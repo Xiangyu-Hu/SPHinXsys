@@ -1,0 +1,149 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyperFirstAtBeginDocument{\AtBeginDocument}
+\HyperFirstAtBeginDocument{\ifx\hyper@anchor\@undefined
+\global\let\oldcontentsline\contentsline
+\gdef\contentsline#1#2#3#4{\oldcontentsline{#1}{#2}{#3}}
+\global\let\oldnewlabel\newlabel
+\gdef\newlabel#1#2{\newlabelxx{#1}#2}
+\gdef\newlabelxx#1#2#3#4#5#6{\oldnewlabel{#1}{{#2}{#3}}}
+\AtEndDocument{\ifx\hyper@anchor\@undefined
+\let\contentsline\oldcontentsline
+\let\newlabel\oldnewlabel
+\fi}
+\fi}
+\global\let\hyper@last\relax 
+\gdef\HyperFirstAtBeginDocument#1{#1}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{4}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}The code}{4}{subsection.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Unified modeling for fluid and solid dynamics}{4}{subsection.1.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces SPH particles and kernel function $W(\mathbf  {r})$.\relax }}{4}{figure.caption.4}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{figs:sph}{{1}{4}{SPH particles and kernel function $W(\mathbf {r})$.\relax }{figure.caption.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces A typical FSI problem involving a rigid solid (wall) body, a composite solid (insert) body and a fluid body. The wall body has two (upper and lower) components. The insert body is composed of a rigid (cylinder) and an elastic (beam) components.\relax }}{5}{figure.caption.5}\protected@file@percent }
+\newlabel{figs:fsi}{{2}{5}{A typical FSI problem involving a rigid solid (wall) body, a composite solid (insert) body and a fluid body. The wall body has two (upper and lower) components. The insert body is composed of a rigid (cylinder) and an elastic (beam) components.\relax }{figure.caption.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Multi-resolution modeling}{5}{subsection.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.4}Using this guide}{5}{subsection.1.4}\protected@file@percent }
+\citation{Han2018}
+\@writefile{toc}{\contentsline {section}{\numberline {2}SPHinXsys theory and architecture overview}{6}{section.2}\protected@file@percent }
+\newlabel{theory}{{2}{6}{SPHinXsys theory and architecture overview}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Lagrangian continuum mechanics}{6}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.1}TLF for solid-like dynamics}{6}{subsubsection.2.1.1}\protected@file@percent }
+\newlabel{trajectory}{{1}{6}{TLF for solid-like dynamics}{equation.2.1}{}}
+\newlabel{deformation-tensor}{{2}{6}{TLF for solid-like dynamics}{equation.2.2}{}}
+\newlabel{Lagrangian-strain}{{3}{6}{TLF for solid-like dynamics}{equation.2.3}{}}
+\newlabel{mass-conservation}{{4}{6}{TLF for solid-like dynamics}{equation.2.4}{}}
+\newlabel{momentum-conservation}{{5}{6}{TLF for solid-like dynamics}{equation.2.5}{}}
+\newlabel{linear-elasticity}{{6}{6}{TLF for solid-like dynamics}{equation.2.6}{}}
+\newlabel{2nd-PK-Cauchy}{{7}{6}{TLF for solid-like dynamics}{equation.2.7}{}}
+\newlabel{isotropic-linear-elasticity}{{8}{7}{TLF for solid-like dynamics}{equation.2.8}{}}
+\newlabel{Neo-Hookean-energy}{{9}{7}{TLF for solid-like dynamics}{equation.2.9}{}}
+\newlabel{Neo-Hookean-energy-finite-extensibility}{{10}{7}{TLF for solid-like dynamics}{equation.2.10}{}}
+\newlabel{stress-strain-energy}{{11}{7}{TLF for solid-like dynamics}{equation.2.11}{}}
+\newlabel{principle-invariants}{{12}{7}{TLF for solid-like dynamics}{equation.2.12}{}}
+\newlabel{extra-principle-invariants}{{13}{7}{TLF for solid-like dynamics}{equation.2.13}{}}
+\newlabel{muscle-energy}{{14}{7}{TLF for solid-like dynamics}{equation.2.14}{}}
+\citation{holzapfel2009constitutive}
+\newlabel{stress-strain-energy}{{15}{8}{TLF for solid-like dynamics}{equation.2.15}{}}
+\newlabel{solid-damping}{{16}{8}{TLF for solid-like dynamics}{equation.2.16}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.2}ULF for fluid-like dynamics}{8}{subsubsection.2.1.2}\protected@file@percent }
+\newlabel{strain-rate-tensor}{{17}{8}{ULF for fluid-like dynamics}{equation.2.17}{}}
+\newlabel{mass-conservation-ULF}{{18}{8}{ULF for fluid-like dynamics}{equation.2.18}{}}
+\newlabel{momentum-conservation-ULF}{{19}{8}{ULF for fluid-like dynamics}{equation.2.19}{}}
+\newlabel{non-Newtonian-shear-stress}{{20}{8}{ULF for fluid-like dynamics}{equation.2.20}{}}
+\newlabel{non-Newtonian-shear-stress-simplified}{{21}{8}{ULF for fluid-like dynamics}{equation.2.21}{}}
+\citation{hu2015towards}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Basic SPH discretizations}{9}{subsection.2.2}\protected@file@percent }
+\newlabel{particle-average}{{22}{9}{Basic SPH discretizations}{equation.2.22}{}}
+\newlabel{particle-reconstuction}{{23}{9}{Basic SPH discretizations}{equation.2.23}{}}
+\newlabel{particle-density-reconstuction}{{24}{9}{Basic SPH discretizations}{equation.2.24}{}}
+\newlabel{eq:gradsph}{{25}{9}{Basic SPH discretizations}{equation.2.25}{}}
+\newlabel{eq:gradsph-strong}{{26}{9}{Basic SPH discretizations}{equation.2.26}{}}
+\newlabel{eq:gradsph-weak}{{27}{9}{Basic SPH discretizations}{equation.2.27}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.1}Discretization of TLF conservation equations}{10}{subsubsection.2.2.1}\protected@file@percent }
+\newlabel{sph-displacement-gradient}{{28}{10}{Discretization of TLF conservation equations}{equation.2.28}{}}
+\newlabel{sph-displacement-gradient-corrected}{{29}{10}{Discretization of TLF conservation equations}{equation.2.29}{}}
+\newlabel{sph-gradient-correction}{{30}{10}{Discretization of TLF conservation equations}{equation.2.30}{}}
+\newlabel{eq:surface-integral-TFL}{{31}{10}{Discretization of TLF conservation equations}{equation.2.31}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.2}Discretization of UFL conservation equations}{10}{subsubsection.2.2.2}\protected@file@percent }
+\newlabel{sph-strain-rate-tensor}{{32}{10}{Discretization of UFL conservation equations}{equation.2.32}{}}
+\newlabel{sph-strain-rate-tensor-corrected}{{33}{10}{Discretization of UFL conservation equations}{equation.2.33}{}}
+\newlabel{eq:surface-integral}{{34}{10}{Discretization of UFL conservation equations}{equation.2.34}{}}
+\citation{hu2012sph}
+\newlabel{eq:gradsph-weak-Laplacian}{{35}{11}{Discretization of UFL conservation equations}{equation.2.35}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.3}Modeling contact dynamics}{11}{subsubsection.2.2.3}\protected@file@percent }
+\newlabel{particle-density-conatct}{{36}{11}{Modeling contact dynamics}{equation.2.36}{}}
+\newlabel{momentum-conservation-contact}{{37}{11}{Modeling contact dynamics}{equation.2.37}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.4}SPH discretization as coarse-graining model}{11}{subsubsection.2.2.4}\protected@file@percent }
+\newlabel{filtering}{{38}{11}{SPH discretization as coarse-graining model}{equation.2.38}{}}
+\newlabel{filtered-particle-position}{{39}{11}{SPH discretization as coarse-graining model}{equation.2.39}{}}
+\newlabel{particle-trajectory}{{40}{11}{SPH discretization as coarse-graining model}{equation.2.40}{}}
+\newlabel{momentum-particle-velocity}{{41}{11}{SPH discretization as coarse-graining model}{equation.2.41}{}}
+\citation{KoshizukaNobeOka1998}
+\newlabel{derivative}{{42}{12}{SPH discretization as coarse-graining model}{equation.2.42}{}}
+\newlabel{full-derivative}{{43}{12}{SPH discretization as coarse-graining model}{equation.2.42}{}}
+\newlabel{reconstruction}{{44}{12}{SPH discretization as coarse-graining model}{equation.2.44}{}}
+\newlabel{volume}{{45}{12}{SPH discretization as coarse-graining model}{equation.2.45}{}}
+\newlabel{approx-derivative}{{46}{12}{SPH discretization as coarse-graining model}{equation.2.46}{}}
+\newlabel{approx-full-derivative}{{47}{12}{SPH discretization as coarse-graining model}{equation.2.47}{}}
+\citation{adami2013transport}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.5}Transport-velocity formulation}{13}{subsubsection.2.2.5}\protected@file@percent }
+\newlabel{density_summation}{{48}{13}{Transport-velocity formulation}{equation.2.48}{}}
+\newlabel{density-variation}{{49}{13}{Transport-velocity formulation}{equation.2.49}{}}
+\newlabel{discretized-momentum-equation-transport}{{50}{13}{Transport-velocity formulation}{equation.2.50}{}}
+\newlabel{discretized-momentum-equation}{{51}{13}{Transport-velocity formulation}{equation.2.51}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.6}Dual-criteria time stepping}{13}{subsubsection.2.2.6}\protected@file@percent }
+\newlabel{sectimescheme}{{2.2.6}{13}{Dual-criteria time stepping}{subsubsection.2.2.6}{}}
+\newlabel{dt-advection}{{52}{13}{Dual-criteria time stepping}{equation.2.52}{}}
+\newlabel{dt-relax}{{53}{13}{Dual-criteria time stepping}{equation.2.53}{}}
+\newlabel{eqrhosum}{{54}{14}{Dual-criteria time stepping}{equation.2.54}{}}
+\newlabel{eqrhosumnosurface}{{55}{14}{Dual-criteria time stepping}{equation.2.55}{}}
+\newlabel{verlet-first-half}{{56}{14}{Dual-criteria time stepping}{equation.2.56}{}}
+\newlabel{verlet-first-mediate}{{57}{14}{Dual-criteria time stepping}{equation.2.57}{}}
+\newlabel{verlet-first-final}{{58}{14}{Dual-criteria time stepping}{equation.2.58}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}SPHinXsys architecture overview}{14}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.3.1}Constructing a SPHinXsys system}{14}{subsubsection.2.3.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Flowchart of the proposed time stepping incorporate with WCSPH method.\relax }}{15}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:flowchart}{{3}{15}{Flowchart of the proposed time stepping incorporate with WCSPH method.\relax }{figure.caption.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Constructing a computation with ordered stages. \relax }}{15}{figure.caption.7}\protected@file@percent }
+\newlabel{figs:construction}{{4}{15}{Constructing a computation with ordered stages. \relax }{figure.caption.7}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.3.2}Carrying out a computation}{16}{subsubsection.2.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Installing SPHinXsys}{17}{section.3}\protected@file@percent }
+\newlabel{install}{{3}{17}{Installing SPHinXsys}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}General instruction}{17}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.1}General instructions}{17}{subsubsection.3.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.2}Where can I find the downloads}{17}{subsubsection.3.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.3}What is in the download zip files}{17}{subsubsection.3.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.4}Which download do I want}{17}{subsubsection.3.1.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.5}What if I have a problem}{17}{subsubsection.3.1.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.6}Installation overview}{17}{subsubsection.3.1.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Dependencies}{18}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Installing on Unix(Linux or Mac OS X)}{18}{subsection.3.3}\protected@file@percent }
+\newlabel{install-unix}{{3.3}{18}{Installing on Unix(Linux or Mac OS X)}{subsection.3.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Installing on Windows}{20}{subsection.3.4}\protected@file@percent }
+\newlabel{install-win}{{3.4}{20}{Installing on Windows}{subsection.3.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Simple Example: 2D Dam break}{20}{section.4}\protected@file@percent }
+\newlabel{example}{{4}{20}{Simple Example: 2D Dam break}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}A First Example}{20}{subsection.4.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Cmake configure sphinxsys library. \relax }}{21}{figure.caption.8}\protected@file@percent }
+\newlabel{figs:win-sphinxsys}{{5}{21}{Cmake configure sphinxsys library. \relax }{figure.caption.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces A snapshot of the particle distribution in the dam break problem.\relax }}{29}{figure.caption.9}\protected@file@percent }
+\newlabel{figs:dambreak}{{6}{29}{A snapshot of the particle distribution in the dam break problem.\relax }{figure.caption.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Complex Example: 2D Dam break with an elastic gate}{37}{section.5}\protected@file@percent }
+\newlabel{complex-example}{{5}{37}{Complex Example: 2D Dam break with an elastic gate}{section.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces A snapshot of the particle distribution in the problem of dam break with an elastic gate. \relax }}{38}{figure.caption.10}\protected@file@percent }
+\newlabel{figs:elastic-gate}{{7}{38}{A snapshot of the particle distribution in the problem of dam break with an elastic gate. \relax }{figure.caption.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}An elastic water gate}{38}{subsection.5.1}\protected@file@percent }
+\bibstyle{plain}
+\bibdata{sphinxsys}
+\bibcite{adami2013transport}{{1}{}{{}}{{}}}
+\bibcite{Han2018}{{2}{}{{}}{{}}}
+\bibcite{holzapfel2009constitutive}{{3}{}{{}}{{}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Temporal displacement of the tip point on the elastic gate.\relax }}{44}{figure.caption.11}\protected@file@percent }
+\newlabel{figs:elastic-gate-tip}{{8}{44}{Temporal displacement of the tip point on the elastic gate.\relax }{figure.caption.11}{}}
+\bibcite{hu2012sph}{{4}{}{{}}{{}}}
+\bibcite{KoshizukaNobeOka1998}{{5}{}{{}}{{}}}
+\bibcite{hu2015towards}{{6}{}{{}}{{}}}
+\providecommand\NAT@force@numbers{}\NAT@force@numbers
