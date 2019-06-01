@@ -13,9 +13,11 @@ namespace SPH
 	namespace observer_dynamics
 	{
 		//===============================================================//
-		void ObserveFluidPressure::ContactInteraction(size_t index_particle_i,	size_t interacting_body_index, Real dt)
+		template <typename FluidQuantityType>
+		void ObserveAFluidQuantity<FluidQuantityType>
+			::ContactInteraction(size_t index_particle_i,	size_t interacting_body_index, Real dt)
 		{
-			Real pressure(0);
+			FluidQuantityType observed_quantity(0);
 			Real weight(0);
 			StdVec<NeighboringParticle>  &neighors 
 				= (*current_interacting_configuration_[interacting_body_index])[index_particle_i];
@@ -25,19 +27,23 @@ namespace SPH
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j 
 					= (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
-				WeaklyCompressibleFluidParticleData &fluid_data_j 
-					= (*interacting_particles_[interacting_body_index]).fluid_data_[index_particle_j];
 
-				pressure += fluid_data_j.p_ * neighboring_particle.W_ij_ * base_particle_data_j.Vol_ ;
+				observed_quantity += GetAFluidQuantity(index_particle_j, *interacting_particles_[interacting_body_index]) 
+					* neighboring_particle.W_ij_ * base_particle_data_j.Vol_ ;
 				weight += neighboring_particle.W_ij_ * base_particle_data_j.Vol_;
 			}
 
-			pressures_[index_particle_i] = pressure / weight;
+			fluid_quantities_[index_particle_i] = observed_quantity / weight;
 		}
+		//template definitions should be instantiated here
+		template class ObserveAFluidQuantity<Real>;
+		template class ObserveAFluidQuantity<Vecd>;
 		//===============================================================//
-		void ObserveElasticDisplacement::ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt)
+		template <typename ElasticBodyQuantityType>
+		void ObserveAnElasticBodyQuantity<ElasticBodyQuantityType>
+			::ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt)
 		{
-			Vecd displacement(0);
+			ElasticBodyQuantityType observed_quantity(0);
 			Real total_weight(0);
 			StdVec<ReferenceNeighboringParticle>  &neighors
 				= (*reference_interacting_configuration_[interacting_body_index])[index_particle_i];
@@ -48,12 +54,17 @@ namespace SPH
 				BaseParticleData &base_particle_data_j
 					= (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
 
-				displacement += base_particle_data_j.pos_n_ * neighboring_particle.W_ij_ * base_particle_data_j.Vol_;
+				observed_quantity += GetAnElasticBodyQuantity(index_particle_j, *interacting_particles_[interacting_body_index])
+					* neighboring_particle.W_ij_ * base_particle_data_j.Vol_;
 				total_weight += neighboring_particle.W_ij_ * base_particle_data_j.Vol_;
 			}
 
-			displacements_[index_particle_i] = displacement / total_weight;
+			elastic_body_quantities_[index_particle_i] = observed_quantity / total_weight;
 		}
+		//template definitions should be instantiated here
+		template class ObserveAnElasticBodyQuantity<Real>;
+		template class ObserveAnElasticBodyQuantity<Vecd>;
+		//===============================================================//
 	}
 }
 

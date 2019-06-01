@@ -1,6 +1,7 @@
 /**
 * @file 	particle_dynamics_algorithms.h
-* @brief 	This is the class for algorithms which are using at least two particle dynamics
+* @brief 	This is the classes for algorithms which are using at least two particle dynamics
+* and some generic algorithms used for particle operations
 * @author	Chi ZHang and Xiangyu Hu
 * @version	0.1
 */

@@ -191,7 +191,41 @@ namespace SPH {
 		out_file << time << "   ";
 		for (size_t i = 0; i != observer_->number_of_particles_; ++i)
 		{
-			out_file << "  " << pressures_[i] << " ";
+			out_file << "  " << fluid_quantities_[i] << " ";
+		}
+		out_file << "\n";
+		out_file.close();
+	}
+	//===============================================================//
+	WriteObservedFluidVelocity
+		::WriteObservedFluidVelocity(Output &output,
+			ObserverBody* observer, WeaklyCompressibleFluidBody *interacting_body)
+		: WriteBodyStates(output, observer), observer_(observer),
+		ObserveFluidVelocity(observer, interacting_body)
+	{
+		dimension_ = Vecd(0).size();
+		filefullpath_ = output_folder_ + "/" + observer->GetBodyName() + "_fluid_velocity.dat";
+		std::ofstream out_file(filefullpath_.c_str(), ios::app);
+		out_file << "run_time" << "   ";
+		for (size_t i = 0; i != observer->number_of_particles_; ++i)
+		{
+			for (size_t j = 0; j != dimension_; ++j)
+				out_file << "  " << "velocities_[" << i << "][" << j << "]" << " ";
+		}
+		out_file << "\n";
+		out_file.close();
+	}
+	//===============================================================//
+	void WriteObservedFluidVelocity::WriteToFile(Real time)
+	{
+		int Itime = int(time*1.0e4);
+		parallel_exec();
+		std::ofstream out_file(filefullpath_.c_str(), ios::app);
+		out_file << time << "   ";
+		for (size_t i = 0; i != observer_->number_of_particles_; ++i)
+		{
+			for (size_t j = 0; j != dimension_; ++j)
+				out_file << "  " << fluid_quantities_[i][j] << " ";
 		}
 		out_file << "\n";
 		out_file.close();
@@ -225,7 +259,7 @@ namespace SPH {
 		for (size_t i = 0; i != observer_->number_of_particles_; ++i)
 		{
 			for (size_t j = 0; j != dimension_; ++j)
-				out_file << "  " << displacements_[i][j] << " ";
+				out_file << "  " << elastic_body_quantities_[i][j] << " ";
 		}
 		out_file << "\n";
 		out_file.close();
@@ -378,4 +412,35 @@ namespace SPH {
 			body->WriteParticlesToXmlForRestart(filefullpath);
 		}
 	}
+	//===============================================================//
+	WriteSimBodyPinAngle
+		::WriteSimBodyPinAngle(Output& output, StdVec<SimTK::MobilizedBody::Pin *> mobodies, SimTK::RungeKuttaMersonIntegrator &integ)
+		: WriteSimBodyStates<SimTK::MobilizedBody::Pin>(output, mobodies), integ_(integ)
+	{
+		filefullpath_ = output_folder_ + "/simbody_pin_angles.dat";
+		std::ofstream out_file(filefullpath_.c_str(), ios::app);
+		out_file << "\"run_time\"" << "   ";
+		for (size_t i = 0; i != mobodies_.size(); ++i)
+		{
+			out_file << "  " << "simbody_pin_angles_[" << i << "]" << " ";
+			out_file << "  " << "simbody_pin_angle_rates_[" << i << "]" << " ";
+		}
+		out_file << "\n";
+		out_file.close();
+	};
+	//===============================================================//
+	void WriteSimBodyPinAngle::WriteToFile(Real time)
+	{
+		int Itime = int(time * 1.0e4);
+		std::ofstream out_file(filefullpath_.c_str(), ios::app);
+		out_file << time << "   ";
+		const SimTK::State *simbody_state = &integ_.getState();
+		for (size_t i = 0; i != mobodies_.size(); ++i)
+		{
+			out_file << "  " << mobodies_[i]->getAngle(*simbody_state) <<"  ";
+			out_file << "  " << mobodies_[i]->getRate(*simbody_state) <<"  ";
+		}
+		out_file << "\n";
+		out_file.close();
+	};
 }

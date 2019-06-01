@@ -77,6 +77,33 @@ namespace SPH {
 	};
 
 	/**
+	 * @class WriteSimBodyStates
+	 * @brief base class for write SimBody states.
+	 */
+	template<class MobilizedBodyType>
+	class WriteSimBodyStates
+	{
+	protected:
+		std::string output_folder_;
+		std::string restart_folder_;
+		Output& output_;
+		StdVec<MobilizedBodyType*> mobodies_;
+
+	public:
+		/** write for several bodies */
+		WriteSimBodyStates(Output& output, StdVec<MobilizedBodyType*> mobodies) 
+			: output_(output), mobodies_(mobodies)
+		{
+			output_folder_ = output_.output_folder_;
+			restart_folder_ = output_.restart_folder_;
+		};
+		virtual ~WriteSimBodyStates() {};
+
+		std::string filefullpath_;
+		virtual void WriteToFile(Real time) = 0;
+	};
+
+	/**
 	 * @class WriteBodyStatesToVtu
 	 * @brief  Write files for bodies
 	 * the output file is VTK XML format can visualized by ParaView
@@ -153,6 +180,25 @@ namespace SPH {
 		WriteObservedFluidPressure(Output &output,
 			ObserverBody* observer, WeaklyCompressibleFluidBody *interacting_body);
 		virtual ~WriteObservedFluidPressure() {};
+		virtual void WriteToFile(Real time) override;
+
+	};
+
+	/**
+	* @class WriteObservedFluidPressure
+	* @brief write files for observed fluid pressure
+	*/
+	class WriteObservedFluidVelocity
+		: public WriteBodyStates,
+		public observer_dynamics::ObserveFluidVelocity
+	{
+	protected:
+		size_t dimension_;
+		ObserverBody * observer_;
+	public:
+		WriteObservedFluidVelocity(Output &output,
+			ObserverBody* observer, WeaklyCompressibleFluidBody *interacting_body);
+		virtual ~WriteObservedFluidVelocity() {};
 		virtual void WriteToFile(Real time) override;
 
 	};
@@ -259,6 +305,20 @@ namespace SPH {
 		WriteRestartFileToXml(Output &output, SPHBodyVector bodies);
 		virtual ~WriteRestartFileToXml() {};
 
+		virtual void WriteToFile(Real time) override;
+	};
+
+	/**
+	 * @class WriteTotalForceOnSolid
+	* @brief Write total force acting a solid body.
+	*/
+	class WriteSimBodyPinAngle : public WriteSimBodyStates<SimTK::MobilizedBody::Pin>
+	{
+	protected:
+		SimTK::RungeKuttaMersonIntegrator &integ_;
+	public:
+		WriteSimBodyPinAngle(Output& output, StdVec<SimTK::MobilizedBody::Pin*> mobodies, SimTK::RungeKuttaMersonIntegrator &integ);
+		virtual ~WriteSimBodyPinAngle() {};
 		virtual void WriteToFile(Real time) override;
 	};
 }

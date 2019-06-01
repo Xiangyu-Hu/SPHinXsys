@@ -17,7 +17,7 @@ namespace SPH {
 	
 	using IndexVector = StdVec<size_t>;		/**< Index containner with elements of size_t. */
 	using CellVector = StdVec<Vecu>;		/**< Cell containner with elements of Vecu. */
-	using SPHBodyVector = StdVec<SPHBody*>;	/**< Vector of SPH body. */
+	using SPHBodyVector = StdVec<SPHBody*>;	/**< Vector of SPH body. Note that vector of references are not allowed in c++.*/
 
 	using ListIndexVector = LargeVec<size_t>;	/**< Concurrent body index vector for cell linked lists. */
 
