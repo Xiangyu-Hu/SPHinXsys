@@ -72,15 +72,13 @@ Real Youngs_modulus = Ae * rho0_f * U_f * U_f;
 /**
  * @brief 	Fluid body definition.
  */
-class WaterBlock : public WeaklyCompressibleFluidBody
+class WaterBlock : public FluidBody
 {
 public:
 	WaterBlock(SPHSystem &system, string body_name,
-		WeaklyCompressibleFluid* material,
-		WeaklyCompressibleFluidParticles &weakly_compressible_fluid_particles,
+		WeaklyCompressibleFluid &fluid_material, FluidParticles &fluid_particles,
 		int refinement_level, ParticlesGeneratorOps op)
-		: WeaklyCompressibleFluidBody(system, body_name, material,
-			weakly_compressible_fluid_particles, refinement_level, op)
+		: FluidBody(system, body_name, fluid_material, fluid_particles, refinement_level, op)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> water_block_shape;
@@ -95,13 +93,6 @@ public:
 		/** Finish the region modeling. */
 		body_region_.done_modeling();
 	}
-	/**
-	 * @brief 	Initialize every fluid particle data.
-	 */
-	void InitialCondition()
-	{
-		SetAllParticleAtRest();
-	}
 };
 /**
  * @brief 	wall body definition.
@@ -110,10 +101,8 @@ class WallBoundary : public SolidBody
 {
 public:
 	WallBoundary(SPHSystem &system, string body_name,
-		SolidBodyParticles &solid_particles,
-		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, solid_particles,
-			refinement_level, op)
+		SolidParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), solid_particles, refinement_level, op)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> outer_wall_shape;
@@ -135,25 +124,16 @@ public:
 		body_region_.done_modeling();
 
 	}
-	/**
-	 * @brief 	Initialize every wall particle data.
-	 */
-	void InitialCondition()
-	{
-		SetAllParticleAtRest();
-	}
 };
 /**
  * @brief  Gate base body definition.
  */
-class GateBase : public ElasticBody
+class GateBase : public SolidBody
 {
 public:
-	GateBase(SPHSystem &system, string body_name, ElasticSolid* material,
-		ElasticBodyParticles &elastic_particles,
-		int refinement_level, ParticlesGeneratorOps op)
-		: ElasticBody(system, body_name, material, elastic_particles,
-			refinement_level, op)
+	GateBase(SPHSystem &system, string body_name, ElasticSolid &solid_material,
+		ElasticSolidParticles &elastic_particles, int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, solid_material, elastic_particles, refinement_level, op)
 	{
 		/** Geometry definition. */
 		std::vector<Point> gate_base_shape;
@@ -166,27 +146,16 @@ public:
 		/** Finish the region modeling. */
 		body_region_.done_modeling();
 	}
-	/**
-	 * @brief 	Initialize every gate base particle data.
-	 */
-	void InitialCondition()
-	{
-		SetAllParticleAtRest();
-		/** Shift the particle slightly. */
-		OffsetInitialParticlePosition(offset);
-	}
 };
 /**
  * @brief  Define the elastic gate body.
  */
-class Gate : public ElasticBody
+class Gate : public SolidBody
 {
 public:
-	Gate(SPHSystem &system, string body_name, ElasticSolid* material,
-		ElasticBodyParticles &elastic_particles,
-		int refinement_level, ParticlesGeneratorOps op)
-		: ElasticBody(system, body_name, material, elastic_particles,
-			refinement_level, op)
+	Gate(SPHSystem &system, string body_name, ElasticSolid &solid_material,
+		ElasticSolidParticles &elastic_particles, int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, solid_material, elastic_particles, refinement_level, op)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> gate_shape;
@@ -199,15 +168,6 @@ public:
 		/** Finish the region modeling. */
 		body_region_.done_modeling();
 	}
-	/**
-	 * @brief 	Initialize every elastic gate particle data.
-	 */
-	void InitialCondition()
-	{
-		SetAllParticleAtRest();
-		/** Shift the particle slightly. */
-		OffsetInitialParticlePosition(offset);
-	}
 };
 /**
  * @brief Define the observer body.
@@ -215,8 +175,7 @@ public:
 class Observer : public ObserverLagrangianBody
 {
 public:
-	Observer(SPHSystem &system, string body_name,
-		ObserverParticles &observer_particles,
+	Observer(SPHSystem &system, string body_name, ObserverParticles &observer_particles,
 		int refinement_level, ParticlesGeneratorOps op)
 		: ObserverLagrangianBody(system, body_name, observer_particles,
 			refinement_level, op)
@@ -241,27 +200,27 @@ int main()
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
 	WeaklyCompressibleFluid 			fluid("Water", rho0_f, c_f, mu_f, k_f);
-	WeaklyCompressibleFluidParticles 	fluid_particles("WaterBody");
-	WaterBlock *water_block = new WaterBlock(system, "WaterBody", &fluid,
+	FluidParticles 	fluid_particles("WaterBody");
+	WaterBlock *water_block = new WaterBlock(system, "WaterBody", fluid,
 		fluid_particles, 0, ParticlesGeneratorOps::lattice);
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
-	SolidBodyParticles 					solid_particles("Wall");
+	SolidParticles 					solid_particles("Wall");
 	WallBoundary *wall_boundary = new WallBoundary(system, "Wall",
 		solid_particles, 0, ParticlesGeneratorOps::lattice);
 	/**
 	 * @brief 	Material property, particle and body creation of gate base.
 	 */
 	ElasticSolid 			solid_material("ElasticSolid", rho0_s, Youngs_modulus, poisson);
-	ElasticBodyParticles 	gate_base_particles("GateBase");
-	GateBase *gate_base = new GateBase(system, "GateBase", &solid_material,
+	ElasticSolidParticles 	gate_base_particles("GateBase");
+	GateBase *gate_base = new GateBase(system, "GateBase", solid_material,
 		gate_base_particles, 1, ParticlesGeneratorOps::lattice);
 	/**
 	 * @brief 	Material property, particle and body creation of elastic gate.
 	 */
-	ElasticBodyParticles 	gate_particles("Gate");
-	Gate *gate = new Gate(system, "Gate", &solid_material,
+	ElasticSolidParticles 	gate_particles("Gate");
+	Gate *gate = new Gate(system, "Gate", solid_material, 
 		gate_particles, 1, ParticlesGeneratorOps::lattice);
 	/**
 	 * @brief 	Particle and body creation of gate observer.
@@ -288,9 +247,17 @@ int main()
 	 /**
 	  * @brief 	Methods used only once.
 	  */
-	  /** Obtain the initial number density of fluid. */
+	  /** initial condition for fluid body */
+	fluid_dynamics::WeaklyCompressibleFluidInitialCondition set_all_fluid_particles_at_rest(water_block);
+	/** obtain the initial number density of fluid. */
 	fluid_dynamics::InitialNumberDensity 		fluid_initial_number_density(water_block,
 		{ wall_boundary,  gate_base, gate });
+
+	/** initial condition for the solid body */
+	solid_dynamics::SolidDynamicsInitialCondition set_all_wall_particles_at_rest(wall_boundary);
+	/** initial condition for the elastic solid bodies */
+	solid_dynamics::ElasticSolidDynamicsInitialCondition set_all_gate_base_particles_at_rest(gate_base);
+	solid_dynamics::ElasticSolidDynamicsInitialCondition set_all_gate_particles_at_rest(gate);
 	/** Initialize normal direction of the wall boundary. */
 	solid_dynamics::NormalDirectionSummation 	get_wall_normal(wall_boundary, {});
 	/** Initialize normal direction of the gate base. */
@@ -300,6 +267,8 @@ int main()
 	/** Corrected strong configuration. */
 	solid_dynamics::CorrectConfiguration 		gate_base_corrected_configuration_in_strong_form(gate_base, { gate });
 	solid_dynamics::CorrectConfiguration 		gate_corrected_configuration_in_strong_form(gate, { gate_base });
+
+
 	/**
 	 * @brief 	Methods used for time stepping.
 	 */
@@ -321,7 +290,7 @@ int main()
 	 * @brief Algorithms of FSI.
 	 */
 	 /** Compute the force exerted on elastic gate due to fluid pressure. */
-	solid_dynamics::FluidPressureForceOnSolid 	fluid_pressure_force_on_gate(gate, { water_block }, &fluid, &gravity);
+	solid_dynamics::FluidPressureForceOnSolid 	fluid_pressure_force_on_gate(gate, { water_block }, &gravity);
 	/**
 	 * @brief Algorithms of Elastic dynamics.
 	 */
@@ -351,21 +320,26 @@ int main()
 	/**
 	 * @brief Output.
 	 */
-	Output output(system);
+	In_Output in_output(system);
 	/** Output body states for visulaization. */
-	WriteBodyStatesToPlt 				write_real_body_states_to_plt(output, system.real_bodies_);
+	WriteBodyStatesToPlt 				write_real_body_states_to_plt(in_output, system.real_bodies_);
 	/** Output body states for visulaization. */
-	WriteBodyStatesToVtu 				write_real_body_states_to_vtu(output, system.real_bodies_);
+	WriteBodyStatesToVtu 				write_real_body_states_to_vtu(in_output, system.real_bodies_);
 	/** Output the observed displacement of gate free end. */
-	WriteObservedElasticDisplacement 	write_beam_tip_displacement(output, gate_observer, { gate });
+	WriteObservedElasticDisplacement 	write_beam_tip_displacement(in_output, gate_observer, { gate });
 	/**
 	 * @brief The time stepping starts here.
 	 */
 	 /** Set the starting time to zero. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/**
-	 * @brief Prepare quantities will be used once only.
+	 * @brief Prepare quantities will be used once only and initial condition.
 	 */
+	set_all_fluid_particles_at_rest.exec();
+	set_all_wall_particles_at_rest.exec();
+	set_all_gate_base_particles_at_rest.exec();
+	set_all_gate_particles_at_rest.exec();
+
 	get_wall_normal.parallel_exec();
 	get_gate_base_normal.parallel_exec();
 	get_gate_normal.parallel_exec();
@@ -386,8 +360,7 @@ int main()
 	/** statistics for computing CPU time. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
-	/** Output global basic parameters. */
-	output.WriteCaseSetup(End_Time, D_Time, GlobalStaticVariables::physical_time_);
+
 	/**
 	 * @brief Main loop starts here.
 	 */

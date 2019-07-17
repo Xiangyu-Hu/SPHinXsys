@@ -13,10 +13,9 @@
 using namespace std;
 namespace SPH {
 	/**
-	 * @brief Friend Class.
+	 * @brief Preclaimed class.
 	 */
 	class SPHSystem;
-	class MeshCellLinkedList;
 	class RelaxBodyParticles;
 	class MeshBackground;
 	/**
@@ -28,45 +27,24 @@ namespace SPH {
 	protected:
 		//initialize the background level set, displacement to the body surface
 		void InitializeBackgroundMesh();
-
 	public:
-		/**
-		 * @brief Defaut constructor of ObserverBody.
-		 * @param[in] sph_system SPHSystem.
-		 * @param[in] body_name Name of Body.
-		 * @param[in] relax_particles Particles object.
-		 * @param[in] refinement_level Refinement level of this body.
-		 * @param[in] op Partciel generator manner.
-		 */
 		RelaxBody(SPHSystem &sph_system, string body_name,
 			RelaxBodyParticles &relax_particles, int refinement_level, ParticlesGeneratorOps op);
-		/**
-		 * @brief Default destructor.
-		 */
 		virtual ~RelaxBody() {};
 
-		RelaxBodyParticles &relax_particles_;	/**< Particles in this body. */
-		MeshBackground *mesh_background_;		/**< Background mesh.*/
+		/** Particles in this body. */
+		RelaxBodyParticles &relax_particles_;
+		/** Background mesh.*/
+		MeshBackground *mesh_background_;		
 
 		IndexVector lists_of_singularity_particles_;
 		
-		/**
-		 * @brief Build inner configuration.
-		*/
+		/** Build inner configuration. */
 		virtual void BuildInnerConfiguration() override;
-		/**
-		 * @brief Build contact configuration.
-		 */
+		/** Build contact configuration. */
 		virtual void BuildContactConfiguration() override;
-		/**
-		 * @brief initial condition for relax body.
-		 */
-		virtual void InitialCondition() override;
-		/**
-		 * @brief Override the virtual function to output global basic parameters in RelaxBody.
-		 * @param[in,out] out_file Ofstream of out put data.
-		 */
-		virtual void GlobalBasicParameters(ofstream &out_file) override;
+		/** The pointer to derived class object. */
+		virtual RelaxBody* PointToThisObject() override { return this; };
 	};
 
 	/**

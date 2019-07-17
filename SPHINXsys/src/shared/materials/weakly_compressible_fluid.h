@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "base_fluid.h"
+#include "base_material.h"
 
 namespace SPH {
 
@@ -26,6 +26,9 @@ namespace SPH {
 		explicit WeaklyCompressibleFluid(string fluid_name,Real rho_0 = 1.0,
 			Real c_0 = 1.0, Real mu = 0.0, Real k = 0.0);
 		virtual ~WeaklyCompressibleFluid() {};
+
+		/** the interface for dynamical cast*/
+		virtual WeaklyCompressibleFluid* PointToThisObject() override { return this; };
 
 		virtual Real GetPressure(Real rho) override;
 		virtual Real ReinitializeRho(Real p) override;
@@ -55,6 +58,9 @@ namespace SPH {
 			Real c_0 = 1.0, Real mu = 0.0, Real k = 0.0);
 		virtual ~SymmetricTaitFluid() {};
 
+		/** the interface for dynamical cast*/
+		virtual SymmetricTaitFluid* PointToThisObject() override { return this; };
+
 		virtual Real GetPressure(Real rho) override;
 		virtual Real ReinitializeRho(Real p) override;
 		virtual Real GetSoundSpeed(Real p = 0.0, Real rho = 1.0) override;
@@ -77,5 +83,9 @@ namespace SPH {
 			Real c_0 = 1.0, Real mu = 0.0, Real k = 0.0, 
 			Real lambda = 1.0, Real mu_p = 0.0);
 		virtual ~Oldroyd_B_Fluid() {};
+
+		/** the interface for dynamical cast*/
+		virtual Oldroyd_B_Fluid* PointToThisObject() override { return this; };
+
 	};
 }

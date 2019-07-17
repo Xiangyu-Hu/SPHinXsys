@@ -14,21 +14,22 @@ namespace SPH
 {
 	namespace observer_dynamics
 	{
+		template <class InteractingBodyType, class InteractingParticlesType>
+		using ObserverDynamicsContact = ParticleDynamicsContact<ObserverBody, ObserverParticles, Material,
+			InteractingBodyType, InteractingParticlesType>;
+		
 		/**
 		 * @class ObserveABody
 		 * @brief observer physical field from fluid
 		 */	
-		template <class InteractingBodytype, class InteractingParticlesType>
-		class ObserveABody 
-			: public ParticleDynamicsContact<ObserverBody, ObserverParticles, InteractingBodytype, InteractingParticlesType>
+		template <class InteractingBodyType, class InteractingParticlesType>
+		class ObserveABody : public ObserverDynamicsContact<InteractingBodyType, InteractingParticlesType>
 		{
-		
 		protected:
 			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) = 0;
-
 		public:
-			ObserveABody(ObserverBody *body, InteractingBodytype *interacting_body)
-				: ParticleDynamicsContact(body, { interacting_body }) {};
+			explicit ObserveABody(ObserverBody *body, InteractingBodyType *interacting_body)
+				: ObserverDynamicsContact<InteractingBodyType, InteractingParticlesType>(body, { interacting_body }) {};
 			virtual ~ObserveABody() {};
 		};
 		
@@ -37,18 +38,17 @@ namespace SPH
 		 * @brief observe a fluid quantity
 		 */
 		template <typename FluidQuantityType>
-		class ObserveAFluidQuantity : public ObserveABody<WeaklyCompressibleFluidBody, WeaklyCompressibleFluidParticles>
+		class ObserveAFluidQuantity : public ObserveABody<FluidBody, FluidParticles>
 		{
-
 		protected:
 			StdVec<FluidQuantityType>  fluid_quantities_;
-			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) override;
-			virtual FluidQuantityType GetAFluidQuantity(size_t index_particle_j, WeaklyCompressibleFluidParticles &particles) = 0;
 
+			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) override;
+			virtual FluidQuantityType GetAFluidQuantity(size_t index_particle_j, FluidParticles &particles) = 0;
 		public:
-			ObserveAFluidQuantity(ObserverBody *body, WeaklyCompressibleFluidBody *interacting_body)
+			explicit ObserveAFluidQuantity(ObserverBody *body, FluidBody *interacting_body)
 				: ObserveABody(body, interacting_body) {
-				for (size_t i = 0; i < body->number_of_particles_; ++i) fluid_quantities_.push_back(FluidQuantityType(0));
+				for (size_t i = 0; i < body->number_of_real_particles_; ++i) fluid_quantities_.push_back(FluidQuantityType(0));
 			};
 			virtual ~ObserveAFluidQuantity() {};
 		};
@@ -60,70 +60,69 @@ namespace SPH
 		class ObserveFluidPressure : public ObserveAFluidQuantity<Real>
 		{
 		protected:
-			virtual Real GetAFluidQuantity(size_t index_particle_j, WeaklyCompressibleFluidParticles &particles) override
-			{ return particles.fluid_data_[index_particle_j].p_; };
+			virtual Real GetAFluidQuantity(size_t index_particle_j, FluidParticles &particles) override { 
+				return particles.fluid_particle_data_[index_particle_j].p_; 
+			};
 		public:
-			ObserveFluidPressure(ObserverBody *body, WeaklyCompressibleFluidBody *interacting_body)
+			explicit ObserveFluidPressure(ObserverBody *body, FluidBody *interacting_body)
 				: ObserveAFluidQuantity(body, interacting_body) {};
 			virtual ~ObserveFluidPressure() {};
 		};
 
-
 		/**
-		 * @class ObserveFluidPressure
-		 * @brief observe fluid pressure
+		 * @class ObserveFluidVelocity
+		 * @brief observe fluid velocity
 		 */
 		class ObserveFluidVelocity : public ObserveAFluidQuantity<Vecd>
 		{
 		protected:
-			virtual Vecd GetAFluidQuantity(size_t index_particle_j, WeaklyCompressibleFluidParticles &particles) override
-			{
+			virtual Vecd GetAFluidQuantity(size_t index_particle_j, FluidParticles &particles) override {
 				return particles.base_particle_data_[index_particle_j].vel_n_;
 			};
 		public:
-			ObserveFluidVelocity(ObserverBody *body, WeaklyCompressibleFluidBody *interacting_body)
+			explicit ObserveFluidVelocity(ObserverBody *body, FluidBody *interacting_body)
 				: ObserveAFluidQuantity(body, interacting_body) {};
 			virtual ~ObserveFluidVelocity() {};
 		};
 
 		/**
-		 * @class ObserveElasticDisplacement
-		 * @brief observe elastic displacement
+		 * @class ObserveAnElasticSolidQuantity
+		 * @brief observe an elastic solid quantity
 		 */
-		template <typename ElasticBodyQuantityType>
-		class ObserveAnElasticBodyQuantity : public ObserveABody<ElasticBody, ElasticBodyParticles>
+		template <typename ElasticSolidQuantityType>
+		class ObserveAnElasticSolidQuantity : public ObserveABody<SolidBody, ElasticSolidParticles>
 		{
 
 		protected:
-			StdVec<ElasticBodyQuantityType>  elastic_body_quantities_;
+			StdVec<ElasticSolidQuantityType>  elastic_body_quantities_;
 
 			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) override;
-			virtual ElasticBodyQuantityType GetAnElasticBodyQuantity(size_t index_particle_j, ElasticBodyParticles &particles) = 0;
+			virtual ElasticSolidQuantityType GetAnElasticSolidQuantity(size_t index_particle_j, ElasticSolidParticles &particles) = 0;
 
 		public:
-			ObserveAnElasticBodyQuantity(ObserverBody *body, ElasticBody *interacting_body)
+			explicit ObserveAnElasticSolidQuantity(ObserverBody *body, SolidBody *interacting_body)
 				: ObserveABody(body, interacting_body) {
-				for (size_t i = 0; i < body->number_of_particles_; ++i) elastic_body_quantities_.push_back(ElasticBodyQuantityType(0));
+				for (size_t i = 0; i < body->number_of_real_particles_; ++i) 
+					elastic_body_quantities_.push_back(ElasticSolidQuantityType(0));
 			};
-			virtual ~ObserveAnElasticBodyQuantity() {};
+			virtual ~ObserveAnElasticSolidQuantity() {};
 		};
 
 		/**
 		 * @class ObserveElasticDisplacement
 		 * @brief observe elastic displacement
 		 */
-		class ObserveElasticDisplacement : public ObserveAnElasticBodyQuantity<Vecd>
+		class ObserveElasticDisplacement : public ObserveAnElasticSolidQuantity<Vecd>
 		{
 
 		protected:
-			virtual Vecd GetAnElasticBodyQuantity(size_t index_particle_j, ElasticBodyParticles &particles) override
-			{
+			virtual Vecd GetAnElasticSolidQuantity(size_t index_particle_j, ElasticSolidParticles &particles) override {
 				return particles.base_particle_data_[index_particle_j].pos_n_;
 			};
 
 		public:
-			ObserveElasticDisplacement(ObserverBody *body, ElasticBody *interacting_body)
-				: ObserveAnElasticBodyQuantity(body, interacting_body) {};
+			ObserveElasticDisplacement(ObserverBody *body, SolidBody *interacting_body)
+				: ObserveAnElasticSolidQuantity(body, interacting_body) {};
 			virtual ~ObserveElasticDisplacement() {};
 		};
 	}

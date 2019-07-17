@@ -7,6 +7,23 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//===========================================================//
+		void WeaklyCompressibleFluidInitialCondition::Update(size_t index_particle_i, Real dt)
+		{
+			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
+
+			base_particle_data_i.vel_n_(0);
+			base_particle_data_i.dvel_dt_(0);
+
+			fluid_data_i.p_ = 0.0;
+			fluid_data_i.vel_trans_(0);
+			fluid_data_i.rho_0_
+				= material_->ReinitializeRho(fluid_data_i.p_);
+			fluid_data_i.rho_n_ = fluid_data_i.rho_0_;
+			fluid_data_i.mass_
+				= fluid_data_i.rho_0_*base_particle_data_i.Vol_;
+		}
+		//===========================================================//
 		void InitialNumberDensity::InnerInteraction(size_t index_particle_i, Real dt)
 		{
 			Real sigma = W0_;
@@ -19,7 +36,7 @@ namespace SPH
 				sigma += neighors[n].W_ij_;
 			}
 
-			particles_->fluid_data_[index_particle_i].sigma_0_ = sigma;
+			particles_->fluid_particle_data_[index_particle_i].sigma_0_ = sigma;
 		}
 		//===========================================================//
 		void InitialNumberDensity::ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt)
@@ -39,12 +56,12 @@ namespace SPH
 				sigma += neighors[n].W_ij_*base_particle_data_j.Vol_0_/ base_particle_data_i.Vol_0_;
 			}
 
-			particles_->fluid_data_[index_particle_i].sigma_0_ += sigma;
+			particles_->fluid_particle_data_[index_particle_i].sigma_0_ += sigma;
 		}
 		//===========================================================//
 		void DensityBySummation::InnerInteraction(size_t index_particle_i, Real dt)
 		{
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			//initial value for summation
 			Real sigma = W0_;
@@ -64,7 +81,7 @@ namespace SPH
 		void DensityBySummation::ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			Real sigma = 0.0;
 			StdVec<NeighboringParticle>  &neighors = (*current_interacting_configuration_[interacting_body_index])[index_particle_i];
@@ -84,14 +101,14 @@ namespace SPH
 		void  DensityBySummation::Update(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			base_particle_data_i.Vol_ = fluid_data_i.mass_ / fluid_data_i.rho_n_;
 		}
 		//===========================================================//
 		void DensityBySummationFreeSurface::InnerInteraction(size_t index_particle_i, Real dt)
 		{
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			fluid_data_i.temp_real_ = fluid_data_i.rho_n_;
 
@@ -113,7 +130,7 @@ namespace SPH
 		void DensityBySummationFreeSurface::ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			Real sigma = 0.0;
 			StdVec<NeighboringParticle>  &neighors = (*current_interacting_configuration_[interacting_body_index])[index_particle_i];
@@ -134,7 +151,7 @@ namespace SPH
 		void DivergenceCorrection::InnerInteraction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			Real div_correction = 0.0;
 			StdVec<NeighboringParticle>  &neighors = (*current_inner_configuration_)[index_particle_i];
@@ -153,7 +170,7 @@ namespace SPH
 		//===========================================================//
 		void DivergenceCorrection::ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt)
 		{
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			Real div_correction = 0.0;
 			StdVec<NeighboringParticle>  &neighors = (*current_interacting_configuration_[interacting_body_index])[index_particle_i];
@@ -163,7 +180,7 @@ namespace SPH
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j
 					= (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
-				SolidBodyParticleData &solid_data_j
+				SolidParticleData &solid_data_j
 					= (*interacting_particles_[interacting_body_index]).solid_body_data_[index_particle_j];
 
 				div_correction +=
@@ -175,7 +192,7 @@ namespace SPH
 		//===========================================================//
 		void  DivergenceCorrection::Update(size_t index_particle_i, Real dt)
 		{
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 			Real div_correction_1 = fluid_data_i.div_correction_ / dimension_;
 			fluid_data_i.div_correction_
 				= 1.0 / (div_correction_1 + 0.1*(1.0 - div_correction_1)*(1.0 - div_correction_1));
@@ -184,7 +201,7 @@ namespace SPH
 		void ComputingViscousAcceleration::InnerInteraction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			Vecd acceleration(0);
 			StdVec<NeighboringParticle>  &neighors = (*current_inner_configuration_)[index_particle_i];
@@ -193,7 +210,7 @@ namespace SPH
 				NeighboringParticle &neighboring_particle = neighors[n];
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
-				WeaklyCompressibleFluidParticleData &fluid_data_j = particles_->fluid_data_[index_particle_j];
+				FluidParticleData &fluid_data_j = particles_->fluid_particle_data_[index_particle_j];
 
 				//viscous force
 				Vecd vel_detivative = (base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_)
@@ -209,7 +226,7 @@ namespace SPH
 			::ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			Vecd acceleration(0);
 			StdVec<NeighboringParticle>  &neighors = (*current_interacting_configuration_[interacting_body_index])[index_particle_i];
@@ -219,7 +236,7 @@ namespace SPH
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j
 					= (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
-				SolidBodyParticleData &solid_data_j
+				SolidParticleData &solid_data_j
 					= (*interacting_particles_[interacting_body_index]).solid_body_data_[index_particle_j];
 
 				//viscous force with a simple wall model for high-Reynolds number flow
@@ -238,7 +255,7 @@ namespace SPH
 		void TransportVelocityStress::InnerInteraction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			Vecd acceleration(0);
 			StdVec<NeighboringParticle>  &neighors = (*current_inner_configuration_)[index_particle_i];
@@ -247,7 +264,7 @@ namespace SPH
 				NeighboringParticle &neighboring_particle = neighors[n];
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
-				WeaklyCompressibleFluidParticleData &fluid_data_j = particles_->fluid_data_[index_particle_j];
+				FluidParticleData &fluid_data_j = particles_->fluid_particle_data_[index_particle_j];
 
 				//exra stress
 				acceleration += 0.5*dt*((fluid_data_i.rho_n_*base_particle_data_i.vel_n_
@@ -264,7 +281,7 @@ namespace SPH
 			::ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			Vecd acceleration(0);
 			StdVec<NeighboringParticle>  &neighors = (*current_interacting_configuration_[interacting_body_index])[index_particle_i];
@@ -274,7 +291,7 @@ namespace SPH
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j
 					= (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
-				SolidBodyParticleData &solid_data_j
+				SolidParticleData &solid_data_j
 					= (*interacting_particles_[interacting_body_index]).solid_body_data_[index_particle_j];
 
 				//exra stress
@@ -289,14 +306,14 @@ namespace SPH
 		void TransportVelocityCorrection::SetupDynamics(Real dt)
 		{
 			Real speed_max = body_->speed_max_;
-			Real density = body_->material_->GetReferenceDensity();
+			Real density = material_->GetReferenceDensity();
 			p_background_ = 10.0*density*speed_max * speed_max;
 		}
 		//===========================================================//
 		void TransportVelocityCorrection::InnerInteraction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			Vecd acceleration_trans(0);
 			StdVec<NeighboringParticle>  &neighors = (*current_inner_configuration_)[index_particle_i];
@@ -305,7 +322,7 @@ namespace SPH
 				NeighboringParticle &neighboring_particle = neighors[n];
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
-				WeaklyCompressibleFluidParticleData &fluid_data_j = particles_->fluid_data_[index_particle_j];
+				FluidParticleData &fluid_data_j = particles_->fluid_particle_data_[index_particle_j];
 
 				//acceleration for transport velocity
 				acceleration_trans -= 2.0*p_background_*base_particle_data_j.Vol_ / fluid_data_i.rho_n_
@@ -318,7 +335,7 @@ namespace SPH
 		void TransportVelocityCorrection::ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			Vecd acceleration_trans(0);
 			StdVec<NeighboringParticle>  &neighors = (*current_interacting_configuration_[interacting_body_index])[index_particle_i];
@@ -338,44 +355,29 @@ namespace SPH
 			base_particle_data_i.pos_n_ += acceleration_trans * dt*dt*0.5;
 		}
 		//===========================================================//
-		TotalMechanicalEnergy::TotalMechanicalEnergy(WeaklyCompressibleFluidBody* body, ExternalForce *external_force)
-			: ParticleDynamicsSum<Real, WeaklyCompressibleFluidBody, WeaklyCompressibleFluidParticles>(body)
+		TotalMechanicalEnergy::TotalMechanicalEnergy(FluidBody* body, ExternalForce *external_force)
+			: WeaklyCompressibleFluidDynamicsSum<Real>(body)
 		{
 			initial_reference_ = 0.0;
-			average_farctor_ = 1.0 / Real(body_->number_of_particles_);
+			average_farctor_ = 1.0 / Real(body_->number_of_real_particles_);
 			potential_ = external_force->InducedAcceleration().norm();
 		}
 		//===========================================================//
 		Real TotalMechanicalEnergy::ReduceFunction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			return average_farctor_ * (
 				0.5 * fluid_data_i.mass_* base_particle_data_i.vel_n_.normSqr()
 				+ fluid_data_i.mass_*potential_*base_particle_data_i.pos_n_[1]);
 		}
 		//===========================================================//
-		DambreakWaterFront
-			::DambreakWaterFront(WeaklyCompressibleFluidBody *body)
-			: ParticleDynamicsMaximum<WeaklyCompressibleFluidBody, WeaklyCompressibleFluidParticles>(body)
-		{
-			initial_reference_ = 0.0;
-		}
-		//===========================================================//
-		Real DambreakWaterFront::ReduceFunction(size_t index_particle_i, Real dt)
-		{
-			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-
-			return base_particle_data_i.pos_n_[0];
-		}
-		//===========================================================//
-		GetAcousticTimeStepSize::GetAcousticTimeStepSize(WeaklyCompressibleFluidBody* body)
-			: ParticleDynamicsMaximum<WeaklyCompressibleFluidBody, WeaklyCompressibleFluidParticles>(body)
+		GetAcousticTimeStepSize::GetAcousticTimeStepSize(FluidBody* body)
+			: WeaklyCompressibleFluidDynamicsMaximum(body)
 		{
 			smoothing_length_ = body->kernel_->GetSmoothingLength();
 			//time setep size due to linear viscosity
-			material_ = body->material_;
 			Real rho_0 = material_->rho_0_;
 			Real mu = material_->mu_;
 			initial_reference_ = mu / rho_0 / smoothing_length_;
@@ -383,10 +385,8 @@ namespace SPH
 		//===========================================================//
 		Real GetAcousticTimeStepSize::ReduceFunction(size_t index_particle_i, Real dt)
 		{
-			BaseParticleData &base_particle_data_i
-				= particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i
-				= particles_->fluid_data_[index_particle_i];
+			BaseParticleData &base_particle_data_i	= particles_->base_particle_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			//since the particle does not change its configuration in pressure relaxation step
 			//I chose a time-step size according to Eulerian method
@@ -402,7 +402,7 @@ namespace SPH
 			return 0.6 * smoothing_length_ / (reduced_value + 1.0e-15);
 		}
 		//===========================================================//
-		GetAdvectionTimeStepSize::GetAdvectionTimeStepSize(WeaklyCompressibleFluidBody* body, Real U_f)
+		GetAdvectionTimeStepSize::GetAdvectionTimeStepSize(FluidBody* body, Real U_f)
 			: GetAcousticTimeStepSize(body)
 		{
 			initial_reference_ = SMAX(initial_reference_, U_f);
@@ -426,7 +426,7 @@ namespace SPH
 		void PressureRelaxationVerletFreeSurface::Initialization(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			fluid_data_i.rho_n_ += fluid_data_i.drho_dt_* dt * 0.5;
 			base_particle_data_i.Vol_ = fluid_data_i.mass_ / fluid_data_i.rho_n_;
@@ -437,7 +437,7 @@ namespace SPH
 		void PressureRelaxationVerletFreeSurface::InnerInteraction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			Vecd acceleration = base_particle_data_i.dvel_dt_others_;
 			StdVec<NeighboringParticle>  &neighors = (*current_inner_configuration_)[index_particle_i];
@@ -447,7 +447,7 @@ namespace SPH
 				NeighboringParticle &neighboring_particle = neighors[n];
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
-				WeaklyCompressibleFluidParticleData &fluid_data_j = particles_->fluid_data_[index_particle_j];
+				FluidParticleData &fluid_data_j = particles_->fluid_particle_data_[index_particle_j];
 
 				//low dissipation Riemann problem
 				Real ul = dot(neighboring_particle.e_ij_, base_particle_data_i.vel_n_);
@@ -465,7 +465,7 @@ namespace SPH
 			::ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			Vecd acceleration(0);
 			StdVec<NeighboringParticle>  &neighors = (*current_interacting_configuration_[interacting_body_index])[index_particle_i];
@@ -475,7 +475,7 @@ namespace SPH
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j
 					= (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
-				SolidBodyParticleData &solid_data_j
+				SolidParticleData &solid_data_j
 					= (*interacting_particles_[interacting_body_index]).solid_body_data_[index_particle_j];
 
 				Real face_wall_external_acceleration 
@@ -499,7 +499,8 @@ namespace SPH
 		void PressureRelaxationVerletFreeSurface::Intermediate(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
+
 			base_particle_data_i.vel_n_ += base_particle_data_i.dvel_dt_* dt;
 			base_particle_data_i.pos_n_ += base_particle_data_i.vel_n_ * dt * 0.5;
 		}
@@ -507,7 +508,7 @@ namespace SPH
 		void PressureRelaxationVerletFreeSurface::InnerInteraction2nd(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			Real density_change_rate = 0.0;
 			StdVec<NeighboringParticle>  &neighors = (*current_inner_configuration_)[index_particle_i];
@@ -516,7 +517,7 @@ namespace SPH
 				NeighboringParticle &neighboring_particle = neighors[n];
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
-				WeaklyCompressibleFluidParticleData &fluid_data_j = particles_->fluid_data_[index_particle_j];
+				FluidParticleData &fluid_data_j = particles_->fluid_particle_data_[index_particle_j];
 
 				//low dissipation Riemann problem
 				Real ul = dot(neighboring_particle.e_ij_, base_particle_data_i.vel_n_);
@@ -535,7 +536,7 @@ namespace SPH
 			::ContactInteraction2nd(size_t index_particle_i, size_t interacting_body_index, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			Real density_change_rate = 0.0;
 			StdVec<NeighboringParticle>  &neighors = (*current_interacting_configuration_[interacting_body_index])[index_particle_i];
@@ -545,7 +546,7 @@ namespace SPH
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j
 					= (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
-				SolidBodyParticleData &solid_data_j
+				SolidParticleData &solid_data_j
 					= (*interacting_particles_[interacting_body_index]).solid_body_data_[index_particle_j];
 
 				//seems not using rimann problem solution is better
@@ -559,7 +560,7 @@ namespace SPH
 		//===========================================================//
 		void PressureRelaxationVerletFreeSurface::Update(size_t index_particle_i, Real dt)
 		{
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			fluid_data_i.rho_n_ += fluid_data_i.drho_dt_ * dt * 0.5;
 		}
@@ -567,7 +568,7 @@ namespace SPH
 		void PressureRelaxationVerlet::InnerInteraction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			Vecd acceleration = base_particle_data_i.dvel_dt_others_;
 			StdVec<NeighboringParticle>  &neighors = (*current_inner_configuration_)[index_particle_i];
@@ -576,7 +577,7 @@ namespace SPH
 				NeighboringParticle &neighboring_particle = neighors[n];
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
-				WeaklyCompressibleFluidParticleData &fluid_data_j = particles_->fluid_data_[index_particle_j];
+				FluidParticleData &fluid_data_j = particles_->fluid_particle_data_[index_particle_j];
 
 				Real p_star = (fluid_data_i.p_*fluid_data_j.rho_n_ + fluid_data_j.p_*fluid_data_i.rho_n_)
 						/ (fluid_data_i.rho_n_ + fluid_data_j.rho_n_);
@@ -593,7 +594,7 @@ namespace SPH
 			::ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			Vecd acceleration(0);
 			StdVec<NeighboringParticle>  &neighors = (*current_interacting_configuration_[interacting_body_index])[index_particle_i];
@@ -603,7 +604,7 @@ namespace SPH
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j
 					= (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
-				SolidBodyParticleData &solid_data_j
+				SolidParticleData &solid_data_j
 					= (*interacting_particles_[interacting_body_index]).solid_body_data_[index_particle_j];
 
 				Real face_wall_external_acceleration 
@@ -624,12 +625,32 @@ namespace SPH
 			base_particle_data_i.dvel_dt_ += acceleration;
 		}
 		//===========================================================//
-		VerletOldroyd_B_Fluid::VerletOldroyd_B_Fluid(Oldroyd_B_FluidBody *body,
+		void Oldroyd_B_FluidInitialCondition::Update(size_t index_particle_i, Real dt)
+		{
+
+			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
+			ViscoelasticFluidParticleData &non_newtonian_fluid_data_i = particles_->viscoelastic_particle_data_[index_particle_i];
+
+			base_particle_data_i.vel_n_(0);
+			base_particle_data_i.dvel_dt_(0);
+
+			fluid_data_i.p_ = 0.0;
+			fluid_data_i.vel_trans_(0);
+			fluid_data_i.rho_0_
+				= material_->ReinitializeRho(fluid_data_i.p_);
+			fluid_data_i.rho_n_ = fluid_data_i.rho_0_;
+			fluid_data_i.mass_
+				= fluid_data_i.rho_0_*base_particle_data_i.Vol_;
+
+			non_newtonian_fluid_data_i.tau_(0);
+		}
+		//===========================================================//
+		VerletOldroyd_B_Fluid::VerletOldroyd_B_Fluid(FluidBody *body,
 			StdVec<SolidBody*> interacting_bodies, ExternalForce *external_force)
-			: ParticleDynamicsComplex2Levels<Oldroyd_B_FluidBody, Oldroyd_B_FluidParticles, SolidBody, SolidBodyParticles>(body, interacting_bodies),
+			:Oldroyd_B_FluidDynamicsComplex2Levels(body, interacting_bodies),
 			external_force_(external_force)
 		{
-			material_ = body->oldroyd_b_material_;
 			mu_ = material_->mu_;
 			mu_p_ = material_->mu_p_;
 			lambda_ = material_->lambda_;
@@ -641,8 +662,8 @@ namespace SPH
 		void VerletOldroyd_B_Fluid::Initialization(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
-			Oldroyd_B_FluidParticleData &non_newtonian_fluid_data_i = particles_->oldroyd_b_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
+			ViscoelasticFluidParticleData &non_newtonian_fluid_data_i = particles_->viscoelastic_particle_data_[index_particle_i];
 
 			fluid_data_i.rho_n_ += fluid_data_i.drho_dt_* dt * 0.5;
 			non_newtonian_fluid_data_i.tau_ += non_newtonian_fluid_data_i.dtau_dt_ * dt * 0.5;
@@ -654,8 +675,8 @@ namespace SPH
 		void VerletOldroyd_B_Fluid::InnerInteraction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
-			Oldroyd_B_FluidParticleData &non_newtonian_fluid_data_i = particles_->oldroyd_b_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
+			ViscoelasticFluidParticleData &non_newtonian_fluid_data_i = particles_->viscoelastic_particle_data_[index_particle_i];
 
 			Vecd acceleration = base_particle_data_i.dvel_dt_others_;
 			StdVec<NeighboringParticle>  &neighors = (*current_inner_configuration_)[index_particle_i];
@@ -664,8 +685,8 @@ namespace SPH
 				NeighboringParticle &neighboring_particle = neighors[n];
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
-				WeaklyCompressibleFluidParticleData &fluid_data_j = particles_->fluid_data_[index_particle_j];
-				Oldroyd_B_FluidParticleData &non_newtonian_fluid_data_j = particles_->oldroyd_b_data_[index_particle_j];
+				FluidParticleData &fluid_data_j = particles_->fluid_particle_data_[index_particle_j];
+				ViscoelasticFluidParticleData &non_newtonian_fluid_data_j = particles_->viscoelastic_particle_data_[index_particle_j];
 
 				//simple average for pressure
 				Real p_star = (fluid_data_i.p_*fluid_data_j.rho_n_ + fluid_data_j.p_*fluid_data_i.rho_n_)
@@ -684,8 +705,8 @@ namespace SPH
 			::ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
-			Oldroyd_B_FluidParticleData &non_newtonian_fluid_data_i = particles_->oldroyd_b_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
+			ViscoelasticFluidParticleData &non_newtonian_fluid_data_i = particles_->viscoelastic_particle_data_[index_particle_i];
 
 			Vecd acceleration(0);
 			StdVec<NeighboringParticle>  &neighors = (*current_interacting_configuration_[interacting_body_index])[index_particle_i];
@@ -695,7 +716,7 @@ namespace SPH
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j
 					= (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
-				SolidBodyParticleData &solid_data_j
+				SolidParticleData &solid_data_j
 					= (*interacting_particles_[interacting_body_index]).solid_body_data_[index_particle_j];
 
 				Real face_wall_external_acceleration
@@ -720,7 +741,7 @@ namespace SPH
 		void VerletOldroyd_B_Fluid::Intermediate(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
 			base_particle_data_i.vel_n_ += base_particle_data_i.dvel_dt_* dt;
 			base_particle_data_i.pos_n_ += base_particle_data_i.vel_n_ * dt * 0.5;
@@ -729,8 +750,8 @@ namespace SPH
 		void VerletOldroyd_B_Fluid::InnerInteraction2nd(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
-			Oldroyd_B_FluidParticleData &non_newtonian_fluid_data_i = particles_->oldroyd_b_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
+			ViscoelasticFluidParticleData &non_newtonian_fluid_data_i = particles_->viscoelastic_particle_data_[index_particle_i];
 
 			Real density_change_rate = 0.0;
 			Matd stress_rate(0);
@@ -741,7 +762,7 @@ namespace SPH
 				NeighboringParticle &neighboring_particle = neighors[n];
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
-				WeaklyCompressibleFluidParticleData &fluid_data_j = particles_->fluid_data_[index_particle_j];
+				FluidParticleData &fluid_data_j = particles_->fluid_particle_data_[index_particle_j];
 
 				//low dissipation Riemann problem
 				Real ul = dot(neighboring_particle.e_ij_, fluid_data_i.vel_trans_);
@@ -752,7 +773,7 @@ namespace SPH
 					*(u_star - ul)*neighboring_particle.dW_ij_;
 				//transport velocity
 				Matd velocity_gradient = SimTK::outer((fluid_data_i.vel_trans_ - fluid_data_j.vel_trans_),
-					neighboring_particle.str_gradW_ij_)*base_particle_data_j.Vol_;
+					neighboring_particle.gradW_ij_)*base_particle_data_j.Vol_;
 				stress_rate -= ~velocity_gradient*non_newtonian_fluid_data_i.tau_ 
 					+ non_newtonian_fluid_data_i.tau_*velocity_gradient + non_newtonian_fluid_data_i.tau_/lambda_
 					+ (~velocity_gradient + velocity_gradient)*mu_p_/lambda_;
@@ -765,8 +786,8 @@ namespace SPH
 			::ContactInteraction2nd(size_t index_particle_i, size_t interacting_body_index, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
-			Oldroyd_B_FluidParticleData &non_newtonian_fluid_data_i = particles_->oldroyd_b_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
+			ViscoelasticFluidParticleData &non_newtonian_fluid_data_i = particles_->viscoelastic_particle_data_[index_particle_i];
 
 			Real density_change_rate = 0.0;
 			Matd stress_rate(0);
@@ -778,14 +799,14 @@ namespace SPH
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j
 					= (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
-				SolidBodyParticleData &solid_data_j
+				SolidParticleData &solid_data_j
 					= (*interacting_particles_[interacting_body_index]).solid_body_data_[index_particle_j];
 
 				density_change_rate += 2.0*fluid_data_i.rho_n_
 					*dot(fluid_data_i.vel_trans_ - solid_data_j.vel_ave_, neighboring_particle.gradW_ij_)
 					*base_particle_data_j.Vol_;
 				Matd velocity_gradient = SimTK::outer((fluid_data_i.vel_trans_ - solid_data_j.vel_ave_),
-					neighboring_particle.str_gradW_ij_)*base_particle_data_j.Vol_*2.0;
+					neighboring_particle.gradW_ij_)*base_particle_data_j.Vol_*2.0;
 				stress_rate -= ~velocity_gradient*non_newtonian_fluid_data_i.tau_
 					+ non_newtonian_fluid_data_i.tau_*velocity_gradient + non_newtonian_fluid_data_i.tau_ / lambda_
 					+ (~velocity_gradient + velocity_gradient)*mu_p_ / lambda_;
@@ -797,8 +818,8 @@ namespace SPH
 		//===========================================================//
 		void VerletOldroyd_B_Fluid::Update(size_t index_particle_i, Real dt)
 		{
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
-			Oldroyd_B_FluidParticleData &non_newtonian_fluid_data_i = particles_->oldroyd_b_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
+			ViscoelasticFluidParticleData &non_newtonian_fluid_data_i = particles_->viscoelastic_particle_data_[index_particle_i];
 
 			fluid_data_i.rho_n_ += fluid_data_i.drho_dt_ * dt * 0.5;
 			non_newtonian_fluid_data_i.tau_ += non_newtonian_fluid_data_i.dtau_dt_ * dt * 0.5;

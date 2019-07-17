@@ -2,7 +2,7 @@
 * @file 	base_kernel.h
 * @brief 	This is the base classes of kernel functions.  Implementation will be
 *			implemented in derived classes. The kernal function define the relevance
-* 			between two neigghboring particles. basically, the further the two
+* 			between two neighboring particles. Basically, the further the two
 *			particles, the less relevance they have.     
 * @author	Luhui Han, Chi ZHang and Xiangyu Hu
 * @version	0.1
@@ -23,10 +23,10 @@ namespace SPH
 	 * @brief Abstract base class of a general SPH kernel function which
 	 * is a smoothed Dirac delta function,
 	 * a kernel function is radial symmetric, and has a scaling factor.
-	 * Based on difference data_type.h in 2d or 3d buildings
-	 * the kernel is defined for 2 and 3 dimensional cases
-	 * The kernel gives one at the origin.
-	 * The naming of kernel data and function follow the stand SPH literature.
+	 * Based on difference data type in 2d or 3d buildings,
+	 * the kernel is defined for 2 and 3 dimensions.
+	 * The kernel gives value one at the origin.
+	 * The naming of kernel function follows the stand SPH literature.
 	 * Currently, only constant smoothing length is applied.
 	 */
 	class Kernel
@@ -45,7 +45,7 @@ namespace SPH
 		Real factor_dW_1D_, factor_dW_2D_, factor_dW_3D_;
 
 		//---------------------------------------------------------------------
-		//for variable smoothing lenght
+		//for variable smoothing length
 		//using ratio to the reference smoothing length
 		//---------------------------------------------------------------------
 		virtual Real GetFactorW1D(Real rt_h) const { return factor_W_1D_ / rt_h; };
@@ -58,7 +58,7 @@ namespace SPH
 	public:
 		/** Constructor **/
 		Kernel(Real h, Real kernel_size, string kernel_name = "kernel");
-		/**Base classes with virtual member functions should have a virtual destructor **/
+		/** Base classes with virtual member functions should have a virtual destructor **/
 		virtual ~Kernel() {};
 
 		/** access esstential information of the kernel **/
@@ -84,9 +84,9 @@ namespace SPH
 		virtual Real dW(const Vec2d& r_ij) const = 0;
 		virtual Real dW(const Vec3d& r_ij) const = 0;
 
-		/** Calculates the kernel gradient pointing from r to origin
-		  * for the given distance of two particles
-		  * same form for 2D and 3D comuptation **/
+		/** Calculates the kernel gradient pointing from r_j to origin r_i
+		  * for the given distance of two particles. It is the
+		  * same form for 2D and 3D comuptations **/
 		Vecd GradW(const Vecd& r_ij) const {
 			return dW(r_ij) * normalize(r_ij);
 		};
@@ -111,8 +111,8 @@ namespace SPH
 		virtual Real dW(Real rt_h, const Vec2d& r_ij) const = 0;
 		virtual Real dW(Real rt_h, const Vec3d& r_ij) const = 0;
 
-		/** Calculates the kernel gradient pointing from r to origin
-		  * for the given distance of two particles
+		/** Calculates the kernel gradient pointing from r_j to origin r_i
+		  * for the given distance of two particles. It is the 
 		  * same form for 2D and 3D comuptation **/
 		Vecd GradW(Real rt_h, const Vecd& r_ij) const {
 			return dW(rt_h, r_ij) * normalize(r_ij);

@@ -19,7 +19,7 @@ using namespace SPH;
 Real DL = 11.0;                             /**< Channel length. */
 Real DH = 8.0;                              /**< Channel height. */
 
-Real particle_spacing_ref = 0.05;           /** Intial particle spacing. */
+Real particle_spacing_ref = 0.1;           /** Intial particle spacing. */
 Real DLsponge = particle_spacing_ref * 20.0; /**< Sponge region to impose inflow condition. */
 Real BW = particle_spacing_ref * 4.0;       /**< Extending width for BCs. */
 
@@ -122,14 +122,14 @@ std::vector<Point> CreatFishBlockingShape()
 /**
 * Water body defintion.
 */
-class WaterBlock : public WeaklyCompressibleFluidBody
+class WaterBlock : public FluidBody
 {
 public:
 	WaterBlock(SPHSystem &system, string body_name,
-		WeaklyCompressibleFluid* material,
-		WeaklyCompressibleFluidParticles &weakly_compressible_fluid_particles,
+		WeaklyCompressibleFluid &material,
+		FluidParticles &weakly_compressible_fluid_particles,
 		int refinement_level, ParticlesGeneratorOps op)
-		: WeaklyCompressibleFluidBody(system, body_name, material,
+		: FluidBody(system, body_name, material,
 			weakly_compressible_fluid_particles, refinement_level, op)
 	{
 		body_region_.add_geometry(new Geometry(CreatWaterBlockShape()), RegionBooleanOps::add);
@@ -137,11 +137,6 @@ public:
 		std::vector<Point> fish_shape = CreatFishShape(cx, cy, fish_length, particle_spacing_*0.5);
 		body_region_.add_geometry(new Geometry(fish_shape), RegionBooleanOps::sub);
 		body_region_.done_modeling();
-	}
-
-	void InitialCondition()
-	{
-		SetAllParticleAtRest();
 	}
 };
 /**
@@ -151,42 +146,30 @@ class WallBoundary : public SolidBody
 {
 public:
 	WallBoundary(SPHSystem &system, string body_name,
-		SolidBodyParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, solid_particles,
+		SolidParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), solid_particles,
 			refinement_level, op)
 	{
 		body_region_.add_geometry(new Geometry(CreatOuterWallShape()), RegionBooleanOps::add);
 		body_region_.add_geometry(new Geometry(CreatInnerWallShape()), RegionBooleanOps::sub);
 		body_region_.done_modeling();
-
-	}
-
-	void InitialCondition()
-	{
-		SetAllParticleAtRest();
 	}
 };
 /**
 * Fish body with tethering constraint.
 */
-class FishBody : public ElasticBody
+class FishBody : public SolidBody
 {
 
 public:
-	FishBody(SPHSystem &system, string body_name, ElasticSolid* material,
-		ElasticBodyParticles &elastic_particles, int refinement_level, ParticlesGeneratorOps op)
-		: ElasticBody(system, body_name, material, elastic_particles,
+	FishBody(SPHSystem &system, string body_name, ElasticSolid &material,
+		ElasticSolidParticles &elastic_particles, int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, material, elastic_particles,
 			refinement_level, op)
 	{
-
 		std::vector<Point> fish_shape = CreatFishShape(cx, cy, fish_length, particle_spacing_);
 		body_region_.add_geometry(new Geometry(fish_shape), RegionBooleanOps::add);
 		body_region_.done_modeling();
-	}
-
-	void InitialCondition()
-	{
-		SetAllParticleAtRest();
 	}
 };
 /**
@@ -217,7 +200,7 @@ public:
 class InflowBuffer : public FluidBodyPart
 {
 public:
-	InflowBuffer(WeaklyCompressibleFluidBody* fluid_body, string constrianed_region_name)
+	InflowBuffer(FluidBody* fluid_body, string constrianed_region_name)
 		: FluidBodyPart(fluid_body, constrianed_region_name)
 	{
 		/** Geomerty definition. */
@@ -253,7 +236,7 @@ class ParabolicInflow : public fluid_dynamics::InflowBoundaryCondition
 	Real u_ave_, u_ref_, t_ref;
 
 public:
-	ParabolicInflow(WeaklyCompressibleFluidBody* fluid_body,
+	ParabolicInflow(FluidBody* fluid_body,
 		FluidBodyPart *constrained_region)
 		: InflowBoundaryCondition(fluid_body, constrained_region)
 	{
@@ -293,13 +276,13 @@ int main()
 	* @brief   Particles and body creation for water.
 	*/
 	SymmetricTaitFluid                  fluid("Water", rho0_f, c_f, mu_f, k_f);
-	WeaklyCompressibleFluidParticles    fluid_particles("WaterBody");
+	FluidParticles    fluid_particles("WaterBody");
 	WaterBlock *water_block = new WaterBlock(system, "WaterBody",
-		&fluid, fluid_particles, 0, ParticlesGeneratorOps::lattice);
+		fluid, fluid_particles, 0, ParticlesGeneratorOps::lattice);
 	/**
 	* @brief   Particles and body creation for wall boundary.
 	*/
-	SolidBodyParticles                  solid_particles("Wall");
+	SolidParticles                  solid_particles("Wall");
 	WallBoundary *wall_boundary = new   WallBoundary(system, "Wall",
 		solid_particles, 0, ParticlesGeneratorOps::lattice);
 	/**
@@ -307,8 +290,8 @@ int main()
 	*/
 	NeoHookeanSolid             solid_material("NeoHookeanSolid",
 		rho0_s, Youngs_modulus, poisson, 0.0);
-	ElasticBodyParticles        fish_body_particles("FishBody");
-	FishBody *fish_body = new   FishBody(system, "FishBody", &solid_material,
+	ElasticSolidParticles        fish_body_particles("FishBody");
+	FishBody *fish_body = new   FishBody(system, "FishBody", solid_material,
 		fish_body_particles, 1, ParticlesGeneratorOps::lattice);
 	/**
 	* @brief   Particle and body creation of gate observer.
@@ -332,8 +315,13 @@ int main()
 	* This section define all numerical methods will be used in this case.
 	*/
 	/** Methods only used only once.*/
+	/** initial condition for fluid body */
+	fluid_dynamics::WeaklyCompressibleFluidInitialCondition set_all_fluid_particles_at_rest(water_block);
 	fluid_dynamics::InitialNumberDensity
 		fluid_initial_number_density(water_block, { wall_boundary, fish_body });
+	/** initial condition for the solid body */
+	solid_dynamics::SolidDynamicsInitialCondition set_all_wall_particles_at_rest(wall_boundary);
+	solid_dynamics::ElasticSolidDynamicsInitialCondition set_all_fish_body_particles_at_rest(fish_body);
 	/** Initialize normal direction of the wall boundary. */
 	solid_dynamics::NormalDirectionSummation get_wall_normal(wall_boundary, {});
 	/** Initialize normal direction of the inserted body. */
@@ -384,9 +372,9 @@ int main()
 	* Fluid structure interaction model.
 	*/
 	solid_dynamics::FluidPressureForceOnSolid
-		fluid_pressure_force_on_fish_body(fish_body, { water_block }, &fluid);
+		fluid_pressure_force_on_fish_body(fish_body, { water_block });
 	solid_dynamics::FluidViscousForceOnSolid
-		fluid_viscous_force_on_fish_body(fish_body, { water_block }, &fluid);
+		fluid_viscous_force_on_fish_body(fish_body, { water_block });
 	/**
 	* Solid dynmaics.
 	*/
@@ -478,14 +466,19 @@ int main()
 		fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
 
 	/** Output. */
-	Output output(system);
-	WriteBodyStatesToVtu        write_real_body_states(output, system.real_bodies_);
-	WriteTotalForceOnSolid      write_total_force_on_fish(output, fish_body);
-	WriteObservedElasticDisplacement write_fish_displacement(output, fish_observer, { fish_body });
+	In_Output in_output(system);
+	WriteBodyStatesToVtu        write_real_body_states(in_output, system.real_bodies_);
+	WriteTotalForceOnSolid      write_total_force_on_fish(in_output, fish_body);
+	WriteObservedElasticDisplacement write_fish_displacement(in_output, fish_observer, { fish_body });
+
 	/**
 	* Time steeping starts here.
 	*/
 	GlobalStaticVariables::physical_time_ = 0.0;
+	/** initial conditions*/
+	set_all_fluid_particles_at_rest.exec();
+	set_all_wall_particles_at_rest.exec();
+	set_all_fish_body_particles_at_rest.exec();
 	/**
 	* Initial periodic boundary condition which copies the particle identifies
 	* as extra cell linked list form periodic regions to the corresponding boundaries
@@ -514,8 +507,7 @@ int main()
 	Real dt = 0.0;      /**< Default accoustic time step sizes. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
-	/** Output global basic parameters. */
-	output.WriteCaseSetup(End_Time, D_Time, GlobalStaticVariables::physical_time_);
+
 	/**
 	* Main loop starts here.
 	*/

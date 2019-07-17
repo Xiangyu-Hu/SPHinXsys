@@ -1,6 +1,6 @@
 /**
- * @file 	array.h
- * @details An Array toolkit for array operator. 
+ * @file 	exception.h
+ * @details A toolkit for exception functionality. 
  * @author	Chi Zhang and Xiangyu Hu.
  * @version	0.1.
  */

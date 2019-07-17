@@ -3,7 +3,7 @@
  * @brief 	This is the class for bodies recording the state of the flow or solid
  * 			in given locations by observer particles at these locations. 
  *			This body has no inner configuration so that no
- * 			cell linked list is requires. However, it has contact configuration to
+ * 			cell linked list is required. However, it has contact configuration to
  * 			the body it is obeserving.
  * @author	Chi ZHang and Xiangyu Hu
  * @version	0.1
@@ -16,11 +16,9 @@ using namespace std;
 
 namespace SPH {
 	/**
-	 * @brief 	Friend Class. 
+	 * @brief preclaimed class. 
 	 */
 	class SPHSystem;
-	class ExternalForce;
-	class MeshCellLinkedList;
 	class ObserverParticles;
 	/**
 	 * @class ObserverBody
@@ -31,11 +29,10 @@ namespace SPH {
 	public:
 		ObserverBody(SPHSystem &system, string body_name,
 			ObserverParticles &observer_particles, int refinement_level, ParticlesGeneratorOps op);
-		/**
-		 * @brief Default destructor.
-		 */
 		virtual ~ObserverBody() {};
-		ObserverParticles &observer_particles_;	/**< particles in this body */
+		
+		/** particles in this body */
+		ObserverParticles &observer_particles_;	
 	};
 
 	class ObserverLagrangianBody : public ObserverBody
@@ -45,9 +42,7 @@ namespace SPH {
 			ObserverParticles &observer_particles, int refinement_level, ParticlesGeneratorOps op);
 		virtual ~ObserverLagrangianBody() {};
 
-		/**
-		 * @brief Build contact configuration.
-		 */
+		/** Build contact configuration. */
 		virtual void BuildContactConfiguration() override;
 	};
 
@@ -58,9 +53,7 @@ namespace SPH {
 			ObserverParticles &observer_particles, int refinement_level, ParticlesGeneratorOps op);
 		virtual ~ObserverEulerianBody() {};
 
-		/**
-		 * @brief Build contact configuration.
-		 */
+		/** Build contact configuration. */
 		virtual void BuildContactConfiguration() override;
 	};
 }

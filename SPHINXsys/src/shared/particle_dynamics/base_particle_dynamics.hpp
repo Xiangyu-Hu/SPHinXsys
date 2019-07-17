@@ -10,17 +10,20 @@
 
 namespace SPH {
 	//===============================================================//
-	template <class BodyType, class ParticlesType>
-	ParticleDynamicsWithInnerConfigurations<BodyType, ParticlesType>
-		::ParticleDynamicsWithInnerConfigurations(BodyType* body) : ParticleDynamics(body) {
+	template <class BodyType, class ParticlesType, class MaterialType>
+	ParticleDynamicsWithInnerConfigurations<BodyType, ParticlesType, MaterialType>
+		::ParticleDynamicsWithInnerConfigurations(BodyType* body) 
+		: ParticleDynamics<void, BodyType, ParticlesType, MaterialType>(body) {
 		current_inner_configuration_ = &body->current_inner_configuration_;
 		reference_inner_configuration_ = &body->reference_inner_configuration_;
 	}
 	//===============================================================//
-	template <class BodyType, class ParticlesType, class InteractingBodytype, class InteractingParticlesType>
-	ParticleDynamicsWithContactConfigurations<BodyType, ParticlesType, InteractingBodytype, InteractingParticlesType>
-		::ParticleDynamicsWithContactConfigurations(BodyType *body, StdVec<InteractingBodytype*> interacting_bodies)
-		: ParticleDynamicsWithInnerConfigurations(body), interacting_bodies_(interacting_bodies) {
+	template <class BodyType, class ParticlesType, class MaterialType,
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType>
+	ParticleDynamicsWithContactConfigurations<BodyType, ParticlesType, MaterialType,
+		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
+		::ParticleDynamicsWithContactConfigurations(BodyType *body, StdVec<InteractingBodyType*> interacting_bodies)
+		: ParticleDynamicsWithInnerConfigurations<BodyType, ParticlesType, MaterialType>(body), interacting_bodies_(interacting_bodies) {
 		/** contact configuration data from the body*/
 		SPHBodyVector contact_bodies = body->contact_map_.second;
 		ContactParticleList *indexes_contact_particles = &(body->indexes_contact_particles_);
@@ -31,6 +34,7 @@ namespace SPH {
 			for (size_t j = 0; j != contact_bodies.size(); ++j) {
 				if (static_cast<SPHBody*>(interacting_bodies_[i]) == contact_bodies[j]) {
 					interacting_particles_.push_back(dynamic_cast<InteractingParticlesType*>(contact_bodies[j]->base_particles_.PointToThisObject()));
+					interacting_material_.push_back(dynamic_cast<InteractingMaterialType*>(contact_bodies[j]->base_material_.PointToThisObject()));
 					indexes_interacting_particles_.push_back(&(*indexes_contact_particles)[j]);
 					current_interacting_configuration_.push_back(&(*current_contact_configuration)[j]);
 					reference_interacting_configuration_.push_back(&(*reference_contact_configuration)[j]);
@@ -38,9 +42,10 @@ namespace SPH {
 			}
 	}
 	//===============================================================//
-	template <class BodyType, class ParticlesType>
-	ParticleDynamicsByCells<BodyType, ParticlesType>
-		::ParticleDynamicsByCells(BodyType* body) : ParticleDynamics<void, BodyType, ParticlesType>(body),
+	template <class BodyType, class ParticlesType, class MaterialType>
+	ParticleDynamicsByCells<BodyType, ParticlesType, MaterialType>
+		::ParticleDynamicsByCells(BodyType* body) 
+		: ParticleDynamics<void, BodyType, ParticlesType, MaterialType>(body),
 		mesh_cell_linked_list_(*(body->mesh_cell_linked_list_))
 	{
 		cell_linked_lists_ = mesh_cell_linked_list_.cell_linked_lists_;
@@ -50,161 +55,122 @@ namespace SPH {
 		mesh_upper_bound_ = mesh_cell_linked_list_.GetUpperBound();
 	}
 	//===============================================================//
-	template <class BodyType, class ParticlesType>
-	void ParticleDynamicsSimple<BodyType, ParticlesType>::exec(Real dt)
+	template <class ReturnType, typename ReduceOperation>
+	ReturnType ReduceIterator(size_t number_of_particles, ReturnType temp, 
+		ReduceFunctor<ReturnType> &reduce_functor, ReduceOperation &ruduce_operation, Real dt)
 	{
-		SetupDynamics(dt);
-		for (size_t i = 0; i < number_of_particles_; ++i) ParticleUpdate(i, dt);
-	}
-	//===============================================================//
-	template <class BodyType, class ParticlesType>
-	void ParticleDynamicsSimple<BodyType, ParticlesType>::parallel_exec(Real dt)
-	{
-		SetupDynamics(dt);
-		parallel_for(blocked_range<size_t>(0, number_of_particles_),
-			[&](const blocked_range<size_t>& r) {
-			for (size_t i = r.begin(); i < r.end(); ++i) ParticleUpdate(i, dt);
-		}, ap);
-	}
-	//===============================================================//
-	template <class ReturnType, class BodyType, class ParticlesType>
-	ReturnType ParticleDynamicsReduce<ReturnType, BodyType, ParticlesType>::exec(Real dt) 
-	{
-		ReturnType temp = initial_reference_;
-		SetupReduce();
-		for (size_t i = 0; i < number_of_particles_; ++i)
+		for (size_t i = 0; i < number_of_particles; ++i)
 		{
-			temp = ReduceOperation(temp, ReduceFunction(i, dt));
+			temp = ruduce_operation(temp, reduce_functor(i, dt));
 		}
-		return OutputResult(temp);
-	}	
+		return temp;
+	}
 	//===============================================================//
-	template <class ReturnType, class BodyType, class ParticlesType>
-	ReturnType ParticleDynamicsReduce<ReturnType, BodyType, ParticlesType>::parallel_exec(Real dt) 
+	template <class ReturnType, typename ReduceOperation>
+	ReturnType ReduceIterator_parallel(size_t number_of_particles, ReturnType temp,
+		ReduceFunctor<ReturnType> &reduce_functor, ReduceOperation &ruduce_operation, Real dt)
 	{
-		ReturnType temp = initial_reference_;
-		SetupReduce();
-		temp = parallel_reduce(blocked_range<size_t>(0, number_of_particles_),
+		temp = parallel_reduce(blocked_range<size_t>(0, number_of_particles),
 			temp, [&](const blocked_range<size_t>& r, ReturnType temp0)->ReturnType {
 			for (size_t i = r.begin(); i != r.end(); ++i) {
-				temp0 = ReduceOperation(temp0, ReduceFunction(i, dt));
+				temp0 = ruduce_operation(temp0, reduce_functor(i, dt));
 			}
 			return temp0;
 		},
-			[this](ReturnType x, ReturnType y)->ReturnType {
-			return ReduceOperation(x, y);
+			[&](ReturnType x, ReturnType y)->ReturnType {
+			return ruduce_operation(x, y);
 		}
 		);
-		return OutputResult(temp);
+		return temp;
 	}
 	//===============================================================//
-	template <class BodyType, class ParticlesType>
-	void ParticleDynamicsInner<BodyType, ParticlesType>::exec(Real dt)
+	template <class BodyType, class ParticlesType, class MaterialType>
+	void ParticleDynamicsSimple<BodyType, ParticlesType, MaterialType>::exec(Real dt)
 	{
-		SetupDynamics(dt);
-		for (size_t i = 0; i < number_of_particles_; ++i) InnerInteraction(i, dt);
+		this->SetupDynamics(dt);
+		InnerIterator(number_of_particles_, functor_update_, dt);
 	}
 	//===============================================================//
-	template <class BodyType, class ParticlesType>
-	void ParticleDynamicsInner<BodyType, ParticlesType>::parallel_exec(Real dt)
+	template <class BodyType, class ParticlesType, class MaterialType>
+	void ParticleDynamicsSimple<BodyType, ParticlesType, MaterialType>
+		::parallel_exec(Real dt)
 	{
-		SetupDynamics(dt);
-		parallel_for(blocked_range<size_t>(0, number_of_particles_),
-			[&](const blocked_range<size_t>& r) {
-			for (size_t i = r.begin(); i < r.end(); ++i) InnerInteraction(i, dt);
-		}, ap);
+		this->SetupDynamics(dt);
+		InnerIterator_parallel(number_of_particles_, functor_update_, dt);
+	}
+	//===============================================================//
+	template <class ReturnType, class ReduceOperation, 
+		class BodyType, class ParticlesType, class MaterialType>
+		ReturnType ParticleDynamicsReduce<ReturnType, ReduceOperation, 
+		BodyType, ParticlesType, MaterialType>
+		::exec(Real dt)
+	{
+		ReturnType temp = initial_reference_;
+		this->SetupReduce();
+		temp = ReduceIterator(number_of_particles_, 
+			temp, functor_reduce_function_, reduce_operation_, dt);
+		return this->OutputResult(temp);
+	}	
+	//===============================================================//
+	template <class ReturnType, typename ReduceOperation,
+		class BodyType, class ParticlesType, class MaterialType>
+		ReturnType ParticleDynamicsReduce<ReturnType, ReduceOperation,
+		BodyType, ParticlesType, MaterialType>
+		::parallel_exec(Real dt)
+	{
+		ReturnType temp = initial_reference_;
+		this->SetupReduce();
+		temp = ReduceIterator_parallel(number_of_particles_, 
+			temp, functor_reduce_function_, reduce_operation_, dt);
+		return this->OutputResult(temp);
+	}
+	//===============================================================//
+	template <class BodyType, class ParticlesType, class MaterialType>
+	void ParticleDynamicsInner<BodyType, ParticlesType, MaterialType>::exec(Real dt)
+	{
+		this->SetupDynamics(dt);
+		InnerIterator(number_of_particles_, functor_inner_interaction_, dt);
+	}
+	//===============================================================//
+	template <class BodyType, class ParticlesType, class MaterialType>
+	void ParticleDynamicsInner<BodyType, ParticlesType, MaterialType>::parallel_exec(Real dt)
+	{
+		this->SetupDynamics(dt);
+		InnerIterator_parallel(number_of_particles_, functor_inner_interaction_, dt);
 	}
 	//===================================================================//
-	template <class BodyType, class ParticlesType>
-	void ParticleDynamicsInnerSplitting<BodyType, ParticlesType>::exec(Real dt)
+	template <class BodyType, class ParticlesType, class MaterialType>
+	void ParticleDynamicsInnerSplitting<BodyType, ParticlesType, MaterialType>::exec(Real dt)
 	{
-		SetupDynamics(dt);
-		//forward sweeping
-		for (size_t k = 0; k < numer_of_lists_; ++k) {
-			StdVec<IndexVector> &lists_particle_indexes_
-				= body_->by_cell_lists_particle_indexes_[k];
-			for (size_t l = 0; l < lists_particle_indexes_.size(); ++l)
-			{
-				for (size_t i = 0; i < lists_particle_indexes_[l].size(); ++i)
-				{
-					InnerInteraction(lists_particle_indexes_[l][i], dt);
-				}
-			}
-		}
-
-		//backward sweeping
-		for (size_t k = numer_of_lists_ - 1; k >= 0; --k) {
-			StdVec<IndexVector> &lists_particle_indexes_
-				= body_->by_cell_lists_particle_indexes_[k];
-			for (size_t l = lists_particle_indexes_.size() - 1; l >= 0; --l)
-			{
-				for (size_t i = lists_particle_indexes_[l].size() - 1; i >= 0; --i)
-				{
-					InnerInteraction(lists_particle_indexes_[l][i], dt);
-				}
-			}
-		}
+		this->SetupDynamics(dt);
+		InnerIteratorSplitting(by_cell_lists_particle_indexes_, functor_inner_interaction_, dt);
 	}
 	//===================================================================//
-	template <class BodyType, class ParticlesType>
-	void ParticleDynamicsInnerSplitting<BodyType, ParticlesType>::parallel_exec(Real dt)
+	template <class BodyType, class ParticlesType, class MaterialType>
+	void ParticleDynamicsInnerSplitting<BodyType, ParticlesType, MaterialType>::parallel_exec(Real dt)
 	{
-		SetupDynamics(dt);
-		//forward sweeping
-		for (size_t k = 0; k < numer_of_lists_; ++k) {
-			StdVec<IndexVector> &lists_particle_indexes_
-				= body_->by_cell_lists_particle_indexes_[k];
-			parallel_for(blocked_range<size_t>(0, lists_particle_indexes_.size()),
-				[&](const blocked_range<size_t>& r) {
-				for (size_t l = r.begin(); l < r.end(); ++l) {
-					for (size_t i = 0; i < lists_particle_indexes_[l].size(); ++i)
-					{
-						InnerInteraction(lists_particle_indexes_[l][i], dt);
-					}
-				}
-			}, ap);
-		}
-
-		//backward sweeping
-		for (size_t k = numer_of_lists_; k >= 1; --k) {
-			StdVec<IndexVector> &lists_particle_indexes_
-				= body_->by_cell_lists_particle_indexes_[k - 1];
-			parallel_for(blocked_range<size_t>(0, lists_particle_indexes_.size()),
-				[&](const blocked_range<size_t>& r) {
-				for (size_t l = r.end(); l >= r.begin() + 1; --l) {
-					IndexVector &particle_indexes = lists_particle_indexes_[l - 1];
-					for (size_t i = particle_indexes.size(); i >= 1; --i)
-					{
-						InnerInteraction(particle_indexes[i - 1], dt);
-					}
-				}
-			}, ap);
-		}
+		this->SetupDynamics(dt);
+		InnerIteratorSplitting_parallel(by_cell_lists_particle_indexes_, functor_inner_interaction_, dt);
 	}
 	//===============================================================//
-	template <class BodyType, class ParticlesType, class InteractingBodytype, class InteractingParticlesType>
-	void ParticleDynamicsContact<BodyType, ParticlesType, InteractingBodytype, InteractingParticlesType>::exec(Real dt)
+	template <class BodyType, class ParticlesType, class MaterialType, 
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType>
+	void ParticleDynamicsContact<BodyType, ParticlesType, MaterialType, 
+		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
+		::exec(Real dt)
 	{
-		SetupDynamics(dt);
-		for (size_t k = 0; k < interacting_bodies_.size(); ++k)
-			for (size_t l = 0; l < (*indexes_interacting_particles_[k]).size(); ++l) {
-				size_t particle_index_i = (*indexes_interacting_particles_[k])[l];
-				ContactInteraction(particle_index_i, k, dt);
-			}
+		this->SetupDynamics(dt);
+		ContactIterator(this->indexes_interacting_particles_, functor_contact_interaction_, dt);
 	}
 	//===============================================================//
-	template <class BodyType, class ParticlesType, class InteractingBodytype, class InteractingParticlesType>
-	void ParticleDynamicsContact<BodyType, ParticlesType, InteractingBodytype, InteractingParticlesType>::parallel_exec(Real dt)
+	template <class BodyType, class ParticlesType, class MaterialType,
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType>
+		void ParticleDynamicsContact<BodyType, ParticlesType, MaterialType,
+		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
+		::parallel_exec(Real dt)
 	{
-		SetupDynamics(dt);
-		for (size_t k = 0; k < interacting_bodies_.size(); ++k)
-			parallel_for(blocked_range<size_t>(0, (*indexes_interacting_particles_[k]).size()),
-				[&](const blocked_range<size_t>& r) {
-			for (size_t l = r.begin(); l < r.end(); ++l) {
-				size_t particle_index_i = (*indexes_interacting_particles_[k])[l];
-				ContactInteraction(particle_index_i, k, dt);
-			}
-		}, ap);
+		this->SetupDynamics(dt);
+		ContactIterator_parallel(this->indexes_interacting_particles_, functor_contact_interaction_, dt);
 	}
 	//===============================================================//
 }

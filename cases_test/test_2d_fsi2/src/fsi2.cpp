@@ -45,9 +45,6 @@ Real c_f = 10.0*U_f;	/**< Speed of sound. */
 Real Re = 100.0;		/**< Reynolds number. */
 Real mu_f = rho0_f * U_f * (2.0 * insert_circle_radius) / Re;	/**< Dynamics visocisty. */
 Real k_f = 0.0;			/**< kinetic smoothness. */
-
-Real initial_pressure = 0.0;		/**< Initial pressure of fluid. */
-Vec2d intial_velocity(0.0, 0.0);	/**< Initial velocity of fluid. */
 /**
  * @brief Material properties of the solid,
  */
@@ -56,7 +53,7 @@ Real poisson = 0.4; 		/**< Poisson ratio.*/
 Real Ae = 1.4e3; 			/**< Normalized Youngs Modulus. */
 Real Youngs_modulus = Ae * rho0_f * U_f * U_f;
 /**
-* @brief define geometry and initial conditions of SPH bodies
+* @brief define geometry of SPH bodies
 */
 /**
 * @brief create a water block shape
@@ -132,15 +129,13 @@ std::vector<Point> CreatInnerWallShape()
 /**
  * @brief Fluid body definition. 
  */
-class WaterBlock : public WeaklyCompressibleFluidBody
+class WaterBlock : public FluidBody
 {
 	public:
 		WaterBlock(SPHSystem &system, string body_name,
-			WeaklyCompressibleFluid* material, 
-			WeaklyCompressibleFluidParticles &weakly_compressible_fluid_particles, 
+			WeaklyCompressibleFluid &material, FluidParticles &fluid_particles, 
 			int refinement_level, ParticlesGeneratorOps op)
-			: WeaklyCompressibleFluidBody(system, body_name, material, 
-				weakly_compressible_fluid_particles, refinement_level, op)
+			: FluidBody(system, body_name, material, fluid_particles, refinement_level, op)
 		{
 			/** Geomerty definition. */
 			body_region_.add_geometry(new Geometry(CreatWaterBlockShape()), RegionBooleanOps::add);
@@ -150,13 +145,6 @@ class WaterBlock : public WeaklyCompressibleFluidBody
 			/** Finalize the geometry definition and correspoding opertation. */
 			body_region_.done_modeling();
 		}
-	/**
-	 * @brief Definiton of the initial condition for starting simulation. 
-	 */
-	void InitialCondition() 
-	{
-		SetAllParticleAtRest();
-	}
 };
 /**
  * @brief Definition of the solid body.
@@ -165,9 +153,9 @@ class WallBoundary : public SolidBody
 {
 public:
 	WallBoundary(SPHSystem &system, string body_name, 
-		SolidBodyParticles &solid_particles,
+		SolidParticles &solid_particles,
 		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, solid_particles, refinement_level, op)
+		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), solid_particles, refinement_level, op)
 	{	
 		/** Geomerty definition. */
 		body_region_.add_geometry(new Geometry(CreatOuterWallShape()), RegionBooleanOps::add);
@@ -177,27 +165,18 @@ public:
 		body_region_.done_modeling();
 
 	}
-	/**
-	 * @brief Definiton of the initial condition for starting simulation. 
-	 */
-	void InitialCondition() 
-	{
-		SetAllParticleAtRest();
-	}
 };
 
-//insert elastic body with constraint
 /**
  * @brief Definition of the inserted body as a elastic structure.
  */
-class InsertedBody : public ElasticBody
+class InsertedBody : public SolidBody
 {
 public:
-	InsertedBody(SPHSystem &system, string body_name, ElasticSolid* material,
-		ElasticBodyParticles &elastic_particles,
+	InsertedBody(SPHSystem &system, string body_name, ElasticSolid &material,
+		ElasticSolidParticles &elastic_particles,
 		int refinement_level, ParticlesGeneratorOps op)
-		: ElasticBody(system, body_name, 
-			material, elastic_particles, refinement_level, op)
+		: SolidBody(system, body_name, material, elastic_particles, refinement_level, op)
 	{
 		/** Geomerty definition. */
 		Geometry *circle_geometry = new Geometry(insert_circle_center, insert_circle_radius, 100);
@@ -206,13 +185,6 @@ public:
 		body_region_.add_geometry(beam_geometry, RegionBooleanOps::add);
 		/** Finalize the geometry definition and correspoding opertation. */
 		body_region_.done_modeling();
-	}
-	/**
-	 * @brief Definiton of the initial condition for starting simulation. 
-	 */
-	void InitialCondition()
-	{
-		SetAllParticleAtRest();
 	}
 };
 /**
@@ -242,7 +214,7 @@ public:
 class InflowBuffer : public FluidBodyPart
 {
 public:
-	InflowBuffer(WeaklyCompressibleFluidBody* fluid_body, string constrianed_region_name)
+	InflowBuffer(FluidBody* fluid_body, string constrianed_region_name)
 		: FluidBodyPart(fluid_body, constrianed_region_name)
 	{
 		/** Geomerty definition. */
@@ -255,21 +227,6 @@ public:
 	}
 };
 /**
- * @brief Definition of an observer body with one particle located at specific position.
- */
-class Observer : public ObserverLagrangianBody
-{
-public:
-	Observer(SPHSystem &system, string body_name,
-		ObserverParticles &observer_particles,
-		int refinement_level, ParticlesGeneratorOps op)
-		: ObserverLagrangianBody(system, body_name, observer_particles, refinement_level, op)
-	{
-		/** postion and volume. */
-		body_input_points_volumes_.push_back(make_pair(0.5 * (BRT + BRB), 0.0));
-	}
-};
-/**
  * @brief Inflow BCs.
  */
 class ParabolicInflow : public fluid_dynamics::InflowBoundaryCondition
@@ -277,7 +234,7 @@ class ParabolicInflow : public fluid_dynamics::InflowBoundaryCondition
 	Real u_ave_, u_ref_, t_ref;
 
 public:
-	ParabolicInflow(WeaklyCompressibleFluidBody* fluid_body, 
+	ParabolicInflow(FluidBody* fluid_body, 
 		FluidBodyPart *constrained_region)
 		: InflowBoundaryCondition(fluid_body, constrained_region)
 	{
@@ -302,6 +259,44 @@ public:
 	}
 };
 /**
+* @brief Definition of an observer body with one particle located at specific position
+* of the insert beam.
+*/
+class BeamObserver : public ObserverLagrangianBody
+{
+public:
+	BeamObserver(SPHSystem &system, string body_name,
+		ObserverParticles &observer_particles,
+		int refinement_level, ParticlesGeneratorOps op)
+		: ObserverLagrangianBody(system, body_name, observer_particles, refinement_level, op)
+	{
+		/** postion and volume. */
+		body_input_points_volumes_.push_back(make_pair(0.5 * (BRT + BRB), 0.0));
+	}
+};
+/**
+* @brief Definition of an observer body with several particles located
+* at the entrance of the flow channel.
+*/
+class FluidObserver : public ObserverEulerianBody
+{
+public:
+	FluidObserver(SPHSystem &system, string body_name,
+		ObserverParticles &observer_particles,
+		int refinement_level, ParticlesGeneratorOps op)
+		: ObserverEulerianBody(system, body_name, observer_particles, refinement_level, op)
+	{
+		/** A line of measuring points at the entrance of the channel. */
+		size_t number_observation_pionts = 21;
+		Real range_of_measure = DH - particle_spacing_ref * 4.0;
+		Real start_of_measure = particle_spacing_ref*2.0;
+		for (size_t i = 0; i < number_observation_pionts; ++i) {
+			Vec2d point_coordinate(0.0, range_of_measure*Real(i) / Real(number_observation_pionts - 1) + start_of_measure);
+			body_input_points_volumes_.push_back(make_pair(point_coordinate, 0.0));
+		}
+	}
+};
+/**
  * @brief 	Main program starts here.
  */
 int main()
@@ -311,59 +306,77 @@ int main()
 	 */
 	SPHSystem system(Vec2d(-DLsponge - BW, -BW), Vec2d(DL + BW, DH + BW), particle_spacing_ref);
 	/** Set the starting time. */
-	/**
-	 * @brief Note that in this case, BCs(inflow) is time dependent, please
-	 *			set physical_time_ properly when you using resart technique.
-	 */
 	GlobalStaticVariables::physical_time_ = 0.0;
+	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
+	/** Tag for reload initially repaxed particles. */
+	system.reload_particle_ = true;
+
 	/**
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
-	SymmetricTaitFluid 					fluid("Water", rho0_f, c_f, mu_f, k_f);
-	WeaklyCompressibleFluidParticles 	fluid_particles("WaterBody");
-	WaterBlock *water_block  = 			new WaterBlock(system, "WaterBody", &fluid, 
-											fluid_particles, 0, ParticlesGeneratorOps::lattice);
+	SymmetricTaitFluid 				fluid("Water", rho0_f, c_f, mu_f, k_f);
+	FluidParticles 					fluid_particles("WaterBody");
+	WaterBlock *water_block  =		new WaterBlock(system, "WaterBody", fluid, fluid_particles, 0, ParticlesGeneratorOps::lattice);
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
-	SolidBodyParticles 				solid_particles("Wall");
-	WallBoundary *wall_boundary = 	new WallBoundary(system, "Wall", solid_particles,	
-											0, ParticlesGeneratorOps::lattice);
+	SolidParticles 					solid_particles("Wall");
+	WallBoundary *wall_boundary = 	new WallBoundary(system, "Wall", solid_particles, 0, ParticlesGeneratorOps::lattice);
 	/**
 	 * @brief 	Material property, particle and body creation of elastic beam(inserted body).
 	 */
 	ElasticSolid 					solid_material("ElasticSolid", rho0_s, Youngs_modulus, poisson, 0.0);
-	ElasticBodyParticles 			inserted_body_particles("InsertedBody");
-	InsertedBody *inserted_body = 	new InsertedBody(system, "InsertedBody", &solid_material, 
-											inserted_body_particles, 1, ParticlesGeneratorOps::lattice);
+	ElasticSolidParticles 			inserted_body_particles("InsertedBody");
+	InsertedBody *inserted_body = 	new InsertedBody(system, "InsertedBody", solid_material, inserted_body_particles, 1, ParticlesGeneratorOps::lattice);
 	/**
 	 * @brief 	Particle and body creation of gate observer.
 	 */
-	ObserverParticles 			observer_particles("Observer");
-	Observer *beam_observer = 	new Observer(system, "Observer", 
-										observer_particles, 0, ParticlesGeneratorOps::direct);
+	ObserverParticles 				beam_observer_particles("BeamObserver");
+	BeamObserver *beam_observer =	new BeamObserver(system, "BeamObserver", beam_observer_particles, 0, ParticlesGeneratorOps::direct);
+	ObserverParticles				flow_observer_particles("FlowObserver");
+	FluidObserver *fluid_observer = new FluidObserver(system, "FluidObserver", flow_observer_particles, 0, ParticlesGeneratorOps::direct);
+	/**
+	 * @brief simple input and outputs.
+	 */
+	In_Output 							in_output(system);
+	WriteBodyStatesToVtu 				write_real_body_states_to_vtu(in_output, system.real_bodies_);
+	WriteBodyStatesToPlt 				write_real_body_states_to_plt(in_output, system.real_bodies_);
+	WriteRestart						write_restart_files(in_output, system.real_bodies_);
+	ReadRestart							read_restart_files(in_output, system.real_bodies_);
+	ReadReloadParticle					read_reload_particles(in_output, { inserted_body, water_block }, { "InsertBody", "WaterBody" });
 	/**
 	 * @brief 	Body contact map.
 	 * @details The contact map gives the data conntections between the bodies.
-	 * 			Basically the the rang of bidies to build neighbor particle lists.
+	 * 			Basically the the rangE of bodies to build neighbor particle lists.
 	 */
 	SPHBodyTopology body_topology = { { water_block, { wall_boundary, inserted_body } },
 									  { wall_boundary, { } }, { inserted_body, { water_block } }, 
-									  { beam_observer,{inserted_body} } };
+									  { beam_observer, {inserted_body} }, { fluid_observer, { water_block } } };
 	system.SetBodyTopology(&body_topology);
 	/**
-	 * @brief 	Simulation set up.
+	 * @brief 	Simulation data structure set up.
 	 */
-	system.SetupSPHSimulation();
+	system.CreateParticelsForAllBodies();
+	/** check whether reload particles. */
+	if (system.reload_particle_) read_reload_particles.ReadFromFile();
+	system.InitializeSystemCellLinkedLists();
+	system.InitializeSystemConfigurations();
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
 	/**
 	 * @brief 	Methods used only once.
 	 */
+	 /** initial condition for fluid body */
+	fluid_dynamics::WeaklyCompressibleFluidInitialCondition set_all_fluid_particles_at_rest(water_block);
 	/** Obtain the initial number density of fluid. */
 	fluid_dynamics::InitialNumberDensity 		fluid_initial_number_density(water_block, { wall_boundary, inserted_body });
+
+	/** initial condition for the solid body */
+	solid_dynamics::SolidDynamicsInitialCondition set_all_wall_particles_at_rest(wall_boundary);
+	/** initial condition for the elastic solid bodies */
+	solid_dynamics::ElasticSolidDynamicsInitialCondition set_all_insert_body_particles_at_rest(inserted_body);
 	/** Initialize normal direction of the wall boundary. */
 	solid_dynamics::NormalDirectionSummation 	get_wall_normal(wall_boundary, {});
 	/** Initialize normal direction of the inserted body. */
@@ -404,11 +417,11 @@ int main()
 	/** 
 	 * @brief Algorithms of FSI. 
 	 */
-	/** Compute the force exerted on elastic gate due to fluid pressure and visocisty. */
-	solid_dynamics::FluidPressureForceOnSolid 	fluid_pressure_force_on_insrted_body(inserted_body, { water_block }, &fluid);
-	solid_dynamics::FluidViscousForceOnSolid 	fluid_viscous_force_on_insrted_body(inserted_body, { water_block }, &fluid);
+	/** Compute the force exerted on solid body due to fluid pressure and visocisty. */
+	solid_dynamics::FluidPressureForceOnSolid 	fluid_pressure_force_on_insrted_body(inserted_body, { water_block });
+	solid_dynamics::FluidViscousForceOnSolid 	fluid_viscous_force_on_insrted_body(inserted_body, { water_block });
 	/** 
-	 * @brief Algorithms of Elastic dynamics. 
+	 * @brief Algorithms of solid dynamics. 
 	 */
 	/** Compute time step size of elastic solid. */
 	solid_dynamics::GetAcousticTimeStepSize 	inserted_body_computing_time_step_size(inserted_body);
@@ -418,7 +431,7 @@ int main()
 	/** Constrain region of the inserted body. */
 	solid_dynamics::ConstrainSolidBodyRegion
 		constrain_beam_base(inserted_body, new BeamBase(inserted_body, "BeamBase"));
-	/** Computing the verage velocity. */
+	/** Computing the average velocity. */
 	solid_dynamics::InitializeDisplacement 			inserted_body_initialize_displacement(inserted_body);
 	solid_dynamics::UpdateAverageVelocity 			inserted_body_average_velocity(inserted_body);
 	/** Update norm .*/
@@ -434,56 +447,56 @@ int main()
 	ParticleDynamicsCellLinkedList 			update_inserted_body_cell_linked_list(inserted_body);
 	/** Update the contact configuration for a given contact map. */
 	ParticleDynamicsContactConfiguration 	update_inserted_body_contact_configuration(inserted_body);
+	/** Update the contact configuration for the flow observer. */
+	ParticleDynamicsContactConfiguration 	update_fluid_observer_body_contact_configuration(fluid_observer);
+	
 	/**
-	 * @brief The time stepping starts here.
+	 * @brief oberservation outputs.
 	 */
-	/** Pre-simultion*/
+	WriteTotalViscousForceOnSolid 		write_total_viscous_force_on_inserted_body(in_output, inserted_body);
+	WriteObservedElasticDisplacement 	write_beam_tip_displacement(in_output, beam_observer, { inserted_body });
+	WriteObservedFluidVelocity 			write_fluid_velocity(in_output, fluid_observer, { water_block });
+
+	 /** Pre-simultion*/
+	set_all_fluid_particles_at_rest.exec();
+	set_all_wall_particles_at_rest.exec();
+	set_all_insert_body_particles_at_rest.exec();
 	periodic_condition.parallel_exec();
+	/** one need update configuration after peroidic condition. */
 	update_water_block_configuration.parallel_exec();
 	get_wall_normal.parallel_exec();
 	get_inserted_body_normal.parallel_exec();
 	fluid_initial_number_density.parallel_exec();
 	inserted_body_corrected_configuration_in_strong_form.parallel_exec();
-	/**
-	 * @brief Output.
-	 */
-	Output 								output(system);
-	WriteBodyStatesToVtu 				write_real_body_states_to_vtu(output, system.real_bodies_);
-	WriteBodyStatesToPlt 				write_real_body_states_to_plt(output, system.real_bodies_);
-	WriteTotalViscousForceOnSolid 		write_total_viscous_force_on_inserted_body(output, inserted_body);
-	WriteObservedElasticDisplacement 	write_beam_tip_displacement(output, beam_observer, { inserted_body });
-	WriteRestartFileToXml				write_restart_body_states(output, system.real_bodies_);
+
 	/**
 	 * @brief The time stepping starts here.
 	 */
-	/** If the starting time is not zero, please setup the restart time step ro read in restart states. */
 	if(system.restart_step_ != 0)
 	{
-		system.ResetSPHSimulationFromRestart();	
-
+		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
 		update_water_block_cell_linked_list.parallel_exec();
 		update_inserted_body_cell_linked_list.parallel_exec();
-
 		periodic_condition.parallel_exec();
+		/** one need update configuration after peroidic condition. */
 		update_water_block_configuration.parallel_exec();
 		update_inserted_body_contact_configuration.parallel_exec();
-
 		get_inserted_body_normal.parallel_exec();	
 	}
 	write_real_body_states_to_plt.WriteToFile(GlobalStaticVariables::physical_time_);
 	write_beam_tip_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
 
-	int ite = 0;
-	int rst_out = 5000;				/**< time step frquency for restart output. */
+	int number_of_iterations = system.restart_step_;
+	int screen_output_interval = 100;
+	int restart_output_interval = screen_output_interval * 10;
 	Real End_Time = 200.0;			/**< End time. */
 	Real D_Time = End_Time/200.0;	/**< time stamps for output. */
-	Real Dt = 0.0;					/**< Default advection time step sizes. */
-	Real dt = 0.0; 					/**< Default accoustic time step sizes. */
+	Real Dt = 0.0;					/**< Default advection time step sizes for fluid. */
+	Real dt = 0.0; 					/**< Default accoustic time step sizes for fluid. */
+	Real dt_s = 0.0;				/**< Default accoustic time step sizes for solid. */
 	/** Statistics for computing time. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
-	/** Output global basic parameters. */
-	output.WriteCaseSetup(GlobalStaticVariables::physical_time_, D_Time, End_Time);
 	/**
 	 * @brief Main loop starts here.
 	 */
@@ -492,7 +505,6 @@ int main()
 		Real integeral_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
 		while (integeral_time < D_Time) {
-
 			Dt = get_fluid_adevction_time_step_size.parallel_exec();
 			update_fluid_desnity.parallel_exec();
 			divergence_correction.parallel_exec();
@@ -506,14 +518,6 @@ int main()
 			inserted_body_update_normal.parallel_exec();
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt) {
-
-				if (ite % 100 == 0) {
-					cout << "N=" << ite << " Time: "
-						<< GlobalStaticVariables::physical_time_ << "	dt: "
-						<< dt << "\n";
-					if (ite % rst_out == 0)
-						write_restart_body_states.WriteToFile(Real(ite));
-				}
 				/** Fluid pressure relaxation. */
 				pressure_relaxation.parallel_exec(dt);
 				/** FSI for pressure force. */
@@ -523,14 +527,8 @@ int main()
 				inserted_body_initialize_displacement.parallel_exec();
 				while (dt_s_sum < dt) {
 
-					Real dt_s = inserted_body_computing_time_step_size.parallel_exec();
+					dt_s = inserted_body_computing_time_step_size.parallel_exec();
 					if (dt - dt_s_sum < dt_s) dt_s = dt - dt_s_sum;
-
-					if (ite % 100 == 0) {
-						cout << "N=" << ite << " Time: "
-							<< GlobalStaticVariables::physical_time_ << "	dt_s: "
-							<< dt_s << "\n";
-					}
 					inserted_body_stress_relaxation_first_step.parallel_exec(dt_s);
 					constrain_beam_base.parallel_exec();
 					inserted_body_stress_relaxation_second_step.parallel_exec(dt_s);
@@ -538,13 +536,24 @@ int main()
 				}
 				inserted_body_average_velocity.parallel_exec(dt);
 
-				ite++;
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integeral_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 				parabolic_inflow.parallel_exec();
 			}
+
+			if (number_of_iterations % screen_output_interval == 0)
+			{
+				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+					<< GlobalStaticVariables::physical_time_
+					<< "	Dt = " << Dt << "	dt = " << dt << "	dt_s = " << dt_s << "\n";
+
+				if (number_of_iterations % restart_output_interval == 0)
+					write_restart_files.WriteToFile(Real(number_of_iterations));
+			}
+			number_of_iterations++;
+
 			/** Water block confifuration and periodic constion. */
 			periodic_bounding.parallel_exec();
 			update_water_block_cell_linked_list.parallel_exec();
@@ -559,6 +568,8 @@ int main()
 		tick_count t2 = tick_count::now();
 		write_real_body_states_to_vtu.WriteToFile(GlobalStaticVariables::physical_time_);
 		write_total_viscous_force_on_inserted_body.WriteToFile(GlobalStaticVariables::physical_time_);
+		update_fluid_observer_body_contact_configuration.parallel_exec();
+		write_fluid_velocity.WriteToFile(GlobalStaticVariables::physical_time_);
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

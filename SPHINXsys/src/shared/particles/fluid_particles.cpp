@@ -4,12 +4,12 @@
  * @author	Xiangyu Hu and Chi Zhang
  * @version	0.1
  */
-#include "weakly_compressible_fluid_particles.h"
+#include "fluid_particles.h"
 
 namespace SPH
 {
 	//===============================================================//
-	WeaklyCompressibleFluidParticleData::WeaklyCompressibleFluidParticleData()
+	FluidParticleData::FluidParticleData()
 		: mass_(0.0), sigma_0_(0.0), rho_0_(1.0), rho_n_(1.0), p_(0.0), 
 		drho_dt_(0.0), div_correction_(1.0), vel_trans_(0),
 		dvel_dt_trans_(0), c_(1.0), vorticity_(0), vort_2d_(0.0)
@@ -17,43 +17,43 @@ namespace SPH
 
 	}
 	//===============================================================//
-	WeaklyCompressibleFluidParticles::WeaklyCompressibleFluidParticles(string body_name)
+	FluidParticles::FluidParticles(string body_name)
 		: Particles(body_name)
 	{
 
 	}
 	//===============================================================//
-	void WeaklyCompressibleFluidParticles::InitializeAParticle(Vecd pnt, Real particle_volume)
+	void FluidParticles::InitializeAParticle(Vecd pnt, Real particle_volume)
 	{
 		base_particle_data_.push_back(BaseParticleData(pnt, particle_volume));
-		fluid_data_.push_back(WeaklyCompressibleFluidParticleData());
+		fluid_particle_data_.push_back(FluidParticleData());
 	}
 	//===============================================================//
-	WeaklyCompressibleFluidParticles* WeaklyCompressibleFluidParticles::PointToThisObject() 
+	FluidParticles* FluidParticles::PointToThisObject() 
 	{
 		return this;
 	}
 	//===============================================================//
-	Oldroyd_B_FluidParticleData::Oldroyd_B_FluidParticleData()
+	ViscoelasticFluidParticleData::ViscoelasticFluidParticleData()
 		: tau_(0), dtau_dt_(0)
 	{
 
 	}
 	//===============================================================//
-	Oldroyd_B_FluidParticles::Oldroyd_B_FluidParticles(string body_name)
-		: WeaklyCompressibleFluidParticles(body_name)
+	ViscoelasticFluidParticles::ViscoelasticFluidParticles(string body_name)
+		: FluidParticles(body_name)
 	{
 
 	}
 	//===============================================================//
-	void Oldroyd_B_FluidParticles::InitializeAParticle(Vecd pnt, Real particle_volume)
+	void ViscoelasticFluidParticles::InitializeAParticle(Vecd pnt, Real particle_volume)
 	{
 		base_particle_data_.push_back(BaseParticleData(pnt, particle_volume));
-		fluid_data_.push_back(WeaklyCompressibleFluidParticleData());
-		oldroyd_b_data_.push_back(Oldroyd_B_FluidParticleData());
+		fluid_particle_data_.push_back(FluidParticleData());
+		viscoelastic_particle_data_.push_back(ViscoelasticFluidParticleData());
 	}
 	//===============================================================//
-	Oldroyd_B_FluidParticles* Oldroyd_B_FluidParticles::PointToThisObject()
+	ViscoelasticFluidParticles* ViscoelasticFluidParticles::PointToThisObject()
 	{
 		return this;
 	}

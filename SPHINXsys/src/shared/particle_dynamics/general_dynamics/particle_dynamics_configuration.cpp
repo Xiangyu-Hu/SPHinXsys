@@ -5,7 +5,7 @@
 namespace SPH {
 
 	ParticleDynamicsConfiguration::ParticleDynamicsConfiguration(SPHBody *body)
-		: ParticleDynamics<void, SPHBody, Particles>(body)
+		: ParticleDynamics<void, SPHBody>(body)
 	{
 
 	}
@@ -24,7 +24,7 @@ namespace SPH {
 	//===============================================================//
 	ParticleDynamicsContactConfiguration
 		::ParticleDynamicsContactConfiguration(SPHBody *body)
-		: ParticleDynamics<void, SPHBody, Particles>(body)
+		: ParticleDynamics<void, SPHBody>(body)
 	{
 
 	}
@@ -42,7 +42,7 @@ namespace SPH {
 	ParticleDynamicsInteractionConfiguration
 		::ParticleDynamicsInteractionConfiguration(SPHBody *body, 
 			SPHBodyVector interacting_bodies)
-		: ParticleDynamics<void, SPHBody, Particles>(body), interacting_bodies_(interacting_bodies)
+		: ParticleDynamics<void, SPHBody>(body), interacting_bodies_(interacting_bodies)
 	{
 		//building interacting topology
 		interacting_bodies_ = interacting_bodies;
@@ -60,7 +60,7 @@ namespace SPH {
 	//===============================================================//
 	ParticleDynamicsInnerConfiguration
 		::ParticleDynamicsInnerConfiguration(SPHBody *body)
-		: ParticleDynamics<void, SPHBody, Particles>(body)
+		: ParticleDynamics<void, SPHBody>(body)
 	{
 
 	}
@@ -77,7 +77,7 @@ namespace SPH {
 	//===============================================================//
 	ParticleDynamicsCellLinkedList
 		::ParticleDynamicsCellLinkedList(SPHBody *body)
-		: ParticleDynamics<void, SPHBody, Particles>(body)
+		: ParticleDynamics<void, SPHBody>(body)
 	{
 
 	}
@@ -94,7 +94,7 @@ namespace SPH {
 	//===============================================================//
 	ParticleDynamicsByCellParticleLists
 		::ParticleDynamicsByCellParticleLists(SPHSystem *system, SPHBody *body)
-		: ParticleDynamics<void, SPHBody, Particles>(body), system_(system)
+		: ParticleDynamics<void, SPHBody>(body), system_(system)
 	{
 
 	}

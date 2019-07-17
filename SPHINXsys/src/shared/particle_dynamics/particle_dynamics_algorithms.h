@@ -12,25 +12,25 @@
 #include "base_particle_dynamics.hpp"
 
 namespace SPH {
-
 	/**
 	* @class ParticleDynamicsInner1Level
 	* @brief This class includes an initialization, an inner interaction and an update steps
 	*/
-	template <class BodyType, class ParticlesType>
-	class ParticleDynamicsInner1Level : 
-		public ParticleDynamicsWithInnerConfigurations<BodyType, ParticlesType>
+	template <class BodyType, class ParticlesType, class MaterialType = Material>
+	class ParticleDynamicsInner1Level 
+		: public ParticleDynamicsWithInnerConfigurations<BodyType, ParticlesType, MaterialType>
 	{
+	protected:
 		size_t number_of_particles_;
-		virtual void SetupDynamics(Real dt = 0.0) {};
+
 		virtual void Initialization(size_t index_particle_i, Real dt = 0.0) = 0;
 		virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) = 0;
 		virtual void Update(size_t index_particle_i, Real dt = 0.0) = 0;
-
+		InnerFunctor functor_initialization_;
+		InnerFunctor functor_inner_interaction_;
+		InnerFunctor functor_update_;
 	public:
-		ParticleDynamicsInner1Level(BodyType* body) : ParticleDynamicsWithInnerConfigurations(body) {
-			number_of_particles_ = body->number_of_particles_;
-		};
+		ParticleDynamicsInner1Level(BodyType* body);
 		virtual ~ParticleDynamicsInner1Level() {};
 
 		virtual void exec(Real dt = 0.0);
@@ -41,26 +41,21 @@ namespace SPH {
 	* @class ParticleDynamicsComplex
 	* @brief compex operations involving both inner and contact particle dynamics
 	*/
-	template <class BodyType, class ParticlesType, class InteractingBodytype, class InteractingParticlesType>
+	template <class BodyType, class ParticlesType, class MaterialType,
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType = Material>
 	class ParticleDynamicsComplex 
-		: public ParticleDynamicsWithContactConfigurations<BodyType, ParticlesType, InteractingBodytype, InteractingParticlesType>
+		: public ParticleDynamicsWithContactConfigurations<BodyType, ParticlesType, MaterialType,
+		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
 	{
 	protected:
 		size_t number_of_particles_;
-		virtual void SetupDynamics(Real dt = 0.0) {};
+
 		virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) = 0;
 		virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) = 0;
-
-		virtual void LoopingInnerInteraction_exec(Real dt = 0.0);
-		virtual void LoopingContactInteraction_exec(Real dt = 0.0);
-
-		virtual void LoopingInnerInteraction_parallel_exec(Real dt = 0.0);
-		virtual void LoopingContactInteraction_parallel_exec(Real dt = 0.0);
+		InnerFunctor functor_inner_interaction_;
+		ContactFunctor functor_contact_interaction_;
 	public:
-		ParticleDynamicsComplex(BodyType *body, StdVec<InteractingBodytype*> interacting_bodies)
-			: ParticleDynamicsWithContactConfigurations(body, interacting_bodies) {
-			number_of_particles_ = body->number_of_particles_;
-		};
+		ParticleDynamicsComplex(BodyType *body, StdVec<InteractingBodyType*> interacting_bodies);
 		virtual ~ParticleDynamicsComplex() {};
 
 		virtual void exec(Real dt = 0.0) override;
@@ -71,18 +66,23 @@ namespace SPH {
 	* @class ParticleDynamicsComplexWithUpdate
 	* @brief an extra particle updating is inlcuded
 	*/
-	template <class BodyType, class ParticlesType, class InteractingBodytype, class InteractingParticlesType>
+	template <class BodyType, class ParticlesType, class MaterialType, 
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType = Material>
 	class ParticleDynamicsComplexWithUpdate 
-		: public ParticleDynamicsComplex<BodyType, ParticlesType, InteractingBodytype, InteractingParticlesType>
+		: public ParticleDynamicsWithContactConfigurations<BodyType, ParticlesType, MaterialType,
+		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
 	{
 	protected:
-		virtual void Update(size_t index_particle_i, Real dt = 0.0) = 0;
+		size_t number_of_particles_;
 
-		virtual void LoopingUpdate_exec(Real dt = 0.0);
-		virtual void LoopingUpdate_parallel_exec(Real dt = 0.0);	
+		virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) = 0;
+		virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) = 0;
+		virtual void Update(size_t index_particle_i, Real dt = 0.0) = 0;
+		InnerFunctor functor_inner_interaction_;
+		ContactFunctor functor_contact_interaction_;
+		InnerFunctor functor_update_;
 	public:
-		ParticleDynamicsComplexWithUpdate(BodyType *body, StdVec<InteractingBodytype*> interacting_bodies)
-			: ParticleDynamicsComplex(body, interacting_bodies) {};
+		ParticleDynamicsComplexWithUpdate(BodyType *body, StdVec<InteractingBodyType*> interacting_bodies);
 		virtual ~ParticleDynamicsComplexWithUpdate() {};
 
 		virtual void exec(Real dt = 0.0) override;
@@ -94,18 +94,26 @@ namespace SPH {
 	* @brief compex operations involving one level with both inner
 	* and contact particle dynamics, initilaize and update
 	*/
-	template <class BodyType, class ParticlesType, class InteractingBodytype, class InteractingParticlesType>
+	template <class BodyType, class ParticlesType, class MaterialType, 
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType = Material>
 	class ParticleDynamicsComplex1Level 
-		: public ParticleDynamicsComplexWithUpdate<BodyType, ParticlesType, InteractingBodytype, InteractingParticlesType>
+		: public ParticleDynamicsWithContactConfigurations<BodyType, ParticlesType, MaterialType,
+		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
 	{
 	protected:
-		virtual void Initialization(size_t index_particle_i, Real dt = 0.0) = 0;
+		size_t number_of_particles_;
 
-		virtual void LoopingInitialization_exec(Real dt = 0.0);
-		virtual void LoopingInitialization_parallel_exec(Real dt = 0.0);
+		virtual void Initialization(size_t index_particle_i, Real dt = 0.0) = 0;
+		virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) = 0;
+		virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) = 0;
+		virtual void Update(size_t index_particle_i, Real dt = 0.0) = 0;
+		InnerFunctor functor_initialization_;
+		InnerFunctor functor_inner_interaction_;
+		ContactFunctor functor_contact_interaction_;
+		InnerFunctor functor_update_;
+
 	public:
-		ParticleDynamicsComplex1Level(BodyType *body, StdVec<InteractingBodytype*> interacting_bodies)
-			: ParticleDynamicsComplexWithUpdate(body, interacting_bodies) {};
+		ParticleDynamicsComplex1Level(BodyType *body, StdVec<InteractingBodyType*> interacting_bodies);
 		virtual ~ParticleDynamicsComplex1Level() {};
 
 		virtual void exec(Real dt = 0.0) override;
@@ -117,26 +125,31 @@ namespace SPH {
 	* @brief compex operations involving 2 level with both inner
 	* and contact particle dynamics, initilaize and update
 	*/
-	template <class BodyType, class ParticlesType, class InteractingBodytype, class InteractingParticlesType>
-	class ParticleDynamicsComplex2Levels
-		: public ParticleDynamicsComplex1Level<BodyType, ParticlesType, InteractingBodytype, InteractingParticlesType>
+	template <class BodyType, class ParticlesType, class MaterialType, 
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType = Material>
+	class ParticleDynamicsComplex2Levels 
+		: public ParticleDynamicsWithContactConfigurations<BodyType, ParticlesType, MaterialType,
+		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
 	{
 	protected:
+		size_t number_of_particles_;
+
+		virtual void Initialization(size_t index_particle_i, Real dt = 0.0) = 0;
+		virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) = 0;
+		virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) = 0;
 		virtual void Intermediate(size_t index_particle_i, Real dt = 0.0) = 0;
 		virtual void InnerInteraction2nd(size_t index_particle_i, Real dt = 0.0) = 0;
 		virtual void ContactInteraction2nd(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) = 0;
-
-		virtual void LoopingIntermediate_exec(Real dt = 0.0);
-		virtual void LoopingIntermediate_parallel_exec(Real dt = 0.0);
-
-		virtual void LoopingInnerInteraction2nd_exec(Real dt = 0.0);
-		virtual void LoopingContactInteraction2nd_exec(Real dt = 0.0);
-
-		virtual void LoopingInnerInteraction2nd_parallel_exec(Real dt = 0.0);
-		virtual void LoopingContactInteraction2nd_parallel_exec(Real dt = 0.0);
+		virtual void Update(size_t index_particle_i, Real dt = 0.0) = 0;
+		InnerFunctor functor_initialization_;
+		InnerFunctor functor_inner_interaction_;
+		ContactFunctor functor_contact_interaction_;
+		InnerFunctor functor_intermediate_;
+		InnerFunctor functor_inner_interaction_2nd_;
+		ContactFunctor functor_contact_interaction_2nd_;
+		InnerFunctor functor_update_;
 	public:
-		ParticleDynamicsComplex2Levels(BodyType *body, StdVec<InteractingBodytype*> interacting_bodies)
-			: ParticleDynamicsComplex1Level(body, interacting_bodies) {};
+		ParticleDynamicsComplex2Levels(BodyType *body, StdVec<InteractingBodyType*> interacting_bodies);
 		virtual ~ParticleDynamicsComplex2Levels() {};
 
 		virtual void exec(Real dt = 0.0) override;
@@ -147,23 +160,26 @@ namespace SPH {
 	* @class ParticleDynamicsComplexSplitting
 	* @brief inner interaction use splitting scheme
 	*/
-	template <class BodyType, class ParticlesType, class InteractingBodytype, class InteractingParticlesType>
-	class ParticleDynamicsComplexSplitting : 
-		public ParticleDynamicsComplex<BodyType, ParticlesType, InteractingBodytype, InteractingParticlesType>
+	template <class BodyType, class ParticlesType, class MaterialType, 
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType = Material>
+	class ParticleDynamicsComplexSplitting 
+		: public ParticleDynamicsWithContactConfigurations<BodyType, ParticlesType, MaterialType,
+		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
 	{
 	protected:
-		int numer_of_lists_;
+		ByCellLists by_cell_lists_particle_indexes_;
 
-		virtual void LoopingInnerInteraction_exec(Real dt = 0.0) override;
-		virtual void LoopingInnerInteraction_parallel_exec(Real dt = 0.0) override;
+		virtual void SetupDynamics(Real dt = 0.0) {};
+		virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) = 0;
+		virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) = 0;
+		InnerFunctor functor_inner_interaction_;
+		ContactFunctor functor_contact_interaction_;
 	public:
-		explicit ParticleDynamicsComplexSplitting(BodyType *body, StdVec<InteractingBodytype*> interacting_bodies)
-			: ParticleDynamicsWithInnerConfigurations(body) {
-			numer_of_lists_ = powern(3, Vecd(0).size());
-		};
+		explicit ParticleDynamicsComplexSplitting(BodyType *body, StdVec<InteractingBodyType*> interacting_bodies);
 		virtual ~ParticleDynamicsComplexSplitting() {};
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
 	};
 }
+

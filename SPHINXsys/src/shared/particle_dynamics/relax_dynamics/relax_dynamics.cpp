@@ -14,8 +14,16 @@ namespace SPH
 	namespace relax_dynamics
 	{
 		//===========================================================//
-		GetTimeStepSize::GetTimeStepSize(RelaxBody* body)
-			: ParticleDynamicsMinimum<RelaxBody, RelaxBodyParticles>(body)
+		void RelaxDynamicsInitialCondition::Update(size_t index_particle_i, Real dt)
+		{
+			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
+
+			base_particle_data_i.vel_n_(0);
+			base_particle_data_i.dvel_dt_(0);
+		}
+		//===========================================================//
+		GetTimeStepSize::GetTimeStepSize(RelaxBody* body) 
+			: RelaxDynamicsMin(body)
 		{
 			smoothing_length_ = body->kernel_->GetSmoothingLength();
 			Real eta = 0.1 * 1.3 * body->particle_spacing_;
@@ -32,7 +40,7 @@ namespace SPH
 		}
 		//===========================================================//
 		PhysicsRelaxationInner::PhysicsRelaxationInner(RelaxBody *body)
-			: ParticleDynamicsInner1Level<RelaxBody, RelaxBodyParticles>(body)
+			: RelaxDynamicsInner1Level(body)
 		{
 			smoothing_length_ = body_->kernel_->GetSmoothingLength();
 			sound_speed_ = 1.0;
@@ -124,7 +132,7 @@ namespace SPH
 		}
 		//===========================================================//
 		PhysicsRelaxationComplex::PhysicsRelaxationComplex(RelaxBody *body, StdVec<RelaxBody*> interacting_bodies)
-			: ParticleDynamicsComplex1Level<RelaxBody, RelaxBodyParticles, RelaxBody, RelaxBodyParticles>(body, interacting_bodies)
+			: RelaxDynamicsComplex1Level(body, interacting_bodies)
 		{
 			Real smoothing_length_ = body_->kernel_->GetSmoothingLength();
 			eta_ = 0.25 * smoothing_length_;

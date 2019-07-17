@@ -77,12 +77,12 @@ std::vector<Point> CreatBeamShape()
 /**
 * @brief define the beam body
 */
-class Beam : public ElasticBody
+class Beam : public SolidBody
 {
 public:
-	Beam(SPHSystem &system, string body_name, ElasticSolid* material, ElasticBodyParticles 
+	Beam(SPHSystem &system, string body_name, ElasticSolid &material, ElasticSolidParticles 
 						&elastic_particles, int refinement_level, ParticlesGeneratorOps op)
-		: ElasticBody(system, body_name, material, elastic_particles, refinement_level, op)
+		: SolidBody(system, body_name, material, elastic_particles, refinement_level, op)
 	{
 		//geometry
 		Geometry * beam_base_gemetry = new Geometry(CreatBeamBaseShape());
@@ -94,25 +94,31 @@ public:
 		//finish the region modeling
 		body_region_.done_modeling();
 	}
+};
+/**
+ * application dependent initial condition 
+ */
+class BeamInitialCondition
+	: public solid_dynamics::ElasticSolidDynamicsInitialCondition
+{
+public:
+	BeamInitialCondition(SolidBody *beam)
+		: solid_dynamics::ElasticSolidDynamicsInitialCondition(beam) {};
+protected:
+	void Update(size_t index_particle_i, Real dt) override {
+		/** first set all particle at rest*/
+		solid_dynamics::ElasticSolidDynamicsInitialCondition::Update(index_particle_i, dt);
 
-	void InitialCondition() 
-	{
-		SetAllParticleAtRest();
-		//initial velocity
-		for (int i = 0; i < number_of_particles_; ++i) {
-			BaseParticleData &base_particle_data_i
-				= elastic_particles_.base_particle_data_[i];
-			SolidBodyParticleData &solid_particle_data_i
-				= elastic_particles_.solid_body_data_[i];
-			
-			Real x = solid_particle_data_i.pos_0_[0]/PL;
-			if (x > 0.0) {
-				base_particle_data_i.vel_n_[1]
-					= vf * material_->GetSoundSpeed(rho0_s, Youngs_modulus, poisson)
-					*(M*(cos(kl*x) - cosh(kl*x)) - N * (sin(kl*x) - sinh(kl*x))) / Q;
-			}
+		/** initial velocity profile */
+		BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
+		SolidParticleData &solid_body_data_i = particles_->solid_body_data_[index_particle_i];
+
+		Real x = solid_body_data_i.pos_0_[0] / PL;
+		if (x > 0.0) {
+			base_particle_data_i.vel_n_[1]
+				= vf * material_->c_0_*(M*(cos(kl*x) - cosh(kl*x)) - N * (sin(kl*x) - sinh(kl*x))) / Q;
 		}
-	}
+	};
 };
 /**
 * @brief define the beam base which will be constrained.
@@ -168,10 +174,10 @@ int main()
 	ElasticSolid solid_material("ElasticSolid", rho0_s, Youngs_modulus, poisson, 0.0);
 
 	//creat a particle cotainer the elastic body
-	ElasticBodyParticles beam_particles("BeamBody");
-	//the water block
+	ElasticSolidParticles beam_particles("BeamBody");
+	//the osillating beam
 	Beam *beam_body = 
-		new Beam(system, "BeamBody", &solid_material, beam_particles, 0, ParticlesGeneratorOps::lattice);
+		new Beam(system, "BeamBody", solid_material, beam_particles, 0, ParticlesGeneratorOps::lattice);
 
 	//create a observer particle container
 	ObserverParticles observer_particles("BeamObserver");
@@ -192,11 +198,11 @@ int main()
 	//-----------------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
 	//-----------------------------------------------------------------------------
-
+	/** initial condition */
+	BeamInitialCondition beam_initial_velocity(beam_body);
 	//corrected strong configuration	
 	solid_dynamics::CorrectConfiguration
 		beam_corrected_configuration_in_strong_form(beam_body, {});
-	beam_corrected_configuration_in_strong_form.parallel_exec();
 
 	//time step size caclutation
 	solid_dynamics::GetAcousticTimeStepSize computing_time_step_size(beam_body);
@@ -216,11 +222,17 @@ int main()
 	//-----------------------------------------------------------------------------
 	//outputs
 	//-----------------------------------------------------------------------------
-	Output output(system);
-	WriteBodyStatesToVtu write_beam_states(output, system.real_bodies_);
+	In_Output in_output(system);
+	WriteBodyStatesToVtu write_beam_states(in_output, system.real_bodies_);
 	WriteObservedElasticDisplacement
-		write_beam_tip_displacement(output, beam_observer, { beam_body });
+		write_beam_tip_displacement(in_output, beam_observer, { beam_body });
 
+
+	/**
+	 * @brief Setup goematrics and initial conditions
+	 */
+	beam_initial_velocity.exec();
+	beam_corrected_configuration_in_strong_form.parallel_exec();
 
 	//-----------------------------------------------------------------------------
 	//from here the time stepping begines
@@ -241,8 +253,7 @@ int main()
 	//statistics for computing time
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
-	//output global basic parameters
-	output.WriteCaseSetup(End_Time, D_Time, GlobalStaticVariables::physical_time_);
+
 	//computation loop starts 
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{

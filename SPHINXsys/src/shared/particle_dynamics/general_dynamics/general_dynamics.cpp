@@ -15,7 +15,7 @@ namespace SPH {
 		initial_value_ = external_force->InducedAcceleration();
 	}
 	//===================================================================//
-	void InitializeOtherAccelerations::ParticleUpdate(size_t index_particle_i, Real dt)
+	void InitializeOtherAccelerations::Update(size_t index_particle_i, Real dt)
 	{
 		BaseParticleData &base_particle_data_i
 			= particles_->base_particle_data_[index_particle_i];
@@ -28,7 +28,7 @@ namespace SPH {
 		particle_spacing_ = body->particle_spacing_;
 	}
 	//===================================================================//
-	void RandomizePartilePosition::ParticleUpdate(size_t index_particle_i, Real dt)
+	void RandomizePartilePosition::Update(size_t index_particle_i, Real dt)
 	{
 		BaseParticleData &base_particle_data_i
 			= particles_->base_particle_data_[index_particle_i];
@@ -41,7 +41,7 @@ namespace SPH {
 	//===================================================================//
 	BoundingBodyDomain
 		::BoundingBodyDomain(SPHBody* body)
-		: ParticleDynamicsByCells<SPHBody, Particles>(body)
+		: ParticleDynamicsByCells(body)
 	{
 		body_->BodyBounds(body_lower_bound_, body_upper_bound_);
 		SetCellBounds();
@@ -100,7 +100,7 @@ namespace SPH {
 	//===================================================================//
 	VelocityBoundCheck::
 		VelocityBoundCheck(SPHBody* body, Real velocity_bound)
-		: ParticleDynamicsOR<SPHBody, Particles>(body),
+		: ParticleDynamicsReduce<bool, ReduceOR, SPHBody, Particles>(body),
 		velocity_bound_(velocity_bound)
 	{
 		initial_reference_ = false;
@@ -112,6 +112,13 @@ namespace SPH {
 			= particles_->base_particle_data_[index_particle_i];
 
 		return base_particle_data_i.vel_n_.norm() > velocity_bound_;
+	}
+	//===================================================================//
+	Real UpperBoundInXDirection::ReduceFunction(size_t index_particle_i, Real dt)
+	{
+		BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
+
+		return base_particle_data_i.pos_n_[0];
 	}
 	//===================================================================//
 }

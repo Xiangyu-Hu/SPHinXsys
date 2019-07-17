@@ -12,10 +12,10 @@ namespace SPH
 {
 	//===============================================================//
 	SPHSystem::SPHSystem(Vecd lower_bound, Vecd upper_bound,
-		Real particle_spacing_ref, Real smoothinglength_ratio)
+		Real particle_spacing_ref, size_t number_of_threads)
 		: lower_bound_(lower_bound), upper_bound_(upper_bound),
-		particle_spacing_ref_(particle_spacing_ref),
-		smoothinglength_ratio_(smoothinglength_ratio)
+		particle_spacing_ref_(particle_spacing_ref), tbb_init_(number_of_threads),
+		restart_step_(0), reload_particle_(false)
 	{
 	}
 	//===============================================================//
@@ -24,10 +24,9 @@ namespace SPH
 
 	}
 	//===============================================================//
-	Kernel* SPHSystem::GenerateAKernel(Real particle_spacing)
+	Kernel* SPHSystem::GenerateAKernel(Real smoothing_lenght)
 	{	
-		return new KernelWendlandC2(particle_spacing*smoothinglength_ratio_);
-		//return new KernelHyperbolic(particle_spacing*smoothinglength_ratio_);
+		return new KernelWendlandC2(smoothing_lenght);
 	}
 	//===============================================================//
 	void SPHSystem::AddBody(SPHBody* body)
@@ -58,17 +57,6 @@ namespace SPH
 		}
 	}
 	//===============================================================//
-	void SPHSystem::InitializeAllRealBodies()
-	{
-		for (auto &body : real_bodies_)
-		{
-			dynamic_cast<RealBody*>
-				(body->PointToThisObject())->InitializeLocalMaterialProperties();
-			dynamic_cast<RealBody*>
-				(body->PointToThisObject())->InitialCondition();
-		}
-	}
-	//===============================================================//
 	void SPHSystem::InitializeSystemCellLinkedLists()
 	{
 		for (auto &body : bodies_)
@@ -95,21 +83,6 @@ namespace SPH
 		CreateParticelsForAllBodies();
 		InitializeSystemCellLinkedLists();
 		InitializeSystemConfigurations();
-		InitializeAllRealBodies();
-	}
-	//===============================================================//
-	void SPHSystem::ReInitializeAllRealBodiesFromRestart()
-	{
-		for (auto &body : real_bodies_)
-		{
-			dynamic_cast<RealBody*>
-				(body->PointToThisObject())->InitialConditionFromRestartFile();
-		}
-	}
-	//===============================================================//
-	void SPHSystem::ResetSPHSimulationFromRestart()
-	{
-		ReInitializeAllRealBodiesFromRestart();
 	}
 	//===============================================================//
 }

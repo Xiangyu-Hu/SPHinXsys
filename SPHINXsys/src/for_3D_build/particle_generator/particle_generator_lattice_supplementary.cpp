@@ -25,8 +25,7 @@ namespace SPH {
 				}
 			}
 
-		sph_body.base_particles_.number_of_particles_ = number_of_particles;
-		sph_body.number_of_particles_ = number_of_particles;
+		sph_body.number_of_real_particles_ = number_of_particles;
 	}
 	//===============================================================//
 }

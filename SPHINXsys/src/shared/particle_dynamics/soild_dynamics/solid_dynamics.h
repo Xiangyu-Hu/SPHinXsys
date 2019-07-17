@@ -8,6 +8,81 @@ namespace SPH
 {
 	namespace solid_dynamics
 	{
+		typedef ParticleDynamicsSimple<SolidBody, SolidParticles, Solid> SolidDynamicsSimple;
+
+		template <class ReturnType>
+		using SolidDynamicsSum = ParticleDynamicsReduce<ReturnType, ReduceSum<ReturnType>, SolidBody, SolidParticles>;
+
+		template <class ReturnType>
+		using SolidDynamicsConstraintForSimbodySum = LagrangianConstraintReduce<ReturnType,
+			ReduceSum<ReturnType>, SolidBody, SolidParticles, SolidBodyPartForSimbody>;
+
+		template <class ReturnType>
+		using ElasticSolidDynamicsConstraintForSimbodySum = LagrangianConstraintReduce<ReturnType,
+			ReduceSum<ReturnType>, SolidBody, ElasticSolidParticles, SolidBodyPartForSimbody>;
+
+		typedef ParticleDynamicsComplex<SolidBody, SolidParticles, Solid,
+			SolidBody, SolidParticles> SolidDynamicsComplex;
+
+		typedef ParticleDynamicsComplexWithUpdate<SolidBody, SolidParticles, Solid,
+			SolidBody, SolidParticles> SolidDynamicsComplexWithUpdate;
+
+		typedef ParticleDynamicsComplexWithUpdate<SolidBody, SolidParticles, Solid,
+			SolidBody, SolidParticles> SolidDynamicsComplexWithUpdate;
+		
+		typedef ParticleDynamicsComplex<SolidBody, SolidParticles, Solid, 
+			FluidBody, FluidParticles, WeaklyCompressibleFluid> FSIDynamicsComplex;
+
+		typedef ParticleDynamicsSimple<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDynamicsSimple;
+
+		typedef ParticleDynamicsReduce<Real, ReduceMin, SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDynamicsMinimum;
+
+		typedef ParticleDynamicsInner1Level<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDynamicsInner1Level;
+
+		typedef ParticleDynamicsInnerSplitting<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDynamicsInnerSplitting;
+
+		typedef ParticleDynamicsContact<SolidBody, ElasticSolidParticles, ElasticSolid, 
+			SolidBody, ElasticSolidParticles> ElasticSolidDynamicsContact;
+		
+		typedef ParticleDynamicsComplex<SolidBody, ElasticSolidParticles, ElasticSolid,
+			SolidBody, SolidParticles> ElasticSolidDynamicsComplex;
+
+		typedef ParticleDynamicsComplexWithUpdate<SolidBody, ElasticSolidParticles, ElasticSolid,
+			SolidBody, SolidParticles> ElasticSolidDynamicsComplexWithUpdate;
+
+		typedef ParticleDynamicsComplex2Levels<SolidBody, ElasticSolidParticles, ElasticSolid, 
+			SolidBody, ElasticSolidParticles> ElasticSolidDynamicsComplex2Levels;
+
+		/**
+		 * @class SolidDynamicsInitialCondition
+		 * @brief  set initial condition for a fluid body with weakly compressible fluid
+		*/
+		class OffsetInitialParticlePosition : public SolidDynamicsSimple
+		{
+			Vecd offset_;
+		protected:
+			//default for set all particle at rest
+			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
+		public:
+			OffsetInitialParticlePosition(SolidBody *body, Vecd offset)
+				: SolidDynamicsSimple(body), offset_(offset){};
+			virtual ~OffsetInitialParticlePosition() {};
+		};
+
+		/**
+		 * @class WeaklyCompressibleFluidInitialCondition
+		 * @brief  set initial condition for a fluid body with weakly compressible fluid
+		*/
+		class SolidDynamicsInitialCondition : public SolidDynamicsSimple
+		{
+		protected:
+			//default for set all particle at rest
+			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
+		public:
+			SolidDynamicsInitialCondition(SolidBody *body)
+				: SolidDynamicsSimple(body) {};
+			virtual ~SolidDynamicsInitialCondition() {};
+		};
 		/**
 		 * @class NormalDirectionSummation
 		 * @brief Computing surface normal direction of a body
@@ -15,8 +90,7 @@ namespace SPH
 		 * near the surface particle will used
 		 * note that the normal is normalized.
 		 */
-		class NormalDirectionSummation : 
-			public ParticleDynamicsComplex<SolidBody, SolidBodyParticles, SolidBody, SolidBodyParticles>
+		class NormalDirectionSummation : public SolidDynamicsComplex
 		{
 		protected:
 			virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) override;
@@ -24,7 +98,7 @@ namespace SPH
 
 		public:
 			NormalDirectionSummation(SolidBody *body, StdVec<SolidBody*> interacting_bodies)
-				: ParticleDynamicsComplex(body, interacting_bodies) {};
+				: SolidDynamicsComplex(body, interacting_bodies) {};
 			virtual ~NormalDirectionSummation() {};
 		};
 
@@ -33,30 +107,44 @@ namespace SPH
 		* @brief Computing surface normal direction of a body
 		 * using a second order algorithm
 		 */
-		class NormalDirectionReNormalization : 
-			public ParticleDynamicsComplexWithUpdate<ElasticBody, ElasticBodyParticles, SolidBody, SolidBodyParticles>
+		class NormalDirectionReNormalization : public SolidDynamicsComplexWithUpdate
 		{
 		protected:
 			virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) override;
 			virtual void ContactInteraction(size_t index_particle_i, size_t contact_body_index, Real dt = 0.0) override;
 			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			NormalDirectionReNormalization(ElasticBody *body, StdVec<SolidBody*> interacting_bodies)
-				: ParticleDynamicsComplexWithUpdate(body, interacting_bodies) {};
+			NormalDirectionReNormalization(SolidBody *body, StdVec<SolidBody*> interacting_bodies)
+				: SolidDynamicsComplexWithUpdate(body, interacting_bodies) {};
 			virtual ~NormalDirectionReNormalization() {};
+		};
+
+		/**
+		 * @class WeaklyCompressibleFluidInitialCondition
+		 * @brief  set initial condition for a fluid body with weakly compressible fluid
+		*/
+		class ElasticSolidDynamicsInitialCondition : public ElasticSolidDynamicsSimple
+		{
+		protected:
+			//default for set all particle at rest
+			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
+		public:
+			ElasticSolidDynamicsInitialCondition(SolidBody *body)
+				: ElasticSolidDynamicsSimple(body) {};
+			virtual ~ElasticSolidDynamicsInitialCondition() {};
 		};
 
 		/**
 		* @class UpdateElasticNormalDirection
 		* @brief update particle normal directions for elastic solid
 		*/
-		class UpdateElasticNormalDirection : public ParticleDynamicsSimple<ElasticBody, ElasticBodyParticles>
+		class UpdateElasticNormalDirection : public ElasticSolidDynamicsSimple
 		{
 		protected:
-			virtual void ParticleUpdate(size_t index_particle_i, Real dt = 0.0) override;
+			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			explicit UpdateElasticNormalDirection(ElasticBody *elastic_body)
-				: ParticleDynamicsSimple<ElasticBody, ElasticBodyParticles>(elastic_body) {};
+			explicit UpdateElasticNormalDirection(SolidBody *elastic_body)
+				: ElasticSolidDynamicsSimple(elastic_body) {};
 			virtual ~UpdateElasticNormalDirection() {};
 		};
 
@@ -66,12 +154,12 @@ namespace SPH
 		* This class is for FSI applications to achieve smaller solid dynamics
 		* time step size compared to the fluid dynamics
 		*/
-		class InitializeDisplacement : public ParticleDynamicsSimple<ElasticBody, ElasticBodyParticles>
+		class InitializeDisplacement : public ElasticSolidDynamicsSimple
 		{
 		protected:
-			virtual void ParticleUpdate(size_t index_particle_i, Real dt = 0.0) override;
+			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			explicit InitializeDisplacement(ElasticBody *body) : ParticleDynamicsSimple(body) {};
+			explicit InitializeDisplacement(SolidBody *body) : ElasticSolidDynamicsSimple(body) {};
 			virtual ~InitializeDisplacement() {};
 		};
 
@@ -81,12 +169,12 @@ namespace SPH
 		* This class is for FSI applications to achieve smaller solid dynamics
 		* time step size compared to the fluid dynamics
 		*/
-		class UpdateAverageVelocity : public ParticleDynamicsSimple<ElasticBody, ElasticBodyParticles>
+		class UpdateAverageVelocity : public ElasticSolidDynamicsSimple
 		{
 		protected:
-			virtual void ParticleUpdate(size_t index_particle_i, Real dt = 0.0) override;
+			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			explicit UpdateAverageVelocity(ElasticBody *body) : ParticleDynamicsSimple(body) {};
+			explicit UpdateAverageVelocity(SolidBody *body) : ElasticSolidDynamicsSimple(body) {};
 			virtual ~UpdateAverageVelocity() {};
 		};
 
@@ -96,23 +184,19 @@ namespace SPH
 		* This class is for FSI applications to achieve smaller solid dynamics
 		* time step size compared to the fluid dynamics
 		*/
-		class FluidPressureForceOnSolid 
-			: public ParticleDynamicsComplex<SolidBody, SolidBodyParticles, WeaklyCompressibleFluidBody, WeaklyCompressibleFluidParticles>
+		class FluidPressureForceOnSolid : public FSIDynamicsComplex
 		{
 		protected:
 			ExternalForce *external_force_;
-			WeaklyCompressibleFluid* material_;
 
 			virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) override;
 			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) override;
 
 		public:
-			FluidPressureForceOnSolid(SolidBody *body, StdVec<WeaklyCompressibleFluidBody*> interacting_bodies,
-				WeaklyCompressibleFluid* material, ExternalForce *external_force)
-				: ParticleDynamicsComplex(body, interacting_bodies), material_(material), external_force_(external_force) {};
-			FluidPressureForceOnSolid(SolidBody *body, StdVec<WeaklyCompressibleFluidBody*> interacting_bodies,
-				WeaklyCompressibleFluid* material) : ParticleDynamicsComplex(body, interacting_bodies), 
-				material_(material), external_force_(new ExternalForce) {};
+			FluidPressureForceOnSolid(SolidBody *body, StdVec<FluidBody*> interacting_bodies, ExternalForce *external_force)
+				: ParticleDynamicsComplex(body, interacting_bodies), external_force_(external_force) {};
+			FluidPressureForceOnSolid(SolidBody *body, StdVec<FluidBody*> interacting_bodies) 
+				: ParticleDynamicsComplex(body, interacting_bodies), external_force_(new ExternalForce) {};
 			virtual ~FluidPressureForceOnSolid() {};
 		};
 
@@ -128,12 +212,10 @@ namespace SPH
 			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) override;
 
 		public:
-			FluidPressureForceOnSolidFreeSurface(SolidBody *body, StdVec<WeaklyCompressibleFluidBody*> interacting_bodies,
-				WeaklyCompressibleFluid* material, ExternalForce *external_force)
-				: FluidPressureForceOnSolid(body, interacting_bodies, material, external_force) {};
-			FluidPressureForceOnSolidFreeSurface(SolidBody *body, StdVec<WeaklyCompressibleFluidBody*> interacting_bodies,
-				WeaklyCompressibleFluid* material)
-				: FluidPressureForceOnSolid(body, interacting_bodies, material) {};
+			FluidPressureForceOnSolidFreeSurface(SolidBody *body, StdVec<FluidBody*> interacting_bodies, ExternalForce *external_force)
+				: FluidPressureForceOnSolid(body, interacting_bodies, external_force) {};
+			FluidPressureForceOnSolidFreeSurface(SolidBody *body, StdVec<FluidBody*> interacting_bodies)
+				: FluidPressureForceOnSolid(body, interacting_bodies) {};
 			virtual ~FluidPressureForceOnSolidFreeSurface() {};
 		};
 
@@ -141,8 +223,7 @@ namespace SPH
 		* @class TotalViscousForceOnSolid
 		* @brief Computing the total viscous force from fluid
 		*/
-		class TotalViscousForceOnSolid : 
-			public ParticleDynamicsSum<Vecd, SolidBody, SolidBodyParticles>
+		class TotalViscousForceOnSolid : public SolidDynamicsSum<Vecd>
 		{
 		protected:
 			Vecd ReduceFunction(size_t index_particle_i, Real dt = 0.0) override;
@@ -168,8 +249,7 @@ namespace SPH
 		* @class FluidViscousForceOnSolid
 		* @brief Computing the viscous force from the fluid
 		*/
-		class FluidViscousForceOnSolid : 
-			public ParticleDynamicsComplex<SolidBody, SolidBodyParticles, WeaklyCompressibleFluidBody, WeaklyCompressibleFluidParticles>
+		class FluidViscousForceOnSolid : public FSIDynamicsComplex
 		{
 		protected:
 			Real mu_;
@@ -181,12 +261,13 @@ namespace SPH
 			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) override;
 
 		public:
-			FluidViscousForceOnSolid(SolidBody *body, StdVec<WeaklyCompressibleFluidBody*> interacting_bodies,
-				WeaklyCompressibleFluid* fluid_material)
-				: ParticleDynamicsComplex(body, interacting_bodies) {
-				mu_ = fluid_material->mu_;
+			FluidViscousForceOnSolid(SolidBody *body, StdVec<FluidBody*> interacting_bodies)
+				: FSIDynamicsComplex(body, interacting_bodies) {
+				//more work should be done for more general cases with multiple resolutions
+				//and for fluids with different viscosities
+				mu_ = interacting_material_[0]->mu_;
 				/** the smmothing lenght should be discuss more. */
-				smoothing_length_ = powern(2.0, body->refinement_level_)*body->kernel_->GetSmoothingLength();
+				smoothing_length_ = powern(2.0, body_->refinement_level_)*body->kernel_->GetSmoothingLength();
 			};
 			virtual ~FluidViscousForceOnSolid() {};
 		};
@@ -196,13 +277,13 @@ namespace SPH
 		* @brief Computing the acoustic time step size
 		* computing time step size
 		*/
-		class GetAcousticTimeStepSize : public ParticleDynamicsMinimum<ElasticBody, ElasticBodyParticles>
+		class GetAcousticTimeStepSize : public ElasticSolidDynamicsMinimum
 		{
 		protected:
 			Real smoothing_length_;
 			Real ReduceFunction(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			explicit GetAcousticTimeStepSize(ElasticBody* body);
+			explicit GetAcousticTimeStepSize(SolidBody* body);
 			virtual ~GetAcousticTimeStepSize() {};
 		};
 
@@ -210,16 +291,15 @@ namespace SPH
 		* @class CorrectConfiguration
 		* @brief obtain the corrected initial configuration in strong form
 		*/
-		class CorrectConfiguration 
-			: public ParticleDynamicsComplexWithUpdate<ElasticBody, ElasticBodyParticles, SolidBody, SolidBodyParticles>
+		class CorrectConfiguration : public SolidDynamicsComplexWithUpdate
 		{
 		protected:
 			virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) override;
 			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) override;
 			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			CorrectConfiguration(ElasticBody *body, StdVec<SolidBody*> interacting_bodies)
-				: ParticleDynamicsComplexWithUpdate(body, interacting_bodies) {};
+			CorrectConfiguration(SolidBody *body, StdVec<SolidBody*> interacting_bodies)
+				: SolidDynamicsComplexWithUpdate(body, interacting_bodies) {};
 			virtual ~CorrectConfiguration() {};
 		};
 
@@ -227,16 +307,15 @@ namespace SPH
 		* @class DeformationGradientTensorBySummation
 		* @brief computing deformation gradient tensor by summation
 		*/
-		class DeformationGradientTensorBySummation 
-			: public ParticleDynamicsComplex<ElasticBody, ElasticBodyParticles, SolidBody, SolidBodyParticles>
+		class DeformationGradientTensorBySummation : public ElasticSolidDynamicsComplex
 		{
 		protected:
 			virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) override;
 			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) override;
 
 		public:
-			DeformationGradientTensorBySummation(ElasticBody *body, StdVec<SolidBody*> interacting_bodies)
-				: ParticleDynamicsComplex(body, interacting_bodies) {};
+			DeformationGradientTensorBySummation(SolidBody *body, StdVec<SolidBody*> interacting_bodies)
+				: ElasticSolidDynamicsComplex(body, interacting_bodies) {};
 			virtual ~DeformationGradientTensorBySummation() {};
 		};
 
@@ -244,12 +323,11 @@ namespace SPH
 		* @class StressRelaxation
 		* @brief computing stress relaxation process by verlet time stepping
 		*/
-		class StressRelaxation 
-			: public ParticleDynamicsComplex2Levels<ElasticBody, ElasticBodyParticles, ElasticBody, ElasticBodyParticles>
+		class StressRelaxation : public ElasticSolidDynamicsComplex2Levels
 		{
 		protected:
 			Real smoothing_length_;
-			ElasticSolid *material_;
+			Real numerical_viscosity_;
 
 			virtual void Initialization(size_t index_particle_i, Real dt = 0.0) override;
 			virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) override;
@@ -259,10 +337,10 @@ namespace SPH
 			virtual void ContactInteraction2nd(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) override;
 			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			StressRelaxation(ElasticBody *body, StdVec<ElasticBody*> interacting_bodies)
-				: ParticleDynamicsComplex2Levels(body, interacting_bodies) {
-				material_ = body->material_;
+			StressRelaxation(SolidBody *body, StdVec<SolidBody*> interacting_bodies)
+				: ElasticSolidDynamicsComplex2Levels(body, interacting_bodies) {
 				smoothing_length_ = body->kernel_->GetSmoothingLength();
+				numerical_viscosity_ = 0.5*material_->rho_0_*material_->c_0_*body_->kernel_->GetSmoothingLength();
 			};
 			virtual ~StressRelaxation() {};
 		};
@@ -272,18 +350,18 @@ namespace SPH
 		* @brief computing stress relaxation process by verlet time stepping
 		* This is the first step
 		*/
-		class StressRelaxationFirstStep : public ParticleDynamicsInner1Level<ElasticBody, ElasticBodyParticles>
+		class StressRelaxationFirstStep 
+			: public ParticleDynamicsInner1Level<SolidBody, ElasticSolidParticles, ElasticSolid>
 		{
 		protected:
-			ElasticSolid *material_;
+			Real numerical_viscosity_;
 
 			virtual void Initialization(size_t index_particle_i, Real dt = 0.0) override;
 			virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			StressRelaxationFirstStep(ElasticBody *body) : ParticleDynamicsInner1Level(body) {
-				material_ = body->material_;
-			};
+			StressRelaxationFirstStep(SolidBody *body) : ParticleDynamicsInner1Level(body) {
+				numerical_viscosity_ = 0.5*material_->rho_0_*material_->c_0_*body_->kernel_->GetSmoothingLength(); };
 			virtual ~StressRelaxationFirstStep() {};
 		};
 
@@ -292,14 +370,14 @@ namespace SPH
 		* @brief computing stress relaxation process by verlet time stepping
 		* This is the second step
 		*/
-		class StressRelaxationSecondStep : public ParticleDynamicsInner1Level<ElasticBody, ElasticBodyParticles>
+		class StressRelaxationSecondStep : public ElasticSolidDynamicsInner1Level
 		{
 		protected:
 			virtual void Initialization(size_t index_particle_i, Real dt = 0.0) override;
 			virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			StressRelaxationSecondStep(ElasticBody *body) : ParticleDynamicsInner1Level(body) {};
+			StressRelaxationSecondStep(SolidBody *body) : ElasticSolidDynamicsInner1Level(body) {};
 			virtual ~StressRelaxationSecondStep() {};
 		};
 
@@ -308,16 +386,16 @@ namespace SPH
 		* @brief computing stress within constrined elastic body
 		* This is the first half step
 		*/
-		class StressInConstrinedElasticBodyFirstHalf 
-			: public ParticleDynamicsSimple<ElasticBody, ElasticBodyParticles>
+		class StressInConstrinedElasticBodyFirstHalf : public  ElasticSolidDynamicsSimple
 		{
 		protected:
-			ElasticSolid *material_;
-			virtual void ParticleUpdate(size_t index_particle_i, Real dt = 0.0) override;
+			Real numerical_viscosity_;
+			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 
 		public:
-			StressInConstrinedElasticBodyFirstHalf(ElasticBody *body)
-				: ParticleDynamicsSimple(body) { material_ = body->material_; };
+			StressInConstrinedElasticBodyFirstHalf(SolidBody *body)
+				: ElasticSolidDynamicsSimple(body) { 
+				numerical_viscosity_ = 0.5*material_->rho_0_*material_->c_0_*body_->kernel_->GetSmoothingLength(); };
 			virtual ~StressInConstrinedElasticBodyFirstHalf() {};
 		};
 
@@ -327,15 +405,13 @@ namespace SPH
 		* This is the second half step
 		*/
 		//computing stress within constrined elastic body
-		class StressInConstrinedElasticBodySecondHalf 
-			: public ParticleDynamicsContact<ElasticBody, ElasticBodyParticles, ElasticBody, ElasticBodyParticles>
+		class StressInConstrinedElasticBodySecondHalf : public ElasticSolidDynamicsContact
 		{
 		protected:
-			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) override;
-
+				virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) override;
 		public:
-			StressInConstrinedElasticBodySecondHalf(ElasticBody *body, StdVec<ElasticBody*> interacting_bodies)
-				: ParticleDynamicsContact(body, interacting_bodies) {};
+			StressInConstrinedElasticBodySecondHalf(SolidBody *body, StdVec<SolidBody*> interacting_bodies)
+				: ElasticSolidDynamicsContact(body, interacting_bodies) {};
 			virtual ~StressInConstrinedElasticBodySecondHalf() {};
 		};
 
@@ -344,7 +420,7 @@ namespace SPH
 		 * Note the average values for FSI are prescirbed also.
 		 */
 		class ConstrainSolidBodyRegion 
-			: public LagrangianConstraint<SolidBody, SolidBodyParticles, SolidBodyPart>
+			: public LagrangianConstraint<SolidBody, SolidParticles, SolidBodyPart>
 		{
 		protected:
 			virtual Vecd GetDisplacement(Vecd &pos) { return Vecd(0); };
@@ -354,7 +430,7 @@ namespace SPH
 				Real dt = 0.0) override;
 		public:
 			ConstrainSolidBodyRegion(SolidBody *body, SolidBodyPart *body_part)
-				: LagrangianConstraint<SolidBody, SolidBodyParticles, SolidBodyPart>(body, body_part) {};
+				: LagrangianConstraint<SolidBody, SolidParticles, SolidBodyPart>(body, body_part) {};
 			virtual ~ConstrainSolidBodyRegion() {};
 		};
 
@@ -363,7 +439,7 @@ namespace SPH
 		 * by add extra acceleration
 		 */
 		class ImposeExternalForce
-			: public LagrangianConstraint<SolidBody, SolidBodyParticles, SolidBodyPartForSimbody>
+			: public LagrangianConstraint<SolidBody, SolidParticles, SolidBodyPartForSimbody>
 		{
 		protected:
 			/**
@@ -374,7 +450,7 @@ namespace SPH
 				Real dt = 0.0) override;
 		public:
 			ImposeExternalForce(SolidBody *body, SolidBodyPartForSimbody *body_part)
-				: LagrangianConstraint<SolidBody, SolidBodyParticles, SolidBodyPartForSimbody>(body, body_part) {};
+				: LagrangianConstraint<SolidBody, SolidParticles, SolidBodyPartForSimbody>(body, body_part) {};
 			virtual ~ImposeExternalForce() {};
 		};
 
@@ -384,7 +460,7 @@ namespace SPH
 		 * computed from Simbody.
 		 */
 		class ConstrianSoildBodyPartBySimBody
-			: public LagrangianConstraint<SolidBody, SolidBodyParticles, SolidBodyPartForSimbody>
+			: public LagrangianConstraint<SolidBody, SolidParticles, SolidBodyPartForSimbody>
 		{
 		protected:
 			SimTK::MultibodySystem &MBsystem_;
@@ -412,8 +488,7 @@ namespace SPH
 		 * @brief Compute the force acting on the solid body part
 		 * for applying to simbody forces latter
 		 */
-		class ForceOnSolidBodyPartForSimBody 
-			: public LagrangianConstraintSum<SpatialVec, SolidBody, SolidBodyParticles, SolidBodyPartForSimbody>
+		class ForceOnSolidBodyPartForSimBody : public SolidDynamicsConstraintForSimbodySum<SpatialVec>
 		{
 		protected:
 			SimTK::MultibodySystem &MBsystem_;
@@ -440,8 +515,7 @@ namespace SPH
 		 * @brief Compute the force acting on the elastic solid body part
 		 * for applying to simbody forces latter
 		 */
-		class ForceOnElasticBodyPartForSimBody 
-			: public LagrangianConstraintSum<SpatialVec, ElasticBody, ElasticBodyParticles, SolidBodyPartForSimbody>
+		class ForceOnElasticBodyPartForSimBody : public ElasticSolidDynamicsConstraintForSimbodySum<SpatialVec>
 		{
 		protected:
 			SimTK::MultibodySystem &MBsystem_;
@@ -454,7 +528,7 @@ namespace SPH
 			virtual void SetupReduce() override;
 			virtual SpatialVec ReduceFunction(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			ForceOnElasticBodyPartForSimBody(ElasticBody *body,
+			ForceOnElasticBodyPartForSimBody(SolidBody *body,
 				SolidBodyPartForSimbody *body_part,
 				SimTK::MultibodySystem &MBsystem,
 				SimTK::MobilizedBody &mobod,
@@ -468,8 +542,7 @@ namespace SPH
 		* @brief Velocity damping by splitting scheme
 		* this method modify the total acceleration and velocity directly
 		*/
-		class DampingBySplittingAlgorithm
-			: public ParticleDynamicsInnerSplitting<ElasticBody, ElasticBodyParticles>
+		class DampingBySplittingAlgorithm : public ElasticSolidDynamicsInnerSplitting
 		{
 			//viscousity
 			Real eta_;
@@ -478,7 +551,7 @@ namespace SPH
 			ElasticSolid *material_;
 			virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			DampingBySplittingAlgorithm(ElasticBody *elastic_body, Real eta);
+			DampingBySplittingAlgorithm(SolidBody *elastic_body, Real eta);
 			virtual ~DampingBySplittingAlgorithm() {};
 		};
 	}

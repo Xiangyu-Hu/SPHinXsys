@@ -1,13 +1,13 @@
 #include "solid_dynamics.h"
 #include "solid_body.h"
-#include "solid_body_particles.h"
+#include "solid_particles.h"
 #include "neighboring_particle.h"
 #include "base_kernel.h"
 #include "base_data_package.h"
 #include "elastic_solid.h"
 #include "external_force.h"
 #include "mesh_cell_linked_list.h"
-#include "weakly_compressible_fluid_particles.h"
+#include "fluid_particles.h"
 #include "weakly_compressible_fluid.h"
 #include "polar_decomposition_3x3.h"
 
@@ -19,10 +19,10 @@ namespace SPH
 	namespace solid_dynamics
 	{
 		//=========================================================================================//
-		void UpdateElasticNormalDirection::ParticleUpdate(size_t index_particle_i, Real dt)
+		void UpdateElasticNormalDirection::Update(size_t index_particle_i, Real dt)
 		{
-			SolidBodyParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-			ElasticBodyParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
+			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
+			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
 
 			Mat3d R;
 			Real Q[9], H[9], A[9];

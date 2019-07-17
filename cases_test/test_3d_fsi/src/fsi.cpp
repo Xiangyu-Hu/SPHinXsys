@@ -126,15 +126,15 @@ Geometry *CreateInnerWall()
 	return geometry_inner;
 }
 //define the fluid body
-class WaterBlock : public WeaklyCompressibleFluidBody
+class WaterBlock : public FluidBody
 {
 	public:
 		WaterBlock(SPHSystem &system, string body_name,
-			WeaklyCompressibleFluid* material, 
-			WeaklyCompressibleFluidParticles &weakly_compressible_fluid_particles, 
+			WeaklyCompressibleFluid &material, 
+			FluidParticles &fluid_particles, 
 			int refinement_level, ParticlesGeneratorOps op)
-			: WeaklyCompressibleFluidBody(system, body_name, material, 
-				weakly_compressible_fluid_particles, refinement_level, op)
+			: FluidBody(system, body_name, material, 
+				fluid_particles, refinement_level, op)
 		{
 
 			body_region_.add_geometry(CreateWaterBlock(), RegionBooleanOps::add);
@@ -143,11 +143,6 @@ class WaterBlock : public WeaklyCompressibleFluidBody
 			//finish the region modeling
 			body_region_.done_modeling();
 		}
-
-	void InitialCondition() 
-	{
-		SetAllParticleAtRest();
-	}
 };
 
 //define the static solid wall boudary
@@ -155,40 +150,29 @@ class WallBoundary : public SolidBody
 {
 public:
 	WallBoundary(SPHSystem &system, string body_name, 
-		SolidBodyParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, solid_particles, refinement_level, op)
+		SolidParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), solid_particles, refinement_level, op)
 	{
 		body_region_.add_geometry(CreateOuterWall(), RegionBooleanOps::add);
 		body_region_.add_geometry(CreateInnerWall(), RegionBooleanOps::sub);
 		//finish the region modeling
 		body_region_.done_modeling();
 	}
-
-	void InitialCondition() 
-	{
-		SetAllParticleAtRest();
-	}
 };
 
 //insert elastic body with constraint
-class InsertedBody : public ElasticBody
+class InsertedBody : public SolidBody
 {
 public:
-	InsertedBody(SPHSystem &system, string body_name, ElasticSolid* material,
-		ElasticBodyParticles &elastic_particles, int refinement_level, ParticlesGeneratorOps op)
-		: ElasticBody(system, body_name, material, elastic_particles, 
+	InsertedBody(SPHSystem &system, string body_name, ElasticSolid &material,
+		ElasticSolidParticles &elastic_particles, int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, material, elastic_particles, 
 			refinement_level, op)
 	{
-
 		body_region_.add_geometry(CreateInsertCylinder(), RegionBooleanOps::add);
 		body_region_.add_geometry(CreateAttatchedFlag(), RegionBooleanOps::add);
 		//finish the region modeling
 		body_region_.done_modeling();
-	}
-
-	void InitialCondition()
-	{
-		SetAllParticleAtRest();
 	}
 };
 /**
@@ -216,7 +200,7 @@ public:
 class InflowBuffer : public FluidBodyPart
 {
 public:
-	InflowBuffer(WeaklyCompressibleFluidBody* fluid_body, string constrianed_region_name)
+	InflowBuffer(FluidBody* fluid_body, string constrianed_region_name)
 		: FluidBodyPart(fluid_body, constrianed_region_name)
 	{
 		/** Geomerty definition. */
@@ -257,7 +241,7 @@ class ParabolicInflow : public fluid_dynamics::InflowBoundaryCondition
 	Real u_ave_, u_ref_, t_ref;
 
 public:
-	ParabolicInflow(WeaklyCompressibleFluidBody* fluid_body,
+	ParabolicInflow(FluidBody* fluid_body,
 		FluidBodyPart *constrained_region)
 		: InflowBoundaryCondition(fluid_body, constrained_region)
 	{
@@ -298,13 +282,13 @@ int main()
 	WeaklyCompressibleFluid fluid("Water", rho0_f, c_f, mu_f, k_f);
 	
 	//creat a fluid particle cotainer
-	WeaklyCompressibleFluidParticles fluid_particles("WaterBody");
+	FluidParticles fluid_particles("WaterBody");
 	//the water block
 	WaterBlock *water_block 
-		= new WaterBlock(system, "WaterBody", &fluid, fluid_particles, 0, ParticlesGeneratorOps::lattice);
+		= new WaterBlock(system, "WaterBody", fluid, fluid_particles, 0, ParticlesGeneratorOps::lattice);
 	
 	//creat a solid particle cotainer
-	SolidBodyParticles solid_particles("Wall");
+	SolidParticles solid_particles("Wall");
 	//the wall boundary
 	WallBoundary *wall_boundary 
 		= new WallBoundary(system, "Wall", solid_particles, 0, ParticlesGeneratorOps::lattice);
@@ -313,10 +297,10 @@ int main()
 	//elastic soild material properties
 	ElasticSolid solid_material("ElasticSolid", rho0_s, Youngs_modulus, poisson, 0.0);
 	//creat a particle cotainer for the elastic body
-	ElasticBodyParticles inserted_body_particles("InsertedBody");
+	ElasticSolidParticles inserted_body_particles("InsertedBody");
 	//the inseted body immersed in water
 	InsertedBody *inserted_body 
-		= new InsertedBody(system, "InsertedBody", &solid_material,
+		= new InsertedBody(system, "InsertedBody", solid_material,
 		inserted_body_particles, 1, ParticlesGeneratorOps::lattice);
 
 	//create a observer particle container
@@ -342,11 +326,16 @@ int main()
 	//-------------------------------------------------------------------
 	//methods only used only once
 	//-------------------------------------------------------------------
+	 /** initial condition for fluid body */
+	fluid_dynamics::WeaklyCompressibleFluidInitialCondition set_all_fluid_particles_at_rest(water_block);
 	//obtain the initial number density
 	fluid_dynamics::InitialNumberDensity
 		fluid_initial_number_density(water_block, { wall_boundary, inserted_body });
 
-
+	/** initial condition for the solid body */
+	solid_dynamics::SolidDynamicsInitialCondition set_all_wall_particles_at_rest(wall_boundary);
+	/** initial condition for the elastic solid bodies */
+	solid_dynamics::ElasticSolidDynamicsInitialCondition set_all_insert_body_particles_at_rest(inserted_body);
 	//initialize normal direction of the wall boundary
 	solid_dynamics::NormalDirectionSummation get_wall_normal(wall_boundary, {});
 	//initialize normal direction of the inserted body
@@ -390,9 +379,9 @@ int main()
 
 	//FSI
 	solid_dynamics::FluidPressureForceOnSolid
-		fluid_pressure_force_on_insrted_body(inserted_body, { water_block }, &fluid);
+		fluid_pressure_force_on_insrted_body(inserted_body, { water_block });
 	solid_dynamics::FluidViscousForceOnSolid
-		fluid_viscous_force_on_insrted_body(inserted_body, { water_block }, &fluid);
+		fluid_viscous_force_on_insrted_body(inserted_body, { water_block });
 
 	//solid dynmaics
 	//time step size caclutation
@@ -431,6 +420,12 @@ int main()
 	//-------------------------------------------------------------------
 	//starting time zero
 	GlobalStaticVariables::physical_time_ = 0.0;
+
+	/** Pre-simultion*/
+	set_all_fluid_particles_at_rest.exec();
+	set_all_wall_particles_at_rest.exec();
+	set_all_insert_body_particles_at_rest.exec();
+
 	//initial periodic boundary condition
 	//which copies the particle identifies
 	//as extra cell linked list form 
@@ -440,8 +435,6 @@ int main()
 	//update configuration after periodic boundary condition
 	update_water_block_configuration.parallel_exec();
 
-
-	//prepare quantities will be used once only
 	get_wall_normal.parallel_exec();
 	get_inserted_body_normal.parallel_exec();
 	fluid_initial_number_density.parallel_exec();
@@ -450,10 +443,10 @@ int main()
 	//-----------------------------------------------------------------------------
 	//outputs
 	//-----------------------------------------------------------------------------
-	Output output(system);
-	WriteBodyStatesToVtu write_real_body_states(output, system.real_bodies_);
+	In_Output in_output(system);
+	WriteBodyStatesToVtu write_real_body_states(in_output, system.real_bodies_);
 	WriteObservedElasticDisplacement
-		write_flag_free_end(output, flag_observer, { inserted_body });
+		write_flag_free_end(in_output, flag_observer, { inserted_body });
 
 
 	//initial output
@@ -470,8 +463,7 @@ int main()
 	//statistics for computing time
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
-	//output global basic parameters
-	output.WriteCaseSetup(End_Time, D_Time, GlobalStaticVariables::physical_time_);
+
 	//computation loop starts 
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{

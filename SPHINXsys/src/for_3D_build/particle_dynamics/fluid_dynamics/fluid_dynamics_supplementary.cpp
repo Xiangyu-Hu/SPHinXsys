@@ -9,7 +9,7 @@ namespace SPH
 		//===========================================================//
 		void ComputingVorticityInFluidField::InnerInteraction(size_t index_particle_i, Real dt)
 		{
-			WeaklyCompressibleFluidParticleData &fluid_data_i = particles_->fluid_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 
 			Vecd vort_temp(0);
@@ -20,7 +20,7 @@ namespace SPH
 				NeighboringParticle &neighboring_particle = neighors[n];
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
-				WeaklyCompressibleFluidParticleData &fluid_data_j = particles_->fluid_data_[index_particle_j];
+				FluidParticleData &fluid_data_j = particles_->fluid_particle_data_[index_particle_j];
 
 
 				//low dissipation Riemann problem

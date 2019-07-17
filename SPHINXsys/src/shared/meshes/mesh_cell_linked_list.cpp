@@ -33,17 +33,30 @@ namespace SPH {
 	//===========================================================//
 	void MeshCellLinkedList::UpdateParticleCellLocation(SPHBody &body)
 	{
-		Particles &current_particles = body.base_particles_;
+		StdVec<BaseParticleData> &base_particle_data = body.base_particles_.base_particle_data_;
 
 		//rebuild the corresponding particle list.
-		parallel_for(blocked_range<size_t>(0, current_particles.number_of_particles_),
+		parallel_for(blocked_range<size_t>(0, base_particle_data.size()),
 			[&](const blocked_range<size_t>& r) {
-			StdVec<BaseParticleData> &base_particle_data
-				= current_particles.base_particle_data_;
 			for (size_t i = r.begin(); i != r.end(); ++i) {
 				Vecu cellpos = GridIndexesFromPosition(base_particle_data[i].pos_n_);
 				base_particle_data[i].cell_location_ = cellpos;
 			}
 		}, ap);
+	}
+	//===========================================================//
+	void MeshCellLinkedList::ClearByCellParticleLists(SPHBody &body)
+	{
+		ByCellLists by_cell_lists_particle_indexes
+			= body.by_cell_lists_particle_indexes_;
+
+		for (size_t i = 0; i < body.number_of_by_cell_lists_; i++) {
+			parallel_for(blocked_range<size_t>(0, by_cell_lists_particle_indexes[i].size()),
+				[&](const blocked_range<size_t>& r) {
+				for (size_t j = r.begin(); j != r.end(); ++j) 
+					by_cell_lists_particle_indexes[i][j].clear();
+			}, ap);
+			by_cell_lists_particle_indexes[i].clear();
+		}
 	}
 }

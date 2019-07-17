@@ -27,14 +27,14 @@ Real initial_pressure = 0.0;
 Vec2d intial_velocity(0.0, 0.0);
 
 //define the fluid body
-class FluidBlock : public Oldroyd_B_FluidBody
+class FluidBlock : public FluidBody
 {
 	public:
-		FluidBlock(SPHSystem &system, string body_name, Oldroyd_B_Fluid* oldroyd_b_material,
-						Oldroyd_B_FluidParticles &oldroyd_b_fluid_particles, 
+		FluidBlock(SPHSystem &system, string body_name, Oldroyd_B_Fluid &oldroyd_b_material,
+			ViscoelasticFluidParticles &viscoelastic_fluid_particles,
 									int refinement_level, ParticlesGeneratorOps op)
-			: Oldroyd_B_FluidBody(system, body_name, oldroyd_b_material,
-				oldroyd_b_fluid_particles, refinement_level, op)
+			: FluidBody(system, body_name, oldroyd_b_material,
+				viscoelastic_fluid_particles, refinement_level, op)
 		{
 			std::vector<Point> pnts;
 			pnts.push_back(Point(-0.5*DL, -0.5*DH));
@@ -63,30 +63,6 @@ class FluidBlock : public Oldroyd_B_FluidBody
 			//finish the region modeling
 			body_region_.done_modeling();
 		}
-
-	void InitialCondition() 
-	{
-		//initial condition
-		Particles &base_particles = base_particles_;
-		Oldroyd_B_FluidParticles &fluid_particles
-			= oldroyd_b_fluid_particles_;
-		Mat2d zero(0);
-		for (int i = 0; i < weakly_compressible_fluid_particles_.number_of_particles_; ++i) {
-			fluid_particles.fluid_data_[i].p_ = initial_pressure;
-			fluid_particles.base_particle_data_[i].vel_n_ = intial_velocity;
-			fluid_particles.fluid_data_[i].vel_trans_ = intial_velocity;
-			fluid_particles.base_particle_data_[i].dvel_dt_ = Vecd(0);
-			fluid_particles.fluid_data_[i].rho_0_
-				= material_->ReinitializeRho(initial_pressure);
-			fluid_particles.fluid_data_[i].rho_n_
-				= material_->ReinitializeRho(initial_pressure);
-			fluid_particles.fluid_data_[i].mass_
-				= fluid_particles.fluid_data_[i].rho_0_
-				*base_particles_.base_particle_data_[i].Vol_;
-			fluid_particles.oldroyd_b_data_[i].tau_ = zero;
-			fluid_particles.oldroyd_b_data_[i].dtau_dt_ = zero;
-		}
-	}
 };
 
 //define the static solid wall boudary
@@ -94,8 +70,8 @@ class WallBoundary : public SolidBody
 {
 public:
 	WallBoundary(SPHSystem &system, string body_name, 
-		SolidBodyParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, solid_particles,	refinement_level, op)
+		SolidParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), solid_particles,	refinement_level, op)
 	{
 		std::vector<Point> pnts3;
 		pnts3.push_back(Point(-0.5*DL - BW, -0.5*DH - BW));
@@ -133,17 +109,6 @@ public:
 		body_region_.done_modeling();
 
 	}
-
-	void InitialCondition() 
-	{
-		Vec2d zero(0);
-		for (int i = 0; i < solid_particles_.number_of_particles_; ++i) {
-			solid_particles_.base_particle_data_[i].vel_n_ = intial_velocity;
-			solid_particles_.base_particle_data_[i].dvel_dt_ = zero;
-			solid_particles_.solid_body_data_[i].vel_ave_ = zero;
-			solid_particles_.solid_body_data_[i].dvel_dt_ave_ = zero;
-		}
-	}
 };
 
 //the main program
@@ -160,13 +125,13 @@ int main()
 	Oldroyd_B_Fluid fluid("Fluid", rho0_f, c_f, mu_f, k_f, lambda_f, mu_p_f);
 	
 	//creat a fluid particle cotainer
-	Oldroyd_B_FluidParticles fluid_particles("FluidBody");
+	ViscoelasticFluidParticles fluid_particles("FluidBody");
 	//the water block
 	FluidBlock *fluid_block 
-		= new FluidBlock(system, "FluidBody", &fluid, fluid_particles, 0, ParticlesGeneratorOps::lattice);
+		= new FluidBlock(system, "FluidBody", fluid, fluid_particles, 0, ParticlesGeneratorOps::lattice);
 	
 	//creat a solid particle cotainer
-	SolidBodyParticles solid_particles("Wall");
+	SolidParticles solid_particles("Wall");
 	//the wall boundary
 	WallBoundary *wall_boundary 
 		= new WallBoundary(system, "Wall", solid_particles, 0, ParticlesGeneratorOps::lattice);
@@ -188,14 +153,17 @@ int main()
 	//-------------------------------------------------------------------
 	//methods only used only once
 	//-------------------------------------------------------------------
+	/** initial condition */
+	fluid_dynamics::Oldroyd_B_FluidInitialCondition set_all_fluid_particles_at_rest(fluid_block);
 	//obtain the initial number density
 	fluid_dynamics::InitialNumberDensity
 		fluid_initial_number_density(fluid_block, {wall_boundary});
 
 
+	/** initial condition for the solid body */
+	solid_dynamics::SolidDynamicsInitialCondition set_all_wall_particles_at_rest(wall_boundary);
 	//initialize normal direction of the wall boundary
-	solid_dynamics::NormalDirectionSummation 
-		get_wall_normal(wall_boundary, {});
+	solid_dynamics::NormalDirectionSummation get_wall_normal(wall_boundary, {});
 
 	//-------------------------------------------------------------------
 	//methods used for time stepping
@@ -245,14 +213,19 @@ int main()
 	//-----------------------------------------------------------------------------
 	//outputs
 	//-----------------------------------------------------------------------------
-	Output output(system);
-	WriteBodyStatesToVtu write_real_body_states(output, system.real_bodies_);
+	In_Output in_output(system);
+	WriteBodyStatesToVtu write_real_body_states(in_output, system.real_bodies_);
 
 	//-------------------------------------------------------------------
 	//from here the time stepping begines
 	//-------------------------------------------------------------------
 	//starting time zero
 	GlobalStaticVariables::physical_time_ = 0.0;
+	
+	/** apply initial condition */
+	set_all_fluid_particles_at_rest.exec();
+	set_all_wall_particles_at_rest.exec();
+
 	//initial periodic boundary condition
 	//which copies the particle identifies
 	//as extra cell linked list form 
@@ -280,8 +253,7 @@ int main()
 	//statistics for computing time
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
-	//output global basic parameters
-	output.WriteCaseSetup(End_Time, D_Time, GlobalStaticVariables::physical_time_);
+
 	//computation loop starts 
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{

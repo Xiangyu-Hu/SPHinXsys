@@ -1,6 +1,6 @@
 #include "solid_body.h"
 #include "elastic_solid.h"
-#include "solid_body_particles.h"
+#include "solid_particles.h"
 #include "sph_system.h"
 
 
@@ -17,7 +17,7 @@ namespace SPH {
 			size_t index_particle_i = body_part_particles_[i];
 			BaseParticleData &base_particle_data_i
 				= solid_body_->base_particles_.base_particle_data_[index_particle_i];
-			SolidBodyParticleData &solid_data_i
+			SolidParticleData &solid_data_i
 				= solid_body_->solid_particles_.solid_body_data_[index_particle_i];
 
 			mass_center += base_particle_data_i.Vol_*solid_data_i.pos_0_;
@@ -36,7 +36,7 @@ namespace SPH {
 			size_t index_particle_i = body_part_particles_[i];
 			BaseParticleData &base_particle_data_i
 				= solid_body_->base_particles_.base_particle_data_[index_particle_i];
-			SolidBodyParticleData &solid_data_i
+			SolidParticleData &solid_data_i
 				= solid_body_->solid_particles_.solid_body_data_[index_particle_i];
 
 			Vecd displacement = (solid_data_i.pos_0_ - mass_center);

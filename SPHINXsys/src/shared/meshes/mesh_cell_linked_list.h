@@ -27,6 +27,7 @@ namespace SPH {
 	{
 	public:
 		size_t particle_index_;
+		/** This is important for implement peroidic boundary condition. */
 		Vecd particle_position_;
 
 		ListData(size_t particle_index, Vecd &particle_position) { 
@@ -69,6 +70,8 @@ namespace SPH {
 
 		/** clear the cell lists */
 		void ClearCellLists();
+		/** clear by cell particle lists for a body*/
+		void ClearByCellParticleLists(SPHBody &body);
 
 		/** computing search range for building contact configuration */
 		int ComputingSearchRage(int orign_refinement_level, 

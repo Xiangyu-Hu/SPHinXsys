@@ -2,7 +2,8 @@
 
 namespace SPH {
 	//===========================================================//
-	//3x3 matrix
+	/** 2x2 matrix,
+	  * It is only works for kernel corection not reverse other matrices */
 	Mat2d GeneralizedInverse(Mat2d &A)
 	{
 		// Find U such that U*A*A’*U’ = diag
@@ -38,7 +39,9 @@ namespace SPH {
 
 		return V * r_SIG*~U;
 	}
-	//===========================================================//
+	/** 3x3 matrix,
+	  * It is only works for kernel corection not reverse other matrices */
+	  //===========================================================//
 	Mat3d GeneralizedInverse(Mat3d &A)
 	{
 		SimTK::Real det = A(0, 0) * (A(1, 1) * A(2, 2) - A(2, 1) * A(1, 2)) -

@@ -10,7 +10,7 @@
 
 namespace SPH {
 	/**
-	 * @brief Friend class.
+	 * @brief preclaimed class.
 	 */
 	class Kernel;
 	/**
@@ -20,27 +20,25 @@ namespace SPH {
 	class NeighboringParticle
 	{
 	public:
-		size_t i_, j_;		/**< Index of the origina and neighbor particles. */
-		Vecd r_ij_, e_ij_;	/**< Vecor and norm of particle postion,r_ij_ and e_ij_ pointing from i to j. */
-		Real W_ij_, dW_ij_;	/**< Weighted fucntion and gardient of weighted fucntion. */
-		Vecd gradW_ij_;		/**< Kernel gradient in weak form. */
-		Vecd str_gradW_ij_;	/**< kernel gradient in strong form. */
+		/** Index of the neighbor particle. */
+		size_t j_;
+		/** Vecor and norm of particle postion,r_ij_ and e_ij_ pointing from i to j. */
+		Vecd r_ij_, e_ij_;
+		/** Weighted fucntion and gardient of weighted fucntion. */
+		Real W_ij_, dW_ij_;
+		/** Kernel gradient in weak form. */
+		Vecd gradW_ij_;		
 
-		/**
-		 * @brief Default construcutor. 
-		 */
+		/** default constrcutor*/
 		NeighboringParticle() {};
 		/**
-		 * @brief Constructor.
-		 * @param[in] kernel Specific kernel.
-		 * @param[in] r_ij Postion vector of interacing particles.
-		 * @param[in] i_index Index of particle i
-		 * @param[in] j_index Index of particle j
-		 */
-		NeighboringParticle(Kernel &kernel,	Vecd &r_ij, size_t i_index, size_t j_index);
-		/**
-		 * @brief Destructor.
-		 */
+		* @brief Constructor.
+		* @param[in] kernel Specific kernel.
+		* @param[in] r_ij Postion vector of interacing particles.
+		* @param[in] i_index Index of particle i
+		* @param[in] j_index Index of particle j
+		*/
+		NeighboringParticle(Kernel &kernel,	Vecd &r_ij, size_t j_index);
 		~NeighboringParticle() {};
 		/**
 		 * @brief Reset the neighboring particles.
@@ -49,40 +47,7 @@ namespace SPH {
 		 * @param[in] i_index Index of particle i
 		 * @param[in] j_index Index of particle j
 		 */
-		void Reset(Kernel &kernel, Vecd &r_ij, size_t i_index, size_t j_index);
-	};
-
-	/**
-	 * @class NeighboringParticleCofiguration 
-	 * @brief interacing configuration between particle i and particle j.
-	 */
-	class NeighboringParticleCofiguration
-	{
-	public:
-		Vecd r_ij_, e_ij_;	/**< Vecor and norm of particle postion,r_ij_ and e_ij_ pointing from i to j. */
-		Real W_ij_, dW_ij_;	/**< Weighted fucntion and gardient of weighted fucntion. */
-		Vecd gradW_ij_;		/**< Kernel gradient in weak form. */
-
-		/**
-		 * @brief Default construcutor.
-		 */
-		NeighboringParticleCofiguration() {};
-		/**
-		 * @brief Constructor.
-		 * @param[in] kernel Specific kernel.
-		 * @param[in] r_ij Postion vector of interacing particles.
-		 */
-		NeighboringParticleCofiguration(Kernel &kernel, Vecd &r_ij);
-		/**
-		 * @brief Destructor.
-		 */
-		~NeighboringParticleCofiguration() {};
-		/**
-		 * @brief Reset the neighboring particles.
-		 * @param[in] kernel Specific kernel.
-		 * @param[in] r_ij Postion vector of interacing particles.
-		 */
-		void Reset(Kernel &kernel, Vecd &r_ij);
+		void Reset(Kernel &kernel, Vecd &r_ij, size_t j_index);
 	};
 
 	/**
@@ -92,14 +57,16 @@ namespace SPH {
 	class ReferenceNeighboringParticle
 	{
 	public:
-		size_t j_;		/**< Index of the origina and neighbor particles. */
-		Vecd r_ij_;	/**< Vecor and norm of particle postion,r_ij_ and e_ij_ pointing from i to j. */
-		Real W_ij_, dW_ij_;	/**< Weighted fucntion and gardient of weighted fucntion. */
-		Vecd gradW_ij_;		/**< Kernel gradient in weak form. */
+		/** Index of the neighbor particle. */
+		size_t j_;
+		/** Vecor and norm of particle postion,r_ij_ and e_ij_ pointing from i to j. */
+		Vecd r_ij_;	
+		/** Weighted fucntion and gardient of weighted fucntion. */
+		Real W_ij_, dW_ij_;
+		/** Kernel gradient in weak form. */
+		Vecd gradW_ij_;		
 
-		/**
-		 * @brief Default construcutor.
-		 */
+		/** default constrcutor*/
 		ReferenceNeighboringParticle() {};
 		/**
 		 * @brief Constructor.
@@ -108,10 +75,7 @@ namespace SPH {
 		 * @param[in] i_index Index of particle i
 		 * @param[in] j_index Index of particle j
 		 */
-		ReferenceNeighboringParticle(Kernel &kernel, Vecd &r_ij, size_t i_index, size_t j_index);
-		/**
-		 * @brief Destructor.
-		 */
+		ReferenceNeighboringParticle(Kernel &kernel, Vecd &r_ij, size_t j_index);
 		~ReferenceNeighboringParticle() {};
 		/**
 		 * @brief Reset the neighboring particles.
@@ -120,6 +84,6 @@ namespace SPH {
 		 * @param[in] i_index Index of particle i
 		 * @param[in] j_index Index of particle j
 		 */
-		void Reset(Kernel &kernel, Vecd &r_ij, size_t i_index, size_t j_index);
+		void Reset(Kernel &kernel, Vecd &r_ij, size_t j_index);
 	};
 }

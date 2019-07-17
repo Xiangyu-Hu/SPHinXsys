@@ -36,15 +36,13 @@ Vec2d intial_velocity(0.0, 0.0);		/**< Initial velocity field. */
 /**
  * @brief 	Fluid body definition.
  */
-class WaterBlock : public WeaklyCompressibleFluidBody
+class WaterBlock : public FluidBody
 {
 public:
 	WaterBlock(SPHSystem &system, string body_name,
-		WeaklyCompressibleFluid* material,
-		WeaklyCompressibleFluidParticles
-		&weakly_compressible_fluid_particles, int refinement_level, ParticlesGeneratorOps op)
-		: WeaklyCompressibleFluidBody(system, body_name, material,
-			weakly_compressible_fluid_particles, refinement_level, op)
+		WeaklyCompressibleFluid &material,
+		FluidParticles &fluid_particles, int refinement_level, ParticlesGeneratorOps op)
+		: FluidBody(system, body_name, material, fluid_particles, refinement_level, op)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> water_block_shape;
@@ -58,25 +56,6 @@ public:
 
 		body_region_.done_modeling();
 	}
-	/** Initialize every fluid particle data. */
-	void InitialCondition()
-	{
-		for (int i = 0; i < number_of_particles_; ++i) {
-			BaseParticleData &base_particle_data_i
-				= weakly_compressible_fluid_particles_.base_particle_data_[i];
-			WeaklyCompressibleFluidParticleData &fluid_data_i
-				= weakly_compressible_fluid_particles_.fluid_data_[i];
-
-			fluid_data_i.p_ = initial_pressure;
-			base_particle_data_i.vel_n_ = intial_velocity;
-			base_particle_data_i.dvel_dt_(0);
-			fluid_data_i.rho_0_
-				= material_->ReinitializeRho(initial_pressure);
-			fluid_data_i.rho_n_ = fluid_data_i.rho_0_;
-			fluid_data_i.mass_
-				= fluid_data_i.rho_0_*base_particle_data_i.Vol_;
-		}
-	}
 };
 /**
  * @brief 	Wall boundary body definition.
@@ -85,8 +64,8 @@ class WallBoundary : public SolidBody
 {
 public:
 	WallBoundary(SPHSystem &system, string body_name,
-		SolidBodyParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, solid_particles, refinement_level, op)
+		SolidParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), solid_particles, refinement_level, op)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> outer_wall_shape;
@@ -108,22 +87,6 @@ public:
 		body_region_.add_geometry(inner_wall_geometry, RegionBooleanOps::sub);
 
 		body_region_.done_modeling();
-	}
-	/** Initialize every wallboundary particle data. */
-	void InitialCondition()
-	{
-		for (int i = 0; i < solid_particles_.number_of_particles_; ++i) {
-			BaseParticleData &base_particle_data_i
-				= solid_particles_.base_particle_data_[i];
-			SolidBodyParticleData &solid_body_data_i
-				= solid_particles_.solid_body_data_[i];
-
-			base_particle_data_i.vel_n_ = intial_velocity;
-			Vec2d zero(0);
-			base_particle_data_i.dvel_dt_ = zero;
-			solid_body_data_i.vel_ave_ = zero;
-			solid_body_data_i.dvel_dt_ave_ = zero;
-		}
 	}
 };
 /**
@@ -151,18 +114,18 @@ int main()
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for computation from restart files. 0: not from restart files. */
-		system.restart_step_ = 0;
+	system.restart_step_ = 0;
 	/**
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
 	WeaklyCompressibleFluid 			fluid("Water", rho0_f, c_f);
-	WeaklyCompressibleFluidParticles 	fluid_particles("WaterBody");
-	WaterBlock *water_block = new WaterBlock(system, "WaterBody", &fluid,
+	FluidParticles 	fluid_particles("WaterBody");
+	WaterBlock *water_block = new WaterBlock(system, "WaterBody", fluid,
 		fluid_particles, 0, ParticlesGeneratorOps::lattice);
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
-	SolidBodyParticles 					solid_particles("Wall");
+	SolidParticles 					solid_particles("Wall");
 	WallBoundary *wall_boundary = new WallBoundary(system, "Wall",
 		solid_particles, 0, ParticlesGeneratorOps::lattice);
 	/**
@@ -191,12 +154,15 @@ int main()
 	 /**
 	  * @brief 	Methods used only once.
 	  */
-	  /** Initialize normal direction of the wall boundary. */
+	  /** initial condition for the solid body */
+	solid_dynamics::SolidDynamicsInitialCondition set_all_solid_particles_at_rest(wall_boundary);
+	/** Initialize normal direction of the wall boundary. */
 	solid_dynamics::NormalDirectionSummation 	get_wall_normal(wall_boundary, {});
-	get_wall_normal.exec();
+
+	/** initial condition for fluid body */
+	fluid_dynamics::WeaklyCompressibleFluidInitialCondition set_all_fluid_particles_at_rest(water_block);
 	/** Obtain the initial number density of fluid. */
 	fluid_dynamics::InitialNumberDensity 		fluid_initial_number_density(water_block, { wall_boundary });
-	fluid_initial_number_density.exec();
 	/**
 	 * @brief 	Methods used for time stepping.
 	 */
@@ -226,22 +192,32 @@ int main()
 	/**
 	 * @brief Output.
 	 */
-	Output output(system);
+	In_Output in_output(system);
 	/** Output the body states. */
-	WriteBodyStatesToVtu 		write_body_states(output, system.real_bodies_);
+	WriteBodyStatesToVtu 		write_body_states(in_output, system.real_bodies_);
 	/** Output the body states for restart simulation. */
-	WriteRestartFileToXml		write_restart_body_states(output, system.real_bodies_);
+	ReadRestart		read_restart_files(in_output, system.real_bodies_);
+	WriteRestart	write_restart_files(in_output, system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	WriteWaterMechanicalEnergy 	write_water_mechanical_energy(output, water_block, &gravity);
+	WriteWaterMechanicalEnergy 	write_water_mechanical_energy(in_output, water_block, &gravity);
 	/** output the observed data from fluid body. */
-	WriteObservedFluidPressure	write_recorded_water_pressure(output, fluid_observer, { water_block });
+	WriteObservedFluidPressure	write_recorded_water_pressure(in_output, fluid_observer, { water_block });
+	
+	/**
+	 * @brief Setup goematrics and initial conditions
+	 */
+	set_all_fluid_particles_at_rest.exec();
+	set_all_solid_particles_at_rest.exec();
+	get_wall_normal.exec();
+	fluid_initial_number_density.exec();
+
 	/**
 	 * @brief The time stepping starts here.
 	 */
 	 /** If the starting time is not zero, please setup the restart time step ro read in restart states. */
 	if (system.restart_step_ != 0)
 	{
-		system.ResetSPHSimulationFromRestart();
+		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
 		update_cell_linked_list.parallel_exec();
 		update_particle_configuration.parallel_exec();
 	}
@@ -252,8 +228,9 @@ int main()
 	/**
 	 * @brief 	Basic parameters.
 	 */
-	int ite = system.restart_step_;
-	int rst_out = 1000;
+	int number_of_iterations = system.restart_step_;
+	int screen_output_interval = 100;
+	int restart_output_interval = screen_output_interval*10;
 	Real End_Time = 20.0; 	/**< End time. */
 	Real D_Time = 0.1;		/**< Time stamps for output of body states. */
 	Real Dt = 0.0;			/**< Default advection time step sizes. */
@@ -261,8 +238,6 @@ int main()
 	/** statistics for computing CPU time. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
-	/** Output global basic parameters. */
-	output.WriteCaseSetup(End_Time, D_Time, GlobalStaticVariables::physical_time_);
 	/**
 	 * @brief 	Main loop starts here.
 	 */
@@ -281,23 +256,25 @@ int main()
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				if (ite % 100 == 0)
-				{
-					cout << "N=" << ite << " Time: "
-						<< GlobalStaticVariables::physical_time_
-						<< "	dt: " << dt << "\n";
-					if (ite % rst_out == 0)
-						write_restart_body_states.WriteToFile(Real(ite));
-				}
 				pressure_relaxation.parallel_exec(dt);
-
-				ite++;
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integeral_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 
 			}
+
+			if (number_of_iterations % screen_output_interval == 0)
+			{
+				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+					<< GlobalStaticVariables::physical_time_
+					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
+
+				if (number_of_iterations % restart_output_interval == 0)
+					write_restart_files.WriteToFile(Real(number_of_iterations));
+			}
+			number_of_iterations++;
+
 			/** Update cell linked list and configuration. */
 			update_cell_linked_list.parallel_exec();
 			update_particle_configuration.parallel_exec();

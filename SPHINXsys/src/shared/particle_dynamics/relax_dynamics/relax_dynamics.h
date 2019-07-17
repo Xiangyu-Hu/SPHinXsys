@@ -14,12 +14,34 @@ namespace SPH
 {
 	namespace relax_dynamics
 	{
+		typedef ParticleDynamicsSimple<RelaxBody, RelaxBodyParticles, Material> RelaxDynamicsSimple;
+		typedef ParticleDynamicsReduce<Real, ReduceMin, RelaxBody, RelaxBodyParticles> RelaxDynamicsMin;
+		typedef ParticleDynamicsInner1Level<RelaxBody, RelaxBodyParticles, Material>  RelaxDynamicsInner1Level;
+		typedef ParticleDynamicsComplex1Level<RelaxBody, RelaxBodyParticles, Material,
+			RelaxBody, RelaxBodyParticles> RelaxDynamicsComplex1Level;
+		typedef LagrangianConstraint<RelaxBody, RelaxBodyParticles, RelaxBodySurface> RelaxLagrangianConstraint;
+		
+		/**
+		 * @class RelaxDynamicsInitialCondition
+		 * @brief  set initial condition for a relax body
+		*/
+		class RelaxDynamicsInitialCondition : public RelaxDynamicsSimple
+		{
+		protected:
+			//default for set all particle at rest
+			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
+		public:
+			RelaxDynamicsInitialCondition(RelaxBody *body)
+				: RelaxDynamicsSimple(body) {};
+			virtual ~RelaxDynamicsInitialCondition() {};
+		};
+
 		/**
 		* @class GetTimeStepSize
 		* @brief relaxation dynamics for particle initialization
 		* computing time step size
 		*/
-		class GetTimeStepSize : public ParticleDynamicsMinimum<RelaxBody, RelaxBodyParticles>
+		class GetTimeStepSize : public RelaxDynamicsMin
 		{
 		protected:
 			Real smoothing_length_;
@@ -35,7 +57,7 @@ namespace SPH
 		* without considering contact interaction.
 		* this is usually used for solid like bodies
 		*/
-		class PhysicsRelaxationInner : public ParticleDynamicsInner1Level<RelaxBody, RelaxBodyParticles>
+		class PhysicsRelaxationInner : public RelaxDynamicsInner1Level
 		{
 		protected:
 			Real smoothing_length_;
@@ -58,8 +80,7 @@ namespace SPH
 		* with considering contact interaction
 		* this is usually used for fluid like bodies
 		*/
-		class PhysicsRelaxationComplex 
-			: public ParticleDynamicsComplex1Level<RelaxBody, RelaxBodyParticles, RelaxBody, RelaxBodyParticles>
+		class PhysicsRelaxationComplex : public RelaxDynamicsComplex1Level
 		{
 		protected:
 			Real eta_, p_star_;
@@ -79,15 +100,14 @@ namespace SPH
 		* map contrained particles to geometry face and
 		* r = r + phi * norm (vector distance to face)
 		*/
-		class ConstriantSurfaceParticles : 
-			public LagrangianConstraint<RelaxBody, RelaxBodyParticles, RelaxBodySurface>
+		class ConstriantSurfaceParticles : public RelaxLagrangianConstraint
 		{
 		protected:
 			virtual void ConstraintAParticle(size_t index_particle_i,
 				Real dt = 0.0) override;
 		public:
 			ConstriantSurfaceParticles(RelaxBody *body, RelaxBodySurface *body_part)
-				: LagrangianConstraint<RelaxBody, RelaxBodyParticles, RelaxBodySurface>(body, body_part) {};
+				:RelaxLagrangianConstraint(body, body_part) {};
 			virtual ~ConstriantSurfaceParticles() {};
 		};
 	}

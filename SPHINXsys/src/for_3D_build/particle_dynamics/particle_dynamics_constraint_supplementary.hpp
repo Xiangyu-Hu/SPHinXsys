@@ -11,8 +11,9 @@
 
 namespace SPH {
 	//===============================================================//
-	template <class BodyType, class ParticlesType, class EulerianBodyPartType>
-	void EulerianConstraint<BodyType, ParticlesType, EulerianBodyPartType>::exec(Real dt)
+	template <class BodyType, class ParticlesType, class EulerianBodyPartType, class MaterialType>
+	void EulerianConstraint<BodyType, ParticlesType, EulerianBodyPartType, MaterialType>
+		::exec(Real dt)
 	{
 		PrepareConstraint();
 
@@ -25,8 +26,9 @@ namespace SPH {
 		}
 	}
 	//===============================================================//
-	template <class BodyType, class ParticlesType, class EulerianBodyPartType>
-	void EulerianConstraint<BodyType, ParticlesType, EulerianBodyPartType>::parallel_exec(Real dt)
+	template <class BodyType, class ParticlesType, class EulerianBodyPartType, class MaterialType>
+	void EulerianConstraint<BodyType, ParticlesType, EulerianBodyPartType, MaterialType>
+		::parallel_exec(Real dt)
 	{
 		PrepareConstraint();
 

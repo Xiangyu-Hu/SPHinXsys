@@ -7,23 +7,37 @@ namespace SPH {
 		: Solid(elastic_solid_name, rho_0), 
 		E_0_(E_0), nu_(nu), eta_0_(eta_0)
 	{	
-
+		lambda_0_ = SetLambda(E_0_, nu_);
+		G_0_ = SetShearModulus(E_0_, nu_);
+		c_0_ = SetSoundSpeed(rho_0, E_0, nu);
 	}
 	//===================================================================//
-	Matd ElasticSolid::ConstitutiveRelation(Matd &F, Real local_G, Real local_lambda)
+	Real ElasticSolid::GetSoundSpeed(size_t particle_index_i)
+	{
+		return c_0_;
+	}
+	//===================================================================//
+	Matd ElasticSolid::ConstitutiveRelation(Matd &F, size_t particle_index_i)
 	{
 		Matd strain = 0.5 * (~F * F - Matd(1.0));
-		Matd sigmaPK2 = local_lambda * strain.trace() *  Matd(1.0)
-			+ 2.0*local_G * strain;
+		Matd sigmaPK2 = lambda_0_ * strain.trace() *  Matd(1.0)
+			+ 2.0*G_0_ * strain;
 		return F * sigmaPK2;
 	}
 	//===================================================================//
-	Matd ElasticSolid::DampingStress(Matd &F, Matd &dF_dt, Real local_eta)
+	Matd ElasticSolid::DampingStress(Matd &F, Matd &dF_dt, size_t particle_index_i)
 	{
 		Matd strain_rate = 0.5*(~dF_dt*F + ~F * dF_dt);
-		Matd sigmaPK2 = local_eta *strain_rate;
+		Matd sigmaPK2 = eta_0_ *strain_rate;
 		return F * sigmaPK2;
 	}
+	//===================================================================//
+	Matd ElasticSolid::NumericalDampingStress(Matd &F, Matd &dF_dt, Real numerical_viscoisty)
+	{
+		Matd strain_rate = 0.5*(~dF_dt*F + ~F * dF_dt);
+		Matd sigmaPK2 = numerical_viscoisty * strain_rate;
+		return F * sigmaPK2;
+	}	
 	//===================================================================//
 	Real ElasticSolid::GetArtificalViscosity(Real rho,
 		Real sound_speed, Real smoothing_length)
@@ -31,17 +45,17 @@ namespace SPH {
 		return 0.5*rho*sound_speed*smoothing_length;
 	}
 	//===================================================================//
-	Real ElasticSolid::GetSoundSpeed(Real rho_0, Real E, Real nu)
+	Real ElasticSolid::SetSoundSpeed(Real rho_0, Real E, Real nu)
 	{
 		return  sqrt(E / 3.0 / (1.0 - 2.0 * nu) / rho_0);
 	}
 	//===================================================================//
-	Real ElasticSolid::GetShearModulus(Real E, Real nu)
+	Real ElasticSolid::SetShearModulus(Real E, Real nu)
 	{
 		return 0.5 * E / (1.0 + nu);
 	}
 	//===================================================================//
-	Real ElasticSolid::GetLambda(Real E, Real nu)
+	Real ElasticSolid::SetLambda(Real E, Real nu)
 	{
 		return nu * E / (1.0 + nu) / (1.0 - 2.0 * nu);
 	}
@@ -53,11 +67,11 @@ namespace SPH {
 
 	}
 	//===================================================================//
-	Matd NeoHookeanSolid::ConstitutiveRelation(Matd &F, Real local_G, Real local_lambda)
+	Matd NeoHookeanSolid::ConstitutiveRelation(Matd &F, size_t particle_index_i)
 	{
 		Matd right_cauchy = ~F * F;
-		Matd sigmaPK2 = local_G * Matd(1.0)
-			+ (local_lambda*log(det(F)) - local_G)*inverse(right_cauchy);
+		Matd sigmaPK2 = G_0_ * Matd(1.0)
+			+ (lambda_0_*log(det(F)) - G_0_)*inverse(right_cauchy);
 		return F * sigmaPK2;
 	}
 	//===================================================================//
@@ -69,12 +83,12 @@ namespace SPH {
 
 	}
 	//===================================================================//
-	Matd FeneNeoHookeanSolid::ConstitutiveRelation(Matd &F, Real local_G, Real local_lambda)
+	Matd FeneNeoHookeanSolid::ConstitutiveRelation(Matd &F, size_t particle_index_i)
 	{
 		Matd right_cauchy = ~F * F;
 		Matd strain = 0.5 * (right_cauchy - Matd(1.0));
-		Matd sigmaPK2 = local_G / (1.0 - 2.0*strain.trace() / j1_m_)*Matd(1.0)
-			+ (local_lambda*log(det(F)) - local_G)*inverse(right_cauchy);
+		Matd sigmaPK2 = G_0_ / (1.0 - 2.0*strain.trace() / j1_m_)*Matd(1.0)
+			+ (lambda_0_*log(det(F)) - G_0_)*inverse(right_cauchy);
 		return F * sigmaPK2;
 	}
 	//===================================================================//
@@ -89,21 +103,25 @@ namespace SPH {
 		}
 	}
 	//===================================================================//
-	Matd Muscle::ConstitutiveRelation(Matd &F,
-		Real local_lambda, Real a[4], Real b[4], Vecd local_f0, Vecd local_s0,
-		Matd local_f0f0, Matd local_s0s0, Matd local_f0s0)
+	void Muscle::SetupLocalProperties(ElasticSolidParticles &elasticsolid_particles)
+	{
+		cout << "\n This function Muscle::SetupLocalProperties is not done yet. Exit the program! \n";
+		exit(0);
+	}
+	//===================================================================//
+	Matd Muscle::ConstitutiveRelation(Matd &F, size_t i)
 	{
 		Matd right_cauchy = ~F * F;
-		Real I_ff_1 = SimTK::dot(right_cauchy*local_f0, local_f0) - 1.0;
-		Real I_ss_1 = SimTK::dot(right_cauchy*local_s0, local_s0) - 1.0;
-		Real I_fs = SimTK::dot(right_cauchy*local_f0, local_s0);
+		Real I_ff_1 = SimTK::dot(right_cauchy*f0_[i], f0_[i]) - 1.0;
+		Real I_ss_1 = SimTK::dot(right_cauchy*s0_[i], s0_[i]) - 1.0;
+		Real I_fs = SimTK::dot(right_cauchy*f0_[i], s0_[i]);
 		Real ln_J = log(det(F));
 		Real I_1_1 = right_cauchy.trace() - 3.0 - 2.0*ln_J;
-		Matd sigmaPK2 = a[0]*exp(b[0] * I_1_1)*Matd(1.0)
-			+ (local_lambda*ln_J - a[0] * exp(b[0] * I_1_1))*inverse(right_cauchy)
-			+ 2.0* a[1]*I_ff_1*exp(b[1]*I_ff_1*I_ff_1)*local_f0f0
-			+ 2.0* a[2]*I_ss_1*exp(b[2]*I_ss_1*I_ss_1)*local_s0s0
-			+ a[3]* I_fs*exp(b[3]* I_fs*I_fs)*local_f0s0;
+		Matd sigmaPK2 = a_0_[0]*exp(b_0_[0] * I_1_1)*Matd(1.0)
+			+ (lambda_0_*ln_J - a_0_[0] * exp(b_0_[0] * I_1_1))*inverse(right_cauchy)
+			+ 2.0* a_0_[1]*I_ff_1*exp(b_0_[1]*I_ff_1*I_ff_1)*f0f0_[i]
+			+ 2.0* a_0_[2]*I_ss_1*exp(b_0_[2]*I_ss_1*I_ss_1)*s0s0_[i]
+			+ a_0_[3]* I_fs*exp(b_0_[3]* I_fs*I_fs)*f0s0_[i];
 		return F * sigmaPK2;
 	}
 }

@@ -1,13 +1,13 @@
 #include "solid_dynamics.h"
 #include "solid_body.h"
-#include "solid_body_particles.h"
+#include "solid_particles.h"
 #include "neighboring_particle.h"
 #include "base_kernel.h"
 #include "base_data_package.h"
 #include "elastic_solid.h"
 #include "external_force.h"
 #include "mesh_cell_linked_list.h"
-#include "weakly_compressible_fluid_particles.h"
+#include "fluid_particles.h"
 #include "weakly_compressible_fluid.h"
 
 using namespace SimTK;
@@ -17,10 +17,10 @@ namespace SPH
 	namespace solid_dynamics
 	{
 		//=========================================================================================//
-		void UpdateElasticNormalDirection::ParticleUpdate(size_t index_particle_i, Real dt)
+		void UpdateElasticNormalDirection::Update(size_t index_particle_i, Real dt)
 		{
-			SolidBodyParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-			ElasticBodyParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
+			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
+			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
 
 			//deformation tensor in 2D
 			Real F00 = elastic_data_i.F_(0, 0);
@@ -40,7 +40,7 @@ namespace SPH
 				Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			SolidBodyParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
+			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
 
 			Vec3 rr, pos, vel, acc;
 			rr(0) = solid_data_i.pos_0_[0] - initial_mobod_origin_location_[0];
@@ -61,7 +61,7 @@ namespace SPH
 		SpatialVec ForceOnSolidBodyPartForSimBody::ReduceFunction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i 	= particles_->base_particle_data_[index_particle_i];
-			SolidBodyParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
+			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
 
 			Vec3 force_from_particle(0);
 			force_from_particle.updSubVec<2>(0) = solid_data_i.force_from_fluid_;
@@ -77,8 +77,8 @@ namespace SPH
 			::ReduceFunction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			SolidBodyParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-			ElasticBodyParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
+			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
+			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
 
 			Vec3 force_from_particle(0);
 			force_from_particle.updSubVec<2>(0) = elastic_data_i.mass_

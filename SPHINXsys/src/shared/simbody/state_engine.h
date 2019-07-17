@@ -1,5 +1,5 @@
 /**
- * @file 	statengine.h
+ * @file 	state_engine.h
  * @details The StateEngine class defines the interface used to add computational
  *          elements to the underlying SimTK::System (MultibodySystem). It specifies
  *          the interface that simbodystates must satisfy in order to be part of the system
@@ -345,5 +345,4 @@ namespace SPH {
          */
         void realizeReport();
     };
-
 }

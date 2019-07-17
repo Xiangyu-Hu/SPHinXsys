@@ -170,9 +170,8 @@ int main()
 	/**
 	 * @brief 	Build up context -- a SPHSystem.
 	 */
-	Real smoothinglength_ratio = 1.0;
 	SPHSystem system(Vec2d(-DLsponge - BW, -BW),
-		Vec2d(DL + BW, DH + BW), particle_spacing_ref, smoothinglength_ratio);
+		Vec2d(DL + BW, DH + BW), particle_spacing_ref);
 	/**
 	 * @brief 	Particles and body creation for water.
 	 */
@@ -201,6 +200,7 @@ int main()
 	system.SetBodyTopology(&body_topology);
 	/** Setting up the simulation. */
 	system.SetupSPHSimulation();
+
 	/**
 	 * @brief 	Methods used for updating data structure.
 	 */
@@ -225,6 +225,13 @@ int main()
 	RandomizePartilePosition random_relax_water_particles(relax_water);
 
 	/**
+	 * @brief 	Methods used only once.
+	 */
+	 /** initial condition for fluid body */
+	relax_dynamics::RelaxDynamicsInitialCondition set_all_relax_water_particles_at_rest(relax_water);
+	relax_dynamics::RelaxDynamicsInitialCondition set_all_relax_solid_particles_at_rest(relax_solid);
+
+	/**
 	 * @brief 	Algorithms for particle relaxation.
 	 */
 	 /** Constraint particles to surface. */
@@ -242,20 +249,22 @@ int main()
 	 * @brief Output.
 	 */
 	 /** Initialize the output system. */
-	Output output(system);
+	In_Output in_output(system);
 	/** Write the body state to Vtu file. */
-	WriteBodyStatesToVtu 		write_states_to_vtu(output, system.real_bodies_);
+	WriteBodyStatesToVtu 		write_states_to_vtu(in_output, system.real_bodies_);
 	/** Write the body state to plt file. */
-	WriteBodyStatesToPlt 		write_states_to_plt(output, system.real_bodies_);
-	/** Write the body state ot Xml file. */
-	WriteBodyStatesToXml 		write_water_block_states_to_xml(output, system.real_bodies_);
+	WriteBodyStatesToPlt 		write_states_to_plt(in_output, system.real_bodies_);
+	/** Write the particle reload files. */
+	WriteReloadParticle 		write_particle_reload_files(in_output, system.real_bodies_);
 	/** Write mesh data. */
-	WriteRelaxBodyMeshToPlt 	write_relax_solid_background_mesh(output, relax_solid);
+	WriteRelaxBodyMeshToPlt 	write_relax_solid_background_mesh(in_output, relax_solid);
 	write_relax_solid_background_mesh.WriteToFile(0.0);
 	/**
 	 * @brief 	Physics relaxation starts here.
 	 */
 	 /** Relax the elastic structure. */
+	set_all_relax_water_particles_at_rest.exec();
+	set_all_relax_solid_particles_at_rest.exec();
 	random_relax_solid_particles.parallel_exec();
 	random_relax_water_particles.parallel_exec();
 	constrain_particles_to_gemotery.parallel_exec();
@@ -295,7 +304,7 @@ int main()
 	std::cout << "The physics relaxation of fluid process finish !" << std::endl;
 	/** Output results. */
 	write_states_to_plt.WriteToFile(1.0);
-	write_water_block_states_to_xml.WriteToFile(0);
+	write_particle_reload_files.WriteToFile(0);
 
 	return 0;
 }

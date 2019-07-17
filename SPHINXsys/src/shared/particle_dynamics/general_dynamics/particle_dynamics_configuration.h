@@ -17,7 +17,7 @@ namespace SPH {
 	 * @class ParticleDynamicsConfiguration
 	 * @brief Update both inner and contact configurations
 	 */
-	class ParticleDynamicsConfiguration : public ParticleDynamics<void, SPHBody, Particles>
+	class ParticleDynamicsConfiguration : public ParticleDynamics<void, SPHBody>
 	{
 	protected:
 
@@ -34,7 +34,7 @@ namespace SPH {
 	 * @class ParticleDynamicsConfiguration
 	 * @brief Update both contact configurations only
 	 */
-	class ParticleDynamicsContactConfiguration : public ParticleDynamics<void, SPHBody, Particles>
+	class ParticleDynamicsContactConfiguration : public ParticleDynamics<void, SPHBody>
 	{
 	protected:
 
@@ -51,10 +51,9 @@ namespace SPH {
 	 * @class ParticleDynamicsInteractionConfiguration
 	 * @brief Update interaction configuration only
 	 */
-	class ParticleDynamicsInteractionConfiguration : public ParticleDynamics<void, SPHBody, Particles>
+	class ParticleDynamicsInteractionConfiguration : public ParticleDynamics<void, SPHBody>
 	{
 	protected:
-		
 		SPHBodyVector interacting_bodies_;
 
 	public:
@@ -72,7 +71,7 @@ namespace SPH {
 	 * @brief Update inner configuration only
 	 */
 	 //update particle inner configuration only
-	class ParticleDynamicsInnerConfiguration : public ParticleDynamics<void, SPHBody, Particles>
+	class ParticleDynamicsInnerConfiguration : public ParticleDynamics<void, SPHBody>
 	{
 	protected:
 
@@ -89,7 +88,7 @@ namespace SPH {
 	 * @class ParticleDynamicsCellLinkedList
 	 * @brief Update cell linked list
 	 */
-	class ParticleDynamicsCellLinkedList : public ParticleDynamics<void, SPHBody, Particles>
+	class ParticleDynamicsCellLinkedList : public ParticleDynamics<void, SPHBody>
 	{
 	protected:
 
@@ -106,7 +105,7 @@ namespace SPH {
 	 * @class ParticleDynamicsByCellParticleLists
 	 * @brief Update by cell particle list
 	 */
-	class ParticleDynamicsByCellParticleLists : public ParticleDynamics<void, SPHBody, Particles>
+	class ParticleDynamicsByCellParticleLists : public ParticleDynamics<void, SPHBody>
 	{
 		SPHSystem *system_;
 

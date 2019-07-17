@@ -1,4 +1,4 @@
-#include "weakly_compressible_fluid_body.h"
+#include "fluid_body.h"
 #include "mesh_cell_linked_list.h"
 #include "weakly_compressible_fluid.h"
 #include "sph_system.h"

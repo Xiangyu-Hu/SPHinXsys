@@ -2,8 +2,7 @@
  * @file 	base_particle_generator.h
  * @brief 	This is the base class of particle generator, which generates particles
  * 			with given positions and volumes. The direct generator simply generate
- * 			particle with given position and volume. The lattice generator generate
- * 			at lattice position by check whether the poision is contained by a SPH body.
+ * 			particle with given position and volume. 
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  * @version	0.1
  */
@@ -13,52 +12,29 @@
 
 namespace SPH {
 	/**
-	 * @brief Friend Class.
+	 * @brief preclaimed class.
 	 */
-	class MeshCellLinkedList;
 	class SPHBody;
 	/**
 	 * @class ParticleGenerator.
-	 * @brief Base class for particle gneration.
+	 * @brief Base abstract class for particle generation.
 	 */
 	class ParticleGenerator
 	{
 	public:
-		/**
-	 	* @brief Default constructor.
-	 	* @param[in] 
-	 	*/
 		ParticleGenerator(SPHBody &sph_body);
-		/**
-	 	* @brief Default destructor.
-	 	*/
 		virtual ~ParticleGenerator() {};
-		/**
-	 	* @brief Create particle for a body.
-	 	*/
 		virtual void CreateParticles(SPHBody &sph_body) = 0;
 	};
 	/**
 	 * @class ParticleGeneratorDirect
-	 * @brief generate particle directly from poistion-and-volume data.
+	 * @brief Generate particle directly from poistion-and-volume data.
 	 */
-	class ParticleGeneratorDirect
-		: public ParticleGenerator
+	class ParticleGeneratorDirect : public ParticleGenerator
 	{
-
 	public:
-		/**
-	 	* @brief Default constructor.
-	 	* @param[in] 
-	 	*/
 		ParticleGeneratorDirect(SPHBody &sph_body);
-		/**
-	 	* @brief Default destructor.
-	 	*/
 		virtual ~ParticleGeneratorDirect() {};
-		/**
-	 	* @brief Create particle for a body.
-	 	*/
 		virtual void CreateParticles(SPHBody &sph_body) override;
 	};
 	/**
@@ -68,18 +44,8 @@ namespace SPH {
 	class ReadRelaxedParticlsFromXmlFile : public ParticleGenerator
 	{
 	public:
-		/**
-	 	* @brief Default constructor.
-	 	* @param[in] 
-	 	*/
 		ReadRelaxedParticlsFromXmlFile(SPHBody &sph_body);
-		/**
-	 	* @brief Default destructor.
-	 	*/
 		virtual ~ReadRelaxedParticlsFromXmlFile() {};
-		/**
-	 	* @brief Create particle for a body.
-	 	*/
 		virtual void CreateParticles(SPHBody &sph_body) override;
 	};
 	/**
@@ -89,18 +55,8 @@ namespace SPH {
 	class ReadRestartParticlsFromXmlFile : public ParticleGenerator
 	{
 	public:
-		/**
-	 	* @brief Default constructor.
-	 	* @param[in] 
-	 	*/
 		ReadRestartParticlsFromXmlFile(SPHBody &sph_body);
-		/**
-	 	* @brief Default destructor.
-	 	*/
 		virtual ~ReadRestartParticlsFromXmlFile() {};
-		/**
-	 	* @brief Create particle for a body.
-	 	*/
 		virtual void CreateParticles(SPHBody &sph_body) override;
 	};
 }

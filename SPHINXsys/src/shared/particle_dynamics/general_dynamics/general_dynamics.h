@@ -19,7 +19,7 @@ namespace SPH
 	{
 	protected:
 		Vecd initial_value_;
-		virtual void ParticleUpdate(size_t index_particle_i, Real dt = 0.0) override;
+		virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 	public:
 		InitializeOtherAccelerations(SPHBody* body);
 		InitializeOtherAccelerations(SPHBody* body, ExternalForce *external_force);
@@ -34,7 +34,7 @@ namespace SPH
 	{
 	protected:
 		Real particle_spacing_;
-		virtual void ParticleUpdate(size_t index_particle_i, Real dt = 0.0) override;
+		virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 	public:
 		RandomizePartilePosition(SPHBody* body);
 		virtual ~RandomizePartilePosition() {};
@@ -44,7 +44,7 @@ namespace SPH
 	* @class BoundingBodyDomain
 	* @brief The base calss bounding particle position within a box body domain.
 	*/
-	class BoundingBodyDomain : public ParticleDynamicsByCells<SPHBody, Particles>
+	class BoundingBodyDomain : public ParticleDynamicsByCells<SPHBody>
 	{
 		//obtain the cells lower and upper boundy 
 		//for the body domain
@@ -54,7 +54,6 @@ namespace SPH
 		//lower and upper bound for checking
 		Vecd body_lower_bound_, body_upper_bound_;
 		Vecu body_lower_bound_cell_, body_upper_bound_cell_;
-
 
 		//dynamics of a particle
 		//to be realized in specific algorithms
@@ -88,7 +87,6 @@ namespace SPH
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
-
 	};
 
 	/**
@@ -134,7 +132,8 @@ namespace SPH
 	 * @class VelocityBoundCheck
 	 * @brief  check whether paritcle velocity within a bound
 	 */
-	class VelocityBoundCheck : public ParticleDynamicsOR<SPHBody, Particles>
+	class VelocityBoundCheck 
+		: public ParticleDynamicsReduce<bool, ReduceOR, SPHBody, Particles>
 	{
 	protected:
 		Real velocity_bound_;
@@ -143,5 +142,21 @@ namespace SPH
 	public:
 		VelocityBoundCheck(SPHBody* body, Real velocity_bound);
 		virtual ~VelocityBoundCheck() {};
+	};
+
+	/**
+	 * @class UpperBoundInXDirection
+	 * @brief Get the Upper Bound In X Direction for a SPH body
+	 */
+	class UpperBoundInXDirection : public ParticleDynamicsReduce<Real, ReduceMax, SPHBody>
+	{
+	protected:
+		Real ReduceFunction(size_t index_particle_i, Real dt = 0.0) override;
+	public:
+		explicit UpperBoundInXDirection(SPHBody* body)
+			: ParticleDynamicsReduce(body) {
+			initial_reference_ = 0.0;
+		};
+		virtual ~UpperBoundInXDirection() {};
 	};
 }

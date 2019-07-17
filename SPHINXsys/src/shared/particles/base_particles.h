@@ -9,8 +9,9 @@
 #pragma once
 
 #include "base_data_package.h"
-#include <fstream>
+#include "xml_engine.h"
 
+#include <fstream>
 using namespace std;
 
 namespace SPH {
@@ -24,27 +25,16 @@ namespace SPH {
 		static int ID_max_;		/**< Maximum ID number for all particles. */
 
 	public:
-		/**
-		 * @brief Default constrcutor.
-		 * @detail Create a group of particle refered to a body.
-		 */
-		BaseParticleData() {};
-		/**
-		 * @brief Constrcutor.
-		 * @detail Create a particle.
-		 * @param[in] positioni Particle positiion.
-		 * @param[in] volum Particle volume.
-		 */
 		BaseParticleData(Vecd position, Real volume);
-		/**
-		 * @brief Default destructor.
-		 */
 		virtual ~BaseParticleData() {};
 
-		int particle_ID_;			/**< Particle ID. */
-		Vecu cell_location_;		/**< Cell location of a particle, */
-		Point pos_n_;	/**< Current position. */
-		/** Current and transport particle velocity and acceleration. **/
+		/** Particle ID. */
+		int particle_ID_;			
+		/** Cell location of a particle, used building inner configuration. */
+		Vecu cell_location_;		
+		/** Current position. */
+		Point pos_n_;	
+		/** Current particle velocity and stress induced and other accelerations. */
 		Vecd  vel_n_, dvel_dt_, dvel_dt_others_;	
 		/** Particle volume and initial volume. */
 		Real Vol_, Vol_0_;							
@@ -59,52 +49,27 @@ namespace SPH {
 		/** The name of the body in which the particles belongs to. */
 		string body_name_;		
 	public:
-		/**
-		 * @brief Default Constructor.
-		 * @detail Create a group of particles referred to a body.
-		 * @param[in] body_name Name of a body.
-		 */
 		Particles(string body_name);
-		/**
-		 * @brief Destructor.
-		 */
 		virtual ~Particles() {};
-
-		StdLargeVec<BaseParticleData> base_particle_data_;	/**< Vector of base particle data. */
-		size_t number_of_particles_;						/**< Number of particles. */
-		/**
-		 * @brief Initialize a prticle by input a postion and volume. 
-		 * @param[in] pnt Vecotor of particle position.
-		 * @param[in] particle_volume Volume of particle.
-		 */
+		/** Vector of base particle data. */
+		StdLargeVec<BaseParticleData> base_particle_data_;	
+		/** Initialize a prticle by input a postion and volume. */
 		virtual void InitializeAParticle(Vecd pnt, Real particle_volume) = 0;
-		/**
-		 * @brief Write particle data in VTU format for Paraview.
-		 * @param[out] output_file Ofstream of particle data.
-		 */
+		/** Write particle data in VTU format for Paraview. */
 		virtual void WriteParticlesToVtuFile(ofstream &output_file) = 0;
-		/**
-		 * @brief Write particle data in PLT format for Tecplot.
-		 * @param[out] output_file Ofstream of particle data.
-		 */
+		/** Write particle data in PLT format for Tecplot. */
 		virtual void WriteParticlesToPltFile(ofstream &output_file) = 0;
-		/**
-		 * @brief Write particle data in XML format.
-		 * @param[out] filefullpath Full path to file being write.
-		 */
+		/** Write particle data in XML format. */
 		virtual void WriteParticlesToXmlFile(std::string &filefullpath) = 0;
-		/**
-		 * @brief Write particle data in XML format for restart.
-		 * @param[out] filefullpath Full path to file being write.
-		 */
+		/** Write particle data in XML format for restart. */
 		virtual void WriteParticlesToXmlForRestart(std::string &filefullpath) = 0;
-		/**
-		 * @brief Initialize particle data from restart xml file.
-		 */
-		virtual void InitialParticleFromRestartXmlFile(std::string &filefullpath) = 0;
-		/**
-		 * @brief Pointer to this object. 
-		 */
+		/** Initialize particle data from restart xml file. */
+		virtual void ReadParticleFromXmlForRestart(std::string &filefullpath) = 0;
+		/** Output particle position and volume in XML file for reloading particles. */
+		virtual void WriteToXmlForReloadParticle(std::string &filefullpath);
+		/** Reload particle position and volume from XML files. */
+		virtual void ReadFromXmlForReloadParticle(std::string &filefullpath);
+		/** Pointer to this object. */
 		virtual Particles* PointToThisObject();
 	};
 }

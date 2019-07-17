@@ -37,14 +37,14 @@ Vecd intial_velocity(0.0, 0.0, 0.0);
 int resolution(50);
 
 //define the fluid body
-class WaterBlock : public WeaklyCompressibleFluidBody
+class WaterBlock : public FluidBody
 {
 	public:
 		WaterBlock(SPHSystem &system, string body_name,
-			WeaklyCompressibleFluid* material, 
-			WeaklyCompressibleFluidParticles &weakly_compressible_fluid_particles, 
+			WeaklyCompressibleFluid &material, 
+			FluidParticles &weakly_compressible_fluid_particles, 
 			int refinement_level, ParticlesGeneratorOps op)
-			: WeaklyCompressibleFluidBody(system, body_name, material, 
+			: FluidBody(system, body_name, material, 
 				weakly_compressible_fluid_particles, refinement_level, op)
 		{
 			Vecd halfsize_water(0.5 * LL, 0.5 * LH, 0.5 * LW);
@@ -56,26 +56,6 @@ class WaterBlock : public WeaklyCompressibleFluidBody
 			/* the function name, done_modeling, is confused, modify it in the future */
 			body_region_.done_modeling();
 		}
-
-	void InitialCondition() 
-	{
-		Particles &base_particles = base_particles_;
-		WeaklyCompressibleFluidParticles &fluid_particles
-			= weakly_compressible_fluid_particles_;
-
-		for (int i = 0; i < weakly_compressible_fluid_particles_.number_of_particles_; ++i) {
-			fluid_particles.fluid_data_[i].p_ = initial_pressure;
-			fluid_particles.base_particle_data_[i].vel_n_ = intial_velocity;
-			fluid_particles.base_particle_data_[i].dvel_dt_(0);
-			fluid_particles.fluid_data_[i].rho_0_
-				= material_->ReinitializeRho(initial_pressure);
-			fluid_particles.fluid_data_[i].rho_n_
-				= material_->ReinitializeRho(initial_pressure);
-			fluid_particles.fluid_data_[i].mass_
-				= fluid_particles.fluid_data_[i].rho_0_
-				*base_particles.base_particle_data_[i].Vol_;
-		}
-	}
 };
 
 //define the static solid wall boudary
@@ -83,8 +63,8 @@ class WallBoundary : public SolidBody
 {
 public:
 	WallBoundary(SPHSystem &system, string body_name, 
-		SolidBodyParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, solid_particles, refinement_level, op)
+		SolidParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), solid_particles, refinement_level, op)
 	{
 		Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
 		Vecd translation_wall(0.5 * DL, 0.5 * DH, 0.5 * DW);
@@ -96,17 +76,6 @@ public:
 		body_region_.add_geometry(geometry_inner, RegionBooleanOps::sub);
 
 		body_region_.done_modeling();
-	}
-
-	void InitialCondition() 
-	{
-		for (int i = 0; i < solid_particles_.number_of_particles_; ++i) {
-			solid_particles_.base_particle_data_[i].vel_n_ = intial_velocity;
-			Vecd zero(0);
-			solid_particles_.base_particle_data_[i].dvel_dt_ = zero;
-			solid_particles_.solid_body_data_[i].vel_ave_ = zero;
-			solid_particles_.solid_body_data_[i].dvel_dt_ave_ = zero;
-		}
 	}
 };
 
@@ -139,13 +108,13 @@ int main()
 	//Configuration of Materials
 	WeaklyCompressibleFluid fluid("Water", rho0_f, c_f, mu_f, k_f);
 	//creat a fluid particle cotainer
-	WeaklyCompressibleFluidParticles fluid_particles("WaterBody");
+	FluidParticles fluid_particles("WaterBody");
 	//the water block
 	WaterBlock *water_block 
-		= new WaterBlock(system, "WaterBody", &fluid, fluid_particles, 0, ParticlesGeneratorOps::lattice);
+		= new WaterBlock(system, "WaterBody", fluid, fluid_particles, 0, ParticlesGeneratorOps::lattice);
 	
 	//creat a solid particle cotainer
-	SolidBodyParticles solid_particles("Wall");
+	SolidParticles solid_particles("Wall");
 	//the wall boundary
 	WallBoundary *wall_boundary 
 		= new WallBoundary(system, "Wall", solid_particles, 0, ParticlesGeneratorOps::lattice);
@@ -177,14 +146,15 @@ int main()
 	//methods only used only once
 	//-------------------------------------------------------------------
 	//initialize normal direction of the wall boundary
-	solid_dynamics::NormalDirectionSummation 
+	  /** initial condition for the solid body */
+	solid_dynamics::SolidDynamicsInitialCondition set_all_solid_particles_at_rest(wall_boundary);
+	solid_dynamics::NormalDirectionSummation
 		get_wall_normal(wall_boundary, {});
-	get_wall_normal.exec();
+	/** initial condition for fluid body */
+	fluid_dynamics::WeaklyCompressibleFluidInitialCondition set_all_fluid_particles_at_rest(water_block);
 	//obtain the initial number density
 	fluid_dynamics::InitialNumberDensity 
 		fluid_initial_number_density(water_block, { wall_boundary });
-	fluid_initial_number_density.parallel_exec();
-
 
 	//-------- common paritcle dynamics ----------------------------------------
 	InitializeOtherAccelerations
@@ -218,18 +188,27 @@ int main()
 	//-----------------------------------------------------------------------------
 	//outputs
 	//-----------------------------------------------------------------------------
-	Output output(system);
-	WriteBodyStatesToVtu write_water_block_states(output, system.real_bodies_);
-	WriteWaterMechanicalEnergy write_water_mechanical_energy(output, water_block, &gravity);
-	WriteWaterFront write_water_front(output, water_block);
+	In_Output in_output(system);
+	WriteBodyStatesToVtu write_water_block_states(in_output, system.real_bodies_);
+	WriteWaterMechanicalEnergy write_water_mechanical_energy(in_output, water_block, &gravity);
+	WriteUpperBoundInXDirection write_water_front(in_output, water_block);
 	WriteObservedFluidPressure
-		write_recorded_water_pressure(output, fluid_observer, { water_block });
+		write_recorded_water_pressure(in_output, fluid_observer, { water_block });
 
 	//-------------------------------------------------------------------
 	//from here the time stepping begines
 	//-------------------------------------------------------------------
 	//starting time zero
 	GlobalStaticVariables::physical_time_ = 0.0;
+
+	/**
+	 * @brief Setup goematrics and initial conditions
+	 */
+	set_all_fluid_particles_at_rest.exec();
+	set_all_solid_particles_at_rest.exec();
+	get_wall_normal.exec();
+	fluid_initial_number_density.parallel_exec();
+
 	write_water_block_states.WriteToFile(GlobalStaticVariables::physical_time_);
 
 	int ite = 0;
@@ -241,8 +220,6 @@ int main()
 
 	//output for initial particles, global data
 	write_water_block_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	//output global basic parameters
-	output.WriteCaseSetup(End_Time, D_Time, GlobalStaticVariables::physical_time_);
 
 	//statistics for computing time
 	tick_count t1 = tick_count::now();

@@ -39,13 +39,10 @@ namespace SPH {
 	void MeshCellLinkedList::UpdateCellLists(SPHBody &body)
 	{
 		ClearCellLists();
-		Particles &current_particles = body.base_particles_;
-
+		StdVec<BaseParticleData> &base_particle_data = body.base_particles_.base_particle_data_;
 		//rebuild the corresponding particle list.
-		parallel_for(blocked_range<size_t>(0, current_particles.number_of_particles_),
+		parallel_for(blocked_range<size_t>(0, base_particle_data.size()),
 			[&](const blocked_range<size_t>& r) {
-			StdVec<BaseParticleData> &base_particle_data
-				= current_particles.base_particle_data_;
 			for (size_t i = r.begin(); i != r.end(); ++i) {
 				Vecu cellpos = GridIndexesFromPosition(base_particle_data[i].pos_n_);
 				base_particle_data[i].cell_location_ = cellpos;
@@ -58,14 +55,10 @@ namespace SPH {
 	void MeshCellLinkedList::UpdateByCellParticleLists(SPHBody &body)
 	{
 		//clear the data
+		ClearByCellParticleLists(body);
+
 		ByCellLists by_cell_lists_particle_indexes
 			= body.by_cell_lists_particle_indexes_;
-		for (size_t i = 0; i < 9; i++) {
-			for (size_t j = 0; j < by_cell_lists_particle_indexes[i].size(); j++)
-				by_cell_lists_particle_indexes[i][j].clear();
-			by_cell_lists_particle_indexes[i].clear();
-		}
-
 		for (size_t k = 0; k < 3; ++k)
 			for (size_t l = 0; l < 3; ++l)
 			{
@@ -93,7 +86,7 @@ namespace SPH {
 		StdVec<BaseParticleData> &base_particle_data = body.base_particles_.base_particle_data_;
 		NeighborList current_inner_configuration = body.current_inner_configuration_;
 
-		parallel_for(blocked_range<size_t>(0, body.number_of_particles_),
+		parallel_for(blocked_range<size_t>(0, body.number_of_real_particles_),
 			[&](const blocked_range<size_t>& r) {
 			for (size_t num = r.begin(); num != r.end(); ++num) {
 				int i = (int)base_particle_data[num].cell_location_[0];
@@ -115,9 +108,9 @@ namespace SPH {
 							{
 								count_of_neigbors >= current_number_of_neighbors ?
 									current_neighbor_list
-									.push_back(NeighboringParticle(*(body.kernel_), displacement, num, target_particles[n].particle_index_))
+									.push_back(NeighboringParticle(*(body.kernel_), displacement, target_particles[n].particle_index_))
 									: current_neighbor_list[count_of_neigbors]
-									.Reset(*(body.kernel_), displacement, num, target_particles[n].particle_index_);
+									.Reset(*(body.kernel_), displacement, target_particles[n].particle_index_);
 								count_of_neigbors++;
 							}
 						}
@@ -133,7 +126,7 @@ namespace SPH {
 		StdVec<BaseParticleData> &base_particle_data = body.base_particles_.base_particle_data_;
 		ReferenceNeighborList reference_inner_configuration = body.reference_inner_configuration_;
 
-		parallel_for(blocked_range<size_t>(0, body.number_of_particles_),
+		parallel_for(blocked_range<size_t>(0, body.number_of_real_particles_),
 			[&](const blocked_range<size_t>& r) {
 			for (size_t num = r.begin(); num != r.end(); ++num) {
 				int i = (int)base_particle_data[num].cell_location_[0];
@@ -155,9 +148,9 @@ namespace SPH {
 							{
 								count_of_neigbors >= current_number_of_neighbors ?
 									reference_neighbor_list
-									.push_back(ReferenceNeighboringParticle(*(body.kernel_), displacement, num, target_particles[n].particle_index_))
+									.push_back(ReferenceNeighboringParticle(*(body.kernel_), displacement, target_particles[n].particle_index_))
 									: reference_neighbor_list[count_of_neigbors]
-									.Reset(*(body.kernel_), displacement, num, target_particles[n].particle_index_);
+									.Reset(*(body.kernel_), displacement, target_particles[n].particle_index_);
 								count_of_neigbors++;
 							}
 						}
@@ -187,7 +180,7 @@ namespace SPH {
 			Kernel &kernel = ChoosingKernel(body.kernel_, contact_bodies[body_num]->kernel_);
 			Real cutoff_radius = kernel.GetCutOffRadius();
 
-			parallel_for(blocked_range<size_t>(0, body.number_of_particles_),
+			parallel_for(blocked_range<size_t>(0, body.number_of_real_particles_),
 				[&](const blocked_range<size_t>& r) {
 				for (size_t num = r.begin(); num != r.end(); ++num)
 				{
@@ -218,11 +211,9 @@ namespace SPH {
 								{
 									count_of_neigbors >= current_number_of_neighbors ?
 										current_neighbor_list
-										.push_back(NeighboringParticle(kernel, displacement,
-											num, target_particles[n].particle_index_))
+										.push_back(NeighboringParticle(kernel, displacement, target_particles[n].particle_index_))
 										: current_neighbor_list[count_of_neigbors]
-										.Reset(kernel, displacement, num,
-											target_particles[n].particle_index_);
+										.Reset(kernel, displacement, target_particles[n].particle_index_);
 									count_of_neigbors++;
 								}
 							}
@@ -256,7 +247,7 @@ namespace SPH {
 			Kernel &kernel = ChoosingKernel(body.kernel_, contact_bodies[body_num]->kernel_);
 			Real cutoff_radius = kernel.GetCutOffRadius();
 
-			parallel_for(blocked_range<size_t>(0, body.number_of_particles_),
+			parallel_for(blocked_range<size_t>(0, body.number_of_real_particles_),
 				[&](const blocked_range<size_t>& r) {
 				for (size_t num = r.begin(); num != r.end(); ++num)
 				{
@@ -287,11 +278,9 @@ namespace SPH {
 								{
 									count_of_neigbors >= current_number_of_neighbors ?
 										reference_neighbor_list
-										.push_back(ReferenceNeighboringParticle(kernel, displacement,
-											num, target_particles[n].particle_index_))
+										.push_back(ReferenceNeighboringParticle(kernel, displacement, target_particles[n].particle_index_))
 										: reference_neighbor_list[count_of_neigbors]
-										.Reset(kernel, displacement, num,
-											target_particles[n].particle_index_);
+										.Reset(kernel, displacement, target_particles[n].particle_index_);
 									count_of_neigbors++;
 								}
 							}
@@ -335,7 +324,7 @@ namespace SPH {
 				interacting_bodies[intertaction_body_num]->kernel_);
 			Real cutoff_radius = kernel.GetCutOffRadius();
 
-			parallel_for(blocked_range<size_t>(0, body.number_of_particles_),
+			parallel_for(blocked_range<size_t>(0, body.number_of_real_particles_),
 				[&](const blocked_range<size_t>& r) {
 				for (size_t num = r.begin(); num != r.end(); ++num) {
 					Vecu target_cell_index
@@ -367,11 +356,9 @@ namespace SPH {
 								{
 									count_of_neigbors >= current_number_of_neighbors ?
 										current_neighbor_list
-										.push_back(NeighboringParticle(kernel, displacement, num,
-											target_particles[n].particle_index_))
+										.push_back(NeighboringParticle(kernel, displacement, target_particles[n].particle_index_))
 										: current_neighbor_list[count_of_neigbors]
-										.Reset(kernel, displacement, num,
-											target_particles[n].particle_index_);
+										.Reset(kernel, displacement, target_particles[n].particle_index_);
 									count_of_neigbors++;
 								}
 							}

@@ -13,9 +13,8 @@
 
 namespace SPH {
 	/**
-	 * @brief Friend Class.
+	 * @brief Preclaimed class.
 	 */
-	class CellLinkedListMesh;
 	class SPHBody;
 
 	/**
@@ -36,19 +35,10 @@ namespace SPH {
 		void CalcNumberOfLattices(Vecd lower_bound, Vecd upper_bound, Real lattice_spacing);
 	protected:
 		Vecd lower_bound_, upper_bound_;	/**< Domain bounds. */
-
 	public:
-		/**
-	 	* @brief Default constructor.
-	 	*/
 		ParticleGeneratorLattice(SPHBody &sph_body);
-		/**
-	 	* @brief Defaut desctructor
-	 	*/
 		virtual ~ParticleGeneratorLattice() {};
-		/**
-	 	* @brief Create lattice particle for a body.
-	 	*/
+		/** Create lattice particle for a body. */
 		virtual void CreateParticles(SPHBody &sph_body) override;
 	};
 }

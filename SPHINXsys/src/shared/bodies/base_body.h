@@ -23,14 +23,15 @@ using namespace std;
 
 namespace SPH {
 	/**
-	 * @brief Friend Class.
+	 * @brief preclaimed class.
 	 */
 	class SPHSystem;
+	class Output;
 	class Particles;
+	class Material;
 	class Kernel;
 	class MeshCellLinkedList;
 	class MeshBackground;
-	class Region;
 
 	/**
 	 * @class ParticlesGeneratorOps
@@ -51,13 +52,11 @@ namespace SPH {
 	class SPHBody
 	{
 	protected:
-		SPHSystem &sph_system_; 	/**< SPHSystme. */
+		SPHSystem &sph_system_; 	/**< SPHSystem. */
 		string body_name_; 			/**< name of this body */
-		/**
-		 * @brief Computing particle spacing from refinement level.
-		 * @returns current particle sapcing calculated 
-		 * as particle_spacing_ref_ * powern(2.0, refinement_level_).
-		 */
+		/** Ratio between smoothing length to particle spacing. */
+		Real smoothinglength_ratio_;		
+		/** Computing particle spacing from refinement level */
 		Real RefinementLevelToParticleSpacing();
 
 	public:
@@ -69,11 +68,8 @@ namespace SPH {
 		 * @param[in] refinement_level Refinement level of this body.
 		 * @param[in] op Partciel generator manner.
 		 */
-		explicit SPHBody(SPHSystem &sph_system, string body_name,
-				Particles &base_particles, int refinement_level, ParticlesGeneratorOps op);
-		/**
-		 * @brief Default distructor.
-		 */
+		explicit SPHBody(SPHSystem &sph_system, string body_name, Material &base_material,
+			Particles &base_particles, int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op);
 		virtual ~SPHBody() {};
 
 		Kernel *kernel_; 		/**< sph kernel function specific to a SPHBody */
@@ -108,7 +104,7 @@ namespace SPH {
 		 */
 		virtual void UpdateContactConfiguration() = 0;
 		/**
-		 * @brief Update interactiong configuration, e.g., both inner and contact.
+		 * @brief Update interactiong configuration.
 		 * @param[in] interacting_bodies Interacting bodies of this body. 
 		 */
 		virtual void UpdateInteractionConfiguration(SPHBodyVector interacting_bodies) = 0;
@@ -118,37 +114,36 @@ namespace SPH {
 		//----------------------------------------------------------------------
 		Real speed_max_;							/**< Maxium particle speed. */
 		Real particle_spacing_;						/**< Particle spacing of the body. */
-		size_t number_of_particles_;				/**< Number of particles of the body. */
+		size_t number_of_real_particles_;			/**< Number of real particles of the body. */
 		Particles &base_particles_;					/**< Base particles of this body. */
+		Material &base_material_;					/**< Base material of this body. */
 		MeshCellLinkedList *mesh_cell_linked_list_; /**< Cell linked mesh of this body. */
 		/**
- 		 * @brief particle lists by cells for parallel splitting algorithm
+ 		 * @brief particle by cells lists is for parallel splitting algorithm
 		 * particles in each cell are collected together, 
-		 *if two partiles each belongs two different entries,
+		 * if two partiles each belongs two different cell entries,
 		 * they have no interaction because they are too far.
 		 */
+		size_t number_of_by_cell_lists_;
 		ByCellLists by_cell_lists_particle_indexes_;
 		
-
 		/** 
-		  * @brief Inner configurations for totoal Lagrangian formulation. 
+		  * @brief Reference inner configurations for totoal Lagrangian formulation. 
 		  */
 		ReferenceNeighborList reference_inner_configuration_;	
 		/**
-		  * @brief Inner configurations for updated Lagrangian formulation.
+		  * @brief current inner configurations for updated Lagrangian formulation.
 		  */
 		NeighborList current_inner_configuration_;
 		
 		/**
 		 * @brief Contact configurations
 		 * @details Note that contact configuration only gives all topological relation to this body.
-		 * the specific physical interaction, which may not involving all contact bodies,
-		 * will be defined in the specific particle dynmaics
+		 * The specific physical interaction, which may not involving all contact bodies,
+		 * will be defined in the specific particle dynamics
 		 */
-		 /** Contact map: pointing to contacted bodies. **/
+		 /** Contact map: pointing to toplogically contacted bodies. **/
 		SPHBodyContactMap contact_map_;
-		/** Pointing to Base particles of all contatced bodies. **/
-		StdVec<Particles *>  base_particles_contact_bodies_;
 		/** Lists of particles has a ocnfiguration with particles in contaced bodies. **/
 		ContactParticleList indexes_contact_particles_;
 		/** Configurations for total Lagrangian formulation.**/
@@ -177,7 +172,7 @@ namespace SPH {
 		Region body_region_;
 		/**
 		 * @brief Check wether a point within the geometry of this body.
-		 * @returns TRUE if a point within body's region other wise FALSE.
+		 * @returns TRUE if a point within body's region otherwise FALSE.
 		 */
 		bool BodyContain(Vecd pnt); 
 		/**
@@ -233,23 +228,17 @@ namespace SPH {
 		 * @param[in,out] output_file Ofstream for writing.
 		 */
 		virtual void WriteParticlesToXmlForRestart(std::string &filefullpath);
+		/** Output particle data in XML file for restart simulation. */
+		virtual void ReadParticlesFromXmlForRestart(std::string &filefullpath);
+	
+		/** Output particle position and volume in XML file for reloading particles. */
+		virtual void WriteToXmlForReloadParticle(std::string &filefullpath);
+		/** Reload particle position and volume from XML files. */
+		virtual void ReadFromXmlForReloadParticle(std::string &filefullpath);
 		/**
 		 * @brief The pointer to derived class object.
 		 */
 		virtual SPHBody* PointToThisObject();
-		/**
-		 * @brief Output global data in dat file for later reference.
-		 * @param[in,out] output_file Ofstream for output.
-		 */
-		virtual void GlobalBasicParameters(ofstream &out_file) = 0;
-		/**
-		 * @brief The initial condition is readed from restart files.
-		 */
-		virtual void InitialConditionFromRestartFile();
-		/**
-		 * @brief offset initial particle position.
-		 */
-		virtual void OffsetInitialParticlePosition(Vecd offset);
 	};
 	/**
 	 * @class RealBody
@@ -269,11 +258,8 @@ namespace SPH {
 		 * @param[in] refinement_level Refinement level of this body.
 		 * @param[in] op Partciel generator manner.
 		 */
-		RealBody(SPHSystem &sph_system, string body_name, 
-				Particles &base_particles, int refinement_level, ParticlesGeneratorOps op);
-		/**
-		 * @brief Default distructor.
-		 */
+		RealBody(SPHSystem &sph_system, string body_name, Material &base_material, 
+			Particles &base_particles, int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op);
 		virtual ~RealBody() {};
 		/**
 		 * @brief Allocate memory for cell linked list.
@@ -296,18 +282,6 @@ namespace SPH {
 		 * @param[in] interacting_bodies Interacting bodies of this body. 
 		 */
 		virtual void UpdateInteractionConfiguration(SPHBodyVector interacting_bodies) override;
-		/**
-		 * @brief Initilized local material properties.
-		 */
-		virtual void InitializeLocalMaterialProperties() {};
-		/**
-		 * @brief Set initial condition for the body.
-		 */
-		virtual void InitialCondition() = 0;
-		/**
-		 * @brief Set all particle at rest for easy initial condition.
-		 */
-		virtual void SetAllParticleAtRest();
 		/**
 		 * @brief The pointer to derived class object.
 		 */
@@ -332,11 +306,8 @@ namespace SPH {
 		 * @param[in] refinement_level Refinement level of this body.
 		 * @param[in] op Partciel generator manner.
 		 */
-		FictitiousBody(SPHSystem &system, string body_name, 
-					Particles &base_particles, int refinement_level, ParticlesGeneratorOps op);
-		/**
-		 * @brief Default distructor.
-		 */
+		FictitiousBody(SPHSystem &system, string body_name, Particles &base_particles, 
+			int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op);
 		virtual ~FictitiousBody() {};
 
 		/**
@@ -366,16 +337,11 @@ namespace SPH {
 		 * @brief The pointer to derived class object.
 		 */
 		virtual FictitiousBody* PointToThisObject() override;
-		/**
-		 * @brief Output global data in dat file for visuallization.
-		 * @param[in,out] output_file Ofstream for output.
-		 */
-		virtual void GlobalBasicParameters(ofstream &out_file) override;
 	};
 
 	/**
 	 * @class BodyPart
-	 * @brief A auxillariy class for SPHBody to indicate a part of the body.
+	 * @brief An auxillariy class for SPHBody to indicate a part of the body.
 	 */
 	class BodyPart
 	{
@@ -390,7 +356,7 @@ namespace SPH {
 
 	/**
 	 * @class LagrangianBodyPart
-	 * @brief A auxillariy class for SPHBody to 
+	 * @brief An auxillariy class for SPHBody to 
 	 * indicate a part of the body moving together with particles.
 	 */
 	class LagrangianBodyPart : public BodyPart
@@ -407,7 +373,7 @@ namespace SPH {
 
 	/**
 	 * @class EulerianBodyPart
-	 * @brief A auxillariy class for SPHBody to
+	 * @brief An auxillariy class for SPHBody to
 	 * indicate a part of the body fixed in space.
 	 */
 	class EulerianBodyPart : public BodyPart

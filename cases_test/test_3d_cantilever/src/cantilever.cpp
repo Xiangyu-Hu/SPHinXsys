@@ -73,12 +73,12 @@ Geometry *CreateForceSpot()
 	return geometry_cantilever_force_impose;
 }
 //define the cantilever body
-class Cantilever : public ElasticBody
+class Cantilever : public SolidBody
 {
 public:
-	Cantilever(SPHSystem &system, string body_name, ElasticSolid* material,
-		ElasticBodyParticles &elastic_particles, int refinement_level, ParticlesGeneratorOps op)
-		: ElasticBody(system, body_name, material,
+	Cantilever(SPHSystem &system, string body_name, ElasticSolid &material,
+		ElasticSolidParticles &elastic_particles, int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, material,
 			elastic_particles, refinement_level, op)
 	{
 		//geometry
@@ -86,11 +86,6 @@ public:
 		body_region_.add_geometry(CreateCantileverHolder(),	RegionBooleanOps::add);
 		//finish the region modeling
 		body_region_.done_modeling();
-	}
-
-	void InitialCondition()
-	{
-		SetAllParticleAtRest();
 	}
 };
 
@@ -194,10 +189,10 @@ int main()
 	ElasticSolid solid_material("ElasticSolid", rho0_s, Youngs_modulus, poisson, 0.0);
 
 	//creat a particle cotainer the elastic body
-	ElasticBodyParticles cantilever_particles("cantileverBody");
+	ElasticSolidParticles cantilever_particles("cantileverBody");
 	//the water block
 	Cantilever *cantilever_body =
-		new Cantilever(system, "CantileverBody", &solid_material, cantilever_particles, 0, ParticlesGeneratorOps::lattice);
+		new Cantilever(system, "CantileverBody", solid_material, cantilever_particles, 0, ParticlesGeneratorOps::lattice);
 
 	//create a observer particle container
 	ObserverParticles observer_particles("CantileverObserver");
@@ -215,6 +210,8 @@ int main()
 	//-----------------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
 	//-----------------------------------------------------------------------------
+	/** initial condition for the elastic solid bodies */
+	solid_dynamics::ElasticSolidDynamicsInitialCondition set_all_gate_particles_at_rest(cantilever_body);
 	//corrected strong configuration	
 	solid_dynamics::CorrectConfiguration
 		cantilever_corrected_configuration_in_strong_form(cantilever_body, {});
@@ -235,15 +232,17 @@ int main()
 	//-----------------------------------------------------------------------------
 	//outputs
 	//-----------------------------------------------------------------------------
-	Output output(system);
-	WriteBodyStatesToVtu write_cantilever_states(output, system.real_bodies_);
+	In_Output in_output(system);
+	WriteBodyStatesToVtu write_cantilever_states(in_output, system.real_bodies_);
 	WriteObservedElasticDisplacement
-		write_cantilever_displacement(output, cantilever_observer, { cantilever_body});
+		write_cantilever_displacement(in_output, cantilever_observer, { cantilever_body});
 	//-----------------------------------------------------------------------------
 	//from here the time stepping begines
 	//-----------------------------------------------------------------------------
 	//starting time zero
 	GlobalStaticVariables::physical_time_ = 0.0;
+	/** apply initial condition */
+	set_all_gate_particles_at_rest.exec();
 	write_cantilever_states.WriteToFile(GlobalStaticVariables::physical_time_);
 	write_cantilever_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
 

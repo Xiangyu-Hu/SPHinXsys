@@ -11,22 +11,24 @@
 
 namespace SPH {
 	//===============================================================//
-	template <class BodyType, class ParticlesType, class EulerianBodyPartType>
-	void EulerianConstraint<BodyType, ParticlesType, EulerianBodyPartType>::exec(Real dt)
+	template <class BodyType, class ParticlesType, class EulerianBodyPartType, class MaterialType>
+	void EulerianConstraint<BodyType, ParticlesType, EulerianBodyPartType, MaterialType>
+		::exec(Real dt)
 	{
 		PrepareConstraint();
 
 		for (size_t i = 0; i != constrained_cells_.size(); ++i) {
 			ListDataVector &list_data
-				= cell_linked_lists_[constrained_cells_[i][0]][constrained_cells_[i][1]]
+				= this->cell_linked_lists_[constrained_cells_[i][0]][constrained_cells_[i][1]]
 				.particle_data_lists_;
 			for (size_t num = 0; num < list_data.size(); ++num)
 				ConstraintAParticle(list_data[num].particle_index_, dt);
 		}
 	}
 	//===============================================================//
-	template <class BodyType, class ParticlesType, class EulerianBodyPartType>
-	void EulerianConstraint<BodyType, ParticlesType, EulerianBodyPartType>::parallel_exec(Real dt)
+	template <class BodyType, class ParticlesType, class EulerianBodyPartType, class MaterialType>
+	void EulerianConstraint<BodyType, ParticlesType, EulerianBodyPartType, MaterialType>
+		::parallel_exec(Real dt)
 	{
 		PrepareConstraint();
 
@@ -34,7 +36,7 @@ namespace SPH {
 			[&](const blocked_range<size_t>& r) {
 			for (size_t i = r.begin(); i < r.end(); ++i) {
 				ListDataVector &list_data
-					= cell_linked_lists_[constrained_cells_[i][0]][constrained_cells_[i][1]]
+					= this->cell_linked_lists_[constrained_cells_[i][0]][constrained_cells_[i][1]]
 					.particle_data_lists_;
 				for (size_t num = 0; num < list_data.size(); ++num)
 					ConstraintAParticle(list_data[num].particle_index_, dt);

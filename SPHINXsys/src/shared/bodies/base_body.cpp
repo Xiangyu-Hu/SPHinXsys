@@ -13,7 +13,9 @@
  */
 #include "base_body.h"
 #include "sph_system.h"
+#include "in_output.h"
 #include "base_particles.h"
+#include "base_material.h"
 #include "neighboring_particle.h"
 #include "base_kernel.h"
 #include "mesh_cell_linked_list.h"
@@ -22,23 +24,23 @@
 namespace SPH
 {
 	//===========================================================//
-	SPHBody::SPHBody(SPHSystem &sph_system, string body_name,
-		Particles &base_particles, int refinement_level, ParticlesGeneratorOps op)
+	SPHBody::SPHBody(SPHSystem &sph_system, string body_name, Material &base_material,
+		Particles &base_particles, int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op)
 		: sph_system_(sph_system), body_region_(body_name), 
-		body_name_(body_name), base_particles_(base_particles), 
-		refinement_level_(refinement_level), particle_generator_op_(op)
+		body_name_(body_name), base_particles_(base_particles), base_material_(base_material),
+		refinement_level_(refinement_level), smoothinglength_ratio_(smoothinglength_ratio), particle_generator_op_(op)
 	{	
 		sph_system_.AddBody(this);
 
 		particle_spacing_ 	= RefinementLevelToParticleSpacing();
-		kernel_ 			= sph_system_.GenerateAKernel(particle_spacing_);
+		kernel_ 			= sph_system_.GenerateAKernel(particle_spacing_*smoothinglength_ratio_);
 		rst_step_ 			= sph_system_.restart_step_;
 		mesh_cell_linked_list_
 							= new MeshCellLinkedList(sph_system.lower_bound_,
 									sph_system_.upper_bound_, kernel_->GetCutOffRadius());
-		Vecd zero;
-		by_cell_lists_particle_indexes_ 
-							= new StdVec<IndexVector>[powern(3, zero.size())];
+		number_of_by_cell_lists_ = powern(3, Vecd(0).size());
+		/** I will use concurrent vector here later after tests. */
+		by_cell_lists_particle_indexes_ = new StdVec<IndexVector>[number_of_by_cell_lists_];
 	}
 	//===========================================================//
 	Real SPHBody::RefinementLevelToParticleSpacing()
@@ -55,13 +57,13 @@ namespace SPH
 	void  SPHBody::AllocateMemoriesForConfiguration()
 	{
 		Allocate1dArray(indexes_contact_particles_, contact_map_.second.size());
-		Allocate1dArray(reference_inner_configuration_, number_of_particles_);
-		Allocate1dArray(current_inner_configuration_, number_of_particles_);
-		Allocate2dArray(reference_contact_configuration_, {contact_map_.second.size(), number_of_particles_});
-		Allocate2dArray(current_contact_configuration_, { contact_map_.second.size(), number_of_particles_ });
+		Allocate1dArray(reference_inner_configuration_, number_of_real_particles_);
+		Allocate1dArray(current_inner_configuration_, number_of_real_particles_);
+		Allocate2dArray(reference_contact_configuration_, {contact_map_.second.size(), number_of_real_particles_ });
+		Allocate2dArray(current_contact_configuration_, { contact_map_.second.size(), number_of_real_particles_ });
 		//reserve memeory for concurrent vectors
 		for (size_t i = 0; i != contact_map_.second.size(); ++i) {
-			indexes_contact_particles_[i].reserve(number_of_particles_);
+			indexes_contact_particles_[i].reserve(number_of_real_particles_);
 		}
 
 	}
@@ -84,10 +86,6 @@ namespace SPH
 	void  SPHBody::SetContactMap(SPHBodyContactMap &contact_map)
 	{
 		contact_map_ = contact_map;
-		//reserve memeory for concurrent vectors
-		for (size_t i = 0; i != contact_map_.second.size(); ++i) {
-			base_particles_contact_bodies_.push_back(&(contact_map_.second[i]->base_particles_));
-		}
 	}
 	//===========================================================//
 	void SPHBody::CreateParticelsInSpecificManner()
@@ -157,37 +155,29 @@ namespace SPH
 		base_particles_.WriteParticlesToXmlForRestart(filefullpath);
 	}
 	//===========================================================//
+	void SPHBody::ReadParticlesFromXmlForRestart(std::string &filefullpath) 
+	{
+		base_particles_.ReadParticleFromXmlForRestart(filefullpath);
+	}
+	//===============================================================//
+	void SPHBody::WriteToXmlForReloadParticle(std::string &filefullpath)
+	{
+		base_particles_.WriteToXmlForReloadParticle(filefullpath);
+	}
+	//===========================================================//
+	void SPHBody::ReadFromXmlForReloadParticle(std::string &filefullpath)
+	{
+		base_particles_.ReadFromXmlForReloadParticle(filefullpath);
+	}
+	//===========================================================//
 	SPHBody* SPHBody::PointToThisObject()
 	{
 		return this;
 	}
 	//===========================================================//
-	void SPHBody::InitialConditionFromRestartFile()
-	{
-		std::string restart_folder_ = "./rstfile";
-		if (!fs::exists(restart_folder_))
-		{
-			std::cout << "\n Error: the input file:"<< restart_folder_ << " is not exists" << std::endl;
-			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-			exit(1);
-		}
-		std::string filefullpath = restart_folder_ + "/SPHBody_" + GetBodyName() + "_rst_" + std::to_string(rst_step_) + ".xml";
-		base_particles_.InitialParticleFromRestartXmlFile(filefullpath);
-	}
-	//===========================================================//
-	void SPHBody::OffsetInitialParticlePosition(Vecd offset)
-	{
-		for (int i = 0; i < base_particles_.number_of_particles_; ++i) {
-			BaseParticleData &base_particle_data_i
-				= base_particles_.base_particle_data_[i];
-
-			base_particle_data_i.pos_n_ += offset;
-		}
-	}
-	//===========================================================//
-	RealBody::RealBody(SPHSystem &sph_system, string body_name,
-		Particles &base_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SPHBody(sph_system, body_name, base_particles, refinement_level, op)
+	RealBody::RealBody(SPHSystem &sph_system, string body_name, Material &base_material,
+		Particles &base_particles, int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op)
+		: SPHBody(sph_system, body_name, base_material, base_particles, refinement_level, smoothinglength_ratio, op)
 	{
 		sph_system.AddRealBody(this);
 
@@ -221,25 +211,14 @@ namespace SPH
 			->UpdateInteractionConfiguration(*this, interacting_bodies);
 	}
 	//===========================================================//
-	void RealBody::SetAllParticleAtRest()
-	{
-		for (int i = 0; i < number_of_particles_; ++i) {
-			BaseParticleData &base_particle_data_i
-				= base_particles_.base_particle_data_[i];
-
-			Vecd zero(0);
-			base_particle_data_i.vel_n_ = zero;
-		}
-	}
-	//===========================================================//
 	RealBody* RealBody::PointToThisObject()
 	{
 		return this;
 	}
 	//===========================================================//
-	FictitiousBody::FictitiousBody(SPHSystem &system, string body_name,
-		Particles &base_particles, 	int refinement_level, ParticlesGeneratorOps op)
-		: SPHBody(system, body_name, base_particles, refinement_level, op)
+	FictitiousBody::FictitiousBody(SPHSystem &system, string body_name, Particles &base_particles, 	int refinement_level, 
+		Real smoothinglength_ratio, ParticlesGeneratorOps op)
+		: SPHBody(system, body_name, *(new Material("FictitiousMaterial")), base_particles, refinement_level, smoothinglength_ratio, op)
 	{
 		system.AddFictitiousBody(this);
 	}
@@ -273,10 +252,5 @@ namespace SPH
 	FictitiousBody* FictitiousBody::PointToThisObject()
 	{
 		return this;
-	}
-	//===========================================================//
-	void FictitiousBody::GlobalBasicParameters(ofstream &out_file)
-	{
-		//noting done here
 	}
 }

@@ -38,8 +38,7 @@ namespace SPH {
 			number_of_particles++;
 		}
 
-		sph_body.base_particles_.number_of_particles_ = number_of_particles;
-		sph_body.number_of_particles_ = number_of_particles;
+		sph_body.number_of_real_particles_ = number_of_particles;
 	}
 	//---------------------------------------------------------------//
 	ReadRelaxedParticlsFromXmlFile
@@ -71,8 +70,7 @@ namespace SPH {
 					sph_body.GenerateAParticle(pos,vol);
 					number_of_particles++;
 			}
-			sph_body.base_particles_.number_of_particles_ = number_of_particles;
-			sph_body.number_of_particles_ = number_of_particles;
+			sph_body.number_of_real_particles_ = number_of_particles;
 		}
 	}
 	//---------------------------------------------------------------//
@@ -105,9 +103,8 @@ namespace SPH {
 					sph_body.GenerateAParticle(pos,vol);
 					number_of_particles++;
 			}
-			sph_body.base_particles_.number_of_particles_ = number_of_particles;
-			sph_body.number_of_particles_ = number_of_particles;
+			sph_body.number_of_real_particles_ = number_of_particles;
 		}
 	}
-
+	//---------------------------------------------------------------//
 }

@@ -20,8 +20,8 @@ namespace SPH {
 	 * That is the constrained particles will be the same
 	 * during the simulation.
 	 */
-	template <class BodyType, class ParticlesType, class LagrangianBodyPartType>
-	class LagrangianConstraint : public ParticleDynamics<void, BodyType, ParticlesType>
+	template <class BodyType, class ParticlesType, class LagrangianBodyPartType, class MaterialType = Material>
+	class LagrangianConstraint : public ParticleDynamics<void, BodyType, ParticlesType, MaterialType>
 	{
 	protected:
 		LagrangianBodyPartType *body_part_;
@@ -31,12 +31,12 @@ namespace SPH {
 		virtual void  ConstraintAParticle(size_t index_particle_i, 	Real dt = 0.0) = 0;
 	public:
 		LagrangianConstraint(BodyType *body, LagrangianBodyPartType *body_part)
-			: ParticleDynamics<void, BodyType, ParticlesType>(body),
-			body_part_(body_part), constrained_particles_(body_part->body_part_particles_) {};
+			: ParticleDynamics<void, BodyType, ParticlesType, MaterialType>(body),	body_part_(body_part), 
+			constrained_particles_(body_part->body_part_particles_) {};
 		virtual ~LagrangianConstraint() {};
 
-		virtual void exec(Real dt = 0.0);
-		virtual void parallel_exec(Real dt = 0.0);
+		virtual void exec(Real dt = 0.0) override;
+		virtual void parallel_exec(Real dt = 0.0) override;
 	};
 
 	/** 
@@ -44,8 +44,8 @@ namespace SPH {
 	 * @brief Imposing Eulerian constrain to a body.
 	 * The constrained particles are the cells tagged.
 	 */
-	template <class BodyType, class ParticlesType, class EulerianBodyPartType>
-	class EulerianConstraint : public ParticleDynamicsByCells<BodyType, ParticlesType>
+	template <class BodyType, class ParticlesType, class EulerianBodyPartType, class MaterialType = Material>
+	class EulerianConstraint : public ParticleDynamicsByCells<BodyType, ParticlesType, MaterialType >
 	{
 	protected:
 		EulerianBodyPartType *body_part_;
@@ -56,7 +56,7 @@ namespace SPH {
 			Real dt = 0.0) = 0;
 	public:
 		EulerianConstraint(BodyType *body, EulerianBodyPartType *body_part)
-			: ParticleDynamicsByCells<BodyType, ParticlesType>(body),
+			: ParticleDynamicsByCells<BodyType, ParticlesType, MaterialType>(body), 
 			body_part_(body_part), constrained_cells_(body_part->body_part_cells_) {};
 		virtual ~EulerianConstraint() {};
 
@@ -67,41 +67,31 @@ namespace SPH {
 	  * @class LagrangianConstraintReduce
 	  * @brief reduce operation in a Lagrangian contrained region.
 	  */
-	template <class ReturnType, class BodyType, class ParticlesType, class LagrangianBodyPartType>
-	class LagrangianConstraintReduce
-		: public ParticleDynamicsReduce<ReturnType, BodyType, ParticlesType>
+	template <class ReturnType, typename ReduceOperation, 
+		class BodyType, class ParticlesType, class LagrangianBodyPartType, class MaterialType = Material>
+	class LagrangianConstraintReduce : public ParticleDynamics<ReturnType, BodyType, ParticlesType, MaterialType>
 	{
 	protected:
+		ReduceOperation reduce_operation_;
+
 		LagrangianBodyPartType *body_part_;
 		IndexVector &constrained_particles_;
 
+		//inital or refence value
+		ReturnType initial_reference_;
+		virtual void SetupReduce() {};
+		virtual ReturnType ReduceFunction(size_t index_particle_i, Real dt = 0.0) = 0;
+		virtual ReturnType OutputResult(ReturnType reduced_value) { return reduced_value; };
 	public:
 		LagrangianConstraintReduce(BodyType* body, LagrangianBodyPartType *body_part)
-			: ParticleDynamicsReduce<ReturnType, BodyType, ParticlesType>(body),
-			body_part_(body_part), constrained_particles_(body_part->body_part_particles_) {};
+			: ParticleDynamics<ReturnType, BodyType, ParticlesType, MaterialType>(body), body_part_(body_part), 
+			constrained_particles_(body_part->body_part_particles_) {};
 		virtual ~LagrangianConstraintReduce() {};
 
 		/** sequential */
-		virtual ReturnType exec(Real dt = 0.0);
+		virtual ReturnType exec(Real dt = 0.0) override;
 
 		/** parallel */
-		virtual ReturnType parallel_exec(Real dt = 0.0);
-	};
-
-	/** 
-	 * @class LagrangianConstraintSum
-	 * @brief compute reduced sum form Lagrangian contrained region.
-	 */
-	template <class ReturnType, class BodyType, class ParticlesType, class LagrangianBodyPartType>
-	class LagrangianConstraintSum
-		: public LagrangianConstraintReduce<ReturnType, BodyType, ParticlesType, LagrangianBodyPartType>
-	{
-	protected:
-
-		virtual ReturnType ReduceOperation(ReturnType x, ReturnType y) override { return x + y; };
-	public:
-		LagrangianConstraintSum(BodyType* body, LagrangianBodyPartType *body_part)
-			: LagrangianConstraintReduce<ReturnType, BodyType, ParticlesType, LagrangianBodyPartType>(body, body_part) {};
-		virtual ~LagrangianConstraintSum() {};
+		virtual ReturnType parallel_exec(Real dt = 0.0) override;
 	};
 }
