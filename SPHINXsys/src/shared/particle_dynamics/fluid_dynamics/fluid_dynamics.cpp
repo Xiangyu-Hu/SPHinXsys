@@ -161,8 +161,8 @@ namespace SPH
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 
-				div_correction +=
-					dot(neighboring_particle.gradW_ij_, neighboring_particle.r_ij_)*base_particle_data_j.Vol_;
+				div_correction += neighboring_particle.dW_ij_ * neighboring_particle.r_ij_ *
+					dot(-neighboring_particle.e_ij_, neighboring_particle.e_ij_) * base_particle_data_j.Vol_;
 			}
 
 			fluid_data_i.div_correction_ = div_correction;
@@ -183,8 +183,8 @@ namespace SPH
 				SolidParticleData &solid_data_j
 					= (*interacting_particles_[interacting_body_index]).solid_body_data_[index_particle_j];
 
-				div_correction +=
-					dot(neighboring_particle.gradW_ij_, neighboring_particle.r_ij_)*base_particle_data_j.Vol_;
+				div_correction += neighboring_particle.dW_ij_ * neighboring_particle.r_ij_ *
+					dot(-neighboring_particle.e_ij_, neighboring_particle.e_ij_)*base_particle_data_j.Vol_;
 			}
 
 			fluid_data_i.div_correction_ += div_correction;
@@ -214,7 +214,7 @@ namespace SPH
 
 				//viscous force
 				Vecd vel_detivative = (base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_)
-					/ (neighboring_particle.r_ij_.norm() + 0.01 * smoothing_length_);
+					/ (neighboring_particle.r_ij_ + 0.01 * smoothing_length_);
 				acceleration += 2.0*mu_*vel_detivative*base_particle_data_j.Vol_ / fluid_data_i.rho_n_
 					*neighboring_particle.dW_ij_;
 			}
@@ -241,9 +241,9 @@ namespace SPH
 
 				//viscous force with a simple wall model for high-Reynolds number flow
 				Vecd vel_detivative = 2.0*(base_particle_data_i.vel_n_ - solid_data_j.vel_ave_)
-					/ (neighboring_particle.r_ij_.norm() + 0.01 * smoothing_length_);
+					/ (neighboring_particle.r_ij_ + 0.01 * smoothing_length_);
 				Real vel_difference = 0.03*(base_particle_data_i.vel_n_ - solid_data_j.vel_ave_).norm()
-					*neighboring_particle.r_ij_.norm();
+					* neighboring_particle.r_ij_;
 				acceleration += 2.0*SMAX(mu_, fluid_data_i.rho_n_*vel_difference)
 					*vel_detivative*base_particle_data_j.Vol_ / fluid_data_i.rho_n_
 					*neighboring_particle.dW_ij_;
@@ -267,10 +267,10 @@ namespace SPH
 				FluidParticleData &fluid_data_j = particles_->fluid_particle_data_[index_particle_j];
 
 				//exra stress
-				acceleration += 0.5*dt*((fluid_data_i.rho_n_*base_particle_data_i.vel_n_
-					*dot(fluid_data_i.dvel_dt_trans_, neighboring_particle.gradW_ij_))
+				acceleration += 0.5*dt*((fluid_data_i.rho_n_ * base_particle_data_i.vel_n_
+					* neighboring_particle.dW_ij_ * dot(fluid_data_i.dvel_dt_trans_, -neighboring_particle.e_ij_))
 					+ (fluid_data_j.rho_n_*base_particle_data_j.vel_n_
-						*dot(fluid_data_j.dvel_dt_trans_, neighboring_particle.gradW_ij_)))
+					* neighboring_particle.dW_ij_ * dot(fluid_data_j.dvel_dt_trans_, -neighboring_particle.e_ij_)))
 					*base_particle_data_j.Vol_ / fluid_data_i.rho_n_;
 			}
 
@@ -296,7 +296,7 @@ namespace SPH
 
 				//exra stress
 				acceleration += 0.5*dt*(fluid_data_i.rho_n_*base_particle_data_i.vel_n_
-					*dot(fluid_data_i.dvel_dt_trans_, neighboring_particle.gradW_ij_))
+					* neighboring_particle.dW_ij_ * dot(fluid_data_i.dvel_dt_trans_, -neighboring_particle.e_ij_))
 					*base_particle_data_j.Vol_ / fluid_data_i.rho_n_;
 			}
 
@@ -325,8 +325,8 @@ namespace SPH
 				FluidParticleData &fluid_data_j = particles_->fluid_particle_data_[index_particle_j];
 
 				//acceleration for transport velocity
-				acceleration_trans -= 2.0*p_background_*base_particle_data_j.Vol_ / fluid_data_i.rho_n_
-					*neighboring_particle.gradW_ij_;
+				acceleration_trans -= 2.0 * p_background_*base_particle_data_j.Vol_ / fluid_data_i.rho_n_
+					* neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_);
 			}
 			fluid_data_i.dvel_dt_trans_ = acceleration_trans;
 			base_particle_data_i.pos_n_ += acceleration_trans * dt*dt*0.5;
@@ -348,7 +348,7 @@ namespace SPH
 
 				//acceleration for transport velocity
 				acceleration_trans -= 2.0*p_background_*base_particle_data_j.Vol_ / fluid_data_i.rho_n_
-					*neighboring_particle.gradW_ij_;
+					* neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_);
 			}
 
 			fluid_data_i.dvel_dt_trans_ += acceleration_trans;
@@ -455,7 +455,7 @@ namespace SPH
 				Real p_star = material_->RiemannSolverForPressure(fluid_data_i.rho_n_, fluid_data_j.rho_n_,
 					fluid_data_i.p_, fluid_data_j.p_, ul, ur);
 				acceleration -= 2.0*p_star*base_particle_data_j.Vol_ / fluid_data_i.rho_n_
-					*neighboring_particle.gradW_ij_;
+					* neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_);
 			}
 
 			base_particle_data_i.dvel_dt_ = acceleration;
@@ -481,8 +481,9 @@ namespace SPH
 				Real face_wall_external_acceleration 
 					= dot((external_force_->InducedAcceleration(base_particle_data_i.pos_n_, base_particle_data_i.vel_n_, dt)
 					- solid_data_j.dvel_dt_ave_), -solid_data_j.n_);
-				Real p_in_wall = fluid_data_i.p_ + fluid_data_i.rho_n_*dot(neighboring_particle.r_ij_, -solid_data_j.n_)
-					*SMAX(0.0, face_wall_external_acceleration);
+				Real p_in_wall = fluid_data_i.p_ + fluid_data_i.rho_n_* neighboring_particle.r_ij_ *
+				 		dot(neighboring_particle.e_ij_, -solid_data_j.n_)
+						*SMAX(0.0, face_wall_external_acceleration);
 				Real rho_in_wall = material_->ReinitializeRho(p_in_wall);
 
 				Real p_star = (fluid_data_i.p_*rho_in_wall + p_in_wall * fluid_data_i.rho_n_)
@@ -490,7 +491,7 @@ namespace SPH
 
 				//pressure force
 				acceleration -= 2.0*p_star*base_particle_data_j.Vol_ / fluid_data_i.rho_n_
-					*neighboring_particle.gradW_ij_;
+					* neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_);
 			}
 
 			base_particle_data_i.dvel_dt_ += acceleration;
@@ -552,7 +553,8 @@ namespace SPH
 				//seems not using rimann problem solution is better
 				Vecd vel_in_wall = 2.0*solid_data_j.vel_ave_ - base_particle_data_i.vel_n_;
 				density_change_rate += fluid_data_i.rho_n_*base_particle_data_j.Vol_
-						*dot(base_particle_data_i.vel_n_ - vel_in_wall, neighboring_particle.gradW_ij_);
+						* dot(base_particle_data_i.vel_n_ - vel_in_wall, -neighboring_particle.e_ij_) 
+						* neighboring_particle.dW_ij_;
 			}
 
 			fluid_data_i.drho_dt_ += fluid_data_i.div_correction_*density_change_rate;
@@ -584,7 +586,7 @@ namespace SPH
 
 				//pressure force
 				acceleration -= 2.0*p_star*base_particle_data_j.Vol_ / fluid_data_i.rho_n_
-					*neighboring_particle.gradW_ij_;
+					* neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_);
 			}
 
 			base_particle_data_i.dvel_dt_ = acceleration;
@@ -610,7 +612,8 @@ namespace SPH
 				Real face_wall_external_acceleration 
 					= dot((external_force_->InducedAcceleration(base_particle_data_i.pos_n_, base_particle_data_i.vel_n_, dt)
 					- solid_data_j.dvel_dt_ave_), -solid_data_j.n_);
-				Real p_in_wall = fluid_data_i.p_ + fluid_data_i.rho_n_*dot(neighboring_particle.r_ij_, -solid_data_j.n_)
+				Real p_in_wall = fluid_data_i.p_ + fluid_data_i.rho_n_ * neighboring_particle.r_ij_ * 
+					dot(neighboring_particle.e_ij_, -solid_data_j.n_)
 					*SMAX(0.0, face_wall_external_acceleration);
 				Real rho_in_wall = material_->ReinitializeRho(p_in_wall);
 
@@ -619,7 +622,7 @@ namespace SPH
 
 				//pressure force
 				acceleration -= 2.0*p_star*base_particle_data_j.Vol_ / fluid_data_i.rho_n_
-					*neighboring_particle.gradW_ij_;
+					* neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_);
 			}
 
 			base_particle_data_i.dvel_dt_ += acceleration;
@@ -693,8 +696,9 @@ namespace SPH
 					/ (fluid_data_i.rho_n_ + fluid_data_j.rho_n_);
 
 				//pressure and elastic force
-				acceleration -= (2.0*p_star*neighboring_particle.gradW_ij_
-					+ (non_newtonian_fluid_data_i.tau_ + non_newtonian_fluid_data_j.tau_)*neighboring_particle.gradW_ij_)
+				acceleration -= (2.0 * p_star * neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_)
+					+ (non_newtonian_fluid_data_i.tau_ + non_newtonian_fluid_data_j.tau_)
+					* neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_))
 					*base_particle_data_j.Vol_ / fluid_data_i.rho_n_;
 			}
 
@@ -722,7 +726,8 @@ namespace SPH
 				Real face_wall_external_acceleration
 					= dot((external_force_->InducedAcceleration(base_particle_data_i.pos_n_, base_particle_data_i.vel_n_, dt)
 						- solid_data_j.dvel_dt_ave_), -solid_data_j.n_);
-				Real p_in_wall = fluid_data_i.p_ + fluid_data_i.rho_n_*dot(neighboring_particle.r_ij_, -solid_data_j.n_)
+				Real p_in_wall = fluid_data_i.p_ + fluid_data_i.rho_n_ * neighboring_particle.r_ij_ * 
+					dot(neighboring_particle.e_ij_, -solid_data_j.n_)
 					*SMAX(0.0, face_wall_external_acceleration);
 				Real rho_in_wall = material_->ReinitializeRho(p_in_wall);
 
@@ -730,8 +735,8 @@ namespace SPH
 					/ (fluid_data_i.rho_n_ + rho_in_wall);
 
 				//stress boundary condition 
-				acceleration -= (2.0*p_star*neighboring_particle.gradW_ij_
-					+ 2.0*non_newtonian_fluid_data_i.tau_*neighboring_particle.gradW_ij_)
+				acceleration -= (2.0 * p_star * neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_)
+					+ 2.0 * non_newtonian_fluid_data_i.tau_ * neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_))
 					*base_particle_data_j.Vol_ / fluid_data_i.rho_n_;
 			}
 
@@ -773,7 +778,7 @@ namespace SPH
 					*(u_star - ul)*neighboring_particle.dW_ij_;
 				//transport velocity
 				Matd velocity_gradient = SimTK::outer((fluid_data_i.vel_trans_ - fluid_data_j.vel_trans_),
-					neighboring_particle.gradW_ij_)*base_particle_data_j.Vol_;
+					neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_))*base_particle_data_j.Vol_;
 				stress_rate -= ~velocity_gradient*non_newtonian_fluid_data_i.tau_ 
 					+ non_newtonian_fluid_data_i.tau_*velocity_gradient + non_newtonian_fluid_data_i.tau_/lambda_
 					+ (~velocity_gradient + velocity_gradient)*mu_p_/lambda_;
@@ -803,10 +808,10 @@ namespace SPH
 					= (*interacting_particles_[interacting_body_index]).solid_body_data_[index_particle_j];
 
 				density_change_rate += 2.0*fluid_data_i.rho_n_
-					*dot(fluid_data_i.vel_trans_ - solid_data_j.vel_ave_, neighboring_particle.gradW_ij_)
-					*base_particle_data_j.Vol_;
+					*dot(fluid_data_i.vel_trans_ - solid_data_j.vel_ave_, 
+							neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_)) * base_particle_data_j.Vol_;
 				Matd velocity_gradient = SimTK::outer((fluid_data_i.vel_trans_ - solid_data_j.vel_ave_),
-					neighboring_particle.gradW_ij_)*base_particle_data_j.Vol_*2.0;
+					neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_)) * base_particle_data_j.Vol_*2.0;
 				stress_rate -= ~velocity_gradient*non_newtonian_fluid_data_i.tau_
 					+ non_newtonian_fluid_data_i.tau_*velocity_gradient + non_newtonian_fluid_data_i.tau_ / lambda_
 					+ (~velocity_gradient + velocity_gradient)*mu_p_ / lambda_;

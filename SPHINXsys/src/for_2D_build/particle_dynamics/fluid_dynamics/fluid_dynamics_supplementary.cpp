@@ -22,7 +22,8 @@ namespace SPH
 				FluidParticleData &fluid_data_j = particles_->fluid_particle_data_[index_particle_j];
 
 				Vecd vel_diff = base_particle_data_j.vel_n_ - base_particle_data_i.vel_n_;
-				Real vort = vel_diff[0] * neighboring_particle.r_ij_[1] - vel_diff[1] * neighboring_particle.r_ij_[0];
+				Vecd r_ij = neighboring_particle.r_ij_ * neighboring_particle.e_ij_;
+				Real vort = vel_diff[0] * r_ij[1] - vel_diff[1] * r_ij[0];
 				vort_temp += vort * base_particle_data_j.Vol_ * neighboring_particle.dW_ij_;
 			}
 

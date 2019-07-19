@@ -192,9 +192,12 @@ class WaterBlock : public FluidBody
 			: FluidBody(system, body_name, material, 
 				fluid_particles, refinement_level, op)
 		{
-			body_region_.add_polygon(CreatWaterBlockShape(), RegionBooleanOps::add);
-			body_region_.add_polygon(CreatGateBaseShape(), RegionBooleanOps::sub);
-			body_region_.add_polygon(CreatFlapShape(), RegionBooleanOps::sub);
+			std::vector<Point> water_block_shape = CreatWaterBlockShape();
+			std::vector<Point> gate_base_shape = CreatGateBaseShape();
+			std::vector<Point> flap_shape = CreatFlapShape();
+			body_region_.add_polygon(water_block_shape, RegionBooleanOps::add);
+			body_region_.add_polygon(gate_base_shape, RegionBooleanOps::sub);
+			body_region_.add_polygon(flap_shape, RegionBooleanOps::sub);
 			//finish the region modeling
 			body_region_.done_modeling();
 		}
@@ -208,9 +211,12 @@ public:
 		SolidParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
 		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), solid_particles, refinement_level, op)
 	{
-		body_region_.add_polygon(CreatOuterWallShape(), RegionBooleanOps::add);
-		body_region_.add_polygon(CreatInnerWallShape01(), RegionBooleanOps::sub);
-		body_region_.add_polygon(CreatInnerWallShape02(), RegionBooleanOps::sub);
+		std::vector<Point> outer_wall_shape   = CreatOuterWallShape();
+		std::vector<Point> inner_wall_shape_1 = CreatInnerWallShape01();
+		std::vector<Point> inner_wall_shape_2 = CreatInnerWallShape02();
+		body_region_.add_polygon(outer_wall_shape, RegionBooleanOps::add);
+		body_region_.add_polygon(inner_wall_shape_1, RegionBooleanOps::sub);
+		body_region_.add_polygon(inner_wall_shape_2, RegionBooleanOps::sub);
 		//finish the region modeling
 		body_region_.done_modeling();
 	}
@@ -224,7 +230,8 @@ public:
 		ElasticSolidParticles &elastic_particles, int refinement_level, ParticlesGeneratorOps op)
 		: SolidBody(system, body_name, material, elastic_particles, refinement_level, op)
 	{
-		body_region_.add_polygon(CreatGateBaseShape(), RegionBooleanOps::add);
+		std::vector<Point> gate_base_shape = CreatGateBaseShape();
+		body_region_.add_polygon(gate_base_shape, RegionBooleanOps::add);
 		//finish the region modeling
 		body_region_.done_modeling();
 	}
@@ -239,7 +246,8 @@ public:
 		: SolidBody(system, body_name, material, elastic_particles, 
 			refinement_level, op)
 	{
-		body_region_.add_polygon(CreatFlapShape(), RegionBooleanOps::add);
+		std::vector<Point> flap_shape = CreatFlapShape();
+		body_region_.add_polygon(flap_shape, RegionBooleanOps::add);
 		//finish the region modeling
 		body_region_.done_modeling();
 	}
@@ -254,7 +262,8 @@ public:
 		: SolidBodyPart(solid_body, constrianed_region_name)
 	{
 		//geometry
-		soild_body_part_region_.add_polygon(CreatWaveMakerShape(), RegionBooleanOps::add);
+		std::vector<Point> wave_maker_shape = CreatWaveMakerShape();
+		soild_body_part_region_.add_polygon(wave_maker_shape, RegionBooleanOps::add);
 		//finish the region modeling
 		soild_body_part_region_.done_modeling();
 

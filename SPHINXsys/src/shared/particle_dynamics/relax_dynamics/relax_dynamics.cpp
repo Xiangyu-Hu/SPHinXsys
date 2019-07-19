@@ -80,18 +80,18 @@ namespace SPH
 				RelaxBodyParticleData &relax_data_j
 					= particles_->relax_body_data_[index_particle_j];
 
-				acceleration -= 2.0 * p_star_ * neighboring_particle.gradW_ij_
-					*base_particle_data_j.Vol_ * base_particle_data_i.Vol_;
+				acceleration -= 2.0 * p_star_ * neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_)
+					* base_particle_data_j.Vol_ * base_particle_data_i.Vol_;
 				//viscous force
 				Vecd vel_detivative = (base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_)
-					/ (neighboring_particle.r_ij_.norm() + 0.01 * smoothing_length_ );
+					/ (neighboring_particle.r_ij_ + 0.01 * smoothing_length_ );
 				acceleration += 0.5 * eta_ * (base_particle_data_i.vel_n_.norm() + base_particle_data_j.vel_n_.norm())
 					* vel_detivative * base_particle_data_j.Vol_ * base_particle_data_i.Vol_* neighboring_particle.dW_ij_;
 				if(isnan(acceleration.norm()))
 				{
 					std::cout << "\n Error: the viscous acceleration is not valid" << std::endl;
 					std::cout << "\n Particle ID :" << index_particle_i << "\n Particle ID :" << index_particle_j << std::endl;
-					std::cout << "\n Particle distance :" << neighboring_particle.r_ij_.norm()<< std::endl;
+					std::cout << "\n Particle distance :" << neighboring_particle.r_ij_ << std::endl;
 					std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 					exit(1);
 				}
@@ -161,10 +161,10 @@ namespace SPH
 				RelaxBodyParticleData &relax_data_j = particles_->relax_body_data_[index_particle_j];
 
 				acceleration -= 2.0*p_star_*base_particle_data_j.Vol_ * base_particle_data_i.Vol_
-					*neighboring_particle.gradW_ij_;
+					* neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_);
 				//viscous force
 				Vecd vel_detivative = (base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_)
-					/ neighboring_particle.r_ij_.norm();
+					/ neighboring_particle.r_ij_ ;
 				acceleration += 0.5 * eta_ * (base_particle_data_i.vel_n_.norm() + base_particle_data_j.vel_n_.norm())
 					* vel_detivative * base_particle_data_j.Vol_ * base_particle_data_i.Vol_ * neighboring_particle.dW_ij_;
 			}
@@ -191,10 +191,10 @@ namespace SPH
 
 				//pressure force
 				acceleration -= 2.0 * p_star_ * base_particle_data_j.Vol_ * base_particle_data_i.Vol_
-					* neighboring_particle.gradW_ij_;
+					* neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_);
 
 				//viscous force
-				Vecd vel_detivative = 2.0*base_particle_data_i.vel_n_ / neighboring_particle.r_ij_.norm();
+				Vecd vel_detivative = 2.0*base_particle_data_i.vel_n_ / neighboring_particle.r_ij_ ;
 				acceleration += 0.5 * eta_ * (base_particle_data_i.vel_n_.norm() + base_particle_data_j.vel_n_.norm())
 					* vel_detivative * base_particle_data_j.Vol_ * base_particle_data_i.Vol_ * neighboring_particle.dW_ij_;
 			}

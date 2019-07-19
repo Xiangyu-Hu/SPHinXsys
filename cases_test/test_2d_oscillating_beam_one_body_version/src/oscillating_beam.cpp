@@ -84,14 +84,16 @@ public:
 						&elastic_particles, int refinement_level, ParticlesGeneratorOps op)
 		: SolidBody(system, body_name, material, elastic_particles, refinement_level, op)
 	{
-		//geometry
-		Geometry * beam_base_gemetry = new Geometry(CreatBeamBaseShape());
+		/** Geometry defination. */
+		std::vector<Point> beam_base_shape = CreatBeamBaseShape();
+		Geometry * beam_base_gemetry = new Geometry(beam_base_shape);
 		body_region_.add_geometry(beam_base_gemetry, RegionBooleanOps::add);
 
-		Geometry * beam_gemetry = new Geometry(CreatBeamShape());
+		std::vector<Point> beam_shape = CreatBeamShape();
+		Geometry * beam_gemetry = new Geometry(beam_shape);
 		body_region_.add_geometry(beam_gemetry, RegionBooleanOps::add);
 
-		//finish the region modeling
+		/** Finish the region modeling. */
 		body_region_.done_modeling();
 	}
 };
@@ -131,14 +133,15 @@ public:
 	BeamBase(SolidBody *solid_body, string constrianed_region_name)
 		: SolidBodyPart(solid_body, constrianed_region_name)
 	{
-		//geometry
-		Geometry * beam_base_gemetry = new Geometry(CreatBeamBaseShape());
+		/* Geometry defination */
+		std::vector<Point> beam_base_shape = CreatBeamBaseShape();
+		Geometry * beam_base_gemetry = new Geometry(beam_base_shape);
 		soild_body_part_region_.add_geometry(beam_base_gemetry, RegionBooleanOps::add);
-
-		Geometry * beam_gemetry = new Geometry(CreatBeamShape());
+		std::vector<Point> beam_shape = CreatBeamShape();
+		Geometry * beam_gemetry = new Geometry(beam_shape);
 		soild_body_part_region_.add_geometry(beam_gemetry, RegionBooleanOps::sub);
 
-		//finish the region modeling
+		/** Finish the region modeling. */
 		soild_body_part_region_.done_modeling();
 
 		//tag the constrained particle
@@ -154,7 +157,6 @@ public:
 			   &observer_particles, int refinement_level, ParticlesGeneratorOps op)
 		: ObserverLagrangianBody(system, body_name, observer_particles, refinement_level, op)
 	{
-		//add observation point
 		body_input_points_volumes_.push_back(make_pair(Point(PL, 0.0), 0.0));
 	}
 };

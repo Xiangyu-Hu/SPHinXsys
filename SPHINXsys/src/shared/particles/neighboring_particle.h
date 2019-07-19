@@ -22,12 +22,10 @@ namespace SPH {
 	public:
 		/** Index of the neighbor particle. */
 		size_t j_;
-		/** Vecor and norm of particle postion,r_ij_ and e_ij_ pointing from i to j. */
-		Vecd r_ij_, e_ij_;
-		/** Weighted fucntion and gardient of weighted fucntion. */
-		Real W_ij_, dW_ij_;
-		/** Kernel gradient in weak form. */
-		Vecd gradW_ij_;		
+		/** Norm of particle postion,e_ij_ pointing from i to j. */
+		Vecd e_ij_;
+		/** Particle distance, Weighted fucntion and gardient of weighted fucntion. */
+		Real r_ij_, W_ij_, dW_ij_;	
 
 		/** default constrcutor*/
 		NeighboringParticle() {};
@@ -59,12 +57,10 @@ namespace SPH {
 	public:
 		/** Index of the neighbor particle. */
 		size_t j_;
-		/** Vecor and norm of particle postion,r_ij_ and e_ij_ pointing from i to j. */
-		Vecd r_ij_;	
-		/** Weighted fucntion and gardient of weighted fucntion. */
-		Real W_ij_, dW_ij_;
-		/** Kernel gradient in weak form. */
-		Vecd gradW_ij_;		
+		/** Norm of particle postion,e_ij_ pointing from i to j. */
+		Vecd e_ij_;	
+		/** Particle distrane, Weighted fucntion and gardient of weighted fucntion. */
+		Real r_ij_, W_ij_, dW_ij_;	
 
 		/** default constrcutor*/
 		ReferenceNeighboringParticle() {};

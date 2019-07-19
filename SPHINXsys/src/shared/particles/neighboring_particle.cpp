@@ -11,37 +11,34 @@ namespace SPH
 {
 	//===============================================================//
 	NeighboringParticle::NeighboringParticle(Kernel &kernel, Vecd &r_ij, size_t j_index) 
-		: r_ij_(- r_ij), W_ij_(kernel.W(r_ij)), dW_ij_(kernel.dW(r_ij)),
+		: r_ij_(r_ij.norm()), W_ij_(kernel.W(r_ij)), dW_ij_(kernel.dW(r_ij)),
 		e_ij_(- normalize(r_ij)), j_(j_index)
 	{
-		gradW_ij_ = - dW_ij_ * e_ij_;
+		/* Nothing done here! */
 	}
 	//===============================================================//
 	void NeighboringParticle::Reset(Kernel &kernel,	Vecd &r_ij, size_t j_index)
 	{
-		j_ = j_index;
-		//r_ij_ pointing from i to j
-		r_ij_ = - r_ij;
-		e_ij_ = - normalize(r_ij);
-		W_ij_ = kernel.W(r_ij);
-		dW_ij_ = kernel.dW(r_ij);
-		gradW_ij_ = - dW_ij_* e_ij_;
+		j_ 		= j_index;
+		e_ij_ 	= - normalize(r_ij); /**< e_ij_ pointing from i to j */
+		r_ij_ 	= r_ij.norm();
+		W_ij_ 	= kernel.W(r_ij);
+		dW_ij_ 	= kernel.dW(r_ij);
 	}
 	//===============================================================//
 	ReferenceNeighboringParticle::ReferenceNeighboringParticle(Kernel &kernel, Vecd &r_ij, size_t j_index)
-		: r_ij_(-r_ij), W_ij_(kernel.W(r_ij)), dW_ij_(kernel.dW(r_ij)),
+		: r_ij_(r_ij.norm()), e_ij_(normalize(r_ij)), W_ij_(kernel.W(r_ij)), dW_ij_(kernel.dW(r_ij)),
 		j_(j_index)
 	{
-		gradW_ij_ = dW_ij_ * normalize(r_ij);;
+		/* Nothing done here! */
 	}
 	//===============================================================//
 	void ReferenceNeighboringParticle::Reset(Kernel &kernel, Vecd &r_ij, size_t j_index)
 	{
-		j_ = j_index;
-		//r_ij_ pointing from i to j
-		r_ij_ = -r_ij;
-		W_ij_ = kernel.W(r_ij);
-		dW_ij_ = kernel.dW(r_ij);
-		gradW_ij_ = dW_ij_ * normalize(r_ij);
+		j_ 		= j_index;
+		e_ij_ 	= normalize(r_ij); /**< e_ij_ pointing from i to j. */
+		r_ij_ 	= r_ij.norm();
+		W_ij_ 	= kernel.W(r_ij);
+		dW_ij_ 	= kernel.dW(r_ij);
 	}
 }

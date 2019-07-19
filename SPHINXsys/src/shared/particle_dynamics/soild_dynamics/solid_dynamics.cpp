@@ -46,7 +46,7 @@ namespace SPH
 			StdVec<ReferenceNeighboringParticle>  &neighors = (*reference_inner_configuration_)[index_particle_i];
 			for (size_t n = 0; n < neighors.size(); ++n)
 			{
-				gradient += neighors[n].gradW_ij_;
+				gradient += neighors[n].dW_ij_ * neighors[n].e_ij_;
 			}
 			solid_data_i.temp_vec_ = gradient;
 			solid_data_i.n_0_ = -solid_data_i.temp_vec_ / (solid_data_i.temp_vec_.norm() + 1.0e-2);;
@@ -61,7 +61,7 @@ namespace SPH
 			StdVec<ReferenceNeighboringParticle>  &neighors = (*reference_interacting_configuration_[interacting_body_index])[index_particle_i];
 			for (size_t n = 0; n < neighors.size(); ++n)
 			{
-				gradient += neighors[n].gradW_ij_;
+				gradient += neighors[n].dW_ij_ * neighors[n].e_ij_;
 			}
 			solid_data_i.temp_vec_ += gradient;
 			solid_data_i.n_0_ = -solid_data_i.temp_vec_ / (solid_data_i.temp_vec_.norm() + 1.0e-2);;
@@ -83,9 +83,10 @@ namespace SPH
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 
-				local_configuration += base_particle_data_j.Vol_
-					*SimTK::outer(neighboring_particle.r_ij_, neighboring_particle.gradW_ij_);
-				gradient += neighboring_particle.gradW_ij_ * base_particle_data_j.Vol_;
+				Vecd gradw_ij = neighboring_particle.dW_ij_ * neighboring_particle.e_ij_;
+				Vecd r_ij = -neighboring_particle.r_ij_ * neighboring_particle.e_ij_;
+				local_configuration += base_particle_data_j.Vol_ * SimTK::outer(r_ij, gradw_ij);
+				gradient += gradw_ij * base_particle_data_j.Vol_;
 			}
 
 			solid_data_i.temp_vec_ = gradient;
@@ -109,9 +110,10 @@ namespace SPH
 				BaseParticleData &base_particle_data_j
 					= (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
 
-				local_configuration += base_particle_data_j.Vol_
-					*SimTK::outer(neighboring_particle.r_ij_, neighboring_particle.gradW_ij_);
-				gradient += neighboring_particle.gradW_ij_ * base_particle_data_j.Vol_;
+				Vecd gradw_ij = neighboring_particle.dW_ij_ * neighboring_particle.e_ij_;
+				Vecd r_ij = -neighboring_particle.r_ij_ * neighboring_particle.e_ij_;
+				local_configuration += base_particle_data_j.Vol_ * SimTK::outer(r_ij, gradw_ij);
+				gradient += gradw_ij * base_particle_data_j.Vol_;
 			}
 
 			solid_data_i.temp_vec_ += gradient;
@@ -200,9 +202,9 @@ namespace SPH
 				//froce due to viscousity
 				//viscous force with a simple wall model for high-Reynolds number flow
 				Vecd vel_detivative = 2.0*(solid_data_i.vel_ave_ - base_particle_data_j.vel_n_)
-					/ (neighboring_particle.r_ij_.norm() + 0.01 * smoothing_length_);
+					/ (neighboring_particle.r_ij_ + 0.01 * smoothing_length_);
 				Real vel_difference = 0.03*(solid_data_i.vel_ave_ - base_particle_data_j.vel_n_).norm()
-					*neighboring_particle.r_ij_.norm();
+					*neighboring_particle.r_ij_ ;
 
 				force += 2.0*SMAX(mu_, fluid_data_j.rho_n_*vel_difference)
 					*vel_detivative*base_particle_data_i.Vol_ * base_particle_data_j.Vol_
@@ -261,7 +263,8 @@ namespace SPH
 				Real face_wall_external_acceleration
 					= dot((external_force_->InducedAcceleration(base_particle_data_j.pos_n_, base_particle_data_j.vel_n_, dt)
 						- solid_data_i.dvel_dt_ave_), -solid_data_i.n_);
-				Real p_in_wall = fluid_data_j.p_ + fluid_data_j.rho_n_*dot(neighboring_particle.r_ij_, -solid_data_i.n_)
+				Real p_in_wall = fluid_data_j.p_ + fluid_data_j.rho_n_ * neighboring_particle.r_ij_ *
+					dot(neighboring_particle.e_ij_, -solid_data_i.n_)
 					*SMAX(0.0, face_wall_external_acceleration);
 				Real rho_in_wall = interacting_material_[interacting_body_index]->ReinitializeRho(p_in_wall);
 
@@ -269,8 +272,8 @@ namespace SPH
 					/ (fluid_data_j.rho_n_ + rho_in_wall);
 
 				//force due to pressure
-				force -= 2.0*p_star*base_particle_data_i.Vol_ * base_particle_data_j.Vol_
-					*neighboring_particle.gradW_ij_;
+				force += 2.0*p_star*base_particle_data_i.Vol_ * base_particle_data_j.Vol_
+					* neighboring_particle.dW_ij_ * neighboring_particle.e_ij_;
 
 			}
 
@@ -300,7 +303,8 @@ namespace SPH
 				Real face_wall_external_acceleration
 					= dot((external_force_->InducedAcceleration(base_particle_data_j.pos_n_, base_particle_data_j.vel_n_, dt)
 						- solid_data_i.dvel_dt_ave_), -solid_data_i.n_);
-				Real p_in_wall = fluid_data_j.p_ + fluid_data_j.rho_n_*dot(neighboring_particle.r_ij_, -solid_data_i.n_)
+				Real p_in_wall = fluid_data_j.p_ + fluid_data_j.rho_n_ * neighboring_particle.r_ij_ *
+					dot(neighboring_particle.e_ij_, -solid_data_i.n_)
 					*SMAX(0.0, face_wall_external_acceleration);
 				Real rho_in_wall = interacting_material->ReinitializeRho(p_in_wall);
 				Vecd vel_in_wall = 2.0*solid_data_i.vel_ave_ - base_particle_data_j.vel_n_;
@@ -312,8 +316,8 @@ namespace SPH
 					fluid_data_j.p_, p_in_wall, ul, ur);
 
 				//force due to pressure
-				force -= 2.0*p_star*base_particle_data_i.Vol_ * base_particle_data_j.Vol_
-					*neighboring_particle.gradW_ij_;
+				force += 2.0*p_star*base_particle_data_i.Vol_ * base_particle_data_j.Vol_
+					* neighboring_particle.dW_ij_ * neighboring_particle.e_ij_;
 
 			}
 
@@ -354,8 +358,9 @@ namespace SPH
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 
-				local_configuration += base_particle_data_j.Vol_
-					*SimTK::outer(neighboring_particle.r_ij_, neighboring_particle.gradW_ij_);
+				Vecd gradw_ij = neighboring_particle.dW_ij_ * neighboring_particle.e_ij_;
+				Vecd r_ij = -neighboring_particle.r_ij_ * neighboring_particle.e_ij_;
+				local_configuration += base_particle_data_j.Vol_ * SimTK::outer(r_ij, gradw_ij);
 			}
 			solid_data_i.temp_matrix_ = local_configuration;
 		}
@@ -373,8 +378,9 @@ namespace SPH
 				BaseParticleData &base_particle_data_j
 					= (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
 
-				local_configuration += base_particle_data_j.Vol_
-					*SimTK::outer(neighboring_particle.r_ij_, neighboring_particle.gradW_ij_);
+				Vecd gradw_ij = neighboring_particle.dW_ij_ * neighboring_particle.e_ij_;
+				Vecd r_ij = -neighboring_particle.r_ij_ * neighboring_particle.e_ij_;
+				local_configuration += base_particle_data_j.Vol_ * SimTK::outer(r_ij, gradw_ij);
 			}
 			solid_data_i.temp_matrix_ += local_configuration;
 		}
@@ -401,9 +407,9 @@ namespace SPH
 				size_t index_particle_j = neighboring_particle.j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 
+				Vecd gradw_ij = neighboring_particle.dW_ij_ * neighboring_particle.e_ij_;
 				deformation -= base_particle_data_j.Vol_
-					*SimTK::outer((base_particle_data_i.pos_n_ - base_particle_data_j.pos_n_), 
-						neighboring_particle.gradW_ij_);
+					*SimTK::outer((base_particle_data_i.pos_n_ - base_particle_data_j.pos_n_), gradw_ij);
 			}
 			elastic_data_i.F_ = deformation * solid_data_i.B_;
 		}
@@ -426,9 +432,9 @@ namespace SPH
 				SolidParticleData &solid_data_j
 					= (*interacting_particles_[interacting_body_index]).solid_body_data_[index_particle_j];
 
+				Vecd gradw_ij = neighboring_particle.dW_ij_ * neighboring_particle.e_ij_;
 				deformation -= base_particle_data_j.Vol_
-					*SimTK::outer((base_particle_data_i.pos_n_ - base_particle_data_j.pos_n_),
-						neighboring_particle.gradW_ij_);
+					* SimTK::outer((base_particle_data_i.pos_n_ - base_particle_data_j.pos_n_), gradw_ij);
 			}
 			elastic_data_i.F_ += deformation * solid_data_i.B_;
 		}
@@ -469,8 +475,8 @@ namespace SPH
 
 				acceleration += (elastic_data_i.stress_*solid_data_i.B_
 					+ elastic_data_j.stress_ *solid_data_j.B_)
-					*neighboring_particle.gradW_ij_
-					*base_particle_data_j.Vol_ / elastic_data_i.rho_0_;
+					* neighboring_particle.dW_ij_ * neighboring_particle.e_ij_
+					* base_particle_data_j.Vol_ / elastic_data_i.rho_0_;
 			}
 			base_particle_data_i.dvel_dt_ = acceleration;
 		}
@@ -497,7 +503,7 @@ namespace SPH
 
 				acceleration += (elastic_data_i.stress_ *solid_data_i.B_
 					+ elastic_data_j.stress_*solid_data_j.B_)
-					*neighboring_particle.gradW_ij_
+					* neighboring_particle.dW_ij_ * neighboring_particle.e_ij_
 					*base_particle_data_j.Vol_ / elastic_data_i.rho_0_;
 			}
 			base_particle_data_i.dvel_dt_ += acceleration;
@@ -531,10 +537,10 @@ namespace SPH
 				SolidParticleData &solid_data_j = particles_->solid_body_data_[index_particle_j];
 				ElasticSolidParticleData &elastic_data_j = particles_->elastic_body_data_[index_particle_j];
 
+				Vecd gradw_ij = neighboring_particle.dW_ij_ * neighboring_particle.e_ij_;
 				deformation_gradient_change_rate
 					-= base_particle_data_j.Vol_
-					*SimTK::outer((base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_),
-						neighboring_particle.gradW_ij_);
+					*SimTK::outer((base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_), gradw_ij);
 			}
 			elastic_data_i.dF_dt_ = deformation_gradient_change_rate * solid_data_i.B_;
 		}
@@ -560,10 +566,10 @@ namespace SPH
 				ElasticSolidParticleData &elastic_data_j
 					= (*interacting_particles_[interacting_body_index]).elastic_body_data_[index_particle_j];
 
+				Vecd gradw_ij = neighboring_particle.dW_ij_ * neighboring_particle.e_ij_;
 				deformation_gradient_change_rate
 					-= base_particle_data_j.Vol_
-					*SimTK::outer((base_particle_data_i.vel_n_ - solid_data_j.vel_ave_),
-						neighboring_particle.gradW_ij_);
+					*SimTK::outer((base_particle_data_i.vel_n_ - solid_data_j.vel_ave_), gradw_ij);
 			}
 			elastic_data_i.dF_dt_ += deformation_gradient_change_rate * solid_data_i.B_;
 		}
@@ -611,8 +617,8 @@ namespace SPH
 
 				acceleration += (elastic_data_i.stress_ *solid_data_i.B_
 					+ elastic_data_j.stress_*solid_data_j.B_)
-					*neighboring_particle.gradW_ij_
-					*base_particle_data_j.Vol_ / elastic_data_i.rho_0_;
+					* neighboring_particle.dW_ij_ * neighboring_particle.e_ij_
+					* base_particle_data_j.Vol_ / elastic_data_i.rho_0_;
 			}
 			base_particle_data_i.dvel_dt_ = acceleration;
 		}
@@ -652,10 +658,10 @@ namespace SPH
 				ElasticSolidParticleData &elastic_data_j = particles_->elastic_body_data_[index_particle_j];
 
 				//deformtion
+				Vecd gradw_ij = neighboring_particle.dW_ij_ * neighboring_particle.e_ij_;
 				deformation_gradient_change_rate
 					-= base_particle_data_j.Vol_
-					*SimTK::outer((base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_),
-						neighboring_particle.gradW_ij_);
+					*SimTK::outer((base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_), gradw_ij);
 			}
 			elastic_data_i.dF_dt_ = deformation_gradient_change_rate* solid_data_i.B_;
 		}
@@ -701,9 +707,10 @@ namespace SPH
 				ElasticSolidParticleData &elastic_data_j
 					= (*interacting_particles_[interacting_body_index]).elastic_body_data_[index_particle_j];
 
+				Vecd gradw_ij = neighboring_particle.dW_ij_ * neighboring_particle.e_ij_;
 				deformation_gradient_change_rate
 					-= base_particle_data_j.Vol_
-					*SimTK::outer((solid_data_i.vel_ave_ - base_particle_data_j.vel_n_), neighboring_particle.gradW_ij_);
+					*SimTK::outer((solid_data_i.vel_ave_ - base_particle_data_j.vel_n_), gradw_ij);
 			}
 			elastic_data_i.dF_dt_ = deformation_gradient_change_rate * solid_data_i.B_;
 			elastic_data_i.F_ += elastic_data_i.dF_dt_ * dt * 0.5;
@@ -827,7 +834,7 @@ namespace SPH
 
 				//viscous force
 				Vecd vel_detivative = (base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_)
-					/ neighboring_particle.r_ij_.norm();
+					/ neighboring_particle.r_ij_ ;
 				acceleration += 0.5*eta_*vel_detivative
 					*neighboring_particle.dW_ij_*elastic_data_j.mass_
 					/ elastic_data_i.rho_0_ / elastic_data_j.rho_0_;

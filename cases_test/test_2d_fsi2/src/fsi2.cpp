@@ -138,10 +138,12 @@ class WaterBlock : public FluidBody
 			: FluidBody(system, body_name, material, fluid_particles, refinement_level, op)
 		{
 			/** Geomerty definition. */
-			body_region_.add_geometry(new Geometry(CreatWaterBlockShape()), RegionBooleanOps::add);
+			std::vector<Point> water_bock_shape = CreatWaterBlockShape(); 
+			body_region_.add_geometry(new Geometry(water_bock_shape), RegionBooleanOps::add);
 			/** Geomerty definition. */
 			body_region_.add_geometry(new Geometry(insert_circle_center, insert_circle_radius, 100), RegionBooleanOps::sub);
-			body_region_.add_geometry(new Geometry(CreatBeamShape()), RegionBooleanOps::sub);
+			std::vector<Point> beam_shape = CreatBeamShape();
+			body_region_.add_geometry(new Geometry(beam_shape), RegionBooleanOps::sub);
 			/** Finalize the geometry definition and correspoding opertation. */
 			body_region_.done_modeling();
 		}
@@ -158,9 +160,10 @@ public:
 		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), solid_particles, refinement_level, op)
 	{	
 		/** Geomerty definition. */
-		body_region_.add_geometry(new Geometry(CreatOuterWallShape()), RegionBooleanOps::add);
-		/** Geomerty definition. */
-		body_region_.add_geometry(new Geometry(CreatInnerWallShape()), RegionBooleanOps::sub);
+		std::vector<Point> outer_wall_shape = CreatOuterWallShape();
+		std::vector<Point> inner_wall_shape = CreatInnerWallShape();
+		body_region_.add_geometry(new Geometry(outer_wall_shape), RegionBooleanOps::add);
+		body_region_.add_geometry(new Geometry(inner_wall_shape), RegionBooleanOps::sub);
 		/** Finalize the geometry definition and correspoding opertation. */
 		body_region_.done_modeling();
 
@@ -179,9 +182,10 @@ public:
 		: SolidBody(system, body_name, material, elastic_particles, refinement_level, op)
 	{
 		/** Geomerty definition. */
+		std::vector<Point> beam_shape = CreatBeamShape();
 		Geometry *circle_geometry = new Geometry(insert_circle_center, insert_circle_radius, 100);
 		body_region_.add_geometry(circle_geometry, RegionBooleanOps::add);
-		Geometry *beam_geometry = new Geometry(CreatBeamShape());
+		Geometry *beam_geometry = new Geometry(beam_shape);
 		body_region_.add_geometry(beam_geometry, RegionBooleanOps::add);
 		/** Finalize the geometry definition and correspoding opertation. */
 		body_region_.done_modeling();
@@ -196,15 +200,15 @@ public:
 	BeamBase(SolidBody *solid_body, string constrianed_region_name)
 		: SolidBodyPart(solid_body, constrianed_region_name)
 	{
-		//geometry
+		/** Geomerty definition. */
+		std::vector<Point> beam_shape = CreatBeamShape();
 		Geometry *circle_geometry = new Geometry(insert_circle_center, insert_circle_radius, 100);
 		soild_body_part_region_.add_geometry(circle_geometry, RegionBooleanOps::add);
-		Geometry * beam_gemetry = new Geometry(CreatBeamShape());
+		Geometry * beam_gemetry = new Geometry(beam_shape);
 		soild_body_part_region_.add_geometry(beam_gemetry, RegionBooleanOps::sub);
-		//finish the region modeling
 		soild_body_part_region_.done_modeling();
 
-		//tag the constrained particle
+		/**  Tag the constrained particle. */
 		TagBodyPartParticles();
 	}
 };
@@ -218,7 +222,8 @@ public:
 		: FluidBodyPart(fluid_body, constrianed_region_name)
 	{
 		/** Geomerty definition. */
-		fluid_body_part_region_.add_geometry(new Geometry(CreatInflowBufferShape()), RegionBooleanOps::add);
+		std::vector<Point> inflow_buffer_shape = CreatInflowBufferShape();
+		fluid_body_part_region_.add_geometry(new Geometry(inflow_buffer_shape), RegionBooleanOps::add);
 		/** Finalize the geometry definition and correspoding opertation. */
 		fluid_body_part_region_.done_modeling();
 
@@ -310,7 +315,7 @@ int main()
 	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
 	/** Tag for reload initially repaxed particles. */
-	system.reload_particle_ = true;
+	system.reload_particle_ = false;
 
 	/**
 	 * @brief Material property, partilces and body creation of fluid.

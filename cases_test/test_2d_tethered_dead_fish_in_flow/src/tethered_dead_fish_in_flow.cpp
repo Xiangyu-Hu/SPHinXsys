@@ -132,7 +132,8 @@ public:
 		: FluidBody(system, body_name, material,
 			weakly_compressible_fluid_particles, refinement_level, op)
 	{
-		body_region_.add_geometry(new Geometry(CreatWaterBlockShape()), RegionBooleanOps::add);
+		std::vector<Point> water_block_shape = CreatWaterBlockShape( );
+		body_region_.add_geometry(new Geometry(water_block_shape), RegionBooleanOps::add);
 		/** Exclude the fish body. */
 		std::vector<Point> fish_shape = CreatFishShape(cx, cy, fish_length, particle_spacing_*0.5);
 		body_region_.add_geometry(new Geometry(fish_shape), RegionBooleanOps::sub);
@@ -150,8 +151,10 @@ public:
 		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), solid_particles,
 			refinement_level, op)
 	{
-		body_region_.add_geometry(new Geometry(CreatOuterWallShape()), RegionBooleanOps::add);
-		body_region_.add_geometry(new Geometry(CreatInnerWallShape()), RegionBooleanOps::sub);
+		std::vector<Point> outer_wall_shape = CreatOuterWallShape( );
+		std::vector<Point> inner_wall_shape = CreatInnerWallShape( );
+		body_region_.add_geometry(new Geometry(outer_wall_shape), RegionBooleanOps::add);
+		body_region_.add_geometry(new Geometry(inner_wall_shape), RegionBooleanOps::sub);
 		body_region_.done_modeling();
 	}
 };
@@ -185,8 +188,9 @@ public:
 	{
 		//geometry
 		std::vector<Point> fish_shape = CreatFishShape(cx, cy, fish_length, solid_body_->particle_spacing_);
+		std::vector<Point> fish_blocking_shape = CreatFishBlockingShape();
 		soild_body_part_region_.add_geometry(new Geometry(fish_shape), RegionBooleanOps::add);
-		soild_body_part_region_.add_geometry(new Geometry(CreatFishBlockingShape()), RegionBooleanOps::sub);
+		soild_body_part_region_.add_geometry(new Geometry(fish_blocking_shape), RegionBooleanOps::sub);
 		//finish the region modeling
 		soild_body_part_region_.done_modeling();
 
@@ -204,7 +208,8 @@ public:
 		: FluidBodyPart(fluid_body, constrianed_region_name)
 	{
 		/** Geomerty definition. */
-		fluid_body_part_region_.add_geometry(new Geometry(CreatInflowBufferShape()), RegionBooleanOps::add);
+		std::vector<Point> inflow_shape = CreatInflowBufferShape();
+		fluid_body_part_region_.add_geometry(new Geometry(inflow_shape), RegionBooleanOps::add);
 		/** Finalize the geometry definition and correspoding opertation. */
 		fluid_body_part_region_.done_modeling();
 

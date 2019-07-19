@@ -109,12 +109,14 @@ public:
 			relax_particles, refinement_level, op)
 	{
 		/** Define the water outer geometry by using the corner of a box.*/
-		body_region_.add_geometry(new Geometry(CreatWaterBlockShape()), RegionBooleanOps::add);
+		std::vector<Point> water_block_shape = CreatWaterBlockShape();
+		body_region_.add_geometry(new Geometry(water_block_shape), RegionBooleanOps::add);
 
 		/** Define a circle geometry*/
 		Geometry *circle_geometry = new Geometry(insert_circle_center, insert_circle_radius, 100);
 		body_region_.add_geometry(circle_geometry, RegionBooleanOps::sub);
-		body_region_.add_geometry(new Geometry(CreatBeamShape()), RegionBooleanOps::sub);
+		std::vector<Point> beam_shape = CreatBeamShape();
+		body_region_.add_geometry(new Geometry(beam_shape), RegionBooleanOps::sub);
 
 		/** Finish the region modeling. */
 		body_region_.done_modeling();
@@ -132,10 +134,12 @@ public:
 		: RelaxBody(system, body_name, relax_particles, refinement_level, op)
 	{
 		/** Define a box geomerty by using corner coordinate. */
-		Geometry *outer_wall_geometry = new Geometry(CreatOuterWallShape());
+		std::vector<Point> outer_wall_shape = CreatOuterWallShape();
+		Geometry *outer_wall_geometry = new Geometry(outer_wall_shape);
 		body_region_.add_geometry(outer_wall_geometry, RegionBooleanOps::add);
 		/** Define a box geomerty by using corner coordinate. */
-		Geometry *inner_wall_geometry = new Geometry(CreatInnerWallShape());
+		std::vector<Point> inner_wall_shape = CreatInnerWallShape();
+		Geometry *inner_wall_geometry = new Geometry(inner_wall_shape);
 		body_region_.add_geometry(inner_wall_geometry, RegionBooleanOps::sub);
 		/** Finish the region modeling. */
 		body_region_.done_modeling();
@@ -155,7 +159,8 @@ public:
 		Geometry *circle_geometry = new Geometry(insert_circle_center, insert_circle_radius, 100);
 		body_region_.add_geometry(circle_geometry, RegionBooleanOps::add);
 		/** Create a box geometry by defining cornore coordinates. */
-		body_region_.add_geometry(new Geometry(CreatBeamShape()), RegionBooleanOps::add);
+		std::vector<Point> beam_shape = CreatBeamShape();
+		body_region_.add_geometry(new Geometry(beam_shape), RegionBooleanOps::add);
 		/** Finish the region modeling. */
 		body_region_.done_modeling();
 		/** Initilize the background mesh, e.g., Level set data. */
