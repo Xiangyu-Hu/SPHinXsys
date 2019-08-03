@@ -10,8 +10,6 @@ Use your best judgment, and feel free to propose changes to this document in a p
 
 [Code of Conduct](#code-of-conduct)
 
-[I don't want to read this whole thing, I just have a question!!!](#i-dont-want-to-read-this-whole-thing-i-just-have-a-question)
-
 [What should I know before I get started?](#what-should-i-know-before-i-get-started)
   * [SPHinXsys Libraries](#sphinxsys-libraries)
 
@@ -33,8 +31,6 @@ Use your best judgment, and feel free to propose changes to this document in a p
 
 This project and everyone participating in it is governed by the [Contributor Covenant][homepage], 
 version 1.4, available at [https://contributor-covenant.org/version/1/4][version]
-[homepage]: https://contributor-covenant.org
-[version]: https://contributor-covenant.org/version/1/4/
 
 ## What should I know before I get started?
 
@@ -70,31 +66,22 @@ There are a few conventions that have developed over time around SPHinXsys:
 
 ### Reporting Bugs
 
-This section guides you through submitting a bug report for SPHinXsys. 
-Following these guidelines helps maintainers and the community understand your report :pencil:, 
-reproduce the behavior :computer: :computer:, and find related reports :mag_right:.
-
-Before creating bug reports, please check [this list](#before-submitting-a-bug-report) 
-as you might find out that you don't need to create one. 
-When you are creating a bug report, please [include as many details as possible](#how-do-i-submit-a-good-bug-report). 
+When you are creating a bug report, please include as many details as possible. 
 
 ### Suggesting Enhancements
 
-This section guides you through submitting an enhancement suggestion for SPHinXsys, 
+You are welcomed to submit an enhancement suggestion for SPHinXsys, 
 including completely new features and minor improvements to existing functionality. 
-Following these guidelines helps maintainers and the community understand your suggestion 
-:pencil: and find related suggestions :mag_right:.
 
 ### Your First Code Contribution
 
 Unsure where to begin contributing to SPHinXsys? 
-You can start by looking through these `beginner` and `help-wanted` issues:
+You can start by looking through these `good first` and `help-wanted` issues:
 
-* [Beginner issues][beginner] - issues which should only require a few lines of code, and a test or two.
-* [Help wanted issues][help-wanted] - issues which should be a bit more involved than `beginner` issues.
+* [Good first issues] - issues which should only require a few lines of code, and a test or two.
+* [Help wanted issues] - issues which should be a bit more involved than `beginner` issues.
 
 Both issue lists are sorted by total number of comments. 
-While not perfect, number of comments is a reasonable proxy for impact a given change will have.
 
 ### Pull Requests
 
