@@ -62,7 +62,7 @@ Intel Threading Building Blocks (TBB) is used for the multi-core parallelism.
 
 Authors
 -----------------
-Xiangyu Hu, Luhui Han, Chi Zhang, Shuoguo Zhang, Massoud Rezavand
+Xiangyu Hu, Luhui Han, Chi Zhang, Shuoguo Zhang, Massoud Rezavand, Yongchuan Yu
 
 Project Principle Investigator
 -----------------
