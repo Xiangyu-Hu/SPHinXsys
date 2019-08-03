@@ -41,8 +41,8 @@ class WaterBlock : public FluidBody
 public:
 	WaterBlock(SPHSystem &system, string body_name,
 		WeaklyCompressibleFluid &material,
-		FluidParticles &fluid_particles, int refinement_level, ParticlesGeneratorOps op)
-		: FluidBody(system, body_name, material, fluid_particles, refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: FluidBody(system, body_name, material, refinement_level, op)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> water_block_shape;
@@ -64,8 +64,8 @@ class WallBoundary : public SolidBody
 {
 public:
 	WallBoundary(SPHSystem &system, string body_name,
-		SolidParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), solid_particles, refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), refinement_level, op)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> outer_wall_shape;
@@ -96,8 +96,8 @@ class FluidObserver : public ObserverEulerianBody
 {
 public:
 	FluidObserver(SPHSystem &system, string body_name,
-		ObserverParticles &observer_particles, int refinement_level, ParticlesGeneratorOps op)
-		: ObserverEulerianBody(system, body_name, observer_particles, refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: ObserverEulerianBody(system, body_name, refinement_level, op)
 	{
 		body_input_points_volumes_.push_back(make_pair(Point(DL, 0.2), 0.0));
 	}
@@ -119,21 +119,21 @@ int main()
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
 	WeaklyCompressibleFluid 			fluid("Water", rho0_f, c_f);
-	FluidParticles 	fluid_particles("WaterBody");
-	WaterBlock *water_block = new WaterBlock(system, "WaterBody", fluid,
-		fluid_particles, 0, ParticlesGeneratorOps::lattice);
+	WaterBlock *water_block = new WaterBlock(system, "WaterBody", 
+		fluid, 0, ParticlesGeneratorOps::lattice);
+	FluidParticles 	fluid_particles(water_block);
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
-	SolidParticles 					solid_particles("Wall");
-	WallBoundary *wall_boundary = new WallBoundary(system, "Wall",
-		solid_particles, 0, ParticlesGeneratorOps::lattice);
+	WallBoundary *wall_boundary 
+		= new WallBoundary(system, "Wall",	0, ParticlesGeneratorOps::lattice);
+	SolidParticles 					solid_particles(wall_boundary);
 	/**
 	 * @brief 	Particle and body creation of fluid observer.
 	 */
-	ObserverParticles 					observer_particles("Fluidobserver");
-	FluidObserver *fluid_observer = new FluidObserver(system, "Fluidobserver",
-		observer_particles, 0, ParticlesGeneratorOps::direct);
+	FluidObserver *fluid_observer 
+		= new FluidObserver(system, "Fluidobserver", 0, ParticlesGeneratorOps::direct);
+	ObserverParticles 					observer_particles(fluid_observer);
 	/**
 	 * @brief 	Body contact map.
 	 * @details The contact map gives the data conntections between the bodies.

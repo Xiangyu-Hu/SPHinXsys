@@ -127,10 +127,8 @@ class WaterBlock : public FluidBody
 public:
 	WaterBlock(SPHSystem &system, string body_name,
 		WeaklyCompressibleFluid &material,
-		FluidParticles &weakly_compressible_fluid_particles,
 		int refinement_level, ParticlesGeneratorOps op)
-		: FluidBody(system, body_name, material,
-			weakly_compressible_fluid_particles, refinement_level, op)
+		: FluidBody(system, body_name, material, refinement_level, op)
 	{
 		std::vector<Point> water_block_shape = CreatWaterBlockShape( );
 		body_region_.add_geometry(new Geometry(water_block_shape), RegionBooleanOps::add);
@@ -147,9 +145,8 @@ class WallBoundary : public SolidBody
 {
 public:
 	WallBoundary(SPHSystem &system, string body_name,
-		SolidParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), solid_particles,
-			refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), refinement_level, op)
 	{
 		std::vector<Point> outer_wall_shape = CreatOuterWallShape( );
 		std::vector<Point> inner_wall_shape = CreatInnerWallShape( );
@@ -166,9 +163,8 @@ class FishBody : public SolidBody
 
 public:
 	FishBody(SPHSystem &system, string body_name, ElasticSolid &material,
-		ElasticSolidParticles &elastic_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, material, elastic_particles,
-			refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, material, refinement_level, op)
 	{
 		std::vector<Point> fish_shape = CreatFishShape(cx, cy, fish_length, particle_spacing_);
 		body_region_.add_geometry(new Geometry(fish_shape), RegionBooleanOps::add);
@@ -224,9 +220,8 @@ class Observer : public ObserverLagrangianBody
 {
 public:
 	Observer(SPHSystem &system, string body_name,
-		ObserverParticles &observer_particles,
 		int refinement_level, ParticlesGeneratorOps op)
-		: ObserverLagrangianBody(system, body_name, observer_particles, refinement_level, op)
+		: ObserverLagrangianBody(system, body_name, refinement_level, op)
 	{
 		/** postion and volume. */
 		body_input_points_volumes_.push_back(make_pair(Point(cx + particle_spacing_ref, cy), 0.0));
@@ -281,29 +276,29 @@ int main()
 	* @brief   Particles and body creation for water.
 	*/
 	SymmetricTaitFluid                  fluid("Water", rho0_f, c_f, mu_f, k_f);
-	FluidParticles    fluid_particles("WaterBody");
 	WaterBlock *water_block = new WaterBlock(system, "WaterBody",
-		fluid, fluid_particles, 0, ParticlesGeneratorOps::lattice);
+		fluid, 0, ParticlesGeneratorOps::lattice);
+	FluidParticles    fluid_particles(water_block);
 	/**
 	* @brief   Particles and body creation for wall boundary.
 	*/
-	SolidParticles                  solid_particles("Wall");
 	WallBoundary *wall_boundary = new   WallBoundary(system, "Wall",
-		solid_particles, 0, ParticlesGeneratorOps::lattice);
+		0, ParticlesGeneratorOps::lattice);
+	SolidParticles                  solid_particles(wall_boundary);
 	/**
 	* @brief   Particles and body creation for fish.
 	*/
 	NeoHookeanSolid             solid_material("NeoHookeanSolid",
 		rho0_s, Youngs_modulus, poisson, 0.0);
-	ElasticSolidParticles        fish_body_particles("FishBody");
 	FishBody *fish_body = new   FishBody(system, "FishBody", solid_material,
-		fish_body_particles, 1, ParticlesGeneratorOps::lattice);
+		1, ParticlesGeneratorOps::lattice);
+	ElasticSolidParticles        fish_body_particles(fish_body);
 	/**
 	* @brief   Particle and body creation of gate observer.
 	*/
-	ObserverParticles           observer_particles("Observer");
 	Observer *fish_observer = new Observer(system, "Observer",
-		observer_particles, 0, ParticlesGeneratorOps::direct);
+		0, ParticlesGeneratorOps::direct);
+	ObserverParticles           observer_particles(fish_observer);
 	/**
 	* @brief   Body contact map.
 	* @details The contact map gives the data conntections between the bodies.

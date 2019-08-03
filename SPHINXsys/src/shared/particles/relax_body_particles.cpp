@@ -14,16 +14,13 @@ namespace SPH {
 
 	}
 	//===============================================================//
-	RelaxBodyParticles::RelaxBodyParticles(string body_name)
-		: Particles(body_name)
+	RelaxBodyParticles::RelaxBodyParticles(SPHBody *body)
+		: Particles(body)
 	{
-
-	}
-	//===============================================================//
-	void RelaxBodyParticles::InitializeAParticle(Vecd pnt, Real particle_volume)
-	{
-		base_particle_data_.push_back(BaseParticleData(pnt, particle_volume));
-		relax_body_data_.push_back(RelaxBodyParticleData(pnt));
+		for (size_t i = 0; i < base_particle_data_.size(); ++i) {
+			Point pnt = base_particle_data_[i].pos_n_;
+			relax_body_data_.push_back(RelaxBodyParticleData(pnt));
+		}
 	}
 	//===============================================================//
 	RelaxBodyParticles* RelaxBodyParticles::PointToThisObject()

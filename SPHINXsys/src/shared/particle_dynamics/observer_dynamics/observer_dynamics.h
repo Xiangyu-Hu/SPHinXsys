@@ -1,7 +1,7 @@
 /**
  * @file 	obeserver_dynamics.h
- * @brief 	This is the class for obsevser bodies to record the state of the flow or
- *			solid in given locations. Mostly, this is done by interpolation alogortim.   
+ * @brief 	There are the classes for obsevser bodies to record the state of the flow or
+ *			solid in given locations. Mostly, this is done by an interpolation alogortim.   
  * @author	Xiangyu Hu and Chi Zhang
  * @version	0.1
  */
@@ -20,12 +20,13 @@ namespace SPH
 		
 		/**
 		 * @class ObserveABody
-		 * @brief observer physical field from fluid
+		 * @brief Observering general body
 		 */	
 		template <class InteractingBodyType, class InteractingParticlesType>
 		class ObserveABody : public ObserverDynamicsContact<InteractingBodyType, InteractingParticlesType>
 		{
 		protected:
+			/** Abstract method for observing. */
 			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) = 0;
 		public:
 			explicit ObserveABody(ObserverBody *body, InteractingBodyType *interacting_body)
@@ -41,14 +42,16 @@ namespace SPH
 		class ObserveAFluidQuantity : public ObserveABody<FluidBody, FluidParticles>
 		{
 		protected:
+			/** Observed quantities saved here. */
 			StdVec<FluidQuantityType>  fluid_quantities_;
 
 			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) override;
+			/** Abstarct method to define the quantity to be observed. */
 			virtual FluidQuantityType GetAFluidQuantity(size_t index_particle_j, FluidParticles &particles) = 0;
 		public:
 			explicit ObserveAFluidQuantity(ObserverBody *body, FluidBody *interacting_body)
 				: ObserveABody(body, interacting_body) {
-				for (size_t i = 0; i < body->number_of_real_particles_; ++i) fluid_quantities_.push_back(FluidQuantityType(0));
+				for (size_t i = 0; i < body->number_of_particles_; ++i) fluid_quantities_.push_back(FluidQuantityType(0));
 			};
 			virtual ~ObserveAFluidQuantity() {};
 		};
@@ -60,6 +63,7 @@ namespace SPH
 		class ObserveFluidPressure : public ObserveAFluidQuantity<Real>
 		{
 		protected:
+			/** Define to observe fluid pressure. */
 			virtual Real GetAFluidQuantity(size_t index_particle_j, FluidParticles &particles) override { 
 				return particles.fluid_particle_data_[index_particle_j].p_; 
 			};
@@ -76,6 +80,7 @@ namespace SPH
 		class ObserveFluidVelocity : public ObserveAFluidQuantity<Vecd>
 		{
 		protected:
+			/** Define to observe fluid velocity. */
 			virtual Vecd GetAFluidQuantity(size_t index_particle_j, FluidParticles &particles) override {
 				return particles.base_particle_data_[index_particle_j].vel_n_;
 			};
@@ -87,7 +92,9 @@ namespace SPH
 
 		/**
 		 * @class ObserveAnElasticSolidQuantity
-		 * @brief observe an elastic solid quantity
+		 * @brief Observe an elastic solid quantity.
+		 * This class is the couterpart to the class
+		 * ObserveAFluidQuantity
 		 */
 		template <typename ElasticSolidQuantityType>
 		class ObserveAnElasticSolidQuantity : public ObserveABody<SolidBody, ElasticSolidParticles>
@@ -102,7 +109,7 @@ namespace SPH
 		public:
 			explicit ObserveAnElasticSolidQuantity(ObserverBody *body, SolidBody *interacting_body)
 				: ObserveABody(body, interacting_body) {
-				for (size_t i = 0; i < body->number_of_real_particles_; ++i) 
+				for (size_t i = 0; i < body->number_of_particles_; ++i) 
 					elastic_body_quantities_.push_back(ElasticSolidQuantityType(0));
 			};
 			virtual ~ObserveAnElasticSolidQuantity() {};
@@ -116,6 +123,7 @@ namespace SPH
 		{
 
 		protected:
+			/** Define to observe the solid dispalacement. */
 			virtual Vecd GetAnElasticSolidQuantity(size_t index_particle_j, ElasticSolidParticles &particles) override {
 				return particles.base_particle_data_[index_particle_j].pos_n_;
 			};

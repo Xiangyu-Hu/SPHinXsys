@@ -7,26 +7,35 @@ This is a simple instruction for install SPHINSYS on Linus system
 First, Install Simbody Library :
 Note : The easy way is using miniconda.(not recommaned, install simbody can help to you to understand the code)
 
-Step 1, Check the gcc version, gcc-4.9.0 or higher version is required and gcc-7.3.0 is recommended.
+Step 0, Check the gcc version, gcc-4.9.0 or higher version is required and gcc-7.3.0 is recommended.
 		Chekc the cmake version, if you want to install simboy by hand, please using cmake 3.12.2 or higher
 
-Step 0, Install LAPACK library.
+Step 1, Install LAPACK library.
 		LAPACK version 3.6.0 and higher may be required for some applications (OpenSim). 
-		LAPACK can be downloaded from http://www.netlib.org/lapack/, and compiled using the following method:
-		$ cmake ../lapack-source -DCMAKE_INSTALL_PREFIX=/path/to/new/lapack/prefix -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_SHARED_LIBS=ON
+		LAPACK can be downloaded from http://www.netlib.org/lapack/, 
+		unzip it to your prefered folder(for example "$HOME/lapack-source")
+		and compiled using the following method, 
+		the default installation and build path is "$HOME/lapack-prefix" and "$HOME/lapack-build"
+		$ mkdir $HOME/lapack-prefix
+		$ mkdir $HOME/lapack-build
+		$ cd $HOME/lapack-build
+		$ cmake $HOME/lapack-source -DCMAKE_INSTALL_PREFIX=$HOME/lapack-prefix -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_SHARED_LIBS=ON
 		$ make
 		$ make instal
-		$ echo 'export LIBRARY_PATH=$pathto/lapack-prefix/lib64:$LIBRARY_PATH' >> ~/.bashrc
+		$ echo 'export LIBRARY_PATH=$HOME/lapack-prefix/lib64:$LIBRARY_PATH' >> ~/.bashrc
 		$ echo 'export LD_LIBRARY_PATH=$LIBRARY_PATH:$LD_LIBRARY_PATH' << ~/.bashrc
 
 Step 2, Download a release version from https://github.com/simbody/simbody/releases 
-Step 3,  Unzip the repository into ~/simbody-source and then Create a directory in which we'll build Simbody. 
-			We'll assume you choose ~/simbody-build. Don't choose a location inside ~/simbody-source.
-	 		$ mkdir ~/simbody-build
- 			$ cd ~/simbody-build
+Step 3,  Unzip the repository into your prefered folder , e.g., $HOME/simbody-source. 
+		Create a directory for installation, e.g., 
+		$ mkdir $HOME/simbody-prefix
+		Then Create a directory in which we'll build Simbody. 
+		We'll assume you choose $HOME/simbody-build. Don't choose a location inside $HOME/simbody-source.
+	 	$ mkdir $HOME/simbody-build
+ 		$ cd $HOME/simbody-build
 
 Step 4, Configure and geneartes Make file:
-			$ cmake ~/simbody-source -DCMAKE_INSTALL_PREFIX=~/simbody-prefix -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_VISUALIZER=on (optional set to ON if simbody visualizer is going to be used)
+		$ cmake $HOME/simbody-source -DCMAKE_INSTALL_PREFIX=$HOME/simbody-prefix -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_VISUALIZER=on (optional set to ON if simbody visualizer is going to be used)
 			-DBUILD_STATIC_LIBRARIES=on (optional, leave it off if you don't know what are you doing)
 
 Step 5, BUild and Install
@@ -37,15 +46,15 @@ Step 5, BUild and Install
 
 Step 6, Allow Simbody and other projects  to find Simbody:
 		Mac:
-			$ echo 'export SIMBODY_HOME=~/simbody' >> ~/.bash_profile
+			$ echo 'export SIMBODY_HOME=$HOME/simbody' >> ~/.bash_profile
 		Linux:
-			$ echo 'export SIMBODY_HOME=~/simbody' >> ~/.bashrc
+			$ echo 'export SIMBODY_HOME=$HOME/simbody' >> ~/.bashrc
 Setp 7, Set environment variables
 		If your CMAKE_INSTALL_PREFIX is /usr/local/, run:
 			$ sudo ldconfig
 		If your CMAKE_INSTALL_PREFIX is neither /usr/ nor /usr/local/ (e.g., ~/simbody'):
 			Mac:
-				$ echo 'export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:~/simbody/lib' >> ~/.bash_profile
+				$ echo 'export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$HOME/simbody-prefix/lib' >> ~/.bash_profile
 			Linux:
 				$ echo 'export LIBRARY_PATH=$SIMBODY_HOME/lib64:$LIBRARY_PATH' >> ~/.bashrc
 				$ echo 'export LD_LIBRARY_PATH=$LIBRARY_PATH:$LD_LIBRARY_PATH' >> ~/.bashrc
@@ -55,27 +64,31 @@ Setp 7, Set environment variables
 
 Second, TBB library:
 
-Step 1, Download a release version from : https://github.com/01org/tbb/releases and then unzip it to the appropriate directory on your computer
-
+Step 1, Download a release version from : https://github.com/01org/tbb/releases, new version is good, 	
+		 and then unzip it to the appropriate directory, e.g.,$HOME/tbb-versioin, on your computer
+		
 Setp 2, Set environment variables
 			Mac:
-				$ echo 'export PATH=~/tbb-versioin/bin/intel64/vc14' >> ~/.bash_profile
+				$ echo 'export PATH = $HOME/tbb-versioin/bin/intel64/vc14' >> ~/.bash_profile
 			Linux:
-				$ echo 'PATH=~/tbb-versioin/bin/intel64/vc14' >> ~/.bashrc
+				$ echo 'PATH = $HOME/tbb-versioin/bin/intel64/vc14' >> ~/.bashrc
 		Note that, you may need to replace lib64 with the appropriate directory on your computer
 
 Step 3, Allow Simbody and other projects  to find TBB:
 		Mac:
-			$ echo 'export SIMBODY_HOME=~/tbb-version' >> ~/.bash_profile
+			$ echo 'export TBB_HOME = $HOME/tbb-versioin' >> ~/.bash_profile
 		Linux:
-			$ echo 'export SIMBODY_HOME=~/tbb-version' >> ~/.bashrc
+			$ echo 'export TBB_HOME = $HOME/tbb-versioin' >> ~/.bashrc
 
 Third, BOOST library
-Step 1, Download a release version from : https://www.boost.org/
-
+Step 1, Download a release version from : https://www.boost.org/, recommaned version 1.69.0, 
+		unzip it to your prefered directory, e.g., $HOME/boost-source
+		Create a directory for installation, e.g., 
+		$ mkdir $HOME/boost-prefix
 Step 2, BUild:
 		Unix :
-			$bash bootstrap.sh --prefix=path/to/installed/prefix
+			$ cd $HOME/boost-source
+			$bash bootstrap.sh --prefix=$HOME/boost-prefix
 			$./bjam install
 			To build with MPI add full path to mpic++ or jsut mpic++ at the end of user-config.jam file.
 			like, #MPI 
@@ -83,7 +96,15 @@ Step 2, BUild:
 		Windows:
 		using cmd system
 			$ bootstrap
-			$ b2 install --prefix=path/to/install/prefix --layout=tagged address-model=64 architecture=x86
+			$ b2 install --prefix=$HOME/boost-prefix --layout=tagged address-model=64 architecture=x86
+
+Step 3, other projects  to find BOOST:
+		Mac:
+			$ echo 'export BOOST_HOME = $HOME/boost-prefix' >> ~/.bash_profile
+		Linux:
+			$ echo 'export BOOST_HOME = $HOME/boost-prefix' >> ~/.bashrc
+Step 4, Check the installation, two folders lib and include should be cterated in $HOME/boost-prefix. 
+
 
 Last, bu not least, Chek path is crrectly setup:
 		$ echo $SIMBODY_HOME
@@ -91,10 +112,14 @@ Last, bu not least, Chek path is crrectly setup:
 		$ echo $BOOST_HOME
 
 Final step :
-		$ download the SPHInXsys from https://github.com/Xiangyu-Hu/SPHinXsys
+		$ download the SPHinXsys from https://github.com/Xiangyu-Hu/SPHinXsys
 		$ mkdir /path/to/sphinxsys-build
 		$ cd /path/to/sphinxsys-build
-		$ cmake /path/to/sphinxsys/source/code -DCMAKE_INSTALL_PREFIX=/path/to/sphinxsys-prefix -DCMAKE_BUILD_TYPE=RelWithDebInfo
+		To buid the SPHinXsys you have to two options:
+		I) If you only want to use SPHinXsys as a library stored in "/path/to/sphinxsys-prefix" with no development within the source code: 
+			$ cmake /path/to/sphinxsys/source/code -DCMAKE_INSTALL_PREFIX=/path/to/sphinxsys-prefix -DCMAKE_BUILD_TYPE=RelWithDebInfo
+		II) If you want to contribute in the development of SPHinXsys and change the source code:
+			$ cmake /path/to/sphinxsys/source/code -DCMAKE_BUILD_TYPE=RelWithDebInfo
 		THEN you can play with SPHInXsys, for example
 		$ cd /path/to/sphinxsys-build/cases_test/test_2d_dambreak
 		$ make -j 

@@ -16,9 +16,10 @@ namespace SPH {
 		{
 			size_t index_particle_i = body_part_particles_[i];
 			BaseParticleData &base_particle_data_i
-				= solid_body_->base_particles_.base_particle_data_[index_particle_i];
+				= solid_body_->base_particles_->base_particle_data_[index_particle_i];
 			SolidParticleData &solid_data_i
-				= solid_body_->solid_particles_.solid_body_data_[index_particle_i];
+				= dynamic_cast<SolidParticles*>(solid_body_->base_particles_->PointToThisObject())
+				->solid_body_data_[index_particle_i];
 
 			mass_center += base_particle_data_i.Vol_*solid_data_i.pos_0_;
 			body_part_volume += base_particle_data_i.Vol_;
@@ -35,9 +36,10 @@ namespace SPH {
 		{
 			size_t index_particle_i = body_part_particles_[i];
 			BaseParticleData &base_particle_data_i
-				= solid_body_->base_particles_.base_particle_data_[index_particle_i];
+				= solid_body_->base_particles_->base_particle_data_[index_particle_i];
 			SolidParticleData &solid_data_i
-				= solid_body_->solid_particles_.solid_body_data_[index_particle_i];
+				= dynamic_cast<SolidParticles*>(solid_body_->base_particles_->PointToThisObject())
+				->solid_body_data_[index_particle_i];
 
 			Vecd displacement = (solid_data_i.pos_0_ - mass_center);
 			Real r_x = (solid_data_i.pos_0_[1] - mass_center[1]);

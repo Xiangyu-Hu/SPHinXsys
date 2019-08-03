@@ -17,16 +17,10 @@ namespace SPH
 
 	}
 	//===============================================================//
-	FluidParticles::FluidParticles(string body_name)
-		: Particles(body_name)
+	FluidParticles::FluidParticles(SPHBody *body) : Particles(body)
 	{
-
-	}
-	//===============================================================//
-	void FluidParticles::InitializeAParticle(Vecd pnt, Real particle_volume)
-	{
-		base_particle_data_.push_back(BaseParticleData(pnt, particle_volume));
-		fluid_particle_data_.push_back(FluidParticleData());
+		for(size_t i = 0; i < base_particle_data_.size(); ++i)
+			fluid_particle_data_.push_back(FluidParticleData());
 	}
 	//===============================================================//
 	FluidParticles* FluidParticles::PointToThisObject() 
@@ -40,17 +34,11 @@ namespace SPH
 
 	}
 	//===============================================================//
-	ViscoelasticFluidParticles::ViscoelasticFluidParticles(string body_name)
-		: FluidParticles(body_name)
+	ViscoelasticFluidParticles::ViscoelasticFluidParticles(SPHBody *body)
+		: FluidParticles(body)
 	{
-
-	}
-	//===============================================================//
-	void ViscoelasticFluidParticles::InitializeAParticle(Vecd pnt, Real particle_volume)
-	{
-		base_particle_data_.push_back(BaseParticleData(pnt, particle_volume));
-		fluid_particle_data_.push_back(FluidParticleData());
-		viscoelastic_particle_data_.push_back(ViscoelasticFluidParticleData());
+		for (size_t i = 0; i < base_particle_data_.size(); ++i)
+			viscoelastic_particle_data_.push_back(ViscoelasticFluidParticleData());
 	}
 	//===============================================================//
 	ViscoelasticFluidParticles* ViscoelasticFluidParticles::PointToThisObject()

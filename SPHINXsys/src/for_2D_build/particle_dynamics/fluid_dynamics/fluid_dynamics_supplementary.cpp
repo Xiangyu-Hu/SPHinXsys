@@ -4,9 +4,21 @@ using namespace std;
 
 namespace SPH
 {
+//=================================================================================================//
 	namespace fluid_dynamics
 	{
-		//===========================================================//
+//=================================================================================================//
+		void ResetFluidCondition::Update(size_t index_particle_i, Real dt)
+		{
+			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
+
+			base_particle_data_i.vel_n_[0] = -cos(2.0 * pi * base_particle_data_i.pos_n_[0]) * 
+				sin(2.0 * pi * base_particle_data_i.pos_n_[1]);
+			base_particle_data_i.vel_n_[1] = sin(2.0 * pi * base_particle_data_i.pos_n_[0]) * 
+				cos(2.0 * pi * base_particle_data_i.pos_n_[1]);
+		}
+//=================================================================================================//
 		void ComputingVorticityInFluidField::InnerInteraction(size_t index_particle_i, Real dt)
 		{
 			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
@@ -29,5 +41,7 @@ namespace SPH
 
 			fluid_data_i.vort_2d_ = vort_temp;
 		}
+//=================================================================================================//
 	}
+//=================================================================================================//
 }

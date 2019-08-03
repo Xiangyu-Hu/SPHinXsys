@@ -14,9 +14,8 @@
 namespace SPH {
 	//===============================================================//
 	SolidBody::SolidBody(SPHSystem &system, string body_name, Solid &solid_material, 
-		SolidParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
-		: RealBody(system, body_name, solid_material, solid_particles, refinement_level, 1.0, op),
-		solid_material_(solid_material), solid_particles_(solid_particles)
+		int refinement_level, ParticlesGeneratorOps op)
+		: RealBody(system, body_name, solid_material, refinement_level, 1.0, op)
 	{
 	
 	}
@@ -41,10 +40,10 @@ namespace SPH {
 	//===============================================================//
 	void SolidBodyPart::TagBodyPartParticles()
 	{
-		for (size_t i = 0; i < solid_body_->number_of_real_particles_; ++i)
+		for (size_t i = 0; i < solid_body_->number_of_particles_; ++i)
 		{
 			BaseParticleData &base_particle_data_i
-				= solid_body_->base_particles_.base_particle_data_[i];
+				= solid_body_->base_particles_->base_particle_data_[i];
 
 			if (soild_body_part_region_.contain(base_particle_data_i.pos_n_))
 			{

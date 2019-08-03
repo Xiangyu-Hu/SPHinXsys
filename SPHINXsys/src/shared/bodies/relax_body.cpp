@@ -14,9 +14,8 @@
 namespace SPH {
 	//===========================================================//
 	RelaxBody::RelaxBody(SPHSystem &sph_system, string body_name,
-		RelaxBodyParticles &relax_particles, int refinement_level, ParticlesGeneratorOps op)
-		: RealBody(sph_system, body_name, *(new Material("EmptyRelaxMaterial")), relax_particles, refinement_level, 1.0, op),
-		relax_particles_(relax_particles)
+		int refinement_level, ParticlesGeneratorOps op)
+		: RealBody(sph_system, body_name, *(new Material("EmptyRelaxMaterial")), refinement_level, 1.0, op)
 	{
 
 	}
@@ -52,10 +51,10 @@ namespace SPH {
 	//===========================================================//
 	void RelaxBodySurface::TagBodyPartParticles()
 	{
-		for (size_t i = 0; i < relax_body_->number_of_real_particles_; ++i)
+		for (size_t i = 0; i < relax_body_->number_of_particles_; ++i)
 		{
 			BaseParticleData &base_particle_data_i
-				= relax_body_->base_particles_.base_particle_data_[i];
+				= relax_body_->base_particles_->base_particle_data_[i];
 
 			Real phii = relax_body_->mesh_background_->ProbeLevelSet(base_particle_data_i.pos_n_);
 			//this is important, as outer particles is neglect, is shoul be the particle spacing

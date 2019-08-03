@@ -131,10 +131,8 @@ class WaterBlock : public FluidBody
 	public:
 		WaterBlock(SPHSystem &system, string body_name,
 			WeaklyCompressibleFluid &material, 
-			FluidParticles &fluid_particles, 
 			int refinement_level, ParticlesGeneratorOps op)
-			: FluidBody(system, body_name, material, 
-				fluid_particles, refinement_level, op)
+			: FluidBody(system, body_name, material, refinement_level, op)
 		{
 
 			body_region_.add_geometry(CreateWaterBlock(), RegionBooleanOps::add);
@@ -150,8 +148,8 @@ class WallBoundary : public SolidBody
 {
 public:
 	WallBoundary(SPHSystem &system, string body_name, 
-		SolidParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), solid_particles, refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), refinement_level, op)
 	{
 		body_region_.add_geometry(CreateOuterWall(), RegionBooleanOps::add);
 		body_region_.add_geometry(CreateInnerWall(), RegionBooleanOps::sub);
@@ -165,9 +163,8 @@ class InsertedBody : public SolidBody
 {
 public:
 	InsertedBody(SPHSystem &system, string body_name, ElasticSolid &material,
-		ElasticSolidParticles &elastic_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, material, elastic_particles, 
-			refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, material, refinement_level, op)
 	{
 		body_region_.add_geometry(CreateInsertCylinder(), RegionBooleanOps::add);
 		body_region_.add_geometry(CreateAttatchedFlag(), RegionBooleanOps::add);
@@ -217,9 +214,8 @@ class Observer : public ObserverLagrangianBody
 {
 public:
 	Observer(SPHSystem &system, string body_name,
-		ObserverParticles &observer_particles, int refinement_level, ParticlesGeneratorOps op)
-		: ObserverLagrangianBody(system, body_name, observer_particles,
-			refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: ObserverLagrangianBody(system, body_name, refinement_level, op)
 	{
 		//add observation point
 		body_input_points_volumes_.push_back(
@@ -281,32 +277,32 @@ int main()
 	//fluid material properties
 	WeaklyCompressibleFluid fluid("Water", rho0_f, c_f, mu_f, k_f);
 	
-	//creat a fluid particle cotainer
-	FluidParticles fluid_particles("WaterBody");
 	//the water block
 	WaterBlock *water_block 
-		= new WaterBlock(system, "WaterBody", fluid, fluid_particles, 0, ParticlesGeneratorOps::lattice);
-	
-	//creat a solid particle cotainer
-	SolidParticles solid_particles("Wall");
+		= new WaterBlock(system, "WaterBody", fluid, 0, ParticlesGeneratorOps::lattice);
+	//creat fluid particles
+	FluidParticles fluid_particles(water_block);
+
 	//the wall boundary
 	WallBoundary *wall_boundary 
-		= new WallBoundary(system, "Wall", solid_particles, 0, ParticlesGeneratorOps::lattice);
+		= new WallBoundary(system, "Wall", 0, ParticlesGeneratorOps::lattice);
+	//creat solid particles
+	SolidParticles solid_particles(wall_boundary);
 
 
 	//elastic soild material properties
 	ElasticSolid solid_material("ElasticSolid", rho0_s, Youngs_modulus, poisson, 0.0);
-	//creat a particle cotainer for the elastic body
-	ElasticSolidParticles inserted_body_particles("InsertedBody");
 	//the inseted body immersed in water
 	InsertedBody *inserted_body 
 		= new InsertedBody(system, "InsertedBody", solid_material,
-		inserted_body_particles, 1, ParticlesGeneratorOps::lattice);
+		1, ParticlesGeneratorOps::lattice);
+	//creat particles for the elastic body
+	ElasticSolidParticles inserted_body_particles(inserted_body);
 
-	//create a observer particle container
-	ObserverParticles observer_particles("Observer");
 	Observer *flag_observer 
-		= new Observer(system, "Observer", observer_particles, 1, ParticlesGeneratorOps::direct);
+		= new Observer(system, "Observer", 1, ParticlesGeneratorOps::direct);
+	//create observer particles 
+	ObserverParticles observer_particles(flag_observer);
 
 	//set body contact map
 	//the contact map gives the data conntections between the bodies

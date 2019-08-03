@@ -5,7 +5,7 @@
 * 			saved on the mesh. The intersection points of mesh lines are called 
 *			grid points, the element enclosed by mesh lines (2D) or faces (3D) called 
 *			cells. The mesh line or face are also called cell faces. Grid points are
-*			also call cell corners.
+*			also called cell corners.
 * @author	Luhui Han, Chi ZHang and Xiangyu Hu
 * @version	0.1
 */
@@ -24,7 +24,7 @@ namespace SPH {
 	 * @class Mesh
 	 * @brief Abstract base class for defining basic mesh prpoerties.
 	 * The mesh is proposed for several functions.
-	 * First, it is used for cell linked list for neighbor search.
+	 * First, it is used in cell linked list for neighbor search.
 	 * Second, it is used for background maps such as level sets.
 	 * This class is the counterpart of the class particles.
 	 */
@@ -77,7 +77,7 @@ namespace SPH {
 	/**
 	 * @class BackgroundData
 	 * @brief Data for background mesh.
-	 * Decribing complex geometrics using level set, 
+	 * Describing complex geometrics using level set, 
 	 * which is the distance to the surface of the geometry 
 	 * and the direction leads to the nearest point on the surface    
 	 */
@@ -100,9 +100,8 @@ namespace SPH {
 
 	/**
 	 * @class MeshBackground
-	 * @brief background mesh for inital particle relaxation.
+	 * @brief Background mesh for inital particle relaxation.
 	 */
-	 //
 	class MeshBackground : public Mesh
 	{
 		/** base mesh data */
@@ -113,7 +112,7 @@ namespace SPH {
 			Real grid_spacing, size_t buffer_size = 0);
 		virtual ~MeshBackground() {};
 
-		/** allcate memories for mesh data */
+		/** allocate memories for mesh data */
 		virtual void AllocateMeshDataMatrix() override;
 		/** delete memories for mesh data */
 		virtual void DeleteMeshDataMatrix() override;

@@ -65,25 +65,25 @@ namespace SPH {
 	class SolidParticles : public Particles
 	{
 	public:
-		SolidParticles(string body_name);
+		SolidParticles(SPHBody *body);
 		virtual ~SolidParticles() {};
 
 		/** Vector of solid body data. */
 		StdLargeVec<SolidParticleData> solid_body_data_; 
-		/** Initialize a prticle by input a postion and volume. */
-		virtual void InitializeAParticle(Vecd pnt, Real particle_volume) override;
+
 		/** Write particle data in VTU format for Paraview. */
 		virtual void WriteParticlesToVtuFile(ofstream &output_file) override;
 		/** Write particle data in PLT format for Tecplot. */
 		virtual void WriteParticlesToPltFile(ofstream &output_file) override;
-		/** Write particle data in XML format. */
-		virtual void WriteParticlesToXmlFile(std::string &filefullpath) override{};
+
 		/* Write particle data in XML format for restart. */
 		virtual void WriteParticlesToXmlForRestart(std::string &filefullpath) override;
 		/** Initialize particle data from restart xml file. */
 		virtual void ReadParticleFromXmlForRestart(std::string &filefullpath) override ;
+
 		/** Reload particle position and volume from XML files. */
 		virtual void ReadFromXmlForReloadParticle(std::string &filefullpath) override;
+
 		/** Pointer to this object. */
 		virtual SolidParticles* PointToThisObject() override;
 	};
@@ -99,23 +99,22 @@ namespace SPH {
 		Real von_Mises_stress(size_t particle_i);
 
 	public:
-		ElasticSolidParticles(string body_name);
+		ElasticSolidParticles(SPHBody *body);
 		virtual ~ElasticSolidParticles() {};
 
 		/** Vector of elastic solid particle data. */
 		StdLargeVec<ElasticSolidParticleData> elastic_body_data_;
-		/** Initialize a prticle by input a postion and volume. */
-		virtual void InitializeAParticle(Vecd pnt, Real particle_volume) override;
+
 		/** Write particle data in VTU format for Paraview. */
 		virtual void WriteParticlesToVtuFile(ofstream &output_file) override;
 		/** Write particle data in PLT format for Tecplot. */
 		virtual void WriteParticlesToPltFile(ofstream &output_file) override;
-		/** Write particle data in XML format. */
-		virtual void WriteParticlesToXmlFile(std::string &filefullpath) override{};
+
 		/** Write particle data in XML format for restart. */
 		virtual void WriteParticlesToXmlForRestart(std::string &filefullpath) override;
 		/** Initialize particle data from restart xml file. */
 		virtual void ReadParticleFromXmlForRestart(std::string &filefullpath) override ;
+
 		/** Pointer to this object.  */
 		virtual ElasticSolidParticles* PointToThisObject() override;
 

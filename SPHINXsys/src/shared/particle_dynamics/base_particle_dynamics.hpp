@@ -33,7 +33,7 @@ namespace SPH {
 		for (size_t i = 0; i != interacting_bodies.size(); ++i)
 			for (size_t j = 0; j != contact_bodies.size(); ++j) {
 				if (static_cast<SPHBody*>(interacting_bodies_[i]) == contact_bodies[j]) {
-					interacting_particles_.push_back(dynamic_cast<InteractingParticlesType*>(contact_bodies[j]->base_particles_.PointToThisObject()));
+					interacting_particles_.push_back(dynamic_cast<InteractingParticlesType*>(contact_bodies[j]->base_particles_->PointToThisObject()));
 					interacting_material_.push_back(dynamic_cast<InteractingMaterialType*>(contact_bodies[j]->base_material_.PointToThisObject()));
 					indexes_interacting_particles_.push_back(&(*indexes_contact_particles)[j]);
 					current_interacting_configuration_.push_back(&(*current_contact_configuration)[j]);
@@ -45,14 +45,14 @@ namespace SPH {
 	template <class BodyType, class ParticlesType, class MaterialType>
 	ParticleDynamicsByCells<BodyType, ParticlesType, MaterialType>
 		::ParticleDynamicsByCells(BodyType* body) 
-		: ParticleDynamics<void, BodyType, ParticlesType, MaterialType>(body),
-		mesh_cell_linked_list_(*(body->mesh_cell_linked_list_))
+		: ParticleDynamics<void, BodyType, ParticlesType, MaterialType>(body)
 	{
-		cell_linked_lists_ = mesh_cell_linked_list_.cell_linked_lists_;
-		number_of_cells_ = mesh_cell_linked_list_.GetNumberOfCells();
-		cell_spacing_ = mesh_cell_linked_list_.GetCellSpacing();
-		mesh_lower_bound_ = mesh_cell_linked_list_.GetLowerBound();
-		mesh_upper_bound_ = mesh_cell_linked_list_.GetUpperBound();
+		mesh_cell_linked_list_ = body->mesh_cell_linked_list_;
+		cell_linked_lists_ = mesh_cell_linked_list_->cell_linked_lists_;
+		number_of_cells_ = mesh_cell_linked_list_->GetNumberOfCells();
+		cell_spacing_ = mesh_cell_linked_list_->GetCellSpacing();
+		mesh_lower_bound_ = mesh_cell_linked_list_->GetLowerBound();
+		mesh_upper_bound_ = mesh_cell_linked_list_->GetUpperBound();
 	}
 	//===============================================================//
 	template <class ReturnType, typename ReduceOperation>

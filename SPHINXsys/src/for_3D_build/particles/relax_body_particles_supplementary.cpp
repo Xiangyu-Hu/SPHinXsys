@@ -66,20 +66,18 @@ namespace SPH {
 		}
 	}
 	//===========================================================//
-	void RelaxBodyParticles::WriteParticlesToXmlFile(std::string &filefullpath)
+	void RelaxBodyParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)
 	{
-		XmlEngine* relax_xml = new XmlEngine("particles_xml", "particles");
-		
-		size_t number_of_particles = base_particle_data_.size();
-		for(size_t i = 0; i != number_of_particles; ++i)
-  		{
-  			relax_xml->CreatXmlElement("particle");
-    		relax_xml->AddAttributeToElement("ID",base_particle_data_[i].particle_ID_);
-    		relax_xml->AddAttributeToElement("Position",base_particle_data_[i].pos_n_);
-    		relax_xml->AddAttributeToElement("Volume",base_particle_data_[i].Vol_);
-    		relax_xml->AddElementToXmlDoc();
-  		}
-  		relax_xml->WriteToXmlFile(filefullpath);
+		cout << "\n This function RelaxBodyParticles::WriteParticlesToXmlForRestart is not done. Exit the program! \n";
+		exit(0);
+
+	}
+	//===========================================================//
+	void RelaxBodyParticles::ReadParticleFromXmlForRestart(std::string &filefullpath)
+	{
+		cout << "\n This function RelaxBodyParticles::WriteParticlesToXmlForRestart is not done. Exit the program! \n";
+		exit(0);
+
 	}
 	//===========================================================//
 }

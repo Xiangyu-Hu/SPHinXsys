@@ -52,7 +52,8 @@ namespace SPH {
 		Vecd rltpos = body_lower_bound_ - mesh_lower_bound_;
 		for (size_t i = 0; i < rltpos.size(); ++i) {
 			body_lower_bound_cell_[i] = floor(rltpos[i] / cell_spacing_);
-			// floor in c++ Rounds x downward, returning the largest integral value that is not greater than x.
+			/**< floor in c++ Rounds x downward, returning the largest integral value 
+			 		that is not greater than x. */
 		}
 
 		rltpos = body_upper_bound_ - mesh_lower_bound_;
@@ -61,8 +62,7 @@ namespace SPH {
 		}
 	}
 	//===================================================================//
-	PeriodicBoundingInXDirection
-		::PeriodicBoundingInXDirection(SPHBody* body)
+	PeriodicBoundingInXDirection::PeriodicBoundingInXDirection(SPHBody* body)
 		: BoundingInXDirection(body), periodic_translation_(0)
 	{
 		periodic_translation_[0] = body_upper_bound_[0] - body_lower_bound_[0];
@@ -73,8 +73,7 @@ namespace SPH {
 		}
 	}
 	//===================================================================//
-	void PeriodicBoundingInXDirection
-		::CheckLowerBound(size_t index_particle_i, Real dt)
+	void PeriodicBoundingInXDirection::CheckLowerBound(size_t index_particle_i, Vecd pnt, Real dt)
 	{
 		BaseParticleData &base_particle_data_i
 			= particles_->base_particle_data_[index_particle_i];
@@ -82,8 +81,7 @@ namespace SPH {
 			base_particle_data_i.pos_n_[0] += periodic_translation_[0];
 	}
 	//===================================================================//
-	void PeriodicBoundingInXDirection
-		::CheckUpperBound(size_t index_particle_i, Real dt)
+	void PeriodicBoundingInXDirection::CheckUpperBound(size_t index_particle_i, Vecd pnt, Real dt)
 	{
 		BaseParticleData &base_particle_data_i
 			= particles_->base_particle_data_[index_particle_i];
@@ -91,9 +89,74 @@ namespace SPH {
 			base_particle_data_i.pos_n_[0] -= periodic_translation_[0];
 	}
 	//===================================================================//
-	PeriodicConditionInXDirection::
-		PeriodicConditionInXDirection(SPHBody* body)
+	PeriodicBoundingInYDirection::PeriodicBoundingInYDirection(SPHBody* body)
+		: BoundingInYDirection(body), periodic_translation_(0)
+	{
+		periodic_translation_[1] = body_upper_bound_[1] - body_lower_bound_[1];
+		if (periodic_translation_.norm() < body->particle_spacing_) {
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			std::cout << "\n Periodic bounding failure: bounds not defined!" << std::endl;
+			exit(1);
+		}
+	}
+	//===================================================================//
+	void PeriodicBoundingInYDirection::CheckLowerBound(size_t index_particle_i, Vecd pnt, Real dt)
+	{
+		BaseParticleData &base_particle_data_i
+			= particles_->base_particle_data_[index_particle_i];
+		if (base_particle_data_i.pos_n_[1] < body_lower_bound_[1])
+			base_particle_data_i.pos_n_[1] += periodic_translation_[1];
+	}
+	//===================================================================//
+	void PeriodicBoundingInYDirection::CheckUpperBound(size_t index_particle_i, Vecd pnt, Real dt)
+	{
+		BaseParticleData &base_particle_data_i
+			= particles_->base_particle_data_[index_particle_i];
+		if (base_particle_data_i.pos_n_[1] > body_upper_bound_[1])
+			base_particle_data_i.pos_n_[1] -= periodic_translation_[1];
+	}
+	//===================================================================//
+	PeriodicBoundingInZDirection::PeriodicBoundingInZDirection(SPHBody* body)
+		: BoundingInZDirection(body), periodic_translation_(0)
+	{
+		periodic_translation_[2] = body_upper_bound_[2] - body_lower_bound_[2];
+		if (periodic_translation_.norm() < body->particle_spacing_) {
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			std::cout << "\n Periodic bounding failure: bounds not defined!" << std::endl;
+			exit(1);
+		}
+	}
+	//===================================================================//
+	void PeriodicBoundingInZDirection::CheckLowerBound(size_t index_particle_i, Vecd pnt, Real dt)
+	{
+		BaseParticleData &base_particle_data_i
+			= particles_->base_particle_data_[index_particle_i];
+		if (base_particle_data_i.pos_n_[2] < body_lower_bound_[2])
+			base_particle_data_i.pos_n_[2] += periodic_translation_[2];
+	}
+	//===================================================================//
+	void PeriodicBoundingInZDirection::CheckUpperBound(size_t index_particle_i, Vecd pnt, Real dt)
+	{
+		BaseParticleData &base_particle_data_i
+			= particles_->base_particle_data_[index_particle_i];
+		if (base_particle_data_i.pos_n_[2] > body_upper_bound_[2])
+			base_particle_data_i.pos_n_[2] -= periodic_translation_[2];
+	}
+	//===================================================================//
+	PeriodicConditionInXDirection::PeriodicConditionInXDirection(SPHBody* body)
 		: PeriodicBoundingInXDirection(body)
+	{
+
+	}
+	//===================================================================//
+	PeriodicConditionInYDirection::PeriodicConditionInYDirection(SPHBody* body)
+		: PeriodicBoundingInYDirection(body)
+	{
+
+	}
+	//===================================================================//
+	PeriodicConditionInZDirection::PeriodicConditionInZDirection(SPHBody* body)
+		: PeriodicBoundingInZDirection(body)
 	{
 
 	}

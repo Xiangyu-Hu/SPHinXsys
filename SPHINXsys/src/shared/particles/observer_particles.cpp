@@ -14,16 +14,11 @@ namespace SPH
 
 	}
 	//===============================================================//
-	ObserverParticles::ObserverParticles(string body_name)
-		: Particles(body_name)
+	ObserverParticles::ObserverParticles(SPHBody *body)
+		: Particles(body)
 	{
-
-	}
-	//===============================================================//
-	void ObserverParticles::InitializeAParticle(Vecd pnt, Real particle_volume)
-	{
-		base_particle_data_.push_back(BaseParticleData(pnt, particle_volume));
-		observer_body_data_.push_back(ObserverParticleData());
+		for (size_t i = 0; i < base_particle_data_.size(); ++i)
+			observer_body_data_.push_back(ObserverParticleData());
 	}
 	//===============================================================//
 	ObserverParticles* ObserverParticles::PointToThisObject() 

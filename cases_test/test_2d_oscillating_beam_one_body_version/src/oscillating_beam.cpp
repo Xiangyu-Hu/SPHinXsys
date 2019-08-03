@@ -80,9 +80,9 @@ std::vector<Point> CreatBeamShape()
 class Beam : public SolidBody
 {
 public:
-	Beam(SPHSystem &system, string body_name, ElasticSolid &material, ElasticSolidParticles 
-						&elastic_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, material, elastic_particles, refinement_level, op)
+	Beam(SPHSystem &system, string body_name, ElasticSolid &material, 
+				int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, material, refinement_level, op)
 	{
 		/** Geometry defination. */
 		std::vector<Point> beam_base_shape = CreatBeamBaseShape();
@@ -153,9 +153,9 @@ public:
 class BeamObserver : public ObserverLagrangianBody
 {
 public:
-	BeamObserver(SPHSystem &system, string body_name, ObserverParticles 
-			   &observer_particles, int refinement_level, ParticlesGeneratorOps op)
-		: ObserverLagrangianBody(system, body_name, observer_particles, refinement_level, op)
+	BeamObserver(SPHSystem &system, string body_name, 
+			   int refinement_level, ParticlesGeneratorOps op)
+		: ObserverLagrangianBody(system, body_name, refinement_level, op)
 	{
 		body_input_points_volumes_.push_back(make_pair(Point(PL, 0.0), 0.0));
 	}
@@ -175,16 +175,16 @@ int main()
 	//Configuration of soild materials
 	ElasticSolid solid_material("ElasticSolid", rho0_s, Youngs_modulus, poisson, 0.0);
 
-	//creat a particle cotainer the elastic body
-	ElasticSolidParticles beam_particles("BeamBody");
 	//the osillating beam
 	Beam *beam_body = 
-		new Beam(system, "BeamBody", solid_material, beam_particles, 0, ParticlesGeneratorOps::lattice);
+		new Beam(system, "BeamBody", solid_material, 0, ParticlesGeneratorOps::lattice);
+	//creat particles for the elastic body
+	ElasticSolidParticles beam_particles(beam_body);
 
-	//create a observer particle container
-	ObserverParticles observer_particles("BeamObserver");
 	BeamObserver *beam_observer 
-		= new BeamObserver(system, "BeamObserver", observer_particles, 1, ParticlesGeneratorOps::direct);
+		= new BeamObserver(system, "BeamObserver", 1, ParticlesGeneratorOps::direct);
+	//create observer particles
+	ObserverParticles observer_particles(beam_observer);
 
 	//set body contact map
 	//the contact map gives the data conntections between the bodies

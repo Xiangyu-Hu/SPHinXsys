@@ -18,7 +18,7 @@ namespace SPH {
 		functor_initialization_(std::bind(&ParticleDynamicsInner1Level::Initialization, this, _1, _2)),
 		functor_inner_interaction_(std::bind(&ParticleDynamicsInner1Level::InnerInteraction, this, _1, _2)),
 		functor_update_(std::bind(&ParticleDynamicsInner1Level::Update, this, _1, _2)) {
-		number_of_particles_ = body->number_of_real_particles_;
+		number_of_particles_ = body->number_of_particles_;
 	}
 	//===================================================================//
 	template <class BodyType, class ParticlesType, class MaterialType>
@@ -49,7 +49,7 @@ namespace SPH {
 		functor_inner_interaction_(std::bind(&ParticleDynamicsComplex::InnerInteraction, this, _1, _2)),
 		functor_contact_interaction_(std::bind(&ParticleDynamicsComplex::ContactInteraction, this, _1, _2, _3)) 
 	{
-		number_of_particles_ = body->number_of_real_particles_;
+		number_of_particles_ = body->number_of_particles_;
 	}
 	//===============================================================//
 template <class BodyType, class ParticlesType, class MaterialType,
@@ -84,7 +84,7 @@ template <class BodyType, class ParticlesType, class MaterialType,
 		functor_inner_interaction_(std::bind(&ParticleDynamicsComplexWithUpdate::InnerInteraction, this, _1, _2)),
 		functor_contact_interaction_(std::bind(&ParticleDynamicsComplexWithUpdate::ContactInteraction, this, _1, _2, _3)),
 		functor_update_(std::bind(&ParticleDynamicsComplexWithUpdate::Update, this, _1, _2)) {
-		number_of_particles_ = body->number_of_real_particles_;
+		number_of_particles_ = body->number_of_particles_;
 	}
 	//===============================================================//
 	template <class BodyType, class ParticlesType, class MaterialType,
@@ -122,7 +122,7 @@ template <class BodyType, class ParticlesType, class MaterialType,
 		functor_inner_interaction_(std::bind(&ParticleDynamicsComplex1Level::InnerInteraction, this, _1, _2)),
 		functor_contact_interaction_(std::bind(&ParticleDynamicsComplex1Level::ContactInteraction, this, _1, _2, _3)),
 		functor_update_(std::bind(&ParticleDynamicsComplex1Level::Update, this, _1, _2)) {
-		number_of_particles_ = body->number_of_real_particles_;
+		number_of_particles_ = body->number_of_particles_;
 	}
 	//===============================================================//
 	template <class BodyType, class ParticlesType, class MaterialType,
@@ -165,7 +165,7 @@ template <class BodyType, class ParticlesType, class MaterialType,
 		functor_inner_interaction_2nd_(std::bind(&ParticleDynamicsComplex2Levels::InnerInteraction2nd, this, _1, _2)),
 		functor_contact_interaction_2nd_(std::bind(&ParticleDynamicsComplex2Levels::ContactInteraction2nd, this, _1, _2, _3)),
 		functor_update_(std::bind(&ParticleDynamicsComplex2Levels::Update, this, _1, _2)) {
-		number_of_particles_ = body->number_of_real_particles_;
+		number_of_particles_ = body->number_of_particles_;
 	}
 	//===============================================================//
 	template <class BodyType, class ParticlesType, class MaterialType,

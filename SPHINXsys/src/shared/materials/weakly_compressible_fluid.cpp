@@ -8,7 +8,7 @@ namespace SPH {
 		Real rho0, Real c0, Real mu, Real k) 
 		: Fluid(fluid_name, rho0, c0, mu, k)
 	{
-		p0_ = rho_0_* c_0_*c_0_;
+		p0_ = rho_0_* c_0_ * c_0_;
 	}
 	//===============================================================//
 	Real WeaklyCompressibleFluid::GetPressure(Real rho)

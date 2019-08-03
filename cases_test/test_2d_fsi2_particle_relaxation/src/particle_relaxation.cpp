@@ -103,10 +103,8 @@ class RelaxWater : public RelaxBody
 {
 public:
 	RelaxWater(SPHSystem &system, string body_name,
-		RelaxBodyParticles &relax_particles,
 		int refinement_level, ParticlesGeneratorOps op)
-		: RelaxBody(system, body_name,
-			relax_particles, refinement_level, op)
+		: RelaxBody(system, body_name, refinement_level, op)
 	{
 		/** Define the water outer geometry by using the corner of a box.*/
 		std::vector<Point> water_block_shape = CreatWaterBlockShape();
@@ -129,9 +127,8 @@ class Wall : public RelaxBody
 {
 public:
 	Wall(SPHSystem &system, string body_name,
-		RelaxBodyParticles &relax_particles,
 		int refinement_level, ParticlesGeneratorOps op)
-		: RelaxBody(system, body_name, relax_particles, refinement_level, op)
+		: RelaxBody(system, body_name, refinement_level, op)
 	{
 		/** Define a box geomerty by using corner coordinate. */
 		std::vector<Point> outer_wall_shape = CreatOuterWallShape();
@@ -152,9 +149,8 @@ class RelaxSolid : public RelaxBody
 {
 public:
 	RelaxSolid(SPHSystem &system, string body_name,
-		RelaxBodyParticles &relax_particles,
 		int refinement_level, ParticlesGeneratorOps op)
-		: RelaxBody(system, body_name, relax_particles, refinement_level, op)
+		: RelaxBody(system, body_name, refinement_level, op)
 	{	/** Create a circle geomerty. */
 		Geometry *circle_geometry = new Geometry(insert_circle_center, insert_circle_radius, 100);
 		body_region_.add_geometry(circle_geometry, RegionBooleanOps::add);
@@ -180,21 +176,21 @@ int main()
 	/**
 	 * @brief 	Particles and body creation for water.
 	 */
-	RelaxBodyParticles 			relax_water_particles("WaterBody");
 	RelaxWater *relax_water = new RelaxWater(system, "WaterBody",
-		relax_water_particles, 0, ParticlesGeneratorOps::lattice);
+		0, ParticlesGeneratorOps::lattice);
+	RelaxBodyParticles 			relax_water_particles(relax_water);
 	/**
 	 * @brief 	Particles and body creation for wall.
 	 */
-	RelaxBodyParticles 			wall_particles("Wall");
 	Wall *wall_boundary = new Wall(system, "Wall",
-		wall_particles, 0, ParticlesGeneratorOps::lattice);
+		0, ParticlesGeneratorOps::lattice);
+	RelaxBodyParticles 			wall_particles(wall_boundary);
 	/**
 	 * @brief 	Particles and body creation for Elastic structure.
 	 */
-	RelaxBodyParticles 			relax_solid_particles("InsertedBody");
 	RelaxSolid *relax_solid = new RelaxSolid(system, "InsertedBody",
-		relax_solid_particles, 1, ParticlesGeneratorOps::lattice);
+		1, ParticlesGeneratorOps::lattice);
+	RelaxBodyParticles 			relax_solid_particles(relax_solid);
 	/**
 	 * @brief 	Body contact map.
 	 * @details The contact map gives the data conntections between the bodies.

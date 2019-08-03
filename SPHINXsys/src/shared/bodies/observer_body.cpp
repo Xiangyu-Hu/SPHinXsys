@@ -15,17 +15,15 @@
 namespace SPH {
 	//===========================================================//
 	ObserverBody::ObserverBody(SPHSystem &system, string body_name,
-		ObserverParticles &observer_particles,
 		int refinement_level, ParticlesGeneratorOps op)
-		: FictitiousBody(system, body_name, observer_particles, refinement_level, 1.3, op),
-		observer_particles_(observer_particles)
+		: FictitiousBody(system, body_name, refinement_level, 1.3, op)
 	{
 
 	}
 	//===========================================================//
 	ObserverLagrangianBody::ObserverLagrangianBody(SPHSystem &system, string body_name,
-		ObserverParticles &observer_particles, int refinement_level, ParticlesGeneratorOps op)
-		: ObserverBody(system, body_name, observer_particles, refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: ObserverBody(system, body_name, refinement_level, op)
 	{
 
 	}
@@ -36,8 +34,8 @@ namespace SPH {
 	}
 	//===========================================================//
 	ObserverEulerianBody::ObserverEulerianBody(SPHSystem &system, string body_name,
-		ObserverParticles &observer_particles, int refinement_level, ParticlesGeneratorOps op)
-		: ObserverBody(system, body_name, observer_particles, refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: ObserverBody(system, body_name, refinement_level, op)
 	{
 
 	}

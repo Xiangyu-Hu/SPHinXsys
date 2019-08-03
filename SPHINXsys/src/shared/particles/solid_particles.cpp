@@ -21,16 +21,13 @@ namespace SPH {
 
 	}
 	//===============================================================//
-	SolidParticles::SolidParticles(string body_name)
-		: Particles(body_name)
+	SolidParticles::SolidParticles(SPHBody *body)
+		: Particles(body)
 	{
-
-	}
-	//===============================================================//
-	void SolidParticles::InitializeAParticle(Vecd pnt, Real particle_volume)
-	{
-		base_particle_data_.push_back(BaseParticleData(pnt, particle_volume));
-		solid_body_data_.push_back(SolidParticleData(pnt));
+		for (size_t i = 0; i < base_particle_data_.size(); ++i) {
+			Point pnt = base_particle_data_[i].pos_n_;
+			solid_body_data_.push_back(SolidParticleData(pnt));
+		}
 	}
 	//===============================================================//
 	void SolidParticles::ReadFromXmlForReloadParticle(std::string &filefullpath)
@@ -62,17 +59,11 @@ namespace SPH {
 		return this;
 	}
 	//===============================================================//
-	ElasticSolidParticles::ElasticSolidParticles(string body_name)
-		: SolidParticles(body_name)
+	ElasticSolidParticles::ElasticSolidParticles(SPHBody *body)
+		: SolidParticles(body)
 	{
-
-	}
-	//===============================================================//
-	void ElasticSolidParticles::InitializeAParticle(Vecd pnt, Real particle_volume)
-	{
-		base_particle_data_.push_back(BaseParticleData(pnt, particle_volume));
-		solid_body_data_.push_back(SolidParticleData(pnt));
-		elastic_body_data_.push_back(ElasticSolidParticleData());
+		for (size_t i = 0; i < base_particle_data_.size(); ++i)
+			elastic_body_data_.push_back(ElasticSolidParticleData());
 	}
 	//===============================================================//
 	ElasticSolidParticles* ElasticSolidParticles::PointToThisObject()

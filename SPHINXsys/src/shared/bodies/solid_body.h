@@ -27,13 +27,8 @@ namespace SPH {
 	{
 	public:
 		SolidBody(SPHSystem &system, string body_name, Solid &solid_material,
-			SolidParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op);
+			int refinement_level, ParticlesGeneratorOps op);
 		virtual ~SolidBody() {};
-
-		/** material of this body. */
-		Solid &solid_material_;
-		/** Particles in this body. */
-		SolidParticles &solid_particles_;	
 
 		/** Build inner configuration. */
 		virtual void BuildInnerConfiguration() override;
@@ -52,6 +47,7 @@ namespace SPH {
 	{
 	protected:
 		SolidBody *solid_body_;
+		/** The goematric region to indicate the body part. */
 		Region soild_body_part_region_;
 
 		virtual void TagBodyPartParticles() override;
@@ -63,14 +59,13 @@ namespace SPH {
 	/**
 	 * @class SolidBodyPartForSimbody
 	 * @brief A SolidBodyPart for coupling with Simbody.
-	 * The mass, origin, and unit inertial matrix are computed
-	 * Note: Simbody spatial vectors are three dimensional
+	 * The mass, origin, and unit inertial matrix are computed.
+	 * Note: Simbody spatial vectors are three dimensional.
 	 */
 	class SolidBodyPartForSimbody : public SolidBodyPart
 	{
 	protected:
 		Real solid_body_density_;
-
 
 		virtual void TagBodyPartParticles() override;
 	public:
@@ -78,7 +73,7 @@ namespace SPH {
 			string soild_body_part_name, Real solid_body_density);
 		virtual~SolidBodyPartForSimbody() {};
 
-		SimTK::MassProperties *body_part_mass_properties_;
 		Vec3 initial_mass_center_;
+		SimTK::MassProperties *body_part_mass_properties_;
 	};
 }

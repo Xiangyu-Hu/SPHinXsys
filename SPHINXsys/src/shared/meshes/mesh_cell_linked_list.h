@@ -1,9 +1,9 @@
 /**
 * @file mesh_cell_linked_list.h
-* @brief This is the classes for managing cell linked lists. This is the baic class 
+* @brief Here gives the classes for managing cell linked lists. This is the baic class 
 * for building the particle configurations.
 * @details  The cell linked list saves for each body a list of particles
-* located within the cell
+* located within the cell.
 * @author	Luhui Han, Chi ZHang and Xiangyu Hu
 * @version	0.1
 */
@@ -18,24 +18,6 @@ namespace SPH {
 	class SPHSystem;
 	class SPHBody;
 	class Kernel;
-
-	/**
-	 * @class ListData
-	 * @brief Save particle index and other fast access information 
-	 */
-	class ListData
-	{
-	public:
-		size_t particle_index_;
-		/** This is important for implement peroidic boundary condition. */
-		Vecd particle_position_;
-
-		ListData(size_t particle_index, Vecd &particle_position) { 
-			particle_index_ = particle_index;
-			particle_position_ = particle_position;
-		};
-		~ListData() {};
-	};
 
 	/**
 	 * @class CellList
@@ -55,8 +37,8 @@ namespace SPH {
 
 	/**
 	 * @class MeshCellLinkedList
-	 * @brief defining a mesh cell linked list for a body
-	 * the meshes for all bodies share the same global coordiantes
+	 * @brief Defining a mesh cell linked list for a body.
+	 * The meshes for all bodies share the same global coordiantes.
 	 */
 	class MeshCellLinkedList : public Mesh
 	{
@@ -65,7 +47,7 @@ namespace SPH {
 		Real cutoff_radius_;
 		/** cell spacing */
 		Real cell_spacing_;
-		/** number cells by dimension */
+		/** number of cells by dimension */
 		Vecu number_of_cells_;
 
 		/** clear the cell lists */
@@ -85,24 +67,24 @@ namespace SPH {
 		virtual ~MeshCellLinkedList() {};
 
 		/** access protected members */
-		Real GetCutoffRadius() { return cutoff_radius_; };
 		Real GetCellSpacing() { return cell_spacing_; };
 		Vecu GetNumberOfCells() { return number_of_cells_; };
 
-		/** number of lists in each cell,
-		 * which is the the number of bodies
-		 * all the lists numer of cell times number of bodies
-		 * a list saved with the index of partilces within the cell 
-		 */
+		/** The array for of mesh cells, i.e. mesh data.
+		 * Within each cell, a list is saved with the index of partilces.*/
 		matrix_cell cell_linked_lists_;
 
 		/** allcate memories for mesh data */
 		virtual void AllocateMeshDataMatrix() override;
+		/** delete memories for mesh data */
 		virtual void DeleteMeshDataMatrix() override;
 
-		/** update cell lists */
+		/** update the cell lists */
 		void UpdateCellLists(SPHBody &body);
-		/** only update particle locations in cells */
+		/** Only update particles' cell locations. 
+		 *  This is for fiticious body in which no cell linked list 
+		 *  is required because no inner particle configuration to be constructed.
+		 */
 		void UpdateParticleCellLocation(SPHBody &body);
 		/** update by cell particle list for splitting algorithm */
 		void UpdateByCellParticleLists(SPHBody &body);

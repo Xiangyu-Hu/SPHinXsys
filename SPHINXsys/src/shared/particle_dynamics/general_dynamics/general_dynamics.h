@@ -57,8 +57,8 @@ namespace SPH
 
 		//dynamics of a particle
 		//to be realized in specific algorithms
-		virtual void CheckLowerBound(size_t index_particle_i, Real dt = 0.0) = 0;
-		virtual void CheckUpperBound(size_t index_particle_i, Real dt = 0.0) = 0;
+		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt, Real dt = 0.0) = 0;
+		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt, Real dt = 0.0) = 0;
 
 	public:
 		BoundingBodyDomain(SPHBody* body);
@@ -78,12 +78,59 @@ namespace SPH
 
 		//dynamics of a particle
 		//to be realized in specific algorithms
-		virtual void CheckLowerBound(size_t index_particle_i, Real dt = 0.0) = 0;
-		virtual void CheckUpperBound(size_t index_particle_i, Real dt = 0.0) = 0;
+		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt, Real dt = 0.0) = 0;
+		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt, Real dt = 0.0) = 0;
 
 	public:
 		BoundingInXDirection(SPHBody* body);
 		virtual ~BoundingInXDirection() {};
+
+		virtual void exec(Real dt = 0.0) override;
+		virtual void parallel_exec(Real dt = 0.0) override;
+	};
+
+	/**
+	* @class BoundingInYDirection
+	* @brief Bounding particle position in y direction, in genreal
+	*/
+	class BoundingInYDirection : public BoundingBodyDomain
+	{
+	protected:
+
+		//cells in which particle checked for bounding
+		StdVec<Vecu> lower_bound_cells_, upper_bound_cells_;
+
+		//dynamics of a particle
+		//to be realized in specific algorithms
+		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt, Real dt = 0.0) = 0;
+		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt, Real dt = 0.0) = 0;
+
+	public:
+		BoundingInYDirection(SPHBody* body);
+		virtual ~BoundingInYDirection() {};
+
+		virtual void exec(Real dt = 0.0) override;
+		virtual void parallel_exec(Real dt = 0.0) override;
+	};
+	/**
+	* @class BoundingInZDirection
+	* @brief Bounding particle position in z direction, in genreal
+	*/
+	class BoundingInZDirection : public BoundingBodyDomain
+	{
+	protected:
+
+		//cells in which particle checked for bounding
+		StdVec<Vecu> lower_bound_cells_, upper_bound_cells_;
+
+		//dynamics of a particle
+		//to be realized in specific algorithms
+		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt, Real dt = 0.0) = 0;
+		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt, Real dt = 0.0) = 0;
+
+	public:
+		BoundingInZDirection(SPHBody* body);
+		virtual ~BoundingInZDirection() {};
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
@@ -98,14 +145,54 @@ namespace SPH
 	protected:
 		Vecd periodic_translation_;
 
-		virtual void CheckLowerBound(size_t index_particle_i,
+		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt,
 			Real dt = 0.0) override;
-		virtual void CheckUpperBound(size_t index_particle_i,
+		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt,
 			Real dt = 0.0) override;
 	public:
 
 		PeriodicBoundingInXDirection(SPHBody* body);
 		virtual ~PeriodicBoundingInXDirection() {};
+
+	};
+
+	/**
+	* @class PeriodicBoundingInYDirection
+	* @brief Periodic bounding particle position in y direction
+	*/
+	class PeriodicBoundingInYDirection : public BoundingInYDirection
+	{
+	protected:
+		Vecd periodic_translation_;
+
+		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt,
+			Real dt = 0.0) override;
+		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt,
+			Real dt = 0.0) override;
+	public:
+
+		PeriodicBoundingInYDirection(SPHBody* body);
+		virtual ~PeriodicBoundingInYDirection() {};
+
+	};
+
+	/**
+	* @class PeriodicBoundingInZDirection
+	* @brief Periodic bounding particle position in z direction
+	*/
+	class PeriodicBoundingInZDirection : public BoundingInZDirection
+	{
+	protected:
+		Vecd periodic_translation_;
+
+		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt,
+			Real dt = 0.0) override;
+		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt,
+			Real dt = 0.0) override;
+	public:
+
+		PeriodicBoundingInZDirection(SPHBody* body);
+		virtual ~PeriodicBoundingInZDirection() {};
 
 	};
 
@@ -117,14 +204,52 @@ namespace SPH
 		: public PeriodicBoundingInXDirection
 	{
 	protected:
-		virtual void CheckLowerBound(size_t index_particle_i,
+		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt,
 			Real dt = 0.0) override;
-		virtual void CheckUpperBound(size_t index_particle_i,
+		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt,
 			Real dt = 0.0) override;
 	public:
 
 		PeriodicConditionInXDirection(SPHBody* body);
 		virtual ~PeriodicConditionInXDirection() {};
+
+	};
+
+	/**
+	* @class PeriodicConditionInYDirection
+	* @brief Periodic boundary condition in y direction
+	*/
+	class PeriodicConditionInYDirection
+		: public PeriodicBoundingInYDirection
+	{
+	protected:
+		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt,
+			Real dt = 0.0) override;
+		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt,
+			Real dt = 0.0) override;
+	public:
+
+		PeriodicConditionInYDirection(SPHBody* body);
+		virtual ~PeriodicConditionInYDirection() {};
+
+	};
+
+	/**
+	* @class PeriodicConditionInZDirection
+	* @brief Periodic boundary condition in z direction
+	*/
+	class PeriodicConditionInZDirection
+		: public PeriodicBoundingInZDirection
+	{
+	protected:
+		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt,
+			Real dt = 0.0) override;
+		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt,
+			Real dt = 0.0) override;
+	public:
+
+		PeriodicConditionInZDirection(SPHBody* body);
+		virtual ~PeriodicConditionInZDirection() {};
 
 	};
 

@@ -307,7 +307,7 @@ namespace SPH
 		{
 			Real speed_max = body_->speed_max_;
 			Real density = material_->GetReferenceDensity();
-			p_background_ = 10.0*density*speed_max * speed_max;
+			p_background_ =  10.0 * density * speed_max * speed_max;
 		}
 		//===========================================================//
 		void TransportVelocityCorrection::InnerInteraction(size_t index_particle_i, Real dt)
@@ -352,14 +352,14 @@ namespace SPH
 			}
 
 			fluid_data_i.dvel_dt_trans_ += acceleration_trans;
-			base_particle_data_i.pos_n_ += acceleration_trans * dt*dt*0.5;
+			base_particle_data_i.pos_n_ += acceleration_trans * dt * dt * 0.5;
 		}
 		//===========================================================//
 		TotalMechanicalEnergy::TotalMechanicalEnergy(FluidBody* body, ExternalForce *external_force)
 			: WeaklyCompressibleFluidDynamicsSum<Real>(body)
 		{
 			initial_reference_ = 0.0;
-			average_farctor_ = 1.0 / Real(body_->number_of_real_particles_);
+			average_farctor_ = 1.0;// / Real(body_->number_of_real_particles_);
 			potential_ = external_force->InducedAcceleration().norm();
 		}
 		//===========================================================//

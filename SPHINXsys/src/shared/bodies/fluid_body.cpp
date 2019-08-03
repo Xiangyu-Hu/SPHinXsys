@@ -8,11 +8,8 @@
 namespace SPH {
 	//===============================================================//
 	FluidBody::FluidBody(SPHSystem &system, string body_name,
-		Fluid &material, FluidParticles &fluid_particles,
-			int refinement_level, ParticlesGeneratorOps op)
-		: RealBody(system, body_name, material, fluid_particles,
-			refinement_level, 1.3, op), fluid_material_(material),
-		fluid_particles_(fluid_particles)
+		Fluid &material, int refinement_level, ParticlesGeneratorOps op)
+		: RealBody(system, body_name, material, refinement_level, 1.3, op)
 	{
 
 	}

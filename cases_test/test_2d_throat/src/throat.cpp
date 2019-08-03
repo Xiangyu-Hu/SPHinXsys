@@ -31,10 +31,8 @@ class FluidBlock : public FluidBody
 {
 	public:
 		FluidBlock(SPHSystem &system, string body_name, Oldroyd_B_Fluid &oldroyd_b_material,
-			ViscoelasticFluidParticles &viscoelastic_fluid_particles,
-									int refinement_level, ParticlesGeneratorOps op)
-			: FluidBody(system, body_name, oldroyd_b_material,
-				viscoelastic_fluid_particles, refinement_level, op)
+			int refinement_level, ParticlesGeneratorOps op)
+			: FluidBody(system, body_name, oldroyd_b_material, refinement_level, op)
 		{
 			std::vector<Point> pnts;
 			pnts.push_back(Point(-0.5*DL, -0.5*DH));
@@ -70,8 +68,8 @@ class WallBoundary : public SolidBody
 {
 public:
 	WallBoundary(SPHSystem &system, string body_name, 
-		SolidParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), solid_particles,	refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), refinement_level, op)
 	{
 		std::vector<Point> pnts3;
 		pnts3.push_back(Point(-0.5*DL - BW, -0.5*DH - BW));
@@ -124,17 +122,17 @@ int main()
 	//fluid material properties
 	Oldroyd_B_Fluid fluid("Fluid", rho0_f, c_f, mu_f, k_f, lambda_f, mu_p_f);
 	
-	//creat a fluid particle cotainer
-	ViscoelasticFluidParticles fluid_particles("FluidBody");
 	//the water block
 	FluidBlock *fluid_block 
-		= new FluidBlock(system, "FluidBody", fluid, fluid_particles, 0, ParticlesGeneratorOps::lattice);
-	
-	//creat a solid particle cotainer
-	SolidParticles solid_particles("Wall");
+		= new FluidBlock(system, "FluidBody", fluid, 0, ParticlesGeneratorOps::lattice);
+	//creat fluid particles
+	ViscoelasticFluidParticles fluid_particles(fluid_block);
+
 	//the wall boundary
 	WallBoundary *wall_boundary 
-		= new WallBoundary(system, "Wall", solid_particles, 0, ParticlesGeneratorOps::lattice);
+		= new WallBoundary(system, "Wall", 0, ParticlesGeneratorOps::lattice);
+	//creat solid particles
+	SolidParticles solid_particles(wall_boundary);
 
 	//set body contact map
 	//the contact map gives the data conntections between the bodies

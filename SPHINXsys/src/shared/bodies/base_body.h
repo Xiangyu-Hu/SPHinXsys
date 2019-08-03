@@ -38,10 +38,8 @@ namespace SPH {
 	 * @brief Serval manners are provied for particles generator.
 	 * @details lattice : Generate partice from lattcie grid.
 	 *			direct  : Input particle position and volume directly.
-	 *			relax   : Read relaxed particles from specific files.
-	 *			restart : Read particles info from restart files.
 	 */
-	enum class ParticlesGeneratorOps {lattice, direct, relax, restart};
+	enum class ParticlesGeneratorOps {lattice, direct};
 	/**
 	 * @class SPHBody
 	 * @brief SPHBody is a base body with basic data and functions.
@@ -69,44 +67,26 @@ namespace SPH {
 		 * @param[in] op Partciel generator manner.
 		 */
 		explicit SPHBody(SPHSystem &sph_system, string body_name, Material &base_material,
-			Particles &base_particles, int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op);
+			int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op);
 		virtual ~SPHBody() {};
 
 		Kernel *kernel_; 		/**< sph kernel function specific to a SPHBody */
 		int refinement_level_;	/**< refinement level of this body */
-		int rst_step_; 			/**< Time step for restart simulaiton
-		/**
-		 * @brief Allocate memory for cell linked list.
-		 */
+		/** Allocate memory for cell linked list. */
 		virtual void AllocateMeoemryCellLinkedList() {};
-		/**
-		 * @brief Allocate memory for back ground mesh.
-		 */
+		/** Allocate memory for back ground mesh. */
 		virtual void AllocateMeoemryBackgroundMesh() {};
-		/**
-		 * @brief Update cell linked list.
-		 */
+		/** Update cell linked list. */
 		virtual void UpdateCellLinkedList() = 0;
-		/**
-		 * @brief Build inner configuration.
-		 */
+		/** Build inner configuration. */
 		virtual void BuildInnerConfiguration() = 0;
-		/**
-		 * @brief Build contact configuration.
-		 */
+		/** Build contact configuration. */
 		virtual void BuildContactConfiguration() = 0;
-		/**
-		 * @brief Update inner configuration.
-		 */
+		/** Update inner configuration. */
 		virtual void UpdateInnerConfiguration() = 0;
-		/**
-		 * @brief Update contact configuration.
-		 */
+		/** Update contact configuration. */
 		virtual void UpdateContactConfiguration() = 0;
-		/**
-		 * @brief Update interactiong configuration.
-		 * @param[in] interacting_bodies Interacting bodies of this body. 
-		 */
+		/** Update interactiong configuration. */
 		virtual void UpdateInteractionConfiguration(SPHBodyVector interacting_bodies) = 0;
 
 		//----------------------------------------------------------------------
@@ -114,8 +94,8 @@ namespace SPH {
 		//----------------------------------------------------------------------
 		Real speed_max_;							/**< Maxium particle speed. */
 		Real particle_spacing_;						/**< Particle spacing of the body. */
-		size_t number_of_real_particles_;			/**< Number of real particles of the body. */
-		Particles &base_particles_;					/**< Base particles of this body. */
+		size_t number_of_particles_;			/**< Number of real particles of the body. */
+		Particles *base_particles_;					/**< Base particles of this body. */
 		Material &base_material_;					/**< Base material of this body. */
 		MeshCellLinkedList *mesh_cell_linked_list_; /**< Cell linked mesh of this body. */
 		/**
@@ -127,13 +107,9 @@ namespace SPH {
 		size_t number_of_by_cell_lists_;
 		ByCellLists by_cell_lists_particle_indexes_;
 		
-		/** 
-		  * @brief Reference inner configurations for totoal Lagrangian formulation. 
-		  */
+		/** Reference inner configurations for totoal Lagrangian formulation. */
 		ReferenceNeighborList reference_inner_configuration_;	
-		/**
-		  * @brief current inner configurations for updated Lagrangian formulation.
-		  */
+		/** current inner configurations for updated Lagrangian formulation. */
 		NeighborList current_inner_configuration_;
 		
 		/**
@@ -151,28 +127,18 @@ namespace SPH {
 		/** Configurations for updated Lagrangian formulation. **/
 		ContactNeighborList current_contact_configuration_;				
 
-		/**
-		 * @brief Get the name of this body for out file name.
-		 * @returns Name of the body.
-		 */
+		/** Get the name of this body for out file name. */
 		string GetBodyName(); 
-		/**
-		 * @brief Set up the contact map.
-		 */
+		/** Set up the contact map. */
 		void SetContactMap(SPHBodyContactMap &contact_map);
-		/**
-		 * @brief Allocate memories for configuration
-		 */
+		/** Allocate memories for configuration. */
 		void AllocateMemoriesForConfiguration();
 
-		/**
-		 * @brief the reagion describe the geometry of the body
-		 * static member, so the geoemtry head file is included.
-		 */
+		/** the reagion describe the geometry of the body.
+		 * static member, so the geoemtry head file is included. */
 		Region body_region_;
-		/**
-		 * @brief Check wether a point within the geometry of this body.
-		 * @returns TRUE if a point within body's region otherwise FALSE.
+		/** Check wether a point within the geometry of this body.
+		 * @returns TRUE if a point within body's region otherwise FALSE. 
 		 */
 		bool BodyContain(Vecd pnt); 
 		/**
@@ -193,51 +159,22 @@ namespace SPH {
 		 */		
 		PositionsAndVolumes body_input_points_volumes_;
 		ParticlesGeneratorOps particle_generator_op_;	/**< Particle generator manner */
-		/**
-		 * @brief Generate particles for the body in specific manner.
-		 * @details Several manners are defind in the Body constructor
-		 *			lattice Generate particles on lattice point;
-		 *			direct  Input particles with pos and vol;
-		 *    		relaxed Read particles info from relax scheme;
-		 *			restart Read particles info from restart files.
-		 */		
-		virtual void CreateParticelsInSpecificManner();
-		/**
-		 * @brief Generate a particle for the body.
-		 * @param[in] pnt The position the particle.
-		 * @param[in] particle_volume The volume of the particle.
-		 */
-		virtual void GenerateAParticle(Vecd pnt, Real particle_volume = 0.0);
-		/**
-		 * @brief Output particle data in VTU file for visuallization in Paraview.
-		 * @param[in,out] output_file Ofstream for output.
-		 */
+		/** Output particle data in VTU file for visuallization in Paraview. */
 		virtual void WriteParticlesToVtuFile(ofstream &output_file);
-		/**
-		 * @brief Output particle data in PLT file for visuallization in Tecplot.
-		 * @param[in,out] output_file Ofstream for output.
-		 */
+		/** Output particle data in PLT file for visuallization in Tecplot. */
 		virtual void WriteParticlesToPltFile(ofstream &output_file);
-		/**
-		 * @brief Output particle data in XML file for visuallization.
-		 * @param[in,out] output_file Ofstream for output.
-		 */
-		virtual void WriteParticlesToXmlFile(std::string &filefullpath);
-		/**
-		 * @brief Output particle data in XML file for restart simulation.
-		 * @param[in,out] output_file Ofstream for writing.
-		 */
-		virtual void WriteParticlesToXmlForRestart(std::string &filefullpath);
+
 		/** Output particle data in XML file for restart simulation. */
+		virtual void WriteParticlesToXmlForRestart(std::string &filefullpath);
+		/** Read particle data in XML file for restart simulation. */
 		virtual void ReadParticlesFromXmlForRestart(std::string &filefullpath);
-	
+
 		/** Output particle position and volume in XML file for reloading particles. */
 		virtual void WriteToXmlForReloadParticle(std::string &filefullpath);
 		/** Reload particle position and volume from XML files. */
 		virtual void ReadFromXmlForReloadParticle(std::string &filefullpath);
-		/**
-		 * @brief The pointer to derived class object.
-		 */
+		
+		/** The pointer to derived class object. */
 		virtual SPHBody* PointToThisObject();
 	};
 	/**
@@ -259,32 +196,20 @@ namespace SPH {
 		 * @param[in] op Partciel generator manner.
 		 */
 		RealBody(SPHSystem &sph_system, string body_name, Material &base_material, 
-			Particles &base_particles, int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op);
+			int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op);
 		virtual ~RealBody() {};
-		/**
-		 * @brief Allocate memory for cell linked list.
-		 */
+		/** Allocate memory for cell linked list. */
 		virtual void AllocateMeoemryCellLinkedList() override;
-		/**
-		 * @brief Update cell linked list.
-		 */
+		/** Update cell linked list. */
 		virtual void UpdateCellLinkedList() override;
-		/**
-		 * @brief Update inner configuration.
-		 */
+		/** Update inner configuration. */
 		virtual void UpdateInnerConfiguration() override;
-		/**
-		 * @brief Update contact configuration.
-		 */
+		/** Update contact configuration. */
 		virtual void UpdateContactConfiguration() override;
-		/**
-		 * @brief Update interaction configuration, e.g., both ineer and contact.
-		 * @param[in] interacting_bodies Interacting bodies of this body. 
-		 */
+		/** Update interaction configuration, e.g., both ineer and contact. */
 		virtual void UpdateInteractionConfiguration(SPHBodyVector interacting_bodies) override;
-		/**
-		 * @brief The pointer to derived class object.
-		 */
+
+		/** The pointer to derived class object. */
 		virtual RealBody* PointToThisObject() override;
 	};
 
@@ -306,36 +231,22 @@ namespace SPH {
 		 * @param[in] refinement_level Refinement level of this body.
 		 * @param[in] op Partciel generator manner.
 		 */
-		FictitiousBody(SPHSystem &system, string body_name, Particles &base_particles, 
+		FictitiousBody(SPHSystem &system, string body_name, 
 			int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op);
 		virtual ~FictitiousBody() {};
 
-		/**
-		 * @brief Build inner configuration.
-		*/
+		/** Build inner configuration. */
 		virtual void BuildInnerConfiguration() override;
-		/**
-		 * @brief Update cell linked list.
-		 */
+		/** Update cell linked list. */
 		virtual void UpdateCellLinkedList() override;
-		/**
-		 * @brief Update inner configuration.
-		 * doing nothing because there is no inner configuration
-		 */
+		/** Update inner configuration. */
 		virtual void UpdateInnerConfiguration() override;
-		/**
-		 * @brief Update contact configuration.
-		 */
+		/** Update contact configuration. */
 		virtual void UpdateContactConfiguration() override;
-		/**
-		 * @brief Update interaction configuration, e.g., both ineer and contact.
-		 * @param[in] interacting_bodies Interacting bodies of this body. 
-		 */
+		/** Update interaction configuration, e.g., both ineer and contact. */
 		virtual void UpdateInteractionConfiguration(SPHBodyVector interacting_bodies) override;
 
-		/**
-		 * @brief The pointer to derived class object.
-		 */
+		/** The pointer to derived class object. */
 		virtual FictitiousBody* PointToThisObject() override;
 	};
 
@@ -364,6 +275,7 @@ namespace SPH {
 	protected:
 		virtual void TagBodyPartParticles() = 0;
 	public:
+		/** Collection particle in this body part. */
 		IndexVector body_part_particles_;
 
 		LagrangianBodyPart(SPHBody *body, string body_part_name)
@@ -381,6 +293,7 @@ namespace SPH {
 	protected:
 		virtual void TagBodyPartCells() = 0;
 	public:
+		/** Collection of cells to indicate the body part. */
 		CellVector body_part_cells_;
 
 		EulerianBodyPart(SPHBody *body, string body_part_name)

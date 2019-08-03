@@ -129,7 +129,7 @@ namespace SPH
 	public:
 		/** Constructor */
 		explicit ParticleDynamics(BodyType* body) : Dynamics<ReturnType>(), body_(body), 
-			particles_(dynamic_cast<ParticlesType*>(body->base_particles_.PointToThisObject())),
+			particles_(dynamic_cast<ParticlesType*>(body->base_particles_->PointToThisObject())),
 			material_(dynamic_cast<MaterialType*>(body->base_material_.PointToThisObject())) {};
 		virtual ~ParticleDynamics() {};
 	};
@@ -189,8 +189,7 @@ namespace SPH
 	class ParticleDynamicsByCells : public ParticleDynamics<void, BodyType, ParticlesType, MaterialType>
 	{
 	protected:
-		/** information of mesh cell linked list */
-		MeshCellLinkedList & mesh_cell_linked_list_;
+		MeshCellLinkedList *mesh_cell_linked_list_;
 		matrix_cell cell_linked_lists_;
 		Vecu number_of_cells_;
 		Real cell_spacing_;
@@ -218,7 +217,7 @@ namespace SPH
 		explicit ParticleDynamicsSimple(BodyType* body)
 			: ParticleDynamics<void, BodyType, ParticlesType, MaterialType>(body), 
 			functor_update_(std::bind(&ParticleDynamicsSimple::Update, this, _1, _2)){
-			number_of_particles_ = body->number_of_real_particles_;
+			number_of_particles_ = body->number_of_particles_;
 		};
 		virtual ~ParticleDynamicsSimple() {};
 
@@ -246,7 +245,7 @@ namespace SPH
 	public:
 		explicit ParticleDynamicsReduce(BodyType* body) : ParticleDynamics<ReturnType, BodyType, ParticlesType, MaterialType>(body), 
 			functor_reduce_function_(std::bind(&ParticleDynamicsReduce::ReduceFunction, this, _1, _2)) {
-			number_of_particles_ = body->number_of_real_particles_;
+			number_of_particles_ = body->number_of_particles_;
 		};
 		virtual ~ParticleDynamicsReduce() {};
 	
@@ -272,12 +271,12 @@ namespace SPH
 		explicit ParticleDynamicsInner(BodyType* body) : 
 			ParticleDynamicsWithInnerConfigurations<BodyType, ParticlesType, MaterialType>(body),
 			functor_inner_interaction_(std::bind(&ParticleDynamicsInner::InnerInteraction, this, _1, _2)) {
-			number_of_particles_ = body->number_of_real_particles_;
+			number_of_particles_ = body->number_of_particles_;
 		};
 		virtual ~ParticleDynamicsInner() {};
 
-		virtual void exec(Real dt = 0.0);
-		virtual void parallel_exec(Real dt = 0.0);
+		virtual void exec(Real dt = 0.0) override;
+		virtual void parallel_exec(Real dt = 0.0) override;
 	};
 
 	/**

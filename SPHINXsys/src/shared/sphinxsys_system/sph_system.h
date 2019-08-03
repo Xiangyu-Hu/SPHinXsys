@@ -29,6 +29,10 @@ namespace SPH
 	public:
 		/**
 		 * @brief Default constructor.
+		 * Note that the lower and upper domian bounds are used to build mesh cell linked list, 
+		 * therefore, should be bigger than the lower and upper bounds of 
+		 * all bodies plus the boundary width. Otherwise, it may come to the situation that 
+		 * a particle may can not found a valid cell to build the cell linked list.
 		 * @param[in] lower_bound Lower bound of the computational domain.
 		 * @param[in] upper_bound Upper bound of the computational domain.
 		 * @param[in] particle_spacing_ref Reference particle spacing.
@@ -62,8 +66,6 @@ namespace SPH
 		void AddFictitiousBody(SPHBody* body);
 		/** Set up the body topology. */
 		void SetBodyTopology(SPHBodyTopology* body_topology);
-		/** Create particles for the system, and particles are created and saved in the bodies. */
-		void CreateParticelsForAllBodies();
 		/** Initialize cell linked lists system. */
 		void InitializeSystemCellLinkedLists();
 		/** Initialize particle interacting configurations. */

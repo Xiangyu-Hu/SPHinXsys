@@ -8,7 +8,7 @@
 namespace SPH {
 	//===============================================================//
 	void ParticleGeneratorLattice
-		::CreateParticles(SPHBody &sph_body)
+		::CreateBaseParticles(SPHBody &sph_body, Particles &base_particles)
 	{
 		size_t number_of_particles = 0;
 		Real vol = lattice_spacing_ * lattice_spacing_*lattice_spacing_;
@@ -20,12 +20,12 @@ namespace SPH {
 					lower_bound_[2] + (k + 0.5)*lattice_spacing_);
 				if (sph_body.BodyContain(particle_location))
 				{
-					sph_body.GenerateAParticle(particle_location, vol);
+					base_particles.InitializeABaseParticle(particle_location, vol);
 					number_of_particles++;
 				}
 			}
 
-		sph_body.number_of_real_particles_ = number_of_particles;
+		sph_body.number_of_particles_ = number_of_particles;
 	}
 	//===============================================================//
 }

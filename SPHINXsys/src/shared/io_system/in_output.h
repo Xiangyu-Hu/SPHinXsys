@@ -372,22 +372,6 @@ namespace SPH {
 	};
 
 	/**
-	 * @class WriteBodyStatesToXml
-	 * @brief write files for bodies 
-	 * the output file is XML format can be read by XML parser
-	 */
-	class WriteBodyStatesToXml : public WriteBodyStates
-	{
-	protected:
-		std::string filefullpath_;
-	public:
-		WriteBodyStatesToXml(In_Output& in_output, SPHBodyVector bodies);
-		virtual ~WriteBodyStatesToXml() {};
-
-		virtual void WriteToFile(Real time = 0.0) override;
-	};
-
-	/**
 	 * @class RestartIO
 	 * @brief Write the restart file in XML format.
 	 */

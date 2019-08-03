@@ -15,6 +15,11 @@
 using namespace std;
 
 namespace SPH {
+
+	/** preclaimed classes*/
+	class SPHBody;
+	class ParticleGenerator;
+
 	/**
 	 * @class BaseParticleData
 	 * @brief A based particle with essential data.
@@ -22,7 +27,8 @@ namespace SPH {
 	class BaseParticleData
 	{
 	protected:
-		static int ID_max_;		/**< Maximum ID number for all particles. */
+		/** Maximum ID number for all particles. */
+		static int ID_max_;		
 
 	public:
 		BaseParticleData(Vecd position, Real volume);
@@ -46,29 +52,34 @@ namespace SPH {
 	class Particles
 	{
 	protected:
-		/** The name of the body in which the particles belongs to. */
-		string body_name_;		
+		/** The body in which the particles belongs to. */
+		SPHBody *body_;
+		string body_name_;
+
+		ParticleGenerator *particle_generator_;
 	public:
-		Particles(string body_name);
+		Particles(SPHBody *body);
 		virtual ~Particles() {};
 		/** Vector of base particle data. */
 		StdLargeVec<BaseParticleData> base_particle_data_;	
-		/** Initialize a prticle by input a postion and volume. */
-		virtual void InitializeAParticle(Vecd pnt, Real particle_volume) = 0;
+		/** Initialize a base prticle by input a postion and volume. */
+		void InitializeABaseParticle(Vecd pnt, Real particle_volume);
+
 		/** Write particle data in VTU format for Paraview. */
 		virtual void WriteParticlesToVtuFile(ofstream &output_file) = 0;
 		/** Write particle data in PLT format for Tecplot. */
 		virtual void WriteParticlesToPltFile(ofstream &output_file) = 0;
-		/** Write particle data in XML format. */
-		virtual void WriteParticlesToXmlFile(std::string &filefullpath) = 0;
+
 		/** Write particle data in XML format for restart. */
 		virtual void WriteParticlesToXmlForRestart(std::string &filefullpath) = 0;
 		/** Initialize particle data from restart xml file. */
 		virtual void ReadParticleFromXmlForRestart(std::string &filefullpath) = 0;
+
 		/** Output particle position and volume in XML file for reloading particles. */
 		virtual void WriteToXmlForReloadParticle(std::string &filefullpath);
 		/** Reload particle position and volume from XML files. */
 		virtual void ReadFromXmlForReloadParticle(std::string &filefullpath);
+
 		/** Pointer to this object. */
 		virtual Particles* PointToThisObject();
 	};

@@ -76,9 +76,9 @@ class WaterBlock : public FluidBody
 {
 public:
 	WaterBlock(SPHSystem &system, string body_name,
-		WeaklyCompressibleFluid &fluid_material, FluidParticles &fluid_particles,
+		WeaklyCompressibleFluid &fluid_material, 
 		int refinement_level, ParticlesGeneratorOps op)
-		: FluidBody(system, body_name, fluid_material, fluid_particles, refinement_level, op)
+		: FluidBody(system, body_name, fluid_material, refinement_level, op)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> water_block_shape;
@@ -101,8 +101,8 @@ class WallBoundary : public SolidBody
 {
 public:
 	WallBoundary(SPHSystem &system, string body_name,
-		SolidParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), solid_particles, refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), refinement_level, op)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> outer_wall_shape;
@@ -132,8 +132,8 @@ class GateBase : public SolidBody
 {
 public:
 	GateBase(SPHSystem &system, string body_name, ElasticSolid &solid_material,
-		ElasticSolidParticles &elastic_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, solid_material, elastic_particles, refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, solid_material, refinement_level, op)
 	{
 		/** Geometry definition. */
 		std::vector<Point> gate_base_shape;
@@ -154,8 +154,8 @@ class Gate : public SolidBody
 {
 public:
 	Gate(SPHSystem &system, string body_name, ElasticSolid &solid_material,
-		ElasticSolidParticles &elastic_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, solid_material, elastic_particles, refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, solid_material, refinement_level, op)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> gate_shape;
@@ -175,10 +175,9 @@ public:
 class Observer : public ObserverLagrangianBody
 {
 public:
-	Observer(SPHSystem &system, string body_name, ObserverParticles &observer_particles,
+	Observer(SPHSystem &system, string body_name, 
 		int refinement_level, ParticlesGeneratorOps op)
-		: ObserverLagrangianBody(system, body_name, observer_particles,
-			refinement_level, op)
+		: ObserverLagrangianBody(system, body_name, refinement_level, op)
 	{
 		/** Add observation point. */
 		body_input_points_volumes_.push_back(make_pair(GateP_lb, 0.0));
@@ -200,34 +199,34 @@ int main()
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
 	WeaklyCompressibleFluid 			fluid("Water", rho0_f, c_f, mu_f, k_f);
-	FluidParticles 	fluid_particles("WaterBody");
-	WaterBlock *water_block = new WaterBlock(system, "WaterBody", fluid,
-		fluid_particles, 0, ParticlesGeneratorOps::lattice);
+	WaterBlock *water_block = new WaterBlock(system, "WaterBody", 
+		fluid, 0, ParticlesGeneratorOps::lattice);
+	FluidParticles 	fluid_particles(water_block);
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
-	SolidParticles 					solid_particles("Wall");
-	WallBoundary *wall_boundary = new WallBoundary(system, "Wall",
-		solid_particles, 0, ParticlesGeneratorOps::lattice);
+	WallBoundary *wall_boundary 
+		= new WallBoundary(system, "Wall", 0, ParticlesGeneratorOps::lattice);
+	SolidParticles 					solid_particles(wall_boundary);
 	/**
 	 * @brief 	Material property, particle and body creation of gate base.
 	 */
 	ElasticSolid 			solid_material("ElasticSolid", rho0_s, Youngs_modulus, poisson);
-	ElasticSolidParticles 	gate_base_particles("GateBase");
-	GateBase *gate_base = new GateBase(system, "GateBase", solid_material,
-		gate_base_particles, 1, ParticlesGeneratorOps::lattice);
+	GateBase *gate_base = new GateBase(system, "GateBase", 
+		solid_material, 1, ParticlesGeneratorOps::lattice);
+	ElasticSolidParticles 	gate_base_particles(gate_base);
 	/**
 	 * @brief 	Material property, particle and body creation of elastic gate.
 	 */
-	ElasticSolidParticles 	gate_particles("Gate");
-	Gate *gate = new Gate(system, "Gate", solid_material, 
-		gate_particles, 1, ParticlesGeneratorOps::lattice);
+	Gate *gate = new Gate(system, "Gate", 
+		solid_material, 1, ParticlesGeneratorOps::lattice);
+	ElasticSolidParticles 	gate_particles(gate);
 	/**
 	 * @brief 	Particle and body creation of gate observer.
 	 */
-	ObserverParticles 			observer_particles("Observer");
-	Observer *gate_observer = new Observer(system, "Observer",
-		observer_particles, 1, ParticlesGeneratorOps::direct);
+	Observer *gate_observer 
+		= new Observer(system, "Observer", 1, ParticlesGeneratorOps::direct);
+	ObserverParticles 			observer_particles(gate_observer);
 	/**
 	 * @brief 	Body contact map.
 	 * @details The contact map gives the data conntections between the bodies.

@@ -12,7 +12,6 @@ namespace SPH {
 	/**
 	 * @brief Friend classes.
 	 */
-	class ListData;
 	class SPHBody;
 	
 	using IndexVector = StdVec<size_t>;		/**< Index containner with elements of size_t. */
@@ -22,7 +21,7 @@ namespace SPH {
 	using ListIndexVector = LargeVec<size_t>;	/**< Concurrent body index vector for cell linked lists. */
 
 	using ConcurrentIndexVector = LargeVec<size_t>;	/**< Concurrent particle index which can be used to store particle position of a container .*/
-	using ListDataVector = LargeVec<ListData>;		/**< List of vector data. */
+	using ListDataVector = LargeVec<std::pair<size_t, Vecd>>;		/**< List of vector data. */
 
 	// index set
 	using IndexSet = LargeSet<size_t>;				/**< Index set. */

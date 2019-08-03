@@ -55,6 +55,20 @@ namespace SPH
 		};
 
 		/**
+		 * @class ResetFluidCondition
+		 * @brief  Set user defined condition for a fluid body with weakly compressible fluid.
+		 */
+		class ResetFluidCondition : public WeaklyCompressibleFluidDynamicsSimple
+		{
+		protected:
+			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
+		public:
+			ResetFluidCondition(FluidBody *body)
+				: WeaklyCompressibleFluidDynamicsSimple(body) {};
+			virtual ~ResetFluidCondition() {};
+		};
+
+		/**
 		 * @class InitialNumberDensity
 		 * @brief  Initialize particle number density
 		 */

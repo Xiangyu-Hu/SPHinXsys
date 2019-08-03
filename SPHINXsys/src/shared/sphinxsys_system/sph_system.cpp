@@ -49,14 +49,6 @@ namespace SPH
 		body_topology_ = body_topology;
 	}
 	//===============================================================//
-	void SPHSystem::CreateParticelsForAllBodies()
-	{
-		for (auto &body : bodies_)
-		{
-			body->CreateParticelsInSpecificManner();
-		}
-	}
-	//===============================================================//
 	void SPHSystem::InitializeSystemCellLinkedLists()
 	{
 		for (auto &body : bodies_)
@@ -80,7 +72,6 @@ namespace SPH
 	//===============================================================//
 	void SPHSystem::SetupSPHSimulation()
 	{
-		CreateParticelsForAllBodies();
 		InitializeSystemCellLinkedLists();
 		InitializeSystemConfigurations();
 	}

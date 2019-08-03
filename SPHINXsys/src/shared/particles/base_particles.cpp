@@ -5,6 +5,8 @@
  * @version	0.1
  */
 #include "base_particles.h"
+#include "base_body.h"
+#include "all_particle_generators.h"
 
 namespace SPH
 {
@@ -19,10 +21,37 @@ namespace SPH
 		ID_max_++;
 	}
 	//===============================================================//
-	Particles::Particles(string body_name) 
-		: body_name_(body_name)
+	Particles::Particles(SPHBody *body)
+		: body_(body), body_name_(body->GetBodyName())
 	{
+		body->base_particles_ = this;
 
+		switch (body->particle_generator_op_)
+		{
+		case ParticlesGeneratorOps::lattice: {
+			particle_generator_ = new ParticleGeneratorLattice(*body);
+			break;
+		}
+
+		case ParticlesGeneratorOps::direct: {
+			particle_generator_ = new ParticleGeneratorDirect(*body);
+			break;
+		}
+
+		default: {
+			std::cout << "\n FAILURE: the type of particle generator is undefined!" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
+			break;
+		}
+		}
+
+		particle_generator_->CreateBaseParticles(*body, *this);
+	}
+	//===============================================================//
+	void Particles::InitializeABaseParticle(Vecd pnt, Real particle_volume)
+	{
+		base_particle_data_.push_back(BaseParticleData(pnt, particle_volume));
 	}
 	//===============================================================//
 	void Particles::WriteToXmlForReloadParticle(std::string &filefullpath)

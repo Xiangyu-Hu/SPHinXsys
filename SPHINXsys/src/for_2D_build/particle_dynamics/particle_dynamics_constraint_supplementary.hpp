@@ -22,7 +22,7 @@ namespace SPH {
 				= this->cell_linked_lists_[constrained_cells_[i][0]][constrained_cells_[i][1]]
 				.particle_data_lists_;
 			for (size_t num = 0; num < list_data.size(); ++num)
-				ConstraintAParticle(list_data[num].particle_index_, dt);
+				ConstraintAParticle(list_data[num].first, dt);
 		}
 	}
 	//===============================================================//
@@ -39,7 +39,7 @@ namespace SPH {
 					= this->cell_linked_lists_[constrained_cells_[i][0]][constrained_cells_[i][1]]
 					.particle_data_lists_;
 				for (size_t num = 0; num < list_data.size(); ++num)
-					ConstraintAParticle(list_data[num].particle_index_, dt);
+					ConstraintAParticle(list_data[num].first, dt);
 			}
 		}, ap);
 	}

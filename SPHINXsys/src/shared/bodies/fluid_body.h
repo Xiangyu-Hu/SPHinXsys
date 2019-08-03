@@ -25,14 +25,8 @@ namespace SPH {
 	{
 	public:
 		explicit FluidBody(SPHSystem &system, string body_name,
-			Fluid &fluid_material, FluidParticles &fluid_particles,
-			int refinement_level, ParticlesGeneratorOps op);
+			Fluid &fluid_material, int refinement_level, ParticlesGeneratorOps op);
 		virtual ~FluidBody() {};
-
-		/** Material of this body. */
-		Fluid &fluid_material_;
-		/** Particles in this body. */
-		FluidParticles &fluid_particles_; 	
 
 		/** Maximum signal speed, total kinetic energy. */
 		Real signal_speed_max_;					
@@ -44,13 +38,14 @@ namespace SPH {
 
 	/**
 	  * @class FluidBodyPart
-	  * @brief An auxillariy class for WeaklyCompressiblefluidBody to
+	  * @brief An auxillariy class for fluidBody to
 	  * indicate a part of the body fixed with location.
 	  */
 	class FluidBodyPart : public EulerianBodyPart
 	{
 	protected:
 		FluidBody *fluid_body_;
+		/** The geometric region indicating the body part. */
 		Region fluid_body_part_region_;
 
 		virtual void TagBodyPartCells() override;

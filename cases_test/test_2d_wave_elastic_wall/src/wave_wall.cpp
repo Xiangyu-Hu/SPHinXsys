@@ -187,10 +187,8 @@ class WaterBlock : public FluidBody
 	public:
 		WaterBlock(SPHSystem &system, string body_name,
 			WeaklyCompressibleFluid &material, 
-			FluidParticles &fluid_particles, 
 			int refinement_level, ParticlesGeneratorOps op)
-			: FluidBody(system, body_name, material, 
-				fluid_particles, refinement_level, op)
+			: FluidBody(system, body_name, material, refinement_level, op)
 		{
 			std::vector<Point> water_block_shape = CreatWaterBlockShape();
 			std::vector<Point> gate_base_shape = CreatGateBaseShape();
@@ -208,8 +206,8 @@ class WallBoundary : public SolidBody
 {
 public:
 	WallBoundary(SPHSystem &system, string body_name, 
-		SolidParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), solid_particles, refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), refinement_level, op)
 	{
 		std::vector<Point> outer_wall_shape   = CreatOuterWallShape();
 		std::vector<Point> inner_wall_shape_1 = CreatInnerWallShape01();
@@ -227,8 +225,8 @@ class GateBase : public SolidBody
 {
 public:
 	GateBase(SPHSystem &system, string body_name, ElasticSolid &material,
-		ElasticSolidParticles &elastic_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, material, elastic_particles, refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, material, refinement_level, op)
 	{
 		std::vector<Point> gate_base_shape = CreatGateBaseShape();
 		body_region_.add_polygon(gate_base_shape, RegionBooleanOps::add);
@@ -242,9 +240,8 @@ class Gate : public SolidBody
 {
 public:
 	Gate(SPHSystem &system, string body_name, ElasticSolid &material,
-		ElasticSolidParticles &elastic_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, material, elastic_particles, 
-			refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, material, refinement_level, op)
 	{
 		std::vector<Point> flap_shape = CreatFlapShape();
 		body_region_.add_polygon(flap_shape, RegionBooleanOps::add);
@@ -331,32 +328,32 @@ int main()
 	//fluid material properties
 	WeaklyCompressibleFluid fluid("Water", rho0_f, c_f, mu_f, k_f);
 	
-	//creat a fluid particle cotainer
-	FluidParticles fluid_particles("WaterBody");
 	//the water block
 	WaterBlock *water_block 
-		= new WaterBlock(system, "WaterBody", fluid, fluid_particles, 0, ParticlesGeneratorOps::lattice);
+		= new WaterBlock(system, "WaterBody", fluid, 0, ParticlesGeneratorOps::lattice);
+	//creat fluid particles
+	FluidParticles fluid_particles(water_block);
 
-	//creat a solid particle cotainer
-	SolidParticles solid_particles("Wall");
 	//the wall boundary
 	WallBoundary *wall_boundary 
-		= new WallBoundary(system, "Wall", solid_particles, 0, ParticlesGeneratorOps::lattice);
+		= new WallBoundary(system, "Wall", 0, ParticlesGeneratorOps::lattice);
+	//creat solid particles
+	SolidParticles solid_particles(wall_boundary);
 
 	//elastic soild material properties
 	ElasticSolid solid_material("ElasticSolid", rho0_s, Youngs_modulus, poisson, 0.0);
 
-	//creat a particle cotainer for the gate base
-	ElasticSolidParticles gate_base_particles("GateBase");
 	//the gate base
 	GateBase *gate_base = new GateBase(system, "GateBase", solid_material,
-		gate_base_particles, 0, ParticlesGeneratorOps::lattice);
+		0, ParticlesGeneratorOps::lattice);
+	//creat particles for the gate base
+	ElasticSolidParticles gate_base_particles(gate_base);
 
-	//creat a particle cotainer for the elastic gate
-	ElasticSolidParticles gate_particles("Gate");
 	//the elastic gate
 	Gate *gate = 
-		new Gate(system, "Gate", solid_material, gate_particles, 0, ParticlesGeneratorOps::lattice);
+		new Gate(system, "Gate", solid_material, 0, ParticlesGeneratorOps::lattice);
+	//creat particles for the elastic gate
+	ElasticSolidParticles gate_particles(gate);
 
 	//set body contact map
 	//the contact map gives the data conntections between the bodies

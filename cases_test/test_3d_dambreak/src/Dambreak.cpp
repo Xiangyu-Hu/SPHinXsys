@@ -42,10 +42,8 @@ class WaterBlock : public FluidBody
 	public:
 		WaterBlock(SPHSystem &system, string body_name,
 			WeaklyCompressibleFluid &material, 
-			FluidParticles &weakly_compressible_fluid_particles, 
 			int refinement_level, ParticlesGeneratorOps op)
-			: FluidBody(system, body_name, material, 
-				weakly_compressible_fluid_particles, refinement_level, op)
+			: FluidBody(system, body_name, material, refinement_level, op)
 		{
 			Vecd halfsize_water(0.5 * LL, 0.5 * LH, 0.5 * LW);
 			Vecd translation_water = halfsize_water;
@@ -63,8 +61,8 @@ class WallBoundary : public SolidBody
 {
 public:
 	WallBoundary(SPHSystem &system, string body_name, 
-		SolidParticles &solid_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), solid_particles, refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), refinement_level, op)
 	{
 		Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
 		Vecd translation_wall(0.5 * DL, 0.5 * DH, 0.5 * DW);
@@ -84,8 +82,8 @@ class FluidObserver : public ObserverEulerianBody
 {
 public:
 	FluidObserver(SPHSystem &system, string body_name,
-		ObserverParticles &observer_particles, int refinement_level, ParticlesGeneratorOps op)
-		: ObserverEulerianBody(system, body_name, observer_particles, refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: ObserverEulerianBody(system, body_name, refinement_level, op)
 	{
 		//add observation point
 		body_input_points_volumes_.push_back(make_pair(Point(DL, 0.01, 0.5 * DW), 0.0));
@@ -107,22 +105,22 @@ int main()
 
 	//Configuration of Materials
 	WeaklyCompressibleFluid fluid("Water", rho0_f, c_f, mu_f, k_f);
-	//creat a fluid particle cotainer
-	FluidParticles fluid_particles("WaterBody");
 	//the water block
 	WaterBlock *water_block 
-		= new WaterBlock(system, "WaterBody", fluid, fluid_particles, 0, ParticlesGeneratorOps::lattice);
-	
-	//creat a solid particle cotainer
-	SolidParticles solid_particles("Wall");
+		= new WaterBlock(system, "WaterBody", fluid, 0, ParticlesGeneratorOps::lattice);
+	//creat fluid particles
+	FluidParticles fluid_particles(water_block);
+
 	//the wall boundary
 	WallBoundary *wall_boundary 
-		= new WallBoundary(system, "Wall", solid_particles, 0, ParticlesGeneratorOps::lattice);
+		= new WallBoundary(system, "Wall", 0, ParticlesGeneratorOps::lattice);
+	//creat solid particles 
+	SolidParticles solid_particles(wall_boundary);
 
-	//create a observer particle container
-	ObserverParticles observer_particles("Fluidobserver");
 	FluidObserver *fluid_observer 
-		= new FluidObserver(system, "Fluidobserver", observer_particles, 0, ParticlesGeneratorOps::direct);
+		= new FluidObserver(system, "Fluidobserver", 0, ParticlesGeneratorOps::direct);
+	//create observer particles 
+	ObserverParticles observer_particles(fluid_observer);
 
 	//define external force
 	Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));

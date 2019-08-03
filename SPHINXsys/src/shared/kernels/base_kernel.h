@@ -28,6 +28,7 @@ namespace SPH
 	 * The kernel gives value one at the origin.
 	 * The naming of kernel function follows the stand SPH literature.
 	 * Currently, only constant smoothing length is applied.
+	 * Basically, one can assign different kernel for different particle interactions.
 	 */
 	class Kernel
 	{

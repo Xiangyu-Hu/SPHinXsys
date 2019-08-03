@@ -133,9 +133,9 @@ class WaterBlock : public FluidBody
 {
 	public:
 		WaterBlock(SPHSystem &system, string body_name,
-			WeaklyCompressibleFluid &material, FluidParticles &fluid_particles, 
+			WeaklyCompressibleFluid &material, 
 			int refinement_level, ParticlesGeneratorOps op)
-			: FluidBody(system, body_name, material, fluid_particles, refinement_level, op)
+			: FluidBody(system, body_name, material, refinement_level, op)
 		{
 			/** Geomerty definition. */
 			std::vector<Point> water_bock_shape = CreatWaterBlockShape(); 
@@ -155,9 +155,8 @@ class WallBoundary : public SolidBody
 {
 public:
 	WallBoundary(SPHSystem &system, string body_name, 
-		SolidParticles &solid_particles,
 		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), solid_particles, refinement_level, op)
+		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), refinement_level, op)
 	{	
 		/** Geomerty definition. */
 		std::vector<Point> outer_wall_shape = CreatOuterWallShape();
@@ -177,9 +176,8 @@ class InsertedBody : public SolidBody
 {
 public:
 	InsertedBody(SPHSystem &system, string body_name, ElasticSolid &material,
-		ElasticSolidParticles &elastic_particles,
 		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, material, elastic_particles, refinement_level, op)
+		: SolidBody(system, body_name, material, refinement_level, op)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> beam_shape = CreatBeamShape();
@@ -271,9 +269,8 @@ class BeamObserver : public ObserverLagrangianBody
 {
 public:
 	BeamObserver(SPHSystem &system, string body_name,
-		ObserverParticles &observer_particles,
 		int refinement_level, ParticlesGeneratorOps op)
-		: ObserverLagrangianBody(system, body_name, observer_particles, refinement_level, op)
+		: ObserverLagrangianBody(system, body_name, refinement_level, op)
 	{
 		/** postion and volume. */
 		body_input_points_volumes_.push_back(make_pair(0.5 * (BRT + BRB), 0.0));
@@ -287,9 +284,8 @@ class FluidObserver : public ObserverEulerianBody
 {
 public:
 	FluidObserver(SPHSystem &system, string body_name,
-		ObserverParticles &observer_particles,
 		int refinement_level, ParticlesGeneratorOps op)
-		: ObserverEulerianBody(system, body_name, observer_particles, refinement_level, op)
+		: ObserverEulerianBody(system, body_name, refinement_level, op)
 	{
 		/** A line of measuring points at the entrance of the channel. */
 		size_t number_observation_pionts = 21;
@@ -321,26 +317,27 @@ int main()
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
 	SymmetricTaitFluid 				fluid("Water", rho0_f, c_f, mu_f, k_f);
-	FluidParticles 					fluid_particles("WaterBody");
-	WaterBlock *water_block  =		new WaterBlock(system, "WaterBody", fluid, fluid_particles, 0, ParticlesGeneratorOps::lattice);
+	WaterBlock *water_block  =		new WaterBlock(system, "WaterBody", fluid, 0, ParticlesGeneratorOps::lattice);
+	FluidParticles 					fluid_particles(water_block);
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
-	SolidParticles 					solid_particles("Wall");
-	WallBoundary *wall_boundary = 	new WallBoundary(system, "Wall", solid_particles, 0, ParticlesGeneratorOps::lattice);
+	WallBoundary *wall_boundary = 	new WallBoundary(system, "Wall", 0, ParticlesGeneratorOps::lattice);
+	SolidParticles 					solid_particles(wall_boundary);
 	/**
 	 * @brief 	Material property, particle and body creation of elastic beam(inserted body).
 	 */
 	ElasticSolid 					solid_material("ElasticSolid", rho0_s, Youngs_modulus, poisson, 0.0);
-	ElasticSolidParticles 			inserted_body_particles("InsertedBody");
-	InsertedBody *inserted_body = 	new InsertedBody(system, "InsertedBody", solid_material, inserted_body_particles, 1, ParticlesGeneratorOps::lattice);
+	InsertedBody *inserted_body = 	new InsertedBody(system, "InsertedBody", solid_material, 1, ParticlesGeneratorOps::lattice);
+	ElasticSolidParticles 			inserted_body_particles(inserted_body);
 	/**
 	 * @brief 	Particle and body creation of gate observer.
 	 */
-	ObserverParticles 				beam_observer_particles("BeamObserver");
-	BeamObserver *beam_observer =	new BeamObserver(system, "BeamObserver", beam_observer_particles, 0, ParticlesGeneratorOps::direct);
-	ObserverParticles				flow_observer_particles("FlowObserver");
-	FluidObserver *fluid_observer = new FluidObserver(system, "FluidObserver", flow_observer_particles, 0, ParticlesGeneratorOps::direct);
+	BeamObserver *beam_observer =	new BeamObserver(system, "BeamObserver", 0, ParticlesGeneratorOps::direct);
+	ObserverParticles 				beam_observer_particles(beam_observer);
+
+	FluidObserver *fluid_observer = new FluidObserver(system, "FluidObserver", 0, ParticlesGeneratorOps::direct);
+	ObserverParticles				flow_observer_particles(fluid_observer);
 	/**
 	 * @brief simple input and outputs.
 	 */
@@ -362,7 +359,6 @@ int main()
 	/**
 	 * @brief 	Simulation data structure set up.
 	 */
-	system.CreateParticelsForAllBodies();
 	/** check whether reload particles. */
 	if (system.reload_particle_) read_reload_particles.ReadFromFile();
 	system.InitializeSystemCellLinkedLists();

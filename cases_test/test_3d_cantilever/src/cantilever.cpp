@@ -77,9 +77,8 @@ class Cantilever : public SolidBody
 {
 public:
 	Cantilever(SPHSystem &system, string body_name, ElasticSolid &material,
-		ElasticSolidParticles &elastic_particles, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, material,
-			elastic_particles, refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, material, refinement_level, op)
 	{
 		//geometry
 		body_region_.add_geometry(CreateCantilever(), RegionBooleanOps::add);
@@ -166,8 +165,8 @@ class CantileverObserver : public ObserverLagrangianBody
 {
 public:
 	CantileverObserver(SPHSystem &system, string body_name,
-		ObserverParticles &observer_particles, int refinement_level, ParticlesGeneratorOps op)
-		: ObserverLagrangianBody(system, body_name, observer_particles, refinement_level, op)
+		int refinement_level, ParticlesGeneratorOps op)
+		: ObserverLagrangianBody(system, body_name, refinement_level, op)
 	{
 		//add observation point
 		body_input_points_volumes_.push_back(make_pair(Point(PL, 0.5 * PH, 0.5 * PW), 0.0));
@@ -188,16 +187,16 @@ int main()
 	//Configuration of soild materials
 	ElasticSolid solid_material("ElasticSolid", rho0_s, Youngs_modulus, poisson, 0.0);
 
-	//creat a particle cotainer the elastic body
-	ElasticSolidParticles cantilever_particles("cantileverBody");
 	//the water block
 	Cantilever *cantilever_body =
-		new Cantilever(system, "CantileverBody", solid_material, cantilever_particles, 0, ParticlesGeneratorOps::lattice);
+		new Cantilever(system, "CantileverBody", solid_material, 0, ParticlesGeneratorOps::lattice);
+	//creat particles the elastic body
+	ElasticSolidParticles cantilever_particles(cantilever_body);
 
-	//create a observer particle container
-	ObserverParticles observer_particles("CantileverObserver");
 	CantileverObserver *cantilever_observer
-		= new CantileverObserver(system, "CantileverObserver", observer_particles, 0, ParticlesGeneratorOps::direct);
+		= new CantileverObserver(system, "CantileverObserver", 0, ParticlesGeneratorOps::direct);
+	//create observer particles 
+	ObserverParticles observer_particles(cantilever_observer);
 	//set body contact map
 	//the contact map gives the data conntections between the bodies
 	//basically the the range of bidies to build neighbor particle lists

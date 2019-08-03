@@ -1,3 +1,3 @@
 #pragma once
 
-#include "lattice_particle_generator.h"
+#include "particle_generator_lattice.h"

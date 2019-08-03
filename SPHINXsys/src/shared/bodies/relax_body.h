@@ -29,11 +29,9 @@ namespace SPH {
 		void InitializeBackgroundMesh();
 	public:
 		RelaxBody(SPHSystem &sph_system, string body_name,
-			RelaxBodyParticles &relax_particles, int refinement_level, ParticlesGeneratorOps op);
+			int refinement_level, ParticlesGeneratorOps op);
 		virtual ~RelaxBody() {};
 
-		/** Particles in this body. */
-		RelaxBodyParticles &relax_particles_;
 		/** Background mesh.*/
 		MeshBackground *mesh_background_;		
 
@@ -48,7 +46,7 @@ namespace SPH {
 	};
 
 	/**
-	 * @class SolidBodyPart
+	 * @class RelaxBodySurface
 	 * @brief A auxillariy class for RelaxBody to
 	 * indicate the surface particles
 	 */

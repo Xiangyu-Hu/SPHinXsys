@@ -13,16 +13,10 @@
 
 namespace SPH {
 	/**
-	 * @brief Preclaimed class.
-	 */
-	class SPHBody;
-
-	/**
 	 * @class ParticleGeneratorLattice
 	 * @brief generate particles from lattice poistions for a body.
 	 */
-	class ParticleGeneratorLattice 
-		: public ParticleGenerator
+	class ParticleGeneratorLattice : public ParticleGenerator
 	{
 		Real lattice_spacing_;		/**< Lattice size. */
 		Vecu number_of_lattices_;	/**< Number of lattice. */ 
@@ -39,6 +33,6 @@ namespace SPH {
 		ParticleGeneratorLattice(SPHBody &sph_body);
 		virtual ~ParticleGeneratorLattice() {};
 		/** Create lattice particle for a body. */
-		virtual void CreateParticles(SPHBody &sph_body) override;
+		virtual void CreateBaseParticles(SPHBody &sph_body, Particles &base_particles) override;
 	};
 }

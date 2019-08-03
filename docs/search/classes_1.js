@@ -9,5 +9,7 @@ var searchData=
   ['bodypart',['BodyPart',['../class_s_p_h_1_1_body_part.html',1,'SPH']]],
   ['bodystatesio',['BodyStatesIO',['../class_s_p_h_1_1_body_states_i_o.html',1,'SPH']]],
   ['boundingbodydomain',['BoundingBodyDomain',['../class_s_p_h_1_1_bounding_body_domain.html',1,'SPH']]],
-  ['boundinginxdirection',['BoundingInXDirection',['../class_s_p_h_1_1_bounding_in_x_direction.html',1,'SPH']]]
+  ['boundinginxdirection',['BoundingInXDirection',['../class_s_p_h_1_1_bounding_in_x_direction.html',1,'SPH']]],
+  ['boundinginydirection',['BoundingInYDirection',['../class_s_p_h_1_1_bounding_in_y_direction.html',1,'SPH']]],
+  ['boundinginzdirection',['BoundingInZDirection',['../class_s_p_h_1_1_bounding_in_z_direction.html',1,'SPH']]]
 ];

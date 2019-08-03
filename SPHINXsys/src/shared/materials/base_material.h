@@ -16,6 +16,8 @@ namespace SPH {
 
 	/** @class  Material
 	 *  @brief Base of all materials
+	 *  @details Note that the same material object can be shared by several
+	 *  SPH bodies.
 	*/
 	class Material
 	{

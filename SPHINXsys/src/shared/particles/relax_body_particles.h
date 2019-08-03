@@ -34,23 +34,22 @@ namespace SPH {
 	class RelaxBodyParticles : public Particles
 	{
 	public:
-		RelaxBodyParticles(string body_name);
+		RelaxBodyParticles(SPHBody *body);
 		virtual ~RelaxBodyParticles() {};
 
 		/** Vector of particle data. */
 		StdLargeVec<RelaxBodyParticleData> relax_body_data_;	
-		/** Initialize a prticle by input a postion and volume.  */
-		virtual void InitializeAParticle(Vecd pnt, Real particle_volume) override;
+
 		/** Write particle data in VTU format for Paraview. */
 		virtual void WriteParticlesToVtuFile(ofstream &output_file) override;
 		/** Write particle data in PLT format for Tecplot. */
 		virtual void WriteParticlesToPltFile(ofstream &output_file) override;
-		/** Write particle data in XML format. */
-		virtual void WriteParticlesToXmlFile(std::string &filefullpath) override;
+
 		/** Write particle data in XML format for restart. */
-		virtual void WriteParticlesToXmlForRestart(std::string &filefullpath) override{};
+		virtual void WriteParticlesToXmlForRestart(std::string &filefullpath) override;
 		/** Initialize particle data from restart xml file. */
-		virtual void ReadParticleFromXmlForRestart(std::string &filefullpath) override {};
+		virtual void ReadParticleFromXmlForRestart(std::string &filefullpath) override;
+
 		/** Pointer to this object. */
 		virtual RelaxBodyParticles* PointToThisObject() override;
 	};

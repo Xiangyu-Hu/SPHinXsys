@@ -25,16 +25,14 @@ namespace SPH
 {
 	//===========================================================//
 	SPHBody::SPHBody(SPHSystem &sph_system, string body_name, Material &base_material,
-		Particles &base_particles, int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op)
-		: sph_system_(sph_system), body_region_(body_name), 
-		body_name_(body_name), base_particles_(base_particles), base_material_(base_material),
+		int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op)
+		: sph_system_(sph_system), body_region_(body_name), body_name_(body_name), base_material_(base_material),
 		refinement_level_(refinement_level), smoothinglength_ratio_(smoothinglength_ratio), particle_generator_op_(op)
 	{	
 		sph_system_.AddBody(this);
 
 		particle_spacing_ 	= RefinementLevelToParticleSpacing();
 		kernel_ 			= sph_system_.GenerateAKernel(particle_spacing_*smoothinglength_ratio_);
-		rst_step_ 			= sph_system_.restart_step_;
 		mesh_cell_linked_list_
 							= new MeshCellLinkedList(sph_system.lower_bound_,
 									sph_system_.upper_bound_, kernel_->GetCutOffRadius());
@@ -57,13 +55,13 @@ namespace SPH
 	void  SPHBody::AllocateMemoriesForConfiguration()
 	{
 		Allocate1dArray(indexes_contact_particles_, contact_map_.second.size());
-		Allocate1dArray(reference_inner_configuration_, number_of_real_particles_);
-		Allocate1dArray(current_inner_configuration_, number_of_real_particles_);
-		Allocate2dArray(reference_contact_configuration_, {contact_map_.second.size(), number_of_real_particles_ });
-		Allocate2dArray(current_contact_configuration_, { contact_map_.second.size(), number_of_real_particles_ });
+		Allocate1dArray(reference_inner_configuration_, number_of_particles_);
+		Allocate1dArray(current_inner_configuration_, number_of_particles_);
+		Allocate2dArray(reference_contact_configuration_, {contact_map_.second.size(), number_of_particles_ });
+		Allocate2dArray(current_contact_configuration_, { contact_map_.second.size(), number_of_particles_ });
 		//reserve memeory for concurrent vectors
 		for (size_t i = 0; i != contact_map_.second.size(); ++i) {
-			indexes_contact_particles_[i].reserve(number_of_real_particles_);
+			indexes_contact_particles_[i].reserve(number_of_particles_);
 		}
 
 	}
@@ -88,86 +86,34 @@ namespace SPH
 		contact_map_ = contact_map;
 	}
 	//===========================================================//
-	void SPHBody::CreateParticelsInSpecificManner()
-	{
-		switch (particle_generator_op_)
-		{
-			case ParticlesGeneratorOps::lattice: {
-				ParticleGeneratorLattice* lattice_particle_generator_ 
-						= new ParticleGeneratorLattice(*this);
-				lattice_particle_generator_->CreateParticles(*this);
-				break;
-			}
-
-			case ParticlesGeneratorOps::direct: {
-				ParticleGeneratorDirect* direct_particle_generator_ 
-						= new ParticleGeneratorDirect(*this);
-				direct_particle_generator_->CreateParticles(*this);
-				break;
-			}
-
-			case ParticlesGeneratorOps::relax: {
-
-				ReadRelaxedParticlsFromXmlFile* relax_particle_reader_
-						= new ReadRelaxedParticlsFromXmlFile(*this);
-				relax_particle_reader_->CreateParticles(*this);
-				break;
-			}
-
-			case ParticlesGeneratorOps::restart: {
-				ReadRestartParticlsFromXmlFile* restart_particle_reader_
-						= new ReadRestartParticlsFromXmlFile(*this);
-				restart_particle_reader_->CreateParticles(*this);
-				break;
-			}
-
-			default: {
-				std::cout << "\n FAILURE: the type of particle generator is undefined!" << std::endl;
-				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-				exit(1);
-				break;
-			}
-		}
-	}
-	//===========================================================//
-	void SPHBody::GenerateAParticle(Vecd pnt, Real particle_volume)
-	{
-		base_particles_.InitializeAParticle(pnt, particle_volume);
-	}
-	//===========================================================//
 	void SPHBody::WriteParticlesToVtuFile(ofstream &output_file)
 	{
-		base_particles_.WriteParticlesToVtuFile(output_file);
+		base_particles_->WriteParticlesToVtuFile(output_file);
 	}
 	//===========================================================//
 	void SPHBody::WriteParticlesToPltFile(ofstream &output_file)
 	{
-		base_particles_.WriteParticlesToPltFile(output_file);
-	}
-	//===========================================================//
-	void SPHBody::WriteParticlesToXmlFile(std::string &filefullpath)
-	{
-		base_particles_.WriteParticlesToXmlFile(filefullpath);
+		base_particles_->WriteParticlesToPltFile(output_file);
 	}
 	//===============================================================//
 	void SPHBody::WriteParticlesToXmlForRestart(std::string &filefullpath)
 	{
-		base_particles_.WriteParticlesToXmlForRestart(filefullpath);
+		base_particles_->WriteParticlesToXmlForRestart(filefullpath);
 	}
 	//===========================================================//
 	void SPHBody::ReadParticlesFromXmlForRestart(std::string &filefullpath) 
 	{
-		base_particles_.ReadParticleFromXmlForRestart(filefullpath);
+		base_particles_->ReadParticleFromXmlForRestart(filefullpath);
 	}
 	//===============================================================//
 	void SPHBody::WriteToXmlForReloadParticle(std::string &filefullpath)
 	{
-		base_particles_.WriteToXmlForReloadParticle(filefullpath);
+		base_particles_->WriteToXmlForReloadParticle(filefullpath);
 	}
 	//===========================================================//
 	void SPHBody::ReadFromXmlForReloadParticle(std::string &filefullpath)
 	{
-		base_particles_.ReadFromXmlForReloadParticle(filefullpath);
+		base_particles_->ReadFromXmlForReloadParticle(filefullpath);
 	}
 	//===========================================================//
 	SPHBody* SPHBody::PointToThisObject()
@@ -176,8 +122,8 @@ namespace SPH
 	}
 	//===========================================================//
 	RealBody::RealBody(SPHSystem &sph_system, string body_name, Material &base_material,
-		Particles &base_particles, int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op)
-		: SPHBody(sph_system, body_name, base_material, base_particles, refinement_level, smoothinglength_ratio, op)
+		int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op)
+		: SPHBody(sph_system, body_name, base_material, refinement_level, smoothinglength_ratio, op)
 	{
 		sph_system.AddRealBody(this);
 
@@ -216,9 +162,9 @@ namespace SPH
 		return this;
 	}
 	//===========================================================//
-	FictitiousBody::FictitiousBody(SPHSystem &system, string body_name, Particles &base_particles, 	int refinement_level, 
+	FictitiousBody::FictitiousBody(SPHSystem &system, string body_name, int refinement_level, 
 		Real smoothinglength_ratio, ParticlesGeneratorOps op)
-		: SPHBody(system, body_name, *(new Material("FictitiousMaterial")), base_particles, refinement_level, smoothinglength_ratio, op)
+		: SPHBody(system, body_name, *(new Material("FictitiousMaterial")), refinement_level, smoothinglength_ratio, op)
 	{
 		system.AddFictitiousBody(this);
 	}

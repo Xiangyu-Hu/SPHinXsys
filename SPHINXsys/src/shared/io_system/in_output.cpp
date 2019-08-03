@@ -131,7 +131,7 @@ namespace SPH {
 					  + "_fluid_pressure_" + in_output_.restart_step_ +".dat";
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << "run_time" << "   ";
-		for (size_t i = 0; i != observer->number_of_real_particles_; ++i)
+		for (size_t i = 0; i != observer->number_of_particles_; ++i)
 		{
 			out_file << "  " << "pressures_[" << i << "]" << " ";
 		}
@@ -145,7 +145,7 @@ namespace SPH {
 		parallel_exec();
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << time << "   ";
-		for (size_t i = 0; i != observer_->number_of_real_particles_; ++i)
+		for (size_t i = 0; i != observer_->number_of_particles_; ++i)
 		{
 			out_file << "  " << fluid_quantities_[i] << " ";
 		}
@@ -164,7 +164,7 @@ namespace SPH {
 					  + "_fluid_velocity_" + in_output_.restart_step_ + ".dat";
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << "run_time" << "   ";
-		for (size_t i = 0; i != observer->number_of_real_particles_; ++i)
+		for (size_t i = 0; i != observer->number_of_particles_; ++i)
 		{
 			for (size_t j = 0; j != dimension_; ++j)
 				out_file << "  " << "velocities_[" << i << "][" << j << "]" << " ";
@@ -179,7 +179,7 @@ namespace SPH {
 		parallel_exec();
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << time << "   ";
-		for (size_t i = 0; i != observer_->number_of_real_particles_; ++i)
+		for (size_t i = 0; i != observer_->number_of_particles_; ++i)
 		{
 			for (size_t j = 0; j != dimension_; ++j)
 				out_file << "  " << fluid_quantities_[i][j] << " ";
@@ -199,7 +199,7 @@ namespace SPH {
 			+ "_elastic_displacement_" + in_output_.restart_step_ + ".dat";
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << "run_time" << "   ";
-		for (size_t i = 0; i != observer->number_of_real_particles_; ++i)
+		for (size_t i = 0; i != observer->number_of_particles_; ++i)
 		{
 			for (size_t j = 0; j != dimension_; ++j)
 				out_file << "  " << "displacements_[" << i <<"]["<< j <<"]" << " ";
@@ -214,7 +214,7 @@ namespace SPH {
 		parallel_exec();
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << time << "   ";
-		for (size_t i = 0; i != observer_->number_of_real_particles_; ++i)
+		for (size_t i = 0; i != observer_->number_of_particles_; ++i)
 		{
 			for (size_t j = 0; j != dimension_; ++j)
 				out_file << "  " << elastic_body_quantities_[i][j] << " ";
@@ -387,30 +387,6 @@ namespace SPH {
 			}
 
 			bodies_[i]->ReadFromXmlForReloadParticle(filefullpath);
-		}
-	}
-	//===============================================================//
-	WriteBodyStatesToXml
-		::WriteBodyStatesToXml(In_Output& in_output, SPHBodyVector bodies)
-		: WriteBodyStates(in_output, bodies)
-	{
-
-	}
-	//===============================================================//
-	void WriteBodyStatesToXml::WriteToFile(Real time)
-	{
-		int Itime = int(time*1.0e4);
-
-		for (SPHBody* body : bodies_)
-		{
-			std::string filefullpath = in_output_.output_folder_ + "/SPHBody_" + body->GetBodyName() + "_" + std::to_string(Itime) + ".xml";
-			std::ofstream out_file(filefullpath_.c_str(), ios::app);
-
-			if (fs::exists(filefullpath))
-			{
-				fs::remove(filefullpath);
-			}
-			body->WriteParticlesToXmlFile(filefullpath);
 		}
 	}
 	//===============================================================//
