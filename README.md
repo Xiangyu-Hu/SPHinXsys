@@ -24,7 +24,7 @@ Any contribution to SPHinXsys are welcome. For this, you will do the following s
 1. Fork the project & clone locally.
 2. Create an upstream remote and sync your local copy before you branch.
 3. Branch for each separate piece of work.
-3. Do the work, write good commit messages, and read the CONTRIBUTING file if there is one.
+3. Do the work, write good commit messages, and read the [contributing file](contributing.md).
 4. Push to your origin repository.
 5. Create a new PR in GitHub.
 6. Respond to any code review feedback.
