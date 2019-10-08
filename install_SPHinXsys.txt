@@ -1,19 +1,36 @@
-SPHINXsys is a multi-physics, multi-resolution SPH library.
-SPHINXsys provides a C++ API that is used to build physics-specific applications; 
+SPHinXsys is a multi-physics, multi-resolution SPH library.
+SPHinXsys provides a C++ API that is used to build physics-specific applications; 
 it is not a standalone application itself.
 
-This is a simple instruction for install SPHINSYS on Linus system
+This is a simple instruction for install SPHinXsys on Linux system
 
-First, Install Simbody Library :
+There are three 3rd-party libraries, i.e. simbody, tbb and boost, which should be installed 
+before we can compile and link SPHinXsys.
+
+If you are using Ubuntu system, you can use apt install tbb and boost, 
+apt install simbody is not recommended as that simbody version is 3.5.1(too low for SPHinXsys) 
+if you Ubuntu is lower than 19.0 
+Ubuntu install tbb and boost :
+	sudo apt-get install libtbb-dev
+	sudo apt-get install libboost-all-dev 
+and set 
+	echo 'export TBB_HOME=/usr/lib/x86_64-linux-gnu' >> ~/.bashrc
+	echo 'export BOOST_HOME=/usr/lib/x86_64-linux-gnu' >> ~/.bashrc
+
+For self advanced installation on Linux:
+
+First, Install simbody Library :
 Note : The easy way is using miniconda.(not recommaned, install simbody can help to you to understand the code)
 
 Step 0, Check the gcc version, gcc-4.9.0 or higher version is required and gcc-7.3.0 is recommended.
 		Chekc the cmake version, if you want to install simboy by hand, please using cmake 3.12.2 or higher
 
 Step 1, Install LAPACK library.
-		LAPACK version 3.6.0 and higher may be required for some applications (OpenSim). 
+		LAPACK version 3.8.0 and higher may be required for some applications (OpenSim). 
+		$ wget http://www.netlib.org/lapack/lapack-3.8.0.tar.gz
 		LAPACK can be downloaded from http://www.netlib.org/lapack/, 
 		unzip it to your prefered folder(for example "$HOME/lapack-source")
+		$ tar xvzf lapack-3.8.0.tar.gz
 		and compiled using the following method, 
 		the default installation and build path is "$HOME/lapack-prefix" and "$HOME/lapack-build"
 		$ mkdir $HOME/lapack-prefix
@@ -21,30 +38,30 @@ Step 1, Install LAPACK library.
 		$ cd $HOME/lapack-build
 		$ cmake $HOME/lapack-source -DCMAKE_INSTALL_PREFIX=$HOME/lapack-prefix -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_SHARED_LIBS=ON
 		$ make
-		$ make instal
-		$ echo 'export LIBRARY_PATH=$HOME/lapack-prefix/lib64:$LIBRARY_PATH' >> ~/.bashrc
-		$ echo 'export LD_LIBRARY_PATH=$LIBRARY_PATH:$LD_LIBRARY_PATH' << ~/.bashrc
+		$ make install
+		$ echo 'export LIBRARY_PATH=$HOME/lapack-prefix/lib:$LIBRARY_PATH' >> ~/.bashrc
+		$ echo 'export LD_LIBRARY_PATH=$LIBRARY_PATH:$LD_LIBRARY_PATH' >> ~/.bashrc
 
 Step 2, Download a release version from https://github.com/simbody/simbody/releases 
 Step 3,  Unzip the repository into your prefered folder , e.g., $HOME/simbody-source. 
 		Create a directory for installation, e.g., 
-		$ mkdir $HOME/simbody-prefix
-		Then Create a directory in which we'll build Simbody. 
+		$ mkdir $HOME/simbody
+		Then create a directory in which we'll build Simbody. 
 		We'll assume you choose $HOME/simbody-build. Don't choose a location inside $HOME/simbody-source.
 	 	$ mkdir $HOME/simbody-build
  		$ cd $HOME/simbody-build
 
 Step 4, Configure and geneartes Make file:
-		$ cmake $HOME/simbody-source -DCMAKE_INSTALL_PREFIX=$HOME/simbody-prefix -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_VISUALIZER=on (optional set to ON if simbody visualizer is going to be used)
+		$ cmake $HOME/simbody-source -DCMAKE_INSTALL_PREFIX=$HOME/simbody -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_VISUALIZER=on (optional set to ON if simbody visualizer is going to be used)
 			-DBUILD_STATIC_LIBRARIES=on (optional, leave it off if you don't know what are you doing)
 
-Step 5, BUild and Install
+Step 5, Build and Install
 		$ make doxygen  //Note that this is optional
 		$ make -j8
 		$ ctest -j8
 		$ make -j8 install
 
-Step 6, Allow Simbody and other projects  to find Simbody:
+Step 6, Allow Simbody and other projects  to find simbody:
 		Mac:
 			$ echo 'export SIMBODY_HOME=$HOME/simbody' >> ~/.bash_profile
 		Linux:
@@ -56,9 +73,8 @@ Setp 7, Set environment variables
 			Mac:
 				$ echo 'export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$HOME/simbody-prefix/lib' >> ~/.bash_profile
 			Linux:
-				$ echo 'export LIBRARY_PATH=$SIMBODY_HOME/lib64:$LIBRARY_PATH' >> ~/.bashrc
-				$ echo 'export LD_LIBRARY_PATH=$LIBRARY_PATH:$LD_LIBRARY_PATH' >> ~/.bashrc
-				$ echo 'export CPLUS_INCLUDE_PATH=$SIMBODY_HOME/include:$CPLUS_INCLUDE_PATH' << ~/.bashrc
+				$ echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SIMBODY_HOME/lib' >> ~/.bashrc
+				$ echo 'export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$SIMBODY_HOME/include' >> ~/.bashrc
 
 		Note that, you may need to replace lib64 with the appropriate directory on your computer.
 
@@ -76,9 +92,9 @@ Setp 2, Set environment variables
 
 Step 3, Allow Simbody and other projects  to find TBB:
 		Mac:
-			$ echo 'export TBB_HOME = $HOME/tbb-versioin' >> ~/.bash_profile
+			$ echo 'export TBB_HOME=$HOME/tbb-versioin' >> ~/.bash_profile
 		Linux:
-			$ echo 'export TBB_HOME = $HOME/tbb-versioin' >> ~/.bashrc
+			$ echo 'export TBB_HOME=$HOME/tbb-versioin' >> ~/.bashrc
 
 Third, BOOST library
 Step 1, Download a release version from : https://www.boost.org/, recommaned version 1.69.0, 
@@ -126,5 +142,3 @@ Final step :
 		$ cd /bin
 		$ ./test_2d_dambreak
 		Have FUN!!!
-
-
