@@ -13,9 +13,9 @@
 
 namespace SPH {
 	//===============================================================//
-	SolidBody::SolidBody(SPHSystem &system, string body_name, Solid &solid_material, 
+	SolidBody::SolidBody(SPHSystem &system, string body_name, 
 		int refinement_level, ParticlesGeneratorOps op)
-		: RealBody(system, body_name, solid_material, refinement_level, 1.0, op)
+		: RealBody(system, body_name, refinement_level, 1.0, op)
 	{
 	
 	}

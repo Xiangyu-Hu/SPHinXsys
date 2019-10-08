@@ -288,6 +288,12 @@ namespace SPH {
 
 	Mat2d GeneralizedInverse(Mat2d &A);
 	Mat3d GeneralizedInverse(Mat3d &A);
+	Mat2d getInverse(Mat2d &A);
+	Mat3d getInverse(Mat3d &A);
+	Mat2d getAverageValue(Mat2d &A, Mat2d &B);
+	Mat3d getAverageValue(Mat3d &A, Mat3d &B);
+	Mat2d inverseCholeskyDecomposition(Mat2d &A);
+	Mat3d inverseCholeskyDecomposition(Mat3d &A);
 
 	SimTK::Real TensorDoubleDotProduct(Mat2d &A, Mat2d &B);
 	SimTK::Real TensorDoubleDotProduct(Mat3d &A, Mat3d &B);

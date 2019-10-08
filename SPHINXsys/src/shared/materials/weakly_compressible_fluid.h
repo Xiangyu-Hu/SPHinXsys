@@ -23,7 +23,7 @@ namespace SPH {
 		Real p0_;
 	public:
 		/** constructor */
-		explicit WeaklyCompressibleFluid(string fluid_name,Real rho_0 = 1.0,
+		explicit WeaklyCompressibleFluid(string fluid_name, SPHBody *body, Real rho_0 = 1.0,
 			Real c_0 = 1.0, Real mu = 0.0, Real k = 0.0);
 		virtual ~WeaklyCompressibleFluid() {};
 
@@ -54,7 +54,7 @@ namespace SPH {
 
 	public:
 		///constructor
-		explicit SymmetricTaitFluid(string fluid_name, Real rho_0 = 1.0,
+		explicit SymmetricTaitFluid(string fluid_name, SPHBody *body, Real rho_0 = 1.0,
 			Real c_0 = 1.0, Real mu = 0.0, Real k = 0.0);
 		virtual ~SymmetricTaitFluid() {};
 
@@ -79,7 +79,7 @@ namespace SPH {
 		Real mu_p_;
 
 		/** constructor */
-		explicit Oldroyd_B_Fluid(string fluid_name, Real rho_0 = 1.0,
+		explicit Oldroyd_B_Fluid(string fluid_name, SPHBody *body, Real rho_0 = 1.0,
 			Real c_0 = 1.0, Real mu = 0.0, Real k = 0.0, 
 			Real lambda = 1.0, Real mu_p = 0.0);
 		virtual ~Oldroyd_B_Fluid() {};

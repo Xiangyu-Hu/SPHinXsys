@@ -133,5 +133,49 @@ namespace SPH
 				: ObserveAnElasticSolidQuantity(body, interacting_body) {};
 			virtual ~ObserveElasticDisplacement() {};
 		};
+		 /**
+		 * @class ObserveAnElasticSolidQuantity
+		 * @brief Observe an muscle quantity.
+		 * This class is the couterpart to the class
+		 * ObserveAFluidQuantity and ObserveAnElasticSolidQuantity
+		 */
+		template <typename MuscleQuantityType>
+		class ObserveAMuscleQuantity : public ObserveABody<SolidBody, MuscleParticles>
+		{
+
+		protected:
+			StdVec<MuscleQuantityType>  muscle_quantities_;
+
+			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) override;
+			virtual MuscleQuantityType GetAMuscleQuantity(size_t index_particle_j, MuscleParticles &particles) = 0;
+
+		public:
+			explicit ObserveAMuscleQuantity(ObserverBody *body, SolidBody *interacting_body)
+				: ObserveABody(body, interacting_body) 
+				{
+					for (size_t i = 0; i < body->number_of_particles_; ++i) 
+						muscle_quantities_.push_back(MuscleQuantityType(0));
+				};
+			virtual ~ObserveAMuscleQuantity() {};
+		};
+		/**
+		 * @class ObserveMuscleVoltage
+		 * @brief observe elastic displacement
+		 */
+		class ObserveMuscleVoltage : public ObserveAMuscleQuantity<Real>
+		{
+
+		protected:
+			/** Define to observe the solid dispalacement. */
+			virtual Real GetAMuscleQuantity(size_t index_particle_j, MuscleParticles &particles) override 
+			{
+				return particles.muscle_body_data_[index_particle_j].voltage_n_ ;
+			};
+
+		public:
+			ObserveMuscleVoltage(ObserverBody *body, SolidBody *interacting_body)
+				: ObserveAMuscleQuantity(body, interacting_body) {};
+			virtual ~ObserveMuscleVoltage() {};
+		};
 	}
 }

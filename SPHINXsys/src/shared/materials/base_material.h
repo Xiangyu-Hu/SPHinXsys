@@ -9,7 +9,7 @@
 #pragma once
 
 #include "base_data_package.h"
-
+#include "base_body.h"
 using namespace std;
 
 namespace SPH {
@@ -25,7 +25,7 @@ namespace SPH {
 		const string material_name_;
 
 	public:
-		Material(string material_name)
+		explicit Material(string material_name)
 			: material_name_(material_name) {};
 		virtual ~Material() {};
 
@@ -45,8 +45,13 @@ namespace SPH {
 		/** reference density, sound speed, viscosity, thermal condution rate */
 		const Real rho_0_, c_0_, mu_, k_;
 
-		Fluid(string fluid_name, Real rho_0 = 1.0, Real c_0 = 1.0, Real mu = 0.0, Real k = 0.0) 
-			: Material(fluid_name), fluid_name_(fluid_name), rho_0_(rho_0), c_0_(c_0), mu_(mu), k_(k) {	};
+		/** In the constructor, the base material is deleted. */
+		Fluid(string fluid_name, SPHBody *body, Real rho_0 = 1.0, Real c_0 = 1.0, Real mu = 0.0, Real k = 0.0)
+			: Material(fluid_name), fluid_name_(fluid_name), rho_0_(rho_0), c_0_(c_0), mu_(mu), k_(k) 
+		{
+			delete body->base_material_;
+			body->base_material_ = this;
+		};
 		virtual ~Fluid() {};
 
 		/** the interface for dynamical cast*/
@@ -73,9 +78,13 @@ namespace SPH {
 	public:
 		/** reference density */
 		const Real rho_0_;
-
-		Solid(string solid_name, Real rho_0 = 1.0) 
-			: Material(solid_name), solid_name_(solid_name), rho_0_(rho_0) {};
+		/** In the constructor, the base material is deleted. */
+		Solid(string solid_name, SPHBody *body, Real rho_0 = 1.0)
+			: Material(solid_name), solid_name_(solid_name), rho_0_(rho_0) 
+		{
+			delete body->base_material_;
+			body->base_material_ = this;
+		};
 		virtual ~Solid() {};
 
 		/** the interface for dynamical cast*/

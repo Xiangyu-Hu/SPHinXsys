@@ -22,7 +22,8 @@ namespace SPH
 	}
 	//===============================================================//
 	Particles::Particles(SPHBody *body)
-		: body_(body), body_name_(body->GetBodyName())
+		: body_(body), body_name_(body->GetBodyName()),
+		speed_max_(0.0)
 	{
 		body->base_particles_ = this;
 
@@ -59,8 +60,7 @@ namespace SPH
 		const SimTK::String xml_name("particles_xml"), ele_name("particles");
 		XmlEngine* reload_xml = new XmlEngine(xml_name, ele_name);
 
-		size_t number_of_particles = base_particle_data_.size();
-		for (size_t i = 0; i != number_of_particles; ++i)
+		for (size_t i = 0; i != body_->number_of_particles_; ++i)
 		{
 			reload_xml->CreatXmlElement("particle");
 			reload_xml->AddAttributeToElement("Position", base_particle_data_[i].pos_n_);

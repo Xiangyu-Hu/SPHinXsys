@@ -25,11 +25,9 @@ namespace SPH {
 	{
 	public:
 		explicit FluidBody(SPHSystem &system, string body_name,
-			Fluid &fluid_material, int refinement_level, ParticlesGeneratorOps op);
+			int refinement_level, ParticlesGeneratorOps op);
 		virtual ~FluidBody() {};
 
-		/** Maximum signal speed, total kinetic energy. */
-		Real signal_speed_max_;					
 		/** Build inner configuration. */
 		virtual void BuildInnerConfiguration() override;
 		/** Build contact configuration. */

@@ -32,11 +32,6 @@ namespace SPH {
 			int refinement_level, ParticlesGeneratorOps op);
 		virtual ~RelaxBody() {};
 
-		/** Background mesh.*/
-		MeshBackground *mesh_background_;		
-
-		IndexVector lists_of_singularity_particles_;
-		
 		/** Build inner configuration. */
 		virtual void BuildInnerConfiguration() override;
 		/** Build contact configuration. */

@@ -34,7 +34,7 @@ namespace SPH {
 			for (size_t j = 0; j != contact_bodies.size(); ++j) {
 				if (static_cast<SPHBody*>(interacting_bodies_[i]) == contact_bodies[j]) {
 					interacting_particles_.push_back(dynamic_cast<InteractingParticlesType*>(contact_bodies[j]->base_particles_->PointToThisObject()));
-					interacting_material_.push_back(dynamic_cast<InteractingMaterialType*>(contact_bodies[j]->base_material_.PointToThisObject()));
+					interacting_material_.push_back(dynamic_cast<InteractingMaterialType*>(contact_bodies[j]->base_material_->PointToThisObject()));
 					indexes_interacting_particles_.push_back(&(*indexes_contact_particles)[j]);
 					current_interacting_configuration_.push_back(&(*current_contact_configuration)[j]);
 					reference_interacting_configuration_.push_back(&(*reference_contact_configuration)[j]);
@@ -87,16 +87,18 @@ namespace SPH {
 	template <class BodyType, class ParticlesType, class MaterialType>
 	void ParticleDynamicsSimple<BodyType, ParticlesType, MaterialType>::exec(Real dt)
 	{
+		size_t number_of_particles = this->body_->number_of_particles_;
 		this->SetupDynamics(dt);
-		InnerIterator(number_of_particles_, functor_update_, dt);
+		InnerIterator(number_of_particles, functor_update_, dt);
 	}
 	//===============================================================//
 	template <class BodyType, class ParticlesType, class MaterialType>
 	void ParticleDynamicsSimple<BodyType, ParticlesType, MaterialType>
 		::parallel_exec(Real dt)
 	{
+		size_t number_of_particles = this->body_->number_of_particles_;
 		this->SetupDynamics(dt);
-		InnerIterator_parallel(number_of_particles_, functor_update_, dt);
+		InnerIterator_parallel(number_of_particles, functor_update_, dt);
 	}
 	//===============================================================//
 	template <class ReturnType, class ReduceOperation, 
@@ -105,9 +107,10 @@ namespace SPH {
 		BodyType, ParticlesType, MaterialType>
 		::exec(Real dt)
 	{
+		size_t number_of_particles = this->body_->number_of_particles_;
 		ReturnType temp = initial_reference_;
 		this->SetupReduce();
-		temp = ReduceIterator(number_of_particles_, 
+		temp = ReduceIterator(number_of_particles, 
 			temp, functor_reduce_function_, reduce_operation_, dt);
 		return this->OutputResult(temp);
 	}	
@@ -118,9 +121,10 @@ namespace SPH {
 		BodyType, ParticlesType, MaterialType>
 		::parallel_exec(Real dt)
 	{
+		size_t number_of_particles = this->body_->number_of_particles_;
 		ReturnType temp = initial_reference_;
 		this->SetupReduce();
-		temp = ReduceIterator_parallel(number_of_particles_, 
+		temp = ReduceIterator_parallel(number_of_particles,
 			temp, functor_reduce_function_, reduce_operation_, dt);
 		return this->OutputResult(temp);
 	}
@@ -128,15 +132,17 @@ namespace SPH {
 	template <class BodyType, class ParticlesType, class MaterialType>
 	void ParticleDynamicsInner<BodyType, ParticlesType, MaterialType>::exec(Real dt)
 	{
+		size_t number_of_particles = this->body_->number_of_particles_;
 		this->SetupDynamics(dt);
-		InnerIterator(number_of_particles_, functor_inner_interaction_, dt);
+		InnerIterator(number_of_particles, functor_inner_interaction_, dt);
 	}
 	//===============================================================//
 	template <class BodyType, class ParticlesType, class MaterialType>
 	void ParticleDynamicsInner<BodyType, ParticlesType, MaterialType>::parallel_exec(Real dt)
 	{
+		size_t number_of_particles = this->body_->number_of_particles_;
 		this->SetupDynamics(dt);
-		InnerIterator_parallel(number_of_particles_, functor_inner_interaction_, dt);
+		InnerIterator_parallel(number_of_particles, functor_inner_interaction_, dt);
 	}
 	//===================================================================//
 	template <class BodyType, class ParticlesType, class MaterialType>

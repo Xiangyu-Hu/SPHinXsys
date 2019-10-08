@@ -64,7 +64,8 @@ namespace SPH {
 	public:
 		MeshCellLinkedList(Vecd lower_bound, Vecd upper_bound, 
 			Real cell_spacing, size_t buffer_size = 0);
-		virtual ~MeshCellLinkedList() {};
+		/**In the destructor, the dynamically located memeory is released.*/
+		virtual ~MeshCellLinkedList() { DeleteMeshDataMatrix(); };
 
 		/** access protected members */
 		Real GetCellSpacing() { return cell_spacing_; };

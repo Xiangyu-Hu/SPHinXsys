@@ -9,6 +9,7 @@
 #pragma once
 
 #include "base_data_package.h"
+#include "sph_data_conainers.h"
 #include "xml_engine.h"
 
 #include <fstream>
@@ -62,6 +63,12 @@ namespace SPH {
 		virtual ~Particles() {};
 		/** Vector of base particle data. */
 		StdLargeVec<BaseParticleData> base_particle_data_;	
+		
+		//----------------------------------------------------------------------
+		//Global data
+		//----------------------------------------------------------------------
+		Real speed_max_;							/**< Maxium particle speed. */
+		
 		/** Initialize a base prticle by input a postion and volume. */
 		void InitializeABaseParticle(Vecd pnt, Real particle_volume);
 

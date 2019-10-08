@@ -29,6 +29,7 @@ namespace SPH {
 	class Output;
 	class Particles;
 	class Material;
+	class Reaction;
 	class Kernel;
 	class MeshCellLinkedList;
 	class MeshBackground;
@@ -66,7 +67,7 @@ namespace SPH {
 		 * @param[in] refinement_level Refinement level of this body.
 		 * @param[in] op Partciel generator manner.
 		 */
-		explicit SPHBody(SPHSystem &sph_system, string body_name, Material &base_material,
+		explicit SPHBody(SPHSystem &sph_system, string body_name, 
 			int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op);
 		virtual ~SPHBody() {};
 
@@ -92,12 +93,14 @@ namespace SPH {
 		//----------------------------------------------------------------------
 		//Global variables
 		//----------------------------------------------------------------------
-		Real speed_max_;							/**< Maxium particle speed. */
 		Real particle_spacing_;						/**< Particle spacing of the body. */
-		size_t number_of_particles_;			/**< Number of real particles of the body. */
+		size_t number_of_particles_;				/**< Number of real particles of the body. */
 		Particles *base_particles_;					/**< Base particles of this body. */
-		Material &base_material_;					/**< Base material of this body. */
+		Material *base_material_;					/**< Base material of this body. */
+		Reaction *base_reaction_;					/**< Base reaction model of this body */
 		MeshCellLinkedList *mesh_cell_linked_list_; /**< Cell linked mesh of this body. */
+		MeshBackground *mesh_background_;			/**< Background mesh.*/
+
 		/**
  		 * @brief particle by cells lists is for parallel splitting algorithm
 		 * particles in each cell are collected together, 
@@ -195,7 +198,7 @@ namespace SPH {
 		 * @param[in] refinement_level Refinement level of this body.
 		 * @param[in] op Partciel generator manner.
 		 */
-		RealBody(SPHSystem &sph_system, string body_name, Material &base_material, 
+		RealBody(SPHSystem &sph_system, string body_name, 
 			int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op);
 		virtual ~RealBody() {};
 		/** Allocate memory for cell linked list. */

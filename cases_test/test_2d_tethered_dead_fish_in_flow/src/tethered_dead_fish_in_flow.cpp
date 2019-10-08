@@ -36,8 +36,6 @@ Real c_f = 10.0*U_f;
 Real Re = 5.0e3;
 Real mu_f = rho0_f * U_f * (fish_length) / Re;
 Real k_f = 0.0;
-Real initial_pressure = 0.0;
-Vec2d intial_velocity(0.0, 0.0);
 /**
 * Material properties of the fish body.
 */
@@ -126,9 +124,8 @@ class WaterBlock : public FluidBody
 {
 public:
 	WaterBlock(SPHSystem &system, string body_name,
-		WeaklyCompressibleFluid &material,
 		int refinement_level, ParticlesGeneratorOps op)
-		: FluidBody(system, body_name, material, refinement_level, op)
+		: FluidBody(system, body_name, refinement_level, op)
 	{
 		std::vector<Point> water_block_shape = CreatWaterBlockShape( );
 		body_region_.add_geometry(new Geometry(water_block_shape), RegionBooleanOps::add);
@@ -146,7 +143,7 @@ class WallBoundary : public SolidBody
 public:
 	WallBoundary(SPHSystem &system, string body_name,
 		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), refinement_level, op)
+		: SolidBody(system, body_name, refinement_level, op)
 	{
 		std::vector<Point> outer_wall_shape = CreatOuterWallShape( );
 		std::vector<Point> inner_wall_shape = CreatInnerWallShape( );
@@ -162,9 +159,9 @@ class FishBody : public SolidBody
 {
 
 public:
-	FishBody(SPHSystem &system, string body_name, ElasticSolid &material,
+	FishBody(SPHSystem &system, string body_name, 
 		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, material, refinement_level, op)
+		: SolidBody(system, body_name, refinement_level, op)
 	{
 		std::vector<Point> fish_shape = CreatFishShape(cx, cy, fish_length, particle_spacing_);
 		body_region_.add_geometry(new Geometry(fish_shape), RegionBooleanOps::add);
@@ -275,9 +272,9 @@ int main()
 	/**
 	* @brief   Particles and body creation for water.
 	*/
-	SymmetricTaitFluid                  fluid("Water", rho0_f, c_f, mu_f, k_f);
 	WaterBlock *water_block = new WaterBlock(system, "WaterBody",
-		fluid, 0, ParticlesGeneratorOps::lattice);
+		0, ParticlesGeneratorOps::lattice);
+	SymmetricTaitFluid    fluid("Water", water_block, rho0_f, c_f, mu_f, k_f);
 	FluidParticles    fluid_particles(water_block);
 	/**
 	* @brief   Particles and body creation for wall boundary.
@@ -288,11 +285,9 @@ int main()
 	/**
 	* @brief   Particles and body creation for fish.
 	*/
-	NeoHookeanSolid             solid_material("NeoHookeanSolid",
-		rho0_s, Youngs_modulus, poisson, 0.0);
-	FishBody *fish_body = new   FishBody(system, "FishBody", solid_material,
-		1, ParticlesGeneratorOps::lattice);
-	ElasticSolidParticles        fish_body_particles(fish_body);
+	FishBody *fish_body = new   FishBody(system, "FishBody", 1, ParticlesGeneratorOps::lattice);
+	NeoHookeanSolid   fish_body_material("NeoHookeanSolid", fish_body, rho0_s, Youngs_modulus, poisson, 0.0);
+	ElasticSolidParticles  fish_body_particles(fish_body);
 	/**
 	* @brief   Particle and body creation of gate observer.
 	*/

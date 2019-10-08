@@ -275,7 +275,7 @@ namespace SPH {
             std::cout << __FILE__ << ':' << __LINE__ << std::endl;
             exit(1);
         }else{
-            size_t num_mobod = 0;
+            int num_mobod = 0;
             XmlEngine* read_xml = new XmlEngine();
             read_xml->LoadXmlFile(filefullpath);
             SimTK::Xml::element_iterator ele_ite_ = read_xml->root_element_.element_begin();

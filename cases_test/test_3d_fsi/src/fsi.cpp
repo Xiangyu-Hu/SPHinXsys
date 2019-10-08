@@ -48,10 +48,6 @@ Real Re 		= 100.0;
 Real mu_f 		= rho0_f * U_f * (2.0 * Cylinder_radius) / Re;
 Real k_f 		= 0.0;
 
-//for fluid initial condition
-Real initial_pressure = 0.0;
-Vecd intial_velocity(0.0, 0.0, 0.0);
-
 //for material properties of the solid
 Real rho0_s 	= 10.0; 								//reference density
 Real poisson 	= 0.4; 									//Poisson ratio
@@ -130,9 +126,8 @@ class WaterBlock : public FluidBody
 {
 	public:
 		WaterBlock(SPHSystem &system, string body_name,
-			WeaklyCompressibleFluid &material, 
 			int refinement_level, ParticlesGeneratorOps op)
-			: FluidBody(system, body_name, material, refinement_level, op)
+			: FluidBody(system, body_name, refinement_level, op)
 		{
 
 			body_region_.add_geometry(CreateWaterBlock(), RegionBooleanOps::add);
@@ -149,7 +144,7 @@ class WallBoundary : public SolidBody
 public:
 	WallBoundary(SPHSystem &system, string body_name, 
 		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), refinement_level, op)
+		: SolidBody(system, body_name, refinement_level, op)
 	{
 		body_region_.add_geometry(CreateOuterWall(), RegionBooleanOps::add);
 		body_region_.add_geometry(CreateInnerWall(), RegionBooleanOps::sub);
@@ -162,9 +157,9 @@ public:
 class InsertedBody : public SolidBody
 {
 public:
-	InsertedBody(SPHSystem &system, string body_name, ElasticSolid &material,
+	InsertedBody(SPHSystem &system, string body_name, 
 		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, material, refinement_level, op)
+		: SolidBody(system, body_name, refinement_level, op)
 	{
 		body_region_.add_geometry(CreateInsertCylinder(), RegionBooleanOps::add);
 		body_region_.add_geometry(CreateAttatchedFlag(), RegionBooleanOps::add);
@@ -274,12 +269,11 @@ int main()
 	SPHSystem system(Vecd(-DLsponge - BW, -BW, -BW), 
 		Vecd(DL + BW, DH + BW, DW + BW), particle_spacing_ref);
 
-	//fluid material properties
-	WeaklyCompressibleFluid fluid("Water", rho0_f, c_f, mu_f, k_f);
-	
 	//the water block
 	WaterBlock *water_block 
-		= new WaterBlock(system, "WaterBody", fluid, 0, ParticlesGeneratorOps::lattice);
+		= new WaterBlock(system, "WaterBody", 0, ParticlesGeneratorOps::lattice);
+	//fluid material properties
+	WeaklyCompressibleFluid fluid("Water", water_block, rho0_f, c_f, mu_f, k_f);
 	//creat fluid particles
 	FluidParticles fluid_particles(water_block);
 
@@ -290,12 +284,11 @@ int main()
 	SolidParticles solid_particles(wall_boundary);
 
 
-	//elastic soild material properties
-	ElasticSolid solid_material("ElasticSolid", rho0_s, Youngs_modulus, poisson, 0.0);
 	//the inseted body immersed in water
 	InsertedBody *inserted_body 
-		= new InsertedBody(system, "InsertedBody", solid_material,
-		1, ParticlesGeneratorOps::lattice);
+		= new InsertedBody(system, "InsertedBody", 1, ParticlesGeneratorOps::lattice);
+	//elastic soild material properties
+	ElasticSolid inserted_body_material("ElasticSolid", inserted_body, rho0_s, Youngs_modulus, poisson, 0.0);
 	//creat particles for the elastic body
 	ElasticSolidParticles inserted_body_particles(inserted_body);
 

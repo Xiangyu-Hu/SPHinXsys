@@ -22,17 +22,13 @@ Real k_f = 0.0;
 Real mu_p_f = 0.6*mu_f;
 Real lambda_f = 10.0;
 
-//for fluid initial condition
-Real initial_pressure = 0.0;
-Vec2d intial_velocity(0.0, 0.0);
-
 //define the fluid body
 class FluidBlock : public FluidBody
 {
 	public:
-		FluidBlock(SPHSystem &system, string body_name, Oldroyd_B_Fluid &oldroyd_b_material,
+		FluidBlock(SPHSystem &system, string body_name, 
 			int refinement_level, ParticlesGeneratorOps op)
-			: FluidBody(system, body_name, oldroyd_b_material, refinement_level, op)
+			: FluidBody(system, body_name, refinement_level, op)
 		{
 			std::vector<Point> pnts;
 			pnts.push_back(Point(-0.5*DL, -0.5*DH));
@@ -69,7 +65,7 @@ class WallBoundary : public SolidBody
 public:
 	WallBoundary(SPHSystem &system, string body_name, 
 		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), refinement_level, op)
+		: SolidBody(system, body_name, refinement_level, op)
 	{
 		std::vector<Point> pnts3;
 		pnts3.push_back(Point(-0.5*DL - BW, -0.5*DH - BW));
@@ -119,12 +115,12 @@ int main()
 	//define external force
 	Gravity gravity(Vecd(1.0, 0.0));
 
-	//fluid material properties
-	Oldroyd_B_Fluid fluid("Fluid", rho0_f, c_f, mu_f, k_f, lambda_f, mu_p_f);
 	
 	//the water block
 	FluidBlock *fluid_block 
-		= new FluidBlock(system, "FluidBody", fluid, 0, ParticlesGeneratorOps::lattice);
+		= new FluidBlock(system, "FluidBody", 0, ParticlesGeneratorOps::lattice);
+	//fluid material properties
+	Oldroyd_B_Fluid fluid("Fluid", fluid_block, rho0_f, c_f, mu_f, k_f, lambda_f, mu_p_f);
 	//creat fluid particles
 	ViscoelasticFluidParticles fluid_particles(fluid_block);
 

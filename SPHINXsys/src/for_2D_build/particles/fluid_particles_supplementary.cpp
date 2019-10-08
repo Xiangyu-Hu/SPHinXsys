@@ -1,4 +1,5 @@
 #include "fluid_particles.h"
+#include "base_body.h"
 
 #include <iterator>
 
@@ -14,7 +15,7 @@ namespace SPH
 		std::vector<Vecd>::const_iterator vector_iterater;
 		std::vector<int>::const_iterator int_iterater;
 
-		size_t number_of_particles = base_particle_data_.size();
+		size_t number_of_particles = body_->number_of_particles_;
 		output_file << "  <Piece Name =\"" << body_name_ << "\" NumberOfPoints=\"" << number_of_particles << "\" NumberOfCells=\"0\">\n";
 
 		//write coordinates of particles
@@ -81,7 +82,7 @@ namespace SPH
 	{
 		output_file << " VARIABLES = \" x \", \"y\", \"ID\", \"density\", \"u\", \"v\", \"Vorticity\" \n";
 
-		size_t number_of_particles = base_particle_data_.size();
+		size_t number_of_particles = body_->number_of_particles_;
 		for (size_t i = 0; i != number_of_particles; ++i)
 		{
 			output_file << base_particle_data_[i].pos_n_[0] << "  "
@@ -100,7 +101,7 @@ namespace SPH
 		const SimTK::String xml_name("particles_xml"), ele_name("particles");
 		XmlEngine* restart_xml = new XmlEngine(xml_name, ele_name);
 		
-		size_t number_of_particles = base_particle_data_.size();
+		size_t number_of_particles = body_->number_of_particles_;
 		for(size_t i = 0; i != number_of_particles; ++i)
   		{
   			restart_xml->CreatXmlElement("particle");
@@ -143,7 +144,7 @@ namespace SPH
 		std::vector<Vecd>::const_iterator vector_iterater;
 		std::vector<int>::const_iterator int_iterater;
 
-		size_t number_of_particles = base_particle_data_.size();
+		size_t number_of_particles = body_->number_of_particles_;
 		output_file << "  <Piece Name =\"" << body_name_ << "\" NumberOfPoints=\"" << number_of_particles << "\" NumberOfCells=\"0\">\n";
 
 		//write coordinates of particles
@@ -210,7 +211,7 @@ namespace SPH
 	{
 		output_file << " VARIABLES = \" x \", \"y\", \"ID\", \"density\", \"u\", \"v\" \n";
 
-		size_t number_of_particles = base_particle_data_.size();
+		size_t number_of_particles = body_->number_of_particles_;
 		for (size_t i = 0; i != number_of_particles; ++i)
 		{
 			output_file << base_particle_data_[i].pos_n_[0] << "  "

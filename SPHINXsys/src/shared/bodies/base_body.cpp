@@ -16,6 +16,7 @@
 #include "in_output.h"
 #include "base_particles.h"
 #include "base_material.h"
+#include "base_reaction.h"
 #include "neighboring_particle.h"
 #include "base_kernel.h"
 #include "mesh_cell_linked_list.h"
@@ -24,15 +25,17 @@
 namespace SPH
 {
 	//===========================================================//
-	SPHBody::SPHBody(SPHSystem &sph_system, string body_name, Material &base_material,
+	SPHBody::SPHBody(SPHSystem &sph_system, string body_name, 
 		int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op)
-		: sph_system_(sph_system), body_region_(body_name), body_name_(body_name), base_material_(base_material),
+		: sph_system_(sph_system), body_region_(body_name), body_name_(body_name), 
 		refinement_level_(refinement_level), smoothinglength_ratio_(smoothinglength_ratio), particle_generator_op_(op)
 	{	
 		sph_system_.AddBody(this);
 
 		particle_spacing_ 	= RefinementLevelToParticleSpacing();
 		kernel_ 			= sph_system_.GenerateAKernel(particle_spacing_*smoothinglength_ratio_);
+		base_material_ = new Material("EmptyMaterial");
+		base_reaction_ = new Reaction("EmptyMaterial");
 		mesh_cell_linked_list_
 							= new MeshCellLinkedList(sph_system.lower_bound_,
 									sph_system_.upper_bound_, kernel_->GetCutOffRadius());
@@ -121,9 +124,9 @@ namespace SPH
 		return this;
 	}
 	//===========================================================//
-	RealBody::RealBody(SPHSystem &sph_system, string body_name, Material &base_material,
+	RealBody::RealBody(SPHSystem &sph_system, string body_name, 
 		int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op)
-		: SPHBody(sph_system, body_name, base_material, refinement_level, smoothinglength_ratio, op)
+		: SPHBody(sph_system, body_name, refinement_level, smoothinglength_ratio, op)
 	{
 		sph_system.AddRealBody(this);
 
@@ -164,7 +167,7 @@ namespace SPH
 	//===========================================================//
 	FictitiousBody::FictitiousBody(SPHSystem &system, string body_name, int refinement_level, 
 		Real smoothinglength_ratio, ParticlesGeneratorOps op)
-		: SPHBody(system, body_name, *(new Material("FictitiousMaterial")), refinement_level, smoothinglength_ratio, op)
+		: SPHBody(system, body_name, refinement_level, smoothinglength_ratio, op)
 	{
 		system.AddFictitiousBody(this);
 	}

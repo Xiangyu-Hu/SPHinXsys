@@ -26,7 +26,7 @@ namespace SPH {
 	class SolidBody : public RealBody
 	{
 	public:
-		SolidBody(SPHSystem &system, string body_name, Solid &solid_material,
+		SolidBody(SPHSystem &system, string body_name, 
 			int refinement_level, ParticlesGeneratorOps op);
 		virtual ~SolidBody() {};
 
@@ -34,6 +34,7 @@ namespace SPH {
 		virtual void BuildInnerConfiguration() override;
 		/** Build contact configuration. */
 		virtual void BuildContactConfiguration() override;
+		/** Set up the reaction model, if essential */
 		/** The pointer to derived class object. */
 		virtual SolidBody* PointToThisObject() override { return this; };
 	};

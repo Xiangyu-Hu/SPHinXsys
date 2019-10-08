@@ -59,9 +59,6 @@ Real U_f = 1.0;								/**< Characteristic velocity. */
 Real c_f = 20.0*sqrt(140.0*gravity_g); 		/**< Reference sound speed. */
 Real mu_f = 0.0;							/**< Dynamics viscosity. */
 Real k_f = 0.0;								/**< Thermal conduction rate. */
-
-Real initial_pressure = 0.0;			/**< Initial pressure field. */
-Vec2d intial_velocity(0.0, 0.0);		/**< Initial velocity field. */
 /**
  * @brief Material properties of the elastic gate.
  */
@@ -76,9 +73,8 @@ class WaterBlock : public FluidBody
 {
 public:
 	WaterBlock(SPHSystem &system, string body_name,
-		WeaklyCompressibleFluid &fluid_material, 
 		int refinement_level, ParticlesGeneratorOps op)
-		: FluidBody(system, body_name, fluid_material, refinement_level, op)
+		: FluidBody(system, body_name, refinement_level, op)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> water_block_shape;
@@ -102,7 +98,7 @@ class WallBoundary : public SolidBody
 public:
 	WallBoundary(SPHSystem &system, string body_name,
 		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), refinement_level, op)
+		: SolidBody(system, body_name, refinement_level, op)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> outer_wall_shape;
@@ -131,9 +127,9 @@ public:
 class GateBase : public SolidBody
 {
 public:
-	GateBase(SPHSystem &system, string body_name, ElasticSolid &solid_material,
+	GateBase(SPHSystem &system, string body_name, 
 		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, solid_material, refinement_level, op)
+		: SolidBody(system, body_name, refinement_level, op)
 	{
 		/** Geometry definition. */
 		std::vector<Point> gate_base_shape;
@@ -153,9 +149,9 @@ public:
 class Gate : public SolidBody
 {
 public:
-	Gate(SPHSystem &system, string body_name, ElasticSolid &solid_material,
+	Gate(SPHSystem &system, string body_name, 
 		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, solid_material, refinement_level, op)
+		: SolidBody(system, body_name, refinement_level, op)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> gate_shape;
@@ -198,9 +194,9 @@ int main()
 	/**
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
-	WeaklyCompressibleFluid 			fluid("Water", rho0_f, c_f, mu_f, k_f);
-	WaterBlock *water_block = new WaterBlock(system, "WaterBody", 
-		fluid, 0, ParticlesGeneratorOps::lattice);
+	WaterBlock *water_block 
+		= new WaterBlock(system, "WaterBody", 0, ParticlesGeneratorOps::lattice);
+	WeaklyCompressibleFluid 	fluid("Water", water_block, rho0_f, c_f, mu_f, k_f);
 	FluidParticles 	fluid_particles(water_block);
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
@@ -211,15 +207,15 @@ int main()
 	/**
 	 * @brief 	Material property, particle and body creation of gate base.
 	 */
-	ElasticSolid 			solid_material("ElasticSolid", rho0_s, Youngs_modulus, poisson);
-	GateBase *gate_base = new GateBase(system, "GateBase", 
-		solid_material, 1, ParticlesGeneratorOps::lattice);
+	GateBase *gate_base 
+		= new GateBase(system, "GateBase", 1, ParticlesGeneratorOps::lattice);
+	ElasticSolid 	gate_base_material("ElasticSolid", gate_base, rho0_s, Youngs_modulus, poisson);
 	ElasticSolidParticles 	gate_base_particles(gate_base);
 	/**
 	 * @brief 	Material property, particle and body creation of elastic gate.
 	 */
-	Gate *gate = new Gate(system, "Gate", 
-		solid_material, 1, ParticlesGeneratorOps::lattice);
+	Gate *gate = new Gate(system, "Gate", 1, ParticlesGeneratorOps::lattice);
+	ElasticSolid 	gate_material("ElasticSolid", gate, rho0_s, Youngs_modulus, poisson);
 	ElasticSolidParticles 	gate_particles(gate);
 	/**
 	 * @brief 	Particle and body creation of gate observer.

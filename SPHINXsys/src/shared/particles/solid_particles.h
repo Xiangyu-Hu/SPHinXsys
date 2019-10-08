@@ -3,6 +3,8 @@
  * @brief 	This is the derived class of base particle.
  * @author	Xiangyu Hu and Chi Zhang
  * @version	0.1
+ * @version 0.2.1
+ * 			add muscle particles and muscle data.
  */
 #pragma once
 
@@ -59,27 +61,80 @@ namespace SPH {
 		Vecd pos_temp_;				
 	};
 	/**
+	 * @class MuscleBodyData
+	 * @brief Data for Muscle particles.
+	 */	
+	class MuscleParticleData
+	{
+	public:
+		/**
+		 * @brief Constrcutor.
+		 * @detail Create a particle.
+		 */
+		MuscleParticleData();
+		/**
+		 * @brief Default destructor.
+		 */		
+		virtual ~MuscleParticleData() {};
+		Vecd f0_, s0_, n0_;					/**< Fiber and sheet direction and related matrices. */
+		Real voltage_n_;
+		Real dvoltage_dt_;
+		Vecd grad_voltage_;
+		Real gate_var_;
+	};
+	/**
 	 * @class SolidParticles
 	 * @brief A group of particles with solid body particle data.
 	 */
 	class SolidParticles : public Particles
 	{
 	public:
+		/**
+		 * @brief Default Constructor.
+		 * @detail Create a group of particles referred to a body.
+		 * @param[in] body_name Name of a body.
+		 */
 		SolidParticles(SPHBody *body);
+		/**
+		 * @brief Destructor.
+		 */
 		virtual ~SolidParticles() {};
 
 		/** Vector of solid body data. */
 		StdLargeVec<SolidParticleData> solid_body_data_; 
+		/**
+		 * @brief Write particle data in VTU format for Paraview.
+		 * @param[inout] output_file Ofstream of particle data.
+		 */
 
 		/** Write particle data in VTU format for Paraview. */
 		virtual void WriteParticlesToVtuFile(ofstream &output_file) override;
-		/** Write particle data in PLT format for Tecplot. */
+		/**
+		 * @brief Write particle data in PLT format for Tecplot.
+		 * @param[inout] output_file Ofstream of particle data.
+		 */
 		virtual void WriteParticlesToPltFile(ofstream &output_file) override;
+		/**
+		 * @brief Write particle data in XML format.
+		 * @param[inout] filefullpath Full path to file being write.
+		 */
+		virtual void WriteParticlesToXmlFile(std::string &filefullpath) {};
+		/**
+		 * @brief Write particle data in XML format for restart.
+		 * @param[inout] filefullpath Full path to file being write.
+		 */
 
 		/* Write particle data in XML format for restart. */
 		virtual void WriteParticlesToXmlForRestart(std::string &filefullpath) override;
-		/** Initialize particle data from restart xml file. */
+		/**
+		 * @brief Initialize particle data from restart xml file.
+		 * @param[inout] filefullpath Full path to file being write.
+		 */
 		virtual void ReadParticleFromXmlForRestart(std::string &filefullpath) override ;
+		/**
+		 * @brief Reload particle position and volume from XML files.
+		 * @param[inout] filefullpath Full path to file being write.
+		 */		
 
 		/** Reload particle position and volume from XML files. */
 		virtual void ReadFromXmlForReloadParticle(std::string &filefullpath) override;
@@ -89,7 +144,7 @@ namespace SPH {
 	};
 	
 	/**
-	 * @class ElasticSoildParticles
+	 * @class ElasticSolidParticles
 	 * @brief A group of particles with elastic body particle data.
 	 */
 	class ElasticSolidParticles : public SolidParticles
@@ -99,24 +154,81 @@ namespace SPH {
 		Real von_Mises_stress(size_t particle_i);
 
 	public:
+		/**
+		 * @brief Default Constructor.
+		 * @detail Create a group of particles referred to a body.
+		 * @param[in] body_name Name of a body.
+		 */
 		ElasticSolidParticles(SPHBody *body);
+		/**
+		 * @brief Destructor.
+		 */
 		virtual ~ElasticSolidParticles() {};
 
 		/** Vector of elastic solid particle data. */
 		StdLargeVec<ElasticSolidParticleData> elastic_body_data_;
-
-		/** Write particle data in VTU format for Paraview. */
+		/**
+		 * @brief Write particle data in VTU format for Paraview.
+		 * @param[inout] output_file Ofstream of particle data.
+		 */
 		virtual void WriteParticlesToVtuFile(ofstream &output_file) override;
-		/** Write particle data in PLT format for Tecplot. */
+		/**
+		 * @brief Write particle data in PLT format for Tecplot.
+		 * @param[inout] output_file Ofstream of particle data.
+		 */
 		virtual void WriteParticlesToPltFile(ofstream &output_file) override;
-
-		/** Write particle data in XML format for restart. */
+		/**
+		 * @brief Write particle data in XML format.
+		 * @param[inout] filefullpath Full path to file being write.
+		 */
+		virtual void WriteParticlesToXmlFile(std::string &filefullpath) override{};
+		/**
+		 * @brief Write particle data in XML format for restart.
+		 * @param[inout] filefullpath Full path to file being write.
+		 */
 		virtual void WriteParticlesToXmlForRestart(std::string &filefullpath) override;
-		/** Initialize particle data from restart xml file. */
+		/**
+		 * @brief Initialize particle data from restart xml file.
+		 * @param[inout] filefullpath Full path to file being write.
+		 */
 		virtual void ReadParticleFromXmlForRestart(std::string &filefullpath) override ;
 
 		/** Pointer to this object.  */
 		virtual ElasticSolidParticles* PointToThisObject() override;
 
+	};
+	/**
+	 * @class DiffusionDrivenBodyParticles
+	 * @brief A group of particles with diffusion driven particle data.
+	 */
+	class MuscleParticles : public ElasticSolidParticles
+	{
+	public:
+		/**
+		 * @brief Default Constructor.
+		 * @detail Create a group of particles referred to a body.
+		 * @param[in] body_name Name of a body.
+		 */
+		MuscleParticles(SPHBody *body);
+		/**
+		 * @brief Destructor.
+		 */
+		virtual ~MuscleParticles() {};
+
+		StdLargeVec<MuscleParticleData> muscle_body_data_;
+		/**
+		 * @brief Write particle data in VTU format for Paraview.
+		 * @param[out] output_file Ofstream of particle data.
+		 */
+		virtual void WriteParticlesToVtuFile(ofstream &output_file) override;
+		/**
+		 * @brief Write particle data in PLT format for Tecplot.
+		 * @param[out] output_file Ofstream of particle data.
+		 */
+		virtual void WriteParticlesToPltFile(ofstream &output_file) override;
+		/**
+		 * @brief Pointer to this object. 
+		 */
+		virtual MuscleParticles* PointToThisObject() override;
 	};
 }

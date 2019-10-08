@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 set(Boost_ROOT_DIR "${BOOST_HOME}")
-set(Boost_SEARCH_PATHS "${Boost_ROOT_DIR}")
+set(Boost_SEARCH_PATHS "${Boost_ROOT_DIR}" "/usr/include/boost/" )
 
 foreach(pth IN LISTS Boost_SEARCH_PATHS)
   find_path(Boost_INCLUDE_DIR 
@@ -28,7 +28,7 @@ set(Boost_LIBRARY_LIST boost_filesystem boost_system)
 
 find_library(Boost_LIB_DIR_TEMP 
     NAMES ${Boost_LIBRARY_LIST}
-    PATHS ${Boost_ROOT_DIR}/lib ${Boost_ROOT_DIR}/lib64
+    PATHS ${Boost_ROOT_DIR} ${Boost_ROOT_DIR}/lib ${Boost_ROOT_DIR}/lib64
     NO_DEFAULT_PATH)
 
 get_filename_component(Boost_LIB_DIR ${Boost_LIB_DIR_TEMP} DIRECTORY)

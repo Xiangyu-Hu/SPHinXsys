@@ -15,7 +15,7 @@ namespace SPH {
 	//===========================================================//
 	RelaxBody::RelaxBody(SPHSystem &sph_system, string body_name,
 		int refinement_level, ParticlesGeneratorOps op)
-		: RealBody(sph_system, body_name, *(new Material("EmptyRelaxMaterial")), refinement_level, 1.0, op)
+		: RealBody(sph_system, body_name, refinement_level, 1.0, op)
 	{
 
 	}

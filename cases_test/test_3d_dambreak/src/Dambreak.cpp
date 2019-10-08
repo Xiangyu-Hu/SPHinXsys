@@ -30,9 +30,6 @@ Real c_f = 10.0*U_f;
 Real mu_f = 0.0;
 Real k_f = 0.0;
 
-//for initial condition
-Real initial_pressure = 0.0;
-Vecd intial_velocity(0.0, 0.0, 0.0);
 /* resolution which control the quality of polygonalmesh created by geometry system */
 int resolution(50);
 
@@ -41,9 +38,8 @@ class WaterBlock : public FluidBody
 {
 	public:
 		WaterBlock(SPHSystem &system, string body_name,
-			WeaklyCompressibleFluid &material, 
 			int refinement_level, ParticlesGeneratorOps op)
-			: FluidBody(system, body_name, material, refinement_level, op)
+			: FluidBody(system, body_name, refinement_level, op)
 		{
 			Vecd halfsize_water(0.5 * LL, 0.5 * LH, 0.5 * LW);
 			Vecd translation_water = halfsize_water;
@@ -62,7 +58,7 @@ class WallBoundary : public SolidBody
 public:
 	WallBoundary(SPHSystem &system, string body_name, 
 		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), refinement_level, op)
+		: SolidBody(system, body_name, refinement_level, op)
 	{
 		Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
 		Vecd translation_wall(0.5 * DL, 0.5 * DH, 0.5 * DW);
@@ -103,11 +99,11 @@ int main()
 	SPHSystem system(Vecd(-BW, -BW, -BW), 
 		Vecd(DL + BW, DH + BW, DW + BW), particle_spacing_ref);
 
-	//Configuration of Materials
-	WeaklyCompressibleFluid fluid("Water", rho0_f, c_f, mu_f, k_f);
 	//the water block
 	WaterBlock *water_block 
-		= new WaterBlock(system, "WaterBody", fluid, 0, ParticlesGeneratorOps::lattice);
+		= new WaterBlock(system, "WaterBody", 0, ParticlesGeneratorOps::lattice);
+	//Configuration of Materials
+	WeaklyCompressibleFluid fluid("Water", water_block, rho0_f, c_f, mu_f, k_f);
 	//creat fluid particles
 	FluidParticles fluid_particles(water_block);
 

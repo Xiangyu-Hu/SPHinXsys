@@ -110,7 +110,7 @@ namespace SPH {
 	public:
 		MeshBackground(Vecd lower_bound, Vecd upper_bound, 
 			Real grid_spacing, size_t buffer_size = 0);
-		virtual ~MeshBackground() {};
+		virtual ~MeshBackground() { DeleteMeshDataMatrix(); };
 
 		/** allocate memories for mesh data */
 		virtual void AllocateMeshDataMatrix() override;

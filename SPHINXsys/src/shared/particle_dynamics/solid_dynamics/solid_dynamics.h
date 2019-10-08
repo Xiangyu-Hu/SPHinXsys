@@ -54,8 +54,8 @@ namespace SPH
 			SolidBody, ElasticSolidParticles> ElasticSolidDynamicsComplex2Levels;
 
 		/**
-		 * @class SolidDynamicsInitialCondition
-		 * @brief  set initial condition for a fluid body with weakly compressible fluid
+		 * @class OffsetInitialParticlePosition
+		 * @brief  set initial condition for a solid body with different material
 		*/
 		class OffsetInitialParticlePosition : public SolidDynamicsSimple
 		{
@@ -70,8 +70,8 @@ namespace SPH
 		};
 
 		/**
-		 * @class WeaklyCompressibleFluidInitialCondition
-		 * @brief  set initial condition for a fluid body with weakly compressible fluid
+		 * @class SolidDynamicsInitialCondition
+		 * @brief  set initial condition for solid fluid body
 		*/
 		class SolidDynamicsInitialCondition : public SolidDynamicsSimple
 		{
@@ -120,13 +120,12 @@ namespace SPH
 		};
 
 		/**
-		 * @class WeaklyCompressibleFluidInitialCondition
-		 * @brief  set initial condition for a fluid body with weakly compressible fluid
+		 * @class ElasticSolidDynamicsInitialCondition
+		 * @brief  set initial condition for a solid body with different material
 		*/
 		class ElasticSolidDynamicsInitialCondition : public ElasticSolidDynamicsSimple
 		{
 		protected:
-			//default for set all particle at rest
 			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
 			ElasticSolidDynamicsInitialCondition(SolidBody *body)
@@ -404,7 +403,6 @@ namespace SPH
 		* @brief computing stress within constrined elastic body
 		* This is the second half step
 		*/
-		//computing stress within constrined elastic body
 		class StressInConstrinedElasticBodySecondHalf : public ElasticSolidDynamicsContact
 		{
 		protected:
@@ -553,6 +551,20 @@ namespace SPH
 		public:
 			DampingBySplittingAlgorithm(SolidBody *elastic_body, Real eta);
 			virtual ~DampingBySplittingAlgorithm() {};
+		};
+		/**
+		 * @class TwistingInitialCondition
+		 * @brief  set initial condition for twisting cantilever
+		*/
+		class TwistingInitialCondition : public SolidDynamicsSimple
+		{
+		protected:
+			//default for set all particle at rest
+			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
+		public:
+			TwistingInitialCondition(SolidBody *body)
+				: SolidDynamicsSimple(body) {};
+			virtual ~TwistingInitialCondition() {};
 		};
 	}
 }

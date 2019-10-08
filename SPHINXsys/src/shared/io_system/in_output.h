@@ -269,6 +269,29 @@ namespace SPH {
 	};
 
 	/**
+	 * @class WriteObservedVoltage
+	 * @brief write the observed voltage of electrophysiology to files.
+	 */
+	class WriteObservedVoltage
+		: public WriteBodyStates,
+		public observer_dynamics::ObserveMuscleVoltage
+	{
+	protected:
+		ObserverBody *observer_;
+		std::string filefullpath_;
+	public:
+		/** Constructor and Destructor. */
+		WriteObservedVoltage(In_Output& in_output,
+			ObserverBody* observer, SolidBody *interacting_body);
+		virtual ~WriteObservedVoltage() {};
+		/**
+		 * @brief Output data to files.
+		 * @param[in] time Physical time.
+		 */
+		virtual void WriteToFile(Real time) override;
+	};
+
+	/**
 	 * @class WriteWaterMechanicalEnergy
 	 * @brief write files for the total mechanical energy of a weakly compressible fluid body
 	 */
@@ -331,7 +354,7 @@ namespace SPH {
 	};
 
 	/**
-	 * @class ParticleReloadIO
+	 * @class ReloadParticleIO
 	 * @brief For write  and read particle reload.
 	 */
 	class ReloadParticleIO
@@ -412,7 +435,6 @@ namespace SPH {
 		ReadRestart(In_Output& in_output, SPHBodyVector bodies)
 			: RestartIO(in_output, bodies), ReadBodyStates(in_output, bodies) {};
 		virtual ~ReadRestart() {};
-
 		virtual Real ReadRestartFiles(size_t restart_step) {
 			ReadFromFile(restart_step);
 			return ReadRestartTime(restart_step);
@@ -424,14 +446,15 @@ namespace SPH {
 	 * @class WriteTotalForceOnSolid
 	* @brief Write total force acting a solid body.
 	*/
-	class WriteSimBodyPinAngle : public WriteSimBodyStates<SimTK::MobilizedBody::Pin>
+	class WriteSimBodyPinAngleAndAngleRate : public WriteSimBodyStates<SimTK::MobilizedBody::Pin>
 	{
 	protected:
 		SimTK::RungeKuttaMersonIntegrator &integ_;
 		std::string filefullpath_;
+		SimTK::Visualizer *visulizer;
 	public:
-		WriteSimBodyPinAngle(In_Output& in_output, StdVec<SimTK::MobilizedBody::Pin*> mobodies, SimTK::RungeKuttaMersonIntegrator &integ);
-		virtual ~WriteSimBodyPinAngle() {};
+		WriteSimBodyPinAngleAndAngleRate(In_Output& in_output, StdVec<SimTK::MobilizedBody::Pin*> mobodies, SimTK::RungeKuttaMersonIntegrator &integ);
+		virtual ~WriteSimBodyPinAngleAndAngleRate() {};
 		virtual void WriteToFile(Real time = 0.0) override;
 	};
 }

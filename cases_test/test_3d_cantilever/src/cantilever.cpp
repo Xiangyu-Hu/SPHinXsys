@@ -76,9 +76,9 @@ Geometry *CreateForceSpot()
 class Cantilever : public SolidBody
 {
 public:
-	Cantilever(SPHSystem &system, string body_name, ElasticSolid &material,
+	Cantilever(SPHSystem &system, string body_name, 
 		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, material, refinement_level, op)
+		: SolidBody(system, body_name, refinement_level, op)
 	{
 		//geometry
 		body_region_.add_geometry(CreateCantilever(), RegionBooleanOps::add);
@@ -184,12 +184,11 @@ int main()
 	SPHSystem system(Vecd(-SL - BW, -0.5 * (PL + BW), -0.5 * (SL + BW)),
 		Vecd(PL, 0.5 * (PL + BW), 0.5 * (SL + BW)), particle_spacing_ref);
 
-	//Configuration of soild materials
-	ElasticSolid solid_material("ElasticSolid", rho0_s, Youngs_modulus, poisson, 0.0);
-
 	//the water block
 	Cantilever *cantilever_body =
-		new Cantilever(system, "CantileverBody", solid_material, 0, ParticlesGeneratorOps::lattice);
+		new Cantilever(system, "CantileverBody", 0, ParticlesGeneratorOps::lattice);
+	//Configuration of soild materials
+	ElasticSolid solid_material("ElasticSolid", cantilever_body, rho0_s, Youngs_modulus, poisson, 0.0);
 	//creat particles the elastic body
 	ElasticSolidParticles cantilever_particles(cantilever_body);
 

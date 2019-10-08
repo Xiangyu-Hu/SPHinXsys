@@ -56,11 +56,6 @@ Real c_f = 10.0*U_f;
 Real mu_f = 0.0;
 Real k_f = 0.0;
 
-//for fluid initial condition
-Real initial_pressure = 0.0;
-Vec2d intial_velocity(0.0, 0.0);
-
-
 //for material properties of the solid
 Real rho0_s = 1100.0; //reference density
 Real poisson = 0.47; //Poisson ratio
@@ -186,9 +181,8 @@ class WaterBlock : public FluidBody
 {
 	public:
 		WaterBlock(SPHSystem &system, string body_name,
-			WeaklyCompressibleFluid &material, 
 			int refinement_level, ParticlesGeneratorOps op)
-			: FluidBody(system, body_name, material, refinement_level, op)
+			: FluidBody(system, body_name, refinement_level, op)
 		{
 			std::vector<Point> water_block_shape = CreatWaterBlockShape();
 			std::vector<Point> gate_base_shape = CreatGateBaseShape();
@@ -207,7 +201,7 @@ class WallBoundary : public SolidBody
 public:
 	WallBoundary(SPHSystem &system, string body_name, 
 		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), refinement_level, op)
+		: SolidBody(system, body_name, refinement_level, op)
 	{
 		std::vector<Point> outer_wall_shape   = CreatOuterWallShape();
 		std::vector<Point> inner_wall_shape_1 = CreatInnerWallShape01();
@@ -224,9 +218,9 @@ public:
 class GateBase : public SolidBody
 {
 public:
-	GateBase(SPHSystem &system, string body_name, ElasticSolid &material,
+	GateBase(SPHSystem &system, string body_name, 
 		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, material, refinement_level, op)
+		: SolidBody(system, body_name, refinement_level, op)
 	{
 		std::vector<Point> gate_base_shape = CreatGateBaseShape();
 		body_region_.add_polygon(gate_base_shape, RegionBooleanOps::add);
@@ -239,9 +233,9 @@ public:
 class Gate : public SolidBody
 {
 public:
-	Gate(SPHSystem &system, string body_name, ElasticSolid &material,
+	Gate(SPHSystem &system, string body_name, 
 		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, material, refinement_level, op)
+		: SolidBody(system, body_name, refinement_level, op)
 	{
 		std::vector<Point> flap_shape = CreatFlapShape();
 		body_region_.add_polygon(flap_shape, RegionBooleanOps::add);
@@ -325,12 +319,11 @@ int main()
 	//define external force
 	Gravity gravity(Vecd(0.0, -gravity_g));
 
-	//fluid material properties
-	WeaklyCompressibleFluid fluid("Water", rho0_f, c_f, mu_f, k_f);
-	
 	//the water block
 	WaterBlock *water_block 
-		= new WaterBlock(system, "WaterBody", fluid, 0, ParticlesGeneratorOps::lattice);
+		= new WaterBlock(system, "WaterBody", 0, ParticlesGeneratorOps::lattice);
+	//fluid material properties
+	WeaklyCompressibleFluid fluid("Water", water_block, rho0_f, c_f, mu_f, k_f);
 	//creat fluid particles
 	FluidParticles fluid_particles(water_block);
 
@@ -340,18 +333,19 @@ int main()
 	//creat solid particles
 	SolidParticles solid_particles(wall_boundary);
 
-	//elastic soild material properties
-	ElasticSolid solid_material("ElasticSolid", rho0_s, Youngs_modulus, poisson, 0.0);
-
 	//the gate base
-	GateBase *gate_base = new GateBase(system, "GateBase", solid_material,
-		0, ParticlesGeneratorOps::lattice);
+	GateBase *gate_base 
+		= new GateBase(system, "GateBase", 0, ParticlesGeneratorOps::lattice);
+	//elastic soild material properties
+	ElasticSolid gate_base_material("ElasticSolid", gate_base, rho0_s, Youngs_modulus, poisson, 0.0);
 	//creat particles for the gate base
 	ElasticSolidParticles gate_base_particles(gate_base);
 
 	//the elastic gate
 	Gate *gate = 
-		new Gate(system, "Gate", solid_material, 0, ParticlesGeneratorOps::lattice);
+		new Gate(system, "Gate", 0, ParticlesGeneratorOps::lattice);
+	//elastic soild material properties
+	ElasticSolid gate_material("ElasticSolid", gate, rho0_s, Youngs_modulus, poisson, 0.0);
 	//creat particles for the elastic gate
 	ElasticSolidParticles gate_particles(gate);
 

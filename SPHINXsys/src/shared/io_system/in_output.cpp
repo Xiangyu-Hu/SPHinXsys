@@ -222,7 +222,37 @@ namespace SPH {
 		out_file << "\n";
 		out_file.close();
 	}
-	//===============================================================//
+	//=================================================================================================//
+	WriteObservedVoltage::WriteObservedVoltage(In_Output &in_output,
+			ObserverBody* observer, SolidBody *interacting_body)
+		: WriteBodyStates(in_output, observer), observer_(observer),
+		ObserveMuscleVoltage(observer, interacting_body)
+	{
+		filefullpath_ = in_output_.output_folder_ + "/" + observer->GetBodyName() + "_voltage.dat";
+		std::ofstream out_file(filefullpath_.c_str(), ios::app);
+		out_file << "run_time" << "   ";
+		for (size_t i = 0; i != observer->number_of_particles_; ++i)
+		{
+			out_file << "  " << "voltage_[" << i << "]" << " ";
+		}
+		out_file << "\n";
+		out_file.close();
+	}
+//=================================================================================================//
+	void WriteObservedVoltage::WriteToFile(Real time)
+	{
+		int Itime = int(time*1.0e4);
+		parallel_exec();
+		std::ofstream out_file(filefullpath_.c_str(), ios::app);
+		out_file << time << "   ";
+		for (size_t i = 0; i != observer_->number_of_particles_; ++i)
+		{
+			out_file << "  " << muscle_quantities_[i] << " ";
+		}
+		out_file << "\n";
+		out_file.close();
+	}
+//=================================================================================================//
 	WriteWaterMechanicalEnergy
 		::WriteWaterMechanicalEnergy(In_Output &in_output, FluidBody* water_block, ExternalForce* external_force)
 		: WriteBodyStates(in_output, water_block), TotalMechanicalEnergy(water_block, external_force)
@@ -458,11 +488,11 @@ namespace SPH {
 		}
 	}
 	//===============================================================//
-	WriteSimBodyPinAngle
-		::WriteSimBodyPinAngle(In_Output& in_output, StdVec<SimTK::MobilizedBody::Pin *> mobodies, SimTK::RungeKuttaMersonIntegrator &integ)
+	WriteSimBodyPinAngleAndAngleRate
+		::WriteSimBodyPinAngleAndAngleRate(In_Output& in_output, StdVec<SimTK::MobilizedBody::Pin *> mobodies, SimTK::RungeKuttaMersonIntegrator &integ)
 		: WriteSimBodyStates<SimTK::MobilizedBody::Pin>(in_output, mobodies), integ_(integ)
 	{
-		filefullpath_ = in_output_.output_folder_ + "/simbody_pin_angles_" 
+		filefullpath_ = in_output_.output_folder_ + "/simbody_pin_angles_and_anglerate" 
 					  + in_output_.restart_step_ + ".dat";
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << "\"run_time\"" << "   ";
@@ -475,12 +505,13 @@ namespace SPH {
 		out_file.close();
 	};
 	//===============================================================//
-	void WriteSimBodyPinAngle::WriteToFile(Real time)
+	void WriteSimBodyPinAngleAndAngleRate::WriteToFile(Real time)
 	{
 		int Itime = int(time * 1.0e4);
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << time << "   ";
 		const SimTK::State *simbody_state = &integ_.getState();
+		visulizer->report(*simbody_state);
 		for (size_t i = 0; i != mobodies_.size(); ++i)
 		{
 			out_file << "  " << mobodies_[i]->getAngle(*simbody_state) <<"  ";

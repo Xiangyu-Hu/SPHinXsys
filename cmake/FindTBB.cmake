@@ -203,9 +203,9 @@ endforeach ()
 
 # add general search paths
 foreach (dir IN LISTS TBB_PREFIX_PATH)
-  list(APPEND TBB_LIB_SEARCH_PATH ${dir}/lib ${dir}/Lib ${dir}/lib/tbb
+  list(APPEND TBB_LIB_SEARCH_PATH ${dir} ${dir}/lib ${dir}/Lib ${dir}/lib/tbb
     ${dir}/Libs)
-  list(APPEND TBB_INC_SEARCH_PATH ${dir}/include ${dir}/Include
+  list(APPEND TBB_INC_SEARCH_PATH /usr/include/ ${dir}/include ${dir}/Include
     ${dir}/include/tbb)
 endforeach ()
 
@@ -214,7 +214,7 @@ get_debug_names(TBB_LIBRARY_NAMES)
 
 find_path(TBB_INCLUDE_DIR
           NAMES tbb/tbb.h
-          PATHS ${TBB_INC_SEARCH_PATH}
+          PATHS ${TBB_INC_SEARCH_PATH} 
 	  NO_DEFAULT_PATH)
 
 IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")

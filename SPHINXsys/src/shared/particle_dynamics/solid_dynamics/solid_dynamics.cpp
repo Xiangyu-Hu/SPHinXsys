@@ -38,6 +38,26 @@ namespace SPH
 			solid_particle_data_i.pos_0_ += offset_;
 		}
 		//===========================================================//
+		void TwistingInitialCondition::Update(size_t index_particle_i, Real dt)
+		{
+			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
+			SolidParticleData &solid_body_data_i = particles_->solid_body_data_[index_particle_i];
+
+			Real x = solid_body_data_i.pos_0_[0];
+			Real y = solid_body_data_i.pos_0_[1];
+			Real z = solid_body_data_i.pos_0_[2];
+			Real angular_velocity = dt * sin((pi * x) / (2.0 * 6.0));
+			Real local_radius = sqrt(pow(y, 2.0) + pow(z, 2.0));
+			Real angular = atan2(y, z);
+			Vecd zero(0);
+			base_particle_data_i.vel_n_ = zero;
+
+			if (x > 0.0) {
+				base_particle_data_i.vel_n_[1] = angular_velocity * local_radius * cos(angular);
+				base_particle_data_i.vel_n_[2] = -angular_velocity * local_radius * sin(angular);
+			}
+		}
+		//===========================================================//
 		void NormalDirectionSummation::InnerInteraction(size_t index_particle_i, Real dt)
 		{
 			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];

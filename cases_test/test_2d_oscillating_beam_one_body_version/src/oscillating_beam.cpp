@@ -32,9 +32,7 @@ Real rho0_s = 1.0e3; 			//reference density
 Real Youngs_modulus = 2.0e6;	//reference Youngs modulus
 Real poisson = 0.3975; 			//Poisson ratio
 
-//for initial condition
-Real initial_pressure = 0.0;
-//for initial velocity
+//for initial condition on velocity
 Real kl = 1.875;
 Real M = sin(kl) + sinh(kl);
 Real N = cos(kl) + cosh(kl);
@@ -80,9 +78,9 @@ std::vector<Point> CreatBeamShape()
 class Beam : public SolidBody
 {
 public:
-	Beam(SPHSystem &system, string body_name, ElasticSolid &material, 
-				int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, material, refinement_level, op)
+	Beam(SPHSystem &system, string body_name, 
+		int refinement_level, ParticlesGeneratorOps op)
+		: SolidBody(system, body_name, refinement_level, op)
 	{
 		/** Geometry defination. */
 		std::vector<Point> beam_base_shape = CreatBeamBaseShape();
@@ -172,12 +170,11 @@ int main()
 	SPHSystem system(Vec2d(-SL - BW, -PL / 2.0), 
 		Vec2d(PL + 3.0*BW, PL / 2.0), particle_spacing_ref);
 
-	//Configuration of soild materials
-	ElasticSolid solid_material("ElasticSolid", rho0_s, Youngs_modulus, poisson, 0.0);
-
 	//the osillating beam
 	Beam *beam_body = 
-		new Beam(system, "BeamBody", solid_material, 0, ParticlesGeneratorOps::lattice);
+		new Beam(system, "BeamBody", 0, ParticlesGeneratorOps::lattice);
+	//Configuration of soild materials
+	ElasticSolid beam_material("ElasticSolid", beam_body, rho0_s, Youngs_modulus, poisson, 0.0);
 	//creat particles for the elastic body
 	ElasticSolidParticles beam_particles(beam_body);
 

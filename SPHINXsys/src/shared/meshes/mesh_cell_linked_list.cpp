@@ -33,7 +33,7 @@ namespace SPH {
 	//===========================================================//
 	void MeshCellLinkedList::UpdateParticleCellLocation(SPHBody &body)
 	{
-		StdVec<BaseParticleData> &base_particle_data = body.base_particles_->base_particle_data_;
+		StdLargeVec<BaseParticleData> &base_particle_data = body.base_particles_->base_particle_data_;
 
 		//rebuild the corresponding particle list.
 		parallel_for(blocked_range<size_t>(0, base_particle_data.size()),

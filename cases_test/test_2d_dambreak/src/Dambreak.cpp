@@ -30,9 +30,6 @@ Real rho0_f = 1.0;						/**< Reference density of fluid. */
 Real gravity_g = 1.0;					/**< Gravity force of fluid. */
 Real U_f = 2.0*sqrt(gravity_g*LH);		/**< Characteristic velocity. */
 Real c_f = 10.0*U_f;					/**< Reference sound speed. */
-
-Real initial_pressure = 0.0;			/**< Initial pressure field. */
-Vec2d intial_velocity(0.0, 0.0);		/**< Initial velocity field. */
 /**
  * @brief 	Fluid body definition.
  */
@@ -40,9 +37,8 @@ class WaterBlock : public FluidBody
 {
 public:
 	WaterBlock(SPHSystem &system, string body_name,
-		WeaklyCompressibleFluid &material,
 		int refinement_level, ParticlesGeneratorOps op)
-		: FluidBody(system, body_name, material, refinement_level, op)
+		: FluidBody(system, body_name, refinement_level, op)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> water_block_shape;
@@ -65,7 +61,7 @@ class WallBoundary : public SolidBody
 public:
 	WallBoundary(SPHSystem &system, string body_name,
 		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, *(new Solid("EmptyWallMaterial")), refinement_level, op)
+		: SolidBody(system, body_name, refinement_level, op)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> outer_wall_shape;
@@ -118,9 +114,9 @@ int main()
 	/**
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
-	WeaklyCompressibleFluid 			fluid("Water", rho0_f, c_f);
-	WaterBlock *water_block = new WaterBlock(system, "WaterBody", 
-		fluid, 0, ParticlesGeneratorOps::lattice);
+	WaterBlock *water_block 
+		= new WaterBlock(system, "WaterBody", 0, ParticlesGeneratorOps::lattice);
+	WeaklyCompressibleFluid 	fluid("Water", water_block, rho0_f, c_f);
 	FluidParticles 	fluid_particles(water_block);
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
@@ -171,13 +167,13 @@ int main()
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
-	 /** Wvaluation of density by summation approach. */
-	fluid_dynamics::DensityBySummationFreeSurface 		update_fluid_desnity(water_block, { wall_boundary });
+	 /** Evaluation of density by summation approach. */
+	fluid_dynamics::DensityBySummationFreeSurface 		update_fluid_density(water_block, { wall_boundary });
 	/** Time step size without considering sound wave speed. */
 	fluid_dynamics::GetAdvectionTimeStepSize 			get_fluid_adevction_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
 	fluid_dynamics::GetAcousticTimeStepSize get_fluid_time_step_size(water_block);
-	/** Pressure relaxation algorithm by using verlet time stepping. */
+	/** Pressure relaxation algorithm by using position verlet time stepping. */
 	fluid_dynamics::PressureRelaxationVerletFreeSurface pressure_relaxation(water_block, { wall_boundary }, &gravity);
 	/**
 	 * @brief 	Methods used for updating data structure.
@@ -204,7 +200,7 @@ int main()
 	WriteObservedFluidPressure	write_recorded_water_pressure(in_output, fluid_observer, { water_block });
 	
 	/**
-	 * @brief Setup goematrics and initial conditions
+	 * @brief Setup goematrics and initial conditions.
 	 */
 	set_all_fluid_particles_at_rest.exec();
 	set_all_solid_particles_at_rest.exec();
@@ -238,6 +234,11 @@ int main()
 	/** statistics for computing CPU time. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
+	tick_count::interval_t interval_computing_time_step;
+	tick_count::interval_t interval_computing_pressure_relaxation;
+	tick_count::interval_t interval_updating_configuration;
+	tick_count time_instance;
+
 	/**
 	 * @brief 	Main loop starts here.
 	 */
@@ -248,11 +249,14 @@ int main()
 		while (integeral_time < D_Time)
 		{
 			/** Acceleration due to viscous force and gravity. */
+			time_instance = tick_count::now();
 			initialize_fluid_acceleration.parallel_exec();
 			Dt = get_fluid_adevction_time_step_size.parallel_exec();
-			update_fluid_desnity.parallel_exec();
+			update_fluid_density.parallel_exec();
+			interval_computing_time_step += tick_count::now() - time_instance;
 
 			/** Dynamics including pressure relaxation. */
+			time_instance = tick_count::now();
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
@@ -263,6 +267,7 @@ int main()
 				GlobalStaticVariables::physical_time_ += dt;
 
 			}
+			interval_computing_pressure_relaxation += tick_count::now() - time_instance;
 
 			if (number_of_iterations % screen_output_interval == 0)
 			{
@@ -276,10 +281,13 @@ int main()
 			number_of_iterations++;
 
 			/** Update cell linked list and configuration. */
+			time_instance = tick_count::now();
 			update_cell_linked_list.parallel_exec();
 			update_particle_configuration.parallel_exec();
 			update_observer_interact_configuration.parallel_exec();
+			interval_updating_configuration += tick_count::now() - time_instance;
 		}
+
 
 		tick_count t2 = tick_count::now();
 		write_water_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
@@ -287,6 +295,7 @@ int main()
 		write_recorded_water_pressure.WriteToFile(GlobalStaticVariables::physical_time_);
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
+
 	}
 	tick_count t4 = tick_count::now();
 
@@ -294,6 +303,12 @@ int main()
 	tt = t4 - t1 - interval;
 	cout << "Total wall time for computation: " << tt.seconds()
 		<< " seconds." << endl;
+	cout << fixed << setprecision(9) << "interval_computing_time_step ="
+		<< interval_computing_time_step.seconds() << "\n";
+	cout << fixed << setprecision(9) << "interval_computing_pressure_relaxation = "
+		<< interval_computing_pressure_relaxation.seconds() << "\n";
+	cout << fixed << setprecision(9) << "interval_updating_configuration = "
+		<< interval_updating_configuration.seconds() << "\n";
 
 	return 0;
 }

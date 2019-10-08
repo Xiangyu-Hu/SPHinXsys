@@ -40,6 +40,8 @@ namespace SPH {
 		/** Vector of particle data. */
 		StdLargeVec<RelaxBodyParticleData> relax_body_data_;	
 
+		IndexVector lists_of_singularity_particles_;
+
 		/** Write particle data in VTU format for Paraview. */
 		virtual void WriteParticlesToVtuFile(ofstream &output_file) override;
 		/** Write particle data in PLT format for Tecplot. */

@@ -70,7 +70,7 @@ namespace SPH
 	struct ReduceLowerBound {
 		Vecd operator () (Vecd x, Vecd y) const {
 			Vecd lower_bound;
-			for (size_t i = 0; i < lower_bound.size(); ++i) 
+			for (int i = 0; i < lower_bound.size(); ++i) 
 				lower_bound[i] = SMIN(x[i], y[i]);
 			return lower_bound;
 		}; };
@@ -130,7 +130,7 @@ namespace SPH
 		/** Constructor */
 		explicit ParticleDynamics(BodyType* body) : Dynamics<ReturnType>(), body_(body), 
 			particles_(dynamic_cast<ParticlesType*>(body->base_particles_->PointToThisObject())),
-			material_(dynamic_cast<MaterialType*>(body->base_material_.PointToThisObject())) {};
+			material_(dynamic_cast<MaterialType*>(body->base_material_->PointToThisObject())) {};
 		virtual ~ParticleDynamics() {};
 	};
 
@@ -209,16 +209,12 @@ namespace SPH
 	class ParticleDynamicsSimple : public ParticleDynamics<void, BodyType, ParticlesType, MaterialType>
 	{
 	protected:
-		size_t number_of_particles_;
-
 		virtual void Update(size_t index_particle_i, Real dt = 0.0) = 0;
 		InnerFunctor functor_update_;
 		public:
 		explicit ParticleDynamicsSimple(BodyType* body)
 			: ParticleDynamics<void, BodyType, ParticlesType, MaterialType>(body), 
-			functor_update_(std::bind(&ParticleDynamicsSimple::Update, this, _1, _2)){
-			number_of_particles_ = body->number_of_particles_;
-		};
+			functor_update_(std::bind(&ParticleDynamicsSimple::Update, this, _1, _2)) {};
 		virtual ~ParticleDynamicsSimple() {};
 
 		virtual void exec(Real dt = 0.0) override;
@@ -234,7 +230,6 @@ namespace SPH
 	{
 	protected:
 		ReduceOperation reduce_operation_;
-		size_t number_of_particles_;
 
 		//inital or refence value
 		ReturnType initial_reference_;
@@ -244,9 +239,7 @@ namespace SPH
 		ReduceFunctor<ReturnType> functor_reduce_function_;
 	public:
 		explicit ParticleDynamicsReduce(BodyType* body) : ParticleDynamics<ReturnType, BodyType, ParticlesType, MaterialType>(body), 
-			functor_reduce_function_(std::bind(&ParticleDynamicsReduce::ReduceFunction, this, _1, _2)) {
-			number_of_particles_ = body->number_of_particles_;
-		};
+			functor_reduce_function_(std::bind(&ParticleDynamicsReduce::ReduceFunction, this, _1, _2)) {};
 		virtual ~ParticleDynamicsReduce() {};
 	
 		virtual ReturnType exec(Real dt = 0.0) override;
@@ -263,16 +256,12 @@ namespace SPH
 	class ParticleDynamicsInner : public ParticleDynamicsWithInnerConfigurations<BodyType, ParticlesType, MaterialType>
 	{
 	protected:
-		size_t number_of_particles_;
-
 		virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) = 0;
 		InnerFunctor functor_inner_interaction_;
 	public:
 		explicit ParticleDynamicsInner(BodyType* body) : 
 			ParticleDynamicsWithInnerConfigurations<BodyType, ParticlesType, MaterialType>(body),
-			functor_inner_interaction_(std::bind(&ParticleDynamicsInner::InnerInteraction, this, _1, _2)) {
-			number_of_particles_ = body->number_of_particles_;
-		};
+			functor_inner_interaction_(std::bind(&ParticleDynamicsInner::InnerInteraction, this, _1, _2)) {};
 		virtual ~ParticleDynamicsInner() {};
 
 		virtual void exec(Real dt = 0.0) override;
