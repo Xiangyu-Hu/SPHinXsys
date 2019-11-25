@@ -177,10 +177,10 @@ public:
 		: SolidBodyPart(solid_body, constrianed_region_name)
 	{
 		//geometry
-		soild_body_part_region_.add_geometry(CreateInsertCylinder(), RegionBooleanOps::add);
-		soild_body_part_region_.add_geometry(CreateAttatchedFlag(), RegionBooleanOps::sub);
+		body_part_region_.add_geometry(CreateInsertCylinder(), RegionBooleanOps::add);
+		body_part_region_.add_geometry(CreateAttatchedFlag(), RegionBooleanOps::sub);
 		//finish the region modeling
-		soild_body_part_region_.done_modeling();
+		body_part_region_.done_modeling();
 
 		//tag the constrained particle
 		TagBodyPartParticles();
@@ -196,9 +196,9 @@ public:
 		: FluidBodyPart(fluid_body, constrianed_region_name)
 	{
 		/** Geomerty definition. */
-		fluid_body_part_region_.add_geometry(CreateInflowBuffer(), RegionBooleanOps::add);
+		body_part_region_.add_geometry(CreateInflowBuffer(), RegionBooleanOps::add);
 		/** Finalize the geometry definition and correspoding opertation. */
-		fluid_body_part_region_.done_modeling();
+		body_part_region_.done_modeling();
 
 		//tag the constrained particle
 		TagBodyPartCells();
@@ -315,16 +315,6 @@ int main()
 	//-------------------------------------------------------------------
 	//methods only used only once
 	//-------------------------------------------------------------------
-	 /** initial condition for fluid body */
-	fluid_dynamics::WeaklyCompressibleFluidInitialCondition set_all_fluid_particles_at_rest(water_block);
-	//obtain the initial number density
-	fluid_dynamics::InitialNumberDensity
-		fluid_initial_number_density(water_block, { wall_boundary, inserted_body });
-
-	/** initial condition for the solid body */
-	solid_dynamics::SolidDynamicsInitialCondition set_all_wall_particles_at_rest(wall_boundary);
-	/** initial condition for the elastic solid bodies */
-	solid_dynamics::ElasticSolidDynamicsInitialCondition set_all_insert_body_particles_at_rest(inserted_body);
 	//initialize normal direction of the wall boundary
 	solid_dynamics::NormalDirectionSummation get_wall_normal(wall_boundary, {});
 	//initialize normal direction of the inserted body
@@ -340,12 +330,10 @@ int main()
 	//-------- common paritcle dynamics ----------------------------------------
 	InitializeOtherAccelerations
 		initialize_fluid_acceleration(water_block);
-	//periodic bounding
-	PeriodicBoundingInXDirection
-		periodic_bounding(water_block);
-	//periodic boundary condition
-	PeriodicConditionInXDirection
-		periodic_condition(water_block);
+	/** Periodic bounding in x direction. */
+	PeriodicBoundingInAxisDirection 	periodic_bounding(water_block, 0);
+	/** Periodic BCs in x direction. */
+	PeriodicConditionInAxisDirection 	periodic_condition(water_block, 0);
 
 	//evaluation of density by summation approach
 	fluid_dynamics::DensityBySummation
@@ -355,8 +343,10 @@ int main()
 	//time step size with considering sound wave speed
 	fluid_dynamics::GetAcousticTimeStepSize		get_fluid_time_step_size(water_block);
 	//pressure relaxation using verlet time stepping
-	fluid_dynamics::PressureRelaxationVerlet
-		pressure_relaxation(water_block, { wall_boundary, inserted_body });
+	fluid_dynamics::PressureRelaxationFirstHalfRiemann
+		pressure_relaxation_first_half(water_block, { wall_boundary, inserted_body });
+	fluid_dynamics::PressureRelaxationSecondHalfRiemann
+		pressure_relaxation_second_half(water_block, { wall_boundary, inserted_body });
 	//computing viscous acceleration
 	fluid_dynamics::ComputingViscousAcceleration
 		viscous_acceleration(water_block, { wall_boundary, inserted_body });
@@ -411,9 +401,6 @@ int main()
 	GlobalStaticVariables::physical_time_ = 0.0;
 
 	/** Pre-simultion*/
-	set_all_fluid_particles_at_rest.exec();
-	set_all_wall_particles_at_rest.exec();
-	set_all_insert_body_particles_at_rest.exec();
 
 	//initial periodic boundary condition
 	//which copies the particle identifies
@@ -426,7 +413,6 @@ int main()
 
 	get_wall_normal.parallel_exec();
 	get_inserted_body_normal.parallel_exec();
-	fluid_initial_number_density.parallel_exec();
 	inserted_body_corrected_configuration_in_strong_form.parallel_exec();
 
 	//-----------------------------------------------------------------------------
@@ -480,10 +466,10 @@ int main()
 				}
 
 				//fluid dynamics
-				pressure_relaxation.parallel_exec(dt);
-
+				pressure_relaxation_first_half.parallel_exec(dt);
 				//FSI for pressure force
 				fluid_pressure_force_on_insrted_body.parallel_exec();
+				pressure_relaxation_second_half.parallel_exec(dt);
 
 				//solid dynamics
 				Real dt_s_sum = 0.0;

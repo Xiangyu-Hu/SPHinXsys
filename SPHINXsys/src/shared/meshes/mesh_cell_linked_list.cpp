@@ -1,3 +1,9 @@
+/**
+ * @file 	mesh_cell_linked_list.cpp
+ * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @version	0.1
+ */
+
 #include "mesh_cell_linked_list.h"
 #include "base_body.h"
 #include "sph_system.h"

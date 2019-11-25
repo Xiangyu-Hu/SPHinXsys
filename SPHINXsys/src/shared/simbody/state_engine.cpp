@@ -4,6 +4,7 @@
  * @author	Chi Zhang and Xiangyu Hu
  * @version	0.1
  */
+
 #include "state_engine.h"
 
 namespace SPH {
@@ -289,7 +290,7 @@ namespace SPH {
                     for (int i = 0; i < num_q_; i++)
                     {
                         std::string attr_name = "QIndx_" + std::to_string(i);
-                        Real q_tmp_ = read_xml->GetRequiredAttributeRealValue(ele_ite_, attr_name);
+                        Real q_tmp_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, attr_name);
                         mobod.setOneQ(state_, QIndex(i), q_tmp_);
                     }
                 }
@@ -300,11 +301,11 @@ namespace SPH {
                     for (int i = 0; i < num_u_; i++)
                     {
                         std::string attr_name = "UIndx_" + std::to_string(i);
-                        Real u_tmp_ = read_xml->GetRequiredAttributeRealValue(ele_ite_, attr_name);
+                        Real u_tmp_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, attr_name);
                         mobod.setOneU(state_, UIndex(i), u_tmp_);
                     }
                 }
-                Vec3d transform_ = read_xml->GetRequiredAttributeVec3dValue(ele_ite_, "Transform");
+                Vec3d transform_ = read_xml->GetRequiredAttributeValue<Vec3d>(ele_ite_, "Transform");
                 mobod.setQToFitTransform(state_, SimTK::Transform(transform_));
 
                 num_mobod++;

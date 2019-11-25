@@ -1,3 +1,9 @@
+/**
+ * @file 	in_output.cpp
+ * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @version	0.1
+ */
+
 #include "in_output.h"
 #include "all_types_of_bodies.h"
 #include "all_meshes.h"
@@ -10,14 +16,20 @@ namespace SPH {
 		: sph_system_(sph_system)
 	{
 		output_folder_ = "./output";
-
 		if (fs::exists(output_folder_) && sph_system.restart_step_ == 0)
 		{
 			fs::remove_all(output_folder_);
 		}
-		fs::create_directory(output_folder_);
+		if (!fs::exists(output_folder_))
+		{
+			fs::create_directory(output_folder_);
+		}
 
 		restart_folder_ = "./restart";
+		if (fs::exists(restart_folder_) && sph_system.restart_step_ == 0)
+		{
+			fs::remove_all(restart_folder_);
+		}
 		if (!fs::exists(restart_folder_))
 		{	
 			fs::create_directory(restart_folder_);
@@ -79,10 +91,10 @@ namespace SPH {
 		}
 	}
 	//===============================================================//
-	WriteToPltIfVelocityOutOfBound
-		::WriteToPltIfVelocityOutOfBound(In_Output& in_output,
+	WriteToVtuIfVelocityOutOfBound
+		::WriteToVtuIfVelocityOutOfBound(In_Output& in_output,
 			SPHBodyVector bodies, Real velocity_bound)
-		: WriteBodyStatesToPlt(in_output, bodies)
+		: WriteBodyStatesToVtu(in_output, bodies), out_of_bound_(false)
 	{
 		for (SPHBody* body : bodies_)
 		{
@@ -90,20 +102,17 @@ namespace SPH {
 		}
 	}
 	//===============================================================//
-	void WriteToPltIfVelocityOutOfBound::WriteToFile(Real time)
+	void WriteToVtuIfVelocityOutOfBound::WriteToFile(Real time)
 	{
-		bool out_of_bound = false;
-
 		for (auto check_body : check_bodies_)
 		{
-			out_of_bound = out_of_bound || check_body->parallel_exec();
+			out_of_bound_ = out_of_bound_ || check_body->parallel_exec();
 		}
 
-		if (out_of_bound) {
-			WriteBodyStatesToPlt::WriteToFile(time);
+		if (out_of_bound_) {
+			WriteBodyStatesToVtu::WriteToFile(time);
 			cout << "\n Velocity is out of bound at physical time " << GlobalStaticVariables::physical_time_
 				 <<"\n The body states have been outputted and the simulation terminates here. \n";
-			exit(0);
 		}
 	}
 	//===============================================================//
@@ -166,7 +175,7 @@ namespace SPH {
 		out_file << "run_time" << "   ";
 		for (size_t i = 0; i != observer->number_of_particles_; ++i)
 		{
-			for (size_t j = 0; j != dimension_; ++j)
+			for (int j = 0; j < dimension_; ++j)
 				out_file << "  " << "velocities_[" << i << "][" << j << "]" << " ";
 		}
 		out_file << "\n";
@@ -181,7 +190,7 @@ namespace SPH {
 		out_file << time << "   ";
 		for (size_t i = 0; i != observer_->number_of_particles_; ++i)
 		{
-			for (size_t j = 0; j != dimension_; ++j)
+			for (int j = 0; j < dimension_; ++j)
 				out_file << "  " << fluid_quantities_[i][j] << " ";
 		}
 		out_file << "\n";
@@ -216,7 +225,7 @@ namespace SPH {
 		out_file << time << "   ";
 		for (size_t i = 0; i != observer_->number_of_particles_; ++i)
 		{
-			for (size_t j = 0; j != dimension_; ++j)
+			for (int j = 0; j < dimension_; ++j)
 				out_file << "  " << elastic_body_quantities_[i][j] << " ";
 		}
 		out_file << "\n";
@@ -253,8 +262,8 @@ namespace SPH {
 		out_file.close();
 	}
 //=================================================================================================//
-	WriteWaterMechanicalEnergy
-		::WriteWaterMechanicalEnergy(In_Output &in_output, FluidBody* water_block, ExternalForce* external_force)
+	WriteTotalMechanicalEnergy
+		::WriteTotalMechanicalEnergy(In_Output &in_output, FluidBody* water_block, ExternalForce* external_force)
 		: WriteBodyStates(in_output, water_block), TotalMechanicalEnergy(water_block, external_force)
 	{
 		filefullpath_ = in_output_.output_folder_ + "/" + water_block->GetBodyName() 
@@ -266,7 +275,7 @@ namespace SPH {
 		out_file.close();
 	};
 	//===============================================================//
-	void WriteWaterMechanicalEnergy::WriteToFile(Real time)
+	void WriteTotalMechanicalEnergy::WriteToFile(Real time)
 	{
 		int Itime = int(time*1.0e4);
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
@@ -299,7 +308,7 @@ namespace SPH {
 		int Itime = int(time*1.0e4);
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << time << "   ";
-		for (size_t i = 0; i != dimension_; ++i)
+		for (int i = 0; i < dimension_; ++i)
 			out_file << total_force[i] << "   ";
 		out_file << "\n";
 		out_file.close();
@@ -316,7 +325,7 @@ namespace SPH {
 			+ "_"+ in_output_.restart_step_ + ".dat";
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << "\"run_time\"" << "   ";
-		for(size_t i=0; i!= dimension_; ++i)
+		for(int i = 0; i < dimension_; ++i)
 		 out_file << "\"total_force["<<i<<"]\"" << "   ";
 		out_file << "\n";
 		out_file.close();
@@ -329,7 +338,7 @@ namespace SPH {
 		int Itime = int(time*1.0e4);
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << time << "   ";
-		for (size_t i = 0; i != dimension_; ++i)
+		for (int i = 0; i < dimension_; ++i)
 			out_file << total_force[i] << "   ";
 		out_file << "\n";
 		out_file.close();

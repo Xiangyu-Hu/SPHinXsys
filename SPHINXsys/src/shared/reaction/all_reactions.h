@@ -4,3 +4,4 @@
  * cell models. 
  */
 #include "physiology_reaction.h"
+#include "chemical_reaction.h"

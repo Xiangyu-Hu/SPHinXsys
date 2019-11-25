@@ -18,9 +18,10 @@ Real L = 1.0;
 Real H = 1.0;
 /** Particle spacing and boudary dummy particles. */
 Real particle_spacing_ref = H / 50.0;
-Real BW = 4.0 * particle_spacing_ref;
+Real BW = 10.0 * particle_spacing_ref;
 /** Material properties. */
-Real rho_0 = 1.0; 	
+Real rho_0 = 1.0; 
+Real poisson = 0.49;	
 Real a_0[4] = {1.0, 0.0, 0.0, 0.0};
 Real b_0[4] = {1.0, 0.0, 0.0, 0.0};
 Vec2d d_0(1.0, 0.0);
@@ -31,15 +32,15 @@ Real a = 0.15;
 Real mu_1 = 0.2;
 Real mu_2 = 0.3;
 Real epsilon = 0.04;
-
+Real k_a = 0.0;
 std::vector<Point> CreatShape()
 {
 	std::vector<Point> shape;
-	shape.push_back(Point(0.0, 0.0));
-	shape.push_back(Point(0.0,  H));
-	shape.push_back(Point( L,  H));
-	shape.push_back(Point( L, 0.0));
-	shape.push_back(Point(0.0, 0.0));
+	shape.push_back(Point(0.0 - BW, 0.0 - BW));
+	shape.push_back(Point(0.0 - BW,  H + BW));
+	shape.push_back(Point( L + BW ,  H + BW));
+	shape.push_back(Point( L + BW , 0.0 - BW ));
+	shape.push_back(Point(0.0- BW , 0.0 - BW));
 	return shape;
 }
 /** 
@@ -70,6 +71,33 @@ public:
 	}
 };
  /**
+ * Setup local properties of myocardium
+ */
+class MyocardiumMuscle
+ 	: public Muscle
+{
+ public:
+ 	MyocardiumMuscle(string myocardium_name,SPHBody *body, Real a0[4], Real b0[4], Vecd d0, 
+		Real rho0, Real nu, Real eta0)
+		: Muscle(myocardium_name, body, a0, b0, d0, rho0, nu, eta0){}
+
+ 	void SetupLocalProperties(SPHBody *body) override
+ 	{
+ 		Vec2d e_1(1.0,0.0);
+ 		Vec2d e_2(0.0,1.0);
+ 		for(size_t i = 0; i < body->number_of_particles_; i++)
+ 		{
+ 			f0_.push_back(e_1);
+ 			s0_.push_back(e_2);
+ 			f0f0_.push_back(SimTK::outer(e_1, e_1));
+ 			s0s0_.push_back(SimTK::outer(e_2, e_2));
+ 			f0s0_.push_back(SimTK::outer(e_1, e_2));
+			Matd diff_i = d_0_[0] * Matd(1.0) + d_0_[1] * SimTK::outer(f0_[i], f0_[i]);
+			diff_cd_0.push_back(inverseCholeskyDecomposition(diff_i));
+ 		}
+ 	}
+};
+ /**
  * application dependent initial condition 
  */
 class DepolarizationInitialCondition
@@ -81,9 +109,6 @@ public:
 protected:
 	void Update(size_t index_particle_i, Real dt) override 
 	{
-		/** first set all particle at rest*/
-		electro_physiology::ElectroPhysiologyInitialCondition::Update(index_particle_i, dt);
-
 		BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
         MuscleParticleData &muscle_particle_data_i = particles_->muscle_body_data_[index_particle_i];
 
@@ -107,8 +132,8 @@ int main()
 	 * Configuration of materials, crate particle container and muscle body. 
 	 */
 	MuscleBody *muscle_body  =  new MuscleBody(system, "MuscleBody", 0, ParticlesGeneratorOps::lattice);
-	Muscle 						material("Muscle", muscle_body, a_0, b_0,d_0, rho_0, 1.0);
-	ElectrophysiologyReaction 	reaction_model("TwoVariableModel",muscle_body, c_m, k, a, mu_1, mu_2, epsilon);
+	MyocardiumMuscle 			material("Muscle", muscle_body, a_0, b_0,d_0, rho_0, poisson, 1.0);
+	AlievPanfilowModel 			reaction_model("TwoVariableModel",muscle_body, c_m, k, a, mu_1, mu_2, epsilon, k_a);
 	MuscleParticles 			particles(muscle_body);
 	/**
 	 * Particle and body creation of fluid observer.
@@ -159,6 +184,7 @@ int main()
 	 * Pre-simultion. 
 	 */
 	initialization.exec();
+	material.SetupLocalProperties(muscle_body);
 	correct_configuration.parallel_exec();
 	/** 
 	 * Output global basic parameters. 
@@ -209,7 +235,7 @@ int main()
 		}
 
 		tick_count t2 = tick_count::now();
-		write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		//write_states.WriteToFile(GlobalStaticVariables::physical_time_);
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

@@ -22,7 +22,7 @@ namespace SPH {
 
 	/**
 	 * @class Mesh
-	 * @brief Abstract base class for defining basic mesh prpoerties.
+	 * @brief Abstract base class for defining basic mesh properties.
 	 * The mesh is proposed for several functions.
 	 * First, it is used in cell linked list for neighbor search.
 	 * Second, it is used for background maps such as level sets.
@@ -71,7 +71,6 @@ namespace SPH {
 		virtual void WriteMeshToVtuFile(ofstream &output_file) = 0;
 		/** output mesh data for Tecplot visuallization */
 		virtual void WriteMeshToPltFile(ofstream &output_file) = 0;
-
 	};
 
 	/**
@@ -85,7 +84,7 @@ namespace SPH {
 	{
 	public:
 		/** Empty constructor */
-		BackgroundData() {};
+		BackgroundData() : phi_(0), n_(0), kappa_(1.0) {};
 		BackgroundData(Real level_set, Vecd normal_direction);
 		virtual ~BackgroundData() {};
 
@@ -100,7 +99,7 @@ namespace SPH {
 
 	/**
 	 * @class MeshBackground
-	 * @brief Background mesh for inital particle relaxation.
+	 * @brief Background mesh gives a level set field.
 	 */
 	class MeshBackground : public Mesh
 	{

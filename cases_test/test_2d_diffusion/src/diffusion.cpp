@@ -62,9 +62,6 @@ public:
 protected:
 	void Update(size_t index_particle_i, Real dt) override 
 	{
-		/** first set all particle at rest*/
-		electro_physiology::ElectroPhysiologyInitialCondition::Update(index_particle_i, dt);
-
 		BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 		MuscleParticleData &muscle_particle_data_i = particles_->muscle_body_data_[index_particle_i];
 
@@ -79,6 +76,33 @@ protected:
 		}
 	};
 };
+ /**
+ * Setup local properties of myocardium
+ */
+class MyocardiumMuscle
+ 	: public Muscle
+{
+ public:
+ 	MyocardiumMuscle(string myocardium_name,SPHBody *body, Real a0[4], Real b0[4], Vecd d0, 
+		Real rho0, Real nu, Real eta0)
+		: Muscle(myocardium_name, body, a0, b0, d0, rho0, nu, eta0){}
+
+ 	void SetupLocalProperties(SPHBody *body) override
+ 	{
+ 		Vec2d e_1(0.0,1.0);
+ 		Vec2d e_2(1.0,0.0);
+ 		for(size_t i = 0; i < body->number_of_particles_; i++)
+ 		{
+ 			f0_.push_back(e_1);
+ 			s0_.push_back(e_2);
+ 			f0f0_.push_back(SimTK::outer(e_1, e_1));
+ 			s0s0_.push_back(SimTK::outer(e_2, e_2));
+ 			f0s0_.push_back(SimTK::outer(e_1, e_2));
+			Matd diff_i = d_0_[0] * Matd(1.0) + d_0_[1] * SimTK::outer(f0_[i], f0_[i]);
+			diff_cd_0.push_back(inverseCholeskyDecomposition(diff_i));
+ 		}
+ 	}
+};
 /** The main program. */
 int main()
 {
@@ -87,7 +111,7 @@ int main()
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Configuration of materials, crate particle container and diffusion body. */
 	DiffusionBody *diffusion_body  =  new DiffusionBody(system, "DiffusionBody", 0, ParticlesGeneratorOps::lattice);
-	Muscle 						material("Muscle", diffusion_body, a_0, b_0,d_0, rho_0, 1.0);
+	MyocardiumMuscle 			material("Muscle", diffusion_body, a_0, b_0,d_0, rho_0, 1.0, 1.0);
 	MuscleParticles 			particles(diffusion_body);
 	/** Set body contact map. */
 	SPHBodyTopology body_topology = { { diffusion_body, {  } }};
@@ -102,11 +126,13 @@ int main()
 	/** Case setup */
 	DiffusionInitialCondition setup_diffusion_initial_condition(diffusion_body);
 	/** Corrected strong configuration for diffusion body. */	
-	electro_physiology::CorrectConfiguration 				correct_configuration(diffusion_body);
+	electro_physiology::CorrectConfiguration 			correct_configuration(diffusion_body);
 	/** Time step size caclutation. */
-	electro_physiology::getDiffusionTimeStepSize 			get_time_step_size(diffusion_body);
+	electro_physiology::getDiffusionTimeStepSize 		get_time_step_size(diffusion_body);
 	/** Diffusion process for diffusion body. */
-	electro_physiology::DiffusionRelaxation 				diffusion_relaxation(diffusion_body);
+	electro_physiology::DiffusionRelaxation 			diffusion_relaxation(diffusion_body);
+	/** Periodic BCs. */
+	PeriodicConditionInAxisDirection 					periodic_condition_y(diffusion_body, 1);
 	/**
 	 * @brief simple input and outputs.
 	 */
@@ -114,6 +140,9 @@ int main()
 	WriteBodyStatesToPlt 				write_states(in_output, system.real_bodies_);
 	/** Pre-simultion*/
 	setup_diffusion_initial_condition.exec();
+	material.SetupLocalProperties(diffusion_body);
+	periodic_condition_y.parallel_exec();
+	diffusion_body->BuildInnerConfiguration();
 	correct_configuration.parallel_exec();
 	/** Output global basic parameters. */
 	write_states.WriteToFile(GlobalStaticVariables::physical_time_);

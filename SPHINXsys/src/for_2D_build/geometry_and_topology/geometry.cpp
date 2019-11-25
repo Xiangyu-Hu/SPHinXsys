@@ -1,3 +1,9 @@
+/**
+ * @file 	geometry.cpp
+ * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @version	0.1
+ */
+
 #include "geometry.h"
 
 using namespace boost::geometry;

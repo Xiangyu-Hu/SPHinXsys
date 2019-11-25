@@ -69,7 +69,7 @@ namespace SPH {
 	void MeshCellLinkedList::UpdateInnerConfiguration(SPHBody &body)
 	{
 		StdLargeVec<BaseParticleData> &base_particle_data = body.base_particles_->base_particle_data_;
-		NeighborList current_inner_configuration = body.current_inner_configuration_;
+		StdVec<NeighborList> &current_inner_configuration = body.current_inner_configuration_;
 
 		parallel_for(blocked_range<size_t>(0, body.number_of_particles_),
 			[&](const blocked_range<size_t>& r) {
@@ -117,7 +117,7 @@ namespace SPH {
 		::BuildReferenceInnerConfiguration(SPHBody &body)
 	{
 		StdLargeVec<BaseParticleData> &base_particle_data = body.base_particles_->base_particle_data_;
-		ReferenceNeighborList reference_inner_configuration = body.reference_inner_configuration_;
+		StdVec<ReferenceNeighborList> &reference_inner_configuration = body.reference_inner_configuration_;
 
 		parallel_for(blocked_range<size_t>(0, body.number_of_particles_),
 			[&](const blocked_range<size_t>& r) {
@@ -164,8 +164,8 @@ namespace SPH {
 	void MeshCellLinkedList::UpdateContactConfiguration(SPHBody &body)
 	{
 		StdLargeVec<BaseParticleData> &base_particle_data = body.base_particles_->base_particle_data_;
-		ContactNeighborList  current_contact_configuration = body.current_contact_configuration_;
-		ContactParticleList indexes_contact_particles = body.indexes_contact_particles_;
+		StdVec<ContactNeighborList>  &current_contact_configuration = body.current_contact_configuration_;
+		StdVec<ContactParticleList> &indexes_contact_particles = body.indexes_contact_particles_;
 		StdVec<SPHBody*> contact_bodies = body.contact_map_.second;
 
 		//clear previous surface particles
@@ -235,8 +235,8 @@ namespace SPH {
 		::BuildReferenceContactConfiguration(SPHBody &body)
 	{
 		StdLargeVec<BaseParticleData> &base_particle_data = body.base_particles_->base_particle_data_;
-		ReferenceContactNeighborList  reference_contact_configuration = body.reference_contact_configuration_;
-		ContactParticleList indexes_contact_particles = body.indexes_contact_particles_;
+		StdVec<ReferenceContactNeighborList>  &reference_contact_configuration = body.reference_contact_configuration_;
+		StdVec<ContactParticleList> &indexes_contact_particles = body.indexes_contact_particles_;
 		StdVec<SPHBody*> contact_bodies = body.contact_map_.second;
 
 		//clear previous surface particles
@@ -306,8 +306,8 @@ namespace SPH {
 		SPHBodyVector interacting_bodies)
 	{
 		StdLargeVec<BaseParticleData> &base_particle_data = body.base_particles_->base_particle_data_;
-		ContactNeighborList  current_contact_configuration = body.current_contact_configuration_;
-		ContactParticleList indexes_contact_particles = body.indexes_contact_particles_;
+		StdVec<ContactNeighborList>  &current_contact_configuration = body.current_contact_configuration_;
+		StdVec<ContactParticleList> &indexes_contact_particles = body.indexes_contact_particles_;
 		StdVec<SPHBody*> contact_bodies = body.contact_map_.second;
 		IndexVector contact_configuration_index(interacting_bodies.size());
 

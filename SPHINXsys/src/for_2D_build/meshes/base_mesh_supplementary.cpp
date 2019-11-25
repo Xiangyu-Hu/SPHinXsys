@@ -1,3 +1,9 @@
+/**
+ * @file 	base_mesh_supplementary.cpp
+ * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @version	0.1
+ */
+
 #include "base_mesh.h"
 #include "array_allocation.h"
 #include "sph_system.h"

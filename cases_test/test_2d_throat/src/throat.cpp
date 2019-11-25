@@ -14,10 +14,11 @@ Real BW = particle_spacing_ref * 4.0; //boundary width
 
 //for material properties of the fluid
 Real rho0_f = 1.0;
-Real U_f = 1.0;
-Real c_f = 10.0*U_f;
-Real Re = 10.0;
-Real mu_f = rho0_f * U_f * (2.0 * DT) / Re;
+Real gravity_g = 1.0;	/**< Gravity force of fluid. */
+Real Re = 1.0;			/**< Reynolds number*/
+Real mu_f = sqrt(0.25*rho0_f * powern(0.5*DT, 3)* gravity_g / Re);
+Real U_f = 0.25*powern(0.5 * DT, 2)* gravity_g / mu_f;
+Real c_f = SMAX(10.0*U_f, 10.0*mu_f/ rho0_f/ particle_spacing_ref);
 Real k_f = 0.0;
 Real mu_p_f = 0.6*mu_f;
 Real lambda_f = 10.0;
@@ -113,7 +114,7 @@ int main()
 		Vec2d(0.5*DL + BW, 0.5*DH + BW), particle_spacing_ref);
 
 	//define external force
-	Gravity gravity(Vecd(1.0, 0.0));
+	Gravity gravity(Vecd(gravity_g, 0.0));
 
 	
 	//the water block
@@ -147,15 +148,6 @@ int main()
 	//-------------------------------------------------------------------
 	//methods only used only once
 	//-------------------------------------------------------------------
-	/** initial condition */
-	fluid_dynamics::Oldroyd_B_FluidInitialCondition set_all_fluid_particles_at_rest(fluid_block);
-	//obtain the initial number density
-	fluid_dynamics::InitialNumberDensity
-		fluid_initial_number_density(fluid_block, {wall_boundary});
-
-
-	/** initial condition for the solid body */
-	solid_dynamics::SolidDynamicsInitialCondition set_all_wall_particles_at_rest(wall_boundary);
 	//initialize normal direction of the wall boundary
 	solid_dynamics::NormalDirectionSummation get_wall_normal(wall_boundary, {});
 
@@ -163,12 +155,11 @@ int main()
 	//methods used for time stepping
 	//-------------------------------------------------------------------
 
-	//periodic bounding
-	PeriodicBoundingInXDirection
-		periodic_bounding(fluid_block);
-	//periodic boundary condition
-	PeriodicConditionInXDirection
-		periodic_condition(fluid_block);
+	/** Periodic bounding in x direction. */
+	PeriodicBoundingInAxisDirection 	periodic_bounding(fluid_block, 0);
+	/** Periodic BCs in x direction. */
+	PeriodicConditionInAxisDirection 	periodic_condition(fluid_block, 0);
+
 	
 	//evaluation of density by summation approach
 	fluid_dynamics::DensityBySummation
@@ -178,8 +169,10 @@ int main()
 	//time step size with considering sound wave speed
 	fluid_dynamics::GetAcousticTimeStepSize		get_fluid_time_step_size(fluid_block);
 	//pressure relaxation using verlet time stepping
-	fluid_dynamics::VerletOldroyd_B_Fluid
-		pressure_relaxation(fluid_block, { wall_boundary}, &gravity);
+	fluid_dynamics::PressureRelaxationFirstHalfOldroyd_B
+		pressure_relaxation_first_half(fluid_block, { wall_boundary});
+	fluid_dynamics::PressureRelaxationSecondHalfOldroyd_B
+		pressure_relaxation_second_half(fluid_block, { wall_boundary });
 
 	//-------- common paritcle dynamics ----------------------------------------
 	InitializeOtherAccelerations
@@ -216,10 +209,6 @@ int main()
 	//starting time zero
 	GlobalStaticVariables::physical_time_ = 0.0;
 	
-	/** apply initial condition */
-	set_all_fluid_particles_at_rest.exec();
-	set_all_wall_particles_at_rest.exec();
-
 	//initial periodic boundary condition
 	//which copies the particle identifies
 	//as extra cell linked list form 
@@ -232,12 +221,12 @@ int main()
 
 	//prepare quantities will be used once only
 	get_wall_normal.parallel_exec();
-	fluid_initial_number_density.parallel_exec();
 
 	//initial output
 	write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
 
-	int ite = 0;
+	int number_of_iterations = 0;
+	int screen_output_interval = 100;
 	Real End_Time = 200.0*5.0;
 	//time step size for oupt file
 	Real D_Time = End_Time/200.0/5.0;
@@ -263,24 +252,25 @@ int main()
 
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt) {
-
-				if (ite % 50 == 0) {
-					cout << "N=" << ite << " Time: "
-						<< GlobalStaticVariables::physical_time_ << "	dt: "
-						<< dt << "\n";
-				}
-
 				//fluid dynamics
-				pressure_relaxation.parallel_exec(dt);
+				pressure_relaxation_first_half.parallel_exec(dt);
+				pressure_relaxation_second_half.parallel_exec(dt);
 
-				ite++;
 				dt = get_fluid_time_step_size.parallel_exec();
+				if ((relaxation_time + dt) >= Dt) dt = Dt - relaxation_time;
 				relaxation_time += dt;
 				integeral_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
-
 			}
-			
+
+			if (number_of_iterations % screen_output_interval == 0)
+			{
+				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+					<< GlobalStaticVariables::physical_time_
+					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
+			}
+			number_of_iterations++;
+
 			//water block confifuration and periodic constion
 			periodic_bounding.parallel_exec();
 			update_water_block_cell_linked_list.parallel_exec();

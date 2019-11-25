@@ -44,7 +44,7 @@ namespace SPH {
 	}
 	//===========================================================//
 	RelaxBodySurface::RelaxBodySurface(RelaxBody *relax_body)
-		: LagrangianBodyPart(relax_body, "Surface"), relax_body_(relax_body)
+		: BodyPartByParticle(relax_body, "Surface"), relax_body_(relax_body)
 	{
 		TagBodyPartParticles();
 	}

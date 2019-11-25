@@ -1,8 +1,5 @@
 #include "fluid_body.h"
 #include "mesh_cell_linked_list.h"
-#include "weakly_compressible_fluid.h"
-#include "sph_system.h"
-
 
 namespace SPH 
 {
@@ -24,7 +21,7 @@ namespace SPH
 							{
 								Vecd cell_position = mesh_cell_linked_list
 									->CellPositionFromIndexes(Vecu(l, m, n));
-								if (fluid_body_part_region_.contain(cell_position))
+								if (body_part_region_.contain(cell_position))
 									is_contained = true;
 							}
 					if (is_contained == true) body_part_cells_.push_back(Vecu(i, j, k));

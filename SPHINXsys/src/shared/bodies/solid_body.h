@@ -8,17 +8,14 @@
 #pragma once
 
 #include "base_body.h"
-#include <fstream>
 
 using namespace std;
+
 namespace SPH {
 	/**
 	 * @brief Preclaimed class.
 	 */
 	class SPHSystem;
-	class Solid;
-	class SolidParticles;
-
 	/**
 	 * @class SolidBody
 	 * @brief Declaration of solidbody which is used for Solid BCs and derived from RealBody.
@@ -44,14 +41,11 @@ namespace SPH {
 	 * @brief A auxillariy class for SoildBody to
 	 * indicate a part of the body moving together with particles.
 	 */
-	class SolidBodyPart : public LagrangianBodyPart
+	class SolidBodyPart : public BodyPartByParticle
 	{
 	protected:
 		SolidBody *solid_body_;
-		/** The goematric region to indicate the body part. */
-		Region soild_body_part_region_;
 
-		virtual void TagBodyPartParticles() override;
 	public:
 		SolidBodyPart(SolidBody *solid_body, string soild_body_part_name);
 		virtual~SolidBodyPart() {};

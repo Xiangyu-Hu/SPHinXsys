@@ -1,3 +1,9 @@
+/**
+ * @file 	small_vectors.cpp
+ * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @version	0.1
+ */
+
 #include "small_vectors.h"
 //=================================================================================================//
 namespace SPH {
@@ -109,9 +115,9 @@ namespace SPH {
 	Mat2d getAverageValue(Mat2d &A, Mat2d &B)
 	{
 		Mat2d C(1.0);
-		for(size_t i = 0; i < 2; i++)
+		for(int i = 0; i < 2; i++)
 		{
-			for(size_t j = 0; j < 2; j++)
+			for(int j = 0; j < 2; j++)
 			{
 				C(i,j) = 2.0 * A(i,j) * B(i,j) / (A(i,j) + B(i,j) + 1.0e-15);
 			}
@@ -122,9 +128,9 @@ namespace SPH {
 	Mat3d getAverageValue(Mat3d &A, Mat3d &B)
 	{
 		Mat3d C(1.0);
-		for(size_t i = 0; i < 3; i++)
+		for(int i = 0; i < 3; i++)
 		{
-			for(size_t j = 0; j < 3; j++)
+			for(int j = 0; j < 3; j++)
 			{
 				C(i,j) = 2.0 * A(i,j) * B(i,j) / (A(i,j) + B(i,j) + 1.0e-15);
 			}
@@ -182,7 +188,8 @@ namespace SPH {
             	}
         	}
     	}
-		return GeneralizedInverse(lower); 
+		Mat3d inverse_lower = getInverse(lower);
+		return inverse_lower;
 	}
 //=================================================================================================//
 }

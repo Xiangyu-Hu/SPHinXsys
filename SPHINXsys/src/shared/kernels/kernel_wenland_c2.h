@@ -20,34 +20,22 @@ namespace SPH
 	class KernelWendlandC2 : public Kernel
 	{
 	public:
-
 		/** constructor to initialize the data members 
 		(auxiliary factors for kernel calculation) */
 		KernelWendlandC2(Real h);
 
 		/** Calculates the kernel value for 
 		the given distance of two particles */
-		virtual Real W(const Real& r_ij) const override;
-		virtual Real W(const Vec2d& r_ij) const override;
-		virtual Real W(const Vec3d& r_ij) const override;
+		virtual Real W_1D(const Real q) const override;
+		virtual Real W_2D(const Real q) const override;
+		virtual Real W_3D(const Real q) const override;
 
-		/** calculate derivative of W */
-		virtual Real dW(const Real& r_ij) const override;
-		virtual Real dW(const Vec2d& r_ij) const override;
-		virtual Real dW(const Vec3d& r_ij) const override;
+		virtual Real dW_1D(const Real q) const override;
+		virtual Real dW_2D(const Real q) const override;
+		virtual Real dW_3D(const Real q) const override;
 
-		//---------------------------------------------------------------------
-		//for variable smoothing lenght
-		//---------------------------------------------------------------------
-		/** Calculates the kernel value for 
-		the given distance of two particles */
-		virtual Real W(Real rt_h, const Real& r_ij) const override;
-		virtual Real W(Real rt_h, const Vec2d& r_ij) const override;
-		virtual Real W(Real rt_h, const Vec3d& r_ij) const override;
-
-		/** calculate derivative of W */
-		virtual Real dW(Real rt_h, const Real& r_ij) const override;
-		virtual Real dW(Real rt_h, const Vec2d& r_ij) const override;
-		virtual Real dW(Real rt_h, const Vec3d& r_ij) const override;
+		virtual Real d2W_1D(const Real q) const override;
+		virtual Real d2W_2D(const Real q) const override;
+		virtual Real d2W_3D(const Real q) const override;
 	};
 }

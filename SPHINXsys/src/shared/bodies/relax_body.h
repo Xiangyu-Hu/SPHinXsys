@@ -45,7 +45,7 @@ namespace SPH {
 	 * @brief A auxillariy class for RelaxBody to
 	 * indicate the surface particles
 	 */
-	class RelaxBodySurface : public LagrangianBodyPart
+	class RelaxBodySurface : public BodyPartByParticle
 	{
 	protected:
 		RelaxBody *relax_body_;

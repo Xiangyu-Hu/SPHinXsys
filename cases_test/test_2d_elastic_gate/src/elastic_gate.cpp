@@ -54,7 +54,7 @@ Vec2d GateP_rb(DL - Dam_L, 0.0); 									/**< Right bottom. */
  * @brief Material properties of the fluid.
  */
 Real rho0_f = 1.0;							/**< Reference density of fluid. */
-Real gravity_g = 9.8e-3; 					/**< value of gravity. */
+Real gravity_g = 9.8e-3; 					/**< Value of gravity. */
 Real U_f = 1.0;								/**< Characteristic velocity. */
 Real c_f = 20.0*sqrt(140.0*gravity_g); 		/**< Reference sound speed. */
 Real mu_f = 0.0;							/**< Dynamics viscosity. */
@@ -191,12 +191,15 @@ int main()
 	SPHSystem system(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW), particle_spacing_ref);
 	/** Define the external force. */
 	Gravity gravity(Vecd(0.0, -gravity_g));
+	/** Set the starting time to zero. */
+	GlobalStaticVariables::physical_time_ = 0.0;
 	/**
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
 	WaterBlock *water_block 
 		= new WaterBlock(system, "WaterBody", 0, ParticlesGeneratorOps::lattice);
 	WeaklyCompressibleFluid 	fluid("Water", water_block, rho0_f, c_f, mu_f, k_f);
+
 	FluidParticles 	fluid_particles(water_block);
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
@@ -217,6 +220,9 @@ int main()
 	Gate *gate = new Gate(system, "Gate", 1, ParticlesGeneratorOps::lattice);
 	ElasticSolid 	gate_material("ElasticSolid", gate, rho0_s, Youngs_modulus, poisson);
 	ElasticSolidParticles 	gate_particles(gate);
+	/** offset particle position */
+	gate_particles.OffsetInitialParticlePosition(offset);
+	
 	/**
 	 * @brief 	Particle and body creation of gate observer.
 	 */
@@ -242,17 +248,6 @@ int main()
 	 /**
 	  * @brief 	Methods used only once.
 	  */
-	  /** initial condition for fluid body */
-	fluid_dynamics::WeaklyCompressibleFluidInitialCondition set_all_fluid_particles_at_rest(water_block);
-	/** obtain the initial number density of fluid. */
-	fluid_dynamics::InitialNumberDensity 		fluid_initial_number_density(water_block,
-		{ wall_boundary,  gate_base, gate });
-
-	/** initial condition for the solid body */
-	solid_dynamics::SolidDynamicsInitialCondition set_all_wall_particles_at_rest(wall_boundary);
-	/** initial condition for the elastic solid bodies */
-	solid_dynamics::ElasticSolidDynamicsInitialCondition set_all_gate_base_particles_at_rest(gate_base);
-	solid_dynamics::ElasticSolidDynamicsInitialCondition set_all_gate_particles_at_rest(gate);
 	/** Initialize normal direction of the wall boundary. */
 	solid_dynamics::NormalDirectionSummation 	get_wall_normal(wall_boundary, {});
 	/** Initialize normal direction of the gate base. */
@@ -279,13 +274,15 @@ int main()
 	/** Compute time step size with considering sound wave speed. */
 	fluid_dynamics::GetAcousticTimeStepSize get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
-	fluid_dynamics::PressureRelaxationVerletFreeSurface pressure_relaxation(water_block,
-		{ wall_boundary,  gate_base, gate }, &gravity);
+	fluid_dynamics::PressureRelaxationFirstHalfRiemann 
+		pressure_relaxation_first_half(water_block,	{ wall_boundary,  gate_base, gate });
+	fluid_dynamics::PressureRelaxationSecondHalfRiemann 
+		pressure_relaxation_second_half(water_block, { wall_boundary,  gate_base, gate });
 	/**
 	 * @brief Algorithms of FSI.
 	 */
 	 /** Compute the force exerted on elastic gate due to fluid pressure. */
-	solid_dynamics::FluidPressureForceOnSolid 	fluid_pressure_force_on_gate(gate, { water_block }, &gravity);
+	solid_dynamics::FluidPressureForceOnSolid 	fluid_pressure_force_on_gate(gate, { water_block });
 	/**
 	 * @brief Algorithms of Elastic dynamics.
 	 */
@@ -325,34 +322,25 @@ int main()
 	/**
 	 * @brief The time stepping starts here.
 	 */
-	 /** Set the starting time to zero. */
-	GlobalStaticVariables::physical_time_ = 0.0;
 	/**
 	 * @brief Prepare quantities will be used once only and initial condition.
 	 */
-	set_all_fluid_particles_at_rest.exec();
-	set_all_wall_particles_at_rest.exec();
-	set_all_gate_base_particles_at_rest.exec();
-	set_all_gate_particles_at_rest.exec();
-
 	get_wall_normal.parallel_exec();
 	get_gate_base_normal.parallel_exec();
 	get_gate_normal.parallel_exec();
-	fluid_initial_number_density.parallel_exec();
 	gate_corrected_configuration_in_strong_form.parallel_exec();
 	gate_base_corrected_configuration_in_strong_form.parallel_exec();
-	/**
-	 * @brief Initial output.
-	 */
+
 	write_real_body_states_to_plt.WriteToFile(GlobalStaticVariables::physical_time_);
 	write_beam_tip_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
 
-	int ite = 0;
+	int number_of_iterations = 0;
+	int screen_output_interval = 100;
 	Real End_Time = 400.0;			/**< End time. */
 	Real D_Time = End_Time / 200.0;	/**< time stamps for output. */
 	Real Dt = 0.0;					/**< Default advection time step sizes. */
 	Real dt = 0.0; 					/**< Default accoustic time step sizes. */
-	/** statistics for computing CPU time. */
+	Real dt_s = 0.0;				/**< Default acoustic time step sizes for solid. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
 
@@ -374,41 +362,37 @@ int main()
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				if (ite % 100 == 0) {
-					cout << "N=" << ite << " Time: "
-						<< GlobalStaticVariables::physical_time_ << "	dt: "
-						<< dt << "\n";
-				}
 				/** Fluid relaxation and force computaton. */
-				pressure_relaxation.parallel_exec(dt);
+				pressure_relaxation_first_half.parallel_exec(dt);
 				fluid_pressure_force_on_gate.parallel_exec();
+				pressure_relaxation_second_half.parallel_exec(dt);
 				/** Solid dynamics time stepping. */
 				Real dt_s_sum = 0.0;
 				gate_initialize_displacement.parallel_exec();
-				//if(GlobalStaticVariables::physical_time_ >= 100.0){
 				while (dt_s_sum < dt)
 				{
-					Real dt_s = gate_computing_time_step_size.parallel_exec();
+					dt_s = gate_computing_time_step_size.parallel_exec();
 					if (dt - dt_s_sum < dt_s) dt_s = dt - dt_s_sum;
-					if (ite % 100 == 0) {
-						cout << "N=" << ite << " Time: "
-							<< GlobalStaticVariables::physical_time_ << "	dt_s: "
-							<< dt_s << "\n";
-					}
 					gate_base_stress_update_first_half.parallel_exec(dt_s);
 					gate_stress_relaxation.parallel_exec(dt_s);
 					gate_base_stress_update_second_half.exec(dt_s);
 					dt_s_sum += dt_s;
 				}
-				//}
 				gate_average_velocity.parallel_exec(dt);
-
-				ite++;
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integeral_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
+
+			if (number_of_iterations % screen_output_interval == 0)
+			{
+				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+					<< GlobalStaticVariables::physical_time_
+					<< "	Dt = " << Dt << "	dt = " << dt << "	dt_s = " << dt_s << "\n";
+			}
+			number_of_iterations++;
+
 			/** Update cell linked list and configuration. */
 			update_water_block_cell_linked_list.parallel_exec();
 			update_water_block_configuration.parallel_exec();

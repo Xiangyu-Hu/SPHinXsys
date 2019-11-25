@@ -1,4 +1,11 @@
+/**
+ * @file 	base_mesh.cpp
+ * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @version	0.1
+ */
+
 #include "base_mesh.h"
+
 namespace SPH {
 
 	Mesh::Mesh(Vecd lower_bound, Vecd upper_bound, Real grid_spacing, size_t buffer_size)
@@ -15,7 +22,7 @@ namespace SPH {
 	{
 		Vecu number_of_grid_points;
 		Vecd zero(0);
-		for (size_t i = 0; i < zero.size(); ++i) {
+		for (int i = 0; i < zero.size(); ++i) {
 			number_of_grid_points[i] = static_cast<int>(ceil((mesh_upper_bound_[i]
 				- mesh_lower_bound_[i]) / grid_spacing_));
 		}

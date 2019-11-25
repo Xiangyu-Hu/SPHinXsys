@@ -12,7 +12,7 @@
 using namespace SPH;
 
 //for geometry
-Real particle_spacing_ref = 0.05; //particle spacing
+Real particle_spacing_ref = 0.0125; //particle spacing
 Real BW = particle_spacing_ref * 4; //boundary width
 
 Real DL = 5.366; 						//tank length
@@ -98,6 +98,10 @@ int main()
 	//build up context -- a SPHSystem
 	SPHSystem system(Vecd(-BW, -BW, -BW), 
 		Vecd(DL + BW, DH + BW, DW + BW), particle_spacing_ref);
+	/** Set the starting time. */
+	GlobalStaticVariables::physical_time_ = 0.0;
+	/** Tag for computation from restart files. 0: not from restart files. */
+	system.restart_step_ = 0;
 
 	//the water block
 	WaterBlock *water_block 
@@ -140,16 +144,8 @@ int main()
 	//methods only used only once
 	//-------------------------------------------------------------------
 	//initialize normal direction of the wall boundary
-	  /** initial condition for the solid body */
-	solid_dynamics::SolidDynamicsInitialCondition set_all_solid_particles_at_rest(wall_boundary);
 	solid_dynamics::NormalDirectionSummation
 		get_wall_normal(wall_boundary, {});
-	/** initial condition for fluid body */
-	fluid_dynamics::WeaklyCompressibleFluidInitialCondition set_all_fluid_particles_at_rest(water_block);
-	//obtain the initial number density
-	fluid_dynamics::InitialNumberDensity 
-		fluid_initial_number_density(water_block, { wall_boundary });
-
 	//-------- common paritcle dynamics ----------------------------------------
 	InitializeOtherAccelerations
 		initialize_fluid_acceleration(water_block, &gravity);
@@ -164,8 +160,10 @@ int main()
 	fluid_dynamics::GetAcousticTimeStepSize		get_fluid_time_step_size(water_block);
 
 	//pressure relaxation using verlet time stepping
-	fluid_dynamics::PressureRelaxationVerletFreeSurface
-		pressure_relaxation(water_block, { wall_boundary }, &gravity);
+	fluid_dynamics::PressureRelaxationFirstHalfRiemann 
+		pressure_relaxation_first_half(water_block, { wall_boundary });
+	fluid_dynamics::PressureRelaxationSecondHalfRiemann 
+		pressure_relaxation_second_half(water_block, { wall_boundary });
 
 	//--------------------------------------------------------------------------
 	//methods used for updating data structure
@@ -184,7 +182,10 @@ int main()
 	//-----------------------------------------------------------------------------
 	In_Output in_output(system);
 	WriteBodyStatesToVtu write_water_block_states(in_output, system.real_bodies_);
-	WriteWaterMechanicalEnergy write_water_mechanical_energy(in_output, water_block, &gravity);
+	/** Output the body states for restart simulation. */
+	ReadRestart		read_restart_files(in_output, system.real_bodies_);
+	WriteRestart	write_restart_files(in_output, system.real_bodies_);
+	WriteTotalMechanicalEnergy write_water_mechanical_energy(in_output, water_block, &gravity);
 	WriteUpperBoundInXDirection write_water_front(in_output, water_block);
 	WriteObservedFluidPressure
 		write_recorded_water_pressure(in_output, fluid_observer, { water_block });
@@ -192,20 +193,30 @@ int main()
 	//-------------------------------------------------------------------
 	//from here the time stepping begines
 	//-------------------------------------------------------------------
-	//starting time zero
-	GlobalStaticVariables::physical_time_ = 0.0;
 
 	/**
 	 * @brief Setup goematrics and initial conditions
 	 */
-	set_all_fluid_particles_at_rest.exec();
-	set_all_solid_particles_at_rest.exec();
 	get_wall_normal.exec();
-	fluid_initial_number_density.parallel_exec();
-
+	/**
+	* @brief The time stepping starts here.
+	*/
+	/** If the starting time is not zero, please setup the restart time step ro read in restart states. */
+	if (system.restart_step_ != 0)
+	{
+		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
+		update_cell_linked_list.parallel_exec();
+		update_particle_configuration.parallel_exec();
+	}
+	
+	/** Output the start states of bodies. */
 	write_water_block_states.WriteToFile(GlobalStaticVariables::physical_time_);
+	/** Output the Hydrostatic mechanical energy of fluid. */
+	write_water_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
 
-	int ite = 0;
+	int number_of_iterations = system.restart_step_;
+	int screen_output_interval = 100;
+	int restart_output_interval = screen_output_interval * 10;
 	Real End_Time = 20.0;
 	//time step size for oupt file
 	Real D_Time = End_Time/20.0;
@@ -237,21 +248,25 @@ int main()
 			while (relaxation_time < Dt) 
 			{
 			
-				if (ite % 100 == 0) 
-				{
-					cout << "N=" << ite << " Time: "
-						<< GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
-				}
-
-				pressure_relaxation.parallel_exec(dt);
-
-				ite++;
+				pressure_relaxation_first_half.parallel_exec(dt);
+				pressure_relaxation_second_half.parallel_exec(dt);
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integeral_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
 			
+			if (number_of_iterations % screen_output_interval == 0)
+			{
+				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+					<< GlobalStaticVariables::physical_time_
+					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
+
+				if (number_of_iterations % restart_output_interval == 0)
+					write_restart_files.WriteToFile(Real(number_of_iterations));
+			}
+			number_of_iterations++;
+
 			update_cell_linked_list.parallel_exec();
 			update_particle_configuration.parallel_exec();
 			update_observer_contact_configuration.parallel_exec();

@@ -106,9 +106,6 @@ public:
 		: solid_dynamics::ElasticSolidDynamicsInitialCondition(beam) {};
 protected:
 	void Update(size_t index_particle_i, Real dt) override {
-		/** first set all particle at rest*/
-		solid_dynamics::ElasticSolidDynamicsInitialCondition::Update(index_particle_i, dt);
-
 		/** initial velocity profile */
 		BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 		SolidParticleData &solid_body_data_i = particles_->solid_body_data_[index_particle_i];
@@ -134,13 +131,13 @@ public:
 		/* Geometry defination */
 		std::vector<Point> beam_base_shape = CreatBeamBaseShape();
 		Geometry * beam_base_gemetry = new Geometry(beam_base_shape);
-		soild_body_part_region_.add_geometry(beam_base_gemetry, RegionBooleanOps::add);
+		body_part_region_.add_geometry(beam_base_gemetry, RegionBooleanOps::add);
 		std::vector<Point> beam_shape = CreatBeamShape();
 		Geometry * beam_gemetry = new Geometry(beam_shape);
-		soild_body_part_region_.add_geometry(beam_gemetry, RegionBooleanOps::sub);
+		body_part_region_.add_geometry(beam_gemetry, RegionBooleanOps::sub);
 
 		/** Finish the region modeling. */
-		soild_body_part_region_.done_modeling();
+		body_part_region_.done_modeling();
 
 		//tag the constrained particle
 		TagBodyPartParticles();

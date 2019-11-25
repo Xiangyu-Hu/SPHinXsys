@@ -26,7 +26,7 @@ namespace SPH {
 		/** derivative of kernel function
 		 *  and kernel fucntion values. */
 		Real dW_ij_, W_ij_;
-		/** Unit vector pointing from i to j. */
+		/** Unit vector pointing from j to i. */
 		Vecd e_ij_;
 		/** Particle distance. */
 		Real r_ij_;	
@@ -62,7 +62,7 @@ namespace SPH {
 		/** derivative of kernel function
 		 *  and kernel fucntion values. */
 		Real dW_ij_, W_ij_;
-		/** Unit vector pointing from i to j. */
+		/** Unit vector pointing from j to i. */
 		Vecd e_ij_;
 		/** Particle distance. */
 		Real r_ij_;
@@ -84,5 +84,33 @@ namespace SPH {
 		 * @param[in] j_index Index of particle j
 		 */
 		void Reset(Kernel &kernel, Vecd &r_ij, size_t j_index);
+	};
+	/**
+	  * @class ReferenceNeighboringParticleDiffusion
+	  * @brief Interparticle averaged diffusion tensor
+	  */
+	class ReferenceNeighboringParticleDiffusion
+	{
+	public:
+		/** Index of the neighbor particle. */
+		size_t j_;
+		/** Diffusion tensor */
+		Matd diffusion_ij_;
+
+		/** default constrcutor*/
+		ReferenceNeighboringParticleDiffusion() {};
+		/**
+		 * @brief Constructor.
+		 * @param[in] j_index Index of particle j
+		 * @param[in] diff_ij Inter average diffusion tensor
+		 */
+		ReferenceNeighboringParticleDiffusion(size_t j_index, Matd &diff_ij);
+		~ReferenceNeighboringParticleDiffusion() {};
+		/**
+		 * @brief Reset the neighboring particles diffusion tensor.
+		 * @param[in] j_index Index of particle j
+		 * @param[in] diff_ij Inter average diffusion tensor
+		 */
+		void Reset(size_t j_index, Matd &diff_ij);
 	};
 }

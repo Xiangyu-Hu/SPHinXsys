@@ -1,3 +1,10 @@
+/**
+* @file 	solid_dynamics.h
+* @brief 	Here, we define the algorithm classes for solid dynamics. 
+* @details 	We consider here a weakly compresible fluids. .   
+* @author	Luhui Han, Chi ZHang and Xiangyu Hu
+* @version	0.1
+*/
 #pragma once
 #include "all_particle_dynamics.h"
 #include "elastic_solid.h"
@@ -14,11 +21,11 @@ namespace SPH
 		using SolidDynamicsSum = ParticleDynamicsReduce<ReturnType, ReduceSum<ReturnType>, SolidBody, SolidParticles>;
 
 		template <class ReturnType>
-		using SolidDynamicsConstraintForSimbodySum = LagrangianConstraintReduce<ReturnType,
+		using SolidDynamicsConstraintForSimbodySum = ConstraintByParticleReduce<ReturnType,
 			ReduceSum<ReturnType>, SolidBody, SolidParticles, SolidBodyPartForSimbody>;
 
 		template <class ReturnType>
-		using ElasticSolidDynamicsConstraintForSimbodySum = LagrangianConstraintReduce<ReturnType,
+		using ElasticSolidDynamicsConstraintForSimbodySum = ConstraintByParticleReduce<ReturnType,
 			ReduceSum<ReturnType>, SolidBody, ElasticSolidParticles, SolidBodyPartForSimbody>;
 
 		typedef ParticleDynamicsComplex<SolidBody, SolidParticles, Solid,
@@ -54,30 +61,12 @@ namespace SPH
 			SolidBody, ElasticSolidParticles> ElasticSolidDynamicsComplex2Levels;
 
 		/**
-		 * @class OffsetInitialParticlePosition
-		 * @brief  set initial condition for a solid body with different material
-		*/
-		class OffsetInitialParticlePosition : public SolidDynamicsSimple
-		{
-			Vecd offset_;
-		protected:
-			//default for set all particle at rest
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
-		public:
-			OffsetInitialParticlePosition(SolidBody *body, Vecd offset)
-				: SolidDynamicsSimple(body), offset_(offset){};
-			virtual ~OffsetInitialParticlePosition() {};
-		};
-
-		/**
 		 * @class SolidDynamicsInitialCondition
 		 * @brief  set initial condition for solid fluid body
-		*/
+		 * This is a abstract class to be override for case specific initial conditions.
+		 */
 		class SolidDynamicsInitialCondition : public SolidDynamicsSimple
 		{
-		protected:
-			//default for set all particle at rest
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
 			SolidDynamicsInitialCondition(SolidBody *body)
 				: SolidDynamicsSimple(body) {};
@@ -122,11 +111,10 @@ namespace SPH
 		/**
 		 * @class ElasticSolidDynamicsInitialCondition
 		 * @brief  set initial condition for a solid body with different material
-		*/
+		 * This is a abstract class to be override for case specific initial conditions.
+		 */
 		class ElasticSolidDynamicsInitialCondition : public ElasticSolidDynamicsSimple
 		{
-		protected:
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
 			ElasticSolidDynamicsInitialCondition(SolidBody *body)
 				: ElasticSolidDynamicsSimple(body) {};
@@ -186,36 +174,13 @@ namespace SPH
 		class FluidPressureForceOnSolid : public FSIDynamicsComplex
 		{
 		protected:
-			ExternalForce *external_force_;
-
 			virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) override;
 			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) override;
 
 		public:
-			FluidPressureForceOnSolid(SolidBody *body, StdVec<FluidBody*> interacting_bodies, ExternalForce *external_force)
-				: ParticleDynamicsComplex(body, interacting_bodies), external_force_(external_force) {};
-			FluidPressureForceOnSolid(SolidBody *body, StdVec<FluidBody*> interacting_bodies) 
-				: ParticleDynamicsComplex(body, interacting_bodies), external_force_(new ExternalForce) {};
+			FluidPressureForceOnSolid(SolidBody *body, StdVec<FluidBody*> interacting_bodies)
+				: FSIDynamicsComplex(body, interacting_bodies) {};
 			virtual ~FluidPressureForceOnSolid() {};
-		};
-
-		/**
-		* @class FluidPressureForceOnSolidFreeSurface
-		* @brief Computing the pressure force from the free surface flow
-		* This class is for FSI applications to achieve smaller solid dynamics
-		* time step size compared to the fluid dynamics
-		*/
-		class FluidPressureForceOnSolidFreeSurface : public FluidPressureForceOnSolid
-		{
-		protected:
-			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) override;
-
-		public:
-			FluidPressureForceOnSolidFreeSurface(SolidBody *body, StdVec<FluidBody*> interacting_bodies, ExternalForce *external_force)
-				: FluidPressureForceOnSolid(body, interacting_bodies, external_force) {};
-			FluidPressureForceOnSolidFreeSurface(SolidBody *body, StdVec<FluidBody*> interacting_bodies)
-				: FluidPressureForceOnSolid(body, interacting_bodies) {};
-			virtual ~FluidPressureForceOnSolidFreeSurface() {};
 		};
 
 		/**
@@ -418,7 +383,7 @@ namespace SPH
 		 * Note the average values for FSI are prescirbed also.
 		 */
 		class ConstrainSolidBodyRegion 
-			: public LagrangianConstraint<SolidBody, SolidParticles, SolidBodyPart>
+			: public ConstraintByParticle<SolidBody, SolidParticles, SolidBodyPart>
 		{
 		protected:
 			virtual Vecd GetDisplacement(Vecd &pos) { return Vecd(0); };
@@ -428,7 +393,7 @@ namespace SPH
 				Real dt = 0.0) override;
 		public:
 			ConstrainSolidBodyRegion(SolidBody *body, SolidBodyPart *body_part)
-				: LagrangianConstraint<SolidBody, SolidParticles, SolidBodyPart>(body, body_part) {};
+				: ConstraintByParticle<SolidBody, SolidParticles, SolidBodyPart>(body, body_part) {};
 			virtual ~ConstrainSolidBodyRegion() {};
 		};
 
@@ -437,7 +402,7 @@ namespace SPH
 		 * by add extra acceleration
 		 */
 		class ImposeExternalForce
-			: public LagrangianConstraint<SolidBody, SolidParticles, SolidBodyPartForSimbody>
+			: public ConstraintByParticle<SolidBody, SolidParticles, SolidBodyPartForSimbody>
 		{
 		protected:
 			/**
@@ -448,7 +413,7 @@ namespace SPH
 				Real dt = 0.0) override;
 		public:
 			ImposeExternalForce(SolidBody *body, SolidBodyPartForSimbody *body_part)
-				: LagrangianConstraint<SolidBody, SolidParticles, SolidBodyPartForSimbody>(body, body_part) {};
+				: ConstraintByParticle<SolidBody, SolidParticles, SolidBodyPartForSimbody>(body, body_part) {};
 			virtual ~ImposeExternalForce() {};
 		};
 
@@ -458,7 +423,7 @@ namespace SPH
 		 * computed from Simbody.
 		 */
 		class ConstrianSoildBodyPartBySimBody
-			: public LagrangianConstraint<SolidBody, SolidParticles, SolidBodyPartForSimbody>
+			: public ConstraintByParticle<SolidBody, SolidParticles, SolidBodyPartForSimbody>
 		{
 		protected:
 			SimTK::MultibodySystem &MBsystem_;
@@ -551,20 +516,6 @@ namespace SPH
 		public:
 			DampingBySplittingAlgorithm(SolidBody *elastic_body, Real eta);
 			virtual ~DampingBySplittingAlgorithm() {};
-		};
-		/**
-		 * @class TwistingInitialCondition
-		 * @brief  set initial condition for twisting cantilever
-		*/
-		class TwistingInitialCondition : public SolidDynamicsSimple
-		{
-		protected:
-			//default for set all particle at rest
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
-		public:
-			TwistingInitialCondition(SolidBody *body)
-				: SolidDynamicsSimple(body) {};
-			virtual ~TwistingInitialCondition() {};
 		};
 	}
 }

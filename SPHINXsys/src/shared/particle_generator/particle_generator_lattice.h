@@ -10,6 +10,7 @@
 #pragma once
 
 #include "base_particle_generator.h"
+#include "geometry.h"
 
 namespace SPH {
 	/**
@@ -18,8 +19,10 @@ namespace SPH {
 	 */
 	class ParticleGeneratorLattice : public ParticleGenerator
 	{
+		Region &region_;
 		Real lattice_spacing_;		/**< Lattice size. */
 		Vecu number_of_lattices_;	/**< Number of lattice. */ 
+		Real sigma_ref_;
 		/**
 		 * @brief Claculate the number of Lattices.
 		 * @param[in] lower_bound Lower bound of lattice size.
@@ -30,9 +33,12 @@ namespace SPH {
 	protected:
 		Vecd lower_bound_, upper_bound_;	/**< Domain bounds. */
 	public:
-		ParticleGeneratorLattice(SPHBody &sph_body);
+		ParticleGeneratorLattice(SPHBody &sph_body, Region &region);
 		virtual ~ParticleGeneratorLattice() {};
+
+		/** Compute reference number density*/
+		virtual Real ComputeReferenceNumberDensity();
 		/** Create lattice particle for a body. */
-		virtual void CreateBaseParticles(SPHBody &sph_body, Particles &base_particles) override;
+		virtual void CreateBaseParticles() override;
 	};
 }

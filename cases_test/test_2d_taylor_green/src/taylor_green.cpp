@@ -17,19 +17,18 @@ using namespace SPH;
 /**
  * @brief Basic geometry parameters and numerical setup.
  */
-Real DL = 1.0; 						/**< Tank length. */
-Real DH = 1.0; 						/**< Tank height. */
+Real DL = 1.0; 						/**< box length. */
+Real DH = 1.0; 						/**< box height. */
 
-Real particle_spacing_ref = 1.0/100; 		/**< Initial reference particle spacing. */
-Real BW = 4.0 * particle_spacing_ref;
+Real particle_spacing_ref = 1.0/50; 		/**< Initial reference particle spacing. */
+Real BW = 4.0 * particle_spacing_ref;		/**< Domain boundary thickness. */
 /**
  * @brief Material properties of the fluid.
  */
 Real rho0_f = 1.0;						/**< Reference density of fluid. */
-Real gravity_g = 0.0;					/**< Gravity force of fluid. */
 Real U_f = 1.0;							/**< Characteristic velocity. */
 Real c_f = 10.0*U_f;					/**< Reference sound speed. */
-Real Re = 100;
+Real Re = 100;							/**< Reynolds number. */
 Real mu_f = rho0_f * U_f * DL / Re;		/**< Dynamics visocisty. */
 Real k_f = 0.0;
 
@@ -68,9 +67,6 @@ public:
 protected:
 	void Update(size_t index_particle_i, Real dt) override 
 	{
-		/** first set all particle at rest*/
-		fluid_dynamics::WeaklyCompressibleFluidInitialCondition::Update(index_particle_i, dt);
-
 		/** initial velocity profile */
 		BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 		FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
@@ -79,7 +75,7 @@ protected:
 				sin(2.0 * pi * base_particle_data_i.pos_n_[1]);
 		base_particle_data_i.vel_n_[1] = sin(2.0 * pi * base_particle_data_i.pos_n_[0]) * 
 				cos(2.0 * pi * base_particle_data_i.pos_n_[1]);
-	};
+	}
 };
 /**
  * @brief 	Main program starts here.
@@ -115,27 +111,25 @@ int main()
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
-	 /** Define external force. */
-	Gravity 							gravity(Vecd(0.0, 0.0));
 	 /**
 	  * @brief 	Methods used only once.
 	  */
 
-	/** Obtain the initial number density of fluid. */
-	fluid_dynamics::InitialNumberDensity 		fluid_initial_number_density(water_block, { });
-	/** Reset velocity field */
+	/** Initial velocity field */
 	TaylorGreenInitialCondition setup_taylor_green_velocity(water_block);
 	/**
 	 * @brief 	Methods used for time stepping.
 	 */
 	 /** Initialize particle acceleration. */
-	InitializeOtherAccelerations 	initialize_fluid_acceleration(water_block, &gravity);
-	/** Periodic bounding. */
-	PeriodicBoundingInXDirection 	periodic_bounding_x(water_block);
-	PeriodicBoundingInYDirection 	periodic_bounding_y(water_block);
-	/** Periodic BCs. */
-	PeriodicConditionInXDirection 	periodic_condition_x(water_block);
-	PeriodicConditionInYDirection 	periodic_condition_y(water_block);
+	InitializeOtherAccelerations 	initialize_fluid_acceleration(water_block);
+	/** Periodic bounding in x direction. */
+	PeriodicBoundingInAxisDirection 	periodic_bounding_x(water_block, 0);
+	/** Periodic bounding in y direction. */
+	PeriodicBoundingInAxisDirection 	periodic_bounding_y(water_block, 1);
+	/** Periodic BCs in x direction. */
+	PeriodicConditionInAxisDirection 	periodic_condition_x(water_block, 0);
+	/** Periodic BCs in y direction. */
+	PeriodicConditionInAxisDirection 	periodic_condition_y(water_block, 1);
 	
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
@@ -147,7 +141,10 @@ int main()
 	/** Time step size with considering sound wave speed. */
 	fluid_dynamics::GetAcousticTimeStepSize 	get_fluid_time_step_size(water_block);
 	/** Pressure relaxation algorithm by using verlet time stepping. */
-	fluid_dynamics::PressureRelaxationVerlet 	pressure_relaxation(water_block, { }, &gravity);
+	fluid_dynamics::PressureRelaxationFirstHalf 	
+		pressure_relaxation_first_half(water_block, { });
+	fluid_dynamics::PressureRelaxationSecondHalfRiemann 
+		pressure_relaxation_second_half(water_block, {});
 	/** Computing viscous acceleration. */
 	fluid_dynamics::ComputingViscousAcceleration 	viscous_acceleration(water_block, {  });
 	/** Impose transport velocity. */
@@ -170,7 +167,7 @@ int main()
 	ReadRestart				read_restart_files(in_output, system.real_bodies_);
 	WriteRestart			write_restart_files(in_output, system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	WriteWaterMechanicalEnergy 	write_water_mechanical_energy(in_output, water_block, &gravity);
+	WriteTotalMechanicalEnergy 	write_totoal_mechanical_energy(in_output, water_block, new Gravity(Vec2d(0)));
 
 	/**
 	 * @brief Setup goematrics and initial conditions
@@ -179,7 +176,6 @@ int main()
 	periodic_condition_x.parallel_exec();
 	periodic_condition_y.parallel_exec();
 	update_particle_configuration.parallel_exec();
-	fluid_initial_number_density.exec();
 	/**
 	 * @brief The time stepping starts here.
 	 */
@@ -192,8 +188,8 @@ int main()
 	}
 	/** Output the start states of bodies. */
 	write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	/** Output the Hydrostatic mechanical energy of fluid. */
-	write_water_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
+	/** Output the mechanical energy of fluid. */
+	write_totoal_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
 	/**
 	 * @brief 	Basic parameters.
 	 */
@@ -216,18 +212,19 @@ int main()
 		/** Integrate time (loop) until the next output time. */
 		while (integeral_time < D_Time)
 		{
-			/** Acceleration due to viscous force and gravity. */
+			/** Acceleration due to viscous force. */
 			initialize_fluid_acceleration.parallel_exec();
 			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec(Dt);
+			//transport_velocity_correction.parallel_exec(Dt);
 			Dt = get_fluid_adevction_time_step_size.parallel_exec();
 			update_fluid_desnity.parallel_exec();
 
 			/** Dynamics including pressure relaxation. */
 			Real relaxation_time = 0.0;
-			while (relaxation_time < Dt)
+			//while (relaxation_time < Dt)
 			{
-				pressure_relaxation.parallel_exec(dt);
+				pressure_relaxation_first_half.parallel_exec(dt);
+				pressure_relaxation_second_half.parallel_exec(dt);
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integeral_time += dt;
@@ -256,7 +253,7 @@ int main()
 		}
 
 		tick_count t2 = tick_count::now();
-		write_water_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_totoal_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
 		write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;

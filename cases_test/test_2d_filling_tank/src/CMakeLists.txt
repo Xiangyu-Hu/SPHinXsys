@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake) # main (top) cmake dir
 
 set(CMAKE_VERBOSE_MAKEFILE on)
@@ -12,8 +12,7 @@ aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    target_link_libraries(${PROJECT_NAME} sphinxsys_2d ${TBB_LIBRARYS} debug ${Simbody_DEBUG_LIBRARIES})
-    target_link_libraries(${PROJECT_NAME} sphinxsys_2d ${TBB_LIBRARYS} optimized ${Simbody_RELEASE_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} sphinxsys_2d ${TBB_LIBRARYS} ${Simbody_LIBRARIES})
     add_dependencies(${PROJECT_NAME} sphinxsys_2d sphinxsys_static_2d)
 else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

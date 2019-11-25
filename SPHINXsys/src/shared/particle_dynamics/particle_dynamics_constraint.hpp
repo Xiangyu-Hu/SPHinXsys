@@ -11,8 +11,8 @@
 
 namespace SPH {
 	//===============================================================//
-	template <class BodyType, class ParticlesType, class LagrangianBodyPartType, class MaterialType>
-	void LagrangianConstraint<BodyType, ParticlesType, LagrangianBodyPartType, MaterialType>
+	template <class BodyType, class ParticlesType, class BodyPartByParticleType, class MaterialType>
+	void ConstraintByParticle<BodyType, ParticlesType, BodyPartByParticleType, MaterialType>
 		::exec(Real dt)
 	{
 		this->PrepareConstraint();
@@ -22,8 +22,8 @@ namespace SPH {
 		}
 	}
 	//===============================================================//
-	template <class BodyType, class ParticlesType, class LagrangianBodyPartType, class MaterialType>
-	void LagrangianConstraint<BodyType, ParticlesType, LagrangianBodyPartType, MaterialType>
+	template <class BodyType, class ParticlesType, class BodyPartByParticleType, class MaterialType>
+	void ConstraintByParticle<BodyType, ParticlesType, BodyPartByParticleType, MaterialType>
 		::parallel_exec(Real dt)
 	{
 		this->PrepareConstraint();
@@ -36,9 +36,9 @@ namespace SPH {
 	}
 	//===============================================================//
 	template <class ReturnType, typename ReduceOperation, 
-		class BodyType, class ParticlesType, class LagrangianBodyPartType, class MaterialType>
-	ReturnType LagrangianConstraintReduce<ReturnType, ReduceOperation, 
-		BodyType, ParticlesType, LagrangianBodyPartType, MaterialType>
+		class BodyType, class ParticlesType, class BodyPartByParticleType, class MaterialType>
+	ReturnType ConstraintByParticleReduce<ReturnType, ReduceOperation, 
+		BodyType, ParticlesType, BodyPartByParticleType, MaterialType>
 		::exec(Real dt)
 	{
 		ReturnType temp = initial_reference_;
@@ -53,9 +53,9 @@ namespace SPH {
 	}
 	//===============================================================//
 	template <class ReturnType, class ReduceOperation,
-		class BodyType, class ParticlesType, class LagrangianBodyPartType, class MaterialType>
-		ReturnType LagrangianConstraintReduce<ReturnType, ReduceOperation,
-		BodyType, ParticlesType, LagrangianBodyPartType, MaterialType>
+		class BodyType, class ParticlesType, class BodyPartByParticleType, class MaterialType>
+		ReturnType ConstraintByParticleReduce<ReturnType, ReduceOperation,
+		BodyType, ParticlesType, BodyPartByParticleType, MaterialType>
 		::parallel_exec(Real dt)
 	{
 		ReturnType temp = initial_reference_;

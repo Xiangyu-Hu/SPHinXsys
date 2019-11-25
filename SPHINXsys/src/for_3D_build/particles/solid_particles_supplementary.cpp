@@ -22,7 +22,7 @@ namespace SPH {
 		output_file << "    <DataArray Name=\"Position\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << base_particle_data_[i].pos_n_[0] << " " << base_particle_data_[i].pos_n_[1] << " " << base_particle_data_[i].pos_n_[2] << " ";
+			output_file << fixed << setprecision(9) << base_particle_data_[i].pos_n_[0] << " " << base_particle_data_[i].pos_n_[1] << " " << base_particle_data_[i].pos_n_[2] << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -33,7 +33,7 @@ namespace SPH {
 		output_file << "    <DataArray Name=\"Particle_ID\" type=\"Int32\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << base_particle_data_[i].particle_ID_ << " ";
+			output_file << i << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -41,7 +41,7 @@ namespace SPH {
 		output_file << "    <DataArray Name=\"NormalDirection\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << solid_body_data_[i].n_[0] << " " << solid_body_data_[i].n_[1] << " " << solid_body_data_[i].n_[2] << " ";
+			output_file << fixed << setprecision(9) << solid_body_data_[i].n_[0] << " " << solid_body_data_[i].n_[1] << " " << solid_body_data_[i].n_[2] << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -70,23 +70,11 @@ namespace SPH {
 			output_file << base_particle_data_[i].pos_n_[0] << "  "
 				<< base_particle_data_[i].pos_n_[1] << "  "
 				<< base_particle_data_[i].pos_n_[2] << "  "
-				<< base_particle_data_[i].particle_ID_ << "  "
+				<< i << "  "
 				<< solid_body_data_[i].n_[0] << "  "
 				<< solid_body_data_[i].n_[1] << "  "
 				<< solid_body_data_[i].n_[2] << "\n ";
 		}
-	}
-//=================================================================================================//
-	void SolidParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)
-	{
-		cout << "\n This function SolidParticles::WriteParticlesToXmlForRestart is not done in 3D. Exit the program! \n";
-		exit(0);
-	}
-//=================================================================================================//
-	void SolidParticles::ReadParticleFromXmlForRestart(std::string &filefullpath)
-	{
-		cout << "\n This function SolidParticles::ReadParticleFromXmlForRestart is not done in 3D. Exit the program! \n";
-		exit(0);
 	}
 //=================================================================================================//
 	Real ElasticSolidParticles::von_Mises_stress(size_t particle_i)
@@ -125,7 +113,7 @@ namespace SPH {
 		output_file << "    <DataArray Name=\"Position\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << base_particle_data_[i].pos_n_[0] << " " << base_particle_data_[i].pos_n_[1] << " " << base_particle_data_[i].pos_n_[2] << " ";
+			output_file << fixed << setprecision(9) << base_particle_data_[i].pos_n_[0] << " " << base_particle_data_[i].pos_n_[1] << " " << base_particle_data_[i].pos_n_[2] << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -137,7 +125,7 @@ namespace SPH {
 		output_file << "    <DataArray Name=\"Particle_ID\" type=\"Int32\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << base_particle_data_[i].particle_ID_ << " ";
+			output_file << i << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -145,7 +133,7 @@ namespace SPH {
 		output_file << "    <DataArray Name=\"Density\" type=\"Float32\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << elastic_body_data_[i].rho_n_ << " ";
+			output_file << fixed << setprecision(9) << elastic_body_data_[i].rho_n_ << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -153,7 +141,7 @@ namespace SPH {
 		output_file << "    <DataArray Name=\"Velocity\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file <<  base_particle_data_[i].vel_n_[0] << " " <<  base_particle_data_[i].vel_n_[1] << " " <<  base_particle_data_[i].vel_n_[2] << " ";
+			output_file << fixed << setprecision(9) <<  base_particle_data_[i].vel_n_[0] << " " <<  base_particle_data_[i].vel_n_[1] << " " <<  base_particle_data_[i].vel_n_[2] << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -161,7 +149,7 @@ namespace SPH {
 		output_file << "    <DataArray Name=\"von Mises stress\" type=\"Float32\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << von_Mises_stress(i) << " ";
+			output_file << fixed << setprecision(9) << von_Mises_stress(i) << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -169,7 +157,7 @@ namespace SPH {
 		output_file << "    <DataArray Name=\"NormalDirection\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << solid_body_data_[i].n_[0] << " " << solid_body_data_[i].n_[1] << " " << solid_body_data_[i].n_[2] << " ";
+			output_file << fixed << setprecision(9) << solid_body_data_[i].n_[0] << " " << solid_body_data_[i].n_[1] << " " << solid_body_data_[i].n_[2] << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -202,23 +190,11 @@ namespace SPH {
 				<< base_particle_data_[i].vel_n_[0] << "  "
 				<< base_particle_data_[i].vel_n_[1] << "  "
 				<< base_particle_data_[i].vel_n_[2] << "  "
-				<< base_particle_data_[i].particle_ID_ << "  "
+				<< i << "  "
 				<< solid_body_data_[i].n_[0] << "  "
 				<< solid_body_data_[i].n_[1] << "  "
 				<< solid_body_data_[i].n_[2] << "\n ";
 		}
-	}
-//=================================================================================================//
-	void ElasticSolidParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)
-	{
-		cout << "\n This function ElasticSolidParticles::WriteParticlesToXmlForRestart is not done in 3D. Exit the program! \n";
-		exit(0);
-	}
-//=================================================================================================//
-	void ElasticSolidParticles::ReadParticleFromXmlForRestart(std::string &filefullpath)
-	{
-		cout << "\n This function  ElasticSolidParticles::ReadParticleFromXmlForRestart is not done in 3D. Exit the program! \n";
-		exit(0);
 	}
 //=================================================================================================//
 	void MuscleParticles::WriteParticlesToVtuFile(ofstream &output_file)
@@ -248,7 +224,7 @@ namespace SPH {
 		output_file << "    <DataArray Name=\"Particle_ID\" type=\"Int32\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << base_particle_data_[i].particle_ID_ << " ";
+			output_file << i << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -260,6 +236,16 @@ namespace SPH {
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
+
+		output_file << "    <DataArray Name=\"T_a\" type=\"Float32\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != number_of_particles; ++i) {
+			output_file << muscle_body_data_[i].T_a_ << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+
+		output_file << "   </PointData>\n";
 
 		//write empty cells
 		output_file << "   <Cells>\n";
@@ -277,14 +263,18 @@ namespace SPH {
 	void MuscleParticles::WriteParticlesToPltFile(ofstream &output_file)
 	{
 		size_t number_of_particles = body_->number_of_particles_;
-		output_file << " VARIABLES = \" x \", \"y\",\"z\", \"ID\", \"Voltage\" \n";
+		output_file << " VARIABLES = \" x \", \"y\",\"z\", \"ID\", \"Vx\", \"Vy\", \"Vz\", \"Voltage\",\"Ta\" \n";
 		for (size_t i = 0; i != number_of_particles; ++i)
 		{
 			output_file << base_particle_data_[i].pos_n_[0] << "  "
 				<< base_particle_data_[i].pos_n_[1] << "  "
 				<< base_particle_data_[i].pos_n_[2] << "  "
-				<< base_particle_data_[i].particle_ID_ << "  "
-				<< muscle_body_data_[i].voltage_n_ << "\n ";
+				<< i << "  "
+				<< base_particle_data_[i].vel_n_[0] << " "
+				<< base_particle_data_[i].vel_n_[1] << " "
+				<< base_particle_data_[i].vel_n_[2] << " "
+				<< muscle_body_data_[i].voltage_n_ << "  "
+				<< muscle_body_data_[i].T_a_ << "\n ";
 		}
 	}
 //=================================================================================================//

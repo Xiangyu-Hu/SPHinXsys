@@ -1,15 +1,14 @@
 /** 
  * @file elastic_solid.cpp
- * @brief These are functions defined in elastic_solid.h
  * @author Chi Zhang and Xiangyu Hu
  * @version  0.1
  * @version  0.2.1
- *			 add the electrophysiology to muscle body.
  */
+
 #include "elastic_solid.h"
-//=================================================================================================//
+
 namespace SPH {
-	//===================================================================//
+//===================================================================//
 	ElasticSolid::ElasticSolid(string elastic_solid_name, SPHBody *body,
 		Real rho_0, Real E_0, Real nu, Real eta_0)
 		: Solid(elastic_solid_name, body, rho_0), 
@@ -103,7 +102,7 @@ namespace SPH {
 	Muscle::Muscle(string elastic_solid_name,SPHBody *body, Real a_0[4], Real b_0[4], Vecd d_0, 
 		Real rho_0, Real poisson, Real eta_0)
 		: ElasticSolid(elastic_solid_name, body, 
-			rho_0, 2.0*a_0[0]*b_0[0]*(1.0 + poisson), poisson, eta_0)
+			rho_0, 2.0 * a_0[0] * b_0[0] * (1.0 + poisson), poisson, eta_0)
 	{
 		for (size_t i = 0; i != 4; ++i)
 		{
@@ -111,12 +110,6 @@ namespace SPH {
 			b_0_[i] = b_0[i];
 		}
 		d_0_ = d_0;
-	}
-//=================================================================================================//
-	void Muscle::SetupLocalProperties(ElasticSolidParticles &elasticsolid_particles)
-	{
-		cout << "\n This function Muscle::SetupLocalProperties is not done yet. Exit the program! \n";
-		exit(0);
 	}
 //=================================================================================================//
 	Matd Muscle::ConstitutiveRelation(Matd &F, size_t i)
@@ -127,29 +120,37 @@ namespace SPH {
 		Real I_fs = SimTK::dot(right_cauchy*f0_[i], s0_[i]);
 		Real ln_J = log(det(F));
 		Real I_1_1 = right_cauchy.trace() - 3.0 - 2.0*ln_J;
-		Matd sigmaPK2 = a_0_[0]*exp(b_0_[0] * I_1_1)*Matd(1.0)
-			+ (lambda_0_*ln_J - a_0_[0] * exp(b_0_[0] * I_1_1))*inverse(right_cauchy)
+		Matd sigmaPK2 = a_0_[0] * exp(b_0_[0] * I_1_1) * Matd(1.0)
+			+ (lambda_0_ * ln_J - a_0_[0] * exp(b_0_[0] * I_1_1)) * inverse(right_cauchy)
 			+ 2.0* a_0_[1]*I_ff_1*exp(b_0_[1]*I_ff_1*I_ff_1)*f0f0_[i]
 			+ 2.0* a_0_[2]*I_ss_1*exp(b_0_[2]*I_ss_1*I_ss_1)*s0s0_[i]
 			+ a_0_[3]* I_fs*exp(b_0_[3]* I_fs*I_fs)*f0s0_[i];
 		return F * sigmaPK2;
 	}
 //=================================================================================================//
-	Matd Muscle::getDiffussionTensor(Vecd pnt)
+	Matd Muscle::ConstitutiveRelationOfActiveStress(Matd &F, Real T_a, size_t i)
 	{
-		Matd matrix_unit(1.0);
-		Vecd f0(0.0, 1.0);
-		Matd diffusion_tensor = d_0_[0] * matrix_unit - d_0_[1] * SimTK::outer(f0, f0);
-
-		return diffusion_tensor;
+		Matd active_stress = T_a * F * f0f0_[i];
+		return active_stress;
 	}
 //=================================================================================================//
-	Real Muscle::getDiffusionTensorTrace(Vecd pnt)
+	Matd Muscle::getDiffussionTensor(size_t particle_index_i)
 	{
-		Matd matrix_unit(1.0);
-		Vecd f0(0.0, 1.0);
-		Matd diffusion_tensor = d_0_[0] * matrix_unit + d_0_[1] * SimTK::outer(f0, f0);
-		return diffusion_tensor.trace();
+		return diff_cd_0[particle_index_i];
 	}
+//=================================================================================================//
+	Real Muscle::getDiffusionTensorTrace(size_t particle_index_i)
+	{
+		Matd diff_i = d_0_[0] * Matd(1.0) + d_0_[1] * SimTK::outer(f0_[particle_index_i], f0_[particle_index_i]);
+		return diff_i.trace();
+	}
+//=================================================================================================//
+	// Matd Muscle::getReferenceAverageDiffusionTensor(size_t index_i, size_t neighbor_index)
+	// {
+	// 	ReferenceNeighborDiffusionList  &neighors = reference_inner_diffusionn_tensor_[index_i];
+	// 	ReferenceNeighboringParticleDiffusion &neighboring_particle = neighors[neighbor_index];
+	// 	return neighboring_particle.diffusion_ij_;
+	// }
 //=================================================================================================//
 }
+//=================================================================================================//

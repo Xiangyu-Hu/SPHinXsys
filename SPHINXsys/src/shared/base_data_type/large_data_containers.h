@@ -19,8 +19,6 @@ static tbb::affinity_partitioner ap;
 
 namespace SPH {
 
-	class NeighboringParticle;
-	class ReferenceNeighboringParticle;
 	class SPHBody;
 
 	template <typename T>
@@ -41,12 +39,6 @@ namespace SPH {
 
 	typedef std::vector<std::pair<SPHBody*, std::vector<SPHBody*>>> SPHBodyTopology;
 	typedef std::pair<SPHBody*, std::vector<SPHBody*>> SPHBodyContactMap;
-
-	using NeighborList = StdVec<NeighboringParticle> *;
-	using ReferenceNeighborList = StdVec<ReferenceNeighboringParticle> *;
-
-	using ContactNeighborList = StdVec<NeighboringParticle> **;
-	using ReferenceContactNeighborList = StdVec<ReferenceNeighboringParticle> **;
 }
 
 #endif // SPHINXSYS_BASE_CONTAINER_H

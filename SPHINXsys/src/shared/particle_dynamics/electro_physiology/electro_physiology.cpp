@@ -1,12 +1,9 @@
 /**
- * @file 	diffusion_dynamics.cpp
- * @brief 	In is file, we define functions decleared in diffusion_dynamics.h
+ * @file 	electro_physiology.cpp
  * @author 	Chi Zhang and Xiangyu Hu
  * @version 0.2.1
- * 			From here, I will denote version a beta, e.g. 0.2.1, other than 0.1 as
- * 			we will introduce cardiac electrophysiology and cardaic mechanics herein.
- * 			Chi Zhang
  */
+
 #include "electro_physiology.h"
 #include "solid_body.h"
 #include "solid_particles.h"
@@ -24,39 +21,6 @@ namespace SPH
 	namespace electro_physiology
 	{
 //=================================================================================================//
-		void OffsetInitialParticlePosition::Update(size_t index_particle_i, Real dt)
-		{
-			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_particle_data_i = particles_->solid_body_data_[index_particle_i];
-
-			base_particle_data_i.pos_n_ += offset_;
-			solid_particle_data_i.pos_0_ += offset_;
-		}
-//=================================================================================================//
-		void ElectroPhysiologyInitialCondition::Update(size_t index_particle_i, Real dt)
-		{
-			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_particle_data_i = particles_->solid_body_data_[index_particle_i];
-			ElasticSolidParticleData &elastic_particle_data_i = particles_->elastic_body_data_[index_particle_i];
-            MuscleParticleData &muscle_particle_data_i = particles_->muscle_body_data_[index_particle_i];
-
-			Vecd zero(0);
-			base_particle_data_i.vel_n_ = zero;
-			base_particle_data_i.dvel_dt_ = zero;
-
-			solid_particle_data_i.vel_ave_ = zero;
-			solid_particle_data_i.dvel_dt_ave_ = zero;
-
-			elastic_particle_data_i.rho_0_ = material_->rho_0_;
-			elastic_particle_data_i.rho_n_ = material_->rho_0_;
-			elastic_particle_data_i.mass_ = material_->rho_0_*base_particle_data_i.Vol_;
-
-            muscle_particle_data_i.voltage_n_ = 0.0;
-		    muscle_particle_data_i.dvoltage_dt_ = 0.0;
-		    muscle_particle_data_i.grad_voltage_ = 0.0;
-		    muscle_particle_data_i.gate_var_ = 0.0;
-		}
-//=================================================================================================//
 		getDiffusionTimeStepSize::getDiffusionTimeStepSize(SolidBody* body)
 			: ElectroPhysiologyMinimum(body)
 		{
@@ -69,7 +33,7 @@ namespace SPH
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 
-            Real diff_trace = material_->getDiffusionTensorTrace(base_particle_data_i.pos_n_);
+            Real diff_trace = material_->getDiffusionTensorTrace(index_particle_i);
 			return SMIN(initial_reference_, 0.125 *smoothing_length_ * smoothing_length_ / diff_trace );
 		}
 //=================================================================================================//
@@ -128,11 +92,12 @@ namespace SPH
 			    ElasticSolidParticleData &elastic_particle_data_j = particles_->elastic_body_data_[index_particle_j];
                 MuscleParticleData &muscle_particle_data_j = particles_->muscle_body_data_[index_particle_j];
 
-				Matd diff_tensor_i =  material_->getDiffussionTensor(base_particle_data_i.pos_n_);
-				Matd diff_tensor_j =  material_->getDiffussionTensor(base_particle_data_j.pos_n_);
-				Matd diff_ij = getAverageValue(diff_tensor_i, diff_tensor_j);
-				Matd cd_diff_ij = inverseCholeskyDecomposition(diff_ij);
-				Vecd grad_ij = cd_diff_ij * (-neighboring_particle.e_ij_);
+				// Matd cd_diff_ij = material_->getReferenceAverageDiffusionTensor(index_particle_i, n);
+				// Vecd grad_ij = cd_diff_ij * (-neighboring_particle.e_ij_);
+				Matd diff_cd_i = material_->getDiffussionTensor(index_particle_i);
+				Matd diff_cd_j = material_->getDiffussionTensor(index_particle_j);
+				Matd diff_cd_ij = getAverageValue(diff_cd_i, diff_cd_j);
+				Vecd grad_ij = diff_cd_ij * (-neighboring_particle.e_ij_);
 
 				Matd k_ij  = solid_particle_data_i.B_ * muscle_particle_data_i.voltage_n_ 
                            - solid_particle_data_j.B_ * muscle_particle_data_j.voltage_n_;
@@ -155,7 +120,7 @@ namespace SPH
         TransmembranePotentialReaction::TransmembranePotentialReaction(SolidBody *body)
             : ElectroPhysiologySimple(body) 
         {
-            reaction_model_ = dynamic_cast<ElectrophysiologyReaction*>(body->base_reaction_->PointToThisObject());
+            reaction_model_ = dynamic_cast<ElectroPhysiology*>(body->base_reaction_->PointToThisObject());
         }
 //=================================================================================================//
         void TransmembranePotentialReaction::Update(size_t index_particle_i, Real dt)
@@ -177,7 +142,7 @@ namespace SPH
 		GateVariableReaction::GateVariableReaction(SolidBody *body)
 				: ElectroPhysiologySimple(body) 
         {
-            reaction_model_ = dynamic_cast<ElectrophysiologyReaction*>(body->base_reaction_->PointToThisObject());
+            reaction_model_ = dynamic_cast<ElectroPhysiology*>(body->base_reaction_->PointToThisObject());
         }
 //=================================================================================================//
         void GateVariableReaction::Update(size_t index_particle_i, Real dt)
@@ -191,40 +156,6 @@ namespace SPH
                                     muscle_particle_data_i.gate_var_);
 			Real gate = muscle_particle_data_i.gate_var_;
 			muscle_particle_data_i.gate_var_ = gate * exp(-p * dt) + q * (1.0 - exp(-p * dt)) / p;
-		}
-//=================================================================================================//
-		ApplyStimulusCurrents::ApplyStimulusCurrents(SolidBody *body)
-				: ElectroPhysiologySimple(body) 
-        {
-            /* Nothing done here rightnow */
-        }
-//=================================================================================================//
-        void ApplyStimulusCurrents::Update(size_t index_particle_i, Real dt)
-		{
-			BaseParticleData &base_particle_data_i      = particles_->base_particle_data_[index_particle_i];
-            MuscleParticleData &muscle_particle_data_i  = particles_->muscle_body_data_[index_particle_i];
-
-            Real physical_time = GlobalStaticVariables::physical_time_;
-            Real stimulus_currents(0);
-		    if(physical_time <= 0.5)
-		    {
-			    if(base_particle_data_i.pos_n_[0] <= 0.02)
-			    {
-				stimulus_currents = 0.92;
-			    }
-		    }
-
-		    if(60.0 <= physical_time &&  physical_time <= 61.25)
-		    {
-			    if(base_particle_data_i.pos_n_[0] <= 0.5 )
-			    {
-				    if(base_particle_data_i.pos_n_[1] <= 0.5)
-				    {
-					stimulus_currents = 0.95;
-				    }
-			    }
-		    }
-			muscle_particle_data_i.voltage_n_ += stimulus_currents * dt;
 		}
 //=================================================================================================//
     }

@@ -7,7 +7,11 @@
 * @author	Xiangyu Hu and Chi Zhang
 * @version	0.1
 * @version  0.2.1
+*           Chi Zhang
 *			add the electrophysiology to muscle body.
+* @version  0.2.2
+*           Chi Zhang
+*           Add the electro-mechnaics and local properties of muscle material.
 */
 #pragma once
 
@@ -24,8 +28,6 @@ namespace SPH {
 	*/
 	class ElasticSolid : public Solid
 	{
-	protected:
-		virtual void SetupLocalProperties(ElasticSolidParticles &elasticsolid_particles) {};
 	public:
 		ElasticSolid(string elastic_solid_name, SPHBody *body,
 			Real rho_0 = 1.0, Real E_0 = 1.0, Real poisson = 0.3, Real eta_0 = 0.0);
@@ -57,6 +59,11 @@ namespace SPH {
 		 * @param[in] particle_index_i Particle index
 		 */
 		virtual Real GetSoundSpeed(size_t particle_index_i);
+		/**
+		 * @brief Setup the local properties, fiber and sheet direction.
+		 * @param[in] elasticsolid_particles Particles of elastic solid. 
+		 */
+		virtual void SetupLocalProperties(SPHBody *body) {};
 		/**
 		 * @brief compute the stree through Constitutive relation.
 		 * @param[in] deform_grad defromation gradient
@@ -141,20 +148,20 @@ namespace SPH {
 	* Holzapfel and Ogden, 2009, Phil. Trans. R. Soc. 367:3445-3475
 	* we consider a neo-hookean model for the background isotropic contribution.
 	*/
+	//using ReferenceNeighborDiffusionList = StdVec<ReferenceNeighboringParticleDiffusion>;
+
 	class Muscle : public ElasticSolid
 	{
 	protected:
 		StdVec<Vecd> f0_, s0_;				/**< Fiber direction. */
-		StdVec<Matd> f0f0_, s0s0_, f0s0_;	/**< Sheet direction. */
-		/**
-		 * @brief Setup the local properties, fiber and sheet direction.
-		 * @param[in] elasticsolid_particles Particles of elastic solid. 
-		 */
-		virtual void SetupLocalProperties(ElasticSolidParticles &elasticsolid_particles) override;
+		StdVec<Matd> f0f0_, s0s0_, f0s0_, diff_cd_0;	/**< Sheet direction. */
 	public:
 		/** consitutive parameters */
 		Real a_0_[4], b_0_[4];
 		Vecd d_0_;
+
+		/** Reference inner diffusion tensor configurations for totoal Lagrangian formulation. */
+		//StdVec<ReferenceNeighborDiffusionList> reference_inner_diffusionn_tensor_;
 
 		Muscle(string elastic_solid_name, SPHBody *body, Real a_0[4], Real b_0[4], Vecd d_0,
 			Real rho_0 = 1.0, Real poisson = 0.49, Real eta_0 = 0.0);
@@ -163,20 +170,38 @@ namespace SPH {
 		/** the interface for dynamical cast*/
 		virtual Muscle* PointToThisObject() override { return this; };
 		/**
+		 * @brief Setup the local properties, fiber and sheet direction.
+		 * @param[in] elasticsolid_particles Particles of elastic solid. 
+		 */
+		virtual void SetupLocalProperties(SPHBody *body) override {};
+		/**
 		 * @brief compute the stree through Constitutive relation.
 		 * @param[in] deform_grad defromation gradient
 		 * @param[in] particle_index_i Particle index
 		 */
 		virtual Matd ConstitutiveRelation(Matd &deform_grad, size_t particle_index_i) override;
 		/**
+		 * @brief compute the active stree through Constitutive relation.
+		 * @param[in] deform_grad defromation gradient
+		 * @param[in] T_a active contraction stress
+		 * @param[in] particle_index_i Particle index
+		 */
+		virtual Matd ConstitutiveRelationOfActiveStress(Matd &deform_grad, Real T_a, size_t particle_index_i);
+		/**
 		 * @brief get the diffusion tensor of muscle material.
 		 * @param[in]	pnt Position of particles.
 		 */
-		Matd getDiffussionTensor(Vecd pnt);
+		Matd getDiffussionTensor(size_t particle_index_i);
 		/**
 		 * @brief get the trace of diffusion matrix.
 		 * @param[in]	pnt Position of particles.
 		 */
-		Real getDiffusionTensorTrace(Vecd pnt);
+		Real getDiffusionTensorTrace(size_t particle_index_i);
+		// /**
+		//  * @brief get the trace of diffusion matrix.
+		//  * @param[in]	index_i Particle index i
+		//  * @param[in] 	index_j Paeticle index j
+		//  */
+		// Matd getReferenceAverageDiffusionTensor(size_t index_i, size_t index_j);
 	};
 }

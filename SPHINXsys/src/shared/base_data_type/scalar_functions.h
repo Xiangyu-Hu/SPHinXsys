@@ -1,7 +1,7 @@
 #ifndef SPHINXSYS_BASE_SCALARFUNC_H
 #define SPHINXSYS_BASE_SCALARFUNC_H
 
-#include <cstdlib>
+#include <cmath>
 #include <algorithm>
 
 namespace SPH {
@@ -9,13 +9,13 @@ namespace SPH {
 	template<class T>
 	inline T sqr(const T& x)
 	{
-		return x*x;
+		return x * x;
 	}
 
 	template<class T>
 	inline T cube(const T& x)
 	{
-		return x*x*x;
+		return x * x * x;
 	}
 
 	//Get the nth power
@@ -120,6 +120,12 @@ namespace SPH {
 	{
 		return (x < 0) ? -1 : ((x > 0) ? 1 : 0);
 	}
+	/** Heaviside step function */
+	template<class T>
+	inline T HSF(const T& x)
+	{
+		return 0.5 * (1.0 + SGN(x));
+	}
 
 	template<class T>
 	inline T clamp(T a, T lower, T upper)
@@ -134,5 +140,16 @@ namespace SPH {
 	{
 		return (std::isnan(a) || !(std::isfinite(a))) ? true : false;
 	}
+
+	/** rotating axis once according to right hand rule.
+	 * The axis_direction must be 0, 1 for 2d and 0, 1, 2 for 3d
+	 */
+	int SeondAxis(int axis_direction);
+	/** rotating axis twice  according to right hand rule.
+	  * The axis_direction must be 0, 1 for 2d and 0, 1, 2 for 3d
+	  */
+	int ThirdAxis(int axis_direction);
+	
+
 }
 #endif //SPHINXSYS_BASE_SCALARFUNC_H

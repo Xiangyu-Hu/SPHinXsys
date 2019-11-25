@@ -1,3 +1,9 @@
+/**
+ * @file 	relax_dynamics.cpp
+ * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @version	0.1
+ */
+
 #include "relax_dynamics.h"
 #include "relax_body.h"
 #include "relax_body_particles.h"
@@ -8,20 +14,13 @@
 #include "math.h"
 
 using namespace SimTK;
-
+//=================================================================================================//
 namespace SPH
 {
+//=================================================================================================//
 	namespace relax_dynamics
 	{
-		//===========================================================//
-		void RelaxDynamicsInitialCondition::Update(size_t index_particle_i, Real dt)
-		{
-			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-
-			base_particle_data_i.vel_n_(0);
-			base_particle_data_i.dvel_dt_(0);
-		}
-		//===========================================================//
+//=================================================================================================//
 		GetTimeStepSize::GetTimeStepSize(RelaxBody* body) 
 			: RelaxDynamicsMin(body)
 		{
@@ -29,7 +28,7 @@ namespace SPH
 			Real eta = 0.1 * 1.3 * body->particle_spacing_;
 			initial_reference_ = 0.125 * smoothing_length_* smoothing_length_ * 1.0 / (eta + 1.0e-15);
 		}
-		//===========================================================//
+//=================================================================================================//
 		Real GetTimeStepSize::ReduceFunction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i
@@ -38,7 +37,7 @@ namespace SPH
 			return 0.25 * SMIN(sqrt(smoothing_length_ / (base_particle_data_i.dvel_dt_.norm() + 1.0e-15)),
 				smoothing_length_ / (40 * base_particle_data_i.vel_n_.norm() + 1.0e-15));
 		}
-		//===========================================================//
+//=================================================================================================//
 		PhysicsRelaxationInner::PhysicsRelaxationInner(RelaxBody *body)
 			: RelaxDynamicsInner1Level(body)
 		{
@@ -49,7 +48,7 @@ namespace SPH
 			eta_ = 0.1 * 1.3 * body_->particle_spacing_;
 			p_star_ = 2.0;
 		}
-		//===========================================================//
+//=================================================================================================//
 		void PhysicsRelaxationInner::Initialization(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i
@@ -57,7 +56,7 @@ namespace SPH
 
 			base_particle_data_i.pos_n_ += base_particle_data_i.vel_n_ * dt * 0.5;
 		}
-		//===========================================================//
+//=================================================================================================//
 		void PhysicsRelaxationInner::InnerInteraction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i
@@ -80,7 +79,7 @@ namespace SPH
 				RelaxBodyParticleData &relax_data_j
 					= particles_->relax_body_data_[index_particle_j];
 
-				acceleration -= 2.0 * p_star_ * neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_)
+				acceleration -= 2.0 * p_star_ * neighboring_particle.dW_ij_ * neighboring_particle.e_ij_
 					* base_particle_data_j.Vol_ * base_particle_data_i.Vol_;
 				//viscous force
 				Vecd vel_detivative = (base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_)
@@ -119,7 +118,7 @@ namespace SPH
 			
 			base_particle_data_i.dvel_dt_ = acceleration;
 		}
-		//===========================================================//
+//=================================================================================================//
 		void PhysicsRelaxationInner::Update(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i
@@ -130,7 +129,7 @@ namespace SPH
 			base_particle_data_i.vel_n_ = base_particle_data_i.dvel_dt_* dt;
 			base_particle_data_i.pos_n_ += base_particle_data_i.vel_n_ * dt * 0.5;
 		}
-		//===========================================================//
+//=================================================================================================//
 		PhysicsRelaxationComplex::PhysicsRelaxationComplex(RelaxBody *body, StdVec<RelaxBody*> interacting_bodies)
 			: RelaxDynamicsComplex1Level(body, interacting_bodies)
 		{
@@ -138,13 +137,13 @@ namespace SPH
 			eta_ = 0.25 * smoothing_length_;
 			p_star_ = 1.0;
 		}
-		//===========================================================//
+//=================================================================================================//
 		void PhysicsRelaxationComplex::Initialization(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 			base_particle_data_i.pos_n_ += base_particle_data_i.vel_n_ * dt * 0.5;
 		}
-		//===========================================================//
+//=================================================================================================//
 		void PhysicsRelaxationComplex::InnerInteraction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
@@ -161,7 +160,7 @@ namespace SPH
 				RelaxBodyParticleData &relax_data_j = particles_->relax_body_data_[index_particle_j];
 
 				acceleration -= 2.0*p_star_*base_particle_data_j.Vol_ * base_particle_data_i.Vol_
-					* neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_);
+					* neighboring_particle.dW_ij_ * neighboring_particle.e_ij_;
 				//viscous force
 				Vecd vel_detivative = (base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_)
 					/ neighboring_particle.r_ij_ ;
@@ -170,7 +169,7 @@ namespace SPH
 			}
 			base_particle_data_i.dvel_dt_ = acceleration;
 		}
-		//===========================================================//
+//=================================================================================================//
 		void PhysicsRelaxationComplex
 			::ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt)
 		{
@@ -191,7 +190,7 @@ namespace SPH
 
 				//pressure force
 				acceleration -= 2.0 * p_star_ * base_particle_data_j.Vol_ * base_particle_data_i.Vol_
-					* neighboring_particle.dW_ij_ * (-neighboring_particle.e_ij_);
+					* neighboring_particle.dW_ij_ * neighboring_particle.e_ij_;
 
 				//viscous force
 				Vecd vel_detivative = 2.0*base_particle_data_i.vel_n_ / neighboring_particle.r_ij_ ;
@@ -200,7 +199,7 @@ namespace SPH
 			}
 			base_particle_data_i.dvel_dt_ += acceleration;
 		}
-		//===========================================================//
+//=================================================================================================//
 		void PhysicsRelaxationComplex::Update(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
@@ -209,7 +208,7 @@ namespace SPH
 			base_particle_data_i.pos_n_ += base_particle_data_i.vel_n_ * dt * 0.5;
 
 		}
-		//===========================================================//
+//=================================================================================================//
 		void ConstriantSurfaceParticles ::ConstraintAParticle(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
@@ -225,6 +224,8 @@ namespace SPH
 				base_particle_data_i.pos_n_ += (ABS(phi) + 0.5 * body_->particle_spacing_) * norm;
 			}
 		}
-		//===========================================================//
+//=================================================================================================//
 	}
+//=================================================================================================//
 }
+//=================================================================================================//

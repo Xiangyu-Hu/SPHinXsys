@@ -254,9 +254,9 @@ public:
 	{
 		//geometry
 		std::vector<Point> wave_maker_shape = CreatWaveMakerShape();
-		soild_body_part_region_.add_polygon(wave_maker_shape, RegionBooleanOps::add);
+		body_part_region_.add_polygon(wave_maker_shape, RegionBooleanOps::add);
 		//finish the region modeling
-		soild_body_part_region_.done_modeling();
+		body_part_region_.done_modeling();
 
 		//tag the constrained particle
 		TagBodyPartParticles();
@@ -370,19 +370,6 @@ int main()
 	//methods only used only once
 	//-------------------------------------------------------------------
 
-	  /** initial condition for fluid body */
-	fluid_dynamics::WeaklyCompressibleFluidInitialCondition set_all_fluid_particles_at_rest(water_block);
-	//obtain the initial number density
-	fluid_dynamics::InitialNumberDensity
-		fluid_initial_number_density(water_block, 
-			{ wall_boundary,  gate_base, gate });
-
-
-	/** initial condition for the solid body */
-	solid_dynamics::SolidDynamicsInitialCondition set_all_wall_particles_at_rest(wall_boundary);
-	/** initial condition for the elastic solid bodies */
-	solid_dynamics::ElasticSolidDynamicsInitialCondition set_all_gate_base_particles_at_rest(gate_base);
-	solid_dynamics::ElasticSolidDynamicsInitialCondition set_all_gate_particles_at_rest(gate);
 	//initialize normal direction of the wall boundary
 	solid_dynamics::NormalDirectionSummation 
 		get_wall_normal(wall_boundary, {});
@@ -415,13 +402,13 @@ int main()
 	//time step size with considering sound wave speed
 	fluid_dynamics::GetAcousticTimeStepSize		get_fluid_time_step_size(water_block);
 	//pressure relaxation using verlet time stepping
-	fluid_dynamics::PressureRelaxationVerletFreeSurface
-		pressure_relaxation(water_block, 
-			{ wall_boundary,  gate_base, gate }, &gravity);
+	fluid_dynamics::PressureRelaxationFirstHalfRiemann
+		pressure_relaxation_first_half(water_block, { wall_boundary,  gate_base, gate });
+	fluid_dynamics::PressureRelaxationSecondHalfRiemann
+		pressure_relaxation_second_half(water_block, { wall_boundary,  gate_base, gate });
 
 	//FSI
-	solid_dynamics::FluidPressureForceOnSolid
-		fluid_pressure_force_on_gate(gate, { water_block }, &gravity);
+	solid_dynamics::FluidPressureForceOnSolid fluid_pressure_force_on_gate(gate, { water_block });
 
 	//solid dynmaics
 	//time step size caclutation
@@ -480,27 +467,23 @@ int main()
 	/**
 	 * @brief Prepare quantities will be used once only and initial condition.
 	 */
-	set_all_fluid_particles_at_rest.exec();
-	set_all_wall_particles_at_rest.exec();
-	set_all_gate_base_particles_at_rest.exec();
-	set_all_gate_particles_at_rest.exec();
-
 	get_wall_normal.parallel_exec();
 	get_gate_base_normal.parallel_exec();
 	get_gate_normal.parallel_exec();
-	fluid_initial_number_density.parallel_exec();
 	gate_corrected_configuration_in_strong_form.parallel_exec();
 	gate_base_corrected_configuration_in_strong_form.parallel_exec();
 
 	//initial output
 	write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
 
-	int ite = 0;
+	int number_of_iterations = system.restart_step_;
+	int screen_output_interval = 100;
 	Real End_Time = 10.0;
 	//time step size for oupt file
 	Real D_Time = End_Time/100.0;
 	Real Dt = 0.0;//default advection time step sizes
 	Real dt = 0.0; //default accoustic time step sizes
+	Real dt_s = 0.0;	/**< Default acoustic time step sizes for solid. */
 
 	//statistics for computing time
 	tick_count t1 = tick_count::now();
@@ -518,35 +501,21 @@ int main()
 
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt) {
-
-				if (ite % 100 == 0) {
-					cout << "N=" << ite << " Time: "
-						<< GlobalStaticVariables::physical_time_ << "	dt: "
-						<< dt << "\n";
-				}
-
 				wave_making.parallel_exec(dt);
-				//fluid dynamics
-				pressure_relaxation.parallel_exec(dt);
-
+				//fluid dynamic, first half 
+				pressure_relaxation_first_half.parallel_exec(dt);
 				//FSI on pressure force
 				fluid_pressure_force_on_gate.parallel_exec();
+				//fluid dynamic, second half 
+				pressure_relaxation_second_half.parallel_exec(dt);
 
 				//solid dynamics
 				Real dt_s_sum = 0.0;
 				gate_initialize_displacement.parallel_exec();
 				while (dt_s_sum < dt) 
 				{
-
-					Real dt_s = gate_computing_time_step_size.parallel_exec();
+					dt_s = gate_computing_time_step_size.parallel_exec();
 					if (dt - dt_s_sum < dt_s) dt_s = dt - dt_s_sum;
-
-					if (ite % 100 == 0) {
-						cout << "N=" << ite << " Time: "
-							<< GlobalStaticVariables::physical_time_ << "	dt_s: "
-							<< dt_s << "\n";
-					}
-
 					gate_base_stress_update_first_half.parallel_exec(dt_s);
 					gate_stress_relaxation.parallel_exec(dt_s);
 					gate_base_stress_update_second_half.parallel_exec(dt_s);
@@ -554,13 +523,20 @@ int main()
 				}
 				gate_average_velocity.parallel_exec(dt);
 
-				ite++;
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integeral_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
 			
+			if (number_of_iterations % screen_output_interval == 0)
+			{
+				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+					<< GlobalStaticVariables::physical_time_
+					<< "	Dt = " << Dt << "	dt = " << dt << "	dt_s = " << dt_s << "\n";
+			}
+			number_of_iterations++;
+
 			//water block confifuration
 			update_water_block_cell_linked_list.parallel_exec();
 			update_water_block_configuration.parallel_exec();

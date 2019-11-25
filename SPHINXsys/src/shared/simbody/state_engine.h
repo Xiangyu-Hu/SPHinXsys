@@ -11,6 +11,7 @@
  * @version	0.1.
  */
 #pragma once
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_data_package.h"
 #include "array.h"

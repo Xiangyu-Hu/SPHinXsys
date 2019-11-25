@@ -30,7 +30,7 @@ namespace SPH
 				vort[0] = vel_diff[1] * r_ij[2] - vel_diff[2] * r_ij[1];
 				vort[1] = vel_diff[2] * r_ij[0] - vel_diff[0] * r_ij[2];
 				vort[2] = vel_diff[0] * r_ij[1] - vel_diff[1] * r_ij[0];
-				vort_temp += vort * base_particle_data_j.Vol_ * neighboring_particle.dW_ij_;
+				vort_temp -= vort * base_particle_data_j.Vol_ * neighboring_particle.dW_ij_;
 			}
 
 			fluid_data_i.vorticity_ = vort_temp;

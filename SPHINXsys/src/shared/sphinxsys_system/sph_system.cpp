@@ -3,6 +3,7 @@
  * @brief 	Definatioin of all the functions decleared in spy_system.h
  * @author  Xiangyu Hu, Luhui Han and Chi Zhang
  */
+
 #include "sph_system.h"
 #include "all_kernels.h"
 #include "base_body.h"
@@ -12,7 +13,7 @@ namespace SPH
 {
 	//===============================================================//
 	SPHSystem::SPHSystem(Vecd lower_bound, Vecd upper_bound,
-		Real particle_spacing_ref, size_t number_of_threads)
+		Real particle_spacing_ref, int number_of_threads)
 		: lower_bound_(lower_bound), upper_bound_(upper_bound),
 		particle_spacing_ref_(particle_spacing_ref), tbb_init_(number_of_threads),
 		restart_step_(0), reload_particle_(false)

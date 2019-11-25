@@ -216,21 +216,14 @@ int main()
 	/**
 	 * @brief 	Algorithms for periodic BCs.
 	 */
-	 /** Periodic BCs bounding. */
-	PeriodicConditionInXDirection 		periodic_condition(relax_water);
-	/** Periodic boundary condition. */
-	PeriodicBoundingInXDirection 		periodic_bounding(relax_water);
+	 /** Periodic bounding in x direction. */
+	PeriodicBoundingInAxisDirection 	periodic_bounding(relax_water, 0);
+	/** Periodic BCs in x direction. */
+	PeriodicConditionInAxisDirection 	periodic_condition(relax_water, 0);
 	/** Random reset the relax solid particle position. */
 	RandomizePartilePosition  random_relax_solid_particles(relax_solid);
 	/** Random reset the water particle position. */
 	RandomizePartilePosition random_relax_water_particles(relax_water);
-
-	/**
-	 * @brief 	Methods used only once.
-	 */
-	 /** initial condition for fluid body */
-	relax_dynamics::RelaxDynamicsInitialCondition set_all_relax_water_particles_at_rest(relax_water);
-	relax_dynamics::RelaxDynamicsInitialCondition set_all_relax_solid_particles_at_rest(relax_solid);
 
 	/**
 	 * @brief 	Algorithms for particle relaxation.
@@ -264,8 +257,6 @@ int main()
 	 * @brief 	Physics relaxation starts here.
 	 */
 	 /** Relax the elastic structure. */
-	set_all_relax_water_particles_at_rest.exec();
-	set_all_relax_solid_particles_at_rest.exec();
 	random_relax_solid_particles.parallel_exec();
 	random_relax_water_particles.parallel_exec();
 	constrain_particles_to_gemotery.parallel_exec();
@@ -305,6 +296,7 @@ int main()
 	std::cout << "The physics relaxation of fluid process finish !" << std::endl;
 	/** Output results. */
 	write_states_to_plt.WriteToFile(1.0);
+	write_states_to_vtu.WriteToFile(1.0);
 	write_particle_reload_files.WriteToFile(0);
 
 	return 0;

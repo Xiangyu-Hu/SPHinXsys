@@ -11,4 +11,5 @@ particle dynamics capabilities. **/
 #include "observer_dynamics.h"
 #include "relax_dynamics.h"
 #include "electro_physiology.h"
+#include "electro_mechanics.h"
 

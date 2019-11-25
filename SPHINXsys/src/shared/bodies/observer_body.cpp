@@ -1,9 +1,5 @@
 /**
  * @file 	observer_body.cpp
- * @brief 	This is the class for bodies recording the state of the flow or solid
- * 			in given locations. This body has no inner configuration so that no
- * 			cell linked list is requires. However, it has contact configuration to
- * 			the body it is obesering.
  * @author	Chi ZHang and Xiangyu Hu
  * @version	0.1
  */

@@ -1,3 +1,9 @@
+/**
+ * @file 	base_particle_dynamics.cpp
+ * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @version	0.1
+ */
+
 #include "base_particle_dynamics.h"
 #include "base_particle_dynamics.hpp"
 

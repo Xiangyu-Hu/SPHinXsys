@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
@@ -182,16 +183,17 @@ namespace SPH {
 	 * @brief  output body sates if paritcle velocity
 	 * out of a bound
 	 */
-	class WriteToPltIfVelocityOutOfBound
-		: public WriteBodyStatesToPlt
+	class WriteToVtuIfVelocityOutOfBound
+		: public WriteBodyStatesToVtu
 	{
 	protected:
 		StdVec<VelocityBoundCheck *> check_bodies_;
 	public:
-		WriteToPltIfVelocityOutOfBound(In_Output& in_output,
+		WriteToVtuIfVelocityOutOfBound(In_Output& in_output,
 			SPHBodyVector bodies, Real velocity_bound);
-		virtual ~WriteToPltIfVelocityOutOfBound() {};
+		virtual ~WriteToVtuIfVelocityOutOfBound() {};
 
+		bool out_of_bound_;
 		virtual void WriteToFile(Real time) override;
 	};
 
@@ -238,7 +240,7 @@ namespace SPH {
 		public observer_dynamics::ObserveFluidVelocity
 	{
 	protected:
-		size_t dimension_;
+		int dimension_;
 		ObserverBody * observer_;
 		std::string filefullpath_;
 	public:
@@ -292,17 +294,17 @@ namespace SPH {
 	};
 
 	/**
-	 * @class WriteWaterMechanicalEnergy
+	 * @class WriteTotalMechanicalEnergy
 	 * @brief write files for the total mechanical energy of a weakly compressible fluid body
 	 */
-	class WriteWaterMechanicalEnergy 
+	class WriteTotalMechanicalEnergy 
 		: public WriteBodyStates, public fluid_dynamics::TotalMechanicalEnergy
 	{
 	protected:
 		std::string filefullpath_;
 	public:
-		WriteWaterMechanicalEnergy(In_Output& in_output, FluidBody* water_block, ExternalForce* external_force);
-		virtual ~WriteWaterMechanicalEnergy() {};
+		WriteTotalMechanicalEnergy(In_Output& in_output, FluidBody* water_block, ExternalForce* external_force);
+		virtual ~WriteTotalMechanicalEnergy() {};
 		virtual void WriteToFile(Real time = 0.0) override;
 	};
 

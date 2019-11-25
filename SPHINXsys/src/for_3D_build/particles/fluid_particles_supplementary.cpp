@@ -34,7 +34,7 @@ namespace SPH
 		output_file << "    <DataArray Name=\"Particle_ID\" type=\"Int32\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << base_particle_data_[i].particle_ID_ << " ";
+			output_file << i << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -88,24 +88,12 @@ namespace SPH
 			output_file << base_particle_data_[i].pos_n_[0] << "  "
 				<< base_particle_data_[i].pos_n_[1] << "  "
 				<< base_particle_data_[i].pos_n_[2] << "  "
-				<< base_particle_data_[i].particle_ID_ << "  "
+				<< i << "  "
 				<< fluid_particle_data_[i].rho_n_ << " "
 				<< base_particle_data_[i].vel_n_[0] << " " 
 				<< base_particle_data_[i].vel_n_[1] << " " 
 				<< base_particle_data_[i].vel_n_[2] << "\n ";
 		}
-	}
-	//===============================================================//
-	void FluidParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)
-	{
-		cout << "\n This function FluidParticles::WriteParticlesToXmlForRestart is not done in 3D. Exit the program! \n";
-		exit(0);
-	}
-	//===============================================================//
-	void FluidParticles::ReadParticleFromXmlForRestart(std::string &filefullpath)
-	{
-		cout << "\n This function FluidParticles::WriteParticlesToXmlForRestart is not done in 3D. Exit the program! \n";
-		exit(0);
 	}
 	//===============================================================//
 	void ViscoelasticFluidParticles::WriteParticlesToVtuFile(ofstream &output_file)
@@ -134,7 +122,7 @@ namespace SPH
 		output_file << "    <DataArray Name=\"Particle_ID\" type=\"Int32\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << base_particle_data_[i].particle_ID_ << " ";
+			output_file << i << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -178,24 +166,12 @@ namespace SPH
 			output_file << base_particle_data_[i].pos_n_[0] << "  "
 				<< base_particle_data_[i].pos_n_[1] << "  "
 				<< base_particle_data_[i].pos_n_[2] << "  "
-				<< base_particle_data_[i].particle_ID_ << "  "
+				<< i << "  "
 				<< fluid_particle_data_[i].rho_n_ << " "
 				<< base_particle_data_[i].vel_n_[0] << " "
 				<< base_particle_data_[i].vel_n_[1] << " "
 				<< base_particle_data_[i].vel_n_[2] << "\n ";
 		}
-	}
-	//===============================================================//
-	void ViscoelasticFluidParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)
-	{
-		cout << "\n This function ViscoelasticFluidParticles::WriteParticlesToXmlForRestart is not done in 3D. Exit the program! \n";
-		exit(0);
-	}
-	//===============================================================//
-	void ViscoelasticFluidParticles::ReadParticleFromXmlForRestart(std::string &filefullpath)
-	{
-		cout << "\n This function ViscoelasticFluidParticles::ReadParticleFromXmlForRestart is not done in 3D. Exit the program! \n";
-		exit(0);
 	}
 	//===============================================================//
 }

@@ -33,7 +33,7 @@ namespace SPH {
 		output_file << "    <DataArray Name=\"Particle_ID\" type=\"Int32\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << base_particle_data_[i].particle_ID_ << " ";
+			output_file << i << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -63,22 +63,7 @@ namespace SPH {
 			output_file << base_particle_data_[i].pos_n_[0] << "  "
 				<< base_particle_data_[i].pos_n_[1] << "  "
 				<< base_particle_data_[i].pos_n_[2] << "  "
-				<< base_particle_data_[i].particle_ID_ << "\n ";
+				<< i << "\n ";
 		}
 	}
-	//===========================================================//
-	void RelaxBodyParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)
-	{
-		cout << "\n This function RelaxBodyParticles::WriteParticlesToXmlForRestart is not done. Exit the program! \n";
-		exit(0);
-
-	}
-	//===========================================================//
-	void RelaxBodyParticles::ReadParticleFromXmlForRestart(std::string &filefullpath)
-	{
-		cout << "\n This function RelaxBodyParticles::WriteParticlesToXmlForRestart is not done. Exit the program! \n";
-		exit(0);
-
-	}
-	//===========================================================//
 }

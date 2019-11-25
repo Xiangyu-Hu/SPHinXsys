@@ -297,6 +297,33 @@ namespace SPH {
 
 	SimTK::Real TensorDoubleDotProduct(Mat2d &A, Mat2d &B);
 	SimTK::Real TensorDoubleDotProduct(Mat3d &A, Mat3d &B);
+
+	/**
+	 * @class Transform2d
+	 * @brief Coordinate transfrom in 2D
+	 */
+	class Transform2d {
+		using Real = SimTK::Real;
+		Real rotation_angle_;
+		Vec2d translation_;
+	public:
+		Transform2d(SimTK::Real rotation_angle)
+			: rotation_angle_(rotation_angle), translation_(0) {};
+		Transform2d(SimTK::Real rotation_angle, Vec2d translation)
+			: rotation_angle_(rotation_angle), translation_(translation) {};
+		/** Forward tranformation. */
+		Vec2d ImposeTransform(Vec2d& origin) {
+			Vec2d result(origin[0] * cos(rotation_angle_) - origin[1] * sin(rotation_angle_),
+				origin[1] * cos(rotation_angle_) + origin[0] * sin(rotation_angle_));
+				return result + translation_;
+		};
+		/** Inverse tranformation. */
+		Vec2d ImposeInverseTransform(Vec2d& result) {
+			Vec2d origin(result[0] * cos(-rotation_angle_) - result[1] * sin(-rotation_angle_),
+				result[1] * cos(-rotation_angle_) + result[0] * sin(-rotation_angle_));
+			return origin - translation_;
+		};
+	};
 }
 
 #endif //SPHINXSYS_BASE_SMALLVEC_H

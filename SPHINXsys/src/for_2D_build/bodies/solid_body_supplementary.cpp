@@ -1,8 +1,11 @@
-#include "solid_body.h"
-#include "elastic_solid.h"
-#include "solid_particles.h"
-#include "sph_system.h"
+/**
+ * @file 	solid_body_supplementary.cpp
+ * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @version	0.1
+ */
 
+#include "solid_body.h"
+#include "solid_particles.h"
 
 namespace SPH {
 	//===============================================================//

@@ -1,3 +1,9 @@
+/**
+ * @file 	solid_particles_supplementary.cpp
+ * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @version	0.1
+ */
+
 #include "solid_particles.h"
 #include "base_body.h"
 
@@ -26,7 +32,7 @@ namespace SPH {
 		output_file << "    <DataArray Name=\"Particle_ID\" type=\"Int32\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << base_particle_data_[i].particle_ID_ << " ";
+			output_file << i << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -62,31 +68,10 @@ namespace SPH {
 		{
 			output_file << base_particle_data_[i].pos_n_[0] << "  "
 						<< base_particle_data_[i].pos_n_[1] << "  "
-						<< base_particle_data_[i].particle_ID_ << "  "
+						<< i << "  "
 						<< solid_body_data_[i].n_[0] << "  "
 						<< solid_body_data_[i].n_[1] << "\n ";
 		}
-	}
-//=================================================================================================//
-	void SolidParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)
-	{
-		XmlEngine* restart_xml = new XmlEngine("particles_xml", "particles");
-
-		size_t number_of_particles = body_->number_of_particles_;
-		for(size_t i = 0; i != number_of_particles; ++i)
-  		{
-  			restart_xml->CreatXmlElement("particle");
-    		restart_xml->AddAttributeToElement("ID",base_particle_data_[i].particle_ID_);
-    		restart_xml->AddAttributeToElement("Position",base_particle_data_[i].pos_n_);
-    		restart_xml->AddAttributeToElement("Volume",base_particle_data_[i].Vol_);
-    		restart_xml->AddElementToXmlDoc();
-  		}
-  		restart_xml->WriteToXmlFile(filefullpath);
-	}
-//=================================================================================================//
-	void SolidParticles::ReadParticleFromXmlForRestart(std::string &filefullpath)
-	{
-		/** Nothing should be done for non-moving BCs. */
 	}
 //=================================================================================================//
 	Real ElasticSolidParticles::von_Mises_stress(size_t particle_i)
@@ -127,7 +112,7 @@ namespace SPH {
 		output_file << "    <DataArray Name=\"Particle_ID\" type=\"Int32\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << base_particle_data_[i].particle_ID_ << " ";
+			output_file << i << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -189,54 +174,10 @@ namespace SPH {
 		{
 			output_file << base_particle_data_[i].pos_n_[0] << "  "
 				<< base_particle_data_[i].pos_n_[1] << "  "
-				<< base_particle_data_[i].particle_ID_ << "  "
+				<< i << "  "
 				<< solid_body_data_[i].n_[0] << "  "
 				<< solid_body_data_[i].n_[1] << "  "
 				<< von_Mises_stress(i) << "\n ";
-		}
-	}
-//=================================================================================================//
-	void ElasticSolidParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)
-	{
-		XmlEngine* restart_xml = new XmlEngine("particles_xml", "particles");
-		
-		size_t number_of_particles = body_->number_of_particles_;
-		for(size_t i = 0; i != number_of_particles; ++i)
-  		{
-  			restart_xml->CreatXmlElement("particle");
-    		restart_xml->AddAttributeToElement("ID",base_particle_data_[i].particle_ID_);
-    		restart_xml->AddAttributeToElement("Position",base_particle_data_[i].pos_n_);
-    		restart_xml->AddAttributeToElement("Volume",base_particle_data_[i].Vol_);
-    		restart_xml->AddAttributeToElement("Density", elastic_body_data_[i].rho_n_);
-    		restart_xml->AddAttributeToElement("Velocity",base_particle_data_[i].vel_n_);
-    		restart_xml->AddAttributeToElement("Displacement",elastic_body_data_[i].pos_temp_); 		
-    		restart_xml->AddAttributeToElement("DefTensor", elastic_body_data_[i].F_);
-    		restart_xml->AddElementToXmlDoc();
-  		}
-  		restart_xml->WriteToXmlFile(filefullpath);
-	}
-//=================================================================================================//
-	void ElasticSolidParticles::ReadParticleFromXmlForRestart(std::string &filefullpath)
-	{
-		size_t number_of_particles = 0;
-		XmlEngine* read_xml = new XmlEngine();
-		read_xml->LoadXmlFile(filefullpath);
-		SimTK::Xml::element_iterator ele_ite_ = read_xml->root_element_.element_begin();
-		for (; ele_ite_ != read_xml->root_element_.element_end(); ++ele_ite_)
-		{
-			Vecd pos_ = read_xml->GetRequiredAttributeVectorValue(ele_ite_, "Position");
-			base_particle_data_[number_of_particles].pos_n_ = pos_;
-			Real rst_Vol_ = read_xml->GetRequiredAttributeRealValue(ele_ite_, "Volume");
-			base_particle_data_[number_of_particles].Vol_ = rst_Vol_;
-			Vecd rst_vel_ = read_xml->GetRequiredAttributeVectorValue(ele_ite_, "Velocity");
-			base_particle_data_[number_of_particles].vel_n_ = rst_vel_;
-			Real rst_rho_n_ = read_xml->GetRequiredAttributeRealValue(ele_ite_, "Density");
-			elastic_body_data_[number_of_particles].rho_n_ = rst_rho_n_;
-			Vecd rst_dis_ = read_xml->GetRequiredAttributeVectorValue(ele_ite_, "Displacement");
-			elastic_body_data_[number_of_particles].pos_temp_ = rst_dis_;
-			Matd rst_F_ = read_xml->GetRequiredAttributeMatrixValue(ele_ite_, "DefTensor");
-			elastic_body_data_[number_of_particles].F_ = rst_F_;
-			number_of_particles++;
 		}
 	}
 //=================================================================================================//
@@ -261,7 +202,7 @@ namespace SPH {
 		output_file << "    <DataArray Name=\"Particle_ID\" type=\"Int32\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << base_particle_data_[i].particle_ID_ << " ";
+			output_file << i << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -278,6 +219,14 @@ namespace SPH {
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
 			output_file << fixed << setprecision(9) << muscle_body_data_[i].voltage_n_ << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+
+		output_file << "    <DataArray Name=\"T_a\" type=\"Float32\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != number_of_particles; ++i) {
+			output_file << muscle_body_data_[i].T_a_ << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -300,17 +249,19 @@ namespace SPH {
 	void MuscleParticles::WriteParticlesToPltFile(ofstream &output_file)
 	{
 		size_t number_of_particles = body_->number_of_particles_;
-		/*
-		output_file << " VARIABLES = \" x \", \"y\", \"ID\",\"Volume\", \" Voltage \" \n";
+		
+		output_file << " VARIABLES = \" x \", \"y\", \"ID\",\"Vx\",\"Vy\", \"Voltage\", \" Ta \" \n";
 		for (size_t i = 0; i != number_of_particles; ++i)
 		{
 			output_file << base_particle_data_[i].pos_n_[0] << "  "
 				<< base_particle_data_[i].pos_n_[1] << "  "
-				<< base_particle_data_[i].particle_ID_ << "  "
-				<< base_particle_data_[i].Vol_ << "  "
-				<< muscle_body_data_[i].voltage_n_ << "\n ";
+				<< i << "  "
+				<< base_particle_data_[i].vel_n_[0] << " "
+				<< base_particle_data_[i].vel_n_[1] << " "
+				<< muscle_body_data_[i].voltage_n_ << " "
+				<< muscle_body_data_[i].T_a_ << "\n ";
 		}
-		*/
+		/*
 		output_file << "\n";
 		output_file << "title='View'" << "\n";
 		output_file << "variables= " << "x, " << "y, " << "Phi, " << "\n";
@@ -347,6 +298,7 @@ namespace SPH {
 			}
 			output_file << " \n";
 		}
+		*/
 	}
 //=================================================================================================//
 }

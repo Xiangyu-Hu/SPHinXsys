@@ -17,9 +17,9 @@ namespace SPH {
 	using SymMatd = SymMat2d;
 
 	using matrix_i = int **;
-	using Angular = SimTK::Real;
+	using Rotationd = SimTK::Real;
+	using Transformd = Transform2d;
 
 	using matrix_cell = CellList **;
 	using matrix_grid = BackgroundData **;
-
 }

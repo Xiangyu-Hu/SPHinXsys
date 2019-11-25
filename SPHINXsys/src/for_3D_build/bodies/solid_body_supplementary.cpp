@@ -1,8 +1,5 @@
 #include "solid_body.h"
-#include "elastic_solid.h"
 #include "solid_particles.h"
-#include "sph_system.h"
-
 
 namespace SPH {
 	//===============================================================//

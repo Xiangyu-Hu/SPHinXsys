@@ -1,9 +1,12 @@
+/**
+ * @file 	fluid_body.cpp
+ * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @version	0.1
+ */
+
 #include "fluid_body.h"
-#include "mesh_cell_linked_list.h"
-#include "weakly_compressible_fluid.h"
-#include "fluid_particles.h"
 #include "sph_system.h"
-#include "base_kernel.h"
+#include "mesh_cell_linked_list.h"
 
 namespace SPH {
 	//===============================================================//
@@ -24,11 +27,10 @@ namespace SPH {
 		mesh_cell_linked_list_->UpdateContactConfiguration(*this);
 	}
 	//===============================================================//
-	FluidBodyPart
-		::FluidBodyPart(FluidBody *fluid_body, string fluid_body_part_name)
-		: EulerianBodyPart(fluid_body, fluid_body_part_name),
-		fluid_body_(fluid_body), fluid_body_part_region_(fluid_body_part_name)
+	FluidBodyPart::FluidBodyPart(FluidBody *fluid_body, string fluid_body_part_name)
+		: BodyPartByCell(fluid_body, fluid_body_part_name), fluid_body_(fluid_body)
 	{
 
 	}
+	//===============================================================//
 }

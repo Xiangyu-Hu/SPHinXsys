@@ -27,5 +27,19 @@ namespace SPH {
 	{
 		return this;
 	}
+	//===========================================================//
+	void RelaxBodyParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)
+	{
+		cout << "\n This function RelaxBodyParticles::WriteParticlesToXmlForRestart is not done. Exit the program! \n";
+		exit(0);
+
+	}
+	//===========================================================//
+	void RelaxBodyParticles::ReadParticleFromXmlForRestart(std::string &filefullpath)
+	{
+		cout << "\n This function RelaxBodyParticles::WriteParticlesToXmlForRestart is not done. Exit the program! \n";
+		exit(0);
+
+	}
 	//===============================================================//
 }

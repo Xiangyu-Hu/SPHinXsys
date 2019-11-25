@@ -1,6 +1,5 @@
 /**
  * @file observer_particles.cpp
- * @brief Definition of funcitons declared in observer_particles.h
  * @author	Chi Zhang and Xiangyu Hu
  * @version	0.1
  */

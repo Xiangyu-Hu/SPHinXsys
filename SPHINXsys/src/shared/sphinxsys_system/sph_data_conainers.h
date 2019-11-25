@@ -8,6 +8,8 @@
 
 #include "base_data_package.h"
 
+using namespace std;
+
 namespace SPH {
 	/**
 	 * @brief Friend classes.
@@ -21,12 +23,12 @@ namespace SPH {
 	using ListIndexVector = LargeVec<size_t>;	/**< Concurrent body index vector for cell linked lists. */
 
 	using ConcurrentIndexVector = LargeVec<size_t>;	/**< Concurrent particle index which can be used to store particle position of a container .*/
-	using ListDataVector = LargeVec<std::pair<size_t, Vecd>>;		/**< List of vector data. */
+	using ListDataVector = LargeVec<pair<size_t, Vecd>>;		/**< List of vector data. */
 
 	// index set
 	using IndexSet = LargeSet<size_t>;				/**< Index set. */
-	using ContactParticleList = ListIndexVector *;	/**< List of contact interacing partilces. */
+	using ContactParticleList = ListIndexVector;	/**< List of contact interacing partilces. */
 	using ByCellLists = StdVec<IndexVector> *;		/**< Index vector for by cell list. */
-	using PositionsAndVolumes = std::vector<std::pair<Point, Real>> ; /**< Pair of point and volume. */
+	using PositionsAndVolumes =vector<pair<Point, Real>> ; /**< Pair of point and volume. */
 
 }

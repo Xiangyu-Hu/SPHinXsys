@@ -73,7 +73,9 @@ namespace SPH
 			for (int i = 0; i < lower_bound.size(); ++i) 
 				lower_bound[i] = SMIN(x[i], y[i]);
 			return lower_bound;
-		}; };
+		}; 
+	};
+	
 	/**
 	 * @class GlobalStaticVariables
 	 * @brief A place to put all global variables
@@ -121,10 +123,14 @@ namespace SPH
 	class ParticleDynamics : public Dynamics<ReturnType>
 	{
 	protected:
+		/** the body involving the particle dynamics */
 		BodyType * body_;
+		/** the particles involving the particle dynamics */
 		ParticlesType *particles_;
+		/** the material involving the particle dynamics */
 		MaterialType *material_;
 
+		/** the function for set global parameters for the particle dynamics */
 		virtual void SetupDynamics(Real dt = 0.0) override {};
 	public:
 		/** Constructor */
@@ -145,9 +151,9 @@ namespace SPH
 	{
 	protected:
 		/** current inner confifuration of the designated body */
-		NeighborList *current_inner_configuration_;
+		StdVec<NeighborList> *current_inner_configuration_;
 		/** reference inner confifuration of the designated body */
-		ReferenceNeighborList *reference_inner_configuration_;
+		StdVec <ReferenceNeighborList> *reference_inner_configuration_;
 	public:
 		explicit ParticleDynamicsWithInnerConfigurations(BodyType* body);
 		virtual ~ParticleDynamicsWithInnerConfigurations() {};
@@ -168,11 +174,11 @@ namespace SPH
 		StdVec<InteractingMaterialType *>  interacting_material_;
 
 		/** lists of the original body particles contacted to interacting bodies*/
-		StdVec<ListIndexVector*> indexes_interacting_particles_;
+		StdVec<ContactParticleList*> indexes_interacting_particles_;
 		/** current interaction confifuration of the interacting bodies */
-		StdVec<NeighborList *> current_interacting_configuration_;
+		StdVec<StdVec<NeighborList>*> current_interacting_configuration_;
 		/** reference interaction confifuration of the designated body */
-		StdVec<ReferenceNeighborList *> reference_interacting_configuration_;
+		StdVec<StdVec<ReferenceNeighborList>*> reference_interacting_configuration_;
 	public:
 		explicit ParticleDynamicsWithContactConfigurations(BodyType *body, 
 			StdVec<InteractingBodyType*> interacting_bodies);
@@ -231,7 +237,7 @@ namespace SPH
 	protected:
 		ReduceOperation reduce_operation_;
 
-		//inital or refence value
+		/** inital or refence value */
 		ReturnType initial_reference_;
 		virtual void SetupReduce() {};
 		virtual ReturnType ReduceFunction(size_t index_particle_i, Real dt = 0.0) = 0;
@@ -285,7 +291,7 @@ namespace SPH
 		explicit ParticleDynamicsInnerSplitting(BodyType* body)
 			: ParticleDynamicsWithInnerConfigurations<BodyType, ParticlesType, MaterialType>(body),
 			by_cell_lists_particle_indexes_(body->by_cell_lists_particle_indexes_),
-			functor_inner_interaction_(std::bind(&ParticleDynamicsInnerSplitting::InnerInteraction, this, _1, _2)) {};
+			functor_inner_interaction_(std::bind(&ParticleDynamicsInnerSplitting<BodyType, ParticlesType, MaterialType>::InnerInteraction, this, _1, _2)) {};
 		virtual ~ParticleDynamicsInnerSplitting() {};
 
 		virtual void exec(Real dt = 0.0) override;
@@ -311,6 +317,36 @@ namespace SPH
 				InteractingBodyType, InteractingParticlesType, InteractingMaterialType>(body, interacting_bodies), 
 			functor_contact_interaction_(std::bind(&ParticleDynamicsContact::ContactInteraction, this, _1, _2, _3)) {};
 		virtual ~ParticleDynamicsContact() {};
+
+		virtual void exec(Real dt = 0.0) override;
+		virtual void parallel_exec(Real dt = 0.0) override;
+	};
+
+	/**
+	 * @class ParticleDynamicsComplexSplitting
+	 * @brief This is for the splitting algorihm
+	 * which taking account wall boundary conditions
+	 */
+	template <class BodyType, class ParticlesType, class MaterialType,
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType = Material>
+	class ParticleDynamicsComplexSplitting
+		: public ParticleDynamicsWithContactConfigurations<BodyType, ParticlesType, MaterialType,
+		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
+	{
+	protected:
+		ByCellLists by_cell_lists_particle_indexes_;
+
+		/** the inner interaction taking account wall boundary conditions,
+		  * but the function form is the same as the inner interaction. */
+		virtual void ParticleInteraction(size_t index_particle_i, Real dt = 0.0) = 0;
+		InnerFunctor functor_particle_interaction_;
+	public:
+		explicit ParticleDynamicsComplexSplitting(BodyType* body, StdVec<InteractingBodyType*> interacting_bodies)
+			: ParticleDynamicsWithContactConfigurations<BodyType, ParticlesType, MaterialType,
+			InteractingBodyType, InteractingParticlesType, InteractingMaterialType>(body, interacting_bodies),
+			by_cell_lists_particle_indexes_(body->by_cell_lists_particle_indexes_),
+			functor_particle_interaction_(std::bind(&ParticleDynamicsComplexSplitting::ParticleInteraction, this, _1, _2)) {};
+		virtual ~ParticleDynamicsComplexSplitting() {};
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;

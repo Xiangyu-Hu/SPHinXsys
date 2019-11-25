@@ -1,3 +1,9 @@
+/**
+ * @file 	weakly_compressible_fluid.cpp
+ * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @version	0.1
+ */
+
 #include "weakly_compressible_fluid.h"
 
 using namespace std;
@@ -5,10 +11,17 @@ using namespace std;
 namespace SPH {
 	//===============================================================//
 	WeaklyCompressibleFluid::WeaklyCompressibleFluid(string fluid_name, 
-		SPHBody *body, Real rho0, Real c0, Real mu, Real k) 
-		: Fluid(fluid_name, body, rho0, c0, mu, k)
+		SPHBody *body, Real rho_0, Real c_0, Real mu, Real k) 
+		: Fluid(fluid_name, body, rho_0, c_0, mu, k)
 	{
 		p0_ = rho_0_* c_0_ * c_0_;
+	}
+	//===============================================================//
+	WeaklyCompressibleFluid
+		::WeaklyCompressibleFluid(Real rho_0, Real c_0, Real mu, Real k)
+		: Fluid(rho_0, c_0, mu, k)
+	{
+		p0_ = rho_0_ * c_0_ * c_0_;
 	}
 	//===============================================================//
 	Real WeaklyCompressibleFluid::GetPressure(Real rho)
@@ -53,6 +66,13 @@ namespace SPH {
 			Real rho_0, Real c_0, Real mu, Real k)
 		:WeaklyCompressibleFluid(fluid_name, body, rho_0, c_0, mu, k),
 		gamma_(2)
+	{
+
+	}
+	//===============================================================//
+	SymmetricTaitFluid
+		::SymmetricTaitFluid(Real rho_0, Real c_0, Real mu, Real k)
+		:WeaklyCompressibleFluid(rho_0, c_0, mu, k), gamma_(2)
 	{
 
 	}

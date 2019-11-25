@@ -16,23 +16,30 @@
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
+#include "neighboring_particle.h"
 #include "geometry.h"
 
 #include <string>
 using namespace std;
 
 namespace SPH {
+	
 	/**
 	 * @brief preclaimed class.
 	 */
 	class SPHSystem;
-	class Output;
 	class Particles;
 	class Material;
 	class Reaction;
 	class Kernel;
 	class MeshCellLinkedList;
 	class MeshBackground;
+
+	using NeighborList = StdVec<NeighboringParticle>;
+	using ReferenceNeighborList = StdVec<ReferenceNeighboringParticle>;
+
+	using ContactNeighborList = StdVec<StdVec<NeighboringParticle>>;
+	using ReferenceContactNeighborList = StdVec<StdVec<ReferenceNeighboringParticle>>;
 
 	/**
 	 * @class ParticlesGeneratorOps
@@ -53,11 +60,13 @@ namespace SPH {
 	protected:
 		SPHSystem &sph_system_; 	/**< SPHSystem. */
 		string body_name_; 			/**< name of this body */
-		/** Ratio between smoothing length to particle spacing. */
-		Real smoothinglength_ratio_;		
+		/** smoothing length. */
+		Real smoothinglength_;		
 		/** Computing particle spacing from refinement level */
 		Real RefinementLevelToParticleSpacing();
 
+		/** change kernel function*/
+		void ReplaceKernelFunction(Kernel* kernel);
 	public:
 		/**
 		 * @brief Defaut constructor of SPHBody.
@@ -106,14 +115,16 @@ namespace SPH {
 		 * particles in each cell are collected together, 
 		 * if two partiles each belongs two different cell entries,
 		 * they have no interaction because they are too far.
+		 * Due to possible conflict for periodic boundary condition,
+		 * one may require the number of cells in each direction be divided by three.
 		 */
 		size_t number_of_by_cell_lists_;
 		ByCellLists by_cell_lists_particle_indexes_;
 		
 		/** Reference inner configurations for totoal Lagrangian formulation. */
-		ReferenceNeighborList reference_inner_configuration_;	
+		StdVec<ReferenceNeighborList> reference_inner_configuration_;	
 		/** current inner configurations for updated Lagrangian formulation. */
-		NeighborList current_inner_configuration_;
+		StdVec<NeighborList> current_inner_configuration_;
 		
 		/**
 		 * @brief Contact configurations
@@ -124,11 +135,11 @@ namespace SPH {
 		 /** Contact map: pointing to toplogically contacted bodies. **/
 		SPHBodyContactMap contact_map_;
 		/** Lists of particles has a ocnfiguration with particles in contaced bodies. **/
-		ContactParticleList indexes_contact_particles_;
+		StdVec<ContactParticleList> indexes_contact_particles_;
 		/** Configurations for total Lagrangian formulation.**/
-		ReferenceContactNeighborList reference_contact_configuration_;
+		StdVec<ReferenceContactNeighborList> reference_contact_configuration_;
 		/** Configurations for updated Lagrangian formulation. **/
-		ContactNeighborList current_contact_configuration_;				
+		StdVec<ContactNeighborList> current_contact_configuration_;				
 
 		/** Get the name of this body for out file name. */
 		string GetBodyName(); 
@@ -136,6 +147,8 @@ namespace SPH {
 		void SetContactMap(SPHBodyContactMap &contact_map);
 		/** Allocate memories for configuration. */
 		void AllocateMemoriesForConfiguration();
+		/** Allocate extra configuration memories for body buffer particles. */
+		void AllocateConfigurationMemoriesForBodyBuffer(size_t body_buffer_particles);
 
 		/** the reagion describe the geometry of the body.
 		 * static member, so the geoemtry head file is included. */
@@ -262,28 +275,33 @@ namespace SPH {
 	protected:
 		SPHBody *body_;
 		string body_part_name_;
+		Region body_part_region_;
+
 	public:
 		BodyPart(SPHBody *body, string body_part_name)
-			: body_(body), body_part_name_(body_part_name) {};
+			: body_(body), body_part_name_(body_part_name),
+			body_part_region_(body_part_name) {};
 		virtual ~BodyPart() {};
+
+		Region* GetRegion() { return &body_part_region_; };
 	};
 
 	/**
-	 * @class LagrangianBodyPart
+	 * @class BodyPartByParticle
 	 * @brief An auxillariy class for SPHBody to 
 	 * indicate a part of the body moving together with particles.
 	 */
-	class LagrangianBodyPart : public BodyPart
+	class BodyPartByParticle : public BodyPart
 	{
 	protected:
-		virtual void TagBodyPartParticles() = 0;
+		virtual void TagBodyPartParticles();
 	public:
 		/** Collection particle in this body part. */
 		IndexVector body_part_particles_;
 
-		LagrangianBodyPart(SPHBody *body, string body_part_name)
+		BodyPartByParticle(SPHBody *body, string body_part_name)
 			: BodyPart(body, body_part_name) {};
-		virtual ~LagrangianBodyPart() {};
+		virtual ~BodyPartByParticle() {};
 	};
 
 	/**
@@ -291,7 +309,7 @@ namespace SPH {
 	 * @brief An auxillariy class for SPHBody to
 	 * indicate a part of the body fixed in space.
 	 */
-	class EulerianBodyPart : public BodyPart
+	class BodyPartByCell : public BodyPart
 	{
 	protected:
 		virtual void TagBodyPartCells() = 0;
@@ -299,8 +317,8 @@ namespace SPH {
 		/** Collection of cells to indicate the body part. */
 		CellVector body_part_cells_;
 
-		EulerianBodyPart(SPHBody *body, string body_part_name)
+		BodyPartByCell(SPHBody *body, string body_part_name)
 			: BodyPart(body, body_part_name) {};
-		virtual ~EulerianBodyPart() {};
+		virtual ~BodyPartByCell() {};
 	};
 }

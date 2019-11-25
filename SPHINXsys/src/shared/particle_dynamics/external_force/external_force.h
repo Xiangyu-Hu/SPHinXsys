@@ -1,6 +1,6 @@
 /**
- * @file external_force.h
- * @brief Here, we define the base external foce class.
+ * @file 	external_force.h
+ * @brief 	Here, we define the base external foce class.
  * @details The simple derived classes, such as gravity will be defined in applicaitons.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  * @version	0.1

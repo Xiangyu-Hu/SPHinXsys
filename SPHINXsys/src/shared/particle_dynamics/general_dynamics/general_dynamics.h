@@ -1,7 +1,7 @@
 /**
 * @file 	general_dynamics.h
 * @brief 	This is the particle dynnamics apllicable for all type bodies
-* @author	Luhui Han, Chi ZHang and Xiangyu Hu
+* @author	Chi ZHang and Xiangyu Hu
 * @version	0.1
 */
 
@@ -13,7 +13,8 @@ namespace SPH
 {
 	/**
 	* @class InitializeOtherAccelerations
-	* @brief initialize particle acceleration
+	* @brief initialize particle acceleration 
+	* induced by viscous, gravity and other forces
 	*/
 	class InitializeOtherAccelerations : public ParticleDynamicsSimple<SPHBody, Particles>
 	{
@@ -28,7 +29,7 @@ namespace SPH
 
 	/**
 	* @class RandomizePartilePosition
-	* @brief Randomize the initialize particle position
+	* @brief Randomize the initial particle position
 	*/
 	class RandomizePartilePosition : public ParticleDynamicsSimple<SPHBody, Particles>
 	{
@@ -46,17 +47,14 @@ namespace SPH
 	*/
 	class BoundingBodyDomain : public ParticleDynamicsByCells<SPHBody>
 	{
-		//obtain the cells lower and upper boundy 
-		//for the body domain
+		/** obtain the cells lower and upper boundy for the body domain. */
 		void SetCellBounds();
 
 	protected:
-		//lower and upper bound for checking
+		/** lower and upper bound for checking. */
 		Vecd body_lower_bound_, body_upper_bound_;
 		Vecu body_lower_bound_cell_, body_upper_bound_cell_;
 
-		//dynamics of a particle
-		//to be realized in specific algorithms
 		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt, Real dt = 0.0) = 0;
 		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt, Real dt = 0.0) = 0;
 
@@ -66,81 +64,35 @@ namespace SPH
 	};
 
 	/**
-	* @class BoundingInXDirection
-	* @brief Bounding particle position in x direction, in genreal
+	* @class BoundingAxisDirection
+	* @brief Bounding particle position in a axis direction.
+	* The axis_direction must be 0, 1 for 2d and 0, 1, 2 for 3d
 	*/
-	class BoundingInXDirection : public BoundingBodyDomain
+	class BoundingInAxisDirection : public BoundingBodyDomain
 	{
 	protected:
+		/** the axis direction for bounding*/
+		const int axis_;
+		/** the second axis according right hand rule. */
+		const int second_axis_;
+		/** the third axis according right hand rule. used only for 3d. */
+		const int third_axis_;
 
 		//cells in which particle checked for bounding
 		StdVec<Vecu> lower_bound_cells_, upper_bound_cells_;
-
-		//dynamics of a particle
-		//to be realized in specific algorithms
-		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt, Real dt = 0.0) = 0;
-		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt, Real dt = 0.0) = 0;
-
 	public:
-		BoundingInXDirection(SPHBody* body);
-		virtual ~BoundingInXDirection() {};
+		BoundingInAxisDirection(SPHBody* body, int axis_direction);
+		virtual ~BoundingInAxisDirection() {};
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
 	};
 
 	/**
-	* @class BoundingInYDirection
-	* @brief Bounding particle position in y direction, in genreal
+	* @class PeriodicBoundingInAxisDirection
+	* @brief Periodic bounding particle position in an axis direction
 	*/
-	class BoundingInYDirection : public BoundingBodyDomain
-	{
-	protected:
-
-		//cells in which particle checked for bounding
-		StdVec<Vecu> lower_bound_cells_, upper_bound_cells_;
-
-		//dynamics of a particle
-		//to be realized in specific algorithms
-		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt, Real dt = 0.0) = 0;
-		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt, Real dt = 0.0) = 0;
-
-	public:
-		BoundingInYDirection(SPHBody* body);
-		virtual ~BoundingInYDirection() {};
-
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
-	};
-	/**
-	* @class BoundingInZDirection
-	* @brief Bounding particle position in z direction, in genreal
-	*/
-	class BoundingInZDirection : public BoundingBodyDomain
-	{
-	protected:
-
-		//cells in which particle checked for bounding
-		StdVec<Vecu> lower_bound_cells_, upper_bound_cells_;
-
-		//dynamics of a particle
-		//to be realized in specific algorithms
-		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt, Real dt = 0.0) = 0;
-		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt, Real dt = 0.0) = 0;
-
-	public:
-		BoundingInZDirection(SPHBody* body);
-		virtual ~BoundingInZDirection() {};
-
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
-	};
-
-	/**
-	* @class PeriodicBoundingInXDirection
-	* @brief Periodic bounding particle position in x direction
-	*/
-	class PeriodicBoundingInXDirection : public BoundingInXDirection
+	class PeriodicBoundingInAxisDirection : public BoundingInAxisDirection
 	{
 	protected:
 		Vecd periodic_translation_;
@@ -150,58 +102,16 @@ namespace SPH
 		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt,
 			Real dt = 0.0) override;
 	public:
-
-		PeriodicBoundingInXDirection(SPHBody* body);
-		virtual ~PeriodicBoundingInXDirection() {};
-
+		PeriodicBoundingInAxisDirection(SPHBody* body, int axis_direction);
+		virtual ~PeriodicBoundingInAxisDirection() {};
 	};
 
 	/**
-	* @class PeriodicBoundingInYDirection
-	* @brief Periodic bounding particle position in y direction
+	* @class PeriodicConditionInAxisDirection
+	* @brief Periodic boundary condition in an axis direction
 	*/
-	class PeriodicBoundingInYDirection : public BoundingInYDirection
-	{
-	protected:
-		Vecd periodic_translation_;
-
-		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt,
-			Real dt = 0.0) override;
-		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt,
-			Real dt = 0.0) override;
-	public:
-
-		PeriodicBoundingInYDirection(SPHBody* body);
-		virtual ~PeriodicBoundingInYDirection() {};
-
-	};
-
-	/**
-	* @class PeriodicBoundingInZDirection
-	* @brief Periodic bounding particle position in z direction
-	*/
-	class PeriodicBoundingInZDirection : public BoundingInZDirection
-	{
-	protected:
-		Vecd periodic_translation_;
-
-		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt,
-			Real dt = 0.0) override;
-		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt,
-			Real dt = 0.0) override;
-	public:
-
-		PeriodicBoundingInZDirection(SPHBody* body);
-		virtual ~PeriodicBoundingInZDirection() {};
-
-	};
-
-	/**
-	* @class PeriodicConditionInXDirection
-	* @brief Periodic boundary condition in x direction
-	*/
-	class PeriodicConditionInXDirection
-		: public PeriodicBoundingInXDirection
+	class PeriodicConditionInAxisDirection
+		: public PeriodicBoundingInAxisDirection
 	{
 	protected:
 		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt,
@@ -210,47 +120,9 @@ namespace SPH
 			Real dt = 0.0) override;
 	public:
 
-		PeriodicConditionInXDirection(SPHBody* body);
-		virtual ~PeriodicConditionInXDirection() {};
-
-	};
-
-	/**
-	* @class PeriodicConditionInYDirection
-	* @brief Periodic boundary condition in y direction
-	*/
-	class PeriodicConditionInYDirection
-		: public PeriodicBoundingInYDirection
-	{
-	protected:
-		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt,
-			Real dt = 0.0) override;
-		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt,
-			Real dt = 0.0) override;
-	public:
-
-		PeriodicConditionInYDirection(SPHBody* body);
-		virtual ~PeriodicConditionInYDirection() {};
-
-	};
-
-	/**
-	* @class PeriodicConditionInZDirection
-	* @brief Periodic boundary condition in z direction
-	*/
-	class PeriodicConditionInZDirection
-		: public PeriodicBoundingInZDirection
-	{
-	protected:
-		virtual void CheckLowerBound(size_t index_particle_i, Vecd pnt,
-			Real dt = 0.0) override;
-		virtual void CheckUpperBound(size_t index_particle_i, Vecd pnt,
-			Real dt = 0.0) override;
-	public:
-
-		PeriodicConditionInZDirection(SPHBody* body);
-		virtual ~PeriodicConditionInZDirection() {};
-
+		PeriodicConditionInAxisDirection(SPHBody* body, int axis_direction)
+			: PeriodicBoundingInAxisDirection(body, axis_direction) {};
+		virtual ~PeriodicConditionInAxisDirection() {};
 	};
 
 	/**

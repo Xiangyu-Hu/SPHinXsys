@@ -1,23 +1,15 @@
 /**
  * @file 	base_body.cpp
- * @brief 	This is the base classes of SPH bodies. The real body is for 
- *			that with cell linked list and the fivtitious one doesnot.     
- * 			Before the defination of the SPH bodies, the shapes with complex 
- *			geometries, i.e. those are produced by adavnced binary operation, 
- * 			such as intersection, should be produced first.
- * 			Then, all shapes used in body definition should be either contain 
- * 			or not contain each other. 
- *			Partial overlap between them are not premitted.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  * @version	0.1
  */
+
 #include "base_body.h"
 #include "sph_system.h"
 #include "in_output.h"
 #include "base_particles.h"
 #include "base_material.h"
 #include "base_reaction.h"
-#include "neighboring_particle.h"
 #include "base_kernel.h"
 #include "mesh_cell_linked_list.h"
 #include "particle_generator_lattice.h"
@@ -28,12 +20,13 @@ namespace SPH
 	SPHBody::SPHBody(SPHSystem &sph_system, string body_name, 
 		int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op)
 		: sph_system_(sph_system), body_region_(body_name), body_name_(body_name), 
-		refinement_level_(refinement_level), smoothinglength_ratio_(smoothinglength_ratio), particle_generator_op_(op)
+		refinement_level_(refinement_level), particle_generator_op_(op)
 	{	
 		sph_system_.AddBody(this);
 
 		particle_spacing_ 	= RefinementLevelToParticleSpacing();
-		kernel_ 			= sph_system_.GenerateAKernel(particle_spacing_*smoothinglength_ratio_);
+		smoothinglength_ = particle_spacing_ * smoothinglength_ratio;
+		kernel_ 			= sph_system_.GenerateAKernel(smoothinglength_);
 		base_material_ = new Material("EmptyMaterial");
 		base_reaction_ = new Reaction("EmptyMaterial");
 		mesh_cell_linked_list_
@@ -50,6 +43,12 @@ namespace SPH
 			/ powern(2.0, refinement_level_);
 	}
 	//===========================================================//
+	void SPHBody::ReplaceKernelFunction(Kernel* kernel)
+	{
+		delete kernel_;
+		kernel_ = kernel;
+	}
+	//===========================================================//
 	string SPHBody::GetBodyName()
 	{
 		return body_name_;
@@ -57,16 +56,29 @@ namespace SPH
 	//===========================================================//
 	void  SPHBody::AllocateMemoriesForConfiguration()
 	{
-		Allocate1dArray(indexes_contact_particles_, contact_map_.second.size());
-		Allocate1dArray(reference_inner_configuration_, number_of_particles_);
-		Allocate1dArray(current_inner_configuration_, number_of_particles_);
-		Allocate2dArray(reference_contact_configuration_, {contact_map_.second.size(), number_of_particles_ });
-		Allocate2dArray(current_contact_configuration_, { contact_map_.second.size(), number_of_particles_ });
-		//reserve memeory for concurrent vectors
-		for (size_t i = 0; i != contact_map_.second.size(); ++i) {
-			indexes_contact_particles_[i].reserve(number_of_particles_);
-		}
+		indexes_contact_particles_.resize(contact_map_.second.size());
 
+		current_inner_configuration_.resize(number_of_particles_);
+		reference_inner_configuration_.resize(number_of_particles_);
+
+		current_contact_configuration_.resize(contact_map_.second.size());
+		reference_contact_configuration_.resize(contact_map_.second.size());
+		for (size_t i = 0; i != contact_map_.second.size(); ++i) {
+			current_contact_configuration_[i].resize(number_of_particles_);
+			reference_contact_configuration_[i].resize(number_of_particles_);
+		}
+	}
+	void SPHBody::AllocateConfigurationMemoriesForBodyBuffer(size_t body_buffer_particles)
+	{
+		size_t updated_size = number_of_particles_ + body_buffer_particles;
+
+		current_inner_configuration_.resize(updated_size);
+		reference_inner_configuration_.resize(updated_size);
+
+		for (size_t i = 0; i != contact_map_.second.size(); ++i) {
+			current_contact_configuration_[i].resize(updated_size);
+			reference_contact_configuration_[i].resize(updated_size);
+		}
 	}
 	//===========================================================//
 	bool SPHBody::BodyContain(Vecd pnt)
@@ -202,4 +214,19 @@ namespace SPH
 	{
 		return this;
 	}
+	//===============================================================//
+	void BodyPartByParticle::TagBodyPartParticles()
+	{
+		for (size_t i = 0; i < body_->number_of_particles_; ++i)
+		{
+			BaseParticleData &base_particle_data_i
+				= body_->base_particles_->base_particle_data_[i];
+
+			if (body_part_region_.contain(base_particle_data_i.pos_n_))
+			{
+				body_part_particles_.push_back(i);
+			}
+		}
+	}
+	//===============================================================//
 }

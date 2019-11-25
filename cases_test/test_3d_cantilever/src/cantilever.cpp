@@ -100,9 +100,9 @@ public:
 		: SolidBodyPart(solid_body, constrianed_region_name)
 	{
 		//geometry
-		soild_body_part_region_.add_geometry(CreateCantileverHolder(), RegionBooleanOps::add);
+		body_part_region_.add_geometry(CreateCantileverHolder(), RegionBooleanOps::add);
 		//finish the region modeling
-		soild_body_part_region_.done_modeling();
+		body_part_region_.done_modeling();
 
 		//tag the constrained particle
 		TagBodyPartParticles();
@@ -119,9 +119,9 @@ public:
 		: SolidBodyPartForSimbody(solid_body, constrianed_region_name, solid_body_density)
 	{
 		//geometry
-		soild_body_part_region_.add_geometry(CreateForceSpot(), RegionBooleanOps::add);
+		body_part_region_.add_geometry(CreateForceSpot(), RegionBooleanOps::add);
 		//finish the region modeling
-		soild_body_part_region_.done_modeling();
+		body_part_region_.done_modeling();
 
 		//tag the constrained particle
 		TagBodyPartParticles();
@@ -208,8 +208,6 @@ int main()
 	//-----------------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
 	//-----------------------------------------------------------------------------
-	/** initial condition for the elastic solid bodies */
-	solid_dynamics::ElasticSolidDynamicsInitialCondition set_all_gate_particles_at_rest(cantilever_body);
 	//corrected strong configuration	
 	solid_dynamics::CorrectConfiguration
 		cantilever_corrected_configuration_in_strong_form(cantilever_body, {});
@@ -239,8 +237,7 @@ int main()
 	//-----------------------------------------------------------------------------
 	//starting time zero
 	GlobalStaticVariables::physical_time_ = 0.0;
-	/** apply initial condition */
-	set_all_gate_particles_at_rest.exec();
+	/** write initial condition */
 	write_cantilever_states.WriteToFile(GlobalStaticVariables::physical_time_);
 	write_cantilever_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
 

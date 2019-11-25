@@ -1,3 +1,9 @@
+/**
+ * @file 	fluid_particles.cpp
+ * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @version	0.1
+ */
+
 #include "fluid_particles.h"
 #include "base_body.h"
 
@@ -34,7 +40,7 @@ namespace SPH
 		output_file << "    <DataArray Name=\"Particle_ID\" type=\"Int32\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << base_particle_data_[i].particle_ID_ << " ";
+			output_file << i << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -46,6 +52,15 @@ namespace SPH
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
+
+		output_file << "    <DataArray Name=\"Number Density\" type=\"Float32\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != number_of_particles; ++i) {
+			output_file <<  fixed << setprecision(9) << base_particle_data_[i].sigma_0_ << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+
 
 		output_file << "    <DataArray Name=\"Velocity\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
 		output_file << "    ";
@@ -87,54 +102,13 @@ namespace SPH
 		{
 			output_file << base_particle_data_[i].pos_n_[0] << "  "
 				<< base_particle_data_[i].pos_n_[1] << "  "
-				<< base_particle_data_[i].particle_ID_ << "  "
+				<< i << "  "
 				<< fluid_particle_data_[i].rho_n_ << " "
 				<< base_particle_data_[i].vel_n_[0] << " "
 				<< base_particle_data_[i].vel_n_[1] << " "
 				<< fluid_particle_data_[i].vort_2d_ << " \n";
 		}
 
-	}
-	//===============================================================//
-	void FluidParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)
-	{
-		const SimTK::String xml_name("particles_xml"), ele_name("particles");
-		XmlEngine* restart_xml = new XmlEngine(xml_name, ele_name);
-		
-		size_t number_of_particles = body_->number_of_particles_;
-		for(size_t i = 0; i != number_of_particles; ++i)
-  		{
-  			restart_xml->CreatXmlElement("particle");
-    		restart_xml->AddAttributeToElement("ID",base_particle_data_[i].particle_ID_);
-    		restart_xml->AddAttributeToElement("Position",base_particle_data_[i].pos_n_);
-    		restart_xml->AddAttributeToElement("Volume",base_particle_data_[i].Vol_);
-    		restart_xml->AddAttributeToElement("Velocity",base_particle_data_[i].vel_n_);
-    		restart_xml->AddAttributeToElement("Density",fluid_particle_data_[i].rho_n_);
-    		restart_xml->AddElementToXmlDoc();
-  		}
-  		restart_xml->WriteToXmlFile(filefullpath);
-	}
-	//===============================================================//
-	void FluidParticles::ReadParticleFromXmlForRestart(std::string &filefullpath)
-	{
-		size_t number_of_particles = 0;
-		XmlEngine* read_xml = new XmlEngine();
-		read_xml->LoadXmlFile(filefullpath);
-		SimTK::Xml::element_iterator ele_ite_ = read_xml->root_element_.element_begin();
-		for (; ele_ite_ != read_xml->root_element_.element_end(); ++ele_ite_)
-		{
-			Vecd pos_ = read_xml->GetRequiredAttributeVectorValue(ele_ite_, "Position");
-			base_particle_data_[number_of_particles].pos_n_ = pos_;
-			Real rst_Vol_ = read_xml->GetRequiredAttributeRealValue(ele_ite_, "Volume");
-			base_particle_data_[number_of_particles].Vol_ = rst_Vol_;
-			Vecd rst_vel_ = read_xml->GetRequiredAttributeVectorValue(ele_ite_, "Velocity");
-			base_particle_data_[number_of_particles].vel_n_ = rst_vel_;
-			Real rst_rho_n_ = read_xml->GetRequiredAttributeRealValue(ele_ite_, "Density");
-			fluid_particle_data_[number_of_particles].rho_n_ = rst_rho_n_;
-			fluid_particle_data_[number_of_particles].vel_trans_(0);
-			base_particle_data_[number_of_particles].dvel_dt_(0);
-			number_of_particles++;
-		}
 	}
 	//===============================================================//
 	void ViscoelasticFluidParticles::WriteParticlesToVtuFile(ofstream &output_file)
@@ -163,7 +137,7 @@ namespace SPH
 		output_file << "    <DataArray Name=\"Particle_ID\" type=\"Int32\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << base_particle_data_[i].particle_ID_ << " ";
+			output_file << i << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -216,32 +190,11 @@ namespace SPH
 		{
 			output_file << base_particle_data_[i].pos_n_[0] << "  "
 				<< base_particle_data_[i].pos_n_[1] << "  "
-				<< base_particle_data_[i].particle_ID_ << "  "
+				<< i << "  "
 				<< fluid_particle_data_[i].rho_n_ << " "
 				<< base_particle_data_[i].vel_n_[0] << " "
 				<< base_particle_data_[i].vel_n_[1] << " \n";
 		}
-	}
-	//===============================================================//
-	void ViscoelasticFluidParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)
-	{
-		XmlEngine* restart_xml = new XmlEngine("particles_xml", "particles");
-		size_t number_of_particles = base_particle_data_.size();
-		for(size_t i = 0; i != number_of_particles; ++i)
-  		{
-  			restart_xml->CreatXmlElement("particle");
-    		restart_xml->AddAttributeToElement("ID",base_particle_data_[i].particle_ID_);
-    		restart_xml->AddAttributeToElement("Position",base_particle_data_[i].pos_n_);
-    		restart_xml->AddAttributeToElement("Volume",base_particle_data_[i].Vol_);
-    		restart_xml->AddElementToXmlDoc();
-  		}
-  		restart_xml->WriteToXmlFile(filefullpath);
-	}
-	//===============================================================//
-	void ViscoelasticFluidParticles::ReadParticleFromXmlForRestart(std::string &filefullpath)
-	{
-		cout << "\n This function ViscoelasticFluidParticles::ReadParticleFromXmlForRestart is not done. Exit the program! \n";
-		exit(0);
 	}
 	//===============================================================//
 }

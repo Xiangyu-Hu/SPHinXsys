@@ -38,7 +38,7 @@ namespace SPH {
 	/**
 	 * @class MeshCellLinkedList
 	 * @brief Defining a mesh cell linked list for a body.
-	 * The meshes for all bodies share the same global coordiantes.
+	 * The meshes for all bodies share the same global coordinates.
 	 */
 	class MeshCellLinkedList : public Mesh
 	{
@@ -72,7 +72,7 @@ namespace SPH {
 		Vecu GetNumberOfCells() { return number_of_cells_; };
 
 		/** The array for of mesh cells, i.e. mesh data.
-		 * Within each cell, a list is saved with the index of partilces.*/
+		 * Within each cell, a list is saved with the indexes of particles.*/
 		matrix_cell cell_linked_lists_;
 
 		/** allcate memories for mesh data */

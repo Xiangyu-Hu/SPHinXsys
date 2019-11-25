@@ -7,6 +7,7 @@
 #pragma once
 
 #include "base_body.h"
+#include "particle_generator_lattice.h"
 #include <fstream>
 
 using namespace std;
@@ -15,8 +16,6 @@ namespace SPH {
 	 * @brief preclaimed class.
 	 */
 	class SPHSystem;
-	class Fluid;
-	class FluidParticles;
 	/**
 	 * @class FluidBody
 	 * @brief Declaration of fluid body.
@@ -39,12 +38,10 @@ namespace SPH {
 	  * @brief An auxillariy class for fluidBody to
 	  * indicate a part of the body fixed with location.
 	  */
-	class FluidBodyPart : public EulerianBodyPart
+	class FluidBodyPart : public BodyPartByCell
 	{
 	protected:
 		FluidBody *fluid_body_;
-		/** The geometric region indicating the body part. */
-		Region fluid_body_part_region_;
 
 		virtual void TagBodyPartCells() override;
 	public:

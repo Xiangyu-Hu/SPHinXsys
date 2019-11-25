@@ -32,91 +32,93 @@ namespace SPH
 	 */
 	class Kernel
 	{
-
 	protected:
 		/** name of the kernel **/
 		const string kernel_name_;
 		/** reference smoothing length **/
 		const Real h_, inv_h_;
 		/** non-dimensional size of the kernel **/
-		const Real kernel_size_;
+		Real kernel_size_;
 		/** Normalization factor for the kernel function  **/
 		Real factor_W_1D_, factor_W_2D_, factor_W_3D_;
 		/** Auxiliary factors for the derivative of kernel function  **/
 		Real factor_dW_1D_, factor_dW_2D_, factor_dW_3D_;
+		/** Auxiliary factors for the second order derivative of kernel function  **/
+		Real factor_d2W_1D_, factor_d2W_2D_, factor_d2W_3D_;
 
-		//---------------------------------------------------------------------
-		//for variable smoothing length
-		//using ratio to the reference smoothing length
-		//---------------------------------------------------------------------
-		virtual Real GetFactorW1D(Real rt_h) const { return factor_W_1D_ / rt_h; };
-		virtual Real GetFactorW2D(Real rt_h) const { return factor_W_2D_ / rt_h / rt_h; };
-		virtual Real GetFactorW3D(Real rt_h) const { return factor_W_2D_ / rt_h / rt_h / rt_h; };
-		virtual Real GetFactorDW1D(Real rt_h) const { return GetFactorW1D(rt_h) / rt_h; };
-		virtual Real GetFactorDW2D(Real rt_h) const { return GetFactorW2D(rt_h) / rt_h; };
-		virtual Real GetFactorDW3D(Real rt_h) const { return GetFactorW3D(rt_h) / rt_h; };
-
+		/** Fractors for derivatives*/
+		virtual void SetDerivativeFactors();
 	public:
 		/** Constructor **/
-		Kernel(Real h, Real kernel_size, string kernel_name = "kernel");
+		Kernel(Real h, string kernel_name = "kernel");
 		/** Base classes with virtual member functions should have a virtual destructor **/
 		virtual ~Kernel() {};
-
+		
 		/** access esstential information of the kernel **/
-		string GetKerenlName() const;
-		Real GetSmoothingLength() const;
-		Real GetKernelSize() const;
-		Real GetCutOffRadius() const;
+		string GetKerenlName() const { return kernel_name_; };
+		Real GetSmoothingLength() const { return h_; };
+		Real GetKernelSize() const { return kernel_size_; };
+		Real GetCutOffRadius() const { return h_ * kernel_size_; };
+		Real GetFactorW1D() const { return factor_W_1D_; };
+		Real GetFactorW2D() const { return factor_W_2D_; };
+		Real GetFactorW3D() const { return factor_W_3D_; };
 
-		/** Calculates the kernel value for the given distance of two particles
+		/** Calculates the kernel value for the given displacement of two particles
 		  * r_ij pointing from particle j to particle i **/
-		virtual Real W(const Real& r_ij) const = 0;
-		virtual Real W(const Vec2d& r_ij) const = 0;
-		virtual Real W(const Vec3d& r_ij) const = 0;
+		virtual Real W(const Real& r_ij) const;
+		virtual Real W(const Vec2d& r_ij) const;
+		virtual Real W(const Vec3d& r_ij) const;
+
+		/** this value could be use to calculate the value of W **/
+		virtual Real W_1D(const Real q) const = 0;
+		virtual Real W_2D(const Real q) const = 0;
+		virtual Real W_3D(const Real q) const = 0;
 
 		/** Calculates the kernel value at the origin **/
-		virtual Real W0(const Real& r_i) const { return factor_W_1D_; };
+		virtual Real W0(const Real& r_i)  const { return factor_W_1D_; };
 		virtual Real W0(const Vec2d& r_i) const { return factor_W_2D_; };
 		virtual Real W0(const Vec3d& r_i) const { return factor_W_3D_; };
 
 		/** Calculates the kernel derivation for
 		  * the given distance of two particles **/
-		virtual Real dW(const Real& r_ij) const = 0;
-		virtual Real dW(const Vec2d& r_ij) const = 0;
-		virtual Real dW(const Vec3d& r_ij) const = 0;
+		virtual Real dW(const Real& r_ij) const;
+		virtual Real dW(const Vec2d& r_ij) const;
+		virtual Real dW(const Vec3d& r_ij) const;
 
-		/** Calculates the kernel gradient pointing from r_j to origin r_i
-		  * for the given distance of two particles. It is the
-		  * same form for 2D and 3D comuptations **/
-		Vecd GradW(const Vecd& r_ij) const {
-			return dW(r_ij) * normalize(r_ij);
-		};
+		/** this value could be use to calculate the value of dW **/
+		virtual Real dW_1D(const Real q) const = 0;
+		virtual Real dW_2D(const Real q) const = 0;
+		virtual Real dW_3D(const Real q) const = 0;
+
+		/** Calculates the kernel second order derivation for
+		  * the given distance of two particles **/
+		virtual Real d2W(const Real& r_ij) const;
+		virtual Real d2W(const Vec2d& r_ij) const;
+		virtual Real d2W(const Vec3d& r_ij) const;
+
+		/** this value could be use to calculate the value of d2W **/
+		virtual Real d2W_1D(const Real q) const = 0;
+		virtual Real d2W_2D(const Real q) const = 0;
+		virtual Real d2W_3D(const Real q) const = 0;
 
 		//---------------------------------------------------------------------
 		//for variable smoothing lenght
 		//---------------------------------------------------------------------
 		/** Calculates the kernel value for the given distance of two particles
 		  * r_ij pointing from particle j to particle i **/
-		virtual Real W(Real rt_h, const Real& r_ij) const = 0;
-		virtual Real W(Real rt_h, const Vec2d& r_ij) const = 0;
-		virtual Real W(Real rt_h, const Vec3d& r_ij) const = 0;
+		Real W(Real rt_h, const Real& r_ij) const;
+		Real W(Real rt_h, const Vec2d& r_ij) const;
+		Real W(Real rt_h, const Vec3d& r_ij) const;
 
 		/** Calculates the kernel value at the origin **/
-		virtual Real W0(Real rt_h, const Real& r_i) const { return GetFactorW1D(rt_h); };
-		virtual Real W0(Real rt_h, const Vec2d& r_i) const { return GetFactorW2D(rt_h); };
-		virtual Real W0(Real rt_h, const Vec3d& r_i) const { return GetFactorW3D(rt_h); };
+		Real W0(Real rt_h, const Real& r_i)  const { return factor_W_1D_ * rt_h; };
+		Real W0(Real rt_h, const Vec2d& r_i) const { return factor_W_2D_ * rt_h; };
+		Real W0(Real rt_h, const Vec3d& r_i) const { return factor_W_3D_ * rt_h; };
 
 		/** Calculates the kernel derivation for
 		  * the given distance of two particles **/
-		virtual Real dW(Real rt_h, const Real& r_ij) const = 0;
-		virtual Real dW(Real rt_h, const Vec2d& r_ij) const = 0;
-		virtual Real dW(Real rt_h, const Vec3d& r_ij) const = 0;
-
-		/** Calculates the kernel gradient pointing from r_j to origin r_i
-		  * for the given distance of two particles. It is the 
-		  * same form for 2D and 3D comuptation **/
-		Vecd GradW(Real rt_h, const Vecd& r_ij) const {
-			return dW(rt_h, r_ij) * normalize(r_ij);
-		};
+		virtual Real dW(Real rt_h, const Real& r_ij) const;
+		virtual Real dW(Real rt_h, const Vec2d& r_ij) const;
+		virtual Real dW(Real rt_h, const Vec3d& r_ij) const;
 	};
 }

@@ -15,36 +15,23 @@
 
 namespace SPH
 {
-	class ElectrophysiologyReaction;
+	class ElectroPhysiology;
 	
 	namespace electro_physiology
 	{
         typedef ParticleDynamicsSimple<SolidBody, MuscleParticles, Muscle> ElectroPhysiologySimple;
         typedef ParticleDynamicsReduce<Real, ReduceMin, SolidBody, MuscleParticles, Muscle> ElectroPhysiologyMinimum;
         typedef ParticleDynamicsInner1Level<SolidBody, MuscleParticles, Muscle> ElectroPhysiologyInnver1Level;
+
 		/**
-		 * @class  OffsetInitialParticlePosition
-		 * @brief  set initial condition for a cardiac muscle body
-		*/
-		class OffsetInitialParticlePosition : public ElectroPhysiologySimple
-		{
-			Vecd offset_;
-		protected:
-			//default for set all particle at rest
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
-		public:
-			OffsetInitialParticlePosition(SolidBody *body, Vecd offset)
-				: ElectroPhysiologySimple(body), offset_(offset){};
-			virtual ~OffsetInitialParticlePosition() {};
-		};
-        /**
 		 * @class ElectroPhysiologyInitialCondition
 		 * @brief  set initial condition for a muscle body
-		*/
+		 * This is a abstract class to be override for case specific initial conditions.
+		 */
 		class ElectroPhysiologyInitialCondition : public ElectroPhysiologySimple
 		{
-		protected:
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
+			protected:
+			virtual void Update(size_t index_particle_i, Real dt = 0.0) = 0;
 		public:
 			ElectroPhysiologyInitialCondition(SolidBody *body)
 				: ElectroPhysiologySimple(body) {};
@@ -99,7 +86,7 @@ namespace SPH
 		class TransmembranePotentialReaction : public ElectroPhysiologySimple
 		{
 		protected:
-            ElectrophysiologyReaction* reaction_model_;
+            ElectroPhysiology* reaction_model_;
 			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
 			TransmembranePotentialReaction(SolidBody *body);
@@ -112,7 +99,7 @@ namespace SPH
 		class GateVariableReaction : public ElectroPhysiologySimple
 		{
 		protected:
-		 	ElectrophysiologyReaction* reaction_model_;
+		 	ElectroPhysiology* reaction_model_;
 			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
 			GateVariableReaction(SolidBody *body);
@@ -125,9 +112,9 @@ namespace SPH
 		class ApplyStimulusCurrents : public ElectroPhysiologySimple
 		{
 		protected:
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
+			virtual void Update(size_t index_particle_i, Real dt = 0.0) override {};
 		public:
-			ApplyStimulusCurrents(SolidBody *body);
+			ApplyStimulusCurrents(SolidBody *body) : ElectroPhysiologySimple(body) {}
 			virtual ~ApplyStimulusCurrents() {};
 		};
     }

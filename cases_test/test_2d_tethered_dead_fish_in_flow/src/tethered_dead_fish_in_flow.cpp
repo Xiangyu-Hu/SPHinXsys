@@ -182,10 +182,10 @@ public:
 		//geometry
 		std::vector<Point> fish_shape = CreatFishShape(cx, cy, fish_length, solid_body_->particle_spacing_);
 		std::vector<Point> fish_blocking_shape = CreatFishBlockingShape();
-		soild_body_part_region_.add_geometry(new Geometry(fish_shape), RegionBooleanOps::add);
-		soild_body_part_region_.add_geometry(new Geometry(fish_blocking_shape), RegionBooleanOps::sub);
+		body_part_region_.add_geometry(new Geometry(fish_shape), RegionBooleanOps::add);
+		body_part_region_.add_geometry(new Geometry(fish_blocking_shape), RegionBooleanOps::sub);
 		//finish the region modeling
-		soild_body_part_region_.done_modeling();
+		body_part_region_.done_modeling();
 
 		//tag the constrained particle
 		TagBodyPartParticles();
@@ -202,9 +202,9 @@ public:
 	{
 		/** Geomerty definition. */
 		std::vector<Point> inflow_shape = CreatInflowBufferShape();
-		fluid_body_part_region_.add_geometry(new Geometry(inflow_shape), RegionBooleanOps::add);
+		body_part_region_.add_geometry(new Geometry(inflow_shape), RegionBooleanOps::add);
 		/** Finalize the geometry definition and correspoding opertation. */
-		fluid_body_part_region_.done_modeling();
+		body_part_region_.done_modeling();
 
 		//tag the constrained particle
 		TagBodyPartCells();
@@ -309,14 +309,6 @@ int main()
 	/**
 	* This section define all numerical methods will be used in this case.
 	*/
-	/** Methods only used only once.*/
-	/** initial condition for fluid body */
-	fluid_dynamics::WeaklyCompressibleFluidInitialCondition set_all_fluid_particles_at_rest(water_block);
-	fluid_dynamics::InitialNumberDensity
-		fluid_initial_number_density(water_block, { wall_boundary, fish_body });
-	/** initial condition for the solid body */
-	solid_dynamics::SolidDynamicsInitialCondition set_all_wall_particles_at_rest(wall_boundary);
-	solid_dynamics::ElasticSolidDynamicsInitialCondition set_all_fish_body_particles_at_rest(fish_body);
 	/** Initialize normal direction of the wall boundary. */
 	solid_dynamics::NormalDirectionSummation get_wall_normal(wall_boundary, {});
 	/** Initialize normal direction of the inserted body. */
@@ -329,12 +321,10 @@ int main()
 	*/
 	InitializeOtherAccelerations
 		initialize_fluid_acceleration(water_block);
-	/** Periodic bounding. */
-	PeriodicBoundingInXDirection
-		periodic_bounding(water_block);
-	/** Periodic boundary condition. */
-	PeriodicConditionInXDirection
-		periodic_condition(water_block);
+	/** Periodic bounding in x direction. */
+	PeriodicBoundingInAxisDirection 	periodic_bounding(water_block, 0);
+	/** Periodic BCs in x direction. */
+	PeriodicConditionInAxisDirection 	periodic_condition(water_block, 0);
 
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensityBySummation
@@ -347,8 +337,10 @@ int main()
 	/** Time step size with considering sound wave speed. */
 	fluid_dynamics::GetAcousticTimeStepSize		get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
-	fluid_dynamics::PressureRelaxationVerlet
-		pressure_relaxation(water_block, { wall_boundary, fish_body });
+	fluid_dynamics::PressureRelaxationFirstHalf
+		pressure_relaxation_first_half(water_block, { wall_boundary, fish_body });
+	fluid_dynamics::PressureRelaxationSecondHalfRiemann
+		pressure_relaxation_second_half(water_block, { wall_boundary, fish_body });
 	/** Computing viscous acceleration. */
 	fluid_dynamics::ComputingViscousAcceleration
 		viscous_acceleration(water_block, { wall_boundary, fish_body });
@@ -470,10 +462,6 @@ int main()
 	* Time steeping starts here.
 	*/
 	GlobalStaticVariables::physical_time_ = 0.0;
-	/** initial conditions*/
-	set_all_fluid_particles_at_rest.exec();
-	set_all_wall_particles_at_rest.exec();
-	set_all_fish_body_particles_at_rest.exec();
 	/**
 	* Initial periodic boundary condition which copies the particle identifies
 	* as extra cell linked list form periodic regions to the corresponding boundaries
@@ -487,7 +475,6 @@ int main()
 	*/
 	get_wall_normal.parallel_exec();
 	get_fish_body_normal.parallel_exec();
-	fluid_initial_number_density.parallel_exec();
 	fish_body_corrected_configuration_in_strong_form.parallel_exec();
 	/** Output for initial condition. */
 	write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
@@ -495,11 +482,13 @@ int main()
 	/**
 	* Time parameters
 	*/
-	int ite = 0;
+	int number_of_iterations = 0;
+	int screen_output_interval = 100;
 	Real End_Time = 200.0;
 	Real D_Time = End_Time / 200.0;
 	Real Dt = 0.0;      /**< Default advection time step sizes. */
 	Real dt = 0.0;      /**< Default accoustic time step sizes. */
+	Real dt_s = 0.0;	/**< Default acoustic time step sizes for solid. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
 
@@ -525,29 +514,18 @@ int main()
 			fish_body_update_normal.parallel_exec();
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt) {
-
-				if (ite % 100 == 0) {
-					cout << "N=" << ite << " Time: "
-						<< GlobalStaticVariables::physical_time_ << "   dt: "
-						<< dt << "\n";
-				}
-				/** Fluid dynamics process. */
-				pressure_relaxation.parallel_exec(dt);
+				/** Fluid dynamics process, first half. */
+				pressure_relaxation_first_half.parallel_exec(dt);
 				/** Fluid pressure force exerting on fish. */
 				fluid_pressure_force_on_fish_body.parallel_exec();
+				/** Fluid dynamics process, second half. */
+				pressure_relaxation_second_half.parallel_exec(dt);
 				/** Relax fish body by solid dynamics. */
 				Real dt_s_sum = 0.0;
 				fish_body_initialize_displacement.parallel_exec();
 				while (dt_s_sum < dt)
 				{
-					Real dt_s = fish_body_computing_time_step_size.parallel_exec();
-					if (dt - dt_s_sum < dt_s) dt_s = dt - dt_s_sum;
-
-					if (ite % 100 == 0) {
-						cout << "N=" << ite << " Time: "
-							<< GlobalStaticVariables::physical_time_ << "   dt_s: "
-							<< dt_s << "\n";
-					}
+					dt_s = fish_body_computing_time_step_size.parallel_exec();
 					fish_body_stress_relaxation_first_step.parallel_exec(dt_s);
 					SimTK::State &state_for_update = integ.updAdvancedState();
 					force_on_bodies.clearAllBodyForces(state_for_update);
@@ -561,7 +539,6 @@ int main()
 				fish_body_average_velocity.parallel_exec(dt);
 				write_total_force_on_fish.WriteToFile(GlobalStaticVariables::physical_time_);
 
-				ite++;
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integeral_time += dt;
@@ -569,6 +546,13 @@ int main()
 				parabolic_inflow.parallel_exec();
 
 			}
+			if (number_of_iterations % screen_output_interval == 0)
+			{
+				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+					<< GlobalStaticVariables::physical_time_
+					<< "	Dt = " << Dt << "	dt = " << dt << "	dt_s = " << dt_s << "\n";
+			}
+			number_of_iterations++;
 
 			const State& s = integ.getState();
 			viz.report(s);

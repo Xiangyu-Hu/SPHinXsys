@@ -39,13 +39,13 @@ namespace SPH
 		 * @param[in] smoothinglength_ratio The Referncen ratio of smoothing length to particle spacing.
 		 */
  		SPHSystem(Vecd lower_bound, Vecd upper_bound, Real particle_spacing_ref, 
-			size_t number_of_threads = tbb::task_scheduler_init::automatic);
+			int number_of_threads = tbb::task_scheduler_init::automatic);
 		virtual ~SPHSystem();
 
 		Vecd lower_bound_, upper_bound_;	/**< Lower and Upper domain bound. */
 		Real particle_spacing_ref_;			/**< Refernce initial particle spacing. */
 		/** restart step*/
-		size_t restart_step_;
+		int restart_step_;
 		/** computing from roeload particles from files. */
 		bool reload_particle_;
 

@@ -19,23 +19,8 @@ namespace SPH
 		typedef ParticleDynamicsInner1Level<RelaxBody, RelaxBodyParticles, Material>  RelaxDynamicsInner1Level;
 		typedef ParticleDynamicsComplex1Level<RelaxBody, RelaxBodyParticles, Material,
 			RelaxBody, RelaxBodyParticles> RelaxDynamicsComplex1Level;
-		typedef LagrangianConstraint<RelaxBody, RelaxBodyParticles, RelaxBodySurface> RelaxLagrangianConstraint;
+		typedef ConstraintByParticle<RelaxBody, RelaxBodyParticles, RelaxBodySurface> RelaxLagrangianConstraint;
 		
-		/**
-		 * @class RelaxDynamicsInitialCondition
-		 * @brief  set initial condition for a relax body
-		*/
-		class RelaxDynamicsInitialCondition : public RelaxDynamicsSimple
-		{
-		protected:
-			//default for set all particle at rest
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
-		public:
-			RelaxDynamicsInitialCondition(RelaxBody *body)
-				: RelaxDynamicsSimple(body) {};
-			virtual ~RelaxDynamicsInitialCondition() {};
-		};
-
 		/**
 		* @class GetTimeStepSize
 		* @brief relaxation dynamics for particle initialization

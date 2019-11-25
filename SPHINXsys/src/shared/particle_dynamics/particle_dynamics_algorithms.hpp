@@ -49,9 +49,9 @@ namespace SPH {
 		functor_inner_interaction_(std::bind(&ParticleDynamicsComplex::InnerInteraction, this, _1, _2)),
 		functor_contact_interaction_(std::bind(&ParticleDynamicsComplex::ContactInteraction, this, _1, _2, _3)) {}
 	//===============================================================//
-template <class BodyType, class ParticlesType, class MaterialType,
-	class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType>
-	void ParticleDynamicsComplex<BodyType, ParticlesType, MaterialType,
+	template <class BodyType, class ParticlesType, class MaterialType,
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType>
+		void ParticleDynamicsComplex<BodyType, ParticlesType, MaterialType,
 		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
 		::exec(Real dt)
 	{
@@ -71,6 +71,37 @@ template <class BodyType, class ParticlesType, class MaterialType,
 		this->SetupDynamics(dt);
 		InnerIterator_parallel(number_of_particles, functor_inner_interaction_, dt);
 		ContactIterator_parallel(this->indexes_interacting_particles_, functor_contact_interaction_, dt);
+	}
+	//===================================================================//
+	template <class BodyType, class ParticlesType, class MaterialType,
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType>
+		ParticleDynamicsComplexCombined<BodyType, ParticlesType, MaterialType,
+		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
+		::ParticleDynamicsComplexCombined(BodyType *body, StdVec<InteractingBodyType*> interacting_bodies)
+		: ParticleDynamicsWithContactConfigurations<BodyType, ParticlesType, MaterialType,
+		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>(body, interacting_bodies),
+		functor_particle_interaction_(std::bind(&ParticleDynamicsComplexCombined::ParticleInteraction, this, _1, _2)) {}
+	//===============================================================//
+	template <class BodyType, class ParticlesType, class MaterialType,
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType>
+		void ParticleDynamicsComplexCombined<BodyType, ParticlesType, MaterialType,
+		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
+		::exec(Real dt)
+	{
+		size_t number_of_particles = this->body_->number_of_particles_;
+		this->SetupDynamics(dt);
+		InnerIterator(number_of_particles, functor_particle_interaction_, dt);
+	}
+	//===============================================================//
+	template <class BodyType, class ParticlesType, class MaterialType,
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType>
+		void ParticleDynamicsComplexCombined<BodyType, ParticlesType, MaterialType,
+		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
+		::parallel_exec(Real dt)
+	{
+		size_t number_of_particles = this->body_->number_of_particles_;
+		this->SetupDynamics(dt);
+		InnerIterator_parallel(number_of_particles, functor_particle_interaction_, dt);
 	}
 	//===============================================================//
 	template <class BodyType, class ParticlesType, class MaterialType,
@@ -197,42 +228,6 @@ template <class BodyType, class ParticlesType, class MaterialType,
 		InnerIterator_parallel(number_of_particles, functor_inner_interaction_2nd_, dt);
 		ContactIterator_parallel(this->indexes_interacting_particles_, functor_contact_interaction_2nd_, dt);
 		InnerIterator_parallel(number_of_particles, functor_update_, dt);
-	}
-	//===============================================================//
-	template <class BodyType, class ParticlesType, class MaterialType,
-		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType>
-		ParticleDynamicsComplexSplitting<BodyType, ParticlesType, MaterialType,
-		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
-		::ParticleDynamicsComplexSplitting(BodyType *body, StdVec<InteractingBodyType*> interacting_bodies)
-		: ParticleDynamicsWithContactConfigurations<BodyType, ParticlesType, MaterialType,
-			InteractingBodyType, InteractingParticlesType, InteractingMaterialType>(body, interacting_bodies), 
-		by_cell_lists_particle_indexes_(body->by_cell_lists_particle_indexes_),
-		functor_inner_interaction_(std::bind(&ParticleDynamicsComplexSplitting::InnerInteraction, this, _1, _2)),
-		functor_contact_interaction_(std::bind(&ParticleDynamicsComplexSplitting::ContactInteraction, this, _1, _2, _3)) 
-	{
-	
-	}
-	//===============================================================//
-	template <class BodyType, class ParticlesType, class MaterialType,
-		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType>
-		void ParticleDynamicsComplexSplitting<BodyType, ParticlesType, MaterialType,
-		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
-		::exec(Real dt)
-	{
-		this->SetupDynamics(dt);
-		InnerIteratorSplitting(by_cell_lists_particle_indexes_, functor_inner_interaction_, dt);
-		ContactIterator(this->indexes_interacting_particles_, functor_contact_interaction_, dt);
-	}
-	//===============================================================//
-	template <class BodyType, class ParticlesType, class MaterialType,
-		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType>
-		void ParticleDynamicsComplexSplitting<BodyType, ParticlesType, MaterialType,
-		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
-		::parallel_exec(Real dt)
-	{
-		this->SetupDynamics(dt);
-		InnerIteratorSplitting_parallel(by_cell_lists_particle_indexes_, functor_inner_interaction_, dt);
-		ContactIterator_parallel(this->indexes_interacting_particles_, functor_contact_interaction_, dt);
 	}
 	//===============================================================//
 }

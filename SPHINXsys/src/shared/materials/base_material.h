@@ -3,9 +3,15 @@
  * @brief 	This is the base classes of all materials. 
  *			Basically, it is a interface from which
  *			one can access devirved material by dynamic cast
- * @author	Xiangyu Hu and Chi Zhang
- * @version	0.1
- */
+* @author	Chi Zhang and Xiangyu Hu
+* @version	0.1
+* @version  0.2.1
+*           Chi Zhang
+*			add the electrophysiology to muscle body.
+* @version  0.2.2
+*           Chi Zhang
+*           Add the electro-mechnaics and local properties of muscle material.
+*/
 #pragma once
 
 #include "base_data_package.h"
@@ -52,6 +58,9 @@ namespace SPH {
 			delete body->base_material_;
 			body->base_material_ = this;
 		};
+		/** constructor without body information*/
+		Fluid(Real rho_0 = 1.0, Real c_0 = 1.0, Real mu = 0.0, Real k = 0.0)
+			: Material("Fluid"), rho_0_(rho_0), c_0_(c_0), mu_(mu), k_(k)	{};
 		virtual ~Fluid() {};
 
 		/** the interface for dynamical cast*/

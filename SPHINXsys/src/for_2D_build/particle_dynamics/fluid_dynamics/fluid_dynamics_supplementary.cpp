@@ -1,3 +1,9 @@
+/**
+ * @file 	fluid_dynamics_supplementary.cpp
+ * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @version	0.1
+ */
+
 #include "fluid_dynamics.h"
 
 using namespace std;
@@ -25,7 +31,7 @@ namespace SPH
 				Vecd vel_diff = base_particle_data_j.vel_n_ - base_particle_data_i.vel_n_;
 				Vecd r_ij = neighboring_particle.r_ij_ * neighboring_particle.e_ij_;
 				Real vort = vel_diff[0] * r_ij[1] - vel_diff[1] * r_ij[0];
-				vort_temp += vort * base_particle_data_j.Vol_ * neighboring_particle.dW_ij_;
+				vort_temp -= vort * base_particle_data_j.Vol_ * neighboring_particle.dW_ij_;
 			}
 
 			fluid_data_i.vort_2d_ = vort_temp;

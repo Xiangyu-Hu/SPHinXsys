@@ -4,6 +4,12 @@
  * @author	Xiangyu Hu and Chi Zhang
  * @version	0.1
  */
+ /**
+  * @file 	base_particles.cpp
+  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+  * @version	0.1
+  */
+
 #include "base_particles.h"
 #include "base_body.h"
 #include "all_particle_generators.h"
@@ -11,14 +17,20 @@
 namespace SPH
 {
 	//===============================================================//
-	int BaseParticleData::ID_max_ = 0;
+	int BaseParticleData::total_number_of_particles_ = 0;
 	//===============================================================//
-	BaseParticleData::BaseParticleData(Vecd position, Real volume) 
-		: vel_n_(0), pos_n_(position), Vol_(volume), Vol_0_(volume),
+	BaseParticleData::BaseParticleData()
+		: vel_n_(0), pos_n_(0), Vol_(0), Vol_0_(0), sigma_(0), sigma_0_(0),
 		cell_location_(0), dvel_dt_others_(0), dvel_dt_(0)
 	{
-		particle_ID_ = ID_max_;
-		ID_max_++;
+		total_number_of_particles_++;
+	}
+	//===============================================================//
+	BaseParticleData::BaseParticleData(Vecd position, Real Vol_0, Real sigma_0) 
+		: vel_n_(0), pos_n_(position), Vol_(Vol_0), Vol_0_(Vol_0), sigma_(sigma_0), sigma_0_(sigma_0),
+		cell_location_(0), dvel_dt_others_(0), dvel_dt_(0)
+	{
+		total_number_of_particles_++;
 	}
 	//===============================================================//
 	Particles::Particles(SPHBody *body)
@@ -30,7 +42,7 @@ namespace SPH
 		switch (body->particle_generator_op_)
 		{
 		case ParticlesGeneratorOps::lattice: {
-			particle_generator_ = new ParticleGeneratorLattice(*body);
+			particle_generator_ = new ParticleGeneratorLattice(*body, body->body_region_);
 			break;
 		}
 
@@ -47,12 +59,22 @@ namespace SPH
 		}
 		}
 
-		particle_generator_->CreateBaseParticles(*body, *this);
+		particle_generator_->CreateBaseParticles();
 	}
 	//===============================================================//
-	void Particles::InitializeABaseParticle(Vecd pnt, Real particle_volume)
+	void Particles::InitializeABaseParticle(Vecd pnt, Real Vol_0, Real sigma_0)
 	{
-		base_particle_data_.push_back(BaseParticleData(pnt, particle_volume));
+		base_particle_data_.push_back(BaseParticleData(pnt, Vol_0, sigma_0));
+	}
+	//===============================================================//
+	void Particles::AddABufferParticle()
+	{
+		base_particle_data_.push_back(BaseParticleData());
+	}
+	//===============================================================//
+	void Particles::RealizeABufferParticle(size_t buffer_particle_index, size_t real_particle_index)
+	{
+		base_particle_data_[buffer_particle_index] = base_particle_data_[real_particle_index];
 	}
 	//===============================================================//
 	void Particles::WriteToXmlForReloadParticle(std::string &filefullpath)
@@ -63,8 +85,8 @@ namespace SPH
 		for (size_t i = 0; i != body_->number_of_particles_; ++i)
 		{
 			reload_xml->CreatXmlElement("particle");
-			reload_xml->AddAttributeToElement("Position", base_particle_data_[i].pos_n_);
-			reload_xml->AddAttributeToElement("Volume", base_particle_data_[i].Vol_);
+			reload_xml->AddAttributeToElement<Vecd>("Position", base_particle_data_[i].pos_n_);
+			reload_xml->AddAttributeToElement<Real>("Volume", base_particle_data_[i].Vol_);
 			reload_xml->AddElementToXmlDoc();
 		}
 		reload_xml->WriteToXmlFile(filefullpath);
@@ -78,9 +100,9 @@ namespace SPH
 		SimTK::Xml::element_iterator ele_ite_ = read_xml->root_element_.element_begin();
 		for (; ele_ite_ != read_xml->root_element_.element_end(); ++ele_ite_)
 		{
-			Vecd position = read_xml->GetRequiredAttributeVectorValue(ele_ite_, "Position");
+			Vecd position = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Position");
 			base_particle_data_[number_of_particles].pos_n_ = position;
-			Real volume = read_xml->GetRequiredAttributeRealValue(ele_ite_, "Volume");
+			Real volume = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Volume");
 			base_particle_data_[number_of_particles].Vol_ = volume;
 			number_of_particles++;
 		}

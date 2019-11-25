@@ -150,15 +150,8 @@ int main()
 	 /**
 	  * @brief 	Methods used only once.
 	  */
-	  /** initial condition for the solid body */
-	solid_dynamics::SolidDynamicsInitialCondition set_all_solid_particles_at_rest(wall_boundary);
 	/** Initialize normal direction of the wall boundary. */
 	solid_dynamics::NormalDirectionSummation 	get_wall_normal(wall_boundary, {});
-
-	/** initial condition for fluid body */
-	fluid_dynamics::WeaklyCompressibleFluidInitialCondition set_all_fluid_particles_at_rest(water_block);
-	/** Obtain the initial number density of fluid. */
-	fluid_dynamics::InitialNumberDensity 		fluid_initial_number_density(water_block, { wall_boundary });
 	/**
 	 * @brief 	Methods used for time stepping.
 	 */
@@ -174,7 +167,10 @@ int main()
 	/** Time step size with considering sound wave speed. */
 	fluid_dynamics::GetAcousticTimeStepSize get_fluid_time_step_size(water_block);
 	/** Pressure relaxation algorithm by using position verlet time stepping. */
-	fluid_dynamics::PressureRelaxationVerletFreeSurface pressure_relaxation(water_block, { wall_boundary }, &gravity);
+	fluid_dynamics::PressureRelaxationFirstHalfRiemann 
+		pressure_relaxation_first_half(water_block, { wall_boundary });
+	fluid_dynamics::PressureRelaxationSecondHalfRiemann 
+		pressure_relaxation_second_half(water_block, { wall_boundary });
 	/**
 	 * @brief 	Methods used for updating data structure.
 	 */
@@ -195,17 +191,14 @@ int main()
 	ReadRestart		read_restart_files(in_output, system.real_bodies_);
 	WriteRestart	write_restart_files(in_output, system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	WriteWaterMechanicalEnergy 	write_water_mechanical_energy(in_output, water_block, &gravity);
+	WriteTotalMechanicalEnergy 	write_water_mechanical_energy(in_output, water_block, &gravity);
 	/** output the observed data from fluid body. */
 	WriteObservedFluidPressure	write_recorded_water_pressure(in_output, fluid_observer, { water_block });
 	
 	/**
 	 * @brief Setup goematrics and initial conditions.
 	 */
-	set_all_fluid_particles_at_rest.exec();
-	set_all_solid_particles_at_rest.exec();
 	get_wall_normal.exec();
-	fluid_initial_number_density.exec();
 
 	/**
 	 * @brief The time stepping starts here.
@@ -217,6 +210,7 @@ int main()
 		update_cell_linked_list.parallel_exec();
 		update_particle_configuration.parallel_exec();
 	}
+
 	/** Output the start states of bodies. */
 	write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
 	/** Output the Hydrostatic mechanical energy of fluid. */
@@ -260,7 +254,8 @@ int main()
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				pressure_relaxation.parallel_exec(dt);
+				pressure_relaxation_first_half.parallel_exec(dt);
+				pressure_relaxation_second_half.parallel_exec(dt);
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integeral_time += dt;

@@ -14,6 +14,11 @@
 
 using namespace std;
 namespace SPH {
+
+	/** preclaimed classes. */
+	class ElasticSolid;
+	class Muscle;
+
 	/**
 	 * @class SolidParticleData 
 	 * @brief Data for solid body particles.
@@ -21,6 +26,7 @@ namespace SPH {
 	class SolidParticleData 
 	{
 	public:
+		/** in constructor, set the particle at rest*/
 		SolidParticleData(Vecd position);
 		virtual ~SolidParticleData() {};
 
@@ -49,7 +55,8 @@ namespace SPH {
 	class ElasticSolidParticleData 
 	{
 	public:
-		ElasticSolidParticleData();
+		ElasticSolidParticleData(BaseParticleData &base_particle_data,
+			ElasticSolid *elastic_solid);
 		virtual ~ElasticSolidParticleData() {};
 
 		/** mass, reference density and current density. */
@@ -76,11 +83,13 @@ namespace SPH {
 		 * @brief Default destructor.
 		 */		
 		virtual ~MuscleParticleData() {};
-		Vecd f0_, s0_, n0_;					/**< Fiber and sheet direction and related matrices. */
 		Real voltage_n_;
 		Real dvoltage_dt_;
 		Vecd grad_voltage_;
 		Real gate_var_;
+		/** Active contraction stress T_a . */
+		Matd active_stress_;
+		Real T_a_;
 	};
 	/**
 	 * @class SolidParticles
@@ -102,6 +111,10 @@ namespace SPH {
 
 		/** Vector of solid body data. */
 		StdLargeVec<SolidParticleData> solid_body_data_; 
+	
+		/** Set initial condition for a solid body with different material. */
+		virtual void OffsetInitialParticlePosition(Vecd offset);
+
 		/**
 		 * @brief Write particle data in VTU format for Paraview.
 		 * @param[inout] output_file Ofstream of particle data.
@@ -152,6 +165,7 @@ namespace SPH {
 	protected:
 		/** Computing von_Mises_stress. */
 		Real von_Mises_stress(size_t particle_i);
+		ElasticSolid *elastic_solid_;
 
 	public:
 		/**
@@ -203,6 +217,8 @@ namespace SPH {
 	 */
 	class MuscleParticles : public ElasticSolidParticles
 	{
+	protected:
+		Muscle * muscle_;
 	public:
 		/**
 		 * @brief Default Constructor.

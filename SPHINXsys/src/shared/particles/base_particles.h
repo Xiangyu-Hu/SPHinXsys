@@ -28,27 +28,31 @@ namespace SPH {
 	class BaseParticleData
 	{
 	protected:
-		/** Maximum ID number for all particles. */
-		static int ID_max_;		
+		/** Total number for all real particles 
+		  * which excludes the buffer particles. */
+		static int total_number_of_particles_;		
 
 	public:
-		BaseParticleData(Vecd position, Real volume);
+		/** default constructor. */
+		BaseParticleData();
+		/** in this constructor, the particle is set at rest. */
+		BaseParticleData(Vecd position, Real Vol_0, Real sigma_0);
 		virtual ~BaseParticleData() {};
 
-		/** Particle ID. */
-		int particle_ID_;			
-		/** Cell location of a particle, used building inner configuration. */
+		/** Cell location of a particle, used for building inner configuration. */
 		Vecu cell_location_;		
 		/** Current position. */
 		Point pos_n_;	
 		/** Current particle velocity and stress induced and other accelerations. */
-		Vecd  vel_n_, dvel_dt_, dvel_dt_others_;	
-		/** Particle volume and initial volume. */
-		Real Vol_, Vol_0_;							
+		Vecd  vel_n_, dvel_dt_, dvel_dt_others_;
+		/** Particle volume and its reference volume. */
+		Real Vol_, Vol_0_;
+		/** Particle number density and its reference value. */
+		Real sigma_, sigma_0_;
 	};
 	/**
 	 * @class Particles
-	 * @brief Agroup of based particles with essential data.
+	 * @brief A group of based particles with essential (geometric and kinematic) data.
 	 */
 	class Particles
 	{
@@ -67,10 +71,15 @@ namespace SPH {
 		//----------------------------------------------------------------------
 		//Global data
 		//----------------------------------------------------------------------
-		Real speed_max_;							/**< Maxium particle speed. */
+		Real speed_max_;		/**< Maxium particle speed. */
 		
-		/** Initialize a base prticle by input a postion and volume. */
-		void InitializeABaseParticle(Vecd pnt, Real particle_volume);
+		/** Initialize a base prticle by input a postion, volume
+		  * and reference number density. */
+		void InitializeABaseParticle(Vecd pnt, Real Vol_0, Real sigma_0);
+		/** add buffer particles which latter may be realized for particle dynamics */
+		virtual void AddABufferParticle();
+		/** Realize a buffer particle from a real particle */
+		virtual void RealizeABufferParticle(size_t buffer_particle_index, size_t real_particle_index);
 
 		/** Write particle data in VTU format for Paraview. */
 		virtual void WriteParticlesToVtuFile(ofstream &output_file) = 0;
