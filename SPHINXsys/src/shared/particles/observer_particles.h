@@ -28,7 +28,7 @@ namespace SPH {
 	 * @class ObserverParticles
 	 * @brief A group of particles for observing.
 	 */
-	class ObserverParticles : public Particles
+	class ObserverParticles : public BaseParticles
 	{
 	public:
 		explicit ObserverParticles(SPHBody *body);

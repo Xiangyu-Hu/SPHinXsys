@@ -14,26 +14,42 @@ namespace SPH
 {
 	namespace observer_dynamics
 	{
-		template <class InteractingBodyType, class InteractingParticlesType>
-		using ObserverDynamicsContact = ParticleDynamicsContact<ObserverBody, ObserverParticles, Material,
+		template <class BodyType, class ParticlesType, class MaterialType, class InteractingBodyType, class InteractingParticlesType>
+		using ContactInterpolation = ParticleDynamicsContact<BodyType, ParticlesType, MaterialType, 
 			InteractingBodyType, InteractingParticlesType>;
 		
+		/**
+		 * @class InterpolationFromABody
+		 * @brief Interpolate any variable from general body
+		 */	
+		template <class BodyType, class ParticlesType, class MaterialType, class InteractingBodyType, class InteractingParticlesType>
+		class InterpolationFromABody : public ContactInterpolation<BodyType, ParticlesType, MaterialType, InteractingBodyType, InteractingParticlesType>
+		{
+		protected:
+			/** Abstract method for observing. */
+			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) = 0;
+		public:
+			explicit InterpolationFromABody(BodyType *body, InteractingBodyType *interacting_body)
+				: ContactInterpolation<BodyType, ParticlesType, MaterialType, InteractingBodyType, InteractingParticlesType>(body, { interacting_body }) {};
+			virtual ~InterpolationFromABody() {};
+		};
+
 		/**
 		 * @class ObserveABody
 		 * @brief Observering general body
 		 */	
 		template <class InteractingBodyType, class InteractingParticlesType>
-		class ObserveABody : public ObserverDynamicsContact<InteractingBodyType, InteractingParticlesType>
+		class ObserveABody : public ContactInterpolation<ObserverBody, ObserverParticles, BaseMaterial, InteractingBodyType, InteractingParticlesType>
 		{
 		protected:
 			/** Abstract method for observing. */
 			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) = 0;
 		public:
 			explicit ObserveABody(ObserverBody *body, InteractingBodyType *interacting_body)
-				: ObserverDynamicsContact<InteractingBodyType, InteractingParticlesType>(body, { interacting_body }) {};
+				: ContactInterpolation<ObserverBody, ObserverParticles, BaseMaterial, InteractingBodyType, InteractingParticlesType>(body, { interacting_body }) {};
 			virtual ~ObserveABody() {};
 		};
-		
+
 		/**
 		 * @class ObserveAFluidQuantity
 		 * @brief observe a fluid quantity
@@ -139,43 +155,110 @@ namespace SPH
 		 * This class is the couterpart to the class
 		 * ObserveAFluidQuantity and ObserveAnElasticSolidQuantity
 		 */
-		template <typename MuscleQuantityType>
-		class ObserveAMuscleQuantity : public ObserveABody<SolidBody, MuscleParticles>
+		template <typename ElectroPhysiologyQuantityType>
+		class ObserveAElectroPhysiologyQuantity : public ObserveABody<SolidBody, ElectroPhysiologyParticles>
 		{
 
 		protected:
-			StdVec<MuscleQuantityType>  muscle_quantities_;
+			ElectroPhysiologyParticles* electro_physiology_particles_;
+			map<string, size_t> species_indexes_map_;
+
+			StdVec<ElectroPhysiologyQuantityType> electro_physiology_quantities_;
 
 			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) override;
-			virtual MuscleQuantityType GetAMuscleQuantity(size_t index_particle_j, MuscleParticles &particles) = 0;
+			virtual ElectroPhysiologyQuantityType GetAMuscleQuantity(size_t index_particle_j, ElectroPhysiologyParticles&particles) = 0;
 
 		public:
-			explicit ObserveAMuscleQuantity(ObserverBody *body, SolidBody *interacting_body)
+			explicit ObserveAElectroPhysiologyQuantity(ObserverBody *body, SolidBody *interacting_body)
 				: ObserveABody(body, interacting_body) 
 				{
+				ElectroPhysiologyParticles* electro_physiology_particles_
+					= interacting_particles_[0];
+				species_indexes_map_ = electro_physiology_particles_->getSpeciesIndexMap();
 					for (size_t i = 0; i < body->number_of_particles_; ++i) 
-						muscle_quantities_.push_back(MuscleQuantityType(0));
+						electro_physiology_quantities_.push_back(ElectroPhysiologyQuantityType(0));
 				};
-			virtual ~ObserveAMuscleQuantity() {};
+			virtual ~ObserveAElectroPhysiologyQuantity() {};
 		};
 		/**
 		 * @class ObserveMuscleVoltage
 		 * @brief observe elastic displacement
 		 */
-		class ObserveMuscleVoltage : public ObserveAMuscleQuantity<Real>
+		class ObserveElectroPhysiologyVoltage : public ObserveAElectroPhysiologyQuantity<Real>
 		{
 
 		protected:
+			/** Index of voltage. */
+			size_t voltage_;
+
 			/** Define to observe the solid dispalacement. */
-			virtual Real GetAMuscleQuantity(size_t index_particle_j, MuscleParticles &particles) override 
+			virtual Real GetAMuscleQuantity(size_t index_particle_j, ElectroPhysiologyParticles& particles) override
 			{
-				return particles.muscle_body_data_[index_particle_j].voltage_n_ ;
+				return particles.diffusion_reaction_data_[index_particle_j].species_n_[voltage_];
 			};
 
 		public:
-			ObserveMuscleVoltage(ObserverBody *body, SolidBody *interacting_body)
-				: ObserveAMuscleQuantity(body, interacting_body) {};
-			virtual ~ObserveMuscleVoltage() {};
+			ObserveElectroPhysiologyVoltage(ObserverBody *body, SolidBody *interacting_body)
+				: ObserveAElectroPhysiologyQuantity(body, interacting_body) 
+			{
+				voltage_ = species_indexes_map_["Voltage"];
+			};
+			virtual ~ObserveElectroPhysiologyVoltage() {};
+		};
+
+		/**
+		 * @class Interpolate
+		 * @brief Observe an muscle quantity.
+		 * This class is the couterpart to the class
+		 * ObserveAFluidQuantity and ObserveAnElasticSolidQuantity
+		 */
+		typedef InterpolationFromABody<SolidBody, ActiveMuscleParticles, ActiveMuscle, SolidBody, ElectroPhysiologyParticles> ElectroPhysiologyInterpolation;
+		
+		template <typename ElectroPhysiologyQuantityType>
+		class ElectroPhysiologyQuantityInterpolation : public ElectroPhysiologyInterpolation
+		{
+
+		protected:
+			ElectroPhysiologyParticles* electro_physiology_particles_;
+			map<string, size_t> species_indexes_map_;
+
+			virtual ElectroPhysiologyQuantityType GetAMuscleQuantity(size_t index_particle_j, ElectroPhysiologyParticles&particles) = 0;
+			virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) override ;
+
+		public:
+			explicit ElectroPhysiologyQuantityInterpolation(SolidBody *body, SolidBody *interacting_body)
+				: ElectroPhysiologyInterpolation(body, interacting_body) 
+				{
+					ElectroPhysiologyParticles* electro_physiology_particles_ = interacting_particles_[0];
+					species_indexes_map_ = electro_physiology_particles_->getSpeciesIndexMap();
+				};
+			virtual ~ElectroPhysiologyQuantityInterpolation() {};
+		};
+
+		/**
+		 * @class ObserveMuscleVoltage
+		 * @brief observe elastic displacement
+		 */
+		class ActiveContractStressInterpolation : public ElectroPhysiologyQuantityInterpolation<Real>
+		{
+
+		protected:
+			/** Index of active constract stress. */
+			size_t active_contract_stress_;
+
+			/** Define to observe the solid dispalacement. */
+			virtual Real GetAMuscleQuantity(size_t index_particle_j, ElectroPhysiologyParticles& particles) override
+			{
+				return particles.diffusion_reaction_data_[index_particle_j].species_n_[active_contract_stress_];
+			};
+
+		public:
+			ActiveContractStressInterpolation(SolidBody *body, SolidBody *interacting_body)
+				: ElectroPhysiologyQuantityInterpolation(body, interacting_body) 
+			{
+				active_contract_stress_ = species_indexes_map_["ActiveContractionStress"];
+			};
+			virtual ~ActiveContractStressInterpolation() {};
 		};
 	}
 }

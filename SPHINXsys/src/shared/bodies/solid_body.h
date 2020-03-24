@@ -37,27 +37,12 @@ namespace SPH {
 	};
 
 	/**
-	 * @class SolidBodyPart
-	 * @brief A auxillariy class for SoildBody to
-	 * indicate a part of the body moving together with particles.
-	 */
-	class SolidBodyPart : public BodyPartByParticle
-	{
-	protected:
-		SolidBody *solid_body_;
-
-	public:
-		SolidBodyPart(SolidBody *solid_body, string soild_body_part_name);
-		virtual~SolidBodyPart() {};
-	};
-
-	/**
 	 * @class SolidBodyPartForSimbody
 	 * @brief A SolidBodyPart for coupling with Simbody.
 	 * The mass, origin, and unit inertial matrix are computed.
 	 * Note: Simbody spatial vectors are three dimensional.
 	 */
-	class SolidBodyPartForSimbody : public SolidBodyPart
+	class SolidBodyPartForSimbody : public BodyPartByParticle
 	{
 	protected:
 		Real solid_body_density_;
@@ -65,7 +50,7 @@ namespace SPH {
 		virtual void TagBodyPartParticles() override;
 	public:
 		SolidBodyPartForSimbody(SolidBody *solid_body,
-			string soild_body_part_name, Real solid_body_density);
+			string soild_body_part_name);
 		virtual~SolidBodyPartForSimbody() {};
 
 		Vec3 initial_mass_center_;

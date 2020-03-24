@@ -13,8 +13,10 @@
 #pragma once
 
 #include "base_data_package.h"
+#include "sph_data_conainers.h"
 
 #include <fstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -30,8 +32,9 @@ namespace SPH {
 	 */
 	class Mesh
 	{
-
 	protected:
+		/** point to body. */
+		SPHBody* body_;
 		/** buffer to avoid bound check */
 		size_t buffer_size_;
 		/** bounds */
@@ -45,7 +48,13 @@ namespace SPH {
 		Vecu CalcNumberOfGridPoints();
 	public:
 		/** Constructor */
-		Mesh(Vecd lower_bound, Vecd upper_bound, Real grid_spacing, size_t buffer_size = 0);
+		Mesh(Vecd lower_bound, Vecd upper_bound, Real grid_spacing,
+			size_t buffer_size = 0);
+		Mesh(SPHBody *body, Vecd lower_bound, Vecd upper_bound, 
+			Real grid_spacing, size_t buffer_size = 0) 
+			: Mesh(lower_bound, upper_bound, grid_spacing, buffer_size) {
+			body_ = body; 
+		};
 		virtual ~Mesh() {};
 
 		/** accesss protected variables */
@@ -66,7 +75,10 @@ namespace SPH {
 		/** Find cell position from indexes.
 		  * It is the position shift in the upper-right direction half grid size */
 		Vecd CellPositionFromIndexes(Vecu cell_indexes);
-
+		/** convert 1d vector index to mesh index. */
+		Vecu transfer1DtoMeshIndex(Vecu mesh_size, size_t i);
+		/** convert mesh index to 1d vector index. */
+		size_t transferMeshIndexTo1D(Vecu mesh_size, Vecu mesh_index);
 		/** output mesh data for Paraview visuallization */
 		virtual void WriteMeshToVtuFile(ofstream &output_file) = 0;
 		/** output mesh data for Tecplot visuallization */
@@ -83,7 +95,7 @@ namespace SPH {
 	class BackgroundData
 	{
 	public:
-		/** Empty constructor */
+		/** Default constructor */
 		BackgroundData() : phi_(0), n_(0), kappa_(1.0) {};
 		BackgroundData(Real level_set, Vecd normal_direction);
 		virtual ~BackgroundData() {};

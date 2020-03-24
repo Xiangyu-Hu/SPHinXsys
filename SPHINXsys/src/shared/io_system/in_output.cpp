@@ -9,9 +9,9 @@
 #include "all_meshes.h"
 #include "sph_system.h"
 
-namespace SPH {
-
-	//===============================================================//
+namespace SPH 
+{
+	//=============================================================================================//
 	In_Output::In_Output(SPHSystem &sph_system)
 		: sph_system_(sph_system)
 	{
@@ -36,15 +36,15 @@ namespace SPH {
 		}
 		restart_step_ = std::to_string(sph_system.restart_step_);
 
-		particle_reload_folder_ = "./particle_reload";
-		if (!fs::exists(particle_reload_folder_) && sph_system.reload_particle_)
+		reload_folder_ = "./reload";
+		if (!fs::exists(reload_folder_) && sph_system.reload_particle_)
 		{
-			std::cout << "\n Error: the input file:" << particle_reload_folder_ << " is not exists" << std::endl;
+			std::cout << "\n Error: the input file:" << reload_folder_ << " is not exists" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
 	}
-	//===============================================================//
+	//=============================================================================================//
 	void WriteBodyStatesToVtu::WriteToFile(Real time)
 	{
 		int Itime = int(time*1.0e4);
@@ -62,14 +62,32 @@ namespace SPH {
 			out_file << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
 			out_file << " <UnstructuredGrid>\n";
 
+			size_t number_of_particles = body->number_of_particles_;
+			out_file << "  <Piece Name =\"" << body->GetBodyName() << "\" NumberOfPoints=\"" << number_of_particles << "\" NumberOfCells=\"0\">\n";
+
 			body->WriteParticlesToVtuFile(out_file);
+
+			out_file << "   </PointData>\n";
+
+			//write empty cells
+			out_file << "   <Cells>\n";
+			out_file << "    <DataArray type=\"Int32\"  Name=\"connectivity\"  Format=\"ascii\">\n";
+			out_file << "    </DataArray>\n";
+			out_file << "    <DataArray type=\"Int32\"  Name=\"offsets\"  Format=\"ascii\">\n";
+			out_file << "    </DataArray>\n";
+			out_file << "    <DataArray type=\"types\"  Name=\"offsets\"  Format=\"ascii\">\n";
+			out_file << "    </DataArray>\n";
+			out_file << "   </Cells>\n";
+
+			out_file << "  </Piece>\n";
+
 			out_file << " </UnstructuredGrid>\n";
 			out_file << "</VTKFile>\n";
 
 			out_file.close();
 		}
 	}
-	//===============================================================//
+	//=============================================================================================//
 	void WriteBodyStatesToPlt::WriteToFile(Real time)
 	{
 		int Itime = int(time*1.0e4);
@@ -90,7 +108,7 @@ namespace SPH {
 			out_file.close();
 		}
 	}
-	//===============================================================//
+	//=============================================================================================//
 	WriteToVtuIfVelocityOutOfBound
 		::WriteToVtuIfVelocityOutOfBound(In_Output& in_output,
 			SPHBodyVector bodies, Real velocity_bound)
@@ -101,7 +119,7 @@ namespace SPH {
 			check_bodies_.push_back(new VelocityBoundCheck(body, velocity_bound));
 		}
 	}
-	//===============================================================//
+	//=============================================================================================//
 	void WriteToVtuIfVelocityOutOfBound::WriteToFile(Real time)
 	{
 		for (auto check_body : check_bodies_)
@@ -115,21 +133,21 @@ namespace SPH {
 				 <<"\n The body states have been outputted and the simulation terminates here. \n";
 		}
 	}
-	//===============================================================//
+	//=============================================================================================//
 	WriteRelaxBodyMeshToPlt
 		::WriteRelaxBodyMeshToPlt(In_Output& in_output, RelaxBody * relax_body)
 		: WriteBodyStates(in_output, relax_body), relax_body_(relax_body)
 	{
 		filefullpath_ = in_output_.output_folder_ + "/" + relax_body->GetBodyName() + "_background_mesh.dat";
 	}
-	//===============================================================//
+	//=============================================================================================//
 	void WriteRelaxBodyMeshToPlt::WriteToFile(Real time)
 	{
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		relax_body_->mesh_background_->WriteMeshToPltFile(out_file);
 		out_file.close();
 	}
-	//===============================================================//
+	//=============================================================================================//
 	WriteObservedFluidPressure
 		::WriteObservedFluidPressure(In_Output& in_output,
 			ObserverBody* observer, FluidBody *interacting_body)
@@ -147,10 +165,9 @@ namespace SPH {
 		out_file << "\n";
 		out_file.close();
 	}
-	//===============================================================//
+	//=============================================================================================//
 	void WriteObservedFluidPressure::WriteToFile(Real time)
 	{
-		int Itime = int(time*1.0e4);
 		parallel_exec();
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << time << "   ";
@@ -161,7 +178,7 @@ namespace SPH {
 		out_file << "\n";
 		out_file.close();
 	}
-	//===============================================================//
+	//=============================================================================================//
 	WriteObservedFluidVelocity
 		::WriteObservedFluidVelocity(In_Output &in_output,
 			ObserverBody* observer, FluidBody *interacting_body)
@@ -181,10 +198,9 @@ namespace SPH {
 		out_file << "\n";
 		out_file.close();
 	}
-	//===============================================================//
+	//=============================================================================================//
 	void WriteObservedFluidVelocity::WriteToFile(Real time)
 	{
-		int Itime = int(time*1.0e4);
 		parallel_exec();
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << time << "   ";
@@ -196,7 +212,7 @@ namespace SPH {
 		out_file << "\n";
 		out_file.close();
 	}
-	//===============================================================//
+	//=============================================================================================//
 	WriteObservedElasticDisplacement
 		::WriteObservedElasticDisplacement(In_Output &in_output,
 			ObserverBody* observer, SolidBody *interacting_body)
@@ -216,10 +232,9 @@ namespace SPH {
 		out_file << "\n";
 		out_file.close();
 	}
-	//===============================================================//
+	//=============================================================================================//
 	void WriteObservedElasticDisplacement::WriteToFile(Real time)
 	{
-		int Itime = int(time*1.0e4);
 		parallel_exec();
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << time << "   ";
@@ -235,7 +250,7 @@ namespace SPH {
 	WriteObservedVoltage::WriteObservedVoltage(In_Output &in_output,
 			ObserverBody* observer, SolidBody *interacting_body)
 		: WriteBodyStates(in_output, observer), observer_(observer),
-		ObserveMuscleVoltage(observer, interacting_body)
+		ObserveElectroPhysiologyVoltage(observer, interacting_body)
 	{
 		filefullpath_ = in_output_.output_folder_ + "/" + observer->GetBodyName() + "_voltage.dat";
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
@@ -250,13 +265,12 @@ namespace SPH {
 //=================================================================================================//
 	void WriteObservedVoltage::WriteToFile(Real time)
 	{
-		int Itime = int(time*1.0e4);
 		parallel_exec();
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << time << "   ";
 		for (size_t i = 0; i != observer_->number_of_particles_; ++i)
 		{
-			out_file << "  " << muscle_quantities_[i] << " ";
+			out_file << "  " << electro_physiology_quantities_[i] << " ";
 		}
 		out_file << "\n";
 		out_file.close();
@@ -274,17 +288,16 @@ namespace SPH {
 		out_file <<"\n";
 		out_file.close();
 	};
-	//===============================================================//
+	//=============================================================================================//
 	void WriteTotalMechanicalEnergy::WriteToFile(Real time)
 	{
-		int Itime = int(time*1.0e4);
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << time<<"   ";
 		out_file << parallel_exec()<<"   ";
 		out_file << "\n";
 		out_file.close();
 	};
-	//===============================================================//
+	//=============================================================================================//
 	WriteTotalViscousForceOnSolid
 		::WriteTotalViscousForceOnSolid(In_Output &in_output, SolidBody *solid_body)
 		: WriteBodyStates(in_output, solid_body), TotalViscousForceOnSolid(solid_body)
@@ -300,12 +313,11 @@ namespace SPH {
 		out_file << "\n";
 		out_file.close();
 	}
-	//===============================================================//
+	//=============================================================================================//
 	void WriteTotalViscousForceOnSolid::WriteToFile(Real time)
 	{
 		Vecd total_force = parallel_exec();
 
-		int Itime = int(time*1.0e4);
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << time << "   ";
 		for (int i = 0; i < dimension_; ++i)
@@ -313,7 +325,7 @@ namespace SPH {
 		out_file << "\n";
 		out_file.close();
 	};
-	//===============================================================//
+	//=============================================================================================//
 	WriteTotalForceOnSolid
 		::WriteTotalForceOnSolid(In_Output& in_output, SolidBody *solid_body)
 		: WriteBodyStates(in_output, solid_body), TotalForceOnSolid(solid_body)
@@ -330,12 +342,11 @@ namespace SPH {
 		out_file << "\n";
 		out_file.close();
 	}
-	//===============================================================//
+	//=============================================================================================//
 	void WriteTotalForceOnSolid::WriteToFile(Real time)
 	{
 		Vecd total_force = parallel_exec();
 
-		int Itime = int(time*1.0e4);
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << time << "   ";
 		for (int i = 0; i < dimension_; ++i)
@@ -343,10 +354,10 @@ namespace SPH {
 		out_file << "\n";
 		out_file.close();
 	};
-	//===============================================================//
-	WriteUpperBoundInXDirection
-		::WriteUpperBoundInXDirection(In_Output& in_output, SPHBody* body)
-		:WriteBodyStates(in_output, body), UpperBoundInXDirection(body)
+	//=============================================================================================//
+	WriteUpperFrontInXDirection
+		::WriteUpperFrontInXDirection(In_Output& in_output, SPHBody* body)
+		:WriteBodyStates(in_output, body), UpperFrontInXDirection(body)
 	{
 		filefullpath_ = in_output_.output_folder_ + "/" + body->GetBodyName() 
 			+ "_upper_bound_in_x_direction_" + in_output_.restart_step_ + ".dat";
@@ -356,28 +367,27 @@ namespace SPH {
 		out_file << "\n";
 		out_file.close();
 	};
-	//===============================================================//
-	void WriteUpperBoundInXDirection::WriteToFile(Real time)
+	//=============================================================================================//
+	void WriteUpperFrontInXDirection::WriteToFile(Real time)
 	{
-		int Itime = int(time*1.0e4);
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << time << "   ";
 		out_file << parallel_exec() << "   ";
 		out_file << "\n";
 		out_file.close();
 	};
-	//===============================================================//
+	//=============================================================================================//
 	ReloadParticleIO::ReloadParticleIO(In_Output& in_output, SPHBodyVector bodies)
 	{
 		for (SPHBody* body : bodies)
 		{
-			file_paths_.push_back(in_output.particle_reload_folder_ + "/SPHBody_" + body->GetBodyName() + "_rld.xml");
+			file_paths_.push_back(in_output.reload_folder_ + "/SPHBody_" + body->GetBodyName() + "_rld.xml");
 		}
 	}
-	//===============================================================//
+	//=============================================================================================//
 	void WriteReloadParticle::WriteToFile(Real time)
 	{
-		std::string reload_particle_folder = in_output_.particle_reload_folder_;
+		std::string reload_particle_folder = in_output_.reload_folder_;
 		if (!fs::exists(reload_particle_folder))
 		{
 			fs::create_directory(reload_particle_folder);
@@ -394,7 +404,7 @@ namespace SPH {
 			bodies_[i]->WriteToXmlForReloadParticle(filefullpath);
 		}
 	}
-	//===============================================================//
+	//=============================================================================================//
 	ReadReloadParticle::ReadReloadParticle(In_Output& in_output, SPHBodyVector bodies, StdVec<std::string> reload_body_names) 
 	: ReloadParticleIO(in_output, bodies), ReadBodyStates(in_output, bodies) 
 	{
@@ -407,10 +417,10 @@ namespace SPH {
 		
 		for (size_t i = 0; i < bodies_.size(); ++i)
 		{
-			file_paths_.push_back(in_output.particle_reload_folder_ + "/SPHBody_" + reload_body_names[i] + "_rld.xml");
+			file_paths_.push_back(in_output.reload_folder_ + "/SPHBody_" + reload_body_names[i] + "_rld.xml");
 		}
 	}
-	//===============================================================//
+	//=============================================================================================//
 	void ReadReloadParticle::ReadFromFile(size_t restart_step)
 	{
 		std::cout << "\n Reloading particles from files." << std::endl;
@@ -428,7 +438,7 @@ namespace SPH {
 			bodies_[i]->ReadFromXmlForReloadParticle(filefullpath);
 		}
 	}
-	//===============================================================//
+	//=============================================================================================//
 	RestartIO::RestartIO(In_Output& in_output, SPHBodyVector bodies)
 	{
 		overall_file_path_ = in_output.restart_folder_ + "/Restart_time_";
@@ -437,7 +447,7 @@ namespace SPH {
 			file_paths_.push_back(in_output.restart_folder_ + "/SPHBody_" + body->GetBodyName() + "_rst_");
 		}
 	}
-	//===============================================================//
+	//=============================================================================================//
 	void WriteRestart::WriteToFile(Real time)
 	{
 		int Itime = int(time);
@@ -461,7 +471,7 @@ namespace SPH {
 			bodies_[i]->WriteParticlesToXmlForRestart(filefullpath);
 		}
 	}
-	//===============================================================//
+	//=============================================================================================//
 	Real ReadRestart::ReadRestartTime(size_t restart_step)
 	{
 		std::cout << "\n Reading restart files from the restart step = " << restart_step << std::endl;
@@ -479,7 +489,7 @@ namespace SPH {
 
 		return restart_time;
 	}
-	//===============================================================//
+	//=============================================================================================//
 	void ReadRestart::ReadFromFile(size_t restart_step)
 	{
 		for (size_t i = 0; i < bodies_.size(); ++i)
@@ -496,7 +506,7 @@ namespace SPH {
 			bodies_[i]->ReadParticlesFromXmlForRestart(filefullpath);
 		}
 	}
-	//===============================================================//
+	//=============================================================================================//
 	WriteSimBodyPinAngleAndAngleRate
 		::WriteSimBodyPinAngleAndAngleRate(In_Output& in_output, StdVec<SimTK::MobilizedBody::Pin *> mobodies, SimTK::RungeKuttaMersonIntegrator &integ)
 		: WriteSimBodyStates<SimTK::MobilizedBody::Pin>(in_output, mobodies), integ_(integ)
@@ -513,10 +523,9 @@ namespace SPH {
 		out_file << "\n";
 		out_file.close();
 	};
-	//===============================================================//
+	//=============================================================================================//
 	void WriteSimBodyPinAngleAndAngleRate::WriteToFile(Real time)
 	{
-		int Itime = int(time * 1.0e4);
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << time << "   ";
 		const SimTK::State *simbody_state = &integ_.getState();
@@ -529,4 +538,52 @@ namespace SPH {
 		out_file << "\n";
 		out_file.close();
 	};
+	//=================================================================================================//
+	ReloadMaterialPropertyIO::ReloadMaterialPropertyIO(In_Output& in_output, BaseMaterial *material)
+	{
+
+		file_path_ = in_output.reload_folder_ + "/Material_" + material->getMaterialName() + "_rld.xml";
+	}
+//=================================================================================================//
+	void WriteReloadMaterialProperty::WriteToFile(Real time)
+	{
+		std::string reload_material_folder = in_output_.reload_folder_;
+		if (!fs::exists(reload_material_folder))
+		{
+			fs::create_directory(reload_material_folder);
+		}
+
+		if (fs::exists(file_path_))
+		{
+			fs::remove(file_path_);
+		}
+		material_->writeToXmlForReloadMaterialProperty(file_path_);
+	}
+//=================================================================================================//
+	ReadReloadMaterialProperty::ReadReloadMaterialProperty(In_Output& in_output,  
+		BaseMaterial *material, std::string material_name) 
+	: ReloadMaterialPropertyIO(in_output, material), ReadMaterialProperty(in_output, material) 
+	{
+		if (material->getMaterialName() != material_name)
+		{
+			std::cout << "\n Error: reload material name does not match" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
+		}
+	}
+//=================================================================================================//
+	void ReadReloadMaterialProperty::ReadFromFile(size_t restart_step)
+	{
+		std::cout << "\n Reloading material property from files." << std::endl;
+
+		if (!fs::exists(file_path_))
+		{
+			std::cout << "\n Error: the input file:" << file_path_ << " is not exists" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
+		}
+
+		material_->readFromXmlForMaterialProperty(file_path_);
+	}
+//=================================================================================================//
 }

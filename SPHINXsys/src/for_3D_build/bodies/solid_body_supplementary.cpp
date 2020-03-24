@@ -5,7 +5,7 @@ namespace SPH {
 	//===============================================================//
 	void SolidBodyPartForSimbody::TagBodyPartParticles()
 	{
-		SolidBodyPart::TagBodyPartParticles();
+		BodyPartByParticle::TagBodyPartParticles();
 
 		Real body_part_volume(0);
 		initial_mass_center_ = Vec3(0);
@@ -13,9 +13,9 @@ namespace SPH {
 		{
 			size_t index_particle_i = body_part_particles_[i];
 			BaseParticleData &base_particle_data_i
-				= solid_body_->base_particles_->base_particle_data_[index_particle_i];
+				= body_->base_particles_->base_particle_data_[index_particle_i];
 			SolidParticleData &solid_data_i
-				= dynamic_cast<SolidParticles*>(solid_body_->base_particles_->PointToThisObject())
+				= dynamic_cast<SolidParticles*>(body_->base_particles_->PointToThisObject())
 				->solid_body_data_[index_particle_i];
 
 			initial_mass_center_ += base_particle_data_i.Vol_*solid_data_i.pos_0_;
@@ -31,9 +31,9 @@ namespace SPH {
 		{
 			size_t index_particle_i = body_part_particles_[i];
 			BaseParticleData &base_particle_data_i
-				= solid_body_->base_particles_->base_particle_data_[index_particle_i];
+				= body_->base_particles_->base_particle_data_[index_particle_i];
 			SolidParticleData &solid_data_i
-				= dynamic_cast<SolidParticles*>(solid_body_->base_particles_->PointToThisObject())
+				= dynamic_cast<SolidParticles*>(body_->base_particles_->PointToThisObject())
 				->solid_body_data_[index_particle_i];
 
 			Vec3d displacement = (solid_data_i.pos_0_ - initial_mass_center_);

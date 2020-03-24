@@ -20,21 +20,22 @@ namespace SPH
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 
 			Real vort_temp = 0.0;
-			StdVec<NeighboringParticle>  &neighors = (*current_inner_configuration_)[index_particle_i];
-			for (size_t n = 0; n < neighors.size(); ++n)
+			NeighborList& inner_neighors
+				= getNeighborList(current_inner_configuration_, index_particle_i);
+			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
-				NeighboringParticle &neighboring_particle = neighors[n];
-				size_t index_particle_j = neighboring_particle.j_;
+				NeighboringParticle* neighboring_particle = inner_neighors[n];
+				size_t index_particle_j = neighboring_particle->j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 				FluidParticleData &fluid_data_j = particles_->fluid_particle_data_[index_particle_j];
 
 				Vecd vel_diff = base_particle_data_j.vel_n_ - base_particle_data_i.vel_n_;
-				Vecd r_ij = neighboring_particle.r_ij_ * neighboring_particle.e_ij_;
+				Vecd r_ij = neighboring_particle->r_ij_ * neighboring_particle->e_ij_;
 				Real vort = vel_diff[0] * r_ij[1] - vel_diff[1] * r_ij[0];
-				vort_temp -= vort * base_particle_data_j.Vol_ * neighboring_particle.dW_ij_;
+				vort_temp -= vort * base_particle_data_j.Vol_ * neighboring_particle->dW_ij_;
 			}
 
-			fluid_data_i.vort_2d_ = vort_temp;
+			fluid_data_i.vorticity_ = upgradeToVector3D(vort_temp);
 		}
 //=================================================================================================//
 	}

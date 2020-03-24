@@ -13,27 +13,28 @@ namespace SPH
 	//===============================================================//
 	FluidParticleData::FluidParticleData()
 		: p_(0.0), drho_dt_(0.0), div_correction_(1.0), vel_trans_(0),
-		dvel_dt_trans_(0), vorticity_(0), vort_2d_(0.0),
-		rho_0_(1.0), rho_n_(1.0), mass_(1.0), dvel_dt_inner_(0)
+		dvel_dt_trans_(0), vorticity_(0), rho_0_(1.0), rho_n_(1.0), 
+		mass_(1.0), dvel_dt_inner_(0)
 	{
 
 	}
 	//===============================================================//
-	FluidParticleData::FluidParticleData(BaseParticleData &base_particle_data, 
-		WeaklyCompressibleFluid *weakly_compressible_fluid)
+	FluidParticleData::FluidParticleData(BaseParticleData &base_particle_data, Fluid *fluid)
 		: p_(0.0), drho_dt_(0.0), div_correction_(1.0), vel_trans_(0),
-		dvel_dt_trans_(0), vorticity_(0), vort_2d_(0.0), dvel_dt_inner_(0)
+		dvel_dt_trans_(0), vorticity_(0), dvel_dt_inner_(0)
 	{
-		rho_0_ = weakly_compressible_fluid->ReinitializeRho(p_);
+		rho_0_ = fluid->ReinitializeRho(p_);
 		rho_n_ = rho_0_;
 		mass_ = base_particle_data.Vol_ * rho_0_;
 	}
 	//===============================================================//
-	FluidParticles::FluidParticles(SPHBody *body) : Particles(body)
+	FluidParticles::FluidParticles(SPHBody *body, BaseMaterial *base_material) 
+		: BaseParticles(body, base_material)
 	{
-		weakly_compressible_fluid_ = dynamic_cast<WeaklyCompressibleFluid*>(body->base_material_);
+		/** material of the fluid*/
+		Fluid* fluid = dynamic_cast<Fluid*>(base_material_);
 		for (size_t i = 0; i < base_particle_data_.size(); ++i) {
-			fluid_particle_data_.push_back(FluidParticleData(base_particle_data_[i], weakly_compressible_fluid_));
+			fluid_particle_data_.push_back(FluidParticleData(base_particle_data_[i], fluid));
 		}
 	}
 	//===============================================================//
@@ -44,17 +45,64 @@ namespace SPH
 	//===============================================================//
 	void FluidParticles::AddABufferParticle()
 	{
-		Particles::AddABufferParticle();
+		BaseParticles::AddABufferParticle();
 		fluid_particle_data_.push_back(FluidParticleData());
 
 	}
 	//===============================================================//
-	void FluidParticles::RealizeABufferParticle(size_t buffer_particle_index, size_t real_particle_index)
+	void FluidParticles::CopyFromAnotherParticle(size_t this_particle_index, size_t another_particle_index)
 	{
-		Particles::RealizeABufferParticle(buffer_particle_index, real_particle_index);
-		fluid_particle_data_[buffer_particle_index] = fluid_particle_data_[real_particle_index];
-		FluidParticleData& fluid_particle_data_i
-			= fluid_particle_data_[buffer_particle_index];
+		BaseParticles::CopyFromAnotherParticle(this_particle_index, another_particle_index);
+		fluid_particle_data_[this_particle_index] = fluid_particle_data_[another_particle_index];
+	}
+	//===============================================================//
+	void FluidParticles::UpdateFromAnotherParticle(size_t this_particle_index, size_t another_particle_index)
+	{
+		BaseParticles::UpdateFromAnotherParticle(this_particle_index, another_particle_index);
+		fluid_particle_data_[this_particle_index].rho_n_ = fluid_particle_data_[another_particle_index].rho_n_;
+		fluid_particle_data_[this_particle_index].p_ = fluid_particle_data_[another_particle_index].p_;
+	}
+	//===============================================================//
+	void FluidParticles::swapParticles(size_t this_particle_index, size_t that_particle_index)
+	{
+		BaseParticles::swapParticles(this_particle_index, that_particle_index);
+		std::swap(fluid_particle_data_[this_particle_index], fluid_particle_data_[that_particle_index]);
+	}
+	//===============================================================//
+	void  FluidParticles
+		::mirrorInAxisDirection(size_t particle_index_i, Vecd body_bound, int axis_direction)
+	{
+		BaseParticles::mirrorInAxisDirection(particle_index_i, body_bound, axis_direction);
+		FluidParticleData& fluid_particle_data_i = fluid_particle_data_[particle_index_i];
+		fluid_particle_data_i.vel_trans_[axis_direction] *= -1.0;
+	}
+	//===============================================================//
+	void FluidParticles::WriteParticlesToVtuFile(ofstream& output_file)
+	{
+		BaseParticles::WriteParticlesToVtuFile(output_file);
+
+		size_t number_of_particles = body_->number_of_particles_;
+
+		output_file << "    <DataArray Name=\"Density\" type=\"Float32\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != number_of_particles; ++i) {
+			output_file << fluid_particle_data_[i].rho_n_ << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+
+		output_file << "    <DataArray Name=\"Vorticity\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != number_of_particles; ++i) {
+			output_file << fluid_particle_data_[i].vorticity_[0] << " " << fluid_particle_data_[i].vorticity_[1] << " " << fluid_particle_data_[i].vorticity_[2] << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+	}
+	//===============================================================//
+	void ViscoelasticFluidParticles::WriteParticlesToVtuFile(ofstream& output_file)
+	{
+		FluidParticles::WriteParticlesToVtuFile(output_file);
 	}
 	//===============================================================//
 	void FluidParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)
@@ -104,10 +152,10 @@ namespace SPH
 
 	}
 	//===============================================================//
-	ViscoelasticFluidParticles::ViscoelasticFluidParticles(SPHBody *body)
-		: FluidParticles(body)
+	ViscoelasticFluidParticles
+		::ViscoelasticFluidParticles(SPHBody *body, BaseMaterial *base_material)
+		: FluidParticles(body, base_material)
 	{
-		oldroyd_b_fluid_ = dynamic_cast<Oldroyd_B_Fluid*>(body->base_material_);
 		for (size_t i = 0; i < base_particle_data_.size(); ++i) {
 			viscoelastic_particle_data_.push_back(ViscoelasticFluidParticleData());
 		}
@@ -125,10 +173,16 @@ namespace SPH
 	}
 	//===============================================================//
 	void ViscoelasticFluidParticles
-		::RealizeABufferParticle(size_t buffer_particle_index, size_t real_particle_index)
+		::CopyFromAnotherParticle(size_t this_particle_index, size_t another_particle_index)
 	{
-		FluidParticles::RealizeABufferParticle(buffer_particle_index, real_particle_index);
-		viscoelastic_particle_data_[buffer_particle_index] = viscoelastic_particle_data_[real_particle_index];
+		FluidParticles::CopyFromAnotherParticle(this_particle_index, another_particle_index);
+		viscoelastic_particle_data_[this_particle_index] = viscoelastic_particle_data_[another_particle_index];
+	}
+	//===============================================================//
+	void ViscoelasticFluidParticles::swapParticles(size_t this_particle_index, size_t that_particle_index)
+	{
+		FluidParticles::swapParticles(this_particle_index, that_particle_index);
+		std::swap(viscoelastic_particle_data_[this_particle_index], viscoelastic_particle_data_[that_particle_index]);
 	}
 	//===============================================================//
 	void ViscoelasticFluidParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)

@@ -41,7 +41,7 @@ namespace SPH {
 		SPHSystem &sph_system_;
 		std::string output_folder_;
 		std::string restart_folder_;
-		std::string particle_reload_folder_;
+		std::string reload_folder_;
 		std::string restart_step_;
 	};
 
@@ -276,7 +276,7 @@ namespace SPH {
 	 */
 	class WriteObservedVoltage
 		: public WriteBodyStates,
-		public observer_dynamics::ObserveMuscleVoltage
+		public observer_dynamics::ObserveElectroPhysiologyVoltage
 	{
 	protected:
 		ObserverBody *observer_;
@@ -344,14 +344,14 @@ namespace SPH {
 	 * @class WriteWaterFront
 	 * @brief write files for water front in free surface flow
 	 */
-	class WriteUpperBoundInXDirection
-		: public WriteBodyStates, public UpperBoundInXDirection
+	class WriteUpperFrontInXDirection
+		: public WriteBodyStates, public UpperFrontInXDirection
 	{
 	protected:
 		std::string filefullpath_;
 	public:
-		WriteUpperBoundInXDirection(In_Output& in_output, SPHBody* body);
-		virtual ~WriteUpperBoundInXDirection() {};
+		WriteUpperFrontInXDirection(In_Output& in_output, SPHBody* body);
+		virtual ~WriteUpperFrontInXDirection() {};
 		virtual void WriteToFile(Real time = 0.0) override;
 	};
 
@@ -458,5 +458,94 @@ namespace SPH {
 		WriteSimBodyPinAngleAndAngleRate(In_Output& in_output, StdVec<SimTK::MobilizedBody::Pin*> mobodies, SimTK::RungeKuttaMersonIntegrator &integ);
 		virtual ~WriteSimBodyPinAngleAndAngleRate() {};
 		virtual void WriteToFile(Real time = 0.0) override;
+	};
+		/**
+	 * @class MaterialPropertyIO
+	 * @brief base class for write and read material property.
+	 */
+	class MaterialPropertyIO
+	{
+	protected:
+		In_Output &in_output_;
+		BaseMaterial *material_;
+		MaterialVector materials_;
+	public:
+		MaterialPropertyIO(In_Output &in_output, BaseMaterial *material)
+			: in_output_(in_output), material_(material) {};
+		MaterialPropertyIO(In_Output &in_output, MaterialVector materials)
+			: in_output_(in_output), materials_(materials) {};
+		virtual ~MaterialPropertyIO() {};
+	};
+
+	/**
+	 * @class WriteMaterialProperty
+	 * @brief base class for write material property.
+	 */
+	class WriteMaterialProperty : public MaterialPropertyIO
+	{
+	public:
+		WriteMaterialProperty(In_Output &in_output, BaseMaterial *material)
+			: MaterialPropertyIO(in_output, material) {};
+		WriteMaterialProperty(In_Output &in_output, MaterialVector materials)
+			: MaterialPropertyIO(in_output, materials) {};
+		virtual ~WriteMaterialProperty() {};
+
+		virtual void WriteToFile(Real time) = 0;
+	};
+
+	/**
+	 * @class ReadBodyStates
+	 * @brief base class for read material property.
+	 */
+	class ReadMaterialProperty : public MaterialPropertyIO
+	{
+	public:
+		ReadMaterialProperty(In_Output &in_output, BaseMaterial *material)
+			: MaterialPropertyIO(in_output, material) {};
+		ReadMaterialProperty(In_Output &in_output, MaterialVector materials)
+			: MaterialPropertyIO(in_output, materials) {};
+		virtual ~ReadMaterialProperty() {};
+
+		virtual void ReadFromFile(size_t iteration_step) = 0;
+	};
+
+	/**
+	 * @class ReloadMaterialPropertyIO
+	 * @brief For write  and read material property.
+	 */
+	class ReloadMaterialPropertyIO
+	{
+	protected:
+		std::string file_path_;
+	public:
+		ReloadMaterialPropertyIO(In_Output& in_output, BaseMaterial *material);
+		virtual ~ReloadMaterialPropertyIO() {};
+	};
+
+	/**
+	  * @class WriteReloadMaterialProperty
+	  * @brief Write the material property to file in XML format.
+	  */
+	class WriteReloadMaterialProperty : public ReloadMaterialPropertyIO, public WriteMaterialProperty
+	{
+	public:
+		WriteReloadMaterialProperty(In_Output& in_output, BaseMaterial *material)
+			: ReloadMaterialPropertyIO(in_output, material), WriteMaterialProperty(in_output, material) {};
+		virtual ~WriteReloadMaterialProperty() {};
+
+		virtual void WriteToFile(Real time = 0.0) override;
+	};
+
+	/**
+	  * @class ReadReloadMaterialProperty
+	  * @brief Read the material property to file in XML format.
+	  */
+	class ReadReloadMaterialProperty : public ReloadMaterialPropertyIO, public ReadMaterialProperty
+	{
+	public:
+		ReadReloadMaterialProperty(In_Output& in_output, BaseMaterial *material, std::string material_name);
+		virtual ~ReadReloadMaterialProperty() {};
+
+		virtual void ReadFromFile(size_t iteration_step = 0) override;
 	};
 }

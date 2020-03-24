@@ -20,7 +20,7 @@ namespace SPH {
 	 * That is the constrained particles will be the same
 	 * during the simulation.
 	 */
-	template <class BodyType, class ParticlesType, class BodyPartByParticleType, class MaterialType = Material>
+	template <class BodyType, class ParticlesType, class BodyPartByParticleType, class MaterialType = BaseMaterial>
 	class ConstraintByParticle : public ParticleDynamics<void, BodyType, ParticlesType, MaterialType>
 	{
 	protected:
@@ -44,7 +44,7 @@ namespace SPH {
 	 * @brief Imposing Eulerian constrain to a body.
 	 * The constrained particles are the cells tagged.
 	 */
-	template <class BodyType, class ParticlesType, class BodyPartByCellType, class MaterialType = Material>
+	template <class BodyType, class ParticlesType, class BodyPartByCellType, class MaterialType = BaseMaterial>
 	class ConstraintByCell : public ParticleDynamicsByCells<BodyType, ParticlesType, MaterialType >
 	{
 	protected:
@@ -68,7 +68,7 @@ namespace SPH {
 	  * @brief reduce operation in a Lagrangian contrained region.
 	  */
 	template <class ReturnType, typename ReduceOperation, 
-		class BodyType, class ParticlesType, class BodyPartByParticleType, class MaterialType = Material>
+		class BodyType, class ParticlesType, class BodyPartByParticleType, class MaterialType = BaseMaterial>
 	class ConstraintByParticleReduce : public ParticleDynamics<ReturnType, BodyType, ParticlesType, MaterialType>
 	{
 	protected:

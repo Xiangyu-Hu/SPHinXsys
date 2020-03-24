@@ -22,4 +22,6 @@ namespace SPH {
 
 	using matrix_cell = CellList ***;
 	using matrix_grid = BackgroundData ***;
+	template<class DataType>
+	using MeshData = MeshData3<DataType>;
 }

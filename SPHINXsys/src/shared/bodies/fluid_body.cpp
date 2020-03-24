@@ -19,18 +19,12 @@ namespace SPH {
 	//===============================================================//
 	void FluidBody::BuildInnerConfiguration()
 	{
-		mesh_cell_linked_list_->UpdateInnerConfiguration(*this);
+		mesh_cell_linked_list_->UpdateInnerConfiguration(*this, current_inner_configuration_);
 	}
 	//===============================================================//
 	void FluidBody::BuildContactConfiguration()
 	{
 		mesh_cell_linked_list_->UpdateContactConfiguration(*this);
-	}
-	//===============================================================//
-	FluidBodyPart::FluidBodyPart(FluidBody *fluid_body, string fluid_body_part_name)
-		: BodyPartByCell(fluid_body, fluid_body_part_name), fluid_body_(fluid_body)
-	{
-
 	}
 	//===============================================================//
 }

@@ -144,7 +144,7 @@ namespace SPH {
 	/** rotating axis once according to right hand rule.
 	 * The axis_direction must be 0, 1 for 2d and 0, 1, 2 for 3d
 	 */
-	int SeondAxis(int axis_direction);
+	int SecondAxis(int axis_direction);
 	/** rotating axis twice  according to right hand rule.
 	  * The axis_direction must be 0, 1 for 2d and 0, 1, 2 for 3d
 	  */

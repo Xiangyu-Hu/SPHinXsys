@@ -5,7 +5,7 @@
 * the this kernel is more stable than gaussian like kernel due to its spike
 * at the origin. However, it is also found that such kernels give bad density
 * predictions. Therefore, the application of this kernel should be clarified.
-* @author	Luhui Han, Chi ZHang and Xiangyu Hu
+* @author	Chi ZHang and Xiangyu Hu
 * @version	0.1
 */
 

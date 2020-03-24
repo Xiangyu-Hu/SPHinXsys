@@ -1,6 +1,8 @@
 #ifndef SPHINXSYS_BASE_SMALLVEC_H
 #define SPHINXSYS_BASE_SMALLVEC_H
 
+#pragma once
+
 #include <cmath>
 #include <iostream>
 #include <cassert>
@@ -295,14 +297,24 @@ namespace SPH {
 	Mat2d inverseCholeskyDecomposition(Mat2d &A);
 	Mat3d inverseCholeskyDecomposition(Mat3d &A);
 
+	Vec2d FisrtAxisVector(Vec2d zero_vector);
+	Vec3d FisrtAxisVector(Vec3d zero_vector);
+
 	SimTK::Real TensorDoubleDotProduct(Mat2d &A, Mat2d &B);
 	SimTK::Real TensorDoubleDotProduct(Mat3d &A, Mat3d &B);
 
+	/** Upgrade real to 3d vector. */
+	Vec3d upgradeToVector3D(SimTK::Real input); 
+	/** Upgrade 2d vector to 3d vector. */
+	Vec3d upgradeToVector3D(Vec2d input);
+	/** overload for 3d vector. */
+	Vec3d upgradeToVector3D(Vec3d input);
 	/**
 	 * @class Transform2d
 	 * @brief Coordinate transfrom in 2D
 	 */
-	class Transform2d {
+	class Transform2d 
+	{
 		using Real = SimTK::Real;
 		Real rotation_angle_;
 		Vec2d translation_;
@@ -324,6 +336,12 @@ namespace SPH {
 			return origin - translation_;
 		};
 	};
+	/** CrossProduct computation. */
+	Vec2d getCrossProduct(Vec2d &A, Vec2d &B);
+	Vec3d getCrossProduct(Vec3d &A, Vec3d &B);
+	/** User defined cross product for fiber calculation. */
+	Mat2d getCrossProductMatrix(Vec2d &A);
+	Mat3d getCrossProductMatrix(Vec3d &A);
 }
 
 #endif //SPHINXSYS_BASE_SMALLVEC_H

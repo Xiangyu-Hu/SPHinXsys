@@ -7,7 +7,30 @@
 #include "small_vectors.h"
 //=================================================================================================//
 namespace SPH {
-//=================================================================================================//
+
+	//=================================================================================================//
+	Vec2d FisrtAxisVector(Vec2d zero_vector) 
+	{ 
+		return Vec2d(1.0, 0.0); 
+	}
+	//=================================================================================================//
+	Vec3d FisrtAxisVector(Vec3d zero_vector) 
+	{ 
+		return Vec3d(1.0, 0.0, 0.0); 
+	};
+	//=================================================================================================//
+	Vec3d upgradeToVector3D(SimTK::Real input) {
+		return Vec3d(input, 0.0, 0.0);
+	}
+	//=================================================================================================//
+	Vec3d upgradeToVector3D(Vec2d input) {
+		return Vec3d(input[0], input[1], 0.0);
+	}
+	//=================================================================================================//
+	Vec3d upgradeToVector3D(Vec3d input) {
+		return input;
+	}
+	//=================================================================================================//
 	/** 2x2 matrix,
 	  * It is only works for kernel corection not reverse other matrices */
 	Mat2d GeneralizedInverse(Mat2d &A)
@@ -81,7 +104,7 @@ namespace SPH {
 //=================================================================================================//
 	Mat2d getInverse(Mat2d &A)
 	{
-		Mat2d minv;
+		Mat2d minv(0);
 		SimTK::Real det = A(0, 0) * A(1, 1) - A(0, 1) * A(1, 0);
 		SimTK::Real invdet = 1.0 / det;
 		minv(0, 0) = A(1, 1) * invdet;
@@ -98,7 +121,7 @@ namespace SPH {
              A(0, 2) * (A(1, 0) * A(2, 1) - A(1, 1) * A(2, 0));
 
         SimTK::Real invdet = 1 / det;
-        Mat3d minv; // inverse of matrix m
+        Mat3d minv(0); // inverse of matrix m
 		minv(0, 0) = (A(1, 1) * A(2, 2) - A(2, 1) * A(1, 2)) * invdet;
 		minv(0, 1) = (A(0, 2) * A(2, 1) - A(0, 1) * A(2, 2)) * invdet;
 		minv(0, 2) = (A(0, 1) * A(1, 2) - A(0, 2) * A(1, 1)) * invdet;
@@ -140,7 +163,7 @@ namespace SPH {
 //=================================================================================================//
 	Mat2d inverseCholeskyDecomposition(Mat2d &A)
 	{
-		Mat2d lower;
+		Mat2d lower(0);
 		int n = 2;
     	/** Decomposing a matrix into Lower Triangular. */
     	for (int i = 0; i < n; i++)
@@ -167,7 +190,7 @@ namespace SPH {
 //=================================================================================================//
 	Mat3d inverseCholeskyDecomposition(Mat3d &A)
 	{
-		Mat3d lower;
+		Mat3d lower(0);
 		int n = 3;
     	/** Decomposing a matrix into Lower Triangular. */
     	for (int i = 0; i < n; i++)
@@ -190,6 +213,42 @@ namespace SPH {
     	}
 		Mat3d inverse_lower = getInverse(lower);
 		return inverse_lower;
+	}
+//=================================================================================================//
+	Vec2d getCrossProduct(Vec2d &A, Vec2d &B)
+	{
+		return Vec2d(0.0);
+	}
+//=================================================================================================//
+	Vec3d getCrossProduct(Vec3d &A, Vec3d &B)
+	{
+		SimTK::Real x_1 = A[1] * B[2] - A[2] * B[1];
+		SimTK::Real x_2 = A[2] * B[0] - A[0] * B[2];
+		SimTK::Real x_3 = A[0] * B[1] - A[1] * B[0];
+		return Vec3d(x_1, x_2, x_3);
+	}
+//=================================================================================================//
+	Mat2d getCrossProductMatrix(Vec2d &A)
+	{
+		return Mat2d(0.0);
+	}
+//=================================================================================================//
+	Mat3d getCrossProductMatrix(Vec3d &A)
+	{
+		Mat3d cross_A(0.0);
+		cross_A(1,1) =  0.0;
+		cross_A(1,2) = -A[2];
+		cross_A(1,3) =  A[1];
+
+		cross_A(2,1) =  A[2];
+		cross_A(2,2) =  0.0;
+		cross_A(2,3) = -A[0];
+
+		cross_A(3,1) = -A[1];
+		cross_A(3,2) =  A[0];
+		cross_A(3,3) =  0.0;
+		
+		return cross_A;
 	}
 //=================================================================================================//
 }

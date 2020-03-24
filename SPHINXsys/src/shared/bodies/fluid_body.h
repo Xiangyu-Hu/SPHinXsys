@@ -32,20 +32,4 @@ namespace SPH {
 		/** Build contact configuration. */
 		virtual void BuildContactConfiguration() override;
 	};
-
-	/**
-	  * @class FluidBodyPart
-	  * @brief An auxillariy class for fluidBody to
-	  * indicate a part of the body fixed with location.
-	  */
-	class FluidBodyPart : public BodyPartByCell
-	{
-	protected:
-		FluidBody *fluid_body_;
-
-		virtual void TagBodyPartCells() override;
-	public:
-		FluidBodyPart(FluidBody *fluid_body, string fluid_body_part_name);
-		virtual~FluidBodyPart() {};
-	};
 }

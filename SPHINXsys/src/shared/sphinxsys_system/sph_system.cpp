@@ -48,13 +48,22 @@ namespace SPH
 	void SPHSystem::SetBodyTopology(SPHBodyTopology* body_topology)
 	{
 		body_topology_ = body_topology;
+		for (size_t i = 0; i < body_topology_->size(); i++)
+		{
+			for (auto& body : bodies_) {
+				if (body == body_topology_->at(i).first) {
+					body->SetContactMap(body_topology_->at(i));
+					body->AllocateMeoemryCellLinkedList();
+					body->AllocateMemoriesForConfiguration();
+				}
+			}
+		}
 	}
 	//===============================================================//
 	void SPHSystem::InitializeSystemCellLinkedLists()
 	{
 		for (auto &body : bodies_)
 		{
-			body->AllocateMeoemryCellLinkedList();
 			body->UpdateCellLinkedList();
 		}
 	}
@@ -64,8 +73,6 @@ namespace SPH
 		for (size_t i = 0; i < body_topology_->size(); i++)
 		{
 			SPHBody *body = body_topology_->at(i).first;
-			body->SetContactMap(body_topology_->at(i));
-			body->AllocateMemoriesForConfiguration();
 			body->BuildInnerConfiguration();
 			body->BuildContactConfiguration();
 		}

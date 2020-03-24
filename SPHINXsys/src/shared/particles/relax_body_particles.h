@@ -25,22 +25,37 @@ namespace SPH {
 		virtual ~RelaxBodyParticleData() {};
 		
 		/** Paticle postion after mapping particles to surface. */
-		Vecd pos_0_;	
+		Vecd pos_0_;
+		/** Fiber and sheet direction. */
+		Vecd f_, s_;
 	};
 	/**
 	 * @class RelaxBodyParticles
 	 * @brief A group of particles with relax body particle data.
 	 */
-	class RelaxBodyParticles : public Particles
+	class RelaxBodyParticles : public BaseParticles
 	{
 	public:
-		RelaxBodyParticles(SPHBody *body);
+		/** Constructor as the most derived object. */
+		RelaxBodyParticles(SPHBody* body);
+		/**
+		 * @brief Default Constructor.
+		 * @detail Create a group of particles referred to a body.
+		 * @param[in] body_name Name of a body.
+		 */
+		RelaxBodyParticles(SPHBody* body, BaseMaterial* base_material);
+		
 		virtual ~RelaxBodyParticles() {};
 
 		/** Vector of particle data. */
 		StdLargeVec<RelaxBodyParticleData> relax_body_data_;	
 
 		IndexVector lists_of_singularity_particles_;
+
+		/** Copy state from another particle */
+		virtual void CopyFromAnotherParticle(size_t this_particle_index, size_t another_particle_index) override;
+		/** Swapping particles. */
+		virtual void swapParticles(size_t this_particle_index, size_t that_particle_index) override;
 
 		/** Write particle data in VTU format for Paraview. */
 		virtual void WriteParticlesToVtuFile(ofstream &output_file) override;

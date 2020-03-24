@@ -28,7 +28,7 @@ namespace SPH
 		}, ap);
 	}
 	//===============================================================//
-	void ContactIterator(StdVec<ListIndexVector*> indexes_interacting_particles,
+	void ContactIterator(InteractingParticles& indexes_interacting_particles,
 		ContactFunctor &contact_functor, Real dt)
 	{
 		for (size_t k = 0; k < indexes_interacting_particles.size(); ++k)
@@ -38,7 +38,7 @@ namespace SPH
 			}
 	}
 	//===============================================================//
-	void ContactIterator_parallel(StdVec<ListIndexVector*> indexes_interacting_particles,
+	void ContactIterator_parallel(InteractingParticles& indexes_interacting_particles,
 		ContactFunctor &contact_functor, Real dt)
 	{
 		for (size_t k = 0; k < indexes_interacting_particles.size(); ++k)
@@ -50,72 +50,116 @@ namespace SPH
 			}
 		}, ap);
 	}
+	//=================================================================================================//
+	void CellListIteratorSplitting(SplitCellLists& split_cell_lists,
+		CellListFunctor& cell_list_functor, Real dt)
+	{
+		//forward sweeping
+		for (size_t k = 0; k != split_cell_lists.size(); ++k) {
+			StdLargeVec<CellList*>& cell_lists = split_cell_lists[k];
+			for (size_t l = 0; l != cell_lists.size(); ++l)
+				cell_list_functor(cell_lists[l], dt);
+		}
+
+		//backward sweeping
+		for (size_t k = split_cell_lists.size(); k != 0; --k) {
+			StdLargeVec<CellList*>& cell_lists = split_cell_lists[k - 1];
+			for (size_t l = cell_lists.size(); l != 0; --l)
+				cell_list_functor(cell_lists[l - 1], dt);
+		}
+	}
+	//=================================================================================================//
+	void CellListIteratorSplitting_parallel(SplitCellLists& split_cell_lists,
+		CellListFunctor& cell_list_functor, Real dt)
+	{
+		//forward sweeping
+		for (size_t k = 0; k != split_cell_lists.size(); ++k) {
+			StdLargeVec<CellList*>& cell_lists = split_cell_lists[k];
+			parallel_for(blocked_range<size_t>(0, cell_lists.size()),
+				[&](const blocked_range<size_t>& r) {
+					for (size_t l = r.begin(); l < r.end(); ++l)
+						cell_list_functor(cell_lists[l], dt);
+				}, ap);
+		}
+	
+		//backward sweeping
+		for (size_t k = split_cell_lists.size(); k >= 1; --k) {
+			StdLargeVec<CellList*>& cell_lists = split_cell_lists[k - 1];
+			parallel_for(blocked_range<size_t>(0, cell_lists.size()),
+				[&](const blocked_range<size_t>& r) {
+					for (size_t l = r.end(); l >= r.begin() + 1; --l) {
+						cell_list_functor(cell_lists[l -1], dt);
+					}
+				}, ap);
+		}
+	}
 	//===============================================================//
-	void InnerIteratorSplitting(ByCellLists by_cell_lists_particle_indexes,
+	void InnerIteratorSplitting(SplitCellLists& split_cell_lists,
 		InnerFunctor &inner_functor, Real dt)
 	{
-		size_t number_of_lists = (*by_cell_lists_particle_indexes).size();
-
 		//forward sweeping
-		for (size_t k = 0; k < number_of_lists; ++k) {
-			StdVec<IndexVector> &lists_particle_indexes
-				= by_cell_lists_particle_indexes[k];
-			for (size_t l = 0; l < lists_particle_indexes.size(); ++l)
+		for (size_t k = 0; k != split_cell_lists.size(); ++k) {
+			StdLargeVec<CellList*>& cell_lists = split_cell_lists[k];
+			for (size_t l = 0; l != cell_lists.size(); ++l)
 			{
-				for (size_t i = 0; i < lists_particle_indexes[l].size(); ++i)
+				ConcurrentListDataVector& particle_data_lists
+					= cell_lists[l]->particle_data_lists_;
+				for (size_t i = 0; i != particle_data_lists.size(); ++i)
 				{
-					inner_functor(lists_particle_indexes[l][i], dt);
+					inner_functor(particle_data_lists[i].first, dt);
 				}
 			}
 		}
 
 		//backward sweeping
-		for (size_t k = number_of_lists - 1; k >= 0; --k) {
-			StdVec<IndexVector> &lists_particle_indexes
-				= by_cell_lists_particle_indexes[k];
-			for (size_t l = lists_particle_indexes.size() - 1; l >= 0; --l)
+		for (size_t k = split_cell_lists.size() - 1; k >= 0; --k) {
+			StdLargeVec<CellList*>& cell_lists = split_cell_lists[k];
+			for (size_t l = cell_lists.size() - 1; l >= 0; --l)
 			{
-				for (size_t i = lists_particle_indexes[l].size() - 1; i >= 0; --i)
+				ConcurrentListDataVector& particle_data_lists
+					= cell_lists[l]->particle_data_lists_;
+				for (size_t i = particle_data_lists.size() - 1; i >= 0; --i)
 				{
-					inner_functor(lists_particle_indexes[l][i], dt);
+					inner_functor(particle_data_lists[i].first, dt);
 				}
 			}
 		}
 	}
 	//===============================================================//
-	void InnerIteratorSplitting_parallel(ByCellLists by_cell_lists_particle_indexes,
+	void InnerIteratorSplitting_parallel(SplitCellLists& split_cell_lists,
 		InnerFunctor &inner_functor, Real dt)
 	{
-		size_t number_of_lists = (*by_cell_lists_particle_indexes).size();
 		//forward sweeping
-		for (size_t k = 0; k < number_of_lists; ++k) {
-			StdVec<IndexVector> &lists_particle_indexes
-				= by_cell_lists_particle_indexes[k];
-			parallel_for(blocked_range<size_t>(0, lists_particle_indexes.size()),
+		for (size_t k = 0; k != split_cell_lists.size(); ++k) {
+			StdLargeVec<CellList*>& cell_lists = split_cell_lists[k];
+			parallel_for(blocked_range<size_t>(0, cell_lists.size()),
 				[&](const blocked_range<size_t>& r) {
-				for (size_t l = r.begin(); l < r.end(); ++l) {
-					for (size_t i = 0; i < lists_particle_indexes[l].size(); ++i)
-					{
-						inner_functor(lists_particle_indexes[l][i], dt);
+					for (size_t l = r.begin(); l < r.end(); ++l) {
+						ConcurrentListDataVector& particle_data_lists
+							= cell_lists[l]->particle_data_lists_;
+						for (size_t i = 0; i < particle_data_lists.size(); ++i)
+						{
+							inner_functor(particle_data_lists[i].first, dt);
+						}
 					}
-				}
-			}, ap);
+				}, ap);
 		}
 
 		//backward sweeping
-		for (size_t k = number_of_lists; k >= 1; --k) {
-			StdVec<IndexVector> &lists_particle_indexes
-				= by_cell_lists_particle_indexes[k - 1];
-			parallel_for(blocked_range<size_t>(0, lists_particle_indexes.size()),
+		for (size_t k = split_cell_lists.size(); k >= 1; --k) {
+			StdLargeVec<CellList*>& cell_lists = split_cell_lists[k - 1];
+			parallel_for(blocked_range<size_t>(0, cell_lists.size()),
 				[&](const blocked_range<size_t>& r) {
 				for (size_t l = r.end(); l >= r.begin() + 1; --l) {
-					IndexVector &particle_indexes = lists_particle_indexes[l - 1];
-					for (size_t i = particle_indexes.size(); i >= 1; --i)
+					ConcurrentListDataVector& particle_data_lists
+						= cell_lists[l-1]->particle_data_lists_;
+					for (size_t i = particle_data_lists.size(); i >= 1; --i)
 					{
-						inner_functor(particle_indexes[i - 1], dt);
+						inner_functor(particle_data_lists[i - 1].first, dt);
 					}
 				}
 			}, ap);
 		}
 	}
+	//===============================================================//
 }

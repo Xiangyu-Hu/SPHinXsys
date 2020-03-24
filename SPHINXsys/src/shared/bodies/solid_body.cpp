@@ -20,28 +20,20 @@ namespace SPH {
 	//===============================================================//
 	void SolidBody::BuildInnerConfiguration()
 	{
-		mesh_cell_linked_list_->BuildReferenceInnerConfiguration(*this);
+		mesh_cell_linked_list_->UpdateInnerConfiguration(*this, reference_inner_configuration_);
 	}
 	//===============================================================//
 	void SolidBody::BuildContactConfiguration()
 	{
-		mesh_cell_linked_list_->BuildReferenceContactConfiguration(*this);
 		mesh_cell_linked_list_->UpdateContactConfiguration(*this);
-	}
-	//===============================================================//
-	SolidBodyPart::SolidBodyPart(SolidBody *solid_body, string soild_body_part_name)
-		: BodyPartByParticle(solid_body, soild_body_part_name),
-		solid_body_(solid_body)
-	{
-
 	}
 	//===============================================================//
 	SolidBodyPartForSimbody
 		::SolidBodyPartForSimbody(SolidBody *solid_body,
-			string soild_body_part_name, Real solid_body_density)
-		: SolidBodyPart(solid_body, soild_body_part_name), 
-		solid_body_density_(solid_body_density)
+			string soild_body_part_name)
+		: BodyPartByParticle(solid_body, soild_body_part_name)
 	{
-
+		Solid* solid = dynamic_cast<Solid*>(body_->base_particles_->base_material_);
+		solid_body_density_ = solid->getReferenceDensity();
 	}
 }

@@ -12,23 +12,59 @@ using namespace std;
 
 namespace SPH {
 	/**
-	 * @brief Friend classes.
+	 * @brief Preclaimed classes.
 	 */
+	class BaseMaterial;
 	class SPHBody;
+	class CellList;
+	class NeighboringParticle;
+	class ReferenceNeighboringParticle;
+
+	/**< Vector of Material. Note that vector of references are not allowed in c++.*/
+	using MaterialVector = StdVec<BaseMaterial*>;
+	/** Vector of SPH body. Note that vector of references are not allowed in c++.*/
+	using SPHBodyVector = StdVec<SPHBody*>;	
+	typedef pair<SPHBody*, SPHBodyVector> SPHBodyContactMap;
+	typedef vector<SPHBodyContactMap> SPHBodyTopology;
 	
-	using IndexVector = StdVec<size_t>;		/**< Index containner with elements of size_t. */
-	using CellVector = StdVec<Vecu>;		/**< Cell containner with elements of Vecu. */
-	using SPHBodyVector = StdVec<SPHBody*>;	/**< Vector of SPH body. Note that vector of references are not allowed in c++.*/
+	/** Index containner with elements of size_t. */
+	using IndexVector = StdVec<size_t>;
+	/** Cell containner with elements of Vecu. */
+	using CellVector = StdVec<Vecu>;		
 
-	using ListIndexVector = LargeVec<size_t>;	/**< Concurrent body index vector for cell linked lists. */
+	/** Concurrent particle indexes .*/
+	using ConcurrentIndexVector = LargeVec<size_t>;
+	/** Concurrent cell indexes.*/
+	using ConcurrentCellVector = LargeVec<Vecu>;
+	/** List data pair*/
+	using ListData = pair<size_t, Vecd>;
+	/** Cell list concurrent vector data. */
+	using ConcurrentListDataVector = LargeVec<ListData>;
 
-	using ConcurrentIndexVector = LargeVec<size_t>;	/**< Concurrent particle index which can be used to store particle position of a container .*/
-	using ListDataVector = LargeVec<pair<size_t, Vecd>>;		/**< List of vector data. */
+	/** Split cell list for split algorithms. */
+	using SplitCellLists = StdVec<StdLargeVec<CellList*>>;
+	/** Pair of point and volume. */
+	using PositionsAndVolumes =vector<pair<Point, Real>> ; 
 
-	// index set
-	using IndexSet = LargeSet<size_t>;				/**< Index set. */
-	using ContactParticleList = ListIndexVector;	/**< List of contact interacing partilces. */
-	using ByCellLists = StdVec<IndexVector> *;		/**< Index vector for by cell list. */
-	using PositionsAndVolumes =vector<pair<Point, Real>> ; /**< Pair of point and volume. */
+	/** Neighboring particles list. 
+	  * Using pointer for overloading derived neighbor relations.*/
+	using NeighborList = StdVec<NeighboringParticle*>; 
+	/** Neighboring particle list, the current and the previous number of neighbors. */	
+	using Neighborhood = tuple<NeighborList, size_t, size_t>;
+	/** A neighborhoods for all particles in a body. */
+	using ParticleConfiguration = StdLargeVec<Neighborhood>;
+	/** Inner neighborhoods for all particles in a body. */
+	using InnerParticleConfiguration = ParticleConfiguration;
+	/** All contact neighborhoods for all particles in a body. */
+	using ContatcParticleConfiguration = StdVec<ParticleConfiguration>;
+	/** Interacting neighborhoods for all particles in a body. */
+	using InteractingParticleConfiguration = StdVec<ParticleConfiguration*>;
+
+	/** List of partilces contact to another body. */
+	using ContactParticleList = ConcurrentIndexVector;
+	/** All contact particles lists. **/
+	using ContactParticles = StdVec<ContactParticleList>;
+	/** Contact particles to interacting bodies. **/
+	using InteractingParticles = StdVec<ContactParticleList*>;
 
 }

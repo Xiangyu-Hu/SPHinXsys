@@ -19,8 +19,6 @@ static tbb::affinity_partitioner ap;
 
 namespace SPH {
 
-	class SPHBody;
-
 	template <typename T>
 	using LargeVec = tbb::concurrent_vector<T>;
 
@@ -37,8 +35,11 @@ namespace SPH {
 
 	typedef std::pair<int, int> IndexPair;
 
-	typedef std::vector<std::pair<SPHBody*, std::vector<SPHBody*>>> SPHBodyTopology;
-	typedef std::pair<SPHBody*, std::vector<SPHBody*>> SPHBodyContactMap;
+	template<class DataType>
+	using MeshData2 = DataType**;
+
+	template<class DataType>
+	using MeshData3 = DataType***;
 }
 
 #endif // SPHINXSYS_BASE_CONTAINER_H

@@ -1,13 +1,19 @@
-#include "fluid_body.h"
+/**
+ * @file 	base_body_supplementary.cpp
+ * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @version	0.1
+ */
+
+#include "base_body.h"
 #include "mesh_cell_linked_list.h"
 
 namespace SPH 
 {
 	//===============================================================//
-	void FluidBodyPart::TagBodyPartCells()
+	void BodyPartByCell::TagBodyPartCells()
 	{
 		MeshCellLinkedList *mesh_cell_linked_list
-			= fluid_body_->mesh_cell_linked_list_;
+			= body_->mesh_cell_linked_list_;
 		Vecu number_of_cells = mesh_cell_linked_list->GetNumberOfCells();
 
 		for (int i = 0; i < number_of_cells[0]; ++i)

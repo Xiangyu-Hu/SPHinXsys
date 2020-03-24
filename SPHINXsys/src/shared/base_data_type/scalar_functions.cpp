@@ -9,7 +9,7 @@
 namespace SPH {
 	//=================================================================================================//
 	int ThirdAxis(int axis_direction) {
-		return SeondAxis(SeondAxis(axis_direction));
+		return SecondAxis(SecondAxis(axis_direction));
 	}
 
 }

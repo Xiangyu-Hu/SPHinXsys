@@ -23,16 +23,16 @@ namespace SPH {
 	public:
 		/** Index of the neighbor particle. */
 		size_t j_;
-		/** derivative of kernel function
-		 *  and kernel fucntion values. */
+		/** Derivative of kernel function and kernel fucntion values. */
 		Real dW_ij_, W_ij_;
 		/** Unit vector pointing from j to i. */
 		Vecd e_ij_;
-		/** Particle distance. */
+		/** Distance between i and j. */
 		Real r_ij_;	
 
 		/** default constrcutor*/
-		NeighboringParticle() {};
+		NeighboringParticle() : j_(0), dW_ij_(0.0), W_ij_(0.0), 
+			e_ij_(FisrtAxisVector(Vecd(0))), r_ij_(1.0) {};
 		/**
 		* @brief Constructor.
 		* @param[in] kernel Specific kernel.
@@ -48,69 +48,8 @@ namespace SPH {
 		 * @param[in] j_index Index of particle j
 		 */
 		void Reset(Kernel &kernel, Vecd &r_ij, size_t j_index);
-	};
 
-	/**
-	  * @class ReferenceNeighboringParticle
-	  * @brief A neigboring particle j of particle i from reference configuration.
-	  */
-	class ReferenceNeighboringParticle
-	{
-	public:
-		/** Index of the neighbor particle. */
-		size_t j_;
-		/** derivative of kernel function
-		 *  and kernel fucntion values. */
-		Real dW_ij_, W_ij_;
-		/** Unit vector pointing from j to i. */
-		Vecd e_ij_;
-		/** Particle distance. */
-		Real r_ij_;
-
-		/** default constrcutor*/
-		ReferenceNeighboringParticle() {};
-		/**
-		 * @brief Constructor.
-		 * @param[in] kernel Specific kernel.
-		 * @param[in] r_ij Postion vector of interacing particles.
-		 * @param[in] j_index Index of particle j
-		 */
-		ReferenceNeighboringParticle(Kernel &kernel, Vecd &r_ij, size_t j_index);
-		~ReferenceNeighboringParticle() {};
-		/**
-		 * @brief Reset the neighboring particles.
-		 * @param[in] kernel Specific kernel.
-		 * @param[in] r_ij Postion vector of interacing particles.
-		 * @param[in] j_index Index of particle j
-		 */
-		void Reset(Kernel &kernel, Vecd &r_ij, size_t j_index);
-	};
-	/**
-	  * @class ReferenceNeighboringParticleDiffusion
-	  * @brief Interparticle averaged diffusion tensor
-	  */
-	class ReferenceNeighboringParticleDiffusion
-	{
-	public:
-		/** Index of the neighbor particle. */
-		size_t j_;
-		/** Diffusion tensor */
-		Matd diffusion_ij_;
-
-		/** default constrcutor*/
-		ReferenceNeighboringParticleDiffusion() {};
-		/**
-		 * @brief Constructor.
-		 * @param[in] j_index Index of particle j
-		 * @param[in] diff_ij Inter average diffusion tensor
-		 */
-		ReferenceNeighboringParticleDiffusion(size_t j_index, Matd &diff_ij);
-		~ReferenceNeighboringParticleDiffusion() {};
-		/**
-		 * @brief Reset the neighboring particles diffusion tensor.
-		 * @param[in] j_index Index of particle j
-		 * @param[in] diff_ij Inter average diffusion tensor
-		 */
-		void Reset(size_t j_index, Matd &diff_ij);
+		/** compute gradient of the kernel function. */
+		Vecd getNablaWij() { return dW_ij_ * e_ij_; };
 	};
 }

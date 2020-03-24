@@ -1,6 +1,7 @@
 /**
  * @file 	eletro_physiology.h
- * @brief 	In is file, we declear the diffusion dynamics and the corresponing function. 
+ * @brief 	In is file, we declaim the dynamics relavant to electrophysiology,
+ * including diffusion, reaction and muscle activation. 
  * @author 	Chi Zhang and Xiangyu Hu
  * @version 0.2.1
  * 			From here, I will denote version a beta, e.g. 0.2.1, other than 0.1 as
@@ -10,19 +11,21 @@
 #pragma once
 
 #include "all_particle_dynamics.h"
+#include "diffusion_reaction_particles.h"
+#include "particle_dynamics_diffusion_reaction.h"
+#include "diffusion_reaction.h"
 #include "elastic_solid.h"
 #include "base_kernel.h"
+#include "solid_body.h"
+#include "solid_particles.h"
 
 namespace SPH
 {
-	class ElectroPhysiology;
-	
 	namespace electro_physiology
 	{
-        typedef ParticleDynamicsSimple<SolidBody, MuscleParticles, Muscle> ElectroPhysiologySimple;
-        typedef ParticleDynamicsReduce<Real, ReduceMin, SolidBody, MuscleParticles, Muscle> ElectroPhysiologyMinimum;
-        typedef ParticleDynamicsInner1Level<SolidBody, MuscleParticles, Muscle> ElectroPhysiologyInnver1Level;
-
+		typedef DiffusionBase<SolidBody, SolidParticles, Solid> ElectroPhysiologyBase;
+		typedef DiffusionReactionSimple<SolidBody, SolidParticles, Solid> ElectroPhysiologySimple;
+		typedef DiffusionInner<SolidBody, SolidParticles, Solid> ElectroPhysiologyInner;
 		/**
 		 * @class ElectroPhysiologyInitialCondition
 		 * @brief  set initial condition for a muscle body
@@ -30,8 +33,6 @@ namespace SPH
 		 */
 		class ElectroPhysiologyInitialCondition : public ElectroPhysiologySimple
 		{
-			protected:
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) = 0;
 		public:
 			ElectroPhysiologyInitialCondition(SolidBody *body)
 				: ElectroPhysiologySimple(body) {};
@@ -42,70 +43,51 @@ namespace SPH
 		* @brief Computing the acoustic time step size
 		* computing time step size
 		*/
-		class getDiffusionTimeStepSize : public ElectroPhysiologyMinimum
+		class GetElectroPhysiologyTimeStepSize 
+			: public GetDiffusionTimeStepSize<SolidBody, SolidParticles, Solid>
 		{
-		protected:
-			Real smoothing_length_;
-			Real ReduceFunction(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			explicit getDiffusionTimeStepSize(SolidBody* body);
-			virtual ~getDiffusionTimeStepSize() {};
+			explicit GetElectroPhysiologyTimeStepSize(SolidBody* body)
+				: GetDiffusionTimeStepSize<SolidBody, SolidParticles, Solid>(body) {};
+			virtual ~GetElectroPhysiologyTimeStepSize() {};
 		};
         /**
-		* @class CorrectConfiguration
-		* @brief obtain the corrected initial configuration in strong form
-		*/
-		class CorrectConfiguration : public ElectroPhysiologyInnver1Level
-		{
-		protected:
-			virtual void Initialization(size_t index_particle_i, Real dt = 0.0) override;
-			virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
-		public:
-			CorrectConfiguration(SolidBody *body) : ElectroPhysiologyInnver1Level(body) {};
-			virtual ~CorrectConfiguration() {};
-		};
-        /**
-		* @class DiffusionRelaxation
+		* @class ElectroPhysiologyDiffusionRelaxation
 		* @brief Compute the diffusion relaxation process
 		*/
-		class DiffusionRelaxation : public ElectroPhysiologyInnver1Level
+		class ElectroPhysiologyDiffusionRelaxation : 
+			public TotalLagrangianRungeKuttaRelaxationOfAllDifussionSpecies<SolidBody, SolidParticles, Solid>
 		{
-		protected:
-			virtual void Initialization(size_t index_particle_i, Real dt = 0.0) override;
-			virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			DiffusionRelaxation(SolidBody *body): ElectroPhysiologyInnver1Level(body) {};
-			virtual ~DiffusionRelaxation() {};
+			ElectroPhysiologyDiffusionRelaxation(SolidBody *body)
+				: TotalLagrangianRungeKuttaRelaxationOfAllDifussionSpecies<SolidBody, SolidParticles, Solid>(body) {};
+			virtual ~ElectroPhysiologyDiffusionRelaxation() {};
 		};
         /**
-		 * @class TransmembranePotentialReaction
+		 * @class ElectroPhysiologyReactionRelaxationForward
 		 * @brief Solv the reaction ODE equation of trans-membrane potential
 		*/
-		class TransmembranePotentialReaction : public ElectroPhysiologySimple
+		class ElectroPhysiologyReactionRelaxationForward
+			: public RelaxationOfAllReactionsFoward<SolidBody, SolidParticles, Solid>
 		{
-		protected:
-            ElectroPhysiology* reaction_model_;
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			TransmembranePotentialReaction(SolidBody *body);
-			virtual ~TransmembranePotentialReaction() {};
+			ElectroPhysiologyReactionRelaxationForward(SolidBody* body)
+				: RelaxationOfAllReactionsFoward<SolidBody, SolidParticles, Solid>(body) {};
+			virtual ~ElectroPhysiologyReactionRelaxationForward() {};
 		};
-        /**
-		 * @class GateVariableReaction
-		 * @brief Solvin the reaction ODE equation of gate variable.
+		/**
+		 * @class ElectroPhysiologyReactionRelaxationForward
+		 * @brief Solv the reaction ODE equation of trans-membrane potential
 		*/
-		class GateVariableReaction : public ElectroPhysiologySimple
+		class ElectroPhysiologyReactionRelaxationBackward
+			: public RelaxationOfAllReactionsBackward<SolidBody, SolidParticles, Solid>
 		{
-		protected:
-		 	ElectroPhysiology* reaction_model_;
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			GateVariableReaction(SolidBody *body);
-			virtual ~GateVariableReaction() {};
-		};    
-        /**
+			ElectroPhysiologyReactionRelaxationBackward(SolidBody* body)
+				: RelaxationOfAllReactionsBackward<SolidBody, SolidParticles, Solid>(body) {};
+			virtual ~ElectroPhysiologyReactionRelaxationBackward() {};
+		};
+		/**
 		 * @class ApplyStimulusCurrents
 		 * @brief Apply specific stimulus currents
 		*/

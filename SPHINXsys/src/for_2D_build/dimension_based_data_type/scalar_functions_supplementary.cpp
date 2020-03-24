@@ -8,7 +8,7 @@
 
 namespace SPH {
 	//=================================================================================================//
-	int SeondAxis(int axis_direction) {
+	int SecondAxis(int axis_direction) {
 		return axis_direction == 1 ? 0 : 1;
 	}
 }

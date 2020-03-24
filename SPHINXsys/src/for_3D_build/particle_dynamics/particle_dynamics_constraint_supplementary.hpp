@@ -18,7 +18,7 @@ namespace SPH {
 		PrepareConstraint();
 
 		for (size_t i = 0; i != constrained_cells_.size(); ++i) {
-			ListDataVector &list_data
+			ConcurrentListDataVector &list_data
 				= this->cell_linked_lists_[constrained_cells_[i][0]][constrained_cells_[i][1]][constrained_cells_[i][2]]
 				.particle_data_lists_;
 			for (size_t num = 0; num < list_data.size(); ++num)
@@ -35,7 +35,7 @@ namespace SPH {
 		parallel_for(blocked_range<size_t>(0, constrained_cells_.size()),
 			[&](const blocked_range<size_t>& r) {
 			for (size_t i = r.begin(); i < r.end(); ++i) {
-				ListDataVector &list_data
+				ConcurrentListDataVector &list_data
 					= this->cell_linked_lists_[constrained_cells_[i][0]][constrained_cells_[i][1]][constrained_cells_[i][2]]
 					.particle_data_lists_;
 				for (size_t num = 0; num < list_data.size(); ++num)

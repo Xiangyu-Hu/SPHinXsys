@@ -12,7 +12,7 @@
 
 
 namespace SPH {
-
+	//===========================================================//
 	MeshCellLinkedList::MeshCellLinkedList(Vecd lower_bound,
 		Vecd upper_bound, Real cell_spacing, size_t buffer_size)
 		: Mesh(lower_bound, upper_bound, cell_spacing, buffer_size)
@@ -37,32 +37,40 @@ namespace SPH {
 			? *orignal_kernel : *target_kernel;
 	}
 	//===========================================================//
-	void MeshCellLinkedList::UpdateParticleCellLocation(SPHBody &body)
+	void MeshCellLinkedList::UpdateCellLists(SPHBody& body)
 	{
-		StdLargeVec<BaseParticleData> &base_particle_data = body.base_particles_->base_particle_data_;
-
+		ClearCellLists();
+		StdLargeVec<BaseParticleData>& base_particle_data = body.base_particles_->base_particle_data_;
+		size_t number_of_particles = body.number_of_particles_;
 		//rebuild the corresponding particle list.
-		parallel_for(blocked_range<size_t>(0, base_particle_data.size()),
+		parallel_for(blocked_range<size_t>(0, number_of_particles),
 			[&](const blocked_range<size_t>& r) {
-			for (size_t i = r.begin(); i != r.end(); ++i) {
-				Vecu cellpos = GridIndexesFromPosition(base_particle_data[i].pos_n_);
-				base_particle_data[i].cell_location_ = cellpos;
-			}
-		}, ap);
+				for (size_t i = r.begin(); i != r.end(); ++i) {
+					Vecu cellpos = GridIndexesFromPosition(base_particle_data[i].pos_n_);
+					InsertACellLinkedListEntry(i, base_particle_data[i].pos_n_, cellpos);
+				}
+			}, ap);
+		UpdateSplitCellLists(body);
 	}
 	//===========================================================//
-	void MeshCellLinkedList::ClearByCellParticleLists(SPHBody &body)
+	void MeshCellLinkedList::ClearSplitCellLists(SPHBody &body)
 	{
-		ByCellLists by_cell_lists_particle_indexes
-			= body.by_cell_lists_particle_indexes_;
+		SplitCellLists& split_cell_lists = body.split_cell_lists_;
 
-		for (size_t i = 0; i < body.number_of_by_cell_lists_; i++) {
-			parallel_for(blocked_range<size_t>(0, by_cell_lists_particle_indexes[i].size()),
-				[&](const blocked_range<size_t>& r) {
-				for (size_t j = r.begin(); j != r.end(); ++j) 
-					by_cell_lists_particle_indexes[i][j].clear();
-			}, ap);
-			by_cell_lists_particle_indexes[i].clear();
-		}
+		for (size_t i = 0; i < split_cell_lists.size(); i++) 
+			split_cell_lists[i].clear();
+	}
+	//===============================================================//
+	void MeshCellLinkedList
+		::BuildInnerConfiguration(SPHBody& body,
+			InnerParticleConfiguration& inner_particle_configuration)
+	{
+		UpdateInnerConfiguration(body, inner_particle_configuration);
+	}
+	//===============================================================//
+	void MeshCellLinkedList
+		::BuildContactConfiguration(SPHBody& body)
+	{
+		UpdateContactConfiguration(body);
 	}
 }

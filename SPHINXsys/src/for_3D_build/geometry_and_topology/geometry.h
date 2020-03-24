@@ -7,6 +7,7 @@
 * ----------------------------------------------------------------------------*/
 
 #pragma once
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_geometry.h"
 
@@ -16,6 +17,16 @@
 
 #include <iostream>
 #include <string>
+#include <fstream>
+
+/** Macro for APPLE compilers*/
+#ifdef __APPLE__
+#include <boost/filesystem.hpp>
+namespace fs = boost::filesystem;
+#else
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#endif
 
 using namespace std;
 
@@ -33,7 +44,7 @@ namespace SPH {
 		SimTK::ContactGeometry::TriangleMesh *triangle_mesh_;
 
 		//constructor for load stl file from out side
-		Geometry(string file_path_name, Vec3d translation);
+		Geometry(string file_path_name, Vec3d translation, Real scale_factor);
 		// constructor for brick geometry
 		Geometry(Vec3d halfsize, int resol, Vec3d translation); 
 		// constructor for sphere geometry
@@ -70,7 +81,7 @@ namespace SPH {
 		void add_brick(Vec3d halfsize, int resol, Vec3d translation, RegionBooleanOps op);
 		void add_sphere(Real radius, int resol, Vec3d translation, RegionBooleanOps op);
 		void add_cylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resol, Vec3d translation, RegionBooleanOps op);
-		void add_from_STL_file(string file_path_name, Vec3d translation, RegionBooleanOps op);
+		void add_from_STL_file(string file_path_name, Vec3d translation, Real scale_factor, RegionBooleanOps op);
 
 		void done_modeling();
 	};

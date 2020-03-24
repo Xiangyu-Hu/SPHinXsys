@@ -4,6 +4,7 @@
  * @version	0.1
  */
 #include "observer_particles.h"
+#include "base_material.h"
 
 namespace SPH
 {
@@ -14,7 +15,7 @@ namespace SPH
 	}
 	//===============================================================//
 	ObserverParticles::ObserverParticles(SPHBody *body)
-		: Particles(body)
+		: BaseParticles(body, new BaseMaterial())
 	{
 		for (size_t i = 0; i < base_particle_data_.size(); ++i)
 			observer_body_data_.push_back(ObserverParticleData());

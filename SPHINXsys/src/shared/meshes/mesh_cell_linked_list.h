@@ -25,14 +25,20 @@ namespace SPH {
 	 */
 	class CellList
 	{
-
 	public:
+	/** the saved lists currently using concurrent vectors
+		 * due to writting conflicts when building the lists */
+		ConcurrentListDataVector particle_data_lists_;
+		Vecu cell_location_;
+		size_t real_particles_in_cell_;
+
 		CellList();
 		~CellList() {};
 
-		/** the saved lists currently using concurrent vectors
-		 * due to writting conflicts when building the lists */
-		ListDataVector particle_data_lists_;
+		/**Initialize cell information. */
+		void setCellInformation(Vecu cell_location) {
+			cell_location_ = cell_location;
+		};
 	};
 
 	/**
@@ -52,8 +58,8 @@ namespace SPH {
 
 		/** clear the cell lists */
 		void ClearCellLists();
-		/** clear by cell particle lists for a body*/
-		void ClearByCellParticleLists(SPHBody &body);
+		/** clear split cell lists for a body*/
+		void ClearSplitCellLists(SPHBody &body);
 
 		/** computing search range for building contact configuration */
 		int ComputingSearchRage(int orign_refinement_level, 
@@ -62,8 +68,9 @@ namespace SPH {
 		Kernel& ChoosingKernel(Kernel *orignal_kernel, Kernel *target_kernel);
 
 	public:
+		/** The buffer size 2 used to expand computational domian for particle searching. */
 		MeshCellLinkedList(Vecd lower_bound, Vecd upper_bound, 
-			Real cell_spacing, size_t buffer_size = 0);
+			Real cell_spacing, size_t buffer_size = 2);
 		/**In the destructor, the dynamically located memeory is released.*/
 		virtual ~MeshCellLinkedList() { DeleteMeshDataMatrix(); };
 
@@ -82,21 +89,18 @@ namespace SPH {
 
 		/** update the cell lists */
 		void UpdateCellLists(SPHBody &body);
-		/** Only update particles' cell locations. 
-		 *  This is for fiticious body in which no cell linked list 
-		 *  is required because no inner particle configuration to be constructed.
-		 */
-		void UpdateParticleCellLocation(SPHBody &body);
 		/** update by cell particle list for splitting algorithm */
-		void UpdateByCellParticleLists(SPHBody &body);
+		void UpdateSplitCellLists(SPHBody &body);
 
 		/** build reference inner configurtion */
-		void BuildReferenceInnerConfiguration(SPHBody &body);
+		void BuildInnerConfiguration(SPHBody& body, 
+			InnerParticleConfiguration& inner_particle_configuration);
 		/** build reference contact configuration */
-		void BuildReferenceContactConfiguration(SPHBody &body);
+		void BuildContactConfiguration(SPHBody &body);
 
 		/** update inner configuration */
-		void UpdateInnerConfiguration(SPHBody &body);
+		void UpdateInnerConfiguration(SPHBody &body,
+			InnerParticleConfiguration& inner_particle_configuration);
 		/** update contact configuration */
 		void UpdateContactConfiguration(SPHBody &body);
 		/** update interaction configuration */
@@ -109,5 +113,8 @@ namespace SPH {
 
 		/** check if wether the two points are in order repsected to the coordinates */
 		bool IsInSequence(Vecd pos_1, Vecd pos_2);
+
+		/** Insert a cell-linked_list entry. */
+		void InsertACellLinkedListEntry(size_t particle_index, Vecd particle_position, Vecu cellpos);
 	};
 }

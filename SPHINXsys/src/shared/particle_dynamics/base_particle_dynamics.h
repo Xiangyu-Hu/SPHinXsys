@@ -1,7 +1,7 @@
 /**
 * @file base_particle_dynamics.h
 * @brief This is for the base classes of particle dynamics, which describe the
-* intection between particles. These interactions are used to define  
+* interaction between particles. These interactions are used to define  
 * differential operators for surface forces or fluxes in continuum mechanics
 * @author  Xiangyu Hu, Luhui Han and Chi Zhang
 */
@@ -35,10 +35,10 @@ namespace SPH
 	/** Iterators for inner functors. parallel computing. */
 	void InnerIterator_parallel(size_t number_of_particles, InnerFunctor &inner_functor, Real dt = 0.0);
 	/** Iterators for contact functors. sequential computing. */
-	void ContactIterator(StdVec<ListIndexVector*> indexes_interacting_particles, 
+	void ContactIterator(InteractingParticles& indexes_interacting_particles,
 		ContactFunctor &contact_functor, Real dt = 0.0);
 	/** Iterators for contact functors. parallel computing. */
-	void ContactIterator_parallel(StdVec<ListIndexVector*> indexes_interacting_particles, 
+	void ContactIterator_parallel(InteractingParticles& indexes_interacting_particles,
 		ContactFunctor &contact_functor, Real dt = 0.0);
 
 	/** Iterators for reduce functors. sequential computing. */
@@ -50,11 +50,20 @@ namespace SPH
 	ReturnType ReduceIterator_parallel(size_t number_of_particles, ReturnType temp,
 		ReduceFunctor<ReturnType> &reduce_functor, ReduceOperation &ruduce_operation, Real dt = 0.0);
 
+	/** Functor for cofiguration operation. */
+	typedef std::function<void(CellList*, Real)> CellListFunctor;
+	/** Iterators for inner functors with splitting for configuration dynamics. sequential computing. */
+	void CellListIteratorSplitting(SplitCellLists& split_cell_lists,
+		CellListFunctor& cell_list_functor, Real dt = 0.0);
+	/** Iterators for inner functors with splitting for configuration dynamics. parallel computing. */
+	void CellListIteratorSplitting_parallel(SplitCellLists& split_cell_lists,
+		CellListFunctor& cell_list_functor, Real dt = 0.0);
+
 	/** Iterators for inner functors with splitting. sequential computing. */
-	void InnerIteratorSplitting(ByCellLists by_cell_lists_particle_indexes, 
+	void InnerIteratorSplitting(SplitCellLists& split_cell_lists,
 		InnerFunctor &inner_functor, Real dt = 0.0);
 	/** Iterators for inner functors with splitting. parallel computing. */
-	void InnerIteratorSplitting_parallel(ByCellLists by_cell_lists_particle_indexes, 
+	void InnerIteratorSplitting_parallel(SplitCellLists& split_cell_lists,
 		InnerFunctor &inner_functor, Real dt = 0.0);
 
 	/** A Functor for Summation */
@@ -70,12 +79,19 @@ namespace SPH
 	struct ReduceLowerBound {
 		Vecd operator () (Vecd x, Vecd y) const {
 			Vecd lower_bound;
-			for (int i = 0; i < lower_bound.size(); ++i) 
-				lower_bound[i] = SMIN(x[i], y[i]);
+			for (int i = 0; i < lower_bound.size(); ++i) lower_bound[i] = SMIN(x[i], y[i]);
 			return lower_bound;
 		}; 
 	};
-	
+	/** A Functor for upper bound */
+	struct ReduceUpperBound {
+		Vecd operator () (Vecd x, Vecd y) const {
+			Vecd upper_bound;
+			for (int i = 0; i < upper_bound.size(); ++i) upper_bound[i] = SMIN(x[i], y[i]);
+			return upper_bound;
+		};
+	};
+
 	/**
 	 * @class GlobalStaticVariables
 	 * @brief A place to put all global variables
@@ -119,7 +135,7 @@ namespace SPH
 	* and the bodies interacting with this body.
 	*/
 	template <class ReturnType, class BodyType, 
-		class ParticlesType = Particles, class MaterialType = Material>
+		class ParticlesType = BaseParticles, class MaterialType = BaseMaterial>
 	class ParticleDynamics : public Dynamics<ReturnType>
 	{
 	protected:
@@ -129,6 +145,9 @@ namespace SPH
 		ParticlesType *particles_;
 		/** the material involving the particle dynamics */
 		MaterialType *material_;
+		/** Split cell lists*/
+		SplitCellLists& split_cell_lists_;
+
 
 		/** the function for set global parameters for the particle dynamics */
 		virtual void SetupDynamics(Real dt = 0.0) override {};
@@ -136,7 +155,8 @@ namespace SPH
 		/** Constructor */
 		explicit ParticleDynamics(BodyType* body) : Dynamics<ReturnType>(), body_(body), 
 			particles_(dynamic_cast<ParticlesType*>(body->base_particles_->PointToThisObject())),
-			material_(dynamic_cast<MaterialType*>(body->base_material_->PointToThisObject())) {};
+			material_(dynamic_cast<MaterialType*>(body->base_particles_->base_material_->PointToThisObject())),
+			split_cell_lists_(body->split_cell_lists_){};
 		virtual ~ParticleDynamics() {};
 	};
 
@@ -145,15 +165,21 @@ namespace SPH
 	* @brief Particle dynamics base class for the case 
 	* with the inner configuration
 	*/
-	template <class BodyType, class ParticlesType = Particles, class MaterialType = Material>	
+	template <class BodyType, class ParticlesType = BaseParticles, class MaterialType = BaseMaterial>
 	class ParticleDynamicsWithInnerConfigurations
 		: public ParticleDynamics<void, BodyType, ParticlesType, MaterialType>
 	{
 	protected:
 		/** current inner confifuration of the designated body */
-		StdVec<NeighborList> *current_inner_configuration_;
+		InnerParticleConfiguration* current_inner_configuration_;
 		/** reference inner confifuration of the designated body */
-		StdVec <ReferenceNeighborList> *reference_inner_configuration_;
+		InnerParticleConfiguration* reference_inner_configuration_;
+		/** Get neighbor list for particle interaction. */
+		NeighborList& getNeighborList(InnerParticleConfiguration* particle_configuration, 
+			size_t index_particle_i) {
+			Neighborhood& neighborhood = (*particle_configuration)[index_particle_i];
+			return std::get<0>(neighborhood);
+		}
 	public:
 		explicit ParticleDynamicsWithInnerConfigurations(BodyType* body);
 		virtual ~ParticleDynamicsWithInnerConfigurations() {};
@@ -164,21 +190,19 @@ namespace SPH
 	* @brief This is the bas class for the case with contact configurations
 	*/
 	template <class BodyType, class ParticlesType, class MaterialType,
-		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType = Material>
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType = BaseMaterial>
 		class ParticleDynamicsWithContactConfigurations
 		: public ParticleDynamicsWithInnerConfigurations<BodyType, ParticlesType, MaterialType>
 	{
 	protected:
-		StdVec<InteractingBodyType *>  interacting_bodies_;
-		StdVec<InteractingParticlesType *>  interacting_particles_;
-		StdVec<InteractingMaterialType *>  interacting_material_;
+		StdVec<InteractingBodyType*>  interacting_bodies_;
+		StdVec<InteractingParticlesType*>  interacting_particles_;
+		StdVec<InteractingMaterialType*>  interacting_material_;
 
 		/** lists of the original body particles contacted to interacting bodies*/
-		StdVec<ContactParticleList*> indexes_interacting_particles_;
+		InteractingParticles indexes_interacting_particles_;
 		/** current interaction confifuration of the interacting bodies */
-		StdVec<StdVec<NeighborList>*> current_interacting_configuration_;
-		/** reference interaction confifuration of the designated body */
-		StdVec<StdVec<ReferenceNeighborList>*> reference_interacting_configuration_;
+		InteractingParticleConfiguration current_interacting_configuration_;
 	public:
 		explicit ParticleDynamicsWithContactConfigurations(BodyType *body, 
 			StdVec<InteractingBodyType*> interacting_bodies);
@@ -191,7 +215,7 @@ namespace SPH
 	* The particles are iterated according a list of cells.
 	* This is mainly used for imposing Eulerian boundary conditions.
 	*/
-	template <class BodyType, class ParticlesType = Particles, class MaterialType = Material>
+	template <class BodyType, class ParticlesType = BaseParticles, class MaterialType = BaseMaterial>
 	class ParticleDynamicsByCells : public ParticleDynamics<void, BodyType, ParticlesType, MaterialType>
 	{
 	protected:
@@ -208,115 +232,49 @@ namespace SPH
 	};
 
 	/**
-	* @class ParticleDynamicsSimple
-	* @brief Simple particle dynamics base class
-	*/
-	template <class BodyType, class ParticlesType = Particles, class MaterialType = Material>
-	class ParticleDynamicsSimple : public ParticleDynamics<void, BodyType, ParticlesType, MaterialType>
+	  * @class ParticleDynamicsCellListSplitting
+	  * @brief This is for using splitting algorihm 
+	  * which does not use particle conmfiguration data for 
+	  * particle interaction
+	  */
+	template <class BodyType, class ParticlesType, class MaterialType = BaseMaterial>
+	class ParticleDynamicsCellListSplitting
+		: public ParticleDynamics<void, BodyType, ParticlesType, MaterialType>
 	{
 	protected:
-		virtual void Update(size_t index_particle_i, Real dt = 0.0) = 0;
-		InnerFunctor functor_update_;
-		public:
-		explicit ParticleDynamicsSimple(BodyType* body)
-			: ParticleDynamics<void, BodyType, ParticlesType, MaterialType>(body), 
-			functor_update_(std::bind(&ParticleDynamicsSimple::Update, this, _1, _2)) {};
-		virtual ~ParticleDynamicsSimple() {};
+		MeshCellLinkedList* mesh_cell_linked_list_;
+		matrix_cell cell_linked_lists_;
+		Vecu number_of_cells_;
+		Kernel* kernel_;
+		Real cutoff_radius_;
+		Real cell_spacing_;
+		Vecd mesh_lower_bound_, mesh_upper_bound_;
+
+		virtual void CellListInteraction(CellList* cell_list, Real dt = 0.0) = 0;
+		CellListFunctor functor_cell_list_;
+	public:
+		explicit ParticleDynamicsCellListSplitting(BodyType* body);
+		virtual ~ParticleDynamicsCellListSplitting() {};
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
 	};
-	/**
-	* @class ParticleDynamicsReduce
-	* @brief Base abstract class for reduce
-	*/
-	template <class ReturnType, typename ReduceOperation,
-		class BodyType, class ParticlesType = Particles, class MaterialType = Material>
-	class ParticleDynamicsReduce : public ParticleDynamics<ReturnType, BodyType, ParticlesType, MaterialType>
-	{
-	protected:
-		ReduceOperation reduce_operation_;
-
-		/** inital or refence value */
-		ReturnType initial_reference_;
-		virtual void SetupReduce() {};
-		virtual ReturnType ReduceFunction(size_t index_particle_i, Real dt = 0.0) = 0;
-		virtual ReturnType OutputResult(ReturnType reduced_value) { return reduced_value; };
-		ReduceFunctor<ReturnType> functor_reduce_function_;
-	public:
-		explicit ParticleDynamicsReduce(BodyType* body) : ParticleDynamics<ReturnType, BodyType, ParticlesType, MaterialType>(body), 
-			functor_reduce_function_(std::bind(&ParticleDynamicsReduce::ReduceFunction, this, _1, _2)) {};
-		virtual ~ParticleDynamicsReduce() {};
-	
-		virtual ReturnType exec(Real dt = 0.0) override;
-		virtual ReturnType parallel_exec(Real dt = 0.0) override;
-	};
-
-	/**
-	* @class ParticleDynamicsInner
-	* @brief This is the class for inner interactions
-	* in which one the particles from the same body
-	* interact with each other
-	*/
-	template <class BodyType, class ParticlesType = Particles, class MaterialType = Material>
-	class ParticleDynamicsInner : public ParticleDynamicsWithInnerConfigurations<BodyType, ParticlesType, MaterialType>
-	{
-	protected:
-		virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) = 0;
-		InnerFunctor functor_inner_interaction_;
-	public:
-		explicit ParticleDynamicsInner(BodyType* body) : 
-			ParticleDynamicsWithInnerConfigurations<BodyType, ParticlesType, MaterialType>(body),
-			functor_inner_interaction_(std::bind(&ParticleDynamicsInner::InnerInteraction, this, _1, _2)) {};
-		virtual ~ParticleDynamicsInner() {};
-
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
-	};
-
 	/**
 	 * @class ParticleDynamicsInnerSplitting
 	 * @brief This is for the splitting algorihm
 	 */
-	template <class BodyType, class ParticlesType, class MaterialType = Material>
+	template <class BodyType, class ParticlesType, class MaterialType = BaseMaterial>
 	class ParticleDynamicsInnerSplitting 
 		: public ParticleDynamicsWithInnerConfigurations<BodyType, ParticlesType, MaterialType>
 	{
 	protected:
-		ByCellLists by_cell_lists_particle_indexes_;
-
 		virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) = 0;
 		InnerFunctor functor_inner_interaction_;
 	public:
 		explicit ParticleDynamicsInnerSplitting(BodyType* body)
 			: ParticleDynamicsWithInnerConfigurations<BodyType, ParticlesType, MaterialType>(body),
-			by_cell_lists_particle_indexes_(body->by_cell_lists_particle_indexes_),
-			functor_inner_interaction_(std::bind(&ParticleDynamicsInnerSplitting<BodyType, ParticlesType, MaterialType>::InnerInteraction, this, _1, _2)) {};
+			functor_inner_interaction_(std::bind(&ParticleDynamicsInnerSplitting::InnerInteraction, this, _1, _2)) {};
 		virtual ~ParticleDynamicsInnerSplitting() {};
-
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
-	};
-
-	/**
-	 * @class ParticleDynamicsContact
-	 * @brief This is the class for contact interactions
-	 */
-	template <class BodyType, class ParticlesType, class MaterialType, 
-		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType = Material>
-	class ParticleDynamicsContact 
-		: public ParticleDynamicsWithContactConfigurations<BodyType, ParticlesType, MaterialType, 
-		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
-	{
-	protected:
-		virtual void ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt = 0.0) = 0;
-		ContactFunctor functor_contact_interaction_;
-	public:
-		explicit ParticleDynamicsContact(BodyType* body, StdVec<InteractingBodyType*> interacting_bodies)
-			: ParticleDynamicsWithContactConfigurations<BodyType, ParticlesType, MaterialType, 
-				InteractingBodyType, InteractingParticlesType, InteractingMaterialType>(body, interacting_bodies), 
-			functor_contact_interaction_(std::bind(&ParticleDynamicsContact::ContactInteraction, this, _1, _2, _3)) {};
-		virtual ~ParticleDynamicsContact() {};
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
@@ -328,14 +286,12 @@ namespace SPH
 	 * which taking account wall boundary conditions
 	 */
 	template <class BodyType, class ParticlesType, class MaterialType,
-		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType = Material>
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType = BaseMaterial>
 	class ParticleDynamicsComplexSplitting
 		: public ParticleDynamicsWithContactConfigurations<BodyType, ParticlesType, MaterialType,
 		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
 	{
 	protected:
-		ByCellLists by_cell_lists_particle_indexes_;
-
 		/** the inner interaction taking account wall boundary conditions,
 		  * but the function form is the same as the inner interaction. */
 		virtual void ParticleInteraction(size_t index_particle_i, Real dt = 0.0) = 0;
@@ -344,7 +300,6 @@ namespace SPH
 		explicit ParticleDynamicsComplexSplitting(BodyType* body, StdVec<InteractingBodyType*> interacting_bodies)
 			: ParticleDynamicsWithContactConfigurations<BodyType, ParticlesType, MaterialType,
 			InteractingBodyType, InteractingParticlesType, InteractingMaterialType>(body, interacting_bodies),
-			by_cell_lists_particle_indexes_(body->by_cell_lists_particle_indexes_),
 			functor_particle_interaction_(std::bind(&ParticleDynamicsComplexSplitting::ParticleInteraction, this, _1, _2)) {};
 		virtual ~ParticleDynamicsComplexSplitting() {};
 

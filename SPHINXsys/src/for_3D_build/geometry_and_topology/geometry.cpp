@@ -2,13 +2,20 @@
 
 using namespace std;
 
-namespace SPH {
-
-	Geometry::Geometry(string filepathname, Vec3d translation) 
+namespace SPH 
+{
+	Geometry::Geometry(string filepathname, Vec3d translation, Real scale_factor) 
 		: Shape("Geoemetry")
 	{
+		if (!fs::exists(filepathname))
+		{
+			std::cout << "\n Error: the input file:" << filepathname << " is not exists" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
+		}
 		SimTK::PolygonalMesh polymesh;
 		polymesh.loadStlFile(filepathname);
+		polymesh.scaleMesh(scale_factor);
 		triangle_mesh_ = TriangleMeshFromPolyMesh(polymesh.transformMesh(translation));
 	}
 
@@ -63,7 +70,7 @@ namespace SPH {
 		SimTK::UnitVec3 normal;
 		Vec3d nearest = triangle_mesh_->findNearestPoint(input_pnt, inside, normal);
 
-		return input_pnt - nearest;
+		return nearest;
 	}
 
 	void Geometry::shapebound(Vec3d &lower_bound, Vec3d &upper_bound)
@@ -133,24 +140,18 @@ namespace SPH {
 		//a big positive number
 		Real large_number(1.0e15);
 		phi = large_number;
-		Vec3d p_find(0);
+		Vec3d pnt_found(0);
 
 		for (auto& Rshape : shapes)
 		{
 			Geometry* sp = Rshape.first;
 
-			Vec3d dispalcement = sp->closestpointonface(input_pnt);
-			Real distance = dispalcement.norm();
-			if (distance < phi)
-			{
-				phi = distance;
-				p_find = dispalcement;
-			}
-
+			pnt_found  = sp->closestpointonface(input_pnt);
+			phi = (input_pnt - pnt_found).norm();
 		}
 
 		phi = contain(input_pnt) ? phi : -phi;
-		closest_pnt = p_find;
+		closest_pnt = pnt_found;
 	}
 
 	void Region::add_geometry(Geometry *geometry, RegionBooleanOps op)
@@ -180,9 +181,9 @@ namespace SPH {
 		geometryops.push_back(op);
 	}
 
-	void Region::add_from_STL_file(string file_path_name, Vec3d translation, RegionBooleanOps op)
+	void Region::add_from_STL_file(string file_path_name, Vec3d translation, Real scale_factor, RegionBooleanOps op)
 	{
-		Geometry *geometry = new Geometry(file_path_name, translation);
+		Geometry *geometry = new Geometry(file_path_name, translation, scale_factor);
 		geometries.push_back(geometry);
 		geometryops.push_back(op);
 	}

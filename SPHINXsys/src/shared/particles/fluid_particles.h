@@ -14,7 +14,7 @@ using namespace std;
 
 namespace SPH {
 
-	class WeaklyCompressibleFluid;
+	class Fluid;
 	class Oldroyd_B_Fluid;
 	/**
 	 * @class FluidParticleData 
@@ -26,8 +26,7 @@ namespace SPH {
 		/** default constructor */
 		FluidParticleData();
 		/** in the constructor, particles is set at rest */
-		FluidParticleData(BaseParticleData &base_particle_data, 
-			WeaklyCompressibleFluid *weakly_compressible_fluid);
+		FluidParticleData(BaseParticleData &base_particle_data, Fluid *fluid);
 		virtual ~FluidParticleData() {};
 
 		/** Particle mass, initial number desity, initial density and current density. */
@@ -42,8 +41,6 @@ namespace SPH {
 		Vecd dvel_dt_inner_;
 		/** Vorticcity of fluid in 3D. */
 		Vec3d vorticity_;					
-		/** Vorticcity of fluid in 2D. */
-		Real vort_2d_; 						
 
 		/** Temporary data for initermediate usage. */
 		Real temp_real_;		
@@ -53,14 +50,10 @@ namespace SPH {
 	 * @class FluidParticles
 	 * @brief newtonian flud particles.
 	 */
-	class FluidParticles : public Particles
+	class FluidParticles : public BaseParticles
 	{
-	protected:
-		/** material of the fluid*/
-		WeaklyCompressibleFluid *weakly_compressible_fluid_;
-
 	public:
-		explicit FluidParticles(SPHBody *body);
+		explicit FluidParticles(SPHBody *body, BaseMaterial *base_material);
 		virtual ~FluidParticles() {};
 
 		/** vector of fluid particle data. */
@@ -75,7 +68,13 @@ namespace SPH {
 		/** add buffer particles which latter may be realized for particle dynamics*/
 		virtual void AddABufferParticle() override;
 		/** copy particle data from another particle */
-		virtual void RealizeABufferParticle(size_t buffer_particle_index, size_t real_particle_index) override;
+		virtual void CopyFromAnotherParticle(size_t this_particle_index, size_t another_particle_index) override;
+		/** Update the state of a particle from another particle */
+		virtual void UpdateFromAnotherParticle(size_t this_particle_index, size_t another_particle_index) override;
+		/** Swapping particles. */
+		virtual void swapParticles(size_t this_particle_index, size_t that_particle_index) override;
+		/** Get mirror a particle along an axis direaction. */
+		virtual void mirrorInAxisDirection(size_t particle_index_i, Vecd body_bound, int axis_direction);
 
 		/**
 		 * @brief Write particle data in XML format.
@@ -116,11 +115,9 @@ namespace SPH {
 	 */	
 	class ViscoelasticFluidParticles : public FluidParticles
 	{
-	protected:
-		Oldroyd_B_Fluid *oldroyd_b_fluid_;
 	public:
 		//constructor
-		explicit ViscoelasticFluidParticles(SPHBody *body);
+		explicit ViscoelasticFluidParticles(SPHBody *body, BaseMaterial *base_material);
 		virtual ~ViscoelasticFluidParticles() {};
 		
 		/** Vector of oldroyd b particle data. */
@@ -129,7 +126,9 @@ namespace SPH {
 		/** add buffer particles which latter may be realized for particle dynamics*/
 		virtual void AddABufferParticle() override;
 		/** copy particle data from another particle */
-		virtual void RealizeABufferParticle(size_t buffer_particle_index, size_t real_particle_index) override;
+		virtual void CopyFromAnotherParticle(size_t this_particle_index, size_t another_particle_index) override;
+		/** Swapping particles. */
+		virtual void swapParticles(size_t this_particle_index, size_t that_particle_index) override;
 
 		/** Write particle data in VTU format for Paraview. */
 		virtual void WriteParticlesToVtuFile(ofstream &output_file) override;

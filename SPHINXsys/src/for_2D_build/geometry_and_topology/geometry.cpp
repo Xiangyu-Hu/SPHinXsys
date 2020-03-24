@@ -34,7 +34,8 @@ namespace SPH {
 			join_strategy, end_strategy, circle_strategy);
 
 		if (!is_valid(multi_poly)) {
-			std::cout << "\n Error: the multi ploygen is not valid" << std::endl;
+			std::cout << "\n Error: the multi ploygen is not valid." << std::endl;
+			std::cout << "\n The points must be in clockwise. Please check the boost libraray reference." << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
@@ -58,7 +59,8 @@ namespace SPH {
 		boost_poly poly;
 		append(poly, pts);
 		if (!is_valid(poly)) {
-			std::cout << "\n Error: the ploygen is not valid" << std::endl;
+			std::cout << "\n Error: the multi ploygen is not valid." << std::endl;
+			std::cout << "\n The points must be in clockwise. Please check the boost libraray reference." << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
@@ -237,6 +239,7 @@ namespace SPH {
 			default:
 			{
 				std::cout << "\n FAILURE: the type of boolean operation is undefined!" << std::endl;
+				std::cout << "\n Please check the boost libraray reference." << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 				exit(1);
 				break;
@@ -247,6 +250,7 @@ namespace SPH {
 
 		if (!is_valid(multi_poly_tmp_in)) {
 			std::cout << "\n FAILURE: the boolean operation of multi ploygen is not valid" << std::endl;
+			std::cout << "\n Please check the boost libraray reference." << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}

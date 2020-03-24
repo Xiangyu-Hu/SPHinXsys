@@ -16,6 +16,19 @@
 
 namespace SPH {
 
+	//===========================================================//
+	Vecu Mesh::transfer1DtoMeshIndex(Vecu mesh_size, size_t i)
+	{
+		int row_size = mesh_size[1];
+		int column = i / row_size;
+		return Vecu(column, i - column * row_size);
+	}
+	//===================================================================//
+	size_t Mesh::transferMeshIndexTo1D(Vecu mesh_size, Vecu mesh_index)
+	{
+		return mesh_index[0] * mesh_size[1] + mesh_index[1];
+	}
+	//===================================================================//
 	void MeshBackground
 		::AllocateMeshDataMatrix()
 	{
@@ -37,7 +50,7 @@ namespace SPH {
 			[&](const blocked_range2d<size_t>& r) {
 			for (size_t i = r.rows().begin(); i != r.rows().end(); ++i)
 				for (size_t j = r.cols().begin(); j != r.cols().end(); ++j)
-		{
+				{
 					Vec2d grid_position = GridPositionFromIndexes(Vecu(i, j));
 					Vec2d closet_pnt_on_face(0, 0);
 					Real phi_from_surface = 0.0;
@@ -51,8 +64,16 @@ namespace SPH {
 	//===================================================================//
 	void MeshBackground::ComputeCurvatureFromLevelSet(SPHBody &body)
 	{
-		//intialise the corresponding level set .
 		Vecu number_of_operation = number_of_grid_points_;
+
+		for (size_t j = 0; j != number_of_operation[1]; ++j)
+		{
+			for (size_t i = 0; i != number_of_operation[0]; ++i)
+			{
+				mesh_background_data_[i][j].kappa_ = 0.0;
+			}
+		}
+
 		parallel_for(blocked_range2d<size_t>
 			(1, number_of_operation[0]-1, 1, number_of_operation[1]-1),
 			[&](const blocked_range2d<size_t>& r) 

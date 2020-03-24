@@ -1,7 +1,7 @@
 /**
  * @file 	base_body.h
  * @brief 	This is the base classes of SPH bodies. The real body is for 
- *			that with cell linked list and the fivtitious one doesnot.     
+ *			that with cell linked list and the fictitious one does not.     
  * 			Before the defination of the SPH bodies, the shapes with complex 
  *			geometries, i.e. those are produced by adavnced binary operation, 
  * 			such as intersection, should be produced first.
@@ -25,21 +25,13 @@ using namespace std;
 namespace SPH {
 	
 	/**
-	 * @brief preclaimed class.
+	 * @brief preclaimed classes.
 	 */
 	class SPHSystem;
-	class Particles;
-	class Material;
-	class Reaction;
+	class BaseParticles;
 	class Kernel;
 	class MeshCellLinkedList;
 	class MeshBackground;
-
-	using NeighborList = StdVec<NeighboringParticle>;
-	using ReferenceNeighborList = StdVec<ReferenceNeighboringParticle>;
-
-	using ContactNeighborList = StdVec<StdVec<NeighboringParticle>>;
-	using ReferenceContactNeighborList = StdVec<StdVec<ReferenceNeighboringParticle>>;
 
 	/**
 	 * @class ParticlesGeneratorOps
@@ -61,31 +53,41 @@ namespace SPH {
 		SPHSystem &sph_system_; 	/**< SPHSystem. */
 		string body_name_; 			/**< name of this body */
 		/** smoothing length. */
-		Real smoothinglength_;		
-		/** Computing particle spacing from refinement level */
+		Real smoothinglength_;
+		/** Computational domain bounds of the body for boundry conditions. */
+		Vecd body_lower_bound_, body_upper_bound_;
+		/** Whether the computational domain bound for this body is prescribed. */
+		bool prescribed_body_bounds_;
+		/** Computing particle spacing from refinement level. */
 		Real RefinementLevelToParticleSpacing();
 
-		/** change kernel function*/
+		/** Change kernel function specific for this body. */
 		void ReplaceKernelFunction(Kernel* kernel);
 	public:
 		/**
 		 * @brief Defaut constructor of SPHBody.
 		 * @param[in] sph_system SPHSystem.
 		 * @param[in] body_name Name of Body.
-		 * @param[in] base_particles Particles object.
 		 * @param[in] refinement_level Refinement level of this body.
+		 * @param[in] smoothinglength_ratio The ratio between smoothinglength to particle spacing.
 		 * @param[in] op Partciel generator manner.
 		 */
 		explicit SPHBody(SPHSystem &sph_system, string body_name, 
 			int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op);
 		virtual ~SPHBody() {};
 
-		Kernel *kernel_; 		/**< sph kernel function specific to a SPHBody */
-		int refinement_level_;	/**< refinement level of this body */
+		/** Get the name of this body for out file name. */
+		string GetBodyName();
+		/** Set up the contact map. */
+		void SetContactMap(SPHBodyContactMap& contact_map);
 		/** Allocate memory for cell linked list. */
 		virtual void AllocateMeoemryCellLinkedList() {};
 		/** Allocate memory for back ground mesh. */
 		virtual void AllocateMeoemryBackgroundMesh() {};
+		/** Allocate memories for configuration. */
+		void AllocateMemoriesForConfiguration();
+		/** Allocate extra configuration memories for body buffer particles. */
+		void AllocateConfigurationMemoriesForBodyBuffer(size_t body_buffer_particles);
 		/** Update cell linked list. */
 		virtual void UpdateCellLinkedList() = 0;
 		/** Build inner configuration. */
@@ -102,29 +104,28 @@ namespace SPH {
 		//----------------------------------------------------------------------
 		//Global variables
 		//----------------------------------------------------------------------
+		int refinement_level_;	/**< refinement level of this body */
+		Kernel* kernel_; 		/**< sph kernel function specific to a SPHBody */
 		Real particle_spacing_;						/**< Particle spacing of the body. */
 		size_t number_of_particles_;				/**< Number of real particles of the body. */
-		Particles *base_particles_;					/**< Base particles of this body. */
-		Material *base_material_;					/**< Base material of this body. */
-		Reaction *base_reaction_;					/**< Base reaction model of this body */
-		MeshCellLinkedList *mesh_cell_linked_list_; /**< Cell linked mesh of this body. */
-		MeshBackground *mesh_background_;			/**< Background mesh.*/
+		BaseParticles* base_particles_;				/**< Base particles of this body. */
+		MeshCellLinkedList* mesh_cell_linked_list_; /**< Cell linked mesh of this body. */
+		MeshBackground* mesh_background_;			/**< Background mesh.*/
+		ParticlesGeneratorOps particle_generator_op_;	/**< Particle generator manner */
+		PositionsAndVolumes body_input_points_volumes_; /**< For direct generate particles. /
 
 		/**
- 		 * @brief particle by cells lists is for parallel splitting algorithm
-		 * particles in each cell are collected together, 
-		 * if two partiles each belongs two different cell entries,
+ 		 * @brief particle by cells lists is for parallel splitting algorithm.
+		 * All particles in each cell are collected together. 
+		 * If two partiles each belongs two different cell entries,
 		 * they have no interaction because they are too far.
-		 * Due to possible conflict for periodic boundary condition,
-		 * one may require the number of cells in each direction be divided by three.
 		 */
-		size_t number_of_by_cell_lists_;
-		ByCellLists by_cell_lists_particle_indexes_;
+		SplitCellLists split_cell_lists_;
 		
 		/** Reference inner configurations for totoal Lagrangian formulation. */
-		StdVec<ReferenceNeighborList> reference_inner_configuration_;	
+		InnerParticleConfiguration reference_inner_configuration_;
 		/** current inner configurations for updated Lagrangian formulation. */
-		StdVec<NeighborList> current_inner_configuration_;
+		InnerParticleConfiguration current_inner_configuration_;
 		
 		/**
 		 * @brief Contact configurations
@@ -135,20 +136,9 @@ namespace SPH {
 		 /** Contact map: pointing to toplogically contacted bodies. **/
 		SPHBodyContactMap contact_map_;
 		/** Lists of particles has a ocnfiguration with particles in contaced bodies. **/
-		StdVec<ContactParticleList> indexes_contact_particles_;
-		/** Configurations for total Lagrangian formulation.**/
-		StdVec<ReferenceContactNeighborList> reference_contact_configuration_;
+		ContactParticles indexes_contact_particles_;
 		/** Configurations for updated Lagrangian formulation. **/
-		StdVec<ContactNeighborList> current_contact_configuration_;				
-
-		/** Get the name of this body for out file name. */
-		string GetBodyName(); 
-		/** Set up the contact map. */
-		void SetContactMap(SPHBodyContactMap &contact_map);
-		/** Allocate memories for configuration. */
-		void AllocateMemoriesForConfiguration();
-		/** Allocate extra configuration memories for body buffer particles. */
-		void AllocateConfigurationMemoriesForBodyBuffer(size_t body_buffer_particles);
+		ContatcParticleConfiguration current_contact_configuration_;
 
 		/** the reagion describe the geometry of the body.
 		 * static member, so the geoemtry head file is included. */
@@ -170,11 +160,7 @@ namespace SPH {
 		 * @param[in,out] upper_bound Upper bound of this body.
 		 */
 		void BodyBounds(Vecd &lower_bound, Vecd &upper_bound);
-		/**
-		 * @brief The positions and volumes for genearting particles directly.
-		 */		
-		PositionsAndVolumes body_input_points_volumes_;
-		ParticlesGeneratorOps particle_generator_op_;	/**< Particle generator manner */
+
 		/** Output particle data in VTU file for visuallization in Paraview. */
 		virtual void WriteParticlesToVtuFile(ofstream &output_file);
 		/** Output particle data in PLT file for visuallization in Tecplot. */
@@ -203,17 +189,11 @@ namespace SPH {
 	protected:
 
 	public:
-		/**
-		 * @brief Defaut constructor of RealBody.
-		 * @param[in] sph_system SPHSystem.
-		 * @param[in] body_name Name of Body.
-		 * @param[in] base_particles Particles object.
-		 * @param[in] refinement_level Refinement level of this body.
-		 * @param[in] op Partciel generator manner.
-		 */
+		/** Constructor of RealBody. */
 		RealBody(SPHSystem &sph_system, string body_name, 
 			int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op);
 		virtual ~RealBody() {};
+
 		/** Allocate memory for cell linked list. */
 		virtual void AllocateMeoemryCellLinkedList() override;
 		/** Update cell linked list. */
@@ -239,14 +219,7 @@ namespace SPH {
 	protected:
 
 	public:
-		/**
-		 * @brief Defaut constructor of FictitiousBodyBody.
-		 * @param[in] sph_system SPHSystem.
-		 * @param[in] body_name Name of Body.
-		 * @param[in] base_particles Particles object.
-		 * @param[in] refinement_level Refinement level of this body.
-		 * @param[in] op Partciel generator manner.
-		 */
+		/** Constructor of FictitiousBodyBody. */
 		FictitiousBody(SPHSystem &system, string body_name, 
 			int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op);
 		virtual ~FictitiousBody() {};
@@ -294,6 +267,7 @@ namespace SPH {
 	class BodyPartByParticle : public BodyPart
 	{
 	protected:
+		void tagAParticle(size_t particle_index);
 		virtual void TagBodyPartParticles();
 	public:
 		/** Collection particle in this body part. */
@@ -305,14 +279,14 @@ namespace SPH {
 	};
 
 	/**
-	 * @class EulerianBodyPart
+	 * @class BodyPartByCell
 	 * @brief An auxillariy class for SPHBody to
 	 * indicate a part of the body fixed in space.
 	 */
 	class BodyPartByCell : public BodyPart
 	{
 	protected:
-		virtual void TagBodyPartCells() = 0;
+		virtual void TagBodyPartCells();
 	public:
 		/** Collection of cells to indicate the body part. */
 		CellVector body_part_cells_;

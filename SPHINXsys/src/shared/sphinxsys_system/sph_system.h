@@ -33,8 +33,8 @@ namespace SPH
 		 * therefore, should be bigger than the lower and upper bounds of 
 		 * all bodies plus the boundary width. Otherwise, it may come to the situation that 
 		 * a particle may can not found a valid cell to build the cell linked list.
-		 * @param[in] lower_bound Lower bound of the computational domain.
-		 * @param[in] upper_bound Upper bound of the computational domain.
+		 * @param[in] lower_bound Lower bound of the system computational domain.
+		 * @param[in] upper_bound Upper bound of the system computational domain.
 		 * @param[in] particle_spacing_ref Reference particle spacing.
 		 * @param[in] smoothinglength_ratio The Referncen ratio of smoothing length to particle spacing.
 		 */
@@ -64,13 +64,14 @@ namespace SPH
 		void AddRealBody(SPHBody* body);
 		/** Add a new body to the SPH fictitious bodies. */
 		void AddFictitiousBody(SPHBody* body);
-		/** Set up the body topology. */
+		/** Set up the body topology and allocate memeries 
+		  * for mesh cell linked lists and particle configurations. */
 		void SetBodyTopology(SPHBodyTopology* body_topology);
-		/** Initialize cell linked lists system. */
+		/** Initialize cell linked lists. */
 		void InitializeSystemCellLinkedLists();
 		/** Initialize particle interacting configurations. */
 		void InitializeSystemConfigurations();
-		/** Set up, create particle, cell-linked list and configuration, for simulation. */
+		/** Set up cell-linked list and configuration for simulation. */
 		void SetupSPHSimulation();
 	};
 }

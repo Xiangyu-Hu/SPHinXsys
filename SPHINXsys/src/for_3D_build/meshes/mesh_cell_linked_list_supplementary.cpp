@@ -9,16 +9,20 @@
 
 namespace SPH {
 
-	CellList::CellList()
+	CellList::CellList() : cell_location_(0)
 	{
-		particle_data_lists_.reserve(27);
-
+		particle_data_lists_.reserve(36);
 	}
 	//===============================================================//
 	void MeshCellLinkedList
 		::AllocateMeshDataMatrix()
 	{
 		Allocate3dArray(cell_linked_lists_, number_of_grid_points_);
+		for (size_t i = 0; i != number_of_cells_[0]; ++i)
+			for (size_t j = 0; j != number_of_cells_[1]; ++j)
+				for (size_t k = 0; k != number_of_cells_[2]; ++k) {
+					cell_linked_lists_[i][j][k].setCellInformation(Vecu(i, j, k));
+				}
 	}
 	//===============================================================//
 	void MeshCellLinkedList
@@ -36,52 +40,61 @@ namespace SPH {
 					for (size_t k = r.cols().begin(); k != r.cols().end(); ++k)
 					{
 						cell_linked_lists_[i][j][k].particle_data_lists_.clear();
+						cell_linked_lists_[i][j][k].real_particles_in_cell_ = 0;
+
 					}
 		}, ap);
 	}
 	//===============================================================//
-	void MeshCellLinkedList::UpdateCellLists(SPHBody &body)
+	void MeshCellLinkedList::UpdateSplitCellLists(SPHBody &body)
 	{
-		ClearCellLists();
-		StdLargeVec<BaseParticleData> &base_particle_data = body.base_particles_->base_particle_data_;
+		//clear the data
+		ClearSplitCellLists(body);
 
-		//rebuild the corresponding particle list.
-		parallel_for(blocked_range<size_t>(0, base_particle_data.size()),
+		SplitCellLists& split_cell_lists = body.split_cell_lists_;
+
+		parallel_for(blocked_range<size_t>(0, split_cell_lists.size()),
 			[&](const blocked_range<size_t>& r) {
-			for (size_t i = r.begin(); i != r.end(); ++i)
-			{
-				Vecu cellpos = GridIndexesFromPosition(base_particle_data[i].pos_n_);
-				base_particle_data[i].cell_location_ = cellpos;
-				cell_linked_lists_[cellpos[0]][cellpos[1]][cellpos[2]]
-					.particle_data_lists_.push_back(make_pair(i, base_particle_data[i].pos_n_));
-			}
-		}, ap);
+				for (size_t num = r.begin(); num != r.end(); ++num) {
+					/** convert 1d vector index to mesh index. */
+					Vec3u split_mesh_index = transfer1DtoMeshIndex(Vec3u(3, 3, 3), num);
+					size_t l = split_mesh_index[0];
+					size_t m = split_mesh_index[1];
+					size_t n = split_mesh_index[2];
+
+					Vecu starting_index(2 - l, 2 - m, 2 - n);
+					Vecu number_of_operation = (number_of_cells_ + starting_index) / 3;
+					for (size_t i = 0; i != number_of_operation[0]; ++i)
+						for (size_t j = 0; j != number_of_operation[1]; ++j)
+							for (size_t k = 0; k != number_of_operation[2]; ++k) {
+								CellList& cell_list = cell_linked_lists_[3 * i + l][3 * j + m][3 * k + n];
+								size_t real_particles_in_cell = cell_list.particle_data_lists_.size();
+								if (real_particles_in_cell != 0) {
+									cell_list.real_particles_in_cell_ = real_particles_in_cell;
+									split_cell_lists[num].push_back(&cell_linked_lists_[3 * i + l][3 * j + m][3 * k + n]);
+								}
+							}
+				}
+			}, ap);
 	}
 	//===============================================================//
-	void MeshCellLinkedList::UpdateByCellParticleLists(SPHBody &body)
-	{
-		cout << "\n The function " 
-			<< "MeshCellLinkedList::UpdateByCellParticleLists"
-			<< " is not done in 3D. Exit the program! \n";
-		exit(0);
-	}
-	//===============================================================//
-	void MeshCellLinkedList::UpdateInnerConfiguration(SPHBody &body)
+	void MeshCellLinkedList::UpdateInnerConfiguration(SPHBody &body,
+		InnerParticleConfiguration& inner_particle_configuration)
 	{
 		StdLargeVec<BaseParticleData> &base_particle_data = body.base_particles_->base_particle_data_;
-		StdVec<NeighborList> &current_inner_configuration = body.current_inner_configuration_;
 
 		parallel_for(blocked_range<size_t>(0, body.number_of_particles_),
 			[&](const blocked_range<size_t>& r) {
 			for (size_t num = r.begin(); num != r.end(); ++num)
 			{
-				int i = (int)base_particle_data[num].cell_location_[0];
-				int j = (int)base_particle_data[num].cell_location_[1];
-				int k = (int)base_particle_data[num].cell_location_[2];
+				Vecu cell_location = GridIndexesFromPosition(base_particle_data[num].pos_n_);
+				int i = (int)cell_location[0];
+				int j = (int)cell_location[1];
+				int k = (int)cell_location[2];
 
-				StdVec<NeighboringParticle> &current_neighbor_list = current_inner_configuration[num];
-				size_t current_number_of_neighbors = current_neighbor_list.size();
-				size_t count_of_neigbors = 0;
+				Neighborhood& neighborhood = inner_particle_configuration[num];
+				NeighborList& neighbor_list = std::get<0>(neighborhood);
+				size_t previous_count_of_neigbors = std::get<2>(neighborhood);
 
 				for (int l = SMAX(i - 1, 0); l <= SMIN(i + 1, int(number_of_cells_[0]) - 1); ++l)
 				{
@@ -89,74 +102,26 @@ namespace SPH {
 					{
 						for (int q = SMAX(k - 1, 0); q <= SMIN(k + 1, int(number_of_cells_[2]) - 1); ++q)
 						{
-							ListDataVector &target_particles = cell_linked_lists_[l][m][q].particle_data_lists_;
+							ConcurrentListDataVector &target_particles = cell_linked_lists_[l][m][q].particle_data_lists_;
 							for (size_t n = 0; n != target_particles.size(); ++n)
 							{
 								//displacement pointing from neighboring particle to origin particle
 								Vecd displacement = base_particle_data[num].pos_n_ - target_particles[n].second;
 								if (displacement.norm() <= cutoff_radius_ && num != target_particles[n].first)
 								{
-									count_of_neigbors >= current_number_of_neighbors ?
-										current_neighbor_list
-										.push_back(NeighboringParticle(*(body.kernel_), displacement, target_particles[n].first))
-										: current_neighbor_list[count_of_neigbors]
-										.Reset(*(body.kernel_), displacement, target_particles[n].first);
-									count_of_neigbors++;
+									std::get<1>(neighborhood) >= previous_count_of_neigbors ?
+										neighbor_list.push_back(new NeighboringParticle(*(body.kernel_), displacement, target_particles[n].first))
+										: neighbor_list[std::get<1>(neighborhood)]->Reset(*(body.kernel_), displacement, target_particles[n].first);
+									std::get<1>(neighborhood)++;
 								}
 							}
 						}
 					}
 				}
-				//std::cout<<"count_of_neigbors :"<<count_of_neigbors<<std::endl;
-				current_neighbor_list.resize(count_of_neigbors);
-			}
-		}, ap);
-	}
-	//===============================================================//
-	void MeshCellLinkedList
-		::BuildReferenceInnerConfiguration(SPHBody &body)
-	{
-		StdLargeVec<BaseParticleData> &base_particle_data = body.base_particles_->base_particle_data_;
-		StdVec<ReferenceNeighborList> &reference_inner_configuration = body.reference_inner_configuration_;
-
-		parallel_for(blocked_range<size_t>(0, body.number_of_particles_),
-			[&](const blocked_range<size_t>& r) {
-			for (size_t num = r.begin(); num != r.end(); ++num)
-			{
-				int i = (int)base_particle_data[num].cell_location_[0];
-				int j = (int)base_particle_data[num].cell_location_[1];
-				int k = (int)base_particle_data[num].cell_location_[2];
-
-				StdVec<ReferenceNeighboringParticle> &reference_neighbor_list = reference_inner_configuration[num];
-				size_t current_number_of_neighbors = reference_neighbor_list.size();
-				size_t count_of_neigbors = 0;
-
-				for (int l = SMAX(i - 1, 0); l <= SMIN(i + 1, int(number_of_cells_[0]) - 1); ++l)
-				{
-					for (int m = SMAX(j - 1, 0); m <= SMIN(j + 1, int(number_of_cells_[1]) - 1); ++m)
-					{
-						for (int q = SMAX(k - 1, 0); q <= SMIN(k + 1, int(number_of_cells_[2]) - 1); ++q)
-						{
-							ListDataVector &target_particles = cell_linked_lists_[l][m][q].particle_data_lists_;
-							for (size_t n = 0; n != target_particles.size(); ++n)
-							{
-								//displacement pointing from neighboring particle to origin particle
-								Vecd displacement = base_particle_data[num].pos_n_ - target_particles[n].second;
-								if (displacement.norm() <= cutoff_radius_ && num != target_particles[n].first)
-								{
-									count_of_neigbors >= current_number_of_neighbors ?
-										reference_neighbor_list
-										.push_back(ReferenceNeighboringParticle(*(body.kernel_), displacement, target_particles[n].first))
-										: reference_neighbor_list[count_of_neigbors]
-										.Reset(*(body.kernel_), displacement, target_particles[n].first);
-									count_of_neigbors++;
-								}
-							}
-						}
-					}
-				}
-				//std::cout<<"count_of_neigbors :"<<count_of_neigbors<<std::endl;
-				reference_neighbor_list.resize(count_of_neigbors);
+				size_t current_count_of_neighbors = std::get<1>(neighborhood);
+				neighbor_list.resize(current_count_of_neighbors);
+				std::get<2>(neighborhood) = current_count_of_neighbors;
+				std::get<1>(neighborhood) = 0;
 			}
 		}, ap);
 	}
@@ -164,9 +129,9 @@ namespace SPH {
 	void MeshCellLinkedList::UpdateContactConfiguration(SPHBody &body)
 	{
 		StdLargeVec<BaseParticleData> &base_particle_data = body.base_particles_->base_particle_data_;
-		StdVec<ContactNeighborList>  &current_contact_configuration = body.current_contact_configuration_;
-		StdVec<ContactParticleList> &indexes_contact_particles = body.indexes_contact_particles_;
-		StdVec<SPHBody*> contact_bodies = body.contact_map_.second;
+		ContatcParticleConfiguration& current_contact_configuration = body.current_contact_configuration_;
+		ContactParticles& indexes_contact_particles = body.indexes_contact_particles_;
+		SPHBodyVector contact_bodies = body.contact_map_.second;
 
 		//clear previous surface particles
 		for (size_t body_num = 0; body_num < contact_bodies.size(); ++body_num)
@@ -194,16 +159,16 @@ namespace SPH {
 
 					matrix_cell target_cell_linked_lists
 						= target_mesh_cell_linked_list.cell_linked_lists_;
-					StdVec<NeighboringParticle> &current_neighbor_list
-						= current_contact_configuration[body_num][num];
-					size_t current_number_of_neighbors = current_neighbor_list.size();
-					size_t count_of_neigbors = 0;
+
+					Neighborhood& neighborhood = current_contact_configuration[body_num][num];
+					NeighborList& neighbor_list = std::get<0>(neighborhood);
+					size_t previous_count_of_neigbors = std::get<2>(neighborhood);
 
 					for (int l = SMAX(i - search_range, 0); l <= SMIN(i + search_range, int(target_number_of_cells[0]) - 1); ++l)
 						for (int m = SMAX(j - search_range, 0); m <= SMIN(j + search_range, int(target_number_of_cells[1]) - 1); ++m)
 							for (int q = SMAX(k - search_range, 0); q <= SMIN(k + search_range, int(target_number_of_cells[2]) - 1); ++q)
 							{
-								ListDataVector &target_particles
+								ConcurrentListDataVector &target_particles
 									= target_cell_linked_lists[l][m][q].particle_data_lists_;
 								for (size_t n = 0; n < target_particles.size(); n++)
 								{
@@ -212,91 +177,19 @@ namespace SPH {
 										- target_particles[n].second;
 									if (displacement.norm() <= cutoff_radius)
 									{
-										count_of_neigbors >= current_number_of_neighbors ?
-											current_neighbor_list
-											.push_back(NeighboringParticle(kernel, displacement, target_particles[n].first))
-											: current_neighbor_list[count_of_neigbors]
-											.Reset(kernel, displacement, target_particles[n].first);
-										count_of_neigbors++;
+										std::get<1>(neighborhood) >= previous_count_of_neigbors ?
+											neighbor_list.push_back(new NeighboringParticle(kernel, displacement, target_particles[n].first))
+											: neighbor_list[std::get<1>(neighborhood)]->Reset(kernel, displacement, target_particles[n].first);
+										std::get<1>(neighborhood)++;
 									}
 								}
 							}
-					current_neighbor_list.resize(count_of_neigbors);
-					if (current_neighbor_list.size() != 0)
-					{
+					size_t current_count_of_neighbors = std::get<1>(neighborhood);
+					neighbor_list.resize(current_count_of_neighbors);
+					std::get<2>(neighborhood) = current_count_of_neighbors;
+					std::get<1>(neighborhood) = 0;
+					if (current_count_of_neighbors != 0)
 						indexes_contact_particles[body_num].push_back(num);
-					}
-				}
-			}, ap);
-		}
-	}
-	//===============================================================//
-	void MeshCellLinkedList
-		::BuildReferenceContactConfiguration(SPHBody &body)
-	{
-		StdLargeVec<BaseParticleData> &base_particle_data = body.base_particles_->base_particle_data_;
-		StdVec<ReferenceContactNeighborList>  &reference_contact_configuration = body.reference_contact_configuration_;
-		StdVec<ContactParticleList> &indexes_contact_particles = body.indexes_contact_particles_;
-		StdVec<SPHBody*> contact_bodies = body.contact_map_.second;
-
-		//clear previous surface particles
-		for (size_t body_num = 0; body_num < contact_bodies.size(); ++body_num)
-		{
-			indexes_contact_particles[body_num].clear();
-			MeshCellLinkedList &target_mesh_cell_linked_list
-				= *(contact_bodies[body_num]->mesh_cell_linked_list_);
-			Vecu target_number_of_cells = target_mesh_cell_linked_list.number_of_cells_;
-			int search_range
-				= ComputingSearchRage(body.refinement_level_,
-					contact_bodies[body_num]->refinement_level_);
-			Kernel &kernel = ChoosingKernel(body.kernel_, contact_bodies[body_num]->kernel_);
-			Real cutoff_radius = kernel.GetCutOffRadius();
-
-			parallel_for(blocked_range<size_t>(0, body.number_of_particles_),
-				[&](const blocked_range<size_t>& r) {
-				for (size_t num = r.begin(); num != r.end(); ++num)
-				{
-					Vecu target_cell_index
-						= target_mesh_cell_linked_list
-						.GridIndexesFromPosition(base_particle_data[num].pos_n_);
-					int i = (int)target_cell_index[0];
-					int j = (int)target_cell_index[1];
-					int k = (int)target_cell_index[2];
-
-					matrix_cell target_cell_linked_lists
-						= target_mesh_cell_linked_list.cell_linked_lists_;
-					StdVec<ReferenceNeighboringParticle> &reference_neighbor_list
-						= reference_contact_configuration[body_num][num];
-					size_t current_number_of_neighbors = reference_neighbor_list.size();
-					size_t count_of_neigbors = 0;
-
-					for (int l = SMAX(i - search_range, 0); l <= SMIN(i + search_range, int(target_number_of_cells[0]) - 1); ++l)
-						for (int m = SMAX(j - search_range, 0); m <= SMIN(j + search_range, int(target_number_of_cells[1]) - 1); ++m)
-							for (int q = SMAX(k - search_range, 0); q <= SMIN(k + search_range, int(target_number_of_cells[2]) - 1); ++q)
-							{
-								ListDataVector &target_particles
-									= target_cell_linked_lists[l][m][q].particle_data_lists_;
-								for (size_t n = 0; n < target_particles.size(); n++)
-								{
-									//displacement pointing from neighboring particle to origin particle
-									Vecd displacement = base_particle_data[num].pos_n_
-										- target_particles[n].second;
-									if (displacement.norm() <= cutoff_radius)
-									{
-										count_of_neigbors >= current_number_of_neighbors ?
-											reference_neighbor_list
-											.push_back(ReferenceNeighboringParticle(kernel, displacement, target_particles[n].first))
-											: reference_neighbor_list[count_of_neigbors]
-											.Reset(kernel, displacement, target_particles[n].first);
-										count_of_neigbors++;
-									}
-								}
-							}
-					reference_neighbor_list.resize(count_of_neigbors);
-					if (reference_neighbor_list.size() != 0)
-					{
-						indexes_contact_particles[body_num].push_back(num);
-					}
 				}
 			}, ap);
 		}
@@ -306,9 +199,9 @@ namespace SPH {
 		SPHBodyVector interacting_bodies)
 	{
 		StdLargeVec<BaseParticleData> &base_particle_data = body.base_particles_->base_particle_data_;
-		StdVec<ContactNeighborList>  &current_contact_configuration = body.current_contact_configuration_;
-		StdVec<ContactParticleList> &indexes_contact_particles = body.indexes_contact_particles_;
-		StdVec<SPHBody*> contact_bodies = body.contact_map_.second;
+		ContatcParticleConfiguration& current_contact_configuration = body.current_contact_configuration_;
+		ContactParticles& indexes_contact_particles = body.indexes_contact_particles_;
+		SPHBodyVector contact_bodies = body.contact_map_.second;
 		IndexVector contact_configuration_index(interacting_bodies.size());
 
 		//clear previous interacting particles
@@ -348,17 +241,17 @@ namespace SPH {
 						->mesh_cell_linked_list_->cell_linked_lists_;
 					size_t contact_body_num
 						= contact_configuration_index[intertaction_body_num];
-					StdVec<NeighboringParticle> &current_neighbor_list
-						= current_contact_configuration[contact_body_num][num];
-					size_t current_number_of_neighbors = current_neighbor_list.size();
-					size_t count_of_neigbors = 0;
+
+					Neighborhood& neighborhood = current_contact_configuration[contact_body_num][num];
+					NeighborList& neighbor_list = std::get<0>(neighborhood);
+					size_t previous_count_of_neigbors = std::get<2>(neighborhood);
 
 					for (int l = SMAX(i - search_range, 0); l <= SMIN(i + search_range, int(target_number_of_cells[0]) - 1); ++l)
 						for (int m = SMAX(j - search_range, 0); m <= SMIN(j + search_range, int(target_number_of_cells[1]) - 1); ++m)
 							for (int q = SMAX(k - search_range, 0); q <= SMIN(k + search_range, int(target_number_of_cells[2]) - 1); ++q)
 							{
-								ListDataVector &target_particles
-									= target_cell_linked_lists[l][m][k].particle_data_lists_;
+								ConcurrentListDataVector &target_particles
+									= target_cell_linked_lists[l][m][q].particle_data_lists_;
 								for (size_t n = 0; n < target_particles.size(); n++)
 								{
 									//displacement pointing from neighboring particle to origin particle
@@ -366,17 +259,18 @@ namespace SPH {
 										- target_particles[n].second;
 									if (displacement.norm() <= cutoff_radius)
 									{
-										count_of_neigbors >= current_number_of_neighbors ?
-											current_neighbor_list
-											.push_back(NeighboringParticle(kernel, displacement, target_particles[n].first))
-											: current_neighbor_list[count_of_neigbors]
-											.Reset(kernel, displacement, target_particles[n].first);
-										count_of_neigbors++;
+										std::get<1>(neighborhood) >= previous_count_of_neigbors ?
+											neighbor_list.push_back(new NeighboringParticle(kernel, displacement, target_particles[n].first))
+											: neighbor_list[std::get<1>(neighborhood)]->Reset(kernel, displacement, target_particles[n].first);
+										std::get<1>(neighborhood)++;
 									}
 								}
 							}
-					current_neighbor_list.resize(count_of_neigbors);
-					if (current_neighbor_list.size() != 0)
+					size_t current_count_of_neighbors = std::get<1>(neighborhood);
+					neighbor_list.resize(current_count_of_neighbors);
+					std::get<2>(neighborhood) = current_count_of_neighbors;
+					std::get<1>(neighborhood) = 0;
+					if (current_count_of_neighbors != 0)
 						indexes_contact_particles[contact_body_num].push_back(num);
 				}
 			}, ap);
@@ -396,4 +290,12 @@ namespace SPH {
 
 		return index_1 > index_2 ? false : true;
 	}
+	//===========================================================//
+	void MeshCellLinkedList
+		::InsertACellLinkedListEntry(size_t particle_index, Vecd particle_position, Vecu cellpos)
+	{
+		cell_linked_lists_[cellpos[0]][cellpos[1]][cellpos[2]].particle_data_lists_
+			.push_back(make_pair(particle_index, particle_position));
+	}
+	//===========================================================//
 }

@@ -26,10 +26,12 @@ namespace SPH {
 	{
 	protected:
 		//initialize the background level set, displacement to the body surface
-		void InitializeBackgroundMesh();
+		void InitializeBackgroundMesh(Real mesh_size_ratio = 0.5);
 	public:
 		RelaxBody(SPHSystem &sph_system, string body_name,
 			int refinement_level, ParticlesGeneratorOps op);
+		RelaxBody(SPHSystem &sph_system, string body_name,
+			int refinement_level,Real smoothing_factor, ParticlesGeneratorOps op);
 		virtual ~RelaxBody() {};
 
 		/** Build inner configuration. */
@@ -55,5 +57,23 @@ namespace SPH {
 
 		RelaxBodySurface(RelaxBody *relax_body);
 		virtual~RelaxBodySurface() {};
+		void updateSurfaceParticles();
+	};
+	/**
+	 * @class RelaxBodySingularity
+	 * @brief A auxillariy class for RelaxBody to
+	 * indicate the surface particles
+	 */
+	class RelaxBodySingularity : public BodyPartByParticle
+	{
+	protected:
+		RelaxBody *relax_body_;
+		Real threshold_;
+		virtual void TagBodyPartParticles() override;
+	public:
+
+		RelaxBodySingularity(RelaxBody *relax_body);
+		virtual~RelaxBodySingularity() {};
+		void updateSingularityParticles(Real threshold);
 	};
 }

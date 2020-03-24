@@ -8,11 +8,8 @@
 #include "sph_system.h"
 #include "in_output.h"
 #include "base_particles.h"
-#include "base_material.h"
-#include "base_reaction.h"
 #include "base_kernel.h"
 #include "mesh_cell_linked_list.h"
-#include "particle_generator_lattice.h"
 
 namespace SPH
 {
@@ -20,21 +17,21 @@ namespace SPH
 	SPHBody::SPHBody(SPHSystem &sph_system, string body_name, 
 		int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op)
 		: sph_system_(sph_system), body_region_(body_name), body_name_(body_name), 
-		refinement_level_(refinement_level), particle_generator_op_(op)
+		refinement_level_(refinement_level), particle_generator_op_(op),
+		body_lower_bound_(0), body_upper_bound_(0), prescribed_body_bounds_(false)
+
 	{	
 		sph_system_.AddBody(this);
 
 		particle_spacing_ 	= RefinementLevelToParticleSpacing();
 		smoothinglength_ = particle_spacing_ * smoothinglength_ratio;
 		kernel_ 			= sph_system_.GenerateAKernel(smoothinglength_);
-		base_material_ = new Material("EmptyMaterial");
-		base_reaction_ = new Reaction("EmptyMaterial");
 		mesh_cell_linked_list_
 							= new MeshCellLinkedList(sph_system.lower_bound_,
 									sph_system_.upper_bound_, kernel_->GetCutOffRadius());
-		number_of_by_cell_lists_ = powern(3, Vecd(0).size());
+		size_t number_of_split_cell_lists = powern(3, Vecd(0).size());
 		/** I will use concurrent vector here later after tests. */
-		by_cell_lists_particle_indexes_ = new StdVec<IndexVector>[number_of_by_cell_lists_];
+		split_cell_lists_.resize(number_of_split_cell_lists);
 	}
 	//===========================================================//
 	Real SPHBody::RefinementLevelToParticleSpacing()
@@ -58,26 +55,29 @@ namespace SPH
 	{
 		indexes_contact_particles_.resize(contact_map_.second.size());
 
-		current_inner_configuration_.resize(number_of_particles_);
-		reference_inner_configuration_.resize(number_of_particles_);
+		current_inner_configuration_.resize(number_of_particles_, 
+			make_tuple<NeighborList, size_t, size_t>(NeighborList(0), 0, 0));
+		reference_inner_configuration_.resize(number_of_particles_, 
+			make_tuple<NeighborList, size_t, size_t>(NeighborList(0), 0, 0));
 
 		current_contact_configuration_.resize(contact_map_.second.size());
-		reference_contact_configuration_.resize(contact_map_.second.size());
-		for (size_t i = 0; i != contact_map_.second.size(); ++i) {
-			current_contact_configuration_[i].resize(number_of_particles_);
-			reference_contact_configuration_[i].resize(number_of_particles_);
+		for (size_t k = 0; k != contact_map_.second.size(); ++k) {
+			current_contact_configuration_[k].resize(number_of_particles_,
+				make_tuple<NeighborList, size_t, size_t>(NeighborList(0), 0, 0));
 		}
 	}
 	void SPHBody::AllocateConfigurationMemoriesForBodyBuffer(size_t body_buffer_particles)
 	{
 		size_t updated_size = number_of_particles_ + body_buffer_particles;
 
-		current_inner_configuration_.resize(updated_size);
-		reference_inner_configuration_.resize(updated_size);
+		current_inner_configuration_.resize(updated_size,
+			make_tuple<NeighborList, size_t, size_t>(NeighborList(0), 0, 0));
+		reference_inner_configuration_.resize(updated_size,
+			make_tuple<NeighborList, size_t, size_t>(NeighborList(0), 0, 0));
 
-		for (size_t i = 0; i != contact_map_.second.size(); ++i) {
-			current_contact_configuration_[i].resize(updated_size);
-			reference_contact_configuration_[i].resize(updated_size);
+		for (size_t k = 0; k != contact_map_.second.size(); ++k) {
+			current_contact_configuration_[k].resize(updated_size,
+				make_tuple<NeighborList, size_t, size_t>(NeighborList(0), 0, 0));
 		}
 	}
 	//===========================================================//
@@ -91,9 +91,15 @@ namespace SPH
 		body_region_.closestpointonface(input_pnt, closest_pnt, phi);
 	}
 	//===========================================================//
-	void SPHBody::BodyBounds(Vecd &lower_bound, Vecd &upper_bound)
+	void SPHBody::BodyBounds(Vecd& lower_bound, Vecd& upper_bound)
 	{
-		body_region_.regionbound(lower_bound, upper_bound);
+		if(!prescribed_body_bounds_) {
+			body_region_.regionbound(lower_bound, upper_bound);
+		}
+		else {
+			lower_bound = body_lower_bound_;
+			upper_bound = body_upper_bound_;
+		}
 	}
 	//===========================================================//
 	void  SPHBody::SetContactMap(SPHBodyContactMap &contact_map)
@@ -157,7 +163,7 @@ namespace SPH
 	//===========================================================//
 	void RealBody::UpdateInnerConfiguration()
 	{
-		mesh_cell_linked_list_->UpdateInnerConfiguration(*this);
+		mesh_cell_linked_list_->UpdateInnerConfiguration(*this, current_inner_configuration_);
 	}
 	//===========================================================//
 	void RealBody::UpdateContactConfiguration()
@@ -191,7 +197,7 @@ namespace SPH
 	//===========================================================//
 	void FictitiousBody::UpdateCellLinkedList()
 	{
-		mesh_cell_linked_list_->UpdateParticleCellLocation(*this);
+		/** do nothing here. */;
 	}
 	//===========================================================//
 	void FictitiousBody::UpdateInnerConfiguration()
@@ -215,17 +221,21 @@ namespace SPH
 		return this;
 	}
 	//===============================================================//
+	void BodyPartByParticle::tagAParticle(size_t particle_index)
+	{
+		BaseParticleData& base_particle_data_i
+			= body_->base_particles_->base_particle_data_[particle_index];
+		body_part_particles_.push_back(particle_index);
+		base_particle_data_i.is_sortable_ = false;
+	}
+	//===============================================================//
 	void BodyPartByParticle::TagBodyPartParticles()
 	{
 		for (size_t i = 0; i < body_->number_of_particles_; ++i)
 		{
 			BaseParticleData &base_particle_data_i
 				= body_->base_particles_->base_particle_data_[i];
-
-			if (body_part_region_.contain(base_particle_data_i.pos_n_))
-			{
-				body_part_particles_.push_back(i);
-			}
+			if (body_part_region_.contain(base_particle_data_i.pos_n_)) tagAParticle(i);
 		}
 	}
 	//===============================================================//
