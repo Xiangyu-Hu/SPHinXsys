@@ -14,6 +14,7 @@ capabilities. **/
 #include "all_materials.h"
 #include "all_physical_dynamics.h"
 #include "all_simbody.h"
+#include "in_output.h"
 
 /** Standrad c++ libraries. */
 #include <iostream>

@@ -25,7 +25,7 @@
 using namespace std;
 
 namespace SPH {
-	/** @class  Material
+	/** @class  BaseMaterial
 	 *  @brief Base of all materials
 	 *  @details Note that the same material object can be shared by several
 	 *  SPH bodies, and the case dependent material properties will defined in 

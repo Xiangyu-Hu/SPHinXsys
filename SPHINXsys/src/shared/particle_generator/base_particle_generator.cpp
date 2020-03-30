@@ -25,12 +25,12 @@ namespace SPH {
 	}
 	//---------------------------------------------------------------//
 	void ParticleGeneratorDirect
-		::CreateBaseParticles()
+		::CreateBaseParticles(BaseParticles* base_particles)
 	{
 		size_t number_of_particles = 0;
 		for (int i = 0; i < body_.body_input_points_volumes_.size(); ++i) 
 		{
-			body_.base_particles_->InitializeABaseParticle(body_.body_input_points_volumes_[i].first,
+			base_particles->InitializeABaseParticle(body_.body_input_points_volumes_[i].first,
 				body_.body_input_points_volumes_[i].second, 1.0 / body_.body_input_points_volumes_[i].second);
 			number_of_particles++;
 		}

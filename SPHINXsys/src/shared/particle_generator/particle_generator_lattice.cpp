@@ -11,8 +11,8 @@
 namespace SPH {
 	//===============================================================//
 	ParticleGeneratorLattice
-		::ParticleGeneratorLattice(SPHBody &sph_body, Region &region)
-		: ParticleGenerator(sph_body), region_(region)
+		::ParticleGeneratorLattice(SPHBody &sph_body)
+		: ParticleGenerator(sph_body), region_(sph_body.getBodyReagion())
 	{
 		region_.regionbound(lower_bound_, upper_bound_);
 		lattice_spacing_ = sph_body.particle_spacing_;

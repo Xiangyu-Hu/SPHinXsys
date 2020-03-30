@@ -11,16 +11,19 @@ namespace SPH
 	//=================================================================================================//
 	BoundingInAxisDirection::BoundingInAxisDirection(SPHBody* body, int axis_direction)
 		: BoundingBodyDomain(body), axis_(axis_direction), second_axis_(SecondAxis(axis_direction)),
-		third_axis_(ThirdAxis(axis_direction))
+		third_axis_(ThirdAxis(axis_direction)) 	{}
+	//=================================================================================================//
+	PeriodicBoundingInAxisDirection::PeriodicBoundingInAxisDirection(SPHBody* body, int axis_direction)
+		: BoundingInAxisDirection(body, axis_direction), periodic_translation_(0)
 	{
 		//lower bound cells
 		for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis_] - 1), 0);
-			k < SMIN(int(body_upper_bound_cell_[third_axis_] + 2), 
+			k < SMIN(int(body_upper_bound_cell_[third_axis_] + 2),
 				int(number_of_cells_[third_axis_])); ++k)
 		{
 
 			for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis_] - 1), 0);
-				j < SMIN(int(body_upper_bound_cell_[second_axis_] + 2), 
+				j < SMIN(int(body_upper_bound_cell_[second_axis_] + 2),
 					int(number_of_cells_[second_axis_])); ++j)
 			{
 
@@ -38,17 +41,17 @@ namespace SPH
 
 		//upper bound cells
 		for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis_] - 1), 0);
-			k < SMIN(int(body_upper_bound_cell_[third_axis_] + 2), 
+			k < SMIN(int(body_upper_bound_cell_[third_axis_] + 2),
 				int(number_of_cells_[third_axis_])); ++k)
 		{
 
 			for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis_] - 1), 0);
-				j < SMIN(int(body_upper_bound_cell_[second_axis_] + 2), 
+				j < SMIN(int(body_upper_bound_cell_[second_axis_] + 2),
 					int(number_of_cells_[second_axis_])); ++j)
 			{
 
 				for (size_t i = SMAX(int(body_upper_bound_cell_[axis_]) - 1, 0);
-					i <= SMIN(int(body_upper_bound_cell_[axis_] + 1), 
+					i <= SMIN(int(body_upper_bound_cell_[axis_] + 1),
 						int(number_of_cells_[axis_] - 1)); ++i)
 				{
 					Vecu cell_position(0);
@@ -59,9 +62,11 @@ namespace SPH
 				}
 			}
 		}
+
+		setPeriodicTranslation();
 	}
 	//=================================================================================================//
-	void BoundingInAxisDirection::exec(Real dt)
+	void PeriodicBoundingInAxisDirection::exec(Real dt)
 	{
 		//check lower bound
 		for (size_t i = 0; i != lower_bound_cells_.size(); ++i) {
@@ -82,7 +87,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void BoundingInAxisDirection::parallel_exec(Real dt)
+	void PeriodicBoundingInAxisDirection::parallel_exec(Real dt)
 	{
 		//check lower bound
 		parallel_for(blocked_range<size_t>(0, lower_bound_cells_.size()),
@@ -109,10 +114,13 @@ namespace SPH
 			}, ap);
 	}
 	//=================================================================================================//
-	MirrorBoundingInAxisDirection
-		::MirrorBoundingInAxisDirection(SPHBody* body, int axis_direction, bool positive)
-		: BoundingBodyDomain(body), axis_(axis_direction), second_axis_(SecondAxis(axis_direction)),
-		third_axis_(ThirdAxis(axis_direction))
+	//=================================================================================================//
+	MirrorBoundaryConditionInAxisDirection
+		::MirrorBoundaryConditionInAxisDirection(SPHBody* body, int axis_direction, bool positive)
+		: BoundingInAxisDirection(body, axis_direction),
+		bounding_(this->bound_cells_, body, axis_direction, positive),
+		creating_ghost_particles_(this->ghost_particles_, this->bound_cells_, body, axis_direction, positive),
+		updating_ghost_states_(this->ghost_particles_, body, axis_direction, positive)
 	{
 		if (positive) {
 			//upper bound cells
@@ -138,7 +146,6 @@ namespace SPH
 					}
 				}
 			}
-			checking_bound_ = std::bind(&MirrorBoundingInAxisDirection::CheckUpperBound, this, _1, _2);
 		}
 		else {
 			//lower bound cells
@@ -163,11 +170,11 @@ namespace SPH
 					}
 				}
 			}
-			checking_bound_ = std::bind(&MirrorBoundingInAxisDirection::CheckLowerBound, this, _1, _2);
 		}
 	}
 	//=================================================================================================//
-	void MirrorBoundingInAxisDirection::exec(Real dt)
+	void MirrorBoundaryConditionInAxisDirection::Bounding
+		::exec(Real dt)
 	{
 		for (size_t i = 0; i != bound_cells_.size(); ++i) {
 			ConcurrentListDataVector& list_data
@@ -178,7 +185,8 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void MirrorBoundingInAxisDirection::parallel_exec(Real dt)
+	void MirrorBoundaryConditionInAxisDirection::Bounding
+		::parallel_exec(Real dt)
 	{
 		parallel_for(blocked_range<size_t>(0, bound_cells_.size()),
 			[&](const blocked_range<size_t>& r) {

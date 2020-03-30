@@ -39,7 +39,7 @@ namespace SPH
 			virtual ~ElectroPhysiologyInitialCondition() {};
 		};
         /**
-		* @class getDiffusionTimeStepSize
+		* @class GetElectroPhysiologyTimeStepSize
 		* @brief Computing the acoustic time step size
 		* computing time step size
 		*/

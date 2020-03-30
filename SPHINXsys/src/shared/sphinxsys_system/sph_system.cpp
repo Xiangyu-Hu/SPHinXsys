@@ -5,7 +5,6 @@
  */
 
 #include "sph_system.h"
-#include "all_kernels.h"
 #include "base_body.h"
 #include "particle_generator_lattice.h"
 
@@ -23,11 +22,6 @@ namespace SPH
 	SPHSystem::~SPHSystem()
 	{
 
-	}
-	//===============================================================//
-	Kernel* SPHSystem::GenerateAKernel(Real smoothing_lenght)
-	{	
-		return new KernelWendlandC2(smoothing_lenght);
 	}
 	//===============================================================//
 	void SPHSystem::AddBody(SPHBody* body)

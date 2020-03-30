@@ -12,7 +12,7 @@
 
 namespace SPH {
 	//===============================================================//
-	void ParticleGeneratorLattice::CreateBaseParticles()
+	void ParticleGeneratorLattice::CreateBaseParticles(BaseParticles* base_particles)
 	{
 		size_t number_of_particles = 0;
 		Real vol = lattice_spacing_ * lattice_spacing_;
@@ -24,7 +24,7 @@ namespace SPH {
 					lower_bound_[1] + (Real(j) + 0.5)*lattice_spacing_);
 				if(region_.contain(particle_location))
 				{
-					body_.base_particles_->InitializeABaseParticle(particle_location, vol, sigma);
+					base_particles->InitializeABaseParticle(particle_location, vol, sigma);
 					number_of_particles++;
 				}
 			}

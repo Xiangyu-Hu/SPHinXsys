@@ -5,7 +5,6 @@
  */
 
 #include "fluid_body.h"
-#include "sph_system.h"
 #include "mesh_cell_linked_list.h"
 
 namespace SPH {
@@ -19,12 +18,12 @@ namespace SPH {
 	//===============================================================//
 	void FluidBody::BuildInnerConfiguration()
 	{
-		mesh_cell_linked_list_->UpdateInnerConfiguration(*this, current_inner_configuration_);
+		base_mesh_cell_linked_list_->UpdateInnerConfiguration(current_configuration_);
 	}
 	//===============================================================//
 	void FluidBody::BuildContactConfiguration()
 	{
-		mesh_cell_linked_list_->UpdateContactConfiguration(*this);
+		base_mesh_cell_linked_list_->UpdateContactConfiguration();
 	}
 	//===============================================================//
 }

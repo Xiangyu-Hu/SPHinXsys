@@ -21,10 +21,10 @@ namespace SPH
 
 			Real vort_temp = 0.0;
 			NeighborList& inner_neighors
-				= getNeighborList(current_inner_configuration_, index_particle_i);
+				= getNeighborList(current_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = inner_neighors[n];
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 				FluidParticleData &fluid_data_j = particles_->fluid_particle_data_[index_particle_j];

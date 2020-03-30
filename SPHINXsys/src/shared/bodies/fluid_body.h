@@ -8,6 +8,7 @@
 
 #include "base_body.h"
 #include "particle_generator_lattice.h"
+
 #include <fstream>
 
 using namespace std;

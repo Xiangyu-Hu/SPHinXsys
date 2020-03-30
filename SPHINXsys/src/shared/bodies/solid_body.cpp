@@ -7,6 +7,7 @@
 
 #include "solid_body.h"
 #include "sph_system.h"
+#include "base_material.h"
 #include "mesh_cell_linked_list.h"
 
 namespace SPH {
@@ -20,12 +21,12 @@ namespace SPH {
 	//===============================================================//
 	void SolidBody::BuildInnerConfiguration()
 	{
-		mesh_cell_linked_list_->UpdateInnerConfiguration(*this, reference_inner_configuration_);
+		base_mesh_cell_linked_list_->UpdateInnerConfiguration(reference_configuration_);
 	}
 	//===============================================================//
 	void SolidBody::BuildContactConfiguration()
 	{
-		mesh_cell_linked_list_->UpdateContactConfiguration(*this);
+		base_mesh_cell_linked_list_->UpdateContactConfiguration();
 	}
 	//===============================================================//
 	SolidBodyPartForSimbody

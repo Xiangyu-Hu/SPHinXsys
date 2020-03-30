@@ -6,8 +6,8 @@
  * @version 0.2.1
  * 			add muscle particles and muscle data.
  */
-#include "base_body.h"
 #include "solid_particles.h"
+#include "base_body.h"
 #include "elastic_solid.h"
 //=============================================================================================//
 namespace SPH {
@@ -94,6 +94,11 @@ namespace SPH {
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
+	}
+	void SolidParticles::AddABufferParticle()
+	{
+		BaseParticles::AddABufferParticle();
+		solid_body_data_.push_back(SolidParticleData(Vecd(0)));
 	}
 	//===============================================================//
 	void SolidParticles

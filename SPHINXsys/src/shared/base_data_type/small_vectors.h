@@ -300,6 +300,9 @@ namespace SPH {
 	Vec2d FisrtAxisVector(Vec2d zero_vector);
 	Vec3d FisrtAxisVector(Vec3d zero_vector);
 
+	SimTK::Real getMinAbslouteElement(Vec2d input);
+	SimTK::Real getMinAbslouteElement(Vec3d input);
+
 	SimTK::Real TensorDoubleDotProduct(Mat2d &A, Mat2d &B);
 	SimTK::Real TensorDoubleDotProduct(Mat3d &A, Mat3d &B);
 

@@ -70,6 +70,11 @@ namespace SPH {
 
 		/** Get species index map. */
 		map<string, size_t> getSpeciesIndexMap() { return  species_indexes_map_; };
+		/** add buffer particles which latter may be realized for particle dynamics*/
+		virtual void AddABufferParticle() override {
+			BaseParticlesType::AddABufferParticle();
+			diffusion_reaction_data_.push_back(DiffusionReactionData(number_of_species_));
+		};
 		/** Copy state from another particle */
 		virtual void CopyFromAnotherParticle(size_t this_particle_index,
 			size_t another_particle_index) override 

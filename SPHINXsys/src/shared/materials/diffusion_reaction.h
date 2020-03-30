@@ -71,7 +71,7 @@ namespace SPH
 	};
 
 	/**
-	 * @class DirectionBiasedDiffusionMaterial
+	 * @class DirectionalDiffusion
 	 * @brief Diffusision is biased along a specific direction.
 	 */
 	class DirectionalDiffusion : public IsotropicDiffusion

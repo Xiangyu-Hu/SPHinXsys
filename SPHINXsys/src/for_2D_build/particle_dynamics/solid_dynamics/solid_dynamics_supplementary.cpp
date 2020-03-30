@@ -7,7 +7,7 @@
 #include "solid_dynamics.h"
 #include "solid_body.h"
 #include "solid_particles.h"
-#include "neighboring_particle.h"
+#include "neighbor_relation.h"
 #include "base_kernel.h"
 #include "base_data_package.h"
 #include "elastic_solid.h"

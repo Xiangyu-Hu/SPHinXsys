@@ -89,54 +89,82 @@ namespace SPH
 		return factor_d2W_3D_ * d2W_3D(q);
 	}
 	//===========================================================//
-	Real Kernel::W(Real rt_h, const Real& r_ij) const
+	Real  Kernel::W0(Real inv_h_in, const Real& r_i)  const
 	{
-		Real q = abs(r_ij) * inv_h_ * rt_h;
-		cout << "\n This function Kernel::W(Real rt_h, const Real& r_ij) is not done in 3D. Exit the program! \n";
-		exit(0);
-		return factor_W_1D_ * rt_h * W_1D(q);
-
+		return factor_W_1D_ * getSmoothingLengthFactor1D(inv_h_in);
+	};
+	//===========================================================//
+	Real Kernel::W0(Real inv_h_in, const Vec2d& r_i) const
+	{
+		return factor_W_2D_ * getSmoothingLengthFactor2D(inv_h_in);
+	};
+	//===========================================================//
+	Real Kernel::W0(Real inv_h_in, const Vec3d& r_i) const
+	{
+		return factor_W_3D_ * getSmoothingLengthFactor3D(inv_h_in);
+	};
+	//===========================================================//
+	Real Kernel::W(Real inv_h_in, const Real& r_ij) const
+	{
+		Real q = abs(r_ij) * inv_h_in;
+		return factor_W_1D_ * W_1D(q) 
+			* getSmoothingLengthFactor1D(inv_h_in);
 	}
 	//===========================================================//
-	Real Kernel::W(Real rt_h, const Vec2d& r_ij) const
+	Real Kernel::W(Real inv_h_in, const Vec2d& r_ij) const
 	{
-		Real q = r_ij.norm() * inv_h_ * rt_h;
-		cout << "\n This function Kernel::W(Real rt_h, const Vec2d& r_ij) is not done in 3D. Exit the program! \n";
-		exit(0);
-		return factor_W_2D_ * rt_h * W_2D(q);
-
+		Real q = r_ij.norm() * inv_h_in;
+		return factor_W_2D_ * W_2D(q) 
+			* getSmoothingLengthFactor2D(inv_h_in);
 	}
 	//===========================================================//
-	Real Kernel::W(Real rt_h, const Vec3d& r_ij) const
+	Real Kernel::W(Real inv_h_in, const Vec3d& r_ij) const
 	{
-		Real q = r_ij.norm() * inv_h_ / rt_h;
-		cout << "\n This function Kernel::W(Real rt_h, const Vec3d& r_ij) is not done in 3D. Exit the program! \n";
-		exit(0);
-		return W_3D(q);
+		Real q = r_ij.norm() * inv_h_in;
+		return  factor_W_3D_ * W_3D(q) 
+			* getSmoothingLengthFactor3D(inv_h_in);
 	}
 	//===========================================================//
-	Real Kernel::dW(Real rt_h, const Real& r_ij) const
+	Real Kernel::dW(Real inv_h_in, const Real& r_ij) const
 	{
-		Real q = abs(r_ij) * inv_h_;
-		cout << "\n This function Kernel::dW(Real rt_h, const Real& r_ij) is not done in 3D. Exit the program! \n";
-		exit(0);
-		return dW_1D(q); // missing rt_h
+		Real q = abs(r_ij) * inv_h_in;
+		return factor_dW_1D_ * dW_1D(q) * inv_h_in
+			* getSmoothingLengthFactor1D(inv_h_in);
 	}
 	//===========================================================//
-	Real Kernel::dW(Real rt_h, const Vec2d& r_ij) const
+	Real Kernel::dW(Real inv_h_in, const Vec2d& r_ij) const
 	{
-		Real q = r_ij.norm() * inv_h_;
-		cout << "\n This function ::dW(Real rt_h, const Vec2d& r_ij) is not done in 3D. Exit the program! \n";
-		exit(0);
-		return dW_2D(q); // missing rt_h
+		Real q = r_ij.norm() * inv_h_in;
+		return factor_dW_2D_ * dW_2D(q) * inv_h_in
+			* getSmoothingLengthFactor2D(inv_h_in);
 	}
 	//===========================================================//
-	Real Kernel::dW(Real rt_h, const Vec3d& r_ij) const
+	Real Kernel::dW(Real inv_h_in, const Vec3d& r_ij) const
 	{
-		Real q = r_ij.norm() * inv_h_;
-		cout << "\n This function Kernel::dW(Real rt_h, const Vec3d& r_ij) is not done in 3D. Exit the program! \n";
-		exit(0);
-		return dW_3D(q); // missing rt_h
+		Real q = r_ij.norm() * inv_h_in;
+		return factor_dW_3D_ * dW_3D(q) * inv_h_in
+			* getSmoothingLengthFactor3D(inv_h_in);
+	}
+	//===========================================================//
+	Real Kernel::d2W(Real inv_h_in, const Real& r_ij) const
+	{
+		Real q = abs(r_ij) * inv_h_in;
+		return factor_d2W_1D_ * d2W_1D(q) * inv_h_in * inv_h_in
+			* getSmoothingLengthFactor1D(inv_h_in);
+	}
+	//===========================================================//
+	Real Kernel::d2W(Real inv_h_in, const Vec2d& r_ij) const
+	{
+		Real q = r_ij.norm() * inv_h_in;
+		return factor_d2W_2D_ * d2W_2D(q) * inv_h_in * inv_h_in
+			* getSmoothingLengthFactor2D(inv_h_in);
+	}
+	//===========================================================//
+	Real Kernel::d2W(Real inv_h_in, const Vec3d& r_ij) const
+	{
+		Real q = r_ij.norm() * inv_h_in;
+		return factor_d2W_3D_ * d2W_3D(q) * inv_h_in * inv_h_in
+			* getSmoothingLengthFactor3D(inv_h_in);
 	}
 	//===========================================================//
 }

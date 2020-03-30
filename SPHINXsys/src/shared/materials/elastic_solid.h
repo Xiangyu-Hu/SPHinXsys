@@ -39,7 +39,7 @@ namespace SPH {
 	public:
 		/** Constructor */
 		ElasticSolid(string elastic_solid_name) : Solid(elastic_solid_name),
-			c_0_(1.0), eta_0_(1.0), lambda_0_(0.375) {};
+			c_0_(1.0), eta_0_(0.0), lambda_0_(0.375) {};
 		virtual ~ElasticSolid() {};
 		/** Access to reference sound speed. */
 		Real getReferenceSoundSpeed() { return c_0_; };

@@ -93,6 +93,8 @@ namespace SPH {
 	
 		/** Set initial condition for a solid body with different material. */
 		virtual void OffsetInitialParticlePosition(Vecd offset);
+		/** add buffer particles which latter may be realized for particle dynamics*/
+		virtual void AddABufferParticle() override;
 		/** Copy state from another particle */
 		virtual void CopyFromAnotherParticle(size_t this_particle_index, size_t another_particle_index) override;
 		/** Swapping particles. */
@@ -200,8 +202,8 @@ namespace SPH {
 	};
 
 	/**
-	 * @class ElectroPhysiologyData
-	 * @brief Data for elctrophsiology.
+	 * @class ActiveMuscleData
+	 * @brief Data for active muscle.
 	 */
 	class ActiveMuscleData
 	{

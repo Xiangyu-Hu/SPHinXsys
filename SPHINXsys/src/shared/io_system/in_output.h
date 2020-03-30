@@ -179,7 +179,7 @@ namespace SPH {
 	};
 
 	/**
-	 * @class WriteToPltIfVelocityOutOfBound
+	 * @class WriteToVtuIfVelocityOutOfBound
 	 * @brief  output body sates if paritcle velocity
 	 * out of a bound
 	 */
@@ -232,8 +232,8 @@ namespace SPH {
 	};
 
 	/**
-	* @class WriteObservedFluidPressure
-	* @brief write files for observed fluid pressure
+	* @class WriteObservedFluidVelocity
+	* @brief write files for observed fluid velocity
 	*/
 	class WriteObservedFluidVelocity
 		: public WriteBodyStates,
@@ -341,7 +341,7 @@ namespace SPH {
 	};
 
 	/**
-	 * @class WriteWaterFront
+	 * @class WriteUpperFrontInXDirection
 	 * @brief write files for water front in free surface flow
 	 */
 	class WriteUpperFrontInXDirection
@@ -445,7 +445,7 @@ namespace SPH {
 	};
 
 	/**
-	 * @class WriteTotalForceOnSolid
+	 * @class WriteSimBodyPinAngleAndAngleRate
 	* @brief Write total force acting a solid body.
 	*/
 	class WriteSimBodyPinAngleAndAngleRate : public WriteSimBodyStates<SimTK::MobilizedBody::Pin>

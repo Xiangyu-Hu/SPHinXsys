@@ -23,10 +23,10 @@ namespace SPH
 			/** Inner interaction. */
 			Real sigma = W0_;
 			NeighborList& inner_neighors
-				= getNeighborList(current_inner_configuration_, index_particle_i);
+				= getNeighborList(current_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = inner_neighors[n];
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 
 				sigma += neighboring_particle->W_ij_;
 			}
@@ -38,7 +38,7 @@ namespace SPH
 					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
 				for (size_t n = 0; n < contact_neighors.size(); ++n)
 				{
-					NeighboringParticle* neighboring_particle = contact_neighors[n];
+					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
 					BaseParticleData &base_particle_data_j
 						= (*interacting_particles_[k]).base_particle_data_[index_particle_j];
@@ -75,10 +75,10 @@ namespace SPH
 			/** Inner interaction. */
 			Real div_correction = 0.0;
 			NeighborList& inner_neighors
-				= getNeighborList(current_inner_configuration_, index_particle_i);
+				= getNeighborList(current_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = inner_neighors[n];
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 
@@ -92,7 +92,7 @@ namespace SPH
 					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
 				for (size_t n = 0; n < contact_neighors.size(); ++n)
 				{
-					NeighboringParticle* neighboring_particle = contact_neighors[n];
+					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
 					BaseParticleData &base_particle_data_j
 						= (*interacting_particles_[k]).base_particle_data_[index_particle_j];
@@ -119,10 +119,10 @@ namespace SPH
 			Vecd acceleration(0);
 			Vecd vel_derivative(0);
 				NeighborList& inner_neighors
-				= getNeighborList(current_inner_configuration_, index_particle_i);
+				= getNeighborList(current_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = inner_neighors[n];
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				Real dW_ij = neighboring_particle->dW_ij_;
 				size_t index_particle_j = neighboring_particle->j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
@@ -140,10 +140,10 @@ namespace SPH
 				/** computing the accelerations of near wall particles without considering wall. */
 				Vecd acceleration_inner = acceleration;
 				NeighborList& inner_neighors
-					= getNeighborList(current_inner_configuration_, index_particle_i);
+					= getNeighborList(current_configuration_, index_particle_i);
 				for (size_t n = 0; n < inner_neighors.size(); ++n)
 				{
-					NeighboringParticle* neighboring_particle = inner_neighors[n];
+					BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 					Vecd& nablaW_ij = neighboring_particle->getNablaWij();
 					size_t index_particle_j = neighboring_particle->j_;
 					BaseParticleData& base_particle_data_j = particles_->base_particle_data_[index_particle_j];
@@ -158,7 +158,7 @@ namespace SPH
 					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
 				for (size_t n = 0; n < contact_neighors.size(); ++n)
 				{
-					NeighboringParticle* neighboring_particle = contact_neighors[n];
+					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
 					BaseParticleData &base_particle_data_j
 						= (*interacting_particles_[k]).base_particle_data_[index_particle_j];
@@ -188,10 +188,10 @@ namespace SPH
 			/** Inner interaction. */
 			Vecd acceleration(0);
 			NeighborList& inner_neighors
-				= getNeighborList(current_inner_configuration_, index_particle_i);
+				= getNeighborList(current_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = inner_neighors[n];
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				Vecd& e_ij = neighboring_particle->e_ij_;
 				Real r_ij = neighboring_particle->r_ij_;
@@ -200,8 +200,7 @@ namespace SPH
 				/** The following viscous force is given in Monaghan 2005 (Rep. Prog. Phys.), it seems that 
 				 * is formulation is more accurate thant the previsou one for Taygree-Vortex flow. */
 				Real v_r_ij = dot(base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_, r_ij * e_ij);
-				Real eta_ij = 16.0 * (mu_ * mu_) * v_r_ij / (mu_ + mu_) / 
-					(r_ij * r_ij + 0.01 * smoothing_length_);
+				Real eta_ij = 8.0 * mu_ * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
 				acceleration += eta_ij * base_particle_data_j.Vol_ / fluid_data_i.rho_n_
 					* neighboring_particle->dW_ij_ * e_ij;
 			}
@@ -213,7 +212,7 @@ namespace SPH
 					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
 				for (size_t n = 0; n < contact_neighors.size(); ++n)
 				{
-					NeighboringParticle* neighboring_particle = contact_neighors[n];
+					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
 					Vecd& e_ij = neighboring_particle->e_ij_;
 					Real r_ij = neighboring_particle->r_ij_;
@@ -224,7 +223,7 @@ namespace SPH
 
 				/** The following viscous force is given in Monaghan 2005 (Rep. Prog. Phys.), it seems that 
 				 * is formulation is more accurate thant the previsou one for Taygree-Vortex flow. */
-				Real v_r_ij = dot(base_particle_data_i.vel_n_ -  solid_data_j.vel_ave_, r_ij * e_ij);
+				Real v_r_ij = 2.0 * dot(base_particle_data_i.vel_n_ -  solid_data_j.vel_ave_, r_ij * e_ij);
 				Real vel_difference = 0.0*(base_particle_data_i.vel_n_ - solid_data_j.vel_ave_).norm() * r_ij;
 				Real eta_ij = 8.0 * SMAX(mu_, fluid_data_i.rho_n_*vel_difference) * v_r_ij / 
 					(r_ij * r_ij + 0.01 * smoothing_length_);
@@ -245,10 +244,10 @@ namespace SPH
 			/** Inner interaction. */
 			Vecd acceleration(0);
 			NeighborList& inner_neighors
-				= getNeighborList(current_inner_configuration_, index_particle_i);
+				= getNeighborList(current_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = inner_neighors[n];
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				Real dW_ij = neighboring_particle->dW_ij_;
 				Vecd& e_ij = neighboring_particle->e_ij_;
@@ -271,7 +270,7 @@ namespace SPH
 					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
 				for (size_t n = 0; n < contact_neighors.size(); ++n)
 				{
-					NeighboringParticle* neighboring_particle = contact_neighors[n];
+					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
 					BaseParticleData& base_particle_data_j
 						= (*interacting_particles_[k]).base_particle_data_[index_particle_j];
@@ -305,10 +304,10 @@ namespace SPH
 			/** Inner interaction. */
 			Vecd acceleration_trans(0);
 			NeighborList& inner_neighors
-				= getNeighborList(current_inner_configuration_, index_particle_i);
+				= getNeighborList(current_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = inner_neighors[n];
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 				FluidParticleData &fluid_data_j = particles_->fluid_particle_data_[index_particle_j];
@@ -325,7 +324,7 @@ namespace SPH
 					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
 				for (size_t n = 0; n < contact_neighors.size(); ++n)
 				{
-					NeighboringParticle* neighboring_particle = contact_neighors[n];
+					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
 					BaseParticleData& base_particle_data_j
 						= (*interacting_particles_[k]).base_particle_data_[index_particle_j];
@@ -430,10 +429,10 @@ namespace SPH
 
 			Vecd acceleration = base_particle_data_i.dvel_dt_others_;
 				NeighborList& inner_neighors
-				= getNeighborList(current_inner_configuration_, index_particle_i);
+				= getNeighborList(current_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = inner_neighors[n];
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				Real dW_ij = neighboring_particle->dW_ij_;
 				Vecd& e_ij = neighboring_particle->e_ij_;
@@ -460,7 +459,7 @@ namespace SPH
 					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
 				for (size_t n = 0; n < contact_neighors.size(); ++n)
 				{
-					NeighboringParticle* neighboring_particle = contact_neighors[n];
+					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
 					BaseParticleData& base_particle_data_j
 						= (*interacting_particles_[k]).base_particle_data_[index_particle_j];
@@ -515,8 +514,6 @@ namespace SPH
 			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 			FluidParticleData& fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 			base_particle_data_i.pos_n_ += base_particle_data_i.vel_n_ * dt * 0.5;
-			/** Transport velocity is the same as moment velocity here. */
-			fluid_data_i.vel_trans_ = base_particle_data_i.vel_n_;
 		}
 //=================================================================================================//
 		void PressureRelaxationSecondHalfRiemann::ComplexInteraction(size_t index_particle_i, Real dt)
@@ -525,15 +522,15 @@ namespace SPH
 			FluidParticleData& fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 			Real rho_i = fluid_data_i.rho_n_;
 			Real p_i = fluid_data_i.p_;
-			Vecd vel_i = fluid_data_i.vel_trans_;
+			Vecd vel_i = base_particle_data_i.vel_n_;
 
 			Real density_change_rate = 0.0;
 			Vecd vel_star(0);
 			NeighborList& inner_neighors
-				= getNeighborList(current_inner_configuration_, index_particle_i);
+				= getNeighborList(current_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = inner_neighors[n];
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				Vecd& e_ij = neighboring_particle->e_ij_;
 				Real dW_ij = neighboring_particle->dW_ij_;
@@ -542,7 +539,7 @@ namespace SPH
 
 				/** Solving Riemann problem or not. */
 				vel_star = getVStar(e_ij, vel_i, p_i, rho_i,
-					fluid_data_j.vel_trans_, fluid_data_j.p_, fluid_data_j.rho_n_);
+					base_particle_data_j.vel_n_, fluid_data_j.p_, fluid_data_j.rho_n_);
 
 				density_change_rate += 2.0 * rho_i * base_particle_data_j.Vol_
 					* dot(vel_i - vel_star, e_ij) * dW_ij;
@@ -557,7 +554,7 @@ namespace SPH
 					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
 				for (size_t n = 0; n < contact_neighors.size(); ++n)
 				{
-					NeighboringParticle* neighboring_particle = contact_neighors[n];
+					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
 					BaseParticleData& base_particle_data_j
 						= (*interacting_particles_[k]).base_particle_data_[index_particle_j];
@@ -601,15 +598,6 @@ namespace SPH
 			fluid_data_i.rho_n_ += fluid_data_i.drho_dt_ * dt * 0.5;
 		}
 		//=================================================================================================//
-		void PressureRelaxationSecondHalf::Initialization(size_t index_particle_i, Real dt)
-		{
-			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			FluidParticleData& fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
-			base_particle_data_i.pos_n_ += base_particle_data_i.vel_n_ * dt * 0.5;
-			/** Transport velocity is introduced here for flow without free surface. */
-			fluid_data_i.vel_trans_ = base_particle_data_i.vel_n_ + fluid_data_i.dvel_dt_trans_ * dt;
-		}
-		//=================================================================================================//
 		Vecd PressureRelaxationSecondHalf::getVStar(Vecd& e_ij, Vecd& vel_i, Real p_i, Real rho_i,
 			Vecd& vel_j, Real p_j, Real rho_j)
 		{
@@ -645,10 +633,10 @@ namespace SPH
 
 			Vecd acceleration(0);
 			NeighborList& inner_neighors
-				= getNeighborList(current_inner_configuration_, index_particle_i);
+				= getNeighborList(current_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = inner_neighors[n];
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				BaseParticleData& base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 				ViscoelasticFluidParticleData& non_newtonian_fluid_data_j
@@ -667,7 +655,7 @@ namespace SPH
 					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
 				for (size_t n = 0; n < contact_neighors.size(); ++n)
 				{
-					NeighboringParticle* neighboring_particle = contact_neighors[n];
+					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
 					BaseParticleData& base_particle_data_j
 						= (*interacting_particles_[k]).base_particle_data_[index_particle_j];
@@ -704,10 +692,10 @@ namespace SPH
 
 			Matd stress_rate(0);
 			NeighborList& inner_neighors
-				= getNeighborList(current_inner_configuration_, index_particle_i);
+				= getNeighborList(current_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = inner_neighors[n];
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				BaseParticleData& base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 				FluidParticleData& fluid_data_j = particles_->fluid_particle_data_[index_particle_j];
@@ -725,7 +713,7 @@ namespace SPH
 					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
 				for (size_t n = 0; n < contact_neighors.size(); ++n)
 				{
-					NeighboringParticle* neighboring_particle = contact_neighors[n];
+					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
 					BaseParticleData& base_particle_data_j
 						= (*interacting_particles_[k]).base_particle_data_[index_particle_j];

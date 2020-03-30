@@ -181,7 +181,7 @@ namespace SPH
 			virtual ~ObserveAElectroPhysiologyQuantity() {};
 		};
 		/**
-		 * @class ObserveMuscleVoltage
+		 * @class ObserveElectroPhysiologyVoltage
 		 * @brief observe elastic displacement
 		 */
 		class ObserveElectroPhysiologyVoltage : public ObserveAElectroPhysiologyQuantity<Real>

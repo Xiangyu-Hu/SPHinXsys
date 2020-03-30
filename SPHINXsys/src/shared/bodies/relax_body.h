@@ -18,6 +18,7 @@ namespace SPH {
 	class SPHSystem;
 	class RelaxBodyParticles;
 	class MeshBackground;
+	class LevelSet;
 	/**
 	 * @class RelaxBody
 	 * @brief Declaration of relaxbody which is used for particle relaxation and derived from RealBody

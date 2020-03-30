@@ -7,17 +7,14 @@
 #pragma once
 
 #include "base_data_package.h"
-#include "in_output.h"
+#include "sph_data_conainers.h"
 
 namespace SPH 
 {
 	/**
 	 * @brief Preclaimed classes.
 	 */
-	class Kernel;
 	class SPHBody;
-	class ParticleGeneratorLattice;
-	class ParticleGeneratorDirect;
 
 	/**
 	 * @class SPHSystem
@@ -51,13 +48,11 @@ namespace SPH
 
 		task_scheduler_init tbb_init_;		/**< TBB library. */
 
-		StdVec<SPHBody*> bodies_;			/**< All sph bodies. */
-		StdVec<SPHBody*> fictitious_bodies_;/**< The bodies without inner particle configuration. */
-		StdVec<SPHBody*> real_bodies_;		/**< The bodies with inner particle configuration. */
+		SPHBodyVector bodies_;			/**< All sph bodies. */
+		SPHBodyVector fictitious_bodies_;/**< The bodies without inner particle configuration. */
+		SPHBodyVector real_bodies_;		/**< The bodies with inner particle configuration. */
 		SPHBodyTopology* body_topology_;	/**< SPH body topology. */
 
-		/** Generate a kernel. */
-		Kernel* GenerateAKernel(Real smoothing_lenght);
 		/** Add a new body to the SPH system. */
 		void AddBody(SPHBody* body);
 		/** Add a new body to the SPH real bodies. */

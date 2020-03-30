@@ -64,7 +64,7 @@ namespace SPH
 	};
 
 	/**
-	* @class BoundingAxisDirection
+	* @class BoundingInAxisDirection
 	* @brief Bounding particle position in a axis direction.
 	* The axis_direction must be 0, 1 for 2d and 0, 1, 2 for 3d
 	*/
@@ -77,18 +77,9 @@ namespace SPH
 		const int second_axis_;
 		/** the third axis according right hand rule. used only for 3d. */
 		const int third_axis_;
-
-		//cells in which particle checked for bounding
-		CellVector lower_bound_cells_, upper_bound_cells_;
-
-		virtual void CheckLowerBound(size_t index_particle_i, Vecd& pnt, Real dt = 0.0) = 0;
-		virtual void CheckUpperBound(size_t index_particle_i, Vecd& pnt, Real dt = 0.0) = 0;
 	public:
 		BoundingInAxisDirection(SPHBody* body, int axis_direction);
 		virtual ~BoundingInAxisDirection() {};
-
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
 	};
 
 	/**
@@ -99,14 +90,20 @@ namespace SPH
 	{
 	protected:
 		Vecd periodic_translation_;
+		//cells in which particle checked for bounding
+		CellVector lower_bound_cells_, upper_bound_cells_;
 
-		virtual void CheckLowerBound(size_t index_particle_i, Vecd& pnt,
-			Real dt = 0.0) override;
-		virtual void CheckUpperBound(size_t index_particle_i, Vecd& pnt,
-			Real dt = 0.0) override;
+		/**compute the distance for periodic translation. */
+		void setPeriodicTranslation();
+
+		virtual void CheckLowerBound(size_t index_particle_i, Vecd& pnt, Real dt = 0.0);
+		virtual void CheckUpperBound(size_t index_particle_i, Vecd& pnt, Real dt = 0.0);
 	public:
 		PeriodicBoundingInAxisDirection(SPHBody* body, int axis_direction);
 		virtual ~PeriodicBoundingInAxisDirection() {};
+
+		virtual void exec(Real dt = 0.0) override;
+		virtual void parallel_exec(Real dt = 0.0) override;
 	};
 
 	/**
@@ -117,10 +114,8 @@ namespace SPH
 		: public PeriodicBoundingInAxisDirection
 	{
 	protected:
-		virtual void CheckLowerBound(size_t index_particle_i, Vecd& pnt,
-			Real dt = 0.0) override;
-		virtual void CheckUpperBound(size_t index_particle_i, Vecd& pnt,
-			Real dt = 0.0) override;
+		virtual void CheckLowerBound(size_t index_particle_i, Vecd& pnt, Real dt = 0.0) override;
+		virtual void CheckUpperBound(size_t index_particle_i, Vecd& pnt, Real dt = 0.0) override;
 	public:
 
 		PeriodicConditionInAxisDirection(SPHBody* body, int axis_direction)
@@ -132,82 +127,73 @@ namespace SPH
 	};
 
 	/**
-	* @class MirrorBoundingInAxisDirection
+	* @class MirrorBoundaryConditionInAxisDirection
 	* @brief Mirror bounding particle position and velocity in an axis direction
 	*/
-	class MirrorBoundingInAxisDirection : public BoundingBodyDomain
+	class MirrorBoundaryConditionInAxisDirection : public BoundingInAxisDirection
 	{
 	protected:
-		/** the axis direction for bounding*/
-		const int axis_;	
-		/** the second axis according right hand rule. */
-		const int second_axis_;
-		/** the third axis according right hand rule. used only for 3d. */
-		const int third_axis_;
 		/** cells in which particle checked for bounding */
 		CellVector bound_cells_;
-		virtual void CheckLowerBound(size_t index_particle_i, Real dt = 0.0);
-		virtual void CheckUpperBound(size_t index_particle_i, Real dt = 0.0);
-		InnerFunctor checking_bound_;
-	public:
-		MirrorBoundingInAxisDirection(SPHBody* body, int axis_direction, bool positive);
-		virtual ~MirrorBoundingInAxisDirection() {};
-
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
-	};
-
-	/**
-	* @class MirrorBoundaryConditionInAxisDirection
-	* @brief Mirror boundary condition in an axis direction
-	*/
-	class MirrorBoundaryCreateGhostsInAxisDirection : public MirrorBoundingInAxisDirection
-	{
-	protected:
+		/** ghost particles createded for impose boundary condition. */
 		IndexVector ghost_particles_;
-		virtual void SetupDynamics(Real dt = 0.0) override { ghost_particles_.clear(); };
-		virtual void CheckLowerBound(size_t index_particle_i, Real dt = 0.0) override;
-		virtual void CheckUpperBound(size_t index_particle_i, Real dt = 0.0) override;
-	public:
-		/**
-		 * @brief Constructor.
-		 * @param[in] fluid body.
-		 * @param[in] body part by particles.
-		 * @param[in] axis direction of in flow: 0, 1, 2 for x-, y- and z-axis.
-		 * @param[in] direction sign of the inlfow: ture for positive direction.
-		 */
-		explicit MirrorBoundaryCreateGhostsInAxisDirection(FluidBody* body, int axis_direction, bool positive)
-			: MirrorBoundingInAxisDirection(body, axis_direction, positive) {};
-		virtual ~MirrorBoundaryCreateGhostsInAxisDirection() {};
 
-		/** This class is only implemented in sequential due to memory conflicts. */
-		virtual void parallel_exec(Real dt = 0.0) override { exec(); };
-	};
+		class Bounding : public BoundingInAxisDirection
+		{
+		protected:
+			CellVector& bound_cells_;
+			virtual void SetupDynamics(Real dt = 0.0) { };
+			virtual void checkLowerBound(size_t index_particle_i, Real dt = 0.0);
+			virtual void checkUpperBound(size_t index_particle_i, Real dt = 0.0);
+			InnerFunctor checking_bound_;
+		public:
+			Bounding(CellVector& bound_cells, SPHBody* body, int axis_direction, bool positive);
+			virtual ~Bounding() {};
+			virtual void exec(Real dt = 0.0) override;
+			virtual void parallel_exec(Real dt = 0.0) override;
+		};
 
-	/**
-	* @class MirrorBoundaryConditionInAxisDirection
-	* @brief Mirror boundary condition in an axis direction
-	*/
-	class MirrorBoundaryConditionInAxisDirection 
-		: public MirrorBoundaryCreateGhostsInAxisDirection
-	{
-	protected:
-		void CheckLowerBoundUpdate(size_t index_particle_i, Real dt = 0.0);
-		void CheckUpperBoundUpdate(size_t index_particle_i, Real dt = 0.0);
-		InnerFunctor checking_bound_update_;
+		class CreatingGhostParticles : public Bounding
+		{
+		protected:
+			IndexVector& ghost_particles_;
+			virtual void SetupDynamics(Real dt = 0.0) override { ghost_particles_.clear(); };
+			virtual void checkLowerBound(size_t index_particle_i, Real dt = 0.0) override;
+			virtual void checkUpperBound(size_t index_particle_i, Real dt = 0.0) override;
+		public:
+			CreatingGhostParticles(IndexVector& ghost_particles, CellVector& bound_cells, 
+				SPHBody* body, int axis_direction, bool positive);
+			virtual ~CreatingGhostParticles() {};
+			/** This class is only implemented in sequential due to memory conflicts. */
+			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
+		};
+
+		class UpdatingGhostStates : public BoundingInAxisDirection
+		{
+		protected:
+			IndexVector& ghost_particles_;
+			void updateForLowerBound(size_t index_particle_i, Real dt = 0.0);
+			void updateForUpperBound(size_t index_particle_i, Real dt = 0.0);
+			InnerFunctor checking_bound_update_;
+		public:
+			UpdatingGhostStates(IndexVector& ghost_particles,
+				SPHBody* body, int axis_direction, bool positive);
+			virtual ~UpdatingGhostStates() {};
+
+			virtual void exec(Real dt = 0.0) override;
+			virtual void parallel_exec(Real dt = 0.0) override;
+		};
+
 	public:
-		/**
-		 * @brief Constructor.
-		 * @param[in] fluid body.
-		 * @param[in] body part by particles.
-		 * @param[in] axis direction of in flow: 0, 1, 2 for x-, y- and z-axis.
-		 * @param[in] direction sign of the inlfow: ture for positive direction.
-		 */
-		explicit MirrorBoundaryConditionInAxisDirection(FluidBody* body, int axis_direction, bool positive);
+		Bounding bounding_;
+		CreatingGhostParticles creating_ghost_particles_;
+		UpdatingGhostStates updating_ghost_states_;
+
+		MirrorBoundaryConditionInAxisDirection(SPHBody* body, int axis_direction, bool positive);
 		virtual ~MirrorBoundaryConditionInAxisDirection() {};
 
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
+		virtual void exec(Real dt = 0.0) override {};
+		virtual void parallel_exec(Real dt = 0.0) override {};
 	};
 
 	/**

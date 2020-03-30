@@ -45,12 +45,12 @@ namespace SPH
 //=================================================================================================//
 	void RelaxBody::BuildInnerConfiguration()
 	{
-		mesh_cell_linked_list_->UpdateInnerConfiguration(*this, current_inner_configuration_);
+		base_mesh_cell_linked_list_->UpdateInnerConfiguration(current_configuration_);
 	}
 //=================================================================================================//
 	void RelaxBody::BuildContactConfiguration()
 	{
-		mesh_cell_linked_list_->UpdateContactConfiguration(*this);
+		base_mesh_cell_linked_list_->UpdateContactConfiguration();
 	}
 //=================================================================================================//
 	RelaxBodySurface::RelaxBodySurface(RelaxBody *relax_body)

@@ -20,7 +20,7 @@ namespace SPH
 
 			Vecd gradient(0.0);
 			NeighborList& inner_neighors
-				= getNeighborList(reference_inner_configuration_, index_particle_i);
+				= getNeighborList(reference_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				gradient += inner_neighors[n]->dW_ij_ * inner_neighors[n]->e_ij_;
@@ -50,10 +50,10 @@ namespace SPH
 			Vecd gradient(0.0);
 
 			NeighborList& inner_neighors
-				= getNeighborList(reference_inner_configuration_, index_particle_i);
+				= getNeighborList(reference_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = inner_neighors[n];
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 
@@ -70,7 +70,7 @@ namespace SPH
 					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
 				for (size_t n = 0; n < contact_neighors.size(); ++n)
 				{
-					NeighboringParticle* neighboring_particle = contact_neighors[n];
+					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
 					BaseParticleData& base_particle_data_j
 						= (*interacting_particles_[k]).base_particle_data_[index_particle_j];
@@ -126,7 +126,7 @@ namespace SPH
 					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
 				for (size_t n = 0; n < contact_neighors.size(); ++n)
 				{
-					NeighboringParticle* neighboring_particle = contact_neighors[n];
+					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
 					BaseParticleData& base_particle_data_j
 						= (*interacting_particles_[k]).base_particle_data_[index_particle_j];
@@ -163,7 +163,7 @@ namespace SPH
 					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
 				for (size_t n = 0; n < contact_neighors.size(); ++n)
 				{
-					NeighboringParticle* neighboring_particle = contact_neighors[n];
+					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
 					BaseParticleData& base_particle_data_j
 						= (*interacting_particles_[k]).base_particle_data_[index_particle_j];
@@ -226,7 +226,7 @@ namespace SPH
 					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
 				for (size_t n = 0; n < contact_neighors.size(); ++n)
 				{
-					NeighboringParticle* neighboring_particle = contact_neighors[n];
+					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
 					BaseParticleData& base_particle_data_j
 						= (*interacting_particles_[k]).base_particle_data_[index_particle_j];
@@ -280,10 +280,10 @@ namespace SPH
 
 			Matd local_configuration(0.0);
 			NeighborList& inner_neighors
-				= getNeighborList(reference_inner_configuration_, index_particle_i);
+				= getNeighborList(reference_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = inner_neighors[n];
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 
@@ -304,10 +304,10 @@ namespace SPH
 
 			Matd deformation(0.0);
 			NeighborList& inner_neighors
-				= getNeighborList(reference_inner_configuration_, index_particle_i);
+				= getNeighborList(reference_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = inner_neighors[n];
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 
@@ -344,10 +344,10 @@ namespace SPH
 				+ solid_data_i.force_from_fluid_/ elastic_data_i.mass_;
 
 			NeighborList& inner_neighors
-				= getNeighborList(reference_inner_configuration_, index_particle_i);
+				= getNeighborList(reference_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = inner_neighors[n];
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 				SolidParticleData &solid_data_j = particles_->solid_body_data_[index_particle_j];
@@ -385,10 +385,10 @@ namespace SPH
 
 			Matd deformation_gradient_change_rate(0);
 			NeighborList& inner_neighors
-				= getNeighborList(reference_inner_configuration_, index_particle_i);
+				= getNeighborList(reference_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = inner_neighors[n];
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 				SolidParticleData &solid_data_j = particles_->solid_body_data_[index_particle_j];
@@ -568,10 +568,10 @@ namespace SPH
 
 			Vecd acceleration(0);
 			NeighborList& inner_neighors
-				= getNeighborList(reference_inner_configuration_, index_particle_i);
+				= getNeighborList(reference_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = inner_neighors[n];
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				BaseParticleData &base_particle_data_j
 					= particles_->base_particle_data_[index_particle_j];

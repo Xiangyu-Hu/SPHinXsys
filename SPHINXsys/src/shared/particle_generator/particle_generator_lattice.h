@@ -22,7 +22,6 @@ namespace SPH {
 		Region &region_;
 		Real lattice_spacing_;		/**< Lattice size. */
 		Vecu number_of_lattices_;	/**< Number of lattice. */ 
-		Real sigma_ref_;
 		/**
 		 * @brief Claculate the number of Lattices.
 		 * @param[in] lower_bound Lower bound of lattice size.
@@ -33,12 +32,12 @@ namespace SPH {
 	protected:
 		Vecd lower_bound_, upper_bound_;	/**< Domain bounds. */
 	public:
-		ParticleGeneratorLattice(SPHBody &sph_body, Region &region);
+		ParticleGeneratorLattice(SPHBody &sph_body);
 		virtual ~ParticleGeneratorLattice() {};
 
 		/** Compute reference number density*/
 		virtual Real ComputeReferenceNumberDensity();
 		/** Create lattice particle for a body. */
-		virtual void CreateBaseParticles() override;
+		virtual void CreateBaseParticles(BaseParticles *base_particles) override;
 	};
 }

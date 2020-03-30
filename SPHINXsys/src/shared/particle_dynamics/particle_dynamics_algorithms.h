@@ -168,7 +168,7 @@ namespace SPH {
 	};
 
 	/**
-	* @class ParticleDynamicsComplexWithUpdateCombined
+	* @class ParticleDynamicsComplexWithUpdate
 	* @brief compex operations combining both inner and contact particle dynamics together
 	*/
 	template <class BodyType, class ParticlesType, class MaterialType,
@@ -190,7 +190,7 @@ namespace SPH {
 	};
 
 	/**
-	* @class ParticleDynamicsComplex1LevelCombined
+	* @class ParticleDynamicsComplex1Level
 	* @brief compex operations combining both inner and contact particle dynamics together
 	*/
 	template <class BodyType, class ParticlesType, class MaterialType,
@@ -210,5 +210,22 @@ namespace SPH {
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
 	};
-}
 
+	/**
+	* @class ParticleDynamicsComplexSplit
+	* @brief compex split operations combining both inner and contact particle dynamics together
+	*/
+	template <class BodyType, class ParticlesType, class MaterialType,
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType = BaseMaterial>
+		class ParticleDynamicsComplexSplit
+		: public ParticleDynamicsComplex1Level<BodyType, ParticlesType, MaterialType,
+		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
+	{
+	public:
+		ParticleDynamicsComplexSplit(BodyType* body, StdVec<InteractingBodyType*> interacting_bodies);
+		virtual ~ParticleDynamicsComplexSplit() {};
+
+		virtual void exec(Real dt = 0.0) override;
+		virtual void parallel_exec(Real dt = 0.0) override;
+	};
+}

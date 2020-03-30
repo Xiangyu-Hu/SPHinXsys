@@ -14,6 +14,7 @@ namespace SPH {
 
 	/** Preclaimed classes*/
 	class SPHBody;
+	class BaseParticles;
 
 	/**
 	 * @class ParticleGenerator.
@@ -28,7 +29,7 @@ namespace SPH {
 		virtual ~ParticleGenerator() {};
 
 		/** Create lattice particle for a body. */
-		virtual void CreateBaseParticles() = 0;
+		virtual void CreateBaseParticles(BaseParticles* base_particles) = 0;
 	};
 	/**
 	 * @class ParticleGeneratorDirect
@@ -39,6 +40,6 @@ namespace SPH {
 	public:
 		ParticleGeneratorDirect(SPHBody &body);
 		virtual ~ParticleGeneratorDirect() {};
-		virtual void CreateBaseParticles() override;
+		virtual void CreateBaseParticles(BaseParticles* base_particles) override;
 	};
 }

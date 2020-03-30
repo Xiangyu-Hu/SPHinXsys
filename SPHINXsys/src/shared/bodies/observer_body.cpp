@@ -26,7 +26,7 @@ namespace SPH {
 	//===========================================================//
 	void ObserverLagrangianBody::BuildContactConfiguration()
 	{
-		mesh_cell_linked_list_->BuildContactConfiguration(*this);
+		base_mesh_cell_linked_list_->BuildContactConfiguration();
 	}
 	//===========================================================//
 	ObserverEulerianBody::ObserverEulerianBody(SPHSystem &system, string body_name,
@@ -38,7 +38,7 @@ namespace SPH {
 	//===========================================================//
 	void ObserverEulerianBody::BuildContactConfiguration()
 	{
-		mesh_cell_linked_list_->UpdateContactConfiguration(*this);
+		base_mesh_cell_linked_list_->UpdateContactConfiguration();
 	}
 	//===========================================================//
 }

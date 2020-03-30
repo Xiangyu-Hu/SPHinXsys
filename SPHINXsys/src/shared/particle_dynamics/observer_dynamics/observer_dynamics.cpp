@@ -24,7 +24,7 @@ namespace SPH
 				= getNeighborList(current_interacting_configuration_[interacting_body_index], index_particle_i);
 			for (size_t n = 0; n < contact_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = contact_neighors[n];
+				BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				BaseParticleData &base_particle_data_j 
 					= (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
@@ -50,7 +50,7 @@ namespace SPH
 				= getNeighborList(current_interacting_configuration_[interacting_body_index], index_particle_i);
 			for (size_t n = 0; n < contact_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = contact_neighors[n];
+				BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				BaseParticleData &base_particle_data_j
 					= (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
@@ -76,7 +76,7 @@ namespace SPH
 				= getNeighborList(current_interacting_configuration_[interacting_body_index], index_particle_i);
 			for (size_t n = 0; n < contact_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = contact_neighors[n];
+				BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				BaseParticleData &base_particle_data_j
 					= (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
@@ -105,7 +105,7 @@ namespace SPH
 				= getNeighborList(current_interacting_configuration_[interacting_body_index], index_particle_i);
 			for (size_t n = 0; n < contact_neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = contact_neighors[n];
+				BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				BaseParticleData &base_particle_data_j = (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
 

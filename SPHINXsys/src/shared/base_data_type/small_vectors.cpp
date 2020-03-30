@@ -19,6 +19,20 @@ namespace SPH {
 		return Vec3d(1.0, 0.0, 0.0); 
 	};
 	//=================================================================================================//
+	SimTK::Real getMinAbslouteElement(Vec2d input)
+	{
+		SimTK::Real min = input.norm();
+		for (size_t n = 0; n != input.size(); n++) SMIN(fabs(input[n]), min);
+		return min;
+	}
+	//=================================================================================================//
+	SimTK::Real getMinAbslouteElement(Vec3d input)
+	{
+		SimTK::Real min = input.norm();
+		for (size_t n = 0; n != input.size(); n++) SMIN(fabs(input[n]), min);
+		return min;
+	}
+	//=================================================================================================//
 	Vec3d upgradeToVector3D(SimTK::Real input) {
 		return Vec3d(input, 0.0, 0.0);
 	}

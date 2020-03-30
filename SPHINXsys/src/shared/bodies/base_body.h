@@ -16,7 +16,7 @@
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
-#include "neighboring_particle.h"
+#include "neighbor_relation.h"
 #include "geometry.h"
 
 #include <string>
@@ -30,7 +30,7 @@ namespace SPH {
 	class SPHSystem;
 	class BaseParticles;
 	class Kernel;
-	class MeshCellLinkedList;
+	class BaseMeshCellLinkedList;
 	class MeshBackground;
 
 	/**
@@ -52,6 +52,9 @@ namespace SPH {
 	protected:
 		SPHSystem &sph_system_; 	/**< SPHSystem. */
 		string body_name_; 			/**< name of this body */
+		/** the reagion describe the geometry of the body.
+		 * static member, so the geoemtry head file is included. */
+		Region body_region_;
 		/** smoothing length. */
 		Real smoothinglength_;
 		/** Computational domain bounds of the body for boundry conditions. */
@@ -61,9 +64,50 @@ namespace SPH {
 		/** Computing particle spacing from refinement level. */
 		Real RefinementLevelToParticleSpacing();
 
+		/** Generate a kernel. */
+		Kernel* GenerateAKernel(Real smoothing_lenght);
 		/** Change kernel function specific for this body. */
 		void ReplaceKernelFunction(Kernel* kernel);
 	public:
+		//----------------------------------------------------------------------
+		//Global variables
+		//----------------------------------------------------------------------
+		int refinement_level_;	/**< refinement level of this body */
+		Kernel* kernel_; 		/**< sph kernel function specific to a SPHBody */
+		Real particle_spacing_;						/**< Particle spacing of the body. */
+		size_t number_of_particles_;				/**< Number of real particles of the body. */
+		BaseParticles* base_particles_;				/**< Base particles of this body. */
+		BaseMeshCellLinkedList* base_mesh_cell_linked_list_; /**< Cell linked mesh of this body. */
+		MeshBackground* mesh_background_;			/**< Background mesh.*/
+		ParticlesGeneratorOps particle_generator_op_;	/**< Particle generator manner */
+		PositionsAndVolumes body_input_points_volumes_; /**< For direct generate particles. /
+
+		/**
+		 * @brief particle by cells lists is for parallel splitting algorithm.
+		 * All particles in each cell are collected together.
+		 * If two partiles each belongs two different cell entries,
+		 * they have no interaction because they are too far.
+		 */
+		SplitCellLists split_cell_lists_;
+
+		/** Reference inner configurations for totoal Lagrangian formulation. */
+		ParticleConfiguration reference_configuration_;
+		/** current inner configurations for updated Lagrangian formulation. */
+		ParticleConfiguration current_configuration_;
+
+		/**
+		 * @brief Contact configurations
+		 * @details Note that contact configuration only gives all topological relation to this body.
+		 * The specific physical interaction, which may not involving all contact bodies,
+		 * will be defined in the specific particle dynamics
+		 */
+		 /** Contact map: pointing to toplogically contacted bodies. **/
+		SPHBodyContactMap contact_map_;
+		/** Lists of particles has a ocnfiguration with particles in contaced bodies. **/
+		ContactParticles indexes_contact_particles_;
+		/** Configurations for updated Lagrangian formulation. **/
+		ContatcParticleConfiguration contact_configuration_;
+
 		/**
 		 * @brief Defaut constructor of SPHBody.
 		 * @param[in] sph_system SPHSystem.
@@ -78,8 +122,12 @@ namespace SPH {
 
 		/** Get the name of this body for out file name. */
 		string GetBodyName();
+		/** Get the name of this body for out file name. */
+		Region& getBodyReagion() { return body_region_; };
 		/** Set up the contact map. */
 		void SetContactMap(SPHBodyContactMap& contact_map);
+		/** Set up the contact map. */
+		SPHBodyContactMap& getContactMap() { return contact_map_; };
 		/** Allocate memory for cell linked list. */
 		virtual void AllocateMeoemryCellLinkedList() {};
 		/** Allocate memory for back ground mesh. */
@@ -101,48 +149,6 @@ namespace SPH {
 		/** Update interactiong configuration. */
 		virtual void UpdateInteractionConfiguration(SPHBodyVector interacting_bodies) = 0;
 
-		//----------------------------------------------------------------------
-		//Global variables
-		//----------------------------------------------------------------------
-		int refinement_level_;	/**< refinement level of this body */
-		Kernel* kernel_; 		/**< sph kernel function specific to a SPHBody */
-		Real particle_spacing_;						/**< Particle spacing of the body. */
-		size_t number_of_particles_;				/**< Number of real particles of the body. */
-		BaseParticles* base_particles_;				/**< Base particles of this body. */
-		MeshCellLinkedList* mesh_cell_linked_list_; /**< Cell linked mesh of this body. */
-		MeshBackground* mesh_background_;			/**< Background mesh.*/
-		ParticlesGeneratorOps particle_generator_op_;	/**< Particle generator manner */
-		PositionsAndVolumes body_input_points_volumes_; /**< For direct generate particles. /
-
-		/**
- 		 * @brief particle by cells lists is for parallel splitting algorithm.
-		 * All particles in each cell are collected together. 
-		 * If two partiles each belongs two different cell entries,
-		 * they have no interaction because they are too far.
-		 */
-		SplitCellLists split_cell_lists_;
-		
-		/** Reference inner configurations for totoal Lagrangian formulation. */
-		InnerParticleConfiguration reference_inner_configuration_;
-		/** current inner configurations for updated Lagrangian formulation. */
-		InnerParticleConfiguration current_inner_configuration_;
-		
-		/**
-		 * @brief Contact configurations
-		 * @details Note that contact configuration only gives all topological relation to this body.
-		 * The specific physical interaction, which may not involving all contact bodies,
-		 * will be defined in the specific particle dynamics
-		 */
-		 /** Contact map: pointing to toplogically contacted bodies. **/
-		SPHBodyContactMap contact_map_;
-		/** Lists of particles has a ocnfiguration with particles in contaced bodies. **/
-		ContactParticles indexes_contact_particles_;
-		/** Configurations for updated Lagrangian formulation. **/
-		ContatcParticleConfiguration current_contact_configuration_;
-
-		/** the reagion describe the geometry of the body.
-		 * static member, so the geoemtry head file is included. */
-		Region body_region_;
 		/** Check wether a point within the geometry of this body.
 		 * @returns TRUE if a point within body's region otherwise FALSE. 
 		 */
@@ -289,7 +295,7 @@ namespace SPH {
 		virtual void TagBodyPartCells();
 	public:
 		/** Collection of cells to indicate the body part. */
-		CellVector body_part_cells_;
+		CellLists body_part_cells_;
 
 		BodyPartByCell(SPHBody *body, string body_part_name)
 			: BodyPart(body, body_part_name) {};

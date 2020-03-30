@@ -240,5 +240,39 @@ namespace SPH {
 		InnerIterator_parallel(number_of_particles, this->functor_complex_interaction_, dt);
 		InnerIterator_parallel(number_of_particles, this->functor_update_, dt);
 	}
+	//===================================================================//
+	template <class BodyType, class ParticlesType, class MaterialType,
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType>
+		ParticleDynamicsComplexSplit<BodyType, ParticlesType, MaterialType,
+		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
+		::ParticleDynamicsComplexSplit(BodyType* body, StdVec<InteractingBodyType*> interacting_bodies)
+		: ParticleDynamicsComplex1Level<BodyType, ParticlesType, MaterialType,
+		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>(body, interacting_bodies) {}
+	//===============================================================//
+	template <class BodyType, class ParticlesType, class MaterialType,
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType>
+		void ParticleDynamicsComplexSplit<BodyType, ParticlesType, MaterialType,
+		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
+		::exec(Real dt)
+	{
+		this->SetupDynamics(dt);
+		size_t number_of_particles = this->body_->number_of_particles_;
+		InnerIterator(number_of_particles, functor_initialization_, dt);
+		InnerIteratorSplitting(this->split_cell_lists_, this->functor_complex_interaction_, dt);
+		InnerIterator(number_of_particles, this->functor_update_, dt);
+	}
+	//===============================================================//
+	template <class BodyType, class ParticlesType, class MaterialType,
+		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType>
+		void ParticleDynamicsComplexSplit<BodyType, ParticlesType, MaterialType,
+		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
+		::parallel_exec(Real dt)
+	{
+		this->SetupDynamics(dt);
+		size_t number_of_particles = this->body_->number_of_particles_;
+		InnerIterator_parallel(number_of_particles, functor_initialization_, dt);
+		InnerIteratorSplitting_parallel(this->split_cell_lists_, this->functor_complex_interaction_, dt);
+		InnerIterator_parallel(number_of_particles, this->functor_update_, dt);
+	}
 	//===============================================================//
 }

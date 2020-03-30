@@ -35,7 +35,14 @@ namespace SPH
 			relax_body_data_.push_back(RelaxBodyParticleData(pnt));
 		}
 	}
-	//=============================================================================================//
+	//===============================================================//
+	void RelaxBodyParticles::AddABufferParticle()
+	{
+		BaseParticles::AddABufferParticle();
+		relax_body_data_.push_back(RelaxBodyParticleData(Vecd(0)));
+
+	}
+	//===============================================================//
 	void RelaxBodyParticles
 		::CopyFromAnotherParticle(size_t this_particle_index, size_t another_particle_index)
 	{

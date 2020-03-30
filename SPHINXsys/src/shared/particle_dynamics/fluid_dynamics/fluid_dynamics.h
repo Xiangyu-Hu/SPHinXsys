@@ -310,7 +310,6 @@ namespace SPH
 		protected:
 			virtual Vecd getVStar(Vecd& e_ij, Vecd& vel_i, Real p_i, Real rho_i,
 				Vecd& vel_j, Real p_j, Real rho_j) override;
-			virtual void Initialization(size_t index_particle_i, Real dt = 0.0) override;
 		public:
 			PressureRelaxationSecondHalf(FluidBody *body, StdVec<SolidBody*> interacting_bodies)
 				: PressureRelaxationSecondHalfRiemann(body, interacting_bodies) {};

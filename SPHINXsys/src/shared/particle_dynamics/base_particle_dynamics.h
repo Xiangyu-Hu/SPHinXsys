@@ -12,7 +12,7 @@
 #include "sph_data_conainers.h"
 #include "all_particles.h"
 #include "all_materials.h"
-#include "neighboring_particle.h"
+#include "neighbor_relation.h"
 #include "all_types_of_bodies.h"
 #include "all_meshes.h"
 #include "external_force.h"
@@ -46,7 +46,7 @@ namespace SPH
 	ReturnType ReduceIterator(size_t number_of_particles, ReturnType temp,
 		ReduceFunctor<ReturnType> &reduce_functor, ReduceOperation &ruduce_operation, Real dt = 0.0);
 	/** Iterators for reduce functors. parallel computing. */
-	template <class ReturnType, class ReduceFunction, typename ReduceOperation>
+	template <class ReturnType, typename ReduceOperation>
 	ReturnType ReduceIterator_parallel(size_t number_of_particles, ReturnType temp,
 		ReduceFunctor<ReturnType> &reduce_functor, ReduceOperation &ruduce_operation, Real dt = 0.0);
 
@@ -65,6 +65,13 @@ namespace SPH
 	/** Iterators for inner functors with splitting. parallel computing. */
 	void InnerIteratorSplitting_parallel(SplitCellLists& split_cell_lists,
 		InnerFunctor &inner_functor, Real dt = 0.0);
+	/** Iterators for inner functors with splitting. sequential computing. */
+	void InnerIteratorSplittingSweeping(SplitCellLists& split_cell_lists,
+		InnerFunctor& inner_functor, Real dt = 0.0);
+	/** Iterators for inner functors with splitting. parallel computing. */
+	void InnerIteratorSplittingSweeping_parallel(SplitCellLists& split_cell_lists,
+		InnerFunctor& inner_functor, Real dt = 0.0);
+
 
 	/** A Functor for Summation */
 	template <class ReturnType>
@@ -171,11 +178,11 @@ namespace SPH
 	{
 	protected:
 		/** current inner confifuration of the designated body */
-		InnerParticleConfiguration* current_inner_configuration_;
+		ParticleConfiguration* current_configuration_;
 		/** reference inner confifuration of the designated body */
-		InnerParticleConfiguration* reference_inner_configuration_;
+		ParticleConfiguration* reference_configuration_;
 		/** Get neighbor list for particle interaction. */
-		NeighborList& getNeighborList(InnerParticleConfiguration* particle_configuration, 
+		NeighborList& getNeighborList(ParticleConfiguration* particle_configuration, 
 			size_t index_particle_i) {
 			Neighborhood& neighborhood = (*particle_configuration)[index_particle_i];
 			return std::get<0>(neighborhood);
@@ -219,7 +226,7 @@ namespace SPH
 	class ParticleDynamicsByCells : public ParticleDynamics<void, BodyType, ParticlesType, MaterialType>
 	{
 	protected:
-		MeshCellLinkedList *mesh_cell_linked_list_;
+		BaseMeshCellLinkedList *mesh_cell_linked_list_;
 		matrix_cell cell_linked_lists_;
 		Vecu number_of_cells_;
 		Real cell_spacing_;
@@ -242,7 +249,7 @@ namespace SPH
 		: public ParticleDynamics<void, BodyType, ParticlesType, MaterialType>
 	{
 	protected:
-		MeshCellLinkedList* mesh_cell_linked_list_;
+		BaseMeshCellLinkedList* mesh_cell_linked_list_;
 		matrix_cell cell_linked_lists_;
 		Vecu number_of_cells_;
 		Kernel* kernel_;

@@ -12,9 +12,9 @@ namespace SPH
 	//===============================================================//
 	void BodyPartByCell::TagBodyPartCells()
 	{
-		MeshCellLinkedList *mesh_cell_linked_list
-			= body_->mesh_cell_linked_list_;
-		Vecu number_of_cells = mesh_cell_linked_list->GetNumberOfCells();
+		BaseMeshCellLinkedList *mesh_cell_linked_list
+			= body_->base_mesh_cell_linked_list_;
+		Vecu number_of_cells = mesh_cell_linked_list->getNumberOfCells();
 
 		for (int i = 0; i < number_of_cells[0]; ++i)
 			for (int j = 0; j < number_of_cells[1]; ++j)
@@ -30,7 +30,8 @@ namespace SPH
 								if (body_part_region_.contain(cell_position))
 									is_contained = true;
 							}
-					if (is_contained == true) body_part_cells_.push_back(Vecu(i, j, k));
+					if (is_contained == true) 
+						body_part_cells_.push_back(mesh_cell_linked_list->getCellList(Vecu(i, j, k)));
 				}
 	}
 	//===============================================================//

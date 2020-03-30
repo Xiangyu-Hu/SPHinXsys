@@ -14,8 +14,8 @@ namespace SPH {
 	ParticleDynamicsWithInnerConfigurations<BodyType, ParticlesType, MaterialType>
 		::ParticleDynamicsWithInnerConfigurations(BodyType* body) 
 		: ParticleDynamics<void, BodyType, ParticlesType, MaterialType>(body) {
-		current_inner_configuration_ = &body->current_inner_configuration_;
-		reference_inner_configuration_ = &body->reference_inner_configuration_;
+		current_configuration_ = &body->current_configuration_;
+		reference_configuration_ = &body->reference_configuration_;
 	}
 //=================================================================================================//
 	template <class BodyType, class ParticlesType, class MaterialType,
@@ -27,7 +27,7 @@ namespace SPH {
 		/** contact configuration data from the body*/
 		SPHBodyVector contact_bodies = body->contact_map_.second;
 		ContactParticles& indexes_contact_particles = body->indexes_contact_particles_;
-		ContatcParticleConfiguration& current_contact_configuration = body->current_contact_configuration_;
+		ContatcParticleConfiguration& current_contact_configuration = body->contact_configuration_;
 		/** finding the interacing bodies */
 		for (size_t i = 0; i != interacting_bodies.size(); ++i)
 			for (size_t j = 0; j != contact_bodies.size(); ++j) {
@@ -45,12 +45,11 @@ namespace SPH {
 		::ParticleDynamicsByCells(BodyType* body) 
 		: ParticleDynamics<void, BodyType, ParticlesType, MaterialType>(body)
 	{
-		mesh_cell_linked_list_ = body->mesh_cell_linked_list_;
-		cell_linked_lists_ = mesh_cell_linked_list_->cell_linked_lists_;
-		number_of_cells_ = mesh_cell_linked_list_->GetNumberOfCells();
-		cell_spacing_ = mesh_cell_linked_list_->GetCellSpacing();
-		mesh_lower_bound_ = mesh_cell_linked_list_->GetLowerBound();
-		mesh_upper_bound_ = mesh_cell_linked_list_->GetUpperBound();
+		mesh_cell_linked_list_ = body->base_mesh_cell_linked_list_;
+		cell_linked_lists_ = mesh_cell_linked_list_->getCellLinkedLists();
+		number_of_cells_ = mesh_cell_linked_list_->getNumberOfCells();
+		cell_spacing_ = mesh_cell_linked_list_->getCellSpacing();
+		mesh_lower_bound_ = mesh_cell_linked_list_->getMeshLowerBound();
 	}
 //=================================================================================================//
 	template <class ReturnType, typename ReduceOperation>
@@ -87,13 +86,12 @@ namespace SPH {
 		: ParticleDynamics<void, BodyType, ParticlesType, MaterialType>(body),
 		functor_cell_list_(std::bind(&ParticleDynamicsCellListSplitting::CellListInteraction, this, _1, _2))
 	{
-		mesh_cell_linked_list_ = body->mesh_cell_linked_list_;
-		cell_linked_lists_ = mesh_cell_linked_list_->cell_linked_lists_;
-		number_of_cells_ = mesh_cell_linked_list_->GetNumberOfCells();
-		cell_spacing_ = mesh_cell_linked_list_->GetCellSpacing();
-		mesh_lower_bound_ = mesh_cell_linked_list_->GetLowerBound();
-		mesh_upper_bound_ = mesh_cell_linked_list_->GetUpperBound();
-		cutoff_radius_ = mesh_cell_linked_list_->GetCellSpacing();
+		mesh_cell_linked_list_ = body->base_mesh_cell_linked_list_;
+		cell_linked_lists_ = mesh_cell_linked_list_->getCellLinkedLists();
+		number_of_cells_ = mesh_cell_linked_list_->getNumberOfCells();
+		cell_spacing_ = mesh_cell_linked_list_->getCellSpacing();
+		mesh_lower_bound_ = mesh_cell_linked_list_->getMeshLowerBound();
+		cutoff_radius_ = mesh_cell_linked_list_->getCellSpacing();
 		kernel_ = body_->kernel_;
 	};
 	//=================================================================================================//

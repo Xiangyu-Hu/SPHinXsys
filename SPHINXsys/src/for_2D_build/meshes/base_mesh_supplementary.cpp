@@ -5,26 +5,47 @@
  */
 
 #include "base_mesh.h"
+#include "base_mesh.hpp"
 #include "array_allocation.h"
 #include "sph_system.h"
 #include "base_particles.h"
 #include "base_body.h"
-#include "neighboring_particle.h"
+#include "neighbor_relation.h"
 #include "base_data_package.h"
 
 #include "math.h"
 
 namespace SPH {
-
 	//===========================================================//
-	Vecu Mesh::transfer1DtoMeshIndex(Vecu mesh_size, size_t i)
+	void MeshIterator(Vecu index_begin, Vecu index_end, MeshFunctor& mesh_functor, Real dt)
+	{
+		for (size_t i = index_begin[0]; i != index_end[0]; ++i)
+			for (size_t j = index_begin[1]; j != index_end[1]; ++j) {
+				mesh_functor(Vecu(i, j), dt);
+			}
+	}
+	//===================================================================//
+	void MeshIterator_parallel(Vecu index_begin, Vecu index_end, MeshFunctor& mesh_functor, Real dt)
+	{
+		parallel_for(blocked_range2d<size_t>
+			(index_begin[0], index_end[0], index_begin[1], index_end[1]),
+			[&](const blocked_range2d<size_t>& r) {
+				for (size_t i = r.rows().begin(); i != r.rows().end(); ++i)
+					for (size_t j = r.cols().begin(); j != r.cols().end(); ++j)
+					{
+						mesh_functor(Vecu(i, j), dt);
+					}
+			}, ap);
+	}
+	//===========================================================//
+	Vecu BaseMesh::transfer1DtoMeshIndex(Vecu mesh_size, size_t i)
 	{
 		int row_size = mesh_size[1];
 		int column = i / row_size;
 		return Vecu(column, i - column * row_size);
 	}
 	//===================================================================//
-	size_t Mesh::transferMeshIndexTo1D(Vecu mesh_size, Vecu mesh_index)
+	size_t BaseMesh::transferMeshIndexTo1D(Vecu mesh_size, Vecu mesh_index)
 	{
 		return mesh_index[0] * mesh_size[1] + mesh_index[1];
 	}
@@ -224,4 +245,157 @@ namespace SPH {
 		}
 
 	}
+	//===================================================================//
+	void LevelSetDataPackage::AllocateMeshDataMatrix()
+	{
+		Allocate2dArray(phi_, number_of_grid_points_);
+		Allocate2dArray(n_, number_of_grid_points_);
+		Allocate2dArray(phi_addrs_, number_of_addrs_);
+		Allocate2dArray(n_addrs_, number_of_addrs_);
+	}
+	//===================================================================//
+	void LevelSetDataPackage::DeleteMeshDataMatrix()
+	{
+		Delete2dArray(phi_, number_of_grid_points_);
+		Delete2dArray(n_, number_of_grid_points_);
+		Delete2dArray(phi_addrs_, number_of_addrs_);
+		Delete2dArray(n_addrs_, number_of_addrs_);
+	}
+	//===================================================================//
+	void LevelSetDataPackage::initializeWithUniformData(Real level_set, Vecd normal_direction)
+	{
+		for (size_t i = 0; i != pkg_size_; ++i)
+			for (size_t j = 0; j != pkg_size_; ++j) {
+				phi_[i][j] = level_set;
+				n_[i][j] = normal_direction;
+			}
+	}
+	//=================================================================================================//
+	void  LevelSetDataPackage
+		::initializeDataPackage(SPHBody* sph_body)
+	{
+		for (size_t i = 0; i != pkg_size_; ++i)
+			for (size_t j = 0; j != pkg_size_; ++j) {
+				Vecd position = data_lower_bound_ + Vecd((Real)i * grid_spacing_, (Real)j * grid_spacing_);
+				Vecd closet_pnt_on_face(0);
+				sph_body->ClosestPointOnBodySurface(position, closet_pnt_on_face, phi_[i][j]);
+				n_[i][j] = closet_pnt_on_face - position;
+			}
+	}
+	//===================================================================//
+	void LevelSet::initializeDataInACell(Vecu cell_index, Real dt)
+	{
+		int i = (int)cell_index[0];
+		int j = (int)cell_index[1];
+
+		Vecd cell_position = CellPositionFromIndexes(cell_index);
+		Vecd closet_pnt_on_face(0, 0);
+		Real phi_from_surface = 0.0;
+		sph_body_->ClosestPointOnBodySurface(cell_position, closet_pnt_on_face, phi_from_surface);
+		Real measure = getMinAbslouteElement(closet_pnt_on_face - cell_position);
+		if (measure < cell_spacing_) {
+			LevelSetDataPackage* new_data_pkg = data_pakg_pool_.malloc();
+			Vecd pkg_lower_bound = getGridPositionFromCellPosition(cell_position);
+			new_data_pkg->initializePackageGoemetry(pkg_lower_bound, data_spacing_);
+			new_data_pkg->initializeDataPackage(sph_body_);
+			core_data_pkgs_.push_back(new_data_pkg);
+			new_data_pkg->is_core_pkg_ = true;
+			data_pkg_addrs_[i][j] = new_data_pkg;
+		}
+		else {
+			data_pkg_addrs_[i][j] = phi_from_surface > 0 ?
+			 singular_data_pkgs_addrs[0] : singular_data_pkgs_addrs[1];
+		}
+	}
+	//===================================================================//
+	void LevelSet::tagACellIsInnerPackage(Vecu cell_index, Real dt)
+	{
+		int i = (int)cell_index[0];
+		int j = (int)cell_index[1];
+
+		bool is_inner_pkg = false;
+		for (int l = SMAX(i - 1, 0); l <= SMIN(i + 1, int(number_of_cells_[0]) - 1); ++l)
+			for (int m = SMAX(j - 1, 0); m <= SMIN(j + 1, int(number_of_cells_[1]) - 1); ++m)
+				if (data_pkg_addrs_[l][m]->is_core_pkg_) is_inner_pkg = true;
+
+		if (is_inner_pkg) {
+			LevelSetDataPackage* current_data_pkg = data_pkg_addrs_[i][j];
+			if (current_data_pkg->is_core_pkg_) {
+				current_data_pkg->is_inner_pkg_ = true;
+				inner_data_pkgs_.push_back(current_data_pkg);
+			}
+			else {
+				LevelSetDataPackage* new_data_pkg = data_pakg_pool_.malloc();
+				Vecd cell_position = CellPositionFromIndexes(cell_index);
+				Vecd pkg_lower_bound = getGridPositionFromCellPosition(cell_position);
+				new_data_pkg->initializePackageGoemetry(pkg_lower_bound, data_spacing_);
+				new_data_pkg->initializeDataPackage(sph_body_);
+				new_data_pkg->is_inner_pkg_ = true;
+				inner_data_pkgs_.push_back(new_data_pkg);
+				data_pkg_addrs_[i][j] = new_data_pkg;
+			}
+		}
+	}
+	//===================================================================//
+	void LevelSet::WriteMeshToPltFile(ofstream& output_file)
+	{
+		Vecu number_of_operation = number_of_data_;
+
+		output_file << "\n";
+		output_file << "title='View'" << "\n";
+		output_file << "variables= " << "x, " << "y, " << "phi, " << "n_x, " << "n_y " << "\n";
+		output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << 1
+			<< "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
+
+		for (size_t j = 0; j != number_of_operation[1]; ++j)
+		{
+			for (size_t i = 0; i != number_of_operation[0]; ++i)
+			{
+				Vecd data_position = getDataPositionFromIndex(Vecu(i, j));
+				output_file << data_position[0] << " ";
+			}
+			output_file << " \n";
+		}
+
+		for (size_t j = 0; j != number_of_operation[1]; ++j)
+		{
+			for (size_t i = 0; i != number_of_operation[0]; ++i)
+			{
+				Vecd data_position = getDataPositionFromIndex(Vecu(i, j));
+				output_file << data_position[1] << " ";
+			}
+			output_file << " \n";
+		}
+
+		for (size_t j = 0; j != number_of_operation[1]; ++j)
+		{
+			for (size_t i = 0; i != number_of_operation[0]; ++i)
+			{
+				output_file << getValueFromGlobalDataIndex<Real, &LevelSetDataPackage::phi_>(Vecu(i, j)) << " ";
+
+			}
+			output_file << " \n";
+		}
+
+		for (size_t j = 0; j != number_of_operation[1]; ++j)
+		{
+			for (size_t i = 0; i != number_of_operation[0]; ++i)
+			{
+				output_file << getValueFromGlobalDataIndex<Vecd, &LevelSetDataPackage::n_>(Vecu(i, j))[0]<< " ";
+
+			}
+			output_file << " \n";
+		}
+
+		for (size_t j = 0; j != number_of_operation[1]; ++j)
+		{
+			for (size_t i = 0; i != number_of_operation[0]; ++i)
+			{
+				output_file << getValueFromGlobalDataIndex<Vecd, &LevelSetDataPackage::n_>(Vecu(i, j))[1] << " ";
+
+			}
+			output_file << " \n";
+		}
+	}
+	//===================================================================//
 }

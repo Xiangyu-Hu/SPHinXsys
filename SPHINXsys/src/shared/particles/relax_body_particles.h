@@ -52,6 +52,8 @@ namespace SPH {
 
 		IndexVector lists_of_singularity_particles_;
 
+		/** add buffer particles which latter may be realized for particle dynamics*/
+		virtual void AddABufferParticle() override;
 		/** Copy state from another particle */
 		virtual void CopyFromAnotherParticle(size_t this_particle_index, size_t another_particle_index) override;
 		/** Swapping particles. */

@@ -17,8 +17,8 @@ namespace SPH {
 	class BaseMaterial;
 	class SPHBody;
 	class CellList;
-	class NeighboringParticle;
-	class ReferenceNeighboringParticle;
+	class BaseNeighborRelation;
+	class BaseParticleData;
 
 	/**< Vector of Material. Note that vector of references are not allowed in c++.*/
 	using MaterialVector = StdVec<BaseMaterial*>;
@@ -40,21 +40,24 @@ namespace SPH {
 	using ListData = pair<size_t, Vecd>;
 	/** Cell list concurrent vector data. */
 	using ConcurrentListDataVector = LargeVec<ListData>;
+	/** Concurrent vector .*/
+	template<class DataType>
+	using ConcurrentVector = LargeVec<DataType>;
 
+	/** Cell lists*/
+	using CellLists = StdLargeVec<CellList*>;
 	/** Split cell list for split algorithms. */
-	using SplitCellLists = StdVec<StdLargeVec<CellList*>>;
+	using SplitCellLists = StdVec<CellLists>;
 	/** Pair of point and volume. */
 	using PositionsAndVolumes =vector<pair<Point, Real>> ; 
 
 	/** Neighboring particles list. 
 	  * Using pointer for overloading derived neighbor relations.*/
-	using NeighborList = StdVec<NeighboringParticle*>; 
+	using NeighborList = StdVec<BaseNeighborRelation*>; 
 	/** Neighboring particle list, the current and the previous number of neighbors. */	
 	using Neighborhood = tuple<NeighborList, size_t, size_t>;
 	/** A neighborhoods for all particles in a body. */
 	using ParticleConfiguration = StdLargeVec<Neighborhood>;
-	/** Inner neighborhoods for all particles in a body. */
-	using InnerParticleConfiguration = ParticleConfiguration;
 	/** All contact neighborhoods for all particles in a body. */
 	using ContatcParticleConfiguration = StdVec<ParticleConfiguration>;
 	/** Interacting neighborhoods for all particles in a body. */
@@ -66,5 +69,4 @@ namespace SPH {
 	using ContactParticles = StdVec<ContactParticleList>;
 	/** Contact particles to interacting bodies. **/
 	using InteractingParticles = StdVec<ContactParticleList*>;
-
 }

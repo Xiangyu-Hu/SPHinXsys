@@ -82,7 +82,7 @@ namespace SPH
 		{
 			DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>* particles = this->particles_;
 			DiffusionReactionMaterial<BaseMaterialType>* material = this->material_;
-			Neighborhood& neighborhood = (*this->reference_inner_configuration_)[index_particle_i];
+			Neighborhood& neighborhood = (*this->reference_configuration_)[index_particle_i];
 
 			StdLargeVec<DiffusionReactionData>& diffusion_reaction_data = particles->diffusion_reaction_data_;
 			StdLargeVec<BaseParticleData>& base_particle_data = particles->base_particle_data_;
@@ -92,7 +92,7 @@ namespace SPH
 			NeighborList& neighors = std::get<0>(neighborhood);
 			for (size_t n = 0; n < neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = neighors[n];
+				BaseNeighborRelation* neighboring_particle = neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				Vecd& e_ij = neighboring_particle->e_ij_;
 				Real Vol_j = base_particle_data[index_particle_j].Vol_;
@@ -138,7 +138,7 @@ namespace SPH
 		{
 			DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>* particles = this->particles_;
 			DiffusionReactionMaterial<BaseMaterialType>* material = this->material_;
-			Neighborhood& neighborhood = (*this->reference_inner_configuration_)[index_particle_i];
+			Neighborhood& neighborhood = (*this->reference_configuration_)[index_particle_i];
 
 			StdLargeVec<DiffusionReactionData>& diffusion_reaction_data = particles->diffusion_reaction_data_;
 			StdLargeVec<BaseParticleData>& base_particle_data = particles->base_particle_data_;
@@ -152,7 +152,7 @@ namespace SPH
 			NeighborList& neighors = std::get<0>(neighborhood);
 			for (size_t n = 0; n < neighors.size(); ++n)
 			{
-				NeighboringParticle* neighboring_particle = neighors[n];
+				BaseNeighborRelation* neighboring_particle = neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				Vecd& e_ij = neighboring_particle->e_ij_;
 				Real Vol_j = base_particle_data[index_particle_j].Vol_;
@@ -202,7 +202,7 @@ namespace SPH
 		{
 			DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>* particles = this->particles_;
 			DiffusionReactionMaterial<BaseMaterialType>* material = this->material_;
-			Neighborhood& neighborhood = (*this->current_inner_configuration_)[index_particle_i];
+			Neighborhood& neighborhood = (*this->current_configuration_)[index_particle_i];
 
 			StdLargeVec<DiffusionReactionData>& diffusion_reaction_data = particles->diffusion_reaction_data_;
 			StdLargeVec<BaseParticleData>& base_particle_data = particles->base_particle_data_;

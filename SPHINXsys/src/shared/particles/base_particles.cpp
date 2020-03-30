@@ -14,6 +14,8 @@
 #include "base_material.h"
 #include "base_body.h"
 #include "all_particle_generators.h"
+#include "mesh_cell_linked_list.h"
+
 
 namespace SPH
 {
@@ -41,16 +43,18 @@ namespace SPH
 	{
 		body->base_particles_ = this;
 		base_material->AssignParticles(this);
+		body->base_mesh_cell_linked_list_->assignParticles(this);
 
+		ParticleGenerator* particle_generator;
 		switch (body->particle_generator_op_)
 		{
 		case ParticlesGeneratorOps::lattice: {
-			particle_generator_ = new ParticleGeneratorLattice(*body, body->body_region_);
+			particle_generator = new ParticleGeneratorLattice(*body);
 			break;
 		}
 
 		case ParticlesGeneratorOps::direct: {
-			particle_generator_ = new ParticleGeneratorDirect(*body);
+			particle_generator = new ParticleGeneratorDirect(*body);
 			break;
 		}
 
@@ -62,9 +66,10 @@ namespace SPH
 		}
 		}
 
-		particle_generator_->CreateBaseParticles();
+		particle_generator->CreateBaseParticles(this);
 		real_particles_bound_ = body_->number_of_particles_;
 		number_of_ghost_particles_ = 0;
+		delete particle_generator;
 	}
 	//===============================================================//
 	void BaseParticles::InitializeABaseParticle(Vecd pnt, Real Vol_0, Real sigma_0)

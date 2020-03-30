@@ -89,6 +89,8 @@ namespace SPH {
 		std::vector<RegionBooleanOps> geometryops;
 
 	public:
+		/** Default constructor. */
+		Region() {};
 		Region(string region_name);
 		virtual ~Region() {};
 		virtual bool contain(Vec2d pnt, bool BOUNDARY_INCLUDED = true);

@@ -31,7 +31,6 @@ namespace SPH {
 	protected:
 		/** Total number for all, including the buffer, particles. */
 		static size_t total_number_of_particles_;		
-
 	public:
 		/** Default constructor. */
 		BaseParticleData();
@@ -52,6 +51,8 @@ namespace SPH {
 		Real Vol_, Vol_0_;
 		/** Particle reference number density. */
 		Real sigma_0_;
+		/** smoothing length of the particle. */
+		Real smoothing_length_;
 		/** particle with fixed index, not subject to sorting. */
 		bool is_sortable_;
 	};
@@ -72,8 +73,6 @@ namespace SPH {
 		/** The body in which the particles belongs to. */
 		SPHBody *body_;
 		string body_name_;
-
-		ParticleGenerator *particle_generator_;
 	public:
 		/** Base material corresponding to base particles*/
 		BaseMaterial* base_material_;

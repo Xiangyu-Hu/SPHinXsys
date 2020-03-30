@@ -13,7 +13,7 @@
 #include "all_particle_dynamics.h"
 #include "relax_body.h"
 #include "relax_body_particles.h"
-#include "neighboring_particle.h"
+#include "neighbor_relation.h"
 #include "base_kernel.h"
 #include "mesh_cell_linked_list.h"
 
@@ -74,21 +74,6 @@ namespace SPH
 		public:
 			PhysicsRelaxationInner(RelaxBody *body);
 			virtual ~PhysicsRelaxationInner() {};
-			void setupBackgroundPressure(Real p_b){p_star_ = p_b;}
-		};
-		/**
-		* @class PhysicsRelaxationInnerRiemann
-		* @brief position verlet algorithm for physics relaxation
-		* without considering contact interaction.
-		* Here, a one-side Riemann sovler is applied between particles and surface.
-		*/
-		class PhysicsRelaxationInnerRiemann : public PhysicsRelaxationInner
-		{
-		protected:
-			virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) override;
-		public:
-			PhysicsRelaxationInnerRiemann(RelaxBody *body):PhysicsRelaxationInner(body){};
-			virtual ~PhysicsRelaxationInnerRiemann() {};
 			void setupBackgroundPressure(Real p_b){p_star_ = p_b;}
 		};
 		/**

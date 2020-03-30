@@ -49,7 +49,7 @@ namespace SPH {
 	{
 	protected:
 		BodyPartByCellType *body_part_;
-		CellVector &constrained_cells_;
+		CellLists &constrained_cells_;
 
 		virtual void PrepareConstraint() {};
 		virtual void  ConstraintAParticle(size_t index_particle_i,
