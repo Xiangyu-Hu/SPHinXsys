@@ -198,99 +198,128 @@ namespace SPH {
 	};
 
 	/**
-	 * @class WriteRelaxBodyMeshToPlt
+	 * @class WriteBodyMeshToPlt
 	 * @brief  write the background mesh data for relax body
 	 */
-	class WriteRelaxBodyMeshToPlt : public WriteBodyStates
+	class WriteBodyMeshToPlt : public WriteBodyStates
 	{
 	protected:
-		RelaxBody *relax_body_;
 		std::string filefullpath_;
 	public:
-		WriteRelaxBodyMeshToPlt(In_Output& in_output, RelaxBody *relax_body);
-		virtual ~WriteRelaxBodyMeshToPlt() {};
+		WriteBodyMeshToPlt(In_Output& in_output, SPHBody *body);
+		virtual ~WriteBodyMeshToPlt() {};
 
 		virtual void WriteToFile(Real time = 0.0) override;
 	};
 
 	/**
 	 * @class WriteObservedFluidPressure
-	 * @brief write files for observed fluid pressure 
+	 * @brief write files for observed fluid pressure
 	 */
-	class WriteObservedFluidPressure
-		: public WriteBodyStates,
-		public observer_dynamics::ObserveFluidPressure
+	template <class DataType, class TargetParticlesType, class TargetDataType,
+		StdLargeVec<TargetDataType> TargetParticlesType:: * TrgtDataMemPtr, DataType TargetDataType:: * TrgtMemPtr>
+	class WriteAnObservedQuantity : public WriteBodyStates,
+		public observer_dynamics::ObservingAQuantityFromABody<DataType, TargetParticlesType, TargetDataType, TrgtDataMemPtr, TrgtMemPtr>
 	{
 	protected:
-		ObserverBody *observer_;
+		SPHBody* observer_;
 		std::string filefullpath_;
+
+		void writeFileHead(std::ofstream& out_file, Real& observed_quantity, string quantity_name, size_t i) {
+			out_file << "  " << quantity_name << "[" << i << "]" << " ";
+		};
+		void writeDataToFile(std::ofstream& out_file, Real& observed_quantity) {
+			out_file << "  " << observed_quantity << " ";
+		};
+
+		void writeFileHead(std::ofstream& out_file, Vecd& observed_quantity, string quantity_name, size_t i) {
+			for (int j = 0; j < observed_quantity.size(); ++j)
+				out_file << "  " << quantity_name <<"[" << i << "][" << j << "]" << " ";
+		};
+		void writeDataToFile(std::ofstream& out_file, Vecd& observed_quantity) {
+			for (int j = 0; j < observed_quantity.size(); ++j)
+				out_file << "  " << observed_quantity[j] << " ";
+		};
+
 	public:
-		WriteObservedFluidPressure(In_Output& in_output,
-			ObserverBody* observer, FluidBody *interacting_body);
-		virtual ~WriteObservedFluidPressure() {};
-		virtual void WriteToFile(Real time = 0.0) override;
+		WriteAnObservedQuantity(string quantity_name, In_Output& in_output, SPHBody* observer, SPHBody* target)
+			: WriteBodyStates(in_output, observer), observer_(observer),
+			observer_dynamics::ObservingAQuantityFromABody<DataType, TargetParticlesType, TargetDataType, TrgtDataMemPtr, TrgtMemPtr>(observer, target)
+		{
+			filefullpath_ = in_output_.output_folder_ + "/" + observer->GetBodyName()
+				+ "_" + quantity_name + "_" + in_output_.restart_step_ + ".dat";
+			std::ofstream out_file(filefullpath_.c_str(), ios::app);
+			out_file << "run_time" << "   ";
+			for (size_t i = 0; i != observer->number_of_particles_; ++i)
+			{
+				writeFileHead(out_file, this->observed_quantities_[i], quantity_name, i);
+			}
+			out_file << "\n";
+			out_file.close();
+		};
+		virtual ~WriteAnObservedQuantity() {};
+
+		virtual void WriteToFile(Real time = 0.0) override 
+		{
+			this->parallel_exec();
+			std::ofstream out_file(filefullpath_.c_str(), ios::app);
+			out_file << time << "   ";
+			for (size_t i = 0; i != observer_->number_of_particles_; ++i)
+			{
+				writeDataToFile(out_file, this->observed_quantities_[i]);
+			}
+			out_file << "\n";
+			out_file.close();
+		};
 	};
 
 	/**
-	* @class WriteObservedFluidVelocity
-	* @brief write files for observed fluid velocity
-	*/
-	class WriteObservedFluidVelocity
+ * @class WriteObservedDiffusionReactionQuantity
+ * @brief write the observed voltage of electrophysiology to files.
+ */
+	template <class DiffusionReactionParticlesType>
+	class WriteObservedDiffusionReactionQuantity
 		: public WriteBodyStates,
-		public observer_dynamics::ObserveFluidVelocity
+		public observer_dynamics::ObservingADiffusionReactionQuantityFromABody<DiffusionReactionParticlesType>
 	{
 	protected:
-		int dimension_;
-		ObserverBody * observer_;
-		std::string filefullpath_;
-	public:
-		WriteObservedFluidVelocity(In_Output& in_output,
-			ObserverBody* observer, FluidBody *interacting_body);
-		virtual ~WriteObservedFluidVelocity() {};
-		virtual void WriteToFile(Real time = 0.0) override;
-	};
-
-	/**
-	 * @class WriteObservedElasticDisplacement
-	 * @brief write files for observed elastic displacement
-	 */
-	class WriteObservedElasticDisplacement
-		: public WriteBodyStates, 
-		public observer_dynamics::ObserveElasticDisplacement
-	{
-	protected:
-		size_t dimension_;
-		ObserverBody *observer_;
-		std::string filefullpath_;
-	public:
-		WriteObservedElasticDisplacement(In_Output& in_output,
-			ObserverBody* observer, SolidBody *interacting_body);
-		virtual ~WriteObservedElasticDisplacement() {};
-		virtual void WriteToFile(Real time = 0.0) override;
-
-	};
-
-	/**
-	 * @class WriteObservedVoltage
-	 * @brief write the observed voltage of electrophysiology to files.
-	 */
-	class WriteObservedVoltage
-		: public WriteBodyStates,
-		public observer_dynamics::ObserveElectroPhysiologyVoltage
-	{
-	protected:
-		ObserverBody *observer_;
+		SPHBody* observer_;
 		std::string filefullpath_;
 	public:
 		/** Constructor and Destructor. */
-		WriteObservedVoltage(In_Output& in_output,
-			ObserverBody* observer, SolidBody *interacting_body);
-		virtual ~WriteObservedVoltage() {};
+		WriteObservedDiffusionReactionQuantity(string species_name, In_Output& in_output, SPHBody* observer, SPHBody* target)
+			: WriteBodyStates(in_output, observer), observer_(observer),
+			observer_dynamics::ObservingADiffusionReactionQuantityFromABody<DiffusionReactionParticlesType>(species_name, observer, target)
+		{
+			filefullpath_ = in_output_.output_folder_ + "/" + observer->GetBodyName()
+				+ "_" + species_name + "_" + in_output_.restart_step_ + ".dat";
+			std::ofstream out_file(filefullpath_.c_str(), ios::app);
+			out_file << "run_time" << "   ";
+			for (size_t i = 0; i != observer->number_of_particles_; ++i)
+			{
+				out_file << "  " << species_name << "[" << i << "]" << " ";
+			}
+			out_file << "\n";
+			out_file.close();
+		};
+
+		virtual ~WriteObservedDiffusionReactionQuantity() {};
 		/**
 		 * @brief Output data to files.
 		 * @param[in] time Physical time.
 		 */
-		virtual void WriteToFile(Real time) override;
+		virtual void WriteToFile(Real time) override 
+		{
+			this->parallel_exec();
+			std::ofstream out_file(filefullpath_.c_str(), ios::app);
+			out_file << time << "   ";
+			for (size_t i = 0; i != observer_->number_of_particles_; ++i)
+			{
+				out_file << "  " << this->observed_quantities_[i] << " ";
+			}
+			out_file << "\n";
+			out_file.close();
+		};
 	};
 
 	/**
@@ -376,8 +405,7 @@ namespace SPH {
 	class WriteReloadParticle : public ReloadParticleIO, public WriteBodyStates
 	{
 	public:
-		WriteReloadParticle(In_Output& in_output, SPHBodyVector bodies)
-			: ReloadParticleIO(in_output, bodies), WriteBodyStates(in_output, bodies) {};
+		WriteReloadParticle(In_Output& in_output, SPHBodyVector bodies);
 		virtual ~WriteReloadParticle() {};
 
 		virtual void WriteToFile(Real time = 0.0) override;
@@ -391,7 +419,7 @@ namespace SPH {
 	{
 	public:
 		ReadReloadParticle(In_Output& in_output, SPHBodyVector bodies, StdVec<std::string> reload_body_names);
-		virtual ~ReadReloadParticle() {};
+		virtual ~ReadReloadParticle() { };
 
 		virtual void ReadFromFile(size_t iteration_step = 0) override;
 	};
@@ -543,7 +571,7 @@ namespace SPH {
 	class ReadReloadMaterialProperty : public ReloadMaterialPropertyIO, public ReadMaterialProperty
 	{
 	public:
-		ReadReloadMaterialProperty(In_Output& in_output, BaseMaterial *material, std::string material_name);
+		ReadReloadMaterialProperty(In_Output& in_output, BaseMaterial *material);
 		virtual ~ReadReloadMaterialProperty() {};
 
 		virtual void ReadFromFile(size_t iteration_step = 0) override;

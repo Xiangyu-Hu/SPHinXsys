@@ -14,11 +14,10 @@ namespace SPH
 	namespace relax_dynamics
 	{
 		//=================================================================================================//
-		GetTimeStepSize::GetTimeStepSize(RelaxBody* body)
-			: RelaxDynamicsMin(body)
+		GetTimeStepSize::GetTimeStepSize(SPHBody* body) : RelaxDynamicsMin<BaseParticles>(body)
 		{
 			smoothing_length_ = body->kernel_->GetSmoothingLength();
-			Real eta = 0.1 * 1.3 * body->particle_spacing_;
+			Real eta = 0.1 * smoothing_length_;
 			initial_reference_ = 0.125 * smoothing_length_ * smoothing_length_ * 1.0 / (eta + 1.0e-15);
 		}
 		//=================================================================================================//
@@ -31,110 +30,39 @@ namespace SPH
 				smoothing_length_ / (40.0 * base_particle_data_i.vel_n_.norm() + 1.0e-15));
 		}
 		//=================================================================================================//
-		PhysicsRelaxationInner::PhysicsRelaxationInner(RelaxBody* body)
-			: RelaxDynamicsInner1Level(body)
+		PhysicsRelaxationInner::PhysicsRelaxationInner(SPHBody* body) 
+			: ParticleDynamicsInner<SPHBody>(body),
+			p0_(1.0), sound_speed_(1.0), mesh_background_(body->mesh_background_),
+			particle_spacing_(body->particle_spacing_)
 		{
-			p0_ = 1.0;
-			sound_speed_ = 1.0;
 			smoothing_length_ = body_->kernel_->GetSmoothingLength();
-			eta_ = 0.1 * smoothing_length_;
 			p_star_ = p0_ * sound_speed_ * sound_speed_;
+			back_mesh_spacing_ = mesh_background_->getGridSpacing();
 			mass_ = 1.0 * powern(body_->particle_spacing_, Vecd(0).size());
 			std::cout << "The background pressure for relaxation:" << " " << p_star_ << std::endl;
-			std::cout << "The viscosity for relaxation:" << " " << eta_ << std::endl;
-		}
-		//=================================================================================================//
-		void PhysicsRelaxationInner::Initialization(size_t index_particle_i, Real dt)
-		{
-			BaseParticleData& base_particle_data_i
-				= particles_->base_particle_data_[index_particle_i];
-
-			base_particle_data_i.pos_n_ += base_particle_data_i.vel_n_ * dt * 0.5;
-		}
-		//=================================================================================================//
+		};
+			//=================================================================================================//
 		void PhysicsRelaxationInner::InnerInteraction(size_t index_particle_i, Real dt)
 		{
-			BaseParticleData& base_particle_data_i
-				= particles_->base_particle_data_[index_particle_i];
-			RelaxBodyParticleData& relax_data_i
-				= particles_->relax_body_data_[index_particle_i];
+			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 
-			//including gravity and force from fluid
 			Vecd acceleration(0);
-
-			NeighborList& inner_neighors
-				= getNeighborList(current_configuration_, index_particle_i);
+			NeighborList& inner_neighors = getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
-
-				BaseParticleData& base_particle_data_j
-					= particles_->base_particle_data_[index_particle_j];
-				RelaxBodyParticleData& relax_data_j
-					= particles_->relax_body_data_[index_particle_j];
+				BaseParticleData& base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 
 				acceleration -= 2.0 * p_star_ * neighboring_particle->dW_ij_ * neighboring_particle->e_ij_
 					* base_particle_data_j.Vol_ * base_particle_data_i.Vol_;
-				//viscous force
-				Vecd vel_detivative = (base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_)
-					/ (neighboring_particle->r_ij_ + 0.01 * smoothing_length_);
-				acceleration += 0.5 * eta_ * (base_particle_data_i.vel_n_.norm() + base_particle_data_j.vel_n_.norm())
-					* vel_detivative * base_particle_data_j.Vol_ * base_particle_data_i.Vol_ * neighboring_particle->dW_ij_;
-				if (isnan(acceleration.norm()))
-				{
-					std::cout << "\n Error: the viscous acceleration is not valid" << std::endl;
-					std::cout << "\n Particle ID :" << index_particle_i << "\n Particle ID :" << index_particle_j << std::endl;
-					std::cout << "\n Particle distance :" << neighboring_particle->r_ij_ << std::endl;
-					std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-					exit(1);
-				}
 			}
-
-			Real phi = body_->mesh_background_->ProbeLevelSet(base_particle_data_i.pos_n_);
-			//Vecd norm  = SGN(phi) *  elastic_body_.mesh_background_->ProbeNormalDirection(base_particle_data_i.pos_n_);
-			Vecd dist_2_face(0);
-			Vecd norm(0);
-			dist_2_face = body_->mesh_background_->ProbeNormalDirection(base_particle_data_i.pos_n_);
-			norm = -dist_2_face / (dist_2_face.norm() + 1.0e-15);
-
-			if ((phi - 0.5 * body_->particle_spacing_) <= smoothing_length_)
-			{
-				Real q = (phi - 0.5 * body_->particle_spacing_) / smoothing_length_;
-				if(Vecd(0).size() == 2)
-				{
-					Real gamma_ = 1.0 + (0.0625 - 0.0531 * q) * (q - 2.0) * (q - 2.0) * (q - 2.0);
-					Real grad_gamma_ = (0.2937 - 0.2124 * q) * (q - 2.0) * (q - 2.0);
-					acceleration += p_star_ * base_particle_data_i.Vol_ / smoothing_length_ / gamma_ * grad_gamma_ * norm;
-				}else if(Vecd(0).size() == 3)
-				{
-					Real kernel_factor = 21.0 / (16.0 * pi) / smoothing_length_ / smoothing_length_ / smoothing_length_;
-					Real grad_gamma = kernel_factor * 2.0 * 3.1415926 * (2.0 + 5.0 * q + 4.0 * q * q) * pow((1.0 - 0.5 * q), 5.0) / 7.0; 
-					acceleration += p_star_ * base_particle_data_i.Vol_ * grad_gamma * norm;
-				}
-
-				if ((phi - 0.5 * body_->particle_spacing_) <= back_mesh_spacing_)
-				{
-					acceleration -= dot(acceleration, norm) * norm;
-				}
-			}
-			
 			base_particle_data_i.dvel_dt_ = acceleration / mass_;
+			base_particle_data_i.pos_n_ += acceleration / mass_* dt * dt * 0.5;
 		}
 		//=================================================================================================//
-		void PhysicsRelaxationInner::Update(size_t index_particle_i, Real dt)
-		{
-			BaseParticleData& base_particle_data_i
-				= particles_->base_particle_data_[index_particle_i];
-			RelaxBodyParticleData& relax_data_i
-				= particles_->relax_body_data_[index_particle_i];
-
-			base_particle_data_i.vel_n_ = base_particle_data_i.dvel_dt_ * dt;
-			base_particle_data_i.pos_n_ += base_particle_data_i.vel_n_ * dt * 0.5;
-		}
-//=================================================================================================//
-		PhysicsRelaxationComplex::PhysicsRelaxationComplex(RelaxBody *body, StdVec<RelaxBody*> interacting_bodies)
-			: RelaxDynamicsComplex1Level(body, interacting_bodies)
+		PhysicsRelaxationComplex::PhysicsRelaxationComplex(SPHBody *body, StdVec<SPHBody*> interacting_bodies)
+			: RelaxDynamicsComplex1Level<BaseParticles>(body, interacting_bodies)
 		{
 			p0_ = 1.0;
 			sound_speed_ = 1.0;
@@ -154,18 +82,15 @@ namespace SPH
 		void PhysicsRelaxationComplex::ComplexInteraction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			RelaxBodyParticleData& relax_data_i = particles_->relax_body_data_[index_particle_i];
 
+			/** inner interaction*/
 			Vecd acceleration = base_particle_data_i.dvel_dt_others_;
-
-			NeighborList& inner_neighors
-				= getNeighborList(current_configuration_, index_particle_i);
+			NeighborList& inner_neighors = getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				BaseParticleData& base_particle_data_j = particles_->base_particle_data_[index_particle_j];
-				RelaxBodyParticleData& relax_data_j = particles_->relax_body_data_[index_particle_j];
 
 				acceleration -= 2.0 * p_star_ * base_particle_data_j.Vol_ * base_particle_data_i.Vol_
 					* neighboring_particle->dW_ij_ * neighboring_particle->e_ij_;
@@ -187,8 +112,6 @@ namespace SPH
 					size_t index_particle_j = neighboring_particle->j_;
 					BaseParticleData& base_particle_data_j
 						= (*interacting_particles_[k]).base_particle_data_[index_particle_j];
-					RelaxBodyParticleData& relax_data_j
-						= (*interacting_particles_[k]).relax_body_data_[index_particle_j];
 
 					//pressure force
 					acceleration -= 2.0 * p_star_ * base_particle_data_j.Vol_ * base_particle_data_i.Vol_
@@ -211,10 +134,27 @@ namespace SPH
 			base_particle_data_i.pos_n_ += base_particle_data_i.vel_n_ * dt * 0.5;
 		}
 		//=================================================================================================//
+		void BodySurfaceBounding::ConstraintAParticle(size_t index_particle_i, Real dt)
+		{
+			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
+
+			Real phi = body_->mesh_background_->ProbeLevelSet(base_particle_data_i.pos_n_);
+			Vecd dist_2_face = body_->mesh_background_->ProbeNormalDirection(base_particle_data_i.pos_n_);
+			Vecd norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
+
+			if (phi < 0.5*body_->particle_spacing_ && phi > 0.0)
+			{
+				base_particle_data_i.pos_n_ += 2.0 * (phi - 0.5 * body_->particle_spacing_) * norm;
+			}
+			if (phi < 0.0)
+			{
+				base_particle_data_i.pos_n_ -= 2.0 * (phi - 0.5 * body_->particle_spacing_) * norm;
+			}
+		}
+		//=================================================================================================//
 		void ConstriantSurfaceParticles::ConstraintAParticle(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			RelaxBodyParticleData& relax_particle_data_i = particles_->relax_body_data_[index_particle_i];
 
 			Real phi = body_->mesh_background_->ProbeLevelSet(base_particle_data_i.pos_n_);
 			Vecd dist_2_face = body_->mesh_background_->ProbeNormalDirection(base_particle_data_i.pos_n_);
@@ -230,14 +170,6 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		void ConstriantSingularityParticles::ConstraintAParticle(size_t index_particle_i, Real dt)
-		{
-			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			RelaxBodyParticleData& relax_particle_data_i = particles_->relax_body_data_[index_particle_i];
-
-			base_particle_data_i.pos_n_ = relax_particle_data_i.pos_0_;
-		}
-		//=================================================================================================//
 		void computeNumberDensitybySummation::ComplexInteraction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
@@ -245,8 +177,7 @@ namespace SPH
 
 			/** Inner interaction. */
 			Real sigma = W0_;
-			NeighborList& inner_neighors
-				= getNeighborList(current_configuration_, index_particle_i);
+			NeighborList& inner_neighors = getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
@@ -274,7 +205,7 @@ namespace SPH
 			base_particle_data_i.sigma_0_ = sigma;
 		}
 		//=================================================================================================//
-		getAveragedParticleNumberDensity::getAveragedParticleNumberDensity(RelaxBody* body)
+		getAveragedParticleNumberDensity::getAveragedParticleNumberDensity(SPHBody* body)
 			: RelaxDynamicsSum<Real>(body)
 		{
 			initial_reference_ = 0.0;
@@ -288,11 +219,12 @@ namespace SPH
 			return average_farctor_ * (base_particle_data_i.sigma_0_);
 		}
 		//=================================================================================================//
-		void updateNumberDensity::Update(size_t index_particle_i, Real dt)
+		void FinalizingParticleRelaxation::Update(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 
 			base_particle_data_i.sigma_0_ = sigma_;
+			base_particle_data_i.pos_0_ = base_particle_data_i.pos_n_;
 		}
 		//=================================================================================================//
 	}

@@ -3,21 +3,19 @@
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  * @version	0.1
  */
-
 #include "base_particle_dynamics.h"
 #include "base_particle_dynamics.hpp"
-
+//=============================================================================================//
 namespace SPH
 {
 	Real GlobalStaticVariables::physical_time_ = 0.0;
-
-	//===============================================================//
+	//=============================================================================================//
 	void InnerIterator(size_t number_of_particles, InnerFunctor &inner_functor, Real dt)
 	{
 		for (size_t i = 0; i < number_of_particles; ++i)
 			inner_functor(i, dt);
 	}
-	//===============================================================//
+	//=============================================================================================//
 	void InnerIterator_parallel(size_t number_of_particles, InnerFunctor &inner_functor, Real dt)
 	{
 		parallel_for(blocked_range<size_t>(0, number_of_particles),
@@ -27,7 +25,7 @@ namespace SPH
 			}
 		}, ap);
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void ContactIterator(InteractingParticles& indexes_interacting_particles,
 		ContactFunctor &contact_functor, Real dt)
 	{
@@ -37,7 +35,7 @@ namespace SPH
 				contact_functor(particle_index_i, k, dt);
 			}
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void ContactIterator_parallel(InteractingParticles& indexes_interacting_particles,
 		ContactFunctor &contact_functor, Real dt)
 	{
@@ -93,7 +91,7 @@ namespace SPH
 				}, ap);
 		}
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void InnerIteratorSplitting(SplitCellLists& split_cell_lists,
 		InnerFunctor &inner_functor, Real dt)
 	{
@@ -110,7 +108,7 @@ namespace SPH
 			}
 		}
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void InnerIteratorSplitting_parallel(SplitCellLists& split_cell_lists,
 		InnerFunctor& inner_functor, Real dt)
 	{
@@ -129,7 +127,7 @@ namespace SPH
 				}, ap);
 		}
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void InnerIteratorSplittingSweeping(SplitCellLists& split_cell_lists,
 		InnerFunctor& inner_functor, Real dt)
 	{
@@ -161,7 +159,7 @@ namespace SPH
 			}
 		}
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void InnerIteratorSplittingSweeping_parallel(SplitCellLists& split_cell_lists,
 		InnerFunctor &inner_functor, Real dt)
 	{
@@ -197,5 +195,6 @@ namespace SPH
 			}, ap);
 		}
 	}
-	//===============================================================//
+	//=============================================================================================//
 }
+//=============================================================================================//

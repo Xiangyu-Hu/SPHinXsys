@@ -49,8 +49,8 @@ namespace SPH
 			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
 
 			Vec3 rr, pos, vel, acc;
-			rr(0) = solid_data_i.pos_0_[0] - initial_mobod_origin_location_[0];
-			rr(1) = solid_data_i.pos_0_[1] - initial_mobod_origin_location_[1];
+			rr(0) = base_particle_data_i.pos_0_[0] - initial_mobod_origin_location_[0];
+			rr(1) = base_particle_data_i.pos_0_[1] - initial_mobod_origin_location_[1];
 			rr(2) = 0.0;
 			mobod_.findStationLocationVelocityAndAccelerationInGround(*simbody_state_, rr, pos, vel, acc);
 			/** this is how we calculate the particle position in after transform of MBbody.

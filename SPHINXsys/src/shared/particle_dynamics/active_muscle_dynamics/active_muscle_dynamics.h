@@ -25,29 +25,13 @@ namespace SPH
         typedef ParticleDynamicsSimple<SolidBody, ActiveMuscleParticles, ActiveMuscle> ActiveMuscleSimple;
  
 		/**
-		 * @class  OffsetInitialParticlePosition
-		 * @brief  set initial condition for a cardiac muscle body
-		*/
-		class OffsetInitialParticlePosition : public ActiveMuscleSimple
-		{
-			Vecd offset_;
-		protected:
-			//default for set all particle at rest
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
-		public:
-			OffsetInitialParticlePosition(SolidBody *body, Vecd offset)
-				: ActiveMuscleSimple(body), offset_(offset){};
-			virtual ~OffsetInitialParticlePosition() {};
-		};
-  
-		/**
 		 * @class ElectroMechanicsInitialCondition
 		 * @brief  set initial condition for electro mechanics
 		*/
 		class ElectroMechanicsInitialCondition : public ActiveMuscleSimple
 		{
 		protected:
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
+			virtual void Update(size_t index_particle_i, Real dt = 0.0) = 0;
 		public:
 			ElectroMechanicsInitialCondition(SolidBody *body)
 				: ActiveMuscleSimple(body) {};
@@ -73,7 +57,7 @@ namespace SPH
 		};
 		
 		/**@class ImposingStress
-		 * @brief impose external force in stress form on a solid body part
+		 * @brief impose activation stress on a solid body part
 		 */
 		class ImposingStress
 			: public ConstraintByParticle<SolidBody, ActiveMuscleParticles, SolidBodyPartForSimbody>

@@ -20,7 +20,7 @@ namespace SPH {
 		int j = (int)cell_location[1];
 		int k = (int)cell_location[2];
 
-		Neighborhood& neighborhood = (*current_configuration_)[index_particle_i];
+		Neighborhood& neighborhood = (*inner_configuration_)[index_particle_i];
 		NeighborList& neighbor_list = std::get<0>(neighborhood);
 		size_t previous_count_of_neigbors = std::get<2>(neighborhood);
 

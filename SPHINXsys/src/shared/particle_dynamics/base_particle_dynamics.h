@@ -5,9 +5,7 @@
 * differential operators for surface forces or fluxes in continuum mechanics
 * @author  Xiangyu Hu, Luhui Han and Chi Zhang
 */
-
 #pragma once
-
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
 #include "all_particles.h"
@@ -16,8 +14,8 @@
 #include "all_types_of_bodies.h"
 #include "all_meshes.h"
 #include "external_force.h"
-
 #include <functional>
+
 using namespace std::placeholders;
 
 namespace SPH 
@@ -177,10 +175,8 @@ namespace SPH
 		: public ParticleDynamics<void, BodyType, ParticlesType, MaterialType>
 	{
 	protected:
-		/** current inner confifuration of the designated body */
-		ParticleConfiguration* current_configuration_;
-		/** reference inner confifuration of the designated body */
-		ParticleConfiguration* reference_configuration_;
+		/** inner confifuration of the designated body */
+		ParticleConfiguration* inner_configuration_;
 		/** Get neighbor list for particle interaction. */
 		NeighborList& getNeighborList(ParticleConfiguration* particle_configuration, 
 			size_t index_particle_i) {
@@ -299,7 +295,7 @@ namespace SPH
 		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
 	{
 	protected:
-		/** the inner interaction taking account wall boundary conditions,
+		/** the particle interaction also taking account wall boundary conditions,
 		  * but the function form is the same as the inner interaction. */
 		virtual void ParticleInteraction(size_t index_particle_i, Real dt = 0.0) = 0;
 		InnerFunctor functor_particle_interaction_;

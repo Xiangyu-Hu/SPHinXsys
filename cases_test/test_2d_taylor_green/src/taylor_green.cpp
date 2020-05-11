@@ -21,7 +21,6 @@ Real DL = 1.0; 						/**< box length. */
 Real DH = 1.0; 						/**< box height. */
 
 Real particle_spacing_ref = 1.0/50; 		/**< Initial reference particle spacing. */
-Real BW = 4.0 * particle_spacing_ref;		/**< Domain boundary thickness. */
 /**
  * @brief Material properties of the fluid.
  */
@@ -30,7 +29,6 @@ Real U_f = 1.0;							/**< Characteristic velocity. */
 Real c_f = 10.0*U_f;					/**< Reference sound speed. */
 Real Re = 100;							/**< Reynolds number. */
 Real mu_f = rho0_f * U_f * DL / Re;		/**< Dynamics visocisty. */
-Real k_f = 0.0;
 
 /**
  * @brief 	Fluid body definition.
@@ -55,7 +53,22 @@ public:
 		body_region_.done_modeling();
 	}
 };
- /**
+/**
+ * @brief 	Case dependent material properties definition.
+ */
+class WaterMaterial : public WeaklyCompressibleFluid
+{
+public:
+	WaterMaterial()	: WeaklyCompressibleFluid()
+	{
+		rho_0_ = rho0_f;
+		c_0_ = c_f;
+		mu_ = mu_f;
+
+		assignDerivedMaterialParameters();
+	}
+};
+/**
  * application dependent initial condition 
  */
 class TaylorGreenInitialCondition
@@ -85,7 +98,7 @@ int main()
 	/**
 	 * @brief Build up -- a SPHSystem --
 	 */
-	SPHSystem system(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW), particle_spacing_ref);
+	SPHSystem system(Vec2d(0), Vec2d(DL, DH), particle_spacing_ref);
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for computation from restart files. 0: not from restart files. */
@@ -95,8 +108,8 @@ int main()
 	 */
 	WaterBlock *water_block = new WaterBlock(system, "WaterBody", 
 		0, ParticlesGeneratorOps::lattice);
-	WeaklyCompressibleFluid 		fluid("Water", water_block, rho0_f, c_f, mu_f, k_f);
-	FluidParticles 	fluid_particles(water_block);
+	WaterMaterial 	*water_material = new WaterMaterial();
+	FluidParticles 	fluid_particles(water_block, water_material);
 	/**
 	 * @brief 	Body contact map.
 	 * @details The contact map gives the data conntections between the bodies.
@@ -104,10 +117,7 @@ int main()
 	 */
 	SPHBodyTopology 	body_topology = { { water_block, { } } };
 	system.SetBodyTopology(&body_topology);
-	/**
-	 * @brief 	Simulation set up.
-	 */
-	system.SetupSPHSimulation();
+
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
@@ -121,7 +131,7 @@ int main()
 	 * @brief 	Methods used for time stepping.
 	 */
 	 /** Initialize particle acceleration. */
-	InitializeOtherAccelerations 	initialize_fluid_acceleration(water_block);
+	InitializeATimeStep 	initialize_a_fluid_step(water_block);
 	/** Periodic bounding in x direction. */
 	PeriodicBoundingInAxisDirection 	periodic_bounding_x(water_block, 0);
 	/** Periodic bounding in y direction. */
@@ -141,9 +151,12 @@ int main()
 	/** Time step size with considering sound wave speed. */
 	fluid_dynamics::GetAcousticTimeStepSize 	get_fluid_time_step_size(water_block);
 	/** Pressure relaxation algorithm by using verlet time stepping. */
-	fluid_dynamics::PressureRelaxationFirstHalf 	
+	/** Here, we do not use Riemann solver for pressure as the flow is viscous. 
+	  * The other reason is that we are using transport velocity formulation, 
+	  * which will also introduce numerical disspation slightly. */
+	fluid_dynamics::PressureRelaxationFirstHalf
 		pressure_relaxation_first_half(water_block, { });
-	fluid_dynamics::PressureRelaxationSecondHalfRiemann 
+	fluid_dynamics::PressureRelaxationSecondHalf 
 		pressure_relaxation_second_half(water_block, {});
 	/** Computing viscous acceleration. */
 	fluid_dynamics::ComputingViscousAcceleration 	viscous_acceleration(water_block, {  });
@@ -169,12 +182,21 @@ int main()
 	/** Output the mechanical energy of fluid body. */
 	WriteTotalMechanicalEnergy 	write_totoal_mechanical_energy(in_output, water_block, new Gravity(Vec2d(0)));
 
+	/*
+	for (size_t i = 0; i != 100; ++i)
+	{
+		increase_locality_relax_body.parallel_exec();
+		write_body_states.WriteToFile(Real(i + 1));
+	}
+	*/
 	/**
 	 * @brief Setup goematrics and initial conditions
 	 */
 	setup_taylor_green_velocity.exec();
+	system.InitializeSystemCellLinkedLists();
 	periodic_condition_x.parallel_exec();
 	periodic_condition_y.parallel_exec();
+	system.InitializeSystemConfigurations();
 	update_particle_configuration.parallel_exec();
 	/**
 	 * @brief The time stepping starts here.
@@ -184,6 +206,8 @@ int main()
 	{
 		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
 		update_cell_linked_list.parallel_exec();
+		periodic_condition_x.parallel_exec();
+		periodic_condition_y.parallel_exec();
 		update_particle_configuration.parallel_exec();
 	}
 	/** Output the start states of bodies. */
@@ -213,11 +237,11 @@ int main()
 		while (integeral_time < D_Time)
 		{
 			/** Acceleration due to viscous force. */
-			initialize_fluid_acceleration.parallel_exec();
-			viscous_acceleration.parallel_exec();
-			//transport_velocity_correction.parallel_exec(Dt);
+			initialize_a_fluid_step.parallel_exec();
 			Dt = get_fluid_adevction_time_step_size.parallel_exec();
 			update_fluid_desnity.parallel_exec();
+			viscous_acceleration.parallel_exec();
+			transport_velocity_correction.parallel_exec(Dt);
 
 			/** Dynamics including pressure relaxation. */
 			Real relaxation_time = 0.0;

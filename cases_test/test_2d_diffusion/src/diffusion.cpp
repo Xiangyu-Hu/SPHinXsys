@@ -16,13 +16,11 @@ Real L = 2.0;
 Real H = 0.4;
 /** Particle spacing. */
 Real particle_spacing_ref = H / 40.0;
-/** Thickness of the surounding boundary. */
-Real BW = 4.0 * particle_spacing_ref;
 /** Material properties. */
-Real rho_0 = 1.0; 	
-Real a_0[4] = {1.0, 0.0, 0.0, 0.0};
-Real b_0[4] = {1.0, 0.0, 0.0, 0.0};
-Vec2d d_0(1.0e-4, 0.0);
+Real diffusion_coff = 1.0e-4;
+Real bias_diffusion_coff = 0.0;
+Real alpha = Pi / 6.0;
+Vec2d bias_direction(cos(alpha), sin(alpha));
 /**
 * @brief create a block shape
 */
@@ -50,109 +48,119 @@ public:
 		body_region_.done_modeling();
 	}
 };
- /**
- * application dependent initial condition 
+/**
+ * Setup diffusion material properties
  */
-class DiffusionInitialCondition
-	: public electro_physiology::ElectroPhysiologyInitialCondition
+class DiffusionBodyMaterial
+	: public DiffusionReactionMaterial<SolidParticles, Solid>
 {
 public:
-	DiffusionInitialCondition(SolidBody *diffusion)
-		: electro_physiology::ElectroPhysiologyInitialCondition(diffusion) {};
-protected:
-	void Update(size_t index_particle_i, Real dt) override 
+	DiffusionBodyMaterial()
+		: DiffusionReactionMaterial<SolidParticles, Solid>()
 	{
-		BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-		MuscleParticleData &muscle_particle_data_i = particles_->muscle_body_data_[index_particle_i];
+		insertASpecies("Phi");
+		assignDerivedMaterialParameters();
+		initializeDiffusion();
+	}
+
+	/** Initialize diffusion reaction material. */
+	virtual void initializeDiffusion() override {
+		DirectionalDiffusion* phi_diffusion
+			= new DirectionalDiffusion(species_indexes_map_["Phi"], species_indexes_map_["Phi"],
+				diffusion_coff, bias_diffusion_coff, bias_direction);
+		species_diffusion_.push_back(phi_diffusion);
+	};
+};
+/**
+ * application dependent initial condition 
+ */
+class DiffusionBodyInitialCondition
+	: public DiffusionReactionSimple<SolidBody, SolidParticles, Solid>
+{
+protected:
+	size_t phi_;
+
+	void Update(size_t index_particle_i, Real dt) override
+	{
+		BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
+		DiffusionReactionData& diffusion_data_i = particles_->diffusion_reaction_data_[index_particle_i];
 
         if(0.45 <= base_particle_data_i.pos_n_[0] && base_particle_data_i.pos_n_[0] <= 0.55)
 		{
-			muscle_particle_data_i.voltage_n_ = 1.0;
+			diffusion_data_i.species_n_[phi_] = 1.0;
 		}
 		if(base_particle_data_i.pos_n_[0] >= 1.0)
 		{
-			muscle_particle_data_i.voltage_n_ = exp(-2500 * ((base_particle_data_i.pos_n_[0] - 1.5) 
+			diffusion_data_i.species_n_[phi_] = exp(-2500.0 * ((base_particle_data_i.pos_n_[0] - 1.5)
 					* (base_particle_data_i.pos_n_[0] - 1.5)));
 		}
 	};
+public:
+	DiffusionBodyInitialCondition(SolidBody* diffusion_body)
+		: DiffusionReactionSimple<SolidBody, SolidParticles, Solid>(diffusion_body) {
+		phi_ = material_->getSpeciesIndexMap()["Phi"];
+	};
 };
- /**
- * Setup local properties of myocardium
- */
-class MyocardiumMuscle
- 	: public Muscle
+/** Set diffusion relaxation. */
+class DiffusionBodyRelaxation
+	: public RelaxationOfAllDifussionSpeciesRK2<SolidBody, SolidParticles, Solid>
 {
- public:
- 	MyocardiumMuscle(string myocardium_name,SPHBody *body, Real a0[4], Real b0[4], Vecd d0, 
-		Real rho0, Real nu, Real eta0)
-		: Muscle(myocardium_name, body, a0, b0, d0, rho0, nu, eta0){}
-
- 	void SetupLocalProperties(SPHBody *body) override
- 	{
- 		Vec2d e_1(0.0,1.0);
- 		Vec2d e_2(1.0,0.0);
- 		for(size_t i = 0; i < body->number_of_particles_; i++)
- 		{
- 			f0_.push_back(e_1);
- 			s0_.push_back(e_2);
- 			f0f0_.push_back(SimTK::outer(e_1, e_1));
- 			s0s0_.push_back(SimTK::outer(e_2, e_2));
- 			f0s0_.push_back(SimTK::outer(e_1, e_2));
-			Matd diff_i = d_0_[0] * Matd(1.0) + d_0_[1] * SimTK::outer(f0_[i], f0_[i]);
-			diff_cd_0.push_back(inverseCholeskyDecomposition(diff_i));
- 		}
- 	}
+public:
+	DiffusionBodyRelaxation(SolidBody* body)
+		: RelaxationOfAllDifussionSpeciesRK2<SolidBody, SolidParticles, Solid>(body) {
+	};
+	virtual ~DiffusionBodyRelaxation() {};
 };
+
 /** The main program. */
 int main()
 {
 	/** Build up context -- a SPHSystem. */
-	SPHSystem system(Vec2d(- BW, - BW), Vec2d(L + BW, H + BW), particle_spacing_ref);
+	SPHSystem system(Vec2d(0.0, 0.0), Vec2d(L, H), particle_spacing_ref, 4);
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Configuration of materials, crate particle container and diffusion body. */
 	DiffusionBody *diffusion_body  =  new DiffusionBody(system, "DiffusionBody", 0, ParticlesGeneratorOps::lattice);
-	MyocardiumMuscle 			material("Muscle", diffusion_body, a_0, b_0,d_0, rho_0, 1.0, 1.0);
-	MuscleParticles 			particles(diffusion_body);
+	DiffusionBodyMaterial *diffusion_body_material = new DiffusionBodyMaterial();
+	DiffusionReactionParticles<SolidParticles, Solid>	diffusion_body_particles(diffusion_body, diffusion_body_material);
 	/** Set body contact map. */
 	SPHBodyTopology body_topology = { { diffusion_body, {  } }};
 	system.SetBodyTopology(&body_topology);
-	/**
-	 * @brief 	Simulation set up.
-	 */
-	system.SetupSPHSimulation();
+
 	/**
 	 * The main dynamics algorithm is defined start here.
 	 */
 	/** Case setup */
-	DiffusionInitialCondition setup_diffusion_initial_condition(diffusion_body);
+	DiffusionBodyInitialCondition setup_diffusion_initial_condition(diffusion_body);
 	/** Corrected strong configuration for diffusion body. */	
-	electro_physiology::CorrectConfiguration 			correct_configuration(diffusion_body);
+	solid_dynamics::CorrectConfiguration 			correct_configuration(diffusion_body);
 	/** Time step size caclutation. */
-	electro_physiology::getDiffusionTimeStepSize 		get_time_step_size(diffusion_body);
+	GetDiffusionTimeStepSize<SolidBody, SolidParticles, Solid> get_time_step_size(diffusion_body);
 	/** Diffusion process for diffusion body. */
-	electro_physiology::DiffusionRelaxation 			diffusion_relaxation(diffusion_body);
+	DiffusionBodyRelaxation 			diffusion_relaxation(diffusion_body);
 	/** Periodic BCs. */
 	PeriodicConditionInAxisDirection 					periodic_condition_y(diffusion_body, 1);
 	/**
 	 * @brief simple input and outputs.
 	 */
 	In_Output 							in_output(system);
-	WriteBodyStatesToPlt 				write_states(in_output, system.real_bodies_);
+	WriteBodyStatesToVtu 				write_states(in_output, system.real_bodies_);
+
 	/** Pre-simultion*/
+	system.InitializeSystemCellLinkedLists();
+	system.InitializeSystemConfigurations();
 	setup_diffusion_initial_condition.exec();
-	material.SetupLocalProperties(diffusion_body);
 	periodic_condition_y.parallel_exec();
 	diffusion_body->BuildInnerConfiguration();
 	correct_configuration.parallel_exec();
 	/** Output global basic parameters. */
 	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
 
-	int ite 		= 0;
-	Real T0 		= 1.0;
-	Real End_Time 	= T0;
-	Real D_Time 	= 0.1 * End_Time;
-	Real Dt 		= 0.001 * D_Time;
-	Real dt		 	= 0.0;
+	int ite 				= 0;
+	Real T0 				= 1.0;
+	Real End_Time 			= T0;
+	Real Output_Time 	    = 0.1 * End_Time;
+	Real Observe_time 		= 0.1 * Output_Time;
+	Real dt		 			= 0.0;
 	/** Statistics for computing time. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
@@ -160,17 +168,18 @@ int main()
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
 		Real integeral_time = 0.0;
-		while (integeral_time < D_Time) 
+		while (integeral_time < Output_Time) 
 		{
 			Real relaxation_time = 0.0;
-			while (relaxation_time < Dt) 
+			while (relaxation_time < Observe_time)
 			{
-				if (ite % 100 == 0) 
+				if (ite % 1 == 0)
 				{
 					cout << "N=" << ite << " Time: "
 						<< GlobalStaticVariables::physical_time_ << "	dt: "
 						<< dt << "\n";
 				}
+
 				diffusion_relaxation.parallel_exec(dt);
 
 				ite++;
@@ -178,6 +187,7 @@ int main()
 				relaxation_time += dt;
 				integeral_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
+				write_states.WriteToFile(GlobalStaticVariables::physical_time_);
 			}
 		}
 

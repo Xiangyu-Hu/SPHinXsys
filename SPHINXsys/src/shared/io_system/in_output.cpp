@@ -37,12 +37,6 @@ namespace SPH
 		restart_step_ = std::to_string(sph_system.restart_step_);
 
 		reload_folder_ = "./reload";
-		if (!fs::exists(reload_folder_) && sph_system.reload_particle_)
-		{
-			std::cout << "\n Error: the input file:" << reload_folder_ << " is not exists" << std::endl;
-			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-			exit(1);
-		}
 	}
 	//=============================================================================================//
 	void WriteBodyStatesToVtu::WriteToFile(Real time)
@@ -134,145 +128,24 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	WriteRelaxBodyMeshToPlt
-		::WriteRelaxBodyMeshToPlt(In_Output& in_output, RelaxBody * relax_body)
-		: WriteBodyStates(in_output, relax_body), relax_body_(relax_body)
+	WriteBodyMeshToPlt
+		::WriteBodyMeshToPlt(In_Output& in_output, SPHBody * body)
+		: WriteBodyStates(in_output, body)
 	{
-		filefullpath_ = in_output_.output_folder_ + "/" + relax_body->GetBodyName() + "_background_mesh.dat";
+		if (body->mesh_background_ == NULL)
+		{
+			std::cout << "\n BodySurface::BodySurface: Background mesh is required. Exit the program! \n";
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(0);
+		}
+
+		filefullpath_ = in_output_.output_folder_ + "/" + body->GetBodyName() + "_background_mesh.dat";
 	}
 	//=============================================================================================//
-	void WriteRelaxBodyMeshToPlt::WriteToFile(Real time)
+	void WriteBodyMeshToPlt::WriteToFile(Real time)
 	{
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
-		relax_body_->mesh_background_->WriteMeshToPltFile(out_file);
-		out_file.close();
-	}
-	//=============================================================================================//
-	WriteObservedFluidPressure
-		::WriteObservedFluidPressure(In_Output& in_output,
-			ObserverBody* observer, FluidBody *interacting_body)
-		: WriteBodyStates(in_output, observer), observer_(observer),
-		ObserveFluidPressure(observer, interacting_body)
-	{
-		filefullpath_ = in_output_.output_folder_ + "/" + observer->GetBodyName() 
-					  + "_fluid_pressure_" + in_output_.restart_step_ +".dat";
-		std::ofstream out_file(filefullpath_.c_str(), ios::app);
-		out_file << "run_time" << "   ";
-		for (size_t i = 0; i != observer->number_of_particles_; ++i)
-		{
-			out_file << "  " << "pressures_[" << i << "]" << " ";
-		}
-		out_file << "\n";
-		out_file.close();
-	}
-	//=============================================================================================//
-	void WriteObservedFluidPressure::WriteToFile(Real time)
-	{
-		parallel_exec();
-		std::ofstream out_file(filefullpath_.c_str(), ios::app);
-		out_file << time << "   ";
-		for (size_t i = 0; i != observer_->number_of_particles_; ++i)
-		{
-			out_file << "  " << fluid_quantities_[i] << " ";
-		}
-		out_file << "\n";
-		out_file.close();
-	}
-	//=============================================================================================//
-	WriteObservedFluidVelocity
-		::WriteObservedFluidVelocity(In_Output &in_output,
-			ObserverBody* observer, FluidBody *interacting_body)
-		: WriteBodyStates(in_output, observer), observer_(observer),
-		ObserveFluidVelocity(observer, interacting_body)
-	{
-		dimension_ = Vecd(0).size();
-		filefullpath_ = in_output_.output_folder_ + "/" + observer->GetBodyName() 
-					  + "_fluid_velocity_" + in_output_.restart_step_ + ".dat";
-		std::ofstream out_file(filefullpath_.c_str(), ios::app);
-		out_file << "run_time" << "   ";
-		for (size_t i = 0; i != observer->number_of_particles_; ++i)
-		{
-			for (int j = 0; j < dimension_; ++j)
-				out_file << "  " << "velocities_[" << i << "][" << j << "]" << " ";
-		}
-		out_file << "\n";
-		out_file.close();
-	}
-	//=============================================================================================//
-	void WriteObservedFluidVelocity::WriteToFile(Real time)
-	{
-		parallel_exec();
-		std::ofstream out_file(filefullpath_.c_str(), ios::app);
-		out_file << time << "   ";
-		for (size_t i = 0; i != observer_->number_of_particles_; ++i)
-		{
-			for (int j = 0; j < dimension_; ++j)
-				out_file << "  " << fluid_quantities_[i][j] << " ";
-		}
-		out_file << "\n";
-		out_file.close();
-	}
-	//=============================================================================================//
-	WriteObservedElasticDisplacement
-		::WriteObservedElasticDisplacement(In_Output &in_output,
-			ObserverBody* observer, SolidBody *interacting_body)
-		: WriteBodyStates(in_output, observer), observer_(observer),
-		ObserveElasticDisplacement(observer, interacting_body)
-	{
-		dimension_ = Vecd(0).size();
-		filefullpath_ = in_output_.output_folder_ + "/" + observer->GetBodyName() 
-			+ "_elastic_displacement_" + in_output_.restart_step_ + ".dat";
-		std::ofstream out_file(filefullpath_.c_str(), ios::app);
-		out_file << "run_time" << "   ";
-		for (size_t i = 0; i != observer->number_of_particles_; ++i)
-		{
-			for (size_t j = 0; j != dimension_; ++j)
-				out_file << "  " << "displacements_[" << i <<"]["<< j <<"]" << " ";
-		}
-		out_file << "\n";
-		out_file.close();
-	}
-	//=============================================================================================//
-	void WriteObservedElasticDisplacement::WriteToFile(Real time)
-	{
-		parallel_exec();
-		std::ofstream out_file(filefullpath_.c_str(), ios::app);
-		out_file << time << "   ";
-		for (size_t i = 0; i != observer_->number_of_particles_; ++i)
-		{
-			for (int j = 0; j < dimension_; ++j)
-				out_file << "  " << elastic_body_quantities_[i][j] << " ";
-		}
-		out_file << "\n";
-		out_file.close();
-	}
-	//=================================================================================================//
-	WriteObservedVoltage::WriteObservedVoltage(In_Output &in_output,
-			ObserverBody* observer, SolidBody *interacting_body)
-		: WriteBodyStates(in_output, observer), observer_(observer),
-		ObserveElectroPhysiologyVoltage(observer, interacting_body)
-	{
-		filefullpath_ = in_output_.output_folder_ + "/" + observer->GetBodyName() + "_voltage.dat";
-		std::ofstream out_file(filefullpath_.c_str(), ios::app);
-		out_file << "run_time" << "   ";
-		for (size_t i = 0; i != observer->number_of_particles_; ++i)
-		{
-			out_file << "  " << "voltage_[" << i << "]" << " ";
-		}
-		out_file << "\n";
-		out_file.close();
-	}
-//=================================================================================================//
-	void WriteObservedVoltage::WriteToFile(Real time)
-	{
-		parallel_exec();
-		std::ofstream out_file(filefullpath_.c_str(), ios::app);
-		out_file << time << "   ";
-		for (size_t i = 0; i != observer_->number_of_particles_; ++i)
-		{
-			out_file << "  " << electro_physiology_quantities_[i] << " ";
-		}
-		out_file << "\n";
+		body_->mesh_background_->WriteMeshToPltFile(out_file);
 		out_file.close();
 	}
 //=================================================================================================//
@@ -385,6 +258,15 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
+	WriteReloadParticle::WriteReloadParticle(In_Output& in_output, SPHBodyVector bodies)
+		: ReloadParticleIO(in_output, bodies), WriteBodyStates(in_output, bodies) 
+	{
+		if (!fs::exists(in_output.reload_folder_))
+		{
+			fs::create_directory(in_output.reload_folder_);
+		}
+	};
+	//=============================================================================================//
 	void WriteReloadParticle::WriteToFile(Real time)
 	{
 		std::string reload_particle_folder = in_output_.reload_folder_;
@@ -408,6 +290,13 @@ namespace SPH
 	ReadReloadParticle::ReadReloadParticle(In_Output& in_output, SPHBodyVector bodies, StdVec<std::string> reload_body_names) 
 	: ReloadParticleIO(in_output, bodies), ReadBodyStates(in_output, bodies) 
 	{
+		if (!fs::exists(in_output.reload_folder_))
+		{
+			std::cout << "\n Error: the input file:" << in_output.reload_folder_ << " is not exists" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
+		}
+
 		if (bodies.size() != reload_body_names.size())
 		{
 			std::cout << "\n Error: reload bodies boes not match" << std::endl;
@@ -560,19 +449,8 @@ namespace SPH
 		material_->writeToXmlForReloadMaterialProperty(file_path_);
 	}
 //=================================================================================================//
-	ReadReloadMaterialProperty::ReadReloadMaterialProperty(In_Output& in_output,  
-		BaseMaterial *material, std::string material_name) 
+	ReadReloadMaterialProperty::ReadReloadMaterialProperty(In_Output& in_output, BaseMaterial *material) 
 	: ReloadMaterialPropertyIO(in_output, material), ReadMaterialProperty(in_output, material) 
-	{
-		if (material->getMaterialName() != material_name)
-		{
-			std::cout << "\n Error: reload material name does not match" << std::endl;
-			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-			exit(1);
-		}
-	}
-//=================================================================================================//
-	void ReadReloadMaterialProperty::ReadFromFile(size_t restart_step)
 	{
 		std::cout << "\n Reloading material property from files." << std::endl;
 
@@ -582,7 +460,10 @@ namespace SPH
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
-
+	}
+//=================================================================================================//
+	void ReadReloadMaterialProperty::ReadFromFile(size_t restart_step)
+	{
 		material_->readFromXmlForMaterialProperty(file_path_);
 	}
 //=================================================================================================//

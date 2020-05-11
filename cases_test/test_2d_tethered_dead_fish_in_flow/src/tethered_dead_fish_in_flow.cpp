@@ -32,10 +32,9 @@ Vec3d tethering_point(-1.0, cy, 0.0);        /**< The tethering point. */
 											*/
 Real rho0_f = 1.0;
 Real U_f = 1.0;
-Real c_f = 10.0*U_f;
+Real c_f = 10.0 * U_f;
 Real Re = 5.0e3;
 Real mu_f = rho0_f * U_f * (fish_length) / Re;
-Real k_f = 0.0;
 /**
 * Material properties of the fish body.
 */
@@ -94,11 +93,11 @@ std::vector<Point> CreatOuterWallShape()
 std::vector<Point> CreatInnerWallShape()
 {
 	std::vector<Point> pnts_shaping_inner_wall;
-	pnts_shaping_inner_wall.push_back(Point(-DLsponge - 2.0*BW, 0.0));
-	pnts_shaping_inner_wall.push_back(Point(-DLsponge - 2.0*BW, DH));
-	pnts_shaping_inner_wall.push_back(Point(DL + 2.0*BW, DH));
-	pnts_shaping_inner_wall.push_back(Point(DL + 2.0*BW, 0.0));
-	pnts_shaping_inner_wall.push_back(Point(-DLsponge - 2.0*BW, 0.0));
+	pnts_shaping_inner_wall.push_back(Point(-DLsponge - 2.0 * BW, 0.0));
+	pnts_shaping_inner_wall.push_back(Point(-DLsponge - 2.0 * BW, DH));
+	pnts_shaping_inner_wall.push_back(Point(DL + 2.0 * BW, DH));
+	pnts_shaping_inner_wall.push_back(Point(DL + 2.0 * BW, 0.0));
+	pnts_shaping_inner_wall.push_back(Point(-DLsponge - 2.0 * BW, 0.0));
 
 	return pnts_shaping_inner_wall;
 }
@@ -123,16 +122,31 @@ std::vector<Point> CreatFishBlockingShape()
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem &system, string body_name,
+	WaterBlock(SPHSystem& system, string body_name,
 		int refinement_level, ParticlesGeneratorOps op)
 		: FluidBody(system, body_name, refinement_level, op)
 	{
-		std::vector<Point> water_block_shape = CreatWaterBlockShape( );
+		std::vector<Point> water_block_shape = CreatWaterBlockShape();
 		body_region_.add_geometry(new Geometry(water_block_shape), RegionBooleanOps::add);
 		/** Exclude the fish body. */
-		std::vector<Point> fish_shape = CreatFishShape(cx, cy, fish_length, particle_spacing_*0.5);
+		std::vector<Point> fish_shape = CreatFishShape(cx, cy, fish_length, particle_spacing_ * 0.5);
 		body_region_.add_geometry(new Geometry(fish_shape), RegionBooleanOps::sub);
 		body_region_.done_modeling();
+	}
+};
+/**
+ * @brief 	Case dependent material properties definition.
+ */
+class WaterMaterial : public SymmetricTaitFluid
+{
+public:
+	WaterMaterial() : SymmetricTaitFluid()
+	{
+		rho_0_ = rho0_f;
+		c_0_ = c_f;
+		mu_ = mu_f;
+
+		assignDerivedMaterialParameters();
 	}
 };
 /**
@@ -141,12 +155,12 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &system, string body_name,
+	WallBoundary(SPHSystem& system, string body_name,
 		int refinement_level, ParticlesGeneratorOps op)
 		: SolidBody(system, body_name, refinement_level, op)
 	{
-		std::vector<Point> outer_wall_shape = CreatOuterWallShape( );
-		std::vector<Point> inner_wall_shape = CreatInnerWallShape( );
+		std::vector<Point> outer_wall_shape = CreatOuterWallShape();
+		std::vector<Point> inner_wall_shape = CreatInnerWallShape();
 		body_region_.add_geometry(new Geometry(outer_wall_shape), RegionBooleanOps::add);
 		body_region_.add_geometry(new Geometry(inner_wall_shape), RegionBooleanOps::sub);
 		body_region_.done_modeling();
@@ -159,7 +173,7 @@ class FishBody : public SolidBody
 {
 
 public:
-	FishBody(SPHSystem &system, string body_name, 
+	FishBody(SPHSystem& system, string body_name,
 		int refinement_level, ParticlesGeneratorOps op)
 		: SolidBody(system, body_name, refinement_level, op)
 	{
@@ -169,18 +183,34 @@ public:
 	}
 };
 /**
+*@brief Define gate material.
+*/
+class FishMaterial : public NeoHookeanSolid
+{
+public:
+	FishMaterial() : NeoHookeanSolid()
+	{
+		rho_0_ = rho0_s;
+		E_0_ = Youngs_modulus;
+		nu_ = poisson;
+
+		assignDerivedMaterialParameters();
+	}
+};
+
+/**
 * @brief create fish head for constraint
 */
 class FishHead : public SolidBodyPartForSimbody
 {
 public:
-	FishHead(SolidBody *solid_body, 
+	FishHead(SolidBody* solid_body,
 		string constrianed_region_name, Real solid_body_density)
-		: SolidBodyPartForSimbody(solid_body, 
-			constrianed_region_name, solid_body_density)
+		: SolidBodyPartForSimbody(solid_body,
+			constrianed_region_name)
 	{
 		//geometry
-		std::vector<Point> fish_shape = CreatFishShape(cx, cy, fish_length, solid_body_->particle_spacing_);
+		std::vector<Point> fish_shape = CreatFishShape(cx, cy, fish_length, body_->particle_spacing_);
 		std::vector<Point> fish_blocking_shape = CreatFishBlockingShape();
 		body_part_region_.add_geometry(new Geometry(fish_shape), RegionBooleanOps::add);
 		body_part_region_.add_geometry(new Geometry(fish_blocking_shape), RegionBooleanOps::sub);
@@ -194,11 +224,11 @@ public:
 /**
 * @brief inflow buffer
 */
-class InflowBuffer : public FluidBodyPart
+class InflowBuffer : public BodyPartByCell
 {
 public:
 	InflowBuffer(FluidBody* fluid_body, string constrianed_region_name)
-		: FluidBodyPart(fluid_body, constrianed_region_name)
+		: BodyPartByCell(fluid_body, constrianed_region_name)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> inflow_shape = CreatInflowBufferShape();
@@ -213,12 +243,11 @@ public:
 /**
 * Definition of an observer body with serveral particle to record particular property.
 */
-class Observer : public ObserverLagrangianBody
+class Observer : public FictitiousBody
 {
 public:
-	Observer(SPHSystem &system, string body_name,
-		int refinement_level, ParticlesGeneratorOps op)
-		: ObserverLagrangianBody(system, body_name, refinement_level, op)
+	Observer(SPHSystem& system, string body_name, int refinement_level, ParticlesGeneratorOps op)
+		: FictitiousBody(system, body_name, refinement_level, 1.3, op)
 	{
 		/** postion and volume. */
 		body_input_points_volumes_.push_back(make_pair(Point(cx + particle_spacing_ref, cy), 0.0));
@@ -234,7 +263,7 @@ class ParabolicInflow : public fluid_dynamics::InflowBoundaryCondition
 
 public:
 	ParabolicInflow(FluidBody* fluid_body,
-		FluidBodyPart *constrained_region)
+		BodyPartByCell* constrained_region)
 		: InflowBoundaryCondition(fluid_body, constrained_region)
 	{
 		u_ave_ = 0.0;
@@ -242,12 +271,12 @@ public:
 		t_ref = 4.0;
 	}
 
-	Vecd GetInflowVelocity(Vecd &position, Vecd &velocity)
+	Vecd GetInflowVelocity(Vecd& position, Vecd& velocity)
 	{
 		Real u = velocity[0];
 		Real v = velocity[1];
 		if (position[0] < 0.0) {
-			u = 6.0*u_ave_*position[1] * (DH - position[1]) / DH / DH;
+			u = 6.0 * u_ave_ * position[1] * (DH - position[1]) / DH / DH;
 			v = 0.0;
 		}
 		return Vecd(u, v);
@@ -256,7 +285,7 @@ public:
 	void PrepareConstraint() override
 	{
 		Real run_time = GlobalStaticVariables::physical_time_;
-		u_ave_ = run_time < t_ref ? 0.5*u_ref_*(1.0 - cos(pi*run_time / t_ref)) : u_ref_;
+		u_ave_ = run_time < t_ref ? 0.5 * u_ref_ * (1.0 - cos(pi * run_time / t_ref)) : u_ref_;
 	}
 };
 /**
@@ -267,33 +296,45 @@ int main()
 	/**
 	* Build up context -- a SPHSystem.
 	*/
-	SPHSystem system(Vec2d(-DLsponge - BW, -BW),
-		Vec2d(DL + BW, DH + BW), particle_spacing_ref);
+	SPHSystem system(Vec2d(-DLsponge - BW, -BW), Vec2d(DL + BW, DH + BW), particle_spacing_ref);
+	/** Tag for run particle relaxation for the initial body fitted distribution. */
+	system.run_particle_relaxation_ = false;
+	/** Tag for computation start with relaxed body fitted particles distribution. */
+	system.reload_particles_ = true;
+	/** Tag for computation from restart files. 0: start with initial condition. */
+	system.restart_step_ = 0;
 	/**
 	* @brief   Particles and body creation for water.
 	*/
-	WaterBlock *water_block = new WaterBlock(system, "WaterBody",
+	WaterBlock* water_block = new WaterBlock(system, "WaterBody",
 		0, ParticlesGeneratorOps::lattice);
-	SymmetricTaitFluid    fluid("Water", water_block, rho0_f, c_f, mu_f, k_f);
-	FluidParticles    fluid_particles(water_block);
+	WaterMaterial    *water_fluid = new WaterMaterial();
+	FluidParticles    fluid_particles(water_block, water_fluid);
 	/**
 	* @brief   Particles and body creation for wall boundary.
 	*/
-	WallBoundary *wall_boundary = new   WallBoundary(system, "Wall",
+	WallBoundary* wall_boundary = new   WallBoundary(system, "Wall",
 		0, ParticlesGeneratorOps::lattice);
 	SolidParticles                  solid_particles(wall_boundary);
 	/**
 	* @brief   Particles and body creation for fish.
 	*/
-	FishBody *fish_body = new   FishBody(system, "FishBody", 1, ParticlesGeneratorOps::lattice);
-	NeoHookeanSolid   fish_body_material("NeoHookeanSolid", fish_body, rho0_s, Youngs_modulus, poisson, 0.0);
-	ElasticSolidParticles  fish_body_particles(fish_body);
+	FishBody* fish_body = new   FishBody(system, "FishBody", 1, ParticlesGeneratorOps::lattice);
+	FishMaterial   *fish_body_material = new FishMaterial();
+	ElasticSolidParticles  fish_body_particles(fish_body, fish_body_material);
 	/**
 	* @brief   Particle and body creation of gate observer.
 	*/
-	Observer *fish_observer = new Observer(system, "Observer",
+	Observer* fish_observer = new Observer(system, "Observer",
 		0, ParticlesGeneratorOps::direct);
-	ObserverParticles           observer_particles(fish_observer);
+	BaseParticles           observer_particles(fish_observer);
+	/** Output. */
+	In_Output in_output(system);
+	WriteBodyStatesToVtu        write_real_body_states(in_output, system.real_bodies_);
+	WriteTotalForceOnSolid      write_total_force_on_fish(in_output, fish_body);
+	WriteAnObservedQuantity<Vecd, BaseParticles,
+		BaseParticleData, &BaseParticles::base_particle_data_, &BaseParticleData::pos_n_>
+		write_fish_displacement("Displacement", in_output, fish_observer, fish_body);
 	/**
 	* @brief   Body contact map.
 	* @details The contact map gives the data conntections between the bodies.
@@ -302,10 +343,87 @@ int main()
 	SPHBodyTopology body_topology = { { water_block,{ wall_boundary, fish_body } },
 	{ wall_boundary,{} },{ fish_body,{ water_block } },{ fish_observer,{ fish_body } } };
 	system.SetBodyTopology(&body_topology);
+
 	/**
-	* Setting up the simulation.
+	* @brief   Methods used for updating data structure.
 	*/
-	system.SetupSPHSimulation();
+	/** Update the cell linked list of bodies when neccessary. */
+	ParticleDynamicsCellLinkedList          update_water_block_cell_linked_list(water_block);
+	/** Update the configuration of bodies when neccessary. */
+	ParticleDynamicsConfiguration           update_water_block_configuration(water_block);
+	/** Update the cell linked list of bodies when neccessary. */
+	ParticleDynamicsCellLinkedList          update_fish_body_cell_linked_list(fish_body);
+	/** Update the contact configuration for a given contact map. */
+	ParticleDynamicsContactConfiguration    update_fish_body_contact_configuration(fish_body);
+	/** Update inner configuration of a body. */
+	ParticleDynamicsInnerConfiguration update_fish_body_inner_configuration(fish_body);
+	/** Periodic bounding in x direction. */
+	PeriodicBoundingInAxisDirection 	periodic_bounding(water_block, 0);
+	/** Periodic BCs in x direction. */
+	PeriodicConditionInAxisDirection 	periodic_condition(water_block, 0);
+
+	/** check whether run particle relaxation for body fiited particle distribution. */
+	if (system.run_particle_relaxation_) {
+		/** add background level set for particle realxation. */
+		fish_body->addBackgroundMesh();
+		/**
+		 * @brief 	Methods used for particle relaxation.
+		 */
+		 /** Random reset the insert body particle position. */
+		RandomizePartilePosition  random_fish_body_particles(fish_body);
+		/** Write backgroung level set. */
+		WriteBodyMeshToPlt write_fish_body_background_mesh(in_output, fish_body);
+		/** Write the body state to Vtu file. */
+		WriteBodyStatesToVtu 		write_fish_body_to_vtu(in_output, { fish_body });
+		/** Write the particle reload files. */
+		WriteReloadParticle 		write_particle_reload_files(in_output, { fish_body });
+
+		/** bounding particles to insert body surface. */
+		relax_dynamics::BodySurfaceBounding
+			body_surface_bounding(fish_body, new NearBodySurface(fish_body));
+		/** Compute the time step for particle relaxation. */
+		relax_dynamics::GetTimeStepSize get_solid_relax_timestep(fish_body);
+		/** Physics relaxation algorithm. */
+		relax_dynamics::PhysicsRelaxationInner 	relax_process_for_solid(fish_body);
+		/** finilaizing  particle number desnity and inital position after relaxatoin. */
+		relax_dynamics::FinalizingParticleRelaxation finalizing_inserted_body_particles(fish_body);
+		/**
+		  * @brief 	Particle relaxation starts here.
+		  */
+		write_fish_body_background_mesh.WriteToFile(0.0);
+		update_fish_body_cell_linked_list.parallel_exec();
+		update_fish_body_inner_configuration.parallel_exec();
+		body_surface_bounding.parallel_exec();
+		random_fish_body_particles.parallel_exec(0.25);
+		write_fish_body_to_vtu.WriteToFile(0.0);
+
+		/** relax particles of the insert body. */
+		int ite_p = 0;
+		Real dt_p = 0.0;
+		while (ite_p < 1000)
+		{
+			dt_p = get_solid_relax_timestep.parallel_exec();
+
+			relax_process_for_solid.parallel_exec(dt_p);
+			body_surface_bounding.parallel_exec();
+			ite_p += 1;
+
+			update_fish_body_cell_linked_list.parallel_exec();
+			update_fish_body_inner_configuration.parallel_exec();
+			if (ite_p % 200 == 0)
+			{
+				cout << fixed << setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
+				write_fish_body_to_vtu.WriteToFile(Real(ite_p) * 1.0e-4);
+			}
+		}
+		std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
+		finalizing_inserted_body_particles.parallel_exec();
+
+		/** Output results. */
+		write_particle_reload_files.WriteToFile(0.0);
+		return 0;
+	}
+
 	/**
 	* This section define all numerical methods will be used in this case.
 	*/
@@ -315,16 +433,12 @@ int main()
 	solid_dynamics::NormalDirectionReNormalization get_fish_body_normal(fish_body, {});
 	/** Corrected strong configuration.*/
 	solid_dynamics::CorrectConfiguration
-		fish_body_corrected_configuration_in_strong_form(fish_body, {});
+		fish_body_corrected_configuration_in_strong_form(fish_body);
 	/**
 	* Common paritcle dynamics.
 	*/
-	InitializeOtherAccelerations
-		initialize_fluid_acceleration(water_block);
-	/** Periodic bounding in x direction. */
-	PeriodicBoundingInAxisDirection 	periodic_bounding(water_block, 0);
-	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirection 	periodic_condition(water_block, 0);
+	InitializeATimeStep
+		initialize_a_fluid_step(water_block);
 
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensityBySummation
@@ -339,7 +453,7 @@ int main()
 	/** Pressure relaxation using verlet time stepping. */
 	fluid_dynamics::PressureRelaxationFirstHalf
 		pressure_relaxation_first_half(water_block, { wall_boundary, fish_body });
-	fluid_dynamics::PressureRelaxationSecondHalfRiemann
+	fluid_dynamics::PressureRelaxationSecondHalf
 		pressure_relaxation_second_half(water_block, { wall_boundary, fish_body });
 	/** Computing viscous acceleration. */
 	fluid_dynamics::ComputingViscousAcceleration
@@ -368,10 +482,10 @@ int main()
 	/** Time step size caclutation. */
 	solid_dynamics::GetAcousticTimeStepSize fish_body_computing_time_step_size(fish_body);
 	/** Process of stress relaxation. */
-	solid_dynamics::StressRelaxationFirstStep
-		fish_body_stress_relaxation_first_step(fish_body);
-	solid_dynamics::StressRelaxationSecondStep
-		fish_body_stress_relaxation_second_step(fish_body);
+	solid_dynamics::StressRelaxationFirstHalf
+		fish_body_stress_relaxation_first_half(fish_body);
+	solid_dynamics::StressRelaxationSecondHalf
+		fish_body_stress_relaxation_second_half(fish_body);
 	/** Update normal direction on fish body.*/
 	solid_dynamics::UpdateElasticNormalDirection
 		fish_body_update_normal(fish_body);
@@ -380,17 +494,6 @@ int main()
 		fish_body_initialize_displacement(fish_body);
 	solid_dynamics::UpdateAverageVelocity
 		fish_body_average_velocity(fish_body);
-	/**
-	* @brief   Methods used for updating data structure.
-	*/
-	/** Update the cell linked list of bodies when neccessary. */
-	ParticleDynamicsCellLinkedList          update_water_block_cell_linked_list(water_block);
-	/** Update the configuration of bodies when neccessary. */
-	ParticleDynamicsConfiguration           update_water_block_configuration(water_block);
-	/** Update the cell linked list of bodies when neccessary. */
-	ParticleDynamicsCellLinkedList          update_fish_body_cell_linked_list(fish_body);
-	/** Update the contact configuration for a given contact map. */
-	ParticleDynamicsContactConfiguration    update_fish_body_contact_configuration(fish_body);
 	/**
 	* The multi body system from simbody.
 	*/
@@ -402,21 +505,21 @@ int main()
 	SimTK::CableTrackerSubsystem    cables(MBsystem);
 	/** Mass proeprties of the fixed spot. */
 	SimTK::Body::Rigid      fixed_spot_info(MassProperties(1.0, Vec3(0), UnitInertia(1)));
-	FishHead *fish_head = new FishHead(fish_body, "FishHead", rho0_s);
+	FishHead* fish_head = new FishHead(fish_body, "FishHead", rho0_s);
 	/** Mass properties of the consrained spot. */
 	SimTK::Body::Rigid      tethered_spot_info(*fish_head->body_part_mass_properties_);
 	/** Mobility of the fixed spot. */
 	SimTK::MobilizedBody::Weld      fixed_spot(matter.Ground(), Transform(tethering_point),
 		fixed_spot_info, Transform(Vec3(0)));
-	/** Mobility of the tethered spot. 
+	/** Mobility of the tethered spot.
 	  * Set the mass center as the origin location of the planar mobilizer
 	  */
 	Vec3 displacement0 = fish_head->initial_mass_center_ - tethering_point;
 	SimTK::MobilizedBody::Planar    tethered_spot(fixed_spot,
 		Transform(displacement0), tethered_spot_info, Transform(Vec3(0)));
-	/** The tethering line give cable force. 
+	/** The tethering line give cable force.
 	  * the start point of the cable path is at the origin loaction of the first mobilizer body,
-	  * the end point is the tip of the fish head which has a distance to the origin 
+	  * the end point is the tip of the fish head which has a distance to the origin
 	  * location of the second mobilizer body origin location, here, the mass center
 	  * of the fish head.
 	  */
@@ -445,31 +548,31 @@ int main()
 	/**
 	* Coupling between SimBody and SPH.
 	*/
-	solid_dynamics::ForceOnElasticBodyPartForSimBody      
+	solid_dynamics::ForceOnElasticBodyPartForSimBody
 		force_on_tethered_spot(fish_body, fish_head,
-		MBsystem, tethered_spot, force_on_bodies, integ);
+			MBsystem, tethered_spot, force_on_bodies, integ);
 	solid_dynamics::ConstrianSoildBodyPartBySimBody
 		constriant_tethered_spot(fish_body,
-		fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
-
-	/** Output. */
-	In_Output in_output(system);
-	WriteBodyStatesToVtu        write_real_body_states(in_output, system.real_bodies_);
-	WriteTotalForceOnSolid      write_total_force_on_fish(in_output, fish_body);
-	WriteObservedElasticDisplacement write_fish_displacement(in_output, fish_observer, { fish_body });
+			fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
 
 	/**
 	* Time steeping starts here.
 	*/
 	GlobalStaticVariables::physical_time_ = 0.0;
+	/** Using relaxed particle distribution if needed. */
+	if (system.reload_particles_) {
+		ReadReloadParticle		reload_insert_body_particles(in_output, { fish_body }, { "FishBody" });
+		reload_insert_body_particles.ReadFromFile();
+		reload_insert_body_particles.~ReadReloadParticle();
+	}
 	/**
 	* Initial periodic boundary condition which copies the particle identifies
 	* as extra cell linked list form periodic regions to the corresponding boundaries
 	* for buiding up of extra configuration.
 	*/
+	system.InitializeSystemCellLinkedLists();
 	periodic_condition.parallel_exec();
-	/** Update configuration after periodic boundary condition.*/
-	update_water_block_configuration.parallel_exec();
+	system.InitializeSystemConfigurations();
 	/** Prepare quantities, e.g. wall normal, fish body norm,
 	* fluid initial number density and configuration of fish particles, will be used once only.
 	*/
@@ -500,11 +603,10 @@ int main()
 		Real integeral_time = 0.0;
 		while (integeral_time < D_Time)
 		{
-			initialize_fluid_acceleration.parallel_exec();
+			initialize_a_fluid_step.parallel_exec();
 			Dt = get_fluid_adevction_time_step_size.parallel_exec();
 			update_fluid_desnity.parallel_exec();
 			divergence_correction.parallel_exec();
-			initialize_fluid_acceleration.parallel_exec();
 			viscous_acceleration.parallel_exec();
 			transport_velocity_correction.parallel_exec(Dt);
 			transport_velocity_stress.parallel_exec();
@@ -526,14 +628,14 @@ int main()
 				while (dt_s_sum < dt)
 				{
 					dt_s = fish_body_computing_time_step_size.parallel_exec();
-					fish_body_stress_relaxation_first_step.parallel_exec(dt_s);
-					SimTK::State &state_for_update = integ.updAdvancedState();
+					fish_body_stress_relaxation_first_half.parallel_exec(dt_s);
+					SimTK::State& state_for_update = integ.updAdvancedState();
 					force_on_bodies.clearAllBodyForces(state_for_update);
 					force_on_bodies.setOneBodyForce(state_for_update, tethered_spot,
 						force_on_tethered_spot.parallel_exec());
 					integ.stepBy(dt_s);
 					constriant_tethered_spot.parallel_exec();
-					fish_body_stress_relaxation_second_step.parallel_exec(dt_s);
+					fish_body_stress_relaxation_second_half.parallel_exec(dt_s);
 					dt_s_sum += dt_s;
 				}
 				fish_body_average_velocity.parallel_exec(dt);

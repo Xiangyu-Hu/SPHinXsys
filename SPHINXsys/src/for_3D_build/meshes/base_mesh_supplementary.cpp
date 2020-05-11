@@ -8,7 +8,7 @@
 #include "base_data_package.h"
 
 namespace SPH {
-	//===================================================================//
+	//=================================================================================================//
 	void MeshIterator(Vec3u index_begin, Vec3u index_end, MeshFunctor& mesh_functor, Real dt)
 	{
 		for (size_t i = index_begin[0]; i != index_end[0]; ++i)
@@ -18,7 +18,7 @@ namespace SPH {
 					mesh_functor(Vecu(i, j, k), dt);
 				}
 	}
-	//===================================================================//
+	//=================================================================================================//
 	void MeshIterator_parallel(Vecu index_begin, Vecu index_end, MeshFunctor& mesh_functor, Real dt)
 	{
 		parallel_for(blocked_range3d<size_t>
@@ -32,7 +32,7 @@ namespace SPH {
 						}
 			}, ap);
 	}
-	//===========================================================//
+	//=================================================================================================//
 	Vecu BaseMesh::transfer1DtoMeshIndex(Vecu mesh_size, size_t i)
 	{
 		size_t row_times_column_size = mesh_size[1] * mesh_size[2];
@@ -42,26 +42,26 @@ namespace SPH {
 		size_t column = left_over / row_size;
 		return Vecu(page, column, left_over - column * row_size);
 	}
-	//===================================================================//
+	//=================================================================================================//
 	size_t BaseMesh::transferMeshIndexTo1D(Vecu mesh_size, Vecu mesh_index)
 	{
 		return mesh_index[0] * mesh_size[1] * mesh_size[2] 
 			 + mesh_index[1] * mesh_size[2] 
 			 + mesh_index[2];
 	}
-	//===================================================================//
+	//=================================================================================================//
 	void MeshBackground
 		::AllocateMeshDataMatrix()
 	{
 		Allocate3dArray(mesh_background_data_, number_of_grid_points_);
 	}
-	//===================================================================//
+	//=================================================================================================//
 	void MeshBackground
 		::DeleteMeshDataMatrix()
 	{
 		Delete3dArray(mesh_background_data_, number_of_grid_points_);
 	}
-	//===================================================================//
+	//=================================================================================================//
 	void MeshBackground::InitializeLevelSetData(SPHBody &body)
 	{
 		Vecu number_of_operation = number_of_grid_points_;
@@ -96,7 +96,7 @@ namespace SPH {
 					}
 	 }, ap);
 	}
-	//===================================================================//
+	//=================================================================================================//
 	Vecd MeshBackground::ProbeNormalDirection(Vecd Point)
 	{
 		Vec3u grid_idx = CellIndexesFromPosition(Point);
@@ -115,7 +115,7 @@ namespace SPH {
 			+ mesh_background_data_[grid_idx[0] + 1][grid_idx[1]+1][grid_idx[2]+1].n_* dis_grid[0] * dis_grid[1];
 		return  bilinear_1 * (1.0 - dis_grid[2]) + bilinear_2 * dis_grid[2];
 	}
-	//===================================================================//
+	//=================================================================================================//
 	Real MeshBackground::ProbeLevelSet(Vecd Point)
 	{
 		Vec3u grid_idx = GridIndexesFromPosition(Point);
@@ -135,12 +135,12 @@ namespace SPH {
 			+ mesh_background_data_[grid_idx[0] + 1][grid_idx[1]+1][grid_idx[2]+1].phi_* dis_grid[0] * dis_grid[1];
 		return  bilinear_1 * (1.0 - dis_grid[2]) + bilinear_2 * dis_grid[2];
 	}
-	//===================================================================//
+	//=================================================================================================//
 	void MeshBackground::ComputeCurvatureFromLevelSet(SPHBody &body)
 	{
 
 	}
-	//===================================================================//
+	//=================================================================================================//
 	Real MeshBackground::ProbeCurvature(Vecd Point)
 	{
 		cout << "\n This function is not done in 3D. Exit the program! \n";
@@ -148,14 +148,14 @@ namespace SPH {
 
 		return  0.0;
 	}
-	//===================================================================//
+	//=================================================================================================//
 	void MeshBackground::WriteMeshToVtuFile(ofstream &output_file)
 	{
 		cout << "\n This function WriteMeshToVtuFile is not done. Exit the program! \n";
 		exit(0);
 
 	}
-	//===================================================================//
+	//=================================================================================================//
 	void MeshBackground::WriteMeshToPltFile(ofstream &output_file)
 	{
 		Vecu number_of_operation = number_of_grid_points_;
@@ -253,7 +253,7 @@ namespace SPH {
 			}
 		}
 	}
-	//===================================================================//
+	//=================================================================================================//
 	void LevelSetDataPackage::AllocateMeshDataMatrix()
 	{
 		Allocate3dArray(phi_, number_of_grid_points_);
@@ -261,7 +261,7 @@ namespace SPH {
 		Allocate3dArray(phi_addrs_, number_of_addrs_);
 		Allocate3dArray(n_addrs_, number_of_addrs_);
 	}
-	//===================================================================//
+	//=================================================================================================//
 	void LevelSetDataPackage::DeleteMeshDataMatrix()
 	{
 		Delete3dArray(phi_, number_of_grid_points_);
@@ -269,7 +269,7 @@ namespace SPH {
 		Delete3dArray(phi_addrs_, number_of_addrs_);
 		Delete3dArray(n_addrs_, number_of_addrs_);
 	}
-	//===================================================================//
+	//=================================================================================================//
 	void LevelSetDataPackage::initializeWithUniformData(Real level_set, Vecd normal_direction)
 	{
 		for (size_t i = 0; i != 4; ++i)
@@ -294,7 +294,7 @@ namespace SPH {
 					n_[i][j][k] = closet_pnt_on_face - position;
 				}
 	}
-	//===================================================================//
+	//=================================================================================================//
 	void LevelSet::initializeDataInACell(Vecu cell_index, Real dt)
 	{
 		int i = (int)cell_index[0];
@@ -319,7 +319,8 @@ namespace SPH {
 			data_pkg_addrs_[i][j][k] = phi_from_surface > 0 ?
 				singular_data_pkgs_addrs[0] : singular_data_pkgs_addrs[1];
 		}
-	}	//===================================================================//
+	}	
+	//=================================================================================================//
 	void LevelSet::tagACellIsInnerPackage(Vecu cell_index, Real dt)
 	{
 		int i = (int)cell_index[0];
@@ -349,11 +350,11 @@ namespace SPH {
 			}
 		}
 	}
-	//===================================================================//
+	//=================================================================================================//
 	void LevelSet::WriteMeshToPltFile(ofstream& output_file)
 	{
 		cout << "\n This function LevelSet::WriteMeshToPltFile is not done in 3D. Exit the program! \n";
 		exit(0);
 	}
-	//===================================================================//
+	//=================================================================================================//
 }

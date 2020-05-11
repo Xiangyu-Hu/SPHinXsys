@@ -20,8 +20,6 @@ namespace SPH {
 	/** preclaimed classes*/
 	class SPHBody;
 	class ParticleGenerator;
-	class BaseMaterial;
-
 	/**
 	 * @class BaseParticleData
 	 * @brief A based particle with essential data.
@@ -44,7 +42,7 @@ namespace SPH {
 		 */
 		size_t particle_id_;
 		/** Current position. */
-		Point pos_n_;	
+		Point pos_n_, pos_0_;	
 		/** Current particle velocity and stress-induced and other accelerations. */
 		Vecd  vel_n_, dvel_dt_, dvel_dt_others_;
 		/** Particle volume and its reference volume. */
@@ -78,6 +76,7 @@ namespace SPH {
 		BaseMaterial* base_material_;
 
 		BaseParticles(SPHBody *body, BaseMaterial* base_material);
+		BaseParticles(SPHBody* body);
 		virtual ~BaseParticles() {};
 	
 		/** Vector of base particle data. */
@@ -109,15 +108,17 @@ namespace SPH {
 		/** Getinsert a ghost particle. */
 		size_t insertAGhostParticle(size_t index_particle_i);
 
+		/** acess the sph body*/
+		SPHBody* getSPHBody();
 		/** Write particle data in VTU format for Paraview. */
 		virtual void WriteParticlesToVtuFile(ofstream &output_file);
 		/** Write particle data in PLT format for Tecplot. */
-		virtual void WriteParticlesToPltFile(ofstream &output_file) = 0;
+		virtual void WriteParticlesToPltFile(ofstream& output_file) {};
 
 		/** Write particle data in XML format for restart. */
-		virtual void WriteParticlesToXmlForRestart(std::string &filefullpath) = 0;
+		virtual void WriteParticlesToXmlForRestart(std::string& filefullpath) {};
 		/** Initialize particle data from restart xml file. */
-		virtual void ReadParticleFromXmlForRestart(std::string &filefullpath) = 0;
+		virtual void ReadParticleFromXmlForRestart(std::string& filefullpath) {};
 
 		/** Output particle position and volume in XML file for reloading particles. */
 		virtual void WriteToXmlForReloadParticle(std::string &filefullpath);

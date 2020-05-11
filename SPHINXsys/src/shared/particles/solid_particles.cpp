@@ -13,7 +13,7 @@
 namespace SPH {
 //=============================================================================================//
 	SolidParticleData::SolidParticleData(Vecd position)
-		: pos_0_(position), n_0_(0), n_(0), B_(0), vel_ave_(0), dvel_dt_ave_(0),
+		: n_0_(0), n_(0), B_(1.0), vel_ave_(0), dvel_dt_ave_(0),
 		viscous_force_from_fluid_(0), force_from_fluid_(0)
 	{
 
@@ -38,10 +38,11 @@ namespace SPH {
 		}
 	}
 	//=============================================================================================//
-	SolidParticles::SolidParticles(SPHBody* body, BaseMaterial* base_material)
-		: BaseParticles(body, base_material)
+	SolidParticles::SolidParticles(SPHBody* body, Solid* solid)
+		: BaseParticles(body, solid)
 	{
-		for (size_t i = 0; i < base_particle_data_.size(); ++i) 
+		solid->assignSolidParticles(this);
+		for (size_t i = 0; i < base_particle_data_.size(); ++i)
 		{
 			Point pnt = base_particle_data_[i].pos_n_;
 			solid_body_data_.push_back(SolidParticleData(pnt));
@@ -53,7 +54,7 @@ namespace SPH {
 		for (size_t i = 0; i != body_->number_of_particles_; ++i)
 		{
 			base_particle_data_[i].pos_n_ += offset;
-			solid_body_data_[i].pos_0_ += offset;
+			base_particle_data_[i].pos_0_ += offset;
 		}
 	}
 	//=================================================================================================//
@@ -66,7 +67,8 @@ namespace SPH {
 		output_file << "    <DataArray Name=\"NormalDirection\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << fixed << setprecision(9) << solid_body_data_[i].n_[0] << " " << solid_body_data_[i].n_[1] << " " << 0.0 << " ";
+			Vec3d normal_direction = upgradeToVector3D(solid_body_data_[i].n_);
+			output_file << fixed << setprecision(9) << normal_direction[0] << " " << normal_direction[1] << " " << normal_direction[2] << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -82,7 +84,7 @@ namespace SPH {
 		{
 			Vecd position = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Position");
 			base_particle_data_[number_of_particles].pos_n_ = position;
-			solid_body_data_[number_of_particles].pos_0_ = position;
+			base_particle_data_[number_of_particles].pos_0_ = position;
 			Real volume = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Volume");
 			base_particle_data_[number_of_particles].Vol_ = volume;
 			number_of_particles++;
@@ -129,6 +131,7 @@ namespace SPH {
 			restart_xml->CreatXmlElement("particle");
 			restart_xml->AddAttributeToElement<size_t>("ID", i);
 			restart_xml->AddAttributeToElement<Vecd>("Position", base_particle_data_[i].pos_n_);
+			restart_xml->AddAttributeToElement<Vecd>("InitialPosition", base_particle_data_[i].pos_0_);
 			restart_xml->AddAttributeToElement<Real>("Volume", base_particle_data_[i].Vol_);
 			restart_xml->AddElementToXmlDoc();
 		}
@@ -153,10 +156,10 @@ namespace SPH {
 		return 0.5 * dW_ij * (B_i + B_j) * e_ij;
 	}
 	//=============================================================================================//
-	ElasticSolidParticles::ElasticSolidParticles(SPHBody* body, BaseMaterial* base_material)
-		: SolidParticles(body, base_material)
+	ElasticSolidParticles::ElasticSolidParticles(SPHBody* body, ElasticSolid* elastic_solid)
+		: SolidParticles(body, elastic_solid)
 	{
-		ElasticSolid* elastic_solid = dynamic_cast<ElasticSolid*>(base_material_);
+		elastic_solid->assignElasticSolidParticles(this);
 		for (size_t i = 0; i < base_particle_data_.size(); ++i)
 			elastic_body_data_.push_back(ElasticSolidParticleData(base_particle_data_[i], elastic_solid));
 	}
@@ -210,8 +213,8 @@ namespace SPH {
 		for (size_t i = 0; i != number_of_particles; ++i)
 		{
 			restart_xml->CreatXmlElement("particle");
-			restart_xml->AddAttributeToElement<size_t>("ID", i);
 			restart_xml->AddAttributeToElement<Vecd>("Position", base_particle_data_[i].pos_n_);
+			restart_xml->AddAttributeToElement<Vecd>("InitialPosition", base_particle_data_[i].pos_0_);
 			restart_xml->AddAttributeToElement<Real>("Volume", base_particle_data_[i].Vol_);
 			restart_xml->AddAttributeToElement<Real>("Density", elastic_body_data_[i].rho_n_);
 			restart_xml->AddAttributeToElement<Vecd>("Velocity", base_particle_data_[i].vel_n_);
@@ -232,6 +235,8 @@ namespace SPH {
 		{
 			Vecd pos_ = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Position");
 			base_particle_data_[number_of_particles].pos_n_ = pos_;
+			Vecd pos_0 = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "InitialPosition");
+			base_particle_data_[number_of_particles].pos_0_ = pos_0;
 			Real rst_Vol_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Volume");
 			base_particle_data_[number_of_particles].Vol_ = rst_Vol_;
 			Vecd rst_vel_ = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Velocity");
@@ -246,9 +251,10 @@ namespace SPH {
 		}
 	}
 	//=============================================================================================//
-	ActiveMuscleParticles::ActiveMuscleParticles(SPHBody* body, BaseMaterial* base_material)
-		: ElasticSolidParticles(body, base_material)
+	ActiveMuscleParticles::ActiveMuscleParticles(SPHBody* body, ActiveMuscle* active_muscle)
+		: ElasticSolidParticles(body, active_muscle)
 	{
+		active_muscle->assignActiveMuscleParticles(this);
 		for (size_t i = 0; i < base_particle_data_.size(); ++i)
 			active_muscle_data_.push_back(ActiveMuscleData());
 	}

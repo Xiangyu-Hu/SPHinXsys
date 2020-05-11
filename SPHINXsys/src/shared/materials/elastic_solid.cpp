@@ -6,12 +6,16 @@
  */
 
 #include "elastic_solid.h"
+#include "solid_particles.h"
+#include "xml_engine.h"
+#include "base_body.h"
 
 namespace SPH {
 	//=================================================================================================//
-	Real ElasticSolid::GetSoundSpeed(size_t particle_index_i)
+	void ElasticSolid::assignElasticSolidParticles(ElasticSolidParticles* elastic_particles) 
 	{
-		return c_0_;
+		elastic_particles_ = elastic_particles;
+		initializeLocalProperties(elastic_particles);
 	}
 	//=================================================================================================//
 	Real ElasticSolid::getViscousTimeStepSize(Real smoothing_length)
@@ -90,14 +94,14 @@ namespace SPH {
 	//=================================================================================================//
 	Real Muscle::SetSoundSpeed()
 	{
-		Real young_modulus = 2.0 * a_0_[0] * b_0_[0] * (1.0 + nu_);
-		return  sqrt( young_modulus / 3.0 / (1.0 - 2.0 * nu_) / rho_0_);
+		return  sqrt(bulk_modulus_ / rho_0_);
 	}
 	//=================================================================================================//
 	Real Muscle::SetLambda()
 	{
-		Real young_modulus = 2.0 * a_0_[0] * b_0_[0] * (1.0 + nu_);
-		return nu_ * young_modulus / (1.0 + nu_) / (1.0 - 2.0 * nu_);
+		Real shear_modulus_ref = a_0_[0]* b_0_[0] + 2.0 * a_0_[1] * b_0_[1] 
+						 + 2.0 * a_0_[2] * b_0_[2] + a_0_[3] * b_0_[3];
+		return bulk_modulus_ - 2.0 * shear_modulus_ref / 3.0;
 	}
 	//=================================================================================================//
 	void Muscle::assignDerivedMaterialParameters()
@@ -143,6 +147,16 @@ namespace SPH {
 			+ a_0_[3] * I_fs * exp(b_0_[3] * I_fs * I_fs) * local_f0s0_[i];
 
 		return F * sigmaPK2;
+	}		
+	//=================================================================================================//
+	void LocallyOrthotropicMuscle::initializeLocalProperties(BaseParticles* base_particles)
+	{
+		size_t number_of_particles = base_particles->getSPHBody()->number_of_particles_;
+		for (size_t i = 0; i != number_of_particles; i++)
+		{
+			local_f0_.push_back(Vecd(0));
+			local_s0_.push_back(Vecd(0));
+		}
 	}
 	//=================================================================================================//
 	void LocallyOrthotropicMuscle::writeToXmlForReloadMaterialProperty(std::string &filefullpath)
@@ -171,9 +185,9 @@ namespace SPH {
 		for (; ele_ite_ != read_xml->root_element_.element_end(); ++ele_ite_)
 		{
 			Vecd fibre = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Fibre");
-			local_f0_.push_back(fibre);
+			local_f0_[number_of_element] = fibre;
 			Vecd sheet = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Sheet");
-			local_s0_.push_back(sheet);
+			local_s0_[number_of_element] = sheet;
 			number_of_element++;
 		}
 
@@ -196,16 +210,60 @@ namespace SPH {
  		}
 	}
 	//=================================================================================================//
-	Matd ActiveMuscle::ConstitutiveRelation(Matd& F, size_t i)
+	void LocallyOrthotropicMuscle::WriteMaterialPropertyToVtuFile(ofstream& output_file)
 	{
-		Matd passive_stress = Muscle::ConstitutiveRelation(F, i);
-		return passive_stress + base_particles_->accessAParticleDataTypeReal(i) * F * f0f0_;
+		size_t number_of_particles = elastic_particles_->getSPHBody()->number_of_particles_;
+
+		output_file << "    <DataArray Name=\"FiberDirection\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != number_of_particles; ++i) {
+			Vec3d local_f0 = upgradeToVector3D(local_f0_[i]);
+			output_file << fixed << setprecision(9) << local_f0[0] << " " << local_f0[1] << " " << local_f0[2] << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+
+		output_file << "    <DataArray Name=\"SheetDirection\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != number_of_particles; ++i) {
+			Vec3d local_s0 = upgradeToVector3D(local_s0_[i]);
+			output_file << fixed << setprecision(9) << local_s0[0] << " " << local_s0[1] << " " << local_s0[2] << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
 	}
 	//=================================================================================================//
-	Matd ActiveLocallyOrthotropicMuscle::ConstitutiveRelation(Matd& F, size_t i)
+	Real ActiveMuscle::SetSoundSpeed()
 	{
-		Matd passive_stress = LocallyOrthotropicMuscle::ConstitutiveRelation(F, i);
-		return passive_stress + base_particles_->accessAParticleDataTypeReal(i) * F * local_f0f0_[i];
+		return muscle_.SetSoundSpeed();
+	}
+	//=================================================================================================//
+	void ActiveMuscle::assignActiveMuscleParticles(ActiveMuscleParticles* active_muscle_particles)
+	{
+		active_muscle_particles_ = active_muscle_particles;
+		muscle_.assignElasticSolidParticles(active_muscle_particles);
+	}
+	//=================================================================================================//
+	Matd ActiveMuscle::ConstitutiveRelation(Matd& F, size_t i)
+	{
+		Matd passive_stress = muscle_.ConstitutiveRelation(F, i);
+		return passive_stress + active_muscle_particles_->getActiveContractionStress(i) 
+							  * F * muscle_.getMuscleFiber(i);
+	}
+	//=================================================================================================//
+	void ActiveMuscle::writeToXmlForReloadMaterialProperty(std::string& filefullpath)
+	{
+		muscle_.writeToXmlForReloadMaterialProperty(filefullpath);
+	}
+	//=================================================================================================//
+	void ActiveMuscle::readFromXmlForMaterialProperty(std::string& filefullpath)
+	{
+		muscle_.readFromXmlForMaterialProperty(filefullpath);
+	}
+	//=================================================================================================//
+	void ActiveMuscle::WriteMaterialPropertyToVtuFile(ofstream& output_file)
+	{
+		muscle_.WriteMaterialPropertyToVtuFile(output_file);
 	}
 	//=================================================================================================//
 }

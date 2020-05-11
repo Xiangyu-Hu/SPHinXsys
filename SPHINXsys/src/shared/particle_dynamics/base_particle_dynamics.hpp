@@ -14,8 +14,7 @@ namespace SPH {
 	ParticleDynamicsWithInnerConfigurations<BodyType, ParticlesType, MaterialType>
 		::ParticleDynamicsWithInnerConfigurations(BodyType* body) 
 		: ParticleDynamics<void, BodyType, ParticlesType, MaterialType>(body) {
-		current_configuration_ = &body->current_configuration_;
-		reference_configuration_ = &body->reference_configuration_;
+		inner_configuration_ = &body->inner_configuration_;
 	}
 //=================================================================================================//
 	template <class BodyType, class ParticlesType, class MaterialType,
@@ -92,7 +91,7 @@ namespace SPH {
 		cell_spacing_ = mesh_cell_linked_list_->getCellSpacing();
 		mesh_lower_bound_ = mesh_cell_linked_list_->getMeshLowerBound();
 		cutoff_radius_ = mesh_cell_linked_list_->getCellSpacing();
-		kernel_ = body_->kernel_;
+		kernel_ = body->kernel_;
 	};
 	//=================================================================================================//
 	template <class BodyType, class ParticlesType, class MaterialType>
@@ -124,7 +123,7 @@ namespace SPH {
 		this->SetupDynamics(dt);
 		InnerIteratorSplitting_parallel(this->split_cell_lists_, functor_inner_interaction_, dt);
 	}
-	//===================================================================//
+	//=============================================================================================//
 	template <class BodyType, class ParticlesType, class MaterialType,
 		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType>
 		void ParticleDynamicsComplexSplitting<BodyType, ParticlesType, MaterialType,
@@ -134,7 +133,7 @@ namespace SPH {
 		this->SetupDynamics(dt);
 		InnerIteratorSplitting(this->split_cell_lists_, functor_particle_interaction_, dt);
 	}
-	//===============================================================//
+	//=============================================================================================//
 	template <class BodyType, class ParticlesType, class MaterialType,
 		class InteractingBodyType, class InteractingParticlesType, class InteractingMaterialType>
 		void ParticleDynamicsComplexSplitting<BodyType, ParticlesType, MaterialType,

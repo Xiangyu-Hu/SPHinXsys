@@ -19,8 +19,7 @@ Real Re = 1.0;			/**< Reynolds number*/
 Real mu_f = sqrt(0.25*rho0_f * powern(0.5*DT, 3)* gravity_g / Re);
 Real U_f = 0.25*powern(0.5 * DT, 2)* gravity_g / mu_f;
 Real c_f = SMAX(10.0*U_f, 10.0*mu_f/ rho0_f/ particle_spacing_ref);
-Real k_f = 0.0;
-Real mu_p_f = 0.6*mu_f;
+Real mu_p_f = 0.6 * mu_f;
 Real lambda_f = 10.0;
 
 //define the fluid body
@@ -59,7 +58,23 @@ class FluidBlock : public FluidBody
 			body_region_.done_modeling();
 		}
 };
+/**
+ * @brief 	Case dependent material properties definition.
+ */
+class NonNewtonianMaterial : public Oldroyd_B_Fluid
+{
+public:
+	NonNewtonianMaterial() : Oldroyd_B_Fluid()
+	{
+		rho_0_ = rho0_f;
+		c_0_ = c_f;
+		mu_ = mu_f;
+		mu_p_ =  mu_p_f;
+		lambda_ = lambda_f;
 
+		assignDerivedMaterialParameters();
+	}
+};
 //define the static solid wall boudary
 class WallBoundary : public SolidBody
 {
@@ -121,9 +136,9 @@ int main()
 	FluidBlock *fluid_block 
 		= new FluidBlock(system, "FluidBody", 0, ParticlesGeneratorOps::lattice);
 	//fluid material properties
-	Oldroyd_B_Fluid fluid("Fluid", fluid_block, rho0_f, c_f, mu_f, k_f, lambda_f, mu_p_f);
+	NonNewtonianMaterial *non_newtonian_material = new NonNewtonianMaterial();
 	//creat fluid particles
-	ViscoelasticFluidParticles fluid_particles(fluid_block);
+	ViscoelasticFluidParticles fluid_particles(fluid_block, non_newtonian_material);
 
 	//the wall boundary
 	WallBoundary *wall_boundary 
@@ -137,9 +152,6 @@ int main()
 	SPHBodyTopology body_topology 
 		= { { fluid_block, { wall_boundary} },	{ wall_boundary, { } } };
 	system.SetBodyTopology(&body_topology);
-
-	//setting up the simulation
-	system.SetupSPHSimulation();
 
 	//-------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
@@ -175,8 +187,7 @@ int main()
 		pressure_relaxation_second_half(fluid_block, { wall_boundary });
 
 	//-------- common paritcle dynamics ----------------------------------------
-	InitializeOtherAccelerations
-		initialize_other_acceleration(fluid_block, &gravity);
+	InitializeATimeStep 	initialize_a_fluid_step(fluid_block, &gravity);
 	//computing viscous acceleration
 	fluid_dynamics::ComputingViscousAcceleration
 		viscous_acceleration(fluid_block, { wall_boundary});
@@ -214,7 +225,9 @@ int main()
 	//as extra cell linked list form 
 	//periodic regions to the corresponding boundaries
 	//for buiding up of extra configuration
+	system.InitializeSystemCellLinkedLists();
 	periodic_condition.parallel_exec();
+	system.InitializeSystemConfigurations();
 	//update configuration after periodic boundary condition
 	update_water_block_configuration.parallel_exec();
 
@@ -244,9 +257,9 @@ int main()
 		//integrate time (loop) until the next output time
 		while (integeral_time < D_Time) {
 
+			initialize_a_fluid_step.parallel_exec();
 			Dt = get_fluid_adevction_time_step_size.parallel_exec();
 			update_fluid_desnity.parallel_exec();
-			initialize_other_acceleration.parallel_exec();
 			viscous_acceleration.parallel_exec();
 			transport_velocity_correction.parallel_exec(Dt);
 

@@ -1,6 +1,7 @@
 /**
  * @file 	observer_dynamics.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @brief 	Here, Functions defined in observer_dyanmcis.h are detailed.
+ * @author	Chi ZHang and Xiangyu Hu
  * @version	0.1
  */
 
@@ -13,115 +14,53 @@ namespace SPH
 //=================================================================================================//
 	namespace observer_dynamics
 	{
-//=================================================================================================//
-		template <typename FluidQuantityType>
-		void ObserveAFluidQuantity<FluidQuantityType>
-			::ContactInteraction(size_t index_particle_i,	size_t interacting_body_index, Real dt)
+		//=================================================================================================//
+		void CorrectKenelWeightsForInterpolation::ComplexInteraction(size_t index_particle_i, Real dt)
 		{
-			FluidQuantityType observed_quantity(0);
-			Real weight(0);
-			NeighborList& contact_neighors
-				= getNeighborList(current_interacting_configuration_[interacting_body_index], index_particle_i);
-			for (size_t n = 0; n < contact_neighors.size(); ++n)
-			{
-				BaseNeighborRelation* neighboring_particle = contact_neighors[n];
-				size_t index_particle_j = neighboring_particle->j_;
-				BaseParticleData &base_particle_data_j 
-					= (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
+			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 
-				observed_quantity += GetAFluidQuantity(index_particle_j, *interacting_particles_[interacting_body_index]) 
-					* neighboring_particle->W_ij_ * base_particle_data_j.Vol_ ;
-				weight += neighboring_particle->W_ij_ * base_particle_data_j.Vol_;
+			Vecd weight_correction(0.0);
+			Matd local_configuration(0.0);
+			/** Compute the first order consistent kernel weights */
+			for (size_t k = 0; k < current_interacting_configuration_.size(); ++k)
+			{
+				NeighborList& contact_neighors
+					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
+				for (size_t n = 0; n < contact_neighors.size(); ++n)
+				{
+					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
+					size_t index_particle_j = neighboring_particle->j_;
+					BaseParticleData& base_particle_data_j = (*interacting_particles_[k]).base_particle_data_[index_particle_j];
+
+					Vecd r_ji = -neighboring_particle->r_ij_ * neighboring_particle->e_ij_;
+					weight_correction += r_ji * neighboring_particle->W_ij_ * base_particle_data_j.Vol_;
+					Vecd gradw_ij = neighboring_particle->dW_ij_ * neighboring_particle->e_ij_;
+					local_configuration += base_particle_data_j.Vol_ * SimTK::outer(r_ji, gradw_ij);
+				}
 			}
 
-			fluid_quantities_[index_particle_i] = observed_quantity / weight;
-		}
-		//template definitions should be instantiated here
-		template class ObserveAFluidQuantity<Real>;
-		template class ObserveAFluidQuantity<Vecd>;
-//=================================================================================================//
-		template <typename ElasticSolidQuantityType>
-		void ObserveAnElasticSolidQuantity<ElasticSolidQuantityType>
-			::ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt)
-		{
-			ElasticSolidQuantityType observed_quantity(0);
-			Real total_weight(0);
-			NeighborList& contact_neighors
-				= getNeighborList(current_interacting_configuration_[interacting_body_index], index_particle_i);
-			for (size_t n = 0; n < contact_neighors.size(); ++n)
+			/** correction matrix for interacting configuration */
+			Matd B_ = GeneralizedInverse(local_configuration);
+
+			/** Add the kernel weight correction to W_ij_ of neighboring particles. */
+			for (size_t k = 0; k < current_interacting_configuration_.size(); ++k)
 			{
-				BaseNeighborRelation* neighboring_particle = contact_neighors[n];
-				size_t index_particle_j = neighboring_particle->j_;
-				BaseParticleData &base_particle_data_j
-					= (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
+				NeighborList& contact_neighors
+					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
+				for (size_t n = 0; n < contact_neighors.size(); ++n)
+				{
+					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
+					size_t index_particle_j = neighboring_particle->j_;
+					BaseParticleData& base_particle_data_j = (*interacting_particles_[k]).base_particle_data_[index_particle_j];
 
-				observed_quantity += GetAnElasticSolidQuantity(index_particle_j, *interacting_particles_[interacting_body_index])
-					* neighboring_particle->W_ij_ * base_particle_data_j.Vol_;
-				total_weight += neighboring_particle->W_ij_ * base_particle_data_j.Vol_;
+					Vecd normalized_weight_correction = B_ * weight_correction;
+					neighboring_particle->W_ij_ 
+						-= dot(normalized_weight_correction, neighboring_particle->e_ij_) * neighboring_particle->dW_ij_;
+				}
 			}
-
-			elastic_body_quantities_[index_particle_i] = observed_quantity / total_weight;
 		}
-		//template definitions should be instantiated here
-		template class ObserveAnElasticSolidQuantity<Real>;
-		template class ObserveAnElasticSolidQuantity<Vecd>;
-//=================================================================================================//
-		template <typename ElectroPhysiologyQuantityType>
-		void ObserveAElectroPhysiologyQuantity<ElectroPhysiologyQuantityType>
-			::ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt)
-		{
-			ElectroPhysiologyQuantityType observed_quantity(0);
-			Real total_weight(0);
-			NeighborList& contact_neighors
-				= getNeighborList(current_interacting_configuration_[interacting_body_index], index_particle_i);
-			for (size_t n = 0; n < contact_neighors.size(); ++n)
-			{
-				BaseNeighborRelation* neighboring_particle = contact_neighors[n];
-				size_t index_particle_j = neighboring_particle->j_;
-				BaseParticleData &base_particle_data_j
-					= (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
-
-				observed_quantity += GetAMuscleQuantity(index_particle_j, *interacting_particles_[interacting_body_index])
-					* neighboring_particle->W_ij_ * base_particle_data_j.Vol_;
-				total_weight += neighboring_particle->W_ij_ * base_particle_data_j.Vol_;
-			}
-
-			electro_physiology_quantities_[index_particle_i] = observed_quantity / total_weight;
-		}
-		//template definitions should be instantiated here
-		template class ObserveAElectroPhysiologyQuantity<Real>;
-//=================================================================================================//
-		template <typename ElectroPhysiologyQuantityType>
-		void ElectroPhysiologyQuantityInterpolation<ElectroPhysiologyQuantityType>::ContactInteraction(size_t index_particle_i, size_t interacting_body_index, Real dt)
-		{
-			BaseParticleData &base_particle_data_i 		= particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_data_i 			= particles_->solid_body_data_[index_particle_i];
-			ElasticSolidParticleData &elastic_data_i 	= particles_->elastic_body_data_[index_particle_i];
-			ActiveMuscleData &active_muscle_data_i 		= particles_->active_muscle_data_[index_particle_i];
-
-			ElectroPhysiologyQuantityType observed_quantity(0);
-			Real total_weight(0);
-			NeighborList& contact_neighors
-				= getNeighborList(current_interacting_configuration_[interacting_body_index], index_particle_i);
-			for (size_t n = 0; n < contact_neighors.size(); ++n)
-			{
-				BaseNeighborRelation* neighboring_particle = contact_neighors[n];
-				size_t index_particle_j = neighboring_particle->j_;
-				BaseParticleData &base_particle_data_j = (*interacting_particles_[interacting_body_index]).base_particle_data_[index_particle_j];
-
-				observed_quantity += GetAMuscleQuantity(index_particle_j, *interacting_particles_[interacting_body_index])
-					* neighboring_particle->W_ij_ * base_particle_data_j.Vol_;
-				total_weight += neighboring_particle->W_ij_ * base_particle_data_j.Vol_;
-			}
-
-			active_muscle_data_i.active_contraction_stress_ = observed_quantity / total_weight;
-		}
-		//template definitions should be instantiated here
-		template class ElectroPhysiologyQuantityInterpolation<Real>;
-//=================================================================================================//
+		//=================================================================================================//
 	}
 //=================================================================================================//
 }
-//=================================================================================================//
-
 

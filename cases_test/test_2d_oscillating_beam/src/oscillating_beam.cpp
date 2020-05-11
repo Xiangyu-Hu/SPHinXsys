@@ -96,6 +96,22 @@ public:
 	}
 };
 /**
+ * @brief Define beam material.
+ */
+class BeamMaterial : public LinearElasticSolid
+{
+public:
+	BeamMaterial()	: LinearElasticSolid()
+	{
+		rho_0_ = rho0_s;
+		E_0_ = Youngs_modulus;
+		nu_ = poisson;
+
+		assignDerivedMaterialParameters();
+	}
+};
+
+/**
  * application dependent initial condition 
  */
 class BeamInitialCondition
@@ -110,10 +126,10 @@ protected:
 		BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 		SolidParticleData &solid_body_data_i = particles_->solid_body_data_[index_particle_i];
 
-		Real x = solid_body_data_i.pos_0_[0] / PL;
+		Real x = base_particle_data_i.pos_0_[0] / PL;
 		if (x > 0.0) {
 			base_particle_data_i.vel_n_[1]
-				= vf * material_->c_0_*(M*(cos(kl*x) - cosh(kl*x)) - N * (sin(kl*x) - sinh(kl*x))) / Q;
+				= vf * material_->getReferenceSoundSpeed()*(M*(cos(kl*x) - cosh(kl*x)) - N * (sin(kl*x) - sinh(kl*x))) / Q;
 		}
 	};
 };
@@ -122,11 +138,11 @@ protected:
 * NOTE: this class can only be instanced after body particles
 * have been generated
 */
-class BeamBase : public SolidBodyPart
+class BeamBase : public BodyPartByParticle
 {
 public:
 	BeamBase(SolidBody *solid_body, string constrianed_region_name)
-		: SolidBodyPart(solid_body, constrianed_region_name)
+		: BodyPartByParticle(solid_body, constrianed_region_name)
 	{
 		/* Geometry defination */
 		std::vector<Point> beam_base_shape = CreatBeamBaseShape();
@@ -145,17 +161,15 @@ public:
 };
 
 //define an observer body
-class BeamObserver : public ObserverLagrangianBody
+class BeamObserver : public FictitiousBody
 {
 public:
-	BeamObserver(SPHSystem &system, string body_name, 
-			   int refinement_level, ParticlesGeneratorOps op)
-		: ObserverLagrangianBody(system, body_name, refinement_level, op)
+	BeamObserver(SPHSystem &system, string body_name, int refinement_level, ParticlesGeneratorOps op)
+		: FictitiousBody(system, body_name, refinement_level, 1.3, op)
 	{
 		body_input_points_volumes_.push_back(make_pair(Point(PL, 0.0), 0.0));
 	}
 };
-
 //------------------------------------------------------------------------------
 //the main program
 //------------------------------------------------------------------------------
@@ -171,14 +185,14 @@ int main()
 	Beam *beam_body = 
 		new Beam(system, "BeamBody", 0, ParticlesGeneratorOps::lattice);
 	//Configuration of soild materials
-	ElasticSolid beam_material("ElasticSolid", beam_body, rho0_s, Youngs_modulus, poisson, 0.0);
+	BeamMaterial *beam_material = new BeamMaterial();
 	//creat particles for the elastic body
-	ElasticSolidParticles beam_particles(beam_body);
+	ElasticSolidParticles beam_particles(beam_body, beam_material);
 
 	BeamObserver *beam_observer 
 		= new BeamObserver(system, "BeamObserver", 1, ParticlesGeneratorOps::direct);
 	//create observer particles
-	ObserverParticles observer_particles(beam_observer);
+	BaseParticles observer_particles(beam_observer);
 
 	//set body contact map
 	//the contact map gives the data conntections between the bodies
@@ -187,10 +201,6 @@ int main()
 		= { { beam_body, {} }, { beam_observer,{ beam_body} } };
 	system.SetBodyTopology(&body_topology);
 
-	//setting up the simulation
-	system.SetupSPHSimulation();
-
-
 	//-----------------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
 	//-----------------------------------------------------------------------------
@@ -198,16 +208,16 @@ int main()
 	BeamInitialCondition beam_initial_velocity(beam_body);
 	//corrected strong configuration	
 	solid_dynamics::CorrectConfiguration
-		beam_corrected_configuration_in_strong_form(beam_body, {});
+		beam_corrected_configuration_in_strong_form(beam_body);
 
 	//time step size caclutation
 	solid_dynamics::GetAcousticTimeStepSize computing_time_step_size(beam_body);
 
 	//stress relaxation for the beam
-	solid_dynamics::StressRelaxationFirstStep
-		stress_relaxation_first_step(beam_body);
-	solid_dynamics::StressRelaxationSecondStep
-		stress_relaxation_second_step(beam_body);
+	solid_dynamics::StressRelaxationFirstHalf
+		stress_relaxation_first_half(beam_body);
+	solid_dynamics::StressRelaxationSecondHalf
+		stress_relaxation_second_half(beam_body);
 
 	/**
 	 * @brief Constrain a solid body part
@@ -220,13 +230,14 @@ int main()
 	//-----------------------------------------------------------------------------
 	In_Output in_output(system);
 	WriteBodyStatesToVtu write_beam_states(in_output, system.real_bodies_);
-	WriteObservedElasticDisplacement
-		write_beam_tip_displacement(in_output, beam_observer, { beam_body });
-
-
+	WriteAnObservedQuantity<Vecd, BaseParticles,
+		BaseParticleData, &BaseParticles::base_particle_data_, &BaseParticleData::pos_n_>
+		write_beam_tip_displacement("Displacement", in_output, beam_observer, beam_body);
 	/**
 	 * @brief Setup goematrics and initial conditions
 	 */
+	system.InitializeSystemCellLinkedLists();
+	system.InitializeSystemConfigurations();
 	beam_initial_velocity.exec();
 	beam_corrected_configuration_in_strong_form.parallel_exec();
 
@@ -243,7 +254,7 @@ int main()
 	Real End_Time = T0;
 	//time step size for oupt file
 	Real D_Time = 0.01*T0;
-	Real Dt = 0.01*D_Time;			//default advection time step sizes
+	Real Dt = 0.1*D_Time;			/**< Time period for data observing */
 	Real dt = 0.0; 					//default accoustic time step sizes
 
 	//statistics for computing time
@@ -266,9 +277,9 @@ int main()
 						<< dt << "\n";
 				}
 
-				stress_relaxation_first_step.parallel_exec(dt);
+				stress_relaxation_first_half.parallel_exec(dt);
 				constrain_beam_base.parallel_exec(dt);
-				stress_relaxation_second_step.parallel_exec(dt);
+				stress_relaxation_second_half.parallel_exec(dt);
 
 				ite++;
 				dt = computing_time_step_size.parallel_exec();

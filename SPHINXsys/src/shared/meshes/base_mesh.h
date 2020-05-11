@@ -23,8 +23,8 @@ using namespace std::placeholders;
 
 using namespace std;
 
-namespace SPH {
-
+namespace SPH 
+{
 	/** Functor for operation oon the mesh. */
 	typedef std::function<void(Vecu, Real)> MeshFunctor;
 	/** Functor for operation on the mesh data package. */
@@ -36,41 +36,45 @@ namespace SPH {
 	void MeshIterator_parallel(Vecu index_begin, Vecu index_end, MeshFunctor& mesh_functor, Real dt = 0.0);
 	/** Iterator on a collection of mesh data packages. sequential computing. */
 	template <class DataPackageType>
-	void PackageIterator(ConcurrentVector<DataPackageType*> data_pkgs_,
-		PacakgeFunctor<void>& pkg_functor, Real dt = 0.0) {
-		for (size_t i = 0; i != inner_data_pkgs_.size(); ++i)
-			inner_data_pkgs_[i]->pkg_functor(dt);
+	void PackageIterator(ConcurrentVector<DataPackageType*> inner_data_pkgs,
+		PacakgeFunctor<void>& pkg_functor, Real dt = 0.0) 
+	{
+		for (size_t i = 0; i != inner_data_pkgs.size(); ++i)
+			inner_data_pkgs[i]->pkg_functor(dt);
 
 	};
 	/** Iterator on a collection of mesh data packages. parallel computing. */
 	template <class DataPackageType>
-	void PackageIterator_parallel(ConcurrentVector<DataPackageType*> data_pkgs_,
-		PacakgeFunctor<void>& pkg_functor, Real dt = 0.0) {
-		parallel_for(blocked_range<size_t>(0, inner_data_pkgs_.size()),
+	void PackageIterator_parallel(ConcurrentVector<DataPackageType*> inner_data_pkgs,
+		PacakgeFunctor<void>& pkg_functor, Real dt = 0.0) 
+	{
+		parallel_for(blocked_range<size_t>(0, inner_data_pkgs.size()),
 			[&](const blocked_range<size_t>& r) {
 				for (size_t i = r.begin(); i != r.end(); ++i) {
-					inner_data_pkgs_[i]->pkg_functor(dt);
+					inner_data_pkgs[i]->pkg_functor(dt);
 				}
 			}, ap);
 	};
 	/** Package iterator for reducing. sequential computing. */
 	template <class ReturnType, typename ReduceOperation, class DataPackageType>
-	ReturnType ReducePacakageIterator(ConcurrentVector<DataPackageType*> inner_data_pkgs_, ReturnType temp,
-		PacakgeFunctor<ReturnType>& reduce_pkg_functor, ReduceOperation& ruduce_operation, Real dt = 0.0) {
-		for (size_t i = 0; i < inner_data_pkgs_.size(); ++i)
+	ReturnType ReducePacakageIterator(ConcurrentVector<DataPackageType*> inner_data_pkgs, ReturnType temp,
+		PacakgeFunctor<ReturnType>& reduce_pkg_functor, ReduceOperation& ruduce_operation, Real dt = 0.0) 
+	{
+		for (size_t i = 0; i < inner_data_pkgs.size(); ++i)
 		{
-			temp = reduce_operation(temp, inner_data_pkgs_[i]->reduce_functor(dt));
+			temp = reduce_operation(temp, inner_data_pkgs[i]->reduce_functor(dt));
 		}
 		return temp;
 	};
 	/** Package iterator for reducing. parallel computing. */
 	template <class ReturnType, typename ReduceOperation, class DataPackageType>
-	ReturnType ReduceMeshIterator_parallel(ConcurrentVector<DataPackageType*> inner_data_pkgs_, ReturnType temp,
+	ReturnType ReduceMeshIterator_parallel(ConcurrentVector<DataPackageType*> inner_data_pkgs, ReturnType temp,
 		PacakgeFunctor<ReturnType>& reduce_fupkg_functor, ReduceOperation& ruduce_operation, Real dt = 0.0) {
-		return parallel_reduce(blocked_range<size_t>(0, number_of_particles),
-			temp, [&](const blocked_range<size_t>& r, ReturnType temp0)->ReturnType {
+		return parallel_reduce(blocked_range<size_t>(0, inner_data_pkgs.size()),
+			temp, [&](const blocked_range<size_t>& r, ReturnType temp0)->ReturnType 
+			{
 				for (size_t i = r.begin(); i != r.end(); ++i) {
-					temp0 = reduce_operation(temp0, inner_data_pkgs_[i]->reduce_functor(dt));
+					temp0 = reduce_operation(temp0, inner_data_pkgs[i]->reduce_functor(dt));
 				}
 				return temp0;
 			},
@@ -168,6 +172,8 @@ namespace SPH {
 		Real getCellSpacing() { return cell_spacing_; };
 		Vecu getNumberOfCells() { return number_of_cells_; };
 
+		/** check whether a position well within in the mesh bounds */
+		bool checkMeshBound(Vecd position);
 		/** find cell indexes from point poistion */
 		Vecu CellIndexesFromPosition(Vecd& position);
 		/** Find cell position from indexes.
@@ -403,11 +409,12 @@ namespace SPH {
 		StdVec<DataPackageType*> singular_data_pkgs_addrs;
 
 		/** find the poistion data from its global index */
-		Vecd getDataPositionFromIndex(Vecu global_data_index) {
+		Vecd getDataPositionFromIndex(Vecu global_data_index) 
+		{
 			Vecd data_position;
 			for (int n = 0; n < data_position.size(); n++)
 			{
-				data_position[n] = mesh_lower_bound_[n] + 0.5* data_spacing_
+				data_position[n] = this->mesh_lower_bound_[n] + 0.5* data_spacing_
 					+ Real(global_data_index[n]) * data_spacing_;
 			}
 			return data_position;
@@ -439,7 +446,7 @@ namespace SPH {
 		{
 			pkg_size_ = DataPackageType().getDataPackageSize();
 			data_spacing_ = grid_spacing / (Real)pkg_size_;
-			number_of_data_ = number_of_cells_ * pkg_size_;
+			number_of_data_ = this->number_of_cells_ * pkg_size_;
 			AllocateMeshDataMatrix();
 		}
 		/** Constructor using mesh information directly. */
@@ -447,8 +454,8 @@ namespace SPH {
 			: BaseMeshType(mesh_lower_bound, number_of_cells, cell_spacing)
 		{
 			pkg_size_ = DataPackageType().getDataPackageSize();
-			data_spacing_ = grid_spacing_ / (Real)pkg_size_;
-			number_of_data_ = number_of_cells_ * pkg_size_;
+			data_spacing_ = this->grid_spacing_ / (Real)pkg_size_;
+			number_of_data_ = this->number_of_cells_ * pkg_size_;
 			AllocateMeshDataMatrix();
 		};
 		virtual ~MeshWithDataPackages() { DeleteMeshDataMatrix(); };

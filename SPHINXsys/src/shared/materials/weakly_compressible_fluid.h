@@ -13,6 +13,8 @@
 
 namespace SPH {
 
+	/** preclaimed classes. */
+	class ViscoelasticFluidParticles;
 	/**
 	 * @class WeaklyCompressibleFluid
 	 * @brief Linear equation of state (EOS).
@@ -30,8 +32,9 @@ namespace SPH {
 		};
 	public:
 		/** Constructor with material name. */
-		explicit WeaklyCompressibleFluid(string fluid_name) 
-			: Fluid(fluid_name), p0_(1.0) {};
+		explicit WeaklyCompressibleFluid() : Fluid(), p0_(1.0) {
+			material_name_ = "WeaklyCompressibleFluid";
+		};
 		virtual ~WeaklyCompressibleFluid() {};
 
 		/** the interface for dynamical cast*/
@@ -65,12 +68,13 @@ namespace SPH {
 		};
 	public:
 		/** constructor */
-		WeaklyCompressibleFluidFreeSurface(string fluid_name, Real cutoff_pressure)
-			: WeaklyCompressibleFluid(fluid_name),
+		WeaklyCompressibleFluidFreeSurface(Real cutoff_pressure)
+			: WeaklyCompressibleFluid(),
 			cutoff_pressure_(cutoff_pressure) {
-			fluid_ = new WeaklyCompressibleFluidType(fluid_name);
+			fluid_ = new WeaklyCompressibleFluidType();
+			material_name_ = fluid_->material_name_ + "FreeSurface";
 			cutoff_density_ = fluid_->ReinitializeRho(cutoff_pressure);
-		};
+		}; 
 		virtual ~WeaklyCompressibleFluidFreeSurface() {};
 
 		virtual Real GetPressure(Real rho) override {
@@ -95,8 +99,9 @@ namespace SPH {
 
 	public:
 		/** constructor. */
-		SymmetricTaitFluid(string fluid_name)
-			: WeaklyCompressibleFluid(fluid_name), gamma_(2) {};
+		SymmetricTaitFluid() : WeaklyCompressibleFluid(), gamma_(2) {
+			material_name_ = "SymmetricTaitFluid";
+		};
 		virtual ~SymmetricTaitFluid() {};
 
 		/** the interface for dynamical cast*/
@@ -118,6 +123,8 @@ namespace SPH {
 		Real lambda_;
 		/** polymeric viscosity */
 		Real mu_p_;
+		/** particles for this material */
+		ViscoelasticFluidParticles* viscoelastic_fluid_particles_;
 
 		/** assign derived material properties*/
 		virtual void assignDerivedMaterialParameters() {
@@ -125,11 +132,16 @@ namespace SPH {
 		};
 	public:
 		/** constructor */
-		explicit Oldroyd_B_Fluid(string fluid_name)
-			: WeaklyCompressibleFluid(fluid_name),
-			lambda_(1.0), mu_p_(0.0) {};
+		explicit Oldroyd_B_Fluid() : WeaklyCompressibleFluid(),
+			lambda_(1.0), mu_p_(0.0) {
+			material_name_ = "Oldroyd_B_Fluid";
+		};
 		virtual ~Oldroyd_B_Fluid() {};
 
+		/** assign particles to this material */
+		void assignViscoelasticFluidParticles(ViscoelasticFluidParticles* viscoelastic_fluid_particles) {
+			viscoelastic_fluid_particles_ = viscoelastic_fluid_particles;
+		};
 		Real getReferenceRelaxationTime() { return lambda_; };
 		Real getReferencePloymericViscosity() { return mu_p_; };
 

@@ -23,7 +23,7 @@ namespace SPH
 			/** Inner interaction. */
 			Real sigma = W0_;
 			NeighborList& inner_neighors
-				= getNeighborList(current_configuration_, index_particle_i);
+				= getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
@@ -75,7 +75,7 @@ namespace SPH
 			/** Inner interaction. */
 			Real div_correction = 0.0;
 			NeighborList& inner_neighors
-				= getNeighborList(current_configuration_, index_particle_i);
+				= getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
@@ -118,21 +118,22 @@ namespace SPH
 			/** Inner interaction. */
 			Vecd acceleration(0);
 			Vecd vel_derivative(0);
-				NeighborList& inner_neighors
-				= getNeighborList(current_configuration_, index_particle_i);
+			NeighborList& inner_neighors
+				= getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				Real dW_ij = neighboring_particle->dW_ij_;
 				size_t index_particle_j = neighboring_particle->j_;
-				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
+				BaseParticleData& base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 				Real Vol_j = base_particle_data_j.Vol_;
 
 				//viscous force
 				vel_derivative = (vel_i - base_particle_data_j.vel_n_)
 					/ (neighboring_particle->r_ij_ + 0.01 * smoothing_length_);
-				acceleration += 2.0*mu_* vel_derivative * Vol_j * dW_ij / rho_i;				/** acceleration in strong form */
+				acceleration += 2.0 * mu_ * vel_derivative * Vol_j * dW_ij / rho_i;				/** acceleration in strong form */
 			}
+
 
 			/** Contact interaction. */
 			for (size_t k = 0; k < current_interacting_configuration_.size(); ++k)
@@ -140,11 +141,11 @@ namespace SPH
 				/** computing the accelerations of near wall particles without considering wall. */
 				Vecd acceleration_inner = acceleration;
 				NeighborList& inner_neighors
-					= getNeighborList(current_configuration_, index_particle_i);
+					= getNeighborList(inner_configuration_, index_particle_i);
 				for (size_t n = 0; n < inner_neighors.size(); ++n)
 				{
 					BaseNeighborRelation* neighboring_particle = inner_neighors[n];
-					Vecd& nablaW_ij = neighboring_particle->getNablaWij();
+					Vecd nablaW_ij = neighboring_particle->getNablaWij();
 					size_t index_particle_j = neighboring_particle->j_;
 					BaseParticleData& base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 					FluidParticleData& fluid_data_j = particles_->fluid_particle_data_[index_particle_j];
@@ -188,7 +189,7 @@ namespace SPH
 			/** Inner interaction. */
 			Vecd acceleration(0);
 			NeighborList& inner_neighors
-				= getNeighborList(current_configuration_, index_particle_i);
+				= getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
@@ -200,7 +201,7 @@ namespace SPH
 				/** The following viscous force is given in Monaghan 2005 (Rep. Prog. Phys.), it seems that 
 				 * is formulation is more accurate thant the previsou one for Taygree-Vortex flow. */
 				Real v_r_ij = dot(base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_, r_ij * e_ij);
-				Real eta_ij = 8.0 * mu_ * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
+				Real eta_ij = 8.0 * mu_  * v_r_ij /	(r_ij * r_ij + 0.01 * smoothing_length_);
 				acceleration += eta_ij * base_particle_data_j.Vol_ / fluid_data_i.rho_n_
 					* neighboring_particle->dW_ij_ * e_ij;
 			}
@@ -244,7 +245,7 @@ namespace SPH
 			/** Inner interaction. */
 			Vecd acceleration(0);
 			NeighborList& inner_neighors
-				= getNeighborList(current_configuration_, index_particle_i);
+				= getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
@@ -304,7 +305,7 @@ namespace SPH
 			/** Inner interaction. */
 			Vecd acceleration_trans(0);
 			NeighborList& inner_neighors
-				= getNeighborList(current_configuration_, index_particle_i);
+				= getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
@@ -429,7 +430,7 @@ namespace SPH
 
 			Vecd acceleration = base_particle_data_i.dvel_dt_others_;
 				NeighborList& inner_neighors
-				= getNeighborList(current_configuration_, index_particle_i);
+				= getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
@@ -527,7 +528,7 @@ namespace SPH
 			Real density_change_rate = 0.0;
 			Vecd vel_star(0);
 			NeighborList& inner_neighors
-				= getNeighborList(current_configuration_, index_particle_i);
+				= getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
@@ -563,7 +564,7 @@ namespace SPH
 
 					Vecd& e_ij = neighboring_particle->e_ij_;
 					Real r_ij = neighboring_particle->r_ij_;
-					Vecd& vel_in_wall = 2.0 * solid_data_j.vel_ave_ - vel_i;
+					Vecd vel_in_wall = 2.0 * solid_data_j.vel_ave_ - vel_i;
 					Real dW_ij = neighboring_particle->dW_ij_;
 					Real face_wall_external_acceleration
 						= dot((dvel_dt_others_i - solid_data_j.dvel_dt_ave_), e_ij);
@@ -633,7 +634,7 @@ namespace SPH
 
 			Vecd acceleration(0);
 			NeighborList& inner_neighors
-				= getNeighborList(current_configuration_, index_particle_i);
+				= getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
@@ -679,7 +680,7 @@ namespace SPH
 			mu_p_ = oldroy_b_fluid->getReferencePloymericViscosity();
 			lambda_ = oldroy_b_fluid->getReferenceRelaxationTime();
 		}
-//=================================================================================================//
+		//=================================================================================================//
 		void PressureRelaxationSecondHalfOldroyd_B::ComplexInteraction(size_t index_particle_i, Real dt)
 		{
 			PressureRelaxationSecondHalfRiemann::ComplexInteraction(index_particle_i, dt);
@@ -692,7 +693,7 @@ namespace SPH
 
 			Matd stress_rate(0);
 			NeighborList& inner_neighors
-				= getNeighborList(current_configuration_, index_particle_i);
+				= getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
@@ -797,7 +798,7 @@ namespace SPH
 				}
 				/** Buffer Particle state copied from real particle. */
 				particles_->CopyFromAnotherParticle(body_->number_of_particles_, index_particle_i);
-				/** Realize the buffer particle by increasíng the number of real particle in the body.  */
+				/** Realize the buffer particle by increasï¿½ng the number of real particle in the body.  */
 				body_->number_of_particles_ += 1;
 				/** Periodic bounding. */
 				base_particle_data_i.pos_n_[axis_] -= periodic_translation_[axis_];
@@ -819,12 +820,108 @@ namespace SPH
 				}
 				/** Buffer Particle state copied from real particle. */
 				particles_->CopyFromAnotherParticle(body_->number_of_particles_, index_particle_i);
-				/** Realize the buffer particle by increasíng the number of real particle in the body.  */
+				/** Realize the buffer particle by increasï¿½ng the number of real particle in the body.  */
 				body_->number_of_particles_ += 1;
 				base_particle_data_i.pos_n_[axis_] += periodic_translation_[axis_];
 			}
 		}
-	//=================================================================================================//
+		//=================================================================================================//
+	    void ImplicitComputingViscousAcceleration::Initialization(size_t index_particle_i, Real dt)
+		{
+			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
+			base_particle_data_i.dvel_dt_ = 0.0;
+		}
+		//=================================================================================================//
+	    void ImplicitComputingViscousAcceleration::ComplexInteraction(size_t index_particle_i, Real dt)
+		{
+			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
+			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
+			Real rho_i = fluid_data_i.rho_n_;
+
+			/** Inner interaction. */
+			Real A_sum(0.0);
+			Real A_square_sum(0.0);
+			Vecd A_v_j_sum(0.0);
+			NeighborList& inner_neighors
+				= getNeighborList(inner_configuration_, index_particle_i);
+			for (size_t n = 0; n < inner_neighors.size(); ++n)
+			{
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
+				size_t index_particle_j = neighboring_particle->j_;
+				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
+				/** Viscous force. */
+				Real A_ij = dt * 2.0 * mu_ * base_particle_data_j.Vol_ * neighboring_particle->dW_ij_ 
+					/ (neighboring_particle->r_ij_ + 0.01 * smoothing_length_) / rho_i;
+				A_sum += A_ij;
+				A_square_sum += A_ij * A_ij;
+				A_v_j_sum += A_ij * base_particle_data_j.vel_n_;
+			}
+			
+			/** Contact interaction. */
+			for (size_t k = 0; k < current_interacting_configuration_.size(); ++k)
+			{
+				NeighborList& contact_neighors 
+					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
+				for (size_t n = 0; n < contact_neighors.size(); ++n)
+				{
+					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
+					size_t index_particle_j = neighboring_particle->j_;
+					BaseParticleData &base_particle_data_j
+						= (*interacting_particles_[k]).base_particle_data_[index_particle_j];
+					SolidParticleData &solid_data_j
+						= (*interacting_particles_[k]).solid_body_data_[index_particle_j];
+					/** Viscous force. */
+					Real A_ij = dt * 2.0 * mu_ * base_particle_data_j.Vol_ * neighboring_particle->dW_ij_ 
+						/ (neighboring_particle->r_ij_ + 0.01 * smoothing_length_) / rho_i;
+					A_sum += A_ij;
+					A_square_sum += A_ij * A_ij;
+					A_v_j_sum += A_ij * solid_data_j.vel_ave_;
+				}
+			}
+			/** Compute the lambda. */
+			Vecd lambda = (base_particle_data_i.vel_n_ * A_sum - A_v_j_sum) / ((1.0 - A_sum) * (1.0 - A_sum) + A_square_sum) ;
+			/** Force calculation. */
+			/** Inner interaction. */
+			for (size_t n = 0; n < inner_neighors.size(); ++n)
+			{
+				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
+				size_t index_particle_j = neighboring_particle->j_;
+				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
+				/** Viscous force. */
+				Real A_ij = dt * 2.0 * mu_ * base_particle_data_j.Vol_ * neighboring_particle->dW_ij_ 
+					/ (neighboring_particle->r_ij_ + 0.01 * smoothing_length_) / rho_i;
+				base_particle_data_j.dvel_dt_ += A_ij * lambda;
+			}
+			
+			/** Contact interaction. */
+			for (size_t k = 0; k < current_interacting_configuration_.size(); ++k)
+			{
+				NeighborList& contact_neighors 
+					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
+				for (size_t n = 0; n < contact_neighors.size(); ++n)
+				{
+					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
+					size_t index_particle_j = neighboring_particle->j_;
+					BaseParticleData &base_particle_data_j
+						= (*interacting_particles_[k]).base_particle_data_[index_particle_j];
+					SolidParticleData &solid_data_j
+						= (*interacting_particles_[k]).solid_body_data_[index_particle_j];
+					/** Viscous force. */
+					Real A_ij = 2.0 * mu_ * base_particle_data_j.Vol_ * neighboring_particle->dW_ij_ 
+						/ (neighboring_particle->r_ij_ + 0.01 * smoothing_length_) / rho_i;
+					base_particle_data_j.dvel_dt_ += A_ij * lambda;
+				}
+			}
+
+			base_particle_data_i.dvel_dt_ += (1.0 - A_sum) * lambda;
+		}
+		//=================================================================================================//
+	    void ImplicitComputingViscousAcceleration::Update(size_t index_particle_i, Real dt)
+		{
+			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
+			base_particle_data_i.vel_n_ += base_particle_data_i.dvel_dt_ * dt;
+		}
+		//=================================================================================================//
 	}
 //=================================================================================================//
 }

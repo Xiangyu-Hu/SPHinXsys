@@ -95,13 +95,13 @@ namespace SPH {
 	template<class BaseMeshType, class DataPackageType>
 	void MeshWithDataPackages<BaseMeshType, DataPackageType>::AllocateMeshDataMatrix()
 	{
-		Allocate2dArray(data_pkg_addrs_, number_of_cells_);
+		Allocate2dArray(data_pkg_addrs_, BaseMeshType::number_of_cells_);
 	}
 	//=================================================================================================//
 	template<class BaseMeshType, class DataPackageType>
 	void MeshWithDataPackages<BaseMeshType, DataPackageType>::DeleteMeshDataMatrix()
 	{
-		Delete2dArray(data_pkg_addrs_, number_of_cells_);
+		Delete2dArray(data_pkg_addrs_, BaseMeshType::number_of_cells_);
 	}
 	//=================================================================================================//
 	template<class BaseMeshType, class DataPackageType>
@@ -109,7 +109,7 @@ namespace SPH {
 		MeshDataMatrix<DataType> DataPackageType:: * MemPtr>
 	DataType MeshWithDataPackages<BaseMeshType, DataPackageType>::probeMesh(Vecd& position)
 	{
-		Vecu grid_index = GridIndexesFromPosition(position);
+		Vecu grid_index = BaseMeshType::GridIndexesFromPosition(position);
 		size_t i = grid_index[0];
 		size_t j = grid_index[1];
 	

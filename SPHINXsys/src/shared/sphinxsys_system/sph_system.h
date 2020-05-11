@@ -41,10 +41,12 @@ namespace SPH
 
 		Vecd lower_bound_, upper_bound_;	/**< Lower and Upper domain bound. */
 		Real particle_spacing_ref_;			/**< Refernce initial particle spacing. */
+		/** start the simulation with relaxed particles*/
+		bool reload_particles_;
 		/** restart step*/
 		int restart_step_;
 		/** computing from roeload particles from files. */
-		bool reload_particle_;
+		bool run_particle_relaxation_;
 
 		task_scheduler_init tbb_init_;		/**< TBB library. */
 

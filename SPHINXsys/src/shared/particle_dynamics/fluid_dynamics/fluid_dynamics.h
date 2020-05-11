@@ -47,7 +47,9 @@ namespace SPH
 
 		typedef ParticleDynamicsSimple<FluidBody, ViscoelasticFluidParticles, Oldroyd_B_Fluid>
 			Oldroyd_B_FluidDynamicsSimple;
-
+			
+		typedef ParticleDynamicsComplexSplitting<FluidBody, FluidParticles,
+			WeaklyCompressibleFluid, SolidBody, SolidParticles> SplittingFluidDynamicsComplex;
 		/**
 		 * @class WeaklyCompressibleFluidInitialCondition
 		 * @brief  Set default initial condition for a fluid body with weakly compressible fluid.
@@ -443,6 +445,29 @@ namespace SPH
 
 			/** This class is only implemented in sequential due to memory conflicts. */
 			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
+		};
+		/**
+		 * @class ImplicitComputingViscousAcceleration
+		 * @brief  compute the viscous acceleration with implicit algorithm with splitting cell method.
+		 */
+		class ImplicitComputingViscousAcceleration : public WeaklyCompressibleFluidDynamicsComplex1Level
+		{
+		protected:
+			//viscousity
+			Real mu_;
+			Real smoothing_length_;
+
+			virtual void Initialization(size_t index_particle_i, Real dt = 0.0) override;
+			virtual void ComplexInteraction(size_t index_particle_i, Real dt = 0.0) override;
+			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
+		public:
+			ImplicitComputingViscousAcceleration(FluidBody *body, StdVec<SolidBody*> interacting_bodies)
+				: WeaklyCompressibleFluidDynamicsComplex1Level(body, interacting_bodies) 
+			{
+				mu_ = material_->getReferenceViscosity();
+				smoothing_length_ = body->kernel_->GetSmoothingLength();
+			};
+			virtual ~ImplicitComputingViscousAcceleration() {};
 		};
 	}
 }

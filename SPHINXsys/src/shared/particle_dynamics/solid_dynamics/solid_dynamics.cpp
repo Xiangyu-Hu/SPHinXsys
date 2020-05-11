@@ -20,7 +20,7 @@ namespace SPH
 
 			Vecd gradient(0.0);
 			NeighborList& inner_neighors
-				= getNeighborList(reference_configuration_, index_particle_i);
+				= getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				gradient += inner_neighors[n]->dW_ij_ * inner_neighors[n]->e_ij_;
@@ -50,7 +50,7 @@ namespace SPH
 			Vecd gradient(0.0);
 
 			NeighborList& inner_neighors
-				= getNeighborList(reference_configuration_, index_particle_i);
+				= getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
@@ -269,7 +269,7 @@ namespace SPH
 
 			//since the particle does not change its configuration in pressure relaxation step
 			//I chose a time-step size according to Eulerian method
-			Real sound_speed = material_->GetSoundSpeed(index_particle_i);
+			Real sound_speed = material_->getReferenceSoundSpeed();
 			return 0.6 * SMIN(sqrt(smoothing_length_ / (base_particle_data_i.dvel_dt_.norm() + 1.0e-15)),
 				smoothing_length_ / (sound_speed + base_particle_data_i.vel_n_.norm()));
 		}
@@ -280,7 +280,7 @@ namespace SPH
 
 			Matd local_configuration(0.0);
 			NeighborList& inner_neighors
-				= getNeighborList(reference_configuration_, index_particle_i);
+				= getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
@@ -288,8 +288,8 @@ namespace SPH
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 
 				Vecd gradw_ij = neighboring_particle->dW_ij_ * neighboring_particle->e_ij_;
-				Vecd r_ij = -neighboring_particle->r_ij_ * neighboring_particle->e_ij_;
-				local_configuration += base_particle_data_j.Vol_ * SimTK::outer(r_ij, gradw_ij);
+				Vecd r_ji = - neighboring_particle->r_ij_ * neighboring_particle->e_ij_;
+				local_configuration += base_particle_data_j.Vol_ * SimTK::outer(r_ji, gradw_ij);
 			}
 
 			/** note that the generalized inverse only works here*/
@@ -304,7 +304,7 @@ namespace SPH
 
 			Matd deformation(0.0);
 			NeighborList& inner_neighors
-				= getNeighborList(reference_configuration_, index_particle_i);
+				= getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
@@ -344,7 +344,7 @@ namespace SPH
 				+ solid_data_i.force_from_fluid_/ elastic_data_i.mass_;
 
 			NeighborList& inner_neighors
-				= getNeighborList(reference_configuration_, index_particle_i);
+				= getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
@@ -385,7 +385,7 @@ namespace SPH
 
 			Matd deformation_gradient_change_rate(0);
 			NeighborList& inner_neighors
-				= getNeighborList(reference_configuration_, index_particle_i);
+				= getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
@@ -417,7 +417,7 @@ namespace SPH
 				= particles_->solid_body_data_[index_particle_i];
 
 			Vecd pos_old = base_particle_data_i.pos_n_;
-			base_particle_data_i.pos_n_ = solid_data_i.pos_0_ + GetDisplacement(pos_old);
+			base_particle_data_i.pos_n_ = base_particle_data_i.pos_0_ + GetDisplacement(pos_old);
 			base_particle_data_i.vel_n_ = GetVelocity(pos_old);
 			base_particle_data_i.dvel_dt_ = GetAcceleration(pos_old);
 			/** the average values are prescirbed also. */
@@ -433,7 +433,7 @@ namespace SPH
 				= particles_->solid_body_data_[index_particle_i];
 
 			Vecd pos_old = base_particle_data_i.pos_n_;
-			base_particle_data_i.pos_n_ = solid_data_i.pos_0_ + GetDisplacement(pos_old);
+			base_particle_data_i.pos_n_ = base_particle_data_i.pos_0_ + GetDisplacement(pos_old);
 			base_particle_data_i.vel_n_ = GetVelocity(pos_old);
 			base_particle_data_i.dvel_dt_ = GetAcceleration(pos_old);
 			/** the average values are prescirbed also. */
@@ -470,7 +470,7 @@ namespace SPH
 				= particles_->solid_body_data_[index_particle_i];
 
 			Vecd pos_old = base_particle_data_i.pos_n_;
-			base_particle_data_i.pos_n_[axis_id_] = solid_data_i.pos_0_[axis_id_];
+			base_particle_data_i.pos_n_[axis_id_] = base_particle_data_i.pos_0_[axis_id_];
 			base_particle_data_i.vel_n_[axis_id_] = 0.0;
 			base_particle_data_i.dvel_dt_[axis_id_] = 0.0;
 			/** the average values are prescirbed also. */
@@ -484,7 +484,7 @@ namespace SPH
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
 
-			Vecd induced_acceleration = GetAcceleration(solid_data_i.pos_0_);
+			Vecd induced_acceleration = GetAcceleration(base_particle_data_i.pos_0_);
 			base_particle_data_i.vel_n_ += induced_acceleration * dt;
 			solid_data_i.vel_ave_ = base_particle_data_i.vel_n_;
 		}
@@ -568,7 +568,7 @@ namespace SPH
 
 			Vecd acceleration(0);
 			NeighborList& inner_neighors
-				= getNeighborList(reference_configuration_, index_particle_i);
+				= getNeighborList(inner_configuration_, index_particle_i);
 			for (size_t n = 0; n < inner_neighors.size(); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];

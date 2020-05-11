@@ -5,14 +5,12 @@
 * @author	Chi ZHang and Xiangyu Hu
 * @version	0.1
 */
-
 #pragma once
-
 #include "base_particle_dynamics.h"
 #include "base_particle_dynamics.hpp"
 
-namespace SPH {
-
+namespace SPH 
+{
 	/**
 	* @class ParticleDynamicsSimple
 	* @brief Simple particle dynamics base class

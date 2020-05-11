@@ -11,14 +11,17 @@
 #pragma once
 
 #include "base_material.h"
+#include "solid_particles.h"
 #include <map>
 #include <functional>
 using namespace std::placeholders;
 
 namespace SPH 
 {
-	/** Preclaimed classes. */
-	class DiffusionReactionData;
+	/** preclaimed classes */
+	template<class BaseParticlesType, class BaseMaterialType>
+	class DiffusionReactionParticles;
+	class ElectroPhysiologyParticles;
 	/**
 	 * @class BaseDiffusion
 	 * @brief diffusision property abstract base class.
@@ -40,7 +43,9 @@ namespace SPH
 		virtual Real getReferenceDiffusivity() = 0;
 		/** Get diffusion coefficient along the interacting particle direction. */
 		virtual Real getInterParticleDiffusionCoff(size_t particle_i, size_t particle_j, Vecd& direction_from_j_to_i) = 0;
-		/** Setup the local property. */
+		/** initialize the local property. */
+		virtual void initializeLocalProperties(BaseParticles* base_particles) = 0;
+		/** Setup the local property after initialization. */
 		virtual void setupLocalProperties(StdVec<Vecd> &material_fiber) = 0;
 	};
 
@@ -67,6 +72,9 @@ namespace SPH
 		{
 			return diff_cf_;
 		};
+		/** initialize the local property. */
+		virtual void initializeLocalProperties(BaseParticles* base_particles) override {};
+		/** Setup the local property after initialization. */
 		virtual void setupLocalProperties(StdVec<Vecd> &material_fiber) override {};
 	};
 
@@ -80,7 +88,7 @@ namespace SPH
 		Vecd bias_direction_; /*> Reference bias direction. */
 		/*> The bias diffusion coefficient along the fiber direction. */
 		Real bias_diff_cf_;
-		/*> The transferred diffusivity with inverse Cholesky decomposition. */
+		/*> The transformed diffusivity with inverse Cholesky decomposition. */
 		Matd transf_diffusivity_;
 		/** Intialize directional diffusivity. */
 		void intializeDirectionalDiffusivity(Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
@@ -112,6 +120,9 @@ namespace SPH
 			Vecd grad_ij = transf_diffusivity_ * inter_particle_direction;
 			return 1.0 / grad_ij.scalarNormSqr();
 		};
+		/** initialize the local property. */
+		virtual void initializeLocalProperties(BaseParticles* base_particles) override {};
+		/** Setup the local property after initialization. */
 		virtual void setupLocalProperties(StdVec<Vecd> &material_fiber) override {};
 	};
 
@@ -122,46 +133,36 @@ namespace SPH
 	class LocalDirectionalDiffusion : public DirectionalDiffusion
 	{
 	protected:
-		StdVec<Matd> local_diffusivity_; 		/*< The transferred diffusivity with inverse Cholesky decomposition. */
+		/* Local bias (usually due to fiber orientation) direction. */
+		StdVec<Vecd> local_bias_direction_;
+		/* Local transformed diffusivity with inverse Cholesky decomposition. */
+		StdVec<Matd> local_transf_diffusivity_;
 	public:
 		/** Constructor*/
 		LocalDirectionalDiffusion(size_t diffusion_species_index, size_t gradient_species_index,
-			Real diff_cf, Real bias_diff_cf, Vecd bias_direction) 
-			: DirectionalDiffusion(diffusion_species_index, gradient_species_index, diff_cf, bias_diff_cf, bias_direction)
-		{
-			DirectionalDiffusion::intializeDirectionalDiffusivity(diff_cf, bias_diff_cf, bias_direction);
-		};
+			Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
+			: DirectionalDiffusion(diffusion_species_index, gradient_species_index, diff_cf, bias_diff_cf, bias_direction) {};
 		virtual ~LocalDirectionalDiffusion() {};
-		/** 
-		 * @brief Obtain diffusion coefficient along the interacting particle direction. 
+		/**
+		 * @brief Obtain diffusion coefficient along the interacting particle direction.
 		 * @param[in] particle_index_i Index of particle i;
 		 * @param[in] particle_index_j Index of particle j;
 		 * @param[in] inter_particle_direction Normal direction pointing from i to j;
 		 */
 		virtual Real getInterParticleDiffusionCoff(size_t particle_index_i, size_t particle_index_j, Vecd& inter_particle_direction) override
 		{
-			Matd trans_diffusivity = getAverageValue(local_diffusivity_[particle_index_i], local_diffusivity_[particle_index_j]);
+			Matd trans_diffusivity = getAverageValue(local_transf_diffusivity_[particle_index_i], local_transf_diffusivity_[particle_index_j]);
 			Vecd grad_ij = trans_diffusivity * inter_particle_direction;
 			return 1.0 / grad_ij.scalarNormSqr();
 		};
-		/**
-		 * @brief Link the particles the present material
-		 * @param[in]	body a muscle body
-		 */
-		virtual void setupLocalProperties(StdVec<Vecd> &material_fiber) override
-		{
-			for(size_t i = 0; i < material_fiber.size(); i++)
-			{
-				Matd diff_i = diff_cf_ * Matd(1.0) + bias_diff_cf_ * SimTK::outer(material_fiber[i], material_fiber[i]);
-				local_diffusivity_.push_back(inverseCholeskyDecomposition(diff_i));
-			}
-			std::cout << "\n Local diffusion properties setup finished " << std::endl;
-		};
+		/** initialize the local property. */
+		virtual void initializeLocalProperties(BaseParticles* base_particles);
+		/** Setup the local property after initialization. */
+		virtual void setupLocalProperties(StdVec<Vecd>& material_fiber);
 	};
 
 	/** Reaction functor . */
 	typedef std::function<Real(StdVec<Real>&)> ReactionFunctor;
-
 	/**
 	 * @class BaseReactionModel
 	 * @brief Base class for all reaction models.
@@ -244,10 +245,11 @@ namespace SPH
 	 * @class DiffusionReactionMaterial
 	 * @brief Complex material for diffusion or/and reactions.
 	 */
-	template<class BaseMaterialType>
+	template<class BaseParticlesType = BaseParticles, class BaseMaterialType = BaseMaterial>
 	class DiffusionReactionMaterial : public BaseMaterialType
 	{
 	protected:
+
 		/** Total number of species. */
 		size_t number_of_species_;
 		/** Map from species names to indexes. */
@@ -256,6 +258,9 @@ namespace SPH
 		StdVec<BaseDiffusion*> species_diffusion_;
 		/** The reaction model for all reactive species. */
 		BaseReactionModel* species_reaction_;
+		/** particles for this material */
+		DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>* diffusion_reaction_particles_;
+
 		/** assign derived material properties*/
 		virtual void assignDerivedMaterialParameters() override 
 		{
@@ -270,32 +275,36 @@ namespace SPH
 			species_indexes_map_.insert(make_pair(species_name, number_of_species_));
 			number_of_species_++;
 		};
-		/** 
-		 * @brief Splitting scheme for directly computing one time step integeration for a species. 
-		 * @param[in] input Input state of species.
-		 * @param[in] production_rate Production rate of species.
-		 * @param[in] loss_rate Loss rate of species.
-		 * @param[in] dt Time step size
-		 * @param[out] Change rate of species.
-		 **/
-		Real updateAReactionSpecies(Real input, Real production_rate, Real loss_rate, Real dt)
-		{
-			return input*exp(-loss_rate * dt) + production_rate * (1.0 - exp(-loss_rate * dt)) / (loss_rate + 1.0e-30);
-		};
+		/** initialized local diffusion or/and reaction properties */
+		virtual void initializeLocalProperties(BaseParticles* base_particles) {};
 	public:
 		/** Constructor for material only with diffusion. */
-		DiffusionReactionMaterial(string diffusion_material_name) 
-			: BaseMaterialType(diffusion_material_name), number_of_species_(0), species_reaction_(NULL) {};
-
+		DiffusionReactionMaterial() 
+			: BaseMaterialType(), number_of_species_(0), species_reaction_(NULL) 
+		{
+			BaseMaterialType::material_name_ = "DiffusionMaterial";
+		};
 		/** Constructor for material with diffusion and reaction. */
-		DiffusionReactionMaterial(string diffusion_reaction_material_name, BaseReactionModel* species_reaction)
-			: BaseMaterialType(diffusion_reaction_material_name), number_of_species_(0), species_reaction_(species_reaction) {};
+		DiffusionReactionMaterial(BaseReactionModel* species_reaction)
+			: BaseMaterialType(), number_of_species_(0), species_reaction_(species_reaction) 
+		{
+			BaseMaterialType::material_name_ = "DiffusionReactionMaterial";
+		};
 		virtual ~DiffusionReactionMaterial() {};
 
 		/** Get number of species. */
 		size_t getNumberOfSpecies() { return number_of_species_; };
+		/** Get diffusion species */
+		StdVec<BaseDiffusion*> getDiffusionSpecies() { return species_diffusion_; };
+		/** Get reaction model */
+		BaseReactionModel* getReactionModel() { return species_reaction_; };
 		/** Get species to index map. */
 		map<string, size_t> getSpeciesIndexMap() { return  species_indexes_map_; };
+		/** assign particles to this material */
+		void assignDiffusionReactionParticles(DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>* diffusion_reaction_particles) {
+			diffusion_reaction_particles_ = diffusion_reaction_particles;
+			initializeLocalProperties(diffusion_reaction_particles);
+		};
 		/**
 		 * @brief Get diffusion time step size. Here, I follow the reference:
 		 * https://www.uni-muenster.de/imperia/md/content/physik_tp/lectures/ws2016-2017/num_methods_i/heat.pdf 
@@ -310,143 +319,9 @@ namespace SPH
 		};
 		/** Initialize diffusion material. */
 		virtual void initializeDiffusion() = 0;
-		/** 
-		 * @brief Initialize change rate to zero for all diffusion species. 
-		 * @param[in] diffusion_reaction_data_i Diffusion reaction data of particle i.
-		 */
-		void initializeDiffusionChangeRate(DiffusionReactionData& diffusion_reaction_data_i) 
-		{
-			for (size_t m = 0; m < species_diffusion_.size(); ++m) 
-			{
-				size_t k = species_diffusion_[m]->diffusion_species_index_;
-				diffusion_reaction_data_i.dspecies_dt_[k] = 0;
-			}
-		};
-		/** 
-		 * @brief Initialize the stages for Runge-Kutta scheme.
-		 * @param[in] diffusion_reaction_data_i Diffusion reaction data of particle i.
-		 */
-		void initializeStageForRungeKutta(DiffusionReactionData& diffusion_reaction_data_i) 
-		{
-			for (size_t m = 0; m < species_diffusion_.size(); ++m) 
-			{
-				size_t k = species_diffusion_[m]->diffusion_species_index_;
-				diffusion_reaction_data_i.species_s_[k] = 0.0;
-			}
-		};
-		/** 
-		 * @brief Get change rate for all diffusion species. 
-		 * @param[in] particle_i Particle Index;
-		 * @param[in] particle_j Particle Index;
-		 * @param[in] e_ij Norm vector pointing from i to j;
-		 * @param[in] surface_area_ij Surface area of particle interaction
-		 * @param[in] diffusion_reaction_data_i Diffusion reaction data of particle i;
-		 * @param[in] diffusion_reaction_data_j Diffusion reaction data of particle j;
-		 */
-		void getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd& e_ij, Real surface_area_ij,
-			DiffusionReactionData& diffusion_reaction_data_i, DiffusionReactionData& diffusion_reaction_data_j) 
-		{
-			for (size_t m = 0; m < species_diffusion_.size(); ++m) 
-			{
-				Real diff_coff_ij = species_diffusion_[m]->getInterParticleDiffusionCoff(particle_i, particle_j, e_ij);
-				size_t k = species_diffusion_[m]->diffusion_species_index_;
-				size_t l = species_diffusion_[m]->gradient_species_index_;
-				Real phi_ij = diffusion_reaction_data_i.species_n_[k] - diffusion_reaction_data_j.species_n_[k];
-				diffusion_reaction_data_i.dspecies_dt_[k] += diff_coff_ij * phi_ij * surface_area_ij;
-			}
-		};
-		/** 
-		 * @brief Update all diffusion species. 
-		 * @param[in] diffusion_reaction_data_i Diffusion reaction data of particle i;
-		 * @param[in] dt Time step;
-		 */
-		void updateDiffusionSpecies(DiffusionReactionData& diffusion_reaction_data_i, Real dt) 
-		{
-			for (size_t m = 0; m < species_diffusion_.size(); ++m) 
-			{
-				size_t k = species_diffusion_[m]->diffusion_species_index_;
-				diffusion_reaction_data_i.species_n_[k] += dt * diffusion_reaction_data_i.dspecies_dt_[k];
-			}
-		};
-		/** 
-		 * @brief Update all diffusion species. 
-		 * @param[in] diffusion_reaction_data_i Diffusion reaction data of particle i;
-		 * @param[in] dt Time step;
-		 */
-		void updateStageforRungeKutta(DiffusionReactionData& diffusion_reaction_data_i, Real delta) 
-		{
-			for (size_t m = 0; m < species_diffusion_.size(); ++m) 
-			{
-				size_t k = species_diffusion_[m]->diffusion_species_index_;
-				diffusion_reaction_data_i.species_s_[k] += delta * diffusion_reaction_data_i.species_n_[k];
-			}
-		};
-		/** 
-		 * @brief Update all diffusion species. 
-		 * @param[in] diffusion_reaction_data_i Diffusion reaction data of particle i;
-		 * @param[in] dt Time step;
-		 */
-		void initializeStageforRungeKutta(DiffusionReactionData& diffusion_reaction_data_i) 
-		{
-			for (size_t m = 0; m < species_diffusion_.size(); ++m) 
-			{
-				size_t k = species_diffusion_[m]->diffusion_species_index_;
-				diffusion_reaction_data_i.species_s_[k] = 0.0;
-			}
-		};
-		/** 
-		 * @brief Update all diffusion species. 
-		 * @param[in] diffusion_reaction_data_i Diffusion reaction data of particle i;
-		 * @param[in] dt Time step;
-		 */
-		void updateDiffusionSpeciesforRungeKutta(DiffusionReactionData& diffusion_reaction_data_i, Real gamma_1, Real gamma_2, Real beta, Real dt) 
-		{
-			for (size_t m = 0; m < species_diffusion_.size(); ++m) 
-			{
-				size_t k = species_diffusion_[m]->diffusion_species_index_;
-				Real s_temp = gamma_1 * diffusion_reaction_data_i.species_n_[k] + 
-								gamma_2 * diffusion_reaction_data_i.species_s_[k] +
-								beta * dt * diffusion_reaction_data_i.dspecies_dt_[k];
-				diffusion_reaction_data_i.species_n_[k] = s_temp;
-			}
-		};
-		/** Get change rate for all rective species by forward sweeping.
-		 * @brief Get change rate for all rective species by backward sweeping. 
-		 * @param[in] diffusion_reaction_data_i Diffusion Reaction Data.
-		 * @param[in] dt Time step size.
-		 **/
-		void UpdateReactiveSpeciesForward(DiffusionReactionData& diffusion_reaction_data_i, Real dt) {
-			IndexVector& reactive_species = species_reaction_->reactive_species_;
-
-			for (size_t m = 0; m != reactive_species.size(); ++m) {
-				size_t k = reactive_species[m];
-				Real production_rate = species_reaction_->get_production_rates_[k](diffusion_reaction_data_i.species_n_);
-				Real loss_rate = species_reaction_->get_loss_rates_[k](diffusion_reaction_data_i.species_n_);
-				Real input = diffusion_reaction_data_i.species_n_[k];
-				diffusion_reaction_data_i.species_n_[k] = updateAReactionSpecies(input, production_rate, loss_rate, dt);
-			}
-		};
-		/** 
-		 * @brief Get change rate for all rective species by backward sweeping. 
-		 * @param[in] diffusion_reaction_data_i Diffusion Reaction Data.
-		 * @param[in] dt Time step size.
-		 **/
-		void UpdateReactiveSpeciesBackward(DiffusionReactionData& diffusion_reaction_data_i, Real dt)
-		{
-			IndexVector& reactive_species = species_reaction_->reactive_species_;
-
-			for (size_t m = reactive_species.size(); m != 0; --m) {
-				size_t k = reactive_species[m - 1];
-				Real production_rate = species_reaction_->get_production_rates_[k](diffusion_reaction_data_i.species_n_);
-				Real loss_rate = species_reaction_->get_loss_rates_[k](diffusion_reaction_data_i.species_n_);
-				Real input = diffusion_reaction_data_i.species_n_[k];
-				diffusion_reaction_data_i.species_n_[k] = updateAReactionSpecies(input, production_rate, loss_rate, dt);
-			}
-		};
 
 		/** the interface for dynamical cast*/
-		virtual DiffusionReactionMaterial<BaseMaterialType>* PointToThisObject() override 
-		{
+		virtual DiffusionReactionMaterial<BaseParticlesType, BaseMaterialType>* PointToThisObject() override {
 			return this;
 		};
 	};
@@ -456,7 +331,7 @@ namespace SPH
 	 * @brief material class for electro_physiology.
 	 */
 	class MonoFieldElectroPhysiology 
-		: public DiffusionReactionMaterial<Solid>
+		: public DiffusionReactionMaterial<SolidParticles, Solid>
 	{
 	protected:
 		Real diff_cf_;
@@ -466,12 +341,11 @@ namespace SPH
 		/** assign derived material properties*/
 		virtual void assignDerivedMaterialParameters() override
 		{
-			DiffusionReactionMaterial<Solid>::assignDerivedMaterialParameters();
+			DiffusionReactionMaterial<SolidParticles, Solid>::assignDerivedMaterialParameters();
 		};
 	public:
 		/** Constructor*/
-		MonoFieldElectroPhysiology(string electro_physioology_material_name,
-			ElectroPhysiologyReaction* electro_physiology_reaction);
+		MonoFieldElectroPhysiology(ElectroPhysiologyReaction* electro_physiology_reaction);
 		virtual ~MonoFieldElectroPhysiology() {};
 
 		/** Initialize diffusion reaction material. */
@@ -486,7 +360,7 @@ namespace SPH
 
 	/**
 	 * @class LocalMonoFieldElectroPhysiology
-	 * @brief material class for electro_physiology.
+	 * @brief material class for electro_physiology with locally oriented fibers.
 	 */
 	class LocalMonoFieldElectroPhysiology 
 		: public MonoFieldElectroPhysiology
@@ -499,11 +373,13 @@ namespace SPH
 		};
 	public:
 		/** Constructor*/
-		LocalMonoFieldElectroPhysiology(string electro_physioology_material_name,
-			ElectroPhysiologyReaction* electro_physiology_reaction)
-			:MonoFieldElectroPhysiology(electro_physioology_material_name, electro_physiology_reaction){};
+		LocalMonoFieldElectroPhysiology(ElectroPhysiologyReaction* electro_physiology_reaction)
+			:MonoFieldElectroPhysiology(electro_physiology_reaction) {
+			MonoFieldElectroPhysiology::material_name_ = "LocalMonoFieldElectroPhysiology";
+		};
 		virtual ~LocalMonoFieldElectroPhysiology() {};
-
+		/** initialized local diffusion properties*/
+		virtual void initializeLocalProperties(BaseParticles* base_particles) override;
 		/** Initialize diffusion reaction material. */
 		virtual void initializeDiffusion() override;
 		/** Assign the fiber property into the diffusion material. */

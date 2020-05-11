@@ -28,9 +28,8 @@ namespace SPH {
 			int refinement_level, ParticlesGeneratorOps op);
 		virtual ~FluidBody() {};
 
-		/** Build inner configuration. */
-		virtual void BuildInnerConfiguration() override;
-		/** Build contact configuration. */
-		virtual void BuildContactConfiguration() override;
+		/** Set up the reaction model, if essential */
+		/** The pointer to derived class object. */
+		virtual FluidBody* PointToThisObject() override { return this; };
 	};
 }

@@ -17,6 +17,7 @@ Real Flap_H = 0.48;
 Real Flap_width = 0.12;
 
 Real Base_bottom_position = 0.15;
+Real Base_constrain_height = 0.1;
 Real particle_spacing_ref = Flap_width / 4.0; //particle spacing
 Real BW = particle_spacing_ref * 4.0; //boundary width
 
@@ -34,17 +35,17 @@ Vec2d Water_slope_2(DL - 6.2 - 3.7, 0.35 - 0.2);
 Vec2d Water_slope_3(DL - 6.2 - 3.7 - 2.4, 0.35 - 0.2);
 Vec2d Water_slope_4(DL - 6.2 - 3.7 - 2.4 - 1.3, 0.0);
 
-//define rigid base for installation of gate
+//define constrin region of gate
 Vec2d Base_lb(Flap_x - 0.5 * Flap_width, Base_bottom_position); //left bottom
-Vec2d Base_lt(Flap_x - 0.5 * Flap_width, Base_bottom_position + 0.1); //left top
-Vec2d Base_rt(Flap_x + 0.5 * Flap_width, Base_bottom_position + 0.1); //right top
+Vec2d Base_lt(Flap_x - 0.5 * Flap_width, Base_bottom_position + Base_constrain_height); //left top
+Vec2d Base_rt(Flap_x + 0.5 * Flap_width, Base_bottom_position + Base_constrain_height); //right top
 Vec2d Base_rb(Flap_x + 0.5 * Flap_width, Base_bottom_position ); //right bottom
 
 //define gate
-Vec2d Flap_lb(Flap_x - 0.5 * Flap_width, Base_bottom_position + 0.1); //left bottom
-Vec2d Flap_lt(Flap_x - 0.5 * Flap_width, Base_bottom_position + 0.1 + Flap_H ); //left top
-Vec2d Flap_rt(Flap_x + 0.5 * Flap_width, Base_bottom_position + 0.1 + Flap_H ); //right top
-Vec2d Flap_rb(Flap_x + 0.5 * Flap_width, Base_bottom_position + 0.1 ); //right bottom
+Vec2d Flap_lb(Flap_x - 0.5 * Flap_width, Base_bottom_position); //left bottom
+Vec2d Flap_lt(Flap_x - 0.5 * Flap_width, Base_bottom_position + Base_constrain_height + Flap_H ); //left top
+Vec2d Flap_rt(Flap_x + 0.5 * Flap_width, Base_bottom_position + Base_constrain_height + Flap_H ); //right top
+Vec2d Flap_rb(Flap_x + 0.5 * Flap_width, Base_bottom_position ); //right bottom
 
 //gravity value
 Real gravity_g = 9.8;
@@ -53,8 +54,6 @@ Real gravity_g = 9.8;
 Real rho0_f = 1000.0;
 Real U_f = 2.0*sqrt(0.79 * gravity_g);
 Real c_f = 10.0*U_f;
-Real mu_f = 0.0;
-Real k_f = 0.0;
 
 //for material properties of the solid
 Real rho0_s = 1100.0; //reference density
@@ -85,7 +84,7 @@ std::vector<Point> CreatWaterBlockShape()
 /**
 * @brief create gate base shape
 */
-std::vector<Point> CreatGateBaseShape()
+std::vector<Point> CreatGateConstrainShape()
 {
 	//geometry
 	std::vector<Point> pnts2;
@@ -185,16 +184,27 @@ class WaterBlock : public FluidBody
 			: FluidBody(system, body_name, refinement_level, op)
 		{
 			std::vector<Point> water_block_shape = CreatWaterBlockShape();
-			std::vector<Point> gate_base_shape = CreatGateBaseShape();
 			std::vector<Point> flap_shape = CreatFlapShape();
 			body_region_.add_polygon(water_block_shape, RegionBooleanOps::add);
-			body_region_.add_polygon(gate_base_shape, RegionBooleanOps::sub);
 			body_region_.add_polygon(flap_shape, RegionBooleanOps::sub);
 			//finish the region modeling
 			body_region_.done_modeling();
 		}
 };
+/**
+ * @brief 	Case dependent material properties definition.
+ */
+class WaterMaterial : public WeaklyCompressibleFluid
+{
+public:
+	WaterMaterial() : WeaklyCompressibleFluid()
+	{
+		rho_0_ = rho0_f;
+		c_0_ = c_f;
 
+		assignDerivedMaterialParameters();
+	}
+};
 //define the static solid wall boudary
 class WallBoundary : public SolidBody
 {
@@ -214,21 +224,6 @@ public:
 	}
 };
 
-//define base of the elastic gate
-class GateBase : public SolidBody
-{
-public:
-	GateBase(SPHSystem &system, string body_name, 
-		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, refinement_level, op)
-	{
-		std::vector<Point> gate_base_shape = CreatGateBaseShape();
-		body_region_.add_polygon(gate_base_shape, RegionBooleanOps::add);
-		//finish the region modeling
-		body_region_.done_modeling();
-	}
-};
-
 //define the elastic gate
 class Gate : public SolidBody
 {
@@ -243,14 +238,53 @@ public:
 		body_region_.done_modeling();
 	}
 };
+
+/**
+* @brief define the beam base which will be constrained.
+* NOTE: this class can only be instanced after body particles
+* have been generated
+*/
+class GateConstrain : public BodyPartByParticle
+{
+public:
+	GateConstrain(SolidBody* solid_body, string constrianed_region_name)
+		: BodyPartByParticle(solid_body, constrianed_region_name)
+	{
+		/* Geometry defination */
+		std::vector<Point> beam_base_shape = CreatGateConstrainShape();
+		Geometry* beam_base_gemetry = new Geometry(beam_base_shape);
+		body_part_region_.add_geometry(beam_base_gemetry, RegionBooleanOps::add);
+		/** Finish the region modeling. */
+		body_part_region_.done_modeling();
+
+		//tag the constrained particle
+		TagBodyPartParticles();
+	}
+};
+
+/**
+ * @brief Define gate material.
+ */
+class GateMaterial : public LinearElasticSolid
+{
+public:
+	GateMaterial() : LinearElasticSolid()
+	{
+		rho_0_ = rho0_s;
+		E_0_ = Youngs_modulus;
+		nu_ = poisson;
+
+		assignDerivedMaterialParameters();
+	}
+};
 /**
 * @brief constrain the beam base
 */
-class WaveMaker : public SolidBodyPart
+class WaveMaker : public BodyPartByParticle
 {
 public:
 	WaveMaker(SolidBody *solid_body, string constrianed_region_name)
-		: SolidBodyPart(solid_body, constrianed_region_name)
+		: BodyPartByParticle(solid_body, constrianed_region_name)
 	{
 		//geometry
 		std::vector<Point> wave_maker_shape = CreatWaveMakerShape();
@@ -301,8 +335,8 @@ class WaveMaking : public solid_dynamics::ConstrainSolidBodyRegion
 	}
 
 public:
-	WaveMaking(SolidBody *solid_body, SolidBodyPart *constrained_region)
-		: ConstrainSolidBodyRegion(solid_body, constrained_region)
+	WaveMaking(SolidBody *solid_body, BodyPartByParticle*constrained_region)
+		: ConstrainSolidBodyRegion(solid_body, constrained_region), time_(0.0)
 	{
 		wave_freq_ = 3.14159;
 		wave_stroke_ = 0.21515;
@@ -323,9 +357,9 @@ int main()
 	WaterBlock *water_block 
 		= new WaterBlock(system, "WaterBody", 0, ParticlesGeneratorOps::lattice);
 	//fluid material properties
-	WeaklyCompressibleFluid fluid("Water", water_block, rho0_f, c_f, mu_f, k_f);
+	WaterMaterial *water_material = new WaterMaterial();
 	//creat fluid particles
-	FluidParticles fluid_particles(water_block);
+	FluidParticles fluid_particles(water_block, water_material);
 
 	//the wall boundary
 	WallBoundary *wall_boundary 
@@ -333,34 +367,22 @@ int main()
 	//creat solid particles
 	SolidParticles solid_particles(wall_boundary);
 
-	//the gate base
-	GateBase *gate_base 
-		= new GateBase(system, "GateBase", 0, ParticlesGeneratorOps::lattice);
-	//elastic soild material properties
-	ElasticSolid gate_base_material("ElasticSolid", gate_base, rho0_s, Youngs_modulus, poisson, 0.0);
-	//creat particles for the gate base
-	ElasticSolidParticles gate_base_particles(gate_base);
-
 	//the elastic gate
-	Gate *gate = 
-		new Gate(system, "Gate", 0, ParticlesGeneratorOps::lattice);
 	//elastic soild material properties
-	ElasticSolid gate_material("ElasticSolid", gate, rho0_s, Youngs_modulus, poisson, 0.0);
+	GateMaterial* gate_material = new GateMaterial();
+	Gate *gate =
+		new Gate(system, "Gate", 0, ParticlesGeneratorOps::lattice);
 	//creat particles for the elastic gate
-	ElasticSolidParticles gate_particles(gate);
+	ElasticSolidParticles gate_particles(gate, gate_material);
 
 	//set body contact map
 	//the contact map gives the data conntections between the bodies
 	//basically the the rang of bidies to build neighbor particle lists
 	SPHBodyTopology body_topology 
-		= { { water_block, { wall_boundary, gate_base, gate } },
-		{ wall_boundary, { } },{ gate_base, { gate } },
-	    { gate, { gate_base, water_block} } };
+		= { { water_block, { wall_boundary, gate } },
+		{ wall_boundary, { gate} },
+	    { gate, {wall_boundary, water_block} } };
 	system.SetBodyTopology(&body_topology);
-
-	//setting up the simulation
-	system.SetupSPHSimulation();
-
 
 	//-------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
@@ -371,41 +393,32 @@ int main()
 	//-------------------------------------------------------------------
 
 	//initialize normal direction of the wall boundary
-	solid_dynamics::NormalDirectionSummation 
-		get_wall_normal(wall_boundary, {});
-	//initialize normal direction of the gate base
-	solid_dynamics::NormalDirectionSummation 
-		get_gate_base_normal(gate_base, { gate });
+	solid_dynamics::NormalDirectionSummation get_wall_normal(wall_boundary, { gate });
 	//initialize normal direction of the elastic gate
-	solid_dynamics::NormalDirectionSummation 
-		get_gate_normal(gate, { gate_base });
-
+	solid_dynamics::NormalDirectionSummation get_gate_normal(gate, { wall_boundary });
 	//corrected strong configuration	
-	//gate base
 	solid_dynamics::CorrectConfiguration
-		gate_base_corrected_configuration_in_strong_form(gate_base, { gate });
-	//elastic gate
-	solid_dynamics::CorrectConfiguration
-		gate_corrected_configuration_in_strong_form(gate, { gate_base });
+		gate_corrected_configuration_in_strong_form(gate);
+
 
 	//--------------------------------------------------------------------------
 	//methods used for time stepping
 	//--------------------------------------------------------------------------
 	/** Add particle acceleration due to gravity force. */
 	//fluid dynamics
-	InitializeOtherAccelerations 	initialize_fluid_acceleration(water_block, &gravity);
+	InitializeATimeStep 	initialize_a_fluid_step(water_block, &gravity);
 	//evaluation of density by summation approach
 	fluid_dynamics::DensityBySummationFreeSurface
-		update_fluid_desnity(water_block, { wall_boundary,  gate_base, gate });
+		update_fluid_desnity(water_block, { wall_boundary,  gate });
 	//time step size without considering sound wave speed
 	fluid_dynamics::GetAdvectionTimeStepSize	get_fluid_adevction_time_step_size(water_block, U_f);
 	//time step size with considering sound wave speed
 	fluid_dynamics::GetAcousticTimeStepSize		get_fluid_time_step_size(water_block);
 	//pressure relaxation using verlet time stepping
 	fluid_dynamics::PressureRelaxationFirstHalfRiemann
-		pressure_relaxation_first_half(water_block, { wall_boundary,  gate_base, gate });
+		pressure_relaxation_first_half(water_block, { wall_boundary,  gate });
 	fluid_dynamics::PressureRelaxationSecondHalfRiemann
-		pressure_relaxation_second_half(water_block, { wall_boundary,  gate_base, gate });
+		pressure_relaxation_second_half(water_block, { wall_boundary, gate });
 
 	//FSI
 	solid_dynamics::FluidPressureForceOnSolid fluid_pressure_force_on_gate(gate, { water_block });
@@ -413,41 +426,34 @@ int main()
 	//solid dynmaics
 	//time step size caclutation
 	solid_dynamics::GetAcousticTimeStepSize gate_computing_time_step_size(gate);
-	//stress relaxation for the gate
-	solid_dynamics::StressRelaxation
-		gate_stress_relaxation(gate, { gate_base });
-	//stress update for contrained wall body
-	solid_dynamics::StressInConstrinedElasticBodyFirstHalf
-		gate_base_stress_update_first_half(gate_base);
-	solid_dynamics::StressInConstrinedElasticBodySecondHalf
-		gate_base_stress_update_second_half(gate_base, { gate });
+	//stress relaxation for the beam
+	solid_dynamics::StressRelaxationFirstHalf gate_stress_relaxation_first_half(gate);
+	solid_dynamics::StressRelaxationSecondHalf gate_stress_relaxation_second_half(gate);
 
-	//constrain region of the inserted body
+	//average velocity
+	solid_dynamics::InitializeDisplacement 		gate_initialize_displacement(gate);
+	solid_dynamics::UpdateAverageVelocity 		gate_average_velocity(gate);
+	solid_dynamics::UpdateElasticNormalDirection 	gate_update_normal(gate);
+
+	/** Constrain the gate base.  */
+	solid_dynamics::ConstrainSolidBodyRegion
+		gate_constrain(gate, new GateConstrain(gate, "GateConstrain"));
+	//constrain region of the part of wall boundary
 	WaveMaking
 		wave_making(wall_boundary, new WaveMaker(wall_boundary, "WaveMaker"));
-	//average velocity
-	solid_dynamics::InitializeDisplacement
-		gate_initialize_displacement(gate);
-	solid_dynamics::UpdateAverageVelocity
-		gate_average_velocity(gate);
-	solid_dynamics::UpdateElasticNormalDirection 
-		gate_update_normal(gate);
+
 	//-------------------------------------------------------------------
 	//methods used for updating data structure
 	//-------------------------------------------------------------------
 	//update the cell linked list of bodies when neccessary
-	ParticleDynamicsCellLinkedList
-		update_water_block_cell_linked_list(water_block);
+	ParticleDynamicsCellLinkedList update_water_block_cell_linked_list(water_block);
 	//update the configuration of bodies when neccessary
-	ParticleDynamicsConfiguration
-		update_water_block_configuration(water_block);
+	ParticleDynamicsConfiguration update_water_block_configuration(water_block);
 	//update the cell linked list of bodies when neccessary
-	ParticleDynamicsCellLinkedList
-		update_wall_boundry_cell_linked_list(wall_boundary);
+	ParticleDynamicsCellLinkedList update_wall_boundry_cell_linked_list(wall_boundary);
 	//update the configuration of bodies when neccessary
 	//update the cell linked list of bodies when neccessary
-	ParticleDynamicsCellLinkedList
-		update_gate_cell_linked_list(gate);
+	ParticleDynamicsCellLinkedList update_gate_cell_linked_list(gate);
 	//update the contact configuration for a given contact map
 	ParticleDynamicsInteractionConfiguration
 		update_gate_interaction_configuration(gate, { water_block });
@@ -467,11 +473,11 @@ int main()
 	/**
 	 * @brief Prepare quantities will be used once only and initial condition.
 	 */
+	system.InitializeSystemCellLinkedLists();
+	system.InitializeSystemConfigurations();
 	get_wall_normal.parallel_exec();
-	get_gate_base_normal.parallel_exec();
 	get_gate_normal.parallel_exec();
 	gate_corrected_configuration_in_strong_form.parallel_exec();
-	gate_base_corrected_configuration_in_strong_form.parallel_exec();
 
 	//initial output
 	write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
@@ -494,9 +500,9 @@ int main()
 		Real integeral_time = 0.0;
 		while (integeral_time < D_Time) {
 
+			initialize_a_fluid_step.parallel_exec();
 			Dt = get_fluid_adevction_time_step_size.parallel_exec();
 			update_fluid_desnity.parallel_exec();
-			initialize_fluid_acceleration.parallel_exec();
 			gate_update_normal.parallel_exec();
 
 			Real relaxation_time = 0.0;
@@ -516,9 +522,9 @@ int main()
 				{
 					dt_s = gate_computing_time_step_size.parallel_exec();
 					if (dt - dt_s_sum < dt_s) dt_s = dt - dt_s_sum;
-					gate_base_stress_update_first_half.parallel_exec(dt_s);
-					gate_stress_relaxation.parallel_exec(dt_s);
-					gate_base_stress_update_second_half.parallel_exec(dt_s);
+					gate_stress_relaxation_first_half.parallel_exec(dt_s);
+					gate_constrain.parallel_exec();
+					gate_stress_relaxation_second_half.parallel_exec(dt_s);
 					dt_s_sum += dt_s;
 				}
 				gate_average_velocity.parallel_exec(dt);

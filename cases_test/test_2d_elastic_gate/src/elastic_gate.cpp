@@ -19,36 +19,44 @@ using namespace SPH;
  */
 Real DL = 500.0; 									/**< Tank length. */
 Real DH = 200.1; 									/**< Tank height. */
-Real Dam_L = 100.0; 								/**< Dam width. */
-Real Dam_H = 140.0; 								/**< Dam height. */
-Real Rubber_width = 5.0;							/**< Width of the rubber gate. */
+Real Dam_L = 100.0; 								/**< Water block width. */
+Real Dam_H = 140.0; 								/**< Water block height. */
+Real Gate_width = 5.0;							/**< Width of the gate. */
 Real Base_bottom_position = 79.0;					/**< Position of gate base. (In Y direction) */
-Real particle_spacing_ref = Rubber_width / 2.0; 	/**< Initial reference particle spacing. */
+Real particle_spacing_ref = Gate_width / 2.0; 	/**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4.0; 				/**< Extending width for BCs. */
 /** The offset that the rubber gate shifted above the tank. */
 Real dp_s = 0.5 * particle_spacing_ref;
 Vec2d offset = Vec2d(0.0, Base_bottom_position - floor(Base_bottom_position / dp_s) * dp_s);
 /**
- * @brief 	Define the corner point of dam geomerty.
+ * @brief 	Define the corner point of water block geomerty.
  */
 Vec2d DamP_lb(DL - Dam_L, 0.0); 		/**< Left bottom. */
 Vec2d DamP_lt(DL - Dam_L, Dam_H); 		/**< Left top. */
 Vec2d DamP_rt(DL, Dam_H); 				/**< Right top. */
 Vec2d DamP_rb(DL, 0.0); 				/**< Right bottom. */
 /**
- * @brief 	Define the corner point of gate base geomerty.
- */
-Vec2d BaseP_lb(DL - Dam_L - Rubber_width, Base_bottom_position); 	/**< Left bottom. */
-Vec2d BaseP_lt(DL - Dam_L - Rubber_width, DH); 						/**< Left top. */
-Vec2d BaseP_rt(DL - Dam_L, DH); 									/**< Right top. */
-Vec2d BaseP_rb(DL - Dam_L, Base_bottom_position); 					/**< Right bottom. */
-/**
  * @brief 	Define the corner point of gate geomerty.
  */
-Vec2d GateP_lb(DL - Dam_L - Rubber_width, 0.0); 					/**< Left bottom. */
-Vec2d GateP_lt(DL - Dam_L - Rubber_width, Base_bottom_position); 	/**< Left top. */
-Vec2d GateP_rt(DL - Dam_L, Base_bottom_position); 					/**< Right top. */
+Vec2d GateP_lb(DL - Dam_L - Gate_width, 0.0); 					/**< Left bottom. */
+Vec2d GateP_lt(DL - Dam_L - Gate_width, Base_bottom_position + BW); 	/**< Left top. */
+Vec2d GateP_rt(DL - Dam_L, Base_bottom_position + BW); 					/**< Right top. */
 Vec2d GateP_rb(DL - Dam_L, 0.0); 									/**< Right bottom. */
+/**
+ * @brief 	Define the geomerty for gate constrian.
+ */
+Vec2d ConstrainP_lb(DL - Dam_L - Gate_width, Base_bottom_position); 	/**< Left bottom. */
+Vec2d ConstrainP_lt(DL - Dam_L - Gate_width, Base_bottom_position + BW); /**< Left top. */
+Vec2d ConstrainP_rt(DL - Dam_L, Base_bottom_position + BW); 				/**< Right top. */
+Vec2d ConstrainP_rb(DL - Dam_L, Base_bottom_position); 					/**< Right bottom. */
+
+/**
+ * @brief 	Define the gate base geomerty as wall.
+ */
+Vec2d BaseP_lb(DL - Dam_L - Gate_width, Base_bottom_position + BW); 	/**< Left bottom. */
+Vec2d BaseP_lt(DL - Dam_L - Gate_width, DH); /**< Left top. */
+Vec2d BaseP_rt(DL - Dam_L, DH); 				/**< Right top. */
+Vec2d BaseP_rb(DL - Dam_L, Base_bottom_position + BW); 					/**< Right bottom. */
 
 /**
  * @brief Material properties of the fluid.
@@ -57,8 +65,6 @@ Real rho0_f = 1.0;							/**< Reference density of fluid. */
 Real gravity_g = 9.8e-3; 					/**< Value of gravity. */
 Real U_f = 1.0;								/**< Characteristic velocity. */
 Real c_f = 20.0*sqrt(140.0*gravity_g); 		/**< Reference sound speed. */
-Real mu_f = 0.0;							/**< Dynamics viscosity. */
-Real k_f = 0.0;								/**< Thermal conduction rate. */
 /**
  * @brief Material properties of the elastic gate.
  */
@@ -91,6 +97,20 @@ public:
 	}
 };
 /**
+ * @brief 	Case dependent material properties definition.
+ */
+class WaterMaterial : public WeaklyCompressibleFluid
+{
+public:
+	WaterMaterial()	: WeaklyCompressibleFluid()
+	{
+		rho_0_ = rho0_f;
+		c_0_ = c_f;
+
+		assignDerivedMaterialParameters();
+	}
+};
+/**
  * @brief 	wall body definition.
  */
 class WallBoundary : public SolidBody
@@ -116,33 +136,59 @@ public:
 		inner_wall_shape.push_back(Point(DL, 0.0));
 		inner_wall_shape.push_back(Point(0.0, 0.0));
 		body_region_.add_geometry(new Geometry(inner_wall_shape), RegionBooleanOps::sub);
+
 		/** Finish the region modeling. */
 		body_region_.done_modeling();
 
 	}
 };
 /**
- * @brief  Gate base body definition.
+* @brief create a Gate Base shape
+*/
+std::vector<Point> CreatGateBaseShape()
+{
+	//geometry
+	std::vector<Point> gate_base_shape;
+	gate_base_shape.push_back(BaseP_lb);
+	gate_base_shape.push_back(BaseP_lt);
+	gate_base_shape.push_back(BaseP_rt);
+	gate_base_shape.push_back(BaseP_rb);
+	gate_base_shape.push_back(BaseP_lb);
+
+	return gate_base_shape;
+}
+/**
+ * @brief 	wall body definition.
  */
 class GateBase : public SolidBody
 {
 public:
-	GateBase(SPHSystem &system, string body_name, 
+	GateBase(SPHSystem& system, string body_name,
 		int refinement_level, ParticlesGeneratorOps op)
 		: SolidBody(system, body_name, refinement_level, op)
 	{
-		/** Geometry definition. */
-		std::vector<Point> gate_base_shape;
-		gate_base_shape.push_back(BaseP_lb);
-		gate_base_shape.push_back(BaseP_lt);
-		gate_base_shape.push_back(BaseP_rt);
-		gate_base_shape.push_back(BaseP_rb);
-		gate_base_shape.push_back(BaseP_lb);
+		/** Geomerty definition. */
+		std::vector<Point> gate_base_shape = CreatGateBaseShape();
 		body_region_.add_geometry(new Geometry(gate_base_shape), RegionBooleanOps::add);
 		/** Finish the region modeling. */
 		body_region_.done_modeling();
+
 	}
 };
+/**
+* @brief create a gate shape
+*/
+std::vector<Point> CreatGateShape()
+{
+	std::vector<Point> gate_shape;
+	gate_shape.push_back(GateP_lb);
+	gate_shape.push_back(GateP_lt);
+	gate_shape.push_back(GateP_rt);
+	gate_shape.push_back(GateP_rb);
+	gate_shape.push_back(GateP_lb);
+
+	return gate_shape;
+}
 /**
  * @brief  Define the elastic gate body.
  */
@@ -154,26 +200,73 @@ public:
 		: SolidBody(system, body_name, refinement_level, op)
 	{
 		/** Geomerty definition. */
-		std::vector<Point> gate_shape;
-		gate_shape.push_back(GateP_lb);
-		gate_shape.push_back(GateP_lt);
-		gate_shape.push_back(GateP_rt);
-		gate_shape.push_back(GateP_rb);
-		gate_shape.push_back(GateP_lb);
+		std::vector<Point> gate_shape = CreatGateShape();
 		body_region_.add_geometry(new Geometry(gate_shape), RegionBooleanOps::add);
 		/** Finish the region modeling. */
 		body_region_.done_modeling();
 	}
 };
 /**
- * @brief Define the observer body.
- */
-class Observer : public ObserverLagrangianBody
+* @brief create a Gate constrain shape
+*/
+std::vector<Point> CreatGateConstrainShape()
+{
+	//geometry
+	std::vector<Point> gate_constrain_shape;
+	gate_constrain_shape.push_back(ConstrainP_lb);
+	gate_constrain_shape.push_back(ConstrainP_lt);
+	gate_constrain_shape.push_back(ConstrainP_rt);
+	gate_constrain_shape.push_back(ConstrainP_rb);
+	gate_constrain_shape.push_back(ConstrainP_lb);
+
+	return gate_constrain_shape;
+}
+/**
+* @brief define the beam base which will be constrained.
+* NOTE: this class can only be instanced after body particles
+* have been generated
+*/
+class GateConstrain : public BodyPartByParticle
 {
 public:
-	Observer(SPHSystem &system, string body_name, 
-		int refinement_level, ParticlesGeneratorOps op)
-		: ObserverLagrangianBody(system, body_name, refinement_level, op)
+	GateConstrain(SolidBody* solid_body, string constrianed_region_name)
+		: BodyPartByParticle(solid_body, constrianed_region_name)
+	{
+		/* Geometry defination */
+		std::vector<Point> gate_constrain_shape = CreatGateConstrainShape();
+		body_part_region_.add_geometry(new Geometry(gate_constrain_shape), RegionBooleanOps::add);
+		/** Finish the region modeling. */
+		body_part_region_.done_modeling();
+
+		//tag the constrained particle
+		TagBodyPartParticles();
+	}
+};
+
+
+/**
+ * @brief Define gate material.
+ */
+class GateMaterial : public LinearElasticSolid
+{
+public:
+	GateMaterial() : LinearElasticSolid()
+	{
+		rho_0_ = rho0_s;
+		E_0_ = Youngs_modulus;
+		nu_ = poisson;
+
+		assignDerivedMaterialParameters();
+	}
+};
+/**
+ * @brief Define the observer body.
+ */
+class Observer : public FictitiousBody
+{
+public:
+	Observer(SPHSystem &system, string body_name, int refinement_level, ParticlesGeneratorOps op)
+		: FictitiousBody(system, body_name, refinement_level, 1.3, op)
 	{
 		/** Add observation point. */
 		body_input_points_volumes_.push_back(make_pair(GateP_lb, 0.0));
@@ -198,28 +291,23 @@ int main()
 	 */
 	WaterBlock *water_block 
 		= new WaterBlock(system, "WaterBody", 0, ParticlesGeneratorOps::lattice);
-	WeaklyCompressibleFluid 	fluid("Water", water_block, rho0_f, c_f, mu_f, k_f);
-
-	FluidParticles 	fluid_particles(water_block);
+	WaterMaterial 	*water_material = new WaterMaterial();
+	FluidParticles 	fluid_particles(water_block, water_material);
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
 	WallBoundary *wall_boundary 
 		= new WallBoundary(system, "Wall", 0, ParticlesGeneratorOps::lattice);
-	SolidParticles 					solid_particles(wall_boundary);
-	/**
-	 * @brief 	Material property, particle and body creation of gate base.
-	 */
+	SolidParticles 					wall_boundary_particles(wall_boundary);
 	GateBase *gate_base 
 		= new GateBase(system, "GateBase", 1, ParticlesGeneratorOps::lattice);
-	ElasticSolid 	gate_base_material("ElasticSolid", gate_base, rho0_s, Youngs_modulus, poisson);
-	ElasticSolidParticles 	gate_base_particles(gate_base);
+	SolidParticles 				gate_base_particles(gate_base);
 	/**
-	 * @brief 	Material property, particle and body creation of elastic gate.
+	 * @brief 	Material property, particle and body creation of gate.
 	 */
+	GateMaterial* gate_material = new GateMaterial();
 	Gate *gate = new Gate(system, "Gate", 1, ParticlesGeneratorOps::lattice);
-	ElasticSolid 	gate_material("ElasticSolid", gate, rho0_s, Youngs_modulus, poisson);
-	ElasticSolidParticles 	gate_particles(gate);
+	ElasticSolidParticles 	gate_particles(gate, gate_material);
 	/** offset particle position */
 	gate_particles.OffsetInitialParticlePosition(offset);
 	
@@ -228,20 +316,18 @@ int main()
 	 */
 	Observer *gate_observer 
 		= new Observer(system, "Observer", 1, ParticlesGeneratorOps::direct);
-	ObserverParticles 			observer_particles(gate_observer);
+	BaseParticles 			observer_particles(gate_observer);
 	/**
 	 * @brief 	Body contact map.
 	 * @details The contact map gives the data conntections between the bodies.
 	 * 			Basically the the rang of bidies to build neighbor particle lists.
 	 */
-	SPHBodyTopology body_topology = { { water_block, { wall_boundary, gate_base, gate } },
-									  { wall_boundary, { } },{ gate_base, { gate } },
-									  { gate, { gate_base, water_block} }, { gate_observer,{ gate } } };
+	SPHBodyTopology body_topology = { { water_block, { wall_boundary, gate, gate_base } },
+									  { wall_boundary, { } }, { gate_base, { gate } },
+									  { gate, {water_block, gate_base} }, 
+									  { gate_observer,{ gate } } };
 	system.SetBodyTopology(&body_topology);
-	/**
-	 * @brief 	Simulation set up.
-	 */
-	system.SetupSPHSimulation();
+
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
@@ -250,34 +336,33 @@ int main()
 	  */
 	/** Initialize normal direction of the wall boundary. */
 	solid_dynamics::NormalDirectionSummation 	get_wall_normal(wall_boundary, {});
-	/** Initialize normal direction of the gate base. */
+	/** Initialize normal direction of the wall boundary. */
 	solid_dynamics::NormalDirectionSummation 	get_gate_base_normal(gate_base, { gate });
 	/** Initialize normal direction of the elastic gate. */
 	solid_dynamics::NormalDirectionSummation 	get_gate_normal(gate, { gate_base });
 	/** Corrected strong configuration. */
-	solid_dynamics::CorrectConfiguration 		gate_base_corrected_configuration_in_strong_form(gate_base, { gate });
-	solid_dynamics::CorrectConfiguration 		gate_corrected_configuration_in_strong_form(gate, { gate_base });
+	solid_dynamics::CorrectConfiguration 		gate_corrected_configuration_in_strong_form(gate);
 
 
 	/**
 	 * @brief 	Methods used for time stepping.
 	 */
 	 /** Initialize particle acceleration. */
-	InitializeOtherAccelerations 	initialize_fluid_acceleration(water_block, &gravity);
+	InitializeATimeStep 	initialize_a_fluid_step(water_block, &gravity);
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
 	 /** Evaluation of fluid density by summation approach. */
-	fluid_dynamics::DensityBySummationFreeSurface		update_fluid_desnity(water_block, { wall_boundary,  gate_base, gate });
+	fluid_dynamics::DensityBySummationFreeSurface		update_fluid_desnity(water_block, { wall_boundary, gate, gate_base });
 	/** Compute time step size without considering sound wave speed. */
 	fluid_dynamics::GetAdvectionTimeStepSize			get_fluid_adevction_time_step_size(water_block, U_f);
 	/** Compute time step size with considering sound wave speed. */
 	fluid_dynamics::GetAcousticTimeStepSize get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
 	fluid_dynamics::PressureRelaxationFirstHalfRiemann 
-		pressure_relaxation_first_half(water_block,	{ wall_boundary,  gate_base, gate });
+		pressure_relaxation_first_half(water_block,	{ wall_boundary,  gate, gate_base });
 	fluid_dynamics::PressureRelaxationSecondHalfRiemann 
-		pressure_relaxation_second_half(water_block, { wall_boundary,  gate_base, gate });
+		pressure_relaxation_second_half(water_block, { wall_boundary,  gate, gate_base });
 	/**
 	 * @brief Algorithms of FSI.
 	 */
@@ -289,10 +374,11 @@ int main()
 	 /** Compute time step size of elastic solid. */
 	solid_dynamics::GetAcousticTimeStepSize 	gate_computing_time_step_size(gate);
 	/** Stress relaxation stepping for the elastic gate. */
-	solid_dynamics::StressRelaxation 			gate_stress_relaxation(gate, { gate_base });
-	/** Stress update for contrained wall body(gate base). */
-	solid_dynamics::StressInConstrinedElasticBodyFirstHalf 	gate_base_stress_update_first_half(gate_base);
-	solid_dynamics::StressInConstrinedElasticBodySecondHalf gate_base_stress_update_second_half(gate_base, { gate });
+	solid_dynamics::StressRelaxationFirstHalf 			gate_stress_relaxation_first_half(gate);
+	solid_dynamics::StressRelaxationSecondHalf 			gate_stress_relaxation_second_half(gate);
+	/**Constrain a solid body part.  */
+	solid_dynamics::ConstrainSolidBodyRegion
+		gate_constrain(gate, new GateConstrain(gate, "GateConstrain"));
 	/** Update the norm of elastic gate. */
 	solid_dynamics::UpdateElasticNormalDirection 	gate_update_normal(gate);
 	/** Compute the average velocity of gate. */
@@ -318,18 +404,21 @@ int main()
 	/** Output body states for visulaization. */
 	WriteBodyStatesToVtu 				write_real_body_states_to_vtu(in_output, system.real_bodies_);
 	/** Output the observed displacement of gate free end. */
-	WriteObservedElasticDisplacement 	write_beam_tip_displacement(in_output, gate_observer, { gate });
+	WriteAnObservedQuantity<Vecd, BaseParticles,
+		BaseParticleData, &BaseParticles::base_particle_data_, &BaseParticleData::pos_n_>
+		write_beam_tip_displacement("Displacement", in_output, gate_observer, gate);
 	/**
 	 * @brief The time stepping starts here.
 	 */
 	/**
 	 * @brief Prepare quantities will be used once only and initial condition.
 	 */
+	system.InitializeSystemCellLinkedLists();
+	system.InitializeSystemConfigurations();
 	get_wall_normal.parallel_exec();
 	get_gate_base_normal.parallel_exec();
 	get_gate_normal.parallel_exec();
 	gate_corrected_configuration_in_strong_form.parallel_exec();
-	gate_base_corrected_configuration_in_strong_form.parallel_exec();
 
 	write_real_body_states_to_plt.WriteToFile(GlobalStaticVariables::physical_time_);
 	write_beam_tip_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
@@ -353,10 +442,10 @@ int main()
 		/** Integrate time (loop) until the next output time. */
 		while (integeral_time < D_Time)
 		{
+			/** Acceleration due to viscous force and gravity. */
+			initialize_a_fluid_step.parallel_exec();
 			Dt = get_fluid_adevction_time_step_size.parallel_exec();
 			update_fluid_desnity.parallel_exec();
-			/** Acceleration due to viscous force and gravity. */
-			initialize_fluid_acceleration.parallel_exec();
 			/** Update normal direction on elastic body. */
 			gate_update_normal.parallel_exec();
 			Real relaxation_time = 0.0;
@@ -373,9 +462,9 @@ int main()
 				{
 					dt_s = gate_computing_time_step_size.parallel_exec();
 					if (dt - dt_s_sum < dt_s) dt_s = dt - dt_s_sum;
-					gate_base_stress_update_first_half.parallel_exec(dt_s);
-					gate_stress_relaxation.parallel_exec(dt_s);
-					gate_base_stress_update_second_half.exec(dt_s);
+					gate_stress_relaxation_first_half.parallel_exec(dt_s);
+					gate_constrain.parallel_exec();
+					gate_stress_relaxation_second_half.parallel_exec(dt_s);
 					dt_s_sum += dt_s;
 				}
 				gate_average_velocity.parallel_exec(dt);

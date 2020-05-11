@@ -18,12 +18,11 @@
 #include "sph_data_conainers.h"
 #include "neighbor_relation.h"
 #include "geometry.h"
-
 #include <string>
 using namespace std;
 
-namespace SPH {
-	
+namespace SPH 
+{
 	/**
 	 * @brief preclaimed classes.
 	 */
@@ -90,10 +89,8 @@ namespace SPH {
 		 */
 		SplitCellLists split_cell_lists_;
 
-		/** Reference inner configurations for totoal Lagrangian formulation. */
-		ParticleConfiguration reference_configuration_;
-		/** current inner configurations for updated Lagrangian formulation. */
-		ParticleConfiguration current_configuration_;
+		/** inner configuration for the neighbor relations. */
+		ParticleConfiguration inner_configuration_;
 
 		/**
 		 * @brief Contact configurations
@@ -109,7 +106,7 @@ namespace SPH {
 		ContatcParticleConfiguration contact_configuration_;
 
 		/**
-		 * @brief Defaut constructor of SPHBody.
+		 * @brief Constructor of SPHBody.
 		 * @param[in] sph_system SPHSystem.
 		 * @param[in] body_name Name of Body.
 		 * @param[in] refinement_level Refinement level of this body.
@@ -130,8 +127,8 @@ namespace SPH {
 		SPHBodyContactMap& getContactMap() { return contact_map_; };
 		/** Allocate memory for cell linked list. */
 		virtual void AllocateMeoemryCellLinkedList() {};
-		/** Allocate memory for back ground mesh. */
-		virtual void AllocateMeoemryBackgroundMesh() {};
+		/** add the back ground mesh particle mesh interaction. */
+		virtual void addBackgroundMesh(Real mesh_size_ratio = 0.5);
 		/** Allocate memories for configuration. */
 		void AllocateMemoriesForConfiguration();
 		/** Allocate extra configuration memories for body buffer particles. */
@@ -141,7 +138,7 @@ namespace SPH {
 		/** Build inner configuration. */
 		virtual void BuildInnerConfiguration() = 0;
 		/** Build contact configuration. */
-		virtual void BuildContactConfiguration() = 0;
+		virtual void BuildContactConfiguration();
 		/** Update inner configuration. */
 		virtual void UpdateInnerConfiguration() = 0;
 		/** Update contact configuration. */
@@ -202,6 +199,8 @@ namespace SPH {
 
 		/** Allocate memory for cell linked list. */
 		virtual void AllocateMeoemryCellLinkedList() override;
+		/** Build inner configuration. */
+		virtual void BuildInnerConfiguration() override;
 		/** Update cell linked list. */
 		virtual void UpdateCellLinkedList() override;
 		/** Update inner configuration. */
@@ -285,6 +284,20 @@ namespace SPH {
 	};
 
 	/**
+	 * @class BodySurface
+	 * @brief A auxillariy class for Body to
+	 * indicate the surface particles from background mesh
+	 */
+	class BodySurface : public BodyPartByParticle
+	{
+	protected:
+		virtual void TagBodyPartParticles() override;
+	public:
+		BodySurface(SPHBody* body);
+		virtual~BodySurface() {};
+	};
+
+	/**
 	 * @class BodyPartByCell
 	 * @brief An auxillariy class for SPHBody to
 	 * indicate a part of the body fixed in space.
@@ -301,4 +314,39 @@ namespace SPH {
 			: BodyPart(body, body_part_name) {};
 		virtual ~BodyPartByCell() {};
 	};
+
+	/**
+	 * @class NearBodySurface
+	 * @brief An auxillariy class for SPHBody to
+	 * indicate region close the body surface.
+	 */
+	class NearBodySurface : public BodyPartByCell
+	{
+	protected:
+		virtual void TagBodyPartCells();
+	public:
+		NearBodySurface(SPHBody* body);
+		virtual ~NearBodySurface() {};
+	};
+
+	/**
+	 * @class SolidBodyPartForSimbody
+	 * @brief A SolidBodyPart for coupling with Simbody.
+	 * The mass, origin, and unit inertial matrix are computed.
+	 * Note: In Simbody, all spatial vectors are three dimensional.
+	 */
+	class SolidBodyPartForSimbody : public BodyPartByParticle
+	{
+	protected:
+		Real solid_body_density_;
+
+		virtual void TagBodyPartParticles() override;
+	public:
+		SolidBodyPartForSimbody(SPHBody* body, string soild_body_part_name);
+		virtual~SolidBodyPartForSimbody() {};
+
+		Vec3 initial_mass_center_;
+		SimTK::MassProperties* body_part_mass_properties_;
+	};
+
 }

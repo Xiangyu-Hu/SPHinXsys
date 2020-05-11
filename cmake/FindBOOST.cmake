@@ -1,8 +1,6 @@
 # FindBoost.cmake
 #
 
-cmake_minimum_required(VERSION 2.8)
-
 set(Boost_ROOT_DIR "${BOOST_HOME}")
 set(Boost_SEARCH_PATHS "${Boost_ROOT_DIR}" "/usr/include/boost/" )
 

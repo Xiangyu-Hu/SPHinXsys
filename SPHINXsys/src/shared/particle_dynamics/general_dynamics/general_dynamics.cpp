@@ -47,7 +47,7 @@ namespace SPH {
 
 		for (int i = 0; i < base_particle_data_i.pos_n_.size(); ++i)
 		{
-			base_particle_data_i.pos_n_[i] += dt * (((double)rand() / (RAND_MAX)) - 1.0) * particle_spacing_;
+			base_particle_data_i.pos_n_[i] += dt * (((double)rand() / (RAND_MAX)) - 0.5) * 2.0 * particle_spacing_;
 		}
 	}
 //=================================================================================================//

@@ -1,4 +1,4 @@
-/**
+/** 
  * @file fluid_particles.cpp
  * @author	Xiangyu Hu and Chi Zhang
  * @version	0.1
@@ -10,65 +10,64 @@
 
 namespace SPH
 {
-	//===============================================================//
+	//=================================================================================================//
 	FluidParticleData::FluidParticleData()
 		: p_(0.0), drho_dt_(0.0), div_correction_(1.0), vel_trans_(0),
 		dvel_dt_trans_(0), vorticity_(0), rho_0_(1.0), rho_n_(1.0), 
-		mass_(1.0), dvel_dt_inner_(0)
+		mass_(1.0)
 	{
 
 	}
-	//===============================================================//
+	//=================================================================================================//
 	FluidParticleData::FluidParticleData(BaseParticleData &base_particle_data, Fluid *fluid)
 		: p_(0.0), drho_dt_(0.0), div_correction_(1.0), vel_trans_(0),
-		dvel_dt_trans_(0), vorticity_(0), dvel_dt_inner_(0)
+		dvel_dt_trans_(0), vorticity_(0)
 	{
 		rho_0_ = fluid->ReinitializeRho(p_);
 		rho_n_ = rho_0_;
 		mass_ = base_particle_data.Vol_ * rho_0_;
 	}
-	//===============================================================//
-	FluidParticles::FluidParticles(SPHBody *body, BaseMaterial *base_material) 
-		: BaseParticles(body, base_material)
+	//=================================================================================================//
+	FluidParticles::FluidParticles(SPHBody *body, Fluid* fluid)
+		: BaseParticles(body, fluid), signal_speed_max_(0.0)
 	{
-		/** material of the fluid*/
-		Fluid* fluid = dynamic_cast<Fluid*>(base_material_);
+		fluid->assignFluidParticles(this);
 		for (size_t i = 0; i < base_particle_data_.size(); ++i) {
 			fluid_particle_data_.push_back(FluidParticleData(base_particle_data_[i], fluid));
 		}
 	}
-	//===============================================================//
-	FluidParticles* FluidParticles::PointToThisObject() 
+	//=================================================================================================//
+	FluidParticles* FluidParticles::PointToThisObject()
 	{
 		return this;
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void FluidParticles::AddABufferParticle()
 	{
 		BaseParticles::AddABufferParticle();
 		fluid_particle_data_.push_back(FluidParticleData());
 
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void FluidParticles::CopyFromAnotherParticle(size_t this_particle_index, size_t another_particle_index)
 	{
 		BaseParticles::CopyFromAnotherParticle(this_particle_index, another_particle_index);
 		fluid_particle_data_[this_particle_index] = fluid_particle_data_[another_particle_index];
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void FluidParticles::UpdateFromAnotherParticle(size_t this_particle_index, size_t another_particle_index)
 	{
 		BaseParticles::UpdateFromAnotherParticle(this_particle_index, another_particle_index);
 		fluid_particle_data_[this_particle_index].rho_n_ = fluid_particle_data_[another_particle_index].rho_n_;
 		fluid_particle_data_[this_particle_index].p_ = fluid_particle_data_[another_particle_index].p_;
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void FluidParticles::swapParticles(size_t this_particle_index, size_t that_particle_index)
 	{
 		BaseParticles::swapParticles(this_particle_index, that_particle_index);
 		std::swap(fluid_particle_data_[this_particle_index], fluid_particle_data_[that_particle_index]);
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void  FluidParticles
 		::mirrorInAxisDirection(size_t particle_index_i, Vecd body_bound, int axis_direction)
 	{
@@ -76,7 +75,7 @@ namespace SPH
 		FluidParticleData& fluid_particle_data_i = fluid_particle_data_[particle_index_i];
 		fluid_particle_data_i.vel_trans_[axis_direction] *= -1.0;
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void FluidParticles::WriteParticlesToVtuFile(ofstream& output_file)
 	{
 		BaseParticles::WriteParticlesToVtuFile(output_file);
@@ -99,12 +98,12 @@ namespace SPH
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void ViscoelasticFluidParticles::WriteParticlesToVtuFile(ofstream& output_file)
 	{
 		FluidParticles::WriteParticlesToVtuFile(output_file);
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void FluidParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)
 	{
 		const SimTK::String xml_name("particles_xml"), ele_name("particles");
@@ -114,7 +113,7 @@ namespace SPH
 		for (size_t i = 0; i != number_of_particles; ++i)
 		{
 			restart_xml->CreatXmlElement("particle");
-			restart_xml->AddAttributeToElement<size_t>("ID", i);
+			restart_xml->AddAttributeToElement<Real>("Sigma0", base_particle_data_[i].sigma_0_);
 			restart_xml->AddAttributeToElement<Vecd>("Position", base_particle_data_[i].pos_n_);
 			restart_xml->AddAttributeToElement<Real>("Volume", base_particle_data_[i].Vol_);
 			restart_xml->AddAttributeToElement<Vecd>("Velocity", base_particle_data_[i].vel_n_);
@@ -123,7 +122,7 @@ namespace SPH
 		}
 		restart_xml->WriteToXmlFile(filefullpath);
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void FluidParticles::ReadParticleFromXmlForRestart(std::string &filefullpath)
 	{
 		size_t number_of_particles = 0;
@@ -132,6 +131,8 @@ namespace SPH
 		SimTK::Xml::element_iterator ele_ite_ = read_xml->root_element_.element_begin();
 		for (; ele_ite_ != read_xml->root_element_.element_end(); ++ele_ite_)
 		{
+			Real sigma_0 = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Sigma0");
+			base_particle_data_[number_of_particles].sigma_0_ = sigma_0;
 			Vecd pos_ = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Position");
 			base_particle_data_[number_of_particles].pos_n_ = pos_;
 			Real rst_Vol_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Volume");
@@ -145,46 +146,47 @@ namespace SPH
 			number_of_particles++;
 		}
 	}
-	//===============================================================//
+	//=================================================================================================//
 	ViscoelasticFluidParticleData::ViscoelasticFluidParticleData()
 		: tau_(0), dtau_dt_(0)
 	{
 
 	}
-	//===============================================================//
+	//=================================================================================================//
 	ViscoelasticFluidParticles
-		::ViscoelasticFluidParticles(SPHBody *body, BaseMaterial *base_material)
-		: FluidParticles(body, base_material)
+		::ViscoelasticFluidParticles(SPHBody *body, Oldroyd_B_Fluid* oldroyd_b_fluid)
+		: FluidParticles(body, oldroyd_b_fluid)
 	{
+		oldroyd_b_fluid->assignViscoelasticFluidParticles(this);
 		for (size_t i = 0; i < base_particle_data_.size(); ++i) {
 			viscoelastic_particle_data_.push_back(ViscoelasticFluidParticleData());
 		}
 	}
-	//===============================================================//
+	//=================================================================================================//
 	ViscoelasticFluidParticles* ViscoelasticFluidParticles::PointToThisObject()
 	{
 		return this;
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void ViscoelasticFluidParticles::AddABufferParticle()
 	{
 		FluidParticles::AddABufferParticle();
 		viscoelastic_particle_data_.push_back(ViscoelasticFluidParticleData());
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void ViscoelasticFluidParticles
 		::CopyFromAnotherParticle(size_t this_particle_index, size_t another_particle_index)
 	{
 		FluidParticles::CopyFromAnotherParticle(this_particle_index, another_particle_index);
 		viscoelastic_particle_data_[this_particle_index] = viscoelastic_particle_data_[another_particle_index];
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void ViscoelasticFluidParticles::swapParticles(size_t this_particle_index, size_t that_particle_index)
 	{
 		FluidParticles::swapParticles(this_particle_index, that_particle_index);
 		std::swap(viscoelastic_particle_data_[this_particle_index], viscoelastic_particle_data_[that_particle_index]);
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void ViscoelasticFluidParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)
 	{
 		XmlEngine* restart_xml = new XmlEngine("particles_xml", "particles");
@@ -199,11 +201,11 @@ namespace SPH
 		}
 		restart_xml->WriteToXmlFile(filefullpath);
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void ViscoelasticFluidParticles::ReadParticleFromXmlForRestart(std::string &filefullpath)
 	{
 		cout << "\n This function ViscoelasticFluidParticles::ReadParticleFromXmlForRestart is not done. Exit the program! \n";
 		exit(0);
 	}
-	//===============================================================//
+	//=================================================================================================//
 }

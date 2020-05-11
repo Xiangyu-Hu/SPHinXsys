@@ -9,7 +9,7 @@
 #include "base_body.h"
 
 namespace SPH {
-	//===================================================================//
+	//=================================================================================================//
 	Vecu BaseMesh::GridIndexesFromPosition(Vecd& position)
 	{
 		Vecd rltpos = position - mesh_lower_bound_;
@@ -21,7 +21,7 @@ namespace SPH {
 		}
 		return gird_pos;
 	}
-	//===================================================================//
+	//=================================================================================================//
 	Vecd BaseMesh::GridPositionFromIndexes(Vecu grid_indexes)
 	{
 		Vecd grid_position;
@@ -32,8 +32,8 @@ namespace SPH {
 		}
 		return grid_position;
 	}
-	//===================================================================//
-	Mesh::Mesh(Vecd lower_bound, Vecd upper_bound, Real grid_spacing, 
+	//=================================================================================================//
+	Mesh::Mesh(Vecd lower_bound, Vecd upper_bound, Real grid_spacing,
 		size_t buffer_size) : BaseMesh () 
 
 	{
@@ -44,7 +44,7 @@ namespace SPH {
 		number_of_cells_ = calcNumberOfCells(lower_bound, upper_bound, grid_spacing, buffer_size);
 		number_of_grid_points_ = getNumberOfGridPoints(number_of_cells_);
 	}
-	//===================================================================//
+	//=================================================================================================//
 	Mesh::Mesh(Vecd mesh_lower_bound, Vecu number_of_cells, Real cell_spacing)
 		: BaseMesh(), number_of_cells_(number_of_cells), cell_spacing_(cell_spacing)
 	{
@@ -53,12 +53,13 @@ namespace SPH {
 		buffer_size_ = 0;
 		number_of_grid_points_ = getNumberOfGridPoints(number_of_cells_);
 	}
+	//=================================================================================================//
 	void Mesh::setMeshLowerBound(Vecd lower_bound, Real grid_spacing, size_t buffer_size)
 	{
 		Vecd mesh_buffer = Vecd(Real(buffer_size) * grid_spacing);
 		mesh_lower_bound_ = lower_bound - mesh_buffer;
 	}
-	//===================================================================//
+	//=================================================================================================//
 	Vecu Mesh::calcNumberOfCells(Vecd lower_bound, Vecd upper_bound, Real grid_spacing, size_t buffer_size)
 	{
 		Vecd mesh_buffer = Vecd(Real(buffer_size) * grid_spacing);
@@ -74,6 +75,7 @@ namespace SPH {
 
 		return number_of_cells;
 	}
+	//=================================================================================================//
 	void Mesh::copyMeshProperties(Mesh* another_mesh)
 	{
 		mesh_lower_bound_ = another_mesh->mesh_lower_bound_;
@@ -82,7 +84,7 @@ namespace SPH {
 		number_of_cells_ = another_mesh->number_of_cells_;
 		number_of_grid_points_ = another_mesh->number_of_grid_points_;
 	}
-	//===================================================================//
+	//=================================================================================================//
 	Vecu Mesh::CellIndexesFromPosition(Vecd& position)
 	{
 		Vecd rltpos = position - mesh_lower_bound_;
@@ -94,7 +96,7 @@ namespace SPH {
 		}
 		return cell_pos;
 	}
-	//===================================================================//
+	//=================================================================================================//
 	Vecd Mesh::CellPositionFromIndexes(Vecu cell_indexes)
 	{
 		Vecd cell_position;
@@ -105,14 +107,25 @@ namespace SPH {
 		}
 		return cell_position;
 	}
-	//===================================================================//
+	//=================================================================================================//
+	bool Mesh::checkMeshBound(Vecd position)
+	{
+		bool is_bounded = true;
+		Vecu cell_pos = CellIndexesFromPosition(position);
+		for (size_t i = 0; i != position.size(); ++i) {
+			if (cell_pos[i] < 2) is_bounded = false;
+			if (cell_pos[i] > (number_of_cells_[i] - 2)) is_bounded = false;
+		}
+		return is_bounded;
+	}
+	//=================================================================================================//
 	LevelSetData
 		::LevelSetData(Real level_set, Vecd normal_direction)
 		: phi_(level_set), n_(normal_direction), kappa_(0.0)
 	{
 
 	}
-	//===================================================================//
+	//=================================================================================================//
 	MeshBackground
 		::MeshBackground(Vecd lower_bound, Vecd upper_bound, 
 			Real grid_spacing, size_t buffer_size)
@@ -120,7 +133,7 @@ namespace SPH {
 	{
 		number_of_grid_points_ = getNumberOfGridPoints(number_of_cells_);
 	}
-	//===================================================================//
+	//=================================================================================================//
 	void BaseDataPackage
 		::initializePackageGoemetry(Vecd& pkg_lower_bound, Real data_spacing)
 	{
@@ -128,18 +141,18 @@ namespace SPH {
 		grid_spacing_ = data_spacing;
 		data_lower_bound_ = pkg_lower_bound + Vecd(data_spacing * 0.5);
 	}
-	//===================================================================//
+	//=================================================================================================//
 	BaseLevelSet
 		::BaseLevelSet(Vecd lower_bound,
 			Vecd upper_bound, Real grid_spacing, size_t buffer_size)
 		: BaseMeshWithDataPackages(lower_bound, upper_bound,
 			grid_spacing, buffer_size), sph_body_(NULL) {}
-	//===================================================================//
+	//=================================================================================================//
 	BaseLevelSet
 		::BaseLevelSet(Vecd mesh_lower_bound, Vecu number_of_cells, Real cell_spacing)
 		: BaseMeshWithDataPackages(mesh_lower_bound, number_of_cells,
 			cell_spacing), sph_body_(NULL) {}
-	//===================================================================//
+	//=================================================================================================//
 	LevelSet
 		::LevelSet(Vecd lower_bound, Vecd upper_bound, Real grid_spacing, size_t buffer_size)
 		: MeshWithDataPackages<BaseLevelSet, LevelSetDataPackage>(lower_bound,
@@ -153,7 +166,7 @@ namespace SPH {
 		negatve_far_field->initializeWithUniformData(-far_field_distance, Vecd(0));
 		singular_data_pkgs_addrs.push_back(negatve_far_field);
 	}
-	//===================================================================//
+	//=================================================================================================//
 	LevelSet
 		::LevelSet(SPHBody* sph_body, Vecd lower_bound,
 			Vecd upper_bound, Real grid_spacing, size_t buffer_size)
@@ -162,13 +175,13 @@ namespace SPH {
 		sph_body_ = sph_body;
 		InitializeDataPackages();
 	}
-	//===================================================================//
+	//=================================================================================================//
 	LevelSet
 		::LevelSet(Vecd mesh_lower_bound, 
 			Vecu number_of_cells, Real cell_spacing)
 		: MeshWithDataPackages<BaseLevelSet, LevelSetDataPackage>(mesh_lower_bound,
 			number_of_cells, cell_spacing) {}
-	//===================================================================//
+	//=================================================================================================//
 	void LevelSet::InitializeDataPackages()
 	{
 		MeshFunctor initialize_data_in_a_cell = std::bind(&LevelSet::initializeDataInACell, this, _1, _2);
@@ -194,7 +207,7 @@ namespace SPH {
 	{
 		return probeMesh<Real, &LevelSetDataPackage::phi_addrs_, &LevelSetDataPackage::phi_>(position);
 	}
-	//===================================================================//
+	//=================================================================================================//
 	MultiresolutionLevelSet
 		::MultiresolutionLevelSet(SPHBody* sph_body, Vecd lower_bound, Vecd upper_bound,
 		Real reference_cell_spacing, size_t total_levels, size_t buffer_size)
@@ -207,6 +220,5 @@ namespace SPH {
 			mesh_levels_[level]->InitializeDataPackages();
 		}
 	}
-	//===================================================================//
-
+	//=================================================================================================//
 }

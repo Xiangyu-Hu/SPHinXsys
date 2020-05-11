@@ -25,16 +25,21 @@
 using namespace std;
 
 namespace SPH {
+	/** preclaimed classes */
+	class FluidParticles;
+	class SolidParticles;
+
 	/** @class  BaseMaterial
 	 *  @brief Base of all materials
-	 *  @details Note that the same material object can be shared by several
-	 *  SPH bodies, and the case dependent material properties will defined in 
+	 *  @details Note that the case dependent material properties will defined in 
 	 *  apliications.
 	*/
 	class BaseMaterial
 	{
 	protected:
 		string material_name_;
+		/** inverse of dimension */
+		Real inv_dimension_;
 		/** base partilce information for defining local material properties*/
 		BaseParticles* base_particles_;
 
@@ -42,24 +47,19 @@ namespace SPH {
 		virtual void assignDerivedMaterialParameters() {};
 	public:
 		/** Default constructor */
-		BaseMaterial() : material_name_("BaseMaterial"), base_particles_(NULL) {};
-		/** constructor with material name. */
-		BaseMaterial(string material_name) : BaseMaterial() {
-			material_name_ = material_name;
-		};
+		BaseMaterial() : material_name_("BaseMaterial"), 
+			inv_dimension_(1.0 / (Real)Vecd(0).size()), base_particles_(NULL) {};
 		virtual ~BaseMaterial() {};
 
-		/** Assign base particles to this material
-		  * for defining local material properties. 
-		  */
-		void AssignParticles(BaseParticles* base_particles) { base_particles_ = base_particles; };
+		/** Assign base particles to this material for defining local material properties. */
+		void assignParticles(BaseParticles* base_particles) { base_particles_ = base_particles; };
 		/** The interface for dynamical cast. */
 		virtual BaseMaterial* PointToThisObject() { return this; };
-		/**
-		 * @brief Return the material name.
-		 */
+		/** access the material name */
 		string getMaterialName() { return material_name_;}
-		/** 
+		/** initialize the local property. */
+		virtual void initializeLocalProperties(BaseParticles* base_particles) {};
+		/**
 		 * @brief Write the material property to xml file.
 		 * @param[in] filefullpath Full path the the output file.
 		 */
@@ -69,6 +69,11 @@ namespace SPH {
 		 * @param[in] filefullpath Full path the the output file.
 		 */
 		virtual void readFromXmlForMaterialProperty(std::string &filefullpath) {};
+		/**
+		 * @brief Write local material properties particle data in VTU format for Paraview.
+		 * @param[inout] output_file Ofstream of particle data.
+		 */
+		virtual void WriteMaterialPropertyToVtuFile(ofstream& output_file) {};
 	};
 
 
@@ -80,17 +85,25 @@ namespace SPH {
 	protected:
 		/** reference density, sound speed, viscosity. */
 		Real rho_0_, c_0_, mu_;
+		/** particles for this material */
+		FluidParticles* fluid_particles_;
 
 		/** assign derived material properties*/
-		virtual void assignDerivedMaterialParameters() {
+		virtual void assignDerivedMaterialParameters() override {
 			BaseMaterial::assignDerivedMaterialParameters();
 		};
 	public:
 		/** constructor with material name. */
-		Fluid(string fluid_name) : BaseMaterial(fluid_name), 
-			rho_0_(1.0), c_0_(1.0), mu_(0.0) {};
+		Fluid() : BaseMaterial(), rho_0_(1.0), c_0_(1.0), mu_(0.0),
+			fluid_particles_(NULL) {
+			material_name_ = "Fluid"; 
+		};
 		virtual ~Fluid() {};
 
+		/** assign particles to this material */
+		void assignFluidParticles(FluidParticles* fluid_particles) {
+			fluid_particles_ = fluid_particles;
+		};
 		/** the interface for dynamical cast*/
 		virtual Fluid* PointToThisObject() override { return this; };
 
@@ -113,77 +126,28 @@ namespace SPH {
 	protected:
 		/** reference density */
 		Real rho_0_;
+		/** particles for this material */
+		SolidParticles* solid_particles_;
 
 		/** assign derived material properties*/
-		virtual void assignDerivedMaterialProperties() {
+		virtual void assignDerivedMaterialParameters() override {
 			BaseMaterial::assignDerivedMaterialParameters();
 		};
 	public:
 		/** constructor with material name. */
-		Solid(string solid_name) 
-			: BaseMaterial(solid_name), rho_0_(1.0) {};
+		Solid()	: BaseMaterial(), rho_0_(1.0), solid_particles_(NULL) {
+			material_name_ = "Soild";
+		};
 		virtual ~Solid() {};
 
+		/** assign particles to this material */
+		void assignSolidParticles(SolidParticles* solid_particles) {
+			solid_particles_ = solid_particles;
+		};
 		/** Access to reference density. */
 		Real getReferenceDensity() { return rho_0_; };
 		/** the interface for dynamical cast*/
 		virtual Solid* PointToThisObject() override { return this; };
-		/** 
-		 * @brief Write the material property to xml file.
-		 * @param[in] filefullpath Full path the the output file.
-		 */
-		virtual void writeToXmlForReloadMaterialProperty(std::string &filefullpath) override {};
-		/** 
-		 * @brief Read the material property from xml file.
-		 * @param[in] filefullpath Full path the the output file.
-		 */
-		virtual void readFromXmlForMaterialProperty(std::string &filefullpath) override {};
 	};
 	
-	/**
-	  * @class MaterialWithLocalProperties
-	  * @brief The base class for a material with local properties
-	  */
-	template<class MaterialType>
-	class MaterialWithLocalProperties : public MaterialType
-	{
-	protected:
-		/** Assigning local material properties. */
-		virtual void AssignLocalProperties() = 0;
-	public:
-		/** constructor with material name. */
-		MaterialWithLocalProperties<MaterialType>(string material_name)
-			: MaterialType(material_name) {};
-		virtual ~MaterialWithLocalProperties() {};
-
-		/** the interface for dynamical cast*/
-		virtual MaterialWithLocalProperties* PointToThisObject() override { return this; };
-	};
-
-	/**
-	  * @class CompositeMaterial
-	  * @brief The base class for a material compaite with several
-	  * similar materials
-	  */
-	template<class MaterialType>
-	class CompositeMaterial : public MaterialType
-	{
-	protected:
-		/** local material mapping. */
-		StdLargeVec<MaterialType*> matrial_mapping_;
-		/** Vector of materal objects. */
-		StdVec<MaterialType*> reference_materials_;
-
-		/** Assigning local material properties. */
-		virtual void AssignComposite() = 0;
-	public:
-		CompositeMaterial<MaterialType>(string material_name,
-			StdVec<MaterialType*> reference_materials) 
-			: MaterialType(material_name),
-			reference_materials_(reference_materials) {};
-		virtual ~CompositeMaterial() {};
-
-		/** the interface for dynamical cast*/
-		virtual CompositeMaterial* PointToThisObject() override { return this; };
-	}; 
 }

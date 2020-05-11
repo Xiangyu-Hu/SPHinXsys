@@ -19,30 +19,30 @@
 
 namespace SPH
 {
-	//===============================================================//
+	//=================================================================================================//
 	size_t BaseParticleData::total_number_of_particles_ = 0;
-	//===============================================================//
+	//=================================================================================================//
 	BaseParticleData::BaseParticleData()
-		: vel_n_(0), pos_n_(0), Vol_(0), Vol_0_(0), sigma_0_(0),
+		: vel_n_(0), pos_n_(0), pos_0_(0), Vol_(0), Vol_0_(0), sigma_0_(0),
 		dvel_dt_others_(0), dvel_dt_(0), is_sortable_(true),
 		particle_id_(0)
 	{
 		total_number_of_particles_++;
 	}
-	//===============================================================//
-	BaseParticleData::BaseParticleData(Vecd position, Real Vol_0, Real sigma_0) 
-		: vel_n_(0), pos_n_(position), Vol_(Vol_0), Vol_0_(Vol_0), sigma_0_(sigma_0),
-		dvel_dt_others_(0), dvel_dt_(0), is_sortable_(true), particle_id_(0)
+	//=================================================================================================//
+	BaseParticleData::BaseParticleData(Vecd position, Real Vol_0, Real sigma_0)
+		: vel_n_(0), pos_n_(position), pos_0_(position), Vol_(Vol_0), Vol_0_(Vol_0), 
+		sigma_0_(sigma_0), dvel_dt_others_(0), dvel_dt_(0), is_sortable_(true), particle_id_(0)
 	{
 		total_number_of_particles_++;
 	}
-	//===============================================================//
+	//=================================================================================================//
 	BaseParticles::BaseParticles(SPHBody* body, BaseMaterial* base_material)
 		: body_(body), base_material_(base_material),
 		body_name_(body->GetBodyName()), speed_max_(0.0)
 	{
 		body->base_particles_ = this;
-		base_material->AssignParticles(this);
+		base_material->assignParticles(this);
 		body->base_mesh_cell_linked_list_->assignParticles(this);
 
 		ParticleGenerator* particle_generator;
@@ -71,39 +71,42 @@ namespace SPH
 		number_of_ghost_particles_ = 0;
 		delete particle_generator;
 	}
-	//===============================================================//
+	//=================================================================================================//
+	BaseParticles::BaseParticles(SPHBody* body)
+		: BaseParticles(body, new BaseMaterial()) {}
+	//=================================================================================================//
 	void BaseParticles::InitializeABaseParticle(Vecd pnt, Real Vol_0, Real sigma_0)
 	{
 		size_t particle_index = base_particle_data_.size();
 		base_particle_data_.push_back(BaseParticleData(pnt, Vol_0, sigma_0));
 		base_particle_data_[particle_index].particle_id_ = particle_index;
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void BaseParticles::AddABufferParticle()
 	{
 		size_t particle_index = base_particle_data_.size();
 		base_particle_data_.push_back(BaseParticleData());
 		base_particle_data_[particle_index].particle_id_ = particle_index;
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void BaseParticles::CopyFromAnotherParticle(size_t this_particle_index, size_t another_particle_index)
 	{
 		size_t particle_id = base_particle_data_[this_particle_index].particle_id_;
 		base_particle_data_[this_particle_index] = base_particle_data_[another_particle_index];
 		base_particle_data_[this_particle_index].particle_id_ = particle_id;
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void BaseParticles::UpdateFromAnotherParticle(size_t this_particle_index, size_t another_particle_index)
 	{
 		base_particle_data_[this_particle_index].pos_n_ = base_particle_data_[another_particle_index].pos_n_;
 		base_particle_data_[this_particle_index].vel_n_ = base_particle_data_[another_particle_index].vel_n_;
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void BaseParticles::swapParticles(size_t this_particle_index, size_t that_particle_index)
 	{
 		std::swap(base_particle_data_[this_particle_index], base_particle_data_[that_particle_index]);
 	}
-	//===============================================================//
+	//=================================================================================================//
 	bool BaseParticles::allowSwapping(size_t this_particle_index, size_t that_particle_index)
 	{
 		return  base_particle_data_[this_particle_index].is_sortable_
@@ -129,7 +132,12 @@ namespace SPH
 		}
 		return expected_particle_index;
 	}
-	//===============================================================//
+	//=================================================================================================//
+	SPHBody* BaseParticles::getSPHBody()
+	{
+		return body_;
+	}
+	//=================================================================================================//
 	void BaseParticles::WriteParticlesToVtuFile(ofstream& output_file)
 	{
 		size_t number_of_particles = body_->number_of_particles_;
@@ -164,6 +172,8 @@ namespace SPH
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
 
+		base_material_->WriteMaterialPropertyToVtuFile(output_file);
+
 		output_file << "    <DataArray Name=\"Velocity\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
@@ -173,7 +183,7 @@ namespace SPH
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void BaseParticles::WriteToXmlForReloadParticle(std::string &filefullpath)
 	{
 		const SimTK::String xml_name("particles_xml"), ele_name("particles");
@@ -189,7 +199,7 @@ namespace SPH
 		}
 		reload_xml->WriteToXmlFile(filefullpath);
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void BaseParticles::ReadFromXmlForReloadParticle(std::string &filefullpath)
 	{
 		size_t number_of_particles = 0;
@@ -214,12 +224,12 @@ namespace SPH
 			exit(1);
 		}
 	}
-	//===============================================================//
+	//=================================================================================================//
 	BaseParticles* BaseParticles::PointToThisObject()
 	{
 		return this;
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void  BaseParticles
 		::mirrorInAxisDirection(size_t particle_index_i, Vecd body_bound, int axis_direction)
 	{
@@ -228,6 +238,5 @@ namespace SPH
 			= 2.0 * body_bound[axis_direction] - base_particle_data_i.pos_n_[axis_direction];
 		base_particle_data_i.vel_n_[axis_direction] *= -1.0;
 	}
-	//===============================================================//
-
+	//=================================================================================================//
 }

@@ -37,13 +37,8 @@ namespace SPH {
 		Real drho_dt_, div_correction_;
 		/** Paticle transport acceleration and velocity. */
 		Vecd dvel_dt_trans_, vel_trans_;
-		/** Particle acceleration due to inner body force. */
-		Vecd dvel_dt_inner_;
 		/** Vorticcity of fluid in 3D. */
 		Vec3d vorticity_;					
-
-		/** Temporary data for initermediate usage. */
-		Real temp_real_;		
 	};
 
 	/**
@@ -53,7 +48,7 @@ namespace SPH {
 	class FluidParticles : public BaseParticles
 	{
 	public:
-		explicit FluidParticles(SPHBody *body, BaseMaterial *base_material);
+		explicit FluidParticles(SPHBody *body, Fluid *fluid);
 		virtual ~FluidParticles() {};
 
 		/** vector of fluid particle data. */
@@ -117,7 +112,7 @@ namespace SPH {
 	{
 	public:
 		//constructor
-		explicit ViscoelasticFluidParticles(SPHBody *body, BaseMaterial *base_material);
+		explicit ViscoelasticFluidParticles(SPHBody *body, Oldroyd_B_Fluid* oldroyd_b_fluid);
 		virtual ~ViscoelasticFluidParticles() {};
 		
 		/** Vector of oldroyd b particle data. */

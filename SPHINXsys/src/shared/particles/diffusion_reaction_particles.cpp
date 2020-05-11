@@ -22,8 +22,9 @@ namespace SPH
 	};
 	//=================================================================================================//
 	ElectroPhysiologyParticles
-		::ElectroPhysiologyParticles(SPHBody* body, BaseMaterial* base_material) 
-		: DiffusionReactionParticles<SolidParticles, Solid>(body, base_material)
+		::ElectroPhysiologyParticles(SPHBody* body, 
+			DiffusionReactionMaterial<SolidParticles, Solid>* diffusion_reaction_material)
+		: DiffusionReactionParticles<SolidParticles, Solid>(body, diffusion_reaction_material)
 	{
 	}
 	//=================================================================================================//

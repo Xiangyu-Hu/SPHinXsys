@@ -6,6 +6,7 @@
  */
 
 #include "diffusion_reaction.h"
+#include "diffusion_reaction_particles.h"
 
 namespace SPH 
 {
@@ -18,7 +19,33 @@ namespace SPH
 							+ bias_diff_cf_ * SimTK::outer(bias_direction_, bias_direction_);
 		transf_diffusivity_ = inverseCholeskyDecomposition(diff_i);
 	};
-//=================================================================================================//
+	//=================================================================================================//
+	void LocalDirectionalDiffusion::initializeLocalProperties(BaseParticles* base_particles)
+	{
+		size_t number_of_particles = base_particles->getSPHBody()->number_of_particles_;
+		for (size_t i = 0; i != number_of_particles; i++)
+		{
+			local_bias_direction_.push_back(Vecd(0));
+			local_transf_diffusivity_.push_back(Matd(0));
+		}
+	};
+	//=================================================================================================//
+	void LocalDirectionalDiffusion::setupLocalProperties(StdVec<Vecd>& material_fiber)
+	{
+		if (material_fiber.size() != local_bias_direction_.size()) {
+			std::cout << "\n Error:  material properties does not matrch" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
+		}
+		for (size_t i = 0; i < material_fiber.size(); i++)
+		{
+			local_bias_direction_[i] = material_fiber[i];
+			Matd diff_i = diff_cf_ * Matd(1.0) + bias_diff_cf_ * SimTK::outer(material_fiber[i], material_fiber[i]);
+			local_transf_diffusivity_[i] = inverseCholeskyDecomposition(diff_i);
+		}
+		std::cout << "\n Local diffusion properties setup finished " << std::endl;
+	};
+	//=================================================================================================//
 	void ElectroPhysiologyReaction::initilaizeElectroPhysiologyReaction(size_t voltage, size_t gate_variable, 
 			size_t active_contraction_stress)
 	{
@@ -79,12 +106,11 @@ namespace SPH
 		return epsilon_ + mu_1_ * gate_variable / (mu_2_ + voltage + 1.0e-6);
 	}
 //=================================================================================================//
-	MonoFieldElectroPhysiology::MonoFieldElectroPhysiology(string electro_physioology_material_name,
-			ElectroPhysiologyReaction* electro_physiology_reaction)
-		: DiffusionReactionMaterial<Solid>(electro_physioology_material_name,
-			electro_physiology_reaction), diff_cf_(1.0), bias_diff_cf_(0.0), 
+	MonoFieldElectroPhysiology::MonoFieldElectroPhysiology(ElectroPhysiologyReaction* electro_physiology_reaction)
+		: DiffusionReactionMaterial<SolidParticles, Solid>(electro_physiology_reaction), diff_cf_(1.0), bias_diff_cf_(0.0), 
 		bias_direction_(FisrtAxisVector(Vecd(0)))
 	{
+		material_name_ = "MonoFieldElectroPhysiology";
 		insertASpecies("Voltage");
 		insertASpecies("GateVariable");
 		insertASpecies("ActiveContractionStress");
@@ -100,7 +126,12 @@ namespace SPH
 				diff_cf_, bias_diff_cf_, bias_direction_);
 		species_diffusion_.push_back(voltage_diffusion);
 	}
-//=================================================================================================//
+	//=================================================================================================//
+	void LocalMonoFieldElectroPhysiology::initializeLocalProperties(BaseParticles* base_particles)
+	{
+		species_diffusion_[0]->initializeLocalProperties(base_particles);
+	}
+	//=================================================================================================//
 	void LocalMonoFieldElectroPhysiology::initializeDiffusion()
 	{
 		LocalDirectionalDiffusion* voltage_diffusion

@@ -57,8 +57,6 @@
 #     endif()
 #
 
-cmake_minimum_required(VERSION 2.8)
-
 #set(Simbody_ROOT_DIR "$ENV{SIMBODY_HOME}")
 set(Simbody_ROOT_DIR "${SIMBODY_HOME}")
 set(Simbody_SEARCH_PATHS "${Simbody_ROOT_DIR}")

@@ -56,11 +56,11 @@ namespace SPH
 		* @brief Compute the diffusion relaxation process
 		*/
 		class ElectroPhysiologyDiffusionRelaxation : 
-			public TotalLagrangianRungeKuttaRelaxationOfAllDifussionSpecies<SolidBody, SolidParticles, Solid>
+			public RelaxationOfAllDifussionSpeciesRK2<SolidBody, SolidParticles, Solid>
 		{
 		public:
 			ElectroPhysiologyDiffusionRelaxation(SolidBody *body)
-				: TotalLagrangianRungeKuttaRelaxationOfAllDifussionSpecies<SolidBody, SolidParticles, Solid>(body) {};
+				: RelaxationOfAllDifussionSpeciesRK2<SolidBody, SolidParticles, Solid>(body) {};
 			virtual ~ElectroPhysiologyDiffusionRelaxation() {};
 		};
         /**

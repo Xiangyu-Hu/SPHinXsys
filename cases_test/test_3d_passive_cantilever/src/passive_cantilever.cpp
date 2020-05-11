@@ -1,45 +1,40 @@
 /**
- * @file electro_activation.cpp
- * @brief This is the first example of elctro activation of myocaridum
+ * @file pssive_cantilever.cpp
+ * @brief This is the first example of myocaridum 
  * @author Chi Zhang and Xiangyu Hu
  * @version 0.1.0
+ * @ref 	doi.org/10.1016/j.jcp.2013.12.012
  */
 #include "sphinxsys.h"
-
+/** Name space. */
 using namespace SPH;
-
-Real PL = 10.0; 		/**< Lenght. */
-Real PH = 2.0; 		/**< Thickness for thick plate. */
-Real PW = 2.0;		/**< Width. */				
-Real SL = 2.0; 		/**< Extensioin for holder. */
-
-Real particle_spacing_ref = PL / 50.0;		/**< Initial particle spacing. */
+/** Geometry parameters. */
+Real PL = 6.0; 
+Real PH = 1.0;
+Real PW = 1.0;		
+Real SL = 0.5; 
+Real particle_spacing_ref = PH / 12.0;		/**< Initial particle spacing. */
 Real BW = particle_spacing_ref * 4; 		/**< Boundary width. */
-
-int resolution(20);		/**< SimTK geometric modeling resolution. */
+/**< SimTK geometric modeling resolution. */
+int resolution(20);
 /** For material properties of the solid. */
-Real rho_0 = 1.0; 
-Real poisson = 0.49; 
-Real Youngs_modulus = 1.0;
-Real a_0[4] = {496.0, 15196.0, 3283.0, 662.0};
-Real b_0[4] = {7.209, 20.417, 11.176, 9.466};
-// Real a_0[4] = {496.0, 0.0, 0.0, 0.0};
-// Real b_0[4] = {7.209, 0.0, 0.0, 0.0};
-Vec3d d_0(1.0, 0.0, 0.0);
-/** Electrophysiology prameters. */
-Real c_m = 1.0;
-Real k = 8.0;
-Real a = 0.15;
-Real mu_1 = 0.2;
-Real mu_2 = 0.3;
-Real epsilon = 0.04;
-/** Active stress factor */
-Real k_a = 250.0;
+Real rho_0 = 1100.0; 
+Real poisson = 0.45; 
+Real Youngs_modulus = 1.7e7;
+Real a = Youngs_modulus/(2.0 *(1.0 + poisson));
+Real a_f = 0.0 * a;
+Real a_0[4] = {a, a_f, 0.0, 0.0};
+Real b_0[4] = {1.0, 0.0, 0.0, 0.0};
+Vec3d fiber_direction(1.0, 0.0, 0.0);
+Vec3d sheet_direction(0.0, 1.0, 0.0);
+Real bulk_modulus = Youngs_modulus / 3.0 / (1.0 - 2.0 * poisson);
+
+Vec3d d_0(1.0e-4, 0.0, 0.0);
 /** Define the geometry. */
 Geometry *CreateMyocardium()
 {
 	Vecd halfsize_myocardium(0.5 * (PL + SL), 0.5 * PH, 0.5 * PW);
-	Vecd translation_myocardium(0.5 * (PL - SL), 0.0, 0.0);
+	Vecd translation_myocardium(0.5 * (PL - SL), 0.5 * PH, 0.5 * PW);
 	Geometry *geometry_myocardium = new Geometry(halfsize_myocardium, resolution,
 		translation_myocardium);
 
@@ -49,7 +44,7 @@ Geometry *CreateMyocardium()
 Geometry *CreateHolder()
 {
 	Vecd halfsize_holder(0.5*SL, 0.5*PH , 0.5*PW);
-	Vecd translation_holder(-0.5*SL, 0.0, 0.0);
+	Vecd translation_holder(-0.5*SL, 0.5 * PH, 0.5 * PW);
 	Geometry *geometry_holder = new Geometry(halfsize_holder,
 		resolution, translation_holder);
 
@@ -74,11 +69,11 @@ public:
 * NOTE: this class can only be instanced after body particles
 * have been generated
 */
-class Holder : public SolidBodyPart
+class Holder : public BodyPartByParticle
 {
 public:
 	Holder(SolidBody *solid_body, string constrianed_region_name)
-		: SolidBodyPart(solid_body, constrianed_region_name)
+		: BodyPartByParticle(solid_body, constrianed_region_name)
 	{
 		body_part_region_.add_geometry(CreateHolder(), RegionBooleanOps::add);
 		body_part_region_.done_modeling();
@@ -86,57 +81,52 @@ public:
 		TagBodyPartParticles();
 	}
 };
- /**
- * application dependent initial condition 
+/**
+ * Setup material properties of myocardium
  */
-class ElectroActivationInitialization
-	: public electro_mechanics::ElectroMechanicsInitialCondition
+class MyocardiumMuscle : public Muscle
 {
 public:
-	ElectroActivationInitialization(SolidBody *myocardium)
-		: electro_mechanics::ElectroMechanicsInitialCondition(myocardium) {};
+	MyocardiumMuscle() : Muscle() 
+	{
+		rho_0_ 	= rho_0;
+		bulk_modulus_ = bulk_modulus;
+		f0_ 	= fiber_direction;
+		s0_ 	= sheet_direction;
+		std::copy(a_0, a_0 + 4, a_0_);
+		std::copy(b_0, b_0 + 4, b_0_);
+
+		assignDerivedMaterialParameters();
+	}
+};
+/**
+ * application dependent initial condition 
+ */
+class MyocardiumInitialCondition
+	: public solid_dynamics::ElasticSolidDynamicsInitialCondition
+{
+public:
+	MyocardiumInitialCondition(SolidBody *myocardium)
+		: solid_dynamics::ElasticSolidDynamicsInitialCondition(myocardium) {};
 protected:
 	void Update(size_t index_particle_i, Real dt) override 
 	{
-		electro_mechanics::ElectroMechanicsInitialCondition::Update(index_particle_i, dt);
-
 		BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-		MuscleParticleData &muscle_particle_data_i = particles_->muscle_body_data_[index_particle_i];
-		if(base_particle_data_i.pos_n_[0] <= 0)
+		if (base_particle_data_i.pos_n_[0] > 0.0) 
 		{
-			muscle_particle_data_i.voltage_n_ = 0.0;
-		}else{
-			muscle_particle_data_i.voltage_n_ = exp(-4.0 * (base_particle_data_i.pos_n_[0] - 5.0) 
-				* (base_particle_data_i.pos_n_[0] - 5.0));
-		}	
+			base_particle_data_i.vel_n_[1] = 5.0 * sqrt(3.0);
+			base_particle_data_i.vel_n_[2] = 5.0;
+		}
 	};
 };
- /**
- * Setup local properties of myocardium
- */
-class MyocardiumMuscle
- 	: public Muscle
+ //define an observer body
+class MyocardiumObserver : public FictitiousBody
 {
- public:
- 	MyocardiumMuscle(string myocardium_name,SPHBody *body, Real a0[4], Real b0[4], Vecd d0, 
-		Real rho0, Real nu, Real eta0)
-		: Muscle(myocardium_name, body, a0, b0, d0, rho0, nu, eta0){}
-
- 	void SetupLocalProperties(SPHBody *body) override
- 	{
-	
- 		Vecd e_1(1.0,0.0,0.0);
- 		Vecd e_2(0.0,1.0,0.0);
- 		for(size_t i = 0; i < body->number_of_particles_; i++)
- 		{
- 			f0_.push_back(e_1);
- 			s0_.push_back(e_2);
- 			f0f0_.push_back(SimTK::outer(e_1, e_1));
- 			s0s0_.push_back(SimTK::outer(e_2, e_2));
- 			f0s0_.push_back(SimTK::outer(e_1, e_2));
-			Matd diff_i = d_0_[0] * Matd(1.0) + d_0_[1] * SimTK::outer(f0_[i], f0_[i]);
-			diff_cd_0.push_back(inverseCholeskyDecomposition(diff_i));
-		}
+public:
+	MyocardiumObserver(SPHSystem &system, string body_name, int refinement_level, ParticlesGeneratorOps op)
+		: FictitiousBody(system, body_name, refinement_level, 1.3, op)
+	{
+		body_input_points_volumes_.push_back(make_pair(Point(PL, PH, PW), 0.0));
 	}
 };
 /**
@@ -145,61 +135,66 @@ class MyocardiumMuscle
 int main()
 {
 	/** Setup the system. */
-	SPHSystem system(Vecd(-SL - BW, -0.5 * (PL + BW), -0.5 * (SL + BW)),
-		Vecd(PL, 0.5 * (PL + BW), 0.5 * (SL + BW)), particle_spacing_ref);
+	SPHSystem system(Vecd(-SL - BW, BW, BW),
+		Vecd(PL + BW, PH + BW, PH + BW), particle_spacing_ref, 6);
 	/** Creat a Myocardium body, corresponding material, particles and reaction model. */
 	Myocardium *myocardium_body =
 		new Myocardium(system, "MyocardiumBody", 0, ParticlesGeneratorOps::lattice);
-	MyocardiumMuscle 	material("Muscle", myocardium_body, a_0, b_0,d_0, rho_0, poisson, 1.0);
-	MuscleParticles 	particles(myocardium_body);
-	AlievPanfilowModel 	reaction_model("TwoVariableModel", myocardium_body, c_m, k, a, mu_1, mu_2, epsilon, k_a);
+	MyocardiumMuscle 	*muscle_material = new MyocardiumMuscle();
+	ElasticSolidParticles 	particles(myocardium_body, muscle_material);
+	/** Define Observer. */
+	MyocardiumObserver *myocardium_observer 
+		= new MyocardiumObserver(system, "MyocardiumObserver", 0, ParticlesGeneratorOps::direct);
+	BaseParticles observer_particles(myocardium_observer);
 	/** Set body contact map
 	 *  The contact map gives the data conntections between the bodies
 	 *  basically the the range of bidies to build neighbor particle lists
 	 */
-	SPHBodyTopology body_topology = { { myocardium_body,{} } };
+	SPHBodyTopology body_topology = { { myocardium_body,{} }, {myocardium_observer, {myocardium_body}} };
 	system.SetBodyTopology(&body_topology);
-	/** Setting up the simulation. */
-	system.SetupSPHSimulation();
+
 	/** 
 	 * This section define all numerical methods will be used in this case.
 	 */
-	/** initial condition for the elastic solid bodies */
-	ElectroActivationInitialization 
-		setup_initial_condition(myocardium_body);
+	/** Initialization. */
+	MyocardiumInitialCondition initialization(myocardium_body);
 	/** Corrected strong configuration. */	
 	solid_dynamics::CorrectConfiguration 
-		corrected_configuration_in_strong_form(myocardium_body, {});
+		corrected_configuration_in_strong_form(myocardium_body);
 	/** Time step size caclutation. */
 	solid_dynamics::GetAcousticTimeStepSize 
 		computing_time_step_size(myocardium_body);
-	/** Compute the active contraction stress */
-	electro_mechanics::computeActiveContractionStress
-		compute_active_contraction_stress(myocardium_body);
 	/** active-pative stress relaxation. */
-	electro_mechanics::ActivePassiveStressRelaxationFirstStep
-		stress_relaxation_first_step(myocardium_body);
-	electro_mechanics::ActivePassiveStressRelaxationSecondStep
-		stress_relaxation_second_step(myocardium_body);
+	solid_dynamics::StressRelaxationFirstHalf
+		stress_relaxation_first_half(myocardium_body);
+	/** Setup the damping stress, if you know what you are doing. */
+	//stress_relaxation_first_step.setupDampingStressFactor(1.0);
+	solid_dynamics::StressRelaxationSecondHalf
+		stress_relaxation_second_half(myocardium_body);
 	/** Constrain the holder. */
 	solid_dynamics::ConstrainSolidBodyRegion
 		constrain_holder(myocardium_body, new Holder(myocardium_body, "Holder"));
 	/** Output */
 	In_Output in_output(system);
-	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
+	WriteBodyStatesToPlt write_states(in_output, system.real_bodies_);
+	WriteAnObservedQuantity<Vecd, BaseParticles,
+		BaseParticleData, &BaseParticles::base_particle_data_, &BaseParticleData::pos_n_>
+		write_displacement("Displacement", in_output, myocardium_observer, myocardium_body);
 	/**
 	 * From here the time stepping begines.
 	 * Set the starting time.
 	 */
 	GlobalStaticVariables::physical_time_ = 0.0;
+	system.InitializeSystemCellLinkedLists();
+	system.InitializeSystemConfigurations();
 	/** apply initial condition */
-	setup_initial_condition.exec();
-	material.SetupLocalProperties(myocardium_body);
+	initialization.parallel_exec();
 	corrected_configuration_in_strong_form.parallel_exec();
 	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
 	/** Setup physical parameters. */
 	int ite = 0;
-	Real end_time = 10.0;
+	Real end_time = 3.0;
 	Real output_period = end_time / 100.0;		
 	Real dt = 0.0; 
 	/** Statistics for computing time. */
@@ -218,17 +213,16 @@ int main()
 					<< GlobalStaticVariables::physical_time_ << "	dt: "
 					<< dt << "\n";
 			}
-			compute_active_contraction_stress.parallel_exec(dt);
-			stress_relaxation_first_step.parallel_exec(dt);
+			stress_relaxation_first_half.parallel_exec(dt);
 			constrain_holder.parallel_exec(dt);
-			stress_relaxation_second_step.parallel_exec(dt);
+			stress_relaxation_second_half.parallel_exec(dt);
 
 			ite++;
 			dt = computing_time_step_size.parallel_exec();
 			integeral_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 		}
-
+		write_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
 		tick_count t2 = tick_count::now();
 		write_states.WriteToFile(GlobalStaticVariables::physical_time_);
 		tick_count t3 = tick_count::now();

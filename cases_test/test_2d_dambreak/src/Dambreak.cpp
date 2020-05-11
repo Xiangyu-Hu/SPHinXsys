@@ -54,6 +54,22 @@ public:
 	}
 };
 /**
+ * @brief 	Case dependent material properties definition.
+ */
+class WaterMaterial : public WeaklyCompressibleFluid
+{
+public:
+	WaterMaterial() : WeaklyCompressibleFluid()
+	{
+		/** Basic material parameters*/
+		rho_0_ = rho0_f;
+		c_0_ = c_f;
+
+		/** Compute the derived material parameters*/
+		assignDerivedMaterialParameters();
+	}
+};
+/**
  * @brief 	Wall boundary body definition.
  */
 class WallBoundary : public SolidBody
@@ -88,12 +104,12 @@ public:
 /**
  * @brief 	Fluid observer body definition.
  */
-class FluidObserver : public ObserverEulerianBody
+class FluidObserver : public FictitiousBody
 {
 public:
 	FluidObserver(SPHSystem &system, string body_name,
 		int refinement_level, ParticlesGeneratorOps op)
-		: ObserverEulerianBody(system, body_name, refinement_level, op)
+		: FictitiousBody(system, body_name, refinement_level, 1.3, op)
 	{
 		body_input_points_volumes_.push_back(make_pair(Point(DL, 0.2), 0.0));
 	}
@@ -116,8 +132,8 @@ int main()
 	 */
 	WaterBlock *water_block 
 		= new WaterBlock(system, "WaterBody", 0, ParticlesGeneratorOps::lattice);
-	WeaklyCompressibleFluid 	fluid("Water", water_block, rho0_f, c_f);
-	FluidParticles 	fluid_particles(water_block);
+	WaterMaterial 	*water_material = new WaterMaterial();
+	FluidParticles 	fluid_particles(water_block, water_material);
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
@@ -129,7 +145,7 @@ int main()
 	 */
 	FluidObserver *fluid_observer 
 		= new FluidObserver(system, "Fluidobserver", 0, ParticlesGeneratorOps::direct);
-	ObserverParticles 					observer_particles(fluid_observer);
+	BaseParticles 	observer_particles(fluid_observer);
 	/**
 	 * @brief 	Body contact map.
 	 * @details The contact map gives the data conntections between the bodies.
@@ -138,10 +154,7 @@ int main()
 	SPHBodyTopology 	body_topology = { { water_block, { wall_boundary } },
 										  { wall_boundary, {} },{ fluid_observer,{ water_block} } };
 	system.SetBodyTopology(&body_topology);
-	/**
-	 * @brief 	Simulation set up.
-	 */
-	system.SetupSPHSimulation();
+
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
@@ -156,7 +169,7 @@ int main()
 	 * @brief 	Methods used for time stepping.
 	 */
 	 /** Initialize particle acceleration. */
-	InitializeOtherAccelerations 	initialize_fluid_acceleration(water_block, &gravity);
+	InitializeATimeStep 	initialize_a_fluid_step(water_block, &gravity);
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
@@ -193,11 +206,13 @@ int main()
 	/** Output the mechanical energy of fluid body. */
 	WriteTotalMechanicalEnergy 	write_water_mechanical_energy(in_output, water_block, &gravity);
 	/** output the observed data from fluid body. */
-	WriteObservedFluidPressure	write_recorded_water_pressure(in_output, fluid_observer, { water_block });
-	
-	/**
-	 * @brief Setup goematrics and initial conditions.
-	 */
+	WriteAnObservedQuantity<Real, FluidParticles,
+		FluidParticleData, &FluidParticles::fluid_particle_data_, &FluidParticleData::p_>
+		write_recorded_water_pressure("Pressure", in_output, fluid_observer, water_block);
+
+	/** Pre-simulation*/
+	system.InitializeSystemCellLinkedLists();
+	system.InitializeSystemConfigurations();
 	get_wall_normal.exec();
 
 	/**
@@ -233,7 +248,7 @@ int main()
 	tick_count::interval_t interval_updating_configuration;
 	tick_count time_instance;
 
-	/**
+		/**
 	 * @brief 	Main loop starts here.
 	 */
 	while (GlobalStaticVariables::physical_time_ < End_Time)
@@ -244,7 +259,7 @@ int main()
 		{
 			/** Acceleration due to viscous force and gravity. */
 			time_instance = tick_count::now();
-			initialize_fluid_acceleration.parallel_exec();
+			initialize_a_fluid_step.parallel_exec();
 			Dt = get_fluid_adevction_time_step_size.parallel_exec();
 			update_fluid_density.parallel_exec();
 			interval_computing_time_step += tick_count::now() - time_instance;

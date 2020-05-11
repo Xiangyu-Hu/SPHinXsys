@@ -27,33 +27,8 @@ namespace SPH {
 			int refinement_level, ParticlesGeneratorOps op);
 		virtual ~SolidBody() {};
 
-		/** Build inner configuration. */
-		virtual void BuildInnerConfiguration() override;
-		/** Build contact configuration. */
-		virtual void BuildContactConfiguration() override;
 		/** Set up the reaction model, if essential */
 		/** The pointer to derived class object. */
 		virtual SolidBody* PointToThisObject() override { return this; };
-	};
-
-	/**
-	 * @class SolidBodyPartForSimbody
-	 * @brief A SolidBodyPart for coupling with Simbody.
-	 * The mass, origin, and unit inertial matrix are computed.
-	 * Note: Simbody spatial vectors are three dimensional.
-	 */
-	class SolidBodyPartForSimbody : public BodyPartByParticle
-	{
-	protected:
-		Real solid_body_density_;
-
-		virtual void TagBodyPartParticles() override;
-	public:
-		SolidBodyPartForSimbody(SolidBody *solid_body,
-			string soild_body_part_name);
-		virtual~SolidBodyPartForSimbody() {};
-
-		Vec3 initial_mass_center_;
-		SimTK::MassProperties *body_part_mass_properties_;
 	};
 }

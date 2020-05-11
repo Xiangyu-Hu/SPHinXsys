@@ -7,7 +7,7 @@ using namespace std;
 
 namespace SPH
 {
-	//===============================================================//
+	//=================================================================================================//
 	void FluidParticles::WriteParticlesToPltFile(ofstream &output_file)
 	{
 		output_file << " VARIABLES = \" x \", \"y\",\"z\", \"ID\", \"density\", \"Numberdensity\", \"u\", \"v\",\"w\" \n";
@@ -26,10 +26,10 @@ namespace SPH
 				<< base_particle_data_[i].vel_n_[2] << "\n ";
 		}
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void ViscoelasticFluidParticles::WriteParticlesToPltFile(ofstream &output_file)
 	{
 		FluidParticles::WriteParticlesToPltFile(output_file);
 	}
-	//===============================================================//
+	//=================================================================================================//
 }

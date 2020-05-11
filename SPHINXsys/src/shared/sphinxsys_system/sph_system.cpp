@@ -15,7 +15,8 @@ namespace SPH
 		Real particle_spacing_ref, int number_of_threads)
 		: lower_bound_(lower_bound), upper_bound_(upper_bound),
 		particle_spacing_ref_(particle_spacing_ref), tbb_init_(number_of_threads),
-		restart_step_(0), reload_particle_(false)
+		restart_step_(0), run_particle_relaxation_(false),
+		reload_particles_(false)
 	{
 	}
 	//===============================================================//

@@ -16,6 +16,7 @@ using namespace std;
 namespace SPH {
 
 	/** preclaimed classes. */
+	class Solid;
 	class ElasticSolid;
 	class ActiveMuscle;
 	class BaseMaterial;
@@ -32,7 +33,7 @@ namespace SPH {
 		virtual ~SolidParticleData() {};
 
 		/** Inital position, and inital and current normal direction. */
-		Vecd pos_0_, n_0_, n_;			
+		Vecd n_0_, n_;
 		/** Linear reproducing configuration correction. */
 		Matd B_;
 		/** fluid time-step averaged particle velocity and acceleration,
@@ -40,13 +41,6 @@ namespace SPH {
 		Vecd vel_ave_, dvel_dt_ave_;	
 		/** Forces from fluid. */
 		Vecd force_from_fluid_, viscous_force_from_fluid_;	
-
-		/** Temporary data for intermediate usage. */
-		Real temp_real_;
-		/** Temporary vector data for intermediate usage. */
-		Vecd temp_vec_;
-		/** Temporary matrix data for intermediate usage. */
-		Matd temp_matrix_;
 	};
 
 	/**
@@ -82,7 +76,7 @@ namespace SPH {
 		 * @detail Create a group of particles referred to a body.
 		 * @param[in] body_name Name of a body.
 		 */
-		SolidParticles(SPHBody* body, BaseMaterial* base_material);
+		SolidParticles(SPHBody* body, Solid* solid);
 		/**
 		 * @brief Destructor.
 		 */
@@ -157,7 +151,7 @@ namespace SPH {
 		 * @detail Create a group of particles referred to a body.
 		 * @param[in] body_name Name of a body.
 		 */
-		ElasticSolidParticles(SPHBody* body, BaseMaterial* base_material);
+		ElasticSolidParticles(SPHBody* body, ElasticSolid* elastic_solid);
 		/**
 		 * @brief Destructor.
 		 */
@@ -209,7 +203,9 @@ namespace SPH {
 	{
 	public:
 		/** defualt constrcutor. */
-		ActiveMuscleData() : active_contraction_stress_(0.0) {};
+		ActiveMuscleData() 
+			: active_contraction_stress_(0.0),
+			active_stress_(0.0) {};
 		virtual ~ActiveMuscleData() {};
 
 		/** Active contraction stress. */
@@ -228,7 +224,7 @@ namespace SPH {
 		StdLargeVec<ActiveMuscleData> active_muscle_data_;
 
 		/** Constructor. */
-		ActiveMuscleParticles(SPHBody* body, BaseMaterial* base_material);
+		ActiveMuscleParticles(SPHBody* body, ActiveMuscle* active_muscle);
 		/** Default destructor. */
 		virtual ~ActiveMuscleParticles() {};
 
@@ -267,11 +263,11 @@ namespace SPH {
 		virtual ActiveMuscleParticles* PointToThisObject() override;
 
 		/** Access a real data*/
-		virtual Real accessAParticleDataTypeReal(size_t particle_index) {
+		Real getActiveContractionStress(size_t particle_index) {
 			return  active_muscle_data_[particle_index].active_contraction_stress_;
 		}
 		/** Access a matrix data*/
-		virtual Matd accessAParticleDataTypeMatd(size_t particel_index) {
+		Matd getActiveStress(size_t particel_index) {
 			return active_muscle_data_[particel_index].active_stress_;
 		};
 	};

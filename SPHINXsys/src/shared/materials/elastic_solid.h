@@ -1,9 +1,9 @@
 /**
 * @file 	elastic_solid.h
 * @brief 	These are classes for define properties of elastic solid materials.
-*			These class based on isotropic linear elastic solid.
+*			These classes are based on isotropic linear elastic solid.
 * 			Several more complex materials, including mneo-hookean, FENE noe-hookean
-*			 and aisotropic muscle, are derived from the basic elastic solid class.
+*			and anisotropic muscle, are derived from the basic elastic solid class.
 * @author	Xiangyu Hu and Chi Zhang
 * @version	0.1
 * @version  0.2.1
@@ -12,20 +12,26 @@
 * @version  0.2.2
 *           Chi Zhang
 *           Add the electro-mechnaics and local properties of muscle material.
+* @version  0.3
+*           Xiangyu Hu
+*           The relations between the materials are revised.
 */
 #pragma once
 
 #include "base_material.h"
-#include "diffusion_reaction.h"
-#include "xml_engine.h"
 #include <fstream>
 
 using namespace std;
 
 namespace SPH {
+
+	/** preclaimed classes. */
+	class ElasticSolidParticles;
+	class ActiveMuscleParticles;
+
 	/**
 	* @class ElasticSolid
-	* @brief general elastic solid
+	* @brief Abstract class for a generalized elastic solid
 	*/
 	class ElasticSolid : public Solid
 	{
@@ -33,14 +39,16 @@ namespace SPH {
 		Real eta_0_; 		/*> physical viscosity */
 		Real c_0_; 			/*> speed of sound */
 		Real lambda_0_; 	/*> First Lame parameter */
+		ElasticSolidParticles* elastic_particles_;
 
-		/** the speed of sound. */
-		virtual Real SetSoundSpeed() = 0;
 	public:
 		/** Constructor */
-		ElasticSolid(string elastic_solid_name) : Solid(elastic_solid_name),
+		ElasticSolid() : Solid(), elastic_particles_(NULL),
 			c_0_(1.0), eta_0_(0.0), lambda_0_(0.375) {};
 		virtual ~ElasticSolid() {};
+
+		/** assign particles to this material */
+		void assignElasticSolidParticles(ElasticSolidParticles* elastic_particles);
 		/** Access to reference sound speed. */
 		Real getReferenceSoundSpeed() { return c_0_; };
 		/** the interface for dynamical cast*/
@@ -49,7 +57,8 @@ namespace SPH {
 		 * @brief Get the speed of sound.
 		 * @param[in] particle_index_i Particle index
 		 */
-		virtual Real GetSoundSpeed(size_t particle_index_i);
+		 /** the speed of sound. */
+		virtual Real SetSoundSpeed() = 0;
 		/** Get viscous time step size. */
 		virtual Real getViscousTimeStepSize(Real smoothing_length);
 		/** Get numerical viscosity. */
@@ -73,16 +82,6 @@ namespace SPH {
 		 * @param[in] deform_grad_rate 	Rate of gradient of deformation.
 		 * @param[in] numerical_viscoisty 	Nuemrical visocsity. */
 		virtual Matd NumericalDampingStress(Matd& deform_grad, Matd& deform_grad_rate, Real numerical_viscoisty);
-		/** 
-		 * @brief Write the material property to xml file.
-		 * @param[in] filefullpath Full path the the output file.
-		 */
-		virtual void writeToXmlForReloadMaterialProperty(std::string &filefullpath) override {};
-		/** 
-		 * @brief Read the material property from xml file.
-		 * @param[in] filefullpath Full path the the output file.
-		 */
-		virtual void readFromXmlForMaterialProperty(std::string &filefullpath) override {};
 	};
 
 	/**
@@ -92,14 +91,11 @@ namespace SPH {
 	class LinearElasticSolid : public ElasticSolid
 	{
 	protected:
-		/** Youngs modulus, poisson ration. */
-		Real E_0_, nu_;
-	
+		Real E_0_;	/*> Youngs modulus */
+		Real nu_;	/*> poisson ratio */
 		/**Second Lame parameter, shear modulus. Derived material property. */
 		Real G_0_; 
 
-		/** the speed of sound. */
-		virtual Real SetSoundSpeed() override;
 		/** Set the shear modulus. */
 		virtual Real SetShearModulus();
 		/** Set lambda. */
@@ -108,12 +104,16 @@ namespace SPH {
 		virtual void assignDerivedMaterialParameters() override;
 	public:
 		/** Constructor */
-		LinearElasticSolid(string linear_elastic_solid_name)
-			: ElasticSolid(linear_elastic_solid_name),
-			E_0_(1.0), nu_(1.0 / 3.0), G_0_(0.75) {};
+		LinearElasticSolid() : ElasticSolid(),
+			E_0_(1.0), nu_(1.0 / 3.0), G_0_(0.75) {
+			material_name_ = "LinearElasticSolid";
+		};
 		virtual ~LinearElasticSolid() {};
 		/** the interface for dynamical cast*/
 		virtual LinearElasticSolid* PointToThisObject() override { return this; };
+
+		/** the speed of sound. */
+		virtual Real SetSoundSpeed() override;
 		/** Compute the stree through Constitutive relation. */
 		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
 	};
@@ -126,8 +126,9 @@ namespace SPH {
 	{
 	public:
 		/** Constructor. */
-		NeoHookeanSolid(string neohookean_solid_name)
-			: LinearElasticSolid(neohookean_solid_name) {};
+		NeoHookeanSolid() : LinearElasticSolid() {
+			material_name_ = "NeoHookeanSolid";
+		};
 		virtual ~NeoHookeanSolid() {};
 		/** the interface for dynamical cast*/
 		virtual NeoHookeanSolid* PointToThisObject() override { return this; };
@@ -150,8 +151,9 @@ namespace SPH {
 
 	public:
 		/** Constructor */
-		FeneNeoHookeanSolid(string feneneohookean_solid_name)
-			: LinearElasticSolid(feneneohookean_solid_name), j1_m_(1.0) {};
+		FeneNeoHookeanSolid() : LinearElasticSolid(), j1_m_(1.0) {
+			material_name_ = "FeneNeoHookeanSolid";
+		};
 		virtual ~FeneNeoHookeanSolid() {};
 		/** the interface for dynamical cast*/
 		virtual FeneNeoHookeanSolid* PointToThisObject() override { return this; };
@@ -174,36 +176,30 @@ namespace SPH {
 		Matd f0f0_, s0s0_, f0s0_;	/**< Direct products of fiber and sheet directions. */
 		/** consitutive parameters */
 		Real a_0_[4], b_0_[4];
-		/** Poisson ratio. */
-		Real nu_;
+		/** reference stress to achieve weakly compressible condition */
+		Real bulk_modulus_;
 
-		/** the speed of sound. */
-		virtual Real SetSoundSpeed() override;
 		/** Set lambda. */
 		virtual Real SetLambda();
 		/** assign derived material properties. */
 		virtual void assignDerivedMaterialParameters() override;
 	public:
 		/** Constructor */
-		Muscle(string muscle_name) : ElasticSolid(muscle_name),
-			a_0_{1.0, 0.0, 0.0, 0.0 }, b_0_{1.0, 0.0, 0.0, 0.0 }, nu_(0.49),
-			f0_(0), s0_(0), f0f0_(0), f0s0_(0), s0s0_(0) {};
+		Muscle() : ElasticSolid(),
+			a_0_{1.0, 0.0, 0.0, 0.0 }, b_0_{1.0, 0.0, 0.0, 0.0 }, bulk_modulus_(30.0),
+			f0_(0), s0_(0), f0f0_(0), f0s0_(0), s0s0_(0) {
+			material_name_ = "Muscle";
+		};
 		virtual ~Muscle() {};
 
+		/** the speed of sound. */
+		virtual Real SetSoundSpeed() override;
+		/** obtain fiber matrix */
+		virtual Matd getMuscleFiber(size_t particle_index_i) { return f0f0_; };
 		/** the interface for dynamical cast*/
 		virtual Muscle* PointToThisObject() override { return this; };
 		/** compute the stree through Constitutive relation. */
 		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
-		/** 
-		 * @brief Write the material property to xml file.
-		 * @param[in] filefullpath Full path the the output file.
-		 */
-		virtual void writeToXmlForReloadMaterialProperty(std::string &filefullpath) override {};
-		/** 
-		 * @brief Read the material property from xml file.
-		 * @param[in] filefullpath Full path the the output file.
-		 */
-		virtual void readFromXmlForMaterialProperty(std::string &filefullpath) override {};
 	};
 
 	/**
@@ -217,95 +213,81 @@ namespace SPH {
 	class LocallyOrthotropicMuscle : public Muscle
 	{
 	protected:
-		StdVec<Vecd> local_s0_;										/**< Fiber direction. */
 		StdVec<Matd> local_f0f0_, local_s0s0_, local_f0s0_;			/**< Sheet direction. */
-		virtual void assignDerivedMaterialParameters() override
-		{
+		virtual void assignDerivedMaterialParameters() override {
 			Muscle::assignDerivedMaterialParameters();
 		};
 	public:
+		/** lcoal fiber direction. */
 		StdVec<Vecd> local_f0_;
+		/** lcoal sheet direction. */
+		StdVec<Vecd> local_s0_;
+
 		/** Constructor */
-		LocallyOrthotropicMuscle(string muscle_name) : Muscle(muscle_name) {};
+		LocallyOrthotropicMuscle() : Muscle() {
+			material_name_ = "LocallyOrthotropicMuscle";
+		};
 		virtual ~LocallyOrthotropicMuscle() {};
 
+		/** obtain fiber matrix */
+		virtual Matd getMuscleFiber(size_t particle_index_i) { return local_f0f0_[particle_index_i]; };
 		/** the interface for dynamical cast*/
 		virtual LocallyOrthotropicMuscle* PointToThisObject() override { return this; };
 		/**
 		 * @brief Setup the local properties, fiber and sheet direction.
-		 * @param[in] elasticsolid_particles Particles of elastic solid. 
+		 * @param[in] Base particles of elastic solid. 
 		 */
-		virtual void SetupLocalProperties(SPHBody *body) { };
+		virtual void initializeLocalProperties(BaseParticles* base_particles) override;
 		/** 
 		 * @brief Compute the stree through Constitutive relation.
 		 * @param[in] deform_grad Deformation tensor.
 		 * @param[in] particle_index_i Particle index.
 		 */
 		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
-		/** 
-		 * @brief Write the material property to xml file.
-		 * @param[in] filefullpath Full path the the output file.
-		 */
+		/** Write the material property to xml file. */
 		virtual void writeToXmlForReloadMaterialProperty(std::string &filefullpath) override;
-		/** 
-		 * @brief Read the material property from xml file.
-		 * @param[in] filefullpath Full path the the output file.
-		 */
+		/** Read the material property from xml file. */
 		virtual void readFromXmlForMaterialProperty(std::string &filefullpath) override;
+		/** Write local material properties particle data in VTU format for Paraview */
+		virtual void WriteMaterialPropertyToVtuFile(ofstream& output_file) override;
 	};
 
 	/**
 	* @class ActiveMuscle
 	* @brief Here, the active reponse is considered.
 	*/
-	class ActiveMuscle : public Muscle
+	class ActiveMuscle : public ElasticSolid
 	{
 	protected:
+		ActiveMuscleParticles* active_muscle_particles_;
+
+		Muscle& muscle_;
 		/** assign derived material properties. */
-		virtual void assignDerivedMaterialParameters() override 
-		{
-		
-			Muscle::assignDerivedMaterialParameters();
+		virtual void assignDerivedMaterialParameters() override {
+			ElasticSolid::assignDerivedMaterialParameters();
 		};
 	public:
 		/** Constructor. */
-		ActiveMuscle(string active_muscle_name)
-			: Muscle(active_muscle_name) {};	
+		ActiveMuscle(Muscle* muscle) : ElasticSolid(*muscle), muscle_(*muscle),
+			active_muscle_particles_(NULL) {
+			material_name_ = "ActiveMuscle";
+		};
 		virtual ~ActiveMuscle() {};
+
+		/** the speed of sound. */
+		virtual Real SetSoundSpeed() override;
+		/** assign particles to this material */
+		void assignActiveMuscleParticles(ActiveMuscleParticles* active_muscle_particles);
 
 		/** the interface for dynamical cast*/
 		virtual ActiveMuscle* PointToThisObject() override { return this; };
 		/** compute the stress through Constitutive relation. */
 		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
-	};
-
-	/**
-	* @class ActiveMuscle
-	* @brief Here, the active reponse is considered.
-	*/
-	class ActiveLocallyOrthotropicMuscle : public LocallyOrthotropicMuscle
-	{
-	protected:
-		/** assign derived material properties. */
-		virtual void assignDerivedMaterialParameters() override 
-		{
-		
-			LocallyOrthotropicMuscle::assignDerivedMaterialParameters();
-		};
-	public:
-		/** Constructor. */
-		ActiveLocallyOrthotropicMuscle(string active_muscle_name)
-			: LocallyOrthotropicMuscle(active_muscle_name) {};	
-		virtual ~ActiveLocallyOrthotropicMuscle() {};
-
-		/** the interface for dynamical cast*/
-		virtual ActiveLocallyOrthotropicMuscle* PointToThisObject() override { return this; };
-		/** compute the stress through Constitutive relation. */
-		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
-		/**
-		 * @brief Setup the local properties, fiber and sheet direction.
-		 * @param[in] elasticsolid_particles Particles of elastic solid. 
-		 */
-		virtual void SetupLocalProperties(SPHBody *body) override {};
+		/** Write the material property to xml file */
+		virtual void writeToXmlForReloadMaterialProperty(std::string& filefullpath) override;
+		/** Read the material property from xml file. */
+		virtual void readFromXmlForMaterialProperty(std::string& filefullpath) override;
+		/** Write local material properties particle data in VTU format for Paraview */
+		virtual void WriteMaterialPropertyToVtuFile(ofstream& output_file) override;
 	};
 }

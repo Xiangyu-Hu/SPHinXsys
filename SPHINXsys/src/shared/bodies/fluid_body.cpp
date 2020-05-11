@@ -16,14 +16,4 @@ namespace SPH {
 
 	}
 	//===============================================================//
-	void FluidBody::BuildInnerConfiguration()
-	{
-		base_mesh_cell_linked_list_->UpdateInnerConfiguration(current_configuration_);
-	}
-	//===============================================================//
-	void FluidBody::BuildContactConfiguration()
-	{
-		base_mesh_cell_linked_list_->UpdateContactConfiguration();
-	}
-	//===============================================================//
 }

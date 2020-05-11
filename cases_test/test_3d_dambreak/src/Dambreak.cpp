@@ -12,7 +12,7 @@
 using namespace SPH;
 
 //for geometry
-Real particle_spacing_ref = 0.0125; //particle spacing
+Real particle_spacing_ref = 0.05; //particle spacing
 Real BW = particle_spacing_ref * 4; //boundary width
 
 Real DL = 5.366; 						//tank length
@@ -27,8 +27,6 @@ Real rho0_f = 1.0;
 Real gravity_g = 1.0;
 Real U_f = 2.0*sqrt(gravity_g * LH);
 Real c_f = 10.0*U_f;
-Real mu_f = 0.0;
-Real k_f = 0.0;
 
 /* resolution which control the quality of polygonalmesh created by geometry system */
 int resolution(50);
@@ -51,7 +49,20 @@ class WaterBlock : public FluidBody
 			body_region_.done_modeling();
 		}
 };
+/**
+ * @brief 	Case dependent material properties definition.
+ */
+class WaterMaterial : public WeaklyCompressibleFluid
+{
+public:
+	WaterMaterial() : WeaklyCompressibleFluid()
+	{
+		rho_0_ = rho0_f;
+		c_0_ = c_f;
 
+		assignDerivedMaterialParameters();
+	}
+};
 //define the static solid wall boudary
 class WallBoundary : public SolidBody
 {
@@ -74,12 +85,11 @@ public:
 };
 
 //define an observer body
-class FluidObserver : public ObserverEulerianBody
+class FluidObserver : public FictitiousBody
 {
 public:
-	FluidObserver(SPHSystem &system, string body_name,
-		int refinement_level, ParticlesGeneratorOps op)
-		: ObserverEulerianBody(system, body_name, refinement_level, op)
+	FluidObserver(SPHSystem &system, string body_name, int refinement_level, ParticlesGeneratorOps op)
+		: FictitiousBody(system, body_name, refinement_level, 1.3, op)
 	{
 		//add observation point
 		body_input_points_volumes_.push_back(make_pair(Point(DL, 0.01, 0.5 * DW), 0.0));
@@ -107,9 +117,9 @@ int main()
 	WaterBlock *water_block 
 		= new WaterBlock(system, "WaterBody", 0, ParticlesGeneratorOps::lattice);
 	//Configuration of Materials
-	WeaklyCompressibleFluid fluid("Water", water_block, rho0_f, c_f, mu_f, k_f);
+	WaterMaterial *water_material = new WaterMaterial();
 	//creat fluid particles
-	FluidParticles fluid_particles(water_block);
+	FluidParticles fluid_particles(water_block, water_material);
 
 	//the wall boundary
 	WallBoundary *wall_boundary 
@@ -120,7 +130,7 @@ int main()
 	FluidObserver *fluid_observer 
 		= new FluidObserver(system, "Fluidobserver", 0, ParticlesGeneratorOps::direct);
 	//create observer particles 
-	ObserverParticles observer_particles(fluid_observer);
+	BaseParticles observer_particles(fluid_observer);
 
 	//define external force
 	Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));
@@ -133,9 +143,6 @@ int main()
 		{ wall_boundary, {} },{ fluid_observer,{ water_block} } };
 	system.SetBodyTopology(&body_topology);
 
-	//setting up the simulation
-	system.SetupSPHSimulation();
-
 	//-------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
 	//-------------------------------------------------------------------
@@ -147,8 +154,7 @@ int main()
 	solid_dynamics::NormalDirectionSummation
 		get_wall_normal(wall_boundary, {});
 	//-------- common paritcle dynamics ----------------------------------------
-	InitializeOtherAccelerations
-		initialize_fluid_acceleration(water_block, &gravity);
+	InitializeATimeStep 	initialize_a_fluid_step(water_block, &gravity);
 
 	//-------- fluid dynamics --------------------------------------------------
 	//evaluation of density by summation approach
@@ -185,11 +191,12 @@ int main()
 	/** Output the body states for restart simulation. */
 	ReadRestart		read_restart_files(in_output, system.real_bodies_);
 	WriteRestart	write_restart_files(in_output, system.real_bodies_);
-	WriteTotalMechanicalEnergy write_water_mechanical_energy(in_output, water_block, &gravity);
-	WriteUpperBoundInXDirection write_water_front(in_output, water_block);
-	WriteObservedFluidPressure
-		write_recorded_water_pressure(in_output, fluid_observer, { water_block });
-
+	/** Output the mechanical energy of fluid body. */
+	WriteTotalMechanicalEnergy 	write_water_mechanical_energy(in_output, water_block, &gravity);
+	/** output the observed data from fluid body. */
+	WriteAnObservedQuantity<Real, FluidParticles,
+		FluidParticleData, &FluidParticles::fluid_particle_data_, &FluidParticleData::p_>
+		write_recorded_water_pressure("Pressure", in_output, fluid_observer, water_block);
 	//-------------------------------------------------------------------
 	//from here the time stepping begines
 	//-------------------------------------------------------------------
@@ -197,6 +204,8 @@ int main()
 	/**
 	 * @brief Setup goematrics and initial conditions
 	 */
+	system.InitializeSystemCellLinkedLists();
+	system.InitializeSystemConfigurations();
 	get_wall_normal.exec();
 	/**
 	* @brief The time stepping starts here.
@@ -240,7 +249,7 @@ int main()
 		{
 
 			//acceleration due to viscous force and gravity
-			initialize_fluid_acceleration.parallel_exec();
+			initialize_a_fluid_step.parallel_exec();
 			Dt = get_fluid_adevction_time_step_size.parallel_exec();
 			update_fluid_desnity.parallel_exec();
 
@@ -275,7 +284,6 @@ int main()
 		}
 
 		write_water_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
-		write_water_front.WriteToFile(GlobalStaticVariables::physical_time_);
 
 		tick_count t2 = tick_count::now();
 		write_water_block_states.WriteToFile(GlobalStaticVariables::physical_time_ * 0.001);

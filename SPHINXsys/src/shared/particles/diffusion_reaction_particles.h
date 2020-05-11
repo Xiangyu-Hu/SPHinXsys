@@ -32,7 +32,9 @@ namespace SPH {
 		virtual ~DiffusionReactionData() {};
 
 		/** The array of diffusion/reaction scalars. */
-		StdVec<Real> species_n_, species_s_;
+		StdVec<Real> species_n_;
+		/** intermediate state for multi-step time integration */
+		StdVec<Real> species_s_;
 		/** The array of the time drivative. */
 		StdVec<Real>  dspecies_dt_;
 	};
@@ -53,11 +55,11 @@ namespace SPH {
 		StdLargeVec<DiffusionReactionData> diffusion_reaction_data_;
 
 		/** Constructor. */
-		DiffusionReactionParticles(SPHBody* body, BaseMaterial* base_material)
-			: BaseParticlesType(body, base_material) 
+		DiffusionReactionParticles(SPHBody* body, 
+			DiffusionReactionMaterial<BaseParticlesType, BaseMaterialType>* diffusion_reaction_material)
+			: BaseParticlesType(body, diffusion_reaction_material)
 		{
-			DiffusionReactionMaterial<BaseMaterialType>* diffusion_reaction_material
-				= dynamic_cast<DiffusionReactionMaterial<BaseMaterialType>*>(base_material);
+			diffusion_reaction_material->assignDiffusionReactionParticles(this);
 			number_of_species_ 		= diffusion_reaction_material->getNumberOfSpecies();
 			species_indexes_map_ 	= diffusion_reaction_material->getSpeciesIndexMap();
 			for (size_t i = 0; i < this->base_particle_data_.size(); ++i)
@@ -87,7 +89,6 @@ namespace SPH {
 			BaseParticlesType::swapParticles(this_particle_index, that_particle_index);
 			std::swap(diffusion_reaction_data_[this_particle_index], diffusion_reaction_data_[that_particle_index]);
 		};
-
 		/** Write particle data in VTU format for Paraview. */
 		virtual void WriteParticlesToVtuFile(ofstream& output_file) override {
 			BaseParticlesType::WriteParticlesToVtuFile(output_file);
@@ -160,7 +161,8 @@ namespace SPH {
 	{
 	public:
 		/** Constructor. */
-		ElectroPhysiologyParticles(SPHBody* body, BaseMaterial* base_material);
+		ElectroPhysiologyParticles(SPHBody* body, 
+			DiffusionReactionMaterial<SolidParticles, Solid>* diffusion_reaction_material);
 		/** Destructor. */
 		virtual ~ElectroPhysiologyParticles() {};
 
