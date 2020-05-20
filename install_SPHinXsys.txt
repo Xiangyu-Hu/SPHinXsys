@@ -18,7 +18,7 @@ and set
 	echo 'export BOOST_HOME=/usr/lib/x86_64-linux-gnu' >> ~/.bashrc
 
 For self advanced installation on Linux:
-
+gcc
 First, Install simbody Library :
 Note : The easy way is using miniconda.(not recommaned, install simbody can help to you to understand the code)
 
@@ -26,6 +26,9 @@ Step 0, Check the gcc version, gcc-4.9.0 or higher version is required and gcc-7
 		Chekc the cmake version, if you want to install simboy by hand, please using cmake 3.12.2 or higher
 
 Step 1, Install LAPACK library.
+		$ sudo apt-get install cmake liblapack-dev
+-------------------------------------------------------------------------------------------------------------
+If you want install from source, you can
 		LAPACK version 3.8.0 and higher may be required for some applications (OpenSim). 
 		$ wget http://www.netlib.org/lapack/lapack-3.8.0.tar.gz
 		LAPACK can be downloaded from http://www.netlib.org/lapack/, 
@@ -41,9 +44,11 @@ Step 1, Install LAPACK library.
 		$ make install
 		$ echo 'export LIBRARY_PATH=$HOME/lapack-prefix/lib:$LIBRARY_PATH' >> ~/.bashrc
 		$ echo 'export LD_LIBRARY_PATH=$LIBRARY_PATH:$LD_LIBRARY_PATH' >> ~/.bashrc
-
-Step 2, Download a release version from https://github.com/simbody/simbody/releases 
-Step 3,  Unzip the repository into your prefered folder , e.g., $HOME/simbody-source. 
+-------------------------------------------------------------------------------------------------------------
+Step 2, Download a release version from https://github.com/simbody/simbody/releases
+		$ wget https://github.com/simbody/simbody/archive/Simbody-3.7.tar.gz
+		$ tar xvzf Simbody-3.7.tar.gz
+Step 3,  Unzip the repository into your prefered folder , e.g., $HOME/simbody-Simbody-3.7 
 		Create a directory for installation, e.g., 
 		$ mkdir $HOME/simbody
 		Then create a directory in which we'll build Simbody. 
@@ -52,7 +57,7 @@ Step 3,  Unzip the repository into your prefered folder , e.g., $HOME/simbody-so
  		$ cd $HOME/simbody-build
 
 Step 4, Configure and geneartes Make file:
-		$ cmake $HOME/simbody-source -DCMAKE_INSTALL_PREFIX=$HOME/simbody -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_VISUALIZER=on (optional set to ON if simbody visualizer is going to be used)
+		$ cmake $HOME/simbody-Simbody-3.7 -DCMAKE_INSTALL_PREFIX=$HOME/simbody -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_VISUALIZER=on (optional set to ON if simbody visualizer is going to be used)
 			-DBUILD_STATIC_LIBRARIES=on (optional, leave it off if you don't know what are you doing)
 
 Step 5, Build and Install
@@ -78,6 +83,8 @@ Setp 7, Set environment variables
 
 		Note that, you may need to replace lib64 with the appropriate directory on your computer.
 
+If you have apt install TBB and Boost, you can neglected the following.
+----------------------------------------------------------------------------------------------------------
 Second, TBB library:
 
 Step 1, Download a release version from : https://github.com/01org/tbb/releases, new version is good, 	
@@ -120,7 +127,7 @@ Step 3, other projects  to find BOOST:
 		Linux:
 			$ echo 'export BOOST_HOME = $HOME/boost-prefix' >> ~/.bashrc
 Step 4, Check the installation, two folders lib and include should be cterated in $HOME/boost-prefix. 
-
+----------------------------------------------------------------------------------------------------------
 
 Last, bu not least, Chek path is crrectly setup:
 		$ echo $SIMBODY_HOME
@@ -128,14 +135,23 @@ Last, bu not least, Chek path is crrectly setup:
 		$ echo $BOOST_HOME
 
 Final step :
-		$ download the SPHinXsys from https://github.com/Xiangyu-Hu/SPHinXsys
-		$ mkdir /path/to/sphinxsys-build
-		$ cd /path/to/sphinxsys-build
-		To buid the SPHinXsys you have to two options:
-		I) If you only want to use SPHinXsys as a library stored in "/path/to/sphinxsys-prefix" with no development within the source code: 
-			$ cmake /path/to/sphinxsys/source/code -DCMAKE_INSTALL_PREFIX=/path/to/sphinxsys-prefix -DCMAKE_BUILD_TYPE=RelWithDebInfo
-		II) If you want to contribute in the development of SPHinXsys and change the source code:
-			$ cmake /path/to/sphinxsys/source/code -DCMAKE_BUILD_TYPE=RelWithDebInfo
+		download the SPHinXsys from https://github.com/Xiangyu-Hu/SPHinXsys 
+		or Bitbucket if you have the link and password to the internal group repository for the newest version.
+		$ git clone https://github.com/Xiangyu-Hu/SPHinXsys.git
+		$ mkdir $HOME/sphinxsys-build
+		$ cd $HOME/sphinxsys-build
+		- To buid a SPHinXsys project o CPU:
+			$ cmake /path/to/sphinxsys/source-code -DCMAKE_BUILD_TYPE=RelWithDebInfo
+		- To buid a SPHinXsys project o GPU:
+			* Download the UAMMD framework from https://github.com/RaulPPelaez/UAMMD.git and store it in /path/to/UAMMD
+			* set the following two directories and include them in the cmake file related to the test-case:
+				set(uammd_src /path/to/UAMMD/src)
+				set(gpuSPHINXsys ${CMAKE_SOURCE_DIR}/gpuSPHINXsys)
+				include_directories(${uammd_src} ${gpuSPHINXsys})
+			* add the above-mentioned directories to executables:
+				ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS} ${uammd_SRCS} ${gpuSolvers_SRCS})
+			* now you can build the project with the following cmake command:
+			$ cmake /path/to/sphinxsys/source-code -DCMAKE_BUILD_TYPE=RelWithDebInfo -DACTIVATE_CUDA=on
 		THEN you can play with SPHInXsys, for example
 		$ cd /path/to/sphinxsys-build/cases_test/test_2d_dambreak
 		$ make -j 
