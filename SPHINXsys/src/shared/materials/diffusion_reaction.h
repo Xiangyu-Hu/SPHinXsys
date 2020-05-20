@@ -276,7 +276,7 @@ namespace SPH
 			number_of_species_++;
 		};
 		/** initialized local diffusion or/and reaction properties */
-		virtual void initializeLocalProperties(BaseParticles* base_particles) {};
+		virtual void initializeLocalDiffusionReactionProperties(BaseParticles* base_particles) {};
 	public:
 		/** Constructor for material only with diffusion. */
 		DiffusionReactionMaterial() 
@@ -303,7 +303,7 @@ namespace SPH
 		/** assign particles to this material */
 		void assignDiffusionReactionParticles(DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>* diffusion_reaction_particles) {
 			diffusion_reaction_particles_ = diffusion_reaction_particles;
-			initializeLocalProperties(diffusion_reaction_particles);
+			initializeLocalDiffusionReactionProperties(diffusion_reaction_particles);
 		};
 		/**
 		 * @brief Get diffusion time step size. Here, I follow the reference:
