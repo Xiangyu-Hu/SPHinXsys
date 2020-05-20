@@ -20,7 +20,7 @@ namespace SPH
 		transf_diffusivity_ = inverseCholeskyDecomposition(diff_i);
 	};
 	//=================================================================================================//
-	void LocalDirectionalDiffusion::initializeLocalProperties(BaseParticles* base_particles)
+	void LocalDirectionalDiffusion::initializeLocalDiffusionProperties(BaseParticles* base_particles)
 	{
 		size_t number_of_particles = base_particles->getSPHBody()->number_of_particles_;
 		for (size_t i = 0; i != number_of_particles; i++)
@@ -30,7 +30,7 @@ namespace SPH
 		}
 	};
 	//=================================================================================================//
-	void LocalDirectionalDiffusion::setupLocalProperties(StdVec<Vecd>& material_fiber)
+	void LocalDirectionalDiffusion::setupLocalDiffusionProperties(StdVec<Vecd>& material_fiber)
 	{
 		if (material_fiber.size() != local_bias_direction_.size()) {
 			std::cout << "\n Error:  material properties does not matrch" << std::endl;
@@ -127,11 +127,6 @@ namespace SPH
 		species_diffusion_.push_back(voltage_diffusion);
 	}
 	//=================================================================================================//
-	void LocalMonoFieldElectroPhysiology::initializeLocalProperties(BaseParticles* base_particles)
-	{
-		species_diffusion_[0]->initializeLocalProperties(base_particles);
-	}
-	//=================================================================================================//
 	void LocalMonoFieldElectroPhysiology::initializeDiffusion()
 	{
 		LocalDirectionalDiffusion* voltage_diffusion
@@ -142,7 +137,7 @@ namespace SPH
 //=================================================================================================//
 	void LocalMonoFieldElectroPhysiology::assignFiberProperties(StdVec<Vecd> &material_fiber)
 	{
-		species_diffusion_[0]->setupLocalProperties(material_fiber);
+		species_diffusion_[0]->setupLocalDiffusionProperties(material_fiber);
 	}
 //=================================================================================================//
 }

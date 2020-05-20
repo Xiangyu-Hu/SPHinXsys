@@ -44,9 +44,9 @@ namespace SPH
 		/** Get diffusion coefficient along the interacting particle direction. */
 		virtual Real getInterParticleDiffusionCoff(size_t particle_i, size_t particle_j, Vecd& direction_from_j_to_i) = 0;
 		/** initialize the local property. */
-		virtual void initializeLocalProperties(BaseParticles* base_particles) = 0;
+		virtual void initializeLocalDiffusionProperties(BaseParticles* base_particles) {};
 		/** Setup the local property after initialization. */
-		virtual void setupLocalProperties(StdVec<Vecd> &material_fiber) = 0;
+		virtual void setupLocalDiffusionProperties(StdVec<Vecd>& material_fiber) {};
 	};
 
 	/**
@@ -72,10 +72,6 @@ namespace SPH
 		{
 			return diff_cf_;
 		};
-		/** initialize the local property. */
-		virtual void initializeLocalProperties(BaseParticles* base_particles) override {};
-		/** Setup the local property after initialization. */
-		virtual void setupLocalProperties(StdVec<Vecd> &material_fiber) override {};
 	};
 
 	/**
@@ -120,10 +116,6 @@ namespace SPH
 			Vecd grad_ij = transf_diffusivity_ * inter_particle_direction;
 			return 1.0 / grad_ij.scalarNormSqr();
 		};
-		/** initialize the local property. */
-		virtual void initializeLocalProperties(BaseParticles* base_particles) override {};
-		/** Setup the local property after initialization. */
-		virtual void setupLocalProperties(StdVec<Vecd> &material_fiber) override {};
 	};
 
 	/**
@@ -156,9 +148,9 @@ namespace SPH
 			return 1.0 / grad_ij.scalarNormSqr();
 		};
 		/** initialize the local property. */
-		virtual void initializeLocalProperties(BaseParticles* base_particles);
+		virtual void initializeLocalDiffusionProperties(BaseParticles* base_particles);
 		/** Setup the local property after initialization. */
-		virtual void setupLocalProperties(StdVec<Vecd>& material_fiber);
+		virtual void setupLocalDiffusionProperties(StdVec<Vecd>& material_fiber);
 	};
 
 	/** Reaction functor . */
@@ -275,8 +267,6 @@ namespace SPH
 			species_indexes_map_.insert(make_pair(species_name, number_of_species_));
 			number_of_species_++;
 		};
-		/** initialized local diffusion or/and reaction properties */
-		virtual void initializeLocalDiffusionReactionProperties(BaseParticles* base_particles) {};
 	public:
 		/** Constructor for material only with diffusion. */
 		DiffusionReactionMaterial() 
@@ -303,7 +293,8 @@ namespace SPH
 		/** assign particles to this material */
 		void assignDiffusionReactionParticles(DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>* diffusion_reaction_particles) {
 			diffusion_reaction_particles_ = diffusion_reaction_particles;
-			initializeLocalDiffusionReactionProperties(diffusion_reaction_particles);
+			for (size_t k = 0; k < species_diffusion_.size(); ++k)
+				species_diffusion_[k]->initializeLocalDiffusionProperties(diffusion_reaction_particles);
 		};
 		/**
 		 * @brief Get diffusion time step size. Here, I follow the reference:
@@ -378,8 +369,6 @@ namespace SPH
 			MonoFieldElectroPhysiology::material_name_ = "LocalMonoFieldElectroPhysiology";
 		};
 		virtual ~LocalMonoFieldElectroPhysiology() {};
-		/** initialized local diffusion properties*/
-		virtual void initializeLocalProperties(BaseParticles* base_particles) override;
 		/** Initialize diffusion reaction material. */
 		virtual void initializeDiffusion() override;
 		/** Assign the fiber property into the diffusion material. */
