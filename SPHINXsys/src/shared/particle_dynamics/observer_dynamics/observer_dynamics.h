@@ -145,7 +145,7 @@ namespace SPH
 					StdLargeVec<TargetDataType>& target_data = target_particles->*TrgtDataMemPtr;
 
 					NeighborList& contact_neighors
-						= getNeighborList(this->current_interacting_configuration_[k], index_particle_i);
+						= this->getNeighborList(this->current_interacting_configuration_[k], index_particle_i);
 					for (size_t n = 0; n < contact_neighors.size(); ++n)
 					{
 						BaseNeighborRelation* neighboring_particle = contact_neighors[n];
