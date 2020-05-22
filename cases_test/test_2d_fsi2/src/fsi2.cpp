@@ -224,9 +224,9 @@ int main()
 	 */
 	 /** Using relaxed particle distribution if needed. */
 	if (system.reload_particles_) {
-		ReadReloadParticle		reload_insert_body_particles(in_output, { inserted_body }, { "InsertedBody" });
-		reload_insert_body_particles.ReadFromFile();
-		reload_insert_body_particles.~ReadReloadParticle();
+		unique_ptr<ReadReloadParticle>	
+			reload_insert_body_particles(new ReadReloadParticle(in_output, { inserted_body }, { "InsertedBody" }));
+		reload_insert_body_particles->ReadFromFile();
 	}
 	/** intialize cell linked lists for all bodies. */
 	system.InitializeSystemCellLinkedLists();
