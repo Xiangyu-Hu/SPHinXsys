@@ -187,7 +187,7 @@ namespace SPH
 	void BaseParticles::WriteToXmlForReloadParticle(std::string &filefullpath)
 	{
 		const SimTK::String xml_name("particles_xml"), ele_name("particles");
-		XmlEngine* reload_xml = new XmlEngine(xml_name, ele_name);
+		unique_ptr<XmlEngine> reload_xml(new XmlEngine(xml_name, ele_name));
 
 		for (size_t i = 0; i != body_->number_of_particles_; ++i)
 		{
@@ -203,7 +203,7 @@ namespace SPH
 	void BaseParticles::ReadFromXmlForReloadParticle(std::string &filefullpath)
 	{
 		size_t number_of_particles = 0;
-		XmlEngine* read_xml = new XmlEngine();
+		unique_ptr<XmlEngine> read_xml(new XmlEngine());
 		read_xml->LoadXmlFile(filefullpath);
 		SimTK::Xml::element_iterator ele_ite_ = read_xml->root_element_.element_begin();
 		for (; ele_ite_ != read_xml->root_element_.element_end(); ++ele_ite_)

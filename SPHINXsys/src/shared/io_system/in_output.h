@@ -58,8 +58,8 @@ namespace SPH {
 	public:
 		BodyStatesIO(In_Output &in_output, SPHBody *body)
 			: in_output_(in_output), body_(body) {};
-		BodyStatesIO(In_Output &in_output, SPHBodyVector bodies)
-			: in_output_(in_output), bodies_(bodies) {};
+		BodyStatesIO(In_Output& in_output, SPHBodyVector bodies)
+			: in_output_(in_output), bodies_(bodies), body_(bodies[0]) {};
 		virtual ~BodyStatesIO() {};
 	};
 

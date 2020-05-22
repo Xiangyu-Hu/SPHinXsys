@@ -292,7 +292,7 @@ namespace SPH
 	{
 		if (!fs::exists(in_output.reload_folder_))
 		{
-			std::cout << "\n Error: the input file:" << in_output.reload_folder_ << " is not exists" << std::endl;
+			std::cout << "\n Error: the particle reload folder:" << in_output.reload_folder_ << " is not exists" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
@@ -302,11 +302,6 @@ namespace SPH
 			std::cout << "\n Error: reload bodies boes not match" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
-		}
-		
-		for (size_t i = 0; i < bodies_.size(); ++i)
-		{
-			file_paths_.push_back(in_output.reload_folder_ + "/SPHBody_" + reload_body_names[i] + "_rld.xml");
 		}
 	}
 	//=============================================================================================//

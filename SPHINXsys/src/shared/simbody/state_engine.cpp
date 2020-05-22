@@ -234,7 +234,7 @@ namespace SPH {
     void StateEngine::writeStateInfoToXml(int ite_rst_, const SimTK::State& state_)
     {
         std::string filefullpath = restart_folder_ + "/Simbody_Rst_" + std::to_string(ite_rst_) + ".xml";
-        XmlEngine* state_xml = new XmlEngine("sate_xml", "mbsystem");
+ 		std::unique_ptr<XmlEngine> state_xml(new XmlEngine("sate_xml", "mbsystem"));
 
         const SimTK::SimbodyMatterSubsystem& matter_ = getMultibodySystem().getMatterSubsystem();
         for (SimTK::MobilizedBodyIndex mbx(0); mbx < matter_.getNumBodies(); ++mbx) 
@@ -277,8 +277,8 @@ namespace SPH {
             exit(1);
         }else{
             int num_mobod = 0;
-            XmlEngine* read_xml = new XmlEngine();
-            read_xml->LoadXmlFile(filefullpath);
+			std::unique_ptr<XmlEngine> read_xml(new XmlEngine());
+           read_xml->LoadXmlFile(filefullpath);
             SimTK::Xml::element_iterator ele_ite_ = read_xml->root_element_.element_begin();
             for (; ele_ite_ != read_xml->root_element_.element_end(); ++ele_ite_)
             {

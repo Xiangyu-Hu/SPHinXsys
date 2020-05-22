@@ -77,7 +77,7 @@ namespace SPH {
 	void SolidParticles::ReadFromXmlForReloadParticle(std::string &filefullpath)
 	{
 		size_t number_of_particles = 0;
-		XmlEngine* read_xml = new XmlEngine();
+		unique_ptr<XmlEngine> read_xml(new XmlEngine());
 		read_xml->LoadXmlFile(filefullpath);
 		SimTK::Xml::element_iterator ele_ite_ = read_xml->root_element_.element_begin();
 		for (; ele_ite_ != read_xml->root_element_.element_end(); ++ele_ite_)
@@ -123,7 +123,7 @@ namespace SPH {
 	//=================================================================================================//
 	void SolidParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)
 	{
-		XmlEngine* restart_xml = new XmlEngine("particles_xml", "particles");
+		unique_ptr<XmlEngine> restart_xml(new XmlEngine("particles_xml", "particles"));
 
 		size_t number_of_particles = body_->number_of_particles_;
 		for (size_t i = 0; i != number_of_particles; ++i)
@@ -207,7 +207,7 @@ namespace SPH {
 	//=================================================================================================//
 	void ElasticSolidParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)
 	{
-		XmlEngine* restart_xml = new XmlEngine("particles_xml", "particles");
+		unique_ptr<XmlEngine> restart_xml(new XmlEngine("particles_xml", "particles"));
 
 		size_t number_of_particles = body_->number_of_particles_;
 		for (size_t i = 0; i != number_of_particles; ++i)
@@ -228,7 +228,7 @@ namespace SPH {
 	void ElasticSolidParticles::ReadParticleFromXmlForRestart(std::string &filefullpath)
 	{
 		size_t number_of_particles = 0;
-		XmlEngine* read_xml = new XmlEngine();
+		unique_ptr<XmlEngine> read_xml(new XmlEngine());
 		read_xml->LoadXmlFile(filefullpath);
 		SimTK::Xml::element_iterator ele_ite_ = read_xml->root_element_.element_begin();
 		for (; ele_ite_ != read_xml->root_element_.element_end(); ++ele_ite_)
@@ -294,7 +294,7 @@ namespace SPH {
 	//=================================================================================================//
 	void ActiveMuscleParticles::WriteParticlesToXmlForRestart(std::string& filefullpath)
 	{
-		XmlEngine* restart_xml = new XmlEngine("particles_xml", "particles");
+		unique_ptr<XmlEngine> restart_xml(new XmlEngine("particles_xml", "particles"));
 
 		size_t number_of_particles = body_->number_of_particles_;
 		for (size_t i = 0; i != number_of_particles; ++i)
@@ -316,7 +316,7 @@ namespace SPH {
 	void ActiveMuscleParticles::ReadParticleFromXmlForRestart(std::string& filefullpath)
 	{
 		size_t number_of_particles = 0;
-		XmlEngine* read_xml = new XmlEngine();
+		unique_ptr<XmlEngine> read_xml(new XmlEngine());
 		read_xml->LoadXmlFile(filefullpath);
 		SimTK::Xml::element_iterator ele_ite_ = read_xml->root_element_.element_begin();
 		for (; ele_ite_ != read_xml->root_element_.element_end(); ++ele_ite_)
