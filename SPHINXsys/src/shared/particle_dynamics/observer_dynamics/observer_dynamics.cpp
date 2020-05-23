@@ -24,9 +24,9 @@ namespace SPH
 			/** Compute the first order consistent kernel weights */
 			for (size_t k = 0; k < current_interacting_configuration_.size(); ++k)
 			{
-				NeighborList& contact_neighors
-					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
-				for (size_t n = 0; n < contact_neighors.size(); ++n)
+				Neighborhood& contact_neighborhood = (*current_interacting_configuration_[k])[index_particle_i];
+				NeighborList& contact_neighors = std::get<0>(contact_neighborhood);
+				for (size_t n = 0; n != std::get<2>(contact_neighborhood); ++n)
 				{
 					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
@@ -45,9 +45,9 @@ namespace SPH
 			/** Add the kernel weight correction to W_ij_ of neighboring particles. */
 			for (size_t k = 0; k < current_interacting_configuration_.size(); ++k)
 			{
-				NeighborList& contact_neighors
-					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
-				for (size_t n = 0; n < contact_neighors.size(); ++n)
+				Neighborhood& contact_neighborhood = (*current_interacting_configuration_[k])[index_particle_i];
+				NeighborList& contact_neighors = std::get<0>(contact_neighborhood);
+				for (size_t n = 0; n != std::get<2>(contact_neighborhood); ++n)
 				{
 					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;

@@ -37,7 +37,7 @@ namespace SPH {
 						Vecd displacement = base_particle_data_i.pos_n_ - target_particles[n].second;
 						if (displacement.norm() <= cell_spacing_ && index_particle_i != target_particles[n].first)
 						{
-							std::get<1>(neighborhood) >= previous_count_of_neigbors ?
+							std::get<1>(neighborhood) >= neighbor_list.size() ?
 								neighbor_list.push_back(new NeighborRelationType(base_particle_data, *kernel_,
 									displacement, index_particle_i, target_particles[n].first))
 								: neighbor_list[std::get<1>(neighborhood)]->resetRelation(base_particle_data, *kernel_,
@@ -48,9 +48,7 @@ namespace SPH {
 				}
 			}
 		}
-		size_t current_count_of_neighbors = std::get<1>(neighborhood);
-		neighbor_list.resize(current_count_of_neighbors);
-		std::get<2>(neighborhood) = current_count_of_neighbors;
+		std::get<2>(neighborhood) = std::get<1>(neighborhood);
 		std::get<1>(neighborhood) = 0;
 	}
 	//template definitions should be instantiated here

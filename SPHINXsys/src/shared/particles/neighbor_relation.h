@@ -9,6 +9,8 @@
 #pragma once
 #include "base_data_package.h"
 
+using namespace std;
+
 namespace SPH {
 	/**
 	 * @brief preclaimed class.

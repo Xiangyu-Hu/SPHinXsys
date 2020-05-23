@@ -114,7 +114,7 @@ namespace SPH {
 								Vecd displacement = base_particle_data_i.pos_n_ - target_particles[n].second;
 								if (displacement.norm() <= cutoff_radius_ && num != target_particles[n].first)
 								{
-									std::get<1>(neighborhood) >= previous_count_of_neigbors ?
+									std::get<1>(neighborhood) >= neighbor_list.size() ?
 										neighbor_list.push_back(new NeighborRelation(base_particle_data, *kernel_,
 											displacement, num, target_particles[n].first))
 										: neighbor_list[std::get<1>(neighborhood)]->resetRelation(base_particle_data, 
@@ -125,9 +125,7 @@ namespace SPH {
 						}
 					}
 				}
-				size_t current_count_of_neighbors = std::get<1>(neighborhood);
-				neighbor_list.resize(current_count_of_neighbors);
-				std::get<2>(neighborhood) = current_count_of_neighbors;
+				std::get<2>(neighborhood) = std::get<1>(neighborhood);
 				std::get<1>(neighborhood) = 0;
 			}
 		}, ap);
@@ -195,7 +193,7 @@ namespace SPH {
 											- target_particles[n].second;
 										if (displacement.norm() <= cutoff_radius)
 										{
-											std::get<1>(neighborhood) >= previous_count_of_neigbors ?
+											std::get<1>(neighborhood) >= neighbor_list.size() ?
 												neighbor_list.push_back(new NeighborRelation(base_particle_data, current_kernel,
 													displacement, num, target_particles[n].first))
 												: neighbor_list[std::get<1>(neighborhood)]->resetRelation(base_particle_data,
@@ -205,7 +203,6 @@ namespace SPH {
 									}
 								}
 						size_t current_count_of_neighbors = std::get<1>(neighborhood);
-						neighbor_list.resize(current_count_of_neighbors);
 						std::get<2>(neighborhood) = current_count_of_neighbors;
 						std::get<1>(neighborhood) = 0;
 						if (current_count_of_neighbors != 0)
@@ -269,7 +266,7 @@ namespace SPH {
 												if (displacement.norm() < cell_spacing) {
 													//neigbor particles for the original particle
 													size_t current_count_here = std::get<1>(neighborhood_here);
-													current_count_here >= previous_count_of_neigbors ?
+													current_count_here >= neighbor_list_here.size() ?
 														neighbor_list_here.push_back(
 															new NeighborRelationWithVariableSmoothingLength(base_particle_data, *kernel_,
 																displacement, particle_index_here, particle_index_there))
@@ -281,7 +278,7 @@ namespace SPH {
 														Neighborhood& neighborhood_there = inner_configuration[particle_index_there];
 														NeighborList& neighbor_list_there = std::get<0>(neighborhood_there);
 														size_t current_count_there = std::get<1>(neighborhood_there);
-														current_count_there >= std::get<2>(neighborhood_there) ?
+														current_count_there >= neighbor_list_there.size() ?
 															neighbor_list_there.push_back(
 																new NeighborRelationWithVariableSmoothingLength(
 																	neighbor_list_here[current_count_here], particle_index_here))

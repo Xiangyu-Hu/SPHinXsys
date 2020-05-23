@@ -19,9 +19,9 @@ namespace SPH
 			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
 
 			Vecd gradient(0.0);
-			NeighborList& inner_neighors
-				= getNeighborList(inner_configuration_, index_particle_i);
-			for (size_t n = 0; n < inner_neighors.size(); ++n)
+			Neighborhood& inner_neighborhood = (*inner_configuration_)[index_particle_i];
+			NeighborList& inner_neighors = std::get<0>(inner_neighborhood);
+			for (size_t n = 0; n != std::get<2>(inner_neighborhood); ++n)
 			{
 				gradient += inner_neighors[n]->dW_ij_ * inner_neighors[n]->e_ij_;
 			}
@@ -29,9 +29,9 @@ namespace SPH
 			/** Contact interaction. */
 			for (size_t k = 0; k < current_interacting_configuration_.size(); ++k)
 			{
-				NeighborList& contact_neighors
-					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
-				for (size_t n = 0; n < contact_neighors.size(); ++n)
+				Neighborhood& contact_neighborhood = (*current_interacting_configuration_[k])[index_particle_i];
+				NeighborList& contact_neighors = std::get<0>(contact_neighborhood);
+				for (size_t n = 0; n != std::get<2>(contact_neighborhood); ++n)
 				{
 					gradient += contact_neighors[n]->dW_ij_ * contact_neighors[n]->e_ij_;
 				}
@@ -49,9 +49,9 @@ namespace SPH
 			Matd local_configuration(0.0);
 			Vecd gradient(0.0);
 
-			NeighborList& inner_neighors
-				= getNeighborList(inner_configuration_, index_particle_i);
-			for (size_t n = 0; n < inner_neighors.size(); ++n)
+			Neighborhood& inner_neighborhood = (*inner_configuration_)[index_particle_i];
+			NeighborList& inner_neighors = std::get<0>(inner_neighborhood);
+			for (size_t n = 0; n != std::get<2>(inner_neighborhood); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
@@ -66,9 +66,9 @@ namespace SPH
 			/** Contact interaction. */
 			for (size_t k = 0; k < current_interacting_configuration_.size(); ++k)
 			{
-				NeighborList& contact_neighors
-					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
-				for (size_t n = 0; n < contact_neighors.size(); ++n)
+				Neighborhood& contact_neighborhood = (*current_interacting_configuration_[k])[index_particle_i];
+				NeighborList& contact_neighors = std::get<0>(contact_neighborhood);
+				for (size_t n = 0; n != std::get<2>(contact_neighborhood); ++n)
 				{
 					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
@@ -122,9 +122,9 @@ namespace SPH
 			/** Contact interaction. */
 			for (size_t k = 0; k < current_interacting_configuration_.size(); ++k)
 			{
-				NeighborList& contact_neighors
-					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
-				for (size_t n = 0; n < contact_neighors.size(); ++n)
+				Neighborhood& contact_neighborhood = (*current_interacting_configuration_[k])[index_particle_i];
+				NeighborList& contact_neighors = std::get<0>(contact_neighborhood);
+				for (size_t n = 0; n != std::get<2>(contact_neighborhood); ++n)
 				{
 					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
@@ -159,9 +159,9 @@ namespace SPH
 			/** Contact interaction. */
 			for (size_t k = 0; k < current_interacting_configuration_.size(); ++k)
 			{
-				NeighborList& contact_neighors
-					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
-				for (size_t n = 0; n < contact_neighors.size(); ++n)
+				Neighborhood& contact_neighborhood = (*current_interacting_configuration_[k])[index_particle_i];
+				NeighborList& contact_neighors = std::get<0>(contact_neighborhood);
+				for (size_t n = 0; n != std::get<2>(contact_neighborhood); ++n)
 				{
 					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
@@ -222,9 +222,9 @@ namespace SPH
 					* particle_spacing_i1);
 				particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
 
-				NeighborList& contact_neighors
-					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
-				for (size_t n = 0; n < contact_neighors.size(); ++n)
+				Neighborhood& contact_neighborhood = (*current_interacting_configuration_[k])[index_particle_i];
+				NeighborList& contact_neighors = std::get<0>(contact_neighborhood);
+				for (size_t n = 0; n != std::get<2>(contact_neighborhood); ++n)
 				{
 					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
@@ -279,9 +279,9 @@ namespace SPH
 			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
 
 			Matd local_configuration(0.0);
-			NeighborList& inner_neighors
-				= getNeighborList(inner_configuration_, index_particle_i);
-			for (size_t n = 0; n < inner_neighors.size(); ++n)
+			Neighborhood& inner_neighborhood = (*inner_configuration_)[index_particle_i];
+			NeighborList& inner_neighors = std::get<0>(inner_neighborhood);
+			for (size_t n = 0; n != std::get<2>(inner_neighborhood); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
@@ -303,9 +303,9 @@ namespace SPH
 			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
 
 			Matd deformation(0.0);
-			NeighborList& inner_neighors
-				= getNeighborList(inner_configuration_, index_particle_i);
-			for (size_t n = 0; n < inner_neighors.size(); ++n)
+			Neighborhood& inner_neighborhood = (*inner_configuration_)[index_particle_i];
+			NeighborList& inner_neighors = std::get<0>(inner_neighborhood);
+			for (size_t n = 0; n != std::get<2>(inner_neighborhood); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
@@ -343,9 +343,9 @@ namespace SPH
 			Vecd acceleration = base_particle_data_i.dvel_dt_others_ 
 				+ solid_data_i.force_from_fluid_/ elastic_data_i.mass_;
 
-			NeighborList& inner_neighors
-				= getNeighborList(inner_configuration_, index_particle_i);
-			for (size_t n = 0; n < inner_neighors.size(); ++n)
+			Neighborhood& inner_neighborhood = (*inner_configuration_)[index_particle_i];
+			NeighborList& inner_neighors = std::get<0>(inner_neighborhood);
+			for (size_t n = 0; n != std::get<2>(inner_neighborhood); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
@@ -384,9 +384,9 @@ namespace SPH
 			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
 
 			Matd deformation_gradient_change_rate(0);
-			NeighborList& inner_neighors
-				= getNeighborList(inner_configuration_, index_particle_i);
-			for (size_t n = 0; n < inner_neighors.size(); ++n)
+			Neighborhood& inner_neighborhood = (*inner_configuration_)[index_particle_i];
+			NeighborList& inner_neighors = std::get<0>(inner_neighborhood);
+			for (size_t n = 0; n != std::get<2>(inner_neighborhood); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
@@ -567,9 +567,9 @@ namespace SPH
 			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
 
 			Vecd acceleration(0);
-			NeighborList& inner_neighors
-				= getNeighborList(inner_configuration_, index_particle_i);
-			for (size_t n = 0; n < inner_neighors.size(); ++n)
+			Neighborhood& inner_neighborhood = (*inner_configuration_)[index_particle_i];
+			NeighborList& inner_neighors = std::get<0>(inner_neighborhood);
+			for (size_t n = 0; n != std::get<2>(inner_neighborhood); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;

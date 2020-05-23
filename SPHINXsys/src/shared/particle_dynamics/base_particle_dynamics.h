@@ -177,12 +177,6 @@ namespace SPH
 	protected:
 		/** inner confifuration of the designated body */
 		ParticleConfiguration* inner_configuration_;
-		/** Get neighbor list for particle interaction. */
-		NeighborList& getNeighborList(ParticleConfiguration* particle_configuration, 
-			size_t index_particle_i) {
-			Neighborhood& neighborhood = (*particle_configuration)[index_particle_i];
-			return std::get<0>(neighborhood);
-		}
 	public:
 		explicit ParticleDynamicsWithInnerConfigurations(BodyType* body);
 		virtual ~ParticleDynamicsWithInnerConfigurations() {};

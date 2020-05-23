@@ -45,9 +45,10 @@ namespace SPH
 
 				DataType observed_quantity(0);
 				Real ttl_weight(0);
-				NeighborList& contact_neighors
-					= this->getNeighborList(this->current_interacting_configuration_[interacting_body_index], index_particle_i);
-				for (size_t n = 0; n < contact_neighors.size(); ++n)
+				Neighborhood& contact_neighborhood 
+					= (*this->current_interacting_configuration_[interacting_body_index])[index_particle_i];
+				NeighborList& contact_neighors = std::get<0>(contact_neighborhood);
+				for (size_t n = 0; n != std::get<2>(contact_neighborhood); ++n)
 				{
 					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
@@ -92,9 +93,10 @@ namespace SPH
 
 				Real observed_quantity(0);
 				Real ttl_weight(0);
-				NeighborList& contact_neighors
-					= this->getNeighborList(this->current_interacting_configuration_[interacting_body_index], index_particle_i);
-				for (size_t n = 0; n < contact_neighors.size(); ++n)
+				Neighborhood& contact_neighborhood 
+					= (*this->current_interacting_configuration_[interacting_body_index])[index_particle_i];
+				NeighborList& contact_neighors = std::get<0>(contact_neighborhood);
+				for (size_t n = 0; n != std::get<2>(contact_neighborhood); ++n)
 				{
 					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
@@ -144,9 +146,9 @@ namespace SPH
 					StdLargeVec<BaseParticleData>& target_base_particle_data = target_particles->base_particle_data_;
 					StdLargeVec<TargetDataType>& target_data = target_particles->*TrgtDataMemPtr;
 
-					NeighborList& contact_neighors
-						= this->getNeighborList(this->current_interacting_configuration_[k], index_particle_i);
-					for (size_t n = 0; n < contact_neighors.size(); ++n)
+					Neighborhood& contact_neighborhood = (*this->current_interacting_configuration_[k])[index_particle_i];
+					NeighborList& contact_neighors = std::get<0>(contact_neighborhood);
+					for (size_t n = 0; n != std::get<2>(contact_neighborhood); ++n)
 					{
 						BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 						size_t index_particle_j = neighboring_particle->j_;
@@ -198,9 +200,9 @@ namespace SPH
 					StdLargeVec<BaseParticleData>& target_base_particle_data = target_particles->base_particle_data_;
 					StdLargeVec<DiffusionReactionData>& target_diffusion_reaction_data = target_particles->diffusion_reaction_data_;
 
-					NeighborList& contact_neighors
-						= this->getNeighborList(this->current_interacting_configuration_[k], index_particle_i);
-					for (size_t n = 0; n < contact_neighors.size(); ++n)
+					Neighborhood& contact_neighborhood = (*this->current_interacting_configuration_[k])[index_particle_i];
+					NeighborList& contact_neighors = std::get<0>(contact_neighborhood);
+					for (size_t n = 0; n != std::get<2>(contact_neighborhood); ++n)
 					{
 						BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 						size_t index_particle_j = neighboring_particle->j_;

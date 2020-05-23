@@ -47,8 +47,9 @@ namespace SPH
 			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 
 			Vecd acceleration(0);
-			NeighborList& inner_neighors = getNeighborList(inner_configuration_, index_particle_i);
-			for (size_t n = 0; n < inner_neighors.size(); ++n)
+			Neighborhood& inner_neighborhood = (*inner_configuration_)[index_particle_i];
+			NeighborList& inner_neighors = std::get<0>(inner_neighborhood);
+			for (size_t n = 0; n != std::get<2>(inner_neighborhood); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
@@ -85,8 +86,9 @@ namespace SPH
 
 			/** inner interaction*/
 			Vecd acceleration = base_particle_data_i.dvel_dt_others_;
-			NeighborList& inner_neighors = getNeighborList(inner_configuration_, index_particle_i);
-			for (size_t n = 0; n < inner_neighors.size(); ++n)
+			Neighborhood& inner_neighborhood = (*inner_configuration_)[index_particle_i];
+			NeighborList& inner_neighors = std::get<0>(inner_neighborhood);
+			for (size_t n = 0; n != std::get<2>(inner_neighborhood); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
@@ -104,9 +106,9 @@ namespace SPH
 			/** Contact interaction. */
 			for (size_t k = 0; k < current_interacting_configuration_.size(); ++k)
 			{
-				NeighborList& contact_neighors
-					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
-				for (size_t n = 0; n < contact_neighors.size(); ++n)
+				Neighborhood& contact_neighborhood = (*current_interacting_configuration_[k])[index_particle_i];
+				NeighborList& contact_neighors = std::get<0>(contact_neighborhood);
+				for (size_t n = 0; n != std::get<2>(contact_neighborhood); ++n)
 				{
 					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;
@@ -177,8 +179,9 @@ namespace SPH
 
 			/** Inner interaction. */
 			Real sigma = W0_;
-			NeighborList& inner_neighors = getNeighborList(inner_configuration_, index_particle_i);
-			for (size_t n = 0; n < inner_neighors.size(); ++n)
+			Neighborhood& inner_neighborhood = (*inner_configuration_)[index_particle_i];
+			NeighborList& inner_neighors = std::get<0>(inner_neighborhood);
+			for (size_t n = 0; n != std::get<2>(inner_neighborhood); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 
@@ -188,9 +191,9 @@ namespace SPH
 			/** Contact interaction. */
 			for (size_t k = 0; k < current_interacting_configuration_.size(); ++k)
 			{
-				NeighborList& contact_neighors
-					= getNeighborList(current_interacting_configuration_[k], index_particle_i);
-				for (size_t n = 0; n < contact_neighors.size(); ++n)
+				Neighborhood& contact_neighborhood = (*current_interacting_configuration_[k])[index_particle_i];
+				NeighborList& contact_neighors = std::get<0>(contact_neighborhood);
+				for (size_t n = 0; n != std::get<2>(contact_neighborhood); ++n)
 				{
 					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
 					size_t index_particle_j = neighboring_particle->j_;

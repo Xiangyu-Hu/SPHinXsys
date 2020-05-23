@@ -15,9 +15,9 @@ namespace SPH
 
 			Vecd vort_temp(0);
 			Vecd vort(0);
-			NeighborList& inner_neighors
-				= getNeighborList(inner_configuration_, index_particle_i);
-			for (size_t n = 0; n < inner_neighors.size(); ++n)
+			Neighborhood& inner_neighborhood = (*inner_configuration_)[index_particle_i];
+			NeighborList& inner_neighors = std::get<0>(inner_neighborhood);
+			for (size_t n = 0; n != std::get<2>(inner_neighborhood); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;

@@ -143,7 +143,7 @@ namespace SPH
 
 			initializeDiffusionChangeRate(diffusion_reaction_data_i);
 			NeighborList& neighors = std::get<0>(neighborhood);
-			for (size_t n = 0; n < neighors.size(); ++n)
+			for (size_t n = 0; n != std::get<2>(neighborhood); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
@@ -342,7 +342,7 @@ namespace SPH
 			
 			updateStageforRungeKutta(diffusion_reaction_data_i, delta_[RK_step_ - 1]);
 			NeighborList& neighors = std::get<0>(neighborhood);
-			for (size_t n = 0; n < neighors.size(); ++n)
+			for (size_t n = 0; n != std::get<2>(neighborhood); ++n)
 			{
 				BaseNeighborRelation* neighboring_particle = neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
