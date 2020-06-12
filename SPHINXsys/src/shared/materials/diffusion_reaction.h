@@ -148,9 +148,9 @@ namespace SPH
 			return 1.0 / grad_ij.scalarNormSqr();
 		};
 		/** initialize the local property. */
-		virtual void initializeLocalDiffusionProperties(BaseParticles* base_particles);
+		virtual void initializeLocalDiffusionProperties(BaseParticles* base_particles) override;
 		/** Setup the local property after initialization. */
-		virtual void setupLocalDiffusionProperties(StdVec<Vecd>& material_fiber);
+		virtual void setupLocalDiffusionProperties(StdVec<Vecd>& material_fiber) override;
 	};
 
 	/** Reaction functor . */

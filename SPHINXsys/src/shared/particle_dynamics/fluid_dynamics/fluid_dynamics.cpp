@@ -343,12 +343,10 @@ namespace SPH
 			base_particle_data_i.pos_n_ += acceleration_trans * dt*dt*0.5;
 		}
 		//=================================================================================================//
-		TotalMechanicalEnergy::TotalMechanicalEnergy(FluidBody* body, ExternalForce *external_force)
-			: WeaklyCompressibleFluidDynamicsSum<Real>(body)
+		TotalMechanicalEnergy::TotalMechanicalEnergy(FluidBody* body, Gravity* gravity)
+			: WeaklyCompressibleFluidDynamicsSum<Real>(body), gravity_(gravity)
 		{
 			initial_reference_ = 0.0;
-			average_farctor_ = 1.0;// / Real(body_->number_of_real_particles_);
-			potential_ = external_force->InducedAcceleration().norm();
 		}
 		//=================================================================================================//
 		Real TotalMechanicalEnergy::ReduceFunction(size_t index_particle_i, Real dt)
@@ -356,9 +354,8 @@ namespace SPH
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
 
-			return average_farctor_ * (
-				0.5 * fluid_data_i.mass_* base_particle_data_i.vel_n_.normSqr()
-				+ fluid_data_i.mass_*potential_*base_particle_data_i.pos_n_[1]);
+			return 0.5 * fluid_data_i.mass_* base_particle_data_i.vel_n_.normSqr()
+				+ fluid_data_i.mass_* gravity_->getPotential(base_particle_data_i.pos_n_);
 		}
 		//=================================================================================================//
 		GetAcousticTimeStepSize::GetAcousticTimeStepSize(FluidBody* body)

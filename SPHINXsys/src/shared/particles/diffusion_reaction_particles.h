@@ -112,13 +112,14 @@ namespace SPH {
 			//BaseParticlesType::WriteParticlesToPltFile(output_file);
 			size_t number_of_particles = this->body_->number_of_particles_;
 			map<string, size_t>::iterator itr;
+			
 			if(Vecd(0).size()==2)
 			{
-				output_file << " VARIABLES = \" x \", \"y\" " << "";
+				output_file << " VARIABLES = \" x \", \"y\", \"ID \" " << " ";
 			}
 			if(Vecd(0).size()==3)
 			{
-				output_file << " VARIABLES = \" x \", \"y\" , \"z\" " << "";
+				output_file << " VARIABLES = \" x \", \"y\" , \"z\", \" ID \" " << " ";
 			}
 
 			for (itr = species_indexes_map_.begin(); itr != species_indexes_map_.end(); ++itr) 
@@ -133,16 +134,20 @@ namespace SPH {
 				{
 					output_file << this->body_->base_particles_->base_particle_data_[i].pos_n_[j] << "  ";
 				}
+
+				output_file << i << " ";
+
 				for (itr = species_indexes_map_.begin(); itr != species_indexes_map_.end(); ++itr) 
 				{
 					size_t k = itr->second;
 					output_file << diffusion_reaction_data_[i].species_n_[k] << " ";
 				}
+
 				output_file << "\n";
 			}
 		};
 		/** Write particle data in XML format. */
-		virtual void WriteParticlesToXmlFile(std::string& filefullpath) {};
+		virtual void WriteParticlesToXmlFile(std::string& filefullpath) override{};
 		/** Write particle data in XML format for restart. */
 		virtual void WriteParticlesToXmlForRestart(std::string& filefullpath) override {};
 		/** Initialize particle data from restart xml file. */

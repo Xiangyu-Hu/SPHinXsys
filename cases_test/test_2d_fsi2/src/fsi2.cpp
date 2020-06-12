@@ -8,7 +8,6 @@
  * @author 	Xiangyu Hu, Chi Zhang and Luhui Han
  * @version 0.1
  */
-
 #include "sphinxsys.h"
 
 /** case file to setup the test case */
@@ -16,7 +15,7 @@
 
 using namespace SPH;
 
-int main()
+int main(int ac, char* av[])
 {
 	/** Build up -- a SPHSystem -- */
 	SPHSystem system(Vec2d(-DLsponge - BW, -BW), Vec2d(DL + BW, DH + BW), particle_spacing_ref);
@@ -26,6 +25,9 @@ int main()
 	system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: start with initial condition. */
 	system.restart_step_ = 0;
+
+	//handle command line arguments
+	system.handleCommandlineOptions(ac, av);
 
 	/**
 	 * @brief Creating body, materials and particles for a water block.
@@ -57,8 +59,8 @@ int main()
 	 * @brief define simple data file input and outputs functions.
 	 */
 	In_Output 							in_output(system);
-	WriteBodyStatesToVtu 				write_real_body_states_to_vtu(in_output, system.real_bodies_);
-	WriteBodyStatesToPlt 				write_real_body_states_to_plt(in_output, system.real_bodies_);
+	//WriteBodyStatesToVtu 				write_real_body_states(in_output, system.real_bodies_);
+	WriteBodyStatesToPlt 				write_real_body_states(in_output, system.real_bodies_);
 	WriteRestart						write_restart_files(in_output, system.real_bodies_);
 	ReadRestart							read_restart_files(in_output, system.real_bodies_);
 	/**
@@ -91,7 +93,8 @@ int main()
 	PeriodicConditionInAxisDirection 	periodic_condition(water_block, 0);
 
 	/** check whether run particle relaxation for body fiited particle distribution. */
-	if (system.run_particle_relaxation_) {
+	if (system.run_particle_relaxation_) 
+	{
 		/** add background level set for particle realxation. */
 		inserted_body->addBackgroundMesh();
 		/**
@@ -123,7 +126,7 @@ int main()
 		update_inserted_body_inner_configuration.parallel_exec();
 		body_surface_bounding.parallel_exec();
 		random_inserted_body_particles.parallel_exec(0.25);
-		write_real_body_states_to_vtu.WriteToFile(0.0);
+		write_real_body_states.WriteToFile(0.0);
 
 		/** relax particles of the insert body. */
 		int ite_p = 0;
@@ -256,7 +259,7 @@ int main()
 		inserted_body_update_normal.parallel_exec();
 	}
 	/** first output*/
-	write_real_body_states_to_vtu.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
 	write_beam_tip_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
 
 	int number_of_iterations = system.restart_step_;
@@ -350,7 +353,7 @@ int main()
 		tick_count t2 = tick_count::now();
 		/** write run-time observation into file */
 		compute_vorticity.parallel_exec();
-		write_real_body_states_to_vtu.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
 		write_total_viscous_force_on_inserted_body.WriteToFile(GlobalStaticVariables::physical_time_);
 		update_fluid_observer_body_contact_configuration.parallel_exec();
 		write_fluid_velocity.WriteToFile(GlobalStaticVariables::physical_time_);

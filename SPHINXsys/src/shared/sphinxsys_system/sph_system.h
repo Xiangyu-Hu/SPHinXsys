@@ -6,6 +6,9 @@
  */
 #pragma once
 
+#include "boost/program_options.hpp"
+namespace po = boost::program_options;
+
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
 
@@ -70,5 +73,8 @@ namespace SPH
 		void InitializeSystemConfigurations();
 		/** Set up cell-linked list and configuration for simulation. */
 		void SetupSPHSimulation();
+
+		/** handle the commandline options*/
+		void handleCommandlineOptions(int ac, char* av[]);
 	};
 }

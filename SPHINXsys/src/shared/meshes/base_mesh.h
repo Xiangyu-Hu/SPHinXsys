@@ -501,7 +501,7 @@ namespace SPH
 		/** output mesh data for Paraview visuallization */
 		virtual void WriteMeshToVtuFile(ofstream& output_file) override {};
 		/** output mesh data for Tecplot visuallization */
-		virtual void WriteMeshToPltFile(ofstream& output_file);
+		virtual void WriteMeshToPltFile(ofstream& output_file) override;
 	};
 	/**
 	 * @class MultilevelMesh

@@ -36,9 +36,9 @@ Real c_f = 10.0*U_f;					/**< Reference sound speed. */
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem &system, string body_name,
+	WaterBlock(SPHSystem &sph_system, string body_name,
 		int refinement_level, ParticlesGeneratorOps op)
-		: FluidBody(system, body_name, refinement_level, op)
+		: FluidBody(sph_system, body_name, refinement_level, op)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> water_block_shape;
@@ -75,9 +75,9 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &system, string body_name,
+	WallBoundary(SPHSystem &sph_system, string body_name,
 		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, refinement_level, op)
+		: SolidBody(sph_system, body_name, refinement_level, op)
 	{
 		/** Geomerty definition. */
 		std::vector<Point> outer_wall_shape;
@@ -107,9 +107,9 @@ public:
 class FluidObserver : public FictitiousBody
 {
 public:
-	FluidObserver(SPHSystem &system, string body_name,
+	FluidObserver(SPHSystem &sph_system, string body_name,
 		int refinement_level, ParticlesGeneratorOps op)
-		: FictitiousBody(system, body_name, refinement_level, 1.3, op)
+		: FictitiousBody(sph_system, body_name, refinement_level, 1.3, op)
 	{
 		body_input_points_volumes_.push_back(make_pair(Point(DL, 0.2), 0.0));
 	}
@@ -122,29 +122,29 @@ int main()
 	/**
 	 * @brief Build up -- a SPHSystem --
 	 */
-	SPHSystem system(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW), particle_spacing_ref);
+	SPHSystem sph_system(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW), particle_spacing_ref);
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for computation from restart files. 0: not from restart files. */
-	system.restart_step_ = 0;
+	sph_system.restart_step_ = 0;
 	/**
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
 	WaterBlock *water_block 
-		= new WaterBlock(system, "WaterBody", 0, ParticlesGeneratorOps::lattice);
+		= new WaterBlock(sph_system, "WaterBody", 0, ParticlesGeneratorOps::lattice);
 	WaterMaterial 	*water_material = new WaterMaterial();
 	FluidParticles 	fluid_particles(water_block, water_material);
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
 	WallBoundary *wall_boundary 
-		= new WallBoundary(system, "Wall",	0, ParticlesGeneratorOps::lattice);
+		= new WallBoundary(sph_system, "Wall",	0, ParticlesGeneratorOps::lattice);
 	SolidParticles 					solid_particles(wall_boundary);
 	/**
 	 * @brief 	Particle and body creation of fluid observer.
 	 */
 	FluidObserver *fluid_observer 
-		= new FluidObserver(system, "Fluidobserver", 0, ParticlesGeneratorOps::direct);
+		= new FluidObserver(sph_system, "Fluidobserver", 0, ParticlesGeneratorOps::direct);
 	BaseParticles 	observer_particles(fluid_observer);
 	/**
 	 * @brief 	Body contact map.
@@ -153,7 +153,7 @@ int main()
 	 */
 	SPHBodyTopology 	body_topology = { { water_block, { wall_boundary } },
 										  { wall_boundary, {} },{ fluid_observer,{ water_block} } };
-	system.SetBodyTopology(&body_topology);
+	sph_system.SetBodyTopology(&body_topology);
 
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
@@ -197,12 +197,12 @@ int main()
 	/**
 	 * @brief Output.
 	 */
-	In_Output in_output(system);
+	In_Output in_output(sph_system);
 	/** Output the body states. */
-	WriteBodyStatesToVtu 		write_body_states(in_output, system.real_bodies_);
+	WriteBodyStatesToVtu 		write_body_states(in_output, sph_system.real_bodies_);
 	/** Output the body states for restart simulation. */
-	ReadRestart		read_restart_files(in_output, system.real_bodies_);
-	WriteRestart	write_restart_files(in_output, system.real_bodies_);
+	ReadRestart		read_restart_files(in_output, sph_system.real_bodies_);
+	WriteRestart	write_restart_files(in_output, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
 	WriteTotalMechanicalEnergy 	write_water_mechanical_energy(in_output, water_block, &gravity);
 	/** output the observed data from fluid body. */
@@ -211,17 +211,17 @@ int main()
 		write_recorded_water_pressure("Pressure", in_output, fluid_observer, water_block);
 
 	/** Pre-simulation*/
-	system.InitializeSystemCellLinkedLists();
-	system.InitializeSystemConfigurations();
+	sph_system.InitializeSystemCellLinkedLists();
+	sph_system.InitializeSystemConfigurations();
 	get_wall_normal.exec();
 
 	/**
 	 * @brief The time stepping starts here.
 	 */
 	 /** If the starting time is not zero, please setup the restart time step ro read in restart states. */
-	if (system.restart_step_ != 0)
+	if (sph_system.restart_step_ != 0)
 	{
-		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
+		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(sph_system.restart_step_);
 		update_cell_linked_list.parallel_exec();
 		update_particle_configuration.parallel_exec();
 	}
@@ -233,7 +233,7 @@ int main()
 	/**
 	 * @brief 	Basic parameters.
 	 */
-	int number_of_iterations = system.restart_step_;
+	int number_of_iterations = sph_system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval*10;
 	Real End_Time = 20.0; 	/**< End time. */

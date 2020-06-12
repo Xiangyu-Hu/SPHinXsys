@@ -7,26 +7,25 @@
 //=================================================================================================//
 namespace SPH {
 //=================================================================================================//
-	ExternalForce::ExternalForce() : exteranl_acceleration_(0)
+	ExternalForce::ExternalForce()
 	{	
 	}
 //=================================================================================================//
-	void ExternalForce::UpdateAcceleration()
+	Gravity::Gravity(Vecd global_acceleration, Vecd reference_position)
+		: ExternalForce(), global_acceleration_(global_acceleration),
+		reference_position_(reference_position)
 	{
-
 	}
-//=================================================================================================//
-	Vecd ExternalForce
-		::InducedAcceleration(Vecd position, Vecd velocity, Real t)
+	//=================================================================================================//
+	Vecd Gravity::InducedAcceleration(Vecd& position)
 	{
-		return exteranl_acceleration_;
+		return global_acceleration_;
 	}
-//=================================================================================================//
-	Gravity::Gravity(Vecd gravity_vector)
-		: ExternalForce() 
+	//=================================================================================================//
+	Real Gravity::getPotential(Vecd& position)
 	{
-		exteranl_acceleration_ = gravity_vector;
+		return dot(InducedAcceleration(position), reference_position_ - position);
 	}
-//=================================================================================================//
+	//=================================================================================================//
 }
 //=================================================================================================//

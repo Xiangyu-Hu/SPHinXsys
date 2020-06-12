@@ -150,8 +150,8 @@ namespace SPH
 	}
 //=================================================================================================//
 	WriteTotalMechanicalEnergy
-		::WriteTotalMechanicalEnergy(In_Output &in_output, FluidBody* water_block, ExternalForce* external_force)
-		: WriteBodyStates(in_output, water_block), TotalMechanicalEnergy(water_block, external_force)
+		::WriteTotalMechanicalEnergy(In_Output &in_output, FluidBody* water_block, Gravity* gravity)
+		: WriteBodyStates(in_output, water_block), TotalMechanicalEnergy(water_block, gravity)
 	{
 		filefullpath_ = in_output_.output_folder_ + "/" + water_block->GetBodyName() 
 					  + "_water_mechnical_energy_" + in_output_.restart_step_ + ".dat";

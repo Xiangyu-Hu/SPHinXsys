@@ -26,7 +26,7 @@ namespace SPH {
 		Real p0_;
 
 		/** assign derived material properties*/
-		virtual void assignDerivedMaterialParameters() {
+		virtual void assignDerivedMaterialParameters() override {
 			Fluid::assignDerivedMaterialParameters();
 			p0_ = rho_0_ * c_0_ * c_0_;
 		};
@@ -93,7 +93,7 @@ namespace SPH {
 		int gamma_;
 
 		/** assign derived material properties*/
-		virtual void assignDerivedMaterialParameters() {
+		virtual void assignDerivedMaterialParameters() override {
 			WeaklyCompressibleFluid::assignDerivedMaterialParameters();
 		};
 
@@ -127,7 +127,7 @@ namespace SPH {
 		ViscoelasticFluidParticles* viscoelastic_fluid_particles_;
 
 		/** assign derived material properties*/
-		virtual void assignDerivedMaterialParameters() {
+		virtual void assignDerivedMaterialParameters() override {
 			WeaklyCompressibleFluid::assignDerivedMaterialParameters();
 		};
 	public:

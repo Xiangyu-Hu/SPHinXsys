@@ -21,12 +21,11 @@ namespace SPH
 	class InitializeATimeStep : public ParticleDynamicsSimple<SPHBody, BaseParticles>
 	{
 	protected:
-		Vecd initial_value_;
+		Gravity* gravity_;
 		virtual void SetupDynamics(Real dt = 0.0) override;
 		virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 	public:
-		InitializeATimeStep(SPHBody* body);
-		InitializeATimeStep(SPHBody* body, ExternalForce *external_force);
+		InitializeATimeStep(SPHBody* body, Gravity* gravity = new Gravity(Vecd(0)));
 		virtual ~InitializeATimeStep() {};
 	};
 
@@ -142,7 +141,6 @@ namespace SPH
 		{
 		protected:
 			CellVector& bound_cells_;
-			virtual void SetupDynamics(Real dt = 0.0) { };
 			virtual void checkLowerBound(size_t index_particle_i, Real dt = 0.0);
 			virtual void checkUpperBound(size_t index_particle_i, Real dt = 0.0);
 			InnerFunctor checking_bound_;

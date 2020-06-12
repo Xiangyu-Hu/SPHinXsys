@@ -328,7 +328,7 @@ namespace SPH
 			elastic_data_i.F_ += elastic_data_i.dF_dt_*dt * 0.5;
 			elastic_data_i.rho_n_ = elastic_data_i.rho_0_ / det(elastic_data_i.F_);
 			elastic_data_i.stress_ = material_->ConstitutiveRelation(elastic_data_i.F_, index_particle_i)
-				+ material_->NumericalDampingStress(elastic_data_i.F_, elastic_data_i.dF_dt_, numerical_viscosity_);
+				+ material_->DampingStress(elastic_data_i.F_, elastic_data_i.dF_dt_, numerical_viscosity_, index_particle_i);
 			base_particle_data_i.pos_n_ += base_particle_data_i.vel_n_*dt * 0.5;
 
 		}

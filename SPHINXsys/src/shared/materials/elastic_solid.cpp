@@ -20,20 +20,14 @@ namespace SPH {
 	//=================================================================================================//
 	Real ElasticSolid::getViscousTimeStepSize(Real smoothing_length)
 	{
-		return 0.5 * smoothing_length * smoothing_length * rho_0_ / (eta_0_ + 1.0e-15);
+		Real totoal_viscosity = eta_0_ + getNumericalViscosity(smoothing_length);
+		return 0.5 * smoothing_length * smoothing_length * rho_0_ / (totoal_viscosity + 1.0e-15);
 	}
 	//=================================================================================================//
-	Matd ElasticSolid::DampingStress(Matd& F, Matd& dF_dt, size_t particle_index_i)
+	Matd ElasticSolid::DampingStress(Matd& F, Matd& dF_dt, Real numerical_viscoisty, size_t particle_index_i)
 	{
 		Matd strain_rate = 0.5 * (~dF_dt * F + ~F * dF_dt);
-		Matd sigmaPK2 = eta_0_ * strain_rate;
-		return F * sigmaPK2;
-	}
-	//=================================================================================================//
-	Matd ElasticSolid::NumericalDampingStress(Matd& F, Matd& dF_dt, Real numerical_viscoisty)
-	{
-		Matd strain_rate = 0.5 * (~dF_dt * F + ~F * dF_dt);
-		Matd sigmaPK2 = numerical_viscoisty * strain_rate;
+		Matd sigmaPK2 = (eta_0_ + numerical_viscoisty) * strain_rate;
 		return F * sigmaPK2;
 	}
 	//=================================================================================================//

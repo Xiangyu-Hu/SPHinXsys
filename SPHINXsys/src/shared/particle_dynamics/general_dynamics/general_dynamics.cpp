@@ -9,17 +9,9 @@
 namespace SPH {
 //=================================================================================================//
 	InitializeATimeStep
-		::InitializeATimeStep(SPHBody* body)
-		: ParticleDynamicsSimple<SPHBody, BaseParticles>(body)
+		::InitializeATimeStep(SPHBody* body, Gravity* gravity)
+		: ParticleDynamicsSimple<SPHBody, BaseParticles>(body), gravity_(gravity)
 	{
-		initial_value_ = Vecd(0);
-	}
-//=================================================================================================//
-	InitializeATimeStep
-		::InitializeATimeStep(SPHBody* body, ExternalForce *external_force)
-		: ParticleDynamicsSimple<SPHBody, BaseParticles>(body)
-	{
-		initial_value_ = external_force->InducedAcceleration();
 	}
 //=================================================================================================//
 	void InitializeATimeStep::SetupDynamics(Real dt)
@@ -31,7 +23,8 @@ namespace SPH {
 	{
 		BaseParticleData &base_particle_data_i
 			= particles_->base_particle_data_[index_particle_i];
-		base_particle_data_i.dvel_dt_others_ = initial_value_;
+		base_particle_data_i.dvel_dt_others_ 
+			= gravity_->InducedAcceleration(base_particle_data_i.pos_n_);
 	}
 //=================================================================================================//
 	RandomizePartilePosition::RandomizePartilePosition(SPHBody* body)

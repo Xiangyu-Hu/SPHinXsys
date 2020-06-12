@@ -16,20 +16,11 @@ namespace SPH {
 	 */
 	class ExternalForce
 	{
-	protected:
-		/** external force. */
-		Vecd exteranl_acceleration_;	
-
 	public:
 		ExternalForce();
 		virtual ~ExternalForce() {};
-		/** The function to define acceleration 
-		 * due to external force with default arguments for simple functions. */
-		virtual void UpdateAcceleration();
 		/** This function can be used for runtime control of external force. */
-		virtual Vecd InducedAcceleration(Vecd position, Vecd velocity, Real t = 0.0);
-		/** simple constant acceleration */
-		virtual Vecd InducedAcceleration() { return exteranl_acceleration_; };
+		virtual Vecd InducedAcceleration(Vecd& position) = 0;
 	};
 
 	/**
@@ -38,8 +29,18 @@ namespace SPH {
 	 */
 	class Gravity : public ExternalForce
 	{
+	protected:
+		/** global accerlaeration. */
+		Vecd global_acceleration_;
+		/** global reference position for zero potential. */
+		Vecd reference_position_;
 	public:
-		Gravity(Vecd gravity_vector);
+		Gravity(Vecd gravity_vector, Vecd reference_position = Vecd(0));
 		virtual ~Gravity() {};
+
+		/** This function can be used for runtime control of external force. */
+		virtual Vecd InducedAcceleration(Vecd& position) override;
+		/** Compute potential. */
+		Real getPotential(Vecd& position);
 	};
 }

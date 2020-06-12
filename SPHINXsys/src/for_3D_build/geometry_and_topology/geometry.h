@@ -39,7 +39,6 @@ namespace SPH {
 	protected:
 		//generate trangle mesh from polymesh
 		SimTK::ContactGeometry::TriangleMesh* TriangleMeshFromPolyMesh(SimTK::PolygonalMesh &ploy_mesh);
-
 	public:
 		SimTK::ContactGeometry::TriangleMesh *triangle_mesh_;
 
@@ -55,6 +54,7 @@ namespace SPH {
 		virtual bool contain(Vec3d pnt, bool BOUNDARY_INCLUDED = true) override;
 		virtual Vec3d closestpointonface(Vec3d input_pnt) override;
 		virtual void shapebound(Vec3d &lower_bound, Vec3d &upper_bound) override;
+		void writePolygonalVertices(int poly_id, string out_folder);
 	};
 
 	class Region
@@ -68,7 +68,7 @@ namespace SPH {
 		std::vector<RegionBooleanOps> geometryops;							
 		//shapes container<pointer to geomerty, operation>
 		std::vector<std::pair<Geometry*, RegionBooleanOps>> shapes;
-
+		string output_folder_;
 	public:
 		Region(string region_name);
 		virtual ~Region() {};

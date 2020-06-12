@@ -332,7 +332,7 @@ namespace SPH {
 	protected:
 		std::string filefullpath_;
 	public:
-		WriteTotalMechanicalEnergy(In_Output& in_output, FluidBody* water_block, ExternalForce* external_force);
+		WriteTotalMechanicalEnergy(In_Output& in_output, FluidBody* water_block, Gravity* gravity);
 		virtual ~WriteTotalMechanicalEnergy() {};
 		virtual void WriteToFile(Real time = 0.0) override;
 	};

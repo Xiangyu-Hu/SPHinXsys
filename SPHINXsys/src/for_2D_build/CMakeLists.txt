@@ -62,7 +62,9 @@ else(MSVC)
 endif(MSVC)
 
 INSTALL(TARGETS sphinxsys_2d sphinxsys_static_2d
-
 RUNTIME DESTINATION 2d_code/bin
 LIBRARY DESTINATION 2d_code/lib
 ARCHIVE DESTINATION 2d_code/lib)
+
+FILE(GLOB_RECURSE hpp_headers  ${PROJECT_SOURCE_DIR}/src/shared/*.hpp ${PROJECT_SOURCE_DIR}/src/for_2D_build/*.hpp)
+INSTALL(FILES ${hpp_headers} DESTINATION 2d_code/include)

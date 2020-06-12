@@ -69,7 +69,7 @@ namespace SPH {
 		/** Swapping particles. */
 		virtual void swapParticles(size_t this_particle_index, size_t that_particle_index) override;
 		/** Get mirror a particle along an axis direaction. */
-		virtual void mirrorInAxisDirection(size_t particle_index_i, Vecd body_bound, int axis_direction);
+		virtual void mirrorInAxisDirection(size_t particle_index_i, Vecd body_bound, int axis_direction) override;
 
 		/**
 		 * @brief Write particle data in XML format.
@@ -87,7 +87,7 @@ namespace SPH {
 		virtual void ReadParticleFromXmlForRestart(std::string &filefullpath) override;
 
 		/** Pointer to this object. */
-		virtual FluidParticles* PointToThisObject();
+		virtual FluidParticles* PointToThisObject() override;
 	};
 
 	/**
@@ -136,6 +136,6 @@ namespace SPH {
 		virtual void ReadParticleFromXmlForRestart(std::string &filefullpath) override;
 
 		/** Pointer to this object. */
-		virtual ViscoelasticFluidParticles* PointToThisObject();
+		virtual ViscoelasticFluidParticles* PointToThisObject() override;
 	};
 }

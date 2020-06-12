@@ -62,7 +62,9 @@ else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
 INSTALL(TARGETS sphinxsys_3d sphinxsys_static_3d
-
 RUNTIME DESTINATION 3d_code/bin
 LIBRARY DESTINATION 3d_code/lib
 ARCHIVE DESTINATION 3d_code/lib)
+
+FILE(GLOB_RECURSE hpp_headers  ${PROJECT_SOURCE_DIR}/src/shared/*.hpp ${PROJECT_SOURCE_DIR}/src/for_3D_build/*.hpp)
+INSTALL(FILES ${hpp_headers} DESTINATION 3d_code/include)

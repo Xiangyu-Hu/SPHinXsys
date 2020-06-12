@@ -302,7 +302,7 @@ namespace SPH {
 	{
 		Vecu cellpos = GridIndexesFromPosition(particle_position);
 		cell_linked_lists_[cellpos[0]][cellpos[1]][cellpos[2]].particle_data_lists_
-			.push_back(make_pair(particle_index, particle_position));
+			.emplace_back(make_pair(particle_index, particle_position));
 	}
 	//=================================================================================================//
 }

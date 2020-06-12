@@ -33,6 +33,10 @@ ${CMAKE_CURRENT_SOURCE_DIR}/reload/SPHBody_ExcitationHeart_rld.xml
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
+add_test(NAME ${PROJECT_NAME} 
+		 COMMAND ${PROJECT_NAME}
+		 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(${PROJECT_NAME} sphinxsys_3d ${TBB_LIBRARYS} debug ${Simbody_DEBUG_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} sphinxsys_3d ${TBB_LIBRARYS} optimized ${Simbody_RELEASE_LIBRARIES})
@@ -41,6 +45,6 @@ else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     	target_link_libraries(${PROJECT_NAME} sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} ${Boost_LIBRARIES} stdc++)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		target_link_libraries(${PROJECT_NAME} sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} stdc++ stdc++fs)
+		target_link_libraries(${PROJECT_NAME} sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES}  ${Boost_LIBRARIES} stdc++ stdc++fs)
 	endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")

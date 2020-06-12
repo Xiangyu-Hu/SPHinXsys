@@ -131,9 +131,9 @@ namespace SPH {
 		/** Pointer to this object. */
 		virtual SolidParticles* PointToThisObject() override;
 		/** Normalize a gradient. */
-		virtual Vecd normalizeGradient(size_t particle_index_i, Vecd& gradient);
+		virtual Vecd normalizeGradient(size_t particle_index_i, Vecd& gradient) override;
 		/** Get the kernel gradient in weak form. */
-		virtual Vecd getKernelGradient(size_t particle_index_i, size_t particle_index_j, Real dW_ij, Vecd& e_ij);
+		virtual Vecd getKernelGradient(size_t particle_index_i, size_t particle_index_j, Real dW_ij, Vecd& e_ij) override;
 	};
 	
 	/**

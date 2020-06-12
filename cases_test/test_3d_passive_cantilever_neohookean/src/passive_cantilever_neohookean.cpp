@@ -1,7 +1,7 @@
 /**
- * @file pssive_cantilever.cpp
- * @brief This is the first example of myocaridum 
- * @author Chi Zhang and Xiangyu Hu
+ * @file pssive_cantilever_neohookean.cpp
+ * @brief This is the example of myocaridum with simple neohookean tissue model 
+ * @author Bence Rochlitz, Chi Zhang  and Xiangyu Hu
  * @version 0.1.0
  * @ref 	doi.org/10.1016/j.jcp.2013.12.012
  */
@@ -9,25 +9,21 @@
 /** Name space. */
 using namespace SPH;
 /** Geometry parameters. */
-Real PL = 6.0; 
-Real PH = 1.0;
-Real PW = 1.0;		
-Real SL = 0.5; 
-Real particle_spacing_ref = PH / 12.0;		/**< Initial particle spacing. */
+Real PL = 0.1;
+Real PH = 0.04;
+Real PW = 0.04;
+Real SL = 0.02;
+Real particle_spacing_ref = PH / 6.0;		/**< Initial particle spacing. */
 Real BW = particle_spacing_ref * 4; 		/**< Boundary width. */
 /**< SimTK geometric modeling resolution. */
 int resolution(20);
 /** For material properties of the solid. */
-Real rho_0 = 1100.0; 
-Real poisson = 0.45; 
-Real Youngs_modulus = 1.7e7;
-Real a = Youngs_modulus/(2.0 *(1.0 + poisson));
-Real a_f = 0.0 * a;
-Real a_0[4] = {a, a_f, 0.0, 0.0};
-Real b_0[4] = {1.0, 0.0, 0.0, 0.0};
-Vec3d fiber_direction(1.0, 0.0, 0.0);
-Vec3d sheet_direction(0.0, 1.0, 0.0);
-Real bulk_modulus = Youngs_modulus / 3.0 / (1.0 - 2.0 * poisson);
+Real rho_0 = 1265.0; // Gheorghe 2019 
+Real poisson = 0.45; // nearly incompressible
+Real Youngs_modulus = 5e4; // Sommer 2015
+Real physical_viscosity = 0.0; //physical damping
+Real gravity_g = 9.8; 					/**< Value of gravity. */
+Real time_to_full_gravity = 4.0;
 
 Vec3d d_0(1.0e-4, 0.0, 0.0);
 /** Define the geometry. */
@@ -84,40 +80,33 @@ public:
 /**
  * Setup material properties of myocardium
  */
-class MyocardiumMuscle : public Muscle
+class MyocardiumMuscle : public NeoHookeanSolid
 {
 public:
-	MyocardiumMuscle() : Muscle() 
+	MyocardiumMuscle() : NeoHookeanSolid()
 	{
 		rho_0_ 	= rho_0;
-		bulk_modulus_ = bulk_modulus;
-		f0_ 	= fiber_direction;
-		s0_ 	= sheet_direction;
-		std::copy(a_0, a_0 + 4, a_0_);
-		std::copy(b_0, b_0 + 4, b_0_);
+		E_0_ = Youngs_modulus;
+		nu_ = poisson;
+		eta_0_ = physical_viscosity;
 
 		assignDerivedMaterialParameters();
 	}
 };
 /**
- * application dependent initial condition 
+ * define time dependent gravity
  */
-class MyocardiumInitialCondition
-	: public solid_dynamics::ElasticSolidDynamicsInitialCondition
+class TimeDependentGravity : public Gravity
 {
 public:
-	MyocardiumInitialCondition(SolidBody *myocardium)
-		: solid_dynamics::ElasticSolidDynamicsInitialCondition(myocardium) {};
-protected:
-	void Update(size_t index_particle_i, Real dt) override 
+	TimeDependentGravity(Vecd gravity_vector) 
+		: Gravity(gravity_vector) {}
+	virtual Vecd InducedAcceleration(Vecd& position) override
 	{
-		BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-		if (base_particle_data_i.pos_n_[0] > 0.0) 
-		{
-			base_particle_data_i.vel_n_[1] = 5.0 * sqrt(3.0);
-			base_particle_data_i.vel_n_[2] = 5.0;
-		}
-	};
+		Real current_time = GlobalStaticVariables::physical_time_;
+		return current_time < time_to_full_gravity ?
+			current_time * global_acceleration_ / time_to_full_gravity : global_acceleration_;
+	}
 };
  //define an observer body
 class MyocardiumObserver : public FictitiousBody
@@ -137,6 +126,10 @@ int main()
 	/** Setup the system. */
 	SPHSystem system(Vecd(-SL - BW, BW, BW),
 		Vecd(PL + BW, PH + BW, PH + BW), particle_spacing_ref, 6);
+
+	/** Define the external force. */
+	TimeDependentGravity gravity(Vec3d(0.0, -gravity_g, 0.0));
+
 	/** Creat a Myocardium body, corresponding material, particles and reaction model. */
 	Myocardium *myocardium_body =
 		new Myocardium(system, "MyocardiumBody", 0, ParticlesGeneratorOps::lattice);
@@ -153,11 +146,12 @@ int main()
 	SPHBodyTopology body_topology = { { myocardium_body,{} }, {myocardium_observer, {myocardium_body}} };
 	system.SetBodyTopology(&body_topology);
 
+	//-------- common paritcle dynamics ----------------------------------------
+	InitializeATimeStep 	initialize_gravity(myocardium_body, &gravity);
+
 	/** 
 	 * This section define all numerical methods will be used in this case.
 	 */
-	/** Initialization. */
-	MyocardiumInitialCondition initialization(myocardium_body);
 	/** Corrected strong configuration. */	
 	solid_dynamics::CorrectConfiguration 
 		corrected_configuration_in_strong_form(myocardium_body);
@@ -174,6 +168,7 @@ int main()
 	/** Constrain the holder. */
 	solid_dynamics::ConstrainSolidBodyRegion
 		constrain_holder(myocardium_body, new Holder(myocardium_body, "Holder"));
+
 	/** Output */
 	In_Output in_output(system);
 	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
@@ -187,14 +182,12 @@ int main()
 	GlobalStaticVariables::physical_time_ = 0.0;
 	system.InitializeSystemCellLinkedLists();
 	system.InitializeSystemConfigurations();
-	/** apply initial condition */
-	initialization.parallel_exec();
 	corrected_configuration_in_strong_form.parallel_exec();
 	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
 	write_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
 	/** Setup physical parameters. */
 	int ite = 0;
-	Real end_time = 3.0;
+	Real end_time = 8.0;
 	Real output_period = end_time / 100.0;		
 	Real dt = 0.0; 
 	/** Statistics for computing time. */
@@ -213,6 +206,8 @@ int main()
 					<< GlobalStaticVariables::physical_time_ << "	dt: "
 					<< dt << "\n";
 			}
+
+			initialize_gravity.parallel_exec(); // gravity force
 			stress_relaxation_first_half.parallel_exec(dt);
 			constrain_holder.parallel_exec(dt);
 			stress_relaxation_second_half.parallel_exec(dt);

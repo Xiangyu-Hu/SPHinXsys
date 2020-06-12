@@ -79,7 +79,7 @@ namespace SPH
 		BaseMeshCellLinkedList* base_mesh_cell_linked_list_; /**< Cell linked mesh of this body. */
 		MeshBackground* mesh_background_;			/**< Background mesh.*/
 		ParticlesGeneratorOps particle_generator_op_;	/**< Particle generator manner */
-		PositionsAndVolumes body_input_points_volumes_; /**< For direct generate particles. /
+		PositionsAndVolumes body_input_points_volumes_; /**< For direct generate particles. */
 
 		/**
 		 * @brief particle by cells lists is for parallel splitting algorithm.

@@ -195,11 +195,10 @@ namespace SPH
 		class TotalMechanicalEnergy  : public WeaklyCompressibleFluidDynamicsSum<Real>
 		{
 		protected:
-			Real average_farctor_;
-			Real potential_;
+			Gravity* gravity_;
 			Real ReduceFunction(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			explicit TotalMechanicalEnergy(FluidBody* body, ExternalForce *external_force);
+			explicit TotalMechanicalEnergy(FluidBody* body, Gravity* gravity);
 			virtual ~TotalMechanicalEnergy() {};
 		};
 

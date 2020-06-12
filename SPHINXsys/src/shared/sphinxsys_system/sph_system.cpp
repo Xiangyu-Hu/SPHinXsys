@@ -79,4 +79,51 @@ namespace SPH
 		InitializeSystemConfigurations();
 	}
 	//===============================================================//
+	void SPHSystem::handleCommandlineOptions(int ac, char* av[])
+	{
+		try {
+
+			po::options_description desc("Allowed options");
+			desc.add_options()
+				("help", "produce help message")
+				("r", po::value<bool>(), "Particle relaxation.")
+				("i", po::value<bool>(), "Particle reload from input file.")
+				;
+
+			po::variables_map vm;
+			po::store(po::parse_command_line(ac, av, desc), vm);
+			po::notify(vm);
+
+			if (vm.count("help")) {
+				cout << desc << "\n";
+				exit(0);
+			}
+
+			if (vm.count("r")) {
+				run_particle_relaxation_ = vm["r"].as<bool>();
+				cout << "Particle relaxation was set to "
+					<< vm["r"].as<bool>() << ".\n";
+			}
+			else {
+				cout << "Particle relaxation was set to default(false).\n";
+			}
+			if (vm.count("i")) {
+				reload_particles_ = vm["i"].as<bool>();
+				cout << "Particle reload from input file was set to "
+					<< vm["i"].as<bool>() << ".\n";
+			}
+			else {
+				cout << "Particle reload from input file was set to default(false).\n";
+			}
+		}
+		catch (std::exception & e) {
+			cerr << "error: " << e.what() << "\n";
+			exit(1);
+		}
+		catch (...) {
+			cerr << "Exception of unknown type!\n";
+		}
+
+	}
+	//===============================================================//
 }

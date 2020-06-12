@@ -47,7 +47,8 @@ namespace SPH
 	{
 		SimTK::ContactGeometry::TriangleMesh *triangle_mesh;
 		triangle_mesh = new SimTK::ContactGeometry::TriangleMesh(ploy_mesh);
-		if (!SimTK::ContactGeometry::TriangleMesh::isInstance(*triangle_mesh)) {
+		if (!SimTK::ContactGeometry::TriangleMesh::isInstance(*triangle_mesh)) 
+		{
 			std::cout << "\n Error the triangle mesh is not valid" << std::endl;
 		}
 		std::cout << "num of faces:" << triangle_mesh->getNumFaces() << std::endl;
@@ -58,19 +59,32 @@ namespace SPH
 	bool Geometry::contain(Vec3d pnt, bool BOUNDARY_INCLUDED /*= true*/)
 	{
 		bool inside = false;
-		SimTK::UnitVec3 normal;
-		Vec3d nearest = triangle_mesh_->findNearestPoint(pnt, inside, normal);
-
+		int face_id;
+		SimTK::Vec2 normal;
+		Vec3d closest_pnt = triangle_mesh_->findNearestPoint(pnt, inside,face_id, normal);
+		if (face_id < 0 && face_id > triangle_mesh_->getNumFaces()) 
+		{
+			std::cout << "\n Error the nearest point is not valid" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
+		}
 		return inside;
 	}
 
 	Vec3d Geometry::closestpointonface(Vec3d input_pnt)
 	{
 		bool inside = false;
-		SimTK::UnitVec3 normal;
-		Vec3d nearest = triangle_mesh_->findNearestPoint(input_pnt, inside, normal);
-
-		return nearest;
+		int face_id;
+		SimTK::Vec2 normal;
+		Vec3d closest_pnt;
+		closest_pnt = triangle_mesh_->findNearestPoint(input_pnt, inside,face_id, normal);
+		if (face_id < 0 && face_id > triangle_mesh_->getNumFaces()) 
+		{
+			std::cout << "\n Error the nearest point is not valid" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
+		}
+		return closest_pnt;
 	}
 
 	void Geometry::shapebound(Vec3d &lower_bound, Vec3d &upper_bound)
@@ -90,6 +104,30 @@ namespace SPH
 		}
 	}
 
+	void Geometry::writePolygonalVertices(int poly_id, string out_folder)
+	{
+		std::string filefullpath = out_folder + "/Polygonalmesh_" + std::to_string(poly_id) + ".plt";
+		if (fs::exists(filefullpath))
+		{
+				fs::remove(filefullpath);
+		}
+		std::ofstream out_file(filefullpath.c_str(), ios::trunc);
+		out_file << " VARIABLES = \" x \", \"y\",\"z\", \"ID\", \" n_x \", \" n_y \",\" n_z \" \n";
+		for(int i = 0; i <= triangle_mesh_->getNumVertices(); i++ )
+		{
+			Vec3d face_pos = triangle_mesh_->getVertexPosition(i);
+			Vec3d face_norm = triangle_mesh_->getFaceNormal(i);
+			out_file << face_pos[0] << "  "
+					 << face_pos[1] << "  "
+					 << face_pos[2] << "  "
+					 << i << " "
+					 << face_norm[0] << "  "
+					 << face_norm[1] << "  "
+					 << face_norm[2] << "\n";
+		}
+		out_file.close();
+	}
+
 	Region::Region(string region_name)
 	{
 		region_name_ = region_name;
@@ -99,7 +137,7 @@ namespace SPH
 	{
 		bool exist = false;
 		bool inside = false;
-		SimTK::UnitVec3 normal;
+		
 		for (auto& Rshape : shapes)
 		{
 			RegionBooleanOps opstring = Rshape.second;
@@ -133,25 +171,29 @@ namespace SPH
 
 	void Region::closestpointonface(Vec3d input_pnt, Vec3d& closest_pnt, Real& phi)
 	{
-		bool exist = false;
-		bool inside = false;
-		SimTK::UnitVec3 normal;
-	
 		//a big positive number
 		Real large_number(1.0e15);
 		phi = large_number;
+		Real dist_min = large_number;
+		Vec3d pnt_closest(0);
 		Vec3d pnt_found(0);
 
 		for (auto& Rshape : shapes)
 		{
 			Geometry* sp = Rshape.first;
-
 			pnt_found  = sp->closestpointonface(input_pnt);
-			phi = (input_pnt - pnt_found).norm();
+			Real dist = (input_pnt - pnt_found).norm();
+
+			if(dist <= dist_min)
+			{
+				dist_min = dist;
+				pnt_closest = pnt_found;
+				phi = (input_pnt - pnt_closest).norm();
+			}
 		}
 
 		phi = contain(input_pnt) ? phi : -phi;
-		closest_pnt = pnt_found;
+		closest_pnt = pnt_closest;
 	}
 
 	void Region::add_geometry(Geometry *geometry, RegionBooleanOps op)
@@ -248,6 +290,22 @@ namespace SPH
 		{
 			std::cout << "Warning: The first " << faultyShapes << " sub-shapes used to construct reagion '" << region_name_
 				<< "' will be neglected as their boolean operations are BodyBooleanOps::sub!" << std::endl;
+		}
+
+		output_folder_ = "./ploymesh";
+		if (fs::exists(output_folder_))
+		{
+			fs::remove_all(output_folder_);
+		}
+		if (!fs::exists(output_folder_))
+		{
+			fs::create_directory(output_folder_);
+		}
+
+		for (int i = 0; i < shapes.size(); i++)
+		{
+			Geometry* sp = shapes[i].first;
+			sp->writePolygonalVertices(i, output_folder_);
 		}
 	}
 

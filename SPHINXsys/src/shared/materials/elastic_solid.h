@@ -70,18 +70,13 @@ namespace SPH {
 		 */
 		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) = 0;
 		/**
-		 * @brief Compute damping stress.
+		 * @brief Compute phsical and numerical damping stress.
 		 * @param[in] deform_grad 	Gradient of deformation.
 		 * @param[in] deform_grad_rate 	Rate of gradient of deformation.
+		 * @param[in] numerical_viscoisty numerical viscosity.
 		 * @param[in] particle_index_i 	Particle index.
 		 * */
-		virtual Matd DampingStress(Matd& deform_grad, Matd& deform_grad_rate, size_t particle_index_i);
-		/**
-		 * @brief Numericla damping stress.
-		 * @param[in] deform_grad 	Gradient of deformation.
-		 * @param[in] deform_grad_rate 	Rate of gradient of deformation.
-		 * @param[in] numerical_viscoisty 	Nuemrical visocsity. */
-		virtual Matd NumericalDampingStress(Matd& deform_grad, Matd& deform_grad_rate, Real numerical_viscoisty);
+		virtual Matd DampingStress(Matd& deform_grad, Matd& deform_grad_rate, Real numerical_viscoisty, size_t particle_index_i);
 	};
 
 	/**
@@ -230,7 +225,7 @@ namespace SPH {
 		virtual ~LocallyOrthotropicMuscle() {};
 
 		/** obtain fiber matrix */
-		virtual Matd getMuscleFiber(size_t particle_index_i) { return local_f0f0_[particle_index_i]; };
+		virtual Matd getMuscleFiber(size_t particle_index_i) override { return local_f0f0_[particle_index_i]; };
 		/** the interface for dynamical cast*/
 		virtual LocallyOrthotropicMuscle* PointToThisObject() override { return this; };
 		/**
