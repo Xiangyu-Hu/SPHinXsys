@@ -45,7 +45,7 @@ namespace SPH {
 	 * The constrained particles are the cells tagged.
 	 */
 	template <class BodyType, class ParticlesType, class BodyPartByCellType, class MaterialType = BaseMaterial>
-	class ConstraintByCell : public ParticleDynamicsByCells<BodyType, ParticlesType, MaterialType >
+	class ConstraintByCell : public ParticleDynamics<void, BodyType, ParticlesType, MaterialType >
 	{
 	protected:
 		BodyPartByCellType *body_part_;
@@ -56,7 +56,7 @@ namespace SPH {
 			Real dt = 0.0) = 0;
 	public:
 		ConstraintByCell(BodyType *body, BodyPartByCellType *body_part)
-			: ParticleDynamicsByCells<BodyType, ParticlesType, MaterialType>(body), 
+			: ParticleDynamics<void, BodyType, ParticlesType, MaterialType>(body), 
 			body_part_(body_part), constrained_cells_(body_part->body_part_cells_) {};
 		virtual ~ConstraintByCell() {};
 

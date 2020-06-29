@@ -12,6 +12,9 @@
 
 namespace SPH {
 
+	typedef ParticleDynamicsComplex<SPHBody, BaseParticles, BaseMaterial,
+		SPHBody, BaseParticles, BaseMaterial> ConfigurationDynamicsComplex;
+
 	class SPHSystem;
 
 	/** Functor for cofiguration operation. */
@@ -24,7 +27,7 @@ namespace SPH {
 		ConfigurationFunctor& configuration_functor, Real dt = 0.0);
 	/**
 	 * @class ConfigurationDynamicsInner
-	 * @brief This is for using splitting algorihm to update particle configuration
+	 * @brief This is for using particle dynamics to update particle configuration
 	 */
 	template<class NeighborRelationType = NeighborRelation>
 	class ConfigurationDynamicsInner
@@ -49,6 +52,51 @@ namespace SPH {
 			kernel_ = body_->kernel_;
 		};
 		virtual ~ConfigurationDynamicsInner() {};
+	};
+
+	/**
+	 * @class ConfigurationDynamicsContact
+	 * @brief This is for using particle dynamics to update particle contact configuration
+	 */
+	class ConfigurationDynamicsContact : public ConfigurationDynamicsComplex
+	{
+	protected:
+		StdVec<BaseMeshCellLinkedList*> target_mesh_cell_linked_lists_;
+
+		virtual bool checkNeighbor(Real particle_distance,	Real cutoff_radius, 
+			BaseParticleData& base_particle_data_i, BaseParticleData& base_particle_data_j) {
+			return particle_distance < cutoff_radius ? true : false;
+		};
+		virtual void setupDynamics(Real dt = 0.0) override {
+			for (size_t k = 0; k < current_interacting_configuration_.size(); ++k)
+				indexes_interacting_particles_[k]->clear();
+		};
+		virtual void ComplexInteraction(size_t index_particle_i, Real dt = 0.0) override;
+	public:
+		explicit ConfigurationDynamicsContact(SPHBody* body, SPHBodyVector interacting_bodies);
+		virtual ~ConfigurationDynamicsContact() {};
+	};
+
+	/**
+	 * @class ConfigurationDynamicsCollision
+	 * @brief This is for using particle dynamics to update particle configuration
+	 * for computing collsion dynamics between solid bodies
+	 */
+	class ConfigurationDynamicsCollision : public ConfigurationDynamicsContact
+	{
+	protected:
+		StdVec<BaseMeshCellLinkedList*> target_mesh_cell_linked_lists_;
+
+		virtual bool checkNeighbor(Real particle_distance, Real cutoff_radius,
+			BaseParticleData& base_particle_data_i, BaseParticleData& base_particle_data_j) override {
+			return particle_distance < cutoff_radius 
+				&& (base_particle_data_i.pos_0_ - base_particle_data_j.pos_0_).norm() > cutoff_radius
+				? true : false;
+		};
+	public:
+		explicit ConfigurationDynamicsCollision(SPHBody* body, SPHBodyVector interacting_bodies)
+			: ConfigurationDynamicsContact(body, interacting_bodies) {};
+		virtual ~ConfigurationDynamicsCollision() {};
 	};
 
 	/**
@@ -191,25 +239,6 @@ namespace SPH {
 	public:
 		ParticleDynamicsCellLinkedList(SPHBody *body);
 		virtual ~ParticleDynamicsCellLinkedList() {};
-
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
-
-	};
-
-	/**
-	 * @class ParticleDynamicsByCellParticleLists
-	 * @brief Update by cell particle list
-	 */
-	class ParticleDynamicsByCellParticleLists : public ParticleDynamics<void, SPHBody>
-	{
-		SPHSystem *system_;
-
-	protected:
-
-	public:
-		ParticleDynamicsByCellParticleLists(SPHSystem *system, SPHBody *body);
-		virtual ~ParticleDynamicsByCellParticleLists() {};
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;

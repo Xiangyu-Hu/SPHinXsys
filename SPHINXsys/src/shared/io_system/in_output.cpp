@@ -266,6 +266,14 @@ namespace SPH
 			fs::create_directory(in_output.reload_folder_);
 		}
 	};
+	WriteReloadParticle::WriteReloadParticle(In_Output& in_output, SPHBodyVector bodies,
+		StdVec<string> given_body_names) : WriteReloadParticle(in_output, bodies)
+	{
+		for(size_t i = 0; i != bodies.size(); ++i)
+		{
+			file_paths_[i] = in_output.reload_folder_ + "/SPHBody_" + given_body_names[i] + "_rld.xml";
+		}
+	}
 	//=============================================================================================//
 	void WriteReloadParticle::WriteToFile(Real time)
 	{

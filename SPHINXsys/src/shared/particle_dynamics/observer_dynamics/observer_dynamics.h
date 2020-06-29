@@ -18,17 +18,19 @@ namespace SPH
 	namespace observer_dynamics
 	{
 		template <class ObserverParticlesType, class TargetParticlesType>
-		using ContactInterpolation = ParticleDynamicsContact<SPHBody, ObserverParticlesType, BaseMaterial, SPHBody, TargetParticlesType>;
+		using ContactInterpolation = ParticleDynamicsContact<SPHBody, ObserverParticlesType, 
+			BaseMaterial, SPHBody, TargetParticlesType>;
 
 		template <class ObserverParticlesType, class TargetParticlesType>
-		using ComplexInterpolation = ParticleDynamicsComplex<SPHBody, ObserverParticlesType, BaseMaterial, SPHBody, TargetParticlesType>;
+		using ComplexInterpolation = ParticleDynamicsComplex<SPHBody, ObserverParticlesType, 
+			BaseMaterial, SPHBody, TargetParticlesType>;
 
 		template <class BaseParticlesType, class TargetParticlesType>
 		using ObservingDyanmics = ParticleDynamicsContact<SPHBody, BaseParticlesType, BaseMaterial,SPHBody, TargetParticlesType, BaseMaterial>;
 
 		/**
 		 * @class ObservingAQuantityFromABody
-		 * @brief Observering general body
+		 * @brief Observering a given member data in the particles of a general body
 		 */
 		template <class DataType, class TargetParticlesType, class TargetDataType,
 			StdLargeVec<TargetDataType> TargetParticlesType:: * TrgtDataMemPtr, DataType TargetDataType:: * TrgtMemPtr>
@@ -122,13 +124,12 @@ namespace SPH
 
 		/**
 		 * @class InterpolatingAQuantity
-		 * @brief Observering general body
+		 * @brief interpolate a given member data in the particles of a general body from another body
 		 */
 		template <class DataType, class ObserverParticlesType, class ObserverDataType, class TargetParticlesType, class TargetDataType,
 			StdLargeVec<ObserverDataType> ObserverParticlesType:: * ObrsvrDataMemPtr, StdLargeVec<TargetDataType> TargetParticlesType:: * TrgtDataMemPtr,
 			DataType ObserverDataType:: * ObrsvrMemPtr, DataType TargetDataType:: * TrgtMemPtr>
-			class InterpolatingAQuantity
-			: public ComplexInterpolation<ObserverParticlesType, TargetParticlesType>
+			class InterpolatingAQuantity : public ComplexInterpolation<ObserverParticlesType, TargetParticlesType>
 		{
 		protected:
 			virtual void ComplexInteraction(size_t index_particle_i, Real dt = 0.0) override
@@ -228,7 +229,7 @@ namespace SPH
 		};
 		
 		/**
-		* @class CorrectKenelWeightsforInterpolation
+		* @class CorrectKenelWeightsForInterpolation
 		* @brief  correct kenel weights for interpolation
 		*/
 		class CorrectKenelWeightsForInterpolation : 

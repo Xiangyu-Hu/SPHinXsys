@@ -10,16 +10,73 @@
 
 namespace SPH
 {
-	//===============================================================//
+	//=================================================================================================//
+	SPHBodySystem::SPHBodySystem(SPHSystem* sph_system)
+		: sph_system_(sph_system)
+	{
+	}
+	//=================================================================================================//
+	bool SPHBodySystem::addABody(SPHBody* sph_body) {
+		bool new_sph_body = true;
+		for (size_t i = 0; i != sph_bodies_.size(); ++i)
+			if (sph_body == sph_bodies_[i]) new_sph_body = false;
+		if (new_sph_body) {
+			sph_bodies_.push_back(sph_body);
+		}
+		return new_sph_body;
+	}
+	//=================================================================================================//
+	void SPHBodySystem::addBodies(SPHBodyVector sph_bodies) {
+		for (size_t i = 0; i != sph_bodies.size(); ++i)
+			addABody(sph_bodies[i]);
+	}
+	//=================================================================================================//
+	void SPHBodySystem::addSPHBodyContactRealtion(SPHBodyContactRealtion* sph_body_contact_realtion)
+	{
+		/** add a new sph bodies to the system */
+		addABody(sph_body_contact_realtion->body_);
+		addBodies(sph_body_contact_realtion->contact_bodies_);
+		sph_body_contact_realtions_.push_back(sph_body_contact_realtion);
+	}
+	//=================================================================================================//
+	bool SPHBodyCollisionSystem::addABody(SPHBody* sph_body)
+	{
+		bool new_sph_body = SPHBodySystem::addABody(sph_body);
+		if (new_sph_body) {
+			sph_bodies_.push_back(sph_body);
+			sph_body_lower_bounds_.push_back(BodyLowerBound(sph_body));
+			sph_body_upper_bounds_.push_back(BodyUpperBound(sph_body));
+		}
+		return new_sph_body;
+	}
+	//=================================================================================================//
+	void SPHBodyCollisionSystem::updateBodyBound()
+	{
+		for (size_t i = 0; i != sph_bodies_.size(); ++i) {
+			if (!sph_bodies_[i]->is_static_) {
+				sph_bodies_[i]->setBodyLowerBound(sph_body_lower_bounds_[i].parallel_exec());
+				sph_bodies_[i]->setBodyUpperBound(sph_body_upper_bounds_[i].parallel_exec());
+			}
+		}
+	}
+	void SPHBodySystem::updateCellLinkedList()
+	{
+		for (size_t i = 0; i != sph_bodies_.size(); ++i) {
+			if (!sph_bodies_[i]->is_static_) {
+				sph_bodies_[i]->UpdateCellLinkedList();
+			}
+		}
+	}
+	//=================================================================================================//
 	SPHSystem::SPHSystem(Vecd lower_bound, Vecd upper_bound,
 		Real particle_spacing_ref, int number_of_threads)
-		: lower_bound_(lower_bound), upper_bound_(upper_bound),
-		particle_spacing_ref_(particle_spacing_ref), tbb_init_(number_of_threads),
+		: sph_body_systems_(NULL), lower_bound_(lower_bound), upper_bound_(upper_bound),
+		tbb_init_(number_of_threads), particle_spacing_ref_(particle_spacing_ref),
 		restart_step_(0), run_particle_relaxation_(false),
 		reload_particles_(false)
 	{
 	}
-	//===============================================================//
+	//=================================================================================================//
 	SPHSystem::~SPHSystem()
 	{
 
@@ -48,8 +105,7 @@ namespace SPH
 			for (auto& body : bodies_) {
 				if (body == body_topology_->at(i).first) {
 					body->SetContactMap(body_topology_->at(i));
-					body->AllocateMeoemryCellLinkedList();
-					body->AllocateMemoriesForConfiguration();
+					body->AllocateMemoriesForContactConfiguration();
 				}
 			}
 		}
@@ -105,7 +161,7 @@ namespace SPH
 					<< vm["r"].as<bool>() << ".\n";
 			}
 			else {
-				cout << "Particle relaxation was set to default(false).\n";
+				cout << "Particle relaxation was set to default (" << run_particle_relaxation_ <<").\n";
 			}
 			if (vm.count("i")) {
 				reload_particles_ = vm["i"].as<bool>();
@@ -113,7 +169,7 @@ namespace SPH
 					<< vm["i"].as<bool>() << ".\n";
 			}
 			else {
-				cout << "Particle reload from input file was set to default(false).\n";
+				cout << "Particle reload from input file was set to default (" << reload_particles_ << ").\n";
 			}
 		}
 		catch (std::exception & e) {

@@ -10,7 +10,7 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_geometry.h"
-
+#include "array.h"
 #include "SimTKcommon.h"
 #include "SimTKmath.h"
 #include "Simbody.h"

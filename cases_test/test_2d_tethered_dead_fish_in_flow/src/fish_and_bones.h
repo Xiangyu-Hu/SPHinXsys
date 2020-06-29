@@ -44,7 +44,9 @@ std::vector<Point> CreatFishShape(Real center_x, Real center_y, Real length, Rea
 		Real y = outline(t, h, L);
 
 		if (y >= resolution)
+		{
 			pnts.push_back(Point(x, y));
+		}
 		else
 		{
 			if (x<0.0)

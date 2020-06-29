@@ -6,6 +6,7 @@
 * @version	0.1
 */
 #pragma once
+
 #include "base_particle_dynamics.h"
 #include "base_particle_dynamics.hpp"
 

@@ -96,24 +96,6 @@ namespace SPH
 		};
 
 		/**
-		 * @class DivergenceCorrection
-		 * @brief  obtained divergence correction factor for each fluid particle
-		 * so the divegnce of linear velocity field is reproduced
-		 * note that this correction does not work for free surface flow
-		 */
-		class DivergenceCorrection : public WeaklyCompressibleFluidDynamicsComplex
-		{
-		protected:
-			Real dimension_;
-
-			virtual void ComplexInteraction(size_t index_particle_i,	Real dt = 0.0) override;
-		public:
-			DivergenceCorrection(FluidBody *body, StdVec<SolidBody*> interacting_bodies)
-				: WeaklyCompressibleFluidDynamicsComplex(body, interacting_bodies) {
-				dimension_ = Real(Vecd(0).size());	};
-		};
-
-		/**
 		 * @class ComputingViscousAcceleration
 		 * @brief  the viscosity force induecd accelerarion
 		 */
@@ -178,7 +160,7 @@ namespace SPH
 		protected:
 			Real p_background_;
 
-			virtual void SetupDynamics(Real dt = 0.0) override;
+			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void ComplexInteraction(size_t index_particle_i, Real dt = 0.0)  override;
 
 		public:
@@ -229,7 +211,7 @@ namespace SPH
 			Real ReduceFunction(size_t index_particle_i, Real dt = 0.0) override;
 			Real OutputResult(Real reduced_value) override;
 		public:
-			explicit GetAdvectionTimeStepSize(FluidBody* body, Real U_f);
+			explicit GetAdvectionTimeStepSize(FluidBody* body, Real U_max);
 			virtual ~GetAdvectionTimeStepSize() {};
 		};
 

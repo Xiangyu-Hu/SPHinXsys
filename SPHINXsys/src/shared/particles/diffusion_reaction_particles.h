@@ -130,7 +130,7 @@ namespace SPH {
 
 			for (size_t i = 0; i != number_of_particles; ++i)
 			{
-				for(size_t j = 0; j != Vecd(0).size(); ++j)
+				for(int j = 0; j != Vecd(0).size(); ++j)
 				{
 					output_file << this->body_->base_particles_->base_particle_data_[i].pos_n_[j] << "  ";
 				}

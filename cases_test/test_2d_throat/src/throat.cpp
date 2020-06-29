@@ -240,9 +240,9 @@ int main()
 
 	int number_of_iterations = 0;
 	int screen_output_interval = 100;
-	Real End_Time = 200.0*5.0;
+	Real End_Time = 100.0;
 	//time step size for oupt file
-	Real D_Time = End_Time/200.0/5.0;
+	Real D_Time = End_Time/100.0;
 	Real Dt = 0.0;//default advection time step sizes
 	Real dt = 0.0; //default accoustic time step sizes
 

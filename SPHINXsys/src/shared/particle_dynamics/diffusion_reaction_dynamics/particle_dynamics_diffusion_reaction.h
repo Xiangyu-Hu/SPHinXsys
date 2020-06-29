@@ -113,7 +113,7 @@ namespace SPH
 				Real diff_coff_ij = species_diffusion_[m]->getInterParticleDiffusionCoff(particle_i, particle_j, e_ij);
 				size_t k = species_diffusion_[m]->diffusion_species_index_;
 				size_t l = species_diffusion_[m]->gradient_species_index_;
-				Real phi_ij = diffusion_reaction_data_i.species_n_[k] - diffusion_reaction_data_j.species_n_[k];
+				Real phi_ij = diffusion_reaction_data_i.species_n_[l] - diffusion_reaction_data_j.species_n_[l];
 				diffusion_reaction_data_i.dspecies_dt_[k] += diff_coff_ij * phi_ij * surface_area_ij;
 			}
 		};
@@ -148,7 +148,6 @@ namespace SPH
 				BaseNeighborRelation* neighboring_particle = neighors[n];
 				size_t index_particle_j = neighboring_particle->j_;
 				Vecd& e_ij = neighboring_particle->e_ij_;
-				Real Vol_j = base_particle_data[index_particle_j].Vol_;
 				DiffusionReactionData& diffusion_reaction_data_j = diffusion_reaction_data[index_particle_j];
 	
 				const Vecd& gradi_ij = particles->getKernelGradient(index_particle_i, index_particle_j, neighboring_particle->dW_ij_, e_ij);

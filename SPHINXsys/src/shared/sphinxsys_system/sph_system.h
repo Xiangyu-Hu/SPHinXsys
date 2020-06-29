@@ -11,6 +11,8 @@ namespace po = boost::program_options;
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
+#include "general_dynamics.h"
+#include "particle_dynamics_configuration.h"
 
 namespace SPH 
 {
@@ -18,6 +20,48 @@ namespace SPH
 	 * @brief Preclaimed classes.
 	 */
 	class SPHBody;
+	class SPHSystem;
+	class SPHBodyContactRealtion;
+
+	/**
+	 * @class SPHBodySystem
+	 * @brief The base class managing SPH bodies in the system level.
+	 */
+	class SPHBodySystem
+	{
+		SPHSystem* sph_system_;
+	protected:
+		SPHBodyVector sph_bodies_;
+		StdVec<SPHBodyContactRealtion*> sph_body_contact_realtions_;
+
+	public:
+		SPHBodySystem(SPHSystem* sph_system);
+		virtual ~SPHBodySystem() {};
+
+		virtual bool addABody(SPHBody* sph_body);
+		void addBodies(SPHBodyVector sph_bodies);
+		void addSPHBodyContactRealtion(SPHBodyContactRealtion* sph_body_contact_realtion);
+
+		void updateCellLinkedList();
+	};
+
+	/**
+	 * @class SPHBodyCollisionSystem
+	 * @brief The base class managing SPH bodies in the system level.
+	 */
+	class SPHBodyCollisionSystem : public SPHBodySystem
+	{
+	protected:
+		StdVec<BodyLowerBound> sph_body_lower_bounds_;
+		StdVec<BodyUpperBound> sph_body_upper_bounds_;
+	public:
+		SPHBodyCollisionSystem(SPHSystem* sph_system)
+			: SPHBodySystem(sph_system) {};
+		virtual ~SPHBodyCollisionSystem() {};
+
+		virtual bool addABody(SPHBody* sph_body) override;
+		void updateBodyBound();
+	};
 
 	/**
 	 * @class SPHSystem
@@ -25,6 +69,8 @@ namespace SPH
 	 */
 	class SPHSystem
 	{
+	protected:
+		StdVec<SPHBodySystem*> sph_body_systems_;
 
 	public:
 		/**
@@ -43,15 +89,15 @@ namespace SPH
 		virtual ~SPHSystem();
 
 		Vecd lower_bound_, upper_bound_;	/**< Lower and Upper domain bound. */
+		task_scheduler_init tbb_init_;		/**< TBB library. */
 		Real particle_spacing_ref_;			/**< Refernce initial particle spacing. */
-		/** start the simulation with relaxed particles*/
-		bool reload_particles_;
 		/** restart step*/
 		int restart_step_;
 		/** computing from roeload particles from files. */
 		bool run_particle_relaxation_;
+		/** start the simulation with relaxed particles*/
+		bool reload_particles_;
 
-		task_scheduler_init tbb_init_;		/**< TBB library. */
 
 		SPHBodyVector bodies_;			/**< All sph bodies. */
 		SPHBodyVector fictitious_bodies_;/**< The bodies without inner particle configuration. */

@@ -29,16 +29,13 @@ namespace SPH {
 		FluidParticleData(BaseParticleData &base_particle_data, Fluid *fluid);
 		virtual ~FluidParticleData() {};
 
+		Real p_; /**< Particle pressure. */
 		/** Particle mass, initial number desity, initial density and current density. */
-		Real mass_, rho_0_, rho_n_;	
-		/** Particle pressure. */
-		Real p_;
-		/** Paticle desity change rate and divergence correction. */
-		Real drho_dt_, div_correction_;
+		Real rho_0_, rho_n_, mass_;
+		Real drho_dt_; /**< Paticle desity change rate */
 		/** Paticle transport acceleration and velocity. */
 		Vecd dvel_dt_trans_, vel_trans_;
-		/** Vorticcity of fluid in 3D. */
-		Vec3d vorticity_;					
+		Vec3d vorticity_;	/**< Vorticcity of fluid in 3D. */				
 	};
 
 	/**

@@ -58,17 +58,45 @@ namespace SPH
 
 	bool Geometry::contain(Vec3d pnt, bool BOUNDARY_INCLUDED /*= true*/)
 	{
+
+		SimTK::Vec2 uv_coordinate;
 		bool inside = false;
 		int face_id;
-		SimTK::Vec2 normal;
-		Vec3d closest_pnt = triangle_mesh_->findNearestPoint(pnt, inside,face_id, normal);
+		Vec3d closest_pnt = triangle_mesh_->findNearestPoint(pnt, inside,face_id, uv_coordinate);
+
+		vector<int> neigbor_face(4);
+		neigbor_face[0] = face_id;
+		/** go throught the neighbor faces. */
+		for (int i = 1; i < 4; i++) {
+			int edge = triangle_mesh_->getFaceEdge(face_id, i - 1);
+			int face = triangle_mesh_->getEdgeFace(edge, 0);
+			neigbor_face[i] = face != face_id ? face : triangle_mesh_->getEdgeFace(edge, 1);
+		}
+
+		Vec3d from_face_to_pnt = pnt - closest_pnt;
+		Real sum_weights = 0.0;
+		Real weigthed_dot_product = 0.0;
+		for(int i = 0; i < 4; i++) {
+			SimTK::UnitVec3 normal_direction = triangle_mesh_->getFaceNormal(neigbor_face[i]);
+			Real dot_product = dot(normal_direction, from_face_to_pnt);
+			Real weight = dot_product* dot_product;
+			weigthed_dot_product += weight * dot_product;
+			sum_weights += weight;
+		}
+
+		weigthed_dot_product /= sum_weights;
+
+		bool weighted_inside = false;
+		if(weigthed_dot_product < 0.0) weighted_inside = true;
+
 		if (face_id < 0 && face_id > triangle_mesh_->getNumFaces()) 
 		{
 			std::cout << "\n Error the nearest point is not valid" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
-		return inside;
+
+		return weighted_inside;
 	}
 
 	Vec3d Geometry::closestpointonface(Vec3d input_pnt)
@@ -192,7 +220,7 @@ namespace SPH
 			}
 		}
 
-		phi = contain(input_pnt) ? phi : -phi;
+		phi = contain(input_pnt) ? -phi : phi;
 		closest_pnt = pnt_closest;
 	}
 

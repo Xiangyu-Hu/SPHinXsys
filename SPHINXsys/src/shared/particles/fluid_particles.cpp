@@ -12,20 +12,21 @@ namespace SPH
 {
 	//=================================================================================================//
 	FluidParticleData::FluidParticleData()
-		: p_(0.0), drho_dt_(0.0), div_correction_(1.0), vel_trans_(0),
-		dvel_dt_trans_(0), vorticity_(0), rho_0_(1.0), rho_n_(1.0), 
-		mass_(1.0)
+		: p_(0.0), rho_0_(1.0), rho_n_(1.0), mass_(1.0),
+		drho_dt_(0.0), dvel_dt_trans_(0), vel_trans_(0),
+		vorticity_(0) 
+		
 	{
 
 	}
 	//=================================================================================================//
 	FluidParticleData::FluidParticleData(BaseParticleData &base_particle_data, Fluid *fluid)
-		: p_(0.0), drho_dt_(0.0), div_correction_(1.0), vel_trans_(0),
-		dvel_dt_trans_(0), vorticity_(0)
+		: p_(0.0), rho_0_(fluid->ReinitializeRho(p_)), rho_n_(rho_0_),
+		mass_(base_particle_data.Vol_* rho_0_),
+		drho_dt_(0.0), dvel_dt_trans_(0), vel_trans_(0),
+		vorticity_(0)
 	{
-		rho_0_ = fluid->ReinitializeRho(p_);
-		rho_n_ = rho_0_;
-		mass_ = base_particle_data.Vol_ * rho_0_;
+	
 	}
 	//=================================================================================================//
 	FluidParticles::FluidParticles(SPHBody *body, Fluid* fluid)

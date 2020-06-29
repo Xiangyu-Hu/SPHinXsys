@@ -25,7 +25,7 @@ using namespace std;
 
 namespace SPH 
 {
-	/** Functor for operation oon the mesh. */
+	/** Functor for operation on the mesh. */
 	typedef std::function<void(Vecu, Real)> MeshFunctor;
 	/** Functor for operation on the mesh data package. */
 	template <class ReturnType>
@@ -149,18 +149,19 @@ namespace SPH
 
 		/** set the mesh lower bound including the buffer region. */
 		void setMeshLowerBound(Vecd lower_bound, Real grid_spacing, size_t buffer_size);
-		/** computing number of total lattices */
+		/** computing number of total cells */
 		Vecu calcNumberOfCells(Vecd lower_bound, Vecd upper_bound, Real grid_spacing, size_t buffer_size);
-		/** computing number of total lattices */
+		/** computing number of total grid points form total cells */
 		Vecu getNumberOfGridPoints(Vecu number_of_cells) { return number_of_cells + Vecu(1); };
+		/** computing number of total cells form total grid points */
 		Vecu getNumberOfCells(Vecu number_of_grid_points) { return number_of_grid_points - Vecu(1); };
 
 		/** copy mesh properties from another mesh. */
 		void copyMeshProperties(Mesh* another_mesh);
 		/** shift position between cell and grid positions. */
 		Vecd getGridPositionFromCellPosition(Vecd& cell_position) {
-			return cell_position - Vecd(0.5 * cell_spacing_); 
-		}
+			return cell_position - Vecd(0.5 * cell_spacing_);
+		};
 	public:
 		/** Constructor using domain information. */
 		Mesh(Vecd lower_bound, Vecd upper_bound, Real grid_spacing, size_t buffer_size = 0);
@@ -202,7 +203,10 @@ namespace SPH
 		Vecd n_;
 		/** curvature */
 		Real kappa_;
-
+		/*mark the cut cell with narrow band, P for positive; N for negative; S for 0 levelset*/
+		bool gamma_P_ = false, gamma_N_ = false, gamma_S_ = false;
+		/*temporary phi for smoothing process*/
+		Real phi_temp_max = 0.0, phi_temp_min = 0.0;
 		/** Default constructor */
 		LevelSetData() : phi_(0), n_(0), kappa_(1.0) {};
 		/** Constructor for one data point. */
@@ -231,6 +235,23 @@ namespace SPH
 		/** initialize level set and displacement to surface
 		  * for body region geometry */
 		void InitializeLevelSetData(SPHBody &body);
+
+		/*clear the sharp corner for 0 levelset*/
+		void MarkZeroLevelSetCutCell();
+		vector<Vecu> GetZeroLevelSetCutCell();
+		vector<Vecu> GetPositiveCutCell();
+		vector<Vecu> GetNegativeCutCell();
+		int IfNeighborCellsInAuxiliayBandP(Vecu position);
+		int IfNeighborCellsInAuxiliayBandN(Vecu position);
+		void ClearLevelSetData(SPHBody &body);
+
+		/*smoothing the 0 levelset by curvature*/
+		Real AverageLevelSetValueForStencil(Vecu position, int square_width);
+		void SmoothLevelSetByCurvature(SPHBody &body, Real smooth_coe);
+
+		/*reinitialize the levelset field*/
+		void ReinitializeLevelSetData(SPHBody &body);
+		
 		void ComputeCurvatureFromLevelSet(SPHBody &body);
 		/** probe the mesh data */
 		Vecd ProbeNormalDirection(Vecd Point);
@@ -248,6 +269,7 @@ namespace SPH
 	 * @brief Abstract base class for a data package 
 	 * which is given by a small mesh patch.
 	 */
+	template<class PackageDataType>
 	class BaseDataPackage : public BaseMesh
 	{
 	public:
@@ -260,29 +282,48 @@ namespace SPH
 		/** If true, its data saved in memeory pool. */
 		bool is_inner_pkg_;
 
+		/** level set, signed distance. */
+		MeshDataMatrix<PackageDataType> pkg_data_;
+		/** address of the mesh data for spatial operatings.
+		  * only valid for inner packages.
+		  * The extra layer of data is from the neighbor packages. */
+		MeshDataMatrix<PackageDataType*> pkg_data_addrs_;
+
 		/** Constructor with package size information.  */
 		BaseDataPackage(size_t pkg_size, size_t buffer_size) 
 			: BaseMesh(Vecu(pkg_size), buffer_size), pkg_size_(pkg_size), 
 			number_of_addrs_(Vecu(pkg_size + 2 * buffer_size)),
-			is_inner_pkg_(false), data_lower_bound_(0) {};
-		virtual ~BaseDataPackage() {};
+			is_inner_pkg_(false), data_lower_bound_(0) {
+			AllocateMeshDataMatrix();
+		};
+		virtual ~BaseDataPackage() {
+			DeleteMeshDataMatrix();
+		};
 
+		/** allocate memory for package data */
+		virtual void AllocateMeshDataMatrix() override;
+		/** delete memory for package data */
+		virtual void DeleteMeshDataMatrix() override;
 		/** get the size of package*/
 		size_t getDataPackageSize() { return pkg_size_; };
 		/** initialize package mesh information. */
-		void initializePackageGoemetry(Vecd& pkg_lower_bound, Real data_spacing);
+		void initializePackageGoemetry(Vecd& pkg_lower_bound, Real data_spacing) {
+			mesh_lower_bound_ = pkg_lower_bound - Vecd(data_spacing * 0.5);;
+			grid_spacing_ = data_spacing;
+			data_lower_bound_ = pkg_lower_bound + Vecd(data_spacing * 0.5);
+		};
 		/** initialize the defaultly construted package. */
 		virtual void initializeDataPackage(SPHBody* sph_body) = 0;
 		/** Bi and tri-linear interpolation within the package. */
-		template<class DataType>
-		DataType ProbeDataPackage(MeshDataMatrix<DataType*> data, Vecd& position);
+		template<class DataType, DataType PackageDataType:: * MemPtr>
+		DataType ProbeDataPackage(MeshDataMatrix<PackageDataType*> pkg_data_addrs, Vecd& position);
 	};
 
 	/**
 	 * @class LevelSetDataPackage
 	 * @brief Fixed memory level data located in a package.
 	 */
-	class LevelSetDataPackage : public BaseDataPackage
+	class LevelSetDataPackage : public BaseDataPackage<LevelSetData>
 	{
 	protected:
 		/** Heavside function for computing volume fraction is a cell. */
@@ -290,30 +331,13 @@ namespace SPH
 		/** Aperture at a grid point for compueting patch area in a cell. */
 		Vecd getAperture(Vecu grid_index);
 	public:
-		/** level set, signed distance. */
-		MeshDataMatrix<Real> phi_;
-		/** normal direction. */
-		MeshDataMatrix<Vecd> n_;
-		/** address of the mesh data for spatial operatings.
-		  * only valid for inner packages.
-		  * The extra layer of data is from the neighbor packages. */
-		MeshDataMatrix<Real*> phi_addrs_;
-		MeshDataMatrix<Vecd*> n_addrs_;
 		/** If true, the packase is near to zero level set. */
 		bool is_core_pkg_;
 
 		/** */
 		/** defualt constructor */
-		LevelSetDataPackage() 
-			: BaseDataPackage(4, 1), is_core_pkg_(false) { 
-			AllocateMeshDataMatrix(); 
-		}
-		virtual ~LevelSetDataPackage() { DeleteMeshDataMatrix(); };;
-
-		/** allocate memory for package data */
-		virtual void AllocateMeshDataMatrix() override;
-		/** delete memory for package data */
-		virtual void DeleteMeshDataMatrix() override;
+		LevelSetDataPackage() : BaseDataPackage<LevelSetData>(4, 1), is_core_pkg_(false) {}
+		virtual ~LevelSetDataPackage() {};;
 
 		/** initialize the defaultly constructed package. */
 		virtual void initializeDataPackage(SPHBody* sph_body) override;
@@ -420,12 +444,11 @@ namespace SPH
 			return data_position;
 		};
 		/** find the value of data from its global index */
-		template<class DataType, MeshDataMatrix<DataType> DataPackageType:: * MemPtr>
-		DataType getValueFromGlobalDataIndex(Vecu global_data_index);
+		template<class PackageDataType>
+		PackageDataType getValueFromGlobalDataIndex(Vecu global_data_index);
 		/** initialize the addresses in a data package for one varibale. */
-		template<class DataType, MeshDataMatrix<DataType*> DataPackageType:: * MemPtrAddrss,
-			MeshDataMatrix<DataType> DataPackageType:: * MemPtr>
-		void initializeOneVariableAdressesInACell(Vecu cell_index);
+		template<class PackageDataType>
+		void initializePackageAdressesInACell(Vecu cell_index);
 
 	public:
 		/** memory pool for all packages in the mesh. */
@@ -461,9 +484,8 @@ namespace SPH
 		virtual ~MeshWithDataPackages() { DeleteMeshDataMatrix(); };
 
 		/** probe a off-mesh value. */
-		template<class DataType, MeshDataMatrix<DataType*> DataPackageType:: * MemPtrAddrss,
-			MeshDataMatrix<DataType> DataPackageType:: * MemPtr>
-			DataType probeMesh(Vecd& position);
+		template<class DataType, class PackageDataType, DataType PackageDataType:: * MemPtr>
+		DataType probeMesh(Vecd& position);
 	};
 	
 	/**

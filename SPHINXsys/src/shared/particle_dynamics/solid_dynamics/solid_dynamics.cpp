@@ -59,8 +59,8 @@ namespace SPH
 
 				Vecd gradw_ij = neighboring_particle->dW_ij_ * neighboring_particle->e_ij_;
 				Vecd r_ij = -neighboring_particle->r_ij_ * neighboring_particle->e_ij_;
-				local_configuration += base_particle_data_j.Vol_ * SimTK::outer(r_ij, gradw_ij);
-				gradient += gradw_ij * base_particle_data_j.Vol_;
+				local_configuration += base_particle_data_j.Vol_0_ * SimTK::outer(r_ij, gradw_ij);
+				gradient += gradw_ij * base_particle_data_j.Vol_0_;
 			}
 
 			/** Contact interaction. */
@@ -77,8 +77,8 @@ namespace SPH
 
 					Vecd gradw_ij = neighboring_particle->dW_ij_ * neighboring_particle->e_ij_;
 					Vecd r_ij = -neighboring_particle->r_ij_ * neighboring_particle->e_ij_;
-					local_configuration += base_particle_data_j.Vol_ * SimTK::outer(r_ij, gradw_ij);
-					gradient += gradw_ij * base_particle_data_j.Vol_;
+					local_configuration += base_particle_data_j.Vol_0_ * SimTK::outer(r_ij, gradw_ij);
+					gradient += gradw_ij * base_particle_data_j.Vol_0_;
 				}
 			}
 
@@ -278,7 +278,8 @@ namespace SPH
 		{
 			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
 
-			Matd local_configuration(0.0);
+			/** a small number added to diagnal to avoid divide zero */
+			Matd local_configuration(1.0e-6);
 			Neighborhood& inner_neighborhood = (*inner_configuration_)[index_particle_i];
 			NeighborList& inner_neighors = std::get<0>(inner_neighborhood);
 			for (size_t n = 0; n != std::get<2>(inner_neighborhood); ++n)
@@ -289,11 +290,10 @@ namespace SPH
 
 				Vecd gradw_ij = neighboring_particle->dW_ij_ * neighboring_particle->e_ij_;
 				Vecd r_ji = - neighboring_particle->r_ij_ * neighboring_particle->e_ij_;
-				local_configuration += base_particle_data_j.Vol_ * SimTK::outer(r_ji, gradw_ij);
+				local_configuration += base_particle_data_j.Vol_0_ * SimTK::outer(r_ji, gradw_ij);
 			}
-
-			/** note that the generalized inverse only works here*/
-			solid_data_i.B_ = GeneralizedInverse(local_configuration);
+			/** note that I have changed to use stadrad linear solver here*/
+			solid_data_i.B_ = SimTK::inverse(local_configuration);
 		}
 		//=================================================================================================//
 		void DeformationGradientTensorBySummation::InnerInteraction(size_t index_particle_i, Real dt)
@@ -312,7 +312,7 @@ namespace SPH
 				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
 
 				Vecd gradw_ij = neighboring_particle->dW_ij_ * neighboring_particle->e_ij_;
-				deformation -= base_particle_data_j.Vol_
+				deformation -= base_particle_data_j.Vol_0_
 					*SimTK::outer((base_particle_data_i.pos_n_ - base_particle_data_j.pos_n_), gradw_ij);
 			}
 
@@ -327,6 +327,7 @@ namespace SPH
 
 			elastic_data_i.F_ += elastic_data_i.dF_dt_*dt * 0.5;
 			elastic_data_i.rho_n_ = elastic_data_i.rho_0_ / det(elastic_data_i.F_);
+			base_particle_data_i.Vol_ = elastic_data_i.mass_ / elastic_data_i.rho_n_;
 			elastic_data_i.stress_ = material_->ConstitutiveRelation(elastic_data_i.F_, index_particle_i)
 				+ material_->DampingStress(elastic_data_i.F_, elastic_data_i.dF_dt_, numerical_viscosity_, index_particle_i);
 			base_particle_data_i.pos_n_ += base_particle_data_i.vel_n_*dt * 0.5;
@@ -356,7 +357,7 @@ namespace SPH
 				acceleration += (elastic_data_i.stress_ *solid_data_i.B_
 					+ elastic_data_j.stress_*solid_data_j.B_)
 					* neighboring_particle->dW_ij_ * neighboring_particle->e_ij_
-					* base_particle_data_j.Vol_ / elastic_data_i.rho_0_;
+					* base_particle_data_j.Vol_0_ / elastic_data_i.rho_0_;
 			}
 			base_particle_data_i.dvel_dt_ = acceleration;
 		}
@@ -396,7 +397,7 @@ namespace SPH
 
 				Vecd gradw_ij = neighboring_particle->dW_ij_ * neighboring_particle->e_ij_;
 				deformation_gradient_change_rate
-					-= base_particle_data_j.Vol_
+					-= base_particle_data_j.Vol_0_
 					*SimTK::outer((base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_), gradw_ij);
 			}
 			elastic_data_i.dF_dt_ = deformation_gradient_change_rate* solid_data_i.B_;

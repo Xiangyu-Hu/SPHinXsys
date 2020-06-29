@@ -19,32 +19,32 @@ using namespace SPH;
 Real DL = 11.0;                             /**< Channel length. */
 Real DH = 8.0;                              /**< Channel height. */
 
-Real particle_spacing_ref = 0.1;           /** Intial particle spacing. */
+Real particle_spacing_ref = 0.05;           /** Intial particle spacing. */
 Real DLsponge = particle_spacing_ref * 20.0; /**< Sponge region to impose inflow condition. */
-Real BW = particle_spacing_ref * 4.0;       /**< Extending width for BCs. */
+Real BW = particle_spacing_ref * 4.0;        /**< Extending width for BCs. */
 
 Real cx = 2.0;                              /**< Center of fish in x direction. */
 Real cy = 4.0;                              /**< Center of fish in y direction. */
 Real fish_length = 3.738;                   /**< Length of fish. */
 Vec3d tethering_point(-1.0, cy, 0.0);        /**< The tethering point. */
-											/**
-											* Material properties of the fluid.
-											*/
+/**
+ * Material properties of the fluid.
+ */
 Real rho0_f = 1.0;
 Real U_f = 1.0;
 Real c_f = 10.0 * U_f;
 Real Re = 5.0e3;
 Real mu_f = rho0_f * U_f * (fish_length) / Re;
 /**
-* Material properties of the fish body.
-*/
+ * Material properties of the fish body.
+ */
 Real rho0_s = 1.0;
 Real poisson = 0.49;
 Real Ae = 2.0e2;
 Real Youngs_modulus = Ae * rho0_f * U_f * U_f;
 /**
-* Basic geometries for construct SPH bodies.
-*/
+ * Basic geometries for construct SPH bodies.
+ */
 /**
 * @brief create a water block shape
 */
@@ -326,15 +326,8 @@ int main()
 	* @brief   Particle and body creation of gate observer.
 	*/
 	Observer* fish_observer = new Observer(system, "Observer",
-		0, ParticlesGeneratorOps::direct);
+		1, ParticlesGeneratorOps::direct);
 	BaseParticles           observer_particles(fish_observer);
-	/** Output. */
-	In_Output in_output(system);
-	WriteBodyStatesToVtu        write_real_body_states(in_output, system.real_bodies_);
-	WriteTotalForceOnSolid      write_total_force_on_fish(in_output, fish_body);
-	WriteAnObservedQuantity<Vecd, BaseParticles,
-		BaseParticleData, &BaseParticles::base_particle_data_, &BaseParticleData::pos_n_>
-		write_fish_displacement("Displacement", in_output, fish_observer, fish_body);
 	/**
 	* @brief   Body contact map.
 	* @details The contact map gives the data conntections between the bodies.
@@ -343,7 +336,13 @@ int main()
 	SPHBodyTopology body_topology = { { water_block,{ wall_boundary, fish_body } },
 	{ wall_boundary,{} },{ fish_body,{ water_block } },{ fish_observer,{ fish_body } } };
 	system.SetBodyTopology(&body_topology);
-
+	/** Output. */
+	In_Output in_output(system);
+	WriteBodyStatesToPlt        write_real_body_states(in_output, system.real_bodies_);
+	WriteTotalForceOnSolid      write_total_force_on_fish(in_output, fish_body);
+	WriteAnObservedQuantity<Vecd, BaseParticles,
+		BaseParticleData, &BaseParticles::base_particle_data_, &BaseParticleData::pos_n_>
+		write_fish_displacement("Displacement", in_output, fish_observer, fish_body);
 	/**
 	* @brief   Methods used for updating data structure.
 	*/
@@ -374,7 +373,7 @@ int main()
 		/** Write backgroung level set. */
 		WriteBodyMeshToPlt write_fish_body_background_mesh(in_output, fish_body);
 		/** Write the body state to Vtu file. */
-		WriteBodyStatesToVtu 		write_fish_body_to_vtu(in_output, { fish_body });
+		WriteBodyStatesToPlt 		write_fish_body(in_output, { fish_body });
 		/** Write the particle reload files. */
 		WriteReloadParticle 		write_particle_reload_files(in_output, { fish_body });
 
@@ -395,7 +394,7 @@ int main()
 		update_fish_body_inner_configuration.parallel_exec();
 		body_surface_bounding.parallel_exec();
 		random_fish_body_particles.parallel_exec(0.25);
-		write_fish_body_to_vtu.WriteToFile(0.0);
+		write_fish_body.WriteToFile(0.0);
 
 		/** relax particles of the insert body. */
 		int ite_p = 0;
@@ -413,7 +412,7 @@ int main()
 			if (ite_p % 200 == 0)
 			{
 				cout << fixed << setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
-				write_fish_body_to_vtu.WriteToFile(Real(ite_p) * 1.0e-4);
+				write_fish_body.WriteToFile(Real(ite_p) * 1.0e-4);
 			}
 		}
 		std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
@@ -443,9 +442,6 @@ int main()
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensityBySummation
 		update_fluid_desnity(water_block, { wall_boundary, fish_body });
-	//divergence correction
-	fluid_dynamics::DivergenceCorrection
-		divergence_correction(water_block, { wall_boundary });
 	/** Time step size without considering sound wave speed. */
 	fluid_dynamics::GetAdvectionTimeStepSize	get_fluid_adevction_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
@@ -533,13 +529,11 @@ int main()
 	fixed_spot_info.addDecoration(Transform(), DecorativeSphere(0.02));
 	tethered_spot_info.addDecoration(Transform(), DecorativeSphere(0.4));
 	/** Visulizer from simbody. */
-	SimTK::Visualizer viz(MBsystem);
-	MBsystem.addEventReporter(new Visualizer::Reporter(viz, 0.01));
+	//SimTK::Visualizer viz(MBsystem);
+	//MBsystem.addEventReporter(new Visualizer::Reporter(viz, 0.01));
 	/** Initialize the system and state. */
 	SimTK::State state = MBsystem.realizeTopology();
-	viz.report(state);
-	cout << "Hit ENTER to run a short simulation ...";
-	getchar();
+	//viz.report(state);
 	/** Time steping method for multibody system.*/
 	SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
 	integ.setAccuracy(1e-3);
@@ -563,7 +557,6 @@ int main()
 	if (system.reload_particles_) {
 		ReadReloadParticle		reload_insert_body_particles(in_output, { fish_body }, { "FishBody" });
 		reload_insert_body_particles.ReadFromFile();
-		reload_insert_body_particles.~ReadReloadParticle();
 	}
 	/**
 	* Initial periodic boundary condition which copies the particle identifies
@@ -606,7 +599,6 @@ int main()
 			initialize_a_fluid_step.parallel_exec();
 			Dt = get_fluid_adevction_time_step_size.parallel_exec();
 			update_fluid_desnity.parallel_exec();
-			divergence_correction.parallel_exec();
 			viscous_acceleration.parallel_exec();
 			transport_velocity_correction.parallel_exec(Dt);
 			transport_velocity_stress.parallel_exec();
@@ -656,8 +648,8 @@ int main()
 			}
 			number_of_iterations++;
 
-			const State& s = integ.getState();
-			viz.report(s);
+			//const State& s = integ.getState();
+			//viz.report(s);
 			/** Water block confifuration and periodic constion. */
 			periodic_bounding.parallel_exec();
 			update_water_block_cell_linked_list.parallel_exec();

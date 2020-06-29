@@ -22,7 +22,7 @@ namespace SPH
 	: sph_system_(sph_system), body_region_(body_name), body_name_(body_name), 
 		refinement_level_(refinement_level), particle_generator_op_(op),
 		body_lower_bound_(0), body_upper_bound_(0), prescribed_body_bounds_(false),
-		mesh_background_(NULL)
+		mesh_background_(NULL), is_static_(false)
 	{	
 		sph_system_.AddBody(this);
 
@@ -60,12 +60,15 @@ namespace SPH
 		return body_name_;
 	}
 	//=================================================================================================//
-	void  SPHBody::AllocateMemoriesForConfiguration()
+	void  SPHBody::AllocateMemoriesForInnerConfiguration()
+	{
+		inner_configuration_.resize(number_of_particles_,
+			make_tuple<NeighborList, size_t, size_t>(NeighborList(0), 0, 0));
+	}
+	//=================================================================================================//
+	void  SPHBody::AllocateMemoriesForContactConfiguration()
 	{
 		indexes_contact_particles_.resize(contact_map_.second.size());
-
-		inner_configuration_.resize(number_of_particles_, 
-			make_tuple<NeighborList, size_t, size_t>(NeighborList(0), 0, 0));
 
 		contact_configuration_.resize(contact_map_.second.size());
 		for (size_t k = 0; k != contact_map_.second.size(); ++k) {
@@ -105,6 +108,17 @@ namespace SPH
 		mesh_background_->ComputeCurvatureFromLevelSet(*this);
 	}
 	//=================================================================================================//
+	void SPHBody::CleanAndSmoothLevelSet(Real smoothing_coe)
+	{
+		mesh_background_->ClearLevelSetData(*this);
+		mesh_background_->ReinitializeLevelSetData(*this);
+		mesh_background_->SmoothLevelSetByCurvature(*this, smoothing_coe);
+		mesh_background_->ReinitializeLevelSetData(*this);
+		mesh_background_->ComputeCurvatureFromLevelSet(*this);
+	}
+	
+	//=================================================================================================//
+
 	bool SPHBody::BodyContain(Vecd pnt)
 	{
 		return body_region_.contain(pnt);
@@ -315,6 +329,28 @@ namespace SPH
 	{
 		Solid* solid = dynamic_cast<Solid*>(body_->base_particles_->base_material_);
 		solid_body_density_ = solid->getReferenceDensity();
+	}
+	//=================================================================================================//
+	SPHBodyContactRealtion::SPHBodyContactRealtion(SPHBody* body, SPHBodyVector contact_bodies)
+		: body_(body), contact_bodies_(contact_bodies), inner_configuration_(&body->inner_configuration_),
+		split_cell_lists_(body->split_cell_lists_)
+	{
+		body_->body_contact_realtions_.push_back(this);
+		indexes_contact_particles_.resize(contact_bodies_.size());
+		contact_configuration_.resize(contact_bodies_.size());
+		for (size_t k = 0; k != contact_bodies_.size(); ++k) {
+			contact_configuration_[k].resize(body_->number_of_particles_,
+				make_tuple<NeighborList, size_t, size_t>(NeighborList(0), 0, 0));
+		}
+	}
+	//=================================================================================================//
+	void SPHBodyContactRealtion::AllocateConfigurationMemoriesForBodyBuffer(size_t body_buffer_particles)
+	{
+		size_t updated_size = body_->number_of_particles_ + body_buffer_particles;
+		for (size_t k = 0; k != contact_bodies_.size(); ++k) {
+			contact_configuration_[k].resize(updated_size,
+				make_tuple<NeighborList, size_t, size_t>(NeighborList(0), 0, 0));
+		}
 	}
 	//=================================================================================================//
 }

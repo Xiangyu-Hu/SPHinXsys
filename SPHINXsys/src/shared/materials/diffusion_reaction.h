@@ -61,7 +61,7 @@ namespace SPH
 	public:
 		/** Constructor. */
 		IsotropicDiffusion(size_t diffusion_species_index, size_t gradient_species_index,
-			Real diff_cf) : BaseDiffusion(diffusion_species_index, gradient_species_index),
+			Real diff_cf = 1.0) : BaseDiffusion(diffusion_species_index, gradient_species_index),
 			diff_cf_(diff_cf) {};
 		virtual ~IsotropicDiffusion() {};
 

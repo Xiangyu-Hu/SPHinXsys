@@ -14,7 +14,7 @@ namespace SPH {
 		::exec(Real dt)
 	{
 		size_t number_of_particles = this->body_->number_of_particles_;
-		this->SetupDynamics(dt);
+		this->setupDynamics(dt);
 		InnerIterator(number_of_particles, functor_update_, dt);
 	}
 	//=================================================================================================//
@@ -23,7 +23,7 @@ namespace SPH {
 		::parallel_exec(Real dt)
 	{
 		size_t number_of_particles = this->body_->number_of_particles_;
-		this->SetupDynamics(dt);
+		this->setupDynamics(dt);
 		InnerIterator_parallel(number_of_particles, functor_update_, dt);
 	}
 	//=================================================================================================//
@@ -54,7 +54,7 @@ namespace SPH {
 		::exec(Real dt)
 	{
 		size_t number_of_particles = this->body_->number_of_particles_;
-		this->SetupDynamics(dt);
+		this->setupDynamics(dt);
 		InnerIterator(number_of_particles, functor_inner_interaction_, dt);
 	}
 	//=================================================================================================//
@@ -63,7 +63,7 @@ namespace SPH {
 		::parallel_exec(Real dt)
 	{
 		size_t number_of_particles = this->body_->number_of_particles_;
-		this->SetupDynamics(dt);
+		this->setupDynamics(dt);
 		InnerIterator_parallel(number_of_particles, functor_inner_interaction_, dt);
 	}
 	//=================================================================================================//
@@ -101,7 +101,7 @@ namespace SPH {
 	void ParticleDynamicsInner1Level<BodyType, ParticlesType, MaterialType>
 		::exec(Real dt)
 	{
-		this->SetupDynamics(dt);
+		this->setupDynamics(dt);
 		size_t number_of_particles = this->body_->number_of_particles_;
 		InnerIterator(number_of_particles, functor_initialization_, dt);
 		InnerIterator(number_of_particles, this->functor_inner_interaction_, dt);
@@ -112,7 +112,7 @@ namespace SPH {
 	void ParticleDynamicsInner1Level<BodyType, ParticlesType, MaterialType>
 		::parallel_exec(Real dt)
 	{
-		this->SetupDynamics(dt);
+		this->setupDynamics(dt);
 		size_t number_of_particles = this->body_->number_of_particles_;
 		InnerIterator_parallel(number_of_particles, functor_initialization_, dt);
 		InnerIterator_parallel(number_of_particles, this->functor_inner_interaction_, dt);
@@ -125,7 +125,7 @@ namespace SPH {
 		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
 		::exec(Real dt)
 	{
-		this->SetupDynamics(dt);
+		this->setupDynamics(dt);
 		ContactIterator(this->indexes_interacting_particles_, functor_contact_interaction_, dt);
 	}
 	//=================================================================================================//
@@ -135,7 +135,7 @@ namespace SPH {
 		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
 		::parallel_exec(Real dt)
 	{
-		this->SetupDynamics(dt);
+		this->setupDynamics(dt);
 		ContactIterator_parallel(this->indexes_interacting_particles_, functor_contact_interaction_, dt);
 	}
 	//=================================================================================================//
@@ -155,7 +155,7 @@ namespace SPH {
 		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
 		::exec(Real dt)
 	{
-		this->SetupDynamics(dt);
+		this->setupDynamics(dt);
 		size_t number_of_particles = this->body_->number_of_particles_;
 		InnerIterator(number_of_particles, functor_complex_interaction_, dt);
 	}
@@ -166,7 +166,7 @@ namespace SPH {
 		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
 		::parallel_exec(Real dt)
 	{
-		this->SetupDynamics(dt);
+		this->setupDynamics(dt);
 		size_t number_of_particles = this->body_->number_of_particles_;
 		InnerIterator_parallel(number_of_particles, functor_complex_interaction_, dt);
 	}
@@ -221,7 +221,7 @@ namespace SPH {
 		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
 		::exec(Real dt)
 	{
-		this->SetupDynamics(dt);
+		this->setupDynamics(dt);
 		size_t number_of_particles = this->body_->number_of_particles_;
 		InnerIterator(number_of_particles, functor_initialization_, dt);
 		InnerIterator(number_of_particles, this->functor_complex_interaction_, dt);
@@ -234,7 +234,7 @@ namespace SPH {
 		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
 		::parallel_exec(Real dt)
 	{
-		this->SetupDynamics(dt);
+		this->setupDynamics(dt);
 		size_t number_of_particles = this->body_->number_of_particles_;
 		InnerIterator_parallel(number_of_particles, functor_initialization_, dt);
 		InnerIterator_parallel(number_of_particles, this->functor_complex_interaction_, dt);
@@ -255,7 +255,7 @@ namespace SPH {
 		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
 		::exec(Real dt)
 	{
-		this->SetupDynamics(dt);
+		this->setupDynamics(dt);
 		size_t number_of_particles = this->body_->number_of_particles_;
 		InnerIterator(number_of_particles, this->functor_initialization_, dt);
 		InnerIteratorSplitting(this->split_cell_lists_, this->functor_complex_interaction_, dt);
@@ -268,7 +268,7 @@ namespace SPH {
 		InteractingBodyType, InteractingParticlesType, InteractingMaterialType>
 		::parallel_exec(Real dt)
 	{
-		this->SetupDynamics(dt);
+		this->setupDynamics(dt);
 		size_t number_of_particles = this->body_->number_of_particles_;
 		InnerIterator_parallel(number_of_particles, this->functor_initialization_, dt);
 		InnerIteratorSplitting_parallel(this->split_cell_lists_, this->functor_complex_interaction_, dt);

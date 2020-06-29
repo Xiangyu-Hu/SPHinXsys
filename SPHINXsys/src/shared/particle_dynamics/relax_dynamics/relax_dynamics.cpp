@@ -141,16 +141,11 @@ namespace SPH
 			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 
 			Real phi = body_->mesh_background_->ProbeLevelSet(base_particle_data_i.pos_n_);
-			Vecd dist_2_face = body_->mesh_background_->ProbeNormalDirection(base_particle_data_i.pos_n_);
-			Vecd norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
-
-			if (phi < 0.5*body_->particle_spacing_ && phi > 0.0)
+			if (phi > -0.5 * body_->particle_spacing_)
 			{
-				base_particle_data_i.pos_n_ += 2.0 * (phi - 0.5 * body_->particle_spacing_) * norm;
-			}
-			if (phi < 0.0)
-			{
-				base_particle_data_i.pos_n_ -= 2.0 * (phi - 0.5 * body_->particle_spacing_) * norm;
+				Vecd unit_normal = body_->mesh_background_->ProbeNormalDirection(base_particle_data_i.pos_n_);
+				unit_normal /= unit_normal.norm() + 1.0e-16;
+				base_particle_data_i.pos_n_ -= (phi + 0.5 * body_->particle_spacing_) * unit_normal;
 			}
 		}
 		//=================================================================================================//
@@ -159,8 +154,7 @@ namespace SPH
 			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 
 			Real phi = body_->mesh_background_->ProbeLevelSet(base_particle_data_i.pos_n_);
-			Vecd dist_2_face = body_->mesh_background_->ProbeNormalDirection(base_particle_data_i.pos_n_);
-			Vecd norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
+			Vecd norm = body_->mesh_background_->ProbeNormalDirection(base_particle_data_i.pos_n_);
 
 			if (phi >= 0.0)
 			{

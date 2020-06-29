@@ -126,16 +126,32 @@ namespace SPH {
 	protected:
 		/** reference density */
 		Real rho_0_;
+		/** maximum colision speed */
+		Real collision_speed_max_;
+		/** for scalling the force between two colliding particles */
+		Real collision_potential_const_;
 		/** particles for this material */
 		SolidParticles* solid_particles_;
 
 		/** assign derived material properties*/
 		virtual void assignDerivedMaterialParameters() override {
 			BaseMaterial::assignDerivedMaterialParameters();
+			collision_potential_const_ = getCollisionPotentialConst(collision_speed_max_);
+		};
+
+		/** obtaine the constant based on assuminga a special equation of state,
+		    $p = rho^2 C$, where $C$ is the constant,
+			so that the particle interaction has the form of potential
+			force, so that the colliding force is pure microscipic */
+		Real getCollisionPotentialConst(Real collision_speed_max) {
+			Real sound_speed = 10.0 * collision_speed_max_;
+			return 2.0 * sound_speed * sound_speed / rho_0_;
 		};
 	public:
 		/** constructor with material name. */
-		Solid()	: BaseMaterial(), rho_0_(1.0), solid_particles_(NULL) {
+		Solid() : BaseMaterial(), rho_0_(1.0), collision_speed_max_(1.0),
+			collision_potential_const_(getCollisionPotentialConst(collision_speed_max_)), 
+			solid_particles_(NULL) {
 			material_name_ = "Soild";
 		};
 		virtual ~Solid() {};

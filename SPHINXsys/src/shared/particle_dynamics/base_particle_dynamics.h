@@ -121,7 +121,7 @@ namespace SPH
 	class Dynamics : public GlobalStaticVariables
 	{
 	protected:
-		virtual void SetupDynamics(Real dt = 0.0) = 0;
+		virtual void setupDynamics(Real dt = 0.0) = 0;
 	public:
 		/** Constructor */
 		explicit Dynamics() : GlobalStaticVariables() {};
@@ -144,24 +144,28 @@ namespace SPH
 	class ParticleDynamics : public Dynamics<ReturnType>
 	{
 	protected:
-		/** the body involving the particle dynamics */
 		BodyType * body_;
-		/** the particles involving the particle dynamics */
 		ParticlesType *particles_;
-		/** the material involving the particle dynamics */
 		MaterialType *material_;
-		/** Split cell lists*/
 		SplitCellLists& split_cell_lists_;
-
+		BaseMeshCellLinkedList* mesh_cell_linked_list_;
+		matrix_cell cell_linked_lists_;
+		Vecu number_of_cells_;
+		Real cell_spacing_;
+		Vecd mesh_lower_bound_, mesh_upper_bound_;
 
 		/** the function for set global parameters for the particle dynamics */
-		virtual void SetupDynamics(Real dt = 0.0) override {};
+		virtual void setupDynamics(Real dt = 0.0) override {};
 	public:
 		/** Constructor */
-		explicit ParticleDynamics(BodyType* body) : Dynamics<ReturnType>(), body_(body), 
+		explicit ParticleDynamics(BodyType* body) : Dynamics<ReturnType>(), body_(body),
 			particles_(dynamic_cast<ParticlesType*>(body->base_particles_->PointToThisObject())),
 			material_(dynamic_cast<MaterialType*>(body->base_particles_->base_material_->PointToThisObject())),
-			split_cell_lists_(body->split_cell_lists_){};
+			split_cell_lists_(body->split_cell_lists_), mesh_cell_linked_list_(body->base_mesh_cell_linked_list_),
+			cell_linked_lists_(mesh_cell_linked_list_->getCellLinkedLists()),
+			number_of_cells_(mesh_cell_linked_list_->getNumberOfCells()), 
+			cell_spacing_(mesh_cell_linked_list_->getCellSpacing()),
+			mesh_lower_bound_(mesh_cell_linked_list_->getMeshLowerBound()) {};
 		virtual ~ParticleDynamics() {};
 	};
 
@@ -207,28 +211,6 @@ namespace SPH
 	};
 
 	/**
-	* @class ParticleDynamicsByCells
-	* @brief Simple particle dynamics base class
-	* The particles are iterated according a list of cells.
-	* This is mainly used for imposing Eulerian boundary conditions.
-	*/
-	template <class BodyType, class ParticlesType = BaseParticles, class MaterialType = BaseMaterial>
-	class ParticleDynamicsByCells : public ParticleDynamics<void, BodyType, ParticlesType, MaterialType>
-	{
-	protected:
-		BaseMeshCellLinkedList *mesh_cell_linked_list_;
-		matrix_cell cell_linked_lists_;
-		Vecu number_of_cells_;
-		Real cell_spacing_;
-		Vecd mesh_lower_bound_, mesh_upper_bound_;
-
-	public:
-		/** Constructor */
-		explicit ParticleDynamicsByCells(BodyType* body);
-		virtual ~ParticleDynamicsByCells() {};
-	};
-
-	/**
 	  * @class ParticleDynamicsCellListSplitting
 	  * @brief This is for using splitting algorihm 
 	  * which does not use particle conmfiguration data for 
@@ -239,13 +221,8 @@ namespace SPH
 		: public ParticleDynamics<void, BodyType, ParticlesType, MaterialType>
 	{
 	protected:
-		BaseMeshCellLinkedList* mesh_cell_linked_list_;
-		matrix_cell cell_linked_lists_;
-		Vecu number_of_cells_;
 		Kernel* kernel_;
 		Real cutoff_radius_;
-		Real cell_spacing_;
-		Vecd mesh_lower_bound_, mesh_upper_bound_;
 
 		virtual void CellListInteraction(CellList* cell_list, Real dt = 0.0) = 0;
 		CellListFunctor functor_cell_list_;
@@ -256,6 +233,7 @@ namespace SPH
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
 	};
+
 	/**
 	 * @class ParticleDynamicsInnerSplitting
 	 * @brief This is for the splitting algorihm

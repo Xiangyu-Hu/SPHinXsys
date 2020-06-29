@@ -406,6 +406,7 @@ namespace SPH {
 	{
 	public:
 		WriteReloadParticle(In_Output& in_output, SPHBodyVector bodies);
+		WriteReloadParticle(In_Output& in_output, SPHBodyVector bodies, StdVec<string> given_body_names);
 		virtual ~WriteReloadParticle() {};
 
 		virtual void WriteToFile(Real time = 0.0) override;
@@ -559,6 +560,11 @@ namespace SPH {
 	public:
 		WriteReloadMaterialProperty(In_Output& in_output, BaseMaterial *material)
 			: ReloadMaterialPropertyIO(in_output, material), WriteMaterialProperty(in_output, material) {};
+		WriteReloadMaterialProperty(In_Output& in_output, BaseMaterial* material, string given_material_name)
+			:WriteReloadMaterialProperty(in_output, material) {
+			file_path_ = in_output.reload_folder_ + "/Material_" + given_material_name + "_rld.xml";
+		};
+
 		virtual ~WriteReloadMaterialProperty() {};
 
 		virtual void WriteToFile(Real time = 0.0) override;

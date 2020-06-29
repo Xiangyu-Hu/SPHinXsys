@@ -185,7 +185,7 @@ namespace SPH
 			getAveragedParticleNumberDensity* get_average_number_density_;
 
 			/** the function for set global parameters for the particle dynamics */
-			virtual void SetupDynamics(Real dt = 0.0) override { 
+			virtual void setupDynamics(Real dt = 0.0) override { 
 				sigma_ = get_average_number_density_->parallel_exec(); 
 			};
 			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;

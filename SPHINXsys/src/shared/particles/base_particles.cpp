@@ -58,6 +58,10 @@ namespace SPH
 			break;
 		}
 
+		case ParticlesGeneratorOps::regular: {
+			particle_generator = new ParticleGeneratorRegular(*body);
+			break;
+		}
 		default: {
 			std::cout << "\n FAILURE: the type of particle generator is undefined!" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -67,9 +71,12 @@ namespace SPH
 		}
 
 		particle_generator->CreateBaseParticles(this);
+		delete particle_generator;
+
 		real_particles_bound_ = body_->number_of_particles_;
 		number_of_ghost_particles_ = 0;
-		delete particle_generator;
+		body->AllocateMeoemryCellLinkedList();
+		body->AllocateMemoriesForInnerConfiguration();
 	}
 	//=================================================================================================//
 	BaseParticles::BaseParticles(SPHBody* body)

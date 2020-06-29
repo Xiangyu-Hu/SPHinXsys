@@ -55,11 +55,6 @@ namespace SPH {
 		SPHBodyContactMap contact_map_;
 		Kernel* kernel_;
 
-		/** computing search range for building contact configuration */
-		int ComputingSearchRage(int orign_refinement_level,
-			int target_refinement_level);
-		/** choose a kernel for building up inter refinement level configuration */
-		Kernel& ChoosingKernel(Kernel* orignal_kernel, Kernel* target_kernel);
 		/** clear the cell lists */
 		void ClearCellLists(Vecu& number_of_cells, matrix_cell cell_linked_lists);
 		/** clear split cell lists in this mesh*/
@@ -77,6 +72,11 @@ namespace SPH {
 		/**In the destructor, the dynamically located memeory is released.*/
 		virtual ~BaseMeshCellLinkedList() {};
 
+		/** computing search range for building contact configuration */
+		int ComputingSearchRage(int orign_refinement_level,
+			int target_refinement_level);
+		/** choose a kernel for building up inter refinement level configuration */
+		Kernel& ChoosingKernel(Kernel* orignal_kernel, Kernel* target_kernel);
 		/** get the address of cell list */
 		virtual CellList* getCellList(Vecu cell_index) = 0;
 		/** Get the array for of mesh cell linked lists.*/

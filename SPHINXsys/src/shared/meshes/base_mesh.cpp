@@ -134,14 +134,6 @@ namespace SPH {
 		number_of_grid_points_ = getNumberOfGridPoints(number_of_cells_);
 	}
 	//=================================================================================================//
-	void BaseDataPackage
-		::initializePackageGoemetry(Vecd& pkg_lower_bound, Real data_spacing)
-	{
-		mesh_lower_bound_ = pkg_lower_bound - Vecd(data_spacing * 0.5);;
-		grid_spacing_ = data_spacing;
-		data_lower_bound_ = pkg_lower_bound + Vecd(data_spacing * 0.5);
-	}
-	//=================================================================================================//
 	BaseLevelSet
 		::BaseLevelSet(Vecd lower_bound,
 			Vecd upper_bound, Real grid_spacing, size_t buffer_size)
@@ -194,18 +186,17 @@ namespace SPH {
 	//=================================================================================================//
 	void LevelSet::initializeAdressesInACell(Vecu cell_index, Real dt)
 	{
-		initializeOneVariableAdressesInACell<Real, &LevelSetDataPackage::phi_addrs_, &LevelSetDataPackage::phi_>(cell_index);
-		initializeOneVariableAdressesInACell<Vecd, &LevelSetDataPackage::n_addrs_, &LevelSetDataPackage::n_>(cell_index);
+		initializePackageAdressesInACell<LevelSetData>(cell_index);
 	}
 	//=================================================================================================//
 	Vecd LevelSet::probeNormalDirection(Vecd position)
 	{
-		return probeMesh<Vecd, &LevelSetDataPackage::n_addrs_, &LevelSetDataPackage::n_>(position);
+		return probeMesh<Vecd, LevelSetData, &LevelSetData::n_>(position);
 	}
 	//=================================================================================================//
 	Real LevelSet::probeLevelSet(Vecd position)
 	{
-		return probeMesh<Real, &LevelSetDataPackage::phi_addrs_, &LevelSetDataPackage::phi_>(position);
+		return probeMesh<Real, LevelSetData, &LevelSetData::phi_>(position);
 	}
 	//=================================================================================================//
 	MultiresolutionLevelSet

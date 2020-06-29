@@ -9,6 +9,8 @@
 
 #include "all_particle_dynamics.h"
 
+#include <limits>
+
 namespace SPH
 {
 	/**
@@ -22,7 +24,7 @@ namespace SPH
 	{
 	protected:
 		Gravity* gravity_;
-		virtual void SetupDynamics(Real dt = 0.0) override;
+		virtual void setupDynamics(Real dt = 0.0) override;
 		virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 	public:
 		InitializeATimeStep(SPHBody* body, Gravity* gravity = new Gravity(Vecd(0)));
@@ -47,7 +49,7 @@ namespace SPH
 	* @class BoundingBodyDomain
 	* @brief The base calss bounding particle position within a box body domain.
 	*/
-	class BoundingBodyDomain : public ParticleDynamicsByCells<SPHBody>
+	class BoundingBodyDomain : public ParticleDynamics<void, SPHBody>
 	{
 		/** obtain the cells lower and upper boundy for the body domain. */
 		void SetCellBounds();
@@ -141,6 +143,7 @@ namespace SPH
 		{
 		protected:
 			CellVector& bound_cells_;
+			virtual void setupDynamics(Real dt = 0.0) { };
 			virtual void checkLowerBound(size_t index_particle_i, Real dt = 0.0);
 			virtual void checkUpperBound(size_t index_particle_i, Real dt = 0.0);
 			InnerFunctor checking_bound_;
@@ -155,7 +158,7 @@ namespace SPH
 		{
 		protected:
 			IndexVector& ghost_particles_;
-			virtual void SetupDynamics(Real dt = 0.0) override { ghost_particles_.clear(); };
+			virtual void setupDynamics(Real dt = 0.0) override { ghost_particles_.clear(); };
 			virtual void checkLowerBound(size_t index_particle_i, Real dt = 0.0) override;
 			virtual void checkUpperBound(size_t index_particle_i, Real dt = 0.0) override;
 		public:
@@ -224,5 +227,39 @@ namespace SPH
 			initial_reference_ = 0.0;
 		};
 		virtual ~UpperFrontInXDirection() {};
+	};
+
+	/**
+	* @class BodyLowerBound
+	* @brief the lower bound of a body by reuced particle poistions.
+	*/
+	class BodyLowerBound : public  ParticleDynamicsReduce<Vecd, ReduceLowerBound, SPHBody>
+	{
+	protected:
+		Vecd ReduceFunction(size_t index_particle_i, Real dt = 0.0) override;
+	public:
+		explicit BodyLowerBound(SPHBody* body)
+			: ParticleDynamicsReduce<Vecd, ReduceLowerBound, SPHBody>(body) {
+			constexpr  double max_real_number = (std::numeric_limits<double>::max)();
+			initial_reference_ = Vecd(max_real_number);
+		};
+		virtual ~BodyLowerBound() {};
+	};
+
+	/**
+	 * @class BodyUpperBound
+	 * @brief the upper bound of a body by reuced particle poistions.
+	 */
+	class BodyUpperBound : public  ParticleDynamicsReduce<Vecd, ReduceUpperBound, SPHBody>
+	{
+	protected:
+		Vecd ReduceFunction(size_t index_particle_i, Real dt = 0.0) override;
+	public:
+		explicit BodyUpperBound(SPHBody* body)
+			: ParticleDynamicsReduce<Vecd, ReduceUpperBound, SPHBody>(body) {
+			constexpr  double min_real_number = (std::numeric_limits<double>::min)();
+			initial_reference_ = Vecd(min_real_number);
+		};
+		virtual ~BodyUpperBound() {};
 	};
 }

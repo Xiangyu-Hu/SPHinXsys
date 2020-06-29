@@ -55,6 +55,15 @@ namespace SPH {
 	template class ConfigurationDynamicsInner<NeighborRelation>;
 	template class ConfigurationDynamicsInner<NeighborRelationWithVariableSmoothingLength>;
 	//=================================================================================================//
+	void ConfigurationDynamicsContact
+		::ComplexInteraction(size_t index_particle_i, Real dt)
+	{
+		cout << "\n The function "
+			<< "ConfigurationDynamicsContact::ComplexInteraction"
+			<< " is not done in 3D. Exit the program! \n";
+		exit(0);
+	}
+	//=================================================================================================//
 	void ParticleSortingSplit::ConfigurationInteraction(CellList* cell_list_here, Real dt)
 	{
 		cout << "\n The function "

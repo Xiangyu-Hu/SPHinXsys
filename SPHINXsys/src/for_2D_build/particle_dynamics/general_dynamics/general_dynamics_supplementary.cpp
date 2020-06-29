@@ -133,7 +133,7 @@ namespace SPH
 	void MirrorBoundaryConditionInAxisDirection::Bounding
 		::exec(Real dt)
 	{
-		SetupDynamics(dt);
+		setupDynamics(dt);
 		for (size_t i = 0; i != bound_cells_.size(); ++i) {
 			ConcurrentListDataVector& list_data
 				= cell_linked_lists_[bound_cells_[i][0]][bound_cells_[i][1]]
@@ -146,7 +146,7 @@ namespace SPH
 	void MirrorBoundaryConditionInAxisDirection::Bounding
 		::parallel_exec(Real dt)
 	{
-		SetupDynamics(dt);
+		setupDynamics(dt);
 		parallel_for(blocked_range<size_t>(0, bound_cells_.size()),
 			[&](const blocked_range<size_t>& r) {
 				for (size_t i = r.begin(); i < r.end(); ++i) {

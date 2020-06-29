@@ -31,6 +31,7 @@ namespace SPH
 	class Kernel;
 	class BaseMeshCellLinkedList;
 	class MeshBackground;
+	class SPHBodyContactRealtion;
 
 	/**
 	 * @class ParticlesGeneratorOps
@@ -38,7 +39,7 @@ namespace SPH
 	 * @details lattice : Generate partice from lattcie grid.
 	 *			direct  : Input particle position and volume directly.
 	 */
-	enum class ParticlesGeneratorOps {lattice, direct};
+	enum class ParticlesGeneratorOps {lattice, direct, regular};
 	/**
 	 * @class SPHBody
 	 * @brief SPHBody is a base body with basic data and functions.
@@ -68,9 +69,7 @@ namespace SPH
 		/** Change kernel function specific for this body. */
 		void ReplaceKernelFunction(Kernel* kernel);
 	public:
-		//----------------------------------------------------------------------
-		//Global variables
-		//----------------------------------------------------------------------
+		bool is_static_;		/**< whether this body is a static body */
 		int refinement_level_;	/**< refinement level of this body */
 		Kernel* kernel_; 		/**< sph kernel function specific to a SPHBody */
 		Real particle_spacing_;						/**< Particle spacing of the body. */
@@ -105,6 +104,9 @@ namespace SPH
 		/** Configurations for updated Lagrangian formulation. **/
 		ContatcParticleConfiguration contact_configuration_;
 
+		/** all contact relations centered from this body **/
+		StdVec<SPHBodyContactRealtion*> body_contact_realtions_;
+
 		/**
 		 * @brief Constructor of SPHBody.
 		 * @param[in] sph_system SPHSystem.
@@ -121,6 +123,10 @@ namespace SPH
 		string GetBodyName();
 		/** Get the name of this body for out file name. */
 		Region& getBodyReagion() { return body_region_; };
+		void setBodyLowerBound(Vecd lower_bound) { body_lower_bound_ = lower_bound; };
+		void setBodyUpperBound(Vecd upper_bound) { body_upper_bound_ = upper_bound; };
+		Vecd getBodyLowerBound() { return body_lower_bound_; };
+		Vecd getBodyUpperBound() { return body_upper_bound_; };
 		/** Set up the contact map. */
 		void SetContactMap(SPHBodyContactMap& contact_map);
 		/** Set up the contact map. */
@@ -128,9 +134,12 @@ namespace SPH
 		/** Allocate memory for cell linked list. */
 		virtual void AllocateMeoemryCellLinkedList() {};
 		/** add the back ground mesh particle mesh interaction. */
-		virtual void addBackgroundMesh(Real mesh_size_ratio = 0.5);
+		virtual void addBackgroundMesh(Real mesh_size_ratio = 1.0);
+		virtual void CleanAndSmoothLevelSet(Real smoothing_coe=1.0);
 		/** Allocate memories for configuration. */
-		void AllocateMemoriesForConfiguration();
+		void AllocateMemoriesForInnerConfiguration();
+		/** Allocate memories for configuration. */
+		void AllocateMemoriesForContactConfiguration();
 		/** Allocate extra configuration memories for body buffer particles. */
 		void AllocateConfigurationMemoriesForBodyBuffer(size_t body_buffer_particles);
 		/** Update cell linked list. */
@@ -349,4 +358,30 @@ namespace SPH
 		SimTK::MassProperties* body_part_mass_properties_;
 	};
 
+	/**
+	 * @class SPHBodyContactRealtion
+	 * @brief The relation between a SPH body and its contact SPH bodies
+	 */
+	class SPHBodyContactRealtion
+	{
+	public:
+		SPHBody* body_;
+		SPHBodyVector contact_bodies_;
+		/** Split cell lists*/
+		SplitCellLists& split_cell_lists_;
+		/** inner configuration for the neighbor relations. */
+		ParticleConfiguration* inner_configuration_;
+
+
+		/** Lists of particles has a ocnfiguration with particles in contaced bodies. **/
+		ContactParticles indexes_contact_particles_;
+		/** Configurations for updated Lagrangian formulation. **/
+		ContatcParticleConfiguration contact_configuration_;
+
+		SPHBodyContactRealtion(SPHBody* body, SPHBodyVector contact_bodies);
+		virtual ~SPHBodyContactRealtion() {};
+
+		/** Allocate extra configuration memories for body buffer particles. */
+		void AllocateConfigurationMemoriesForBodyBuffer(size_t body_buffer_particles);
+	};
 }

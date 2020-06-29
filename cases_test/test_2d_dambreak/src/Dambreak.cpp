@@ -28,8 +28,8 @@ Real BW = particle_spacing_ref * 4; 	/**< Extending width for BCs. */
  */
 Real rho0_f = 1.0;						/**< Reference density of fluid. */
 Real gravity_g = 1.0;					/**< Gravity force of fluid. */
-Real U_f = 2.0*sqrt(gravity_g*LH);		/**< Characteristic velocity. */
-Real c_f = 10.0*U_f;					/**< Reference sound speed. */
+Real U_max = 2.0*sqrt(gravity_g*LH);		/**< Characteristic velocity. */
+Real c_f = 10.0* U_max;					/**< Reference sound speed. */
 /**
  * @brief 	Fluid body definition.
  */
@@ -176,7 +176,7 @@ int main()
 	 /** Evaluation of density by summation approach. */
 	fluid_dynamics::DensityBySummationFreeSurface 		update_fluid_density(water_block, { wall_boundary });
 	/** Time step size without considering sound wave speed. */
-	fluid_dynamics::GetAdvectionTimeStepSize 			get_fluid_adevction_time_step_size(water_block, U_f);
+	fluid_dynamics::GetAdvectionTimeStepSize 			get_fluid_adevction_time_step_size(water_block, U_max);
 	/** Time step size with considering sound wave speed. */
 	fluid_dynamics::GetAcousticTimeStepSize get_fluid_time_step_size(water_block);
 	/** Pressure relaxation algorithm by using position verlet time stepping. */

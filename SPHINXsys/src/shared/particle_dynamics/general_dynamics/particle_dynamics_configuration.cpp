@@ -10,6 +10,15 @@
 
 namespace SPH {
 	//=================================================================================================//
+	ConfigurationDynamicsContact
+		::ConfigurationDynamicsContact(SPHBody* body, SPHBodyVector interacting_bodies)
+		: ConfigurationDynamicsComplex(body, interacting_bodies)
+	{
+		for (size_t k = 0; k != interacting_bodies.size(); ++k) {
+			target_mesh_cell_linked_lists_.push_back(interacting_bodies[k]->base_mesh_cell_linked_list_);
+		}
+	}
+	//=================================================================================================//
 	void ConfigurationIteratorSplit(SplitCellLists& split_cell_lists,
 		ConfigurationFunctor& configuration_functor, Real dt)
 	{
@@ -46,13 +55,13 @@ namespace SPH {
 	//=================================================================================================//
 	void ConfigurationDynamicsSplit::exec(Real dt)
 	{
-		SetupDynamics(dt);
+		setupDynamics(dt);
 		ConfigurationIteratorSplit(split_cell_lists_, functor_configuration_interaction_, dt);
 	}
 	//=================================================================================================//
 	void ConfigurationDynamicsSplit::parallel_exec(Real dt)
 	{
-		SetupDynamics(dt);
+		setupDynamics(dt);
 		ConfigurationIteratorSplit_parallel(split_cell_lists_, functor_configuration_interaction_, dt);
 	}
 	//=================================================================================================//
@@ -155,25 +164,6 @@ namespace SPH {
 	void ParticleDynamicsCellLinkedList::parallel_exec(Real dt)
 	{
 		body_->UpdateCellLinkedList();
-	}
-//=================================================================================================//
-	ParticleDynamicsByCellParticleLists
-		::ParticleDynamicsByCellParticleLists(SPHSystem *system, SPHBody *body)
-		: ParticleDynamics<void, SPHBody>(body), system_(system)
-	{
-
-	}
-//=================================================================================================//
-	void ParticleDynamicsByCellParticleLists::exec(Real dt)
-	{
-		cout << "\n ParticleDynamicsByCellParticleLists not done yet. Exit the program! \n";
-		exit(0);
-	}
-//=================================================================================================//
-	void ParticleDynamicsByCellParticleLists::parallel_exec(Real dt)
-	{
-		cout << "\n ParticleDynamicsByCellParticleLists not done yet. Exit the program! \n";
-		exit(0);
 	}
 //=================================================================================================//
 }

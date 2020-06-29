@@ -168,7 +168,7 @@ namespace SPH {
 	{
 		closest_pnt = Geometry::closestpointonface(input_pnt);
 		Real phii = (closest_pnt - input_pnt).norm();
-		phi = contain(input_pnt) ? phii : -phii;
+		phi = contain(input_pnt) ? -phii : phii;
 	}
 	//===========================================================//
 	void Region::regionbound(Vec2d &lower_bound, Vec2d &upper_bound)

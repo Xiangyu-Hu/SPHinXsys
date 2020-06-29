@@ -85,8 +85,6 @@ int main(int ac, char* av[])
 	ParticleDynamicsContactConfiguration 	update_inserted_body_contact_configuration(inserted_body);
 	/** Update the contact configuration for the flow observer. */
 	ParticleDynamicsContactConfiguration 	update_fluid_observer_body_contact_configuration(fluid_observer);
-	/** Update inner configuration of a body. */
-	ParticleDynamicsInnerConfiguration update_inserted_body_inner_configuration(inserted_body);
 	/** Periodic bounding in x direction. */
 	PeriodicBoundingInAxisDirection 	periodic_bounding(water_block, 0);
 	/** Periodic BCs in x direction. */
@@ -100,7 +98,9 @@ int main(int ac, char* av[])
 		/**
 		 * @brief 	Methods used for particle relaxation.
 		 */
-		 /** Random reset the insert body particle position. */
+		 /** Update inner configuration of a body. */
+		ParticleDynamicsInnerConfiguration update_inserted_body_inner_configuration(inserted_body);
+		/** Random reset the insert body particle position. */
 		RandomizePartilePosition  random_inserted_body_particles(inserted_body);
 		/** Write backgroung level set. */
 		WriteBodyMeshToPlt write_inserted_body_background_mesh(in_output, inserted_body);

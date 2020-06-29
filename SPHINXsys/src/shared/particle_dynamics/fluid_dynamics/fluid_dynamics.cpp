@@ -68,45 +68,6 @@ namespace SPH
 			base_particle_data_i.Vol_ = fluid_data_i.mass_ / fluid_data_i.rho_n_;
 		}
 		//=================================================================================================//
-		void DivergenceCorrection::ComplexInteraction(size_t index_particle_i, Real dt)
-		{
-			FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
-
-			/** Inner interaction. */
-			Real div_correction = 0.0;
-			Neighborhood& inner_neighborhood = (*inner_configuration_)[index_particle_i];
-			NeighborList& inner_neighors = std::get<0>(inner_neighborhood);
-			for (size_t n = 0; n != std::get<2>(inner_neighborhood); ++n)
-			{
-				BaseNeighborRelation* neighboring_particle = inner_neighors[n];
-				size_t index_particle_j = neighboring_particle->j_;
-				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
-
-				div_correction -= neighboring_particle->dW_ij_ * neighboring_particle->r_ij_ * base_particle_data_j.Vol_;
-			}
-
-			/** Contact interaction. */
-			for (size_t k = 0; k < current_interacting_configuration_.size(); ++k)
-			{
-				Neighborhood& contact_neighborhood = (*current_interacting_configuration_[k])[index_particle_i];
-				NeighborList& contact_neighors = std::get<0>(contact_neighborhood);
-				for (size_t n = 0; n != std::get<2>(contact_neighborhood); ++n)
-				{
-					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
-					size_t index_particle_j = neighboring_particle->j_;
-					BaseParticleData &base_particle_data_j
-						= (*interacting_particles_[k]).base_particle_data_[index_particle_j];
-
-					div_correction -= neighboring_particle->dW_ij_ * neighboring_particle->r_ij_ * base_particle_data_j.Vol_;
-				}
-			}
-
-			/** Particle summation. */
-			Real div_correction_1 = div_correction / dimension_;
-			fluid_data_i.div_correction_
-				= 1.0 / (div_correction_1 + 0.1*(1.0 - div_correction_1)*(1.0 - div_correction_1));
-		}
-		//=================================================================================================//
 		void ComputingViscousAcceleration::ComplexInteraction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
@@ -289,7 +250,7 @@ namespace SPH
 			base_particle_data_i.dvel_dt_others_ += acceleration;
 		}
 		//=================================================================================================//
-		void TransportVelocityCorrection::SetupDynamics(Real dt)
+		void TransportVelocityCorrection::setupDynamics(Real dt)
 		{
 			Real speed_max = particles_->speed_max_;
 			Real density = material_->GetReferenceDensity();
@@ -385,10 +346,10 @@ namespace SPH
 			return 0.6 * smoothing_length_ / (reduced_value + 1.0e-15);
 		}
 		//=================================================================================================//
-		GetAdvectionTimeStepSize::GetAdvectionTimeStepSize(FluidBody* body, Real U_f)
+		GetAdvectionTimeStepSize::GetAdvectionTimeStepSize(FluidBody* body, Real U_max)
 			: GetAcousticTimeStepSize(body)
 		{
-			Real u_max = SMAX(initial_reference_, U_f);
+			Real u_max = SMAX(initial_reference_, U_max);
 			initial_reference_ = u_max * u_max;
 		}
 		//=================================================================================================//
@@ -576,7 +537,7 @@ namespace SPH
 				}
 			}
 
-			fluid_data_i.drho_dt_ = fluid_data_i.div_correction_ * density_change_rate;
+			fluid_data_i.drho_dt_ = density_change_rate;
 		}
 		//=================================================================================================//
 		Vecd PressureRelaxationSecondHalfRiemann::getVStar(Vecd& e_ij, Vecd& vel_i, Real p_i, Real rho_i,

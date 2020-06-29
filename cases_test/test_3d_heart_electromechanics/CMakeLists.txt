@@ -23,19 +23,16 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/heart-new.stl
         DESTINATION ${BUILD_INPUT_PATH})
 
-file(MAKE_DIRECTORY ${BUILD_RELOAD_PATH})
-execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_RELOAD_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/reload/Material_LocallyOrthotropicMuscle_rld.xml
-${CMAKE_CURRENT_SOURCE_DIR}/reload/SPHBody_ContractionHeart_rld.xml
-${CMAKE_CURRENT_SOURCE_DIR}/reload/SPHBody_ExcitationHeart_rld.xml
-        DESTINATION ${BUILD_RELOAD_PATH})
-		
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
-add_test(NAME ${PROJECT_NAME} 
-		 COMMAND ${PROJECT_NAME}
+add_test(NAME ${PROJECT_NAME}_particle_relaxation 
+		 COMMAND ${PROJECT_NAME} --r=true
 		 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+add_test(NAME ${PROJECT_NAME} 
+		 COMMAND ${PROJECT_NAME}  --i=true
+		 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(${PROJECT_NAME} sphinxsys_3d ${TBB_LIBRARYS} debug ${Simbody_DEBUG_LIBRARIES})
