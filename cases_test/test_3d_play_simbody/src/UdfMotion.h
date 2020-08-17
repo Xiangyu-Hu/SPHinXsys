@@ -1,6 +1,6 @@
 #include "Simbody.h"
 
-using SimTK::Motion;
+using namespace SimTK;
 
 //------------------------------------------------------------------------------
 //                               udf motion

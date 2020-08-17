@@ -55,6 +55,11 @@ namespace SPH
 		void SetCellBounds();
 
 	protected:
+		matrix_cell cell_linked_lists_;
+		Vecu number_of_cells_;
+		Real cell_spacing_;
+		Vecd mesh_lower_bound_;
+
 		/** lower and upper bound for checking. */
 		Vecd body_lower_bound_, body_upper_bound_;
 		Vecu body_lower_bound_cell_, body_upper_bound_cell_;
@@ -143,7 +148,6 @@ namespace SPH
 		{
 		protected:
 			CellVector& bound_cells_;
-			virtual void setupDynamics(Real dt = 0.0) { };
 			virtual void checkLowerBound(size_t index_particle_i, Real dt = 0.0);
 			virtual void checkUpperBound(size_t index_particle_i, Real dt = 0.0);
 			InnerFunctor checking_bound_;
@@ -227,6 +231,21 @@ namespace SPH
 			initial_reference_ = 0.0;
 		};
 		virtual ~UpperFrontInXDirection() {};
+	};
+
+	/**
+	 * @class MaximumSpeed
+	 * @brief Get the maximum particle speed in a SPH body
+	 */
+	class MaximumSpeed : public ParticleDynamicsReduce<Real, ReduceMax, SPHBody>
+	{
+	protected:
+		Real ReduceFunction(size_t index_particle_i, Real dt = 0.0) override;
+	public:
+		explicit MaximumSpeed(SPHBody* body) : ParticleDynamicsReduce(body) {
+			initial_reference_ = 0.0;
+		};
+		virtual ~MaximumSpeed() {};
 	};
 
 	/**

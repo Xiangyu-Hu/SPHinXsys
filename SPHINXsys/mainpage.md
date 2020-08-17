@@ -3,7 +3,7 @@ is an acronym from <b>S</b>moothed <b>P</b>article
 <b>H</b>ydrodynamics for <b>in</b>dustrial comple<b>X</b> <b>sys</b>tems.
 It provides C++ APIs for physical accurate simulation and aims to model coupled
 industrial dynamic systems including fluid, solid, multi-body dynamics and
-beyond with SPH (smoothed particle hydrodynamics), 
+beyond with SPH (smoothed particle hydrodynamics),
 a meshless computational method using particle discretization.
 
 Included physics

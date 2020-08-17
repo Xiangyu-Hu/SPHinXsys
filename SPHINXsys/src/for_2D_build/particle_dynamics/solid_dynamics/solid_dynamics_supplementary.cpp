@@ -41,8 +41,7 @@ namespace SPH
 			solid_data_i.n_ = R * solid_data_i.n_0_;
 		}
 		//=========================================================================================//
-		void ConstrianSoildBodyPartBySimBody
-			::ConstraintAParticle(size_t index_particle_i,
+		void ConstrianSolidBodyPartBySimBody::Update(size_t index_particle_i,
 				Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
@@ -64,7 +63,7 @@ namespace SPH
 			base_particle_data_i.dvel_dt_ = acc.getSubVec<2>(0);
 		}
 		//=========================================================================================//
-		SpatialVec ForceOnSolidBodyPartForSimBody::ReduceFunction(size_t index_particle_i, Real dt)
+		SimTK::SpatialVec ForceOnSolidBodyPartForSimBody::ReduceFunction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i 	= particles_->base_particle_data_[index_particle_i];
 			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
@@ -76,25 +75,24 @@ namespace SPH
 				- current_mobod_origin_location_.getSubVec<2>(0);
 			Vec3 torque_from_particle = cross(displacement, force_from_particle);
 
-			return SpatialVec(torque_from_particle, force_from_particle);
+			return SimTK::SpatialVec(torque_from_particle, force_from_particle);
 		}
 		//=========================================================================================//
-		SpatialVec ForceOnElasticBodyPartForSimBody
+		SimTK::SpatialVec ForceOnElasticBodyPartForSimBody
 			::ReduceFunction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
 
 			Vec3 force_from_particle(0);
-			force_from_particle.updSubVec<2>(0) = elastic_data_i.mass_
+			force_from_particle.updSubVec<2>(0) = solid_data_i.mass_
 				*base_particle_data_i.dvel_dt_;
 			Vec3 displacement(0);
 			displacement.updSubVec<2>(0) = base_particle_data_i.pos_n_ 
 				- current_mobod_origin_location_.getSubVec<2>(0);
 			Vec3 torque_from_particle = cross(displacement, force_from_particle);
 
-			return SpatialVec(torque_from_particle, force_from_particle);
+			return SimTK::SpatialVec(torque_from_particle, force_from_particle);
 		}
 		//=================================================================================================//	
 	}

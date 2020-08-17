@@ -1,6 +1,6 @@
 /**
  * @file muscle_activation.cpp
- * @brief This is the first example of elctro activation of myocaridum
+ * @brief This is the first example of electro activation of myocardium
  * @author Chi Zhang and Xiangyu Hu
  * @version 0.1.0
  */
@@ -8,12 +8,12 @@
 /** Name space. */
 using namespace SPH;
 /** Geometry parameters. */
-Real PL = 1.0; 		/**< Lenght. */
+Real PL = 1.0; 		/**< Length. */
 Real PH = 1.0; 		/**< Thickness for thick plate. */
 Real PW = 1.0;		/**< Width. */				
 /**< Initial particle spacing. */
 Real particle_spacing_ref = PH / 25.0;
-Real SL = 4.0 * particle_spacing_ref; 		/**< Extensioin for holder. */
+Real SL = 4.0 * particle_spacing_ref; 		/**< Extension for holder. */
 /**< SimTK geometric modeling resolution. */
 int resolution(20);
 /** For material properties of the solid. */
@@ -28,21 +28,21 @@ Real linear_active_stress_factor = - 0.5;
 Real bulk_modulus = 30.0 * reference_voltage * fabs(linear_active_stress_factor);
 
 /** Define the geometry. */
-Geometry *CreateMyocardium()
+TriangleMeshShape* CreateMyocardium()
 {
 	Vecd halfsize_myocardium(0.5 * (PL + SL), 0.5 * PH, 0.5 * PW);
 	Vecd translation_myocardium(0.5 * (PL - SL), 0.5 * PH, 0.5*PW);
-	Geometry *geometry_myocardium = new Geometry(halfsize_myocardium, resolution,
+	TriangleMeshShape* geometry_myocardium = new TriangleMeshShape(halfsize_myocardium, resolution,
 		translation_myocardium);
 
 	return geometry_myocardium;
 }
 /** Define the holder geometry. */
-Geometry *CreateHolder()	
+TriangleMeshShape* CreateHolder()
 {
 	Vecd halfsize_shape(0.5 * SL, 0.5 * PH, 0.5 * PW);
 	Vecd translation_shape(-0.5 * SL, 0.5 * PH, 0.5 * PW);
-	Geometry *geometry = new Geometry(halfsize_shape, resolution,
+	TriangleMeshShape* geometry = new TriangleMeshShape(halfsize_shape, resolution,
 		translation_shape);
 
 	return geometry;
@@ -55,9 +55,7 @@ public:
 		int refinement_level, ParticlesGeneratorOps op)
 		: SolidBody(system, body_name, refinement_level, op)
 	{
-		body_region_.add_geometry(CreateMyocardium(), RegionBooleanOps::add);
-
-		body_region_.done_modeling();
+		body_shape_.addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
 	}
 };
 /**
@@ -71,26 +69,25 @@ public:
 	Holder(SolidBody *solid_body, string constrianed_region_name)
 		: BodyPartByParticle(solid_body, constrianed_region_name)
 	{
-		body_part_region_.add_geometry(CreateHolder(), RegionBooleanOps::add);
-		body_part_region_.done_modeling();
+		body_part_shape_.addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
 
-		TagBodyPartParticles();
+		TagBodyPart();
 	}
 };
  /**
  * Assign case dependent muscle activation histroy  
  */
-class MuslceActivation
+class MuscleActivation
 	: public active_muscle_dynamics::ActiveMuscleSimple
 {
 public:
-	MuslceActivation(SolidBody *myocardium)
+	MuscleActivation(SolidBody *myocardium)
 		: active_muscle_dynamics
 		::ActiveMuscleSimple(myocardium) {};
 protected:
 	void Update(size_t index_particle_i, Real dt) override 
 	{
-		ActiveMuscleData& active_muscle_data_i 	= particles_->active_muscle_data_[index_particle_i];
+		ActiveMuscleParticleData& active_muscle_data_i 	= particles_->active_muscle_data_[index_particle_i];
 		SolidParticleData &solid_data_i			= particles_->solid_body_data_[index_particle_i];
 		BaseParticleData& base_particle_data_i	= particles_->base_particle_data_[index_particle_i];
 
@@ -134,29 +131,26 @@ int main()
 	Myocardium *myocardium_muscle_body =
 		new Myocardium(system, "MyocardiumMuscleBody", 0, ParticlesGeneratorOps::lattice);
 	ActiveMuscleParticles 	myocardium_muscle_particles(myocardium_muscle_body, new ActiveMuscle(new MyocardiumMuscle()));
-	/** Set body contact map
-	 *  The contact map gives the data conntections between the bodies
-	 *  basically the the range of bidies to build neighbor particle lists
-	 */
-	SPHBodyTopology body_topology = { { myocardium_muscle_body,{} } };
-	system.SetBodyTopology(&body_topology);
+
+	/** topology */
+	SPHBodyInnerRelation* myocardium_muscle_body_inner = new SPHBodyInnerRelation(myocardium_muscle_body);
 
 	/** 
 	 * This section define all numerical methods will be used in this case.
 	 */
 	/** Corrected strong configuration. */	
 	solid_dynamics::CorrectConfiguration 
-		corrected_configuration_in_strong_form(myocardium_muscle_body);
-	/** Time step size caclutation. */
+		corrected_configuration_in_strong_form(myocardium_muscle_body_inner);
+	/** Time step size calculation. */
 	solid_dynamics::GetAcousticTimeStepSize 
 		computing_time_step_size(myocardium_muscle_body);
 	/** Compute the active contraction stress */
-	MuslceActivation muscle_activation(myocardium_muscle_body);
-	/** active-pative stress relaxation. */
+	MuscleActivation muscle_activation(myocardium_muscle_body);
+	/** active and passive stress relaxation. */
 	solid_dynamics::StressRelaxationFirstHalf
-		stress_relaxation_first_half(myocardium_muscle_body);
+		stress_relaxation_first_half(myocardium_muscle_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf
-		stress_relaxation_second_half(myocardium_muscle_body);
+		stress_relaxation_second_half(myocardium_muscle_body_inner);
 	/** Constrain region of the inserted body. */
 	solid_dynamics::constrainNormDirichletBoundary
 		constrain_holder(myocardium_muscle_body, new Holder(myocardium_muscle_body, "Holder"), 0);
@@ -185,8 +179,8 @@ int main()
 	 */
 	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
-		Real integeral_time = 0.0;
-		while (integeral_time < output_period) 
+		Real integration_time = 0.0;
+		while (integration_time < output_period) 
 		{
 			if (ite % 100 == 0) 
 			{
@@ -201,7 +195,7 @@ int main()
 
 			ite++;
 			dt = computing_time_step_size.parallel_exec();
-			integeral_time += dt;
+			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 		}
 

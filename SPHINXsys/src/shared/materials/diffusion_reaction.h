@@ -1,9 +1,9 @@
 /**
- * @file 	difussion_reaction.h
- * @brief 	Desrcibe the dffusive and reaction in which 
- *          the dynamcis is characterized duffusion equation and reactive source terms.
- *			Typical physical processes are diffusion, heat condution 
- *			and chemical and bioligical reactions. 
+ * @file 	diffussion_reaction.h
+ * @brief 	Describe the diffusive and reaction in which 
+ *          the dynamics is characterized diffusion equation and reactive source terms.
+ *			Typical physical processes are diffusion, heat conduction 
+ *			and chemical and biological reactions. 
  * @author  Xiangyu Hu, Chi Zhang
  * @version 0.2.0
  * 			Here, Version 0.2.0 is set, as reaction-diffusion equation is solved. 
@@ -24,7 +24,7 @@ namespace SPH
 	class ElectroPhysiologyParticles;
 	/**
 	 * @class BaseDiffusion
-	 * @brief diffusision property abstract base class.
+	 * @brief diffusion property abstract base class.
 	 */
 	class BaseDiffusion
 	{
@@ -51,7 +51,7 @@ namespace SPH
 
 	/**
 	 * @class IsotropicDiffusion
-	 * @brief isotropic diffusision property.
+	 * @brief isotropic diffusion property.
 	 */
 	class IsotropicDiffusion : public BaseDiffusion
 	{
@@ -76,7 +76,7 @@ namespace SPH
 
 	/**
 	 * @class DirectionalDiffusion
-	 * @brief Diffusision is biased along a specific direction.
+	 * @brief Diffussion is biased along a specific direction.
 	 */
 	class DirectionalDiffusion : public IsotropicDiffusion
 	{
@@ -86,8 +86,8 @@ namespace SPH
 		Real bias_diff_cf_;
 		/*> The transformed diffusivity with inverse Cholesky decomposition. */
 		Matd transf_diffusivity_;
-		/** Intialize directional diffusivity. */
-		void intializeDirectionalDiffusivity(Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
+		/** Initialize directional diffusivity. */
+		void initializeDirectionalDiffusivity(Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
 	public:
 		/** Constructor*/
 		DirectionalDiffusion(size_t diffusion_species_index, size_t gradient_species_index,
@@ -96,7 +96,7 @@ namespace SPH
 				diff_cf), bias_diff_cf_(bias_diff_cf), bias_direction_(bias_direction),
 			transf_diffusivity_(1.0) 
 		{
-			intializeDirectionalDiffusivity(diff_cf, bias_diff_cf, bias_direction);
+			initializeDirectionalDiffusivity(diff_cf, bias_diff_cf, bias_direction);
 		};
 		virtual ~DirectionalDiffusion() {};
 
@@ -119,8 +119,8 @@ namespace SPH
 	};
 
 	/**
-	 * @class DirectionBiasedDiffusionMaterial
-	 * @brief Diffusision is biased along a specific direction.
+	 * @class LocalDirectionalDiffusion
+	 * @brief Diffusion is biased along a specific direction.
 	 */
 	class LocalDirectionalDiffusion : public DirectionalDiffusion
 	{
@@ -206,7 +206,7 @@ namespace SPH
 			voltage_(0), gate_variable_(1), active_contraction_stress_(2) {};
 		virtual ~ElectroPhysiologyReaction() {};
 		/** Initialize reaction model. */
-		void initilaizeElectroPhysiologyReaction(size_t voltage,
+		void initializeElectroPhysiologyReaction(size_t voltage,
 			size_t gate_variable, size_t active_contraction_stress);
 	};
 

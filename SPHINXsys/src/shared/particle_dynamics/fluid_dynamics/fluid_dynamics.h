@@ -1,7 +1,7 @@
 /**
 * @file fluid_dynamics.h
 * @brief Here, we define the algorithm classes for fluid dynamics. 
-* @details We consider here a weakly compresible fluids. The algorithms may be
+* @details We consider here weakly compressible fluids. The algorithms may be
 * different for free surface flow and flow without free surface.   
 * @author	Luhui Han, Chi ZHang and Xiangyu Hu
 * @version	0.1
@@ -17,7 +17,10 @@ namespace SPH
 {
 	namespace fluid_dynamics
 	{
-		typedef ParticleDynamicsSimple<FluidBody, FluidParticles, WeaklyCompressibleFluid> 
+		typedef ParticleDynamics<void, FluidBody, FluidParticles, WeaklyCompressibleFluid>
+			WeaklyCompressibleFluidDynamics;
+
+		typedef ParticleDynamicsSimple<FluidBody, FluidParticles, WeaklyCompressibleFluid>
 			WeaklyCompressibleFluidDynamicsSimple;
 
 		typedef ParticleDynamicsInner<FluidBody, FluidParticles, WeaklyCompressibleFluid>  
@@ -39,11 +42,11 @@ namespace SPH
 		typedef ParticleDynamicsReduce<Real, ReduceMax, FluidBody,
 			FluidParticles, WeaklyCompressibleFluid> WeaklyCompressibleFluidDynamicsMaximum;
 
-		typedef ConstraintByCell<FluidBody,
-			FluidParticles, BodyPartByCell> WeaklyCompressibleFluidConstraintByCell;
+		typedef PartDynamicsByCell<FluidBody,
+			FluidParticles, BodyPartByCell> WeaklyCompressibleFluidPartDynamicsByCell;
 
-		typedef ConstraintByParticle<FluidBody,	FluidParticles, BodyPartByParticle, WeaklyCompressibleFluid> 
-			WeaklyCompressibleFluidConstraintByParticle;
+		typedef PartDynamicsByParticle<FluidBody,	FluidParticles, BodyPartByParticle, WeaklyCompressibleFluid> 
+			WeaklyCompressibleFluidPartDynamicsByParticle;
 
 		typedef ParticleDynamicsSimple<FluidBody, ViscoelasticFluidParticles, Oldroyd_B_Fluid>
 			Oldroyd_B_FluidDynamicsSimple;
@@ -72,11 +75,11 @@ namespace SPH
 		protected:
 			Real W0_;
 			virtual void ComplexInteraction(size_t index_particle_i, Real dt = 0.0) override;
-			virtual void UpdateDensity(size_t index_particle_i, Real sigma);
+			virtual Real reinitializeDensity(Real rho_sum, Real rho_0, Real rho_n) { return rho_sum; };
 		public:
-			DensityBySummation(FluidBody *body, StdVec<SolidBody*> interacting_bodies)
-				: WeaklyCompressibleFluidDynamicsComplex(body, interacting_bodies) {
-				W0_ = body->kernel_->W(Vecd(0));
+			DensityBySummation(SPHBodyComplexRelation* body_complex_relation)
+				: WeaklyCompressibleFluidDynamicsComplex(body_complex_relation) {
+				W0_ = body_->kernel_->W(Vecd(0));
 			};
 			virtual ~DensityBySummation() {};
 		};
@@ -88,88 +91,111 @@ namespace SPH
 		class DensityBySummationFreeSurface : public DensityBySummation
 		{
 		protected:
-			virtual void UpdateDensity(size_t index_particle_i, Real sigma) override;
+			virtual Real reinitializeDensity(Real rho_sum, Real rho_0, Real rho_n) override {	
+				return rho_sum + SMAX(0.0, (rho_n - rho_sum)) * rho_0 / rho_n;
+			};
 		public:
-			DensityBySummationFreeSurface(FluidBody *body, StdVec<SolidBody*> interacting_bodies)
-				: DensityBySummation(body, interacting_bodies) {};
+			DensityBySummationFreeSurface(SPHBodyComplexRelation* body_complex_relation)
+				: DensityBySummation(body_complex_relation) {};
 			virtual ~DensityBySummationFreeSurface() {};
 		};
 
 		/**
 		 * @class ComputingViscousAcceleration
-		 * @brief  the viscosity force induecd accelerarion
+		 * @brief  the viscosity force induced acceleration
 		 */
 		class ComputingViscousAcceleration : public WeaklyCompressibleFluidDynamicsComplex
 		{
 		protected:
-			//viscousity
+			//viscosity
 			Real mu_;
 			Real smoothing_length_;
 
 			virtual void ComplexInteraction(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			ComputingViscousAcceleration(FluidBody *body, StdVec<SolidBody*> interacting_bodies)
-				: WeaklyCompressibleFluidDynamicsComplex(body, interacting_bodies) {
+			ComputingViscousAcceleration(SPHBodyComplexRelation* body_complex_relation)
+				: WeaklyCompressibleFluidDynamicsComplex(body_complex_relation) {
 				mu_ = material_->getReferenceViscosity();
-				smoothing_length_ = body->kernel_->GetSmoothingLength();
+				smoothing_length_ = body_->kernel_->GetSmoothingLength();
 			};
 			virtual ~ComputingViscousAcceleration() {};
 		};
 
 		/**
 		 * @class ComputingAngularConservativeViscousAcceleration
-		 * @brief  the viscosity force induecd accelerarion
+		 * @brief  the viscosity force induced acceleration
 		 */
 		class ComputingAngularConservativeViscousAcceleration : public WeaklyCompressibleFluidDynamicsComplex
 		{
 		protected:
-			//viscousity
+			//viscosity
 			Real mu_;
 			Real smoothing_length_;
 
 			virtual void ComplexInteraction(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			ComputingAngularConservativeViscousAcceleration(FluidBody *body, StdVec<SolidBody*> interacting_bodies)
-				: WeaklyCompressibleFluidDynamicsComplex(body, interacting_bodies) {
+			ComputingAngularConservativeViscousAcceleration(SPHBodyComplexRelation* body_complex_relation)
+				: WeaklyCompressibleFluidDynamicsComplex(body_complex_relation) {
 				mu_ = material_->getReferenceViscosity();
-				smoothing_length_ = body->kernel_->GetSmoothingLength();
+				smoothing_length_ = body_->kernel_->GetSmoothingLength();
 			};
 			virtual ~ComputingAngularConservativeViscousAcceleration() {};
 		};
 		
 		/**
-		 * @class TransportVelocityStress
-		 * @brief  Transport velocity induced stress
-		 */
-		class TransportVelocityStress : public WeaklyCompressibleFluidDynamicsComplex
-		{
-		protected:
-			virtual void ComplexInteraction(size_t index_particle_i, Real dt)  override;
-		public:
-			TransportVelocityStress(FluidBody *body, StdVec<SolidBody*> interacting_bodies)
-				: WeaklyCompressibleFluidDynamicsComplex(body, interacting_bodies) {};
-			virtual ~TransportVelocityStress() {};
-		};
-
-		/**
 		 * @class TransportVelocityCorrection
-		 * @brief  transport velocty correction
+		 * @brief  transport velocity correction
 		 */
 		class TransportVelocityCorrection : public WeaklyCompressibleFluidDynamicsComplex
 		{
+		public:
+			TransportVelocityCorrection(SPHBodyComplexRelation* body_complex_relation, StdLargeVec<Vecd>& dvel_dt_trans)
+				: WeaklyCompressibleFluidDynamicsComplex(body_complex_relation), dvel_dt_trans_(dvel_dt_trans),
+				p_background_(0) {};
+			virtual ~TransportVelocityCorrection() {};
+
 		protected:
+			StdLargeVec<Vecd>& dvel_dt_trans_;
 			Real p_background_;
 
 			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void ComplexInteraction(size_t index_particle_i, Real dt = 0.0)  override;
-
-		public:
-			TransportVelocityCorrection(FluidBody *body, StdVec<SolidBody*> interacting_bodies)
-				: WeaklyCompressibleFluidDynamicsComplex(body, interacting_bodies),
-				p_background_(0) {};
-			virtual ~TransportVelocityCorrection() {};
 		};
 
+		/**
+		 * @class TransportVelocityStress
+		 * @brief  Transport velocity induced stress
+		 */
+		class TransportVelocityStress : public TransportVelocityCorrection
+		{
+		public:
+			TransportVelocityStress(SPHBodyComplexRelation* body_complex_relation, StdLargeVec<Vecd>& dvel_dt_trans)
+				: TransportVelocityCorrection(body_complex_relation, dvel_dt_trans) {};
+			virtual ~TransportVelocityStress() {};
+
+		protected:
+			virtual void ComplexInteraction(size_t index_particle_i, Real dt)  override;
+		};
+
+		/**
+		 * @class TransportVelocityFormulation
+		 * @brief  transport velocity formulation including velocity correction
+		 * and transport veocity stress.
+		 */
+		class TransportVelocityFormulation : public WeaklyCompressibleFluidDynamics
+		{
+		public:
+			TransportVelocityFormulation(SPHBodyComplexRelation* body_complex_relation);
+			virtual ~TransportVelocityFormulation() {};
+	
+			TransportVelocityCorrection correction_;
+			TransportVelocityStress stress_;
+
+			virtual void exec(Real dt = 0.0) override;
+			virtual void parallel_exec(Real dt = 0.0) override;
+		protected:
+			StdLargeVec<Vecd> dvel_dt_trans_;
+		};
 		/**
 		 * @class TotalMechanicalEnergy
 		 * @brief  Compute the total mechanical energy
@@ -224,15 +250,15 @@ namespace SPH
 		protected:
 			virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			ComputingVorticityInFluidField(FluidBody *body) 
-				: WeaklyCompressibleFluidDynamicsInner(body) {};
+			ComputingVorticityInFluidField(SPHBodyInnerRelation* body_inner_relation)
+				: WeaklyCompressibleFluidDynamicsInner(body_inner_relation) {};
 			virtual ~ComputingVorticityInFluidField() {};
 		};
 
 		/**
 		 * @class PressureRelaxationFirstHalfRiemann
 		 * @brief  first half of the pressure relaxation scheme with Riemann solver
-		 * computing first half step displacement, density increament and full step veloicty
+		 * computing first half step displacement, density increment and full step velocity
 		 */
 		class PressureRelaxationFirstHalfRiemann : public WeaklyCompressibleFluidDynamicsComplex1Level
 		{
@@ -244,8 +270,8 @@ namespace SPH
 			virtual void ComplexInteraction(size_t index_particle_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			PressureRelaxationFirstHalfRiemann(FluidBody* body, StdVec<SolidBody*> interacting_bodies)
-				: WeaklyCompressibleFluidDynamicsComplex1Level(body, interacting_bodies) {};
+			PressureRelaxationFirstHalfRiemann(SPHBodyComplexRelation* body_complex_relation)
+				: WeaklyCompressibleFluidDynamicsComplex1Level(body_complex_relation) {};
 			virtual ~PressureRelaxationFirstHalfRiemann() {};
 		};
 
@@ -259,15 +285,15 @@ namespace SPH
 			virtual Real getPStar(Vecd& e_ij, Vecd& vel_i, Real p_i, Real rho_i,
 				Vecd& vel_j, Real p_j, Real rho_j) override;
 		public:
-			PressureRelaxationFirstHalf(FluidBody *body, StdVec<SolidBody*> interacting_bodies)
-				: PressureRelaxationFirstHalfRiemann(body, interacting_bodies) {};
+			PressureRelaxationFirstHalf(SPHBodyComplexRelation* body_complex_relation)
+				: PressureRelaxationFirstHalfRiemann(body_complex_relation) {};
 			virtual ~PressureRelaxationFirstHalf() {};
 		};
 
 		/**
 		 * @class PressureRelaxationSecondHalfRiemann
 		 * @brief  second half of the pressure relaxation scheme with Riemann solver
-		 * computing second half step displacement, density increament
+		 * computing second half step displacement, density increment
 		 */
 		class PressureRelaxationSecondHalfRiemann : public WeaklyCompressibleFluidDynamicsComplex1Level
 		{
@@ -278,8 +304,8 @@ namespace SPH
 			virtual void ComplexInteraction(size_t index_particle_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			PressureRelaxationSecondHalfRiemann(FluidBody* body, StdVec<SolidBody*> interacting_bodies)
-				: WeaklyCompressibleFluidDynamicsComplex1Level(body, interacting_bodies) {};
+			PressureRelaxationSecondHalfRiemann(SPHBodyComplexRelation* body_complex_relation)
+				: WeaklyCompressibleFluidDynamicsComplex1Level(body_complex_relation) {};
 			virtual ~PressureRelaxationSecondHalfRiemann() {};
 		};
 
@@ -294,8 +320,8 @@ namespace SPH
 			virtual Vecd getVStar(Vecd& e_ij, Vecd& vel_i, Real p_i, Real rho_i,
 				Vecd& vel_j, Real p_j, Real rho_j) override;
 		public:
-			PressureRelaxationSecondHalf(FluidBody *body, StdVec<SolidBody*> interacting_bodies)
-				: PressureRelaxationSecondHalfRiemann(body, interacting_bodies) {};
+			PressureRelaxationSecondHalf(SPHBodyComplexRelation* body_complex_relation)
+				: PressureRelaxationSecondHalfRiemann(body_complex_relation) {};
 			virtual ~PressureRelaxationSecondHalf() {};
 		};
 
@@ -323,7 +349,7 @@ namespace SPH
 			virtual void Initialization(size_t index_particle_i, Real dt = 0.0) override;
 			virtual void ComplexInteraction(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			PressureRelaxationFirstHalfOldroyd_B(FluidBody* body, StdVec<SolidBody*> interacting_bodies);
+			PressureRelaxationFirstHalfOldroyd_B(SPHBodyComplexRelation* body_complex_relation);
 			virtual ~PressureRelaxationFirstHalfOldroyd_B() {};
 		};
 
@@ -341,7 +367,7 @@ namespace SPH
 			virtual void ComplexInteraction(size_t index_particle_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			PressureRelaxationSecondHalfOldroyd_B(FluidBody* body, StdVec<SolidBody*> interacting_bodies);
+			PressureRelaxationSecondHalfOldroyd_B(SPHBodyComplexRelation* body_complex_relation);
 			virtual ~PressureRelaxationSecondHalfOldroyd_B() {};
 		};
 
@@ -350,18 +376,18 @@ namespace SPH
 		 * @brief inflow boundary condition which relaxes 
 		 * the particles to a given velocity profile.
 		 */
-		class InflowBoundaryCondition : public WeaklyCompressibleFluidConstraintByCell
+		class InflowBoundaryCondition : public WeaklyCompressibleFluidPartDynamicsByCell
 		{
 		protected:
-			/** dedault value is 0.1 suggests reaching  target inflow velocity in about 10 time steps */
+			/** default value is 0.1 suggests reaching  target inflow velocity in about 10 time steps */
 			Real constrain_strength_;
 
 			/** inflow profile to be defined in applications */
 			virtual Vecd GetInflowVelocity(Vecd& position, Vecd& velocity) = 0;
-			virtual void ConstraintAParticle(size_t index_particle_i, Real dt = 0.0) override;
+			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
 			InflowBoundaryCondition(FluidBody* body, BodyPartByCell* body_part)
-				: WeaklyCompressibleFluidConstraintByCell(body, body_part),
+				: WeaklyCompressibleFluidPartDynamicsByCell(body, body_part),
 				constrain_strength_(0.1) {};
 			virtual ~InflowBoundaryCondition() {};
 		};
@@ -372,7 +398,7 @@ namespace SPH
 		 * The body part region is required to 
 		 * have parallel lower- and upper-bound surfaces. 
 		 */
-		class EmitterInflowCondition : public WeaklyCompressibleFluidConstraintByParticle
+		class EmitterInflowCondition : public WeaklyCompressibleFluidPartDynamicsByParticle
 		{
 		protected:
 			/** inflow pressure condition */
@@ -383,10 +409,10 @@ namespace SPH
 			/** inflow parameters to be defined in applications */
 			virtual void SetInflowParameters() = 0;
 
-			virtual void ConstraintAParticle(size_t index_particle_i, Real dt = 0.0) override;
+			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
 			explicit EmitterInflowCondition(FluidBody* body, BodyPartByParticle* body_part)
-				: WeaklyCompressibleFluidConstraintByParticle(body, body_part),
+				: WeaklyCompressibleFluidPartDynamicsByParticle(body, body_part),
 				inflow_pressure_(0) {};
 			virtual ~EmitterInflowCondition() {};
 		};
@@ -395,7 +421,7 @@ namespace SPH
 		 * @class EmitterInflowInjecting
 		 * @brief Inject particles into the computational domain.
 		 */
-		class EmitterInflowInjecting : public WeaklyCompressibleFluidConstraintByParticle
+		class EmitterInflowInjecting : public WeaklyCompressibleFluidPartDynamicsByParticle
 		{
 		protected:
 			/** the axis direction for bounding*/
@@ -410,7 +436,7 @@ namespace SPH
 			virtual void CheckUpperBound(size_t index_particle_i, Real dt = 0.0);
 			InnerFunctor checking_bound_;
 
-			virtual void ConstraintAParticle(size_t index_particle_i, Real dt = 0.0) override {
+			virtual void Update(size_t index_particle_i, Real dt = 0.0) override {
 				checking_bound_(index_particle_i, dt); };
 		public:
 			/**
@@ -434,7 +460,7 @@ namespace SPH
 		class ImplicitComputingViscousAcceleration : public WeaklyCompressibleFluidDynamicsComplex1Level
 		{
 		protected:
-			//viscousity
+			//viscosity
 			Real mu_;
 			Real smoothing_length_;
 
@@ -442,11 +468,11 @@ namespace SPH
 			virtual void ComplexInteraction(size_t index_particle_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			ImplicitComputingViscousAcceleration(FluidBody *body, StdVec<SolidBody*> interacting_bodies)
-				: WeaklyCompressibleFluidDynamicsComplex1Level(body, interacting_bodies) 
+			ImplicitComputingViscousAcceleration(SPHBodyComplexRelation* body_complex_relation)
+				: WeaklyCompressibleFluidDynamicsComplex1Level(body_complex_relation)
 			{
 				mu_ = material_->getReferenceViscosity();
-				smoothing_length_ = body->kernel_->GetSmoothingLength();
+				smoothing_length_ = body_->kernel_->GetSmoothingLength();
 			};
 			virtual ~ImplicitComputingViscousAcceleration() {};
 		};

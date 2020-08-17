@@ -168,7 +168,7 @@ namespace SPH {
         SimTK::ZIndex zix(getVarIndex());
         if(getSubsysIndex().isValid() && zix.isValid()){
             const SimTK::Vector& z = getOwner().getDefaultSubsystem().getZ(getOwner().working_state_);
-            return z[ZIndex(zix)];
+            return z[SimTK::ZIndex(zix)];
         }
 
         std::stringstream msg;
@@ -183,7 +183,7 @@ namespace SPH {
         SimTK::ZIndex zix(getVarIndex());
         if(getSubsysIndex().isValid() && zix.isValid()){
             SimTK::Vector& z = getOwner().getDefaultSubsystem().updZ(getOwner().working_state_);
-            z[ZIndex(zix)] = value;
+            z[SimTK::ZIndex(zix)] = value;
             return;
         }
 
@@ -217,12 +217,12 @@ namespace SPH {
             int num_q_ = mobod.getNumQ(state_);
             for (int i = 0; i < num_q_; i++)
             {
-                std::cout<< num_q_ << " " << mobod.getOneQ(state_, QIndex(i)) <<std::endl;
+                std::cout<< num_q_ << " " << mobod.getOneQ(state_, SimTK::QIndex(i)) <<std::endl;
             }
             int num_u_ = mobod.getNumU(state_);
             for (int i = 0; i < num_u_; i++)
             {
-                std::cout<<num_u_ << " " << mobod.getOneU(state_, UIndex(i)) <<std::endl;
+                std::cout<<num_u_ << " " << mobod.getOneU(state_, SimTK::UIndex(i)) <<std::endl;
             }
             std::cout<< " Body Info : " << std::endl;
             std::cout<< " Transform : " << mobod.getBodyTransform(state_) << std::endl;
@@ -245,7 +245,7 @@ namespace SPH {
             int num_q_ = mobod.getNumQ(state_);
             for (int i = 0; i < num_q_; i++)
             {
-                Real mobod_q = mobod.getOneQ(state_, QIndex(i));
+                Real mobod_q = mobod.getOneQ(state_, SimTK::QIndex(i));
                 std::string ele_name = "QIndx_" + std::to_string(i);
                 state_xml->AddAttributeToElement(ele_name,mobod_q);
             }
@@ -253,7 +253,7 @@ namespace SPH {
             int num_u_ = mobod.getNumU(state_);
             for (int i = 0; i < num_u_; i++)
             {
-                Real mobod_u = mobod.getOneU(state_, UIndex(i));
+                Real mobod_u = mobod.getOneU(state_, SimTK::UIndex(i));
                 std::string ele_name = "UIndx_" + std::to_string(i);
                 state_xml->AddAttributeToElement(ele_name, mobod_u);
             }
@@ -265,7 +265,7 @@ namespace SPH {
         state_xml->WriteToXmlFile(filefullpath);
     }
     //===============================================================//
-    SimTK::State StateEngine::readAndSetStateInfoFromXml(int ite_rst_, MultibodySystem& system_)
+    SimTK::State StateEngine::readAndSetStateInfoFromXml(int ite_rst_, SimTK::MultibodySystem& system_)
     {
         std::string filefullpath = restart_folder_ + "/Simbody_Rst_" + std::to_string(ite_rst_) + ".xml";
         const SimTK::SimbodyMatterSubsystem& matter_ = system_.getMatterSubsystem();
@@ -291,7 +291,7 @@ namespace SPH {
                     {
                         std::string attr_name = "QIndx_" + std::to_string(i);
                         Real q_tmp_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, attr_name);
-                        mobod.setOneQ(state_, QIndex(i), q_tmp_);
+                        mobod.setOneQ(state_, SimTK::QIndex(i), q_tmp_);
                     }
                 }
                 int num_u_ = mobod.getNumU(state_);
@@ -302,7 +302,7 @@ namespace SPH {
                     {
                         std::string attr_name = "UIndx_" + std::to_string(i);
                         Real u_tmp_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, attr_name);
-                        mobod.setOneU(state_, UIndex(i), u_tmp_);
+                        mobod.setOneU(state_, SimTK::UIndex(i), u_tmp_);
                     }
                 }
                 Vec3d transform_ = read_xml->GetRequiredAttributeValue<Vec3d>(ele_ite_, "Transform");

@@ -15,47 +15,47 @@ namespace SPH
 	namespace observer_dynamics
 	{
 		//=================================================================================================//
-		void CorrectKenelWeightsForInterpolation::ComplexInteraction(size_t index_particle_i, Real dt)
+		void CorrectInterpolationKernelWeights::ContactInteraction(size_t index_particle_i, Real dt)
 		{
-			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-
 			Vecd weight_correction(0.0);
-			Matd local_configuration(0.0);
+			/** a small number added to diagnal to avoid divide zero */
+			Matd local_configuration(Eps);
 			/** Compute the first order consistent kernel weights */
-			for (size_t k = 0; k < current_interacting_configuration_.size(); ++k)
+			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				Neighborhood& contact_neighborhood = (*current_interacting_configuration_[k])[index_particle_i];
-				NeighborList& contact_neighors = std::get<0>(contact_neighborhood);
-				for (size_t n = 0; n != std::get<2>(contact_neighborhood); ++n)
+				Neighborhood& contact_neighborhood = contact_configuration_[k][index_particle_i];
+				KernelValueList& kernel_value_list = contact_neighborhood.kernel_value_list_;
+				CommonRelationList& contact_common_relations = contact_neighborhood.common_relation_list_;
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
-					size_t index_particle_j = neighboring_particle->j_;
-					BaseParticleData& base_particle_data_j = (*interacting_particles_[k]).base_particle_data_[index_particle_j];
+					CommonRelation& common_relation = contact_common_relations[n];
+					size_t index_particle_j = common_relation.j_;
+					BaseParticleData& base_particle_data_j = contact_particles_[k]->base_particle_data_[index_particle_j];
 
-					Vecd r_ji = -neighboring_particle->r_ij_ * neighboring_particle->e_ij_;
-					weight_correction += r_ji * neighboring_particle->W_ij_ * base_particle_data_j.Vol_;
-					Vecd gradw_ij = neighboring_particle->dW_ij_ * neighboring_particle->e_ij_;
+					Vecd r_ji = -common_relation.r_ij_ * common_relation.e_ij_;
+					weight_correction += r_ji * kernel_value_list[n] * base_particle_data_j.Vol_;
+					Vecd gradw_ij = common_relation.dW_ij_ * common_relation.e_ij_;
 					local_configuration += base_particle_data_j.Vol_ * SimTK::outer(r_ji, gradw_ij);
 				}
 			}
 
 			/** correction matrix for interacting configuration */
-			Matd B_ = GeneralizedInverse(local_configuration);
+			Matd B_ = SimTK::inverse(local_configuration);
 
 			/** Add the kernel weight correction to W_ij_ of neighboring particles. */
-			for (size_t k = 0; k < current_interacting_configuration_.size(); ++k)
+			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				Neighborhood& contact_neighborhood = (*current_interacting_configuration_[k])[index_particle_i];
-				NeighborList& contact_neighors = std::get<0>(contact_neighborhood);
-				for (size_t n = 0; n != std::get<2>(contact_neighborhood); ++n)
+				Neighborhood& contact_neighborhood = contact_configuration_[k][index_particle_i];
+				KernelValueList& kernel_value_list = contact_neighborhood.kernel_value_list_;
+				CommonRelationList& contact_common_relations = contact_neighborhood.common_relation_list_;
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					BaseNeighborRelation* neighboring_particle = contact_neighors[n];
-					size_t index_particle_j = neighboring_particle->j_;
-					BaseParticleData& base_particle_data_j = (*interacting_particles_[k]).base_particle_data_[index_particle_j];
+					CommonRelation& common_relation = contact_common_relations[n];
+					size_t index_particle_j = common_relation.j_;
+					BaseParticleData& base_particle_data_j = contact_particles_[k]->base_particle_data_[index_particle_j];
 
 					Vecd normalized_weight_correction = B_ * weight_correction;
-					neighboring_particle->W_ij_ 
-						-= dot(normalized_weight_correction, neighboring_particle->e_ij_) * neighboring_particle->dW_ij_;
+					kernel_value_list[n] -= dot(normalized_weight_correction, common_relation.e_ij_) * common_relation.dW_ij_;
 				}
 			}
 		}

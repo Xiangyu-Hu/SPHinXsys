@@ -11,7 +11,7 @@
 namespace SPH 
 {
 //=================================================================================================//
-	void DirectionalDiffusion::intializeDirectionalDiffusivity(Real diff_cf, Real bias_diff_cf, Vecd bias_direction) 
+	void DirectionalDiffusion::initializeDirectionalDiffusivity(Real diff_cf, Real bias_diff_cf, Vecd bias_direction) 
 	{
 		bias_diff_cf_ 		= bias_diff_cf;
 		bias_direction_ 	= bias_direction;
@@ -46,7 +46,7 @@ namespace SPH
 		std::cout << "\n Local diffusion properties setup finished " << std::endl;
 	};
 	//=================================================================================================//
-	void ElectroPhysiologyReaction::initilaizeElectroPhysiologyReaction(size_t voltage, size_t gate_variable, 
+	void ElectroPhysiologyReaction::initializeElectroPhysiologyReaction(size_t voltage, size_t gate_variable, 
 			size_t active_contraction_stress)
 	{
 		voltage_ 					= voltage;
@@ -95,7 +95,7 @@ namespace SPH
 	{
 		Real voltage = species[voltage_];
 		Real gate_variable = species[gate_variable_];
-		Real temp = epsilon_ + mu_1_ * gate_variable / (mu_2_ + voltage + 1.0e-6);
+		Real temp = epsilon_ + mu_1_ * gate_variable / (mu_2_ + voltage + Eps);
 		return - temp * k_ * voltage * (voltage - b_ - 1.0);
 	}
 //=================================================================================================//
@@ -103,19 +103,19 @@ namespace SPH
 	{
 		Real voltage = species[voltage_];
 		Real gate_variable = species[gate_variable_];
-		return epsilon_ + mu_1_ * gate_variable / (mu_2_ + voltage + 1.0e-6);
+		return epsilon_ + mu_1_ * gate_variable / (mu_2_ + voltage + Eps);
 	}
 //=================================================================================================//
 	MonoFieldElectroPhysiology::MonoFieldElectroPhysiology(ElectroPhysiologyReaction* electro_physiology_reaction)
 		: DiffusionReactionMaterial<SolidParticles, Solid>(electro_physiology_reaction), diff_cf_(1.0), bias_diff_cf_(0.0), 
-		bias_direction_(FisrtAxisVector(Vecd(0)))
+		bias_direction_(FirstAxisVector(Vecd(0)))
 	{
 		material_name_ = "MonoFieldElectroPhysiology";
 		insertASpecies("Voltage");
 		insertASpecies("GateVariable");
 		insertASpecies("ActiveContractionStress");
 
-		electro_physiology_reaction->initilaizeElectroPhysiologyReaction(species_indexes_map_["Voltage"],
+		electro_physiology_reaction->initializeElectroPhysiologyReaction(species_indexes_map_["Voltage"],
 			species_indexes_map_["GateVariable"], species_indexes_map_["ActiveContractionStress"]);
 	};
 //=================================================================================================//

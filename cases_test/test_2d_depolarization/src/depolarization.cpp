@@ -1,11 +1,11 @@
 /**
  * @file 	depolarization.cpp
  * @brief 	This is the first test to validate our PED-ODE solver for solving
- * 			elctrophysiology monodomain model closed by a physiology reaction.
+ * 			electrophysiology monodomain model closed by a physiology reaction.
  * @author 	Chi Zhang and Xiangyu Hu
  * @version 0.2.1
  * 			From here, I will denote version a beta, e.g. 0.2.1, other than 0.1 as
- * 			we will introduce cardiac electrophysiology and cardaic mechanics herein.
+ * 			we will introduce cardiac electrophysiology and cardiac mechanics herein.
  * 			Chi Zhang
  */
 
@@ -18,7 +18,7 @@ Real L = 1.0;
 Real H = 1.0;
 /** Reference particle spacing. */
 Real particle_spacing_ref = H / 50.0;
-/** Electrophysiology prameters. */
+/** Electrophysiology parameters. */
 Real diffusion_coff_ = 1.0;
 Real bias_diffusion_coff_ = 0.0;
 Vec2d fiber_direction(1.0, 0.0);
@@ -49,8 +49,7 @@ public:
 		: SolidBody(system, body_name, refinement_level, op)
 	{
 		std::vector<Point> body_shape = CreatShape();
-		body_region_.add_geometry(new Geometry(body_shape), RegionBooleanOps::add);
-		body_region_.done_modeling();
+		body_shape_.addAPolygon(body_shape, ShapeBooleanOps::add);
 	}
 };
 /**
@@ -68,7 +67,7 @@ public:
 };
 
 /**
- * Setup eletro_physiology reation properties
+ * Setup electro_physiology reaction properties
  */
 class MuscleReactionModel : public AlievPanfilowModel
 {
@@ -150,18 +149,17 @@ int main()
 	 */
 	MuscleBody *muscle_body  =  new MuscleBody(system, "MuscleBody", 0, ParticlesGeneratorOps::lattice);
 	MuscleReactionModel *muscle_reaction_model = new MuscleReactionModel();
-	MyocardiumMuscle 	*myocardium_musscle = new MyocardiumMuscle(muscle_reaction_model);
-	ElectroPhysiologyParticles 		pmyocardium_musscle_articles(muscle_body, myocardium_musscle);
+	MyocardiumMuscle 	*myocardium_muscle = new MyocardiumMuscle(muscle_reaction_model);
+	ElectroPhysiologyParticles 		myocardium_muscle_particles(muscle_body, myocardium_muscle);
 	/**
 	 * Particle and body creation of fluid observer.
 	 */
 	VoltageObserver *voltage_observer = new VoltageObserver(system, "VoltageObserver", 0, ParticlesGeneratorOps::direct);
 	BaseParticles 					observer_particles(voltage_observer);
-	/** 
-	 * Set body contact map. 
-	 */
-	SPHBodyTopology body_topology = { { muscle_body, {  } }, {voltage_observer, {muscle_body}} };
-	system.SetBodyTopology(&body_topology);
+
+	/** topology */
+	SPHBodyInnerRelation* muscle_body_inner_relation = new SPHBodyInnerRelation(muscle_body);
+	SPHBodyContactRelation* voltage_observer_contact_relation = new SPHBodyContactRelation(voltage_observer, { muscle_body });
 
 	/**
 	 * The main dynamics algorithm is defined start here.
@@ -173,17 +171,17 @@ int main()
 	/** 
 	 * Corrected strong configuration. 
 	 */	
-	solid_dynamics::CorrectConfiguration 					correct_configuration(muscle_body);
+	solid_dynamics::CorrectConfiguration 					correct_configuration(muscle_body_inner_relation);
 	/** 
-	 * Time step size caclutation. 
+	 * Time step size calculation. 
 	 */
 	electro_physiology::GetElectroPhysiologyTimeStepSize 		get_time_step_size(muscle_body);
 	/** 
 	 * Diffusion process for diffusion body. 
 	 */
-	electro_physiology::ElectroPhysiologyDiffusionRelaxation 		diffusion_relaxation(muscle_body);
+	electro_physiology::ElectroPhysiologyDiffusionRelaxation 		diffusion_relaxation(muscle_body_inner_relation);
 	/** 
-	 * Sovlers for ODE system 
+	 * Solvers for ODE system 
 	 */
 	electro_physiology::ElectroPhysiologyReactionRelaxationForward 		reaction_relaxation_forward(muscle_body);
 	electro_physiology::ElectroPhysiologyReactionRelaxationBackward 	reaction_relaxation_backward(muscle_body);
@@ -194,7 +192,7 @@ int main()
 	In_Output 							in_output(system);
 	WriteBodyStatesToVtu 				write_states(in_output, system.real_bodies_);
 	WriteObservedDiffusionReactionQuantity<ElectroPhysiologyParticles>
-		write_recorded_voltage("Voltage", in_output, voltage_observer, muscle_body);
+		write_recorded_voltage("Voltage", in_output, voltage_observer_contact_relation);
 
 	/** 
 	 * Pre-simultion. 
@@ -221,8 +219,8 @@ int main()
 	/** Main loop starts here. */ 
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
-		Real integeral_time = 0.0;
-		while (integeral_time < D_Time) 
+		Real integration_time = 0.0;
+		while (integration_time < D_Time) 
 		{
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt) 
@@ -233,7 +231,7 @@ int main()
 						<< GlobalStaticVariables::physical_time_ << "	dt: "
 						<< dt << "\n";
 				}
-				/**Strang's splitting method. */
+				/**Strang splitting method. */
 				reaction_relaxation_forward.parallel_exec(0.5 * dt);
 				diffusion_relaxation.parallel_exec(dt);
 				reaction_relaxation_backward.parallel_exec(0.5 * dt);
@@ -241,7 +239,7 @@ int main()
 				ite++;
 				dt = get_time_step_size.parallel_exec();
 				relaxation_time += dt;
-				integeral_time += dt;
+				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
 			write_recorded_voltage.WriteToFile(GlobalStaticVariables::physical_time_);

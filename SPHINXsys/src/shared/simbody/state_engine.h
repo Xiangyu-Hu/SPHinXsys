@@ -47,7 +47,7 @@ namespace SPH {
         class StateVariable{
            //friend void StateEngine::addStateVariable(StateVariable* sv);
         public:
-            /** Concstructor and desctrucutore. */
+            /** Concstructor and destructor. */
             StateVariable() :name_(""), owner_(nullptr),
                 subsysindex_(SimTK::InvalidIndex), 
                 varindex_(SimTK::InvalidIndex),
@@ -68,7 +68,7 @@ namespace SPH {
             SimTK::SubsystemIndex& getSubsysIndex() { return subsysindex_; }
             /** Return the index in the global list of continuous state variables, Y. */
             SimTK::SystemYIndex& getSystemYIndex() { return sysyindex_; }
-            /** Set the index of simbody variavle. */
+            /** Set the index of simbody variable. */
             void setVarIndex(int index) { varindex_ = index; }
             /** Set the index of the subsystem used to resource allocations. */
             void setSubsystemIndex(SimTK::SubsystemIndex& subsysindx) 
@@ -307,7 +307,7 @@ namespace SPH {
 		 * generalized velocities and transformations of the origin points are read from 
 		 * the restart file
         */
-        SimTK::State readAndSetStateInfoFromXml(int ite_rst_, MultibodySystem& system_);
+        SimTK::State readAndSetStateInfoFromXml(int ite_rst_, SimTK::MultibodySystem& system_);
         /**@name  Realize the Simbody System and State to Computational Stage.
                 Methods in this section enable advanced and scripting users access to
                 realize the Simbody MultibodySystem and the provided state to a desired

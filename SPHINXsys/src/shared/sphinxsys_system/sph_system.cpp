@@ -11,66 +11,9 @@
 namespace SPH
 {
 	//=================================================================================================//
-	SPHBodySystem::SPHBodySystem(SPHSystem* sph_system)
-		: sph_system_(sph_system)
-	{
-	}
-	//=================================================================================================//
-	bool SPHBodySystem::addABody(SPHBody* sph_body) {
-		bool new_sph_body = true;
-		for (size_t i = 0; i != sph_bodies_.size(); ++i)
-			if (sph_body == sph_bodies_[i]) new_sph_body = false;
-		if (new_sph_body) {
-			sph_bodies_.push_back(sph_body);
-		}
-		return new_sph_body;
-	}
-	//=================================================================================================//
-	void SPHBodySystem::addBodies(SPHBodyVector sph_bodies) {
-		for (size_t i = 0; i != sph_bodies.size(); ++i)
-			addABody(sph_bodies[i]);
-	}
-	//=================================================================================================//
-	void SPHBodySystem::addSPHBodyContactRealtion(SPHBodyContactRealtion* sph_body_contact_realtion)
-	{
-		/** add a new sph bodies to the system */
-		addABody(sph_body_contact_realtion->body_);
-		addBodies(sph_body_contact_realtion->contact_bodies_);
-		sph_body_contact_realtions_.push_back(sph_body_contact_realtion);
-	}
-	//=================================================================================================//
-	bool SPHBodyCollisionSystem::addABody(SPHBody* sph_body)
-	{
-		bool new_sph_body = SPHBodySystem::addABody(sph_body);
-		if (new_sph_body) {
-			sph_bodies_.push_back(sph_body);
-			sph_body_lower_bounds_.push_back(BodyLowerBound(sph_body));
-			sph_body_upper_bounds_.push_back(BodyUpperBound(sph_body));
-		}
-		return new_sph_body;
-	}
-	//=================================================================================================//
-	void SPHBodyCollisionSystem::updateBodyBound()
-	{
-		for (size_t i = 0; i != sph_bodies_.size(); ++i) {
-			if (!sph_bodies_[i]->is_static_) {
-				sph_bodies_[i]->setBodyLowerBound(sph_body_lower_bounds_[i].parallel_exec());
-				sph_bodies_[i]->setBodyUpperBound(sph_body_upper_bounds_[i].parallel_exec());
-			}
-		}
-	}
-	void SPHBodySystem::updateCellLinkedList()
-	{
-		for (size_t i = 0; i != sph_bodies_.size(); ++i) {
-			if (!sph_bodies_[i]->is_static_) {
-				sph_bodies_[i]->UpdateCellLinkedList();
-			}
-		}
-	}
-	//=================================================================================================//
 	SPHSystem::SPHSystem(Vecd lower_bound, Vecd upper_bound,
 		Real particle_spacing_ref, int number_of_threads)
-		: sph_body_systems_(NULL), lower_bound_(lower_bound), upper_bound_(upper_bound),
+		: lower_bound_(lower_bound), upper_bound_(upper_bound),
 		tbb_init_(number_of_threads), particle_spacing_ref_(particle_spacing_ref),
 		restart_step_(0), run_particle_relaxation_(false),
 		reload_particles_(false)
@@ -97,20 +40,6 @@ namespace SPH
 		fictitious_bodies_.push_back(body);
 	}
 	//===============================================================//
-	void SPHSystem::SetBodyTopology(SPHBodyTopology* body_topology)
-	{
-		body_topology_ = body_topology;
-		for (size_t i = 0; i < body_topology_->size(); i++)
-		{
-			for (auto& body : bodies_) {
-				if (body == body_topology_->at(i).first) {
-					body->SetContactMap(body_topology_->at(i));
-					body->AllocateMemoriesForContactConfiguration();
-				}
-			}
-		}
-	}
-	//===============================================================//
 	void SPHSystem::InitializeSystemCellLinkedLists()
 	{
 		for (auto &body : bodies_)
@@ -121,18 +50,14 @@ namespace SPH
 	//===============================================================//
 	void SPHSystem::InitializeSystemConfigurations()
 	{
-		for (size_t i = 0; i < body_topology_->size(); i++)
+		for (auto& body : bodies_)
 		{
-			SPHBody *body = body_topology_->at(i).first;
-			body->BuildInnerConfiguration();
-			body->BuildContactConfiguration();
+			for (size_t i = 0; i < body->body_relations_.size(); i++)
+			{
+				body->body_relations_[i]->updateConfiguration();
+			}
+
 		}
-	}
-	//===============================================================//
-	void SPHSystem::SetupSPHSimulation()
-	{
-		InitializeSystemCellLinkedLists();
-		InitializeSystemConfigurations();
 	}
 	//===============================================================//
 	void SPHSystem::handleCommandlineOptions(int ac, char* av[])

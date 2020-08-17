@@ -41,12 +41,7 @@ class WaterBlock : public FluidBody
 		{
 			Vecd halfsize_water(0.5 * LL, 0.5 * LH, 0.5 * LW);
 			Vecd translation_water = halfsize_water;
-			Geometry *geometry_water = new Geometry(halfsize_water, resolution , translation_water);
-			body_region_.add_geometry(geometry_water, RegionBooleanOps::add);
-
-
-			/* the function name, done_modeling, is confused, modify it in the future */
-			body_region_.done_modeling();
+			body_shape_.addBrick(halfsize_water, resolution, translation_water, ShapeBooleanOps::add);
 		}
 };
 /**
@@ -63,7 +58,7 @@ public:
 		assignDerivedMaterialParameters();
 	}
 };
-//define the static solid wall boudary
+//define the static solid wall boundary
 class WallBoundary : public SolidBody
 {
 public:
@@ -73,14 +68,10 @@ public:
 	{
 		Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
 		Vecd translation_wall(0.5 * DL, 0.5 * DH, 0.5 * DW);
-		Geometry *geometry_outer = new Geometry(halfsize_outer, resolution, translation_wall);
-		body_region_.add_geometry(geometry_outer, RegionBooleanOps::add);
+		body_shape_.addBrick(halfsize_outer, resolution, translation_wall, ShapeBooleanOps::add);
 
 		Vecd halfsize_inner(0.5 * DL, 0.5 * DH, 0.5 * DW);
-		Geometry *geometry_inner = new Geometry(halfsize_inner, resolution, translation_wall);
-		body_region_.add_geometry(geometry_inner, RegionBooleanOps::sub);
-
-		body_region_.done_modeling();
+		body_shape_.addBrick(halfsize_inner, resolution, translation_wall, ShapeBooleanOps::sub);
 	}
 };
 
@@ -136,12 +127,10 @@ int main()
 	Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));
 
 
-	//set body contact map
-	//the contact map gives the data conntections between the bodies
-	//basically the the rang of bidies to build neighbor particle lists
-	SPHBodyTopology body_topology = { { water_block, { wall_boundary } }, 
-		{ wall_boundary, {} },{ fluid_observer,{ water_block} } };
-	system.SetBodyTopology(&body_topology);
+	/** topology */
+	SPHBodyComplexRelation* water_block_complex = new SPHBodyComplexRelation(water_block, { wall_boundary });
+	SPHBodyComplexRelation* wall_complex = new SPHBodyComplexRelation(wall_boundary, {});
+	SPHBodyContactRelation* fluid_observer_contact = new SPHBodyContactRelation(fluid_observer, { water_block });
 
 	//-------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
@@ -152,36 +141,24 @@ int main()
 	//-------------------------------------------------------------------
 	//initialize normal direction of the wall boundary
 	solid_dynamics::NormalDirectionSummation
-		get_wall_normal(wall_boundary, {});
+		get_wall_normal(wall_complex);
 	//-------- common paritcle dynamics ----------------------------------------
 	InitializeATimeStep 	initialize_a_fluid_step(water_block, &gravity);
 
 	//-------- fluid dynamics --------------------------------------------------
 	//evaluation of density by summation approach
 	fluid_dynamics::DensityBySummationFreeSurface
-		update_fluid_desnity(water_block, { wall_boundary });
+		update_fluid_density(water_block_complex);
 	//time step size without considering sound wave speed
-	fluid_dynamics::GetAdvectionTimeStepSize	get_fluid_adevction_time_step_size(water_block, U_f);
+	fluid_dynamics::GetAdvectionTimeStepSize	get_fluid_advection_time_step_size(water_block, U_f);
 	//time step size with considering sound wave speed
 	fluid_dynamics::GetAcousticTimeStepSize		get_fluid_time_step_size(water_block);
 
 	//pressure relaxation using verlet time stepping
 	fluid_dynamics::PressureRelaxationFirstHalfRiemann 
-		pressure_relaxation_first_half(water_block, { wall_boundary });
+		pressure_relaxation_first_half(water_block_complex);
 	fluid_dynamics::PressureRelaxationSecondHalfRiemann 
-		pressure_relaxation_second_half(water_block, { wall_boundary });
-
-	//--------------------------------------------------------------------------
-	//methods used for updating data structure
-	//--------------------------------------------------------------------------
-	//update the cell linked list of bodies when neccessary
-	ParticleDynamicsCellLinkedList
-		update_cell_linked_list(water_block);
-	//update the configuration of bodies when neccessary
-	ParticleDynamicsConfiguration 
-		update_particle_configuration(water_block);
-	ParticleDynamicsContactConfiguration
-		update_observer_contact_configuration(fluid_observer);
+		pressure_relaxation_second_half(water_block_complex);
 
 	//-----------------------------------------------------------------------------
 	//outputs
@@ -196,13 +173,13 @@ int main()
 	/** output the observed data from fluid body. */
 	WriteAnObservedQuantity<Real, FluidParticles,
 		FluidParticleData, &FluidParticles::fluid_particle_data_, &FluidParticleData::p_>
-		write_recorded_water_pressure("Pressure", in_output, fluid_observer, water_block);
+		write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact);
 	//-------------------------------------------------------------------
 	//from here the time stepping begines
 	//-------------------------------------------------------------------
 
 	/**
-	 * @brief Setup goematrics and initial conditions
+	 * @brief Setup geemetrics and initial conditions
 	 */
 	system.InitializeSystemCellLinkedLists();
 	system.InitializeSystemConfigurations();
@@ -214,8 +191,8 @@ int main()
 	if (system.restart_step_ != 0)
 	{
 		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
-		update_cell_linked_list.parallel_exec();
-		update_particle_configuration.parallel_exec();
+		water_block->UpdateCellLinkedList();
+		water_block_complex->updateConfiguration();
 	}
 	
 	/** Output the start states of bodies. */
@@ -227,10 +204,10 @@ int main()
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
 	Real End_Time = 20.0;
-	//time step size for oupt file
+	//time step size for ouput file
 	Real D_Time = End_Time/20.0;
 	Real Dt = 0.0;//default advection time step sizes
-	Real dt = 0.0; //default accoustic time step sizes
+	Real dt = 0.0; //default acoustic time step sizes
 
 	//output for initial particles, global data
 	write_water_block_states.WriteToFile(GlobalStaticVariables::physical_time_);
@@ -243,15 +220,15 @@ int main()
 	//computation loop starts 
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
-		Real integeral_time = 0.0;
+		Real integration_time = 0.0;
 		//integrate time (loop) until the next output time
-		while (integeral_time < D_Time) 
+		while (integration_time < D_Time) 
 		{
 
 			//acceleration due to viscous force and gravity
 			initialize_a_fluid_step.parallel_exec();
-			Dt = get_fluid_adevction_time_step_size.parallel_exec();
-			update_fluid_desnity.parallel_exec();
+			Dt = get_fluid_advection_time_step_size.parallel_exec();
+			update_fluid_density.parallel_exec();
 
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt) 
@@ -261,7 +238,7 @@ int main()
 				pressure_relaxation_second_half.parallel_exec(dt);
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
-				integeral_time += dt;
+				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
 			
@@ -276,9 +253,9 @@ int main()
 			}
 			number_of_iterations++;
 
-			update_cell_linked_list.parallel_exec();
-			update_particle_configuration.parallel_exec();
-			update_observer_contact_configuration.parallel_exec();
+			water_block->UpdateCellLinkedList();
+			water_block_complex->updateConfiguration();
+			fluid_observer_contact->updateConfiguration();
 			write_recorded_water_pressure.WriteToFile(GlobalStaticVariables::physical_time_);
 
 		}

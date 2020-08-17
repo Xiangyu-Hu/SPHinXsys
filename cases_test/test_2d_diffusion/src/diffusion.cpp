@@ -4,7 +4,7 @@
  * @author 	Chi Zhang and Xiangyu Hu
  * @version 0.2.1
  * 			From here, I will denote version a beta, e.g. 0.2.1, other than 0.1 as
- * 			we will introduce cardiac electrophysiology and cardaic mechanics herein.
+ * 			we will introduce cardiac electrophysiology and cardiac mechanics herein.
  * 			Chi Zhang
  */
 /** SPHinXsys Library. */
@@ -44,8 +44,7 @@ public:
 		: SolidBody(system, body_name, refinement_level, op)
 	{
 		std::vector<Point> body_shape = CreatShape();
-		body_region_.add_geometry(new Geometry(body_shape), RegionBooleanOps::add);
-		body_region_.done_modeling();
+		body_shape_.addAPolygon(body_shape, ShapeBooleanOps::add);
 	}
 };
 /**
@@ -103,11 +102,11 @@ public:
 };
 /** Set diffusion relaxation. */
 class DiffusionBodyRelaxation
-	: public RelaxationOfAllDifussionSpeciesRK2<SolidBody, SolidParticles, Solid>
+	: public RelaxationOfAllDiffusionSpeciesRK2<SolidBody, SolidParticles, Solid>
 {
 public:
-	DiffusionBodyRelaxation(SolidBody* body)
-		: RelaxationOfAllDifussionSpeciesRK2<SolidBody, SolidParticles, Solid>(body) {
+	DiffusionBodyRelaxation(SPHBodyInnerRelation* body_inner_relation)
+		: RelaxationOfAllDiffusionSpeciesRK2<SolidBody, SolidParticles, Solid>(body_inner_relation) {
 	};
 	virtual ~DiffusionBodyRelaxation() {};
 };
@@ -122,9 +121,9 @@ int main()
 	DiffusionBody *diffusion_body  =  new DiffusionBody(system, "DiffusionBody", 0, ParticlesGeneratorOps::lattice);
 	DiffusionBodyMaterial *diffusion_body_material = new DiffusionBodyMaterial();
 	DiffusionReactionParticles<SolidParticles, Solid>	diffusion_body_particles(diffusion_body, diffusion_body_material);
-	/** Set body contact map. */
-	SPHBodyTopology body_topology = { { diffusion_body, {  } }};
-	system.SetBodyTopology(&body_topology);
+
+	/** topology */
+	SPHBodyInnerRelation* diffusion_body_inner_relation = new SPHBodyInnerRelation(diffusion_body);
 
 	/**
 	 * The main dynamics algorithm is defined start here.
@@ -132,11 +131,11 @@ int main()
 	/** Case setup */
 	DiffusionBodyInitialCondition setup_diffusion_initial_condition(diffusion_body);
 	/** Corrected strong configuration for diffusion body. */	
-	solid_dynamics::CorrectConfiguration 			correct_configuration(diffusion_body);
-	/** Time step size caclutation. */
+	solid_dynamics::CorrectConfiguration 			correct_configuration(diffusion_body_inner_relation);
+	/** Time step size calculation. */
 	GetDiffusionTimeStepSize<SolidBody, SolidParticles, Solid> get_time_step_size(diffusion_body);
 	/** Diffusion process for diffusion body. */
-	DiffusionBodyRelaxation 			diffusion_relaxation(diffusion_body);
+	DiffusionBodyRelaxation 			diffusion_relaxation(diffusion_body_inner_relation);
 	/** Periodic BCs. */
 	PeriodicConditionInAxisDirection 					periodic_condition_y(diffusion_body, 1);
 	/**
@@ -147,11 +146,10 @@ int main()
 
 	/** Pre-simultion*/
 	system.InitializeSystemCellLinkedLists();
-	system.InitializeSystemConfigurations();
-	setup_diffusion_initial_condition.exec();
 	periodic_condition_y.parallel_exec();
-	diffusion_body->BuildInnerConfiguration();
+	system.InitializeSystemConfigurations();
 	correct_configuration.parallel_exec();
+	setup_diffusion_initial_condition.exec();
 	/** Output global basic parameters. */
 	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
 
@@ -167,8 +165,8 @@ int main()
 	/** Main loop starts here. */ 
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
-		Real integeral_time = 0.0;
-		while (integeral_time < Output_Time) 
+		Real integration_time = 0.0;
+		while (integration_time < Output_Time) 
 		{
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Observe_time)
@@ -185,7 +183,7 @@ int main()
 				ite++;
 				dt = get_time_step_size.parallel_exec();
 				relaxation_time += dt;
-				integeral_time += dt;
+				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 				write_states.WriteToFile(GlobalStaticVariables::physical_time_);
 			}

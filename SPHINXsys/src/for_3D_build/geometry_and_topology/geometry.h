@@ -10,7 +10,6 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_geometry.h"
-#include "array.h"
 #include "SimTKcommon.h"
 #include "SimTKmath.h"
 #include "Simbody.h"
@@ -32,58 +31,52 @@ using namespace std;
 
 namespace SPH {
 
-	enum class RegionBooleanOps { add, sub };
-
-	class Geometry  : public Shape
+	class TriangleMeshShape : public Shape
 	{
-	protected:
-		//generate trangle mesh from polymesh
-		SimTK::ContactGeometry::TriangleMesh* TriangleMeshFromPolyMesh(SimTK::PolygonalMesh &ploy_mesh);
 	public:
-		SimTK::ContactGeometry::TriangleMesh *triangle_mesh_;
-
 		//constructor for load stl file from out side
-		Geometry(string file_path_name, Vec3d translation, Real scale_factor);
+		TriangleMeshShape(string file_path_name, Vec3d translation, Real scale_factor);
 		// constructor for brick geometry
-		Geometry(Vec3d halfsize, int resol, Vec3d translation); 
+		TriangleMeshShape(Vec3d halfsize, int resol, Vec3d translation);
 		// constructor for sphere geometry
-		Geometry(Real radius, int resol, Vec3d translation); 
+		TriangleMeshShape(Real radius, int resol, Vec3d translation);
 		//constructor for cylinder geometry
-		Geometry(SimTK::UnitVec3 axis, Real radius, Real halflength, int resol, Vec3d translation); 
+		TriangleMeshShape(SimTK::UnitVec3 axis, Real radius, Real halflength, int resol, Vec3d translation);
 
-		virtual bool contain(Vec3d pnt, bool BOUNDARY_INCLUDED = true) override;
-		virtual Vec3d closestpointonface(Vec3d input_pnt) override;
-		virtual void shapebound(Vec3d &lower_bound, Vec3d &upper_bound) override;
+		SimTK::ContactGeometry::TriangleMesh* getTriangleMesh() { return triangle_mesh_; };
+		bool checkContain(Vec3d pnt, bool BOUNDARY_INCLUDED = true);
+		virtual Vec3d findClosestPoint(Vec3d input_pnt) override;
+		virtual void findBounds(Vec3d &lower_bound, Vec3d &upper_bound) override;
 		void writePolygonalVertices(int poly_id, string out_folder);
+
+	protected:
+		SimTK::ContactGeometry::TriangleMesh* triangle_mesh_;
+
+		//generate triangle mesh from polymesh
+		SimTK::ContactGeometry::TriangleMesh* generateTriangleMesh(SimTK::PolygonalMesh& ploy_mesh);
 	};
 
-	class Region
+	class ComplexShape : public Shape
 	{
-	protected:
-		//name of the region
-		std::string region_name_; 											
-		//geometry container
-		std::vector<Geometry*> geometries;
-		//geometry operation container
-		std::vector<RegionBooleanOps> geometryops;							
-		//shapes container<pointer to geomerty, operation>
-		std::vector<std::pair<Geometry*, RegionBooleanOps>> shapes;
-		string output_folder_;
 	public:
-		Region(string region_name);
-		virtual ~Region() {};
-		virtual bool contain(Vec3d pnt, bool BOUNDARY_INCLUDED = true);
-		virtual void closestpointonface(Vec3d input_pnt, Vec3d& closest_pnt, Real& phi);
-		virtual void regionbound(Vec3d &lower_bound, Vec3d &upper_bound);
+		ComplexShape(string complex_shape_name) : Shape(complex_shape_name) {};
+		virtual ~ComplexShape() {};
+		bool checkContain(Vec3d pnt, bool BOUNDARY_INCLUDED = true);
+		virtual Vec3d findClosestPoint(Vec3d input_pnt) override;
+		virtual void findBounds(Vec3d &lower_bound, Vec3d &upper_bound) override;
 
-		void add_geometry(Geometry* geometry, RegionBooleanOps op);
-		void add_region(Region *region, RegionBooleanOps op);
-		void add_brick(Vec3d halfsize, int resol, Vec3d translation, RegionBooleanOps op);
-		void add_sphere(Real radius, int resol, Vec3d translation, RegionBooleanOps op);
-		void add_cylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resol, Vec3d translation, RegionBooleanOps op);
-		void add_from_STL_file(string file_path_name, Vec3d translation, Real scale_factor, RegionBooleanOps op);
+		void addTriangleMeshShape(TriangleMeshShape* triangle_mesh_shape, ShapeBooleanOps op);
+		void addComplexShape(ComplexShape* complex_shape, ShapeBooleanOps op);
+		void addBrick(Vec3d halfsize, int resol, Vec3d translation, ShapeBooleanOps op);
+		void addSphere(Real radius, int resol, Vec3d translation, ShapeBooleanOps op);
+		void addCylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resol, Vec3d translation, ShapeBooleanOps op);
+		void addFormSTLFile(string file_path_name, Vec3d translation, Real scale_factor, ShapeBooleanOps op);
+		void writePolygonalVertices();
 
-		void done_modeling();
+	protected:
+		/** shape container<pointer to geomtry, operation> */
+		std::vector<std::pair<TriangleMeshShape*, ShapeBooleanOps>> triangle_mesh_shapes_;
+		string output_folder_;
 	};
 }
 

@@ -180,7 +180,7 @@ namespace SPH {
 
 	/**
 	 * @class WriteToVtuIfVelocityOutOfBound
-	 * @brief  output body sates if paritcle velocity
+	 * @brief  output body sates if particle velocity is
 	 * out of a bound
 	 */
 	class WriteToVtuIfVelocityOutOfBound
@@ -213,13 +213,13 @@ namespace SPH {
 	};
 
 	/**
-	 * @class WriteObservedFluidPressure
-	 * @brief write files for observed fluid pressure
+	 * @class WriteAnObservedQuantity
+	 * @brief write files for observed quantity
 	 */
 	template <class DataType, class TargetParticlesType, class TargetDataType,
 		StdLargeVec<TargetDataType> TargetParticlesType:: * TrgtDataMemPtr, DataType TargetDataType:: * TrgtMemPtr>
 	class WriteAnObservedQuantity : public WriteBodyStates,
-		public observer_dynamics::ObservingAQuantityFromABody<DataType, TargetParticlesType, TargetDataType, TrgtDataMemPtr, TrgtMemPtr>
+		public observer_dynamics::ObservingAQuantity<DataType, TargetParticlesType, TargetDataType, TrgtDataMemPtr, TrgtMemPtr>
 	{
 	protected:
 		SPHBody* observer_;
@@ -242,15 +242,15 @@ namespace SPH {
 		};
 
 	public:
-		WriteAnObservedQuantity(string quantity_name, In_Output& in_output, SPHBody* observer, SPHBody* target)
-			: WriteBodyStates(in_output, observer), observer_(observer),
-			observer_dynamics::ObservingAQuantityFromABody<DataType, TargetParticlesType, TargetDataType, TrgtDataMemPtr, TrgtMemPtr>(observer, target)
+		WriteAnObservedQuantity(string quantity_name, In_Output& in_output, SPHBodyContactRelation* body_contact_relation)
+			: WriteBodyStates(in_output, body_contact_relation->body_), observer_(body_contact_relation->body_),
+			observer_dynamics::ObservingAQuantity<DataType, TargetParticlesType, TargetDataType, TrgtDataMemPtr, TrgtMemPtr>(body_contact_relation)
 		{
-			filefullpath_ = in_output_.output_folder_ + "/" + observer->GetBodyName()
+			filefullpath_ = in_output_.output_folder_ + "/" + observer_->GetBodyName()
 				+ "_" + quantity_name + "_" + in_output_.restart_step_ + ".dat";
 			std::ofstream out_file(filefullpath_.c_str(), ios::app);
 			out_file << "run_time" << "   ";
-			for (size_t i = 0; i != observer->number_of_particles_; ++i)
+			for (size_t i = 0; i != observer_->number_of_particles_; ++i)
 			{
 				writeFileHead(out_file, this->observed_quantities_[i], quantity_name, i);
 			}
@@ -275,27 +275,27 @@ namespace SPH {
 
 	/**
  * @class WriteObservedDiffusionReactionQuantity
- * @brief write the observed voltage of electrophysiology to files.
+ * @brief write the observed diffusion and reaction quantity to files.
  */
 	template <class DiffusionReactionParticlesType>
 	class WriteObservedDiffusionReactionQuantity
 		: public WriteBodyStates,
-		public observer_dynamics::ObservingADiffusionReactionQuantityFromABody<DiffusionReactionParticlesType>
+		public observer_dynamics::ObservingADiffusionReactionQuantity<DiffusionReactionParticlesType>
 	{
 	protected:
 		SPHBody* observer_;
 		std::string filefullpath_;
 	public:
 		/** Constructor and Destructor. */
-		WriteObservedDiffusionReactionQuantity(string species_name, In_Output& in_output, SPHBody* observer, SPHBody* target)
-			: WriteBodyStates(in_output, observer), observer_(observer),
-			observer_dynamics::ObservingADiffusionReactionQuantityFromABody<DiffusionReactionParticlesType>(species_name, observer, target)
+		WriteObservedDiffusionReactionQuantity(string species_name, In_Output& in_output, SPHBodyContactRelation* body_contact_relation)
+			: WriteBodyStates(in_output, body_contact_relation->body_), observer_(body_contact_relation->body_),
+			observer_dynamics::ObservingADiffusionReactionQuantity<DiffusionReactionParticlesType>(species_name, body_contact_relation)
 		{
-			filefullpath_ = in_output_.output_folder_ + "/" + observer->GetBodyName()
+			filefullpath_ = in_output_.output_folder_ + "/" + observer_->GetBodyName()
 				+ "_" + species_name + "_" + in_output_.restart_step_ + ".dat";
 			std::ofstream out_file(filefullpath_.c_str(), ios::app);
 			out_file << "run_time" << "   ";
-			for (size_t i = 0; i != observer->number_of_particles_; ++i)
+			for (size_t i = 0; i != observer_->number_of_particles_; ++i)
 			{
 				out_file << "  " << species_name << "[" << i << "]" << " ";
 			}
@@ -334,6 +334,20 @@ namespace SPH {
 	public:
 		WriteTotalMechanicalEnergy(In_Output& in_output, FluidBody* water_block, Gravity* gravity);
 		virtual ~WriteTotalMechanicalEnergy() {};
+		virtual void WriteToFile(Real time = 0.0) override;
+	};
+
+	/**
+	 * @class WriteMaximumSpeed
+	 * @brief write files for the maximum speed within the body
+	 */
+	class WriteMaximumSpeed : public WriteBodyStates, public MaximumSpeed
+	{
+	protected:
+		std::string filefullpath_;
+	public:
+		WriteMaximumSpeed(In_Output& in_output, SPHBody* sph_body);
+		virtual ~WriteMaximumSpeed() {};
 		virtual void WriteToFile(Real time = 0.0) override;
 	};
 

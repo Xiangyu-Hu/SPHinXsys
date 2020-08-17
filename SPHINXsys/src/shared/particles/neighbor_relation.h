@@ -1,6 +1,6 @@
 /**
  * @file 	neighbor_relation.h
- * @brief 	There are the classes for a neighboring partcle. 
+ * @brief 	There are the classes for a neighboring particle. 
  * It saves the information for carring out pair
  * interaction, and also considered as the topology of the particles.
  * @author	Xiangyu Hu and Chi Zhang
@@ -8,36 +8,29 @@
  */
 #pragma once
 #include "base_data_package.h"
+#include "base_kernel.h"
 
 using namespace std;
 
 namespace SPH {
 	/**
-	 * @brief preclaimed class.
+	 * @class CommonRelation
+	 * @brief The common relation for a particle j around particle i.
 	 */
-	class Kernel;
-	class BaseParticleData;
-
-	/**
-	 * @class NeighborRelation
-	 * @brief A neighboring realtion for a particle j around particle i.
-	 */
-	class BaseNeighborRelation
+	class CommonRelation
 	{
 	public:
-		/** Index of the neighbor particle. */
-		size_t j_;
-		/** kernel function value. */
-		Real W_ij_;
-		/** Derivative of kernel function. */
-		Real dW_ij_;
 		/** Unit vector pointing from j to i. */
 		Vecd e_ij_;
-		/** Distance between i and j. */
+		/** Derivative of kernel function. */
+		Real dW_ij_;
+		/** Distance between j and i. */
 		Real r_ij_;
+		/** Index of the neighbor particle. */
+		size_t j_;
 
-		/** default constructor*/
-		BaseNeighborRelation() {};
+		/** default constructor */
+		CommonRelation();
 		/**
 		* @brief Constructor.
 		* @param[in] base_particles Particles with geometric informaiton.
@@ -46,61 +39,37 @@ namespace SPH {
 		* @param[in] i_index Index of particle i
 		* @param[in] j_index Index of particle j
 		*/
-		BaseNeighborRelation(StdLargeVec<BaseParticleData>& base_particle_data,
-			Kernel& kernel, Vecd& vec_r_ij, size_t i_index, size_t j_index);
-		~BaseNeighborRelation() {};
-		/**
-		 * @brief Reset the neighboring particles.
-		* @param[in] base_particles Particles with geometric informaiton.
-		* @param[in] kernel Specific kernel.
-		* @param[in] r_ij Postion vector pointing from j to i.
-		* @param[in] i_index Index of particle i
-		* @param[in] j_index Index of particle j
-		*/
-		virtual void resetRelation(StdLargeVec<BaseParticleData>& base_particle_data,
-			Kernel& kernel, Vecd& vec_r_ij, size_t i_index, size_t j_index) = 0;
-		/** reset from a symmetric realtion. */
-		void resetSymmetricRelation(BaseNeighborRelation* symmetic_neigbor_relation, size_t i_index);
-
-		/** compute gradient of the kernel function. */
-		virtual Vecd getNablaWij() { return dW_ij_ * e_ij_; };
+		CommonRelation(Kernel& kernel, Vecd& vec_r_ij, size_t i_index, size_t j_index);
+		~CommonRelation() {};
 	};
+
+	/** common list for particle interaction*/
+	using CommonRelationList = StdLargeVec<CommonRelation>;
+	/** kernel value list for interploation and denisty summation */
+	using KernelValueList = StdLargeVec<Real>;
 
 	/**
-	 * @class NeighborRelation
-	 * @brief A neighboring realtion for a particle j around particle i.
+	 * @class Neighborhood
+	 * @brief A neighborhood around particle i.
 	 */
-	class NeighborRelation : public BaseNeighborRelation
+	class Neighborhood
 	{
 	public:
-		/** Constructor. */
-		NeighborRelation(StdLargeVec<BaseParticleData>& base_particle_data,
-			Kernel& kernel, Vecd& vec_r_ij, size_t i_index, size_t j_index);
-		/** Constructor with symmetic condition.*/
-		NeighborRelation(BaseNeighborRelation* symmetic_neigbor_relation, size_t i_index);
-		~NeighborRelation() {};
+		CommonRelationList common_relation_list_;
+		KernelValueList kernel_value_list_;
+		/** the currnet number of neighors */
+		size_t current_size_;
+		/** the limit of neighors does not require memory allocation  */
+		size_t memory_size_;
 
-		/** Reset the neighboring particles. */
-		virtual void resetRelation(StdLargeVec<BaseParticleData>& base_particle_data,
-			Kernel& kernel, Vecd& vec_r_ij, size_t i_index, size_t j_index) override;
+		/** default constructor */
+		Neighborhood()
+			: current_size_(0), memory_size_(0) {};
+		~Neighborhood() {};
 	};
 
-	/**
-	 * @class NeighborRelationWithVariableSmoothingLength
-	 * @brief A neighboring particle j of particle i.
-	 */
-	class NeighborRelationWithVariableSmoothingLength : public BaseNeighborRelation
-	{
-	public:
-		/** Constructor. */
-		NeighborRelationWithVariableSmoothingLength(StdLargeVec<BaseParticleData>& base_particle_data,
-			Kernel& kernel, Vecd& vec_r_ij, size_t i_index, size_t j_index);
-		/** Constructor with symmetic condition.*/
-		NeighborRelationWithVariableSmoothingLength(BaseNeighborRelation* symmetic_neigbor_relation, size_t i_index);
-		~NeighborRelationWithVariableSmoothingLength() {};
-
-		/** Reset the neighboring particles. */
-		virtual void resetRelation(StdLargeVec<BaseParticleData>& base_particle_data,
-			Kernel& kernel, Vecd& r_ij, size_t i_index, size_t j_index) override;
-	};
+	/** A neighborhoods for all particles in a body. */
+	using ParticleConfiguration = StdLargeVec<Neighborhood>;
+	/** All contact neighborhoods for all particles in a body. */
+	using ContatcParticleConfiguration = StdVec<ParticleConfiguration>;
 }

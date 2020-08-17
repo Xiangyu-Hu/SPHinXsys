@@ -63,8 +63,8 @@ namespace SPH
 		/** Base classes with virtual member functions should have a virtual destructor **/
 		virtual ~Kernel() {};
 		
-		/** access esstential information of the kernel **/
-		string GetKerenlName() const { return kernel_name_; };
+		/** access essential information of the kernel **/
+		string GetKernelName() const { return kernel_name_; };
 		Real GetSmoothingLength() const { return h_; };
 		Real GetKernelSize() const { return kernel_size_; };
 		Real GetCutOffRadius() const { return h_ * kernel_size_; };
@@ -110,7 +110,7 @@ namespace SPH
 		virtual Real d2W_2D(const Real q) const = 0;
 		virtual Real d2W_3D(const Real q) const = 0;
 
-		/** for variable smoothing lenght
+		/** for variable smoothing length
 		  * note that we input the inverse of 
 		  * the variable smoothing length.
 		  */

@@ -51,7 +51,7 @@ namespace SPH {
 	 	 */
   		~XmlEngine();
         SimTK::Xml::Document xmldoc_;         /**< the xml document. */
-        SimTK::Xml::Element root_element_;    /**< Root element of docment. */
+        SimTK::Xml::Element root_element_;    /**< Root element of document. */
         SimTK::Xml::Element* element_;        /**< pointer to element. */
         //SimTK::Xml::element_iterator ele_ite_; /**< element iterator. */
   		/**
@@ -70,7 +70,7 @@ namespace SPH {
 		 */
 		template<class T>
 		void AddAttributeToElement(const std::string& attrib_name, const T& value) {
-			SimTK::Xml::Attribute attr_(attrib_name, String(value));
+			SimTK::Xml::Attribute attr_(attrib_name, SimTK::String(value));
 			element_->setAttributeValue(attr_.getName(), attr_.getValue());
 		};
 		/**
@@ -91,10 +91,10 @@ namespace SPH {
 			return SimTK::convertStringTo<T>(value_in_string);
 		};
 		/**
-		* @brief Get the required int attribute vlaue of an element
+		* @brief Get the required int attribute valaue of an element
 		* @param[in] ele input element.
 		* @param[in] attrib_name required attribute name.
-		* @returns Vector(in 2D or 3D) type value of rquaired attribute.
+		* @returns Vector(in 2D or 3D) type value of required attribute.
 		*/
 		Matd GetRequiredAttributeMatrixValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name);
 		/**

@@ -70,18 +70,18 @@ namespace SPH
 	{
 		//check lower bound
 		for (size_t i = 0; i != lower_bound_cells_.size(); ++i) {
-			ConcurrentListDataVector& list_data
+			CellListDataVector& list_data
 				= cell_linked_lists_[lower_bound_cells_[i][0]][lower_bound_cells_[i][1]][lower_bound_cells_[i][2]]
-				.particle_data_lists_;
+				.cell_list_data_;
 			for (size_t num = 0; num < list_data.size(); ++num)
 				CheckLowerBound(list_data[num].first, list_data[num].second, dt);
 		}
 
 		//check upper bound
 		for (size_t i = 0; i != upper_bound_cells_.size(); ++i) {
-			ConcurrentListDataVector& list_data
+			CellListDataVector& list_data
 				= cell_linked_lists_[upper_bound_cells_[i][0]][upper_bound_cells_[i][1]][upper_bound_cells_[i][2]]
-				.particle_data_lists_;
+				.cell_list_data_;
 			for (size_t num = 0; num < list_data.size(); ++num)
 				CheckUpperBound(list_data[num].first, list_data[num].second, dt);
 		}
@@ -93,9 +93,9 @@ namespace SPH
 		parallel_for(blocked_range<size_t>(0, lower_bound_cells_.size()),
 			[&](const blocked_range<size_t>& r) {
 				for (size_t i = r.begin(); i < r.end(); ++i) {
-					ConcurrentListDataVector& list_data
+					CellListDataVector& list_data
 						= cell_linked_lists_[lower_bound_cells_[i][0]][lower_bound_cells_[i][1]][lower_bound_cells_[i][2]]
-						.particle_data_lists_;
+						.cell_list_data_;
 					for (size_t num = 0; num < list_data.size(); ++num)
 						CheckLowerBound(list_data[num].first, list_data[num].second, dt);
 				}
@@ -105,9 +105,9 @@ namespace SPH
 		parallel_for(blocked_range<size_t>(0, upper_bound_cells_.size()),
 			[&](const blocked_range<size_t>& r) {
 				for (size_t i = r.begin(); i < r.end(); ++i) {
-					ConcurrentListDataVector& list_data
+					CellListDataVector& list_data
 						= cell_linked_lists_[upper_bound_cells_[i][0]][upper_bound_cells_[i][1]][upper_bound_cells_[i][2]]
-						.particle_data_lists_;
+						.cell_list_data_;
 					for (size_t num = 0; num < list_data.size(); ++num)
 						CheckUpperBound(list_data[num].first, list_data[num].second, dt);
 				}
@@ -177,9 +177,9 @@ namespace SPH
 		::exec(Real dt)
 	{
 		for (size_t i = 0; i != bound_cells_.size(); ++i) {
-			ConcurrentListDataVector& list_data
+			CellListDataVector& list_data
 				= cell_linked_lists_[bound_cells_[i][0]][bound_cells_[i][1]][bound_cells_[i][2]]
-				.particle_data_lists_;
+				.cell_list_data_;
 			for (size_t num = 0; num < list_data.size(); ++num)
 				checking_bound_(list_data[num].first, dt);
 		}
@@ -191,9 +191,9 @@ namespace SPH
 		parallel_for(blocked_range<size_t>(0, bound_cells_.size()),
 			[&](const blocked_range<size_t>& r) {
 				for (size_t i = r.begin(); i < r.end(); ++i) {
-					ConcurrentListDataVector& list_data
+					CellListDataVector& list_data
 						= cell_linked_lists_[bound_cells_[i][0]][bound_cells_[i][1]][bound_cells_[i][2]]
-						.particle_data_lists_;
+						.cell_list_data_;
 					for (size_t num = 0; num < list_data.size(); ++num)
 						checking_bound_(list_data[num].first, dt);
 				}

@@ -11,11 +11,11 @@
 namespace SPH 
 {
 	//=================================================================================================//
-	void BodyPartByCell::TagBodyPartCells()
+	void BodyPartByCell::TagBodyPart()
 	{
 		BaseMeshCellLinkedList *mesh_cell_linked_list
 			= body_->base_mesh_cell_linked_list_;
-		Vecu number_of_cells = mesh_cell_linked_list->getNumberOfCells();
+		Vecu number_of_cells = mesh_cell_linked_list->NumberOfCells();
 
 		for (int i = 0; i < number_of_cells[0]; ++i)
 			for (int j = 0; j < number_of_cells[1]; ++j) {
@@ -25,19 +25,19 @@ namespace SPH
 					{
 						Vecd cell_position = mesh_cell_linked_list
 							->CellPositionFromIndexes(Vecu(k, l));
-						if (body_part_region_.contain(cell_position))
+						if (body_part_shape_.checkContain(cell_position))
 							is_contained = true;
 					}
 				if (is_contained == true) 
-					body_part_cells_.push_back(mesh_cell_linked_list->getCellList(Vecu(i, j)));
+					body_part_cells_.push_back(mesh_cell_linked_list->CellListFormIndex(Vecu(i, j)));
 			}
 	}
 	//=================================================================================================//
-	void NearBodySurface::TagBodyPartCells()
+	void NearBodySurface::TagBodyPart()
 	{
 		BaseMeshCellLinkedList* mesh_cell_linked_list
 			= body_->base_mesh_cell_linked_list_;
-		Vecu number_of_cells = mesh_cell_linked_list->getNumberOfCells();
+		Vecu number_of_cells = mesh_cell_linked_list->NumberOfCells();
 
 		for (int i = 0; i < number_of_cells[0]; ++i)
 			for (int j = 0; j < number_of_cells[1]; ++j) {
@@ -47,19 +47,20 @@ namespace SPH
 					for (int l = SMAX(j - 1, 0); l <= SMIN(j + 1, int(number_of_cells[1]) - 1); ++l)
 					{
 						Vecd cell_position = mesh_cell_linked_list->CellPositionFromIndexes(Vecu(k, l));
-						if (body_->mesh_background_->checkMeshBound(cell_position)) {
-							Real phii = body_->mesh_background_->ProbeLevelSet(cell_position);
-							if (fabs(phii) <= mesh_cell_linked_list->getGridSpacing()) is_near = true;
+						if (body_->levelset_mesh_->isWithinMeshBound(cell_position)) 
+						{
+							Real phii = body_->levelset_mesh_->probeLevelSet(cell_position);
+							if (fabs(phii) <= mesh_cell_linked_list->GridSpacing()) is_near = true;
 						}
 					}
 				if (is_near == true)
-					body_part_cells_.push_back(mesh_cell_linked_list->getCellList(Vecu(i, j)));
+					body_part_cells_.push_back(mesh_cell_linked_list->CellListFormIndex(Vecu(i, j)));
 			}
 	}
 	//=================================================================================================//
-	void SolidBodyPartForSimbody::TagBodyPartParticles()
+	void SolidBodyPartForSimbody::TagBodyPart()
 	{
-		BodyPartByParticle::TagBodyPartParticles();
+		BodyPartByParticle::TagBodyPart();
 
 		Real body_part_volume(0);
 		Vecd mass_center = Vecd(0);
@@ -74,7 +75,7 @@ namespace SPH
 		}
 
 		mass_center /= body_part_volume;
-		initial_mass_center_ = Vec3(mass_center[0], mass_center[1], 0.0);
+		initial_mass_center_ = Vec3d(mass_center[0], mass_center[1], 0.0);
 
 		//computing unit intertia
 		Real Ix = 0.0;
@@ -100,7 +101,7 @@ namespace SPH
 
 		body_part_mass_properties_
 			= new SimTK::MassProperties(body_part_volume * solid_body_density_,
-				Vec3(0), UnitInertia(Ix, Iy, Iz));
+				Vec3d(0), SimTK::UnitInertia(Ix, Iy, Iz));
 	}
 	//=================================================================================================//
 }

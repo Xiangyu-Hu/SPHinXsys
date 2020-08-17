@@ -9,12 +9,61 @@
 using namespace boost::geometry;
 
 namespace SPH {
-
-	Geometry::Geometry(Vec2d center_, Real radius_, int resolution_) : Shape("MLPolygon")
+	//=================================================================================================//
+	boost_multi_poly MultiPolygon::MultiPolygonByBooleanOps(boost_multi_poly multi_poly_in,
+		boost_multi_poly multi_poly_op, ShapeBooleanOps boolean_op)
 	{
-		Vec2d buffer_center = center_;
-		Real buffer_radius = radius_;
-		int buffer_res = resolution_;
+		boost_multi_poly multi_poly_tmp_in = multi_poly_in;
+		//out multi-poly need to be emtpy
+		//otherwise the operation is not valid
+		boost_multi_poly multi_poly_tmp_out;
+
+		switch (boolean_op)
+		{
+		case ShapeBooleanOps::add: {
+			boost::geometry::union_(multi_poly_tmp_in, multi_poly_op, multi_poly_tmp_out);
+			break;
+		}
+
+		case ShapeBooleanOps::sub: {
+			boost::geometry::difference(multi_poly_tmp_in, multi_poly_op, multi_poly_tmp_out);
+			break;
+		}
+		case ShapeBooleanOps::sym_diff: {
+			boost::geometry::sym_difference(multi_poly_tmp_in, multi_poly_op, multi_poly_tmp_out);
+			break;
+		}
+		case ShapeBooleanOps::intersect: {
+			boost::geometry::intersection(multi_poly_tmp_in, multi_poly_op, multi_poly_tmp_out);
+			break;
+		}
+		default:
+		{
+			std::cout << "\n FAILURE: the type of boolean operation is undefined!" << std::endl;
+			std::cout << "\n Please check the boost libraray reference." << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
+			break;
+		}
+		}
+		return multi_poly_tmp_out;
+	}
+	//=================================================================================================//
+	void MultiPolygon::addAMultiPolygon(MultiPolygon& multi_polygon_op, ShapeBooleanOps op)
+	{
+		multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_polygon_op.getBoostMultiPoly(), op);
+	}
+	//=================================================================================================//
+	void MultiPolygon::addABoostMultiPoly(boost_multi_poly& boost_multi_poly_op, ShapeBooleanOps op)
+	{
+		multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, boost_multi_poly_op, op);
+	}
+	//=================================================================================================//
+	void MultiPolygon::addACircle(Vec2d center, Real radius, int resolution, ShapeBooleanOps op)
+	{
+		Vec2d buffer_center = center;
+		Real buffer_radius = radius;
+		int buffer_res = resolution;
 
 		// Declare the point_circle strategy
 		strategy::buffer::join_round join_strategy;
@@ -29,33 +78,29 @@ namespace SPH {
 		boost::geometry::set<0>(circle_center_pnt, buffer_center[0]);
 		boost::geometry::set<1>(circle_center_pnt, buffer_center[1]);
 
-		buffer(circle_center_pnt, multi_poly,
+		boost_multi_poly multi_poly_circle;
+		buffer(circle_center_pnt, multi_poly_circle,
 			circle_dist_strategy, side_strategy,
 			join_strategy, end_strategy, circle_strategy);
 
-		if (!is_valid(multi_poly)) {
+		if (!is_valid(multi_poly_circle)) {
 			std::cout << "\n Error: the multi ploygen is not valid." << std::endl;
 			std::cout << "\n The points must be in clockwise. Please check the boost libraray reference." << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
+
+		multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_poly_circle, op);
 	}
-	//===========================================================//
-	Geometry::Geometry(boost_multi_poly multi_poly_)
-		: Shape("MLPolygon")
-	{
-		multi_poly = multi_poly_;
-	}
-	//===========================================================//
-	Geometry::Geometry(std::vector<Point>& points)
-		: Shape("MLPolygon")
+	//=================================================================================================//
+	void MultiPolygon::addAPolygon(std::vector<Point>& points, ShapeBooleanOps op)
 	{
 		std::vector<model::d2::point_xy<Real>> pts;
 		for (const Point& pnt : points)
 		{
 			pts.push_back(model::d2::point_xy<Real>(pnt[0], pnt[1]));
 		}
-		
+
 		boost_poly poly;
 		append(poly, pts);
 		if (!is_valid(poly)) {
@@ -65,27 +110,25 @@ namespace SPH {
 			exit(1);
 		}
 
-		convert(poly, multi_poly);
+		boost_multi_poly multi_poly_polygen;
+		convert(poly, multi_poly_polygen);
+
+		multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_poly_polygen, op);
 	}
-	//===========================================================//
-	boost_multi_poly  Geometry::get_multi_poly()
-	{
-		return multi_poly;
-	}
-	//===========================================================//
-	bool Geometry::contain(Vec2d pnt, bool BOUNDARY_INCLUDED /*= true*/)
+	//=================================================================================================//
+	bool MultiPolygon::checkContain(Vec2d pnt, bool BOUNDARY_INCLUDED /*= true*/)
 	{
 		if (BOUNDARY_INCLUDED)
 		{
-			return covered_by(model::d2::point_xy<Real>(pnt[0], pnt[1]), multi_poly);
+			return covered_by(model::d2::point_xy<Real>(pnt[0], pnt[1]), multi_poly_);
 		}
 		else
 		{
-			return within(model::d2::point_xy<Real>(pnt[0], pnt[1]), multi_poly);
+			return within(model::d2::point_xy<Real>(pnt[0], pnt[1]), multi_poly_);
 		}
 	}
-	//===========================================================//
-	Vec2d Geometry::closestpointonface(Vec2d input_pnt)
+	//=================================================================================================//
+	Vec2d MultiPolygon::findClosestPoint(Vec2d input_pnt)
 	{
 		typedef model::d2::point_xy<Real> pnt_type;
 		typedef model::referring_segment<model::d2::point_xy<Real>> seg_type;
@@ -115,7 +158,7 @@ namespace SPH {
 				boost::geometry::set<1, 1>(closest_seg, y1);
 			}
 		};
-		boost::geometry::for_each_segment(multi_poly, findclosestsegment);
+		boost::geometry::for_each_segment(multi_poly_, findclosestsegment);
 
 		Vec2d p_find(0, 0);
 
@@ -141,119 +184,52 @@ namespace SPH {
 				p_find = p_0 + vec_v * c1 / c2;
 			}
 		}
-		
+
 		return p_find;
 	}
-	//===========================================================//
-	void Geometry::shapebound(Vec2d &lower_bound, Vec2d &upper_bound)
+	//=================================================================================================//
+	void MultiPolygon::findBounds(Vec2d& lower_bound, Vec2d& upper_bound)
 	{
 		typedef boost::geometry::model::box<model::d2::point_xy<Real>> box;
-		lower_bound[0] = boost::geometry::return_envelope<box>(multi_poly).min_corner().get<0>();
-		lower_bound[1] = boost::geometry::return_envelope<box>(multi_poly).min_corner().get<1>();
-		upper_bound[0] = boost::geometry::return_envelope<box>(multi_poly).max_corner().get<0>();
-		upper_bound[1] = boost::geometry::return_envelope<box>(multi_poly).max_corner().get<1>();
+		lower_bound[0] = boost::geometry::return_envelope<box>(multi_poly_).min_corner().get<0>();
+		lower_bound[1] = boost::geometry::return_envelope<box>(multi_poly_).min_corner().get<1>();
+		upper_bound[0] = boost::geometry::return_envelope<box>(multi_poly_).max_corner().get<0>();
+		upper_bound[1] = boost::geometry::return_envelope<box>(multi_poly_).max_corner().get<1>();
 	}
-	//===========================================================//
-	Region::Region(string region_name)
+	//=================================================================================================//
+	bool ComplexShape::checkContain(Vecd pnt, bool BOUNDARY_INCLUDED)
 	{
-		region_name_ = region_name;
+		return multi_ploygen_.checkContain(pnt, BOUNDARY_INCLUDED);
 	}
-	//===========================================================//
-	bool Region::contain(Vec2d pnt, bool BOUNDARY_INCLUDED /*= true*/)
+	//=================================================================================================//
+	Vec2d ComplexShape::findClosestPoint(Vec2d input_pnt)
 	{
-		return Geometry::contain(pnt);
+		return  multi_ploygen_.findClosestPoint(input_pnt);
 	}
-	//===========================================================//
-	void Region::closestpointonface(Vec2d input_pnt, Vec2d& closest_pnt, Real& phi)
+	//=================================================================================================//
+	void ComplexShape::findBounds(Vec2d& lower_bound, Vec2d& upper_bound)
 	{
-		closest_pnt = Geometry::closestpointonface(input_pnt);
-		Real phii = (closest_pnt - input_pnt).norm();
-		phi = contain(input_pnt) ? -phii : phii;
+		multi_ploygen_.findBounds(lower_bound, upper_bound);
 	}
-	//===========================================================//
-	void Region::regionbound(Vec2d &lower_bound, Vec2d &upper_bound)
+	//=================================================================================================//
+	void ComplexShape::addAMultiPolygon(MultiPolygon& multi_polygon, ShapeBooleanOps op)
 	{
-		Geometry::shapebound(lower_bound, upper_bound);
+		multi_ploygen_.addAMultiPolygon(multi_polygon, op);
 	}
-	//===========================================================//
-	void Region::add_geometry(Geometry *geometry, RegionBooleanOps op)
+	//=================================================================================================//
+	void ComplexShape::addABoostMultiPoly(boost_multi_poly& boost_multi_poly, ShapeBooleanOps op)
 	{
-		geometries.push_back(geometry);
-		geometryops.push_back(op);
+		multi_ploygen_.addABoostMultiPoly(boost_multi_poly, op);
 	}
-	//===========================================================//
-	void Region::add_polygon(std::vector<Point>& points, RegionBooleanOps op)
+	//=================================================================================================//
+	void ComplexShape::addAPolygon(std::vector<Point>& points, ShapeBooleanOps op)
 	{
-		Geometry * geometry = new Geometry(points);
-		geometries.push_back(geometry);
-		geometryops.push_back(op);
+		multi_ploygen_.addAPolygon(points, op);
 	}
-	//===========================================================//
-	void Region::add_circle(Vec2d center_, Real radius_, int resolution_, RegionBooleanOps op)
+	//=================================================================================================//
+	void ComplexShape::addACircle(Vec2d center, Real radius, int resolution, ShapeBooleanOps op)
 	{
-		Geometry * geometry = new Geometry(center_, radius_, resolution_);
-		geometries.push_back(geometry);
-		geometryops.push_back(op);
+		multi_ploygen_.addACircle(center, radius, resolution, op);
 	}
-	//===========================================================//
-	void Region::add_boost_multi_polygon(boost_multi_poly multi_poly_, RegionBooleanOps op)
-	{
-		Geometry * geometry = new Geometry(multi_poly_);
-		geometries.push_back(geometry);
-		geometryops.push_back(op);
-	}
-	//===========================================================//
-	void Region::done_modeling()
-	{
-		boost_multi_poly multi_poly_tmp_in = geometries[0]->get_multi_poly();
-
-		for (size_t i = 1; i < geometries.size(); ++i) {
-			//out multi-poly need to be emtpy
-			//otherwise the operation is not valid
-			boost_multi_poly multi_poly_tmp_out;
-
-			RegionBooleanOps boolean_op = geometryops[i];
-			switch (boolean_op)
-			{
-			case RegionBooleanOps::add: {
-				boost::geometry::union_(multi_poly_tmp_in,
-					geometries[i]->get_multi_poly(), multi_poly_tmp_out);
-				break;
-			}
-
-			case RegionBooleanOps::sub: {
-				boost::geometry::difference(multi_poly_tmp_in,
-					geometries[i]->get_multi_poly(), multi_poly_tmp_out);
-				break;
-			}
-			case RegionBooleanOps::sym_diff: {
-				boost::geometry::sym_difference(multi_poly_tmp_in,
-					geometries[i]->get_multi_poly(), multi_poly_tmp_out);
-				break;
-			}
-			case RegionBooleanOps::intersect: {
-				boost::geometry::intersection(multi_poly_tmp_in,
-					geometries[i]->get_multi_poly(), multi_poly_tmp_out);
-				break;
-			}
-			default:
-			{
-				std::cout << "\n FAILURE: the type of boolean operation is undefined!" << std::endl;
-				std::cout << "\n Please check the boost libraray reference." << std::endl;
-				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-				exit(1);
-				break;
-			}
-			}
-			multi_poly_tmp_in = multi_poly_tmp_out;
-		}
-
-		if (!is_valid(multi_poly_tmp_in)) {
-			std::cout << "\n FAILURE: the boolean operation of multi ploygen is not valid" << std::endl;
-			std::cout << "\n Please check the boost libraray reference." << std::endl;
-			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-			exit(1);
-		}
-		multi_poly = multi_poly_tmp_in;
-	}
+	//=================================================================================================//
 }

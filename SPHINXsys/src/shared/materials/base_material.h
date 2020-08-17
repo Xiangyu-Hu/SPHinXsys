@@ -4,17 +4,11 @@
  *		    A function in a derived material class returns a value with the inputs
  *          from the particle data.
  *			Basically, it is a interface from which
- *			one can access devirved material by dynamic cast.
+ *			one can access derived material by dynamic cast.
  *          Note that the derived material may have position dependent or 
  *          local properties.
 * @author	Chi Zhang and Xiangyu Hu
 * @version	0.1
-* @version  0.2.1
-*           Chi Zhang
-*			add the electrophysiology to muscle body.
-* @version  0.2.2
-*           Chi Zhang
-*           Add the electro-mechnaics and local properties of muscle material.
 */
 #pragma once
 #include <string>
@@ -32,7 +26,7 @@ namespace SPH {
 	/** @class  BaseMaterial
 	 *  @brief Base of all materials
 	 *  @details Note that the case dependent material properties will defined in 
-	 *  apliications.
+	 *  applications.
 	*/
 	class BaseMaterial
 	{
@@ -40,7 +34,7 @@ namespace SPH {
 		string material_name_;
 		/** inverse of dimension */
 		Real inv_dimension_;
-		/** base partilce information for defining local material properties*/
+		/** base particle information for defining local material properties*/
 		BaseParticles* base_particles_;
 
 		/** assign derived material properties*/
@@ -78,7 +72,7 @@ namespace SPH {
 
 
 	/** @class  Fluid
-	 *  @brief Base calss  of all fluids
+	 *  @brief Base class  of all fluids
 	*/
 	class Fluid : public BaseMaterial
 	{
@@ -119,40 +113,15 @@ namespace SPH {
 	};
 
 	/** @class  Solid
-	 *  @brief Base calss  of all solids
+	 *  @brief Base class  of all solids
 	*/
 	class Solid : public BaseMaterial
 	{
-	protected:
-		/** reference density */
-		Real rho_0_;
-		/** maximum colision speed */
-		Real collision_speed_max_;
-		/** for scalling the force between two colliding particles */
-		Real collision_potential_const_;
-		/** particles for this material */
-		SolidParticles* solid_particles_;
-
-		/** assign derived material properties*/
-		virtual void assignDerivedMaterialParameters() override {
-			BaseMaterial::assignDerivedMaterialParameters();
-			collision_potential_const_ = getCollisionPotentialConst(collision_speed_max_);
-		};
-
-		/** obtaine the constant based on assuminga a special equation of state,
-		    $p = rho^2 C$, where $C$ is the constant,
-			so that the particle interaction has the form of potential
-			force, so that the colliding force is pure microscipic */
-		Real getCollisionPotentialConst(Real collision_speed_max) {
-			Real sound_speed = 10.0 * collision_speed_max_;
-			return 2.0 * sound_speed * sound_speed / rho_0_;
-		};
 	public:
 		/** constructor with material name. */
-		Solid() : BaseMaterial(), rho_0_(1.0), collision_speed_max_(1.0),
-			collision_potential_const_(getCollisionPotentialConst(collision_speed_max_)), 
-			solid_particles_(NULL) {
-			material_name_ = "Soild";
+		Solid() : BaseMaterial(), rho_0_(1.0), collision_stiffness_(1.0),
+			collision_friction_(0.0), solid_particles_(NULL) {
+			material_name_ = "Solid";
 		};
 		virtual ~Solid() {};
 
@@ -162,8 +131,26 @@ namespace SPH {
 		};
 		/** Access to reference density. */
 		Real getReferenceDensity() { return rho_0_; };
+		Real getFriction() { return collision_friction_; };
+		Real getStiffness() { return collision_stiffness_; };
 		/** the interface for dynamical cast*/
 		virtual Solid* PointToThisObject() override { return this; };
+
+	protected:
+		/** reference density */
+		Real rho_0_;
+		/** artifical bulk modulus*/
+		Real collision_stiffness_;
+		/** friction property mimic fluid viscosity*/
+		Real collision_friction_;
+
+		/** particles for this material */
+		SolidParticles* solid_particles_;
+
+		/** assign derived material properties*/
+		virtual void assignDerivedMaterialParameters() override {
+			BaseMaterial::assignDerivedMaterialParameters();
+		};
 	};
 	
 }

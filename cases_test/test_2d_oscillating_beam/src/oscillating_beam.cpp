@@ -1,9 +1,9 @@
 /* ---------------------------------------------------------------------------*
-*            SPHinXsys: 2D oscilation beam example-one body version           *
+*            SPHinXsys: 2D oscillation beam example-one body version           *
 * ----------------------------------------------------------------------------*
 * This is the one of the basic test cases, also the first case for            *
-* understanding SPH method for solid similation.                              *
-* In this case, the constriant of the beam is implemented with                *
+* understanding SPH method for solid simulation.                              *
+* In this case, the constraint of the beam is implemented with                *
 * internal constrianed subregion.                                             *
 * ----------------------------------------------------------------------------*/
 /**
@@ -20,7 +20,7 @@ using namespace SPH;
 //------------------------------------------------------------------------------
 
 //for geometry
-Real PL = 0.2; 	//beam lenght
+Real PL = 0.2; 	//beam length
 Real PH = 0.02; //for thick plate; =0.01 for thin plate
 Real SL = 0.06; //depth of the insert
 //particle spacing, at least three particles
@@ -38,7 +38,7 @@ Real M = sin(kl) + sinh(kl);
 Real N = cos(kl) + cosh(kl);
 Real Q = 2.0 * (cos(kl)*sinh(kl) - sin(kl)*cosh(kl));
 Real vf = 0.05;
-Real R = PL / (0.5 * pi);
+Real R = PL / (0.5 * Pi);
 
 /**
 * @brief define geometry and initial conditions of SPH bodies
@@ -82,17 +82,11 @@ public:
 		int refinement_level, ParticlesGeneratorOps op)
 		: SolidBody(system, body_name, refinement_level, op)
 	{
-		/** Geometry defination. */
+		/** Geometry definition. */
 		std::vector<Point> beam_base_shape = CreatBeamBaseShape();
-		Geometry * beam_base_gemetry = new Geometry(beam_base_shape);
-		body_region_.add_geometry(beam_base_gemetry, RegionBooleanOps::add);
-
+		body_shape_.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
 		std::vector<Point> beam_shape = CreatBeamShape();
-		Geometry * beam_gemetry = new Geometry(beam_shape);
-		body_region_.add_geometry(beam_gemetry, RegionBooleanOps::add);
-
-		/** Finish the region modeling. */
-		body_region_.done_modeling();
+		body_shape_.addAPolygon(beam_shape, ShapeBooleanOps::add);
 	}
 };
 /**
@@ -144,19 +138,14 @@ public:
 	BeamBase(SolidBody *solid_body, string constrianed_region_name)
 		: BodyPartByParticle(solid_body, constrianed_region_name)
 	{
-		/* Geometry defination */
+		/* Geometry definition */
 		std::vector<Point> beam_base_shape = CreatBeamBaseShape();
-		Geometry * beam_base_gemetry = new Geometry(beam_base_shape);
-		body_part_region_.add_geometry(beam_base_gemetry, RegionBooleanOps::add);
+		body_part_shape_.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
 		std::vector<Point> beam_shape = CreatBeamShape();
-		Geometry * beam_gemetry = new Geometry(beam_shape);
-		body_part_region_.add_geometry(beam_gemetry, RegionBooleanOps::sub);
+		body_part_shape_.addAPolygon(beam_shape, ShapeBooleanOps::sub);
 
-		/** Finish the region modeling. */
-		body_part_region_.done_modeling();
-
-		//tag the constrained particle
-		TagBodyPartParticles();
+		//tag the particles within the body part
+		TagBodyPart();
 	}
 };
 
@@ -181,10 +170,10 @@ int main()
 	SPHSystem system(Vec2d(-SL - BW, -PL / 2.0), 
 		Vec2d(PL + 3.0*BW, PL / 2.0), particle_spacing_ref);
 
-	//the osillating beam
+	//the oscillating beam
 	Beam *beam_body = 
 		new Beam(system, "BeamBody", 0, ParticlesGeneratorOps::lattice);
-	//Configuration of soild materials
+	//Configuration of solid materials
 	BeamMaterial *beam_material = new BeamMaterial();
 	//creat particles for the elastic body
 	ElasticSolidParticles beam_particles(beam_body, beam_material);
@@ -194,12 +183,9 @@ int main()
 	//create observer particles
 	BaseParticles observer_particles(beam_observer);
 
-	//set body contact map
-	//the contact map gives the data conntections between the bodies
-	//basically the the range of bidies to build neighbor particle lists
-	SPHBodyTopology body_topology 
-		= { { beam_body, {} }, { beam_observer,{ beam_body} } };
-	system.SetBodyTopology(&body_topology);
+	/** topology */
+	SPHBodyInnerRelation* beam_body_inner = new SPHBodyInnerRelation(beam_body);
+	SPHBodyContactRelation* beam_observer_contact = new SPHBodyContactRelation(beam_observer, { beam_body });
 
 	//-----------------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
@@ -208,16 +194,16 @@ int main()
 	BeamInitialCondition beam_initial_velocity(beam_body);
 	//corrected strong configuration	
 	solid_dynamics::CorrectConfiguration
-		beam_corrected_configuration_in_strong_form(beam_body);
+		beam_corrected_configuration_in_strong_form(beam_body_inner);
 
-	//time step size caclutation
+	//time step size calculation
 	solid_dynamics::GetAcousticTimeStepSize computing_time_step_size(beam_body);
 
 	//stress relaxation for the beam
 	solid_dynamics::StressRelaxationFirstHalf
-		stress_relaxation_first_half(beam_body);
+		stress_relaxation_first_half(beam_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf
-		stress_relaxation_second_half(beam_body);
+		stress_relaxation_second_half(beam_body_inner);
 
 	/**
 	 * @brief Constrain a solid body part
@@ -232,9 +218,9 @@ int main()
 	WriteBodyStatesToVtu write_beam_states(in_output, system.real_bodies_);
 	WriteAnObservedQuantity<Vecd, BaseParticles,
 		BaseParticleData, &BaseParticles::base_particle_data_, &BaseParticleData::pos_n_>
-		write_beam_tip_displacement("Displacement", in_output, beam_observer, beam_body);
+		write_beam_tip_displacement("Displacement", in_output, beam_observer_contact);
 	/**
-	 * @brief Setup goematrics and initial conditions
+	 * @brief Setup geomtry and initial conditions
 	 */
 	system.InitializeSystemCellLinkedLists();
 	system.InitializeSystemConfigurations();
@@ -252,10 +238,10 @@ int main()
 	int ite = 0;
 	Real T0 = 1.0;
 	Real End_Time = T0;
-	//time step size for oupt file
+	//time step size for ouput file
 	Real D_Time = 0.01*T0;
 	Real Dt = 0.1*D_Time;			/**< Time period for data observing */
-	Real dt = 0.0; 					//default accoustic time step sizes
+	Real dt = 0.0; 					//default acoustic time step sizes
 
 	//statistics for computing time
 	tick_count t1 = tick_count::now();
@@ -264,9 +250,9 @@ int main()
 	//computation loop starts 
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
-		Real integeral_time = 0.0;
+		Real integration_time = 0.0;
 		//integrate time (loop) until the next output time
-		while (integeral_time < D_Time) {
+		while (integration_time < D_Time) {
 
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt) {
@@ -284,7 +270,7 @@ int main()
 				ite++;
 				dt = computing_time_step_size.parallel_exec();
 				relaxation_time += dt;
-				integeral_time += dt;
+				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
 		}

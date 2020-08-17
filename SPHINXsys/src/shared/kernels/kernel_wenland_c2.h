@@ -1,6 +1,6 @@
 /**
 * @file kernel_wenland_c2.h
-* @brief This is the classe Wenland kernel..
+* @brief This is the class for Wenland kernel.
 * @details  NThis kernel has compact support of 2h.
 * The smoothing length h can be variable when variable h functions are applied.
 * @author	Luhui Han, Chi ZHang and Xiangyu Hu

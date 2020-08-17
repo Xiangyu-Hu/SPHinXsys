@@ -14,8 +14,8 @@ namespace SPH
 		: Kernel(h, "Wendland2C")
 	{
 		factor_W_1D_ = inv_h_  * 5.0 / 8.0;
-		factor_W_2D_ = inv_h_ * inv_h_ * 7.0 / (4.0 * pi);
-		factor_W_3D_ = inv_h_ * inv_h_ * inv_h_ * 21.0 / (16.0 * pi);
+		factor_W_2D_ = inv_h_ * inv_h_ * 7.0 / (4.0 * Pi);
+		factor_W_3D_ = inv_h_ * inv_h_ * inv_h_ * 21.0 / (16.0 * Pi);
 		SetDerivativeFactors();
 	}
 	//=================================================================================================//

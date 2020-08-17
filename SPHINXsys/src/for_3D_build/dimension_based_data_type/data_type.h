@@ -4,9 +4,6 @@
 
 namespace SPH {
 
-	class CellList;
-	class BackgroundData;
-
 	//for 3d build
 	using Veci = Vec3i;
 	using Vecu = Vec3u;
@@ -16,15 +13,11 @@ namespace SPH {
 	using Matd = Mat3d;
 	using SymMatd = SymMat3d;
 
-	using matrix_i = int ***;
-	using Rotationd = SimTK::Real;
 	using Transformd = SimTK::Transform;
 
+	class CellList;
 	using matrix_cell = CellList ***;
-	using matrix_grid = BackgroundData ***;
 
 	template<class DataType>
 	using MeshDataMatrix = DataType***;
-	template<size_t PACK_SIZE, class DataType>
-	using MeshData = MeshData3<PACK_SIZE, DataType>;
 }

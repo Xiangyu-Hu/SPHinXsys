@@ -2,7 +2,7 @@
 * @file 	elastic_solid.h
 * @brief 	These are classes for define properties of elastic solid materials.
 *			These classes are based on isotropic linear elastic solid.
-* 			Several more complex materials, including mneo-hookean, FENE noe-hookean
+* 			Several more complex materials, including neo-hookean, FENE noe-hookean
 *			and anisotropic muscle, are derived from the basic elastic solid class.
 * @author	Xiangyu Hu and Chi Zhang
 * @version	0.1
@@ -49,8 +49,8 @@ namespace SPH {
 
 		/** assign particles to this material */
 		void assignElasticSolidParticles(ElasticSolidParticles* elastic_particles);
-		/** Access to reference sound speed. */
 		Real getReferenceSoundSpeed() { return c_0_; };
+		Real getPhysicalViscosity() { return eta_0_; };
 		/** the interface for dynamical cast*/
 		virtual ElasticSolid* PointToThisObject() override { return this; };
 		/**
@@ -64,24 +64,24 @@ namespace SPH {
 		/** Get numerical viscosity. */
 		virtual Real getNumericalViscosity(Real smoothing_length);
 		/**
-		 * @brief compute the stree through Constitutive relation.
-		 * @param[in] deform_grad defromation gradient
+		 * @brief compute the stress through Constitutive relation.
+		 * @param[in] deform_grad deformation gradient
 		 * @param[in] particle_index_i Particle index
 		 */
 		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) = 0;
 		/**
-		 * @brief Compute phsical and numerical damping stress.
+		 * @brief Compute physical and numerical damping stress.
 		 * @param[in] deform_grad 	Gradient of deformation.
 		 * @param[in] deform_grad_rate 	Rate of gradient of deformation.
-		 * @param[in] numerical_viscoisty numerical viscosity.
+		 * @param[in] numerical_viscosity numerical viscosity.
 		 * @param[in] particle_index_i 	Particle index.
 		 * */
-		virtual Matd DampingStress(Matd& deform_grad, Matd& deform_grad_rate, Real numerical_viscoisty, size_t particle_index_i);
+		virtual Matd NumericalDampingStress(Matd& deform_grad, Matd& deform_grad_rate, Real numerical_viscosity, size_t particle_index_i);
 	};
 
 	/**
 	* @class LinearElasticSolid
-	* @brief Isoptropic linear elastic solid
+	* @brief Isotropic linear elastic solid
 	*/
 	class LinearElasticSolid : public ElasticSolid
 	{
@@ -109,7 +109,7 @@ namespace SPH {
 
 		/** the speed of sound. */
 		virtual Real SetSoundSpeed() override;
-		/** Compute the stree through Constitutive relation. */
+		/** Compute the stress through Constitutive relation. */
 		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
 	};
 
@@ -128,8 +128,8 @@ namespace SPH {
 		/** the interface for dynamical cast*/
 		virtual NeoHookeanSolid* PointToThisObject() override { return this; };
 		/**
-		 * @brief compute the stree through Constitutive relation.
-		 * @param[in] deform_grad defromation gradient
+		 * @brief compute the stress through Constitutive relation.
+		 * @param[in] deform_grad deformation gradient
 		 * @param[in] particle_index_i Particle index
 		 */
 		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
@@ -153,8 +153,8 @@ namespace SPH {
 		/** the interface for dynamical cast*/
 		virtual FeneNeoHookeanSolid* PointToThisObject() override { return this; };
 		/**
-		 * @brief compute the stree through Constitutive relation.
-		 * @param[in] deform_grad defromation gradient
+		 * @brief compute the stress through Constitutive relation.
+		 * @param[in] deform_grad deformation gradient
 		 * @param[in] particle_index_i Particle index
 		 */
 		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
@@ -169,7 +169,7 @@ namespace SPH {
 	protected:
 		Vecd f0_, s0_; 				/**< Reference fiber and sheet directions. */
 		Matd f0f0_, s0s0_, f0s0_;	/**< Direct products of fiber and sheet directions. */
-		/** consitutive parameters */
+		/** constitutive parameters */
 		Real a_0_[4], b_0_[4];
 		/** reference stress to achieve weakly compressible condition */
 		Real bulk_modulus_;
@@ -193,7 +193,7 @@ namespace SPH {
 		virtual Matd getMuscleFiber(size_t particle_index_i) { return f0f0_; };
 		/** the interface for dynamical cast*/
 		virtual Muscle* PointToThisObject() override { return this; };
-		/** compute the stree through Constitutive relation. */
+		/** compute the stress through Constitutive relation. */
 		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
 	};
 
@@ -213,9 +213,9 @@ namespace SPH {
 			Muscle::assignDerivedMaterialParameters();
 		};
 	public:
-		/** lcoal fiber direction. */
+		/** local fiber direction. */
 		StdVec<Vecd> local_f0_;
-		/** lcoal sheet direction. */
+		/** local sheet direction. */
 		StdVec<Vecd> local_s0_;
 
 		/** Constructor */
@@ -234,7 +234,7 @@ namespace SPH {
 		 */
 		virtual void initializeLocalProperties(BaseParticles* base_particles) override;
 		/** 
-		 * @brief Compute the stree through Constitutive relation.
+		 * @brief Compute the stress through Constitutive relation.
 		 * @param[in] deform_grad Deformation tensor.
 		 * @param[in] particle_index_i Particle index.
 		 */

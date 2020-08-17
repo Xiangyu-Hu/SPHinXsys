@@ -12,7 +12,6 @@ namespace po = boost::program_options;
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
 #include "general_dynamics.h"
-#include "particle_dynamics_configuration.h"
 
 namespace SPH 
 {
@@ -21,57 +20,13 @@ namespace SPH
 	 */
 	class SPHBody;
 	class SPHSystem;
-	class SPHBodyContactRealtion;
-
-	/**
-	 * @class SPHBodySystem
-	 * @brief The base class managing SPH bodies in the system level.
-	 */
-	class SPHBodySystem
-	{
-		SPHSystem* sph_system_;
-	protected:
-		SPHBodyVector sph_bodies_;
-		StdVec<SPHBodyContactRealtion*> sph_body_contact_realtions_;
-
-	public:
-		SPHBodySystem(SPHSystem* sph_system);
-		virtual ~SPHBodySystem() {};
-
-		virtual bool addABody(SPHBody* sph_body);
-		void addBodies(SPHBodyVector sph_bodies);
-		void addSPHBodyContactRealtion(SPHBodyContactRealtion* sph_body_contact_realtion);
-
-		void updateCellLinkedList();
-	};
-
-	/**
-	 * @class SPHBodyCollisionSystem
-	 * @brief The base class managing SPH bodies in the system level.
-	 */
-	class SPHBodyCollisionSystem : public SPHBodySystem
-	{
-	protected:
-		StdVec<BodyLowerBound> sph_body_lower_bounds_;
-		StdVec<BodyUpperBound> sph_body_upper_bounds_;
-	public:
-		SPHBodyCollisionSystem(SPHSystem* sph_system)
-			: SPHBodySystem(sph_system) {};
-		virtual ~SPHBodyCollisionSystem() {};
-
-		virtual bool addABody(SPHBody* sph_body) override;
-		void updateBodyBound();
-	};
 
 	/**
 	 * @class SPHSystem
-	 * @brief The SPHsystem managing objects in the system level.
+	 * @brief The SPH system managing objects in the system level.
 	 */
 	class SPHSystem
 	{
-	protected:
-		StdVec<SPHBodySystem*> sph_body_systems_;
-
 	public:
 		/**
 		 * @brief Default constructor.
@@ -82,7 +37,7 @@ namespace SPH
 		 * @param[in] lower_bound Lower bound of the system computational domain.
 		 * @param[in] upper_bound Upper bound of the system computational domain.
 		 * @param[in] particle_spacing_ref Reference particle spacing.
-		 * @param[in] smoothinglength_ratio The Referncen ratio of smoothing length to particle spacing.
+		 * @param[in] smoothing_length_ratio The Reference ratio of smoothing length to particle spacing.
 		 */
  		SPHSystem(Vecd lower_bound, Vecd upper_bound, Real particle_spacing_ref, 
 			int number_of_threads = tbb::task_scheduler_init::automatic);
@@ -102,7 +57,6 @@ namespace SPH
 		SPHBodyVector bodies_;			/**< All sph bodies. */
 		SPHBodyVector fictitious_bodies_;/**< The bodies without inner particle configuration. */
 		SPHBodyVector real_bodies_;		/**< The bodies with inner particle configuration. */
-		SPHBodyTopology* body_topology_;	/**< SPH body topology. */
 
 		/** Add a new body to the SPH system. */
 		void AddBody(SPHBody* body);
@@ -110,15 +64,10 @@ namespace SPH
 		void AddRealBody(SPHBody* body);
 		/** Add a new body to the SPH fictitious bodies. */
 		void AddFictitiousBody(SPHBody* body);
-		/** Set up the body topology and allocate memeries 
-		  * for mesh cell linked lists and particle configurations. */
-		void SetBodyTopology(SPHBodyTopology* body_topology);
 		/** Initialize cell linked lists. */
 		void InitializeSystemCellLinkedLists();
 		/** Initialize particle interacting configurations. */
 		void InitializeSystemConfigurations();
-		/** Set up cell-linked list and configuration for simulation. */
-		void SetupSPHSimulation();
 
 		/** handle the commandline options*/
 		void handleCommandlineOptions(int ac, char* av[]);

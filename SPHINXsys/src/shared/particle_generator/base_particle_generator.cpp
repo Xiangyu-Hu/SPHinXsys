@@ -28,7 +28,7 @@ namespace SPH {
 		::CreateBaseParticles(BaseParticles* base_particles)
 	{
 		size_t number_of_particles = 0;
-		for (int i = 0; i < body_.body_input_points_volumes_.size(); ++i) 
+		for (size_t i = 0; i < body_.body_input_points_volumes_.size(); ++i) 
 		{
 			base_particles->InitializeABaseParticle(body_.body_input_points_volumes_[i].first,
 				body_.body_input_points_volumes_[i].second, 1.0 / body_.body_input_points_volumes_[i].second);

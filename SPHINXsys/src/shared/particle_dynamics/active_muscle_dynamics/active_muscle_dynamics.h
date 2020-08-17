@@ -42,16 +42,16 @@ namespace SPH
 		 * @brief Constriant a solid body part with a spring force with original position.
 		 */
 		class SpringConstrainMuscleRegion 
-			: public ConstraintByParticle<SolidBody, ActiveMuscleParticles, BodyPartByParticle>
+			: public PartDynamicsByParticle<SolidBody, ActiveMuscleParticles, BodyPartByParticle>
 		{
 		protected:
 			Vecd stiffness_;
 			virtual Vecd GetAcceleration(Vecd &disp, Real mass);
-			virtual void ConstraintAParticle(size_t index_particle_i,
+			virtual void Update(size_t index_particle_i,
 				Real dt = 0.0) override;
 		public:
 			SpringConstrainMuscleRegion(SolidBody *body, BodyPartByParticle*body_part)
-				: ConstraintByParticle<SolidBody, ActiveMuscleParticles, BodyPartByParticle>(body, body_part) {};
+				: PartDynamicsByParticle<SolidBody, ActiveMuscleParticles, BodyPartByParticle>(body, body_part) {};
 			virtual ~SpringConstrainMuscleRegion() {};
 			void setUpSpringStiffness(Vecd stiffness){stiffness_ = stiffness;}
 		};
@@ -60,18 +60,18 @@ namespace SPH
 		 * @brief impose activation stress on a solid body part
 		 */
 		class ImposingStress
-			: public ConstraintByParticle<SolidBody, ActiveMuscleParticles, SolidBodyPartForSimbody>
+			: public PartDynamicsByParticle<SolidBody, ActiveMuscleParticles, SolidBodyPartForSimbody>
 		{
 		protected:
 			/**
 			 * @brief the constrian will be specified by the application
 			 */
 			virtual Matd getStress(Vecd &pos) = 0;
-			virtual void ConstraintAParticle(size_t index_particle_i,
+			virtual void Update(size_t index_particle_i,
 				Real dt = 0.0) override;
 		public:
 			ImposingStress(SolidBody *body, SolidBodyPartForSimbody *body_part)
-				: ConstraintByParticle<SolidBody, ActiveMuscleParticles, SolidBodyPartForSimbody>(body, body_part) {};
+				: PartDynamicsByParticle<SolidBody, ActiveMuscleParticles, SolidBodyPartForSimbody>(body, body_part) {};
 			virtual ~ImposingStress() {};
 		};
     }

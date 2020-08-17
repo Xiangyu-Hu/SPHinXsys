@@ -11,21 +11,25 @@
 #include "elastic_solid.h"
 //=============================================================================================//
 namespace SPH {
-//=============================================================================================//
-	SolidParticleData::SolidParticleData(Vecd position)
-		: n_0_(0), n_(0), B_(1.0), vel_ave_(0), dvel_dt_ave_(0),
-		viscous_force_from_fluid_(0), force_from_fluid_(0)
+	//=================================================================================================//
+	SolidParticleData::SolidParticleData()
+		: rho_0_(1.0), rho_n_(rho_0_), mass_(rho_0_),
+		n_0_(0), n_(0), B_(1.0), vel_ave_(0), dvel_dt_ave_(0),
+		force_from_fluid_(0), viscous_force_from_fluid_(0)
 	{
-
 	}
-//=============================================================================================//
+	//=============================================================================================//
+	SolidParticleData::SolidParticleData(BaseParticleData& base_particle_data, Solid* solid)
+		: rho_0_(solid->getReferenceDensity()), rho_n_(rho_0_), mass_(rho_0_* base_particle_data.Vol_), 
+		n_0_(0), n_(0), B_(1.0), vel_ave_(0), dvel_dt_ave_(0),
+		force_from_fluid_(0), viscous_force_from_fluid_(0)
+	{
+	}
+	//=============================================================================================//
 	ElasticSolidParticleData::ElasticSolidParticleData(BaseParticleData &base_particle_data,
 		ElasticSolid *elastic_solid)
-		:F_(1.0), dF_dt_(0), stress_(0), mass_(1.0), pos_temp_(0)
+		:F_(1.0), dF_dt_(0), stress_(0), pos_temp_(0)
 	{
-		rho_0_ = elastic_solid->getReferenceDensity();
-		rho_n_ = rho_0_;
-		mass_ = rho_0_ *base_particle_data.Vol_;
 	}
 	//=============================================================================================//
 	SolidParticles::SolidParticles(SPHBody* body)
@@ -33,8 +37,7 @@ namespace SPH {
 	{
 		for (size_t i = 0; i < base_particle_data_.size(); ++i)
 		{
-			Point pnt = base_particle_data_[i].pos_n_;
-			solid_body_data_.push_back(SolidParticleData(pnt));
+			solid_body_data_.push_back(SolidParticleData());
 		}
 	}
 	//=============================================================================================//
@@ -45,7 +48,7 @@ namespace SPH {
 		for (size_t i = 0; i < base_particle_data_.size(); ++i)
 		{
 			Point pnt = base_particle_data_[i].pos_n_;
-			solid_body_data_.push_back(SolidParticleData(pnt));
+			solid_body_data_.push_back(SolidParticleData(base_particle_data_[i], solid));
 		}
 	}
 	//=============================================================================================//
@@ -63,6 +66,14 @@ namespace SPH {
 		BaseParticles::WriteParticlesToVtuFile(output_file);
 
 		size_t number_of_particles = body_->number_of_particles_;
+
+		output_file << "    <DataArray Name=\"Density\" type=\"Float32\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != number_of_particles; ++i) {
+			output_file << fixed << setprecision(9) << solid_body_data_[i].rho_n_ << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
 
 		output_file << "    <DataArray Name=\"NormalDirection\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
 		output_file << "    ";
@@ -100,7 +111,7 @@ namespace SPH {
 	void SolidParticles::AddABufferParticle()
 	{
 		BaseParticles::AddABufferParticle();
-		solid_body_data_.push_back(SolidParticleData(Vecd(0)));
+		solid_body_data_.push_back(SolidParticleData());
 	}
 	//===============================================================//
 	void SolidParticles
@@ -143,10 +154,10 @@ namespace SPH {
 		/** Nothing should be done for non-moving BCs. */
 	}
 	//=================================================================================================//	
-	Vecd SolidParticles::normalizeGradient(size_t particle_index_i, Vecd& gradient) 
+	Vecd SolidParticles::normalizeKernelGradient(size_t particle_index_i, Vecd& kernel_gradient) 
 	{
 		Matd&   B_i = solid_body_data_[particle_index_i].B_;
-		return  B_i * gradient;
+		return  B_i * kernel_gradient;
 	}
 	//=================================================================================================//
 	Vecd SolidParticles::getKernelGradient(size_t particle_index_i, size_t particle_index_j, Real dW_ij, Vecd& e_ij) 
@@ -188,14 +199,6 @@ namespace SPH {
 
 		size_t number_of_particles = body_->number_of_particles_;
 
-		output_file << "    <DataArray Name=\"Density\" type=\"Float32\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << fixed << setprecision(9) << elastic_body_data_[i].rho_n_ << " ";
-		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
-
 		output_file << "    <DataArray Name=\"von Mises stress\" type=\"Float32\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
@@ -216,8 +219,8 @@ namespace SPH {
 			restart_xml->AddAttributeToElement<Vecd>("Position", base_particle_data_[i].pos_n_);
 			restart_xml->AddAttributeToElement<Vecd>("InitialPosition", base_particle_data_[i].pos_0_);
 			restart_xml->AddAttributeToElement<Real>("Volume", base_particle_data_[i].Vol_);
-			restart_xml->AddAttributeToElement<Real>("Density", elastic_body_data_[i].rho_n_);
 			restart_xml->AddAttributeToElement<Vecd>("Velocity", base_particle_data_[i].vel_n_);
+			restart_xml->AddAttributeToElement<Real>("Density", solid_body_data_[i].rho_n_);
 			restart_xml->AddAttributeToElement<Vecd>("Displacement", elastic_body_data_[i].pos_temp_);
 			restart_xml->AddAttributeToElement("DefTensor", elastic_body_data_[i].F_);
 			restart_xml->AddElementToXmlDoc();
@@ -242,7 +245,7 @@ namespace SPH {
 			Vecd rst_vel_ = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Velocity");
 			base_particle_data_[number_of_particles].vel_n_ = rst_vel_;
 			Real rst_rho_n_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Density");
-			elastic_body_data_[number_of_particles].rho_n_ = rst_rho_n_;
+			solid_body_data_[number_of_particles].rho_n_ = rst_rho_n_;
 			Vecd rst_dis_ = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Displacement");
 			elastic_body_data_[number_of_particles].pos_temp_ = rst_dis_;
 			Matd rst_F_ = read_xml->GetRequiredAttributeMatrixValue(ele_ite_, "DefTensor");
@@ -256,7 +259,7 @@ namespace SPH {
 	{
 		active_muscle->assignActiveMuscleParticles(this);
 		for (size_t i = 0; i < base_particle_data_.size(); ++i)
-			active_muscle_data_.push_back(ActiveMuscleData());
+			active_muscle_data_.push_back(ActiveMuscleParticleData());
 	}
 	//=============================================================================================//
 	void ActiveMuscleParticles
@@ -303,8 +306,8 @@ namespace SPH {
 			restart_xml->AddAttributeToElement<size_t>("ID", i);
 			restart_xml->AddAttributeToElement<Vecd>("Position", base_particle_data_[i].pos_n_);
 			restart_xml->AddAttributeToElement<Real>("Volume", base_particle_data_[i].Vol_);
-			restart_xml->AddAttributeToElement<Real>("Density", elastic_body_data_[i].rho_n_);
 			restart_xml->AddAttributeToElement<Vecd>("Velocity", base_particle_data_[i].vel_n_);
+			restart_xml->AddAttributeToElement<Real>("Density", solid_body_data_[i].rho_n_);
 			restart_xml->AddAttributeToElement<Vecd>("Displacement", elastic_body_data_[i].pos_temp_);
 			restart_xml->AddAttributeToElement("DefTensor", elastic_body_data_[i].F_);
 			restart_xml->AddAttributeToElement<Real>("ActiveStress", active_muscle_data_[i].active_contraction_stress_);
@@ -328,7 +331,7 @@ namespace SPH {
 			Vecd rst_vel_ = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Velocity");
 			base_particle_data_[number_of_particles].vel_n_ = rst_vel_;
 			Real rst_rho_n_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Density");
-			elastic_body_data_[number_of_particles].rho_n_ = rst_rho_n_;
+			solid_body_data_[number_of_particles].rho_n_ = rst_rho_n_;
 			Vecd rst_dis_ = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Displacement");
 			elastic_body_data_[number_of_particles].pos_temp_ = rst_dis_;
 			Matd rst_F_ = read_xml->GetRequiredAttributeMatrixValue(ele_ite_, "DefTensor");

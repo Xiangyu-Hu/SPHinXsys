@@ -4,8 +4,9 @@ using namespace std;
 
 namespace SPH 
 {
-	Geometry::Geometry(string filepathname, Vec3d translation, Real scale_factor) 
-		: Shape("Geoemetry")
+	//=================================================================================================//
+	TriangleMeshShape::TriangleMeshShape(string filepathname, Vec3d translation, Real scale_factor)
+		: Shape("TriangleMeshShape")
 	{
 		if (!fs::exists(filepathname))
 		{
@@ -16,34 +17,34 @@ namespace SPH
 		SimTK::PolygonalMesh polymesh;
 		polymesh.loadStlFile(filepathname);
 		polymesh.scaleMesh(scale_factor);
-		triangle_mesh_ = TriangleMeshFromPolyMesh(polymesh.transformMesh(translation));
+		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(translation));
 	}
-
-	Geometry::Geometry(Vec3d halfsize, int resol, Vec3d translation) 
-		: Shape("Geoemetry")
+	//=================================================================================================//
+	TriangleMeshShape::TriangleMeshShape(Vec3d halfsize, int resol, Vec3d translation)
+		: Shape("TriangleMeshShape")
 	{
-		SimTK::PolygonalMesh polymesh = PolygonalMesh::createBrickMesh(halfsize, resol);
-		triangle_mesh_ = TriangleMeshFromPolyMesh(polymesh.transformMesh(translation));
+		SimTK::PolygonalMesh polymesh = SimTK::PolygonalMesh::createBrickMesh(halfsize, resol);
+		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(translation));
 	}
-
-	Geometry::Geometry(Real radius, int resol, Vec3d translation) 
-		: Shape("Geoemetry")
-	{
-		SimTK::PolygonalMesh polymesh 
-			= PolygonalMesh::createSphereMesh(radius, resol);
-		triangle_mesh_ = TriangleMeshFromPolyMesh(polymesh.transformMesh(translation));
-	}
-
-	Geometry::Geometry(SimTK::UnitVec3 axis, Real radius, Real halflength, int resol, Vec3d translation) 
-		: Shape("Geoemetry")
+	//=================================================================================================//
+	TriangleMeshShape::TriangleMeshShape(Real radius, int resol, Vec3d translation)
+		: Shape("TriangleMeshShape")
 	{
 		SimTK::PolygonalMesh polymesh 
-			= PolygonalMesh::createCylinderMesh(axis, radius, halflength, resol);
-		triangle_mesh_ = TriangleMeshFromPolyMesh(polymesh.transformMesh(translation));
+			= SimTK::PolygonalMesh::createSphereMesh(radius, resol);
+		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(translation));
 	}
-
-	SimTK::ContactGeometry::TriangleMesh* Geometry
-		::TriangleMeshFromPolyMesh(SimTK::PolygonalMesh &ploy_mesh)
+	//=================================================================================================//
+	TriangleMeshShape::TriangleMeshShape(SimTK::UnitVec3 axis, Real radius, Real halflength, int resol, Vec3d translation)
+		: Shape("TriangleMeshShape")
+	{
+		SimTK::PolygonalMesh polymesh 
+			= SimTK::PolygonalMesh::createCylinderMesh(axis, radius, halflength, resol);
+		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(translation));
+	}
+	//=================================================================================================//
+	SimTK::ContactGeometry::TriangleMesh* TriangleMeshShape
+		::generateTriangleMesh(SimTK::PolygonalMesh &ploy_mesh)
 	{
 		SimTK::ContactGeometry::TriangleMesh *triangle_mesh;
 		triangle_mesh = new SimTK::ContactGeometry::TriangleMesh(ploy_mesh);
@@ -55,14 +56,14 @@ namespace SPH
 
 		return triangle_mesh;
 	}
-
-	bool Geometry::contain(Vec3d pnt, bool BOUNDARY_INCLUDED /*= true*/)
+	//=================================================================================================//
+	bool TriangleMeshShape::checkContain(Vec3d pnt, bool BOUNDARY_INCLUDED)
 	{
 
 		SimTK::Vec2 uv_coordinate;
 		bool inside = false;
 		int face_id;
-		Vec3d closest_pnt = triangle_mesh_->findNearestPoint(pnt, inside,face_id, uv_coordinate);
+		Vec3d closest_pnt = triangle_mesh_->findNearestPoint(pnt, inside, face_id, uv_coordinate);
 
 		vector<int> neigbor_face(4);
 		neigbor_face[0] = face_id;
@@ -76,10 +77,10 @@ namespace SPH
 		Vec3d from_face_to_pnt = pnt - closest_pnt;
 		Real sum_weights = 0.0;
 		Real weigthed_dot_product = 0.0;
-		for(int i = 0; i < 4; i++) {
+		for (int i = 0; i < 4; i++) {
 			SimTK::UnitVec3 normal_direction = triangle_mesh_->getFaceNormal(neigbor_face[i]);
 			Real dot_product = dot(normal_direction, from_face_to_pnt);
-			Real weight = dot_product* dot_product;
+			Real weight = dot_product * dot_product;
 			weigthed_dot_product += weight * dot_product;
 			sum_weights += weight;
 		}
@@ -87,9 +88,9 @@ namespace SPH
 		weigthed_dot_product /= sum_weights;
 
 		bool weighted_inside = false;
-		if(weigthed_dot_product < 0.0) weighted_inside = true;
+		if (weigthed_dot_product < 0.0) weighted_inside = true;
 
-		if (face_id < 0 && face_id > triangle_mesh_->getNumFaces()) 
+		if (face_id < 0 && face_id > triangle_mesh_->getNumFaces())
 		{
 			std::cout << "\n Error the nearest point is not valid" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -98,8 +99,8 @@ namespace SPH
 
 		return weighted_inside;
 	}
-
-	Vec3d Geometry::closestpointonface(Vec3d input_pnt)
+	//=================================================================================================//
+	Vec3d TriangleMeshShape::findClosestPoint(Vec3d input_pnt)
 	{
 		bool inside = false;
 		int face_id;
@@ -114,25 +115,25 @@ namespace SPH
 		}
 		return closest_pnt;
 	}
-
-	void Geometry::shapebound(Vec3d &lower_bound, Vec3d &upper_bound)
+	//=================================================================================================//
+	void TriangleMeshShape::findBounds(Vec3d &lower_bound, Vec3d &upper_bound)
 	{
-		size_t number_of_vertices = triangle_mesh_->getNumVertices();
+		int number_of_vertices = triangle_mesh_->getNumVertices();
 		//initial reference values
-		lower_bound = Vec3d(1.0e15);
-		upper_bound = Vec3d(-1.0e15);
+		lower_bound = Vec3d(Infinity);
+		upper_bound = Vec3d(-Infinity);
 
-		for (size_t i = 0; i != number_of_vertices; ++i)
+		for (int i = 0; i != number_of_vertices; ++i)
 		{
 			Vec3d vertex_position = triangle_mesh_->getVertexPosition(i);
-			for (size_t j = 0; j != 3; ++j) {
+			for (int j = 0; j != 3; ++j) {
 				lower_bound[j] = SMIN(lower_bound[j], vertex_position[j]);
 				upper_bound[j] = SMAX(upper_bound[j], vertex_position[j]);
 			}
 		}
 	}
-
-	void Geometry::writePolygonalVertices(int poly_id, string out_folder)
+	//=================================================================================================//
+	void TriangleMeshShape::writePolygonalVertices(int poly_id, string out_folder)
 	{
 		std::string filefullpath = out_folder + "/Polygonalmesh_" + std::to_string(poly_id) + ".plt";
 		if (fs::exists(filefullpath))
@@ -155,33 +156,28 @@ namespace SPH
 		}
 		out_file.close();
 	}
-
-	Region::Region(string region_name)
-	{
-		region_name_ = region_name;
-	}
-
-	bool Region::contain(Vec3d pnt, bool BOUNDARY_INCLUDED /*= true*/)
+	//=================================================================================================//
+	bool ComplexShape::checkContain(Vec3d pnt, bool BOUNDARY_INCLUDED)
 	{
 		bool exist = false;
 		bool inside = false;
 		
-		for (auto& Rshape : shapes)
+		for (auto& Rshape : triangle_mesh_shapes_)
 		{
-			RegionBooleanOps opstring = Rshape.second;
-			Geometry* sp = Rshape.first;
+			ShapeBooleanOps opstring = Rshape.second;
+			TriangleMeshShape* sp = Rshape.first;
 
 			switch (opstring)
 			{
-			case RegionBooleanOps::add:
+			case ShapeBooleanOps::add:
 			{
-				inside = sp->contain(pnt);
+				inside = sp->checkContain(pnt);
 				exist = exist || inside;
 				break;
 			}
-			case RegionBooleanOps::sub:
+			case ShapeBooleanOps::sub:
 			{
-				inside = sp->contain(pnt);
+				inside = sp->checkContain(pnt);
 				exist = exist && (!inside);
 				break;
 			}
@@ -196,130 +192,95 @@ namespace SPH
 		}
 		return exist;
 	}
-
-	void Region::closestpointonface(Vec3d input_pnt, Vec3d& closest_pnt, Real& phi)
+	//=================================================================================================//
+	Vec3d ComplexShape::findClosestPoint(Vec3d input_pnt)
 	{
 		//a big positive number
-		Real large_number(1.0e15);
-		phi = large_number;
+		Real large_number(Infinity);
 		Real dist_min = large_number;
 		Vec3d pnt_closest(0);
 		Vec3d pnt_found(0);
 
-		for (auto& Rshape : shapes)
+		for (auto& Rshape : triangle_mesh_shapes_)
 		{
-			Geometry* sp = Rshape.first;
-			pnt_found  = sp->closestpointonface(input_pnt);
+			TriangleMeshShape* sp = Rshape.first;
+			pnt_found  = sp->findClosestPoint(input_pnt);
 			Real dist = (input_pnt - pnt_found).norm();
 
 			if(dist <= dist_min)
 			{
 				dist_min = dist;
 				pnt_closest = pnt_found;
-				phi = (input_pnt - pnt_closest).norm();
 			}
 		}
 
-		phi = contain(input_pnt) ? -phi : phi;
-		closest_pnt = pnt_closest;
+		return pnt_closest;
 	}
-
-	void Region::add_geometry(Geometry *geometry, RegionBooleanOps op)
+	//=================================================================================================//
+	void ComplexShape::addTriangleMeshShape(TriangleMeshShape* triangle_mesh_shape, ShapeBooleanOps op)
 	{
-		geometries.push_back(geometry);
-		geometryops.push_back(op);
+		pair<TriangleMeshShape*, ShapeBooleanOps> shape_and_op(triangle_mesh_shape, op);
+		triangle_mesh_shapes_.push_back(shape_and_op);
 	}
-
-	void Region::add_brick(Vec3d halfsize, int resol, Vec3d translation, RegionBooleanOps op)
+	//=================================================================================================//
+	void ComplexShape::addBrick(Vec3d halfsize, int resol, Vec3d translation, ShapeBooleanOps op)
 	{
-		Geometry *geometry = new Geometry(halfsize, resol, translation);
-		geometries.push_back(geometry);
-		geometryops.push_back(op);
+		TriangleMeshShape* triangle_mesh_shape = new TriangleMeshShape(halfsize, resol, translation);
+		pair<TriangleMeshShape*, ShapeBooleanOps> shape_and_op(triangle_mesh_shape, op);
+		triangle_mesh_shapes_.push_back(shape_and_op);
 	}
-
-	void Region::add_sphere(Real radius, int resol, Vec3d translation, RegionBooleanOps op)
+	//=================================================================================================//
+	void ComplexShape::addSphere(Real radius, int resol, Vec3d translation, ShapeBooleanOps op)
 	{
-		Geometry *geometry = new Geometry(radius, resol, translation);
-		geometries.push_back(geometry);
-		geometryops.push_back(op);
+		TriangleMeshShape* triangle_mesh_shape = new TriangleMeshShape(radius, resol, translation);
+		pair<TriangleMeshShape*, ShapeBooleanOps> shape_and_op(triangle_mesh_shape, op);
+		triangle_mesh_shapes_.push_back(shape_and_op);
 	}
-
-	void Region::add_cylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resol, Vec3d translation, RegionBooleanOps op)
+	//=================================================================================================//
+	void ComplexShape::addCylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resol, Vec3d translation, ShapeBooleanOps op)
 	{
-		Geometry *geometry = new Geometry(axis, radius, halflength, resol, translation);
-		geometries.push_back(geometry);
-		geometryops.push_back(op);
+		TriangleMeshShape* triangle_mesh_shape = new TriangleMeshShape(axis, radius, halflength, resol, translation);
+		pair<TriangleMeshShape*, ShapeBooleanOps> shape_and_op(triangle_mesh_shape, op);
+		triangle_mesh_shapes_.push_back(shape_and_op);
 	}
-
-	void Region::add_from_STL_file(string file_path_name, Vec3d translation, Real scale_factor, RegionBooleanOps op)
+	//=================================================================================================//
+	void ComplexShape::addFormSTLFile(string file_path_name, Vec3d translation, Real scale_factor, ShapeBooleanOps op)
 	{
-		Geometry *geometry = new Geometry(file_path_name, translation, scale_factor);
-		geometries.push_back(geometry);
-		geometryops.push_back(op);
+		TriangleMeshShape* triangle_mesh_shape = new TriangleMeshShape(file_path_name, translation, scale_factor);
+		pair<TriangleMeshShape*, ShapeBooleanOps> shape_and_op(triangle_mesh_shape, op);
+		triangle_mesh_shapes_.push_back(shape_and_op);
 	}
-
-	void Region::add_region(Region *region, RegionBooleanOps op)
+	//=================================================================================================//
+	void ComplexShape::addComplexShape(ComplexShape* complex_shape, ShapeBooleanOps op)
 	{
 		switch (op)
 		{
-		case RegionBooleanOps::add:
+		case ShapeBooleanOps::add:
 		{
-			for (auto& Rshape : region->shapes)
+			for (auto& shape_and_op : complex_shape->triangle_mesh_shapes_)
 			{
-				Geometry* sp = Rshape.first;
-				RegionBooleanOps opstring = Rshape.second;
-
-				geometries.push_back(sp);
-				geometryops.push_back(opstring);
+				triangle_mesh_shapes_.push_back(shape_and_op);
 			}
 			break;
 		}
-		case RegionBooleanOps::sub:
+		case ShapeBooleanOps::sub:
 		{
-			for (auto& Rshape : region->shapes)
+			for (auto& shape_and_op : complex_shape->triangle_mesh_shapes_)
 			{
-				Geometry* sp = Rshape.first;
-				RegionBooleanOps opstring = Rshape.second;
+				TriangleMeshShape* sp = shape_and_op.first;
+				ShapeBooleanOps opstring 
+					= shape_and_op.second == ShapeBooleanOps::add ? ShapeBooleanOps::sub : ShapeBooleanOps::add;
+				pair<TriangleMeshShape*, ShapeBooleanOps> substract_shape_and_op(sp, opstring);
 
-				geometries.push_back(sp);
-				opstring == RegionBooleanOps::add ?
-				geometryops.push_back(RegionBooleanOps::sub) 
-					: geometryops.push_back(RegionBooleanOps::add);
+				triangle_mesh_shapes_.push_back(substract_shape_and_op);
 			}
 			break;
 		}
 		}
 	}
-
-	void Region::done_modeling()
+	//=================================================================================================//
+	void ComplexShape::writePolygonalVertices()
 	{
-		int faultyShapes = 0;
-		bool flag = false;
-		for (int i = 0; i < geometries.size(); i++)
-		{
-			if (flag == false)
-			{
-				if (geometryops[i] == RegionBooleanOps::add)
-				{
-					flag = true;
-				}
-				else
-				{
-					faultyShapes++;
-				}
-			}
-
-			if (flag == true)
-			{
-				shapes.push_back(std::pair<Geometry*, RegionBooleanOps>(geometries[i], geometryops[i]));
-			}
-		}
-		if (faultyShapes > 0) 
-		{
-			std::cout << "Warning: The first " << faultyShapes << " sub-shapes used to construct reagion '" << region_name_
-				<< "' will be neglected as their boolean operations are BodyBooleanOps::sub!" << std::endl;
-		}
-
 		output_folder_ = "./ploymesh";
 		if (fs::exists(output_folder_))
 		{
@@ -330,27 +291,28 @@ namespace SPH
 			fs::create_directory(output_folder_);
 		}
 
-		for (int i = 0; i < shapes.size(); i++)
+		for (int i = 0; i < triangle_mesh_shapes_.size(); i++)
 		{
-			Geometry* sp = shapes[i].first;
+			TriangleMeshShape* sp = triangle_mesh_shapes_[i].first;
 			sp->writePolygonalVertices(i, output_folder_);
 		}
 	}
-
-	void Region::regionbound(Vec3d &lower_bound, Vec3d &upper_bound)
+	//=================================================================================================//
+	void ComplexShape::findBounds(Vec3d &lower_bound, Vec3d &upper_bound)
 	{
 		//initial reference values
-		lower_bound = Vec3d(1.0e15);
-		upper_bound = Vec3d(-1.0e15);
+		lower_bound = Vec3d(Infinity);
+		upper_bound = Vec3d(-Infinity);
 
-		for (int i = 0; i < geometries.size(); i++)
+		for (int i = 0; i < triangle_mesh_shapes_.size(); i++)
 		{
 			Vec3d shape_lower_bound(0), shape_upper_bound(0);
-			geometries[i]->shapebound(shape_lower_bound, shape_upper_bound);
-			for (size_t j = 0; j != 3; ++j) {
+			triangle_mesh_shapes_[i].first->findBounds(shape_lower_bound, shape_upper_bound);
+			for (int j = 0; j != 3; ++j) {
 				lower_bound[j] = SMIN(lower_bound[j], shape_lower_bound[j]);
 				upper_bound[j] = SMAX(upper_bound[j], shape_upper_bound[j]);
 			}
 		}
 	}
+	//=================================================================================================//
 }

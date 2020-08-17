@@ -36,7 +36,7 @@ class FluidBlock : public FluidBody
 			pnts.push_back(Point(-DL / 6.0, 0.5*DH));
 			pnts.push_back(Point(-DL / 6.0, - 0.5*DH));
 			pnts.push_back(Point(-0.5*DL, -0.5*DH));
-			body_region_.add_polygon(pnts, RegionBooleanOps::add);
+			body_shape_.addAPolygon(pnts, ShapeBooleanOps::add);
 
 			std::vector<Point> pnts1;
 			pnts1.push_back(Point(-DL/6.0 - BW, -0.5*DT));
@@ -44,7 +44,7 @@ class FluidBlock : public FluidBody
 			pnts1.push_back(Point(DL / 6.0 + BW, 0.5*DT));
 			pnts1.push_back(Point(DL / 6.0 + BW, - 0.5*DT));
 			pnts1.push_back(Point(-DL / 6.0 - BW, -0.5*DT));
-			body_region_.add_polygon(pnts1, RegionBooleanOps::add);
+			body_shape_.addAPolygon(pnts1, ShapeBooleanOps::add);
 
 			std::vector<Point> pnts2;
 			pnts2.push_back(Point(DL/6.0, -0.5*DH));
@@ -52,10 +52,7 @@ class FluidBlock : public FluidBody
 			pnts2.push_back(Point(0.5*DL, 0.5*DH));
 			pnts2.push_back(Point(0.5*DL, -0.5*DH));
 			pnts2.push_back(Point(DL / 6.0, -0.5*DH));
-			body_region_.add_polygon(pnts2, RegionBooleanOps::add);
-
-			//finish the region modeling
-			body_region_.done_modeling();
+			body_shape_.addAPolygon(pnts2, ShapeBooleanOps::add);
 		}
 };
 /**
@@ -75,7 +72,7 @@ public:
 		assignDerivedMaterialParameters();
 	}
 };
-//define the static solid wall boudary
+//define the static solid wall boundary
 class WallBoundary : public SolidBody
 {
 public:
@@ -89,7 +86,7 @@ public:
 		pnts3.push_back(Point(0.5*DL + BW, 0.5*DH + BW));
 		pnts3.push_back(Point(0.5*DL + BW, -0.5*DH - BW));
 		pnts3.push_back(Point(-0.5*DL - BW, -0.5*DH - BW));
-		body_region_.add_polygon(pnts3, RegionBooleanOps::add);
+		body_shape_.addAPolygon(pnts3, ShapeBooleanOps::add);
 
 		std::vector<Point> pnts;
 		pnts.push_back(Point(-0.5*DL - 2.0*BW, -0.5*DH));
@@ -97,7 +94,7 @@ public:
 		pnts.push_back(Point(-DL / 6.0, 0.5*DH));
 		pnts.push_back(Point(-DL / 6.0, -0.5*DH));
 		pnts.push_back(Point(-0.5*DL - 2.0*BW, -0.5*DH));
-		body_region_.add_polygon(pnts, RegionBooleanOps::sub);
+		body_shape_.addAPolygon(pnts, ShapeBooleanOps::sub);
 
 		std::vector<Point> pnts1;
 		pnts1.push_back(Point(-DL / 6.0 - BW, -0.5*DT));
@@ -105,7 +102,7 @@ public:
 		pnts1.push_back(Point(DL / 6.0 + BW, 0.5*DT));
 		pnts1.push_back(Point(DL / 6.0 + BW, -0.5*DT));
 		pnts1.push_back(Point(-DL / 6.0 - BW, -0.5*DT));
-		body_region_.add_polygon(pnts1, RegionBooleanOps::sub);
+		body_shape_.addAPolygon(pnts1, ShapeBooleanOps::sub);
 
 		std::vector<Point> pnts2;
 		pnts2.push_back(Point(DL / 6.0, -0.5*DH));
@@ -113,11 +110,7 @@ public:
 		pnts2.push_back(Point(0.5*DL + 2.0*BW, 0.5*DH));
 		pnts2.push_back(Point(0.5*DL + 2.0*BW, -0.5*DH));
 		pnts2.push_back(Point(DL / 6.0, -0.5*DH));
-		body_region_.add_polygon(pnts2, RegionBooleanOps::sub);
-
-		//finish the region modeling
-		body_region_.done_modeling();
-
+		body_shape_.addAPolygon(pnts2, ShapeBooleanOps::sub);
 	}
 };
 
@@ -145,13 +138,10 @@ int main()
 		= new WallBoundary(system, "Wall", 0, ParticlesGeneratorOps::lattice);
 	//creat solid particles
 	SolidParticles solid_particles(wall_boundary);
-
-	//set body contact map
-	//the contact map gives the data conntections between the bodies
-	//basically the the rang of bidies to build neighbor particle lists
-	SPHBodyTopology body_topology 
-		= { { fluid_block, { wall_boundary} },	{ wall_boundary, { } } };
-	system.SetBodyTopology(&body_topology);
+	/** topology */
+	SPHBodyInnerRelation* fluid_block_inner = new SPHBodyInnerRelation(fluid_block);
+	SPHBodyComplexRelation* fluid_block_complex = new SPHBodyComplexRelation(fluid_block_inner, { wall_boundary });
+	SPHBodyComplexRelation* wall_complex = new SPHBodyComplexRelation(wall_boundary, {});
 
 	//-------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
@@ -161,7 +151,7 @@ int main()
 	//methods only used only once
 	//-------------------------------------------------------------------
 	//initialize normal direction of the wall boundary
-	solid_dynamics::NormalDirectionSummation get_wall_normal(wall_boundary, {});
+	solid_dynamics::NormalDirectionSummation get_wall_normal(wall_complex);
 
 	//-------------------------------------------------------------------
 	//methods used for time stepping
@@ -175,39 +165,26 @@ int main()
 	
 	//evaluation of density by summation approach
 	fluid_dynamics::DensityBySummation
-		update_fluid_desnity(fluid_block, { wall_boundary });
+		update_fluid_density(fluid_block_complex);
 	//time step size without considering sound wave speed
-	fluid_dynamics::GetAdvectionTimeStepSize	get_fluid_adevction_time_step_size(fluid_block, U_f);
+	fluid_dynamics::GetAdvectionTimeStepSize	get_fluid_advection_time_step_size(fluid_block, U_f);
 	//time step size with considering sound wave speed
 	fluid_dynamics::GetAcousticTimeStepSize		get_fluid_time_step_size(fluid_block);
 	//pressure relaxation using verlet time stepping
 	fluid_dynamics::PressureRelaxationFirstHalfOldroyd_B
-		pressure_relaxation_first_half(fluid_block, { wall_boundary});
+		pressure_relaxation_first_half(fluid_block_complex);
 	fluid_dynamics::PressureRelaxationSecondHalfOldroyd_B
-		pressure_relaxation_second_half(fluid_block, { wall_boundary });
+		pressure_relaxation_second_half(fluid_block_complex);
 
-	//-------- common paritcle dynamics ----------------------------------------
+	//-------- common particle dynamics ----------------------------------------
 	InitializeATimeStep 	initialize_a_fluid_step(fluid_block, &gravity);
 	//computing viscous acceleration
-	fluid_dynamics::ComputingViscousAcceleration
-		viscous_acceleration(fluid_block, { wall_boundary});
+	fluid_dynamics::ComputingViscousAcceleration viscous_acceleration(fluid_block_complex);
 	//impose transport velocity
-	fluid_dynamics::TransportVelocityCorrection
-		transport_velocity_correction(fluid_block, { wall_boundary });
+	fluid_dynamics::TransportVelocityFormulation transport_velocity_formulation(fluid_block_complex);
 	//computing vorticity in the flow
 	fluid_dynamics::ComputingVorticityInFluidField
-		compute_vorticity(fluid_block);
-
-	//-------------------------------------------------------------------
-	//methods used for updating data structure
-	//-------------------------------------------------------------------
-	//update the cell linked list of bodies when neccessary
-	ParticleDynamicsCellLinkedList
-		update_water_block_cell_linked_list(fluid_block);
-	//update the configuration of bodies when neccessary
-	ParticleDynamicsConfiguration
-		update_water_block_configuration(fluid_block);
-
+		compute_vorticity(fluid_block_inner);
 	//-----------------------------------------------------------------------------
 	//outputs
 	//-----------------------------------------------------------------------------
@@ -224,13 +201,10 @@ int main()
 	//which copies the particle identifies
 	//as extra cell linked list form 
 	//periodic regions to the corresponding boundaries
-	//for buiding up of extra configuration
+	//for building up of extra configuration
 	system.InitializeSystemCellLinkedLists();
 	periodic_condition.parallel_exec();
 	system.InitializeSystemConfigurations();
-	//update configuration after periodic boundary condition
-	update_water_block_configuration.parallel_exec();
-
 
 	//prepare quantities will be used once only
 	get_wall_normal.parallel_exec();
@@ -241,10 +215,10 @@ int main()
 	int number_of_iterations = 0;
 	int screen_output_interval = 100;
 	Real End_Time = 100.0;
-	//time step size for oupt file
+	//time step size for ouput file
 	Real D_Time = End_Time/100.0;
 	Real Dt = 0.0;//default advection time step sizes
-	Real dt = 0.0; //default accoustic time step sizes
+	Real dt = 0.0; //default acoustic time step sizes
 
 	//statistics for computing time
 	tick_count t1 = tick_count::now();
@@ -253,15 +227,15 @@ int main()
 	//computation loop starts 
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
-		Real integeral_time = 0.0;
+		Real integration_time = 0.0;
 		//integrate time (loop) until the next output time
-		while (integeral_time < D_Time) {
+		while (integration_time < D_Time) {
 
 			initialize_a_fluid_step.parallel_exec();
-			Dt = get_fluid_adevction_time_step_size.parallel_exec();
-			update_fluid_desnity.parallel_exec();
+			Dt = get_fluid_advection_time_step_size.parallel_exec();
+			update_fluid_density.parallel_exec();
 			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec(Dt);
+			transport_velocity_formulation.correction_.parallel_exec(Dt);
 
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt) {
@@ -272,7 +246,7 @@ int main()
 				dt = get_fluid_time_step_size.parallel_exec();
 				if ((relaxation_time + dt) >= Dt) dt = Dt - relaxation_time;
 				relaxation_time += dt;
-				integeral_time += dt;
+				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
 
@@ -284,11 +258,11 @@ int main()
 			}
 			number_of_iterations++;
 
-			//water block confifuration and periodic constion
+			//water block configuration and periodic condition
 			periodic_bounding.parallel_exec();
-			update_water_block_cell_linked_list.parallel_exec();
+			system.InitializeSystemCellLinkedLists();
 			periodic_condition.parallel_exec();
-			update_water_block_configuration.parallel_exec();
+			system.InitializeSystemConfigurations();
 		}
 
 		tick_count t2 = tick_count::now();

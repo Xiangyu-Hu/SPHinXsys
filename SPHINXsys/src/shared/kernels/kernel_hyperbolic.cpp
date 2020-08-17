@@ -1,5 +1,5 @@
 /**
- * @file 	kerel_hyperbolic.cpp
+ * @file 	kernel_hyperbolic.cpp
  * @author	Luhui Han, Chi ZHang, Yongchuan Yu and Xiangyu Hu
  * @version	0.1
  */
@@ -15,8 +15,8 @@ namespace SPH
 		: Kernel(h, "Hyperbolic")
 	{
 		factor_W_1D_ = inv_h_ / 7.0;
-		factor_W_2D_ = inv_h_ * inv_h_ / (3.0 * pi);
-		factor_W_3D_ = inv_h_ * inv_h_ * inv_h_ * 15.0 / (62.0 * pi);
+		factor_W_2D_ = inv_h_ * inv_h_ / (3.0 * Pi);
+		factor_W_3D_ = inv_h_ * inv_h_ * inv_h_ * 15.0 / (62.0 *Pi);
 		SetDerivativeFactors();
 	}
 	//=================================================================================================//

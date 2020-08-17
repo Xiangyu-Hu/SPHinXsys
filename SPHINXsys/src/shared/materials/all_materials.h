@@ -1,5 +1,5 @@
 /**
-* @file 	all_material.h
+* @file 	all_materials.h
 * @brief 	This is the header file that user code should include to pick up all
 *           material
 * @author	Xiangyu Hu and Chi Zhang

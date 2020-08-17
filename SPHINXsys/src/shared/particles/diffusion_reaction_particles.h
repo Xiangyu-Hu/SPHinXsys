@@ -35,7 +35,7 @@ namespace SPH {
 		StdVec<Real> species_n_;
 		/** intermediate state for multi-step time integration */
 		StdVec<Real> species_s_;
-		/** The array of the time drivative. */
+		/** The array of the time derivative. */
 		StdVec<Real>  dspecies_dt_;
 	};
 

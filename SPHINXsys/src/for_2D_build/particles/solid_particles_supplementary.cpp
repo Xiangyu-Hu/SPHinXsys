@@ -29,9 +29,9 @@ namespace SPH {
 //=================================================================================================//
 	Real ElasticSolidParticles::von_Mises_stress(size_t particle_i)
 	{
-		ElasticSolidParticleData &elastic_data_i
-			= elastic_body_data_[particle_i];
-		Real J = elastic_data_i.rho_0_ / elastic_data_i.rho_n_;
+		SolidParticleData& solid_body_data_i = solid_body_data_[particle_i];
+		ElasticSolidParticleData &elastic_data_i = elastic_body_data_[particle_i];
+		Real J = solid_body_data_i.rho_0_ / solid_body_data_i.rho_n_;
 		Mat2d F = elastic_data_i.F_;
 		Mat2d stress = elastic_data_i.stress_;
 		Mat2d sigma = (F* stress*~F) / J;

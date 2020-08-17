@@ -12,9 +12,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	FluidParticleData::FluidParticleData()
-		: p_(0.0), rho_0_(1.0), rho_n_(1.0), mass_(1.0),
-		drho_dt_(0.0), dvel_dt_trans_(0), vel_trans_(0),
-		vorticity_(0) 
+		: p_(0.0), rho_0_(1.0), rho_n_(1.0), mass_(1.0), drho_dt_(0.0), vorticity_(0) 
 		
 	{
 
@@ -22,15 +20,13 @@ namespace SPH
 	//=================================================================================================//
 	FluidParticleData::FluidParticleData(BaseParticleData &base_particle_data, Fluid *fluid)
 		: p_(0.0), rho_0_(fluid->ReinitializeRho(p_)), rho_n_(rho_0_),
-		mass_(base_particle_data.Vol_* rho_0_),
-		drho_dt_(0.0), dvel_dt_trans_(0), vel_trans_(0),
-		vorticity_(0)
+		mass_(base_particle_data.Vol_* rho_0_), drho_dt_(0.0), vorticity_(0)
 	{
 	
 	}
 	//=================================================================================================//
 	FluidParticles::FluidParticles(SPHBody *body, Fluid* fluid)
-		: BaseParticles(body, fluid), signal_speed_max_(0.0)
+		: BaseParticles(body, fluid)
 	{
 		fluid->assignFluidParticles(this);
 		for (size_t i = 0; i < base_particle_data_.size(); ++i) {
@@ -74,7 +70,6 @@ namespace SPH
 	{
 		BaseParticles::mirrorInAxisDirection(particle_index_i, body_bound, axis_direction);
 		FluidParticleData& fluid_particle_data_i = fluid_particle_data_[particle_index_i];
-		fluid_particle_data_i.vel_trans_[axis_direction] *= -1.0;
 	}
 	//=================================================================================================//
 	void FluidParticles::WriteParticlesToVtuFile(ofstream& output_file)
@@ -142,7 +137,6 @@ namespace SPH
 			base_particle_data_[number_of_particles].vel_n_ = rst_vel_;
 			Real rst_rho_n_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Density");
 			fluid_particle_data_[number_of_particles].rho_n_ = rst_rho_n_;
-			fluid_particle_data_[number_of_particles].vel_trans_(0);
 			base_particle_data_[number_of_particles].dvel_dt_(0);
 			number_of_particles++;
 		}

@@ -16,6 +16,7 @@ namespace SPH {
 	//=================================================================================================//
 	void InitializeATimeStep::setupDynamics(Real dt)
 	{
+		body_->setNewlyUpdated();
 		particles_->number_of_ghost_particles_ = 0;
 	}
 	//=================================================================================================//
@@ -46,9 +47,13 @@ namespace SPH {
 	//=================================================================================================//
 	BoundingBodyDomain
 		::BoundingBodyDomain(SPHBody* body)
-		: ParticleDynamics(body)
+		: ParticleDynamics(body),
+		cell_linked_lists_(mesh_cell_linked_list_->CellLinkedLists()),
+		number_of_cells_(mesh_cell_linked_list_->NumberOfCells()),
+		cell_spacing_(mesh_cell_linked_list_->CellSpacing()),
+		mesh_lower_bound_(mesh_cell_linked_list_->MeshLowerBound())
 	{
-		body_->BodyBounds(body_lower_bound_, body_upper_bound_);
+		body_->findBodyShapeBounds(body_lower_bound_, body_upper_bound_);
 		SetCellBounds();
 	}
 	//=================================================================================================//
@@ -101,7 +106,7 @@ namespace SPH {
 		{
 			Vecd translated_position = particle_position + periodic_translation_;
 			/** insert ghost particle to cell linked list */
-			mesh_cell_linked_list_->InsertACellLinkedListEntry(index_particle_i, translated_position);
+			mesh_cell_linked_list_->InsertACellLinkedListDataEntry(index_particle_i, translated_position);
 		}
 	}
 	//=================================================================================================//
@@ -113,7 +118,7 @@ namespace SPH {
 		{
 			Vecd translated_position = particle_position - periodic_translation_;
 			/** insert ghost particle to cell linked list */
-			mesh_cell_linked_list_->InsertACellLinkedListEntry(index_particle_i, translated_position);
+			mesh_cell_linked_list_->InsertACellLinkedListDataEntry(index_particle_i, translated_position);
 		}
 	}
 	//=================================================================================================//
@@ -177,7 +182,7 @@ namespace SPH {
 			particles_->mirrorInAxisDirection(expected_particle_index, body_lower_bound_, axis_);
 			Vecd translated_position = particles_->base_particle_data_[expected_particle_index].pos_n_;
 			/** insert ghost particle to cell linked list */
-			mesh_cell_linked_list_->InsertACellLinkedListEntry(expected_particle_index, translated_position);
+			mesh_cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
 		}
 	}
 	//=================================================================================================//
@@ -196,7 +201,7 @@ namespace SPH {
 			particles_->mirrorInAxisDirection(expected_particle_index, body_upper_bound_, axis_);
 			Vecd translated_position = particles_->base_particle_data_[expected_particle_index].pos_n_;
 			/** insert ghost particle to cell linked list */
-			mesh_cell_linked_list_->InsertACellLinkedListEntry(expected_particle_index, translated_position);
+			mesh_cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
 		}
 	}
 	//=================================================================================================//
@@ -256,6 +261,13 @@ namespace SPH {
 		BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 
 		return base_particle_data_i.pos_n_[0];
+	}
+	//=================================================================================================//
+	Real MaximumSpeed::ReduceFunction(size_t index_particle_i, Real dt)
+	{
+		BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
+
+		return base_particle_data_i.vel_n_.norm();
 	}
 	//=================================================================================================//
 	Vecd BodyLowerBound::ReduceFunction(size_t index_particle_i, Real dt)

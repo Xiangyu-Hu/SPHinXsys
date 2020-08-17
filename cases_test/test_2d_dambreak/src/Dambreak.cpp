@@ -1,8 +1,8 @@
 /**
  * @file 	Dambreak.cpp
- * @brief 	2D dambreak exaple.
+ * @brief 	2D dambreak example.
  * @details This is the one of the basic test cases, also the first case for
- * 			understanding SPH method for fluid similation.
+ * 			understanding SPH method for fluid simulation.
  * @author 	Luhui Han, Chi Zhang and Xiangyu Hu
  * @version 0.1
  */
@@ -40,17 +40,14 @@ public:
 		int refinement_level, ParticlesGeneratorOps op)
 		: FluidBody(sph_system, body_name, refinement_level, op)
 	{
-		/** Geomerty definition. */
+		/** Geomtry definition. */
 		std::vector<Point> water_block_shape;
 		water_block_shape.push_back(Point(0.0, 0.0));
 		water_block_shape.push_back(Point(0.0, LH));
 		water_block_shape.push_back(Point(LL, LH));
 		water_block_shape.push_back(Point(LL, 0.0));
 		water_block_shape.push_back(Point(0.0, 0.0));
-		Geometry *water_block_geometry = new Geometry(water_block_shape);
-		body_region_.add_geometry(water_block_geometry, RegionBooleanOps::add);
-
-		body_region_.done_modeling();
+		body_shape_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
 	}
 };
 /**
@@ -79,15 +76,14 @@ public:
 		int refinement_level, ParticlesGeneratorOps op)
 		: SolidBody(sph_system, body_name, refinement_level, op)
 	{
-		/** Geomerty definition. */
+		/** Geomtry definition. */
 		std::vector<Point> outer_wall_shape;
 		outer_wall_shape.push_back(Point(-BW, -BW));
 		outer_wall_shape.push_back(Point(-BW, DH + BW));
 		outer_wall_shape.push_back(Point(DL + BW, DH + BW));
 		outer_wall_shape.push_back(Point(DL + BW, -BW));
 		outer_wall_shape.push_back(Point(-BW, -BW));
-		Geometry *outer_wall_geometry = new Geometry(outer_wall_shape);
-		body_region_.add_geometry(outer_wall_geometry, RegionBooleanOps::add);
+		body_shape_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
 
 		std::vector<Point> inner_wall_shape;
 		inner_wall_shape.push_back(Point(0.0, 0.0));
@@ -95,10 +91,7 @@ public:
 		inner_wall_shape.push_back(Point(DL, DH));
 		inner_wall_shape.push_back(Point(DL, 0.0));
 		inner_wall_shape.push_back(Point(0.0, 0.0));
-		Geometry *inner_wall_geometry = new Geometry(inner_wall_shape);
-		body_region_.add_geometry(inner_wall_geometry, RegionBooleanOps::sub);
-
-		body_region_.done_modeling();
+		body_shape_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 	}
 };
 /**
@@ -146,14 +139,11 @@ int main()
 	FluidObserver *fluid_observer 
 		= new FluidObserver(sph_system, "Fluidobserver", 0, ParticlesGeneratorOps::direct);
 	BaseParticles 	observer_particles(fluid_observer);
-	/**
-	 * @brief 	Body contact map.
-	 * @details The contact map gives the data conntections between the bodies.
-	 * 			Basically the the rang of bidies to build neighbor particle lists.
-	 */
-	SPHBodyTopology 	body_topology = { { water_block, { wall_boundary } },
-										  { wall_boundary, {} },{ fluid_observer,{ water_block} } };
-	sph_system.SetBodyTopology(&body_topology);
+
+	/** topology */
+	SPHBodyComplexRelation* water_block_complex_relation = new SPHBodyComplexRelation(water_block, { wall_boundary });
+	SPHBodyComplexRelation* wall_complex_relation = new SPHBodyComplexRelation(wall_boundary, {});
+	SPHBodyContactRelation* fluid_observer_contact_relation = new SPHBodyContactRelation(fluid_observer, { water_block });
 
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
@@ -164,7 +154,7 @@ int main()
 	  * @brief 	Methods used only once.
 	  */
 	/** Initialize normal direction of the wall boundary. */
-	solid_dynamics::NormalDirectionSummation 	get_wall_normal(wall_boundary, {});
+	solid_dynamics::NormalDirectionSummation 	get_wall_normal(wall_complex_relation);
 	/**
 	 * @brief 	Methods used for time stepping.
 	 */
@@ -174,26 +164,17 @@ int main()
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
 	 /** Evaluation of density by summation approach. */
-	fluid_dynamics::DensityBySummationFreeSurface 		update_fluid_density(water_block, { wall_boundary });
+	fluid_dynamics::DensityBySummationFreeSurface 		update_fluid_density(water_block_complex_relation);
 	/** Time step size without considering sound wave speed. */
-	fluid_dynamics::GetAdvectionTimeStepSize 			get_fluid_adevction_time_step_size(water_block, U_max);
+	fluid_dynamics::GetAdvectionTimeStepSize 			get_fluid_advection_time_step_size(water_block, U_max);
 	/** Time step size with considering sound wave speed. */
 	fluid_dynamics::GetAcousticTimeStepSize get_fluid_time_step_size(water_block);
 	/** Pressure relaxation algorithm by using position verlet time stepping. */
 	fluid_dynamics::PressureRelaxationFirstHalfRiemann 
-		pressure_relaxation_first_half(water_block, { wall_boundary });
+		pressure_relaxation_first_half(water_block_complex_relation);
 	fluid_dynamics::PressureRelaxationSecondHalfRiemann 
-		pressure_relaxation_second_half(water_block, { wall_boundary });
-	/**
-	 * @brief 	Methods used for updating data structure.
-	 */
-	 /** Update the cell linked list of bodies when neccessary. */
-	ParticleDynamicsCellLinkedList			update_cell_linked_list(water_block);
-	/** Update the configuration of bodies when neccessary. */
-	ParticleDynamicsConfiguration 			update_particle_configuration(water_block);
-	/** Update the interact configuration of bodies when neccessary. */
-	ParticleDynamicsInteractionConfiguration 	
-		update_observer_interact_configuration(fluid_observer, { water_block });
+		pressure_relaxation_second_half(water_block_complex_relation);
+
 	/**
 	 * @brief Output.
 	 */
@@ -208,7 +189,7 @@ int main()
 	/** output the observed data from fluid body. */
 	WriteAnObservedQuantity<Real, FluidParticles,
 		FluidParticleData, &FluidParticles::fluid_particle_data_, &FluidParticleData::p_>
-		write_recorded_water_pressure("Pressure", in_output, fluid_observer, water_block);
+		write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact_relation);
 
 	/** Pre-simulation*/
 	sph_system.InitializeSystemCellLinkedLists();
@@ -222,8 +203,8 @@ int main()
 	if (sph_system.restart_step_ != 0)
 	{
 		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(sph_system.restart_step_);
-		update_cell_linked_list.parallel_exec();
-		update_particle_configuration.parallel_exec();
+		water_block->UpdateCellLinkedList();
+		water_block_complex_relation->updateConfiguration();
 	}
 
 	/** Output the start states of bodies. */
@@ -239,7 +220,7 @@ int main()
 	Real End_Time = 20.0; 	/**< End time. */
 	Real D_Time = 0.1;		/**< Time stamps for output of body states. */
 	Real Dt = 0.0;			/**< Default advection time step sizes. */
-	Real dt = 0.0; 			/**< Default accoustic time step sizes. */
+	Real dt = 0.0; 			/**< Default acoustic time step sizes. */
 	/** statistics for computing CPU time. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
@@ -253,14 +234,14 @@ int main()
 	 */
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
-		Real integeral_time = 0.0;
+		Real integration_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
-		while (integeral_time < D_Time)
+		while (integration_time < D_Time)
 		{
 			/** Acceleration due to viscous force and gravity. */
 			time_instance = tick_count::now();
 			initialize_a_fluid_step.parallel_exec();
-			Dt = get_fluid_adevction_time_step_size.parallel_exec();
+			Dt = get_fluid_advection_time_step_size.parallel_exec();
 			update_fluid_density.parallel_exec();
 			interval_computing_time_step += tick_count::now() - time_instance;
 
@@ -273,7 +254,7 @@ int main()
 				pressure_relaxation_second_half.parallel_exec(dt);
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
-				integeral_time += dt;
+				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 
 			}
@@ -292,9 +273,9 @@ int main()
 
 			/** Update cell linked list and configuration. */
 			time_instance = tick_count::now();
-			update_cell_linked_list.parallel_exec();
-			update_particle_configuration.parallel_exec();
-			update_observer_interact_configuration.parallel_exec();
+			water_block->UpdateCellLinkedList();
+			water_block_complex_relation->updateConfiguration();
+			fluid_observer_contact_relation->updateConfiguration();
 			interval_updating_configuration += tick_count::now() - time_instance;
 		}
 

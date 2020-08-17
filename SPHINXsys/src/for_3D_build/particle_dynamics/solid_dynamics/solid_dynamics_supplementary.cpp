@@ -39,27 +39,25 @@ namespace SPH
 			solid_data_i.n_ = R * solid_data_i.n_0_;
 		}
 		//=================================================================================================//
-		void ConstrianSoildBodyPartBySimBody
-			::ConstraintAParticle(size_t index_particle_i,
-				Real dt)
+		void ConstrianSolidBodyPartBySimBody::Update(size_t index_particle_i, Real dt)
 		{
 
 		}
-
-		SpatialVec ForceOnSolidBodyPartForSimBody
+		//=================================================================================================//
+		SimTK::SpatialVec ForceOnSolidBodyPartForSimBody
 			::ReduceFunction(size_t index_particle_i, Real dt)
 		{
 			cout << "\n This function is not done in 3D. Exit the program! \n";
 			exit(0);
-			return SpatialVec(Vec3(0), Vec3(0));
+			return SimTK::SpatialVec(Vec3(0), Vec3(0));
 		}
-
-		SpatialVec ForceOnElasticBodyPartForSimBody
+		//=================================================================================================//
+		SimTK::SpatialVec ForceOnElasticBodyPartForSimBody
 			::ReduceFunction(size_t index_particle_i, Real dt)
 		{
 			cout << "\n This function is not done in 3D. Exit the program! \n";
 			exit(0);
-			return SpatialVec(Vec3(0), Vec3(0));
+			return SimTK::SpatialVec(Vec3(0), Vec3(0));
 		}
 		//=================================================================================================//	
 	}

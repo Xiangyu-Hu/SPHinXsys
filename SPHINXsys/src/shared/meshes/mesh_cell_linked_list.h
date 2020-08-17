@@ -1,6 +1,6 @@
 /**
 * @file mesh_cell_linked_list.h
-* @brief Here gives the classes for managing cell linked lists. This is the baic class 
+* @brief Here gives the classes for managing cell linked lists. This is the basic class 
 * for building the particle configurations.
 * @details  The cell linked list saves for each body a list of particles
 * located within the cell.
@@ -26,21 +26,15 @@ namespace SPH {
 	class CellList
 	{
 	public:
-		/** the saved lists currently using concurrent vectors
-		 * due to writting conflicts when building the lists */
-		ConcurrentListDataVector particle_data_lists_;
-		/** the index vector for itreate particles in a split scheme. */
+		/** using concurrent vectors due to writting conflicts when building the list */
+		ConcurrentIndexVector concurrent_particle_indexes_;
+		/** non-concurrent cell linked list rewritten for building neighbor list */
+		CellListDataVector cell_list_data_;
+		/** the index vector for iterate particles in a split scheme. */
 		IndexVector real_particle_indexes_;
-		Vecu cell_location_;
-		size_t real_particle_count_;
 
 		CellList();
 		~CellList() {};
-
-		/**Initialize cell information. */
-		void setCellInformation(Vecu cell_location) {
-			cell_location_ = cell_location;
-		};
 	};
 
 	/**
@@ -52,7 +46,6 @@ namespace SPH {
 	protected:
 		SPHBody* body_;
 		BaseParticles* base_particles_;
-		SPHBodyContactMap contact_map_;
 		Kernel* kernel_;
 
 		/** clear the cell lists */
@@ -62,6 +55,8 @@ namespace SPH {
 		/** update split particle list in this mesh */
 		void UpdateSplitCellLists(SplitCellLists& split_cell_lists,
 			Vecu& number_of_cells, matrix_cell cell_linked_lists);
+		/** update cell linked list data in this mesh */
+		void UpdateCellListData(matrix_cell cell_linked_lists);
 	public:
 		/** The buffer size 2 used to expand computational domian for particle searching. */
 		BaseMeshCellLinkedList(SPHBody* body, Vecd lower_bound, Vecd upper_bound, 
@@ -69,47 +64,34 @@ namespace SPH {
 		/** Constructor with the direct information of the mesh. */
 		BaseMeshCellLinkedList(SPHBody* body, 
 			Vecd mesh_lower_bound, Vecu number_of_cells, Real cell_spacing);
-		/**In the destructor, the dynamically located memeory is released.*/
+		/**In the destructor, the dynamically located memory is released.*/
 		virtual ~BaseMeshCellLinkedList() {};
 
 		/** computing search range for building contact configuration */
-		int ComputingSearchRage(int orign_refinement_level,
+		int ComputingSearchRage(int origin_refinement_level,
 			int target_refinement_level);
 		/** choose a kernel for building up inter refinement level configuration */
-		Kernel& ChoosingKernel(Kernel* orignal_kernel, Kernel* target_kernel);
+		Kernel& ChoosingKernel(Kernel* original_kernel, Kernel* target_kernel);
 		/** get the address of cell list */
-		virtual CellList* getCellList(Vecu cell_index) = 0;
+		virtual CellList* CellListFormIndex(Vecu cell_index) = 0;
 		/** Get the array for of mesh cell linked lists.*/
-		virtual matrix_cell getCellLinkedLists() = 0;
+		virtual matrix_cell CellLinkedLists() = 0;
 
 		/** Assign base particles to the mesh cell linked list. */
 		void assignParticles(BaseParticles* base_particles);
-		/** Assign contact map to the mesh cell linked list. */
-		void assignContactMap(SPHBodyContactMap contact_map);
 		/** Assign kernel to the mesh cell linked list. */
 		void reassignKernel(Kernel* kernel);
 		/** allcate memories for mesh data */
-		virtual void AllocateMeshDataMatrix() = 0;
+		virtual void allocateMeshDataMatrix() = 0;
 		/** delete memories for mesh data */
-		virtual void DeleteMeshDataMatrix() = 0;
+		virtual void deleteMeshDataMatrix() = 0;
 
 		/** update the cell lists */
 		virtual void UpdateCellLists() = 0;
 
-		/** build reference inner configurtion */
-		virtual void BuildInnerConfiguration(ParticleConfiguration& inner_configuration);
-		/** build reference contact configuration */
-		virtual void BuildContactConfiguration();
-		/** update contact configuration */
-		virtual void UpdateContactConfiguration();
-
-		/** update inner configuration */
-		virtual void UpdateInnerConfiguration(ParticleConfiguration& inner_configuration) = 0;
-		/** update interaction configuration */
-		virtual void UpdateInteractionConfiguration(SPHBodyVector interacting_bodies) = 0;
-
 		/** Insert a cell-linked_list entry. */
-		virtual void InsertACellLinkedListEntry(size_t particle_index, Vecd particle_position) = 0;
+		virtual void InsertACellLinkedParticleIndex(size_t particle_index, Vecd particle_position) = 0;
+		virtual void InsertACellLinkedListDataEntry(size_t particle_index, Vecd particle_position) = 0;
 	};
 
 	/**
@@ -132,33 +114,29 @@ namespace SPH {
 		/** direct construct with mesh information. */
 		MeshCellLinkedList(SPHBody* body, Vecd mesh_lower_bound,
 			Vecu number_of_cells, Real cell_spacing);
-		/**In the destructor, the dynamically located memeory is released.*/
-		virtual ~MeshCellLinkedList() { DeleteMeshDataMatrix(); };
+		/**In the destructor, the dynamically located memory is released.*/
+		virtual ~MeshCellLinkedList() { deleteMeshDataMatrix(); };
 
 		/** access protected members */
-		virtual CellList* getCellList(Vecu cell_index) override;
+		virtual CellList* CellListFormIndex(Vecu cell_index) override;
 		/** Get the array for of mesh cell linked lists.*/
-		virtual matrix_cell getCellLinkedLists() override { return cell_linked_lists_; };
+		virtual matrix_cell CellLinkedLists() override { return cell_linked_lists_; };
 
 		/** allcate memories for mesh data */
-		virtual void AllocateMeshDataMatrix() override;
+		virtual void allocateMeshDataMatrix() override;
 		/** delete memories for mesh data */
-		virtual void DeleteMeshDataMatrix() override;
+		virtual void deleteMeshDataMatrix() override;
 
 		/** update the cell lists */
 		virtual void UpdateCellLists() override;
 
-		/** update inner configuration */
-		virtual void UpdateInnerConfiguration(ParticleConfiguration& inner_configuration) override;
-		/** update interaction configuration */
-		virtual void UpdateInteractionConfiguration(SPHBodyVector interacting_bodies) override;
-
-		/** output mesh data for visuallization */
-		virtual void WriteMeshToVtuFile(ofstream &output_file) override {};
-		virtual void WriteMeshToPltFile(ofstream &output_file) override {};
+		/** output mesh data for visualization */
+		virtual void writeMeshToVtuFile(ofstream &output_file) override {};
+		virtual void writeMeshToPltFile(ofstream &output_file) override {};
 
 		/** Insert a cell-linked_list entry. */
-		void InsertACellLinkedListEntry(size_t particle_index, Vecd particle_position) override;
+		void InsertACellLinkedParticleIndex(size_t particle_index, Vecd particle_position) override;
+		void InsertACellLinkedListDataEntry(size_t particle_index, Vecd particle_position) override;
 	};
 
 	/**
@@ -176,7 +154,7 @@ namespace SPH {
 		StdVec<Real> cell_spacing_levels_;
 		/** number of cells by dimension */
 		StdVec<Vecu> number_of_cells_levels_;
-		/** split cell list for building confifuration.*/
+		/** split cell list for building configuration.*/
 		StdVec<SplitCellLists> split_cell_lists_levels_;
 		/** Projected cell linked lists for building configuration.*/
 		StdVec<MeshDataMatrix<CellList>> cell_linked_lists_levels_;
@@ -185,33 +163,32 @@ namespace SPH {
 
 		/** determine mesh level of a particle. */
 		size_t getLevelFromCutOffRadius(Real smoothing_length);
-		/** find cell indexes from point poistion in a level */
+		/** find cell indexes from point position in a level */
 		Vecu getLevelCellIndexesFromPosition(Vecd& position, size_t level);
-		/** Insert a cell-linked_list entry to the preojected particle list. */
+		/** Insert a cell-linked_list entry to the projected particle list. */
 		void InsertACellLinkedListEntryAtALevel(size_t particle_index, Vecd& position, Vecu& cell_index, size_t level);
 	public:
 		/** Constructor to achieve alignment of all mesh levels. */
 		MultilevelMeshCellLinkedList(SPHBody* body, Vecd lower_bound, Vecd upper_bound,
 			Real reference_cell_spacing, size_t total_levels = 1, size_t buffer_size = 2);
-		/**In the destructor, the dynamically located memeory is released.*/
+		/**In the destructor, the dynamically located memory is released.*/
 		virtual ~MultilevelMeshCellLinkedList() {};
 
 		/** access protected members */
-		virtual CellList* getCellList(Vecu cell_index) override;
+		virtual CellList* CellListFormIndex(Vecu cell_index) override;
 		/** Get the array for of mesh cell linked lists.*/
-		virtual matrix_cell getCellLinkedLists() override { return cell_linked_lists_levels_[0]; };
+		virtual matrix_cell CellLinkedLists() override { return cell_linked_lists_levels_[0]; };
 
 		/** allcate memories for mesh data */
-		virtual void AllocateMeshDataMatrix() override;
+		virtual void allocateMeshDataMatrix() override;
 		/** delete memories for mesh data */
-		virtual void DeleteMeshDataMatrix() override;
+		virtual void deleteMeshDataMatrix() override;
 
 		/** update the cell lists */
 		virtual void UpdateCellLists() override;
-		/** update inner configuration */
-		virtual void UpdateInnerConfiguration(ParticleConfiguration& inner_configuration) override;
 
-		/** Insert a cell-linked_list entry to the preojected particle list. */
-		void InsertACellLinkedListEntry(size_t particle_index, Vecd particle_position) override;
+		/** Insert a cell-linked_list entry to the projected particle list. */
+		void InsertACellLinkedParticleIndex(size_t particle_index, Vecd particle_position) override;
+		void InsertACellLinkedListDataEntry(size_t particle_index, Vecd particle_position) override {};
 	};
 }

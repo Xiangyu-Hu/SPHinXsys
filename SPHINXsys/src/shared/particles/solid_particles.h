@@ -28,19 +28,24 @@ namespace SPH {
 	class SolidParticleData 
 	{
 	public:
+		/** default constructor */
+		SolidParticleData();
 		/** in constructor, set the particle at rest*/
-		SolidParticleData(Vecd position);
+		SolidParticleData(BaseParticleData& base_particle_data, Solid* solid);
 		virtual ~SolidParticleData() {};
 
+		/** mass, reference density and current density. */
+		Real rho_0_, rho_n_, mass_;
 		/** Inital position, and inital and current normal direction. */
 		Vecd n_0_, n_;
 		/** Linear reproducing configuration correction. */
 		Matd B_;
+	
 		/** fluid time-step averaged particle velocity and acceleration,
 		  * or applying fluid structure interaction. */
 		Vecd vel_ave_, dvel_dt_ave_;	
 		/** Forces from fluid. */
-		Vecd force_from_fluid_, viscous_force_from_fluid_;	
+		Vecd force_from_fluid_, viscous_force_from_fluid_;
 	};
 
 	/**
@@ -54,9 +59,7 @@ namespace SPH {
 			ElasticSolid *elastic_solid);
 		virtual ~ElasticSolidParticleData() {};
 
-		/** mass, reference density and current density. */
-		Real mass_, rho_0_, rho_n_;	
-		/** elastic body strain varaibles, deformation tensor. */
+		/** elastic body strain variables, deformation tensor. */
 		Matd F_, dF_dt_, stress_;
 
 		/** temporally particle position for computing average velocity. */
@@ -71,15 +74,8 @@ namespace SPH {
 	public:
 		/** Constructor as the most derived object. */
 		SolidParticles(SPHBody* body);
-		/**
-		 * @brief Default Constructor.
-		 * @detail Create a group of particles referred to a body.
-		 * @param[in] body_name Name of a body.
-		 */
+		/** Constructor */
 		SolidParticles(SPHBody* body, Solid* solid);
-		/**
-		 * @brief Destructor.
-		 */
 		virtual ~SolidParticles() {};
 
 		/** Vector of solid body data. */
@@ -131,7 +127,7 @@ namespace SPH {
 		/** Pointer to this object. */
 		virtual SolidParticles* PointToThisObject() override;
 		/** Normalize a gradient. */
-		virtual Vecd normalizeGradient(size_t particle_index_i, Vecd& gradient) override;
+		virtual Vecd normalizeKernelGradient(size_t particle_index_i, Vecd& gradient) override;
 		/** Get the kernel gradient in weak form. */
 		virtual Vecd getKernelGradient(size_t particle_index_i, size_t particle_index_j, Real dW_ij, Vecd& e_ij) override;
 	};
@@ -196,17 +192,16 @@ namespace SPH {
 	};
 
 	/**
-	 * @class ActiveMuscleData
+	 * @class ActiveMuscleParticleData
 	 * @brief Data for active muscle.
 	 */
-	class ActiveMuscleData
+	class ActiveMuscleParticleData
 	{
 	public:
-		/** defualt constrcutor. */
-		ActiveMuscleData() 
-			: active_contraction_stress_(0.0),
-			active_stress_(0.0) {};
-		virtual ~ActiveMuscleData() {};
+		/** default constructor. */
+		ActiveMuscleParticleData() 
+			: active_contraction_stress_(0.0), active_stress_(0.0) {};
+		virtual ~ActiveMuscleParticleData() {};
 
 		/** Active contraction stress. */
 		Real active_contraction_stress_;
@@ -220,8 +215,8 @@ namespace SPH {
 	class ActiveMuscleParticles : public ElasticSolidParticles
 	{
 	public:
-		/** inclduing of electrophysiology data_. */
-		StdLargeVec<ActiveMuscleData> active_muscle_data_;
+		/** including of electrophysiology data_. */
+		StdLargeVec<ActiveMuscleParticleData> active_muscle_data_;
 
 		/** Constructor. */
 		ActiveMuscleParticles(SPHBody* body, ActiveMuscle* active_muscle);

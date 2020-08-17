@@ -33,7 +33,7 @@ namespace SPH {
 	};
 	/**
 	 * @class ParticleGeneratorDirect
-	 * @brief Generate particle directly from poistion-and-volume data.
+	 * @brief Generate particle directly from position-and-volume data.
 	 */
 	class ParticleGeneratorDirect : public ParticleGenerator
 	{

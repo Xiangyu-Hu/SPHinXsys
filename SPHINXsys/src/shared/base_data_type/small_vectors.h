@@ -11,7 +11,11 @@
 #include "SimTKcommon.h"
 #include "SimTKmath.h"
 #include "scalar_functions.h"
+#include <algorithm>
+#include <vector>
+#include <map>
 
+using namespace std;
 namespace SPH {
 
 	template<int N, class T>
@@ -260,36 +264,41 @@ namespace SPH {
 	}
 
 	//vetor with integers
-	using Vec1i = SVec<1, int>;
 	using Vec2i = SVec<2, int>;
 	using Vec3i = SVec<3, int>;
 
 	//vector with unsigned int
-	using Vec1u = SVec<1, size_t>;
 	using Vec2u = SVec<2, size_t>;
 	using Vec3u = SVec<3, size_t>;
 
-	//vector with double float number
-	using Vec1d = SimTK::Vec1;
+	//float point number
+	using Real = SimTK::Real;
+
+	//useful float point constants 
+	const SimTK::Real Pi = SimTK::Pi;
+	const SimTK::Real Infinity = SimTK::Infinity;
+	const SimTK::Real Eps = SimTK::Eps;
+	const SimTK::Real TinyReal = SimTK::TinyReal;
+
+	//vector with float point number
 	using Vec2d = SimTK::Vec2;
 	using Vec3d = SimTK::Vec3;
 
-	//small matrix with double float number
-	using Mat1d = SimTK::Mat11;
+	//small matrix with float point number
 	using Mat2d = SimTK::Mat22;
 	using Mat3d = SimTK::Mat33;
-	//small symmetric matrix with double float number
-	using SymMat1d = SimTK::SymMat11;
+	//small symmetric matrix with float point number
 	using SymMat2d = SimTK::SymMat22;
 	using SymMat3d = SimTK::SymMat33;
 
-	const SimTK::Real pi = SimTK::Pi;
+	Vec2d FirstAxisVector(Vec2d zero_vector);
+	Vec3d FirstAxisVector(Vec3d zero_vector);
+	Real getMinAbsoluteElement(Vec2d input);
+	Real getMinAbsoluteElement(Vec3d input);
+	Vec3d upgradeToVector3D(Real input);
+	Vec3d upgradeToVector3D(Vec2d input);
+	Vec3d upgradeToVector3D(Vec3d input);
 
-	template<int N>
-	SimTK::Vec<N> normalize(const SimTK::Vec<N> &r) { return r / (r.norm() + 1.0e-15); };
-
-	Mat2d GeneralizedInverse(Mat2d &A);
-	Mat3d GeneralizedInverse(Mat3d &A);
 	Mat2d getInverse(Mat2d &A);
 	Mat3d getInverse(Mat3d &A);
 	Mat2d getAverageValue(Mat2d &A, Mat2d &B);
@@ -297,21 +306,6 @@ namespace SPH {
 	Mat2d inverseCholeskyDecomposition(Mat2d &A);
 	Mat3d inverseCholeskyDecomposition(Mat3d &A);
 
-	Vec2d FisrtAxisVector(Vec2d zero_vector);
-	Vec3d FisrtAxisVector(Vec3d zero_vector);
-
-	SimTK::Real getMinAbslouteElement(Vec2d input);
-	SimTK::Real getMinAbslouteElement(Vec3d input);
-
-	SimTK::Real TensorDoubleDotProduct(Mat2d &A, Mat2d &B);
-	SimTK::Real TensorDoubleDotProduct(Mat3d &A, Mat3d &B);
-
-	/** Upgrade real to 3d vector. */
-	Vec3d upgradeToVector3D(SimTK::Real input); 
-	/** Upgrade 2d vector to 3d vector. */
-	Vec3d upgradeToVector3D(Vec2d input);
-	/** overload for 3d vector. */
-	Vec3d upgradeToVector3D(Vec3d input);
 	/**
 	 * @class Transform2d
 	 * @brief Coordinate transfrom in 2D
@@ -345,6 +339,74 @@ namespace SPH {
 	/** User defined cross product for fiber calculation. */
 	Mat2d getCrossProductMatrix(Vec2d &A);
 	Mat3d getCrossProductMatrix(Vec3d &A);
+
+	template<typename T>
+	std::vector<T> subvector(std::vector<T> const &v, int m, int n) 
+	{
+		auto first = v.begin() + m;
+		auto last = v.begin() + n + 1;
+		std::vector<T> sub_vector(first, last);
+		return sub_vector;
+	}
+
+	template<typename T>
+	void shuffle(std::vector<T> &v) 
+	{
+		int size = v.size();
+		for (int i = 0; i < size - 1; i++) 
+		{
+			int j = i + rand() % (size - i);
+			swap(v[i], v[j]);
+		}
+	}
+
+	template<typename T>
+	void ascendingSort(std::vector<T> &v) 
+	{
+		for (const auto &i: v)
+			sort(v.begin(), v.end());
+	}
+
+	template<typename T>
+	void descendingSort(std::vector<T> &v) 
+	{
+		for (const auto &i: v)
+			sort(v.begin(), v.end(), std::greater<T>() );
+	}
+
+	template<typename T>
+	std::vector<T> differenceVector(std::vector<T> &a, std::vector<T> &b) 
+	{
+		std::vector<T> difference_v;
+		ascendingSort(a);
+		ascendingSort(b);
+		set_difference(a.begin(), a.end(), b.begin(), b.end(), 
+                        std::inserter(difference_v, difference_v.begin()));
+		return difference_v;
+	}
+
+	template <typename T, typename U>
+	class create_map
+	{
+	private:
+		std::map<T, U> m_map;
+	public:
+		create_map(const T& key, const U& val)
+		{
+			m_map[key] = val;
+		}
+
+		create_map<T, U>& operator()(const T& key, const U& val)
+		{
+			m_map[key] = val;
+			return *this;
+		}
+
+		operator std::map<T, U>()
+		{
+			return m_map;
+		}
+	};
 }
 
 #endif //SPHINXSYS_BASE_SMALLVEC_H

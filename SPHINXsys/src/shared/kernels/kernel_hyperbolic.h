@@ -1,6 +1,6 @@
 /**
 * @file kernel_hyperbolic.h
-* @brief Here, we define hperbolic kernel functions.
+* @brief Here, we define hyperbolic kernel functions.
 * @details  Numerical experiments suggests
 * the this kernel is more stable than gaussian like kernel due to its spike
 * at the origin. However, it is also found that such kernels give bad density

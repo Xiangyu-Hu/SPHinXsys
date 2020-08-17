@@ -9,16 +9,18 @@
 #include "base_particles.h"
 
 namespace SPH {
-	//===============================================================//
+	//=================================================================================================//
 	ParticleGeneratorLattice
 		::ParticleGeneratorLattice(SPHBody &sph_body)
-		: ParticleGenerator(sph_body), region_(sph_body.getBodyReagion())
+		: ParticleGenerator(sph_body), body_shape_(sph_body.getBodyShape())
 	{
-		region_.regionbound(lower_bound_, upper_bound_);
+		sph_body.getSPHSystemBound(lower_bound_, upper_bound_);
 		lattice_spacing_ = sph_body.particle_spacing_;
 		CalcNumberOfLattices(lower_bound_, upper_bound_, lattice_spacing_);
+		Vecd body_lower_bound, bound_upper_bound;
+		sph_body.findBodyShapeBounds(body_lower_bound, bound_upper_bound);
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void ParticleGeneratorLattice
 		::CalcNumberOfLattices(Vecd lower_bound, Vecd upper_bound,
 			Real lattice_spacing)
@@ -29,5 +31,11 @@ namespace SPH {
 				- lower_bound[i]) / lattice_spacing));
 		}
 	}
-	//===============================================================//
+	//=================================================================================================//
+	ParticleGeneratorRegularized::ParticleGeneratorRegularized(SPHBody& sph_body)
+		: ParticleGeneratorLattice(sph_body)
+	{
+
+	}
+	//=================================================================================================//
 }

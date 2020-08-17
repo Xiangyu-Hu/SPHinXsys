@@ -17,20 +17,19 @@ namespace SPH {
 	class BaseMaterial;
 	class SPHBody;
 	class CellList;
-	class BaseNeighborRelation;
 	class BaseParticleData;
+	class NeighborRelation;
 
 	/**< Vector of Material. Note that vector of references are not allowed in c++.*/
 	using MaterialVector = StdVec<BaseMaterial*>;
 	/** Vector of SPH body. Note that vector of references are not allowed in c++.*/
-	using SPHBodyVector = StdVec<SPHBody*>;	
+	using SPHBodyVector = StdVec<SPHBody*>;
 	typedef pair<SPHBody*, SPHBodyVector> SPHBodyContactMap;
-	typedef vector<SPHBodyContactMap> SPHBodyTopology;
-	
-	/** Index containner with elements of size_t. */
+
+	/** Index container with elements of size_t. */
 	using IndexVector = StdVec<size_t>;
-	/** Cell containner with elements of Vecu. */
-	using CellVector = StdVec<Vecu>;		
+	/** Cell container with elements of Vecu. */
+	using CellVector = StdVec<Vecu>;
 
 	/** Concurrent particle indexes .*/
 	using ConcurrentIndexVector = LargeVec<size_t>;
@@ -39,34 +38,17 @@ namespace SPH {
 	/** List data pair*/
 	using ListData = pair<size_t, Vecd>;
 	/** Cell list concurrent vector data. */
-	using ConcurrentListDataVector = LargeVec<ListData>;
+	using CellListDataVector = StdLargeVec<ListData>;
 	/** Concurrent vector .*/
 	template<class DataType>
 	using ConcurrentVector = LargeVec<DataType>;
 
 	/** Cell lists*/
 	using CellLists = StdLargeVec<CellList*>;
+	/** concurrent cell lists*/
+	using ConcurrentCellLists = LargeVec<CellList*>;
 	/** Split cell list for split algorithms. */
-	using SplitCellLists = StdVec<CellLists>;
+	using SplitCellLists = StdVec<ConcurrentCellLists>;
 	/** Pair of point and volume. */
-	using PositionsAndVolumes =vector<pair<Point, Real>> ; 
-
-	/** Neighboring particles list. 
-	  * Using pointer for overloading derived neighbor relations.*/
-	using NeighborList = StdVec<BaseNeighborRelation*>; 
-	/** Neighboring particle list, the current and the previous number of neighbors. */	
-	using Neighborhood = tuple<NeighborList, size_t, size_t>;
-	/** A neighborhoods for all particles in a body. */
-	using ParticleConfiguration = StdLargeVec<Neighborhood>;
-	/** All contact neighborhoods for all particles in a body. */
-	using ContatcParticleConfiguration = StdVec<ParticleConfiguration>;
-	/** Interacting neighborhoods for all particles in a body. */
-	using InteractingParticleConfiguration = StdVec<ParticleConfiguration*>;
-
-	/** List of partilces contact to another body. */
-	using ContactParticleList = ConcurrentIndexVector;
-	/** All contact particles lists. **/
-	using ContactParticles = StdVec<ContactParticleList>;
-	/** Contact particles to interacting bodies. **/
-	using InteractingParticles = StdVec<ContactParticleList*>;
+	using PositionsAndVolumes = vector<pair<Point, Real>>;
 }

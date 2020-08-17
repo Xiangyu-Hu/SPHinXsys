@@ -45,40 +45,44 @@ namespace SPH
 
 		for (SPHBody* body : bodies_)
 		{
-			std::string filefullpath = in_output_.output_folder_ + "/SPHBody_" + body->GetBodyName() + "_" + std::to_string(Itime) + ".vtu";
-			if (fs::exists(filefullpath))
+			if (body->checkNewlyUpdated())
 			{
-				fs::remove(filefullpath);
+				std::string filefullpath = in_output_.output_folder_ + "/SPHBody_" + body->GetBodyName() + "_" + std::to_string(Itime) + ".vtu";
+				if (fs::exists(filefullpath))
+				{
+					fs::remove(filefullpath);
+				}
+				std::ofstream out_file(filefullpath.c_str(), ios::trunc);
+				//begin of the XML file
+				out_file << "<?xml version=\"1.0\"?>\n";
+				out_file << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
+				out_file << " <UnstructuredGrid>\n";
+
+				size_t number_of_particles = body->number_of_particles_;
+				out_file << "  <Piece Name =\"" << body->GetBodyName() << "\" NumberOfPoints=\"" << number_of_particles << "\" NumberOfCells=\"0\">\n";
+
+				body->WriteParticlesToVtuFile(out_file);
+
+				out_file << "   </PointData>\n";
+
+				//write empty cells
+				out_file << "   <Cells>\n";
+				out_file << "    <DataArray type=\"Int32\"  Name=\"connectivity\"  Format=\"ascii\">\n";
+				out_file << "    </DataArray>\n";
+				out_file << "    <DataArray type=\"Int32\"  Name=\"offsets\"  Format=\"ascii\">\n";
+				out_file << "    </DataArray>\n";
+				out_file << "    <DataArray type=\"types\"  Name=\"offsets\"  Format=\"ascii\">\n";
+				out_file << "    </DataArray>\n";
+				out_file << "   </Cells>\n";
+
+				out_file << "  </Piece>\n";
+
+				out_file << " </UnstructuredGrid>\n";
+				out_file << "</VTKFile>\n";
+
+				out_file.close();
 			}
-			std::ofstream out_file(filefullpath.c_str(), ios::trunc);
-			//begin of the XML file
-			out_file << "<?xml version=\"1.0\"?>\n";
-			out_file << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
-			out_file << " <UnstructuredGrid>\n";
-
-			size_t number_of_particles = body->number_of_particles_;
-			out_file << "  <Piece Name =\"" << body->GetBodyName() << "\" NumberOfPoints=\"" << number_of_particles << "\" NumberOfCells=\"0\">\n";
-
-			body->WriteParticlesToVtuFile(out_file);
-
-			out_file << "   </PointData>\n";
-
-			//write empty cells
-			out_file << "   <Cells>\n";
-			out_file << "    <DataArray type=\"Int32\"  Name=\"connectivity\"  Format=\"ascii\">\n";
-			out_file << "    </DataArray>\n";
-			out_file << "    <DataArray type=\"Int32\"  Name=\"offsets\"  Format=\"ascii\">\n";
-			out_file << "    </DataArray>\n";
-			out_file << "    <DataArray type=\"types\"  Name=\"offsets\"  Format=\"ascii\">\n";
-			out_file << "    </DataArray>\n";
-			out_file << "   </Cells>\n";
-
-			out_file << "  </Piece>\n";
-
-			out_file << " </UnstructuredGrid>\n";
-			out_file << "</VTKFile>\n";
-
-			out_file.close();
+			body->setNotNewlyUpdated();
 		}
 	}
 	//=============================================================================================//
@@ -88,18 +92,22 @@ namespace SPH
 
 		for (SPHBody* body : bodies_)
 		{
-			std::string filefullpath = in_output_.output_folder_ + "/SPHBody_" + body->GetBodyName() + "_" + std::to_string(Itime) + ".plt";
-			if (fs::exists(filefullpath))
+			if (body->checkNewlyUpdated())
 			{
-				fs::remove(filefullpath);
+				std::string filefullpath = in_output_.output_folder_ + "/SPHBody_" + body->GetBodyName() + "_" + std::to_string(Itime) + ".plt";
+				if (fs::exists(filefullpath))
+				{
+					fs::remove(filefullpath);
+				}
+				std::ofstream out_file(filefullpath.c_str(), ios::trunc);
+
+				//begin of the plt file writing
+
+				body->WriteParticlesToPltFile(out_file);
+
+				out_file.close();
 			}
-			std::ofstream out_file(filefullpath.c_str(), ios::trunc);
-
-			//begin of the plt file writing
-
-			body->WriteParticlesToPltFile(out_file);
-
-			out_file.close();
+			body->setNotNewlyUpdated();
 		}
 	}
 	//=============================================================================================//
@@ -132,29 +140,29 @@ namespace SPH
 		::WriteBodyMeshToPlt(In_Output& in_output, SPHBody * body)
 		: WriteBodyStates(in_output, body)
 	{
-		if (body->mesh_background_ == NULL)
+		if (body->levelset_mesh_ == NULL)
 		{
-			std::cout << "\n BodySurface::BodySurface: Background mesh is required. Exit the program! \n";
+			std::cout << "\n BodySurface::BodySurface: Levelset mesh is required. Exit the program! \n";
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(0);
 		}
 
-		filefullpath_ = in_output_.output_folder_ + "/" + body->GetBodyName() + "_background_mesh.dat";
+		filefullpath_ = in_output_.output_folder_ + "/" + body->GetBodyName() + "_levelset_mesh.dat";
 	}
 	//=============================================================================================//
 	void WriteBodyMeshToPlt::WriteToFile(Real time)
 	{
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
-		body_->mesh_background_->WriteMeshToPltFile(out_file);
+		body_->levelset_mesh_->writeMeshToPltFile(out_file);
 		out_file.close();
 	}
-//=================================================================================================//
+	//=================================================================================================//
 	WriteTotalMechanicalEnergy
 		::WriteTotalMechanicalEnergy(In_Output &in_output, FluidBody* water_block, Gravity* gravity)
 		: WriteBodyStates(in_output, water_block), TotalMechanicalEnergy(water_block, gravity)
 	{
 		filefullpath_ = in_output_.output_folder_ + "/" + water_block->GetBodyName() 
-					  + "_water_mechnical_energy_" + in_output_.restart_step_ + ".dat";
+					  + "_water_mechanical_energy_" + in_output_.restart_step_ + ".dat";
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << "\"run_time\""<<"   ";
 		out_file << water_block->GetBodyName()<<"   ";
@@ -167,6 +175,28 @@ namespace SPH
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << time<<"   ";
 		out_file << parallel_exec()<<"   ";
+		out_file << "\n";
+		out_file.close();
+	};
+	//=================================================================================================//
+	WriteMaximumSpeed
+		::WriteMaximumSpeed(In_Output& in_output, SPHBody* sph_body)
+		: WriteBodyStates(in_output, sph_body), MaximumSpeed(sph_body)
+	{
+		filefullpath_ = in_output_.output_folder_ + "/" + sph_body->GetBodyName()
+			+ "_maximum_speed_" + in_output_.restart_step_ + ".dat";
+		std::ofstream out_file(filefullpath_.c_str(), ios::app);
+		out_file << "\"run_time\"" << "   ";
+		out_file << sph_body->GetBodyName() << "   ";
+		out_file << "\n";
+		out_file.close();
+	};
+	//=============================================================================================//
+	void WriteMaximumSpeed::WriteToFile(Real time)
+	{
+		std::ofstream out_file(filefullpath_.c_str(), ios::app);
+		out_file << time << "   ";
+		out_file << parallel_exec() << "   ";
 		out_file << "\n";
 		out_file.close();
 	};

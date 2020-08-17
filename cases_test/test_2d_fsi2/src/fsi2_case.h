@@ -1,6 +1,6 @@
 /**
 * @file 	fsi2_case.h
-* @brief 	This is the case file for the test of fliud - structure interaction.
+* @brief 	This is the case file for the test of fluid - structure interaction.
 * @details  We consider a flow - induced vibration of an elastic beam behind a cylinder in 2D.
 * @author 	Xiangyu Hu, Chi Zhangand Luhui Han
 * @version 0.1
@@ -18,7 +18,7 @@ using namespace SPH;
 Real DL = 11.0; 					/**< Channel length. */
 Real DH = 4.1; 						/**< Channel height. */
 Real particle_spacing_ref = 0.1; 	/**< Initial reference particle spacing. */
-Real DLsponge = particle_spacing_ref * 20.0;	/**< Sponge region to impose inflow condition. */
+Real DL_sponge = particle_spacing_ref * 20.0;	/**< Sponge region to impose inflow condition. */
 Real BW = particle_spacing_ref * 4.0; 		/**< Boundary width, determined by specific layer of boundary particles. */
 Vec2d insert_circle_center(2.0, 2.0);		/**< Location of the cylinder center. */
 Real insert_circle_radius = 0.5;			/**< Radius of the cylinder. */
@@ -28,10 +28,10 @@ Real bl = 7.0 * insert_circle_radius;			/**< Length of the beam. */
  * @brief Material properties of the fluid.
  */
 Real rho0_f = 1.0;		/**< Density. */
-Real U_f = 1.0;			/**< Cheractristic velocity. */
+Real U_f = 1.0;			/**< Characteristic velocity. */
 Real c_f = 10.0 * U_f;	/**< Speed of sound. */
 Real Re = 100.0;		/**< Reynolds number. */
-Real mu_f = rho0_f * U_f * (2.0 * insert_circle_radius) / Re;	/**< Dynamics visocisty. */
+Real mu_f = rho0_f * U_f * (2.0 * insert_circle_radius) / Re;	/**< Dynamics viscosity. */
 /**
  * @brief Material properties of the solid,
  */
@@ -47,11 +47,11 @@ std::vector<Point> CreatWaterBlockShape()
 {
 	//geometry
 	std::vector<Point> water_block_shape;
-	water_block_shape.push_back(Point(-DLsponge, 0.0));
-	water_block_shape.push_back(Point(-DLsponge, DH));
+	water_block_shape.push_back(Point(-DL_sponge, 0.0));
+	water_block_shape.push_back(Point(-DL_sponge, DH));
 	water_block_shape.push_back(Point(DL, DH));
 	water_block_shape.push_back(Point(DL, 0.0));
-	water_block_shape.push_back(Point(-DLsponge, 0.0));
+	water_block_shape.push_back(Point(-DL_sponge, 0.0));
 
 	return water_block_shape;
 }
@@ -59,11 +59,11 @@ std::vector<Point> CreatWaterBlockShape()
 std::vector<Point> CreatInflowBufferShape()
 {
 	std::vector<Point> inlfow_buffer_shape;
-	inlfow_buffer_shape.push_back(Point(-DLsponge, 0.0));
-	inlfow_buffer_shape.push_back(Point(-DLsponge, DH));
+	inlfow_buffer_shape.push_back(Point(-DL_sponge, 0.0));
+	inlfow_buffer_shape.push_back(Point(-DL_sponge, DH));
 	inlfow_buffer_shape.push_back(Point(0.0, DH));
 	inlfow_buffer_shape.push_back(Point(0.0, 0.0));
-	inlfow_buffer_shape.push_back(Point(-DLsponge, 0.0));
+	inlfow_buffer_shape.push_back(Point(-DL_sponge, 0.0));
 
 	return inlfow_buffer_shape;
 }
@@ -88,11 +88,11 @@ std::vector<Point> CreatBeamShape()
 std::vector<Point> CreatOuterWallShape()
 {
 	std::vector<Point> outer_wall_shape;
-	outer_wall_shape.push_back(Point(-DLsponge - BW, -BW));
-	outer_wall_shape.push_back(Point(-DLsponge - BW, DH + BW));
+	outer_wall_shape.push_back(Point(-DL_sponge - BW, -BW));
+	outer_wall_shape.push_back(Point(-DL_sponge - BW, DH + BW));
 	outer_wall_shape.push_back(Point(DL + BW, DH + BW));
 	outer_wall_shape.push_back(Point(DL + BW, -BW));
-	outer_wall_shape.push_back(Point(-DLsponge - BW, -BW));
+	outer_wall_shape.push_back(Point(-DL_sponge - BW, -BW));
 
 	return outer_wall_shape;
 }
@@ -102,16 +102,16 @@ std::vector<Point> CreatOuterWallShape()
 std::vector<Point> CreatInnerWallShape()
 {
 	std::vector<Point> inner_wall_shape;
-	inner_wall_shape.push_back(Point(-DLsponge - 2.0 * BW, 0.0));
-	inner_wall_shape.push_back(Point(-DLsponge - 2.0 * BW, DH));
+	inner_wall_shape.push_back(Point(-DL_sponge - 2.0 * BW, 0.0));
+	inner_wall_shape.push_back(Point(-DL_sponge - 2.0 * BW, DH));
 	inner_wall_shape.push_back(Point(DL + 2.0 * BW, DH));
 	inner_wall_shape.push_back(Point(DL + 2.0 * BW, 0.0));
-	inner_wall_shape.push_back(Point(-DLsponge - 2.0 * BW, 0.0));
+	inner_wall_shape.push_back(Point(-DL_sponge - 2.0 * BW, 0.0));
 
 	return inner_wall_shape;
 }
 /**
- * @brief Define case dependent bodies matertial, constraint and boundary conditions.
+ * @brief Define case dependent bodies material, constraint and boundary conditions.
  */
  /** Fluid body definition */
 class WaterBlock : public FluidBody
@@ -120,15 +120,13 @@ public:
 	WaterBlock(SPHSystem& system, string body_name,	int refinement_level, ParticlesGeneratorOps op)
 		: FluidBody(system, body_name, refinement_level, op)
 	{
-		/** Geomerty definition. */
-		std::vector<Point> water_bock_shape = CreatWaterBlockShape();
-		body_region_.add_geometry(new Geometry(water_bock_shape), RegionBooleanOps::add);
-		/** Geomerty definition. */
-		body_region_.add_geometry(new Geometry(insert_circle_center, insert_circle_radius, 100), RegionBooleanOps::sub);
+		/** Geomtry definition. */
+		std::vector<Point> water_block_shape = CreatWaterBlockShape();
+		body_shape_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+		/** Geomtry definition. */
+		body_shape_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
 		std::vector<Point> beam_shape = CreatBeamShape();
-		body_region_.add_geometry(new Geometry(beam_shape), RegionBooleanOps::sub);
-		/** Finalize the geometry definition and correspoding opertation. */
-		body_region_.done_modeling();
+		body_shape_.addAPolygon(beam_shape, ShapeBooleanOps::sub);
 	}
 };
 /** Case-dependent material properties. */
@@ -140,7 +138,7 @@ public:
 		rho_0_ = rho0_f;
 		c_0_ = c_f;
 		mu_ = mu_f;
-		/** supplementrary material paramters derived from basic parameters. */
+		/** supplementary material paramters derived from basic parameters. */
 		assignDerivedMaterialParameters();
 	}
 };
@@ -151,13 +149,11 @@ public:
 	WallBoundary(SPHSystem& system, string body_name, int refinement_level, ParticlesGeneratorOps op)
 		: SolidBody(system, body_name, refinement_level, op)
 	{
-		/** Geomerty definition. */
+		/** Geomtry definition. */
 		std::vector<Point> outer_wall_shape = CreatOuterWallShape();
 		std::vector<Point> inner_wall_shape = CreatInnerWallShape();
-		body_region_.add_geometry(new Geometry(outer_wall_shape), RegionBooleanOps::add);
-		body_region_.add_geometry(new Geometry(inner_wall_shape), RegionBooleanOps::sub);
-		/** Finalize the geometry definition and correspoding opertation. */
-		body_region_.done_modeling();
+		body_shape_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
+		body_shape_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 	}
 };
 /** Definition of the inserted body as a elastic structure. */
@@ -167,14 +163,10 @@ public:
 	InsertedBody(SPHSystem& system, string body_name, int refinement_level, ParticlesGeneratorOps op)
 		: SolidBody(system, body_name, refinement_level, op)
 	{
-		/** Geomerty definition. */
+		/** Geomtry definition. */
+		body_shape_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
 		std::vector<Point> beam_shape = CreatBeamShape();
-		Geometry* circle_geometry = new Geometry(insert_circle_center, insert_circle_radius, 100);
-		body_region_.add_geometry(circle_geometry, RegionBooleanOps::add);
-		Geometry* beam_geometry = new Geometry(beam_shape);
-		body_region_.add_geometry(beam_geometry, RegionBooleanOps::add);
-		/** Finalize the geometry definition and correspoding opertation. */
-		body_region_.done_modeling();
+		body_shape_.addAPolygon(beam_shape, ShapeBooleanOps::add);
 	}
 };
 /** the material for insert body. */
@@ -197,15 +189,13 @@ public:
 	BeamBase(SolidBody* solid_body, string constrianed_region_name)
 		: BodyPartByParticle(solid_body, constrianed_region_name)
 	{
-		/** Geomerty definition. */
+		/** Geomtry definition. */
+		body_part_shape_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
 		std::vector<Point> beam_shape = CreatBeamShape();
-		Geometry* circle_geometry = new Geometry(insert_circle_center, insert_circle_radius, 100);
-		body_part_region_.add_geometry(circle_geometry, RegionBooleanOps::add);
-		Geometry* beam_gemetry = new Geometry(beam_shape);
-		body_part_region_.add_geometry(beam_gemetry, RegionBooleanOps::sub);
-		body_part_region_.done_modeling();
+		body_part_shape_.addAPolygon(beam_shape, ShapeBooleanOps::sub);
+
 		/**  Tag the constrained particle. */
-		TagBodyPartParticles();
+		TagBodyPart();
 	}
 };
 /** inflow buffer */
@@ -215,13 +205,12 @@ public:
 	InflowBuffer(FluidBody* fluid_body, string constrianed_region_name)
 		: BodyPartByCell(fluid_body, constrianed_region_name)
 	{
-		/** Geomerty definition. */
+		/** Geomtry definition. */
 		std::vector<Point> inflow_buffer_shape = CreatInflowBufferShape();
-		body_part_region_.add_geometry(new Geometry(inflow_buffer_shape), RegionBooleanOps::add);
-		/** Finalize the geometry definition and correspoding opertation. */
-		body_part_region_.done_modeling();
+		body_part_shape_.addAPolygon(inflow_buffer_shape, ShapeBooleanOps::add);
+
 		//tag the constrained particle
-		TagBodyPartCells();
+		TagBodyPart();
 	}
 };
 /** Case dependent inflow boundary condition. */
@@ -247,10 +236,10 @@ public:
 		}
 		return Vecd(u, v);
 	}
-	void PrepareConstraint() override
+	void setupDynamics(Real dt = 0.0) override
 	{
 		Real run_time = GlobalStaticVariables::physical_time_;
-		u_ave_ = run_time < t_ref ? 0.5 * u_ref_ * (1.0 - cos(pi * run_time / t_ref)) : u_ref_;
+		u_ave_ = run_time < t_ref ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref)) : u_ref_;
 	}
 };
 /** fluid observer body */

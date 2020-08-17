@@ -7,8 +7,6 @@
 #include "scalar_functions.h"
 #include "data_type.h"
 
-using namespace SimTK;
-
 #define TBB_PARALLEL true
 
 #endif //SPHINXSYS_BASE_PACKAGE_H

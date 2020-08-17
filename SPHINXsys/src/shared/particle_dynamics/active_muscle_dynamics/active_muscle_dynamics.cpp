@@ -29,27 +29,23 @@ namespace SPH
 			return spring_force;
 		}
 		//=================================================================================================//
-		void SpringConstrainMuscleRegion::ConstraintAParticle(size_t index_particle_i, Real dt)
+		void SpringConstrainMuscleRegion::Update(size_t index_particle_i, Real dt)
 		{
-			BaseParticleData &base_particle_data_i
-				= particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_data_i
-				= particles_->solid_body_data_[index_particle_i];
-			ElasticSolidParticleData &elastic_data_i 
-				= particles_->elastic_body_data_[index_particle_i];
+			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
+			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
 
 			Vecd disp_from_0 = base_particle_data_i.pos_n_ - base_particle_data_i.pos_0_;
-			base_particle_data_i.vel_n_ 	+=  dt * GetAcceleration(disp_from_0, elastic_data_i.mass_);
-			base_particle_data_i.pos_n_ 	+=  dt * dt * GetAcceleration(disp_from_0, elastic_data_i.mass_);
+			base_particle_data_i.vel_n_ 	+=  dt * GetAcceleration(disp_from_0, solid_data_i.mass_);
+			base_particle_data_i.pos_n_ 	+=  dt * dt * GetAcceleration(disp_from_0, solid_data_i.mass_);
 		}
 		//=================================================================================================//
 		void ImposingStress
-			::ConstraintAParticle(size_t index_particle_i, Real dt)
+			::Update(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
 			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
-			ActiveMuscleData &active_muscle_data_i = particles_->active_muscle_data_[index_particle_i];
+			ActiveMuscleParticleData &active_muscle_data_i = particles_->active_muscle_data_[index_particle_i];
 
 			active_muscle_data_i.active_stress_= getStress(base_particle_data_i.pos_0_);
 		}

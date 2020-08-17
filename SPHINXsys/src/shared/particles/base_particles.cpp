@@ -39,7 +39,8 @@ namespace SPH
 	//=================================================================================================//
 	BaseParticles::BaseParticles(SPHBody* body, BaseMaterial* base_material)
 		: body_(body), base_material_(base_material),
-		body_name_(body->GetBodyName()), speed_max_(0.0)
+		body_name_(body->GetBodyName()), speed_max_(0.0),
+		signal_speed_max_(0.0)
 	{
 		body->base_particles_ = this;
 		base_material->assignParticles(this);
@@ -58,8 +59,8 @@ namespace SPH
 			break;
 		}
 
-		case ParticlesGeneratorOps::regular: {
-			particle_generator = new ParticleGeneratorRegular(*body);
+		case ParticlesGeneratorOps::regularized: {
+			particle_generator = new ParticleGeneratorRegularized(*body);
 			break;
 		}
 		default: {
@@ -75,8 +76,7 @@ namespace SPH
 
 		real_particles_bound_ = body_->number_of_particles_;
 		number_of_ghost_particles_ = 0;
-		body->AllocateMeoemryCellLinkedList();
-		body->AllocateMemoriesForInnerConfiguration();
+		body->AllocateMemoryCellLinkedList();
 	}
 	//=================================================================================================//
 	BaseParticles::BaseParticles(SPHBody* body)
@@ -114,7 +114,7 @@ namespace SPH
 		std::swap(base_particle_data_[this_particle_index], base_particle_data_[that_particle_index]);
 	}
 	//=================================================================================================//
-	bool BaseParticles::allowSwapping(size_t this_particle_index, size_t that_particle_index)
+	bool BaseParticles::isSwappingAllowed(size_t this_particle_index, size_t that_particle_index)
 	{
 		return  base_particle_data_[this_particle_index].is_sortable_
 			    && base_particle_data_[that_particle_index].is_sortable_;
@@ -237,10 +237,9 @@ namespace SPH
 		return this;
 	}
 	//=================================================================================================//
-	void  BaseParticles
-		::mirrorInAxisDirection(size_t particle_index_i, Vecd body_bound, int axis_direction)
+	void  BaseParticles::mirrorInAxisDirection(size_t particle_index_i, Vecd body_bound, int axis_direction)
 	{
-		BaseParticleData & base_particle_data_i = base_particle_data_[particle_index_i];
+		BaseParticleData& base_particle_data_i = base_particle_data_[particle_index_i];
 		base_particle_data_i.pos_n_[axis_direction]
 			= 2.0 * body_bound[axis_direction] - base_particle_data_i.pos_n_[axis_direction];
 		base_particle_data_i.vel_n_[axis_direction] *= -1.0;

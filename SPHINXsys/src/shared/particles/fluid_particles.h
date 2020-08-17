@@ -30,12 +30,10 @@ namespace SPH {
 		virtual ~FluidParticleData() {};
 
 		Real p_; /**< Particle pressure. */
-		/** Particle mass, initial number desity, initial density and current density. */
+		/** Particle mass, initial number density, initial density and current density. */
 		Real rho_0_, rho_n_, mass_;
-		Real drho_dt_; /**< Paticle desity change rate */
-		/** Paticle transport acceleration and velocity. */
-		Vecd dvel_dt_trans_, vel_trans_;
-		Vec3d vorticity_;	/**< Vorticcity of fluid in 3D. */				
+		Real drho_dt_; /**< Particle density change rate */
+		Vec3d vorticity_;	/**< Vorticity of fluid in 3D. */				
 	};
 
 	/**
@@ -54,9 +52,6 @@ namespace SPH {
 		//----------------------------------------------------------------------
 		//Global data
 		//----------------------------------------------------------------------
-		/** Maximum signal speed.*/
-		Real signal_speed_max_;
-
 		/** add buffer particles which latter may be realized for particle dynamics*/
 		virtual void AddABufferParticle() override;
 		/** copy particle data from another particle */
@@ -103,7 +98,7 @@ namespace SPH {
 
 	/**
 	 * @class ViscoelasticFluidParticles
-	 * @brief Viscoelastic flud particles.
+	 * @brief Viscoelastic fluid particles.
 	 */	
 	class ViscoelasticFluidParticles : public FluidParticles
 	{
@@ -112,7 +107,7 @@ namespace SPH {
 		explicit ViscoelasticFluidParticles(SPHBody *body, Oldroyd_B_Fluid* oldroyd_b_fluid);
 		virtual ~ViscoelasticFluidParticles() {};
 		
-		/** Vector of oldroyd b particle data. */
+		/** Vector of Oldroyd b particle data. */
 		StdLargeVec<ViscoelasticFluidParticleData> viscoelastic_particle_data_;	
 
 		/** add buffer particles which latter may be realized for particle dynamics*/

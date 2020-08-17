@@ -22,7 +22,7 @@ namespace SPH {
 			{
 				Point particle_location(lower_bound_[0] + (Real(i) + 0.5)*lattice_spacing_,
 					lower_bound_[1] + (Real(j) + 0.5)*lattice_spacing_);
-				if(region_.contain(particle_location))
+				if(body_shape_.checkContain(particle_location))
 				{
 					base_particles->InitializeABaseParticle(particle_location, vol, sigma);
 					number_of_particles++;

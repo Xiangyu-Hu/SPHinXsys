@@ -3,6 +3,8 @@
 
 #include <cmath>
 #include <algorithm>
+#include <random>
+#include <chrono>
 
 namespace SPH {
 
@@ -141,6 +143,13 @@ namespace SPH {
 		return (std::isnan(a) || !(std::isfinite(a))) ? true : false;
 	}
 
+	inline double rand_norm(double u, double std)
+	{
+		unsigned seed = (unsigned)std::chrono::system_clock::now().time_since_epoch().count();
+        std::default_random_engine generator (seed);
+        std::normal_distribution<double> distribution(u, std);
+		return distribution(generator);
+	}
 	/** rotating axis once according to right hand rule.
 	 * The axis_direction must be 0, 1 for 2d and 0, 1, 2 for 3d
 	 */
@@ -149,7 +158,5 @@ namespace SPH {
 	  * The axis_direction must be 0, 1 for 2d and 0, 1, 2 for 3d
 	  */
 	int ThirdAxis(int axis_direction);
-	
-
 }
 #endif //SPHINXSYS_BASE_SCALARFUNC_H

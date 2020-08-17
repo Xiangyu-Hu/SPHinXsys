@@ -2,8 +2,8 @@
  * @file 	base_body.h
  * @brief 	This is the base classes of SPH bodies. The real body is for 
  *			that with cell linked list and the fictitious one does not.     
- * 			Before the defination of the SPH bodies, the shapes with complex 
- *			geometries, i.e. those are produced by adavnced binary operation, 
+ * 			Before the definition of the SPH bodies, the shapes with complex 
+ *			geometries, i.e. those are produced by advanced binary operation, 
  * 			such as intersection, should be produced first.
  * 			Then, all shapes used in body definition should be either contain 
  * 			or not contain each other. 
@@ -30,16 +30,17 @@ namespace SPH
 	class BaseParticles;
 	class Kernel;
 	class BaseMeshCellLinkedList;
-	class MeshBackground;
-	class SPHBodyContactRealtion;
+	class SPHBodyBaseRelation;
+	class BaseLevelSet;
 
 	/**
 	 * @class ParticlesGeneratorOps
 	 * @brief Serval manners are provied for particles generator.
-	 * @details lattice : Generate partice from lattcie grid.
+	 * @details lattice : Generate partice from lattice grid.
 	 *			direct  : Input particle position and volume directly.
+	 *			regularized : geometry will be regularized with level set technique.
 	 */
-	enum class ParticlesGeneratorOps {lattice, direct, regular};
+	enum class ParticlesGeneratorOps {lattice, direct, regularized};
 	/**
 	 * @class SPHBody
 	 * @brief SPHBody is a base body with basic data and functions.
@@ -51,13 +52,13 @@ namespace SPH
 	{
 	protected:
 		SPHSystem &sph_system_; 	/**< SPHSystem. */
-		string body_name_; 			/**< name of this body */
-		/** the reagion describe the geometry of the body.
-		 * static member, so the geoemtry head file is included. */
-		Region body_region_;
+		string body_name_; 		/**< name of this body */
+		bool newly_updated_;		/**< whether this body is in a newly updated state */
+		/** describe the geometry of the body, static member, so the geometry head file is included. */
+		ComplexShape  body_shape_;
 		/** smoothing length. */
-		Real smoothinglength_;
-		/** Computational domain bounds of the body for boundry conditions. */
+		Real smoothing_length_;
+		/** Computational domain bounds of the body for boundary conditions. */
 		Vecd body_lower_bound_, body_upper_bound_;
 		/** Whether the computational domain bound for this body is prescribed. */
 		bool prescribed_body_bounds_;
@@ -65,21 +66,19 @@ namespace SPH
 		Real RefinementLevelToParticleSpacing();
 
 		/** Generate a kernel. */
-		Kernel* GenerateAKernel(Real smoothing_lenght);
+		Kernel* GenerateAKernel(Real smoothing_length);
 		/** Change kernel function specific for this body. */
 		void ReplaceKernelFunction(Kernel* kernel);
 	public:
-		bool is_static_;		/**< whether this body is a static body */
 		int refinement_level_;	/**< refinement level of this body */
 		Kernel* kernel_; 		/**< sph kernel function specific to a SPHBody */
 		Real particle_spacing_;						/**< Particle spacing of the body. */
 		size_t number_of_particles_;				/**< Number of real particles of the body. */
 		BaseParticles* base_particles_;				/**< Base particles of this body. */
 		BaseMeshCellLinkedList* base_mesh_cell_linked_list_; /**< Cell linked mesh of this body. */
-		MeshBackground* mesh_background_;			/**< Background mesh.*/
 		ParticlesGeneratorOps particle_generator_op_;	/**< Particle generator manner */
 		PositionsAndVolumes body_input_points_volumes_; /**< For direct generate particles. */
-
+		BaseLevelSet* levelset_mesh_;					/**< narrow bounded levelset mesh. */
 		/**
 		 * @brief particle by cells lists is for parallel splitting algorithm.
 		 * All particles in each cell are collected together.
@@ -88,94 +87,60 @@ namespace SPH
 		 */
 		SplitCellLists split_cell_lists_;
 
-		/** inner configuration for the neighbor relations. */
-		ParticleConfiguration inner_configuration_;
-
-		/**
-		 * @brief Contact configurations
-		 * @details Note that contact configuration only gives all topological relation to this body.
-		 * The specific physical interaction, which may not involving all contact bodies,
-		 * will be defined in the specific particle dynamics
-		 */
-		 /** Contact map: pointing to toplogically contacted bodies. **/
-		SPHBodyContactMap contact_map_;
-		/** Lists of particles has a ocnfiguration with particles in contaced bodies. **/
-		ContactParticles indexes_contact_particles_;
-		/** Configurations for updated Lagrangian formulation. **/
-		ContatcParticleConfiguration contact_configuration_;
-
 		/** all contact relations centered from this body **/
-		StdVec<SPHBodyContactRealtion*> body_contact_realtions_;
+		StdVec<SPHBodyBaseRelation*> body_relations_;
 
 		/**
 		 * @brief Constructor of SPHBody.
 		 * @param[in] sph_system SPHSystem.
 		 * @param[in] body_name Name of Body.
 		 * @param[in] refinement_level Refinement level of this body.
-		 * @param[in] smoothinglength_ratio The ratio between smoothinglength to particle spacing.
-		 * @param[in] op Partciel generator manner.
+		 * @param[in] smoothing_length_ratio The ratio between smoothinglength to particle spacing.
+		 * @param[in] op Particle generator manner.
 		 */
 		explicit SPHBody(SPHSystem &sph_system, string body_name, 
-			int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op);
+			int refinement_level, Real smoothing_length_ratio, ParticlesGeneratorOps op);
 		virtual ~SPHBody() {};
 
 		/** Get the name of this body for out file name. */
 		string GetBodyName();
+		void setNewlyUpdated() { newly_updated_ = true; };
+		bool checkNewlyUpdated() { return newly_updated_; };
+		void setNotNewlyUpdated() { newly_updated_ = false; };
+
 		/** Get the name of this body for out file name. */
-		Region& getBodyReagion() { return body_region_; };
+		ComplexShape& getBodyShape() { return body_shape_; };
 		void setBodyLowerBound(Vecd lower_bound) { body_lower_bound_ = lower_bound; };
 		void setBodyUpperBound(Vecd upper_bound) { body_upper_bound_ = upper_bound; };
 		Vecd getBodyLowerBound() { return body_lower_bound_; };
 		Vecd getBodyUpperBound() { return body_upper_bound_; };
-		/** Set up the contact map. */
-		void SetContactMap(SPHBodyContactMap& contact_map);
-		/** Set up the contact map. */
-		SPHBodyContactMap& getContactMap() { return contact_map_; };
+		void getSPHSystemBound(Vecd& system_lower_bound, Vecd& system_uppwer_bound);
+
+		/** add levelset mesh */
+		virtual void addLevelsetMesh(Real mesh_size_ratio = 4.0);
 		/** Allocate memory for cell linked list. */
-		virtual void AllocateMeoemryCellLinkedList() {};
-		/** add the back ground mesh particle mesh interaction. */
-		virtual void addBackgroundMesh(Real mesh_size_ratio = 1.0);
-		virtual void CleanAndSmoothLevelSet(Real smoothing_coe=1.0);
-		/** Allocate memories for configuration. */
-		void AllocateMemoriesForInnerConfiguration();
-		/** Allocate memories for configuration. */
-		void AllocateMemoriesForContactConfiguration();
-		/** Allocate extra configuration memories for body buffer particles. */
-		void AllocateConfigurationMemoriesForBodyBuffer(size_t body_buffer_particles);
+		virtual void AllocateMemoryCellLinkedList() = 0;
 		/** Update cell linked list. */
 		virtual void UpdateCellLinkedList() = 0;
-		/** Build inner configuration. */
-		virtual void BuildInnerConfiguration() = 0;
-		/** Build contact configuration. */
-		virtual void BuildContactConfiguration();
-		/** Update inner configuration. */
-		virtual void UpdateInnerConfiguration() = 0;
-		/** Update contact configuration. */
-		virtual void UpdateContactConfiguration() = 0;
-		/** Update interactiong configuration. */
-		virtual void UpdateInteractionConfiguration(SPHBodyVector interacting_bodies) = 0;
+		/** Allocate extra configuration memories for body buffer particles. */
+		void AllocateConfigurationMemoriesForBodyBuffer();
 
 		/** Check wether a point within the geometry of this body.
 		 * @returns TRUE if a point within body's region otherwise FALSE. 
 		 */
-		bool BodyContain(Vecd pnt); 
-		/**
-		 * @brief Find closest point from a given point to body surface.
-		 * @param[in] input_pnt The given point.
-		 * @param[in,out] closest_pnt The found point.
-		 * @param[in,out] phi The distance from given point to closest point. 
-		 */
-		void ClosestPointOnBodySurface(Vecd input_pnt, Vecd& closest_pnt, Real& phi);
+		bool checkBodyShapeContain(Vecd pnt); 
+		/** Find closest point from a given point to body surface. */
+		Vecd ClosestPointOnBodySurface(Vecd input_pnt);
 		/**
 		 * @brief Find the lower and upper bounds of the body.
 		 * @param[in,out] lower_bound Lower bound of this body.
 		 * @param[in,out] upper_bound Upper bound of this body.
 		 */
-		void BodyBounds(Vecd &lower_bound, Vecd &upper_bound);
+		void findBodyShapeBounds(Vecd &lower_bound, Vecd &upper_bound);
 
-		/** Output particle data in VTU file for visuallization in Paraview. */
+		/** Output particle data in VTU file for visualization in Paraview. */
 		virtual void WriteParticlesToVtuFile(ofstream &output_file);
-		/** Output particle data in PLT file for visuallization in Tecplot. */
+		/** Output particle data in PLT file for visualization in Tecplot. */
 		virtual void WriteParticlesToPltFile(ofstream &output_file);
 
 		/** Output particle data in XML file for restart simulation. */
@@ -203,22 +168,13 @@ namespace SPH
 	public:
 		/** Constructor of RealBody. */
 		RealBody(SPHSystem &sph_system, string body_name, 
-			int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op);
+			int refinement_level, Real smoothing_length_ratio, ParticlesGeneratorOps op);
 		virtual ~RealBody() {};
 
 		/** Allocate memory for cell linked list. */
-		virtual void AllocateMeoemryCellLinkedList() override;
-		/** Build inner configuration. */
-		virtual void BuildInnerConfiguration() override;
+		virtual void AllocateMemoryCellLinkedList() override;
 		/** Update cell linked list. */
 		virtual void UpdateCellLinkedList() override;
-		/** Update inner configuration. */
-		virtual void UpdateInnerConfiguration() override;
-		/** Update contact configuration. */
-		virtual void UpdateContactConfiguration() override;
-		/** Update interaction configuration, e.g., both ineer and contact. */
-		virtual void UpdateInteractionConfiguration(SPHBodyVector interacting_bodies) override;
-
 		/** The pointer to derived class object. */
 		virtual RealBody* PointToThisObject() override;
 	};
@@ -226,7 +182,7 @@ namespace SPH
 	/**
 	 * @class FictitiousBody.
 	 * @brief Derived class from SPHBody. 
-	 * Without innner configuration or inner interaction.
+	 * Without inner configuration or inner interaction.
 	 */
 	class FictitiousBody : public SPHBody
 	{
@@ -235,86 +191,100 @@ namespace SPH
 	public:
 		/** Constructor of FictitiousBodyBody. */
 		FictitiousBody(SPHSystem &system, string body_name, 
-			int refinement_level, Real smoothinglength_ratio, ParticlesGeneratorOps op);
+			int refinement_level, Real smoothing_length_ratio, ParticlesGeneratorOps op);
 		virtual ~FictitiousBody() {};
 
-		/** Build inner configuration. */
-		virtual void BuildInnerConfiguration() override;
+		/** Allocate memory for cell linked list. */
+		virtual void AllocateMemoryCellLinkedList() override;
 		/** Update cell linked list. */
 		virtual void UpdateCellLinkedList() override;
-		/** Update inner configuration. */
-		virtual void UpdateInnerConfiguration() override;
-		/** Update contact configuration. */
-		virtual void UpdateContactConfiguration() override;
-		/** Update interaction configuration, e.g., both ineer and contact. */
-		virtual void UpdateInteractionConfiguration(SPHBodyVector interacting_bodies) override;
-
 		/** The pointer to derived class object. */
 		virtual FictitiousBody* PointToThisObject() override;
 	};
 
 	/**
 	 * @class BodyPart
-	 * @brief An auxillariy class for SPHBody to indicate a part of the body.
+	 * @brief An auxillary class for SPHBody to indicate a part of the body.
 	 */
 	class BodyPart
 	{
-	protected:
-		SPHBody *body_;
-		string body_part_name_;
-		Region body_part_region_;
-
 	public:
 		BodyPart(SPHBody *body, string body_part_name)
 			: body_(body), body_part_name_(body_part_name),
-			body_part_region_(body_part_name) {};
+			body_part_shape_(body_part_name) {};
 		virtual ~BodyPart() {};
 
-		Region* GetRegion() { return &body_part_region_; };
+		ComplexShape& getBodyPartShape() { return body_part_shape_; };
+		SPHBody* getBody() { return body_; };
+
+	protected:
+		SPHBody* body_;
+		string body_part_name_;
+		ComplexShape body_part_shape_;
+
+		virtual void TagBodyPart() = 0;
 	};
 
 	/**
 	 * @class BodyPartByParticle
-	 * @brief An auxillariy class for SPHBody to 
+	 * @brief An auxillary class for SPHBody to 
 	 * indicate a part of the body moving together with particles.
 	 */
 	class BodyPartByParticle : public BodyPart
 	{
-	protected:
-		void tagAParticle(size_t particle_index);
-		virtual void TagBodyPartParticles();
 	public:
 		/** Collection particle in this body part. */
 		IndexVector body_part_particles_;
 
-		BodyPartByParticle(SPHBody *body, string body_part_name)
+		BodyPartByParticle(SPHBody* body, string body_part_name)
 			: BodyPart(body, body_part_name) {};
-		virtual ~BodyPartByParticle() {};
+	virtual ~BodyPartByParticle() {};
+
+	protected:
+		void tagAParticle(size_t particle_index);
+		virtual void TagBodyPart() override;
+
 	};
 
 	/**
 	 * @class BodySurface
-	 * @brief A auxillariy class for Body to
+	 * @brief A auxillary class for Body to
 	 * indicate the surface particles from background mesh
 	 */
 	class BodySurface : public BodyPartByParticle
 	{
-	protected:
-		virtual void TagBodyPartParticles() override;
 	public:
 		BodySurface(SPHBody* body);
 		virtual~BodySurface() {};
+
+	protected:
+		virtual void TagBodyPart() override;
+	};
+
+	/**
+	 * @class BodySurfaceLayer
+	 * @brief A auxillary class for Body to
+	 * indicate the particles within the inner layers
+	 */
+	class BodySurfaceLayer : public BodyPartByParticle
+	{
+	public:
+		BodySurfaceLayer(SPHBody* body, Real layer_thickness = 3.0);
+		virtual~BodySurfaceLayer() {};
+
+	protected:
+		Real layer_thickness_;
+
+		virtual void TagBodyPart() override;
 	};
 
 	/**
 	 * @class BodyPartByCell
-	 * @brief An auxillariy class for SPHBody to
+	 * @brief An auxillary class for SPHBody to
 	 * indicate a part of the body fixed in space.
 	 */
 	class BodyPartByCell : public BodyPart
 	{
-	protected:
-		virtual void TagBodyPartCells();
 	public:
 		/** Collection of cells to indicate the body part. */
 		CellLists body_part_cells_;
@@ -322,20 +292,24 @@ namespace SPH
 		BodyPartByCell(SPHBody *body, string body_part_name)
 			: BodyPart(body, body_part_name) {};
 		virtual ~BodyPartByCell() {};
+
+	protected:
+		virtual void TagBodyPart() override;
 	};
 
 	/**
 	 * @class NearBodySurface
-	 * @brief An auxillariy class for SPHBody to
+	 * @brief An auxillary class for SPHBody to
 	 * indicate region close the body surface.
 	 */
 	class NearBodySurface : public BodyPartByCell
 	{
-	protected:
-		virtual void TagBodyPartCells();
 	public:
 		NearBodySurface(SPHBody* body);
 		virtual ~NearBodySurface() {};
+
+	protected:
+		virtual void TagBodyPart() override;
 	};
 
 	/**
@@ -346,42 +320,15 @@ namespace SPH
 	 */
 	class SolidBodyPartForSimbody : public BodyPartByParticle
 	{
+	public:
+		Vec3d initial_mass_center_;
+		SimTK::MassProperties* body_part_mass_properties_;
+		
+		SolidBodyPartForSimbody(SPHBody* body, string solid_body_part_name);
+		virtual~SolidBodyPartForSimbody() {};
 	protected:
 		Real solid_body_density_;
 
-		virtual void TagBodyPartParticles() override;
-	public:
-		SolidBodyPartForSimbody(SPHBody* body, string soild_body_part_name);
-		virtual~SolidBodyPartForSimbody() {};
-
-		Vec3 initial_mass_center_;
-		SimTK::MassProperties* body_part_mass_properties_;
-	};
-
-	/**
-	 * @class SPHBodyContactRealtion
-	 * @brief The relation between a SPH body and its contact SPH bodies
-	 */
-	class SPHBodyContactRealtion
-	{
-	public:
-		SPHBody* body_;
-		SPHBodyVector contact_bodies_;
-		/** Split cell lists*/
-		SplitCellLists& split_cell_lists_;
-		/** inner configuration for the neighbor relations. */
-		ParticleConfiguration* inner_configuration_;
-
-
-		/** Lists of particles has a ocnfiguration with particles in contaced bodies. **/
-		ContactParticles indexes_contact_particles_;
-		/** Configurations for updated Lagrangian formulation. **/
-		ContatcParticleConfiguration contact_configuration_;
-
-		SPHBodyContactRealtion(SPHBody* body, SPHBodyVector contact_bodies);
-		virtual ~SPHBodyContactRealtion() {};
-
-		/** Allocate extra configuration memories for body buffer particles. */
-		void AllocateConfigurationMemoriesForBodyBuffer(size_t body_buffer_particles);
+		virtual void TagBodyPart() override;
 	};
 }

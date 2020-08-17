@@ -37,11 +37,11 @@ namespace SPH
 	void XmlEngine::AddAttributeToElement(const std::string &attrib_name, const Matd value)
 	{
 		int num_dim = value.nrow();
-		Array_<Real> array_(num_dim * num_dim);
+		SimTK::Array_<Real> array_(num_dim * num_dim);
 		for (int i = 0; i < num_dim; i++)
 			for (int j = 0; j < num_dim; j++)
 				array_[i * num_dim + j] = value(i, j);
-		SimTK::Xml::Attribute attr_(attrib_name, String(array_));
+		SimTK::Xml::Attribute attr_(attrib_name, SimTK::String(array_));
 		element_->setAttributeValue(attr_.getName(), attr_.getValue());
 	}
 	//===============================================================//
@@ -69,8 +69,8 @@ namespace SPH
 	Matd XmlEngine::GetRequiredAttributeMatrixValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name)
 	{
 		std::string value_in_string = ele_ite_->getRequiredAttributeValue(attrib_name);
-		Array_<Real> array_;
-		array_ = SimTK::convertStringTo<Array_<float>>(value_in_string);
+		SimTK::Array_<Real> array_;
+		array_ = SimTK::convertStringTo<SimTK::Array_<float>>(value_in_string);
 		int num_dim_2 = array_.size();
 		int num_dim;
 		if (num_dim_2 == 4) {

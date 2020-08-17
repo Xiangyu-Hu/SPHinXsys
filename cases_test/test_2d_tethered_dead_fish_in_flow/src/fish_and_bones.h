@@ -102,7 +102,7 @@ Real outline_zebra_fish(Real x, Real h, Real L)
 
 
 //creat bone shape
-std::vector<Point> CreatZebraFishtShape(Real center_x, Real center_y, Real length)
+std::vector<Point> CreatZebraFishShape(Real center_x, Real center_y, Real length)
 {
 	Real headtip = center_x;		//head position(cx, cy)
 	Real tailtip = center_x + length;	//tail position(cx + length, cy)
@@ -167,7 +167,7 @@ std::vector<Point> CreatBoneShape(int Nh, Real ra, Real rab, Real center_x, Real
 	for (int n = 1; n < Nh; n++)
 	{
 		Real x = headtip + n * hstep;
-		pnts.push_back(Point(x, rb * sqrt(1 - square((x - center_x) / ra)) + center_y));
+		pnts.push_back(Point(x, rb * sqrt(1 - sqr((x - center_x) / ra)) + center_y));
 	}
 	pnts.push_back(Point(center_x + ra, center_y));
 
