@@ -695,12 +695,20 @@ namespace SPH
 			non_newtonian_fluid_data_i.tau_ += non_newtonian_fluid_data_i.dtau_dt_ * dt * 0.5;
 		}
 		//=================================================================================================//
-		void InflowBoundaryCondition
-			::Update(size_t index_particle_i, Real dt)
+		void InflowBoundaryCondition::Update(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
 			base_particle_data_i.vel_n_ = base_particle_data_i.vel_n_*(1.0 - constrain_strength_)
 				+ constrain_strength_*GetInflowVelocity(base_particle_data_i.pos_n_, base_particle_data_i.vel_n_);
+		}
+		//=================================================================================================//
+		void DampingBoundaryCondition::Update(size_t index_particle_i, Real dt)
+		{
+			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
+
+			Real damping_factor = (base_particle_data_i.pos_n_[0] - damping_zone_lower_bound_[0]) /
+								  (damping_zone_upper_bound_[0]-damping_zone_lower_bound_[0]);
+			base_particle_data_i.vel_n_ = base_particle_data_i.vel_n_ * (1.0 - dt * strength_ * damping_factor * damping_factor);
 		}
 		//=================================================================================================//
 		void EmitterInflowCondition

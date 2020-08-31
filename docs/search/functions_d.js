@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['observer',['Observer',['../class_observer.html#a3a28eabdec2095e8ea5d4e22c068949a',1,'Observer::Observer(SPHSystem &amp;system, string body_name, int refinement_level, ParticlesGeneratorOps op)'],['../class_observer.html#a3a28eabdec2095e8ea5d4e22c068949a',1,'Observer::Observer(SPHSystem &amp;system, string body_name, int refinement_level, ParticlesGeneratorOps op)']]],
   ['offsetinitialparticleposition',['OffsetInitialParticlePosition',['../class_s_p_h_1_1_solid_particles.html#a101bace3656fb8498d358befd7b39924',1,'SPH::SolidParticles']]],
   ['oldroyd_5fb_5ffluid',['Oldroyd_B_Fluid',['../class_s_p_h_1_1_oldroyd___b___fluid.html#a62ef62acd5b9c928ebcd6b31ae868cdf',1,'SPH::Oldroyd_B_Fluid']]],
   ['operator_3d',['operator=',['../class_s_p_h_1_1_array.html#a79679d423f2d29a81f871c33f5461585',1,'SPH::Array::operator=()'],['../struct_s_p_h_1_1_state_engine_1_1_state_variable_info.html#aada2890308ac32241cafcbee3079ad66',1,'SPH::StateEngine::StateVariableInfo::operator=()']]],

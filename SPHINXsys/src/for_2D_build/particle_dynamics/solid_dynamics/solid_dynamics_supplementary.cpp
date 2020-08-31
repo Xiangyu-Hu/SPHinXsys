@@ -41,7 +41,7 @@ namespace SPH
 			solid_data_i.n_ = R * solid_data_i.n_0_;
 		}
 		//=========================================================================================//
-		void ConstrianSolidBodyPartBySimBody::Update(size_t index_particle_i,
+		void ConstrainSolidBodyPartBySimBody::Update(size_t index_particle_i,
 				Real dt)
 		{
 			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
@@ -63,7 +63,20 @@ namespace SPH
 			base_particle_data_i.dvel_dt_ = acc.getSubVec<2>(0);
 		}
 		//=========================================================================================//
-		SimTK::SpatialVec ForceOnSolidBodyPartForSimBody::ReduceFunction(size_t index_particle_i, Real dt)
+		void ConstrainNormalDirectionforSoildBodyPartBySimBody::Update(size_t index_particle_i, Real dt)
+		{
+			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
+			/** Update normal due to ration */
+			Vec3 norm_in_3d, norm_3d;
+			norm_in_3d(0) = solid_data_i.n_0_[0];
+			norm_in_3d(1) = solid_data_i.n_0_[1];
+			norm_in_3d(2) = 0.0;
+			/** Get the body rotation matrix. */
+			norm_3d = mobod_.getBodyRotation(*simbody_state_) * norm_in_3d;
+			solid_data_i.n_ = norm_3d.getSubVec<2>(0);
+		}
+		//=========================================================================================//
+		SpatialVec ForceOnSolidBodyPartForSimBody::ReduceFunction(size_t index_particle_i, Real dt)
 		{
 			BaseParticleData &base_particle_data_i 	= particles_->base_particle_data_[index_particle_i];
 			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
@@ -75,7 +88,7 @@ namespace SPH
 				- current_mobod_origin_location_.getSubVec<2>(0);
 			Vec3 torque_from_particle = cross(displacement, force_from_particle);
 
-			return SimTK::SpatialVec(torque_from_particle, force_from_particle);
+			return SpatialVec(torque_from_particle, force_from_particle);
 		}
 		//=========================================================================================//
 		SimTK::SpatialVec ForceOnElasticBodyPartForSimBody

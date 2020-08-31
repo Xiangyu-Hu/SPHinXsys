@@ -145,6 +145,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1fluid__dynamics_1_1_inflow_boundary_condition.html">SPH::fluid_dynamics::InflowBoundaryCondition</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">inflow boundary condition which relaxes the particles to a given velocity profile.  <a href="class_s_p_h_1_1fluid__dynamics_1_1_inflow_boundary_condition.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1fluid__dynamics_1_1_damping_boundary_condition.html">SPH::fluid_dynamics::DampingBoundaryCondition</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">damping boundary condition which relaxes the particles to zero velocity profile.  <a href="class_s_p_h_1_1fluid__dynamics_1_1_damping_boundary_condition.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1fluid__dynamics_1_1_emitter_inflow_condition.html">SPH::fluid_dynamics::EmitterInflowCondition</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inflow boundary condition. The body part region is required to have parallel lower- and upper-bound surfaces.  <a href="class_s_p_h_1_1fluid__dynamics_1_1_emitter_inflow_condition.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -185,7 +188,7 @@ template&lt;class ReturnType &gt; </td></tr>
 <tr class="memitem:a94bae92deb37ebf371384891c8dcf367"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>SPH::fluid_dynamics::WeaklyCompressibleFluidDynamicsSum</b> = ParticleDynamicsReduce&lt; ReturnType, ReduceSum&lt; ReturnType &gt;, FluidBody, FluidParticles, WeaklyCompressibleFluid &gt;</td></tr>
 <tr class="separator:a94bae92deb37ebf371384891c8dcf367"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a608fc3391113a498c69e5bc9e374f72a"><td class="memItemLeft" align="right" valign="top"><a id="a608fc3391113a498c69e5bc9e374f72a"></a>
-typedef ParticleDynamicsReduce&lt; Real, ReduceMax, FluidBody, FluidParticles, WeaklyCompressibleFluid &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SPH::fluid_dynamics::WeaklyCompressibleFluidDynamicsMaximum</b></td></tr>
+typedef ParticleDynamicsReduce&lt; <a class="el" href="class_real.html">Real</a>, ReduceMax, FluidBody, FluidParticles, WeaklyCompressibleFluid &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SPH::fluid_dynamics::WeaklyCompressibleFluidDynamicsMaximum</b></td></tr>
 <tr class="separator:a608fc3391113a498c69e5bc9e374f72a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9c85d8cbf8d1f4b52c0824beacf1561d"><td class="memItemLeft" align="right" valign="top"><a id="a9c85d8cbf8d1f4b52c0824beacf1561d"></a>
 typedef PartDynamicsByCell&lt; FluidBody, FluidParticles, BodyPartByCell &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SPH::fluid_dynamics::WeaklyCompressibleFluidPartDynamicsByCell</b></td></tr>

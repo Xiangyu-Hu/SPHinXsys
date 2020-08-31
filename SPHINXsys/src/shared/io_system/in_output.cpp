@@ -429,34 +429,28 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	WriteSimBodyPinAngleAndAngleRate
-		::WriteSimBodyPinAngleAndAngleRate(In_Output& in_output, StdVec<SimTK::MobilizedBody::Pin *> mobodies, SimTK::RungeKuttaMersonIntegrator &integ)
-		: WriteSimBodyStates<SimTK::MobilizedBody::Pin>(in_output, mobodies), integ_(integ)
+	WriteSimBodyPinData::WriteSimBodyPinData(In_Output& in_output, SimTK::RungeKuttaMersonIntegrator& integ, SimTK::MobilizedBody::Pin& pinbody)
+		: WriteSimBodyStates<SimTK::MobilizedBody::Pin>(in_output, integ, pinbody)
 	{
-		filefullpath_ = in_output_.output_folder_ + "/simbody_pin_angles_and_anglerate" 
-					  + in_output_.restart_step_ + ".dat";
+		filefullpath_ = in_output_.output_folder_ + "/mb_pinbody_data.dat";
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
-		out_file << "\"run_time\"" << "   ";
-		for (size_t i = 0; i != mobodies_.size(); ++i)
-		{
-			out_file << "  " << "simbody_pin_angles_[" << i << "]" << " ";
-			out_file << "  " << "simbody_pin_angle_rates_[" << i << "]" << " ";
-		}
+
+		out_file << "\"time\"" << "   ";
+		out_file << "  " << "angles" << " ";
+		out_file << "  " << "angle_rates" << " ";
 		out_file << "\n";
+
 		out_file.close();
 	};
 	//=============================================================================================//
-	void WriteSimBodyPinAngleAndAngleRate::WriteToFile(Real time)
+	void WriteSimBodyPinData::WriteToFile(Real time)
 	{
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << time << "   ";
-		const SimTK::State *simbody_state = &integ_.getState();
-		visulizer->report(*simbody_state);
-		for (size_t i = 0; i != mobodies_.size(); ++i)
-		{
-			out_file << "  " << mobodies_[i]->getAngle(*simbody_state) <<"  ";
-			out_file << "  " << mobodies_[i]->getRate(*simbody_state) <<"  ";
-		}
+		const SimTK::State& state = integ_.getState();
+
+		out_file << "  " << mobody_.getAngle(state) <<"  "<< mobody_.getRate(state) <<"  ";
+		
 		out_file << "\n";
 		out_file.close();
 	};

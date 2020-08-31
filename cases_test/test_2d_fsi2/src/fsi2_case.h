@@ -186,8 +186,8 @@ public:
 class BeamBase : public BodyPartByParticle
 {
 public:
-	BeamBase(SolidBody* solid_body, string constrianed_region_name)
-		: BodyPartByParticle(solid_body, constrianed_region_name)
+	BeamBase(SolidBody* solid_body, string constrained_region_name)
+		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		/** Geomtry definition. */
 		body_part_shape_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
@@ -202,8 +202,8 @@ public:
 class InflowBuffer : public BodyPartByCell
 {
 public:
-	InflowBuffer(FluidBody* fluid_body, string constrianed_region_name)
-		: BodyPartByCell(fluid_body, constrianed_region_name)
+	InflowBuffer(FluidBody* fluid_body, string constrained_region_name)
+		: BodyPartByCell(fluid_body, constrained_region_name)
 	{
 		/** Geomtry definition. */
 		std::vector<Point> inflow_buffer_shape = CreatInflowBufferShape();

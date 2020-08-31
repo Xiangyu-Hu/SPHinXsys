@@ -1,8 +1,5 @@
 var searchData=
 [
-  ['ball',['Ball',['../class_ball.html',1,'']]],
-  ['ballinitialcondition',['BallInitialCondition',['../class_ball_initial_condition.html',1,'']]],
-  ['ballmaterial',['BallMaterial',['../class_ball_material.html',1,'']]],
   ['basebranch',['BaseBranch',['../class_base_branch.html',1,'']]],
   ['basedatapackage',['BaseDataPackage',['../class_s_p_h_1_1_base_data_package.html',1,'SPH']]],
   ['basedatapackage_3c_20levelsetdata_20_3e',['BaseDataPackage&lt; LevelSetData &gt;',['../class_s_p_h_1_1_base_data_package.html',1,'SPH']]],
@@ -15,11 +12,6 @@ var searchData=
   ['baseparticledata',['BaseParticleData',['../class_s_p_h_1_1_base_particle_data.html',1,'SPH']]],
   ['baseparticles',['BaseParticles',['../class_s_p_h_1_1_base_particles.html',1,'SPH']]],
   ['basereactionmodel',['BaseReactionModel',['../class_s_p_h_1_1_base_reaction_model.html',1,'SPH']]],
-  ['beam',['Beam',['../class_beam.html',1,'']]],
-  ['beambase',['BeamBase',['../class_beam_base.html',1,'']]],
-  ['beaminitialcondition',['BeamInitialCondition',['../class_beam_initial_condition.html',1,'']]],
-  ['beammaterial',['BeamMaterial',['../class_beam_material.html',1,'']]],
-  ['beamobserver',['BeamObserver',['../class_beam_observer.html',1,'']]],
   ['bodylowerbound',['BodyLowerBound',['../class_s_p_h_1_1_body_lower_bound.html',1,'SPH']]],
   ['bodypart',['BodyPart',['../class_s_p_h_1_1_body_part.html',1,'SPH']]],
   ['bodypartbycell',['BodyPartByCell',['../class_s_p_h_1_1_body_part_by_cell.html',1,'SPH']]],

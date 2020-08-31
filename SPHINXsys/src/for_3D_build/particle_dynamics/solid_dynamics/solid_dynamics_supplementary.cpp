@@ -39,12 +39,19 @@ namespace SPH
 			solid_data_i.n_ = R * solid_data_i.n_0_;
 		}
 		//=================================================================================================//
-		void ConstrianSolidBodyPartBySimBody::Update(size_t index_particle_i, Real dt)
+		void ConstrainSolidBodyPartBySimBody::Update(size_t index_particle_i, Real dt)
 		{
 
 		}
 		//=================================================================================================//
-		SimTK::SpatialVec ForceOnSolidBodyPartForSimBody
+		void ConstrainNormalDirectionforSoildBodyPartBySimBody::Update(size_t index_particle_i, Real dt)
+		{
+			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
+			/** Update normal due to ration */
+			solid_data_i.n_ = mobod_.getBodyRotation(*simbody_state_) * solid_data_i.n_0_;
+		}
+		//=================================================================================================//
+		SpatialVec ForceOnSolidBodyPartForSimBody
 			::ReduceFunction(size_t index_particle_i, Real dt)
 		{
 			cout << "\n This function is not done in 3D. Exit the program! \n";
@@ -52,12 +59,12 @@ namespace SPH
 			return SimTK::SpatialVec(Vec3(0), Vec3(0));
 		}
 		//=================================================================================================//
-		SimTK::SpatialVec ForceOnElasticBodyPartForSimBody
+		SpatialVec ForceOnElasticBodyPartForSimBody
 			::ReduceFunction(size_t index_particle_i, Real dt)
 		{
 			cout << "\n This function is not done in 3D. Exit the program! \n";
 			exit(0);
-			return SimTK::SpatialVec(Vec3(0), Vec3(0));
+			return SpatialVec(Vec3(0), Vec3(0));
 		}
 		//=================================================================================================//	
 	}

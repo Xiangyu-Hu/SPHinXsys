@@ -15,7 +15,6 @@ var searchData=
   ['node_5fidxs_5f',['node_idxs_',['../class_s_p_h_1_1_branch.html#ac0952d5bfac3963929adc077dc446c84',1,'SPH::Branch']]],
   ['nodes_5f',['nodes_',['../class_s_p_h_1_1_node.html#a18579b570d4f163829098c655350994b',1,'SPH::Node']]],
   ['nodes_5fidx_5f',['nodes_idx_',['../class_s_p_h_1_1_node.html#abe8bf9d8d414f5896e58b1cb52fbdf42',1,'SPH::Node']]],
-  ['nonnewtonianmaterial',['NonNewtonianMaterial',['../class_non_newtonian_material.html',1,'']]],
   ['normaldirectionrenormalization',['NormalDirectionReNormalization',['../class_s_p_h_1_1solid__dynamics_1_1_normal_direction_re_normalization.html',1,'SPH::solid_dynamics']]],
   ['normaldirectionsummation',['NormalDirectionSummation',['../class_s_p_h_1_1solid__dynamics_1_1_normal_direction_summation.html',1,'SPH::solid_dynamics']]],
   ['normalizekernelgradient',['normalizeKernelGradient',['../class_s_p_h_1_1_base_particles.html#aacd901a6230deb7dfb2b6e5ca192072c',1,'SPH::BaseParticles::normalizeKernelGradient()'],['../class_s_p_h_1_1_solid_particles.html#ad6dc347577e65c254e4c5490b4bcc189',1,'SPH::SolidParticles::normalizeKernelGradient()']]],

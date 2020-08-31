@@ -71,7 +71,7 @@ Technical University of Munich
 
 Acknowledgements
 -----------------
-German Research Fundation (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1 and HU1527/12-1.
+German Research Foundation (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1 and HU1527/12-1.
 
 Please cite
 -----------------

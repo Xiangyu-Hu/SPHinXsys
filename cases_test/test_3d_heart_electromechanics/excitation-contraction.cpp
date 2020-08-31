@@ -271,8 +271,8 @@ public:
 class MuscleBase : public BodyPartByParticle
 {
 public:
-	 MuscleBase(SolidBody *solid_body, string constrianed_region_name)
-		: BodyPartByParticle(solid_body, constrianed_region_name)
+	 MuscleBase(SolidBody *solid_body, string constrained_region_name)
+		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		body_part_shape_.addTriangleMeshShape(CreateBaseShape(), ShapeBooleanOps::add);
 
@@ -664,8 +664,8 @@ int main(int ac, char* av[])
 					apply_stimulus_s1.parallel_exec(dt);
 				}
 				/** Single spiral wave. */
-				// if( 105 <= GlobalStaticVariables::physical_time_ 
-				// 	&&  GlobalStaticVariables::physical_time_ <= 105.2)	
+				// if( 60 <= GlobalStaticVariables::physical_time_ 
+				// 	&&  GlobalStaticVariables::physical_time_ <= 65)	
 				// {
 				// 	apply_stimulus_s2.parallel_exec(dt);
 				// }

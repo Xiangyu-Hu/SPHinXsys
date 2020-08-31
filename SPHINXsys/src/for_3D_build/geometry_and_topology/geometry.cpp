@@ -133,30 +133,6 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void TriangleMeshShape::writePolygonalVertices(int poly_id, string out_folder)
-	{
-		std::string filefullpath = out_folder + "/Polygonalmesh_" + std::to_string(poly_id) + ".plt";
-		if (fs::exists(filefullpath))
-		{
-				fs::remove(filefullpath);
-		}
-		std::ofstream out_file(filefullpath.c_str(), ios::trunc);
-		out_file << " VARIABLES = \" x \", \"y\",\"z\", \"ID\", \" n_x \", \" n_y \",\" n_z \" \n";
-		for(int i = 0; i <= triangle_mesh_->getNumVertices(); i++ )
-		{
-			Vec3d face_pos = triangle_mesh_->getVertexPosition(i);
-			Vec3d face_norm = triangle_mesh_->getFaceNormal(i);
-			out_file << face_pos[0] << "  "
-					 << face_pos[1] << "  "
-					 << face_pos[2] << "  "
-					 << i << " "
-					 << face_norm[0] << "  "
-					 << face_norm[1] << "  "
-					 << face_norm[2] << "\n";
-		}
-		out_file.close();
-	}
-	//=================================================================================================//
 	bool ComplexShape::checkContain(Vec3d pnt, bool BOUNDARY_INCLUDED)
 	{
 		bool exist = false;
@@ -276,25 +252,6 @@ namespace SPH
 			}
 			break;
 		}
-		}
-	}
-	//=================================================================================================//
-	void ComplexShape::writePolygonalVertices()
-	{
-		output_folder_ = "./ploymesh";
-		if (fs::exists(output_folder_))
-		{
-			fs::remove_all(output_folder_);
-		}
-		if (!fs::exists(output_folder_))
-		{
-			fs::create_directory(output_folder_);
-		}
-
-		for (int i = 0; i < triangle_mesh_shapes_.size(); i++)
-		{
-			TriangleMeshShape* sp = triangle_mesh_shapes_[i].first;
-			sp->writePolygonalVertices(i, output_folder_);
 		}
 	}
 	//=================================================================================================//

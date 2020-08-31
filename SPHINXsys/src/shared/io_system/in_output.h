@@ -1,3 +1,25 @@
+/* -------------------------------------------------------------------------*
+*								SPHinXsys									*
+* --------------------------------------------------------------------------*
+* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+* physical accurate simulation and aims to model coupled industrial dynamic *
+* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+* (smoothed particle hydrodynamics), a meshless computational method using	*
+* particle discretization.													*
+*																			*
+* SPHinXsys is partially funded by German Research Foundation				*
+* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+* and HU1527/12-1.															*
+*                                                                           *
+* Portions copyright (c) 2017-2020 Technical University of Munich and		*
+* the authors' affiliations.												*
+*                                                                           *
+* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+* not use this file except in compliance with the License. You may obtain a *
+* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+*                                                                           *
+* --------------------------------------------------------------------------*/
 /**
  * @file 	in_output.h
  * @brief 	Classes for input and output functions.
@@ -103,13 +125,11 @@ namespace SPH {
 	{
 	protected:
 		In_Output &in_output_;
-		MobilizedBodyType* mobody_;
-		StdVec<MobilizedBodyType*> mobodies_;
+		SimTK::RungeKuttaMersonIntegrator& integ_;
+		MobilizedBodyType& mobody_;
 	public:
-		SimBodyStatesIO(In_Output& in_output, MobilizedBodyType* mobody)
-			: in_output_(in_output), mobody_(mobody) {};
-		SimBodyStatesIO(In_Output& in_output, StdVec<MobilizedBodyType*> mobodies)
-			: in_output_(in_output), mobodies_(mobodies) {};
+		SimBodyStatesIO(In_Output& in_output, SimTK::RungeKuttaMersonIntegrator& integ, MobilizedBodyType& mobody)
+			: in_output_(in_output),integ_(integ), mobody_(mobody) {};
 		virtual ~SimBodyStatesIO() {};
 	};
 
@@ -121,10 +141,8 @@ namespace SPH {
 	class WriteSimBodyStates : public SimBodyStatesIO<MobilizedBodyType>
 	{
 	public:
-		WriteSimBodyStates(In_Output& in_output, MobilizedBodyType* mobody)
-			: SimBodyStatesIO<MobilizedBodyType>(in_output, mobody) {};
-		WriteSimBodyStates(In_Output& in_output, StdVec<MobilizedBodyType*> mobodies)
-			: SimBodyStatesIO<MobilizedBodyType>(in_output, mobodies) {};
+		WriteSimBodyStates(In_Output& in_output, SimTK::RungeKuttaMersonIntegrator& integ, MobilizedBodyType& mobody)
+			: SimBodyStatesIO<MobilizedBodyType>(in_output,integ, mobody) {};
 		virtual ~WriteSimBodyStates() {};
 
 		virtual void WriteToFile(Real time) = 0;
@@ -488,18 +506,16 @@ namespace SPH {
 	};
 
 	/**
-	 * @class WriteSimBodyPinAngleAndAngleRate
+	 * @class WriteSimBodyPinData
 	* @brief Write total force acting a solid body.
 	*/
-	class WriteSimBodyPinAngleAndAngleRate : public WriteSimBodyStates<SimTK::MobilizedBody::Pin>
+	class WriteSimBodyPinData : public WriteSimBodyStates<SimTK::MobilizedBody::Pin>
 	{
 	protected:
-		SimTK::RungeKuttaMersonIntegrator &integ_;
 		std::string filefullpath_;
-		SimTK::Visualizer *visulizer;
 	public:
-		WriteSimBodyPinAngleAndAngleRate(In_Output& in_output, StdVec<SimTK::MobilizedBody::Pin*> mobodies, SimTK::RungeKuttaMersonIntegrator &integ);
-		virtual ~WriteSimBodyPinAngleAndAngleRate() {};
+		WriteSimBodyPinData(In_Output& in_output, SimTK::RungeKuttaMersonIntegrator& integ, SimTK::MobilizedBody::Pin& pinbody);
+		virtual ~WriteSimBodyPinData() {};
 		virtual void WriteToFile(Real time = 0.0) override;
 	};
 		/**

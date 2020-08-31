@@ -1,22 +1,13 @@
 var searchData=
 [
-  ['dam_5fh',['Dam_H',['../elastic__gate_8cpp.html#a563b9c6c20aa191215aa726001e03866',1,'elastic_gate.cpp']]],
-  ['dam_5fl',['Dam_L',['../elastic__gate_8cpp.html#a185e776fca4ef7f80a7970f2f2d8ab13',1,'elastic_gate.cpp']]],
   ['data_5flower_5fbound_5f',['data_lower_bound_',['../class_s_p_h_1_1_base_data_package.html#abe79a160d794e5d2173d1bf95fdae11e',1,'SPH::BaseDataPackage']]],
   ['data_5fpkg_5faddrs_5f',['data_pkg_addrs_',['../class_s_p_h_1_1_mesh_with_data_packages.html#a60367a8dbbe1def71a561f0ef1c8dca0',1,'SPH::MeshWithDataPackages']]],
   ['data_5fpkg_5fpool_5f',['data_pkg_pool_',['../class_s_p_h_1_1_mesh_with_data_packages.html#aadba35ad3ccab5a3fec7be11c781e0ec',1,'SPH::MeshWithDataPackages']]],
   ['data_5fspacing_5f',['data_spacing_',['../class_s_p_h_1_1_mesh_with_data_packages.html#a7547ab2f45b7be609ec58b2b14d2736f',1,'SPH::MeshWithDataPackages']]],
   ['defaultvalue_5f',['defaultValue_',['../class_s_p_h_1_1_array.html#a9961bcd37a4247cbdc4c58eff0e53656',1,'SPH::Array']]],
-  ['dh',['DH',['../collision_8cpp.html#abea0d0175182abda021cdc6ec0e593f2',1,'DH():&#160;collision.cpp'],['../elastic__gate_8cpp.html#abea0d0175182abda021cdc6ec0e593f2',1,'DH():&#160;elastic_gate.cpp'],['../filling__tank_8cpp.html#abea0d0175182abda021cdc6ec0e593f2',1,'DH():&#160;filling_tank.cpp'],['../fsi2__case_8h.html#abea0d0175182abda021cdc6ec0e593f2',1,'DH():&#160;fsi2_case.h'],['../parallel__scaling_8cpp.html#abea0d0175182abda021cdc6ec0e593f2',1,'DH():&#160;parallel_scaling.cpp'],['../poiseuille__flow_8cpp.html#abea0d0175182abda021cdc6ec0e593f2',1,'DH():&#160;poiseuille_flow.cpp'],['../taylor__green_8cpp.html#abea0d0175182abda021cdc6ec0e593f2',1,'DH():&#160;taylor_green.cpp'],['../tethered__dead__fish__in__flow_8cpp.html#abea0d0175182abda021cdc6ec0e593f2',1,'DH():&#160;tethered_dead_fish_in_flow.cpp']]],
-  ['diffusion_5fcoff',['diffusion_coff',['../diffusion_8cpp.html#a0fc5d1263e723431e36abbb71bb50ad7',1,'diffusion_coff():&#160;diffusion.cpp'],['../excitation-contraction_8cpp.html#a0fc5d1263e723431e36abbb71bb50ad7',1,'diffusion_coff():&#160;excitation-contraction.cpp']]],
-  ['diffusion_5fcoff_5f',['diffusion_coff_',['../depolarization_8cpp.html#ac363f7ae320dfeaea9202288109193f5',1,'depolarization.cpp']]],
   ['diffusion_5freaction_5fdata_5f',['diffusion_reaction_data_',['../class_s_p_h_1_1_diffusion_reaction_particles.html#ace9886026ada5948e27c14a0ce827b2f',1,'SPH::DiffusionReactionParticles']]],
   ['diffusion_5freaction_5fparticles_5f',['diffusion_reaction_particles_',['../class_s_p_h_1_1_diffusion_reaction_material.html#ae4f0b595243d37c432706f000aceae57',1,'SPH::DiffusionReactionMaterial']]],
   ['diffusion_5fspecies_5findex_5f',['diffusion_species_index_',['../class_s_p_h_1_1_base_diffusion.html#a1cf2a7e873e1bf1c0666793b5ebff900',1,'SPH::BaseDiffusion']]],
-  ['dl',['DL',['../collision_8cpp.html#a2e450c8ca2e7d0e070bc6f569b8c7465',1,'DL():&#160;collision.cpp'],['../elastic__gate_8cpp.html#a2e450c8ca2e7d0e070bc6f569b8c7465',1,'DL():&#160;elastic_gate.cpp'],['../filling__tank_8cpp.html#a2e450c8ca2e7d0e070bc6f569b8c7465',1,'DL():&#160;filling_tank.cpp'],['../fsi2__case_8h.html#a2e450c8ca2e7d0e070bc6f569b8c7465',1,'DL():&#160;fsi2_case.h'],['../parallel__scaling_8cpp.html#a2e450c8ca2e7d0e070bc6f569b8c7465',1,'DL():&#160;parallel_scaling.cpp'],['../poiseuille__flow_8cpp.html#a2e450c8ca2e7d0e070bc6f569b8c7465',1,'DL():&#160;poiseuille_flow.cpp'],['../taylor__green_8cpp.html#a2e450c8ca2e7d0e070bc6f569b8c7465',1,'DL():&#160;taylor_green.cpp'],['../tethered__dead__fish__in__flow_8cpp.html#a2e450c8ca2e7d0e070bc6f569b8c7465',1,'DL():&#160;tethered_dead_fish_in_flow.cpp']]],
-  ['dl_5fsponge',['DL_sponge',['../fsi2__case_8h.html#aebfb396fa52225e418b894d1b3ca8891',1,'DL_sponge():&#160;fsi2_case.h'],['../tethered__dead__fish__in__flow_8cpp.html#aebfb396fa52225e418b894d1b3ca8891',1,'DL_sponge():&#160;tethered_dead_fish_in_flow.cpp']]],
-  ['dp_5f0',['dp_0',['../excitation-contraction_8cpp.html#a1c8f7a416c96577df512bfe26465f828',1,'excitation-contraction.cpp']]],
-  ['dp_5fs',['dp_s',['../elastic__gate_8cpp.html#aed9c283a9b4928dc08eac0dd7058678f',1,'elastic_gate.cpp']]],
   ['drho_5fdt_5f',['drho_dt_',['../class_s_p_h_1_1_fluid_particle_data.html#a2c2405444e68311b5226adccf92b6fcb',1,'SPH::FluidParticleData']]],
   ['dspecies_5fdt_5f',['dspecies_dt_',['../class_s_p_h_1_1_diffusion_reaction_data.html#a9c9c5fa76e83b20f66c7eb961dea9b76',1,'SPH::DiffusionReactionData']]],
   ['dw_5fij_5f',['dW_ij_',['../class_s_p_h_1_1_common_relation.html#a2fdbf618dfaaca3cf77176907c1e7ae0',1,'SPH::CommonRelation']]]

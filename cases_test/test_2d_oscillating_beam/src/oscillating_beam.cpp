@@ -4,7 +4,7 @@
 * This is the one of the basic test cases, also the first case for            *
 * understanding SPH method for solid simulation.                              *
 * In this case, the constraint of the beam is implemented with                *
-* internal constrianed subregion.                                             *
+* internal constrained subregion.                                             *
 * ----------------------------------------------------------------------------*/
 /**
   * @brief 	SPHinXsys Library.
@@ -135,8 +135,8 @@ protected:
 class BeamBase : public BodyPartByParticle
 {
 public:
-	BeamBase(SolidBody *solid_body, string constrianed_region_name)
-		: BodyPartByParticle(solid_body, constrianed_region_name)
+	BeamBase(SolidBody *solid_body, string constrained_region_name)
+		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		/* Geometry definition */
 		std::vector<Point> beam_base_shape = CreatBeamBaseShape();

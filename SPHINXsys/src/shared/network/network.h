@@ -1,3 +1,25 @@
+/* -------------------------------------------------------------------------*
+*								SPHinXsys									*
+* --------------------------------------------------------------------------*
+* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+* physical accurate simulation and aims to model coupled industrial dynamic *
+* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+* (smoothed particle hydrodynamics), a meshless computational method using	*
+* particle discretization.													*
+*																			*
+* SPHinXsys is partially funded by German Research Foundation				*
+* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+* and HU1527/12-1.															*
+*                                                                           *
+* Portions copyright (c) 2017-2020 Technical University of Munich and		*
+* the authors' affiliations.												*
+*                                                                           *
+* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+* not use this file except in compliance with the License. You may obtain a *
+* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+*                                                                           *
+* --------------------------------------------------------------------------*/
 /**
  * @file 	branch.h
  * @brief 	This is Branch class.
@@ -157,15 +179,15 @@ namespace SPH
 		SPHBody* body_;
 		BaseLevelSet* levelset_mesh_;;
 		
-		int n_it_ =15; 				/**< Number of iterations (generations of branches. */
+		int n_it_ = 25; 			/**< Number of iterations (generations of branches. */
 		Real branch_angle_ = 0.15;	/**< angle with respect to the direction of the previous branch and the new branch. */
-		Real branch_w_ = 0.2; 		/**< epulsivity parameter. */
+		Real branch_w_ = 0.1; 		/**< epulsivity parameter. */
 		Real length_;				/**< edian length of the branches. */
 		Real length_std_;			/**< standard deviation of the length. Set to zero to avoid random lengths */
 		Real length_min_; 			/**< inimum length of the branches. To avoid randomly generated negative lengths*/
 		bool fascicles_	= true;			/**< Create fascicles? */
 		std::vector<Real> fascicle_angles_ = {-1.5, 0.2}; 	/**< angles with respect to the initial branches of the fascicles.*/
-		std::vector<Real> fascicle_length_ = {0.5, 0.5}; 	/**< length  of the fascicles. Include one per fascicle to include.*/
+		Real fascicle_ratio_ = 20.0; 	/**< ratio of length  of the fascicles. Include one per fascicle to include.*/
 	public:
 		NetworkTree(SPHBody* body, 		/**< Pointer to SPH Body. */
 					Point starting_pnt, /**< Starting point of net work. */

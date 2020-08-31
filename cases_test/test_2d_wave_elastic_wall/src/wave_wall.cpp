@@ -241,8 +241,8 @@ public:
 class GateConstrain : public BodyPartByParticle
 {
 public:
-	GateConstrain(SolidBody* solid_body, string constrianed_region_name)
-		: BodyPartByParticle(solid_body, constrianed_region_name)
+	GateConstrain(SolidBody* solid_body, string constrained_region_name)
+		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		/* Geometry definition */
 		std::vector<Point> beam_base_shape = CreatGateConstrainShape();
@@ -274,8 +274,8 @@ public:
 class WaveMaker : public BodyPartByParticle
 {
 public:
-	WaveMaker(SolidBody *solid_body, string constrianed_region_name)
-		: BodyPartByParticle(solid_body, constrianed_region_name)
+	WaveMaker(SolidBody *solid_body, string constrained_region_name)
+		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		//geometry
 		std::vector<Point> wave_maker_shape = CreatWaveMakerShape();

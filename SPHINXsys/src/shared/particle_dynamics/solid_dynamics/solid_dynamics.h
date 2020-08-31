@@ -1,3 +1,25 @@
+/* -------------------------------------------------------------------------*
+*								SPHinXsys									*
+* --------------------------------------------------------------------------*
+* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+* physical accurate simulation and aims to model coupled industrial dynamic *
+* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+* (smoothed particle hydrodynamics), a meshless computational method using	*
+* particle discretization.													*
+*																			*
+* SPHinXsys is partially funded by German Research Foundation				*
+* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+* and HU1527/12-1.															*
+*                                                                           *
+* Portions copyright (c) 2017-2020 Technical University of Munich and		*
+* the authors' affiliations.												*
+*                                                                           *
+* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+* not use this file except in compliance with the License. You may obtain a *
+* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+*                                                                           *
+* --------------------------------------------------------------------------*/
 /**
 * @file 	solid_dynamics.h
 * @brief 	Here, we define the algorithm classes for solid dynamics. 
@@ -191,9 +213,6 @@ namespace SPH
 		class FluidAngularConservativeViscousForceOnSolid : public FluidViscousForceOnSolid
 		{
 		protected:
-			Real mu_;
-			Real smoothing_length_;
-
 			virtual void ContactInteraction(size_t index_particle_i, Real dt = 0.0) override;
 		public:
 			FluidAngularConservativeViscousForceOnSolid(SPHBodyContactRelation* body_contact_relation)
@@ -415,11 +434,11 @@ namespace SPH
 		};
 
 		/**
-		 * @class ConstrianSolidBodyPartBySimBody
+		 * @class ConstrainSolidBodyPartBySimBody
 		 * @brief Constrain a solid body part from the motion
 		 * computed from Simbody.
 		 */
-		class ConstrianSolidBodyPartBySimBody
+		class ConstrainSolidBodyPartBySimBody
 			: public PartDynamicsByParticle<SolidBody, SolidParticles, SolidBodyPartForSimbody>
 		{
 		protected:
@@ -434,15 +453,33 @@ namespace SPH
 			void virtual Update(size_t index_particle_i,
 				Real dt = 0.0) override;
 		public:
-			ConstrianSolidBodyPartBySimBody(SolidBody *body,
+			ConstrainSolidBodyPartBySimBody(SolidBody *body,
 				SolidBodyPartForSimbody *body_part,
 				SimTK::MultibodySystem &MBsystem,
 				SimTK::MobilizedBody &mobod,
 				SimTK::Force::DiscreteForces &force_on_bodies,
 				SimTK::RungeKuttaMersonIntegrator &integ);
-			virtual ~ConstrianSolidBodyPartBySimBody() {};
+			virtual ~ConstrainSolidBodyPartBySimBody() {};
 		};
-
+		/**
+		 * @class ConstrainNormalDirectionforSoildBodyPartBySimBody
+		 * @brief Constrain normal directin for a solid body part from the motion
+		 * computed from Simbody.
+		 */
+		class ConstrainNormalDirectionforSoildBodyPartBySimBody
+			: public ConstrainSolidBodyPartBySimBody
+		{
+			void virtual Update(size_t index_particle_i, Real dt = 0.0) override;
+			public:
+			ConstrainNormalDirectionforSoildBodyPartBySimBody(SolidBody *body,
+				SolidBodyPartForSimbody *body_part,
+				SimTK::MultibodySystem &MBsystem,
+				SimTK::MobilizedBody &mobod,
+				SimTK::Force::DiscreteForces &force_on_bodies,
+				SimTK::RungeKuttaMersonIntegrator &integ)
+			: ConstrainSolidBodyPartBySimBody(body, body_part, MBsystem, mobod, force_on_bodies, integ){};
+			virtual ~ConstrainNormalDirectionforSoildBodyPartBySimBody() {};
+		};
 		/**
 		 * @class ForceOnSolidBodyPartForSimBody
 		 * @brief Compute the force acting on the solid body part

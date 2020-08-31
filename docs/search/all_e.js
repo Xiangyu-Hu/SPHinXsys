@@ -1,7 +1,6 @@
 var searchData=
 [
   ['observed_5fquantities_5f',['observed_quantities_',['../class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity.html#ac7c700df625fac6dfe6999301e4f83ad',1,'SPH::observer_dynamics::ObservingAQuantity::observed_quantities_()'],['../class_s_p_h_1_1observer__dynamics_1_1_observing_a_diffusion_reaction_quantity.html#a8a10412badcd4f261d3587c4ee4a536b',1,'SPH::observer_dynamics::ObservingADiffusionReactionQuantity::observed_quantities_()'],['../class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_diffusion_reaction_quantity.html#a59a7da494fc4ad297c1295450e6993ae',1,'SPH::observer_dynamics::InterpolatingADiffusionReactionQuantity::observed_quantities_()']]],
-  ['observer',['Observer',['../class_observer.html',1,'Observer'],['../class_observer.html#a3a28eabdec2095e8ea5d4e22c068949a',1,'Observer::Observer(SPHSystem &amp;system, string body_name, int refinement_level, ParticlesGeneratorOps op)'],['../class_observer.html#a3a28eabdec2095e8ea5d4e22c068949a',1,'Observer::Observer(SPHSystem &amp;system, string body_name, int refinement_level, ParticlesGeneratorOps op)']]],
   ['observer_5fdynamics_2ecpp',['observer_dynamics.cpp',['../observer__dynamics_8cpp.html',1,'']]],
   ['observer_5fdynamics_2eh',['observer_dynamics.h',['../observer__dynamics_8h.html',1,'']]],
   ['observingadiffusionreactionquantity',['ObservingADiffusionReactionQuantity',['../class_s_p_h_1_1observer__dynamics_1_1_observing_a_diffusion_reaction_quantity.html',1,'SPH::observer_dynamics']]],

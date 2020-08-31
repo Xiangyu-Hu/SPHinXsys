@@ -43,7 +43,7 @@ Vec2d GateP_lt(DL - Dam_L - Gate_width, Base_bottom_position + BW); 	/**< Left t
 Vec2d GateP_rt(DL - Dam_L, Base_bottom_position + BW); 					/**< Right top. */
 Vec2d GateP_rb(DL - Dam_L, 0.0); 									/**< Right bottom. */
 /**
- * @brief 	Define the geomtry for gate constrian.
+ * @brief 	Define the geomtry for gate constrain.
  */
 Vec2d ConstrainP_lb(DL - Dam_L - Gate_width, Base_bottom_position); 	/**< Left bottom. */
 Vec2d ConstrainP_lt(DL - Dam_L - Gate_width, Base_bottom_position + BW); /**< Left top. */
@@ -216,8 +216,8 @@ std::vector<Point> CreatGateConstrainShape()
 class GateConstrain : public BodyPartByParticle
 {
 public:
-	GateConstrain(SolidBody* solid_body, string constrianed_region_name)
-		: BodyPartByParticle(solid_body, constrianed_region_name)
+	GateConstrain(SolidBody* solid_body, string constrained_region_name)
+		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		/* Geometry defination */
 		std::vector<Point> gate_constrain_shape = CreatGateConstrainShape();

@@ -202,9 +202,9 @@ class FishHead : public SolidBodyPartForSimbody
 {
 public:
 	FishHead(SolidBody* solid_body,
-		string constrianed_region_name, Real solid_body_density)
+		string constrained_region_name, Real solid_body_density)
 		: SolidBodyPartForSimbody(solid_body,
-			constrianed_region_name)
+			constrained_region_name)
 	{
 		//geometry
 		std::vector<Point> fish_shape = CreatFishShape(cx, cy, fish_length, body_->particle_spacing_);
@@ -222,8 +222,8 @@ public:
 class InflowBuffer : public BodyPartByCell
 {
 public:
-	InflowBuffer(FluidBody* fluid_body, string constrianed_region_name)
-		: BodyPartByCell(fluid_body, constrianed_region_name)
+	InflowBuffer(FluidBody* fluid_body, string constrained_region_name)
+		: BodyPartByCell(fluid_body, constrained_region_name)
 	{
 		/** Geomtry definition. */
 		std::vector<Point> inflow_shape = CreatInflowBufferShape();
@@ -291,9 +291,9 @@ int main()
 	*/
 	SPHSystem system(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW), particle_spacing_ref);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = false;
+	system.run_particle_relaxation_ = true;
 	/** Tag for computation start with relaxed body fitted particles distribution. */
-	system.reload_particles_ = true;
+	system.reload_particles_ = false;
 	/** Tag for computation from restart files. 0: start with initial condition. */
 	system.restart_step_ = 0;
 	/**
@@ -526,8 +526,8 @@ int main()
 	solid_dynamics::ForceOnElasticBodyPartForSimBody
 		force_on_tethered_spot(fish_body, fish_head,
 			MBsystem, tethered_spot, force_on_bodies, integ);
-	solid_dynamics::ConstrianSolidBodyPartBySimBody
-		constriant_tethered_spot(fish_body,
+	solid_dynamics::ConstrainSolidBodyPartBySimBody
+		constraint_tethered_spot(fish_body,
 			fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
 
 	/**
@@ -606,7 +606,7 @@ int main()
 					force_on_bodies.setOneBodyForce(state_for_update, tethered_spot,
 						force_on_tethered_spot.parallel_exec());
 					integ.stepBy(dt_s);
-					constriant_tethered_spot.parallel_exec();
+					constraint_tethered_spot.parallel_exec();
 					fish_body_stress_relaxation_second_half.parallel_exec(dt_s);
 					dt_s_sum += dt_s;
 				}

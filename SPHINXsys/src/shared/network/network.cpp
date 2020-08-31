@@ -98,7 +98,7 @@ namespace SPH
         {
             Point new_node = creatNewBranchNode(branch_nodes_[i-1], segment_dir_);
             Real dist_to_collision_node =  node->checkCollitionOnKDTree(new_node);
-            if(dist_to_collision_node < 2.0 * segment_length_)
+            if(dist_to_collision_node < segment_length_)
             {
                 growing_ = false;
                 std::cout<< "Branch Collision Detected, Break! " << std::endl;
@@ -163,7 +163,7 @@ namespace SPH
             for(int i = 0; i < 2; i++)
             {
                 angle_to_use = fascicle_angles_[i];
-                l_to_use = fascicle_length_[i];
+                l_to_use = fascicle_ratio_ * length_;
                 n_seg = int(l_to_use / seg_l);
                 branches_.push_back(new Branch(body_, 0, branches_[0]->node_idxs_.back(), branches_[0]->segment_dir_, l_to_use, 
                                         angle_to_use, 0.0, node_, family_node_idxs, n_seg));

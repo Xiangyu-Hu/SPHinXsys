@@ -66,8 +66,8 @@ public:
 class Holder : public BodyPartByParticle
 {
 public:
-	Holder(SolidBody *solid_body, string constrianed_region_name)
-		: BodyPartByParticle(solid_body, constrianed_region_name)
+	Holder(SolidBody *solid_body, string constrained_region_name)
+		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		body_part_shape_.addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
 

@@ -189,8 +189,8 @@ public:
 class FlagHolder : public BodyPartByParticle
 {
 public:
-	FlagHolder(SolidBody *solid_body, string constrianed_region_name)
-		: BodyPartByParticle(solid_body, constrianed_region_name)
+	FlagHolder(SolidBody *solid_body, string constrained_region_name)
+		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		//geometry
 		body_part_shape_.addTriangleMeshShape(CreateInsertCylinder(), ShapeBooleanOps::add);
@@ -206,8 +206,8 @@ public:
 class InflowBuffer : public BodyPartByCell
 {
 public:
-	InflowBuffer(FluidBody* fluid_body, string constrianed_region_name)
-		: BodyPartByCell(fluid_body, constrianed_region_name)
+	InflowBuffer(FluidBody* fluid_body, string constrained_region_name)
+		: BodyPartByCell(fluid_body, constrained_region_name)
 	{
 		/** Geometry definition. */
 		body_part_shape_.addTriangleMeshShape(CreateInflowBuffer(), ShapeBooleanOps::add);

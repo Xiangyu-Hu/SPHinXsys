@@ -473,7 +473,7 @@ namespace SPH
 			solid_data_i.vel_ave_ = base_particle_data_i.vel_n_;
 		}
 		//=================================================================================================//
-		ConstrianSolidBodyPartBySimBody::ConstrianSolidBodyPartBySimBody(SolidBody *body,
+		ConstrainSolidBodyPartBySimBody::ConstrainSolidBodyPartBySimBody(SolidBody *body,
 				SolidBodyPartForSimbody *body_part,
 				SimTK::MultibodySystem &MBsystem,
 				SimTK::MobilizedBody &mobod,
@@ -487,7 +487,7 @@ namespace SPH
 			initial_mobod_origin_location_ = mobod_.getBodyOriginLocation(*simbody_state_);
 		}
 		//=================================================================================================//
-		void  ConstrianSolidBodyPartBySimBody::setupDynamics(Real dt)
+		void  ConstrainSolidBodyPartBySimBody::setupDynamics(Real dt)
 		{
 			body_->setNewlyUpdated();
 			simbody_state_ = &integ_.getState();

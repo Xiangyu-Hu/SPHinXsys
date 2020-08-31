@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['main',['main',['../collision_8cpp.html#adacbe0175a79dff748855d8c9839f82b',1,'main(int ac, char *av[]):&#160;collision.cpp'],['../depolarization_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4',1,'main():&#160;depolarization.cpp'],['../diffusion_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4',1,'main():&#160;diffusion.cpp'],['../elastic__gate_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4',1,'main():&#160;elastic_gate.cpp'],['../filling__tank_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4',1,'main():&#160;filling_tank.cpp'],['../fsi2_8cpp.html#adacbe0175a79dff748855d8c9839f82b',1,'main(int ac, char *av[]):&#160;fsi2.cpp'],['../parallel__scaling_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4',1,'main():&#160;parallel_scaling.cpp'],['../poiseuille__flow_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4',1,'main():&#160;poiseuille_flow.cpp'],['../taylor__green_8cpp.html#adacbe0175a79dff748855d8c9839f82b',1,'main(int ac, char *av[]):&#160;taylor_green.cpp'],['../tethered__dead__fish__in__flow_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4',1,'main():&#160;tethered_dead_fish_in_flow.cpp'],['../fsi_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4',1,'main():&#160;fsi.cpp'],['../excitation-contraction_8cpp.html#adacbe0175a79dff748855d8c9839f82b',1,'main(int ac, char *av[]):&#160;excitation-contraction.cpp'],['../muscle__activation_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4',1,'main():&#160;muscle_activation.cpp'],['../passive__cantilever_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4',1,'main():&#160;passive_cantilever.cpp'],['../passive__cantilever__neohookean_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4',1,'main():&#160;passive_cantilever_neohookean.cpp'],['../play__simbody_8cpp.html#ae66f6b31b5ad750f1fe042a706a4e3d4',1,'main():&#160;play_simbody.cpp']]],
   ['materialpropertyio',['MaterialPropertyIO',['../class_s_p_h_1_1_material_property_i_o.html',1,'SPH']]],
   ['materialvector',['MaterialVector',['../namespace_s_p_h.html#ad51fa139045aca30efc1ab82968a98a5',1,'SPH']]],
   ['math_5futils',['math_utils',['../structpolar_1_1detail_1_1math__utils.html',1,'polar::detail']]],
@@ -26,7 +25,6 @@ var searchData=
   ['mirrorboundaryconditioninaxisdirection',['MirrorBoundaryConditionInAxisDirection',['../class_s_p_h_1_1_mirror_boundary_condition_in_axis_direction.html',1,'SPH']]],
   ['mirrorinaxisdirection',['mirrorInAxisDirection',['../class_s_p_h_1_1_base_particles.html#a2c0245086daa4d05e214874f158dc53a',1,'SPH::BaseParticles::mirrorInAxisDirection()'],['../class_s_p_h_1_1_fluid_particles.html#a4d1883819697892721b3e5cceccaf2dd',1,'SPH::FluidParticles::mirrorInAxisDirection()']]],
   ['monofieldelectrophysiology',['MonoFieldElectroPhysiology',['../class_s_p_h_1_1_mono_field_electro_physiology.html',1,'SPH::MonoFieldElectroPhysiology'],['../class_s_p_h_1_1_mono_field_electro_physiology.html#a92c28885d3b34620d278e47f0351fcb4',1,'SPH::MonoFieldElectroPhysiology::MonoFieldElectroPhysiology()']]],
-  ['mu_5ff',['mu_f',['../fsi2__case_8h.html#ae1367234be582dd0967bb8047f018cef',1,'mu_f():&#160;fsi2_case.h'],['../poiseuille__flow_8cpp.html#ae1367234be582dd0967bb8047f018cef',1,'mu_f():&#160;poiseuille_flow.cpp'],['../taylor__green_8cpp.html#ae1367234be582dd0967bb8047f018cef',1,'mu_f():&#160;taylor_green.cpp']]],
   ['mu_5fp_5f',['mu_p_',['../class_s_p_h_1_1_oldroyd___b___fluid.html#a2648eb8576d7555cf2474ed3d61fee32',1,'SPH::Oldroyd_B_Fluid']]],
   ['multilevelmesh',['MultilevelMesh',['../class_s_p_h_1_1_multilevel_mesh.html',1,'SPH::MultilevelMesh&lt; BaseMeshType, MeshLevelType &gt;'],['../class_s_p_h_1_1_multilevel_mesh.html#a17dd368e3585ba788fcaf97e2dcb0dc6',1,'SPH::MultilevelMesh::MultilevelMesh()']]],
   ['multilevelmesh_3c_20baselevelset_2c_20levelset_20_3e',['MultilevelMesh&lt; BaseLevelSet, LevelSet &gt;',['../class_s_p_h_1_1_multilevel_mesh.html',1,'SPH']]],
@@ -34,17 +32,6 @@ var searchData=
   ['multipolygon',['MultiPolygon',['../class_s_p_h_1_1_multi_polygon.html',1,'SPH']]],
   ['multiresolutionlevelset',['MultiresolutionLevelSet',['../class_s_p_h_1_1_multiresolution_level_set.html',1,'SPH']]],
   ['muscle',['Muscle',['../class_s_p_h_1_1_muscle.html',1,'SPH::Muscle'],['../class_s_p_h_1_1_muscle.html#a2ece0f5bbc853338fa973d9795e0dffb',1,'SPH::Muscle::Muscle()']]],
-  ['muscle_5factivation_2ecpp',['muscle_activation.cpp',['../muscle__activation_8cpp.html',1,'']]],
-  ['muscleactivation',['MuscleActivation',['../class_muscle_activation.html',1,'']]],
-  ['musclebase',['MuscleBase',['../class_muscle_base.html',1,'MuscleBase'],['../class_muscle_base.html#a44f3aad6bdde8e1b73d534179c64e4c2',1,'MuscleBase::MuscleBase()']]],
-  ['musclebody',['MuscleBody',['../class_muscle_body.html',1,'']]],
-  ['musclereactionmodel',['MuscleReactionModel',['../class_muscle_reaction_model.html',1,'MuscleReactionModel'],['../class_muscle_reaction_model.html#aef82648adb65816835663302e1aca56b',1,'MuscleReactionModel::MuscleReactionModel()'],['../class_muscle_reaction_model.html#aef82648adb65816835663302e1aca56b',1,'MuscleReactionModel::MuscleReactionModel()']]],
-  ['mymotion',['MyMotion',['../class_my_motion.html',1,'']]],
-  ['myocardium',['Myocardium',['../class_myocardium.html',1,'']]],
-  ['myocardiuminitialcondition',['MyocardiumInitialCondition',['../class_myocardium_initial_condition.html',1,'']]],
-  ['myocardiummuscle',['MyocardiumMuscle',['../class_myocardium_muscle.html',1,'MyocardiumMuscle'],['../class_myocardium_muscle.html#a84fe689939f10c6fac38fadc5bd429ae',1,'MyocardiumMuscle::MyocardiumMuscle()']]],
-  ['myocardiumobserver',['MyocardiumObserver',['../class_myocardium_observer.html',1,'MyocardiumObserver'],['../class_myocardium_observer.html#a6f023f1577c424cbeb5473980492436c',1,'MyocardiumObserver::MyocardiumObserver()']]],
-  ['myocardiumphysiology',['MyocardiumPhysiology',['../class_myocardium_physiology.html',1,'MyocardiumPhysiology'],['../class_myocardium_physiology.html#a9db0641ec3b338cdb925293a250b39b3',1,'MyocardiumPhysiology::MyocardiumPhysiology()']]],
   ['mypool',['Mypool',['../class_mypool.html',1,'']]],
   ['mypool_3c_20datapackagetype_20_3e',['Mypool&lt; DataPackageType &gt;',['../class_mypool.html',1,'']]],
   ['mypool_3c_20levelsetdatapackage_20_3e',['Mypool&lt; LevelSetDataPackage &gt;',['../class_mypool.html',1,'']]]

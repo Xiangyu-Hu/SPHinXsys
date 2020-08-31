@@ -116,8 +116,8 @@ public:
 class Inlet : public BodyPartByParticle
 {
 public:
-	Inlet(FluidBody* fluid_body, string constrianed_region_name)
-		: BodyPartByParticle(fluid_body, constrianed_region_name)
+	Inlet(FluidBody* fluid_body, string constrained_region_name)
+		: BodyPartByParticle(fluid_body, constrained_region_name)
 	{
 		/** Geometry definition. */
 		std::vector<Point> water_block_shape = CreatWaterBlockShape();

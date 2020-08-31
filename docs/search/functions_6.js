@@ -1,11 +1,5 @@
 var searchData=
 [
-  ['gate',['Gate',['../class_gate.html#a8a55129c5ebbc06c3ea8047e2e49da6e',1,'Gate']]],
-  ['gatebase',['GateBase',['../class_gate_base.html#acac15968e760de4b5bbb69141df75d33',1,'GateBase']]],
-  ['gatep_5flb',['GateP_lb',['../elastic__gate_8cpp.html#a8ddfa0ef555fbcce2dd805336c7e6264',1,'elastic_gate.cpp']]],
-  ['gatep_5flt',['GateP_lt',['../elastic__gate_8cpp.html#ad965d64fa6b6900bab6c475454c003ee',1,'elastic_gate.cpp']]],
-  ['gatep_5frb',['GateP_rb',['../elastic__gate_8cpp.html#a6d19bebeb51cc1877a8f911893caec15',1,'elastic_gate.cpp']]],
-  ['gatep_5frt',['GateP_rt',['../elastic__gate_8cpp.html#ac9b9bd014ad0dbd0cd8730b414afeeda',1,'elastic_gate.cpp']]],
   ['generateakernel',['GenerateAKernel',['../class_s_p_h_1_1_s_p_h_body.html#ac042502ee0fbdd55db8a5f81343907b3',1,'SPH::SPHBody']]],
   ['generateparticlesforsphbody',['generateParticlesForSPHBody',['../class_s_p_h_1_1_network_tree.html#a1722db7387e77dc567d2f74fea8246cb',1,'SPH::NetworkTree']]],
   ['get',['get',['../class_s_p_h_1_1_array.html#a4b6524f2d1e862ea0e73da1ea0b050a2',1,'SPH::Array::get()'],['../class_s_p_h_1_1_array.html#ac81ea5d068e8f5951c162d8ed704a402',1,'SPH::Array::get() const'],['../class_s_p_h_1_1_array.html#a56079ea8cd09f82bf462718e751fd5c2',1,'SPH::Array::get(int aIndex) const']]],
@@ -29,7 +23,7 @@ var searchData=
   ['getdistancefrompoint',['getDistanceFromPoint',['../class_s_p_h_1_1_node.html#a4358f3e5911e4339368ae3288fa22f94',1,'SPH::Node']]],
   ['getgradient',['getGradient',['../class_s_p_h_1_1_node.html#a785d3acf5c333549e6a38217ef78c918',1,'SPH::Node']]],
   ['getheaviside',['getHeaviside',['../class_s_p_h_1_1_level_set_data_package.html#aab04359fe38980790e94a356dabf8df6',1,'SPH::LevelSetDataPackage']]],
-  ['getinflowvelocity',['GetInflowVelocity',['../class_s_p_h_1_1fluid__dynamics_1_1_inflow_boundary_condition.html#a493147f7bafa47f36857e81732520efa',1,'SPH::fluid_dynamics::InflowBoundaryCondition::GetInflowVelocity()'],['../class_s_p_h_1_1fluid__dynamics_1_1_emitter_inflow_condition.html#ad91dcc2f6405379bb18d3a5e3ca0e6cb',1,'SPH::fluid_dynamics::EmitterInflowCondition::GetInflowVelocity()'],['../class_inlet_inflow_condition.html#a01a2b213e4cc89eb1860211b8c7e5e04',1,'InletInflowCondition::GetInflowVelocity()'],['../class_parabolic_inflow.html#a31c9b0758b49c88f1452ce9e9e6d8ca2',1,'ParabolicInflow::GetInflowVelocity(Vecd &amp;position, Vecd &amp;velocity)'],['../class_parabolic_inflow.html#a31c9b0758b49c88f1452ce9e9e6d8ca2',1,'ParabolicInflow::GetInflowVelocity(Vecd &amp;position, Vecd &amp;velocity)'],['../class_parabolic_inflow.html#a31c9b0758b49c88f1452ce9e9e6d8ca2',1,'ParabolicInflow::GetInflowVelocity(Vecd &amp;position, Vecd &amp;velocity)']]],
+  ['getinflowvelocity',['GetInflowVelocity',['../class_s_p_h_1_1fluid__dynamics_1_1_inflow_boundary_condition.html#a493147f7bafa47f36857e81732520efa',1,'SPH::fluid_dynamics::InflowBoundaryCondition::GetInflowVelocity()'],['../class_s_p_h_1_1fluid__dynamics_1_1_emitter_inflow_condition.html#ad91dcc2f6405379bb18d3a5e3ca0e6cb',1,'SPH::fluid_dynamics::EmitterInflowCondition::GetInflowVelocity()']]],
   ['getinterparticlediffusioncoff',['getInterParticleDiffusionCoff',['../class_s_p_h_1_1_base_diffusion.html#a82bb7f61e58ea78a2b6d31dff7c714bf',1,'SPH::BaseDiffusion::getInterParticleDiffusionCoff()'],['../class_s_p_h_1_1_isotropic_diffusion.html#aac18dd1f017b84629c0f283f91aeaa3d',1,'SPH::IsotropicDiffusion::getInterParticleDiffusionCoff()'],['../class_s_p_h_1_1_directional_diffusion.html#a9cddff8508ce415c43e169d522e3e1d8',1,'SPH::DirectionalDiffusion::getInterParticleDiffusionCoff()'],['../class_s_p_h_1_1_local_directional_diffusion.html#a3d7732c37df4d03daccbfa489d856998',1,'SPH::LocalDirectionalDiffusion::getInterParticleDiffusionCoff()']]],
   ['getkernelgradient',['getKernelGradient',['../class_s_p_h_1_1_base_particles.html#affce1d43813839bdc86d091ff8c77e2d',1,'SPH::BaseParticles::getKernelGradient()'],['../class_s_p_h_1_1_solid_particles.html#adaf798dbe70fc42d8b6a6eafe4e7cefa',1,'SPH::SolidParticles::getKernelGradient()']]],
   ['getkernelname',['GetKernelName',['../class_s_p_h_1_1_kernel.html#abfa30e4afb735134ff4339e8a0aa8471',1,'SPH::Kernel']]],

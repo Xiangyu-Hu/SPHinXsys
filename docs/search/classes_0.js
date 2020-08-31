@@ -6,7 +6,5 @@ var searchData=
   ['addedstatevariable',['AddedStateVariable',['../class_s_p_h_1_1_state_engine_1_1_added_state_variable.html',1,'SPH::StateEngine']]],
   ['alievpanfilowmodel',['AlievPanfilowModel',['../class_s_p_h_1_1_aliev_panfilow_model.html',1,'SPH']]],
   ['applystimuluscurrents',['ApplyStimulusCurrents',['../class_s_p_h_1_1electro__physiology_1_1_apply_stimulus_currents.html',1,'SPH::electro_physiology']]],
-  ['applystimuluscurrentsi',['ApplyStimulusCurrentSI',['../class_apply_stimulus_current_s_i.html',1,'']]],
-  ['applystimuluscurrentsii',['ApplyStimulusCurrentSII',['../class_apply_stimulus_current_s_i_i.html',1,'']]],
   ['array',['Array',['../class_s_p_h_1_1_array.html',1,'SPH']]]
 ];
