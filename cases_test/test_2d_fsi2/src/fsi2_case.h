@@ -117,16 +117,17 @@ std::vector<Point> CreatInnerWallShape()
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem& system, string body_name,	int refinement_level, ParticlesGeneratorOps op)
-		: FluidBody(system, body_name, refinement_level, op)
+	WaterBlock(SPHSystem& system, string body_name,	int refinement_level)
+		: FluidBody(system, body_name, refinement_level)
 	{
 		/** Geomtry definition. */
 		std::vector<Point> water_block_shape = CreatWaterBlockShape();
-		body_shape_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
 		/** Geomtry definition. */
-		body_shape_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
 		std::vector<Point> beam_shape = CreatBeamShape();
-		body_shape_.addAPolygon(beam_shape, ShapeBooleanOps::sub);
+		body_shape_ = new ComplexShape(body_name);
+		body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::add);
+		body_shape_->addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
+		body_shape_->addAPolygon(beam_shape, ShapeBooleanOps::sub);
 	}
 };
 /** Case-dependent material properties. */
@@ -146,27 +147,31 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem& system, string body_name, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, refinement_level, op)
+	WallBoundary(SPHSystem& system, string body_name, int refinement_level)
+		: SolidBody(system, body_name, refinement_level)
 	{
 		/** Geomtry definition. */
 		std::vector<Point> outer_wall_shape = CreatOuterWallShape();
 		std::vector<Point> inner_wall_shape = CreatInnerWallShape();
-		body_shape_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-		body_shape_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+		body_shape_ = new ComplexShape(body_name);
+		body_shape_->addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
+		body_shape_->addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 	}
 };
 /** Definition of the inserted body as a elastic structure. */
 class InsertedBody : public SolidBody
 {
 public:
-	InsertedBody(SPHSystem& system, string body_name, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, refinement_level, op)
+	InsertedBody(SPHSystem& system, string body_name, int refinement_level)
+		: SolidBody(system, body_name, refinement_level)
 	{
 		/** Geomtry definition. */
-		body_shape_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
 		std::vector<Point> beam_shape = CreatBeamShape();
-		body_shape_.addAPolygon(beam_shape, ShapeBooleanOps::add);
+		ComplexShape original_body_shape;
+		original_body_shape.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
+		original_body_shape.addAPolygon(beam_shape, ShapeBooleanOps::add);
+		body_shape_ = new LevelSetComplexShape(this, original_body_shape);
+
 	}
 };
 /** the material for insert body. */
@@ -190,12 +195,13 @@ public:
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		/** Geomtry definition. */
-		body_part_shape_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
 		std::vector<Point> beam_shape = CreatBeamShape();
-		body_part_shape_.addAPolygon(beam_shape, ShapeBooleanOps::sub);
+		body_part_shape_ = new ComplexShape(constrained_region_name);
+		body_part_shape_->addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
+		body_part_shape_->addAPolygon(beam_shape, ShapeBooleanOps::sub);
 
 		/**  Tag the constrained particle. */
-		TagBodyPart();
+		tagBodyPart();
 	}
 };
 /** inflow buffer */
@@ -207,10 +213,11 @@ public:
 	{
 		/** Geomtry definition. */
 		std::vector<Point> inflow_buffer_shape = CreatInflowBufferShape();
-		body_part_shape_.addAPolygon(inflow_buffer_shape, ShapeBooleanOps::add);
+		body_part_shape_ = new ComplexShape(constrained_region_name);
+		body_part_shape_->addAPolygon(inflow_buffer_shape, ShapeBooleanOps::add);
 
 		//tag the constrained particle
-		TagBodyPart();
+		tagBodyPart();
 	}
 };
 /** Case dependent inflow boundary condition. */
@@ -226,7 +233,7 @@ public:
 		u_ref_ = 1.0;
 		t_ref = 2.0;
 	}
-	Vecd GetInflowVelocity(Vecd& position, Vecd& velocity)
+	Vecd getTargetVelocity(Vecd& position, Vecd& velocity)
 	{
 		Real u = velocity[0];
 		Real v = velocity[1];
@@ -246,8 +253,8 @@ public:
 class BeamObserver : public FictitiousBody
 {
 public:
-	BeamObserver(SPHSystem& system, string body_name, int refinement_level, ParticlesGeneratorOps op)
-		: FictitiousBody(system, body_name, refinement_level, 1.3, op)
+	BeamObserver(SPHSystem& system, string body_name, int refinement_level)
+		: FictitiousBody(system, body_name, refinement_level, 1.3)
 	{
 		/** the measuring particle with zero volume */
 		body_input_points_volumes_.push_back(make_pair(0.5 * (BRT + BRB), 0.0));
@@ -257,8 +264,8 @@ public:
 class FluidObserver : public FictitiousBody
 {
 public:
-	FluidObserver(SPHSystem& system, string body_name, int refinement_level, ParticlesGeneratorOps op)
-		: FictitiousBody(system, body_name, refinement_level, 1.3, op)
+	FluidObserver(SPHSystem& system, string body_name, int refinement_level)
+		: FictitiousBody(system, body_name, refinement_level, 1.3)
 	{
 		/** A line of measuring points at the entrance of the channel. */
 		size_t number_observation_pionts = 21;

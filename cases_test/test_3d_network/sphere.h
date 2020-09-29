@@ -1,6 +1,6 @@
 /**
-* @file 	fsi2_case.h
-* @brief 	This is the case file for the test of fliud - structure interaction.
+* @file 	sphere.h
+* @brief 	This is the case file for the network growing.
 * @details  We consider a flow - induced vibration of an elastic beam behind a cylinder in 2D.
 * @author 	Xiangyu Hu, Chi Zhangand Luhui Han
 * @version 0.1
@@ -11,7 +11,6 @@
 #include "sphinxsys.h"
 using namespace SPH;
 
-#define PI 3.1415926
 /** Set the file path to the stl file. */
 std::string full_path_to_stl = "./input/sphere.stl";
 Vec3d domain_lower_bound(-1.0,-1.0, -1.0);
@@ -25,19 +24,20 @@ TriangleMeshShape* CreateCADGeometry()
 
 	return geometry;
 }
-/** Define the myheart body. */
+/** Define the my heart body. */
 class MyPolygonBody : public SolidBody
 {
 public:
-	MyPolygonBody(SPHSystem &system, string body_name, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, refinement_level, op)
+	MyPolygonBody(SPHSystem &system, string body_name, int refinement_level, 
+		ParticleGenerator* particle_generator)
+		: SolidBody(system, body_name, refinement_level, particle_generator)
 	{
-		body_shape_.addTriangleMeshShape(CreateCADGeometry(), ShapeBooleanOps::add);
-		/** add background level set for particle realxation. */
-		addLevelsetMesh();
+		ComplexShape original_body_shape;
+		original_body_shape.addTriangleMeshShape(CreateCADGeometry(), ShapeBooleanOps::add);
+		body_shape_ = new LevelSetComplexShape(this, original_body_shape, 4);
 	}
 };
-/** the material for insert body. */
+/** the material for the newwork. */
 class BodyMaterial : public LinearElasticSolid
 {
 public:

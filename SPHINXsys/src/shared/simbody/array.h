@@ -144,7 +144,7 @@ namespace SPH {
     		// ARRAY
     		if(array_!=NULL) delete[] array_;
     		array_ = new T[capacity_];
-    		for(size_t i=0;i<capacity_;i++) array_[i] = aArray.array_[i];
+    		for(int i = 0;i < capacity_; i++) array_[i] = aArray.array_[i];
 
     		return(*this);
 		}

@@ -36,7 +36,7 @@ namespace SPH
 
 	/*
 	Mesh system also managing objects in the system level
-	It is dual system respected SPH system
+	It is dual system respected to SPH system
 	Here a base class is defined for 2d and 3d 
 	which will defined as dervied classes
 	*/
@@ -76,7 +76,7 @@ namespace SPH
 		//public functions to build up the system
 		//add the domain, which managing the geometric information 
 		//add a SPH body in the system
-		void AddBody(SPHBody* body);
+		void addABody(SPHBody* body);
 		//add a particle configuartion to the system 
 		void AddNNPS(NNPS* nnps = nullptr, bool Eulerian = true);
 		//write a output file at a given time

@@ -29,7 +29,6 @@
 #pragma once
 
 #include "base_body.h"
-#include "particle_generator_lattice.h"
 
 #include <fstream>
 
@@ -46,12 +45,11 @@ namespace SPH {
 	class FluidBody : public RealBody
 	{
 	public:
-		explicit FluidBody(SPHSystem &system, string body_name,
-			int refinement_level, ParticlesGeneratorOps op);
+		explicit FluidBody(SPHSystem &system, string body_name, int refinement_level,
+			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~FluidBody() {};
 
-		/** Set up the reaction model, if essential */
 		/** The pointer to derived class object. */
-		virtual FluidBody* PointToThisObject() override { return this; };
+		virtual FluidBody* pointToThisObject() override { return this; };
 	};
 }

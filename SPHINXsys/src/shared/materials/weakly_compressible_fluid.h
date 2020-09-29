@@ -22,8 +22,8 @@
 * --------------------------------------------------------------------------*/
 /**
  * @file 	weakly_compressible_fluid.h
- * @brief 	Desrcibe the weakly compressible fluid which is used 
- * 			model incompressible fluids. Here, we have included serveral equation of states.
+ * @brief 	Describe the weakly compressible fluid which is used 
+ * 			model incompressible fluids. Here, we have included several equation of states.
  * 			Futhermore, A typical non-newtonian fluid model is included.  
  * @author  Xiangyu Hu, Luhui Han and Chi Zhang
  * @version 0.1.0
@@ -60,13 +60,13 @@ namespace SPH {
 		virtual ~WeaklyCompressibleFluid() {};
 
 		/** the interface for dynamical cast*/
-		virtual WeaklyCompressibleFluid* PointToThisObject() override { return this; };
+		virtual WeaklyCompressibleFluid* pointToThisObject() override { return this; };
 
 		virtual Real GetPressure(Real rho) override;
-		virtual Real ReinitializeRho(Real p) override;
+		virtual Real DensityFromPressure(Real p) override;
 		virtual Real GetSoundSpeed(Real p = 0.0, Real rho = 1.0) override;
 
-		/** riemann soslver */
+		/** riemann solver */
 		virtual Real RiemannSolverForPressure(Real rhol, Real Rhor, Real pl,
 			Real pr, Real ul, Real ur) override;
 		virtual Real RiemannSolverForVelocity(Real rhol, Real Rhor, Real pl,
@@ -95,7 +95,7 @@ namespace SPH {
 			cutoff_pressure_(cutoff_pressure) {
 			fluid_ = new WeaklyCompressibleFluidType();
 			material_name_ = fluid_->material_name_ + "FreeSurface";
-			cutoff_density_ = fluid_->ReinitializeRho(cutoff_pressure);
+			cutoff_density_ = fluid_->DensityFromPressure(cutoff_pressure);
 		}; 
 		virtual ~WeaklyCompressibleFluidFreeSurface() {};
 
@@ -106,7 +106,7 @@ namespace SPH {
 
 	/**
 	 * @class SymmetricTaitFluid
-	 * @brief linear EOS for negative presssure and Tait EOS for positive pressure.
+	 * @brief Tait EOS for positive and negative pressure symmetrically.
 	 */
 	class SymmetricTaitFluid : public WeaklyCompressibleFluid
 	{
@@ -127,10 +127,10 @@ namespace SPH {
 		virtual ~SymmetricTaitFluid() {};
 
 		/** the interface for dynamical cast*/
-		virtual SymmetricTaitFluid* PointToThisObject() override { return this; };
+		virtual SymmetricTaitFluid* pointToThisObject() override { return this; };
 
 		virtual Real GetPressure(Real rho) override;
-		virtual Real ReinitializeRho(Real p) override;
+		virtual Real DensityFromPressure(Real p) override;
 		virtual Real GetSoundSpeed(Real p = 0.0, Real rho = 1.0) override;
 	};
 
@@ -165,9 +165,9 @@ namespace SPH {
 			viscoelastic_fluid_particles_ = viscoelastic_fluid_particles;
 		};
 		Real getReferenceRelaxationTime() { return lambda_; };
-		Real getReferencePloymericViscosity() { return mu_p_; };
+		Real ReferencePolymericViscosity() { return mu_p_; };
 
 		/** the interface for dynamical cast*/
-		virtual Oldroyd_B_Fluid* PointToThisObject() override { return this; };
+		virtual Oldroyd_B_Fluid* pointToThisObject() override { return this; };
 	};
 }

@@ -14,8 +14,8 @@ namespace SPH {
 	//=================================================================================================//
 	BaseMeshCellLinkedList
 		::BaseMeshCellLinkedList(SPHBody* body, Vecd lower_bound, Vecd upper_bound,
-			Real cell_spacing, size_t buffer_size)
-		: Mesh(lower_bound, upper_bound, cell_spacing, buffer_size), 
+			Real cell_spacing, size_t buffer_width)
+		: Mesh(lower_bound, upper_bound, cell_spacing, buffer_width), 
 		body_(body), base_particles_(NULL), kernel_(body->kernel_) {}
 	//=================================================================================================//
 	BaseMeshCellLinkedList
@@ -39,7 +39,7 @@ namespace SPH {
 			? *original_kernel : *target_kernel;
 	}
 	//=================================================================================================//
-	void BaseMeshCellLinkedList::assignParticles(BaseParticles* base_particles) 
+	void BaseMeshCellLinkedList::assignBaseParticles(BaseParticles* base_particles) 
 	{ 
 		base_particles_ = base_particles; 
 	};
@@ -56,8 +56,8 @@ namespace SPH {
 	}
 	//=================================================================================================//
 	MeshCellLinkedList::MeshCellLinkedList(SPHBody* body, Vecd lower_bound,
-		Vecd upper_bound, Real cell_spacing, size_t buffer_size)
-		: BaseMeshCellLinkedList(body, lower_bound, upper_bound, cell_spacing, buffer_size),
+		Vecd upper_bound, Real cell_spacing, size_t buffer_width)
+		: BaseMeshCellLinkedList(body, lower_bound, upper_bound, cell_spacing, buffer_width),
 		cutoff_radius_(cell_spacing) {}
 	//=================================================================================================//
 	MeshCellLinkedList::MeshCellLinkedList(SPHBody* body, Vecd mesh_lower_bound,
@@ -68,13 +68,13 @@ namespace SPH {
 	void MeshCellLinkedList::UpdateCellLists()
 	{
 		ClearCellLists(number_of_cells_, cell_linked_lists_);
-		StdLargeVec<BaseParticleData>& base_particle_data = base_particles_->base_particle_data_;
+		StdLargeVec<Vecd>& pos_n = base_particles_->pos_n_;
 		size_t number_of_particles = body_->number_of_particles_;
 		//rebuild the corresponding particle list.
 		parallel_for(blocked_range<size_t>(0, number_of_particles),
 			[&](const blocked_range<size_t>& r) {
 				for (size_t i = r.begin(); i != r.end(); ++i) {
-					InsertACellLinkedParticleIndex(i, base_particle_data[i].pos_n_);
+					InsertACellLinkedParticleIndex(i, pos_n[i]);
 				}
 			}, ap);
 		UpdateCellListData(cell_linked_lists_);
@@ -83,8 +83,8 @@ namespace SPH {
 	//=================================================================================================//
 	MultilevelMeshCellLinkedList
 		::MultilevelMeshCellLinkedList(SPHBody* body, Vecd lower_bound,
-		Vecd upper_bound, Real reference_cell_spacing, size_t total_levels, size_t buffer_size)
-		: BaseMeshCellLinkedList(body, lower_bound, upper_bound, reference_cell_spacing, buffer_size),
+		Vecd upper_bound, Real reference_cell_spacing, size_t total_levels, size_t buffer_width)
+		: BaseMeshCellLinkedList(body, lower_bound, upper_bound, reference_cell_spacing, buffer_width),
 		total_levels_(total_levels)
 	{
 		/**initialize lists. */
@@ -96,7 +96,7 @@ namespace SPH {
 		Real zero_level_cell_spacing = reference_cell_spacing * powern(2.0, (int)middle_level);
 		cell_spacing_levels_.push_back(zero_level_cell_spacing);
 		MeshCellLinkedList* zero_level_mesh
-			= new MeshCellLinkedList(body, lower_bound,	upper_bound, zero_level_cell_spacing, buffer_size);
+			= new MeshCellLinkedList(body, lower_bound,	upper_bound, zero_level_cell_spacing, buffer_width);
 		mesh_cell_linked_list_levels_.push_back(zero_level_mesh);
 		size_t number_of_split_cell_lists = powern(3, Vecd(0).size());
 		split_cell_lists_levels_[0].resize(number_of_split_cell_lists);
@@ -148,11 +148,9 @@ namespace SPH {
 	void MultilevelMeshCellLinkedList::
 		InsertACellLinkedParticleIndex(size_t index_i, Vecd particle_position)
 	{
-		BaseParticleData& base_particle_data_i
-			= base_particles_->base_particle_data_[index_i];
 		size_t current_level = 0;
-		Real cut_off_radius = kernel_->GetCutOffRadius(base_particle_data_i.smoothing_length_);
-		Vecd& position = base_particle_data_i.pos_n_;
+		Real cut_off_radius = kernel_->GetCutOffRadius(base_particles_->smoothing_length_[index_i]);
+		Vecd& position = base_particles_->pos_n_[index_i];
 		Vecu current_cell_index(0);
 		for (size_t level = 1; level != cell_spacing_levels_.size(); ++level)
 		{
@@ -188,14 +186,13 @@ namespace SPH {
 			ClearCellLists(number_of_cells_levels_[level], cell_linked_lists_levels_[level]);
 
 		}
-		StdLargeVec<BaseParticleData>& base_particle_data 
-			= base_particles_->base_particle_data_;
+		StdLargeVec<Vecd>& pos_n = base_particles_->pos_n_;
 		size_t number_of_particles = body_->number_of_particles_;
 		//rebuild the corresponding particle list.
 		parallel_for(blocked_range<size_t>(0, number_of_particles),
 			[&](const blocked_range<size_t>& r) {
 				for (size_t i = r.begin(); i != r.end(); ++i) {
-					InsertACellLinkedParticleIndex(i, base_particle_data[i].pos_n_);
+					InsertACellLinkedParticleIndex(i, pos_n[i]);
 				}
 			}, ap);
 

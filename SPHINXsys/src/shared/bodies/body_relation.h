@@ -39,15 +39,15 @@ namespace SPH
 	class SPHBodyBaseRelation
 	{
 	public:
-		SPHBody* body_;
+		SPHBody* sph_body_;
 		SplitCellLists& split_cell_lists_;
 		BaseParticles* base_particles_;
-		BaseMeshCellLinkedList* base_mesh_cell_linked_list_;
+		BaseMeshCellLinkedList* mesh_cell_linked_list_;
 
-		SPHBodyBaseRelation(SPHBody* body);
+		SPHBodyBaseRelation(SPHBody* sph_body);
 		virtual ~SPHBodyBaseRelation() {};
 
-		void subscribe_to_body() { body_->body_relations_.push_back(this); };
+		void subscribe_to_body() { sph_body_->body_relations_.push_back(this); };
 		virtual void updateConfigurationMemories() = 0;
 		virtual void updateConfiguration() = 0;
 	protected:
@@ -68,7 +68,7 @@ namespace SPH
 		/** inner configuration for the neighbor relations. */
 		ParticleConfiguration inner_configuration_;
 
-		SPHBodyInnerRelation(SPHBody* body);
+		SPHBodyInnerRelation(SPHBody* sph_body);
 		virtual ~SPHBodyInnerRelation() {};
 
 		virtual void updateConfigurationMemories() override;
@@ -83,11 +83,8 @@ namespace SPH
 	{
 	protected:
 		StdVec<BaseMeshCellLinkedList*> target_mesh_cell_linked_lists_;
-		virtual bool checkNeighbor(Real particle_distance, Real cutoff_radius,
-			BaseParticleData& base_particle_data_i, BaseParticleData& base_particle_data_j);
-
 	public:
-		SPHBodyVector relation_bodies_;
+		SPHBodyVector contact_sph_bodies_;
 
 		/** Configurations for particle interaction between bodies. */
 		ContatcParticleConfiguration contact_configuration_;
@@ -97,22 +94,6 @@ namespace SPH
 
 		virtual void updateConfigurationMemories() override;
 		virtual void updateConfiguration() override;
-	};
-
-	/**
-	 * @class SPHBodyCollisionRelation
-	 * @brief The relation between a SPH body and its contact SPH bodies
-	 */
-	class SPHBodyCollisionRelation : public SPHBodyContactRelation
-	{
-	protected:
-		virtual bool checkNeighbor(Real particle_distance, Real cutoff_radius,
-			BaseParticleData& base_particle_data_i, BaseParticleData& base_particle_data_j) override;
-
-	public:
-		SPHBodyCollisionRelation(SPHBody* body,	SPHBodyVector relation_bodies)
-			: SPHBodyContactRelation(body, relation_bodies) {};
-		virtual ~SPHBodyCollisionRelation() {};
 	};
 
 	/**
@@ -127,15 +108,15 @@ namespace SPH
 		SPHBodyInnerRelation* inner_relation_;
 		SPHBodyContactRelation* contact_relation_;
 	public:
-		SPHBodyVector relation_bodies_;
+		SPHBodyVector contact_sph_bodies_;
 
 		/** inner configuration for the neighbor relations. */
 		ParticleConfiguration& inner_configuration_;
 		/** Configurations for updated Lagrangian formulation. **/
 		ContatcParticleConfiguration& contact_configuration_;
 
-		SPHBodyComplexRelation(SPHBody* body, SPHBodyVector contact_bodies);
-		SPHBodyComplexRelation(SPHBodyInnerRelation* body_inner_relation, SPHBodyVector contact_bodies);
+		SPHBodyComplexRelation(SPHBody* body, SPHBodyVector contact_sph_bodies);
+		SPHBodyComplexRelation(SPHBodyInnerRelation* body_inner_relation, SPHBodyVector contact_sph_bodies);
 		virtual ~SPHBodyComplexRelation() {
 			delete inner_relation_;
 			delete contact_relation_;

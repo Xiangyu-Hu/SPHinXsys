@@ -10,7 +10,7 @@ class UdfSinusoidMotionImplementation
 {
 public:
 	UdfSinusoidMotionImplementation(Real amplitude, Real t0, Real rate, Real phase)
-		: Motion::Custom::Implementation(), defAmplitude(amplitude), defT(t0), defRate(rate), defPhase(phase)
+		: Motion::Custom::Implementation(), defAmplitude(amplitude), defRate(rate), defPhase(phase), defT(t0)
 	{
 	
 	};

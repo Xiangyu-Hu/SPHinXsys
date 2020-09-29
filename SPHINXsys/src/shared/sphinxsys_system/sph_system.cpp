@@ -18,37 +18,53 @@ namespace SPH
 		restart_step_(0), run_particle_relaxation_(false),
 		reload_particles_(false)
 	{
-	}
-	//=================================================================================================//
-	SPHSystem::~SPHSystem()
-	{
+		output_folder_ = "./output";
+		if (fs::exists(output_folder_) && restart_step_ == 0)
+		{
+			fs::remove_all(output_folder_);
+		}
+		if (!fs::exists(output_folder_))
+		{
+			fs::create_directory(output_folder_);
+		}
 
+		restart_folder_ = "./restart";
+		if (fs::exists(restart_folder_) && restart_step_ == 0)
+		{
+			fs::remove_all(restart_folder_);
+		}
+		if (!fs::exists(restart_folder_))
+		{
+			fs::create_directory(restart_folder_);
+		}
+
+		reload_folder_ = "./reload";
 	}
 	//===============================================================//
-	void SPHSystem::AddBody(SPHBody* body)
+	void SPHSystem::addABody(SPHBody* body)
 	{
 		bodies_.push_back(body);
 	}
 	//===============================================================//
-	void SPHSystem::AddRealBody(SPHBody* body)
+	void SPHSystem::addARealBody(SPHBody* body)
 	{
 		real_bodies_.push_back(body);
 	}
 	//===============================================================//
-	void SPHSystem::AddFictitiousBody(SPHBody* body)
+	void SPHSystem::addAFictitiousBody(SPHBody* body)
 	{
 		fictitious_bodies_.push_back(body);
 	}
 	//===============================================================//
-	void SPHSystem::InitializeSystemCellLinkedLists()
+	void SPHSystem::initializeSystemCellLinkedLists()
 	{
 		for (auto &body : bodies_)
 		{
-			body->UpdateCellLinkedList();
+			body->updateCellLinkedList();
 		}
 	}
 	//===============================================================//
-	void SPHSystem::InitializeSystemConfigurations()
+	void SPHSystem::initializeSystemConfigurations()
 	{
 		for (auto& body : bodies_)
 		{

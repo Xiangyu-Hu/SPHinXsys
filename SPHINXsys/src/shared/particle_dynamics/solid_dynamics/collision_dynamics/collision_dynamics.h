@@ -36,9 +36,8 @@ namespace SPH
 {
 	namespace solid_dynamics
 	{
-		typedef ParticleDynamicsContact<SolidBody, SolidParticles, Solid, SolidBody, SolidParticles, Solid> CollisionDynamicsContact;
-		typedef ParticleDynamicsReduce<Real, ReduceMax, SolidBody, SolidParticles, Solid> CollisionDynamicsMaximum;
-		typedef ParticleDynamicsSimple<SolidBody, SolidParticles, Solid> CollisionDynamicsSimple;
+		typedef DataDelegateContact<SolidBody, SolidParticles, Solid, SolidBody, SolidParticles, Solid> CollisionDataDelegateContact;
+		typedef DataDelegateSimple<SolidBody, SolidParticles, Solid> CollisionDataDelegateSimple;
 
 	}
 }

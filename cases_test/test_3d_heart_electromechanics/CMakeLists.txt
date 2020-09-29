@@ -30,7 +30,7 @@ add_test(NAME ${PROJECT_NAME}_particle_relaxation
 		 COMMAND ${PROJECT_NAME} --r=true
 		 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 add_test(NAME ${PROJECT_NAME} 
-		 COMMAND ${PROJECT_NAME}  --i=true
+		 COMMAND ${PROJECT_NAME} --r=false --i=true
 		 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
 

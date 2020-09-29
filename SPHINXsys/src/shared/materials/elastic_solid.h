@@ -27,16 +27,6 @@
 * 			Several more complex materials, including neo-hookean, FENE noe-hookean
 *			and anisotropic muscle, are derived from the basic elastic solid class.
 * @author	Xiangyu Hu and Chi Zhang
-* @version	0.1
-* @version  0.2.1
-*           Chi Zhang
-*			add the electrophysiology to muscle body.
-* @version  0.2.2
-*           Chi Zhang
-*           Add the electro-mechnaics and local properties of muscle material.
-* @version  0.3
-*           Xiangyu Hu
-*           The relations between the materials are revised.
 */
 #pragma once
 
@@ -65,16 +55,16 @@ namespace SPH {
 
 	public:
 		/** Constructor */
-		ElasticSolid() : Solid(), elastic_particles_(NULL),
-			c_0_(1.0), eta_0_(0.0), lambda_0_(0.375) {};
+		ElasticSolid() : 
+		Solid(), eta_0_(0.0), c_0_(1.0), lambda_0_(0.375), elastic_particles_(NULL) {};
 		virtual ~ElasticSolid() {};
 
 		/** assign particles to this material */
 		void assignElasticSolidParticles(ElasticSolidParticles* elastic_particles);
-		Real getReferenceSoundSpeed() { return c_0_; };
+		Real ReferenceSoundSpeed() { return c_0_; };
 		Real getPhysicalViscosity() { return eta_0_; };
 		/** the interface for dynamical cast*/
-		virtual ElasticSolid* PointToThisObject() override { return this; };
+		virtual ElasticSolid* pointToThisObject() override { return this; };
 		/**
 		 * @brief Get the speed of sound.
 		 * @param[in] particle_index_i Particle index
@@ -127,7 +117,7 @@ namespace SPH {
 		};
 		virtual ~LinearElasticSolid() {};
 		/** the interface for dynamical cast*/
-		virtual LinearElasticSolid* PointToThisObject() override { return this; };
+		virtual LinearElasticSolid* pointToThisObject() override { return this; };
 
 		/** the speed of sound. */
 		virtual Real SetSoundSpeed() override;
@@ -148,7 +138,7 @@ namespace SPH {
 		};
 		virtual ~NeoHookeanSolid() {};
 		/** the interface for dynamical cast*/
-		virtual NeoHookeanSolid* PointToThisObject() override { return this; };
+		virtual NeoHookeanSolid* pointToThisObject() override { return this; };
 		/**
 		 * @brief compute the stress through Constitutive relation.
 		 * @param[in] deform_grad deformation gradient
@@ -173,7 +163,7 @@ namespace SPH {
 		};
 		virtual ~FeneNeoHookeanSolid() {};
 		/** the interface for dynamical cast*/
-		virtual FeneNeoHookeanSolid* PointToThisObject() override { return this; };
+		virtual FeneNeoHookeanSolid* pointToThisObject() override { return this; };
 		/**
 		 * @brief compute the stress through Constitutive relation.
 		 * @param[in] deform_grad deformation gradient
@@ -203,8 +193,8 @@ namespace SPH {
 	public:
 		/** Constructor */
 		Muscle() : ElasticSolid(),
-			a_0_{1.0, 0.0, 0.0, 0.0 }, b_0_{1.0, 0.0, 0.0, 0.0 }, bulk_modulus_(30.0),
-			f0_(0), s0_(0), f0f0_(0), f0s0_(0), s0s0_(0) {
+			f0_(0), s0_(0), f0f0_(0), s0s0_(0), f0s0_(0),
+			a_0_{1.0, 0.0, 0.0, 0.0 }, b_0_{1.0, 0.0, 0.0, 0.0 }, bulk_modulus_(30.0) {
 			material_name_ = "Muscle";
 		};
 		virtual ~Muscle() {};
@@ -214,7 +204,7 @@ namespace SPH {
 		/** obtain fiber matrix */
 		virtual Matd getMuscleFiber(size_t particle_index_i) { return f0f0_; };
 		/** the interface for dynamical cast*/
-		virtual Muscle* PointToThisObject() override { return this; };
+		virtual Muscle* pointToThisObject() override { return this; };
 		/** compute the stress through Constitutive relation. */
 		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
 	};
@@ -249,7 +239,7 @@ namespace SPH {
 		/** obtain fiber matrix */
 		virtual Matd getMuscleFiber(size_t particle_index_i) override { return local_f0f0_[particle_index_i]; };
 		/** the interface for dynamical cast*/
-		virtual LocallyOrthotropicMuscle* PointToThisObject() override { return this; };
+		virtual LocallyOrthotropicMuscle* pointToThisObject() override { return this; };
 		/**
 		 * @brief Setup the local properties, fiber and sheet direction.
 		 * @param[in] Base particles of elastic solid. 
@@ -285,8 +275,8 @@ namespace SPH {
 		};
 	public:
 		/** Constructor. */
-		ActiveMuscle(Muscle* muscle) : ElasticSolid(*muscle), muscle_(*muscle),
-			active_muscle_particles_(NULL) {
+		ActiveMuscle(Muscle* muscle) : 
+		ElasticSolid(*muscle),active_muscle_particles_(NULL), muscle_(*muscle) {
 			material_name_ = "ActiveMuscle";
 		};
 		virtual ~ActiveMuscle() {};
@@ -297,7 +287,7 @@ namespace SPH {
 		void assignActiveMuscleParticles(ActiveMuscleParticles* active_muscle_particles);
 
 		/** the interface for dynamical cast*/
-		virtual ActiveMuscle* PointToThisObject() override { return this; };
+		virtual ActiveMuscle* pointToThisObject() override { return this; };
 		/** compute the stress through Constitutive relation. */
 		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
 		/** Write the material property to xml file */

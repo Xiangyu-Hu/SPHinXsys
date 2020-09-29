@@ -10,8 +10,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	Kernel::Kernel(Real h, string kernel_name)
-		: h_(h), inv_h_(1.0/h), kernel_size_(2.0), 
-		kernel_name_(kernel_name)
+		: kernel_name_(kernel_name), h_(h), inv_h_(1.0/h), kernel_size_(2.0)
 	{
 		if (h <= 0.0)
 		{

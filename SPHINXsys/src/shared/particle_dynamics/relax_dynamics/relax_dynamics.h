@@ -39,94 +39,88 @@
 
 namespace SPH
 {
+	class ComplexShape;
+
 	namespace relax_dynamics
 	{
-		template <class ParticlesType = BaseParticles>
-		using RelaxDynamicsSimple = ParticleDynamicsSimple<SPHBody, ParticlesType>;
+		typedef DataDelegateSimple<SPHBody, BaseParticles> RelaxDataDelegateSimple;
 
-		template <class ParticlesType = BaseParticles>
-		using RelaxDynamicsMin = ParticleDynamicsReduce<Real, ReduceMin, SPHBody, ParticlesType>;
+		typedef DataDelegateInner<SPHBody, BaseParticles> RelaxDataDelegateInner;
 
-		template <class ReturnType, class ParticlesType = BaseParticles>
-		using RelaxDynamicsSum = ParticleDynamicsReduce<ReturnType, ReduceSum<ReturnType>, SPHBody,	ParticlesType>;
+		typedef DataDelegateComplex<SPHBody, BaseParticles, BaseMaterial, SPHBody, BaseParticles> RelaxDataDelegateComplex;
 
-		template <class ParticlesType = BaseParticles>
-		using RelaxDynamicsInner1Level = ParticleDynamicsInner1Level<SPHBody, ParticlesType>;
-	
-		template <class ParticlesType = BaseParticles>
-		using RelaxDynamicsInner =  ParticleDynamicsInner<SPHBody, ParticlesType>;
-
-		template <class ParticlesType = BaseParticles>
-		using RelaxSurfaceConstraint = PartDynamicsByParticle<SPHBody, ParticlesType, BodySurface>;
-
-		template <class ParticlesType = BaseParticles>
-		using RelaxConstraintByCell = PartDynamicsByCell<SPHBody, ParticlesType, NearBodySurface>;
-
-		template <class ParticlesType = BaseParticles, class ContactParticlesType = BaseParticles>
-		using RelaxDynamicsComplex =  
-			ParticleDynamicsComplex<SPHBody, ParticlesType, BaseMaterial, SPHBody, ParticlesType>;
-
-		template <class ParticlesType = BaseParticles, class ContactParticlesType = BaseParticles>
-		using RelaxDynamicsComplex1Level 
-			= ParticleDynamicsComplex1Level<SPHBody, ParticlesType, BaseMaterial, SPHBody, ParticlesType>;
-	
 		/**
-		* @class GetTimeStepSize
+		* @class GetTimeStepSizeSquare
 		* @brief relaxation dynamics for particle initialization
-		* computing time step size
+		* computing the square of time step size
 		*/
-		class GetTimeStepSize : public RelaxDynamicsMin<BaseParticles>
+		class GetTimeStepSizeSquare :
+			public ParticleDynamicsReduce<Real, ReduceMin>,
+			public RelaxDataDelegateSimple
 		{
-		protected:
-			Real smoothing_length_;
-			Real ReduceFunction(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			explicit GetTimeStepSize(SPHBody* body);
-			virtual ~GetTimeStepSize() {};
+			explicit GetTimeStepSizeSquare(SPHBody* body);
+			virtual ~GetTimeStepSizeSquare() {};
+		protected:
+			StdLargeVec<Vecd>& dvel_dt_;
+			Real smoothing_length_;
+			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
-		* @class PhysicsRelaxationInner
+		* @class RelaxationAccelerationInner
 		* @brief simple algorithm for physics relaxation
 		* without considering contact interaction.
 		* this is usually used for solid like bodies
 		*/
-		class PhysicsRelaxationInner : public ParticleDynamicsInner<SPHBody>
+		class RelaxationAccelerationInner : 
+			public ParticleDynamicsInner, public RelaxDataDelegateInner
 		{
-		protected:
-			Real smoothing_length_;
-			Real particle_spacing_;
-			Real sound_speed_;
-			Real p0_;
-			Real p_star_;
-			Real mass_;
-
-			virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			PhysicsRelaxationInner(SPHBodyInnerRelation* body_inner_relation);
-			virtual ~PhysicsRelaxationInner() {};
+			RelaxationAccelerationInner(SPHBodyInnerRelation* body_inner_relation);
+			virtual ~RelaxationAccelerationInner() {};
+		protected:
+			StdLargeVec<Real>& Vol_;
+			StdLargeVec<Vecd>& dvel_dt_;
+			StdLargeVec<Vecd>& pos_n_;
+			ComplexShape* complex_shape_;
+			Kernel* kernel_;
+			virtual void InnerInteraction(size_t index_i, Real dt = 0.0) override;
 		};
+
 		/**
-		* @class PhysicsRelaxationComplex
-		* @brief position verlet algorithm for physics relaxation
+		* @class UpdateParticlePosition
+		* @brief update the particle position for a time step
+		*/
+		class UpdateParticlePosition :
+			public ParticleDynamicsSimple, public RelaxDataDelegateSimple
+		{
+		public:
+			explicit UpdateParticlePosition(SPHBody* body);
+			virtual ~UpdateParticlePosition() {};
+		protected:
+			StdLargeVec<Vecd>& pos_n_, & dvel_dt_;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		* @class RelaxationAccelerationComplex
+		* @brief compute relaxation acceleration while consider the present of contact bodies
 		* with considering contact interaction
 		* this is usually used for fluid like bodies
 		*/
-		class PhysicsRelaxationComplex : public RelaxDynamicsComplex1Level<BaseParticles>
+		class RelaxationAccelerationComplex : 
+			public ParticleDynamicsComplex,
+			public RelaxDataDelegateComplex
 		{
-		protected:
-			Real eta_;
-			Real p0_;
-			Real sound_speed_;
-			Real p_star_;
-			Real mass_;
-
-			virtual void Initialization(size_t index_particle_i, Real dt = 0.0) override;
-			virtual void ComplexInteraction(size_t index_particle_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			PhysicsRelaxationComplex(SPHBodyComplexRelation* body_complex_relation);
-			virtual ~PhysicsRelaxationComplex() {};
+			RelaxationAccelerationComplex(SPHBodyComplexRelation* body_complex_relation);
+			virtual ~RelaxationAccelerationComplex() {};
+		protected:
+			StdLargeVec<Real>& Vol_;
+			StdLargeVec<Vecd>& dvel_dt_;
+			StdVec<StdLargeVec<Real>*> contact_Vol_;
+			virtual void ComplexInteraction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -135,14 +129,16 @@ namespace SPH
 		* map contrained particles to geometry face and
 		* r = r + phi * norm (vector distance to face)
 		*/
-		class BodySurfaceBounding : public RelaxConstraintByCell<BaseParticles>
+		class BodySurfaceBounding : 
+			public PartDynamicsByCell,
+			public RelaxDataDelegateSimple
 		{
-		protected:
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			BodySurfaceBounding(SPHBody *body, NearBodySurface* body_part)
-				:RelaxConstraintByCell<BaseParticles>(body, body_part) {};
+			BodySurfaceBounding(SPHBody *body, NearBodySurface* body_part);
 			virtual ~BodySurfaceBounding() {};
+		protected:
+			StdLargeVec<Vecd>& pos_n_;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -151,53 +147,88 @@ namespace SPH
 		* map contrained particles to geometry face and
 		* r = r + phi * norm (vector distance to face)
 		*/
-		class ConstraintSurfaceParticles : public RelaxSurfaceConstraint<BaseParticles>
+		class ConstraintSurfaceParticles : 
+			public PartDynamicsByParticle,
+			public RelaxDataDelegateSimple
+		{
+		public:
+			ConstraintSurfaceParticles(SPHBody* body, BodySurface* body_part);
+			virtual ~ConstraintSurfaceParticles() {};
+		protected:
+			StdLargeVec<Vecd>& pos_n_;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		* @class RelaxationStepInner
+		* @brief carry out particle relaxation step of particles within the body
+		*/
+		class RelaxationStepInner : public  ParticleDynamics<void>
 		{
 		protected:
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
+			SPHBody* sph_body_;
+			SPHBodyInnerRelation* inner_relation_;
 		public:
-			ConstraintSurfaceParticles(SPHBody* body, BodySurface* body_part)
-				:RelaxSurfaceConstraint<BaseParticles>(body, body_part) {};
-			virtual ~ConstraintSurfaceParticles() {};
+			explicit RelaxationStepInner(SPHBodyInnerRelation* body_inner_relation);
+			virtual ~RelaxationStepInner() {};
+
+			RelaxationAccelerationInner relaxation_acceleration_inner_;
+			GetTimeStepSizeSquare get_time_step_square_;
+			UpdateParticlePosition update_particle_position_;
+			BodySurfaceBounding	surface_bounding_;
+
+			virtual void exec(Real dt = 0.0) override;
+			virtual void parallel_exec(Real dt = 0.0) override;
 		};
 
 		/**
 		* @class computeNumberDensityBySummation
 		* @brief  compute the particle number density by summation.
 		*/
-		class computeNumberDensityBySummation : public RelaxDynamicsComplex<BaseParticles>
+		class computeNumberDensityBySummation :
+			public ParticleDynamicsComplex,
+			public RelaxDataDelegateComplex
 		{
-		protected:
-			Real W0_;
-			virtual void ComplexInteraction(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			computeNumberDensityBySummation(SPHBodyComplexRelation* body_complex_relation)
-				: RelaxDynamicsComplex<BaseParticles>(body_complex_relation) {
-				W0_ = body_->kernel_->W(Vecd(0));
-			};
+			computeNumberDensityBySummation(SPHBodyComplexRelation* body_complex_relation);
 			virtual ~computeNumberDensityBySummation() {};
+		protected:
+			StdLargeVec<Real>& Vol_0_, & sigma_0_;
+			StdVec<StdLargeVec<Real>*> contact_Vol_0_;
+			Real W0_;
+			virtual void ComplexInteraction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
 		 * @class getAveragedParticleNumberDensity
 		 * @brief  Compute the Everaged Particle Number Density.
 		 */
-		class getAveragedParticleNumberDensity  : public RelaxDynamicsSum<Real, BaseParticles>
+		class getAveragedParticleNumberDensity : 
+			public ParticleDynamicsReduce <Real, ReduceSum<Real>>,
+			public RelaxDataDelegateSimple
 		{
-		protected:
-			Real average_farctor_;
-			Real ReduceFunction(size_t index_particle_i, Real dt = 0.0) override;
 		public:
 			explicit getAveragedParticleNumberDensity(SPHBody* body);
 			virtual ~getAveragedParticleNumberDensity() {};
+		protected:
+			StdLargeVec<Real>& sigma_0_;
+			Real average_farctor_;
+			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 		};
 		/**
 		* @class FinalizingParticleRelaxation
 		* @brief update the number density after relaxation.
 		*/
-		class FinalizingParticleRelaxation : public RelaxDynamicsSimple<BaseParticles>
+		class FinalizingParticleRelaxation : 
+			public ParticleDynamicsSimple,
+			public RelaxDataDelegateSimple
 		{
+		public:
+			explicit FinalizingParticleRelaxation(SPHBody *body);
+			virtual ~FinalizingParticleRelaxation() {};
 		protected:
+			StdLargeVec<Real>& sigma_0_;
+			StdLargeVec<Vecd>& pos_n_;
 			/** the average particle number density. */
 			Real sigma_;
 			/** the method to compute average particle number density. */
@@ -206,15 +237,9 @@ namespace SPH
 			/** the function for set global parameters for the particle dynamics */
 			virtual void setupDynamics(Real dt = 0.0) override {
 				body_->setNewlyUpdated();
-				sigma_ = get_average_number_density_->parallel_exec(); 
+				sigma_ = get_average_number_density_->parallel_exec();
 			};
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
-		public:
-			explicit FinalizingParticleRelaxation(SPHBody *body)
-				: RelaxDynamicsSimple<BaseParticles>(body), sigma_(0.0){
-				get_average_number_density_ = new getAveragedParticleNumberDensity(body);
-			};
-			virtual ~FinalizingParticleRelaxation() {};
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 	}
 }

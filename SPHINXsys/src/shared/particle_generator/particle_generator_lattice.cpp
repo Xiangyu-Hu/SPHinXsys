@@ -10,15 +10,19 @@
 
 namespace SPH {
 	//=================================================================================================//
-	ParticleGeneratorLattice
-		::ParticleGeneratorLattice(SPHBody &sph_body)
-		: ParticleGenerator(sph_body), body_shape_(sph_body.getBodyShape())
+	ParticleGeneratorLattice::ParticleGeneratorLattice()
+		: ParticleGenerator(), lower_bound_(0), upper_bound_(0),
+		body_shape_(NULL), lattice_spacing_(0), number_of_lattices_(0)
 	{
-		sph_body.getSPHSystemBound(lower_bound_, upper_bound_);
-		lattice_spacing_ = sph_body.particle_spacing_;
+	}
+	//=================================================================================================//
+	void ParticleGeneratorLattice::initialize(SPHBody* sph_body)
+	{
+		sph_body_ = sph_body;
+		sph_body_->getSPHSystemBound(lower_bound_, upper_bound_);
+		body_shape_ = sph_body_->body_shape_;
+		lattice_spacing_ = sph_body_->particle_spacing_;
 		CalcNumberOfLattices(lower_bound_, upper_bound_, lattice_spacing_);
-		Vecd body_lower_bound, bound_upper_bound;
-		sph_body.findBodyShapeBounds(body_lower_bound, bound_upper_bound);
 	}
 	//=================================================================================================//
 	void ParticleGeneratorLattice
@@ -32,8 +36,8 @@ namespace SPH {
 		}
 	}
 	//=================================================================================================//
-	ParticleGeneratorRegularized::ParticleGeneratorRegularized(SPHBody& sph_body)
-		: ParticleGeneratorLattice(sph_body)
+	ParticleGeneratorRegularized::ParticleGeneratorRegularized()
+		: ParticleGeneratorLattice()
 	{
 
 	}

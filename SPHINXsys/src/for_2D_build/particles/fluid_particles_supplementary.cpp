@@ -14,28 +14,28 @@ using namespace std;
 namespace SPH
 {
 	//=================================================================================================//
-	void FluidParticles::WriteParticlesToPltFile(ofstream& output_file)
+	void FluidParticles::writeParticlesToPltFile(ofstream& output_file)
 	{
 		output_file << " VARIABLES = \" x \", \"y\", \"ID\",\"NumberDensity\" , \"density\", \"u\", \"v\", \"Vorticity\" \n";
 
 		size_t number_of_particles = body_->number_of_particles_;
 		for (size_t i = 0; i != number_of_particles; ++i)
 		{
-			output_file << base_particle_data_[i].pos_n_[0] << "  "
-				<< base_particle_data_[i].pos_n_[1] << "  "
+			output_file << pos_n_[i][0] << "  "
+				<< pos_n_[i][1] << "  "
 				<< i << "  "
-				<< base_particle_data_[i].sigma_0_ << " "
-				<< fluid_particle_data_[i].rho_n_ << " "
-				<< base_particle_data_[i].vel_n_[0] << " "
-				<< base_particle_data_[i].vel_n_[1] << " "
-				<< fluid_particle_data_[i].vorticity_[0] << " \n";
+				<< sigma_0_[i] << " "
+				<< rho_n_[i] << " "
+				<< vel_n_[i][0] << " "
+				<< vel_n_[i][1] << " "
+				<< vorticity_[i][0] << " \n";
 		}
 
 	}
 	//=================================================================================================//
-	void ViscoelasticFluidParticles::WriteParticlesToPltFile(ofstream &output_file)
+	void ViscoelasticFluidParticles::writeParticlesToPltFile(ofstream &output_file)
 	{
-		FluidParticles::WriteParticlesToPltFile(output_file);
+		FluidParticles::writeParticlesToPltFile(output_file);
 	}
 	//=================================================================================================//
 }

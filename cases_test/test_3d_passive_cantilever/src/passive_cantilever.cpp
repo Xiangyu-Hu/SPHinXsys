@@ -54,12 +54,12 @@ TriangleMeshShape* CreateHolder()
 class Myocardium : public SolidBody
 {
 public:
-	Myocardium(SPHSystem &system, string body_name, 
-		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, refinement_level, op)
+	Myocardium(SPHSystem &system, string body_name, int refinement_level)
+		: SolidBody(system, body_name, refinement_level)
 	{
-		body_shape_.addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
-		body_shape_.addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
+		body_shape_ = new ComplexShape(body_name);
+		body_shape_->addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
+		body_shape_->addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
 	}
 };
 /**
@@ -73,9 +73,10 @@ public:
 	Holder(SolidBody *solid_body, string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
-		body_part_shape_.addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
+		body_part_shape_ = new ComplexShape(constrained_region_name);
+		body_part_shape_->addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
 
-		TagBodyPart();
+		tagBodyPart();
 	}
 };
 /**
@@ -106,13 +107,12 @@ public:
 	MyocardiumInitialCondition(SolidBody *myocardium)
 		: solid_dynamics::ElasticSolidDynamicsInitialCondition(myocardium) {};
 protected:
-	void Update(size_t index_particle_i, Real dt) override 
+	void Update(size_t index_i, Real dt) override 
 	{
-		BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-		if (base_particle_data_i.pos_n_[0] > 0.0) 
+		if (pos_n_[index_i][0] > 0.0)
 		{
-			base_particle_data_i.vel_n_[1] = 5.0 * sqrt(3.0);
-			base_particle_data_i.vel_n_[2] = 5.0;
+			vel_n_[index_i][1] = 5.0 * sqrt(3.0);
+			vel_n_[index_i][2] = 5.0;
 		}
 	};
 };
@@ -120,8 +120,8 @@ protected:
 class MyocardiumObserver : public FictitiousBody
 {
 public:
-	MyocardiumObserver(SPHSystem &system, string body_name, int refinement_level, ParticlesGeneratorOps op)
-		: FictitiousBody(system, body_name, refinement_level, 1.3, op)
+	MyocardiumObserver(SPHSystem &system, string body_name, int refinement_level)
+		: FictitiousBody(system, body_name, refinement_level, 1.3)
 	{
 		body_input_points_volumes_.push_back(make_pair(Point(PL, PH, PW), 0.0));
 	}
@@ -135,13 +135,11 @@ int main()
 	SPHSystem system(Vecd(- SL - BW, -BW, -BW),
 		Vecd(PL + BW, PH + BW, PH + BW), particle_spacing_ref);
 	/** Creat a Myocardium body, corresponding material, particles and reaction model. */
-	Myocardium *myocardium_body =
-		new Myocardium(system, "MyocardiumBody", 0, ParticlesGeneratorOps::lattice);
+	Myocardium *myocardium_body = new Myocardium(system, "MyocardiumBody", 0);
 	MyocardiumMuscle 	*muscle_material = new MyocardiumMuscle();
 	ElasticSolidParticles 	particles(myocardium_body, muscle_material);
 	/** Define Observer. */
-	MyocardiumObserver *myocardium_observer 
-		= new MyocardiumObserver(system, "MyocardiumObserver", 0, ParticlesGeneratorOps::direct);
+	MyocardiumObserver *myocardium_observer = new MyocardiumObserver(system, "MyocardiumObserver", 0);
 	BaseParticles observer_particles(myocardium_observer);
 
 	/** topology */
@@ -157,7 +155,7 @@ int main()
 	solid_dynamics::CorrectConfiguration 
 		corrected_configuration_in_strong_form(myocardium_body_inner);
 	/** Time step size calculation. */
-	solid_dynamics::GetAcousticTimeStepSize 
+	solid_dynamics::AcousticTimeStepSize 
 		computing_time_step_size(myocardium_body);
 	/** active and passive stress relaxation. */
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(myocardium_body_inner);
@@ -168,16 +166,15 @@ int main()
 	/** Output */
 	In_Output in_output(system);
 	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
-	WriteAnObservedQuantity<Vecd, BaseParticles,
-		BaseParticleData, &BaseParticles::base_particle_data_, &BaseParticleData::pos_n_>
+	WriteAnObservedQuantity<Vecd, BaseParticles, &BaseParticles::pos_n_>
 		write_displacement("Displacement", in_output, myocardium_observer_contact);
 	/**
 	 * From here the time stepping begines.
 	 * Set the starting time.
 	 */
 	GlobalStaticVariables::physical_time_ = 0.0;
-	system.InitializeSystemCellLinkedLists();
-	system.InitializeSystemConfigurations();
+	system.initializeSystemCellLinkedLists();
+	system.initializeSystemConfigurations();
 	/** apply initial condition */
 	initialization.parallel_exec();
 	corrected_configuration_in_strong_form.parallel_exec();

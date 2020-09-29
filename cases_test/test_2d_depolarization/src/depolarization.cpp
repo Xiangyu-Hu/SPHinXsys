@@ -29,6 +29,7 @@ Real mu_1 = 0.2;
 Real mu_2 = 0.3;
 Real epsilon = 0.04;
 Real k_a = 0.0;
+/** create a block shape */
 std::vector<Point> CreatShape()
 {
 	std::vector<Point> shape;
@@ -45,11 +46,13 @@ std::vector<Point> CreatShape()
 class MuscleBody : public SolidBody
 {
 public:
-	MuscleBody(SPHSystem &system, string body_name, int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, refinement_level, op)
+	MuscleBody(SPHSystem& system, string body_name, int refinement_level)
+		: SolidBody(system, body_name, refinement_level)
 	{
-		std::vector<Point> body_shape = CreatShape();
-		body_shape_.addAPolygon(body_shape, ShapeBooleanOps::add);
+
+		std::vector<Point> block_shape = CreatShape();
+		body_shape_ = new ComplexShape(body_name);
+		body_shape_->addAPolygon(block_shape, ShapeBooleanOps::add);
 	}
 };
 /**
@@ -58,8 +61,8 @@ public:
 class VoltageObserver : public FictitiousBody
 {
 public:
-	VoltageObserver(SPHSystem &system, string body_name, int refinement_level, ParticlesGeneratorOps op)
-		: FictitiousBody(system, body_name, refinement_level, 1.3, op)
+	VoltageObserver(SPHSystem &system, string body_name, int refinement_level)
+		: FictitiousBody(system, body_name, refinement_level, 1.3)
 	{
 		/** postion and volume. */
 		body_input_points_volumes_.push_back(make_pair(Point(0.3, 0.7), 0.0));
@@ -118,19 +121,15 @@ class DepolarizationInitialCondition
 protected:
 	size_t voltage_;
 
-	void Update(size_t index_particle_i, Real dt) override
+	void Update(size_t index_i, Real dt) override
 	{
-		BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-		DiffusionReactionData& electro_physiology_data_i = particles_->diffusion_reaction_data_[index_particle_i];
-
-		electro_physiology_data_i.species_n_[voltage_] = exp(-4.0 * ((base_particle_data_i.pos_n_[0] - 1.0)
-				* (base_particle_data_i.pos_n_[0] - 1.0) + base_particle_data_i.pos_n_[1] * 
-				base_particle_data_i.pos_n_[1]));
+		species_n_[voltage_][index_i] = exp(-4.0 * ((pos_n_[index_i][0] - 1.0)
+				* (pos_n_[index_i][0] - 1.0) + pos_n_[index_i][1] *	pos_n_[index_i][1]));
 	};
 public:
 	DepolarizationInitialCondition(SolidBody* muscle)
 		: electro_physiology::ElectroPhysiologyInitialCondition(muscle) {
-		voltage_ = material_->getSpeciesIndexMap()["Voltage"];
+		voltage_ = material_->SpeciesIndexMap()["Voltage"];
 	};
 };
 
@@ -147,14 +146,14 @@ int main()
 	/** 
 	 * Configuration of materials, crate particle container and muscle body. 
 	 */
-	MuscleBody *muscle_body  =  new MuscleBody(system, "MuscleBody", 0, ParticlesGeneratorOps::lattice);
+	MuscleBody *muscle_body  =  new MuscleBody(system, "MuscleBody", 0);
 	MuscleReactionModel *muscle_reaction_model = new MuscleReactionModel();
 	MyocardiumMuscle 	*myocardium_muscle = new MyocardiumMuscle(muscle_reaction_model);
 	ElectroPhysiologyParticles 		myocardium_muscle_particles(muscle_body, myocardium_muscle);
 	/**
 	 * Particle and body creation of fluid observer.
 	 */
-	VoltageObserver *voltage_observer = new VoltageObserver(system, "VoltageObserver", 0, ParticlesGeneratorOps::direct);
+	VoltageObserver *voltage_observer = new VoltageObserver(system, "VoltageObserver", 0);
 	BaseParticles 					observer_particles(voltage_observer);
 
 	/** topology */
@@ -197,8 +196,8 @@ int main()
 	/** 
 	 * Pre-simultion. 
 	 */
-	system.InitializeSystemCellLinkedLists();
-	system.InitializeSystemConfigurations();
+	system.initializeSystemCellLinkedLists();
+	system.initializeSystemConfigurations();
 	initialization.exec();
 	correct_configuration.parallel_exec();
 	/** 

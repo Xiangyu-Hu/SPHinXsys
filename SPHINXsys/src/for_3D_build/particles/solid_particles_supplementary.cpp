@@ -7,30 +7,28 @@ using namespace std;
 //=================================================================================================//
 namespace SPH {
 //=================================================================================================//
-	void SolidParticles::WriteParticlesToPltFile(ofstream &output_file)
+	void SolidParticles::writeParticlesToPltFile(ofstream &output_file)
 	{
 		output_file << " VARIABLES = \" x \", \"y\",\"z\", \"ID\", \"x_norm\", \"y_norm\", \"z_norm\" \n";
 
 		size_t number_of_particles = body_->number_of_particles_;
 		for (size_t i = 0; i != number_of_particles; ++i)
 		{
-			output_file << base_particle_data_[i].pos_n_[0] << "  "
-				<< base_particle_data_[i].pos_n_[1] << "  "
-				<< base_particle_data_[i].pos_n_[2] << "  "
+			output_file << pos_n_[i][0] << "  "
+				<< pos_n_[i][1] << "  "
+				<< pos_n_[i][2] << "  "
 				<< i << "  "
-				<< solid_body_data_[i].n_[0] << "  "
-				<< solid_body_data_[i].n_[1] << "  "
-				<< solid_body_data_[i].n_[2] << "\n ";
+				<< n_[i][0] << "  "
+				<< n_[i][1] << "  "
+				<< n_[i][2] << "\n ";
 		}
 	}
 //=================================================================================================//
 	Real ElasticSolidParticles::von_Mises_stress(size_t particle_i)
 	{
-		SolidParticleData& solid_body_data_i = solid_body_data_[particle_i];
-		ElasticSolidParticleData &elastic_data_i = elastic_body_data_[particle_i];
-		Real J = solid_body_data_i.rho_0_ / solid_body_data_i.rho_n_;
-		Mat3d F = elastic_data_i.F_;
-		Mat3d stress = elastic_data_i.stress_;
+		Real J = rho_0_[particle_i] / rho_n_[particle_i];
+		Mat3d F = F_[particle_i];
+		Mat3d stress = stress_[particle_i];
 		Mat3d sigma = (F* stress*~F) / J;
 
 		Real sigmaxx = sigma(0, 0);
@@ -45,41 +43,43 @@ namespace SPH {
 			+ 3.0 * (sigmaxy * sigmaxy + sigmaxz * sigmaxz + sigmayz * sigmayz));
 	}
 //=================================================================================================//
-	void ElasticSolidParticles::WriteParticlesToPltFile(ofstream &output_file)
+	void ElasticSolidParticles::writeParticlesToPltFile(ofstream &output_file)
 	{
 		output_file << " VARIABLES = \" x \", \"y\",\"z\", \"u\", \"v\", \"w\", \"ID\", \"x_norm\", \"y_norm\", \"z_norm\", \"von Mieses\" \n";
 
 		size_t number_of_particles = body_->number_of_particles_;
 		for (size_t i = 0; i != number_of_particles; ++i)
 		{
-			output_file << base_particle_data_[i].pos_n_[0] << "  "
-				<< base_particle_data_[i].pos_n_[1] << "  "
-				<< base_particle_data_[i].pos_n_[2] << "  "
-				<< base_particle_data_[i].vel_n_[0] << "  "
-				<< base_particle_data_[i].vel_n_[1] << "  "
-				<< base_particle_data_[i].vel_n_[2] << "  "
+			output_file 
+				<< pos_n_[i][0] << "  "
+				<< pos_n_[i][1] << "  "
+				<< pos_n_[i][2] << "  "
+				<< vel_n_[i][0] << "  "
+				<< vel_n_[i][1] << "  "
+				<< vel_n_[i][2] << "  "
 				<< i << "  "
-				<< solid_body_data_[i].n_[0] << "  "
-				<< solid_body_data_[i].n_[1] << "  "
-				<< solid_body_data_[i].n_[2] << "  "
+				<< n_[i][0] << "  "
+				<< n_[i][1] << "  "
+				<< n_[i][2] << "  "
 				<< von_Mises_stress(i) << "\n ";
 		}
 	}
 //=================================================================================================//
-	void ActiveMuscleParticles::WriteParticlesToPltFile(ofstream &output_file)
+	void ActiveMuscleParticles::writeParticlesToPltFile(ofstream &output_file)
 	{
 		size_t number_of_particles = body_->number_of_particles_;
 		output_file << " VARIABLES = \" x \", \"y\",\"z\", \"ID\", \"Vx\", \"Vy\", \"Vz\", \"Ta\" ,\"von Mieses \" \n";
 		for (size_t i = 0; i != number_of_particles; ++i)
 		{
-			output_file << base_particle_data_[i].pos_n_[0] << "  "
-				<< base_particle_data_[i].pos_n_[1] << "  "
-				<< base_particle_data_[i].pos_n_[2] << "  "
+			output_file 
+				<< pos_n_[i][0] << "  "
+				<< pos_n_[i][1] << "  "
+				<< pos_n_[i][2] << "  "
 				<< i << "  "
-				<< base_particle_data_[i].vel_n_[0] << " "
-				<< base_particle_data_[i].vel_n_[1] << " "
-				<< base_particle_data_[i].vel_n_[2] << " "
-				<< active_muscle_data_[i].active_contraction_stress_ << "  "
+				<< vel_n_[i][0] << " "
+				<< vel_n_[i][1] << " "
+				<< vel_n_[i][2] << " "
+				<< active_contraction_stress_[i] << "  "
 				<< von_Mises_stress(i)              << "\n ";
 		}
 	}

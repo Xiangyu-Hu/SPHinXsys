@@ -35,13 +35,13 @@ int resolution(50);
 class WaterBlock : public FluidBody
 {
 	public:
-		WaterBlock(SPHSystem &system, string body_name,
-			int refinement_level, ParticlesGeneratorOps op)
-			: FluidBody(system, body_name, refinement_level, op)
+		WaterBlock(SPHSystem &system, string body_name, int refinement_level)
+			: FluidBody(system, body_name, refinement_level)
 		{
 			Vecd halfsize_water(0.5 * LL, 0.5 * LH, 0.5 * LW);
 			Vecd translation_water = halfsize_water;
-			body_shape_.addBrick(halfsize_water, resolution, translation_water, ShapeBooleanOps::add);
+			body_shape_ = new ComplexShape(body_name);
+			body_shape_->addBrick(halfsize_water, resolution, translation_water, ShapeBooleanOps::add);
 		}
 };
 /**
@@ -62,16 +62,15 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &system, string body_name, 
-		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, refinement_level, op)
+	WallBoundary(SPHSystem &system, string body_name, int refinement_level)
+		: SolidBody(system, body_name, refinement_level)
 	{
 		Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
 		Vecd translation_wall(0.5 * DL, 0.5 * DH, 0.5 * DW);
-		body_shape_.addBrick(halfsize_outer, resolution, translation_wall, ShapeBooleanOps::add);
-
 		Vecd halfsize_inner(0.5 * DL, 0.5 * DH, 0.5 * DW);
-		body_shape_.addBrick(halfsize_inner, resolution, translation_wall, ShapeBooleanOps::sub);
+		body_shape_ = new ComplexShape(body_name);
+		body_shape_->addBrick(halfsize_outer, resolution, translation_wall, ShapeBooleanOps::add);
+		body_shape_->addBrick(halfsize_inner, resolution, translation_wall, ShapeBooleanOps::sub);
 	}
 };
 
@@ -79,8 +78,8 @@ public:
 class FluidObserver : public FictitiousBody
 {
 public:
-	FluidObserver(SPHSystem &system, string body_name, int refinement_level, ParticlesGeneratorOps op)
-		: FictitiousBody(system, body_name, refinement_level, 1.3, op)
+	FluidObserver(SPHSystem &system, string body_name, int refinement_level)
+		: FictitiousBody(system, body_name, refinement_level, 1.3)
 	{
 		//add observation point
 		body_input_points_volumes_.push_back(make_pair(Point(DL, 0.01, 0.5 * DW), 0.0));
@@ -105,21 +104,18 @@ int main()
 	system.restart_step_ = 0;
 
 	//the water block
-	WaterBlock *water_block 
-		= new WaterBlock(system, "WaterBody", 0, ParticlesGeneratorOps::lattice);
+	WaterBlock *water_block = new WaterBlock(system, "WaterBody", 0);
 	//Configuration of Materials
 	WaterMaterial *water_material = new WaterMaterial();
 	//creat fluid particles
 	FluidParticles fluid_particles(water_block, water_material);
 
 	//the wall boundary
-	WallBoundary *wall_boundary 
-		= new WallBoundary(system, "Wall", 0, ParticlesGeneratorOps::lattice);
+	WallBoundary *wall_boundary = new WallBoundary(system, "Wall", 0);
 	//creat solid particles 
 	SolidParticles solid_particles(wall_boundary);
 
-	FluidObserver *fluid_observer 
-		= new FluidObserver(system, "Fluidobserver", 0, ParticlesGeneratorOps::direct);
+	FluidObserver *fluid_observer = new FluidObserver(system, "Fluidobserver", 0);
 	//create observer particles 
 	BaseParticles observer_particles(fluid_observer);
 
@@ -150,9 +146,9 @@ int main()
 	fluid_dynamics::DensityBySummationFreeSurface
 		update_fluid_density(water_block_complex);
 	//time step size without considering sound wave speed
-	fluid_dynamics::GetAdvectionTimeStepSize	get_fluid_advection_time_step_size(water_block, U_f);
+	fluid_dynamics::AdvectionTimeStepSize	get_fluid_advection_time_step_size(water_block, U_f);
 	//time step size with considering sound wave speed
-	fluid_dynamics::GetAcousticTimeStepSize		get_fluid_time_step_size(water_block);
+	fluid_dynamics::AcousticTimeStepSize		get_fluid_time_step_size(water_block);
 
 	//pressure relaxation using verlet time stepping
 	fluid_dynamics::PressureRelaxationFirstHalfRiemann 
@@ -171,8 +167,7 @@ int main()
 	/** Output the mechanical energy of fluid body. */
 	WriteTotalMechanicalEnergy 	write_water_mechanical_energy(in_output, water_block, &gravity);
 	/** output the observed data from fluid body. */
-	WriteAnObservedQuantity<Real, FluidParticles,
-		FluidParticleData, &FluidParticles::fluid_particle_data_, &FluidParticleData::p_>
+	WriteAnObservedQuantity<Real, FluidParticles, &FluidParticles::p_>
 		write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact);
 	//-------------------------------------------------------------------
 	//from here the time stepping begines
@@ -181,8 +176,8 @@ int main()
 	/**
 	 * @brief Setup geemetrics and initial conditions
 	 */
-	system.InitializeSystemCellLinkedLists();
-	system.InitializeSystemConfigurations();
+	system.initializeSystemCellLinkedLists();
+	system.initializeSystemConfigurations();
 	get_wall_normal.exec();
 	/**
 	* @brief The time stepping starts here.
@@ -191,7 +186,7 @@ int main()
 	if (system.restart_step_ != 0)
 	{
 		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
-		water_block->UpdateCellLinkedList();
+		water_block->updateCellLinkedList();
 		water_block_complex->updateConfiguration();
 	}
 	
@@ -216,7 +211,6 @@ int main()
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
 	
-	int count_sorting = 0;
 	//computation loop starts 
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
@@ -253,7 +247,7 @@ int main()
 			}
 			number_of_iterations++;
 
-			water_block->UpdateCellLinkedList();
+			water_block->updateCellLinkedList();
 			water_block_complex->updateConfiguration();
 			fluid_observer_contact->updateConfiguration();
 			write_recorded_water_pressure.WriteToFile(GlobalStaticVariables::physical_time_);

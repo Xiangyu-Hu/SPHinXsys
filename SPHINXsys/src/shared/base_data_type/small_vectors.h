@@ -25,14 +25,15 @@
 
 #pragma once
 
-#include <cmath>
-#include <iostream>
-#include <cassert>
-
 #include "Simbody.h"
 #include "SimTKcommon.h"
 #include "SimTKmath.h"
 #include "scalar_functions.h"
+
+#include <cmath>
+#include <iostream>
+#include <cassert>
+#include <climits>
 #include <algorithm>
 #include <vector>
 #include <map>
@@ -285,7 +286,7 @@ namespace SPH {
 		return in;
 	}
 
-	//vetor with integers
+	//vector with integers
 	using Vec2i = SVec<2, int>;
 	using Vec3i = SVec<3, int>;
 
@@ -301,6 +302,7 @@ namespace SPH {
 	const SimTK::Real Infinity = SimTK::Infinity;
 	const SimTK::Real Eps = SimTK::Eps;
 	const SimTK::Real TinyReal = SimTK::TinyReal;
+	constexpr size_t MaxSize_t = numeric_limits<size_t>::max();
 
 	//vector with float point number
 	using Vec2d = SimTK::Vec2;
@@ -320,6 +322,31 @@ namespace SPH {
 	Vec3d upgradeToVector3D(Real input);
 	Vec3d upgradeToVector3D(Vec2d input);
 	Vec3d upgradeToVector3D(Vec3d input);
+
+	template<typename OutVectorType>
+	OutVectorType upgradeVector(Real input)
+	{
+		OutVectorType out_vector(0);
+		out_vector[0] = input;
+		return out_vector;
+	};
+	template<typename OutVectorType>
+	OutVectorType upgradeVector(Vec2d input)
+	{
+		OutVectorType out_vector(0);
+		out_vector[0] = input[0];
+		out_vector[1] = input[1];
+		return out_vector;
+	};
+	template<typename OutVectorType>
+	OutVectorType upgradeVector(Vec3d input)
+	{
+		OutVectorType out_vector(0);
+		out_vector[0] = input[0];
+		out_vector[1] = input[1];
+		out_vector[2] = input[2];
+		return out_vector;
+	};
 
 	Mat2d getInverse(Mat2d &A);
 	Mat3d getInverse(Mat3d &A);
@@ -354,80 +381,6 @@ namespace SPH {
 				result[1] * cos(-rotation_angle_) + result[0] * sin(-rotation_angle_));
 			return origin - translation_;
 		};
-	};
-	/** CrossProduct computation. */
-	Vec2d getCrossProduct(Vec2d &A, Vec2d &B);
-	Vec3d getCrossProduct(Vec3d &A, Vec3d &B);
-	/** User defined cross product for fiber calculation. */
-	Mat2d getCrossProductMatrix(Vec2d &A);
-	Mat3d getCrossProductMatrix(Vec3d &A);
-
-	template<typename T>
-	std::vector<T> subvector(std::vector<T> const &v, int m, int n) 
-	{
-		auto first = v.begin() + m;
-		auto last = v.begin() + n + 1;
-		std::vector<T> sub_vector(first, last);
-		return sub_vector;
-	}
-
-	template<typename T>
-	void shuffle(std::vector<T> &v) 
-	{
-		int size = v.size();
-		for (int i = 0; i < size - 1; i++) 
-		{
-			int j = i + rand() % (size - i);
-			swap(v[i], v[j]);
-		}
-	}
-
-	template<typename T>
-	void ascendingSort(std::vector<T> &v) 
-	{
-		for (const auto &i: v)
-			sort(v.begin(), v.end());
-	}
-
-	template<typename T>
-	void descendingSort(std::vector<T> &v) 
-	{
-		for (const auto &i: v)
-			sort(v.begin(), v.end(), std::greater<T>() );
-	}
-
-	template<typename T>
-	std::vector<T> differenceVector(std::vector<T> &a, std::vector<T> &b) 
-	{
-		std::vector<T> difference_v;
-		ascendingSort(a);
-		ascendingSort(b);
-		set_difference(a.begin(), a.end(), b.begin(), b.end(), 
-                        std::inserter(difference_v, difference_v.begin()));
-		return difference_v;
-	}
-
-	template <typename T, typename U>
-	class create_map
-	{
-	private:
-		std::map<T, U> m_map;
-	public:
-		create_map(const T& key, const U& val)
-		{
-			m_map[key] = val;
-		}
-
-		create_map<T, U>& operator()(const T& key, const U& val)
-		{
-			m_map[key] = val;
-			return *this;
-		}
-
-		operator std::map<T, U>()
-		{
-			return m_map;
-		}
 	};
 }
 

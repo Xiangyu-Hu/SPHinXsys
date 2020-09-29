@@ -10,36 +10,46 @@
 //=================================================================================================//
 namespace SPH {
 	//=================================================================================================//
-	template <class BodyType, class ParticlesType, class MaterialType,
-		class ContactBodyType, class ContactParticlesType, class ContactMaterialType>
-		ParticleDynamicsWithContactConfigurations<BodyType, ParticlesType, MaterialType,
-		ContactBodyType, ContactParticlesType, ContactMaterialType>
-		::ParticleDynamicsWithContactConfigurations(SPHBodyContactRelation* body_contact_relation)
-		: ParticleDynamics<void, BodyType, ParticlesType, MaterialType>(body_contact_relation->body_),
+	template <class BodyType, 
+			  class ParticlesType, 
+		      class MaterialType,
+			  class ContactBodyType, 
+			  class ContactParticlesType, 
+			  class ContactMaterialType>
+	DataDelegateContact<BodyType, ParticlesType, MaterialType, ContactBodyType, ContactParticlesType, ContactMaterialType>
+		::DataDelegateContact(SPHBodyContactRelation* body_contact_relation) :	
+		body_(dynamic_cast<BodyType*>(body_contact_relation->sph_body_)),
+		particles_(dynamic_cast<ParticlesType*>(body_->base_particles_)),
+		material_(dynamic_cast<MaterialType*>(body_->base_particles_->base_material_)),
 		contact_configuration_(body_contact_relation->contact_configuration_) 
 	{
-		SPHBodyVector relation_bodies = body_contact_relation->relation_bodies_;
-		for (size_t i = 0; i != relation_bodies.size(); ++i) {
-			contact_bodies_.push_back(dynamic_cast<ContactBodyType*>(relation_bodies[i]));
-			contact_particles_.push_back(dynamic_cast<ContactParticlesType*>(relation_bodies[i]->base_particles_));
-			contact_material_.push_back(dynamic_cast<ContactMaterialType*>(relation_bodies[i]->base_particles_->base_material_));
+		SPHBodyVector contact_sph_bodies = body_contact_relation->contact_sph_bodies_;
+		for (size_t i = 0; i != contact_sph_bodies.size(); ++i) {
+			contact_bodies_.push_back(dynamic_cast<ContactBodyType*>(contact_sph_bodies[i]));
+			contact_particles_.push_back(dynamic_cast<ContactParticlesType*>(contact_sph_bodies[i]->base_particles_));
+			contact_material_.push_back(dynamic_cast<ContactMaterialType*>(contact_sph_bodies[i]->base_particles_->base_material_));
 		}
 	}
 	//=================================================================================================//
-	template <class BodyType, class ParticlesType, class MaterialType,
-		class ContactBodyType, class ContactParticlesType, class ContactMaterialType>
-		ParticleDynamicsWithComplexConfigurations<BodyType, ParticlesType, MaterialType,
-		ContactBodyType, ContactParticlesType, ContactMaterialType>
-		::ParticleDynamicsWithComplexConfigurations(SPHBodyComplexRelation* body_complex_relation)
-		: ParticleDynamics<void, BodyType, ParticlesType, MaterialType>(body_complex_relation->body_),
+	template <class BodyType,
+		class ParticlesType,
+		class MaterialType,
+		class ContactBodyType,
+		class ContactParticlesType,
+		class ContactMaterialType>
+	DataDelegateComplex<BodyType, ParticlesType, MaterialType, ContactBodyType, ContactParticlesType, ContactMaterialType>
+		::DataDelegateComplex(SPHBodyComplexRelation* body_complex_relation) :
+		body_(dynamic_cast<BodyType*>(body_complex_relation->sph_body_)),
+		particles_(dynamic_cast<ParticlesType*>(body_->base_particles_)),
+		material_(dynamic_cast<MaterialType*>(body_->base_particles_->base_material_)),
 		inner_configuration_(body_complex_relation->inner_configuration_),
 		contact_configuration_(body_complex_relation->contact_configuration_)
 	{
-		SPHBodyVector relation_bodies = body_complex_relation->relation_bodies_;
-		for (size_t i = 0; i != relation_bodies.size(); ++i) {
-			contact_bodies_.push_back(dynamic_cast<ContactBodyType*>(relation_bodies[i]));
-			contact_particles_.push_back(dynamic_cast<ContactParticlesType*>(relation_bodies[i]->base_particles_));
-			contact_material_.push_back(dynamic_cast<ContactMaterialType*>(relation_bodies[i]->base_particles_->base_material_));
+		SPHBodyVector contact_sph_bodies = body_complex_relation->contact_sph_bodies_;
+		for (size_t i = 0; i != contact_sph_bodies.size(); ++i) {
+			contact_bodies_.push_back(dynamic_cast<ContactBodyType*>(contact_sph_bodies[i]));
+			contact_particles_.push_back(dynamic_cast<ContactParticlesType*>(contact_sph_bodies[i]->base_particles_));
+			contact_material_.push_back(dynamic_cast<ContactMaterialType*>(contact_sph_bodies[i]->base_particles_->base_material_));
 		}
 	}
 	//=================================================================================================//

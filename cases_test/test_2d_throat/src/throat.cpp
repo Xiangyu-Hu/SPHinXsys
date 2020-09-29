@@ -26,9 +26,8 @@ Real lambda_f = 10.0;
 class FluidBlock : public FluidBody
 {
 	public:
-		FluidBlock(SPHSystem &system, string body_name, 
-			int refinement_level, ParticlesGeneratorOps op)
-			: FluidBody(system, body_name, refinement_level, op)
+		FluidBlock(SPHSystem &system, string body_name, int refinement_level)
+			: FluidBody(system, body_name, refinement_level)
 		{
 			std::vector<Point> pnts;
 			pnts.push_back(Point(-0.5*DL, -0.5*DH));
@@ -36,7 +35,6 @@ class FluidBlock : public FluidBody
 			pnts.push_back(Point(-DL / 6.0, 0.5*DH));
 			pnts.push_back(Point(-DL / 6.0, - 0.5*DH));
 			pnts.push_back(Point(-0.5*DL, -0.5*DH));
-			body_shape_.addAPolygon(pnts, ShapeBooleanOps::add);
 
 			std::vector<Point> pnts1;
 			pnts1.push_back(Point(-DL/6.0 - BW, -0.5*DT));
@@ -44,7 +42,6 @@ class FluidBlock : public FluidBody
 			pnts1.push_back(Point(DL / 6.0 + BW, 0.5*DT));
 			pnts1.push_back(Point(DL / 6.0 + BW, - 0.5*DT));
 			pnts1.push_back(Point(-DL / 6.0 - BW, -0.5*DT));
-			body_shape_.addAPolygon(pnts1, ShapeBooleanOps::add);
 
 			std::vector<Point> pnts2;
 			pnts2.push_back(Point(DL/6.0, -0.5*DH));
@@ -52,7 +49,11 @@ class FluidBlock : public FluidBody
 			pnts2.push_back(Point(0.5*DL, 0.5*DH));
 			pnts2.push_back(Point(0.5*DL, -0.5*DH));
 			pnts2.push_back(Point(DL / 6.0, -0.5*DH));
-			body_shape_.addAPolygon(pnts2, ShapeBooleanOps::add);
+
+			body_shape_ = new ComplexShape(body_name);
+			body_shape_->addAPolygon(pnts, ShapeBooleanOps::add);
+			body_shape_->addAPolygon(pnts1, ShapeBooleanOps::add);
+			body_shape_->addAPolygon(pnts2, ShapeBooleanOps::add);
 		}
 };
 /**
@@ -76,9 +77,8 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &system, string body_name, 
-		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, refinement_level, op)
+	WallBoundary(SPHSystem &system, string body_name, int refinement_level)
+		: SolidBody(system, body_name, refinement_level)
 	{
 		std::vector<Point> pnts3;
 		pnts3.push_back(Point(-0.5*DL - BW, -0.5*DH - BW));
@@ -86,7 +86,6 @@ public:
 		pnts3.push_back(Point(0.5*DL + BW, 0.5*DH + BW));
 		pnts3.push_back(Point(0.5*DL + BW, -0.5*DH - BW));
 		pnts3.push_back(Point(-0.5*DL - BW, -0.5*DH - BW));
-		body_shape_.addAPolygon(pnts3, ShapeBooleanOps::add);
 
 		std::vector<Point> pnts;
 		pnts.push_back(Point(-0.5*DL - 2.0*BW, -0.5*DH));
@@ -94,7 +93,6 @@ public:
 		pnts.push_back(Point(-DL / 6.0, 0.5*DH));
 		pnts.push_back(Point(-DL / 6.0, -0.5*DH));
 		pnts.push_back(Point(-0.5*DL - 2.0*BW, -0.5*DH));
-		body_shape_.addAPolygon(pnts, ShapeBooleanOps::sub);
 
 		std::vector<Point> pnts1;
 		pnts1.push_back(Point(-DL / 6.0 - BW, -0.5*DT));
@@ -102,7 +100,6 @@ public:
 		pnts1.push_back(Point(DL / 6.0 + BW, 0.5*DT));
 		pnts1.push_back(Point(DL / 6.0 + BW, -0.5*DT));
 		pnts1.push_back(Point(-DL / 6.0 - BW, -0.5*DT));
-		body_shape_.addAPolygon(pnts1, ShapeBooleanOps::sub);
 
 		std::vector<Point> pnts2;
 		pnts2.push_back(Point(DL / 6.0, -0.5*DH));
@@ -110,7 +107,12 @@ public:
 		pnts2.push_back(Point(0.5*DL + 2.0*BW, 0.5*DH));
 		pnts2.push_back(Point(0.5*DL + 2.0*BW, -0.5*DH));
 		pnts2.push_back(Point(DL / 6.0, -0.5*DH));
-		body_shape_.addAPolygon(pnts2, ShapeBooleanOps::sub);
+
+		body_shape_ = new ComplexShape(body_name);
+		body_shape_->addAPolygon(pnts3, ShapeBooleanOps::add);
+		body_shape_->addAPolygon(pnts, ShapeBooleanOps::sub);
+		body_shape_->addAPolygon(pnts1, ShapeBooleanOps::sub);
+		body_shape_->addAPolygon(pnts2, ShapeBooleanOps::sub);
 	}
 };
 
@@ -126,16 +128,14 @@ int main()
 
 	
 	//the water block
-	FluidBlock *fluid_block 
-		= new FluidBlock(system, "FluidBody", 0, ParticlesGeneratorOps::lattice);
+	FluidBlock *fluid_block = new FluidBlock(system, "FluidBody", 0);
 	//fluid material properties
 	NonNewtonianMaterial *non_newtonian_material = new NonNewtonianMaterial();
 	//creat fluid particles
 	ViscoelasticFluidParticles fluid_particles(fluid_block, non_newtonian_material);
 
 	//the wall boundary
-	WallBoundary *wall_boundary 
-		= new WallBoundary(system, "Wall", 0, ParticlesGeneratorOps::lattice);
+	WallBoundary *wall_boundary = new WallBoundary(system, "Wall", 0);
 	//creat solid particles
 	SolidParticles solid_particles(wall_boundary);
 	/** topology */
@@ -167,9 +167,9 @@ int main()
 	fluid_dynamics::DensityBySummation
 		update_fluid_density(fluid_block_complex);
 	//time step size without considering sound wave speed
-	fluid_dynamics::GetAdvectionTimeStepSize	get_fluid_advection_time_step_size(fluid_block, U_f);
+	fluid_dynamics::AdvectionTimeStepSize	get_fluid_advection_time_step_size(fluid_block, U_f);
 	//time step size with considering sound wave speed
-	fluid_dynamics::GetAcousticTimeStepSize		get_fluid_time_step_size(fluid_block);
+	fluid_dynamics::AcousticTimeStepSize		get_fluid_time_step_size(fluid_block);
 	//pressure relaxation using verlet time stepping
 	fluid_dynamics::PressureRelaxationFirstHalfOldroyd_B
 		pressure_relaxation_first_half(fluid_block_complex);
@@ -179,11 +179,11 @@ int main()
 	//-------- common particle dynamics ----------------------------------------
 	InitializeATimeStep 	initialize_a_fluid_step(fluid_block, &gravity);
 	//computing viscous acceleration
-	fluid_dynamics::ComputingViscousAcceleration viscous_acceleration(fluid_block_complex);
+	fluid_dynamics::ViscousAcceleration viscous_acceleration(fluid_block_complex);
 	//impose transport velocity
 	fluid_dynamics::TransportVelocityFormulation transport_velocity_formulation(fluid_block_complex);
 	//computing vorticity in the flow
-	fluid_dynamics::ComputingVorticityInFluidField
+	fluid_dynamics::VorticityInFluidField
 		compute_vorticity(fluid_block_inner);
 	//-----------------------------------------------------------------------------
 	//outputs
@@ -202,9 +202,9 @@ int main()
 	//as extra cell linked list form 
 	//periodic regions to the corresponding boundaries
 	//for building up of extra configuration
-	system.InitializeSystemCellLinkedLists();
+	system.initializeSystemCellLinkedLists();
 	periodic_condition.parallel_exec();
-	system.InitializeSystemConfigurations();
+	system.initializeSystemConfigurations();
 
 	//prepare quantities will be used once only
 	get_wall_normal.parallel_exec();
@@ -260,9 +260,9 @@ int main()
 
 			//water block configuration and periodic condition
 			periodic_bounding.parallel_exec();
-			system.InitializeSystemCellLinkedLists();
+			system.initializeSystemCellLinkedLists();
 			periodic_condition.parallel_exec();
-			system.InitializeSystemConfigurations();
+			system.initializeSystemConfigurations();
 		}
 
 		tick_count t2 = tick_count::now();

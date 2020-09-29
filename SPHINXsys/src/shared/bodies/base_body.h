@@ -39,7 +39,9 @@
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
 #include "neighbor_relation.h"
+#include "all_particle_generators.h"
 #include "geometry.h"
+
 #include <string>
 using namespace std;
 
@@ -53,16 +55,7 @@ namespace SPH
 	class Kernel;
 	class BaseMeshCellLinkedList;
 	class SPHBodyBaseRelation;
-	class BaseLevelSet;
 
-	/**
-	 * @class ParticlesGeneratorOps
-	 * @brief Serval manners are provied for particles generator.
-	 * @details lattice : Generate partice from lattice grid.
-	 *			direct  : Input particle position and volume directly.
-	 *			regularized : geometry will be regularized with level set technique.
-	 */
-	enum class ParticlesGeneratorOps {lattice, direct, regularized};
 	/**
 	 * @class SPHBody
 	 * @brief SPHBody is a base body with basic data and functions.
@@ -76,14 +69,12 @@ namespace SPH
 		SPHSystem &sph_system_; 	/**< SPHSystem. */
 		string body_name_; 		/**< name of this body */
 		bool newly_updated_;		/**< whether this body is in a newly updated state */
-		/** describe the geometry of the body, static member, so the geometry head file is included. */
-		ComplexShape  body_shape_;
-		/** smoothing length. */
-		Real smoothing_length_;
 		/** Computational domain bounds of the body for boundary conditions. */
 		Vecd body_lower_bound_, body_upper_bound_;
 		/** Whether the computational domain bound for this body is prescribed. */
 		bool prescribed_body_bounds_;
+		/** smoothing length. */
+		Real smoothing_length_;
 		/** Computing particle spacing from refinement level. */
 		Real RefinementLevelToParticleSpacing();
 
@@ -97,10 +88,10 @@ namespace SPH
 		Real particle_spacing_;						/**< Particle spacing of the body. */
 		size_t number_of_particles_;				/**< Number of real particles of the body. */
 		BaseParticles* base_particles_;				/**< Base particles of this body. */
-		BaseMeshCellLinkedList* base_mesh_cell_linked_list_; /**< Cell linked mesh of this body. */
-		ParticlesGeneratorOps particle_generator_op_;	/**< Particle generator manner */
+		BaseMeshCellLinkedList* mesh_cell_linked_list_; /**< Cell linked mesh of this body. */
+		ParticleGenerator* particle_generator_;	/**< Particle generator manner */
 		PositionsAndVolumes body_input_points_volumes_; /**< For direct generate particles. */
-		BaseLevelSet* levelset_mesh_;					/**< narrow bounded levelset mesh. */
+		ComplexShape*  body_shape_;		/** describe the geometry of the body*/
 		/**
 		 * @brief particle by cells lists is for parallel splitting algorithm.
 		 * All particles in each cell are collected together.
@@ -120,8 +111,8 @@ namespace SPH
 		 * @param[in] smoothing_length_ratio The ratio between smoothinglength to particle spacing.
 		 * @param[in] op Particle generator manner.
 		 */
-		explicit SPHBody(SPHSystem &sph_system, string body_name, 
-			int refinement_level, Real smoothing_length_ratio, ParticlesGeneratorOps op);
+		explicit SPHBody(SPHSystem &sph_system, string body_name, int refinement_level, Real smoothing_length_ratio, 
+			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~SPHBody() {};
 
 		/** Get the name of this body for out file name. */
@@ -129,54 +120,48 @@ namespace SPH
 		void setNewlyUpdated() { newly_updated_ = true; };
 		bool checkNewlyUpdated() { return newly_updated_; };
 		void setNotNewlyUpdated() { newly_updated_ = false; };
+		SPHSystem& getSPHSystem();
 
 		/** Get the name of this body for out file name. */
-		ComplexShape& getBodyShape() { return body_shape_; };
 		void setBodyLowerBound(Vecd lower_bound) { body_lower_bound_ = lower_bound; };
 		void setBodyUpperBound(Vecd upper_bound) { body_upper_bound_ = upper_bound; };
 		Vecd getBodyLowerBound() { return body_lower_bound_; };
 		Vecd getBodyUpperBound() { return body_upper_bound_; };
 		void getSPHSystemBound(Vecd& system_lower_bound, Vecd& system_uppwer_bound);
 
-		/** add levelset mesh */
-		virtual void addLevelsetMesh(Real mesh_size_ratio = 4.0);
+		/** assign base particle to the body and cell linked list. */
+		void assignBaseParticle(BaseParticles* base_particles);
 		/** Allocate memory for cell linked list. */
-		virtual void AllocateMemoryCellLinkedList() = 0;
+		virtual void allocateMemoryCellLinkedList() = 0;
 		/** Update cell linked list. */
-		virtual void UpdateCellLinkedList() = 0;
+		virtual void updateCellLinkedList() = 0;
 		/** Allocate extra configuration memories for body buffer particles. */
-		void AllocateConfigurationMemoriesForBodyBuffer();
+		void allocateConfigurationMemoriesForBodyBuffer();
 
-		/** Check wether a point within the geometry of this body.
-		 * @returns TRUE if a point within body's region otherwise FALSE. 
-		 */
-		bool checkBodyShapeContain(Vecd pnt); 
-		/** Find closest point from a given point to body surface. */
-		Vecd ClosestPointOnBodySurface(Vecd input_pnt);
 		/**
 		 * @brief Find the lower and upper bounds of the body.
 		 * @param[in,out] lower_bound Lower bound of this body.
 		 * @param[in,out] upper_bound Upper bound of this body.
 		 */
-		void findBodyShapeBounds(Vecd &lower_bound, Vecd &upper_bound);
+		void findBodyDomainBounds(Vecd &lower_bound, Vecd &upper_bound);
 
 		/** Output particle data in VTU file for visualization in Paraview. */
-		virtual void WriteParticlesToVtuFile(ofstream &output_file);
+		virtual void writeParticlesToVtuFile(ofstream &output_file);
 		/** Output particle data in PLT file for visualization in Tecplot. */
-		virtual void WriteParticlesToPltFile(ofstream &output_file);
+		virtual void writeParticlesToPltFile(ofstream &output_file);
 
 		/** Output particle data in XML file for restart simulation. */
-		virtual void WriteParticlesToXmlForRestart(std::string &filefullpath);
+		virtual void writeParticlesToXmlForRestart(std::string &filefullpath);
 		/** Read particle data in XML file for restart simulation. */
-		virtual void ReadParticlesFromXmlForRestart(std::string &filefullpath);
+		virtual void readParticlesFromXmlForRestart(std::string &filefullpath);
 
 		/** Output particle position and volume in XML file for reloading particles. */
-		virtual void WriteToXmlForReloadParticle(std::string &filefullpath);
+		virtual void writeToXmlForReloadParticle(std::string &filefullpath);
 		/** Reload particle position and volume from XML files. */
-		virtual void ReadFromXmlForReloadParticle(std::string &filefullpath);
+		virtual void readFromXmlForReloadParticle(std::string &filefullpath);
 		
 		/** The pointer to derived class object. */
-		virtual SPHBody* PointToThisObject();
+		virtual SPHBody* pointToThisObject();
 	};
 	/**
 	 * @class RealBody
@@ -189,16 +174,16 @@ namespace SPH
 
 	public:
 		/** Constructor of RealBody. */
-		RealBody(SPHSystem &sph_system, string body_name, 
-			int refinement_level, Real smoothing_length_ratio, ParticlesGeneratorOps op);
+		RealBody(SPHSystem &sph_system, string body_name, int refinement_level, Real smoothing_length_ratio, 
+			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~RealBody() {};
 
 		/** Allocate memory for cell linked list. */
-		virtual void AllocateMemoryCellLinkedList() override;
+		virtual void allocateMemoryCellLinkedList() override;
 		/** Update cell linked list. */
-		virtual void UpdateCellLinkedList() override;
+		virtual void updateCellLinkedList() override;
 		/** The pointer to derived class object. */
-		virtual RealBody* PointToThisObject() override;
+		virtual RealBody* pointToThisObject() override;
 	};
 
 	/**
@@ -212,16 +197,16 @@ namespace SPH
 
 	public:
 		/** Constructor of FictitiousBodyBody. */
-		FictitiousBody(SPHSystem &system, string body_name, 
-			int refinement_level, Real smoothing_length_ratio, ParticlesGeneratorOps op);
+		FictitiousBody(SPHSystem &system, string body_name, int refinement_level, Real smoothing_length_ratio,
+			ParticleGenerator* particle_generator = new ParticleGeneratorDirect());
 		virtual ~FictitiousBody() {};
 
 		/** Allocate memory for cell linked list. */
-		virtual void AllocateMemoryCellLinkedList() override;
+		virtual void allocateMemoryCellLinkedList() override;
 		/** Update cell linked list. */
-		virtual void UpdateCellLinkedList() override;
+		virtual void updateCellLinkedList() override;
 		/** The pointer to derived class object. */
-		virtual FictitiousBody* PointToThisObject() override;
+		virtual FictitiousBody* pointToThisObject() override;
 	};
 
 	/**
@@ -233,10 +218,10 @@ namespace SPH
 	public:
 		BodyPart(SPHBody *body, string body_part_name)
 			: body_(body), body_part_name_(body_part_name),
-			body_part_shape_(body_part_name) {};
+			body_part_shape_(NULL) {};
 		virtual ~BodyPart() {};
 
-		ComplexShape& getBodyPartShape() { return body_part_shape_; };
+		ComplexShape* getBodyPartShape() { return body_part_shape_; };
 		SPHBody* getBody() { return body_; };
 		/**
 		 * @brief Find the lower and upper bounds of the body part.
@@ -245,14 +230,14 @@ namespace SPH
 		 */
 		void BodyPartBounds(Vecd &lower_bound, Vecd &upper_bound)
 		{
-			body_part_shape_.findBounds(lower_bound, upper_bound);
+			body_part_shape_->findBounds(lower_bound, upper_bound);
 		};
 	protected:
 		SPHBody* body_;
 		string body_part_name_;
-		ComplexShape body_part_shape_;
+		ComplexShape* body_part_shape_;
 
-		virtual void TagBodyPart() = 0;
+		virtual void tagBodyPart() = 0;
 	};
 
 	/**
@@ -272,7 +257,7 @@ namespace SPH
 
 	protected:
 		void tagAParticle(size_t particle_index);
-		virtual void TagBodyPart() override;
+		virtual void tagBodyPart() override;
 
 	};
 
@@ -288,7 +273,7 @@ namespace SPH
 		virtual~BodySurface() {};
 
 	protected:
-		virtual void TagBodyPart() override;
+		virtual void tagBodyPart() override;
 	};
 
 	/**
@@ -305,7 +290,7 @@ namespace SPH
 	protected:
 		Real layer_thickness_;
 
-		virtual void TagBodyPart() override;
+		virtual void tagBodyPart() override;
 	};
 
 	/**
@@ -324,7 +309,7 @@ namespace SPH
 		virtual ~BodyPartByCell() {};
 
 	protected:
-		virtual void TagBodyPart() override;
+		virtual void tagBodyPart() override;
 	};
 
 	/**
@@ -339,26 +324,6 @@ namespace SPH
 		virtual ~NearBodySurface() {};
 
 	protected:
-		virtual void TagBodyPart() override;
-	};
-
-	/**
-	 * @class SolidBodyPartForSimbody
-	 * @brief A SolidBodyPart for coupling with Simbody.
-	 * The mass, origin, and unit inertial matrix are computed.
-	 * Note: In Simbody, all spatial vectors are three dimensional.
-	 */
-	class SolidBodyPartForSimbody : public BodyPartByParticle
-	{
-	public:
-		Vec3d initial_mass_center_;
-		SimTK::MassProperties* body_part_mass_properties_;
-		
-		SolidBodyPartForSimbody(SPHBody* body, string solid_body_part_name);
-		virtual~SolidBodyPartForSimbody() {};
-	protected:
-		Real solid_body_density_;
-
-		virtual void TagBodyPart() override;
+		virtual void tagBodyPart() override;
 	};
 }

@@ -28,7 +28,7 @@ Here, we give the instructions for installing on Ubuntu Linux, Apple OS and Wind
         $ sudo apt-get install libtbb-dev
         $ sudo apt-get install libboost-all-dev
 
-    and set the enviroment by
+    and set the environment by
 
         $ echo 'export TBB_HOME=/usr/lib/x86_64-linux-gnu' >> ~/.bashrc
         $ echo 'export BOOST_HOME=/usr/lib/x86_64-linux-gnu' >> ~/.bashrc
@@ -75,7 +75,7 @@ Here, we give the instructions for installing on Ubuntu Linux, Apple OS and Wind
                 $ echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SIMBODY_HOME/lib' >> ~/.bashrc
                 $ echo 'export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$SIMBODY_HOME/include' >> ~/.bashrc
 
-3. Update and check environment setup before building SPHinXsys. The follwing commands should upadte the environment and report the corresponding paths.
+3. Update and check environment setup before building SPHinXsys. The following commands should update the environment and report the corresponding paths.
 
         $ source ~/.bashrc
         $ echo $SIMBODY_HOME
@@ -102,12 +102,12 @@ Here, we give the instructions for installing on Ubuntu Linux, Apple OS and Wind
 
 5. Create and build your own application
   
-        Create your own application in the cases_user in the source folder simply by copying the entire folder of a similar test case and rename and modify applcation files
+        Create your own application in the cases_user in the source folder simply by copying the entire folder of a similar test case and rename and modify application files
 
         Re-run the cmake in the build folder
         $ cmake /path/to/sphinxsys/source-code -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
-        You can make and run your applciation
+        You can make and run your application
         $ cd /path/to/sphinxsys-build/cases_user/your_application_folder
         $ make -j 
         $ cd /bin
@@ -115,13 +115,13 @@ Here, we give the instructions for installing on Ubuntu Linux, Apple OS and Wind
 
 ### Install on Windows Visual Studio
 
-1. Install lastest version Cmake, SmartGit (choose non-commercial option) binary.
+1. Install latest version Cmake, SmartGit (choose non-commercial option) binary.
 2. Build, test and install Simbody
 
         Downloading from https://github.com/simbody/simbody/releases
-        Unpack to source folder, like: c:\simobody-source 
+        Unpack to source folder, like: c:\simbody-source 
         Create build folder, like: c:\simbody-build
-        Use Cmake, configure with option Visual Studioi 2017 x64 and then Generate the solution file for VS2017 (Note that install prefix should be a file folder not in system folder. For example : C:/simbody)
+        Use Cmake, configure with option Visual Studio 2017 x64 and then Generate the solution file for VS2017 (Note that install prefix should be a file folder not in system folder. For example : C:/simbody)
         Right-clicking ALL_BUILD and selecting build
         Right-clicking INSTALL and selecting build
         Set Environment Variable (User Variables) by add an entry SIMBODY_HOME to the simbody directory.
@@ -143,16 +143,16 @@ Here, we give the instructions for installing on Ubuntu Linux, Apple OS and Wind
 5. Buidling SPHinXsys project
 
         Clone SPHinXsys source files to local computer using SmartGit
-        Remember to creat a new build directory outside of the git directory to avoid upload the project files to the         
+        Remember to create a new build directory outside of the git directory to avoid upload the project files to the         
         Use Cmake to build project file
         Configure x64 build and Generate
-        After configuration, one can choose debug or relaese mode of the project file.
+        After configuration, one can choose debug or release mode of the project file.
 
-6. Build excutable and run test cases in Visual Studio
+6. Build execute able and run test cases in Visual Studio
 
 7. Create and build your own application
 
-        Create your own application in the cases_user in the source folder simply by copying the entire folder of a similar test case and rename and modify applcation files
+        Create your own application in the cases_user in the source folder simply by copying the entire folder of a similar test case and rename and modify application files
 
 ## Contribution
 

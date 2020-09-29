@@ -113,9 +113,9 @@ namespace SPH
 	public:
 		/** Constructor*/
 		DirectionalDiffusion(size_t diffusion_species_index, size_t gradient_species_index,
-			Real diff_cf, Real bias_diff_cf, Vecd bias_direction) 
-			: IsotropicDiffusion(diffusion_species_index, gradient_species_index,
-				diff_cf), bias_diff_cf_(bias_diff_cf), bias_direction_(bias_direction),
+			Real diff_cf, Real bias_diff_cf, Vecd bias_direction) : 
+			IsotropicDiffusion(diffusion_species_index, gradient_species_index, diff_cf), 
+			bias_direction_(bias_direction), bias_diff_cf_(bias_diff_cf), 
 			transf_diffusivity_(1.0) 
 		{
 			initializeDirectionalDiffusivity(diff_cf, bias_diff_cf, bias_direction);
@@ -176,7 +176,7 @@ namespace SPH
 	};
 
 	/** Reaction functor . */
-	typedef std::function<Real(StdVec<Real>&)> ReactionFunctor;
+	typedef std::function<Real(StdVec<StdLargeVec<Real>>&, size_t particle_i)> ReactionFunctor;
 	/**
 	 * @class BaseReactionModel
 	 * @brief Base class for all reaction models.
@@ -214,12 +214,12 @@ namespace SPH
 		size_t gate_variable_;
 		size_t active_contraction_stress_;
 
-		virtual Real getProductionRateIonicCurrent(StdVec<Real>& species) = 0;
-		virtual Real getLossRateIonicCurrent(StdVec<Real>& species) = 0;
-		virtual Real getProductionRateGateVariable(StdVec<Real>& species) = 0;
-		virtual Real getLossRateGateVariable(StdVec<Real>& species) = 0;
-		virtual Real getProductionActiveContractionStress(StdVec<Real>& species);
-		virtual Real getLossRateActiveContractionStress(StdVec<Real>& species);
+		virtual Real getProductionRateIonicCurrent(StdVec<StdLargeVec<Real>>& species, size_t particle_i) = 0;
+		virtual Real getLossRateIonicCurrent(StdVec<StdLargeVec<Real>>& species, size_t particle_i) = 0;
+		virtual Real getProductionRateGateVariable(StdVec<StdLargeVec<Real>>& species, size_t particle_i) = 0;
+		virtual Real getLossRateGateVariable(StdVec<StdLargeVec<Real>>& species, size_t particle_i) = 0;
+		virtual Real getProductionActiveContractionStress(StdVec<StdLargeVec<Real>>& species, size_t particle_i);
+		virtual Real getLossRateActiveContractionStress(StdVec<StdLargeVec<Real>>& species, size_t particle_i);
 
 		/** assign derived material properties*/
 		virtual void assignDerivedReactionParameters() override {};
@@ -238,10 +238,10 @@ namespace SPH
 		/** Parameters for two variable cell model. */
 		Real k_, a_, b_, mu_1_, mu_2_, epsilon_, c_m_;
 
-		virtual Real getProductionRateIonicCurrent(StdVec<Real>& species) override;
-		virtual Real getLossRateIonicCurrent(StdVec<Real>& species) override;
-		virtual Real getProductionRateGateVariable(StdVec<Real>& species) override;
-		virtual Real getLossRateGateVariable(StdVec<Real>& species) override;
+		virtual Real getProductionRateIonicCurrent(StdVec<StdLargeVec<Real>>& species, size_t particle_i) override;
+		virtual Real getLossRateIonicCurrent(StdVec<StdLargeVec<Real>>& species, size_t particle_i) override;
+		virtual Real getProductionRateGateVariable(StdVec<StdLargeVec<Real>>& species, size_t particle_i) override;
+		virtual Real getLossRateGateVariable(StdVec<StdLargeVec<Real>>& species, size_t particle_i) override;
 
 		/** assign derived material properties*/
 		virtual void assignDerivedReactionParameters() override 
@@ -266,6 +266,8 @@ namespace SPH
 
 		/** Total number of species. */
 		size_t number_of_species_;
+		/** Total number of species. */
+		size_t number_of_diffusion_species_;
 		/** Map from species names to indexes. */
 		map<string, size_t> species_indexes_map_;
 		/** all diffusion species and diffusion relation. */
@@ -305,13 +307,15 @@ namespace SPH
 		virtual ~DiffusionReactionMaterial() {};
 
 		/** Get number of species. */
-		size_t getNumberOfSpecies() { return number_of_species_; };
+		size_t NumberOfSpecies() { return number_of_species_; };
+		/** Get number of species. */
+		size_t NumberOfSpeciesDiffusion() { return species_diffusion_.size(); };
 		/** Get diffusion species */
-		StdVec<BaseDiffusion*> getDiffusionSpecies() { return species_diffusion_; };
+		StdVec<BaseDiffusion*> SpeciesDiffusion() { return species_diffusion_; };
 		/** Get reaction model */
-		BaseReactionModel* getReactionModel() { return species_reaction_; };
+		BaseReactionModel* SpeciesReaction() { return species_reaction_; };
 		/** Get species to index map. */
-		map<string, size_t> getSpeciesIndexMap() { return  species_indexes_map_; };
+		map<string, size_t> SpeciesIndexMap() { return  species_indexes_map_; };
 		/** assign particles to this material */
 		void assignDiffusionReactionParticles(DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>* diffusion_reaction_particles) {
 			diffusion_reaction_particles_ = diffusion_reaction_particles;
@@ -334,7 +338,7 @@ namespace SPH
 		virtual void initializeDiffusion() = 0;
 
 		/** the interface for dynamical cast*/
-		virtual DiffusionReactionMaterial<BaseParticlesType, BaseMaterialType>* PointToThisObject() override {
+		virtual DiffusionReactionMaterial<BaseParticlesType, BaseMaterialType>* pointToThisObject() override {
 			return this;
 		};
 	};
@@ -365,7 +369,7 @@ namespace SPH
 		virtual void initializeDiffusion() override;
 
 		/** the interface for dynamical cast*/
-		virtual MonoFieldElectroPhysiology* PointToThisObject() override 
+		virtual MonoFieldElectroPhysiology* pointToThisObject() override 
 		{
 			return this;
 		};
@@ -396,7 +400,7 @@ namespace SPH
 		/** Assign the fiber property into the diffusion material. */
 		void assignFiberProperties(StdVec<Vecd> &material_fiber);
 		/** the interface for dynamical cast*/
-		virtual LocalMonoFieldElectroPhysiology* PointToThisObject() override 
+		virtual LocalMonoFieldElectroPhysiology* pointToThisObject() override 
 		{
 			return this;
 		};

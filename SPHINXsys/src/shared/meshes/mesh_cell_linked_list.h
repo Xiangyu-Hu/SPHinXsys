@@ -1,3 +1,26 @@
+/* -------------------------------------------------------------------------*
+*								SPHinXsys									*
+* --------------------------------------------------------------------------*
+* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+* physical accurate simulation and aims to model coupled industrial dynamic *
+* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+* (smoothed particle hydrodynamics), a meshless computational method using	*
+* particle discretization.													*
+*																			*
+* SPHinXsys is partially funded by German Research Foundation				*
+* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+* and HU1527/12-1.															*
+*                                                                           *
+* Portions copyright (c) 2017-2020 Technical University of Munich and		*
+* the authors' affiliations.												*
+*                                                                           *
+* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+* not use this file except in compliance with the License. You may obtain a *
+* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+*                                                                           *
+* --------------------------------------------------------------------------*/
+
 /**
 * @file mesh_cell_linked_list.h
 * @brief Here gives the classes for managing cell linked lists. This is the basic class 
@@ -60,7 +83,7 @@ namespace SPH {
 	public:
 		/** The buffer size 2 used to expand computational domian for particle searching. */
 		BaseMeshCellLinkedList(SPHBody* body, Vecd lower_bound, Vecd upper_bound, 
-			Real cell_spacing, size_t buffer_size = 2);
+			Real cell_spacing, size_t buffer_width = 2);
 		/** Constructor with the direct information of the mesh. */
 		BaseMeshCellLinkedList(SPHBody* body, 
 			Vecd mesh_lower_bound, Vecu number_of_cells, Real cell_spacing);
@@ -78,13 +101,9 @@ namespace SPH {
 		virtual matrix_cell CellLinkedLists() = 0;
 
 		/** Assign base particles to the mesh cell linked list. */
-		void assignParticles(BaseParticles* base_particles);
+		void assignBaseParticles(BaseParticles* base_particles);
 		/** Assign kernel to the mesh cell linked list. */
 		void reassignKernel(Kernel* kernel);
-		/** allcate memories for mesh data */
-		virtual void allocateMeshDataMatrix() = 0;
-		/** delete memories for mesh data */
-		virtual void deleteMeshDataMatrix() = 0;
 
 		/** update the cell lists */
 		virtual void UpdateCellLists() = 0;
@@ -92,31 +111,12 @@ namespace SPH {
 		/** Insert a cell-linked_list entry. */
 		virtual void InsertACellLinkedParticleIndex(size_t particle_index, Vecd particle_position) = 0;
 		virtual void InsertACellLinkedListDataEntry(size_t particle_index, Vecd particle_position) = 0;
+
+		/** find the nearest list data entry */
+		virtual ListData findNearestListDataEntry(Vecd& position) = 0;
 	};
 
-	/* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
-/**
+	/**
 	 * @class MeshCellLinkedList
 	 * @brief Defining a mesh cell linked list for a body.
 	 * The meshes for all bodies share the same global coordinates.
@@ -132,7 +132,7 @@ namespace SPH {
 	public:
 		/** The buffer size 2 used to expand computational domian for particle searching. */
 		MeshCellLinkedList(SPHBody* body, Vecd lower_bound, Vecd upper_bound,
-			Real cell_spacing, size_t buffer_size = 2);
+			Real cell_spacing, size_t buffer_width = 2);
 		/** direct construct with mesh information. */
 		MeshCellLinkedList(SPHBody* body, Vecd mesh_lower_bound,
 			Vecu number_of_cells, Real cell_spacing);
@@ -159,6 +159,9 @@ namespace SPH {
 		/** Insert a cell-linked_list entry. */
 		void InsertACellLinkedParticleIndex(size_t particle_index, Vecd particle_position) override;
 		void InsertACellLinkedListDataEntry(size_t particle_index, Vecd particle_position) override;
+
+		/** find the nearest list data entry */
+		virtual ListData findNearestListDataEntry(Vecd& position) override;
 	};
 
 	/**
@@ -192,7 +195,7 @@ namespace SPH {
 	public:
 		/** Constructor to achieve alignment of all mesh levels. */
 		MultilevelMeshCellLinkedList(SPHBody* body, Vecd lower_bound, Vecd upper_bound,
-			Real reference_cell_spacing, size_t total_levels = 1, size_t buffer_size = 2);
+			Real reference_cell_spacing, size_t total_levels = 1, size_t buffer_width = 2);
 		/**In the destructor, the dynamically located memory is released.*/
 		virtual ~MultilevelMeshCellLinkedList() {};
 
@@ -212,5 +215,9 @@ namespace SPH {
 		/** Insert a cell-linked_list entry to the projected particle list. */
 		void InsertACellLinkedParticleIndex(size_t particle_index, Vecd particle_position) override;
 		void InsertACellLinkedListDataEntry(size_t particle_index, Vecd particle_position) override {};
+
+		/** find the nearest list data entry */
+		virtual ListData findNearestListDataEntry(Vecd& position) override { return ListData(0, Vecd(0)); };
+
 	};
 }

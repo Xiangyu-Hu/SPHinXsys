@@ -57,52 +57,58 @@ namespace SPH
 		reactive_species_.push_back(gate_variable);		
 		reactive_species_.push_back(active_contraction_stress);
 
-		get_production_rates_.push_back(std::bind(&ElectroPhysiologyReaction::getProductionRateIonicCurrent, this, _1));
-		get_production_rates_.push_back(std::bind(&ElectroPhysiologyReaction::getProductionRateGateVariable, this, _1));
-		get_production_rates_.push_back(std::bind(&ElectroPhysiologyReaction::getProductionActiveContractionStress, this, _1));
+		get_production_rates_.push_back(std::bind(&ElectroPhysiologyReaction::getProductionRateIonicCurrent, this, _1, _2));
+		get_production_rates_.push_back(std::bind(&ElectroPhysiologyReaction::getProductionRateGateVariable, this, _1, _2));
+		get_production_rates_.push_back(std::bind(&ElectroPhysiologyReaction::getProductionActiveContractionStress, this, _1, _2));
 
-		get_loss_rates_.push_back(std::bind(&ElectroPhysiologyReaction::getLossRateIonicCurrent, this, _1));
-		get_loss_rates_.push_back(std::bind(&ElectroPhysiologyReaction::getLossRateGateVariable, this, _1));
-		get_loss_rates_.push_back(std::bind(&ElectroPhysiologyReaction::getLossRateActiveContractionStress, this, _1));
+		get_loss_rates_.push_back(std::bind(&ElectroPhysiologyReaction::getLossRateIonicCurrent, this, _1, _2));
+		get_loss_rates_.push_back(std::bind(&ElectroPhysiologyReaction::getLossRateGateVariable, this, _1, _2));
+		get_loss_rates_.push_back(std::bind(&ElectroPhysiologyReaction::getLossRateActiveContractionStress, this, _1, _2));
 	};
 //=================================================================================================//
-	Real ElectroPhysiologyReaction::getProductionActiveContractionStress(StdVec<Real>& species)
+	Real ElectroPhysiologyReaction::
+		getProductionActiveContractionStress(StdVec<StdLargeVec<Real>>& species, size_t particle_i)
 	{
-		Real voltage_dim = species[voltage_] * 100.0 - 80.0;
+		Real voltage_dim = species[voltage_][particle_i] * 100.0 - 80.0;
 		Real factor = 0.1 + (1.0 - 0.1) * exp(-exp(-voltage_dim));
 		return factor * k_a_ * (voltage_dim + 80.0);
 	}
 //=================================================================================================//
-	Real ElectroPhysiologyReaction::getLossRateActiveContractionStress(StdVec<Real>& species)
+	Real ElectroPhysiologyReaction::
+		getLossRateActiveContractionStress(StdVec<StdLargeVec<Real>>& species, size_t particle_i)
 	{
-		Real voltage_dim = species[voltage_] * 100.0 - 80.0;
+		Real voltage_dim = species[voltage_][particle_i] * 100.0 - 80.0;
 		return 0.1 + (1.0 - 0.1) * exp(-exp(-voltage_dim));
 	}
 //=================================================================================================//
-	Real AlievPanfilowModel::getProductionRateIonicCurrent(StdVec<Real>& species)
+	Real AlievPanfilowModel::
+		getProductionRateIonicCurrent(StdVec<StdLargeVec<Real>>& species, size_t particle_i)
 	{
-		Real voltage = species[voltage_];
+		Real voltage = species[voltage_][particle_i];
 		return - k_ * voltage * (voltage * voltage - a_ * voltage - voltage) / c_m_;
 	}
 //=================================================================================================//
-	Real AlievPanfilowModel::getLossRateIonicCurrent(StdVec<Real>& species)
+	Real AlievPanfilowModel::
+		getLossRateIonicCurrent(StdVec<StdLargeVec<Real>>& species, size_t particle_i)
 	{
-		Real gate_variable = species[gate_variable_];
+		Real gate_variable = species[gate_variable_][particle_i];
 		return  (k_ * a_ + gate_variable) / c_m_;
 	}
 //=================================================================================================//
-	Real AlievPanfilowModel::getProductionRateGateVariable(StdVec<Real>& species)
+	Real AlievPanfilowModel::
+		getProductionRateGateVariable(StdVec<StdLargeVec<Real>>& species, size_t particle_i)
 	{
-		Real voltage = species[voltage_];
-		Real gate_variable = species[gate_variable_];
+		Real voltage = species[voltage_][particle_i];
+		Real gate_variable = species[gate_variable_][particle_i];
 		Real temp = epsilon_ + mu_1_ * gate_variable / (mu_2_ + voltage + Eps);
 		return - temp * k_ * voltage * (voltage - b_ - 1.0);
 	}
 //=================================================================================================//
-	Real AlievPanfilowModel::getLossRateGateVariable(StdVec<Real>& species)
+	Real AlievPanfilowModel::
+		getLossRateGateVariable(StdVec<StdLargeVec<Real>>& species, size_t particle_i)
 	{
-		Real voltage = species[voltage_];
-		Real gate_variable = species[gate_variable_];
+		Real voltage = species[voltage_][particle_i];
+		Real gate_variable = species[gate_variable_][particle_i];
 		return epsilon_ + mu_1_ * gate_variable / (mu_2_ + voltage + Eps);
 	}
 //=================================================================================================//

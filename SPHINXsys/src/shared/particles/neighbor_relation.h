@@ -36,58 +36,29 @@ using namespace std;
 
 namespace SPH {
 	/**
-	 * @class CommonRelation
-	 * @brief The common relation for a particle j around particle i.
-	 */
-	class CommonRelation
-	{
-	public:
-		/** Unit vector pointing from j to i. */
-		Vecd e_ij_;
-		/** Derivative of kernel function. */
-		Real dW_ij_;
-		/** Distance between j and i. */
-		Real r_ij_;
-		/** Index of the neighbor particle. */
-		size_t j_;
-
-		/** default constructor */
-		CommonRelation();
-		/**
-		* @brief Constructor.
-		* @param[in] base_particles Particles with geometric informaiton.
-		* @param[in] kernel Specific kernel.
-		* @param[in] r_ij Postion vector pointing from j to i.
-		* @param[in] i_index Index of particle i
-		* @param[in] j_index Index of particle j
-		*/
-		CommonRelation(Kernel& kernel, Vecd& vec_r_ij, size_t i_index, size_t j_index);
-		~CommonRelation() {};
-	};
-
-	/** common list for particle interaction*/
-	using CommonRelationList = StdLargeVec<CommonRelation>;
-	/** kernel value list for interploation and denisty summation */
-	using KernelValueList = StdLargeVec<Real>;
-
-	/**
 	 * @class Neighborhood
 	 * @brief A neighborhood around particle i.
 	 */
 	class Neighborhood
 	{
 	public:
-		CommonRelationList common_relation_list_;
-		KernelValueList kernel_value_list_;
 		/** the currnet number of neighors */
 		size_t current_size_;
 		/** the limit of neighors does not require memory allocation  */
 		size_t memory_size_;
 
+		StdLargeVec<size_t> j_;		/**< index of the neighbor particle. */
+		StdLargeVec<Real> W_ij_;	/**< kernel value */
+		StdLargeVec<Real> dW_ij_;	/**< derivative of kernel function */
+		StdLargeVec<Real> r_ij_;	/**< distance between j and i. */
+		StdLargeVec<Vecd> e_ij_;	/**< unit vector pointing from j to i */
+
 		/** default constructor */
 		Neighborhood()
 			: current_size_(0), memory_size_(0) {};
 		~Neighborhood() {};
+
+		void addANeighbor(Kernel& kernel, Vecd& vec_r_ij, size_t i_index, size_t j_index);
 	};
 
 	/** A neighborhoods for all particles in a body. */

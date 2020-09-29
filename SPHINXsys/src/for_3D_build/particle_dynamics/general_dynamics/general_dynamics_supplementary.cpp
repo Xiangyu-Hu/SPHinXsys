@@ -17,18 +17,16 @@ namespace SPH
 		: BoundingInAxisDirection(body, axis_direction), periodic_translation_(0)
 	{
 		//lower bound cells
-		for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis_] - 1), 0);
-			k < SMIN(int(body_upper_bound_cell_[third_axis_] + 2),
-				int(number_of_cells_[third_axis_])); ++k)
+		for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis_]) - 1, 0);
+			k < (size_t)SMIN(int(body_upper_bound_cell_[third_axis_] + 2), int(number_of_cells_[third_axis_])); ++k)
 		{
 
-			for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis_] - 1), 0);
-				j < SMIN(int(body_upper_bound_cell_[second_axis_] + 2),
-					int(number_of_cells_[second_axis_])); ++j)
+			for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis_]) - 1, 0);
+				j < (size_t)SMIN(int(body_upper_bound_cell_[second_axis_] + 2), int(number_of_cells_[second_axis_])); ++j)
 			{
 
 				for (size_t i = SMAX(int(body_lower_bound_cell_[axis_]) - 1, 0);
-					i <= SMIN(int(body_lower_bound_cell_[axis_] + 1), int(number_of_cells_[axis_] - 1)); ++i)
+					i <= (size_t)SMIN(int(body_lower_bound_cell_[axis_] + 1), int(number_of_cells_[axis_] - 1)); ++i)
 				{
 					Vecu cell_position(0);
 					cell_position[axis_] = i;
@@ -40,19 +38,16 @@ namespace SPH
 		}
 
 		//upper bound cells
-		for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis_] - 1), 0);
-			k < SMIN(int(body_upper_bound_cell_[third_axis_] + 2),
-				int(number_of_cells_[third_axis_])); ++k)
+		for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis_]) - 1, 0);
+			k < (size_t)SMIN(int(body_upper_bound_cell_[third_axis_] + 2), int(number_of_cells_[third_axis_])); ++k)
 		{
 
-			for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis_] - 1), 0);
-				j < SMIN(int(body_upper_bound_cell_[second_axis_] + 2),
-					int(number_of_cells_[second_axis_])); ++j)
+			for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis_]) - 1, 0);
+				j < (size_t)SMIN(int(body_upper_bound_cell_[second_axis_] + 2), int(number_of_cells_[second_axis_])); ++j)
 			{
 
 				for (size_t i = SMAX(int(body_upper_bound_cell_[axis_]) - 1, 0);
-					i <= SMIN(int(body_upper_bound_cell_[axis_] + 1),
-						int(number_of_cells_[axis_] - 1)); ++i)
+					i <= (size_t)SMIN(int(body_upper_bound_cell_[axis_] + 1), int(number_of_cells_[axis_] - 1)); ++i)
 				{
 					Vecu cell_position(0);
 					cell_position[axis_] = i;
@@ -114,7 +109,6 @@ namespace SPH
 			}, ap);
 	}
 	//=================================================================================================//
-	//=================================================================================================//
 	MirrorBoundaryConditionInAxisDirection
 		::MirrorBoundaryConditionInAxisDirection(SPHBody* body, int axis_direction, bool positive)
 		: BoundingInAxisDirection(body, axis_direction),
@@ -124,19 +118,16 @@ namespace SPH
 	{
 		if (positive) {
 			//upper bound cells
-			for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis_] - 1), 0);
-				k < SMIN(int(body_upper_bound_cell_[third_axis_] + 2),
-					int(number_of_cells_[third_axis_])); ++k)
+			for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis_]) - 1, 0);
+				k < (size_t)SMIN(int(body_upper_bound_cell_[third_axis_] + 2), int(number_of_cells_[third_axis_])); ++k)
 			{
 
-				for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis_] - 1), 0);
-					j < SMIN(int(body_upper_bound_cell_[second_axis_] + 2),
-						int(number_of_cells_[second_axis_])); ++j)
+				for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis_]) - 1, 0);
+					j < (size_t)SMIN(int(body_upper_bound_cell_[second_axis_] + 2), int(number_of_cells_[second_axis_])); ++j)
 				{
 
 					for (size_t i = SMAX(int(body_upper_bound_cell_[axis_]) - 1, 0);
-						i <= SMIN(int(body_upper_bound_cell_[axis_] + 1),
-							int(number_of_cells_[axis_] - 1)); ++i)
+						i <= (size_t)SMIN(int(body_upper_bound_cell_[axis_] + 1), int(number_of_cells_[axis_] - 1)); ++i)
 					{
 						Vecu cell_position(0);
 						cell_position[axis_] = i;
@@ -149,18 +140,16 @@ namespace SPH
 		}
 		else {
 			//lower bound cells
-			for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis_] - 1), 0);
-				k < SMIN(int(body_upper_bound_cell_[third_axis_] + 2),
-					int(number_of_cells_[third_axis_])); ++k)
+			for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis_]) - 1, 0);
+				k < (size_t)SMIN(int(body_upper_bound_cell_[third_axis_] + 2), int(number_of_cells_[third_axis_])); ++k)
 			{
 
-				for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis_] - 1), 0);
-					j < SMIN(int(body_upper_bound_cell_[second_axis_] + 2),
-						int(number_of_cells_[second_axis_])); ++j)
+				for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis_]) - 1, 0);
+					j < (size_t)SMIN(int(body_upper_bound_cell_[second_axis_] + 2), int(number_of_cells_[second_axis_])); ++j)
 				{
 
 					for (size_t i = SMAX(int(body_lower_bound_cell_[axis_]) - 1, 0);
-						i <= SMIN(int(body_lower_bound_cell_[axis_] + 1), int(number_of_cells_[axis_] - 1)); ++i)
+						i <= (size_t)SMIN(int(body_lower_bound_cell_[axis_] + 1), int(number_of_cells_[axis_] - 1)); ++i)
 					{
 						Vecu cell_position(0);
 						cell_position[axis_] = i;

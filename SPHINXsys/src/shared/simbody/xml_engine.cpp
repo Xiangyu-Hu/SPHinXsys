@@ -76,7 +76,7 @@ namespace SPH
 		if (num_dim_2 == 4) {
 			num_dim = 2;
 		}
-		else if (num_dim_2 = 9) {
+		else if (num_dim_2 == 9) {
 			num_dim = 3;
 		}
 		else

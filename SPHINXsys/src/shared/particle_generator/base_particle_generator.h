@@ -31,6 +31,7 @@
 #pragma once
 
 #include "base_data_package.h"
+#include "sph_data_conainers.h"
 
 namespace SPH {
 
@@ -44,14 +45,14 @@ namespace SPH {
 	 */
 	class ParticleGenerator
 	{
-	protected:
-		SPHBody &body_;
 	public:
-		ParticleGenerator(SPHBody &body);
+		ParticleGenerator() : sph_body_(NULL) {};
 		virtual ~ParticleGenerator() {};
 
-		/** Create lattice particle for a body. */
+		virtual void initialize(SPHBody* sph_body);
 		virtual void CreateBaseParticles(BaseParticles* base_particles) = 0;
+	protected:
+		SPHBody* sph_body_;
 	};
 	/**
 	 * @class ParticleGeneratorDirect
@@ -60,7 +61,7 @@ namespace SPH {
 	class ParticleGeneratorDirect : public ParticleGenerator
 	{
 	public:
-		ParticleGeneratorDirect(SPHBody &body);
+		ParticleGeneratorDirect() : ParticleGenerator() {};
 		virtual ~ParticleGeneratorDirect() {};
 		virtual void CreateBaseParticles(BaseParticles* base_particles) override;
 	};

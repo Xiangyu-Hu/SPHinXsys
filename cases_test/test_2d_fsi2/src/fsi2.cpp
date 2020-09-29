@@ -20,7 +20,7 @@ int main(int ac, char* av[])
 	/** Build up -- a SPHSystem -- */
 	SPHSystem system(Vec2d(- DL_sponge - BW, - BW), Vec2d(DL + BW, DH + BW), particle_spacing_ref);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = false;
+	system.run_particle_relaxation_ = true;
 	/** Tag for computation start with relaxed body fitted particles distribution. */
 	system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: start with initial condition. */
@@ -32,28 +32,26 @@ int main(int ac, char* av[])
 	/**
 	 * @brief Creating body, materials and particles for a water block.
 	 */
-	WaterBlock* water_block
-		= new WaterBlock(system, "WaterBody", 0, ParticlesGeneratorOps::lattice);
+	WaterBlock* water_block	= new WaterBlock(system, "WaterBody", 0);
 	WaterMaterial* water_material = new WaterMaterial();
 	FluidParticles 	fluid_particles(water_block, water_material);
 	/**
 	 * @brief 	Creating body and particles for the wall boundary.
 	 */
-	WallBoundary* wall_boundary
-		= new WallBoundary(system, "Wall", 0, ParticlesGeneratorOps::lattice);
+	WallBoundary* wall_boundary	= new WallBoundary(system, "Wall", 0);
 	SolidParticles 	solid_particles(wall_boundary);
 	/**
 	 * @brief 	Creating body, materials and particles for the elastic beam (inserted body).
 	 */
-	InsertedBody* inserted_body = new InsertedBody(system, "InsertedBody", 1, ParticlesGeneratorOps::lattice);
+	InsertedBody* inserted_body = new InsertedBody(system, "InsertedBody", 1);
 	InsertBodyMaterial* insert_body_material = new InsertBodyMaterial();
 	ElasticSolidParticles 	inserted_body_particles(inserted_body, insert_body_material);
 	/**
 	 * @brief 	Particle and body creation of beam and fluid observers.
 	 */
-	BeamObserver* beam_observer = new BeamObserver(system, "BeamObserver", 0, ParticlesGeneratorOps::direct);
+	BeamObserver* beam_observer = new BeamObserver(system, "BeamObserver", 0);
 	BaseParticles 				beam_observer_particles(beam_observer);
-	FluidObserver* fluid_observer = new FluidObserver(system, "FluidObserver", 0, ParticlesGeneratorOps::direct);
+	FluidObserver* fluid_observer = new FluidObserver(system, "FluidObserver", 0);
 	BaseParticles				flow_observer_particles(fluid_observer);
 	/**
 	 * @brief define simple data file input and outputs functions.
@@ -79,50 +77,33 @@ int main(int ac, char* av[])
 	/** check whether run particle relaxation for body fitted particle distribution. */
 	if (system.run_particle_relaxation_) 
 	{
-		/** add background level set for particle relaxation. */
-		inserted_body->addLevelsetMesh();
 		/**
 		 * @brief 	Methods used for particle relaxation.
 		 */
 		/** Random reset the insert body particle position. */
 		RandomizePartilePosition  random_inserted_body_particles(inserted_body);
-		/** Write background level set. */
-		WriteBodyMeshToPlt write_inserted_body_background_mesh(in_output, inserted_body);
 		/** Write the body state to Vtu file. */
 		WriteBodyStatesToVtu 		write_inserted_body_to_vtu(in_output, { inserted_body });
 		/** Write the particle reload files. */
 		WriteReloadParticle 		write_particle_reload_files(in_output, { inserted_body });
 
-		/** bounding particles to insert body surface. */
-		relax_dynamics::BodySurfaceBounding
-			body_surface_bounding(inserted_body, new NearBodySurface(inserted_body));
-		/** Compute the time step for particle relaxation. */
-		relax_dynamics::GetTimeStepSize get_solid_relax_timestep(inserted_body);
-		/** Physics relaxation algorithm. */
-		relax_dynamics::PhysicsRelaxationInner 	relax_process_for_solid(inserted_body_inner);
+		/** A  Physics relaxation step. */
+		relax_dynamics::RelaxationStepInner relaxation_step_inner(inserted_body_inner);
 		/** finalizing  particle number density and inital position after relaxatoin. */
 		relax_dynamics::FinalizingParticleRelaxation finalizing_inserted_body_particles(inserted_body);
 		/**
 		  * @brief 	Particle relaxation starts here.
 		  */
-		write_inserted_body_background_mesh.WriteToFile(0.0);
-		body_surface_bounding.parallel_exec();
 		random_inserted_body_particles.parallel_exec(0.25);
+		relaxation_step_inner.surface_bounding_.parallel_exec();
 		write_real_body_states.WriteToFile(0.0);
 
 		/** relax particles of the insert body. */
 		int ite_p = 0;
-		Real dt_p = 0.0;
 		while (ite_p < 1000)
 		{
-			dt_p = get_solid_relax_timestep.parallel_exec();
-
-			relax_process_for_solid.parallel_exec(dt_p);
-			body_surface_bounding.parallel_exec();
+			relaxation_step_inner.parallel_exec();
 			ite_p += 1;
-
-			inserted_body->UpdateCellLinkedList();
-			inserted_body_inner->updateConfiguration();
 			if (ite_p % 200 == 0)
 			{
 				cout << fixed << setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
@@ -153,9 +134,9 @@ int main(int ac, char* av[])
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensityBySummation 			update_fluid_density(water_block_complex);
 	/** Time step size without considering sound wave speed. */
-	fluid_dynamics::GetAdvectionTimeStepSize 	get_fluid_advection_time_step_size(water_block, U_f);
+	fluid_dynamics::AdvectionTimeStepSize 	get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
-	fluid_dynamics::GetAcousticTimeStepSize		get_fluid_time_step_size(water_block);
+	fluid_dynamics::AcousticTimeStepSize		get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
 	fluid_dynamics::PressureRelaxationFirstHalf
@@ -163,11 +144,11 @@ int main(int ac, char* av[])
 	fluid_dynamics::PressureRelaxationSecondHalfRiemann
 		pressure_relaxation_second_half(water_block_complex);
 	/** Computing viscous acceleration. */
-	fluid_dynamics::ComputingViscousAcceleration 	viscous_acceleration(water_block_complex);
+	fluid_dynamics::ViscousAcceleration 	viscous_acceleration(water_block_complex);
 	/** Impose transport velocity. */
 	fluid_dynamics::TransportVelocityFormulation 	transport_velocity_formulation(water_block_complex);
 	/** Computing vorticity in the flow. */
-	fluid_dynamics::ComputingVorticityInFluidField 	compute_vorticity(water_block_inner);
+	fluid_dynamics::VorticityInFluidField 	compute_vorticity(water_block_inner);
 	/** Inflow boundary condition. */
 	ParabolicInflow		parabolic_inflow(water_block, new InflowBuffer(water_block, "Buffer"));
 	/**
@@ -176,14 +157,13 @@ int main(int ac, char* av[])
 	 /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
 	solid_dynamics::FluidPressureForceOnSolid 	fluid_pressure_force_on_inserted_body(inserted_body_contact);
 	solid_dynamics::FluidViscousForceOnSolid 	fluid_viscous_force_on_inserted_body(inserted_body_contact);
-	/** Computing the average velocity. */
-	solid_dynamics::InitializeDisplacement 		inserted_body_initialize_displacement(inserted_body);
-	solid_dynamics::UpdateAverageVelocity 		inserted_body_average_velocity(inserted_body);
+	/** Compute the average velocity of the insert body. */
+	solid_dynamics::AverageVelocityAndAcceleration 		average_velocity_and_acceleration(inserted_body);
 	/**
 	 * @brief Algorithms of solid dynamics.
 	 */
 	 /** Compute time step size of elastic solid. */
-	solid_dynamics::GetAcousticTimeStepSize 	inserted_body_computing_time_step_size(inserted_body);
+	solid_dynamics::AcousticTimeStepSize 	inserted_body_computing_time_step_size(inserted_body);
 	/** Stress relaxation for the inserted body. */
 	solid_dynamics::StressRelaxationFirstHalf 	inserted_body_stress_relaxation_first_half(inserted_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf 	inserted_body_stress_relaxation_second_half(inserted_body_inner);
@@ -197,11 +177,9 @@ int main(int ac, char* av[])
 	 */
 	WriteTotalViscousForceOnSolid 		write_total_viscous_force_on_inserted_body(in_output, inserted_body);
 
-	WriteAnObservedQuantity<Vecd, BaseParticles,
-		BaseParticleData, &BaseParticles::base_particle_data_, &BaseParticleData::pos_n_>
+	WriteAnObservedQuantity<Vecd, BaseParticles, &BaseParticles::pos_n_>
 		write_beam_tip_displacement("Displacement", in_output, beam_observer_contact);
-	WriteAnObservedQuantity<Vecd, BaseParticles,
-		BaseParticleData, &BaseParticles::base_particle_data_, &BaseParticleData::vel_n_>
+	WriteAnObservedQuantity<Vecd, BaseParticles, &BaseParticles::vel_n_>
 		write_fluid_velocity("Velocity", in_output, fluid_observer_contact);
 
 	/**
@@ -214,12 +192,12 @@ int main(int ac, char* av[])
 		reload_insert_body_particles->ReadFromFile();
 	}
 	/** initialize cell linked lists for all bodies. */
-	system.InitializeSystemCellLinkedLists();
+	system.initializeSystemCellLinkedLists();
 	/** periodic condition applied after the mesh cell linked list build up
 	  * but before the configuration build up. */
 	periodic_condition.parallel_exec();
 	/** initialize configurations for all bodies. */
-	system.InitializeSystemConfigurations();
+	system.initializeSystemConfigurations();
 	/** computing surface normal direction for the wall. */
 	get_wall_normal.parallel_exec();
 	/** computing surface normal direction for the insert body. */
@@ -232,8 +210,8 @@ int main(int ac, char* av[])
 	 */
 	if (system.restart_step_ != 0) {
 		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
-		inserted_body->UpdateCellLinkedList();
-		water_block->UpdateCellLinkedList();
+		inserted_body->updateCellLinkedList();
+		water_block->updateCellLinkedList();
 		periodic_condition.parallel_exec();
 		/** one need update configuration after periodic condition. */
 		water_block_complex->updateConfiguration();
@@ -288,7 +266,7 @@ int main(int ac, char* av[])
 				/** Solid dynamics. */
 				inner_ite_dt_s = 0;
 				Real dt_s_sum = 0.0;
-				inserted_body_initialize_displacement.parallel_exec();
+				average_velocity_and_acceleration.initialize_displacement_.parallel_exec();
 				while (dt_s_sum < dt) {
 
 					dt_s = inserted_body_computing_time_step_size.parallel_exec();
@@ -299,7 +277,7 @@ int main(int ac, char* av[])
 					dt_s_sum += dt_s;
 					inner_ite_dt_s++;
 				}
-				inserted_body_average_velocity.parallel_exec(dt);
+				average_velocity_and_acceleration.update_averages_.parallel_exec(dt);
 
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
@@ -323,11 +301,11 @@ int main(int ac, char* av[])
 			/** Water block configuration and periodic condition. */
 			periodic_bounding.parallel_exec();
 
-			water_block->UpdateCellLinkedList();
+			water_block->updateCellLinkedList();
 			periodic_condition.parallel_exec();
 			water_block_complex->updateConfiguration();
 			/** one need update configuration after periodic condition. */
-			inserted_body->UpdateCellLinkedList();
+			inserted_body->updateCellLinkedList();
 			inserted_body_contact->updateConfiguration();
 			/** write run-time observation into file */
 			write_beam_tip_displacement.WriteToFile(GlobalStaticVariables::physical_time_);

@@ -14,7 +14,8 @@ using namespace tbb;
 //my memory pool
 //-------------------------------------------------------------------------------------------------
 template<class T>
-class Mypool {
+class MyMemoryPool {
+	T sample;
 	tbb::memory_pool< std::allocator<T> > my_pool;				//memory pool
 	typedef tbb::memory_pool_allocator<T> pool_allocator_t;		//memory allocator
 	std::list<T, pool_allocator_t> data_list;					//list of all nodes allocated
@@ -23,17 +24,16 @@ class Mypool {
 public:
 
 	//constructor
-	Mypool() :data_list((pool_allocator_t(my_pool))) {};
+	MyMemoryPool() : data_list((pool_allocator_t(my_pool))) {};
 	//deconstructor
-	~Mypool() {
+	~MyMemoryPool() {
 		//my_pool.recycle();
 	};
 	//prepare an avaliable node
 	T* malloc()
 	{
 		if (free_list.empty()) {
-			T* smaple = new T();
-			data_list.push_back(*smaple);
+			data_list.push_back(sample);
 			return (&data_list.back());
 		}
 		else

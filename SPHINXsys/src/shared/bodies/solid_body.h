@@ -38,6 +38,7 @@ namespace SPH {
 	 * @brief Preclaimed class.
 	 */
 	class SPHSystem;
+	class SolidParticles;
 	/**
 	 * @class SolidBody
 	 * @brief Declaration of solidbody which is used for Solid BCs and derived from RealBody.
@@ -45,12 +46,33 @@ namespace SPH {
 	class SolidBody : public RealBody
 	{
 	public:
-		SolidBody(SPHSystem &system, string body_name, 
-			int refinement_level, ParticlesGeneratorOps op);
+		SolidBody(SPHSystem &system, string body_name, int refinement_level,
+			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~SolidBody() {};
 
 		/** Set up the reaction model, if essential */
 		/** The pointer to derived class object. */
-		virtual SolidBody* PointToThisObject() override { return this; };
+		virtual SolidBody* pointToThisObject() override { return this; };
 	};
+
+/**
+	 * @class SolidBodyPartForSimbody
+	 * @brief A SolidBodyPart for coupling with Simbody.
+	 * The mass, origin, and unit inertial matrix are computed.
+	 * Note: In Simbody, all spatial vectors are three dimensional.
+	 */
+	class SolidBodyPartForSimbody : public BodyPartByParticle
+	{
+	public:
+		Vec3d initial_mass_center_;
+		SimTK::MassProperties* body_part_mass_properties_;
+		
+		SolidBodyPartForSimbody(SPHBody* body, string solid_body_part_name);
+		virtual~SolidBodyPartForSimbody() {};
+	protected:
+		Real solid_body_density_;
+		SolidParticles* solid_particles_;
+
+		virtual void tagBodyPart() override;
+	};	
 }

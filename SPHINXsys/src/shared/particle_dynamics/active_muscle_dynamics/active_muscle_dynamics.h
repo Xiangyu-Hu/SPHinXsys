@@ -25,7 +25,7 @@
  * @brief 	In is file, we declear muscle dynamics which is driven by an external injection of energy. 
  * @author 	Chi Zhang and Xiangyu Hu
  * @version 0.3.1
- *			Here, we need identify the physical differences between electrophysilogy and active muscle.
+ *			Here, we need identify the physical differences between electrophysiology and active muscle.
  *			The former is on the diffusion and electro-chemical reaction happens in tissue.
  *			The latter is for muscle dynamics which is driven by an external injection of energy.
  *			As the naming of class, function and variables in this code need be based on physics.
@@ -44,57 +44,60 @@ namespace SPH
 {
     namespace active_muscle_dynamics
 	{
-        typedef ParticleDynamicsSimple<SolidBody, ActiveMuscleParticles, ActiveMuscle> ActiveMuscleSimple;
+        typedef DataDelegateSimple<SolidBody, ActiveMuscleParticles, ActiveMuscle> ActiveMuscleDataDelegateSimple;
  
 		/**
-		 * @class ElectroMechanicsInitialCondition
-		 * @brief  set initial condition for electro mechanics
-		*/
-		class ElectroMechanicsInitialCondition : public ActiveMuscleSimple
+		 * @class MuscleActivation
+		 * @brief  impose cases specific muscle activation
+		 * This is a abstract class to be override for case specific activation
+		 */
+		class MuscleActivation :
+			public ParticleDynamicsSimple, public ActiveMuscleDataDelegateSimple
 		{
-		protected:
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) = 0;
 		public:
-			ElectroMechanicsInitialCondition(SolidBody *body)
-				: ActiveMuscleSimple(body) {};
-			virtual ~ElectroMechanicsInitialCondition() {};
+			MuscleActivation(SolidBody *body);
+			virtual ~MuscleActivation() {};
+		protected:
+			StdLargeVec<Vecd>& pos_0_;
+			StdLargeVec<Real>& active_contraction_stress_;
 		};
 
 		/**@class SpringConstrainMuscleRegion
-		 * @brief Constraint a solid body part with a spring force with original position.
+		 * @brief Constrain a solid body part with a spring force 
+		 * towards each constrained particles' original position.
 		 */
-		class SpringConstrainMuscleRegion 
-			: public PartDynamicsByParticle<SolidBody, ActiveMuscleParticles, BodyPartByParticle>
+		class SpringConstrainMuscleRegion : 
+			public PartDynamicsByParticle, public ActiveMuscleDataDelegateSimple
 		{
-		protected:
-			Vecd stiffness_;
-			virtual Vecd GetAcceleration(Vecd &disp, Real mass);
-			virtual void Update(size_t index_particle_i,
-				Real dt = 0.0) override;
 		public:
-			SpringConstrainMuscleRegion(SolidBody *body, BodyPartByParticle*body_part)
-				: PartDynamicsByParticle<SolidBody, ActiveMuscleParticles, BodyPartByParticle>(body, body_part) {};
+			SpringConstrainMuscleRegion(SolidBody *body, BodyPartByParticle*body_part);
 			virtual ~SpringConstrainMuscleRegion() {};
 			void setUpSpringStiffness(Vecd stiffness){stiffness_ = stiffness;}
+		protected:
+			StdLargeVec<Real>& mass_;
+			StdLargeVec<Vecd>& pos_n_, & pos_0_, & vel_n_;
+			Vecd stiffness_;
+			virtual Vecd GetAcceleration(Vecd& disp, Real mass);
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 		
 		/**@class ImposingStress
 		 * @brief impose activation stress on a solid body part
 		 */
-		class ImposingStress
-			: public PartDynamicsByParticle<SolidBody, ActiveMuscleParticles, SolidBodyPartForSimbody>
+		class ImposingStress :
+			public PartDynamicsByParticle, public ActiveMuscleDataDelegateSimple
 		{
-		protected:
-			/**
-			 * @brief the constrain will be specified by the application
-			 */
-			virtual Matd getStress(Vecd &pos) = 0;
-			virtual void Update(size_t index_particle_i,
-				Real dt = 0.0) override;
 		public:
-			ImposingStress(SolidBody *body, SolidBodyPartForSimbody *body_part)
-				: PartDynamicsByParticle<SolidBody, ActiveMuscleParticles, SolidBodyPartForSimbody>(body, body_part) {};
+			ImposingStress(SolidBody *body, SolidBodyPartForSimbody *body_part);
 			virtual ~ImposingStress() {};
+		protected:
+			StdLargeVec<Vecd>& pos_0_;
+			StdLargeVec<Matd>& active_stress_;
+				/**
+			 * @brief the constrian will be specified by the application
+			 */
+			virtual Matd getStress(Vecd& pos) = 0;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
     }
 }

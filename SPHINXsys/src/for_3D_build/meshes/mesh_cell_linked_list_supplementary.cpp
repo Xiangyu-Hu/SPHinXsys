@@ -42,7 +42,7 @@ namespace SPH {
 							CellList& cell_list = cell_linked_lists[i][j][k];
 							size_t real_particles_in_cell = cell_list.concurrent_particle_indexes_.size();
 							if (real_particles_in_cell != 0) {
-								for (int s = 0; s != real_particles_in_cell; ++s)
+								for (size_t s = 0; s != real_particles_in_cell; ++s)
 									cell_list.real_particle_indexes_.push_back(cell_list.concurrent_particle_indexes_[s]);
 								split_cell_lists[transferMeshIndexTo1D(Vecu(3), Vecu(i % 3, j % 3, k % 3))]
 									.push_back(&cell_linked_lists[i][j][k]);
@@ -53,7 +53,7 @@ namespace SPH {
 	//=================================================================================================//
 	void BaseMeshCellLinkedList::UpdateCellListData(matrix_cell cell_linked_lists)
 	{
-		StdLargeVec<BaseParticleData>& base_particle_data = base_particles_->base_particle_data_;
+		StdLargeVec<Vecd>& pos_n = base_particles_->pos_n_;
 		parallel_for(blocked_range3d<size_t>(0, number_of_cells_[0], 0, number_of_cells_[1], 0, number_of_cells_[2]),
 			[&](const blocked_range3d<size_t>& r) {
 				for (size_t i = r.pages().begin(); i != r.pages().end(); ++i)
@@ -62,9 +62,9 @@ namespace SPH {
 						{
 							CellList& cell_list = cell_linked_lists[i][j][k];
 							cell_list.cell_list_data_.clear();
-							for (int s = 0; s != cell_list.concurrent_particle_indexes_.size(); ++s) {
+							for (size_t s = 0; s != cell_list.concurrent_particle_indexes_.size(); ++s) {
 								size_t particle_index = cell_list.concurrent_particle_indexes_[s];
-								cell_list.cell_list_data_.emplace_back(make_pair(particle_index, base_particle_data[particle_index].pos_n_));
+								cell_list.cell_list_data_.emplace_back(make_pair(particle_index, pos_n[particle_index]));
 							}
 						}
 			}, ap);
@@ -113,6 +113,38 @@ namespace SPH {
 		Vecu cellpos = GridIndexFromPosition(particle_position);
 		cell_linked_lists_[cellpos[0]][cellpos[1]][cellpos[2]].cell_list_data_
 			.emplace_back(make_pair(particle_index, particle_position));
+	}
+	//=================================================================================================//
+	ListData MeshCellLinkedList::findNearestListDataEntry(Vecd& position)
+	{
+		Real min_distance = Infinity;
+		ListData nearest_entry = std::make_pair(MaxSize_t, Vecd(Infinity));
+
+		Vecu cell_location = GridIndexFromPosition(position);
+		int i = (int)cell_location[0];
+		int j = (int)cell_location[1];
+		int k = (int)cell_location[2];
+
+		for (int l = SMAX(i - 1, 0); l <= SMIN(i + 1, int(number_of_cells_[0]) - 1); ++l)
+		{
+			for (int m = SMAX(j - 1, 0); m <= SMIN(j + 1, int(number_of_cells_[1]) - 1); ++m)
+			{
+				for (int q = SMAX(k - 1, 0); q <= SMIN(k + 1, int(number_of_cells_[2]) - 1); ++q)
+				{
+					CellListDataVector& target_particles = cell_linked_lists_[l][m][q].cell_list_data_;
+					for (size_t n = 0; n != target_particles.size(); ++n)
+					{
+						Real distance = (position - target_particles[n].second).norm();
+						if(distance < min_distance)
+						{
+							min_distance = distance;
+							nearest_entry =  target_particles[n];
+						}
+					}
+				}
+			}
+		}
+		return nearest_entry;
 	}
 	//=================================================================================================//
 }

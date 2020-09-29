@@ -56,6 +56,8 @@ namespace SPH {
 		string material_name_;
 		/** inverse of dimension */
 		Real inv_dimension_;
+		/** reference density. */
+		Real rho_0_;
 		/** base particle information for defining local material properties*/
 		BaseParticles* base_particles_;
 
@@ -64,15 +66,17 @@ namespace SPH {
 	public:
 		/** Default constructor */
 		BaseMaterial() : material_name_("BaseMaterial"), 
-			inv_dimension_(1.0 / (Real)Vecd(0).size()), base_particles_(NULL) {};
+			inv_dimension_(1.0 / (Real)Vecd(0).size()), rho_0_(1.0), base_particles_(NULL) {};
 		virtual ~BaseMaterial() {};
 
 		/** Assign base particles to this material for defining local material properties. */
-		void assignParticles(BaseParticles* base_particles) { base_particles_ = base_particles; };
+		void assignBaseParticles(BaseParticles* base_particles) { base_particles_ = base_particles; };
 		/** The interface for dynamical cast. */
-		virtual BaseMaterial* PointToThisObject() { return this; };
+		virtual BaseMaterial* pointToThisObject() { return this; };
 		/** access the material name */
-		string getMaterialName() { return material_name_;}
+		string MaterialName() { return material_name_;}
+		/** Access to reference density. */
+		Real ReferenceDensity() { return rho_0_; };
 		/** initialize the local property. */
 		virtual void initializeLocalProperties(BaseParticles* base_particles) {};
 		/**
@@ -99,8 +103,8 @@ namespace SPH {
 	class Fluid : public BaseMaterial
 	{
 	protected:
-		/** reference density, sound speed, viscosity. */
-		Real rho_0_, c_0_, mu_;
+		/** reference sound speed, viscosity. */
+		Real c_0_, mu_;
 		/** particles for this material */
 		FluidParticles* fluid_particles_;
 
@@ -110,7 +114,7 @@ namespace SPH {
 		};
 	public:
 		/** constructor with material name. */
-		Fluid() : BaseMaterial(), rho_0_(1.0), c_0_(1.0), mu_(0.0),
+		Fluid() : BaseMaterial(), c_0_(1.0), mu_(0.0),
 			fluid_particles_(NULL) {
 			material_name_ = "Fluid"; 
 		};
@@ -121,14 +125,13 @@ namespace SPH {
 			fluid_particles_ = fluid_particles;
 		};
 		/** the interface for dynamical cast*/
-		virtual Fluid* PointToThisObject() override { return this; };
+		virtual Fluid* pointToThisObject() override { return this; };
 
-		Real GetReferenceSoundSpeed() { return c_0_; };
-		Real GetReferenceDensity() { return rho_0_; };
-		Real getReferenceViscosity() { return mu_; };
+		Real ReferenceSoundSpeed() { return c_0_; };
+		Real ReferenceViscosity() { return mu_; };
 		virtual Real GetPressure(Real rho) = 0;
 		virtual Real GetPressure(Real rho, Real rho_e) { return GetPressure(rho); };
-		virtual Real ReinitializeRho(Real p) = 0;
+		virtual Real DensityFromPressure(Real p) = 0;
 		virtual Real GetSoundSpeed(Real p = 0.0, Real rho = 1.0) = 0;
 		virtual Real RiemannSolverForPressure(Real rhol, Real Rhor, Real pl, Real pr, Real ul, Real ur) = 0;
 		virtual Real RiemannSolverForVelocity(Real rhol, Real Rhor, Real pl, Real pr, Real ul, Real ur) = 0;
@@ -141,7 +144,7 @@ namespace SPH {
 	{
 	public:
 		/** constructor with material name. */
-		Solid() : BaseMaterial(), rho_0_(1.0), collision_stiffness_(1.0),
+		Solid() : BaseMaterial(), collision_stiffness_(1.0),
 			collision_friction_(0.0), solid_particles_(NULL) {
 			material_name_ = "Solid";
 		};
@@ -151,16 +154,12 @@ namespace SPH {
 		void assignSolidParticles(SolidParticles* solid_particles) {
 			solid_particles_ = solid_particles;
 		};
-		/** Access to reference density. */
-		Real getReferenceDensity() { return rho_0_; };
 		Real getFriction() { return collision_friction_; };
 		Real getStiffness() { return collision_stiffness_; };
 		/** the interface for dynamical cast*/
-		virtual Solid* PointToThisObject() override { return this; };
+		virtual Solid* pointToThisObject() override { return this; };
 
 	protected:
-		/** reference density */
-		Real rho_0_;
 		/** artifical bulk modulus*/
 		Real collision_stiffness_;
 		/** friction property mimic fluid viscosity*/

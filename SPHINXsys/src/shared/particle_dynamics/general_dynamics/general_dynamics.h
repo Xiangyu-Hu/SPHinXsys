@@ -22,7 +22,7 @@
 * --------------------------------------------------------------------------*/
 /**
 * @file 	general_dynamics.h
-* @brief 	This is the particle dynnamics apllicable for all type bodies
+* @brief 	This is the particle dynamics aplliable for all type bodies
 * @author	Chi ZHang and Xiangyu Hu
 * @version	0.1
 */
@@ -35,6 +35,8 @@
 
 namespace SPH
 {
+	typedef DataDelegateSimple<SPHBody, BaseParticles> GeneralDataDelegateSimple;
+
 	/**
 	* @class InitializeATimeStep
 	* @brief initialize a time step for a body.
@@ -42,41 +44,47 @@ namespace SPH
 	* induced by viscous, gravity and other forces,
 	* set number of ghost particles into zero.
 	*/
-	class InitializeATimeStep : public ParticleDynamicsSimple<SPHBody, BaseParticles>
+	class InitializeATimeStep 
+		: public ParticleDynamicsSimple, public GeneralDataDelegateSimple
 	{
-	protected:
-		Gravity* gravity_;
-		virtual void setupDynamics(Real dt = 0.0) override;
-		virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 	public:
 		InitializeATimeStep(SPHBody* body, Gravity* gravity = new Gravity(Vecd(0)));
 		virtual ~InitializeATimeStep() {};
+	protected:
+		StdLargeVec<Vecd>& pos_n_,& dvel_dt_others_;
+		Gravity* gravity_;
+		virtual void setupDynamics(Real dt = 0.0) override;
+		virtual void Update(size_t index_i, Real dt = 0.0) override;
 	};
 
 	/**
 	* @class RandomizePartilePosition
 	* @brief Randomize the initial particle position
 	*/
-	class RandomizePartilePosition : public ParticleDynamicsSimple<SPHBody, BaseParticles>
+	class RandomizePartilePosition
+		: public ParticleDynamicsSimple, public GeneralDataDelegateSimple
 	{
-	protected:
-		Real particle_spacing_;
-		virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
 	public:
 		RandomizePartilePosition(SPHBody* body);
 		virtual ~RandomizePartilePosition() {};
+	protected:
+		StdLargeVec<Vecd>& pos_n_;
+		Real particle_spacing_;
+		virtual void Update(size_t index_i, Real dt = 0.0) override;
 	};
 
 	/**
 	* @class BoundingBodyDomain
-	* @brief The base calss bounding particle position within a box body domain.
+	* @brief The base class bounding particle position within a box body domain.
 	*/
-	class BoundingBodyDomain : public ParticleDynamics<void, SPHBody>
+	class BoundingBodyDomain
+		: public ParticleDynamics<void>, public GeneralDataDelegateSimple
 	{
-		/** obtain the cells lower and upper boundy for the body domain. */
-		void SetCellBounds();
-
+	public:
+		BoundingBodyDomain(SPHBody* body);
+		virtual ~BoundingBodyDomain() {};
 	protected:
+		StdLargeVec<Vecd>& pos_n_;
 		matrix_cell cell_linked_lists_;
 		Vecu number_of_cells_;
 		Real cell_spacing_;
@@ -85,10 +93,9 @@ namespace SPH
 		/** lower and upper bound for checking. */
 		Vecd body_lower_bound_, body_upper_bound_;
 		Vecu body_lower_bound_cell_, body_upper_bound_cell_;
-
-	public:
-		BoundingBodyDomain(SPHBody* body);
-		virtual ~BoundingBodyDomain() {};
+	private:
+		/** obtain the cells lower and upper boundary for the body domain. */
+		void SetCellBounds();
 	};
 
 	/**
@@ -124,8 +131,8 @@ namespace SPH
 		/**compute the distance for periodic translation. */
 		void setPeriodicTranslation();
 
-		virtual void CheckLowerBound(size_t index_particle_i, Vecd& pnt, Real dt = 0.0);
-		virtual void CheckUpperBound(size_t index_particle_i, Vecd& pnt, Real dt = 0.0);
+		virtual void CheckLowerBound(size_t index_i, Vecd& pnt, Real dt = 0.0);
+		virtual void CheckUpperBound(size_t index_i, Vecd& pnt, Real dt = 0.0);
 	public:
 		PeriodicBoundingInAxisDirection(SPHBody* body, int axis_direction);
 		virtual ~PeriodicBoundingInAxisDirection() {};
@@ -142,8 +149,8 @@ namespace SPH
 		: public PeriodicBoundingInAxisDirection
 	{
 	protected:
-		virtual void CheckLowerBound(size_t index_particle_i, Vecd& pnt, Real dt = 0.0) override;
-		virtual void CheckUpperBound(size_t index_particle_i, Vecd& pnt, Real dt = 0.0) override;
+		virtual void CheckLowerBound(size_t index_i, Vecd& pnt, Real dt = 0.0) override;
+		virtual void CheckUpperBound(size_t index_i, Vecd& pnt, Real dt = 0.0) override;
 	public:
 
 		PeriodicConditionInAxisDirection(SPHBody* body, int axis_direction)
@@ -170,8 +177,8 @@ namespace SPH
 		{
 		protected:
 			CellVector& bound_cells_;
-			virtual void checkLowerBound(size_t index_particle_i, Real dt = 0.0);
-			virtual void checkUpperBound(size_t index_particle_i, Real dt = 0.0);
+			virtual void checkLowerBound(size_t index_i, Real dt = 0.0);
+			virtual void checkUpperBound(size_t index_i, Real dt = 0.0);
 			InnerFunctor checking_bound_;
 		public:
 			Bounding(CellVector& bound_cells, SPHBody* body, int axis_direction, bool positive);
@@ -180,13 +187,17 @@ namespace SPH
 			virtual void parallel_exec(Real dt = 0.0) override;
 		};
 
+		/**
+		* @class CreatingGhostParticles
+		* @brief ghost particle created according to its corresponding real particle
+		*/
 		class CreatingGhostParticles : public Bounding
 		{
 		protected:
 			IndexVector& ghost_particles_;
 			virtual void setupDynamics(Real dt = 0.0) override { ghost_particles_.clear(); };
-			virtual void checkLowerBound(size_t index_particle_i, Real dt = 0.0) override;
-			virtual void checkUpperBound(size_t index_particle_i, Real dt = 0.0) override;
+			virtual void checkLowerBound(size_t index_i, Real dt = 0.0) override;
+			virtual void checkUpperBound(size_t index_i, Real dt = 0.0) override;
 		public:
 			CreatingGhostParticles(IndexVector& ghost_particles, CellVector& bound_cells, 
 				SPHBody* body, int axis_direction, bool positive);
@@ -195,12 +206,16 @@ namespace SPH
 			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
 		};
 
+		/**
+		* @class UpdatingGhostStates
+		* @brief the state of a ghost particle updated according to its corresponding real particle
+		*/
 		class UpdatingGhostStates : public BoundingInAxisDirection
 		{
 		protected:
 			IndexVector& ghost_particles_;
-			void updateForLowerBound(size_t index_particle_i, Real dt = 0.0);
-			void updateForUpperBound(size_t index_particle_i, Real dt = 0.0);
+			void updateForLowerBound(size_t index_i, Real dt = 0.0);
+			void updateForUpperBound(size_t index_i, Real dt = 0.0);
 			InnerFunctor checking_bound_update_;
 		public:
 			UpdatingGhostStates(IndexVector& ghost_particles,
@@ -225,82 +240,82 @@ namespace SPH
 
 	/**
 	 * @class VelocityBoundCheck
-	 * @brief  check whether paritcle velocity within a bound
+	 * @brief  check whether particle velocity within a given bound
 	 */
-	class VelocityBoundCheck 
-		: public ParticleDynamicsReduce<bool, ReduceOR, SPHBody, BaseParticles>
+	class VelocityBoundCheck : 
+		public ParticleDynamicsReduce<bool, ReduceOR>, 
+		public GeneralDataDelegateSimple
 	{
-	protected:
-		Real velocity_bound_;
-		bool ReduceFunction(size_t index_particle_i, Real dt = 0.0) override;
-
 	public:
 		VelocityBoundCheck(SPHBody* body, Real velocity_bound);
 		virtual ~VelocityBoundCheck() {};
+	protected:
+		StdLargeVec<Vecd>& vel_n_;
+		Real velocity_bound_;
+		bool ReduceFunction(size_t index_i, Real dt = 0.0) override;
 	};
 
 	/**
 	 * @class UpperFrontInXDirection
 	 * @brief Get the upper front In X Direction for a SPH body
 	 */
-	class UpperFrontInXDirection : public ParticleDynamicsReduce<Real, ReduceMax, SPHBody>
+	class UpperFrontInXDirection : 
+		public ParticleDynamicsReduce<Real, ReduceMax>, 
+		public GeneralDataDelegateSimple
 	{
-	protected:
-		Real ReduceFunction(size_t index_particle_i, Real dt = 0.0) override;
 	public:
-		explicit UpperFrontInXDirection(SPHBody* body)
-			: ParticleDynamicsReduce(body) {
-			initial_reference_ = 0.0;
-		};
+		explicit UpperFrontInXDirection(SPHBody* body);
 		virtual ~UpperFrontInXDirection() {};
+	protected:
+		StdLargeVec<Vecd>& pos_n_;
+		Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 	};
 
 	/**
 	 * @class MaximumSpeed
 	 * @brief Get the maximum particle speed in a SPH body
 	 */
-	class MaximumSpeed : public ParticleDynamicsReduce<Real, ReduceMax, SPHBody>
+	class MaximumSpeed : 
+		public ParticleDynamicsReduce<Real, ReduceMax>, 
+		public GeneralDataDelegateSimple
 	{
-	protected:
-		Real ReduceFunction(size_t index_particle_i, Real dt = 0.0) override;
 	public:
-		explicit MaximumSpeed(SPHBody* body) : ParticleDynamicsReduce(body) {
-			initial_reference_ = 0.0;
-		};
+		explicit MaximumSpeed(SPHBody* body);
 		virtual ~MaximumSpeed() {};
+	protected:
+		StdLargeVec<Vecd>& vel_n_;
+		Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 	};
 
 	/**
 	* @class BodyLowerBound
-	* @brief the lower bound of a body by reuced particle poistions.
+	* @brief the lower bound of a body by reduced particle positions.
 	*/
-	class BodyLowerBound : public  ParticleDynamicsReduce<Vecd, ReduceLowerBound, SPHBody>
+	class BodyLowerBound : 
+		public  ParticleDynamicsReduce<Vecd, ReduceLowerBound>,
+		public GeneralDataDelegateSimple
 	{
-	protected:
-		Vecd ReduceFunction(size_t index_particle_i, Real dt = 0.0) override;
 	public:
-		explicit BodyLowerBound(SPHBody* body)
-			: ParticleDynamicsReduce<Vecd, ReduceLowerBound, SPHBody>(body) {
-			constexpr  double max_real_number = (std::numeric_limits<double>::max)();
-			initial_reference_ = Vecd(max_real_number);
-		};
+		explicit BodyLowerBound(SPHBody* body);
 		virtual ~BodyLowerBound() {};
+	protected:
+		StdLargeVec<Vecd>& pos_n_;
+		Vecd ReduceFunction(size_t index_i, Real dt = 0.0) override;
 	};
 
 	/**
 	 * @class BodyUpperBound
-	 * @brief the upper bound of a body by reuced particle poistions.
+	 * @brief the upper bound of a body by reduced particle positions.
 	 */
-	class BodyUpperBound : public  ParticleDynamicsReduce<Vecd, ReduceUpperBound, SPHBody>
+	class BodyUpperBound : 
+		public  ParticleDynamicsReduce<Vecd, ReduceUpperBound>,
+		public GeneralDataDelegateSimple
 	{
-	protected:
-		Vecd ReduceFunction(size_t index_particle_i, Real dt = 0.0) override;
 	public:
-		explicit BodyUpperBound(SPHBody* body)
-			: ParticleDynamicsReduce<Vecd, ReduceUpperBound, SPHBody>(body) {
-			constexpr  double min_real_number = (std::numeric_limits<double>::min)();
-			initial_reference_ = Vecd(min_real_number);
-		};
+		explicit BodyUpperBound(SPHBody* body);
 		virtual ~BodyUpperBound() {};
+	protected:
+		StdLargeVec<Vecd>& pos_n_;
+		Vecd ReduceFunction(size_t index_i, Real dt = 0.0) override;
 	};
 }

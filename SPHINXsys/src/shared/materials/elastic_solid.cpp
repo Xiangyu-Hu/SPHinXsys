@@ -241,7 +241,7 @@ namespace SPH {
 	Matd ActiveMuscle::ConstitutiveRelation(Matd& F, size_t i)
 	{
 		Matd passive_stress = muscle_.ConstitutiveRelation(F, i);
-		return passive_stress + active_muscle_particles_->getActiveContractionStress(i) 
+		return passive_stress + active_muscle_particles_->active_contraction_stress_[i]
 							  * F * muscle_.getMuscleFiber(i);
 	}
 	//=================================================================================================//

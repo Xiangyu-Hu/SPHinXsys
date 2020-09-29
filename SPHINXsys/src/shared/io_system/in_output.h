@@ -49,6 +49,12 @@ namespace fs = std::experimental::filesystem;
 #endif
 
 namespace SPH {
+
+	/**
+	 * @brief preclaimed classes.
+	 */
+	class BaseLevelSet;
+
 	/**
 	 * @class In_Output
 	 * @brief The base class which defines folders for output, 
@@ -79,9 +85,9 @@ namespace SPH {
 		SPHBodyVector bodies_;
 	public:
 		BodyStatesIO(In_Output &in_output, SPHBody *body)
-			: in_output_(in_output), body_(body) {};
+			: in_output_(in_output), body_(body), bodies_({body}) {};
 		BodyStatesIO(In_Output& in_output, SPHBodyVector bodies)
-			: in_output_(in_output), bodies_(bodies), body_(bodies[0]) {};
+			: in_output_(in_output), body_(bodies[0]), bodies_(bodies) {};
 		virtual ~BodyStatesIO() {};
 	};
 
@@ -216,16 +222,17 @@ namespace SPH {
 	};
 
 	/**
-	 * @class WriteBodyMeshToPlt
+	 * @class WriteLevelSetToPlt
 	 * @brief  write the background mesh data for relax body
 	 */
-	class WriteBodyMeshToPlt : public WriteBodyStates
+	class WriteLevelSetToPlt : public WriteBodyStates
 	{
 	protected:
 		std::string filefullpath_;
+		BaseLevelSet* level_set_;
 	public:
-		WriteBodyMeshToPlt(In_Output& in_output, SPHBody *body);
-		virtual ~WriteBodyMeshToPlt() {};
+		WriteLevelSetToPlt(In_Output& in_output, SPHBody* body, BaseLevelSet* level_set);
+		virtual ~WriteLevelSetToPlt() {};
 
 		virtual void WriteToFile(Real time = 0.0) override;
 	};
@@ -234,10 +241,10 @@ namespace SPH {
 	 * @class WriteAnObservedQuantity
 	 * @brief write files for observed quantity
 	 */
-	template <class DataType, class TargetParticlesType, class TargetDataType,
-		StdLargeVec<TargetDataType> TargetParticlesType:: * TrgtDataMemPtr, DataType TargetDataType:: * TrgtMemPtr>
+	template <class DataType, class TargetParticlesType, 
+		StdLargeVec<DataType> TargetParticlesType:: * TrgtMemPtr>
 	class WriteAnObservedQuantity : public WriteBodyStates,
-		public observer_dynamics::ObservingAQuantity<DataType, TargetParticlesType, TargetDataType, TrgtDataMemPtr, TrgtMemPtr>
+		public observer_dynamics::ObservingAQuantity<DataType, TargetParticlesType, TrgtMemPtr>
 	{
 	protected:
 		SPHBody* observer_;
@@ -261,8 +268,9 @@ namespace SPH {
 
 	public:
 		WriteAnObservedQuantity(string quantity_name, In_Output& in_output, SPHBodyContactRelation* body_contact_relation)
-			: WriteBodyStates(in_output, body_contact_relation->body_), observer_(body_contact_relation->body_),
-			observer_dynamics::ObservingAQuantity<DataType, TargetParticlesType, TargetDataType, TrgtDataMemPtr, TrgtMemPtr>(body_contact_relation)
+			: WriteBodyStates(in_output, body_contact_relation->sph_body_), 
+			observer_dynamics::ObservingAQuantity<DataType, TargetParticlesType, TrgtMemPtr>(body_contact_relation),
+			observer_(body_contact_relation->sph_body_)
 		{
 			filefullpath_ = in_output_.output_folder_ + "/" + observer_->GetBodyName()
 				+ "_" + quantity_name + "_" + in_output_.restart_step_ + ".dat";
@@ -306,8 +314,9 @@ namespace SPH {
 	public:
 		/** Constructor and Destructor. */
 		WriteObservedDiffusionReactionQuantity(string species_name, In_Output& in_output, SPHBodyContactRelation* body_contact_relation)
-			: WriteBodyStates(in_output, body_contact_relation->body_), observer_(body_contact_relation->body_),
-			observer_dynamics::ObservingADiffusionReactionQuantity<DiffusionReactionParticlesType>(species_name, body_contact_relation)
+			: WriteBodyStates(in_output, body_contact_relation->sph_body_),
+			observer_dynamics::ObservingADiffusionReactionQuantity<DiffusionReactionParticlesType>(species_name, body_contact_relation),
+			observer_(body_contact_relation->sph_body_)
 		{
 			filefullpath_ = in_output_.output_folder_ + "/" + observer_->GetBodyName()
 				+ "_" + species_name + "_" + in_output_.restart_step_ + ".dat";
@@ -377,7 +386,7 @@ namespace SPH {
 		: public WriteBodyStates, public solid_dynamics::TotalViscousForceOnSolid
 	{
 	protected:
-		size_t dimension_;
+		int dimension_;
 		std::string filefullpath_;
 	public:
 		WriteTotalViscousForceOnSolid(In_Output& in_output, SolidBody *solid_body);
@@ -393,7 +402,7 @@ namespace SPH {
 		: public WriteBodyStates, public solid_dynamics::TotalForceOnSolid
 	{
 	protected:
-		size_t dimension_;
+		int dimension_;
 		std::string filefullpath_;
 	public:
 		WriteTotalForceOnSolid(In_Output& in_output, SolidBody *solid_body);

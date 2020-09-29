@@ -2,9 +2,9 @@
 
 ## To do list
 
-1. revise class members by checking Doxgen document
-2. Niklas Aufenanger's case goes strange (bubbles at the wall boundary) when resolution is very high.
-3. body update state
+1. it seems that there is a bug for reading stl file (the file name issue?) when using debug mode in windows 
+2. It seems that the memory pool is only working for sequential run. So, i have used mutex when allocate memory
+3. Consider initializing solid normal direction input geometry directly.
 4. closest point on surface for 3d geometries with binary operations
 5. direction graph for linear shapes in a SPH body
 6. xml memory leaking (tried second time. Failed. Erasing XML elements will not decrease the memory usage.)
@@ -13,6 +13,8 @@
 9. using more meaningful names for class members, so that I do not need extra comments
 10. resolving the compiling warnings for the order of class member initialization
 11. lower- and upper bounds can be represented by a pair
+12. naming issues: used base (like base_particles_) in name when it really means, if overriding is expected, do not use base (like particles_)
+13. clarify the body shape bound, body domain bound and its usages
 
 ## General principles on reviewing the code
 

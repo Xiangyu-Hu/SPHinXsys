@@ -7,479 +7,497 @@
 #include "solid_dynamics.h"
 
 using namespace SimTK;
-//=================================================================================================//
+
 namespace SPH
 {
-	//=================================================================================================//
 	namespace solid_dynamics
 	{
 		//=================================================================================================//
-		void NormalDirectionSummation::ComplexInteraction(size_t index_particle_i, Real dt)
+		NormalDirectionSummation::
+			NormalDirectionSummation(SPHBodyComplexRelation* body_complex_relation) :
+			ParticleDynamicsComplex(body_complex_relation),
+			SolidDataDelegateComplex(body_complex_relation),
+			n_(particles_->n_), n_0_(particles_->n_0_) {}
+		//=================================================================================================//
+		void NormalDirectionSummation::ComplexInteraction(size_t index_i, Real dt)
 		{
-			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-
 			Vecd gradient(0.0);
-			Neighborhood& inner_neighborhood = inner_configuration_[index_particle_i];
-			CommonRelationList& inner_common_relations = inner_neighborhood.common_relation_list_;
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
-				gradient += inner_common_relations[n].dW_ij_ * inner_common_relations[n].e_ij_;
+				gradient += inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
 			}
 
 			/** Contact interaction. */
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				Neighborhood& contact_neighborhood = contact_configuration_[k][index_particle_i];
-				CommonRelationList& contact_common_relations = contact_neighborhood.common_relation_list_;
+				Neighborhood& contact_neighborhood = contact_configuration_[k][index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					gradient += contact_common_relations[n].dW_ij_ * contact_common_relations[n].e_ij_;
+					gradient += contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n];
 				}
 			}
 
-			solid_data_i.n_0_ = - gradient / (gradient.norm() + Eps);;
-			solid_data_i.n_ = solid_data_i.n_0_;
+			n_0_[index_i] = -gradient / (gradient.norm() + Eps);
+			n_[index_i] = n_0_[index_i];
 		}
 		//=================================================================================================//
-		void NormalDirectionReNormalization::ComplexInteraction(size_t index_particle_i, Real dt)
+		NormalDirectionReNormalization::
+			NormalDirectionReNormalization(SPHBodyComplexRelation* body_complex_relation)
+			: NormalDirectionSummation(body_complex_relation),
+			Vol_0_(particles_->Vol_0_)
 		{
-			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-
+			for (size_t k = 0; k != contact_particles_.size(); ++k)
+				contact_Vol_0_.push_back(&(contact_particles_[k]->Vol_0_));
+		}
+		//=================================================================================================//
+		void NormalDirectionReNormalization::ComplexInteraction(size_t index_i, Real dt)
+		{
 			Matd local_configuration(0.0);
 			Vecd gradient(0.0);
 
-			Neighborhood& inner_neighborhood = inner_configuration_[index_particle_i];
-			CommonRelationList& inner_common_relations = inner_neighborhood.common_relation_list_;
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
-				CommonRelation& common_relation = inner_common_relations[n];
-				size_t index_particle_j = common_relation.j_;
-				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
+				size_t index_j = inner_neighborhood.j_[n];
 
-				Vecd gradw_ij = common_relation.dW_ij_ * common_relation.e_ij_;
-				Vecd r_ij = -common_relation.r_ij_ * common_relation.e_ij_;
-				local_configuration += base_particle_data_j.Vol_0_ * SimTK::outer(r_ij, gradw_ij);
-				gradient += gradw_ij * base_particle_data_j.Vol_0_;
+				Vecd gradw_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
+				Vecd r_ij = -inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
+				local_configuration += Vol_0_[index_j] * SimTK::outer(r_ij, gradw_ij);
+				gradient += gradw_ij * Vol_0_[index_j];
 			}
 
 			/** Contact interaction. */
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				Neighborhood& contact_neighborhood = contact_configuration_[k][index_particle_i];
-				CommonRelationList& contact_common_relations = contact_neighborhood.common_relation_list_;
+				StdLargeVec<Real>& Vol_0_k = *(contact_Vol_0_[k]);
+				Neighborhood& contact_neighborhood = contact_configuration_[k][index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					CommonRelation& common_relation = contact_common_relations[n];
-					size_t index_particle_j = common_relation.j_;
-					BaseParticleData& base_particle_data_j
-						= contact_particles_[k]->base_particle_data_[index_particle_j];
-
-					Vecd gradw_ij = common_relation.dW_ij_ * common_relation.e_ij_;
-					Vecd r_ij = -common_relation.r_ij_ * common_relation.e_ij_;
-					local_configuration += base_particle_data_j.Vol_0_ * SimTK::outer(r_ij, gradw_ij);
-					gradient += gradw_ij * base_particle_data_j.Vol_0_;
+					size_t index_j = contact_neighborhood.j_[n];
+					Vecd gradw_ij = contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n];
+					Vecd r_ij = -contact_neighborhood.r_ij_[n] * contact_neighborhood.e_ij_[n];
+					local_configuration += Vol_0_k[index_j] * SimTK::outer(r_ij, gradw_ij);
+					gradient += gradw_ij * Vol_0_k[index_j];
 				}
 			}
 
 			Matd correction_matrix = inverse(local_configuration);
 			Vecd n_temp_ = ~correction_matrix * gradient;
-			if (n_temp_.norm() <= 0.75)	{
-				solid_data_i.n_0_ = Vecd(0.0);
+			if (n_temp_.norm() <= 0.75) {
+				n_0_[index_i] = Vecd(0.0);
 			}
 			else {
-				solid_data_i.n_0_ = -n_temp_ / (n_temp_.norm() + Eps);
+				n_0_[index_i] = -n_temp_ / (n_temp_.norm() + Eps);
 			}
-			solid_data_i.n_ = solid_data_i.n_0_;
+			n_[index_i] = n_0_[index_i];
 		}
 		//=================================================================================================//
-		void InitializeDisplacement::Update(size_t index_particle_i, Real dt)
+		ElasticSolidDynamicsInitialCondition::
+			ElasticSolidDynamicsInitialCondition(SolidBody* body) :
+			ParticleDynamicsSimple(body),
+			ElasticSolidDataDelegateSimple(body),
+			pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_)
 		{
-			BaseParticleData &base_particle_data_i
-				= particles_->base_particle_data_[index_particle_i];
-			ElasticSolidParticleData &elastic_data_i
-				= particles_->elastic_body_data_[index_particle_i];
+		}
+		//=================================================================================================//
+		UpdateElasticNormalDirection::
+			UpdateElasticNormalDirection(SolidBody* elastic_body) :
+			ParticleDynamicsSimple(elastic_body),
+			ElasticSolidDataDelegateSimple(elastic_body),
+			n_(particles_->n_), n_0_(particles_->n_0_), F_(particles_->F_)
+		{
+		}
+		//=================================================================================================//
+		InitializeDisplacement::
+			InitializeDisplacement(SolidBody* body, StdLargeVec<Vecd>& pos_temp) :
+			ParticleDynamicsSimple(body), ElasticSolidDataDelegateSimple(body),
+			pos_temp_(pos_temp), pos_n_(particles_->pos_n_),
+			vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_)
+		{
+		}
+		//=================================================================================================//
+		void InitializeDisplacement::Update(size_t index_i, Real dt)
+		{
+			pos_temp_[index_i] = pos_n_[index_i];
+		}
+		//=================================================================================================//
+		void UpdateAverageVelocityAndAcceleration::Update(size_t index_i, Real dt)
+		{
+			Vecd updated_vel_ave = (pos_n_[index_i] - pos_temp_[index_i]) / (dt + TinyReal);
+			dvel_dt_ave_[index_i] = (updated_vel_ave - vel_ave_[index_i]) / (dt + TinyReal);
+			vel_ave_[index_i] = updated_vel_ave;
+		}
+		//=================================================================================================//
+		AverageVelocityAndAcceleration::
+			AverageVelocityAndAcceleration(SolidBody* body) :
+			initialize_displacement_(body, pos_temp_),
+			update_averages_(body, pos_temp_)
+		{
+			BaseParticles* base_particles = body->base_particles_;
+			//register particle varibales defined in this class
+			base_particles->registerAVariable(pos_temp_, base_particles->registered_vectors_,
+				base_particles->vectors_map_, base_particles->vectors_to_write_, "TemporaryPosition", false);
+		}
+		//=================================================================================================//
+		FluidViscousForceOnSolid::
+			FluidViscousForceOnSolid(SPHBodyContactRelation* body_contact_relation) :
+			ParticleDynamicsContact(body_contact_relation),
+			FSIDataDelegateContact(body_contact_relation),
+			Vol_(particles_->Vol_), vel_ave_(particles_->vel_ave_),
+			viscous_force_from_fluid_(particles_->viscous_force_from_fluid_)
+		{
+			for (size_t k = 0; k != contact_particles_.size(); ++k)
+			{
+				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+				contact_rho_n_.push_back(&(contact_particles_[k]->rho_n_));
+				contact_vel_n_.push_back(&(contact_particles_[k]->vel_n_));
+			}
 
-			elastic_data_i.pos_temp_ = base_particle_data_i.pos_n_;
+			//more work should be done for more general cases with multiple resolutions
+			//and for fluids with different viscosities
+			mu_ = contact_material_[0]->ReferenceViscosity();
+			/** the smoothing length should be discuss more. */
+			smoothing_length_ = powern(2.0, body_->refinement_level_) * body_->kernel_->GetSmoothingLength();
 		}
 		//=================================================================================================//
-		void UpdateAverageVelocity::Update(size_t index_particle_i, Real dt)
+		void FluidViscousForceOnSolid::ContactInteraction(size_t index_i, Real dt)
 		{
-			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
-
-			solid_data_i.vel_ave_ = (base_particle_data_i.pos_n_ - elastic_data_i.pos_temp_) / (dt + TinyReal);
-		}
-		//=================================================================================================//
-		void FluidViscousForceOnSolid::ContactInteraction(size_t index_particle_i, Real dt)
-		{
-			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-			solid_data_i.viscous_force_from_fluid_ = Vecd(0);
+			Real Vol_i = Vol_[index_i];
+			Vecd& vel_ave_i = vel_ave_[index_i];
 
 			Vecd force(0);
 			/** Contact interaction. */
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				Neighborhood& contact_neighborhood = contact_configuration_[k][index_particle_i];
-				CommonRelationList& contact_common_relations = contact_neighborhood.common_relation_list_;
+				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+				StdLargeVec<Vecd>& vel_n_k = *(contact_vel_n_[k]);
+				Neighborhood& contact_neighborhood = contact_configuration_[k][index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					CommonRelation& common_relation = contact_common_relations[n];
-					size_t index_particle_j = common_relation.j_;
-					BaseParticleData& base_particle_data_j
-						= contact_particles_[k]->base_particle_data_[index_particle_j];
-					FluidParticleData& fluid_data_j = contact_particles_[k]->fluid_particle_data_[index_particle_j];
+					size_t index_j = contact_neighborhood.j_[n];
 
 					//froce due to viscousity
 					//viscous force with a simple wall model for high-Reynolds number flow
-					Vecd vel_detivative = 2.0 * (solid_data_i.vel_ave_ - base_particle_data_j.vel_n_)
-						/ (common_relation.r_ij_ + 0.01 * smoothing_length_);
-					Real vel_difference = 0.0 * (solid_data_i.vel_ave_ - base_particle_data_j.vel_n_).norm()
-						* common_relation.r_ij_;
+					Vecd vel_detivative = 2.0 * (vel_ave_i - vel_n_k[index_j])
+						/ (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
 
-					force += 2.0 * SMAX(mu_, fluid_data_j.rho_n_ * vel_difference)
-						* vel_detivative * base_particle_data_i.Vol_ * base_particle_data_j.Vol_
-						* common_relation.dW_ij_;
+					force += 2.0 * mu_ * vel_detivative * Vol_i * Vol_k[index_j]
+						   * contact_neighborhood.dW_ij_[n];
 				}
 			}
 
-			solid_data_i.viscous_force_from_fluid_ += force;
+			viscous_force_from_fluid_[index_i] = force;
 		}
 		//=================================================================================================//
-		void FluidAngularConservativeViscousForceOnSolid::ContactInteraction(size_t index_particle_i, Real dt)
+		void FluidAngularConservativeViscousForceOnSolid::ContactInteraction(size_t index_i, Real dt)
 		{
-			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-			solid_data_i.viscous_force_from_fluid_ = Vecd(0);
+			Real Vol_i = Vol_[index_i];
+			Vecd& vel_ave_i = vel_ave_[index_i];
 
 			Vecd force(0);
 			/** Contact interaction. */
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				Neighborhood& contact_neighborhood = contact_configuration_[k][index_particle_i];
-				CommonRelationList& contact_common_relations = contact_neighborhood.common_relation_list_;
+				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+				StdLargeVec<Real>& rho_n_k = *(contact_rho_n_[k]);
+				StdLargeVec<Vecd>& vel_n_k = *(contact_vel_n_[k]);
+				Neighborhood& contact_neighborhood = contact_configuration_[k][index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					CommonRelation& common_relation = contact_common_relations[n];
-					size_t index_particle_j = common_relation.j_;
-					BaseParticleData& base_particle_data_j
-						= contact_particles_[k]->base_particle_data_[index_particle_j];
-					FluidParticleData& fluid_data_j = contact_particles_[k]->fluid_particle_data_[index_particle_j];
+					size_t index_j = contact_neighborhood.j_[n];
 
 					/** The following viscous force is given in Monaghan 2005 (Rep. Prog. Phys.), it seems that
 					 * is formulation is more accurate thant the previsou one for Taygree-Vortex flow. */
-					Real v_r_ij = dot(solid_data_i.vel_ave_ - base_particle_data_j.vel_n_,
-						common_relation.r_ij_ * common_relation.e_ij_);
-					Real vel_difference = 0.0 * (solid_data_i.vel_ave_ - base_particle_data_j.vel_n_).norm()
-						* common_relation.r_ij_;
-					Real eta_ij = 8.0 * SMAX(mu_, fluid_data_j.rho_n_ * vel_difference) * v_r_ij /
-						(common_relation.r_ij_ * common_relation.r_ij_ + 0.01 * smoothing_length_);
-					force += eta_ij * base_particle_data_i.Vol_ * base_particle_data_j.Vol_
-						* common_relation.dW_ij_ * common_relation.e_ij_;
+					Real v_r_ij = dot(vel_ave_i - vel_n_k[index_j],
+						contact_neighborhood.r_ij_[n] * contact_neighborhood.e_ij_[n]);
+					Real vel_difference = 0.0 * (vel_ave_i - vel_n_k[index_j]).norm()
+						* contact_neighborhood.r_ij_[n];
+					Real eta_ij = 8.0 * SMAX(mu_, rho_n_k[index_j] * vel_difference) * v_r_ij /
+						(contact_neighborhood.r_ij_[n] * contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
+					force += eta_ij * Vol_i * Vol_k[index_j]
+						* contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n];
 				}
 			}
 
-			solid_data_i.viscous_force_from_fluid_ += force;
+			viscous_force_from_fluid_[index_i] = force;
+		}
+		//=================================================================================================//
+		FluidPressureForceOnSolid::
+			FluidPressureForceOnSolid(SPHBodyContactRelation* body_contact_relation) :
+			FluidViscousForceOnSolid(body_contact_relation),
+			force_from_fluid_(particles_->force_from_fluid_),
+			dvel_dt_ave_(particles_->dvel_dt_ave_)
+		{
+			for (size_t k = 0; k != contact_particles_.size(); ++k)
+			{
+				contact_p_.push_back(&(contact_particles_[k]->p_));
+				contact_dvel_dt_others_.push_back(&(contact_particles_[k]->dvel_dt_others_));
+			}
+
+		}
+		//=================================================================================================//
+		void FluidPressureForceOnSolid::ContactInteraction(size_t index_i, Real dt)
+		{
+			force_from_fluid_[index_i] = viscous_force_from_fluid_[index_i];
+			Vecd& dvel_dt_ave_i = dvel_dt_ave_[index_i];
+			Real Vol_i = Vol_[index_i];
+			Vecd& vel_ave_i = vel_ave_[index_i];
+
+			Vecd force(0);
+			/** Contact interaction. */
+			for (size_t k = 0; k < contact_configuration_.size(); ++k)
+			{
+				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+				StdLargeVec<Real>& rho_n_k = *(contact_rho_n_[k]);
+				StdLargeVec<Real>& p_k = *(contact_p_[k]);
+				StdLargeVec<Vecd>& vel_n_k = *(contact_vel_n_[k]);
+				StdLargeVec<Vecd>& dvel_dt_others_k = *(contact_dvel_dt_others_[k]);
+				Fluid* fluid_k = contact_material_[k];
+				Neighborhood& contact_neighborhood = contact_configuration_[k][index_i];
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = contact_neighborhood.j_[n];
+					Vecd e_ij = contact_neighborhood.e_ij_[n];
+					Real r_ij = contact_neighborhood.r_ij_[n];
+					Real face_wall_external_acceleration
+						= dot((dvel_dt_others_k[index_j] - dvel_dt_ave_i), e_ij);
+					Real p_in_wall = p_k[index_j] + rho_n_k[index_j] * r_ij * SMAX(0.0, face_wall_external_acceleration);
+					Real rho_in_wall = fluid_k->DensityFromPressure(p_in_wall);
+
+					//solving Riemann problem
+					Real p_star = fluid_k->RiemannSolverForPressure(rho_n_k[index_j], rho_in_wall, p_k[index_j], p_in_wall,
+						dot(e_ij, vel_n_k[index_j]), dot(e_ij, vel_ave_i));;
+
+					//force due to pressure
+					force -= 2.0 * p_star * e_ij * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+				}
+			}
+
+			force_from_fluid_[index_i] += force;
 		}
 		//=================================================================================================//
 		TotalViscousForceOnSolid
-			::TotalViscousForceOnSolid(SolidBody *body) : SolidDynamicsSum<Vecd>(body)
+			::TotalViscousForceOnSolid(SolidBody* body) :
+			ParticleDynamicsReduce<Vecd, ReduceSum<Vecd>>(body),
+			SolidDataDelegateSimple(body),
+			viscous_force_from_fluid_(particles_->viscous_force_from_fluid_)
 		{
 			initial_reference_ = Vecd(0);
 		}
 		//=================================================================================================//
-		Vecd TotalViscousForceOnSolid::ReduceFunction(size_t index_particle_i, Real dt)
+		Vecd TotalViscousForceOnSolid::ReduceFunction(size_t index_i, Real dt)
 		{
-			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-
-			return solid_data_i.viscous_force_from_fluid_;
+			return viscous_force_from_fluid_[index_i];
 		}
 		//=================================================================================================//
-		Vecd TotalForceOnSolid::ReduceFunction(size_t index_particle_i, Real dt)
+		TotalForceOnSolid::TotalForceOnSolid(SolidBody* body) :
+			ParticleDynamicsReduce<Vecd, ReduceSum<Vecd>>(body),
+			SolidDataDelegateSimple(body),
+			force_from_fluid_(particles_->force_from_fluid_)
 		{
-			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-
-			return solid_data_i.force_from_fluid_;
+			initial_reference_ = Vecd(0);
 		}
 		//=================================================================================================//
-		void FluidPressureForceOnSolid::ContactInteraction(size_t index_particle_i, Real dt)
+		Vecd TotalForceOnSolid::ReduceFunction(size_t index_i, Real dt)
 		{
-			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-			solid_data_i.force_from_fluid_ = solid_data_i.viscous_force_from_fluid_;
-
-			Vecd force(0);
-			/** Contact interaction. */
-			for (size_t k = 0; k < contact_configuration_.size(); ++k)
-			{
-				Neighborhood& contact_neighborhood = contact_configuration_[k][index_particle_i];
-				CommonRelationList& contact_common_relations = contact_neighborhood.common_relation_list_;
-				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-				{
-					CommonRelation& common_relation = contact_common_relations[n];
-					size_t index_particle_j = common_relation.j_;
-					BaseParticleData& base_particle_data_j
-						= contact_particles_[k]->base_particle_data_[index_particle_j];
-					FluidParticleData& fluid_data_j = contact_particles_[k]->fluid_particle_data_[index_particle_j];
-
-					Vecd e_ij = common_relation.e_ij_;
-					Real face_wall_external_acceleration
-						= dot((base_particle_data_j.dvel_dt_others_ - solid_data_i.dvel_dt_ave_), e_ij);
-					Real p_star = fluid_data_j.p_ + 0.5 * fluid_data_j.rho_n_
-						* common_relation.r_ij_ * SMAX(0.0, face_wall_external_acceleration);
-
-					//force due to pressure
-					force -= 2.0 * p_star * e_ij 
-								 * base_particle_data_i.Vol_ * base_particle_data_j.Vol_ * common_relation.dW_ij_;
-				}
-			}
-			
-			solid_data_i.force_from_fluid_ += force;
+			return force_from_fluid_[index_i];
 		}
 		//=================================================================================================//
-		GetAcousticTimeStepSize::GetAcousticTimeStepSize(SolidBody* body)
-			: ElasticSolidDynamicsMinimum(body)
+		AcousticTimeStepSize::AcousticTimeStepSize(SolidBody* body) :
+			ParticleDynamicsReduce<Real, ReduceMin>(body),
+			ElasticSolidDataDelegateSimple(body),
+			vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_)
 		{
 			smoothing_length_ = body->kernel_->GetSmoothingLength();
 			initial_reference_ = DBL_MAX;
 		}
 		//=================================================================================================//
-		Real GetAcousticTimeStepSize::ReduceFunction(size_t index_particle_i, Real dt)
+		Real AcousticTimeStepSize::ReduceFunction(size_t index_i, Real dt)
 		{
-			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
-
 			//since the particle does not change its configuration in pressure relaxation step
 			//I chose a time-step size according to Eulerian method
-			Real sound_speed = material_->getReferenceSoundSpeed();
-			return 0.6 * SMIN(sqrt(smoothing_length_ / (base_particle_data_i.dvel_dt_.norm() + TinyReal)),
-				smoothing_length_ / (sound_speed + base_particle_data_i.vel_n_.norm()));
+			Real sound_speed = material_->ReferenceSoundSpeed();
+			return 0.6 * SMIN(sqrt(smoothing_length_ / (dvel_dt_[index_i].norm() + TinyReal)),
+				smoothing_length_ / (sound_speed + vel_n_[index_i].norm()));
 		}
 		//=================================================================================================//
-		void CorrectConfiguration::InnerInteraction(size_t index_particle_i, Real dt)
+		CorrectConfiguration::
+			CorrectConfiguration(SPHBodyInnerRelation* body_inner_relation) :
+			ParticleDynamicsInner(body_inner_relation),
+			SolidDataDelegateInner(body_inner_relation),
+			Vol_0_(particles_->Vol_0_), B_(particles_->B_)
 		{
-			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-
+		}
+		//=================================================================================================//
+		void CorrectConfiguration::InnerInteraction(size_t index_i, Real dt)
+		{
 			/** a small number added to diagnal to avoid divide zero */
 			Matd local_configuration(Eps);
-			Neighborhood& inner_neighborhood = inner_configuration_[index_particle_i];
-			CommonRelationList& inner_common_relations = inner_neighborhood.common_relation_list_;
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
-				CommonRelation& common_relation = inner_common_relations[n];
-				size_t index_particle_j = common_relation.j_;
-				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
+				size_t index_j = inner_neighborhood.j_[n];
 
-				Vecd gradw_ij = common_relation.dW_ij_ * common_relation.e_ij_;
-				Vecd r_ji = - common_relation.r_ij_ * common_relation.e_ij_;
-				local_configuration += base_particle_data_j.Vol_0_ * SimTK::outer(r_ji, gradw_ij);
+				Vecd gradw_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
+				Vecd r_ji = -inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
+				local_configuration += Vol_0_[index_j] * SimTK::outer(r_ji, gradw_ij);
 			}
 			/** note that I have changed to use stadrad linear solver here*/
-			solid_data_i.B_ = SimTK::inverse(local_configuration);
+			B_[index_i] = SimTK::inverse(local_configuration);
 		}
 		//=================================================================================================//
-		void DeformationGradientTensorBySummation::InnerInteraction(size_t index_particle_i, Real dt)
+		DeformationGradientTensorBySummation::
+			DeformationGradientTensorBySummation(SPHBodyInnerRelation* body_inner_relation) :
+			ParticleDynamicsInner(body_inner_relation),
+			ElasticSolidDataDelegateInner(body_inner_relation),
+			Vol_0_(particles_->Vol_0_), pos_n_(particles_->pos_n_),
+			B_(particles_->B_), F_(particles_->F_)
 		{
-			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
+		}
+		//=================================================================================================//
+		void DeformationGradientTensorBySummation::InnerInteraction(size_t index_i, Real dt)
+		{
+			Vecd& pos_n_i = pos_n_[index_i];
 
 			Matd deformation(0.0);
-			Neighborhood& inner_neighborhood = inner_configuration_[index_particle_i];
-			CommonRelationList& inner_common_relations = inner_neighborhood.common_relation_list_;
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
-				CommonRelation& common_relation = inner_common_relations[n];
-				size_t index_particle_j = common_relation.j_;
-				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
+				size_t index_j = inner_neighborhood.j_[n];
 
-				Vecd gradw_ij = common_relation.dW_ij_ * common_relation.e_ij_;
-				deformation -= base_particle_data_j.Vol_0_
-					*SimTK::outer((base_particle_data_i.pos_n_ - base_particle_data_j.pos_n_), gradw_ij);
+				Vecd gradw_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
+				deformation -= Vol_0_[index_j] * SimTK::outer((pos_n_i - pos_n_[index_j]), gradw_ij);
 			}
 
-			elastic_data_i.F_ = deformation * solid_data_i.B_;
+			F_[index_i] = deformation * B_[index_i];
 		}
 		//=================================================================================================//
-		void StressRelaxationFirstHalf::Initialization(size_t index_particle_i, Real dt)
+		StressRelaxationFirstHalf::
+			StressRelaxationFirstHalf(SPHBodyInnerRelation* body_inner_relation) :
+			ParticleDynamicsInner1Level(body_inner_relation),
+			ElasticSolidDataDelegateInner(body_inner_relation), Vol_0_(particles_->Vol_0_),
+			rho_n_(particles_->rho_n_), rho_0_(particles_->rho_0_), mass_(particles_->mass_),
+			pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
+			dvel_dt_others_(particles_->dvel_dt_others_), force_from_fluid_(particles_->force_from_fluid_),
+			B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_),
+			stress_(particles_->stress_)
 		{
-			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
-
-			elastic_data_i.F_ += elastic_data_i.dF_dt_*dt * 0.5;
-			solid_data_i.rho_n_ = solid_data_i.rho_0_ / det(elastic_data_i.F_);
-			base_particle_data_i.Vol_ = solid_data_i.mass_ / solid_data_i.rho_n_;
-			elastic_data_i.stress_ = material_->ConstitutiveRelation(elastic_data_i.F_, index_particle_i)
-				+ material_->NumericalDampingStress(elastic_data_i.F_, elastic_data_i.dF_dt_, numerical_viscosity_, index_particle_i);
-			base_particle_data_i.pos_n_ += base_particle_data_i.vel_n_*dt * 0.5;
+			numerical_viscosity_
+				= material_->getNumericalViscosity(body_->kernel_->GetSmoothingLength());
+		}
+		//=================================================================================================//
+		void StressRelaxationFirstHalf::Initialization(size_t index_i, Real dt)
+		{
+			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
+			rho_n_[index_i] = rho_0_[index_i] / det(F_[index_i]);
+			stress_[index_i] = material_->ConstitutiveRelation(F_[index_i], index_i)
+				+ material_->NumericalDampingStress(F_[index_i], dF_dt_[index_i], numerical_viscosity_, index_i);
+			pos_n_[index_i] += vel_n_[index_i] * dt * 0.5;
 
 		}
 		//=================================================================================================//
-		void StressRelaxationFirstHalf::InnerInteraction(size_t index_particle_i, Real dt)
+		void StressRelaxationFirstHalf::InnerInteraction(size_t index_i, Real dt)
 		{
-			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
+			Real rho_0_i = rho_0_[index_i];
+			Matd& stress_i = stress_[index_i];
+			Matd& B_i = B_[index_i];
 
 			//including gravity and force from fluid
-			Vecd acceleration = base_particle_data_i.dvel_dt_others_ 
-				+ solid_data_i.force_from_fluid_/ solid_data_i.mass_;
-
-			Neighborhood& inner_neighborhood = inner_configuration_[index_particle_i];
-			CommonRelationList& inner_common_relations = inner_neighborhood.common_relation_list_;
+			Vecd acceleration = dvel_dt_others_[index_i]
+				+ force_from_fluid_[index_i] / mass_[index_i];
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
-				CommonRelation& common_relation = inner_common_relations[n];
-				size_t index_particle_j = common_relation.j_;
-				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
-				SolidParticleData &solid_data_j = particles_->solid_body_data_[index_particle_j];
-				ElasticSolidParticleData &elastic_data_j = particles_->elastic_body_data_[index_particle_j];
+				size_t index_j = inner_neighborhood.j_[n];
 
-				acceleration += (elastic_data_i.stress_ *solid_data_i.B_
-					+ elastic_data_j.stress_*solid_data_j.B_)
-					* common_relation.dW_ij_ * common_relation.e_ij_
-					* base_particle_data_j.Vol_0_ / solid_data_i.rho_0_;
+				acceleration += (stress_i * B_i + stress_[index_j] * B_[index_j])
+					* inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n] * Vol_0_[index_j] / rho_0_i;
 			}
-			base_particle_data_i.dvel_dt_ = acceleration;
-		}
-		//=================================================================================================//
-		void StressRelaxationFirstHalf::Update(size_t index_particle_i, Real dt)
-		{
-			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
 
-			base_particle_data_i.vel_n_ += base_particle_data_i.dvel_dt_* dt;
+			dvel_dt_[index_i] = acceleration;
 		}
 		//=================================================================================================//
-		void StressRelaxationSecondHalf::Initialization(size_t index_particle_i, Real dt)
+		void StressRelaxationFirstHalf::Update(size_t index_i, Real dt)
 		{
-			BaseParticleData &base_particle_data_i 	= particles_->base_particle_data_[index_particle_i];
-			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
-
-			base_particle_data_i.pos_n_ += base_particle_data_i.vel_n_ * dt * 0.5;
+			vel_n_[index_i] += dvel_dt_[index_i] * dt;
 		}
 		//=================================================================================================//
-		void StressRelaxationSecondHalf::InnerInteraction(size_t index_particle_i, Real dt)
+		void StressRelaxationSecondHalf::Initialization(size_t index_i, Real dt)
 		{
-			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
+			pos_n_[index_i] += vel_n_[index_i] * dt * 0.5;
+		}
+		//=================================================================================================//
+		void StressRelaxationSecondHalf::InnerInteraction(size_t index_i, Real dt)
+		{
+			Vecd& vel_n_i = vel_n_[index_i];
 
 			Matd deformation_gradient_change_rate(0);
-			Neighborhood& inner_neighborhood = inner_configuration_[index_particle_i];
-			CommonRelationList& inner_common_relations = inner_neighborhood.common_relation_list_;
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
-				CommonRelation& common_relation = inner_common_relations[n];
-				size_t index_particle_j = common_relation.j_;
-				BaseParticleData &base_particle_data_j = particles_->base_particle_data_[index_particle_j];
-				SolidParticleData &solid_data_j = particles_->solid_body_data_[index_particle_j];
-				ElasticSolidParticleData &elastic_data_j = particles_->elastic_body_data_[index_particle_j];
+				size_t index_j = inner_neighborhood.j_[n];
 
-				Vecd gradw_ij = common_relation.dW_ij_ * common_relation.e_ij_;
+				Vecd gradw_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
 				deformation_gradient_change_rate
-					-= base_particle_data_j.Vol_0_
-					*SimTK::outer((base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_), gradw_ij);
+					-= Vol_0_[index_j] * SimTK::outer((vel_n_i - vel_n_[index_j]), gradw_ij);
 			}
-			elastic_data_i.dF_dt_ = deformation_gradient_change_rate* solid_data_i.B_;
+
+			dF_dt_[index_i] = deformation_gradient_change_rate * B_[index_i];
 		}
 		//=================================================================================================//
-		void StressRelaxationSecondHalf::Update(size_t index_particle_i, Real dt)
+		void StressRelaxationSecondHalf::Update(size_t index_i, Real dt)
 		{
-			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
-
-			elastic_data_i.F_ += elastic_data_i.dF_dt_ * dt * 0.5;
+			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
-		void ConstrainSolidBodyRegion::Update(size_t index_particle_i, Real dt)
+		ConstrainSolidBodyRegion::
+			ConstrainSolidBodyRegion(SolidBody* body, BodyPartByParticle* body_part) :
+			PartDynamicsByParticle(body, body_part), SolidDataDelegateSimple(body),
+			pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
+			n_(particles_->n_), n_0_(particles_->n_0_),
+			vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
+			vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_)
 		{
-			BaseParticleData &base_particle_data_i
-				= particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_data_i
-				= particles_->solid_body_data_[index_particle_i];
+		}
+		//=================================================================================================//
+		void ConstrainSolidBodyRegion::Update(size_t index_i, Real dt)
+		{
+			Point pos_0 = pos_0_[index_i];
+			Point pos_n = pos_n_[index_i];
+			Vecd vel_n = vel_n_[index_i];
+			Vecd dvel_dt = dvel_dt_[index_i];
 
-			Vecd pos_old = base_particle_data_i.pos_n_;
-			base_particle_data_i.pos_n_ = base_particle_data_i.pos_0_ + GetDisplacement(pos_old);
-			base_particle_data_i.vel_n_ = GetVelocity(pos_old);
-			base_particle_data_i.dvel_dt_ = GetAcceleration(pos_old);
+			pos_n_[index_i] = GetDisplacement(pos_0, pos_n);
+			vel_n_[index_i] = GetVelocity(pos_0, pos_n, vel_n);
+			dvel_dt_[index_i] = GetAcceleration(pos_0, pos_n, dvel_dt);
 			/** the average values are prescirbed also. */
-			solid_data_i.vel_ave_ = base_particle_data_i.vel_n_;
-			solid_data_i.dvel_dt_ave_ = base_particle_data_i.dvel_dt_;
+			vel_ave_[index_i] = vel_n_[index_i];
+			dvel_dt_ave_[index_i] = dvel_dt_[index_i];
 		}
 		//=================================================================================================//
-		void ConstrainSolidBodyRegionSinusoidalMotion::Update(size_t index_particle_i, Real dt)
+		ImposeExternalForce::
+			ImposeExternalForce(SolidBody* body, SolidBodyPartForSimbody* body_part) :
+			PartDynamicsByParticle(body, body_part), SolidDataDelegateSimple(body),
+			pos_0_(particles_->pos_0_), vel_n_(particles_->vel_n_),
+			vel_ave_(particles_->vel_ave_)
 		{
-			BaseParticleData &base_particle_data_i
-				= particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_data_i
-				= particles_->solid_body_data_[index_particle_i];
-
-			Vecd pos_old = base_particle_data_i.pos_n_;
-			base_particle_data_i.pos_n_ = base_particle_data_i.pos_0_ + GetDisplacement(pos_old);
-			base_particle_data_i.vel_n_ = GetVelocity(pos_old);
-			base_particle_data_i.dvel_dt_ = GetAcceleration(pos_old);
-			/** the average values are prescirbed also. */
-			solid_data_i.vel_ave_ = base_particle_data_i.vel_n_;
-			solid_data_i.dvel_dt_ave_ = base_particle_data_i.dvel_dt_;
 		}
 		//=================================================================================================//
-		Vecd ConstrainSolidBodyRegionSinusoidalMotion::GetDisplacement(Vecd &pos)
-		{	
-			Vecd disp(0.0);
-			disp[1] = h_m_ * sin(2.0 * Pi * f_ * GlobalStaticVariables::physical_time_ + Real((id_ -1)) * phi_);
-			return disp;
-		}
-		//=================================================================================================//
-		Vecd ConstrainSolidBodyRegionSinusoidalMotion::GetVelocity(Vecd &pos)
+		void ImposeExternalForce::Update(size_t index_i, Real dt)
 		{
-			Vecd disp(0.0);
-			disp[1] = h_m_ * 2.0 * Pi * f_ * cos(2.0 * Pi * f_ * GlobalStaticVariables::physical_time_ + Real((id_ -1)) * phi_);
-			return disp;
+			Vecd induced_acceleration = GetAcceleration(pos_0_[index_i]);
+			vel_n_[index_i] += induced_acceleration * dt;
+			vel_ave_[index_i] = vel_n_[index_i];
 		}
 		//=================================================================================================//
-		Vecd ConstrainSolidBodyRegionSinusoidalMotion::GetAcceleration(Vecd &pos)
-		{
-			Vecd disp(0.0);
-			disp[1] = -h_m_ * 2.0 * Pi * f_ * 2.0 * Pi * f_ * cos(2.0 * Pi * f_ * GlobalStaticVariables::physical_time_ + Real((id_ -1)) * phi_);
-			return disp;
-		}
-		//=================================================================================================//
-		void constrainNormDirichletBoundary::Update(size_t index_particle_i, Real dt)
-		{
-			BaseParticleData &base_particle_data_i
-				= particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_data_i
-				= particles_->solid_body_data_[index_particle_i];
-
-			Vecd pos_old = base_particle_data_i.pos_n_;
-			base_particle_data_i.pos_n_[axis_id_] = base_particle_data_i.pos_0_[axis_id_];
-			base_particle_data_i.vel_n_[axis_id_] = 0.0;
-			base_particle_data_i.dvel_dt_[axis_id_] = 0.0;
-			/** the average values are prescirbed also. */
-			solid_data_i.vel_ave_ = base_particle_data_i.vel_n_;
-			solid_data_i.dvel_dt_ave_ = base_particle_data_i.dvel_dt_;
-		}
-		//=================================================================================================//
-		void ImposeExternalForce::Update(size_t index_particle_i, Real dt)
-		{
-			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-
-			Vecd induced_acceleration = GetAcceleration(base_particle_data_i.pos_0_);
-			base_particle_data_i.vel_n_ += induced_acceleration * dt;
-			solid_data_i.vel_ave_ = base_particle_data_i.vel_n_;
-		}
-		//=================================================================================================//
-		ConstrainSolidBodyPartBySimBody::ConstrainSolidBodyPartBySimBody(SolidBody *body,
-				SolidBodyPartForSimbody *body_part,
-				SimTK::MultibodySystem &MBsystem,
-				SimTK::MobilizedBody &mobod,
-				SimTK::Force::DiscreteForces &force_on_bodies,
-				SimTK::RungeKuttaMersonIntegrator &integ)
-			: PartDynamicsByParticle<SolidBody, SolidParticles, SolidBodyPartForSimbody>(body, body_part),
+		ConstrainSolidBodyPartBySimBody::ConstrainSolidBodyPartBySimBody(SolidBody* body,
+			SolidBodyPartForSimbody* body_part,
+			SimTK::MultibodySystem& MBsystem,
+			SimTK::MobilizedBody& mobod,
+			SimTK::Force::DiscreteForces& force_on_bodies,
+			SimTK::RungeKuttaMersonIntegrator& integ)
+			: ConstrainSolidBodyRegion(body, body_part),
 			MBsystem_(MBsystem), mobod_(mobod), force_on_bodies_(force_on_bodies), integ_(integ)
 		{
 			simbody_state_ = &integ_.getState();
@@ -494,40 +512,22 @@ namespace SPH
 			MBsystem_.realize(*simbody_state_, Stage::Acceleration);
 		}
 		//=================================================================================================//
-		ForceOnSolidBodyPartForSimBody
-			::ForceOnSolidBodyPartForSimBody(SolidBody *body,
-				SolidBodyPartForSimbody *body_part,
-				SimTK::MultibodySystem &MBsystem,
-				SimTK::MobilizedBody &mobod,
-				SimTK::Force::DiscreteForces &force_on_bodies,
-				SimTK::RungeKuttaMersonIntegrator &integ)
-			: SolidDynamicsConstraintForSimbodySum<SpatialVec>(body, body_part),
+		TotalForceOnSolidBodyPartForSimBody
+			::TotalForceOnSolidBodyPartForSimBody(SolidBody* body,
+				SolidBodyPartForSimbody* body_part,
+				SimTK::MultibodySystem& MBsystem,
+				SimTK::MobilizedBody& mobod,
+				SimTK::Force::DiscreteForces& force_on_bodies,
+				SimTK::RungeKuttaMersonIntegrator& integ)
+			: PartDynamicsByParticleReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>>(body, body_part),
+			SolidDataDelegateSimple(body),
+			force_from_fluid_(particles_->force_from_fluid_), pos_n_(particles_->pos_n_),
 			MBsystem_(MBsystem), mobod_(mobod), force_on_bodies_(force_on_bodies), integ_(integ)
 		{
 			initial_reference_ = SpatialVec(Vec3(0), Vec3(0));
 		}
 		//=================================================================================================//
-		void ForceOnSolidBodyPartForSimBody::SetupReduce()
-		{
-			simbody_state_ = &integ_.getState();
-			MBsystem_.realize(*simbody_state_, Stage::Acceleration);
-			current_mobod_origin_location_ = mobod_.getBodyOriginLocation(*simbody_state_);
-		}
-		//=================================================================================================//
-		ForceOnElasticBodyPartForSimBody
-			::ForceOnElasticBodyPartForSimBody(SolidBody *body,
-				SolidBodyPartForSimbody *body_part,
-				SimTK::MultibodySystem &MBsystem,
-				SimTK::MobilizedBody &mobod,
-				SimTK::Force::DiscreteForces &force_on_bodies,
-				SimTK::RungeKuttaMersonIntegrator &integ)
-			: ElasticSolidDynamicsConstraintForSimbodySum<SpatialVec>(body, body_part),
-			MBsystem_(MBsystem), mobod_(mobod), force_on_bodies_(force_on_bodies), integ_(integ)
-		{
-			initial_reference_ = SpatialVec(Vec3(0), Vec3(0));
-		}
-		//=================================================================================================//
-		void ForceOnElasticBodyPartForSimBody::SetupReduce()
+		void TotalForceOnSolidBodyPartForSimBody::SetupReduce()
 		{
 			simbody_state_ = &integ_.getState();
 			MBsystem_.realize(*simbody_state_, Stage::Acceleration);
@@ -535,140 +535,112 @@ namespace SPH
 		}
 		//=================================================================================================//
 		DampingBySplittingAlgorithm
-			::DampingBySplittingAlgorithm(SPHBodyInnerRelation* body_inner_relation)
-			: ElasticSolidDynamicsInnerSplitting(body_inner_relation), 
+			::DampingBySplittingAlgorithm(SPHBodyInnerRelation* body_inner_relation) :
+			ParticleDynamicsInnerSplitting(body_inner_relation),
+			ElasticSolidDataDelegateInner(body_inner_relation),
+			Vol_0_(particles_->Vol_0_), mass_(particles_->mass_), vel_n_(particles_->vel_n_),
 			eta_(material_->getPhysicalViscosity())
 		{
 
 		}
 		//=================================================================================================//
-		void  DampingBySplittingAlgorithm::setupDynamics(Real dt)
-		{
-			body_->setNewlyUpdated();
-		}
-		//=================================================================================================//
 		void DampingBySplittingAlgorithm
-			::InnerInteraction(size_t index_particle_i, Real dt)
+			::InnerInteraction(size_t index_i, Real dt)
 		{
 
-			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
-			Real mass_i = solid_data_i.mass_;
+			Real Vol_0_i = Vol_0_[index_i];
+			Real mass_i = mass_[index_i];
+			Vecd& vel_n_i = vel_n_[index_i];
 
 			Vecd error(0);
 			Real parameter_a(0);
 			Real parameter_c(0);
-			Neighborhood& inner_neighborhood = inner_configuration_[index_particle_i];
-			CommonRelationList& inner_common_relations = inner_neighborhood.common_relation_list_;
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
-				CommonRelation& common_relation = inner_common_relations[n];
-				size_t index_particle_j = common_relation.j_;
-				BaseParticleData &base_particle_data_j
-					= particles_->base_particle_data_[index_particle_j];
-				SolidParticleData& solid_body_data_j
-					= particles_->solid_body_data_[index_particle_j];
-				Real mass_j = solid_body_data_j.mass_;
+				size_t index_j = inner_neighborhood.j_[n];
 
 				//linear projection 
-				Vecd vel_detivative = (base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_);
-				Real parameter_b = 2.0 * eta_ * common_relation.dW_ij_
-					* base_particle_data_i.Vol_0_ * base_particle_data_j.Vol_0_ * dt
-					/ common_relation.r_ij_;
+				Vecd vel_detivative = (vel_n_i - vel_n_[index_j]);
+				Real parameter_b = 2.0 * eta_ * inner_neighborhood.dW_ij_[n]
+					* Vol_0_i * Vol_0_[index_j] * dt / inner_neighborhood.r_ij_[n];
 
 				error -= vel_detivative * parameter_b;
 				parameter_a += parameter_b;
 				parameter_c += parameter_b * parameter_b;
 			}
-			
+
 			parameter_a -= mass_i;
 			Real parameter_l = parameter_a * parameter_a + parameter_c;
 			Vecd parameter_k = error / (parameter_l + TinyReal);
-			base_particle_data_i.vel_n_ += parameter_k * parameter_a;
+			vel_n_[index_i] += parameter_k * parameter_a;
 
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
-				CommonRelation& common_relation = inner_common_relations[n];
-				size_t index_particle_j = common_relation.j_;
-				BaseParticleData &base_particle_data_j
-					= particles_->base_particle_data_[index_particle_j];
-				SolidParticleData& solid_body_data_j
-					= particles_->solid_body_data_[index_particle_j];
-				Real mass_j = solid_body_data_j.mass_;
+				size_t index_j = inner_neighborhood.j_[n];
 
-				Real parameter_b = 2.0 * eta_ * common_relation.dW_ij_
-					* base_particle_data_i.Vol_0_ * base_particle_data_j.Vol_0_ * dt
-					/ common_relation.r_ij_;
+				Real parameter_b = 2.0 * eta_ * inner_neighborhood.dW_ij_[n]
+					* Vol_0_i * Vol_0_[index_j] * dt / inner_neighborhood.r_ij_[n];
 
 				//predicted velocity at particle j
-				Vecd vel_j = base_particle_data_j.vel_n_ - parameter_k * parameter_b;
-				Vecd vel_detivative = (base_particle_data_i.vel_n_ - vel_j);
+				Vecd vel_j = vel_n_[index_j] - parameter_k * parameter_b;
+				Vecd vel_detivative = (vel_n_[index_j] - vel_j);
 
 				//viscous force in conservation form
-				base_particle_data_j.vel_n_ -= vel_detivative * parameter_b / mass_j;
+				vel_n_[index_i] -= vel_detivative * parameter_b / mass_[index_i];
 			}
 		}
 		//=================================================================================================//
 		DampingBySplittingPairwise
-			::DampingBySplittingPairwise(SPHBodyInnerRelation* body_inner_relation)
-			: ElasticSolidDynamicsInnerSplitting(body_inner_relation), eta_(material_->getPhysicalViscosity())
+			::DampingBySplittingPairwise(SPHBodyInnerRelation* body_inner_relation) :
+			ParticleDynamicsInnerSplitting(body_inner_relation),
+			ElasticSolidDataDelegateInner(body_inner_relation),
+			Vol_0_(particles_->Vol_0_), mass_(particles_->mass_), vel_n_(particles_->vel_n_),
+			eta_(material_->getPhysicalViscosity())
 		{
 
 		}
 		//=================================================================================================//
 		void DampingBySplittingPairwise
-			::InnerInteraction(size_t index_particle_i, Real dt)
+			::InnerInteraction(size_t index_i, Real dt)
 		{
 
-			BaseParticleData& base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			SolidParticleData& solid_data_i = particles_->solid_body_data_[index_particle_i];
-			Real mass_i = solid_data_i.mass_;
+			Real Vol_0_i = Vol_0_[index_i];
+			Real mass_i = mass_[index_i];
+			Vecd& vel_n_i = vel_n_[index_i];
 
 			StdVec<Real> parameter_b(50);
-			Neighborhood& inner_neighborhood = inner_configuration_[index_particle_i];
-			CommonRelationList& inner_common_relations = inner_neighborhood.common_relation_list_;
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			size_t number_of_neighbors = inner_neighborhood.current_size_;
 			parameter_b.resize(number_of_neighbors);
 			//forward sweep
 			for (size_t n = 0; n != number_of_neighbors; ++n)
 			{
-				CommonRelation& common_relation = inner_common_relations[n];
-				size_t index_particle_j = common_relation.j_;
-				BaseParticleData& base_particle_data_j
-					= particles_->base_particle_data_[index_particle_j];
-				SolidParticleData& solid_data_j
-					= particles_->solid_body_data_[index_particle_j];
-				Real mass_j = solid_data_j.mass_;
+				size_t index_j = inner_neighborhood.j_[n];
+				Real mass_j = mass_[index_j];
 
-				Vecd vel_detivative = (base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_);
-				parameter_b[n] = eta_ * common_relation.dW_ij_
-					* base_particle_data_i.Vol_0_ * base_particle_data_j.Vol_0_ * dt
-					/ common_relation.r_ij_;
+				Vecd vel_detivative = (vel_n_i - vel_n_[index_j]);
+				parameter_b[n] = eta_ * inner_neighborhood.dW_ij_[n]
+					* Vol_0_i * Vol_0_[index_j] * dt / inner_neighborhood.r_ij_[n];
 
 				Vecd increment = parameter_b[n] * vel_detivative
 					/ (mass_i * mass_j - parameter_b[n] * (mass_i + mass_j));
-				base_particle_data_i.vel_n_ += increment * mass_j;
-				base_particle_data_j.vel_n_ -= increment * mass_i;
+				vel_n_[index_i] += increment * mass_j;
+				vel_n_[index_j] -= increment * mass_i;
 			}
 
 			//backward sweep
 			for (size_t n = number_of_neighbors; n != 0; --n)
 			{
-				CommonRelation& common_relation = inner_common_relations[n - 1];
-				size_t index_particle_j = common_relation.j_;
-				BaseParticleData& base_particle_data_j
-					= particles_->base_particle_data_[index_particle_j];
-				SolidParticleData& solid_data_j
-					= particles_->solid_body_data_[index_particle_j];
-				Real mass_j = solid_data_j.mass_;
+				size_t index_j = inner_neighborhood.j_[n];
+				Real mass_j = mass_[index_j];
 
-				Vecd vel_detivative = (base_particle_data_i.vel_n_ - base_particle_data_j.vel_n_);
+				Vecd vel_detivative = (vel_n_i - vel_n_[index_j]);
 				Vecd increment = parameter_b[n - 1] * vel_detivative
 					/ (mass_i * mass_j - parameter_b[n - 1] * (mass_i + mass_j));
 
-				base_particle_data_i.vel_n_ += increment * mass_j;
-				base_particle_data_j.vel_n_ -= increment * mass_i;
+				vel_n_[index_i] += increment * mass_j;
+				vel_n_[index_j] -= increment * mass_i;
 			}
 		}
 		//=================================================================================================//
@@ -689,13 +661,55 @@ namespace SPH
 			if (RandomChoice()) DampingBySplittingAlgorithm::exec(dt);
 		}
 		//=================================================================================================//
-		//=================================================================================================//
 		void DampingBySplittingWithRandomChoice::parallel_exec(Real dt)
 		{
 			if (RandomChoice()) DampingBySplittingAlgorithm::parallel_exec(dt);
 		}
 		//=================================================================================================//
+		FluidViscousForceOnSolidWallModel::
+			FluidViscousForceOnSolidWallModel(SPHBodyContactRelation* body_contact_relation,
+				fluid_dynamics::ViscousAccelerationWallModel* viscous_acceleration_wall_modeling)
+			: FluidViscousForceOnSolid(body_contact_relation),
+			n_(particles_->n_),
+			gradient_p_(viscous_acceleration_wall_modeling->gradient_p_),
+			gradient_vel_(viscous_acceleration_wall_modeling->gradient_vel_) {};
+		//=================================================================================================//
+		void FluidViscousForceOnSolidWallModel::ContactInteraction(size_t index_i, Real dt)
+		{
+			FluidViscousForceOnSolid::ContactInteraction(index_i, dt);
+
+			Real Vol_i = Vol_[index_i];
+			Vecd& vel_ave_i = vel_ave_[index_i];
+
+			Vecd force(0);
+			/** Contact interaction. */
+			for (size_t k = 0; k < contact_configuration_.size(); ++k)
+			{
+				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+				StdLargeVec<Real>& rho_n_k = *(contact_rho_n_[k]);
+				StdLargeVec<Vecd>& vel_n_k = *(contact_vel_n_[k]);
+				Neighborhood& contact_neighborhood = contact_configuration_[k][index_i];
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = contact_neighborhood.j_[n];
+
+					//obtain the unit vector in the tangential direction
+					Real height = 0.5 * contact_neighborhood.r_ij_[n];
+					Vecd vel_to_wall = (vel_n_k[index_j] - vel_ave_i);
+					Real vel_to_wall_n = SimTK::dot(vel_to_wall, n_[index_i]);
+					Vecd vel_to_wall_t = vel_to_wall - vel_to_wall_n * n_[index_i];
+					Vecd unit_t = vel_to_wall_t / (vel_to_wall_t.norm() + TinyReal);
+
+					Real coefficient_A = SimTK::dot(gradient_p_[index_j], unit_t);
+					Real coefficient_B = SimTK::dot(gradient_vel_[index_j] * vel_to_wall, unit_t);
+					Vecd v_derivative_add = - height * (coefficient_A + rho_n_k[index_j] * coefficient_B) * unit_t;
+
+					force -= 2.0 * v_derivative_add * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+				}
+			}
+
+			viscous_force_from_fluid_[index_i] += force;
+		}
+		//=================================================================================================//
 	}
-	//=================================================================================================//
 }
-//=================================================================================================//

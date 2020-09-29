@@ -15,27 +15,37 @@ namespace SPH
 	namespace observer_dynamics
 	{
 		//=================================================================================================//
-		void CorrectInterpolationKernelWeights::ContactInteraction(size_t index_particle_i, Real dt)
+		CorrectInterpolationKernelWeights::
+			CorrectInterpolationKernelWeights(SPHBodyContactRelation* body_contact_relation)
+			: ParticleDynamicsContact(body_contact_relation),
+			DataDelegateContact<SPHBody, BaseParticles,
+			BaseMaterial, SPHBody, BaseParticles, BaseMaterial>(body_contact_relation)
+		{
+			for (size_t k = 0; k != contact_particles_.size(); ++k)
+			{
+				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+			}
+		}
+		//=================================================================================================//
+		void CorrectInterpolationKernelWeights::ContactInteraction(size_t index_i, Real dt)
 		{
 			Vecd weight_correction(0.0);
-			/** a small number added to diagnal to avoid divide zero */
+			/** a small number added to diagonal to avoid divide zero */
 			Matd local_configuration(Eps);
 			/** Compute the first order consistent kernel weights */
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				Neighborhood& contact_neighborhood = contact_configuration_[k][index_particle_i];
-				KernelValueList& kernel_value_list = contact_neighborhood.kernel_value_list_;
-				CommonRelationList& contact_common_relations = contact_neighborhood.common_relation_list_;
+				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+				Neighborhood& contact_neighborhood = contact_configuration_[k][index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					CommonRelation& common_relation = contact_common_relations[n];
-					size_t index_particle_j = common_relation.j_;
-					BaseParticleData& base_particle_data_j = contact_particles_[k]->base_particle_data_[index_particle_j];
+					size_t index_j = contact_neighborhood.j_[n];
+					Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
+					Vecd r_ji = -contact_neighborhood.r_ij_[n] * contact_neighborhood.e_ij_[n];
+					Vecd gradw_ij = contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n];
 
-					Vecd r_ji = -common_relation.r_ij_ * common_relation.e_ij_;
-					weight_correction += r_ji * kernel_value_list[n] * base_particle_data_j.Vol_;
-					Vecd gradw_ij = common_relation.dW_ij_ * common_relation.e_ij_;
-					local_configuration += base_particle_data_j.Vol_ * SimTK::outer(r_ji, gradw_ij);
+					weight_correction += r_ji * weight_j;
+					local_configuration += Vol_k[index_j] * SimTK::outer(r_ji, gradw_ij);
 				}
 			}
 
@@ -45,17 +55,13 @@ namespace SPH
 			/** Add the kernel weight correction to W_ij_ of neighboring particles. */
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				Neighborhood& contact_neighborhood = contact_configuration_[k][index_particle_i];
-				KernelValueList& kernel_value_list = contact_neighborhood.kernel_value_list_;
-				CommonRelationList& contact_common_relations = contact_neighborhood.common_relation_list_;
+				Neighborhood& contact_neighborhood = contact_configuration_[k][index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					CommonRelation& common_relation = contact_common_relations[n];
-					size_t index_particle_j = common_relation.j_;
-					BaseParticleData& base_particle_data_j = contact_particles_[k]->base_particle_data_[index_particle_j];
-
 					Vecd normalized_weight_correction = B_ * weight_correction;
-					kernel_value_list[n] -= dot(normalized_weight_correction, common_relation.e_ij_) * common_relation.dW_ij_;
+					contact_neighborhood.W_ij_[n] 
+						-= dot(normalized_weight_correction, contact_neighborhood.e_ij_[n])
+						 * contact_neighborhood.dW_ij_[n];
 				}
 			}
 		}

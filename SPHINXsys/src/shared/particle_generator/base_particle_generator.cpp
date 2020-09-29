@@ -7,35 +7,28 @@
 #include "base_particle_generator.h"
 #include "base_body.h"
 #include "base_particles.h"
+#include "mesh_cell_linked_list.h"
 
 namespace SPH {
 	//=================================================================================================//
-	ParticleGenerator
-		::ParticleGenerator(SPHBody &body)
-		: body_(body)
+	void ParticleGenerator::initialize(SPHBody* sph_body)
 	{
-
-	}
-	//=================================================================================================//
-	ParticleGeneratorDirect
-		::ParticleGeneratorDirect(SPHBody &body)
-		: ParticleGenerator(body)
-	{
-
+		sph_body_ = sph_body;
 	}
 	//=================================================================================================//
 	void ParticleGeneratorDirect
 		::CreateBaseParticles(BaseParticles* base_particles)
 	{
 		size_t number_of_particles = 0;
-		for (size_t i = 0; i < body_.body_input_points_volumes_.size(); ++i) 
+		auto& body_input_points_volumes = sph_body_->body_input_points_volumes_;
+		for (size_t i = 0; i < body_input_points_volumes.size(); ++i)
 		{
-			base_particles->InitializeABaseParticle(body_.body_input_points_volumes_[i].first,
-				body_.body_input_points_volumes_[i].second, 1.0 / body_.body_input_points_volumes_[i].second);
+			base_particles->initializeABaseParticle(body_input_points_volumes[i].first,
+				body_input_points_volumes[i].second, 1.0 /(body_input_points_volumes[i].second + TinyReal));
 			number_of_particles++;
 		}
 
-		body_.number_of_particles_ = number_of_particles;
+		sph_body_->number_of_particles_ = number_of_particles;
 	}
 	//=================================================================================================//
 }

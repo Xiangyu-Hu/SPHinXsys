@@ -39,40 +39,11 @@ using namespace std;
 
 namespace SPH {
 
-	/** preclaimed classes*/
+	//----------------------------------------------------------------------
+	//		preclaimed classes
+	//----------------------------------------------------------------------
 	class SPHBody;
 	class ParticleGenerator;
-	/**
-	 * @class BaseParticleData
-	 * @brief A based particle with essential data for all types of particles.
-	  */
-	class BaseParticleData
-	{
-	protected:
-		/** All, including the buffer, particles. */
-		static size_t total_number_of_particles_;		
-	public:
-		BaseParticleData();
-		/** In this constructor, the particle state is set at rest. */
-		BaseParticleData(Vecd position, Real Vol_0, Real sigma_0);
-		virtual ~BaseParticleData() {};
-
-		/** For a real particle, it is the index.
-		 *	For a ghost particle, it is the index of its corresponding real particle. */
-		size_t particle_id_;
-		/** Current and initial position. */
-		Point pos_n_, pos_0_;	
-		/** Current particle velocity and stress-induced and other accelerations. */
-		Vecd  vel_n_, dvel_dt_, dvel_dt_others_;
-		/** Particle volume and its initial value. */
-		Real Vol_, Vol_0_;
-		/** Particle reference number density. */
-		Real sigma_0_;
-		/** Smoothing length of the particle. */
-		Real smoothing_length_;
-		/** Particle with fixed index, not subject to sorting. */
-		bool is_sortable_;
-	};
 
 	/**
 	 * @class BaseParticles
@@ -86,9 +57,6 @@ namespace SPH {
 	 */
 	class BaseParticles
 	{
-	protected:
-		SPHBody *body_; /**< The body in which the particles belongs to. */
-		string body_name_;
 	public:
 		/** Base material corresponding to base particles*/
 		BaseMaterial* base_material_;
@@ -97,9 +65,24 @@ namespace SPH {
 		BaseParticles(SPHBody* body);
 		virtual ~BaseParticles() {};
 	
-		/** Vector of base particle data. */
-		StdLargeVec<BaseParticleData> base_particle_data_;	
-		
+		/** For a real particle, its initial value is the index.
+		 *	For a ghost particle, it is the index of its corresponding real particle. */
+		StdLargeVec<size_t> particle_id_;
+		StdLargeVec<bool> is_sortable_;  /**< whether subject to sorting. */
+
+		StdLargeVec<Vecd> pos_n_;	/**< current position */
+		StdLargeVec<Vecd> vel_n_;	/**< current particle velocity */
+		StdLargeVec<Vecd> dvel_dt_;	/**< inner pressure- or stress-induced acceleration */
+		StdLargeVec<Vecd> dvel_dt_others_; /**<  other, such as gravity and viscous acceleration */
+
+		StdLargeVec<Real> Vol_;		/**< particle volume */
+		StdLargeVec<Real> Vol_0_;	/**< initial particle volume */
+		StdLargeVec<Real> rho_n_;	/**< current particle density */
+		StdLargeVec<Real> rho_0_;	/**< initial particle density*/
+		StdLargeVec<Real> mass_;	/**< particle mass */
+		StdLargeVec<Real> sigma_0_;	/**< reference number density. */
+		StdLargeVec<Real> smoothing_length_;
+
 		//----------------------------------------------------------------------
 		//Global information for all partiles
 		//----------------------------------------------------------------------
@@ -109,48 +92,76 @@ namespace SPH {
 		size_t real_particles_bound_;
 		size_t number_of_ghost_particles_;
 		
-		/** Initialize a base particle by input a postion, volume and reference number density. */
-		void InitializeABaseParticle(Vecd pnt, Real Vol_0, Real sigma_0);
-		/** Add buffer particles which latter may be realized for particle dynamics, or used as ghost particle. */
-		virtual void AddABufferParticle();
-		/** Copy state, except particle id, from another particle */
-		virtual void CopyFromAnotherParticle(size_t this_particle_index, size_t another_particle_index);
-		/** Update the state of a particle from another particle */
-		virtual void UpdateFromAnotherParticle(size_t this_particle_index, size_t another_particle_index);
-		/** Swapping particles. */
-		virtual void swapParticles(size_t this_particle_index, size_t that_particle_index);
-		/** Check whether particles allowed for swaping*/
-		bool isSwappingAllowed(size_t this_particle_index, size_t that_particle_index);
-		/** Insert a ghost particle into the particle list. */
-		size_t insertAGhostParticle(size_t index_particle_i);
+		//----------------------------------------------------------------------
+		//		Registered particle data
+		//----------------------------------------------------------------------
+		StdVec<StdLargeVec<Matd>*> registered_matrices_;
+		StdVec<StdLargeVec<Vecd>*> registered_vectors_;
+		StdVec<StdLargeVec<Real>*> registered_scalars_;
+		map<string, size_t> matrices_map_; 	/**< Map from matrix names to indexes. */
+		map<string, size_t> vectors_map_;	/**< Map from vector names to indexes. */
+		map<string, size_t> scalars_map_;	/**< Map from scalar names to indexes. */
+		StdVec<string> matrices_to_write_;		/**< matrix variables to be written in file */
+		StdVec<string> vectors_to_write_;		/**< vactor variables to be written in file */
+		StdVec<string> scalars_to_write_;		/**< scalar variables to be written in file */
+		/** register a variable into particles */
+		template<typename VariableType>
+		void registerAVariable(StdLargeVec<VariableType>& variable_addrs,
+			StdVec<StdLargeVec<VariableType>*>& registered_variables,
+			map<string, size_t>& name_map, StdVec<string>& variable_to_write, 	
+			string variable_name, bool is_to_write, VariableType initial_value = VariableType(0))
+		{
+			variable_addrs.resize(real_particles_bound_, initial_value);
+			registered_variables.push_back(&variable_addrs);
+			name_map.insert(make_pair(variable_name, registered_variables.size() - 1));
+			if (is_to_write) variable_to_write.push_back(variable_name);
+		};
 
 		/** access the sph body*/
-		SPHBody* getSPHBody();
+		SPHBody* getSPHBody() { return body_; };
+		/** Initialize a base particle by input a postion, volume and reference number density. */
+		void initializeABaseParticle(Vecd pnt, Real Vol_0, Real sigma_0);
+		/** Add buffer particles which latter may be realized for particle dynamics, or used as ghost particle. */
+		void addABufferParticle();
+		/** Copy state, except particle id, from another particle */
+		void copyFromAnotherParticle(size_t this_index, size_t another_index);
+		/** Update the state of a particle from another particle */
+		void updateFromAnotherParticle(size_t this_index, size_t another_index);
+
+		/** Swapping particles. */
+		void swapParticles(size_t this_index, size_t that_index) {};
+		/** Check whether particles allowed for swaping*/
+		bool isSwappingAllowed(size_t this_index, size_t that_index);
+		/** Insert a ghost particle into the particle list. */
+		size_t insertAGhostParticle(size_t index_i);
+		/** Get mirror a particle along an axis direaction. */
+		void mirrorInAxisDirection(size_t particle_index_i, Vecd body_bound, int axis_direction);
+
 		/** Write particle data in VTU format for Paraview. */
-		virtual void WriteParticlesToVtuFile(ofstream &output_file);
+		virtual void writeParticlesToVtuFile(ofstream &output_file);
 		/** Write particle data in PLT format for Tecplot. */
-		virtual void WriteParticlesToPltFile(ofstream& output_file) {};
+		virtual void writeParticlesToPltFile(ofstream& output_file) {};
 
 		/** Write particle data in XML format for restart. */
-		virtual void WriteParticlesToXmlForRestart(std::string& filefullpath) {};
+		virtual void writeParticlesToXmlForRestart(std::string& filefullpath) {};
 		/** Initialize particle data from restart xml file. */
-		virtual void ReadParticleFromXmlForRestart(std::string& filefullpath) {};
+		virtual void readParticleFromXmlForRestart(std::string& filefullpath) {};
 
 		/** Output particle position and volume in XML file for reloading particles. */
-		virtual void WriteToXmlForReloadParticle(std::string &filefullpath);
+		virtual void writeToXmlForReloadParticle(std::string &filefullpath);
 		/** Reload particle position and volume from XML files. */
-		virtual void ReadFromXmlForReloadParticle(std::string &filefullpath);
+		virtual void readFromXmlForReloadParticle(std::string &filefullpath);
 
 		/** Pointer to this object. */
-		virtual BaseParticles* PointToThisObject();
+		virtual BaseParticles* pointToThisObject();
 
 		/** Normalize the kernel gradient. */
 		virtual Vecd normalizeKernelGradient(size_t particle_index_i, Vecd& kernel_gradient) { return kernel_gradient; };
 		/** Get the kernel gradient in weak form. */
 		virtual Vecd getKernelGradient(size_t particle_index_i, size_t particle_index_j,
 			Real dW_ij, Vecd& e_ij) { return dW_ij * e_ij; };
-		/** Get mirror a particle along an axis direaction. */
-		virtual void mirrorInAxisDirection(size_t particle_index_i, Vecd body_bound, int axis_direction);
-
+	protected:
+		SPHBody* body_; /**< The body in which the particles belongs to. */
+		string body_name_;
 	};
 }

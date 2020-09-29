@@ -16,20 +16,19 @@ namespace SPH
 	//=================================================================================================//
 	void SPHBodyInnerRelation::updateConfiguration()
 	{
-		StdLargeVec<BaseParticleData>& base_particle_data
-			= body_->base_particles_->base_particle_data_;
-		Vecu number_of_cells = base_mesh_cell_linked_list_->NumberOfCells();
-		matrix_cell cell_linked_lists = base_mesh_cell_linked_list_->CellLinkedLists();
-		Kernel* current_kernel = body_->kernel_;
+		BaseParticles* base_particles = sph_body_->base_particles_;
+		Vecu number_of_cells = mesh_cell_linked_list_->NumberOfCells();
+		matrix_cell cell_linked_lists = mesh_cell_linked_list_->CellLinkedLists();
+		Kernel* current_kernel = sph_body_->kernel_;
 		Real cutoff_radius_sqr = powern(current_kernel->GetCutOffRadius(), 2);
 
-		parallel_for(blocked_range<size_t>(0, body_->number_of_particles_),
+		parallel_for(blocked_range<size_t>(0, sph_body_->number_of_particles_),
 			[&](const blocked_range<size_t>& r) {
 				for (size_t num = r.begin(); num != r.end(); ++num)
 				{
-					BaseParticleData& base_particle_data_i = base_particle_data[num];
+					Vecd particle_position = base_particles->pos_n_[num];
 					Vecu cell_location = 
-						base_mesh_cell_linked_list_->GridIndexFromPosition(base_particle_data_i.pos_n_);
+						mesh_cell_linked_list_->GridIndexFromPosition(particle_position);
 					int i = (int)cell_location[0];
 					int j = (int)cell_location[1];
 					int k = (int)cell_location[2];
@@ -46,7 +45,7 @@ namespace SPH
 								for (size_t n = 0; n != target_particles.size(); ++n)
 								{
 									//displacement pointing from neighboring particle to origin particle
-									Vecd displacement = base_particle_data_i.pos_n_ - target_particles[n].second;
+									Vecd displacement = particle_position - target_particles[n].second;
 									if (displacement.normSqr() <= cutoff_radius_sqr && num != target_particles[n].first)
 									{
 										current_count_of_neighbors >= neighborhood.memory_size_ ?
@@ -67,29 +66,27 @@ namespace SPH
 	//=================================================================================================//
 	void SPHBodyContactRelation::updateConfiguration()
 	{
-		StdLargeVec<BaseParticleData>& base_particle_data = body_->base_particles_->base_particle_data_;
+		BaseParticles* base_particles = sph_body_->base_particles_;
 
-		for (size_t relation_body_num = 0; relation_body_num < relation_bodies_.size(); ++relation_body_num) 
+		for (size_t relation_body_num = 0; relation_body_num < contact_sph_bodies_.size(); ++relation_body_num)
 		{
-			StdLargeVec<BaseParticleData>& target_base_particle_data
-				= relation_bodies_[relation_body_num]->base_particles_->base_particle_data_;
 			BaseMeshCellLinkedList& target_mesh_cell_linked_list
-				= *(relation_bodies_[relation_body_num]->base_mesh_cell_linked_list_);
+				= *(contact_sph_bodies_[relation_body_num]->mesh_cell_linked_list_);
 			Vecu target_number_of_cells = target_mesh_cell_linked_list.NumberOfCells();
 			int search_range =
-				base_mesh_cell_linked_list_->ComputingSearchRage(body_->refinement_level_,
-					relation_bodies_[relation_body_num]->refinement_level_);
-			Kernel& current_kernel = base_mesh_cell_linked_list_->ChoosingKernel(body_->kernel_,
-				relation_bodies_[relation_body_num]->kernel_);
+				mesh_cell_linked_list_->ComputingSearchRage(sph_body_->refinement_level_,
+					contact_sph_bodies_[relation_body_num]->refinement_level_);
+			Kernel& current_kernel = mesh_cell_linked_list_->ChoosingKernel(sph_body_->kernel_,
+				contact_sph_bodies_[relation_body_num]->kernel_);
 			Real cutoff_radius_sqr = powern(current_kernel.GetCutOffRadius(), 2);
 
-			parallel_for(blocked_range<size_t>(0, body_->number_of_particles_),
+			parallel_for(blocked_range<size_t>(0, sph_body_->number_of_particles_),
 				[&](const blocked_range<size_t>& r) {
 					for (size_t num = r.begin(); num != r.end(); ++num) {
 
-						BaseParticleData& base_particle_data_i = base_particle_data[num];
+						Vecd particle_position = base_particles->pos_n_[num];
 						Vecu target_cell_index = target_mesh_cell_linked_list
-							.GridIndexFromPosition(base_particle_data_i.pos_n_);
+							.GridIndexFromPosition(particle_position);
 						int i = (int)target_cell_index[0];
 						int j = (int)target_cell_index[1];
 						int k = (int)target_cell_index[2];
@@ -106,10 +103,9 @@ namespace SPH
 									CellListDataVector& target_particles = target_cell_linked_lists[l][m][q].cell_list_data_;
 									for (size_t n = 0; n < target_particles.size(); n++)
 									{
-										BaseParticleData& base_particle_data_j = target_base_particle_data[target_particles[n].first];
 										//displacement pointing from neighboring particle to origin particle
-										Vecd displacement = base_particle_data_i.pos_n_ - target_particles[n].second;
-										if (checkNeighbor(displacement.normSqr(), cutoff_radius_sqr, base_particle_data_i, base_particle_data_j))
+										Vecd displacement = particle_position - target_particles[n].second;
+										if (displacement.normSqr() <= cutoff_radius_sqr)
 										{
 											current_count_of_neighbors >= neighborhood.memory_size_ ?
 												createNeighborRelation(neighborhood,

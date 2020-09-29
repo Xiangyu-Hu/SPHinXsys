@@ -17,8 +17,7 @@ namespace SPH {
 	class BaseMaterial;
 	class SPHBody;
 	class CellList;
-	class BaseParticleData;
-	class NeighborRelation;
+	class BaseParticles;
 
 	/**< Vector of Material. Note that vector of references are not allowed in c++.*/
 	using MaterialVector = StdVec<BaseMaterial*>;

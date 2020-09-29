@@ -6,7 +6,7 @@
 
 #include "in_output.h"
 #include "all_types_of_bodies.h"
-#include "all_meshes.h"
+#include "level_set.h"
 #include "sph_system.h"
 
 namespace SPH 
@@ -15,28 +15,10 @@ namespace SPH
 	In_Output::In_Output(SPHSystem &sph_system)
 		: sph_system_(sph_system)
 	{
-		output_folder_ = "./output";
-		if (fs::exists(output_folder_) && sph_system.restart_step_ == 0)
-		{
-			fs::remove_all(output_folder_);
-		}
-		if (!fs::exists(output_folder_))
-		{
-			fs::create_directory(output_folder_);
-		}
-
-		restart_folder_ = "./restart";
-		if (fs::exists(restart_folder_) && sph_system.restart_step_ == 0)
-		{
-			fs::remove_all(restart_folder_);
-		}
-		if (!fs::exists(restart_folder_))
-		{	
-			fs::create_directory(restart_folder_);
-		}
+		output_folder_ = sph_system.output_folder_;
+		restart_folder_ = sph_system.restart_folder_;
 		restart_step_ = std::to_string(sph_system.restart_step_);
-
-		reload_folder_ = "./reload";
+		reload_folder_ = sph_system.reload_folder_;
 	}
 	//=============================================================================================//
 	void WriteBodyStatesToVtu::WriteToFile(Real time)
@@ -61,7 +43,7 @@ namespace SPH
 				size_t number_of_particles = body->number_of_particles_;
 				out_file << "  <Piece Name =\"" << body->GetBodyName() << "\" NumberOfPoints=\"" << number_of_particles << "\" NumberOfCells=\"0\">\n";
 
-				body->WriteParticlesToVtuFile(out_file);
+				body->writeParticlesToVtuFile(out_file);
 
 				out_file << "   </PointData>\n";
 
@@ -103,7 +85,7 @@ namespace SPH
 
 				//begin of the plt file writing
 
-				body->WriteParticlesToPltFile(out_file);
+				body->writeParticlesToPltFile(out_file);
 
 				out_file.close();
 			}
@@ -136,24 +118,17 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	WriteBodyMeshToPlt
-		::WriteBodyMeshToPlt(In_Output& in_output, SPHBody * body)
-		: WriteBodyStates(in_output, body)
+	WriteLevelSetToPlt
+		::WriteLevelSetToPlt(In_Output& in_output, SPHBody* body, BaseLevelSet* level_set)
+		: WriteBodyStates(in_output, body), level_set_(level_set)
 	{
-		if (body->levelset_mesh_ == NULL)
-		{
-			std::cout << "\n BodySurface::BodySurface: Levelset mesh is required. Exit the program! \n";
-			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-			exit(0);
-		}
-
-		filefullpath_ = in_output_.output_folder_ + "/" + body->GetBodyName() + "_levelset_mesh.dat";
+		filefullpath_ = in_output_.output_folder_ + "/" + body->GetBodyName() + "_levelset.dat";
 	}
 	//=============================================================================================//
-	void WriteBodyMeshToPlt::WriteToFile(Real time)
+	void WriteLevelSetToPlt::WriteToFile(Real time)
 	{
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
-		body_->levelset_mesh_->writeMeshToPltFile(out_file);
+		level_set_->writeMeshToPltFile(out_file);
 		out_file.close();
 	}
 	//=================================================================================================//
@@ -211,7 +186,7 @@ namespace SPH
 		filefullpath_ = in_output_.output_folder_ + "/total_viscous_force_on_" + solid_body->GetBodyName() + ".dat";
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << "\"run_time\"" << "   ";
-		for(size_t i=0; i!= dimension_; ++i)
+		for(int i=0; i!= dimension_; ++i)
 		 out_file << "\"total_force["<<i<<"]\"" << "   ";
 		out_file << "\n";
 		out_file.close();
@@ -321,7 +296,7 @@ namespace SPH
 			{
 				fs::remove(filefullpath);
 			}
-			bodies_[i]->WriteToXmlForReloadParticle(filefullpath);
+			bodies_[i]->writeToXmlForReloadParticle(filefullpath);
 		}
 	}
 	//=============================================================================================//
@@ -357,7 +332,7 @@ namespace SPH
 				exit(1);
 			}
 
-			bodies_[i]->ReadFromXmlForReloadParticle(filefullpath);
+			bodies_[i]->readFromXmlForReloadParticle(filefullpath);
 		}
 	}
 	//=============================================================================================//
@@ -390,7 +365,7 @@ namespace SPH
 			{
 				fs::remove(filefullpath);
 			}
-			bodies_[i]->WriteParticlesToXmlForRestart(filefullpath);
+			bodies_[i]->writeParticlesToXmlForRestart(filefullpath);
 		}
 	}
 	//=============================================================================================//
@@ -425,7 +400,7 @@ namespace SPH
 				exit(1);
 			}
 
-			bodies_[i]->ReadParticlesFromXmlForRestart(filefullpath);
+			bodies_[i]->readParticlesFromXmlForRestart(filefullpath);
 		}
 	}
 	//=============================================================================================//
@@ -458,7 +433,7 @@ namespace SPH
 	ReloadMaterialPropertyIO::ReloadMaterialPropertyIO(In_Output& in_output, BaseMaterial *material)
 	{
 
-		file_path_ = in_output.reload_folder_ + "/Material_" + material->getMaterialName() + "_rld.xml";
+		file_path_ = in_output.reload_folder_ + "/Material_" + material->MaterialName() + "_rld.xml";
 	}
 //=================================================================================================//
 	void WriteReloadMaterialProperty::WriteToFile(Real time)

@@ -99,6 +99,9 @@ namespace SPH {
         if (it != namedstatevariableinfo_.end()) 
         {
             return it->second.statevariable_.get();
+        } 
+        else {
+            return NULL;
         }
     }
     //===============================================================//.
@@ -132,7 +135,7 @@ namespace SPH {
             3. The System associated with the StateVariables is the current System */
         bool valid =                 
             !statesassociatedsystem_.empty() &&                             
-            allstatevariables_.size() == nsv &&                            
+            (int)allstatevariables_.size() == nsv &&                            
             getMultibodySystem().isSameSystem(statesassociatedsystem_.getRef());  
 
         return valid;

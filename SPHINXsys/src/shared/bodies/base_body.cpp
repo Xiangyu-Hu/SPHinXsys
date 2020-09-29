@@ -18,18 +18,17 @@ namespace SPH
 {
 	//=================================================================================================//
 	SPHBody::SPHBody(SPHSystem &sph_system, string body_name,
-		int refinement_level, Real smoothing_length_ratio, ParticlesGeneratorOps op)
-	: sph_system_(sph_system), body_shape_(body_name), body_name_(body_name), newly_updated_(true),
-		refinement_level_(refinement_level), particle_generator_op_(op),
+		int refinement_level, Real smoothing_length_ratio, ParticleGenerator* particle_generator) : 
+		sph_system_(sph_system), body_name_(body_name), newly_updated_(true),
 		body_lower_bound_(0), body_upper_bound_(0), prescribed_body_bounds_(false),
-		levelset_mesh_(NULL)
+		refinement_level_(refinement_level), particle_generator_(particle_generator),
+		body_shape_(NULL)
 	{	
-		sph_system_.AddBody(this);
-
+		sph_system_.addABody(this);
 		particle_spacing_ 	= RefinementLevelToParticleSpacing();
 		smoothing_length_ = particle_spacing_ * smoothing_length_ratio;
 		kernel_ 			= GenerateAKernel(smoothing_length_);
-		base_mesh_cell_linked_list_
+		mesh_cell_linked_list_
 							= new MeshCellLinkedList(this, sph_system.lower_bound_,
 									sph_system_.upper_bound_, kernel_->GetCutOffRadius());
 		size_t number_of_split_cell_lists = powern(3, Vecd(0).size());
@@ -58,7 +57,7 @@ namespace SPH
 	{
 		delete kernel_;
 		kernel_ = kernel;
-		base_mesh_cell_linked_list_->reassignKernel(kernel);
+		mesh_cell_linked_list_->reassignKernel(kernel);
 	}
 	//=================================================================================================//
 	string SPHBody::GetBodyName()
@@ -66,7 +65,18 @@ namespace SPH
 		return body_name_;
 	}
 	//=================================================================================================//
-	void SPHBody::AllocateConfigurationMemoriesForBodyBuffer()
+	SPHSystem& SPHBody::getSPHSystem()
+	{
+		return sph_system_;
+	}
+	//=================================================================================================//
+	void SPHBody::assignBaseParticle(BaseParticles* base_particles)
+	{
+		base_particles_ = base_particles;
+		mesh_cell_linked_list_->assignBaseParticles(base_particles);
+	}
+	//=================================================================================================//
+	void SPHBody::allocateConfigurationMemoriesForBodyBuffer()
 	{
 		for (size_t i = 0; i < body_relations_.size(); i++)
 		{
@@ -74,38 +84,11 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void SPHBody::addLevelsetMesh(Real mesh_size_ratio)
-	{
-		Vecd body_lower_bound, body_upper_bound;
-		findBodyShapeBounds(body_lower_bound, body_upper_bound);
-		/** levelset mesh. */
-		Real mesh_spacing = mesh_size_ratio * particle_spacing_;
-
-		levelset_mesh_ = new LevelSet(
-			this, 				/**< body pointer. */
-			body_lower_bound, 	/**< Lower bound. */
-			body_upper_bound,	/**< Upper bound. */
-			mesh_spacing, 		/**< Mesh spacing. */
-			4					/**< Buffer size. */
-		);
-	}
-	//=================================================================================================//
-
-	bool SPHBody::checkBodyShapeContain(Vecd pnt)
-	{
-		return body_shape_.checkContain(pnt);
-	}
-	//=================================================================================================//
-	Vecd SPHBody::ClosestPointOnBodySurface(Vecd input_pnt)
-	{
-		return body_shape_.findClosestPoint(input_pnt);
-	}
-	//=================================================================================================//
-	void SPHBody::findBodyShapeBounds(Vecd& lower_bound, Vecd& upper_bound)
+	void SPHBody::findBodyDomainBounds(Vecd& lower_bound, Vecd& upper_bound)
 	{
 		if(!prescribed_body_bounds_) 
 		{
-			body_shape_.findBounds(lower_bound, upper_bound);
+			body_shape_->findBounds(lower_bound, upper_bound);
 		}
 		else 
 		{
@@ -114,130 +97,116 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void SPHBody::WriteParticlesToVtuFile(ofstream &output_file)
+	void SPHBody::writeParticlesToVtuFile(ofstream &output_file)
 	{
-		base_particles_->WriteParticlesToVtuFile(output_file);
+		base_particles_->writeParticlesToVtuFile(output_file);
 		newly_updated_ = false;
 	}
 	//=================================================================================================//
-	void SPHBody::WriteParticlesToPltFile(ofstream &output_file)
+	void SPHBody::writeParticlesToPltFile(ofstream &output_file)
 	{
-		if (newly_updated_) base_particles_->WriteParticlesToPltFile(output_file);
+		if (newly_updated_) base_particles_->writeParticlesToPltFile(output_file);
 		newly_updated_ = false;
 	}
 	//=================================================================================================//
-	void SPHBody::WriteParticlesToXmlForRestart(std::string &filefullpath)
+	void SPHBody::writeParticlesToXmlForRestart(std::string &filefullpath)
 	{
-		base_particles_->WriteParticlesToXmlForRestart(filefullpath);
+		base_particles_->writeParticlesToXmlForRestart(filefullpath);
 	}
 	//=================================================================================================//
-	void SPHBody::ReadParticlesFromXmlForRestart(std::string &filefullpath)
+	void SPHBody::readParticlesFromXmlForRestart(std::string &filefullpath)
 	{
-		base_particles_->ReadParticleFromXmlForRestart(filefullpath);
+		base_particles_->readParticleFromXmlForRestart(filefullpath);
 	}
 	//=================================================================================================//
-	void SPHBody::WriteToXmlForReloadParticle(std::string &filefullpath)
+	void SPHBody::writeToXmlForReloadParticle(std::string &filefullpath)
 	{
-		base_particles_->WriteToXmlForReloadParticle(filefullpath);
+		base_particles_->writeToXmlForReloadParticle(filefullpath);
 	}
 	//=================================================================================================//
-	void SPHBody::ReadFromXmlForReloadParticle(std::string &filefullpath)
+	void SPHBody::readFromXmlForReloadParticle(std::string &filefullpath)
 	{
-		base_particles_->ReadFromXmlForReloadParticle(filefullpath);
+		base_particles_->readFromXmlForReloadParticle(filefullpath);
 	}
 	//=================================================================================================//
-	SPHBody* SPHBody::PointToThisObject()
+	SPHBody* SPHBody::pointToThisObject()
 	{
 		return this;
 	}
 	//=================================================================================================//
 	RealBody::RealBody(SPHSystem &sph_system, string body_name,
-		int refinement_level, Real smoothing_length_ratio, ParticlesGeneratorOps op)
-	: SPHBody(sph_system, body_name, refinement_level, smoothing_length_ratio, op)
+		int refinement_level, Real smoothing_length_ratio, ParticleGenerator* particle_generator)
+	: SPHBody(sph_system, body_name, refinement_level, smoothing_length_ratio, particle_generator)
 	{
-		sph_system.AddRealBody(this);
+		sph_system.addARealBody(this);
 
-		base_mesh_cell_linked_list_->allocateMeshDataMatrix();
+		mesh_cell_linked_list_->allocateMeshDataMatrix();
 	}
 	//=================================================================================================//
-	void RealBody::AllocateMemoryCellLinkedList()
+	void RealBody::allocateMemoryCellLinkedList()
 	{
-		base_mesh_cell_linked_list_->allocateMeshDataMatrix();
+		mesh_cell_linked_list_->allocateMeshDataMatrix();
 	}
 	//=================================================================================================//
-	void RealBody::UpdateCellLinkedList()
+	void RealBody::updateCellLinkedList()
 	{
-		base_mesh_cell_linked_list_->UpdateCellLists();
+		mesh_cell_linked_list_->UpdateCellLists();
 	}
 	//=================================================================================================//
-	RealBody* RealBody::PointToThisObject()
+	RealBody* RealBody::pointToThisObject()
 	{
 		return this;
 	}
 	//=================================================================================================//
 	FictitiousBody::FictitiousBody(SPHSystem &system, string body_name, int refinement_level,
-		Real smoothing_length_ratio, ParticlesGeneratorOps op)
-	: SPHBody(system, body_name, refinement_level, smoothing_length_ratio, op)
+		Real smoothing_length_ratio, ParticleGenerator* particle_generator)
+	: SPHBody(system, body_name, refinement_level, smoothing_length_ratio, particle_generator)
 	{
-		system.AddFictitiousBody(this);
+		system.addAFictitiousBody(this);
 	}
 	//=================================================================================================//
-	void FictitiousBody::AllocateMemoryCellLinkedList()
-	{
-		/** do nothing here. */;
-	}
-	//=================================================================================================//
-	void FictitiousBody::UpdateCellLinkedList()
+	void FictitiousBody::allocateMemoryCellLinkedList()
 	{
 		/** do nothing here. */;
 	}
 	//=================================================================================================//
-	FictitiousBody* FictitiousBody::PointToThisObject()
+	void FictitiousBody::updateCellLinkedList()
+	{
+		/** do nothing here. */;
+	}
+	//=================================================================================================//
+	FictitiousBody* FictitiousBody::pointToThisObject()
 	{
 		return this;
 	}
 	//=================================================================================================//
 	void BodyPartByParticle::tagAParticle(size_t particle_index)
 	{
-		BaseParticleData& base_particle_data_i
-			= body_->base_particles_->base_particle_data_[particle_index];
 		body_part_particles_.push_back(particle_index);
-		base_particle_data_i.is_sortable_ = false;
+		body_->base_particles_->is_sortable_[particle_index] = false;
 	}
 	//=================================================================================================//
-	void BodyPartByParticle::TagBodyPart()
+	void BodyPartByParticle::tagBodyPart()
 	{
 		BaseParticles* base_particles = body_->base_particles_;
 		for (size_t i = 0; i < body_->number_of_particles_; ++i)
 		{
-			BaseParticleData &base_particle_data_i
-				= base_particles->base_particle_data_[i];
-			if (body_part_shape_.checkContain(base_particle_data_i.pos_n_)) tagAParticle(i);
+			if (body_part_shape_->checkContain(base_particles->pos_n_[i])) tagAParticle(i);
 		}
 	}
 	//=================================================================================================//
 	BodySurface::BodySurface(SPHBody* body)
 		: BodyPartByParticle(body, "Surface")
 	{
-		if (body->levelset_mesh_ == NULL)
-		{
-			std::cout << "\n BodySurface::BodySurface: Background mesh is required. Exit the program! \n";
-			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-			exit(0);
-		}
-		TagBodyPart();
+		tagBodyPart();
 	}	
 	//=================================================================================================//
-	void BodySurface::TagBodyPart()
+	void BodySurface::tagBodyPart()
 	{
 		for (size_t i = 0; i < body_->number_of_particles_; ++i)
 		{
-			BaseParticleData& base_particle_data_i
-				= body_->base_particles_->base_particle_data_[i];
-
-			Real phii = body_->levelset_mesh_->probeLevelSet(base_particle_data_i.pos_n_);
-			//this is important, as outer particles is neglect, is should be the particle spacing
-			if (phii < body_->particle_spacing_) tagAParticle(i);
+			Real phi = body_->body_shape_->findSignedDistance(body_->base_particles_->pos_n_[i]);
+			if (fabs(phi) < body_->particle_spacing_) tagAParticle(i);
 		}
 		std::cout << "Number of surface particles : " << body_part_particles_.size() << std::endl;
 	}
@@ -245,17 +214,15 @@ namespace SPH
 	BodySurfaceLayer::BodySurfaceLayer(SPHBody* body, Real layer_thickness)
 		: BodyPartByParticle(body, "InnerLayers"), layer_thickness_(layer_thickness)
 	{
-		TagBodyPart();
+		tagBodyPart();
 	}
 	//=================================================================================================//
-	void BodySurfaceLayer::TagBodyPart()
+	void BodySurfaceLayer::tagBodyPart()
 	{
 		for (size_t i = 0; i < body_->number_of_particles_; ++i)
 		{
-			BaseParticleData& base_particle_data_i
-				= body_->base_particles_->base_particle_data_[i];
-			Real distance 
-				= (body_->ClosestPointOnBodySurface(base_particle_data_i.pos_n_) - base_particle_data_i.pos_n_).norm();
+			Vecd position_i = body_->base_particles_->pos_n_[i];
+			Real distance = (body_->body_shape_->findClosestPoint(position_i) - position_i).norm();
 			if (distance < body_->particle_spacing_* layer_thickness_) tagAParticle(i);
 		}
 		std::cout << "Number of inner layers particles : " << body_part_particles_.size() << std::endl;
@@ -264,21 +231,7 @@ namespace SPH
 	NearBodySurface::NearBodySurface(SPHBody* body)
 		: BodyPartByCell(body, "NearBodySurface")
 	{
-		if (body->levelset_mesh_ == NULL)
-		{
-			std::cout << "\n NearBodySurface::NearBodySurface: Levelset mesh is required. Exit the program! \n";
-			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-			exit(0);
-		}
-		TagBodyPart();
-	}
-	//=================================================================================================//
-	SolidBodyPartForSimbody
-		::SolidBodyPartForSimbody(SPHBody* solid_body, string solid_body_part_name)
-		: BodyPartByParticle(solid_body, solid_body_part_name)
-	{
-		Solid* solid = dynamic_cast<Solid*>(body_->base_particles_->base_material_);
-		solid_body_density_ = solid->getReferenceDensity();
+		tagBodyPart();
 	}
 	//=================================================================================================//
 }

@@ -36,9 +36,8 @@ Real mu_f = rho0_f * U_f * DL / Re;		/**< Dynamics viscosity. */
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem &system, string body_name,
-		int refinement_level, ParticlesGeneratorOps op)
-		: FluidBody(system, body_name, refinement_level, op)
+	WaterBlock(SPHSystem &system, string body_name,	int refinement_level)
+		: FluidBody(system, body_name, refinement_level)
 	{
 		/** Geomtry definition. */
 		std::vector<Point> water_block_shape;
@@ -47,7 +46,8 @@ public:
 		water_block_shape.push_back(Point(DL, DH));
 		water_block_shape.push_back(Point(DL, 0.0));
 		water_block_shape.push_back(Point(0.0, 0.0));
-		body_shape_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+		body_shape_ = new ComplexShape(body_name);
+		body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::add);
 	}
 };
 /**
@@ -69,22 +69,19 @@ public:
  * application dependent initial condition 
  */
 class TaylorGreenInitialCondition
-	: public fluid_dynamics::WeaklyCompressibleFluidInitialCondition
+	: public fluid_dynamics::FluidInitialCondition
 {
 public:
 	TaylorGreenInitialCondition(FluidBody *water)
-		: fluid_dynamics::WeaklyCompressibleFluidInitialCondition(water) {};
+		: fluid_dynamics::FluidInitialCondition(water) {};
 protected:
-	void Update(size_t index_particle_i, Real dt) override 
+	void Update(size_t index_i, Real dt) override 
 	{
 		/** initial velocity profile */
-		BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-		FluidParticleData &fluid_data_i = particles_->fluid_particle_data_[index_particle_i];
-
-		base_particle_data_i.vel_n_[0] = -cos(2.0 * Pi * base_particle_data_i.pos_n_[0]) * 
-				sin(2.0 * Pi * base_particle_data_i.pos_n_[1]);
-		base_particle_data_i.vel_n_[1] = sin(2.0 * Pi * base_particle_data_i.pos_n_[0]) * 
-				cos(2.0 * Pi * base_particle_data_i.pos_n_[1]);
+		vel_n_[index_i][0] = -cos(2.0 * Pi * pos_n_[index_i][0]) *
+				sin(2.0 * Pi * pos_n_[index_i][1]);
+		vel_n_[index_i][1] = sin(2.0 * Pi * pos_n_[index_i][0]) *
+				cos(2.0 * Pi * pos_n_[index_i][1]);
 	}
 };
 /**
@@ -109,8 +106,7 @@ int main(int ac, char* av[])
 	/**
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
-	WaterBlock *water_block = new WaterBlock(system, "WaterBody", 
-		0, ParticlesGeneratorOps::lattice);
+	WaterBlock *water_block = new WaterBlock(system, "WaterBody", 0);
 	WaterMaterial 	*water_material = new WaterMaterial();
 	FluidParticles 	fluid_particles(water_block, water_material);
 	/** topology */
@@ -144,9 +140,9 @@ int main(int ac, char* av[])
 	 /** Evaluation of density by summation approach. */
 	fluid_dynamics::DensityBySummation 			update_fluid_density(water_block_complex);
 	/** Time step size without considering sound wave speed. */
-	fluid_dynamics::GetAdvectionTimeStepSize 	get_fluid_advection_time_step_size(water_block, U_f);
+	fluid_dynamics::AdvectionTimeStepSize 	get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
-	fluid_dynamics::GetAcousticTimeStepSize 	get_fluid_time_step_size(water_block);
+	fluid_dynamics::AcousticTimeStepSize 	get_fluid_time_step_size(water_block);
 	/** Pressure relaxation algorithm by using verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. 
 	  * The other reason is that we are using transport velocity formulation, 
@@ -154,7 +150,7 @@ int main(int ac, char* av[])
 	fluid_dynamics::PressureRelaxationFirstHalf pressure_relaxation_first_half(water_block_complex);
 	fluid_dynamics::PressureRelaxationSecondHalfRiemann pressure_relaxation_second_half(water_block_complex);
 	/** Computing viscous acceleration. */
-	fluid_dynamics::ComputingViscousAcceleration 	viscous_acceleration(water_block_complex);
+	fluid_dynamics::ViscousAcceleration 	viscous_acceleration(water_block_complex);
 	/** Impose transport velocity. */
 	fluid_dynamics::TransportVelocityFormulation transport_velocity_formulation(water_block_complex);
 	/**
@@ -182,10 +178,10 @@ int main(int ac, char* av[])
 		reload_insert_body_particles->ReadFromFile();
 	}
 	setup_taylor_green_velocity.exec();
-	system.InitializeSystemCellLinkedLists();
+	system.initializeSystemCellLinkedLists();
 	periodic_condition_x.parallel_exec();
 	periodic_condition_y.parallel_exec();
-	system.InitializeSystemConfigurations();
+	system.initializeSystemConfigurations();
 	/**
 	 * @brief The time stepping starts here.
 	 */
@@ -193,7 +189,7 @@ int main(int ac, char* av[])
 	if (system.restart_step_ != 0)
 	{
 		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
-		water_block->UpdateCellLinkedList();
+		water_block->updateCellLinkedList();
 		periodic_condition_x.parallel_exec();
 		periodic_condition_y.parallel_exec();
 		water_block_complex->updateConfiguration();
@@ -257,7 +253,7 @@ int main(int ac, char* av[])
 			/** Water block configuration and periodic condition. */
 			periodic_bounding_x.parallel_exec();
 			periodic_bounding_y.parallel_exec();
-			water_block->UpdateCellLinkedList();
+			water_block->updateCellLinkedList();
 			periodic_condition_x.parallel_exec();
 			periodic_condition_y.parallel_exec();
 			water_block_complex->updateConfiguration();

@@ -57,11 +57,11 @@ namespace SPH
 	/** Iterators for reduce functors. sequential computing. */
 	template <class ReturnType, typename ReduceOperation>
 	ReturnType ReduceIterator(size_t number_of_particles, ReturnType temp,
-		ReduceFunctor<ReturnType> &reduce_functor, ReduceOperation &ruduce_operation, Real dt = 0.0);
+		ReduceFunctor<ReturnType> &reduce_functor, ReduceOperation &reduce_operation, Real dt = 0.0);
 	/** Iterators for reduce functors. parallel computing. */
 	template <class ReturnType, typename ReduceOperation>
 	ReturnType ReduceIterator_parallel(size_t number_of_particles, ReturnType temp,
-		ReduceFunctor<ReturnType> &reduce_functor, ReduceOperation &ruduce_operation, Real dt = 0.0);
+		ReduceFunctor<ReturnType> &reduce_functor, ReduceOperation &reduce_operation, Real dt = 0.0);
 
 	/** Functor for configuration operation. */
 	typedef std::function<void(CellList*, Real)> CellListFunctor;
@@ -107,7 +107,7 @@ namespace SPH
 	struct ReduceUpperBound {
 		Vecd operator () (Vecd x, Vecd y) const {
 			Vecd upper_bound;
-			for (int i = 0; i < upper_bound.size(); ++i) upper_bound[i] = SMIN(x[i], y[i]);
+			for (int i = 0; i < upper_bound.size(); ++i) upper_bound[i] = SMAX(x[i], y[i]);
 			return upper_bound;
 		};
 	};
@@ -127,116 +127,136 @@ namespace SPH
 	};
 
 	/**
-	* @class Dynamics
-	* @brief The base class for all dynamics
+	* @class ParticleDynamics
+	* @brief The base class for all particle dynamics
 	* This class contains the only two interface functions available
 	* for particle dynamics. An specific implementation should be realized.
 	*/
-	template <class ReturnType>
-	class Dynamics : public GlobalStaticVariables
+	template <class ReturnType = void>
+	class ParticleDynamics : public GlobalStaticVariables
 	{
-	protected:
-		virtual void setupDynamics(Real dt = 0.0) = 0;
 	public:
 		/** Constructor */
-		explicit Dynamics() : GlobalStaticVariables() {};
-		virtual ~Dynamics() {};
+		explicit ParticleDynamics(SPHBody* sph_body) 
+			: GlobalStaticVariables(), sph_body_(sph_body),
+			split_cell_lists_(sph_body->split_cell_lists_),
+			mesh_cell_linked_list_(sph_body->mesh_cell_linked_list_) {};
+		virtual ~ParticleDynamics() {};
 
 		/** The only two functions can be called from outside
 		  * One is for sequential execution, the other is for parallel. */
 		virtual ReturnType exec(Real dt = 0.0) = 0;
 		virtual ReturnType parallel_exec(Real dt = 0.0) = 0;
+	protected:
+		SPHBody* sph_body_;
+		SplitCellLists& split_cell_lists_;
+		BaseMeshCellLinkedList* mesh_cell_linked_list_;
+
+		void setBodyUpdated() { sph_body_->setNewlyUpdated(); };
+		/** the function for set global parameters for the particle dynamics */
+		virtual void setupDynamics(Real dt = 0.0) {};
 	};
 
 	/**
-	* @class ParticleDynamics
-	* @brief Particle dynamics base class
-	* Bodies are involved the dynamics of a designated body
-	* and the bodies interacting with this body.
+	* @class DataDelegateSimple
+	* @brief prepare data for simple particle dynamics.
 	*/
-	template <class ReturnType, class BodyType, 
-		class ParticlesType = BaseParticles, class MaterialType = BaseMaterial>
-	class ParticleDynamics : public Dynamics<ReturnType>
+	template <class BodyType = SPHBody, 
+			  class ParticlesType = BaseParticles, 
+			  class MaterialType = BaseMaterial>
+	class DataDelegateSimple
 	{
+	public:
+		/** Constructor */
+		explicit DataDelegateSimple(SPHBody* body) :
+			body_(dynamic_cast<BodyType*>(body)),
+			particles_(dynamic_cast<ParticlesType*>(body->base_particles_)),
+			material_(dynamic_cast<MaterialType*>(body->base_particles_->base_material_)) {};
+		virtual ~DataDelegateSimple() {};
+
 	protected:
 		BodyType* body_;
 		ParticlesType* particles_;
 		MaterialType* material_;
-		SplitCellLists& split_cell_lists_;
-		BaseMeshCellLinkedList* mesh_cell_linked_list_;
-
-		/** the function for set global parameters for the particle dynamics */
-		virtual void setupDynamics(Real dt = 0.0) override { body_->setNewlyUpdated(); };
-	public:
-		/** Constructor */
-		explicit ParticleDynamics(SPHBody* body) : Dynamics<ReturnType>(), 
-			body_(dynamic_cast<BodyType*>(body)),
-			particles_(dynamic_cast<ParticlesType*>(body->base_particles_)),
-			material_(dynamic_cast<MaterialType*>(body->base_particles_->base_material_)),
-			split_cell_lists_(body->split_cell_lists_), mesh_cell_linked_list_(body->base_mesh_cell_linked_list_) {};
-		virtual ~ParticleDynamics() {};
 	};
 
 	/**
-	* @class ParticleDynamicsWithInnerConfigurations
-	* @brief Particle dynamics base class for the case 
-	* with the inner configuration
+	* @class DataDelegateInner
+	* @brief prepare data for inner particle dynamics
 	*/
-	template <class BodyType, class ParticlesType = BaseParticles, class MaterialType = BaseMaterial>
-	class ParticleDynamicsWithInnerConfigurations
-		: public ParticleDynamics<void, BodyType, ParticlesType, MaterialType>
+	template <class BodyType = SPHBody,
+			  class ParticlesType = BaseParticles,
+			  class MaterialType = BaseMaterial>
+	class DataDelegateInner
 	{
-	protected:
-		/** inner configuration of the designated body */
-		ParticleConfiguration& inner_configuration_;
 	public:
-		explicit ParticleDynamicsWithInnerConfigurations(SPHBodyInnerRelation* body_inner_relation)
-			: ParticleDynamics<void, BodyType, ParticlesType, MaterialType>(body_inner_relation->body_),
+		explicit DataDelegateInner(SPHBodyInnerRelation* body_inner_relation) : 
+			body_(dynamic_cast<BodyType*>(body_inner_relation->sph_body_)),
+			particles_(dynamic_cast<ParticlesType*>(body_->base_particles_)),
+			material_(dynamic_cast<MaterialType*>(body_->base_particles_->base_material_)),
 			inner_configuration_(body_inner_relation->inner_configuration_) {};
-		virtual ~ParticleDynamicsWithInnerConfigurations() {};
-	};
-
-	/**
-	* @class ParticleDynamicsWithContactConfigurations
-	* @brief This is the bas class for the case with contact configurations
-	*/
-	template <class BodyType, class ParticlesType, class MaterialType,
-		class ContactBodyType, class ContactParticlesType, class ContactMaterialType = BaseMaterial>
-		class ParticleDynamicsWithContactConfigurations
-		: public ParticleDynamics<void, BodyType, ParticlesType, MaterialType>
-	{
+		virtual ~DataDelegateInner() {};
 	protected:
-		StdVec<ContactBodyType*>  contact_bodies_;
-		StdVec<ContactParticlesType*>  contact_particles_;
-		StdVec<ContactMaterialType*>  contact_material_;
-
-		/** Configurations for particle interaction between bodies. */
-		ContatcParticleConfiguration& contact_configuration_;
-	public:
-		explicit ParticleDynamicsWithContactConfigurations(SPHBodyContactRelation* body_contact_relation);
-		virtual ~ParticleDynamicsWithContactConfigurations() {};
-	};
-
-	/**
-	* @class ParticleDynamicsWithComplexConfigurations
-	* @brief This is the bas class for the case with contact configurations
-	*/
-	template <class BodyType, class ParticlesType, class MaterialType,
-		class ContactBodyType, class ContactParticlesType, class ContactMaterialType = BaseMaterial>
-		class ParticleDynamicsWithComplexConfigurations
-		: public ParticleDynamics<void, BodyType, ParticlesType, MaterialType>
-	{
-	protected:
-		StdVec<ContactBodyType*>  contact_bodies_;
-		StdVec<ContactParticlesType*>  contact_particles_;
-		StdVec<ContactMaterialType*>  contact_material_;
-
+		BodyType* body_;
+		ParticlesType* particles_;
+		MaterialType* material_;
 		/** inner configuration of the designated body */
 		ParticleConfiguration& inner_configuration_;
+	};
+
+	/**
+	* @class DataDelegateContact
+	* @brief prepare data for contact particle dynamics
+	*/
+	template <class BodyType = SPHBody,
+			  class ParticlesType = BaseParticles,
+			  class MaterialType = BaseMaterial,
+			  class ContactBodyType = SPHBody,
+			  class ContactParticlesType = BaseParticles,
+			  class ContactMaterialType = BaseMaterial>
+	class DataDelegateContact
+	{
+	public:
+		explicit DataDelegateContact(SPHBodyContactRelation* body_contact_relation);
+		virtual ~DataDelegateContact() {};
+	protected:
+		BodyType* body_;
+		ParticlesType* particles_;
+		MaterialType* material_;
+
+		StdVec<ContactBodyType*>  contact_bodies_;
+		StdVec<ContactParticlesType*>  contact_particles_;
+		StdVec<ContactMaterialType*>  contact_material_;
 		/** Configurations for particle interaction between bodies. */
 		ContatcParticleConfiguration& contact_configuration_;
+	};
+
+	/**
+	* @class DataDelegateComplex
+	* @brief prepare data for complex particle dynamics
+	*/
+	template <class BodyType = SPHBody,
+		class ParticlesType = BaseParticles,
+		class MaterialType = BaseMaterial,
+		class ContactBodyType = SPHBody,
+		class ContactParticlesType = BaseParticles,
+		class ContactMaterialType = BaseMaterial>
+	class DataDelegateComplex
+	{
 	public:
-		explicit ParticleDynamicsWithComplexConfigurations(SPHBodyComplexRelation* body_complex_relation);
-		virtual ~ParticleDynamicsWithComplexConfigurations() {};
+		explicit DataDelegateComplex(SPHBodyComplexRelation* body_complex_relation);
+		virtual ~DataDelegateComplex() {};
+	protected:
+		BodyType* body_;
+		ParticlesType* particles_;
+		MaterialType* material_;
+		/** inner configuration of the designated body */
+		ParticleConfiguration& inner_configuration_;
+
+		StdVec<ContactBodyType*>  contact_bodies_;
+		StdVec<ContactParticlesType*>  contact_particles_;
+		StdVec<ContactMaterialType*>  contact_material_;
+		/** Configurations for particle interaction between bodies. */
+		ContatcParticleConfiguration& contact_configuration_;
 	};
 }

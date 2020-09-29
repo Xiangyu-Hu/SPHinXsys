@@ -22,7 +22,7 @@
 * --------------------------------------------------------------------------*/
 /**
 * @file 	particle_dynamics_diffusion.h
-* @brief 	This is the particle dynnamics apllicable for all type bodies
+* @brief 	This is the particle dynamics aplliable for all type bodies
 * @author	Chi ZHang and Xiangyu Hu
 * @version	0.2
 * 			Little knowledge of C++
@@ -33,11 +33,6 @@
 *			So a temporary is created. Same is the case for user-defined types as well: Foo &obj = Foo(); 
 *			See : https://stackoverflow.com/questions/18565167/non-const-lvalue-references
 *			Chi Zhang
-*			0.2.1
-*			Low-storage 4rd Runge-Kutta algorithm is added.
-*			Ref : doi:10.1016/j.jcp.2009.11.006
-*			A template-parameter shall not be redeclared within its scope (including nested scopes). 
-*			A template- parameter shall not have the same name as the template name. 
 */
 
 #pragma once
@@ -50,40 +45,49 @@
 namespace SPH
 {
 	template<class BodyType, class BaseParticlesType, class BaseMaterialType>
-	using DiffusionBase = ParticleDynamics<Real, BodyType,
-		DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>, DiffusionReactionMaterial<BaseParticlesType, BaseMaterialType>>;
+	using  DiffusionReactionDataDelegateSimple = DataDelegateSimple<BodyType,
+												 DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>, 
+												 DiffusionReactionMaterial<BaseParticlesType, BaseMaterialType>>;
 
 	template<class BodyType, class BaseParticlesType, class BaseMaterialType>
-	using DiffusionReactionSimple = ParticleDynamicsSimple<BodyType,
-		DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>, DiffusionReactionMaterial<BaseParticlesType, BaseMaterialType>>;
+	using DiffusionReactionDataDelegateInner = DataDelegateInner<BodyType,
+											   DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>, 
+											   DiffusionReactionMaterial<BaseParticlesType, BaseMaterialType>>;
 
+	/**
+	* @class  DiffusionReactionInitialCondition
+	* @brief Computing the acoustic time step size
+	* computing time step size
+	 */
 	template<class BodyType, class BaseParticlesType, class BaseMaterialType>
-	using DiffusionInner = ParticleDynamicsInner<BodyType,
-		DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>, DiffusionReactionMaterial<BaseParticlesType, BaseMaterialType>>;
-
-	template<class BodyType, class BaseParticlesType, class BaseMaterialType>
-	using DiffusionInnerWithUpdate = ParticleDynamicsInnerWithUpdate<BodyType,
-		DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>, DiffusionReactionMaterial<BaseParticlesType, BaseMaterialType>>;
-
-	template <class BodyType, class BaseParticlesType, class BodyPartByParticleType, class BaseMaterialType>
-	using DiffusionReactionConstraint = PartDynamicsByParticle<BodyType,
-		DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>, BodyPartByParticleType, 
-		DiffusionReactionMaterial<BaseParticlesType, BaseMaterialType>>;
+	class DiffusionReactionInitialCondition :
+		public  ParticleDynamicsSimple,
+		public DiffusionReactionDataDelegateSimple<BodyType, BaseParticlesType, BaseMaterialType>
+	{
+	public:
+		DiffusionReactionInitialCondition(SolidBody* diffusion_body) :
+			ParticleDynamicsSimple(diffusion_body),
+			DiffusionReactionDataDelegateSimple<SolidBody, SolidParticles, Solid>(diffusion_body),
+			pos_n_(this->particles_->pos_n_), species_n_(this->particles_->species_n_) {};
+		virtual ~DiffusionReactionInitialCondition() {};
+	protected:
+		StdLargeVec<Vecd>& pos_n_;
+		StdVec<StdLargeVec<Real>>& species_n_;
+	};
 
 	/**
 	* @class GetDiffusionTimeStepSize
-	* @brief Computing the acoustic time step size
-	* computing time step size
+	* @brief Computing the time step size based on diffusion coefficient and particle smoothing length
 	*/
 	template<class BodyType, class BaseParticlesType, class BaseMaterialType>
-	class GetDiffusionTimeStepSize
-		: public  DiffusionBase<BodyType, BaseParticlesType, BaseMaterialType>
+	class GetDiffusionTimeStepSize : 
+		public  ParticleDynamics<Real>,
+		public DiffusionReactionDataDelegateSimple<BodyType, BaseParticlesType, BaseMaterialType>
 	{
-	protected:
-		Real diff_time_step_;
 	public:
-		explicit GetDiffusionTimeStepSize(BodyType* body)
-			: DiffusionBase<BodyType, BaseParticlesType, BaseMaterialType>(body) 
+		explicit GetDiffusionTimeStepSize(BodyType* body) : 
+			ParticleDynamics<Real>(body), 
+			DiffusionReactionDataDelegateSimple<BodyType, BaseParticlesType, BaseMaterialType>(body)
 		{
 			Real smoothing_length = body->kernel_->GetSmoothingLength();
 			diff_time_step_ = this->material_->getDiffusionTimeStepSize(smoothing_length);
@@ -92,29 +96,34 @@ namespace SPH
 
 		virtual Real exec(Real dt = 0.0) override { return diff_time_step_; };
 		virtual Real parallel_exec(Real dt = 0.0) override { return exec(dt); };
+	protected:
+		Real diff_time_step_;
 	};
 
 	/**
-	* @class RelaxationOfAllDifussionSpecies
+	* @class RelaxationOfAllDiffussionSpecies
 	* @brief Compute the diffusion relaxation process of all species
 	*/
 	template<class BodyType, class BaseParticlesType, class BaseMaterialType>
-	class RelaxationOfAllDifussionSpecies
-		: public DiffusionInnerWithUpdate<BodyType, BaseParticlesType, BaseMaterialType>
+	class RelaxationOfAllDiffussionSpecies : 
+		public ParticleDynamicsInnerWithUpdate,
+		public DiffusionReactionDataDelegateInner<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 		/** all diffusion species and diffusion relation. */
 		StdVec<BaseDiffusion*> species_diffusion_;
+		StdVec<StdLargeVec<Real>>& species_n_;
+		StdVec<StdLargeVec<Real>>& diffusion_dt_;
+		StdLargeVec<Real>& Vol_;
 	protected:
 		/**
 		  * @brief Initialize change rate to zero for all diffusion species.
 		  * @param[in] diffusion_reaction_data_i Diffusion reaction data of particle i.
 		  */
-		void initializeDiffusionChangeRate(DiffusionReactionData& diffusion_reaction_data_i)
+		void initializeDiffusionChangeRate(size_t particle_i)
 		{
 			for (size_t m = 0; m < species_diffusion_.size(); ++m)
 			{
-				size_t k = species_diffusion_[m]->diffusion_species_index_;
-				diffusion_reaction_data_i.dspecies_dt_[k] = 0;
+				diffusion_dt_[m][particle_i] = 0;
 			}
 		};
 
@@ -127,16 +136,14 @@ namespace SPH
 		 * @param[in] diffusion_reaction_data_i Diffusion reaction data of particle i;
 		 * @param[in] diffusion_reaction_data_j Diffusion reaction data of particle j;
 		 */
-		void getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd& e_ij, Real surface_area_ij,
-			DiffusionReactionData& diffusion_reaction_data_i, DiffusionReactionData& diffusion_reaction_data_j)
+		void getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd& e_ij, Real surface_area_ij)
 		{
 			for (size_t m = 0; m < species_diffusion_.size(); ++m)
 			{
 				Real diff_coff_ij = species_diffusion_[m]->getInterParticleDiffusionCoff(particle_i, particle_j, e_ij);
-				size_t k = species_diffusion_[m]->diffusion_species_index_;
 				size_t l = species_diffusion_[m]->gradient_species_index_;
-				Real phi_ij = diffusion_reaction_data_i.species_n_[l] - diffusion_reaction_data_j.species_n_[l];
-				diffusion_reaction_data_i.dspecies_dt_[k] += diff_coff_ij * phi_ij * surface_area_ij;
+				Real phi_ij = species_n_[l][particle_i] - species_n_[l][particle_j];
+				diffusion_dt_[m][particle_i] += diff_coff_ij * phi_ij * surface_area_ij;
 			}
 		};
 
@@ -145,128 +152,157 @@ namespace SPH
 		 * @param[in] diffusion_reaction_data_i Diffusion reaction data of particle i;
 		 * @param[in] dt Time step;
 		 */
-		virtual void updateDiffusionSpecies(DiffusionReactionData& diffusion_reaction_data_i, Real dt)
+		virtual void updateSpeciesDiffusion(size_t particle_i, Real dt)
 		{
 			for (size_t m = 0; m < species_diffusion_.size(); ++m)
 			{
 				size_t k = species_diffusion_[m]->diffusion_species_index_;
-				diffusion_reaction_data_i.species_n_[k] += dt * diffusion_reaction_data_i.dspecies_dt_[k];
+				species_n_[k][particle_i] += dt * diffusion_dt_[m][particle_i];
 			}
 		};
 
-		virtual void InnerInteraction(size_t index_particle_i, Real dt = 0.0) override
+		virtual void InnerInteraction(size_t index_i, Real dt = 0.0) override
 		{
 			DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>* particles = this->particles_;
-			Neighborhood& inner_neighborhood = this->inner_configuration_[index_particle_i];
+			Neighborhood& inner_neighborhood = this->inner_configuration_[index_i];
 
-			StdLargeVec<DiffusionReactionData>& diffusion_reaction_data = particles->diffusion_reaction_data_;
-			StdLargeVec<BaseParticleData>& base_particle_data = particles->base_particle_data_;
-			DiffusionReactionData& diffusion_reaction_data_i = diffusion_reaction_data[index_particle_i];
-
-			initializeDiffusionChangeRate(diffusion_reaction_data_i);
-			CommonRelationList& inner_common_relations = inner_neighborhood.common_relation_list_;
+			initializeDiffusionChangeRate(index_i);
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
-				CommonRelation& common_relation = inner_common_relations[n];
-				size_t index_particle_j = common_relation.j_;
-				Vecd& e_ij = common_relation.e_ij_;
-				DiffusionReactionData& diffusion_reaction_data_j = diffusion_reaction_data[index_particle_j];
+				size_t index_j = inner_neighborhood.j_[n];
+				Real dW_ij_ = inner_neighborhood.dW_ij_[n];
+				Real r_ij_ = inner_neighborhood.r_ij_[n];
+				Vecd& e_ij = inner_neighborhood.e_ij_[n];
 	
-				const Vecd& gradi_ij = particles->getKernelGradient(index_particle_i, index_particle_j, common_relation.dW_ij_, e_ij);
-				Real area_ij = 2.0 * base_particle_data[index_particle_j].Vol_ * dot(gradi_ij, e_ij) / common_relation.r_ij_;
-				getDiffusionChangeRate(index_particle_i, index_particle_j, e_ij, area_ij,
-					diffusion_reaction_data_i, diffusion_reaction_data_j);
+				const Vecd& gradi_ij = particles->getKernelGradient(index_i, index_j, dW_ij_, e_ij);
+				Real area_ij = 2.0 * Vol_[index_j] * dot(gradi_ij, e_ij) /r_ij_;
+				getDiffusionChangeRate(index_i, index_j, e_ij, area_ij);
 			}
 		};
 
-		virtual void Update(size_t index_particle_i, Real dt = 0.0) override 
+		virtual void Update(size_t index_i, Real dt = 0.0) override 
 		{
-			DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>* particles = this->particles_;
-			StdLargeVec<DiffusionReactionData>& diffusion_reaction_data = particles->diffusion_reaction_data_;
-			DiffusionReactionData& diffusion_reaction_data_i = diffusion_reaction_data[index_particle_i];
-			updateDiffusionSpecies(diffusion_reaction_data_i, dt);
+			updateSpeciesDiffusion(index_i, dt);
 		};
 	public:
-		RelaxationOfAllDifussionSpecies(SPHBodyInnerRelation* body_inner_relation)
-			: DiffusionInnerWithUpdate<BodyType, BaseParticlesType, BaseMaterialType>(body_inner_relation) {
-			species_diffusion_ = this->material_->getDiffusionSpecies();
+		RelaxationOfAllDiffussionSpecies(SPHBodyInnerRelation* body_inner_relation)
+			: ParticleDynamicsInnerWithUpdate(body_inner_relation),
+			DiffusionReactionDataDelegateInner<BodyType, BaseParticlesType, BaseMaterialType>(body_inner_relation),
+			species_n_(this->particles_->species_n_),
+			diffusion_dt_(this->particles_->diffusion_dt_), Vol_(this->particles_->Vol_)
+		{
+			species_diffusion_ = this->material_->SpeciesDiffusion();
 		};
-		virtual ~RelaxationOfAllDifussionSpecies() {};
+		virtual ~RelaxationOfAllDiffussionSpecies() {};
+	};
+
+	/**
+	* @class RungeKuttaInitialization
+	* @brief initialization of a runge-kutta integration scheme
+	*/
+	template<class BodyType, class BaseParticlesType, class BaseMaterialType>
+	class RungeKuttaInitialization :
+		public ParticleDynamicsSimple,
+		public DiffusionReactionDataDelegateSimple<BodyType, BaseParticlesType, BaseMaterialType>
+	{
+		StdVec<BaseDiffusion*> species_diffusion_;
+		StdVec<StdLargeVec<Real>>& species_n_, & species_s_;
+
+		void initializeIntermediateValue(size_t particle_i)
+		{
+			for (size_t m = 0; m < species_diffusion_.size(); ++m)
+			{
+				size_t k = species_diffusion_[m]->diffusion_species_index_;
+				species_s_[m][particle_i] = species_n_[k][particle_i];
+			}
+		};
+
+		virtual void Update(size_t index_i, Real dt = 0.0) override
+		{
+			initializeIntermediateValue(index_i);
+		};
+	public:
+		RungeKuttaInitialization(SPHBody* body, StdVec<StdLargeVec<Real>>& species_s) :
+			ParticleDynamicsSimple(body),
+			DiffusionReactionDataDelegateSimple<BodyType, BaseParticlesType, BaseMaterialType>(body),
+			species_n_(this->particles_->species_n_), species_s_(species_s)
+		{
+			species_diffusion_ = this->material_->SpeciesDiffusion();
+		};
+		virtual ~RungeKuttaInitialization() {};
+	};
+
+	/**
+	* @class RungeKutta2Stages2ndStage
+	* @brief the second stage of the second runge-kutta scheme
+	*/
+	template<class BodyType, class BaseParticlesType, class BaseMaterialType>
+	class RungeKutta2Stages2ndStage :
+		public RelaxationOfAllDiffussionSpecies<BodyType, BaseParticlesType, BaseMaterialType>
+	{
+		/** all diffusion species and diffusion relation. */
+		StdVec<BaseDiffusion*> species_diffusion_;
+		StdVec<StdLargeVec<Real>>& species_n_;
+		StdVec<StdLargeVec<Real>>& diffusion_dt_;
+	protected:
+		StdVec<StdLargeVec<Real>>& species_s_;
+		virtual void updateSpeciesDiffusion(size_t particle_i, Real dt) override
+		{
+			for (size_t m = 0; m < this->species_diffusion_.size(); ++m)
+			{
+				size_t k = species_diffusion_[m]->diffusion_species_index_;
+				species_n_[k][particle_i] = 0.5 * species_s_[m][particle_i]
+					+ 0.5 * (species_n_[k][particle_i] + dt * diffusion_dt_[m][particle_i]);
+			}
+		};
+	public:
+		RungeKutta2Stages2ndStage(SPHBodyInnerRelation* body_inner_relation, StdVec<StdLargeVec<Real>>& species_s)
+			: RelaxationOfAllDiffussionSpecies<BodyType, BaseParticlesType, BaseMaterialType>(body_inner_relation),
+			species_n_(this->particles_->species_n_), diffusion_dt_(this->particles_->diffusion_dt_),
+			species_s_(species_s) 
+		{
+			species_diffusion_ = this->material_->SpeciesDiffusion();
+		};
+		virtual ~RungeKutta2Stages2ndStage() {};
 	};
 
 	/**
 		* @class RelaxationOfAllDiffusionSpeciesRK2
 		* @brief Compute the diffusion relaxation process of all species
-		* with second order Runge Kutta time stepping
+		* with second order Runge-Kutta time stepping
 		*/
 	template<class BodyType, class BaseParticlesType, class BaseMaterialType>
-	class RelaxationOfAllDiffusionSpeciesRK2
-		: public ParticleDynamics<void, BodyType, BaseParticlesType, BaseMaterialType>
+	class RelaxationOfAllDiffusionSpeciesRK2 : public ParticleDynamics<void>,
+		public DiffusionReactionDataDelegateSimple<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 	protected:
-		template<class ParameterBody, class ParameterBaseParticles, class ParameterBaseMaterial>
-		class RungeKuttaInitialization :
-			public DiffusionReactionSimple<ParameterBody, ParameterBaseParticles, ParameterBaseMaterial>
-		{
-			StdVec<BaseDiffusion*> species_diffusion_;
-		protected:
-
-			void initializeIntermediateValue(DiffusionReactionData& diffusion_reaction_data_i)
-			{
-				for (size_t m = 0; m < species_diffusion_.size(); ++m)
-				{
-					size_t k = species_diffusion_[m]->diffusion_species_index_;
-					diffusion_reaction_data_i.species_s_[k] = diffusion_reaction_data_i.species_n_[k];
-				}
-			};
-
-			virtual void Update(size_t index_particle_i, Real dt = 0.0) override 
-			{
-				DiffusionReactionParticles<ParameterBaseParticles, ParameterBaseMaterial>* particles = this->particles_;
-				StdLargeVec<DiffusionReactionData>& diffusion_reaction_data = particles->diffusion_reaction_data_;
-				DiffusionReactionData& diffusion_reaction_data_i = diffusion_reaction_data[index_particle_i];
-				initializeIntermediateValue(diffusion_reaction_data_i);
-			};
-		public:
-			RungeKuttaInitialization(SPHBody* body)
-				: DiffusionReactionSimple<ParameterBody, ParameterBaseParticles, ParameterBaseMaterial>(body) 
-			{
-				species_diffusion_ = this->material_->getDiffusionSpecies();
-			};;
-			virtual ~RungeKuttaInitialization() {};
-		};
-
-		template<class ParameterBody, class ParameterBaseParticles, class ParameterBaseMaterial>
-		class RungeKutta2Stages2ndStage : public RelaxationOfAllDifussionSpecies<ParameterBody, ParameterBaseParticles, ParameterBaseMaterial>
-		{
-			StdVec<BaseDiffusion*> species_diffusion_;
-		protected:
-			virtual void updateDiffusionSpecies(DiffusionReactionData& diffusion_reaction_data_i, Real dt) override
-			{
-				for (size_t m = 0; m < species_diffusion_.size(); ++m)
-				{
-					size_t k = species_diffusion_[m]->diffusion_species_index_;
-					diffusion_reaction_data_i.species_n_[k] = 0.5 * diffusion_reaction_data_i.species_s_[k]
-					+ 0.5 * (diffusion_reaction_data_i.species_n_[k] + dt * diffusion_reaction_data_i.dspecies_dt_[k]);
-				}
-			};
-		public:
-			RungeKutta2Stages2ndStage(SPHBodyInnerRelation* body_inner_relation)
-				: RelaxationOfAllDifussionSpecies<ParameterBody, ParameterBaseParticles, ParameterBaseMaterial>(body_inner_relation)
-			{
-				species_diffusion_ = this->material_->getDiffusionSpecies();
-			};
-			virtual ~RungeKutta2Stages2ndStage() {};
-		};
+		StdVec<BaseDiffusion*> species_diffusion_;
+		/** Intermediate Value */
+		StdVec<StdLargeVec<Real>> species_s_;
 
 		RungeKuttaInitialization<BodyType, BaseParticlesType, BaseMaterialType> runge_kutta_initialization_;
-		RelaxationOfAllDifussionSpecies<BodyType, BaseParticlesType, BaseMaterialType> runge_kutta_1st_stage_;
+		RelaxationOfAllDiffussionSpecies<BodyType, BaseParticlesType, BaseMaterialType> runge_kutta_1st_stage_;
 		RungeKutta2Stages2ndStage<BodyType, BaseParticlesType, BaseMaterialType> runge_kutta_2nd_stage_;
 	public:
-		RelaxationOfAllDiffusionSpeciesRK2(SPHBodyInnerRelation* body_inner_relation)
-			: ParticleDynamics<void, BodyType, BaseParticlesType, BaseMaterialType>(body_inner_relation->body_),
-			runge_kutta_initialization_(body_inner_relation->body_), runge_kutta_1st_stage_(body_inner_relation),
-			runge_kutta_2nd_stage_(body_inner_relation){};
+		RelaxationOfAllDiffusionSpeciesRK2(SPHBodyInnerRelation* body_inner_relation) : 
+			ParticleDynamics<void>(body_inner_relation->sph_body_),
+			DiffusionReactionDataDelegateSimple<BodyType, BaseParticlesType, BaseMaterialType>(body_inner_relation->sph_body_),
+			runge_kutta_initialization_(body_inner_relation->sph_body_, species_s_),
+			runge_kutta_1st_stage_(body_inner_relation),
+			runge_kutta_2nd_stage_(body_inner_relation, species_s_)
+		{
+			StdVec<BaseDiffusion*> species_diffusion_ = this->material_->SpeciesDiffusion();
+
+			size_t number_of_diffusion_species = species_diffusion_.size();
+			species_s_.resize(number_of_diffusion_species);
+			for (size_t m = 0; m < number_of_diffusion_species; ++m)
+			{
+				//the size should be the same as that in the base particles
+				species_s_[m].resize(this->particles_->real_particles_bound_);
+				//register data in base particles
+				this->particles_->registered_scalars_.push_back(&species_s_[m]);
+			}
+		};
 		virtual ~RelaxationOfAllDiffusionSpeciesRK2() {};
 
 		virtual void exec(Real dt = 0.0) override {
@@ -282,18 +318,20 @@ namespace SPH
 	};
 
 	/**
-	* @class RelaxationOfAllReactionsFoward
+	* @class RelaxationOfAllReactionsForward
 	* @brief Compute the reaction process of all species by forward splitting
 	*/
 	template<class BodyType, class BaseParticlesType, class BaseMaterialType>
-	class RelaxationOfAllReactionsFoward :
-		public DiffusionReactionSimple<BodyType, BaseParticlesType, BaseMaterialType>
+	class RelaxationOfAllReactionsForward :
+		public ParticleDynamicsSimple,
+		public DiffusionReactionDataDelegateSimple<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 		/** The reaction model for all reactive species. */
 		BaseReactionModel* species_reaction_;
+		StdVec<StdLargeVec<Real>>& species_n_;
 	protected:
 		/**
-		 * @brief Splitting scheme for directly computing one time step integeration for a species.
+		 * @brief Splitting scheme for directly computing one time step integration for a species.
 		 * @param[in] input Input state of species.
 		 * @param[in] production_rate Production rate of species.
 		 * @param[in] loss_rate Loss rate of species.
@@ -304,34 +342,36 @@ namespace SPH
 		{
 			return input * exp(-loss_rate * dt) + production_rate * (1.0 - exp(-loss_rate * dt)) / (loss_rate + TinyReal);
 		};
-		/** Get change rate for all rective species by forward sweeping.
-		 * @brief Get change rate for all rective species by backward sweeping.
+		/** Get change rate for all reactive species by forward sweeping.
+		 * @brief Get change rate for all reactive species by backward sweeping.
 		 * @param[in] diffusion_reaction_data_i Diffusion Reaction Data.
 		 * @param[in] dt Time step size.
 		 **/
-		void UpdateReactiveSpeciesForward(DiffusionReactionData& diffusion_reaction_data_i, Real dt) {
+		void UpdateReactiveSpeciesForward(size_t particle_i, Real dt) {
+
+		};
+
+		virtual void Update(size_t index_i, Real dt = 0.0) override 
+		{
 			IndexVector& reactive_species = species_reaction_->reactive_species_;
 
 			for (size_t m = 0; m != reactive_species.size(); ++m) {
 				size_t k = reactive_species[m];
-				Real production_rate = species_reaction_->get_production_rates_[k](diffusion_reaction_data_i.species_n_);
-				Real loss_rate = species_reaction_->get_loss_rates_[k](diffusion_reaction_data_i.species_n_);
-				Real input = diffusion_reaction_data_i.species_n_[k];
-				diffusion_reaction_data_i.species_n_[k] = updateAReactionSpecies(input, production_rate, loss_rate, dt);
+				Real production_rate = species_reaction_->get_production_rates_[k](species_n_, index_i);
+				Real loss_rate = species_reaction_->get_loss_rates_[k](species_n_, index_i);
+				Real input = species_n_[k][index_i];
+				species_n_[k][index_i] = updateAReactionSpecies(input, production_rate, loss_rate, dt);
 			}
-		};
-
-		virtual void Update(size_t index_particle_i, Real dt = 0.0) override {
-			DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>* particles = this->particles_;
-			DiffusionReactionData& diffusion_reaction_data_i = particles->diffusion_reaction_data_[index_particle_i];
-			UpdateReactiveSpeciesForward(diffusion_reaction_data_i, dt);
-		};
+		}
 	public:
-		RelaxationOfAllReactionsFoward(BodyType* body)
-			: DiffusionReactionSimple<BodyType, BaseParticlesType, BaseMaterialType>(body) {
-			species_reaction_ = this->material_->getReactionModel();
+		RelaxationOfAllReactionsForward(BodyType* body) : 
+			ParticleDynamicsSimple(body),
+			DiffusionReactionDataDelegateSimple<BodyType, BaseParticlesType, BaseMaterialType>(body),
+			species_n_(this->particles_->species_n_) 
+		{
+			species_reaction_ = this->material_->SpeciesReaction();
 		};
-		virtual ~RelaxationOfAllReactionsFoward() {};
+		virtual ~RelaxationOfAllReactionsForward() {};
 	};
 
 	/**
@@ -340,10 +380,12 @@ namespace SPH
 	*/
 	template<class BodyType, class BaseParticlesType, class BaseMaterialType>
 	class RelaxationOfAllReactionsBackward :
-		public DiffusionReactionSimple<BodyType, BaseParticlesType, BaseMaterialType>
+		public ParticleDynamicsSimple,
+		public DiffusionReactionDataDelegateSimple<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 		/** The reaction model for all reactive species. */
 		BaseReactionModel* species_reaction_;
+		StdVec<StdLargeVec<Real>>& species_n_;
 	protected:
 		/**
 		 * @brief Splitting scheme for directly computing one time step integeration for a species.
@@ -358,67 +400,68 @@ namespace SPH
 			return input * exp(-loss_rate * dt) + production_rate * (1.0 - exp(-loss_rate * dt)) / (loss_rate + TinyReal);
 		};
 
-		/**
-		 * @brief Get change rate for all rective species by backward sweeping.
-		 * @param[in] diffusion_reaction_data_i Diffusion Reaction Data.
-		 * @param[in] dt Time step size.
-		 **/
-		void UpdateReactiveSpeciesBackward(DiffusionReactionData& diffusion_reaction_data_i, Real dt)
+		virtual void Update(size_t index_i, Real dt = 0.0) override
 		{
 			IndexVector& reactive_species = species_reaction_->reactive_species_;
 
 			for (size_t m = reactive_species.size(); m != 0; --m) {
 				size_t k = reactive_species[m - 1];
-				Real production_rate = species_reaction_->get_production_rates_[k](diffusion_reaction_data_i.species_n_);
-				Real loss_rate = species_reaction_->get_loss_rates_[k](diffusion_reaction_data_i.species_n_);
-				Real input = diffusion_reaction_data_i.species_n_[k];
-				diffusion_reaction_data_i.species_n_[k] = updateAReactionSpecies(input, production_rate, loss_rate, dt);
+				Real production_rate = species_reaction_->get_production_rates_[k](species_n_, index_i);
+				Real loss_rate = species_reaction_->get_loss_rates_[k](species_n_, index_i);
+				Real input = species_n_[k][index_i];
+				species_n_[k][index_i] = updateAReactionSpecies(input, production_rate, loss_rate, dt);
 			}
 		};
-
-		virtual void Update(size_t index_particle_i, Real dt = 0.0) override
-		{
-			DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>* particles = this->particles_;
-			DiffusionReactionData& diffusion_reaction_data_i = particles->diffusion_reaction_data_[index_particle_i];
-			UpdateReactiveSpeciesBackward(diffusion_reaction_data_i, dt);
-		};
 	public:
-		RelaxationOfAllReactionsBackward(BodyType* body)
-			: DiffusionReactionSimple<BodyType, BaseParticlesType, BaseMaterialType>(body) 
+		RelaxationOfAllReactionsBackward(BodyType* body) :
+			ParticleDynamicsSimple(body),
+			DiffusionReactionDataDelegateSimple<BodyType, BaseParticlesType, BaseMaterialType>(body),
+			species_n_(this->particles_->species_n_)
 		{
-			species_reaction_ = this->material_->getReactionModel();
+			species_reaction_ = this->material_->SpeciesReaction();
 		};
 		virtual ~RelaxationOfAllReactionsBackward() {};
 	};
 	/**
-	 * @class DiffusionBoundaryCondtion
-	 * @brief set boudary condition for diffusion problem
+	 * @class DiffusionBoundaryCondition
+	 * @brief set boundary condition for diffusion problem
 	 */
 	template <class BodyType, class BaseParticlesType, class BodyPartByParticleType, class BaseMaterialType>
-	class DiffusionBoundaryCondtion :
-		public DiffusionReactionConstraint<BodyType, BaseParticlesType, BodyPartByParticleType, BaseMaterialType>
+	class DiffusionBoundaryCondition :
+		public PartDynamicsByParticle,
+		public DiffusionReactionDataDelegateSimple<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 	public:
-		DiffusionBoundaryCondtion(BodyType* body, BodyPartByParticleType* body_part)
-			: DiffusionReactionConstraint<BodyType,
-			BaseParticlesType, BodyPartByParticleType, BaseMaterialType>(body, body_part) {}
-		virtual ~DiffusionBoundaryCondtion() {};
+		DiffusionBoundaryCondition(BodyType* body, BodyPartByParticleType* body_part) :
+			PartDynamicsByParticle(body, body_part),
+			DiffusionReactionDataDelegateSimple<BodyType, BaseParticlesType, BaseMaterialType>(body),
+			pos_n_(this->particles_->pos_n_), species_n_(this->particles_->species_n_) {};
+		virtual ~DiffusionBoundaryCondition() {};
+	protected:
+		StdLargeVec<Vecd>& pos_n_;
+		StdVec<StdLargeVec<Real>>& species_n_;
 
 	};
 
 	/**
 	* @class DiffusionBasedMapping
 	* @brief Mapping inside of body according to diffusion.
+	* This is a abstract class to be override for case specific implementation
 	*/
 	template<class BodyType, class BaseParticlesType, class BaseMaterialType>
 	class DiffusionBasedMapping :
-		public DiffusionReactionSimple<BodyType, BaseParticlesType, BaseMaterialType>
+		public ParticleDynamicsSimple,
+		public DiffusionReactionDataDelegateSimple<BodyType, BaseParticlesType, BaseMaterialType>
 	{
-	protected:
-		virtual void Update(size_t index_particle_i, Real dt = 0.0) = 0;
 	public:
-		DiffusionBasedMapping(BodyType* body)
-			: DiffusionReactionSimple<BodyType, BaseParticlesType, BaseMaterialType>(body) {};
-	virtual ~DiffusionBasedMapping() {};
+		DiffusionBasedMapping(BodyType* body) : 
+			ParticleDynamicsSimple(body),
+			DiffusionReactionDataDelegateSimple<BodyType, BaseParticlesType, BaseMaterialType>(body),
+			pos_n_(this->particles_->pos_n_), species_n_(this->particles_->species_n_) {};
+		virtual ~DiffusionBasedMapping() {};
+	protected:
+		StdLargeVec<Vecd>& pos_n_;
+		StdVec<StdLargeVec<Real>>& species_n_;
+
 	};
 }

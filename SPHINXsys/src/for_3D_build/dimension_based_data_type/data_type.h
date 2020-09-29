@@ -1,4 +1,5 @@
 #pragma once
+
 #include "small_vectors.h"
 #include "large_data_containers.h"
 
@@ -18,6 +19,10 @@ namespace SPH {
 	class CellList;
 	using matrix_cell = CellList ***;
 
+	template<class DataType, int ARRAY_SIZE>
+	using PackageDataMatrix = std::array<std::array<std::array<DataType, ARRAY_SIZE>, ARRAY_SIZE>, ARRAY_SIZE>;
+
 	template<class DataType>
 	using MeshDataMatrix = DataType***;
+
 }

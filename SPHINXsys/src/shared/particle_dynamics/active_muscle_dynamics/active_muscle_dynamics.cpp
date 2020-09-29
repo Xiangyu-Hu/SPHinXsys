@@ -19,6 +19,21 @@ namespace SPH
 	namespace active_muscle_dynamics
 	{
 		//=================================================================================================//
+		MuscleActivation::
+			MuscleActivation(SolidBody* body) :
+			ParticleDynamicsSimple(body), ActiveMuscleDataDelegateSimple(body),
+			pos_0_(particles_->pos_0_), active_contraction_stress_(particles_->active_contraction_stress_)
+		{};
+		//=================================================================================================//
+		SpringConstrainMuscleRegion::
+			SpringConstrainMuscleRegion(SolidBody* body, BodyPartByParticle* body_part) :
+			PartDynamicsByParticle(body, body_part),
+			ActiveMuscleDataDelegateSimple(body), mass_(particles_->mass_),
+			pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
+			vel_n_(particles_->vel_n_)
+		{
+		}
+		//=================================================================================================//
 		Vecd SpringConstrainMuscleRegion::GetAcceleration(Vecd &disp, Real mass)
 		{
 			Vecd spring_force(0);
@@ -29,25 +44,25 @@ namespace SPH
 			return spring_force;
 		}
 		//=================================================================================================//
-		void SpringConstrainMuscleRegion::Update(size_t index_particle_i, Real dt)
+		void SpringConstrainMuscleRegion::Update(size_t index_i, Real dt)
 		{
-			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-
-			Vecd disp_from_0 = base_particle_data_i.pos_n_ - base_particle_data_i.pos_0_;
-			base_particle_data_i.vel_n_ 	+=  dt * GetAcceleration(disp_from_0, solid_data_i.mass_);
-			base_particle_data_i.pos_n_ 	+=  dt * dt * GetAcceleration(disp_from_0, solid_data_i.mass_);
+			Vecd disp_from_0 = pos_n_[index_i] - pos_0_[index_i];
+			vel_n_[index_i] +=  dt * GetAcceleration(disp_from_0, mass_[index_i]);
+			pos_n_[index_i] +=  dt * dt * GetAcceleration(disp_from_0, mass_[index_i]);
+		}
+		//=================================================================================================//
+		ImposingStress::
+			ImposingStress(SolidBody* body, SolidBodyPartForSimbody* body_part) :
+			PartDynamicsByParticle(body, body_part),
+			ActiveMuscleDataDelegateSimple(body),
+			pos_0_(particles_->pos_0_), active_stress_(particles_->active_stress_)
+		{
 		}
 		//=================================================================================================//
 		void ImposingStress
-			::Update(size_t index_particle_i, Real dt)
+			::Update(size_t index_i, Real dt)
 		{
-			BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-			SolidParticleData &solid_data_i = particles_->solid_body_data_[index_particle_i];
-			ElasticSolidParticleData &elastic_data_i = particles_->elastic_body_data_[index_particle_i];
-			ActiveMuscleParticleData &active_muscle_data_i = particles_->active_muscle_data_[index_particle_i];
-
-			active_muscle_data_i.active_stress_= getStress(base_particle_data_i.pos_0_);
+			active_stress_[index_i] = getStress(pos_0_[index_i]);
 		}
 		//=================================================================================================//
     }

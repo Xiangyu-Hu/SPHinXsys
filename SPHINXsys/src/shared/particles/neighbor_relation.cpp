@@ -10,19 +10,14 @@
 namespace SPH
 {
 	//=================================================================================================//
-	CommonRelation::CommonRelation()
-		: e_ij_(0), dW_ij_(0), r_ij_(0), j_(0)
+	void Neighborhood::addANeighbor(Kernel& kernel, Vecd& vec_r_ij, size_t i_index, size_t j_index)
 	{
-
-	}
-	//=================================================================================================//
-	CommonRelation::CommonRelation(Kernel& kernel, Vecd& vec_r_ij, size_t i_index, size_t j_index)
-		: CommonRelation()
-	{
-		j_ = j_index;
-		r_ij_ = vec_r_ij.norm();
-		e_ij_ = vec_r_ij / (r_ij_ + TinyReal);
-		dW_ij_ = kernel.dW(vec_r_ij);
+		j_.push_back(j_index);
+		W_ij_.push_back(kernel.W(vec_r_ij));
+		dW_ij_.push_back(kernel.dW(vec_r_ij));
+		Real r_ij = vec_r_ij.norm();
+		r_ij_.push_back(r_ij);
+		e_ij_.push_back(vec_r_ij / (r_ij + TinyReal));
 	}
 	//=================================================================================================//
 }

@@ -118,14 +118,14 @@ TriangleMeshShape* CreateInnerWall()
 class WaterBlock : public FluidBody
 {
 	public:
-		WaterBlock(SPHSystem &system, string body_name,
-			int refinement_level, ParticlesGeneratorOps op)
-			: FluidBody(system, body_name, refinement_level, op)
+		WaterBlock(SPHSystem &system, string body_name,	int refinement_level)
+			: FluidBody(system, body_name, refinement_level)
 		{
 
-			body_shape_.addTriangleMeshShape(CreateWaterBlock(), ShapeBooleanOps::add);
-			body_shape_.addTriangleMeshShape(CreateInsertCylinder(), ShapeBooleanOps::sub);
-			body_shape_.addTriangleMeshShape(CreateAttachedFlag(), ShapeBooleanOps::sub);
+			body_shape_ = new ComplexShape(body_name);
+			body_shape_->addTriangleMeshShape(CreateWaterBlock(), ShapeBooleanOps::add);
+			body_shape_->addTriangleMeshShape(CreateInsertCylinder(), ShapeBooleanOps::sub);
+			body_shape_->addTriangleMeshShape(CreateAttachedFlag(), ShapeBooleanOps::sub);
 		}
 };
 /**
@@ -147,12 +147,12 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &system, string body_name, 
-		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, refinement_level, op)
+	WallBoundary(SPHSystem &system, string body_name, int refinement_level)
+		: SolidBody(system, body_name, refinement_level)
 	{
-		body_shape_.addTriangleMeshShape(CreateOuterWall(), ShapeBooleanOps::add);
-		body_shape_.addTriangleMeshShape(CreateOuterWall(), ShapeBooleanOps::sub);
+		body_shape_ = new ComplexShape(body_name);
+		body_shape_->addTriangleMeshShape(CreateOuterWall(), ShapeBooleanOps::add);
+		body_shape_->addTriangleMeshShape(CreateOuterWall(), ShapeBooleanOps::sub);
 	}
 };
 
@@ -160,12 +160,11 @@ public:
 class InsertedBody : public SolidBody
 {
 public:
-	InsertedBody(SPHSystem &system, string body_name, 
-		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, refinement_level, op)
+	InsertedBody(SPHSystem &system, string body_name, int refinement_level)
+		: SolidBody(system, body_name, refinement_level)
 	{
-		body_shape_.addTriangleMeshShape(CreateInsertCylinder(), ShapeBooleanOps::add);
-		body_shape_.addTriangleMeshShape(CreateAttachedFlag(), ShapeBooleanOps::add);
+		body_shape_->addTriangleMeshShape(CreateInsertCylinder(), ShapeBooleanOps::add);
+		body_shape_->addTriangleMeshShape(CreateAttachedFlag(), ShapeBooleanOps::add);
 	}
 };
 /**
@@ -193,11 +192,12 @@ public:
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		//geometry
-		body_part_shape_.addTriangleMeshShape(CreateInsertCylinder(), ShapeBooleanOps::add);
-		body_part_shape_.addTriangleMeshShape(CreateAttachedFlag(), ShapeBooleanOps::sub);
+		body_part_shape_ = new ComplexShape(constrained_region_name);
+		body_part_shape_->addTriangleMeshShape(CreateInsertCylinder(), ShapeBooleanOps::add);
+		body_part_shape_->addTriangleMeshShape(CreateAttachedFlag(), ShapeBooleanOps::sub);
 
 		//tag the constrained particle
-		TagBodyPart();
+		tagBodyPart();
 	}
 };
 /**
@@ -210,18 +210,19 @@ public:
 		: BodyPartByCell(fluid_body, constrained_region_name)
 	{
 		/** Geometry definition. */
-		body_part_shape_.addTriangleMeshShape(CreateInflowBuffer(), ShapeBooleanOps::add);
+		body_part_shape_ = new ComplexShape(constrained_region_name);
+		body_part_shape_->addTriangleMeshShape(CreateInflowBuffer(), ShapeBooleanOps::add);
 
 		//tag the constrained particle
-		TagBodyPart();
+		tagBodyPart();
 	}
 };
 //define an observer body
 class Observer : public FictitiousBody
 {
 public:
-	Observer(SPHSystem &system, string body_name, int refinement_level, ParticlesGeneratorOps op)
-		: FictitiousBody(system, body_name, refinement_level, 1.3, op)
+	Observer(SPHSystem &system, string body_name, int refinement_level)
+		: FictitiousBody(system, body_name, refinement_level, 1.3)
 	{
 		//add observation point
 		body_input_points_volumes_.push_back(
@@ -252,7 +253,7 @@ public:
 		t_ref = 2.0;
 	}
 
-	Vecd GetInflowVelocity(Vecd &position, Vecd &velocity)
+	Vecd getTargetVelocity(Vecd &position, Vecd &velocity)
 	{
 		Real u = velocity[0];
 		Real v = velocity[1];
@@ -281,30 +282,26 @@ int main()
 		Vecd(DL + BW, DH + BW, DW + BW), particle_spacing_ref);
 
 	//the water block
-	WaterBlock *water_block 
-		= new WaterBlock(system, "WaterBody", 0, ParticlesGeneratorOps::lattice);
+	WaterBlock *water_block = new WaterBlock(system, "WaterBody", 0);
 	//fluid material properties
 	WaterMaterial *water_material = new WaterMaterial();
 	//creat fluid particles
 	FluidParticles fluid_particles(water_block, water_material);
 
 	//the wall boundary
-	WallBoundary *wall_boundary 
-		= new WallBoundary(system, "Wall", 0, ParticlesGeneratorOps::lattice);
+	WallBoundary *wall_boundary = new WallBoundary(system, "Wall", 0);
 	//creat solid particles
 	SolidParticles solid_particles(wall_boundary);
 
 
 	//the inserted body immersed in water
-	InsertedBody *inserted_body 
-		= new InsertedBody(system, "InsertedBody", 1, ParticlesGeneratorOps::lattice);
+	InsertedBody *inserted_body = new InsertedBody(system, "InsertedBody", 1);
 	//elastic solid material properties
 	InsertBodyMaterial *inserted_body_material = new InsertBodyMaterial();
 	//creat particles for the elastic body
 	ElasticSolidParticles inserted_body_particles(inserted_body, inserted_body_material);
 
-	Observer *flag_observer 
-		= new Observer(system, "Observer", 1, ParticlesGeneratorOps::direct);
+	Observer *flag_observer = new Observer(system, "Observer", 1);
 	//create observer particles 
 	BaseParticles observer_particles(flag_observer);
 
@@ -347,16 +344,16 @@ int main()
 	fluid_dynamics::DensityBySummation
 		update_fluid_density(water_block_complex);
 	//time step size without considering sound wave speed
-	fluid_dynamics::GetAdvectionTimeStepSize	get_fluid_advection_time_step_size(water_block, U_f);
+	fluid_dynamics::AdvectionTimeStepSize	get_fluid_advection_time_step_size(water_block, U_f);
 	//time step size with considering sound wave speed
-	fluid_dynamics::GetAcousticTimeStepSize		get_fluid_time_step_size(water_block);
+	fluid_dynamics::AcousticTimeStepSize		get_fluid_time_step_size(water_block);
 	//pressure relaxation using verlet time stepping
 	fluid_dynamics::PressureRelaxationFirstHalf
 		pressure_relaxation_first_half(water_block_complex);
 	fluid_dynamics::PressureRelaxationSecondHalfRiemann
 		pressure_relaxation_second_half(water_block_complex);
 	//computing viscous acceleration
-	fluid_dynamics::ComputingViscousAcceleration viscous_acceleration(water_block_complex);
+	fluid_dynamics::ViscousAcceleration viscous_acceleration(water_block_complex);
 	//impose transport velocity
 	fluid_dynamics::TransportVelocityFormulation transport_velocity_formulation(water_block_complex);
 	//inflow boundary condition
@@ -368,7 +365,7 @@ int main()
 
 	//solid dynamics
 	//time step size calculation
-	solid_dynamics::GetAcousticTimeStepSize inserted_body_computing_time_step_size(inserted_body);
+	solid_dynamics::AcousticTimeStepSize inserted_body_computing_time_step_size(inserted_body);
 	//stress relaxation for the flag
 	solid_dynamics::StressRelaxationFirstHalf
 		inserted_body_stress_relaxation_first_half(inserted_body_inner);
@@ -378,10 +375,8 @@ int main()
 	solid_dynamics::ConstrainSolidBodyRegion
 		inserted_body_constrain(inserted_body, new FlagHolder(inserted_body, "FlagHolder"));
 	//average velocity
-	solid_dynamics::InitializeDisplacement
-		inserted_body_initialize_displacement(inserted_body);
-	solid_dynamics::UpdateAverageVelocity
-		inserted_body_average_velocity(inserted_body);
+	/** Compute the average velocity on fish body. */
+	solid_dynamics::AverageVelocityAndAcceleration	average_velocity_and_acceleration(inserted_body);
 
 	//-------------------------------------------------------------------
 	//from here the time stepping begines
@@ -396,10 +391,10 @@ int main()
 	//as extra cell linked list form 
 	//periodic regions to the corresponding boundaries
 	//for building up of extra configuration
-	system.InitializeSystemCellLinkedLists();
+	system.initializeSystemCellLinkedLists();
 	periodic_condition.parallel_exec();
 	//update configuration after periodic boundary condition
-	system.InitializeSystemConfigurations();
+	system.initializeSystemConfigurations();
 
 	get_wall_normal.parallel_exec();
 	get_inserted_body_normal.parallel_exec();
@@ -410,8 +405,7 @@ int main()
 	//-----------------------------------------------------------------------------
 	In_Output in_output(system);
 	WriteBodyStatesToVtu write_real_body_states(in_output, system.real_bodies_);
-	WriteAnObservedQuantity<Vecd, BaseParticles,
-		BaseParticleData, &BaseParticles::base_particle_data_, &BaseParticleData::pos_n_>
+	WriteAnObservedQuantity<Vecd, BaseParticles, &BaseParticles::pos_n_>
 		write_flag_free_end("Displacement", in_output, flag_observer_contact);
 
 	//initial output
@@ -462,7 +456,7 @@ int main()
 
 				//solid dynamics
 				Real dt_s_sum = 0.0;
-				inserted_body_initialize_displacement.parallel_exec();
+				average_velocity_and_acceleration.initialize_displacement_.parallel_exec();
 				while (dt_s_sum < dt) {
 
 					Real dt_s = inserted_body_computing_time_step_size.parallel_exec();
@@ -479,7 +473,7 @@ int main()
 					inserted_body_stress_relaxation_second_half.parallel_exec(dt_s);
 					dt_s_sum += dt_s;
 				}
-				inserted_body_average_velocity.parallel_exec(dt);
+				average_velocity_and_acceleration.update_averages_.parallel_exec(dt);
 
 				ite++;
 				dt = get_fluid_time_step_size.parallel_exec();
@@ -492,8 +486,8 @@ int main()
 			
 			//water block configuration and periodic condition
 			periodic_bounding.parallel_exec();
-			water_block->UpdateCellLinkedList();
-			inserted_body->UpdateCellLinkedList();
+			water_block->updateCellLinkedList();
+			inserted_body->updateCellLinkedList();
 			periodic_condition.parallel_exec();
 			water_block_complex->updateConfiguration();
 			inserted_body_contact->updateConfiguration();

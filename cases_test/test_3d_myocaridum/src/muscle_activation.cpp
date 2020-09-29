@@ -51,11 +51,11 @@ TriangleMeshShape* CreateHolder()
 class Myocardium : public SolidBody
 {
 public:
-	Myocardium(SPHSystem &system, string body_name, 
-		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, refinement_level, op)
+	Myocardium(SPHSystem &system, string body_name, int refinement_level)
+		: SolidBody(system, body_name, refinement_level)
 	{
-		body_shape_.addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
+		body_shape_ = new ComplexShape(body_name);
+		body_shape_->addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
 	}
 };
 /**
@@ -69,31 +69,52 @@ public:
 	Holder(SolidBody *solid_body, string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
-		body_part_shape_.addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
+		body_part_shape_ = new ComplexShape(constrained_region_name);
+		body_part_shape_->addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
 
-		TagBodyPart();
+		tagBodyPart();
 	}
 };
  /**
  * Assign case dependent muscle activation histroy  
  */
-class MuscleActivation
-	: public active_muscle_dynamics::ActiveMuscleSimple
+class MyocardiumActivation
+	: public active_muscle_dynamics::MuscleActivation
 {
 public:
-	MuscleActivation(SolidBody *myocardium)
-		: active_muscle_dynamics
-		::ActiveMuscleSimple(myocardium) {};
+	MyocardiumActivation(SolidBody *myocardium)
+		: active_muscle_dynamics::MuscleActivation(myocardium) {};
 protected:
-	void Update(size_t index_particle_i, Real dt) override 
+	void Update(size_t index_i, Real dt) override 
 	{
-		ActiveMuscleParticleData& active_muscle_data_i 	= particles_->active_muscle_data_[index_particle_i];
-		SolidParticleData &solid_data_i			= particles_->solid_body_data_[index_particle_i];
-		BaseParticleData& base_particle_data_i	= particles_->base_particle_data_[index_particle_i];
-
-		Real voltage = base_particle_data_i.pos_0_[0] <= 0 ? 0.0 : reference_voltage * base_particle_data_i.pos_0_[0] / PL;
-		active_muscle_data_i.active_contraction_stress_ += GlobalStaticVariables::physical_time_ <= 1.0
+		Real voltage = pos_0_[index_i][0] <= 0 ? 0.0 : reference_voltage * pos_0_[index_i][0] / PL;
+		active_contraction_stress_[index_i] += GlobalStaticVariables::physical_time_ <= 1.0
 			? linear_active_stress_factor * voltage * dt : 0.0;
+	};
+};
+class ConstrainHolder
+	: public solid_dynamics::ConstrainSolidBodyRegion
+{
+public:
+	ConstrainHolder(SolidBody* body, BodyPartByParticle* body_part, int axis_id)
+		: solid_dynamics::ConstrainSolidBodyRegion(body, body_part),
+		axis_id_(axis_id) {};
+protected:
+	int axis_id_;
+	virtual Point GetDisplacement(Point& pos_0, Point& pos_n) {
+		Point pos_temp = pos_n;
+		pos_temp[axis_id_] = pos_0[axis_id_];
+		return pos_temp; 
+	};
+	virtual Vecd GetVelocity(Point& pos_0, Point& pos_n, Vecd& vel_n) {
+		Vecd vel_temp = vel_n;
+		vel_temp[axis_id_] = 0.0;
+		return vel_temp; 
+	};
+	virtual Vecd GetAcceleration(Point& pos_0, Point& pos_n, Vecd& dvel_dt) {
+		Vecd dvel_dt_temp = dvel_dt;
+		dvel_dt_temp[axis_id_] = 0.0;
+		return dvel_dt_temp;
 	};
 };
  /**
@@ -129,7 +150,7 @@ int main()
 
 	/** Creat a Myocardium body, corresponding material, particles and reaction model. */
 	Myocardium *myocardium_muscle_body =
-		new Myocardium(system, "MyocardiumMuscleBody", 0, ParticlesGeneratorOps::lattice);
+		new Myocardium(system, "MyocardiumMuscleBody", 0);
 	ActiveMuscleParticles 	myocardium_muscle_particles(myocardium_muscle_body, new ActiveMuscle(new MyocardiumMuscle()));
 
 	/** topology */
@@ -142,17 +163,17 @@ int main()
 	solid_dynamics::CorrectConfiguration 
 		corrected_configuration_in_strong_form(myocardium_muscle_body_inner);
 	/** Time step size calculation. */
-	solid_dynamics::GetAcousticTimeStepSize 
+	solid_dynamics::AcousticTimeStepSize 
 		computing_time_step_size(myocardium_muscle_body);
 	/** Compute the active contraction stress */
-	MuscleActivation muscle_activation(myocardium_muscle_body);
+	MyocardiumActivation myocardium_activation(myocardium_muscle_body);
 	/** active and passive stress relaxation. */
 	solid_dynamics::StressRelaxationFirstHalf
 		stress_relaxation_first_half(myocardium_muscle_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf
 		stress_relaxation_second_half(myocardium_muscle_body_inner);
 	/** Constrain region of the inserted body. */
-	solid_dynamics::constrainNormDirichletBoundary
+	ConstrainHolder
 		constrain_holder(myocardium_muscle_body, new Holder(myocardium_muscle_body, "Holder"), 0);
 	/** Output */
 	In_Output in_output(system);
@@ -162,8 +183,8 @@ int main()
 	 * Set the starting time.
 	 */
 	GlobalStaticVariables::physical_time_ = 0.0;
-	system.InitializeSystemCellLinkedLists();
-	system.InitializeSystemConfigurations();
+	system.initializeSystemCellLinkedLists();
+	system.initializeSystemConfigurations();
 	corrected_configuration_in_strong_form.parallel_exec();
 	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
 	/** Setup physical parameters. */
@@ -188,7 +209,7 @@ int main()
 					<< GlobalStaticVariables::physical_time_ << "	dt: "
 					<< dt << "\n";
 			}
-			muscle_activation.parallel_exec(dt);
+			myocardium_activation.parallel_exec(dt);
 			stress_relaxation_first_half.parallel_exec(dt);
 			constrain_holder.parallel_exec(dt);
 			stress_relaxation_second_half.parallel_exec(dt);

@@ -42,17 +42,17 @@ namespace SPH {
 	class ParticleGeneratorLattice : public ParticleGenerator
 	{
 	public:
-		ParticleGeneratorLattice(SPHBody& sph_body);
+		ParticleGeneratorLattice();
 		virtual ~ParticleGeneratorLattice() {};
 
 		/** Compute reference number density*/
 		virtual Real ComputeReferenceNumberDensity();
-		/** Create lattice particle for a body. */
-		virtual void CreateBaseParticles(BaseParticles* base_particles) override;
 
+		virtual void initialize(SPHBody* sph_body) override;
+		virtual void CreateBaseParticles(BaseParticles* base_particles) override;
 	protected:
 		Vecd lower_bound_, upper_bound_;	/**< Domain bounds. */
-		ComplexShape &body_shape_;
+		ComplexShape* body_shape_;
 		Real lattice_spacing_;		/**< Lattice size. */
 		Vecu number_of_lattices_;	/**< Number of lattice. */ 
 		/**
@@ -71,7 +71,7 @@ namespace SPH {
 	class ParticleGeneratorRegularized : public ParticleGeneratorLattice
 	{
 	public:
-		ParticleGeneratorRegularized(SPHBody& sph_body);
+		ParticleGeneratorRegularized();
 		virtual ~ParticleGeneratorRegularized() {};
 
 		/** Create lattice particle for a body. */

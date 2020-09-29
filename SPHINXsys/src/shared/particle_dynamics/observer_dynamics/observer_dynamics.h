@@ -40,59 +40,61 @@ namespace SPH
 	namespace observer_dynamics
 	{
 		template <class ObserverParticlesType, class TargetParticlesType>
-		using InterpolationDynamics 
-			= ParticleDynamicsContact<SPHBody, ObserverParticlesType, BaseMaterial, SPHBody, TargetParticlesType>;
+		using InterpolationDataDelegate
+			= DataDelegateContact<SPHBody, ObserverParticlesType, BaseMaterial, SPHBody, TargetParticlesType>;
 
 		template <class TargetParticlesType>
-		using ObservationDynamics 
-			= ParticleDynamicsContact<SPHBody, BaseParticles, BaseMaterial,SPHBody, TargetParticlesType, BaseMaterial>;
+		using ObservationDataDelegate
+			= DataDelegateContact<SPHBody, BaseParticles, BaseMaterial, SPHBody, TargetParticlesType, BaseMaterial>;
 
 		/**
 		 * @class ObservingAQuantity
 		 * @brief Observering a given member data in the particles of a general body
 		 */
-		template <class DataType, class TargetParticlesType, class TargetDataType,
-			StdLargeVec<TargetDataType> TargetParticlesType:: * TrgtDataMemPtr, DataType TargetDataType:: * TrgtMemPtr>
-		class ObservingAQuantity : public ObservationDynamics<TargetParticlesType>
+		template <class DataType, class TargetParticlesType, StdLargeVec<DataType> TargetParticlesType:: * TrgtMemPtr>
+		class ObservingAQuantity : 
+			public ParticleDynamicsContact, public ObservationDataDelegate<TargetParticlesType>
 		{
 		protected:
 			/** Observed quantities saved here. */
 			StdLargeVec<DataType>  observed_quantities_;
+			StdVec<StdLargeVec<Real>*> contact_Vol_;
+			StdVec<StdLargeVec<DataType>*> contact_data_;
 
-			virtual void ContactInteraction(size_t index_particle_i, Real dt = 0.0) override
+			virtual void ContactInteraction(size_t index_i, Real dt = 0.0) override
 			{
 				DataType observed_quantity(0);
 				Real ttl_weight(0);
 
 				for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 				{
-					TargetParticlesType* target_particles = this->contact_particles_[k];
-					StdLargeVec<TargetDataType>& target_data = target_particles->*TrgtDataMemPtr;
-
-					Neighborhood& contact_neighborhood 
-						= this->contact_configuration_[k][index_particle_i];
-					KernelValueList& kernel_value_list = contact_neighborhood.kernel_value_list_;
-					CommonRelationList& contact_common_relations = contact_neighborhood.common_relation_list_;
+					StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+					StdLargeVec<DataType>& data_k = *(contact_data_[k]);
+					Neighborhood& contact_neighborhood
+						= this->contact_configuration_[k][index_i];
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{
-						CommonRelation& common_relation = contact_common_relations[n];
-						size_t index_particle_j = common_relation.j_;
-						BaseParticleData& base_particle_data_j
-							= this->contact_particles_[k]->base_particle_data_[index_particle_j];
-						Real Vol_j = base_particle_data_j.Vol_;
-						TargetDataType& target_data_j = target_data[index_particle_j];
+						size_t index_j = contact_neighborhood.j_[n];
+						Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
 
-						Real weight_j = kernel_value_list[n] * Vol_j;
-						observed_quantity += weight_j * target_data_j.*TrgtMemPtr;
+						observed_quantity += weight_j * data_k[index_j];
 						ttl_weight += weight_j;
 					}
 				}
-				observed_quantities_[index_particle_i] = observed_quantity / (ttl_weight + TinyReal);
+				observed_quantities_[index_i] = observed_quantity / (ttl_weight + TinyReal);
 			};
 		public:
 			explicit ObservingAQuantity(SPHBodyContactRelation* body_contact_relation)
-				: ObservationDynamics<TargetParticlesType>(body_contact_relation) {
-				for (size_t i = 0; i < this->body_->number_of_particles_; ++i) observed_quantities_.push_back(DataType(0));
+				: ParticleDynamicsContact(body_contact_relation),
+				ObservationDataDelegate<TargetParticlesType>(body_contact_relation)
+			{
+				for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+				{
+					contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
+					contact_data_.push_back(&(this->contact_particles_[k]->*TrgtMemPtr));
+				}
+				for (size_t i = 0; i < this->body_->number_of_particles_; ++i) 
+					observed_quantities_.push_back(DataType(0));
 			};
 			virtual ~ObservingAQuantity() {};
 		};
@@ -102,7 +104,8 @@ namespace SPH
 		 * @brief Observing a diffusion-reaction quantity from a body
 		 */
 		template <class DiffusionReactionParticlesType>
-		class ObservingADiffusionReactionQuantity : public ObservationDynamics<DiffusionReactionParticlesType>
+		class ObservingADiffusionReactionQuantity :
+			public ParticleDynamicsContact, public ObservationDataDelegate<DiffusionReactionParticlesType>
 		{
 		protected:
 			/** Index of voltage. */
@@ -110,41 +113,44 @@ namespace SPH
 			map<string, size_t> species_indexes_map_;
 			/** Observed quantities saved here. */
 			StdLargeVec<Real>  observed_quantities_;
+			StdVec<StdLargeVec<Real>*> contact_Vol_, contact_data_;
 
-			virtual void ContactInteraction(size_t index_particle_i, Real dt = 0.0) override
+			virtual void ContactInteraction(size_t index_i, Real dt = 0.0) override
 			{
 				Real observed_quantity(0);
 				Real ttl_weight(0);
 				for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 				{
-					DiffusionReactionParticlesType* target_particles = this->contact_particles_[k];
-					StdLargeVec<DiffusionReactionData>& target_data = target_particles->diffusion_reaction_data_;
-
+					StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+					StdLargeVec<Real>& data_k = *(contact_data_[k]);
 					Neighborhood& contact_neighborhood
-						= this->contact_configuration_[k][index_particle_i];
-					KernelValueList& kernel_value_list = contact_neighborhood.kernel_value_list_;
-					CommonRelationList& contact_common_relations = contact_neighborhood.common_relation_list_;
+						= this->contact_configuration_[k][index_i];
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{
-						CommonRelation& common_relation = contact_common_relations[n];
-						size_t index_particle_j = common_relation.j_;
-						BaseParticleData& base_particle_data_j
-							= this->contact_particles_[k]->base_particle_data_[index_particle_j];
-						Real Vol_j = base_particle_data_j.Vol_;
+						size_t index_j = contact_neighborhood.j_[n];
+						Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
 
-						Real weight_j = kernel_value_list[n] * Vol_j;
-						observed_quantity += weight_j * target_data[index_particle_j].species_n_[species_index_];
+						observed_quantity += weight_j * data_k[index_j];
 						ttl_weight += weight_j;
 					}
-					observed_quantities_[index_particle_i] = observed_quantity / (ttl_weight + TinyReal);
+					observed_quantities_[index_i] = observed_quantity / (ttl_weight + TinyReal);
 				}
 			};
 		public:
 			explicit ObservingADiffusionReactionQuantity(string species_name, SPHBodyContactRelation* body_contact_relation)
-				: ObservationDynamics<DiffusionReactionParticlesType>(body_contact_relation) {
-				species_indexes_map_ = this->contact_particles_[0]->getSpeciesIndexMap();
+				: ParticleDynamicsContact(body_contact_relation),
+				ObservationDataDelegate<DiffusionReactionParticlesType>(body_contact_relation)
+			{
+				species_indexes_map_ = this->contact_particles_[0]->SpeciesIndexMap();
 				species_index_ = species_indexes_map_[species_name];
-				for (size_t i = 0; i < this->body_->number_of_particles_; ++i) observed_quantities_.push_back(0.0);
+				for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+				{
+					contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
+					contact_data_.push_back(&(this->contact_particles_[k]->species_n_[species_index_]));
+				}
+
+				for (size_t i = 0; i < this->body_->number_of_particles_; ++i) 
+					observed_quantities_.push_back(0.0);
 			};
 			virtual ~ObservingADiffusionReactionQuantity() {};
 		};
@@ -153,48 +159,52 @@ namespace SPH
 		 * @class InterpolatingAQuantity
 		 * @brief interpolate a given member data in the particles of a general body from another body
 		 */
-		template <class DataType, class ObserverParticlesType, class ObserverDataType, class TargetParticlesType, class TargetDataType,
-			StdLargeVec<ObserverDataType> ObserverParticlesType:: * ObrsvrDataMemPtr, StdLargeVec<TargetDataType> TargetParticlesType:: * TrgtDataMemPtr,
-			DataType ObserverDataType:: * ObrsvrMemPtr, DataType TargetDataType:: * TrgtMemPtr>
-			class InterpolatingAQuantity : public InterpolationDynamics<ObserverParticlesType, TargetParticlesType>
+		template <class DataType, class ObserverParticlesType, class TargetParticlesType, 
+			StdLargeVec<DataType> ObserverParticlesType:: * ObrsvrMemPtr, StdLargeVec<DataType> TargetParticlesType:: * TrgtMemPtr>
+		class InterpolatingAQuantity : 
+			public ParticleDynamicsContact,
+			public InterpolationDataDelegate<ObserverParticlesType, TargetParticlesType>
 		{
 		protected:
-			virtual void ContactInteraction(size_t index_particle_i, Real dt = 0.0) override
-			{
-				ObserverParticlesType* particles = this->particles_;
-				StdLargeVec<ObserverDataType>& observer_data = this->particles_->*ObrsvrDataMemPtr;
-				ObserverDataType& observer_data_i = observer_data[index_particle_i];
+			/** interpolated quantities saved here. */
+			StdLargeVec<DataType>  &interpolated_data_;
+			StdVec<StdLargeVec<Real>*> contact_Vol_;
+			StdVec<StdLargeVec<DataType>*> contact_data_;
 
+			virtual void ContactInteraction(size_t index_i, Real dt = 0.0) override
+			{
 				DataType observed_quantity(0);
 				Real ttl_weight(0);
 				/** Compute the first order consistent kernel weights */
 				for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 				{
-					TargetParticlesType* target_particles = this->contact_particles_[k];
-					StdLargeVec<BaseParticleData>& target_base_particle_data = target_particles->base_particle_data_;
-					StdLargeVec<TargetDataType>& target_data = target_particles->*TrgtDataMemPtr;
-
-					Neighborhood& contact_neighborhood = this->contact_configuration_[k][index_particle_i];
-					KernelValueList& kernel_value_list = contact_neighborhood.kernel_value_list_;
-					CommonRelationList& contact_common_relations = contact_neighborhood.common_relation_list_;
+					StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+					StdLargeVec<DataType>& data_k = *(contact_data_[k]);
+					Neighborhood& contact_neighborhood = this->contact_configuration_[k][index_i];
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{
-						CommonRelation& common_relation = contact_common_relations[n];
-						size_t index_particle_j = common_relation.j_;
-						BaseParticleData& base_particle_data_j = target_base_particle_data[index_particle_j];
-						Real Vol_j = base_particle_data_j.Vol_;
-						TargetDataType& target_data_j = target_data[index_particle_j];
+						size_t index_j = contact_neighborhood.j_[n];
+						Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
 
-						Real weight_j = kernel_value_list[n] * Vol_j;
-						observed_quantity += weight_j * target_data_j.*TrgtMemPtr;
+						observed_quantity += weight_j * data_k[index_j];
 						ttl_weight += weight_j;
 					}
 				}
-				observer_data_i.* ObrsvrMemPtr = observed_quantity / (ttl_weight + TinyReal);
+
+				interpolated_data_[index_i] = observed_quantity / (ttl_weight + TinyReal);
 			};
 		public:
 			explicit InterpolatingAQuantity(SPHBodyContactRelation* body_contact_relation)
-				: InterpolationDynamics<ObserverParticlesType, TargetParticlesType>(body_contact_relation) {};
+				: ParticleDynamicsContact(body_contact_relation),
+				InterpolationDataDelegate<ObserverParticlesType, TargetParticlesType>(body_contact_relation),
+				interpolated_data_(this->particles_->*ObrsvrMemPtr)
+			{
+				for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+				{
+					contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
+					contact_data_.push_back(&(this->contact_particles_[k]->*TrgtMemPtr));
+				}
+			};
 			virtual ~InterpolatingAQuantity() {};
 		};
 
@@ -202,57 +212,56 @@ namespace SPH
 		 * @class InterpolatingADiffusionReactionQuantity
 		 * @brief interpolate a diffusion-reaction member data in the particles of a general body from another body
 		 */
-		template <class ObserverParticlesType, class ObserverDataType, class DiffusionReactionParticlesType,
-			StdLargeVec<ObserverDataType> ObserverParticlesType:: * ObrsvrDataMemPtr, Real ObserverDataType:: * ObrsvrMemPtr>
-			class InterpolatingADiffusionReactionQuantity
-			: public InterpolationDynamics<ObserverParticlesType, DiffusionReactionParticlesType>
+		template <class ObserverParticlesType, class DiffusionReactionParticlesType,
+			StdLargeVec<Real> ObserverParticlesType:: * ObrsvrDataMemPtr>
+		class InterpolatingADiffusionReactionQuantity : 
+			public ParticleDynamicsContact,
+			public InterpolationDataDelegate<ObserverParticlesType, DiffusionReactionParticlesType>
 		{
 		protected:
 			/** Index of voltage. */
 			size_t species_index_;
 			map<string, size_t> species_indexes_map_;
-			/** Observed quantities saved here. */
-			StdLargeVec<Real>  observed_quantities_;
+			/** interpolated quantities saved here. */
+			StdLargeVec<Real>& interpolated_data_;
+			StdVec<StdLargeVec<Real>*> contact_Vol_, contact_data_;
 
-			virtual void ContactInteraction(size_t index_particle_i, Real dt = 0.0) override
+			virtual void ContactInteraction(size_t index_i, Real dt = 0.0) override
 			{
-				ObserverParticlesType* particles = this->particles_;
-				StdLargeVec<ObserverDataType>& observer_data = this->particles_->*ObrsvrDataMemPtr;
-				ObserverDataType& observer_data_i = observer_data[index_particle_i];
 
 				Real observed_quantity(0);
 				Real ttl_weight(0);
 				/** Compute the first order consistent kernel weights */
 				for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 				{
-					DiffusionReactionParticlesType* target_particles = this->contact_particles_[k];
-					StdLargeVec<BaseParticleData>& target_base_particle_data = target_particles->base_particle_data_;
-					StdLargeVec<DiffusionReactionData>& target_diffusion_reaction_data = target_particles->diffusion_reaction_data_;
-
-					Neighborhood& contact_neighborhood = this->contact_configuration_[k][index_particle_i];
-					KernelValueList& kernel_value_list = contact_neighborhood.kernel_value_list_;
-					CommonRelationList& contact_common_relations = contact_neighborhood.common_relation_list_;
+					StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
+					StdLargeVec<Real>& data_k = *(contact_data_[k]);
+					Neighborhood& contact_neighborhood = this->contact_configuration_[k][index_i];
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{
-						CommonRelation& common_relation = contact_common_relations[n];
-						size_t index_particle_j = common_relation.j_;
-						BaseParticleData& base_particle_data_j = target_base_particle_data[index_particle_j];
-						Real Vol_j = base_particle_data_j.Vol_;
-						DiffusionReactionData& target_data_j = target_diffusion_reaction_data[index_particle_j];
+						size_t index_j = contact_neighborhood.j_[n];
+						Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
 
-						Real weight_j = kernel_value_list[n] * Vol_j;
-						observed_quantity += weight_j * target_data_j.species_n_[species_index_];
+						observed_quantity += weight_j * data_k[index_j];
 						ttl_weight += weight_j;
 					}
 				}
-				observer_data_i.*ObrsvrMemPtr = observed_quantity / (ttl_weight + TinyReal);
+				interpolated_data_[index_i] = observed_quantity / (ttl_weight + TinyReal);
 			};
 		public:
 			explicit InterpolatingADiffusionReactionQuantity(string species_name, SPHBodyContactRelation* body_contact_relation)
-				: InterpolationDynamics<ObserverParticlesType, DiffusionReactionParticlesType>(body_contact_relation)
+				: ParticleDynamicsContact(body_contact_relation),
+				InterpolationDataDelegate<ObserverParticlesType, DiffusionReactionParticlesType>(body_contact_relation),
+				interpolated_data_(this->particles_->*ObrsvrDataMemPtr)
 			{
-				species_indexes_map_ = this->contact_particles_[0]->getSpeciesIndexMap();
+				species_indexes_map_ = this->contact_particles_[0]->SpeciesIndexMap();
 				species_index_ = species_indexes_map_[species_name];
+
+				for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+				{
+					contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
+					contact_data_.push_back(&(this->contact_particles_[k]->species_n_[species_index_]));
+				}
 			};
 			virtual ~InterpolatingADiffusionReactionQuantity() {};
 		};
@@ -262,15 +271,15 @@ namespace SPH
 		* @brief  correct kernel weights for interpolation between general bodies
 		*/
 		class CorrectInterpolationKernelWeights : 
-			public ParticleDynamicsContact<SPHBody, BaseParticles, BaseMaterial, SPHBody, BaseParticles, BaseMaterial>
+			public ParticleDynamicsContact,
+			public DataDelegateContact<SPHBody, BaseParticles, BaseMaterial, SPHBody, BaseParticles, BaseMaterial>
 		{
-		protected:
-			virtual void ContactInteraction(size_t index_particle_i, Real dt = 0.0) override;
 		public:
-			CorrectInterpolationKernelWeights(SPHBodyContactRelation* body_contact_relation)
-				: ParticleDynamicsContact<SPHBody, BaseParticles, 
-				BaseMaterial, SPHBody, BaseParticles, BaseMaterial>(body_contact_relation) {};
+			CorrectInterpolationKernelWeights(SPHBodyContactRelation* body_contact_relation);
 			virtual ~CorrectInterpolationKernelWeights() {};
+		protected:
+			StdVec<StdLargeVec<Real>*> contact_Vol_;
+			virtual void ContactInteraction(size_t index_i, Real dt = 0.0) override;
 		};
 	}
 }

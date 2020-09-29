@@ -36,10 +36,10 @@
 #include "tbb/concurrent_vector.h"
 #include "tbb/cache_aligned_allocator.h"
 
+#include <array>
+
 using namespace tbb;
 static tbb::affinity_partitioner ap;
-
-#include <array>
 
 namespace SPH {
 
@@ -51,25 +51,6 @@ namespace SPH {
 
 	template <typename T>
 	using StdVec = std::vector<T>;
-
-	template <typename T>
-	using LargeSet = tbb::concurrent_unordered_set<T>;
-
-	typedef std::pair<std::string, std::string> StrPair;
-
-	typedef std::pair<int, int> IndexPair;
-
-	template<class DataType>
-	using MeshDataMatrix2 = DataType**;
-
-	template<class DataType>
-	using MeshDataMatrix3 = DataType***;
-
-	template<size_t PACK_SIZE, class DataType>
-	using MeshData2 = std::array<std::array<DataType, PACK_SIZE>, PACK_SIZE>;
-
-	template<size_t PACK_SIZE, class DataType>
-	using MeshData3 = std::array<std::array<std::array<DataType, PACK_SIZE>, PACK_SIZE>, PACK_SIZE>;
 }
 
 #endif // SPHINXSYS_BASE_CONTAINER_H

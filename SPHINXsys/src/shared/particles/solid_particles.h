@@ -37,56 +37,14 @@
 using namespace std;
 namespace SPH {
 
-	/** preclaimed classes. */
+	//----------------------------------------------------------------------
+	//		preclaimed classes
+	//----------------------------------------------------------------------
 	class Solid;
 	class ElasticSolid;
 	class ActiveMuscle;
 	class BaseMaterial;
 
-	/**
-	 * @class SolidParticleData 
-	 * @brief Data for solid body particles.
-	 */
-	class SolidParticleData 
-	{
-	public:
-		/** default constructor */
-		SolidParticleData();
-		/** in constructor, set the particle at rest*/
-		SolidParticleData(BaseParticleData& base_particle_data, Solid* solid);
-		virtual ~SolidParticleData() {};
-
-		/** mass, reference density and current density. */
-		Real rho_0_, rho_n_, mass_;
-		/** Inital position, and inital and current normal direction. */
-		Vecd n_0_, n_;
-		/** Linear reproducing configuration correction. */
-		Matd B_;
-	
-		/** fluid time-step averaged particle velocity and acceleration,
-		  * or applying fluid structure interaction. */
-		Vecd vel_ave_, dvel_dt_ave_;	
-		/** Forces from fluid. */
-		Vecd force_from_fluid_, viscous_force_from_fluid_;
-	};
-
-	/**
-	 * @class ElasticSolidParticleData 
-	 * @brief Data for elastic solid body particles.
-	 */	
-	class ElasticSolidParticleData 
-	{
-	public:
-		ElasticSolidParticleData(BaseParticleData &base_particle_data,
-			ElasticSolid *elastic_solid);
-		virtual ~ElasticSolidParticleData() {};
-
-		/** elastic body strain variables, deformation tensor. */
-		Matd F_, dF_dt_, stress_;
-
-		/** temporally particle position for computing average velocity. */
-		Vecd pos_temp_;				
-	};
 	/**
 	 * @class SolidParticles
 	 * @brief A group of particles with solid body particle data.
@@ -100,54 +58,36 @@ namespace SPH {
 		SolidParticles(SPHBody* body, Solid* solid);
 		virtual ~SolidParticles() {};
 
-		/** Vector of solid body data. */
-		StdLargeVec<SolidParticleData> solid_body_data_; 
+		StdLargeVec<Vecd> pos_0_;	/**< initial position */
+		StdLargeVec<Vecd>	n_;		/**<  current normal direction */
+		StdLargeVec<Vecd>	n_0_;	/**<  inital normal direction */  //seems to be moved to method class
+		StdLargeVec<Matd>	B_;		/**<  configuration correction for linear reproducing */
+
+		//----------------------------------------------------------------------
+		//		for fluid-structure interaction (FSI) 
+		//----------------------------------------------------------------------
+		StdLargeVec<Vecd>	vel_ave_;	/**<  fluid time-step averaged particle velocity */
+		StdLargeVec<Vecd>	dvel_dt_ave_;	/**<  fluid time-step averaged particle acceleration */
+		StdLargeVec<Vecd>	force_from_fluid_;	/**<  forces (including pressure and viscous) from fluid */
+		StdLargeVec<Vecd>	viscous_force_from_fluid_;	/**<  viscous forces from fluid */
 	
-		/** Set initial condition for a solid body with different material. */
-		virtual void OffsetInitialParticlePosition(Vecd offset);
-		/** add buffer particles which latter may be realized for particle dynamics*/
-		virtual void AddABufferParticle() override;
-		/** Copy state from another particle */
-		virtual void CopyFromAnotherParticle(size_t this_particle_index, size_t another_particle_index) override;
-		/** Swapping particles. */
-		virtual void swapParticles(size_t this_particle_index, size_t that_particle_index) override;
+		/** shift the initial position of the solid particles. */
+		void OffsetInitialParticlePosition(Vecd offset);
+		/** initialize normal direction along solid body shape. */
+		void initializeNormalDirectionFromGeometry();
 
-		/**
-		 * @brief Write particle data in VTU format for Paraview.
-		 * @param[inout] output_file Ofstream of particle data.
-		 */
+		/** Write particle data in PLT format for Tecplot */
+		virtual void writeParticlesToPltFile(ofstream &output_file) override;
+		/** Write particle data in XML format for restart */
+		virtual void writeParticlesToXmlForRestart(std::string &filefullpath) override;
+		/** Initialize particle data from restart xml file */
+		virtual void readParticleFromXmlForRestart(std::string &filefullpath) override ;
+		/** Reload particle position and volume from XML files */	
+		virtual void readFromXmlForReloadParticle(std::string &filefullpath) override;
 
-		/** Write particle data in VTU format for Paraview. */
-		virtual void WriteParticlesToVtuFile(ofstream &output_file) override;
-		/**
-		 * @brief Write particle data in PLT format for Tecplot.
-		 * @param[inout] output_file Ofstream of particle data.
-		 */
-		virtual void WriteParticlesToPltFile(ofstream &output_file) override;
-		/**
-		 * @brief Write particle data in XML format.
-		 * @param[inout] filefullpath Full path to file being write.
-		 */
-		virtual void WriteParticlesToXmlFile(std::string &filefullpath) {};
-		/**
-		 * @brief Write particle data in XML format for restart.
-		 * @param[inout] filefullpath Full path to file being write.
-		 */
-
-		/* Write particle data in XML format for restart. */
-		virtual void WriteParticlesToXmlForRestart(std::string &filefullpath) override;
-		/**
-		 * @brief Initialize particle data from restart xml file.
-		 * @param[inout] filefullpath Full path to file being write.
-		 */
-		virtual void ReadParticleFromXmlForRestart(std::string &filefullpath) override ;
-		/**
-		 * @brief Reload particle position and volume from XML files.
-		 * @param[inout] filefullpath Full path to file being write.
-		 */	
-		virtual void ReadFromXmlForReloadParticle(std::string &filefullpath) override;
 		/** Pointer to this object. */
-		virtual SolidParticles* PointToThisObject() override;
+		virtual SolidParticles* pointToThisObject() override;
+
 		/** Normalize a gradient. */
 		virtual Vecd normalizeKernelGradient(size_t particle_index_i, Vecd& gradient) override;
 		/** Get the kernel gradient in weak form. */
@@ -175,59 +115,21 @@ namespace SPH {
 		 */
 		virtual ~ElasticSolidParticles() {};
 
-		/** Vector of elastic solid particle data. */
-		StdLargeVec<ElasticSolidParticleData> elastic_body_data_;
+		StdLargeVec<Matd>	F_;			/**<  deformation tensor */
+		StdLargeVec<Matd>	dF_dt_;		/**<  deformation tensor change rate */
+		StdLargeVec<Matd>	stress_;	/**<  stress tensor */
 
-		/** Copy state from another particle */
-		virtual void CopyFromAnotherParticle(size_t this_particle_index, size_t another_particle_index) override;
-		/** Swapping particles. */
-		virtual void swapParticles(size_t this_particle_index, size_t that_particle_index) override;
-
-		/**
-		 * @brief Write particle data in VTU format for Paraview.
-		 * @param[inout] output_file Ofstream of particle data.
-		 */
-		virtual void WriteParticlesToVtuFile(ofstream &output_file) override;
-		/**
-		 * @brief Write particle data in PLT format for Tecplot.
-		 * @param[inout] output_file Ofstream of particle data.
-		 */
-		virtual void WriteParticlesToPltFile(ofstream &output_file) override;
-		/**
-		 * @brief Write particle data in XML format.
-		 * @param[inout] filefullpath Full path to file being write.
-		 */
-		virtual void WriteParticlesToXmlFile(std::string &filefullpath) override{};
-		/**
-		 * @brief Write particle data in XML format for restart.
-		 * @param[inout] filefullpath Full path to file being write.
-		 */
-		virtual void WriteParticlesToXmlForRestart(std::string &filefullpath) override;
-		/**
-		 * @brief Initialize particle data from restart xml file.
-		 * @param[inout] filefullpath Full path to file being write.
-		 */
-		virtual void ReadParticleFromXmlForRestart(std::string &filefullpath) override ;
+		/** Write particle data in VTU format for Paraview */
+		virtual void writeParticlesToVtuFile(ofstream &output_file) override;
+		/** Write particle data in PLT format for Tecplot */
+		virtual void writeParticlesToPltFile(ofstream &output_file) override;
+		/** Write particle data in XML format for restart */
+		virtual void writeParticlesToXmlForRestart(std::string &filefullpath) override;
+		/** Initialize particle data from restart xml file */
+		virtual void readParticleFromXmlForRestart(std::string &filefullpath) override ;
 
 		/** Pointer to this object.  */
-		virtual ElasticSolidParticles* PointToThisObject() override;
-	};
-
-	/**
-	 * @class ActiveMuscleParticleData
-	 * @brief Data for active muscle.
-	 */
-	class ActiveMuscleParticleData
-	{
-	public:
-		/** default constructor. */
-		ActiveMuscleParticleData() 
-			: active_contraction_stress_(0.0), active_stress_(0.0) {};
-		virtual ~ActiveMuscleParticleData() {};
-
-		/** Active contraction stress. */
-		Real active_contraction_stress_;
-		Matd active_stress_;
+		virtual ElasticSolidParticles* pointToThisObject() override;
 	};
 
 	/**
@@ -237,55 +139,25 @@ namespace SPH {
 	class ActiveMuscleParticles : public ElasticSolidParticles
 	{
 	public:
-		/** including of electrophysiology data_. */
-		StdLargeVec<ActiveMuscleParticleData> active_muscle_data_;
+
+		StdLargeVec<Real>	active_contraction_stress_;			/**<  active contraction stress */
+		StdLargeVec<Matd>	active_stress_;		/**<  active stress */ //seems to be moved to method class
 
 		/** Constructor. */
 		ActiveMuscleParticles(SPHBody* body, ActiveMuscle* active_muscle);
 		/** Default destructor. */
 		virtual ~ActiveMuscleParticles() {};
 
-		/** Copy state from another particle */
-		virtual void CopyFromAnotherParticle(size_t this_particle_index, size_t another_particle_index) override;
-		/** Swapping particles. */
-		virtual void swapParticles(size_t this_particle_index, size_t that_particle_index) override;
-
-		/**
-		 * @brief Write particle data in VTU format for Paraview.
-		 * @param[inout] output_file Ofstream of particle data.
-		 */
-		virtual void WriteParticlesToVtuFile(ofstream& output_file) override;
-		/**
-		 * @brief Write particle data in PLT format for Tecplot.
-		 * @param[inout] output_file Ofstream of particle data.
-		 */
-		virtual void WriteParticlesToPltFile(ofstream& output_file) override;
-		/**
-		 * @brief Write particle data in XML format.
-		 * @param[inout] filefullpath Full path to file being write.
-		 */
-		virtual void WriteParticlesToXmlFile(std::string& filefullpath) override {};
-		/**
-		 * @brief Write particle data in XML format for restart.
-		 * @param[inout] filefullpath Full path to file being write.
-		 */
-		virtual void WriteParticlesToXmlForRestart(std::string& filefullpath) override;
-		/**
-		 * @brief Initialize particle data from restart xml file.
-		 * @param[inout] filefullpath Full path to file being write.
-		 */
-		virtual void ReadParticleFromXmlForRestart(std::string& filefullpath) override;
+		/** Write particle data in VTU format for Paraview */
+		virtual void writeParticlesToVtuFile(ofstream& output_file) override;
+		/** Write particle data in PLT format for Tecplot */
+		virtual void writeParticlesToPltFile(ofstream& output_file) override;
+		/** Write particle data in XML format for restart */
+		virtual void writeParticlesToXmlForRestart(std::string& filefullpath) override;
+		/** Initialize particle data from restart xml file */
+		virtual void readParticleFromXmlForRestart(std::string& filefullpath) override;
 
 		/** Pointer to this object.  */
-		virtual ActiveMuscleParticles* PointToThisObject() override;
-
-		/** Access a real data*/
-		Real getActiveContractionStress(size_t particle_index) {
-			return  active_muscle_data_[particle_index].active_contraction_stress_;
-		}
-		/** Access a matrix data*/
-		Matd getActiveStress(size_t particel_index) {
-			return active_muscle_data_[particel_index].active_stress_;
-		};
+		virtual ActiveMuscleParticles* pointToThisObject() override;
 	};
 }

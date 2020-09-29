@@ -5,6 +5,7 @@
  * @author  Xiangyu Hu, Luhui Han and Chi Zhang
  */
 #pragma once
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "boost/program_options.hpp"
 namespace po = boost::program_options;
@@ -12,6 +13,16 @@ namespace po = boost::program_options;
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
 #include "general_dynamics.h"
+
+#include <fstream>
+/** Macro for APPLE compilers*/
+#ifdef __APPLE__
+#include <boost/filesystem.hpp>
+namespace fs = boost::filesystem;
+#else
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#endif
 
 namespace SPH 
 {
@@ -41,7 +52,7 @@ namespace SPH
 		 */
  		SPHSystem(Vecd lower_bound, Vecd upper_bound, Real particle_spacing_ref, 
 			int number_of_threads = tbb::task_scheduler_init::automatic);
-		virtual ~SPHSystem();
+		virtual ~SPHSystem() {};
 
 		Vecd lower_bound_, upper_bound_;	/**< Lower and Upper domain bound. */
 		task_scheduler_init tbb_init_;		/**< TBB library. */
@@ -52,6 +63,10 @@ namespace SPH
 		bool run_particle_relaxation_;
 		/** start the simulation with relaxed particles*/
 		bool reload_particles_;
+		std::string output_folder_;		/**< folder for saving output files. */
+		std::string restart_folder_;	/**< folder for saving restart files. */
+		std::string reload_folder_;		/**< folder for saving particle reload files. */
+
 
 
 		SPHBodyVector bodies_;			/**< All sph bodies. */
@@ -59,15 +74,15 @@ namespace SPH
 		SPHBodyVector real_bodies_;		/**< The bodies with inner particle configuration. */
 
 		/** Add a new body to the SPH system. */
-		void AddBody(SPHBody* body);
+		void addABody(SPHBody* body);
 		/** Add a new body to the SPH real bodies. */
-		void AddRealBody(SPHBody* body);
+		void addARealBody(SPHBody* body);
 		/** Add a new body to the SPH fictitious bodies. */
-		void AddFictitiousBody(SPHBody* body);
+		void addAFictitiousBody(SPHBody* body);
 		/** Initialize cell linked lists. */
-		void InitializeSystemCellLinkedLists();
+		void initializeSystemCellLinkedLists();
 		/** Initialize particle interacting configurations. */
-		void InitializeSystemConfigurations();
+		void initializeSystemConfigurations();
 
 		/** handle the commandline options*/
 		void handleCommandlineOptions(int ac, char* av[]);

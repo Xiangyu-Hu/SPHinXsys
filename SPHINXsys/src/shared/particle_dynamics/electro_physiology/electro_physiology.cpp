@@ -13,5 +13,13 @@ namespace SPH
 	namespace electro_physiology
 	{
 		//=================================================================================================//
-    }
+		ElectroPhysiologyInitialCondition::
+			ElectroPhysiologyInitialCondition(SolidBody* body) :
+			ParticleDynamicsSimple(body),
+			ElectroPhysiologyDataDelegateSimple(body),
+			pos_n_(particles_->pos_n_), species_n_(particles_->species_n_)
+		{
+		}
+		//=================================================================================================//
+	}
 }

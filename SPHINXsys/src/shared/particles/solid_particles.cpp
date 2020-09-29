@@ -1,6 +1,6 @@
 /**
- * @file solid_body_particles.cpp
- * @brief Definition of funcitons declared in solid_bdoy_particles.h
+ * @file solid_particles.cpp
+ * @brief Definition of funcitons declared in solid_particles.h
  * @author	Xiangyu Hu and Chi Zhang
  * @version	0.1
  * @version 0.2.1
@@ -11,81 +11,57 @@
 #include "elastic_solid.h"
 //=============================================================================================//
 namespace SPH {
-	//=================================================================================================//
-	SolidParticleData::SolidParticleData()
-		: rho_0_(1.0), rho_n_(rho_0_), mass_(rho_0_),
-		n_0_(0), n_(0), B_(1.0), vel_ave_(0), dvel_dt_ave_(0),
-		force_from_fluid_(0), viscous_force_from_fluid_(0)
-	{
-	}
-	//=============================================================================================//
-	SolidParticleData::SolidParticleData(BaseParticleData& base_particle_data, Solid* solid)
-		: rho_0_(solid->getReferenceDensity()), rho_n_(rho_0_), mass_(rho_0_* base_particle_data.Vol_), 
-		n_0_(0), n_(0), B_(1.0), vel_ave_(0), dvel_dt_ave_(0),
-		force_from_fluid_(0), viscous_force_from_fluid_(0)
-	{
-	}
-	//=============================================================================================//
-	ElasticSolidParticleData::ElasticSolidParticleData(BaseParticleData &base_particle_data,
-		ElasticSolid *elastic_solid)
-		:F_(1.0), dF_dt_(0), stress_(0), pos_temp_(0)
-	{
-	}
 	//=============================================================================================//
 	SolidParticles::SolidParticles(SPHBody* body)
-		: BaseParticles(body, new BaseMaterial())
+		: SolidParticles(body, new Solid())
 	{
-		for (size_t i = 0; i < base_particle_data_.size(); ++i)
-		{
-			solid_body_data_.push_back(SolidParticleData());
-		}
 	}
 	//=============================================================================================//
 	SolidParticles::SolidParticles(SPHBody* body, Solid* solid)
 		: BaseParticles(body, solid)
 	{
 		solid->assignSolidParticles(this);
-		for (size_t i = 0; i < base_particle_data_.size(); ++i)
-		{
-			Point pnt = base_particle_data_[i].pos_n_;
-			solid_body_data_.push_back(SolidParticleData(base_particle_data_[i], solid));
-		}
+	
+		//----------------------------------------------------------------------
+		//		register particle data
+		//----------------------------------------------------------------------
+		registerAVariable(pos_0_, registered_vectors_, vectors_map_, vectors_to_write_, "InitialPosition", false);
+		registerAVariable(n_, registered_vectors_, vectors_map_, vectors_to_write_, "NormalDirection", true);
+		registerAVariable(n_0_, registered_vectors_, vectors_map_, vectors_to_write_, "InitialNormalDirection", false); //seems to be moved to method
+		registerAVariable(B_, registered_matrices_, matrices_map_, matrices_to_write_, "CorrectionMatrix", false, Matd(1.0));
+		//----------------------------------------------------------------------
+		//		for FSI to be moved to method classes
+		//----------------------------------------------------------------------
+		registerAVariable(vel_ave_, registered_vectors_, vectors_map_, vectors_to_write_, "AverageVelocity", false);
+		registerAVariable(dvel_dt_ave_, registered_vectors_, vectors_map_, vectors_to_write_, "AverageAcceleration", false);
+		registerAVariable(force_from_fluid_, registered_vectors_, vectors_map_, vectors_to_write_, "ForceFromFluid", false);
+		registerAVariable(viscous_force_from_fluid_, registered_vectors_, vectors_map_, vectors_to_write_, "ViscousForceFromFluid", false);
+
+		//set the initial value
+		for (size_t i = 0; i != pos_n_.size(); ++i) pos_0_[i] =  pos_n_[i];
+
 	}
 	//=============================================================================================//
 	void SolidParticles::OffsetInitialParticlePosition(Vecd offset)
 	{
 		for (size_t i = 0; i != body_->number_of_particles_; ++i)
 		{
-			base_particle_data_[i].pos_n_ += offset;
-			base_particle_data_[i].pos_0_ += offset;
+			pos_n_[i] += offset;
+			pos_0_[i] += offset;
 		}
 	}
 	//=================================================================================================//
-	void SolidParticles::WriteParticlesToVtuFile(ofstream& output_file)
+	void SolidParticles::initializeNormalDirectionFromGeometry()
 	{
-		BaseParticles::WriteParticlesToVtuFile(output_file);
-
-		size_t number_of_particles = body_->number_of_particles_;
-
-		output_file << "    <DataArray Name=\"Density\" type=\"Float32\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << fixed << setprecision(9) << solid_body_data_[i].rho_n_ << " ";
+		for (size_t i = 0; i != body_->number_of_particles_; ++i)
+		{
+			Vecd normal_direction = body_->body_shape_->findNormalDirection(pos_n_[i]);
+			n_[i] = normal_direction;
+			n_0_[i] = normal_direction;
 		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
-
-		output_file << "    <DataArray Name=\"NormalDirection\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != number_of_particles; ++i) {
-			Vec3d normal_direction = upgradeToVector3D(solid_body_data_[i].n_);
-			output_file << fixed << setprecision(9) << normal_direction[0] << " " << normal_direction[1] << " " << normal_direction[2] << " ";
-		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
 	}
-//=============================================================================================//
-	void SolidParticles::ReadFromXmlForReloadParticle(std::string &filefullpath)
+	//=============================================================================================//
+	void SolidParticles::readFromXmlForReloadParticle(std::string &filefullpath)
 	{
 		size_t number_of_particles = 0;
 		unique_ptr<XmlEngine> read_xml(new XmlEngine());
@@ -94,45 +70,27 @@ namespace SPH {
 		for (; ele_ite_ != read_xml->root_element_.element_end(); ++ele_ite_)
 		{
 			Vecd position = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Position");
-			base_particle_data_[number_of_particles].pos_n_ = position;
-			base_particle_data_[number_of_particles].pos_0_ = position;
+			pos_n_[number_of_particles] = position;
+			pos_0_[number_of_particles] = position;
 			Real volume = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Volume");
-			base_particle_data_[number_of_particles].Vol_ = volume;
+			Vol_[number_of_particles] = volume;
 			number_of_particles++;
 		}
 
-		if (number_of_particles != base_particle_data_.size())
+		if (number_of_particles != pos_n_.size())
 		{
 			std::cout << "\n Error: reload particle number does not matrch" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
 	}
-	void SolidParticles::AddABufferParticle()
-	{
-		BaseParticles::AddABufferParticle();
-		solid_body_data_.push_back(SolidParticleData());
-	}
-	//===============================================================//
-	void SolidParticles
-		::CopyFromAnotherParticle(size_t this_particle_index, size_t another_particle_index)
-	{
-		BaseParticles::CopyFromAnotherParticle(this_particle_index, another_particle_index);
-		solid_body_data_[this_particle_index] = solid_body_data_[another_particle_index];
-	}
-	//===============================================================//
-	void SolidParticles::swapParticles(size_t this_particle_index, size_t that_particle_index)
-	{
-		BaseParticles::swapParticles(this_particle_index, that_particle_index);
-		std::swap(solid_body_data_[this_particle_index], solid_body_data_[that_particle_index]);
-	}
 	//=============================================================================================//
-	SolidParticles* SolidParticles::PointToThisObject()
+	SolidParticles* SolidParticles::pointToThisObject()
 	{
 		return this;
 	}
 	//=================================================================================================//
-	void SolidParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)
+	void SolidParticles::writeParticlesToXmlForRestart(std::string &filefullpath)
 	{
 		unique_ptr<XmlEngine> restart_xml(new XmlEngine("particles_xml", "particles"));
 
@@ -141,61 +99,49 @@ namespace SPH {
 		{
 			restart_xml->CreatXmlElement("particle");
 			restart_xml->AddAttributeToElement<size_t>("ID", i);
-			restart_xml->AddAttributeToElement<Vecd>("Position", base_particle_data_[i].pos_n_);
-			restart_xml->AddAttributeToElement<Vecd>("InitialPosition", base_particle_data_[i].pos_0_);
-			restart_xml->AddAttributeToElement<Real>("Volume", base_particle_data_[i].Vol_);
+			restart_xml->AddAttributeToElement<Vecd>("Position", pos_n_[i]);
+			restart_xml->AddAttributeToElement<Vecd>("InitialPosition", pos_0_[i]);
+			restart_xml->AddAttributeToElement<Real>("Volume", Vol_[i]);
 			restart_xml->AddElementToXmlDoc();
 		}
 		restart_xml->WriteToXmlFile(filefullpath);
 	}
 	//=================================================================================================//
-	void SolidParticles::ReadParticleFromXmlForRestart(std::string &filefullpath)
+	void SolidParticles::readParticleFromXmlForRestart(std::string &filefullpath)
 	{
 		/** Nothing should be done for non-moving BCs. */
 	}
 	//=================================================================================================//	
 	Vecd SolidParticles::normalizeKernelGradient(size_t particle_index_i, Vecd& kernel_gradient) 
 	{
-		Matd&   B_i = solid_body_data_[particle_index_i].B_;
-		return  B_i * kernel_gradient;
+		return  B_[particle_index_i] * kernel_gradient;
 	}
 	//=================================================================================================//
 	Vecd SolidParticles::getKernelGradient(size_t particle_index_i, size_t particle_index_j, Real dW_ij, Vecd& e_ij) 
 	{
-		Matd& B_i = solid_body_data_[particle_index_i].B_;
-		Matd& B_j = solid_body_data_[particle_index_j].B_;
-		return 0.5 * dW_ij * (B_i + B_j) * e_ij;
+		return 0.5 * dW_ij * (B_[particle_index_i] + B_[particle_index_j]) * e_ij;
 	}
 	//=============================================================================================//
 	ElasticSolidParticles::ElasticSolidParticles(SPHBody* body, ElasticSolid* elastic_solid)
 		: SolidParticles(body, elastic_solid)
 	{
 		elastic_solid->assignElasticSolidParticles(this);
-		for (size_t i = 0; i < base_particle_data_.size(); ++i)
-			elastic_body_data_.push_back(ElasticSolidParticleData(base_particle_data_[i], elastic_solid));
-	}
-	//===============================================================//
-	void ElasticSolidParticles
-		::CopyFromAnotherParticle(size_t this_particle_index, size_t another_particle_index)
-	{
-		SolidParticles::CopyFromAnotherParticle(this_particle_index, another_particle_index);
-		elastic_body_data_[this_particle_index] = elastic_body_data_[another_particle_index];
-	}
-	//===============================================================//
-	void ElasticSolidParticles::swapParticles(size_t this_particle_index, size_t that_particle_index)
-	{
-		SolidParticles::swapParticles(this_particle_index, that_particle_index);
-		std::swap(elastic_body_data_[this_particle_index], elastic_body_data_[that_particle_index]);
+		//----------------------------------------------------------------------
+		//		register particle data
+		//----------------------------------------------------------------------
+		registerAVariable(F_, registered_matrices_, matrices_map_, matrices_to_write_, "DeformationGradient", false, Matd(1.0));
+		registerAVariable(dF_dt_, registered_matrices_, matrices_map_, matrices_to_write_, "DeformationRate", false);
+		registerAVariable(stress_, registered_matrices_, matrices_map_, matrices_to_write_, "Stress", false);
 	}
 	//=============================================================================================//
-	ElasticSolidParticles* ElasticSolidParticles::PointToThisObject()
+	ElasticSolidParticles* ElasticSolidParticles::pointToThisObject()
 	{
 		return this;
 	}
 	//=================================================================================================//
-	void ElasticSolidParticles::WriteParticlesToVtuFile(ofstream& output_file)
+	void ElasticSolidParticles::writeParticlesToVtuFile(ofstream& output_file)
 	{
-		SolidParticles::WriteParticlesToVtuFile(output_file);
+		SolidParticles::writeParticlesToVtuFile(output_file);
 
 		size_t number_of_particles = body_->number_of_particles_;
 
@@ -208,7 +154,7 @@ namespace SPH {
 		output_file << "    </DataArray>\n";
 	}
 	//=================================================================================================//
-	void ElasticSolidParticles::WriteParticlesToXmlForRestart(std::string &filefullpath)
+	void ElasticSolidParticles::writeParticlesToXmlForRestart(std::string &filefullpath)
 	{
 		unique_ptr<XmlEngine> restart_xml(new XmlEngine("particles_xml", "particles"));
 
@@ -216,19 +162,18 @@ namespace SPH {
 		for (size_t i = 0; i != number_of_particles; ++i)
 		{
 			restart_xml->CreatXmlElement("particle");
-			restart_xml->AddAttributeToElement<Vecd>("Position", base_particle_data_[i].pos_n_);
-			restart_xml->AddAttributeToElement<Vecd>("InitialPosition", base_particle_data_[i].pos_0_);
-			restart_xml->AddAttributeToElement<Real>("Volume", base_particle_data_[i].Vol_);
-			restart_xml->AddAttributeToElement<Vecd>("Velocity", base_particle_data_[i].vel_n_);
-			restart_xml->AddAttributeToElement<Real>("Density", solid_body_data_[i].rho_n_);
-			restart_xml->AddAttributeToElement<Vecd>("Displacement", elastic_body_data_[i].pos_temp_);
-			restart_xml->AddAttributeToElement("DefTensor", elastic_body_data_[i].F_);
+			restart_xml->AddAttributeToElement<Vecd>("Position", pos_n_[i]);
+			restart_xml->AddAttributeToElement<Vecd>("InitialPosition", pos_0_[i]);
+			restart_xml->AddAttributeToElement<Real>("Volume", Vol_[i]);
+			restart_xml->AddAttributeToElement<Vecd>("Velocity", vel_n_[i]);
+			restart_xml->AddAttributeToElement<Real>("Density", rho_n_[i]);
+			restart_xml->AddAttributeToElement("DefTensor", F_[i]);
 			restart_xml->AddElementToXmlDoc();
 		}
 		restart_xml->WriteToXmlFile(filefullpath);
 	}
 	//=================================================================================================//
-	void ElasticSolidParticles::ReadParticleFromXmlForRestart(std::string &filefullpath)
+	void ElasticSolidParticles::readParticleFromXmlForRestart(std::string &filefullpath)
 	{
 		size_t number_of_particles = 0;
 		unique_ptr<XmlEngine> read_xml(new XmlEngine());
@@ -237,19 +182,17 @@ namespace SPH {
 		for (; ele_ite_ != read_xml->root_element_.element_end(); ++ele_ite_)
 		{
 			Vecd pos_ = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Position");
-			base_particle_data_[number_of_particles].pos_n_ = pos_;
+			pos_n_[number_of_particles] = pos_;
 			Vecd pos_0 = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "InitialPosition");
-			base_particle_data_[number_of_particles].pos_0_ = pos_0;
+			pos_0_[number_of_particles] = pos_0;
 			Real rst_Vol_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Volume");
-			base_particle_data_[number_of_particles].Vol_ = rst_Vol_;
+			Vol_[number_of_particles] = rst_Vol_;
 			Vecd rst_vel_ = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Velocity");
-			base_particle_data_[number_of_particles].vel_n_ = rst_vel_;
+			vel_n_[number_of_particles] = rst_vel_;
 			Real rst_rho_n_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Density");
-			solid_body_data_[number_of_particles].rho_n_ = rst_rho_n_;
-			Vecd rst_dis_ = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Displacement");
-			elastic_body_data_[number_of_particles].pos_temp_ = rst_dis_;
+			rho_n_[number_of_particles] = rst_rho_n_;
 			Matd rst_F_ = read_xml->GetRequiredAttributeMatrixValue(ele_ite_, "DefTensor");
-			elastic_body_data_[number_of_particles].F_ = rst_F_;
+			F_[number_of_particles] = rst_F_;
 			number_of_particles++;
 		}
 	}
@@ -258,44 +201,34 @@ namespace SPH {
 		: ElasticSolidParticles(body, active_muscle)
 	{
 		active_muscle->assignActiveMuscleParticles(this);
-		for (size_t i = 0; i < base_particle_data_.size(); ++i)
-			active_muscle_data_.push_back(ActiveMuscleParticleData());
+		//----------------------------------------------------------------------
+		//		register particle data
+		//----------------------------------------------------------------------
+		registerAVariable(active_stress_, registered_matrices_, matrices_map_, matrices_to_write_, "ActiveStress", false);
+		registerAVariable(active_contraction_stress_, registered_scalars_, scalars_map_, scalars_to_write_, "ActiveContractionStress", true);
 	}
 	//=============================================================================================//
-	void ActiveMuscleParticles
-		::CopyFromAnotherParticle(size_t this_particle_index, size_t another_particle_index)
-	{
-		ElasticSolidParticles::CopyFromAnotherParticle(this_particle_index, another_particle_index);
-		active_muscle_data_[this_particle_index] = active_muscle_data_[another_particle_index];
-	}
-	//=============================================================================================//
-	void ActiveMuscleParticles::swapParticles(size_t this_particle_index, size_t that_particle_index)
-	{
-		ElasticSolidParticles::swapParticles(this_particle_index, that_particle_index);
-		std::swap(active_muscle_data_[this_particle_index], active_muscle_data_[that_particle_index]);
-	}
-	//=============================================================================================//
-	ActiveMuscleParticles* ActiveMuscleParticles::PointToThisObject()
+	ActiveMuscleParticles* ActiveMuscleParticles::pointToThisObject()
 	{
 		return this;
 	}
 	//=============================================================================================//
-	void ActiveMuscleParticles::WriteParticlesToVtuFile(ofstream& output_file)
+	void ActiveMuscleParticles::writeParticlesToVtuFile(ofstream& output_file)
 	{
-		ElasticSolidParticles::WriteParticlesToVtuFile(output_file);
+		ElasticSolidParticles::writeParticlesToVtuFile(output_file);
 
 		size_t number_of_particles = body_->number_of_particles_;
 
 		output_file << "    <DataArray Name=\"Active Stress\" type=\"Float32\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
-			output_file << fixed << setprecision(9) << active_muscle_data_[i].active_contraction_stress_ << " ";
+			output_file << fixed << setprecision(9) << active_contraction_stress_[i] << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
 	}
 	//=================================================================================================//
-	void ActiveMuscleParticles::WriteParticlesToXmlForRestart(std::string& filefullpath)
+	void ActiveMuscleParticles::writeParticlesToXmlForRestart(std::string& filefullpath)
 	{
 		unique_ptr<XmlEngine> restart_xml(new XmlEngine("particles_xml", "particles"));
 
@@ -304,19 +237,18 @@ namespace SPH {
 		{
 			restart_xml->CreatXmlElement("particle");
 			restart_xml->AddAttributeToElement<size_t>("ID", i);
-			restart_xml->AddAttributeToElement<Vecd>("Position", base_particle_data_[i].pos_n_);
-			restart_xml->AddAttributeToElement<Real>("Volume", base_particle_data_[i].Vol_);
-			restart_xml->AddAttributeToElement<Vecd>("Velocity", base_particle_data_[i].vel_n_);
-			restart_xml->AddAttributeToElement<Real>("Density", solid_body_data_[i].rho_n_);
-			restart_xml->AddAttributeToElement<Vecd>("Displacement", elastic_body_data_[i].pos_temp_);
-			restart_xml->AddAttributeToElement("DefTensor", elastic_body_data_[i].F_);
-			restart_xml->AddAttributeToElement<Real>("ActiveStress", active_muscle_data_[i].active_contraction_stress_);
+			restart_xml->AddAttributeToElement<Vecd>("Position", pos_n_[i]);
+			restart_xml->AddAttributeToElement<Real>("Volume", Vol_[i]);
+			restart_xml->AddAttributeToElement<Vecd>("Velocity", vel_n_[i]);
+			restart_xml->AddAttributeToElement<Real>("Density", rho_n_[i]);
+			restart_xml->AddAttributeToElement("DefTensor", F_[i]);
+			restart_xml->AddAttributeToElement<Real>("ActiveStress", active_contraction_stress_[i]);
 			restart_xml->AddElementToXmlDoc();
 		}
 		restart_xml->WriteToXmlFile(filefullpath);
 	}
 	//=================================================================================================//
-	void ActiveMuscleParticles::ReadParticleFromXmlForRestart(std::string& filefullpath)
+	void ActiveMuscleParticles::readParticleFromXmlForRestart(std::string& filefullpath)
 	{
 		size_t number_of_particles = 0;
 		unique_ptr<XmlEngine> read_xml(new XmlEngine());
@@ -325,19 +257,17 @@ namespace SPH {
 		for (; ele_ite_ != read_xml->root_element_.element_end(); ++ele_ite_)
 		{
 			Vecd pos_ = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Position");
-			base_particle_data_[number_of_particles].pos_n_ = pos_;
+			pos_n_[number_of_particles] = pos_;
 			Real rst_Vol_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Volume");
-			base_particle_data_[number_of_particles].Vol_ = rst_Vol_;
+			Vol_[number_of_particles] = rst_Vol_;
 			Vecd rst_vel_ = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Velocity");
-			base_particle_data_[number_of_particles].vel_n_ = rst_vel_;
+			vel_n_[number_of_particles] = rst_vel_;
 			Real rst_rho_n_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Density");
-			solid_body_data_[number_of_particles].rho_n_ = rst_rho_n_;
-			Vecd rst_dis_ = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Displacement");
-			elastic_body_data_[number_of_particles].pos_temp_ = rst_dis_;
+			rho_n_[number_of_particles] = rst_rho_n_;
 			Matd rst_F_ = read_xml->GetRequiredAttributeMatrixValue(ele_ite_, "DefTensor");
-			elastic_body_data_[number_of_particles].F_ = rst_F_;
+			F_[number_of_particles] = rst_F_;
 			Real rst_active_stress_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "ActiveStress");
-			active_muscle_data_[number_of_particles].active_contraction_stress_ = rst_active_stress_;
+			active_contraction_stress_[number_of_particles] = rst_active_stress_;
 			number_of_particles++;
 		}
 	}

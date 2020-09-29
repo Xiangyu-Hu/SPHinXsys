@@ -15,7 +15,7 @@ namespace SPH {
 		return p0_ * (rho / rho_0_ - 1.0);
 	}
 	//===============================================================//
-	Real WeaklyCompressibleFluid::ReinitializeRho(Real p)
+	Real WeaklyCompressibleFluid::DensityFromPressure(Real p)
 	{
 		return rho_0_ * (p / p0_ + 1.0);
 	}
@@ -55,7 +55,7 @@ namespace SPH {
 			: -p0_ * (powern(1.0 / rho_ratio, gamma_) - 1.0) / Real(gamma_);
 	}
 	//===============================================================//
-	Real SymmetricTaitFluid::ReinitializeRho(Real p)
+	Real SymmetricTaitFluid::DensityFromPressure(Real p)
 	{
 		return p > 0.0
 			? rho_0_ * pow(1.0 + Real(gamma_) * p / p0_, 1.0 / Real(gamma_))

@@ -78,9 +78,8 @@ Real Youngs_modulus = Ae * rho0_f * U_f * U_f;
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem &system, string body_name,
-		int refinement_level, ParticlesGeneratorOps op)
-		: FluidBody(system, body_name, refinement_level, op)
+	WaterBlock(SPHSystem &system, string body_name,	int refinement_level)
+		: FluidBody(system, body_name, refinement_level)
 	{
 		/** Geomtry definition. */
 		std::vector<Point> water_block_shape;
@@ -89,7 +88,8 @@ public:
 		water_block_shape.push_back(DamP_rt);
 		water_block_shape.push_back(DamP_rb);
 		water_block_shape.push_back(DamP_lb);
-		body_shape_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+		body_shape_ = new ComplexShape(body_name);
+		body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::add);
 	}
 };
 /**
@@ -112,9 +112,8 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &system, string body_name,
-		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, refinement_level, op)
+	WallBoundary(SPHSystem &system, string body_name, int refinement_level)
+		: SolidBody(system, body_name, refinement_level)
 	{
 		/** Geomtry definition. */
 		std::vector<Point> outer_wall_shape;
@@ -123,7 +122,6 @@ public:
 		outer_wall_shape.push_back(Point(DL + BW, DH + BW));
 		outer_wall_shape.push_back(Point(DL + BW, -BW));
 		outer_wall_shape.push_back(Point(-BW, -BW));
-		body_shape_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
 
 		std::vector<Point> inner_wall_shape;
 		inner_wall_shape.push_back(Point(0.0, 0.0));
@@ -131,7 +129,10 @@ public:
 		inner_wall_shape.push_back(Point(DL, DH));
 		inner_wall_shape.push_back(Point(DL, 0.0));
 		inner_wall_shape.push_back(Point(0.0, 0.0));
-		body_shape_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+
+		body_shape_ = new ComplexShape(body_name);
+		body_shape_->addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
+		body_shape_->addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 	}
 };
 /**
@@ -155,13 +156,13 @@ std::vector<Point> CreatGateBaseShape()
 class GateBase : public SolidBody
 {
 public:
-	GateBase(SPHSystem& system, string body_name,
-		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, refinement_level, op)
+	GateBase(SPHSystem& system, string body_name, int refinement_level)
+		: SolidBody(system, body_name, refinement_level)
 	{
 		/** Geomtry definition. */
 		std::vector<Point> gate_base_shape = CreatGateBaseShape();
-		body_shape_.addAPolygon(gate_base_shape, ShapeBooleanOps::add);
+		body_shape_ = new ComplexShape(body_name);
+		body_shape_->addAPolygon(gate_base_shape, ShapeBooleanOps::add);
 	}
 };
 /**
@@ -184,13 +185,13 @@ std::vector<Point> CreatGateShape()
 class Gate : public SolidBody
 {
 public:
-	Gate(SPHSystem &system, string body_name, 
-		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, refinement_level, op)
+	Gate(SPHSystem &system, string body_name, int refinement_level)
+		: SolidBody(system, body_name, refinement_level)
 	{
 		/** Geomtry definition. */
 		std::vector<Point> gate_shape = CreatGateShape();
-		body_shape_.addAPolygon(gate_shape, ShapeBooleanOps::add);
+		body_shape_ = new ComplexShape(body_name);
+		body_shape_->addAPolygon(gate_shape, ShapeBooleanOps::add);
 	}
 };
 /**
@@ -221,10 +222,11 @@ public:
 	{
 		/* Geometry defination */
 		std::vector<Point> gate_constrain_shape = CreatGateConstrainShape();
-		body_part_shape_.addAPolygon(gate_constrain_shape, ShapeBooleanOps::add);
+		body_part_shape_ = new ComplexShape(constrained_region_name);
+		body_part_shape_->addAPolygon(gate_constrain_shape, ShapeBooleanOps::add);
 
 		//tag the constrained particle
-		TagBodyPart();
+		tagBodyPart();
 	}
 };
 
@@ -250,8 +252,8 @@ public:
 class Observer : public FictitiousBody
 {
 public:
-	Observer(SPHSystem &system, string body_name, int refinement_level, ParticlesGeneratorOps op)
-		: FictitiousBody(system, body_name, refinement_level, 1.3, op)
+	Observer(SPHSystem &system, string body_name, int refinement_level)
+		: FictitiousBody(system, body_name, refinement_level, 1.3)
 	{
 		/** Add observation point. */
 		body_input_points_volumes_.push_back(make_pair(GateP_lb, 0.0));
@@ -274,33 +276,29 @@ int main()
 	/**
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
-	WaterBlock *water_block 
-		= new WaterBlock(system, "WaterBody", 0, ParticlesGeneratorOps::lattice);
+	WaterBlock *water_block = new WaterBlock(system, "WaterBody", 0);
 	WaterMaterial 	*water_material = new WaterMaterial();
 	FluidParticles 	fluid_particles(water_block, water_material);
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
-	WallBoundary *wall_boundary 
-		= new WallBoundary(system, "Wall", 0, ParticlesGeneratorOps::lattice);
+	WallBoundary *wall_boundary = new WallBoundary(system, "Wall", 0);
 	SolidParticles 					wall_boundary_particles(wall_boundary);
-	GateBase *gate_base 
-		= new GateBase(system, "GateBase", 1, ParticlesGeneratorOps::lattice);
+	GateBase *gate_base = new GateBase(system, "GateBase", 1);
 	SolidParticles 				gate_base_particles(gate_base);
 	/**
 	 * @brief 	Material property, particle and body creation of gate.
 	 */
 	GateMaterial* gate_material = new GateMaterial();
-	Gate *gate = new Gate(system, "Gate", 1, ParticlesGeneratorOps::lattice);
+	Gate *gate = new Gate(system, "Gate", 1);
 	ElasticSolidParticles 	gate_particles(gate, gate_material);
 	/** offset particle position */
 	gate_particles.OffsetInitialParticlePosition(offset);
-	
+	gate_base_particles.OffsetInitialParticlePosition(offset);
 	/**
 	 * @brief 	Particle and body creation of gate observer.
 	 */
-	Observer *gate_observer 
-		= new Observer(system, "Observer", 1, ParticlesGeneratorOps::direct);
+	Observer *gate_observer = new Observer(system, "Observer", 1);
 	BaseParticles 			observer_particles(gate_observer);
 
 	/** topology */
@@ -339,9 +337,9 @@ int main()
 	 /** Evaluation of fluid density by summation approach. */
 	fluid_dynamics::DensityBySummationFreeSurface		update_fluid_density(water_block_complex_relation);
 	/** Compute time step size without considering sound wave speed. */
-	fluid_dynamics::GetAdvectionTimeStepSize			get_fluid_advection_time_step_size(water_block, U_f);
+	fluid_dynamics::AdvectionTimeStepSize			get_fluid_advection_time_step_size(water_block, U_f);
 	/** Compute time step size with considering sound wave speed. */
-	fluid_dynamics::GetAcousticTimeStepSize get_fluid_time_step_size(water_block);
+	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
 	fluid_dynamics::PressureRelaxationFirstHalfRiemann 
 		pressure_relaxation_first_half(water_block_complex_relation);
@@ -356,7 +354,7 @@ int main()
 	 * @brief Algorithms of Elastic dynamics.
 	 */
 	 /** Compute time step size of elastic solid. */
-	solid_dynamics::GetAcousticTimeStepSize 	gate_computing_time_step_size(gate);
+	solid_dynamics::AcousticTimeStepSize 	gate_computing_time_step_size(gate);
 	/** Stress relaxation stepping for the elastic gate. */
 	solid_dynamics::StressRelaxationFirstHalf 			gate_stress_relaxation_first_half(gate_inner_relation);
 	solid_dynamics::StressRelaxationSecondHalf 			gate_stress_relaxation_second_half(gate_inner_relation);
@@ -366,8 +364,7 @@ int main()
 	/** Update the norm of elastic gate. */
 	solid_dynamics::UpdateElasticNormalDirection 	gate_update_normal(gate);
 	/** Compute the average velocity of gate. */
-	solid_dynamics::InitializeDisplacement 			gate_initialize_displacement(gate);
-	solid_dynamics::UpdateAverageVelocity 			gate_average_velocity(gate);
+	solid_dynamics::AverageVelocityAndAcceleration 		average_velocity_and_acceleration(gate);
 
 	/**
 	 * @brief Output.
@@ -378,8 +375,7 @@ int main()
 	/** Output body states for visualization. */
 	WriteBodyStatesToVtu 				write_real_body_states_to_vtu(in_output, system.real_bodies_);
 	/** Output the observed displacement of gate free end. */
-	WriteAnObservedQuantity<Vecd, BaseParticles,
-		BaseParticleData, &BaseParticles::base_particle_data_, &BaseParticleData::pos_n_>
+	WriteAnObservedQuantity<Vecd, BaseParticles, &BaseParticles::pos_n_>
 		write_beam_tip_displacement("Displacement", in_output, gate_observer_contact_relation);
 	/**
 	 * @brief The time stepping starts here.
@@ -387,14 +383,14 @@ int main()
 	/**
 	 * @brief Prepare quantities will be used once only and initial condition.
 	 */
-	system.InitializeSystemCellLinkedLists();
-	system.InitializeSystemConfigurations();
+	system.initializeSystemCellLinkedLists();
+	system.initializeSystemConfigurations();
 	get_wall_normal.parallel_exec();
 	get_gate_base_normal.parallel_exec();
 	get_gate_normal.parallel_exec();
 	gate_corrected_configuration_in_strong_form.parallel_exec();
 
-	write_real_body_states_to_plt.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_real_body_states_to_vtu.WriteToFile(GlobalStaticVariables::physical_time_);
 	write_beam_tip_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
 
 	int number_of_iterations = 0;
@@ -431,7 +427,7 @@ int main()
 				pressure_relaxation_second_half.parallel_exec(dt);
 				/** Solid dynamics time stepping. */
 				Real dt_s_sum = 0.0;
-				gate_initialize_displacement.parallel_exec();
+				average_velocity_and_acceleration.initialize_displacement_.parallel_exec();
 				while (dt_s_sum < dt)
 				{
 					dt_s = gate_computing_time_step_size.parallel_exec();
@@ -441,7 +437,7 @@ int main()
 					gate_stress_relaxation_second_half.parallel_exec(dt_s);
 					dt_s_sum += dt_s;
 				}
-				gate_average_velocity.parallel_exec(dt);
+				average_velocity_and_acceleration.update_averages_.parallel_exec(dt);
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integration_time += dt;
@@ -457,8 +453,8 @@ int main()
 			number_of_iterations++;
 
 			/** Update cell linked list and configuration. */
-			water_block->UpdateCellLinkedList();
-			gate->UpdateCellLinkedList();
+			water_block->updateCellLinkedList();
+			gate->updateCellLinkedList();
 			water_block_complex_relation->updateConfiguration();
 			gate_water_contact_relation->updateConfiguration();
 			/** Output the observed data. */

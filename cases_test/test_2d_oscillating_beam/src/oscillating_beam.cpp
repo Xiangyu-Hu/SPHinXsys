@@ -78,15 +78,15 @@ std::vector<Point> CreatBeamShape()
 class Beam : public SolidBody
 {
 public:
-	Beam(SPHSystem &system, string body_name, 
-		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, refinement_level, op)
+	Beam(SPHSystem &system, string body_name, int refinement_level)
+		: SolidBody(system, body_name, refinement_level)
 	{
 		/** Geometry definition. */
 		std::vector<Point> beam_base_shape = CreatBeamBaseShape();
-		body_shape_.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
+		body_shape_ = new ComplexShape(body_name);
+		body_shape_->addAPolygon(beam_base_shape, ShapeBooleanOps::add);
 		std::vector<Point> beam_shape = CreatBeamShape();
-		body_shape_.addAPolygon(beam_shape, ShapeBooleanOps::add);
+		body_shape_->addAPolygon(beam_shape, ShapeBooleanOps::add);
 	}
 };
 /**
@@ -115,15 +115,12 @@ public:
 	BeamInitialCondition(SolidBody *beam)
 		: solid_dynamics::ElasticSolidDynamicsInitialCondition(beam) {};
 protected:
-	void Update(size_t index_particle_i, Real dt) override {
+	void Update(size_t index_i, Real dt) override {
 		/** initial velocity profile */
-		BaseParticleData &base_particle_data_i = particles_->base_particle_data_[index_particle_i];
-		SolidParticleData &solid_body_data_i = particles_->solid_body_data_[index_particle_i];
-
-		Real x = base_particle_data_i.pos_0_[0] / PL;
+		Real x = pos_n_[index_i][0] / PL;
 		if (x > 0.0) {
-			base_particle_data_i.vel_n_[1]
-				= vf * material_->getReferenceSoundSpeed()*(M*(cos(kl*x) - cosh(kl*x)) - N * (sin(kl*x) - sinh(kl*x))) / Q;
+			vel_n_[index_i][1] 
+				= vf * material_->ReferenceSoundSpeed()*(M*(cos(kl*x) - cosh(kl*x)) - N * (sin(kl*x) - sinh(kl*x))) / Q;
 		}
 	};
 };
@@ -140,12 +137,13 @@ public:
 	{
 		/* Geometry definition */
 		std::vector<Point> beam_base_shape = CreatBeamBaseShape();
-		body_part_shape_.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
+		body_part_shape_ = new ComplexShape(constrained_region_name);
+		body_part_shape_->addAPolygon(beam_base_shape, ShapeBooleanOps::add);
 		std::vector<Point> beam_shape = CreatBeamShape();
-		body_part_shape_.addAPolygon(beam_shape, ShapeBooleanOps::sub);
+		body_part_shape_->addAPolygon(beam_shape, ShapeBooleanOps::sub);
 
 		//tag the particles within the body part
-		TagBodyPart();
+		tagBodyPart();
 	}
 };
 
@@ -153,8 +151,8 @@ public:
 class BeamObserver : public FictitiousBody
 {
 public:
-	BeamObserver(SPHSystem &system, string body_name, int refinement_level, ParticlesGeneratorOps op)
-		: FictitiousBody(system, body_name, refinement_level, 1.3, op)
+	BeamObserver(SPHSystem &system, string body_name, int refinement_level)
+		: FictitiousBody(system, body_name, refinement_level, 1.3)
 	{
 		body_input_points_volumes_.push_back(make_pair(Point(PL, 0.0), 0.0));
 	}
@@ -171,15 +169,13 @@ int main()
 		Vec2d(PL + 3.0*BW, PL / 2.0), particle_spacing_ref);
 
 	//the oscillating beam
-	Beam *beam_body = 
-		new Beam(system, "BeamBody", 0, ParticlesGeneratorOps::lattice);
+	Beam *beam_body = new Beam(system, "BeamBody", 0);
 	//Configuration of solid materials
 	BeamMaterial *beam_material = new BeamMaterial();
 	//creat particles for the elastic body
 	ElasticSolidParticles beam_particles(beam_body, beam_material);
 
-	BeamObserver *beam_observer 
-		= new BeamObserver(system, "BeamObserver", 1, ParticlesGeneratorOps::direct);
+	BeamObserver *beam_observer = new BeamObserver(system, "BeamObserver", 1);
 	//create observer particles
 	BaseParticles observer_particles(beam_observer);
 
@@ -197,7 +193,7 @@ int main()
 		beam_corrected_configuration_in_strong_form(beam_body_inner);
 
 	//time step size calculation
-	solid_dynamics::GetAcousticTimeStepSize computing_time_step_size(beam_body);
+	solid_dynamics::AcousticTimeStepSize computing_time_step_size(beam_body);
 
 	//stress relaxation for the beam
 	solid_dynamics::StressRelaxationFirstHalf
@@ -216,14 +212,13 @@ int main()
 	//-----------------------------------------------------------------------------
 	In_Output in_output(system);
 	WriteBodyStatesToVtu write_beam_states(in_output, system.real_bodies_);
-	WriteAnObservedQuantity<Vecd, BaseParticles,
-		BaseParticleData, &BaseParticles::base_particle_data_, &BaseParticleData::pos_n_>
+	WriteAnObservedQuantity<Vecd, BaseParticles, &BaseParticles::pos_n_>
 		write_beam_tip_displacement("Displacement", in_output, beam_observer_contact);
 	/**
 	 * @brief Setup geomtry and initial conditions
 	 */
-	system.InitializeSystemCellLinkedLists();
-	system.InitializeSystemConfigurations();
+	system.initializeSystemCellLinkedLists();
+	system.initializeSystemConfigurations();
 	beam_initial_velocity.exec();
 	beam_corrected_configuration_in_strong_form.parallel_exec();
 

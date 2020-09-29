@@ -34,9 +34,8 @@ Real c_f = 10.0*U_f;						/**< Reference sound speed. */
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem &system, string body_name,
-		int refinement_level, ParticlesGeneratorOps op)
-		: FluidBody(system, body_name, refinement_level, op)
+	WaterBlock(SPHSystem &system, string body_name,	int refinement_level)
+		: FluidBody(system, body_name, refinement_level)
 	{
 		/** Geomtry definition. */
 		std::vector<Point> water_block_shape;
@@ -45,7 +44,8 @@ public:
 		water_block_shape.push_back(Point(DL, DH));
 		water_block_shape.push_back(Point(DL, 0.0));
 		water_block_shape.push_back(Point(0.0, 0.0));
-		body_shape_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+		body_shape_ = new ComplexShape(body_name);
+		body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::add);
 	}
 };
 /**
@@ -69,9 +69,8 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &system, string body_name,
-		int refinement_level, ParticlesGeneratorOps op)
-		: SolidBody(system, body_name, refinement_level, op)
+	WallBoundary(SPHSystem &system, string body_name, int refinement_level)
+		: SolidBody(system, body_name, refinement_level)
 	{
 		/** Geomtry definition. */
 		std::vector<Point> outer_wall_shape;
@@ -86,8 +85,9 @@ public:
 		inner_wall_shape.push_back(Point(DL + 2.0 * BW, DH));
 		inner_wall_shape.push_back(Point(DL + 2.0 * BW, 0.0));
 		inner_wall_shape.push_back(Point(-2.0 * BW, 0.0));
-		body_shape_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-		body_shape_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+		body_shape_ = new ComplexShape(body_name);
+		body_shape_->addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
+		body_shape_->addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 	}
 };
 /**
@@ -106,15 +106,13 @@ int main()
 	/**
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
-	WaterBlock *water_block 
-		= new WaterBlock(system, "WaterBody", 0, ParticlesGeneratorOps::lattice);
+	WaterBlock *water_block = new WaterBlock(system, "WaterBody", 0);
 	WaterMaterial 	*water_material = new WaterMaterial();
 	FluidParticles 	fluid_particles(water_block, water_material);
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
-	WallBoundary *wall_boundary 
-		= new WallBoundary(system, "Wall",	0, ParticlesGeneratorOps::lattice);
+	WallBoundary *wall_boundary = new WallBoundary(system, "Wall",	0);
 	SolidParticles 					solid_particles(wall_boundary);
 	/** topology */
 	SPHBodyComplexRelation* water_block_complex = new SPHBodyComplexRelation(water_block, { wall_boundary });
@@ -144,9 +142,9 @@ int main()
 	 /** Evaluation of density by summation approach. */
 	fluid_dynamics::DensityBySummation 		update_fluid_density(water_block_complex);
 	/** Time step size without considering sound wave speed. */
-	fluid_dynamics::GetAdvectionTimeStepSize 	get_fluid_advection_time_step_size(water_block, U_f);
+	fluid_dynamics::AdvectionTimeStepSize 	get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
-	fluid_dynamics::GetAcousticTimeStepSize get_fluid_time_step_size(water_block);
+	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
 	/** Pressure relaxation algorithm without Riemann solver for viscous flows. */
 	fluid_dynamics::PressureRelaxationFirstHalf 
 		pressure_relaxation_first_half(water_block_complex);
@@ -154,13 +152,10 @@ int main()
 	fluid_dynamics::PressureRelaxationSecondHalfRiemann
 		pressure_relaxation_second_half(water_block_complex);
 	/** Computing viscous acceleration. */
-	fluid_dynamics::ComputingViscousAcceleration 	
+	fluid_dynamics::ViscousAcceleration 	
 		viscous_acceleration(water_block_complex);
 	/** Impose transport velocity. */
 	fluid_dynamics::TransportVelocityFormulation transport_velocity_formulation(water_block_complex);
-	/** Computing implicit viscous acceleration. */
-	fluid_dynamics::ImplicitComputingViscousAcceleration 	
-		implicit_viscous_acceleration(water_block_complex);
 	/**
 	 * @brief Output.
 	 */
@@ -173,8 +168,8 @@ int main()
 	/**
 	 * @brief Setup geomtry and initial conditions.
 	 */
-	system.InitializeSystemCellLinkedLists();
-	system.InitializeSystemConfigurations();
+	system.initializeSystemCellLinkedLists();
+	system.initializeSystemConfigurations();
 	get_wall_normal.exec();
 	/**
 	 * @brief The time stepping starts here.
@@ -183,7 +178,7 @@ int main()
 	if (system.restart_step_ != 0)
 	{
 		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
-		water_block->UpdateCellLinkedList();
+		water_block->updateCellLinkedList();
 		periodic_condition.parallel_exec();
 		water_block_complex->updateConfiguration();
 	}
@@ -231,7 +226,7 @@ int main()
 			while (relaxation_time < Dt)
 			{
 				pressure_relaxation_first_half.parallel_exec(dt);
-				implicit_viscous_acceleration.parallel_exec(dt);
+				viscous_acceleration.parallel_exec(dt);
 				pressure_relaxation_second_half.parallel_exec(dt);
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
@@ -254,7 +249,7 @@ int main()
 			time_instance = tick_count::now();
 			/** Water block configuration and periodic condition. */
 			periodic_bounding.parallel_exec();
-			water_block->UpdateCellLinkedList();
+			water_block->updateCellLinkedList();
 			periodic_condition.parallel_exec();
 			water_block_complex->updateConfiguration();
 			interval_updating_configuration += tick_count::now() - time_instance;

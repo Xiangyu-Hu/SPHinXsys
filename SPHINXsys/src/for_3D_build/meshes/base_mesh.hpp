@@ -10,24 +10,10 @@
 //=================================================================================================//
 namespace SPH {
 	//=================================================================================================//
-	template<class PackageDataType>
-	void BaseDataPackage<PackageDataType>::allocateMeshDataMatrix()
-	{
-		Allocate3dArray(pkg_data_, Vecu(pkg_size_));
-		Allocate3dArray(pkg_data_addrs_, number_of_grid_points_);
-	}
-	//=================================================================================================//
-	template<class PackageDataType>
-	void BaseDataPackage<PackageDataType>::deleteMeshDataMatrix()
-	{
-		Delete3dArray(pkg_data_, Vecu(pkg_size_));
-		Delete3dArray(pkg_data_addrs_, number_of_grid_points_);
-	}
-	//=================================================================================================//
-	template<class PackageDataType>
-	template<class DataType, DataType PackageDataType:: * MemPtr>
-	DataType BaseDataPackage<PackageDataType>
-		::probeDataPackage(MeshDataMatrix<PackageDataType*> pkg_data_addrs, Vecd& position)
+	template<int PKG_SIZE, int ADDRS_SIZE>
+	template<class DataType>
+	DataType BaseDataPackage<PKG_SIZE, ADDRS_SIZE>
+		::probeDataPackage(PackageDataAddress<DataType>& pkg_data_addrs, Vecd& position)
 	{
 		Vec3u grid_idx = GridIndexFromPosition(position);
 		Vec3d grid_pos = GridPositionFromIndex(grid_idx);
@@ -35,53 +21,99 @@ namespace SPH {
 		Vec3d beta = Vec3d(1.0) - alpha;
 
 		DataType bilinear_1
-			= pkg_data_addrs[grid_idx[0]][grid_idx[1]][grid_idx[2]]->*MemPtr			* beta[0] * beta[1]
-			+ pkg_data_addrs[grid_idx[0] + 1][grid_idx[1]][grid_idx[2]]->*MemPtr		* alpha[0] * beta[1]
-			+ pkg_data_addrs[grid_idx[0]][grid_idx[1] + 1][grid_idx[2]]->*MemPtr		* beta[0] * alpha[1]
-			+ pkg_data_addrs[grid_idx[0] + 1][grid_idx[1] + 1][grid_idx[2]]->*MemPtr	* alpha[0] * alpha[1];
+			= *pkg_data_addrs[grid_idx[0]][grid_idx[1]][grid_idx[2]]			* beta[0] * beta[1]
+			+ *pkg_data_addrs[grid_idx[0] + 1][grid_idx[1]][grid_idx[2]]		* alpha[0] * beta[1]
+			+ *pkg_data_addrs[grid_idx[0]][grid_idx[1] + 1][grid_idx[2]]		* beta[0] * alpha[1]
+			+ *pkg_data_addrs[grid_idx[0] + 1][grid_idx[1] + 1][grid_idx[2]]	* alpha[0] * alpha[1];
 		DataType bilinear_2
-			= pkg_data_addrs[grid_idx[0]][grid_idx[1]][grid_idx[2] + 1]->*MemPtr				* beta[0] * beta[1]
-			+ pkg_data_addrs[grid_idx[0] + 1][grid_idx[1]][grid_idx[2] + 1]->*MemPtr			* alpha[0] * beta[1]
-			+ pkg_data_addrs[grid_idx[0]][grid_idx[1] + 1][grid_idx[2] + 1]->*MemPtr			* beta[0] * alpha[1]
-			+ pkg_data_addrs[grid_idx[0] + 1][grid_idx[1] + 1][grid_idx[2] + 1]->*MemPtr		* alpha[0] * alpha[1];
+			= *pkg_data_addrs[grid_idx[0]][grid_idx[1]][grid_idx[2] + 1]				* beta[0] * beta[1]
+			+ *pkg_data_addrs[grid_idx[0] + 1][grid_idx[1]][grid_idx[2] + 1]			* alpha[0] * beta[1]
+			+ *pkg_data_addrs[grid_idx[0]][grid_idx[1] + 1][grid_idx[2] + 1]			* beta[0] * alpha[1]
+			+ *pkg_data_addrs[grid_idx[0] + 1][grid_idx[1] + 1][grid_idx[2] + 1]		* alpha[0] * alpha[1];
 		return  bilinear_1 * beta[2] + bilinear_2 * alpha[2];
 	}
 	//=================================================================================================//
-	template<class PackageDataType>
-	template<Real PackageDataType:: * MemPtrSrc, Vecd PackageDataType:: * MemPtrTrg>
-	void BaseDataPackage<PackageDataType>
-		::computeGradient(MeshDataMatrix<PackageDataType*> pkg_data_addrs, Real dt)
+	template<int PKG_SIZE, int ADDRS_SIZE>
+	template<typename InDataType, typename OutDataType>
+	void BaseDataPackage<PKG_SIZE, ADDRS_SIZE>::
+		computeGradient(PackageDataAddress<InDataType>& in_pkg_data_addrs,
+			PackageDataAddress<OutDataType> out_pkg_data_addrs, Real dt)
 	{
-		for (size_t i = 1; i != pkg_size_ + 1; ++i)
-			for (size_t j = 1; j != pkg_size_ + 1; ++j)
-				for (size_t k = 1; k != pkg_size_ + 1; ++k)
+		for (int i = 1; i != PKG_SIZE + 1; ++i)
+			for (int j = 1; j != PKG_SIZE + 1; ++j)
+				for (int k = 1; k != PKG_SIZE + 1; ++k)
 				{
-					Real dphidx = (pkg_data_addrs[i + 1][j][k]->*MemPtrSrc - pkg_data_addrs[i - 1][j][k]->*MemPtrSrc);
-					Real dphidy = (pkg_data_addrs[i][j + 1][k]->*MemPtrSrc - pkg_data_addrs[i][j - 1][k]->*MemPtrSrc);
-					Real dphidz = (pkg_data_addrs[i][j][k + 1]->*MemPtrSrc - pkg_data_addrs[i][j][k - 1]->*MemPtrSrc);
-					pkg_data_addrs[i][j][k]->*MemPtrTrg = Vecd(dphidx, dphidy, dphidz);
+					Real dphidx = (*in_pkg_data_addrs[i + 1][j][k] - *in_pkg_data_addrs[i - 1][j][k]);
+					Real dphidy = (*in_pkg_data_addrs[i][j + 1][k] - *in_pkg_data_addrs[i][j - 1][k]);
+					Real dphidz = (*in_pkg_data_addrs[i][j][k + 1] - *in_pkg_data_addrs[i][j][k - 1]);
+					*out_pkg_data_addrs[i][j][k] = Vecd(dphidx, dphidy, dphidz);
 				}
 	}
 	//=================================================================================================//
-	template<class PackageDataType>
-	template<Real PackageDataType:: * MemPtrSrc, Vecd PackageDataType:: * MemPtrTrg>
-	void BaseDataPackage<PackageDataType>
-		::computeNormalizedGradient(MeshDataMatrix<PackageDataType*> pkg_data_addrs, Real dt)
+	template<int PKG_SIZE, int ADDRS_SIZE>
+	template<typename InDataType, typename OutDataType>
+	void BaseDataPackage<PKG_SIZE, ADDRS_SIZE>::
+		computeNormalizedGradient(PackageDataAddress<InDataType>& in_pkg_data_addrs,
+			PackageDataAddress<OutDataType> out_pkg_data_addrs, Real dt)
 	{
-		for (size_t i = 1; i != pkg_size_ + 1; ++i)
-			for (size_t j = 1; j != pkg_size_ + 1; ++j)
-				for (size_t k = 1; k != pkg_size_ + 1; ++k)
+		for (int i = 1; i != PKG_SIZE + 1; ++i)
+			for (int j = 1; j != PKG_SIZE + 1; ++j)
+				for (int k = 1; k != PKG_SIZE + 1; ++k)
 				{
-					Real dphidx = (pkg_data_addrs[i + 1][j][k]->*MemPtrSrc - pkg_data_addrs[i - 1][j][k]->*MemPtrSrc);
-					Real dphidy = (pkg_data_addrs[i][j + 1][k]->*MemPtrSrc - pkg_data_addrs[i][j - 1][k]->*MemPtrSrc);
-					Real dphidz = (pkg_data_addrs[i][j][k + 1]->*MemPtrSrc - pkg_data_addrs[i][j][k - 1]->*MemPtrSrc);
+					Real dphidx = (*in_pkg_data_addrs[i + 1][j][k] - *in_pkg_data_addrs[i - 1][j][k]);
+					Real dphidy = (*in_pkg_data_addrs[i][j + 1][k] - *in_pkg_data_addrs[i][j - 1][k]);
+					Real dphidz = (*in_pkg_data_addrs[i][j][k + 1] - *in_pkg_data_addrs[i][j][k - 1]);
 					Vecd normal = Vecd(dphidx, dphidy, dphidz);
-					pkg_data_addrs[i][j][k]->*MemPtrTrg = normal / (normal.norm() + TinyReal);
+					*out_pkg_data_addrs[i][j][k] = normal / (normal.norm() + TinyReal);
 				}
 	}
 	//=================================================================================================//
-	template<class BaseMeshType, class DataPackageType> template<class PackageDataType>
-	PackageDataType MeshWithDataPackages<BaseMeshType, DataPackageType>::DataValueFromGlobalIndex(Vecu global_data_index)
+	template<int PKG_SIZE, int ADDRS_SIZE>
+	template<typename DataType>
+	void BaseDataPackage<PKG_SIZE, ADDRS_SIZE>::
+		initializePackageDataAddress(PackageData<DataType>& pkg_data,
+			PackageDataAddress<DataType>& pkg_data_addrs)
+	{
+		for (int i = 0; i != ADDRS_SIZE; ++i)
+			for (int j = 0; j != ADDRS_SIZE; ++j)
+				for (int k = 0; k != ADDRS_SIZE; ++k)
+			{
+				pkg_data_addrs[i][j][k] = &pkg_data[0][0][0];
+			}
+	}
+	//=================================================================================================//
+	template<int PKG_SIZE, int ADDRS_SIZE>
+	template<typename DataType>
+	void BaseDataPackage<PKG_SIZE, ADDRS_SIZE>::
+		assignPackageDataAddress(PackageDataAddress<DataType>& pkg_data_addrs, Vecu& addrs_index,
+			PackageData<DataType>& pkg_data, Vecu& data_index)
+	{
+		pkg_data_addrs[addrs_index[0]][addrs_index[1]][addrs_index[2]] 
+			= &pkg_data[data_index[0]][data_index[1]][data_index[2]];
+	}
+	//=================================================================================================//
+	template<int PKG_SIZE, int ADDRS_SIZE>
+	template<typename DataType>
+	DataType  BaseDataPackage<PKG_SIZE, ADDRS_SIZE>::
+		CornerAverage(PackageDataAddress<DataType>& pkg_data_addrs, Veci addrs_index, Veci corner_direction)
+	{
+		DataType average(0);
+		for (int i = 0; i != 2; ++i)
+			for (int j = 0; j != 2; ++j)
+				for (int k = 0; k != 2; ++k)
+				{
+					int x_index = addrs_index[0] + i * corner_direction[0];
+					int y_index = addrs_index[1] + j * corner_direction[1];
+					int z_index = addrs_index[2] + k * corner_direction[2];
+					average += *pkg_data_addrs[x_index][y_index][z_index];
+				}
+		return average * 0.125;
+	}
+	//=================================================================================================//
+	template<class BaseMeshType, class DataPackageType>
+	template<typename DataType, typename PackageDataType, PackageDataType DataPackageType:: * MemPtr>
+	DataType MeshWithDataPackages<BaseMeshType, DataPackageType>::
+		DataValueFromGlobalIndex(Vecu global_data_index)
 	{
 		Vecu pkg_index_(0);
 		Vecu local_data_index(0);
@@ -91,10 +123,11 @@ namespace SPH {
 			pkg_index_[n] = cell_index_in_this_direction;
 			local_data_index[n] = global_data_index[n] - cell_index_in_this_direction * pkg_size_;
 		}
-		return data_pkg_addrs_[pkg_index_[0]][pkg_index_[1]][pkg_index_[2]]->pkg_data_[local_data_index[0]][local_data_index[1]][local_data_index[2]];
+		PackageDataType& data = data_pkg_addrs_[pkg_index_[0]][pkg_index_[1]][pkg_index_[2]]->*MemPtr;
+		return data[local_data_index[0]][local_data_index[1]][local_data_index[2]];
 	}
 	//=================================================================================================//
-	template<class BaseMeshType, class DataPackageType> template<class PackageDataType>
+	template<class BaseMeshType, class DataPackageType>
 	void MeshWithDataPackages<BaseMeshType, DataPackageType>::initializePackageAddressesInACell(Vecu cell_index)
 	{
 		int i = (int)cell_index[0];
@@ -103,15 +136,16 @@ namespace SPH {
 
 		DataPackageType* data_pkg = data_pkg_addrs_[i][j][k];
 		if (data_pkg->is_inner_pkg_) {
-			MeshDataMatrix<PackageDataType*>& pkg_data_addrs = data_pkg->pkg_data_addrs_;
 			for (int l = 0; l != pkg_addrs_size_; ++l)
 				for (int m = 0; m != pkg_addrs_size_; ++m)
 					for (int n = 0; n != pkg_addrs_size_; ++n) {
 						pair<int, int>  x_pair = CellShiftAndDataIndex(l);
 						pair<int, int>  y_pair = CellShiftAndDataIndex(m);
 						pair<int, int>  z_pair = CellShiftAndDataIndex(n);
-						pkg_data_addrs[l][m][n]
-							= &(data_pkg_addrs_[i + x_pair.first][j + y_pair.first][k + z_pair.first]->pkg_data_[x_pair.second][y_pair.second][z_pair.second]);
+
+						data_pkg->assignAllPackageDataAddress(Vecu(l, m, n),
+							data_pkg_addrs_[i + x_pair.first][j + y_pair.first][k + z_pair.first],
+							Vecu(x_pair.second, y_pair.second, z_pair.second));
 					}
 		}
 	}
@@ -129,7 +163,7 @@ namespace SPH {
 	}
 	//=================================================================================================//
 	template<class BaseMeshType, class DataPackageType>
-	template<class DataType, class PackageDataType, DataType PackageDataType::* MemPtr>
+	template<class DataType, typename PackageDataAddressType, PackageDataAddressType DataPackageType:: * MemPtr>
 	DataType MeshWithDataPackages<BaseMeshType, DataPackageType>::probeMesh(Vecd& position)
 	{
         Vecu grid_index = BaseMeshType::GridIndexFromPosition(position);
@@ -138,10 +172,10 @@ namespace SPH {
 		size_t k = grid_index[2];
 
 		DataPackageType* data_pkg = data_pkg_addrs_[i][j][k];
-		if (data_pkg->is_inner_pkg_) {
-			return data_pkg->DataPackageType::template probeDataPackage<DataType, MemPtr>(data_pkg->pkg_data_addrs_, position);
-		}
-		else return data_pkg->pkg_data_addrs_[0][0][0]->*MemPtr;
+		PackageDataAddressType& pkg_data_addrs = data_pkg->*MemPtr;
+		return data_pkg->is_inner_pkg_ ?
+			data_pkg->DataPackageType::template probeDataPackage<DataType>(pkg_data_addrs, position)
+			: *pkg_data_addrs[0][0][0];
 	}
 	//=================================================================================================//
 }
