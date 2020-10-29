@@ -81,7 +81,7 @@ $(function() {
 <p>A SolidBodyPart for coupling with Simbody. The mass, origin, and unit inertial matrix are computed. Note: In Simbody, all spatial vectors are three dimensional.  
  <a href="class_s_p_h_1_1_solid_body_part_for_simbody.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="base__body_8h_source.html">base_body.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="solid__body_8h_source.html">solid_body.h</a>&gt;</code></p>
 
 <p>Inherits <a class="el" href="class_s_p_h_1_1_body_part_by_particle.html">SPH::BodyPartByParticle</a>.</p>
 <table class="memberdecls">
@@ -98,12 +98,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ac2c8d52c0a7d4a3f8e78014256450bf5 inherit pub_methods_class_s_p_h_1_1_body_part"><td class="memItemLeft" align="right" valign="top"><a id="ac2c8d52c0a7d4a3f8e78014256450bf5"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>BodyPart</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *body, string body_part_name)</td></tr>
 <tr class="separator:ac2c8d52c0a7d4a3f8e78014256450bf5 inherit pub_methods_class_s_p_h_1_1_body_part"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a39da3aa46887804791b74098f11230b1 inherit pub_methods_class_s_p_h_1_1_body_part"><td class="memItemLeft" align="right" valign="top"><a id="a39da3aa46887804791b74098f11230b1"></a>
-<a class="el" href="class_s_p_h_1_1_complex_shape.html">ComplexShape</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getBodyPartShape</b> ()</td></tr>
-<tr class="separator:a39da3aa46887804791b74098f11230b1 inherit pub_methods_class_s_p_h_1_1_body_part"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0367c7d6b2b15bbd05736c5f77e599ac inherit pub_methods_class_s_p_h_1_1_body_part"><td class="memItemLeft" align="right" valign="top"><a id="a0367c7d6b2b15bbd05736c5f77e599ac"></a>
+<a class="el" href="class_s_p_h_1_1_complex_shape.html">ComplexShape</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>getBodyPartShape</b> ()</td></tr>
+<tr class="separator:a0367c7d6b2b15bbd05736c5f77e599ac inherit pub_methods_class_s_p_h_1_1_body_part"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaca3bfadd76686d78e67b67e7f79fbec inherit pub_methods_class_s_p_h_1_1_body_part"><td class="memItemLeft" align="right" valign="top"><a id="aaca3bfadd76686d78e67b67e7f79fbec"></a>
 <a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>getBody</b> ()</td></tr>
 <tr class="separator:aaca3bfadd76686d78e67b67e7f79fbec inherit pub_methods_class_s_p_h_1_1_body_part"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66362ce759e462d548a7ebcbd5db1863 inherit pub_methods_class_s_p_h_1_1_body_part"><td class="memItemLeft" align="right" valign="top"><a id="a66362ce759e462d548a7ebcbd5db1863"></a>
+string&#160;</td><td class="memItemRight" valign="bottom"><b>BodyPartName</b> ()</td></tr>
+<tr class="separator:a66362ce759e462d548a7ebcbd5db1863 inherit pub_methods_class_s_p_h_1_1_body_part"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae2a3bda407f1882ee8158de98f1b203a inherit pub_methods_class_s_p_h_1_1_body_part"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_body_part.html#ae2a3bda407f1882ee8158de98f1b203a">BodyPartBounds</a> (Vecd &amp;lower_bound, Vecd &amp;upper_bound)</td></tr>
 <tr class="memdesc:ae2a3bda407f1882ee8158de98f1b203a inherit pub_methods_class_s_p_h_1_1_body_part"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the lower and upper bounds of the body part.  <a href="class_s_p_h_1_1_body_part.html#ae2a3bda407f1882ee8158de98f1b203a">More...</a><br /></td></tr>
 <tr class="separator:ae2a3bda407f1882ee8158de98f1b203a inherit pub_methods_class_s_p_h_1_1_body_part"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -122,9 +125,9 @@ SimTK::MassProperties *&#160;</td><td class="memItemRight" valign="bottom"><b>bo
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:a10fc24e27bfa68c0bb712120edbb7bef"><td class="memItemLeft" align="right" valign="top"><a id="a10fc24e27bfa68c0bb712120edbb7bef"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>TagBodyPart</b> () override</td></tr>
-<tr class="separator:a10fc24e27bfa68c0bb712120edbb7bef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afec755a62de20e039b779f13629434fd"><td class="memItemLeft" align="right" valign="top"><a id="afec755a62de20e039b779f13629434fd"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>tagBodyPart</b> () override</td></tr>
+<tr class="separator:afec755a62de20e039b779f13629434fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_class_s_p_h_1_1_body_part_by_particle"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_class_s_p_h_1_1_body_part_by_particle')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="class_s_p_h_1_1_body_part_by_particle.html">SPH::BodyPartByParticle</a></td></tr>
 <tr class="memitem:ac4d448406865dcf5b592d5cae0c101a4 inherit pro_methods_class_s_p_h_1_1_body_part_by_particle"><td class="memItemLeft" align="right" valign="top"><a id="ac4d448406865dcf5b592d5cae0c101a4"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>tagAParticle</b> (<a class="el" href="classsize__t.html">size_t</a> particle_index)</td></tr>
@@ -135,6 +138,9 @@ Protected Attributes</h2></td></tr>
 <tr class="memitem:aa2119e64429096b12869be2757c3eb28"><td class="memItemLeft" align="right" valign="top"><a id="aa2119e64429096b12869be2757c3eb28"></a>
 Real&#160;</td><td class="memItemRight" valign="bottom"><b>solid_body_density_</b></td></tr>
 <tr class="separator:aa2119e64429096b12869be2757c3eb28"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a5e32f407dd5adeca7f9158fe9957de"><td class="memItemLeft" align="right" valign="top"><a id="a2a5e32f407dd5adeca7f9158fe9957de"></a>
+<a class="el" href="class_s_p_h_1_1_solid_particles.html">SolidParticles</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>solid_particles_</b></td></tr>
+<tr class="separator:a2a5e32f407dd5adeca7f9158fe9957de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_class_s_p_h_1_1_body_part"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_body_part')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_body_part.html">SPH::BodyPart</a></td></tr>
 <tr class="memitem:a092916531f2808352e38ef9208326792 inherit pro_attribs_class_s_p_h_1_1_body_part"><td class="memItemLeft" align="right" valign="top"><a id="a092916531f2808352e38ef9208326792"></a>
 <a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>body_</b></td></tr>
@@ -142,16 +148,16 @@ Real&#160;</td><td class="memItemRight" valign="bottom"><b>solid_body_density_</
 <tr class="memitem:abe5243e5101fed3d11a354bdcb59219f inherit pro_attribs_class_s_p_h_1_1_body_part"><td class="memItemLeft" align="right" valign="top"><a id="abe5243e5101fed3d11a354bdcb59219f"></a>
 string&#160;</td><td class="memItemRight" valign="bottom"><b>body_part_name_</b></td></tr>
 <tr class="separator:abe5243e5101fed3d11a354bdcb59219f inherit pro_attribs_class_s_p_h_1_1_body_part"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afbc1c393e705bc39e254530049f48a11 inherit pro_attribs_class_s_p_h_1_1_body_part"><td class="memItemLeft" align="right" valign="top"><a id="afbc1c393e705bc39e254530049f48a11"></a>
-<a class="el" href="class_s_p_h_1_1_complex_shape.html">ComplexShape</a>&#160;</td><td class="memItemRight" valign="bottom"><b>body_part_shape_</b></td></tr>
-<tr class="separator:afbc1c393e705bc39e254530049f48a11 inherit pro_attribs_class_s_p_h_1_1_body_part"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a42e3da362eb35f1afa39a12506c30645 inherit pro_attribs_class_s_p_h_1_1_body_part"><td class="memItemLeft" align="right" valign="top"><a id="a42e3da362eb35f1afa39a12506c30645"></a>
+<a class="el" href="class_s_p_h_1_1_complex_shape.html">ComplexShape</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>body_part_shape_</b></td></tr>
+<tr class="separator:a42e3da362eb35f1afa39a12506c30645 inherit pro_attribs_class_s_p_h_1_1_body_part"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A SolidBodyPart for coupling with Simbody. The mass, origin, and unit inertial matrix are computed. Note: In Simbody, all spatial vectors are three dimensional. </p>
 </div><hr/>The documentation for this class was generated from the following files:<ul>
-<li>SPHINXsys/src/shared/bodies/<a class="el" href="base__body_8h_source.html">base_body.h</a></li>
-<li>SPHINXsys/src/for_2D_build/bodies/base_body_supplementary.cpp</li>
-<li>SPHINXsys/src/shared/bodies/<a class="el" href="base__body_8cpp.html">base_body.cpp</a></li>
+<li>SPHINXsys/src/shared/bodies/<a class="el" href="solid__body_8h_source.html">solid_body.h</a></li>
+<li>SPHINXsys/src/for_2D_build/bodies/solid_body_supplementary.cpp</li>
+<li>SPHINXsys/src/shared/bodies/<a class="el" href="solid__body_8cpp.html">solid_body.cpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->

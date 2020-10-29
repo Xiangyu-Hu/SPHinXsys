@@ -113,29 +113,21 @@ int main()
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
 	WallBoundary *wall_boundary = new WallBoundary(system, "Wall",	0);
-	SolidParticles 					solid_particles(wall_boundary);
+	SolidParticles 	wall_particles(wall_boundary);
 	/** topology */
 	SPHBodyComplexRelation* water_block_complex = new SPHBodyComplexRelation(water_block, { wall_boundary });
-	SPHBodyComplexRelation* wall_complex = new SPHBodyComplexRelation(wall_boundary, {});
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
 	 /** Define external force. */
 	Gravity gravity(Vecd(gravity_g, 0.0));
-	 /**
-	  * @brief 	Methods used only once.
-	  */
-	/** Initialize normal direction of the wall boundary. */
-	solid_dynamics::NormalDirectionSummation 	get_wall_normal(wall_complex);
 	/**
 	 * @brief 	Methods used for time stepping.
 	 */
 	 /** Initialize particle acceleration. */
 	InitializeATimeStep 	initialize_a_fluid_step(water_block, &gravity);
-	/** Periodic bounding in x direction. */
-	PeriodicBoundingInAxisDirection 	periodic_bounding(water_block, 0);
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirection 	periodic_condition(water_block, 0);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition(water_block, 0);
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
@@ -169,8 +161,9 @@ int main()
 	 * @brief Setup geomtry and initial conditions.
 	 */
 	system.initializeSystemCellLinkedLists();
+	periodic_condition.update_cell_linked_list_.parallel_exec();
 	system.initializeSystemConfigurations();
-	get_wall_normal.exec();
+	wall_particles.initializeNormalDirectionFromGeometry();
 	/**
 	 * @brief The time stepping starts here.
 	 */
@@ -179,17 +172,15 @@ int main()
 	{
 		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
 		water_block->updateCellLinkedList();
-		periodic_condition.parallel_exec();
+		periodic_condition.update_cell_linked_list_.parallel_exec();
 		water_block_complex->updateConfiguration();
 	}
-	/** Pre-simulation*/
-	periodic_condition.parallel_exec();
 	/** Output the start states of bodies. */
 	write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
 	/**
 	 * @brief 	Basic parameters.
 	 */
-	int number_of_iterations = system.restart_step_;
+	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval*10;
 	Real End_Time 		= 20.0; 	/**< End time. */
@@ -248,9 +239,9 @@ int main()
 			/** Update cell linked list and configuration. */
 			time_instance = tick_count::now();
 			/** Water block configuration and periodic condition. */
-			periodic_bounding.parallel_exec();
+			periodic_condition.bounding_.parallel_exec();
 			water_block->updateCellLinkedList();
-			periodic_condition.parallel_exec();
+			periodic_condition.update_cell_linked_list_.parallel_exec();
 			water_block_complex->updateConfiguration();
 			interval_updating_configuration += tick_count::now() - time_instance;
 		}

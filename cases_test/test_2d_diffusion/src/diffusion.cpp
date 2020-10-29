@@ -136,7 +136,7 @@ int main()
 	/** Diffusion process for diffusion body. */
 	DiffusionBodyRelaxation 			diffusion_relaxation(diffusion_body_inner_relation);
 	/** Periodic BCs. */
-	PeriodicConditionInAxisDirection 					periodic_condition_y(diffusion_body, 1);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList	periodic_condition_y(diffusion_body, 1);
 	/**
 	 * @brief simple input and outputs.
 	 */
@@ -145,7 +145,7 @@ int main()
 
 	/** Pre-simultion*/
 	system.initializeSystemCellLinkedLists();
-	periodic_condition_y.parallel_exec();
+	periodic_condition_y.update_cell_linked_list_.parallel_exec();
 	system.initializeSystemConfigurations();
 	correct_configuration.parallel_exec();
 	setup_diffusion_initial_condition.exec();

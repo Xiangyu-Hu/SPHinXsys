@@ -17,7 +17,7 @@ namespace SPH
 		//=================================================================================================//
 		CorrectInterpolationKernelWeights::
 			CorrectInterpolationKernelWeights(SPHBodyContactRelation* body_contact_relation)
-			: ParticleDynamicsContact(body_contact_relation),
+			: InteractionDynamics(body_contact_relation->sph_body_),
 			DataDelegateContact<SPHBody, BaseParticles,
 			BaseMaterial, SPHBody, BaseParticles, BaseMaterial>(body_contact_relation)
 		{
@@ -27,7 +27,7 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		void CorrectInterpolationKernelWeights::ContactInteraction(size_t index_i, Real dt)
+		void CorrectInterpolationKernelWeights::Interaction(size_t index_i, Real dt)
 		{
 			Vecd weight_correction(0.0);
 			/** a small number added to diagonal to avoid divide zero */

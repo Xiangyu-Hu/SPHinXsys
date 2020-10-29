@@ -20,7 +20,6 @@ namespace SPH
 				<< pos_n_[i][2] << "  "
 				<< i << "  "
 				<< rho_n_[i] << " "
-				<< sigma_0_[i] << " "
 				<< vel_n_[i][0] << " "
 				<< vel_n_[i][1] << " "
 				<< vel_n_[i][2] << "\n ";

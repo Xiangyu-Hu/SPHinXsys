@@ -35,12 +35,190 @@
 
 #include "base_mesh.h"
 
+/** this is a reformulation of tbb parallel_sort for particle data */
+namespace tbb {
+	namespace interafce9 {
+		namespace internal {
+
+			using tbb::internal::no_assign;
+
+			/** sorting particle */
+			template<typename RandomAccessIterator, typename Compare, typename SwapType>
+			class QuickSortParticleRange : private no_assign {
+
+				inline size_t median_of_three(const RandomAccessIterator& array, size_t l, size_t m, size_t r) const {
+					return comp_(array[l], array[m]) ? (comp_(array[m], array[r]) ? m : (comp_(array[l], array[r]) ? r : l))
+						: (comp_(array[r], array[m]) ? m : (comp_(array[r], array[l]) ? r : l));
+				}
+
+				inline size_t PseudoMedianOfNine(const RandomAccessIterator& array, const QuickSortParticleRange& range) const {
+					size_t offset = range.size_ / 8u;
+					return median_of_three(array,
+						median_of_three(array, 0, offset, offset * 2),
+						median_of_three(array, offset * 3, offset * 4, offset * 5),
+						median_of_three(array, offset * 6, offset * 7, range.size_ - 1));
+
+				}
+
+				size_t splitRange(QuickSortParticleRange& range) {
+					RandomAccessIterator array = range.begin_;
+					RandomAccessIterator key0 = range.begin_;
+					size_t m = PseudoMedianOfNine(array, range);
+					if (m) swap_particle_data_(array, array + m);
+
+					size_t i = 0;
+					size_t j = range.size_;
+					// Partition interval [i+1,j-1] with key *key0.
+					for (;;) {
+						__TBB_ASSERT(i < j, NULL);
+						// Loop must terminate since array[l]==*key0.
+						do {
+							--j;
+							__TBB_ASSERT(i <= j, "bad ordering relation?");
+						} while (comp_(*key0, array[j]));
+						do {
+							__TBB_ASSERT(i <= j, NULL);
+							if (i == j) goto quick_sort_particle_partition;
+							++i;
+						} while (comp_(array[i], *key0));
+						if (i == j) goto quick_sort_particle_partition;
+						swap_particle_data_(array + i, array + j);
+					}
+				quick_sort_particle_partition:
+					// Put the partition key were it belongs
+					swap_particle_data_(array + j, key0);
+					// array[l..j) is less or equal to key.
+					// array(j..r) is greater or equal to key.
+					// array[j] is equal to key
+					i = j + 1;
+					size_t new_range_size = range.size_ - i;
+					range.size_ = j;
+					return new_range_size;
+				}
+
+			public:
+
+				static const size_t grainsize_ = 500;
+				const Compare& comp_;
+				SwapType& swap_particle_data_;
+				size_t size_;
+				RandomAccessIterator begin_;
+
+				QuickSortParticleRange(RandomAccessIterator begin,
+					size_t size, const Compare& compare, SwapType& swap_particle_data) :
+					comp_(compare), swap_particle_data_(swap_particle_data),
+					size_(size), begin_(begin) {}
+
+				bool empty() const { return size_ == 0; }
+				bool is_divisible() const { return size_ >= grainsize_; }
+
+				QuickSortParticleRange(QuickSortParticleRange& range, split)
+					: comp_(range.comp_), swap_particle_data_(range.swap_particle_data_)
+					, size_(splitRange(range))
+					// +1 accounts for the pivot element, which is at its correct place
+					// already and, therefore, is not included into subranges.
+					, begin_(range.begin_ + range.size_ + 1) {}
+			};
+
+			/*
+			Description : QuickSort in Iterator format
+			Link        : https://stackoverflow.com/a/54976413/3547485
+			Ref			: http://www.cs.fsu.edu/~lacher/courses/COP4531/lectures/sorts/slide09.html
+			*/
+			template <typename RandomAccessIterator, typename Compare, typename SwapType>
+			RandomAccessIterator Partition(RandomAccessIterator first, RandomAccessIterator last, Compare& compare, SwapType& swap_particle_data)
+			{
+				auto pivot = std::prev(last, 1);
+				auto i = first;
+				for (auto j = first; j != pivot; ++j) {
+					// bool format 
+					if (compare(*j, *pivot)) {
+						swap_particle_data(i++, j);
+					}
+				}
+				swap_particle_data(i, pivot);
+				return i;
+			}
+
+			template <typename RandomAccessIterator, typename Compare, typename SwapType>
+			void SerialQuickSort(RandomAccessIterator first, RandomAccessIterator last, Compare& compare, SwapType& swap_particle_data)
+			{
+				if (std::distance(first, last) > 1) {
+					RandomAccessIterator bound = Partition(first, last, compare, swap_particle_data);
+					SerialQuickSort(first, bound, compare, swap_particle_data);
+					SerialQuickSort(bound + 1, last, compare, swap_particle_data);
+				}
+			}
+
+			/*
+			Description : Insertsort in Iterator format
+			Link        : http://www.codecodex.com/wiki/Insertion_sort
+			*/
+
+			template< typename RandomAccessIterator, typename Compare, typename SwapType>
+			void InsertionSort(RandomAccessIterator First, RandomAccessIterator Last, Compare& compare, SwapType& swap_particle_data)
+			{
+				RandomAccessIterator min = First;
+				for (RandomAccessIterator i = First + 1; i < Last; ++i)
+					if (compare(*i, *min)) min = i;
+
+				swap_particle_data(First, min);
+				while (++First < Last)
+					for (RandomAccessIterator j = First; compare(*j, *(j - 1)); --j)
+						swap_particle_data((j - 1), j);
+			}
+
+			/** Body class used to sort elements in a range that is smaller than the grainsize. */
+			template<typename RandomAccessIterator, typename Compare, typename SwapType>
+			struct QuickSortParticleBody {
+				void operator()(const QuickSortParticleRange<RandomAccessIterator, Compare, SwapType>& range) const {
+					SerialQuickSort(range.begin_, range.begin_ + range.size_, range.comp_, range.swap_particle_data_);
+				}
+			};
+
+		}
+	}
+}
+
 namespace SPH {
 
 	class SPHSystem;
 	class SPHBody;
 	class BaseParticles;
 	class Kernel;
+
+	/**
+	 * @class CompareParticleSequence
+	 * @brief compare the sequence of two particles
+	 */
+	struct CompareParticleSequence 
+	{ 
+		bool operator () (const size_t& x, const size_t& y) const 
+		{ return x < y; }; 
+	};
+
+	/**
+	 * @class SwapParticleData
+	 * @brief swap sortable particle data according to a sequence
+	 */
+	class SwapParticleData
+	{
+	protected:
+		StdLargeVec<size_t>& sequence_;
+		StdLargeVec<size_t>& unsorted_id_;
+		StdVec<StdLargeVec<Matd>*>& sortable_matrices_;
+		StdVec<StdLargeVec<Vecd>*>& sortable_vectors_;
+		StdVec<StdLargeVec<Real>*>& sortable_scalars_;
+
+	public:
+		SwapParticleData(BaseParticles* base_particles);
+		~SwapParticleData() {};
+
+		/** the operater overload for swapping particle data.
+		 *  the arguments are the same with std::iter_swap
+		 */
+		void operator () (size_t* a, size_t* b);
+	};
 
 	/**
 	 * @class CellList
@@ -53,7 +231,7 @@ namespace SPH {
 		ConcurrentIndexVector concurrent_particle_indexes_;
 		/** non-concurrent cell linked list rewritten for building neighbor list */
 		CellListDataVector cell_list_data_;
-		/** the index vector for iterate particles in a split scheme. */
+		/** the index vector for real particles. */
 		IndexVector real_particle_indexes_;
 
 		CellList();
@@ -70,6 +248,14 @@ namespace SPH {
 		SPHBody* body_;
 		BaseParticles* base_particles_;
 		Kernel* kernel_;
+		SwapParticleData* swap_particle_data_;
+		CompareParticleSequence compare_;
+		tbb::interafce9::internal::
+			QuickSortParticleRange<size_t*, CompareParticleSequence, SwapParticleData>* 
+			quick_sort_particle_range_;
+		tbb::interafce9::internal::
+			QuickSortParticleBody<size_t*, CompareParticleSequence, SwapParticleData> 
+			quick_sort_particle_body_;
 
 		/** clear the cell lists */
 		void ClearCellLists(Vecu& number_of_cells, matrix_cell cell_linked_lists);
@@ -91,12 +277,11 @@ namespace SPH {
 		virtual ~BaseMeshCellLinkedList() {};
 
 		/** computing search range for building contact configuration */
-		int ComputingSearchRage(int origin_refinement_level,
-			int target_refinement_level);
+		int computeSearchRange(int origin_refinement_level, int target_refinement_level);
 		/** choose a kernel for building up inter refinement level configuration */
 		Kernel& ChoosingKernel(Kernel* original_kernel, Kernel* target_kernel);
 		/** get the address of cell list */
-		virtual CellList* CellListFormIndex(Vecu cell_index) = 0;
+		virtual CellList* CellListFromIndex(Vecu cell_index) = 0;
 		/** Get the array for of mesh cell linked lists.*/
 		virtual matrix_cell CellLinkedLists() = 0;
 
@@ -114,6 +299,14 @@ namespace SPH {
 
 		/** find the nearest list data entry */
 		virtual ListData findNearestListDataEntry(Vecd& position) = 0;
+
+		/** sorting particle data according to the cell location of particles */
+		virtual void sortingParticleData();
+		/** computing the sequence which indicate the order of sorted particle data */
+		virtual void computingSequence(StdLargeVec<size_t>& sequence) = 0;
+		/** update the reference of sorted data from unsorted data */
+		virtual void updateSortedId();
+
 	};
 
 	/**
@@ -140,7 +333,7 @@ namespace SPH {
 		virtual ~MeshCellLinkedList() { deleteMeshDataMatrix(); };
 
 		/** access protected members */
-		virtual CellList* CellListFormIndex(Vecu cell_index) override;
+		virtual CellList* CellListFromIndex(Vecu cell_index) override;
 		/** Get the array for of mesh cell linked lists.*/
 		virtual matrix_cell CellLinkedLists() override { return cell_linked_lists_; };
 
@@ -162,6 +355,8 @@ namespace SPH {
 
 		/** find the nearest list data entry */
 		virtual ListData findNearestListDataEntry(Vecd& position) override;
+		/** computing the sequence which indicate the order of sorted particle data */
+		virtual void computingSequence(StdLargeVec<size_t>& sequence) override;
 	};
 
 	/**
@@ -200,7 +395,7 @@ namespace SPH {
 		virtual ~MultilevelMeshCellLinkedList() {};
 
 		/** access protected members */
-		virtual CellList* CellListFormIndex(Vecu cell_index) override;
+		virtual CellList* CellListFromIndex(Vecu cell_index) override;
 		/** Get the array for of mesh cell linked lists.*/
 		virtual matrix_cell CellLinkedLists() override { return cell_linked_lists_levels_[0]; };
 
@@ -218,6 +413,7 @@ namespace SPH {
 
 		/** find the nearest list data entry */
 		virtual ListData findNearestListDataEntry(Vecd& position) override { return ListData(0, Vecd(0)); };
-
+		/** computing the sequence which indicate the order of sorted particle data */
+		virtual void computingSequence(StdLargeVec<size_t>& sequence) override {};
 	};
 }

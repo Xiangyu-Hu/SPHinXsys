@@ -22,11 +22,9 @@
 * --------------------------------------------------------------------------*/
 /**
  * @file 	solid_particles.h
- * @brief 	This is the derived class of base particle.
+ * @brief 	This is the derived class of base particles.
  * @author	Xiangyu Hu and Chi Zhang
  * @version	0.1
- * @version 0.2.1
- * 			add muscle particles and muscle data.
  */
 #pragma once
 

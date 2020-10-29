@@ -50,13 +50,10 @@ namespace SPH {
 	class DiffusionReactionParticles : public BaseParticlesType
 	{
 	protected:
-		/** Total number of diffusion and reaction species . */
-		size_t number_of_species_;
-		/** Total number of diffusion species . */
-		size_t number_of_diffusion_species_;
+		size_t number_of_species_;				/**< Total number of diffusion and reaction species . */
+		size_t number_of_diffusion_species_;	/**< Total number of diffusion species . */
 		map<string, size_t> species_indexes_map_;
 	public:
-
 		StdVec<StdLargeVec<Real>> species_n_;	/**< array of diffusion/reaction scalars */
 		StdVec<StdLargeVec<Real>> diffusion_dt_;/**< array of the time derivative of diffusion species */
 

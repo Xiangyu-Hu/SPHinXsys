@@ -109,7 +109,7 @@ namespace SPH
 		 * @param[in] body_name Name of Body.
 		 * @param[in] refinement_level Refinement level of this body.
 		 * @param[in] smoothing_length_ratio The ratio between smoothinglength to particle spacing.
-		 * @param[in] op Particle generator manner.
+		 * @param[in] particle_generator Particle generator.
 		 */
 		explicit SPHBody(SPHSystem &sph_system, string body_name, int refinement_level, Real smoothing_length_ratio, 
 			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
@@ -131,8 +131,8 @@ namespace SPH
 
 		/** assign base particle to the body and cell linked list. */
 		void assignBaseParticle(BaseParticles* base_particles);
-		/** Allocate memory for cell linked list. */
-		virtual void allocateMemoryCellLinkedList() = 0;
+		/** Compute reference number density*/
+		virtual Real computeReferenceNumberDensity();
 		/** Update cell linked list. */
 		virtual void updateCellLinkedList() = 0;
 		/** Allocate extra configuration memories for body buffer particles. */
@@ -178,8 +178,6 @@ namespace SPH
 			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~RealBody() {};
 
-		/** Allocate memory for cell linked list. */
-		virtual void allocateMemoryCellLinkedList() override;
 		/** Update cell linked list. */
 		virtual void updateCellLinkedList() override;
 		/** The pointer to derived class object. */
@@ -201,8 +199,6 @@ namespace SPH
 			ParticleGenerator* particle_generator = new ParticleGeneratorDirect());
 		virtual ~FictitiousBody() {};
 
-		/** Allocate memory for cell linked list. */
-		virtual void allocateMemoryCellLinkedList() override;
 		/** Update cell linked list. */
 		virtual void updateCellLinkedList() override;
 		/** The pointer to derived class object. */
@@ -223,6 +219,7 @@ namespace SPH
 
 		ComplexShape* getBodyPartShape() { return body_part_shape_; };
 		SPHBody* getBody() { return body_; };
+		string BodyPartName() { return body_part_name_; };
 		/**
 		 * @brief Find the lower and upper bounds of the body part.
 		 * @param[in,out] lower_bound Lower bound of this body part.

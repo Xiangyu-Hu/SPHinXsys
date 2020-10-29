@@ -49,7 +49,11 @@ namespace SPH {
 			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~FluidBody() {};
 
+		/** Update cell linked list with particle sorting. */
+		virtual void updateCellLinkedList() override;
 		/** The pointer to derived class object. */
 		virtual FluidBody* pointToThisObject() override { return this; };
+	protected:
+		size_t iteration_count_;
 	};
 }

@@ -5,15 +5,7 @@
  */
 
 #include "base_mesh.h"
-#include "base_mesh.hpp"
-#include "array_allocation.h"
-#include "sph_system.h"
-#include "base_particles.h"
-#include "base_body.h"
-#include "neighbor_relation.h"
-#include "base_data_package.h"
 
-#include "math.h"
 //=================================================================================================//
 namespace SPH {
 	//=============================================================================================//
@@ -49,6 +41,10 @@ namespace SPH {
 	{
 		return grid_index[0] * number_of_grid_points[1] + grid_index[1];
 	}
-	//=============================================================================================//
+    //=============================================================================================//
+    size_t BaseMesh::transferMeshIndexToMortonOrder(Vecu grid_index)
+    {
+        return MortonCode(grid_index[0]) | (MortonCode(grid_index[1]) << 1);
+    }
 }
 //=============================================================================================//

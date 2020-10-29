@@ -58,7 +58,7 @@ namespace SPH
 		task_scheduler_init tbb_init_;		/**< TBB library. */
 		Real particle_spacing_ref_;			/**< Refernce initial particle spacing. */
 		/** restart step*/
-		int restart_step_;
+		size_t restart_step_;
 		/** computing from roeload particles from files. */
 		bool run_particle_relaxation_;
 		/** start the simulation with relaxed particles*/

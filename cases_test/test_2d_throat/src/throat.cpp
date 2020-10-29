@@ -137,30 +137,18 @@ int main()
 	//the wall boundary
 	WallBoundary *wall_boundary = new WallBoundary(system, "Wall", 0);
 	//creat solid particles
-	SolidParticles solid_particles(wall_boundary);
+	SolidParticles wall_particles(wall_boundary);
 	/** topology */
 	SPHBodyInnerRelation* fluid_block_inner = new SPHBodyInnerRelation(fluid_block);
 	SPHBodyComplexRelation* fluid_block_complex = new SPHBodyComplexRelation(fluid_block_inner, { wall_boundary });
-	SPHBodyComplexRelation* wall_complex = new SPHBodyComplexRelation(wall_boundary, {});
-
 	//-------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
 	//-------------------------------------------------------------------
-
-	//-------------------------------------------------------------------
-	//methods only used only once
-	//-------------------------------------------------------------------
-	//initialize normal direction of the wall boundary
-	solid_dynamics::NormalDirectionSummation get_wall_normal(wall_complex);
-
 	//-------------------------------------------------------------------
 	//methods used for time stepping
 	//-------------------------------------------------------------------
-
-	/** Periodic bounding in x direction. */
-	PeriodicBoundingInAxisDirection 	periodic_bounding(fluid_block, 0);
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirection 	periodic_condition(fluid_block, 0);
+	PeriodicConditionInAxisDirectionUsingGhostParticles 	periodic_condition(fluid_block, 0);
 
 	
 	//evaluation of density by summation approach
@@ -173,8 +161,10 @@ int main()
 	//pressure relaxation using verlet time stepping
 	fluid_dynamics::PressureRelaxationFirstHalfOldroyd_B
 		pressure_relaxation_first_half(fluid_block_complex);
+	pressure_relaxation_first_half.pre_processes_.push_back(&periodic_condition.ghost_update_);
 	fluid_dynamics::PressureRelaxationSecondHalfOldroyd_B
 		pressure_relaxation_second_half(fluid_block_complex);
+	pressure_relaxation_second_half.pre_processes_.push_back(&periodic_condition.ghost_update_);
 
 	//-------- common particle dynamics ----------------------------------------
 	InitializeATimeStep 	initialize_a_fluid_step(fluid_block, &gravity);
@@ -203,11 +193,11 @@ int main()
 	//periodic regions to the corresponding boundaries
 	//for building up of extra configuration
 	system.initializeSystemCellLinkedLists();
-	periodic_condition.parallel_exec();
+	periodic_condition.ghost_creation_.parallel_exec();
 	system.initializeSystemConfigurations();
 
 	//prepare quantities will be used once only
-	get_wall_normal.parallel_exec();
+	wall_particles.initializeNormalDirectionFromGeometry();
 
 	//initial output
 	write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
@@ -229,7 +219,8 @@ int main()
 	{
 		Real integration_time = 0.0;
 		//integrate time (loop) until the next output time
-		while (integration_time < D_Time) {
+		while (integration_time < D_Time) 
+		{
 
 			initialize_a_fluid_step.parallel_exec();
 			Dt = get_fluid_advection_time_step_size.parallel_exec();
@@ -238,13 +229,13 @@ int main()
 			transport_velocity_formulation.correction_.parallel_exec(Dt);
 
 			Real relaxation_time = 0.0;
-			while (relaxation_time < Dt) {
+			while (relaxation_time < Dt) 
+			{
+				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt - relaxation_time);
 				//fluid dynamics
 				pressure_relaxation_first_half.parallel_exec(dt);
 				pressure_relaxation_second_half.parallel_exec(dt);
 
-				dt = get_fluid_time_step_size.parallel_exec();
-				if ((relaxation_time + dt) >= Dt) dt = Dt - relaxation_time;
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
@@ -259,9 +250,9 @@ int main()
 			number_of_iterations++;
 
 			//water block configuration and periodic condition
-			periodic_bounding.parallel_exec();
+			periodic_condition.bounding_.parallel_exec();
 			system.initializeSystemCellLinkedLists();
-			periodic_condition.parallel_exec();
+			periodic_condition.ghost_creation_.parallel_exec();
 			system.initializeSystemConfigurations();
 		}
 

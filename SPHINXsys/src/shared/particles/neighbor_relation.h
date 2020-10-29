@@ -22,7 +22,7 @@
 * --------------------------------------------------------------------------*/
 /**
  * @file 	neighbor_relation.h
- * @brief 	There are the classes for a neighboring particle. 
+ * @brief 	There are the classes for neighboring particles. 
  * It saves the information for carring out pair
  * interaction, and also considered as the topology of the particles.
  * @author	Xiangyu Hu and Chi Zhang

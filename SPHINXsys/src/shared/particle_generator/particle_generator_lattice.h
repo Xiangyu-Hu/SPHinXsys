@@ -33,6 +33,7 @@
 
 #include "base_particle_generator.h"
 #include "geometry.h"
+#include "base_mesh.h"
 
 namespace SPH {
 	/**
@@ -45,36 +46,12 @@ namespace SPH {
 		ParticleGeneratorLattice();
 		virtual ~ParticleGeneratorLattice() {};
 
-		/** Compute reference number density*/
-		virtual Real ComputeReferenceNumberDensity();
-
 		virtual void initialize(SPHBody* sph_body) override;
 		virtual void CreateBaseParticles(BaseParticles* base_particles) override;
 	protected:
-		Vecd lower_bound_, upper_bound_;	/**< Domain bounds. */
-		ComplexShape* body_shape_;
 		Real lattice_spacing_;		/**< Lattice size. */
-		Vecu number_of_lattices_;	/**< Number of lattice. */ 
-		/**
-		 * @brief Calculate the number of Lattices.
-		 * @param[in] lower_bound Lower bound of lattice size.
-		 * @param[in] upuper_bound Upper bound of lattice size.
-		 * @param[in] lattice_spacing Lattice size.
-		 */
-		void CalcNumberOfLattices(Vecd lower_bound, Vecd upper_bound, Real lattice_spacing);
-	};
-
-	/**
-	 * @class ParticleGeneratorRegularized
-	 * @brief generate particles from lattice positions for a body.
-	 */
-	class ParticleGeneratorRegularized : public ParticleGeneratorLattice
-	{
-	public:
-		ParticleGeneratorRegularized();
-		virtual ~ParticleGeneratorRegularized() {};
-
-		/** Create lattice particle for a body. */
-		virtual void CreateBaseParticles(BaseParticles* base_particles) override {};
+		Vecd lower_bound_, upper_bound_;	/**< Domain bounds. */
+		std::unique_ptr<Mesh> mesh_;
+		ComplexShape* body_shape_;
 	};
 }

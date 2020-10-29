@@ -19,20 +19,12 @@ namespace SPH
 		reload_particles_(false)
 	{
 		output_folder_ = "./output";
-		if (fs::exists(output_folder_) && restart_step_ == 0)
-		{
-			fs::remove_all(output_folder_);
-		}
 		if (!fs::exists(output_folder_))
 		{
 			fs::create_directory(output_folder_);
 		}
 
 		restart_folder_ = "./restart";
-		if (fs::exists(restart_folder_) && restart_step_ == 0)
-		{
-			fs::remove_all(restart_folder_);
-		}
 		if (!fs::exists(restart_folder_))
 		{
 			fs::create_directory(restart_folder_);

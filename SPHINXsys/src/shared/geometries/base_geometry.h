@@ -105,7 +105,7 @@ namespace SPH
 		Branch(size_t parent_id, Tree* tree);
 		virtual ~Branch() {};
 
-		Vecd end_direction_;	/**< Direction of the last segment of the branch.*/
+		Vecd end_direction_;	/**< direction of the last segment of the branch.*/
 		bool is_end_;	/**< whether is an end branch or not */
 	};
 

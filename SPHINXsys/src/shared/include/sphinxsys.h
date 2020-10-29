@@ -30,7 +30,6 @@ capabilities. **/
 #include "all_kernels.h"
 #include "all_particles.h"
 #include "all_geometries.h"
-#include "all_meshes.h"
 #include "all_types_of_bodies.h"
 #include "sph_system.h"
 #include "all_materials.h"

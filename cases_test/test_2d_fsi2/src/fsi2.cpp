@@ -20,7 +20,7 @@ int main(int ac, char* av[])
 	/** Build up -- a SPHSystem -- */
 	SPHSystem system(Vec2d(- DL_sponge - BW, - BW), Vec2d(DL + BW, DH + BW), particle_spacing_ref);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = true;
+	system.run_particle_relaxation_ = false;
 	/** Tag for computation start with relaxed body fitted particles distribution. */
 	system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: start with initial condition. */
@@ -39,7 +39,7 @@ int main(int ac, char* av[])
 	 * @brief 	Creating body and particles for the wall boundary.
 	 */
 	WallBoundary* wall_boundary	= new WallBoundary(system, "Wall", 0);
-	SolidParticles 	solid_particles(wall_boundary);
+	SolidParticles 	wall_particles(wall_boundary);
 	/**
 	 * @brief 	Creating body, materials and particles for the elastic beam (inserted body).
 	 */
@@ -64,15 +64,9 @@ int main(int ac, char* av[])
 	SPHBodyInnerRelation* water_block_inner = new SPHBodyInnerRelation(water_block);
 	SPHBodyInnerRelation* inserted_body_inner = new SPHBodyInnerRelation(inserted_body);
 	SPHBodyComplexRelation* water_block_complex = new SPHBodyComplexRelation(water_block_inner, { wall_boundary, inserted_body });
-	SPHBodyComplexRelation* wall_complex = new SPHBodyComplexRelation(wall_boundary, {});
-	SPHBodyComplexRelation* inserted_body_complex = new SPHBodyComplexRelation(inserted_body_inner, {});
 	SPHBodyContactRelation* inserted_body_contact = new SPHBodyContactRelation(inserted_body, { water_block });
 	SPHBodyContactRelation* beam_observer_contact = new SPHBodyContactRelation(beam_observer, { inserted_body });
 	SPHBodyContactRelation* fluid_observer_contact = new SPHBodyContactRelation(fluid_observer, { water_block });
-	/** Periodic bounding in x direction. */
-	PeriodicBoundingInAxisDirection 	periodic_bounding(water_block, 0);
-	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirection 	periodic_condition(water_block, 0);
 
 	/** check whether run particle relaxation for body fitted particle distribution. */
 	if (system.run_particle_relaxation_) 
@@ -89,8 +83,6 @@ int main(int ac, char* av[])
 
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(inserted_body_inner);
-		/** finalizing  particle number density and inital position after relaxatoin. */
-		relax_dynamics::FinalizingParticleRelaxation finalizing_inserted_body_particles(inserted_body);
 		/**
 		  * @brief 	Particle relaxation starts here.
 		  */
@@ -111,8 +103,6 @@ int main(int ac, char* av[])
 			}
 		}
 		std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
-		finalizing_inserted_body_particles.parallel_exec();
-
 		/** Output results. */
 		write_particle_reload_files.WriteToFile(0.0);
 		return 0;
@@ -120,10 +110,6 @@ int main(int ac, char* av[])
 	/**
 	 * @brief 	Define all numerical methods which are used in FSI.
 	 */
-	 /** Initialize normal direction of the wall boundary. */
-	solid_dynamics::NormalDirectionSummation 	get_wall_normal(wall_complex);
-	/** Initialize normal direction of the inserted body. */
-	solid_dynamics::NormalDirectionSummation 	get_inserted_body_normal(inserted_body_complex);
 	/** Corrected strong configuration for the elastic  insertbody. */
 	solid_dynamics::CorrectConfiguration 		inserted_body_corrected_configuration_in_strong_form(inserted_body_inner);
 	/**
@@ -151,6 +137,8 @@ int main(int ac, char* av[])
 	fluid_dynamics::VorticityInFluidField 	compute_vorticity(water_block_inner);
 	/** Inflow boundary condition. */
 	ParabolicInflow		parabolic_inflow(water_block, new InflowBuffer(water_block, "Buffer"));
+	/** Periodic BCs in x direction. */
+	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition(water_block, 0);
 	/**
 	 * @brief Algorithms of FSI.
 	 */
@@ -195,13 +183,13 @@ int main(int ac, char* av[])
 	system.initializeSystemCellLinkedLists();
 	/** periodic condition applied after the mesh cell linked list build up
 	  * but before the configuration build up. */
-	periodic_condition.parallel_exec();
+	periodic_condition.update_cell_linked_list_.parallel_exec();
 	/** initialize configurations for all bodies. */
 	system.initializeSystemConfigurations();
 	/** computing surface normal direction for the wall. */
-	get_wall_normal.parallel_exec();
+	wall_particles.initializeNormalDirectionFromGeometry();
 	/** computing surface normal direction for the insert body. */
-	get_inserted_body_normal.parallel_exec();
+	inserted_body_particles.initializeNormalDirectionFromGeometry();
 	/** computing linear reproducing configuration for the insert body. */
 	inserted_body_corrected_configuration_in_strong_form.parallel_exec();
 
@@ -212,7 +200,7 @@ int main(int ac, char* av[])
 		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
 		inserted_body->updateCellLinkedList();
 		water_block->updateCellLinkedList();
-		periodic_condition.parallel_exec();
+		periodic_condition.update_cell_linked_list_.parallel_exec();
 		/** one need update configuration after periodic condition. */
 		water_block_complex->updateConfiguration();
 		inserted_body_contact->updateConfiguration();
@@ -222,7 +210,7 @@ int main(int ac, char* av[])
 	write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
 	write_beam_tip_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
 
-	int number_of_iterations = system.restart_step_;
+	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
 	Real End_Time = 200.0;			/**< End time. */
@@ -242,7 +230,8 @@ int main(int ac, char* av[])
 	{
 		Real integration_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
-		while (integration_time < D_Time) {
+		while (integration_time < D_Time) 
+		{
 			initialize_a_fluid_step.parallel_exec();
 			Dt = get_fluid_advection_time_step_size.parallel_exec();
 			update_fluid_density.parallel_exec();
@@ -255,7 +244,9 @@ int main(int ac, char* av[])
 			inserted_body_update_normal.parallel_exec();
 			inner_ite_dt = 0;
 			Real relaxation_time = 0.0;
-			while (relaxation_time < Dt) {
+			while (relaxation_time < Dt) 
+			{
+				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt - relaxation_time);
 				/** Fluid pressure relaxation, first half. */
 				pressure_relaxation_first_half.parallel_exec(dt);
 				/** FSI for pressure force. */
@@ -268,9 +259,7 @@ int main(int ac, char* av[])
 				Real dt_s_sum = 0.0;
 				average_velocity_and_acceleration.initialize_displacement_.parallel_exec();
 				while (dt_s_sum < dt) {
-
-					dt_s = inserted_body_computing_time_step_size.parallel_exec();
-					if (dt - dt_s_sum < dt_s) dt_s = dt - dt_s_sum;
+					dt_s = SMIN(inserted_body_computing_time_step_size.parallel_exec(), dt - dt_s_sum);
 					inserted_body_stress_relaxation_first_half.parallel_exec(dt_s);
 					constrain_beam_base.parallel_exec();
 					inserted_body_stress_relaxation_second_half.parallel_exec(dt_s);
@@ -279,7 +268,6 @@ int main(int ac, char* av[])
 				}
 				average_velocity_and_acceleration.update_averages_.parallel_exec(dt);
 
-				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
@@ -299,10 +287,10 @@ int main(int ac, char* av[])
 			number_of_iterations++;
 
 			/** Water block configuration and periodic condition. */
-			periodic_bounding.parallel_exec();
+			periodic_condition.bounding_.parallel_exec();
 
 			water_block->updateCellLinkedList();
-			periodic_condition.parallel_exec();
+			periodic_condition.update_cell_linked_list_.parallel_exec();
 			water_block_complex->updateConfiguration();
 			/** one need update configuration after periodic condition. */
 			inserted_body->updateCellLinkedList();

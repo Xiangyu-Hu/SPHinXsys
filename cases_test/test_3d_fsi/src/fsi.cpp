@@ -163,6 +163,7 @@ public:
 	InsertedBody(SPHSystem &system, string body_name, int refinement_level)
 		: SolidBody(system, body_name, refinement_level)
 	{
+		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addTriangleMeshShape(CreateInsertCylinder(), ShapeBooleanOps::add);
 		body_shape_->addTriangleMeshShape(CreateAttachedFlag(), ShapeBooleanOps::add);
 	}
@@ -291,7 +292,7 @@ int main()
 	//the wall boundary
 	WallBoundary *wall_boundary = new WallBoundary(system, "Wall", 0);
 	//creat solid particles
-	SolidParticles solid_particles(wall_boundary);
+	SolidParticles wall_particles(wall_boundary);
 
 
 	//the inserted body immersed in water
@@ -309,36 +310,22 @@ int main()
 	SPHBodyInnerRelation* water_block_inner = new SPHBodyInnerRelation(water_block);
 	SPHBodyInnerRelation* inserted_body_inner = new SPHBodyInnerRelation(inserted_body);
 	SPHBodyComplexRelation* water_block_complex = new SPHBodyComplexRelation(water_block_inner, { wall_boundary, inserted_body });
-	SPHBodyComplexRelation* wall_complex = new SPHBodyComplexRelation(wall_boundary, {});
-	SPHBodyComplexRelation* inserted_body_complex = new SPHBodyComplexRelation(inserted_body_inner, {});
 	SPHBodyContactRelation* inserted_body_contact = new SPHBodyContactRelation(inserted_body, { water_block });
 	SPHBodyContactRelation* flag_observer_contact = new SPHBodyContactRelation(flag_observer, { inserted_body });
 
 	//-------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
 	//-------------------------------------------------------------------
-
-	//-------------------------------------------------------------------
-	//methods only used only once
-	//-------------------------------------------------------------------
-	//initialize normal direction of the wall boundary
-	solid_dynamics::NormalDirectionSummation get_wall_normal(wall_complex);
-	//initialize normal direction of the inserted body
-	solid_dynamics::NormalDirectionSummation get_inserted_body_normal(inserted_body_complex);
 	//corrected strong configuration	
 	solid_dynamics::CorrectConfiguration
 		inserted_body_corrected_configuration(inserted_body_inner);
-
 	//-------------------------------------------------------------------
 	//methods used for time stepping
 	//-------------------------------------------------------------------
-	
 	//-------- common paritcle dynamics ----------------------------------------
 	InitializeATimeStep 	initialize_a_fluid_step(water_block);
-	/** Periodic bounding in x direction. */
-	PeriodicBoundingInAxisDirection 	periodic_bounding(water_block, 0);
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirection 	periodic_condition(water_block, 0);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition(water_block, 0);
 
 	//evaluation of density by summation approach
 	fluid_dynamics::DensityBySummation
@@ -392,12 +379,11 @@ int main()
 	//periodic regions to the corresponding boundaries
 	//for building up of extra configuration
 	system.initializeSystemCellLinkedLists();
-	periodic_condition.parallel_exec();
+	periodic_condition.update_cell_linked_list_.parallel_exec();
 	//update configuration after periodic boundary condition
 	system.initializeSystemConfigurations();
-
-	get_wall_normal.parallel_exec();
-	get_inserted_body_normal.parallel_exec();
+	wall_particles.initializeNormalDirectionFromGeometry();
+	inserted_body_particles.initializeNormalDirectionFromGeometry();
 	inserted_body_corrected_configuration.parallel_exec();
 
 	//-----------------------------------------------------------------------------
@@ -440,7 +426,8 @@ int main()
 			fluid_viscous_force_on_inserted_body.parallel_exec();
 
 			Real relaxation_time = 0.0;
-			while (relaxation_time < Dt) {
+			while (relaxation_time < Dt) 
+			{
 
 				if (ite % 100 == 0) {
 					cout << "N=" << ite << " Time: "
@@ -448,6 +435,7 @@ int main()
 						<< dt << "\n";
 				}
 
+				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt - relaxation_time);
 				//fluid dynamics
 				pressure_relaxation_first_half.parallel_exec(dt);
 				//FSI for pressure force
@@ -457,7 +445,8 @@ int main()
 				//solid dynamics
 				Real dt_s_sum = 0.0;
 				average_velocity_and_acceleration.initialize_displacement_.parallel_exec();
-				while (dt_s_sum < dt) {
+				while (dt_s_sum < dt) 
+				{
 
 					Real dt_s = inserted_body_computing_time_step_size.parallel_exec();
 					if (dt - dt_s_sum < dt_s) dt_s = dt - dt_s_sum;
@@ -476,7 +465,6 @@ int main()
 				average_velocity_and_acceleration.update_averages_.parallel_exec(dt);
 
 				ite++;
-				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
@@ -485,10 +473,10 @@ int main()
 			}
 			
 			//water block configuration and periodic condition
-			periodic_bounding.parallel_exec();
+			periodic_condition.bounding_.parallel_exec();
 			water_block->updateCellLinkedList();
 			inserted_body->updateCellLinkedList();
-			periodic_condition.parallel_exec();
+			periodic_condition.update_cell_linked_list_.parallel_exec();
 			water_block_complex->updateConfiguration();
 			inserted_body_contact->updateConfiguration();
 			write_flag_free_end.WriteToFile(GlobalStaticVariables::physical_time_);

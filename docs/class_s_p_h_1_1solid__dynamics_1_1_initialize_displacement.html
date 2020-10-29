@@ -70,6 +70,7 @@ $(function() {
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pro-methods">Protected Member Functions</a> &#124;
+<a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="class_s_p_h_1_1solid__dynamics_1_1_initialize_displacement-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">SPH::solid_dynamics::InitializeDisplacement Class Reference</div>  </div>
@@ -81,63 +82,93 @@ $(function() {
 
 <p><code>#include &lt;<a class="el" href="solid__dynamics_8h_source.html">solid_dynamics.h</a>&gt;</code></p>
 
-<p>Inherits <a class="el" href="class_s_p_h_1_1_particle_dynamics_simple.html">SPH::ParticleDynamicsSimple&lt; BodyType, ParticlesType, MaterialType &gt;</a>.</p>
+<p>Inherits <a class="el" href="class_s_p_h_1_1_particle_dynamics_simple.html">SPH::ParticleDynamicsSimple</a>, and <a class="el" href="class_s_p_h_1_1_data_delegate_simple.html">SPH::DataDelegateSimple&lt; BodyType, ParticlesType, MaterialType &gt;</a>.</p>
+
+<p>Inherited by <a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_update_average_velocity_and_acceleration.html">SPH::solid_dynamics::UpdateAverageVelocityAndAcceleration</a>.</p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a463209f1c148edff11bacf5a51cd32fe"><td class="memItemLeft" align="right" valign="top"><a id="a463209f1c148edff11bacf5a51cd32fe"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>InitializeDisplacement</b> (<a class="el" href="class_s_p_h_1_1_solid_body.html">SolidBody</a> *body)</td></tr>
-<tr class="separator:a463209f1c148edff11bacf5a51cd32fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_class_s_p_h_1_1_particle_dynamics_simple"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_particle_dynamics_simple')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics_simple.html">SPH::ParticleDynamicsSimple&lt; BodyType, ParticlesType, MaterialType &gt;</a></td></tr>
-<tr class="memitem:a232e0720300f4eff3c93686591bac84b inherit pub_methods_class_s_p_h_1_1_particle_dynamics_simple"><td class="memItemLeft" align="right" valign="top"><a id="a232e0720300f4eff3c93686591bac84b"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>ParticleDynamicsSimple</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *body)</td></tr>
-<tr class="separator:a232e0720300f4eff3c93686591bac84b inherit pub_methods_class_s_p_h_1_1_particle_dynamics_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab98ebfad9077ba2fb92572c86a735c70 inherit pub_methods_class_s_p_h_1_1_particle_dynamics_simple"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_dynamics_simple.html#ab98ebfad9077ba2fb92572c86a735c70">exec</a> (Real dt=0.0) override</td></tr>
-<tr class="separator:ab98ebfad9077ba2fb92572c86a735c70 inherit pub_methods_class_s_p_h_1_1_particle_dynamics_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa8b2588c0307db43a6f341893d97e0b5 inherit pub_methods_class_s_p_h_1_1_particle_dynamics_simple"><td class="memItemLeft" align="right" valign="top"><a id="aa8b2588c0307db43a6f341893d97e0b5"></a>
+<tr class="memitem:a034cf00113ce67c19ca66608f5c3f07f"><td class="memItemLeft" align="right" valign="top"><a id="a034cf00113ce67c19ca66608f5c3f07f"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>InitializeDisplacement</b> (<a class="el" href="class_s_p_h_1_1_solid_body.html">SolidBody</a> *body, StdLargeVec&lt; Vecd &gt; &amp;pos_temp)</td></tr>
+<tr class="separator:a034cf00113ce67c19ca66608f5c3f07f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_class_s_p_h_1_1_particle_dynamics_simple"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_particle_dynamics_simple')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics_simple.html">SPH::ParticleDynamicsSimple</a></td></tr>
+<tr class="memitem:a15a1981076e72ba4439f8ad3d391a881 inherit pub_methods_class_s_p_h_1_1_particle_dynamics_simple"><td class="memItemLeft" align="right" valign="top"><a id="a15a1981076e72ba4439f8ad3d391a881"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>ParticleDynamicsSimple</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *sph_body)</td></tr>
+<tr class="separator:a15a1981076e72ba4439f8ad3d391a881 inherit pub_methods_class_s_p_h_1_1_particle_dynamics_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d84f20b598c6da0894b837b94940bc3 inherit pub_methods_class_s_p_h_1_1_particle_dynamics_simple"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_dynamics_simple.html#a0d84f20b598c6da0894b837b94940bc3">exec</a> (Real dt=0.0) override</td></tr>
+<tr class="separator:a0d84f20b598c6da0894b837b94940bc3 inherit pub_methods_class_s_p_h_1_1_particle_dynamics_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a81849ca6207c4578d491d3d1a6633184 inherit pub_methods_class_s_p_h_1_1_particle_dynamics_simple"><td class="memItemLeft" align="right" valign="top"><a id="a81849ca6207c4578d491d3d1a6633184"></a>
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>parallel_exec</b> (Real dt=0.0) override</td></tr>
-<tr class="separator:aa8b2588c0307db43a6f341893d97e0b5 inherit pub_methods_class_s_p_h_1_1_particle_dynamics_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_class_s_p_h_1_1_particle_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_particle_dynamics')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void, BodyType, ParticlesType, MaterialType &gt;</a></td></tr>
-<tr class="memitem:a129036fc16e69eb21e69a259ca20036a inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_dynamics.html#a129036fc16e69eb21e69a259ca20036a">ParticleDynamics</a> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *body)</td></tr>
-<tr class="separator:a129036fc16e69eb21e69a259ca20036a inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_class_s_p_h_1_1_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_dynamics')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_dynamics.html">SPH::Dynamics&lt; void &gt;</a></td></tr>
-<tr class="memitem:a343c5cd5886c1c142ec2f995449029f5 inherit pub_methods_class_s_p_h_1_1_dynamics"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_dynamics.html#a343c5cd5886c1c142ec2f995449029f5">Dynamics</a> ()</td></tr>
-<tr class="separator:a343c5cd5886c1c142ec2f995449029f5 inherit pub_methods_class_s_p_h_1_1_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a81849ca6207c4578d491d3d1a6633184 inherit pub_methods_class_s_p_h_1_1_particle_dynamics_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_class_s_p_h_1_1_particle_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_particle_dynamics')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void &gt;</a></td></tr>
+<tr class="memitem:a79d1c47689c57d6f956032d4bd75cdc2 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_dynamics.html#a79d1c47689c57d6f956032d4bd75cdc2">ParticleDynamics</a> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *sph_body)</td></tr>
+<tr class="separator:a79d1c47689c57d6f956032d4bd75cdc2 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_class_s_p_h_1_1_data_delegate_simple"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_data_delegate_simple')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_data_delegate_simple.html">SPH::DataDelegateSimple&lt; BodyType, ParticlesType, MaterialType &gt;</a></td></tr>
+<tr class="memitem:a8f9be49cf96804025fc7631790cc80d5 inherit pub_methods_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_data_delegate_simple.html#a8f9be49cf96804025fc7631790cc80d5">DataDelegateSimple</a> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *body)</td></tr>
+<tr class="separator:a8f9be49cf96804025fc7631790cc80d5 inherit pub_methods_class_s_p_h_1_1_data_delegate_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:a6ecb3311743618dae708de0035e79448"><td class="memItemLeft" align="right" valign="top"><a id="a6ecb3311743618dae708de0035e79448"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>Update</b> (<a class="el" href="classsize__t.html">size_t</a> index_particle_i, Real dt=0.0) override</td></tr>
-<tr class="separator:a6ecb3311743618dae708de0035e79448"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pro_methods_class_s_p_h_1_1_particle_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_class_s_p_h_1_1_particle_dynamics')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void, BodyType, ParticlesType, MaterialType &gt;</a></td></tr>
-<tr class="memitem:ad17dd35a0798d79d490d84f85f98cd7a inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_dynamics.html#ad17dd35a0798d79d490d84f85f98cd7a">setupDynamics</a> (Real dt=0.0) override</td></tr>
-<tr class="separator:ad17dd35a0798d79d490d84f85f98cd7a inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad0397668d3fffdf463861ca7bcecdf8d"><td class="memItemLeft" align="right" valign="top"><a id="ad0397668d3fffdf463861ca7bcecdf8d"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>Update</b> (<a class="el" href="classsize__t.html">size_t</a> index_i, Real dt=0.0) override</td></tr>
+<tr class="separator:ad0397668d3fffdf463861ca7bcecdf8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_methods_class_s_p_h_1_1_particle_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_class_s_p_h_1_1_particle_dynamics')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void &gt;</a></td></tr>
+<tr class="memitem:a6c3ffa11bc0514cd9eb1537b79b4975c inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a6c3ffa11bc0514cd9eb1537b79b4975c"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setBodyUpdated</b> ()</td></tr>
+<tr class="separator:a6c3ffa11bc0514cd9eb1537b79b4975c inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab027ee6fb13881db2bc8277ef56d4b58 inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_dynamics.html#ab027ee6fb13881db2bc8277ef56d4b58">setupDynamics</a> (Real dt=0.0)</td></tr>
+<tr class="separator:ab027ee6fb13881db2bc8277ef56d4b58 inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
+Protected Attributes</h2></td></tr>
+<tr class="memitem:a6f86f3dbf1d7467521d307e96ecb24cf"><td class="memItemLeft" align="right" valign="top"><a id="a6f86f3dbf1d7467521d307e96ecb24cf"></a>
+StdLargeVec&lt; Vecd &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>pos_temp_</b></td></tr>
+<tr class="separator:a6f86f3dbf1d7467521d307e96ecb24cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0ef1904185d7eee2d6d5993272adfda7"><td class="memItemLeft" align="right" valign="top"><a id="a0ef1904185d7eee2d6d5993272adfda7"></a>
+StdLargeVec&lt; Vecd &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>pos_n_</b></td></tr>
+<tr class="separator:a0ef1904185d7eee2d6d5993272adfda7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af93cd547343ed7ccfea247ce77f70fac"><td class="memItemLeft" align="right" valign="top"><a id="af93cd547343ed7ccfea247ce77f70fac"></a>
+StdLargeVec&lt; Vecd &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>vel_ave_</b></td></tr>
+<tr class="separator:af93cd547343ed7ccfea247ce77f70fac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25fdc572b95b23bf0bd832d6a0bde076"><td class="memItemLeft" align="right" valign="top"><a id="a25fdc572b95b23bf0bd832d6a0bde076"></a>
+StdLargeVec&lt; Vecd &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>dvel_dt_ave_</b></td></tr>
+<tr class="separator:a25fdc572b95b23bf0bd832d6a0bde076"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_attribs_class_s_p_h_1_1_particle_dynamics_simple"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_particle_dynamics_simple')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics_simple.html">SPH::ParticleDynamicsSimple</a></td></tr>
+<tr class="memitem:a747f6f6ce07cf264de492525f1dc5ffc inherit pro_attribs_class_s_p_h_1_1_particle_dynamics_simple"><td class="memItemLeft" align="right" valign="top"><a id="a747f6f6ce07cf264de492525f1dc5ffc"></a>
+<a class="el" href="namespace_s_p_h.html#aa72cf1f63790f923a029b77f683b9a5e">ParticleFunctor</a>&#160;</td><td class="memItemRight" valign="bottom"><b>functor_update_</b></td></tr>
+<tr class="separator:a747f6f6ce07cf264de492525f1dc5ffc inherit pro_attribs_class_s_p_h_1_1_particle_dynamics_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_attribs_class_s_p_h_1_1_particle_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_particle_dynamics')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void &gt;</a></td></tr>
+<tr class="memitem:a2c547f5f8f9cc2506a6a726fe59b270e inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a2c547f5f8f9cc2506a6a726fe59b270e"></a>
+<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>sph_body_</b></td></tr>
+<tr class="separator:a2c547f5f8f9cc2506a6a726fe59b270e inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4dd0aef601d02f17c374507809ec714a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a4dd0aef601d02f17c374507809ec714a"></a>
+<a class="el" href="namespace_s_p_h.html#ac592bbe202be73decfcbfe8201484ffa">SplitCellLists</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>split_cell_lists_</b></td></tr>
+<tr class="separator:a4dd0aef601d02f17c374507809ec714a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c5a47701f676e233197981ced019a1a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a9c5a47701f676e233197981ced019a1a"></a>
+<a class="el" href="class_s_p_h_1_1_base_mesh_cell_linked_list.html">BaseMeshCellLinkedList</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>mesh_cell_linked_list_</b></td></tr>
+<tr class="separator:a9c5a47701f676e233197981ced019a1a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_data_delegate_simple')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_data_delegate_simple.html">SPH::DataDelegateSimple&lt; BodyType, ParticlesType, MaterialType &gt;</a></td></tr>
+<tr class="memitem:a1d373bbac77e5237890e17ad7a234bea inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top"><a id="a1d373bbac77e5237890e17ad7a234bea"></a>
+BodyType *&#160;</td><td class="memItemRight" valign="bottom"><b>body_</b></td></tr>
+<tr class="separator:a1d373bbac77e5237890e17ad7a234bea inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0984a97bd1065a91bf4f77165373fb3c inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top"><a id="a0984a97bd1065a91bf4f77165373fb3c"></a>
+ParticlesType *&#160;</td><td class="memItemRight" valign="bottom"><b>particles_</b></td></tr>
+<tr class="separator:a0984a97bd1065a91bf4f77165373fb3c inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a05d1c08b536e8fb2b42df75d3ac62e17 inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top"><a id="a05d1c08b536e8fb2b42df75d3ac62e17"></a>
+MaterialType *&#160;</td><td class="memItemRight" valign="bottom"><b>material_</b></td></tr>
+<tr class="separator:a05d1c08b536e8fb2b42df75d3ac62e17 inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1f803a65263fc424b94cd13ad0e62856 inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top"><a id="a1f803a65263fc424b94cd13ad0e62856"></a>
+StdLargeVec&lt; <a class="el" href="classsize__t.html">size_t</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>sorted_id_</b></td></tr>
+<tr class="separator:a1f803a65263fc424b94cd13ad0e62856 inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3fcde9b9d2620a7af465182f6fdcb6f0 inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top"><a id="a3fcde9b9d2620a7af465182f6fdcb6f0"></a>
+StdLargeVec&lt; <a class="el" href="classsize__t.html">size_t</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>unsorted_id_</b></td></tr>
+<tr class="separator:a3fcde9b9d2620a7af465182f6fdcb6f0 inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pub_static_attribs_class_s_p_h_1_1_global_static_variables"><td colspan="2" onclick="javascript:toggleInherit('pub_static_attribs_class_s_p_h_1_1_global_static_variables')"><img src="closed.png" alt="-"/>&#160;Static Public Attributes inherited from <a class="el" href="class_s_p_h_1_1_global_static_variables.html">SPH::GlobalStaticVariables</a></td></tr>
 <tr class="memitem:ade84c016ddfa66794108619277313c82 inherit pub_static_attribs_class_s_p_h_1_1_global_static_variables"><td class="memItemLeft" align="right" valign="top">static Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_global_static_variables.html#ade84c016ddfa66794108619277313c82">physical_time_</a> = 0.0</td></tr>
 <tr class="separator:ade84c016ddfa66794108619277313c82 inherit pub_static_attribs_class_s_p_h_1_1_global_static_variables"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pro_attribs_class_s_p_h_1_1_particle_dynamics_simple"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_particle_dynamics_simple')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics_simple.html">SPH::ParticleDynamicsSimple&lt; BodyType, ParticlesType, MaterialType &gt;</a></td></tr>
-<tr class="memitem:a30df0482bc22e476de74636581c49b5f inherit pro_attribs_class_s_p_h_1_1_particle_dynamics_simple"><td class="memItemLeft" align="right" valign="top"><a id="a30df0482bc22e476de74636581c49b5f"></a>
-<a class="el" href="namespace_s_p_h.html#aa5a0f879b2953392d978d2506abd6ab3">InnerFunctor</a>&#160;</td><td class="memItemRight" valign="bottom"><b>functor_update_</b></td></tr>
-<tr class="separator:a30df0482bc22e476de74636581c49b5f inherit pro_attribs_class_s_p_h_1_1_particle_dynamics_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pro_attribs_class_s_p_h_1_1_particle_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_particle_dynamics')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void, BodyType, ParticlesType, MaterialType &gt;</a></td></tr>
-<tr class="memitem:a4500fb63cd892c13811bd6cfe5fbf7ac inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a4500fb63cd892c13811bd6cfe5fbf7ac"></a>
-BodyType *&#160;</td><td class="memItemRight" valign="bottom"><b>body_</b></td></tr>
-<tr class="separator:a4500fb63cd892c13811bd6cfe5fbf7ac inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a51346b4cba7e0e0acb4f28a85641f241 inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a51346b4cba7e0e0acb4f28a85641f241"></a>
-ParticlesType *&#160;</td><td class="memItemRight" valign="bottom"><b>particles_</b></td></tr>
-<tr class="separator:a51346b4cba7e0e0acb4f28a85641f241 inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0d79b6e26f7ec6bd3c74d10fe666806e inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a0d79b6e26f7ec6bd3c74d10fe666806e"></a>
-MaterialType *&#160;</td><td class="memItemRight" valign="bottom"><b>material_</b></td></tr>
-<tr class="separator:a0d79b6e26f7ec6bd3c74d10fe666806e inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a38f59772207191ae1046143ace795664 inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a38f59772207191ae1046143ace795664"></a>
-<a class="el" href="namespace_s_p_h.html#ac592bbe202be73decfcbfe8201484ffa">SplitCellLists</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>split_cell_lists_</b></td></tr>
-<tr class="separator:a38f59772207191ae1046143ace795664 inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a77205aeffd8f5cffa5a2af3986e927d7 inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a77205aeffd8f5cffa5a2af3986e927d7"></a>
-<a class="el" href="class_s_p_h_1_1_base_mesh_cell_linked_list.html">BaseMeshCellLinkedList</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>mesh_cell_linked_list_</b></td></tr>
-<tr class="separator:a77205aeffd8f5cffa5a2af3986e927d7 inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>initialize the displacement for computing average velocity. This class is for FSI applications to achieve smaller solid dynamics time step size compared to the fluid dynamics </p>

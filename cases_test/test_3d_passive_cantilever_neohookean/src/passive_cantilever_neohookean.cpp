@@ -130,7 +130,7 @@ int main()
 	/** Creat a Myocardium body, corresponding material, particles and reaction model. */
 	Myocardium *myocardium_body = new Myocardium(system, "MyocardiumBody", 0);
 	MyocardiumMuscle 	*muscle_material = new MyocardiumMuscle();
-	ElasticSolidParticles 	particles(myocardium_body, muscle_material);
+	ElasticSolidParticles 	myocardium_particles(myocardium_body, muscle_material);
 	/** Define Observer. */
 	MyocardiumObserver *myocardium_observer = new MyocardiumObserver(system, "MyocardiumObserver", 0);
 	BaseParticles observer_particles(myocardium_observer);
@@ -161,7 +161,8 @@ int main()
 	/** Constrain the holder. */
 	solid_dynamics::ConstrainSolidBodyRegion
 		constrain_holder(myocardium_body, new Holder(myocardium_body, "Holder"));
-	solid_dynamics::DampingBySplittingWithRandomChoice muscle_damping(myocardium_body_inner, 0.1);
+	DampingBySplittingWithRandomChoice<DampingBySplittingPairwise<Vec3d>, Vec3d>
+		muscle_damping(myocardium_body_inner, 0.1, myocardium_particles.vel_n_, physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
 	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);

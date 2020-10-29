@@ -1,8 +1,8 @@
 /**
- * @file 	2d_cylinder_flow.cpp
+ * @file 	2d_flow_around_cylinder.cpp
  * @brief 	This is the benchmark test for the wall modeling of viscous flow.
  * @details We consider a flow passing by a cylinder in 2D.
- * @author 	Xiangyu Hu, Chi Zhang and Luhui Han
+ * @author 	Xiangyu Hu
  * @version 0.1
  */
 #include "sphinxsys.h"
@@ -33,7 +33,7 @@ int main(int ac, char* av[])
 	WaterMaterial* water_material = new WaterMaterial();
 	FluidParticles 	fluid_particles(water_block, water_material);
 	/**
-	 * @brief 	Creating the clyinder.
+	 * @brief 	Creating the cylinder.
 	 */
 	Cylinder* cylinder = new Cylinder(system, "Cylinder", 1);
 	SolidParticles 	cylinder_particles(cylinder);
@@ -71,8 +71,6 @@ int main(int ac, char* av[])
 
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner);
-		/** finalizing  particle number density and inital position after relaxatoin. */
-		relax_dynamics::FinalizingParticleRelaxation finalizing_inserted_body_particles(cylinder);
 		/**
 		  * @brief 	Particle relaxation starts here.
 		  */
@@ -93,7 +91,6 @@ int main(int ac, char* av[])
 			}
 		}
 		std::cout << "The physics relaxation process of the cylinder finish !" << std::endl;
-		finalizing_inserted_body_particles.parallel_exec();
 
 		/** Output results. */
 		write_particle_reload_files.WriteToFile(0.0);
@@ -104,14 +101,10 @@ int main(int ac, char* av[])
 	 */
 	 /** Initialize particle acceleration. */
 	InitializeATimeStep 	initialize_a_fluid_step(water_block);
-	/** Periodic bounding in x direction. */
-	PeriodicBoundingInAxisDirection 	periodic_bounding_x(water_block, 0);
-	/** Periodic bounding in y direction. */
-	PeriodicBoundingInAxisDirection 	periodic_bounding_y(water_block, 1);
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirection 	periodic_condition_x(water_block, 0);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition_x(water_block, 0);
 	/** Periodic BCs in y direction. */
-	PeriodicConditionInAxisDirection 	periodic_condition_y(water_block, 1);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition_y(water_block, 1);
 
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensityBySummation 			update_fluid_density(water_block_complex);
@@ -130,7 +123,7 @@ int main(int ac, char* av[])
 	/** Computing vorticity in the flow. */
 	fluid_dynamics::VorticityInFluidField 	compute_vorticity(water_block_inner);
 	/** freestream boundary condition. */
-	FreetreamCondition freestream_condition(water_block, new FreetreamBuffer(water_block, "FreestreamBuffer"));
+	FreeStreamCondition freestream_condition(water_block, new FreeStreamBuffer(water_block, "FreestreamBuffer"));
 	/**
 	 * @brief Algorithms of FSI.
 	 */
@@ -162,8 +155,8 @@ int main(int ac, char* av[])
 	system.initializeSystemCellLinkedLists();
 	/** periodic condition applied after the mesh cell linked list build up
 	  * but before the configuration build up. */
-	periodic_condition_x.parallel_exec();
-	periodic_condition_y.parallel_exec();
+	periodic_condition_x.update_cell_linked_list_.parallel_exec();
+	periodic_condition_y.update_cell_linked_list_.parallel_exec();
 	/** initialize configurations for all bodies. */
 	system.initializeSystemConfigurations();
 	/** initialize surface normal direction for the insert body. */
@@ -185,7 +178,7 @@ int main(int ac, char* av[])
 	/** first output*/
 	write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
 
-	int number_of_iterations = system.restart_step_;
+	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
 	Real End_Time = 200.0;			    /**< End time. */
@@ -219,6 +212,7 @@ int main(int ac, char* av[])
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt) 
 			{
+				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt - relaxation_time);
 				/** Fluid pressure relaxation, first half. */
 				pressure_relaxation_first_half.parallel_exec(dt);
 				/** FSI for pressure force. */
@@ -226,7 +220,6 @@ int main(int ac, char* av[])
 				/** Fluid pressure relaxation, second half. */
 				pressure_relaxation_second_half.parallel_exec(dt);
 
-				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
@@ -246,11 +239,11 @@ int main(int ac, char* av[])
 			number_of_iterations++;
 
 			/** Water block configuration and periodic condition. */
-			periodic_bounding_x.parallel_exec();
-			periodic_bounding_y.parallel_exec();
+			periodic_condition_x.bounding_.parallel_exec();
+			periodic_condition_y.bounding_.parallel_exec();
 			water_block->updateCellLinkedList();
-			periodic_condition_x.parallel_exec();
-			periodic_condition_y.parallel_exec();
+			periodic_condition_x.update_cell_linked_list_.parallel_exec();
+			periodic_condition_y.update_cell_linked_list_.parallel_exec();
 			/** one need update configuration after periodic condition. */
 			water_block_complex->updateConfiguration();
 			cylinder_contact->updateConfiguration();

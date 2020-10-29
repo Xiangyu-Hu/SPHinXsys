@@ -39,24 +39,16 @@ Vec2d DamP_rb(DL, 0.0); 				/**< Right bottom. */
  * @brief 	Define the corner point of gate geomtry.
  */
 Vec2d GateP_lb(DL - Dam_L - Gate_width, 0.0); 					/**< Left bottom. */
-Vec2d GateP_lt(DL - Dam_L - Gate_width, Base_bottom_position + BW); 	/**< Left top. */
-Vec2d GateP_rt(DL - Dam_L, Base_bottom_position + BW); 					/**< Right top. */
+Vec2d GateP_lt(DL - Dam_L - Gate_width, Dam_H + BW); 			/**< Left top. */
+Vec2d GateP_rt(DL - Dam_L, Dam_H + BW); 					/**< Right top. */
 Vec2d GateP_rb(DL - Dam_L, 0.0); 									/**< Right bottom. */
 /**
  * @brief 	Define the geomtry for gate constrain.
  */
 Vec2d ConstrainP_lb(DL - Dam_L - Gate_width, Base_bottom_position); 	/**< Left bottom. */
-Vec2d ConstrainP_lt(DL - Dam_L - Gate_width, Base_bottom_position + BW); /**< Left top. */
-Vec2d ConstrainP_rt(DL - Dam_L, Base_bottom_position + BW); 				/**< Right top. */
+Vec2d ConstrainP_lt(DL - Dam_L - Gate_width, Dam_H + BW); /**< Left top. */
+Vec2d ConstrainP_rt(DL - Dam_L, Dam_H + BW); 				/**< Right top. */
 Vec2d ConstrainP_rb(DL - Dam_L, Base_bottom_position); 					/**< Right bottom. */
-
-/**
- * @brief 	Define the gate base geomtry as wall.
- */
-Vec2d BaseP_lb(DL - Dam_L - Gate_width, Base_bottom_position + BW); 	/**< Left bottom. */
-Vec2d BaseP_lt(DL - Dam_L - Gate_width, DH); /**< Left top. */
-Vec2d BaseP_rt(DL - Dam_L, DH); 				/**< Right top. */
-Vec2d BaseP_rb(DL - Dam_L, Base_bottom_position + BW); 					/**< Right bottom. */
 
 /**
  * @brief Material properties of the fluid.
@@ -135,36 +127,7 @@ public:
 		body_shape_->addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 	}
 };
-/**
-* @brief create a Gate Base shape
-*/
-std::vector<Point> CreatGateBaseShape()
-{
-	//geometry
-	std::vector<Point> gate_base_shape;
-	gate_base_shape.push_back(BaseP_lb);
-	gate_base_shape.push_back(BaseP_lt);
-	gate_base_shape.push_back(BaseP_rt);
-	gate_base_shape.push_back(BaseP_rb);
-	gate_base_shape.push_back(BaseP_lb);
 
-	return gate_base_shape;
-}
-/**
- * @brief 	wall body definition.
- */
-class GateBase : public SolidBody
-{
-public:
-	GateBase(SPHSystem& system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
-	{
-		/** Geomtry definition. */
-		std::vector<Point> gate_base_shape = CreatGateBaseShape();
-		body_shape_ = new ComplexShape(body_name);
-		body_shape_->addAPolygon(gate_base_shape, ShapeBooleanOps::add);
-	}
-};
 /**
 * @brief create a gate shape
 */
@@ -220,7 +183,7 @@ public:
 	GateConstrain(SolidBody* solid_body, string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
-		/* Geometry defination */
+		/* Geometry definition */
 		std::vector<Point> gate_constrain_shape = CreatGateConstrainShape();
 		body_part_shape_ = new ComplexShape(constrained_region_name);
 		body_part_shape_->addAPolygon(gate_constrain_shape, ShapeBooleanOps::add);
@@ -283,9 +246,7 @@ int main()
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
 	WallBoundary *wall_boundary = new WallBoundary(system, "Wall", 0);
-	SolidParticles 					wall_boundary_particles(wall_boundary);
-	GateBase *gate_base = new GateBase(system, "GateBase", 1);
-	SolidParticles 				gate_base_particles(gate_base);
+	SolidParticles 		wall_boundary_particles(wall_boundary);
 	/**
 	 * @brief 	Material property, particle and body creation of gate.
 	 */
@@ -294,7 +255,6 @@ int main()
 	ElasticSolidParticles 	gate_particles(gate, gate_material);
 	/** offset particle position */
 	gate_particles.OffsetInitialParticlePosition(offset);
-	gate_base_particles.OffsetInitialParticlePosition(offset);
 	/**
 	 * @brief 	Particle and body creation of gate observer.
 	 */
@@ -302,11 +262,8 @@ int main()
 	BaseParticles 			observer_particles(gate_observer);
 
 	/** topology */
-	SPHBodyComplexRelation* water_block_complex_relation = new SPHBodyComplexRelation(water_block, { wall_boundary, gate, gate_base });
-	SPHBodyComplexRelation* wall_complex_relation = new SPHBodyComplexRelation(wall_boundary, {});
-	SPHBodyComplexRelation* gate_base_complex_relation = new SPHBodyComplexRelation(gate_base, { gate });	
+	SPHBodyComplexRelation* water_block_complex_relation = new SPHBodyComplexRelation(water_block, { wall_boundary, gate});
 	SPHBodyInnerRelation*	gate_inner_relation = new SPHBodyInnerRelation(gate);
-	SPHBodyComplexRelation* gate_complex_relation = new SPHBodyComplexRelation(gate_inner_relation, {gate_base });
 	SPHBodyContactRelation* gate_water_contact_relation = new SPHBodyContactRelation(gate, { water_block });
 	SPHBodyContactRelation* gate_observer_contact_relation = new SPHBodyContactRelation(gate_observer, { gate });
 
@@ -316,15 +273,8 @@ int main()
 	 /**
 	  * @brief 	Methods used only once.
 	  */
-	/** Initialize normal direction of the wall boundary. */
-	solid_dynamics::NormalDirectionSummation 	get_wall_normal(wall_complex_relation);
-	/** Initialize normal direction of the wall boundary. */
-	solid_dynamics::NormalDirectionSummation 	get_gate_base_normal(gate_base_complex_relation);
-	/** Initialize normal direction of the elastic gate. */
-	solid_dynamics::NormalDirectionSummation 	get_gate_normal(gate_complex_relation);
 	/** Corrected strong configuration. */
 	solid_dynamics::CorrectConfiguration 		gate_corrected_configuration_in_strong_form(gate_inner_relation);
-
 
 	/**
 	 * @brief 	Methods used for time stepping.
@@ -385,9 +335,8 @@ int main()
 	 */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	get_wall_normal.parallel_exec();
-	get_gate_base_normal.parallel_exec();
-	get_gate_normal.parallel_exec();
+	wall_boundary_particles.initializeNormalDirectionFromGeometry();
+	gate_particles.initializeNormalDirectionFromGeometry();
 	gate_corrected_configuration_in_strong_form.parallel_exec();
 
 	write_real_body_states_to_vtu.WriteToFile(GlobalStaticVariables::physical_time_);

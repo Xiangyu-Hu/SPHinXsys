@@ -70,7 +70,7 @@ namespace SPH {
 			}, ap);
 	}
 	//=================================================================================================//
-	CellList* MeshCellLinkedList::CellListFormIndex(Vecu cell_index)
+	CellList* MeshCellLinkedList::CellListFromIndex(Vecu cell_index)
 	{
 		return &cell_linked_lists_[cell_index[0]][cell_index[1]][cell_index[2]];
 	}
@@ -95,7 +95,7 @@ namespace SPH {
 			.concurrent_particle_indexes_.push_back(particle_index);
 	}
 	//=================================================================================================//
-	CellList* MultilevelMeshCellLinkedList::CellListFormIndex(Vecu cell_index)
+	CellList* MultilevelMeshCellLinkedList::CellListFromIndex(Vecu cell_index)
 	{
 		return &cell_linked_lists_levels_[0][cell_index[0]][cell_index[1]][cell_index[2]];
 	}

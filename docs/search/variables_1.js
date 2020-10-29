@@ -1,10 +1,10 @@
 var searchData=
 [
-  ['b_5f',['B_',['../class_s_p_h_1_1_solid_particle_data.html#acaad40014aeb6574fc5faa26d7ae357f',1,'SPH::SolidParticleData']]],
+  ['b_5f',['B_',['../class_s_p_h_1_1_solid_particles.html#a35ca2e10ba9dacb9fa344258cb274449',1,'SPH::SolidParticles']]],
   ['base_5fmaterial_5f',['base_material_',['../class_s_p_h_1_1_base_particles.html#a6b6da33563d4725affb544d20848ea58',1,'SPH::BaseParticles']]],
-  ['base_5fmesh_5fcell_5flinked_5flist_5f',['base_mesh_cell_linked_list_',['../class_s_p_h_1_1_s_p_h_body.html#a2eaf64eec0d93e8af4ba68fb8a4f3393',1,'SPH::SPHBody']]],
-  ['base_5fparticle_5fdata_5f',['base_particle_data_',['../class_s_p_h_1_1_base_particles.html#a40cf7504c361f1b8193f93bc5da20388',1,'SPH::BaseParticles']]],
   ['base_5fparticles_5f',['base_particles_',['../class_s_p_h_1_1_s_p_h_body.html#adc8f9cc70f735cfe72e3c5571fdd2201',1,'SPH::SPHBody::base_particles_()'],['../class_s_p_h_1_1_base_material.html#a3191e8d463f5d56fe4820acab8289cff',1,'SPH::BaseMaterial::base_particles_()']]],
+  ['bias_5fdiff_5fcf_5f',['bias_diff_cf_',['../class_s_p_h_1_1_directional_diffusion.html#a2d7e6efe0bd23b2f8a483563270298c5',1,'SPH::DirectionalDiffusion']]],
+  ['bias_5fdirection_5f',['bias_direction_',['../class_s_p_h_1_1_directional_diffusion.html#a6c1e25784f768cb1caffb38ab17332e4',1,'SPH::DirectionalDiffusion']]],
   ['bodies_5f',['bodies_',['../class_s_p_h_1_1_s_p_h_system.html#a0d48a961d6eb6dd5b305a83f8740453b',1,'SPH::SPHSystem']]],
   ['body_5f',['body_',['../class_s_p_h_1_1_base_particles.html#a6c1c4100b6ee5f1691c1f719cdfb4f9c',1,'SPH::BaseParticles']]],
   ['body_5finput_5fpoints_5fvolumes_5f',['body_input_points_volumes_',['../class_s_p_h_1_1_s_p_h_body.html#ae8db0d4887412e2336930f4f63d7a7e2',1,'SPH::SPHBody']]],
@@ -14,13 +14,8 @@ var searchData=
   ['body_5fpart_5flower_5fbound_5f',['body_part_lower_bound_',['../class_s_p_h_1_1fluid__dynamics_1_1_emitter_inflow_injecting.html#a72a1eac29537d15d6e0ef4f5e00b6179',1,'SPH::fluid_dynamics::EmitterInflowInjecting']]],
   ['body_5fpart_5fparticles_5f',['body_part_particles_',['../class_s_p_h_1_1_body_part_by_particle.html#a2da1d85be2fb9a62d595d1293f2fa74f',1,'SPH::BodyPartByParticle']]],
   ['body_5frelations_5f',['body_relations_',['../class_s_p_h_1_1_s_p_h_body.html#add47d67ae81be7a97ece4bcb2fd573a1',1,'SPH::SPHBody']]],
-  ['body_5fshape_5f',['body_shape_',['../class_s_p_h_1_1_s_p_h_body.html#aa4dcce0a73ba89a2fd9a95ca68216ca6',1,'SPH::SPHBody']]],
-  ['bound_5fcells_5f',['bound_cells_',['../class_s_p_h_1_1_mirror_boundary_condition_in_axis_direction.html#a9d7a22f81f3cd430700225b9482a3099',1,'SPH::MirrorBoundaryConditionInAxisDirection']]],
-  ['branch_5fangle_5f',['branch_angle_',['../class_s_p_h_1_1_network_tree.html#a2d8b0f5acbe2bfd99c29b6cb8df3c493',1,'SPH::NetworkTree']]],
-  ['branch_5fnodes_5f',['branch_nodes_',['../class_s_p_h_1_1_branch.html#aa916034dcbbd9fed90893cf039b22bb4',1,'SPH::Branch']]],
-  ['branch_5fto_5fgrow_5f',['branch_to_grow_',['../class_s_p_h_1_1_network_tree.html#ae199bcabb7464c9b14f90a6bddd7494c',1,'SPH::NetworkTree']]],
-  ['branch_5fw_5f',['branch_w_',['../class_s_p_h_1_1_network_tree.html#aaef80906afe7aee7e33c41aae928b7d7',1,'SPH::NetworkTree']]],
-  ['branches_5f',['branches_',['../class_s_p_h_1_1_network_tree.html#a6825176c8a63d6a66d75d5b0ff471251',1,'SPH::NetworkTree']]],
-  ['buffer_5fsize_5f',['buffer_size_',['../class_s_p_h_1_1_mesh.html#a0220a9cfe258f8fb9ccdee36ba27193a',1,'SPH::Mesh']]],
+  ['bound_5fcells_5f',['bound_cells_',['../class_s_p_h_1_1_periodic_condition_in_axis_direction.html#a493aa115b614cf281c2d9c7d24579223',1,'SPH::PeriodicConditionInAxisDirection::bound_cells_()'],['../class_s_p_h_1_1_mirror_boundary_condition_in_axis_direction.html#a9d7a22f81f3cd430700225b9482a3099',1,'SPH::MirrorBoundaryConditionInAxisDirection::bound_cells_()']]],
+  ['branches_5f',['branches_',['../class_s_p_h_1_1_tree.html#a1e30b68fee54325968e12bfb6e0666c9',1,'SPH::Tree']]],
+  ['buffer_5fwidth_5f',['buffer_width_',['../class_s_p_h_1_1_mesh.html#a973c2ce893d6b11b2c53cc1ba5fdd846',1,'SPH::Mesh']]],
   ['bulk_5fmodulus_5f',['bulk_modulus_',['../class_s_p_h_1_1_muscle.html#a7ebf079d70936900e45910680fa1f34f',1,'SPH::Muscle']]]
 ];

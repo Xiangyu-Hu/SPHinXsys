@@ -37,7 +37,9 @@ using namespace std;
 
 namespace SPH {
 
-	/** preclaimed classes. */
+	//----------------------------------------------------------------------
+	//		preclaimed classes
+	//----------------------------------------------------------------------
 	class ElasticSolidParticles;
 	class ActiveMuscleParticles;
 
@@ -88,7 +90,8 @@ namespace SPH {
 		 * @param[in] numerical_viscosity numerical viscosity.
 		 * @param[in] particle_index_i 	Particle index.
 		 * */
-		virtual Matd NumericalDampingStress(Matd& deform_grad, Matd& deform_grad_rate, Real numerical_viscosity, size_t particle_index_i);
+		virtual Matd NumericalDampingStress(Matd& deform_grad, 
+		Matd& deform_grad_rate, Real numerical_viscosity, size_t particle_index_i);
 	};
 
 	/**

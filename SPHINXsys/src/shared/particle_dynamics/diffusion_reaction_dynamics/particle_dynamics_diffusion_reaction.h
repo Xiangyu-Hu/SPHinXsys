@@ -106,7 +106,7 @@ namespace SPH
 	*/
 	template<class BodyType, class BaseParticlesType, class BaseMaterialType>
 	class RelaxationOfAllDiffussionSpecies : 
-		public ParticleDynamicsInnerWithUpdate,
+		public InteractionDynamicsWithUpdate,
 		public DiffusionReactionDataDelegateInner<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 		/** all diffusion species and diffusion relation. */
@@ -161,7 +161,7 @@ namespace SPH
 			}
 		};
 
-		virtual void InnerInteraction(size_t index_i, Real dt = 0.0) override
+		virtual void Interaction(size_t index_i, Real dt = 0.0) override
 		{
 			DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>* particles = this->particles_;
 			Neighborhood& inner_neighborhood = this->inner_configuration_[index_i];
@@ -186,7 +186,7 @@ namespace SPH
 		};
 	public:
 		RelaxationOfAllDiffussionSpecies(SPHBodyInnerRelation* body_inner_relation)
-			: ParticleDynamicsInnerWithUpdate(body_inner_relation),
+			: InteractionDynamicsWithUpdate(body_inner_relation->sph_body_),
 			DiffusionReactionDataDelegateInner<BodyType, BaseParticlesType, BaseMaterialType>(body_inner_relation),
 			species_n_(this->particles_->species_n_),
 			diffusion_dt_(this->particles_->diffusion_dt_), Vol_(this->particles_->Vol_)

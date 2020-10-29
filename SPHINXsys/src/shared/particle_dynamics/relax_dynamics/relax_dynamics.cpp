@@ -30,14 +30,15 @@ namespace SPH
 		}
 		//=================================================================================================//
 		RelaxationAccelerationInner::RelaxationAccelerationInner(SPHBodyInnerRelation* body_inner_relation) : 
-			ParticleDynamicsInner(body_inner_relation), RelaxDataDelegateInner(body_inner_relation),
+			InteractionDynamics(body_inner_relation->sph_body_), 
+			RelaxDataDelegateInner(body_inner_relation),
 			Vol_(particles_->Vol_), dvel_dt_(particles_->dvel_dt_), pos_n_(particles_->pos_n_) 
 		{
 			complex_shape_ = body_->body_shape_;
 			kernel_ = body_->kernel_;
 		}
 		//=================================================================================================//
-		void RelaxationAccelerationInner::InnerInteraction(size_t index_i, Real dt)
+		void RelaxationAccelerationInner::Interaction(size_t index_i, Real dt)
 		{
 			Vecd acceleration(0);// = -2.0 * complex_shape_->computeKernelIntegral(pos_n_[index_i], kernel_);
 			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
@@ -60,7 +61,7 @@ namespace SPH
 		//=================================================================================================//
 		RelaxationAccelerationComplex::
 			RelaxationAccelerationComplex(SPHBodyComplexRelation* body_complex_relation) : 
-			ParticleDynamicsComplex(body_complex_relation), 
+			InteractionDynamics(body_complex_relation->sph_body_),
 			RelaxDataDelegateComplex(body_complex_relation), 
 			Vol_(particles_->Vol_), dvel_dt_(particles_->dvel_dt_)
 		{
@@ -70,7 +71,7 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		void RelaxationAccelerationComplex::ComplexInteraction(size_t index_i, Real dt)
+		void RelaxationAccelerationComplex::Interaction(size_t index_i, Real dt)
 		{
 			Vecd acceleration(0);
 			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
@@ -155,72 +156,6 @@ namespace SPH
 			Real dt_square = get_time_step_square_.parallel_exec();
 			update_particle_position_.parallel_exec(dt_square);
 			surface_bounding_.parallel_exec();
-		}
-		//=================================================================================================//
-		computeNumberDensityBySummation::
-			computeNumberDensityBySummation(SPHBodyComplexRelation* body_complex_relation)
-			: ParticleDynamicsComplex(body_complex_relation), 
-			RelaxDataDelegateComplex(body_complex_relation), Vol_0_(particles_->Vol_0_),
-			sigma_0_(particles_->sigma_0_)
-		{
-			for (size_t k = 0; k != contact_particles_.size(); ++k)
-			{
-				contact_Vol_0_.push_back(&(contact_particles_[k]->Vol_0_));
-			}
-			W0_ = body_->kernel_->W(Vecd(0));
-		}
-		//=================================================================================================//
-		void computeNumberDensityBySummation::ComplexInteraction(size_t index_i, Real dt)
-		{
-			Real Vol_0_i = Vol_0_[index_i];
-
-			/** Inner interaction. */
-			Real sigma = W0_;
-			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-				sigma += inner_neighborhood.W_ij_[n];
-
-			/** Contact interaction. */
-			for (size_t k = 0; k < contact_configuration_.size(); ++k)
-			{
-				StdLargeVec<Real>& Vol_0_k = *(contact_Vol_0_[k]);
-				Neighborhood& contact_neighborhood = contact_configuration_[k][index_i];
-				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-				{
-					size_t index_j = contact_neighborhood.j_[n];
-
-					sigma += contact_neighborhood.W_ij_[n] * Vol_0_k[index_j] / Vol_0_i;
-				}
-			}
-
-			/** Particle summation. */
-			sigma_0_[index_i] = sigma;
-		}
-		//=================================================================================================//
-		getAveragedParticleNumberDensity::getAveragedParticleNumberDensity(SPHBody* body)
-			: ParticleDynamicsReduce <Real, ReduceSum<Real>>(body),
-			RelaxDataDelegateSimple(body), sigma_0_(particles_->sigma_0_)
-		{
-			initial_reference_ = 0.0;
-			average_farctor_ = 1.0 / Real(body_->number_of_particles_);
-		}
-		//=================================================================================================//
-		Real getAveragedParticleNumberDensity::ReduceFunction(size_t index_i, Real dt)
-		{
-			return average_farctor_ * sigma_0_[index_i];
-		}
-		//=================================================================================================//
-		FinalizingParticleRelaxation::
-			FinalizingParticleRelaxation(SPHBody* body) : 
-			ParticleDynamicsSimple(body), RelaxDataDelegateSimple(body), 
-			sigma_0_(particles_->sigma_0_), pos_n_(particles_->pos_n_), sigma_(0.0)
-		{
-			get_average_number_density_ = new getAveragedParticleNumberDensity(body);
-		}
-		//=================================================================================================//
-		void FinalizingParticleRelaxation::Update(size_t index_i, Real dt)
-		{
-			sigma_0_[index_i] = sigma_;
 		}
 		//=================================================================================================//
 	}

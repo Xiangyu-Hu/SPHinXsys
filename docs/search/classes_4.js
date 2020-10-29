@@ -1,10 +1,10 @@
 var searchData=
 [
+  ['edge',['Edge',['../class_s_p_h_1_1_edge.html',1,'SPH']]],
+  ['edge_3c_20size_5ft_2c_20indexvector_20_3e',['Edge&lt; size_t, IndexVector &gt;',['../class_s_p_h_1_1_edge.html',1,'SPH']]],
   ['elasticsolid',['ElasticSolid',['../class_s_p_h_1_1_elastic_solid.html',1,'SPH']]],
   ['elasticsoliddynamicsinitialcondition',['ElasticSolidDynamicsInitialCondition',['../class_s_p_h_1_1solid__dynamics_1_1_elastic_solid_dynamics_initial_condition.html',1,'SPH::solid_dynamics']]],
-  ['elasticsolidparticledata',['ElasticSolidParticleData',['../class_s_p_h_1_1_elastic_solid_particle_data.html',1,'SPH']]],
   ['elasticsolidparticles',['ElasticSolidParticles',['../class_s_p_h_1_1_elastic_solid_particles.html',1,'SPH']]],
-  ['electromechanicsinitialcondition',['ElectroMechanicsInitialCondition',['../class_s_p_h_1_1active__muscle__dynamics_1_1_electro_mechanics_initial_condition.html',1,'SPH::active_muscle_dynamics']]],
   ['electrophysiologydiffusionrelaxation',['ElectroPhysiologyDiffusionRelaxation',['../class_s_p_h_1_1electro__physiology_1_1_electro_physiology_diffusion_relaxation.html',1,'SPH::electro_physiology']]],
   ['electrophysiologyinitialcondition',['ElectroPhysiologyInitialCondition',['../class_s_p_h_1_1electro__physiology_1_1_electro_physiology_initial_condition.html',1,'SPH::electro_physiology']]],
   ['electrophysiologyparticles',['ElectroPhysiologyParticles',['../class_s_p_h_1_1_electro_physiology_particles.html',1,'SPH']]],

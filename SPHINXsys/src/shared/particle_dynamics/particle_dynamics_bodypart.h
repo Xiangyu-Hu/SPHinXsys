@@ -78,6 +78,65 @@ namespace SPH {
 
 		virtual void  Update(size_t index_i, Real dt = 0.0) = 0;
 	};
+	/**
+	  * @class PartDynamicsByCellReduce
+	  * @brief reduce operation in a Eulerian constrain region.
+	  */
+	template <class ReturnType, typename ReduceOperation>
+	class PartDynamicsByCellReduce : public ParticleDynamics<ReturnType>
+	{
+	public:
+		PartDynamicsByCellReduce(SPHBody* sph_body, BodyPartByCell* body_part)
+			: ParticleDynamics<ReturnType>(sph_body), constrained_cells_(body_part->body_part_cells_) {};
+		virtual ~PartDynamicsByCellReduce() {};
+
+		virtual ReturnType exec(Real dt = 0.0) override
+		{
+			ReturnType temp = initial_reference_;
+			this->SetupReduce();
+			/** note that base member need to referred by pointer due to the template class has not been instantiated yet. */
+			for (size_t i = 0; i != constrained_cells_.size(); ++i)
+			{
+				CellListDataVector& list_data = constrained_cells_[i]->cell_list_data_;
+				for (size_t num = 0; num < list_data.size(); ++num)
+				{
+					temp = reduce_operation_(temp, ReduceFunction(list_data[num].first, dt));
+				}
+			}
+			return OutputResult(temp);
+		};
+
+		virtual ReturnType parallel_exec(Real dt = 0.0) override
+		{
+			ReturnType temp = initial_reference_;
+			this->SetupReduce();
+			/** note that base member need to referred by pointer due to the template class has not been instantiated yet. */
+			temp = parallel_reduce(blocked_range<size_t>(0, constrained_cells_.size()),
+				temp,
+				[&](const blocked_range<size_t>& r, ReturnType temp0)->ReturnType
+				{
+					for (size_t i = r.begin(); i != r.end(); ++i)
+					{
+						CellListDataVector& list_data = constrained_cells_[i]->cell_list_data_;
+						for (size_t num = 0; num < list_data.size(); ++num)
+						{
+							temp0 = reduce_operation_(temp0, ReduceFunction(list_data[num].first, dt));
+						}
+					}
+					return temp0;
+				}, [this](ReturnType x, ReturnType y)->ReturnType { return reduce_operation_(x, y); }
+				);
+
+			return OutputResult(temp);
+		};
+	protected:
+		ReduceOperation reduce_operation_;
+		CellLists& constrained_cells_;
+		ReturnType initial_reference_;
+		virtual void SetupReduce() {};
+		virtual ReturnType ReduceFunction(size_t index_i, Real dt = 0.0) = 0;
+		virtual ReturnType OutputResult(ReturnType reduced_value) { return reduced_value; };
+	};
 	/** 
 	  * @class PartDynamicsByParticleReduce
 	  * @brief reduce operation in a Lagrangian contrained region.

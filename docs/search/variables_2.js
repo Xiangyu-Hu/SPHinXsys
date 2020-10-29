@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['c_5f0_5f',['c_0_',['../class_s_p_h_1_1_fluid.html#ac95eb5d484137618e8658f16928ed516',1,'SPH::Fluid']]],
   ['capacity_5f',['capacity_',['../class_s_p_h_1_1_array.html#ad7c9b9b534c675d9f29c7a0e8b810e72',1,'SPH::Array']]],
   ['capacityincrement_5f',['capacityIncrement_',['../class_s_p_h_1_1_array.html#abbfb2dab2b98f5d2559fd39eba66e3f6',1,'SPH::Array']]],
   ['cell_5flinked_5flists_5f',['cell_linked_lists_',['../class_s_p_h_1_1_mesh_cell_linked_list.html#a779f66201dda742f7888bd6f17dc4288',1,'SPH::MeshCellLinkedList']]],
@@ -7,13 +8,11 @@ var searchData=
   ['cell_5flist_5fdata_5f',['cell_list_data_',['../class_s_p_h_1_1_cell_list.html#a2ca9d9c369de81d5d6d005264d681ab4',1,'SPH::CellList']]],
   ['cell_5fspacing_5f',['cell_spacing_',['../class_s_p_h_1_1_mesh.html#a90b8a7819fe4eb22f4717dbf09c3b325',1,'SPH::Mesh']]],
   ['cell_5fspacing_5flevels_5f',['cell_spacing_levels_',['../class_s_p_h_1_1_multilevel_mesh.html#ad3967f97e9d1d0d607ef833dbaf8fa5e',1,'SPH::MultilevelMesh::cell_spacing_levels_()'],['../class_s_p_h_1_1_multilevel_mesh_cell_linked_list.html#abe4417adec05e56d361e3762298694e9',1,'SPH::MultilevelMeshCellLinkedList::cell_spacing_levels_()']]],
-  ['child_5fbranchs_5f',['child_branchs_',['../class_s_p_h_1_1_branch.html#aa1a0f16b34a6b9a1bed32e2dff66e0e4',1,'SPH::Branch']]],
   ['collision_5ffriction_5f',['collision_friction_',['../class_s_p_h_1_1_solid.html#aa535b1be8b4e2cde7fc85d2c6aea89a1',1,'SPH::Solid']]],
   ['collision_5fstiffness_5f',['collision_stiffness_',['../class_s_p_h_1_1_solid.html#a7e9fc7a67de5d683dbd323fc6de94f01',1,'SPH::Solid']]],
-  ['comparer_5f',['comparer_',['../class_s_p_h_1_1_node.html#acea90d0decbe568165aa5b885d33e1eb',1,'SPH::Node']]],
+  ['complex_5fshape_5f',['complex_shape_',['../class_s_p_h_1_1_level_set.html#aa524d79eb7819936dd198e99ae7fb884',1,'SPH::LevelSet']]],
   ['concurrent_5fparticle_5findexes_5f',['concurrent_particle_indexes_',['../class_s_p_h_1_1_cell_list.html#a8ea5d710631cb6bb539065732a51e7e0',1,'SPH::CellList']]],
-  ['constrain_5fstrength_5f',['constrain_strength_',['../class_s_p_h_1_1fluid__dynamics_1_1_inflow_boundary_condition.html#ad5a2ff8937f5973b59b9b18dbc1f7d3e',1,'SPH::fluid_dynamics::InflowBoundaryCondition']]],
-  ['contact_5fconfiguration_5f',['contact_configuration_',['../class_s_p_h_1_1_s_p_h_body_contact_relation.html#a3666a7f2e8c8f3f1e96abe42fba050df',1,'SPH::SPHBodyContactRelation::contact_configuration_()'],['../class_s_p_h_1_1_s_p_h_body_complex_relation.html#a41640949bfb88f7685eeb0327c97af41',1,'SPH::SPHBodyComplexRelation::contact_configuration_()'],['../class_s_p_h_1_1_particle_dynamics_with_contact_configurations.html#a8a73fe1f7d8c22453a3c91c702b18796',1,'SPH::ParticleDynamicsWithContactConfigurations::contact_configuration_()'],['../class_s_p_h_1_1_particle_dynamics_with_complex_configurations.html#a891cf758bf8e0c8fdf6fa421f5dbe777',1,'SPH::ParticleDynamicsWithComplexConfigurations::contact_configuration_()']]],
+  ['contact_5fconfiguration_5f',['contact_configuration_',['../class_s_p_h_1_1_s_p_h_body_contact_relation.html#a3666a7f2e8c8f3f1e96abe42fba050df',1,'SPH::SPHBodyContactRelation::contact_configuration_()'],['../class_s_p_h_1_1_s_p_h_body_complex_relation.html#a41640949bfb88f7685eeb0327c97af41',1,'SPH::SPHBodyComplexRelation::contact_configuration_()'],['../class_s_p_h_1_1_data_delegate_contact.html#a79cc8c9ff80b865afbc553012cc0d544',1,'SPH::DataDelegateContact::contact_configuration_()'],['../class_s_p_h_1_1_data_delegate_complex.html#aabac4df9e314d10d3c03ccc93335f08e',1,'SPH::DataDelegateComplex::contact_configuration_()']]],
   ['core_5fdata_5fpkgs_5f',['core_data_pkgs_',['../class_s_p_h_1_1_level_set.html#a7e87db9e868c9944bca57770499b001d',1,'SPH::LevelSet']]],
   ['current_5fsize_5f',['current_size_',['../class_s_p_h_1_1_neighborhood.html#a1e2d0d9c7af09e2ee0e58903b171902d',1,'SPH::Neighborhood']]],
   ['cutoff_5fradius_5f',['cutoff_radius_',['../class_s_p_h_1_1_mesh_cell_linked_list.html#a4b54bc751817dc36f23b01e7673814f9',1,'SPH::MeshCellLinkedList']]]

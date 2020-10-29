@@ -89,14 +89,17 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_get_time_step_size.html">SPH::relax_dynamics::GetTimeStepSize</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">relaxation dynamics for particle initialization computing time step size  <a href="class_s_p_h_1_1relax__dynamics_1_1_get_time_step_size.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_get_time_step_size_square.html">SPH::relax_dynamics::GetTimeStepSizeSquare</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">relaxation dynamics for particle initialization computing the square of time step size  <a href="class_s_p_h_1_1relax__dynamics_1_1_get_time_step_size_square.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_physics_relaxation_inner.html">SPH::relax_dynamics::PhysicsRelaxationInner</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">simple algorithm for physics relaxation without considering contact interaction. this is usually used for solid like bodies  <a href="class_s_p_h_1_1relax__dynamics_1_1_physics_relaxation_inner.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_relaxation_acceleration_inner.html">SPH::relax_dynamics::RelaxationAccelerationInner</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">simple algorithm for physics relaxation without considering contact interaction. this is usually used for solid like bodies  <a href="class_s_p_h_1_1relax__dynamics_1_1_relaxation_acceleration_inner.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_physics_relaxation_complex.html">SPH::relax_dynamics::PhysicsRelaxationComplex</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">position verlet algorithm for physics relaxation with considering contact interaction this is usually used for fluid like bodies  <a href="class_s_p_h_1_1relax__dynamics_1_1_physics_relaxation_complex.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_update_particle_position.html">SPH::relax_dynamics::UpdateParticlePosition</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">update the particle position for a time step  <a href="class_s_p_h_1_1relax__dynamics_1_1_update_particle_position.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_relaxation_acceleration_complex.html">SPH::relax_dynamics::RelaxationAccelerationComplex</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">compute relaxation acceleration while consider the present of contact bodies with considering contact interaction this is usually used for fluid like bodies  <a href="class_s_p_h_1_1relax__dynamics_1_1_relaxation_acceleration_complex.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_body_surface_bounding.html">SPH::relax_dynamics::BodySurfaceBounding</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">constrain surface particles by map contrained particles to geometry face and r = r + phi * norm (vector distance to face)  <a href="class_s_p_h_1_1relax__dynamics_1_1_body_surface_bounding.html#details">More...</a><br /></td></tr>
@@ -104,14 +107,8 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_constraint_surface_particles.html">SPH::relax_dynamics::ConstraintSurfaceParticles</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">constrain surface particles by map contrained particles to geometry face and r = r + phi * norm (vector distance to face)  <a href="class_s_p_h_1_1relax__dynamics_1_1_constraint_surface_particles.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1compute_number_density_by_summation.html">SPH::relax_dynamics::computeNumberDensityBySummation</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">compute the particle number density by summation.  <a href="class_s_p_h_1_1relax__dynamics_1_1compute_number_density_by_summation.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1get_averaged_particle_number_density.html">SPH::relax_dynamics::getAveragedParticleNumberDensity</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the Everaged Particle Number Density.  <a href="class_s_p_h_1_1relax__dynamics_1_1get_averaged_particle_number_density.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_finalizing_particle_relaxation.html">SPH::relax_dynamics::FinalizingParticleRelaxation</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">update the number density after relaxation.  <a href="class_s_p_h_1_1relax__dynamics_1_1_finalizing_particle_relaxation.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_relaxation_step_inner.html">SPH::relax_dynamics::RelaxationStepInner</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">carry out particle relaxation step of particles within the body  <a href="class_s_p_h_1_1relax__dynamics_1_1_relaxation_step_inner.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
@@ -121,42 +118,15 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:ada79045f0072e406eb594e796ebeb5e6"><td class="memTemplParams" colspan="2"><a id="ada79045f0072e406eb594e796ebeb5e6"></a>
-template&lt;class ParticlesType  = BaseParticles&gt; </td></tr>
-<tr class="memitem:ada79045f0072e406eb594e796ebeb5e6"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>SPH::relax_dynamics::RelaxDynamicsSimple</b> = ParticleDynamicsSimple&lt; SPHBody, ParticlesType &gt;</td></tr>
-<tr class="separator:ada79045f0072e406eb594e796ebeb5e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acb584335d8b17639c0583f0c154b6a35"><td class="memTemplParams" colspan="2"><a id="acb584335d8b17639c0583f0c154b6a35"></a>
-template&lt;class ParticlesType  = BaseParticles&gt; </td></tr>
-<tr class="memitem:acb584335d8b17639c0583f0c154b6a35"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>SPH::relax_dynamics::RelaxDynamicsMin</b> = ParticleDynamicsReduce&lt; <a class="el" href="class_real.html">Real</a>, ReduceMin, SPHBody, ParticlesType &gt;</td></tr>
-<tr class="separator:acb584335d8b17639c0583f0c154b6a35"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a86061afd8ad4589905e2590f146233e1"><td class="memTemplParams" colspan="2"><a id="a86061afd8ad4589905e2590f146233e1"></a>
-template&lt;class ReturnType , class ParticlesType  = BaseParticles&gt; </td></tr>
-<tr class="memitem:a86061afd8ad4589905e2590f146233e1"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>SPH::relax_dynamics::RelaxDynamicsSum</b> = ParticleDynamicsReduce&lt; ReturnType, ReduceSum&lt; ReturnType &gt;, SPHBody, ParticlesType &gt;</td></tr>
-<tr class="separator:a86061afd8ad4589905e2590f146233e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a29f7cdfd78fdc053edcf6dc035ff6179"><td class="memTemplParams" colspan="2"><a id="a29f7cdfd78fdc053edcf6dc035ff6179"></a>
-template&lt;class ParticlesType  = BaseParticles&gt; </td></tr>
-<tr class="memitem:a29f7cdfd78fdc053edcf6dc035ff6179"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>SPH::relax_dynamics::RelaxDynamicsInner1Level</b> = ParticleDynamicsInner1Level&lt; SPHBody, ParticlesType &gt;</td></tr>
-<tr class="separator:a29f7cdfd78fdc053edcf6dc035ff6179"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a02f4c3e859e73fc720a82e8d01f1e608"><td class="memTemplParams" colspan="2"><a id="a02f4c3e859e73fc720a82e8d01f1e608"></a>
-template&lt;class ParticlesType  = BaseParticles&gt; </td></tr>
-<tr class="memitem:a02f4c3e859e73fc720a82e8d01f1e608"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>SPH::relax_dynamics::RelaxDynamicsInner</b> = ParticleDynamicsInner&lt; SPHBody, ParticlesType &gt;</td></tr>
-<tr class="separator:a02f4c3e859e73fc720a82e8d01f1e608"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6af90b7b32748eb649ca1b7291ba4f62"><td class="memTemplParams" colspan="2"><a id="a6af90b7b32748eb649ca1b7291ba4f62"></a>
-template&lt;class ParticlesType  = BaseParticles&gt; </td></tr>
-<tr class="memitem:a6af90b7b32748eb649ca1b7291ba4f62"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>SPH::relax_dynamics::RelaxSurfaceConstraint</b> = PartDynamicsByParticle&lt; SPHBody, ParticlesType, BodySurface &gt;</td></tr>
-<tr class="separator:a6af90b7b32748eb649ca1b7291ba4f62"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1065f23ae81d70a303f334b30864aa9e"><td class="memTemplParams" colspan="2"><a id="a1065f23ae81d70a303f334b30864aa9e"></a>
-template&lt;class ParticlesType  = BaseParticles&gt; </td></tr>
-<tr class="memitem:a1065f23ae81d70a303f334b30864aa9e"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>SPH::relax_dynamics::RelaxConstraintByCell</b> = PartDynamicsByCell&lt; SPHBody, ParticlesType, NearBodySurface &gt;</td></tr>
-<tr class="separator:a1065f23ae81d70a303f334b30864aa9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac65e3fe8aa13f2f4eb3b9a07aaf5a43b"><td class="memTemplParams" colspan="2"><a id="ac65e3fe8aa13f2f4eb3b9a07aaf5a43b"></a>
-template&lt;class ParticlesType  = BaseParticles, class ContactParticlesType  = BaseParticles&gt; </td></tr>
-<tr class="memitem:ac65e3fe8aa13f2f4eb3b9a07aaf5a43b"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>SPH::relax_dynamics::RelaxDynamicsComplex</b> = ParticleDynamicsComplex&lt; SPHBody, ParticlesType, BaseMaterial, SPHBody, ParticlesType &gt;</td></tr>
-<tr class="separator:ac65e3fe8aa13f2f4eb3b9a07aaf5a43b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a31e2bf79b329d6b8f04c8ff4a6089af7"><td class="memTemplParams" colspan="2"><a id="a31e2bf79b329d6b8f04c8ff4a6089af7"></a>
-template&lt;class ParticlesType  = BaseParticles, class ContactParticlesType  = BaseParticles&gt; </td></tr>
-<tr class="memitem:a31e2bf79b329d6b8f04c8ff4a6089af7"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>SPH::relax_dynamics::RelaxDynamicsComplex1Level</b> = ParticleDynamicsComplex1Level&lt; SPHBody, ParticlesType, BaseMaterial, SPHBody, ParticlesType &gt;</td></tr>
-<tr class="separator:a31e2bf79b329d6b8f04c8ff4a6089af7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4a50f0a9af01aa92c5823c1a4d9be396"><td class="memItemLeft" align="right" valign="top"><a id="a4a50f0a9af01aa92c5823c1a4d9be396"></a>
+typedef DataDelegateSimple&lt; SPHBody, BaseParticles &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SPH::relax_dynamics::RelaxDataDelegateSimple</b></td></tr>
+<tr class="separator:a4a50f0a9af01aa92c5823c1a4d9be396"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a943ceb31fd96343688d6be3747963599"><td class="memItemLeft" align="right" valign="top"><a id="a943ceb31fd96343688d6be3747963599"></a>
+typedef DataDelegateInner&lt; SPHBody, BaseParticles &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SPH::relax_dynamics::RelaxDataDelegateInner</b></td></tr>
+<tr class="separator:a943ceb31fd96343688d6be3747963599"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad5ed65ce808f19153f4554cfe62ca841"><td class="memItemLeft" align="right" valign="top"><a id="ad5ed65ce808f19153f4554cfe62ca841"></a>
+typedef DataDelegateComplex&lt; SPHBody, BaseParticles, BaseMaterial, SPHBody, BaseParticles &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SPH::relax_dynamics::RelaxDataDelegateComplex</b></td></tr>
+<tr class="separator:ad5ed65ce808f19153f4554cfe62ca841"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This is the classes of particle relaxation in order to produce body fitted initial particle distribution. <br />

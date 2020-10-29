@@ -82,12 +82,12 @@ $(function() {
 
 <p><code>#include &lt;<a class="el" href="base__mesh_8h_source.html">base_mesh.h</a>&gt;</code></p>
 
-<p>Inherits <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>.</p>
+<p>Inherits <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>.</p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a17dd368e3585ba788fcaf97e2dcb0dc6"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_multilevel_mesh.html#a17dd368e3585ba788fcaf97e2dcb0dc6">MultilevelMesh</a> (Vecd lower_bound, Vecd upper_bound, Real reference_cell_spacing, <a class="el" href="classsize__t.html">size_t</a> total_levels, <a class="el" href="classsize__t.html">size_t</a> buffer_size=0)</td></tr>
-<tr class="separator:a17dd368e3585ba788fcaf97e2dcb0dc6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a573d18b2a552ee2a4d9bdfdabf7dbc22"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_multilevel_mesh.html#a573d18b2a552ee2a4d9bdfdabf7dbc22">MultilevelMesh</a> (Vecd lower_bound, Vecd upper_bound, Real reference_cell_spacing, <a class="el" href="classsize__t.html">size_t</a> total_levels, <a class="el" href="classsize__t.html">size_t</a> buffer_width=0)</td></tr>
+<tr class="separator:a573d18b2a552ee2a4d9bdfdabf7dbc22"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -104,24 +104,24 @@ Protected Attributes</h2></td></tr>
 <tr class="separator:a0e476bce39102a423ce49a78f95cff25"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;class BaseMeshType = BaseLevelSet, class MeshLevelType = LevelSet&gt;<br />
+<div class="textblock"><h3>template&lt;class BaseMeshType, class MeshLevelType&gt;<br />
 class SPH::MultilevelMesh&lt; BaseMeshType, MeshLevelType &gt;</h3>
 
 <p>Multi level Meshes with multi resolution mesh data. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a17dd368e3585ba788fcaf97e2dcb0dc6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a17dd368e3585ba788fcaf97e2dcb0dc6">&#9670;&nbsp;</a></span>MultilevelMesh()</h2>
+<a id="a573d18b2a552ee2a4d9bdfdabf7dbc22"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a573d18b2a552ee2a4d9bdfdabf7dbc22">&#9670;&nbsp;</a></span>MultilevelMesh()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class MeshLevelType = LevelSet&gt; </div>
+template&lt;class BaseMeshType , class MeshLevelType &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, MeshLevelType &gt;::<a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">MultilevelMesh</a> </td>
+          <td class="memname"><a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, MeshLevelType &gt;::<a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">MultilevelMesh</a> </td>
           <td>(</td>
           <td class="paramtype">Vecd&#160;</td>
           <td class="paramname"><em>lower_bound</em>, </td>
@@ -148,7 +148,7 @@ template&lt;class BaseMeshType = BaseLevelSet, class MeshLevelType = LevelSet&gt
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="classsize__t.html">size_t</a>&#160;</td>
-          <td class="paramname"><em>buffer_size</em> = <code>0</code>&#160;</td>
+          <td class="paramname"><em>buffer_width</em> = <code>0</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -163,7 +163,7 @@ template&lt;class BaseMeshType = BaseLevelSet, class MeshLevelType = LevelSet&gt
 </table>
 </div><div class="memdoc">
 <p>build the zero level mesh first.</p>
-<p>copy zero evel mesh perperties to this. <br />
+<p>copy zero level mesh perperties to this. <br />
  other levels. </p>
 
 </div>
@@ -175,13 +175,13 @@ template&lt;class BaseMeshType = BaseLevelSet, class MeshLevelType = LevelSet&gt
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class MeshLevelType = LevelSet&gt; </div>
+template&lt;class BaseMeshType , class MeshLevelType &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">StdVec&lt;Real&gt; <a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, MeshLevelType &gt;::cell_spacing_levels_</td>
+          <td class="memname">StdVec&lt;Real&gt; <a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, MeshLevelType &gt;::cell_spacing_levels_</td>
         </tr>
       </table>
   </td>
@@ -200,10 +200,10 @@ template&lt;class BaseMeshType = BaseLevelSet, class MeshLevelType = LevelSet&gt
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class MeshLevelType = LevelSet&gt; </div>
+template&lt;class BaseMeshType , class MeshLevelType &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">StdVec&lt;MeshLevelType*&gt; <a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, MeshLevelType &gt;::mesh_levels_</td>
+          <td class="memname">StdVec&lt;MeshLevelType*&gt; <a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, MeshLevelType &gt;::mesh_levels_</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -217,13 +217,13 @@ template&lt;class BaseMeshType = BaseLevelSet, class MeshLevelType = LevelSet&gt
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class MeshLevelType = LevelSet&gt; </div>
+template&lt;class BaseMeshType , class MeshLevelType &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">StdVec&lt;<a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a>&gt; <a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, MeshLevelType &gt;::number_of_cells_levels_</td>
+          <td class="memname">StdVec&lt;<a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a>&gt; <a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, MeshLevelType &gt;::number_of_cells_levels_</td>
         </tr>
       </table>
   </td>
@@ -242,13 +242,13 @@ template&lt;class BaseMeshType = BaseLevelSet, class MeshLevelType = LevelSet&gt
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class MeshLevelType = LevelSet&gt; </div>
+template&lt;class BaseMeshType , class MeshLevelType &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classsize__t.html">size_t</a> <a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, MeshLevelType &gt;::total_levels_</td>
+          <td class="memname"><a class="el" href="classsize__t.html">size_t</a> <a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, MeshLevelType &gt;::total_levels_</td>
         </tr>
       </table>
   </td>

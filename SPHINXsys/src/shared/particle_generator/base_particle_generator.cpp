@@ -7,7 +7,6 @@
 #include "base_particle_generator.h"
 #include "base_body.h"
 #include "base_particles.h"
-#include "mesh_cell_linked_list.h"
 
 namespace SPH {
 	//=================================================================================================//
@@ -24,7 +23,7 @@ namespace SPH {
 		for (size_t i = 0; i < body_input_points_volumes.size(); ++i)
 		{
 			base_particles->initializeABaseParticle(body_input_points_volumes[i].first,
-				body_input_points_volumes[i].second, 1.0 /(body_input_points_volumes[i].second + TinyReal));
+				body_input_points_volumes[i].second);
 			number_of_particles++;
 		}
 

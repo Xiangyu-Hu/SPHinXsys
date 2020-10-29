@@ -23,12 +23,11 @@
 /**
  * @file 	diffussion_reaction.h
  * @brief 	Describe the diffusive and reaction in which 
- *          the dynamics is characterized diffusion equation and reactive source terms.
+ *          the dynamics is characterized by diffusion equation and reactive source terms.
  *			Typical physical processes are diffusion, heat conduction 
  *			and chemical and biological reactions. 
  * @author  Xiangyu Hu, Chi Zhang
  * @version 0.2.0
- * 			Here, Version 0.2.0 is set, as reaction-diffusion equation is solved. 
  */
 #pragma once
 
@@ -51,7 +50,7 @@ namespace SPH
 	class BaseDiffusion
 	{
 	public:
-		/** Default constructor. */
+		/** Constructor. */
 		BaseDiffusion(size_t diffusion_species_index, size_t gradient_species_index)
 		: diffusion_species_index_(diffusion_species_index), gradient_species_index_(gradient_species_index) {};
 		virtual ~BaseDiffusion() {};
@@ -78,7 +77,7 @@ namespace SPH
 	class IsotropicDiffusion : public BaseDiffusion
 	{
 	protected:
-		Real diff_cf_; /*> diffusion coefficient. */
+		Real diff_cf_; /**< diffusion coefficient. */
 
 	public:
 		/** Constructor. */
@@ -103,11 +102,9 @@ namespace SPH
 	class DirectionalDiffusion : public IsotropicDiffusion
 	{
 	protected:
-		Vecd bias_direction_; /*> Reference bias direction. */
-		/*> The bias diffusion coefficient along the fiber direction. */
-		Real bias_diff_cf_;
-		/*> The transformed diffusivity with inverse Cholesky decomposition. */
-		Matd transf_diffusivity_;
+		Vecd bias_direction_; 	/**< Reference bias direction. */
+		Real bias_diff_cf_;		/**< The bias diffusion coefficient along the fiber direction. */
+		Matd transformed_diffusivity_;	/**< The transformed diffusivity with inverse Cholesky decomposition. */
 		/** Initialize directional diffusivity. */
 		void initializeDirectionalDiffusivity(Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
 	public:
@@ -116,7 +113,7 @@ namespace SPH
 			Real diff_cf, Real bias_diff_cf, Vecd bias_direction) : 
 			IsotropicDiffusion(diffusion_species_index, gradient_species_index, diff_cf), 
 			bias_direction_(bias_direction), bias_diff_cf_(bias_diff_cf), 
-			transf_diffusivity_(1.0) 
+			transformed_diffusivity_(1.0) 
 		{
 			initializeDirectionalDiffusivity(diff_cf, bias_diff_cf, bias_direction);
 		};
@@ -135,7 +132,7 @@ namespace SPH
 		 */
 		virtual Real getInterParticleDiffusionCoff(size_t particle_index_i, size_t particle_index_j, Vecd& inter_particle_direction) override
 		{
-			Vecd grad_ij = transf_diffusivity_ * inter_particle_direction;
+			Vecd grad_ij = transformed_diffusivity_ * inter_particle_direction;
 			return 1.0 / grad_ij.scalarNormSqr();
 		};
 	};
@@ -150,7 +147,7 @@ namespace SPH
 		/* Local bias (usually due to fiber orientation) direction. */
 		StdVec<Vecd> local_bias_direction_;
 		/* Local transformed diffusivity with inverse Cholesky decomposition. */
-		StdVec<Matd> local_transf_diffusivity_;
+		StdVec<Matd> local_transformed_diffusivity_;
 	public:
 		/** Constructor*/
 		LocalDirectionalDiffusion(size_t diffusion_species_index, size_t gradient_species_index,
@@ -165,7 +162,7 @@ namespace SPH
 		 */
 		virtual Real getInterParticleDiffusionCoff(size_t particle_index_i, size_t particle_index_j, Vecd& inter_particle_direction) override
 		{
-			Matd trans_diffusivity = getAverageValue(local_transf_diffusivity_[particle_index_i], local_transf_diffusivity_[particle_index_j]);
+			Matd trans_diffusivity = getAverageValue(local_transformed_diffusivity_[particle_index_i], local_transformed_diffusivity_[particle_index_j]);
 			Vecd grad_ij = trans_diffusivity * inter_particle_direction;
 			return 1.0 / grad_ij.scalarNormSqr();
 		};

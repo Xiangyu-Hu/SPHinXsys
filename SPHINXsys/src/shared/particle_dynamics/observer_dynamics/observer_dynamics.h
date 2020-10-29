@@ -53,7 +53,7 @@ namespace SPH
 		 */
 		template <class DataType, class TargetParticlesType, StdLargeVec<DataType> TargetParticlesType:: * TrgtMemPtr>
 		class ObservingAQuantity : 
-			public ParticleDynamicsContact, public ObservationDataDelegate<TargetParticlesType>
+			public InteractionDynamics, public ObservationDataDelegate<TargetParticlesType>
 		{
 		protected:
 			/** Observed quantities saved here. */
@@ -61,7 +61,7 @@ namespace SPH
 			StdVec<StdLargeVec<Real>*> contact_Vol_;
 			StdVec<StdLargeVec<DataType>*> contact_data_;
 
-			virtual void ContactInteraction(size_t index_i, Real dt = 0.0) override
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override
 			{
 				DataType observed_quantity(0);
 				Real ttl_weight(0);
@@ -85,7 +85,7 @@ namespace SPH
 			};
 		public:
 			explicit ObservingAQuantity(SPHBodyContactRelation* body_contact_relation)
-				: ParticleDynamicsContact(body_contact_relation),
+				: InteractionDynamics(body_contact_relation->sph_body_),
 				ObservationDataDelegate<TargetParticlesType>(body_contact_relation)
 			{
 				for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -105,7 +105,7 @@ namespace SPH
 		 */
 		template <class DiffusionReactionParticlesType>
 		class ObservingADiffusionReactionQuantity :
-			public ParticleDynamicsContact, public ObservationDataDelegate<DiffusionReactionParticlesType>
+			public InteractionDynamics, public ObservationDataDelegate<DiffusionReactionParticlesType>
 		{
 		protected:
 			/** Index of voltage. */
@@ -115,7 +115,7 @@ namespace SPH
 			StdLargeVec<Real>  observed_quantities_;
 			StdVec<StdLargeVec<Real>*> contact_Vol_, contact_data_;
 
-			virtual void ContactInteraction(size_t index_i, Real dt = 0.0) override
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override
 			{
 				Real observed_quantity(0);
 				Real ttl_weight(0);
@@ -138,7 +138,7 @@ namespace SPH
 			};
 		public:
 			explicit ObservingADiffusionReactionQuantity(string species_name, SPHBodyContactRelation* body_contact_relation)
-				: ParticleDynamicsContact(body_contact_relation),
+				: InteractionDynamics(body_contact_relation->sph_body_),
 				ObservationDataDelegate<DiffusionReactionParticlesType>(body_contact_relation)
 			{
 				species_indexes_map_ = this->contact_particles_[0]->SpeciesIndexMap();
@@ -162,7 +162,7 @@ namespace SPH
 		template <class DataType, class ObserverParticlesType, class TargetParticlesType, 
 			StdLargeVec<DataType> ObserverParticlesType:: * ObrsvrMemPtr, StdLargeVec<DataType> TargetParticlesType:: * TrgtMemPtr>
 		class InterpolatingAQuantity : 
-			public ParticleDynamicsContact,
+			public InteractionDynamics,
 			public InterpolationDataDelegate<ObserverParticlesType, TargetParticlesType>
 		{
 		protected:
@@ -171,7 +171,7 @@ namespace SPH
 			StdVec<StdLargeVec<Real>*> contact_Vol_;
 			StdVec<StdLargeVec<DataType>*> contact_data_;
 
-			virtual void ContactInteraction(size_t index_i, Real dt = 0.0) override
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override
 			{
 				DataType observed_quantity(0);
 				Real ttl_weight(0);
@@ -195,7 +195,7 @@ namespace SPH
 			};
 		public:
 			explicit InterpolatingAQuantity(SPHBodyContactRelation* body_contact_relation)
-				: ParticleDynamicsContact(body_contact_relation),
+				: InteractionDynamics(body_contact_relation->sph_body_),
 				InterpolationDataDelegate<ObserverParticlesType, TargetParticlesType>(body_contact_relation),
 				interpolated_data_(this->particles_->*ObrsvrMemPtr)
 			{
@@ -215,7 +215,7 @@ namespace SPH
 		template <class ObserverParticlesType, class DiffusionReactionParticlesType,
 			StdLargeVec<Real> ObserverParticlesType:: * ObrsvrDataMemPtr>
 		class InterpolatingADiffusionReactionQuantity : 
-			public ParticleDynamicsContact,
+			public InteractionDynamics,
 			public InterpolationDataDelegate<ObserverParticlesType, DiffusionReactionParticlesType>
 		{
 		protected:
@@ -226,7 +226,7 @@ namespace SPH
 			StdLargeVec<Real>& interpolated_data_;
 			StdVec<StdLargeVec<Real>*> contact_Vol_, contact_data_;
 
-			virtual void ContactInteraction(size_t index_i, Real dt = 0.0) override
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override
 			{
 
 				Real observed_quantity(0);
@@ -250,7 +250,7 @@ namespace SPH
 			};
 		public:
 			explicit InterpolatingADiffusionReactionQuantity(string species_name, SPHBodyContactRelation* body_contact_relation)
-				: ParticleDynamicsContact(body_contact_relation),
+				: InteractionDynamics(body_contact_relation->sph_body_),
 				InterpolationDataDelegate<ObserverParticlesType, DiffusionReactionParticlesType>(body_contact_relation),
 				interpolated_data_(this->particles_->*ObrsvrDataMemPtr)
 			{
@@ -271,7 +271,7 @@ namespace SPH
 		* @brief  correct kernel weights for interpolation between general bodies
 		*/
 		class CorrectInterpolationKernelWeights : 
-			public ParticleDynamicsContact,
+			public InteractionDynamics,
 			public DataDelegateContact<SPHBody, BaseParticles, BaseMaterial, SPHBody, BaseParticles, BaseMaterial>
 		{
 		public:
@@ -279,7 +279,7 @@ namespace SPH
 			virtual ~CorrectInterpolationKernelWeights() {};
 		protected:
 			StdVec<StdLargeVec<Real>*> contact_Vol_;
-			virtual void ContactInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 	}
 }

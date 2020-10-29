@@ -144,14 +144,14 @@ int main()
 	/**
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
-	WaterBlock *water_block = new WaterBlock(sph_system, "WaterBody", 0);
+WaterBlock *water_block = new WaterBlock(sph_system, "WaterBody", 0);
 	WaterMaterial 	*water_material = new WaterMaterial();
 	FluidParticles 	fluid_particles(water_block, water_material);
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
 	WallBoundary *wall_boundary = new WallBoundary(sph_system, "Wall",	0);
-	SolidParticles 					solid_particles(wall_boundary);
+	SolidParticles 		wall_particles(wall_boundary);
 	/**
 	 * @brief 	Particle and body creation of fluid observer.
 	 */
@@ -160,7 +160,6 @@ int main()
 
 	/** topology */
 	SPHBodyComplexRelation* water_block_complex_relation = new SPHBodyComplexRelation(water_block, { wall_boundary });
-	SPHBodyComplexRelation* wall_complex_relation = new SPHBodyComplexRelation(wall_boundary, {});
 	SPHBodyContactRelation* fluid_observer_contact_relation = new SPHBodyContactRelation(fluid_observer, { water_block });
 
 	/**
@@ -168,11 +167,6 @@ int main()
 	 */
 	 /** Define external force. */
 	Gravity 							gravity(Vecd(0.0, -gravity_g));
-	 /**
-	  * @brief 	Methods used only once.
-	  */
-	/** Initialize normal direction of the wall boundary. */
-	solid_dynamics::NormalDirectionSummation 	get_wall_normal(wall_complex_relation);
 	/**
 	 * @brief 	Methods used for time stepping.
 	 */
@@ -211,7 +205,7 @@ int main()
 	/** Pre-simulation*/
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	get_wall_normal.exec();
+	wall_particles.initializeNormalDirectionFromGeometry();
 
 	/**
 	 * @brief The time stepping starts here.
@@ -231,9 +225,10 @@ int main()
 	/**
 	 * @brief 	Basic parameters.
 	 */
-	int number_of_iterations = sph_system.restart_step_;
+	size_t number_of_iterations = sph_system.restart_step_;
 	int screen_output_interval = 100;
-	int restart_output_interval = screen_output_interval*10;
+	int observation_sample_interval = screen_output_interval * 2;
+	int restart_output_interval = screen_output_interval * 10;
 	Real End_Time = 20.0; 	/**< End time. */
 	Real D_Time = 0.1;		/**< Time stamps for output of body states. */
 	Real Dt = 0.0;			/**< Default advection time step sizes. */
@@ -283,6 +278,10 @@ int main()
 					<< GlobalStaticVariables::physical_time_
 					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
 
+				if (number_of_iterations % observation_sample_interval == 0) {
+					write_water_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
+					write_recorded_water_pressure.WriteToFile(GlobalStaticVariables::physical_time_);
+				}
 				if (number_of_iterations % restart_output_interval == 0)
 					write_restart_files.WriteToFile(Real(number_of_iterations));
 			}
@@ -298,9 +297,7 @@ int main()
 
 
 		tick_count t2 = tick_count::now();
-		write_water_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
 		write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
-		write_recorded_water_pressure.WriteToFile(GlobalStaticVariables::physical_time_);
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 

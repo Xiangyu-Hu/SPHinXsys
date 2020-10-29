@@ -47,8 +47,8 @@ namespace SPH
 	class ParticleDynamicsSimple : public ParticleDynamics<void>
 	{
 	public:
-		explicit ParticleDynamicsSimple(SPHBody* body) : 
-			ParticleDynamics<void>(body),
+		explicit ParticleDynamicsSimple(SPHBody* sph_body) :
+			ParticleDynamics<void>(sph_body),
 			functor_update_(std::bind(&ParticleDynamicsSimple::Update, this, _1, _2)) {};
 		virtual ~ParticleDynamicsSimple() {};
 
@@ -56,7 +56,7 @@ namespace SPH
 		virtual void parallel_exec(Real dt = 0.0) override;
 	protected:
 		virtual void Update(size_t index_i, Real dt = 0.0) = 0;
-		InnerFunctor functor_update_;
+		ParticleFunctor functor_update_;
 	};
 
 	/**
@@ -67,8 +67,8 @@ namespace SPH
 		class ParticleDynamicsReduce : public ParticleDynamics<ReturnType>
 	{
 	public:
-		explicit ParticleDynamicsReduce(SPHBody* body) : 
-			ParticleDynamics<ReturnType>(body), initial_reference_(),
+		explicit ParticleDynamicsReduce(SPHBody* sph_body) :
+			ParticleDynamics<ReturnType>(sph_body), initial_reference_(),
 			functor_reduce_function_(std::bind(&ParticleDynamicsReduce::ReduceFunction, this, _1, _2)) {};
 		virtual ~ParticleDynamicsReduce() {};
 
@@ -102,215 +102,82 @@ namespace SPH
 		};
 
 	/**
-	* @class ParticleDynamicsInner
-	* @brief This is the class for inner interactions
-	* in which one the particles from the same body
-	* interact with each other
+	* @class InteractionDynamics
+	* @brief This is the class for particle interaction with other particles
 	*/
-	class ParticleDynamicsInner : public ParticleDynamics<void>
+	class InteractionDynamics : public ParticleDynamics<void>
 	{
 	public:
-		explicit ParticleDynamicsInner(SPHBodyInnerRelation* body_inner_relation) 
-			: ParticleDynamics<void>(body_inner_relation->sph_body_),
-			functor_inner_interaction_(std::bind(&ParticleDynamicsInner::InnerInteraction, this, _1, _2)) {};
-		virtual ~ParticleDynamicsInner() {};
+		explicit InteractionDynamics(SPHBody* sph_body)
+			: ParticleDynamics<void>(sph_body),
+			functor_interaction_(std::bind(&InteractionDynamics::Interaction,
+				this, _1, _2)) {};
+		virtual ~InteractionDynamics() {};
+
+		/** pre process such as update ghost state */
+		StdVec<ParticleDynamics<void>*> pre_processes_;
+		/** post process such as impose constraint */
+		StdVec<ParticleDynamics<void>*> post_processes_;
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
 	protected:
-		virtual void InnerInteraction(size_t index_i, Real dt = 0.0) = 0;
-		InnerFunctor functor_inner_interaction_;
+		virtual void Interaction(size_t index_i, Real dt = 0.0) = 0;
+		ParticleFunctor functor_interaction_;
 	};
 
 	/**
-	* @class ParticleDynamicsInnerWithUpdate
-	* @brief This class includes an initialization, an inner interaction and an update steps
+	* @class InteractionDynamicsWithUpdate
+	* @brief This class includes an interaction and a update steps
 	*/
-	class ParticleDynamicsInnerWithUpdate : public ParticleDynamicsInner
+	class InteractionDynamicsWithUpdate : public InteractionDynamics
 	{
 	public:
-		ParticleDynamicsInnerWithUpdate(SPHBodyInnerRelation* body_inner_relation)
-			: ParticleDynamicsInner(body_inner_relation),
-			functor_update_(std::bind(&ParticleDynamicsInnerWithUpdate::Update, this, _1, _2)) {}
-		virtual ~ParticleDynamicsInnerWithUpdate() {};
+		InteractionDynamicsWithUpdate(SPHBody* sph_body)
+			: InteractionDynamics(sph_body),
+			functor_update_(std::bind(&InteractionDynamicsWithUpdate::Update, 
+				this, _1, _2)) {}
+		virtual ~InteractionDynamicsWithUpdate() {};
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
 	protected:
 		virtual void Update(size_t index_i, Real dt = 0.0) = 0;
-		InnerFunctor functor_update_;
+		ParticleFunctor functor_update_;
 	};
 
 	/**
-	* @class ParticleDynamicsInner1Level
-	* @brief This class includes an initialization, an inner interaction and an update steps
+	* @class ParticleDynamics1Level
+	* @brief This class includes an initialization, an interaction and a update steps
 	*/
-	class ParticleDynamicsInner1Level : public ParticleDynamicsInnerWithUpdate
+	class ParticleDynamics1Level : public InteractionDynamicsWithUpdate
 	{
 	public:
-		ParticleDynamicsInner1Level(SPHBodyInnerRelation* body_inner_relation)
-			: ParticleDynamicsInnerWithUpdate(body_inner_relation),
-			functor_initialization_(std::bind(&ParticleDynamicsInner1Level::Initialization, this, _1, _2)) {}
-		virtual ~ParticleDynamicsInner1Level() {};
+		ParticleDynamics1Level(SPHBody* sph_body)
+			: InteractionDynamicsWithUpdate(sph_body),
+			functor_initialization_(std::bind(&ParticleDynamics1Level::Initialization, 
+				this, _1, _2)) {}
+		virtual ~ParticleDynamics1Level() {};
 
-		virtual void exec(Real dt = 0.0);
-		virtual void parallel_exec(Real dt = 0.0);
-	protected:
-		virtual void Initialization(size_t index_i, Real dt = 0.0) = 0;
-		InnerFunctor functor_initialization_;
-	};
-
-	/**
-	 * @class ParticleDynamicsContact
-	 * @brief This is the class for contact interactions
-	 */
-	class ParticleDynamicsContact : public ParticleDynamics<void>
-	{
-	public:
-		explicit ParticleDynamicsContact(SPHBodyContactRelation* body_contact_relation)
-			: ParticleDynamics<void>(body_contact_relation->sph_body_),
-			functor_contact_interaction_(std::bind(&ParticleDynamicsContact::ContactInteraction, this, _1, _2)) {};
-		virtual ~ParticleDynamicsContact() {};
-
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
-	protected:
-		virtual void ContactInteraction(size_t index_i, Real dt = 0.0) = 0;
-		InnerFunctor functor_contact_interaction_;
-	};
-
-	/**
-	* @class ParticleDynamicsComplex
-	* @brief complex operations combining both inner and contact particle dynamics together
-	*/
-	class ParticleDynamicsComplex : public ParticleDynamics<void>
-	{
-	public:
-		ParticleDynamicsComplex(SPHBodyComplexRelation* body_complex_relation)
-			: ParticleDynamics<void>(body_complex_relation->sph_body_),
-			functor_complex_interaction_(std::bind(&ParticleDynamicsComplex::ComplexInteraction, this, _1, _2)) {};
-		virtual ~ParticleDynamicsComplex() {};
-
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
-	protected:
-		virtual void ComplexInteraction(size_t index_i, Real dt = 0.0) = 0;
-		InnerFunctor functor_complex_interaction_;
-	};
-
-	/**
-	* @class ParticleDynamicsComplexWithUpdate
-	* @brief complex operations with a update step
-	*/
-	class ParticleDynamicsComplexWithUpdate	: public ParticleDynamicsComplex
-	{
-	public:
-		ParticleDynamicsComplexWithUpdate(SPHBodyComplexRelation* body_complex_relation) 
-			: ParticleDynamicsComplex(body_complex_relation),
-			functor_update_(std::bind(&ParticleDynamicsComplexWithUpdate::Update, this, _1, _2)) {};
-		virtual ~ParticleDynamicsComplexWithUpdate() {};
-
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
-	protected:
-		virtual void Update(size_t index_i, Real dt = 0.0) = 0;
-		InnerFunctor functor_update_;
-	};
-
-	/**
-	* @class ParticleDynamicsComplex1Level
-	* @brief complex operations with a initialization and a update step
-	*/
-	class ParticleDynamicsComplex1Level	: public ParticleDynamicsComplexWithUpdate
-	{
-	public:
-		ParticleDynamicsComplex1Level(SPHBodyComplexRelation* body_complex_relation)
-			: ParticleDynamicsComplexWithUpdate(body_complex_relation),
-			functor_initialization_(std::bind(&ParticleDynamicsComplex1Level::Initialization, this, _1, _2)) {};
-		virtual ~ParticleDynamicsComplex1Level() {};
-	
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
 	protected:
 		virtual void Initialization(size_t index_i, Real dt = 0.0) = 0;
-		InnerFunctor functor_initialization_;
+		ParticleFunctor functor_initialization_;
 	};
 
 	/**
-	* @class ParticleDynamicsComplexSplit
-	* @brief complex split operations combining both inner and contact particle dynamics together
-	*/
-	class ParticleDynamicsComplexSplit : public ParticleDynamicsComplex1Level
-	{
-	public:
-		ParticleDynamicsComplexSplit(SPHBodyComplexRelation* body_complex_relation)
-			: ParticleDynamicsComplex1Level(body_complex_relation) {};
-		virtual ~ParticleDynamicsComplexSplit() {};
-
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
-	};
-
-	/**
-	  * @class ParticleDynamicsCellListSplitting
-	  * @brief This is for using splitting algorithm for inner particle interactions
-	  * which does not use particle configuration data for
-	  * particle interaction
-	  */
-	class ParticleDynamicsCellListSplitting	: public ParticleDynamics<void>
-	{
-	protected:
-		Kernel* kernel_;
-		Real cutoff_radius_;
-
-		virtual void CellListInteraction(CellList* cell_list, Real dt = 0.0) = 0;
-		CellListFunctor functor_cell_list_;
-	public:
-		explicit ParticleDynamicsCellListSplitting(SPHBody* body);
-		virtual ~ParticleDynamicsCellListSplitting() {};
-
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
-	};
-
-	/**
-	 * @class ParticleDynamicsInnerSplitting
+	 * @class InteractionDynamicsSplitting
 	 * @brief This is for the splitting algorithm
 	 */
-	class ParticleDynamicsInnerSplitting : public ParticleDynamics<void>
+	class InteractionDynamicsSplitting : public InteractionDynamics
 	{
 	public:
-		explicit ParticleDynamicsInnerSplitting(SPHBodyInnerRelation* body_inner_relation)
-			: ParticleDynamics<void>(body_inner_relation->sph_body_),
-			functor_inner_interaction_(std::bind(&ParticleDynamicsInnerSplitting::InnerInteraction, this, _1, _2)) {};
-		virtual ~ParticleDynamicsInnerSplitting() {};
+		explicit InteractionDynamicsSplitting(SPHBody* sph_body)
+			: InteractionDynamics(sph_body) {};
+		virtual ~InteractionDynamicsSplitting() {};
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
-	protected:
-		virtual void InnerInteraction(size_t index_i, Real dt = 0.0) = 0;
-		InnerFunctor functor_inner_interaction_;
-	};
-
-	/**
-	 * @class ParticleDynamicsComplexSplitting
-	 * @brief This is for the splitting algorithm
-	 * which taking account wall boundary conditions
-	 */
-	class ParticleDynamicsComplexSplitting : public ParticleDynamics<void>
-	{
-	public:
-		explicit ParticleDynamicsComplexSplitting(SPHBodyComplexRelation* body_complex_relation)
-			: ParticleDynamics<void>(body_complex_relation->sph_body_),
-			functor_particle_interaction_(std::bind(&ParticleDynamicsComplexSplitting::ParticleInteraction, this, _1, _2)) {};
-		virtual ~ParticleDynamicsComplexSplitting() {};
-
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
-	protected:
-		/** the particle interaction also taking account wall boundary conditions,
-		  * but the function form is the same as the inner interaction. */
-		virtual void ParticleInteraction(size_t index_i, Real dt = 0.0) = 0;
-		InnerFunctor functor_particle_interaction_;
 	};
 }

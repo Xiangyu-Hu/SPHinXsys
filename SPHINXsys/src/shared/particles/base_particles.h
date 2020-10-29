@@ -21,10 +21,10 @@
 *                                                                           *
 * --------------------------------------------------------------------------*/
 /**
- * @file 	base_particle.h
+ * @file 	base_particles.h
  * @brief 	This is the base class of SPH particles. The basic data of the particles
- *			is saved in a large vector. Each derived class will introduce an extra     
- * 			vector for the new data. Note that there is no class of particle.
+ *			is saved in separated large vectors. Each derived class will introduce several extra     
+ * 			vectors for the new data. Note that there is no class of single particle.
  * @author	Xiangyu Hu and Chi Zhang
  * @version	0.1
  */
@@ -65,27 +65,21 @@ namespace SPH {
 		BaseParticles(SPHBody* body);
 		virtual ~BaseParticles() {};
 	
-		/** For a real particle, its initial value is the index.
-		 *	For a ghost particle, it is the index of its corresponding real particle. */
-		StdLargeVec<size_t> particle_id_;
-		StdLargeVec<bool> is_sortable_;  /**< whether subject to sorting. */
-
 		StdLargeVec<Vecd> pos_n_;	/**< current position */
 		StdLargeVec<Vecd> vel_n_;	/**< current particle velocity */
 		StdLargeVec<Vecd> dvel_dt_;	/**< inner pressure- or stress-induced acceleration */
 		StdLargeVec<Vecd> dvel_dt_others_; /**<  other, such as gravity and viscous acceleration */
 
 		StdLargeVec<Real> Vol_;		/**< particle volume */
-		StdLargeVec<Real> Vol_0_;	/**< initial particle volume */
 		StdLargeVec<Real> rho_n_;	/**< current particle density */
-		StdLargeVec<Real> rho_0_;	/**< initial particle density*/
 		StdLargeVec<Real> mass_;	/**< particle mass */
-		StdLargeVec<Real> sigma_0_;	/**< reference number density. */
 		StdLargeVec<Real> smoothing_length_;
 
 		//----------------------------------------------------------------------
 		//Global information for all partiles
 		//----------------------------------------------------------------------
+		Real rho_0_;			/**< global reference density*/
+		Real sigma_0_;			/**< global reference number density. */
 		Real speed_max_;		/**< Maximum particle speed. */
 		Real signal_speed_max_; /**< Maximum signal speed.*/
 		/** Maximum possible number of real particles. Also the start index of ghost particles. */
@@ -117,25 +111,28 @@ namespace SPH {
 			if (is_to_write) variable_to_write.push_back(variable_name);
 		};
 
+		//----------------------------------------------------------------------
+		//		Particle data for sorting
+		//----------------------------------------------------------------------
+		StdLargeVec<size_t> sequence_;
+		StdLargeVec<size_t> sorted_id_;
+		StdLargeVec<size_t> unsorted_id_;
+		StdVec<StdLargeVec<Matd>*> sortable_matrices_;
+		StdVec<StdLargeVec<Vecd>*> sortable_vectors_;
+		StdVec<StdLargeVec<Real>*> sortable_scalars_;
+
 		/** access the sph body*/
 		SPHBody* getSPHBody() { return body_; };
 		/** Initialize a base particle by input a postion, volume and reference number density. */
-		void initializeABaseParticle(Vecd pnt, Real Vol_0, Real sigma_0);
+		void initializeABaseParticle(Vecd pnt, Real Vol_0);
 		/** Add buffer particles which latter may be realized for particle dynamics, or used as ghost particle. */
 		void addABufferParticle();
-		/** Copy state, except particle id, from another particle */
+		/** Copy physical state from another particle */
 		void copyFromAnotherParticle(size_t this_index, size_t another_index);
-		/** Update the state of a particle from another particle */
+		/** Update physical state of a particle from another particle */
 		void updateFromAnotherParticle(size_t this_index, size_t another_index);
-
-		/** Swapping particles. */
-		void swapParticles(size_t this_index, size_t that_index) {};
-		/** Check whether particles allowed for swaping*/
-		bool isSwappingAllowed(size_t this_index, size_t that_index);
 		/** Insert a ghost particle into the particle list. */
 		size_t insertAGhostParticle(size_t index_i);
-		/** Get mirror a particle along an axis direaction. */
-		void mirrorInAxisDirection(size_t particle_index_i, Vecd body_bound, int axis_direction);
 
 		/** Write particle data in VTU format for Paraview. */
 		virtual void writeParticlesToVtuFile(ofstream &output_file);

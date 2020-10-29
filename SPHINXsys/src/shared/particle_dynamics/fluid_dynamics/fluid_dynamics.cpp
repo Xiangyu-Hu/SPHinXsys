@@ -22,19 +22,23 @@ namespace SPH
 		}
 		//=================================================================================================//
 		DensityBySummation::DensityBySummation(SPHBodyComplexRelation* body_complex_relation) :
-			ParticleDynamicsComplex(body_complex_relation), FluidDataDelegateComplex(body_complex_relation),
-			Vol_(particles_->Vol_), Vol_0_(particles_->Vol_0_), sigma_0_(particles_->sigma_0_), 
-			rho_n_(particles_->rho_n_), rho_0_(particles_->rho_0_), mass_(particles_->mass_)
+			InteractionDynamics(body_complex_relation->sph_body_), 
+			FluidDataDelegateComplex(body_complex_relation),
+			Vol_(particles_->Vol_),	rho_n_(particles_->rho_n_), mass_(particles_->mass_)
 		{
-			for (size_t k = 0; k != contact_particles_.size(); ++k)
-				contact_Vol_0_.push_back(&(contact_particles_[k]->Vol_0_));
 			W0_ = body_->kernel_->W(Vecd(0));
+			rho_0_ = particles_->rho_0_;
+			inv_sigma_0_ = 1.0 / particles_->sigma_0_;
+			for (size_t k = 0; k != contact_particles_.size(); ++k) {
+				Real rho_0_k = contact_particles_[k]->rho_0_;
+				contact_inv_rho_0_.push_back(1.0 / rho_0_k);
+				contact_mass_.push_back(&(contact_particles_[k]->mass_));
+			}
 		}
 		//=================================================================================================//
-		void DensityBySummation::ComplexInteraction(size_t index_i, Real dt)
+		void DensityBySummation::Interaction(size_t index_i, Real dt)
 		{
-			Real Vol_0_i = Vol_0_[index_i];
-
+			Real inv_Vol_0_i = rho_0_ / mass_[index_i];
 			/** Inner interaction. */
 			Real sigma = W0_;
 			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
@@ -44,22 +48,25 @@ namespace SPH
 			/** Contact interaction. */
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				StdLargeVec<Real>& Vol_0_k = *(contact_Vol_0_[k]);
+				StdLargeVec<Real>& contact_mass_k = *(contact_mass_[k]);
+				Real contact_inv_rho_0_k = contact_inv_rho_0_[k];
 				Neighborhood& contact_neighborhood = contact_configuration_[k][index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					sigma += contact_neighborhood.W_ij_[n] * Vol_0_k[contact_neighborhood.j_[n]] / Vol_0_i;
+					sigma += contact_neighborhood.W_ij_[n] * inv_Vol_0_i
+						* contact_inv_rho_0_k * contact_mass_k[contact_neighborhood.j_[n]];
 				}
 			}
 
-			Real rho_sum = sigma * rho_0_[index_i] / sigma_0_[index_i];
-			rho_n_[index_i] = ReinitializedDensity(rho_sum, rho_0_[index_i], rho_n_[index_i]);
+			Real rho_sum = sigma * rho_0_ * inv_sigma_0_;
+			rho_n_[index_i] = ReinitializedDensity(rho_sum, rho_0_, rho_n_[index_i]);
 			Vol_[index_i] = mass_[index_i] / rho_n_[index_i];
 		}
 		//=================================================================================================//
 		ViscousAcceleration::ViscousAcceleration(SPHBodyComplexRelation* body_complex_relation) :
-			ParticleDynamicsComplex(body_complex_relation), FluidDataDelegateComplex(body_complex_relation),
-			Vol_(particles_->Vol_), rho_n_(particles_->rho_n_), p_(particles_->mass_), 
+			InteractionDynamics(body_complex_relation->sph_body_),
+			FluidDataDelegateComplex(body_complex_relation),
+			Vol_(particles_->Vol_), rho_n_(particles_->rho_n_), p_(particles_->p_), 
 			vel_n_(particles_->vel_n_), dvel_dt_others_(particles_->dvel_dt_others_)
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
@@ -71,7 +78,7 @@ namespace SPH
 			smoothing_length_ = body_->kernel_->GetSmoothingLength();
 		}		
 		//=================================================================================================//
-		void ViscousAcceleration::ComplexInteraction(size_t index_i, Real dt)
+		void ViscousAcceleration::Interaction(size_t index_i, Real dt)
 		{
 			Real rho_i = rho_n_[index_i];
 			Vecd& vel_i = vel_n_[index_i];
@@ -113,7 +120,7 @@ namespace SPH
 			dvel_dt_others_[index_i] += acceleration;
 		}
 		//=================================================================================================//
-		void AngularConservativeViscousAcceleration::ComplexInteraction(size_t index_i, Real dt)
+		void AngularConservativeViscousAcceleration::Interaction(size_t index_i, Real dt)
 		{
 			Real rho_i = rho_n_[index_i];
 			Vecd& vel_i = vel_n_[index_i];
@@ -163,8 +170,10 @@ namespace SPH
 		}
 		//=================================================================================================//
 		TransportVelocityCorrection
-			::TransportVelocityCorrection(SPHBodyComplexRelation* body_complex_relation, StdLargeVec<Vecd>& dvel_dt_trans)
-			: ParticleDynamicsComplex(body_complex_relation), FluidDataDelegateComplex(body_complex_relation),
+			::TransportVelocityCorrection(SPHBodyComplexRelation* body_complex_relation, 
+				StdLargeVec<Vecd>& dvel_dt_trans) : 
+			InteractionDynamics(body_complex_relation->sph_body_),
+			FluidDataDelegateComplex(body_complex_relation),
 			Vol_(particles_->Vol_), rho_n_(particles_->rho_n_), pos_n_(particles_->pos_n_),
 			dvel_dt_trans_(dvel_dt_trans), p_background_(0)
 		{
@@ -181,7 +190,7 @@ namespace SPH
 			p_background_ =  10.0 * density * speed_max * speed_max;
 		}
 		//=================================================================================================//
-		void TransportVelocityCorrection::ComplexInteraction(size_t index_i, Real dt)
+		void TransportVelocityCorrection::Interaction(size_t index_i, Real dt)
 		{
 			Real rho_i = rho_n_[index_i];
 
@@ -224,7 +233,7 @@ namespace SPH
 		{
 		}
 		//=================================================================================================//
-		void TransportVelocityStress::ComplexInteraction(size_t index_i, Real dt)
+		void TransportVelocityStress::Interaction(size_t index_i, Real dt)
 		{
 			Real rho_i = rho_n_[index_i];
 			Vecd& vel_i = vel_n_[index_i];
@@ -334,10 +343,18 @@ namespace SPH
 		//=================================================================================================//
 		VorticityInFluidField::
 			VorticityInFluidField(SPHBodyInnerRelation* body_inner_relation) : 
-			ParticleDynamicsInner(body_inner_relation), FluidDataDelegateInner(body_inner_relation),
-			Vol_(particles_->Vol_), vel_n_(particles_->vel_n_), vorticity_(particles_->vorticity_) {};
+			InteractionDynamics(body_inner_relation->sph_body_),
+			FluidDataDelegateInner(body_inner_relation),
+			Vol_(particles_->Vol_), vel_n_(particles_->vel_n_)
+		{
+			SPHBody* sph_body = body_inner_relation->sph_body_;
+			BaseParticles* base_particles = sph_body->base_particles_;
+			//register particle variable defined in this class
+			base_particles->registerAVariable(vorticity_, base_particles->registered_vectors_,
+				base_particles->vectors_map_, base_particles->vectors_to_write_, "VorticityInner", true);
+		};
 		//=================================================================================================//
-		void VorticityInFluidField::InnerInteraction(size_t index_i, Real dt)
+		void VorticityInFluidField::Interaction(size_t index_i, Real dt)
 		{
 			Vecd& vel_i = vel_n_[index_i];
 
@@ -357,7 +374,7 @@ namespace SPH
 		//=================================================================================================//
 		PressureRelaxationFirstHalfRiemann::
 			PressureRelaxationFirstHalfRiemann(SPHBodyComplexRelation* body_complex_relation) : 
-			ParticleDynamicsComplex1Level(body_complex_relation), 
+			ParticleDynamics1Level(body_complex_relation->sph_body_),
 			FluidDataDelegateComplex(body_complex_relation),  
 			Vol_(particles_->Vol_), mass_(particles_->mass_), rho_n_(particles_->rho_n_), 
 			p_(particles_->p_), drho_dt_(particles_->drho_dt_),
@@ -381,7 +398,7 @@ namespace SPH
 			pos_n_[index_i] += vel_n_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
-		void PressureRelaxationFirstHalfRiemann::ComplexInteraction(size_t index_i, Real dt)
+		void PressureRelaxationFirstHalfRiemann::Interaction(size_t index_i, Real dt)
 		{
 			Real rho_i = rho_n_[index_i];
 			Real p_i = p_[index_i];
@@ -457,7 +474,7 @@ namespace SPH
 			pos_n_[index_i] += vel_n_[index_i] * dt * 0.5;
 		}
 //=================================================================================================//
-		void PressureRelaxationSecondHalfRiemann::ComplexInteraction(size_t index_i, Real dt)
+		void PressureRelaxationSecondHalfRiemann::Interaction(size_t index_i, Real dt)
 		{
 			Real rho_i = rho_n_[index_i];
 			Real p_i = p_[index_i];
@@ -547,9 +564,9 @@ namespace SPH
 			tau_[index_i] += dtau_dt_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
-		void PressureRelaxationFirstHalfOldroyd_B::ComplexInteraction(size_t index_i, Real dt)
+		void PressureRelaxationFirstHalfOldroyd_B::Interaction(size_t index_i, Real dt)
 		{
-			PressureRelaxationFirstHalfRiemann::ComplexInteraction(index_i, dt);
+			PressureRelaxationFirstHalfRiemann::Interaction(index_i, dt);
 
 			Real rho_i = rho_n_[index_i];
 			Matd tau_i = tau_[index_i];
@@ -594,9 +611,9 @@ namespace SPH
 			lambda_ = oldroy_b_fluid->getReferenceRelaxationTime();
 		}
 		//=================================================================================================//
-		void PressureRelaxationSecondHalfOldroyd_B::ComplexInteraction(size_t index_i, Real dt)
+		void PressureRelaxationSecondHalfOldroyd_B::Interaction(size_t index_i, Real dt)
 		{
-			PressureRelaxationSecondHalfRiemann::ComplexInteraction(index_i, dt);
+			PressureRelaxationSecondHalfRiemann::Interaction(index_i, dt);
 			
 			Vecd vel_i = vel_n_[index_i];
 			Matd tau_i = tau_[index_i];
@@ -672,18 +689,19 @@ namespace SPH
 		EmitterInflowCondition::
 			EmitterInflowCondition(FluidBody* body, BodyPartByParticle* body_part) :
 			PartDynamicsByParticle(body, body_part), FluidDataDelegateSimple(body),
-			rho_n_(particles_->rho_n_), rho_0_(particles_->rho_0_), p_(particles_->p_),
+			rho_n_(particles_->rho_n_), p_(particles_->p_),
 			pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_), inflow_pressure_(0)
 		{
-
+			rho_0_ = material_->ReferenceDensity();
 		}
 		//=================================================================================================//
 		void EmitterInflowCondition
-			::Update(size_t index_i, Real dt)
+			::Update(size_t unsorted_index_i, Real dt)
 		{
-			vel_n_[index_i] = getTargetVelocity(pos_n_[index_i], vel_n_[index_i]);
-			rho_n_[index_i] = rho_0_[index_i];
-			p_[index_i] = material_->GetPressure(rho_n_[index_i]);
+			size_t sorted_index_i = sorted_id_[unsorted_index_i];
+			vel_n_[sorted_index_i] = getTargetVelocity(pos_n_[sorted_index_i], vel_n_[sorted_index_i]);
+			rho_n_[sorted_index_i] = rho_0_;
+			p_[sorted_index_i] = material_->GetPressure(rho_n_[sorted_index_i]);
 		}
 		//=================================================================================================//
 		EmitterInflowInjecting
@@ -703,13 +721,14 @@ namespace SPH
 			body_->allocateConfigurationMemoriesForBodyBuffer();
 
 			checking_bound_ = positive ?
-				std::bind(&EmitterInflowInjecting::CheckUpperBound, this, _1, _2)
-				: std::bind(&EmitterInflowInjecting::CheckLowerBound, this, _1, _2);
+				std::bind(&EmitterInflowInjecting::checkUpperBound, this, _1, _2)
+				: std::bind(&EmitterInflowInjecting::checkLowerBound, this, _1, _2);
 		}
 		//=================================================================================================//
-		void EmitterInflowInjecting::CheckUpperBound(size_t index_i, Real dt)
+		void EmitterInflowInjecting::checkUpperBound(size_t unsorted_index_i, Real dt)
 		{
-			if (pos_n_[index_i][axis_] > body_part_upper_bound_[axis_]) {
+			size_t sorted_index_i = sorted_id_[unsorted_index_i];
+			if (pos_n_[sorted_index_i][axis_] > body_part_upper_bound_[axis_]) {
 				if (body_->number_of_particles_ >= particles_->real_particles_bound_)
 				{
 					cout << "EmitterInflowBoundaryCondition::ConstraintAParticle: \n"
@@ -717,18 +736,19 @@ namespace SPH
 					exit(0);
 				}
 				/** Buffer Particle state copied from real particle. */
-				particles_->copyFromAnotherParticle(body_->number_of_particles_, index_i);
+				particles_->copyFromAnotherParticle(body_->number_of_particles_, sorted_index_i);
 				/** Realize the buffer particle by increas�ng the number of real particle in the body.  */
 				body_->number_of_particles_ += 1;
 				/** Periodic bounding. */
-				pos_n_[index_i][axis_] -= periodic_translation_[axis_];
+				pos_n_[sorted_index_i][axis_] -= periodic_translation_[axis_];
 
 			}
 		}
 		//=================================================================================================//
-		void EmitterInflowInjecting::CheckLowerBound(size_t index_i, Real dt)
+		void EmitterInflowInjecting::checkLowerBound(size_t unsorted_index_i, Real dt)
 		{
-			if (pos_n_[index_i][axis_] < body_part_lower_bound_[axis_]) {
+			size_t sorted_index_i = sorted_id_[unsorted_index_i];
+			if (pos_n_[sorted_index_i][axis_] < body_part_lower_bound_[axis_]) {
 				if (body_->number_of_particles_ >= particles_->real_particles_bound_)
 				{
 					cout << "EmitterInflowBoundaryCondition::ConstraintAParticle: \n"
@@ -736,10 +756,10 @@ namespace SPH
 					exit(0);
 				}
 				/** Buffer Particle state copied from real particle. */
-				particles_->copyFromAnotherParticle(body_->number_of_particles_, index_i);
+				particles_->copyFromAnotherParticle(body_->number_of_particles_, sorted_index_i);
 				/** Realize the buffer particle by increas�ng the number of real particle in the body.  */
 				body_->number_of_particles_ += 1;
-				pos_n_[index_i][axis_] += periodic_translation_[axis_];
+				pos_n_[sorted_index_i][axis_] += periodic_translation_[axis_];
 			}
 		}
 		//=================================================================================================//
@@ -760,9 +780,9 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		void ViscousAccelerationWallModel::ComplexInteraction(size_t index_i, Real dt)
+		void ViscousAccelerationWallModel::Interaction(size_t index_i, Real dt)
 		{
-			ViscousAcceleration::ComplexInteraction(index_i, dt);
+			ViscousAcceleration::Interaction(index_i, dt);
 
 			Real rho_i = rho_n_[index_i];
 			Vecd& vel_i = vel_n_[index_i];

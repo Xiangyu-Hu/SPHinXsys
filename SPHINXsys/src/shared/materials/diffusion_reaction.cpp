@@ -17,7 +17,7 @@ namespace SPH
 		bias_direction_ 	= bias_direction;
 		Matd diff_i 		= diff_cf_* Matd(1.0)
 							+ bias_diff_cf_ * SimTK::outer(bias_direction_, bias_direction_);
-		transf_diffusivity_ = inverseCholeskyDecomposition(diff_i);
+		transformed_diffusivity_ = inverseCholeskyDecomposition(diff_i);
 	};
 	//=================================================================================================//
 	void LocalDirectionalDiffusion::initializeLocalDiffusionProperties(BaseParticles* base_particles)
@@ -26,7 +26,7 @@ namespace SPH
 		for (size_t i = 0; i != number_of_particles; i++)
 		{
 			local_bias_direction_.push_back(Vecd(0));
-			local_transf_diffusivity_.push_back(Matd(0));
+			local_transformed_diffusivity_.push_back(Matd(0));
 		}
 	};
 	//=================================================================================================//
@@ -41,7 +41,7 @@ namespace SPH
 		{
 			local_bias_direction_[i] = material_fiber[i];
 			Matd diff_i = diff_cf_ * Matd(1.0) + bias_diff_cf_ * SimTK::outer(material_fiber[i], material_fiber[i]);
-			local_transf_diffusivity_[i] = inverseCholeskyDecomposition(diff_i);
+			local_transformed_diffusivity_[i] = inverseCholeskyDecomposition(diff_i);
 		}
 		std::cout << "\n Local diffusion properties setup finished " << std::endl;
 	};

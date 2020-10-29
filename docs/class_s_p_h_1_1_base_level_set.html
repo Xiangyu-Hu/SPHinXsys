@@ -69,7 +69,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pro-attribs">Protected Attributes</a> &#124;
+<a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="class_s_p_h_1_1_base_level_set-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">SPH::BaseLevelSet Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
@@ -79,21 +79,18 @@ $(function() {
 <p>A abstract describes a mesh with level set data packages.  
  <a href="class_s_p_h_1_1_base_level_set.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="base__mesh_8h_source.html">base_mesh.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="level__set_8h_source.html">level_set.h</a>&gt;</code></p>
 
 <p>Inherits <a class="el" href="class_s_p_h_1_1_base_mesh_with_data_packages.html">SPH::BaseMeshWithDataPackages</a>.</p>
 
-<p>Inherited by <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages&lt; BaseLevelSet, LevelSetDataPackage &gt;</a>, and <a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh&lt; BaseLevelSet, LevelSet &gt;</a>.</p>
+<p>Inherited by <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages&lt; BaseLevelSet, LevelSetDataPackage &gt;</a>.</p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a6639df189843d6a4c2f637f014b2ec6b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_level_set.html#a6639df189843d6a4c2f637f014b2ec6b">BaseLevelSet</a> (Vecd lower_bound, Vecd upper_bound, Real grid_spacing, <a class="el" href="classsize__t.html">size_t</a> buffer_size=0)</td></tr>
-<tr class="separator:a6639df189843d6a4c2f637f014b2ec6b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af5166bc98404cf39e96d4450152c0cbf"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_level_set.html#af5166bc98404cf39e96d4450152c0cbf">BaseLevelSet</a> (Vecd lower_bound, Vecd upper_bound, Real grid_spacing, <a class="el" href="classsize__t.html">size_t</a> buffer_width=0)</td></tr>
+<tr class="separator:af5166bc98404cf39e96d4450152c0cbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4eb049d68d4cd114d4d92b64b2f1463e"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_level_set.html#a4eb049d68d4cd114d4d92b64b2f1463e">BaseLevelSet</a> (Vecd mesh_lower_bound, <a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> number_of_cells, Real cell_spacing)</td></tr>
 <tr class="separator:a4eb049d68d4cd114d4d92b64b2f1463e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7a3966c51857a8f50a89779483e16009"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_level_set.html#a7a3966c51857a8f50a89779483e16009">setSPHBody</a> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *sph_body)</td></tr>
-<tr class="memdesc:a7a3966c51857a8f50a89779483e16009"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function set the <a class="el" href="namespace_s_p_h.html">SPH</a> body externally.  <a href="#a7a3966c51857a8f50a89779483e16009">More...</a><br /></td></tr>
-<tr class="separator:a7a3966c51857a8f50a89779483e16009"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4d1f0e9d005e84d30651f9b747bda6aa"><td class="memItemLeft" align="right" valign="top">virtual Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_level_set.html#a4d1f0e9d005e84d30651f9b747bda6aa">probeLevelSet</a> (Vecd position)=0</td></tr>
 <tr class="memdesc:a4d1f0e9d005e84d30651f9b747bda6aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function probe the level set at a off-grid position.  <a href="#a4d1f0e9d005e84d30651f9b747bda6aa">More...</a><br /></td></tr>
 <tr class="separator:a4d1f0e9d005e84d30651f9b747bda6aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -102,9 +99,29 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a2e68f134a2840fe70e5b1457f13a3079"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaf813c4949eea0eb1e874f4953608358"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_level_set.html#aaf813c4949eea0eb1e874f4953608358">updateNormalDirection</a> ()=0</td></tr>
 <tr class="separator:aaf813c4949eea0eb1e874f4953608358"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9ba1e999111ab27178c7eda4f5417cb1"><td class="memItemLeft" align="right" valign="top"><a id="a9ba1e999111ab27178c7eda4f5417cb1"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_level_set.html#a9ba1e999111ab27178c7eda4f5417cb1">cleanInterface</a> (<a class="el" href="classbool.html">bool</a> isSmoothed=false)=0</td></tr>
+<tr class="memdesc:a9ba1e999111ab27178c7eda4f5417cb1"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function: 1) mark the cutcell in whole domain include zero/positive/negative cutcell; 2) clean the non-consistency 0 levelset in whole domain; 3) reinitialize the levelset vaule in whole domain after clean opeartion; 4) smoothing the levelset according to curvature (optional);. <br /></td></tr>
+<tr class="separator:a9ba1e999111ab27178c7eda4f5417cb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adfbad940279ca5b6f6301bf50134e6ae"><td class="memItemLeft" align="right" valign="top"><a id="adfbad940279ca5b6f6301bf50134e6ae"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_level_set.html#adfbad940279ca5b6f6301bf50134e6ae">reinitializeLevelSet</a> ()=0</td></tr>
+<tr class="memdesc:adfbad940279ca5b6f6301bf50134e6ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function reinitialize levelset value in a whole domain. <br /></td></tr>
+<tr class="separator:adfbad940279ca5b6f6301bf50134e6ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0000bbbf29a1697d759537020a739761"><td class="memItemLeft" align="right" valign="top"><a id="a0000bbbf29a1697d759537020a739761"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_level_set.html#a0000bbbf29a1697d759537020a739761">markNearInterface</a> ()=0</td></tr>
+<tr class="memdesc:a0000bbbf29a1697d759537020a739761"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function marks the near interface. <br /></td></tr>
+<tr class="separator:a0000bbbf29a1697d759537020a739761"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18bdee7776a262d042bdd1f1cd845039"><td class="memItemLeft" align="right" valign="top"><a id="a18bdee7776a262d042bdd1f1cd845039"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_level_set.html#a18bdee7776a262d042bdd1f1cd845039">redistanceInterface</a> ()=0</td></tr>
+<tr class="memdesc:a18bdee7776a262d042bdd1f1cd845039"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function delete unresolved interface by redistance. <br /></td></tr>
+<tr class="separator:a18bdee7776a262d042bdd1f1cd845039"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac743617190c71dfcfbfad36523e691ab"><td class="memItemLeft" align="right" valign="top"><a id="ac743617190c71dfcfbfad36523e691ab"></a>
+virtual Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_level_set.html#ac743617190c71dfcfbfad36523e691ab">computeKernelIntegral</a> (Vecd position, <a class="el" href="class_s_p_h_1_1_kernel.html">Kernel</a> *kernel)=0</td></tr>
+<tr class="memdesc:ac743617190c71dfcfbfad36523e691ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function calculate the integration of kernel function outside the surafce. <br /></td></tr>
+<tr class="separator:ac743617190c71dfcfbfad36523e691ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_s_p_h_1_1_base_mesh_with_data_packages"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_base_mesh_with_data_packages')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_base_mesh_with_data_packages.html">SPH::BaseMeshWithDataPackages</a></td></tr>
-<tr class="memitem:ac86d161b646b5938189e2d337d4b6bce inherit pub_methods_class_s_p_h_1_1_base_mesh_with_data_packages"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh_with_data_packages.html#ac86d161b646b5938189e2d337d4b6bce">BaseMeshWithDataPackages</a> (Vecd lower_bound, Vecd upper_bound, Real grid_spacing, <a class="el" href="classsize__t.html">size_t</a> buffer_size=0)</td></tr>
-<tr class="separator:ac86d161b646b5938189e2d337d4b6bce inherit pub_methods_class_s_p_h_1_1_base_mesh_with_data_packages"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a60a3ace79fda680db3a0f70767c33bb9 inherit pub_methods_class_s_p_h_1_1_base_mesh_with_data_packages"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh_with_data_packages.html#a60a3ace79fda680db3a0f70767c33bb9">BaseMeshWithDataPackages</a> (Vecd lower_bound, Vecd upper_bound, Real grid_spacing, <a class="el" href="classsize__t.html">size_t</a> buffer_width=0)</td></tr>
+<tr class="separator:a60a3ace79fda680db3a0f70767c33bb9 inherit pub_methods_class_s_p_h_1_1_base_mesh_with_data_packages"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6d70bf1a3a8ca197fc448efc44b90d63 inherit pub_methods_class_s_p_h_1_1_base_mesh_with_data_packages"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh_with_data_packages.html#a6d70bf1a3a8ca197fc448efc44b90d63">BaseMeshWithDataPackages</a> (Vecd mesh_lower_bound, <a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> number_of_cells, Real cell_spacing)</td></tr>
 <tr class="separator:a6d70bf1a3a8ca197fc448efc44b90d63 inherit pub_methods_class_s_p_h_1_1_base_mesh_with_data_packages"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ef6b8ee804238acb91f80fb0797f3be inherit pub_methods_class_s_p_h_1_1_base_mesh_with_data_packages"><td class="memItemLeft" align="right" valign="top"><a id="a9ef6b8ee804238acb91f80fb0797f3be"></a>
@@ -112,8 +129,8 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <tr class="memdesc:a9ef6b8ee804238acb91f80fb0797f3be inherit pub_methods_class_s_p_h_1_1_base_mesh_with_data_packages"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function initialize the data packages with external information. <br /></td></tr>
 <tr class="separator:a9ef6b8ee804238acb91f80fb0797f3be inherit pub_methods_class_s_p_h_1_1_base_mesh_with_data_packages"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_s_p_h_1_1_mesh"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_mesh')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_mesh.html">SPH::Mesh</a></td></tr>
-<tr class="memitem:a5546f322670e4df7e79f2ea52367de23 inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a5546f322670e4df7e79f2ea52367de23">Mesh</a> (Vecd lower_bound, Vecd upper_bound, Real grid_spacing, <a class="el" href="classsize__t.html">size_t</a> buffer_size=0)</td></tr>
-<tr class="separator:a5546f322670e4df7e79f2ea52367de23 inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a05c46fc93008540198b0bb25dcc2d346 inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a05c46fc93008540198b0bb25dcc2d346">Mesh</a> (Vecd lower_bound, Vecd upper_bound, Real grid_spacing, <a class="el" href="classsize__t.html">size_t</a> buffer_width=0)</td></tr>
+<tr class="separator:a05c46fc93008540198b0bb25dcc2d346 inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0172f0d850492075075c6a56fa484567 inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a0172f0d850492075075c6a56fa484567">Mesh</a> (Vecd mesh_lower_bound, <a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> number_of_cells, Real cell_spacing)</td></tr>
 <tr class="separator:a0172f0d850492075075c6a56fa484567 inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3184da419f5fb791fd21ca8e24f82cf4 inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a3184da419f5fb791fd21ca8e24f82cf4">CellSpacing</a> ()</td></tr>
@@ -129,10 +146,14 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <tr class="separator:a04ead23440b15961e2658156b2d4e7fe inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5a6464f11ceee9f24432033535e479af inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top">Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a5a6464f11ceee9f24432033535e479af">CellPositionFromIndexes</a> (<a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> cell_indexes)</td></tr>
 <tr class="separator:a5a6464f11ceee9f24432033535e479af inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af24bc38b8a18b909328625eabb838fb6 inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#af24bc38b8a18b909328625eabb838fb6">writeMeshToVtuFile</a> (ofstream &amp;output_file)=0</td></tr>
-<tr class="separator:af24bc38b8a18b909328625eabb838fb6 inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a24e02673c59812a1bf3fd192f62f8f37 inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a24e02673c59812a1bf3fd192f62f8f37">writeMeshToPltFile</a> (ofstream &amp;output_file)=0</td></tr>
-<tr class="separator:a24e02673c59812a1bf3fd192f62f8f37 inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21b79ace46d21f5f9106e2839866853c inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a21b79ace46d21f5f9106e2839866853c">writeMeshToVtuFile</a> (ofstream &amp;output_file)</td></tr>
+<tr class="separator:a21b79ace46d21f5f9106e2839866853c inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8ebafbe010c57d7c24fbf2e7529eac9c inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a8ebafbe010c57d7c24fbf2e7529eac9c">writeMeshToPltFile</a> (ofstream &amp;output_file)</td></tr>
+<tr class="separator:a8ebafbe010c57d7c24fbf2e7529eac9c inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a75a0a64782e5c162b63d9f2e5388e83d inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a75a0a64782e5c162b63d9f2e5388e83d">allocateMeshDataMatrix</a> ()</td></tr>
+<tr class="separator:a75a0a64782e5c162b63d9f2e5388e83d inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ca7dadadab4591cde089b6db689cf86 inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a5ca7dadadab4591cde089b6db689cf86">deleteMeshDataMatrix</a> ()</td></tr>
+<tr class="separator:a5ca7dadadab4591cde089b6db689cf86 inherit pub_methods_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_s_p_h_1_1_base_mesh"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_base_mesh')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_base_mesh.html">SPH::BaseMesh</a></td></tr>
 <tr class="memitem:a24a968bc706af8c7fbdc427ca7ed156b inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh.html#a24a968bc706af8c7fbdc427ca7ed156b">BaseMesh</a> ()</td></tr>
 <tr class="separator:a24a968bc706af8c7fbdc427ca7ed156b inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -150,39 +171,24 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <tr class="memitem:ad8ead27d4828a6cdc50e5cdd56b7ae86 inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memItemLeft" align="right" valign="top">Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh.html#ad8ead27d4828a6cdc50e5cdd56b7ae86">GridPositionFromIndex</a> (<a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> grid_index)</td></tr>
 <tr class="memdesc:ad8ead27d4828a6cdc50e5cdd56b7ae86 inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function find grid position from indexes.  <a href="class_s_p_h_1_1_base_mesh.html#ad8ead27d4828a6cdc50e5cdd56b7ae86">More...</a><br /></td></tr>
 <tr class="separator:ad8ead27d4828a6cdc50e5cdd56b7ae86 inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a253edd98d4f9c0a0eb0727db8f86e2d7 inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh.html#a253edd98d4f9c0a0eb0727db8f86e2d7">transfer1DtoMeshIndex</a> (<a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> mesh_size, <a class="el" href="classsize__t.html">size_t</a> i)</td></tr>
-<tr class="memdesc:a253edd98d4f9c0a0eb0727db8f86e2d7 inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function convert 1d vector index to mesh index.  <a href="class_s_p_h_1_1_base_mesh.html#a253edd98d4f9c0a0eb0727db8f86e2d7">More...</a><br /></td></tr>
-<tr class="separator:a253edd98d4f9c0a0eb0727db8f86e2d7 inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a504f79b1d618218ae8d48917739e1849 inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh.html#a504f79b1d618218ae8d48917739e1849">transferMeshIndexTo1D</a> (<a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> mesh_size, <a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> mesh_index)</td></tr>
-<tr class="memdesc:a504f79b1d618218ae8d48917739e1849 inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function convert mesh index to 1d vector index.  <a href="class_s_p_h_1_1_base_mesh.html#a504f79b1d618218ae8d48917739e1849">More...</a><br /></td></tr>
-<tr class="separator:a504f79b1d618218ae8d48917739e1849 inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a58efbb7a02aa9d7cb00b25a813246f22 inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh.html#a58efbb7a02aa9d7cb00b25a813246f22">allocateMeshDataMatrix</a> ()=0</td></tr>
-<tr class="separator:a58efbb7a02aa9d7cb00b25a813246f22 inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1acc5827a77705943ed2e2357d77e7af inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh.html#a1acc5827a77705943ed2e2357d77e7af">deleteMeshDataMatrix</a> ()=0</td></tr>
-<tr class="separator:a1acc5827a77705943ed2e2357d77e7af inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1926fe2d95f91ae08e16c12e46fca210 inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh.html#a1926fe2d95f91ae08e16c12e46fca210">transfer1DtoMeshIndex</a> (<a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> number_of_grid_points, <a class="el" href="classsize__t.html">size_t</a> i)</td></tr>
+<tr class="memdesc:a1926fe2d95f91ae08e16c12e46fca210 inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function convert 1d vector index to mesh index.  <a href="class_s_p_h_1_1_base_mesh.html#a1926fe2d95f91ae08e16c12e46fca210">More...</a><br /></td></tr>
+<tr class="separator:a1926fe2d95f91ae08e16c12e46fca210 inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab854b17cf6c10bf15eafcf1ad9c4f633 inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh.html#ab854b17cf6c10bf15eafcf1ad9c4f633">transferMeshIndexTo1D</a> (<a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> number_of_grid_points, <a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> grid_index)</td></tr>
+<tr class="memdesc:ab854b17cf6c10bf15eafcf1ad9c4f633 inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function convert mesh index to 1d vector index.  <a href="class_s_p_h_1_1_base_mesh.html#ab854b17cf6c10bf15eafcf1ad9c4f633">More...</a><br /></td></tr>
+<tr class="separator:ab854b17cf6c10bf15eafcf1ad9c4f633 inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae2b22b19b1175c3e5d8c014e00a1602c inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh.html#ae2b22b19b1175c3e5d8c014e00a1602c">MortonCode</a> (const <a class="el" href="classsize__t.html">size_t</a> &amp;i)</td></tr>
+<tr class="memdesc:ae2b22b19b1175c3e5d8c014e00a1602c inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function converts mesh index to 1d vector index.  <a href="class_s_p_h_1_1_base_mesh.html#ae2b22b19b1175c3e5d8c014e00a1602c">More...</a><br /></td></tr>
+<tr class="separator:ae2b22b19b1175c3e5d8c014e00a1602c inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a815229fa561c3cf114a6ddb77bdb247c inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh.html#a815229fa561c3cf114a6ddb77bdb247c">transferMeshIndexToMortonOrder</a> (<a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> grid_index)</td></tr>
+<tr class="memdesc:a815229fa561c3cf114a6ddb77bdb247c inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function converts mesh index into a Morton order.  <a href="class_s_p_h_1_1_base_mesh.html#a815229fa561c3cf114a6ddb77bdb247c">More...</a><br /></td></tr>
+<tr class="separator:a815229fa561c3cf114a6ddb77bdb247c inherit pub_methods_class_s_p_h_1_1_base_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
-Protected Attributes</h2></td></tr>
-<tr class="memitem:a8ca88b5ed0c788959ac5578bc2d30840"><td class="memItemLeft" align="right" valign="top"><a id="a8ca88b5ed0c788959ac5578bc2d30840"></a>
-<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>sph_body_</b></td></tr>
-<tr class="separator:a8ca88b5ed0c788959ac5578bc2d30840"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pro_attribs_class_s_p_h_1_1_mesh"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_mesh')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_mesh.html">SPH::Mesh</a></td></tr>
-<tr class="memitem:a0220a9cfe258f8fb9ccdee36ba27193a inherit pro_attribs_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a0220a9cfe258f8fb9ccdee36ba27193a">buffer_size_</a></td></tr>
-<tr class="separator:a0220a9cfe258f8fb9ccdee36ba27193a inherit pro_attribs_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a90b8a7819fe4eb22f4717dbf09c3b325 inherit pro_attribs_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a90b8a7819fe4eb22f4717dbf09c3b325">cell_spacing_</a></td></tr>
-<tr class="separator:a90b8a7819fe4eb22f4717dbf09c3b325 inherit pro_attribs_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8996ae22420ea203e1206c2c7466d716 inherit pro_attribs_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a8996ae22420ea203e1206c2c7466d716">number_of_cells_</a></td></tr>
-<tr class="separator:a8996ae22420ea203e1206c2c7466d716 inherit pro_attribs_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pro_attribs_class_s_p_h_1_1_base_mesh"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_base_mesh')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_base_mesh.html">SPH::BaseMesh</a></td></tr>
-<tr class="memitem:ac8559448b24066e06263bff0aa5ba75b inherit pro_attribs_class_s_p_h_1_1_base_mesh"><td class="memItemLeft" align="right" valign="top">Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh.html#ac8559448b24066e06263bff0aa5ba75b">mesh_lower_bound_</a></td></tr>
-<tr class="separator:ac8559448b24066e06263bff0aa5ba75b inherit pro_attribs_class_s_p_h_1_1_base_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af6c2e186b771c3573486cdcbaa362b25 inherit pro_attribs_class_s_p_h_1_1_base_mesh"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh.html#af6c2e186b771c3573486cdcbaa362b25">grid_spacing_</a></td></tr>
-<tr class="separator:af6c2e186b771c3573486cdcbaa362b25 inherit pro_attribs_class_s_p_h_1_1_base_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5e1e27e30924c3390d8cdd20dba606fd inherit pro_attribs_class_s_p_h_1_1_base_mesh"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh.html#a5e1e27e30924c3390d8cdd20dba606fd">number_of_grid_points_</a></td></tr>
-<tr class="separator:a5e1e27e30924c3390d8cdd20dba606fd inherit pro_attribs_class_s_p_h_1_1_base_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
-Additional Inherited Members</h2></td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
+<tr class="memitem:a83ab6a0b58428b5a34b8325d63ea9976"><td class="memItemLeft" align="right" valign="top"><a id="a83ab6a0b58428b5a34b8325d63ea9976"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>computeHeaviside</b> (Real phi, Real half_width)</td></tr>
+<tr class="separator:a83ab6a0b58428b5a34b8325d63ea9976"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_class_s_p_h_1_1_base_mesh_with_data_packages"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_class_s_p_h_1_1_base_mesh_with_data_packages')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="class_s_p_h_1_1_base_mesh_with_data_packages.html">SPH::BaseMeshWithDataPackages</a></td></tr>
 <tr class="memitem:a20bf305d1d4fea7d4ba58c8155b4d425 inherit pro_methods_class_s_p_h_1_1_base_mesh_with_data_packages"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh_with_data_packages.html#a20bf305d1d4fea7d4ba58c8155b4d425">initializeDataInACell</a> (<a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> cell_index, Real dt)=0</td></tr>
 <tr class="memdesc:a20bf305d1d4fea7d4ba58c8155b4d425 inherit pro_methods_class_s_p_h_1_1_base_mesh_with_data_packages"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function initialize a cell with package data.  <a href="class_s_p_h_1_1_base_mesh_with_data_packages.html#a20bf305d1d4fea7d4ba58c8155b4d425">More...</a><br /></td></tr>
@@ -194,12 +200,12 @@ Additional Inherited Members</h2></td></tr>
 <tr class="memdesc:a92ae00997884f30d46ce42f5c95bd69b inherit pro_methods_class_s_p_h_1_1_base_mesh_with_data_packages"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function tag if a data package is inner package.  <a href="class_s_p_h_1_1_base_mesh_with_data_packages.html#a92ae00997884f30d46ce42f5c95bd69b">More...</a><br /></td></tr>
 <tr class="separator:a92ae00997884f30d46ce42f5c95bd69b inherit pro_methods_class_s_p_h_1_1_base_mesh_with_data_packages"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_class_s_p_h_1_1_mesh"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_class_s_p_h_1_1_mesh')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="class_s_p_h_1_1_mesh.html">SPH::Mesh</a></td></tr>
-<tr class="memitem:a988f01aaf45e7cd0e0cb6d7627540877 inherit pro_methods_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a988f01aaf45e7cd0e0cb6d7627540877">setMeshLowerBound</a> (Vecd lower_bound, Real grid_spacing, <a class="el" href="classsize__t.html">size_t</a> buffer_size)</td></tr>
-<tr class="memdesc:a988f01aaf45e7cd0e0cb6d7627540877 inherit pro_methods_class_s_p_h_1_1_mesh"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function set the mesh lower bound including the buffer region.  <a href="class_s_p_h_1_1_mesh.html#a988f01aaf45e7cd0e0cb6d7627540877">More...</a><br /></td></tr>
-<tr class="separator:a988f01aaf45e7cd0e0cb6d7627540877 inherit pro_methods_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ada3c6fb4b8e30787b9dc2ea3384d0d71 inherit pro_methods_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#ada3c6fb4b8e30787b9dc2ea3384d0d71">calcNumberOfCells</a> (Vecd lower_bound, Vecd upper_bound, Real grid_spacing, <a class="el" href="classsize__t.html">size_t</a> buffer_size)</td></tr>
-<tr class="memdesc:ada3c6fb4b8e30787b9dc2ea3384d0d71 inherit pro_methods_class_s_p_h_1_1_mesh"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function compute number of total cells.  <a href="class_s_p_h_1_1_mesh.html#ada3c6fb4b8e30787b9dc2ea3384d0d71">More...</a><br /></td></tr>
-<tr class="separator:ada3c6fb4b8e30787b9dc2ea3384d0d71 inherit pro_methods_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a00d46465fe4c2943abf380d40f367afc inherit pro_methods_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a00d46465fe4c2943abf380d40f367afc">setMeshLowerBound</a> (Vecd lower_bound, Real grid_spacing, <a class="el" href="classsize__t.html">size_t</a> buffer_width)</td></tr>
+<tr class="memdesc:a00d46465fe4c2943abf380d40f367afc inherit pro_methods_class_s_p_h_1_1_mesh"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function set the mesh lower bound including the buffer region.  <a href="class_s_p_h_1_1_mesh.html#a00d46465fe4c2943abf380d40f367afc">More...</a><br /></td></tr>
+<tr class="separator:a00d46465fe4c2943abf380d40f367afc inherit pro_methods_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25c36b29e4a029e97cf771b574a35e71 inherit pro_methods_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a25c36b29e4a029e97cf771b574a35e71">calcNumberOfCells</a> (Vecd lower_bound, Vecd upper_bound, Real grid_spacing, <a class="el" href="classsize__t.html">size_t</a> buffer_width)</td></tr>
+<tr class="memdesc:a25c36b29e4a029e97cf771b574a35e71 inherit pro_methods_class_s_p_h_1_1_mesh"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function compute number of total cells.  <a href="class_s_p_h_1_1_mesh.html#a25c36b29e4a029e97cf771b574a35e71">More...</a><br /></td></tr>
+<tr class="separator:a25c36b29e4a029e97cf771b574a35e71 inherit pro_methods_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae76f87848216771b3471ab055df2fd4a inherit pro_methods_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#ae76f87848216771b3471ab055df2fd4a">NumberOfGridPointsFromNumberOfCells</a> (<a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> number_of_cells)</td></tr>
 <tr class="memdesc:ae76f87848216771b3471ab055df2fd4a inherit pro_methods_class_s_p_h_1_1_mesh"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function compute number of total grid points form total cells.  <a href="class_s_p_h_1_1_mesh.html#ae76f87848216771b3471ab055df2fd4a">More...</a><br /></td></tr>
 <tr class="separator:ae76f87848216771b3471ab055df2fd4a inherit pro_methods_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -211,12 +217,29 @@ Additional Inherited Members</h2></td></tr>
 <tr class="memitem:a3082045653c5b076acf14ea23c862021 inherit pro_methods_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top">Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a3082045653c5b076acf14ea23c862021">GridPositionFromCellPosition</a> (Vecd &amp;cell_position)</td></tr>
 <tr class="memdesc:a3082045653c5b076acf14ea23c862021 inherit pro_methods_class_s_p_h_1_1_mesh"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function shift position between cell and grid positions.  <a href="class_s_p_h_1_1_mesh.html#a3082045653c5b076acf14ea23c862021">More...</a><br /></td></tr>
 <tr class="separator:a3082045653c5b076acf14ea23c862021 inherit pro_methods_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pro_attribs_class_s_p_h_1_1_mesh"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_mesh')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_mesh.html">SPH::Mesh</a></td></tr>
+<tr class="memitem:a973c2ce893d6b11b2c53cc1ba5fdd846 inherit pro_attribs_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a973c2ce893d6b11b2c53cc1ba5fdd846">buffer_width_</a></td></tr>
+<tr class="separator:a973c2ce893d6b11b2c53cc1ba5fdd846 inherit pro_attribs_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a90b8a7819fe4eb22f4717dbf09c3b325 inherit pro_attribs_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a90b8a7819fe4eb22f4717dbf09c3b325">cell_spacing_</a></td></tr>
+<tr class="separator:a90b8a7819fe4eb22f4717dbf09c3b325 inherit pro_attribs_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8996ae22420ea203e1206c2c7466d716 inherit pro_attribs_class_s_p_h_1_1_mesh"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html#a8996ae22420ea203e1206c2c7466d716">number_of_cells_</a></td></tr>
+<tr class="separator:a8996ae22420ea203e1206c2c7466d716 inherit pro_attribs_class_s_p_h_1_1_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_attribs_class_s_p_h_1_1_base_mesh"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_base_mesh')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_base_mesh.html">SPH::BaseMesh</a></td></tr>
+<tr class="memitem:ac8559448b24066e06263bff0aa5ba75b inherit pro_attribs_class_s_p_h_1_1_base_mesh"><td class="memItemLeft" align="right" valign="top">Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh.html#ac8559448b24066e06263bff0aa5ba75b">mesh_lower_bound_</a></td></tr>
+<tr class="separator:ac8559448b24066e06263bff0aa5ba75b inherit pro_attribs_class_s_p_h_1_1_base_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af6c2e186b771c3573486cdcbaa362b25 inherit pro_attribs_class_s_p_h_1_1_base_mesh"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh.html#af6c2e186b771c3573486cdcbaa362b25">grid_spacing_</a></td></tr>
+<tr class="separator:af6c2e186b771c3573486cdcbaa362b25 inherit pro_attribs_class_s_p_h_1_1_base_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e1e27e30924c3390d8cdd20dba606fd inherit pro_attribs_class_s_p_h_1_1_base_mesh"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh.html#a5e1e27e30924c3390d8cdd20dba606fd">number_of_grid_points_</a></td></tr>
+<tr class="separator:a5e1e27e30924c3390d8cdd20dba606fd inherit pro_attribs_class_s_p_h_1_1_base_mesh"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A abstract describes a mesh with level set data packages. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a6639df189843d6a4c2f637f014b2ec6b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6639df189843d6a4c2f637f014b2ec6b">&#9670;&nbsp;</a></span>BaseLevelSet() <span class="overload">[1/2]</span></h2>
+<a id="af5166bc98404cf39e96d4450152c0cbf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af5166bc98404cf39e96d4450152c0cbf">&#9670;&nbsp;</a></span>BaseLevelSet() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -243,7 +266,7 @@ Additional Inherited Members</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="classsize__t.html">size_t</a>&#160;</td>
-          <td class="paramname"><em>buffer_size</em> = <code>0</code>&#160;</td>
+          <td class="paramname"><em>buffer_width</em> = <code>0</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -258,7 +281,7 @@ Additional Inherited Members</h2></td></tr>
     <tr><td class="paramname">lower_bound</td><td>Lower bound. </td></tr>
     <tr><td class="paramname">upper_bound</td><td>Upper bound. </td></tr>
     <tr><td class="paramname">grid_spacing</td><td>Grid spcaing. </td></tr>
-    <tr><td class="paramname">buffer_size</td><td>BUffer size. </td></tr>
+    <tr><td class="paramname">buffer_width</td><td>BUffer size. </td></tr>
   </table>
   </dd>
 </dl>
@@ -381,40 +404,6 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a7a3966c51857a8f50a89779483e16009"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7a3966c51857a8f50a89779483e16009">&#9670;&nbsp;</a></span>setSPHBody()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void SPH::BaseLevelSet::setSPHBody </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td>
-          <td class="paramname"><em>sph_body</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>This function set the <a class="el" href="namespace_s_p_h.html">SPH</a> body externally. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">sph_body(SPHBody)</td><td>Pointer to <a class="el" href="namespace_s_p_h.html">SPH</a> Body </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <a id="aaf813c4949eea0eb1e874f4953608358"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aaf813c4949eea0eb1e874f4953608358">&#9670;&nbsp;</a></span>updateNormalDirection()</h2>
 
@@ -444,8 +433,8 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>SPHINXsys/src/shared/meshes/<a class="el" href="base__mesh_8h_source.html">base_mesh.h</a></li>
-<li>SPHINXsys/src/shared/meshes/<a class="el" href="base__mesh_8cpp.html">base_mesh.cpp</a></li>
+<li>SPHINXsys/src/shared/geometries/<a class="el" href="level__set_8h_source.html">level_set.h</a></li>
+<li>SPHINXsys/src/shared/geometries/<a class="el" href="level__set_8cpp.html">level_set.cpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->

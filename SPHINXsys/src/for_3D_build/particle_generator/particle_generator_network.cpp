@@ -136,7 +136,7 @@ namespace SPH
 			for (size_t i = 0; i != new_branch->elements_.size(); i++)
 			{
 				mesh_cell_linked_list->InsertACellLinkedListDataEntry(new_branch->elements_[i], points[new_branch->elements_[i]]);
-				sph_body->base_particles_->initializeABaseParticle(points[new_branch->elements_[i]], segment_length_, 0.0);
+				sph_body->base_particles_->initializeABaseParticle(points[new_branch->elements_[i]], segment_length_);
 			}
 		}
 
@@ -152,7 +152,7 @@ namespace SPH
 		StdVec<Branch*>& branches = my_tree.branches_;
 		StdVec<Point>& points = my_tree.points_;
 
-		base_particles->initializeABaseParticle(starting_pnt_, segment_length_, 0.0);
+		base_particles->initializeABaseParticle(starting_pnt_, segment_length_);
 		BaseMeshCellLinkedList* mesh_cell_linked_list = sph_body_->mesh_cell_linked_list_;
 		mesh_cell_linked_list->InsertACellLinkedListDataEntry(0, points[0]);
 		std::cout << "Now creating Particles on network... " << "\n" << std::endl;

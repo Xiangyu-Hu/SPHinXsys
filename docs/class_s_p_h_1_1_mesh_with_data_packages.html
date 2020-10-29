@@ -81,9 +81,9 @@ $(function() {
 <p>Abstract class fpr mesh with data packages.  
  <a href="class_s_p_h_1_1_mesh_with_data_packages.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="base__mesh_8h_source.html">base_mesh.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="mesh__with__data__packages_8h_source.html">mesh_with_data_packages.h</a>&gt;</code></p>
 
-<p>Inherits <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>.</p>
+<p>Inherits <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>.</p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -91,27 +91,19 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:aa19c73c84e4a98e96a263fc4093601b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5eaec49683e3f760b9e85d47d40d5dac"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#a5eaec49683e3f760b9e85d47d40d5dac">deleteMeshDataMatrix</a> () override</td></tr>
 <tr class="separator:a5eaec49683e3f760b9e85d47d40d5dac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5ccc3838a7aaf62f75ee5e191df482f6"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#a5ccc3838a7aaf62f75ee5e191df482f6">MeshWithDataPackages</a> (Vecd lower_bound, Vecd upper_bound, Real grid_spacing, <a class="el" href="classsize__t.html">size_t</a> buffer_size=0)</td></tr>
-<tr class="separator:a5ccc3838a7aaf62f75ee5e191df482f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7c5b3ac4cb1b7e3d0100ddabcadc741"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#ab7c5b3ac4cb1b7e3d0100ddabcadc741">MeshWithDataPackages</a> (Vecd lower_bound, Vecd upper_bound, Real grid_spacing, <a class="el" href="classsize__t.html">size_t</a> buffer_width=0)</td></tr>
+<tr class="separator:ab7c5b3ac4cb1b7e3d0100ddabcadc741"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a10979ecebef177b628bed9bd78e309d7"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#a10979ecebef177b628bed9bd78e309d7">MeshWithDataPackages</a> (Vecd mesh_lower_bound, <a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> number_of_cells, Real cell_spacing)</td></tr>
 <tr class="separator:a10979ecebef177b628bed9bd78e309d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aedc4e78703d9632d146b2e1552e611bf"><td class="memTemplParams" colspan="2">template&lt;class DataType , class PackageDataType , DataType PackageDataType::* MemPtr&gt; </td></tr>
+<tr class="memitem:aedc4e78703d9632d146b2e1552e611bf"><td class="memTemplParams" colspan="2">template&lt;class DataType , typename PackageDataAddressType , PackageDataAddressType DataPackageType::* MemPtr&gt; </td></tr>
 <tr class="memitem:aedc4e78703d9632d146b2e1552e611bf"><td class="memTemplItemLeft" align="right" valign="top">DataType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#aedc4e78703d9632d146b2e1552e611bf">probeMesh</a> (Vecd &amp;position)</td></tr>
 <tr class="memdesc:aedc4e78703d9632d146b2e1552e611bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function probe a mesh value.  <a href="#aedc4e78703d9632d146b2e1552e611bf">More...</a><br /></td></tr>
 <tr class="separator:aedc4e78703d9632d146b2e1552e611bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af6c39083503e4c2403e1a261209e0ccc"><td class="memTemplParams" colspan="2">template&lt;class PackageDataType , Real PackageDataType::* MemPtrSrc, Vecd PackageDataType::* MemPtrTrg&gt; </td></tr>
-<tr class="memitem:af6c39083503e4c2403e1a261209e0ccc"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#af6c39083503e4c2403e1a261209e0ccc">computeGradient</a> (DataPackageType *inner_data_pkg, Real dt=0.0)</td></tr>
-<tr class="memdesc:af6c39083503e4c2403e1a261209e0ccc"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function compute gradient using central difference scheme.  <a href="#af6c39083503e4c2403e1a261209e0ccc">More...</a><br /></td></tr>
-<tr class="separator:af6c39083503e4c2403e1a261209e0ccc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9813f9cf4d8a729a2131501bd625fc76"><td class="memTemplParams" colspan="2">template&lt;class PackageDataType , Real PackageDataType::* MemPtrSrc, Vecd PackageDataType::* MemPtrTrg&gt; </td></tr>
-<tr class="memitem:a9813f9cf4d8a729a2131501bd625fc76"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#a9813f9cf4d8a729a2131501bd625fc76">computeNormalizedGradient</a> (DataPackageType *inner_data_pkg, Real dt=0.0)</td></tr>
-<tr class="memdesc:a9813f9cf4d8a729a2131501bd625fc76"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function compute normalized gradient using central difference scheme.  <a href="#a9813f9cf4d8a729a2131501bd625fc76">More...</a><br /></td></tr>
-<tr class="separator:a9813f9cf4d8a729a2131501bd625fc76"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:aadba35ad3ccab5a3fec7be11c781e0ec"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_mypool.html">Mypool</a>&lt; DataPackageType &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#aadba35ad3ccab5a3fec7be11c781e0ec">data_pkg_pool_</a></td></tr>
-<tr class="separator:aadba35ad3ccab5a3fec7be11c781e0ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af503414d80db34f5853beb37c7c32e12"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_my_memory_pool.html">MyMemoryPool</a>&lt; DataPackageType &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#af503414d80db34f5853beb37c7c32e12">data_pkg_pool_</a></td></tr>
+<tr class="separator:af503414d80db34f5853beb37c7c32e12"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a60367a8dbbe1def71a561f0ef1c8dca0"><td class="memItemLeft" align="right" valign="top">MeshDataMatrix&lt; DataPackageType * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#a60367a8dbbe1def71a561f0ef1c8dca0">data_pkg_addrs_</a></td></tr>
 <tr class="separator:a60367a8dbbe1def71a561f0ef1c8dca0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa87f20b6d7a431a3afcc3cd6e2cf8a80"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_s_p_h.html#adedcef5c2d6a5ee133747acd23880415">ConcurrentVector</a>&lt; DataPackageType * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#aa87f20b6d7a431a3afcc3cd6e2cf8a80">inner_data_pkgs_</a></td></tr>
@@ -119,17 +111,19 @@ Public Attributes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
+<tr class="memitem:aee1b589c98caff564fdece06eb87358d"><td class="memItemLeft" align="right" valign="top"><a id="aee1b589c98caff564fdece06eb87358d"></a>
+<a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a>&#160;</td><td class="memItemRight" valign="bottom"><b>DataGlobalIndexFromPosition</b> (Vecd position)</td></tr>
+<tr class="separator:aee1b589c98caff564fdece06eb87358d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a856867d209a70e80c5edd0f41713e2da"><td class="memItemLeft" align="right" valign="top">Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#a856867d209a70e80c5edd0f41713e2da">DataPositionFromGlobalIndex</a> (<a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> global_data_index)</td></tr>
 <tr class="separator:a856867d209a70e80c5edd0f41713e2da"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a01d82b54276aab2546cec99449e81722"><td class="memTemplParams" colspan="2">template&lt;class PackageDataType &gt; </td></tr>
-<tr class="memitem:a01d82b54276aab2546cec99449e81722"><td class="memTemplItemLeft" align="right" valign="top">PackageDataType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#a01d82b54276aab2546cec99449e81722">DataValueFromGlobalIndex</a> (<a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> global_data_index)</td></tr>
-<tr class="memdesc:a01d82b54276aab2546cec99449e81722"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function find the value of data from its global index.  <a href="#a01d82b54276aab2546cec99449e81722">More...</a><br /></td></tr>
-<tr class="separator:a01d82b54276aab2546cec99449e81722"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae366d0b1d288916e964a44d0d5345c49"><td class="memTemplParams" colspan="2">template&lt;class PackageDataType &gt; </td></tr>
-<tr class="memitem:ae366d0b1d288916e964a44d0d5345c49"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#ae366d0b1d288916e964a44d0d5345c49">initializePackageAddressesInACell</a> (<a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> cell_index)</td></tr>
-<tr class="separator:ae366d0b1d288916e964a44d0d5345c49"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8d5f98deeb88cf8352087587ded0b5da"><td class="memItemLeft" align="right" valign="top">pair&lt; <a class="el" href="classint.html">int</a>, <a class="el" href="classint.html">int</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#a8d5f98deeb88cf8352087587ded0b5da">CellShiftAndDataIndex</a> (<a class="el" href="classsize__t.html">size_t</a> data_addrs_index_component)</td></tr>
-<tr class="separator:a8d5f98deeb88cf8352087587ded0b5da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc6451434193cf5886b8a3e6d725743c"><td class="memTemplParams" colspan="2">template&lt;typename DataType , typename PackageDataType , PackageDataType DataPackageType::* MemPtr&gt; </td></tr>
+<tr class="memitem:afc6451434193cf5886b8a3e6d725743c"><td class="memTemplItemLeft" align="right" valign="top">DataType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#afc6451434193cf5886b8a3e6d725743c">DataValueFromGlobalIndex</a> (<a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> global_data_index)</td></tr>
+<tr class="memdesc:afc6451434193cf5886b8a3e6d725743c"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function find the value of data from its global index.  <a href="#afc6451434193cf5886b8a3e6d725743c">More...</a><br /></td></tr>
+<tr class="separator:afc6451434193cf5886b8a3e6d725743c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab114b0007ad99f6b103dcca931cee15d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#ab114b0007ad99f6b103dcca931cee15d">initializePackageAddressesInACell</a> (<a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> cell_index)</td></tr>
+<tr class="separator:ab114b0007ad99f6b103dcca931cee15d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abbf87f6bd048ccadb5233104c7dc5cf5"><td class="memItemLeft" align="right" valign="top">pair&lt; <a class="el" href="classint.html">int</a>, <a class="el" href="classint.html">int</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#abbf87f6bd048ccadb5233104c7dc5cf5">CellShiftAndDataIndex</a> (<a class="el" href="classint.html">int</a> data_addrs_index_component)</td></tr>
+<tr class="separator:abbf87f6bd048ccadb5233104c7dc5cf5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
@@ -139,32 +133,36 @@ Protected Attributes</h2></td></tr>
 <tr class="separator:a265af047a587520b5f34f96f55324007"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af78347a7adfc754cd602345d6e8c9ecc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classint.html">int</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#af78347a7adfc754cd602345d6e8c9ecc">pkg_addrs_buffer_</a></td></tr>
 <tr class="separator:af78347a7adfc754cd602345d6e8c9ecc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad654e0b2448c5eb98b363c851949eb6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classint.html">int</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#aad654e0b2448c5eb98b363c851949eb6">pkg_operations_</a></td></tr>
+<tr class="separator:aad654e0b2448c5eb98b363c851949eb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a10eb97e684fb202435b59cce6835d732"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classint.html">int</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#a10eb97e684fb202435b59cce6835d732">pkg_addrs_size_</a></td></tr>
 <tr class="separator:a10eb97e684fb202435b59cce6835d732"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2f6fa59a743b293cfa423b0151338a38"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#a2f6fa59a743b293cfa423b0151338a38">total_number_of_data_points_</a></td></tr>
 <tr class="separator:a2f6fa59a743b293cfa423b0151338a38"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa42ed9e23fbe9af25127ca9b0af47820"><td class="memItemLeft" align="right" valign="top">StdVec&lt; DataPackageType * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#aa42ed9e23fbe9af25127ca9b0af47820">singular_data_pkgs_addrs</a></td></tr>
 <tr class="separator:aa42ed9e23fbe9af25127ca9b0af47820"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a39bd46ee9a77717918fdc71d98d50ddf"><td class="memItemLeft" align="right" valign="top">std::mutex&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html#a39bd46ee9a77717918fdc71d98d50ddf">mutex_my_pool</a></td></tr>
+<tr class="separator:a39bd46ee9a77717918fdc71d98d50ddf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetDataPackage&gt;<br />
+<div class="textblock"><h3>template&lt;class BaseMeshType, class DataPackageType&gt;<br />
 class SPH::MeshWithDataPackages&lt; BaseMeshType, DataPackageType &gt;</h3>
 
 <p>Abstract class fpr mesh with data packages. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a5ccc3838a7aaf62f75ee5e191df482f6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5ccc3838a7aaf62f75ee5e191df482f6">&#9670;&nbsp;</a></span>MeshWithDataPackages() <span class="overload">[1/2]</span></h2>
+<a id="ab7c5b3ac4cb1b7e3d0100ddabcadc741"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab7c5b3ac4cb1b7e3d0100ddabcadc741">&#9670;&nbsp;</a></span>MeshWithDataPackages() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetDataPackage&gt; </div>
+template&lt;class BaseMeshType, class DataPackageType&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::<a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">MeshWithDataPackages</a> </td>
+          <td class="memname"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::<a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">MeshWithDataPackages</a> </td>
           <td>(</td>
           <td class="paramtype">Vecd&#160;</td>
           <td class="paramname"><em>lower_bound</em>, </td>
@@ -185,7 +183,7 @@ template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetD
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="classsize__t.html">size_t</a>&#160;</td>
-          <td class="paramname"><em>buffer_size</em> = <code>0</code>&#160;</td>
+          <td class="paramname"><em>buffer_width</em> = <code>0</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -205,7 +203,7 @@ template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetD
     <tr><td class="paramname">lower_bound</td><td>Lower bound. </td></tr>
     <tr><td class="paramname">upper_bound</td><td>Upper bound. </td></tr>
     <tr><td class="paramname">grid_spacing</td><td>Grid spacing. </td></tr>
-    <tr><td class="paramname">buffer_size</td><td>Buffer size. </td></tr>
+    <tr><td class="paramname">buffer_width</td><td>Buffer size. </td></tr>
   </table>
   </dd>
 </dl>
@@ -218,13 +216,13 @@ template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetD
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetDataPackage&gt; </div>
+template&lt;class BaseMeshType, class DataPackageType&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::<a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">MeshWithDataPackages</a> </td>
+          <td class="memname"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::<a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">MeshWithDataPackages</a> </td>
           <td>(</td>
           <td class="paramtype">Vecd&#160;</td>
           <td class="paramname"><em>mesh_lower_bound</em>, </td>
@@ -278,7 +276,7 @@ template&lt;class BaseMeshType , class DataPackageType &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::allocateMeshDataMatrix </td>
+          <td class="memname">void <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::allocateMeshDataMatrix </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -294,21 +292,21 @@ template&lt;class BaseMeshType , class DataPackageType &gt; </div>
 
 </div>
 </div>
-<a id="a8d5f98deeb88cf8352087587ded0b5da"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8d5f98deeb88cf8352087587ded0b5da">&#9670;&nbsp;</a></span>CellShiftAndDataIndex()</h2>
+<a id="abbf87f6bd048ccadb5233104c7dc5cf5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abbf87f6bd048ccadb5233104c7dc5cf5">&#9670;&nbsp;</a></span>CellShiftAndDataIndex()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetDataPackage&gt; </div>
+template&lt;class BaseMeshType, class DataPackageType&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">pair&lt;<a class="el" href="classint.html">int</a>, <a class="el" href="classint.html">int</a>&gt; <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::CellShiftAndDataIndex </td>
+          <td class="memname">pair&lt;<a class="el" href="classint.html">int</a>, <a class="el" href="classint.html">int</a>&gt; <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::CellShiftAndDataIndex </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classsize__t.html">size_t</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classint.html">int</a>&#160;</td>
           <td class="paramname"><em>data_addrs_index_component</em></td><td>)</td>
           <td></td>
         </tr>
@@ -323,117 +321,19 @@ template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetD
 
 </div>
 </div>
-<a id="af6c39083503e4c2403e1a261209e0ccc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af6c39083503e4c2403e1a261209e0ccc">&#9670;&nbsp;</a></span>computeGradient()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetDataPackage&gt; </div>
-<div class="memtemplate">
-template&lt;class PackageDataType , Real PackageDataType::* MemPtrSrc, Vecd PackageDataType::* MemPtrTrg&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::computeGradient </td>
-          <td>(</td>
-          <td class="paramtype">DataPackageType *&#160;</td>
-          <td class="paramname"><em>inner_data_pkg</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">Real&#160;</td>
-          <td class="paramname"><em>dt</em> = <code>0.0</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>This function compute gradient using central difference scheme. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">inner_data_pkg(DataPackageType)</td><td>input data package. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">dt(Real)</td><td>Not used for spatial gradient. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a9813f9cf4d8a729a2131501bd625fc76"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9813f9cf4d8a729a2131501bd625fc76">&#9670;&nbsp;</a></span>computeNormalizedGradient()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetDataPackage&gt; </div>
-<div class="memtemplate">
-template&lt;class PackageDataType , Real PackageDataType::* MemPtrSrc, Vecd PackageDataType::* MemPtrTrg&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::computeNormalizedGradient </td>
-          <td>(</td>
-          <td class="paramtype">DataPackageType *&#160;</td>
-          <td class="paramname"><em>inner_data_pkg</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">Real&#160;</td>
-          <td class="paramname"><em>dt</em> = <code>0.0</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>This function compute normalized gradient using central difference scheme. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">inner_data_pkg(DataPackageType)</td><td>input data package. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">dt(Real)</td><td>Not used for spatial gradient. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <a id="a856867d209a70e80c5edd0f41713e2da"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a856867d209a70e80c5edd0f41713e2da">&#9670;&nbsp;</a></span>DataPositionFromGlobalIndex()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetDataPackage&gt; </div>
+template&lt;class BaseMeshType, class DataPackageType&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">Vecd <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::DataPositionFromGlobalIndex </td>
+          <td class="memname">Vecd <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::DataPositionFromGlobalIndex </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a>&#160;</td>
           <td class="paramname"><em>global_data_index</em></td><td>)</td>
@@ -450,21 +350,21 @@ template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetD
 
 </div>
 </div>
-<a id="a01d82b54276aab2546cec99449e81722"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a01d82b54276aab2546cec99449e81722">&#9670;&nbsp;</a></span>DataValueFromGlobalIndex()</h2>
+<a id="afc6451434193cf5886b8a3e6d725743c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afc6451434193cf5886b8a3e6d725743c">&#9670;&nbsp;</a></span>DataValueFromGlobalIndex()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;class BaseMeshType , class DataPackageType &gt; </div>
 <div class="memtemplate">
-template&lt;class PackageDataType &gt; </div>
+template&lt;typename DataType , typename PackageDataType , PackageDataType DataPackageType::* MemPtr&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">PackageDataType <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::DataValueFromGlobalIndex </td>
+          <td class="memname">DataType <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::DataValueFromGlobalIndex </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a>&#160;</td>
           <td class="paramname"><em>global_data_index</em></td><td>)</td>
@@ -482,7 +382,7 @@ template&lt;class PackageDataType &gt; </div>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">global_data_index(Vecu)</td><td>input global data index. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">PackageDataType</td><td>return the corresponding data package. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">DataType</td><td>return the corresponding data. </td></tr>
   </table>
   </dd>
 </dl>
@@ -501,7 +401,7 @@ template&lt;class BaseMeshType , class DataPackageType &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::deleteMeshDataMatrix </td>
+          <td class="memname">void <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::deleteMeshDataMatrix </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -517,21 +417,19 @@ template&lt;class BaseMeshType , class DataPackageType &gt; </div>
 
 </div>
 </div>
-<a id="ae366d0b1d288916e964a44d0d5345c49"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae366d0b1d288916e964a44d0d5345c49">&#9670;&nbsp;</a></span>initializePackageAddressesInACell()</h2>
+<a id="ab114b0007ad99f6b103dcca931cee15d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab114b0007ad99f6b103dcca931cee15d">&#9670;&nbsp;</a></span>initializePackageAddressesInACell()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;class BaseMeshType , class DataPackageType &gt; </div>
-<div class="memtemplate">
-template&lt;class PackageDataType &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::initializePackageAddressesInACell </td>
+          <td class="memname">void <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::initializePackageAddressesInACell </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a>&#160;</td>
           <td class="paramname"><em>cell_index</em></td><td>)</td>
@@ -544,7 +442,7 @@ template&lt;class PackageDataType &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>initialize the addresses in a data package for one variable. </p>
+<p>initialize the addresses in a data package for all variables. </p>
 
 </div>
 </div>
@@ -556,10 +454,10 @@ template&lt;class PackageDataType &gt; </div>
 <div class="memtemplate">
 template&lt;class BaseMeshType , class DataPackageType &gt; </div>
 <div class="memtemplate">
-template&lt;class DataType , class PackageDataType , DataType PackageDataType::* MemPtr&gt; </div>
+template&lt;class DataType , typename PackageDataAddressType , PackageDataAddressType DataPackageType::* MemPtr&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">DataType <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::probeMesh </td>
+          <td class="memname">DataType <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::probeMesh </td>
           <td>(</td>
           <td class="paramtype">Vecd &amp;&#160;</td>
           <td class="paramname"><em>position</em></td><td>)</td>
@@ -572,7 +470,7 @@ template&lt;class DataType , class PackageDataType , DataType PackageDataType::*
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">position(Vecd)</td><td>input position. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">(DataType)</td><td>return the probe data. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">(DataType)</td><td>return the probe data. </td></tr>
   </table>
   </dd>
 </dl>
@@ -586,27 +484,27 @@ template&lt;class DataType , class PackageDataType , DataType PackageDataType::*
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetDataPackage&gt; </div>
+template&lt;class BaseMeshType, class DataPackageType&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">MeshDataMatrix&lt;DataPackageType*&gt; <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::data_pkg_addrs_</td>
+          <td class="memname">MeshDataMatrix&lt;DataPackageType*&gt; <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::data_pkg_addrs_</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Address of mesh date packages. </p>
+<p>Address of data packages. </p>
 
 </div>
 </div>
-<a id="aadba35ad3ccab5a3fec7be11c781e0ec"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aadba35ad3ccab5a3fec7be11c781e0ec">&#9670;&nbsp;</a></span>data_pkg_pool_</h2>
+<a id="af503414d80db34f5853beb37c7c32e12"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af503414d80db34f5853beb37c7c32e12">&#9670;&nbsp;</a></span>data_pkg_pool_</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetDataPackage&gt; </div>
+template&lt;class BaseMeshType, class DataPackageType&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="class_mypool.html">Mypool</a>&lt;DataPackageType&gt; <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::data_pkg_pool_</td>
+          <td class="memname"><a class="el" href="class_my_memory_pool.html">MyMemoryPool</a>&lt;DataPackageType&gt; <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::data_pkg_pool_</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -620,13 +518,13 @@ template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetD
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetDataPackage&gt; </div>
+template&lt;class BaseMeshType, class DataPackageType&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">Real <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::data_spacing_</td>
+          <td class="memname">Real <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::data_spacing_</td>
         </tr>
       </table>
   </td>
@@ -645,14 +543,39 @@ template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetD
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetDataPackage&gt; </div>
+template&lt;class BaseMeshType, class DataPackageType&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespace_s_p_h.html#adedcef5c2d6a5ee133747acd23880415">ConcurrentVector</a>&lt;DataPackageType*&gt; <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::inner_data_pkgs_</td>
+          <td class="memname"><a class="el" href="namespace_s_p_h.html#adedcef5c2d6a5ee133747acd23880415">ConcurrentVector</a>&lt;DataPackageType*&gt; <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::inner_data_pkgs_</td>
         </tr>
       </table>
 </div><div class="memdoc">
 <p>Inner data packages which is able to carry out spatial operations. </p>
+
+</div>
+</div>
+<a id="a39bd46ee9a77717918fdc71d98d50ddf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a39bd46ee9a77717918fdc71d98d50ddf">&#9670;&nbsp;</a></span>mutex_my_pool</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class BaseMeshType, class DataPackageType&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::mutex <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::mutex_my_pool</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>mutex exclusion for memory pool </p>
 
 </div>
 </div>
@@ -662,13 +585,13 @@ template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetD
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetDataPackage&gt; </div>
+template&lt;class BaseMeshType, class DataPackageType&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classint.html">int</a> <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::pkg_addrs_buffer_</td>
+          <td class="memname"><a class="el" href="classint.html">int</a> <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::pkg_addrs_buffer_</td>
         </tr>
       </table>
   </td>
@@ -687,13 +610,13 @@ template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetD
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetDataPackage&gt; </div>
+template&lt;class BaseMeshType, class DataPackageType&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classint.html">int</a> <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::pkg_addrs_size_</td>
+          <td class="memname"><a class="el" href="classint.html">int</a> <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::pkg_addrs_size_</td>
         </tr>
       </table>
   </td>
@@ -706,19 +629,44 @@ template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetD
 
 </div>
 </div>
+<a id="aad654e0b2448c5eb98b363c851949eb6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aad654e0b2448c5eb98b363c851949eb6">&#9670;&nbsp;</a></span>pkg_operations_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class BaseMeshType, class DataPackageType&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classint.html">int</a> <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::pkg_operations_</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>the size of operation loops. </p>
+
+</div>
+</div>
 <a id="a265af047a587520b5f34f96f55324007"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a265af047a587520b5f34f96f55324007">&#9670;&nbsp;</a></span>pkg_size_</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetDataPackage&gt; </div>
+template&lt;class BaseMeshType, class DataPackageType&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classint.html">int</a> <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::pkg_size_</td>
+          <td class="memname"><a class="el" href="classint.html">int</a> <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::pkg_size_</td>
         </tr>
       </table>
   </td>
@@ -737,13 +685,13 @@ template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetD
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetDataPackage&gt; </div>
+template&lt;class BaseMeshType, class DataPackageType&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">StdVec&lt;DataPackageType*&gt; <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::singular_data_pkgs_addrs</td>
+          <td class="memname">StdVec&lt;DataPackageType*&gt; <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::singular_data_pkgs_addrs</td>
         </tr>
       </table>
   </td>
@@ -762,13 +710,13 @@ template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetD
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetDataPackage&gt; </div>
+template&lt;class BaseMeshType, class DataPackageType&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_s_p_h_1_1_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::total_number_of_data_points_</td>
+          <td class="memname"><a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> <a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, DataPackageType &gt;::total_number_of_data_points_</td>
         </tr>
       </table>
   </td>
@@ -782,8 +730,8 @@ template&lt;class BaseMeshType = BaseLevelSet, class DataPackageType = LevelSetD
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>SPHINXsys/src/shared/meshes/<a class="el" href="base__mesh_8h_source.html">base_mesh.h</a></li>
-<li>SPHINXsys/src/for_2D_build/meshes/<a class="el" href="for__2_d__build_2meshes_2base__mesh_8hpp_source.html">base_mesh.hpp</a></li>
+<li>SPHINXsys/src/shared/meshes/<a class="el" href="mesh__with__data__packages_8h_source.html">mesh_with_data_packages.h</a></li>
+<li>SPHINXsys/src/for_2D_build/meshes/<a class="el" href="for__2_d__build_2meshes_2mesh__with__data__packages_8hpp_source.html">mesh_with_data_packages.hpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->

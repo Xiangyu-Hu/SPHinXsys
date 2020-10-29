@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.14"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>SPHinXsys: SPHINXsys/src/shared/base_geometry/base_geometry.h File Reference</title>
+<title>SPHinXsys: SPHINXsys/src/shared/geometries/base_geometry.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -63,7 +63,7 @@ $(function() {
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_3dc1dabd28ba78e072d14d3fcfc90454.html">SPHINXsys</a></li><li class="navelem"><a class="el" href="dir_48ea983704c43b6d88c1fa3f4d09e369.html">src</a></li><li class="navelem"><a class="el" href="dir_0a0d9ef1793521534f0094f317758287.html">shared</a></li><li class="navelem"><a class="el" href="dir_a0c731e385f44f5875b98ab421c8bac1.html">base_geometry</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_3dc1dabd28ba78e072d14d3fcfc90454.html">SPHINXsys</a></li><li class="navelem"><a class="el" href="dir_48ea983704c43b6d88c1fa3f4d09e369.html">src</a></li><li class="navelem"><a class="el" href="dir_0a0d9ef1793521534f0094f317758287.html">shared</a></li><li class="navelem"><a class="el" href="dir_fb389e6b9d9cbc3ac32f7707b63c9410.html">geometries</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -79,6 +79,7 @@ $(function() {
 <p>Shape is the base class for all geometries.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;base_data_package.h&quot;</code><br />
+<code>#include &quot;<a class="el" href="sph__data__conainers_8h_source.html">sph_data_conainers.h</a>&quot;</code><br />
 <code>#include &lt;string&gt;</code><br />
 </div>
 <p><a href="base__geometry_8h_source.html">Go to the source code of this file.</a></p>
@@ -87,6 +88,18 @@ $(function() {
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_shape.html">SPH::Shape</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for all geometries.  <a href="class_s_p_h_1_1_shape.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_edge.html">SPH::Edge&lt; InEdgeType, OutEdgeType &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">template base class of linear structure  <a href="class_s_p_h_1_1_edge.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_branch.html">SPH::Branch</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Each branch has a parent and several children, many branches compose a tree.  <a href="class_s_p_h_1_1_branch.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_structure.html">SPH::Structure</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for all structures.  <a href="class_s_p_h_1_1_structure.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_tree.html">SPH::Tree</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">tree structure  <a href="class_s_p_h_1_1_tree.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>

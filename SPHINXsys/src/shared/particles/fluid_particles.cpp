@@ -20,7 +20,14 @@ namespace SPH
 		//----------------------------------------------------------------------
 		registerAVariable(p_, registered_scalars_, scalars_map_, scalars_to_write_, "Pressure", false);
 		registerAVariable(drho_dt_, registered_scalars_, scalars_map_, scalars_to_write_, "DensityChangeRate", false);
-		registerAVariable(vorticity_, registered_vectors_, vectors_map_, vectors_to_write_, "Vorticity", false);
+		//----------------------------------------------------------------------
+		//		register sortable particle data
+		//----------------------------------------------------------------------
+		sortable_vectors_.push_back(&pos_n_);
+		sortable_vectors_.push_back(&vel_n_);
+		sortable_scalars_.push_back(&mass_);
+		sortable_scalars_.push_back(&rho_n_);
+		sortable_scalars_.push_back(&p_);
 	}
 	//=================================================================================================//
 	FluidParticles* FluidParticles::pointToThisObject()
@@ -42,7 +49,6 @@ namespace SPH
 		for (size_t i = 0; i != number_of_particles; ++i)
 		{
 			restart_xml->CreatXmlElement("particle");
-			restart_xml->AddAttributeToElement<Real>("Sigma0", sigma_0_[i]);
 			restart_xml->AddAttributeToElement<Vecd>("Position", pos_n_[i]);
 			restart_xml->AddAttributeToElement<Real>("Volume", Vol_[i]);
 			restart_xml->AddAttributeToElement<Vecd>("Velocity", vel_n_[i]);
@@ -60,8 +66,6 @@ namespace SPH
 		SimTK::Xml::element_iterator ele_ite_ = read_xml->root_element_.element_begin();
 		for (; ele_ite_ != read_xml->root_element_.element_end(); ++ele_ite_)
 		{
-			Real sigma_0 = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Sigma0");
-			sigma_0_[number_of_particles] = sigma_0;
 			Vecd pos_ = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Position");
 			pos_n_[number_of_particles] = pos_;
 			Real rst_Vol_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Volume");
@@ -83,8 +87,12 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
-		registerAVariable(tau_, registered_matrices_, matrices_map_, matrices_to_write_, "ElasticStress", false);
+		registerAVariable(tau_, registered_matrices_, matrices_map_, matrices_to_write_, "ElasticStress", true);
 		registerAVariable(dtau_dt_, registered_matrices_, matrices_map_, matrices_to_write_, "ElasticStressChangeRate", false);
+		//----------------------------------------------------------------------
+		//		register sortable particle data
+		//----------------------------------------------------------------------
+		sortable_matrices_.push_back(&tau_);
 	}
 	//=================================================================================================//
 	ViscoelasticFluidParticles* ViscoelasticFluidParticles::pointToThisObject()

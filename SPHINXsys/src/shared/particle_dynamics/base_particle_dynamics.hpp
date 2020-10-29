@@ -21,7 +21,9 @@ namespace SPH {
 		body_(dynamic_cast<BodyType*>(body_contact_relation->sph_body_)),
 		particles_(dynamic_cast<ParticlesType*>(body_->base_particles_)),
 		material_(dynamic_cast<MaterialType*>(body_->base_particles_->base_material_)),
-		contact_configuration_(body_contact_relation->contact_configuration_) 
+		sorted_id_(body_->base_particles_->sorted_id_),
+		unsorted_id_(body_->base_particles_->unsorted_id_),
+		contact_configuration_(body_contact_relation->contact_configuration_)
 	{
 		SPHBodyVector contact_sph_bodies = body_contact_relation->contact_sph_bodies_;
 		for (size_t i = 0; i != contact_sph_bodies.size(); ++i) {
@@ -43,6 +45,8 @@ namespace SPH {
 		particles_(dynamic_cast<ParticlesType*>(body_->base_particles_)),
 		material_(dynamic_cast<MaterialType*>(body_->base_particles_->base_material_)),
 		inner_configuration_(body_complex_relation->inner_configuration_),
+		sorted_id_(body_->base_particles_->sorted_id_),
+		unsorted_id_(body_->base_particles_->unsorted_id_),
 		contact_configuration_(body_complex_relation->contact_configuration_)
 	{
 		SPHBodyVector contact_sph_bodies = body_complex_relation->contact_sph_bodies_;

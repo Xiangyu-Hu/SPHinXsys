@@ -74,7 +74,7 @@ namespace SPH
 		* this is usually used for solid like bodies
 		*/
 		class RelaxationAccelerationInner : 
-			public ParticleDynamicsInner, public RelaxDataDelegateInner
+			public InteractionDynamics, public RelaxDataDelegateInner
 		{
 		public:
 			RelaxationAccelerationInner(SPHBodyInnerRelation* body_inner_relation);
@@ -85,7 +85,7 @@ namespace SPH
 			StdLargeVec<Vecd>& pos_n_;
 			ComplexShape* complex_shape_;
 			Kernel* kernel_;
-			virtual void InnerInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -110,7 +110,7 @@ namespace SPH
 		* this is usually used for fluid like bodies
 		*/
 		class RelaxationAccelerationComplex : 
-			public ParticleDynamicsComplex,
+			public InteractionDynamics,
 			public RelaxDataDelegateComplex
 		{
 		public:
@@ -120,7 +120,7 @@ namespace SPH
 			StdLargeVec<Real>& Vol_;
 			StdLargeVec<Vecd>& dvel_dt_;
 			StdVec<StdLargeVec<Real>*> contact_Vol_;
-			virtual void ComplexInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -179,67 +179,6 @@ namespace SPH
 
 			virtual void exec(Real dt = 0.0) override;
 			virtual void parallel_exec(Real dt = 0.0) override;
-		};
-
-		/**
-		* @class computeNumberDensityBySummation
-		* @brief  compute the particle number density by summation.
-		*/
-		class computeNumberDensityBySummation :
-			public ParticleDynamicsComplex,
-			public RelaxDataDelegateComplex
-		{
-		public:
-			computeNumberDensityBySummation(SPHBodyComplexRelation* body_complex_relation);
-			virtual ~computeNumberDensityBySummation() {};
-		protected:
-			StdLargeVec<Real>& Vol_0_, & sigma_0_;
-			StdVec<StdLargeVec<Real>*> contact_Vol_0_;
-			Real W0_;
-			virtual void ComplexInteraction(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
-		 * @class getAveragedParticleNumberDensity
-		 * @brief  Compute the Everaged Particle Number Density.
-		 */
-		class getAveragedParticleNumberDensity : 
-			public ParticleDynamicsReduce <Real, ReduceSum<Real>>,
-			public RelaxDataDelegateSimple
-		{
-		public:
-			explicit getAveragedParticleNumberDensity(SPHBody* body);
-			virtual ~getAveragedParticleNumberDensity() {};
-		protected:
-			StdLargeVec<Real>& sigma_0_;
-			Real average_farctor_;
-			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
-		};
-		/**
-		* @class FinalizingParticleRelaxation
-		* @brief update the number density after relaxation.
-		*/
-		class FinalizingParticleRelaxation : 
-			public ParticleDynamicsSimple,
-			public RelaxDataDelegateSimple
-		{
-		public:
-			explicit FinalizingParticleRelaxation(SPHBody *body);
-			virtual ~FinalizingParticleRelaxation() {};
-		protected:
-			StdLargeVec<Real>& sigma_0_;
-			StdLargeVec<Vecd>& pos_n_;
-			/** the average particle number density. */
-			Real sigma_;
-			/** the method to compute average particle number density. */
-			getAveragedParticleNumberDensity* get_average_number_density_;
-
-			/** the function for set global parameters for the particle dynamics */
-			virtual void setupDynamics(Real dt = 0.0) override {
-				body_->setNewlyUpdated();
-				sigma_ = get_average_number_density_->parallel_exec();
-			};
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 	}
 }

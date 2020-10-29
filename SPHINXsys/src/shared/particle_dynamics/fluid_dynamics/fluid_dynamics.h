@@ -65,18 +65,19 @@ namespace SPH
 		* @brief  computing density by summation
 		*/
 		class DensityBySummation
-			: public ParticleDynamicsComplex, public FluidDataDelegateComplex
+			: public InteractionDynamics, public FluidDataDelegateComplex
 		{
 		public:
 			DensityBySummation(SPHBodyComplexRelation* body_complex_relation);
 			virtual ~DensityBySummation() {};
 
 		protected:
-			Real W0_;
-			StdLargeVec<Real>& Vol_, & Vol_0_, & sigma_0_, & rho_n_, & rho_0_, & mass_;
-			StdVec<StdLargeVec<Real>*> contact_Vol_0_;
+			Real W0_, rho_0_, inv_sigma_0_;
+			StdVec<Real> contact_inv_rho_0_;
+			StdLargeVec<Real>& Vol_, & rho_n_, & mass_;
+			StdVec<StdLargeVec<Real>*> contact_mass_;
 			
-			virtual void ComplexInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n) { return rho_sum; };
 		};
 
@@ -101,7 +102,7 @@ namespace SPH
 		 * @brief  the viscosity force induced acceleration
 		 */
 		class ViscousAcceleration
-			: public ParticleDynamicsComplex, public FluidDataDelegateComplex
+			: public InteractionDynamics, public FluidDataDelegateComplex
 		{
 		public:
 			ViscousAcceleration(SPHBodyComplexRelation* body_complex_relation);
@@ -115,7 +116,7 @@ namespace SPH
 			StdVec<StdLargeVec<Real>*> contact_Vol_;
 			StdVec<StdLargeVec<Vecd>*> contact_vel_ave_;
 
-			virtual void ComplexInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -129,7 +130,7 @@ namespace SPH
 				: ViscousAcceleration(body_complex_relation) {};
 			virtual ~AngularConservativeViscousAcceleration() {};
 		protected:
-			virtual void ComplexInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -137,7 +138,7 @@ namespace SPH
 		 * @brief  transport velocity correction
 		 */
 		class TransportVelocityCorrection
-			: public ParticleDynamicsComplex, public FluidDataDelegateComplex
+			: public InteractionDynamics, public FluidDataDelegateComplex
 		{
 		public:
 			TransportVelocityCorrection(SPHBodyComplexRelation* body_complex_relation, StdLargeVec<Vecd>& dvel_dt_trans);
@@ -149,7 +150,7 @@ namespace SPH
 			Real p_background_;
 
 			virtual void setupDynamics(Real dt = 0.0) override;
-			virtual void ComplexInteraction(size_t index_i, Real dt = 0.0)  override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0)  override;
 		};
 
 		/**
@@ -164,7 +165,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Vecd>& vel_n_, & dvel_dt_others_;
-			virtual void ComplexInteraction(size_t index_i, Real dt)  override;
+			virtual void Interaction(size_t index_i, Real dt)  override;
 		};
 
 		/**
@@ -237,15 +238,16 @@ namespace SPH
 		* @brief  compute vorticity in fluid field (without consider wall boundary effect)
 		*/
 		class VorticityInFluidField
-			: public ParticleDynamicsInner, public FluidDataDelegateInner
+			: public InteractionDynamics, public FluidDataDelegateInner
 		{
 		public:
 			VorticityInFluidField(SPHBodyInnerRelation* body_inner_relation);
 			virtual ~VorticityInFluidField() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
-			StdLargeVec<Vecd>& vel_n_, & vorticity_;
-			virtual void InnerInteraction(size_t index_i, Real dt = 0.0) override;
+			StdLargeVec<Vecd>& vel_n_;
+			StdLargeVec<Vecd>	vorticity_;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -254,7 +256,7 @@ namespace SPH
 		 * computing first half step displacement, density increment and full step velocity
 		 */
 		class PressureRelaxationFirstHalfRiemann
-			: public ParticleDynamicsComplex1Level, public FluidDataDelegateComplex
+			: public ParticleDynamics1Level, public FluidDataDelegateComplex
 		{
 		public:
 			PressureRelaxationFirstHalfRiemann(SPHBodyComplexRelation* body_complex_relation);
@@ -269,7 +271,7 @@ namespace SPH
 				Vecd& vel_j, Real p_j, Real rho_j);
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void ComplexInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -304,7 +306,7 @@ namespace SPH
 			virtual Vecd getVStar(Vecd& e_ij, Vecd& vel_i, Real p_i, Real rho_i,
 				Vecd& vel_j, Real p_j, Real rho_j);
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void ComplexInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -350,7 +352,7 @@ namespace SPH
 		protected:
 			StdLargeVec<Matd>& tau_, & dtau_dt_;
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void ComplexInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -366,7 +368,7 @@ namespace SPH
 			StdLargeVec<Matd>& tau_, & dtau_dt_;
 			Real mu_p_, lambda_;
 
-			virtual void ComplexInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -439,17 +441,18 @@ namespace SPH
 			explicit EmitterInflowCondition(FluidBody* body, BodyPartByParticle* body_part);
 			virtual ~EmitterInflowCondition() {};
 		protected:
-			StdLargeVec<Real>& rho_n_, & rho_0_, & p_;
+			StdLargeVec<Real>& rho_n_, & p_;
 			StdLargeVec<Vecd>& pos_n_, & vel_n_;
 			/** inflow pressure condition */
 			Real inflow_pressure_;
+			Real rho_0_;
 
 			/** inflow velocity profile to be defined in applications */
 			virtual Vecd getTargetVelocity(Vecd& position, Vecd& velocity) = 0;
 			/** inflow parameters to be defined in applications */
 			virtual void SetInflowParameters() = 0;
 
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+			virtual void Update(size_t unsorted_index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -483,12 +486,12 @@ namespace SPH
 			Vecd periodic_translation_;
 			size_t body_buffer_width_;
 
-			virtual void CheckLowerBound(size_t index_i, Real dt = 0.0);
-			virtual void CheckUpperBound(size_t index_i, Real dt = 0.0);
-			InnerFunctor checking_bound_;
+			virtual void checkLowerBound(size_t unsorted_index_i, Real dt = 0.0);
+			virtual void checkUpperBound(size_t unsorted_index_i, Real dt = 0.0);
+			ParticleFunctor checking_bound_;
 
-			virtual void Update(size_t index_i, Real dt = 0.0) override {
-				checking_bound_(index_i, dt);
+			virtual void Update(size_t unsorted_index_i, Real dt = 0.0) override {
+				checking_bound_(unsorted_index_i, dt);
 			};
 		};
 
@@ -507,7 +510,27 @@ namespace SPH
 		protected:
 			StdVec<StdLargeVec<Vecd>*> contact_n_;
 
-			virtual void ComplexInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+		/**
+		 * @class FreeSurfaceProbeOnFluidBody
+		 * @brief Probe the free surface profile for a fluid body part by reduced operation.
+		 */
+		class FreeSurfaceProbeOnFluidBody : public PartDynamicsByCellReduce<Real, ReduceMax>,
+			public FluidDataDelegateSimple
+		{
+		public:
+			FreeSurfaceProbeOnFluidBody(FluidBody* body, BodyPartByCell* body_part)
+				: PartDynamicsByCellReduce<Real, ReduceMax>(body, body_part), FluidDataDelegateSimple(body),
+				pos_n_(particles_->pos_n_)
+			{
+				initial_reference_ = 0.0;
+			}
+			virtual ~FreeSurfaceProbeOnFluidBody() {};
+		protected:
+			StdLargeVec<Vecd>& pos_n_;
+			virtual void SetupReduce() override {};
+			virtual Real ReduceFunction(size_t index_i, Real dt = 0.0) override { return pos_n_[index_i][1]; };
 		};
 	}
 }

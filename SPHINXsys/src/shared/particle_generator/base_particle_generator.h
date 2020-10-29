@@ -35,7 +35,9 @@
 
 namespace SPH {
 
-	/** Preclaimed classes*/
+	//----------------------------------------------------------------------
+	//		preclaimed classes
+	//----------------------------------------------------------------------
 	class SPHBody;
 	class BaseParticles;
 

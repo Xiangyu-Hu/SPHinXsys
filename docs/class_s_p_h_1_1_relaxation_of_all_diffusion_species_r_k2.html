@@ -68,7 +68,6 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="class_s_p_h_1_1_relaxation_of_all_diffusion_species_r_k2-members.html">List of all members</a>  </div>
@@ -77,20 +76,13 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>Compute the diffusion relaxation process of all species with second order Runge Kutta time stepping.  
+<p>Compute the diffusion relaxation process of all species with second order Runge-Kutta time stepping.  
  <a href="class_s_p_h_1_1_relaxation_of_all_diffusion_species_r_k2.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="particle__dynamics__diffusion__reaction_8h_source.html">particle_dynamics_diffusion_reaction.h</a>&gt;</code></p>
 
-<p>Inherits <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void, BodyType, BaseParticlesType, BaseMaterialType &gt;</a>.</p>
+<p>Inherits <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void &gt;</a>, and <a class="el" href="class_s_p_h_1_1_data_delegate_simple.html">SPH::DataDelegateSimple&lt; BodyType, ParticlesType, MaterialType &gt;</a>.</p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_relaxation_of_all_diffusion_species_r_k2_1_1_runge_kutta2_stages2nd_stage.html">RungeKutta2Stages2ndStage</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_relaxation_of_all_diffusion_species_r_k2_1_1_runge_kutta_initialization.html">RungeKuttaInitialization</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ab039e17a06c31f958f2f1fd235664d49"><td class="memItemLeft" align="right" valign="top"><a id="ab039e17a06c31f958f2f1fd235664d49"></a>
@@ -101,55 +93,73 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a1a9d01075814eb2cf8a09f538a74ad93"><td class="memItemLeft" align="right" valign="top"><a id="a1a9d01075814eb2cf8a09f538a74ad93"></a>
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>parallel_exec</b> (Real dt=0.0) override</td></tr>
 <tr class="separator:a1a9d01075814eb2cf8a09f538a74ad93"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_class_s_p_h_1_1_particle_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_particle_dynamics')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void, BodyType, BaseParticlesType, BaseMaterialType &gt;</a></td></tr>
-<tr class="memitem:a129036fc16e69eb21e69a259ca20036a inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_dynamics.html#a129036fc16e69eb21e69a259ca20036a">ParticleDynamics</a> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *body)</td></tr>
-<tr class="separator:a129036fc16e69eb21e69a259ca20036a inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_class_s_p_h_1_1_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_dynamics')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_dynamics.html">SPH::Dynamics&lt; void &gt;</a></td></tr>
-<tr class="memitem:a343c5cd5886c1c142ec2f995449029f5 inherit pub_methods_class_s_p_h_1_1_dynamics"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_dynamics.html#a343c5cd5886c1c142ec2f995449029f5">Dynamics</a> ()</td></tr>
-<tr class="separator:a343c5cd5886c1c142ec2f995449029f5 inherit pub_methods_class_s_p_h_1_1_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_class_s_p_h_1_1_particle_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_particle_dynamics')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void &gt;</a></td></tr>
+<tr class="memitem:a79d1c47689c57d6f956032d4bd75cdc2 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_dynamics.html#a79d1c47689c57d6f956032d4bd75cdc2">ParticleDynamics</a> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *sph_body)</td></tr>
+<tr class="separator:a79d1c47689c57d6f956032d4bd75cdc2 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_class_s_p_h_1_1_data_delegate_simple"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_data_delegate_simple')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_data_delegate_simple.html">SPH::DataDelegateSimple&lt; BodyType, ParticlesType, MaterialType &gt;</a></td></tr>
+<tr class="memitem:a8f9be49cf96804025fc7631790cc80d5 inherit pub_methods_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_data_delegate_simple.html#a8f9be49cf96804025fc7631790cc80d5">DataDelegateSimple</a> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *body)</td></tr>
+<tr class="separator:a8f9be49cf96804025fc7631790cc80d5 inherit pub_methods_class_s_p_h_1_1_data_delegate_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
+<tr class="memitem:ac5140b1d5f4e9c4a74908211cce7bf8b"><td class="memItemLeft" align="right" valign="top"><a id="ac5140b1d5f4e9c4a74908211cce7bf8b"></a>
+StdVec&lt; <a class="el" href="class_s_p_h_1_1_base_diffusion.html">BaseDiffusion</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>species_diffusion_</b></td></tr>
+<tr class="separator:ac5140b1d5f4e9c4a74908211cce7bf8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a42804d94be3a06972e12f6c10a6701f0"><td class="memItemLeft" align="right" valign="top">StdVec&lt; StdLargeVec&lt; Real &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_relaxation_of_all_diffusion_species_r_k2.html#a42804d94be3a06972e12f6c10a6701f0">species_s_</a></td></tr>
+<tr class="separator:a42804d94be3a06972e12f6c10a6701f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abb0b307562924c414de956d671a107fb"><td class="memItemLeft" align="right" valign="top"><a id="abb0b307562924c414de956d671a107fb"></a>
-<a class="el" href="class_s_p_h_1_1_relaxation_of_all_diffusion_species_r_k2_1_1_runge_kutta_initialization.html">RungeKuttaInitialization</a>&lt; BodyType, <a class="el" href="class_s_p_h_1_1_base_particles_type.html">BaseParticlesType</a>, <a class="el" href="class_s_p_h_1_1_base_material_type.html">BaseMaterialType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>runge_kutta_initialization_</b></td></tr>
+<a class="el" href="class_s_p_h_1_1_runge_kutta_initialization.html">RungeKuttaInitialization</a>&lt; BodyType, <a class="el" href="class_s_p_h_1_1_base_particles_type.html">BaseParticlesType</a>, <a class="el" href="class_s_p_h_1_1_base_material_type.html">BaseMaterialType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>runge_kutta_initialization_</b></td></tr>
 <tr class="separator:abb0b307562924c414de956d671a107fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a061e63b79aed30a774777489997d383c"><td class="memItemLeft" align="right" valign="top"><a id="a061e63b79aed30a774777489997d383c"></a>
-<a class="el" href="class_s_p_h_1_1_relaxation_of_all_difussion_species.html">RelaxationOfAllDifussionSpecies</a>&lt; BodyType, <a class="el" href="class_s_p_h_1_1_base_particles_type.html">BaseParticlesType</a>, <a class="el" href="class_s_p_h_1_1_base_material_type.html">BaseMaterialType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>runge_kutta_1st_stage_</b></td></tr>
-<tr class="separator:a061e63b79aed30a774777489997d383c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aae1dbf95b9addbacf112fe587eb0b35e"><td class="memItemLeft" align="right" valign="top"><a id="aae1dbf95b9addbacf112fe587eb0b35e"></a>
+<a class="el" href="class_s_p_h_1_1_relaxation_of_all_diffussion_species.html">RelaxationOfAllDiffussionSpecies</a>&lt; BodyType, <a class="el" href="class_s_p_h_1_1_base_particles_type.html">BaseParticlesType</a>, <a class="el" href="class_s_p_h_1_1_base_material_type.html">BaseMaterialType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>runge_kutta_1st_stage_</b></td></tr>
+<tr class="separator:aae1dbf95b9addbacf112fe587eb0b35e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade57af0fd2bef84ec365da0d6c89197f"><td class="memItemLeft" align="right" valign="top"><a id="ade57af0fd2bef84ec365da0d6c89197f"></a>
-<a class="el" href="class_s_p_h_1_1_relaxation_of_all_diffusion_species_r_k2_1_1_runge_kutta2_stages2nd_stage.html">RungeKutta2Stages2ndStage</a>&lt; BodyType, <a class="el" href="class_s_p_h_1_1_base_particles_type.html">BaseParticlesType</a>, <a class="el" href="class_s_p_h_1_1_base_material_type.html">BaseMaterialType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>runge_kutta_2nd_stage_</b></td></tr>
+<a class="el" href="class_s_p_h_1_1_runge_kutta2_stages2nd_stage.html">RungeKutta2Stages2ndStage</a>&lt; BodyType, <a class="el" href="class_s_p_h_1_1_base_particles_type.html">BaseParticlesType</a>, <a class="el" href="class_s_p_h_1_1_base_material_type.html">BaseMaterialType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>runge_kutta_2nd_stage_</b></td></tr>
 <tr class="separator:ade57af0fd2bef84ec365da0d6c89197f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pro_attribs_class_s_p_h_1_1_particle_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_particle_dynamics')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void, BodyType, BaseParticlesType, BaseMaterialType &gt;</a></td></tr>
-<tr class="memitem:a4500fb63cd892c13811bd6cfe5fbf7ac inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a4500fb63cd892c13811bd6cfe5fbf7ac"></a>
-BodyType *&#160;</td><td class="memItemRight" valign="bottom"><b>body_</b></td></tr>
-<tr class="separator:a4500fb63cd892c13811bd6cfe5fbf7ac inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a51346b4cba7e0e0acb4f28a85641f241 inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a51346b4cba7e0e0acb4f28a85641f241"></a>
-<a class="el" href="class_s_p_h_1_1_base_particles_type.html">BaseParticlesType</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>particles_</b></td></tr>
-<tr class="separator:a51346b4cba7e0e0acb4f28a85641f241 inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0d79b6e26f7ec6bd3c74d10fe666806e inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a0d79b6e26f7ec6bd3c74d10fe666806e"></a>
-<a class="el" href="class_s_p_h_1_1_base_material_type.html">BaseMaterialType</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>material_</b></td></tr>
-<tr class="separator:a0d79b6e26f7ec6bd3c74d10fe666806e inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a38f59772207191ae1046143ace795664 inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a38f59772207191ae1046143ace795664"></a>
+<tr class="inherit_header pro_attribs_class_s_p_h_1_1_particle_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_particle_dynamics')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void &gt;</a></td></tr>
+<tr class="memitem:a2c547f5f8f9cc2506a6a726fe59b270e inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a2c547f5f8f9cc2506a6a726fe59b270e"></a>
+<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>sph_body_</b></td></tr>
+<tr class="separator:a2c547f5f8f9cc2506a6a726fe59b270e inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4dd0aef601d02f17c374507809ec714a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a4dd0aef601d02f17c374507809ec714a"></a>
 <a class="el" href="namespace_s_p_h.html#ac592bbe202be73decfcbfe8201484ffa">SplitCellLists</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>split_cell_lists_</b></td></tr>
-<tr class="separator:a38f59772207191ae1046143ace795664 inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a77205aeffd8f5cffa5a2af3986e927d7 inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a77205aeffd8f5cffa5a2af3986e927d7"></a>
+<tr class="separator:a4dd0aef601d02f17c374507809ec714a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c5a47701f676e233197981ced019a1a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a9c5a47701f676e233197981ced019a1a"></a>
 <a class="el" href="class_s_p_h_1_1_base_mesh_cell_linked_list.html">BaseMeshCellLinkedList</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>mesh_cell_linked_list_</b></td></tr>
-<tr class="separator:a77205aeffd8f5cffa5a2af3986e927d7 inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a9c5a47701f676e233197981ced019a1a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_data_delegate_simple')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_data_delegate_simple.html">SPH::DataDelegateSimple&lt; BodyType, ParticlesType, MaterialType &gt;</a></td></tr>
+<tr class="memitem:a1d373bbac77e5237890e17ad7a234bea inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top"><a id="a1d373bbac77e5237890e17ad7a234bea"></a>
+BodyType *&#160;</td><td class="memItemRight" valign="bottom"><b>body_</b></td></tr>
+<tr class="separator:a1d373bbac77e5237890e17ad7a234bea inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0984a97bd1065a91bf4f77165373fb3c inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top"><a id="a0984a97bd1065a91bf4f77165373fb3c"></a>
+ParticlesType *&#160;</td><td class="memItemRight" valign="bottom"><b>particles_</b></td></tr>
+<tr class="separator:a0984a97bd1065a91bf4f77165373fb3c inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a05d1c08b536e8fb2b42df75d3ac62e17 inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top"><a id="a05d1c08b536e8fb2b42df75d3ac62e17"></a>
+MaterialType *&#160;</td><td class="memItemRight" valign="bottom"><b>material_</b></td></tr>
+<tr class="separator:a05d1c08b536e8fb2b42df75d3ac62e17 inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1f803a65263fc424b94cd13ad0e62856 inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top"><a id="a1f803a65263fc424b94cd13ad0e62856"></a>
+StdLargeVec&lt; <a class="el" href="classsize__t.html">size_t</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>sorted_id_</b></td></tr>
+<tr class="separator:a1f803a65263fc424b94cd13ad0e62856 inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3fcde9b9d2620a7af465182f6fdcb6f0 inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top"><a id="a3fcde9b9d2620a7af465182f6fdcb6f0"></a>
+StdLargeVec&lt; <a class="el" href="classsize__t.html">size_t</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>unsorted_id_</b></td></tr>
+<tr class="separator:a3fcde9b9d2620a7af465182f6fdcb6f0 inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pub_static_attribs_class_s_p_h_1_1_global_static_variables"><td colspan="2" onclick="javascript:toggleInherit('pub_static_attribs_class_s_p_h_1_1_global_static_variables')"><img src="closed.png" alt="-"/>&#160;Static Public Attributes inherited from <a class="el" href="class_s_p_h_1_1_global_static_variables.html">SPH::GlobalStaticVariables</a></td></tr>
 <tr class="memitem:ade84c016ddfa66794108619277313c82 inherit pub_static_attribs_class_s_p_h_1_1_global_static_variables"><td class="memItemLeft" align="right" valign="top">static Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_global_static_variables.html#ade84c016ddfa66794108619277313c82">physical_time_</a> = 0.0</td></tr>
 <tr class="separator:ade84c016ddfa66794108619277313c82 inherit pub_static_attribs_class_s_p_h_1_1_global_static_variables"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pro_methods_class_s_p_h_1_1_particle_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_class_s_p_h_1_1_particle_dynamics')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void, BodyType, BaseParticlesType, BaseMaterialType &gt;</a></td></tr>
-<tr class="memitem:ad17dd35a0798d79d490d84f85f98cd7a inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_dynamics.html#ad17dd35a0798d79d490d84f85f98cd7a">setupDynamics</a> (Real dt=0.0) override</td></tr>
-<tr class="separator:ad17dd35a0798d79d490d84f85f98cd7a inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_methods_class_s_p_h_1_1_particle_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_class_s_p_h_1_1_particle_dynamics')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void &gt;</a></td></tr>
+<tr class="memitem:a6c3ffa11bc0514cd9eb1537b79b4975c inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a6c3ffa11bc0514cd9eb1537b79b4975c"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setBodyUpdated</b> ()</td></tr>
+<tr class="separator:a6c3ffa11bc0514cd9eb1537b79b4975c inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab027ee6fb13881db2bc8277ef56d4b58 inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_dynamics.html#ab027ee6fb13881db2bc8277ef56d4b58">setupDynamics</a> (Real dt=0.0)</td></tr>
+<tr class="separator:ab027ee6fb13881db2bc8277ef56d4b58 inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h3>template&lt;class BodyType, class BaseParticlesType, class BaseMaterialType&gt;<br />
 class SPH::RelaxationOfAllDiffusionSpeciesRK2&lt; BodyType, BaseParticlesType, BaseMaterialType &gt;</h3>
 
-<p>Compute the diffusion relaxation process of all species with second order Runge Kutta time stepping. </p>
+<p>Compute the diffusion relaxation process of all species with second order Runge-Kutta time stepping. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="ac90349521ec2a782159bb2536722e3bb"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac90349521ec2a782159bb2536722e3bb">&#9670;&nbsp;</a></span>exec()</h2>
@@ -178,7 +188,33 @@ template&lt;class BodyType, class BaseParticlesType, class BaseMaterialType&gt; 
 </div><div class="memdoc">
 <p>The only two functions can be called from outside One is for sequential execution, the other is for parallel. </p>
 
-<p>Implements <a class="el" href="class_s_p_h_1_1_dynamics.html#a8c31cbb0b72279f481468c7c0f10da8e">SPH::Dynamics&lt; void &gt;</a>.</p>
+<p>Implements <a class="el" href="class_s_p_h_1_1_particle_dynamics.html#a8547795a86452f89ae7a3a4dc30686b2">SPH::ParticleDynamics&lt; void &gt;</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a id="a42804d94be3a06972e12f6c10a6701f0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a42804d94be3a06972e12f6c10a6701f0">&#9670;&nbsp;</a></span>species_s_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class BodyType, class BaseParticlesType, class BaseMaterialType&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">StdVec&lt;StdLargeVec&lt;Real&gt; &gt; <a class="el" href="class_s_p_h_1_1_relaxation_of_all_diffusion_species_r_k2.html">SPH::RelaxationOfAllDiffusionSpeciesRK2</a>&lt; BodyType, <a class="el" href="class_s_p_h_1_1_base_particles_type.html">BaseParticlesType</a>, <a class="el" href="class_s_p_h_1_1_base_material_type.html">BaseMaterialType</a> &gt;::species_s_</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Intermediate Value </p>
 
 </div>
 </div>

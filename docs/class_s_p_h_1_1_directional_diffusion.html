@@ -113,18 +113,14 @@ Protected Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
-<tr class="memitem:a6c1e25784f768cb1caffb38ab17332e4"><td class="memItemLeft" align="right" valign="top"><a id="a6c1e25784f768cb1caffb38ab17332e4"></a>
-Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>bias_direction_</b></td></tr>
+<tr class="memitem:a6c1e25784f768cb1caffb38ab17332e4"><td class="memItemLeft" align="right" valign="top">Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_directional_diffusion.html#a6c1e25784f768cb1caffb38ab17332e4">bias_direction_</a></td></tr>
 <tr class="separator:a6c1e25784f768cb1caffb38ab17332e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2d7e6efe0bd23b2f8a483563270298c5"><td class="memItemLeft" align="right" valign="top"><a id="a2d7e6efe0bd23b2f8a483563270298c5"></a>
-Real&#160;</td><td class="memItemRight" valign="bottom"><b>bias_diff_cf_</b></td></tr>
+<tr class="memitem:a2d7e6efe0bd23b2f8a483563270298c5"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_directional_diffusion.html#a2d7e6efe0bd23b2f8a483563270298c5">bias_diff_cf_</a></td></tr>
 <tr class="separator:a2d7e6efe0bd23b2f8a483563270298c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a609801c35de50bbabd4c76d8fb05387d"><td class="memItemLeft" align="right" valign="top"><a id="a609801c35de50bbabd4c76d8fb05387d"></a>
-Matd&#160;</td><td class="memItemRight" valign="bottom"><b>transf_diffusivity_</b></td></tr>
-<tr class="separator:a609801c35de50bbabd4c76d8fb05387d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abc4879e198a2fd6cf4bb19c68e8a3d4d"><td class="memItemLeft" align="right" valign="top">Matd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_directional_diffusion.html#abc4879e198a2fd6cf4bb19c68e8a3d4d">transformed_diffusivity_</a></td></tr>
+<tr class="separator:abc4879e198a2fd6cf4bb19c68e8a3d4d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_class_s_p_h_1_1_isotropic_diffusion"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_isotropic_diffusion')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_isotropic_diffusion.html">SPH::IsotropicDiffusion</a></td></tr>
-<tr class="memitem:ab1406312fbceea5607a7edd01453920f inherit pro_attribs_class_s_p_h_1_1_isotropic_diffusion"><td class="memItemLeft" align="right" valign="top"><a id="ab1406312fbceea5607a7edd01453920f"></a>
-Real&#160;</td><td class="memItemRight" valign="bottom"><b>diff_cf_</b></td></tr>
+<tr class="memitem:ab1406312fbceea5607a7edd01453920f inherit pro_attribs_class_s_p_h_1_1_isotropic_diffusion"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_isotropic_diffusion.html#ab1406312fbceea5607a7edd01453920f">diff_cf_</a></td></tr>
 <tr class="separator:ab1406312fbceea5607a7edd01453920f inherit pro_attribs_class_s_p_h_1_1_isotropic_diffusion"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
@@ -318,6 +314,76 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 <p>Initialize directional diffusivity. </p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a id="a2d7e6efe0bd23b2f8a483563270298c5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2d7e6efe0bd23b2f8a483563270298c5">&#9670;&nbsp;</a></span>bias_diff_cf_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">Real SPH::DirectionalDiffusion::bias_diff_cf_</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The bias diffusion coefficient along the fiber direction. </p>
+
+</div>
+</div>
+<a id="a6c1e25784f768cb1caffb38ab17332e4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6c1e25784f768cb1caffb38ab17332e4">&#9670;&nbsp;</a></span>bias_direction_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">Vecd SPH::DirectionalDiffusion::bias_direction_</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Reference bias direction. </p>
+
+</div>
+</div>
+<a id="abc4879e198a2fd6cf4bb19c68e8a3d4d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abc4879e198a2fd6cf4bb19c68e8a3d4d">&#9670;&nbsp;</a></span>transformed_diffusivity_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">Matd SPH::DirectionalDiffusion::transformed_diffusivity_</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The transformed diffusivity with inverse Cholesky decomposition. </p>
 
 </div>
 </div>

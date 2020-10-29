@@ -65,40 +65,6 @@ namespace SPH
 		};
 
 		/**
-		 * @class NormalDirectionSummation
-		 * @brief Computing surface normal direction of a body
-		 * the value are valid for all particles but only 
-		 * near the surface particle will used
-		 * note that the normal is normalized.
-		 */
-		class NormalDirectionSummation : 
-			public ParticleDynamicsComplex, public SolidDataDelegateComplex
-		{
-		public:
-			NormalDirectionSummation(SPHBodyComplexRelation* body_complex_relation);
-			virtual ~NormalDirectionSummation() {};
-		protected:
-			StdLargeVec<Vecd>& n_, & n_0_;
-			virtual void ComplexInteraction(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
-		* @class NormalDirectionReNormalization
-		* @brief Computing surface normal direction of a body
-		 * using a second order algorithm
-		 */
-		class NormalDirectionReNormalization : public NormalDirectionSummation
-		{
-		public:
-			NormalDirectionReNormalization(SPHBodyComplexRelation* body_complex_relation);
-			virtual ~NormalDirectionReNormalization() {};
-		protected:
-			StdLargeVec<Real>& Vol_0_;
-			StdVec<StdLargeVec<Real>*> contact_Vol_0_;
-			virtual void ComplexInteraction(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
 		 * @class ElasticSolidDynamicsInitialCondition
 		 * @brief  set initial condition for a solid body with different material
 		 * This is a abstract class to be override for case specific initial conditions.
@@ -164,7 +130,7 @@ namespace SPH
 
 		/**
 		* @class AverageVelocityAndAcceleration
-		* @brief impose force matching between fluid and soild dynamics
+		* @brief impose force matching between fluid and solid dynamics
 		*/
 		class AverageVelocityAndAcceleration
 		{
@@ -183,7 +149,7 @@ namespace SPH
 		* @brief Computing the viscous force from the fluid
 		*/
 		class FluidViscousForceOnSolid : 
-			public ParticleDynamicsContact, public FSIDataDelegateContact
+			public InteractionDynamics, public FSIDataDelegateContact
 		{
 		public:
 			FluidViscousForceOnSolid(SPHBodyContactRelation* body_contact_relation);
@@ -198,7 +164,7 @@ namespace SPH
 
 			//dynamics of a particle
 			//to be realized in specific algorithms
-			virtual void ContactInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -212,7 +178,7 @@ namespace SPH
 				: FluidViscousForceOnSolid(body_contact_relation) {};
 			virtual ~FluidAngularConservativeViscousForceOnSolid() {};
 		protected:
-			virtual void ContactInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -231,7 +197,7 @@ namespace SPH
 			StdLargeVec<Vecd>& force_from_fluid_, & dvel_dt_ave_;
 			StdVec<StdLargeVec<Real>*> contact_p_;
 			StdVec<StdLargeVec<Vecd>*> contact_dvel_dt_others_;
-			virtual void ContactInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -289,15 +255,15 @@ namespace SPH
 		* @brief obtain the corrected initial configuration in strong form
 		*/
 		class CorrectConfiguration : 
-			public ParticleDynamicsInner, public SolidDataDelegateInner
+			public InteractionDynamics, public SolidDataDelegateInner
 		{
 		public:
 			CorrectConfiguration(SPHBodyInnerRelation* body_inner_relation);
 			virtual ~CorrectConfiguration() {};
 		protected:
-			StdLargeVec<Real>& Vol_0_;
+			StdLargeVec<Real>& Vol_;
 			StdLargeVec<Matd>& B_;
-			virtual void InnerInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -305,16 +271,16 @@ namespace SPH
 		* @brief computing deformation gradient tensor by summation
 		*/
 		class DeformationGradientTensorBySummation :
-			public ParticleDynamicsInner, public ElasticSolidDataDelegateInner
+			public InteractionDynamics, public ElasticSolidDataDelegateInner
 		{
 		public:
 			DeformationGradientTensorBySummation(SPHBodyInnerRelation* body_inner_relation);
 			virtual ~DeformationGradientTensorBySummation() {};
 		protected:
-			StdLargeVec<Real>& Vol_0_;
+			StdLargeVec<Real>& Vol_;
 			StdLargeVec<Vecd>& pos_n_;
 			StdLargeVec<Matd>& B_, & F_;
-			virtual void InnerInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -323,19 +289,20 @@ namespace SPH
 		* This is the first step
 		*/
 		class StressRelaxationFirstHalf 
-			: public ParticleDynamicsInner1Level, public ElasticSolidDataDelegateInner
+			: public ParticleDynamics1Level, public ElasticSolidDataDelegateInner
 		{
 		public:
 			StressRelaxationFirstHalf(SPHBodyInnerRelation* body_inner_relation);
 			virtual ~StressRelaxationFirstHalf() {};
 		protected:
-			StdLargeVec<Real>& Vol_0_, & rho_n_, & rho_0_, & mass_;
+			Real rho_0_, inv_rho_0_;
+			StdLargeVec<Real>& Vol_, & rho_n_, & mass_;
 			StdLargeVec<Vecd>& pos_n_, & vel_n_, & dvel_dt_, & dvel_dt_others_, & force_from_fluid_;
 			StdLargeVec<Matd>& B_, & F_, & dF_dt_, & stress_;
 			Real numerical_viscosity_;
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void InnerInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -352,7 +319,7 @@ namespace SPH
 			virtual ~StressRelaxationSecondHalf() {};
 		protected:
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void InnerInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -454,64 +421,6 @@ namespace SPH
 		};
 
 		/**
-		* @class DampingBySplittingAlgorithm
-		* @brief Velocity damping by splitting scheme
-		* this method modify the total acceleration and velocity directly
-		*/
-		class DampingBySplittingAlgorithm
-			: public ParticleDynamicsInnerSplitting, public ElasticSolidDataDelegateInner
-		{
-		public:
-			DampingBySplittingAlgorithm(SPHBodyInnerRelation* body_inner_relation);
-			virtual ~DampingBySplittingAlgorithm() {};
-		protected:
-			StdLargeVec<Real>& Vol_0_, & mass_;
-			StdLargeVec<Vecd>& vel_n_;
-			//viscosity
-			Real eta_;
-			virtual void InnerInteraction(size_t index_i, Real dt = 0.0) override;
-		};
-
-
-		/**
-		* @class DampingBySplittingAlgorithm
-		* @brief Velocity damping by splitting scheme
-		* this method modify the total acceleration and velocity directly
-		*/
-		class DampingBySplittingPairwise
-			: public ParticleDynamicsInnerSplitting, public ElasticSolidDataDelegateInner
-		{
-		public:
-			DampingBySplittingPairwise(SPHBodyInnerRelation* body_inner_relation);
-			virtual ~DampingBySplittingPairwise() {};
-		protected:
-			StdLargeVec<Real>& Vol_0_, & mass_;
-			StdLargeVec<Vecd>& vel_n_;
-			//viscosity
-			Real eta_;
-			virtual void InnerInteraction(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
-		* @class DampingBySplittingWithRandomChoice
-		* @brief Velocity damping by splitting scheme
-		* this method modify the total acceleration and velocity directly
-		*/
-		class DampingBySplittingWithRandomChoice : public DampingBySplittingAlgorithm
-		{
-		protected:
-			Real random_ratio_;
-			bool RandomChoice();
-		public:
-			DampingBySplittingWithRandomChoice(SPHBodyInnerRelation* body_inner_relation, Real random_ratio);
-			virtual ~DampingBySplittingWithRandomChoice() {};
-
-			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override;
-
-		};
-
-		/**
         * @class FluidViscousForceOnSolid
         * @brief Computing the viscous force from the fluid with wall modeling
         */
@@ -527,7 +436,7 @@ namespace SPH
 
 			//dynamics of a particle
 			//to be realized in specific algorithms
-			virtual void ContactInteraction(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 	}
 }

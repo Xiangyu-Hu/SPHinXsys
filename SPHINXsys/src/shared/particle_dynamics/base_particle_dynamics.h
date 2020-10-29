@@ -34,7 +34,7 @@
 #include "all_materials.h"
 #include "neighbor_relation.h"
 #include "all_types_of_bodies.h"
-#include "all_meshes.h"
+#include "mesh_cell_linked_list.h"
 #include "external_force.h"
 #include "body_relation.h"
 #include <functional>
@@ -43,16 +43,16 @@ using namespace std::placeholders;
 
 namespace SPH 
 {
-	/** Functor for operation of inner particles. */
-	typedef std::function<void(size_t, Real)> InnerFunctor;
-	/** Functors for reducing operation of inner particles. */
+	/** Functor for operation on particles. */
+	typedef std::function<void(size_t, Real)> ParticleFunctor;
+	/** Functors for reducing operation on particles. */
 	template <class ReturnType>
 	using ReduceFunctor = std::function<ReturnType(size_t, Real)>;
 
-	/** Iterators for inner functors. sequential computing. */
-	void InnerIterator(size_t number_of_particles, InnerFunctor &inner_functor, Real dt = 0.0);
-	/** Iterators for inner functors. parallel computing. */
-	void InnerIterator_parallel(size_t number_of_particles, InnerFunctor &inner_functor, Real dt = 0.0);
+	/** Iterators for particle functors. sequential computing. */
+	void ParticleIterator(size_t number_of_particles, ParticleFunctor &particle_functor, Real dt = 0.0);
+	/** Iterators for particle functors. parallel computing. */
+	void ParticleIterator_parallel(size_t number_of_particles, ParticleFunctor &particle_functor, Real dt = 0.0);
 
 	/** Iterators for reduce functors. sequential computing. */
 	template <class ReturnType, typename ReduceOperation>
@@ -63,27 +63,12 @@ namespace SPH
 	ReturnType ReduceIterator_parallel(size_t number_of_particles, ReturnType temp,
 		ReduceFunctor<ReturnType> &reduce_functor, ReduceOperation &reduce_operation, Real dt = 0.0);
 
-	/** Functor for configuration operation. */
-	typedef std::function<void(CellList*, Real)> CellListFunctor;
-	/** Iterators for inner functors with splitting for configuration dynamics. sequential computing. */
-	void CellListIteratorSplitting(SplitCellLists& split_cell_lists,
-		CellListFunctor& cell_list_functor, Real dt = 0.0);
-	/** Iterators for inner functors with splitting for configuration dynamics. parallel computing. */
-	void CellListIteratorSplitting_parallel(SplitCellLists& split_cell_lists,
-		CellListFunctor& cell_list_functor, Real dt = 0.0);
-
-	/** Iterators for inner functors with splitting. sequential computing. */
-	void InnerIteratorSplitting(SplitCellLists& split_cell_lists,
-		InnerFunctor &inner_functor, Real dt = 0.0);
-	/** Iterators for inner functors with splitting. parallel computing. */
-	void InnerIteratorSplitting_parallel(SplitCellLists& split_cell_lists,
-		InnerFunctor &inner_functor, Real dt = 0.0);
-	/** Iterators for inner functors with splitting. sequential computing. */
-	void InnerIteratorSplittingSweeping(SplitCellLists& split_cell_lists,
-		InnerFunctor& inner_functor, Real dt = 0.0);
-	/** Iterators for inner functors with splitting. parallel computing. */
-	void InnerIteratorSplittingSweeping_parallel(SplitCellLists& split_cell_lists,
-		InnerFunctor& inner_functor, Real dt = 0.0);
+	/** Iterators for particle functors with splitting. sequential computing. */
+	void ParticleIteratorSplittingSweep(SplitCellLists& split_cell_lists,
+		ParticleFunctor& particle_functor, Real dt = 0.0);
+	/** Iterators for particle functors with splitting. parallel computing. */
+	void ParticleIteratorSplittingSweep_parallel(SplitCellLists& split_cell_lists,
+		ParticleFunctor& particle_functor, Real dt = 0.0);
 
 
 	/** A Functor for Summation */
@@ -171,13 +156,17 @@ namespace SPH
 		explicit DataDelegateSimple(SPHBody* body) :
 			body_(dynamic_cast<BodyType*>(body)),
 			particles_(dynamic_cast<ParticlesType*>(body->base_particles_)),
-			material_(dynamic_cast<MaterialType*>(body->base_particles_->base_material_)) {};
+			material_(dynamic_cast<MaterialType*>(body->base_particles_->base_material_)),
+			sorted_id_(body_->base_particles_->sorted_id_),
+			unsorted_id_(body_->base_particles_->unsorted_id_) {};
 		virtual ~DataDelegateSimple() {};
 
 	protected:
 		BodyType* body_;
 		ParticlesType* particles_;
 		MaterialType* material_;
+		StdLargeVec<size_t>& sorted_id_;
+		StdLargeVec<size_t>& unsorted_id_;
 	};
 
 	/**
@@ -194,12 +183,17 @@ namespace SPH
 			body_(dynamic_cast<BodyType*>(body_inner_relation->sph_body_)),
 			particles_(dynamic_cast<ParticlesType*>(body_->base_particles_)),
 			material_(dynamic_cast<MaterialType*>(body_->base_particles_->base_material_)),
+			sorted_id_(body_->base_particles_->sorted_id_),
+			unsorted_id_(body_->base_particles_->unsorted_id_),
 			inner_configuration_(body_inner_relation->inner_configuration_) {};
 		virtual ~DataDelegateInner() {};
 	protected:
 		BodyType* body_;
 		ParticlesType* particles_;
 		MaterialType* material_;
+		StdLargeVec<size_t>& sorted_id_;
+		StdLargeVec<size_t>& unsorted_id_;
+
 		/** inner configuration of the designated body */
 		ParticleConfiguration& inner_configuration_;
 	};
@@ -223,6 +217,8 @@ namespace SPH
 		BodyType* body_;
 		ParticlesType* particles_;
 		MaterialType* material_;
+		StdLargeVec<size_t>& sorted_id_;
+		StdLargeVec<size_t>& unsorted_id_;
 
 		StdVec<ContactBodyType*>  contact_bodies_;
 		StdVec<ContactParticlesType*>  contact_particles_;
@@ -252,6 +248,9 @@ namespace SPH
 		MaterialType* material_;
 		/** inner configuration of the designated body */
 		ParticleConfiguration& inner_configuration_;
+		StdLargeVec<size_t>& sorted_id_;
+		StdLargeVec<size_t>& unsorted_id_;
+
 
 		StdVec<ContactBodyType*>  contact_bodies_;
 		StdVec<ContactParticlesType*>  contact_particles_;

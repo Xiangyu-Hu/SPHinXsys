@@ -54,7 +54,6 @@ namespace SPH {
 
 		StdLargeVec<Real> p_;		/**< pressure */
 		StdLargeVec<Real> drho_dt_;		/**< density change rate */
-		StdLargeVec<Vecd> vorticity_;	/**<  vorticity */
 
 		/** Write particle data in PLT format for Tecplot. */
 		virtual void writeParticlesToPltFile(ofstream &output_file) override;

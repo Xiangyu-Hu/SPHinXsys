@@ -183,7 +183,7 @@ int main()
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
 	WallBoundary *wall_boundary = new WallBoundary(system, "Wall",	0);
-	SolidParticles 					solid_particles(wall_boundary);
+	SolidParticles	wall_particles(wall_boundary);
 	/**
 	 * @brief 	Particle and body creation of fluid observer.
 	 */
@@ -191,18 +191,12 @@ int main()
 	BaseParticles 	observer_particles(fluid_observer);
 	/** topology */
 	SPHBodyComplexRelation* water_block_complex_relation = new SPHBodyComplexRelation(water_block, { wall_boundary });
-	SPHBodyComplexRelation* wall_complex_relation = new SPHBodyComplexRelation(wall_boundary, {});
 	SPHBodyContactRelation* fluid_observer_contact_relation = new SPHBodyContactRelation(fluid_observer, { water_block });
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
 	 /** Define external force. */
 	Gravity 							gravity(Vecd(0.0, -gravity_g));
-	 /**
-	  * @brief 	Methods used only once.
-	  */
-	/** Initialize normal direction of the wall boundary. */
-	solid_dynamics::NormalDirectionSummation 	get_wall_normal(wall_complex_relation);
 	/**
 	 * @brief 	Methods used for time stepping.
 	 */
@@ -246,7 +240,7 @@ int main()
 	 */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	get_wall_normal.exec();
+	wall_particles.initializeNormalDirectionFromGeometry();
 	/**
 	 * @brief The time stepping starts here.
 	 */
@@ -264,7 +258,7 @@ int main()
 	/**
 	 * @brief 	Basic parameters.
 	 */
-	int number_of_iterations = system.restart_step_;
+	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval*10;
 	Real End_Time = 50.0; 	/**< End time. */

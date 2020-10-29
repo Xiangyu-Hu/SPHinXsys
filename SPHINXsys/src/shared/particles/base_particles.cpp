@@ -25,6 +25,8 @@ namespace SPH
 	{
 		body->assignBaseParticle(this);
 		base_material->assignBaseParticles(this);
+		rho_0_ = base_material->ReferenceDensity();
+		sigma_0_ = body->computeReferenceNumberDensity();
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
@@ -34,10 +36,7 @@ namespace SPH
 		registerAVariable(dvel_dt_others_, registered_vectors_, vectors_map_, vectors_to_write_, "OtherAcceleration", false);
 
 		registerAVariable(Vol_, registered_scalars_, scalars_map_, scalars_to_write_, "Volume", false);
-		registerAVariable(Vol_0_, registered_scalars_, scalars_map_, scalars_to_write_, "InitialVolume", false);
-		registerAVariable(sigma_0_, registered_scalars_, scalars_map_, scalars_to_write_, "InitialNumberDensity", false);
 		registerAVariable(rho_n_, registered_scalars_, scalars_map_, scalars_to_write_, "Density", true);
-		registerAVariable(rho_0_, registered_scalars_, scalars_map_, scalars_to_write_, "InitialDensity", false);
 		registerAVariable(mass_, registered_scalars_, scalars_map_, scalars_to_write_, "Mass", false);
 		registerAVariable(smoothing_length_, registered_scalars_, scalars_map_, scalars_to_write_, "SmoothingLength", false);
 
@@ -55,30 +54,28 @@ namespace SPH
 
 	}
 	//=================================================================================================//
-	void BaseParticles::initializeABaseParticle(Vecd pnt, Real Vol_0, Real sigma_0)
+	void BaseParticles::initializeABaseParticle(Vecd pnt, Real Vol_0)
 	{
-		particle_id_.push_back(pos_n_.size());
-		is_sortable_.push_back(true);
+		sequence_.push_back(0);
+		sorted_id_.push_back(pos_n_.size());
+		unsorted_id_.push_back(pos_n_.size());
 
 		pos_n_.push_back(pnt);
 		vel_n_.push_back(Vecd(0));
 		dvel_dt_.push_back(Vecd(0));
 		dvel_dt_others_.push_back(Vecd(0));
 
-		Vol_0_.push_back(Vol_0);
 		Vol_.push_back(Vol_0);
-		sigma_0_.push_back(sigma_0);
-		Real rho = base_material_->ReferenceDensity();
-		rho_0_.push_back(rho);
-		rho_n_.push_back(rho);
-		mass_.push_back(rho * Vol_0);
+		rho_n_.push_back(rho_0_);
+		mass_.push_back(rho_0_ * Vol_0);
 		smoothing_length_.push_back(0);
 	}
 	//=================================================================================================//
 	void BaseParticles::addABufferParticle()
 	{
-		particle_id_.push_back(pos_n_.size());
-		is_sortable_.push_back(true);
+		sequence_.push_back(0);
+		sorted_id_.push_back(pos_n_.size());
+		unsorted_id_.push_back(pos_n_.size());
 
 		//update registered data in particle dynamics
 		for (size_t i = 0; i != registered_matrices_.size(); ++i) 
@@ -91,8 +88,6 @@ namespace SPH
 	//=================================================================================================//
 	void BaseParticles::copyFromAnotherParticle(size_t this_index, size_t another_index)
 	{
-		is_sortable_[this_index] = is_sortable_[another_index];
-
 		updateFromAnotherParticle(this_index, another_index);
 	}
 	//=================================================================================================//
@@ -107,11 +102,6 @@ namespace SPH
 			(*registered_scalars_[i])[this_index] = (*registered_scalars_[i])[another_index];
 	}
 	//=================================================================================================//
-	bool BaseParticles::isSwappingAllowed(size_t this_particle_index, size_t that_particle_index)
-	{
-		return  is_sortable_[this_particle_index] && is_sortable_[that_particle_index];
-	}
-	//=================================================================================================//
 	size_t BaseParticles ::insertAGhostParticle(size_t index_i)
 	{
 		number_of_ghost_particles_ += 1;
@@ -119,22 +109,17 @@ namespace SPH
 		size_t expected_particle_index = expected_size - 1;
 		if (expected_size <= pos_n_.size()) {
 			copyFromAnotherParticle(expected_particle_index, index_i);
-			particle_id_[expected_particle_index] = particle_id_[index_i];
+			/** For a ghost particle, its sorted id is that of corresponding real particle. */
+			sorted_id_[expected_particle_index] = index_i;
 
 		}
 		else {
 			addABufferParticle();
 			copyFromAnotherParticle(expected_particle_index, index_i);
-			particle_id_[expected_particle_index] = particle_id_[index_i];
+			/** For a ghost particle, its sorted id is that of corresponding real particle. */
+			sorted_id_[expected_particle_index] = index_i;
 		}
 		return expected_particle_index;
-	}
-	//=================================================================================================//
-	void  BaseParticles::mirrorInAxisDirection(size_t particle_index_i, Vecd body_bound, int axis_direction)
-	{
-		pos_n_[particle_index_i][axis_direction]
-			= 2.0 * body_bound[axis_direction] - pos_n_[particle_index_i][axis_direction];
-		vel_n_[particle_index_i][axis_direction] *= -1.0;
 	}
 	//=================================================================================================//
 	void BaseParticles::writeParticlesToVtuFile(ofstream& output_file)
@@ -156,11 +141,20 @@ namespace SPH
 		//write header of particles data
 		output_file << "   <PointData  Vectors=\"vector\">\n";
 
-		//write particles ID
-		output_file << "    <DataArray Name=\"Particle_ID\" type=\"Int32\" Format=\"ascii\">\n";
+		//write sorted particles ID
+		output_file << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != number_of_particles; ++i) {
 			output_file << i << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+
+		//write unsorted particles ID
+		output_file << "    <DataArray Name=\"UnsortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != number_of_particles; ++i) {
+			output_file << unsorted_id_[i] << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -205,7 +199,6 @@ namespace SPH
 			reload_xml->CreatXmlElement("particle");
 			reload_xml->AddAttributeToElement<Vecd>("Position", pos_n_[i]);
 			reload_xml->AddAttributeToElement<Real>("Volume", Vol_[i]);
-			reload_xml->AddAttributeToElement<Real>("NumberDensity", sigma_0_[i]);
 			reload_xml->AddElementToXmlDoc();
 		}
 		reload_xml->WriteToXmlFile(filefullpath);
@@ -223,8 +216,6 @@ namespace SPH
 			pos_n_[number_of_particles] = position;
 			Real volume = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Volume");
 			Vol_[number_of_particles] = volume;
-			Real sigma = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "NumberDensity");
-			sigma_0_[number_of_particles] = sigma;
 			number_of_particles++;
 		}
 

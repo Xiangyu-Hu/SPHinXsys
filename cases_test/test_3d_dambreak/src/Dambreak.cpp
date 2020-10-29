@@ -113,7 +113,7 @@ int main()
 	//the wall boundary
 	WallBoundary *wall_boundary = new WallBoundary(system, "Wall", 0);
 	//creat solid particles 
-	SolidParticles solid_particles(wall_boundary);
+	SolidParticles wall_particles(wall_boundary);
 
 	FluidObserver *fluid_observer = new FluidObserver(system, "Fluidobserver", 0);
 	//create observer particles 
@@ -125,22 +125,13 @@ int main()
 
 	/** topology */
 	SPHBodyComplexRelation* water_block_complex = new SPHBodyComplexRelation(water_block, { wall_boundary });
-	SPHBodyComplexRelation* wall_complex = new SPHBodyComplexRelation(wall_boundary, {});
 	SPHBodyContactRelation* fluid_observer_contact = new SPHBodyContactRelation(fluid_observer, { water_block });
 
 	//-------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
 	//-------------------------------------------------------------------
-
-	//-------------------------------------------------------------------
-	//methods only used only once
-	//-------------------------------------------------------------------
-	//initialize normal direction of the wall boundary
-	solid_dynamics::NormalDirectionSummation
-		get_wall_normal(wall_complex);
 	//-------- common paritcle dynamics ----------------------------------------
 	InitializeATimeStep 	initialize_a_fluid_step(water_block, &gravity);
-
 	//-------- fluid dynamics --------------------------------------------------
 	//evaluation of density by summation approach
 	fluid_dynamics::DensityBySummationFreeSurface
@@ -178,7 +169,7 @@ int main()
 	 */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	get_wall_normal.exec();
+	wall_particles.initializeNormalDirectionFromGeometry();
 	/**
 	* @brief The time stepping starts here.
 	*/

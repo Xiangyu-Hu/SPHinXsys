@@ -5,8 +5,6 @@
  */
 
 #include "base_mesh.h"
-#include "base_mesh.hpp"
-#include "base_body.h"
 
 namespace SPH {
 	//=================================================================================================//
@@ -31,6 +29,17 @@ namespace SPH {
 				+ Real(grid_index[n]) * grid_spacing_;
 		}
 		return grid_position;
+	}
+	//=================================================================================================//
+	size_t BaseMesh::MortonCode(const size_t& i)
+	{
+		size_t x = i;
+		x &= 0x3ff;
+		x = (x | x << 16) & 0x30000ff;
+		x = (x | x << 8) & 0x300f00f;
+		x = (x | x << 4) & 0x30c30c3;
+		x = (x | x << 2) & 0x9249249;
+		return x;
 	}
 	//=================================================================================================//
 	Mesh::Mesh(Vecd lower_bound, Vecd upper_bound, Real grid_spacing,

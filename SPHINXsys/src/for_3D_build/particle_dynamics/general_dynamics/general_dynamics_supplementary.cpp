@@ -13,9 +13,12 @@ namespace SPH
 		: BoundingBodyDomain(body), axis_(axis_direction), second_axis_(SecondAxis(axis_direction)),
 		third_axis_(ThirdAxis(axis_direction)) 	{}
 	//=================================================================================================//
-	PeriodicBoundingInAxisDirection::PeriodicBoundingInAxisDirection(SPHBody* body, int axis_direction)
-		: BoundingInAxisDirection(body, axis_direction), periodic_translation_(0)
+	PeriodicConditionInAxisDirection::PeriodicConditionInAxisDirection(SPHBody* body, int axis_direction) :
+		BoundingInAxisDirection(body, axis_direction)
 	{
+		//allocate memory
+		bound_cells_.resize(2);
+
 		//lower bound cells
 		for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis_]) - 1, 0);
 			k < (size_t)SMIN(int(body_upper_bound_cell_[third_axis_] + 2), int(number_of_cells_[third_axis_])); ++k)
@@ -32,7 +35,7 @@ namespace SPH
 					cell_position[axis_] = i;
 					cell_position[second_axis_] = j;
 					cell_position[third_axis_] = k;
-					lower_bound_cells_.push_back(Vecu(cell_position));
+					bound_cells_[0].push_back(Vecu(cell_position));
 				}
 			}
 		}
@@ -53,58 +56,60 @@ namespace SPH
 					cell_position[axis_] = i;
 					cell_position[second_axis_] = j;
 					cell_position[third_axis_] = k;
-					upper_bound_cells_.push_back(Vecu(cell_position));
+					bound_cells_[1].push_back(Vecu(cell_position));
 				}
 			}
 		}
-
-		setPeriodicTranslation();
 	}
 	//=================================================================================================//
-	void PeriodicBoundingInAxisDirection::exec(Real dt)
+	void PeriodicConditionInAxisDirection::PeriodicBounding::exec(Real dt)
 	{
 		//check lower bound
-		for (size_t i = 0; i != lower_bound_cells_.size(); ++i) {
-			CellListDataVector& list_data
-				= cell_linked_lists_[lower_bound_cells_[i][0]][lower_bound_cells_[i][1]][lower_bound_cells_[i][2]]
-				.cell_list_data_;
-			for (size_t num = 0; num < list_data.size(); ++num)
-				CheckLowerBound(list_data[num].first, list_data[num].second, dt);
+		CellVector& lower_bound_cells = bound_cells_[0];
+		for (size_t i = 0; i != lower_bound_cells.size(); ++i) {
+			IndexVector& particle_indexes
+				= cell_linked_lists_[lower_bound_cells[i][0]][lower_bound_cells[i][1]][lower_bound_cells[i][2]]
+				.real_particle_indexes_;
+			for (size_t num = 0; num < particle_indexes.size(); ++num)
+				checkLowerBound(particle_indexes[num], dt);
 		}
 
 		//check upper bound
-		for (size_t i = 0; i != upper_bound_cells_.size(); ++i) {
-			CellListDataVector& list_data
-				= cell_linked_lists_[upper_bound_cells_[i][0]][upper_bound_cells_[i][1]][upper_bound_cells_[i][2]]
-				.cell_list_data_;
-			for (size_t num = 0; num < list_data.size(); ++num)
-				CheckUpperBound(list_data[num].first, list_data[num].second, dt);
+		CellVector& upper_bound_cells = bound_cells_[1];
+		for (size_t i = 0; i != upper_bound_cells.size(); ++i) {
+			IndexVector& particle_indexes
+				= cell_linked_lists_[upper_bound_cells[i][0]][upper_bound_cells[i][1]][upper_bound_cells[i][2]]
+				.real_particle_indexes_;
+			for (size_t num = 0; num < particle_indexes.size(); ++num)
+				checkUpperBound(particle_indexes[num], dt);
 		}
 	}
 	//=================================================================================================//
-	void PeriodicBoundingInAxisDirection::parallel_exec(Real dt)
+	void PeriodicConditionInAxisDirection::PeriodicBounding::parallel_exec(Real dt)
 	{
 		//check lower bound
-		parallel_for(blocked_range<size_t>(0, lower_bound_cells_.size()),
+		CellVector& lower_bound_cells = bound_cells_[0];
+		parallel_for(blocked_range<size_t>(0, lower_bound_cells.size()),
 			[&](const blocked_range<size_t>& r) {
 				for (size_t i = r.begin(); i < r.end(); ++i) {
-					CellListDataVector& list_data
-						= cell_linked_lists_[lower_bound_cells_[i][0]][lower_bound_cells_[i][1]][lower_bound_cells_[i][2]]
-						.cell_list_data_;
-					for (size_t num = 0; num < list_data.size(); ++num)
-						CheckLowerBound(list_data[num].first, list_data[num].second, dt);
+					IndexVector& particle_indexes
+						= cell_linked_lists_[lower_bound_cells[i][0]][lower_bound_cells[i][1]][lower_bound_cells[i][2]]
+						.real_particle_indexes_;
+					for (size_t num = 0; num < particle_indexes.size(); ++num)
+						checkLowerBound(particle_indexes[num], dt);
 				}
 			}, ap);
 
 		//check upper bound
-		parallel_for(blocked_range<size_t>(0, upper_bound_cells_.size()),
+		CellVector& upper_bound_cells = bound_cells_[1];
+		parallel_for(blocked_range<size_t>(0, upper_bound_cells.size()),
 			[&](const blocked_range<size_t>& r) {
 				for (size_t i = r.begin(); i < r.end(); ++i) {
-					CellListDataVector& list_data
-						= cell_linked_lists_[upper_bound_cells_[i][0]][upper_bound_cells_[i][1]][upper_bound_cells_[i][2]]
-						.cell_list_data_;
-					for (size_t num = 0; num < list_data.size(); ++num)
-						CheckUpperBound(list_data[num].first, list_data[num].second, dt);
+					IndexVector& particle_indexes
+						= cell_linked_lists_[upper_bound_cells[i][0]][upper_bound_cells[i][1]][upper_bound_cells[i][2]]
+						.real_particle_indexes_;
+					for (size_t num = 0; num < particle_indexes.size(); ++num)
+						checkUpperBound(particle_indexes[num], dt);
 				}
 			}, ap);
 	}
@@ -114,7 +119,7 @@ namespace SPH
 		: BoundingInAxisDirection(body, axis_direction),
 		bounding_(this->bound_cells_, body, axis_direction, positive),
 		creating_ghost_particles_(this->ghost_particles_, this->bound_cells_, body, axis_direction, positive),
-		updating_ghost_states_(this->ghost_particles_, body, axis_direction, positive)
+		updating_ghost_states_(this->ghost_particles_, this->bound_cells_, body, axis_direction, positive)
 	{
 		if (positive) {
 			//upper bound cells
@@ -162,7 +167,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void MirrorBoundaryConditionInAxisDirection::Bounding
+	void MirrorBoundaryConditionInAxisDirection::MirrorBounding
 		::exec(Real dt)
 	{
 		for (size_t i = 0; i != bound_cells_.size(); ++i) {
@@ -174,7 +179,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void MirrorBoundaryConditionInAxisDirection::Bounding
+	void MirrorBoundaryConditionInAxisDirection::MirrorBounding
 		::parallel_exec(Real dt)
 	{
 		parallel_for(blocked_range<size_t>(0, bound_cells_.size()),

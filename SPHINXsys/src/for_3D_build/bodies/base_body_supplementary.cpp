@@ -12,6 +12,24 @@
 namespace SPH 
 {
 	//=================================================================================================//
+	Real SPHBody::computeReferenceNumberDensity()
+	{
+		Real sigma(0);
+		Real cutoff_radius = kernel_->GetCutOffRadius();
+		Real particle_spacing = particle_spacing_;
+		int search_range = int(cutoff_radius / particle_spacing) + 1;
+		for (int k = -search_range; k <= search_range; ++k)
+			for (int j = -search_range; j <= search_range; ++j)
+				for (int i = -search_range; i <= search_range; ++i)
+				{
+					Point particle_location(Real(i) * particle_spacing,
+						Real(j) * particle_spacing, Real(k) * particle_spacing);
+					if (particle_location.norm() < cutoff_radius)
+						sigma += kernel_->W(particle_location);
+				}
+		return sigma;
+	}
+	//=================================================================================================//
 	void BodyPartByCell::tagBodyPart()
 	{
 		BaseMeshCellLinkedList *mesh_cell_linked_list
@@ -36,7 +54,7 @@ namespace SPH
 								}
 							}
 					if (is_contained == true) 
-						body_part_cells_.push_back(mesh_cell_linked_list->CellListFormIndex(Vecu(i, j, k)));
+						body_part_cells_.push_back(mesh_cell_linked_list->CellListFromIndex(Vecu(i, j, k)));
 				}
 	}
 	//=================================================================================================//
@@ -63,7 +81,7 @@ namespace SPH
 								}
 							}
 					if (is_near == true)
-						body_part_cells_.push_back(mesh_cell_linked_list->CellListFormIndex(Vecu(i, j, k)));
+						body_part_cells_.push_back(mesh_cell_linked_list->CellListFromIndex(Vecu(i, j, k)));
 				}
 	}
 	//=================================================================================================//

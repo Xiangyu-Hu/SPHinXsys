@@ -35,8 +35,11 @@
 
 namespace SPH {
 
-	/** preclaimed classes. */
+	//----------------------------------------------------------------------
+	//		preclaimed classes
+	//----------------------------------------------------------------------
 	class ViscoelasticFluidParticles;
+
 	/**
 	 * @class WeaklyCompressibleFluid
 	 * @brief Linear equation of state (EOS).
@@ -67,9 +70,9 @@ namespace SPH {
 		virtual Real GetSoundSpeed(Real p = 0.0, Real rho = 1.0) override;
 
 		/** riemann solver */
-		virtual Real RiemannSolverForPressure(Real rhol, Real Rhor, Real pl,
+		virtual Real RiemannSolverForPressure(Real rhol, Real rhor, Real pl,
 			Real pr, Real ul, Real ur) override;
-		virtual Real RiemannSolverForVelocity(Real rhol, Real Rhor, Real pl,
+		virtual Real RiemannSolverForVelocity(Real rhol, Real rhor, Real pl,
 			Real pr, Real ul, Real ur) override;
 	};
 

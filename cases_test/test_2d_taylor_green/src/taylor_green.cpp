@@ -125,14 +125,10 @@ int main(int ac, char* av[])
 	 */
 	 /** Initialize particle acceleration. */
 	InitializeATimeStep 	initialize_a_fluid_step(water_block);
-	/** Periodic bounding in x direction. */
-	PeriodicBoundingInAxisDirection 	periodic_bounding_x(water_block, 0);
-	/** Periodic bounding in y direction. */
-	PeriodicBoundingInAxisDirection 	periodic_bounding_y(water_block, 1);
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirection 	periodic_condition_x(water_block, 0);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition_x(water_block, 0);
 	/** Periodic BCs in y direction. */
-	PeriodicConditionInAxisDirection 	periodic_condition_y(water_block, 1);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition_y(water_block, 1);
 	
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
@@ -179,8 +175,8 @@ int main(int ac, char* av[])
 	}
 	setup_taylor_green_velocity.exec();
 	system.initializeSystemCellLinkedLists();
-	periodic_condition_x.parallel_exec();
-	periodic_condition_y.parallel_exec();
+	periodic_condition_x.update_cell_linked_list_.parallel_exec();
+	periodic_condition_y.update_cell_linked_list_.parallel_exec();
 	system.initializeSystemConfigurations();
 	/**
 	 * @brief The time stepping starts here.
@@ -201,7 +197,7 @@ int main(int ac, char* av[])
 	/**
 	 * @brief 	Basic parameters.
 	 */
-	int number_of_iterations = system.restart_step_;
+	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval*10;
 	Real End_Time = 5.0; 	/**< End time. */
@@ -251,11 +247,11 @@ int main(int ac, char* av[])
 			number_of_iterations++;
 
 			/** Water block configuration and periodic condition. */
-			periodic_bounding_x.parallel_exec();
-			periodic_bounding_y.parallel_exec();
+			periodic_condition_x.bounding_.parallel_exec();
+			periodic_condition_y.bounding_.parallel_exec();
 			water_block->updateCellLinkedList();
-			periodic_condition_x.parallel_exec();
-			periodic_condition_y.parallel_exec();
+			periodic_condition_x.update_cell_linked_list_.parallel_exec();
+			periodic_condition_y.update_cell_linked_list_.parallel_exec();
 			water_block_complex->updateConfiguration();
 		}
 

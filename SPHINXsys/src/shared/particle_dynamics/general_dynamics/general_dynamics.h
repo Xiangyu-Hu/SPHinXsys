@@ -42,7 +42,7 @@ namespace SPH
 	* @brief initialize a time step for a body.
 	* including initialize particle acceleration 
 	* induced by viscous, gravity and other forces,
-	* set number of ghost particles into zero.
+	* set the number of ghost particles into zero.
 	*/
 	class InitializeATimeStep 
 		: public ParticleDynamicsSimple, public GeneralDataDelegateSimple
@@ -118,47 +118,162 @@ namespace SPH
 	};
 
 	/**
-	* @class PeriodicBoundingInAxisDirection
-	* @brief Periodic bounding particle position in an axis direction
-	*/
-	class PeriodicBoundingInAxisDirection : public BoundingInAxisDirection
+	 * @class PeriodicConditionInAxisDirection
+	 * @brief Base class for two different type periodic boundary conditions.
+	 */
+	class PeriodicConditionInAxisDirection : public BoundingInAxisDirection
 	{
 	protected:
-		Vecd periodic_translation_;
-		//cells in which particle checked for bounding
-		CellVector lower_bound_cells_, upper_bound_cells_;
+		/** cells in which particle checked for bounding */
+		StdVec<CellVector> bound_cells_;
 
-		/**compute the distance for periodic translation. */
-		void setPeriodicTranslation();
+		/**
+		* @class PeriodicBounding
+		* @brief Periodic bounding particle position in an axis direction
+		*/
+		class PeriodicBounding : public BoundingInAxisDirection
+		{
+		protected:
+			Vecd periodic_translation_;
+			//cells in which particle checked for bounding
+			StdVec<CellVector>& bound_cells_;
 
-		virtual void CheckLowerBound(size_t index_i, Vecd& pnt, Real dt = 0.0);
-		virtual void CheckUpperBound(size_t index_i, Vecd& pnt, Real dt = 0.0);
+			/**compute the distance for periodic translation. */
+			void setPeriodicTranslation();
+
+			virtual void checkLowerBound(size_t index_i, Real dt = 0.0);
+			virtual void checkUpperBound(size_t index_i, Real dt = 0.0);
+		public:
+			PeriodicBounding(StdVec<CellVector>& bound_cells, SPHBody* body, int axis_direction);
+			virtual ~PeriodicBounding() {};
+
+			virtual void exec(Real dt = 0.0) override;
+			virtual void parallel_exec(Real dt = 0.0) override;
+		};
 	public:
-		PeriodicBoundingInAxisDirection(SPHBody* body, int axis_direction);
-		virtual ~PeriodicBoundingInAxisDirection() {};
+		PeriodicConditionInAxisDirection(SPHBody* body, int axis_direction);
+		virtual ~PeriodicConditionInAxisDirection() {};
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
 	};
 
 	/**
-	* @class PeriodicConditionInAxisDirection
-	* @brief Periodic boundary condition in an axis direction
-	*/
-	class PeriodicConditionInAxisDirection
-		: public PeriodicBoundingInAxisDirection
+	 * @class PeriodicConditionInAxisDirectionUsingCellLinkedList
+	 * @brief The method imposing periodic boundary condition in an axis direction.
+	 *	It includes two different steps, i.e. imposing periodic bounding and condition.
+	 *	The first step is carried out before update cell linked list and
+	 *	the second after the updating.
+	 *	If the exec or parallel_exec is called directly, error message will be given.
+	 */
+	class PeriodicConditionInAxisDirectionUsingCellLinkedList : 
+		public PeriodicConditionInAxisDirection
 	{
 	protected:
-		virtual void CheckLowerBound(size_t index_i, Vecd& pnt, Real dt = 0.0) override;
-		virtual void CheckUpperBound(size_t index_i, Vecd& pnt, Real dt = 0.0) override;
+		/**
+		* @class PeriodicCondition
+		* @brief Periodic boundary condition in an axis direction
+		*/
+		class PeriodicCellLinkedList : public PeriodicBounding
+		{
+		protected:
+			virtual void checkLowerBound(size_t index_i, Real dt = 0.0) override;
+			virtual void checkUpperBound(size_t index_i, Real dt = 0.0) override;
+		public:
+
+			PeriodicCellLinkedList(StdVec<CellVector>& bound_cells, SPHBody* body, int axis_direction)
+				: PeriodicBounding(bound_cells, body, axis_direction) {};
+			virtual ~PeriodicCellLinkedList() {};
+
+			/** This class is only implemented in sequential due to memory conflicts.
+			 * Because the cell list data is not concurrent vector.
+			 */
+			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
+		};
 	public:
+		PeriodicConditionInAxisDirectionUsingCellLinkedList(SPHBody* body, int axis_direction) :
+			PeriodicConditionInAxisDirection(body, axis_direction),
+			bounding_(this->bound_cells_, body, axis_direction),
+			update_cell_linked_list_(this->bound_cells_, body, axis_direction) {};
+		virtual ~PeriodicConditionInAxisDirectionUsingCellLinkedList() {};
 
-		PeriodicConditionInAxisDirection(SPHBody* body, int axis_direction)
-			: PeriodicBoundingInAxisDirection(body, axis_direction) {};
-		virtual ~PeriodicConditionInAxisDirection() {};
+		PeriodicBounding bounding_;
+		PeriodicCellLinkedList update_cell_linked_list_;
+	};
 
-		/** This class is only implemented in sequential due to memory conflicts. */
-		virtual void parallel_exec(Real dt = 0.0) override { exec(); };
+	/**
+	 * @class PeriodicConditionInAxisDirectionUsingGhostParticles
+	 * @brief The method imposing periodic boundary condition in an axis direction by using ghost particles.
+	 *	It includes three different steps, i.e. imposing periodic bounding, creating ghosts and update ghost state.
+	 *	The first step is carried out before update cell linked list and
+	 *	the second and third after the updating.
+	 *	If the exec or parallel_exec is called directly, error message will be given.
+	 */
+	class PeriodicConditionInAxisDirectionUsingGhostParticles : 
+		public PeriodicConditionInAxisDirection
+	{
+	protected:
+		/** ghost particles createded for impose boundary condition. */
+		StdVec<IndexVector> ghost_particles_;
+
+		/**
+		 * @class CreatPeriodicGhostParticles
+		 * @brief create ghost particles in an axis direction
+		 */
+		class CreatPeriodicGhostParticles : public PeriodicBounding
+		{
+		protected:
+			StdVec<IndexVector>& ghost_particles_;
+			virtual void setupDynamics(Real dt = 0.0) override;
+			virtual void checkLowerBound(size_t index_i, Real dt = 0.0) override;
+			virtual void checkUpperBound(size_t index_i, Real dt = 0.0) override;
+		public:
+			CreatPeriodicGhostParticles(StdVec<CellVector>& bound_cells,
+				StdVec<IndexVector>& ghost_particles, SPHBody* body, int axis_direction) :
+				PeriodicBounding(bound_cells, body, axis_direction),
+				ghost_particles_(ghost_particles) {};
+			virtual ~CreatPeriodicGhostParticles() {};
+
+			/** This class is only implemented in sequential due to memory conflicts.
+			 * Because creating ghost particle allocate memory.
+			 */
+			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
+		};
+
+		/**
+		 * @class UpdatePeriodicGhostParticles
+		 * @brief update ghost particles in an axis direction
+		 */
+		class UpdatePeriodicGhostParticles : public PeriodicBounding
+		{
+		protected:
+			StdVec<IndexVector>& ghost_particles_;
+			void checkLowerBound(size_t index_i, Real dt = 0.0) override;
+			void checkUpperBound(size_t index_i, Real dt = 0.0) override;
+		public:
+			UpdatePeriodicGhostParticles(StdVec<CellVector>& bound_cells,
+				StdVec<IndexVector>& ghost_particles, SPHBody* body, int axis_direction) :
+				PeriodicBounding(bound_cells, body, axis_direction), ghost_particles_(ghost_particles) {};
+			virtual ~UpdatePeriodicGhostParticles() {};
+
+			virtual void exec(Real dt = 0.0) override;
+			virtual void parallel_exec(Real dt = 0.0) override;
+		};
+	public:
+		PeriodicConditionInAxisDirectionUsingGhostParticles(SPHBody* body, int axis_direction) :
+			PeriodicConditionInAxisDirection(body, axis_direction),
+			bounding_(this->bound_cells_, body, axis_direction),
+			ghost_creation_(this->bound_cells_, this->ghost_particles_, body, axis_direction),
+			ghost_update_(this->bound_cells_, this->ghost_particles_, body, axis_direction)
+		{
+			ghost_particles_.resize(2);
+		};
+
+		virtual ~PeriodicConditionInAxisDirectionUsingGhostParticles() {};
+
+		PeriodicBounding bounding_;
+		CreatPeriodicGhostParticles ghost_creation_;
+		UpdatePeriodicGhostParticles ghost_update_;
 	};
 
 	/**
@@ -173,16 +288,20 @@ namespace SPH
 		/** ghost particles createded for impose boundary condition. */
 		IndexVector ghost_particles_;
 
-		class Bounding : public BoundingInAxisDirection
+		class MirrorBounding : public BoundingInAxisDirection
 		{
 		protected:
 			CellVector& bound_cells_;
 			virtual void checkLowerBound(size_t index_i, Real dt = 0.0);
 			virtual void checkUpperBound(size_t index_i, Real dt = 0.0);
-			InnerFunctor checking_bound_;
+			ParticleFunctor checking_bound_;
+
+			StdLargeVec<Vecd>& vel_n_;
+			/** mirror the particle physical state along an axis direction. */
+			void mirrorInAxisDirection(size_t particle_index_i, Vecd body_bound, int axis_direction);
 		public:
-			Bounding(CellVector& bound_cells, SPHBody* body, int axis_direction, bool positive);
-			virtual ~Bounding() {};
+			MirrorBounding(CellVector& bound_cells, SPHBody* body, int axis_direction, bool positive);
+			virtual ~MirrorBounding() {};
 			virtual void exec(Real dt = 0.0) override;
 			virtual void parallel_exec(Real dt = 0.0) override;
 		};
@@ -191,7 +310,7 @@ namespace SPH
 		* @class CreatingGhostParticles
 		* @brief ghost particle created according to its corresponding real particle
 		*/
-		class CreatingGhostParticles : public Bounding
+		class CreatingGhostParticles : public MirrorBounding
 		{
 		protected:
 			IndexVector& ghost_particles_;
@@ -210,15 +329,15 @@ namespace SPH
 		* @class UpdatingGhostStates
 		* @brief the state of a ghost particle updated according to its corresponding real particle
 		*/
-		class UpdatingGhostStates : public BoundingInAxisDirection
+		class UpdatingGhostStates : public MirrorBounding
 		{
 		protected:
 			IndexVector& ghost_particles_;
-			void updateForLowerBound(size_t index_i, Real dt = 0.0);
-			void updateForUpperBound(size_t index_i, Real dt = 0.0);
-			InnerFunctor checking_bound_update_;
+			void checkLowerBound(size_t index_i, Real dt = 0.0) override;
+			void checkUpperBound(size_t index_i, Real dt = 0.0) override;
+			ParticleFunctor checking_bound_update_;
 		public:
-			UpdatingGhostStates(IndexVector& ghost_particles,
+			UpdatingGhostStates(IndexVector& ghost_particles, CellVector& bound_cells,
 				SPHBody* body, int axis_direction, bool positive);
 			virtual ~UpdatingGhostStates() {};
 
@@ -227,7 +346,7 @@ namespace SPH
 		};
 
 	public:
-		Bounding bounding_;
+		MirrorBounding bounding_;
 		CreatingGhostParticles creating_ghost_particles_;
 		UpdatingGhostStates updating_ghost_states_;
 
@@ -317,5 +436,172 @@ namespace SPH
 	protected:
 		StdLargeVec<Vecd>& pos_n_;
 		Vecd ReduceFunction(size_t index_i, Real dt = 0.0) override;
+	};
+
+	/**
+	 * @class DampingBySplittingAlgorithm
+	 * @brief A quantity damping by splitting scheme
+	 * this method modifies the quantity directly.
+	 * Note that, if periodic boundary condition is applied, 
+	 * the parallelized version of the method requires the one using ghost particles 
+	 * because the splitting partition only works in this case.  
+	 */
+	template<typename VariableType>
+	class DampingBySplittingAlgorithm : 
+		public InteractionDynamicsSplitting,
+		public DataDelegateInner<SPHBody, BaseParticles, BaseMaterial>
+	{
+	public:
+		DampingBySplittingAlgorithm(SPHBodyInnerRelation* body_inner_relation,
+			StdLargeVec<VariableType>& variable, Real eta) :
+			InteractionDynamicsSplitting(body_inner_relation->sph_body_),
+			DataDelegateInner<SPHBody, BaseParticles, BaseMaterial>(body_inner_relation),
+			Vol_(particles_->Vol_), mass_(particles_->mass_), variable_(variable), eta_(eta) {};
+		virtual ~DampingBySplittingAlgorithm() {};
+	protected:
+		StdLargeVec<Real>& Vol_, & mass_;
+		StdLargeVec<VariableType>& variable_;
+		Real eta_; /**< damping coefficient */
+		virtual void Interaction(size_t index_i, Real dt = 0.0) override
+		{
+			Real Vol_i = Vol_[index_i];
+			Real mass_i = mass_[index_i];
+			VariableType& variable_i = variable_[index_i];
+
+			VariableType error(0);
+			Real parameter_a(0);
+			Real parameter_c(0);
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = inner_neighborhood.j_[n];
+				//linear projection 
+				VariableType variable_derivative = (variable_i - variable_[index_j]);
+				Real parameter_b = 2.0 * eta_ * inner_neighborhood.dW_ij_[n]
+					* Vol_i * Vol_[index_j] * dt / inner_neighborhood.r_ij_[n];
+
+				error -= variable_derivative * parameter_b;
+				parameter_a += parameter_b;
+				parameter_c += parameter_b * parameter_b;
+			}
+
+			parameter_a -= mass_i;
+			Real parameter_l = parameter_a * parameter_a + parameter_c;
+			VariableType parameter_k = error / (parameter_l + TinyReal);
+			variable_[index_i] += parameter_k * parameter_a;
+
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = inner_neighborhood.j_[n];
+
+				Real parameter_b = 2.0 * eta_ * inner_neighborhood.dW_ij_[n]
+					* Vol_i * Vol_[index_j] * dt / inner_neighborhood.r_ij_[n];
+
+				//predicted quantity at particle j
+				VariableType variable_j = variable_[index_j] - parameter_k * parameter_b;
+				VariableType variable_derivative = (variable_i - variable_j);
+
+				//exchange in conservation form
+				variable_[index_j] -= variable_derivative * parameter_b / mass_[index_j];
+			}
+		};
+	};
+
+	/**
+	* @class DampingBySplittingPairwise
+	* @brief A quantity damping by a pairwise splitting scheme
+	* this method modifies the quantity directly
+	* Note that, if periodic boundary condition is applied, 
+	* the parallelized version of the method requires the one using ghost particles 
+	* because the splitting partition only works in this case.  
+	*/
+	template<typename VariableType>
+	class DampingBySplittingPairwise : 
+		public InteractionDynamicsSplitting,
+		public DataDelegateInner<SPHBody, BaseParticles, BaseMaterial>
+	{
+	public:
+		DampingBySplittingPairwise(SPHBodyInnerRelation* body_inner_relation,
+			StdLargeVec<VariableType>& variable, Real eta) :
+			InteractionDynamicsSplitting(body_inner_relation->sph_body_),
+			DataDelegateInner<SPHBody, BaseParticles, BaseMaterial>(body_inner_relation),
+			Vol_(particles_->Vol_), mass_(particles_->mass_), variable_(variable), eta_(eta) {};
+		virtual ~DampingBySplittingPairwise() {};
+	protected:
+		StdLargeVec<Real>& Vol_, & mass_;
+		StdLargeVec<VariableType>& variable_;
+		Real eta_; /**< damping coefficient */
+		
+		virtual void Interaction(size_t index_i, Real dt = 0.0) override 
+		{
+			Real Vol_i = Vol_[index_i];
+			Real mass_i = mass_[index_i];
+			VariableType& variable_i = variable_[index_i];
+
+			StdVec<Real> parameter_b(MaximumNeighborhoodSize);
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			//forward sweep
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = inner_neighborhood.j_[n];
+				Real mass_j = mass_[index_j];
+
+				VariableType variable_derivative = (variable_i - variable_[index_j]);
+				parameter_b[n] = eta_ * inner_neighborhood.dW_ij_[n]
+					* Vol_i * Vol_[index_j] * dt / inner_neighborhood.r_ij_[n];
+
+				VariableType increment = parameter_b[n] * variable_derivative
+					/ (mass_i * mass_j - parameter_b[n] * (mass_i + mass_j));
+				variable_[index_i] += increment * mass_j;
+				variable_[index_j] -= increment * mass_i;
+			}
+
+			//backward sweep
+			for (size_t n = inner_neighborhood.current_size_; n != 0; --n)
+			{
+				size_t index_j = inner_neighborhood.j_[n - 1];
+				Real mass_j = mass_[index_j];
+
+				VariableType variable_derivative = (variable_i - variable_[index_j]);
+				VariableType increment = parameter_b[n - 1] * variable_derivative
+					/ (mass_i * mass_j - parameter_b[n - 1] * (mass_i + mass_j));
+
+				variable_[index_i] += increment * mass_j;
+				variable_[index_j] -= increment * mass_i;
+			}
+		};
+	};
+
+	/**
+	* @class DampingBySplittingWithRandomChoice
+	* @brief A random choice method for obstaining static equilibrium state
+	* Note that, if periodic boundary condition is applied, 
+	* the parallelized version of the method requires the one using ghost particles 
+	* because the splitting partition only works in this case.  
+	*/
+	template<class DampingAlgorithmType, typename VariableType>
+	class DampingBySplittingWithRandomChoice : public DampingAlgorithmType
+	{
+	protected:
+		Real random_ratio_;
+		bool RandomChoice() 
+		{
+			return ((double)rand() / (RAND_MAX)) < random_ratio_ ? true : false;
+		};
+	public:
+		DampingBySplittingWithRandomChoice(SPHBodyInnerRelation* body_inner_relation,
+			Real random_ratio, StdLargeVec<VariableType>& variable, Real eta) :
+			DampingAlgorithmType(body_inner_relation, variable, eta / random_ratio),
+			random_ratio_(random_ratio) {};
+		virtual ~DampingBySplittingWithRandomChoice() {};
+
+		virtual void exec(Real dt = 0.0) override
+		{
+			if (RandomChoice()) DampingAlgorithmType::exec(dt);
+		};
+		virtual void parallel_exec(Real dt = 0.0) override
+		{
+			if (RandomChoice()) DampingAlgorithmType::parallel_exec(dt);
+		};
 	};
 }

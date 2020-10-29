@@ -36,9 +36,9 @@
 
 #pragma once
 
-#include "base_mesh.h"
+#include "mesh_with_data_packages.h"
+#include "mesh_with_data_packages.hpp"
 #include "geometry.h"
-#include "base_mesh.hpp"
 
 namespace SPH
 {
@@ -249,4 +249,3 @@ namespace SPH
 
 	};
 }
-

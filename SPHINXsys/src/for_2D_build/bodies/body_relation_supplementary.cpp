@@ -67,7 +67,7 @@ namespace SPH
 				= *(target_mesh_cell_linked_lists_[relation_body_num]);
 			Vecu target_number_of_cells = target_mesh_cell_linked_list.NumberOfCells();
 			int search_range = 
-				mesh_cell_linked_list_->ComputingSearchRage(sph_body_->refinement_level_,
+				mesh_cell_linked_list_->computeSearchRange(sph_body_->refinement_level_,
 					contact_sph_bodies_[relation_body_num]->refinement_level_);
 			Kernel& current_kernel = mesh_cell_linked_list_->ChoosingKernel(sph_body_->kernel_,
 				contact_sph_bodies_[relation_body_num]->kernel_);

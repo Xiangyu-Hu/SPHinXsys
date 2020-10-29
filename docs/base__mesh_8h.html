@@ -84,6 +84,7 @@ $(function() {
 <code>#include &quot;my_memory_pool.h&quot;</code><br />
 <code>#include &lt;fstream&gt;</code><br />
 <code>#include &lt;algorithm&gt;</code><br />
+<code>#include &lt;mutex&gt;</code><br />
 <code>#include &lt;functional&gt;</code><br />
 </div>
 <p><a href="base__mesh_8h_source.html">Go to the source code of this file.</a></p>
@@ -91,37 +92,13 @@ $(function() {
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh.html">SPH::BaseMesh</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base class for all meshes.  <a href="class_s_p_h_1_1_base_mesh.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for all meshes.  <a href="class_s_p_h_1_1_base_mesh.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh.html">SPH::Mesh</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base class for defining basic mesh properties. The mesh is proposed for several functions. First, it is used in cell linked list for neighbor search. Second, it is used for background maps such as level sets. This class is the counterpart of the class particles.  <a href="class_s_p_h_1_1_mesh.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_level_set_data.html">SPH::LevelSetData</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Level set is for describing complex geometrics, It is the distance to the surface of the geometry and the direction leads to the nearest point on the surface.  <a href="class_s_p_h_1_1_level_set_data.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_data_package.html">SPH::BaseDataPackage&lt; PackageDataType &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract base class for a data package which is given by a small mesh patch.  <a href="class_s_p_h_1_1_base_data_package.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_level_set_data_package.html">SPH::LevelSetDataPackage</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fixed memory level set data packed in a package.  <a href="class_s_p_h_1_1_level_set_data_package.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_mesh_with_data_packages.html">SPH::BaseMeshWithDataPackages</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract class for a mesh with data packages.  <a href="class_s_p_h_1_1_base_mesh_with_data_packages.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_level_set.html">SPH::BaseLevelSet</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A abstract describes a mesh with level set data packages.  <a href="class_s_p_h_1_1_base_level_set.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_mesh_with_data_packages.html">SPH::MeshWithDataPackages&lt; BaseMeshType, DataPackageType &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract class fpr mesh with data packages.  <a href="class_s_p_h_1_1_mesh_with_data_packages.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_level_set.html">SPH::LevelSet</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="class_s_p_h_1_1_mesh.html" title="Abstract base class for defining basic mesh properties. The mesh is proposed for several functions...">Mesh</a> with level set data as packages.  <a href="class_s_p_h_1_1_level_set.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh&lt; BaseMeshType, MeshLevelType &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Multi level Meshes with multi resolution mesh data.  <a href="class_s_p_h_1_1_multilevel_mesh.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_multiresolution_level_set.html">SPH::MultiresolutionLevelSet</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Multi level Meshes for level set data packages.  <a href="class_s_p_h_1_1_multiresolution_level_set.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
@@ -131,30 +108,15 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:ac11be758d779fa508c860fc76ea76c1d"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; void(Vecu, <a class="el" href="class_real.html">Real</a>)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_s_p_h.html#ac11be758d779fa508c860fc76ea76c1d">SPH::MeshFunctor</a></td></tr>
+<tr class="memitem:ac11be758d779fa508c860fc76ea76c1d"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; void(Vecu, Real)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_s_p_h.html#ac11be758d779fa508c860fc76ea76c1d">SPH::MeshFunctor</a></td></tr>
 <tr class="separator:ac11be758d779fa508c860fc76ea76c1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae4ae5c55d688fbb13bd48ef45fb27f05"><td class="memTemplParams" colspan="2">template&lt;class ReturnType , class DataPackageType &gt; </td></tr>
-<tr class="memitem:ae4ae5c55d688fbb13bd48ef45fb27f05"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_s_p_h.html#ae4ae5c55d688fbb13bd48ef45fb27f05">SPH::PackageFunctor</a> = std::function&lt; ReturnType(DataPackageType *, <a class="el" href="class_real.html">Real</a>)&gt;</td></tr>
-<tr class="separator:ae4ae5c55d688fbb13bd48ef45fb27f05"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:aefc4743c0431714953fbf6b4850d4cae"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_s_p_h.html#aefc4743c0431714953fbf6b4850d4cae">SPH::MeshIterator</a> (Vecu index_begin, Vecu index_end, MeshFunctor &amp;mesh_functor, <a class="el" href="class_real.html">Real</a> dt)</td></tr>
+<tr class="memitem:aefc4743c0431714953fbf6b4850d4cae"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_s_p_h.html#aefc4743c0431714953fbf6b4850d4cae">SPH::MeshIterator</a> (Vecu index_begin, Vecu index_end, MeshFunctor &amp;mesh_functor, Real dt)</td></tr>
 <tr class="separator:aefc4743c0431714953fbf6b4850d4cae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aae6b33f2feaab1a5a06a45ec57f0ee8a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_s_p_h.html#aae6b33f2feaab1a5a06a45ec57f0ee8a">SPH::MeshIterator_parallel</a> (Vecu index_begin, Vecu index_end, MeshFunctor &amp;mesh_functor, <a class="el" href="class_real.html">Real</a> dt)</td></tr>
+<tr class="memitem:aae6b33f2feaab1a5a06a45ec57f0ee8a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_s_p_h.html#aae6b33f2feaab1a5a06a45ec57f0ee8a">SPH::MeshIterator_parallel</a> (Vecu index_begin, Vecu index_end, MeshFunctor &amp;mesh_functor, Real dt)</td></tr>
 <tr class="separator:aae6b33f2feaab1a5a06a45ec57f0ee8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa4ff282c8b1c3e623e04440adf39f68a"><td class="memTemplParams" colspan="2">template&lt;class DataPackageType &gt; </td></tr>
-<tr class="memitem:aa4ff282c8b1c3e623e04440adf39f68a"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_s_p_h.html#aa4ff282c8b1c3e623e04440adf39f68a">SPH::PackageIterator</a> (ConcurrentVector&lt; DataPackageType *&gt; inner_data_pkgs, PackageFunctor&lt; void, DataPackageType &gt; &amp;pkg_functor, <a class="el" href="class_real.html">Real</a> dt=0.0)</td></tr>
-<tr class="separator:aa4ff282c8b1c3e623e04440adf39f68a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a47bfdfc81e94165cf7377baf3314020b"><td class="memTemplParams" colspan="2">template&lt;class DataPackageType &gt; </td></tr>
-<tr class="memitem:a47bfdfc81e94165cf7377baf3314020b"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_s_p_h.html#a47bfdfc81e94165cf7377baf3314020b">SPH::PackageIterator_parallel</a> (ConcurrentVector&lt; DataPackageType *&gt; inner_data_pkgs, PackageFunctor&lt; void, DataPackageType &gt; &amp;pkg_functor, <a class="el" href="class_real.html">Real</a> dt=0.0)</td></tr>
-<tr class="separator:a47bfdfc81e94165cf7377baf3314020b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af6044dbd32a657819874af06950bf725"><td class="memTemplParams" colspan="2">template&lt;class ReturnType , typename ReduceOperation , class DataPackageType &gt; </td></tr>
-<tr class="memitem:af6044dbd32a657819874af06950bf725"><td class="memTemplItemLeft" align="right" valign="top">ReturnType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_s_p_h.html#af6044dbd32a657819874af06950bf725">SPH::ReducePackageIterator</a> (ConcurrentVector&lt; DataPackageType *&gt; inner_data_pkgs, ReturnType temp, PackageFunctor&lt; ReturnType, DataPackageType &gt; &amp;reduce_pkg_functor, ReduceOperation &amp;reduce_operation, <a class="el" href="class_real.html">Real</a> dt=0.0)</td></tr>
-<tr class="separator:af6044dbd32a657819874af06950bf725"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a10c87e35a347ecf49ccf630565aab1e2"><td class="memTemplParams" colspan="2">template&lt;class ReturnType , typename ReduceOperation , class DataPackageType &gt; </td></tr>
-<tr class="memitem:a10c87e35a347ecf49ccf630565aab1e2"><td class="memTemplItemLeft" align="right" valign="top">ReturnType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_s_p_h.html#a10c87e35a347ecf49ccf630565aab1e2">SPH::ReducePackageIterator_parallel</a> (ConcurrentVector&lt; DataPackageType *&gt; inner_data_pkgs, ReturnType temp, PackageFunctor&lt; ReturnType, DataPackageType &gt; &amp;reduce_pkg_functor, ReduceOperation &amp;reduce_operation, <a class="el" href="class_real.html">Real</a> dt=0.0)</td></tr>
-<tr class="separator:a10c87e35a347ecf49ccf630565aab1e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This is the base classes of mesh, which describe ordered and indexed data sets. Depending on application, there are different data saved on the mesh. The intersection points of mesh lines are called grid points, the element enclosed by mesh lines (2D) or faces (3D) called cells. The mesh line or face are also called cell faces. Grid points are also called cell corners. </p>

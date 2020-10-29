@@ -621,4 +621,19 @@ namespace SPH {
 
 		virtual void ReadFromFile(size_t iteration_step = 0) override;
 	};
+
+	/**
+	 * @class WriteFreeSurfaceElevation
+	 * @brief write files for the total mechanical energy of a weakly compressible fluid body
+	 */
+	class WriteFreeSurfaceElevation
+		: public WriteBodyStates, public fluid_dynamics::FreeSurfaceProbeOnFluidBody
+	{
+	protected:
+		std::string filefullpath_;
+	public:
+		WriteFreeSurfaceElevation(In_Output& in_output, FluidBody* water_block, BodyPartByCell* body_part);
+		virtual ~WriteFreeSurfaceElevation() {};
+		virtual void WriteToFile(Real time = 0.0) override;
+	};
 }

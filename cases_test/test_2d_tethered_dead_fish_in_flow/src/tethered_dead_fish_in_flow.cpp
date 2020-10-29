@@ -295,7 +295,7 @@ int main()
 	*/
 	SPHSystem system(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW), particle_spacing_ref);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = true;
+	system.run_particle_relaxation_ = false;
 	/** Tag for computation start with relaxed body fitted particles distribution. */
 	system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: start with initial condition. */
@@ -310,7 +310,7 @@ int main()
 	* @brief   Particles and body creation for wall boundary.
 	*/
 	WallBoundary* wall_boundary = new   WallBoundary(system, "Wall", 0);
-	SolidParticles                  solid_particles(wall_boundary);
+	SolidParticles	wall_particles(wall_boundary);
 	/**
 	* @brief   Particles and body creation for fish.
 	*/
@@ -326,8 +326,6 @@ int main()
 	SPHBodyInnerRelation* water_block_inner = new SPHBodyInnerRelation(water_block);
 	SPHBodyInnerRelation* fish_body_inner = new SPHBodyInnerRelation(fish_body);
 	SPHBodyComplexRelation* water_block_complex = new SPHBodyComplexRelation(water_block_inner, { wall_boundary, fish_body });
-	SPHBodyComplexRelation* wall_complex = new SPHBodyComplexRelation(wall_boundary, {});
-	SPHBodyComplexRelation* fish_body_complex = new SPHBodyComplexRelation(fish_body, {});
 	SPHBodyContactRelation* fish_body_contact = new SPHBodyContactRelation(fish_body, { water_block });
 	SPHBodyContactRelation* fish_observer_contact = new SPHBodyContactRelation(fish_observer, { fish_body });
 	/** Output. */
@@ -336,13 +334,6 @@ int main()
 	WriteTotalForceOnSolid      write_total_force_on_fish(in_output, fish_body);
 	WriteAnObservedQuantity<Vecd, BaseParticles, &BaseParticles::pos_n_>
 		write_fish_displacement("Displacement", in_output, fish_observer_contact);
-	/**
-	* @brief   Methods used for updating data structure.
-	*/
-	/** Periodic bounding in x direction. */
-	PeriodicBoundingInAxisDirection 	periodic_bounding(water_block, 0);
-	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirection 	periodic_condition(water_block, 0);
 
 	/** check whether run particle relaxation for body fitted particle distribution. */
 	if (system.run_particle_relaxation_) {
@@ -358,8 +349,6 @@ int main()
 
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(fish_body_inner);
-		/** finalizing  particle number density and inital position after relaxatoin. */
-		relax_dynamics::FinalizingParticleRelaxation finalizing_inserted_body_particles(fish_body);
 		/**
 		  * @brief 	Particle relaxation starts here.
 		  */
@@ -380,7 +369,6 @@ int main()
 			}
 		}
 		std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
-		finalizing_inserted_body_particles.parallel_exec();
 
 		/** Output results. */
 		write_particle_reload_files.WriteToFile(0.0);
@@ -390,10 +378,11 @@ int main()
 	/**
 	* This section define all numerical methods will be used in this case.
 	*/
-	/** Initialize normal direction of the wall boundary. */
-	solid_dynamics::NormalDirectionSummation get_wall_normal(wall_complex);
-	/** Initialize normal direction of the inserted body. */
-	solid_dynamics::NormalDirectionReNormalization get_fish_body_normal(fish_body_complex);
+	/**
+	* @brief   Methods used for updating data structure.
+	*/
+	/** Periodic BCs in x direction. */
+	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition(water_block, 0);
 	/** Corrected strong configuration.*/
 	solid_dynamics::CorrectConfiguration
 		fish_body_corrected_configuration_in_strong_form(fish_body_inner);
@@ -525,13 +514,13 @@ int main()
 	* for building up of extra configuration.
 	*/
 	system.initializeSystemCellLinkedLists();
-	periodic_condition.parallel_exec();
+	periodic_condition.update_cell_linked_list_.parallel_exec();
 	system.initializeSystemConfigurations();
 	/** Prepare quantities, e.g. wall normal, fish body norm,
 	* fluid initial number density and configuration of fish particles, will be used once only.
 	*/
-	get_wall_normal.parallel_exec();
-	get_fish_body_normal.parallel_exec();
+	wall_particles.initializeNormalDirectionFromGeometry();
+	fish_body_particles.initializeNormalDirectionFromGeometry();
 	fish_body_corrected_configuration_in_strong_form.parallel_exec();
 	/** Output for initial condition. */
 	write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
@@ -568,7 +557,9 @@ int main()
 			/** Update normal direction on fish body. */
 			fish_body_update_normal.parallel_exec();
 			Real relaxation_time = 0.0;
-			while (relaxation_time < Dt) {
+			while (relaxation_time < Dt) 
+			{
+				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt - relaxation_time);
 				/** Fluid dynamics process, first half. */
 				pressure_relaxation_first_half.parallel_exec(dt);
 				/** Fluid pressure force exerting on fish. */
@@ -594,7 +585,6 @@ int main()
 				fish_body_average_velocity.update_averages_.parallel_exec(dt);
 				write_total_force_on_fish.WriteToFile(GlobalStaticVariables::physical_time_);
 
-				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
@@ -612,10 +602,10 @@ int main()
 			//const State& s = integ.getState();
 			//viz.report(s);
 			/** Water block configuration and periodic condition. */
-			periodic_bounding.parallel_exec();
+			periodic_condition.bounding_.parallel_exec();
 			water_block->updateCellLinkedList();
 			fish_body->updateCellLinkedList();
-			periodic_condition.parallel_exec();
+			periodic_condition.update_cell_linked_list_.parallel_exec();
 			water_block_complex->updateConfiguration();
 			/** Fish body contact configuration. */
 			fish_body_contact->updateConfiguration();

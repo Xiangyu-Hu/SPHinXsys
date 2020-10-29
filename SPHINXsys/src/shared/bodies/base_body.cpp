@@ -139,12 +139,6 @@ namespace SPH
 	: SPHBody(sph_system, body_name, refinement_level, smoothing_length_ratio, particle_generator)
 	{
 		sph_system.addARealBody(this);
-
-		mesh_cell_linked_list_->allocateMeshDataMatrix();
-	}
-	//=================================================================================================//
-	void RealBody::allocateMemoryCellLinkedList()
-	{
 		mesh_cell_linked_list_->allocateMeshDataMatrix();
 	}
 	//=================================================================================================//
@@ -165,11 +159,6 @@ namespace SPH
 		system.addAFictitiousBody(this);
 	}
 	//=================================================================================================//
-	void FictitiousBody::allocateMemoryCellLinkedList()
-	{
-		/** do nothing here. */;
-	}
-	//=================================================================================================//
 	void FictitiousBody::updateCellLinkedList()
 	{
 		/** do nothing here. */;
@@ -183,7 +172,6 @@ namespace SPH
 	void BodyPartByParticle::tagAParticle(size_t particle_index)
 	{
 		body_part_particles_.push_back(particle_index);
-		body_->base_particles_->is_sortable_[particle_index] = false;
 	}
 	//=================================================================================================//
 	void BodyPartByParticle::tagBodyPart()

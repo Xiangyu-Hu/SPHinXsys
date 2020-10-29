@@ -1,15 +1,15 @@
 var searchData=
 [
-  ['implicitcomputingviscousacceleration',['ImplicitComputingViscousAcceleration',['../class_s_p_h_1_1fluid__dynamics_1_1_implicit_computing_viscous_acceleration.html',1,'SPH::fluid_dynamics']]],
   ['imposeexternalforce',['ImposeExternalForce',['../class_s_p_h_1_1solid__dynamics_1_1_impose_external_force.html',1,'SPH::solid_dynamics']]],
   ['imposingstress',['ImposingStress',['../class_s_p_h_1_1active__muscle__dynamics_1_1_imposing_stress.html',1,'SPH::active_muscle_dynamics']]],
   ['in_5foutput',['In_Output',['../class_s_p_h_1_1_in___output.html',1,'SPH']]],
-  ['indexcomparer',['IndexComparer',['../class_s_p_h_1_1_index_comparer.html',1,'SPH']]],
   ['indexoutofrange',['IndexOutOfRange',['../class_s_p_h_1_1_index_out_of_range.html',1,'SPH']]],
   ['inflowboundarycondition',['InflowBoundaryCondition',['../class_s_p_h_1_1fluid__dynamics_1_1_inflow_boundary_condition.html',1,'SPH::fluid_dynamics']]],
   ['initializeatimestep',['InitializeATimeStep',['../class_s_p_h_1_1_initialize_a_time_step.html',1,'SPH']]],
   ['initializedisplacement',['InitializeDisplacement',['../class_s_p_h_1_1solid__dynamics_1_1_initialize_displacement.html',1,'SPH::solid_dynamics']]],
-  ['intcomparer',['IntComparer',['../class_s_p_h_1_1_int_comparer.html',1,'SPH']]],
+  ['interactiondynamics',['InteractionDynamics',['../class_s_p_h_1_1_interaction_dynamics.html',1,'SPH']]],
+  ['interactiondynamicssplitting',['InteractionDynamicsSplitting',['../class_s_p_h_1_1_interaction_dynamics_splitting.html',1,'SPH']]],
+  ['interactiondynamicswithupdate',['InteractionDynamicsWithUpdate',['../class_s_p_h_1_1_interaction_dynamics_with_update.html',1,'SPH']]],
   ['interpolatingadiffusionreactionquantity',['InterpolatingADiffusionReactionQuantity',['../class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_diffusion_reaction_quantity.html',1,'SPH::observer_dynamics']]],
   ['interpolatingaquantity',['InterpolatingAQuantity',['../class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity.html',1,'SPH::observer_dynamics']]],
   ['invalidargument',['InvalidArgument',['../class_s_p_h_1_1_invalid_argument.html',1,'SPH']]],

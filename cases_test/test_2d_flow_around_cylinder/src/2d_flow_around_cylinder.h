@@ -110,10 +110,10 @@ public:
 	}
 };
 /** inflow buffer */
-class FreetreamBuffer : public BodyPartByCell
+class FreeStreamBuffer : public BodyPartByCell
 {
 public:
-	FreetreamBuffer(FluidBody* fluid_body, string constrained_region_name)
+	FreeStreamBuffer(FluidBody* fluid_body, string constrained_region_name)
 		: BodyPartByCell(fluid_body, constrained_region_name)
 	{
 		/** Geomtry definition. */
@@ -126,11 +126,11 @@ public:
 	}
 };
 /** Case dependent inflow boundary condition. */
-class FreetreamCondition : public fluid_dynamics::FlowRelaxationBuffer
+class FreeStreamCondition : public fluid_dynamics::FlowRelaxationBuffer
 {
 	Real u_ave_, u_ref_, t_ref;
 public:
-	FreetreamCondition(FluidBody* fluid_body,
+	FreeStreamCondition(FluidBody* fluid_body,
 		BodyPartByCell* constrained_region)
 		: fluid_dynamics::FlowRelaxationBuffer(fluid_body, constrained_region)
 	{

@@ -25,4 +25,6 @@ namespace SPH {
 	template<class DataType>
 	using MeshDataMatrix = DataType***;
 
+	/** only works for smoothing length ratio less or equal than 1.3*/
+	const int MaximumNeighborhoodSize = int(1.33 * Pi * 27);
 }

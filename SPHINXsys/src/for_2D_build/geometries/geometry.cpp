@@ -221,14 +221,23 @@ namespace SPH {
 	//=================================================================================================//
 	Real ComplexShape::findSignedDistance(Vec2d input_pnt)
 	{
-		Real distance_to_surafce = (findClosestPoint(input_pnt) - input_pnt).norm();
-		return checkContain(input_pnt) ? -distance_to_surafce : distance_to_surafce;
+		Real distance_to_surface = (findClosestPoint(input_pnt) - input_pnt).norm();
+		return checkContain(input_pnt) ? -distance_to_surface : distance_to_surface;
 	}
 	//=================================================================================================//
 	Vec2d ComplexShape::findNormalDirection(Vec2d input_pnt)
 	{
-		Vec2d direction_to_surafce = (findClosestPoint(input_pnt) - input_pnt).normalize();
-		return checkContain(input_pnt) ? direction_to_surafce : -1.0 * direction_to_surafce;
+		bool is_contain = checkContain(input_pnt);
+		Vecd displacement_to_surface = findClosestPoint(input_pnt) - input_pnt;
+		while(displacement_to_surface.norm() < Eps) {
+			Vecd jittered = input_pnt; //jittering
+			for (int l = 0; l != input_pnt.size(); ++l)
+				jittered[l] = input_pnt[l] + (((Real)rand() / (RAND_MAX)) - 0.5) * 100.0 * Eps;
+			if(checkContain(jittered) == is_contain) 
+				displacement_to_surface = findClosestPoint(jittered) - jittered;
+		}
+		Vecd direction_to_surface = displacement_to_surface.normalize();
+		return is_contain ? direction_to_surface : -1.0 * direction_to_surface;
 	}
 	//=================================================================================================//
 	void ComplexShape::findBounds(Vec2d& lower_bound, Vec2d& upper_bound)

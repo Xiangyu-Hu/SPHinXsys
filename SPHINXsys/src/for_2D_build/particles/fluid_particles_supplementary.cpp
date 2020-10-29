@@ -24,13 +24,10 @@ namespace SPH
 			output_file << pos_n_[i][0] << "  "
 				<< pos_n_[i][1] << "  "
 				<< i << "  "
-				<< sigma_0_[i] << " "
 				<< rho_n_[i] << " "
 				<< vel_n_[i][0] << " "
-				<< vel_n_[i][1] << " "
-				<< vorticity_[i][0] << " \n";
+				<< vel_n_[i][1] << " " << " \n";
 		}
-
 	}
 	//=================================================================================================//
 	void ViscoelasticFluidParticles::writeParticlesToPltFile(ofstream &output_file)
