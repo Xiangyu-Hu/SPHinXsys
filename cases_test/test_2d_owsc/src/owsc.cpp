@@ -217,7 +217,7 @@ int main()
 			viscous_acceleration.parallel_exec();
 			/** Viscous force exerting on flap. */
 			fluid_viscous_force_on_flap.parallel_exec();
-			//flap_update_normal.parallel_exec();
+			flap_update_normal.parallel_exec();
 			
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt) 

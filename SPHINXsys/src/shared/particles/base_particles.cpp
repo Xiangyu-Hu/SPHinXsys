@@ -168,7 +168,7 @@ namespace SPH
 			output_file << "    ";
 			for (size_t i = 0; i != number_of_particles; ++i) {
 				Vec3d vector_value = upgradeToVector3D(variable[i]);
-				output_file << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
+				output_file << fixed << setprecision(9) << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
 			}
 			output_file << std::endl;
 			output_file << "    </DataArray>\n";

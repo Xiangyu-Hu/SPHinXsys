@@ -138,14 +138,14 @@ namespace SPH {
 	};
 
 	/** @class  Solid
-	 *  @brief Base class  of all solids
+	 *  @brief Base class  of all solid materials
 	*/
 	class Solid : public BaseMaterial
 	{
 	public:
 		/** constructor with material name. */
-		Solid() : BaseMaterial(), collision_stiffness_(1.0),
-			collision_friction_(0.0), solid_particles_(NULL) {
+		Solid() : BaseMaterial(), contact_stiffness_(1.0),
+			contact_friction_(0.0), solid_particles_(NULL) {
 			material_name_ = "Solid";
 		};
 		virtual ~Solid() {};
@@ -154,16 +154,17 @@ namespace SPH {
 		void assignSolidParticles(SolidParticles* solid_particles) {
 			solid_particles_ = solid_particles;
 		};
-		Real getFriction() { return collision_friction_; };
-		Real getStiffness() { return collision_stiffness_; };
+
+		Real ContactFriction() { return contact_friction_; };
+		Real ContactStiffness() { return contact_stiffness_; };
 		/** the interface for dynamical cast*/
 		virtual Solid* pointToThisObject() override { return this; };
 
 	protected:
-		/** artifical bulk modulus*/
-		Real collision_stiffness_;
+		/** contact-force stiffness related to bulk modulus*/
+		Real contact_stiffness_;
 		/** friction property mimic fluid viscosity*/
-		Real collision_friction_;
+		Real contact_friction_;
 
 		/** particles for this material */
 		SolidParticles* solid_particles_;

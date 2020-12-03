@@ -56,7 +56,7 @@ namespace SPH {
 		SolidParticles(SPHBody* body, Solid* solid);
 		virtual ~SolidParticles() {};
 
-		StdLargeVec<Vecd> pos_0_;	/**< initial position */
+		StdLargeVec<Vecd>	pos_0_;	/**< initial position */
 		StdLargeVec<Vecd>	n_;		/**<  current normal direction */
 		StdLargeVec<Vecd>	n_0_;	/**<  inital normal direction */  //seems to be moved to method class
 		StdLargeVec<Matd>	B_;		/**<  configuration correction for linear reproducing */
@@ -68,7 +68,13 @@ namespace SPH {
 		StdLargeVec<Vecd>	dvel_dt_ave_;	/**<  fluid time-step averaged particle acceleration */
 		StdLargeVec<Vecd>	force_from_fluid_;	/**<  forces (including pressure and viscous) from fluid */
 		StdLargeVec<Vecd>	viscous_force_from_fluid_;	/**<  viscous forces from fluid */
-	
+
+		//----------------------------------------------------------------------
+		//		for soild-soild contact dynmaics 
+		//----------------------------------------------------------------------
+		StdLargeVec<Real> 	contact_density_;		/**< density due to contact of solid-solid. */
+		StdLargeVec<Vecd>	contact_force_;			/**< contact force from other solid body or bodies */
+
 		/** shift the initial position of the solid particles. */
 		void OffsetInitialParticlePosition(Vecd offset);
 		/** initialize normal direction along solid body shape. */

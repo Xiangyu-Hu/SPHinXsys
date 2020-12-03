@@ -579,7 +579,7 @@ namespace SPH
 	* the parallelized version of the method requires the one using ghost particles 
 	* because the splitting partition only works in this case.  
 	*/
-	template<class DampingAlgorithmType, typename VariableType>
+	template<class BodyRelationType, class DampingAlgorithmType, typename VariableType>
 	class DampingBySplittingWithRandomChoice : public DampingAlgorithmType
 	{
 	protected:
@@ -589,9 +589,9 @@ namespace SPH
 			return ((double)rand() / (RAND_MAX)) < random_ratio_ ? true : false;
 		};
 	public:
-		DampingBySplittingWithRandomChoice(SPHBodyInnerRelation* body_inner_relation,
+		DampingBySplittingWithRandomChoice(BodyRelationType* body_relation,
 			Real random_ratio, StdLargeVec<VariableType>& variable, Real eta) :
-			DampingAlgorithmType(body_inner_relation, variable, eta / random_ratio),
+			DampingAlgorithmType(body_relation, variable, eta / random_ratio),
 			random_ratio_(random_ratio) {};
 		virtual ~DampingBySplittingWithRandomChoice() {};
 

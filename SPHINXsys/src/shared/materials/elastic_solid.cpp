@@ -20,15 +20,15 @@ namespace SPH {
 	//=================================================================================================//
 	Real ElasticSolid::getViscousTimeStepSize(Real smoothing_length)
 	{
-		Real totoal_viscosity = eta_0_;
-		return 0.5 * smoothing_length * smoothing_length * rho_0_ / (totoal_viscosity + TinyReal);
+		Real total_viscosity = eta_0_;
+		return 0.5 * smoothing_length * smoothing_length * rho_0_ / (total_viscosity + TinyReal);
 	}
 	//=================================================================================================//
 	Matd ElasticSolid::NumericalDampingStress(Matd& F, Matd& dF_dt, Real numerical_viscosity, size_t particle_index_i)
 	{
 		Matd strain_rate = 0.5 * (~dF_dt * F + ~F * dF_dt);
 		Matd sigmaPK2 = numerical_viscosity * strain_rate;
-		return F * sigmaPK2;
+		return sigmaPK2;
 	}
 	//=================================================================================================//
 	Real ElasticSolid::getNumericalViscosity(Real smoothing_length)
@@ -42,8 +42,10 @@ namespace SPH {
 		lambda_0_ = SetLambda();
 		G_0_ = SetShearModulus();
 		c_0_ = SetSoundSpeed();
+		setContactStiffness();
 		std::cout << "The speed of sound: " << c_0_ << std::endl;
 		std::cout << "The Lambda: " << lambda_0_ << std::endl;
+		std::cout << "Contact stiffness: " << contact_stiffness_ << std::endl;
 	};
 	//=================================================================================================//
 	Matd LinearElasticSolid::ConstitutiveRelation(Matd& F, size_t particle_index_i)
@@ -51,7 +53,7 @@ namespace SPH {
 		Matd strain = 0.5 * (~F * F - Matd(1.0));
 		Matd sigmaPK2 = lambda_0_ * strain.trace() * Matd(1.0)
 			+ 2.0 * G_0_ * strain;
-		return F * sigmaPK2;
+		return sigmaPK2;
 	}
 	//=================================================================================================//
 	Real LinearElasticSolid::SetSoundSpeed()
@@ -74,7 +76,7 @@ namespace SPH {
 		Matd right_cauchy = ~F * F;
 		Matd sigmaPK2 = G_0_ * Matd(1.0)
 			+ (lambda_0_ * log(det(F)) - G_0_) * inverse(right_cauchy);
-		return F * sigmaPK2;
+		return sigmaPK2;
 	}
 	//=================================================================================================//
 	Matd FeneNeoHookeanSolid::ConstitutiveRelation(Matd& F, size_t particle_index_i)
@@ -83,7 +85,7 @@ namespace SPH {
 		Matd strain = 0.5 * (right_cauchy - Matd(1.0));
 		Matd sigmaPK2 = G_0_ / (1.0 - 2.0 * strain.trace() / j1_m_) * Matd(1.0)
 			+ (lambda_0_ * log(det(F)) - G_0_) * inverse(right_cauchy);
-		return F * sigmaPK2;
+		return sigmaPK2;
 	}
 	//=================================================================================================//
 	Real Muscle::SetSoundSpeed()
@@ -105,8 +107,10 @@ namespace SPH {
 		s0s0_ = SimTK::outer(s0_, s0_);
 		c_0_ = SetSoundSpeed();
 		lambda_0_ = SetLambda();
+		setContactStiffness();
 		std::cout << "The speed of sound: " << c_0_ << std::endl;
 		std::cout << "The Lambda: " << lambda_0_ << std::endl;
+		std::cout << "Contact stiffness: " << contact_stiffness_ << std::endl;
 	}
 	//=================================================================================================//
 	Matd Muscle::ConstitutiveRelation(Matd& F, size_t i)
@@ -123,7 +127,7 @@ namespace SPH {
 			+ 2.0 * a_0_[2] * I_ss_1 * exp(b_0_[2] * I_ss_1 * I_ss_1) * s0s0_
 			+ a_0_[3] * I_fs * exp(b_0_[3] * I_fs * I_fs) * f0s0_;
 
-		return F * sigmaPK2;
+		return sigmaPK2;
 	}
 	//=================================================================================================//
 	Matd LocallyOrthotropicMuscle::ConstitutiveRelation(Matd& F, size_t i)
@@ -140,7 +144,7 @@ namespace SPH {
 			+ 2.0 * a_0_[2] * I_ss_1 * exp(b_0_[2] * I_ss_1 * I_ss_1) * local_s0s0_[i]
 			+ a_0_[3] * I_fs * exp(b_0_[3] * I_fs * I_fs) * local_f0s0_[i];
 
-		return F * sigmaPK2;
+		return sigmaPK2;
 	}		
 	//=================================================================================================//
 	void LocallyOrthotropicMuscle::initializeLocalProperties(BaseParticles* base_particles)
@@ -242,7 +246,7 @@ namespace SPH {
 	{
 		Matd passive_stress = muscle_.ConstitutiveRelation(F, i);
 		return passive_stress + active_muscle_particles_->active_contraction_stress_[i]
-							  * F * muscle_.getMuscleFiber(i);
+							  * muscle_.getMuscleFiber(i);
 	}
 	//=================================================================================================//
 	void ActiveMuscle::writeToXmlForReloadMaterialProperty(std::string& filefullpath)

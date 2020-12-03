@@ -55,6 +55,8 @@ namespace SPH {
 		Real lambda_0_; 	/*> First Lame parameter */
 		ElasticSolidParticles* elastic_particles_;
 
+		/** set contact stiffness for contact dynamics */
+		void setContactStiffness() { contact_stiffness_ = c_0_* c_0_; };
 	public:
 		/** Constructor */
 		ElasticSolid() : 
@@ -79,12 +81,14 @@ namespace SPH {
 		virtual Real getNumericalViscosity(Real smoothing_length);
 		/**
 		 * @brief compute the stress through Constitutive relation.
+		 * In the present total Lagrangian formulation, second Piola-Kirchhoff stress is used.  
 		 * @param[in] deform_grad deformation gradient
 		 * @param[in] particle_index_i Particle index
 		 */
 		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) = 0;
 		/**
 		 * @brief Compute physical and numerical damping stress.
+		 * In the present total Lagrangian formulation, the viscous stress is also in form of second Piola-Kirchhoff stress.  
 		 * @param[in] deform_grad 	Gradient of deformation.
 		 * @param[in] deform_grad_rate 	Rate of gradient of deformation.
 		 * @param[in] numerical_viscosity numerical viscosity.

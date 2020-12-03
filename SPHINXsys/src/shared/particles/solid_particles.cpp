@@ -30,12 +30,17 @@ namespace SPH {
 		registerAVariable(n_0_, registered_vectors_, vectors_map_, vectors_to_write_, "InitialNormalDirection", false); //seems to be moved to method
 		registerAVariable(B_, registered_matrices_, matrices_map_, matrices_to_write_, "CorrectionMatrix", false, Matd(1.0));
 		//----------------------------------------------------------------------
-		//		for FSI to be moved to method classes
+		//		for FSI
 		//----------------------------------------------------------------------
 		registerAVariable(vel_ave_, registered_vectors_, vectors_map_, vectors_to_write_, "AverageVelocity", false);
 		registerAVariable(dvel_dt_ave_, registered_vectors_, vectors_map_, vectors_to_write_, "AverageAcceleration", false);
 		registerAVariable(force_from_fluid_, registered_vectors_, vectors_map_, vectors_to_write_, "ForceFromFluid", false);
 		registerAVariable(viscous_force_from_fluid_, registered_vectors_, vectors_map_, vectors_to_write_, "ViscousForceFromFluid", false);
+		//----------------------------------------------------------------------
+		//		For solid-solid contact
+		//----------------------------------------------------------------------
+		registerAVariable(contact_density_, registered_scalars_, scalars_map_, scalars_to_write_, "ContactDensity", true);
+		registerAVariable(contact_force_, registered_vectors_, vectors_map_, vectors_to_write_, "ViscousForceFromFluid", false);
 
 		//set the initial value
 		for (size_t i = 0; i != pos_n_.size(); ++i) pos_0_[i] =  pos_n_[i];

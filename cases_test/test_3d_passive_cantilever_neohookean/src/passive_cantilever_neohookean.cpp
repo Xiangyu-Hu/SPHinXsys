@@ -161,7 +161,7 @@ int main()
 	/** Constrain the holder. */
 	solid_dynamics::ConstrainSolidBodyRegion
 		constrain_holder(myocardium_body, new Holder(myocardium_body, "Holder"));
-	DampingBySplittingWithRandomChoice<DampingBySplittingPairwise<Vec3d>, Vec3d>
+	DampingBySplittingWithRandomChoice<SPHBodyInnerRelation, DampingBySplittingPairwise<Vec3d>, Vec3d>
 		muscle_damping(myocardium_body_inner, 0.1, myocardium_particles.vel_n_, physical_viscosity);
 	/** Output */
 	In_Output in_output(system);

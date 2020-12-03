@@ -38,117 +38,89 @@ namespace SPH
 {
 	namespace solid_dynamics
 	{
+		//----------------------------------------------------------------------
+		//		for general solid dynamics 
+		//----------------------------------------------------------------------
 		typedef DataDelegateSimple<SolidBody, SolidParticles, Solid> SolidDataDelegateSimple;
-
 		typedef DataDelegateInner<SolidBody, SolidParticles, Solid> SolidDataDelegateInner;
-		
-		typedef DataDelegateComplex<SolidBody, SolidParticles, Solid, SolidBody, SolidParticles> SolidDataDelegateComplex;
-
-		typedef DataDelegateSimple<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataDelegateSimple;
-
-		typedef DataDelegateInner<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataDelegateInner;
-
 		typedef DataDelegateContact<SolidBody, SolidParticles, Solid, FluidBody, FluidParticles, Fluid> FSIDataDelegateContact;
+		typedef DataDelegateContact<SolidBody, SolidParticles, Solid, SolidBody, SolidParticles, Solid> ContactDynamicsDataDelegate;
 
 		/**
 		 * @class SolidDynamicsInitialCondition
 		 * @brief  set initial condition for solid fluid body
 		 * This is a abstract class to be override for case specific initial conditions.
 		 */
-		class SolidDynamicsInitialCondition : 
+		class SolidDynamicsInitialCondition :
 			public ParticleDynamicsSimple, public SolidDataDelegateSimple
 		{
 		public:
-			SolidDynamicsInitialCondition(SolidBody *body) : 
+			SolidDynamicsInitialCondition(SolidBody* body) :
 				ParticleDynamicsSimple(body), SolidDataDelegateSimple(body) {};
 			virtual ~SolidDynamicsInitialCondition() {};
 		};
 
 		/**
-		 * @class ElasticSolidDynamicsInitialCondition
-		 * @brief  set initial condition for a solid body with different material
-		 * This is a abstract class to be override for case specific initial conditions.
-		 */
-		class ElasticSolidDynamicsInitialCondition : 
-			public ParticleDynamicsSimple, public ElasticSolidDataDelegateSimple
+		* @class SummationContactDensity
+		* @brief Computing the summation density due to solid-solid contact model.
+		*/
+		class SummationContactDensity :
+			public InteractionDynamics, public ContactDynamicsDataDelegate
 		{
 		public:
-			ElasticSolidDynamicsInitialCondition(SolidBody *body);
-			virtual ~ElasticSolidDynamicsInitialCondition() {};
+			SummationContactDensity(SPHBodyContactRelation* body_contact_relation);
+			virtual ~SummationContactDensity() {};
 		protected:
-			StdLargeVec<Vecd>& pos_n_, & vel_n_;
+			StdLargeVec<Real>& mass_, & contact_density_;
+			StdVec<StdLargeVec<Real>*> contact_mass_;
+
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
-		* @class UpdateElasticNormalDirection
-		* @brief update particle normal directions for elastic solid
+		* @class ContactForceAcceleration
+		* @brief Computing the contact force.
 		*/
-		class UpdateElasticNormalDirection :
-			public ParticleDynamicsSimple, public ElasticSolidDataDelegateSimple
+		class ContactForce :
+			public InteractionDynamics, public ContactDynamicsDataDelegate
 		{
 		public:
-			explicit UpdateElasticNormalDirection(SolidBody *elastic_body);
-			virtual ~UpdateElasticNormalDirection() {};
+			ContactForce(SPHBodyContactRelation* body_contact_relation);
+			virtual ~ContactForce() {};
 		protected:
-			StdLargeVec<Vecd>& n_, & n_0_;
-			StdLargeVec<Matd>& F_;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+			StdLargeVec<Real>& contact_density_, & Vol_, & mass_;
+			StdLargeVec<Vecd>& dvel_dt_others_, & contact_force_;
+			StdVec<StdLargeVec<Real>*> contact_contact_density_, contact_Vol_, contact_mass_;
+
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
-		* @class InitializeDisplacement
-		* @brief initialize the displacement for computing average velocity.
-		* This class is for FSI applications to achieve smaller solid dynamics
-		* time step size compared to the fluid dynamics
+		* @class ContactForceFromFriction
+		* @brief  Computing the contact-force contribution from friction.
 		*/
-		class InitializeDisplacement : 
-			public ParticleDynamicsSimple, public ElasticSolidDataDelegateSimple
+		class ContactForceFromFriction :
+			public InteractionDynamicsSplitting, public ContactDynamicsDataDelegate
 		{
 		public:
-			explicit InitializeDisplacement(SolidBody *body, StdLargeVec<Vecd>& pos_temp);
-			virtual ~InitializeDisplacement() {};
+			ContactForceFromFriction(SPHBodyContactRelation* body_contact_relation,
+				StdLargeVec<Vecd>& vel_n, Real eta);
+			virtual ~ContactForceFromFriction() {};
 		protected:
-			StdLargeVec<Vecd>& pos_temp_, & pos_n_, & vel_ave_, & dvel_dt_ave_;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
-		};
+			StdLargeVec<Real>& Vol_, & mass_;
+			StdLargeVec<Vecd>& contact_force_, & vel_n_;
+			StdVec<StdLargeVec<Real>*> contact_Vol_, contact_mass_;
+			StdVec<StdLargeVec<Vecd>*> contact_vel_n_, contact_contact_force_;
+			Real eta_; /**< friction coefficient */
 
-		/**
-		* @class UpdateAverageVelocityAndAcceleration
-		* @brief Computing average velocity.
-		* This class is for FSI applications to achieve smaller solid dynamics
-		* time step size compared to the fluid dynamics
-		*/
-		class UpdateAverageVelocityAndAcceleration : public InitializeDisplacement
-		{
-		public:
-			explicit UpdateAverageVelocityAndAcceleration(SolidBody* body, StdLargeVec<Vecd>& pos_temp)
-				: InitializeDisplacement(body, pos_temp) {};
-			virtual ~UpdateAverageVelocityAndAcceleration() {};
-		protected:
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
-		* @class AverageVelocityAndAcceleration
-		* @brief impose force matching between fluid and solid dynamics
-		*/
-		class AverageVelocityAndAcceleration
-		{
-		public:
-			InitializeDisplacement initialize_displacement_;
-			UpdateAverageVelocityAndAcceleration update_averages_;
-
-			AverageVelocityAndAcceleration(SolidBody* body);
-			~AverageVelocityAndAcceleration() {};
-		protected:
-			StdLargeVec<Vecd> pos_temp_;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
 		* @class FluidViscousForceOnSolid
 		* @brief Computing the viscous force from the fluid
 		*/
-		class FluidViscousForceOnSolid : 
+		class FluidViscousForceOnSolid :
 			public InteractionDynamics, public FSIDataDelegateContact
 		{
 		public:
@@ -204,8 +176,8 @@ namespace SPH
 		* @class TotalViscousForceOnSolid
 		* @brief Computing the total viscous force from fluid
 		*/
-		class TotalViscousForceOnSolid : 
-			public ParticleDynamicsReduce<Vecd, ReduceSum<Vecd>>, 
+		class TotalViscousForceOnSolid :
+			public ParticleDynamicsReduce<Vecd, ReduceSum<Vecd>>,
 			public SolidDataDelegateSimple
 		{
 		public:
@@ -233,6 +205,175 @@ namespace SPH
 		};
 
 		/**
+		* @class CorrectConfiguration
+		* @brief obtain the corrected initial configuration in strong form
+		*/
+		class CorrectConfiguration :
+			public InteractionDynamics, public SolidDataDelegateInner
+		{
+		public:
+			CorrectConfiguration(SPHBodyInnerRelation* body_inner_relation);
+			virtual ~CorrectConfiguration() {};
+		protected:
+			StdLargeVec<Real>& Vol_;
+			StdLargeVec<Matd>& B_;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**@class ConstrainSolidBodyRegion
+	 * @brief Constrain a solid body part with prescribed motion.
+	 * Note the average values for FSI are prescirbed also.
+	 */
+		class ConstrainSolidBodyRegion :
+			public PartDynamicsByParticle, public SolidDataDelegateSimple
+		{
+		public:
+			ConstrainSolidBodyRegion(SolidBody* body, BodyPartByParticle* body_part);
+			virtual ~ConstrainSolidBodyRegion() {};
+		protected:
+			StdLargeVec<Vecd>& pos_n_, & pos_0_;
+			StdLargeVec<Vecd>& n_, & n_0_;
+			StdLargeVec<Vecd>& vel_n_, & dvel_dt_, & vel_ave_, & dvel_dt_ave_;
+			virtual Point GetDisplacement(Point& pos_0, Point& pos_n) { return pos_0; };
+			virtual Vecd GetVelocity(Point& pos_0, Point& pos_n, Vecd& vel_n) { return Vecd(0); };
+			virtual Vecd GetAcceleration(Point& pos_0, Point& pos_n, Vecd& dvel_dt) { return Vecd(0); };
+			virtual SimTK::Rotation getBodyRotation(Point& pos_0, Point& pos_n, Vecd& dvel_dt) { return SimTK::Rotation(); }
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**@class ImposeExternalForce
+		 * @brief impose external force on a solid body part
+		 * by add extra acceleration
+		 */
+		class ImposeExternalForce :
+			public PartDynamicsByParticle, public SolidDataDelegateSimple
+		{
+		public:
+			ImposeExternalForce(SolidBody* body, SolidBodyPartForSimbody* body_part);
+			virtual ~ImposeExternalForce() {};
+		protected:
+			StdLargeVec<Vecd>& pos_0_, & vel_n_, & vel_ave_;
+			/**
+			 * @brief acceleration will be specified by the application
+			 */
+			virtual Vecd GetAcceleration(Vecd& pos) = 0;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		 * @class ConstrainSolidBodyPartBySimBody
+		 * @brief Constrain a solid body part from the motion
+		 * computed from Simbody.
+		 */
+		class ConstrainSolidBodyPartBySimBody : public ConstrainSolidBodyRegion
+		{
+		public:
+			ConstrainSolidBodyPartBySimBody(SolidBody* body,
+				SolidBodyPartForSimbody* body_part,
+				SimTK::MultibodySystem& MBsystem,
+				SimTK::MobilizedBody& mobod,
+				SimTK::Force::DiscreteForces& force_on_bodies,
+				SimTK::RungeKuttaMersonIntegrator& integ);
+			virtual ~ConstrainSolidBodyPartBySimBody() {};
+		protected:
+			SimTK::MultibodySystem& MBsystem_;
+			SimTK::MobilizedBody& mobod_;
+			SimTK::Force::DiscreteForces& force_on_bodies_;
+			SimTK::RungeKuttaMersonIntegrator& integ_;
+			const SimTK::State* simbody_state_;
+			Vec3d initial_mobod_origin_location_;
+
+			virtual void setupDynamics(Real dt = 0.0) override;
+			void virtual Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		 * @class TotalForceOnSolidBodyPartForSimBody
+		 * @brief Compute the force acting on the solid body part
+		 * for applying to simbody forces latter
+		 */
+		class TotalForceOnSolidBodyPartForSimBody :
+			public PartDynamicsByParticleReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>>,
+			public SolidDataDelegateSimple
+		{
+		public:
+			TotalForceOnSolidBodyPartForSimBody(SolidBody* body,
+				SolidBodyPartForSimbody* body_part,
+				SimTK::MultibodySystem& MBsystem,
+				SimTK::MobilizedBody& mobod,
+				SimTK::Force::DiscreteForces& force_on_bodies,
+				SimTK::RungeKuttaMersonIntegrator& integ);
+			virtual ~TotalForceOnSolidBodyPartForSimBody() {};
+		protected:
+			StdLargeVec<Vecd>& force_from_fluid_, & contact_force_, & pos_n_;
+			SimTK::MultibodySystem& MBsystem_;
+			SimTK::MobilizedBody& mobod_;
+			SimTK::Force::DiscreteForces& force_on_bodies_;
+			SimTK::RungeKuttaMersonIntegrator& integ_;
+			const SimTK::State* simbody_state_;
+			Vec3d current_mobod_origin_location_;
+
+			virtual void SetupReduce() override;
+			virtual SimTK::SpatialVec ReduceFunction(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		* @class FluidViscousForceOnSolid
+		* @brief Computing the viscous force from the fluid with wall modeling
+		*/
+		class FluidViscousForceOnSolidWallModel : public FluidViscousForceOnSolid
+		{
+		public:
+			FluidViscousForceOnSolidWallModel(SPHBodyContactRelation* body_contact_relation,
+				fluid_dynamics::ViscousAccelerationWallModel* viscous_acceleration_wall_modeling);
+			virtual ~FluidViscousForceOnSolidWallModel() {};
+		protected:
+			StdLargeVec<Vecd>& n_, & gradient_p_;
+			StdLargeVec<Matd>& gradient_vel_;
+
+			//dynamics of a particle
+			//to be realized in specific algorithms
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+		
+		//----------------------------------------------------------------------
+		//		for elastic solid dynamics 
+		//----------------------------------------------------------------------
+		typedef DataDelegateSimple<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataDelegateSimple;
+		typedef DataDelegateInner<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataDelegateInner;
+
+		/**
+		 * @class ElasticSolidDynamicsInitialCondition
+		 * @brief  set initial condition for a solid body with different material
+		 * This is a abstract class to be override for case specific initial conditions.
+		 */
+		class ElasticSolidDynamicsInitialCondition : 
+			public ParticleDynamicsSimple, public ElasticSolidDataDelegateSimple
+		{
+		public:
+			ElasticSolidDynamicsInitialCondition(SolidBody *body);
+			virtual ~ElasticSolidDynamicsInitialCondition() {};
+		protected:
+			StdLargeVec<Vecd>& pos_n_, & vel_n_;
+		};
+
+		/**
+		* @class UpdateElasticNormalDirection
+		* @brief update particle normal directions for elastic solid
+		*/
+		class UpdateElasticNormalDirection :
+			public ParticleDynamicsSimple, public ElasticSolidDataDelegateSimple
+		{
+		public:
+			explicit UpdateElasticNormalDirection(SolidBody *elastic_body);
+			virtual ~UpdateElasticNormalDirection() {};
+		protected:
+			StdLargeVec<Vecd>& n_, & n_0_;
+			StdLargeVec<Matd>& F_;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
 		* @class AcousticTimeStepSize
 		* @brief Computing the acoustic time step size
 		* computing time step size
@@ -248,22 +389,6 @@ namespace SPH
 			StdLargeVec<Vecd>& vel_n_, & dvel_dt_;
 			Real smoothing_length_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
-		* @class CorrectConfiguration
-		* @brief obtain the corrected initial configuration in strong form
-		*/
-		class CorrectConfiguration : 
-			public InteractionDynamics, public SolidDataDelegateInner
-		{
-		public:
-			CorrectConfiguration(SPHBodyInnerRelation* body_inner_relation);
-			virtual ~CorrectConfiguration() {};
-		protected:
-			StdLargeVec<Real>& Vol_;
-			StdLargeVec<Matd>& B_;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -323,120 +448,53 @@ namespace SPH
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
-		/**@class ConstrainSolidBodyRegion
-		 * @brief Constrain a solid body part with prescribed motion.
-		 * Note the average values for FSI are prescirbed also.
-		 */
-		class ConstrainSolidBodyRegion : 
-			public PartDynamicsByParticle, public SolidDataDelegateSimple
+		/**
+		* @class InitializeDisplacement
+		* @brief initialize the displacement for computing average velocity.
+		* This class is for FSI applications to achieve smaller solid dynamics
+		* time step size compared to the fluid dynamics
+		*/
+		class InitializeDisplacement :
+			public ParticleDynamicsSimple, public ElasticSolidDataDelegateSimple
 		{
 		public:
-			ConstrainSolidBodyRegion(SolidBody *body, BodyPartByParticle*body_part);
-			virtual ~ConstrainSolidBodyRegion() {};
+			explicit InitializeDisplacement(SolidBody* body, StdLargeVec<Vecd>& pos_temp);
+			virtual ~InitializeDisplacement() {};
 		protected:
-			StdLargeVec<Vecd>& pos_n_, & pos_0_;
-			StdLargeVec<Vecd>& n_, & n_0_;
-			StdLargeVec<Vecd>&vel_n_, & dvel_dt_, & vel_ave_, & dvel_dt_ave_;
-			virtual Point GetDisplacement(Point& pos_0, Point& pos_n) { return pos_0; };
-			virtual Vecd GetVelocity(Point& pos_0, Point& pos_n, Vecd& vel_n) { return Vecd(0); };
-			virtual Vecd GetAcceleration(Point& pos_0, Point& pos_n, Vecd& dvel_dt) { return Vecd(0); };
-			virtual SimTK::Rotation getBodyRotation(Point& pos_0, Point& pos_n, Vecd& dvel_dt) { return SimTK::Rotation(); }
-			virtual void Update(size_t index_i,	Real dt = 0.0) override;
-		};
-
-		/**@class ImposeExternalForce
-		 * @brief impose external force on a solid body part
-		 * by add extra acceleration
-		 */
-		class ImposeExternalForce :
-			public PartDynamicsByParticle, public SolidDataDelegateSimple
-		{
-		public:
-			ImposeExternalForce(SolidBody *body, SolidBodyPartForSimbody *body_part);
-			virtual ~ImposeExternalForce() {};
-		protected:
-			StdLargeVec<Vecd>& pos_0_, & vel_n_, & vel_ave_;
-			/**
-			 * @brief acceleration will be specified by the application
-			 */
-			virtual Vecd GetAcceleration(Vecd& pos) = 0;
+			StdLargeVec<Vecd>& pos_temp_, & pos_n_, & vel_ave_, & dvel_dt_ave_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
-		 * @class ConstrainSolidBodyPartBySimBody
-		 * @brief Constrain a solid body part from the motion
-		 * computed from Simbody.
-		 */
-		class ConstrainSolidBodyPartBySimBody : public ConstrainSolidBodyRegion
+		* @class UpdateAverageVelocityAndAcceleration
+		* @brief Computing average velocity.
+		* This class is for FSI applications to achieve smaller solid dynamics
+		* time step size compared to the fluid dynamics
+		*/
+		class UpdateAverageVelocityAndAcceleration : public InitializeDisplacement
 		{
 		public:
-			ConstrainSolidBodyPartBySimBody(SolidBody *body,
-				SolidBodyPartForSimbody *body_part,
-				SimTK::MultibodySystem &MBsystem,
-				SimTK::MobilizedBody &mobod,
-				SimTK::Force::DiscreteForces &force_on_bodies,
-				SimTK::RungeKuttaMersonIntegrator &integ);
-			virtual ~ConstrainSolidBodyPartBySimBody() {};
+			explicit UpdateAverageVelocityAndAcceleration(SolidBody* body, StdLargeVec<Vecd>& pos_temp)
+				: InitializeDisplacement(body, pos_temp) {};
+			virtual ~UpdateAverageVelocityAndAcceleration() {};
 		protected:
-			SimTK::MultibodySystem& MBsystem_;
-			SimTK::MobilizedBody& mobod_;
-			SimTK::Force::DiscreteForces& force_on_bodies_;
-			SimTK::RungeKuttaMersonIntegrator& integ_;
-			const SimTK::State* simbody_state_;
-			Vec3d initial_mobod_origin_location_;
-
-			virtual void setupDynamics(Real dt = 0.0) override;
-			void virtual Update(size_t index_i, Real dt = 0.0) override;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
-		 * @class TotalForceOnSolidBodyPartForSimBody
-		 * @brief Compute the force acting on the solid body part
-		 * for applying to simbody forces latter
-		 */
-		class TotalForceOnSolidBodyPartForSimBody :
-			public PartDynamicsByParticleReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>>,
-			public SolidDataDelegateSimple
+		* @class AverageVelocityAndAcceleration
+		* @brief impose force matching between fluid and solid dynamics
+		*/
+		class AverageVelocityAndAcceleration
 		{
 		public:
-			TotalForceOnSolidBodyPartForSimBody(SolidBody *body,
-				SolidBodyPartForSimbody *body_part,
-				SimTK::MultibodySystem &MBsystem,
-				SimTK::MobilizedBody &mobod,
-				SimTK::Force::DiscreteForces &force_on_bodies,
-				SimTK::RungeKuttaMersonIntegrator &integ);
-			virtual ~TotalForceOnSolidBodyPartForSimBody() {};
+			InitializeDisplacement initialize_displacement_;
+			UpdateAverageVelocityAndAcceleration update_averages_;
+
+			AverageVelocityAndAcceleration(SolidBody* body);
+			~AverageVelocityAndAcceleration() {};
 		protected:
-			StdLargeVec<Vecd>& force_from_fluid_, & pos_n_;
-			SimTK::MultibodySystem& MBsystem_;
-			SimTK::MobilizedBody& mobod_;
-			SimTK::Force::DiscreteForces& force_on_bodies_;
-			SimTK::RungeKuttaMersonIntegrator& integ_;
-			const SimTK::State* simbody_state_;
-			Vec3d current_mobod_origin_location_;
-
-			virtual void SetupReduce() override;
-			virtual SimTK::SpatialVec ReduceFunction(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
-        * @class FluidViscousForceOnSolid
-        * @brief Computing the viscous force from the fluid with wall modeling
-        */
-		class FluidViscousForceOnSolidWallModel : public FluidViscousForceOnSolid
-		{
-		public:
-			FluidViscousForceOnSolidWallModel(SPHBodyContactRelation* body_contact_relation,
-				fluid_dynamics::ViscousAccelerationWallModel* viscous_acceleration_wall_modeling);
-			virtual ~FluidViscousForceOnSolidWallModel() {};
-		protected:
-			StdLargeVec<Vecd>& n_, & gradient_p_;
-			StdLargeVec<Matd>& gradient_vel_;
-
-			//dynamics of a particle
-			//to be realized in specific algorithms
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			StdLargeVec<Vecd> pos_temp_;
 		};
 	}
 }
