@@ -32,6 +32,19 @@
 
 namespace SPH
 {
+	struct SPHBodyParticlesIndex
+	{
+		size_t operator () (size_t particle_index) const { return particle_index; };
+	};
+
+	struct BodyPartParticlesIndex
+	{
+		IndexVector& body_part_particles_;
+		BodyPartParticlesIndex(IndexVector& body_part_particles) :
+			body_part_particles_(body_part_particles) {};
+		size_t operator () (size_t particle_entry) const { return body_part_particles_[particle_entry]; };
+	};
+
 	/**
 	 * @class SPHBodyBaseRelation
 	 * @brief The relation within a SPH body or with its contact SPH bodies
@@ -82,7 +95,11 @@ namespace SPH
 	class SPHBodyContactRelation : public SPHBodyBaseRelation
 	{
 	protected:
+		SPHBodyParticlesIndex get_particle_index_;
 		StdVec<BaseMeshCellLinkedList*> target_mesh_cell_linked_lists_;
+		template<typename GetParticleIndex> 
+		void updateConfigurationForParticles(size_t number_of_particles, GetParticleIndex& get_particle_index);
+
 	public:
 		SPHBodyVector contact_sph_bodies_;
 
@@ -96,6 +113,22 @@ namespace SPH
 		virtual void updateConfiguration() override;
 	};
 
+	/**
+	 * @class SolidBodyContactRelation
+	 * @brief The relation between a solid body and its contact solid bodies
+	 */
+	class SolidBodyContactRelation : public SPHBodyContactRelation
+	{
+	public:
+		BodySurfaceLayer body_surface_layer_;
+		SolidBodyContactRelation(SPHBody* body, SPHBodyVector relation_bodies);
+		virtual ~SolidBodyContactRelation() {};
+
+		virtual void updateConfiguration() override;
+	protected:
+		IndexVector& body_part_particles_;
+		BodyPartParticlesIndex get_body_part_particle_index_;
+	};
 	/**
 	 * @class SPHBodyComplexRelation
 	 * @brief The relation within a SPH body and with its contact SPH bodies.
@@ -121,6 +154,9 @@ namespace SPH
 			delete inner_relation_;
 			delete contact_relation_;
 		};
+
+		SPHBodyInnerRelation* InnerRelation() {	return inner_relation_;	};
+		SPHBodyContactRelation* ContactRelation() { return contact_relation_; };
 
 		virtual void updateConfigurationMemories() override;
 		virtual void updateConfiguration()  override;

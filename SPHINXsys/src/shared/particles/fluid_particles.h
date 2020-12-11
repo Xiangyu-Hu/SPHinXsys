@@ -54,6 +54,7 @@ namespace SPH {
 
 		StdLargeVec<Real> p_;		/**< pressure */
 		StdLargeVec<Real> drho_dt_;		/**< density change rate */
+		StdLargeVec<Real> pos_div_;		/**< divergence of particle position to capture a regular (no violent breaking wave) free surface */
 
 		/** Write particle data in PLT format for Tecplot. */
 		virtual void writeParticlesToPltFile(ofstream &output_file) override;

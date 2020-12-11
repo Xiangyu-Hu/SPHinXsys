@@ -15,14 +15,11 @@ namespace SPH {
 		      class MaterialType,
 			  class ContactBodyType, 
 			  class ContactParticlesType, 
-			  class ContactMaterialType>
-	DataDelegateContact<BodyType, ParticlesType, MaterialType, ContactBodyType, ContactParticlesType, ContactMaterialType>
-		::DataDelegateContact(SPHBodyContactRelation* body_contact_relation) :	
-		body_(dynamic_cast<BodyType*>(body_contact_relation->sph_body_)),
-		particles_(dynamic_cast<ParticlesType*>(body_->base_particles_)),
-		material_(dynamic_cast<MaterialType*>(body_->base_particles_->base_material_)),
-		sorted_id_(body_->base_particles_->sorted_id_),
-		unsorted_id_(body_->base_particles_->unsorted_id_),
+			  class ContactMaterialType,
+			  class BaseDataDelegateType>
+	DataDelegateContact<BodyType, ParticlesType, MaterialType, ContactBodyType, ContactParticlesType, ContactMaterialType, BaseDataDelegateType>
+		::DataDelegateContact(SPHBodyContactRelation* body_contact_relation) :
+		BaseDataDelegateType(body_contact_relation->sph_body_),
 		contact_configuration_(body_contact_relation->contact_configuration_)
 	{
 		SPHBodyVector contact_sph_bodies = body_contact_relation->contact_sph_bodies_;

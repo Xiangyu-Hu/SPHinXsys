@@ -155,8 +155,8 @@ int main()
 	SolidParticles 	moving_plate_particles(moving_plate, moving_plate_material);
 	/** topology */
 	SPHBodyInnerRelation*   myocardium_body_inner = new SPHBodyInnerRelation(myocardium_body);
-	SPHBodyContactRelation* myocardium_plate_contact = new SPHBodyContactRelation(myocardium_body, {moving_plate});
-	SPHBodyContactRelation* plate_myocardium_contact = new SPHBodyContactRelation(moving_plate, {myocardium_body});
+	SolidBodyContactRelation* myocardium_plate_contact = new SolidBodyContactRelation(myocardium_body, {moving_plate});
+	SolidBodyContactRelation* plate_myocardium_contact = new SolidBodyContactRelation(moving_plate, {myocardium_body});
 	/** 
 	 * This section define all numerical methods will be used in this case.
 	 */

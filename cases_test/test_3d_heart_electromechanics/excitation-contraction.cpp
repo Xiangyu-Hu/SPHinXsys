@@ -169,11 +169,13 @@ public:
 };
 /** Set diffusion relaxation. */
 class DiffusionRelaxation
-	: public RelaxationOfAllDiffusionSpeciesRK2<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>
+	: public RelaxationOfAllDiffusionSpeciesRK2<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle,
+	RelaxationOfAllDiffussionSpeciesInner<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>,
+	SPHBodyInnerRelation>
 {
 public:
 	DiffusionRelaxation(SPHBodyInnerRelation* body_inner_relation)
-		: RelaxationOfAllDiffusionSpeciesRK2<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(body_inner_relation) {};
+		: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation) {};
 	virtual ~DiffusionRelaxation() {};
 };
 /** Imposing diffusion boundary condition */

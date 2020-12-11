@@ -79,7 +79,8 @@ namespace SPH {
 		void OffsetInitialParticlePosition(Vecd offset);
 		/** initialize normal direction along solid body shape. */
 		void initializeNormalDirectionFromGeometry();
-
+		/** particle translation and rotation */
+		void ParticleTranslationAndRotation(Transformd& transform);
 		/** Write particle data in PLT format for Tecplot */
 		virtual void writeParticlesToPltFile(ofstream &output_file) override;
 		/** Write particle data in XML format for restart */

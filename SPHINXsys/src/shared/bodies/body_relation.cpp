@@ -9,6 +9,7 @@
  */
 #include "base_kernel.h"
 #include "body_relation.h"
+#include "body_relation.hpp"
 #include "base_particles.h"
 
 namespace SPH
@@ -67,6 +68,22 @@ namespace SPH
 		for (size_t k = 0; k != contact_sph_bodies_.size(); ++k) {
 			contact_configuration_[k].resize(updated_size, Neighborhood());
 		}
+	}
+	//=================================================================================================//
+	void SPHBodyContactRelation::updateConfiguration()
+	{
+		updateConfigurationForParticles(sph_body_->number_of_particles_, get_particle_index_);
+	}
+	//=================================================================================================//
+	SolidBodyContactRelation::SolidBodyContactRelation(SPHBody* sph_body, SPHBodyVector contact_sph_bodies)
+		: SPHBodyContactRelation(sph_body, contact_sph_bodies),
+		body_surface_layer_(BodySurfaceLayer(sph_body)), 
+		body_part_particles_(body_surface_layer_.body_part_particles_),
+		get_body_part_particle_index_(body_part_particles_) {}
+	//=================================================================================================//
+	void SolidBodyContactRelation::updateConfiguration()
+	{
+		updateConfigurationForParticles(body_part_particles_.size(), get_body_part_particle_index_);
 	}
 	//=================================================================================================//
 	SPHBodyComplexRelation::SPHBodyComplexRelation(SPHBody* body, SPHBodyVector contact_sph_bodies)

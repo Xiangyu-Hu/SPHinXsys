@@ -65,10 +65,10 @@ namespace SPH
 		* @brief Computing the summation density due to solid-solid contact model.
 		*/
 		class SummationContactDensity :
-			public InteractionDynamics, public ContactDynamicsDataDelegate
+			public PartInteractionDynamicsByParticle, public ContactDynamicsDataDelegate
 		{
 		public:
-			SummationContactDensity(SPHBodyContactRelation* body_contact_relation);
+			SummationContactDensity(SolidBodyContactRelation* soild_body_contact_relation);
 			virtual ~SummationContactDensity() {};
 		protected:
 			StdLargeVec<Real>& mass_, & contact_density_;
@@ -82,15 +82,15 @@ namespace SPH
 		* @brief Computing the contact force.
 		*/
 		class ContactForce :
-			public InteractionDynamics, public ContactDynamicsDataDelegate
+			public PartInteractionDynamicsByParticle, public ContactDynamicsDataDelegate
 		{
 		public:
-			ContactForce(SPHBodyContactRelation* body_contact_relation);
+			ContactForce(SolidBodyContactRelation* soild_body_contact_relation);
 			virtual ~ContactForce() {};
 		protected:
 			StdLargeVec<Real>& contact_density_, & Vol_, & mass_;
 			StdLargeVec<Vecd>& dvel_dt_others_, & contact_force_;
-			StdVec<StdLargeVec<Real>*> contact_contact_density_, contact_Vol_, contact_mass_;
+			StdVec<StdLargeVec<Real>*> contact_contact_density_, contact_Vol_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -131,8 +131,8 @@ namespace SPH
 			StdLargeVec<Vecd>& vel_ave_, & viscous_force_from_fluid_;
 			StdVec<StdLargeVec<Real>*> contact_Vol_, contact_rho_n_;
 			StdVec<StdLargeVec<Vecd>*> contact_vel_n_;
-			Real mu_;
-			Real smoothing_length_;
+			StdVec<Real> mu_;
+			StdVec<Real> smoothing_length_;
 
 			//dynamics of a particle
 			//to be realized in specific algorithms

@@ -15,7 +15,7 @@ using namespace SPH;
 int main(int ac, char* av[])
 {
 	/** Build up -- a SPHSystem -- */
-	SPHSystem system(Vec2d(- DL_sponge - BW, - DH_sponge - BW), Vec2d(DL + BW, DH + BW + DH_sponge), particle_spacing_ref);
+	SPHSystem system(Vec2d(- DL_sponge, - DH_sponge), Vec2d(DL, DH + DH_sponge), particle_spacing_ref);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
 	system.run_particle_relaxation_ = true;
 	/** Tag for computation start with relaxed body fitted particles distribution. */
@@ -49,16 +49,16 @@ int main(int ac, char* av[])
 	WriteBodyStatesToVtu 				write_real_body_states(in_output, system.real_bodies_);
 	WriteRestart						write_restart_files(in_output, system.real_bodies_);
 	ReadRestart							read_restart_files(in_output, system.real_bodies_);
-	/** topology */
-	SPHBodyInnerRelation* water_block_inner = new SPHBodyInnerRelation(water_block);
-	SPHBodyInnerRelation* cylinder_inner = new SPHBodyInnerRelation(cylinder);
-	SPHBodyComplexRelation* water_block_complex = new SPHBodyComplexRelation(water_block_inner, {cylinder });
+	/** body topology */
+	SPHBodyComplexRelation* water_block_complex = new SPHBodyComplexRelation(water_block, {cylinder });
 	SPHBodyContactRelation* cylinder_contact = new SPHBodyContactRelation(cylinder, { water_block });
 	SPHBodyContactRelation* fluid_observer_contact = new SPHBodyContactRelation(fluid_observer, { water_block });
 
 	/** check whether run particle relaxation for body fitted particle distribution. */
 	if (system.run_particle_relaxation_) 
 	{
+		/** body topology only for particle realxation */
+		SPHBodyInnerRelation* cylinder_inner = new SPHBodyInnerRelation(cylinder);
 		/**
 		 * @brief 	Methods used for particle relaxation.
 		 */
@@ -121,7 +121,7 @@ int main(int ac, char* av[])
 	/** Impose transport velocity. */
 	fluid_dynamics::TransportVelocityFormulation 	transport_velocity_formulation(water_block_complex);
 	/** Computing vorticity in the flow. */
-	fluid_dynamics::VorticityInFluidField 	compute_vorticity(water_block_inner);
+	fluid_dynamics::VorticityInFluidField 	compute_vorticity(water_block_complex->InnerRelation());
 	/** freestream boundary condition. */
 	FreeStreamCondition freestream_condition(water_block, new FreeStreamBuffer(water_block, "FreestreamBuffer"));
 	/**

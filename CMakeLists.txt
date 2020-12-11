@@ -51,13 +51,13 @@ message("CXX flags: ${CMAKE_CXX_FLAGS}")
 message("CUDA flags: ${CMAKE_CUDA_FLAGS}")
 message("===========================================")
 
-##### compliler flags for physical properties #####
-option(_RIEMANN_ "Enable Riemann solvers"  ON)
-
-if (${_RIEMANN_})
-    add_definitions(-D_RIEMANN_)
+########### GPU - compliler flags for physical properties #############
+# 1. Turn ON if the body force is time dependent, e.g. sloshing tank 
+option(_TIMEDEPENDENT_BODYFORCE_ "Enable time dependent body force" OFF)
+if (${_TIMEDEPENDENT_BODYFORCE_})
+    add_definitions(-D_TIMEDEPENDENT_BODYFORCE_)
 endif()
-###################################################
+#######################################################################
 
 enable_testing()
 
@@ -65,6 +65,12 @@ include(Common)
 include(Import3rdpartylibs)
 add_subdirectory(SPHINXsys)
 add_subdirectory(cases_test)
+
+if(ACTIVATE_CUDA)
+    add_subdirectory(cases_test_gpu)
+endif()
+
+add_subdirectory(cases_user)
 
 set(BUILD_WITH_BENCHMARK_CASES OFF CACHE BOOL "Include the benchmark cases into the project?")
 if(BUILD_WITH_BENCHMARK_CASES)
@@ -114,4 +120,9 @@ endif()
 set(BUILD_WITH_BR_CASES OFF CACHE BOOL "Include BR's cases into the project?")
 if(BUILD_WITH_BR_CASES)
 add_subdirectory(cases_br)
+endif()
+
+set(BUILD_WITH_NA_CASES OFF CACHE BOOL "Include Niklas Aufenanger's cases into the project?")
+if(BUILD_WITH_NA_CASES)
+add_subdirectory(cases_na)
 endif()

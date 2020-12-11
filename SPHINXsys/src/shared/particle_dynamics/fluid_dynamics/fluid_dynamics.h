@@ -61,6 +61,26 @@ namespace SPH
 		};
 
 		/**
+		* @class RegularFreeSurfaceIndication
+		* @brief  indciate the regular free surface of a fluid body.
+		* Should not be used for violent free surface with wave breaking.
+		*/
+		class RegularFreeSurfaceIndication
+			: public InteractionDynamics, public FluidDataDelegateComplex
+		{
+		public:
+			RegularFreeSurfaceIndication(SPHBodyComplexRelation* body_complex_relation);
+			virtual ~RegularFreeSurfaceIndication() {};
+
+		protected:
+			StdVec<Real> contact_inv_rho_0_;
+			StdLargeVec<Real>& Vol_, & pos_div_;
+			StdVec<StdLargeVec<Real>*> contact_mass_;
+
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
 		* @class DensityBySummation
 		* @brief  computing density by summation
 		*/

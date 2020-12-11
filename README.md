@@ -154,6 +154,20 @@ Here, we give the instructions for installing on Ubuntu Linux, Apple OS and Wind
 
         Create your own application in the cases_user in the source folder simply by copying the entire folder of a similar test case and rename and modify application files
 
+
+### How to run gpuSPHinXsys cases on CUDA enabled GPUs?
+The build process for GPU cases are identical to the CPU cases on all platforms, viz. Linux, Windows and Mac OSX.
+However, the following notes must be considered:
+
+        The flag -DACTIVATE_CUDA=ON must be added to let the compiler find an installed version of CUDA. 
+        CUDA 11.0 or higher has to be installed.
+        Choose RelWithDebInfo mode to build.
+        You need to modify the "BUILD_GPU_ARCH" from the master CMake file according to the architechture of your GPU.
+        Just identify the architecture of your GPU and use the proper value of BUILD_GPU_ARCH according the the available tables like this one:
+        http://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
+        Two examples are 75 for Turing and 60 for Pascal.
+
+
 ## Contribution
 
 Any contribution to SPHinXsys are welcome. For this, you will do the following steps:

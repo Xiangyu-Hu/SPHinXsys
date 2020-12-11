@@ -21,6 +21,42 @@ namespace SPH
 		{
 		}
 		//=================================================================================================//
+		RegularFreeSurfaceIndication::
+			RegularFreeSurfaceIndication(SPHBodyComplexRelation* body_complex_relation) :
+			InteractionDynamics(body_complex_relation->sph_body_),
+			FluidDataDelegateComplex(body_complex_relation), 
+			Vol_(particles_->Vol_), pos_div_(particles_->pos_div_)
+		{
+			for (size_t k = 0; k != contact_particles_.size(); ++k) {
+				Real rho_0_k = contact_particles_[k]->rho_0_;
+				contact_inv_rho_0_.push_back(1.0 / rho_0_k);
+				contact_mass_.push_back(&(contact_particles_[k]->mass_));
+			}
+		}
+		//=================================================================================================//
+		void RegularFreeSurfaceIndication::Interaction(size_t index_i, Real dt)
+		{
+			/** Inner interaction. */
+			Real pos_div = 0.0;
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				pos_div -= inner_neighborhood.dW_ij_[n] 
+					* inner_neighborhood.r_ij_[n] * Vol_[inner_neighborhood.j_[n]];
+			/** Contact interaction. */
+			for (size_t k = 0; k < contact_configuration_.size(); ++k)
+			{
+				StdLargeVec<Real>& contact_mass_k = *(contact_mass_[k]);
+				Real contact_inv_rho_0_k = contact_inv_rho_0_[k];
+				Neighborhood& contact_neighborhood = contact_configuration_[k][index_i];
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					pos_div -= contact_neighborhood.dW_ij_[n] * contact_neighborhood.r_ij_[n]
+						* contact_inv_rho_0_k * contact_mass_k[contact_neighborhood.j_[n]];
+				}
+			}
+			pos_div_[index_i] = pos_div;
+		}
+		//=================================================================================================//
 		DensityBySummation::DensityBySummation(SPHBodyComplexRelation* body_complex_relation) :
 			InteractionDynamics(body_complex_relation->sph_body_), 
 			FluidDataDelegateComplex(body_complex_relation),
@@ -441,8 +477,9 @@ namespace SPH
 					Real p_in_wall = p_i + rho_i * r_ij * SMAX(0.0, face_wall_external_acceleration);
 					Real rho_in_wall = material_->DensityFromPressure(p_in_wall);
 
-					//solving Riemann problem or not
-					Real p_star = getPStar(n_k[index_j], vel_i, p_i, rho_i, vel_in_wall, p_in_wall, rho_in_wall);
+					//always solving Riemann problem for wall boundaries
+					Real p_star = PressureRelaxationFirstHalfRiemann::
+						getPStar(n_k[index_j], vel_i, p_i, rho_i, vel_in_wall, p_in_wall, rho_in_wall);
 
 					//pressure force
 					acceleration -= 2.0 * p_star * e_ij * Vol_k[index_j] * dW_ij / rho_i;
@@ -473,7 +510,7 @@ namespace SPH
 		{
 			pos_n_[index_i] += vel_n_[index_i] * dt * 0.5;
 		}
-//=================================================================================================//
+		//=================================================================================================//
 		void PressureRelaxationSecondHalfRiemann::Interaction(size_t index_i, Real dt)
 		{
 			Real rho_i = rho_n_[index_i];

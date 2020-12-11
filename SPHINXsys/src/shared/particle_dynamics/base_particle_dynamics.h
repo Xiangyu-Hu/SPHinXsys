@@ -143,6 +143,20 @@ namespace SPH
 	};
 
 	/**
+	* @class DataDelegateBase
+	* @brief empty base class mixin template.
+	*/
+	class DataDelegateEmptyBase
+	{
+		SPHBody* sph_body_;
+	public:
+		/** Constructor */
+		explicit DataDelegateEmptyBase(SPHBody* sph_body) :
+			sph_body_(sph_body){};
+		virtual ~DataDelegateEmptyBase() {};
+	};
+
+	/**
 	* @class DataDelegateSimple
 	* @brief prepare data for simple particle dynamics.
 	*/
@@ -207,19 +221,14 @@ namespace SPH
 			  class MaterialType = BaseMaterial,
 			  class ContactBodyType = SPHBody,
 			  class ContactParticlesType = BaseParticles,
-			  class ContactMaterialType = BaseMaterial>
-	class DataDelegateContact
+			  class ContactMaterialType = BaseMaterial,
+			  class BaseDataDelegateType = DataDelegateSimple<BodyType, ParticlesType, MaterialType>>
+	class DataDelegateContact : public BaseDataDelegateType
 	{
 	public:
 		explicit DataDelegateContact(SPHBodyContactRelation* body_contact_relation);
 		virtual ~DataDelegateContact() {};
 	protected:
-		BodyType* body_;
-		ParticlesType* particles_;
-		MaterialType* material_;
-		StdLargeVec<size_t>& sorted_id_;
-		StdLargeVec<size_t>& unsorted_id_;
-
 		StdVec<ContactBodyType*>  contact_bodies_;
 		StdVec<ContactParticlesType*>  contact_particles_;
 		StdVec<ContactMaterialType*>  contact_material_;

@@ -17,12 +17,12 @@ namespace SPH
 	PeriodicConditionInAxisDirection::PeriodicConditionInAxisDirection(SPHBody* body, int axis_direction) :
 		BoundingInAxisDirection(body, axis_direction)
 	{
-		//allocate memory
+		setPeriodicTranslation();
 		bound_cells_.resize(2);
 
 		//lower bound cells
 		for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis_]) - 1, 0);
-			j < (size_t)SMIN(int(body_upper_bound_cell_[second_axis_] + 2), int(number_of_cells_[second_axis_])); ++j)
+			j <= (size_t)SMIN(int(body_upper_bound_cell_[second_axis_] + 1), int(number_of_cells_[second_axis_] - 1)); ++j)
 			for (size_t i = SMAX(int(body_lower_bound_cell_[axis_]) - 1, 0);
 				i <= (size_t)SMIN(int(body_lower_bound_cell_[axis_] + 1), int(number_of_cells_[axis_] - 1)); ++i) {
 			Vecu cell_position(0);
@@ -33,7 +33,7 @@ namespace SPH
 
 		//upper bound cells
 		for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis_]) - 1, 0);
-			j < (size_t)SMIN(int(body_upper_bound_cell_[second_axis_] + 2), int(number_of_cells_[second_axis_])); ++j)
+			j <= (size_t)SMIN(int(body_upper_bound_cell_[second_axis_] + 1), int(number_of_cells_[second_axis_] - 1)); ++j)
 			for (size_t i = SMAX(int(body_upper_bound_cell_[axis_]) - 1, 0);
 				i <= (size_t)SMIN(int(body_upper_bound_cell_[axis_] + 1), int(number_of_cells_[axis_] - 1)); ++i) {
 			Vecu cell_position(0);
@@ -93,6 +93,29 @@ namespace SPH
 						checkUpperBound(particle_indexes[num], dt);
 				}
 			}, ap);
+	}
+	//=================================================================================================//
+	void PeriodicConditionInAxisDirection::PeriodicCondition::exec(Real dt)
+	{
+		setupDynamics(dt);
+
+		//check lower bound
+		CellVector& lower_bound_cells = bound_cells_[0];
+		for (size_t i = 0; i != lower_bound_cells.size(); ++i) {
+			CellListDataVector& cell_list_data
+				= cell_linked_lists_[lower_bound_cells[i][0]][lower_bound_cells[i][1]].cell_list_data_;
+			for (size_t num = 0; num < cell_list_data.size(); ++num)
+				checkLowerBound(cell_list_data[num], dt);
+		}
+
+		//check upper bound
+		CellVector& upper_bound_cells = bound_cells_[1];
+		for (size_t i = 0; i != upper_bound_cells.size(); ++i) {
+			CellListDataVector& cell_list_data
+				= cell_linked_lists_[upper_bound_cells[i][0]][upper_bound_cells[i][1]].cell_list_data_;
+			for (size_t num = 0; num < cell_list_data.size(); ++num)
+				checkUpperBound(cell_list_data[num], dt);
+		}
 	}
 	//=================================================================================================//
 	MirrorBoundaryConditionInAxisDirection

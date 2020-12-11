@@ -20,6 +20,7 @@ namespace SPH
 		//----------------------------------------------------------------------
 		registerAVariable(p_, registered_scalars_, scalars_map_, scalars_to_write_, "Pressure", false);
 		registerAVariable(drho_dt_, registered_scalars_, scalars_map_, scalars_to_write_, "DensityChangeRate", false);
+		registerAVariable(pos_div_, registered_scalars_, scalars_map_, scalars_to_write_, "PositionDivergence", false);
 		//----------------------------------------------------------------------
 		//		register sortable particle data
 		//----------------------------------------------------------------------

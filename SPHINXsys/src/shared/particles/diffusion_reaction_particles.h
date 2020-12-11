@@ -74,6 +74,8 @@ namespace SPH {
 				//----------------------------------------------------------------------
 				this->registered_scalars_.push_back(&species_n_[k]);
 				species_n_[k].resize(this->real_particles_bound_, Real(0));
+				//the scalars needed to be sorted out
+				this->sortable_scalars_.push_back(&species_n_[k]);
 			}
 
 			number_of_diffusion_species_ = diffusion_reaction_material->NumberOfSpeciesDiffusion();

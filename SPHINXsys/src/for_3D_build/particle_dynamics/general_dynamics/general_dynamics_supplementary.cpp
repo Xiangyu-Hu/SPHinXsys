@@ -16,7 +16,7 @@ namespace SPH
 	PeriodicConditionInAxisDirection::PeriodicConditionInAxisDirection(SPHBody* body, int axis_direction) :
 		BoundingInAxisDirection(body, axis_direction)
 	{
-		//allocate memory
+		setPeriodicTranslation();
 		bound_cells_.resize(2);
 
 		//lower bound cells
@@ -112,6 +112,29 @@ namespace SPH
 						checkUpperBound(particle_indexes[num], dt);
 				}
 			}, ap);
+	}
+	//=================================================================================================//
+	void PeriodicConditionInAxisDirection::PeriodicCondition::exec(Real dt)
+	{
+		//check lower bound
+		CellVector& lower_bound_cells = bound_cells_[0];
+		for (size_t i = 0; i != lower_bound_cells.size(); ++i) {
+			CellListDataVector& cell_list_data
+				= cell_linked_lists_[lower_bound_cells[i][0]][lower_bound_cells[i][1]][lower_bound_cells[i][2]]
+				.cell_list_data_;
+			for (size_t num = 0; num < cell_list_data.size(); ++num)
+				checkLowerBound(cell_list_data[num], dt);
+		}
+
+		//check upper bound
+		CellVector& upper_bound_cells = bound_cells_[1];
+		for (size_t i = 0; i != upper_bound_cells.size(); ++i) {
+			CellListDataVector& cell_list_data
+				= cell_linked_lists_[upper_bound_cells[i][0]][upper_bound_cells[i][1]][upper_bound_cells[i][2]]
+				.cell_list_data_;
+			for (size_t num = 0; num < cell_list_data.size(); ++num)
+				checkUpperBound(cell_list_data[num], dt);
+		}
 	}
 	//=================================================================================================//
 	MirrorBoundaryConditionInAxisDirection

@@ -6,8 +6,15 @@
 using namespace std;
 //=================================================================================================//
 namespace SPH {
-//=================================================================================================//
-	void SolidParticles::writeParticlesToPltFile(ofstream &output_file)
+	//=============================================================================================//
+	void SolidParticles::ParticleTranslationAndRotation(Transformd& transform) 
+	{
+			std::cout << "\n Error: the function ParticleTranslationAndRotation in 3d is not defined!" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
+	}
+	//=================================================================================================//
+	void SolidParticles::writeParticlesToPltFile(ofstream& output_file)
 	{
 		output_file << " VARIABLES = \" x \", \"y\",\"z\", \"ID\", \"x_norm\", \"y_norm\", \"z_norm\" \n";
 
@@ -23,13 +30,13 @@ namespace SPH {
 				<< n_[i][2] << "\n ";
 		}
 	}
-//=================================================================================================//
+	//=================================================================================================//
 	Real ElasticSolidParticles::von_Mises_stress(size_t particle_i)
 	{
 		Real J = rho_0_ / rho_n_[particle_i];
 		Mat3d F = F_[particle_i];
 		Mat3d stress = stress_[particle_i];
-		Mat3d sigma = (F* stress*~F) / J;
+		Mat3d sigma = (stress * ~F) / J;
 
 		Real sigmaxx = sigma(0, 0);
 		Real sigmayy = sigma(1, 1);
@@ -38,19 +45,19 @@ namespace SPH {
 		Real sigmaxz = sigma(0, 2);
 		Real sigmayz = sigma(1, 2);
 
-		return sqrt(sigmaxx * sigmaxx + sigmayy * sigmayy + sigmazz * sigmazz 
+		return sqrt(sigmaxx * sigmaxx + sigmayy * sigmayy + sigmazz * sigmazz
 			- sigmaxx * sigmayy - sigmaxx * sigmazz - sigmayy * sigmazz
 			+ 3.0 * (sigmaxy * sigmaxy + sigmaxz * sigmaxz + sigmayz * sigmayz));
 	}
-//=================================================================================================//
-	void ElasticSolidParticles::writeParticlesToPltFile(ofstream &output_file)
+	//=================================================================================================//
+	void ElasticSolidParticles::writeParticlesToPltFile(ofstream& output_file)
 	{
-		output_file << " VARIABLES = \" x \", \"y\",\"z\", \"u\", \"v\", \"w\", \"ID\", \"x_norm\", \"y_norm\", \"z_norm\", \"von Mieses\" \n";
+		output_file << " VARIABLES = \" x \", \"y\",\"z\", \"u\", \"v\", \"w\", \"ID\", \"x_norm\", \"y_norm\", \"z_norm\", \"von Mises\" \n";
 
 		size_t number_of_particles = body_->number_of_particles_;
 		for (size_t i = 0; i != number_of_particles; ++i)
 		{
-			output_file 
+			output_file
 				<< pos_n_[i][0] << "  "
 				<< pos_n_[i][1] << "  "
 				<< pos_n_[i][2] << "  "
@@ -64,14 +71,14 @@ namespace SPH {
 				<< von_Mises_stress(i) << "\n ";
 		}
 	}
-//=================================================================================================//
-	void ActiveMuscleParticles::writeParticlesToPltFile(ofstream &output_file)
+	//=================================================================================================//
+	void ActiveMuscleParticles::writeParticlesToPltFile(ofstream& output_file)
 	{
 		size_t number_of_particles = body_->number_of_particles_;
-		output_file << " VARIABLES = \" x \", \"y\",\"z\", \"ID\", \"Vx\", \"Vy\", \"Vz\", \"Ta\" ,\"von Mieses \" \n";
+		output_file << " VARIABLES = \" x \", \"y\",\"z\", \"ID\", \"Vx\", \"Vy\", \"Vz\", \"Ta\" ,\"von Mises \" \n";
 		for (size_t i = 0; i != number_of_particles; ++i)
 		{
-			output_file 
+			output_file
 				<< pos_n_[i][0] << "  "
 				<< pos_n_[i][1] << "  "
 				<< pos_n_[i][2] << "  "
@@ -80,8 +87,8 @@ namespace SPH {
 				<< vel_n_[i][1] << " "
 				<< vel_n_[i][2] << " "
 				<< active_contraction_stress_[i] << "  "
-				<< von_Mises_stress(i)              << "\n ";
+				<< von_Mises_stress(i) << "\n ";
 		}
 	}
-//=================================================================================================//
+	//=================================================================================================//
 }

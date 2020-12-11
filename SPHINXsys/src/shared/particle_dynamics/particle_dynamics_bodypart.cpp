@@ -31,6 +31,28 @@ namespace SPH {
 		}, ap);
 	}
 	//=================================================================================================//
+	void PartInteractionDynamicsByParticle::exec(Real dt)
+	{
+		setBodyUpdated();
+		setupDynamics(dt);
+		for (size_t i = 0; i < body_part_particles_.size(); ++i)
+		{
+			Interaction(body_part_particles_[i], dt);
+		}
+	}
+	//=================================================================================================//
+	void PartInteractionDynamicsByParticle::parallel_exec(Real dt)
+	{
+		setBodyUpdated();
+		setupDynamics(dt);
+		parallel_for(blocked_range<size_t>(0, body_part_particles_.size()),
+			[&](const blocked_range<size_t>& r) {
+				for (size_t i = r.begin(); i < r.end(); ++i) {
+					Interaction(body_part_particles_[i], dt);
+				}
+			}, ap);
+	}
+	//=================================================================================================//
 	void PartDynamicsByCell::exec(Real dt)
 	{
 		setBodyUpdated();

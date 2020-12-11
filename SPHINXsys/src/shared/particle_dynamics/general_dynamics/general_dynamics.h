@@ -124,8 +124,12 @@ namespace SPH
 	class PeriodicConditionInAxisDirection : public BoundingInAxisDirection
 	{
 	protected:
+		Vecd periodic_translation_;
 		/** cells in which particle checked for bounding */
 		StdVec<CellVector> bound_cells_;
+
+		/**compute the distance for periodic translation. */
+		void setPeriodicTranslation();
 
 		/**
 		* @class PeriodicBounding
@@ -134,22 +138,49 @@ namespace SPH
 		class PeriodicBounding : public BoundingInAxisDirection
 		{
 		protected:
-			Vecd periodic_translation_;
+			Vecd& periodic_translation_;
 			//cells in which particle checked for bounding
 			StdVec<CellVector>& bound_cells_;
-
-			/**compute the distance for periodic translation. */
-			void setPeriodicTranslation();
 
 			virtual void checkLowerBound(size_t index_i, Real dt = 0.0);
 			virtual void checkUpperBound(size_t index_i, Real dt = 0.0);
 		public:
-			PeriodicBounding(StdVec<CellVector>& bound_cells, SPHBody* body, int axis_direction);
+			PeriodicBounding(Vecd& periodic_translation, StdVec<CellVector>& bound_cells, SPHBody* body, int axis_direction) :
+				BoundingInAxisDirection(body, axis_direction), periodic_translation_(periodic_translation),
+				bound_cells_(bound_cells) {};
 			virtual ~PeriodicBounding() {};
 
 			virtual void exec(Real dt = 0.0) override;
 			virtual void parallel_exec(Real dt = 0.0) override;
 		};
+	
+		/**
+		* @class PeriodicCondition
+		* @brief implement periodic condition in an axis direction
+		*/
+		class PeriodicCondition : public BoundingInAxisDirection
+		{
+		protected:
+			Vecd& periodic_translation_;
+			//cells in which particle checked for bounding
+			StdVec<CellVector>& bound_cells_;
+
+			virtual void checkLowerBound(ListData& list_data, Real dt = 0.0) = 0;
+			virtual void checkUpperBound(ListData& list_data, Real dt = 0.0) = 0;
+		public:
+			PeriodicCondition(Vecd& periodic_translation, StdVec<CellVector>& bound_cells, SPHBody* body, int axis_direction) :
+				BoundingInAxisDirection(body, axis_direction), periodic_translation_(periodic_translation),
+				bound_cells_(bound_cells) {};
+			virtual ~PeriodicCondition() {};
+
+			/** This class is only implemented in sequential due to memory conflicts.
+			 * Because the cell list data is not concurrent vector.
+			 */
+			virtual void exec(Real dt = 0.0) override;
+			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
+		};
+
+
 	public:
 		PeriodicConditionInAxisDirection(SPHBody* body, int axis_direction);
 		virtual ~PeriodicConditionInAxisDirection() {};
@@ -174,27 +205,22 @@ namespace SPH
 		* @class PeriodicCondition
 		* @brief Periodic boundary condition in an axis direction
 		*/
-		class PeriodicCellLinkedList : public PeriodicBounding
+		class PeriodicCellLinkedList : public PeriodicCondition
 		{
 		protected:
-			virtual void checkLowerBound(size_t index_i, Real dt = 0.0) override;
-			virtual void checkUpperBound(size_t index_i, Real dt = 0.0) override;
+			virtual void checkLowerBound(ListData& list_data, Real dt = 0.0) override;
+			virtual void checkUpperBound(ListData& list_data, Real dt = 0.0) override;
 		public:
 
-			PeriodicCellLinkedList(StdVec<CellVector>& bound_cells, SPHBody* body, int axis_direction)
-				: PeriodicBounding(bound_cells, body, axis_direction) {};
+			PeriodicCellLinkedList(Vecd& periodic_translation, StdVec<CellVector>& bound_cells, SPHBody* body, int axis_direction)
+				: PeriodicCondition(periodic_translation, bound_cells, body, axis_direction) {};
 			virtual ~PeriodicCellLinkedList() {};
-
-			/** This class is only implemented in sequential due to memory conflicts.
-			 * Because the cell list data is not concurrent vector.
-			 */
-			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
 		};
 	public:
 		PeriodicConditionInAxisDirectionUsingCellLinkedList(SPHBody* body, int axis_direction) :
 			PeriodicConditionInAxisDirection(body, axis_direction),
-			bounding_(this->bound_cells_, body, axis_direction),
-			update_cell_linked_list_(this->bound_cells_, body, axis_direction) {};
+			bounding_(this->periodic_translation_, this->bound_cells_, body, axis_direction),
+			update_cell_linked_list_(this->periodic_translation_, this->bound_cells_, body, axis_direction) {};
 		virtual ~PeriodicConditionInAxisDirectionUsingCellLinkedList() {};
 
 		PeriodicBounding bounding_;
@@ -208,6 +234,8 @@ namespace SPH
 	 *	The first step is carried out before update cell linked list and
 	 *	the second and third after the updating.
 	 *	If the exec or parallel_exec is called directly, error message will be given.
+	 *  Note that, currently, this class is not for periodic condition in combined directions,
+	 *  such as periodic condition in both x and y directions.
 	 */
 	class PeriodicConditionInAxisDirectionUsingGhostParticles : 
 		public PeriodicConditionInAxisDirection
@@ -228,9 +256,9 @@ namespace SPH
 			virtual void checkLowerBound(size_t index_i, Real dt = 0.0) override;
 			virtual void checkUpperBound(size_t index_i, Real dt = 0.0) override;
 		public:
-			CreatPeriodicGhostParticles(StdVec<CellVector>& bound_cells,
+			CreatPeriodicGhostParticles(Vecd& periodic_translation, StdVec<CellVector>& bound_cells,
 				StdVec<IndexVector>& ghost_particles, SPHBody* body, int axis_direction) :
-				PeriodicBounding(bound_cells, body, axis_direction),
+				PeriodicBounding(periodic_translation, bound_cells, body, axis_direction),
 				ghost_particles_(ghost_particles) {};
 			virtual ~CreatPeriodicGhostParticles() {};
 
@@ -251,9 +279,10 @@ namespace SPH
 			void checkLowerBound(size_t index_i, Real dt = 0.0) override;
 			void checkUpperBound(size_t index_i, Real dt = 0.0) override;
 		public:
-			UpdatePeriodicGhostParticles(StdVec<CellVector>& bound_cells,
+			UpdatePeriodicGhostParticles(Vecd& periodic_translation, StdVec<CellVector>& bound_cells,
 				StdVec<IndexVector>& ghost_particles, SPHBody* body, int axis_direction) :
-				PeriodicBounding(bound_cells, body, axis_direction), ghost_particles_(ghost_particles) {};
+				PeriodicBounding(periodic_translation, bound_cells, body, axis_direction), 
+				ghost_particles_(ghost_particles) {};
 			virtual ~UpdatePeriodicGhostParticles() {};
 
 			virtual void exec(Real dt = 0.0) override;
@@ -262,9 +291,9 @@ namespace SPH
 	public:
 		PeriodicConditionInAxisDirectionUsingGhostParticles(SPHBody* body, int axis_direction) :
 			PeriodicConditionInAxisDirection(body, axis_direction),
-			bounding_(this->bound_cells_, body, axis_direction),
-			ghost_creation_(this->bound_cells_, this->ghost_particles_, body, axis_direction),
-			ghost_update_(this->bound_cells_, this->ghost_particles_, body, axis_direction)
+			bounding_(this->periodic_translation_, this->bound_cells_, body, axis_direction),
+			ghost_creation_(this->periodic_translation_, this->bound_cells_, this->ghost_particles_, body, axis_direction),
+			ghost_update_(this->periodic_translation_, this->bound_cells_, this->ghost_particles_, body, axis_direction)
 		{
 			ghost_particles_.resize(2);
 		};
@@ -279,6 +308,8 @@ namespace SPH
 	/**
 	* @class MirrorBoundaryConditionInAxisDirection
 	* @brief Mirror bounding particle position and velocity in an axis direction
+	*  Note that, currently, this class is not for mirror condition in combined directions,
+	*  such as mirror condition in both x and y directions.
 	*/
 	class MirrorBoundaryConditionInAxisDirection : public BoundingInAxisDirection
 	{

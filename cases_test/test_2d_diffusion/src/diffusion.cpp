@@ -101,11 +101,13 @@ public:
 };
 /** Set diffusion relaxation. */
 class DiffusionBodyRelaxation
-	: public RelaxationOfAllDiffusionSpeciesRK2<SolidBody, SolidParticles, Solid>
+	: public RelaxationOfAllDiffusionSpeciesRK2<SolidBody, SolidParticles, Solid,
+	RelaxationOfAllDiffussionSpeciesInner<SolidBody, SolidParticles, Solid>, 
+	SPHBodyInnerRelation>
 {
 public:
 	DiffusionBodyRelaxation(SPHBodyInnerRelation* body_inner_relation)
-		: RelaxationOfAllDiffusionSpeciesRK2<SolidBody, SolidParticles, Solid>(body_inner_relation) {
+		: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation) {
 	};
 	virtual ~DiffusionBodyRelaxation() {};
 };

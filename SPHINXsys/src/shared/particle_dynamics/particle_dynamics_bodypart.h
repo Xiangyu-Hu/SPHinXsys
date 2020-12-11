@@ -58,7 +58,27 @@ namespace SPH {
 		virtual void  Update(size_t index_i, Real dt = 0.0) = 0;
 	};
 
-	/** 
+	/**
+	 * @class PartInteractionDynamicsByParticle
+	 * @brief  particle interaction involving in a body part.
+	 */
+	class PartInteractionDynamicsByParticle : public ParticleDynamics<void>
+	{
+	public:
+		PartInteractionDynamicsByParticle(SPHBody* sph_body, BodyPartByParticle* body_part)
+			: ParticleDynamics<void>(sph_body),
+			body_part_particles_(body_part->body_part_particles_) {};
+		virtual ~PartInteractionDynamicsByParticle() {};
+
+		virtual void exec(Real dt = 0.0) override;
+		virtual void parallel_exec(Real dt = 0.0) override;
+	protected:
+		IndexVector& body_part_particles_;
+
+		virtual void  Interaction(size_t index_i, Real dt = 0.0) = 0;
+	};
+
+	/**
 	 * @class PartDynamicsByCell
 	 * @brief Imposing Eulerian constrain to a body.
 	 * The constrained particles are in the tagged cells .

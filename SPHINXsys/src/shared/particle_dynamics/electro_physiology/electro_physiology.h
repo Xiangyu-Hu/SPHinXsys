@@ -80,11 +80,13 @@ namespace SPH
 		* @brief Compute the diffusion relaxation process
 		*/
 		class ElectroPhysiologyDiffusionRelaxation : 
-			public RelaxationOfAllDiffusionSpeciesRK2<SolidBody, SolidParticles, Solid>
+			public RelaxationOfAllDiffusionSpeciesRK2<SolidBody, SolidParticles, Solid,
+			RelaxationOfAllDiffussionSpeciesInner<SolidBody, SolidParticles, Solid>, 
+			SPHBodyInnerRelation>
 		{
 		public:
 			ElectroPhysiologyDiffusionRelaxation(SPHBodyInnerRelation* body_inner_relation)
-				: RelaxationOfAllDiffusionSpeciesRK2<SolidBody, SolidParticles, Solid>(body_inner_relation) {};
+				: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation) {};
 			virtual ~ElectroPhysiologyDiffusionRelaxation() {};
 		};
         /**

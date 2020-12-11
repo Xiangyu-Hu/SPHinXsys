@@ -69,14 +69,7 @@ namespace SPH {
 		}
 	}
 	//=================================================================================================//
-	PeriodicConditionInAxisDirection::PeriodicBounding::
-		PeriodicBounding(StdVec<CellVector>& bound_cells, SPHBody* body, int axis_direction) :
-		BoundingInAxisDirection(body, axis_direction), periodic_translation_(0), bound_cells_(bound_cells)
-	{
-		setPeriodicTranslation();
-	}
-	//=================================================================================================//
-	void PeriodicConditionInAxisDirection::PeriodicBounding::setPeriodicTranslation()
+	void PeriodicConditionInAxisDirection::setPeriodicTranslation()
 	{
 		periodic_translation_[axis_] = body_upper_bound_[axis_] - body_lower_bound_[axis_];
 		if (periodic_translation_.norm() < body_->particle_spacing_) {
@@ -113,28 +106,28 @@ namespace SPH {
 	}
 	//=================================================================================================//
 	void PeriodicConditionInAxisDirectionUsingCellLinkedList::
-		PeriodicCellLinkedList::checkUpperBound(size_t index_i, Real dt)
+		PeriodicCellLinkedList::checkUpperBound(ListData& list_data, Real dt)
 	{
-		Vecd particle_position = pos_n_[index_i];
+		Vecd particle_position = list_data.second;
 		if (particle_position[axis_] < body_upper_bound_[axis_]
 			&& particle_position[axis_] > (body_upper_bound_[axis_] - cell_spacing_))
 		{
 			Vecd translated_position = particle_position - periodic_translation_;
 			/** insert ghost particle to cell linked list */
-			mesh_cell_linked_list_->InsertACellLinkedListDataEntry(index_i, translated_position);
+			mesh_cell_linked_list_->InsertACellLinkedListDataEntry(list_data.first, translated_position);
 		}
 	}
 	//=================================================================================================//
 	void PeriodicConditionInAxisDirectionUsingCellLinkedList::
-		PeriodicCellLinkedList::checkLowerBound(size_t index_i, Real dt)
+		PeriodicCellLinkedList::checkLowerBound(ListData& list_data, Real dt)
 	{
-		Vecd particle_position = pos_n_[index_i];
+		Vecd particle_position = list_data.second;
 		if (particle_position[axis_] > body_lower_bound_[axis_]
 			&& particle_position[axis_] < (body_lower_bound_[axis_] + cell_spacing_))
 		{
 			Vecd translated_position = particle_position + periodic_translation_;
 			/** insert ghost particle to cell linked list */
-			mesh_cell_linked_list_->InsertACellLinkedListDataEntry(index_i, translated_position);
+			mesh_cell_linked_list_->InsertACellLinkedListDataEntry(list_data.first, translated_position);
 		}
 	}
 	//=================================================================================================//

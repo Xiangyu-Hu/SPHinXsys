@@ -14,9 +14,10 @@ namespace SPH
 	{
 		//=================================================================================================//
 		SummationContactDensity::
-			SummationContactDensity(SPHBodyContactRelation* body_contact_relation) :
-			InteractionDynamics(body_contact_relation->sph_body_),
-			ContactDynamicsDataDelegate(body_contact_relation),
+			SummationContactDensity(SolidBodyContactRelation* soild_body_contact_relation) :
+			PartInteractionDynamicsByParticle(soild_body_contact_relation->sph_body_,
+				&soild_body_contact_relation->body_surface_layer_),
+			ContactDynamicsDataDelegate(soild_body_contact_relation),
 			mass_(particles_->mass_), contact_density_(particles_->contact_density_)
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
@@ -41,17 +42,18 @@ namespace SPH
 			contact_density_[index_i] = sigma;
 		}
 		//=================================================================================================//
-		ContactForce::ContactForce(SPHBodyContactRelation* body_contact_relation) :
-			InteractionDynamics(body_contact_relation->sph_body_),
-			ContactDynamicsDataDelegate(body_contact_relation),
+		ContactForce::ContactForce(SolidBodyContactRelation* soild_body_contact_relation) :
+			PartInteractionDynamicsByParticle(soild_body_contact_relation->sph_body_, 
+				&soild_body_contact_relation->body_surface_layer_),
+			ContactDynamicsDataDelegate(soild_body_contact_relation),
+			contact_density_(particles_->contact_density_), 
 			Vol_(particles_->Vol_), mass_(particles_->mass_),
-			contact_density_(particles_->contact_density_), dvel_dt_others_(particles_->dvel_dt_others_),
+			dvel_dt_others_(particles_->dvel_dt_others_),
 			contact_force_(particles_->contact_force_)
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-				contact_mass_.push_back(&(contact_particles_[k]->mass_));
 				contact_contact_density_.push_back(&(contact_particles_[k]->contact_density_));
 			}
 		}
@@ -59,7 +61,6 @@ namespace SPH
 		void ContactForce::Interaction(size_t index_i, Real dt)
 		{
 			Real Vol_i = Vol_[index_i];
-			Real mass_i = mass_[index_i];
 			Real p_i = contact_density_[index_i] * material_->ContactStiffness();
 			/** Contact interaction. */
 			Vecd force(0.0);
@@ -67,7 +68,6 @@ namespace SPH
 			{
 				StdLargeVec<Real>& contact_density_k = *(contact_contact_density_[k]);
 				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
-				StdLargeVec<Real>& mass_k = *(contact_mass_[k]);
 				Solid* solid_k = contact_material_[k];
 
 				Neighborhood& contact_neighborhood = contact_configuration_[k][index_i];
@@ -140,7 +140,6 @@ namespace SPH
 			/** Contact interaction. */
 			for (size_t k = contact_configuration_.size(); k != 0; --k)
 			{
-				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k - 1]);
 				StdLargeVec<Real>& mass_k = *(contact_mass_[k - 1]);
 				StdLargeVec<Vecd>& vel_n_k = *(contact_vel_n_[k - 1]);
 				StdLargeVec<Vecd>& contact_force_k = *(contact_contact_force_[k - 1]);
@@ -176,13 +175,10 @@ namespace SPH
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_rho_n_.push_back(&(contact_particles_[k]->rho_n_));
 				contact_vel_n_.push_back(&(contact_particles_[k]->vel_n_));
-			}
 
-			//more work should be done for more general cases with multiple resolutions
-			//and for fluids with different viscosities
-			mu_ = contact_material_[0]->ReferenceViscosity();
-			/** the smoothing length should be discuss more. */
-			smoothing_length_ = powern(2.0, body_->refinement_level_) * body_->kernel_->GetSmoothingLength();
+				mu_.push_back(contact_material_[k]->ReferenceViscosity());
+				smoothing_length_.push_back(contact_bodies_[k]->kernel_->GetSmoothingLength());
+			}
 		}
 		//=================================================================================================//
 		void FluidViscousForceOnSolid::Interaction(size_t index_i, Real dt)
@@ -194,6 +190,8 @@ namespace SPH
 			/** Contact interaction. */
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
+				Real mu_k = mu_[k];
+				Real smoothing_length_k = smoothing_length_[k];
 				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
 				StdLargeVec<Vecd>& vel_n_k = *(contact_vel_n_[k]);
 				Neighborhood& contact_neighborhood = contact_configuration_[k][index_i];
@@ -204,9 +202,9 @@ namespace SPH
 					//force due to viscosity
 					//viscous force with a simple wall model for high-Reynolds number flow
 					Vecd vel_derivative = 2.0 * (vel_ave_i - vel_n_k[index_j])
-						/ (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
+						/ (contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
 
-					force += 2.0 * mu_ * vel_derivative * Vol_i * Vol_k[index_j]
+					force += 2.0 * mu_k * vel_derivative * Vol_i * Vol_k[index_j]
 						   * contact_neighborhood.dW_ij_[n];
 				}
 			}
@@ -223,6 +221,8 @@ namespace SPH
 			/** Contact interaction. */
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
+				Real mu_k = mu_[k];
+				Real smoothing_length_k = smoothing_length_[k];
 				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
 				StdLargeVec<Real>& rho_n_k = *(contact_rho_n_[k]);
 				StdLargeVec<Vecd>& vel_n_k = *(contact_vel_n_[k]);
@@ -237,8 +237,8 @@ namespace SPH
 						contact_neighborhood.r_ij_[n] * contact_neighborhood.e_ij_[n]);
 					Real vel_difference = 0.0 * (vel_ave_i - vel_n_k[index_j]).norm()
 						* contact_neighborhood.r_ij_[n];
-					Real eta_ij = 8.0 * SMAX(mu_, rho_n_k[index_j] * vel_difference) * v_r_ij /
-						(contact_neighborhood.r_ij_[n] * contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
+					Real eta_ij = 8.0 * SMAX(mu_k, rho_n_k[index_j] * vel_difference) * v_r_ij /
+						(contact_neighborhood.r_ij_[n] * contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
 					force += eta_ij * Vol_i * Vol_k[index_j]
 						* contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n];
 				}
