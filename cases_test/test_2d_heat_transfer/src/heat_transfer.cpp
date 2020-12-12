@@ -1,5 +1,5 @@
 /**
- * @file 	flow_wall_heat_transfer.cpp
+ * @file 	heat_transfer.cpp
  * @brief 	This is a test to validate heat transfer between a flow and channel walls.
  * @author 	Xiaojing Tang, Chi Zhang and Xiangyu Hu
  * @version 0.2.1
@@ -32,6 +32,13 @@ Real U_f =1.0;		 /**< Characteristic velocity. */
 Real c_f = 10.0 * U_f;	/**< Speed of sound. */
 Real Re = 100.0;		/**< Reynolds number100. */
 Real mu_f = rho0_f * U_f * DH / Re;	/**< Dynamics viscosity. */
+
+/**
+*@brief Temperatures.
+*/
+Real phi_upper_wall = 20.0;
+Real phi_lower_wall = 40.0;
+Real phi_fluid_initial = 20.0;
 
 /** create a water block shape */
 std::vector<Point> CreatShape()
@@ -103,11 +110,11 @@ public:
 
 
 
-/**  Diffusion fluid body definition */
-class DiffusionFluidBody : public FluidBody
+/**  Thermofluid body definition */
+class ThermofluidBody : public FluidBody
 {
 public: 
-	DiffusionFluidBody(SPHSystem &system, string body_name, int refinement_level)
+	ThermofluidBody(SPHSystem &system, string body_name, int refinement_level)
 		: FluidBody(system, body_name, refinement_level)
 	{	
 		std::vector<Point> body_shape = CreatShape();	
@@ -116,11 +123,11 @@ public:
 	}
 };
 
-/**  Diffusion solid body definition */
-class DiffusionSolidBody : public SolidBody
+/**  Thermosolid body definition */
+class ThermosolidBody : public SolidBody
 {
 public:
-	DiffusionSolidBody(SPHSystem &system, string body_name, int refinement_level)
+	ThermosolidBody(SPHSystem &system, string body_name, int refinement_level)
 		: SolidBody(system, body_name, refinement_level)
 	{
 		std::vector<Point>  outer_wall_shape = CreatOuterWallShape();
@@ -134,19 +141,20 @@ public:
 
 
 /**
- * Setup diffusion material properties for diffusion fluid body 
+ * Setup heat condution material properties for diffusion fluid body 
  */
-class DiffusionFluidBodyMaterial
+class ThermofluidBodyMaterial
 	: public DiffusionReactionMaterial<FluidParticles, WeaklyCompressibleFluid>
 {
 public:
-	DiffusionFluidBodyMaterial()
+	ThermofluidBodyMaterial()
 		: DiffusionReactionMaterial<FluidParticles, WeaklyCompressibleFluid>()
 	{
 		rho_0_ = rho0_f;
 		c_0_ = c_f;
 		mu_ = mu_f;
 
+		//add a scalar for temperature in fluid
 		insertASpecies("Phi");
 		assignDerivedMaterialParameters();
 		initializeDiffusion();
@@ -161,15 +169,16 @@ public:
 };
 
 /**
- * Setup diffusion material properties for diffusion solid body
+ * Setup heat conduction material properties for diffusion solid body
  */
-class DiffusionSolidBodyMaterial
+class ThermosolidBodyMaterial
 	: public DiffusionReactionMaterial<SolidParticles, Solid>
 {
 public:
-	DiffusionSolidBodyMaterial()
+	ThermosolidBodyMaterial()
 		: DiffusionReactionMaterial<SolidParticles, Solid>()
 	{
+		//add a scalar for temperature in solid
 		insertASpecies("Phi");
 		assignDerivedMaterialParameters();
 		initializeDiffusion();
@@ -187,7 +196,7 @@ public:
 /**
  * application dependent solid body initial condition
  */
-class DiffusionSolidBodyInitialCondition
+class ThermosolidBodyInitialCondition
 	: public  DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>
 {
 protected:
@@ -198,26 +207,26 @@ protected:
 		
 		if (-BW <= pos_n_[index_i][1] && pos_n_[index_i][1] <= 0.0)
 		{
-			species_n_[phi_][index_i] = 40.0;
+			species_n_[phi_][index_i] = phi_lower_wall;
 		}
 
 		if (DH <= pos_n_[index_i][1] && pos_n_[index_i][1] <= DH+BW)
 		{
-			species_n_[phi_][index_i] = 20.0;
+			species_n_[phi_][index_i] = phi_upper_wall;
 		}
 		
 	};
 public: 
-	DiffusionSolidBodyInitialCondition(SolidBody* diffusion_solid_body)
+	ThermosolidBodyInitialCondition(SolidBody* diffusion_solid_body)
 		: DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>(diffusion_solid_body) {
 		phi_ = material_->SpeciesIndexMap()["Phi"];
 	};
 };
 
 /**
- * application dependent solid body initial condition
+ * application dependent fluid body initial condition
  */
-class DiffusionFluidBodyInitialCondition
+class ThermofluidBodyInitialCondition
 	: public  DiffusionReactionInitialCondition< FluidBody, FluidParticles, WeaklyCompressibleFluid>
 {
 protected:
@@ -228,29 +237,29 @@ protected:
 
 		if (0 <= pos_n_[index_i][1] && pos_n_[index_i][1] <= DH)
 		{
-			species_n_[phi_][index_i] = 20.0;
+			species_n_[phi_][index_i] = phi_fluid_initial;
 		}
 
 	};
 public:
-	DiffusionFluidBodyInitialCondition(FluidBody* diffusion_fluid_body)
+	ThermofluidBodyInitialCondition(FluidBody* diffusion_fluid_body)
 		: DiffusionReactionInitialCondition<FluidBody, FluidParticles, WeaklyCompressibleFluid >(diffusion_fluid_body) {
 		phi_ = material_->SpeciesIndexMap()["Phi"];
 	};
 };
 
 /**
- *Set diffusion ComplexRelaxation between different bodies 
+ *Set thermal relaxation between different bodies 
  */
-class DiffusionBodyComplexRelaxation
+class ThermalRelaxationComplex
 	: public RelaxationOfAllDiffusionSpeciesRK2<FluidBody, FluidParticles, WeaklyCompressibleFluid,
 	RelaxationOfAllDiffussionSpeciesComplex<FluidBody, FluidParticles, WeaklyCompressibleFluid, SolidBody, SolidParticles, Solid>,
 	SPHBodyComplexRelation>
 {
 public:
-	DiffusionBodyComplexRelaxation(SPHBodyComplexRelation* body_complex_relation)
+	ThermalRelaxationComplex(SPHBodyComplexRelation* body_complex_relation)
 		: RelaxationOfAllDiffusionSpeciesRK2(body_complex_relation) {};
-	virtual ~DiffusionBodyComplexRelaxation() {};
+	virtual ~ThermalRelaxationComplex() {};
 };
 
 /** Case dependent inflow boundary condition. */
@@ -283,11 +292,11 @@ public:
 	}
 };
 
-/** an observer body to measure phi dependent of temperature */
-class FluidObserver : public FictitiousBody
+/** an observer body to measure temperature at given poistions */
+class TemperatureObserver : public FictitiousBody
 {
 public:
-	FluidObserver(SPHSystem& system, string body_name, int refinement_level)
+	TemperatureObserver(SPHSystem& system, string body_name, int refinement_level)
 		: FictitiousBody(system, body_name, refinement_level, 1.3)
 	{
 		/** A measuring point at the center of the channel */
@@ -306,24 +315,26 @@ int main()
 	GlobalStaticVariables::physical_time_ = 0.0;
 
 	/**
-	 * @brief Creating body, materials and particles for a DiffusionFluidBody .
+	 * @brief Creating body, materials and particles for a ThermofluidBody .
 	 */
-	DiffusionFluidBody *diffusion_fluid_body = new DiffusionFluidBody(system, "DiffusionFluidBody", 0); 
-	DiffusionFluidBodyMaterial *diffusion_fluid_body_material = new DiffusionFluidBodyMaterial();
-	DiffusionReactionParticles<FluidParticles, WeaklyCompressibleFluid>	diffusion_fluid_body_particles(diffusion_fluid_body, diffusion_fluid_body_material);
+	ThermofluidBody *thermofluid_body = new ThermofluidBody(system, "ThermofluidBody", 0);
+	ThermofluidBodyMaterial *thermofluid_body_material = new ThermofluidBodyMaterial();
+	DiffusionReactionParticles<FluidParticles, WeaklyCompressibleFluid>	
+		diffusion_fluid_body_particles(thermofluid_body, thermofluid_body_material);
 
 	/**
-    * @brief Creating body and particles for the DiffusionSolidBody.
+    * @brief Creating body and particles for the ThermosolidBody.
     */
-	DiffusionSolidBody *diffusion_solid_body = new DiffusionSolidBody(system, "DiffusionSolidBody", 0);
-	DiffusionSolidBodyMaterial *diffusion_solid_body_material = new DiffusionSolidBodyMaterial();
-	DiffusionReactionParticles<SolidParticles, Solid>	diffusion_solid_body_particles(diffusion_solid_body, diffusion_solid_body_material);
+	ThermosolidBody *thermosolid_body = new ThermosolidBody(system, "ThermosolidBody", 0);
+	ThermosolidBodyMaterial *thermosolid_body_material = new ThermosolidBodyMaterial();
+	DiffusionReactionParticles<SolidParticles, Solid>	
+		diffusion_solid_body_particles(thermosolid_body, thermosolid_body_material);
 
 	/**
 	 * @brief 	Particle and body creation of fluid observers.
 	 */
-	FluidObserver* fluid_observer = new FluidObserver(system, "FluidObserver", 0);
-	BaseParticles				flow_observer_particles(fluid_observer);
+	TemperatureObserver* temperature_observer = new TemperatureObserver(system, "FluidObserver", 0);
+	BaseParticles	temperature_observer_particles(temperature_observer);
 	
 	/**
 	 * @brief define simple data file input and outputs functions.
@@ -332,47 +343,51 @@ int main()
 	WriteBodyStatesToVtu 				write_real_body_states(in_output, system.real_bodies_);
 
 	/** topology */
-	SPHBodyInnerRelation* diffusion_fluid_body_inner_relation = new SPHBodyInnerRelation(diffusion_fluid_body);
-	SPHBodyInnerRelation* diffusion_solid_body_inner_relation = new SPHBodyInnerRelation(diffusion_solid_body);
-	SPHBodyComplexRelation* diffusion_fluid_body_complex = new SPHBodyComplexRelation(diffusion_fluid_body_inner_relation, {diffusion_solid_body });
-	SPHBodyContactRelation* fluid_observer_contact = new SPHBodyContactRelation(fluid_observer, {diffusion_fluid_body});
+	SPHBodyInnerRelation* fluid_body_inner = new SPHBodyInnerRelation(thermofluid_body);
+	SPHBodyInnerRelation* solid_body_inner = new SPHBodyInnerRelation(thermosolid_body);
+	SPHBodyComplexRelation* fluid_body_complex = new SPHBodyComplexRelation(fluid_body_inner, {thermosolid_body });
+	SPHBodyContactRelation* fluid_observer_contact = new SPHBodyContactRelation(temperature_observer, {thermofluid_body});
 	
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition(diffusion_fluid_body, 0);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition(thermofluid_body, 0);
 
 	/**
 	 * The main dynamics algorithm is defined start here.
 	 */
 
 	 /** Case setup */
-	DiffusionSolidBodyInitialCondition setup_diffusion_initial_condition(diffusion_solid_body);
-	DiffusionFluidBodyInitialCondition setup_fluid_diffusion_initial_condition(diffusion_fluid_body);
+	ThermosolidBodyInitialCondition thermosolid_condition(thermosolid_body);
+	ThermofluidBodyInitialCondition thermofluid_initial_condition(thermofluid_body);
 
 	/** Corrected strong configuration for diffusion solid body. */
-	solid_dynamics::CorrectConfiguration 			correct_configuration(diffusion_solid_body_inner_relation);
+	solid_dynamics::CorrectConfiguration 			correct_configuration(solid_body_inner);
 	 /** Initialize particle acceleration. */
-	InitializeATimeStep 	initialize_a_fluid_step(diffusion_fluid_body);
+	InitializeATimeStep 	initialize_a_fluid_step(thermofluid_body);
 
 	/** Evaluation of density by summation approach. */
-	fluid_dynamics::DensityBySummation 			update_fluid_density(diffusion_fluid_body_complex);
+	fluid_dynamics::DensityBySummation 			update_fluid_density(fluid_body_complex);
 	/** Time step size without considering sound wave speed. */
-	fluid_dynamics::AdvectionTimeStepSize 	get_fluid_advection_time_step_size(diffusion_fluid_body, U_f);
+	fluid_dynamics::AdvectionTimeStepSize 	get_fluid_advection_time_step(thermofluid_body, U_f);
 	/** Time step size with considering sound wave speed. */
-	fluid_dynamics::AcousticTimeStepSize		get_fluid_time_step_size(diffusion_fluid_body);
+	fluid_dynamics::AcousticTimeStepSize		get_fluid_time_step(thermofluid_body);
+	/** Time step size calculation. */
+	GetDiffusionTimeStepSize<FluidBody, FluidParticles, WeaklyCompressibleFluid> get_thermal_time_step(thermofluid_body);
+	/** Diffusion process between two diffusion bodies. */
+	ThermalRelaxationComplex 	thermal_relaxation_complex(fluid_body_complex);
 	/** Pressure relaxation using verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
 	fluid_dynamics::PressureRelaxationFirstHalf
-		pressure_relaxation_first_half(diffusion_fluid_body_complex);
+		pressure_relaxation_first_half(fluid_body_complex);
 	fluid_dynamics::PressureRelaxationSecondHalfRiemann
-		pressure_relaxation_second_half(diffusion_fluid_body_complex);
+		pressure_relaxation_second_half(fluid_body_complex);
 	/** Computing viscous acceleration. */
-	fluid_dynamics::ViscousAcceleration 	viscous_acceleration(diffusion_fluid_body_complex);
+	fluid_dynamics::ViscousAcceleration 	viscous_acceleration(fluid_body_complex);
 	/** Impose transport velocity. */
-	fluid_dynamics::TransportVelocityFormulation 	transport_velocity_formulation(diffusion_fluid_body_complex);
+	fluid_dynamics::TransportVelocityFormulation 	transport_velocity_formulation(fluid_body_complex);
 	/** Computing vorticity in the flow. */
-	fluid_dynamics::VorticityInFluidField 	compute_vorticity(diffusion_fluid_body_inner_relation);
+	fluid_dynamics::VorticityInFluidField 	compute_vorticity(fluid_body_inner);
 	/** Inflow boundary condition. */
-	ParabolicInflow	parabolic_inflow(diffusion_fluid_body, new InflowBuffer(diffusion_fluid_body, "Buffer"));
+	ParabolicInflow	parabolic_inflow(thermofluid_body, new InflowBuffer(thermofluid_body, "Buffer"));
 
 	/**
 	 * @brief Write observation data into files.
@@ -382,12 +397,6 @@ int main()
 
 	WriteAnObservedQuantity<Vecd, BaseParticles, &BaseParticles::vel_n_>
 		write_fluid_velocity("Velocity", in_output, fluid_observer_contact);
-	
-
-	/** Diffusion process between two diffusion bodies. */
-	DiffusionBodyComplexRelaxation 			diffusion_complex_relaxation(diffusion_fluid_body_complex);
-	
-
 
 	 /** Pre-simultion*/
 	 /** initialize cell linked lists for all bodies. */
@@ -400,15 +409,16 @@ int main()
 	/** computing surface normal direction for the wall. */
 	diffusion_solid_body_particles.initializeNormalDirectionFromGeometry();
 	correct_configuration.parallel_exec();
-	setup_diffusion_initial_condition.parallel_exec();
-	setup_fluid_diffusion_initial_condition.parallel_exec();
+	thermosolid_condition.parallel_exec();
+	thermofluid_initial_condition.parallel_exec();
+	Real dt_thmermal = get_thermal_time_step.parallel_exec();
 
 	/** Output global basic parameters. */
     write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
 	
 	Real End_Time = 10;
 	Real dt = 0.0;
-	Real D_Time = End_Time / 200.0;	/**< time stamps for output,WriteToFile*/ 
+	Real D_Time = End_Time / 100.0;	/**< time stamps for output,WriteToFile*/ 
 	Real Dt = 0.0;					/**< Default advection time step sizes for fluid. */
 	size_t inner_ite_dt = 0;
 	int number_of_iterations = 0;
@@ -421,14 +431,11 @@ int main()
 	/** Main loop starts here. */ 
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
-
 		Real integration_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
  		while (integration_time < D_Time) {
-			
-			setup_diffusion_initial_condition.exec();
 			initialize_a_fluid_step.parallel_exec();
-			Dt = get_fluid_advection_time_step_size.parallel_exec();
+			Dt = get_fluid_advection_time_step.parallel_exec();
 			update_fluid_density.parallel_exec();
 			viscous_acceleration.parallel_exec();
 			transport_velocity_formulation.correction_.parallel_exec(Dt);
@@ -436,20 +443,16 @@ int main()
 			inner_ite_dt = 0;
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt) {
-				/** Fluid pressure relaxation, first half. */
+				dt = SMIN(SMIN(dt_thmermal, get_fluid_time_step.parallel_exec()), Dt - relaxation_time);
 				pressure_relaxation_first_half.parallel_exec(dt);
-				/** Fluid pressure relaxation, second half. */
 				pressure_relaxation_second_half.parallel_exec(dt);			
+				thermal_relaxation_complex.parallel_exec(dt);
 
-				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 				parabolic_inflow.exec();
 				inner_ite_dt++;
-
-				diffusion_complex_relaxation.parallel_exec(dt);
-
 			}
 
 			if (number_of_iterations % screen_output_interval == 0)
@@ -457,15 +460,14 @@ int main()
 				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
 					<< GlobalStaticVariables::physical_time_
 					<< "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "\n";
-
 			}
 			number_of_iterations++;
 
 			/** Water block configuration and periodic condition. */
 			periodic_condition.bounding_.parallel_exec();
-			diffusion_fluid_body->updateCellLinkedList();
+			thermofluid_body->updateCellLinkedList();
 			periodic_condition.update_cell_linked_list_.parallel_exec();
-            diffusion_fluid_body_complex->updateConfiguration();
+            fluid_body_complex->updateConfiguration();
 		}
 		tick_count t2 = tick_count::now();
 		/** write run-time observation into file */
@@ -476,18 +478,12 @@ int main()
 	    write_fluid_velocity.WriteToFile(GlobalStaticVariables::physical_time_);
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
-		
 	}
 	
-  
 	tick_count t4 = tick_count::now();
-
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
 	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
 
 	return 0;
-
 }
-
-
