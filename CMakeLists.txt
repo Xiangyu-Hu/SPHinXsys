@@ -62,7 +62,6 @@ endif()
 enable_testing()
 
 include(Common)
-include(Import3rdpartylibs)
 add_subdirectory(SPHINXsys)
 add_subdirectory(cases_test)
 
