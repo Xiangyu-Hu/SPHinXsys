@@ -125,3 +125,31 @@ set(BUILD_WITH_NA_CASES OFF CACHE BOOL "Include Niklas Aufenanger's cases into t
 if(BUILD_WITH_NA_CASES)
 add_subdirectory(cases_na)
 endif()
+
+# In addition to the platform name we need to know the Application Binary
+# Interface (ABI) we're building for. Currently that is either x86, meaning
+# 32 bit Intel instruction set, or x64 for 64 bit Intel instruction set.
+
+if(${CMAKE_SIZEOF_VOID_P} EQUAL 8)
+    set(PLATFORM_ABI x64)
+else()
+    set(PLATFORM_ABI x86)
+endif()
+
+set(BUILD_PLATFORM "${CMAKE_HOST_SYSTEM_NAME}:${PLATFORM_ABI}" CACHE STRING
+    "This is the platform and ABI we're building for. Not changeable here; use a different CMake generator instead."
+    FORCE)
+    
+# Make the pkgconfig file: select the proper flags depending on the platform
+if(WIN32)
+    if(${PLATFORM_ABI} MATCHES "x64")
+        # win 64 bits
+        set(PKGCONFIG_PLATFORM_LIBS "-lliblapack -llibblas")
+    else()
+        set(PKGCONFIG_PLATFORM_LIBS "-lliblapack -llibblas")
+    endif()
+elseif(APPLE)
+    set(PKGCONFIG_PLATFORM_LIBS     "-llapack -lblas -ldl")
+else()
+    set(PKGCONFIG_PLATFORM_LIBS     "-llapack -lblas -lpthread -lrt -ldl -lm")
+endif()
