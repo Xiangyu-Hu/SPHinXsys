@@ -21,6 +21,6 @@
 #define CLOSE_INTERNAL_NAMESPACE }
 
 #include "library_assert.h"
-#include "tbb/dynamic_link.h" // Refers to src/tbb, not include/tbb 
+#include "../../tbb/dynamic_link.h" // Refers to src/tbb, not include/tbb 
 
 #endif /* __KMP_omp_dynamic_link_H */

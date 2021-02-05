@@ -8,3 +8,4 @@ INSTALL(FILES ${BASE_DIR_HEADER_NAMES} DESTINATION 2d_code/include)
 INSTALL(FILES ${BASE_DIR_HEADER_NAMES} DESTINATION 3d_code/include)
 
 include_directories(simbody-include)
+include_directories(tbb-include)

@@ -55,7 +55,7 @@ namespace this_thread {
 #else /* TBB_IMPLEMENT_CPP0X */
 
 #define __TBB_COMPAT_THREAD_RECURSION_PROTECTOR 1
-#include <thread>
+//#include <thread>
 #undef __TBB_COMPAT_THREAD_RECURSION_PROTECTOR
 
 #endif /* TBB_IMPLEMENT_CPP0X */

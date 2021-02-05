@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "../examples/common/utility/utility.h"
+#include "../../examples/common/utility/utility.h"
 #include "tbb/tick_count.h"
 //#include <tbb/parallel_for.h>
 #include "tbb/task_scheduler_init.h" //for number of threads

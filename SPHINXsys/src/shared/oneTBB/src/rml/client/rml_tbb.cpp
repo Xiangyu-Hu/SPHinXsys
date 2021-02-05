@@ -15,7 +15,7 @@
 */
 
 #include "../include/rml_tbb.h"
-#include "tbb/dynamic_link.h"
+#include "../../tbb/dynamic_link.h"
 #include <assert.h>
 
 namespace tbb {
