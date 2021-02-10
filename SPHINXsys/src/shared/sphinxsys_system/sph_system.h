@@ -7,22 +7,12 @@
 #pragma once
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
-#include "boost/program_options.hpp"
-namespace po = boost::program_options;
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
 #include "general_dynamics.h"
 
 #include <fstream>
-/** Macro for APPLE compilers*/
-#ifdef __APPLE__
-#include <boost/filesystem.hpp>
-namespace fs = boost::filesystem;
-#else
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-#endif
 
 namespace SPH 
 {

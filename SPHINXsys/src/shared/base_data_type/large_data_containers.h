@@ -23,18 +23,19 @@
 #ifndef SPHINXSYS_BASE_CONTAINER_H
 #define SPHINXSYS_BASE_CONTAINER_H
 
-#include "tbb/tbb.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/blocked_range.h"
-#include "tbb/blocked_range2d.h"
-#include "tbb/blocked_range3d.h"
-#include "tbb/parallel_for.h"
-#include "tbb/parallel_reduce.h"
-#include "tbb/tick_count.h"
-#include "tbb/scalable_allocator.h"
-#include "tbb/concurrent_unordered_set.h"
-#include "tbb/concurrent_vector.h"
-#include "tbb/cache_aligned_allocator.h"
+//tbb
+#include "../oneTBB/include/tbb/tbb.h"
+#include "../oneTBB/include/tbb/task_scheduler_init.h"
+#include "../oneTBB/include/tbb/blocked_range.h"
+#include "../oneTBB/include/tbb/blocked_range2d.h"
+#include "../oneTBB/include/tbb/blocked_range3d.h"
+#include "../oneTBB/include/tbb/parallel_for.h"
+#include "../oneTBB/include/tbb/parallel_reduce.h"
+#include "../oneTBB/include/tbb/tick_count.h"
+#include "../oneTBB/include/tbb/scalable_allocator.h"
+#include "../oneTBB/include/tbb/concurrent_unordered_set.h"
+#include "../oneTBB/include/tbb/concurrent_vector.h"
+#include "../oneTBB/include/tbb/cache_aligned_allocator.h"
 
 #include <array>
 

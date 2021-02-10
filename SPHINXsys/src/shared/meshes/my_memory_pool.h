@@ -3,8 +3,9 @@
 
 #define TBB_PREVIEW_MEMORY_POOL 1
 
-#include "tbb/memory_pool.h"
-#include "tbb/enumerable_thread_specific.h"
+//tbb
+#include "../oneTBB/include/tbb/memory_pool.h"
+#include "../oneTBB/include/tbb/enumerable_thread_specific.h"
 
 #include <list>
 

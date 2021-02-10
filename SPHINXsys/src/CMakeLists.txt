@@ -18,6 +18,6 @@ FOREACH(subdir_path ${usefulsubdirs})
 	ADD_SUBDIRECTORY(${subdir_path})
 ENDFOREACH()
 
-ADD_SUBDIRECTORY(for_2D_build)
+#ADD_SUBDIRECTORY(for_2D_build)
 ADD_SUBDIRECTORY(for_3D_build)
 ADD_SUBDIRECTORY(shared)

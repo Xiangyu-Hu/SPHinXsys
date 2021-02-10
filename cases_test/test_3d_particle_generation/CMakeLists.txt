@@ -25,15 +25,3 @@ add_test(NAME ${PROJECT_NAME}_particle_relaxation
 		 COMMAND ${PROJECT_NAME} --r=true
 		 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 		 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-	set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
-    target_link_libraries(${PROJECT_NAME} sphinxsys_3d ${TBB_LIBRARYS} debug ${Simbody_DEBUG_LIBRARIES})
-    target_link_libraries(${PROJECT_NAME} sphinxsys_3d ${TBB_LIBRARYS} optimized ${Simbody_RELEASE_LIBRARIES})
-    add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
-else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-	if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    	target_link_libraries(${PROJECT_NAME} sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} ${Boost_LIBRARIES} stdc++)
-	else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		target_link_libraries(${PROJECT_NAME} sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES}  ${Boost_LIBRARIES} stdc++ stdc++fs)
-	endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")

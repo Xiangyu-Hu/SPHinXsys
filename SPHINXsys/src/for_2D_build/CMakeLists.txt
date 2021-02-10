@@ -51,15 +51,6 @@ SET_TARGET_PROPERTIES(sphinxsys_static_2d PROPERTIES OUTPUT_NAME "sphinxsys_2d")
 
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
-if(MSVC)
-    target_link_libraries(sphinxsys_2d ${TBB_LIBRARYS} ${Simbody_LIBRARIES})
-else(MSVC)
-	if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    	target_link_libraries(sphinxsys_2d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} ${Boost_LIBRARIES} stdc++)
-	else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		target_link_libraries(sphinxsys_2d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} stdc++ stdc++fs)
-	endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-endif(MSVC)
 
 INSTALL(TARGETS sphinxsys_2d sphinxsys_static_2d
 RUNTIME DESTINATION 2d_code/bin

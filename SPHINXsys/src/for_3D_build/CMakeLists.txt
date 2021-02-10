@@ -51,15 +51,6 @@ SET_TARGET_PROPERTIES(sphinxsys_static_3d PROPERTIES OUTPUT_NAME "sphinxsys_3d")
 
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    target_link_libraries(sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES})
-else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-	if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    	target_link_libraries(sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} ${Boost_LIBRARIES} stdc++)
-	else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		target_link_libraries(sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} stdc++ stdc++fs)
-	endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
 INSTALL(TARGETS sphinxsys_3d sphinxsys_static_3d
 RUNTIME DESTINATION 3d_code/bin
