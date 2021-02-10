@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 #if !(_WIN32||_WIN64) || (__MINGW64__||__MINGW32__) || __TBB_WIN8UI_SUPPORT
 
@@ -27,10 +27,10 @@ int TestMain () {
 #else // !(_WIN32||_WIN64)
 
 #define TBB_PREVIEW_RUNTIME_LOADER 1
-#include "tbb/runtime_loader.h"
-#include "tbb/tbb_stddef.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/tbb_exception.h"
+#include "runtime_loader.h"
+#include "tbb_stddef.h"
+#include "task_scheduler_init.h"
+#include "tbb_exception.h"
 
 #include <cstdio>
 #include <cstdlib>

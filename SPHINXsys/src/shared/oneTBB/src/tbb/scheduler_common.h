@@ -17,8 +17,8 @@
 #ifndef _TBB_scheduler_common_H
 #define _TBB_scheduler_common_H
 
-#include "tbb/tbb_machine.h"
-#include "tbb/cache_aligned_allocator.h"
+#include "tbb_machine.h"
+#include "cache_aligned_allocator.h"
 
 #include <string.h>  // for memset, memcpy, memmove
 
@@ -36,8 +36,8 @@
     #define undef_private
 #endif
 
-#include "tbb/task.h"
-#include "tbb/tbb_exception.h"
+#include "task.h"
+#include "tbb_exception.h"
 
 #ifdef undef_private
     #undef private
@@ -47,7 +47,7 @@
 #define __TBB_SCHEDULER_MUTEX_TYPE tbb::spin_mutex
 #endif
 // TODO: add conditional inclusion based on specified type
-#include "tbb/spin_mutex.h"
+#include "spin_mutex.h"
 
 // This macro is an attempt to get rid of ugly ifdefs in the shared parts of the code.
 // It drops the second argument depending on whether the controlling macro is defined.

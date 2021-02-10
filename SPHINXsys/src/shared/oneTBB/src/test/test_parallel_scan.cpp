@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include "tbb/parallel_scan.h"
-#include "tbb/blocked_range.h"
+#include "parallel_scan.h"
+#include "blocked_range.h"
 #include "harness_assert.h"
 #include <vector>
 
@@ -56,7 +56,7 @@ static unsigned char AddendHistory[MAXN];
 //! Set to 1 for debugging output
 #define PRINT_DEBUG 0
 
-#include "tbb/atomic.h"
+#include "atomic.h"
 #if PRINT_DEBUG
 #include <stdio.h>
 #include "harness_report.h"
@@ -244,7 +244,7 @@ public:
     }
 };
 
-#include "tbb/tick_count.h"
+#include "tick_count.h"
 
 template<typename T, typename Scan, typename ReverseJoin>
 T ParallelScanFunctionalInvoker(const Range& range, T idx, const Scan& scan, const ReverseJoin& reverse_join, int mode) {
@@ -436,7 +436,7 @@ static void TestScanTags() {
     ASSERT( tbb::final_scan_tag() == true, NULL );
 }
 
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 #include "harness_cpu.h"
 
 int TestMain () {

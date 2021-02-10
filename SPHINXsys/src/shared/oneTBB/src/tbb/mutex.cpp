@@ -17,7 +17,7 @@
 #if _WIN32||_WIN64
 #include <errno.h> // EDEADLK
 #endif
-#include "tbb/mutex.h"
+#include "mutex.h"
 #include "itt_notify.h"
 #if __TBB_TSX_AVAILABLE
 #include "governor.h" // for speculation_enabled()

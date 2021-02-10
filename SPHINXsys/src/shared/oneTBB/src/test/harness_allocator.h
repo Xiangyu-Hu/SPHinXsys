@@ -27,7 +27,7 @@
 #if __linux__ || __APPLE__ || __sun
 #include <unistd.h>
 #elif _WIN32
-#include "tbb/machine/windows_api.h"
+#include "machine/windows_api.h"
 #endif /* OS specific */
 #include <memory>
 #include <new>
@@ -36,8 +36,8 @@
 #include <utility>
 #include __TBB_STD_SWAP_HEADER
 
-#include "tbb/atomic.h"
-#include "tbb/tbb_allocator.h"
+#include "atomic.h"
+#include "tbb_allocator.h"
 
 #if __SUNPRO_CC
 using std::printf;
@@ -650,7 +650,7 @@ public:
 // C++03 allocator doesn't have to be assignable or swappable, so
 // tbb::internal::allocator_traits defines POCCA and POCS as false_type
 #if __TBB_ALLOCATOR_TRAITS_PRESENT
-#include "tbb/internal/_allocator_traits.h" // Need traits_true/false_type
+#include "internal/_allocator_traits.h" // Need traits_true/false_type
 
 template <typename Allocator, typename POCMA = tbb::internal::traits_false_type,
           typename POCCA = tbb::internal::traits_false_type, typename POCS = tbb::internal::traits_false_type>

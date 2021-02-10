@@ -36,8 +36,8 @@
 #endif // __linux__ && !__ANDROID__
 
 #include "proxy.h"
-#include "tbb/tbb_config.h"
-#include "tbb/tbb_environment.h"
+#include "tbb_config.h"
+#include "tbb_environment.h"
 
 #if !defined(__EXCEPTIONS) && !defined(_CPPUNWIND) && !defined(__SUNPRO_CC)
     #if TBB_USE_EXCEPTIONS

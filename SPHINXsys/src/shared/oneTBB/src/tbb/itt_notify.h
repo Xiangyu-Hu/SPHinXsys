@@ -17,7 +17,7 @@
 #ifndef _TBB_ITT_NOTIFY
 #define _TBB_ITT_NOTIFY
 
-#include "tbb/tbb_stddef.h"
+#include "tbb_stddef.h"
 
 #if DO_ITT_NOTIFY
 

@@ -16,10 +16,10 @@
 
 // test critical section
 //
-#include "tbb/critical_section.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/enumerable_thread_specific.h"
-#include "tbb/tick_count.h"
+#include "critical_section.h"
+#include "task_scheduler_init.h"
+#include "enumerable_thread_specific.h"
+#include "tick_count.h"
 #include "harness_assert.h"
 #include "harness.h"
 #include <math.h>

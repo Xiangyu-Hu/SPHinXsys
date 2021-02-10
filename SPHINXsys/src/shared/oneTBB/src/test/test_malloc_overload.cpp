@@ -35,7 +35,7 @@
 #include "harness_allocator_overload.h"
 
 #if MALLOC_WINDOWS_OVERLOAD_ENABLED
-#include "tbb/tbbmalloc_proxy.h"
+#include "tbbmalloc_proxy.h"
 #endif
 
 #include "harness.h"

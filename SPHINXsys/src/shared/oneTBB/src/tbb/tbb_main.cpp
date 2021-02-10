@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_config.h"
-#include "tbb/global_control.h"
+#include "tbb_config.h"
+#include "global_control.h"
 #include "tbb_main.h"
 #include "governor.h"
 #include "market.h"
@@ -152,7 +152,7 @@ struct resource_string {
 //
 #define TBB_STRING_RESOURCE( index_name, str ) { str, NULL },
 static resource_string strings_for_itt[] = {
-    #include "tbb/internal/_tbb_strings.h"
+    #include "internal/_tbb_strings.h"
     { "num_resource_strings", NULL }
 };
 #undef TBB_STRING_RESOURCE

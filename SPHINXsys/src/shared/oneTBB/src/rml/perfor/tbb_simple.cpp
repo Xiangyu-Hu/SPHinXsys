@@ -26,9 +26,9 @@
 
 #include "thread_level.h"
 
-#include "tbb/task.h"
-#include "tbb/tick_count.h"
-#include "tbb/task_scheduler_init.h"
+#include "task.h"
+#include "tick_count.h"
+#include "task_scheduler_init.h"
 
 #if _WIN32||_WIN64
 #include <Windows.h> /* Need Sleep */

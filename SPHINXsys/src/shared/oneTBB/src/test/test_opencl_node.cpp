@@ -17,7 +17,7 @@
 #define TBB_PREVIEW_FLOW_GRAPH_NODES 1
 #define TBB_PREVIEW_FLOW_GRAPH_FEATURES 1
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 // The old versions of MSVC 2013 fail to compile the test with fatal error
 #define __TBB_MSVC_TEST_COMPILATION_BROKEN (_MSC_VER && _MSC_FULL_VER <= 180021005 && !__INTEL_COMPILER)
@@ -27,11 +27,11 @@
 #pragma warning (disable: 4503) // Suppress "decorated name length exceeded, name was truncated" warning
 #endif
 #include <iterator>
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 #include <vector>
 #include <iostream>
 
-#include "tbb/flow_graph_opencl_node.h"
+#include "flow_graph_opencl_node.h"
 using namespace tbb::flow;
 
 #include "harness_assert.h"

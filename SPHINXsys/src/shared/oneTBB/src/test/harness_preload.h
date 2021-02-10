@@ -37,7 +37,7 @@
 // it includes another file, but that file should only have macros and pragmas;
 // it does not check for compiler, as that is checked in the included file.
 // The file also defines TBB_USE_EXCEPTIONS=0, which is set for all tests via makefiles anyway.
-#include "tbb/tbb_disable_exceptions.h"
+#include "tbb_disable_exceptions.h"
 #endif
 
 #endif /* harness_preload_H */

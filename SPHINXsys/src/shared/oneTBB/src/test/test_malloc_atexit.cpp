@@ -137,7 +137,7 @@ static Foo f;
 #include "harness.h"
 
 #if _WIN32||_WIN64
-#include "tbb/tbbmalloc_proxy.h"
+#include "tbbmalloc_proxy.h"
 
 extern __declspec(dllimport)
 #endif

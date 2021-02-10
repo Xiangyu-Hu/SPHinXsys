@@ -18,7 +18,7 @@
 #define HARNESS_DEFAULT_MAX_THREADS 4
 
 // Need to include "tbb/tbb_config.h" to obtain the definition of __TBB_DEFINE_MIC.
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 #if !__TBB_TODO || __TBB_WIN8UI_SUPPORT
 #define HARNESS_NO_PARSE_COMMAND_LINE 1
@@ -42,7 +42,7 @@ int TestMain() {
 #else /* !__MIC__ */
 
 #if _WIN32 || _WIN64
-#include "tbb/machine/windows_api.h"
+#include "machine/windows_api.h"
 #else
 #include <dlfcn.h>
 #endif
@@ -56,7 +56,7 @@ int TestMain() {
 #endif
 
 #ifdef _USRDLL
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 
 class CModel {
 public:

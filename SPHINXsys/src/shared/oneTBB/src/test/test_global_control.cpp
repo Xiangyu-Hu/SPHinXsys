@@ -15,9 +15,9 @@
 */
 
 #define TBB_PREVIEW_WAITING_FOR_WORKERS 1
-#include "tbb/global_control.h"
+#include "global_control.h"
 #include "harness.h"
-#include "tbb/task_scheduler_observer.h"
+#include "task_scheduler_observer.h"
 
 const size_t MB = 1024*1024;
 const double BARRIER_TIMEOUT = 10.;
@@ -37,7 +37,7 @@ void TestStackSizeSimpleControl()
 }
 
 #include "harness_concurrency_tracker.h"
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 #include <limits.h>   // for UINT_MAX
 
 struct StackSizeRun: NoAssign {
@@ -93,7 +93,7 @@ void TSI_and_RunWorkers(int tsi_max_threads, size_t parallelism, size_t max_valu
     RunWorkersLimited(tsi_max_threads, parallelism, /*wait=*/false);
 }
 
-#include "tbb/tbb_thread.h"
+#include "tbb_thread.h"
 
 void TestWorkers(size_t curr_par)
 {

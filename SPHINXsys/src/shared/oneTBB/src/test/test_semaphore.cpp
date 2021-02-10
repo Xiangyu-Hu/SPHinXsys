@@ -28,8 +28,8 @@
 //
 
 #include "../tbb/semaphore.h"
-#include "tbb/atomic.h"
-#include "tbb/blocked_range.h"
+#include "atomic.h"
+#include "blocked_range.h"
 
 #include <vector>
 using std::vector;
@@ -45,7 +45,7 @@ tbb::atomic<int> pCount;
 
 Harness::SpinBarrier sBarrier;
 
-#include "tbb/tick_count.h"
+#include "tick_count.h"
 // semaphore basic function:
 //   set semaphore to initial value
 //   see that semaphore only allows that number of threads to be active

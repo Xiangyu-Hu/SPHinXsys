@@ -17,7 +17,7 @@
 #ifndef _TBB_intrusive_list_H
 #define _TBB_intrusive_list_H
 
-#include "tbb/tbb_stddef.h"
+#include "tbb_stddef.h"
 
 namespace tbb {
 namespace internal {

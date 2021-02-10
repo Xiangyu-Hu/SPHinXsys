@@ -25,15 +25,15 @@
 
 #if DO_ITT_NOTIFY
 
-#include "tbb/spin_mutex.h"
-#include "tbb/spin_rw_mutex.h"
-#include "tbb/queuing_rw_mutex.h"
-#include "tbb/queuing_mutex.h"
-#include "tbb/mutex.h"
-#include "tbb/recursive_mutex.h"
-#include "tbb/parallel_for.h"
-#include "tbb/blocked_range.h"
-#include "tbb/task_scheduler_init.h"
+#include "spin_mutex.h"
+#include "spin_rw_mutex.h"
+#include "queuing_rw_mutex.h"
+#include "queuing_mutex.h"
+#include "mutex.h"
+#include "recursive_mutex.h"
+#include "parallel_for.h"
+#include "blocked_range.h"
+#include "task_scheduler_init.h"
 
 
 #include "../tbb/itt_notify.h"

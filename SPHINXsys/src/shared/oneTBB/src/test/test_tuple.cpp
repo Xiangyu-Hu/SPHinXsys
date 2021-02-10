@@ -27,7 +27,7 @@
 using namespace std;
 #else
 #define __TESTING_STD_TUPLE__ 0
-#include "tbb/compat/tuple"
+#include "compat/tuple"
 using namespace tbb::flow;
 #endif /*!__TBB_CPP11_TUPLE_PRESENT*/
 #include <string>

@@ -21,10 +21,10 @@
 #include "harness_graph.h"
 #include "harness_barrier.h"
 
-#include "tbb/flow_graph.h"
-#include "tbb/tbb_thread.h"
-#include "tbb/parallel_for.h"
-#include "tbb/concurrent_queue.h"
+#include "flow_graph.h"
+#include "tbb_thread.h"
+#include "parallel_for.h"
+#include "concurrent_queue.h"
 
 #include <vector>
 #include <cstdlib>
@@ -477,7 +477,7 @@ void test( int num_threads ) {
 
 } /* namespace LimitingExecutionToPriorityTask */
 
-#include "tbb/task_arena.h"
+#include "task_arena.h"
 namespace NestedCase {
 
 using tbb::task_arena;

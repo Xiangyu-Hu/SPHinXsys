@@ -22,10 +22,10 @@
 
 #include "harness.h"
 
-#include "tbb/flow_graph.h"
+#include "flow_graph.h"
 #include "harness_checktype.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/tick_count.h"
+#include "task_scheduler_init.h"
+#include "tick_count.h"
 #include "harness_graph.h"
 #include "test_follows_and_precedes_api.h"
 

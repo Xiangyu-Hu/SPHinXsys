@@ -22,14 +22,14 @@
 #include <cstdlib>
 #include <cassert>
 #include <utility>
-#include "tbb/task.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/tick_count.h"
-#include "tbb/parallel_for.h"
-#include "tbb/blocked_range.h"
-#include "tbb/mutex.h"
-#include "tbb/spin_mutex.h"
-#include "tbb/queuing_mutex.h"
+#include "task.h"
+#include "task_scheduler_init.h"
+#include "tick_count.h"
+#include "parallel_for.h"
+#include "blocked_range.h"
+#include "mutex.h"
+#include "spin_mutex.h"
+#include "queuing_mutex.h"
 #include "harness.h"
 
 using namespace std;

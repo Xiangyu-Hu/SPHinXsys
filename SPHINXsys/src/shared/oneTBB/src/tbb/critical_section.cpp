@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/critical_section.h"
+#include "critical_section.h"
 #include "itt_notify.h"
 
 namespace tbb {

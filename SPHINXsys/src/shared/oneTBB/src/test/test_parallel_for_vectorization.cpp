@@ -28,8 +28,8 @@
 // __TBB_ASSERT_ON_VECTORIZATION_FAILURE enables "pragma always assert" for
 // Intel(R) C++ Compiler.
 #define __TBB_ASSERT_ON_VECTORIZATION_FAILURE ( !HARNESS_SKIP_TEST )
-#include "tbb/parallel_for.h"
-#include "tbb/task_scheduler_init.h"
+#include "parallel_for.h"
+#include "task_scheduler_init.h"
 
 #include "harness.h"
 #include "harness_assert.h"

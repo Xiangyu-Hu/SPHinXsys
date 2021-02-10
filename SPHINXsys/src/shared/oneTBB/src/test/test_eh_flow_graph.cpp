@@ -42,10 +42,10 @@
 
 #if TBB_USE_EXCEPTIONS
 #if USE_TASK_SCHEDULER_OBSERVER
-#include "tbb/task_scheduler_observer.h"
+#include "task_scheduler_observer.h"
 #endif
-#include "tbb/flow_graph.h"
-#include "tbb/task_scheduler_init.h"
+#include "flow_graph.h"
+#include "task_scheduler_init.h"
 #include <iostream>
 #include <vector>
 #include "harness_assert.h"

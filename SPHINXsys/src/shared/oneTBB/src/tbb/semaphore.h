@@ -17,11 +17,11 @@
 #ifndef __TBB_tbb_semaphore_H
 #define __TBB_tbb_semaphore_H
 
-#include <tbb/atomic.h>
-#include "tbb/tbb_stddef.h"
+#include "atomic.h"
+#include "tbb_stddef.h"
 
 #if _WIN32||_WIN64
-#include "tbb/machine/windows_api.h"
+#include "machine/windows_api.h"
 
 #elif __APPLE__
 #include <mach/semaphore.h>

@@ -15,7 +15,7 @@
 */
 
 // Please define version number in the file:
-#include "tbb/tbb_stddef.h"
+#include "tbb_stddef.h"
 
 // And don't touch anything below
 #ifndef ENDL

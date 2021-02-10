@@ -15,9 +15,9 @@
 */
 
 #include "harness_task.h"
-#include "tbb/atomic.h"
-#include "tbb/tbb_thread.h"
-#include "tbb/task_scheduler_init.h"
+#include "atomic.h"
+#include "tbb_thread.h"
+#include "task_scheduler_init.h"
 #include <cstdlib>
 
 //------------------------------------------------------------------------
@@ -793,7 +793,7 @@ void TestWaitableTask() {
 #include <stdexcept>
 #include <vector>
 #include <map>
-#include "tbb/parallel_for.h"
+#include "parallel_for.h"
 
 namespace CriticalTaskSupport {
 

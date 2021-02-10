@@ -18,7 +18,7 @@
 #define __RML_wait_counter_H
 
 #include "thread_monitor.h"
-#include "tbb/atomic.h"
+#include "atomic.h"
 
 namespace rml {
 namespace internal {

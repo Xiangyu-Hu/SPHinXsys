@@ -14,16 +14,16 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_config.h"
-#include "tbb/cache_aligned_allocator.h"
-#include "tbb/tbb_allocator.h"
-#include "tbb/tbb_exception.h"
+#include "tbb_config.h"
+#include "cache_aligned_allocator.h"
+#include "tbb_allocator.h"
+#include "tbb_exception.h"
 #include "tbb_misc.h"
 #include "dynamic_link.h"
 #include <cstdlib>
 
 #if _WIN32||_WIN64
-#include "tbb/machine/windows_api.h"
+#include "machine/windows_api.h"
 #else
 #include <dlfcn.h>
 #endif /* _WIN32||_WIN64 */

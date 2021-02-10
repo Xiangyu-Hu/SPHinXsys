@@ -18,10 +18,10 @@
 #include "harness_inject_scheduler.h"
 #include "harness.h"
 
-#include "tbb/global_control.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/parallel_for.h"
-#include "tbb/blocked_range.h"
+#include "global_control.h"
+#include "task_scheduler_init.h"
+#include "parallel_for.h"
+#include "blocked_range.h"
 
 bool allWorkersSleep() {
     using namespace tbb::internal;

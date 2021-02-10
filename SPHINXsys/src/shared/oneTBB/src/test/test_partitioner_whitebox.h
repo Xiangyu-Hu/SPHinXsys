@@ -74,10 +74,10 @@ inline int current_thread_index() { return (int)whitebox_simulation::whitebox_th
 #define get_initial_auto_partitioner_divisor my_get_initial_auto_partitioner_divisor
 #define affinity_partitioner_base_v3 my_affinity_partitioner_base_v3
 #define task fake_task
-#include "tbb/tbb_thread.h"
-#include "tbb/enumerable_thread_specific.h"
+#include "tbb_thread.h"
+#include "enumerable_thread_specific.h"
 #define __TBB_STATIC_THRESHOLD 0
-#include "tbb/partitioner.h"
+#include "partitioner.h"
 #undef __TBB_STATIC_THRESHOLD
 #undef task
 #undef affinity_partitioner_base_v3

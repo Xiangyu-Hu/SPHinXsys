@@ -19,15 +19,15 @@
 
 #include "harness_assert.h"
 #include "harness_barrier.h"
-#include "tbb/atomic.h"
+#include "atomic.h"
 #include "../tbb/tls.h"
 // Note: This file is used by RML tests which do not link TBB.
 // Functionality that requires TBB binaries must be guarded by !__TBB_NO_IMPLICIT_LINKAGE
 #if !defined(__TBB_NO_IMPLICIT_LINKAGE)
-#include "tbb/mutex.h"
-#include "tbb/task.h"
-#include "tbb/combinable.h"
-#include "tbb/parallel_for.h"
+#include "mutex.h"
+#include "task.h"
+#include "combinable.h"
+#include "parallel_for.h"
 #include <functional> // for std::plus
 #include "harness.h" // for Harness::NoCopy
 #endif

@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 #include "test_condition_variable.h"
 

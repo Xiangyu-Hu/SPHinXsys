@@ -27,8 +27,8 @@ int TestMain() {
 
 #else /*__TBB_TEST_SKIP_LAMBDA*/
 
-#include "tbb/tbb.h"
-#include "tbb/combinable.h"
+#include "tbb.h"
+#include "combinable.h"
 #include <cstdio>
 #include <list>
 

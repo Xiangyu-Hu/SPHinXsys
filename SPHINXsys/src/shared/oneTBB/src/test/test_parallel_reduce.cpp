@@ -15,8 +15,8 @@
 */
 
 
-#include "tbb/parallel_reduce.h"
-#include "tbb/atomic.h"
+#include "parallel_reduce.h"
+#include "atomic.h"
 #include "harness_assert.h"
 
 static tbb::atomic<long> ForkCount;
@@ -94,7 +94,7 @@ public:
 };
 
 #include "harness.h"
-#include "tbb/tick_count.h"
+#include "tick_count.h"
 
 void Flog( int nthread, bool interference=false ) {
     for (int mode = 0;  mode < 4; mode++) {
@@ -137,7 +137,7 @@ void Flog( int nthread, bool interference=false ) {
     }
 }
 
-#include "tbb/blocked_range.h"
+#include "blocked_range.h"
 
 #if _MSC_VER
     typedef tbb::internal::uint64_t ValueType;
@@ -404,7 +404,7 @@ void TestDeterministicReduction () {
     ASSERT_WARNING((Harness::ConcurrencyTracker::PeakParallelism() > 1), "no parallel execution\n");
 }
 
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 #include "harness_cpu.h"
 #include "test_partitioner.h"
 

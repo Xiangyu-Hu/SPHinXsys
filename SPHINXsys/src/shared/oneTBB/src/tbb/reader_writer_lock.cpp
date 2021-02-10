@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include "tbb/reader_writer_lock.h"
-#include "tbb/tbb_machine.h"
-#include "tbb/tbb_exception.h"
+#include "reader_writer_lock.h"
+#include "tbb_machine.h"
+#include "tbb_exception.h"
 #include "itt_notify.h"
 
 #if defined(_MSC_VER) && defined(_Wp64)

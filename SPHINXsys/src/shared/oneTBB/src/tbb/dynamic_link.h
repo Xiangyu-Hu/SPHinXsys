@@ -19,7 +19,7 @@
 
 // Support for dynamic loading entry points from other shared libraries.
 
-#include "tbb/tbb_stddef.h"
+#include "tbb_stddef.h"
 
 #ifdef LIBRARY_ASSERT
     #undef __TBB_ASSERT
@@ -38,7 +38,7 @@
 
 #include <stddef.h>
 #if _WIN32
-#include "tbb/machine/windows_api.h"
+#include "machine/windows_api.h"
 #endif /* _WIN32 */
 
 OPEN_INTERNAL_NAMESPACE

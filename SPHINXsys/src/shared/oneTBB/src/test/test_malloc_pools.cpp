@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include "tbb/scalable_allocator.h"
-#include "tbb/atomic.h"
+#include "scalable_allocator.h"
+#include "atomic.h"
 #define HARNESS_TBBMALLOC_THREAD_SHUTDOWN 1
 #include "harness.h"
 #include "harness_barrier.h"

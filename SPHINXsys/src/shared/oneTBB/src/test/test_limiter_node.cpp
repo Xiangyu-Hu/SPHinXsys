@@ -21,9 +21,9 @@
 #include "harness_graph.h"
 #endif
 
-#include "tbb/flow_graph.h"
-#include "tbb/atomic.h"
-#include "tbb/task_scheduler_init.h"
+#include "flow_graph.h"
+#include "atomic.h"
+#include "task_scheduler_init.h"
 #include "test_follows_and_precedes_api.h"
 
 const int L = 10;

@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include "tbb/parallel_sort.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/concurrent_vector.h"
+#include "parallel_sort.h"
+#include "task_scheduler_init.h"
+#include "concurrent_vector.h"
 #include "harness.h"
 #include <math.h>
 #include <vector>

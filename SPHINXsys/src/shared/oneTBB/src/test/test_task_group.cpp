@@ -18,7 +18,7 @@
 
 //Concurrency scheduler is not supported by Windows* new UI apps
 //TODO: check whether we can test anything here
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 #if !__TBB_WIN8UI_SUPPORT
 #ifndef TBBTEST_USE_TBB
     #define TBBTEST_USE_TBB 1
@@ -40,8 +40,8 @@
 
 #if TBBTEST_USE_TBB
 
-    #include "tbb/compat/ppl.h"
-    #include "tbb/task_scheduler_init.h"
+    #include "compat/ppl.h"
+    #include "task_scheduler_init.h"
 
     #if _MSC_VER
         typedef tbb::internal::uint32_t uint_t;
@@ -68,8 +68,8 @@
 
 #if __TBB_TASK_GROUP_CONTEXT
 
-#include "tbb/atomic.h"
-#include "tbb/aligned_space.h"
+#include "atomic.h"
+#include "aligned_space.h"
 #include "harness.h"
 #include "harness_concurrency_tracker.h"
 
@@ -551,7 +551,7 @@ public:
 };
 
 #if TBB_USE_CAPTURED_EXCEPTION
-    #include "tbb/tbb_exception.h"
+    #include "tbb_exception.h"
     typedef tbb::captured_exception TestException;
 #else
     typedef test_exception TestException;

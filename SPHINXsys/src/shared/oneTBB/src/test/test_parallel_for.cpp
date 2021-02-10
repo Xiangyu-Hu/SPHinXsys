@@ -35,8 +35,8 @@
 #endif //#if _MSC_VER
 
 #include "harness_defs.h"
-#include "tbb/parallel_for.h"
-#include "tbb/atomic.h"
+#include "parallel_for.h"
+#include "atomic.h"
 #include "harness_assert.h"
 #include "harness.h"
 
@@ -98,7 +98,7 @@ public:
     }
 };
 
-#include "tbb/tick_count.h"
+#include "tick_count.h"
 
 static const int N = 500;
 static tbb::atomic<int> Array[N];
@@ -306,7 +306,7 @@ void TestParallelForWithStepSupport()
 #if __TBB_TASK_GROUP_CONTEXT
 // Exception support test
 #define HARNESS_EH_SIMPLE_MODE 1
-#include "tbb/tbb_exception.h"
+#include "tbb_exception.h"
 #include "harness_eh.h"
 
 #if TBB_USE_EXCEPTIONS
@@ -407,7 +407,7 @@ void TestVectorTypes() {
 
 #include <vector>
 #include <sstream>
-#include <tbb/blocked_range.h>
+#include "blocked_range.h"
 
 struct TestSimplePartitionerStabilityFunctor:NoAssign{
   std::vector<int> & ranges;
@@ -433,7 +433,7 @@ void TestSimplePartitionerStability(){
     }
 }
 #include <cstdio>
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 #include "harness_cpu.h"
 #include "harness_barrier.h"
 #include "test_partitioner.h"
@@ -572,8 +572,8 @@ void test() {
 
 #include <map>
 #include <utility>
-#include "tbb/task_arena.h"
-#include "tbb/enumerable_thread_specific.h"
+#include "task_arena.h"
+#include "enumerable_thread_specific.h"
 
 namespace parallel_for_within_task_arena {
 

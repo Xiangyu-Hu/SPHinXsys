@@ -16,8 +16,8 @@
 
 // Test whether cache_aligned_allocator works with some of the host's STL containers.
 
-#include "tbb/cache_aligned_allocator.h"
-#include "tbb/tbb_allocator.h"
+#include "cache_aligned_allocator.h"
+#include "tbb_allocator.h"
 
 #define HARNESS_NO_PARSE_COMMAND_LINE 1
 // the real body of the test is there:

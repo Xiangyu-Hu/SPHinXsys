@@ -17,11 +17,11 @@
 #ifndef __TBB_concurrent_monitor_H
 #define __TBB_concurrent_monitor_H
 
-#include "tbb/tbb_stddef.h"
-#include "tbb/atomic.h"
-#include "tbb/spin_mutex.h"
-#include "tbb/tbb_exception.h"
-#include "tbb/aligned_space.h"
+#include "tbb_stddef.h"
+#include "atomic.h"
+#include "spin_mutex.h"
+#include "tbb_exception.h"
+#include "aligned_space.h"
 
 #include "semaphore.h"
 

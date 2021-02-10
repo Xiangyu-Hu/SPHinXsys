@@ -18,7 +18,7 @@
 #define _TBB_scheduler_H
 
 #include "scheduler_common.h"
-#include "tbb/spin_mutex.h"
+#include "spin_mutex.h"
 #include "mailbox.h"
 #include "tbb_misc.h" // for FastRandom
 #include "itt_notify.h"

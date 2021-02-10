@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include "tbb/parallel_do.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/atomic.h"
+#include "parallel_do.h"
+#include "task_scheduler_init.h"
+#include "atomic.h"
 #include "harness.h"
 #include "harness_cpu.h"
 

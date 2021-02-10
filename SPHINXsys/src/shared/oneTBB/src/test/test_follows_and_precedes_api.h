@@ -15,7 +15,7 @@
 */
 
 #include "harness.h"
-#include "tbb/flow_graph.h"
+#include "flow_graph.h"
 
 #if __TBB_PREVIEW_FLOW_GRAPH_NODE_SET
 #include <array>

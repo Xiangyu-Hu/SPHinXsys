@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/blocked_range3d.h"
+#include "blocked_range3d.h"
 #include "harness_assert.h"
 
 // First test as much as we can without including other headers.
@@ -127,7 +127,7 @@ static void SerialTest() {
     }
 }
 
-#include "tbb/parallel_for.h"
+#include "parallel_for.h"
 #include "harness.h"
 
 const int N = 1<<5;
@@ -185,7 +185,7 @@ void TestDeductionGuides() {
 }
 #endif
 
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 
 int TestMain () {
     SerialTest();

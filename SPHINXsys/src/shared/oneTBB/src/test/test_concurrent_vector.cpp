@@ -18,10 +18,10 @@
 #define _SCL_SECURE_NO_WARNINGS
 #endif
 
-#include "tbb/concurrent_vector.h"
-#include "tbb/tbb_allocator.h"
-#include "tbb/cache_aligned_allocator.h"
-#include "tbb/tbb_exception.h"
+#include "concurrent_vector.h"
+#include "tbb_allocator.h"
+#include "cache_aligned_allocator.h"
+#include "tbb_exception.h"
 #include <cstdio>
 #include <cstdlib>
 #include <functional>
@@ -164,8 +164,8 @@ struct CheckElement {
     CheckElement( iterator base_ ) : base(base_) {}
 };
 
-#include "tbb/tick_count.h"
-#include "tbb/parallel_for.h"
+#include "tick_count.h"
+#include "parallel_for.h"
 #include "harness.h"
 
 //! Problem size
@@ -997,7 +997,7 @@ void TestComparison() {
 // concurrent_vector::grow_by to run very slowly (TR#196).
 //------------------------------------------------------------------------
 
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 #include <math.h>
 
 typedef unsigned long Number;

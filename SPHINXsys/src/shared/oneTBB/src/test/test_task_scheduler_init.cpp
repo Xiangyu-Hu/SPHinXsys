@@ -20,7 +20,7 @@
 #define TBB_PREVIEW_WAITING_FOR_WORKERS 1
 #endif
 
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 #include <cstdlib>
 #include <cstdio>
 #if TBB_USE_EXCEPTIONS
@@ -34,7 +34,7 @@
     // in parallel_for after the body call unreachable. So suppress the warning.
 #pragma warning (disable: 4702)
 #endif
-#include "tbb/parallel_for.h"
+#include "parallel_for.h"
 #if _MSC_VER
 #pragma warning (pop)
 #endif
@@ -123,7 +123,7 @@ struct ThreadedInit {
 };
 
 #if _MSC_VER
-#include "tbb/machine/windows_api.h"
+#include "machine/windows_api.h"
 #include <tchar.h>
 #endif /* _MSC_VER */
 
@@ -155,8 +155,8 @@ void TestNoWorkerSurplus () {
 }
 
 #if TBB_PREVIEW_WAITING_FOR_WORKERS
-#include "tbb/task_group.h"
-#include "tbb/task_arena.h"
+#include "task_group.h"
+#include "task_arena.h"
 
 namespace TestBlockingTerminateNS {
     struct EmptyBody {

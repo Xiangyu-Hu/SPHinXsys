@@ -16,10 +16,10 @@
 
 #define _VARIADIC_MAX 10   // Visual Studio 2012
 #include "harness.h"
-#include "tbb/atomic.h"
+#include "atomic.h"
 #include "harness_checktype.h"
 
-#include "tbb/flow_graph.h"
+#include "flow_graph.h"
 #include <cstdio>
 #include <stdexcept>
 #include <vector>

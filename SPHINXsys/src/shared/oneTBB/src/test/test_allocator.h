@@ -198,7 +198,7 @@ void TestBasic( A& a ) {
 
 }
 
-#include "tbb/blocked_range.h"
+#include "blocked_range.h"
 
 #if _MSC_VER && !defined(__INTEL_COMPILER)
     // Workaround for erroneous "conditional expression is constant" warning in method check_allocate.

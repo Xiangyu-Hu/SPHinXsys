@@ -12,7 +12,7 @@
 ; See the License for the specific language governing permissions and
 ; limitations under the License.
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 // Assembly-language support that is called directly by clients
 // __TBB_SYMBOL( __TBB_machine_cmpswp1 )

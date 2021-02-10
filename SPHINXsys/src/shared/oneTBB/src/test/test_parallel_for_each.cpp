@@ -18,9 +18,9 @@
 #pragma warning(disable: 4180) // "qualifier applied to function type has no meaning; ignored"
 #endif
 
-#include "tbb/parallel_for_each.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/atomic.h"
+#include "parallel_for_each.h"
+#include "task_scheduler_init.h"
+#include "atomic.h"
 #include "harness.h"
 #include "harness_iterator.h"
 #include <list>
@@ -84,7 +84,7 @@ void RunMutablePForEachTests() {
 
 #if __TBB_TASK_GROUP_CONTEXT
 #define HARNESS_EH_SIMPLE_MODE 1
-#include "tbb/tbb_exception.h"
+#include "tbb_exception.h"
 #include "harness_eh.h"
 
 #if TBB_USE_EXCEPTIONS

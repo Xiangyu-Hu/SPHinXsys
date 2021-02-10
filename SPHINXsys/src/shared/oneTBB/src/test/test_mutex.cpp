@@ -24,26 +24,26 @@
 // Compile with _OPENMP and -openmp
 //------------------------------------------------------------------------
 #include "harness_defs.h"
-#include "tbb/spin_mutex.h"
-#include "tbb/critical_section.h"
-#include "tbb/spin_rw_mutex.h"
-#include "tbb/queuing_rw_mutex.h"
-#include "tbb/queuing_mutex.h"
-#include "tbb/mutex.h"
-#include "tbb/recursive_mutex.h"
-#include "tbb/null_mutex.h"
-#include "tbb/null_rw_mutex.h"
-#include "tbb/parallel_for.h"
-#include "tbb/blocked_range.h"
-#include "tbb/tick_count.h"
-#include "tbb/atomic.h"
+#include "spin_mutex.h"
+#include "critical_section.h"
+#include "spin_rw_mutex.h"
+#include "queuing_rw_mutex.h"
+#include "queuing_mutex.h"
+#include "mutex.h"
+#include "recursive_mutex.h"
+#include "null_mutex.h"
+#include "null_rw_mutex.h"
+#include "parallel_for.h"
+#include "blocked_range.h"
+#include "tick_count.h"
+#include "atomic.h"
 #include "harness.h"
 #include <cstdlib>
 #include <cstdio>
 #if _OPENMP
 #include "test/OpenMP_Mutex.h"
 #endif /* _OPENMP */
-#include "tbb/tbb_profiling.h"
+#include "tbb_profiling.h"
 
 #ifndef TBB_TEST_LOW_WORKLOAD
     #define TBB_TEST_LOW_WORKLOAD TBB_USE_THREADING_TOOLS
@@ -539,7 +539,7 @@ void TestRecursiveMutexISO( const char * name ) {
 }
 
 #include "harness_tsx.h"
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 
 #if __TBB_TSX_TESTING_ENABLED_FOR_THIS_COMPILER
 

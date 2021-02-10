@@ -17,10 +17,10 @@
 #ifndef _TBB_arena_H
 #define _TBB_arena_H
 
-#include "tbb/tbb_stddef.h"
-#include "tbb/atomic.h"
+#include "tbb_stddef.h"
+#include "atomic.h"
 
-#include "tbb/tbb_machine.h"
+#include "tbb_machine.h"
 
 #include "scheduler_common.h"
 #include "intrusive_list.h"
@@ -37,7 +37,7 @@
 #include "concurrent_monitor.h"
 
 #if __TBB_PREVIEW_RESUMABLE_TASKS
-#include "tbb/spin_mutex.h"
+#include "spin_mutex.h"
 #endif
 
 namespace tbb {

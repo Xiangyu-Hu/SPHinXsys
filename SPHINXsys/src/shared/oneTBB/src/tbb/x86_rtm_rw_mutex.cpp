@@ -14,13 +14,13 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 #if __TBB_TSX_AVAILABLE
-#include "tbb/spin_rw_mutex.h"
-#include "tbb/tbb_machine.h"
+#include "spin_rw_mutex.h"
+#include "tbb_machine.h"
 #include "itt_notify.h"
 #include "governor.h"
-#include "tbb/atomic.h"
+#include "atomic.h"
 
 // __TBB_RW_MUTEX_DELAY_TEST shifts the point where flags aborting speculation are
 // added to the read-set of the operation.  If 1, will add the test just before

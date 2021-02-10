@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include "tbb/pipeline.h"
-#include "tbb/spin_mutex.h"
-#include "tbb/cache_aligned_allocator.h"
+#include "pipeline.h"
+#include "spin_mutex.h"
+#include "cache_aligned_allocator.h"
 #include "itt_notify.h"
 #include "semaphore.h"
 #include "tls.h"  // for parallel filters that do not use NULL as end_of_input

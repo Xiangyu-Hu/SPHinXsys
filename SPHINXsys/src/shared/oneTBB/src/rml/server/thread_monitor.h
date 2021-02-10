@@ -23,7 +23,7 @@
 #include <windows.h>
 #include <process.h>
 #include <malloc.h> //_alloca
-#include "tbb/tbb_misc.h" // support for processor groups
+#include "tbb_misc.h" // support for processor groups
 #if __TBB_WIN8UI_SUPPORT && (_WIN32_WINNT < 0x0A00)
 #include <thread>
 #endif
@@ -35,9 +35,9 @@
 #error Unsupported platform
 #endif
 #include <stdio.h>
-#include "tbb/itt_notify.h"
-#include "tbb/atomic.h"
-#include "tbb/semaphore.h"
+#include "itt_notify.h"
+#include "atomic.h"
+#include "semaphore.h"
 
 // All platform-specific threading support is in this header.
 

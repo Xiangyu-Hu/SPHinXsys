@@ -18,7 +18,7 @@
 #define tbb_tests_harness_concurrency_H
 
 #if _WIN32||_WIN64
-#include "tbb/machine/windows_api.h"
+#include "machine/windows_api.h"
 #elif __linux__
 #include <unistd.h>
 #include <sys/sysinfo.h>

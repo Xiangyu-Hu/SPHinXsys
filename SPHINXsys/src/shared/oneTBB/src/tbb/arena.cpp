@@ -14,14 +14,14 @@
     limitations under the License.
 */
 
-#include "tbb/global_control.h" // thread_stack_size
+#include "global_control.h" // thread_stack_size
 
 #include "scheduler.h"
 #include "governor.h"
 #include "arena.h"
 #include "itt_notify.h"
 #include "semaphore.h"
-#include "tbb/internal/_flow_graph_impl.h"
+#include "internal/_flow_graph_impl.h"
 
 #include <functional>
 
@@ -803,7 +803,7 @@ task::suspend_point internal_current_suspend_point() {
 } // namespace tbb
 
 #include "scheduler_utility.h"
-#include "tbb/task_arena.h" // task_arena_base
+#include "task_arena.h" // task_arena_base
 
 namespace tbb {
 namespace interface7 {

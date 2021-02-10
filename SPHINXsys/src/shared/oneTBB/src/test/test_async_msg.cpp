@@ -18,7 +18,7 @@
     #define TBB_PREVIEW_FLOW_GRAPH_FEATURES 1
 #endif
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 #if __TBB_PREVIEW_ASYNC_MSG
 
@@ -26,9 +26,9 @@
 #pragma warning (disable: 4503) // Suppress "decorated name length exceeded, name was truncated" warning
 #endif
 
-#include "tbb/flow_graph.h"
-#include "tbb/tbb_thread.h"
-#include "tbb/concurrent_queue.h"
+#include "flow_graph.h"
+#include "tbb_thread.h"
+#include "concurrent_queue.h"
 
 #include "harness.h"
 #include "harness_graph.h"

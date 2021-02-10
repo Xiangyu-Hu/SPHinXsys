@@ -17,9 +17,9 @@
 #ifndef _TBB_tbb_misc_H
 #define _TBB_tbb_misc_H
 
-#include "tbb/tbb_stddef.h"
-#include "tbb/tbb_machine.h"
-#include "tbb/atomic.h"     // For atomic_xxx definitions
+#include "tbb_stddef.h"
+#include "tbb_machine.h"
+#include "atomic.h"     // For atomic_xxx definitions
 
 #if __linux__ || __FreeBSD__
 #include <sys/param.h>  // __FreeBSD_version

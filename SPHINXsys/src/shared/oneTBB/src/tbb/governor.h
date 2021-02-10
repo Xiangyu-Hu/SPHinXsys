@@ -17,7 +17,7 @@
 #ifndef _TBB_governor_H
 #define _TBB_governor_H
 
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 #include "../rml/include/rml_tbb.h"
 
 #include "tbb_misc.h" // for AvailableHwConcurrency

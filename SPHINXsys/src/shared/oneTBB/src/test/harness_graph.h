@@ -23,15 +23,15 @@
 
 #include "harness.h"
 #include "harness_barrier.h"
-#include "tbb/flow_graph.h"
-#include "tbb/null_rw_mutex.h"
-#include "tbb/atomic.h"
-#include "tbb/concurrent_unordered_map.h"
-#include "tbb/task.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/compat/condition_variable"
-#include "tbb/mutex.h"
-#include "tbb/tbb_thread.h"
+#include "flow_graph.h"
+#include "null_rw_mutex.h"
+#include "atomic.h"
+#include "concurrent_unordered_map.h"
+#include "task.h"
+#include "task_scheduler_init.h"
+#include "compat/condition_variable"
+#include "mutex.h"
+#include "tbb_thread.h"
 
 using tbb::flow::internal::SUCCESSFULLY_ENQUEUED;
 

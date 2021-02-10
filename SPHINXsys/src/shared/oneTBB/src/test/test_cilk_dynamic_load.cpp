@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 // Skip the test if no interoperability with cilkrts
 #define __TBB_CILK_INTEROP   (__TBB_SURVIVE_THREAD_SWITCH && __INTEL_COMPILER>=1200)
@@ -31,8 +31,8 @@
 
 #if __TBB_CILK_INTEROP && CILK_SYMBOLS_VISIBLE && !CILK_LINKAGE_BROKEN && HEAVY_NESTED_INTEROP_SUPPORT
 
-#include "tbb/task_scheduler_init.h"
-#include "tbb/task.h"
+#include "task_scheduler_init.h"
+#include "task.h"
 
 static const int N = 25;
 static const int P_outer = 4;

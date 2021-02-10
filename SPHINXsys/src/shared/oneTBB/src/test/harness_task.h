@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/task.h"
+#include "task.h"
 #include "harness.h"
 
 //! Helper for verifying that old use cases of spawn syntax still work.

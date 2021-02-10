@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_stddef.h"
-#include "tbb/global_control.h" // global_control::active_value
+#include "tbb_stddef.h"
+#include "global_control.h" // global_control::active_value
 
 #include "market.h"
 #include "tbb_main.h"

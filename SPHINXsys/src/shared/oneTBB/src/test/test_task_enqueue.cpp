@@ -16,10 +16,10 @@
 
 #include "harness_task.h"
 #include "harness_barrier.h"
-#include "tbb/atomic.h"
-#include "tbb/tbb_thread.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/tick_count.h"
+#include "atomic.h"
+#include "tbb_thread.h"
+#include "task_scheduler_init.h"
+#include "tick_count.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Test for basic FIFO scheduling functionality
@@ -310,8 +310,8 @@ void TestDequeueByMaster () {
 }
 
 ////////////////////// Missed wake-ups ///////
-#include "tbb/blocked_range.h"
-#include "tbb/parallel_for.h"
+#include "blocked_range.h"
+#include "parallel_for.h"
 
 static const int NUM_TASKS    = 4;
 static const size_t NUM_REPEATS = TBB_USE_DEBUG ? 50000 : 100000;
@@ -352,7 +352,7 @@ void TestWakeups()
         tbb::parallel_for(tbb::blocked_range<int>(0, NUM_TASKS), Functor(barrier)); // auto
 }
 
-#include "tbb/global_control.h"
+#include "global_control.h"
 
 int TestMain () {
 

@@ -17,18 +17,18 @@
 #define HARNESS_DEFAULT_MIN_THREADS 6
 #define HARNESS_DEFAULT_MAX_THREADS 8
 
-#include "tbb/concurrent_monitor.h"
-#include "tbb/atomic.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/parallel_for.h"
-#include "tbb/blocked_range.h"
+#include "concurrent_monitor.h"
+#include "atomic.h"
+#include "task_scheduler_init.h"
+#include "parallel_for.h"
+#include "blocked_range.h"
 #include "harness.h"
 #if _WIN32||_WIN64
-#include "tbb/dynamic_link.cpp"
+#include "dynamic_link.cpp"
 #endif
 
-#include "tbb/semaphore.cpp"
-#include "tbb/concurrent_monitor.cpp"
+#include "semaphore.cpp"
+#include "concurrent_monitor.cpp"
 
 #if _MSC_VER && !defined(__INTEL_COMPILER)
     // Workaround for overzealous compiler warnings

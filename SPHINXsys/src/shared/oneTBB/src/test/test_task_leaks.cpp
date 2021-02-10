@@ -31,7 +31,7 @@
 #define  __TBB_COUNT_TASK_NODES 1
 #include "harness_inject_scheduler.h"
 
-#include "tbb/atomic.h"
+#include "atomic.h"
 #include "harness_assert.h"
 #include <cstdlib>
 
@@ -55,7 +55,7 @@ tbb::atomic<int> Count;
 tbb::atomic<tbb::task*> Exchanger;
 tbb::internal::scheduler* Producer;
 
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 
 #include "harness.h"
 

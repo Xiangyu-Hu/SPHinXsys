@@ -25,7 +25,7 @@
 
 #include "harness.h"
 #include "harness_assert.h"
-#include "tbb/tbb_stddef.h"
+#include "tbb_stddef.h"
 
 #include <cstdlib>
 

@@ -17,8 +17,8 @@
 #define HARNESS_DEFAULT_MIN_THREADS 4
 #define HARNESS_DEFAULT_MAX_THREADS 4
 
-#include "tbb/queuing_rw_mutex.h"
-#include "tbb/spin_rw_mutex.h"
+#include "queuing_rw_mutex.h"
+#include "spin_rw_mutex.h"
 #include "harness.h"
 
 using namespace tbb;

@@ -15,9 +15,9 @@
 */
 
 #include "harness_defs.h"
-#include "tbb/concurrent_priority_queue.h"
-#include "tbb/atomic.h"
-#include "tbb/blocked_range.h"
+#include "concurrent_priority_queue.h"
+#include "atomic.h"
+#include "blocked_range.h"
 #include "harness.h"
 #include <functional>
 #include <algorithm>

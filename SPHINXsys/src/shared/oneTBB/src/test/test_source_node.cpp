@@ -23,9 +23,9 @@
 #endif
 
 #include "harness_graph.h"
-#include "tbb/flow_graph.h"
-#include "tbb/task.h"
-#include "tbb/task_scheduler_init.h"
+#include "flow_graph.h"
+#include "task.h"
+#include "task_scheduler_init.h"
 
 const int N = 1000;
 

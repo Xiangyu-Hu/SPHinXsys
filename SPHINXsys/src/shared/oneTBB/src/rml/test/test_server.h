@@ -22,8 +22,8 @@
    This header should not use any parts of TBB that require linking in the TBB run-time. 
    It uses a few instances of tbb::atomic<T>, all of which are completely inlined. */
 
-#include "tbb/atomic.h"
-#include "tbb/tbb_thread.h"
+#include "atomic.h"
+#include "tbb_thread.h"
 #include "harness.h"
 #include "harness_memory.h"
 #include "harness_concurrency_tracker.h"

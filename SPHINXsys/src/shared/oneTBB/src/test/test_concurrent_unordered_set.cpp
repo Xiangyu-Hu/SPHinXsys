@@ -22,7 +22,7 @@
 #if !(__TBB_TEST_SECONDARY && __TBB_CPP11_STD_PLACEHOLDERS_LINKAGE_BROKEN)
 
 #define __TBB_EXTRA_DEBUG 1
-#include "tbb/concurrent_unordered_set.h"
+#include "concurrent_unordered_set.h"
 #include "harness_assert.h"
 
 #if __TBB_TEST_SECONDARY

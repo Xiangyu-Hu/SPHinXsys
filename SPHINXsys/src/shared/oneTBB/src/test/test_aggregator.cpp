@@ -18,7 +18,7 @@
     #define TBB_PREVIEW_AGGREGATOR 1
 #endif
 
-#include "tbb/aggregator.h"
+#include "aggregator.h"
 #include "harness.h"
 #include <queue>
 

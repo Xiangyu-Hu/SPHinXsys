@@ -15,7 +15,7 @@
 */
 
 #include "dynamic_link.h"
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 /*
     This file is used by both TBB and OpenMP RTL. Do not use __TBB_ASSERT() macro

@@ -18,7 +18,7 @@
 #include "harness_inject_scheduler.h"
 #define private public
 #define protected public
-#include "tbb/concurrent_queue.h"
+#include "concurrent_queue.h"
 #include "../tbb/concurrent_queue.cpp"
 #undef protected
 #undef private

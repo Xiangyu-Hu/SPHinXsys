@@ -21,9 +21,9 @@
 #include "harness.h"
 #include "harness_graph.h"
 
-#include "tbb/flow_graph.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/spin_rw_mutex.h"
+#include "flow_graph.h"
+#include "task_scheduler_init.h"
+#include "spin_rw_mutex.h"
 #include "test_follows_and_precedes_api.h"
 
 #define N 100

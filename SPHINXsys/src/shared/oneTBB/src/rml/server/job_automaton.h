@@ -18,7 +18,7 @@
 #define __RML_job_automaton_H
 
 #include "rml_base.h"
-#include "tbb/atomic.h"
+#include "atomic.h"
 
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
     // Workaround for overzealous compiler warnings 

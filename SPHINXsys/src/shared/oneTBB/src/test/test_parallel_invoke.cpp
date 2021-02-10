@@ -22,10 +22,10 @@
     #define TBB_PREVIEW_VARIADIC_PARALLEL_INVOKE __TBB_CPF_BUILD
 #endif
 
-#include "tbb/parallel_invoke.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/atomic.h"
-#include "tbb/tbb_exception.h"
+#include "parallel_invoke.h"
+#include "task_scheduler_init.h"
+#include "atomic.h"
+#include "tbb_exception.h"
 #include "harness.h"
 
 #if !__INTEL_COMPILER && (_MSC_VER && _MSC_VER <= 1400 || __GNUC__==3 && __GNUC_MINOR__<=3 || __SUNPRO_CC)

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_machine.h"
-#include "tbb/spin_mutex.h"
+#include "tbb_machine.h"
+#include "spin_mutex.h"
 #include "itt_notify.h"
 #include "tbb_misc.h"
 

@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <tbb/tbb_config.h>
+#include "tbb_config.h"
 #if __TBB_WIN8UI_SUPPORT || __TBB_MIC_OFFLOAD
 #include "harness.h"
 int TestMain () {

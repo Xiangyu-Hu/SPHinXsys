@@ -18,7 +18,7 @@
 #define _TBB_malloc_Customize_H_
 
 // customizing MALLOC_ASSERT macro
-#include "tbb/tbb_stddef.h"
+#include "tbb_stddef.h"
 #define MALLOC_ASSERT(assertion, message) __TBB_ASSERT(assertion, message)
 #define MALLOC_ASSERT_EX(assertion, message) __TBB_ASSERT_EX(assertion, message)
 
@@ -29,7 +29,7 @@
 #include "Synchronize.h"
 
 #if DO_ITT_NOTIFY
-#include "tbb/itt_notify.h"
+#include "itt_notify.h"
 #define MALLOC_ITT_SYNC_PREPARE(pointer) ITT_NOTIFY(sync_prepare, (pointer))
 #define MALLOC_ITT_SYNC_ACQUIRED(pointer) ITT_NOTIFY(sync_acquired, (pointer))
 #define MALLOC_ITT_SYNC_RELEASING(pointer) ITT_NOTIFY(sync_releasing, (pointer))
@@ -130,7 +130,7 @@ namespace tbb {
     } // namespace internal
 } // namespace tbb
 
-#include "tbb/internal/_aggregator_impl.h"
+#include "internal/_aggregator_impl.h"
 
 template <typename OperationType>
 struct MallocAggregator {

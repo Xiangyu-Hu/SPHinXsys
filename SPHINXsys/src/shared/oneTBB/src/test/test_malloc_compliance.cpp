@@ -18,7 +18,7 @@ bool __tbb_test_errno = false;
 
 #define __STDC_LIMIT_MACROS 1 // to get SIZE_MAX from stdint.h
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 #if __TBB_WIN8UI_SUPPORT
 // testing allocator itself not interfaces
@@ -41,7 +41,7 @@ int TestMain() {
 */
 #undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
-#include "tbb/machine/windows_api.h"
+#include "machine/windows_api.h"
 #include <stdio.h>
 
 #if _MSC_VER && defined(_MT) && defined(_DLL)
@@ -106,7 +106,7 @@ void limitMem( size_t limit )
 #include <errno.h>
 #include <limits.h> // for CHAR_BIT
 #define __TBB_NO_IMPLICIT_LINKAGE 1
-#include "tbb/scalable_allocator.h"
+#include "scalable_allocator.h"
 
 #define HARNESS_CUSTOM_MAIN 1
 #define HARNESS_TBBMALLOC_THREAD_SHUTDOWN 1

@@ -16,8 +16,8 @@
 
 #include "harness_graph.h"
 #include "harness_barrier.h"
-#include "tbb/flow_graph.h"
-#include "tbb/task_scheduler_init.h"
+#include "flow_graph.h"
+#include "task_scheduler_init.h"
 
 const int T = 4;
 const int W = 4;

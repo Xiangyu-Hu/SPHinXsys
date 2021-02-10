@@ -97,10 +97,10 @@ void SerialConvolve( T c[], const T a[], int m, const T b[], int n ) {
 #define OPENMP_ASYNC_SHUTDOWN_BROKEN (__INTEL_COMPILER<=1400 && __linux__)
 #define TBB_PREVIEW_WAITING_FOR_WORKERS 1
 
-#include "tbb/blocked_range.h"
-#include "tbb/parallel_for.h"
-#include "tbb/parallel_reduce.h"
-#include "tbb/task_scheduler_init.h"
+#include "blocked_range.h"
+#include "parallel_for.h"
+#include "parallel_reduce.h"
+#include "task_scheduler_init.h"
 #include "harness.h"
 
 using namespace tbb;

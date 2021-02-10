@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 #if !__TBB_WIN8UI_SUPPORT && defined(_WIN32)
 
@@ -36,7 +36,7 @@
 #include <string.h>
 #include "tbb_function_replacement.h"
 
-#include "tbb/tbb_stddef.h"
+#include "tbb_stddef.h"
 #include "../tbb/tbb_assert_impl.h"
 
 // The information about a standard memory allocation function for the replacement log

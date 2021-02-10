@@ -17,11 +17,11 @@
 #ifndef _TBB_mailbox_H
 #define _TBB_mailbox_H
 
-#include "tbb/tbb_stddef.h"
-#include "tbb/cache_aligned_allocator.h"
+#include "tbb_stddef.h"
+#include "cache_aligned_allocator.h"
 
 #include "scheduler_common.h"
-#include "tbb/atomic.h"
+#include "atomic.h"
 
 namespace tbb {
 namespace internal {

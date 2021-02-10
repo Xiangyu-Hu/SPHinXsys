@@ -15,7 +15,7 @@
 */
 
 #include "tbbmalloc_internal.h"
-#include "tbb/tbb_environment.h"
+#include "tbb_environment.h"
 
 /******************************* Allocation of large objects *********************************************/
 

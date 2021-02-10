@@ -17,11 +17,11 @@
 #ifndef _TBB_market_H
 #define _TBB_market_H
 
-#include "tbb/tbb_stddef.h"
+#include "tbb_stddef.h"
 
 #include "scheduler_common.h"
-#include "tbb/atomic.h"
-#include "tbb/spin_rw_mutex.h"
+#include "atomic.h"
+#include "spin_rw_mutex.h"
 #include "../rml/include/rml_tbb.h"
 
 #include "intrusive_list.h"

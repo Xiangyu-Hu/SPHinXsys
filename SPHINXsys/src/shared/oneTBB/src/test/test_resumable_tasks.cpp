@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 #include "harness.h"
 
@@ -24,15 +24,15 @@ int TestMain() {
 }
 #else // __TBB_PREVIEW_RESUMABLE_TASKS
 
-#include "tbb/task.h"
-#include "tbb/concurrent_queue.h"
-#include "tbb/atomic.h"
-#include "tbb/parallel_for.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/enumerable_thread_specific.h"
-#include "tbb/task_arena.h"
-#include "tbb/task_group.h"
-#include "tbb/tbb_thread.h"
+#include "task.h"
+#include "concurrent_queue.h"
+#include "atomic.h"
+#include "parallel_for.h"
+#include "task_scheduler_init.h"
+#include "enumerable_thread_specific.h"
+#include "task_arena.h"
+#include "task_group.h"
+#include "tbb_thread.h"
 
 #include <vector>
 

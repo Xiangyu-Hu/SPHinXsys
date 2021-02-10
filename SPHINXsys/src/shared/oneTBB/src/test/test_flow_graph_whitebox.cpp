@@ -29,17 +29,17 @@
 #include <string> // merely prevents LNK2001 error to happen (on ICL+VC9 configurations)
 
 // need these to get proper external names for private methods in library.
-#include "tbb/spin_mutex.h"
-#include "tbb/spin_rw_mutex.h"
-#include "tbb/task.h"
-#include "tbb/task_arena.h"
+#include "spin_mutex.h"
+#include "spin_rw_mutex.h"
+#include "task.h"
+#include "task_arena.h"
 
 #define private public
 #define protected public
-#include "tbb/flow_graph.h"
+#include "flow_graph.h"
 #undef protected
 #undef private
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 #include "harness_graph.h"
 
 template<typename T>

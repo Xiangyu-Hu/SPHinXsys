@@ -19,7 +19,7 @@
 
 #include <iterator>
 #include <memory>
-#include "tbb/atomic.h"
+#include "atomic.h"
 #include "harness_assert.h"
 
 namespace Harness {

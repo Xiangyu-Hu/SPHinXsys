@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 #if __TBB_GCC_STRICT_ALIASING_BROKEN
     #pragma GCC diagnostic ignored "-Wstrict-aliasing"
@@ -38,7 +38,7 @@ void AssignToCheckAlignment( Minimal<T>& dst, const Minimal<T>& src ) {
     dst.pad = src.pad;
 }
 
-#include "tbb/aligned_space.h"
+#include "aligned_space.h"
 #include "harness_assert.h"
 
 static bool SpaceWasted;

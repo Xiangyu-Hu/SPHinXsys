@@ -20,8 +20,8 @@
 #include "scheduler.h"
 #include "itt_notify.h"
 
-#include "tbb/cache_aligned_allocator.h"
-#include "tbb/partitioner.h"
+#include "cache_aligned_allocator.h"
+#include "partitioner.h"
 
 #include <new>
 

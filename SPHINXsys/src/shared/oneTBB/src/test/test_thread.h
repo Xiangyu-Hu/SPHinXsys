@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/atomic.h"
+#include "atomic.h"
 #if __TBB_CPP11_RVALUE_REF_PRESENT
 #include <utility> // std::move
 #endif

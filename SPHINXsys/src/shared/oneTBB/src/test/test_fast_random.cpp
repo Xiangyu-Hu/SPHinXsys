@@ -30,7 +30,7 @@
 #define TEST_TOTAL_SEQUENCE 0
 
 #include "harness.h"
-#include "tbb/atomic.h"
+#include "atomic.h"
 
 //! Coefficient defining tolerable deviation from ideal random distribution
 const double AcceptableDeviation = 2.1;
@@ -160,7 +160,7 @@ struct CheckReproducibilityBody:NoAssign{
     }
 
 };
-#include "tbb/tbb_thread.h"
+#include "tbb_thread.h"
 
 int TestMain () {
     ASSERT( AcceptableDeviation < 100, NULL );

@@ -17,12 +17,12 @@
 #ifndef _TBB_task_stream_H
 #define _TBB_task_stream_H
 
-#include "tbb/tbb_stddef.h"
+#include "tbb_stddef.h"
 #include <deque>
 #include <climits>
-#include "tbb/atomic.h" // for __TBB_Atomic*
-#include "tbb/spin_mutex.h"
-#include "tbb/tbb_allocator.h"
+#include "atomic.h" // for __TBB_Atomic*
+#include "spin_mutex.h"
+#include "tbb_allocator.h"
 #include "scheduler_common.h"
 #include "tbb_misc.h" // for FastRandom
 

@@ -28,30 +28,30 @@
 // Whitebox stuff for TestIsolatedExecuteNS::ContinuationTest().
 // TODO: Consider better approach instead of the whitebox approach.
 #define private public
-#include "tbb/task.h"
+#include "task.h"
 #undef private
 #endif /* __TBB_TASK_ISOLATION */
 
-#include "tbb/task_arena.h"
-#include "tbb/atomic.h"
-#include "tbb/task_scheduler_observer.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/parallel_for.h"
-#include "tbb/blocked_range.h"
-#include "tbb/enumerable_thread_specific.h"
+#include "task_arena.h"
+#include "atomic.h"
+#include "task_scheduler_observer.h"
+#include "task_scheduler_init.h"
+#include "parallel_for.h"
+#include "blocked_range.h"
+#include "enumerable_thread_specific.h"
 
 #include "harness_assert.h"
 #include "harness.h"
 #include "harness_barrier.h"
 
-#include "tbb/tbb_thread.h"
+#include "tbb_thread.h"
 
 #if _MSC_VER
 // plays around __TBB_NO_IMPLICIT_LINKAGE. __TBB_LIB_NAME should be defined (in makefiles)
 #pragma comment(lib, __TBB_STRING(__TBB_LIB_NAME))
 #endif
 
-#include "tbb/global_control.h"
+#include "global_control.h"
 //--------------------------------------------------//
 // Test that task_arena::initialize and task_arena::terminate work when doing nothing else.
 /* maxthread is treated as the biggest possible concurrency level. */
@@ -387,7 +387,7 @@ void TestMultipleMasters(int p) {
 #include <sstream>
 #if TBB_USE_EXCEPTIONS
 #include <stdexcept>
-#include "tbb/tbb_exception.h"
+#include "tbb_exception.h"
 #endif
 
 struct TestArenaEntryBody : FPModeContext {
@@ -714,8 +714,8 @@ void TestConstantFunctorRequirement() {
 }
 //--------------------------------------------------//
 #if __TBB_TASK_ISOLATION
-#include "tbb/parallel_reduce.h"
-#include "tbb/parallel_invoke.h"
+#include "parallel_reduce.h"
+#include "parallel_invoke.h"
 // Test this_task_arena::isolate
 namespace TestIsolatedExecuteNS {
     //--------------------------------------------------//
@@ -1161,7 +1161,7 @@ private:
     tbb::atomic<int>& my_processed;
 };
 
-#include "tbb/tbb_thread.h"
+#include "tbb_thread.h"
 
 void TestMultipleWaits( int num_threads, int num_bunches, int bunch_size ) {
     tbb::task_arena a( num_threads );
@@ -1208,7 +1208,7 @@ void TestMultipleWaits() {
     }
 }
 //--------------------------------------------------//
-#include "tbb/global_control.h"
+#include "global_control.h"
 
 void TestSmallStackSize() {
     tbb::task_scheduler_init init(tbb::task_scheduler_init::automatic,

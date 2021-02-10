@@ -31,7 +31,7 @@
 //
 #include <winresrc.h>
 #define ENDL "\r\n"
-#include "tbb/tbb_version.h"
+#include "tbb_version.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS

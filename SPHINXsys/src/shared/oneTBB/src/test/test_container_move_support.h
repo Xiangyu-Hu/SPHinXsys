@@ -22,9 +22,9 @@
 #include "harness_allocator.h"
 #include "harness_state_trackable.h"
 
-#include "tbb/atomic.h"
-#include "tbb/aligned_space.h"
-#include "tbb/internal/_allocator_traits.h"
+#include "atomic.h"
+#include "aligned_space.h"
+#include "internal/_allocator_traits.h"
 
 #include <stdexcept>
 #include <string>

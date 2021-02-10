@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
-#include "tbb/pipeline.h"
-#include "tbb/spin_mutex.h"
-#include "tbb/atomic.h"
-#include "tbb/tbb_thread.h"
+#include "pipeline.h"
+#include "spin_mutex.h"
+#include "atomic.h"
+#include "tbb_thread.h"
 #include <cstdlib>
 #include <cstdio>
 #include "harness.h"
@@ -495,7 +495,7 @@ void waiting_probe::probe( ) {
     TestCPUUserTime(nthread, 2);
 }
 
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 
 int TestMain () {
     out_of_order_count = 0;

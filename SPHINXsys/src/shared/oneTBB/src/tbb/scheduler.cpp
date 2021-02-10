@@ -21,8 +21,8 @@
 #include "arena.h"
 #include "mailbox.h"
 #include "observer_proxy.h"
-#include "tbb/tbb_machine.h"
-#include "tbb/atomic.h"
+#include "tbb_machine.h"
+#include "atomic.h"
 
 namespace tbb {
 namespace internal {

@@ -17,12 +17,12 @@
 #include "harness.h"
 #include "harness_graph.h"
 #include "harness_barrier.h"
-#include "tbb/concurrent_queue.h"
-#include "tbb/flow_graph.h"
-#include "tbb/task.h"
-#include "tbb/tbb_thread.h"
-#include "tbb/mutex.h"
-#include "tbb/compat/condition_variable"
+#include "concurrent_queue.h"
+#include "flow_graph.h"
+#include "task.h"
+#include "tbb_thread.h"
+#include "mutex.h"
+#include "compat/condition_variable"
 
 #include <string>
 
@@ -606,7 +606,7 @@ int run_tests() {
     return Harness::Done;
 }
 
-#include "tbb/parallel_for.h"
+#include "parallel_for.h"
 template<typename Input, typename Output>
 class equeueing_on_inner_level {
     typedef Input input_type;

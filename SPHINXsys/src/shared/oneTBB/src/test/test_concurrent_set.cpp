@@ -19,12 +19,12 @@
 #define _SCL_SECURE_NO_WARNINGS
 #endif
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 #include "harness.h"
 #if __TBB_CONCURRENT_ORDERED_CONTAINERS_PRESENT
 
 #define TBB_PREVIEW_CONCURRENT_ORDERED_CONTAINERS 1
-#include "tbb/concurrent_set.h"
+#include "concurrent_set.h"
 #if __TBB_INITIALIZER_LISTS_PRESENT
 // These operator== are used implicitly in  test_initializer_list.h.
 // For some unknown reason clang is not able to find the if they a declared after the

@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 // Include this header file before harness.h for HARNESS_SKIP_TEST to take effect
 #if !__TBB_DYNAMIC_LOAD_ENABLED
@@ -22,7 +22,7 @@
 #else
 
 #if _WIN32 || _WIN64
-#include "tbb/machine/windows_api.h"
+#include "machine/windows_api.h"
 #else
 #include <dlfcn.h>
 #endif

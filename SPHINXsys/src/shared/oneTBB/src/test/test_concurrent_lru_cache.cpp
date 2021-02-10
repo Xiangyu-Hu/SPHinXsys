@@ -23,7 +23,7 @@
     #define selected_raii_lru_cache_impl coarse_grained_raii_lru_cache
 #else
     #define TBB_PREVIEW_CONCURRENT_LRU_CACHE 1
-    #include "tbb/concurrent_lru_cache.h"
+    #include "concurrent_lru_cache.h"
     #define selected_raii_lru_cache_impl tbb::concurrent_lru_cache
 #endif
 
@@ -33,7 +33,7 @@
 
 #include <utility>
 
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 
 namespace helpers{
     // Busy work and calibration helpers

@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/blocked_range.h"
+#include "blocked_range.h"
 #include "harness_assert.h"
 
 // First test as much as we can without including other headers.
@@ -78,7 +78,7 @@ static void SerialTest() {
         }
 }
 
-#include "tbb/parallel_for.h"
+#include "parallel_for.h"
 #include "harness.h"
 
 const int N = 1<<22;
@@ -182,7 +182,7 @@ void TestDeductionGuides() {
 
 //------------------------------------------------------------------------
 // Test driver
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 
 int TestMain () {
     SerialTest();

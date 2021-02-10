@@ -24,7 +24,7 @@
 #error Set TBB_PREVIEW_CONCURRENT_ORDERED_CONTAINERS to include concurrent_set.h
 #endif
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 // concurrent_set requires C++11 support
 #if __TBB_CONCURRENT_ORDERED_CONTAINERS_PRESENT

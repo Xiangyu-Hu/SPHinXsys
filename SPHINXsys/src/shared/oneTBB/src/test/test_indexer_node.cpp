@@ -20,7 +20,7 @@
 
 #include "harness.h"
 #include "harness_graph.h"
-#include "tbb/flow_graph.h"
+#include "flow_graph.h"
 
 //
 // Tests

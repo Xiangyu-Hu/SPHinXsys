@@ -19,7 +19,7 @@
 #define HARNESS_CUSTOM_MAIN 1
 #include "harness.h"
 #include <cstdlib>
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 
 #include <sys/types.h>
 #include <sys/wait.h>

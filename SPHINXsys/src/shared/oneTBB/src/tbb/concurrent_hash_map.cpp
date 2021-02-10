@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/concurrent_hash_map.h"
+#include "concurrent_hash_map.h"
 
 namespace tbb {
 

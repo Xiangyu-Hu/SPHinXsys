@@ -21,8 +21,8 @@
 #include "harness.h"
 #include "harness_graph.h"
 
-#include "tbb/flow_graph.h"
-#include "tbb/task_scheduler_init.h"
+#include "flow_graph.h"
+#include "task_scheduler_init.h"
 #include "test_follows_and_precedes_api.h"
 
 #define N 1000

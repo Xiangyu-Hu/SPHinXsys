@@ -14,11 +14,11 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 #if !__TBB_WIN8UI_SUPPORT
 #define TBB_PREVIEW_RUNTIME_LOADER 1
-#include "tbb/runtime_loader.h"
-#include "tbb/tbb_stddef.h"
+#include "runtime_loader.h"
+#include "tbb_stddef.h"
 #include "tbb_environment.h"
 
 // C standard headers.

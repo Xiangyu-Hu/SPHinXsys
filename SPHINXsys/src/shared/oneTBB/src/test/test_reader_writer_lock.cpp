@@ -15,9 +15,9 @@
 */
 
 // test reader_writer_lock
-#include "tbb/reader_writer_lock.h"
-#include "tbb/atomic.h"
-#include "tbb/tbb_exception.h"
+#include "reader_writer_lock.h"
+#include "atomic.h"
+#include "tbb_exception.h"
 #include "harness.h"
 #include "harness_barrier.h"
 

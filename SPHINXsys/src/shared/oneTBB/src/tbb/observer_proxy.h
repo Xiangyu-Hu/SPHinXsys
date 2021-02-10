@@ -20,9 +20,9 @@
 #if __TBB_SCHEDULER_OBSERVER
 
 #include "scheduler_common.h" // to include task.h
-#include "tbb/task_scheduler_observer.h"
-#include "tbb/spin_rw_mutex.h"
-#include "tbb/aligned_space.h"
+#include "task_scheduler_observer.h"
+#include "spin_rw_mutex.h"
+#include "aligned_space.h"
 
 namespace tbb {
 namespace internal {

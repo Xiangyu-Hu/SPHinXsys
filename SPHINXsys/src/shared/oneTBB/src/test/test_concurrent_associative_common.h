@@ -15,8 +15,8 @@
 */
 
 /* Some tests in this source file are based on PPL tests provided by Microsoft. */
-#include "tbb/parallel_for.h"
-#include "tbb/tick_count.h"
+#include "parallel_for.h"
+#include "tick_count.h"
 #include "harness.h"
 #include "test_container_move_support.h"
 // Test that unordered containers do not require keys have default constructors.
@@ -929,7 +929,7 @@ public:
     }
 };
 
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 
 template <bool defCtorPresent, typename Table>
 void CommonExamine( Table c, const std::list<typename Table::value_type> lst) {

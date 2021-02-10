@@ -23,8 +23,8 @@
 #if !__TBB_SOURCE_DIRECTLY_INCLUDED
 #include "harness_tbb_independence.h" // because harness_allocator.h requires atomics
 #endif
-#include "tbb/memory_pool.h"
-#include "tbb/scalable_allocator.h"
+#include "memory_pool.h"
+#include "scalable_allocator.h"
 
 #define HARNESS_TBBMALLOC_THREAD_SHUTDOWN 1
 // the actual body of the test is there:
@@ -32,7 +32,7 @@
 #include "harness_allocator.h"
 
 #if _MSC_VER
-#include "tbb/machine/windows_api.h"
+#include "machine/windows_api.h"
 #endif /* _MSC_VER */
 
 typedef static_counting_allocator<tbb::memory_pool_allocator<char> > cnt_alloc_t;

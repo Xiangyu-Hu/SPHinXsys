@@ -26,10 +26,10 @@
 
 #include "thread_level.h"
 
-#include "tbb/task.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/parallel_for.h"
-#include "tbb/blocked_range.h"
+#include "task.h"
+#include "task_scheduler_init.h"
+#include "parallel_for.h"
+#include "blocked_range.h"
 
 #if _WIN32||_WIN64
 #include <Windows.h> /* Need Sleep */

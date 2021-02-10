@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_stddef.h"
+#include "tbb_stddef.h"
 
 void TestInsideFunction(){
     __TBB_STATIC_ASSERT(sizeof(char)>=1,"");

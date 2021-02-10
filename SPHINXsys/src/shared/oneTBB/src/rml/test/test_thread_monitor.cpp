@@ -22,7 +22,7 @@ int TestMain () {
 #else
 #include "thread_monitor.h"
 #include "harness_memory.h"
-#include "tbb/semaphore.cpp"
+#include "semaphore.cpp"
 
 class ThreadState {
     void loop();

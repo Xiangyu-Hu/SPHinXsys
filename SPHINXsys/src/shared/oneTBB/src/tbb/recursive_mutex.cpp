@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/recursive_mutex.h"
+#include "recursive_mutex.h"
 #include "itt_notify.h"
 
 namespace tbb {

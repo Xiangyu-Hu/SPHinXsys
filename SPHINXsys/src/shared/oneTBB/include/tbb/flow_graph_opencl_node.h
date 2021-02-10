@@ -20,7 +20,7 @@
 #define __TBB_flow_graph_opencl_node_H_include_area
 #include "internal/_warning_suppress_enable_notice.h"
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 #if __TBB_PREVIEW_OPENCL_NODE
 
 #include "flow_graph.h"

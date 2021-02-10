@@ -21,8 +21,8 @@
 #define TBB_PREVIEW_MEMORY_POOL 1
 
 #include "harness_assert.h"
-#include "tbb/memory_pool.h"
-#include "tbb/scalable_allocator.h"
+#include "memory_pool.h"
+#include "scalable_allocator.h"
 #include <iostream>
 
 // The actual body of the test is there:

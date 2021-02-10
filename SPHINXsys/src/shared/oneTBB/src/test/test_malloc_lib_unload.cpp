@@ -112,7 +112,7 @@ extern "C" size_t safer_scalable_msize (void *, size_t (*)(void*))
 // harness_defs.h must be included before tbb_stddef.h to overcome exception-dependent
 // system headers that come from tbb_stddef.h
 #include "harness_defs.h"
-#include "tbb/tbb_stddef.h"
+#include "tbb_stddef.h"
 #if __TBB_WIN8UI_SUPPORT || __TBB_SOURCE_DIRECTLY_INCLUDED || __TBB_MIC_OFFLOAD
 // The test does not work if dynamic load is unavailable.
 // For MIC offload, it fails because liboffload brings libiomp which observes and uses the fake scalable_* calls.

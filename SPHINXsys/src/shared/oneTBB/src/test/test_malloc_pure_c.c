@@ -18,7 +18,7 @@
 #error For testing purpose, this file should be compiled with a C compiler, not C++
 #endif /*__cplusplus */
 
-#include "tbb/scalable_allocator.h"
+#include "scalable_allocator.h"
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h> /* for atexit */

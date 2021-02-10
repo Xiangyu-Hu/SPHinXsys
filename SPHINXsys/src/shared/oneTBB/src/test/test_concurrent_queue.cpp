@@ -16,8 +16,8 @@
 
 #define NOMINMAX
 #include "harness_defs.h"
-#include "tbb/concurrent_queue.h"
-#include "tbb/tick_count.h"
+#include "concurrent_queue.h"
+#include "tick_count.h"
 #include "harness.h"
 #include "harness_allocator.h"
 

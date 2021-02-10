@@ -23,7 +23,7 @@
 #if _MSC_VER==1500 && !__INTEL_COMPILER
     #pragma warning( pop )
 #endif
-#include "tbb/tbb_stddef.h"
+#include "tbb_stddef.h"
 #include "harness.h"
 #include <vector>
 

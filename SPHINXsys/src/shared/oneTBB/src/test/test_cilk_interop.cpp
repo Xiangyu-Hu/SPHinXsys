@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 #include "harness.h"
 
 // Skip the test if no interoperability with cilkrts
@@ -33,9 +33,9 @@ static const int P_nested = 2;
 #include <cilk/cilk.h>
 #include <cilk/cilk_api.h>
 #define private public
-#include "tbb/task.h"
+#include "task.h"
 #undef private
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 #include <cstdio>
 #include <cassert>
 

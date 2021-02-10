@@ -21,7 +21,7 @@
 // Our tests usually include the header under test first.  But this test needs
 // to use the preprocessor to edit the identifier runtime_warning in concurrent_hash_map.h.
 // Hence we include a few other headers before doing the abusive edit.
-#include "tbb/tbb_stddef.h" /* Defines runtime_warning */
+#include "tbb_stddef.h" /* Defines runtime_warning */
 #include "harness_assert.h" /* Prerequisite for defining hooked_warning */
 
 // The symbol internal::runtime_warning is normally an entry point into the TBB library.
@@ -38,7 +38,7 @@ namespace tbb {
     } // namespace internal
 } // namespace tbb
 #define __TBB_EXTRA_DEBUG 1 // enables additional checks
-#include "tbb/concurrent_hash_map.h"
+#include "concurrent_hash_map.h"
 
 // Restore runtime_warning as an entry point into the TBB library.
 #undef runtime_warning
@@ -73,10 +73,10 @@ tbb::concurrent_hash_map<UserDefinedKeyType,int> TestInstantiationWithUserDefine
 // http://www.threadingbuildingblocks.org/bug_desc.php?id=120
 tbb::concurrent_hash_map<std::pair<std::pair<int,std::string>,const char*>,int> TestInstantiation;
 
-#include "tbb/parallel_for.h"
-#include "tbb/blocked_range.h"
-#include "tbb/atomic.h"
-#include "tbb/tick_count.h"
+#include "parallel_for.h"
+#include "blocked_range.h"
+#include "atomic.h"
+#include "tick_count.h"
 #include "harness.h"
 #include "harness_allocator.h"
 
@@ -1145,7 +1145,7 @@ public:
     }
 };
 
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 
 template <typename Value, typename U = Value>
 struct CompareTables {

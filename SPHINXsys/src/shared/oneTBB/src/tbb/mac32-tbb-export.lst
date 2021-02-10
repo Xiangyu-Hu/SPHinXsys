@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 /*
     Sometimes macOS* requires leading underscore (e. g. in export list file), but sometimes not

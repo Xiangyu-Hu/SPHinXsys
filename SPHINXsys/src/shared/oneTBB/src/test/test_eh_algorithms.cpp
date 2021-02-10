@@ -22,16 +22,16 @@
 #if __TBB_TASK_GROUP_CONTEXT
 
 #include <limits.h> // for INT_MAX
-#include "tbb/task_scheduler_init.h"
-#include "tbb/tbb_exception.h"
-#include "tbb/task.h"
-#include "tbb/atomic.h"
-#include "tbb/parallel_for.h"
-#include "tbb/parallel_reduce.h"
-#include "tbb/parallel_do.h"
-#include "tbb/pipeline.h"
-#include "tbb/parallel_scan.h"
-#include "tbb/blocked_range.h"
+#include "task_scheduler_init.h"
+#include "tbb_exception.h"
+#include "task.h"
+#include "atomic.h"
+#include "parallel_for.h"
+#include "parallel_reduce.h"
+#include "parallel_do.h"
+#include "pipeline.h"
+#include "parallel_scan.h"
+#include "blocked_range.h"
 #include "harness_assert.h"
 
 #define FLAT_RANGE  100000

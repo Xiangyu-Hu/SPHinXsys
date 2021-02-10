@@ -30,8 +30,8 @@
 #include "harness_graph.h"
 #include "harness_checktype.h"
 
-#include "tbb/flow_graph.h"
-#include "tbb/task_scheduler_init.h"
+#include "flow_graph.h"
+#include "task_scheduler_init.h"
 #include "test_follows_and_precedes_api.h"
 
 #define __TBB_MIC_OFFLOAD_TEST_COMPILATION_BROKEN __TBB_MIC_OFFLOAD

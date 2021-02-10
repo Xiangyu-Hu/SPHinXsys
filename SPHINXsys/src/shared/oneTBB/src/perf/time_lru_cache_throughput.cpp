@@ -16,8 +16,8 @@
 
 #include "../../examples/common/utility/utility.h"
 #include "../../include/tbb/tick_count.h"
-//#include <tbb/parallel_for.h>
-#include "../../include/tbbs/task_scheduler_init.h" //for number of threads
+//#include "parallel_for.h>
+#include "../../include/tbb/task_scheduler_init.h" //for number of threads
 #include <functional>
 
 #include "coarse_grained_raii_lru_cache.h"
@@ -27,8 +27,8 @@
 #define HARNESS_CUSTOM_MAIN 1
 #define HARNESS_NO_PARSE_COMMAND_LINE 1
 
-#include "../src/test/harness.h"
-#include "../src/test/harness_barrier.h"
+#include "../../src/test/harness.h"
+#include "../../src/test/harness_barrier.h"
 
 #include <vector>
 #include <algorithm>

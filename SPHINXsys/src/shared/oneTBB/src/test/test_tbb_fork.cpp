@@ -15,10 +15,10 @@
 */
 
 #define TBB_PREVIEW_WAITING_FOR_WORKERS 1
-#include "tbb/task_scheduler_init.h"
-#include "tbb/blocked_range.h"
-#include "tbb/cache_aligned_allocator.h"
-#include "tbb/parallel_for.h"
+#include "task_scheduler_init.h"
+#include "blocked_range.h"
+#include "cache_aligned_allocator.h"
+#include "parallel_for.h"
 
 #define HARNESS_DEFAULT_MIN_THREADS (tbb::task_scheduler_init::default_num_threads())
 #define HARNESS_DEFAULT_MAX_THREADS (4*tbb::task_scheduler_init::default_num_threads())
@@ -29,7 +29,7 @@
 #include "harness.h"
 
 #if _WIN32||_WIN64
-#include "tbb/concurrent_hash_map.h"
+#include "concurrent_hash_map.h"
 
 HANDLE getCurrentThreadHandle()
 {
@@ -67,7 +67,7 @@ static TidTableType tidTable;
 #include <sys/wait.h>
 #include <sched.h>
 
-#include "tbb/tick_count.h"
+#include "tick_count.h"
 
 void SigHandler(int) { }
 

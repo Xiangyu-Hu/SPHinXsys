@@ -16,11 +16,11 @@
 
 // Testing automatic initialization of TBB task scheduler, so do not use task_scheduler_init anywhere.
 
-#include "tbb/task.h"
+#include "task.h"
 
 #define HARNESS_NO_PARSE_COMMAND_LINE 1
 #include "harness.h"
-#include "tbb/atomic.h"
+#include "atomic.h"
 
 static tbb::atomic<int> g_NumTestsExecuted;
 

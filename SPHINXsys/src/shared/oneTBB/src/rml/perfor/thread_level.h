@@ -20,8 +20,8 @@
 #include <cstdio>
 #include <omp.h>
 #include <assert.h>
-#include "tbb/atomic.h"
-#include "tbb/tick_count.h"
+#include "atomic.h"
+#include "tick_count.h"
 
 //#define LOG_THREADS // use this to ifdef out calls to this class 
 //#define NO_BAIL_OUT // continue execution after detecting oversubscription

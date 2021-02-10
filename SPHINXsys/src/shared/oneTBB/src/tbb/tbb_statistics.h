@@ -56,7 +56,7 @@
     3) Add counter belonging to the new group as described above
 **/
 
-#include "tbb/tbb_stddef.h"
+#include "tbb_stddef.h"
 
 #ifndef __TBB_STATISTICS
 #define __TBB_STATISTICS 0

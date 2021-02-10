@@ -17,7 +17,7 @@
 #define TBB_PREVIEW_FLOW_GRAPH_NODES 1
 #define TBB_PREVIEW_FLOW_GRAPH_FEATURES 1
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 #if __TBB_PREVIEW_STREAMING_NODE
 
@@ -32,9 +32,9 @@
 #include "harness.h"
 #include "harness_assert.h"
 
-#include "tbb/concurrent_queue.h"
-#include "tbb/flow_graph.h"
-#include "tbb/tbb_thread.h"
+#include "concurrent_queue.h"
+#include "flow_graph.h"
+#include "tbb_thread.h"
 
 using namespace tbb::flow;
 

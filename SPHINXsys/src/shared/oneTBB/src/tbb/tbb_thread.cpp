@@ -19,10 +19,10 @@
 #endif
 #include <errno.h>
 #include "tbb_misc.h"       // handle_win_error()
-#include "tbb/tbb_stddef.h"
-#include "tbb/tbb_thread.h"
-#include "tbb/tbb_allocator.h"
-#include "tbb/global_control.h" // thread_stack_size
+#include "tbb_stddef.h"
+#include "tbb_thread.h"
+#include "tbb_allocator.h"
+#include "global_control.h" // thread_stack_size
 #include "governor.h"       // default_num_threads()
 #if __TBB_WIN8UI_SUPPORT
 #include <thread>

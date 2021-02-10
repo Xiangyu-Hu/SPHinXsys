@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/tick_count.h"
+#include "tick_count.h"
 #include "harness_assert.h"
 
 //! Assert that two times in seconds are very close.
@@ -81,7 +81,7 @@ void TestSimpleDelay( int ntrial, double duration, double tolerance ) {
 // Test for subtracting calls to tick_count from different threads.
 //------------------------------------------------------------------------
 
-#include "tbb/atomic.h"
+#include "atomic.h"
 static tbb::atomic<int> Counter1, Counter2;
 static tbb::atomic<bool> Flag1, Flag2;
 static tbb::tick_count *tick_count_array;
@@ -170,7 +170,7 @@ void TestResolution() {
     REMARK("avg_diff = %g ticks, max_diff = %g ticks\n", avg_diff, max_diff);
 }
 
-#include "tbb/tbb_thread.h"
+#include "tbb_thread.h"
 
 int TestMain () {
     // Increased tolerance for Virtual Machines

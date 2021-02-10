@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include "tbb/spin_rw_mutex.h"
-#include "tbb/tbb_machine.h"
-#include "tbb/atomic.h"
+#include "spin_rw_mutex.h"
+#include "tbb_machine.h"
+#include "atomic.h"
 #include "itt_notify.h"
 
 #if defined(_MSC_VER) && defined(_Wp64)

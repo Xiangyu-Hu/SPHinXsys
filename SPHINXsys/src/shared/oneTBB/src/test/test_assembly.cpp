@@ -27,7 +27,7 @@ int TestMain() {
 }
 #else
 
-#include "tbb/task.h"
+#include "task.h"
 
 #include <new>
 #include "harness.h"

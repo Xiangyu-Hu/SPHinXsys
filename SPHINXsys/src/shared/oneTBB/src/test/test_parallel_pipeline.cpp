@@ -18,14 +18,14 @@
 // filter_node objects, and make it known for the header.
 int filter_node_count = 0;
 #define __TBB_TEST_FILTER_NODE_COUNT filter_node_count
-#include "tbb/pipeline.h"
+#include "pipeline.h"
 
-#include "tbb/atomic.h"
+#include "atomic.h"
 #include "harness.h"
 #include <string.h>
 
-#include "tbb/tbb_allocator.h"
-#include "tbb/spin_mutex.h"
+#include "tbb_allocator.h"
+#include "spin_mutex.h"
 
 #if __TBB_CPP11_RVALUE_REF_PRESENT
 #include <memory> // std::unique_ptr
@@ -631,7 +631,7 @@ void run_function(const char *l1, const char *l2) {
     }
 }
 
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 
 int TestMain() {
 #if TBB_USE_DEBUG

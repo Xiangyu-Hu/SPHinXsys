@@ -17,17 +17,17 @@
 // undefine __TBB_CPF_BUILD to simulate user's setup
 #undef __TBB_CPF_BUILD
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 #include "harness.h"
 
 #if __TBB_SCHEDULER_OBSERVER
-#include "tbb/task_scheduler_observer.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/atomic.h"
-#include "tbb/task.h"
-#include "tbb/enumerable_thread_specific.h"
+#include "task_scheduler_observer.h"
+#include "task_scheduler_init.h"
+#include "atomic.h"
+#include "task.h"
+#include "enumerable_thread_specific.h"
 #include "../tbb/tls.h"
-#include "tbb/tick_count.h"
+#include "tick_count.h"
 #include "harness_barrier.h"
 
 #if _MSC_VER && __TBB_NO_IMPLICIT_LINKAGE

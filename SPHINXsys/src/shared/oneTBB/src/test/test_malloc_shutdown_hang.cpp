@@ -17,9 +17,9 @@
 #define HARNESS_CUSTOM_MAIN 1
 #include "harness.h"
 
-#include <tbb/task.h>
-#include <tbb/scalable_allocator.h>
-#include <tbb/task_scheduler_init.h>
+#include "task.h"
+#include "scalable_allocator.h"
+#include "task_scheduler_init.h"
 
 // Lets slow down the main thread on exit
 const int MAX_DELAY = 5;

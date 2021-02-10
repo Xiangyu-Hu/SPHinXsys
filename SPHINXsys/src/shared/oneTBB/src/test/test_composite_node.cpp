@@ -17,7 +17,7 @@
 #include "harness.h"
 #if __TBB_FLOW_GRAPH_CPP11_FEATURES
 
-#include "tbb/flow_graph.h"
+#include "flow_graph.h"
 #include "harness_graph.h"
 #include <tuple>
 #include <cmath>

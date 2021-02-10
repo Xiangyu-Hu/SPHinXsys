@@ -22,7 +22,7 @@
 
 #include <cstddef>
 #include <map>
-#include <tbb/atomic.h>
+#include "atomic.h"
 
 #include "harness_assert.h"
 

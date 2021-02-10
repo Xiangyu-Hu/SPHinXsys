@@ -18,10 +18,10 @@
     with SPIN tool using <TBB directory>/tools/spin_models/ReaderWriterMutex.pml.
     There could be some code looking as "can be restructured" but its structure does matter! */
 
-#include "tbb/queuing_rw_mutex.h"
-#include "tbb/tbb_machine.h"
-#include "tbb/tbb_stddef.h"
-#include "tbb/tbb_machine.h"
+#include "queuing_rw_mutex.h"
+#include "tbb_machine.h"
+#include "tbb_stddef.h"
+#include "tbb_machine.h"
 #include "itt_notify.h"
 
 

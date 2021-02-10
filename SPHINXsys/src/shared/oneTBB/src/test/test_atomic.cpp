@@ -28,10 +28,10 @@ int TestMain() {
 // Put tbb/atomic.h first, so if it is missing a prerequisite header, we find out about it.
 // The tests here do *not* test for atomicity, just serial correctness. */
 
-#include "tbb/atomic.h"
+#include "atomic.h"
 #include "harness_assert.h"
 #include <cstring>  // memcmp
-#include "tbb/aligned_space.h"
+#include "aligned_space.h"
 #include <new>      //for placement new
 
 using std::memcmp;

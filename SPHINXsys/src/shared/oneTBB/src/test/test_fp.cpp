@@ -20,10 +20,10 @@
 #include "harness_fp.h"
 #include "harness.h"
 #define private public
-#include "tbb/task.h"
+#include "task.h"
 #undef private
-#include "tbb/parallel_for.h"
-#include "tbb/task_scheduler_init.h"
+#include "parallel_for.h"
+#include "task_scheduler_init.h"
 
 const int N = 500000;
 
@@ -348,7 +348,7 @@ struct TestGlobalIsolatedContextTask : public tbb::task {
     }
 };
 
-#include "tbb/mutex.h"
+#include "mutex.h"
 
 struct TestGlobalIsolatedContextNativeLoopBody {
     void operator()( int threadId ) const {

@@ -20,9 +20,9 @@
 
 #include "harness.h"
 
-#include "tbb/flow_graph.h"
-#include "tbb/task.h"
-#include "tbb/atomic.h"
+#include "flow_graph.h"
+#include "task.h"
+#include "atomic.h"
 #include "test_follows_and_precedes_api.h"
 
 const int N = 1000;

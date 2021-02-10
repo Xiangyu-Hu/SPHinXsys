@@ -21,7 +21,7 @@ Replacing the standard memory allocation routines in Microsoft* C/C++ RTL
 Include the following header to a source of any binary which is loaded during
 application startup
 
-#include "tbb/tbbmalloc_proxy.h"
+#include "tbbmalloc_proxy.h"
 
 or add following parameters to the linker options for the binary which is
 loaded during application startup. It can be either exe-file or dll.

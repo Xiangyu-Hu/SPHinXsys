@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_stddef.h"
+#include "tbb_stddef.h"
 
 #if __TBB_WIN8UI_SUPPORT
 // TODO: figure out how the test can be enabled for win8ui
@@ -31,7 +31,7 @@ int TestMain() {
 #include <string>
 #include <utility>
 
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 
 #define HARNESS_CUSTOM_MAIN 1
 #define HARNESS_NO_PARSE_COMMAND_LINE 1

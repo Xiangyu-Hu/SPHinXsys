@@ -16,7 +16,7 @@
 
 #ifndef __TBB_test_initializer_list_H
 #define __TBB_test_initializer_list_H
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 #if __TBB_INITIALIZER_LISTS_PRESENT
 #include <initializer_list>

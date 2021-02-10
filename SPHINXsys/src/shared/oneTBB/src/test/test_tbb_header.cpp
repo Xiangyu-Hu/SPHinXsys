@@ -64,7 +64,7 @@
 #undef TBB_USE_DEBUG
 #endif /* DO_TEST_DEBUG_MACRO */
 #define __TBB_CONFIG_PREPROC_ONLY _MSC_VER // For MSVC, prevent including standard headers in tbb_config.h
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 #if !TBB_USE_DEBUG && defined(_DEBUG)
 // TBB_USE_DEBUG is 0 but _DEBUG is defined, it means that _DEBUG is 0
@@ -79,7 +79,7 @@
 
 #if !(__TBB_TEST_SECONDARY && __TBB_CPP11_STD_PLACEHOLDERS_LINKAGE_BROKEN)
 
-#include "tbb/tbb.h"
+#include "tbb.h"
 
 static volatile size_t g_sink;
 

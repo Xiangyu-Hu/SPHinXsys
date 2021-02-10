@@ -24,7 +24,7 @@
 #if USE_PTHREAD
 #include <dlfcn.h> // dlopen
 #elif USE_WINTHREAD
-#include "tbb/machine/windows_api.h"
+#include "machine/windows_api.h"
 #endif
 
 namespace rml {

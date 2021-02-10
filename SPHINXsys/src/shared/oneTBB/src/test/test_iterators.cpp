@@ -14,12 +14,12 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 #if __TBB_CPP11_PRESENT
 
-#include "tbb/iterators.h"
-#include "tbb/tbb_stddef.h"
+#include "iterators.h"
+#include "tbb_stddef.h"
 
 #include <vector>
 #include <iostream>

@@ -27,7 +27,7 @@
 #include "../../include/tbb/cache_aligned_allocator.h"
 #include "../../include/tbb/concurrent_priority_queue.h"
 #include "../test/harness.h"
-#include "../examples/common/utility/utility.h"
+#include "../../examples/common/utility/utility.h"
 #if _MSC_VER
 #pragma warning(disable: 4996)
 #endif

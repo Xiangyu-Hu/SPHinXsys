@@ -20,9 +20,9 @@
     #define _SCL_SECURE_NO_WARNINGS
 #endif
 
-#include "tbb/concurrent_vector.h"
-#include "tbb/cache_aligned_allocator.h"
-#include "tbb/tbb_exception.h"
+#include "concurrent_vector.h"
+#include "cache_aligned_allocator.h"
+#include "tbb_exception.h"
 #include "tbb_misc.h"
 #include "itt_notify.h"
 

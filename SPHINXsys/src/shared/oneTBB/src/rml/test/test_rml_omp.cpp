@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <tbb/tbb_config.h>
+#include "tbb_config.h"
 #if __TBB_WIN8UI_SUPPORT || __TBB_MIC_OFFLOAD
 #include "harness.h"
 int TestMain () {
@@ -31,7 +31,7 @@ void DoClientSpecificVerification( MyServer& , int );
 
 #define HARNESS_DEFAULT_MIN_THREADS 0
 #include "test_server.h"
-#include "tbb/tbb_misc.h"
+#include "tbb_misc.h"
 
 static bool StrictTeam;
 

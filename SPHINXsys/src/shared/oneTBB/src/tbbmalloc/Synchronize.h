@@ -17,7 +17,7 @@
 #ifndef __TBB_malloc_Synchronize_H_
 #define __TBB_malloc_Synchronize_H_
 
-#include "tbb/tbb_machine.h"
+#include "tbb_machine.h"
 
 //! Stripped down version of spin_mutex.
 /** Instances of MallocMutex must be declared in memory that is zero-initialized.

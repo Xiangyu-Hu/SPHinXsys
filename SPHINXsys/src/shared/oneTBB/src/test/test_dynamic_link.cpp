@@ -36,7 +36,7 @@ FOO_TYPE dummy_foo2() { return FOO_DUMMY; }
 static FOO_TYPE (*foo1_handler)() = &dummy_foo1;
 static FOO_TYPE (*foo2_handler)() = &dummy_foo2;
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 // Suppress the weak symbol mechanism to avoid surplus compiler warnings.
 #ifdef __TBB_WEAK_SYMBOLS_PRESENT
 #undef __TBB_WEAK_SYMBOLS_PRESENT
@@ -44,7 +44,7 @@ static FOO_TYPE (*foo2_handler)() = &dummy_foo2;
 // Use of harness assert to avoid the dependency on TBB
 #include "harness_assert.h"
 #define LIBRARY_ASSERT(p,message) ASSERT(p,message)
-#include "tbb/dynamic_link.h"
+#include "dynamic_link.h"
 // Table describing how to link the handlers.
 static const tbb::internal::dynamic_link_descriptor LinkTable[] = {
     { "foo1", (tbb::internal::pointer_to_handler*)(void*)(&foo1_handler) },
@@ -52,7 +52,7 @@ static const tbb::internal::dynamic_link_descriptor LinkTable[] = {
 };
 
 // The direct include since we want to test internal functionality.
-#include "tbb/dynamic_link.cpp"
+#include "dynamic_link.cpp"
 #include "harness_dynamic_libs.h"
 #include "harness.h"
 

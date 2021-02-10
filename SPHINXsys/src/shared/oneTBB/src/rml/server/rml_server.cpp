@@ -19,18 +19,18 @@
 #include "rml_omp.h"
 #undef private
 
-#include "tbb/tbb_allocator.h"
-#include "tbb/cache_aligned_allocator.h"
-#include "tbb/aligned_space.h"
-#include "tbb/atomic.h"
-#include "tbb/spin_mutex.h"
-#include "tbb/tbb_misc.h"           // Get AvailableHwConcurrency() from here.
+#include "tbb_allocator.h"
+#include "cache_aligned_allocator.h"
+#include "aligned_space.h"
+#include "atomic.h"
+#include "spin_mutex.h"
+#include "tbb_misc.h"           // Get AvailableHwConcurrency() from here.
 #if _MSC_VER==1500 && !defined(__INTEL_COMPILER)
 // VS2008/VC9 seems to have an issue;
 #pragma warning( push )
 #pragma warning( disable: 4985 )
 #endif
-#include "tbb/concurrent_vector.h"
+#include "concurrent_vector.h"
 #if _MSC_VER==1500 && !defined(__INTEL_COMPILER)
 #pragma warning( pop )
 #endif

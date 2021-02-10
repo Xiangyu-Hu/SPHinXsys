@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 #include "harness.h"
 
 #if __TBB_GCC_STRICT_ALIASING_BROKEN
@@ -23,9 +23,9 @@
 
 #if __TBB_TASK_GROUP_CONTEXT
 
-#include "tbb/task.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/atomic.h"
+#include "task.h"
+#include "task_scheduler_init.h"
+#include "atomic.h"
 #include <cstdlib>
 
 #if _MSC_VER && __TBB_NO_IMPLICIT_LINKAGE
@@ -358,7 +358,7 @@ int TestSimplePriorityOps ( tbb::priority_t prio ) {
     return 0;
 }
 
-#include "tbb/parallel_for.h"
+#include "parallel_for.h"
 
 void EmulateWork( int ) {
     for ( int i = 0; i < 1000; ++i )
@@ -643,7 +643,7 @@ int RunTests () {
     return Harness::Done;
 }
 
-#include "tbb/global_control.h"
+#include "global_control.h"
 
 int TestMain () {
 #if !__TBB_TEST_SKIP_AFFINITY

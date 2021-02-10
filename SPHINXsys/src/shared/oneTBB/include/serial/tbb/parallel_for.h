@@ -31,8 +31,8 @@
 #include "tbb_annotate.h"
 
 #ifndef __TBB_NORMAL_EXECUTION
-#include "tbb/blocked_range.h"
-#include "tbb/partitioner.h"
+#include "blocked_range.h"
+#include "partitioner.h"
 #endif
 
 #if TBB_USE_EXCEPTIONS

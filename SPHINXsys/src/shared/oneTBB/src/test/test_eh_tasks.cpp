@@ -29,12 +29,12 @@
 #define __TBB_ATOMICS_CODEGEN_BROKEN __SUNPRO_CC
 
 #define private public
-#include "tbb/task.h"
+#include "task.h"
 #undef private
 
-#include "tbb/task_scheduler_init.h"
-#include "tbb/spin_mutex.h"
-#include "tbb/tick_count.h"
+#include "task_scheduler_init.h"
+#include "spin_mutex.h"
+#include "tick_count.h"
 
 #include <string>
 

@@ -27,9 +27,9 @@ int TestMain() {
 #include "harness.h"
 #include "harness_concurrency.h"
 
-#include "tbb/task_scheduler_init.h"
-#include "tbb/tbb_thread.h"
-#include "tbb/enumerable_thread_specific.h"
+#include "task_scheduler_init.h"
+#include "tbb_thread.h"
+#include "enumerable_thread_specific.h"
 
 // The declaration of a global ETS object is needed to check that
 // it does not initialize the task scheduler, and in particular

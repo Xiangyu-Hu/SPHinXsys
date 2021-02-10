@@ -14,11 +14,11 @@
     limitations under the License.
 */
 
-#include "tbb/compat/condition_variable"
-#include "tbb/mutex.h"
-#include "tbb/recursive_mutex.h"
-#include "tbb/tick_count.h"
-#include "tbb/atomic.h"
+#include "compat/condition_variable"
+#include "mutex.h"
+#include "recursive_mutex.h"
+#include "tick_count.h"
+#include "atomic.h"
 
 #include <stdexcept>
 

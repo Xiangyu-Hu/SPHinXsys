@@ -62,7 +62,7 @@ namespace interface6 {
 In source code:
 
 \code
-#include "tbb/runtime_loader.h"
+#include "runtime_loader.h"
 
 char const * path[] = { "<install dir>/lib/ia32", NULL };
 tbb::runtime_loader loader( path );

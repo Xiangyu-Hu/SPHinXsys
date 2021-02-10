@@ -26,7 +26,7 @@
 #include <limits.h>
 
 #if _WIN32||_WIN64
-#include "tbb/machine/windows_api.h"
+#include "machine/windows_api.h"
 #if __TBB_WIN8UI_SUPPORT
 #include <thread>
 #endif

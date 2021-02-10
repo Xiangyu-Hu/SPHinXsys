@@ -19,7 +19,7 @@
 #define _SCL_SECURE_NO_WARNINGS
 #endif
 
-#include "tbb/concurrent_unordered_map.h"
+#include "concurrent_unordered_map.h"
 #if __TBB_INITIALIZER_LISTS_PRESENT
 // These operator== are used implicitly in  test_initializer_list.h.
 // For some unknown reason clang is not able to find the if they a declared after the

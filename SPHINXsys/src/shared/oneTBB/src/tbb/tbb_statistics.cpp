@@ -24,7 +24,7 @@
 #include <cstdio>
 #endif
 
-#include "tbb/spin_mutex.h"
+#include "spin_mutex.h"
 
 namespace tbb {
 namespace internal {

@@ -17,7 +17,7 @@
 #ifndef _TBB_tbb_main_H
 #define _TBB_tbb_main_H
 
-#include "tbb/atomic.h"
+#include "atomic.h"
 #include "governor.h"
 #include "tbb_environment.h"
 

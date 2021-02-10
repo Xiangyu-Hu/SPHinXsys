@@ -20,7 +20,7 @@
 #if USE_PTHREAD
 #include <pthread.h>
 #else /* assume USE_WINTHREAD */
-#include "tbb/machine/windows_api.h"
+#include "machine/windows_api.h"
 #endif
 
 namespace tbb {

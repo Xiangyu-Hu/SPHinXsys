@@ -17,15 +17,15 @@
 #define HARNESS_DEFAULT_MIN_THREADS 0
 #define HARNESS_DEFAULT_MAX_THREADS 4
 
-#include "tbb/enumerable_thread_specific.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/parallel_for.h"
-#include "tbb/parallel_reduce.h"
-#include "tbb/blocked_range.h"
-#include "tbb/tick_count.h"
-#include "tbb/tbb_allocator.h"
-#include "tbb/tbb_thread.h"
-#include "tbb/atomic.h"
+#include "enumerable_thread_specific.h"
+#include "task_scheduler_init.h"
+#include "parallel_for.h"
+#include "parallel_reduce.h"
+#include "blocked_range.h"
+#include "tick_count.h"
+#include "tbb_allocator.h"
+#include "tbb_thread.h"
+#include "atomic.h"
 
 #include <cstring>
 #include <vector>

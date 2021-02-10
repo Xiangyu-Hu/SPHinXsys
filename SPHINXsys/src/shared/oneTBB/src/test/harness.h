@@ -24,7 +24,7 @@
 #ifndef tbb_tests_harness_H
 #define tbb_tests_harness_H
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 #include "harness_defs.h"
 
 namespace Harness {
@@ -69,7 +69,7 @@ int TestMain ();
 #endif /* !__MIC__ */
 
 #if _WIN32||_WIN64
-    #include "tbb/machine/windows_api.h"
+    #include "machine/windows_api.h"
     #if _WIN32_WINNT > 0x0501 && _MSC_VER && !_M_ARM
         // Suppress "typedef ignored ... when no variable is declared" warning by vc14
         #pragma warning (push)
@@ -182,7 +182,7 @@ void print_call_stack() {
     #include <exception> //for set_terminate
     #include "harness_assert.h"
     #if TEST_USES_TBB
-        #include <tbb/tbb_stddef.h> /*set_assertion_handler*/
+        #include "tbb_stddef.h" /*set_assertion_handler*/
     #endif
 
     struct InitReporter {
@@ -272,7 +272,7 @@ namespace Harness {
 } //namespace Harness
 
 #if TEST_USES_TBB
-    #include "tbb/blocked_range.h"
+    #include "blocked_range.h"
 
     namespace Harness {
         template<typename T, size_t N>

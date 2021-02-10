@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 /* cache_aligned_allocator.cpp */
 __TBB_SYMBOL( _ZN3tbb8internal12NFS_AllocateEmmPv )

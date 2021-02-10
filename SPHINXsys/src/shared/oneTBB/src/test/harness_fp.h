@@ -17,7 +17,7 @@
 // include system header to prevent standard library to be included under private=public first time
 #include <cstddef>
 #define private public
-#include "tbb/tbb_machine.h"
+#include "tbb_machine.h"
 #undef private
 #include "harness_assert.h"
 

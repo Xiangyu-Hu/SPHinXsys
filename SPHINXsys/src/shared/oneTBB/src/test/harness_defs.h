@@ -17,7 +17,7 @@
 #ifndef __TBB_harness_defs_H
 #define __TBB_harness_defs_H
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 #if __FreeBSD__
 #include <sys/param.h>  // for __FreeBSD_version
 #endif

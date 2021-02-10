@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include "tbb/atomic.h"
-#include "tbb/tick_count.h"
+#include "atomic.h"
+#include "tick_count.h"
 
 #ifndef harness_barrier_H
 #define harness_barrier_H

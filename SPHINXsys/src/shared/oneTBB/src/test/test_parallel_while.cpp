@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "tbb/parallel_while.h"
+#include "parallel_while.h"
 #include "harness.h"
 
 const int N = 200;
@@ -98,7 +98,7 @@ void WhileMatrixMultiply( Element c[N][N], Element a[N][N], Element b[N][N], int
     w.run( stream, body );
 }
 
-#include "tbb/tick_count.h"
+#include "tick_count.h"
 #include <cstdlib>
 #include <cstdio>
 using namespace std;
@@ -146,7 +146,7 @@ static void Run( int nthread, int n ) {
     REMARK("time=%g\tnthread=%d\tn=%d\n",(t1-t0).seconds(),nthread,n);
 }
 
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 #include "harness_cpu.h"
 
 int TestMain () {

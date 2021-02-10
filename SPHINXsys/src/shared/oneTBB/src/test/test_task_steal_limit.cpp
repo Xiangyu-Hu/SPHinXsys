@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include "tbb/task.h"
+#include "task.h"
 #include "harness.h"
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 
 using tbb::task;
 

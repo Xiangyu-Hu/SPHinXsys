@@ -15,9 +15,9 @@
 */
 
 #define TBB_PREVIEW_BLOCKED_RANGE_ND 1
-#include "tbb/blocked_rangeNd.h"
+#include "blocked_rangeNd.h"
 
-#include "tbb/tbb_config.h"
+#include "tbb_config.h"
 
 #if __TBB_CPP11_PRESENT && __TBB_CPP11_ARRAY_PRESENT && __TBB_CPP11_TEMPLATE_ALIASES_PRESENT
 // AbstractValueType class represents Value concept's requirements in the most abstract way
@@ -181,7 +181,7 @@ void SerialTest() {
 }
 template<> void SerialTest<0>() {}
 
-#include "tbb/parallel_for.h"
+#include "parallel_for.h"
 
 template<unsigned int DimAmount>
 void ParallelTest() {
@@ -234,7 +234,7 @@ void TestCtors() {
 static const std::size_t N = 4;
 
 #include "harness.h"
-#include "tbb/task_scheduler_init.h"
+#include "task_scheduler_init.h"
 
 int TestMain() {
     TestCtors();

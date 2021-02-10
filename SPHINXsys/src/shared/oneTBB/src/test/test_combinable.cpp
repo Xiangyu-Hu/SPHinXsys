@@ -18,13 +18,13 @@
 #define HARNESS_DEFAULT_MAX_THREADS 4
 
 #define __TBB_EXTRA_DEBUG 1 // for concurrent_hash_map
-#include "tbb/combinable.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/parallel_for.h"
-#include "tbb/blocked_range.h"
-#include "tbb/tick_count.h"
-#include "tbb/tbb_allocator.h"
-#include "tbb/tbb_thread.h"
+#include "combinable.h"
+#include "task_scheduler_init.h"
+#include "parallel_for.h"
+#include "blocked_range.h"
+#include "tick_count.h"
+#include "tbb_allocator.h"
+#include "tbb_thread.h"
 
 #include <cstring>
 #include <vector>

@@ -20,7 +20,7 @@
 #if HARNESS_USE_RUNTIME_LOADER
     #if TEST_USES_TBB
         #define TBB_PREVIEW_RUNTIME_LOADER 1
-        #include "tbb/runtime_loader.h"
+        #include "runtime_loader.h"
         static char const * _path[] = { ".", NULL };
         // declaration must be placed before 1st TBB call
         static tbb::runtime_loader _runtime_loader( _path );

@@ -22,7 +22,7 @@
 
 #define TEST_SYSTEM_COMMAND "test_malloc_overload_disable.exe"
 
-#include "tbb/tbbmalloc_proxy.h"
+#include "tbbmalloc_proxy.h"
 #include "../tbb/tbb_environment.h"
 
 const size_t SmallObjectSize = 16;

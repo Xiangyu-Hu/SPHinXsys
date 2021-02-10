@@ -16,8 +16,8 @@
 
 #include "../rml/include/rml_tbb.h"
 #include "../rml/server/thread_monitor.h"
-#include "tbb/atomic.h"
-#include "tbb/cache_aligned_allocator.h"
+#include "atomic.h"
+#include "cache_aligned_allocator.h"
 #include "scheduler_common.h"
 #include "governor.h"
 #include "tbb_misc.h"

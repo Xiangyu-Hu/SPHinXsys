@@ -15,10 +15,10 @@
 */
 
 #include <typeinfo>
-#include "tbb/tbb_exception.h"
-#include "tbb/atomic.h"
+#include "tbb_exception.h"
+#include "atomic.h"
 #if USE_TASK_SCHEDULER_OBSERVER
-#include "tbb/task_scheduler_observer.h"
+#include "task_scheduler_observer.h"
 #endif
 #include "harness.h"
 #include "harness_concurrency_tracker.h"

@@ -32,7 +32,7 @@
 #include <algorithm>    // std::any_of
 #include <type_traits>  // std::is_same, std::enable_if
 
-#include "tbb/blocked_range.h"
+#include "blocked_range.h"
 
 namespace tbb {
 namespace internal {

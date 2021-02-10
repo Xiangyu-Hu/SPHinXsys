@@ -17,10 +17,10 @@
 // Source file for miscellaneous entities that are infrequently referenced by
 // an executing program.
 
-#include "tbb/tbb_stddef.h"
+#include "tbb_stddef.h"
 #include "tbb_assert_impl.h" // Out-of-line TBB assertion handling routines are instantiated here.
-#include "tbb/tbb_exception.h"
-#include "tbb/tbb_machine.h"
+#include "tbb_exception.h"
+#include "tbb_machine.h"
 #include "tbb_misc.h"
 #include "tbb_version.h"
 
@@ -30,7 +30,7 @@
 #include <cstring>
 
 #if _WIN32||_WIN64
-#include "tbb/machine/windows_api.h"
+#include "machine/windows_api.h"
 #endif
 
 #if !_WIN32
@@ -273,7 +273,7 @@ extern "C" int TBB_runtime_interface_version() {
 #if !__TBB_RML_STATIC
 #if __TBB_x86_32
 
-#include "tbb/atomic.h"
+#include "atomic.h"
 
 // in MSVC environment, int64_t defined in tbb::internal namespace only (see tbb_stddef.h)
 #if _MSC_VER
