@@ -27,7 +27,7 @@
 #define HARNESS_CUSTOM_MAIN 1
 #define HARNESS_NO_PARSE_COMMAND_LINE 1
 
-#include "../../src/test/harness.h"
+#include "harness.h"
 #include "../../src/test/harness_barrier.h"
 
 #include <vector>

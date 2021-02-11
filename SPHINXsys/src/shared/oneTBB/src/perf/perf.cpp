@@ -25,7 +25,7 @@
 #include "../../include/tbb/tick_count.h"
 
 #define HARNESS_CUSTOM_MAIN 1
-#include "../../src/test/harness.h"
+#include "harness.h"
 #include "../../src/test/harness_barrier.h"
 
 #include "../../include/tbb/task_scheduler_init.h"

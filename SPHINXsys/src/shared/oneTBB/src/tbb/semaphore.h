@@ -30,7 +30,7 @@
 #include <mach/error.h>
 
 #else
-#include <semaphore.h>
+#include "/usr/include/semaphore.h"
 #ifdef TBB_USE_DEBUG
 #include <errno.h>
 #endif

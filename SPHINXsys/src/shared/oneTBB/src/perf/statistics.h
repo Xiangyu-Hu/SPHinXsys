@@ -29,6 +29,7 @@
 #include <set>
 #include <string>
 #include <time.h>
+#include <cstring>
 
 using namespace std;
 typedef double value_t;
