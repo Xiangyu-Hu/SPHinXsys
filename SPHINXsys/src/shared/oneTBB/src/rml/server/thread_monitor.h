@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#define USE_PTHREAD 1
 // All platform-specific threading support is encapsulated here. */
 
 #ifndef __RML_thread_monitor_H

@@ -1,0 +1,11 @@
+#define __TBB_VERSION_STRINGS(N) \
+#N": BUILD_HOST		SPHINXJS (x86_64)" ENDL \
+#N": BUILD_OS		Ubuntu 18.04.5 LTS" ENDL \
+#N": BUILD_KERNEL	Linux 5.4.0-1039-azure #41~18.04.1-Ubuntu SMP Mon Jan 18 14:00:01 UTC 2021" ENDL \
+#N": BUILD_GCC		g++ (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0" ENDL \
+#N": BUILD_LIBC	2.27" ENDL \
+#N": BUILD_LD		" ENDL \
+#N": BUILD_TARGET	intel64 on cc7.5.0_libc2.27_kernel5.4.0" ENDL \
+#N": BUILD_COMMAND	g++ -DTBB_USE_DEBUG -O0 -g -DDO_ITT_NOTIFY -DUSE_PTHREAD -pthread -m64 -mrtm -fPIC -flifetime-dse=1 -D__TBB_BUILD=1 -Wall -Wextra -Wno-parentheses -Wno-sized-deallocation -DTBB_SUPPRESS_DEPRECATED_MESSAGES=1 -I../../src -I../../src/rml/include -I../../include -I." ENDL \
+
+#define __TBB_DATETIME "Fri Feb 5 10:29:21 UTC 2021"

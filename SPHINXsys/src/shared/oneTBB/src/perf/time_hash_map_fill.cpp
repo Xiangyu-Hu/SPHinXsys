@@ -27,12 +27,12 @@ int MAX_TABLE_SIZE = 2000000;
 // enable/disable tests for:
 #define BOX1 "CHMap"
 #define BOX1TEST ValuePerSecond<Uniques<tbb::concurrent_hash_map<int,int> >, SECONDS_RATIO>
-#define BOX1HEADER "tbb/concurrent_hash_map.h"
+#define BOX1HEADER "concurrent_hash_map.h"
 
 // enable/disable tests for:
 #define BOX2 "CUMap"
 #define BOX2TEST ValuePerSecond<Uniques<tbb::concurrent_unordered_map<int,int> >, SECONDS_RATIO>
-#define BOX2HEADER "tbb/concurrent_unordered_map.h"
+#define BOX2HEADER "concurrent_unordered_map.h"
 
 // enable/disable tests for:
 //#define BOX3 "OLD"

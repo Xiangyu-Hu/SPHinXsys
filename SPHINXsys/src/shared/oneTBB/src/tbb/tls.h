@@ -17,6 +17,8 @@
 #ifndef _TBB_tls_H
 #define _TBB_tls_H
 
+#define USE_PTHREAD 1
+
 #if USE_PTHREAD
 #include <pthread.h>
 #else /* assume USE_WINTHREAD */

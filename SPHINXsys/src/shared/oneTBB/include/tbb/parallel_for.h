@@ -413,6 +413,8 @@ using strict_ppl::parallel_for;
 
 } // namespace tbb
 
+#define TBB_PREVIEW_SERIAL_SUBSET 1
+
 #if TBB_PREVIEW_SERIAL_SUBSET
 #define __TBB_NORMAL_EXECUTION
 #include "../serial/tbb/parallel_for.h"
