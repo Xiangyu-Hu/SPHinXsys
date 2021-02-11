@@ -17,6 +17,8 @@
 #ifndef _TBB_malloc_Customize_H_
 #define _TBB_malloc_Customize_H_
 
+#include "tbb_profiling.h"
+
 // customizing MALLOC_ASSERT macro
 #include "tbb_stddef.h"
 #define MALLOC_ASSERT(assertion, message) __TBB_ASSERT(assertion, message)
@@ -87,8 +89,6 @@ namespace internal {
 namespace tbb {
     namespace internal {
 
-        enum notify_type {prepare=0, cancel, acquired, releasing};
-
 #if TBB_USE_THREADING_TOOLS
         inline void call_itt_notify(notify_type t, void *ptr) {
             switch ( t ) {
@@ -106,27 +106,8 @@ namespace tbb {
                 break;
             }
         }
-#else
-        inline void call_itt_notify(notify_type /*t*/, void * /*ptr*/) {}
 #endif // TBB_USE_THREADING_TOOLS
 
-        template <typename T>
-        inline void itt_store_word_with_release(T& dst, T src) {
-#if TBB_USE_THREADING_TOOLS
-            call_itt_notify(releasing, &dst);
-#endif // TBB_USE_THREADING_TOOLS
-            FencedStore(*(intptr_t*)&dst, src);
-        }
-
-        template <typename T>
-        inline T itt_load_word_with_acquire(T& src) {
-            T result = FencedLoad(*(intptr_t*)&src);
-#if TBB_USE_THREADING_TOOLS
-            call_itt_notify(acquired, &src);
-#endif // TBB_USE_THREADING_TOOLS
-            return result;
-
-        }
     } // namespace internal
 } // namespace tbb
 

@@ -106,7 +106,7 @@ void start_for< Range, Body, Partitioner >::execute() {
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
 __TBB_DEPRECATED_VERBOSE void parallel_for( const Range& range, const Body& body ) {
-    serial::interface9::start_for<Range,Body,const __TBB_DEFAULT_PARTITIONER>::run(range,body,__TBB_DEFAULT_PARTITIONER());
+    serial::interface9::start_for<Range,Body,const auto_partitioner>::run(range,body,auto_partitioner());
 }
 
 //! Parallel iteration over range with simple partitioner.

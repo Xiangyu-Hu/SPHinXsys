@@ -198,7 +198,7 @@ namespace internal {
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
 void parallel_for( const Range& range, const Body& body ) {
-    internal::start_for<Range,Body,const __TBB_DEFAULT_PARTITIONER>::run(range,body,__TBB_DEFAULT_PARTITIONER());
+    internal::start_for<Range,Body,const auto_partitioner>::run(range,body,auto_partitioner());
 }
 
 //! Parallel iteration over range with simple partitioner.
@@ -234,7 +234,7 @@ void parallel_for( const Range& range, const Body& body, affinity_partitioner& p
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
 void parallel_for( const Range& range, const Body& body, task_group_context& context ) {
-    internal::start_for<Range,Body,const __TBB_DEFAULT_PARTITIONER>::run(range, body, __TBB_DEFAULT_PARTITIONER(), context);
+    internal::start_for<Range,Body,const auto_partitioner>::run(range, body, auto_partitioner(), context);
 }
 
 //! Parallel iteration over range with simple partitioner and user-supplied context.

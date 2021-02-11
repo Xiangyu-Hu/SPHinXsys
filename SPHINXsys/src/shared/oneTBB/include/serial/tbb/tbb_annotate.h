@@ -18,7 +18,7 @@
 #define __TBB_annotate_H
 
 // Macros used by the Intel(R) Parallel Advisor.
-#define __TBB_NORMAL_EXECUTION 1
+#define __TBB_NORMAL_EXECUTION
 #ifdef __TBB_NORMAL_EXECUTION
     #define ANNOTATE_SITE_BEGIN( site )
     #define ANNOTATE_SITE_END( site )

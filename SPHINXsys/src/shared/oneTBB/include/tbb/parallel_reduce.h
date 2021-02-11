@@ -360,7 +360,7 @@ namespace internal {
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
 void parallel_reduce( const Range& range, Body& body ) {
-    internal::start_reduce<Range,Body, const __TBB_DEFAULT_PARTITIONER>::run( range, body, __TBB_DEFAULT_PARTITIONER() );
+    internal::start_reduce<Range,Body, const auto_partitioner>::run( range, body, auto_partitioner() );
 }
 
 //! Parallel iteration with reduction and simple_partitioner
@@ -396,7 +396,7 @@ void parallel_reduce( const Range& range, Body& body, affinity_partitioner& part
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
 void parallel_reduce( const Range& range, Body& body, task_group_context& context ) {
-    internal::start_reduce<Range,Body,const __TBB_DEFAULT_PARTITIONER>::run( range, body, __TBB_DEFAULT_PARTITIONER(), context );
+    internal::start_reduce<Range,Body,const auto_partitioner>::run( range, body, auto_partitioner(), context );
 }
 
 //! Parallel iteration with reduction, simple partitioner and user-supplied context.
@@ -436,8 +436,8 @@ void parallel_reduce( const Range& range, Body& body, affinity_partitioner& part
 template<typename Range, typename Value, typename RealBody, typename Reduction>
 Value parallel_reduce( const Range& range, const Value& identity, const RealBody& real_body, const Reduction& reduction ) {
     internal::lambda_reduce_body<Range,Value,RealBody,Reduction> body(identity, real_body, reduction);
-    internal::start_reduce<Range,internal::lambda_reduce_body<Range,Value,RealBody,Reduction>,const __TBB_DEFAULT_PARTITIONER>
-                          ::run(range, body, __TBB_DEFAULT_PARTITIONER() );
+    internal::start_reduce<Range,internal::lambda_reduce_body<Range,Value,RealBody,Reduction>,const auto_partitioner>
+                          ::run(range, body, auto_partitioner() );
     return body.result();
 }
 
@@ -492,8 +492,8 @@ template<typename Range, typename Value, typename RealBody, typename Reduction>
 Value parallel_reduce( const Range& range, const Value& identity, const RealBody& real_body, const Reduction& reduction,
                        task_group_context& context ) {
     internal::lambda_reduce_body<Range,Value,RealBody,Reduction> body(identity, real_body, reduction);
-    internal::start_reduce<Range,internal::lambda_reduce_body<Range,Value,RealBody,Reduction>,const __TBB_DEFAULT_PARTITIONER>
-                          ::run( range, body, __TBB_DEFAULT_PARTITIONER(), context );
+    internal::start_reduce<Range,internal::lambda_reduce_body<Range,Value,RealBody,Reduction>,const auto_partitioner>
+                          ::run( range, body, auto_partitioner(), context );
     return body.result();
 }
 

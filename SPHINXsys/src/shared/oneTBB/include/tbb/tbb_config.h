@@ -590,10 +590,6 @@ There are four cases that are supported:
     #define __TBB_SURVIVE_THREAD_SWITCH 1
 #endif /* __TBB_SURVIVE_THREAD_SWITCH */
 
-#ifndef __TBB_DEFAULT_PARTITIONER
-#define __TBB_DEFAULT_PARTITIONER tbb::auto_partitioner
-#endif
-
 #ifndef __TBB_USE_PROPORTIONAL_SPLIT_IN_BLOCKED_RANGES
 #define __TBB_USE_PROPORTIONAL_SPLIT_IN_BLOCKED_RANGES 1
 #endif

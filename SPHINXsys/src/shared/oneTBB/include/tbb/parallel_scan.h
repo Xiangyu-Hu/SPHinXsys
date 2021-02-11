@@ -361,7 +361,7 @@ namespace internal {
 /** @ingroup algorithms **/
 template<typename Range, typename Body>
 void parallel_scan( const Range& range, Body& body ) {
-    internal::start_scan<Range,Body,__TBB_DEFAULT_PARTITIONER>::run(range,body,__TBB_DEFAULT_PARTITIONER());
+    internal::start_scan<Range,Body,auto_partitioner>::run(range,body,auto_partitioner());
 }
 
 //! Parallel prefix with simple_partitioner
@@ -383,7 +383,7 @@ void parallel_scan( const Range& range, Body& body, const auto_partitioner& part
 template<typename Range, typename Value, typename Scan, typename ReverseJoin>
 Value parallel_scan( const Range& range, const Value& identity, const Scan& scan, const ReverseJoin& reverse_join ) {
     internal::lambda_scan_body<Range, Value, Scan, ReverseJoin> body(identity, scan, reverse_join);
-    tbb::parallel_scan(range,body,__TBB_DEFAULT_PARTITIONER());
+    tbb::parallel_scan(range,body,auto_partitioner());
     return body.result();
 }
 

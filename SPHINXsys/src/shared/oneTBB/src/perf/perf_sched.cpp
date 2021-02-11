@@ -213,7 +213,7 @@ protected:
     static const count_t algGrains[numWorkloads];
 
     tbb::simple_partitioner    my_simplePartitioner;
-    tbb::auto_partitioner    my_autoPartitioner;
+    auto_partitioner    my_autoPartitioner;
     PartitionerType my_partitionerType;
 
     bool UseAutoPartitioner () const { return my_partitionerType == AutoPartitioner; }
@@ -305,7 +305,7 @@ count_t NestingGrain;
 class NestingForBody {
     count_t my_depth;
     tbb::simple_partitioner my_simplePartitioner;
-    tbb::auto_partitioner my_autoPartitioner;
+    auto_partitioner my_autoPartitioner;
     
     template<class Partitioner>
     void run ( const range_t& r, Partitioner& p ) const {
