@@ -4,6 +4,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(SPHINXsys VERSION 1.0.0 LANGUAGES CXX)
 
+
 # SimTKcommon depends on the Platform files but nothing else.
 include_directories(${PLATFORM_INCLUDE_DIRECTORIES})
 
@@ -11,10 +12,12 @@ set(SIMBODY_MAJOR_VERSION 3)
 set(SIMBODY_MINOR_VERSION 7)
 set(SIMBODY_PATCH_VERSION 0)
 
-set(SIMBODY_COPYRIGHT_YEARS "2005-18")
+#set(TBB_DIR ${PROJECT_SOURCE_DIR}/SPHINXsys/src/oneTBB/cmake/templates)
+#set(CMAKE_MODULE_PATH TBB_DIR)
+#find_package(TBB)
 
-# underbar separated list of dotted authors, no spaces or commas
-set(SIMBODY_AUTHORS "Michael.Sherman_Peter.Eastman")
+#target_include_directories(${PROJECT_NAME} PUBLIC SPHINXsys/src/oneTBB/include)
+
 
 # Report the version number to the CMake UI. Don't include the
 # build version if it is zero.

@@ -23,18 +23,18 @@
 #ifndef SPHINXSYS_BASE_CONTAINER_H
 #define SPHINXSYS_BASE_CONTAINER_H
 
-#include "tbb/tbb.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/blocked_range.h"
-#include "tbb/blocked_range2d.h"
-#include "tbb/blocked_range3d.h"
-#include "tbb/parallel_for.h"
-#include "tbb/parallel_reduce.h"
-#include "tbb/tick_count.h"
-#include "tbb/scalable_allocator.h"
-#include "tbb/concurrent_unordered_set.h"
-#include "tbb/concurrent_vector.h"
-#include "tbb/cache_aligned_allocator.h"
+#include "../../oneTBB/include/oneapi/tbb.h"
+#include "task_scheduler_init.h"
+#include "blocked_range.h"
+#include "blocked_range2d.h"
+#include "blocked_range3d.h"
+#include "parallel_for.h"
+#include "parallel_reduce.h"
+#include "tick_count.h"
+#include "scalable_allocator.h"
+#include "concurrent_unordered_set.h"
+#include "concurrent_vector.h"
+#include "cache_aligned_allocator.h"
 
 #include <array>
 
