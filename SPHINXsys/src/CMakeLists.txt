@@ -21,6 +21,3 @@ ENDFOREACH()
 #ADD_SUBDIRECTORY(for_2D_build)
 ADD_SUBDIRECTORY(for_3D_build)
 ADD_SUBDIRECTORY(shared)
-ADD_SUBDIRECTORY(oneTBB)
-
-include_directories(oneTBB)

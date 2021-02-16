@@ -8,7 +8,7 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 //#include "boost/program_options.hpp"
-namespace po = boost::program_options;
+//namespace po = boost::program_options;
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
@@ -51,11 +51,11 @@ namespace SPH
 		 * @param[in] smoothing_length_ratio The Reference ratio of smoothing length to particle spacing.
 		 */
  		SPHSystem(Vecd lower_bound, Vecd upper_bound, Real particle_spacing_ref, 
-			int number_of_threads = tbb::task_scheduler_init::automatic);
+			int number_of_threads = tbb::detail::d1::task_arena_base::automatic);
 		virtual ~SPHSystem() {};
 
 		Vecd lower_bound_, upper_bound_;	/**< Lower and Upper domain bound. */
-		task_scheduler_init tbb_init_;		/**< TBB library. */
+		//task_scheduler_init tbb_init_;		/**< TBB library. */
 		Real particle_spacing_ref_;			/**< Refernce initial particle spacing. */
 		/** restart step*/
 		size_t restart_step_;

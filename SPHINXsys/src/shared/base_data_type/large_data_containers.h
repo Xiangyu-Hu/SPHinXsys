@@ -24,7 +24,7 @@
 #define SPHINXSYS_BASE_CONTAINER_H
 
 #include "../../oneTBB/include/oneapi/tbb.h"
-#include "task_scheduler_init.h"
+//#include "task_scheduler_init.h"
 #include "blocked_range.h"
 #include "blocked_range2d.h"
 #include "blocked_range3d.h"

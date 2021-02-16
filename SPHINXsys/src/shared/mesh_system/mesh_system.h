@@ -61,7 +61,7 @@ namespace SPH
 		//whether a domain added
 		bool is_domain_added_;
 		//Initialize TBB
-		task_scheduler_init *tbb_init_;
+		//task_scheduler_init *tbb_init_;
 
 		//the bodies in the SPH system
 		StdVec<SPHBody* > bodies_;

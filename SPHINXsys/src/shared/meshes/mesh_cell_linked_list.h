@@ -40,7 +40,7 @@ namespace tbb {
 	namespace interafce9 {
 		namespace internal {
 
-			using tbb::internal::no_assign;
+			using tbb::detail::no_assign;
 
 			/** sorting particle */
 			template<typename RandomAccessIterator, typename Compare, typename SwapType>

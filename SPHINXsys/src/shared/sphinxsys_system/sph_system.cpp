@@ -7,14 +7,14 @@
 #include "sph_system.h"
 #include "base_body.h"
 #include "particle_generator_lattice.h"
-
+//tbb_init_(number_of_threads), 
 namespace SPH
 {
 	//=================================================================================================//
 	SPHSystem::SPHSystem(Vecd lower_bound, Vecd upper_bound,
 		Real particle_spacing_ref, int number_of_threads)
 		: lower_bound_(lower_bound), upper_bound_(upper_bound),
-		tbb_init_(number_of_threads), particle_spacing_ref_(particle_spacing_ref),
+		particle_spacing_ref_(particle_spacing_ref),
 		restart_step_(0), run_particle_relaxation_(false),
 		reload_particles_(false)
 	{
@@ -68,6 +68,7 @@ namespace SPH
 		}
 	}
 	//===============================================================//
+	/*
 	void SPHSystem::handleCommandlineOptions(int ac, char* av[])
 	{
 		try {
@@ -114,5 +115,6 @@ namespace SPH
 		}
 
 	}
+	*/
 	//===============================================================//
 }
