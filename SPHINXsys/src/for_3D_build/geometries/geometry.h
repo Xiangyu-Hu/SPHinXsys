@@ -34,7 +34,7 @@
 #include "base_geometry.h"
 #include "SimTKcommon.h"
 #include "SimTKmath.h"
-//#include "Simbody.h"
+
 #include "simbody/internal/MultibodySystem.h"
 #include "simbody/internal/MobilizedBody.h"
 #include "simbody/internal/Force.h"

@@ -34,7 +34,7 @@
 #include "simmath/RungeKuttaMersonIntegrator.h"
 #include "simmath/RungeKuttaFeldbergIntegrator.h"
 #include "simmath/VerletIntegrator.h"
-#include "simmath/CPodesIntegrator.h"
+
 #include "simmath/TimeStepper.h"
 #include "simmath/internal/ContactGeometry.h"
 #include "simmath/internal/GeodesicIntegrator.h"
