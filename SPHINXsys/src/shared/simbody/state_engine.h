@@ -38,7 +38,7 @@
 #include "base_data_package.h"
 #include "array.h"
 #include "exception.h"
-#include "all_simbody.h"
+#include "xml_engine.h"
 
 #include <iostream>
 #include <string>

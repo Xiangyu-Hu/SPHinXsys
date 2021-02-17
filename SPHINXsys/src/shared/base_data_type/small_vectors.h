@@ -25,7 +25,6 @@
 
 #pragma once
 
-#include "Simbody.h"
 #include "SimTKcommon.h"
 #include "SimTKmath.h"
 #include "scalar_functions.h"

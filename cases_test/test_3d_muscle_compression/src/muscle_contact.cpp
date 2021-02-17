@@ -4,7 +4,30 @@
  * @author 	Chi Zhang and Xiangyu Hu
  * @version 0.3.0
  */
-#include "sphinxsys.h"
+
+#include "base_data_package.h"
+#include "all_kernels.h"
+#include "all_particles.h"
+#include "all_geometries.h"
+#include "all_types_of_bodies.h"
+#include "sph_system.h"
+#include "all_materials.h"
+#include "all_physical_dynamics.h"
+
+#include "xml_engine.h"
+#include "simbody/internal/Force.h"
+#include "simbody/internal/Force_BuiltIns.h"
+
+#include "simbody/internal/SimbodyMatterSubsystem.h"
+#include "simbody/internal/CableTrackerSubsystem.h"
+
+
+#include "in_output.h"
+/** Standrad c++ libraries. */
+#include <iostream>
+
+
+
 /** Name space. */
 using namespace SPH;
 /** Geometry parameters. */

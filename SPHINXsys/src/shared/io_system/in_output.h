@@ -36,7 +36,8 @@
  
 #include "SimTKcommon.h"
 #include "SimTKmath.h"
-#include "Simbody.h"
+#include "simbody/internal/MobilizedBody.h"
+#include "simbody/internal/MobilizedBody_BuiltIns.h"
 
 #include <fstream>
 /** Macro for APPLE compilers*/
