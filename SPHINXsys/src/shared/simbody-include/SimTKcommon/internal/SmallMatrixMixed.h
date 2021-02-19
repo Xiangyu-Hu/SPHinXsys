@@ -837,14 +837,14 @@ E det(const SymMat<M,E,RS>& s) {
 
 
     // INVERSE
-
+/*
 /// Specialized 1x1 lapackInverse(): costs one divide.
 template <class E, int CS, int RS> inline
 typename Mat<1,1,E,CS,RS>::TInvert lapackInverse(const Mat<1,1,E,CS,RS>& m) {
     typedef typename Mat<1,1,E,CS,RS>::TInvert MInv;
     return MInv( E(typename CNT<E>::StdNumber(1)/m(0,0)) );
 }
-
+*/
 /// General inverse of small, fixed-size, square (mXm), non-singular matrix with 
 /// scalar elements: use Lapack's LU routine with pivoting. This will only work 
 /// if the element type E is a scalar type, although negator<> and conjugate<> 
@@ -855,6 +855,7 @@ typename Mat<1,1,E,CS,RS>::TInvert lapackInverse(const Mat<1,1,E,CS,RS>& m) {
 /// Normally you should call inverse(), but you can call lapackInverse() 
 /// explicitly if you want to ensure that the most stable algorithm is used.
 /// @see inverse()
+/*
 template <int M, class E, int CS, int RS> inline
 typename Mat<M,M,E,CS,RS>::TInvert lapackInverse(const Mat<M,M,E,CS,RS>& m) {
     // Copy the source matrix, which has arbitrary row and column spacing,
@@ -892,7 +893,7 @@ typename Mat<M,M,E,CS,RS>::TInvert lapackInverse(const Mat<M,M,E,CS,RS>& m) {
         "Matrix is singular so can't be inverted (Lapack getri info=%d).", info);
     return inv;
 }
-
+*/
 
 /// Specialized 1x1 Mat inverse: costs one divide.
 template <class E, int CS, int RS> inline
@@ -992,11 +993,12 @@ typename SymMat<3,E,RS>::TInvert inverse(const SymMat<3,E,RS>& s) {
 
 /// For any matrix larger than 3x3, we just punt to the Lapack implementation.
 /// @see lapackInverse()
+/*
 template <int M, class E, int CS, int RS> inline
 typename Mat<M,M,E,CS,RS>::TInvert inverse(const Mat<M,M,E,CS,RS>& m) {
     return lapackInverse(m);
 }
-
+*/
 // Implement the Mat<>::invert() method using the above specialized 
 // inverse functions. This will only compile if M==N.
 template <int M, int N, class ELT, int CS, int RS> inline
