@@ -28,7 +28,7 @@
 
 #include "SimTKcommon/Scalar.h"
 #include "SimTKcommon/SmallMatrix.h"
-#include "SimTKcommon/TemplatizedLapack.h"
+//#include "SimTKcommon/TemplatizedLapack.h"
 
 #include "SimTKcommon/internal/MatrixHelper.h"
 #include "SimTKcommon/internal/MatrixCharacteristics.h"

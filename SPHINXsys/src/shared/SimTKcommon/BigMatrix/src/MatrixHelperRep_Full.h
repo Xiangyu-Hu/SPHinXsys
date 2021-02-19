@@ -172,6 +172,7 @@ protected:
     typedef typename CNT<S>::StdNumber StdNumber;
     // This is for use by scalar col- and row- ordered matrices only. The same
     // code works because transpose(inv(m))==inv(transpose(m)).
+    /*
     void lapackInvertInPlace() {
         // should have been checked already
         assert(this->m_eltSize==1 && this->nrow()==this->ncol()); 
@@ -192,7 +193,7 @@ protected:
         Lapack::getri<StdNumber>(m,rawMem,this->m_leadingDim,&ipiv[0],
                                  &work[0],wsz,info);
         assert(info==0);
-    }
+    }*/
 };
 
 // Full, column order, composite. Row i is the fast dimension here.
@@ -314,7 +315,7 @@ public:
         for (int j=0; j<this->ncol(); ++j) *esum += this->scalarColSum(j);
     }
 
-    void invertInPlace_() {this->lapackInvertInPlace();}
+    //void invertInPlace_() {this->lapackInvertInPlace();}
 };
 
 // Full, row order, composite. Column j is the fast dimension here.
@@ -431,7 +432,7 @@ public:
         for (int i=0; i<this->nrow(); ++i) *esum += this->scalarRowSum(i);
     }
 
-    void invertInPlace_() {this->lapackInvertInPlace();}
+    //void invertInPlace_() {this->lapackInvertInPlace();}
 };
 
 
