@@ -34,7 +34,6 @@
 #include "sph_data_conainers.h"
 #include "all_physical_dynamics.h"
  
-#include "SimTKcommon.h"
 #include "SimTKmath.h"
 #include "simbody/internal/MobilizedBody.h"
 #include "simbody/internal/MobilizedBody_BuiltIns.h"

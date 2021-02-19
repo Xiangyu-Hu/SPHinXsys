@@ -31,7 +31,6 @@
 
 #include "base_data_package.h"
 
-#include "SimTKcommon.h"
 #include "SimTKcommon/internal/Xml.h"
 #include "SimTKcommon/internal/String.h"
 

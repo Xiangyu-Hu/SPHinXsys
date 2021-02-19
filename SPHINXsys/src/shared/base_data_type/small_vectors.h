@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "SimTKcommon.h"
+#include "SmallMatrix.h"
 #include "SimTKmath.h"
 #include "scalar_functions.h"
 
