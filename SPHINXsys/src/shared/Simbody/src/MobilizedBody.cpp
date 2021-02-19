@@ -1714,7 +1714,7 @@ void MobilizedBody::GimbalImpl::calcDecorativeGeometryAndAppendImpl
     /////////////////////////////
     // MOBILIZED BODY::BUSHING //
     /////////////////////////////
-
+/*
 MobilizedBody::Bushing::Bushing(MobilizedBody& parent, const Body& body, 
                                 Direction d) 
 :   MobilizedBody(new BushingImpl(d)) {
@@ -1810,7 +1810,7 @@ updMyPartU(const State& s, Vector& ulike) const {
 
 SimTK_INSERT_DERIVED_HANDLE_DEFINITIONS(MobilizedBody::Bushing, 
     MobilizedBody::BushingImpl, MobilizedBody);
-
+*/
 
     ///////////////////////////////////////////////////
     // MOBILIZED BODY::BALL (ORIENTATION, SPHERICAL) //
@@ -2254,7 +2254,7 @@ SimTK_INSERT_DERIVED_HANDLE_DEFINITIONS(MobilizedBody::Translation,
     //////////////////////////
     // MOBILIZED BODY::FREE //
     //////////////////////////
-
+/*
 MobilizedBody::Free::Free(MobilizedBody& parent, const Body& body, Direction d) 
 :   MobilizedBody(new FreeImpl(d)) {
     // inb & outb frames are just the parent body's frame and new body's frame
@@ -2386,7 +2386,7 @@ updMyPartU(const State& s, Vector& ulike) const {
 
 SimTK_INSERT_DERIVED_HANDLE_DEFINITIONS(MobilizedBody::Free, 
     MobilizedBody::FreeImpl, MobilizedBody);
-
+*/
     //////////////////////////////////////
     // MOBILIZED BODY::LINE ORIENTATION //
     //////////////////////////////////////
@@ -2490,7 +2490,7 @@ SimTK_INSERT_DERIVED_HANDLE_DEFINITIONS(MobilizedBody::LineOrientation,
     ///////////////////////////////
     // MOBILIZED BODY::FREE LINE //
     ///////////////////////////////
-
+/*
 MobilizedBody::FreeLine::FreeLine
    (MobilizedBody& parent, const Body& body, Direction d) 
 :   MobilizedBody(new FreeLineImpl(d)) {
@@ -2514,7 +2514,7 @@ MobilizedBody::FreeLine::FreeLine
 }
 SimTK_INSERT_DERIVED_HANDLE_DEFINITIONS(MobilizedBody::FreeLine, 
     MobilizedBody::FreeLineImpl, MobilizedBody);
-
+*/
     //////////////////////////
     // MOBILIZED BODY::WELD //
     //////////////////////////

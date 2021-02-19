@@ -64,7 +64,7 @@ will include this one). **/
 #include "simbody/internal/SmoothSphereHalfSpaceForce.h"
 #include "simbody/internal/DecorationSubsystem.h"
 #include "simbody/internal/TextDataEventReporter.h"
-#include "simbody/internal/ObservedPointFitter.h"
+//#include "simbody/internal/ObservedPointFitter.h"
 #include "simbody/internal/Assembler.h"
 #include "simbody/internal/AssemblyCondition.h"
 #include "simbody/internal/AssemblyCondition_QValue.h"

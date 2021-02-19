@@ -286,6 +286,7 @@ RigidBodyNode* MobilizedBody::CustomImpl::createRigidBodyNode(
     case 3:
         INSTANTIATE_CUSTOM(3, getImplementation(), getDefaultRigidBodyMassProperties(),
             getDefaultInboardFrame(), getDefaultOutboardFrame(), isReversed(), nextUSlot, nextUSqSlot, nextQSlot)
+    /*
     case 4:
         INSTANTIATE_CUSTOM(4, getImplementation(), getDefaultRigidBodyMassProperties(),
             getDefaultInboardFrame(), getDefaultOutboardFrame(), isReversed(), nextUSlot, nextUSqSlot, nextQSlot)
@@ -295,6 +296,7 @@ RigidBodyNode* MobilizedBody::CustomImpl::createRigidBodyNode(
     case 6:
         INSTANTIATE_CUSTOM(6, getImplementation(), getDefaultRigidBodyMassProperties(),
             getDefaultInboardFrame(), getDefaultOutboardFrame(), isReversed(), nextUSlot, nextUSqSlot, nextQSlot)
+    */
     default:
         assert(!"Illegal number of degrees of freedom for custom MobilizedBody");
         return 0;

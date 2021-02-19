@@ -1842,14 +1842,14 @@ class LineOrientation;
 
 class Planar;
 class Gimbal;
-class Bushing;
+//class Bushing;
 
 class Ball;             
 typedef Ball Orientation;   ///< Synonym for Ball mobilizer.
 typedef Ball Spherical;     ///< Synonym for Ball mobilizer.
 
-class Free;
-class FreeLine;
+//class Free;
+//class FreeLine;
 class Screw;
 class Ellipsoid;
 class Custom;
@@ -1864,13 +1864,13 @@ class CylinderImpl;
 class BendStretchImpl;
 class PlanarImpl;
 class GimbalImpl;
-class BushingImpl;
+//class BushingImpl;
 class BallImpl;
 class TranslationImpl;
 class SphericalCoordsImpl;
-class FreeImpl;
+//class FreeImpl;
 class LineOrientationImpl;
-class FreeLineImpl;
+//class FreeLineImpl;
 class WeldImpl;
 class ScrewImpl;
 class EllipsoidImpl;

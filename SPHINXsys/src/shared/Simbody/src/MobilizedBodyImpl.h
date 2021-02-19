@@ -752,7 +752,7 @@ private:
     Real defaultRadius;   // used for visualization only
     Vec3 defaultQ;  // the three angles in radians
 };
-
+/*
 class MobilizedBody::BushingImpl : public MobilizedBodyImpl {
 public:
     explicit BushingImpl(Direction d) 
@@ -775,7 +775,7 @@ private:
     friend class MobilizedBody::Bushing;
     Vec6 defaultQ;  // 3 angles in radians, then p_FM
 };
-
+*/
 class MobilizedBody::BallImpl : public MobilizedBodyImpl {
 public:
     explicit BallImpl(Direction d) 
@@ -872,7 +872,7 @@ private:
     friend class MobilizedBody::Translation;
     Vec3 defaultQ;  // the three displacements
 };
-
+/*
 class MobilizedBody::FreeImpl : public MobilizedBodyImpl {
 public:
     explicit FreeImpl(Direction d) : MobilizedBodyImpl(d), defaultQOrientation(), defaultQTranslation(0) { }
@@ -901,7 +901,7 @@ private:
     Quaternion defaultQOrientation;
     Vec3       defaultQTranslation;
 };
-
+*/
 class MobilizedBody::LineOrientationImpl : public MobilizedBodyImpl {
 public:
     explicit LineOrientationImpl(Direction d) : MobilizedBodyImpl(d), defaultQ() { } // 1,0,0,0
@@ -926,7 +926,7 @@ private:
     friend class MobilizedBody::LineOrientation;
     Quaternion defaultQ;
 };
-
+/*
 class MobilizedBody::FreeLineImpl : public MobilizedBodyImpl {
 public:
     explicit FreeLineImpl(Direction d) : MobilizedBodyImpl(d), defaultQOrientation(), defaultQTranslation(0) { }
@@ -955,7 +955,7 @@ private:
     Quaternion defaultQOrientation;
     Vec3       defaultQTranslation;
 };
-
+*/
 class MobilizedBody::WeldImpl : public MobilizedBodyImpl {
 public:
     explicit WeldImpl(Direction d) : MobilizedBodyImpl(d) { }
