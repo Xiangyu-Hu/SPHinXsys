@@ -32,7 +32,7 @@ instantiations of the class for all possible values of the arguments. */
 #include "RigidBodyNodeSpec_Pin.h"
 #include "RigidBodyNodeSpec_Slider.h"
 #include "RigidBodyNodeSpec_Ball.h"
-#include "RigidBodyNodeSpec_Free.h"
+//#include "RigidBodyNodeSpec_Free.h"
 #include "RigidBodyNodeSpec_Custom.h"
 
 //==============================================================================
@@ -860,8 +860,8 @@ template class RigidBodyNodeSpec<dof, noR_FM, true, true>;
 INSTANTIATE(1, false)
 INSTANTIATE(2, false)
 INSTANTIATE(3, false)
-INSTANTIATE(4, false)
-INSTANTIATE(5, false)
-INSTANTIATE(6, false)
+//INSTANTIATE(4, false)
+//INSTANTIATE(5, false)
+//INSTANTIATE(6, false)
 INSTANTIATE(1, true)
 INSTANTIATE(3, true)

@@ -32,14 +32,14 @@
 #include "RigidBodyNodeSpec_SphericalCoords.h"
 #include "RigidBodyNodeSpec_Ball.h"
 #include "RigidBodyNodeSpec_Ellipsoid.h"
-#include "RigidBodyNodeSpec_Free.h"
+//#include "RigidBodyNodeSpec_Free.h"
 #include "RigidBodyNodeSpec_Screw.h"
 #include "RigidBodyNodeSpec_Universal.h"
 #include "RigidBodyNodeSpec_PolarCoords.h"
 #include "RigidBodyNodeSpec_Planar.h"
 #include "RigidBodyNodeSpec_Gimbal.h"
-#include "RigidBodyNodeSpec_Bushing.h"
-#include "RigidBodyNodeSpec_FreeLine.h"
+//#include "RigidBodyNodeSpec_Bushing.h"
+//#include "RigidBodyNodeSpec_FreeLine.h"
 #include "RigidBodyNodeSpec_LineOrientation.h"
 #include "RigidBodyNodeSpec_Custom.h"
 // Note: _Translation is handled separately so we can special case
@@ -110,7 +110,7 @@ RigidBodyNode* MobilizedBody::BallImpl::createRigidBodyNode(
         nextUSlot,nextUSqSlot,nextQSlot)
 }
 
-
+/*
 RigidBodyNode* MobilizedBody::FreeImpl::createRigidBodyNode(
     UIndex&        nextUSlot,
     USquaredIndex& nextUSqSlot,
@@ -122,7 +122,7 @@ RigidBodyNode* MobilizedBody::FreeImpl::createRigidBodyNode(
         isReversed(),
         nextUSlot,nextUSqSlot,nextQSlot)
 }
-
+*/
 
 
 RigidBodyNode* MobilizedBody::ScrewImpl::createRigidBodyNode(
@@ -206,7 +206,7 @@ RigidBodyNode* MobilizedBody::GimbalImpl::createRigidBodyNode(
         isReversed(),
         nextUSlot,nextUSqSlot,nextQSlot)
 }
-
+/*
 RigidBodyNode* MobilizedBody::BushingImpl::createRigidBodyNode(
     UIndex&        nextUSlot,
     USquaredIndex& nextUSqSlot,
@@ -217,7 +217,7 @@ RigidBodyNode* MobilizedBody::BushingImpl::createRigidBodyNode(
         isReversed(),
         nextUSlot,nextUSqSlot,nextQSlot)
 }
-
+*/
 RigidBodyNode* MobilizedBody::EllipsoidImpl::createRigidBodyNode(
     UIndex&        nextUSlot,
     USquaredIndex& nextUSqSlot,
@@ -242,7 +242,7 @@ RigidBodyNode* MobilizedBody::LineOrientationImpl::createRigidBodyNode(
         isReversed(),
         nextUSlot,nextUSqSlot,nextQSlot)
 }
-
+/*
 RigidBodyNode* MobilizedBody::FreeLineImpl::createRigidBodyNode(
     UIndex&        nextUSlot,
     USquaredIndex& nextUSqSlot,
@@ -254,7 +254,7 @@ RigidBodyNode* MobilizedBody::FreeLineImpl::createRigidBodyNode(
         isReversed(),
         nextUSlot,nextUSqSlot,nextQSlot)
 }
-
+*/
 #define INSTANTIATE_CUSTOM(DOF, ...) \
     if (noX_MB) { \
         if (noR_PF) \
