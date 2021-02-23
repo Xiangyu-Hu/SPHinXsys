@@ -147,8 +147,8 @@ EigenRep<T>::EigenRep( const Matrix_<ELT>& mat):
     needValues(true),
     needVectors(true) {  
          
-    LapackInterface::getMachineUnderflow( abstol );
-    abstol *= 0.5;
+    //LapackInterface::getMachineUnderflow( abstol );
+    //abstol *= 0.5;
 
     LapackConvert::convertMatrixToLapack( inputMatrix.data, mat );
     isFactored = true;

@@ -287,6 +287,9 @@ extern void zgeev_(SimTK_FOPT_(jobvl), SimTK_FOPT_(jobvr), SimTK_FDIM_(n), SimTK
 
 extern void zgeevx_(SimTK_FOPT_(balanc), SimTK_FOPT_(jobvl), SimTK_FOPT_(jobvr), char *sense, SimTK_FDIM_(n), SimTK_Z_ *a, SimTK_FDIM_(lda), SimTK_Z_ *w, SimTK_Z_ *vl, SimTK_FDIM_(ldvl), SimTK_Z_ *vr, SimTK_FDIM_(ldvr), SimTK_I_OUTPUT_(ilo), SimTK_I_OUTPUT_(ihi), SimTK_D_OUTPUT_(scale), double *abnrm, SimTK_D_OUTPUT_(rconde), SimTK_D_OUTPUT_(rcondv), SimTK_Z_ *work, SimTK_FDIM_(lwork), double *rwork, SimTK_INFO_, SimTK_FLEN_(balanc), SimTK_FLEN_(jobvl), SimTK_FLEN_(jobvr), SimTK_FLEN_(sense));
 
+extern float  slamch_(SimTK_FOPT_(cmach), SimTK_FLEN_(cmach));
+
+extern double  dlamch_(SimTK_FOPT_(cmach), SimTK_FLEN_(cmach));
 
 #ifdef __cplusplus
 }   /* extern "C" */

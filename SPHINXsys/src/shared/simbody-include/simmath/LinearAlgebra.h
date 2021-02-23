@@ -84,6 +84,7 @@ class SimTK_SIMMATH_EXPORT Eigen {
 
 }; // class Eigen
 
+
 } // namespace SimTK 
 
 #endif //SimTK_LINEAR_ALGEBRA_H_
