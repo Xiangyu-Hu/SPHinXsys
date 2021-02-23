@@ -27,7 +27,7 @@ Non-inline static methods from the Geo::Point_ class. **/
 #include "SimTKcommon.h"
 #include "simmath/internal/common.h"
 #include "simmath/LinearAlgebra.h"
-#include "simmath/Optimizer.h"
+//#include "simmath/Optimizer.h"
 #include "simmath/internal/Geo.h"
 #include "simmath/internal/Geo_Point.h"
 #include "simmath/internal/Geo_Box.h"
