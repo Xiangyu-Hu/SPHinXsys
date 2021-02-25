@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "arith.h"
+//#include "arith.h"
 
 #define TYSHORT 2
 #define TYLONG 3
