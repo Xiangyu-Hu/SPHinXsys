@@ -55,7 +55,7 @@ static doublereal c_b35 = 1.;
     extern /* Subroutine */ int dswap_(integer *, doublereal *, integer *, 
 	    doublereal *, integer *);
     logical applv, rsvec;
-    extern /* Subroutine */ int daxpy_(integer *, doublereal *, doublereal *, 
+    /*extern*/ /* Subroutine */ int daxpy_(integer *, doublereal *, doublereal *, 
 	    integer *, doublereal *, integer *), drotm_(integer *, doublereal 
 	    *, integer *, doublereal *, integer *, doublereal *);
     logical rotok;

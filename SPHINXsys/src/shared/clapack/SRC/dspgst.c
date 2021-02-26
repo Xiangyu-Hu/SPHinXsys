@@ -38,7 +38,7 @@ static doublereal c_b11 = 1.;
     extern /* Subroutine */ int dspr2_(char *, integer *, doublereal *, 
 	    doublereal *, integer *, doublereal *, integer *, doublereal *), dscal_(integer *, doublereal *, doublereal *, integer *);
     extern logical lsame_(char *, char *);
-    extern /* Subroutine */ int daxpy_(integer *, doublereal *, doublereal *, 
+    /*extern*/ /* Subroutine */ int daxpy_(integer *, doublereal *, doublereal *, 
 	    integer *, doublereal *, integer *), dspmv_(char *, integer *, 
 	    doublereal *, doublereal *, doublereal *, integer *, doublereal *, 
 	     doublereal *, integer *);

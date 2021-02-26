@@ -38,7 +38,7 @@ static integer c__1 = 1;
     extern /* Subroutine */ int drscl_(integer *, doublereal *, doublereal *, 
 	    integer *);
     logical lnoti;
-    extern /* Subroutine */ int daxpy_(integer *, doublereal *, doublereal *, 
+    /*extern*/ /* Subroutine */ int daxpy_(integer *, doublereal *, doublereal *, 
 	    integer *, doublereal *, integer *), dlacn2_(integer *, 
 	    doublereal *, doublereal *, integer *, doublereal *, integer *, 
 	    integer *);

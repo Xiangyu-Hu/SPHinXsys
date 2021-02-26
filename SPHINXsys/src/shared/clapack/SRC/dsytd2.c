@@ -35,7 +35,7 @@ static doublereal c_b14 = -1.;
 	    integer *);
     doublereal alpha;
     extern logical lsame_(char *, char *);
-    extern /* Subroutine */ int daxpy_(integer *, doublereal *, doublereal *, 
+    /*extern*/ /* Subroutine */ int daxpy_(integer *, doublereal *, doublereal *, 
 	    integer *, doublereal *, integer *);
     logical upper;
     extern /* Subroutine */ int dsymv_(char *, integer *, doublereal *, 
