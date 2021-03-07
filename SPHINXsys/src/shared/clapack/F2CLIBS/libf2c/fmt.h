@@ -76,7 +76,7 @@ extern int pars_f(const char*);
 extern int rd_ed(struct syl*, char*, ftnlen),rd_ned(struct syl*);
 extern int signbit_f2c(double*);
 extern int w_ed(struct syl*, char*, ftnlen),w_ned(struct syl*);
-extern int wrt_E(ufloat*, int, int, int, ftnlen);
+//extern int wrt_E(ufloat*, int, int, int, ftnlen);
 extern int wrt_F(ufloat*, int, int, ftnlen);
 extern int wrt_L(Uint*, int, ftnlen);
 #endif
