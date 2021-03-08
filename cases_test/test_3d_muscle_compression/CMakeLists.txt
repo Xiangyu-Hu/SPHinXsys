@@ -1,5 +1,3 @@
 STRING( REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR} )
 PROJECT("${CURRENT_FOLDER}")
 add_subdirectory(src)
-
-include_directories(../../SPHINXsys/src/oneTBB/include/)
