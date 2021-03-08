@@ -21,7 +21,7 @@ int main(int ac, char* av[])
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
 	system.run_particle_relaxation_ = true;
 	//handle command line arguments
-	system.handleCommandlineOptions(ac, av);
+	//system.handleCommandlineOptions(ac, av);
 	/**
 	 * @brief 	Creating body, materials and particles for the elastic beam (inserted body).
 	 */
