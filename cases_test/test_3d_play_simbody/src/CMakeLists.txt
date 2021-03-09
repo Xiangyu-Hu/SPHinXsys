@@ -2,13 +2,15 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake) # main (to
 
 set(CMAKE_VERBOSE_MAKEFILE on)
 
-include(ImportSPHINXsysFromSource_for_2D_build)
+include(ImportSPHINXsysFromSource_for_3D_build)
 
 SET(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
+
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
