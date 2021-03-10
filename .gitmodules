@@ -1,9 +1,6 @@
 [submodule "submodules/simbody"]
 	path = submodules/simbody
 	url = https://github.com/simbody/simbody
-[submodule "submodules/boost"]
-	path = submodules/boost
-	url = https://github.com/boostorg/boost
 [submodule "submodules/oneTBB"]
 	path = submodules/oneTBB
 	url = https://github.com/oneapi-src/oneTBB
