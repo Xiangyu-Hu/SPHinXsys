@@ -1,8 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake) # main (top) cmake dir
 
-#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/home/virtonomy/oneTBB/cmake/templates/")
-
 set(CMAKE_VERBOSE_MAKEFILE on)
 
 include(ImportSPHINXsysFromSource_for_3D_build)
