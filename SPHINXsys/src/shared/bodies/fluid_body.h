@@ -23,8 +23,7 @@
 /**
  * @file    fluid_body.h
  * @brief 	This is the class for bodies used for fluid.
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- * @version	0.1
+ * @author	Chi ZHang and Xiangyu Hu
  */
 #pragma once
 
@@ -34,25 +33,23 @@
 
 using namespace std;
 namespace SPH {
-	/**
-	 * @brief preclaimed class.
-	 */
 	class SPHSystem;
 	/**
 	 * @class FluidBody
-	 * @brief Declaration of fluid body.
+	 * @brief Fluid body uses smoothing length to particle spacing 1.3 
+	 * and carry out particle sorting every 100 iterations.
 	 */
 	class FluidBody : public RealBody
 	{
 	public:
-		explicit FluidBody(SPHSystem &system, string body_name, int refinement_level,
+		explicit FluidBody(SPHSystem &system, string body_name, 
+			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(),
 			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~FluidBody() {};
 
 		/** Update cell linked list with particle sorting. */
 		virtual void updateCellLinkedList() override;
-		/** The pointer to derived class object. */
-		virtual FluidBody* pointToThisObject() override { return this; };
+		virtual FluidBody* pointToThisObject() override {return this;};
 	protected:
 		size_t iteration_count_;
 	};

@@ -1,7 +1,6 @@
 /**
  * @file 	base_body_supplementary.cpp
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- * @version	0.1
  */
 
 #include "solid_body.h"

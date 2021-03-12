@@ -2,10 +2,11 @@
  * @file    solid_body.cpp
  * @brief 	This is the class for bodies used for solid BCs or Elastic structure.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- * @version	0.1
  */
 
 #include "solid_body.h"
+
+#include "base_kernel.h"
 #include "sph_system.h"
 #include "base_material.h"
 #include "solid_particles.h"
@@ -13,10 +14,14 @@
 namespace SPH {
 	//=================================================================================================//
 	SolidBody::SolidBody(SPHSystem &system, string body_name,
-		int refinement_level, ParticleGenerator* particle_generator)
-		: RealBody(system, body_name, refinement_level, 1.05, particle_generator)
+		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
+		: RealBody(system, body_name, particle_adaptation, particle_generator) {}
+	//=================================================================================================//
+	ThinStructure::ThinStructure(SPHSystem& system, string body_name,
+		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
+		: SolidBody(system, body_name, particle_adaptation, particle_generator)
 	{
-	
+		particle_adaptation->getKernel()->reduceOnce();
 	}
 	//=================================================================================================//
 	SolidBodyPartForSimbody

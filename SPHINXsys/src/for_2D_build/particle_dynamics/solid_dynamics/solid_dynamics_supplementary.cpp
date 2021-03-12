@@ -1,10 +1,9 @@
 /**
  * @file 	solid_dynamics_supplementary.cpp
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- * @version	0.1
  */
 
-#include "solid_dynamics.h"
+#include "all_solid_dynamics.h"
 #include "solid_body.h"
 #include "solid_particles.h"
 #include "neighbor_relation.h"

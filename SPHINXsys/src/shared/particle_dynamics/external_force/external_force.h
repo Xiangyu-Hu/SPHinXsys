@@ -25,7 +25,6 @@
  * @brief 	Here, we define the base external force class.
  * @details The simple derived classes, such as gravity will be defined in applications.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- * @version	0.1
  */
 #pragma once
 
@@ -52,17 +51,14 @@ namespace SPH {
 	class Gravity : public ExternalForce
 	{
 	protected:
-		/** global accerlaeration. */
 		Vecd global_acceleration_;
-		/** global reference position for zero potential. */
-		Vecd reference_position_;
+		Vecd zero_potential_reference_;
 	public:
 		Gravity(Vecd gravity_vector, Vecd reference_position = Vecd(0));
 		virtual ~Gravity() {};
 
 		/** This function can be used for runtime control of external force. */
 		virtual Vecd InducedAcceleration(Vecd& position) override;
-		/** Compute potential. */
 		Real getPotential(Vecd& position);
 	};
 }

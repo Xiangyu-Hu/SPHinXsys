@@ -1,14 +1,13 @@
 /** 
  * @file elastic_solid.cpp
  * @author Chi Zhang and Xiangyu Hu
- * @version  0.1
- * @version  0.2.1
  */
 
 #include "elastic_solid.h"
+
+#include "base_body.h"
 #include "solid_particles.h"
 #include "xml_engine.h"
-#include "base_body.h"
 
 namespace SPH {
 	//=================================================================================================//
@@ -130,6 +129,16 @@ namespace SPH {
 		return sigmaPK2;
 	}
 	//=================================================================================================//
+	Real Muscle::YoungsModulus()
+	{ 
+		return 9.0 * bulk_modulus_ * a_0_[0] / (3.0 * bulk_modulus_ + a_0_[0]); 
+	};
+	//=================================================================================================//
+	Real Muscle::PoissonRatio()
+	{ 
+		return (3.0 * bulk_modulus_ - 2.0 * a_0_[0]) / (3.0 * bulk_modulus_ + a_0_[0]) / 2.0; 
+	};
+	//=================================================================================================//
 	Matd LocallyOrthotropicMuscle::ConstitutiveRelation(Matd& F, size_t i)
 	{
 		Matd right_cauchy = ~F * F;
@@ -149,8 +158,8 @@ namespace SPH {
 	//=================================================================================================//
 	void LocallyOrthotropicMuscle::initializeLocalProperties(BaseParticles* base_particles)
 	{
-		size_t number_of_particles = base_particles->getSPHBody()->number_of_particles_;
-		for (size_t i = 0; i != number_of_particles; i++)
+		size_t total_real_particles = base_particles->total_real_particles_;
+		for (size_t i = 0; i != total_real_particles; i++)
 		{
 			local_f0_.push_back(Vecd(0));
 			local_s0_.push_back(Vecd(0));
@@ -165,7 +174,7 @@ namespace SPH {
 
 		for (size_t i = 0; i != local_f0_.size(); ++i)
 		{
-			reload_xml->CreatXmlElement("muscle");
+			reload_xml->creatXmlElement("muscle");
 			reload_xml->AddAttributeToElement<Vecd>("Fibre", local_f0_[i]);
 			reload_xml->AddAttributeToElement<Vecd>("Sheet", local_s0_[i]);
 			reload_xml->AddElementToXmlDoc();
@@ -208,13 +217,13 @@ namespace SPH {
  		}
 	}
 	//=================================================================================================//
-	void LocallyOrthotropicMuscle::WriteMaterialPropertyToVtuFile(ofstream& output_file)
+	void LocallyOrthotropicMuscle::writeMaterialPropertyToVtuFile(ofstream& output_file)
 	{
-		size_t number_of_particles = elastic_particles_->getSPHBody()->number_of_particles_;
+		size_t total_real_particles = elastic_particles_->total_real_particles_;
 
 		output_file << "    <DataArray Name=\"FiberDirection\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
 		output_file << "    ";
-		for (size_t i = 0; i != number_of_particles; ++i) {
+		for (size_t i = 0; i != total_real_particles; ++i) {
 			Vec3d local_f0 = upgradeToVector3D(local_f0_[i]);
 			output_file << fixed << setprecision(9) << local_f0[0] << " " << local_f0[1] << " " << local_f0[2] << " ";
 		}
@@ -223,7 +232,7 @@ namespace SPH {
 
 		output_file << "    <DataArray Name=\"SheetDirection\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
 		output_file << "    ";
-		for (size_t i = 0; i != number_of_particles; ++i) {
+		for (size_t i = 0; i != total_real_particles; ++i) {
 			Vec3d local_s0 = upgradeToVector3D(local_s0_[i]);
 			output_file << fixed << setprecision(9) << local_s0[0] << " " << local_s0[1] << " " << local_s0[2] << " ";
 		}
@@ -259,9 +268,9 @@ namespace SPH {
 		muscle_.readFromXmlForMaterialProperty(filefullpath);
 	}
 	//=================================================================================================//
-	void ActiveMuscle::WriteMaterialPropertyToVtuFile(ofstream& output_file)
+	void ActiveMuscle::writeMaterialPropertyToVtuFile(ofstream& output_file)
 	{
-		muscle_.WriteMaterialPropertyToVtuFile(output_file);
+		muscle_.writeMaterialPropertyToVtuFile(output_file);
 	}
 	//=================================================================================================//
 }

@@ -25,10 +25,6 @@
  * @brief 	In is file, we declaim the dynamics relevant to electrophysiology,
  * including diffusion, reaction and muscle activation. 
  * @author 	Chi Zhang and Xiangyu Hu
- * @version 0.2.1
- * 			From here, I will denote version a beta, e.g. 0.2.1, other than 0.1 as
- * 			we will introduce cardiac electrophysiology and cardiac mechanics herein.
- * 			Chi Zhang
  */
 #pragma once
 
@@ -82,10 +78,10 @@ namespace SPH
 		class ElectroPhysiologyDiffusionRelaxation : 
 			public RelaxationOfAllDiffusionSpeciesRK2<SolidBody, SolidParticles, Solid,
 			RelaxationOfAllDiffussionSpeciesInner<SolidBody, SolidParticles, Solid>, 
-			SPHBodyInnerRelation>
+			BaseInnerBodyRelation>
 		{
 		public:
-			ElectroPhysiologyDiffusionRelaxation(SPHBodyInnerRelation* body_inner_relation)
+			ElectroPhysiologyDiffusionRelaxation(BaseInnerBodyRelation* body_inner_relation)
 				: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation) {};
 			virtual ~ElectroPhysiologyDiffusionRelaxation() {};
 		};

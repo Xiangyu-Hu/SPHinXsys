@@ -2,7 +2,6 @@
  * @file 	statengine.cpp
  * @brief 	engine of state functions are defined here
  * @author	Chi Zhang and Xiangyu Hu
- * @version	0.1
  */
 
 #include "state_engine.h"
@@ -242,7 +241,7 @@ namespace SPH {
         const SimTK::SimbodyMatterSubsystem& matter_ = getMultibodySystem().getMatterSubsystem();
         for (SimTK::MobilizedBodyIndex mbx(0); mbx < matter_.getNumBodies(); ++mbx) 
         {
-            state_xml->CreatXmlElement("mbbody");
+            state_xml->creatXmlElement("mbbody");
             const SimTK::MobilizedBody& mobod = matter_.getMobilizedBody(mbx);
 
             int num_q_ = mobod.getNumQ(state_);

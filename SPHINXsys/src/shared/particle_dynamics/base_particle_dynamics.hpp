@@ -2,7 +2,6 @@
 * @file 	base_particle_dynamics.hpp
 * @brief 	This is the implementation of the template class for 3D build
 * @author	Chi ZHang and Xiangyu Hu
-* @version	0.1
 */
 #pragma once
 
@@ -18,47 +17,23 @@ namespace SPH {
 			  class ContactMaterialType,
 			  class BaseDataDelegateType>
 	DataDelegateContact<BodyType, ParticlesType, MaterialType, ContactBodyType, ContactParticlesType, ContactMaterialType, BaseDataDelegateType>
-		::DataDelegateContact(SPHBodyContactRelation* body_contact_relation) :
-		BaseDataDelegateType(body_contact_relation->sph_body_),
-		contact_configuration_(body_contact_relation->contact_configuration_)
+		::DataDelegateContact(BaseContactBodyRelation* body_contact_relation) :
+		BaseDataDelegateType(body_contact_relation->sph_body_)
 	{
-		SPHBodyVector contact_sph_bodies = body_contact_relation->contact_sph_bodies_;
+		RealBodyVector contact_sph_bodies = body_contact_relation->contact_bodies_;
 		for (size_t i = 0; i != contact_sph_bodies.size(); ++i) {
 			contact_bodies_.push_back(dynamic_cast<ContactBodyType*>(contact_sph_bodies[i]));
 			contact_particles_.push_back(dynamic_cast<ContactParticlesType*>(contact_sph_bodies[i]->base_particles_));
 			contact_material_.push_back(dynamic_cast<ContactMaterialType*>(contact_sph_bodies[i]->base_particles_->base_material_));
-		}
-	}
-	//=================================================================================================//
-	template <class BodyType,
-		class ParticlesType,
-		class MaterialType,
-		class ContactBodyType,
-		class ContactParticlesType,
-		class ContactMaterialType>
-	DataDelegateComplex<BodyType, ParticlesType, MaterialType, ContactBodyType, ContactParticlesType, ContactMaterialType>
-		::DataDelegateComplex(SPHBodyComplexRelation* body_complex_relation) :
-		body_(dynamic_cast<BodyType*>(body_complex_relation->sph_body_)),
-		particles_(dynamic_cast<ParticlesType*>(body_->base_particles_)),
-		material_(dynamic_cast<MaterialType*>(body_->base_particles_->base_material_)),
-		inner_configuration_(body_complex_relation->inner_configuration_),
-		sorted_id_(body_->base_particles_->sorted_id_),
-		unsorted_id_(body_->base_particles_->unsorted_id_),
-		contact_configuration_(body_complex_relation->contact_configuration_)
-	{
-		SPHBodyVector contact_sph_bodies = body_complex_relation->contact_sph_bodies_;
-		for (size_t i = 0; i != contact_sph_bodies.size(); ++i) {
-			contact_bodies_.push_back(dynamic_cast<ContactBodyType*>(contact_sph_bodies[i]));
-			contact_particles_.push_back(dynamic_cast<ContactParticlesType*>(contact_sph_bodies[i]->base_particles_));
-			contact_material_.push_back(dynamic_cast<ContactMaterialType*>(contact_sph_bodies[i]->base_particles_->base_material_));
+			contact_configuration_.push_back(&body_contact_relation->contact_configuration_[i]);
 		}
 	}
 	//=================================================================================================//
 	template <class ReturnType, typename ReduceOperation>
-	ReturnType ReduceIterator(size_t number_of_particles, ReturnType temp,
+	ReturnType ReduceIterator(size_t total_real_particles, ReturnType temp,
 		ReduceFunctor<ReturnType>& reduce_functor, ReduceOperation& reduce_operation, Real dt)
 	{
-		for (size_t i = 0; i < number_of_particles; ++i)
+		for (size_t i = 0; i < total_real_particles; ++i)
 		{
 			temp = reduce_operation(temp, reduce_functor(i, dt));
 		}
@@ -66,10 +41,10 @@ namespace SPH {
 	}
 	//=================================================================================================//
 	template <class ReturnType, typename ReduceOperation>
-	ReturnType ReduceIterator_parallel(size_t number_of_particles, ReturnType temp,
+	ReturnType ReduceIterator_parallel(size_t total_real_particles, ReturnType temp,
 		ReduceFunctor<ReturnType>& reduce_functor, ReduceOperation& reduce_operation, Real dt)
 	{
-		return parallel_reduce(blocked_range<size_t>(0, number_of_particles),
+		return parallel_reduce(blocked_range<size_t>(0, total_real_particles),
 			temp, [&](const blocked_range<size_t>& r, ReturnType temp0)->ReturnType {
 				for (size_t i = r.begin(); i != r.end(); ++i) {
 					temp0 = reduce_operation(temp0, reduce_functor(i, dt));
@@ -80,6 +55,35 @@ namespace SPH {
 				return reduce_operation(x, y);
 			}
 			);
+	}
+	//=================================================================================================//
+	template<class ParticleDynamicsInnerType, class ContactDataType>
+	ParticleDynamicsComplex<ParticleDynamicsInnerType, ContactDataType>:: 
+		ParticleDynamicsComplex(ComplexBodyRelation* complex_relation, 
+			BaseContactBodyRelation* extra_contact_relation) :
+		ParticleDynamicsInnerType(complex_relation->inner_relation_),
+		ContactDataType(complex_relation->contact_relation_)
+	{
+		if (complex_relation->sph_body_ != extra_contact_relation->sph_body_)
+		{
+			std::cout << "\n Error: the two body_realtions do not have the same source body!" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
+		}
+
+		for (auto& extra_body : extra_contact_relation->contact_bodies_)
+		{
+			// here we first obtain the pointer to the most derived class and then implicitly downcast it to
+			// the types defined in the base complex dynamics  
+			this->contact_bodies_.push_back(extra_body->pointToThisObject());
+			this->contact_particles_.push_back(extra_body->base_particles_->pointToThisObject());
+			this->contact_material_.push_back(extra_body->base_particles_->base_material_->pointToThisObject());
+		}
+
+		for (size_t i = 0; i != extra_contact_relation->contact_bodies_.size(); ++i)
+		{
+			this->contact_configuration_.push_back(&extra_contact_relation->contact_configuration_[i]);
+		}
 	}
 	//=================================================================================================//
 }

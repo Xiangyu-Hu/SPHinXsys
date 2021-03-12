@@ -2,7 +2,6 @@
 * @file    tethered_dead_fish_in_flow.cpp
 * @brief   fish flapping passively in flow
 * @author  Xiangyu Hu and Chi Zhang
-* @version 0.1
 */
 #include "sphinxsys.h"
 /**
@@ -18,10 +17,11 @@ using namespace SPH;
 */
 Real DL = 11.0;                             /**< Channel length. */
 Real DH = 8.0;                              /**< Channel height. */
-
-Real particle_spacing_ref = 0.1;           /** Initial particle spacing. */
-Real DL_sponge = particle_spacing_ref * 20.0; /**< Sponge region to impose inflow condition. */
-Real BW = particle_spacing_ref * 4.0;        /**< Extending width for BCs. */
+Real resolution_ref = 0.1;           /** Initial particle spacing. */
+Real DL_sponge = resolution_ref * 20.0; /**< Sponge region to impose inflow condition. */
+Real BW = resolution_ref * 4.0;        /**< Extending width for BCs. */
+/** Domain bounds of the system. */
+BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW));
 
 Real cx = 2.0;                              /**< Center of fish in x direction. */
 Real cy = 4.0;                              /**< Center of fish in y direction. */
@@ -48,56 +48,56 @@ Real Youngs_modulus = Ae * rho0_f * U_f * U_f;
 /**
 * @brief create a water block shape
 */
-std::vector<Point> CreatWaterBlockShape()
+std::vector<Vecd> CreatWaterBlockShape()
 {
-	std::vector<Point> pnts_shaping_water_block;
-	pnts_shaping_water_block.push_back(Point(-DL_sponge, 0.0));
-	pnts_shaping_water_block.push_back(Point(-DL_sponge, DH));
-	pnts_shaping_water_block.push_back(Point(DL, DH));
-	pnts_shaping_water_block.push_back(Point(DL, 0.0));
-	pnts_shaping_water_block.push_back(Point(-DL_sponge, 0.0));
+	std::vector<Vecd> pnts_shaping_water_block;
+	pnts_shaping_water_block.push_back(Vecd(-DL_sponge, 0.0));
+	pnts_shaping_water_block.push_back(Vecd(-DL_sponge, DH));
+	pnts_shaping_water_block.push_back(Vecd(DL, DH));
+	pnts_shaping_water_block.push_back(Vecd(DL, 0.0));
+	pnts_shaping_water_block.push_back(Vecd(-DL_sponge, 0.0));
 
 	return pnts_shaping_water_block;
 }
 /**
 * @brief create a buffer for water block shape
 */
-std::vector<Point> CreatInflowBufferShape()
+std::vector<Vecd> CreatInflowBufferShape()
 {
-	std::vector<Point> pnts_buffer;
-	pnts_buffer.push_back(Point(-DL_sponge, 0.0));
-	pnts_buffer.push_back(Point(-DL_sponge, DH));
-	pnts_buffer.push_back(Point(0.0, DH));
-	pnts_buffer.push_back(Point(0.0, 0.0));
-	pnts_buffer.push_back(Point(-DL_sponge, 0.0));
+	std::vector<Vecd> pnts_buffer;
+	pnts_buffer.push_back(Vecd(-DL_sponge, 0.0));
+	pnts_buffer.push_back(Vecd(-DL_sponge, DH));
+	pnts_buffer.push_back(Vecd(0.0, DH));
+	pnts_buffer.push_back(Vecd(0.0, 0.0));
+	pnts_buffer.push_back(Vecd(-DL_sponge, 0.0));
 
 	return pnts_buffer;
 }
 /**
 * @brief create outer wall shape
 */
-std::vector<Point> CreatOuterWallShape()
+std::vector<Vecd> CreatOuterWallShape()
 {
-	std::vector<Point> pnts_shaping_outer_wall;
-	pnts_shaping_outer_wall.push_back(Point(-DL_sponge - BW, -BW));
-	pnts_shaping_outer_wall.push_back(Point(-DL_sponge - BW, DH + BW));
-	pnts_shaping_outer_wall.push_back(Point(DL + BW, DH + BW));
-	pnts_shaping_outer_wall.push_back(Point(DL + BW, -BW));
-	pnts_shaping_outer_wall.push_back(Point(-DL_sponge - BW, -BW));
+	std::vector<Vecd> pnts_shaping_outer_wall;
+	pnts_shaping_outer_wall.push_back(Vecd(-DL_sponge - BW, -BW));
+	pnts_shaping_outer_wall.push_back(Vecd(-DL_sponge - BW, DH + BW));
+	pnts_shaping_outer_wall.push_back(Vecd(DL + BW, DH + BW));
+	pnts_shaping_outer_wall.push_back(Vecd(DL + BW, -BW));
+	pnts_shaping_outer_wall.push_back(Vecd(-DL_sponge - BW, -BW));
 
 	return pnts_shaping_outer_wall;
 }
 /**
 * @brief create inner wall shape
 */
-std::vector<Point> CreatInnerWallShape()
+std::vector<Vecd> CreatInnerWallShape()
 {
-	std::vector<Point> pnts_shaping_inner_wall;
-	pnts_shaping_inner_wall.push_back(Point(-DL_sponge - 2.0 * BW, 0.0));
-	pnts_shaping_inner_wall.push_back(Point(-DL_sponge - 2.0 * BW, DH));
-	pnts_shaping_inner_wall.push_back(Point(DL + 2.0 * BW, DH));
-	pnts_shaping_inner_wall.push_back(Point(DL + 2.0 * BW, 0.0));
-	pnts_shaping_inner_wall.push_back(Point(-DL_sponge - 2.0 * BW, 0.0));
+	std::vector<Vecd> pnts_shaping_inner_wall;
+	pnts_shaping_inner_wall.push_back(Vecd(-DL_sponge - 2.0 * BW, 0.0));
+	pnts_shaping_inner_wall.push_back(Vecd(-DL_sponge - 2.0 * BW, DH));
+	pnts_shaping_inner_wall.push_back(Vecd(DL + 2.0 * BW, DH));
+	pnts_shaping_inner_wall.push_back(Vecd(DL + 2.0 * BW, 0.0));
+	pnts_shaping_inner_wall.push_back(Vecd(-DL_sponge - 2.0 * BW, 0.0));
 
 	return pnts_shaping_inner_wall;
 }
@@ -105,14 +105,14 @@ std::vector<Point> CreatInnerWallShape()
 * @brief create blocking shape to separate fish head out
 */
 Real head_size = 1.0;
-std::vector<Point> CreatFishBlockingShape()
+std::vector<Vecd> CreatFishBlockingShape()
 {
-	std::vector<Point> pnts_blocking_shape;
-	pnts_blocking_shape.push_back(Point(cx + head_size, cy - 0.4));
-	pnts_blocking_shape.push_back(Point(cx + head_size, cy + 0.4));
-	pnts_blocking_shape.push_back(Point(cx + 5.0, cy + 0.4));
-	pnts_blocking_shape.push_back(Point(cx + 5.0, cy - 0.4));
-	pnts_blocking_shape.push_back(Point(cx + head_size, cy - 0.4));
+	std::vector<Vecd> pnts_blocking_shape;
+	pnts_blocking_shape.push_back(Vecd(cx + head_size, cy - 0.4));
+	pnts_blocking_shape.push_back(Vecd(cx + head_size, cy + 0.4));
+	pnts_blocking_shape.push_back(Vecd(cx + 5.0, cy + 0.4));
+	pnts_blocking_shape.push_back(Vecd(cx + 5.0, cy - 0.4));
+	pnts_blocking_shape.push_back(Vecd(cx + head_size, cy - 0.4));
 
 	return pnts_blocking_shape;
 }
@@ -122,14 +122,15 @@ std::vector<Point> CreatFishBlockingShape()
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem& system, string body_name,	int refinement_level)
-		: FluidBody(system, body_name, refinement_level)
+	WaterBlock(SPHSystem& system, string body_name)
+		: FluidBody(system, body_name)
 	{
-		std::vector<Point> water_block_shape = CreatWaterBlockShape();
+		std::vector<Vecd> water_block_shape = CreatWaterBlockShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::add);
 		/** Exclude the fish body. */
-		std::vector<Point> fish_shape = CreatFishShape(cx, cy, fish_length, particle_spacing_ * 0.5);
+		std::vector<Vecd> fish_shape 
+			= CreatFishShape(cx, cy, fish_length, particle_adaptation_->ReferenceSpacing() * 0.5);
 		body_shape_->addAPolygon(fish_shape, ShapeBooleanOps::sub);
 	}
 };
@@ -154,11 +155,11 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem& system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	WallBoundary(SPHSystem& system, string body_name)
+		: SolidBody(system, body_name)
 	{
-		std::vector<Point> outer_wall_shape = CreatOuterWallShape();
-		std::vector<Point> inner_wall_shape = CreatInnerWallShape();
+		std::vector<Vecd> outer_wall_shape = CreatOuterWallShape();
+		std::vector<Vecd> inner_wall_shape = CreatInnerWallShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
 		body_shape_->addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
@@ -171,10 +172,11 @@ class FishBody : public SolidBody
 {
 
 public:
-	FishBody(SPHSystem& system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	FishBody(SPHSystem& system, string body_name)
+		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1))
 	{
-		std::vector<Point> fish_shape = CreatFishShape(cx, cy, fish_length, particle_spacing_);
+		std::vector<Vecd> fish_shape 
+			= CreatFishShape(cx, cy, fish_length, particle_adaptation_->ReferenceSpacing());
 		ComplexShape original_body_shape;
 		original_body_shape.addAPolygon(fish_shape, ShapeBooleanOps::add);
 		body_shape_ = new LevelSetComplexShape(this, original_body_shape);
@@ -209,8 +211,9 @@ public:
 			constrained_region_name)
 	{
 		//geometry
-		std::vector<Point> fish_shape = CreatFishShape(cx, cy, fish_length, body_->particle_spacing_);
-		std::vector<Point> fish_blocking_shape = CreatFishBlockingShape();
+		std::vector<Vecd> fish_shape 
+			= CreatFishShape(cx, cy, fish_length, body_->particle_adaptation_->ReferenceSpacing());
+		std::vector<Vecd> fish_blocking_shape = CreatFishBlockingShape();
 		body_part_shape_ = new ComplexShape(constrained_region_name);
 		body_part_shape_->addAPolygon(fish_shape, ShapeBooleanOps::add);
 		body_part_shape_->addAPolygon(fish_blocking_shape, ShapeBooleanOps::sub);
@@ -229,7 +232,7 @@ public:
 		: BodyPartByCell(fluid_body, constrained_region_name)
 	{
 		/** Geomtry definition. */
-		std::vector<Point> inflow_shape = CreatInflowBufferShape();
+		std::vector<Vecd> inflow_shape = CreatInflowBufferShape();
 		body_part_shape_ = new ComplexShape(constrained_region_name);
 		body_part_shape_->addAPolygon(inflow_shape, ShapeBooleanOps::add);
 
@@ -243,12 +246,12 @@ public:
 class Observer : public FictitiousBody
 {
 public:
-	Observer(SPHSystem& system, string body_name, int refinement_level)
-		: FictitiousBody(system, body_name, refinement_level, 1.3)
+	Observer(SPHSystem& system, string body_name)
+		: FictitiousBody(system, body_name, new ParticleAdaptation(1.15, 1))
 	{
 		/** postion and volume. */
-		body_input_points_volumes_.push_back(make_pair(Point(cx + particle_spacing_ref, cy), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(cx + fish_length - particle_spacing_ref, cy), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(cx + resolution_ref, cy), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(cx + fish_length - resolution_ref, cy), 0.0));
 	}
 };
 /**
@@ -293,7 +296,7 @@ int main()
 	/**
 	* Build up context -- a SPHSystem.
 	*/
-	SPHSystem system(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW), particle_spacing_ref);
+	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
 	system.run_particle_relaxation_ = false;
 	/** Tag for computation start with relaxed body fitted particles distribution. */
@@ -303,37 +306,36 @@ int main()
 	/**
 	* @brief   Particles and body creation for water.
 	*/
-	WaterBlock* water_block = new WaterBlock(system, "WaterBody", 0);
+	WaterBlock* water_block = new WaterBlock(system, "WaterBody");
 	WaterMaterial    *water_fluid = new WaterMaterial();
 	FluidParticles    fluid_particles(water_block, water_fluid);
 	/**
 	* @brief   Particles and body creation for wall boundary.
 	*/
-	WallBoundary* wall_boundary = new   WallBoundary(system, "Wall", 0);
+	WallBoundary* wall_boundary = new   WallBoundary(system, "Wall");
 	SolidParticles	wall_particles(wall_boundary);
 	/**
 	* @brief   Particles and body creation for fish.
 	*/
-	FishBody* fish_body = new   FishBody(system, "FishBody", 1);
+	FishBody* fish_body = new   FishBody(system, "FishBody");
 	FishMaterial   *fish_body_material = new FishMaterial();
 	ElasticSolidParticles  fish_body_particles(fish_body, fish_body_material);
 	/**
 	* @brief   Particle and body creation of gate observer.
 	*/
-	Observer* fish_observer = new Observer(system, "Observer", 1);
+	Observer* fish_observer = new Observer(system, "Observer");
 	BaseParticles           observer_particles(fish_observer);
 	/** topology */
-	SPHBodyInnerRelation* water_block_inner = new SPHBodyInnerRelation(water_block);
-	SPHBodyInnerRelation* fish_body_inner = new SPHBodyInnerRelation(fish_body);
-	SPHBodyComplexRelation* water_block_complex = new SPHBodyComplexRelation(water_block_inner, { wall_boundary, fish_body });
-	SPHBodyContactRelation* fish_body_contact = new SPHBodyContactRelation(fish_body, { water_block });
-	SPHBodyContactRelation* fish_observer_contact = new SPHBodyContactRelation(fish_observer, { fish_body });
+	InnerBodyRelation* water_block_inner = new InnerBodyRelation(water_block);
+	InnerBodyRelation* fish_body_inner = new InnerBodyRelation(fish_body);
+	ComplexBodyRelation* water_block_complex = new ComplexBodyRelation(water_block_inner, { wall_boundary, fish_body });
+	ContactBodyRelation* fish_body_contact = new ContactBodyRelation(fish_body, { water_block });
+	ContactBodyRelation* fish_observer_contact = new ContactBodyRelation(fish_observer, { fish_body });
 	/** Output. */
 	In_Output in_output(system);
 	WriteBodyStatesToVtu        write_real_body_states(in_output, system.real_bodies_);
 	WriteTotalForceOnSolid      write_total_force_on_fish(in_output, fish_body);
-	WriteAnObservedQuantity<Vecd, BaseParticles, &BaseParticles::pos_n_>
-		write_fish_displacement("Displacement", in_output, fish_observer_contact);
+	WriteAnObservedQuantity<indexVector, Vecd> write_fish_displacement("Position", in_output, fish_observer_contact);
 
 	/** check whether run particle relaxation for body fitted particle distribution. */
 	if (system.run_particle_relaxation_) {
@@ -393,25 +395,20 @@ int main()
 		initialize_a_fluid_step(water_block);
 
 	/** Evaluation of density by summation approach. */
-	fluid_dynamics::DensityBySummation
-		update_fluid_density(water_block_complex);
+	fluid_dynamics::DensitySummationComplex	update_density_by_summation(water_block_complex);
 	/** Time step size without considering sound wave speed. */
 	fluid_dynamics::AdvectionTimeStepSize	get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
 	fluid_dynamics::AcousticTimeStepSize		get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
-	fluid_dynamics::PressureRelaxationFirstHalf
-		pressure_relaxation_first_half(water_block_complex);
-	fluid_dynamics::PressureRelaxationSecondHalfRiemann
-		pressure_relaxation_second_half(water_block_complex);
+	fluid_dynamics::PressureRelaxationWithWall	pressure_relaxation(water_block_complex);
+		fluid_dynamics::PressureRelaxationRiemannWithWall	density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
-	fluid_dynamics::ViscousAcceleration
-		viscous_acceleration(water_block_complex);
+	fluid_dynamics::ViscousAccelerationWithWall	viscous_acceleration(water_block_complex);
 	/** Impose transport velocity formulation. */
-	fluid_dynamics::TransportVelocityFormulation 
-		transport_velocity_formulation(water_block_complex);
+	fluid_dynamics::TransportVelocityCorrectionComplex	transport_velocity_correction(water_block_complex);
 	/** Computing vorticity in the flow. */
-	fluid_dynamics::VorticityInFluidField
+	fluid_dynamics::VorticityInner
 		compute_vorticity(water_block_inner);
 	/** Inflow boundary condition. */
 	ParabolicInflow parabolic_inflow(water_block, new InflowBuffer(water_block, "Buffer"));
@@ -548,10 +545,9 @@ int main()
 		{
 			initialize_a_fluid_step.parallel_exec();
 			Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_fluid_density.parallel_exec();
+			update_density_by_summation.parallel_exec();
 			viscous_acceleration.parallel_exec();
-			transport_velocity_formulation.correction_.parallel_exec(Dt);
-			transport_velocity_formulation.stress_.parallel_exec(Dt);
+			transport_velocity_correction.parallel_exec(Dt);
 			/** Viscous force exerting on fish body. */
 			fluid_viscous_force_on_fish_body.parallel_exec();
 			/** Update normal direction on fish body. */
@@ -559,19 +555,21 @@ int main()
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt) 
 			{
-				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt - relaxation_time);
+				//note that dt needs to sufficiently large to avoid divide zero
+				//when computing solid avergare velocity for FSI
+				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
 				/** Fluid dynamics process, first half. */
-				pressure_relaxation_first_half.parallel_exec(dt);
+				pressure_relaxation.parallel_exec(dt);
 				/** Fluid pressure force exerting on fish. */
 				fluid_pressure_force_on_fish_body.parallel_exec();
 				/** Fluid dynamics process, second half. */
-				pressure_relaxation_second_half.parallel_exec(dt);
+				density_relaxation.parallel_exec(dt);
 				/** Relax fish body by solid dynamics. */
 				Real dt_s_sum = 0.0;
 				fish_body_average_velocity.initialize_displacement_.parallel_exec();
 				while (dt_s_sum < dt)
 				{
-					dt_s = fish_body_computing_time_step_size.parallel_exec();
+					dt_s = SMIN(fish_body_computing_time_step_size.parallel_exec(), dt - dt_s_sum);
 					fish_body_stress_relaxation_first_half.parallel_exec(dt_s);
 					SimTK::State& state_for_update = integ.updAdvancedState();
 					force_on_bodies.clearAllBodyForces(state_for_update);
@@ -582,6 +580,7 @@ int main()
 					fish_body_stress_relaxation_second_half.parallel_exec(dt_s);
 					dt_s_sum += dt_s;
 				}
+				//note that dt needs to sufficiently large to avoid divide zero
 				fish_body_average_velocity.update_averages_.parallel_exec(dt);
 				write_total_force_on_fish.WriteToFile(GlobalStaticVariables::physical_time_);
 
@@ -599,8 +598,8 @@ int main()
 			}
 			number_of_iterations++;
 
-			//const State& s = integ.getState();
-			//viz.report(s);
+			//visualize the motion of rigid body
+			viz.report(integ.getState());
 			/** Water block configuration and periodic condition. */
 			periodic_condition.bounding_.parallel_exec();
 			water_block->updateCellLinkedList();

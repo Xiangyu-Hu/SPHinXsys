@@ -2,8 +2,6 @@
  * @file 	excitation-contraction.cpp
  * @brief 	This is the case studying the electromechanics on a biventricular heart model in 3D.
  * @author 	Chi Zhang and Xiangyu Hu
- * @version 0.2.1
- * 			Chi Zhang
  * 			Unit :
  *			time t = ms = 12.9 [-]
  * 			length l = mm
@@ -28,6 +26,8 @@ Real stress_scale = 1.0e-6;
 Vec3d domain_lower_bound(-55.0 * length_scale,-75.0 * length_scale, -35.0 * length_scale);
 Vec3d domain_upper_bound(35.0 * length_scale, 5.0 * length_scale, 35.0 * length_scale);	
 Real dp_0 	= (domain_upper_bound[0] - domain_lower_bound[0]) / 45.0;	/**< Initial particle spacing. */
+/** Domain bounds of the system. */
+BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 
 /** Material properties. */
 Real rho_0 = 1.06e-3; 	
@@ -136,8 +136,8 @@ class MyocardiumMuscle
 class HeartBody : public SolidBody
 {
 public:
-	HeartBody(SPHSystem &system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	HeartBody(SPHSystem &system, string body_name)
+		: SolidBody(system, body_name)
 	{
 		ComplexShape original_body_shape;
 		original_body_shape.addTriangleMeshShape(CreateHeart(), ShapeBooleanOps::add);
@@ -171,16 +171,16 @@ public:
 class DiffusionRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle,
 	RelaxationOfAllDiffussionSpeciesInner<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>,
-	SPHBodyInnerRelation>
+	InnerBodyRelation>
 {
 public:
-	DiffusionRelaxation(SPHBodyInnerRelation* body_inner_relation)
+	DiffusionRelaxation(InnerBodyRelation* body_inner_relation)
 		: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation) {};
 	virtual ~DiffusionRelaxation() {};
 };
 /** Imposing diffusion boundary condition */
 class DiffusionBCs
-	: public DiffusionBoundaryCondition<SolidBody, ElasticSolidParticles, BodySurface, LocallyOrthotropicMuscle>
+	: public DiffusionBoundaryCondition<SolidBody, ElasticSolidParticles, ShapeSurface, LocallyOrthotropicMuscle>
 {
 protected:
 	size_t phi_;
@@ -198,13 +198,13 @@ protected:
 		}
 		else
 		{
-			if (pos_n_[index_i][1] < -body_->particle_spacing_)
+			if (pos_n_[index_i][1] < -body_->particle_adaptation_->ReferenceSpacing())
 				species_n_[phi_][index_i] = 0.0;
 		}
 	};
 public:
-	DiffusionBCs(SolidBody* body, BodySurface* body_part)
-		: DiffusionBoundaryCondition<SolidBody, ElasticSolidParticles, BodySurface, LocallyOrthotropicMuscle>(body, body_part)
+	DiffusionBCs(SolidBody* body, ShapeSurface* body_part)
+		: DiffusionBoundaryCondition<SolidBody, ElasticSolidParticles, ShapeSurface, LocallyOrthotropicMuscle>(body, body_part)
 	{
 		phi_ = material_->SpeciesIndexMap()["Phi"];
 	};
@@ -242,7 +242,7 @@ protected:
 		Vecd f_0 = cos(beta) * cd_norm + sin(beta) * SimTK::cross(face_norm, cd_norm) +
 			dot(face_norm, cd_norm) * (1.0 - cos(beta)) * face_norm;
 
-		if (pos_n_[index_i][1] < -body_->particle_spacing_) {
+		if (pos_n_[index_i][1] < -body_->particle_adaptation_->ReferenceSpacing()) {
 			material_->local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
 			material_->local_s0_[index_i] = face_norm;
 		}
@@ -344,15 +344,15 @@ public:
 class VoltageObserver : public FictitiousBody
 {
 public:
-	VoltageObserver(SPHSystem &system, string body_name, int refinement_level)
-		: FictitiousBody(system, body_name, refinement_level, 1.3)
+	VoltageObserver(SPHSystem &system, string body_name)
+		: FictitiousBody(system, body_name)
 	{
 		/** postion and volume. */
-		body_input_points_volumes_.push_back(make_pair(Point(-45.0 * length_scale, -30.0 * length_scale, 0.0),  0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(0.0,   -30.0 * length_scale, 26.0 * length_scale), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(-30.0 * length_scale, -50.0 * length_scale, 0.0),  0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(0.0,   -50.0 * length_scale, 20.0 * length_scale), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(0.0,   -70.0 * length_scale, 0.0),  0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0),  0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(0.0,   -30.0 * length_scale, 26.0 * length_scale), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(-30.0 * length_scale, -50.0 * length_scale, 0.0),  0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(0.0,   -50.0 * length_scale, 20.0 * length_scale), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(0.0,   -70.0 * length_scale, 0.0),  0.0));
 	}
 };
 /**
@@ -361,15 +361,15 @@ public:
 class MyocardiumObserver : public FictitiousBody
 {
 public:
-	MyocardiumObserver(SPHSystem &system, string body_name, int refinement_level)
-		: FictitiousBody(system, body_name, refinement_level, 1.3)
+	MyocardiumObserver(SPHSystem &system, string body_name)
+		: FictitiousBody(system, body_name)
 	{
 		/** postion and volume. */
-		body_input_points_volumes_.push_back(make_pair(Point(-45.0 * length_scale, -30.0 * length_scale, 0.0),  0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(0.0,   -30.0 * length_scale, 26.0 * length_scale), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(-30.0 * length_scale, -50.0 * length_scale, 0.0),  0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(0.0,   -50.0 * length_scale, 20.0 * length_scale), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(0.0,   -70.0 * length_scale, 0.0),  0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0),  0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(0.0,   -30.0 * length_scale, 26.0 * length_scale), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(-30.0 * length_scale, -50.0 * length_scale, 0.0),  0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(0.0,   -50.0 * length_scale, 20.0 * length_scale), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(0.0,   -70.0 * length_scale, 0.0),  0.0));
 	}
 };
 /** 
@@ -380,11 +380,11 @@ int main(int ac, char* av[])
 	/** 
 	 * Build up context -- a SPHSystem. 
 	 */
-	SPHSystem system(domain_lower_bound, domain_upper_bound, dp_0, 6);
+	SPHSystem system(system_domain_bounds, dp_0);
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = true;
+	system.run_particle_relaxation_ = false;
 	/** Tag for reload initially repaxed particles. */
 	system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: not from restart files. */
@@ -395,12 +395,12 @@ int main(int ac, char* av[])
 	In_Output 	in_output(system);
 
 	/** Creat a SPH body, material and particles */
-	HeartBody* physiology_body = new HeartBody(system, "ExcitationHeart", 0);
+	HeartBody* physiology_body = new HeartBody(system, "ExcitationHeart");
 	MuscleReactionModel* muscle_reaction_model = new MuscleReactionModel();
 	MyocardiumPhysiology* myocardium_excitation = new MyocardiumPhysiology(muscle_reaction_model);
 	ElectroPhysiologyParticles 	physiology_articles(physiology_body, myocardium_excitation);
 	/** Creat a SPH body, material and particles */
-	HeartBody* mechanics_body = new HeartBody(system, "ContractionHeart", 0);
+	HeartBody* mechanics_body = new HeartBody(system, "ContractionHeart");
 	MyocardiumMuscle* myocardium_muscle = new MyocardiumMuscle();
 	ActiveMuscle* myocardium_contraction = new ActiveMuscle(myocardium_muscle);
 	ActiveMuscleParticles 	mechanics_particles(mechanics_body, myocardium_contraction);
@@ -408,12 +408,12 @@ int main(int ac, char* av[])
 		/** check whether run particle relaxation for body fitted particle distribution. */
 	if (system.run_particle_relaxation_)
 	{
-		HeartBody* relax_body = new HeartBody(system, "RelaxationHeart", 0);
+		HeartBody* relax_body = new HeartBody(system, "RelaxationHeart");
 		DiffusionMaterial* relax_body_material = new DiffusionMaterial();
 		DiffusionReactionParticles<ElasticSolidParticles, LocallyOrthotropicMuscle>	diffusion_particles(relax_body, relax_body_material);
 
 		/** topology */
-		SPHBodyInnerRelation* relax_body_inner = new SPHBodyInnerRelation(relax_body);
+		InnerBodyRelation* relax_body_inner = new InnerBodyRelation(relax_body);
 		/** Random reset the relax solid particle position. */
 		RandomizePartilePosition  			random_particles(relax_body);
 
@@ -434,7 +434,7 @@ int main(int ac, char* av[])
 		/** Write the body state to Vtu file. */
 		WriteBodyStatesToVtu 		write_relax_body_state_to_vtu(in_output, { relax_body });
 		/** Write the particle reload files. */
-		WriteReloadParticle 		write_particle_reload_files(in_output, { relax_body, relax_body }, { physiology_body->GetBodyName(), mechanics_body->GetBodyName()});
+		WriteReloadParticle 		write_particle_reload_files(in_output, { relax_body, relax_body }, { physiology_body->getBodyName(), mechanics_body->getBodyName()});
 		/** Write material property to xml file. */
 		WriteReloadMaterialProperty write_material_property(in_output, relax_body_material, myocardium_muscle->MaterialName());
 		/**
@@ -462,7 +462,7 @@ int main(int ac, char* av[])
 			}
 		}
 
-		BodySurface* surface_part = new BodySurface(relax_body);
+		ShapeSurface* surface_part = new ShapeSurface(relax_body);
 		/** constraint boundary condition for diffusion. */
 		DiffusionBCs impose_diffusion_bc(relax_body, surface_part);
 		impose_diffusion_bc.parallel_exec();
@@ -494,25 +494,25 @@ int main(int ac, char* av[])
 	/**
 	 * Particle and body creation of fluid observer.
 	 */
-	VoltageObserver* voltage_observer = new VoltageObserver(system, "VoltageObserver", 0);
+	VoltageObserver* voltage_observer = new VoltageObserver(system, "VoltageObserver");
 	BaseParticles 		observer_particles(voltage_observer);
 	/** Define muscle Observer. */
-	MyocardiumObserver* myocardium_observer	= new MyocardiumObserver(system, "MyocardiumObserver", 0);
+	MyocardiumObserver* myocardium_observer	= new MyocardiumObserver(system, "MyocardiumObserver");
 	BaseParticles 	disp_observer_particles(myocardium_observer);
 
 	WriteBodyStatesToVtu 		write_states(in_output, system.real_bodies_);
-	ReadReloadParticle			excitation_reload_particles(in_output, { physiology_body }, { physiology_body->GetBodyName() });
-	ReadReloadParticle			contraction_reload_particles(in_output, { mechanics_body }, { mechanics_body->GetBodyName() });
+	ReadReloadParticle			excitation_reload_particles(in_output, { physiology_body }, { physiology_body->getBodyName() });
+	ReadReloadParticle			contraction_reload_particles(in_output, { mechanics_body }, { mechanics_body->getBodyName() });
 	/** Read material property, e.g., sheet and fiber, from xml file. */
 	ReadReloadMaterialProperty  read_material_property(in_output, myocardium_muscle);
 
 	/** topology */
-	SPHBodyInnerRelation* physiology_body_inner = new SPHBodyInnerRelation(physiology_body);	
-	SPHBodyInnerRelation* mechanics_body_inner = new SPHBodyInnerRelation(mechanics_body);
-	SPHBodyContactRelation* physiology_body_contact = new SPHBodyContactRelation(physiology_body, { mechanics_body });
-	SPHBodyContactRelation* mechanics_body_contact = new SPHBodyContactRelation(mechanics_body, { physiology_body });
-	SPHBodyContactRelation* voltage_observer_contact = new SPHBodyContactRelation(voltage_observer, { physiology_body });	
-	SPHBodyContactRelation* myocardium_observer_contact = new SPHBodyContactRelation(myocardium_observer, { mechanics_body });
+	InnerBodyRelation* physiology_body_inner = new InnerBodyRelation(physiology_body);	
+	InnerBodyRelation* mechanics_body_inner = new InnerBodyRelation(mechanics_body);
+	ContactBodyRelation* physiology_body_contact = new ContactBodyRelation(physiology_body, { mechanics_body });
+	ContactBodyRelation* mechanics_body_contact = new ContactBodyRelation(mechanics_body, { physiology_body });
+	ContactBodyRelation* voltage_observer_contact = new ContactBodyRelation(voltage_observer, { physiology_body });	
+	ContactBodyRelation* myocardium_observer_contact = new ContactBodyRelation(myocardium_observer, { mechanics_body });
 
 	/** check whether reload particles. */
 	if (system.reload_particles_)
@@ -545,10 +545,8 @@ int main(int ac, char* av[])
 	/**
 	 * IO for observer.
 	 */
-	WriteObservedDiffusionReactionQuantity<ElectroPhysiologyParticles>
-		write_voltage("Voltage", in_output, voltage_observer_contact);
-	WriteAnObservedQuantity<Vecd, BaseParticles, &BaseParticles::pos_n_>
-		write_displacement("Displacement", in_output, myocardium_observer_contact);
+	WriteAnObservedQuantity<indexScalar, Real> write_voltage("Voltage", in_output, voltage_observer_contact);
+	WriteAnObservedQuantity<indexVector, Vecd> write_displacement("Position", in_output, myocardium_observer_contact);
 	/**
 	 * Apply the Iron stimulus.
 	 */
@@ -564,13 +562,11 @@ int main(int ac, char* av[])
 	observer_dynamics::CorrectInterpolationKernelWeights
 		correct_kernel_weights_for_interpolation(mechanics_body_contact);
 	/** Interpolate the active contract stress from eletrophyisology body. */
-	observer_dynamics::InterpolatingADiffusionReactionQuantity<ActiveMuscleParticles, 
-		ElectroPhysiologyParticles, &ActiveMuscleParticles::active_contraction_stress_>
-		active_stress_interpolation("ActiveContractionStress", mechanics_body_contact);
+	observer_dynamics::InterpolatingAQuantity<indexScalar, Real>
+		active_stress_interpolation(mechanics_body_contact, "ActiveContractionStress");
 	/** Interpolate the particle position in physiology_body  from mechanics_body. */
-	observer_dynamics::InterpolatingAQuantity<Vecd, BaseParticles, BaseParticles, 
-		&BaseParticles::pos_n_, &BaseParticles::pos_n_>
-		interpolation_particle_position(physiology_body_contact);
+	observer_dynamics::InterpolatingAQuantity<indexVector, Vecd>
+		interpolation_particle_position(physiology_body_contact, "Position", "Position");
 	/** Time step size calculation. */
 	solid_dynamics::AcousticTimeStepSize 
 		get_mechanics_time_step(mechanics_body);

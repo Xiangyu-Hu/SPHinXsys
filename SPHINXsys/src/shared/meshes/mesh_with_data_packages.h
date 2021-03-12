@@ -29,9 +29,6 @@
 *			cells. The mesh line or face are also called cell faces. Grid points are
 *			also called cell corners.
 * @author	Chi ZHang and Xiangyu Hu
-* @version	0.1
-* @version  0.2.0
-* 			Now narrow bounded levelset mesh is added to replace the whole domain background levelset mesh. 
 */
 
 #pragma once
@@ -49,9 +46,6 @@ using namespace std;
 
 namespace SPH
 {
-	/**
-	 * @brief preclaimed classes.
-	 */
 	class Kernel;
 
 	/** Functor for operation on the mesh data package. */
@@ -85,7 +79,7 @@ namespace SPH
 	{
 		for (size_t i = 0; i < data_pkgs.size(); ++i)
 		{
-			temp = reduce_operation(temp, reduce_functor(data_pkgs[i], dt));
+			temp = reduce_operation(temp, reduce_pkg_functor(data_pkgs[i], dt));
 		}
 		return temp;
 	};
@@ -97,7 +91,7 @@ namespace SPH
 			temp, [&](const blocked_range<size_t>& r, ReturnType temp0)->ReturnType
 			{
 				for (size_t i = r.begin(); i != r.end(); ++i) {
-					temp0 = reduce_operation(temp, reduce_functor(data_pkgs[i], dt));
+					temp0 = reduce_operation(temp, reduce_pkg_functor(data_pkgs[i], dt));
 				}
 				return temp0;
 			},
@@ -130,48 +124,28 @@ namespace SPH
 		template<typename DataType>
 		using PackageTemporaryData = PackageDataMatrix<DataType, ADDRS_SIZE>;
 
-
-		/** Constructor with package size information.  */
 		BaseDataPackage() : BaseMesh(Vecu(ADDRS_SIZE)), 
 			data_lower_bound_(0), pkg_index_(0), is_inner_pkg_(false) {};
 		virtual ~BaseDataPackage() {};
 
-		/** This function return the size of package */
 		constexpr int PackageSize() { return PKG_SIZE; };
-		/** This function return the size of package */
 		constexpr int AddressSize() { return ADDRS_SIZE; };
-		/** This function return the size of package fringe */
 		constexpr int AddressBufferWidth() { return (ADDRS_SIZE - PKG_SIZE) / 2; };
-		/** This function return operation upper bound */
 		constexpr int OperationUpperBound() { return PKG_SIZE + AddressBufferWidth(); };
-		/** initialize package mesh information. */
+		/** initialize package mesh geometric information. */
 		void initializePackageGeometry(Vecd& pkg_lower_bound, Real data_spacing) {
 			mesh_lower_bound_ = pkg_lower_bound - Vecd(data_spacing * 0.5);;
 			grid_spacing_ = data_spacing;
 			data_lower_bound_ = pkg_lower_bound + Vecd(data_spacing * 0.5);
 		};
-		/**
-		 *@brief This function probes by applying Bi and tri-linear interpolation within the package.
-		 *@param[in] pkg_data_addrs The data matrix.
-		 *@param[in] position(Vecd) The inquiry postion.
-		 */
+		/** This function probes by applying Bi and tri-linear interpolation within the package. */
 		template<typename DataType>
-		DataType probeDataPackage(PackageDataAddress<DataType>& pkg_data_addrs, Vecd& position);
-		/**
-		 *@brief This function compute gradient transform within data package
-		 *@param[in] in_pkg_data_addrs the data matrix for process
-		 *@param[in] out_pkg_data_addrs the data matrix for saving after process
-		 *@param[in] dt(Real) Time step (Not used)
-		 */
+		DataType probeDataPackage(PackageDataAddress<DataType>& pkg_data_addrs, const Vecd& position);
+		/** This function compute gradient transform within data package */
 		template<typename InDataType, typename OutDataType>
 		void computeGradient(PackageDataAddress<InDataType>& in_pkg_data_addrs,
 			PackageDataAddress<OutDataType> out_pkg_data_addrs, Real dt = 0.0);
-		/**
-		 *@brief This function compute normalized gradient transform within data package
-		 *@param[in] in_pkg_data_addrs the data matrix for process
-		 *@param[in] out_pkg_data_addrs the data matrix for saved after process
-		 *@param[in] dt(Real) Time step (Not used)
-		 */
+		/** This function compute normalized gradient transform within data package  */
 		template<typename InDataType, typename OutDataType>
 		void computeNormalizedGradient(PackageDataAddress<InDataType>& in_pkg_data_addrs,
 			PackageDataAddress<OutDataType> out_pkg_data_addrs, Real dt = 0.0);
@@ -191,52 +165,6 @@ namespace SPH
 	};
 
 	/**
-	 * @class BaseMeshWithDataPackages
-	 * @brief Abstract class for a background mesh on which the data packages are located
-	 */
-	class BaseMeshWithDataPackages : public Mesh
-	{
-	protected:
-		/**
-		 *@brief This function initialize a cell with package data.
-		 *@param[in] cell_index(Vecu) Cell index
-		 *@param[in] dt(Real) Time step size
-		 */
-		virtual void initializeDataInACell(Vecu cell_index, Real dt) = 0;
-		/**
-		 *@brief This function initialize the addresses in a data package.
-		 *@param[in] cell_index(Vecu) Cell index
-		 *@param[in] dt(Real) Time step size
-		 */
-		virtual void initializeAddressesInACell(Vecu cell_index, Real dt) = 0;
-		/**
-		 *@brief This function tag if a data package is inner package.
-		 *@param[in] cell_index(Vecu) Cell index
-		 *@param[in] dt(Real) Time step size
-		 */
-		virtual void tagACellIsInnerPackage(Vecu cell_index, Real dt) = 0;
-	public:
-		/** Constructor using domain information. */
-		BaseMeshWithDataPackages(Vecd lower_bound, 		/**< Lower bound. */
-			Vecd upper_bound, 		/**< Upper bound. */
-			Real grid_spacing, 	/**< Grid spacing. */
-			size_t buffer_width = 0	/**< Buffer size. */
-		)
-			: Mesh(lower_bound, upper_bound, grid_spacing, buffer_width) {};
-		/** Constructor using mesh information directly. */
-		BaseMeshWithDataPackages(Vecd mesh_lower_bound, /**< Lower bound. */
-			Vecu number_of_cells, 	/**< Upper bound. */
-			Real cell_spacing		/**< Cell spacing. */
-		)
-			: Mesh(mesh_lower_bound, number_of_cells, cell_spacing) {};
-		virtual ~BaseMeshWithDataPackages() {};
-		/**
-		 *@brief This function initialize the data packages with external information
-		 */
-		virtual void initializeDataPackages() = 0;
-	};
-
-	/**
 	 * @class MeshWithDataPackages
 	 * @brief Abstract class fpr mesh with data packages
 	 */
@@ -244,68 +172,47 @@ namespace SPH
 	class MeshWithDataPackages : public BaseMeshType
 	{
 	public:
-		MyMemoryPool<DataPackageType> data_pkg_pool_; 			 /**< memory pool for all packages in the mesh. */
+		MyMemoryPool<DataPackageType> data_pkg_pool_; 		 /**< memory pool for all packages in the mesh. */
 		MeshDataMatrix<DataPackageType*> data_pkg_addrs_; 	 /**< Address of data packages. */
 		ConcurrentVector<DataPackageType*> inner_data_pkgs_; /**< Inner data packages which is able to carry out spatial operations. */
 
 		virtual void allocateMeshDataMatrix() override;	/**< allocate memories for addresses of data packages. */
 		virtual void deleteMeshDataMatrix() override; 	/**< delete memories for addresses of data packages. */
 
-		/** Constructor using domain information. */
-		MeshWithDataPackages(Vecd lower_bound,		/**< Lower bound. */
-			Vecd upper_bound, 		/**< Upper bound. */
-			Real grid_spacing, 	/**< Grid spacing. */
-			size_t buffer_width = 0 /**< Buffer size. */
-		)
-			: BaseMeshType(lower_bound, upper_bound, grid_spacing, buffer_width)
+		template<class MeshCompositionType>
+		explicit MeshWithDataPackages(MeshCompositionType& mesh_composition, ParticleAdaptation& particle_adaptation,
+			BoundingBox tentative_bounds, Real data_spacing, size_t buffer_width) :
+			BaseMeshType(mesh_composition, particle_adaptation, tentative_bounds, data_spacing, buffer_width),
+			data_spacing_(data_spacing), 
+			pkg_size_((int)DataPackageType().PackageSize()),
+			pkg_addrs_buffer_((int)DataPackageType().AddressBufferWidth()),
+			pkg_operations_(pkg_size_ + pkg_addrs_buffer_),
+			pkg_addrs_size_(pkg_size_ + 2 * pkg_addrs_buffer_),
+			total_data_points_(this->number_of_cells_ * pkg_size_)
 		{
-			pkg_size_ = (int)DataPackageType().PackageSize();
-			pkg_addrs_buffer_ = (int)DataPackageType().AddressBufferWidth();
-			pkg_addrs_size_ = pkg_size_ + 2 * pkg_addrs_buffer_;
-			pkg_operations_ = pkg_size_ + pkg_addrs_buffer_;
-			data_spacing_ = grid_spacing / (Real)pkg_size_;
-			total_number_of_data_points_ = this->number_of_cells_ * pkg_size_;
-			allocateMeshDataMatrix();
-		}
-		/** Constructor using mesh information directly. */
-		MeshWithDataPackages(Vecd mesh_lower_bound, /**< Lower bound. */
-			Vecu number_of_cells, 	/**< Upper bound. */
-			Real cell_spacing		/**< Cell spacing. */
-		)
-			: BaseMeshType(mesh_lower_bound, number_of_cells, cell_spacing)
-		{
-			pkg_size_ = (int)DataPackageType().PackageSize();
-			pkg_addrs_buffer_ = (int)DataPackageType().AddressBufferWidth();
-			pkg_addrs_size_ = pkg_size_ + 2 * pkg_addrs_buffer_;
-			pkg_operations_ = pkg_size_ + pkg_addrs_buffer_;
-			data_spacing_ = this->grid_spacing_ / (Real)pkg_size_;
-			total_number_of_data_points_ = this->number_of_cells_ * pkg_size_;
 			allocateMeshDataMatrix();
 		};
 		virtual ~MeshWithDataPackages() { deleteMeshDataMatrix(); };
-		/**
-		 *@brief This function probe a mesh value
-		 *@param[in]  position(Vecd) input position.
-		 *@param[out]  (DataType) return the probe data.
-		 */
+
+		/** This function probe a mesh value */
 		template<class DataType, typename PackageDataAddressType, PackageDataAddressType DataPackageType:: * MemPtr>
-		DataType probeMesh(Vecd& position);
+		DataType probeMesh(const Vecd& position);
 	protected:
-		/** spacing of data in the data packages*/
-		Real data_spacing_;
-		/** the size of the data package matrix*/
-		int pkg_size_;
-		/** the size of address buffer, a value less than the package size. */
-		int pkg_addrs_buffer_;
-		/** the size of operation loops. */
-		int pkg_operations_;
-		/** the size of address matrix in the data packages. */
-		int pkg_addrs_size_;
-		/** total numer of data points in all the packages. */
-		Vecu total_number_of_data_points_;
-		/** singular data packages. prodvied for far field condition. */
-		StdVec<DataPackageType*> singular_data_pkgs_addrs;
+		Real data_spacing_; /**< spacing of data in the data packages*/
+		int pkg_size_; /**< the size of the data package matrix*/
+		int pkg_addrs_buffer_; /**< the size of address buffer, a value less than the package size. */
+		int pkg_operations_; /**< the size of operation loops. */
+		int pkg_addrs_size_; /**< the size of address matrix in the data packages. */
+		Vecu total_data_points_; /**< total numer of data points in the packages. */
+		StdVec<DataPackageType*> singular_data_pkgs_addrs; /**< singular data packages. prodvied for far field condition. */
 		std::mutex mutex_my_pool;	/**< mutex exclusion for memory pool */
+
+		virtual void initializeDataInACell(Vecu cell_index, Real dt) = 0;
+		virtual void initializeAddressesInACell(Vecu cell_index, Real dt) = 0;
+		/** This function tag if a data package is inner package. */
+		virtual void tagACellIsInnerPackage(Vecu cell_index, Real dt) = 0;
+		/** This function initialize the data packages with external information */
+		virtual void initializeDataPackages() = 0;
 
 		/*find the data index global index from its position*/
 		Vecu DataGlobalIndexFromPosition(Vecd position)
@@ -316,7 +223,7 @@ namespace SPH
 			{
 				rltpos[n] = position[n] - this->mesh_lower_bound_[n] - 0.5 * data_spacing_;
 				data_global_index[n] = clamp((int)floor(rltpos[n] / data_spacing_),
-					0, int(this->number_of_cells_[n]) * pkg_size_ - 1);
+					0, int(total_data_points_[n]) - 1);
 			}
 			return data_global_index;
 		}
@@ -332,14 +239,9 @@ namespace SPH
 			}
 			return data_position;
 		};
-		/**
-		 *@brief This function find the value of data from its global index
-		 *@param[in]  global_data_index(Vecu) input global data index.
-		 *@param[out] DataType return the corresponding data.
-		 */
+		/** This function find the value of data from its global index. */
 		template<typename DataType, typename PackageDataType, PackageDataType DataPackageType:: *MemPtr>
 		DataType DataValueFromGlobalIndex(Vecu global_data_index);
-		/** initialize the addresses in a data package for all variables. */
 		void initializePackageAddressesInACell(Vecu cell_index);
 		/** find related cell index and data index for a data package address matrix */
 		pair<int, int> CellShiftAndDataIndex(int data_addrs_index_component)

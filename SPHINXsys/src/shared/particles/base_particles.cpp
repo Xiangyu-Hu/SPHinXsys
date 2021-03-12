@@ -1,58 +1,50 @@
 /**
  * @file base_particles.cpp
- * @brief Definition of funcitons declared in base_particles.h
+ * @brief Definition of functions declared in base_particles.h
  * @author	Xiangyu Hu and Chi Zhang
- * @version	0.1
  */
- /**
-  * @file 	base_particles.cpp
-  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
-  * @version	0.1
-  */
-
 #include "base_particles.h"
-#include "base_material.h"
+
 #include "base_body.h"
-#include "all_particle_generators.h"
+#include "base_material.h"
+#include "base_particle_generator.h"
+#include "xml_engine.h"
 
 namespace SPH
 {
 	//=================================================================================================//
 	BaseParticles::BaseParticles(SPHBody* body, BaseMaterial* base_material) : 
 		base_material_(base_material), speed_max_(0.0), signal_speed_max_(0.0),
-		real_particles_bound_(0), number_of_ghost_particles_(0),
-		body_(body), body_name_(body->GetBodyName())
+		total_real_particles_(0), 
+		real_particles_bound_(0), total_ghost_particles_(0),
+		body_(body), body_name_(body->getBodyName())
 	{
-		body->assignBaseParticle(this);
+		body->assignBaseParticles(this);
 		base_material->assignBaseParticles(this);
 		rho_0_ = base_material->ReferenceDensity();
-		sigma_0_ = body->computeReferenceNumberDensity();
+		sigma_0_ = body->computeReferenceNumberDensity(Vecd(0));
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
-		registerAVariable(pos_n_, registered_vectors_, vectors_map_, vectors_to_write_, "Position", false);
-		registerAVariable(vel_n_, registered_vectors_, vectors_map_, vectors_to_write_, "Velocity", true);
-		registerAVariable(dvel_dt_, registered_vectors_, vectors_map_, vectors_to_write_, "Acceleration", false);
-		registerAVariable(dvel_dt_others_, registered_vectors_, vectors_map_, vectors_to_write_, "OtherAcceleration", false);
+		registerAVariable<indexVector, Vecd>(pos_n_, "Position");
+		registerAVariable<indexVector, Vecd>(vel_n_, "Velocity", true);
+		registerAVariable<indexVector, Vecd>(dvel_dt_, "Acceleration");
+		registerAVariable<indexVector, Vecd>(dvel_dt_others_, "OtherAcceleration");
 
-		registerAVariable(Vol_, registered_scalars_, scalars_map_, scalars_to_write_, "Volume", false);
-		registerAVariable(rho_n_, registered_scalars_, scalars_map_, scalars_to_write_, "Density", true);
-		registerAVariable(mass_, registered_scalars_, scalars_map_, scalars_to_write_, "Mass", false);
-		registerAVariable(smoothing_length_, registered_scalars_, scalars_map_, scalars_to_write_, "SmoothingLength", false);
+		registerAVariable<indexScalar, Real>(Vol_, "Volume");
+		registerAVariable<indexScalar, Real>(rho_n_, "Density", true);
+		registerAVariable<indexScalar, Real>(mass_, "Mass");
+		registerAVariable<indexScalar, Real>(h_ratio_, "SmoothingLengthRatio");
 
 		ParticleGenerator* particle_generator = body_->particle_generator_;
 		particle_generator->initialize(body_);
-		particle_generator->CreateBaseParticles(this);
-		delete particle_generator;
+		particle_generator->createBaseParticles(this);
 
-		real_particles_bound_ = body_->number_of_particles_;
+		real_particles_bound_ = total_real_particles_;
 	}
 	//=================================================================================================//
 	BaseParticles::BaseParticles(SPHBody* body)
-		: BaseParticles(body, new BaseMaterial()) 
-	{
-
-	}
+		: BaseParticles(body, new BaseMaterial()) {}
 	//=================================================================================================//
 	void BaseParticles::initializeABaseParticle(Vecd pnt, Real Vol_0)
 	{
@@ -68,7 +60,7 @@ namespace SPH
 		Vol_.push_back(Vol_0);
 		rho_n_.push_back(rho_0_);
 		mass_.push_back(rho_0_ * Vol_0);
-		smoothing_length_.push_back(0);
+		h_ratio_.push_back(1.0);
 	}
 	//=================================================================================================//
 	void BaseParticles::addABufferParticle()
@@ -78,12 +70,16 @@ namespace SPH
 		unsorted_id_.push_back(pos_n_.size());
 
 		//update registered data in particle dynamics
-		for (size_t i = 0; i != registered_matrices_.size(); ++i) 
-			registered_matrices_[i]->push_back(Matd(0));
-		for (size_t i = 0; i != registered_vectors_.size(); ++i) 
-			registered_vectors_[i]->push_back(Vecd(0));
-		for (size_t i = 0; i != registered_scalars_.size(); ++i) 
-			registered_scalars_[i]->push_back(Real(0));
+		for (size_t i = 0; i != std::get<indexScalar>(all_particle_data_).size(); ++i)
+			std::get<indexScalar>(all_particle_data_)[i]->push_back(Real(0));
+		for (size_t i = 0; i != std::get<indexVector>(all_particle_data_).size(); ++i)
+			std::get<indexVector>(all_particle_data_)[i]->push_back(Vecd(0));
+		for (size_t i = 0; i != std::get<indexMatrix>(all_particle_data_).size(); ++i)
+			std::get<indexMatrix>(all_particle_data_)[i]->push_back(Matd(0));
+		for (size_t i = 0; i != std::get<indexInteger>(all_particle_data_).size(); ++i)
+			std::get<indexInteger>(all_particle_data_)[i]->push_back(int(0));
+		for (size_t i = 0; i != std::get<indexBoolean>(all_particle_data_).size(); ++i)
+			std::get<indexBoolean>(all_particle_data_)[i]->push_back(bool(0));
 	}
 	//=================================================================================================//
 	void BaseParticles::copyFromAnotherParticle(size_t this_index, size_t another_index)
@@ -94,18 +90,22 @@ namespace SPH
 	void BaseParticles::updateFromAnotherParticle(size_t this_index, size_t another_index)
 	{
 		//update registered data in particle dynamics
-		for (size_t i = 0; i != registered_matrices_.size(); ++i)
-			(*registered_matrices_[i])[this_index] = (*registered_matrices_[i])[another_index];
-		for (size_t i = 0; i != registered_vectors_.size(); ++i)
-			(*registered_vectors_[i])[this_index] = (*registered_vectors_[i])[another_index];
-		for (size_t i = 0; i != registered_scalars_.size(); ++i)
-			(*registered_scalars_[i])[this_index] = (*registered_scalars_[i])[another_index];
+		for (size_t i = 0; i != std::get<0>(all_particle_data_).size(); ++i)
+			(*std::get<0>(all_particle_data_)[i])[this_index] = (*std::get<0>(all_particle_data_)[i])[another_index];
+		for (size_t i = 0; i != std::get<1>(all_particle_data_).size(); ++i)
+			(*std::get<1>(all_particle_data_)[i])[this_index] = (*std::get<1>(all_particle_data_)[i])[another_index];
+		for (size_t i = 0; i != std::get<2>(all_particle_data_).size(); ++i)
+			(*std::get<2>(all_particle_data_)[i])[this_index] = (*std::get<2>(all_particle_data_)[i])[another_index];
+		for (size_t i = 0; i != std::get<3>(all_particle_data_).size(); ++i)
+			(*std::get<3>(all_particle_data_)[i])[this_index] = (*std::get<3>(all_particle_data_)[i])[another_index];
+		for (size_t i = 0; i != std::get<4>(all_particle_data_).size(); ++i)
+			(*std::get<4>(all_particle_data_)[i])[this_index] = (*std::get<4>(all_particle_data_)[i])[another_index];
 	}
 	//=================================================================================================//
 	size_t BaseParticles ::insertAGhostParticle(size_t index_i)
 	{
-		number_of_ghost_particles_ += 1;
-		size_t expected_size = real_particles_bound_ + number_of_ghost_particles_;
+		total_ghost_particles_ += 1;
+		size_t expected_size = real_particles_bound_ + total_ghost_particles_;
 		size_t expected_particle_index = expected_size - 1;
 		if (expected_size <= pos_n_.size()) {
 			copyFromAnotherParticle(expected_particle_index, index_i);
@@ -122,15 +122,23 @@ namespace SPH
 		return expected_particle_index;
 	}
 	//=================================================================================================//
+	void BaseParticles::switchToBufferParticle(size_t index_i)
+	{
+		size_t last_real_particle_index = total_real_particles_ - 1;
+		updateFromAnotherParticle(index_i, last_real_particle_index);
+		unsorted_id_[index_i] = unsorted_id_[last_real_particle_index];
+		total_real_particles_ -= 1;
+	}
+	//=================================================================================================//
 	void BaseParticles::writeParticlesToVtuFile(ofstream& output_file)
 	{
-		size_t number_of_particles = body_->number_of_particles_;
+		size_t total_real_particles = total_real_particles_;
 
 		//write particle positions first
 		output_file << "   <Points>\n";
 		output_file << "    <DataArray Name=\"Position\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
 		output_file << "    ";
-		for (size_t i = 0; i != number_of_particles; ++i) {
+		for (size_t i = 0; i != total_real_particles; ++i) {
 			Vec3d particle_position = upgradeToVector3D(pos_n_[i]);
 			output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " ";
 		}
@@ -144,7 +152,7 @@ namespace SPH
 		//write sorted particles ID
 		output_file << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
 		output_file << "    ";
-		for (size_t i = 0; i != number_of_particles; ++i) {
+		for (size_t i = 0; i != total_real_particles; ++i) {
 			output_file << i << " ";
 		}
 		output_file << std::endl;
@@ -153,20 +161,20 @@ namespace SPH
 		//write unsorted particles ID
 		output_file << "    <DataArray Name=\"UnsortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
 		output_file << "    ";
-		for (size_t i = 0; i != number_of_particles; ++i) {
+		for (size_t i = 0; i != total_real_particles; ++i) {
 			output_file << unsorted_id_[i] << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
 
 		//write vectors
-		for (size_t l = 0; l != vectors_to_write_.size(); ++l) {
-			string variable_name = vectors_to_write_[l];
-			size_t variable_index_ = vectors_map_[variable_name];
-			StdLargeVec<Vecd>& variable = *(registered_vectors_[variable_index_]);
+		for (size_t l = 0; l != variables_to_write_[indexVector].size(); ++l) {
+			string variable_name = variables_to_write_[indexVector][l];
+			size_t variable_index = name_index_maps_[indexVector][variable_name];
+			StdLargeVec<Vecd>& variable = *(std::get<indexVector>(all_particle_data_)[variable_index]);
 			output_file << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
 			output_file << "    ";
-			for (size_t i = 0; i != number_of_particles; ++i) {
+			for (size_t i = 0; i != total_real_particles; ++i) {
 				Vec3d vector_value = upgradeToVector3D(variable[i]);
 				output_file << fixed << setprecision(9) << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
 			}
@@ -175,18 +183,71 @@ namespace SPH
 		}
 		
 		//write scalars
-		for (size_t l = 0; l != scalars_to_write_.size(); ++l) {
-			string variable_name = scalars_to_write_[l];
-			size_t variable_index_ = scalars_map_[variable_name];
-			StdLargeVec<Real>& variable = *(registered_scalars_[variable_index_]);
+		for (size_t l = 0; l != variables_to_write_[indexScalar].size(); ++l) {
+			string variable_name = variables_to_write_[indexScalar][l];
+			size_t variable_index_ = name_index_maps_[indexScalar][variable_name];
+			StdLargeVec<Real>& variable = *(std::get<indexScalar>(all_particle_data_)[variable_index_]);
 			output_file << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\" Format=\"ascii\">\n";
 			output_file << "    ";
-			for (size_t i = 0; i != number_of_particles; ++i) {
+			for (size_t i = 0; i != total_real_particles; ++i) {
 				output_file << fixed << setprecision(9) << variable[i] << " ";
 			}
 			output_file << std::endl;
 			output_file << "    </DataArray>\n";
 		}
+
+		//write booleans
+		for (size_t l = 0; l != variables_to_write_[indexBoolean].size(); ++l) {
+			string variable_name = variables_to_write_[indexBoolean][l];
+			size_t variable_index_ = name_index_maps_[indexBoolean][variable_name];
+			StdLargeVec<bool>& variable = *(std::get<indexBoolean>(all_particle_data_)[variable_index_]);
+			output_file << "    <DataArray Name=\"" << variable_name << "\" type=\"Int8\" Format=\"ascii\">\n";
+			output_file << "    ";
+			for (size_t i = 0; i != total_real_particles; ++i) {
+				output_file << variable[i] << " ";
+			}
+			output_file << std::endl;
+			output_file << "    </DataArray>\n";
+		}
+	}
+	//=================================================================================================//
+	void BaseParticles::writeParticlesToPltFile(ofstream& output_file)
+	{
+		size_t total_real_particles = total_real_particles_;
+		output_file << " VARIABLES = \"x\",\"y\",\"z\",\"ID\"";
+		for (size_t l = 0; l != variables_to_write_[indexVector].size(); ++l) {
+			string variable_name = variables_to_write_[indexVector][l];
+			output_file << ",\"" << variable_name << "_x\"" << ",\"" << variable_name << "_y\"" << ",\"" << variable_name << "_z\"";
+		};
+		for (size_t l = 0; l != variables_to_write_[indexScalar].size(); ++l) {
+			string variable_name = variables_to_write_[indexScalar][l];
+			output_file << ",\"" << variable_name << "\"";
+		};
+		output_file << "\n";
+
+		//write particle positions first
+		for (size_t i = 0; i != total_real_particles; ++i) {
+			Vec3d particle_position = upgradeToVector3D(pos_n_[i]);
+			output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " "
+				<< i << " ";
+
+
+			for (size_t l = 0; l != variables_to_write_[indexVector].size(); ++l) {
+				string variable_name = variables_to_write_[indexVector][l];
+				size_t variable_index = name_index_maps_[indexVector][variable_name];
+				StdLargeVec<Vecd>& variable = *(std::get<indexVector>(all_particle_data_)[variable_index]);
+				Vec3d vector_value = upgradeToVector3D(variable[i]);
+				output_file << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
+			};
+
+			for (size_t l = 0; l != variables_to_write_[indexScalar].size(); ++l) {
+				string variable_name = variables_to_write_[indexScalar][l];
+				size_t variable_index = name_index_maps_[indexScalar][variable_name];
+				StdLargeVec<Real>& variable = *(std::get<indexScalar>(all_particle_data_)[variable_index]);
+				output_file << variable[i] << " ";
+			};
+			output_file << "\n";
+		};
 	}
 	//=================================================================================================//
 	void BaseParticles::writeToXmlForReloadParticle(std::string &filefullpath)
@@ -194,9 +255,9 @@ namespace SPH
 		const SimTK::String xml_name("particles_xml"), ele_name("particles");
 		unique_ptr<XmlEngine> reload_xml(new XmlEngine(xml_name, ele_name));
 
-		for (size_t i = 0; i != body_->number_of_particles_; ++i)
+		for (size_t i = 0; i != total_real_particles_; ++i)
 		{
-			reload_xml->CreatXmlElement("particle");
+			reload_xml->creatXmlElement("particle");
 			reload_xml->AddAttributeToElement<Vecd>("Position", pos_n_[i]);
 			reload_xml->AddAttributeToElement<Real>("Volume", Vol_[i]);
 			reload_xml->AddElementToXmlDoc();
@@ -206,30 +267,25 @@ namespace SPH
 	//=================================================================================================//
 	void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
 	{
-		size_t number_of_particles = 0;
+		size_t total_real_particles = 0;
 		unique_ptr<XmlEngine> read_xml(new XmlEngine());
 		read_xml->LoadXmlFile(filefullpath);
 		SimTK::Xml::element_iterator ele_ite_ = read_xml->root_element_.element_begin();
 		for (; ele_ite_ != read_xml->root_element_.element_end(); ++ele_ite_)
 		{
 			Vecd position = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Position");
-			pos_n_[number_of_particles] = position;
+			pos_n_[total_real_particles] = position;
 			Real volume = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Volume");
-			Vol_[number_of_particles] = volume;
-			number_of_particles++;
+			Vol_[total_real_particles] = volume;
+			total_real_particles++;
 		}
 
-		if(number_of_particles != pos_n_.size())
+		if(total_real_particles != pos_n_.size())
 		{
-			std::cout << "\n Error: reload particle number does not matrch" << std::endl;
+			std::cout << "\n Error: reload particle number does not match!" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
-	}
-	//=================================================================================================//
-	BaseParticles* BaseParticles::pointToThisObject()
-	{
-		return this;
 	}
 	//=================================================================================================//
 }

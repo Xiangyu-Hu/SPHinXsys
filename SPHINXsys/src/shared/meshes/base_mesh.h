@@ -29,9 +29,6 @@
 *			cells. The mesh line or face are also called cell faces. Grid points are
 *			also called cell corners.
 * @author	Chi ZHang and Xiangyu Hu
-* @version	0.1
-* @version  0.2.0
-* 			Now narrow bounded levelset mesh is added to replace the whole domain background levelset mesh. 
 */
 
 #pragma once
@@ -50,10 +47,8 @@ using namespace std;
 
 namespace SPH
 {
-	/**
-	 * @brief preclaimed classes.
-	 */
 	class Kernel;
+	class ParticleAdaptation;
 
 	/** Functor for operation on the mesh. */
 	typedef std::function<void(Vecu, Real)> MeshFunctor;
@@ -72,75 +67,32 @@ namespace SPH
 		Vecd mesh_lower_bound_; 		/**< mesh lower bound as reference coordinate */
 		Real grid_spacing_; 			/**< grid_spacing */
 		Vecu number_of_grid_points_; 	/**< number of grid points by dimension */
-
 	public:
-		/** default constructors */
-		BaseMesh() : mesh_lower_bound_(0),
-			grid_spacing_(1.0), number_of_grid_points_(1) {};
-		/** Constructors */
-		BaseMesh(Vecu number_of_grid_points)
-			: mesh_lower_bound_(0), grid_spacing_(1.0),
-			number_of_grid_points_(number_of_grid_points) {};
+		BaseMesh();
+		BaseMesh(Vecu number_of_grid_points);
 		virtual ~BaseMesh() {};
 
-		/** Return the mesh lower bound. */
 		Vecd MeshLowerBound() { return mesh_lower_bound_; };
-		/** Return the grid spacing. */
 		Real GridSpacing() { return grid_spacing_; };
-		/** Return the number of grid points in each direction. */
 		Vecu NumberOfGridPoints() { return number_of_grid_points_; };
 
-		/** find grid indexes from point position */
-		/**
-		 *@brief This function find grid indexes from point position/
-		 *@param[in] position(Vecd) inquiry position.
-		 *@param[out] (Vecu) grid index.
-		 */
-		Vecu GridIndexFromPosition(Vecd& position);
-		/**
-		 *@brief This function find grid position from indexes
-		 *@param[in] position(Vecd) inquiry grid index
-		 *@param[out] (Vecd) grid position.
-		 */
+		Vecu GridIndexFromPosition(const Vecd& position);
 		Vecd GridPositionFromIndex(Vecu grid_index);
-		/**
-		 *@brief This function convert 1d vector index to mesh index.
-		 *@param[in] number_of_grid_points(Vecu) number_of_grid_points in each direction.
-		 *@param[in] i(size_t) 1D index
-		 *@param[out] (Vecu) 2 or 3 D index
-		 */
 		Vecu transfer1DtoMeshIndex(Vecu number_of_grid_points, size_t i);
-		/** convert mesh index to 1d vector index. */
-		/**
-		 *@brief This function convert mesh index to 1d vector index.
-		 *@param[in] number_of_grid_points(Vecu) Mesh size in each direction.
-         *@param[in] grid_index Mesh index in each direction.
-         *@param[out] (size_t) 1D index.
-         */
         size_t transferMeshIndexTo1D(Vecu number_of_grid_points, Vecu grid_index);
-        /** generates Morton number for the cells.*/
-        /**
-         *@brief This function converts mesh index to 1d vector index.
-         *@param[in] i Mesh index in x, y or z direction.
-         *@param[out] (size_t) Morton Z number.
-         */
-        size_t MortonCode(const size_t &i);
         /** converts mesh index into a Morton order.
          * Interleave a 10 bit number in 32 bits, fill one bit and leave the other 2 as zeros
          * https://stackoverflow.com/questions/18529057/
          * produce-interleaving-bit-patterns-morton-keys-for-32-bit-64-bit-and-128bit
          */
-        /**
-         *@brief This function converts mesh index into a Morton order.
-         *@param[in] grid_index Mesh index in each direction.
-         *@param[out] (size_t) 1D index.
-         */
+        size_t MortonCode(const size_t &i);
+        /** This function converts mesh index into a Morton order. */
         size_t transferMeshIndexToMortonOrder(Vecu grid_index);
     };
 
 	/**
 	 * @class Mesh
-	 * @brief Abstract base class for defining basic mesh properties.
+	 * @brief Abstract base class for cell-based mesh properties.
 	 * The mesh is proposed for several functions.
 	 * First, it is used in cell linked list for neighbor search.
 	 * Second, it is used for background maps such as level sets.
@@ -149,84 +101,34 @@ namespace SPH
 	class Mesh : public BaseMesh
 	{
 	protected:
+		std::string name_;
 		size_t buffer_width_;	/**< buffer width to avoid bound check.*/
-		Real cell_spacing_; 	/**< cell_spacing */
 		Vecu number_of_cells_; 	/**< number of cells by dimension */
-		/**
-		 *@brief This function set the mesh lower bound including the buffer region.
-		 *@param[in] lower_bound(Vecd) Input mesh lower bound.
-		 *@param[in] grid_spacing(Real) Input grid spacing.
-		 *@param[in] buffer_width(Real)  Buffersize to extened the mesh from the physical bound of a body.
-		 */
-		void setMeshLowerBound(Vecd lower_bound, Real grid_spacing, size_t buffer_width);
-		/**
-		 *@brief This function compute number of total cells
-		 *@param[in] lower_bound(Vecd) Input mesh lower bound.
-		 *@param[in] grid_spacing(Real) Input grid spacing.
-		 *@param[in] buffer_width(Real)  Buffersize to extend the mesh from physical domain of a body or something.
-		 */
-		Vecu calcNumberOfCells(Vecd lower_bound, Vecd upper_bound, Real grid_spacing, size_t buffer_width);
-		/**
-		 *@brief This function compute number of total grid points form total cells
-		 *@param[in] number_of_cells(Vecu) Number of cell in each direction.
-		 *@param[out] (Vecu)  number of total grid points
-		 */
 		Vecu NumberOfGridPointsFromNumberOfCells(Vecu number_of_cells) { return number_of_cells + Vecu(1); };
-		/**
-		 *@brief This function compute number of total cells form total grid points
-		 *@param[in] number_of_grid_points(Vecu) Number of grid points in each direction.
-		 *@param[in] number of total cells.
-		 */
 		Vecu NumberOfCellsFromNumberOfGridPoints(Vecu number_of_grid_points) { return number_of_grid_points - Vecu(1); };
-
-		/** copy mesh properties from another mesh. */
 		void copyMeshProperties(Mesh* another_mesh);
-		/**
-		 *@brief This function shift position between cell and grid positions.
-		 *@param[in] cell_position(Vecd) Cell position.
-		 *@param[out] (Vecd) shifted position.
-		 */
 		Vecd GridPositionFromCellPosition(Vecd& cell_position)
 		{
-			return cell_position - Vecd(0.5 * cell_spacing_);
+			return cell_position - Vecd(0.5 * grid_spacing_);
 		};
+		void initializeWithBoundingBox(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
 	public:
-		/** Constructor using domain information. */
-		Mesh(Vecd lower_bound, 		/**< Lower bound. */
-			Vecd upper_bound, 		/**< Upper bound. */
-			Real grid_spacing,  	/**< Grid spacing. */
-			size_t buffer_width = 0 /**< Buffer size. */
-		);
-		/** Constructor using mesh information directly. */
-		Mesh(Vecd mesh_lower_bound, /**< Mesh lower bound. */
-			Vecu number_of_cells,  /**< Mesh upper bound. */
-			Real cell_spacing 		/**< Mesh cell spacing. */
-		);
+		Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
+		Mesh(Vecd mesh_lower_bound, Vecu number_of_cells, Real grid_spacing);
 		virtual ~Mesh() {};
 
-		/** Return the cell spacing. */
-		Real CellSpacing() { return cell_spacing_; };
-		/** Return the number of cells. */
+		std::string Name() { return name_; };
 		Vecu NumberOfCells() { return number_of_cells_; };
-		/** Retrun the buffer size. */
 		size_t MeshBufferSize() { return buffer_width_; };
-		/**
-		 * @brief This function check whether a position well within in the mesh bounds
-		 * @param[in] position(Vecd) Input position.
-		 */
+		/** This function check whether a position well within in the mesh bounds */
 		bool isWithinMeshBound(Vecd position);
-		/** find cell indexes from point position */
-		Vecu CellIndexesFromPosition(Vecd& position);
-		/** Find cell position from indexes.
-		  * It is the position shift in the upper-right direction half grid size */
-		Vecd CellPositionFromIndexes(Vecu cell_indexes);
+		Vecu CellIndexFromPosition(Vecd& position);
+		Vecd CellPositionFromIndex(Vecu cell_index);
 
-		/** output mesh data for Paraview visualization */
-		virtual void writeMeshToVtuFile(ofstream& output_file) {};
 		/** output mesh data for Tecplot visualization */
 		virtual void writeMeshToPltFile(ofstream& output_file) {};
 
-		/** allcate memories for the mesh data matrix*/
+		/** allocate memories for the mesh data matrix*/
 		virtual void allocateMeshDataMatrix() {};
 		/** delete memories for mesh data */
 		virtual void deleteMeshDataMatrix() {};
@@ -234,49 +136,43 @@ namespace SPH
 
 	/**
 	 * @class MultilevelMesh
-	 * @brief Multi level Meshes with multi resolution mesh data
+	 * @brief Multi level Meshes with successively double the resolutions
 	 */
-	template<class BaseMeshType, class MeshLevelType>
+	template<class MeshCompositionType, class BaseMeshType, class MeshLevelType>
 	class MultilevelMesh : public BaseMeshType
 	{
 	protected:
-		/** total levels of the storage pyramid.*/
-		size_t total_levels_;
-		/**cell spacing for the mesh levels*/
-		StdVec<Real> cell_spacing_levels_;
-		/** number of cells by dimension */
-		StdVec<Vecu> number_of_cells_levels_;
-
-	public:
-		/** point to every level. */
+		size_t total_levels_; /**< level 0 is the coarsest */
 		StdVec<MeshLevelType*> mesh_levels_;
-
-		MultilevelMesh(Vecd lower_bound, Vecd upper_bound,
-			Real reference_cell_spacing, size_t total_levels, size_t buffer_width = 0)
-			: BaseMeshType(lower_bound, upper_bound, reference_cell_spacing, buffer_width),
-			total_levels_(total_levels) {
-
-			/** build the zero level mesh first.*/
-			int middle_level = ((int)total_levels - 1) / 2;
-			Real zero_level_cell_spacing = reference_cell_spacing * powern(2.0, middle_level);
-			cell_spacing_levels_.push_back(zero_level_cell_spacing);
-			MeshLevelType* zero_level_mesh
-				= new MeshLevelType(lower_bound, upper_bound, zero_level_cell_spacing, buffer_width);
-			mesh_levels_.push_back(zero_level_mesh);
-			Vecu zero_level_number_of_cells = zero_level_mesh->NumberOfCells();
-			/** copy zero level mesh perperties to this. */
-			this->copyMeshProperties(zero_level_mesh);
-
-			/** other levels. */
-			for (size_t level = 1; level != total_levels; ++level) {
-				Real cell_spacing = zero_level_cell_spacing * powern(0.5, (int)level);
-				cell_spacing_levels_.push_back(cell_spacing);
-				Vecu number_of_cells = zero_level_number_of_cells * powern(2, (int)level);
-				MeshLevelType* mesh_level
-					= new MeshLevelType(lower_bound, number_of_cells, cell_spacing);
+	public:
+		MultilevelMesh(MeshCompositionType& mesh_composition, ParticleAdaptation& particle_adaptation, 
+			BoundingBox tentative_bounds, Real reference_spacing, 
+			size_t total_levels, Real maximum_spacing_ratio, size_t buffer_width) : 
+			BaseMeshType(mesh_composition, particle_adaptation, tentative_bounds, 
+			reference_spacing, buffer_width), total_levels_(total_levels) 
+		{
+			Real zero_level_spacing = reference_spacing * maximum_spacing_ratio;
+			for (size_t level = 0; level != total_levels_; ++level) {
+				Real spacing_level = zero_level_spacing * powern(0.5, (int)level);
+				/** all mesh levels aligned at the lower bound of tentative_bounds */
+				MeshLevelType* mesh_level = 
+					new MeshLevelType(mesh_composition, particle_adaptation, tentative_bounds, spacing_level, buffer_width);
 				mesh_levels_.push_back(mesh_level);
 			}
 		};
-		virtual ~MultilevelMesh() {};
+
+		virtual ~MultilevelMesh() 
+		{ 
+			for (size_t l = 0; l != total_levels_; ++l) mesh_levels_[l]->~MeshLevelType();
+		};
+
+		StdVec<MeshLevelType*> getMeshLevels() { return mesh_levels_; };
+
+		void writeMeshToPltFile(ofstream& output_file) override
+		{
+			for (size_t l = 0; l != total_levels_; ++l) {
+				mesh_levels_[l]->writeMeshToPltFile(output_file);
+			}
+		}
 	};
 }

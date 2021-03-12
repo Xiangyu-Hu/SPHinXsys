@@ -2,7 +2,6 @@
  * @file 	muscle_compression.cpp
  * @brief 	This is the test for muscle compression with our new contact model. 
  * @author 	Chi Zhang and Xiangyu Hu
- * @version 0.3.0
  */
 #include "sphinxsys.h"
 /** Name space. */
@@ -10,8 +9,12 @@ using namespace SPH;
 /** Geometry parameters. */
 Real L  = 0.04;
 Real PL = 0.1; 
-Real particle_spacing_ref = L / 12.0;
-Real BW = particle_spacing_ref * 4;
+Real resolution_ref = L / 12.0;
+Real BW = resolution_ref * 4;
+/** Domain bounds of the system. */
+BoundingBox system_domain_bounds(Vecd(-BW, -0.5 * PL, -0.5 * PL),
+	Vecd(2.0 * L + BW, 0.5 * PL, 0.5 * PL));
+
 /**< SimTK geometric modeling resolution. */
 int resolution(20);
 /** For material properties of the solid. */
@@ -53,8 +56,8 @@ TriangleMeshShape* CreateMovingPlate()
 class Myocardium : public SolidBody
 {
 public:
-	Myocardium(SPHSystem &system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	Myocardium(SPHSystem &system, string body_name)
+		: SolidBody(system, body_name)
 	{
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
@@ -67,8 +70,8 @@ public:
 class MovingPlate : public SolidBody
 {
 public:
-	MovingPlate(SPHSystem &system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	MovingPlate(SPHSystem &system, string body_name)
+		: SolidBody(system, body_name)
 	{
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addTriangleMeshShape(CreateMovingPlate(), ShapeBooleanOps::add);
@@ -143,20 +146,19 @@ public:
 int main()
 {
 	/** Setup the system. Please the make sure the global domain bounds are correctly defined. */
-	SPHSystem system(Vecd(-BW, -0.5 * PL, - 0.5 * PL),
-		Vecd(2.0 * L + BW, 0.5 * PL, 0.5 * PL), particle_spacing_ref);
+	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Creat a Myocardium body, corresponding material, particles and reaction model. */
-	Myocardium *myocardium_body = new Myocardium(system, "MyocardiumBody", 0);
+	Myocardium *myocardium_body = new Myocardium(system, "MyocardiumBody");
 	MyocardiumMuscle 	*muscle_material = new MyocardiumMuscle();
 	ElasticSolidParticles 	myocardium_particles(myocardium_body, muscle_material);
 	/** Plate. */
-	MovingPlate *moving_plate = new MovingPlate(system, "MovingPlate",	0);
+	MovingPlate *moving_plate = new MovingPlate(system, "MovingPlate");
 	MovingPlateMaterial* moving_plate_material = new MovingPlateMaterial();
 	SolidParticles 	moving_plate_particles(moving_plate, moving_plate_material);
 	/** topology */
-	SPHBodyInnerRelation*   myocardium_body_inner = new SPHBodyInnerRelation(myocardium_body);
-	SolidBodyContactRelation* myocardium_plate_contact = new SolidBodyContactRelation(myocardium_body, {moving_plate});
-	SolidBodyContactRelation* plate_myocardium_contact = new SolidBodyContactRelation(moving_plate, {myocardium_body});
+	InnerBodyRelation*   myocardium_body_inner = new InnerBodyRelation(myocardium_body);
+	SolidContactBodyRelation* myocardium_plate_contact = new SolidContactBodyRelation(myocardium_body, {moving_plate});
+	SolidContactBodyRelation* plate_myocardium_contact = new SolidContactBodyRelation(moving_plate, {myocardium_body});
 	/** 
 	 * This section define all numerical methods will be used in this case.
 	 */
@@ -179,7 +181,7 @@ int main()
 	solid_dynamics::ConstrainSolidBodyRegion
 		constrain_holder(myocardium_body, new Holder(myocardium_body, "Holder"));
 	/** Damping with the solid body*/
-	DampingBySplittingWithRandomChoice<SPHBodyInnerRelation, DampingBySplittingPairwise<Vec3d>, Vec3d>
+	DampingBySplittingWithRandomChoice<InnerBodyRelation, DampingBySplittingPairwise<Vec3d>, Vec3d>
 		muscle_damping(myocardium_body_inner, 0.1, myocardium_particles.vel_n_, physical_viscosity);
 	/** Output */
 	In_Output in_output(system);

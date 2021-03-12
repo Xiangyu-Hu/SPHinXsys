@@ -29,19 +29,19 @@
  *			one can access derived material by dynamic cast.
  *          Note that the derived material may have position dependent or 
  *          local properties.
-* @author	Chi Zhang and Xiangyu Hu
-* @version	0.1
-*/
+ * @author	Chi Zhang and Xiangyu Hu
+ */
+
 #pragma once
-#include <string>
 
 #include "base_data_package.h"
 #include "base_particles.h"
 
+#include <string>
 using namespace std;
 
 namespace SPH {
-	/** preclaimed classes */
+
 	class FluidParticles;
 	class SolidParticles;
 
@@ -54,125 +54,90 @@ namespace SPH {
 	{
 	protected:
 		string material_name_;
-		/** inverse of dimension */
-		Real inv_dimension_;
-		/** reference density. */
-		Real rho_0_;
-		/** base particle information for defining local material properties*/
+		Real inv_dimension_; /**<inverse of dimension */
+		Real rho_0_; /**< reference density. */
 		BaseParticles* base_particles_;
 
-		/** assign derived material properties*/
 		virtual void assignDerivedMaterialParameters() {};
 	public:
-		/** Default constructor */
 		BaseMaterial() : material_name_("BaseMaterial"), 
 			inv_dimension_(1.0 / (Real)Vecd(0).size()), rho_0_(1.0), base_particles_(NULL) {};
 		virtual ~BaseMaterial() {};
 
-		/** Assign base particles to this material for defining local material properties. */
 		void assignBaseParticles(BaseParticles* base_particles) { base_particles_ = base_particles; };
-		/** The interface for dynamical cast. */
-		virtual BaseMaterial* pointToThisObject() { return this; };
-		/** access the material name */
 		string MaterialName() { return material_name_;}
-		/** Access to reference density. */
 		Real ReferenceDensity() { return rho_0_; };
-		/** initialize the local property. */
 		virtual void initializeLocalProperties(BaseParticles* base_particles) {};
-		/**
-		 * @brief Write the material property to xml file.
-		 * @param[in] filefullpath Full path the the output file.
-		 */
 		virtual void writeToXmlForReloadMaterialProperty(std::string &filefullpath) {};
-		/** 
-		 * @brief Read the material property from xml file.
-		 * @param[in] filefullpath Full path the the output file.
-		 */
 		virtual void readFromXmlForMaterialProperty(std::string &filefullpath) {};
-		/**
-		 * @brief Write local material properties particle data in VTU format for Paraview.
-		 * @param[inout] output_file Ofstream of particle data.
-		 */
-		virtual void WriteMaterialPropertyToVtuFile(ofstream& output_file) {};
-	};
+		virtual void writeMaterialPropertyToVtuFile(ofstream& output_file) {};
+		virtual BaseMaterial* pointToThisObject() {return this;};
+};
 
 
 	/** @class  Fluid
-	 *  @brief Base class  of all fluids
+	 *  @brief Base class of all fluids
 	*/
 	class Fluid : public BaseMaterial
 	{
 	protected:
-		/** reference sound speed, viscosity. */
-		Real c_0_, mu_;
-		/** particles for this material */
+		Real c_0_, mu_; /**< reference sound speed, viscosity. */
 		FluidParticles* fluid_particles_;
 
-		/** assign derived material properties*/
-		virtual void assignDerivedMaterialParameters() override {
+		virtual void assignDerivedMaterialParameters() override 
+		{
 			BaseMaterial::assignDerivedMaterialParameters();
 		};
 	public:
-		/** constructor with material name. */
 		Fluid() : BaseMaterial(), c_0_(1.0), mu_(0.0),
 			fluid_particles_(NULL) {
 			material_name_ = "Fluid"; 
 		};
 		virtual ~Fluid() {};
 
-		/** assign particles to this material */
-		void assignFluidParticles(FluidParticles* fluid_particles) {
+		void assignFluidParticles(FluidParticles* fluid_particles) 
+		{
 			fluid_particles_ = fluid_particles;
 		};
-		/** the interface for dynamical cast*/
-		virtual Fluid* pointToThisObject() override { return this; };
 
 		Real ReferenceSoundSpeed() { return c_0_; };
 		Real ReferenceViscosity() { return mu_; };
-		virtual Real GetPressure(Real rho) = 0;
-		virtual Real GetPressure(Real rho, Real rho_e) { return GetPressure(rho); };
+		virtual Real getPressure(Real rho) = 0;
+		virtual Real getPressure(Real rho, Real rho_e) { return getPressure(rho); };
 		virtual Real DensityFromPressure(Real p) = 0;
-		virtual Real GetSoundSpeed(Real p = 0.0, Real rho = 1.0) = 0;
-		virtual Real RiemannSolverForPressure(Real rhol, Real Rhor, Real pl, Real pr, Real ul, Real ur) = 0;
-		virtual Real RiemannSolverForVelocity(Real rhol, Real Rhor, Real pl, Real pr, Real ul, Real ur) = 0;
+		virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) = 0;
+		virtual Fluid* pointToThisObject() override {return this;};
 	};
 
 	/** @class  Solid
-	 *  @brief Base class  of all solid materials
+	 *  @brief Base class of all solid materials
 	*/
 	class Solid : public BaseMaterial
 	{
 	public:
-		/** constructor with material name. */
 		Solid() : BaseMaterial(), contact_stiffness_(1.0),
-			contact_friction_(0.0), solid_particles_(NULL) {
+			contact_friction_(0.0), solid_particles_(NULL) 
+		{
 			material_name_ = "Solid";
 		};
 		virtual ~Solid() {};
 
-		/** assign particles to this material */
-		void assignSolidParticles(SolidParticles* solid_particles) {
+		void assignSolidParticles(SolidParticles* solid_particles) 
+		{
 			solid_particles_ = solid_particles;
 		};
 
 		Real ContactFriction() { return contact_friction_; };
 		Real ContactStiffness() { return contact_stiffness_; };
-		/** the interface for dynamical cast*/
-		virtual Solid* pointToThisObject() override { return this; };
-
+		virtual Solid* pointToThisObject() override {return this;};
 	protected:
-		/** contact-force stiffness related to bulk modulus*/
-		Real contact_stiffness_;
-		/** friction property mimic fluid viscosity*/
-		Real contact_friction_;
-
-		/** particles for this material */
+		Real contact_stiffness_; /**< contact-force stiffness related to bulk modulus*/
+		Real contact_friction_; /**< friction property mimic fluid viscosity*/
 		SolidParticles* solid_particles_;
 
-		/** assign derived material properties*/
-		virtual void assignDerivedMaterialParameters() override {
+		virtual void assignDerivedMaterialParameters() override 
+		{
 			BaseMaterial::assignDerivedMaterialParameters();
 		};
 	};
-	
 }

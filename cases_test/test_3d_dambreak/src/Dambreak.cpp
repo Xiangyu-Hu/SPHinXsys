@@ -12,15 +12,17 @@
 using namespace SPH;
 
 //for geometry
-Real particle_spacing_ref = 0.05; //particle spacing
-Real BW = particle_spacing_ref * 4; //boundary width
-
+Real resolution_ref = 0.05; //particle spacing
+Real BW = resolution_ref * 4; //boundary width
 Real DL = 5.366; 						//tank length
 Real DH = 2.0; 							//tank height
 Real DW = 0.5;							//tank width
 Real LL = 2.0; 							//liquid length
 Real LH = 1.0; 							//liquid height
 Real LW = 0.5; 						//liquid width
+/** Domain bounds of the system. */
+BoundingBox system_domain_bounds(Vecd(-BW, -BW, -BW),
+	Vecd(DL + BW, DH + BW, DW + BW));
 
 //for material properties of the fluid
 Real rho0_f = 1.0;
@@ -35,8 +37,8 @@ int resolution(50);
 class WaterBlock : public FluidBody
 {
 	public:
-		WaterBlock(SPHSystem &system, string body_name, int refinement_level)
-			: FluidBody(system, body_name, refinement_level)
+		WaterBlock(SPHSystem &system, string body_name)
+			: FluidBody(system, body_name)
 		{
 			Vecd halfsize_water(0.5 * LL, 0.5 * LH, 0.5 * LW);
 			Vecd translation_water = halfsize_water;
@@ -62,8 +64,8 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	WallBoundary(SPHSystem &system, string body_name)
+		: SolidBody(system, body_name)
 	{
 		Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
 		Vecd translation_wall(0.5 * DL, 0.5 * DH, 0.5 * DW);
@@ -78,16 +80,16 @@ public:
 class FluidObserver : public FictitiousBody
 {
 public:
-	FluidObserver(SPHSystem &system, string body_name, int refinement_level)
-		: FictitiousBody(system, body_name, refinement_level, 1.3)
+	FluidObserver(SPHSystem &system, string body_name)
+		: FictitiousBody(system, body_name)
 	{
 		//add observation point
-		body_input_points_volumes_.push_back(make_pair(Point(DL, 0.01, 0.5 * DW), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(DL, 0.1, 0.5 * DW), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(DL, 0.2, 0.5 * DW), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(DL, 0.24, 0.5 * DW), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(DL, 0.252, 0.5 * DW), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(DL, 0.266, 0.5 * DW), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(DL, 0.01, 0.5 * DW), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(DL, 0.1, 0.5 * DW), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(DL, 0.2, 0.5 * DW), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(DL, 0.24, 0.5 * DW), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(DL, 0.252, 0.5 * DW), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(DL, 0.266, 0.5 * DW), 0.0));
 	}
 };
 
@@ -96,26 +98,25 @@ int main()
 {
 
 	//build up context -- a SPHSystem
-	SPHSystem system(Vecd(-BW, -BW, -BW), 
-		Vecd(DL + BW, DH + BW, DW + BW), particle_spacing_ref);
+	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
 
 	//the water block
-	WaterBlock *water_block = new WaterBlock(system, "WaterBody", 0);
+	WaterBlock *water_block = new WaterBlock(system, "WaterBody");
 	//Configuration of Materials
 	WaterMaterial *water_material = new WaterMaterial();
 	//creat fluid particles
 	FluidParticles fluid_particles(water_block, water_material);
 
 	//the wall boundary
-	WallBoundary *wall_boundary = new WallBoundary(system, "Wall", 0);
+	WallBoundary *wall_boundary = new WallBoundary(system, "Wall");
 	//creat solid particles 
 	SolidParticles wall_particles(wall_boundary);
 
-	FluidObserver *fluid_observer = new FluidObserver(system, "Fluidobserver", 0);
+	FluidObserver *fluid_observer = new FluidObserver(system, "Fluidobserver");
 	//create observer particles 
 	BaseParticles observer_particles(fluid_observer);
 
@@ -124,8 +125,8 @@ int main()
 
 
 	/** topology */
-	SPHBodyComplexRelation* water_block_complex = new SPHBodyComplexRelation(water_block, { wall_boundary });
-	SPHBodyContactRelation* fluid_observer_contact = new SPHBodyContactRelation(fluid_observer, { water_block });
+	ComplexBodyRelation* water_block_complex = new ComplexBodyRelation(water_block, { wall_boundary });
+	ContactBodyRelation* fluid_observer_contact = new ContactBodyRelation(fluid_observer, { water_block });
 
 	//-------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
@@ -134,18 +135,15 @@ int main()
 	InitializeATimeStep 	initialize_a_fluid_step(water_block, &gravity);
 	//-------- fluid dynamics --------------------------------------------------
 	//evaluation of density by summation approach
-	fluid_dynamics::DensityBySummationFreeSurface
-		update_fluid_density(water_block_complex);
+	fluid_dynamics::DensitySummationFreeSurfaceComplex	update_density_by_summation(water_block_complex);
 	//time step size without considering sound wave speed
 	fluid_dynamics::AdvectionTimeStepSize	get_fluid_advection_time_step_size(water_block, U_f);
 	//time step size with considering sound wave speed
 	fluid_dynamics::AcousticTimeStepSize		get_fluid_time_step_size(water_block);
 
 	//pressure relaxation using verlet time stepping
-	fluid_dynamics::PressureRelaxationFirstHalfRiemann 
-		pressure_relaxation_first_half(water_block_complex);
-	fluid_dynamics::PressureRelaxationSecondHalfRiemann 
-		pressure_relaxation_second_half(water_block_complex);
+	fluid_dynamics::PressureRelaxationRiemannWithWall	pressure_relaxation(water_block_complex);
+	fluid_dynamics::DensityRelaxationRiemannWithWall	density_relaxation(water_block_complex);
 
 	//-----------------------------------------------------------------------------
 	//outputs
@@ -158,8 +156,7 @@ int main()
 	/** Output the mechanical energy of fluid body. */
 	WriteTotalMechanicalEnergy 	write_water_mechanical_energy(in_output, water_block, &gravity);
 	/** output the observed data from fluid body. */
-	WriteAnObservedQuantity<Real, FluidParticles, &FluidParticles::p_>
-		write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact);
+	WriteAnObservedQuantity<indexScalar, Real> write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact);
 	//-------------------------------------------------------------------
 	//from here the time stepping begines
 	//-------------------------------------------------------------------
@@ -186,7 +183,7 @@ int main()
 	/** Output the Hydrostatic mechanical energy of fluid. */
 	write_water_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
 
-	int number_of_iterations = system.restart_step_;
+	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
 	Real End_Time = 20.0;
@@ -213,14 +210,14 @@ int main()
 			//acceleration due to viscous force and gravity
 			initialize_a_fluid_step.parallel_exec();
 			Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_fluid_density.parallel_exec();
+			update_density_by_summation.parallel_exec();
 
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt) 
 			{
 			
-				pressure_relaxation_first_half.parallel_exec(dt);
-				pressure_relaxation_second_half.parallel_exec(dt);
+				pressure_relaxation.parallel_exec(dt);
+				density_relaxation.parallel_exec(dt);
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integration_time += dt;

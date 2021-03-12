@@ -2,7 +2,6 @@
  * @file 	array.h
  * @details An Array toolkit for array operator. 
  * @author	Chi Zhang and Xiangyu Hu.
- * @version	0.1.
  */
 #pragma once
 
@@ -543,7 +542,7 @@ namespace SPH {
 		/**
  		 * @brief Get a pointer to the low-level array.
  		 *
- 		 * @return Pointer to the low-level array.
+ 		 * @return Vecder to the low-level array.
  		*/
 		T* get()
 		{
@@ -552,7 +551,7 @@ namespace SPH {
 		/**
  		 * @brief Get a pointer to the low-level array.
  		 *
- 		 * @return Pointer to the low-level array.
+ 		 * @return Vecder to the low-level array.
  		*/
 
 		const T* get() const

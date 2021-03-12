@@ -1,10 +1,11 @@
 ## 2D build
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake) # main (top) cmake dir
-include(Dirsearch_for_2D_build)
 
 ## prepare dirctories for head and source files
 HEADER_DIRECTORIES_SHARED(headdirs_shared)
 SOURCE_DIRECTORIES_SHARED(sourcedirs_shared)
+
+include(Dirsearch_for_2D_build)
 HEADER_DIRECTORIES_2D(headdirs_2D)
 SOURCE_DIRECTORIES_2D(sourcedirs_2D)
 
@@ -20,9 +21,19 @@ FOREACH(subdir_path ${usefulsubdirs})
 	ADD_SUBDIRECTORY(${subdir_path})
 ENDFOREACH()
 
-## combin head and souce directories
-SET(headdirs ${headdirs_shared} ${headdirs_2D})
-SET(sourcedirs ${sourcedirs_shared} ${sourcedirs_2D})
+if(BUILD_WITH_IMAGE_PROCESS)
+	include(Dirsearch_for_image_process)
+	HEADER_DIRECTORIES_IMAGE_PROCESS(headdirs_image_process)
+	SOURCE_DIRECTORIES_IMAGE_PROCESS(sourcedirs_image_process)
+	## combin head and souce directories
+	SET(headdirs ${headdirs_shared} ${headdirs_2D}  ${headdirs_image_process})
+	SET(sourcedirs ${sourcedirs_shared} ${sourcedirs_2D} ${sourcedirs_image_process})
+else(BUILD_WITH_IMAGE_PROCESS)
+	## combin head and souce directories
+	SET(headdirs ${headdirs_shared} ${headdirs_2D})
+	SET(sourcedirs ${sourcedirs_shared} ${sourcedirs_2D})
+endif(BUILD_WITH_IMAGE_PROCESS)
+
 
 ##Add all header dirs
 FOREACH(headdir_path ${headdirs})

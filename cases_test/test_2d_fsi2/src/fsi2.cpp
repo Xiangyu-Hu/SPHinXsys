@@ -6,7 +6,6 @@
  *			Dual-criteria time stepping for weakly compressible smoothed particle hydrodynamics.
  *			Journal of Computation Physics 404 (2020) 109135.
  * @author 	Xiangyu Hu, Chi Zhang and Luhui Han
- * @version 0.1
  */
 #include "sphinxsys.h"
 
@@ -18,7 +17,7 @@ using namespace SPH;
 int main(int ac, char* av[])
 {
 	/** Build up -- a SPHSystem -- */
-	SPHSystem system(Vec2d(- DL_sponge - BW, - BW), Vec2d(DL + BW, DH + BW), particle_spacing_ref);
+	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
 	system.run_particle_relaxation_ = false;
 	/** Tag for computation start with relaxed body fitted particles distribution. */
@@ -32,26 +31,26 @@ int main(int ac, char* av[])
 	/**
 	 * @brief Creating body, materials and particles for a water block.
 	 */
-	WaterBlock* water_block	= new WaterBlock(system, "WaterBody", 0);
+	WaterBlock* water_block	= new WaterBlock(system, "WaterBody");
 	WaterMaterial* water_material = new WaterMaterial();
 	FluidParticles 	fluid_particles(water_block, water_material);
 	/**
 	 * @brief 	Creating body and particles for the wall boundary.
 	 */
-	WallBoundary* wall_boundary	= new WallBoundary(system, "Wall", 0);
+	WallBoundary* wall_boundary	= new WallBoundary(system, "Wall");
 	SolidParticles 	wall_particles(wall_boundary);
 	/**
 	 * @brief 	Creating body, materials and particles for the elastic beam (inserted body).
 	 */
-	InsertedBody* inserted_body = new InsertedBody(system, "InsertedBody", 1);
+	InsertedBody* inserted_body = new InsertedBody(system, "InsertedBody");
 	InsertBodyMaterial* insert_body_material = new InsertBodyMaterial();
 	ElasticSolidParticles 	inserted_body_particles(inserted_body, insert_body_material);
 	/**
 	 * @brief 	Particle and body creation of beam and fluid observers.
 	 */
-	BeamObserver* beam_observer = new BeamObserver(system, "BeamObserver", 0);
+	BeamObserver* beam_observer = new BeamObserver(system, "BeamObserver");
 	BaseParticles 				beam_observer_particles(beam_observer);
-	FluidObserver* fluid_observer = new FluidObserver(system, "FluidObserver", 0);
+	FluidObserver* fluid_observer = new FluidObserver(system, "FluidObserver");
 	BaseParticles				flow_observer_particles(fluid_observer);
 	/**
 	 * @brief define simple data file input and outputs functions.
@@ -61,12 +60,12 @@ int main(int ac, char* av[])
 	WriteRestart						write_restart_files(in_output, system.real_bodies_);
 	ReadRestart							read_restart_files(in_output, system.real_bodies_);
 	/** topology */
-	SPHBodyInnerRelation* water_block_inner = new SPHBodyInnerRelation(water_block);
-	SPHBodyInnerRelation* inserted_body_inner = new SPHBodyInnerRelation(inserted_body);
-	SPHBodyComplexRelation* water_block_complex = new SPHBodyComplexRelation(water_block_inner, { wall_boundary, inserted_body });
-	SPHBodyContactRelation* inserted_body_contact = new SPHBodyContactRelation(inserted_body, { water_block });
-	SPHBodyContactRelation* beam_observer_contact = new SPHBodyContactRelation(beam_observer, { inserted_body });
-	SPHBodyContactRelation* fluid_observer_contact = new SPHBodyContactRelation(fluid_observer, { water_block });
+	InnerBodyRelation* water_block_inner = new InnerBodyRelation(water_block);
+	InnerBodyRelation* inserted_body_inner = new InnerBodyRelation(inserted_body);
+	ComplexBodyRelation* water_block_complex = new ComplexBodyRelation(water_block_inner, { wall_boundary, inserted_body });
+	ContactBodyRelation* inserted_body_contact = new ContactBodyRelation(inserted_body, { water_block });
+	ContactBodyRelation* beam_observer_contact = new ContactBodyRelation(beam_observer, { inserted_body });
+	ContactBodyRelation* fluid_observer_contact = new ContactBodyRelation(fluid_observer, { water_block });
 
 	/** check whether run particle relaxation for body fitted particle distribution. */
 	if (system.run_particle_relaxation_) 
@@ -118,23 +117,23 @@ int main(int ac, char* av[])
 	 /** Initialize particle acceleration. */
 	InitializeATimeStep 	initialize_a_fluid_step(water_block);
 	/** Evaluation of density by summation approach. */
-	fluid_dynamics::DensityBySummation 			update_fluid_density(water_block_complex);
+	fluid_dynamics::DensitySummationComplex	update_density_by_summation(water_block_complex);
 	/** Time step size without considering sound wave speed. */
 	fluid_dynamics::AdvectionTimeStepSize 	get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
 	fluid_dynamics::AcousticTimeStepSize		get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
-	fluid_dynamics::PressureRelaxationFirstHalf
-		pressure_relaxation_first_half(water_block_complex);
-	fluid_dynamics::PressureRelaxationSecondHalfRiemann
-		pressure_relaxation_second_half(water_block_complex);
+	fluid_dynamics::PressureRelaxationWithWall	pressure_relaxation(water_block_complex);
+	fluid_dynamics::DensityRelaxationRiemannWithWall	density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
-	fluid_dynamics::ViscousAcceleration 	viscous_acceleration(water_block_complex);
+	fluid_dynamics::ViscousAccelerationWithWall 	viscous_acceleration(water_block_complex);
 	/** Impose transport velocity. */
-	fluid_dynamics::TransportVelocityFormulation 	transport_velocity_formulation(water_block_complex);
+	fluid_dynamics::TransportVelocityCorrectionComplex	transport_velocity_correction(water_block_complex);
+	/** viscous acceleration and transport velocity correction can be combined becasue they are independent dynamics. */
+	CombinedInteractionDynamics viscous_acceleration_and_transport_correction({&viscous_acceleration, &transport_velocity_correction});
 	/** Computing vorticity in the flow. */
-	fluid_dynamics::VorticityInFluidField 	compute_vorticity(water_block_inner);
+	fluid_dynamics::VorticityInner 	compute_vorticity(water_block_inner);
 	/** Inflow boundary condition. */
 	ParabolicInflow		parabolic_inflow(water_block, new InflowBuffer(water_block, "Buffer"));
 	/** Periodic BCs in x direction. */
@@ -165,9 +164,9 @@ int main(int ac, char* av[])
 	 */
 	WriteTotalViscousForceOnSolid 		write_total_viscous_force_on_inserted_body(in_output, inserted_body);
 
-	WriteAnObservedQuantity<Vecd, BaseParticles, &BaseParticles::pos_n_>
-		write_beam_tip_displacement("Displacement", in_output, beam_observer_contact);
-	WriteAnObservedQuantity<Vecd, BaseParticles, &BaseParticles::vel_n_>
+	WriteAnObservedQuantity<indexVector, Vecd>
+		write_beam_tip_displacement("Position", in_output, beam_observer_contact);
+	WriteAnObservedQuantity<indexVector, Vecd>
 		write_fluid_velocity("Velocity", in_output, fluid_observer_contact);
 
 	/**
@@ -234,9 +233,8 @@ int main(int ac, char* av[])
 		{
 			initialize_a_fluid_step.parallel_exec();
 			Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_fluid_density.parallel_exec();
-			viscous_acceleration.parallel_exec();
-			transport_velocity_formulation.correction_.parallel_exec(Dt);
+			update_density_by_summation.parallel_exec();
+			viscous_acceleration_and_transport_correction.parallel_exec(Dt);
 
 			/** FSI for viscous force. */
 			fluid_viscous_force_on_inserted_body.parallel_exec();
@@ -246,13 +244,13 @@ int main(int ac, char* av[])
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt) 
 			{
-				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt - relaxation_time);
-				/** Fluid pressure relaxation, first half. */
-				pressure_relaxation_first_half.parallel_exec(dt);
+				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
+				/** Fluid pressure relaxation */
+				pressure_relaxation.parallel_exec(dt);
 				/** FSI for pressure force. */
 				fluid_pressure_force_on_inserted_body.parallel_exec();
-				/** Fluid pressure relaxation, second half. */
-				pressure_relaxation_second_half.parallel_exec(dt);
+				/** Fluid density relaxation */
+				density_relaxation.parallel_exec(dt);
 
 				/** Solid dynamics. */
 				inner_ite_dt_s = 0;
@@ -317,4 +315,3 @@ int main(int ac, char* av[])
 
 	return 0;
 }
-

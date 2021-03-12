@@ -9,8 +9,11 @@ using namespace SPH;
 Real DH = 4.0; //channel height
 Real DT = 1.0; //throat height
 Real DL = 24.0; //channel length
-Real particle_spacing_ref = 0.1; //particle spacing
-Real BW = particle_spacing_ref * 4.0; //boundary width
+Real resolution_ref = 0.1; //particle spacing
+Real BW = resolution_ref * 4.0; //boundary width
+/** Domain bounds of the system. */
+BoundingBox system_domain_bounds(Vec2d(-0.5 * DL - BW, -0.5 * DH - BW),
+	Vec2d(0.5 * DL + BW, 0.5 * DH + BW));
 
 //for material properties of the fluid
 Real rho0_f = 1.0;
@@ -18,7 +21,7 @@ Real gravity_g = 1.0;	/**< Gravity force of fluid. */
 Real Re = 1.0;			/**< Reynolds number*/
 Real mu_f = sqrt(0.25*rho0_f * powern(0.5*DT, 3)* gravity_g / Re);
 Real U_f = 0.25*powern(0.5 * DT, 2)* gravity_g / mu_f;
-Real c_f = SMAX(10.0*U_f, 10.0*mu_f/ rho0_f/ particle_spacing_ref);
+Real c_f = SMAX(10.0*U_f, 10.0*mu_f/ rho0_f/ resolution_ref);
 Real mu_p_f = 0.6 * mu_f;
 Real lambda_f = 10.0;
 
@@ -26,29 +29,29 @@ Real lambda_f = 10.0;
 class FluidBlock : public FluidBody
 {
 	public:
-		FluidBlock(SPHSystem &system, string body_name, int refinement_level)
-			: FluidBody(system, body_name, refinement_level)
+		FluidBlock(SPHSystem &system, string body_name)
+			: FluidBody(system, body_name)
 		{
-			std::vector<Point> pnts;
-			pnts.push_back(Point(-0.5*DL, -0.5*DH));
-			pnts.push_back(Point(-0.5*DL, 0.5*DH));
-			pnts.push_back(Point(-DL / 6.0, 0.5*DH));
-			pnts.push_back(Point(-DL / 6.0, - 0.5*DH));
-			pnts.push_back(Point(-0.5*DL, -0.5*DH));
+			std::vector<Vecd> pnts;
+			pnts.push_back(Vecd(-0.5*DL, -0.5*DH));
+			pnts.push_back(Vecd(-0.5*DL, 0.5*DH));
+			pnts.push_back(Vecd(-DL / 6.0, 0.5*DH));
+			pnts.push_back(Vecd(-DL / 6.0, - 0.5*DH));
+			pnts.push_back(Vecd(-0.5*DL, -0.5*DH));
 
-			std::vector<Point> pnts1;
-			pnts1.push_back(Point(-DL/6.0 - BW, -0.5*DT));
-			pnts1.push_back(Point(-DL / 6.0 - BW, 0.5*DT));
-			pnts1.push_back(Point(DL / 6.0 + BW, 0.5*DT));
-			pnts1.push_back(Point(DL / 6.0 + BW, - 0.5*DT));
-			pnts1.push_back(Point(-DL / 6.0 - BW, -0.5*DT));
+			std::vector<Vecd> pnts1;
+			pnts1.push_back(Vecd(-DL/6.0 - BW, -0.5*DT));
+			pnts1.push_back(Vecd(-DL / 6.0 - BW, 0.5*DT));
+			pnts1.push_back(Vecd(DL / 6.0 + BW, 0.5*DT));
+			pnts1.push_back(Vecd(DL / 6.0 + BW, - 0.5*DT));
+			pnts1.push_back(Vecd(-DL / 6.0 - BW, -0.5*DT));
 
-			std::vector<Point> pnts2;
-			pnts2.push_back(Point(DL/6.0, -0.5*DH));
-			pnts2.push_back(Point(DL / 6.0, 0.5*DH));
-			pnts2.push_back(Point(0.5*DL, 0.5*DH));
-			pnts2.push_back(Point(0.5*DL, -0.5*DH));
-			pnts2.push_back(Point(DL / 6.0, -0.5*DH));
+			std::vector<Vecd> pnts2;
+			pnts2.push_back(Vecd(DL/6.0, -0.5*DH));
+			pnts2.push_back(Vecd(DL / 6.0, 0.5*DH));
+			pnts2.push_back(Vecd(0.5*DL, 0.5*DH));
+			pnts2.push_back(Vecd(0.5*DL, -0.5*DH));
+			pnts2.push_back(Vecd(DL / 6.0, -0.5*DH));
 
 			body_shape_ = new ComplexShape(body_name);
 			body_shape_->addAPolygon(pnts, ShapeBooleanOps::add);
@@ -77,36 +80,36 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	WallBoundary(SPHSystem &system, string body_name)
+		: SolidBody(system, body_name)
 	{
-		std::vector<Point> pnts3;
-		pnts3.push_back(Point(-0.5*DL - BW, -0.5*DH - BW));
-		pnts3.push_back(Point(-0.5*DL - BW, 0.5*DH + BW));
-		pnts3.push_back(Point(0.5*DL + BW, 0.5*DH + BW));
-		pnts3.push_back(Point(0.5*DL + BW, -0.5*DH - BW));
-		pnts3.push_back(Point(-0.5*DL - BW, -0.5*DH - BW));
+		std::vector<Vecd> pnts3;
+		pnts3.push_back(Vecd(-0.5*DL - BW, -0.5*DH - BW));
+		pnts3.push_back(Vecd(-0.5*DL - BW, 0.5*DH + BW));
+		pnts3.push_back(Vecd(0.5*DL + BW, 0.5*DH + BW));
+		pnts3.push_back(Vecd(0.5*DL + BW, -0.5*DH - BW));
+		pnts3.push_back(Vecd(-0.5*DL - BW, -0.5*DH - BW));
 
-		std::vector<Point> pnts;
-		pnts.push_back(Point(-0.5*DL - 2.0*BW, -0.5*DH));
-		pnts.push_back(Point(-0.5*DL - 2.0*BW, 0.5*DH));
-		pnts.push_back(Point(-DL / 6.0, 0.5*DH));
-		pnts.push_back(Point(-DL / 6.0, -0.5*DH));
-		pnts.push_back(Point(-0.5*DL - 2.0*BW, -0.5*DH));
+		std::vector<Vecd> pnts;
+		pnts.push_back(Vecd(-0.5*DL - 2.0*BW, -0.5*DH));
+		pnts.push_back(Vecd(-0.5*DL - 2.0*BW, 0.5*DH));
+		pnts.push_back(Vecd(-DL / 6.0, 0.5*DH));
+		pnts.push_back(Vecd(-DL / 6.0, -0.5*DH));
+		pnts.push_back(Vecd(-0.5*DL - 2.0*BW, -0.5*DH));
 
-		std::vector<Point> pnts1;
-		pnts1.push_back(Point(-DL / 6.0 - BW, -0.5*DT));
-		pnts1.push_back(Point(-DL / 6.0 - BW, 0.5*DT));
-		pnts1.push_back(Point(DL / 6.0 + BW, 0.5*DT));
-		pnts1.push_back(Point(DL / 6.0 + BW, -0.5*DT));
-		pnts1.push_back(Point(-DL / 6.0 - BW, -0.5*DT));
+		std::vector<Vecd> pnts1;
+		pnts1.push_back(Vecd(-DL / 6.0 - BW, -0.5*DT));
+		pnts1.push_back(Vecd(-DL / 6.0 - BW, 0.5*DT));
+		pnts1.push_back(Vecd(DL / 6.0 + BW, 0.5*DT));
+		pnts1.push_back(Vecd(DL / 6.0 + BW, -0.5*DT));
+		pnts1.push_back(Vecd(-DL / 6.0 - BW, -0.5*DT));
 
-		std::vector<Point> pnts2;
-		pnts2.push_back(Point(DL / 6.0, -0.5*DH));
-		pnts2.push_back(Point(DL / 6.0, 0.5*DH));
-		pnts2.push_back(Point(0.5*DL + 2.0*BW, 0.5*DH));
-		pnts2.push_back(Point(0.5*DL + 2.0*BW, -0.5*DH));
-		pnts2.push_back(Point(DL / 6.0, -0.5*DH));
+		std::vector<Vecd> pnts2;
+		pnts2.push_back(Vecd(DL / 6.0, -0.5*DH));
+		pnts2.push_back(Vecd(DL / 6.0, 0.5*DH));
+		pnts2.push_back(Vecd(0.5*DL + 2.0*BW, 0.5*DH));
+		pnts2.push_back(Vecd(0.5*DL + 2.0*BW, -0.5*DH));
+		pnts2.push_back(Vecd(DL / 6.0, -0.5*DH));
 
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(pnts3, ShapeBooleanOps::add);
@@ -120,27 +123,26 @@ public:
 int main()
 {
 	//build up context -- a SPHSystem
-	SPHSystem system(Vec2d(-0.5*DL - BW, -0.5*DH - BW), 
-		Vec2d(0.5*DL + BW, 0.5*DH + BW), particle_spacing_ref);
+	SPHSystem system(system_domain_bounds, resolution_ref);
 
 	//define external force
 	Gravity gravity(Vecd(gravity_g, 0.0));
 
 	
 	//the water block
-	FluidBlock *fluid_block = new FluidBlock(system, "FluidBody", 0);
+	FluidBlock *fluid_block = new FluidBlock(system, "FluidBody");
 	//fluid material properties
 	NonNewtonianMaterial *non_newtonian_material = new NonNewtonianMaterial();
 	//creat fluid particles
 	ViscoelasticFluidParticles fluid_particles(fluid_block, non_newtonian_material);
 
 	//the wall boundary
-	WallBoundary *wall_boundary = new WallBoundary(system, "Wall", 0);
+	WallBoundary *wall_boundary = new WallBoundary(system, "Wall");
 	//creat solid particles
 	SolidParticles wall_particles(wall_boundary);
 	/** topology */
-	SPHBodyInnerRelation* fluid_block_inner = new SPHBodyInnerRelation(fluid_block);
-	SPHBodyComplexRelation* fluid_block_complex = new SPHBodyComplexRelation(fluid_block_inner, { wall_boundary });
+	InnerBodyRelation* fluid_block_inner = new InnerBodyRelation(fluid_block);
+	ComplexBodyRelation* fluid_block_complex = new ComplexBodyRelation(fluid_block_inner, { wall_boundary });
 	//-------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
 	//-------------------------------------------------------------------
@@ -152,29 +154,25 @@ int main()
 
 	
 	//evaluation of density by summation approach
-	fluid_dynamics::DensityBySummation
-		update_fluid_density(fluid_block_complex);
+	fluid_dynamics::DensitySummationComplex	update_density_by_summation(fluid_block_complex);
 	//time step size without considering sound wave speed
 	fluid_dynamics::AdvectionTimeStepSize	get_fluid_advection_time_step_size(fluid_block, U_f);
 	//time step size with considering sound wave speed
 	fluid_dynamics::AcousticTimeStepSize		get_fluid_time_step_size(fluid_block);
 	//pressure relaxation using verlet time stepping
-	fluid_dynamics::PressureRelaxationFirstHalfOldroyd_B
-		pressure_relaxation_first_half(fluid_block_complex);
-	pressure_relaxation_first_half.pre_processes_.push_back(&periodic_condition.ghost_update_);
-	fluid_dynamics::PressureRelaxationSecondHalfOldroyd_B
-		pressure_relaxation_second_half(fluid_block_complex);
-	pressure_relaxation_second_half.pre_processes_.push_back(&periodic_condition.ghost_update_);
+	fluid_dynamics::PressureRelaxationRiemannWithWallOldroyd_B	pressure_relaxation(fluid_block_complex);
+	pressure_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
+	fluid_dynamics::DensityRelaxationRiemannWithWallOldroyd_B	density_relaxation(fluid_block_complex);
+	density_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
 
 	//-------- common particle dynamics ----------------------------------------
 	InitializeATimeStep 	initialize_a_fluid_step(fluid_block, &gravity);
 	//computing viscous acceleration
-	fluid_dynamics::ViscousAcceleration viscous_acceleration(fluid_block_complex);
+	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(fluid_block_complex);
 	//impose transport velocity
-	fluid_dynamics::TransportVelocityFormulation transport_velocity_formulation(fluid_block_complex);
+	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(fluid_block_complex);
 	//computing vorticity in the flow
-	fluid_dynamics::VorticityInFluidField
-		compute_vorticity(fluid_block_inner);
+	fluid_dynamics::VorticityInner compute_vorticity(fluid_block_inner);
 	//-----------------------------------------------------------------------------
 	//outputs
 	//-----------------------------------------------------------------------------
@@ -224,17 +222,17 @@ int main()
 
 			initialize_a_fluid_step.parallel_exec();
 			Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_fluid_density.parallel_exec();
+			update_density_by_summation.parallel_exec();
 			viscous_acceleration.parallel_exec();
-			transport_velocity_formulation.correction_.parallel_exec(Dt);
+			transport_velocity_correction.parallel_exec(Dt);
 
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt) 
 			{
-				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt - relaxation_time);
+				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
 				//fluid dynamics
-				pressure_relaxation_first_half.parallel_exec(dt);
-				pressure_relaxation_second_half.parallel_exec(dt);
+				pressure_relaxation.parallel_exec(dt);
+				density_relaxation.parallel_exec(dt);
 
 				relaxation_time += dt;
 				integration_time += dt;

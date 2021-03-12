@@ -1,7 +1,6 @@
 /**
  * @file 	base_geometry.cpp
  * @author	Chi ZHang and Xiangyu Hu
- * @version	0.1
  */
 
 #include "base_geometry.h"
@@ -14,8 +13,9 @@ namespace SPH {
 	{
 		in_edge_ = 0;
 		id_ = 0;
-		elements_.push_back(tree->points_.size() - 1);
-		end_direction_ = (auxillary_point - init_point).normalize();
+		inner_points_.push_back(tree->points_.size() - 1);
+		Vecd displacement = auxillary_point - init_point;
+		end_direction_ = displacement / (displacement.norm() + TinyReal);
 	}
 	//=================================================================================================//
 	Branch::Branch(size_t parent_id, Tree* tree) : 
@@ -52,11 +52,11 @@ namespace SPH {
 		last_branch_id_ = branch->id_;
 	}
 	//=================================================================================================//
-	void Tree::addANewBranchElement(Branch* branch, Point new_point, Vecd end_direction)
+	void Tree::addANewBranchInnerVecd(Branch* branch, Vecd new_point, Vecd end_direction)
 	{
 		points_.push_back(new_point);
 		edge_locations_.push_back(branch->id_);
-		branch->elements_.push_back(points_.size() - 1);
+		branch->inner_points_.push_back(points_.size() - 1);
 		branch->end_direction_ = end_direction;
 	}
 	//=================================================================================================//

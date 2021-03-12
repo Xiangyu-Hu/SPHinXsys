@@ -1,150 +1,62 @@
 /**
  * @file 	mesh_cell_linked_list.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- * @version	0.1
+ * @author	Yongchuan Yu, Chi ZHang and Xiangyu Hu
  */
 
 #include "mesh_cell_linked_list.h"
 #include "base_kernel.h"
 #include "base_body.h"
+#include "particle_adaptation.h"
 #include "base_particles.h"
 
 
 namespace SPH {
 	//=================================================================================================//
-	SwapParticleData::SwapParticleData(BaseParticles* base_particles) :
-		sequence_(base_particles->sequence_),
-		unsorted_id_(base_particles->unsorted_id_),
-		sortable_matrices_(base_particles->sortable_matrices_),
-		sortable_vectors_(base_particles->sortable_vectors_),
-		sortable_scalars_(base_particles->sortable_scalars_) {}
-	//=================================================================================================//
-	void SwapParticleData::operator () (size_t* a, size_t* b)
-	{
-		std::swap(*a, *b);
-
-		size_t index_a = a - sequence_.data();
-		size_t index_b = b - sequence_.data();
-		std::swap(unsorted_id_[index_a], unsorted_id_[index_b]);
-		for (size_t i = 0; i != sortable_matrices_.size(); ++i) {
-			StdLargeVec<Matd>& matrices = *(sortable_matrices_[i]);
-			std::swap(matrices[index_a], matrices[index_b]);
-		}
-		for (size_t i = 0; i != sortable_vectors_.size(); ++i) {
-			StdLargeVec<Vecd>& vectors = *(sortable_vectors_[i]);
-			std::swap(vectors[index_a], vectors[index_b]);
-		}
-		for (size_t i = 0; i != sortable_scalars_.size(); ++i) {
-			StdLargeVec<Real>& scalars = *(sortable_scalars_[i]);
-			std::swap(scalars[index_a], scalars[index_b]);
-		}
-	}	
-	//=================================================================================================//
 	BaseMeshCellLinkedList
-		::BaseMeshCellLinkedList(SPHBody* body, Vecd lower_bound, Vecd upper_bound,
-			Real cell_spacing, size_t buffer_width)
-		: Mesh(lower_bound, upper_bound, cell_spacing, buffer_width), 
-		body_(body), base_particles_(NULL), kernel_(body->kernel_),
-		swap_particle_data_(NULL) {}
+		::BaseMeshCellLinkedList(SPHBody& sph_body, ParticleAdaptation& particle_adaptation,
+			BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width)
+		: Mesh(tentative_bounds, grid_spacing, buffer_width),
+		sph_body_(sph_body), kernel_(*particle_adaptation.getKernel()), base_particles_(NULL) {}
 	//=================================================================================================//
-	BaseMeshCellLinkedList
-		::BaseMeshCellLinkedList(SPHBody* body, 
-			Vecd mesh_lower_bound, Vecu number_of_cells, Real cell_spacing)
-		: Mesh(mesh_lower_bound, number_of_cells, cell_spacing),
-		body_(body), base_particles_(NULL), kernel_(body->kernel_),
-		swap_particle_data_(NULL), compare_(),
-		quick_sort_particle_range_(NULL),
-		quick_sort_particle_body_() {}
-	//=================================================================================================//
-	int BaseMeshCellLinkedList::computeSearchRange(int origin_refinement_level,
-		int target_refinement_level)
-	{
-		return origin_refinement_level >= target_refinement_level
-			? 1 : powern(2, target_refinement_level - origin_refinement_level);
-	}
-	//=================================================================================================//
-	Kernel& BaseMeshCellLinkedList
-		::ChoosingKernel(Kernel* original_kernel, Kernel* target_kernel)
-	{
-		return original_kernel->GetSmoothingLength()
-				> target_kernel->GetSmoothingLength()
-			? *original_kernel : *target_kernel;
-	}
-	//=================================================================================================//
-	void BaseMeshCellLinkedList::assignBaseParticles(BaseParticles* base_particles) 
-	{ 
-		base_particles_ = base_particles; 
-		swap_particle_data_ = new SwapParticleData(base_particles);
-		size_t* begin = base_particles_->sequence_.data();
-		quick_sort_particle_range_ = new tbb::interafce9::internal::
-			QuickSortParticleRange<size_t*, CompareParticleSequence, SwapParticleData>
-			(begin, 0, compare_, *swap_particle_data_);
-	};
-	//=================================================================================================//
-	void BaseMeshCellLinkedList::reassignKernel(Kernel* kernel)
-	{
-		kernel_ = kernel;
-	}
-	//=================================================================================================//
-	void BaseMeshCellLinkedList::ClearSplitCellLists(SplitCellLists& split_cell_lists)
+	void BaseMeshCellLinkedList::clearSplitCellLists(SplitCellLists& split_cell_lists)
 	{
 		for (size_t i = 0; i < split_cell_lists.size(); i++)
 			split_cell_lists[i].clear();
 	}
 	//=================================================================================================//
-	void BaseMeshCellLinkedList::sortingParticleData()
+	MeshCellLinkedList::MeshCellLinkedList(SPHBody& sph_body, ParticleAdaptation& particle_adaptation, 
+		BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width)
+		: BaseMeshCellLinkedList(sph_body, particle_adaptation, tentative_bounds, grid_spacing, buffer_width)
 	{
-		StdLargeVec<size_t>& sequence = base_particles_->sequence_;
-		computingSequence(sequence);
-		quick_sort_particle_range_->begin_ = sequence.data();
-		quick_sort_particle_range_->size_ = body_->number_of_particles_;
-		parallel_for(*quick_sort_particle_range_, quick_sort_particle_body_, ap);
-		updateSortedId();
+		name_ = "MeshCellLinkedList";
+		allocateMeshDataMatrix();
 	}
-	//=================================================================================================//
-	void BaseMeshCellLinkedList::updateSortedId()
-	{
-		StdLargeVec<size_t>& unsorted_id = base_particles_->unsorted_id_;
-		StdLargeVec<size_t>& sorted_id = base_particles_->sorted_id_;
-		size_t number_of_particles = body_->number_of_particles_;
-		parallel_for(blocked_range<size_t>(0, number_of_particles),
-			[&](const blocked_range<size_t>& r) {
-				for (size_t i = r.begin(); i != r.end(); ++i) {
-					sorted_id[unsorted_id[i]] = i;
-				}
-			}, ap);
-	}
-	//=================================================================================================//
-	MeshCellLinkedList::MeshCellLinkedList(SPHBody* body, Vecd lower_bound,
-		Vecd upper_bound, Real cell_spacing, size_t buffer_width)
-		: BaseMeshCellLinkedList(body, lower_bound, upper_bound, cell_spacing, buffer_width),
-		cutoff_radius_(cell_spacing) {}
-	//=================================================================================================//
-	MeshCellLinkedList::MeshCellLinkedList(SPHBody* body, Vecd mesh_lower_bound,
-		Vecu number_of_cells, Real cell_spacing)
-		: BaseMeshCellLinkedList(body, mesh_lower_bound, number_of_cells, cell_spacing),
-		cutoff_radius_(cell_spacing) {}
 	//=================================================================================================//
 	void MeshCellLinkedList::UpdateCellLists()
 	{
-		ClearCellLists(number_of_cells_, cell_linked_lists_);
+		clearCellLists();
 		StdLargeVec<Vecd>& pos_n = base_particles_->pos_n_;
-		size_t number_of_particles = body_->number_of_particles_;
-		parallel_for(blocked_range<size_t>(0, number_of_particles),
+		size_t total_real_particles = base_particles_->total_real_particles_;
+		parallel_for(blocked_range<size_t>(0, total_real_particles),
 			[&](const blocked_range<size_t>& r) {
 				for (size_t i = r.begin(); i != r.end(); ++i) {
-					InsertACellLinkedParticleIndex(i, pos_n[i]);
+					insertACellLinkedParticleIndex(i, pos_n[i]);
 				}
 			}, ap);
-		UpdateCellListData(cell_linked_lists_);
-		UpdateSplitCellLists(body_->split_cell_lists_, number_of_cells_, cell_linked_lists_);
+		UpdateCellListData();
+		updateSplitCellLists(sph_body_.split_cell_lists_);
 	}
+	//=================================================================================================//
+	void MeshCellLinkedList::assignBaseParticles(BaseParticles* base_particles)
+	{
+		base_particles_ = base_particles;
+	};
 	//=================================================================================================//
 	void MeshCellLinkedList::computingSequence(StdLargeVec<size_t>& sequence)
 	{
 		StdLargeVec<Vecd>& positions = base_particles_->pos_n_;
-		size_t number_of_particles = body_->number_of_particles_;
-		parallel_for(blocked_range<size_t>(0, number_of_particles),
+		size_t total_real_particles = base_particles_->total_real_particles_;
+		parallel_for(blocked_range<size_t>(0, total_real_particles),
 			[&](const blocked_range<size_t>& r) {
 				for (size_t i = r.begin(); i != r.end(); ++i) {
                     sequence[i] = transferMeshIndexToMortonOrder(GridIndexFromPosition(positions[i]));
@@ -153,128 +65,74 @@ namespace SPH {
 	}
 	//=================================================================================================//
 	MultilevelMeshCellLinkedList
-		::MultilevelMeshCellLinkedList(SPHBody* body, Vecd lower_bound,
-		Vecd upper_bound, Real reference_cell_spacing, size_t total_levels, size_t buffer_width)
-		: BaseMeshCellLinkedList(body, lower_bound, upper_bound, reference_cell_spacing, buffer_width),
-		total_levels_(total_levels)
+		::MultilevelMeshCellLinkedList(SPHBody& sph_body, ParticleAdaptation& particle_adaptation, 
+			BoundingBox tentative_bounds, Real reference_grid_spacing, 
+			size_t total_levels, Real maximum_spacing_ratio) :
+		MultilevelMesh<SPHBody, BaseMeshCellLinkedList, MeshCellLinkedList>(sph_body, particle_adaptation, 
+			tentative_bounds, reference_grid_spacing, total_levels, maximum_spacing_ratio, 2)
 	{
-		/**initialize lists. */
-		split_cell_lists_levels_.resize(total_levels);
-		cell_linked_lists_levels_.resize(total_levels);
-
-		/** build the zero level mesh first.*/
-		size_t middle_level = (total_levels - 1) / 2;
-		Real zero_level_cell_spacing = reference_cell_spacing * powern(2.0, (int)middle_level);
-		cell_spacing_levels_.push_back(zero_level_cell_spacing);
-		MeshCellLinkedList* zero_level_mesh
-			= new MeshCellLinkedList(body, lower_bound,	upper_bound, zero_level_cell_spacing, buffer_width);
-		mesh_cell_linked_list_levels_.push_back(zero_level_mesh);
-		size_t number_of_split_cell_lists = powern(3, Vecd(0).size());
-		split_cell_lists_levels_[0].resize(number_of_split_cell_lists);
-		Vecu zero_level_number_of_cells = zero_level_mesh->NumberOfCells();
-		number_of_cells_levels_.push_back(zero_level_number_of_cells);
-		/** copy zero level mesh perperties to this. */
-		copyMeshProperties(zero_level_mesh);
-
-		/** other levels. */
-		for (size_t level = 1; level != total_levels; ++level) {
-			Real cell_spacing = zero_level_cell_spacing * powern(0.5, (int)level);
-			cell_spacing_levels_.push_back(cell_spacing);
-			Vecu number_of_cells
-				= zero_level_number_of_cells * powern(2, (int)level);
-			MeshCellLinkedList* mesh_cell_linked_list_level
-				= new MeshCellLinkedList(body, mesh_lower_bound_, number_of_cells, cell_spacing);
-			mesh_cell_linked_list_levels_.push_back(mesh_cell_linked_list_level);
-			split_cell_lists_levels_[level].resize(number_of_split_cell_lists);
-			number_of_cells_levels_.push_back(number_of_cells);
-		}
+		name_ = "MultilevelMeshCellLinkedList";
 	}
 	//=================================================================================================//
-	size_t MultilevelMeshCellLinkedList
-		::getLevelFromCutOffRadius(Real smoothing_length)
+	size_t MultilevelMeshCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
 	{
-		size_t current_level = 0;
-		Real cut_off_radius = kernel_->GetCutOffRadius(smoothing_length);
-		for (size_t level = 1; level != cell_spacing_levels_.size(); ++level)
-		{
-			if (cut_off_radius < 0.5 * cell_spacing_levels_[level - 1]) current_level = level;
-		}
-		return current_level;
-	}
+		for (size_t level = total_levels_; level != 0; --level)
+			if (particle_cutoff_radius - mesh_levels_[level - 1]->GridSpacing() < Eps) return level - 1; //jump out the loop!
+
+		std::cout << "\n Error: MeshCellLinkedList level searching out of bound!" << std::endl;
+		std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+		exit(1);
+		return 999; //means an error in level searching
+	};
 	//=================================================================================================//
-	Vecu MultilevelMeshCellLinkedList::getLevelCellIndexesFromPosition(Vecd& position, size_t level)
+	void MultilevelMeshCellLinkedList::
+		insertACellLinkedParticleIndex(size_t particle_index, Vecd particle_position)
 	{
-		Real cell_spacing = cell_spacing_levels_[level];
-		Vecu& number_of_cells = number_of_cells_levels_[level];
-		Vecd rltpos = position - mesh_lower_bound_;
-		Vecu cell_pos(0);
-		for (int n = 0; n < rltpos.size(); n++)
-		{
-			cell_pos[n] = clamp((int)floor(rltpos[n] / cell_spacing),
-				0, int(number_of_cells[n]) - 1);
-		}
-		return cell_pos;
+		size_t level = getMeshLevel(kernel_.CutOffRadius(base_particles_->h_ratio_[particle_index]));
+		mesh_levels_[level]->insertACellLinkedParticleIndex(particle_index, particle_position);
 	}
 	//=================================================================================================//
 	void MultilevelMeshCellLinkedList::
-		InsertACellLinkedParticleIndex(size_t index_i, Vecd particle_position)
+		InsertACellLinkedListDataEntry(size_t particle_index, Vecd particle_position)
 	{
-		size_t current_level = 0;
-		Real cut_off_radius = kernel_->GetCutOffRadius(base_particles_->smoothing_length_[index_i]);
-		Vecd& position = base_particles_->pos_n_[index_i];
-		Vecu current_cell_index(0);
-		for (size_t level = 1; level != cell_spacing_levels_.size(); ++level)
-		{
-			if (cut_off_radius < 0.5 * cell_spacing_levels_[level - 1]) {
-				current_level = level;
-				current_cell_index = getLevelCellIndexesFromPosition(position, level);
-				InsertACellLinkedListEntryAtALevel(index_i, position, current_cell_index, level);
-			}
-		}
-		mesh_cell_linked_list_levels_[current_level]->InsertACellLinkedParticleIndex(index_i, particle_position);
+		size_t level = getMeshLevel(kernel_.CutOffRadius(base_particles_->h_ratio_[particle_index]));
+		mesh_levels_[level]->InsertACellLinkedListDataEntry(particle_index, particle_position);
 	}
 	//=================================================================================================//
-	void MultilevelMeshCellLinkedList::allocateMeshDataMatrix()
+	void MultilevelMeshCellLinkedList::assignBaseParticles(BaseParticles* base_particles)
 	{
+		base_particles_ = base_particles;
 		for (size_t l = 0; l != total_levels_; ++l) {
-			mesh_cell_linked_list_levels_[l]->allocateMeshDataMatrix();
+			mesh_levels_[l]->assignBaseParticles(base_particles);
 		}
-	}
-	//=================================================================================================//
-	void MultilevelMeshCellLinkedList::deleteMeshDataMatrix()
-	{
-		for (size_t l = 0; l != total_levels_; ++l) {
-			mesh_cell_linked_list_levels_[l]->deleteMeshDataMatrix();
-		}
-	}
+	};
 	//=================================================================================================//
 	void MultilevelMeshCellLinkedList::UpdateCellLists()
 	{
-		for (size_t level = 0; level != total_levels_; ++level) {
-			matrix_cell cell_linked_list
-				= mesh_cell_linked_list_levels_[level]->CellLinkedLists();
-			ClearCellLists(number_of_cells_levels_[level], cell_linked_list);
-			ClearCellLists(number_of_cells_levels_[level], cell_linked_lists_levels_[level]);
-
-		}
+		for (size_t level = 0; level != total_levels_; ++level) 
+			mesh_levels_[level]->clearCellLists();
+	
 		StdLargeVec<Vecd>& pos_n = base_particles_->pos_n_;
-		size_t number_of_particles = body_->number_of_particles_;
+		size_t total_real_particles = base_particles_->total_real_particles_;
 		//rebuild the corresponding particle list.
-		parallel_for(blocked_range<size_t>(0, number_of_particles),
+		parallel_for(blocked_range<size_t>(0, total_real_particles),
 			[&](const blocked_range<size_t>& r) {
 				for (size_t i = r.begin(); i != r.end(); ++i) {
-					InsertACellLinkedParticleIndex(i, pos_n[i]);
+					insertACellLinkedParticleIndex(i, pos_n[i]);
 				}
 			}, ap);
 
-		for (size_t level = 0; level != total_levels_; ++level) {
-			matrix_cell cell_linked_list
-				= mesh_cell_linked_list_levels_[level]->CellLinkedLists();
-			UpdateSplitCellLists(split_cell_lists_levels_[level],
-				number_of_cells_levels_[level], cell_linked_list);
+		for (size_t level = 0; level != total_levels_; ++level) 
+			mesh_levels_[level]->UpdateCellListData();
+		updateSplitCellLists(sph_body_.split_cell_lists_);
+	}
+	//=================================================================================================//
+	void MultilevelMeshCellLinkedList::
+		tagBodyPartByCell(CellLists& cell_lists, std::function<bool(Vecd, Real)>& check_included)
+	{
+		for (size_t l = 0; l != total_levels_; ++l) {
+			mesh_levels_[l]->tagBodyPartByCell(cell_lists, check_included);
 		}
-		UpdateSplitCellLists(body_->split_cell_lists_, 
-			number_of_cells_levels_[0], cell_linked_lists_levels_[0]);
 	}
 	//=================================================================================================//
 }

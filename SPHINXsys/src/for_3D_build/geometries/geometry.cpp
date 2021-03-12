@@ -100,7 +100,7 @@ namespace SPH
 		return weighted_inside;
 	}
 	//=================================================================================================//
-	Vec3d TriangleMeshShape::findClosestPoint(Vec3d input_pnt)
+	Vec3d TriangleMeshShape::findClosestPoint(Vec3d& input_pnt)
 	{
 		bool inside = false;
 		int face_id;
@@ -116,12 +116,12 @@ namespace SPH
 		return closest_pnt;
 	}
 	//=================================================================================================//
-	void TriangleMeshShape::findBounds(Vec3d &lower_bound, Vec3d &upper_bound)
+	BoundingBox TriangleMeshShape::findBounds()
 	{
 		int number_of_vertices = triangle_mesh_->getNumVertices();
 		//initial reference values
-		lower_bound = Vec3d(Infinity);
-		upper_bound = Vec3d(-Infinity);
+		Vec3d lower_bound = Vec3d(Infinity);
+		Vec3d upper_bound = Vec3d(-Infinity);
 
 		for (int i = 0; i != number_of_vertices; ++i)
 		{
@@ -131,9 +131,10 @@ namespace SPH
 				upper_bound[j] = SMAX(upper_bound[j], vertex_position[j]);
 			}
 		}
+		return BoundingBox(lower_bound, upper_bound);
 	}
 	//=================================================================================================//
-	bool ComplexShape::checkContain(Vec3d input_pnt, bool BOUNDARY_INCLUDED)
+	bool ComplexShape::checkContain(Vec3d& input_pnt, bool BOUNDARY_INCLUDED)
 	{
 		bool exist = false;
 		bool inside = false;
@@ -169,7 +170,7 @@ namespace SPH
 		return exist;
 	}
 	//=================================================================================================//
-	Vec3d ComplexShape::findClosestPoint(Vec3d input_pnt)
+	Vec3d ComplexShape::findClosestPoint(Vec3d& input_pnt)
 	{
 		//a big positive number
 		Real large_number(Infinity);
@@ -193,13 +194,13 @@ namespace SPH
 		return pnt_closest;
 	}
 	//=================================================================================================//
-	Real ComplexShape::findSignedDistance(Vec3d input_pnt)
+	Real ComplexShape::findSignedDistance(Vec3d& input_pnt)
 	{
 		Real distance_to_surface = (input_pnt - findClosestPoint(input_pnt)).norm();
 		return checkContain(input_pnt) ? -distance_to_surface : distance_to_surface;
 	}
 	//=================================================================================================//
-	Vec3d ComplexShape::findNormalDirection(Vec3d input_pnt)
+	Vec3d ComplexShape::findNormalDirection(Vec3d& input_pnt)
 	{
 		bool is_contain = checkContain(input_pnt);
 		Vecd displacement_to_surface = findClosestPoint(input_pnt) - input_pnt;
@@ -276,36 +277,34 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	bool ComplexShape::checkNotFar(Vec3d input_pnt, Real threshold)
+	bool ComplexShape::checkNotFar(Vec3d& input_pnt, Real threshold)
 	{
 		return  ComplexShape::checkContain(input_pnt)
 			|| getMinAbsoluteElement(input_pnt - ComplexShape::findClosestPoint(input_pnt)) < threshold ?
 			true : false;
 	}
 	//=================================================================================================//
-	void ComplexShape::findBounds(Vec3d &lower_bound, Vec3d &upper_bound)
+	bool ComplexShape::checkNearSurface(Vec3d& input_pnt, Real threshold)
+	{
+		return  getMinAbsoluteElement(input_pnt - ComplexShape::findClosestPoint(input_pnt)) < threshold ?
+			true : false;
+	}
+	//=================================================================================================//
+	BoundingBox ComplexShape::findBounds()
 	{
 		//initial reference values
-		lower_bound = Vec3d(Infinity);
-		upper_bound = Vec3d(-Infinity);
+		Vec3d lower_bound = Vec3d(Infinity);
+		Vec3d upper_bound = Vec3d(-Infinity);
 
 		for (size_t i = 0; i < triangle_mesh_shapes_.size(); i++)
 		{
-			Vec3d shape_lower_bound(0), shape_upper_bound(0);
-			triangle_mesh_shapes_[i].first->findBounds(shape_lower_bound, shape_upper_bound);
+			BoundingBox shape_bounds = triangle_mesh_shapes_[i].first->findBounds();
 			for (int j = 0; j != 3; ++j) {
-				lower_bound[j] = SMIN(lower_bound[j], shape_lower_bound[j]);
-				upper_bound[j] = SMAX(upper_bound[j], shape_upper_bound[j]);
+				lower_bound[j] = SMIN(lower_bound[j], shape_bounds.first[j]);
+				upper_bound[j] = SMAX(upper_bound[j], shape_bounds.second[j]);
 			}
 		}
-	}
-	//=================================================================================================//
-	Vecd ComplexShape::computeKernelIntegral(Vecd input_pnt, Kernel* kernel)
-	{
-		std::cout << "\n ComplexShape::computeKernelIntegral is not implemented!" << std::endl;
-		std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-		exit(1);
-		return Vecd(0.0);
+		return BoundingBox(lower_bound, upper_bound);
 	}
 	//=================================================================================================//
 }

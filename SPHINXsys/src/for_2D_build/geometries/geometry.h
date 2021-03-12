@@ -8,7 +8,6 @@
 * This strict requirement suggests that complex shapes should be finished
 * already in modeling using related binary operations before it is included.
 * @author	Luhui Han, Chi ZHang and Xiangyu Hu
-* @version	0.1
 */
 
 #pragma once
@@ -53,17 +52,16 @@ namespace SPH {
 		MultiPolygon() :Shape("MultiPolygon") {};
 		boost_multi_poly& getBoostMultiPoly() { return multi_poly_; };
 		bool checkContain(Vec2d pnt, bool BOUNDARY_INCLUDED = true);
-		virtual Vec2d findClosestPoint(Vec2d input_pnt) override;
-		virtual void findBounds(Vec2d &lower_bound, Vec2d &upper_bound) override;
+		Vec2d findClosestPoint(Vec2d& input_pnt);
+		virtual BoundingBox findBounds() override;
 
 		void addAMultiPolygon(MultiPolygon& multi_polygon, ShapeBooleanOps op);
 		void addABoostMultiPoly(boost_multi_poly& boost_multi_poly, ShapeBooleanOps op);
-		void addAPolygon(std::vector<Point>& points, ShapeBooleanOps op);
+		void addAPolygon(std::vector<Vecd>& points, ShapeBooleanOps op);
 		void addACircle(Vec2d center, Real radius, int resolution, ShapeBooleanOps op);
 
 	protected:
 		boost_multi_poly multi_poly_;
-
 		boost_multi_poly MultiPolygonByBooleanOps(boost_multi_poly multi_poly_in,
 						boost_multi_poly multi_poly_op, ShapeBooleanOps boolean_op);
 	};
@@ -74,24 +72,26 @@ namespace SPH {
 	 */
 	class ComplexShape : public Shape
 	{
+		Vec2d findClosestPoint(Vec2d& input_pnt);
 	public:
 		/** Default constructor. */
 		ComplexShape() : Shape("ComplexShape"), multi_ploygen_() {};
 		ComplexShape(string complex_shape_name) : Shape(complex_shape_name), multi_ploygen_() {};
 		virtual ~ComplexShape() {};
-		virtual void findBounds(Vec2d& lower_bound, Vec2d& upper_bound) override;
+		virtual BoundingBox findBounds() override;
 		void addAMultiPolygon(MultiPolygon& multi_polygon, ShapeBooleanOps op);
 		void addABoostMultiPoly(boost_multi_poly& boost_multi_poly, ShapeBooleanOps op);
-		void addAPolygon(std::vector<Point>& points, ShapeBooleanOps op);
+		void addAPolygon(std::vector<Vecd>& points, ShapeBooleanOps op);
 		void addACircle(Vec2d center, Real radius, int resolution, ShapeBooleanOps op);
 		void addAPolygonFromFile(string file_path_name, ShapeBooleanOps op, Vec2d translation = Vecd(0), Real scale_factor = 1.0);
 
-		virtual bool checkContain(Vec2d input_pnt, bool BOUNDARY_INCLUDED = true);
-		virtual	bool checkNotFar(Vec2d input_pnt, Real threshold);
-		virtual Vec2d findClosestPoint(Vec2d input_pnt) override;
-		virtual Real findSignedDistance(Vec2d input_pnt);
-		virtual Vec2d findNormalDirection(Vec2d input_pnt);
-		virtual Vecd computeKernelIntegral(Vecd input_pnt, Kernel* kernel);
+		virtual bool checkContain(Vec2d& input_pnt, bool BOUNDARY_INCLUDED = true);
+		virtual	bool checkNotFar(Vec2d& input_pnt, Real threshold);
+		virtual bool checkNearSurface(Vec2d& input_pnt, Real threshold);
+		/** Signed distance is negative for point within the complex shape. */
+		virtual Real findSignedDistance(Vec2d& input_pnt);
+		/** Normal direction point toward outside of the complex shape. */
+		virtual Vec2d findNormalDirection(Vec2d& input_pnt);
 	protected:
 		MultiPolygon multi_ploygen_;
 	};

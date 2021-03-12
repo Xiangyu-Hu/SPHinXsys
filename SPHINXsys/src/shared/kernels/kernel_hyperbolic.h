@@ -28,7 +28,6 @@
 * at the origin. However, it is also found that such kernels give bad density
 * predictions. Therefore, the application of this kernel should be clarified.
 * @author	Chi ZHang and Xiangyu Hu
-* @version	0.1
 */
 
 #pragma once
@@ -43,10 +42,10 @@ namespace SPH
 	 */
 	class KernelHyperbolic : public Kernel
 	{
+	protected:
+		virtual void setBasicParameters() override;
 	public:
-		/** constructor to initialize the data members 
-		(auxiliary factors for kernel calculation) */
-		KernelHyperbolic(Real h);
+		KernelHyperbolic();
 
 		virtual Real W_1D(const Real q) const override;
 		virtual Real W_2D(const Real q) const override;

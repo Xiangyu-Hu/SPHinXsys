@@ -3,69 +3,76 @@
  * @brief 	2D example to show that a tank is filled by emitter.
  * @details This is the one of the basic test cases, also the first case for
  * 			understanding how emitter inflow is working.
- * @author 	Chi Zhang and Xiangyu Hu
- * @version 0.1
+ * @author 	Xiangyu Hu
  */
- /**
-  * @brief 	SPHinXsys Library.
-  */
 #include "sphinxsys.h"
-  /**
- * @brief Namespace cite here.
- */
 using namespace SPH;
-/**
- * @brief Basic geometry parameters and numerical setup.
- */
+ //----------------------------------------------------------------------
+ //	Global geometry, material parameters and numerical setup.
+ //----------------------------------------------------------------------
 Real DL = 5.366; 						/**< Tank length. */
 Real DH = 5.366; 						/**< Tank height. */
-Real particle_spacing_ref = 0.025; 		/**< Initial reference particle spacing. */
-Real BW = particle_spacing_ref * 4; 	/**< Extending width for wall BCs. */
+Real resolution_ref = 0.025; 			/**< Initial reference particle spacing. */
+Real BW = resolution_ref * 4; 			/**< Extending width for wall boundarys. */
 Real LL = 2.0*BW; 						/**< Inflow region length. */
 Real LH = 0.125; 						/**< Inflows region height. */
 Real inlet_height = 1.0;				/**< Inflow location height */
 Real inlet_distance = - BW;				/**< Inflow location distance */
-/**
- * @brief Material properties of the fluid.
- */
+BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 Real rho0_f = 1.0;						/**< Reference density of fluid. */
 Real gravity_g = 1.0;					/**< Gravity force of fluid. */
 Real U_f = 2.0*sqrt(gravity_g* (inlet_height + LH));	/**< Characteristic velocity. */
 Real c_f = 10.0*U_f;					/**< Reference sound speed. */
-
-/** @brief create a water block shape for the inlet. */
-std::vector<Point> CreatWaterBlockShape()
+/** create a outer wall polygen. */
+std::vector<Vecd> CreateOuterWallShape()
 {
-	//geometry
-	std::vector<Point> water_block_shape;
-	water_block_shape.push_back(Point(inlet_distance, inlet_height));
-	water_block_shape.push_back(Point(inlet_distance, LH + inlet_height));
-	water_block_shape.push_back(Point(LL + inlet_distance, LH + inlet_height));
-	water_block_shape.push_back(Point(LL + inlet_distance, inlet_height));
-	water_block_shape.push_back(Point(inlet_distance, inlet_height));
+	std::vector<Vecd> outer_wall_shape;
+	outer_wall_shape.push_back(Vecd(-BW, -BW));
+	outer_wall_shape.push_back(Vecd(-BW, DH + BW));
+	outer_wall_shape.push_back(Vecd(DL + BW, DH + BW));
+	outer_wall_shape.push_back(Vecd(DL + BW, -BW));
+	outer_wall_shape.push_back(Vecd(-BW, -BW));
+
+	return outer_wall_shape;
+}
+/** create a inner wall polygen. */
+std::vector<Vecd> CreateInnerWallShape()
+{
+	std::vector<Vecd> inner_wall_shape;
+	inner_wall_shape.push_back(Vecd(0.0, 0.0));
+	inner_wall_shape.push_back(Vecd(0.0, DH));
+	inner_wall_shape.push_back(Vecd(DL, DH));
+	inner_wall_shape.push_back(Vecd(DL, 0.0));
+	inner_wall_shape.push_back(Vecd(0.0, 0.0));
+
+	return inner_wall_shape;
+}
+/** create a water block shape for the inlet. */
+std::vector<Vecd> CreateWaterBlockShape()
+{
+	std::vector<Vecd> water_block_shape;
+	water_block_shape.push_back(Vecd(inlet_distance, inlet_height));
+	water_block_shape.push_back(Vecd(inlet_distance, LH + inlet_height));
+	water_block_shape.push_back(Vecd(LL + inlet_distance, LH + inlet_height));
+	water_block_shape.push_back(Vecd(LL + inlet_distance, inlet_height));
+	water_block_shape.push_back(Vecd(inlet_distance, inlet_height));
 
 	return water_block_shape;
 }
-
 /** @brief 	Fluid body definition. */
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem &system, string body_name,	int refinement_level)
-		: FluidBody(system, body_name, refinement_level)
+	WaterBlock(SPHSystem &system, string body_name, ParticleAdaptation* particle_adaptation)
+		: FluidBody(system, body_name, particle_adaptation)
 	{
-		/** Geometry definition. */
-		std::vector<Point> water_bock_shape = CreatWaterBlockShape();
+		/** initial water block is the inlet */
+		std::vector<Vecd> water_bock_shape = CreateWaterBlockShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(water_bock_shape, ShapeBooleanOps::add);
-
-		/** Replace the default kernel functions */
-		ReplaceKernelFunction(new KernelTabulated<KernelWendlandC2>(smoothing_length_, 20));
 	}
 };
-/**
- * @brief 	Case dependent material properties definition.
- */
+/** Case dependent material properties definition. */
 class WaterMaterial : public WeaklyCompressibleFluid
 {
 public:
@@ -77,31 +84,17 @@ public:
 		assignDerivedMaterialParameters();
 	}
 };
-/**
- * @brief 	Wall boundary body definition.
- */
+/** Wall boundary body definition. */
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	WallBoundary(SPHSystem &system, string body_name)
+		: SolidBody(system, body_name)
 	{
 		/** Geometry definition. */
-		std::vector<Point> outer_wall_shape;
-		outer_wall_shape.push_back(Point(-BW, -BW));
-		outer_wall_shape.push_back(Point(-BW, DH + BW));
-		outer_wall_shape.push_back(Point(DL + BW, DH + BW));
-		outer_wall_shape.push_back(Point(DL + BW, -BW));
-		outer_wall_shape.push_back(Point(-BW, -BW));
-
-		std::vector<Point> inner_wall_shape;
-		inner_wall_shape.push_back(Point(0.0, 0.0));
-		inner_wall_shape.push_back(Point(0.0, DH));
-		inner_wall_shape.push_back(Point(DL, DH));
-		inner_wall_shape.push_back(Point(DL, 0.0));
-		inner_wall_shape.push_back(Point(0.0, 0.0));
-		/** Inlet */
-		std::vector<Point> water_block_shape = CreatWaterBlockShape();
+		std::vector<Vecd> outer_wall_shape = CreateOuterWallShape();
+		std::vector<Vecd> inner_wall_shape = CreateInnerWallShape();
+		std::vector<Vecd> water_block_shape = CreateWaterBlockShape();
 
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
@@ -109,10 +102,7 @@ public:
 		body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::sub);
 	}
 };
-
-/**
-* @brief constrain the beam base
-*/
+/** Inelt as a bodypart by particle */
 class Inlet : public BodyPartByParticle
 {
 public:
@@ -120,7 +110,7 @@ public:
 		: BodyPartByParticle(fluid_body, constrained_region_name)
 	{
 		/** Geometry definition. */
-		std::vector<Point> water_block_shape = CreatWaterBlockShape();
+		std::vector<Vecd> water_block_shape = CreateWaterBlockShape();
 		body_part_shape_ = new ComplexShape(constrained_region_name);
 		body_part_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::add);
 
@@ -128,8 +118,7 @@ public:
 		tagBodyPart();
 	}
 };
-
-/** inlet inflow condition. */
+/** Inlet inflow condition. */
 class InletInflowCondition : public fluid_dynamics::EmitterInflowCondition
 {
 public:
@@ -146,118 +135,98 @@ public:
 		inflow_pressure_ = 0.0;
 	}
 };
-
-/**
- * @brief 	Fluid observer body definition.
- */
+/** Fluid observer body definition. */
 class FluidObserver : public FictitiousBody
 {
 public:
-	FluidObserver(SPHSystem &system, string body_name, int refinement_level)
-		: FictitiousBody(system, body_name, refinement_level, 1.3)
+	FluidObserver(SPHSystem &system, string body_name)
+		: FictitiousBody(system, body_name)
 	{
-		body_input_points_volumes_.push_back(make_pair(Point(DL, 0.2), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(DL, 0.2), 0.0));
 	}
 };
-
-/**
- * @brief 	Main program starts here.
- */
+//----------------------------------------------------------------------
+//	Main program starts here.
+//----------------------------------------------------------------------
 int main()
 {
-	/**
-	 * @brief Build up -- a SPHSystem --
-	 */
-	SPHSystem system(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW), particle_spacing_ref);
+	/** Build up a SPHSystem */
+	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
-	/**
-	 * @brief Material property, partilces and body creation of fluid.
-	 */
-	WaterBlock *water_block = new WaterBlock(system, "WaterBody", 0);
+	//----------------------------------------------------------------------
+	//	Creating body, materials and particles.
+	//----------------------------------------------------------------------
+	ParticleAdaptation* particle_adaptation = new ParticleAdaptation();
+	particle_adaptation->replaceKernel(new KernelTabulated<KernelWendlandC2>(20));
+	WaterBlock *water_block = new WaterBlock(system, "WaterBody", particle_adaptation);
 	WaterMaterial 	*water_material = new WaterMaterial();
 	FluidParticles 	fluid_particles(water_block, water_material);
-	/**
-	 * @brief 	Particle and body creation of wall boundary.
-	 */
-	WallBoundary *wall_boundary = new WallBoundary(system, "Wall",	0);
+	/**note that, as particle sort is activated (by default) for fluid particles, 
+	 * the output occasionally does not reflect the real free surface indication due to sorting. */
+	fluid_particles.addAVariableToWrite<indexBoolean, bool>("FreeSurfaceIndication");
+
+	WallBoundary *wall_boundary = new WallBoundary(system, "Wall");
 	SolidParticles	wall_particles(wall_boundary);
-	/**
-	 * @brief 	Particle and body creation of fluid observer.
-	 */
-	FluidObserver *fluid_observer = new FluidObserver(system, "Fluidobserver", 0);
+
+	FluidObserver *fluid_observer = new FluidObserver(system, "Fluidobserver");
 	BaseParticles 	observer_particles(fluid_observer);
-	/** topology */
-	SPHBodyComplexRelation* water_block_complex_relation = new SPHBodyComplexRelation(water_block, { wall_boundary });
-	SPHBodyContactRelation* fluid_observer_contact_relation = new SPHBodyContactRelation(fluid_observer, { water_block });
-	/**
-	 * @brief 	Define all numerical methods which are used in this case.
-	 */
-	 /** Define external force. */
-	Gravity 							gravity(Vecd(0.0, -gravity_g));
-	/**
-	 * @brief 	Methods used for time stepping.
-	 */
-	 /** Initialize particle acceleration. */
+	//----------------------------------------------------------------------
+	//	Define body relation map.
+	//	The contact map gives the topological connections between the bodies.
+	//	Basically the the range of bodies to build neighbor particle lists.
+	//----------------------------------------------------------------------
+	ComplexBodyRelation* water_block_complex_relation = new ComplexBodyRelation(water_block, { wall_boundary });
+	ContactBodyRelation* fluid_observer_contact_relation = new ContactBodyRelation(fluid_observer, { water_block });
+	//----------------------------------------------------------------------
+	//	Define all numerical methods which are used in this case.
+	//----------------------------------------------------------------------
+	Gravity 				gravity(Vecd(0.0, -gravity_g));
 	InitializeATimeStep 	initialize_a_fluid_step(water_block, &gravity);
-	/** Inlet condition. */
 	Inlet* inlet = new Inlet(water_block, "Inlet");
 	InletInflowCondition inflow_condition(water_block, inlet);
 	fluid_dynamics::EmitterInflowInjecting inflow_emitter(water_block, inlet, 300, 0, true);
-	/**
-	 * @brief 	Algorithms of fluid dynamics.
-	 */
-	 /** Evaluation of density by summation approach. */
-	fluid_dynamics::DensityBySummationFreeSurface 		update_fluid_density(water_block_complex_relation);
-	/** Time step size without considering sound wave speed. */
+	fluid_dynamics::DensitySummationFreeSurfaceComplex	update_density_by_summation(water_block_complex_relation);
+	fluid_dynamics::FreeSurfaceIndicationComplex	indicate_free_surface(water_block_complex_relation);
+	/** We can output a method-specific particle data for debug reason */
+	fluid_particles.addAVariableToWrite<indexScalar, Real>("PositionDivergence");
 	fluid_dynamics::AdvectionTimeStepSize 			get_fluid_advection_time_step_size(water_block, U_f);
-	/** Time step size with considering sound wave speed. */
 	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
-	/** Pressure relaxation algorithm by using position verlet time stepping. */
-	fluid_dynamics::PressureRelaxationFirstHalfRiemann 
-		pressure_relaxation_first_half(water_block_complex_relation);
-	fluid_dynamics::PressureRelaxationSecondHalfRiemann 
-		pressure_relaxation_second_half(water_block_complex_relation);
-	/**
-	 * @brief Output.
-	 */
+	fluid_dynamics::PressureRelaxationRiemannWithWall pressure_relaxation(water_block_complex_relation);
+	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex_relation);
+	//----------------------------------------------------------------------
+	//	File Output
+	//----------------------------------------------------------------------
 	In_Output in_output(system);
-	/** Output the body states. */
 	WriteBodyStatesToVtu 		write_body_states(in_output, system.real_bodies_);
-	/** Output the body states for restart simulation. */
 	ReadRestart		read_restart_files(in_output, system.real_bodies_);
 	WriteRestart	write_restart_files(in_output, system.real_bodies_);
-	/** Output the mechanical energy of fluid body. */
 	WriteTotalMechanicalEnergy 	write_water_mechanical_energy(in_output, water_block, &gravity);
-	/** output the observed data from fluid body. */
-	WriteAnObservedQuantity<Real, FluidParticles, &FluidParticles::p_>
+	WriteAnObservedQuantity<indexScalar, Real>
 		write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact_relation);
-	
-	/**
-	 * @brief Setup configurations and initial conditions.
-	 */
+	//----------------------------------------------------------------------
+	//	Setup computing and initial conditions.
+	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	wall_particles.initializeNormalDirectionFromGeometry();
-	/**
-	 * @brief The time stepping starts here.
-	 */
-	 /** If the starting time is not zero, please setup the restart time step ro read in restart states. */
+	//----------------------------------------------------------------------
+	//	The time stepping starts here.
+	//----------------------------------------------------------------------
+	/** If the starting time is not zero, please setup the restart time step ro read in restart states. */
 	if (system.restart_step_ != 0)
 	{
 		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
 		water_block->updateCellLinkedList();
 		water_block_complex_relation->updateConfiguration();
 	}
-	/** Output the start states of bodies. */
 	write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	/** Output the Hydrostatic mechanical energy of fluid. */
 	write_water_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
-	/**
-	 * @brief 	Basic parameters.
-	 */
+	//----------------------------------------------------------------------
+	//	Time stepping control parameters.
+	//----------------------------------------------------------------------
 	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval*10;
@@ -268,10 +237,9 @@ int main()
 	/** statistics for computing CPU time. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
-
-	/**
-	 * @brief 	Main loop starts here.
-	 */
+	//----------------------------------------------------------------------
+	//	Main loop starts here.
+	//----------------------------------------------------------------------
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
 		Real integration_time = 0.0;
@@ -281,15 +249,16 @@ int main()
 			/** Acceleration due to viscous force and gravity. */
 			initialize_a_fluid_step.parallel_exec();
 			Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_fluid_density.parallel_exec();
+			indicate_free_surface.parallel_exec();
+			update_density_by_summation.parallel_exec();
 
 			/** Dynamics including pressure relaxation. */
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				pressure_relaxation_first_half.parallel_exec(dt);
+				pressure_relaxation.parallel_exec(dt);
 				inflow_condition.parallel_exec();
-				pressure_relaxation_second_half.parallel_exec(dt);
+				density_relaxation.parallel_exec(dt);
 				dt = get_fluid_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integration_time += dt;

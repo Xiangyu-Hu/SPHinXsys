@@ -30,7 +30,6 @@
  *          handles all of the bookkeeping of system indices and provides convenience 
  *          access to variable values (incl. derivatives) via their names as strings. 
  * @author	Chi Zhang and Xiangyu Hu.
- * @version	0.1.
  */
 #pragma once
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING

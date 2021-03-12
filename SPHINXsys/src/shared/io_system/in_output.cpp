@@ -1,11 +1,10 @@
 /**
  * @file 	in_output.cpp
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- * @version	0.1
  */
 
 #include "in_output.h"
-#include "all_types_of_bodies.h"
+#include "all_bodies.h"
 #include "level_set.h"
 #include "sph_system.h"
 
@@ -37,7 +36,7 @@ namespace SPH
 		{
 			if (body->checkNewlyUpdated())
 			{
-				std::string filefullpath = in_output_.output_folder_ + "/SPHBody_" + body->GetBodyName() + "_" + std::to_string(Itime) + ".vtu";
+				std::string filefullpath = in_output_.output_folder_ + "/SPHBody_" + body->getBodyName() + "_" + std::to_string(Itime) + ".vtu";
 				if (fs::exists(filefullpath))
 				{
 					fs::remove(filefullpath);
@@ -48,8 +47,9 @@ namespace SPH
 				out_file << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
 				out_file << " <UnstructuredGrid>\n";
 
-				size_t number_of_particles = body->number_of_particles_;
-				out_file << "  <Piece Name =\"" << body->GetBodyName() << "\" NumberOfPoints=\"" << number_of_particles << "\" NumberOfCells=\"0\">\n";
+				BaseParticles* base_particles = body->base_particles_;
+				size_t total_real_particles = base_particles->total_real_particles_;
+				out_file << "  <Piece Name =\"" << body->getBodyName() << "\" NumberOfPoints=\"" << total_real_particles << "\" NumberOfCells=\"0\">\n";
 
 				body->writeParticlesToVtuFile(out_file);
 
@@ -78,13 +78,11 @@ namespace SPH
 	//=============================================================================================//
 	void WriteBodyStatesToPlt::WriteToFile(Real time)
 	{
-		int Itime = int(time * 1.0e4);
-
 		for (SPHBody* body : bodies_)
 		{
 			if (body->checkNewlyUpdated())
 			{
-				std::string filefullpath = in_output_.output_folder_ + "/SPHBody_" + body->GetBodyName() + "_" + std::to_string(Itime) + ".plt";
+				std::string filefullpath = in_output_.output_folder_ + "/SPHBody_" + std::to_string(time) + "_" + body->getBodyName() + ".plt";
 				if (fs::exists(filefullpath))
 				{
 					fs::remove(filefullpath);
@@ -126,17 +124,17 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	WriteLevelSetToPlt
-		::WriteLevelSetToPlt(In_Output& in_output, SPHBody* body, BaseLevelSet* level_set)
-		: WriteBodyStates(in_output, body), level_set_(level_set)
+	WriteMeshToPlt
+		::WriteMeshToPlt(In_Output& in_output, SPHBody* body, Mesh* mesh)
+		: WriteBodyStates(in_output, body), mesh_(mesh)
 	{
-		filefullpath_ = in_output_.output_folder_ + "/" + body->GetBodyName() + "_levelset.dat";
+		filefullpath_ = in_output_.output_folder_ + "/" + body->getBodyName() + "_" + mesh_->Name() + ".dat";
 	}
 	//=============================================================================================//
-	void WriteLevelSetToPlt::WriteToFile(Real time)
+	void WriteMeshToPlt::WriteToFile(Real time)
 	{
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
-		level_set_->writeMeshToPltFile(out_file);
+		mesh_->writeMeshToPltFile(out_file);
 		out_file.close();
 	}
 	//=================================================================================================//
@@ -144,11 +142,11 @@ namespace SPH
 		::WriteTotalMechanicalEnergy(In_Output& in_output, FluidBody* water_block, Gravity* gravity)
 		: WriteBodyStates(in_output, water_block), TotalMechanicalEnergy(water_block, gravity)
 	{
-		filefullpath_ = in_output_.output_folder_ + "/" + water_block->GetBodyName()
+		filefullpath_ = in_output_.output_folder_ + "/" + water_block->getBodyName()
 			+ "_water_mechanical_energy_" + in_output_.restart_step_ + ".dat";
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << "\"run_time\"" << "   ";
-		out_file << water_block->GetBodyName() << "   ";
+		out_file << water_block->getBodyName() << "   ";
 		out_file << "\n";
 		out_file.close();
 	};
@@ -166,11 +164,11 @@ namespace SPH
 		::WriteMaximumSpeed(In_Output& in_output, SPHBody* sph_body)
 		: WriteBodyStates(in_output, sph_body), MaximumSpeed(sph_body)
 	{
-		filefullpath_ = in_output_.output_folder_ + "/" + sph_body->GetBodyName()
+		filefullpath_ = in_output_.output_folder_ + "/" + sph_body->getBodyName()
 			+ "_maximum_speed_" + in_output_.restart_step_ + ".dat";
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << "\"run_time\"" << "   ";
-		out_file << sph_body->GetBodyName() << "   ";
+		out_file << sph_body->getBodyName() << "   ";
 		out_file << "\n";
 		out_file.close();
 	};
@@ -191,7 +189,7 @@ namespace SPH
 		Vecd zero(0);
 		dimension_ = zero.size();
 
-		filefullpath_ = in_output_.output_folder_ + "/total_viscous_force_on_" + solid_body->GetBodyName() + ".dat";
+		filefullpath_ = in_output_.output_folder_ + "/total_viscous_force_on_" + solid_body->getBodyName() + ".dat";
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << "\"run_time\"" << "   ";
 		for (int i = 0; i != dimension_; ++i)
@@ -219,7 +217,7 @@ namespace SPH
 		Vecd zero(0);
 		dimension_ = zero.size();
 
-		filefullpath_ = in_output_.output_folder_ + "/total_force_on_" + solid_body->GetBodyName()
+		filefullpath_ = in_output_.output_folder_ + "/total_force_on_" + solid_body->getBodyName()
 			+ "_" + in_output_.restart_step_ + ".dat";
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << "\"run_time\"" << "   ";
@@ -245,11 +243,11 @@ namespace SPH
 		::WriteUpperFrontInXDirection(In_Output& in_output, SPHBody* body)
 		:WriteBodyStates(in_output, body), UpperFrontInXDirection(body)
 	{
-		filefullpath_ = in_output_.output_folder_ + "/" + body->GetBodyName()
+		filefullpath_ = in_output_.output_folder_ + "/" + body->getBodyName()
 			+ "_upper_bound_in_x_direction_" + in_output_.restart_step_ + ".dat";
 		std::ofstream out_file(filefullpath_.c_str(), ios::app);
 		out_file << "\"run_time\"" << "   ";
-		out_file << body->GetBodyName() << "   ";
+		out_file << body->getBodyName() << "   ";
 		out_file << "\n";
 		out_file.close();
 	};
@@ -267,7 +265,7 @@ namespace SPH
 	{
 		for (SPHBody* body : bodies)
 		{
-			file_paths_.push_back(in_output.reload_folder_ + "/SPHBody_" + body->GetBodyName() + "_rld.xml");
+			file_paths_.push_back(in_output.reload_folder_ + "/SPHBody_" + body->getBodyName() + "_rld.xml");
 		}
 	}
 	//=============================================================================================//
@@ -349,7 +347,7 @@ namespace SPH
 		overall_file_path_ = in_output.restart_folder_ + "/Restart_time_";
 		for (SPHBody* body : bodies)
 		{
-			file_paths_.push_back(in_output.restart_folder_ + "/SPHBody_" + body->GetBodyName() + "_rst_");
+			file_paths_.push_back(in_output.restart_folder_ + "/SPHBody_" + body->getBodyName() + "_rst_");
 		}
 	}
 	//=============================================================================================//

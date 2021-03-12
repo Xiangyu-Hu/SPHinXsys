@@ -3,7 +3,6 @@
 * @brief 	This is the case file for the test of flow passing by a cylinder.
 * @details  We consider a flow passing by a cylinder in 2D.
 * @author 	Xiangyu Hu, Chi Zhangand Luhui Han
-* @version 0.1
 */
 
 #pragma once
@@ -17,11 +16,13 @@ using namespace SPH;
  */
 Real DL = 15.0; 					            /**< Channel length. */
 Real DH = 10.0; 						        /**< Channel height. */
-Real particle_spacing_ref = 0.2; 	            /**< Initial reference particle spacing. */
-Real DL_sponge = particle_spacing_ref * 10.0;	/**< Sponge region to impose inflow condition. */
-Real DH_sponge = particle_spacing_ref * 2.0;					/**< Sponge region to impose inflow condition. */
+Real resolution_ref = 0.2; 	            /**< Initial reference particle spacing. */
+Real DL_sponge = resolution_ref * 10.0;	/**< Sponge region to impose inflow condition. */
+Real DH_sponge = resolution_ref * 2.0;	/**< Sponge region to impose inflow condition. */
 Vec2d insert_circle_center(4.0, 5.0);		    /**< Location of the cylinder center. */
 Real insert_circle_radius = 0.75;			    /**< Radius of the cylinder. */
+/** Domain bounds of the system. */
+BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge));
 
 /**
  * @brief Material properties of the fluid.
@@ -36,32 +37,32 @@ Real mu_f = rho0_f * U_f * (2.0 * insert_circle_radius) / Re;	/**< Dynamics visc
 * @brief define geometry of SPH bodies
 */
 /** create a water block shape */
-std::vector<Point> CreatWaterBlockShape()
+std::vector<Vecd> CreatWaterBlockShape()
 {
 	//geometry
-	std::vector<Point> water_block_shape;
-	water_block_shape.push_back(Point(-DL_sponge, -DH_sponge));
-	water_block_shape.push_back(Point(-DL_sponge, DH + DH_sponge));
-	water_block_shape.push_back(Point(DL, DH + DH_sponge));
-	water_block_shape.push_back(Point(DL, -DH_sponge));
-	water_block_shape.push_back(Point(-DL_sponge, -DH_sponge));
+	std::vector<Vecd> water_block_shape;
+	water_block_shape.push_back(Vecd(-DL_sponge, -DH_sponge));
+	water_block_shape.push_back(Vecd(-DL_sponge, DH + DH_sponge));
+	water_block_shape.push_back(Vecd(DL, DH + DH_sponge));
+	water_block_shape.push_back(Vecd(DL, -DH_sponge));
+	water_block_shape.push_back(Vecd(-DL_sponge, -DH_sponge));
 
 	return water_block_shape;
 }
 
 /** create a water block buffer shape. */
-std::vector<Point> CreatBufferShape()
+std::vector<Vecd> CreatBufferShape()
 {
-	std::vector<Point> buffer_shape;
-	buffer_shape.push_back(Point(-DL_sponge, -DH_sponge));
-	buffer_shape.push_back(Point(-DL_sponge, DH + DH_sponge));
-	buffer_shape.push_back(Point(DL, DH + DH_sponge));
-	buffer_shape.push_back(Point(DL, DH));
-	buffer_shape.push_back(Point(0.0, DH));
-	buffer_shape.push_back(Point(0.0, 0.0));
-	buffer_shape.push_back(Point(DL, 0.0));
-	buffer_shape.push_back(Point(DL, -DH_sponge));
-	buffer_shape.push_back(Point(-DL_sponge, -DH_sponge));
+	std::vector<Vecd> buffer_shape;
+	buffer_shape.push_back(Vecd(-DL_sponge, -DH_sponge));
+	buffer_shape.push_back(Vecd(-DL_sponge, DH + DH_sponge));
+	buffer_shape.push_back(Vecd(DL, DH + DH_sponge));
+	buffer_shape.push_back(Vecd(DL, DH));
+	buffer_shape.push_back(Vecd(0.0, DH));
+	buffer_shape.push_back(Vecd(0.0, 0.0));
+	buffer_shape.push_back(Vecd(DL, 0.0));
+	buffer_shape.push_back(Vecd(DL, -DH_sponge));
+	buffer_shape.push_back(Vecd(-DL_sponge, -DH_sponge));
 
 	return buffer_shape;
 }
@@ -72,11 +73,11 @@ std::vector<Point> CreatBufferShape()
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem& system, string body_name, int refinement_level)
-		: FluidBody(system, body_name, refinement_level)
+	WaterBlock(SPHSystem& system, string body_name)
+		: FluidBody(system, body_name)
 	{
 		/** Geomtry definition. */
-		std::vector<Point> water_block_shape = CreatWaterBlockShape();
+		std::vector<Vecd> water_block_shape = CreatWaterBlockShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::add);
 		body_shape_->addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
@@ -99,8 +100,8 @@ public:
 class Cylinder : public SolidBody
 {
 public:
-	Cylinder(SPHSystem& system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	Cylinder(SPHSystem& system, string body_name)
+		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1))
 	{
 		/** Geomtry definition. */
 		ComplexShape original_body_shape;
@@ -116,7 +117,7 @@ public:
 		: BodyPartByCell(fluid_body, constrained_region_name)
 	{
 		/** Geomtry definition. */
-		std::vector<Point> inflow_buffer_shape = CreatBufferShape();
+		std::vector<Vecd> inflow_buffer_shape = CreatBufferShape();
 		body_part_shape_ = new ComplexShape(constrained_region_name);
 		body_part_shape_->addAPolygon(inflow_buffer_shape, ShapeBooleanOps::add);
 
@@ -151,8 +152,8 @@ public:
 class FluidObserver : public FictitiousBody
 {
 public:
-	FluidObserver(SPHSystem& system, string body_name, int refinement_level)
-		: FictitiousBody(system, body_name, refinement_level, 1.3)
+	FluidObserver(SPHSystem& system, string body_name)
+		: FictitiousBody(system, body_name)
 	{
 		/** the measureing particles */
 		Vec2d point_coordinate_1(3.0, 5.0);

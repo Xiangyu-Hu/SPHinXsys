@@ -2,10 +2,10 @@
  * @file diffusion_reaction.cpp
  * @brief These are classes for diffusion and reaction properties
  * @author Chi Zhang and Xiangyu Hu
- * @version 0.1.0
  */
 
 #include "diffusion_reaction.h"
+
 #include "diffusion_reaction_particles.h"
 
 namespace SPH 
@@ -22,8 +22,8 @@ namespace SPH
 	//=================================================================================================//
 	void LocalDirectionalDiffusion::initializeLocalDiffusionProperties(BaseParticles* base_particles)
 	{
-		size_t number_of_particles = base_particles->getSPHBody()->number_of_particles_;
-		for (size_t i = 0; i != number_of_particles; i++)
+		size_t total_real_particles = base_particles->total_real_particles_;
+		for (size_t i = 0; i != total_real_particles; i++)
 		{
 			local_bias_direction_.push_back(Vecd(0));
 			local_transformed_diffusivity_.push_back(Matd(0));

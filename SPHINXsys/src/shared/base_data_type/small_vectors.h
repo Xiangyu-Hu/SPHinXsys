@@ -315,6 +315,13 @@ namespace SPH {
 	using SymMat2d = SimTK::SymMat22;
 	using SymMat3d = SimTK::SymMat33;
 
+	//particle data type index
+	const int indexScalar = 0;
+	const int indexVector = 1;
+	const int indexMatrix = 2;
+	const int indexInteger = 3;
+	const int indexBoolean = 4;
+
 	Vec2d FirstAxisVector(Vec2d zero_vector);
 	Vec3d FirstAxisVector(Vec3d zero_vector);
 	Real getMinAbsoluteElement(Vec2d input);
@@ -370,18 +377,31 @@ namespace SPH {
 		Transform2d(SimTK::Real rotation_angle, Vec2d translation)
 			: rotation_angle_(rotation_angle), translation_(translation) {};
 		/** Forward tranformation. */
-		Vec2d ImposeTransform(Vec2d& origin) {
+		Vec2d imposeTransform(Vec2d& origin) {
 			Vec2d result(origin[0] * cos(rotation_angle_) - origin[1] * sin(rotation_angle_),
 				origin[1] * cos(rotation_angle_) + origin[0] * sin(rotation_angle_));
 				return result + translation_;
 		};
 		/** Inverse tranformation. */
-		Vec2d ImposeInverseTransform(Vec2d& result) {
+		Vec2d imposeInverseTransform(Vec2d& result) {
 			Vec2d origin(result[0] * cos(-rotation_angle_) - result[1] * sin(-rotation_angle_),
 				result[1] * cos(-rotation_angle_) + result[0] * sin(-rotation_angle_));
 			return origin - translation_;
 		};
 	};
+
+	/** 
+	* @function getVectorAfterRotation
+	* @brief Each of these basic vector rotations appears counterclockwise 
+	* @brief when the axis about which they occur points toward the observer, 
+	* @brief and the coordinate system is right-handed. 
+	*/
+	Vec2d getVectorAfterRotation(Vec2d &initial_vector, Vec2d &rotation_angles);
+	Vec3d getVectorAfterRotation(Vec3d &initial_vector, Vec3d &rotation_angles);
+
+	/** Vector change rate after rotation. */
+	Vec2d getVectorChangeRateAfterRotation(Vec2d &initial_vector, Vec2d &rotation_angles, Vec2d &angular_vel);
+	Vec3d getVectorChangeRateAfterRotation(Vec3d &initial_vector, Vec3d &rotation_angles, Vec3d &angular_vel);
 }
 
 #endif //SPHINXSYS_BASE_SMALLVEC_H

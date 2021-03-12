@@ -26,8 +26,7 @@
 * @details Several pure virtual functions 
 * are defined here. (a) closet point on surface: to find the closet point on shape
 * surface to a given point. (b) find the lower and upper bounds.
-* @author	Luhui Han, Chi ZHang and Xiangyu Hu
-* @version	0.1
+* @author	Chi ZHang and Xiangyu Hu
 */
 
 #pragma once
@@ -40,7 +39,6 @@ using namespace std;
 
 namespace SPH
 {
-	/** Preclaimed classes*/
 	class Tree;
 
 	/**
@@ -61,9 +59,7 @@ namespace SPH
 		virtual ~Shape() {};
 
 		string getName() { return name_; };
-		virtual Vecd findClosestPoint(Vecd input_pnt) = 0;
-		virtual void findBounds(Vecd& lower_bound, Vecd& upper_bound) = 0;
-
+		virtual BoundingBox findBounds() = 0;
 	protected:
 		string name_;
 	};
@@ -71,15 +67,14 @@ namespace SPH
 	/**
 	 * @class Edge
 	 * @brief template base class of linear structure
+	 * only with topology information
 	 */
 	template<typename InEdgeType, typename OutEdgeType>
 	class Edge
 	{
 	public:
-		/** constructor without specifying in edge */
-		Edge() : id_(0) {};
-		/** constructor with specifying in edge */
-		Edge(InEdgeType in_edge) : Edge() 
+		Edge() : id_(0) {}; /**< constructor without specifying a leading-in edge */
+		Edge(InEdgeType in_edge) : Edge() /**< constructor with specifying a leading-in edge */
 		{
 			in_edge_ = in_edge;
 		};
@@ -88,24 +83,29 @@ namespace SPH
 		size_t id_;					/**< id of this edge */
 		InEdgeType in_edge_;		/**< id(s) of parent edge(s) */
 		OutEdgeType out_edge_;		/**< id(s) of child edge(s) */
-		IndexVector elements_;		/**< element indexes of this edge(s) */
 	};
 
 	/**
 	 * @class Branch
 	 * @brief Each branch has a parent and several children, 
-	 * many branches compose a tree.
+	 * and geometric information. It is a decorated and realized edge. 
+	 * Many connected branches compose a tree.
 	 */
 	class Branch : public Edge<size_t, IndexVector>
 	{
 	public:
-		/** construct the first branch */
+		/** construct the first or leading-in branch of a tree */
 		Branch(Vecd init_point, Vecd auxillary_point, Tree* tree);
-		/** construct a branch with parent */
+		/** construct a branch and connect with its parent */
 		Branch(size_t parent_id, Tree* tree);
 		virtual ~Branch() {};
 
 		Vecd end_direction_;	/**< direction of the last segment of the branch.*/
+		/** Inner point indexes of this branch. 
+		 * The first is the last inner point from the parent or init_point,
+		 * and the last is the first inner point of all its child branches.
+		 */
+		IndexVector inner_points_;	
 		bool is_end_;	/**< whether is an end branch or not */
 	};
 
@@ -119,7 +119,7 @@ namespace SPH
 		Structure() {};
 		virtual ~Structure() {};
 
-		StdVec<Point> points_;				/**< list of the global points containing the coordinates */
+		StdVec<Vecd> points_;				/**< list of the global points containing the coordinates */
 		IndexVector edge_locations_;		/**< in which edges are the points located */
 		IndexVector face_locations_;		/**< in which faces are the points located */
 
@@ -139,6 +139,6 @@ namespace SPH
 		size_t last_branch_id_;
 		StdVec<Branch*> branches_;	/**< list of all branches */
 		void addANewBranch(Branch* branch);
-		void addANewBranchElement(Branch* branch, Point new_point, Vecd end_direction);
+		void addANewBranchInnerVecd(Branch* branch, Vecd new_point, Vecd end_direction);
 	};
 }

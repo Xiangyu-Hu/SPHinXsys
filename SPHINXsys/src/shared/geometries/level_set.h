@@ -29,9 +29,6 @@
 *			cells. The mesh line or face are also called cell faces. Grid points are
 *			also called cell corners.
 * @author	Chi ZHang and Xiangyu Hu
-* @version	0.1
-* @version  0.2.0
-* 			Now narrow bounded levelset mesh is added to replace the whole domain background levelset mesh. 
 */
 
 #pragma once
@@ -42,25 +39,26 @@
 
 namespace SPH
 {
+	class LevelSet;
+	class Kernel;
 	/**
 	 * @class LevelSetDataPackage
 	 * @brief Fixed memory level set data packed in a package.
+	 * Level set is the signed distance to an interface, 
+	 * here, the surface of a body.
 	 */
 	class LevelSetDataPackage : public BaseDataPackage<4, 6>
 	{
 	public:
 		bool is_core_pkg_;	/**< If true, the package is near to zero level set. */
-
-		/** level set is the signed distance to an interface, 
-		  * here, the surface of a body */
-		PackageData<Real> phi_;
-		PackageDataAddress<Real> phi_addrs_;
-		/** level set normalized gradient, to approximate interface normal direction */
-		PackageData<Vecd> n_;
+		PackageData<Real> phi_; /**< the level set or signed distance. */
+		PackageDataAddress<Real> phi_addrs_; /**< address for the level set. */
+		PackageData<Vecd> n_; /**< level set normalized gradient, to approximate interface normal direction */
 		PackageDataAddress<Vecd> n_addrs_;
-		/** level set curvature, to approximate interface curvature */
-		PackageData<Real> kappa_;
-		PackageDataAddress<Real> kappa_addrs_;
+		PackageData<Real> kernel_weight_;
+		PackageDataAddress<Real> kernel_weight_addrs_;
+		PackageData<Vecd> kernel_gradient_;
+		PackageDataAddress<Vecd> kernel_gradient_addrs_;
 		/** mark the near interface cells. 0 for zero level set cut cells,
 		  * -1 and 1 for negative and positive cut cells,  
 		  * 0 can also be for other cells in the region closed 
@@ -69,25 +67,15 @@ namespace SPH
 		PackageData<int> near_interface_id_;
 		PackageDataAddress<int> near_interface_id_addrs_;
 
-		/** default constructor */
 		LevelSetDataPackage();
 		virtual ~LevelSetDataPackage() {};
 	
-		/** This function assigns a set of package data address for all variables. */
 		void assignAllPackageDataAddress(Vecu data_index, LevelSetDataPackage* src_pkg, Vecu addrs_index);
-		/** This function initialize the level set package constructed by default. */
-		void initializeDataPackage(ComplexShape& complex_shape);
-		/**
-		 *@brief This function initialize with uniform level set field
-		 *@param[in] level_set(Real) Level set value
-		 *@param[in] normal_direction(Vecd) Normal direction of levelset field.
-		 */
-		void initializeWithUniformData(Real level_set, Vecd normal_direction);
-		/** This function compute normal direction for all level set in the package */
+		void initializeBasicData(ComplexShape& complex_shape);
+		void initializeWithUniformData(Real level_set);
+		void computeKernelIntegrals(LevelSet& level_set);
 		void computeNormalDirection();
-		/** This function applies one step reinitialization */
 		void stepReinitialization();
-		/** This function marks the near interface ids */
 		void markNearInterface();
 	};
 
@@ -95,60 +83,21 @@ namespace SPH
 	  * @class BaseLevelSet
 	  * @brief A abstract describes a mesh with level set data packages.
 	  */
-	class BaseLevelSet : public BaseMeshWithDataPackages
+	class BaseLevelSet : public Mesh
 	{
 	public:
-		/** Constructor using domain information. */
-		BaseLevelSet(Vecd lower_bound, 		/**< Lower bound. */
-			Vecd upper_bound, 		/**< Upper bound. */
-			Real grid_spacing, 	/**< Grid spcaing. */
-			size_t buffer_width = 0	/**< BUffer size. */
-		);
-		/** Constructor using mesh information directly. */
-		BaseLevelSet(Vecd mesh_lower_bound, /**< Lower bound. */
-			Vecu number_of_cells,  /**< Upper bound. */
-			Real cell_spacing		/**< Cell spcaing. */
-		);
+		BaseLevelSet(ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation,
+			BoundingBox tentative_bounds, Real data_spacing, size_t buffer_width = 4);
 		virtual ~BaseLevelSet() {};
 
-		/**
-		 *@brief This function probe the level set at a off-grid position.
-		 *@param[in] position(Vecd) The enquiry postion
-		 */
-		virtual Real probeLevelSet(Vecd position) = 0;
-		/**
-		 *@brief This function probe the normal direction at a off-grid position
-		 *@param[in] position(Vecd) The enquiry postion
-		 */
-		virtual Vecd probeNormalDirection(Vecd position) = 0;
-		/**update the normal direction */
-		virtual void updateNormalDirection() = 0;
-		/**
-		*@brief This function: 
-		* 1) mark the cutcell in whole domain include zero/positive/negative cutcell;
-		* 2) clean the non-consistency 0 levelset in whole domain;
-		* 3) reinitialize the levelset vaule in whole domain after clean opeartion;
-		* 4) smoothing the levelset according to curvature (optional);
-		*/
+		virtual Real probeSignedDistance(const Vecd& position) = 0;
+		virtual Vecd probeNormalDirection(const Vecd& position) = 0;
+		virtual Real probeKernelIntegral(const Vecd& position, Real h_ratio = 1.0) = 0;
+		virtual Vecd probeKernelGradientIntegral(const Vecd& position, Real h_ratio = 1.0) = 0;
 		virtual void cleanInterface(bool isSmoothed = false) = 0;
-		/**
-		 *@brief This function reinitialize levelset value in a whole domain
-		 */
-		virtual void reinitializeLevelSet() = 0;
-		/**
-		 *@brief This function marks the near interface
-		 */
-		virtual void markNearInterface() = 0;
-		/**
-		 *@brief This function delete unresolved interface by redistance
-		 */
-		virtual void redistanceInterface() = 0;
-		/**
-		*@brief This function calculate the integration of kernel function outside the surafce
-		*/
-		virtual Vecd computeKernelIntegral(Vecd position, Kernel* kernel) = 0;
 	protected:
-		Real computeHeaviside(Real phi, Real half_width);
+		ComplexShape& complex_shape_; /**< the geometry is described by the level set. */
+		ParticleAdaptation& particle_adaptation_;
 	};
 
 	/**
@@ -159,93 +108,63 @@ namespace SPH
 		: public MeshWithDataPackages<BaseLevelSet, LevelSetDataPackage>
 	{
 	public:
-		/** Core packages which are near to zero level set. */
-		ConcurrentVector<LevelSetDataPackage*> core_data_pkgs_;
+		ConcurrentVector<LevelSetDataPackage*> core_data_pkgs_; /**< packages near to zero level set. */
+		Real global_h_ratio_;
 
-		/** Constructor using domain and sph body information. */
-		LevelSet(ComplexShape& complex_shape,  	/**< Link to geomentry. */
-			Vecd lower_bound,      /**< Lower bound. */
-			Vecd upper_bound, 		/**< Upper bound. */
-			Real grid_spacing, 	/**< Grid spcaing. */
-			size_t buffer_width = 0 /**< Buffer size. */
-		);
+		LevelSet(ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation,
+			BoundingBox tentative_bounds, Real data_spacing, size_t buffer_width = 4);
 		virtual ~LevelSet() {};
 
-		/**
-		 *@brief This function initialize the Levelset data package.
-		 */
-		virtual void initializeDataPackages() override;
-		/**
-		 *@brief This function probe the level set at a off-grid position.
-		 *@param[in] position(Vecd) The enquiry postion
-		 */
-		virtual Real probeLevelSet(Vecd position) override;
-		/**
-		 *@brief This function probe the normal direction at a off-grid position
-		 *@param[in] position(Vecd) The enquiry postion
-		 */
-		virtual Vecd probeNormalDirection(Vecd position) override;
-		/**
-		 *@brief This function update the norm of levelset field using central difference scheme.
-		 */
-		virtual void updateNormalDirection() override;
-		/**
-		 *@brief This function clean the zero level set.
-		 */
+		virtual Real probeSignedDistance(const Vecd& position) override;
+		virtual Vecd probeNormalDirection(const Vecd& position) override;
+		virtual Real probeKernelIntegral(const Vecd& position, Real h_ratio = 1.0) override;
+		virtual Vecd probeKernelGradientIntegral(const Vecd& position, Real h_ratio = 1.0) override;
 		virtual void cleanInterface(bool isSmoothed = false) override;
-		/**
-		 *@brief This function reinitialize levelset value in a whole domain
-		 */
-		virtual void reinitializeLevelSet() override;
-		/**
-		 *@brief This function marks the near interface
-		 */
-		virtual void markNearInterface() override;
-		/**
-		 *@brief This function redistance unresolved interface
-		 */
-		virtual void redistanceInterface() override;
-		/**
-		 *@brief This function output mesh data for Paraview
-		 *@param[out] output_file(ofstream) output ofstream.
-		 */
-		virtual void writeMeshToVtuFile(ofstream& output_file) override {};
-		/**
-		 *@brief This function output mesh data for Tecplot visualization
-		 *@param[out] output_file(ofstream) output ofstream.
-		 */
 		virtual void writeMeshToPltFile(ofstream& output_file) override;
-		/*test below*/
-		/**
-		*@brief This function calculate the integration of kernel function outside the surafce
-		*/
-		virtual Vecd computeKernelIntegral(Vecd position, Kernel* kernel) override;
-
+		bool isWithinCorePackage(Vecd position);
+		Real computeKernelIntegral(const Vecd& position);
+		Vecd computeKernelGradientIntegral(const Vecd& position);
 	protected:
-		/**the geometry is described by the level set. */
-		ComplexShape& complex_shape_;
-		/**
-		 *@brief This function initialize level set in a cell.
-		 *@param[in] cell_index(Vecu) Index of cell
-		 *@param[in] dt(Real) not used herein.
-		 */
-		virtual void initializeDataInACell(Vecu cell_index, Real dt) override;
-		/**
-		 *@brief This function initialize the addresses in a data package
-		 *@param[in] cell_index(Vecu) Index of cell
-		 *@param[in] dt(Real) not used herein.
-		 */
-		virtual void initializeAddressesInACell(Vecu cell_index, Real dt) override;
-		/**
-		 *@brief This function tag if a data package is inner package.
-		 *@param[in] cell_index(Vecu) Index of cell
-		 *@param[in] dt(Real) not used herein.
-		 */
-		virtual void tagACellIsInnerPackage(Vecu cell_index, Real dt) override;
+		Kernel& kernel_;
+
+		Real computeHeaviside(Real phi, Real half_width);
+		void reinitializeLevelSet();
+		void markNearInterface();
+		void redistanceInterface();
+		void updateNormalDirection();
 		void updateNormalDirectionForAPackage(LevelSetDataPackage* inner_data_pkg, Real dt = 0.0);
+		void updateKernelIntegrals();
+		void updateKernelIntegralsForAPackage(LevelSetDataPackage* inner_data_pkg, Real dt = 0.0);
 		void stepReinitializationForAPackage(LevelSetDataPackage* inner_data_pkg, Real dt = 0.0);
 		void markNearInterfaceForAPackage(LevelSetDataPackage* core_data_pkg, Real dt = 0.0);
 		void redistanceInterfaceForAPackage(LevelSetDataPackage* core_data_pkg, Real dt = 0.0);
+		virtual void initializeDataInACell(Vecu cell_index, Real dt) override;
+		virtual void initializeAddressesInACell(Vecu cell_index, Real dt) override;
+		virtual void tagACellIsInnerPackage(Vecu cell_index, Real dt) override;
+		virtual void initializeDataPackages() override;
+	};
+
+	/**
+	  * @class MultilevelMeshCellLinkedList
+	  * @brief Defining a multilvel level set for a complex region.
+	  */
+	class MultilevelLevelSet :
+		public MultilevelMesh<ComplexShape, BaseLevelSet, LevelSet>
+	{
+	public:
+		MultilevelLevelSet(ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation, 
+			BoundingBox tentative_bounds, Real reference_data_spacing, 
+			size_t total_levels, Real maximum_spacing_ratio);
+		virtual ~MultilevelLevelSet() {};
+
+		virtual Real probeSignedDistance(const Vecd& position) override;
+		virtual Vecd probeNormalDirection(const Vecd& position) override;
+		virtual Real probeKernelIntegral(const Vecd& position, Real h_ratio = 1.0) override;
+		virtual Vecd probeKernelGradientIntegral(const Vecd& position, Real h_ratio = 1.0) override;
+		virtual void cleanInterface(bool isSmoothed = false) override;
+	protected:
+		inline size_t getProbeLevel(const Vecd& position);
+		inline size_t getMeshLevel(Real h_ratio);
 
 	};
 }

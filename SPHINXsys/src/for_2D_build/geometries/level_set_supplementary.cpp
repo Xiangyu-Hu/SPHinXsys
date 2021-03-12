@@ -1,36 +1,50 @@
 /**
  * @file 	level_set_supplementary.cpp
  * @author	Luhui Han, Chi ZHang, Yongchuan Yu and Xiangyu Hu
- * @version	0.1
  */
 
 #include "level_set.h"
+
+#include "particle_adaptation.h"
+#include "base_kernel.h"
 #include "base_particles.h"
 #include "base_body.h"
+
 
 //=================================================================================================//
 namespace SPH {
 	//=============================================================================================//
-	void LevelSetDataPackage::initializeWithUniformData(Real level_set, Vecd normal_direction)
+	void LevelSetDataPackage::initializeWithUniformData(Real level_set)
 	{
 		for (int i = 0; i != PackageSize(); ++i)
 			for (int j = 0; j != PackageSize(); ++j) {
 				phi_[i][j] = level_set;
-				n_[i][j] = normal_direction;
-				near_interface_id_[i][j]= level_set < 0.0 ? -2 : 2;
+				n_[i][j] = Vecd(1.0);
+				kernel_weight_[i][j] = level_set < 0.0 ? 0 : 1.0;
+				kernel_gradient_[i][j] = Vecd(0.0);
+				near_interface_id_[i][j] = level_set < 0.0 ? -2 : 2;
 			}
 	}
 	//=================================================================================================//
-	void  LevelSetDataPackage::initializeDataPackage(ComplexShape& complex_shape)
+	void  LevelSetDataPackage::initializeBasicData(ComplexShape& complex_shape)
 	{
 		for (int i = 0; i != PackageSize(); ++i)
 			for (int j = 0; j != PackageSize(); ++j)
 			{
 				Vec2d position = data_lower_bound_ + Vec2d((Real)i * grid_spacing_, (Real)j * grid_spacing_);
-				Real distance_from_surface
-					= (complex_shape.findClosestPoint(position) - position).norm();
-				phi_[i][j] = complex_shape.checkContain(position) ?
-					-distance_from_surface : distance_from_surface;
+				phi_[i][j] = complex_shape.findSignedDistance(position);
+				near_interface_id_[i][j] = phi_[i][j] < 0.0 ? -2 : 2;
+			}
+	}
+	//=================================================================================================//
+	void  LevelSetDataPackage::computeKernelIntegrals(LevelSet& level_set)
+	{
+		for (int i = 0; i != PackageSize(); ++i)
+			for (int j = 0; j != PackageSize(); ++j)
+			{
+				Vec2d position = data_lower_bound_ + Vec2d((Real)i * grid_spacing_, (Real)j * grid_spacing_);
+				kernel_weight_[i][j] = level_set.computeKernelIntegral(position);
+				kernel_gradient_[i][j] = level_set.computeKernelGradientIntegral(position);
 			}
 	}
 	//=================================================================================================//
@@ -121,22 +135,29 @@ namespace SPH {
 				*near_interface_id_addrs_[i][j] = near_interface_id;
 			}
 	}
+	//=================================================================================================//
+	bool LevelSet::isWithinCorePackage(Vecd position)
+	{
+		Vecu cell_index = CellIndexFromPosition(position);
+		return data_pkg_addrs_[cell_index[0]][cell_index[1]]->is_core_pkg_;
+	}
 	//=============================================================================================//
 	void LevelSet::initializeDataInACell(Vecu cell_index, Real dt)
 	{
 		int i = (int)cell_index[0];
 		int j = (int)cell_index[1];
 
-		Vecd cell_position = CellPositionFromIndexes(cell_index);
-		Vecd closet_pnt_on_face = complex_shape_.findClosestPoint(cell_position);
-		Real measure = getMinAbsoluteElement(closet_pnt_on_face - cell_position);
-		if (measure < cell_spacing_) {
+		Vecd cell_position = CellPositionFromIndex(cell_index);
+		Real signed_distance = complex_shape_.findSignedDistance(cell_position);
+		Vecd normal_direction = complex_shape_.findNormalDirection(cell_position);
+		Real measure = getMinAbsoluteElement(normal_direction * signed_distance);
+		if (measure < grid_spacing_) {
 			mutex_my_pool.lock();
 			LevelSetDataPackage* new_data_pkg = data_pkg_pool_.malloc();
 			mutex_my_pool.unlock();
 			Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
 			new_data_pkg->initializePackageGeometry(pkg_lower_bound, data_spacing_);
-			new_data_pkg->initializeDataPackage(complex_shape_);
+			new_data_pkg->initializeBasicData(complex_shape_);
 			core_data_pkgs_.push_back(new_data_pkg);
 			new_data_pkg->pkg_index_ = Vecu(i, j);
 			new_data_pkg->is_core_pkg_ = true;
@@ -169,10 +190,10 @@ namespace SPH {
 				mutex_my_pool.lock();
 				LevelSetDataPackage* new_data_pkg = data_pkg_pool_.malloc();
 				mutex_my_pool.unlock();
-				Vecd cell_position = CellPositionFromIndexes(cell_index);
+				Vecd cell_position = CellPositionFromIndex(cell_index);
 				Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
 				new_data_pkg->initializePackageGeometry(pkg_lower_bound, data_spacing_);
-				new_data_pkg->initializeDataPackage(complex_shape_);
+				new_data_pkg->initializeBasicData(complex_shape_);
 				new_data_pkg->pkg_index_ = Vecu(i, j);
 				new_data_pkg->is_inner_pkg_ = true;
 				inner_data_pkgs_.push_back(new_data_pkg);
@@ -258,11 +279,12 @@ namespace SPH {
 	//=============================================================================================//
 	void LevelSet::writeMeshToPltFile(ofstream& output_file)
 	{
-		Vecu number_of_operation = total_number_of_data_points_;
+		Vecu number_of_operation = total_data_points_;
 
 		output_file << "\n";
 		output_file << "title='View'" << "\n";
-		output_file << "variables= " << "x, " << "y, " << "phi, " << "n_x, " << "n_y " << "near_interface_id " << "\n";
+		output_file << "variables= " << "x, " << "y, " << "phi, " << "n_x, " << "n_y " << "near_interface_id ";
+		output_file << "kernel_weight, " << "kernel_gradient_x, " << "kernel_gradient_y " << "\n";
 		output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << 1
 			<< "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
 
@@ -326,34 +348,92 @@ namespace SPH {
 			output_file << " \n";
 		}
 
+		for (size_t j = 0; j != number_of_operation[1]; ++j)
+		{
+			for (size_t i = 0; i != number_of_operation[0]; ++i)
+			{
+				output_file << DataValueFromGlobalIndex<Real, LevelSetDataPackage::PackageData<Real>,
+					&LevelSetDataPackage::kernel_weight_>(Vecu(i, j)) << " ";
+			}
+			output_file << " \n";
+		}
+
+		for (size_t j = 0; j != number_of_operation[1]; ++j)
+		{
+			for (size_t i = 0; i != number_of_operation[0]; ++i)
+			{
+				output_file << DataValueFromGlobalIndex<Vecd, LevelSetDataPackage::PackageData<Vecd>,
+					&LevelSetDataPackage::kernel_gradient_>(Vecu(i, j))[0] << " ";
+			}
+			output_file << " \n";
+		}
+
+		for (size_t j = 0; j != number_of_operation[1]; ++j)
+		{
+			for (size_t i = 0; i != number_of_operation[0]; ++i)
+			{
+				output_file << DataValueFromGlobalIndex<Vecd, LevelSetDataPackage::PackageData<Vecd>,
+					&LevelSetDataPackage::kernel_gradient_>(Vecu(i, j))[1] << " ";
+			}
+			output_file << " \n";
+		}
 	}
 	//=============================================================================================//
-	Vecd LevelSet::computeKernelIntegral(Vecd position, Kernel* kernel)
+	Real LevelSet::computeKernelIntegral(const Vecd& position)
 	{
-		Vecd integral(0.0);
-		Real delta = data_spacing_;
-		Real phi = probeLevelSet(position);
-		Real cutoff_radius = kernel->GetCutOffRadius();
-		Real threshold = -cutoff_radius - delta;
-		if (phi > threshold)
+		Real phi = probeSignedDistance(position);
+		Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
+		Real threshold = cutoff_radius + data_spacing_; //consider that interface's half width is the data spacing  
+
+		Real integral(0.0);
+		if (fabs(phi) < threshold)
 		{
 			Vecu global_index_ = DataGlobalIndexFromPosition(position);
-			for (int i = -2; i != 4; ++i)
-				for (int j = -2; j != 4; ++j)
+			for (int i = -3; i != 4; ++i)
+				for (int j = -3; j != 4; ++j)
+				{
+					Vecu neighbor_index = Vecu(global_index_[0] + i, global_index_[1] + j);
+					Real phi_neighbor = DataValueFromGlobalIndex<Real, LevelSetDataPackage::PackageData<Real>,
+						&LevelSetDataPackage::phi_>(neighbor_index) - 0.5 * data_spacing_;;
+					if (phi_neighbor > -data_spacing_) {
+						Vecd displacement = position - DataPositionFromGlobalIndex(neighbor_index);
+						Real distance = displacement.norm();
+						if (distance < cutoff_radius)
+							integral += kernel_.W(global_h_ratio_, distance, displacement) 
+								* computeHeaviside(phi_neighbor, data_spacing_);
+					}
+				}
+		}
+		return phi > threshold ? 1.0 : integral * data_spacing_* data_spacing_;
+	}
+	//=============================================================================================//
+	Vecd LevelSet::computeKernelGradientIntegral(const Vecd& position)
+	{
+		Real phi = probeSignedDistance(position);
+		Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
+		Real threshold = cutoff_radius + data_spacing_;
+
+		Vecd integral(0.0);
+		if (fabs(phi) < threshold)
+		{
+			Vecu global_index_ = DataGlobalIndexFromPosition(position);
+			for (int i = -3; i != 4; ++i)
+				for (int j = -3; j != 4; ++j)
 				{
 					Vecu neighbor_index = Vecu(global_index_[0] + i, global_index_[1] + j);
 					Real phi_neighbor = DataValueFromGlobalIndex<Real, LevelSetDataPackage::PackageData<Real>,
 						&LevelSetDataPackage::phi_>(neighbor_index);
-					if (phi_neighbor > -delta) {
-						Vecd neighbor_position_ = DataPositionFromGlobalIndex(neighbor_index);
-						Vecd displacement = position - neighbor_position_;
-						if (displacement.norm() < cutoff_radius)
-						integral += kernel->dW(displacement) 
-								  * computeHeaviside(phi_neighbor, delta) * displacement.normalize();
+					if (phi_neighbor > -data_spacing_) {
+						Vecd displacement = position - DataPositionFromGlobalIndex(neighbor_index);
+						Real distance = displacement.norm();
+						if (distance < cutoff_radius)
+							integral += kernel_.dW(global_h_ratio_, distance, displacement)
+								* computeHeaviside(phi_neighbor, data_spacing_) * displacement / (distance + TinyReal);
 					}
 				}
 		}
-		return integral * data_spacing_ * data_spacing_;
+
+		return integral* data_spacing_ * data_spacing_;
 	}
 	//=============================================================================================//
 }

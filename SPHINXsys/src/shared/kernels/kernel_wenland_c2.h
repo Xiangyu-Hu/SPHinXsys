@@ -26,7 +26,6 @@
 * @details  NThis kernel has compact support of 2h.
 * The smoothing length h can be variable when variable h functions are applied.
 * @author	Luhui Han, Chi ZHang and Xiangyu Hu
-* @version	0.1
 */
 
 #pragma once
@@ -41,10 +40,10 @@ namespace SPH
 	 */
 	class KernelWendlandC2 : public Kernel
 	{
+	protected:
+		virtual void setBasicParameters() override;
 	public:
-		/** constructor to initialize the data members 
-		(auxiliary factors for kernel calculation) */
-		KernelWendlandC2(Real h);
+		KernelWendlandC2();
 
 		/** Calculates the kernel value for 
 		the given distance of two particles */

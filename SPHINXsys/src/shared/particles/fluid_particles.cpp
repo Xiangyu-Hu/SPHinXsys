@@ -1,12 +1,13 @@
 /** 
  * @file fluid_particles.cpp
  * @author	Xiangyu Hu and Chi Zhang
- * @version	0.1
  */
 
 #include "fluid_particles.h"
-#include "weakly_compressible_fluid.h"
+
 #include "base_body.h"
+#include "weakly_compressible_fluid.h"
+#include "xml_engine.h"
 
 namespace SPH
 {
@@ -18,9 +19,10 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
-		registerAVariable(p_, registered_scalars_, scalars_map_, scalars_to_write_, "Pressure", false);
-		registerAVariable(drho_dt_, registered_scalars_, scalars_map_, scalars_to_write_, "DensityChangeRate", false);
-		registerAVariable(pos_div_, registered_scalars_, scalars_map_, scalars_to_write_, "PositionDivergence", false);
+		registerAVariable<indexScalar, Real>(p_, "Pressure");
+		registerAVariable<indexScalar, Real>(drho_dt_, "DensityChangeRate");
+		registerAVariable<indexScalar, Real>(rho_sum_, "DensitySummation");
+		registerAVariable<indexBoolean, bool>(is_free_surface_, "FreeSurfaceIndication");
 		//----------------------------------------------------------------------
 		//		register sortable particle data
 		//----------------------------------------------------------------------
@@ -31,25 +33,15 @@ namespace SPH
 		sortable_scalars_.push_back(&p_);
 	}
 	//=================================================================================================//
-	FluidParticles* FluidParticles::pointToThisObject()
-	{
-		return this;
-	}
-	//=================================================================================================//
-	void ViscoelasticFluidParticles::writeParticlesToVtuFile(ofstream& output_file)
-	{
-		FluidParticles::writeParticlesToVtuFile(output_file);
-	}
-	//=================================================================================================//
 	void FluidParticles::writeParticlesToXmlForRestart(std::string &filefullpath)
 	{
 		const SimTK::String xml_name("particles_xml"), ele_name("particles");
 		unique_ptr<XmlEngine> restart_xml(new XmlEngine(xml_name, ele_name));
 
-		size_t number_of_particles = body_->number_of_particles_;
-		for (size_t i = 0; i != number_of_particles; ++i)
+		size_t total_real_particles = total_real_particles_;
+		for (size_t i = 0; i != total_real_particles; ++i)
 		{
-			restart_xml->CreatXmlElement("particle");
+			restart_xml->creatXmlElement("particle");
 			restart_xml->AddAttributeToElement<Vecd>("Position", pos_n_[i]);
 			restart_xml->AddAttributeToElement<Real>("Volume", Vol_[i]);
 			restart_xml->AddAttributeToElement<Vecd>("Velocity", vel_n_[i]);
@@ -61,22 +53,22 @@ namespace SPH
 	//=================================================================================================//
 	void FluidParticles::readParticleFromXmlForRestart(std::string &filefullpath)
 	{
-		size_t number_of_particles = 0;
+		size_t total_real_particles = 0;
 		unique_ptr<XmlEngine> read_xml(new XmlEngine());
 		read_xml->LoadXmlFile(filefullpath);
 		SimTK::Xml::element_iterator ele_ite_ = read_xml->root_element_.element_begin();
 		for (; ele_ite_ != read_xml->root_element_.element_end(); ++ele_ite_)
 		{
 			Vecd pos_ = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Position");
-			pos_n_[number_of_particles] = pos_;
+			pos_n_[total_real_particles] = pos_;
 			Real rst_Vol_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Volume");
-			Vol_[number_of_particles] = rst_Vol_;
+			Vol_[total_real_particles] = rst_Vol_;
 			Vecd rst_vel_ = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Velocity");
-			vel_n_[number_of_particles] = rst_vel_;
+			vel_n_[total_real_particles] = rst_vel_;
 			Real rst_rho_n_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Density");
-			rho_n_[number_of_particles] = rst_rho_n_;
-			dvel_dt_[number_of_particles] = Vecd(0);
-			number_of_particles++;
+			rho_n_[total_real_particles] = rst_rho_n_;
+			dvel_dt_[total_real_particles] = Vecd(0);
+			total_real_particles++;
 		}
 	}
 	//=================================================================================================//
@@ -88,26 +80,21 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
-		registerAVariable(tau_, registered_matrices_, matrices_map_, matrices_to_write_, "ElasticStress", true);
-		registerAVariable(dtau_dt_, registered_matrices_, matrices_map_, matrices_to_write_, "ElasticStressChangeRate", false);
+		registerAVariable<indexMatrix, Matd>(tau_, "ElasticStress");
+		registerAVariable<indexMatrix, Matd>(dtau_dt_, "ElasticStressChangeRate");
 		//----------------------------------------------------------------------
 		//		register sortable particle data
 		//----------------------------------------------------------------------
 		sortable_matrices_.push_back(&tau_);
 	}
 	//=================================================================================================//
-	ViscoelasticFluidParticles* ViscoelasticFluidParticles::pointToThisObject()
-	{
-		return this;
-	}
-	//=================================================================================================//
 	void ViscoelasticFluidParticles::writeParticlesToXmlForRestart(std::string &filefullpath)
 	{
 		unique_ptr<XmlEngine> restart_xml(new XmlEngine("particles_xml", "particles"));
-		size_t number_of_particles = pos_n_.size();
-		for (size_t i = 0; i != number_of_particles; ++i)
+		size_t total_real_particles = pos_n_.size();
+		for (size_t i = 0; i != total_real_particles; ++i)
 		{
-			restart_xml->CreatXmlElement("particle");
+			restart_xml->creatXmlElement("particle");
 			restart_xml->AddAttributeToElement<size_t>("ID", i);
 			restart_xml->AddAttributeToElement<Vecd>("Position", pos_n_[i]);
 			restart_xml->AddAttributeToElement<Real>("Volume", Vol_[i]);
@@ -118,8 +105,9 @@ namespace SPH
 	//=================================================================================================//
 	void ViscoelasticFluidParticles::readParticleFromXmlForRestart(std::string &filefullpath)
 	{
-		cout << "\n This function ViscoelasticFluidParticles::ReadParticleFromXmlForRestart is not done. Exit the program! \n";
-		exit(0);
+		cout << "\n This function ViscoelasticFluidParticles::ReadParticleFromXmlForRestart is not done! \n";
+		std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+		exit(1);
 	}
 	//=================================================================================================//
 }

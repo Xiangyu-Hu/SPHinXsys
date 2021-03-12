@@ -24,7 +24,6 @@
  * @file 	xml_engine.h
  * @brief 	XML class for xml input and output, this is GUI of simbody xml parser.
  * @author	Chi Zhang and Xiangyu Hu.
- * @version	0.1.
  */
 #pragma once
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
@@ -80,7 +79,7 @@ namespace SPH {
 	 	 * @brief 	Creat an Xml Element.
 	 	 * @param[in]	ele_name Name of the element.
 	 	 */
-  		void CreatXmlElement(const std::string &ele_name);
+  		void creatXmlElement(const std::string &ele_name);
   		/**
   		 * @brief	Add existing element to root_element of Xml Doc.
   		 */

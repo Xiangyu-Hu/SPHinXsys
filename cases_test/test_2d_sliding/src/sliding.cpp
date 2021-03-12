@@ -4,8 +4,6 @@
  * @details This is the first case for test collision dynamics for
  * 			understanding SPH method for complex simulation.
  * @author 	Xiangyu Hu
- * @version 0.1
- * @version 0.3.0
  */
  /**
   * @brief 	SPHinXsys Library.
@@ -22,8 +20,10 @@ Real DL = 20.0; 						/**< box length. */
 Real DH = 13.0; 						/**< box height. */
 Real L = 1.0;
 Real slop_h = 11.55;
-Real particle_spacing_ref = L / 10.0; 	/**< reference particle spacing. */
-Real BW = particle_spacing_ref * 4; /**< wall width for BCs. */
+Real resolution_ref = L / 10.0; 	/**< reference particle spacing. */
+Real BW = resolution_ref * 4; /**< wall width for BCs. */
+/** Domain bounds of the system. */
+BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(25, 15));
 /**
  * @brief Material properties of the sphere.
  */
@@ -38,15 +38,15 @@ Real physical_viscosity = 1000000.0;
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &sph_system, string body_name, int refinement_level)
-		: SolidBody(sph_system, body_name, refinement_level)
+	WallBoundary(SPHSystem &sph_system, string body_name)
+		: SolidBody(sph_system, body_name)
 	{
 		/** Geometry definition. */
-		std::vector<Point> wall_shape;
-		wall_shape.push_back(Point(0, 0));
-		wall_shape.push_back(Point(0, slop_h));
-		wall_shape.push_back(Point(DL, slop_h));
-		wall_shape.push_back(Point(0, 0));
+		std::vector<Vecd> wall_shape;
+		wall_shape.push_back(Vecd(0, 0));
+		wall_shape.push_back(Vecd(0, slop_h));
+		wall_shape.push_back(Vecd(DL, slop_h));
+		wall_shape.push_back(Vecd(0, 0));
 
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(wall_shape, ShapeBooleanOps::add);
@@ -56,16 +56,16 @@ public:
 class Cubic : public SolidBody
 {
 public:
-	Cubic(SPHSystem& system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	Cubic(SPHSystem& system, string body_name)
+		: SolidBody(system, body_name)
 	{
 		/** Geometry definition. */
-		std::vector<Point> cubic_shape;
-		cubic_shape.push_back(Point(BW, slop_h + particle_spacing_ref));
-		cubic_shape.push_back(Point(BW, slop_h + L+ particle_spacing_ref));
-		cubic_shape.push_back(Point(BW + L, slop_h + L+ particle_spacing_ref));
-		cubic_shape.push_back(Point(BW + L, slop_h+ particle_spacing_ref));
-		cubic_shape.push_back(Point(BW, slop_h+ particle_spacing_ref));
+		std::vector<Vecd> cubic_shape;
+		cubic_shape.push_back(Vecd(BW, slop_h + resolution_ref));
+		cubic_shape.push_back(Vecd(BW, slop_h + L+ resolution_ref));
+		cubic_shape.push_back(Vecd(BW + L, slop_h + L+ resolution_ref));
+		cubic_shape.push_back(Vecd(BW + L, slop_h+ resolution_ref));
+		cubic_shape.push_back(Vecd(BW, slop_h+ resolution_ref));
 
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(cubic_shape, ShapeBooleanOps::add);
@@ -92,8 +92,8 @@ Vecd cubic_center(BW + 0.5 * L, slop_h + 0.5 * L);
 class CubicObserver : public FictitiousBody
 {
 public:
-	CubicObserver(SPHSystem& system, string body_name, int refinement_level)
-		: FictitiousBody(system, body_name, refinement_level, 1.3)
+	CubicObserver(SPHSystem& system, string body_name)
+		: FictitiousBody(system, body_name)
 	{
 		/** the measuring particle with zero volume */
 		body_input_points_volumes_.push_back(make_pair(Vecd(7.2, 9.8), 0.0));
@@ -108,7 +108,7 @@ int main(int ac, char* av[])
 	/**
 	 * @brief Build up -- a SPHSystem --
 	 */
-	SPHSystem sph_system(Vec2d(-BW, -BW), Vec2d(25, 15), particle_spacing_ref, 6);
+	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** tag for run particle relaxation for the initial body fitted distribution */
 	sph_system.run_particle_relaxation_ = false;
 	/** tag for computation start with relaxed body fitted particles distribution */
@@ -124,44 +124,41 @@ int main(int ac, char* av[])
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
-	WallBoundary* wall_boundary = new WallBoundary(sph_system, "Wall",	0);
+	WallBoundary* wall_boundary = new WallBoundary(sph_system, "Wall");
 	Material* wall_material = new Material();
 	SolidParticles 	solid_particles(wall_boundary, wall_material);
 	/**
 	 * @brief 	Creating body, materials and particles for the elastic beam (inserted body).
 	 */
-	Cubic* free_cubic = new Cubic(sph_system, "FreeBall", 0);
+	Cubic* free_cubic = new Cubic(sph_system, "FreeBall");
 	Material* free_cubic_material = new Material();
 	ElasticSolidParticles 	free_cubic_particles(free_cubic, free_cubic_material);
 	/** Observer. */
-	CubicObserver* free_cubic_observer = new CubicObserver(sph_system, "FreeBallObserver", 0);
+	CubicObserver* free_cubic_observer = new CubicObserver(sph_system, "FreeBallObserver");
 	BaseParticles 	free_cubic_observer_particles(free_cubic_observer);
 	/** Output the body states. */
 	WriteBodyStatesToVtu 		write_body_states(in_output, sph_system.real_bodies_);
 	/** Algorithms. */
-	SPHBodyInnerRelation*   free_cubic_inner = new SPHBodyInnerRelation(free_cubic);
-	SolidBodyContactRelation* free_cubic_contact = new SolidBodyContactRelation(free_cubic, {wall_boundary});
-	SPHBodyContactRelation* free_cubic_observer_contact = new SPHBodyContactRelation(free_cubic_observer, { free_cubic });
+	InnerBodyRelation*   free_cubic_inner = new InnerBodyRelation(free_cubic);
+	SolidContactBodyRelation* free_cubic_contact = new SolidContactBodyRelation(free_cubic, {wall_boundary});
+	ContactBodyRelation* free_cubic_observer_contact = new ContactBodyRelation(free_cubic_observer, { free_cubic });
 	/** Dynamics. */
 	InitializeATimeStep 	free_cubic_initialize_timestep(free_cubic, &gravity);
 	/** Kernel correction. */
 	solid_dynamics::CorrectConfiguration free_cubic_corrected_configuration(free_cubic_inner);
 	/** Time step size. */
 	solid_dynamics::AcousticTimeStepSize free_cubic_get_time_step_size(free_cubic);
-	/** stress relaxation for the beam. */
+	/** stress relaxation for the solid body. */
 	solid_dynamics::StressRelaxationFirstHalf free_cubic_stress_relaxation_first_half(free_cubic_inner);
 	solid_dynamics::StressRelaxationSecondHalf free_cubic_stress_relaxation_second_half(free_cubic_inner);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::SummationContactDensity free_cubic_update_contact_density(free_cubic_contact);
 	solid_dynamics::ContactForce free_cubic_compute_solid_contact_forces(free_cubic_contact);
-	solid_dynamics::ContactForceFromFriction 
-		free_cubic_compute_solid_contact_friction_forces(free_cubic_contact, free_cubic_particles.vel_n_, 100.0);
 	/** Damping*/
-	DampingBySplittingWithRandomChoice<SPHBodyInnerRelation, DampingBySplittingPairwise<Vec2d>, Vec2d>
+	DampingBySplittingWithRandomChoice<InnerBodyRelation, DampingBySplittingPairwise<Vec2d>, Vec2d>
 		damping(free_cubic_inner, 0.5, free_cubic_particles.vel_n_, physical_viscosity);
 	/** Observer and output. */
-	WriteAnObservedQuantity<Vecd, BaseParticles, &BaseParticles::pos_n_>
-		write_free_cubic_displacement("Displacement", in_output, free_cubic_observer_contact);
+	WriteAnObservedQuantity<indexVector, Vecd> write_free_cubic_displacement("Position", in_output, free_cubic_observer_contact);
 	/** Now, pre-simulation. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	Transformd transform(-0.5235, Vecd(0));
@@ -201,7 +198,6 @@ int main(int ac, char* av[])
 				}
 				free_cubic_update_contact_density.parallel_exec();
 				free_cubic_compute_solid_contact_forces.parallel_exec();
-				//free_cubic_compute_solid_contact_friction_forces.parallel_exec(dt);
 				free_cubic_stress_relaxation_first_half.parallel_exec(dt);
 				free_cubic_stress_relaxation_second_half.parallel_exec(dt);
 

@@ -1,7 +1,6 @@
 /**
  * @file 	base_mesh_supplementary.cpp
  * @author	Luhui Han, Chi ZHang Yongchuan YU and Xiangyu Hu
- * @version	0.1
  */
 
 #include "base_mesh.h"

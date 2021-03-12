@@ -26,11 +26,12 @@
  * It saves the information for carring out pair
  * interaction, and also considered as the topology of the particles.
  * @author	Xiangyu Hu and Chi Zhang
- * @version	0.1
  */
 #pragma once
 #include "base_data_package.h"
 #include "base_kernel.h"
+#include "base_body.h"
+#include "base_particles.h"
 
 using namespace std;
 
@@ -42,27 +43,98 @@ namespace SPH {
 	class Neighborhood
 	{
 	public:
-		/** the currnet number of neighors */
-		size_t current_size_;
-		/** the limit of neighors does not require memory allocation  */
-		size_t memory_size_;
+		size_t current_size_; 		/**< the current number of neighors */
+		size_t allocated_size_; 	/**< the limit of neighors does not require memory allocation  */
 
 		StdLargeVec<size_t> j_;		/**< index of the neighbor particle. */
-		StdLargeVec<Real> W_ij_;	/**< kernel value */
-		StdLargeVec<Real> dW_ij_;	/**< derivative of kernel function */
+		StdLargeVec<Real> W_ij_;	/**< kernel value or particle volume contribution */
+		StdLargeVec<Real> dW_ij_;	/**< derivative of kernel function or inter-particle surface contribution */
 		StdLargeVec<Real> r_ij_;	/**< distance between j and i. */
-		StdLargeVec<Vecd> e_ij_;	/**< unit vector pointing from j to i */
+		StdLargeVec<Vecd> e_ij_;	/**< unit vector pointing from j to i or inter-particle surface direction */
 
-		/** default constructor */
-		Neighborhood()
-			: current_size_(0), memory_size_(0) {};
+		Neighborhood() : current_size_(0), allocated_size_(0) {};
 		~Neighborhood() {};
-
-		void addANeighbor(Kernel& kernel, Vecd& vec_r_ij, size_t i_index, size_t j_index);
 	};
 
-	/** A neighborhoods for all particles in a body. */
+	/** Inner neighborhoods for all particles in a body for a inner body relation. */
 	using ParticleConfiguration = StdLargeVec<Neighborhood>;
-	/** All contact neighborhoods for all particles in a body. */
+	/** All contact neighborhoods for all particles in a body for a contact body relation. */
 	using ContatcParticleConfiguration = StdVec<ParticleConfiguration>;
+
+	/**
+	 * @class NeighborRelation
+	 * @brief Base neighbor relation between particles i and j.
+	 */
+	class NeighborRelation
+	{
+	protected:
+		Kernel* kernel_;
+		Real cutoff_radius_;
+
+		void createRelation(Neighborhood& neighborhood,
+			Kernel* kernel, Real& distance, Vecd& displacement, size_t j_index) const;
+		void initializeRelation(Neighborhood& neighborhood,
+			Kernel* kernel, Real& distance, Vecd& displacement, size_t j_index) const;
+	public:
+		NeighborRelation();
+		virtual ~NeighborRelation() {};
+	};
+
+	/**
+	 * @class NeighborRelationVariableSmoothingLength
+	 * @brief Neighbor relation for particle with variable smoothing length between particles i and j.
+	 */
+	class NeighborRelationVariableSmoothingLength
+	{
+	protected:
+		Kernel* kernel_;
+
+		void createRelation(Neighborhood& neighborhood, Kernel* kernel, Real& distance, 
+			Vecd& displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const;
+		void initializeRelation(Neighborhood& neighborhood, Kernel* kernel, Real& distance, 
+			Vecd& displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const;
+	public:
+		NeighborRelationVariableSmoothingLength();
+		virtual ~NeighborRelationVariableSmoothingLength() {};
+	};
+
+	/**
+	 * @class NeighborRelationInner
+	 * @brief A inner neighbor relation functor between particles i and j.
+	 */
+	class NeighborRelationInner : public NeighborRelation
+	{
+	public:
+		NeighborRelationInner(SPHBody* body);
+		void operator () (Neighborhood& neighborhood, 
+			Vecd& displacement, size_t i_index, size_t j_index) const;
+	};
+
+	/**
+	 * @class NeighborRelationInnerVariableSmoothingLength
+	 * @brief A inner neighbor relation functor between particles i and j.
+	 */
+	class NeighborRelationInnerVariableSmoothingLength : 
+		public NeighborRelationVariableSmoothingLength
+	{
+	public:
+		NeighborRelationInnerVariableSmoothingLength(SPHBody* body);
+		void operator () (Neighborhood& neighborhood, 
+			Vecd& displacement, size_t i_index, size_t j_index) const;
+	protected:
+		StdLargeVec<Real>& h_ratio_;
+	};
+
+	/**
+	 * @class NeighborRelationContact
+	 * @brief A contact neighbor relation functor between particles i and j.
+	 */
+	class NeighborRelationContact : public NeighborRelation
+	{
+	public:
+		NeighborRelationContact(SPHBody* body, SPHBody* contact_body);
+		virtual ~NeighborRelationContact() {};
+		void operator () (Neighborhood& neighborhood,
+			Vecd& displacement, size_t i_index, size_t j_index) const;
+	};
 }

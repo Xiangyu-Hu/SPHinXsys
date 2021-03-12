@@ -31,7 +31,6 @@
 *			which carries reduced operations through the particles of the body.
 
 * @author	Chi ZHang and Xiangyu Hu
-* @version	0.1
 */
 #pragma once
 
@@ -74,19 +73,19 @@ namespace SPH
 
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
-			size_t number_of_particles = this->sph_body_->number_of_particles_;
+			size_t total_real_particles = this->base_particles_->total_real_particles_;
 			this->setBodyUpdated();
 			SetupReduce();
-			ReturnType temp = ReduceIterator(number_of_particles,
+			ReturnType temp = ReduceIterator(total_real_particles,
 				initial_reference_, functor_reduce_function_, reduce_operation_, dt);
 			return OutputResult(temp);
 		};
 		virtual ReturnType parallel_exec(Real dt = 0.0) override
 		{
-			size_t number_of_particles = this->sph_body_->number_of_particles_;
+			size_t total_real_particles = this->base_particles_->total_real_particles_;
 			this->setBodyUpdated();
 			SetupReduce();
-			ReturnType temp = ReduceIterator_parallel(number_of_particles,
+			ReturnType temp = ReduceIterator_parallel(total_real_particles,
 				initial_reference_, functor_reduce_function_, reduce_operation_, dt);
 			return this->OutputResult(temp);
 		};
@@ -122,8 +121,27 @@ namespace SPH
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
 	protected:
+		friend class CombinedInteractionDynamics;
 		virtual void Interaction(size_t index_i, Real dt = 0.0) = 0;
 		ParticleFunctor functor_interaction_;
+	};
+
+	/**
+	 * @class CombinedInteractionDynamics
+	 * @brief This is the class for combining several interactions dynamics, 
+	 * which share the particle loop but are independent from each other,
+	 * aiming to increase computing intensity under the data caching environment
+	 */
+	class CombinedInteractionDynamics : public InteractionDynamics
+	{
+	public:
+		explicit CombinedInteractionDynamics(StdVec<InteractionDynamics*> multiple_dynamics);
+		virtual ~CombinedInteractionDynamics() {};
+
+	protected:
+		StdVec<InteractionDynamics*> multiple_dynamics_;
+		virtual void setupDynamics(Real dt = 0.0) override;
+		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 	};
 
 	/**
@@ -173,11 +191,14 @@ namespace SPH
 	class InteractionDynamicsSplitting : public InteractionDynamics
 	{
 	public:
-		explicit InteractionDynamicsSplitting(SPHBody* sph_body)
-			: InteractionDynamics(sph_body) {};
+		explicit InteractionDynamicsSplitting(SPHBody* sph_body) : 
+			InteractionDynamics(sph_body), 
+			split_cell_lists_(sph_body->split_cell_lists_) {};
 		virtual ~InteractionDynamicsSplitting() {};
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
+	protected:
+		SplitCellLists& split_cell_lists_;
 	};
 }

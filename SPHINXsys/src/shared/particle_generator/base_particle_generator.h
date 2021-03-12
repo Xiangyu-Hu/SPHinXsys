@@ -26,7 +26,6 @@
  * 			with given positions and volumes. The direct generator simply generate
  * 			particle with given position and volume. 
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- * @version	0.1
  */
 #pragma once
 
@@ -35,11 +34,9 @@
 
 namespace SPH {
 
-	//----------------------------------------------------------------------
-	//		preclaimed classes
-	//----------------------------------------------------------------------
 	class SPHBody;
 	class BaseParticles;
+	class In_Output;
 
 	/**
 	 * @class ParticleGenerator.
@@ -52,10 +49,11 @@ namespace SPH {
 		virtual ~ParticleGenerator() {};
 
 		virtual void initialize(SPHBody* sph_body);
-		virtual void CreateBaseParticles(BaseParticles* base_particles) = 0;
+		virtual void createBaseParticles(BaseParticles* base_particles) = 0;
 	protected:
 		SPHBody* sph_body_;
 	};
+
 	/**
 	 * @class ParticleGeneratorDirect
 	 * @brief Generate particle directly from position-and-volume data.
@@ -65,6 +63,19 @@ namespace SPH {
 	public:
 		ParticleGeneratorDirect() : ParticleGenerator() {};
 		virtual ~ParticleGeneratorDirect() {};
-		virtual void CreateBaseParticles(BaseParticles* base_particles) override;
+		virtual void createBaseParticles(BaseParticles* base_particles) override;
+	};
+
+	/**
+	 * @class ParticleGeneratorReload
+	 * @brief Generate particle by reloading particle position and volume.
+	 */
+	class ParticleGeneratorReload : public ParticleGenerator
+	{
+		std::string file_path_;
+	public:
+		ParticleGeneratorReload(In_Output* in_output, std::string reload_body_name);
+		virtual ~ParticleGeneratorReload() {};
+		virtual void createBaseParticles(BaseParticles* base_particles) override;
 	};
 }

@@ -24,21 +24,15 @@
  * @file 	fluid_particles.h
  * @brief 	This is the derived class of base particle.
  * @author	Xiangyu Hu and Chi Zhang
- * @version	0.1
  */
 #pragma once
 
 #include "base_particles.h"
-#include "xml_engine.h"
 
-#include <fstream>
 using namespace std;
 
 namespace SPH {
 
-	//----------------------------------------------------------------------
-	//		preclaimed classes
-	//----------------------------------------------------------------------
 	class Fluid;
 	class Oldroyd_B_Fluid;
 
@@ -54,18 +48,12 @@ namespace SPH {
 
 		StdLargeVec<Real> p_;		/**< pressure */
 		StdLargeVec<Real> drho_dt_;		/**< density change rate */
-		StdLargeVec<Real> pos_div_;		/**< divergence of particle position to capture a regular (no violent breaking wave) free surface */
+		StdLargeVec<Real> rho_sum_;		/**< number density */
+		StdLargeVec<bool> is_free_surface_; /**< free surface indicator */
 
-		/** Write particle data in PLT format for Tecplot. */
-		virtual void writeParticlesToPltFile(ofstream &output_file) override;
-
-		/** Write particle data in XML format for restart. */
 		virtual void writeParticlesToXmlForRestart(std::string &filefullpath) override;
-		/** Initialize particle data from restart xml file. */
 		virtual void readParticleFromXmlForRestart(std::string &filefullpath) override;
-
-		/** Pointer to this object. */
-		virtual FluidParticles* pointToThisObject() override;
+		virtual FluidParticles* pointToThisObject() override {return this;};
 	};
 
 	/**
@@ -75,24 +63,14 @@ namespace SPH {
 	class ViscoelasticFluidParticles : public FluidParticles
 	{
 	public:
-		//constructor
 		explicit ViscoelasticFluidParticles(SPHBody *body, Oldroyd_B_Fluid* oldroyd_b_fluid);
 		virtual ~ViscoelasticFluidParticles() {};
 		
 		StdLargeVec<Matd> tau_;	/**<  elastic stress */
 		StdLargeVec<Matd> dtau_dt_;	/**<  change rate of elastic stress */
 
-		/** Write particle data in VTU format for Paraview. */
-		virtual void writeParticlesToVtuFile(ofstream &output_file) override;
-		/** Write particle data in PLT format for Tecplot. */
-		virtual void writeParticlesToPltFile(ofstream &output_file) override;
-
-		/** Write particle data in XML format for restart. */
 		virtual void writeParticlesToXmlForRestart(std::string &filefullpath) override;
-		/** Initialize particle data from restart xml file. */
 		virtual void readParticleFromXmlForRestart(std::string &filefullpath) override;
-
-		/** Pointer to this object. */
-		virtual ViscoelasticFluidParticles* pointToThisObject() override;
+		virtual ViscoelasticFluidParticles* pointToThisObject() override {return this;};
 	};
 }

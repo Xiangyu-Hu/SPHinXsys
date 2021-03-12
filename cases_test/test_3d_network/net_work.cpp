@@ -24,7 +24,6 @@
  * @file 	net_work.cpp
  * @brief 	This is the example of generating a neural network on a sphere 
  * @author 	Chi Zhang and Xiangyu Hu
- * @version 0.2.1
  */
 /** header file and namespace. */
 #include "sphinxsys.h"
@@ -38,12 +37,11 @@ using namespace SPH;
 int main()
 {
 	/** Setup the system. */
-	SPHSystem system(domain_lower_bound, domain_upper_bound, dp_0);
+	SPHSystem system(system_domain_bounds, dp_0);
 	/** Output */
 	In_Output in_output(system);
 	/** Creat a sphere, corresponding material and particles. */
-	MyPolygonBody *polygon_body = new MyPolygonBody(system, "Polygon", 0, 
-		new ParticleGeneratorNetwork(Point(-1.0, 0.0, 0.0), Point(-0.964, 0.0, 0.266)));
+	MyPolygonBody *polygon_body = new MyPolygonBody(system, "Polygon");
 	BodyMaterial* body_material = new BodyMaterial();
 	ElasticSolidParticles 	body_particles(polygon_body, body_material);
 	/** Write particle data. */

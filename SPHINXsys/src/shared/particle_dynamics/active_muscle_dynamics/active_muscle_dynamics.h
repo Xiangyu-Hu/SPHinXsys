@@ -67,7 +67,7 @@ namespace SPH
 		 * towards each constrained particles' original position.
 		 */
 		class SpringConstrainMuscleRegion : 
-			public PartDynamicsByParticle, public ActiveMuscleDataDelegateSimple
+			public PartSimpleDynamicsByParticle, public ActiveMuscleDataDelegateSimple
 		{
 		public:
 			SpringConstrainMuscleRegion(SolidBody *body, BodyPartByParticle*body_part);
@@ -77,7 +77,7 @@ namespace SPH
 			StdLargeVec<Real>& mass_;
 			StdLargeVec<Vecd>& pos_n_, & pos_0_, & vel_n_;
 			Vecd stiffness_;
-			virtual Vecd GetAcceleration(Vecd& disp, Real mass);
+			virtual Vecd getAcceleration(Vecd& disp, Real mass);
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 		
@@ -85,7 +85,7 @@ namespace SPH
 		 * @brief impose activation stress on a solid body part
 		 */
 		class ImposingStress :
-			public PartDynamicsByParticle, public ActiveMuscleDataDelegateSimple
+			public PartSimpleDynamicsByParticle, public ActiveMuscleDataDelegateSimple
 		{
 		public:
 			ImposingStress(SolidBody *body, SolidBodyPartForSimbody *body_part);
@@ -93,9 +93,7 @@ namespace SPH
 		protected:
 			StdLargeVec<Vecd>& pos_0_;
 			StdLargeVec<Matd>& active_stress_;
-				/**
-			 * @brief the constrian will be specified by the application
-			 */
+
 			virtual Matd getStress(Vecd& pos) = 0;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};

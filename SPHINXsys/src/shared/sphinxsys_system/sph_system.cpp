@@ -1,20 +1,22 @@
 /**
  * @file sph_system.cpp
- * @brief 	Definatioin of all the functions decleared in spy_system.h
+ * @brief 	Definition of all system level functions
  * @author  Xiangyu Hu, Luhui Han and Chi Zhang
  */
 
 #include "sph_system.h"
+
 #include "base_body.h"
-#include "particle_generator_lattice.h"
+#include "body_relation.h"
 
 namespace SPH
 {
 	//=================================================================================================//
-	SPHSystem::SPHSystem(Vecd lower_bound, Vecd upper_bound,
-		Real particle_spacing_ref, int number_of_threads)
-		: lower_bound_(lower_bound), upper_bound_(upper_bound),
-		tbb_init_(number_of_threads), particle_spacing_ref_(particle_spacing_ref),
+	SPHSystem::SPHSystem(BoundingBox system_domain_bounds,
+		Real resolution_ref, size_t number_of_threads) :
+		system_domain_bounds_(system_domain_bounds),
+		resolution_ref_(resolution_ref), 
+		tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
 		restart_step_(0), run_particle_relaxation_(false),
 		reload_particles_(false)
 	{
@@ -32,30 +34,30 @@ namespace SPH
 
 		reload_folder_ = "./reload";
 	}
-	//===============================================================//
-	void SPHSystem::addABody(SPHBody* body)
+	//=================================================================================================//
+	void SPHSystem::addABody(SPHBody* sph_body)
 	{
-		bodies_.push_back(body);
+		bodies_.push_back(sph_body);
 	}
-	//===============================================================//
-	void SPHSystem::addARealBody(SPHBody* body)
+	//=================================================================================================//
+	void SPHSystem::addARealBody(RealBody* real_body)
 	{
-		real_bodies_.push_back(body);
+		real_bodies_.push_back(real_body);
 	}
-	//===============================================================//
-	void SPHSystem::addAFictitiousBody(SPHBody* body)
+	//=================================================================================================//
+	void SPHSystem::addAFictitiousBody(FictitiousBody* fictitious_body)
 	{
-		fictitious_bodies_.push_back(body);
+		fictitious_bodies_.push_back(fictitious_body);
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void SPHSystem::initializeSystemCellLinkedLists()
 	{
-		for (auto &body : bodies_)
+		for (auto &body : real_bodies_)
 		{
-			body->updateCellLinkedList();
+			dynamic_cast<RealBody*>(body)->updateCellLinkedList();
 		}
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void SPHSystem::initializeSystemConfigurations()
 	{
 		for (auto& body : bodies_)
@@ -67,7 +69,7 @@ namespace SPH
 
 		}
 	}
-	//===============================================================//
+	//=================================================================================================//
 	void SPHSystem::handleCommandlineOptions(int ac, char* av[])
 	{
 		try {
@@ -91,18 +93,20 @@ namespace SPH
 			if (vm.count("r")) {
 				run_particle_relaxation_ = vm["r"].as<bool>();
 				cout << "Particle relaxation was set to "
-					<< vm["r"].as<bool>() << ".\n";
+					 << vm["r"].as<bool>() << ".\n";
 			}
 			else {
-				cout << "Particle relaxation was set to default (" << run_particle_relaxation_ <<").\n";
+				cout << "Particle relaxation was set to default (" 
+				     << run_particle_relaxation_ <<").\n";
 			}
 			if (vm.count("i")) {
 				reload_particles_ = vm["i"].as<bool>();
 				cout << "Particle reload from input file was set to "
-					<< vm["i"].as<bool>() << ".\n";
+					 << vm["i"].as<bool>() << ".\n";
 			}
 			else {
-				cout << "Particle reload from input file was set to default (" << reload_particles_ << ").\n";
+				cout << "Particle reload from input file was set to default (" 
+				     << reload_particles_ << ").\n";
 			}
 		}
 		catch (std::exception & e) {
@@ -114,5 +118,5 @@ namespace SPH
 		}
 
 	}
-	//===============================================================//
+	//=================================================================================================//
 }

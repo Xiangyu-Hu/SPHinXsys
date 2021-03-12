@@ -24,8 +24,7 @@
  * @file    solid_body.h
  * @brief 	This is the class for bodies used for solid BCs or Elastic structure.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- * @version	0.1
- */
+  */
 
 #pragma once
 
@@ -46,16 +45,28 @@ namespace SPH {
 	class SolidBody : public RealBody
 	{
 	public:
-		SolidBody(SPHSystem &system, string body_name, int refinement_level,
+		SolidBody(SPHSystem &system, string body_name, 
+			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(1.15),
 			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~SolidBody() {};
-
-		/** Set up the reaction model, if essential */
-		/** The pointer to derived class object. */
-		virtual SolidBody* pointToThisObject() override { return this; };
+		virtual SolidBody* pointToThisObject()  override {return this;};
 	};
 
-/**
+	/**
+	 * @class ThinStructure
+	 * @brief Declaration of thin structure solidbody.
+	 */
+	class ThinStructure : public SolidBody
+	{
+	public:
+		ThinStructure(SPHSystem& system, string body_name,
+			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(1.15),
+			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
+		virtual ~ThinStructure() {};
+		virtual ThinStructure* pointToThisObject() override {return this;};
+	};
+
+	/**
 	 * @class SolidBodyPartForSimbody
 	 * @brief A SolidBodyPart for coupling with Simbody.
 	 * The mass, origin, and unit inertial matrix are computed.

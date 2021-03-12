@@ -2,7 +2,6 @@
  * @file 	observer_dynamics.cpp
  * @brief 	Here, Functions defined in observer_dyanmcis.h are detailed.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	0.1
  */
 
 #include "observer_dynamics.h"
@@ -16,7 +15,7 @@ namespace SPH
 	{
 		//=================================================================================================//
 		CorrectInterpolationKernelWeights::
-			CorrectInterpolationKernelWeights(SPHBodyContactRelation* body_contact_relation)
+			CorrectInterpolationKernelWeights(BaseContactBodyRelation* body_contact_relation)
 			: InteractionDynamics(body_contact_relation->sph_body_),
 			DataDelegateContact<SPHBody, BaseParticles,
 			BaseMaterial, SPHBody, BaseParticles, BaseMaterial>(body_contact_relation)
@@ -30,13 +29,12 @@ namespace SPH
 		void CorrectInterpolationKernelWeights::Interaction(size_t index_i, Real dt)
 		{
 			Vecd weight_correction(0.0);
-			/** a small number added to diagonal to avoid divide zero */
-			Matd local_configuration(Eps);
-			/** Compute the first order consistent kernel weights */
+			Matd local_configuration(Eps); // small number added to diagonal to avoid divide zero
+			// Compute the first order consistent kernel weights
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
-				Neighborhood& contact_neighborhood = contact_configuration_[k][index_i];
+				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
 					size_t index_j = contact_neighborhood.j_[n];
@@ -49,13 +47,13 @@ namespace SPH
 				}
 			}
 
-			/** correction matrix for interacting configuration */
+			// correction matrix for interacting configuration
 			Matd B_ = SimTK::inverse(local_configuration);
 
-			/** Add the kernel weight correction to W_ij_ of neighboring particles. */
+			// Add the kernel weight correction to W_ij_ of neighboring particles.
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				Neighborhood& contact_neighborhood = contact_configuration_[k][index_i];
+				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
 					Vecd normalized_weight_correction = B_ * weight_correction;

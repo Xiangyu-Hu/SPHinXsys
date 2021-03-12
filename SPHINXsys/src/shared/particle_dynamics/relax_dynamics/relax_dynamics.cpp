@@ -1,11 +1,11 @@
 /**
  * @file 	relax_dynamics.cpp
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- * @version	0.1
  */
 
 #include "relax_dynamics.h"
-#include "level_set.h"
+#include "particle_generator_lattice.h"
+#include "geometry_level_set.h"
 
 using namespace SimTK;
 //=================================================================================================//
@@ -16,51 +16,90 @@ namespace SPH
 	{
 		//=================================================================================================//
 		GetTimeStepSizeSquare::GetTimeStepSizeSquare(SPHBody* body) :
-			ParticleDynamicsReduce<Real, ReduceMin>(body),
+			ParticleDynamicsReduce<Real, ReduceMax>(body),
 			RelaxDataDelegateSimple(body), dvel_dt_(particles_->dvel_dt_)
 		{
-			smoothing_length_ = body->kernel_->GetSmoothingLength();
+			h_ref_ = body->particle_adaptation_->ReferenceSmoothingLength();
 			//given by sound criteria by assuming unit speed of sound and zero particle velocity
-			initial_reference_ = 0.0625 * smoothing_length_ * smoothing_length_;
+			initial_reference_ = 1.0 / h_ref_;
 		}
 		//=================================================================================================//
 		Real GetTimeStepSizeSquare::ReduceFunction(size_t index_i, Real dt)
 		{
-			return 0.0625 * smoothing_length_ / (dvel_dt_[index_i].norm() + TinyReal);
+			return dvel_dt_[index_i].norm();
 		}
 		//=================================================================================================//
-		RelaxationAccelerationInner::RelaxationAccelerationInner(SPHBodyInnerRelation* body_inner_relation) : 
+		Real GetTimeStepSizeSquare::OutputResult(Real reduced_value) 
+		{
+			return 0.0625 * h_ref_ / (reduced_value + TinyReal);
+		}
+		//=================================================================================================//
+		RelaxationAccelerationInner::RelaxationAccelerationInner(BaseInnerBodyRelation* body_inner_relation) : 
 			InteractionDynamics(body_inner_relation->sph_body_), 
 			RelaxDataDelegateInner(body_inner_relation),
-			Vol_(particles_->Vol_), dvel_dt_(particles_->dvel_dt_), pos_n_(particles_->pos_n_) 
-		{
-			complex_shape_ = body_->body_shape_;
-			kernel_ = body_->kernel_;
-		}
+			Vol_(particles_->Vol_), h_ratio_(particles_->h_ratio_),
+			dvel_dt_(particles_->dvel_dt_), pos_n_(particles_->pos_n_) {}
 		//=================================================================================================//
 		void RelaxationAccelerationInner::Interaction(size_t index_i, Real dt)
 		{
-			Vecd acceleration(0);// = -2.0 * complex_shape_->computeKernelIntegral(pos_n_[index_i], kernel_);
+			Vecd acceleration(0);
 			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				acceleration -= 2.0 * inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n]* Vol_[index_j];
+				acceleration -= 2.0 * inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n] * Vol_[index_j];
 			}
 			dvel_dt_[index_i] = acceleration;
 		}
 		//=================================================================================================//
+		RelaxationAccelerationInnerWithLevelSetCorrection::
+			RelaxationAccelerationInnerWithLevelSetCorrection(BaseInnerBodyRelation* body_inner_relation) : 
+			RelaxationAccelerationInner(body_inner_relation)
+		{
+			level_set_complex_shape_ = dynamic_cast<LevelSetComplexShape*>(body_->body_shape_);
+			if (level_set_complex_shape_ == NULL)
+			{
+				std::cout << "\n FAILURE: LevelSetComplexShape is undefined!" << std::endl;
+				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+				exit(1);
+			}
+		}		
+		//=================================================================================================//
+		void RelaxationAccelerationInnerWithLevelSetCorrection::Interaction(size_t index_i, Real dt)
+		{
+			RelaxationAccelerationInner::Interaction(index_i, dt);
+			dvel_dt_[index_i] -= 2.0 * level_set_complex_shape_->
+				computeKernelGradientIntegral(pos_n_[index_i], h_ratio_[index_i]);
+		}
+		//=================================================================================================//
 		UpdateParticlePosition::UpdateParticlePosition(SPHBody* body) :
 			ParticleDynamicsSimple(body), RelaxDataDelegateSimple(body), 
-			pos_n_(particles_->pos_n_), dvel_dt_(particles_->dvel_dt_)	{}
+			pos_n_(particles_->pos_n_), dvel_dt_(particles_->dvel_dt_),
+			h_ratio_(particles_->h_ratio_) {}
 		//=================================================================================================//
 		void UpdateParticlePosition::Update(size_t index_i, Real dt_square)
 		{
-			pos_n_[index_i] += dvel_dt_[index_i] * dt_square * 0.5;
+			pos_n_[index_i] += dvel_dt_[index_i] * dt_square * 0.5 / h_ratio_[index_i];
+		}
+		//=================================================================================================//
+		UpdateSmoothingLengthRatioByBodyShape::UpdateSmoothingLengthRatioByBodyShape(SPHBody* body) :
+			ParticleDynamicsSimple(body), RelaxDataDelegateSimple(body),
+			h_ratio_(particles_->h_ratio_), Vol_(particles_->Vol_), pos_n_(particles_->pos_n_),
+			body_shape_(*body->body_shape_), kernel_(*body->particle_adaptation_->getKernel())
+		{
+			particle_spacing_by_body_shape_ =
+				dynamic_cast<ParticleSpacingByBodyShape*>(body->particle_adaptation_);
+		}
+		//=================================================================================================//
+		void UpdateSmoothingLengthRatioByBodyShape::Update(size_t index_i, Real dt_square)
+		{
+			Real local_spacing = particle_spacing_by_body_shape_->getLocalSpacing(body_shape_, pos_n_[index_i]);
+			h_ratio_[index_i] = particle_adaptation_->ReferenceSpacing() / local_spacing;
+			Vol_[index_i] = powern(local_spacing, Dimensions);
 		}
 		//=================================================================================================//
 		RelaxationAccelerationComplex::
-			RelaxationAccelerationComplex(SPHBodyComplexRelation* body_complex_relation) : 
+			RelaxationAccelerationComplex(ComplexBodyRelation* body_complex_relation) : 
 			InteractionDynamics(body_complex_relation->sph_body_),
 			RelaxDataDelegateComplex(body_complex_relation), 
 			Vol_(particles_->Vol_), dvel_dt_(particles_->dvel_dt_)
@@ -85,7 +124,7 @@ namespace SPH
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
-				Neighborhood& contact_neighborhood = contact_configuration_[k][index_i];
+				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
 					size_t index_j = contact_neighborhood.j_[n];
@@ -98,28 +137,29 @@ namespace SPH
 			dvel_dt_[index_i] = acceleration;
 		}
 		//=================================================================================================//
-		BodySurfaceBounding::
-			BodySurfaceBounding(SPHBody* body, NearBodySurface* body_part) :
-			PartDynamicsByCell(body, body_part),
-			RelaxDataDelegateSimple(body), pos_n_(particles_->pos_n_)
-		{
-		}
+		ShapeSurfaceBounding::
+			ShapeSurfaceBounding(SPHBody* body, NearShapeSurface* body_part) :
+			PartDynamicsByCell(body, body_part), RelaxDataDelegateSimple(body), 
+			pos_n_(particles_->pos_n_), 
+			constrained_distance_(0.5 * body->particle_adaptation_->MinimumSpacing()) {}
 		//=================================================================================================//
-		void BodySurfaceBounding::Update(size_t index_i, Real dt)
+		void ShapeSurfaceBounding::Update(size_t index_i, Real dt)
 		{
 			Real phi = body_->body_shape_->findSignedDistance(pos_n_[index_i]);
-			if (phi > -0.5 * body_->particle_spacing_)
+
+			if (phi > -constrained_distance_)
 			{
 				Vecd unit_normal = body_->body_shape_->findNormalDirection(pos_n_[index_i]);
 				unit_normal /= unit_normal.norm() + TinyReal;
-				pos_n_[index_i] -= (phi + 0.5 * body_->particle_spacing_) * unit_normal;
+				pos_n_[index_i] -= (phi + constrained_distance_) * unit_normal;
 			}
 		}
 		//=================================================================================================//
 		ConstraintSurfaceParticles::
-			ConstraintSurfaceParticles(SPHBody* body, BodySurface* body_part)
-			:PartDynamicsByParticle(body, body_part),
-			RelaxDataDelegateSimple(body), pos_n_(particles_->pos_n_)
+			ConstraintSurfaceParticles(SPHBody* body, ShapeSurface* body_part)
+			:PartSimpleDynamicsByParticle(body, body_part), RelaxDataDelegateSimple(body),
+			constrained_distance_(0.5 * body->particle_adaptation_->MinimumSpacing()),
+			pos_n_(particles_->pos_n_)
 		{
 		}
 		//=================================================================================================//
@@ -128,21 +168,27 @@ namespace SPH
 			Real phi = body_->body_shape_->findSignedDistance(pos_n_[index_i]);
 			Vecd unit_normal = body_->body_shape_->findNormalDirection(pos_n_[index_i]);
 			unit_normal /= unit_normal.norm() + TinyReal;
-			pos_n_[index_i] -= (phi + 0.5 * body_->particle_spacing_) * unit_normal;
+			pos_n_[index_i] -= (phi + constrained_distance_) * unit_normal;
 		}
 		//=================================================================================================//
-		RelaxationStepInner::RelaxationStepInner(SPHBodyInnerRelation* body_inner_relation) :
+		RelaxationStepInner::
+			RelaxationStepInner(BaseInnerBodyRelation* body_inner_relation, bool level_set_correction) :
 			ParticleDynamics<void>(body_inner_relation->sph_body_),
-			sph_body_(body_inner_relation->sph_body_), inner_relation_(body_inner_relation),
-			relaxation_acceleration_inner_(inner_relation_),
-			get_time_step_square_(sph_body_), update_particle_position_(sph_body_),
-			surface_bounding_(sph_body_, new NearBodySurface(sph_body_)) {}
+			real_body_(body_inner_relation->real_body_), inner_relation_(body_inner_relation),
+			relaxation_acceleration_inner_(NULL),
+			get_time_step_square_(real_body_), update_particle_position_(real_body_),
+			surface_bounding_(real_body_, new NearShapeSurface(real_body_))
+		{
+			relaxation_acceleration_inner_ = !level_set_correction ?
+				new RelaxationAccelerationInner(body_inner_relation) :
+				new RelaxationAccelerationInnerWithLevelSetCorrection(body_inner_relation);
+		}
 		//=================================================================================================//
 		void RelaxationStepInner::exec(Real dt)
 		{
-			sph_body_->updateCellLinkedList();
+			real_body_->updateCellLinkedList();
 			inner_relation_->updateConfiguration();
-			relaxation_acceleration_inner_.exec();
+			relaxation_acceleration_inner_->exec();
 			Real dt_square = get_time_step_square_.exec();
 			update_particle_position_.exec(dt_square);
 			surface_bounding_.exec();
@@ -150,9 +196,9 @@ namespace SPH
 		//=================================================================================================//
 		void RelaxationStepInner::parallel_exec(Real dt)
 		{
-			sph_body_->updateCellLinkedList();
+			real_body_->updateCellLinkedList();
 			inner_relation_->updateConfiguration();
-			relaxation_acceleration_inner_.parallel_exec();
+			relaxation_acceleration_inner_->parallel_exec();
 			Real dt_square = get_time_step_square_.parallel_exec();
 			update_particle_position_.parallel_exec(dt_square);
 			surface_bounding_.parallel_exec();

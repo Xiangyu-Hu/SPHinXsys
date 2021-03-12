@@ -1,7 +1,6 @@
 /**
  * @file 	kernel_hyperbolic.cpp
  * @author	Luhui Han, Chi ZHang, Yongchuan Yu and Xiangyu Hu
- * @version	0.1
  */
 
 #include "kernel_hyperbolic.h"
@@ -11,13 +10,14 @@
 namespace SPH
 {
 	//=================================================================================================//
-	KernelHyperbolic::KernelHyperbolic(Real h)
-		: Kernel(h, "Hyperbolic")
+	KernelHyperbolic::KernelHyperbolic()
+		: Kernel("HyperbolicKernel") {}
+	//=================================================================================================//
+	void KernelHyperbolic::setBasicParameters()
 	{
 		factor_W_1D_ = inv_h_ / 7.0;
 		factor_W_2D_ = inv_h_ * inv_h_ / (3.0 * Pi);
 		factor_W_3D_ = inv_h_ * inv_h_ * inv_h_ * 15.0 / (62.0 *Pi);
-		SetDerivativeFactors();
 	}
 	//=================================================================================================//
 	Real KernelHyperbolic::W_1D(const Real q) const

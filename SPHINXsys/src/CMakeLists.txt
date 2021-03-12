@@ -21,3 +21,7 @@ ENDFOREACH()
 ADD_SUBDIRECTORY(for_2D_build)
 ADD_SUBDIRECTORY(for_3D_build)
 ADD_SUBDIRECTORY(shared)
+
+if(BUILD_WITH_IMAGE_PROCESS)
+add_subdirectory(image_processing)
+endif()

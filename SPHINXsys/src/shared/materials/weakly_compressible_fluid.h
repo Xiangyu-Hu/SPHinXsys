@@ -26,7 +26,6 @@
  * 			model incompressible fluids. Here, we have included several equation of states.
  * 			Futhermore, A typical non-newtonian fluid model is included.  
  * @author  Xiangyu Hu, Luhui Han and Chi Zhang
- * @version 0.1.0
  */
 
 #pragma once
@@ -35,9 +34,6 @@
 
 namespace SPH {
 
-	//----------------------------------------------------------------------
-	//		preclaimed classes
-	//----------------------------------------------------------------------
 	class ViscoelasticFluidParticles;
 
 	/**
@@ -47,33 +43,23 @@ namespace SPH {
 	class WeaklyCompressibleFluid : public Fluid
 	{
 	protected:
-		/** reference pressure */
-		Real p0_;
+		Real p0_; /**< reference pressure */
 
-		/** assign derived material properties*/
-		virtual void assignDerivedMaterialParameters() override {
+		virtual void assignDerivedMaterialParameters() override 
+		{
 			Fluid::assignDerivedMaterialParameters();
 			p0_ = rho_0_ * c_0_ * c_0_;
 		};
 	public:
-		/** Constructor with material name. */
 		explicit WeaklyCompressibleFluid() : Fluid(), p0_(1.0) {
 			material_name_ = "WeaklyCompressibleFluid";
 		};
 		virtual ~WeaklyCompressibleFluid() {};
 
-		/** the interface for dynamical cast*/
-		virtual WeaklyCompressibleFluid* pointToThisObject() override { return this; };
-
-		virtual Real GetPressure(Real rho) override;
+		virtual Real getPressure(Real rho) override;
 		virtual Real DensityFromPressure(Real p) override;
-		virtual Real GetSoundSpeed(Real p = 0.0, Real rho = 1.0) override;
-
-		/** riemann solver */
-		virtual Real RiemannSolverForPressure(Real rhol, Real rhor, Real pl,
-			Real pr, Real ul, Real ur) override;
-		virtual Real RiemannSolverForVelocity(Real rhol, Real rhor, Real pl,
-			Real pr, Real ul, Real ur) override;
+		virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) override;
+		virtual WeaklyCompressibleFluid* pointToThisObject() override {return this;};
 	};
 
 	/**
@@ -87,12 +73,10 @@ namespace SPH {
 		WeaklyCompressibleFluidType* fluid_;
 		Real cutoff_pressure_, cutoff_density_;
 
-		/** assign derived material properties*/
 		virtual void assignDerivedMaterialParameters() {
 			WeaklyCompressibleFluid::assignDerivedMaterialParameters();
 		};
 	public:
-		/** constructor */
 		WeaklyCompressibleFluidFreeSurface(Real cutoff_pressure)
 			: WeaklyCompressibleFluid(),
 			cutoff_pressure_(cutoff_pressure) {
@@ -102,8 +86,8 @@ namespace SPH {
 		}; 
 		virtual ~WeaklyCompressibleFluidFreeSurface() {};
 
-		virtual Real GetPressure(Real rho) override {
-			return rho < cutoff_density_ ? cutoff_pressure_ : fluid_->GetPressure(rho);
+		virtual Real getPressure(Real rho) override {
+			return rho < cutoff_density_ ? cutoff_pressure_ : fluid_->getPressure(rho);
 		};
 	};
 
@@ -114,27 +98,25 @@ namespace SPH {
 	class SymmetricTaitFluid : public WeaklyCompressibleFluid
 	{
 	protected:
-		//determine the stiffness of the fluid
-		int gamma_;
+		
+		int gamma_; /**< determine the stiffness of the fluid */
 
 		/** assign derived material properties*/
-		virtual void assignDerivedMaterialParameters() override {
+		virtual void assignDerivedMaterialParameters() override 
+		{
 			WeaklyCompressibleFluid::assignDerivedMaterialParameters();
 		};
 
 	public:
-		/** constructor. */
-		SymmetricTaitFluid() : WeaklyCompressibleFluid(), gamma_(2) {
+		SymmetricTaitFluid() : WeaklyCompressibleFluid(), gamma_(2) 
+		{
 			material_name_ = "SymmetricTaitFluid";
 		};
 		virtual ~SymmetricTaitFluid() {};
 
-		/** the interface for dynamical cast*/
-		virtual SymmetricTaitFluid* pointToThisObject() override { return this; };
-
-		virtual Real GetPressure(Real rho) override;
+		virtual Real getPressure(Real rho) override;
 		virtual Real DensityFromPressure(Real p) override;
-		virtual Real GetSoundSpeed(Real p = 0.0, Real rho = 1.0) override;
+		virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) override;
 	};
 
 	/**
@@ -144,33 +126,28 @@ namespace SPH {
 	class Oldroyd_B_Fluid : public WeaklyCompressibleFluid
 	{
 	protected:
-		/** relaxation time */
-		Real lambda_;
-		/** polymeric viscosity */
-		Real mu_p_;
-		/** particles for this material */
+		Real lambda_; /**< relaxation time */
+		Real mu_p_; /**< polymeric viscosity */
 		ViscoelasticFluidParticles* viscoelastic_fluid_particles_;
 
-		/** assign derived material properties*/
-		virtual void assignDerivedMaterialParameters() override {
+		virtual void assignDerivedMaterialParameters() override 
+		{
 			WeaklyCompressibleFluid::assignDerivedMaterialParameters();
 		};
 	public:
-		/** constructor */
 		explicit Oldroyd_B_Fluid() : WeaklyCompressibleFluid(),
-			lambda_(1.0), mu_p_(0.0) {
+			lambda_(1.0), mu_p_(0.0) 
+		{
 			material_name_ = "Oldroyd_B_Fluid";
 		};
 		virtual ~Oldroyd_B_Fluid() {};
 
-		/** assign particles to this material */
-		void assignViscoelasticFluidParticles(ViscoelasticFluidParticles* viscoelastic_fluid_particles) {
+		void assignViscoelasticFluidParticles(ViscoelasticFluidParticles* viscoelastic_fluid_particles) 
+		{
 			viscoelastic_fluid_particles_ = viscoelastic_fluid_particles;
 		};
 		Real getReferenceRelaxationTime() { return lambda_; };
 		Real ReferencePolymericViscosity() { return mu_p_; };
-
-		/** the interface for dynamical cast*/
-		virtual Oldroyd_B_Fluid* pointToThisObject() override { return this; };
+		virtual Oldroyd_B_Fluid* pointToThisObject() override {return this;};
 	};
 }

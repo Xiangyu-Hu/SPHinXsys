@@ -3,9 +3,7 @@
 * @brief 	This is the test of using levelset to generate particles relax particles.
 * @details	We use this case to test the particle generation and relaxation by levelset for a complex geometry (3D).
 *			Before particle generation, we clean the sharp corner and smooth 0 levelset value, then doing the re-initialization
-
 * @author 	Yongchuan Yu and Xiangyu Hu
-* @version 0.1
 */
 
 #pragma once
@@ -14,18 +12,18 @@
 
 using namespace SPH;
 
-/**
- * @brief Basic geometry parameters.
- */
- /** Set the file path to the stl file. */
+//----------------------------------------------------------------------
+//	Set the file path to the data file.
+//----------------------------------------------------------------------
 std::string full_path_to_airfoil = "./input/teapot.stl";
-
-/**
- * @brief Basic geometry parameters and numerical setup.
- */
+//----------------------------------------------------------------------
+//	Basic geometry parameters and numerical setup.
+//----------------------------------------------------------------------
 Vec3d domain_lower_bound(-9.0, -6.0, 0.0);
 Vec3d domain_upper_bound(9.0, 6.0, 9.0);
-Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
+Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 25.0;
+/** Domain bounds of the system. */
+BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 
 TriangleMeshShape *CreateImportedModelSurface()
 {
@@ -38,8 +36,10 @@ TriangleMeshShape *CreateImportedModelSurface()
 class ImportedModel : public SolidBody
 {
 public:
-	ImportedModel(SPHSystem &system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	ImportedModel(SPHSystem &system, string body_name)
+		: SolidBody(system, body_name,
+			new ParticleSpacingByBodyShape(1.15, 0, 2),
+			new ParticleGeneratorMultiResolution())
 	{
 		/** Geomerty definition. */
 		ComplexShape original_body_shape;

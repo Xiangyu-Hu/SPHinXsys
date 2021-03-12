@@ -22,7 +22,7 @@ Real outline(Real x, Real h, Real L)
 }
 
 //creat bone shape
-std::vector<Point> CreatFishShape(Real center_x, Real center_y, Real length, Real resolution)
+std::vector<Vecd> CreatFishShape(Real center_x, Real center_y, Real length, Real resolution)
 {
 	Real headtip = center_x;		//head position(cx, cy)
 	Real tailtip = center_x + length;	//tail position(cx + length, cy)
@@ -36,7 +36,7 @@ std::vector<Point> CreatFishShape(Real center_x, Real center_y, Real length, Rea
 	int start_index = 0;
 	int end_index = Nh;
 
-	std::vector<Point> pnts;
+	std::vector<Vecd> pnts;
 	for (int n = 0; n <= Nh; n++)
 	{
 		Real t = L - n * Lstep;
@@ -45,7 +45,7 @@ std::vector<Point> CreatFishShape(Real center_x, Real center_y, Real length, Rea
 
 		if (y >= resolution)
 		{
-			pnts.push_back(Point(x, y));
+			pnts.push_back(Vecd(x, y));
 		}
 		else
 		{
@@ -61,17 +61,17 @@ std::vector<Point> CreatFishShape(Real center_x, Real center_y, Real length, Rea
 	}
 
 	//upper camber line
-	std::vector<Point> pnts1;
+	std::vector<Vecd> pnts1;
 	for (int n = 0; n <= end_index - start_index; n++)
 	{
-		pnts1.push_back(Point(pnts[n][0], pnts[n][1] + center_y));
+		pnts1.push_back(Vecd(pnts[n][0], pnts[n][1] + center_y));
 	}
 	//lower camber line 
 	for (int n = end_index - start_index; n >= 0; n--)
 	{
-		pnts1.push_back(Point(pnts1[n][0], -pnts1[n][1] + 2.0*center_y));
+		pnts1.push_back(Vecd(pnts1[n][0], -pnts1[n][1] + 2.0*center_y));
 	}
-	pnts1.push_back(Point(pnts[0][0], pnts[0][1] + center_y));
+	pnts1.push_back(Vecd(pnts[0][0], pnts[0][1] + center_y));
 
 	return pnts1;
 }
@@ -102,7 +102,7 @@ Real outline_zebra_fish(Real x, Real h, Real L)
 
 
 //creat bone shape
-std::vector<Point> CreatZebraFishShape(Real center_x, Real center_y, Real length)
+std::vector<Vecd> CreatZebraFishShape(Real center_x, Real center_y, Real length)
 {
 	Real headtip = center_x;		//head position(cx, cy)
 	Real tailtip = center_x + length;	//tail position(cx + length, cy)
@@ -116,7 +116,7 @@ std::vector<Point> CreatZebraFishShape(Real center_x, Real center_y, Real length
 	int start_index = 0;
 	int end_index = Nh;
 
-	std::vector<Point> pnts;
+	std::vector<Vecd> pnts;
 	for (int n = 0; n <= Nh; n++)
 	{
 		Real t = n * Lstep;
@@ -124,7 +124,7 @@ std::vector<Point> CreatZebraFishShape(Real center_x, Real center_y, Real length
 		Real y = outline_zebra_fish(t, h, L);
 
 		if (y >= 1.0e-3)
-			pnts.push_back(Point(x, y));
+			pnts.push_back(Vecd(x, y));
 		else
 		{
 			if (x < 0.0)
@@ -139,46 +139,46 @@ std::vector<Point> CreatZebraFishShape(Real center_x, Real center_y, Real length
 	}
 
 	//upper camber line
-	std::vector<Point> pnts1;
+	std::vector<Vecd> pnts1;
 	for (int n = 0; n <= end_index - start_index; n++)
 	{
-		pnts1.push_back(Point(pnts[n][0], pnts[n][1] + center_y));
+		pnts1.push_back(Vecd(pnts[n][0], pnts[n][1] + center_y));
 	}
 	//lower camber line 
 	for (int n = end_index - start_index; n >= 0; n--)
 	{
-		pnts1.push_back(Point(pnts1[n][0], -pnts1[n][1] + 2.0*center_y));
+		pnts1.push_back(Vecd(pnts1[n][0], -pnts1[n][1] + 2.0*center_y));
 	}
-	pnts1.push_back(Point(pnts[0][0], pnts[0][1] + center_y));
+	pnts1.push_back(Vecd(pnts[0][0], pnts[0][1] + center_y));
 
 	return pnts1;
 }
 
 //creat bone shape
-std::vector<Point> CreatBoneShape(int Nh, Real ra, Real rab, Real center_x, Real center_y)
+std::vector<Vecd> CreatBoneShape(int Nh, Real ra, Real rab, Real center_x, Real center_y)
 {
 	Real rb = rab * ra;
 	Real headtip = center_x - ra;
 	Real hstep = 2.0 * ra / Nh;
 
-	std::vector<Point> pnts;
+	std::vector<Vecd> pnts;
 
-	pnts.push_back(Point(center_x - ra, center_y));
+	pnts.push_back(Vecd(center_x - ra, center_y));
 	for (int n = 1; n < Nh; n++)
 	{
 		Real x = headtip + n * hstep;
-		pnts.push_back(Point(x, rb * sqrt(1 - sqr((x - center_x) / ra)) + center_y));
+		pnts.push_back(Vecd(x, rb * sqrt(1 - sqr((x - center_x) / ra)) + center_y));
 	}
-	pnts.push_back(Point(center_x + ra, center_y));
+	pnts.push_back(Vecd(center_x + ra, center_y));
 
-	std::vector<Point> pnts2;
+	std::vector<Vecd> pnts2;
 	for (int n = 0; n <= Nh; n++)
 	{
 		pnts2.push_back(pnts[n]);
 	}
 	for (int n = Nh - 1; n > 0; n--)
 	{
-		pnts2.push_back(Point(pnts[n][0], -pnts[n][1] + 2.0*center_y));
+		pnts2.push_back(Vecd(pnts[n][0], -pnts[n][1] + 2.0*center_y));
 	}
 	pnts2.push_back(pnts[0]);
 

@@ -2,7 +2,6 @@
  * @file 	sph_data_conainers.h
  * @brief 	Set up of basic data structure.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- * @version	0.1
  */
 #pragma once
 
@@ -16,38 +15,39 @@ namespace SPH {
 	 */
 	class BaseMaterial;
 	class SPHBody;
+	class RealBody;
+	class FictitiousBody;
 	class CellList;
 	class BaseParticles;
 
-	/**< Vector of Material. Note that vector of references are not allowed in c++.*/
+	/** Bounding box for system, body, body part and shape, first: lower bound, second: upper bound. */
+	typedef pair<Vecd, Vecd> BoundingBox;
+	/** Vector of Material. Note that vector of references are not allowed in c++.*/
 	using MaterialVector = StdVec<BaseMaterial*>;
-	/** Vector of SPH body. Note that vector of references are not allowed in c++.*/
+	/** Vector of bodys */
 	using SPHBodyVector = StdVec<SPHBody*>;
-	typedef pair<SPHBody*, SPHBodyVector> SPHBodyContactMap;
+	using RealBodyVector = StdVec<RealBody*>;
+	using FictitiousBodyVector = StdVec<FictitiousBody*>;
 
 	/** Index container with elements of size_t. */
 	using IndexVector = StdVec<size_t>;
-	/** Cell container with elements of Vecu. */
-	using CellVector = StdVec<Vecu>;
-
 	/** Concurrent particle indexes .*/
 	using ConcurrentIndexVector = LargeVec<size_t>;
-	/** Concurrent cell indexes.*/
-	using ConcurrentCellVector = LargeVec<Vecu>;
+
 	/** List data pair*/
 	using ListData = pair<size_t, Vecd>;
-	/** Cell list concurrent vector data. */
+	/** Cell list vector data. */
 	using CellListDataVector = StdLargeVec<ListData>;
+	/** Cell lists*/
+	using CellLists = StdLargeVec<CellList*>;
+
 	/** Concurrent vector .*/
 	template<class DataType>
 	using ConcurrentVector = LargeVec<DataType>;
-
-	/** Cell lists*/
-	using CellLists = StdLargeVec<CellList*>;
 	/** concurrent cell lists*/
 	using ConcurrentCellLists = LargeVec<CellList*>;
 	/** Split cell list for split algorithms. */
 	using SplitCellLists = StdVec<ConcurrentCellLists>;
 	/** Pair of point and volume. */
-	using PositionsAndVolumes = vector<pair<Point, Real>>;
+	using PositionsAndVolumes = vector<pair<Vecd, Real>>;
 }

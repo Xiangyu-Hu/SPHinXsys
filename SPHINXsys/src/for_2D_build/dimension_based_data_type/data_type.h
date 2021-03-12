@@ -8,10 +8,11 @@ namespace SPH {
 	using Veci = Vec2i;
 	using Vecu = Vec2u;
 	using Vecd = Vec2d;
-	using Point = Vec2d;
-	using Index = Vec2i;
 	using Matd = Mat2d;
 	using SymMatd = SymMat2d;
+	using AngularVecd = Real;
+	const int indexAngularVector = 0;
+
 
 	using Transformd = Transform2d;
 
@@ -25,5 +26,12 @@ namespace SPH {
 	using MeshDataMatrix = DataType**;
 
 	/** only works for smoothing length ratio less or equal than 1.3*/
-	const int MaximumNeighborhoodSize = int(Pi * 9);
+	constexpr int MaximumNeighborhoodSize = int(M_PI * 9);
+	const int Dimensions = 2;
+
+	/** correction matrix, only works for thin structure dynamics. */
+	const Matd correction_matrix = { 1, 0, 0, 0 };
+
+	/** initial locald normal, only works for thin structure dynamics. */
+	const Vecd n_local_0 = Vecd(0.0, 1.0);
 }

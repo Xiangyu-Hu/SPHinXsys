@@ -1,7 +1,6 @@
 /**
  * @file 	base_particle_dynamics.cpp
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- * @version	0.1
  */
 #include "base_particle_dynamics.h"
 #include "base_particle_dynamics.hpp"
@@ -10,15 +9,15 @@ namespace SPH
 {
 	Real GlobalStaticVariables::physical_time_ = 0.0;
 	//=============================================================================================//
-	void ParticleIterator(size_t number_of_particles, ParticleFunctor &particle_functor, Real dt)
+	void ParticleIterator(size_t total_real_particles, ParticleFunctor &particle_functor, Real dt)
 	{
-		for (size_t i = 0; i < number_of_particles; ++i)
+		for (size_t i = 0; i < total_real_particles; ++i)
 			particle_functor(i, dt);
 	}
 	//=============================================================================================//
-	void ParticleIterator_parallel(size_t number_of_particles, ParticleFunctor &particle_functor, Real dt)
+	void ParticleIterator_parallel(size_t total_real_particles, ParticleFunctor &particle_functor, Real dt)
 	{
-		parallel_for(blocked_range<size_t>(0, number_of_particles),
+		parallel_for(blocked_range<size_t>(0, total_real_particles),
 			[&](const blocked_range<size_t>& r) {
 			for (size_t i = r.begin(); i < r.end(); ++i) {
 				particle_functor(i, dt);

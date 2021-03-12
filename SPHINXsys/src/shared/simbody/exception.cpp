@@ -1,7 +1,6 @@
 /**
  * @file 	exception.cpp
  * @author	Chi Zhang and Xiangyu Hu
- * @version	0.1
  */
 #include "exception.h"
 using namespace std;

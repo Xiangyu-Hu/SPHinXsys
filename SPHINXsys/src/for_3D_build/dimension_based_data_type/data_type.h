@@ -9,10 +9,10 @@ namespace SPH {
 	using Veci = Vec3i;
 	using Vecu = Vec3u;
 	using Vecd = Vec3d;
-	using Point = Vec3d;
-	using Index = Vec3i;
 	using Matd = Mat3d;
 	using SymMatd = SymMat3d;
+	using AngularVecd = Vec3d;
+	const int indexAngularVector = 1;
 
 	using Transformd = SimTK::Transform;
 
@@ -26,5 +26,13 @@ namespace SPH {
 	using MeshDataMatrix = DataType***;
 
 	/** only works for smoothing length ratio less or equal than 1.3*/
-	const int MaximumNeighborhoodSize = int(1.33 * Pi * 27);
+	constexpr int MaximumNeighborhoodSize = int(1.33 * M_PI * 27);
+
+	const int Dimensions = 3;
+
+	/** correction matrix, only works for thin structure dynamics. */
+	const Matd correction_matrix = { 1, 0, 0, 0, 1, 0, 0, 0, 0 };
+
+	/** initial local normal, only works for thin structure dynamics. */
+	const Vecd n_local_0 = Vecd(0.0, 0.0, 1.0);
 }

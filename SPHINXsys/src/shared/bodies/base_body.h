@@ -31,30 +31,28 @@
  * 			or not contain each other. 
  *			Partial overlap between them are not premitted.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- * @version	0.1
  */
 
 #pragma once
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
-#include "neighbor_relation.h"
+#include "particle_adaptation.h"
 #include "all_particle_generators.h"
-#include "geometry.h"
+#include "particle_sorting.h"
 
 #include <string>
 using namespace std;
 
 namespace SPH 
 {
-	/**
-	 * @brief preclaimed classes.
-	 */
 	class SPHSystem;
+	class ParticleAdaptation;
 	class BaseParticles;
-	class Kernel;
 	class BaseMeshCellLinkedList;
-	class SPHBodyBaseRelation;
+	class SPHBodyRelation;
+	class ComplexShape;
+	class LevelSetComplexShape;
 
 	/**
 	 * @class SPHBody
@@ -66,31 +64,16 @@ namespace SPH
 	class SPHBody
 	{
 	protected:
-		SPHSystem &sph_system_; 	/**< SPHSystem. */
-		string body_name_; 		/**< name of this body */
+		SPHSystem& sph_system_;
+		string body_name_;
 		bool newly_updated_;		/**< whether this body is in a newly updated state */
-		/** Computational domain bounds of the body for boundary conditions. */
-		Vecd body_lower_bound_, body_upper_bound_;
-		/** Whether the computational domain bound for this body is prescribed. */
+		BoundingBox body_domain_bounds_; /**< Computational domain bounds for boundary conditions. */
 		bool prescribed_body_bounds_;
-		/** smoothing length. */
-		Real smoothing_length_;
-		/** Computing particle spacing from refinement level. */
-		Real RefinementLevelToParticleSpacing();
-
-		/** Generate a kernel. */
-		Kernel* GenerateAKernel(Real smoothing_length);
-		/** Change kernel function specific for this body. */
-		void ReplaceKernelFunction(Kernel* kernel);
 	public:
-		int refinement_level_;	/**< refinement level of this body */
-		Kernel* kernel_; 		/**< sph kernel function specific to a SPHBody */
-		Real particle_spacing_;						/**< Particle spacing of the body. */
-		size_t number_of_particles_;				/**< Number of real particles of the body. */
-		BaseParticles* base_particles_;				/**< Base particles of this body. */
-		BaseMeshCellLinkedList* mesh_cell_linked_list_; /**< Cell linked mesh of this body. */
+		ParticleAdaptation* particle_adaptation_;	/**< Particle adapation policy. */
 		ParticleGenerator* particle_generator_;	/**< Particle generator manner */
-		PositionsAndVolumes body_input_points_volumes_; /**< For direct generate particles. */
+		BaseParticles* base_particles_;				/**< Base particles of this body. */
+		PositionsAndVolumes body_input_points_volumes_; /**< For direct generate particles. Note this should be moved to direct generator. */
 		ComplexShape*  body_shape_;		/** describe the geometry of the body*/
 		/**
 		 * @brief particle by cells lists is for parallel splitting algorithm.
@@ -100,68 +83,38 @@ namespace SPH
 		 */
 		SplitCellLists split_cell_lists_;
 
-		/** all contact relations centered from this body **/
-		StdVec<SPHBodyBaseRelation*> body_relations_;
+		StdVec<SPHBodyRelation*> body_relations_; /**< all contact relations centered from this body **/
 
-		/**
-		 * @brief Constructor of SPHBody.
-		 * @param[in] sph_system SPHSystem.
-		 * @param[in] body_name Name of Body.
-		 * @param[in] refinement_level Refinement level of this body.
-		 * @param[in] smoothing_length_ratio The ratio between smoothinglength to particle spacing.
-		 * @param[in] particle_generator Particle generator.
-		 */
-		explicit SPHBody(SPHSystem &sph_system, string body_name, int refinement_level, Real smoothing_length_ratio, 
+		explicit SPHBody(SPHSystem &sph_system, string body_name, 
+			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(),
 			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~SPHBody() {};
 
-		/** Get the name of this body for out file name. */
-		string GetBodyName();
-		void setNewlyUpdated() { newly_updated_ = true; };
-		bool checkNewlyUpdated() { return newly_updated_; };
-		void setNotNewlyUpdated() { newly_updated_ = false; };
+		string getBodyName();
 		SPHSystem& getSPHSystem();
+		void setNewlyUpdated() { newly_updated_ = true; };
+		void setNotNewlyUpdated() { newly_updated_ = false; };
+		bool checkNewlyUpdated() { return newly_updated_; };
 
-		/** Get the name of this body for out file name. */
-		void setBodyLowerBound(Vecd lower_bound) { body_lower_bound_ = lower_bound; };
-		void setBodyUpperBound(Vecd upper_bound) { body_upper_bound_ = upper_bound; };
-		Vecd getBodyLowerBound() { return body_lower_bound_; };
-		Vecd getBodyUpperBound() { return body_upper_bound_; };
-		void getSPHSystemBound(Vecd& system_lower_bound, Vecd& system_uppwer_bound);
+		void setBodyDomainBounds(BoundingBox body_domain_bounds) { body_domain_bounds_ = body_domain_bounds; };
+		BoundingBox getBodyDomainBounds() { return body_domain_bounds_; };
+		BoundingBox findBodyDomainBounds();
+		BoundingBox getSPHSystemBounds();
 
-		/** assign base particle to the body and cell linked list. */
-		void assignBaseParticle(BaseParticles* base_particles);
-		/** Compute reference number density*/
-		virtual Real computeReferenceNumberDensity();
-		/** Update cell linked list. */
-		virtual void updateCellLinkedList() = 0;
-		/** Allocate extra configuration memories for body buffer particles. */
-		void allocateConfigurationMemoriesForBodyBuffer();
+		/** This will be called in BaseParticle constructor
+		 * and is important because particles are not defined in SPHBody constructor.  */
+		virtual void assignBaseParticles(BaseParticles* base_particles);
+		virtual Real computeReferenceNumberDensity(Vec2d zero = Vec2d(0));
+		virtual Real computeReferenceNumberDensity(Vec3d zero = Vec3d(0));
+		void allocateConfigurationMemoriesForBufferParticles();
 
-		/**
-		 * @brief Find the lower and upper bounds of the body.
-		 * @param[in,out] lower_bound Lower bound of this body.
-		 * @param[in,out] upper_bound Upper bound of this body.
-		 */
-		void findBodyDomainBounds(Vecd &lower_bound, Vecd &upper_bound);
-
-		/** Output particle data in VTU file for visualization in Paraview. */
 		virtual void writeParticlesToVtuFile(ofstream &output_file);
-		/** Output particle data in PLT file for visualization in Tecplot. */
 		virtual void writeParticlesToPltFile(ofstream &output_file);
-
-		/** Output particle data in XML file for restart simulation. */
 		virtual void writeParticlesToXmlForRestart(std::string &filefullpath);
-		/** Read particle data in XML file for restart simulation. */
 		virtual void readParticlesFromXmlForRestart(std::string &filefullpath);
-
-		/** Output particle position and volume in XML file for reloading particles. */
 		virtual void writeToXmlForReloadParticle(std::string &filefullpath);
-		/** Reload particle position and volume from XML files. */
 		virtual void readFromXmlForReloadParticle(std::string &filefullpath);
-		
-		/** The pointer to derived class object. */
-		virtual SPHBody* pointToThisObject();
+		virtual SPHBody* pointToThisObject() {return this;};
 	};
 	/**
 	 * @class RealBody
@@ -170,18 +123,19 @@ namespace SPH
 	 */
 	class RealBody : public SPHBody
 	{
-	protected:
-
 	public:
-		/** Constructor of RealBody. */
-		RealBody(SPHSystem &sph_system, string body_name, int refinement_level, Real smoothing_length_ratio, 
+		ParticleSorting particle_sorting_;
+		BaseMeshCellLinkedList* mesh_cell_linked_list_; /**< Cell linked mesh of this body. */
+
+		RealBody(SPHSystem &sph_system, string body_name, ParticleAdaptation* particle_adaptation,
 			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~RealBody() {};
 
-		/** Update cell linked list. */
-		virtual void updateCellLinkedList() override;
-		/** The pointer to derived class object. */
-		virtual RealBody* pointToThisObject() override;
+		/** This will be called in BaseParticle constructor
+		 * and is important because particles are not defined in FluidBody constructor.  */
+		virtual void assignBaseParticles(BaseParticles* base_particles) override;
+		virtual void sortParticleWithMeshCellLinkedList();
+		virtual void updateCellLinkedList();
 	};
 
 	/**
@@ -191,101 +145,96 @@ namespace SPH
 	 */
 	class FictitiousBody : public SPHBody
 	{
-	protected:
-
 	public:
-		/** Constructor of FictitiousBodyBody. */
-		FictitiousBody(SPHSystem &system, string body_name, int refinement_level, Real smoothing_length_ratio,
+		FictitiousBody(SPHSystem& system, string body_name, 
+			ParticleAdaptation* particle_adaptation = new  ParticleAdaptation(),
 			ParticleGenerator* particle_generator = new ParticleGeneratorDirect());
 		virtual ~FictitiousBody() {};
-
-		/** Update cell linked list. */
-		virtual void updateCellLinkedList() override;
-		/** The pointer to derived class object. */
-		virtual FictitiousBody* pointToThisObject() override;
 	};
 
 	/**
 	 * @class BodyPart
-	 * @brief An auxillary class for SPHBody to indicate a part of the body.
+	 * @brief An abstract auxillary class for SPHBody to indicate a part of the body.
 	 */
 	class BodyPart
 	{
 	public:
-		BodyPart(SPHBody *body, string body_part_name)
-			: body_(body), body_part_name_(body_part_name),
-			body_part_shape_(NULL) {};
+		BodyPart(SPHBody *body, string body_part_name) : 
+			body_(body), body_part_name_(body_part_name) {};
 		virtual ~BodyPart() {};
 
-		ComplexShape* getBodyPartShape() { return body_part_shape_; };
 		SPHBody* getBody() { return body_; };
 		string BodyPartName() { return body_part_name_; };
-		/**
-		 * @brief Find the lower and upper bounds of the body part.
-		 * @param[in,out] lower_bound Lower bound of this body part.
-		 * @param[in,out] upper_bound Upper bound of this body part.
-		 */
-		void BodyPartBounds(Vecd &lower_bound, Vecd &upper_bound)
-		{
-			body_part_shape_->findBounds(lower_bound, upper_bound);
-		};
 	protected:
 		SPHBody* body_;
 		string body_part_name_;
-		ComplexShape* body_part_shape_;
 
 		virtual void tagBodyPart() = 0;
 	};
 
 	/**
+	 * @class BodyPartByShape
+	 * @brief An auxillary class for SPHBody to indicate 
+	 * a part of the body defined by a presribed complex shape.
+	 */
+	class BodyPartByShape : public BodyPart
+	{
+	public:
+		BodyPartByShape(SPHBody* body, string body_part_name);
+		virtual ~BodyPartByShape() {};
+
+		ComplexShape* getBodyPartShape() { return body_part_shape_; };
+		BoundingBox BodyPartBounds();
+	protected:
+		ComplexShape* body_part_shape_;
+	};
+	/**
 	 * @class BodyPartByParticle
 	 * @brief An auxillary class for SPHBody to 
 	 * indicate a part of the body moving together with particles.
 	 */
-	class BodyPartByParticle : public BodyPart
+	class BodyPartByParticle : public BodyPartByShape
 	{
 	public:
-		/** Collection particle in this body part. */
-		IndexVector body_part_particles_;
+		IndexVector body_part_particles_; /**< Collection particle in this body part. */
 
 		BodyPartByParticle(SPHBody* body, string body_part_name)
-			: BodyPart(body, body_part_name) {};
-	virtual ~BodyPartByParticle() {};
-
+			: BodyPartByShape(body, body_part_name) {};
+		virtual ~BodyPartByParticle() {};
 	protected:
 		void tagAParticle(size_t particle_index);
 		virtual void tagBodyPart() override;
-
 	};
 
 	/**
-	 * @class BodySurface
+	 * @class ShapeSurface
 	 * @brief A auxillary class for Body to
-	 * indicate the surface particles from background mesh
+	 * indicate the surface of a shape
 	 */
-	class BodySurface : public BodyPartByParticle
+	class ShapeSurface : public BodyPartByParticle
 	{
 	public:
-		BodySurface(SPHBody* body);
-		virtual~BodySurface() {};
+		ShapeSurface(SPHBody* body);
+		virtual~ShapeSurface() {};
 
 	protected:
+		Real particle_spacing_min_;
 		virtual void tagBodyPart() override;
 	};
 
 	/**
-	 * @class BodySurfaceLayer
+	 * @class ShapeSurfaceLayer
 	 * @brief A auxillary class for Body to
-	 * indicate the particles within the inner layers
+	 * indicate the particles within the inner layers of a shape
 	 */
-	class BodySurfaceLayer : public BodyPartByParticle
+	class ShapeSurfaceLayer : public BodyPartByParticle
 	{
 	public:
-		BodySurfaceLayer(SPHBody* body, Real layer_thickness = 3.0);
-		virtual~BodySurfaceLayer() {};
+		ShapeSurfaceLayer(SPHBody* body, Real layer_thickness = 3.0);
+		virtual~ShapeSurfaceLayer() {};
 
 	protected:
-		Real layer_thickness_;
+		Real thickness_threshold_;
 
 		virtual void tagBodyPart() override;
 	};
@@ -293,34 +242,44 @@ namespace SPH
 	/**
 	 * @class BodyPartByCell
 	 * @brief An auxillary class for SPHBody to
-	 * indicate a part of the body fixed in space.
+	 * indicate a part of the body fixed in space defined by mesh cells.
 	 */
-	class BodyPartByCell : public BodyPart
+	using namespace std::placeholders;
+	class BodyPartByCell : public BodyPartByShape
 	{
-	public:
-		/** Collection of cells to indicate the body part. */
-		CellLists body_part_cells_;
-
-		BodyPartByCell(SPHBody *body, string body_part_name)
-			: BodyPart(body, body_part_name) {};
-		virtual ~BodyPartByCell() {};
-
 	protected:
+		RealBody* real_body_;
+		typedef std::function<bool(Vecd, Real)> CheckIncludedFunctor;
+		CheckIncludedFunctor checkIncluded_;
+
+		/** all cells near or contained by the body part shape are included */
+		virtual bool checkIncluded(Vecd cell_position, Real threshold);
 		virtual void tagBodyPart() override;
+	public:
+		CellLists body_part_cells_; /**< Collection of cells to indicate the body part. */
+
+		BodyPartByCell(RealBody *real_body, string body_part_name);
+		virtual ~BodyPartByCell() {};
 	};
 
 	/**
-	 * @class NearBodySurface
+	 * @class NearShapeSurface
 	 * @brief An auxillary class for SPHBody to
-	 * indicate region close the body surface.
+	 * indicate the region close to the surface of shape.
 	 */
-	class NearBodySurface : public BodyPartByCell
+	class NearShapeSurface : public BodyPartByCell
 	{
 	public:
-		NearBodySurface(SPHBody* body);
-		virtual ~NearBodySurface() {};
+		/** for the case that the body part shape is not that of the body */
+		NearShapeSurface(RealBody* real_body, ComplexShape* complex_shape, string body_part_name);
+		/** for the case that the body part is the surface of the body shape */
+		NearShapeSurface(RealBody* real_body);
+		virtual ~NearShapeSurface() {};
 
+		LevelSetComplexShape* getLevelSetComplexShape();
 	protected:
-		virtual void tagBodyPart() override;
+		LevelSetComplexShape* level_set_complex_shape_;
+		/** only cells near the surface of the body part shape are included */
+		virtual bool checkIncluded(Vecd cell_position, Real threshold) override;
 	};
 }

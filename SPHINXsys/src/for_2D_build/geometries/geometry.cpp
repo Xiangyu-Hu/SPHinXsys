@@ -1,7 +1,6 @@
 /**
  * @file 	geometry.cpp
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- * @version	0.1
  */
 
 #include "geometry.h"
@@ -93,10 +92,10 @@ namespace SPH {
 		multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_poly_circle, op);
 	}
 	//=================================================================================================//
-	void MultiPolygon::addAPolygon(std::vector<Point>& points, ShapeBooleanOps op)
+	void MultiPolygon::addAPolygon(std::vector<Vecd>& points, ShapeBooleanOps op)
 	{
 		std::vector<model::d2::point_xy<Real>> pts;
-		for (const Point& pnt : points)
+		for (const Vecd& pnt : points)
 		{
 			pts.push_back(model::d2::point_xy<Real>(pnt[0], pnt[1]));
 		}
@@ -133,7 +132,7 @@ namespace SPH {
 		}
 	}
 	//=================================================================================================//
-	Vec2d MultiPolygon::findClosestPoint(Vec2d input_pnt)
+	Vec2d MultiPolygon::findClosestPoint(Vec2d& input_pnt)
 	{
 		typedef model::d2::point_xy<Real> pnt_type;
 		typedef model::referring_segment<model::d2::point_xy<Real>> seg_type;
@@ -193,39 +192,47 @@ namespace SPH {
 		return p_find;
 	}
 	//=================================================================================================//
-	void MultiPolygon::findBounds(Vec2d& lower_bound, Vec2d& upper_bound)
+	BoundingBox MultiPolygon::findBounds()
 	{
+		Vec2d lower_bound(0), upper_bound(0);
 		typedef boost::geometry::model::box<model::d2::point_xy<Real>> box;
 		lower_bound[0] = boost::geometry::return_envelope<box>(multi_poly_).min_corner().get<0>();
 		lower_bound[1] = boost::geometry::return_envelope<box>(multi_poly_).min_corner().get<1>();
 		upper_bound[0] = boost::geometry::return_envelope<box>(multi_poly_).max_corner().get<0>();
 		upper_bound[1] = boost::geometry::return_envelope<box>(multi_poly_).max_corner().get<1>();
+		return BoundingBox(lower_bound, upper_bound);
 	}
 	//=================================================================================================//
-	bool ComplexShape::checkContain(Vecd input_pnt, bool BOUNDARY_INCLUDED)
+	bool ComplexShape::checkContain(Vecd& input_pnt, bool BOUNDARY_INCLUDED)
 	{
 		return multi_ploygen_.checkContain(input_pnt, BOUNDARY_INCLUDED);
 	}
 	//=================================================================================================//
-	Vec2d ComplexShape::findClosestPoint(Vec2d input_pnt)
+	Vec2d ComplexShape::findClosestPoint(Vec2d& input_pnt)
 	{
 		return  multi_ploygen_.findClosestPoint(input_pnt);
 	}
 	//=================================================================================================//
-	bool ComplexShape::checkNotFar(Vec2d input_pnt, Real threshold)
+	bool ComplexShape::checkNotFar(Vec2d& input_pnt, Real threshold)
 	{
 		return  multi_ploygen_.checkContain(input_pnt) 
 			|| getMinAbsoluteElement(input_pnt - multi_ploygen_.findClosestPoint(input_pnt)) < threshold ?
 			true : false;
 	}
 	//=================================================================================================//
-	Real ComplexShape::findSignedDistance(Vec2d input_pnt)
+	bool ComplexShape::checkNearSurface(Vec2d& input_pnt, Real threshold)
+	{
+		return  getMinAbsoluteElement(input_pnt - multi_ploygen_.findClosestPoint(input_pnt)) < threshold ?
+			true : false;
+	}
+	//=================================================================================================//
+	Real ComplexShape::findSignedDistance(Vec2d& input_pnt)
 	{
 		Real distance_to_surface = (findClosestPoint(input_pnt) - input_pnt).norm();
 		return checkContain(input_pnt) ? -distance_to_surface : distance_to_surface;
 	}
 	//=================================================================================================//
-	Vec2d ComplexShape::findNormalDirection(Vec2d input_pnt)
+	Vec2d ComplexShape::findNormalDirection(Vec2d& input_pnt)
 	{
 		bool is_contain = checkContain(input_pnt);
 		Vecd displacement_to_surface = findClosestPoint(input_pnt) - input_pnt;
@@ -240,9 +247,9 @@ namespace SPH {
 		return is_contain ? direction_to_surface : -1.0 * direction_to_surface;
 	}
 	//=================================================================================================//
-	void ComplexShape::findBounds(Vec2d& lower_bound, Vec2d& upper_bound)
+	BoundingBox ComplexShape::findBounds()
 	{
-		multi_ploygen_.findBounds(lower_bound, upper_bound);
+		return multi_ploygen_.findBounds();
 	}
 	//=================================================================================================//
 	void ComplexShape::addAMultiPolygon(MultiPolygon& multi_polygon, ShapeBooleanOps op)
@@ -255,7 +262,7 @@ namespace SPH {
 		multi_ploygen_.addABoostMultiPoly(boost_multi_poly, op);
 	}
 	//=================================================================================================//
-	void ComplexShape::addAPolygon(std::vector<Point>& points, ShapeBooleanOps op)
+	void ComplexShape::addAPolygon(std::vector<Vecd>& points, ShapeBooleanOps op)
 	{
 		multi_ploygen_.addAPolygon(points, op);
 	}
@@ -264,8 +271,8 @@ namespace SPH {
 		addAPolygonFromFile(string file_path_name, ShapeBooleanOps op, Vec2d translation, Real scale_factor)
 	{
 		std::fstream dataFile(file_path_name);
-		Point temp_point;
-		std::vector<Point> coordinates;
+		Vecd temp_point;
+		std::vector<Vecd> coordinates;
 		double temp1 = 0.0, temp2 = 0.0;
 		if (dataFile.fail())
 		{
@@ -287,14 +294,6 @@ namespace SPH {
 	void ComplexShape::addACircle(Vec2d center, Real radius, int resolution, ShapeBooleanOps op)
 	{
 		multi_ploygen_.addACircle(center, radius, resolution, op);
-	}
-	//=================================================================================================//
-	Vecd ComplexShape::computeKernelIntegral(Vecd input_pnt, Kernel* kernel)
-	{
-		std::cout << "\n ComplexShape::computeKernelIntegral is not implemented!" << std::endl;
-		std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-		exit(1);
-		return Vecd(0.0);
 	}
 	//=================================================================================================//
 }

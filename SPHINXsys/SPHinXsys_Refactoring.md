@@ -9,8 +9,7 @@
 5. using more meaningful names for class members, so that I do not need extra comments
 6. xml memory leaking (tried second time. Failed. Erasing XML elements will not decrease the memory usage.)
 7. user may forget impose constraint when apply an algorithm modifying velocity field
-8. clarify the body shape bound, body domain bound and its usages
-9. lower- and upper bounds can be represented by a pair (define a domain class to save bounds, size and the method to compute them, and mesh class can be derived from it, sph system can include it.)
+8. temporary and one time output, such as for level set, may open a temporary folder without related to system.  
 
 ## General principles on reviewing the code
 

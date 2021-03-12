@@ -2,7 +2,6 @@
  * @file passive_cantilever.cpp
  * @brief This is the first example of myocardium 
  * @author Chi Zhang and Xiangyu Hu
- * @version 0.1.0
  * @ref 	doi.org/10.1016/j.jcp.2013.12.012
  */
 #include "sphinxsys.h"
@@ -13,8 +12,12 @@ Real PL = 6.0;
 Real PH = 1.0;
 Real PW = 1.0;		
 Real SL = 0.5; 
-Real particle_spacing_ref = PH / 12.0;		/**< Initial particle spacing. */
-Real BW = particle_spacing_ref * 4; 		/**< Boundary width. */
+Real resolution_ref = PH / 12.0;		/**< Initial particle spacing. */
+Real BW = resolution_ref * 4; 		/**< Boundary width. */
+/** Domain bounds of the system. */
+BoundingBox system_domain_bounds(Vecd(-SL - BW, -BW, -BW),
+	Vecd(PL + BW, PH + BW, PH + BW));
+											
 /**< SimTK geometric modeling resolution. */
 int resolution(20);
 /** For material properties of the solid. */
@@ -54,8 +57,8 @@ TriangleMeshShape* CreateHolder()
 class Myocardium : public SolidBody
 {
 public:
-	Myocardium(SPHSystem &system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	Myocardium(SPHSystem &system, string body_name)
+		: SolidBody(system, body_name)
 	{
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
@@ -120,10 +123,10 @@ protected:
 class MyocardiumObserver : public FictitiousBody
 {
 public:
-	MyocardiumObserver(SPHSystem &system, string body_name, int refinement_level)
-		: FictitiousBody(system, body_name, refinement_level, 1.3)
+	MyocardiumObserver(SPHSystem &system, string body_name)
+		: FictitiousBody(system, body_name)
 	{
-		body_input_points_volumes_.push_back(make_pair(Point(PL, PH, PW), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(PL, PH, PW), 0.0));
 	}
 };
 /**
@@ -132,19 +135,18 @@ public:
 int main()
 {
 	/** Setup the system. Please the make sure the global domain bounds are correctly defined. */
-	SPHSystem system(Vecd(- SL - BW, -BW, -BW),
-		Vecd(PL + BW, PH + BW, PH + BW), particle_spacing_ref);
+	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Creat a Myocardium body, corresponding material, particles and reaction model. */
-	Myocardium *myocardium_body = new Myocardium(system, "MyocardiumBody", 0);
+	Myocardium *myocardium_body = new Myocardium(system, "MyocardiumBody");
 	MyocardiumMuscle 	*muscle_material = new MyocardiumMuscle();
 	ElasticSolidParticles 	particles(myocardium_body, muscle_material);
 	/** Define Observer. */
-	MyocardiumObserver *myocardium_observer = new MyocardiumObserver(system, "MyocardiumObserver", 0);
+	MyocardiumObserver *myocardium_observer = new MyocardiumObserver(system, "MyocardiumObserver");
 	BaseParticles observer_particles(myocardium_observer);
 
 	/** topology */
-	SPHBodyInnerRelation* myocardium_body_inner = new SPHBodyInnerRelation(myocardium_body);
-	SPHBodyContactRelation* myocardium_observer_contact = new SPHBodyContactRelation(myocardium_observer, { myocardium_body });
+	InnerBodyRelation* myocardium_body_inner = new InnerBodyRelation(myocardium_body);
+	ContactBodyRelation* myocardium_observer_contact = new ContactBodyRelation(myocardium_observer, { myocardium_body });
 
 	/** 
 	 * This section define all numerical methods will be used in this case.
@@ -166,8 +168,8 @@ int main()
 	/** Output */
 	In_Output in_output(system);
 	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
-	WriteAnObservedQuantity<Vecd, BaseParticles, &BaseParticles::pos_n_>
-		write_displacement("Displacement", in_output, myocardium_observer_contact);
+	WriteAnObservedQuantity<indexVector, Vecd> 
+		write_displacement("Position", in_output, myocardium_observer_contact);
 	/**
 	 * From here the time stepping begines.
 	 * Set the starting time.

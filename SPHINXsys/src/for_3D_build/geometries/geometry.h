@@ -26,7 +26,6 @@
 * @details The idea is to define complex geometry by passing stl, obj or other 
 *			polymesh files. 
 * @author	Chi ZHang and Xiangyu Hu
-* @version	0.1
 */
 #pragma once
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
@@ -72,8 +71,8 @@ namespace SPH {
 
 		SimTK::ContactGeometry::TriangleMesh* getTriangleMesh() { return triangle_mesh_; };
 		bool checkContain(Vec3d pnt, bool BOUNDARY_INCLUDED = true);
-		virtual Vec3d findClosestPoint(Vec3d input_pnt) override;
-		virtual void findBounds(Vec3d &lower_bound, Vec3d &upper_bound) override;
+		Vec3d findClosestPoint(Vec3d& input_pnt);
+		virtual BoundingBox findBounds() override;
 
 	protected:
 		SimTK::ContactGeometry::TriangleMesh* triangle_mesh_;
@@ -84,11 +83,12 @@ namespace SPH {
 
 	class ComplexShape : public Shape
 	{
+		Vec3d findClosestPoint(Vec3d& input_pnt);
 	public:
 		ComplexShape() : Shape("ComplexShape") {};
 		ComplexShape(string complex_shape_name) : Shape(complex_shape_name) {};
 		virtual ~ComplexShape() {};
-		virtual void findBounds(Vec3d& lower_bound, Vec3d& upper_bound) override;
+		virtual BoundingBox findBounds() override;
 
 		void addTriangleMeshShape(TriangleMeshShape* triangle_mesh_shape, ShapeBooleanOps op);
 		void addComplexShape(ComplexShape* complex_shape, ShapeBooleanOps op);
@@ -97,13 +97,13 @@ namespace SPH {
 		void addCylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resolution, Vec3d translation, ShapeBooleanOps op);
 		void addFormSTLFile(string file_path_name, Vec3d translation, Real scale_factor, ShapeBooleanOps op);
 
-		virtual bool checkContain(Vec3d input_pnt, bool BOUNDARY_INCLUDED = true);
-		virtual bool checkNotFar(Vec3d input_pnt, Real threshold);
-		virtual Vec3d findClosestPoint(Vec3d input_pnt) override;
-		virtual Real findSignedDistance(Vec3d input_pnt);
-		virtual Vec3d findNormalDirection(Vec3d input_pnt);
-		virtual Vecd weightedIntegral(Vecd input_pnt, Kernel * kernel, Real smoothing_length) { return Vecd(1.0); };
-		virtual Vecd computeKernelIntegral(Vecd input_pnt, Kernel* kernel);
+		virtual bool checkContain(Vec3d& input_pnt, bool BOUNDARY_INCLUDED = true);
+		virtual bool checkNotFar(Vec3d& input_pnt, Real threshold);
+		virtual bool checkNearSurface(Vec3d& input_pnt, Real threshold);
+		/** Signed distance is negative for point within the complex shape. */
+		virtual Real findSignedDistance(Vec3d& input_pnt);
+		/** Normal direction point toward outside of the complex shape. */
+		virtual Vec3d findNormalDirection(Vec3d& input_pnt);
 	protected:
 		/** shape container<pointer to geomtry, operation> */
 		std::vector<std::pair<TriangleMeshShape*, ShapeBooleanOps>> triangle_mesh_shapes_;

@@ -3,8 +3,6 @@
  * @brief 	2D taylor_green vortex flow example.
  * @details This is the one of the basic test cases.
  * @author 	Chi Zhang and Xiangyu Hu
- * @version 0.2.1
- * 			this code developed based one the beta version
  */
  /**
   * @brief 	SPHinXsys Library.
@@ -19,8 +17,9 @@ using namespace SPH;
  */
 Real DL = 1.0; 						/**< box length. */
 Real DH = 1.0; 						/**< box height. */
-
-Real particle_spacing_ref = 1.0/100.0; 		/**< Initial reference particle spacing. */
+Real resolution_ref = 1.0/100.0; 	/**< Global reference resolution. */
+/** Domain bounds of the system. */
+BoundingBox system_domain_bounds(Vec2d(0), Vec2d(DL, DH));
 /**
  * @brief Material properties of the fluid.
  */
@@ -36,16 +35,16 @@ Real mu_f = rho0_f * U_f * DL / Re;		/**< Dynamics viscosity. */
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem &system, string body_name,	int refinement_level)
-		: FluidBody(system, body_name, refinement_level)
+	WaterBlock(SPHSystem &system, string body_name)
+		: FluidBody(system, body_name)
 	{
 		/** Geomtry definition. */
-		std::vector<Point> water_block_shape;
-		water_block_shape.push_back(Point(0.0, 0.0));
-		water_block_shape.push_back(Point(0.0, DH));
-		water_block_shape.push_back(Point(DL, DH));
-		water_block_shape.push_back(Point(DL, 0.0));
-		water_block_shape.push_back(Point(0.0, 0.0));
+		std::vector<Vecd> water_block_shape;
+		water_block_shape.push_back(Vecd(0.0, 0.0));
+		water_block_shape.push_back(Vecd(0.0, DH));
+		water_block_shape.push_back(Vecd(DL, DH));
+		water_block_shape.push_back(Vecd(DL, 0.0));
+		water_block_shape.push_back(Vecd(0.0, 0.0));
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::add);
 	}
@@ -92,25 +91,31 @@ int main(int ac, char* av[])
 	/**
 	 * @brief Build up -- a SPHSystem --
 	 */
-	SPHSystem system(Vec2d(0), Vec2d(DL, DH), particle_spacing_ref);
+	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for computation start with relaxed body fitted particles distribution. */
-	system.reload_particles_ = false;
+	sph_system.reload_particles_ = false;
 	/** Tag for computation from restart files. 0: not from restart files. */
-	system.restart_step_ = 0;
-	
+	sph_system.restart_step_ = 0;
+	/** output environment. */
+	In_Output 	in_output(sph_system);
 	//handle command line arguments
-	system.handleCommandlineOptions(ac, av);
+	sph_system.handleCommandlineOptions(ac, av);
 	
 	/**
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
-	WaterBlock *water_block = new WaterBlock(system, "WaterBody", 0);
+	WaterBlock *water_block = new WaterBlock(sph_system, "WaterBody");
+	if (sph_system.reload_particles_) 	 // Using relaxed particle distribution if needed
+	{
+		water_block->particle_generator_->~ParticleGenerator();
+		water_block->particle_generator_ = new ParticleGeneratorReload(&in_output, water_block->getBodyName());
+	}
 	WaterMaterial 	*water_material = new WaterMaterial();
 	FluidParticles 	fluid_particles(water_block, water_material);
 	/** topology */
-	SPHBodyComplexRelation* water_block_complex = new SPHBodyComplexRelation(water_block, {});
+	BaseInnerBodyRelation* water_block_inner = new InnerBodyRelation(water_block);
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
@@ -134,7 +139,7 @@ int main(int ac, char* av[])
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
 	 /** Evaluation of density by summation approach. */
-	fluid_dynamics::DensityBySummation 			update_fluid_density(water_block_complex);
+	fluid_dynamics::DensitySummationInner	update_density_by_summation(water_block_inner);
 	/** Time step size without considering sound wave speed. */
 	fluid_dynamics::AdvectionTimeStepSize 	get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
@@ -143,23 +148,22 @@ int main(int ac, char* av[])
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. 
 	  * The other reason is that we are using transport velocity formulation, 
 	  * which will also introduce numerical disspation slightly. */
-	fluid_dynamics::PressureRelaxationFirstHalf pressure_relaxation_first_half(water_block_complex);
-	fluid_dynamics::PressureRelaxationSecondHalfRiemann pressure_relaxation_second_half(water_block_complex);
+	fluid_dynamics::PressureRelaxationInner pressure_relaxation(water_block_inner);
+	fluid_dynamics::DensityRelaxationRiemannInner density_relaxation(water_block_inner);
 	/** Computing viscous acceleration. */
-	fluid_dynamics::ViscousAcceleration 	viscous_acceleration(water_block_complex);
+	fluid_dynamics::ViscousAccelerationInner 	viscous_acceleration(water_block_inner);
 	/** Impose transport velocity. */
-	fluid_dynamics::TransportVelocityFormulation transport_velocity_formulation(water_block_complex);
+	fluid_dynamics::TransportVelocityCorrectionInner transport_velocity_correction(water_block_inner);
 	/**
 	 * @brief Output.
 	 */
-	In_Output in_output(system);
 	/** Output the body states. */
-	WriteBodyStatesToVtu 	write_body_states(in_output, system.real_bodies_);
+	WriteBodyStatesToVtu 	write_body_states(in_output, sph_system.real_bodies_);
 	/** Write the particle reload files. */
 	WriteReloadParticle 		write_particle_reload_files(in_output, { water_block });
 	/** Output the body states for restart simulation. */
-	ReadRestart				read_restart_files(in_output, system.real_bodies_);
-	WriteRestart			write_restart_files(in_output, system.real_bodies_);
+	ReadRestart				read_restart_files(in_output, sph_system.real_bodies_);
+	WriteRestart			write_restart_files(in_output, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
 	WriteTotalMechanicalEnergy 	write_total_mechanical_energy(in_output, water_block, new Gravity(Vec2d(0)));
 	/** Output the maximum speed of the fluid body. */
@@ -167,28 +171,22 @@ int main(int ac, char* av[])
 	/**
 	 * @brief Setup geomtry and initial conditions
 	 */
-	 /** Using relaxed particle distribution if needed. */
-	if (system.reload_particles_) {
-		unique_ptr<ReadReloadParticle>
-			reload_insert_body_particles(new ReadReloadParticle(in_output, { water_block }, { water_block->GetBodyName() }));
-		reload_insert_body_particles->ReadFromFile();
-	}
 	setup_taylor_green_velocity.exec();
-	system.initializeSystemCellLinkedLists();
+	sph_system.initializeSystemCellLinkedLists();
 	periodic_condition_x.update_cell_linked_list_.parallel_exec();
 	periodic_condition_y.update_cell_linked_list_.parallel_exec();
-	system.initializeSystemConfigurations();
+	sph_system.initializeSystemConfigurations();
 	/**
 	 * @brief The time stepping starts here.
 	 */
 	/** If the starting time is not zero, please setup the restart time step ro read in restart states. */
-	if (system.restart_step_ != 0)
+	if (sph_system.restart_step_ != 0)
 	{
-		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
+		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(sph_system.restart_step_);
 		water_block->updateCellLinkedList();
-		periodic_condition_x.parallel_exec();
-		periodic_condition_y.parallel_exec();
-		water_block_complex->updateConfiguration();
+		periodic_condition_x.update_cell_linked_list_.parallel_exec();
+		periodic_condition_y.update_cell_linked_list_.parallel_exec();
+		water_block_inner->updateConfiguration();
 	}
 	/** Output the start states of bodies. */
 	write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
@@ -197,7 +195,7 @@ int main(int ac, char* av[])
 	/**
 	 * @brief 	Basic parameters.
 	 */
-	size_t number_of_iterations = system.restart_step_;
+	size_t number_of_iterations = sph_system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval*10;
 	Real End_Time = 5.0; 	/**< End time. */
@@ -219,18 +217,19 @@ int main(int ac, char* av[])
 			/** Acceleration due to viscous force. */
 			initialize_a_fluid_step.parallel_exec();
 			Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_fluid_density.parallel_exec();
+			update_density_by_summation.parallel_exec();
 			viscous_acceleration.parallel_exec();
-			transport_velocity_formulation.correction_.parallel_exec(Dt);
+			transport_velocity_correction.parallel_exec(Dt);
 			/** Dynamics including pressure relaxation. */
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt - relaxation_time);
+				//avoid possible smaller acoustic time step size for viscous flow
+				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
 				relaxation_time += dt;
 				integration_time += dt;
-				pressure_relaxation_first_half.parallel_exec(dt);
-				pressure_relaxation_second_half.parallel_exec(dt);
+				pressure_relaxation.parallel_exec(dt);
+				density_relaxation.parallel_exec(dt);
 				GlobalStaticVariables::physical_time_ += dt;
 			}
 
@@ -252,7 +251,7 @@ int main(int ac, char* av[])
 			water_block->updateCellLinkedList();
 			periodic_condition_x.update_cell_linked_list_.parallel_exec();
 			periodic_condition_y.update_cell_linked_list_.parallel_exec();
-			water_block_complex->updateConfiguration();
+			water_block_inner->updateConfiguration();
 		}
 
 		tick_count t2 = tick_count::now();

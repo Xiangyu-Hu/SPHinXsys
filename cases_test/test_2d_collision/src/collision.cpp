@@ -1,13 +1,9 @@
 /**
  * @file 	collision.cpp
- * @brief 	a soft ball with initial velocity bouncing within a confined boundary
+ * @brief 	two soft balls with and without internal damping bouncing within a confined boundary
  * @details This is the first case for test collision dynamics for
  * 			understanding SPH method for complex simulation.
- * @author 	Xiangyu Hu
- * @version 0.1
- * @version 0.3.0
- *			Here, I will try to implement a contact model for collision. 
- *			-- Chi ZHANG
+ * @author 	Chi Zhang and Xiangyu Hu
  */
  /**
   * @brief 	SPHinXsys Library.
@@ -18,15 +14,14 @@
  */
 using namespace SPH;
 /**
- * @brief Basic geometry parameters and numerical setup.
+ * @brief Global geometry and material parameters and numerical setup.
  */
 Real DL = 8.0; 						/**< box length. */
 Real DH = 4.0; 						/**< box height. */
-Real particle_spacing_ref = 0.025; 	/**< reference particle spacing. */
-Real BW = particle_spacing_ref * 4; /**< wall width for BCs. */
-/**
- * @brief Material properties of the sphere.
- */
+Real resolution_ref = 0.025; 	/**< reference resolution. */
+Real BW = resolution_ref * 4; /**< wall width for BCs. */
+/** Domain bounds of the system. */
+BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 Real rho0_s = 1.0e3; 		
 Real Youngs_modulus = 5.0e4;
 Real poisson = 0.45; 			
@@ -44,35 +39,33 @@ Real physical_viscosity = 10000.0;
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &sph_system, string body_name, int refinement_level)
-		: SolidBody(sph_system, body_name, refinement_level)
+	WallBoundary(SPHSystem &sph_system, string body_name) : SolidBody(sph_system, body_name)
 	{
 		/** Geometry definition. */
-		std::vector<Point> outer_wall_shape;
-		outer_wall_shape.push_back(Point(-BW, -BW));
-		outer_wall_shape.push_back(Point(-BW, DH + BW));
-		outer_wall_shape.push_back(Point(DL + BW, DH + BW));
-		outer_wall_shape.push_back(Point(DL + BW, -BW));
-		outer_wall_shape.push_back(Point(-BW, -BW));
+		std::vector<Vecd> outer_wall_shape;
+		outer_wall_shape.push_back(Vecd(-BW, -BW));
+		outer_wall_shape.push_back(Vecd(-BW, DH + BW));
+		outer_wall_shape.push_back(Vecd(DL + BW, DH + BW));
+		outer_wall_shape.push_back(Vecd(DL + BW, -BW));
+		outer_wall_shape.push_back(Vecd(-BW, -BW));
 
-		std::vector<Point> inner_wall_shape;
-		inner_wall_shape.push_back(Point(0.0, 0.0));
-		inner_wall_shape.push_back(Point(0.0, DH));
-		inner_wall_shape.push_back(Point(DL, DH));
-		inner_wall_shape.push_back(Point(DL, 0.0));
-		inner_wall_shape.push_back(Point(0.0, 0.0));
+		std::vector<Vecd> inner_wall_shape;
+		inner_wall_shape.push_back(Vecd(0.0, 0.0));
+		inner_wall_shape.push_back(Vecd(0.0, DH));
+		inner_wall_shape.push_back(Vecd(DL, DH));
+		inner_wall_shape.push_back(Vecd(DL, 0.0));
+		inner_wall_shape.push_back(Vecd(0.0, 0.0));
 
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
 		body_shape_->addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 	}
 };
-/** Definition of the ball as a elastic structure. */
+/** Definition of one ball as an elastic structure. */
 class FreeBall : public SolidBody
 {
 public:
-	FreeBall(SPHSystem& system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	FreeBall(SPHSystem& system, string body_name) : SolidBody(system, body_name)
 	{
 		/** Geometry definition. */
 		ComplexShape original_body_shape;
@@ -80,12 +73,11 @@ public:
 		body_shape_ = new LevelSetComplexShape(this, original_body_shape);
 	}
 };
-/** Definition of the ball as a elastic structure. */
+/** Definition of the other ball as an elastic structure. */
 class DampingBall : public SolidBody
 {
 public:
-	DampingBall(SPHSystem& system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	DampingBall(SPHSystem& system, string body_name) : SolidBody(system, body_name)
 	{
 		/** Geometry definition. */
 		ComplexShape original_body_shape;
@@ -94,12 +86,12 @@ public:
 	}
 };
 /**
- * @brief Define ball material.
+ * @brief Define wall material.
  */
-class BallMaterial : public LinearElasticSolid
+class WallMaterial : public LinearElasticSolid
 {
 public:
-	BallMaterial() : LinearElasticSolid()
+	WallMaterial() : LinearElasticSolid()
 	{
 		rho_0_ = rho0_s;
 		E_0_ = Youngs_modulus;
@@ -110,12 +102,12 @@ public:
 	}
 };
 /**
- * Setup material properties of myocardium
+ * Setup ball material properties
  */
-class Material : public NeoHookeanSolid
+class BallMaterial : public NeoHookeanSolid
 {
 public:
-	Material() : NeoHookeanSolid()
+	BallMaterial() : NeoHookeanSolid()
 	{
 		rho_0_ 	= rho0_s;
 		E_0_ = Youngs_modulus;
@@ -132,31 +124,29 @@ class BallInitialCondition
 	: public solid_dynamics::ElasticSolidDynamicsInitialCondition
 {
 public:
-	BallInitialCondition(SolidBody* beam)
-		: solid_dynamics::ElasticSolidDynamicsInitialCondition(beam) {};
+	BallInitialCondition(SolidBody* solid_body)
+		: solid_dynamics::ElasticSolidDynamicsInitialCondition(solid_body) {};
 protected:
 	void Update(size_t index_i, Real dt) override 
 	{
 		vel_n_[index_i] = initial_velocity;
 	};
 };
-/** fluid observer body */
+/** an observer body */
 class FreeBallObserver : public FictitiousBody
 {
 public:
-	FreeBallObserver(SPHSystem& system, string body_name, int refinement_level)
-		: FictitiousBody(system, body_name, refinement_level, 1.3)
+	FreeBallObserver(SPHSystem& system, string body_name) : FictitiousBody(system, body_name)
 	{
 		/** the measuring particle with zero volume */
 		body_input_points_volumes_.push_back(make_pair(ball_center_1, 0.0));
 	}
 };
-/** fluid observer body */
+/** another observer body */
 class DampingBallObserver : public FictitiousBody
 {
 public:
-	DampingBallObserver(SPHSystem& system, string body_name, int refinement_level)
-		: FictitiousBody(system, body_name, refinement_level, 1.3)
+	DampingBallObserver(SPHSystem& system, string body_name) : FictitiousBody(system, body_name)
 	{
 		/** the measuring particle with zero volume */
 		body_input_points_volumes_.push_back(make_pair(ball_center_2, 0.0));
@@ -170,7 +160,7 @@ int main(int ac, char* av[])
 	/**
 	 * @brief Build up -- a SPHSystem --
 	 */
-	SPHSystem sph_system(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW), particle_spacing_ref, 2);
+	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** tag for run particle relaxation for the initial body fitted distribution */
 	sph_system.run_particle_relaxation_ = false;
 	/** tag for computation start with relaxed body fitted particles distribution */
@@ -186,37 +176,48 @@ int main(int ac, char* av[])
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
-	WallBoundary *wall_boundary = new WallBoundary(sph_system, "Wall",	0);
-	BallMaterial* wall_material = new BallMaterial();
-	SolidParticles 					solid_particles(wall_boundary, wall_material);
+	WallBoundary *wall_boundary = new WallBoundary(sph_system, "Wall");
+	WallMaterial* wall_material = new WallMaterial();
+	SolidParticles 	solid_particles(wall_boundary, wall_material);
 	/**
-	 * @brief 	Creating body, materials and particles for the elastic beam (inserted body).
+	 * @brief 	Creating body, materials and particles for the free ball.
 	 */
-	FreeBall* free_ball = new FreeBall(sph_system, "FreeBall", 0);
-	Material* free_ball_material = new Material();
+	FreeBall* free_ball = new FreeBall(sph_system, "FreeBall");
+	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+	{
+		free_ball->particle_generator_->~ParticleGenerator();
+		free_ball->particle_generator_ = new ParticleGeneratorReload(&in_output, "FreeBall");
+	}
+	BallMaterial* free_ball_material = new BallMaterial();
 	ElasticSolidParticles 	free_ball_particles(free_ball, free_ball_material);
 	/**
-	 * @brief 	Creating body, materials and particles for the elastic beam (inserted body).
+	 * @brief 	Creating body, materials and particles for the damping ball.
 	 */
-	DampingBall* damping_ball = new DampingBall(sph_system, "DampingBall", 0);
-	Material* damping_ball_material = new Material();
+	DampingBall* damping_ball = new DampingBall(sph_system, "DampingBall");
+	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+	{
+		damping_ball->particle_generator_->~ParticleGenerator();
+		damping_ball->particle_generator_ = new ParticleGeneratorReload(&in_output, "DampingBall");
+	}
+	BallMaterial* damping_ball_material = new BallMaterial();
 	ElasticSolidParticles 	damping_ball_particles(damping_ball, damping_ball_material);
-	/** Observer. */
-	FreeBallObserver* free_ball_observer = new FreeBallObserver(sph_system, "FreeBallObserver", 0);
-	BaseParticles 			free_ball_observer_particles(free_ball_observer);
-	
-	DampingBallObserver* damping_ball_observer = new DampingBallObserver(sph_system, "DampingBallObserver", 0);
-	BaseParticles 			damping_ball_observer_particles(damping_ball_observer);
+	/**
+	 * @brief 	Observers.
+	 */
+	FreeBallObserver* free_ball_observer = new FreeBallObserver(sph_system, "FreeBallObserver");
+	BaseParticles 	free_ball_observer_particles(free_ball_observer);
+	DampingBallObserver* damping_ball_observer = new DampingBallObserver(sph_system, "DampingBallObserver");
+	BaseParticles 	damping_ball_observer_particles(damping_ball_observer);
 	/** Output the body states. */
 	WriteBodyStatesToVtu 		write_body_states(in_output, sph_system.real_bodies_);
-	/** check whether run particle relaxation for body fiited particle distribution. */
+	/** check whether run particle relaxation for body fitted particle distribution. */
 	if (sph_system.run_particle_relaxation_)
 	{
 		/** topology */
-		SPHBodyInnerRelation* free_ball_inner = new SPHBodyInnerRelation(free_ball);
-		SPHBodyInnerRelation* damping_ball_inner = new SPHBodyInnerRelation(damping_ball);
+		InnerBodyRelation* free_ball_inner = new InnerBodyRelation(free_ball);
+		InnerBodyRelation* damping_ball_inner = new InnerBodyRelation(damping_ball);
 		/** Write the body state to Vtu file. */
-		WriteBodyStatesToPlt 		write_ball_state(in_output, { free_ball, damping_ball });
+		WriteBodyStatesToVtu 		write_ball_state(in_output, sph_system.real_bodies_);
 		/** Write the particle reload files. */
 		WriteReloadParticle 		write_particle_reload_files(in_output, { free_ball, damping_ball});
 		/** Random reset the relax solid particle position. */
@@ -235,7 +236,6 @@ int main(int ac, char* av[])
 		 */
 		int ite = 0;
 		int relax_step = 1000;
-		Real dt = 0.0;
 		while (ite < relax_step)
 		{
 			free_ball_relaxation_step_inner.exec();
@@ -252,13 +252,13 @@ int main(int ac, char* av[])
 		write_particle_reload_files.WriteToFile(0.0);
 		return 0;
 	}
-	/** Algorithms. */
-	SPHBodyInnerRelation*   free_ball_inner = new SPHBodyInnerRelation(free_ball);
-	SolidBodyContactRelation* free_ball_contact = new SolidBodyContactRelation(free_ball, {wall_boundary});
-	SPHBodyInnerRelation*   damping_ball_inner = new SPHBodyInnerRelation(damping_ball);
-	SolidBodyContactRelation* damping_ball_contact = new SolidBodyContactRelation(damping_ball, {wall_boundary});
-	SPHBodyContactRelation* free_ball_observer_contact = new SPHBodyContactRelation(free_ball_observer, { free_ball });
-	SPHBodyContactRelation* damping_all_observer_contact = new SPHBodyContactRelation(damping_ball_observer, { damping_ball });
+	/** Algorithms for dynamics. */
+	InnerBodyRelation*   free_ball_inner = new InnerBodyRelation(free_ball);
+	SolidContactBodyRelation* free_ball_contact = new SolidContactBodyRelation(free_ball, {wall_boundary});
+	InnerBodyRelation*   damping_ball_inner = new InnerBodyRelation(damping_ball);
+	SolidContactBodyRelation* damping_ball_contact = new SolidContactBodyRelation(damping_ball, {wall_boundary});
+	ContactBodyRelation* free_ball_observer_contact = new ContactBodyRelation(free_ball_observer, { free_ball });
+	ContactBodyRelation* damping_all_observer_contact = new ContactBodyRelation(damping_ball_observer, { damping_ball });
 	/** Dynamics. */
 	InitializeATimeStep 	free_ball_initialize_timestep(free_ball, &gravity);
 	InitializeATimeStep 	damping_ball_initialize_timestep(damping_ball, &gravity);
@@ -268,36 +268,26 @@ int main(int ac, char* av[])
 	/** Time step size. */
 	solid_dynamics::AcousticTimeStepSize free_ball_get_time_step_size(free_ball);
 	solid_dynamics::AcousticTimeStepSize damping_ball_get_time_step_size(damping_ball);
-	/** stress relaxation for the beam. */
+	/** stress relaxation for the balls. */
 	solid_dynamics::StressRelaxationFirstHalf free_ball_stress_relaxation_first_half(free_ball_inner);
 	solid_dynamics::StressRelaxationSecondHalf free_ball_stress_relaxation_second_half(free_ball_inner);
-
 	solid_dynamics::StressRelaxationFirstHalf damping_ball_stress_relaxation_first_half(damping_ball_inner);
 	solid_dynamics::StressRelaxationSecondHalf damping_ball_stress_relaxation_second_half(damping_ball_inner);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::SummationContactDensity free_ball_update_contact_density(free_ball_contact);
 	solid_dynamics::ContactForce free_ball_compute_solid_contact_forces(free_ball_contact);
-
 	solid_dynamics::SummationContactDensity damping_ball_update_contact_density(damping_ball_contact);
 	solid_dynamics::ContactForce damping_ball_compute_solid_contact_forces(damping_ball_contact);
-	/** Damping*/
-	DampingBySplittingWithRandomChoice<SPHBodyInnerRelation, DampingBySplittingPairwise<Vec2d>, Vec2d>
+	/** Damping for one ball */
+	DampingBySplittingWithRandomChoice<InnerBodyRelation, DampingBySplittingPairwise<Vec2d>, Vec2d>
 		damping(damping_ball_inner, 0.5, damping_ball_particles.vel_n_, physical_viscosity);
 	/** Observer and output. */
-	WriteAnObservedQuantity<Vecd, BaseParticles, &BaseParticles::pos_n_>
-		write_free_ball_displacement("Displacement", in_output, free_ball_observer_contact);
-	WriteAnObservedQuantity<Vecd, BaseParticles, &BaseParticles::pos_n_>
-		write_damping_ball_displacement("Displacement", in_output, damping_all_observer_contact);
+	WriteAnObservedQuantity<indexVector, Vecd>
+		write_free_ball_displacement("Position", in_output, free_ball_observer_contact);
+	WriteAnObservedQuantity<indexVector, Vecd>
+		write_damping_ball_displacement("Position", in_output, damping_all_observer_contact);
+
 	/** Now, pre-simulation. */
-	if (sph_system.reload_particles_) 
-	{
-		unique_ptr<ReadReloadParticle>	
-			free_ball_reload_particles(new ReadReloadParticle(in_output, {free_ball}, { "FreeBall"}));
-		unique_ptr<ReadReloadParticle>	
-			damping_ball_reload_particles(new ReadReloadParticle(in_output, { damping_ball}, { "DampingBall"}));
-		free_ball_reload_particles->ReadFromFile();
-		damping_ball_reload_particles->ReadFromFile();
-	}
 	GlobalStaticVariables::physical_time_ = 0.0;
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();

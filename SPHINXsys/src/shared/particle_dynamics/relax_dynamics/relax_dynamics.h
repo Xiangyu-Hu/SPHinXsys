@@ -25,7 +25,6 @@
 * @brief 	This is the classes of particle relaxation in order to produce body fitted
 * 			initial particle distribution.   
 * @author	Chi ZHang and Xiangyu Hu
-* @version	0.1
 */
 
 #pragma once
@@ -40,6 +39,7 @@
 namespace SPH
 {
 	class ComplexShape;
+	class LevelSetComplexShape;
 
 	namespace relax_dynamics
 	{
@@ -55,7 +55,7 @@ namespace SPH
 		* computing the square of time step size
 		*/
 		class GetTimeStepSizeSquare :
-			public ParticleDynamicsReduce<Real, ReduceMin>,
+			public ParticleDynamicsReduce<Real, ReduceMax>,
 			public RelaxDataDelegateSimple
 		{
 		public:
@@ -63,8 +63,9 @@ namespace SPH
 			virtual ~GetTimeStepSizeSquare() {};
 		protected:
 			StdLargeVec<Vecd>& dvel_dt_;
-			Real smoothing_length_;
+			Real h_ref_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
+			Real OutputResult(Real reduced_value) override;
 		};
 
 		/**
@@ -77,14 +78,27 @@ namespace SPH
 			public InteractionDynamics, public RelaxDataDelegateInner
 		{
 		public:
-			RelaxationAccelerationInner(SPHBodyInnerRelation* body_inner_relation);
+			RelaxationAccelerationInner(BaseInnerBodyRelation* body_inner_relation);
 			virtual ~RelaxationAccelerationInner() {};
 		protected:
-			StdLargeVec<Real>& Vol_;
+			StdLargeVec<Real>& Vol_, & h_ratio_;
 			StdLargeVec<Vecd>& dvel_dt_;
 			StdLargeVec<Vecd>& pos_n_;
-			ComplexShape* complex_shape_;
-			Kernel* kernel_;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		* @class RelaxationAccelerationInnerWithLevelSetCorrection
+		* @brief we constrain particles to a level function representing the interafce.
+		*/
+		class RelaxationAccelerationInnerWithLevelSetCorrection : 
+			public RelaxationAccelerationInner
+		{
+		public:
+			RelaxationAccelerationInnerWithLevelSetCorrection(BaseInnerBodyRelation* body_inner_relation);
+			virtual ~RelaxationAccelerationInnerWithLevelSetCorrection() {};
+		protected:
+			LevelSetComplexShape* level_set_complex_shape_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -100,6 +114,27 @@ namespace SPH
 			virtual ~UpdateParticlePosition() {};
 		protected:
 			StdLargeVec<Vecd>& pos_n_, & dvel_dt_;
+			StdLargeVec<Real>& h_ratio_;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		 * @class UpdateSmoothingLengthRatioByBodyShape
+		 * @brief update the particle smoothing length ratio
+		*/
+		class UpdateSmoothingLengthRatioByBodyShape :
+			public ParticleDynamicsSimple, public RelaxDataDelegateSimple
+		{
+		public:
+			explicit UpdateSmoothingLengthRatioByBodyShape(SPHBody* body);
+			virtual ~UpdateSmoothingLengthRatioByBodyShape() {};
+		protected:
+			StdLargeVec<Real>& h_ratio_, & Vol_;
+			StdLargeVec<Vecd>& pos_n_;
+			ComplexShape& body_shape_;
+			Kernel& kernel_;
+			ParticleSpacingByBodyShape* particle_spacing_by_body_shape_;
+
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -114,7 +149,7 @@ namespace SPH
 			public RelaxDataDelegateComplex
 		{
 		public:
-			RelaxationAccelerationComplex(SPHBodyComplexRelation* body_complex_relation);
+			RelaxationAccelerationComplex(ComplexBodyRelation* body_complex_relation);
 			virtual ~RelaxationAccelerationComplex() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
@@ -124,20 +159,21 @@ namespace SPH
 		};
 
 		/**
-		* @class BodySurfaceBounding
+		* @class ShapeSurfaceBounding
 		* @brief constrain surface particles by
 		* map contrained particles to geometry face and
 		* r = r + phi * norm (vector distance to face)
 		*/
-		class BodySurfaceBounding : 
+		class ShapeSurfaceBounding : 
 			public PartDynamicsByCell,
 			public RelaxDataDelegateSimple
 		{
 		public:
-			BodySurfaceBounding(SPHBody *body, NearBodySurface* body_part);
-			virtual ~BodySurfaceBounding() {};
+			ShapeSurfaceBounding(SPHBody *body, NearShapeSurface* body_part);
+			virtual ~ShapeSurfaceBounding() {};
 		protected:
 			StdLargeVec<Vecd>& pos_n_;
+			Real constrained_distance_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -148,13 +184,14 @@ namespace SPH
 		* r = r + phi * norm (vector distance to face)
 		*/
 		class ConstraintSurfaceParticles : 
-			public PartDynamicsByParticle,
+			public PartSimpleDynamicsByParticle,
 			public RelaxDataDelegateSimple
 		{
 		public:
-			ConstraintSurfaceParticles(SPHBody* body, BodySurface* body_part);
+			ConstraintSurfaceParticles(SPHBody* body, ShapeSurface* body_part);
 			virtual ~ConstraintSurfaceParticles() {};
 		protected:
+			Real constrained_distance_;
 			StdLargeVec<Vecd>& pos_n_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
@@ -166,16 +203,16 @@ namespace SPH
 		class RelaxationStepInner : public  ParticleDynamics<void>
 		{
 		protected:
-			SPHBody* sph_body_;
-			SPHBodyInnerRelation* inner_relation_;
+			RealBody* real_body_;
+			BaseInnerBodyRelation* inner_relation_;
 		public:
-			explicit RelaxationStepInner(SPHBodyInnerRelation* body_inner_relation);
+			explicit RelaxationStepInner(BaseInnerBodyRelation* body_inner_relation, bool level_set_correction = false);
 			virtual ~RelaxationStepInner() {};
 
-			RelaxationAccelerationInner relaxation_acceleration_inner_;
+			RelaxationAccelerationInner* relaxation_acceleration_inner_;
 			GetTimeStepSizeSquare get_time_step_square_;
 			UpdateParticlePosition update_particle_position_;
-			BodySurfaceBounding	surface_bounding_;
+			ShapeSurfaceBounding	surface_bounding_;
 
 			virtual void exec(Real dt = 0.0) override;
 			virtual void parallel_exec(Real dt = 0.0) override;

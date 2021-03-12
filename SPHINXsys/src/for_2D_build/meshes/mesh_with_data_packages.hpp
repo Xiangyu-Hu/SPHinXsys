@@ -2,7 +2,6 @@
 * @file 	base_mesh.hpp
 * @brief 	This is the implementation of the template function and class for base mesh
 * @author	Chi ZHang and Xiangyu Hu
-* @version	0.1
 */
 #pragma once
 
@@ -14,7 +13,7 @@ namespace SPH {
 	template<int PKG_SIZE, int ADDRS_SIZE>
 	template<class DataType>
 	DataType BaseDataPackage<PKG_SIZE, ADDRS_SIZE>
-		::probeDataPackage(PackageDataAddress<DataType>& pkg_data_addrs, Vecd& position)
+		::probeDataPackage(PackageDataAddress<DataType>& pkg_data_addrs, const Vecd& position)
 	{
 		Vecu grid_idx = GridIndexFromPosition(position);
 		Vecd grid_pos = GridPositionFromIndex(grid_idx);
@@ -56,8 +55,8 @@ namespace SPH {
 			{
 				Real dphidx = (*in_pkg_data_addrs[i + 1][j] - *in_pkg_data_addrs[i - 1][j]);
 				Real dphidy = (*in_pkg_data_addrs[i][j + 1] - *in_pkg_data_addrs[i][j - 1]);
-				Real norm = sqrt(dphidx * dphidx + dphidy * dphidy) + TinyReal;
-				*out_pkg_data_addrs[i][j] = Vecd(dphidx, dphidy) / norm;
+				Vecd normal = Vecd(dphidx, dphidy);
+				*out_pkg_data_addrs[i][j] = normal / (normal.norm() + TinyReal);
 			}
 	}
 	//=================================================================================================//
@@ -149,7 +148,7 @@ namespace SPH {
 	//=================================================================================================//
 	template<class BaseMeshType, class DataPackageType>
 	template<class DataType, typename PackageDataAddressType, PackageDataAddressType DataPackageType:: * MemPtr>
-	DataType MeshWithDataPackages<BaseMeshType, DataPackageType>::probeMesh(Vecd& position)
+	DataType MeshWithDataPackages<BaseMeshType, DataPackageType>::probeMesh(const Vecd& position)
 	{
 		Vecu grid_index = BaseMeshType::GridIndexFromPosition(position);
 		size_t i = grid_index[0];

@@ -1,7 +1,6 @@
 /**
  * @file 	solid_particles_supplementary.cpp
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- * @version	0.1
  */
 
 #include "solid_particles.h"
@@ -13,18 +12,17 @@ namespace SPH {
 	//=============================================================================================//
 	void SolidParticles::ParticleTranslationAndRotation(Transformd& transform) 
 	{
-		for (size_t i = 0; i != body_->number_of_particles_; ++i)
+		for (size_t i = 0; i != total_real_particles_; ++i)
 		{
-			pos_n_[i] = transform.ImposeTransform(pos_n_[i]);
-			pos_0_[i] = transform.ImposeTransform(pos_0_[i]);
+			pos_n_[i] = transform.imposeTransform(pos_n_[i]);
+			pos_0_[i] = transform.imposeTransform(pos_0_[i]);
 		}
 	}
 	//=================================================================================================//
 	void SolidParticles::writeParticlesToPltFile(ofstream& output_file)
 	{
 		output_file << " VARIABLES = \" x \", \"y\", \"ID\", \"v_x\", \"v_y\", \"x_norm\", \"y_norm\" \n";
-		size_t number_of_particles = body_->number_of_particles_;
-		for (size_t i = 0; i != number_of_particles; ++i)
+		for (size_t i = 0; i != total_real_particles_; ++i)
 		{
 			output_file << pos_n_[i][0] << "  "
 				<< pos_n_[i][1] << "  "
@@ -40,7 +38,7 @@ namespace SPH {
 	{
 		Real J = rho_0_ / rho_n_[particle_i];
 		Mat2d F = F_[particle_i];
-		Mat2d stress = stress_[particle_i];
+		Mat2d stress = stress_PK1_[particle_i];
 		Mat2d sigma = (stress * ~F) / J;
 
 		Real sigmaxx = sigma(0, 0);
@@ -54,9 +52,7 @@ namespace SPH {
 	void ElasticSolidParticles::writeParticlesToPltFile(ofstream& output_file)
 	{
 		output_file << " VARIABLES = \" x \", \"y\", \"ID\",\"v_x\", \"v_y\", \"x_norm\", \"y_norm\", \"von Mises stress\" \n";
-		size_t number_of_particles = body_->number_of_particles_;
-
-		for (size_t i = 0; i != number_of_particles; ++i)
+		for (size_t i = 0; i != total_real_particles_; ++i)
 		{
 			output_file << pos_n_[i][0] << "  "
 				<< pos_n_[i][1] << "  "
@@ -71,10 +67,8 @@ namespace SPH {
 	//=================================================================================================//
 	void ActiveMuscleParticles::writeParticlesToPltFile(ofstream& output_file)
 	{
-		size_t number_of_particles = body_->number_of_particles_;
-
 		output_file << " VARIABLES = \" x \", \"y\", \"ID\", \"Vx\", \"Vy\", \"von Mises\", \" Ta \" \n";
-		for (size_t i = 0; i != number_of_particles; ++i)
+		for (size_t i = 0; i != total_real_particles_; ++i)
 		{
 			output_file << pos_n_[i][0] << "  "
 				<< pos_n_[i][1] << "  "
@@ -83,6 +77,22 @@ namespace SPH {
 				<< vel_n_[i][1] << " "
 				<< von_Mises_stress(i) << " "
 				<< active_contraction_stress_[i] << "\n ";
+		}
+	}
+	//=================================================================================================//
+	void ShellParticles::writeParticlesToPltFile(ofstream &output_file)
+	{
+		output_file << " VARIABLES = \" x \", \"y\", \"ID\",\"v_x\", \"v_y\", \"x_norm\", \"y_norm\", \"von Mises stress\" \n";
+		for (size_t i = 0; i != total_real_particles_; ++i)
+		{
+			output_file << pos_n_[i][0] << "  "
+				<< pos_n_[i][1] << "  "
+				<< i << "  "
+				<< vel_n_[i][0] << " "
+				<< vel_n_[i][1] << " "
+				<< n_[i][0] << "  "
+				<< n_[i][1] << "  "
+				<< von_Mises_stress(i) << "\n ";
 		}
 	}
 	//=================================================================================================//

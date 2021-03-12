@@ -27,7 +27,6 @@
 * 			between two neighboring particles. Basically, the further the two
 *			particles, the less relevance they have.     
 * @author	Luhui Han, Chi ZHang and Xiangyu Hu
-* @version	0.1
 */
 
 #pragma once
@@ -55,110 +54,117 @@ namespace SPH
 	class Kernel
 	{
 	protected:
-		/** name of the kernel **/
 		const string kernel_name_;
-		/** reference smoothing length **/
-		const Real h_, inv_h_;
-		/** non-dimensional size of the kernel **/
-		Real kernel_size_;
-		/** Normalization factor for the kernel function  **/
+		Real h_, inv_h_; /**< reference smoothing length and its inverse **/
+		Real kernel_size_; /**< non-dimensional size of the kernel **/
+		Real cutoff_radius_ref_; /** reference cut off radius **/
+		/** Normalization factors for the kernel function  **/
 		Real factor_W_1D_, factor_W_2D_, factor_W_3D_;
 		/** Auxiliary factors for the derivative of kernel function  **/
 		Real factor_dW_1D_, factor_dW_2D_, factor_dW_3D_;
 		/** Auxiliary factors for the second order derivative of kernel function  **/
 		Real factor_d2W_1D_, factor_d2W_2D_, factor_d2W_3D_;
 
-		/** Fractors for derivatives*/
-		virtual void SetDerivativeFactors();
-		Real getSmoothingLengthFactor1D(Real inv_h_in) const { 
-			return h_ * inv_h_in; 
-		};
-		Real getSmoothingLengthFactor2D(Real inv_h_in) const {
-			return h_ * h_ * inv_h_in * inv_h_in; 
-		};
-		Real getSmoothingLengthFactor3D(Real inv_h_in)  const {
-			return h_ * h_ * h_ * inv_h_in * inv_h_in * inv_h_in;
-		};
+		virtual void setBasicParameters() = 0;
+		void setDerivativeParameters();
 	public:
-		/** Constructor **/
-		Kernel(Real h, string kernel_name = "kernel");
-		/** Base classes with virtual member functions should have a virtual destructor **/
+		/** empty initialization in constructor, initialization will be carried out later. */
+		Kernel(string kernel_name = "Kernel");
 		virtual ~Kernel() {};
 		
-		/** access essential information of the kernel **/
-		string GetKernelName() const { return kernel_name_; };
-		Real GetSmoothingLength() const { return h_; };
-		Real GetKernelSize() const { return kernel_size_; };
-		Real GetCutOffRadius() const { return h_ * kernel_size_; };
-		Real GetFactorW1D() const { return factor_W_1D_; };
-		Real GetFactorW2D() const { return factor_W_2D_; };
-		Real GetFactorW3D() const { return factor_W_3D_; };
+		void initialize(Real h);
+		string Name() const { return kernel_name_; };
+		Real SmoothingLength() const { return h_; };
+		Real KernelSize() const { return kernel_size_; };
+		Real CutOffRadius() const { return cutoff_radius_ref_; };
+		Real FactorW1D() const { return factor_W_1D_; };
+		Real FactorW2D() const { return factor_W_2D_; };
+		Real FactorW3D() const { return factor_W_3D_; };
 
 		/** Calculates the kernel value for the given displacement of two particles
-		  * r_ij pointing from particle j to particle i **/
-		virtual Real W(const Real& r_ij) const;
-		virtual Real W(const Vec2d& r_ij) const;
-		virtual Real W(const Vec3d& r_ij) const;
+		 * r_ij pointing from particle j to particle i
+		 */
+		virtual Real W(const Real& r_ij, const Real& displacement) const;
+		virtual Real W(const Real& r_ij, const Vec2d& displacement) const;
+		virtual Real W(const Real& r_ij, const Vec3d& displacement) const;
 
-		/** this value could be use to calculate the value of W **/
+		/** this value could be use to calculate the value of W 
+		 * they are realized in specific kernel implementations 
+		 */
 		virtual Real W_1D(const Real q) const = 0;
 		virtual Real W_2D(const Real q) const = 0;
 		virtual Real W_3D(const Real q) const = 0;
 
 		/** Calculates the kernel value at the origin **/
-		virtual Real W0(const Real& r_i)  const { return factor_W_1D_; };
-		virtual Real W0(const Vec2d& r_i) const { return factor_W_2D_; };
-		virtual Real W0(const Vec3d& r_i) const { return factor_W_3D_; };
+		virtual Real W0(const Real&	point_i)  const { return factor_W_1D_; };
+		virtual Real W0(const Vec2d& point_i) const { return factor_W_2D_; };
+		virtual Real W0(const Vec3d& point_i) const { return factor_W_3D_; };
 
 		/** Calculates the kernel derivation for
-		  * the given distance of two particles **/
-		virtual Real dW(const Real& r_ij) const;
-		virtual Real dW(const Vec2d& r_ij) const;
-		virtual Real dW(const Vec3d& r_ij) const;
+		 * the given distance of two particles 
+		 */
+		virtual Real dW(const Real& r_ij, const Real& displacement) const;
+		virtual Real dW(const Real& r_ij, const Vec2d& displacement) const;
+		virtual Real dW(const Real& r_ij, const Vec3d& displacement) const;
 
-		/** this value could be use to calculate the value of dW **/
+		/** this value could be use to calculate the value of dW 
+		 * they are realized in specific kernel implementations
+		 */
 		virtual Real dW_1D(const Real q) const = 0;
 		virtual Real dW_2D(const Real q) const = 0;
 		virtual Real dW_3D(const Real q) const = 0;
 
 		/** Calculates the kernel second order derivation for
-		  * the given distance of two particles **/
-		virtual Real d2W(const Real& r_ij) const;
-		virtual Real d2W(const Vec2d& r_ij) const;
-		virtual Real d2W(const Vec3d& r_ij) const;
+		 * the given distance of two particles 
+		 */
+		virtual Real d2W(const Real& r_ij, const Real& displacement) const;
+		virtual Real d2W(const Real& r_ij, const Vec2d& displacement) const;
+		virtual Real d2W(const Real& r_ij, const Vec3d& displacement) const;
 
-		/** this value could be use to calculate the value of d2W **/
+		/** this value could be use to calculate the value of d2W 
+		 * they are realized in specific kernel implementations 
+		 */
 		virtual Real d2W_1D(const Real q) const = 0;
 		virtual Real d2W_2D(const Real q) const = 0;
 		virtual Real d2W_3D(const Real q) const = 0;
 
-		/** for variable smoothing length
-		  * note that we input the inverse of 
-		  * the variable smoothing length.
-		  */
-		Real GetCutOffRadius(Real smoothing_length) const { 
-			return smoothing_length * kernel_size_; 
-		};
+	 //----------------------------------------------------------------------
+	 //		Below are for variable smoothing length.
+	 //		Note that we input the ratio between the reference smoothing length
+	 //		to the variable smoothing length.
+	 //----------------------------------------------------------------------
+	protected:
+		Real SmoothingLengthFactor1D(const Real& h_ratio) const { return h_ratio; };
+		Real SmoothingLengthFactor2D(const Real& h_ratio) const { return h_ratio * h_ratio; };
+		Real SmoothingLengthFactor3D(const Real& h_ratio)  const { return h_ratio * h_ratio * h_ratio; };
 
-		Real W(Real inv_h_in, const Real& r_ij) const;
-		Real W(Real inv_h_in, const Vec2d& r_ij) const;
-		Real W(Real inv_h_in, const Vec3d& r_ij) const;
+	public:
+		Real CutOffRadius(Real h_ratio) const { return cutoff_radius_ref_ / h_ratio; };
+
+		Real W(const Real& h_ratio, const Real& r_ij, const Real& displacement) const;
+		Real W(const Real& h_ratio, const Real& r_ij, const Vec2d& displacement) const;
+		Real W(const Real& h_ratio, const Real& r_ij, const Vec3d& displacement) const;
 
 		/** Calculates the kernel value at the origin **/
-		Real W0(Real inv_h_in, const Real& r_i)  const;
-		Real W0(Real inv_h_in, const Vec2d& r_i) const;
-		Real W0(Real inv_h_in, const Vec3d& r_i) const;
+		Real W0(const Real& h_ratio, const Real& point_i)  const;
+		Real W0(const Real& h_ratio, const Vec2d& point_i) const;
+		Real W0(const Real& h_ratio, const Vec3d& point_i) const;
 
-		/** Calculates the kernel derivation for
-		  * the given distance of two particles **/
-		virtual Real dW(Real inv_h_in, const Real& r_ij) const;
-		virtual Real dW(Real inv_h_in, const Vec2d& r_ij) const;
-		virtual Real dW(Real inv_h_in, const Vec3d& r_ij) const;
+		/** Calculates the kernel derivation for the given distance of two particles **/
+		Real dW(const Real& h_ratio, const Real& r_ij, const Real& displacement) const;
+		Real dW(const Real& h_ratio, const Real& r_ij, const Vec2d& displacement) const;
+		Real dW(const Real& h_ratio, const Real& r_ij, const Vec3d& displacement) const;
 
-		/** Calculates the kernel second order derivation for
-		  * the given distance of two particles **/
-		virtual Real d2W(Real inv_h_in, const Real& r_ij) const;
-		virtual Real d2W(Real inv_h_in, const Vec2d& r_ij) const;
-		virtual Real d2W(Real inv_h_in, const Vec3d& r_ij) const;
+		/** Calculates the kernel second order derivation for the given distance of two particles **/
+		Real d2W(const Real& h_ratio, const Real& r_ij, const Real& displacement) const;
+		Real d2W(const Real& h_ratio, const Real& r_ij, const Vec2d& displacement) const;
+		Real d2W(const Real& h_ratio, const Real& r_ij, const Vec3d& displacement) const;
+
+		//----------------------------------------------------------------------
+		//		Below are for reduced kernels.
+		//----------------------------------------------------------------------
+	public:
+		void reduceOnce(); /** reduce for thin structures or films */
+		void reduceTwice(); /** reduce for linear structures or filaments */
 	};
 }

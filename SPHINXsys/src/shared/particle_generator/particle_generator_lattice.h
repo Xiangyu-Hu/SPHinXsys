@@ -26,16 +26,17 @@
  * 			with given positions and volumes. The direct generator simply generate
  * 			particle with given position and volume. The lattice generator generate
  * 			at lattice position by check whether the poision is contained by a SPH body.
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
- * @version	0.1
+ * @author	Xiangyu Hu, Chi Zhang, Yongchuan Yu
  */
 #pragma once
 
 #include "base_particle_generator.h"
-#include "geometry.h"
-#include "base_mesh.h"
 
 namespace SPH {
+
+	class ComplexShape;
+	class ParticleSpacingByBodyShape;
+
 	/**
 	 * @class ParticleGeneratorLattice
 	 * @brief generate particles from lattice positions for a body.
@@ -47,11 +48,30 @@ namespace SPH {
 		virtual ~ParticleGeneratorLattice() {};
 
 		virtual void initialize(SPHBody* sph_body) override;
-		virtual void CreateBaseParticles(BaseParticles* base_particles) override;
+		virtual void createBaseParticles(BaseParticles* base_particles) override;
 	protected:
-		Real lattice_spacing_;		/**< Lattice size. */
-		Vecd lower_bound_, upper_bound_;	/**< Domain bounds. */
-		std::unique_ptr<Mesh> mesh_;
+		Real lattice_spacing_;
+		BoundingBox domain_bounds_;
 		ComplexShape* body_shape_;
+
+		virtual void createABaseParticle(BaseParticles* base_particles, 
+			Vecd& particle_position, Real particle_volume, size_t& total_real_particles);
+	};
+
+	/**
+	 * @class ParticleGeneratorMultiResolution
+	 * @brief generate multi-resolution particles from lattice positions for a body.
+	 */
+	class ParticleGeneratorMultiResolution : public ParticleGeneratorLattice
+	{
+	public:
+		ParticleGeneratorMultiResolution();
+		virtual ~ParticleGeneratorMultiResolution() {};
+		virtual void initialize(SPHBody* sph_body) override;
+	protected:
+		ParticleSpacingByBodyShape* particle_adapation_;
+
+		virtual void createABaseParticle(BaseParticles* base_particles,
+			Vecd& particle_position, Real particle_volume, size_t& total_real_particles) override;
 	};
 }

@@ -33,7 +33,7 @@
 #include "all_particles.h"
 #include "all_materials.h"
 #include "neighbor_relation.h"
-#include "all_types_of_bodies.h"
+#include "all_bodies.h"
 #include "mesh_cell_linked_list.h"
 #include "external_force.h"
 #include "body_relation.h"
@@ -50,17 +50,17 @@ namespace SPH
 	using ReduceFunctor = std::function<ReturnType(size_t, Real)>;
 
 	/** Iterators for particle functors. sequential computing. */
-	void ParticleIterator(size_t number_of_particles, ParticleFunctor &particle_functor, Real dt = 0.0);
+	void ParticleIterator(size_t total_real_particles, ParticleFunctor &particle_functor, Real dt = 0.0);
 	/** Iterators for particle functors. parallel computing. */
-	void ParticleIterator_parallel(size_t number_of_particles, ParticleFunctor &particle_functor, Real dt = 0.0);
+	void ParticleIterator_parallel(size_t total_real_particles, ParticleFunctor &particle_functor, Real dt = 0.0);
 
 	/** Iterators for reduce functors. sequential computing. */
 	template <class ReturnType, typename ReduceOperation>
-	ReturnType ReduceIterator(size_t number_of_particles, ReturnType temp,
+	ReturnType ReduceIterator(size_t total_real_particles, ReturnType temp,
 		ReduceFunctor<ReturnType> &reduce_functor, ReduceOperation &reduce_operation, Real dt = 0.0);
 	/** Iterators for reduce functors. parallel computing. */
 	template <class ReturnType, typename ReduceOperation>
-	ReturnType ReduceIterator_parallel(size_t number_of_particles, ReturnType temp,
+	ReturnType ReduceIterator_parallel(size_t total_real_particles, ReturnType temp,
 		ReduceFunctor<ReturnType> &reduce_functor, ReduceOperation &reduce_operation, Real dt = 0.0);
 
 	/** Iterators for particle functors with splitting. sequential computing. */
@@ -73,7 +73,7 @@ namespace SPH
 
 	/** A Functor for Summation */
 	template <class ReturnType>
-	struct ReduceSum { ReturnType operator () (ReturnType x, ReturnType y) const { return x + y; }; };
+	struct ReduceSum { ReturnType operator () (const ReturnType& x, const ReturnType& y) const { return x + y; }; };
 	/** A Functor for Maximum */
 	struct ReduceMax { Real operator () (Real x, Real y) const { return SMAX(x, y); }; };
 	/** A Functor for Minimum */
@@ -82,7 +82,7 @@ namespace SPH
 	struct ReduceOR { bool operator () (bool x, bool y) const { return x || y; }; };
 	/** A Functor for lower bound */
 	struct ReduceLowerBound {
-		Vecd operator () (Vecd x, Vecd y) const {
+		Vecd operator () (const Vecd& x, const Vecd& y) const {
 			Vecd lower_bound;
 			for (int i = 0; i < lower_bound.size(); ++i) lower_bound[i] = SMIN(x[i], y[i]);
 			return lower_bound;
@@ -90,7 +90,7 @@ namespace SPH
 	};
 	/** A Functor for upper bound */
 	struct ReduceUpperBound {
-		Vecd operator () (Vecd x, Vecd y) const {
+		Vecd operator () (const Vecd& x, const Vecd& y) const {
 			Vecd upper_bound;
 			for (int i = 0; i < upper_bound.size(); ++i) upper_bound[i] = SMAX(x[i], y[i]);
 			return upper_bound;
@@ -121,38 +121,35 @@ namespace SPH
 	class ParticleDynamics : public GlobalStaticVariables
 	{
 	public:
-		/** Constructor */
-		explicit ParticleDynamics(SPHBody* sph_body) 
+		explicit ParticleDynamics(SPHBody* sph_body)
 			: GlobalStaticVariables(), sph_body_(sph_body),
-			split_cell_lists_(sph_body->split_cell_lists_),
-			mesh_cell_linked_list_(sph_body->mesh_cell_linked_list_) {};
+			particle_adaptation_(sph_body->particle_adaptation_),
+			base_particles_(sph_body->base_particles_) {};
 		virtual ~ParticleDynamics() {};
 
 		/** The only two functions can be called from outside
 		  * One is for sequential execution, the other is for parallel. */
 		virtual ReturnType exec(Real dt = 0.0) = 0;
 		virtual ReturnType parallel_exec(Real dt = 0.0) = 0;
+
 	protected:
 		SPHBody* sph_body_;
-		SplitCellLists& split_cell_lists_;
-		BaseMeshCellLinkedList* mesh_cell_linked_list_;
+		ParticleAdaptation* particle_adaptation_;
+		BaseParticles* base_particles_;
 
 		void setBodyUpdated() { sph_body_->setNewlyUpdated(); };
 		/** the function for set global parameters for the particle dynamics */
 		virtual void setupDynamics(Real dt = 0.0) {};
 	};
-
+	
 	/**
 	* @class DataDelegateBase
 	* @brief empty base class mixin template.
 	*/
 	class DataDelegateEmptyBase
 	{
-		SPHBody* sph_body_;
 	public:
-		/** Constructor */
-		explicit DataDelegateEmptyBase(SPHBody* sph_body) :
-			sph_body_(sph_body){};
+		explicit DataDelegateEmptyBase(SPHBody* sph_body) {};
 		virtual ~DataDelegateEmptyBase() {};
 	};
 
@@ -166,7 +163,6 @@ namespace SPH
 	class DataDelegateSimple
 	{
 	public:
-		/** Constructor */
 		explicit DataDelegateSimple(SPHBody* body) :
 			body_(dynamic_cast<BodyType*>(body)),
 			particles_(dynamic_cast<ParticlesType*>(body->base_particles_)),
@@ -174,7 +170,6 @@ namespace SPH
 			sorted_id_(body_->base_particles_->sorted_id_),
 			unsorted_id_(body_->base_particles_->unsorted_id_) {};
 		virtual ~DataDelegateSimple() {};
-
 	protected:
 		BodyType* body_;
 		ParticlesType* particles_;
@@ -189,25 +184,16 @@ namespace SPH
 	*/
 	template <class BodyType = SPHBody,
 			  class ParticlesType = BaseParticles,
-			  class MaterialType = BaseMaterial>
-	class DataDelegateInner
+			  class MaterialType = BaseMaterial,
+			  class BaseDataDelegateType = DataDelegateSimple<BodyType, ParticlesType, MaterialType>>
+	class DataDelegateInner : public BaseDataDelegateType
 	{
 	public:
-		explicit DataDelegateInner(SPHBodyInnerRelation* body_inner_relation) : 
-			body_(dynamic_cast<BodyType*>(body_inner_relation->sph_body_)),
-			particles_(dynamic_cast<ParticlesType*>(body_->base_particles_)),
-			material_(dynamic_cast<MaterialType*>(body_->base_particles_->base_material_)),
-			sorted_id_(body_->base_particles_->sorted_id_),
-			unsorted_id_(body_->base_particles_->unsorted_id_),
+		explicit DataDelegateInner(BaseInnerBodyRelation* body_inner_relation) : 
+			BaseDataDelegateType(body_inner_relation->sph_body_),
 			inner_configuration_(body_inner_relation->inner_configuration_) {};
 		virtual ~DataDelegateInner() {};
 	protected:
-		BodyType* body_;
-		ParticlesType* particles_;
-		MaterialType* material_;
-		StdLargeVec<size_t>& sorted_id_;
-		StdLargeVec<size_t>& unsorted_id_;
-
 		/** inner configuration of the designated body */
 		ParticleConfiguration& inner_configuration_;
 	};
@@ -226,14 +212,14 @@ namespace SPH
 	class DataDelegateContact : public BaseDataDelegateType
 	{
 	public:
-		explicit DataDelegateContact(SPHBodyContactRelation* body_contact_relation);
+		explicit DataDelegateContact(BaseContactBodyRelation* body_contact_relation);
 		virtual ~DataDelegateContact() {};
 	protected:
 		StdVec<ContactBodyType*>  contact_bodies_;
 		StdVec<ContactParticlesType*>  contact_particles_;
 		StdVec<ContactMaterialType*>  contact_material_;
 		/** Configurations for particle interaction between bodies. */
-		ContatcParticleConfiguration& contact_configuration_;
+		StdVec<ParticleConfiguration*> contact_configuration_;
 	};
 
 	/**
@@ -246,25 +232,36 @@ namespace SPH
 		class ContactBodyType = SPHBody,
 		class ContactParticlesType = BaseParticles,
 		class ContactMaterialType = BaseMaterial>
-	class DataDelegateComplex
+	class DataDelegateComplex : 
+		public DataDelegateInner<BodyType, ParticlesType, MaterialType>,
+		public DataDelegateContact<BodyType, ParticlesType, MaterialType,
+		ContactBodyType, ContactParticlesType, ContactMaterialType, DataDelegateEmptyBase>
 	{
 	public:
-		explicit DataDelegateComplex(SPHBodyComplexRelation* body_complex_relation);
+		explicit DataDelegateComplex(ComplexBodyRelation* body_complex_relation) :
+			DataDelegateInner<BodyType, ParticlesType, MaterialType>(body_complex_relation->inner_relation_),
+			DataDelegateContact<BodyType, ParticlesType, MaterialType, ContactBodyType, ContactParticlesType, 
+			ContactMaterialType, DataDelegateEmptyBase>(body_complex_relation->contact_relation_) {};
 		virtual ~DataDelegateComplex() {};
+	};
+
+	/**
+	* @class ParticleDynamicsComplex
+	* @brief particle dynamics by considering  contribution from extra contact bodies
+	*/
+	template<class ParticleDynamicsInnerType, class ContactDataType>
+	class ParticleDynamicsComplex : public ParticleDynamicsInnerType, public ContactDataType
+	{
+	public:
+		ParticleDynamicsComplex(BaseInnerBodyRelation* inner_relation, 
+			BaseContactBodyRelation* contact_relation) :
+			ParticleDynamicsInnerType(inner_relation), ContactDataType(contact_relation) {};
+
+		ParticleDynamicsComplex(ComplexBodyRelation* complex_relation, 
+			BaseContactBodyRelation* extra_contact_relation);
+
+		virtual ~ParticleDynamicsComplex() {};
 	protected:
-		BodyType* body_;
-		ParticlesType* particles_;
-		MaterialType* material_;
-		/** inner configuration of the designated body */
-		ParticleConfiguration& inner_configuration_;
-		StdLargeVec<size_t>& sorted_id_;
-		StdLargeVec<size_t>& unsorted_id_;
-
-
-		StdVec<ContactBodyType*>  contact_bodies_;
-		StdVec<ContactParticlesType*>  contact_particles_;
-		StdVec<ContactMaterialType*>  contact_material_;
-		/** Configurations for particle interaction between bodies. */
-		ContatcParticleConfiguration& contact_configuration_;
+		virtual void prepareContactData() = 0;
 	};
 }

@@ -1,32 +1,7 @@
-/* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
 /**
 * @file 	case.h
 * @brief 	This is the case file for the test of Oscillating Wave Surge Converter (OWSC).
 * @author   Chi Zhang and Xiangyu Hu
-* @version 0.1
-* @note  	Observer, moving with mobile solid body, can find template in this case.
-*			-- Chi ZHANG
 */
 #pragma once
 
@@ -49,6 +24,8 @@ Real Base_bottom_position = 0.155;
 Real Base_height = 0.1;
 Real particle_spacing_ref = Flap_width / 4.0; //particle spacing
 Real BW = particle_spacing_ref * 4.0; //boundary width
+/** Domain bounds of the system. */
+BoundingBox system_domain_bounds(Vec2d(-DL_Extra - BW, -BW), Vec2d(DL + BW, DH + BW));
 
 //the offset that the rubber flap shifted above the tank
 //Real flap_off = Flap_x - 0.5 * Flap_width + DL_Extra + BW;
@@ -97,9 +74,9 @@ Real Youngs_modulus = 7.8e6;
 /**
 * @brief create a water block shape
 */
-std::vector<Point> CreatWaterBlockShape()
+std::vector<Vecd> CreatWaterBlockShape()
 {
-	std::vector<Point> pnts;
+	std::vector<Vecd> pnts;
 	pnts.push_back(Water_lb);
 	pnts.push_back(Water_lt);
 	pnts.push_back(Water_rt);
@@ -115,23 +92,23 @@ std::vector<Point> CreatWaterBlockShape()
 /**
 * @brief create a damping zone
 */
-std::vector<Point> CreatDampingBufferShape()
+std::vector<Vecd> CreatDampingBufferShape()
 {
-	std::vector<Point> pnts;
-	pnts.push_back(Point(DL - 5.0,  0.356 - BW));
-    pnts.push_back(Point(DL - 5.0,  DH));
-    pnts.push_back(Point(DL + BW,   DH));
-    pnts.push_back(Point(DL + BW,   0.356 - BW));
-    pnts.push_back(Point(DL - 5.0,  0.356 - BW));
+	std::vector<Vecd> pnts;
+	pnts.push_back(Vecd(DL - 5.0,  0.356 - BW));
+    pnts.push_back(Vecd(DL - 5.0,  DH));
+    pnts.push_back(Vecd(DL + BW,   DH));
+    pnts.push_back(Vecd(DL + BW,   0.356 - BW));
+    pnts.push_back(Vecd(DL - 5.0,  0.356 - BW));
 
 	return pnts;
 }
 /**
 * @brief create flap base shape
 */
-std::vector<Point> CreatFlapConstrainShape()
+std::vector<Vecd> CreatFlapConstrainShape()
 {
-	std::vector<Point> pnts2;
+	std::vector<Vecd> pnts2;
 	pnts2.push_back(Base_lb);
 	pnts2.push_back(Base_lt);
 	pnts2.push_back(Base_rt);
@@ -143,9 +120,9 @@ std::vector<Point> CreatFlapConstrainShape()
 /**
 * @brief create flap base shape
 */
-std::vector<Point> CreatFlapShape()
+std::vector<Vecd> CreatFlapShape()
 {
-	std::vector<Point> pnts3;
+	std::vector<Vecd> pnts3;
 	pnts3.push_back(Flap_lb);
 	pnts3.push_back(Flap_lt);
 	pnts3.push_back(Flap_rt);
@@ -155,7 +132,7 @@ std::vector<Point> CreatFlapShape()
         Real angle =  Real(i) * PI / (11.0);
         Real x = Flap_rb[0] - 0.5 * Flap_width * (1.0 - cos(angle));
         Real y = Flap_rb[1] - 0.5 * Flap_width * sin(angle) - 0.5 * particle_spacing_ref;
-        pnts3.push_back(Point(x,y));
+        pnts3.push_back(Vecd(x,y));
     }
 	pnts3.push_back(Flap_lb);
 
@@ -164,30 +141,30 @@ std::vector<Point> CreatFlapShape()
 /**
 * @brief create outer wall shape
 */
-std::vector<Point> CreatOuterWallShape()
+std::vector<Vecd> CreatOuterWallShape()
 {
-	std::vector<Point> pnts1;
-	pnts1.push_back(Point(-DL_Extra - BW, -BW));
-	pnts1.push_back(Point(-DL_Extra - BW, DH + BW));
-	pnts1.push_back(Point(DL + BW, DH + BW));
-	pnts1.push_back(Point(DL + BW, 0.35 - BW));
+	std::vector<Vecd> pnts1;
+	pnts1.push_back(Vecd(-DL_Extra - BW, -BW));
+	pnts1.push_back(Vecd(-DL_Extra - BW, DH + BW));
+	pnts1.push_back(Vecd(DL + BW, DH + BW));
+	pnts1.push_back(Vecd(DL + BW, 0.35 - BW));
 	pnts1.push_back(Water_slope_1 + Vec2d(0.0, -BW));
 	pnts1.push_back(Water_slope_2 + Vec2d(0.0, -BW));
 	pnts1.push_back(Water_slope_3 + Vec2d(0.0, -BW));
 	pnts1.push_back(Water_slope_4 + Vec2d(0.0, -BW));
-	pnts1.push_back(Point(-DL_Extra - BW, -BW));
+	pnts1.push_back(Vecd(-DL_Extra - BW, -BW));
 
 	return pnts1;
 }
 /**
 * @brief create inner wall shape 01
 */
-std::vector<Point> CreatInnerWallShape01()
+std::vector<Vecd> CreatInnerWallShape01()
 {
-	std::vector<Point> pnts2;
+	std::vector<Vecd> pnts2;
 	pnts2.push_back(Water_lb);
-	pnts2.push_back(Point(0.0, DH + BW));
-	pnts2.push_back(Point(DL, DH + BW));
+	pnts2.push_back(Vecd(0.0, DH + BW));
+	pnts2.push_back(Vecd(DL, DH + BW));
 	pnts2.push_back(Water_rb);
 	pnts2.push_back(Water_slope_1);
 	pnts2.push_back(Water_slope_2);
@@ -204,28 +181,28 @@ std::vector<Point> CreatInnerWallShape01()
 /**
 * @brief create inner wall shape 02
 */
-std::vector<Point> CreatInnerWallShape02()
+std::vector<Vecd> CreatInnerWallShape02()
 {
-	std::vector<Point> pnts3;
-	pnts3.push_back(Point(-DL_Extra, 0.0));
-	pnts3.push_back(Point(-DL_Extra, DH + BW));
-	pnts3.push_back(Point(-BW, DH + BW));
-	pnts3.push_back(Point(-BW, 0.0));
-	pnts3.push_back(Point(-DL_Extra, 0.0));
+	std::vector<Vecd> pnts3;
+	pnts3.push_back(Vecd(-DL_Extra, 0.0));
+	pnts3.push_back(Vecd(-DL_Extra, DH + BW));
+	pnts3.push_back(Vecd(-BW, DH + BW));
+	pnts3.push_back(Vecd(-BW, 0.0));
+	pnts3.push_back(Vecd(-DL_Extra, 0.0));
 
 	return pnts3;
 }
 /**
 * @brief create wave maker shape
 */
-std::vector<Point> CreatWaveMakerShape()
+std::vector<Vecd> CreatWaveMakerShape()
 {
-	std::vector<Point> wave_make_shape;
-	wave_make_shape.push_back(Point(-BW, 0.0));
-	wave_make_shape.push_back(Point(-BW, DH + BW));
-	wave_make_shape.push_back(Point(0.0, DH + BW));
-	wave_make_shape.push_back(Point(0.0, 0.0));
-	wave_make_shape.push_back(Point(-BW, 0.0));
+	std::vector<Vecd> wave_make_shape;
+	wave_make_shape.push_back(Vecd(-BW, 0.0));
+	wave_make_shape.push_back(Vecd(-BW, DH + BW));
+	wave_make_shape.push_back(Vecd(0.0, DH + BW));
+	wave_make_shape.push_back(Vecd(0.0, 0.0));
+	wave_make_shape.push_back(Vecd(-BW, 0.0));
 
 	return wave_make_shape;
 }
@@ -233,13 +210,12 @@ std::vector<Point> CreatWaveMakerShape()
 class WaterBlock : public FluidBody
 {
 	public:
-		WaterBlock(SPHSystem &system, string body_name,
-			int refinement_level)
-			: FluidBody(system, body_name, refinement_level)
+		WaterBlock(SPHSystem &system, string body_name)
+			: FluidBody(system, body_name)
 		{
-			std::vector<Point> water_block_shape = CreatWaterBlockShape();
-			std::vector<Point> flap_shape = CreatFlapShape();
-            std::vector<Point> flap_base_shape = CreatFlapConstrainShape();
+			std::vector<Vecd> water_block_shape = CreatWaterBlockShape();
+			std::vector<Vecd> flap_shape = CreatFlapShape();
+            std::vector<Vecd> flap_base_shape = CreatFlapConstrainShape();
 			body_shape_ = new ComplexShape(body_name);
 			body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::add);
 			body_shape_->addAPolygon(flap_shape, ShapeBooleanOps::sub);
@@ -270,7 +246,7 @@ public:
 	{
 		/** Geometry definition. */
 		body_part_shape_ = new ComplexShape(constrained_region_name);
-		std::vector<Point> buffer_shape = CreatDampingBufferShape();
+		std::vector<Vecd> buffer_shape = CreatDampingBufferShape();
 		body_part_shape_->addAPolygon(buffer_shape, ShapeBooleanOps::add);
 		/** tag the constrained particle. */
 		tagBodyPart();
@@ -280,16 +256,15 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &system, string body_name, 
-		int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	WallBoundary(SPHSystem &system, string body_name)
+		: SolidBody(system, body_name)
 	{
 		body_shape_ = new ComplexShape(body_name);
-		std::vector<Point> outer_wall_shape   = CreatOuterWallShape();
-		std::vector<Point> inner_wall_shape_1 = CreatInnerWallShape01();
-		std::vector<Point> inner_wall_shape_2 = CreatInnerWallShape02();
+		std::vector<Vecd> outer_wall_shape   = CreatOuterWallShape();
+		std::vector<Vecd> inner_wall_shape_1 = CreatInnerWallShape01();
+		std::vector<Vecd> inner_wall_shape_2 = CreatInnerWallShape02();
 		body_shape_->addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-        std::vector<Point> flap_base_shape = CreatFlapConstrainShape();
+        std::vector<Vecd> flap_base_shape = CreatFlapConstrainShape();
 		body_shape_->addAPolygon(flap_base_shape, ShapeBooleanOps::add);
 		body_shape_->addAPolygon(inner_wall_shape_1, ShapeBooleanOps::sub);
 		body_shape_->addAPolygon(inner_wall_shape_2, ShapeBooleanOps::sub);
@@ -300,11 +275,11 @@ public:
 class Flap : public SolidBody
 {
 public:
-	Flap(SPHSystem &system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	Flap(SPHSystem &system, string body_name)
+		: SolidBody(system, body_name)
 	{
 		body_shape_ = new ComplexShape(body_name);
-		std::vector<Point> flap_shape = CreatFlapShape();
+		std::vector<Vecd> flap_shape = CreatFlapShape();
 		body_shape_->addAPolygon(flap_shape, ShapeBooleanOps::add);
 	}
 };
@@ -331,7 +306,7 @@ public:
 		: SolidBodyPartForSimbody(solid_body, constrained_region_name)
 	{
 		body_part_shape_ = new ComplexShape(constrained_region_name);
-		std::vector<Point> flap_shape = CreatFlapShape();
+		std::vector<Vecd> flap_shape = CreatFlapShape();
 		body_part_shape_->addAPolygon(flap_shape, ShapeBooleanOps::add);
 		/** tag the constrained particle. */
 		tagBodyPart();
@@ -362,7 +337,7 @@ public:
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		body_part_shape_ = new ComplexShape(constrained_region_name);
-		std::vector<Point> wave_maker_shape = CreatWaveMakerShape();
+		std::vector<Vecd> wave_maker_shape = CreatWaveMakerShape();
 		body_part_shape_->addAPolygon(wave_maker_shape, ShapeBooleanOps::add);
 		/** tag the constrained particle. */
 		tagBodyPart();
@@ -382,21 +357,21 @@ class WaveMaking : public solid_dynamics::ConstrainSolidBodyRegion
 	Real wave_stroke_;
 	Real time_;
 
-	virtual Point GetDisplacement(Point& pos_0, Point& pos_n) override
+	virtual Vecd getDisplacement(Vecd& pos_0, Vecd& pos_n) override
 	{
-		Point displacement(0);
+		Vecd displacement(0);
 		displacement[0] = 0.5 * wave_stroke_ * sin(wave_freq_ * time_);
 		return pos_0 + displacement;
 	}
 
-	virtual Vec2d GetVelocity(Point& pos_0, Point& pos_n, Vec2d& vel_n) override 
+	virtual Vec2d getVelocity(Vecd& pos_0, Vecd& pos_n, Vec2d& vel_n) override 
 	{
 		Vec2d velocity(0);
 		velocity[0] = 0.5 * wave_stroke_ * wave_freq_ * cos(wave_freq_ * time_);
 		return velocity;
 	}
 
-	virtual Vec2d GetAcceleration(Point& pos_0, Point& pos_n, Vec2d& dvel_dt) override
+	virtual Vec2d getAcceleration(Vecd& pos_0, Vecd& pos_n, Vec2d& dvel_dt) override
 	{
 		Vec2d acceleration(0);
 		acceleration[0] = - 0.5 * wave_stroke_ * wave_freq_ * wave_freq_ * sin(wave_freq_ * time_);
@@ -458,37 +433,37 @@ public:
 * @brief create a damping zone
 */
 Real h = 1.3 * particle_spacing_ref;
-std::vector<Point> CreatWaveProbeShape4()
+std::vector<Vecd> CreatWaveProbeShape4()
 {
-	std::vector<Point> pnts;
-	pnts.push_back(Point(3.99 - h,  0.0));
-    pnts.push_back(Point(3.99 - h,  1.0));
-    pnts.push_back(Point(3.99 + h, 1.0));
-    pnts.push_back(Point(3.99 + h,  0.0));
-    pnts.push_back(Point(3.99 - h,  0.0));
+	std::vector<Vecd> pnts;
+	pnts.push_back(Vecd(3.99 - h,  0.0));
+    pnts.push_back(Vecd(3.99 - h,  1.0));
+    pnts.push_back(Vecd(3.99 + h, 1.0));
+    pnts.push_back(Vecd(3.99 + h,  0.0));
+    pnts.push_back(Vecd(3.99 - h,  0.0));
 
 	return pnts;
 }
-std::vector<Point> CreatWaveProbeShape5()
+std::vector<Vecd> CreatWaveProbeShape5()
 {
-	std::vector<Point> pnts;
-	pnts.push_back(Point(7.02 - h,  0.155));
-    pnts.push_back(Point(7.02 - h,  1.0));
-    pnts.push_back(Point(7.02 + h,  1.0));
-    pnts.push_back(Point(7.02 + h,  0.155));
-    pnts.push_back(Point(7.02 - h,  0.155));
+	std::vector<Vecd> pnts;
+	pnts.push_back(Vecd(7.02 - h,  0.155));
+    pnts.push_back(Vecd(7.02 - h,  1.0));
+    pnts.push_back(Vecd(7.02 + h,  1.0));
+    pnts.push_back(Vecd(7.02 + h,  0.155));
+    pnts.push_back(Vecd(7.02 - h,  0.155));
 
 	return pnts;
 }
 
-std::vector<Point> CreatWaveProbeShape12()
+std::vector<Vecd> CreatWaveProbeShape12()
 {
-	std::vector<Point> pnts;
-	pnts.push_back(Point(8.82 - h,  0.155));
-    pnts.push_back(Point(8.82 - h,  1.0));
-    pnts.push_back(Point(8.82 + h,  1.0));
-    pnts.push_back(Point(8.82 + h,  0.155));
-    pnts.push_back(Point(8.82 - h,  0.155));
+	std::vector<Vecd> pnts;
+	pnts.push_back(Vecd(8.82 - h,  0.155));
+    pnts.push_back(Vecd(8.82 - h,  1.0));
+    pnts.push_back(Vecd(8.82 + h,  1.0));
+    pnts.push_back(Vecd(8.82 + h,  0.155));
+    pnts.push_back(Vecd(8.82 - h,  0.155));
 
 	return pnts;
 }
@@ -501,7 +476,7 @@ public:
 	{
 		/** Geometry definition. */
 		body_part_shape_ = new ComplexShape(constrained_region_name);
-		std::vector<Point> buffer_shape = CreatWaveProbeShape4();
+		std::vector<Vecd> buffer_shape = CreatWaveProbeShape4();
 		body_part_shape_->addAPolygon(buffer_shape, ShapeBooleanOps::add);
 		/** tag the constrained particle. */
 		tagBodyPart();
@@ -516,7 +491,7 @@ public:
 	{
 		/** Geometry definition. */
 		body_part_shape_ = new ComplexShape(constrained_region_name);
-		std::vector<Point> buffer_shape = CreatWaveProbeShape5();
+		std::vector<Vecd> buffer_shape = CreatWaveProbeShape5();
 		body_part_shape_->addAPolygon(buffer_shape, ShapeBooleanOps::add);
 		/** tag the constrained particle. */
 		tagBodyPart();
@@ -531,7 +506,7 @@ public:
 	{
 		/** Geometry definition. */
 		body_part_shape_ = new ComplexShape(constrained_region_name);
-		std::vector<Point> buffer_shape = CreatWaveProbeShape12();
+		std::vector<Vecd> buffer_shape = CreatWaveProbeShape12();
 		body_part_shape_->addAPolygon(buffer_shape, ShapeBooleanOps::add);
 		/** tag the constrained particle. */
 		tagBodyPart();
@@ -541,15 +516,15 @@ public:
 class FlapObserver : public FictitiousBody
 {
 public:
-	FlapObserver(SPHSystem& system, string body_name, int refinement_level)
-		: FictitiousBody(system, body_name, refinement_level, 1.3)
+	FlapObserver(SPHSystem& system, string body_name)
+		: FictitiousBody(system, body_name)
 	{
 		/** the measuring particle with zero volume */
-		body_input_points_volumes_.push_back(make_pair(Point(7.862, 0.645), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(7.862, 0.741), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(7.862, 0.391), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(7.862, 0.574), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(7.862, 0.716), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Point(7.862, 0.452), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(7.862, 0.645), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(7.862, 0.741), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(7.862, 0.391), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(7.862, 0.574), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(7.862, 0.716), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(7.862, 0.452), 0.0));
 	}
 };

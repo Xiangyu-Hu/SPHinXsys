@@ -2,7 +2,6 @@
  * @file 	xml.cpp
  * @brief 	XML functions are defined here
  * @author	Chi Zhang and Xiangyu Hu
- * @version	0.1
  */
 
 #include "xml_engine.h"
@@ -24,7 +23,7 @@ namespace SPH
 		//nothing done here right now
 	}
 	//===============================================================//
-	void XmlEngine::CreatXmlElement(const std::string &ele_name)
+	void XmlEngine::creatXmlElement(const std::string &ele_name)
 	{
 		element_ = new SimTK::Xml::Element(ele_name);
 	}

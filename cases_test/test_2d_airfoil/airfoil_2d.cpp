@@ -4,57 +4,65 @@
 * @details	We use this case to test the particle generation and relaxation with a complex geometry (2D).
 *			Before the particles are generated, we clean the sharp corners and other unresolvable surfaces.
 * @author 	Yongchuan Yu and Xiangyu Hu
-* @version 0.1
 */
 
 #include "sphinxsys.h"
 
-/** case file to setup the test case */
+//Case file to setup the test case
 #include "airfoil_2d.h"
 
 using namespace SPH;
 
 int main(int ac, char* av[])
 {
-	/** Build up -- a SPHSystem -- */
-	SPHSystem system(Vec2d(-(DL1 + BW), -(DH + BW)), Vec2d(DL + BW, DH + BW), particle_spacing_ref);
+	//----------------------------------------------------------------------
+	//	Build up -- a SPHSystem
+	//----------------------------------------------------------------------
+	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
 	system.run_particle_relaxation_ = true;
 	//handle command line arguments
 	system.handleCommandlineOptions(ac, av);
-	/**
-	 * @brief 	Creating body, materials and particles for the elastic beam (inserted body).
-	 */
-	Airfoil* airfoil = new Airfoil(system, "Airfoil", 0);
+	//----------------------------------------------------------------------
+	//	Creating body, materials and particles.
+	//----------------------------------------------------------------------
+	Airfoil* airfoil = new Airfoil(system, "Airfoil");
 	SolidParticles airfoil_particles(airfoil);
-	/**
-	 * @brief define simple data file input and outputs functions.
-	 */
-	In_Output 					in_output(system);
-	WriteBodyStatesToVtu 		write_airfoil_to_vtu(in_output, { airfoil });
-	/**
-	 * @brief 	Body relation map.
-	 * @details The contact map gives the topological connections between the bodies.
-	 * 			Basically the the range of bodies to build neighbor particle lists.
-	 */
-	SPHBodyInnerRelation* airfoil_inner = new SPHBodyInnerRelation(airfoil);
-	/**
-	 * @brief 	Methods used for particle relaxation.
-	 */
-	 /** Random reset the insert body particle position. */
+	airfoil_particles.addAVariableToWrite<indexScalar, Real>("SmoothingLengthRatio");
+	//----------------------------------------------------------------------
+	//	Define simple file input and outputs functions.
+	//----------------------------------------------------------------------
+	In_Output in_output(system);
+	WriteBodyStatesToVtu write_airfoil_to_vtu(in_output, { airfoil });
+	WriteMeshToPlt 	write_mesh_cell_linked_list(in_output, airfoil, airfoil->mesh_cell_linked_list_);
+	//----------------------------------------------------------------------
+	//	Define body relation map.
+	//	The contact map gives the topological connections between the bodies.
+	//	Basically the the range of bodies to build neighbor particle lists.
+	//----------------------------------------------------------------------
+	BaseInnerBodyRelation* airfoil_inner = new InnerBodyRelationVariableSmoothingLength(airfoil);
+	//----------------------------------------------------------------------
+	//	Methods used for particle relaxation.
+	//----------------------------------------------------------------------
 	RandomizePartilePosition  random_airfoil_particles(airfoil);
-	/** A  Physics relaxation step. */
-	relax_dynamics::RelaxationStepInner relaxation_step_inner(airfoil_inner);
-	/**
-	  * @brief 	Particle relaxation starts here.
-	  */
+	relax_dynamics::RelaxationStepInner relaxation_step_inner(airfoil_inner, true);
+	relax_dynamics::UpdateSmoothingLengthRatioByBodyShape update_smoothing_length_ratio(airfoil);
+	//----------------------------------------------------------------------
+	//	Particle relaxation starts here.
+	//----------------------------------------------------------------------
 	random_airfoil_particles.parallel_exec(0.25);
 	relaxation_step_inner.surface_bounding_.parallel_exec();
+	update_smoothing_length_ratio.parallel_exec();
 	write_airfoil_to_vtu.WriteToFile(0.0);
-	/** relax particles of the insert body. */
+	airfoil->updateCellLinkedList();
+	write_mesh_cell_linked_list.WriteToFile(0.0);
+	//----------------------------------------------------------------------
+	//	Particle relaxation time stepping start here.
+	//----------------------------------------------------------------------
 	int ite_p = 0;
-	while (ite_p < 1000)
+	while (ite_p < 2000)
 	{
+		update_smoothing_length_ratio.parallel_exec();
 		relaxation_step_inner.parallel_exec();
 		ite_p += 1;
 		if (ite_p % 100 == 0)

@@ -22,11 +22,9 @@
 * --------------------------------------------------------------------------*/
 /**
  * @file 	particle_generator_network.h
- * @brief 	This is the base class of particle generator, which generates particles
+ * @brief 	This is a class of particle generator, which generates particles
  * 			with in network or tree form. 
  * @author	Chi ZHang and Xiangyu Hu
- * @version	0.2
- *			In this version, a network generator is added. -- Chi ZHANG
  */
 #pragma once
 #include "sph_data_conainers.h"
@@ -35,7 +33,6 @@
 
 namespace SPH 
 {
-	/** Preclaimed classes*/
 	class Tree;
 	class BaseLevelSet;
 	class BaseMeshCellLinkedList;
@@ -43,7 +40,7 @@ namespace SPH
 
 	/**
 	 * @class ParticleGeneratorNetwork
-	 * @brief generate network or tree distributed particles from lattice positions for a body.
+	 * @brief Generate a tree-shape network for the conduction system of a heart with particles.
 	 */
 	class ParticleGeneratorNetwork : public ParticleGenerator
 	{
@@ -52,11 +49,11 @@ namespace SPH
 		virtual ~ParticleGeneratorNetwork() {};
 
 		virtual void initialize(SPHBody* sph_body) override;
-		virtual void CreateBaseParticles(BaseParticles* base_particles) override;
+		virtual void createBaseParticles(BaseParticles* base_particles) override;
 	protected:
-		Point starting_pnt_;	/**< Starting point for net work. */
-		Point second_pnt_;		/**< Second point, approximate the growing direction. */
-		size_t n_it_; 				/**< Number of iterations (generations of branch. */
+		Vecd starting_pnt_;	/**< Starting point for net work. */
+		Vecd second_pnt_;		/**< Second point, approximate the growing direction. */
+		size_t n_it_; 			/**< Number of iterations (generations of branch. */
 		bool fascicles_;		/**< Create fascicles? */
 		size_t	segments_in_branch_;	/**< approximated number of segments in a branch. */
 		Real segment_length_;			/**< segment length of the branch. */
@@ -65,18 +62,13 @@ namespace SPH
 		std::vector<Real> fascicle_angles_ = {-1.5, 0.2}; 	/**< angles with respect to the initial edge of the fascicles.*/
 		Real fascicle_ratio_ = 5.0; 	/**< ratio of length  of the fascicles. Include one per fascicle to include.*/
 		ComplexShape* body_shape_;
+		RealBody* real_body_;
 
-		Vecd getGradientFromNearestPoints(Point pt, Real delta, BaseMeshCellLinkedList* mesh_cell_linked_list);
+		Vecd getGradientFromNearestPoints(Vecd pt, Real delta, BaseMeshCellLinkedList* mesh_cell_linked_list);
 		bool createABranchIfValid(SPHBody* sph_body, size_t parent_id, Real angle,
 			Real repulsivity, size_t number_segments, Tree* tree);
-		/**
-		 *@brief Functions that creates a new node in the mesh surface and it to the queue is it lies in the surface.
-		 *@param[in] init_node vector that contains the coordinates of the last node added in the branch.
-		 * 			 vector that contains the coordinates of the last node added in the branch.
-		 *@param[in] dir a vector that contains the direction from the init_node to the node to project.
-		 *@param[out] end point of the created segment.
-		 */
-		Point creatNewBranchPoint(Point init_point, Vecd dir);
-		bool isCollision(Point& new_point, ListData& nearest_neighbor, size_t parent_id, Tree* tree);
+		/** Creates a new tentative point at the body surface */
+		Vecd creatATentativeNewBranchVecd(Vecd init_point, Vecd dir);
+		bool isCollision(Vecd& new_point, ListData& nearest_neighbor, size_t parent_id, Tree* tree);
 	};
 }

@@ -2,10 +2,6 @@
  * @file 	diffusion.cpp
  * @brief 	This is the first test to validate our anisotropic diffusion solver.
  * @author 	Chi Zhang and Xiangyu Hu
- * @version 0.2.1
- * 			From here, I will denote version a beta, e.g. 0.2.1, other than 0.1 as
- * 			we will introduce cardiac electrophysiology and cardiac mechanics herein.
- * 			Chi Zhang
  */
 /** SPHinXsys Library. */
 #include "sphinxsys.h"
@@ -15,7 +11,10 @@ using namespace SPH;
 Real L = 2.0; 	
 Real H = 0.4;
 /** Particle spacing. */
-Real particle_spacing_ref = H / 40.0;
+Real relosution_ref = H / 40.0;
+/** Domain bounds of the system. */
+BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
+
 /** Material properties. */
 Real diffusion_coff = 1.0e-4;
 Real bias_diffusion_coff = 0.0;
@@ -24,15 +23,15 @@ Vec2d bias_direction(cos(alpha), sin(alpha));
 /**
 * @brief create a block shape
 */
-std::vector<Point> CreatShape()
+std::vector<Vecd> CreatShape()
 {
 	//geometry
-	std::vector<Point> shape;
-	shape.push_back(Point(0.0, 0.0));
-	shape.push_back(Point(0.0,  H));
-	shape.push_back(Point( L,  H));
-	shape.push_back(Point( L, 0.0));
-	shape.push_back(Point(0.0, 0.0));
+	std::vector<Vecd> shape;
+	shape.push_back(Vecd(0.0, 0.0));
+	shape.push_back(Vecd(0.0,  H));
+	shape.push_back(Vecd( L,  H));
+	shape.push_back(Vecd( L, 0.0));
+	shape.push_back(Vecd(0.0, 0.0));
 
 	return shape;
 }
@@ -40,10 +39,10 @@ std::vector<Point> CreatShape()
 class DiffusionBody : public SolidBody
 {
 public:
-	DiffusionBody(SPHSystem &system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	DiffusionBody(SPHSystem &system, string body_name)
+		: SolidBody(system, body_name)
 	{
-		std::vector<Point> body_shape = CreatShape();
+		std::vector<Vecd> body_shape = CreatShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(body_shape, ShapeBooleanOps::add);
 	}
@@ -103,10 +102,10 @@ public:
 class DiffusionBodyRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<SolidBody, SolidParticles, Solid,
 	RelaxationOfAllDiffussionSpeciesInner<SolidBody, SolidParticles, Solid>, 
-	SPHBodyInnerRelation>
+	InnerBodyRelation>
 {
 public:
-	DiffusionBodyRelaxation(SPHBodyInnerRelation* body_inner_relation)
+	DiffusionBodyRelaxation(InnerBodyRelation* body_inner_relation)
 		: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation) {
 	};
 	virtual ~DiffusionBodyRelaxation() {};
@@ -116,15 +115,15 @@ public:
 int main()
 {
 	/** Build up context -- a SPHSystem. */
-	SPHSystem system(Vec2d(0.0, 0.0), Vec2d(L, H), particle_spacing_ref, 4);
+	SPHSystem system(system_domain_bounds, relosution_ref);
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Configuration of materials, crate particle container and diffusion body. */
-	DiffusionBody *diffusion_body  =  new DiffusionBody(system, "DiffusionBody", 0);
+	DiffusionBody *diffusion_body  =  new DiffusionBody(system, "DiffusionBody");
 	DiffusionBodyMaterial *diffusion_body_material = new DiffusionBodyMaterial();
 	DiffusionReactionParticles<SolidParticles, Solid>	diffusion_body_particles(diffusion_body, diffusion_body_material);
 
 	/** topology */
-	SPHBodyInnerRelation* diffusion_body_inner_relation = new SPHBodyInnerRelation(diffusion_body);
+	InnerBodyRelation* diffusion_body_inner_relation = new InnerBodyRelation(diffusion_body);
 
 	/**
 	 * The main dynamics algorithm is defined start here.

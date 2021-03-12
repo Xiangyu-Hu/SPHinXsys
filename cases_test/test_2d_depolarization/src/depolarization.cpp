@@ -3,10 +3,6 @@
  * @brief 	This is the first test to validate our PED-ODE solver for solving
  * 			electrophysiology monodomain model closed by a physiology reaction.
  * @author 	Chi Zhang and Xiangyu Hu
- * @version 0.2.1
- * 			From here, I will denote version a beta, e.g. 0.2.1, other than 0.1 as
- * 			we will introduce cardiac electrophysiology and cardiac mechanics herein.
- * 			Chi Zhang
  */
 
 /** SPHinXsys Library. */
@@ -17,7 +13,10 @@ using namespace SPH;
 Real L = 1.0; 	
 Real H = 1.0;
 /** Reference particle spacing. */
-Real particle_spacing_ref = H / 50.0;
+Real resolution_ref = H / 50.0;
+/** Domain bounds of the system. */
+BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
+
 /** Electrophysiology parameters. */
 Real diffusion_coff_ = 1.0;
 Real bias_diffusion_coff_ = 0.0;
@@ -30,14 +29,14 @@ Real mu_2 = 0.3;
 Real epsilon = 0.04;
 Real k_a = 0.0;
 /** create a block shape */
-std::vector<Point> CreatShape()
+std::vector<Vecd> CreatShape()
 {
-	std::vector<Point> shape;
-	shape.push_back(Point(0.0, 0.0));
-	shape.push_back(Point(0.0,  H));
-	shape.push_back(Point(L ,  H));
-	shape.push_back(Point(L, 0.0));
-	shape.push_back(Point(0.0, 0.0));
+	std::vector<Vecd> shape;
+	shape.push_back(Vecd(0.0, 0.0));
+	shape.push_back(Vecd(0.0,  H));
+	shape.push_back(Vecd(L ,  H));
+	shape.push_back(Vecd(L, 0.0));
+	shape.push_back(Vecd(0.0, 0.0));
 	return shape;
 }
 /** 
@@ -46,11 +45,10 @@ std::vector<Point> CreatShape()
 class MuscleBody : public SolidBody
 {
 public:
-	MuscleBody(SPHSystem& system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	MuscleBody(SPHSystem& system, string body_name) : SolidBody(system, body_name)
 	{
 
-		std::vector<Point> block_shape = CreatShape();
+		std::vector<Vecd> block_shape = CreatShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(block_shape, ShapeBooleanOps::add);
 	}
@@ -61,11 +59,10 @@ public:
 class VoltageObserver : public FictitiousBody
 {
 public:
-	VoltageObserver(SPHSystem &system, string body_name, int refinement_level)
-		: FictitiousBody(system, body_name, refinement_level, 1.3)
+	VoltageObserver(SPHSystem &system, string body_name) : FictitiousBody(system, body_name)
 	{
 		/** postion and volume. */
-		body_input_points_volumes_.push_back(make_pair(Point(0.3, 0.7), 0.0));
+		body_input_points_volumes_.push_back(make_pair(Vecd(0.3, 0.7), 0.0));
 	}
 };
 
@@ -141,24 +138,24 @@ int main()
 	/** 
 	 * Build up context -- a SPHSystem. 
 	 */
-	SPHSystem system(Vec2d(0.0, 0.0), Vec2d(L, H), particle_spacing_ref);
+	SPHSystem system(system_domain_bounds, resolution_ref);
 		GlobalStaticVariables::physical_time_ = 0.0;
 	/** 
 	 * Configuration of materials, crate particle container and muscle body. 
 	 */
-	MuscleBody *muscle_body  =  new MuscleBody(system, "MuscleBody", 0);
+	MuscleBody *muscle_body  =  new MuscleBody(system, "MuscleBody");
 	MuscleReactionModel *muscle_reaction_model = new MuscleReactionModel();
 	MyocardiumMuscle 	*myocardium_muscle = new MyocardiumMuscle(muscle_reaction_model);
 	ElectroPhysiologyParticles 		myocardium_muscle_particles(muscle_body, myocardium_muscle);
 	/**
 	 * Particle and body creation of fluid observer.
 	 */
-	VoltageObserver *voltage_observer = new VoltageObserver(system, "VoltageObserver", 0);
+	VoltageObserver *voltage_observer = new VoltageObserver(system, "VoltageObserver");
 	BaseParticles 					observer_particles(voltage_observer);
 
 	/** topology */
-	SPHBodyInnerRelation* muscle_body_inner_relation = new SPHBodyInnerRelation(muscle_body);
-	SPHBodyContactRelation* voltage_observer_contact_relation = new SPHBodyContactRelation(voltage_observer, { muscle_body });
+	InnerBodyRelation* muscle_body_inner_relation = new InnerBodyRelation(muscle_body);
+	ContactBodyRelation* voltage_observer_contact_relation = new ContactBodyRelation(voltage_observer, { muscle_body });
 
 	/**
 	 * The main dynamics algorithm is defined start here.
@@ -190,7 +187,7 @@ int main()
 	 */
 	In_Output 							in_output(system);
 	WriteBodyStatesToVtu 				write_states(in_output, system.real_bodies_);
-	WriteObservedDiffusionReactionQuantity<ElectroPhysiologyParticles>
+	WriteAnObservedQuantity<indexScalar, Real>
 		write_recorded_voltage("Voltage", in_output, voltage_observer_contact_relation);
 
 	/** 

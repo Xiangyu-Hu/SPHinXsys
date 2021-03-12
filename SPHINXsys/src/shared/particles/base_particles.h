@@ -26,89 +26,147 @@
  *			is saved in separated large vectors. Each derived class will introduce several extra     
  * 			vectors for the new data. Note that there is no class of single particle.
  * @author	Xiangyu Hu and Chi Zhang
- * @version	0.1
  */
 #pragma once
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
-#include "xml_engine.h"
 
 #include <fstream>
 using namespace std;
 
 namespace SPH {
 
-	//----------------------------------------------------------------------
-	//		preclaimed classes
-	//----------------------------------------------------------------------
 	class SPHBody;
-	class ParticleGenerator;
+	class BaseMaterial;
 
 	/**
 	 * @class BaseParticles
 	 * @brief Particles with essential (geometric and kinematic) data.
-	 * There are three types of particles. 
-	 * One is real particles whose states are updated by particle dynamics. 
+	 * There are three types of particles， all particles of a same type are saved with continuous memory segments. 
+	 * The first type is real particles whose states are updated by particle dynamics. 
 	 * One is buffer particles whose state are not updated by particle dynamics. 
+	 * Buffer particles are saved behind real particles.
+	 * The global value of total_real_particles_ separate the real and buffer particles.
 	 * They may be switched from real particles or switch to real particles. 
+	 * As the memory for both particles are continuous, such switch is achieved at the memory boundary sequentially.
+	 * The basic idea is swap the data of the last real particle with the one will be switched particle, 
+	 * and then switch this swapped last particle as buffer particle by decrease the total_real_particles_ by one.
+	 * Switch from buffer particle to real particle is easy. One just need to assign expect state to 
+	 * the first buffer particle and increase total_real_particles_ by one.    
 	 * The other is ghost particles whose states are updated according to 
-	 * boundary condition if their indices are included in the neighbor particle list.   
+	 * boundary condition if their indices are included in the neighbor particle list.
+	 * The ghost particles are saved behind the buffer particles.
+	 * The global value of real_particles_bound_ separate the sum of real and buffer particles with ghost particles.
+	 * The global value of total_ghost_particles_ indicates the total number of ghost particles in use.
+	 * It will be initialized to zero before a time step. 
 	 */
 	class BaseParticles
 	{
 	public:
-		/** Base material corresponding to base particles*/
-		BaseMaterial* base_material_;
-
 		BaseParticles(SPHBody *body, BaseMaterial* base_material);
 		BaseParticles(SPHBody* body);
 		virtual ~BaseParticles() {};
 	
+		BaseMaterial* base_material_; /**< for dynamic cast in particle data delegation */
+
 		StdLargeVec<Vecd> pos_n_;	/**< current position */
 		StdLargeVec<Vecd> vel_n_;	/**< current particle velocity */
 		StdLargeVec<Vecd> dvel_dt_;	/**< inner pressure- or stress-induced acceleration */
-		StdLargeVec<Vecd> dvel_dt_others_; /**<  other, such as gravity and viscous acceleration */
+		StdLargeVec<Vecd> dvel_dt_others_; /**<  other, such as gravity and viscous, accelerations */
 
 		StdLargeVec<Real> Vol_;		/**< particle volume */
 		StdLargeVec<Real> rho_n_;	/**< current particle density */
 		StdLargeVec<Real> mass_;	/**< particle mass */
-		StdLargeVec<Real> smoothing_length_;
-
+		StdLargeVec<Real> h_ratio_;	/**< the ratio between reference smoothing length to variable smoothing length */
 		//----------------------------------------------------------------------
-		//Global information for all partiles
+		//Global information for all particles
 		//----------------------------------------------------------------------
-		Real rho_0_;			/**< global reference density*/
-		Real sigma_0_;			/**< global reference number density. */
+		Real rho_0_;			/**< reference density*/
+		Real sigma_0_;			/**< reference number density. */
 		Real speed_max_;		/**< Maximum particle speed. */
 		Real signal_speed_max_; /**< Maximum signal speed.*/
-		/** Maximum possible number of real particles. Also the start index of ghost particles. */
-		size_t real_particles_bound_;
-		size_t number_of_ghost_particles_;
-		
 		//----------------------------------------------------------------------
-		//		Registered particle data
+		//Global information for defining partilce groups
 		//----------------------------------------------------------------------
-		StdVec<StdLargeVec<Matd>*> registered_matrices_;
-		StdVec<StdLargeVec<Vecd>*> registered_vectors_;
-		StdVec<StdLargeVec<Real>*> registered_scalars_;
-		map<string, size_t> matrices_map_; 	/**< Map from matrix names to indexes. */
-		map<string, size_t> vectors_map_;	/**< Map from vector names to indexes. */
-		map<string, size_t> scalars_map_;	/**< Map from scalar names to indexes. */
-		StdVec<string> matrices_to_write_;		/**< matrix variables to be written in file */
-		StdVec<string> vectors_to_write_;		/**< vactor variables to be written in file */
-		StdVec<string> scalars_to_write_;		/**< scalar variables to be written in file */
-		/** register a variable into particles */
-		template<typename VariableType>
+		size_t total_real_particles_;
+		size_t real_particles_bound_; /**< Maximum possible number of real particles. Also the start index of ghost particles. */
+		size_t total_ghost_particles_;
+		//----------------------------------------------------------------------
+		//		Generalized particle data for parameterized management
+		//----------------------------------------------------------------------
+		std::tuple<StdVec<StdLargeVec<Real>*>, StdVec<StdLargeVec<Vecd>*>, StdVec<StdLargeVec<Matd>*>,
+			StdVec<StdLargeVec<int>*>, StdVec<StdLargeVec<bool>*>> all_particle_data_;
+		std::array<map<string, size_t>, 5> name_index_maps_;
+		std::array<StdVec<string>, 5> variables_to_write_;
+
+		/** register a defined variable into particles */
+		template<int DataTypeIndex, typename VariableType>
 		void registerAVariable(StdLargeVec<VariableType>& variable_addrs,
-			StdVec<StdLargeVec<VariableType>*>& registered_variables,
-			map<string, size_t>& name_map, StdVec<string>& variable_to_write, 	
-			string variable_name, bool is_to_write, VariableType initial_value = VariableType(0))
+			string variable_name, bool is_to_write = false, VariableType initial_value = VariableType(0))
 		{
-			variable_addrs.resize(real_particles_bound_, initial_value);
-			registered_variables.push_back(&variable_addrs);
-			name_map.insert(make_pair(variable_name, registered_variables.size() - 1));
-			if (is_to_write) variable_to_write.push_back(variable_name);
+			if (name_index_maps_[DataTypeIndex].find(variable_name) == name_index_maps_[DataTypeIndex].end()) 
+			{
+				variable_addrs.resize(real_particles_bound_, initial_value);
+				std::get<DataTypeIndex>(all_particle_data_).push_back(&variable_addrs);
+				name_index_maps_[DataTypeIndex].insert(make_pair(variable_name, std::get<DataTypeIndex>(all_particle_data_).size() - 1));
+				if (is_to_write) variables_to_write_[DataTypeIndex].push_back(variable_name);
+			}
+			else
+			{
+				std::cout << "\n Error: the variable '" << variable_name << "' has already been registered!" << std::endl;
+				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+				exit(1);
+			}
+		};
+		/** create register a new variable, which has been defined yet, into particles */
+		template<int DataTypeIndex, typename VariableType>
+		StdLargeVec<VariableType>* createAVariable(string variable_name, bool is_to_write = false, VariableType initial_value = VariableType(0))
+		{
+			if (name_index_maps_[DataTypeIndex].find(variable_name) == name_index_maps_[DataTypeIndex].end()) {
+				StdLargeVec<VariableType>* variable = new StdLargeVec<VariableType>;
+				variable->resize(real_particles_bound_, initial_value);
+				std::get<DataTypeIndex>(all_particle_data_).push_back(variable);
+				name_index_maps_[DataTypeIndex].insert(make_pair(variable_name, std::get<DataTypeIndex>(all_particle_data_).size() - 1));
+				if (is_to_write) variables_to_write_[DataTypeIndex].push_back(variable_name);
+				return variable;
+			}
+			std::cout << "\n Warning: the variable '" << variable_name << "' has already registered!" << std::endl;
+			std::cout << "\n So, the previously registered variable is assigned!" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			return getVariableByName<DataTypeIndex, VariableType>(variable_name);
+		};
+
+		/** get a registered variable from particles by its name */
+		template<int DataTypeIndex, typename VariableType>
+		StdLargeVec<VariableType>* getVariableByName(string variable_name) 
+		{
+			if (name_index_maps_[DataTypeIndex].find(variable_name) != name_index_maps_[DataTypeIndex].end())
+				return std::get<DataTypeIndex>(all_particle_data_)[name_index_maps_[DataTypeIndex][variable_name]];
+
+			std::cout << "\n Error: the variable '" << variable_name << "' is not registered!" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
+			return NULL;
+		};
+
+		template<int DataTypeIndex, typename VariableType>
+		void addAVariableToWrite(string variable_name)
+		{
+			if (name_index_maps_[DataTypeIndex].find(variable_name) != name_index_maps_[DataTypeIndex].end())
+			{
+				bool is_to_write = true;
+				for (size_t i = 0; i != variables_to_write_[DataTypeIndex].size(); ++i) {
+					if (variables_to_write_[DataTypeIndex][i] == variable_name) is_to_write = false;
+				}
+				if (is_to_write) variables_to_write_[DataTypeIndex].push_back(variable_name);
+			}
+			else
+			{
+				std::cout << "\n Error: the variable '" << variable_name << "' you are going to write is not particle data!" << std::endl;
+				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+				exit(1);
+			}
 		};
 
 		//----------------------------------------------------------------------
@@ -121,36 +179,23 @@ namespace SPH {
 		StdVec<StdLargeVec<Vecd>*> sortable_vectors_;
 		StdVec<StdLargeVec<Real>*> sortable_scalars_;
 
-		/** access the sph body*/
 		SPHBody* getSPHBody() { return body_; };
-		/** Initialize a base particle by input a postion, volume and reference number density. */
 		void initializeABaseParticle(Vecd pnt, Real Vol_0);
-		/** Add buffer particles which latter may be realized for particle dynamics, or used as ghost particle. */
 		void addABufferParticle();
-		/** Copy physical state from another particle */
 		void copyFromAnotherParticle(size_t this_index, size_t another_index);
-		/** Update physical state of a particle from another particle */
 		void updateFromAnotherParticle(size_t this_index, size_t another_index);
-		/** Insert a ghost particle into the particle list. */
 		size_t insertAGhostParticle(size_t index_i);
+		void switchToBufferParticle(size_t index_i);
 
 		/** Write particle data in VTU format for Paraview. */
 		virtual void writeParticlesToVtuFile(ofstream &output_file);
 		/** Write particle data in PLT format for Tecplot. */
-		virtual void writeParticlesToPltFile(ofstream& output_file) {};
-
-		/** Write particle data in XML format for restart. */
+		virtual void writeParticlesToPltFile(ofstream& output_file);
 		virtual void writeParticlesToXmlForRestart(std::string& filefullpath) {};
-		/** Initialize particle data from restart xml file. */
 		virtual void readParticleFromXmlForRestart(std::string& filefullpath) {};
-
-		/** Output particle position and volume in XML file for reloading particles. */
 		virtual void writeToXmlForReloadParticle(std::string &filefullpath);
-		/** Reload particle position and volume from XML files. */
 		virtual void readFromXmlForReloadParticle(std::string &filefullpath);
-
-		/** Pointer to this object. */
-		virtual BaseParticles* pointToThisObject();
+		virtual BaseParticles* pointToThisObject() {return this;};
 
 		/** Normalize the kernel gradient. */
 		virtual Vecd normalizeKernelGradient(size_t particle_index_i, Vecd& kernel_gradient) { return kernel_gradient; };

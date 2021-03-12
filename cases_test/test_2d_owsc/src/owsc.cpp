@@ -2,9 +2,6 @@
 * @file 	owsc.cpp
 * @brief 	This is the test of wave interaction with Oscillating Wave Surge Converter (OWSC)
 * @author   Chi Zhang and Xiangyu Hu
-* @version 0.1
-* @note  	Observer, moving with mobile solid body, can find template in this case.
-*			-- Chi ZHANG
 */
 /** Header files. */
 #include "sphinxsys.h"
@@ -16,30 +13,30 @@ using namespace SPH;
 int main()
 {
 	/** Build up context -- a SPHSystem. */
-	SPHSystem system(Vec2d( - DL_Extra - BW , -BW), Vec2d(DL + BW, DH + BW), particle_spacing_ref);
+	SPHSystem system(system_domain_bounds, particle_spacing_ref);
 	/** Define external force.*/
 	Gravity gravity(Vecd(0.0, -gravity_g));
 	/** The water block, body, material and particles container. */
-	WaterBlock *water_block 		= new WaterBlock(system, "WaterBody", 0);
+	WaterBlock *water_block 		= new WaterBlock(system, "WaterBody");
 	WaterMaterial *water_material 	= new WaterMaterial();
 	FluidParticles fluid_particles(water_block, water_material);
 	/** The wall boundary, body and particles container. */
-	WallBoundary *wall_boundary 	= new WallBoundary(system, "Wall", 0);
+	WallBoundary *wall_boundary 	= new WallBoundary(system, "Wall");
 	SolidParticles wall_particles(wall_boundary);
 	/** Flap, OWSC system. Body, material and particle container. */
-	Flap *flap 					= new Flap(system, "Flap", 0);
+	Flap *flap 					= new Flap(system, "Flap");
 	FlapMaterial* flap_material = new FlapMaterial();
 	ElasticSolidParticles flap_particles(flap, flap_material);
 	/** Pressure probe on Flap. */
-	FlapObserver* observer = new FlapObserver(system, "FlapObserver", 0);
+	FlapObserver* observer = new FlapObserver(system, "FlapObserver");
 	BaseParticles 	observer_particles(observer);
 	/** topology */
-	SPHBodyInnerRelation* water_block_inner 	= new SPHBodyInnerRelation(water_block);
-	SPHBodyInnerRelation* flap_inner 			= new SPHBodyInnerRelation(flap);
-	SPHBodyComplexRelation* water_block_complex = new SPHBodyComplexRelation(water_block_inner, { wall_boundary, flap });
-	SPHBodyContactRelation* flap_contact 		= new SPHBodyContactRelation(flap, { water_block });
-	SPHBodyContactRelation* observer_contact_with_water = new SPHBodyContactRelation(observer, { water_block });
-	SPHBodyContactRelation* observer_contact_with_flap  = new SPHBodyContactRelation(observer, {flap});
+	InnerBodyRelation* water_block_inner 	= new InnerBodyRelation(water_block);
+	InnerBodyRelation* flap_inner 			= new InnerBodyRelation(flap);
+	ComplexBodyRelation* water_block_complex = new ComplexBodyRelation(water_block_inner, { wall_boundary, flap });
+	ContactBodyRelation* flap_contact 		= new ContactBodyRelation(flap, { water_block });
+	ContactBodyRelation* observer_contact_with_water = new ContactBodyRelation(observer, { water_block });
+	ContactBodyRelation* observer_contact_with_flap  = new ContactBodyRelation(observer, {flap});
 	/**
 	 * Methods only used only once
 	 */
@@ -51,16 +48,16 @@ int main()
 	/** Time step initialization, add gravity. */
 	InitializeATimeStep 	initialize_gravity_to_fluid(water_block, &gravity);
 	/** Evaluation of density by summation approach. */
-	fluid_dynamics::DensityBySummationFreeSurface update_fluid_density(water_block_complex);
+	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_block_complex);
 	/** time step size without considering sound wave speed. */
 	fluid_dynamics::AdvectionTimeStepSize	get_fluid_advection_time_step_size(water_block, U_f);
 	/** time step size with considering sound wave speed. */
 	fluid_dynamics::AcousticTimeStepSize		get_fluid_time_step_size(water_block);
 	/** pressure relaxation using verlet time stepping. */
-	fluid_dynamics::PressureRelaxationFirstHalfRiemann 	pressure_relaxation_first_half(water_block_complex);
-	fluid_dynamics::PressureRelaxationSecondHalfRiemann pressure_relaxation_second_half(water_block_complex);
+	fluid_dynamics::PressureRelaxationRiemannWithWall	pressure_relaxation(water_block_complex);
+	fluid_dynamics::DensityRelaxationRiemannWithWall	density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
-	fluid_dynamics::ViscousAcceleration viscous_acceleration(water_block_complex);
+	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex);
 	/** Inflow boundary condition. */
 	fluid_dynamics::DampingBoundaryCondition	damping_wave(water_block, new DampingBuffer(water_block, "DampingBuffer"));
 	/** Fluid force on flap. */
@@ -166,17 +163,15 @@ int main()
 	WriteFreeSurfaceElevation 	wave_probe_5(in_output, water_block,  new WaveProbeBufferNo5(water_block, "WaveProbe_05"));
 	WriteFreeSurfaceElevation 	wave_probe_12(in_output, water_block, new WaveProbeBufferNo12(water_block, "WaveProbe_12"));
 	/** Pressure probe. */
-	WriteAnObservedQuantity<Real, FluidParticles, &FluidParticles::p_>
-		pressure_probe("Pressure", in_output, observer_contact_with_water);
+	WriteAnObservedQuantity<indexScalar, Real> pressure_probe("Pressure", in_output, observer_contact_with_water);
 	/** Interpolate the particle position in flap to move the observer accordingly. */
-	observer_dynamics::InterpolatingAQuantity<Vecd, BaseParticles, BaseParticles, 
-		&BaseParticles::pos_n_, &BaseParticles::pos_n_>
-		interpolation_observer_position(observer_contact_with_flap);
+	observer_dynamics::InterpolatingAQuantity<indexVector, Vecd>
+		interpolation_observer_position(observer_contact_with_flap, "Position", "Position");
 	/**
 	 * @brief Prepare quantities will be used once only and initial condition.
 	 */
 	/** offset particle position */
-	flap_particles.OffsetInitialParticlePosition(offset);
+	flap_particles.offsetInitialParticlePosition(offset);
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	wall_particles.initializeNormalDirectionFromGeometry();
@@ -213,7 +208,7 @@ int main()
 			initialize_gravity_to_fluid.parallel_exec();
 			
 			Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_fluid_density.parallel_exec();
+			update_density_by_summation.parallel_exec();
 			viscous_acceleration.parallel_exec();
 			/** Viscous force exerting on flap. */
 			fluid_viscous_force_on_flap.parallel_exec();
@@ -222,9 +217,9 @@ int main()
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt) 
 			{
-				pressure_relaxation_first_half.parallel_exec(dt);
+				pressure_relaxation.parallel_exec(dt);
 				fluid_pressure_force_on_flap.parallel_exec();
-				pressure_relaxation_second_half.parallel_exec(dt);
+				density_relaxation.parallel_exec(dt);
 				/** solid dynamics. */
 				average_velocity_and_acceleration.initialize_displacement_.parallel_exec();
 				if(total_time >= relax_time)

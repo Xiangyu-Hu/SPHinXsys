@@ -1,7 +1,6 @@
 /**
  * @file 	kernel_wenland.cpp
  * @author	Luhui Han, Chi ZHang, Yongchuan Yu and Xiangyu Hu
- * @version	0.1
  */
 #include "kernel_wenland_c2.h"
 
@@ -10,13 +9,14 @@
 namespace SPH
 {
 	//=================================================================================================//
-	KernelWendlandC2::KernelWendlandC2(Real h)
-		: Kernel(h, "Wendland2C")
+	KernelWendlandC2::KernelWendlandC2()
+		: Kernel("Wendland2CKernel") {}
+	//=================================================================================================//
+	void KernelWendlandC2::setBasicParameters()
 	{
 		factor_W_1D_ = inv_h_  * 5.0 / 8.0;
 		factor_W_2D_ = inv_h_ * inv_h_ * 7.0 / (4.0 * Pi);
 		factor_W_3D_ = inv_h_ * inv_h_ * inv_h_ * 21.0 / (16.0 * Pi);
-		SetDerivativeFactors();
 	}
 	//=================================================================================================//
 	Real KernelWendlandC2::W_1D(const Real q) const

@@ -2,7 +2,6 @@
  * @file muscle_activation.cpp
  * @brief This is the first example of electro activation of myocardium
  * @author Chi Zhang and Xiangyu Hu
- * @version 0.1.0
  */
 #include "sphinxsys.h"
 /** Name space. */
@@ -12,8 +11,12 @@ Real PL = 1.0; 		/**< Length. */
 Real PH = 1.0; 		/**< Thickness for thick plate. */
 Real PW = 1.0;		/**< Width. */				
 /**< Initial particle spacing. */
-Real particle_spacing_ref = PH / 25.0;
-Real SL = 4.0 * particle_spacing_ref; 		/**< Extension for holder. */
+Real resolution_ref = PH / 25.0;
+Real SL = 4.0 * resolution_ref; 		/**< Extension for holder. */
+/** Domain bounds of the system. */
+BoundingBox system_domain_bounds(Vecd(-SL, -SL, -SL),
+	Vecd(PL + SL, PH + SL, PW + SL));
+
 /**< SimTK geometric modeling resolution. */
 int resolution(20);
 /** For material properties of the solid. */
@@ -51,8 +54,8 @@ TriangleMeshShape* CreateHolder()
 class Myocardium : public SolidBody
 {
 public:
-	Myocardium(SPHSystem &system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	Myocardium(SPHSystem &system, string body_name)
+		: SolidBody(system, body_name)
 	{
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
@@ -101,17 +104,17 @@ public:
 		axis_id_(axis_id) {};
 protected:
 	int axis_id_;
-	virtual Point GetDisplacement(Point& pos_0, Point& pos_n) {
-		Point pos_temp = pos_n;
+	virtual Vecd getDisplacement(Vecd& pos_0, Vecd& pos_n) {
+		Vecd pos_temp = pos_n;
 		pos_temp[axis_id_] = pos_0[axis_id_];
 		return pos_temp; 
 	};
-	virtual Vecd GetVelocity(Point& pos_0, Point& pos_n, Vecd& vel_n) {
+	virtual Vecd getVelocity(Vecd& pos_0, Vecd& pos_n, Vecd& vel_n) {
 		Vecd vel_temp = vel_n;
 		vel_temp[axis_id_] = 0.0;
 		return vel_temp; 
 	};
-	virtual Vecd GetAcceleration(Point& pos_0, Point& pos_n, Vecd& dvel_dt) {
+	virtual Vecd getAcceleration(Vecd& pos_0, Vecd& pos_n, Vecd& dvel_dt) {
 		Vecd dvel_dt_temp = dvel_dt;
 		dvel_dt_temp[axis_id_] = 0.0;
 		return dvel_dt_temp;
@@ -145,16 +148,15 @@ public:
 int main()
 {
 	/** Setup the system. */
-	SPHSystem system(Vecd(-SL, -SL, -SL),
-		Vecd(PL + SL, PH + SL, PW + SL), particle_spacing_ref);
+	SPHSystem system(system_domain_bounds, resolution_ref);
 
 	/** Creat a Myocardium body, corresponding material, particles and reaction model. */
 	Myocardium *myocardium_muscle_body =
-		new Myocardium(system, "MyocardiumMuscleBody", 0);
+		new Myocardium(system, "MyocardiumMuscleBody");
 	ActiveMuscleParticles 	myocardium_muscle_particles(myocardium_muscle_body, new ActiveMuscle(new MyocardiumMuscle()));
 
 	/** topology */
-	SPHBodyInnerRelation* myocardium_muscle_body_inner = new SPHBodyInnerRelation(myocardium_muscle_body);
+	InnerBodyRelation* myocardium_muscle_body_inner = new InnerBodyRelation(myocardium_muscle_body);
 
 	/** 
 	 * This section define all numerical methods will be used in this case.

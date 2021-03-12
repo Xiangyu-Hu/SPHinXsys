@@ -160,4 +160,104 @@ namespace SPH {
 		return inverse_lower;
 	}
 	//=================================================================================================//
+	Vec2d getVectorAfterRotation(Vec2d &initial_vector, Vec2d &rotation_angles)
+	{
+		/**The rotation matrix. */
+		Mat2d rotation_matrix(0.0);
+		rotation_matrix[0][0] = cos(rotation_angles[0]);
+		rotation_matrix[0][1] = -sin(rotation_angles[0]);
+		rotation_matrix[1][0] = -rotation_matrix[0][1];
+		rotation_matrix[1][1] = rotation_matrix[0][0];
+
+		return rotation_matrix * initial_vector;
+	}
+	//=================================================================================================//
+	Vec3d getVectorAfterRotation(Vec3d &initial_vector, Vec3d &rotation_angles)
+	{
+		/**The rotation matrix about the X-axis. */
+		Mat3d rotation_matrix_x(0.0);
+		rotation_matrix_x[0][0] = 1.0;
+		rotation_matrix_x[1][1] = cos(rotation_angles[0]);
+		rotation_matrix_x[1][2] = -sin(rotation_angles[0]);
+		rotation_matrix_x[2][1] = -rotation_matrix_x[1][2];
+		rotation_matrix_x[2][2] = rotation_matrix_x[1][1];
+		/**The rotation matrix about the Y-axis. */
+		Mat3d rotation_matrix_y(0.0);
+		rotation_matrix_y[0][0] = cos(rotation_angles[1]);
+		rotation_matrix_y[0][2] = sin(rotation_angles[1]);
+		rotation_matrix_y[1][1] = 1.0;
+		rotation_matrix_y[2][0] = -rotation_matrix_y[0][2];
+		rotation_matrix_y[2][2] = rotation_matrix_y[0][0];
+		/**The rotation matrix about the Z-axis. */
+		Mat3d rotation_matrix_z(0.0);
+		rotation_matrix_z[0][0] = cos(rotation_angles[2]);
+		rotation_matrix_z[0][1] = -sin(rotation_angles[2]);
+		rotation_matrix_z[1][0] = -rotation_matrix_z[0][1];
+		rotation_matrix_z[1][1] = rotation_matrix_z[0][0];
+		rotation_matrix_z[2][2] = 1.0;
+
+		return rotation_matrix_z * rotation_matrix_y * rotation_matrix_x * initial_vector;
+	}
+	//=================================================================================================//
+	Vec2d getVectorChangeRateAfterRotation(Vec2d &initial_vector, Vec2d &rotation_angles, Vec2d &angular_vel)
+	{
+		/**The derivative of the rotation matrix. */
+		Mat2d drotation_matrix_dt(0.0);
+		drotation_matrix_dt[0][0] = -sin(rotation_angles[0]) * angular_vel[0];
+		drotation_matrix_dt[0][1] = -cos(rotation_angles[0]) * angular_vel[0];
+		drotation_matrix_dt[1][0] = -drotation_matrix_dt[0][1];
+		drotation_matrix_dt[1][1] = drotation_matrix_dt[0][0];
+
+		return drotation_matrix_dt * initial_vector;
+	}
+	//=================================================================================================//
+	Vec3d getVectorChangeRateAfterRotation(Vec3d& initial_vector, Vec3d& rotation_angles, Vec3d& angular_vel)
+	{
+		/**The rotation matrix about the X-axis. */
+		Mat3d rotation_matrix_x(0.0);
+		rotation_matrix_x[0][0] = 1.0;
+		rotation_matrix_x[1][1] = cos(rotation_angles[0]);
+		rotation_matrix_x[1][2] = -sin(rotation_angles[0]);
+		rotation_matrix_x[2][1] = -rotation_matrix_x[1][2];
+		rotation_matrix_x[2][2] = rotation_matrix_x[1][1];
+		/**The rotation matrix about the Y-axis. */
+		Mat3d rotation_matrix_y(0.0);
+		rotation_matrix_y[0][0] = cos(rotation_angles[1]);
+		rotation_matrix_y[0][2] = sin(rotation_angles[1]);
+		rotation_matrix_y[1][1] = 1.0;
+		rotation_matrix_y[2][0] = -rotation_matrix_y[0][2];
+		rotation_matrix_y[2][2] = rotation_matrix_y[0][0];
+		/**The rotation matrix about the Z-axis. */
+		Mat3d rotation_matrix_z(0.0);
+		rotation_matrix_z[0][0] = cos(rotation_angles[2]);
+		rotation_matrix_z[0][1] = -sin(rotation_angles[2]);
+		rotation_matrix_z[1][0] = -rotation_matrix_z[0][1];
+		rotation_matrix_z[1][1] = rotation_matrix_z[0][0];
+		rotation_matrix_z[2][2] = 1.0;
+
+		/**The derivative of the rotation matrix of the X-axis. */
+		Mat3d drotation_matrix_x_dt(0.0);
+		drotation_matrix_x_dt[1][1] = -sin(rotation_angles[0]) * angular_vel[0];
+		drotation_matrix_x_dt[1][2] = -cos(rotation_angles[0]) * angular_vel[0];
+		drotation_matrix_x_dt[2][1] = -drotation_matrix_x_dt[1][2];
+		drotation_matrix_x_dt[2][2] = drotation_matrix_x_dt[1][1];
+		/**The derivative of the rotation matrix of the Y-axis. */
+		Mat3d drotation_matrix_y_dt(0.0);
+		drotation_matrix_y_dt[0][0] = -sin(rotation_angles[1]) * angular_vel[1];
+		drotation_matrix_y_dt[0][2] = cos(rotation_angles[1]) * angular_vel[1];
+		drotation_matrix_y_dt[2][0] = -drotation_matrix_y_dt[0][2];
+		drotation_matrix_y_dt[2][2] = drotation_matrix_y_dt[0][0];
+		/**The derivative of the rotation matrix of the Z-axis. */
+		Mat3d drotation_matrix_z_dt(0.0);
+		drotation_matrix_z_dt[0][0] = -sin(rotation_angles[2]) * angular_vel[2];
+		drotation_matrix_z_dt[0][1] = -cos(rotation_angles[2]) * angular_vel[2];
+		drotation_matrix_z_dt[1][0] = -drotation_matrix_z_dt[0][1];
+		drotation_matrix_z_dt[1][1] = drotation_matrix_z_dt[0][0];
+
+		return (drotation_matrix_z_dt * rotation_matrix_y * rotation_matrix_x
+			+ rotation_matrix_z * drotation_matrix_y_dt * rotation_matrix_x
+			+ rotation_matrix_z * rotation_matrix_y * drotation_matrix_x_dt
+			)* initial_vector;
+	}
+	//=================================================================================================//
 }

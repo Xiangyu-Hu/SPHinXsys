@@ -24,7 +24,6 @@
  * @file 	in_output.h
  * @brief 	Classes for input and output functions.
  * @author	Chi Zhang and Xiangyu Hu
- * @version	0.1
  */
 
 #pragma once
@@ -196,7 +195,7 @@ namespace SPH {
 	{
 	public:
 		WriteBodyStatesToPlt(In_Output& in_output, SPHBodyVector bodies)
-			: WriteBodyStates(in_output, bodies) {};;
+			: WriteBodyStates(in_output, bodies) {};
 		virtual ~WriteBodyStatesToPlt() {};
 
 		virtual void WriteToFile(Real time) override;
@@ -222,17 +221,17 @@ namespace SPH {
 	};
 
 	/**
-	 * @class WriteLevelSetToPlt
+	 * @class WriteMeshToPlt
 	 * @brief  write the background mesh data for relax body
 	 */
-	class WriteLevelSetToPlt : public WriteBodyStates
+	class WriteMeshToPlt : public WriteBodyStates
 	{
 	protected:
 		std::string filefullpath_;
-		BaseLevelSet* level_set_;
+		Mesh* mesh_;
 	public:
-		WriteLevelSetToPlt(In_Output& in_output, SPHBody* body, BaseLevelSet* level_set);
-		virtual ~WriteLevelSetToPlt() {};
+		WriteMeshToPlt(In_Output& in_output, SPHBody* body, Mesh* mesh);
+		virtual ~WriteMeshToPlt() {};
 
 		virtual void WriteToFile(Real time = 0.0) override;
 	};
@@ -241,13 +240,13 @@ namespace SPH {
 	 * @class WriteAnObservedQuantity
 	 * @brief write files for observed quantity
 	 */
-	template <class DataType, class TargetParticlesType, 
-		StdLargeVec<DataType> TargetParticlesType:: * TrgtMemPtr>
+	template <int DataTypeIndex, typename VariableType>
 	class WriteAnObservedQuantity : public WriteBodyStates,
-		public observer_dynamics::ObservingAQuantity<DataType, TargetParticlesType, TrgtMemPtr>
+		public observer_dynamics::InterpolatingAQuantity<DataTypeIndex, VariableType>
 	{
 	protected:
 		SPHBody* observer_;
+		BaseParticles* base_particles_;
 		std::string filefullpath_;
 
 		void writeFileHead(std::ofstream& out_file, Real& observed_quantity, string quantity_name, size_t i) {
@@ -267,18 +266,19 @@ namespace SPH {
 		};
 
 	public:
-		WriteAnObservedQuantity(string quantity_name, In_Output& in_output, SPHBodyContactRelation* body_contact_relation)
-			: WriteBodyStates(in_output, body_contact_relation->sph_body_), 
-			observer_dynamics::ObservingAQuantity<DataType, TargetParticlesType, TrgtMemPtr>(body_contact_relation),
-			observer_(body_contact_relation->sph_body_)
+		WriteAnObservedQuantity(string quantity_name, In_Output& in_output, 
+			BaseContactBodyRelation* body_contact_relation) : 
+			WriteBodyStates(in_output, body_contact_relation->sph_body_), 
+			observer_dynamics::InterpolatingAQuantity<DataTypeIndex, VariableType>(body_contact_relation, quantity_name),
+			observer_(body_contact_relation->sph_body_), base_particles_(observer_->base_particles_)
 		{
-			filefullpath_ = in_output_.output_folder_ + "/" + observer_->GetBodyName()
+			filefullpath_ = in_output_.output_folder_ + "/" + observer_->getBodyName()
 				+ "_" + quantity_name + "_" + in_output_.restart_step_ + ".dat";
 			std::ofstream out_file(filefullpath_.c_str(), ios::app);
 			out_file << "run_time" << "   ";
-			for (size_t i = 0; i != observer_->number_of_particles_; ++i)
+			for (size_t i = 0; i != base_particles_->total_real_particles_; ++i)
 			{
-				writeFileHead(out_file, this->observed_quantities_[i], quantity_name, i);
+				writeFileHead(out_file, (*this->interpolated_quantities_)[i], quantity_name, i);
 			}
 			out_file << "\n";
 			out_file.close();
@@ -290,59 +290,9 @@ namespace SPH {
 			this->parallel_exec();
 			std::ofstream out_file(filefullpath_.c_str(), ios::app);
 			out_file << time << "   ";
-			for (size_t i = 0; i != observer_->number_of_particles_; ++i)
+			for (size_t i = 0; i != base_particles_->total_real_particles_; ++i)
 			{
-				writeDataToFile(out_file, this->observed_quantities_[i]);
-			}
-			out_file << "\n";
-			out_file.close();
-		};
-	};
-
-	/**
- * @class WriteObservedDiffusionReactionQuantity
- * @brief write the observed diffusion and reaction quantity to files.
- */
-	template <class DiffusionReactionParticlesType>
-	class WriteObservedDiffusionReactionQuantity
-		: public WriteBodyStates,
-		public observer_dynamics::ObservingADiffusionReactionQuantity<DiffusionReactionParticlesType>
-	{
-	protected:
-		SPHBody* observer_;
-		std::string filefullpath_;
-	public:
-		/** Constructor and Destructor. */
-		WriteObservedDiffusionReactionQuantity(string species_name, In_Output& in_output, SPHBodyContactRelation* body_contact_relation)
-			: WriteBodyStates(in_output, body_contact_relation->sph_body_),
-			observer_dynamics::ObservingADiffusionReactionQuantity<DiffusionReactionParticlesType>(species_name, body_contact_relation),
-			observer_(body_contact_relation->sph_body_)
-		{
-			filefullpath_ = in_output_.output_folder_ + "/" + observer_->GetBodyName()
-				+ "_" + species_name + "_" + in_output_.restart_step_ + ".dat";
-			std::ofstream out_file(filefullpath_.c_str(), ios::app);
-			out_file << "run_time" << "   ";
-			for (size_t i = 0; i != observer_->number_of_particles_; ++i)
-			{
-				out_file << "  " << species_name << "[" << i << "]" << " ";
-			}
-			out_file << "\n";
-			out_file.close();
-		};
-
-		virtual ~WriteObservedDiffusionReactionQuantity() {};
-		/**
-		 * @brief Output data to files.
-		 * @param[in] time Physical time.
-		 */
-		virtual void WriteToFile(Real time) override 
-		{
-			this->parallel_exec();
-			std::ofstream out_file(filefullpath_.c_str(), ios::app);
-			out_file << time << "   ";
-			for (size_t i = 0; i != observer_->number_of_particles_; ++i)
-			{
-				out_file << "  " << this->observed_quantities_[i] << " ";
+				writeDataToFile(out_file, (*this->interpolated_quantities_)[i]);
 			}
 			out_file << "\n";
 			out_file.close();

@@ -3,7 +3,6 @@
  * @brief 	2D poiseuille flow example
  * @details This is the one of the basic test cases for validating the splitting-implicit SPH method.
  * @author 	Chi Zhang and Xiangyu Hu
- * @version 0.2.1
  */
  /**
   * @brief 	SPHinXsys Library.
@@ -18,8 +17,10 @@ using namespace SPH;
  */
 Real DL = 1.0e-3; 						/**< Tank length. */
 Real DH = 1.0e-3; 						/**< Tank height. */
-Real particle_spacing_ref = DH / 20.0; 		/**< Initial reference particle spacing. */
-Real BW = particle_spacing_ref * 4; 	/**< Extending width for BCs. */
+Real resolution_ref = DH / 20.0; 		/**< Initial reference particle spacing. */
+Real BW = resolution_ref * 4; 	/**< Extending width for BCs. */
+/** Domain bounds of the system. */
+BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 /**
  * @brief Material properties of the fluid.
  */
@@ -34,16 +35,16 @@ Real c_f = 10.0*U_f;						/**< Reference sound speed. */
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem &system, string body_name,	int refinement_level)
-		: FluidBody(system, body_name, refinement_level)
+	WaterBlock(SPHSystem &system, string body_name)
+		: FluidBody(system, body_name)
 	{
 		/** Geomtry definition. */
-		std::vector<Point> water_block_shape;
-		water_block_shape.push_back(Point(0.0, 0.0));
-		water_block_shape.push_back(Point(0.0, DH));
-		water_block_shape.push_back(Point(DL, DH));
-		water_block_shape.push_back(Point(DL, 0.0));
-		water_block_shape.push_back(Point(0.0, 0.0));
+		std::vector<Vecd> water_block_shape;
+		water_block_shape.push_back(Vecd(0.0, 0.0));
+		water_block_shape.push_back(Vecd(0.0, DH));
+		water_block_shape.push_back(Vecd(DL, DH));
+		water_block_shape.push_back(Vecd(DL, 0.0));
+		water_block_shape.push_back(Vecd(0.0, 0.0));
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::add);
 	}
@@ -69,22 +70,22 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &system, string body_name, int refinement_level)
-		: SolidBody(system, body_name, refinement_level)
+	WallBoundary(SPHSystem &system, string body_name)
+		: SolidBody(system, body_name)
 	{
 		/** Geomtry definition. */
-		std::vector<Point> outer_wall_shape;
-		outer_wall_shape.push_back(Point(-BW, -BW));
-		outer_wall_shape.push_back(Point(-BW, DH + BW));
-		outer_wall_shape.push_back(Point(DL + BW, DH + BW));
-		outer_wall_shape.push_back(Point(DL + BW, -BW));
-		outer_wall_shape.push_back(Point(-BW, -BW));
-		std::vector<Point> inner_wall_shape;
-		inner_wall_shape.push_back(Point(-2.0 * BW, 0.0));
-		inner_wall_shape.push_back(Point(-2.0 * BW, DH));
-		inner_wall_shape.push_back(Point(DL + 2.0 * BW, DH));
-		inner_wall_shape.push_back(Point(DL + 2.0 * BW, 0.0));
-		inner_wall_shape.push_back(Point(-2.0 * BW, 0.0));
+		std::vector<Vecd> outer_wall_shape;
+		outer_wall_shape.push_back(Vecd(-BW, -BW));
+		outer_wall_shape.push_back(Vecd(-BW, DH + BW));
+		outer_wall_shape.push_back(Vecd(DL + BW, DH + BW));
+		outer_wall_shape.push_back(Vecd(DL + BW, -BW));
+		outer_wall_shape.push_back(Vecd(-BW, -BW));
+		std::vector<Vecd> inner_wall_shape;
+		inner_wall_shape.push_back(Vecd(-2.0 * BW, 0.0));
+		inner_wall_shape.push_back(Vecd(-2.0 * BW, DH));
+		inner_wall_shape.push_back(Vecd(DL + 2.0 * BW, DH));
+		inner_wall_shape.push_back(Vecd(DL + 2.0 * BW, 0.0));
+		inner_wall_shape.push_back(Vecd(-2.0 * BW, 0.0));
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
 		body_shape_->addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
@@ -98,7 +99,7 @@ int main()
 	/**
 	 * @brief Build up -- a SPHSystem --
 	 */
-	SPHSystem system(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW), particle_spacing_ref);
+	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for computation from restart files. 0: not from restart files. */
@@ -106,16 +107,16 @@ int main()
 	/**
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
-	WaterBlock *water_block = new WaterBlock(system, "WaterBody", 0);
+	WaterBlock *water_block = new WaterBlock(system, "WaterBody");
 	WaterMaterial 	*water_material = new WaterMaterial();
 	FluidParticles 	fluid_particles(water_block, water_material);
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
-	WallBoundary *wall_boundary = new WallBoundary(system, "Wall",	0);
+	WallBoundary *wall_boundary = new WallBoundary(system, "Wall");
 	SolidParticles 	wall_particles(wall_boundary);
 	/** topology */
-	SPHBodyComplexRelation* water_block_complex = new SPHBodyComplexRelation(water_block, { wall_boundary });
+	ComplexBodyRelation* water_block_complex = new ComplexBodyRelation(water_block, { wall_boundary });
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
@@ -132,22 +133,19 @@ int main()
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
 	 /** Evaluation of density by summation approach. */
-	fluid_dynamics::DensityBySummation 		update_fluid_density(water_block_complex);
+	fluid_dynamics::DensitySummationComplex		update_density_by_summation(water_block_complex);
 	/** Time step size without considering sound wave speed. */
 	fluid_dynamics::AdvectionTimeStepSize 	get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
 	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
 	/** Pressure relaxation algorithm without Riemann solver for viscous flows. */
-	fluid_dynamics::PressureRelaxationFirstHalf 
-		pressure_relaxation_first_half(water_block_complex);
+	fluid_dynamics::PressureRelaxationWithWall	pressure_relaxation(water_block_complex);
 	/** Pressure relaxation algorithm by using position verlet time stepping. */
-	fluid_dynamics::PressureRelaxationSecondHalfRiemann
-		pressure_relaxation_second_half(water_block_complex);
+	fluid_dynamics::DensityRelaxationRiemannWithWall	density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
-	fluid_dynamics::ViscousAcceleration 	
-		viscous_acceleration(water_block_complex);
+	fluid_dynamics::ViscousAccelerationWithWall	viscous_acceleration(water_block_complex);
 	/** Impose transport velocity. */
-	fluid_dynamics::TransportVelocityFormulation transport_velocity_formulation(water_block_complex);
+	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(water_block_complex);
 	/**
 	 * @brief Output.
 	 */
@@ -207,19 +205,19 @@ int main()
 			time_instance = tick_count::now();
 			initialize_a_fluid_step.parallel_exec();
 			Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_fluid_density.parallel_exec();
+			update_density_by_summation.parallel_exec();
 			//viscous_acceleration.parallel_exec();
-			transport_velocity_formulation.correction_.parallel_exec(Dt);
+			transport_velocity_correction.parallel_exec(Dt);
 			interval_computing_time_step += tick_count::now() - time_instance;
 			/** Dynamics including pressure relaxation. */
 			time_instance = tick_count::now();
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				pressure_relaxation_first_half.parallel_exec(dt);
+				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
+				pressure_relaxation.parallel_exec(dt);
 				viscous_acceleration.parallel_exec(dt);
-				pressure_relaxation_second_half.parallel_exec(dt);
-				dt = get_fluid_time_step_size.parallel_exec();
+				density_relaxation.parallel_exec(dt);
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;

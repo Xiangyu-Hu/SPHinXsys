@@ -21,13 +21,12 @@
 *                                                                           *
 * --------------------------------------------------------------------------*/
 /**
- * @file 	particle_dynamics_constraint.h
- * @brief 	This is the class for constrain bodies.
- * We constrain the particles on the body. These particles can be
- * in a subregion of on the surface of the body. 
- * We also consider Eulerian and Lagrangian constraint approaches
+ * @file 	particle_dynamics_bodypart.h
+ * @brief 	Dynamics for bodypart.
+ * The dynamics is constrained to a part of the body, 
+ * such as in a subregion or on the surface of the body. 
+ * The particles of a body part can be defined in an Eulerian or Lagrangian fashion.
  * @author	Chi ZHang and Xiangyu Hu
- * @version	0.1
  */
 #pragma once
 
@@ -38,7 +37,7 @@ namespace SPH {
 
 	/**
 	 * @class PartDynamicsByParticle
-	 * @brief Imposing Lagrangian constrain to a body.
+	 * @brief Abstract class for imposing body part dynamics by particles.
 	 * That is the constrained particles will be the same
 	 * during the simulation.
 	 */
@@ -47,40 +46,82 @@ namespace SPH {
 	public:
 		PartDynamicsByParticle(SPHBody* sph_body, BodyPartByParticle *body_part)
 			: ParticleDynamics<void>(sph_body),
-			constrained_particles_(body_part->body_part_particles_) {};
+			body_part_particles_(body_part->body_part_particles_) {};
 		virtual ~PartDynamicsByParticle() {};
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
 	protected:
-		IndexVector& constrained_particles_;
+		IndexVector& body_part_particles_;
+		ParticleFunctor particle_functor_;
+	};
 
+	/**
+	 * @class PartSimpleDynamicsByParticle
+	 * @brief Abstract class for body part simple particle dynamics.
+	 */
+	class PartSimpleDynamicsByParticle : public PartDynamicsByParticle
+	{
+	public:
+		PartSimpleDynamicsByParticle(SPHBody* sph_body, BodyPartByParticle *body_part);
+		virtual ~PartSimpleDynamicsByParticle() {};
+	protected:
 		virtual void  Update(size_t index_i, Real dt = 0.0) = 0;
 	};
 
 	/**
 	 * @class PartInteractionDynamicsByParticle
-	 * @brief  particle interaction involving in a body part.
+	 * @brief Abstract class for particle interaction involving in a body part.
 	 */
-	class PartInteractionDynamicsByParticle : public ParticleDynamics<void>
+	class PartInteractionDynamicsByParticle : public PartDynamicsByParticle
 	{
 	public:
-		PartInteractionDynamicsByParticle(SPHBody* sph_body, BodyPartByParticle* body_part)
-			: ParticleDynamics<void>(sph_body),
-			body_part_particles_(body_part->body_part_particles_) {};
+		PartInteractionDynamicsByParticle(SPHBody* sph_body, BodyPartByParticle* body_part);
 		virtual ~PartInteractionDynamicsByParticle() {};
-
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
 	protected:
-		IndexVector& body_part_particles_;
-
 		virtual void  Interaction(size_t index_i, Real dt = 0.0) = 0;
 	};
 
 	/**
+	 * @class PartInteractionDynamicsByParticleWithUpdate
+	 * @brief Abstract class for particle interaction involving in a body part with an extra update step.
+	 */
+	class PartInteractionDynamicsByParticleWithUpdate : public PartInteractionDynamicsByParticle
+	{
+	public:
+		PartInteractionDynamicsByParticleWithUpdate(SPHBody* sph_body, BodyPartByParticle* body_part);
+		virtual ~PartInteractionDynamicsByParticleWithUpdate() {};
+
+		virtual void exec(Real dt = 0.0) override;
+		virtual void parallel_exec(Real dt = 0.0) override;
+	protected:
+		virtual void  Update(size_t index_i, Real dt = 0.0) = 0;
+		ParticleFunctor functor_update_;
+	};
+
+	/**
+	 * @class PartInteractionDynamicsByParticleWithUpdate
+	 * @brief Abstract class for particle interaction involving in a body part with an extra update step.
+	 */
+	class PartInteractionDynamicsByParticle1Level : public PartInteractionDynamicsByParticleWithUpdate
+	{
+	public:
+		PartInteractionDynamicsByParticle1Level(SPHBody* sph_body, BodyPartByParticle* body_part) :
+			PartInteractionDynamicsByParticleWithUpdate(sph_body, body_part),
+			functor_initialization_(std::bind(&PartInteractionDynamicsByParticle1Level::Initialization,
+				this, _1, _2)) {};
+		virtual ~PartInteractionDynamicsByParticle1Level() {};
+
+		virtual void exec(Real dt = 0.0) override;
+		virtual void parallel_exec(Real dt = 0.0) override;
+	protected:
+		virtual void Initialization(size_t index_i, Real dt = 0.0) = 0;
+		ParticleFunctor functor_initialization_;
+	};
+
+	/**
 	 * @class PartDynamicsByCell
-	 * @brief Imposing Eulerian constrain to a body.
+	 * @brief Abstract class for imposing Eulerian constrain to a body.
 	 * The constrained particles are in the tagged cells .
 	 */
 	class PartDynamicsByCell : public ParticleDynamics<void>
@@ -88,36 +129,35 @@ namespace SPH {
 	public:
 		PartDynamicsByCell(SPHBody* sph_body, BodyPartByCell *body_part)
 			: ParticleDynamics<void>(sph_body),
-			constrained_cells_(body_part->body_part_cells_) {};
+			body_part_cells_(body_part->body_part_cells_) {};
 		virtual ~PartDynamicsByCell() {};
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
 	protected:
-		CellLists& constrained_cells_;
+		CellLists& body_part_cells_;
 
 		virtual void  Update(size_t index_i, Real dt = 0.0) = 0;
 	};
 	/**
 	  * @class PartDynamicsByCellReduce
-	  * @brief reduce operation in a Eulerian constrain region.
+	  * @brief Abstract class for reduce operation in a Eulerian constrain region.
 	  */
 	template <class ReturnType, typename ReduceOperation>
 	class PartDynamicsByCellReduce : public ParticleDynamics<ReturnType>
 	{
 	public:
 		PartDynamicsByCellReduce(SPHBody* sph_body, BodyPartByCell* body_part)
-			: ParticleDynamics<ReturnType>(sph_body), constrained_cells_(body_part->body_part_cells_) {};
+			: ParticleDynamics<ReturnType>(sph_body), body_part_cells_(body_part->body_part_cells_) {};
 		virtual ~PartDynamicsByCellReduce() {};
 
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
 			ReturnType temp = initial_reference_;
 			this->SetupReduce();
-			/** note that base member need to referred by pointer due to the template class has not been instantiated yet. */
-			for (size_t i = 0; i != constrained_cells_.size(); ++i)
+			for (size_t i = 0; i != body_part_cells_.size(); ++i)
 			{
-				CellListDataVector& list_data = constrained_cells_[i]->cell_list_data_;
+				CellListDataVector& list_data = body_part_cells_[i]->cell_list_data_;
 				for (size_t num = 0; num < list_data.size(); ++num)
 				{
 					temp = reduce_operation_(temp, ReduceFunction(list_data[num].first, dt));
@@ -130,14 +170,13 @@ namespace SPH {
 		{
 			ReturnType temp = initial_reference_;
 			this->SetupReduce();
-			/** note that base member need to referred by pointer due to the template class has not been instantiated yet. */
-			temp = parallel_reduce(blocked_range<size_t>(0, constrained_cells_.size()),
+			temp = parallel_reduce(blocked_range<size_t>(0, body_part_cells_.size()),
 				temp,
 				[&](const blocked_range<size_t>& r, ReturnType temp0)->ReturnType
 				{
 					for (size_t i = r.begin(); i != r.end(); ++i)
 					{
-						CellListDataVector& list_data = constrained_cells_[i]->cell_list_data_;
+						CellListDataVector& list_data = body_part_cells_[i]->cell_list_data_;
 						for (size_t num = 0; num < list_data.size(); ++num)
 						{
 							temp0 = reduce_operation_(temp0, ReduceFunction(list_data[num].first, dt));
@@ -151,7 +190,7 @@ namespace SPH {
 		};
 	protected:
 		ReduceOperation reduce_operation_;
-		CellLists& constrained_cells_;
+		CellLists& body_part_cells_;
 		ReturnType initial_reference_;
 		virtual void SetupReduce() {};
 		virtual ReturnType ReduceFunction(size_t index_i, Real dt = 0.0) = 0;
@@ -167,18 +206,16 @@ namespace SPH {
 	public:
 		PartDynamicsByParticleReduce(SPHBody* sph_body, BodyPartByParticle *body_part)
 			: ParticleDynamics<ReturnType>(sph_body),
-			constrained_particles_(body_part->body_part_particles_) {};
+			body_part_particles_(body_part->body_part_particles_) {};
 		virtual ~PartDynamicsByParticleReduce() {};
 
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
 			ReturnType temp = initial_reference_;
 			this->SetupReduce();
-			//note that base member need to referred by pointer
-			//due to the template class has not been instantiated yet
-			for (size_t i = 0; i < constrained_particles_.size(); ++i)
+			for (size_t i = 0; i < body_part_particles_.size(); ++i)
 			{
-				temp = reduce_operation_(temp, ReduceFunction(constrained_particles_[i], dt));
+				temp = reduce_operation_(temp, ReduceFunction(body_part_particles_[i], dt));
 			}
 			return OutputResult(temp);
 		};
@@ -186,13 +223,11 @@ namespace SPH {
 		{
 			ReturnType temp = initial_reference_;
 			this->SetupReduce();
-			//note that base member need to referred by pointer
-			//due to the template class has not been instantiated yet
-			temp = parallel_reduce(blocked_range<size_t>(0, constrained_particles_.size()),
+			temp = parallel_reduce(blocked_range<size_t>(0, body_part_particles_.size()),
 				temp,
 				[&](const blocked_range<size_t>& r, ReturnType temp0)->ReturnType {
 					for (size_t n = r.begin(); n != r.end(); ++n) {
-						temp0 = reduce_operation_(temp0, ReduceFunction(constrained_particles_[n], dt));
+						temp0 = reduce_operation_(temp0, ReduceFunction(body_part_particles_[n], dt));
 					}
 					return temp0;
 				},
@@ -205,10 +240,7 @@ namespace SPH {
 		};
 	protected:
 		ReduceOperation reduce_operation_;
-
-		IndexVector& constrained_particles_;
-
-		//inital or reference value
+		IndexVector& body_part_particles_;
 		ReturnType initial_reference_;
 		virtual void SetupReduce() {};
 		virtual ReturnType ReduceFunction(size_t index_i, Real dt = 0.0) = 0;
