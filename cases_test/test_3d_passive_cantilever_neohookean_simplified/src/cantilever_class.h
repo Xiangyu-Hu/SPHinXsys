@@ -30,6 +30,23 @@ Real time_to_full_gravity = 0.0;
 Vec3d d_0(1.0e-4, 0.0, 0.0);
 
 /**
+ * Setup material properties of myocardium
+ */
+class MyocardiumMuscle : public NeoHookeanSolid
+{
+public:
+	MyocardiumMuscle() : NeoHookeanSolid()
+	{
+		rho_0_ 	= rho_0;
+		E_0_ = Youngs_modulus;
+		nu_ = poisson;
+		eta_0_ = physical_viscosity;
+
+		assignDerivedMaterialParameters();
+	}
+};
+
+/**
  * define time dependent gravity
  */
 class TimeDependentGravity : public Gravity //*** move it to source
@@ -107,7 +124,7 @@ public:
     TimeDependentGravity* gravity;
 	/** Creat a Myocardium body, corresponding material, particles and reaction model. */
     SolidBody *myocardium_body;
-    NeoHookeanSolid *muscle_material;
+    MyocardiumMuscle *muscle_material;
     ElasticSolidParticles *myocardium_particles;
 	/** Define Observer. */
     MyocardiumObserver *myocardium_observer;
@@ -146,27 +163,24 @@ void PassiveCantilever::initialize_simulation(){
 	/** Define the external force. */
     gravity = new TimeDependentGravity (Vec3d(0.0, -gravity_g, 0.0));
     /** Define the myocardium body. */
-    myocardium_body = new SolidBody(system, "MyocardiumBody", 0);
+	string body_name = "MyocardiumBody";
+    myocardium_body = new SolidBody(*system, body_name, 0);
     myocardium_body->body_shape_ = new ComplexShape(body_name);
 	myocardium_body->body_shape_->addTriangleMeshShape(CreateBeamShape(), ShapeBooleanOps::add); // soft body
 	myocardium_body->body_shape_->addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add); // wall fixation
     /** Setup material properties of myocardium **/
-    muscle_material =  new NeoHookeanSolid(system, "MyocardiumBody", 0); //*** need new constructor for NeoHookeanSolid with material paremeters
-    muscle_material->E_0_ = Youngs_modulus;
-    muscle_material->nu_ = poisson;
-    muscle_material->eta_0_ = physical_viscosity;
-    muscle_material->assignDerivedMaterialParameters();
+    muscle_material =  new MyocardiumMuscle(); //*** need new constructor for NeoHookeanSolid with material paremeters to avoid the new class here
     /** myocardium_particles */
     myocardium_particles = new ElasticSolidParticles(myocardium_body, muscle_material);
     /** Define Observer. */
-    myocardium_observer = new MyocardiumObserver(system, "MyocardiumObserver", 0);
+    myocardium_observer = new MyocardiumObserver(*system, "MyocardiumObserver", 0);
     observer_particles = new BaseParticles(myocardium_observer);
     /** topology */
     myocardium_body_inner = new SPHBodyInnerRelation(myocardium_body);
     myocardium_observer_contact = new SPHBodyContactRelation(myocardium_observer, { myocardium_body });
 
 	//--------common particle dynamics--------//
-	initialize_gravity = new InitializeATimeStep(myocardium_body, &gravity);
+	initialize_gravity = new InitializeATimeStep(myocardium_body, gravity);
 
 	/** This section define all numerical methods will be used in this case. */
 	/** Corrected strong configuration. */	
@@ -179,15 +193,15 @@ void PassiveCantilever::initialize_simulation(){
 	stress_relaxation_second_half = new solid_dynamics::StressRelaxationSecondHalf (myocardium_body_inner);
 	/** Constrain the holder. */
 	constrain_holder = new solid_dynamics::ConstrainSolidBodyRegion(myocardium_body, new Holder(myocardium_body, "Holder"));
-	muscle_damping = new DampingBySplittingWithRandomChoice<SPHBodyInnerRelation, DampingBySplittingPairwise<Vec3d>, Vec3d>(myocardium_body_inner, 0.1, myocardium_particles.vel_n_, physical_viscosity);
+	muscle_damping = new DampingBySplittingWithRandomChoice<SPHBodyInnerRelation, DampingBySplittingPairwise<Vec3d>, Vec3d>(myocardium_body_inner, 0.1, myocardium_particles->vel_n_, physical_viscosity);
 	
 	/**
 	 * From here the time stepping begines.
 	 * Set the starting time.
 	 */
-	system.initializeSystemCellLinkedLists();
-	system.initializeSystemConfigurations();
-	corrected_configuration_in_strong_form.parallel_exec();
+	system->initializeSystemCellLinkedLists();
+	system->initializeSystemConfigurations();
+	corrected_configuration_in_strong_form->parallel_exec();
 	/*write_states.WriteToFile(GlobalStaticVariables::physical_time_);
 	write_displacement.WriteToFile(GlobalStaticVariables::physical_time_);*/
 
@@ -196,13 +210,13 @@ void PassiveCantilever::initialize_simulation(){
 
 void PassiveCantilever::perform_simulation_step(){
 
-	initialize_gravity.parallel_exec(); // gravity force
-	stress_relaxation_first_half.parallel_exec(dt);
-	constrain_holder.parallel_exec(dt);
-	muscle_damping.parallel_exec(dt);
-	constrain_holder.parallel_exec(dt);
-	stress_relaxation_second_half.parallel_exec(dt);
+	initialize_gravity->parallel_exec(); // gravity force
+	stress_relaxation_first_half->parallel_exec(dt);
+	constrain_holder->parallel_exec(dt);
+	muscle_damping->parallel_exec(dt);
+	constrain_holder->parallel_exec(dt);
+	stress_relaxation_second_half->parallel_exec(dt);
 
-	dt = computing_time_step_size.parallel_exec();
+	dt = computing_time_step_size->parallel_exec();
 }
 

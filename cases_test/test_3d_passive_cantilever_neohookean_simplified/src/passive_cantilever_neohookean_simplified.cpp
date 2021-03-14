@@ -17,14 +17,14 @@ using namespace SPH;
 int main()
 {	
 	//Simulation setup
-	PassiveCantilever *passive_cantilever = new PassiveCantilever()
+	PassiveCantilever *passive_cantilever = new PassiveCantilever();
 	passive_cantilever->initialize_simulation();
 
 	/** Output */
-	In_Output in_output(system);
-	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
+	In_Output in_output(*passive_cantilever->system);
+	WriteBodyStatesToVtu write_states(in_output, passive_cantilever->system->real_bodies_);
 	WriteAnObservedQuantity<Vecd, BaseParticles, &BaseParticles::pos_n_>
-		write_displacement("Displacement", in_output, myocardium_observer_contact);
+		write_displacement("Displacement", in_output, passive_cantilever->myocardium_observer_contact);
 	/**
 	 * From here the time stepping begines.
 	 * Set the starting time.
