@@ -46,33 +46,38 @@ namespace SPH {
 	}
 	//=================================================================================================//
 	CombinedInteractionDynamics::
-		CombinedInteractionDynamics(StdVec<InteractionDynamics*> multiple_dynamics) : 
-		InteractionDynamics(multiple_dynamics[0]->sph_body_),
-		multiple_dynamics_(multiple_dynamics) 
+		CombinedInteractionDynamics(InteractionDynamics& dynamics_a, InteractionDynamics& dynamics_b) : 
+		InteractionDynamics(dynamics_a.sph_body_),
+		dynamics_a_(dynamics_a), dynamics_b_(dynamics_b)
 	{
-		for (InteractionDynamics* dynamics : multiple_dynamics) 
+		if (dynamics_a.sph_body_ != dynamics_b.sph_body_)
 		{
-			if (sph_body_ != dynamics->sph_body_)
-			{
-				std::cout << "\n Error: CombinedInteractionDynamics does not have the same source body!" << std::endl;
-				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-				exit(1);
-			}
-			for (size_t k = 0; k < dynamics->pre_processes_.size(); ++k)
-				pre_processes_.push_back(dynamics->pre_processes_[k]);
-			for (size_t k = 0; k < dynamics->post_processes_.size(); ++k)
-				post_processes_.push_back(dynamics->post_processes_[k]);
+			std::cout << "\n Error: CombinedInteractionDynamics does not have the same source body!" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
 		}
+
+		for (size_t k = 0; k < dynamics_a.pre_processes_.size(); ++k)
+			pre_processes_.push_back(dynamics_a.pre_processes_[k]);
+		for (size_t k = 0; k < dynamics_b.pre_processes_.size(); ++k)
+			pre_processes_.push_back(dynamics_b.pre_processes_[k]);
+
+		for (size_t k = 0; k < dynamics_a.post_processes_.size(); ++k)
+				post_processes_.push_back(dynamics_a.post_processes_[k]);
+		for (size_t k = 0; k < dynamics_b.post_processes_.size(); ++k)
+				post_processes_.push_back(dynamics_b.post_processes_[k]);
 	}
 	//=================================================================================================//
 	void CombinedInteractionDynamics::setupDynamics(Real dt)
 	{
-		for (InteractionDynamics* dynamics : multiple_dynamics_) dynamics->setupDynamics(dt);
+		dynamics_a_.setupDynamics(dt);
+		dynamics_b_.setupDynamics(dt);
 	}		
 	//=================================================================================================//
 	void CombinedInteractionDynamics::Interaction(size_t index_i, Real dt)
 	{
-		for (InteractionDynamics* dynamics : multiple_dynamics_) dynamics->Interaction(index_i, dt);
+		dynamics_a_.Interaction(index_i, dt);
+		dynamics_b_.Interaction(index_i, dt);
 	}		
 	//=================================================================================================//
 	void InteractionDynamicsWithUpdate::exec(Real dt)

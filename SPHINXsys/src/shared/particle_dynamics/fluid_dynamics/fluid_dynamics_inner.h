@@ -21,10 +21,10 @@
 *                                                                           *
 * --------------------------------------------------------------------------*/
 /**
-* @file fluid_dynamics_inner.h
-* @brief Here, we define the algorithm classes for fluid dynamics within the body. 
-* @details We consider here weakly compressible fluids. The algorithms may be
-* different for free surface flow and the one without free surface.   
+* @file 	fluid_dynamics_inner.h
+* @brief 	Here, we define the algorithm classes for fluid dynamics within the body. 
+* @details 	We consider here weakly compressible fluids. The algorithms may be
+* 			different for free surface flow and the one without free surface.   
 * @author	Chi ZHang and Xiangyu Hu
 */
 
@@ -71,6 +71,7 @@ namespace SPH
 			virtual ~FreeSurfaceIndicationInner() {};
 
 		protected:
+			Real smoothing_length_;
 			Real thereshold_by_dimensions_;
 			StdLargeVec<Real>& Vol_;
 			StdLargeVec<bool>& is_free_surface_;
@@ -191,8 +192,8 @@ namespace SPH
 		* @class AcousticTimeStepSize
 		* @brief Computing the acoustic time step size
 		*/
-		class AcousticTimeStepSize
-			: public ParticleDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
+		class AcousticTimeStepSize : 
+			public ParticleDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
 		{
 		public:
 			explicit AcousticTimeStepSize(FluidBody* body);
@@ -209,14 +210,28 @@ namespace SPH
 		* @class AdvectionTimeStepSize
 		* @brief Computing the advection time step size
 		*/
-		class AdvectionTimeStepSize : public AcousticTimeStepSize
+		class AdvectionTimeStepSize :
+			public ParticleDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
 		{
 		public:
 			explicit AdvectionTimeStepSize(FluidBody* body, Real U_max);
 			virtual ~AdvectionTimeStepSize() {};
 		protected:
+			Real smoothing_length_;
+			StdLargeVec<Vecd>& vel_n_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 			Real OutputResult(Real reduced_value) override;
+		};
+
+		/**
+		* @class AdvectionTimeStepSizeForImplicitViscosity
+		* @brief Computing the advection time step size when viscosity is handled implicitly
+		*/
+		class AdvectionTimeStepSizeForImplicitViscosity : public AdvectionTimeStepSize
+		{
+		public:
+			explicit AdvectionTimeStepSizeForImplicitViscosity(FluidBody* body, Real U_max);
+			virtual ~AdvectionTimeStepSizeForImplicitViscosity() {};
 		};
 
 		/**
@@ -566,6 +581,28 @@ namespace SPH
 			StdLargeVec<Vecd>& pos_n_;
 			virtual void SetupReduce() override {};
 			virtual Real ReduceFunction(size_t index_i, Real dt = 0.0) override { return pos_n_[index_i][1]; };
+		};
+
+		/**
+		 * @class SurfaceTensionAccelerationInner
+		 * @brief  the viscous force induced acceleration
+		 */
+		class SurfaceTensionAccelerationInner
+			: public InteractionDynamics, public FluidDataInner
+		{
+		public:
+			SurfaceTensionAccelerationInner(BaseInnerBodyRelation* inner_relation, Real gamma);
+			SurfaceTensionAccelerationInner(BaseInnerBodyRelation* inner_relation);
+			virtual ~SurfaceTensionAccelerationInner() {};
+		protected:
+			Real gamma_;
+			StdLargeVec<Real> &Vol_, &mass_;
+			StdLargeVec<Vecd> &dvel_dt_others_;
+			StdLargeVec<Real>* pos_div_;
+			StdLargeVec<Vecd>* color_grad_;
+			StdLargeVec<Vecd>* surface_norm_;
+
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 	}
 }

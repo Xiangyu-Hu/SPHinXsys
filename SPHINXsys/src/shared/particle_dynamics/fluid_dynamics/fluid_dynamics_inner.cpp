@@ -1,6 +1,6 @@
 /**
  * @file 	fluid_dynamics.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #include "fluid_dynamics_inner.h"
@@ -29,7 +29,8 @@ namespace SPH
 			thereshold_by_dimensions_(thereshold*(Real)Dimensions), 
 			Vol_(particles_->Vol_), is_free_surface_(particles_->is_free_surface_)
 		{
-			particles_->registerAVariable<indexScalar, Real>(pos_div_, "PositionDivergence");
+			particles_->registerAVariable<indexScalar, Real>(pos_div_, "PositionDivergence", true);
+			smoothing_length_ = inner_relation->sph_body_->particle_adaptation_->ReferenceSmoothingLength();
 		}
 		//=================================================================================================//
 		void FreeSurfaceIndicationInner::Interaction(size_t index_i, Real dt)
@@ -37,8 +38,10 @@ namespace SPH
 			Real pos_div = 0.0;
 			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
 				pos_div -= inner_neighborhood.dW_ij_[n] 
 					* inner_neighborhood.r_ij_[n] * Vol_[inner_neighborhood.j_[n]];
+			}
 			pos_div_[index_i] = pos_div;
 		}
 		//=================================================================================================//
@@ -48,7 +51,10 @@ namespace SPH
 	
 			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-				if (pos_div_[inner_neighborhood.j_[n]] < thereshold_by_dimensions_)
+				/** Two layer particles.*/
+				if (pos_div_[inner_neighborhood.j_[n]] < thereshold_by_dimensions_ && inner_neighborhood.r_ij_[n] < smoothing_length_)
+				/** Three layer particles. */
+				//if (pos_div_[inner_neighborhood.j_[n]] < thereshold_by_dimensions_)
 				{
 					is_free_surface = true;
 					break;
@@ -194,10 +200,7 @@ namespace SPH
 			p_(particles_->p_), vel_n_(particles_->vel_n_)
 		{
 			smoothing_length_ = particle_adaptation_->ReferenceSmoothingLength();
-			//time step size due to linear viscosity
-			Real rho_0 = material_->ReferenceDensity();
-			Real mu = material_->ReferenceViscosity();
-			initial_reference_ = mu / rho_0 / smoothing_length_;
+			initial_reference_ = 0.0;
 		}
 		//=================================================================================================//
 		Real AcousticTimeStepSize::ReduceFunction(size_t index_i, Real dt)
@@ -214,9 +217,14 @@ namespace SPH
 		}
 		//=================================================================================================//
 		AdvectionTimeStepSize::AdvectionTimeStepSize(FluidBody* body, Real U_max)
-			: AcousticTimeStepSize(body)
+			: ParticleDynamicsReduce<Real, ReduceMax>(body),
+			FluidDataSimple(body), vel_n_(particles_->vel_n_)
 		{
-			Real u_max = SMAX(initial_reference_, U_max);
+			smoothing_length_ = particle_adaptation_->ReferenceSmoothingLength();
+			Real rho_0 = material_->ReferenceDensity();
+			Real mu = material_->ReferenceViscosity();
+			Real viscous_speed = mu / rho_0 / smoothing_length_;
+			Real u_max = SMAX(viscous_speed, U_max);
 			initial_reference_ = u_max * u_max;
 		}
 		//=================================================================================================//
@@ -230,6 +238,13 @@ namespace SPH
 			Real speed_max = sqrt(reduced_value);
 			particles_->speed_max_ = speed_max;
 			return 0.25 * smoothing_length_ / (speed_max + TinyReal);
+		}
+		//=================================================================================================//
+		AdvectionTimeStepSizeForImplicitViscosity::
+			AdvectionTimeStepSizeForImplicitViscosity(FluidBody* body, Real U_max)
+			: AdvectionTimeStepSize(body, U_max)
+		{
+			initial_reference_ = U_max * U_max;
 		}
 		//=================================================================================================//
 		VorticityInner::
@@ -564,6 +579,40 @@ namespace SPH
 				particles_->total_real_particles_ += 1;
 				pos_n_[sorted_index_i][axis_] += periodic_translation_[axis_];
 			}
+		}
+		//=================================================================================================//
+		SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseInnerBodyRelation* inner_relation, Real gamma) 
+		: InteractionDynamics(inner_relation->sph_body_), FluidDataInner(inner_relation), Vol_(particles_->Vol_), 
+			mass_(particles_->mass_), dvel_dt_others_(particles_->dvel_dt_others_), gamma_(gamma)
+		{
+			color_grad_ = particles_->getVariableByName<indexVector, Vecd>("ColorGradient");
+			surface_norm_ = particles_->getVariableByName<indexVector, Vecd>("SurfaceNorm");
+			pos_div_ = particles_->getVariableByName<indexScalar, Real>("PositionDivergence");
+		}
+		//=================================================================================================//
+		SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseInnerBodyRelation* inner_relation)
+		: SurfaceTensionAccelerationInner(inner_relation, 1.0) {}
+		//=================================================================================================//
+		void SurfaceTensionAccelerationInner::Interaction(size_t index_i, Real dt)
+		{
+			Vecd n_i = (*surface_norm_)[index_i];
+			Real curvature(0.0);
+			Real renormal_curvature(0);
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = inner_neighborhood.j_[n];
+				Vecd n_j = (*surface_norm_)[index_j];
+				if(n_j.norm() > 1.0e-1)
+				{
+					Vecd n_ij = n_i - n_j;
+					curvature -= inner_neighborhood.dW_ij_[n] * Vol_[index_j] * dot(n_ij, inner_neighborhood.e_ij_[n]);
+				}
+			}
+			/** Normalize the curvature. */
+			renormal_curvature = n_i.size() * curvature / ABS((*pos_div_)[index_i] + TinyReal);
+			Vecd acceleration = gamma_ * renormal_curvature * ((*color_grad_)[index_i]) * Vol_[index_i];
+			dvel_dt_others_[index_i] -= acceleration / mass_[index_i];
 		}
 		//=================================================================================================//
 	}		

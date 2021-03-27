@@ -64,11 +64,6 @@ int main()
 	solid_dynamics::FluidPressureForceOnSolid fluid_pressure_force_on_flap(flap_contact);
 	/** Fluid viscous force on flap. */
 	solid_dynamics::FluidViscousForceOnSolid fluid_viscous_force_on_flap(flap_contact);
-	/** time step size calculation for elastic dynamics. */
-	solid_dynamics::AcousticTimeStepSize flap_computing_time_step_size(flap);
-	/** Stress relaxation for the elastic flap. */
-	solid_dynamics::StressRelaxationFirstHalf 	flap_stress_relaxation_first_half(flap_inner);
-	solid_dynamics::StressRelaxationSecondHalf 	flap_stress_relaxation_second_half(flap_inner);
 	/** average velocity for flap. */
 	solid_dynamics::AverageVelocityAndAcceleration	average_velocity_and_acceleration(flap);
 	solid_dynamics::UpdateElasticNormalDirection 	flap_update_normal(flap);

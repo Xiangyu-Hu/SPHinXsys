@@ -1,5 +1,9 @@
 /**
-   * @brief 	SPHinXsys Library.
+ * @file 	throat.cpp
+ * @brief 	2D in a channel with a throat.
+ * @details This is the one of the basic test cases, also the first case for
+ * 			understanding SPH method for non-Newtonian low Reynolds number flows.
+ * @author 	Luhui Han, Chi Zhang and Xiangyu Hu
    */
 #include "sphinxsys.h"
 
@@ -18,10 +22,12 @@ BoundingBox system_domain_bounds(Vec2d(-0.5 * DL - BW, -0.5 * DH - BW),
 //for material properties of the fluid
 Real rho0_f = 1.0;
 Real gravity_g = 1.0;	/**< Gravity force of fluid. */
-Real Re = 1.0;			/**< Reynolds number*/
+Real Re = 0.1;			/**< Reynolds number*/
 Real mu_f = sqrt(0.25*rho0_f * powern(0.5*DT, 3)* gravity_g / Re);
 Real U_f = 0.25*powern(0.5 * DT, 2)* gravity_g / mu_f;
-Real c_f = SMAX(10.0*U_f, 10.0*mu_f/ rho0_f/ resolution_ref);
+// For low Reynolds number flow the weakly compressible formulation need to 
+// consider viscousity for artificial sound speed.
+Real c_f = 10.0 * SMAX(U_f, 2.0 * mu_f / rho0_f / DT);
 Real mu_p_f = 0.6 * mu_f;
 Real lambda_f = 10.0;
 
@@ -156,7 +162,7 @@ int main()
 	//evaluation of density by summation approach
 	fluid_dynamics::DensitySummationComplex	update_density_by_summation(fluid_block_complex);
 	//time step size without considering sound wave speed
-	fluid_dynamics::AdvectionTimeStepSize	get_fluid_advection_time_step_size(fluid_block, U_f);
+	fluid_dynamics::AdvectionTimeStepSizeForImplicitViscosity	get_fluid_advection_time_step_size(fluid_block, U_f);
 	//time step size with considering sound wave speed
 	fluid_dynamics::AcousticTimeStepSize		get_fluid_time_step_size(fluid_block);
 	//pressure relaxation using verlet time stepping
@@ -167,8 +173,11 @@ int main()
 
 	//-------- common particle dynamics ----------------------------------------
 	InitializeATimeStep 	initialize_a_fluid_step(fluid_block, &gravity);
-	//computing viscous acceleration
 	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(fluid_block_complex);
+	//computing viscous effect with update velocity directly other than viscous acceleration
+	DampingPairwiseWithWall<indexVector, Vec2d, DampingPairwiseInner>
+		implicit_viscous_damping(fluid_block_complex, "Velocity", mu_f);
+
 	//impose transport velocity
 	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(fluid_block_complex);
 	//computing vorticity in the flow
@@ -223,15 +232,14 @@ int main()
 			initialize_a_fluid_step.parallel_exec();
 			Dt = get_fluid_advection_time_step_size.parallel_exec();
 			update_density_by_summation.parallel_exec();
-			viscous_acceleration.parallel_exec();
 			transport_velocity_correction.parallel_exec(Dt);
 
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt) 
 			{
 				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
-				//fluid dynamics
 				pressure_relaxation.parallel_exec(dt);
+				implicit_viscous_damping.parallel_exec(dt);
 				density_relaxation.parallel_exec(dt);
 
 				relaxation_time += dt;

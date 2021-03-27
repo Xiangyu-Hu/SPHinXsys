@@ -35,9 +35,29 @@ namespace SPH
 	{
 		typedef DataDelegateContact<FluidBody, FluidParticles, Fluid,
 			FluidBody, FluidParticles, Fluid, DataDelegateEmptyBase> MultiPhaseContactData;
+		typedef DataDelegateContact<FluidBody, FluidParticles, Fluid, FluidBody, FluidParticles, Fluid> MultiPhaseData;
+		/**
+		 * @class ViscousAccelerationMultiPhase
+		 * @brief  the viscosity force induced acceleration
+		 */
+		class ViscousAccelerationMultiPhase : public ViscousAccelerationInner, public MultiPhaseContactData
+		{
+		public:
+			ViscousAccelerationMultiPhase(BaseInnerBodyRelation* inner_relation,
+				BaseContactBodyRelation* contact_relation);
+			ViscousAccelerationMultiPhase(ComplexBodyRelation* complex_relation);
+			virtual ~ViscousAccelerationMultiPhase() {};
+		protected:
+			StdVec<StdLargeVec<Real>*> contact_Vol_;
+			StdVec<StdLargeVec<Vecd>*> contact_vel_n_;
+
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+		using ViscousAccelerationMultiPhaseWithWall = 
+			BaseViscousAccelerationWithWall<ViscousWithWall<ViscousAccelerationMultiPhase>>;
 
 		/**
-		* @class RelaxationMultiPhase
+		* @class ViscousAccelerationMultiPhase
 		* @brief Abstract base class for general multiphase fluid dynamics
 		*/
 		template<class RelaxationInnerType>
@@ -104,5 +124,27 @@ namespace SPH
 		using MultiPhaseDensityRelaxationRiemann = BaseDensityRelaxationMultiPhase<DensityRelaxationRiemannInner>;
 		using MultiPhaseDensityRelaxationWithWall = BaseDensityRelaxationMultiPhase<MultiPhaseDensityRelaxation>;
 		using MultiPhaseDensityRelaxationRiemannWithWall = BaseDensityRelaxationWithWall<MultiPhaseDensityRelaxationRiemann>;
+
+		/**
+		 * @class MultiPhaseColorFunctionGradient
+		 * @brief  indicate the particles near the interface of a fluid-fluid interaction and computing norm
+		 */
+		class MultiPhaseColorFunctionGradient : public InteractionDynamics, public MultiPhaseData
+		{
+		public:
+			StdLargeVec<Vecd> color_grad_;
+			StdLargeVec<Vecd> surface_norm_;
+			StdLargeVec<Real>* pos_div_;
+			StdLargeVec<bool>& is_free_surface_;
+			MultiPhaseColorFunctionGradient(BaseContactBodyRelation* contact_relation);
+			virtual ~MultiPhaseColorFunctionGradient() {};
+		protected:
+			Real rho_0_;
+			StdVec<Real> contact_rho_0_;
+			StdLargeVec<Real> &Vol_;
+			StdVec<StdLargeVec<Real>*> contact_Vol_;
+
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
 	}
 }

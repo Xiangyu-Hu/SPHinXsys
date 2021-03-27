@@ -1,6 +1,6 @@
 /**
  * @file 	fluid_dynamics_complex.cpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Chi ZHang and Xiangyu Hu
  */
 
 #include "fluid_dynamics_complex.h"
@@ -44,88 +44,6 @@ namespace SPH
 				}
 			}
 			pos_div_[index_i] += pos_div;
-		}
-		//=================================================================================================//
-		ViscousAccelerationWithWall::ViscousAccelerationWithWall(ComplexBodyRelation* body_complex_relation) :
-			ViscousAccelerationInner(body_complex_relation->inner_relation_),
-			FluidWallData(body_complex_relation->contact_relation_)
-		{
-			for (size_t k = 0; k != contact_particles_.size(); ++k)
-			{
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-				contact_vel_ave_.push_back(&(contact_particles_[k]->vel_ave_));
-			}
-		}		
-		//=================================================================================================//
-		void ViscousAccelerationWithWall::Interaction(size_t index_i, Real dt)
-		{
-			ViscousAccelerationInner::Interaction(index_i, dt);
-
-			Real rho_i = rho_n_[index_i];
-			Vecd& vel_i = vel_n_[index_i];
-
-			Vecd acceleration(0), vel_derivative(0);
-			for (size_t k = 0; k < contact_configuration_.size(); ++k)
-			{
-				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
-				StdLargeVec<Vecd>& vel_ave_k = *(contact_vel_ave_[k]);
-				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
-				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-				{
-					size_t index_j = contact_neighborhood.j_[n];
-					Real r_ij = contact_neighborhood.r_ij_[n];
-
-					vel_derivative = 2.0*(vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * smoothing_length_);
-					acceleration += 2.0 * mu_ * vel_derivative 
-								  * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] / rho_i;
-				}
-			}
-
-			dvel_dt_others_[index_i] += acceleration;
-		}
-		//=================================================================================================//
-		AngularConservativeViscousAccelerationWithWall::
-			AngularConservativeViscousAccelerationWithWall(ComplexBodyRelation* body_complex_relation) :
-			AngularConservativeViscousAccelerationInner(body_complex_relation->inner_relation_),
-			FluidWallData(body_complex_relation->contact_relation_)
-		{
-			for (size_t k = 0; k != contact_particles_.size(); ++k)
-			{
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-				contact_vel_ave_.push_back(&(contact_particles_[k]->vel_ave_));
-			}
-		}
-		//=================================================================================================//
-		void AngularConservativeViscousAccelerationWithWall::Interaction(size_t index_i, Real dt)
-		{
-			AngularConservativeViscousAccelerationInner::Interaction(index_i, dt);
-
-			Real rho_i = rho_n_[index_i];
-			Vecd& vel_i = vel_n_[index_i];
-
-			Vecd acceleration(0);
-			for (size_t k = 0; k < contact_configuration_.size(); ++k)
-			{
-				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
-				StdLargeVec<Vecd>& vel_ave_k = *(contact_vel_ave_[k]);
-				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
-				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-				{
-					size_t index_j = contact_neighborhood.j_[n];
-					Vecd& e_ij = contact_neighborhood.e_ij_[n];
-					Real r_ij = contact_neighborhood.r_ij_[n];
-
-					/** The following viscous force is given in Monaghan 2005 (Rep. Prog. Phys.), it seems that
-					 * is formulation is more accurate thant the previous one for Taylor-Green-Vortex flow. */
-					Real v_r_ij = 2.0 * dot(vel_i - vel_ave_k[index_j], r_ij * e_ij);
-					Real vel_difference = 0.0 * (vel_i - vel_ave_k[index_j]).norm() * r_ij;
-					Real eta_ij = 8.0 * SMAX(mu_, rho_i * vel_difference) * v_r_ij /
-						(r_ij * r_ij + 0.01 * smoothing_length_);
-					acceleration += eta_ij * Vol_k[index_j] * contact_neighborhood.dW_ij_[n] * e_ij / rho_i;
-				}
-			}
-
-			dvel_dt_others_[index_i] += acceleration;
 		}
 		//=================================================================================================//
 		TransportVelocityCorrectionComplex::
@@ -233,6 +151,66 @@ namespace SPH
 			}
 
 			dtau_dt_[index_i] += stress_rate;
+		}
+		//=================================================================================================//
+		SurfaceNormWithWall::SurfaceNormWithWall(BaseContactBodyRelation* contact_relation, Real contact_angle) 
+		: InteractionDynamics(contact_relation->sph_body_), FSIContactData(contact_relation), 
+			is_free_surface_(particles_->is_free_surface_),
+			contact_angle_(contact_angle)
+		{
+			particle_spacing_ = contact_relation->sph_body_->particle_adaptation_->ReferenceSpacing();
+			smoothing_length_ = contact_relation->sph_body_->particle_adaptation_->ReferenceSmoothingLength();
+			surface_norm_ = particles_->getVariableByName<indexVector, Vecd>("SurfaceNorm");
+			std::cout<< " Dp " << particle_spacing_ << " H " << smoothing_length_ << std::endl;
+			for (size_t k = 0; k != contact_particles_.size(); ++k)
+			{
+				wall_n_.push_back(&(contact_particles_[k]->n_));
+			}
+		}
+		//=================================================================================================//
+		void SurfaceNormWithWall::Interaction(size_t index_i, Real dt)
+		{
+			Real large_dist(1.0e6);
+			Vecd n_i = (*surface_norm_)[index_i];
+			Vecd contact_norm(0.0);
+			Real smoothing_factor;
+
+			/** Contact interaction. */
+			if(n_i.norm() > 1.0e-1 && is_free_surface_[index_i])
+			{
+				for (size_t k = 0; k < contact_configuration_.size(); ++k)
+				{
+					StdLargeVec<Vecd>& n_k = *(wall_n_[k]);
+					Neighborhood& wall_neighborhood = (*contact_configuration_[k])[index_i];
+					for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
+					{
+						size_t index_j = wall_neighborhood.j_[n];
+						if(wall_neighborhood.r_ij_[n] < large_dist)
+						{
+							Vecd n_w_t = n_i - dot(n_i, n_k[index_j]) * n_k[index_j];
+							Vecd n_t = n_w_t / (n_w_t.norm() + TinyReal);
+							Vecd n_i_w = n_t * sin(contact_angle_) + cos(contact_angle_) * n_k[index_j];
+							/** No change for multi-resolution. */
+							Real r_ij = wall_neighborhood.r_ij_[n] *  dot(n_k[index_j], wall_neighborhood.e_ij_[n]);
+							if(r_ij <= particle_spacing_)
+							{
+								smoothing_factor = 0.0;
+							}else if(r_ij <= 2.0 * smoothing_length_)
+							{
+								smoothing_factor = (r_ij - particle_spacing_) / smoothing_length_;
+							}else
+							{
+								smoothing_factor = 1.0;
+							}
+							
+							Vecd smooth_norm = smoothing_factor * n_i + (1.0 - smoothing_factor) * n_i_w;
+								(*surface_norm_)[index_i] = smooth_norm / (smooth_norm.norm() + TinyReal);
+
+							large_dist = wall_neighborhood.r_ij_[n];
+						}
+					}
+				}
+			}
 		}
 		//=================================================================================================//
 	}		

@@ -180,7 +180,7 @@ public:
 };
 /** Imposing diffusion boundary condition */
 class DiffusionBCs
-	: public DiffusionBoundaryCondition<SolidBody, ElasticSolidParticles, ShapeSurface, LocallyOrthotropicMuscle>
+	: public ConstrainDiffusionBodyRegion<SolidBody, ElasticSolidParticles, ShapeSurface, LocallyOrthotropicMuscle>
 {
 protected:
 	size_t phi_;
@@ -204,7 +204,7 @@ protected:
 	};
 public:
 	DiffusionBCs(SolidBody* body, ShapeSurface* body_part)
-		: DiffusionBoundaryCondition<SolidBody, ElasticSolidParticles, ShapeSurface, LocallyOrthotropicMuscle>(body, body_part)
+		: ConstrainDiffusionBodyRegion<SolidBody, ElasticSolidParticles, ShapeSurface, LocallyOrthotropicMuscle>(body, body_part)
 	{
 		phi_ = material_->SpeciesIndexMap()["Phi"];
 	};

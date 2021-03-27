@@ -46,8 +46,7 @@ namespace SPH
 	{
 		Fluid& fluid_l_, & fluid_r_;
 	public:
-		NoRiemannSolver(Fluid& fluid_i, Fluid& fluid_j) :
-			fluid_l_(fluid_i), fluid_r_(fluid_j) {};
+		NoRiemannSolver(Fluid& fluid_i, Fluid& fluid_j) : fluid_l_(fluid_i), fluid_r_(fluid_j) {};
 		Real getPStar(const FluidState& state_i, const FluidState& state_j, const Vecd& direction_to_i);
 		Vecd getVStar(const FluidState& state_i, const FluidState& state_j, const Vecd& direction_to_i);
 	};
@@ -56,8 +55,7 @@ namespace SPH
 	{
 		Fluid& fluid_i_, & fluid_j_;
 	public:
-		AcousticRiemannSolver(Fluid& fluid_i, Fluid& fluid_j) :
-			fluid_i_(fluid_i), fluid_j_(fluid_j) {};
+		AcousticRiemannSolver(Fluid& fluid_i, Fluid& fluid_j) : fluid_i_(fluid_i), fluid_j_(fluid_j) {};
 		Real getPStar(const FluidState& state_i, const FluidState& state_j, const Vecd& direction_to_i);
 		Vecd getVStar(const FluidState& state_i, const FluidState& state_j, const Vecd& direction_to_i);
 	};
@@ -66,8 +64,7 @@ namespace SPH
 	{
 		Fluid& fluid_i_, & fluid_j_;
 	public:
-		DissipativeRiemannSolver(Fluid& fluid_i, Fluid& fluid_j) :
-			fluid_i_(fluid_i), fluid_j_(fluid_j) {};
+		DissipativeRiemannSolver(Fluid& fluid_i, Fluid& fluid_j) : fluid_i_(fluid_i), fluid_j_(fluid_j) {};
 		Real getPStar(const FluidState& state_i, const FluidState& state_j, const Vecd& direction_to_i);
 		Vecd getVStar(const FluidState& state_i, const FluidState& state_j, const Vecd& direction_to_i);
 	};

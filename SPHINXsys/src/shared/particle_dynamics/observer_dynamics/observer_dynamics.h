@@ -35,18 +35,34 @@ namespace SPH
 {
 	namespace observer_dynamics
 	{
-		using InterpolationDataDelegate =
-			DataDelegateContact<SPHBody, BaseParticles, BaseMaterial, SPHBody, BaseParticles, BaseMaterial>;
+		typedef DataDelegateContact<SPHBody, BaseParticles, BaseMaterial, 
+			SPHBody, BaseParticles, BaseMaterial> InterpolationContactData;
 
 		/**
 		 * @class InterpolatingAQuantity
 		 * @brief Interpolate a given member data in the particles of a general body
 		 */
 		template <int DataTypeIndex, typename VariableType>
-		class InterpolatingAQuantity : public InteractionDynamics, public InterpolationDataDelegate
+		class InterpolatingAQuantity : public InteractionDynamics, public InterpolationContactData
 		{
+		public:
+			explicit InterpolatingAQuantity(BaseContactBodyRelation* body_contact_relation, std::string variable_name) :
+				InteractionDynamics(body_contact_relation->sph_body_), InterpolationContactData(body_contact_relation),
+				interpolated_quantities_(*particles_->createAVariable<DataTypeIndex, VariableType>(variable_name))
+			{
+				prepareContactData(variable_name);
+			};
+			explicit InterpolatingAQuantity(BaseContactBodyRelation* body_contact_relation,
+				std::string interpolated_variable, std::string target_variable) :
+				InteractionDynamics(body_contact_relation->sph_body_), InterpolationContactData(body_contact_relation),
+				interpolated_quantities_(*particles_->getVariableByName<DataTypeIndex, VariableType>(interpolated_variable))
+			{
+				prepareContactData(target_variable);
+			};
+			virtual ~InterpolatingAQuantity() {};
+
 		protected:
-			StdLargeVec<VariableType>*  interpolated_quantities_;
+			StdLargeVec<VariableType>&  interpolated_quantities_;
 			StdVec<StdLargeVec<Real>*> contact_Vol_;
 			StdVec<StdLargeVec<VariableType>*> contact_data_;
 
@@ -69,7 +85,7 @@ namespace SPH
 						ttl_weight += weight_j;
 					}
 				}
-				(*interpolated_quantities_)[index_i] = observed_quantity / (ttl_weight + TinyReal);
+				interpolated_quantities_[index_i] = observed_quantity / (ttl_weight + TinyReal);
 			};
 
 			void prepareContactData(const std::string& variable_name)
@@ -82,21 +98,6 @@ namespace SPH
 					contact_data_.push_back(contact_data);
 				}
 			}
-		public:
-			explicit InterpolatingAQuantity(BaseContactBodyRelation* body_contact_relation, std::string variable_name) :
-				InteractionDynamics(body_contact_relation->sph_body_), InterpolationDataDelegate(body_contact_relation)
-			{
-				interpolated_quantities_ = particles_->createAVariable<DataTypeIndex, VariableType>(variable_name);
-				prepareContactData(variable_name);
-			};
-			explicit InterpolatingAQuantity(BaseContactBodyRelation* body_contact_relation,
-				std::string interpolated_variable, std::string target_variable) :
-				InteractionDynamics(body_contact_relation->sph_body_), InterpolationDataDelegate(body_contact_relation)
-			{
-				interpolated_quantities_ = particles_->getVariableByName<DataTypeIndex, VariableType>(interpolated_variable);
-				prepareContactData(target_variable);
-			};
-			virtual ~InterpolatingAQuantity() {};
 		};
 
 		/**
@@ -104,8 +105,7 @@ namespace SPH
 		* @brief  correct kernel weights for interpolation between general bodies
 		*/
 		class CorrectInterpolationKernelWeights : 
-			public InteractionDynamics,
-			public DataDelegateContact<SPHBody, BaseParticles, BaseMaterial, SPHBody, BaseParticles, BaseMaterial>
+			public InteractionDynamics, public InterpolationContactData
 		{
 		public:
 			CorrectInterpolationKernelWeights(BaseContactBodyRelation* body_contact_relation);

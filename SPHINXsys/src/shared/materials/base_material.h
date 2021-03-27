@@ -54,14 +54,12 @@ namespace SPH {
 	{
 	protected:
 		string material_name_;
-		Real inv_dimension_; /**<inverse of dimension */
 		Real rho_0_; /**< reference density. */
 		BaseParticles* base_particles_;
 
 		virtual void assignDerivedMaterialParameters() {};
 	public:
-		BaseMaterial() : material_name_("BaseMaterial"), 
-			inv_dimension_(1.0 / (Real)Vecd(0).size()), rho_0_(1.0), base_particles_(NULL) {};
+		BaseMaterial() : material_name_("BaseMaterial"), rho_0_(1.0), base_particles_(NULL) {};
 		virtual ~BaseMaterial() {};
 
 		void assignBaseParticles(BaseParticles* base_particles) { base_particles_ = base_particles; };
@@ -71,8 +69,8 @@ namespace SPH {
 		virtual void writeToXmlForReloadMaterialProperty(std::string &filefullpath) {};
 		virtual void readFromXmlForMaterialProperty(std::string &filefullpath) {};
 		virtual void writeMaterialPropertyToVtuFile(ofstream& output_file) {};
-		virtual BaseMaterial* pointToThisObject() {return this;};
-};
+		virtual BaseMaterial* pointToThisObject() { return this; };
+	};
 
 
 	/** @class  Fluid
@@ -106,7 +104,7 @@ namespace SPH {
 		virtual Real getPressure(Real rho, Real rho_e) { return getPressure(rho); };
 		virtual Real DensityFromPressure(Real p) = 0;
 		virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) = 0;
-		virtual Fluid* pointToThisObject() override {return this;};
+		virtual Fluid* pointToThisObject() override { return this; };
 	};
 
 	/** @class  Solid
@@ -129,7 +127,7 @@ namespace SPH {
 
 		Real ContactFriction() { return contact_friction_; };
 		Real ContactStiffness() { return contact_stiffness_; };
-		virtual Solid* pointToThisObject() override {return this;};
+		virtual Solid* pointToThisObject() override { return this; };
 	protected:
 		Real contact_stiffness_; /**< contact-force stiffness related to bulk modulus*/
 		Real contact_friction_; /**< friction property mimic fluid viscosity*/

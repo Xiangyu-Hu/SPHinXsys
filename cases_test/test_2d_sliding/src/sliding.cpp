@@ -155,8 +155,8 @@ int main(int ac, char* av[])
 	solid_dynamics::SummationContactDensity free_cubic_update_contact_density(free_cubic_contact);
 	solid_dynamics::ContactForce free_cubic_compute_solid_contact_forces(free_cubic_contact);
 	/** Damping*/
-	DampingBySplittingWithRandomChoice<InnerBodyRelation, DampingBySplittingPairwise<Vec2d>, Vec2d>
-		damping(free_cubic_inner, 0.5, free_cubic_particles.vel_n_, physical_viscosity);
+	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec2d>>
+		damping(free_cubic_inner, 0.5, "Velocity", physical_viscosity);
 	/** Observer and output. */
 	WriteAnObservedQuantity<indexVector, Vecd> write_free_cubic_displacement("Position", in_output, free_cubic_observer_contact);
 	/** Now, pre-simulation. */

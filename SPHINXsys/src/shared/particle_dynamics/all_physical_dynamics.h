@@ -13,5 +13,8 @@ particle dynamics capabilities. **/
 #include "electro_physiology.h"
 #include "active_muscle_dynamics.h"
 #include "particle_dynamics_diffusion_reaction.h"
+#include "particle_dynamics_diffusion_reaction.hpp"
+#include "particle_dynamics_dissipation.h"
+#include "particle_dynamics_dissipation.hpp"
 
 

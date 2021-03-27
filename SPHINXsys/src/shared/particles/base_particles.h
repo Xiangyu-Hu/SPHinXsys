@@ -119,7 +119,7 @@ namespace SPH {
 				exit(1);
 			}
 		};
-		/** create register a new variable, which has been defined yet, into particles */
+		/** create and register a new variable, which has not been defined yet, into particles */
 		template<int DataTypeIndex, typename VariableType>
 		StdLargeVec<VariableType>* createAVariable(string variable_name, bool is_to_write = false, VariableType initial_value = VariableType(0))
 		{
@@ -150,6 +150,7 @@ namespace SPH {
 			return NULL;
 		};
 
+		/** add a variable into the list for state output */
 		template<int DataTypeIndex, typename VariableType>
 		void addAVariableToWrite(string variable_name)
 		{

@@ -41,8 +41,8 @@ namespace SPH
 {
 	namespace electro_physiology
 	{
-		typedef DiffusionReactionDataDelegateSimple<SolidBody, SolidParticles, Solid> ElectroPhysiologyDataDelegateSimple;
-		typedef DiffusionReactionDataDelegateInner<SolidBody, SolidParticles, Solid> ElectroPhysiologyDataDelegateInner;
+		typedef DiffusionReactionSimpleData<SolidBody, SolidParticles, Solid> ElectroPhysiologyDataDelegateSimple;
+		typedef DiffusionReactionInnerData<SolidBody, SolidParticles, Solid> ElectroPhysiologyDataDelegateInner;
 		/**
 		 * @class ElectroPhysiologyInitialCondition
 		 * @brief  set initial condition for a muscle body

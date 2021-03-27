@@ -40,7 +40,8 @@ namespace SPH
 			SolidBody, SolidParticles, Solid, DataDelegateEmptyBase> FluidWallData;
 		typedef DataDelegateContact<FluidBody, FluidParticles, Fluid,
 			SPHBody, BaseParticles, BaseMaterial, DataDelegateEmptyBase> FluidContactData;
-
+		typedef DataDelegateContact<FluidBody, FluidParticles, Fluid, 
+			SolidBody, SolidParticles, Solid> FSIContactData;
 		/**
 		* @class RelaxationWithWall
 		* @brief Abstract base class for general relaxation algorithms with wall
@@ -100,38 +101,35 @@ namespace SPH
 		using DensitySummationFreeSurfaceComplex = DensitySummation<DensitySummationFreeSurfaceInner>;
 
 		/**
-		 * @class ViscousAccelerationWithWall
-		 * @brief  the viscosity force induced acceleration
+		 * @class ViscousWithWall
+		 * @brief  template class viscous acceleration with wall boundary
 		 */
-		class ViscousAccelerationWithWall : public ViscousAccelerationInner, public FluidWallData
+		template<class BaseViscousAccelerationType>
+		class ViscousWithWall : public RelaxationWithWall<BaseViscousAccelerationType>
 		{
 		public:
-			ViscousAccelerationWithWall(ComplexBodyRelation* body_complex_relation);
-			virtual ~ViscousAccelerationWithWall() {};
+			// template for different combination of constructing body relations
+			template<class BaseBodyRelationType>
+			ViscousWithWall(BaseBodyRelationType* base_body_relation, 
+				BaseContactBodyRelation* wall_contact_relation);
+			virtual ~ViscousWithWall() {};
 		protected:
-			StdVec<StdLargeVec<Real>*> contact_Vol_;
-			StdVec<StdLargeVec<Vecd>*> contact_vel_ave_;
-
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
-		/**
-		 * @class AngularConservativeViscousAccelerationWithWall
-		 * @brief  the viscosity force induced acceleration
-		 */
-		class AngularConservativeViscousAccelerationWithWall :
-			public AngularConservativeViscousAccelerationInner, public FluidWallData
+		/** template interface class for different pressure relaxation with wall schemes */
+		template<class BaseViscousAccelerationType>
+		class BaseViscousAccelerationWithWall : public BaseViscousAccelerationType
 		{
 		public:
-			AngularConservativeViscousAccelerationWithWall(ComplexBodyRelation* body_complex_relation);
-			virtual ~AngularConservativeViscousAccelerationWithWall() {};
-		protected:
-			StdVec<StdLargeVec<Real>*> contact_Vol_;
-			StdVec<StdLargeVec<Vecd>*> contact_vel_ave_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			BaseViscousAccelerationWithWall(ComplexBodyRelation* fluid_wall_relation);
+			BaseViscousAccelerationWithWall(BaseInnerBodyRelation* fluid_inner_relation, 
+				BaseContactBodyRelation* wall_contact_relation);
+			BaseViscousAccelerationWithWall(ComplexBodyRelation* fluid_complex_relation, 
+				BaseContactBodyRelation* wall_contact_relation);
 		};
-
+		using ViscousAccelerationWithWall 
+			= BaseViscousAccelerationWithWall<ViscousWithWall<ViscousAccelerationInner>>;
 		/**
 		 * @class TransportVelocityCorrectionComplex
 		 * @brief  transport velocity correction consdiering  the contribution from contact bodies
@@ -291,6 +289,25 @@ namespace SPH
 
 			virtual ~DensityRelaxationRiemannWithWallOldroyd_B() {};
 		protected:
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		 * @class 	SurfaceNormWithWall
+		 * @brief  Modify surface norm when contact with wall
+		 */
+		class SurfaceNormWithWall : public InteractionDynamics, public FSIContactData
+		{
+		public:
+			SurfaceNormWithWall(BaseContactBodyRelation* contact_relation, Real contact_angle);
+			virtual ~SurfaceNormWithWall() {};
+		protected:
+			Real contact_angle_;
+			Real smoothing_length_;
+			Real particle_spacing_;
+			StdVec<StdLargeVec<Vecd>*> wall_n_;
+			StdLargeVec<Vecd>* surface_norm_;
+			StdLargeVec<bool>& is_free_surface_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 	}

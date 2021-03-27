@@ -122,7 +122,6 @@ int main()
 		air_water_complex->updateConfiguration();
 		air_wall_contact->updateConfiguration();
 	}
-
 	/** Output the start states of bodies. */
 	write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
 	/** Output the Hydrostatic mechanical energy of fluid. */
@@ -145,7 +144,6 @@ int main()
 	tick_count::interval_t interval_computing_pressure_relaxation;
 	tick_count::interval_t interval_updating_configuration;
 	tick_count time_instance;
-
 	/**
 	 * @brief 	Main loop starts here.
 	 */
@@ -166,6 +164,7 @@ int main()
 
 			update_water_density_by_summation.parallel_exec();
 			update_air_density_by_summation.parallel_exec();
+
 			air_transport_correction.parallel_exec(Dt);
 
 			interval_computing_time_step += tick_count::now() - time_instance;
@@ -228,6 +227,7 @@ int main()
 		interval += t3 - t2;
 
 	}
+
 	tick_count t4 = tick_count::now();
 
 	tick_count::interval_t tt;

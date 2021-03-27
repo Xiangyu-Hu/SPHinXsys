@@ -158,9 +158,11 @@ namespace SPH {
 		//----------------------------------------------------------------------
 		//	extra stress compared to elastic solid particles
 		//----------------------------------------------------------------------
-		StdLargeVec<Matd> resultant_stress_;	/**< membrane stress */
-		StdLargeVec<Matd> resultant_moment_;	/**< bending moment */
-
+		StdLargeVec<Vecd> shear_stress_;	    /**< shear stress */
+		StdLargeVec<Matd>	corrected_moment_;	/**<  corrected bending moment for pair interaction */
+		//----------------------------------------------------------------------
+		//	extra coordinate transformation matrix compared to elastic solid particles
+		//----------------------------------------------------------------------
 		StdLargeVec<Matd> transformation_matrix_;   /**< transformation matrix from initial global to initial local coordinates */
 
 

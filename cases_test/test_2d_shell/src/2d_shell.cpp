@@ -186,8 +186,10 @@ int main()
 	/** Constrain the Boundary. */
 	thin_structure_dynamics::FixedFreeRotateShellBoundary
 		fixed_free_rotate_shell_boundary(cylinder_body_inner, new BoundaryGeometry(cylinder_body, "BoundaryGeometry"));
-	DampingForShell<Vecd> cylinder_position_damping(cylinder_body_inner, 0.5, cylinder_body_particles.vel_n_, physical_viscosity);
-	DampingForShell<Vecd> cylinder_rotation_damping(cylinder_body_inner, 0.5, cylinder_body_particles.angular_vel_, physical_viscosity);
+	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec2d>>
+		cylinder_position_damping(cylinder_body_inner, 0.5, "Velocity", physical_viscosity);
+	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec2d>>
+		cylinder_rotation_damping(cylinder_body_inner, 0.5, "AngularVelocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
 	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);

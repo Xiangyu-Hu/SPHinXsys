@@ -129,16 +129,22 @@ namespace SPH
 			Real rho_0_, inv_rho_0_;
 			StdLargeVec<Real>& Vol_, &rho_n_, &mass_, &shell_thickness_;
 			StdLargeVec<Vecd>& pos_n_, &vel_n_, &dvel_dt_, &dvel_dt_others_, &force_from_fluid_;
-			StdLargeVec<Vecd>& n_0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_, &angular_vel_, dangular_vel_dt_;
+			StdLargeVec<Vecd>& n_0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_, 
+				&angular_vel_, dangular_vel_dt_;
+			StdLargeVec<Vecd>& shear_stress_;
 			StdLargeVec<Matd>& B_, &stress_PK1_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_,
-				&resultant_stress_, &resultant_moment_;
+				&corrected_stress_, &corrected_moment_;
 			StdLargeVec<Matd>& transformation_matrix_;
 			Real numerical_viscosity_;
 
 			Real shear_correction_factor;
 			int number_of_gaussian_point;
-			vector<Real> gaussian_point;
-			vector<Real> gaussian_weight;
+			const vector<Real>* gaussian_point;
+			const vector<Real>* gaussian_weight;
+			static vector<Real> three_gaussian_points;
+			static vector<Real> three_gaussian_weights;
+			static vector<Real> five_gaussian_points;
+			static vector<Real> five_gaussian_weights;
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -209,30 +215,29 @@ namespace SPH
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
-		/**@class ConstrainShellBodyRegionForZeroShearStress
-		 * @brief Fix a shell body part to constrain the shear stress of the boundary is equal to zero.
-		 * Note that the average values for FSI are prescirbed also.
+		/**
+		 * @class ClampConstrainShellBodyRegion
+		 * @brief The clamped constrain of a shell body part
 		 */
-		class ConstrainShellBodyRegionForZeroShearStress :
-			public PartSimpleDynamicsByParticle, public ShellDataDelegateSimple
+		class ClampConstrainShellBodyRegion :
+			public PartInteractionDynamicsByParticle1Level,
+			public ShellDataDelegateInner
 		{
 		public:
-			ConstrainShellBodyRegionForZeroShearStress(SolidBody* body, BodyPartByParticle* body_part);
-			virtual ~ConstrainShellBodyRegionForZeroShearStress() {};
+			ClampConstrainShellBodyRegion(BaseInnerBodyRelation* body_inner_relation, BodyPartByParticle* body_part);
+			virtual ~ClampConstrainShellBodyRegion() {};
 		protected:
-			StdLargeVec<Vecd>& pos_n_, &pos_0_;
-			StdLargeVec<Vecd>& vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
-			StdLargeVec<Vecd>& rotation_, &angular_vel_;
-			StdLargeVec<Matd>& F_, &dF_dt_;
-			virtual Vecd getDisplacement(Vecd& pos_0, Vecd& pos_n) { return pos_0; };
-			virtual Vecd getVelocity(Vecd& pos_0, Vecd& pos_n, Vecd& vel_n) { return Vecd(0); };
-			virtual Vecd GetAcceleration(Vecd& pos_0, Vecd& pos_n, Vecd& dvel_dt) { return Vecd(0); };
+			StdLargeVec<Real>& Vol_;
+			StdLargeVec<Vecd>& vel_n_, &angular_vel_;
+			StdLargeVec<Vecd>vel_n_temp_, angular_vel_temp_;
+			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**@class ConstrainShellBodyRegionInAxisDirection
 		 * @brief The boundary conditions are denoted by SS1 according to the references.
-	     * The axis_direction must be 0, 1.
+	     * The axis_direction must be 0 or 1.
 		 * Note that the average values for FSI are prescirbed also.
 		 */
 		class ConstrainShellBodyRegionInAxisDirection :

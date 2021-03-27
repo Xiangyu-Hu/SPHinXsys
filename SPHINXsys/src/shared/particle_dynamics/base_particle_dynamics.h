@@ -127,11 +127,11 @@ namespace SPH
 			base_particles_(sph_body->base_particles_) {};
 		virtual ~ParticleDynamics() {};
 
+		SPHBody* getSPHBody() { return sph_body_; };
 		/** The only two functions can be called from outside
 		  * One is for sequential execution, the other is for parallel. */
 		virtual ReturnType exec(Real dt = 0.0) = 0;
 		virtual ReturnType parallel_exec(Real dt = 0.0) = 0;
-
 	protected:
 		SPHBody* sph_body_;
 		ParticleAdaptation* particle_adaptation_;

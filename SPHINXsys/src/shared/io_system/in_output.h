@@ -278,7 +278,7 @@ namespace SPH {
 			out_file << "run_time" << "   ";
 			for (size_t i = 0; i != base_particles_->total_real_particles_; ++i)
 			{
-				writeFileHead(out_file, (*this->interpolated_quantities_)[i], quantity_name, i);
+				writeFileHead(out_file, this->interpolated_quantities_[i], quantity_name, i);
 			}
 			out_file << "\n";
 			out_file.close();
@@ -292,7 +292,7 @@ namespace SPH {
 			out_file << time << "   ";
 			for (size_t i = 0; i != base_particles_->total_real_particles_; ++i)
 			{
-				writeDataToFile(out_file, (*this->interpolated_quantities_)[i]);
+				writeDataToFile(out_file, this->interpolated_quantities_[i]);
 			}
 			out_file << "\n";
 			out_file.close();

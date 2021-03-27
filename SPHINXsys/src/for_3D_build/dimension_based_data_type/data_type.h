@@ -31,7 +31,7 @@ namespace SPH {
 	const int Dimensions = 3;
 
 	/** correction matrix, only works for thin structure dynamics. */
-	const Matd correction_matrix = { 1, 0, 0, 0, 1, 0, 0, 0, 0 };
+	const Matd reduced_unit_matrix = { 1, 0, 0, 0, 1, 0, 0, 0, 0 };
 
 	/** initial local normal, only works for thin structure dynamics. */
 	const Vecd n_local_0 = Vecd(0.0, 0.0, 1.0);

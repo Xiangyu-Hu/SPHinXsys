@@ -273,8 +273,8 @@ namespace SPH {
 		registerAVariable<indexVector, Vecd>(dangular_vel_dt_, "AngularAcceleration");
 		registerAVariable<indexMatrix, Matd>(F_bending_, "BendingDeformationGradient");
 		registerAVariable<indexMatrix, Matd>(dF_bending_dt_, "BendingDeformationGradientChangeRate");
-		registerAVariable<indexMatrix, Matd>(resultant_stress_, "ResultantStress");
-		registerAVariable<indexMatrix, Matd>(resultant_moment_, "ResultantMoment");
+		registerAVariable<indexVector, Vecd>(shear_stress_, "ShearStress");
+		registerAVariable<indexMatrix, Matd>(corrected_moment_, "CorrectedResultantMoment");
 		registerAVariable<indexMatrix, Matd>(transformation_matrix_, "TransformationMatrix");
 	}
 	//=================================================================================================//

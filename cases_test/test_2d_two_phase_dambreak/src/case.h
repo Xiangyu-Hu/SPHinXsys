@@ -14,12 +14,12 @@ using namespace SPH;
 /**
  * @brief Basic geometry parameters and numerical setup.
  */
-Real DL = 5.366; 						/**< Tank length. */
-Real DH = 2.0; 						/**< Tank height. */
+Real DL = 5.3; 							/**< Tank length. */
+Real DH = 2.0; 							/**< Tank height. */
 Real LL = 2.0; 							/**< Liquid colume length. */
 Real LH = 1.0; 							/**< Liquid colume height. */
-Real particle_spacing_ref = 0.025; 		/**< Initial reference particle spacing. */
-Real BW = particle_spacing_ref * 4; 	/**< Extending width for BCs. */
+Real particle_spacing_ref = 0.05; 		/**< Initial reference particle spacing. */
+Real BW = particle_spacing_ref * 2; 	/**< Extending width for BCs. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 /**
@@ -75,7 +75,7 @@ class WaterBlock : public FluidBody
 {
 public:
 	WaterBlock(SPHSystem& sph_system, string body_name)
-		: FluidBody(sph_system, body_name)
+		: FluidBody(sph_system, body_name, new ParticleAdaptation(1.3, 1))
 	{
 		/** Geomtry definition. */
 		std::vector<Vecd> water_block_shape = CreatWaterBlockShape();
@@ -94,7 +94,6 @@ public:
 		/** Basic material parameters*/
 		rho_0_ = rho0_f;
 		c_0_ = c_f;
-
 		/** Compute the derived material parameters*/
 		assignDerivedMaterialParameters();
 	}
@@ -106,7 +105,7 @@ class AirBlock : public FluidBody
 {
 public:
 	AirBlock(SPHSystem& sph_system, string body_name)
-		: FluidBody(sph_system, body_name)
+		: FluidBody(sph_system, body_name, new ParticleAdaptation(1.3, 0))
 	{
 		/** Geomtry definition. */
 		std::vector<Vecd> water_block_shape = CreatWaterBlockShape();
@@ -127,7 +126,6 @@ public:
 		/** Basic material parameters*/
 		rho_0_ = rho0_a;
 		c_0_ = c_f;
-
 		/** Compute the derived material parameters*/
 		assignDerivedMaterialParameters();
 	}
@@ -139,7 +137,7 @@ class WallBoundary : public SolidBody
 {
 public:
 	WallBoundary(SPHSystem& sph_system, string body_name)
-		: SolidBody(sph_system, body_name)
+		: SolidBody(sph_system, body_name, new ParticleAdaptation(1.3, 1))
 	{
 		/** Geomtry definition. */
 		std::vector<Vecd> outer_shape = CreatOuterWallShape();

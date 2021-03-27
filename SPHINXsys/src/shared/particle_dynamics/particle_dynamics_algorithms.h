@@ -135,11 +135,11 @@ namespace SPH
 	class CombinedInteractionDynamics : public InteractionDynamics
 	{
 	public:
-		explicit CombinedInteractionDynamics(StdVec<InteractionDynamics*> multiple_dynamics);
+		explicit CombinedInteractionDynamics(InteractionDynamics& dynamics_a, InteractionDynamics& dynamics_b);
 		virtual ~CombinedInteractionDynamics() {};
 
 	protected:
-		StdVec<InteractionDynamics*> multiple_dynamics_;
+		InteractionDynamics& dynamics_a_, & dynamics_b_;
 		virtual void setupDynamics(Real dt = 0.0) override;
 		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 	};

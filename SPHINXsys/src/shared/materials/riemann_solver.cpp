@@ -58,7 +58,6 @@ namespace SPH {
 
 		Real rhol_cl = fluid_i_.getSoundSpeed(state_i.p_, state_i.rho_) * state_i.rho_;
 		Real rhor_cr = fluid_j_.getSoundSpeed(state_j.p_, state_j.rho_) * state_j.rho_;
-		Real clr = (rhol_cl + rhor_cr) / (state_i.rho_ + state_j.rho_);
 
 		return (rhol_cl * state_j.p_ + rhor_cr * state_i.p_ + rhol_cl * rhor_cr * (ul - ur)) / (rhol_cl + rhor_cr);
 	}

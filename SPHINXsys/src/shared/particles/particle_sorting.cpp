@@ -45,7 +45,6 @@ namespace SPH {
 	//=================================================================================================//
 	void ParticleSorting::sortingParticleData(size_t* begin, size_t size)
 	{
-		StdLargeVec<size_t>& sequence = base_particles_->sequence_;
 		quick_sort_particle_range_->begin_ = begin;
 		quick_sort_particle_range_->size_ = size;
 		parallel_for(*quick_sort_particle_range_, quick_sort_particle_body_, ap);

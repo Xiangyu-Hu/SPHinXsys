@@ -15,7 +15,7 @@ using namespace SPH;
 Real PL = 10.0;                                          /** Length of the square plate. */
 Real PT = 1.0;                                           /** Thickness of the square plate. */
 Vec2d n_0 = Vec2d(0.0, 1.0);                             /** Pseudo-normal. */
-int particle_number = 40;								 /** Particle number in the direction of the length */
+int particle_number = 20;								 /** Particle number in the direction of the length */
 Real resolution_ref = PL / (Real)particle_number;        /** Initial reference particle spacing. */
 int BWD = 4;
 Real BW = resolution_ref * (Real)BWD;                    /** Boundary width, determined by specific layer of boundary particles. */
@@ -182,10 +182,12 @@ int main()
 	thin_structure_dynamics::ShellStressRelaxationSecondHalf
 		stress_relaxation_second_half(plate_body_inner);
 	/** Constrain the Boundary. */
-	solid_dynamics::ClampConstrainSolidBodyRegion
+	thin_structure_dynamics::FixedFreeRotateShellBoundary
 		constrain_holder(plate_body_inner, new BoundaryGeometry(plate_body, "BoundaryGeometry"));
-	DampingForShell<Vecd> plate_position_damping(plate_body_inner, 0.5, plate_body_particles.vel_n_, physical_viscosity);
-	DampingForShell<Vecd> plate_rotation_damping(plate_body_inner, 0.5, plate_body_particles.angular_vel_, physical_viscosity);
+	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec2d>>
+		plate_position_damping(plate_body_inner, 0.5, "Velocity", physical_viscosity);
+	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec2d>>
+		plate_rotation_damping(plate_body_inner, 0.5, "AngularVelocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
 	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);

@@ -1,6 +1,6 @@
 /**
  * @file 	fluid_dynamics_complex.hpp
- * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ * @author	Chi ZHang and Xiangyu Hu
  */
 #include "fluid_dynamics_complex.h"
 
@@ -90,6 +90,61 @@ namespace SPH
 			}
 			this->rho_sum_[index_i] += sigma * this->rho_0_ * this->inv_sigma_0_;
 		}
+		//=================================================================================================//
+        template<class BaseViscousAccelerationType>   	
+		template<class BaseBodyRelationType>
+		ViscousWithWall<BaseViscousAccelerationType>::
+            ViscousWithWall(BaseBodyRelationType* base_body_relation, 
+				BaseContactBodyRelation* wall_contact_relation) 
+		: RelaxationWithWall<BaseViscousAccelerationType>(base_body_relation, wall_contact_relation) {}
+		//=================================================================================================//
+        template<class BaseViscousAccelerationType>
+		void ViscousWithWall<BaseViscousAccelerationType>::Interaction(size_t index_i, Real dt)
+		{
+			BaseViscousAccelerationType::Interaction(index_i, dt);
+			
+			Real rho_i = this->rho_n_[index_i];
+			Vecd& vel_i = this->vel_n_[index_i];
+
+			Vecd acceleration(0), vel_derivative(0);
+			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
+			{
+				StdLargeVec<Real>& Vol_k = *(this->wall_Vol_[k]);
+				StdLargeVec<Vecd>& vel_ave_k = *(this->wall_vel_ave_[k]);
+				Neighborhood& contact_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = contact_neighborhood.j_[n];
+					Real r_ij = contact_neighborhood.r_ij_[n];
+
+					vel_derivative = 2.0*(vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * this->smoothing_length_);
+					acceleration += 2.0 * this->mu_ * vel_derivative 
+								  * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] / rho_i;
+				}
+			}
+
+			this->dvel_dt_others_[index_i] += acceleration;
+		}
+		//=================================================================================================//
+        template<class BaseViscousAccelerationType>
+		BaseViscousAccelerationWithWall<BaseViscousAccelerationType>::
+			BaseViscousAccelerationWithWall(ComplexBodyRelation* fluid_wall_relation) :
+				BaseViscousAccelerationType(fluid_wall_relation->inner_relation_,
+					fluid_wall_relation->contact_relation_) {}
+        //=================================================================================================//
+        template<class BaseViscousAccelerationType>
+		BaseViscousAccelerationWithWall<BaseViscousAccelerationType>::
+			BaseViscousAccelerationWithWall(BaseInnerBodyRelation* fluid_inner_relation, 
+				BaseContactBodyRelation* wall_contact_relation) :
+				BaseViscousAccelerationType(fluid_inner_relation,
+					wall_contact_relation) {}
+        //=================================================================================================//
+        template<class BaseViscousAccelerationType>
+		BaseViscousAccelerationWithWall<BaseViscousAccelerationType>::
+			BaseViscousAccelerationWithWall(ComplexBodyRelation* fluid_complex_relation, 
+				BaseContactBodyRelation* wall_contact_relation) :
+				BaseViscousAccelerationType(fluid_complex_relation,
+					wall_contact_relation) {}
        //=================================================================================================//
         template<class BasePressureRelaxationType>   	
 		template<class BaseBodyRelationType>
@@ -171,7 +226,6 @@ namespace SPH
 				particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
 
 				StdLargeVec<Real>& Vol_k = *(this->wall_Vol_[k]);
-				StdLargeVec<Vecd>& vel_n_ave_k = *(this->wall_vel_ave_[k]);
 				StdLargeVec<Vecd>& n_k = *(this->wall_n_[k]);
 				Neighborhood& wall_neighborhood = (*FluidWallData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
@@ -304,7 +358,7 @@ namespace SPH
 			BaseDensityRelaxationWithWall(ComplexBodyRelation* fluid_complex_relation,
 				BaseContactBodyRelation* wall_contact_relation) :
 				DensityRelaxation<BaseDensityRelaxationType>(fluid_complex_relation, wall_contact_relation) {}
-        //=================================================================================================//
+		//=================================================================================================//		
     }
 //=================================================================================================//
 }

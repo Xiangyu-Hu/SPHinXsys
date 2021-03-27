@@ -18,7 +18,7 @@ namespace SPH
 			/**The rotation matrix. */
 			Mat2d rotation_matrix(0.0);
 			rotation_matrix[0][0] = cos(rotation_angles[0]);
-			rotation_matrix[0][1] = -sin(rotation_angles[0]);
+			rotation_matrix[0][1] = sin(rotation_angles[0]);
 			rotation_matrix[1][0] = -rotation_matrix[0][1];
 			rotation_matrix[1][1] = rotation_matrix[0][0];
 
@@ -50,7 +50,7 @@ namespace SPH
 			/**The derivative of the rotation matrix. */
 			Mat2d drotation_matrix_dt(0.0);
 			drotation_matrix_dt[0][0] = -sin(rotation_angles[0]) * angular_vel[0];
-			drotation_matrix_dt[0][1] = -cos(rotation_angles[0]) * angular_vel[0];
+			drotation_matrix_dt[0][1] = cos(rotation_angles[0]) * angular_vel[0];
 			drotation_matrix_dt[1][0] = -drotation_matrix_dt[0][1];
 			drotation_matrix_dt[1][1] = drotation_matrix_dt[0][0];
 
@@ -118,7 +118,7 @@ namespace SPH
 		Vecd getRotationFromPseudoNormalForFiniteDeformation(Vec2d dpseudo_n_d2t, Vec2d rotation, Vec2d angular_vel, Real dt)
 		{
 			Vecd dangular_vel_dt(0.0);
-			dangular_vel_dt[0] = (dpseudo_n_d2t[0] - sin(rotation[0]) * powern(angular_vel[0], 2))
+			dangular_vel_dt[0] = -(dpseudo_n_d2t[0] + sin(rotation[0]) * powern(angular_vel[0], 2))
 				/ (2 * sin(rotation[0]) * angular_vel[0] * dt - cos(rotation[0]));
 			return dangular_vel_dt;
 		}
@@ -143,7 +143,7 @@ namespace SPH
 		Vecd getRotationFromPseudoNormalForSmallDeformation(Vec2d dpseudo_n_d2t, Vec2d rotation, Vec2d angular_vel, Real dt)
 		{
 			Vecd dangular_vel_dt(0.0);
-			dangular_vel_dt[0] = -dpseudo_n_d2t[0];
+			dangular_vel_dt[0] = dpseudo_n_d2t[0];
 			return dangular_vel_dt;
 		}
 		//=================================================================================================//

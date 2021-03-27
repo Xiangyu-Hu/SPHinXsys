@@ -279,8 +279,8 @@ int main(int ac, char* av[])
 	solid_dynamics::SummationContactDensity damping_ball_update_contact_density(damping_ball_contact);
 	solid_dynamics::ContactForce damping_ball_compute_solid_contact_forces(damping_ball_contact);
 	/** Damping for one ball */
-	DampingBySplittingWithRandomChoice<InnerBodyRelation, DampingBySplittingPairwise<Vec2d>, Vec2d>
-		damping(damping_ball_inner, 0.5, damping_ball_particles.vel_n_, physical_viscosity);
+	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec2d>>
+		damping(damping_ball_inner, 0.5, "Velocity", physical_viscosity);
 	/** Observer and output. */
 	WriteAnObservedQuantity<indexVector, Vecd>
 		write_free_ball_displacement("Position", in_output, free_ball_observer_contact);

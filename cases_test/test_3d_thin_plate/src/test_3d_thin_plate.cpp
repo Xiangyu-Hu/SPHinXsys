@@ -189,8 +189,10 @@ int main()
 	/** Constrain the Boundary. */
 	solid_dynamics::ConstrainSolidBodyRegion
 		constrain_holder(plate_body, new BoundaryGeometry(plate_body, "BoundaryGeometry"));
-	DampingForShell<Vecd> plate_position_damping(plate_body_inner, 0.5, plate_body_particles.vel_n_, physical_viscosity);
-	DampingForShell<Vecd> plate_rotation_damping(plate_body_inner, 0.5, plate_body_particles.angular_vel_, physical_viscosity);
+	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>
+		plate_position_damping(plate_body_inner, 0.5, "Velocity", physical_viscosity);
+	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>
+		plate_rotation_damping(plate_body_inner, 0.5, "AngularVelocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
 	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
