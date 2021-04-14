@@ -5,7 +5,9 @@
 SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle Hydrodynamics for industrial compleX systems. 
 It provides C++ APIs for physical accurate simulation and aims to model coupled industrial dynamic systems including fluid, solid, multi-body dynamics 
 and beyond with SPH (smoothed particle hydrodynamics), a meshless computational method using particle discretization. 
-Please check the documentation of the code at https://xiangyu-hu.github.io/SPHinXsys/
+Please check the documentation of the code at https://xiangyu-hu.github.io/SPHinXsys/.
+For more information on the SPHinXsys project, please check the project website: https://www.sphinxsys.org.
+For program manual and tutorials, please check https://www.sphinxsys.org/html/sphinx_index.html. 
 
 SPHinXsys is a multi-physics, multi-resolution SPH library. 
 Although it is not a standalone application itself, 
@@ -122,7 +124,7 @@ Here, we give the instructions for installing on Ubuntu Linux, Apple OS and Wind
         $ make -j
         $ ctest
         
-        You can play with SPHInXsys, for example run a specific test case by
+        You can play with SPHinXsys, for example run a specific test case by
         $ cd /path/to/sphinxsys-build/cases_test/test_2d_dambreak
         $ make -j 
         $ cd /bin
@@ -143,6 +145,7 @@ Here, we give the instructions for installing on Ubuntu Linux, Apple OS and Wind
 
 ### Install on Windows Visual Studio
 
+You can find a installation instruction video: https://youtu.be/m0p1nybM4v4, and install by the following steps: 
 1. Install latest version Cmake, SmartGit (choose non-commercial option) binary.
 2. Build, test and install Simbody
 
@@ -190,7 +193,7 @@ However, the following notes must be considered:
         The flag -DACTIVATE_CUDA=ON must be added to let the compiler find an installed version of CUDA. 
         CUDA 11.0 or higher has to be installed.
         Choose RelWithDebInfo mode to build.
-        You need to modify the "BUILD_GPU_ARCH" from the master CMake file according to the architechture of your GPU.
+        You need to modify the "BUILD_GPU_ARCH" from the master CMake file according to the architecture of your GPU.
         Just identify the architecture of your GPU and use the proper value of BUILD_GPU_ARCH according the the available tables like this one:
         http://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
         Two examples are 75 for Turing and 60 for Pascal.
