@@ -1,4 +1,8 @@
-#pragma once
+
+#ifndef DATA_TYPE_2D_H
+#define DATA_TYPE_2D_H
+
+
 #include "small_vectors.h"
 #include "large_data_containers.h"
 
@@ -35,3 +39,4 @@ namespace SPH {
 	/** initial locald normal, only works for thin structure dynamics. */
 	const Vecd n_local_0 = Vecd(0.0, 1.0);
 }
+#endif //DATA_TYPE_2D_H

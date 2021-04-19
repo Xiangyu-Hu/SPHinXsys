@@ -3,7 +3,11 @@
  * @brief 	Set up of basic data structure.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */
-#pragma once
+
+#ifndef SPH_DATA_CONTAINERS_H
+#define SPH_DATA_CONTAINERS_H
+
+
 
 #include "base_data_package.h"
 
@@ -51,3 +55,4 @@ namespace SPH {
 	/** Pair of point and volume. */
 	using PositionsAndVolumes = vector<pair<Vecd, Real>>;
 }
+#endif //SPH_DATA_CONTAINERS_H

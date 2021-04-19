@@ -28,7 +28,11 @@
 * @author	Chi ZHang and Xiangyu Hu
 */
 
-#pragma once
+
+#ifndef FLUID_DYNAMCIS_COMPLEX_H
+#define FLUID_DYNAMCIS_COMPLEX_H
+
+
 
 #include "fluid_dynamics_inner.h"
 
@@ -312,3 +316,4 @@ namespace SPH
 		};
 	}
 }
+#endif //FLUID_DYNAMCIS_COMPLEX_H

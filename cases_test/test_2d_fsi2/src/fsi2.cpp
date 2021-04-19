@@ -26,8 +26,9 @@ int main(int ac, char* av[])
 	system.restart_step_ = 0;
 
 	//handle command line arguments
+	#ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
-
+	#endif
 	/**
 	 * @brief Creating body, materials and particles for a water block.
 	 */

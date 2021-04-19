@@ -3,7 +3,11 @@
  * @details A toolkit for exception functionality. 
  * @author	Chi Zhang and Xiangyu Hu.
  */
-#pragma once
+
+#ifndef EXCEPTION_SIMBODY_H
+#define EXCEPTION_SIMBODY_H
+
+
 
 #include "base_data_package.h"
 
@@ -135,3 +139,4 @@ public:
     	}
 	};
 }/** end of namespace */
+#endif //EXCEPTION_SIMBODY_H

@@ -26,7 +26,11 @@
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#pragma once
+
+#ifndef IN_OUTPUT_H
+#define IN_OUTPUT_H
+
+
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_data_package.h"
@@ -587,3 +591,4 @@ namespace SPH {
 		virtual void WriteToFile(Real time = 0.0) override;
 	};
 }
+#endif //IN_OUTPUT_H
