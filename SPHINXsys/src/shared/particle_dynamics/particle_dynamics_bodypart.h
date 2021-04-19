@@ -28,7 +28,11 @@
  * The particles of a body part can be defined in an Eulerian or Lagrangian fashion.
  * @author	Chi ZHang and Xiangyu Hu
  */
-#pragma once
+
+#ifndef PARTICLE_DYNAMICS_BODYPART_H
+#define PARTICLE_DYNAMICS_BODYPART_H
+
+
 
 #include "base_particle_dynamics.h"
 #include "base_particle_dynamics.hpp"
@@ -247,3 +251,4 @@ namespace SPH {
 		virtual ReturnType OutputResult(ReturnType reduced_value) { return reduced_value; };
 	};
 }
+#endif //PARTICLE_DYNAMICS_BODYPART_H

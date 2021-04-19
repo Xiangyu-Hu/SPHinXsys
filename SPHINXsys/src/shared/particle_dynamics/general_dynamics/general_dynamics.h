@@ -26,7 +26,11 @@
 * @author	Chi ZHang and Xiangyu Hu
 */
 
-#pragma once
+
+#ifndef GENERAL_DYNAMICS_H
+#define GENERAL_DYNAMICS_H
+
+
 
 #include "all_particle_dynamics.h"
 
@@ -434,3 +438,4 @@ namespace SPH
 		Vecd ReduceFunction(size_t index_i, Real dt = 0.0) override;
 	};
 }
+#endif //GENERAL_DYNAMICS_H

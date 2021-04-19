@@ -31,7 +31,11 @@
 * @author	Chi ZHang and Xiangyu Hu
 */
 
-#pragma once
+
+#ifndef LEVEL_SET_H
+#define LEVEL_SET_H
+
+
 
 #include "mesh_with_data_packages.h"
 #include "mesh_with_data_packages.hpp"
@@ -168,3 +172,4 @@ namespace SPH
 
 	};
 }
+#endif //LEVEL_SET_H

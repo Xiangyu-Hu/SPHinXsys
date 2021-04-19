@@ -3,7 +3,8 @@
 * @brief 	This is the case file for the test of Oscillating Wave Surge Converter (OWSC).
 * @author   Chi Zhang and Xiangyu Hu
 */
-#pragma once
+#ifndef TEST_2D_OWSC_CASE_H
+#define TEST_2D_OWSC_CASE_H
 
 #include "sphinxsys.h"
 using namespace SPH;
@@ -528,3 +529,4 @@ public:
 		body_input_points_volumes_.push_back(make_pair(Vecd(7.862, 0.452), 0.0));
 	}
 };
+#endif //TEST_2D_OWSC_CASE_H

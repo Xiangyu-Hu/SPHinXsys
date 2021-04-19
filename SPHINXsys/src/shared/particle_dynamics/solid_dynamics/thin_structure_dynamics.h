@@ -26,7 +26,11 @@
 * @details 	We consider here a weakly compressible solids.   
 * @author	Dong Wu, Chi Zhang and Xiangyu Hu
 */
-#pragma once
+
+#ifndef THIN_STRUCTURE_DYNAMICS_H
+#define THIN_STRUCTURE_DYNAMICS_H
+
+
 #include "all_particle_dynamics.h"
 #include "elastic_solid.h"
 #include "weakly_compressible_fluid.h"
@@ -255,3 +259,4 @@ namespace SPH
 		};
 	}
 }
+#endif //THIN_STRUCTURE_DYNAMICS_H

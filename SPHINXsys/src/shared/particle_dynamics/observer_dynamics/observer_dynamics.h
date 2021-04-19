@@ -27,7 +27,11 @@
  * @author	Xiangyu Hu and Chi Zhang
  */
 
-#pragma once
+
+#ifndef OBSERVER_DYNAMICS_H
+#define OBSERVER_DYNAMICS_H
+
+
 
 #include "all_particle_dynamics.h"
 
@@ -116,3 +120,4 @@ namespace SPH
 		};
 	}
 }
+#endif //OBSERVER_DYNAMICS_H

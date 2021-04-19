@@ -23,7 +23,7 @@
 #ifndef SPHINXSYS_BASE_SMALLVEC_H
 #define SPHINXSYS_BASE_SMALLVEC_H
 
-#pragma once
+
 
 #include "Simbody.h"
 #include "SimTKcommon.h"
