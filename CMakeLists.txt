@@ -4,6 +4,69 @@
 cmake_minimum_required(VERSION 3.10)
 project(SPHINXsys VERSION 1.0.0 LANGUAGES CXX)
 
+# webassembly build #
+set(WASM_BUILD 0)
+
+# oneTBB #
+# "off": oneTBB not built by this project
+# "static": oneTBB static build
+# "dynamic": oneTBB dynamic build
+# static oneTBB build does not work currently
+set(oneTBB_BUILD "dynamic")
+if(oneTBB_BUILD MATCHES "static")
+    set(BUILD_SHARED_LIBS OFF)
+endif(oneTBB_BUILD MATCHES "static")
+
+## current oneTBB version: v2021.2.0
+## set oneTBB testing off in oneTBB CmakeLists
+
+###### BOOST ######
+## turn Boost on here
+#add_definitions(-DBOOST_AVAILABLE)
+###### BOOST ######
+
+###### Simbody ######
+set(ONLY_3D 1)
+include_directories(${PLATFORM_INCLUDE_DIRECTORIES})
+set(SIMBODY_MAJOR_VERSION 3)
+set(SIMBODY_MINOR_VERSION 7)
+set(SIMBODY_PATCH_VERSION 0)
+set(PATCH_VERSION_STRING)
+if(SIMBODY_PATCH_VERSION)
+    set(PATCH_VERSION_STRING ".${SIMBODY_PATCH_VERSION}")
+endif()
+set(SIMBODY_VERSION
+    "${SIMBODY_MAJOR_VERSION}.${SIMBODY_MINOR_VERSION}${PATCH_VERSION_STRING}"
+    CACHE STRING
+    "This is the version that will be built (can't be changed in GUI)."
+    FORCE)
+set(SIMBODY_SONAME_VERSION
+    "${SIMBODY_MAJOR_VERSION}.${SIMBODY_MINOR_VERSION}"
+    CACHE STRING
+    "Soname version; appended to names of shared libs
+    (can't be changed in GUI)."
+    FORCE)
+set(VN "_${SIMBODY_VERSION}")
+set(SimTKCOMMON_MAJOR_VERSION ${SIMBODY_MAJOR_VERSION})
+set(SimTKCOMMON_MINOR_VERSION ${SIMBODY_MINOR_VERSION})
+set(SimTKCOMMON_PATCH_VERSION ${SIMBODY_PATCH_VERSION})
+set(SIMMATH_MAJOR_VERSION ${SIMBODY_MAJOR_VERSION})
+set(SIMMATH_MINOR_VERSION ${SIMBODY_MINOR_VERSION})
+set(SIMMATH_PATCH_VERSION ${SIMBODY_PATCH_VERSION})
+add_definitions(-DSimTK_SIMMATH_MAJOR_VERSION=${SIMMATH_MAJOR_VERSION}
+                -DSimTK_SIMMATH_MINOR_VERSION=${SIMMATH_MINOR_VERSION}
+        -DSimTK_SIMMATH_PATCH_VERSION=${SIMMATH_PATCH_VERSION})
+add_definitions(-DSimTK_SIMBODY_MAJOR_VERSION=${SIMMATH_MAJOR_VERSION}
+                -DSimTK_SIMBODY_MINOR_VERSION=${SIMMATH_MINOR_VERSION}
+        -DSimTK_SIMBODY_PATCH_VERSION=${SIMMATH_PATCH_VERSION})    
+add_definitions(-DSimTK_SimTKCOMMON_MAJOR_VERSION=${SimTKCOMMON_MAJOR_VERSION}
+        -DSimTK_SimTKCOMMON_MINOR_VERSION=${SimTKCOMMON_MINOR_VERSION}
+        -DSimTK_SimTKCOMMON_PATCH_VERSION=${SimTKCOMMON_PATCH_VERSION})
+
+add_definitions(-DBUILD_VISUALIZER=off)
+set(CMAKE_C_FLAGS "-DINTEGER_STAR_8")
+###### Simbody ######
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -35,7 +98,9 @@ if(MSVC)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" " /MP")
     add_definitions(-D_USE_MATH_DEFINES)
 else(MSVC)
-    set(CMAKE_CXX_FLAGS "-Wall -m64 -std=c++11 -DUNIX")
+    add_compile_definitions(__linux__=1)
+    #set(CMAKE_CXX_FLAGS "-Wall -m64 -std=c++11 -DUNIX -pthread")
+    set(CMAKE_CXX_FLAGS "-Wall -std=c++11 -DUNIX -pthread")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -ggdb")
     IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
@@ -61,16 +126,28 @@ endif()
 
 enable_testing()
 
-include(Common)
-include(Import3rdpartylibs)
+if(NOT WASM_BUILD)
+    include(Common)
+endif()
+
+include(Import3rdpartylibs) # TBB and Boost
+
 add_subdirectory(SPHINXsys)
-add_subdirectory(cases_test)
+if(oneTBB_BUILD MATCHES "static" OR oneTBB_BUILD MATCHES "dynamic")
+    add_subdirectory(oneTBB)
+endif(oneTBB_BUILD MATCHES "static" OR oneTBB_BUILD MATCHES "dynamic")
+
+if(NOT WASM_BUILD)
+    add_subdirectory(cases_test)
+endif()
 
 if(ACTIVATE_CUDA)
     add_subdirectory(cases_test_gpu)
 endif()
 
-add_subdirectory(cases_user)
+if(NOT WASM_BUILD)
+    add_subdirectory(cases_user)
+endif()
 
 set(BUILD_WITH_BENCHMARK_CASES OFF CACHE BOOL "Include the benchmark cases into the project?")
 if(BUILD_WITH_BENCHMARK_CASES)

@@ -3,7 +3,11 @@
 * @brief 	This is the implementation of the template class for 3D build
 * @author	Chi ZHang and Xiangyu Hu
 */
-#pragma once
+
+#ifndef BASE_PARTICLE_DYNAMICS_HPP
+#define BASE_PARTICLE_DYNAMICS_HPP
+
+
 
 #include "base_particle_dynamics.h"
 //=================================================================================================//
@@ -88,3 +92,4 @@ namespace SPH {
 	//=================================================================================================//
 }
 //=================================================================================================//
+#endif //BASE_PARTICLE_DYNAMICS_HPP

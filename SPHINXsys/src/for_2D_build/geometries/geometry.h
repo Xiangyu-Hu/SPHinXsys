@@ -10,7 +10,11 @@
 * @author	Luhui Han, Chi ZHang and Xiangyu Hu
 */
 
-#pragma once
+
+#ifndef GEOMETRY_2D_H
+#define GEOMETRY_2D_H
+
+
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 //boost library
@@ -97,3 +101,4 @@ namespace SPH {
 	};
 }
 
+#endif //GEOMETRY_2D_H
