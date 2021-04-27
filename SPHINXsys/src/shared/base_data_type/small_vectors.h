@@ -298,10 +298,10 @@ namespace SPH {
 	using Real = SimTK::Real;
 
 	//useful float point constants 
-	const SimTK::Real Pi = SimTK::Pi;
-	const SimTK::Real Infinity = numeric_limits<SimTK::Real>::max();
-	const SimTK::Real Eps = SimTK::Eps;
-	const SimTK::Real TinyReal = SimTK::TinyReal;
+	using SimTK::Pi;
+	using SimTK::Infinity;
+	using SimTK::Eps;
+	using SimTK::TinyReal;
 	constexpr size_t MaxSize_t = numeric_limits<size_t>::max();
 
 	//vector with float point number
