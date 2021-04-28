@@ -171,10 +171,8 @@ int main(int ac, char* av[])
 	Gravity gravity(Vecd(0.0, -gravity_g));
 	/** output environment. */
 	In_Output 	in_output(sph_system);
-	#ifdef BOOST_AVAILABLE
 	/** handle command line arguments. */
 	sph_system.handleCommandlineOptions(ac, av);
-	#endif
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */

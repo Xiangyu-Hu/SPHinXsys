@@ -32,11 +32,7 @@
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-
-#ifndef BASE_MATERIAL_H
-#define BASE_MATERIAL_H
-
-
+#pragma once
 
 #include "base_data_package.h"
 #include "base_particles.h"
@@ -143,4 +139,3 @@ namespace SPH {
 		};
 	};
 }
-#endif //BASE_MATERIAL_H

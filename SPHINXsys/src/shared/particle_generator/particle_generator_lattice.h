@@ -28,11 +28,7 @@
  * 			at lattice position by check whether the poision is contained by a SPH body.
  * @author	Xiangyu Hu, Chi Zhang, Yongchuan Yu
  */
-
-#ifndef PARTICLE_GENERATOR_LATTICE_H
-#define PARTICLE_GENERATOR_LATTICE_H
-
-
+#pragma once
 
 #include "base_particle_generator.h"
 
@@ -79,4 +75,3 @@ namespace SPH {
 			Vecd& particle_position, Real particle_volume, size_t& total_real_particles) override;
 	};
 }
-#endif //PARTICLE_GENERATOR_LATTICE_H

@@ -32,11 +32,7 @@
  *			We will identify physical differences by properly choosing names.
  *			Xiangyu Hu
  */
-
-#ifndef ACTIVE_MUSCLE_DYNAMICS_H
-#define ACTIVE_MUSCLE_DYNAMICS_H
-
-
+#pragma once
 
 #include "all_particle_dynamics.h"
 #include "elastic_solid.h"
@@ -103,4 +99,3 @@ namespace SPH
 		};
     }
 }
-#endif //ACTIVE_MUSCLE_DYNAMICS_H

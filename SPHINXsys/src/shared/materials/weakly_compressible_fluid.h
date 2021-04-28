@@ -28,11 +28,7 @@
  * @author  Xiangyu Hu, Luhui Han and Chi Zhang
  */
 
-
-#ifndef WEAKLY_COMPRESSIBLE_FLUID_H
-#define WEAKLY_COMPRESSIBLE_FLUID_H
-
-
+#pragma once
 
 #include "base_material.h"
 
@@ -155,4 +151,3 @@ namespace SPH {
 		virtual Oldroyd_B_Fluid* pointToThisObject() override {return this;};
 	};
 }
-#endif //WEAKLY_COMPRESSIBLE_FLUID_H

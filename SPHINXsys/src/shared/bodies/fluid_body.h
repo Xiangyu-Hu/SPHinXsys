@@ -25,11 +25,7 @@
  * @brief 	This is the class for bodies used for fluid.
  * @author	Chi ZHang and Xiangyu Hu
  */
-
-#ifndef FLUID_BODY_H
-#define FLUID_BODY_H
-
-
+#pragma once
 
 #include "base_body.h"
 
@@ -58,4 +54,3 @@ namespace SPH {
 		size_t iteration_count_;
 	};
 }
-#endif //FLUID_BODY_H

@@ -30,11 +30,7 @@
 * @author	Xiangyu Hu
 */
 
-
-#ifndef KERNEL_QUADRATIC_H
-#define KERNEL_QUADRATIC_H
-
-
+#pragma once
 
 #include "base_kernel.h"
 
@@ -64,4 +60,3 @@ namespace SPH
 		virtual Real d2W_3D(const Real q) const override;
 	};
 }
-#endif //KERNEL_QUADRATIC_H

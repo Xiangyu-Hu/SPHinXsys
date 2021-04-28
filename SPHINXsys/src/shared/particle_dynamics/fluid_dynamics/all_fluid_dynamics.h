@@ -29,11 +29,7 @@
 * built upon these basic algorithms.
 * @author	Chi ZHang and Xiangyu Hu
 */
-
-#ifndef ALL_FLUID_DYNAMCIS_H
-#define ALL_FLUID_DYNAMCIS_H
-
-
+#pragma once
 
 #include "fluid_dynamics_inner.h"
 #include "fluid_dynamics_inner.hpp"
@@ -41,5 +37,3 @@
 #include "fluid_dynamics_complex.hpp"
 #include "fluid_dynamics_multi_phase.h"
 #include "fluid_dynamics_multi_phase.hpp"
-
-#endif //ALL_FLUID_DYNAMCIS_H

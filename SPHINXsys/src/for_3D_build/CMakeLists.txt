@@ -39,52 +39,29 @@ FOREACH(srcdir_path ${sourcedirs})
 	list(APPEND SCR_FILES ${DIR_scrs})
 ENDFOREACH()
 
-### SPHinXsys dynamic lib ###
+#FOREACH(file1 ${SCR_FILES})
+	#message(STATUS ${file1})
+#ENDFOREACH()
+
 ADD_LIBRARY(sphinxsys_3d SHARED ${SCR_FILES})
-
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-	target_link_libraries(sphinxsys_3d)
-else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-	if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		target_link_libraries(sphinxsys_3d stdc++)
-	else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		target_link_libraries(sphinxsys_3d stdc++ stdc++fs)
-	endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-
-if(oneTBB_BUILD MATCHES "off")
-	target_link_libraries(sphinxsys_3d ${TBB_LIBRARYS}})
-endif(oneTBB_BUILD MATCHES "off")
-
-target_compile_definitions(sphinxsys_3d
-						PUBLIC
-						$<$<CONFIG:DEBUG>:TBB_USE_DEBUG>
-						PRIVATE
-						__TBB_BUILD)
-
-target_link_libraries(sphinxsys_3d TBB::tbb TBB::tbbmalloc) # TBB::tbbmalloc_proxy is not needed
-### SPHinXsys dynamic lib ###
-
-### SPHinXsys static lib ###
 ADD_LIBRARY(sphinxsys_static_3d STATIC ${SCR_FILES})
 
-target_compile_definitions(sphinxsys_static_3d
-						PUBLIC
-						$<$<CONFIG:DEBUG>:TBB_USE_DEBUG>
-						PRIVATE
-						__TBB_BUILD)
-
-target_link_libraries(sphinxsys_static_3d TBB::tbb TBB::tbbmalloc) # TBB::tbbmalloc_proxy is not needed
-### SPHinXsys static lib ###
+SET_TARGET_PROPERTIES(sphinxsys_static_3d PROPERTIES OUTPUT_NAME "sphinxsys_3d")
+#SET_TARGET_PROPERTIES(sphinxsys PROPERTIES VERSION 1.0 SOVERSION 0)
 
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
-INSTALL(TARGETS sphinxsys_3d sphinxsys_static_3d
-RUNTIME DESTINATION 3d_code/bin
-LIBRARY DESTINATION 3d_code/lib
-ARCHIVE DESTINATION 3d_code/lib)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    target_link_libraries(sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES})
+else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+	if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    	target_link_libraries(sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} ${Boost_LIBRARIES} stdc++)
+	else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+		target_link_libraries(sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} stdc++ stdc++fs)
+	endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
-INSTALL(TARGETS sphinxsys_static_3d
+INSTALL(TARGETS sphinxsys_3d sphinxsys_static_3d
 RUNTIME DESTINATION 3d_code/bin
 LIBRARY DESTINATION 3d_code/lib
 ARCHIVE DESTINATION 3d_code/lib)

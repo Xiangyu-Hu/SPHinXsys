@@ -26,11 +26,7 @@
 * @author	Xiaojing Tang, Chi ZHang and Xiangyu Hu
 */
 
-
-#ifndef PARTICLE_DYNAMICS_DIFFUSION_REACTION_H
-#define PARTICLE_DYNAMICS_DIFFUSION_REACTION_H
-
-
+#pragma once
 
 #include "all_particle_dynamics.h"
 #include "diffusion_reaction_particles.h"
@@ -294,4 +290,3 @@ namespace SPH
 		StdVec<StdLargeVec<Real>>& species_n_;
 	};
 }
-#endif //PARTICLE_DYNAMICS_DIFFUSION_REACTION_H

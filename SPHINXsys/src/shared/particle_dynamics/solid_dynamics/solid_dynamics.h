@@ -26,11 +26,7 @@
 * @details 	We consider here a weakly compressible solids.   
 * @author	Luhui Han, Chi ZHang and Xiangyu Hu
 */
-
-#ifndef SOLID_DYNAMICS_H
-#define SOLID_DYNAMICS_H
-
-
+#pragma once
 #include "all_particle_dynamics.h"
 #include "elastic_solid.h"
 #include "weakly_compressible_fluid.h"
@@ -383,4 +379,3 @@ namespace SPH
 		};		
 	}
 }
-#endif //SOLID_DYNAMICS_H

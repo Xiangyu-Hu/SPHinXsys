@@ -1,8 +1,4 @@
-
-#ifndef ALL_PHYSICAL_DYNAMICS_H
-#define ALL_PHYSICAL_DYNAMICS_H
-
-
+#pragma once
 
 /** @file
 This is the header file that user code should include to pick up all 
@@ -22,4 +18,3 @@ particle dynamics capabilities. **/
 #include "particle_dynamics_dissipation.hpp"
 
 
-#endif //ALL_PHYSICAL_DYNAMICS_H

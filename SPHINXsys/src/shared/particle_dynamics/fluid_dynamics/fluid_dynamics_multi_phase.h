@@ -26,11 +26,7 @@
 * @author	Chi ZHang and Xiangyu Hu
 */
 
-
-#ifndef FLUID_DYNAMCIS_MULTI_PHASE_H
-#define FLUID_DYNAMCIS_MULTI_PHASE_H
-
-
+#pragma once
 
 #include "fluid_dynamics_complex.h"
 namespace SPH
@@ -152,4 +148,3 @@ namespace SPH
 		};
 	}
 }
-#endif //FLUID_DYNAMCIS_MULTI_PHASE_H

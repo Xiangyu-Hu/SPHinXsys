@@ -28,11 +28,7 @@
 * @author	Chi ZHang and Xiangyu Hu
 */
 
-
-#ifndef FLUID_DYNAMCIS_INNER_H
-#define FLUID_DYNAMCIS_INNER_H
-
-
+#pragma once
 
 #include "all_particle_dynamics.h"
 #include "base_kernel.h"
@@ -610,4 +606,3 @@ namespace SPH
 		};
 	}
 }
-#endif //FLUID_DYNAMCIS_INNER_H

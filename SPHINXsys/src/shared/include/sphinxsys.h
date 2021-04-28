@@ -20,11 +20,7 @@
 * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
 *                                                                           *
 * --------------------------------------------------------------------------*/
-
-#ifndef SPHINXSYS_H
-#define SPHINXSYS_H
-
-
+#pragma once
 
 /** @file
 This is the header file that user code should include to pick up all sphinxsys
@@ -39,4 +35,3 @@ capabilities. **/
 #include "all_physical_dynamics.h"
 #include "all_simbody.h"
 #include "in_output.h"
-#endif //SPHINXSYS_H

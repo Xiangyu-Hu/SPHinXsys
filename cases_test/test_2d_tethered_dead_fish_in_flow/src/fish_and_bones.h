@@ -1,5 +1,4 @@
-#ifndef FISH_AND_BONES_H
-#define FISH_AND_BONES_H
+#pragma once
 
 #include "sphinxsys.h"
 
@@ -185,4 +184,3 @@ std::vector<Vecd> CreatBoneShape(int Nh, Real ra, Real rab, Real center_x, Real 
 
 	return pnts2;
 }
-#endif //FISH_AND_BONES_H

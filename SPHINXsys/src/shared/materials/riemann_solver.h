@@ -26,11 +26,7 @@
  * @author	Xiangyu Hu
  */
 
-
-#ifndef RIEMANN_SOLVER_H
-#define RIEMANN_SOLVER_H
-
-
+#pragma once
 
 #include "base_data_package.h"
 
@@ -73,4 +69,3 @@ namespace SPH
 		Vecd getVStar(const FluidState& state_i, const FluidState& state_j, const Vecd& direction_to_i);
 	};
 }
-#endif //RIEMANN_SOLVER_H

@@ -3,11 +3,7 @@
 * @brief 	This is the implementation of the template function and class for base mesh
 * @author	Chi ZHang and Xiangyu Hu
 */
-
-#ifndef MESH_WITH_DATA_PACKAGES_2D_HPP
-#define MESH_WITH_DATA_PACKAGES_2D_HPP
-
-
+#pragma once
 
 #include "mesh_with_data_packages.h"
 
@@ -167,4 +163,3 @@ namespace SPH {
 	//=================================================================================================//
 }
 //=================================================================================================//
-#endif //MESH_WITH_DATA_PACKAGES_2D_HPP

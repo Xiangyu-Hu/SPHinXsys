@@ -27,11 +27,7 @@
  * 			vectors for the new data. Note that there is no class of single particle.
  * @author	Xiangyu Hu and Chi Zhang
  */
-
-#ifndef BASE_PARTICLES_H
-#define BASE_PARTICLES_H
-
-
+#pragma once
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
@@ -212,4 +208,3 @@ namespace SPH {
 		string body_name_;
 	};
 }
-#endif //BASE_PARTICLES_H

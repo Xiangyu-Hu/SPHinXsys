@@ -5,8 +5,7 @@
 * @author 	Xiangyu Hu, Chi Zhangand Luhui Han
 */
 
-#ifndef FSI2_CASE_H
-#define FSI2_CASE_H
+#pragma once
 
 #include "sphinxsys.h"
 
@@ -280,4 +279,3 @@ public:
 		}
 	}
 };
-#endif //FSI2_CASE_H

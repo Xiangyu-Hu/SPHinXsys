@@ -27,11 +27,7 @@
 * @author	Chi ZHang and Xiangyu Hu
 */
 
-
-#ifndef RELAX_DYNAMICS_H
-#define RELAX_DYNAMICS_H
-
-
+#pragma once
 
 #include "math.h"
 
@@ -223,4 +219,3 @@ namespace SPH
 		};
 	}
 }
-#endif //RELAX_DYNAMICS_H

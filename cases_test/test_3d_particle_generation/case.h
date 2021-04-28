@@ -6,8 +6,7 @@
 * @author 	Yongchuan Yu and Xiangyu Hu
 */
 
-#ifndef TEST_3D_PARTICLE_GENERATION_CASE_H
-#define TEST_3D_PARTICLE_GENERATION_CASE_H
+#pragma once
 
 #include "sphinxsys.h"
 
@@ -49,4 +48,3 @@ public:
 	}
 };
 
-#endif //TEST_3D_PARTICLE_GENERATION_CASE_Hs

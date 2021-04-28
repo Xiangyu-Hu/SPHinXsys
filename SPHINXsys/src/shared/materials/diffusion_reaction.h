@@ -28,11 +28,7 @@
  *			and chemical and biological reactions. 
  * @author  Xiangyu Hu, Chi Zhang
  */
-
-#ifndef DIFFUSION_REACTION_H
-#define DIFFUSION_REACTION_H
-
-
+#pragma once
 
 #include "base_material.h"
 #include "solid_particles.h"
@@ -334,4 +330,3 @@ namespace SPH
 		void assignFiberProperties(StdVec<Vecd> &material_fiber);
 	};
 }
-#endif //DIFFUSION_REACTION_H

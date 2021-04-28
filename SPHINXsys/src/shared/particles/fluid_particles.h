@@ -25,11 +25,7 @@
  * @brief 	This is the derived class of base particle.
  * @author	Xiangyu Hu and Chi Zhang
  */
-
-#ifndef FLUID_PARTICLES_H
-#define FLUID_PARTICLES_H
-
-
+#pragma once
 
 #include "base_particles.h"
 
@@ -78,4 +74,3 @@ namespace SPH {
 		virtual ViscoelasticFluidParticles* pointToThisObject() override {return this;};
 	};
 }
-#endif //FLUID_PARTICLES_H

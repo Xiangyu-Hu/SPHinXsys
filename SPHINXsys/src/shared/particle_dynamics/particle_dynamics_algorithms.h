@@ -32,11 +32,7 @@
 
 * @author	Chi ZHang and Xiangyu Hu
 */
-
-#ifndef PARTICLE_DYNAMICS_ALGORITHMS_H
-#define PARTICLE_DYNAMICS_ALGORITHMS_H
-
-
+#pragma once
 
 #include "base_particle_dynamics.h"
 #include "base_particle_dynamics.hpp"
@@ -206,4 +202,3 @@ namespace SPH
 		SplitCellLists& split_cell_lists_;
 	};
 }
-#endif //PARTICLE_DYNAMICS_ALGORITHMS_H

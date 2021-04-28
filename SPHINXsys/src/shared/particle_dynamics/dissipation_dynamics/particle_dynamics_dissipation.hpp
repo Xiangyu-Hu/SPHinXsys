@@ -4,11 +4,7 @@
 * @author	Chi ZHang and Xiangyu Hu
 */
 
-
-#ifndef PARTICLE_DYNAMICS_DISSIPATION_HPP
-#define PARTICLE_DYNAMICS_DISSIPATION_HPP
-
-
+#pragma once
 
 #include "particle_dynamics_dissipation.h"
 
@@ -414,4 +410,3 @@ namespace SPH
 	}
 	//=================================================================================================//
 }
-#endif //PARTICLE_DYNAMICS_DISSIPATION_HPP

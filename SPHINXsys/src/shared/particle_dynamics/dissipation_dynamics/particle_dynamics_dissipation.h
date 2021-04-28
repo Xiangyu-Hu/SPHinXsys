@@ -26,11 +26,7 @@
 * @author	Chi ZHang and Xiangyu Hu
 */
 
-
-#ifndef PARTICLE_DYNAMICS_DISSIPATION_H
-#define PARTICLE_DYNAMICS_DISSIPATION_H
-
-
+#pragma once
 
 #include "all_particle_dynamics.h"
 
@@ -198,4 +194,3 @@ namespace SPH
 		virtual void parallel_exec(Real dt = 0.0) override;
 	};
 }
-#endif //PARTICLE_DYNAMICS_DISSIPATION_H

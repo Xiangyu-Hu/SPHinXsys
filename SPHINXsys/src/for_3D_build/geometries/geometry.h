@@ -27,11 +27,7 @@
 *			polymesh files. 
 * @author	Chi ZHang and Xiangyu Hu
 */
-
-#ifndef GEOMETRY_3D_H
-#define GEOMETRY_3D_H
-
-
+#pragma once
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_geometry.h"
@@ -114,4 +110,3 @@ namespace SPH {
 	};
 }
 
-#endif //GEOMETRY_3D_H

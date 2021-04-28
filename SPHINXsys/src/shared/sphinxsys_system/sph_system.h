@@ -4,19 +4,13 @@
  * @details Note that the system operation prefer these are application independent.
  * @author  Xiangyu Hu, Luhui Han and Chi Zhang
  */
-
-#ifndef SPH_SYSTEM_H
-#define SPH_SYSTEM_H
-
-
+#pragma once
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #define TBB_PREVIEW_GLOBAL_CONTROL 1
 #include <tbb/global_control.h>
-#ifdef BOOST_AVAILABLE
 #include "boost/program_options.hpp"
 namespace po = boost::program_options;
-#endif
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
@@ -70,9 +64,7 @@ namespace SPH
 		void addAFictitiousBody(FictitiousBody* fictitious_body);
 		void initializeSystemCellLinkedLists();
 		void initializeSystemConfigurations();
-		#ifdef BOOST_AVAILABLE
+
 		void handleCommandlineOptions(int ac, char* av[]);
-		#endif
 	};
 }
-#endif //SPH_SYSTEM_H

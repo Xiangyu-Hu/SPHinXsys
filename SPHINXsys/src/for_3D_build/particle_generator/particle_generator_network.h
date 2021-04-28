@@ -26,11 +26,7 @@
  * 			with in network or tree form. 
  * @author	Chi ZHang and Xiangyu Hu
  */
-
-#ifndef PARTICLE_GENERATOR_NETWORK_H
-#define PARTICLE_GENERATOR_NETWORK_H
-
-
+#pragma once
 #include "sph_data_conainers.h"
 #include "base_particle_generator.h"
 #include "base_geometry.h"
@@ -76,4 +72,3 @@ namespace SPH
 		bool isCollision(Vecd& new_point, ListData& nearest_neighbor, size_t parent_id, Tree* tree);
 	};
 }
-#endif //PARTICLE_GENERATOR_NETWORK_H

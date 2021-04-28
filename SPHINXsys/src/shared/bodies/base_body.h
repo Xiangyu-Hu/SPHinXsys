@@ -33,11 +33,7 @@
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */
 
-
-#ifndef BASE_BODY_H
-#define BASE_BODY_H
-
-
+#pragma once
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
@@ -287,4 +283,3 @@ namespace SPH
 		virtual bool checkIncluded(Vecd cell_position, Real threshold) override;
 	};
 }
-#endif //BASE_BODY_H

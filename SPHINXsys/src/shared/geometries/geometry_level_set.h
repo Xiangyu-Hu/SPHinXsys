@@ -4,11 +4,7 @@
 * @author	Luhui Han, Chi ZHang and Xiangyu Hu
 */
 
-
-#ifndef GEOMETRY_LEVEL_SET_H
-#define GEOMETRY_LEVEL_SET_H
-
-
+#pragma once
 
 #include "geometry.h"
 
@@ -40,4 +36,3 @@ namespace SPH {
 	};
 }
 
-#endif //GEOMETRY_LEVEL_SET_H

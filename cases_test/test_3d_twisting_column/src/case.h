@@ -3,8 +3,7 @@
 * @brief 	This is the case setup for twisting_column.cpp.
 * @author 	Chi Zhang and Xiangyu Hu
 */
-#ifndef TEST_3D_TWISTING_COLUMN_CASE_H
-#define TEST_3D_TWISTING_COLUMN_CASE_H
+#pragma once
 
 #include "sphinxsys.h"
 using namespace SPH;
@@ -130,4 +129,3 @@ public:
 		body_input_points_volumes_.push_back(make_pair(Vecd(PL, 0.0, 0.0), 0.0));
 	}
 };
-#endif //TEST_3D_TWISTING_COLUMN_CASE_H

@@ -120,9 +120,7 @@ int main(int ac, char* av[])
 	/** output environment. */
 	In_Output 	in_output(sph_system);
 	/** handle command line arguments. */
-	#ifdef BOOST_AVAILABLE
 	sph_system.handleCommandlineOptions(ac, av);
-	#endif
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */

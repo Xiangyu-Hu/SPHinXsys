@@ -29,11 +29,7 @@
 * @author	Chi ZHang and Xiangyu Hu
 */
 
-
-#ifndef BASE_GEOMETRY_H
-#define BASE_GEOMETRY_H
-
-
+#pragma once
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
@@ -146,4 +142,3 @@ namespace SPH
 		void addANewBranchInnerVecd(Branch* branch, Vecd new_point, Vecd end_direction);
 	};
 }
-#endif //BASE_GEOMETRY_H

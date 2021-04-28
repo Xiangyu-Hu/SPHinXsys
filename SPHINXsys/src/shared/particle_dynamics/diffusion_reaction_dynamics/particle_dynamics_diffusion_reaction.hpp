@@ -3,11 +3,7 @@
 * @author	Xiaojing Tang, Chi ZHang and Xiangyu Hu
 */
 
-
-#ifndef PARTICLE_DYNAMICS_DIFFUSION_REACTION_HPP
-#define PARTICLE_DYNAMICS_DIFFUSION_REACTION_HPP
-
-
+#pragma once
 
 #include "particle_dynamics_diffusion_reaction.h"
 
@@ -311,4 +307,3 @@ namespace SPH
 	}
     //=================================================================================================//
 }
-#endif //PARTICLE_DYNAMICS_DIFFUSION_REACTION_HPP

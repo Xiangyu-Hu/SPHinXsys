@@ -3,11 +3,7 @@
  * @details An Array toolkit for array operator. 
  * @author	Chi Zhang and Xiangyu Hu.
  */
-
-#ifndef ARRAY_SIMBODY_H
-#define ARRAY_SIMBODY_H
-
-
+#pragma once
 
 #include "base_data_package.h"
 
@@ -645,4 +641,3 @@ namespace SPH {
 	}; /** ended of class Array. */
 
 }
-#endif //ARRAY_SIMBODY_H
