@@ -27,6 +27,7 @@ namespace SPH {
 
 		virtual bool checkContain(Vecd& input_pnt, bool BOUNDARY_INCLUDED = true) override;
 		virtual bool checkNotFar(Vecd& input_pnt, Real threshold) override;
+		virtual bool checkNearSurface(Vecd& input_pnt, Real threshold) override;
 		virtual Real findSignedDistance(Vecd& input_pnt) override;
 		virtual Vecd findNormalDirection(Vecd& input_pnt) override;
 		virtual Real computeKernelIntegral(Vecd& input_pnt, Real h_ratio = 1.0);

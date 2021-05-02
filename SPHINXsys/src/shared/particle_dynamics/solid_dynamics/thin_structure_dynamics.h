@@ -32,17 +32,13 @@
 #include "weakly_compressible_fluid.h"
 #include "base_kernel.h"
 #include "all_fluid_dynamics.h"
-#include "thin_structure_math.h"
 
 namespace SPH
 {
 	namespace thin_structure_dynamics
 	{
-		//----------------------------------------------------------------------
-		//		for shell solid dynamics 
-		//----------------------------------------------------------------------
-		typedef DataDelegateSimple<ThinStructure, ShellParticles, ElasticSolid> ShellDataDelegateSimple;
-		typedef DataDelegateInner<ThinStructure, ShellParticles, ElasticSolid> ShellDataDelegateInner;
+		typedef DataDelegateSimple<ThinStructure, ShellParticles, ElasticSolid> ShellDataSimple;
+		typedef DataDelegateInner<ThinStructure, ShellParticles, ElasticSolid> ShellDataInner;
 
 		/**
 		 * @class ShellDynamicsInitialCondition
@@ -50,13 +46,14 @@ namespace SPH
 		 * This is a abstract class to be override for case specific initial conditions.
 		 */
 		class ShellDynamicsInitialCondition :
-			public ParticleDynamicsSimple, public ShellDataDelegateSimple
+			public ParticleDynamicsSimple, public ShellDataSimple
 		{
 		public:
 			ShellDynamicsInitialCondition(SolidBody *body);
 			virtual ~ShellDynamicsInitialCondition() {};
 		protected:
 			StdLargeVec<Vecd>& n_0_, &n_, &pseudo_n_, &pos_0_;
+			StdLargeVec<Matd>& transformation_matrix_;
 		};
 
 		/**
@@ -65,7 +62,7 @@ namespace SPH
 		*/
 		class ShellAcousticTimeStepSize :
 			public ParticleDynamicsReduce<Real, ReduceMin>,
-			public ShellDataDelegateSimple
+			public ShellDataSimple
 		{
 		public:
 			explicit ShellAcousticTimeStepSize(SolidBody* body);
@@ -83,7 +80,7 @@ namespace SPH
 		* @brief obtain the corrected initial configuration in strong form
 		*/
 		class ShellCorrectConfiguration :
-			public InteractionDynamics, public ShellDataDelegateInner
+			public InteractionDynamics, public ShellDataInner
 		{
 		public:
 			ShellCorrectConfiguration(BaseInnerBodyRelation* body_inner_relation);
@@ -101,7 +98,7 @@ namespace SPH
 		* @brief computing deformation gradient tensor for shell
 		*/
 		class ShellDeformationGradientTensor :
-			public InteractionDynamics, public ShellDataDelegateInner
+			public InteractionDynamics, public ShellDataInner
 		{
 		public:
 			ShellDeformationGradientTensor(BaseInnerBodyRelation* body_inner_relation);
@@ -115,36 +112,48 @@ namespace SPH
 		};
 
 		/**
+		 * @class BaseShellRelaxation
+		 * @brief abstract class for preparing shell relaxation
+		*/
+		class BaseShellRelaxation : public ParticleDynamics1Level, public ShellDataInner
+		{
+		public:
+			BaseShellRelaxation(BaseInnerBodyRelation* body_inner_relation);
+			virtual ~BaseShellRelaxation() {};
+		protected:
+			StdLargeVec<Real>& Vol_, & rho_n_, & mass_, & shell_thickness_;
+			StdLargeVec<Vecd>& pos_n_, & vel_n_, & dvel_dt_, & dvel_dt_others_, & force_from_fluid_;
+			StdLargeVec<Vecd>& n_0_, & pseudo_n_, & dpseudo_n_dt_, & dpseudo_n_d2t_, & rotation_,
+				& angular_vel_, dangular_vel_dt_;
+			StdLargeVec<Matd>& B_, & F_, & dF_dt_, & F_bending_, & dF_bending_dt_;
+			StdLargeVec<Matd>& transformation_matrix_;
+		};
+
+		/**
 		* @class ShellStressRelaxationFirstHalf
 		* @brief computing stress relaxation process by verlet time stepping
 		* This is the first step
 		*/
-		class ShellStressRelaxationFirstHalf :
-			public ParticleDynamics1Level, public ShellDataDelegateInner
+		class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
 		{
 		public:
-			ShellStressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation);
+			ShellStressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation,
+				int number_of_gaussian_points = 3);
 			virtual ~ShellStressRelaxationFirstHalf() {};
 		protected:
 			Real rho_0_, inv_rho_0_;
-			StdLargeVec<Real>& Vol_, &rho_n_, &mass_, &shell_thickness_;
-			StdLargeVec<Vecd>& pos_n_, &vel_n_, &dvel_dt_, &dvel_dt_others_, &force_from_fluid_;
-			StdLargeVec<Vecd>& n_0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_, 
-				&angular_vel_, dangular_vel_dt_;
+			StdLargeVec<Matd>& stress_PK1_, &corrected_stress_, &corrected_moment_;
 			StdLargeVec<Vecd>& shear_stress_;
-			StdLargeVec<Matd>& B_, &stress_PK1_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_,
-				&corrected_stress_, &corrected_moment_;
-			StdLargeVec<Matd>& transformation_matrix_;
 			Real numerical_viscosity_;
 
-			Real shear_correction_factor;
-			int number_of_gaussian_point;
-			const vector<Real>* gaussian_point;
-			const vector<Real>* gaussian_weight;
-			static vector<Real> three_gaussian_points;
-			static vector<Real> three_gaussian_weights;
-			static vector<Real> five_gaussian_points;
-			static vector<Real> five_gaussian_weights;
+			const Real shear_correction_factor_ = 5.0/6.0;
+			const StdVec<Real> three_gaussian_points_ = { 0.0, 0.77459667, -0.77459667 };
+			const StdVec<Real> three_gaussian_weights_ = { 8.0 / 9.0, 5.0 / 9.0, 5.0 / 9.0 };
+			const StdVec<Real> five_gaussian_points_ = { 0.0, 0.538469, -0.538469, 0.90618, -0.90618 };
+			const StdVec<Real> five_gaussian_weights_ = { 0.568889, 0.478629, 0.478629, 0.236927, 0.236927 };
+			int number_of_gaussian_points_;
+			StdVec<Real> gaussian_point_;
+			StdVec<Real> gaussian_weight_;
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -156,11 +165,11 @@ namespace SPH
 		* @brief computing stress relaxation process by verlet time stepping
 		* This is the second step
 		*/
-		class ShellStressRelaxationSecondHalf : public ShellStressRelaxationFirstHalf
+		class ShellStressRelaxationSecondHalf : public BaseShellRelaxation
 		{
 		public:
 			ShellStressRelaxationSecondHalf(BaseInnerBodyRelation* body_inner_relation)
-				: ShellStressRelaxationFirstHalf(body_inner_relation) {};
+				: BaseShellRelaxation(body_inner_relation) {};
 			virtual ~ShellStressRelaxationSecondHalf() {};
 		protected:
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
@@ -173,7 +182,7 @@ namespace SPH
 		 * Note that the average values for FSI are prescirbed also.
 		 */
 		class ConstrainShellBodyRegion :
-			public PartSimpleDynamicsByParticle, public ShellDataDelegateSimple
+			public PartSimpleDynamicsByParticle, public ShellDataSimple
 		{
 		public:
 			ConstrainShellBodyRegion(SolidBody* body, BodyPartByParticle* body_part);
@@ -184,14 +193,14 @@ namespace SPH
 			StdLargeVec<Vecd>& vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
 			StdLargeVec<Vecd>& rotation_, &angular_vel_, &dangular_vel_dt_;
 			StdLargeVec<Vecd>& pseudo_n_, &dpseudo_n_dt_;
-			virtual Vecd getDisplacement(Vecd& pos_0, Vecd& pos_n) { return pos_0; };
-			virtual Vecd getVelocity(Vecd& pos_0, Vecd& pos_n, Vecd& vel_n) { return Vecd(0); };
-			virtual Vecd GetAcceleration(Vecd& pos_0, Vecd& pos_n, Vecd& dvel_dt) { return Vecd(0); };
-			virtual Vecd GetRotationAngle(Vecd& pos_0, Vecd& pos_n, Vecd& rotation_angles_0_) { return rotation_angles_0_; };
-			virtual Vecd GetAngularVelocity(Vecd& pos_0, Vecd& pos_n, Vecd& angular_vel_) { return Vecd(0); };
-			virtual Vecd GetAngularAcceleration(Vecd& pos_0, Vecd& pos_n, Vecd& dangular_vel_dt_) { return Vecd(0); };
-			virtual Vecd GetPseudoNormal(Vecd& pos_0, Vecd& pos_n, Vecd& n_0) { return n_0; };
-			virtual Vecd GetPseudoNormalChangeRate(Vecd& pos_0, Vecd& pos_n, Vecd& dpseudo_normal_dt_) { return Vecd(0); };
+			virtual Vecd getDisplacement(const Vecd& pos_0, const Vecd& pos_n) { return pos_0; };
+			virtual Vecd getVelocity(const Vecd& pos_0, const Vecd& pos_n, const Vecd& vel_n) { return Vecd(0); };
+			virtual Vecd GetAcceleration(const Vecd& pos_0, const Vecd& pos_n, const Vecd& dvel_dt) { return Vecd(0); };
+			virtual Vecd GetRotationAngle(const Vecd& pos_0, const Vecd& pos_n, const Vecd& rotation_angles_0_) { return rotation_angles_0_; };
+			virtual Vecd GetAngularVelocity(const Vecd& pos_0, const Vecd& pos_n, const Vecd& angular_vel_) { return Vecd(0); };
+			virtual Vecd GetAngularAcceleration(const Vecd& pos_0, const Vecd& pos_n, const Vecd& dangular_vel_dt_) { return Vecd(0); };
+			virtual Vecd GetPseudoNormal(const Vecd& pos_0, const Vecd& pos_n, const Vecd& n_0) { return n_0; };
+			virtual Vecd GetPseudoNormalChangeRate(const Vecd& pos_0, const Vecd& pos_n, const Vecd& dpseudo_normal_dt_) { return Vecd(0); };
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -201,15 +210,18 @@ namespace SPH
 		 */
 		class FixedFreeRotateShellBoundary :
 			public PartInteractionDynamicsByParticle1Level,
-			public ShellDataDelegateInner
+			public ShellDataInner
 		{
 		public:
-			FixedFreeRotateShellBoundary(BaseInnerBodyRelation* body_inner_relation, BodyPartByParticle* body_part);
+			FixedFreeRotateShellBoundary(BaseInnerBodyRelation* body_inner_relation, 
+				BodyPartByParticle* body_part, Vecd constrained_direction = Vecd(0));
 			virtual ~FixedFreeRotateShellBoundary() {};
 		protected:
+			Real W0_;
+			Matd constrain_matrix_, recover_matrix_;
 			StdLargeVec<Real>& Vol_;
-			StdLargeVec<Vecd>& vel_n_, & angular_vel_;
-			StdLargeVec<Vecd>vel_n_temp_, angular_vel_temp_;
+			StdLargeVec<Vecd>& vel_n_, & angular_vel_, &vel_n_temp_, &angular_vel_temp_;
+
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -221,15 +233,15 @@ namespace SPH
 		 */
 		class ClampConstrainShellBodyRegion :
 			public PartInteractionDynamicsByParticle1Level,
-			public ShellDataDelegateInner
+			public ShellDataInner
 		{
 		public:
 			ClampConstrainShellBodyRegion(BaseInnerBodyRelation* body_inner_relation, BodyPartByParticle* body_part);
 			virtual ~ClampConstrainShellBodyRegion() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
-			StdLargeVec<Vecd>& vel_n_, &angular_vel_;
-			StdLargeVec<Vecd>vel_n_temp_, angular_vel_temp_;
+			StdLargeVec<Vecd>& vel_n_, &angular_vel_, & vel_n_temp_, & angular_vel_temp_;
+
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -241,7 +253,7 @@ namespace SPH
 		 * Note that the average values for FSI are prescirbed also.
 		 */
 		class ConstrainShellBodyRegionInAxisDirection :
-			public PartSimpleDynamicsByParticle, public ShellDataDelegateSimple
+			public PartSimpleDynamicsByParticle, public ShellDataSimple
 		{
 		public:
 			ConstrainShellBodyRegionInAxisDirection(SolidBody* body, BodyPartByParticle* body_part, int axis_direction);

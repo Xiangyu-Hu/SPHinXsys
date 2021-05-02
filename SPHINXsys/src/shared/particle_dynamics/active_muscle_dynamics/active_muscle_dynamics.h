@@ -44,7 +44,7 @@ namespace SPH
 {
     namespace active_muscle_dynamics
 	{
-        typedef DataDelegateSimple<SolidBody, ActiveMuscleParticles, ActiveMuscle> ActiveMuscleDataDelegateSimple;
+        typedef DataDelegateSimple<SolidBody, ActiveMuscleParticles, Muscle> ActiveMuscleDataDelegateSimple;
  
 		/**
 		 * @class MuscleActivation

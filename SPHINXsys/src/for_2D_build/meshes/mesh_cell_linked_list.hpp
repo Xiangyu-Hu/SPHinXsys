@@ -3,6 +3,9 @@
  * @brief 	Here, Functions belong to BaseBody, RealBody and FictitiousBody are given.
  * @author	hi ZHang and Xiangyu Hu
  */
+
+#pragma once
+
 #include "base_particles.h"
 #include "mesh_cell_linked_list.h"
 

@@ -30,8 +30,6 @@
 
 #include "base_body.h"
 
-using namespace std;
-
 namespace SPH {
 	/**
 	 * @brief Preclaimed class.
@@ -45,11 +43,11 @@ namespace SPH {
 	class SolidBody : public RealBody
 	{
 	public:
-		SolidBody(SPHSystem &system, string body_name, 
+		SolidBody(SPHSystem &system, std::string body_name,
 			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(1.15),
 			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~SolidBody() {};
-		virtual SolidBody* pointToThisObject()  override {return this;};
+		virtual SolidBody* ThisObjectPtr()  override {return this;};
 	};
 
 	/**
@@ -59,11 +57,11 @@ namespace SPH {
 	class ThinStructure : public SolidBody
 	{
 	public:
-		ThinStructure(SPHSystem& system, string body_name,
+		ThinStructure(SPHSystem& system, std::string body_name,
 			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(1.15),
 			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~ThinStructure() {};
-		virtual ThinStructure* pointToThisObject() override {return this;};
+		virtual ThinStructure* ThisObjectPtr() override {return this;};
 	};
 
 	/**
@@ -78,7 +76,7 @@ namespace SPH {
 		Vec3d initial_mass_center_;
 		SimTK::MassProperties* body_part_mass_properties_;
 		
-		SolidBodyPartForSimbody(SPHBody* body, string solid_body_part_name);
+		SolidBodyPartForSimbody(SPHBody* body, std::string solid_body_part_name);
 		virtual~SolidBodyPartForSimbody() {};
 	protected:
 		Real solid_body_density_;

@@ -148,8 +148,12 @@ namespace SPH {
 	{
 	public:
 		PartDynamicsByCellReduce(SPHBody* sph_body, BodyPartByCell* body_part)
-			: ParticleDynamics<ReturnType>(sph_body), body_part_cells_(body_part->body_part_cells_) {};
+			: ParticleDynamics<ReturnType>(sph_body), body_part_cells_(body_part->body_part_cells_),
+			quantity_name_("ReducedQuantity"), initial_reference_() {};
 		virtual ~PartDynamicsByCellReduce() {};
+
+		ReturnType InitialReference() { return initial_reference_; };
+		std::string QuantityName() { return quantity_name_; };
 
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
@@ -191,6 +195,7 @@ namespace SPH {
 	protected:
 		ReduceOperation reduce_operation_;
 		CellLists& body_part_cells_;
+		std::string quantity_name_;
 		ReturnType initial_reference_;
 		virtual void SetupReduce() {};
 		virtual ReturnType ReduceFunction(size_t index_i, Real dt = 0.0) = 0;
@@ -206,8 +211,12 @@ namespace SPH {
 	public:
 		PartDynamicsByParticleReduce(SPHBody* sph_body, BodyPartByParticle *body_part)
 			: ParticleDynamics<ReturnType>(sph_body),
-			body_part_particles_(body_part->body_part_particles_) {};
+			body_part_particles_(body_part->body_part_particles_),
+			quantity_name_("ReducedQuantity"), initial_reference_() {};
 		virtual ~PartDynamicsByParticleReduce() {};
+
+		ReturnType InitialReference() { return initial_reference_; };
+		std::string QuantityName() { return quantity_name_; };
 
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
@@ -241,6 +250,7 @@ namespace SPH {
 	protected:
 		ReduceOperation reduce_operation_;
 		IndexVector& body_part_particles_;
+		std::string quantity_name_;
 		ReturnType initial_reference_;
 		virtual void SetupReduce() {};
 		virtual ReturnType ReduceFunction(size_t index_i, Real dt = 0.0) = 0;

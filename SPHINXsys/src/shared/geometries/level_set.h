@@ -120,7 +120,7 @@ namespace SPH
 		virtual Real probeKernelIntegral(const Vecd& position, Real h_ratio = 1.0) override;
 		virtual Vecd probeKernelGradientIntegral(const Vecd& position, Real h_ratio = 1.0) override;
 		virtual void cleanInterface(bool isSmoothed = false) override;
-		virtual void writeMeshToPltFile(ofstream& output_file) override;
+		virtual void writeMeshToPltFile(std::ofstream& output_file) override;
 		bool isWithinCorePackage(Vecd position);
 		Real computeKernelIntegral(const Vecd& position);
 		Vecd computeKernelGradientIntegral(const Vecd& position);

@@ -11,7 +11,7 @@ using namespace SPH;
 Real L = 2.0; 	
 Real H = 0.4;
 /** Particle spacing. */
-Real relosution_ref = H / 40.0;
+Real resolution_ref = H / 40.0;
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
 
@@ -39,7 +39,7 @@ std::vector<Vecd> CreatShape()
 class DiffusionBody : public SolidBody
 {
 public:
-	DiffusionBody(SPHSystem &system, string body_name)
+	DiffusionBody(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
 		std::vector<Vecd> body_shape = CreatShape();
@@ -115,10 +115,13 @@ public:
 int main()
 {
 	/** Build up context -- a SPHSystem. */
-	SPHSystem system(system_domain_bounds, relosution_ref);
+	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	GlobalStaticVariables::physical_time_ = 0.0;
+	/** output environment. */
+	In_Output in_output(sph_system);
+
 	/** Configuration of materials, crate particle container and diffusion body. */
-	DiffusionBody *diffusion_body  =  new DiffusionBody(system, "DiffusionBody");
+	DiffusionBody *diffusion_body  =  new DiffusionBody(sph_system, "DiffusionBody");
 	DiffusionBodyMaterial *diffusion_body_material = new DiffusionBodyMaterial();
 	DiffusionReactionParticles<SolidParticles, Solid>	diffusion_body_particles(diffusion_body, diffusion_body_material);
 
@@ -141,13 +144,12 @@ int main()
 	/**
 	 * @brief simple input and outputs.
 	 */
-	In_Output 							in_output(system);
-	WriteBodyStatesToVtu 				write_states(in_output, system.real_bodies_);
+	WriteBodyStatesToVtu 				write_states(in_output, sph_system.real_bodies_);
 
 	/** Pre-simultion*/
-	system.initializeSystemCellLinkedLists();
+	sph_system.initializeSystemCellLinkedLists();
 	periodic_condition_y.update_cell_linked_list_.parallel_exec();
-	system.initializeSystemConfigurations();
+	sph_system.initializeSystemConfigurations();
 	correct_configuration.parallel_exec();
 	setup_diffusion_initial_condition.exec();
 	/** Output global basic parameters. */
@@ -173,7 +175,7 @@ int main()
 			{
 				if (ite % 1 == 0)
 				{
-					cout << "N=" << ite << " Time: "
+					std::cout << "N=" << ite << " Time: "
 						<< GlobalStaticVariables::physical_time_ << "	dt: "
 						<< dt << "\n";
 				}
@@ -198,7 +200,7 @@ int main()
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

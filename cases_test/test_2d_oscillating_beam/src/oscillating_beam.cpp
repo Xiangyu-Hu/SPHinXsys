@@ -81,7 +81,7 @@ std::vector<Vecd> CreatBeamShape()
 class Beam : public SolidBody
 {
 public:
-	Beam(SPHSystem &system, string body_name)
+	Beam(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
 		/** Geometry definition. */
@@ -112,11 +112,11 @@ public:
  * application dependent initial condition 
  */
 class BeamInitialCondition
-	: public solid_dynamics::ElasticSolidDynamicsInitialCondition
+	: public solid_dynamics::ElasticDynamicsInitialCondition
 {
 public:
 	BeamInitialCondition(SolidBody *beam)
-		: solid_dynamics::ElasticSolidDynamicsInitialCondition(beam) {};
+		: solid_dynamics::ElasticDynamicsInitialCondition(beam) {};
 protected:
 	void Update(size_t index_i, Real dt) override {
 		/** initial velocity profile */
@@ -135,7 +135,7 @@ protected:
 class BeamBase : public BodyPartByParticle
 {
 public:
-	BeamBase(SolidBody *solid_body, string constrained_region_name)
+	BeamBase(SolidBody *solid_body, std::string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		/* Geometry definition */
@@ -154,10 +154,10 @@ public:
 class BeamObserver : public FictitiousBody
 {
 public:
-	BeamObserver(SPHSystem &system, string body_name)
+	BeamObserver(SPHSystem &system, std::string body_name)
 		: FictitiousBody(system, body_name, new ParticleAdaptation(1.15, 1))
 	{
-		body_input_points_volumes_.push_back(make_pair(Vecd(PL, 0.0), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(PL, 0.0), 0.0));
 	}
 };
 //------------------------------------------------------------------------------
@@ -253,7 +253,7 @@ int main()
 			while (relaxation_time < Dt) {
 
 				if (ite % 100 == 0) {
-					cout << "N=" << ite << " Time: "
+					std::cout << "N=" << ite << " Time: "
 						<< GlobalStaticVariables::physical_time_ << "	dt: "
 						<< dt << "\n";
 				}
@@ -281,7 +281,7 @@ int main()
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

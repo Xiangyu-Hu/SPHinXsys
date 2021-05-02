@@ -46,11 +46,12 @@ namespace SPH
 	 * @class BaseDiffusion
 	 * @brief diffusion property abstract base class.
 	 */
-	class BaseDiffusion
+	class BaseDiffusion : public BaseMaterial
 	{
 	public:
-		BaseDiffusion(size_t diffusion_species_index, size_t gradient_species_index)
-		: diffusion_species_index_(diffusion_species_index), gradient_species_index_(gradient_species_index) {};
+		BaseDiffusion(size_t diffusion_species_index, size_t gradient_species_index) : 
+			BaseMaterial(), diffusion_species_index_(diffusion_species_index), 
+			gradient_species_index_(gradient_species_index) {};
 		virtual ~BaseDiffusion() {};
 
 		size_t diffusion_species_index_;
@@ -58,8 +59,6 @@ namespace SPH
 
 		virtual Real getReferenceDiffusivity() = 0;
 		virtual Real getInterParticleDiffusionCoff(size_t particle_i, size_t particle_j, Vecd& direction_from_j_to_i) = 0;
-		virtual void initializeLocalDiffusionProperties(BaseParticles* base_particles) {};
-		virtual void setupLocalDiffusionProperties(StdVec<Vecd>& material_fiber) {};
 	};
 
 	/**
@@ -127,8 +126,10 @@ namespace SPH
 	class LocalDirectionalDiffusion : public DirectionalDiffusion
 	{
 	protected:
-		StdVec<Vecd> local_bias_direction_;
-		StdVec<Matd> local_transformed_diffusivity_;
+		StdLargeVec<Vecd> local_bias_direction_;
+		StdLargeVec<Matd> local_transformed_diffusivity_;
+
+		void initializeFiberDirection();
 	public:
 		LocalDirectionalDiffusion(size_t diffusion_species_index, size_t gradient_species_index,
 			Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
@@ -140,8 +141,8 @@ namespace SPH
 			Vecd grad_ij = trans_diffusivity * inter_particle_direction;
 			return 1.0 / grad_ij.scalarNormSqr();
 		};
-		virtual void initializeLocalDiffusionProperties(BaseParticles* base_particles) override;
-		virtual void setupLocalDiffusionProperties(StdVec<Vecd>& material_fiber) override;
+		virtual void assignBaseParticles(BaseParticles* base_particles);
+		virtual void readFromXmlForLocalParameters(std::string& filefullpath) override;
 	};
 
 	/** Reaction functor . */
@@ -224,7 +225,7 @@ namespace SPH
 
 		size_t number_of_species_;
 		size_t number_of_diffusion_species_;
-		map<string, size_t> species_indexes_map_;
+		std::map<std::string, size_t> species_indexes_map_;
 		StdVec<BaseDiffusion*> species_diffusion_;
 		BaseReactionModel* species_reaction_;
 		DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>* diffusion_reaction_particles_;
@@ -234,7 +235,7 @@ namespace SPH
 			BaseMaterialType::assignDerivedMaterialParameters();
 		};
 
-		void insertASpecies(string species_name) 
+		void insertASpecies(std::string species_name)
 		{
 			species_indexes_map_.insert(make_pair(species_name, number_of_species_));
 			number_of_species_++;
@@ -258,13 +259,13 @@ namespace SPH
 		size_t NumberOfSpeciesDiffusion() { return species_diffusion_.size(); };
 		StdVec<BaseDiffusion*> SpeciesDiffusion() { return species_diffusion_; };
 		BaseReactionModel* SpeciesReaction() { return species_reaction_; };
-		map<string, size_t> SpeciesIndexMap() { return  species_indexes_map_; };
+		std::map<std::string, size_t> SpeciesIndexMap() { return  species_indexes_map_; };
 		void assignDiffusionReactionParticles(DiffusionReactionParticles<BaseParticlesType, 
 			BaseMaterialType>* diffusion_reaction_particles) 
 		{
 			diffusion_reaction_particles_ = diffusion_reaction_particles;
 			for (size_t k = 0; k < species_diffusion_.size(); ++k)
-				species_diffusion_[k]->initializeLocalDiffusionProperties(diffusion_reaction_particles);
+				species_diffusion_[k]->assignBaseParticles(diffusion_reaction_particles);
 		};
 		/**
 		 * @brief Get diffusion time step size. Here, I follow the reference:
@@ -281,7 +282,7 @@ namespace SPH
 		/** Initialize diffusion material. */
 		virtual void initializeDiffusion() = 0;
 		virtual DiffusionReactionMaterial<BaseParticlesType, BaseMaterialType>* 
-			pointToThisObject() override { return this; };	
+			ThisObjectPtr() override { return this; };	
 	};
 
 	/**
@@ -327,6 +328,6 @@ namespace SPH
 		virtual ~LocalMonoFieldElectroPhysiology() {};
 
 		virtual void initializeDiffusion() override;
-		void assignFiberProperties(StdVec<Vecd> &material_fiber);
+		virtual void readFromXmlForLocalParameters(std::string& filefullpath) override;
 	};
 }

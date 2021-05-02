@@ -9,7 +9,8 @@
 namespace SPH {
     //===============================================================//
     StateEngine::
-        StateEngine(SimTK::MultibodySystem& system)
+        StateEngine(SimTK::MultibodySystem& system) :
+        simbody_xml_engine_("state_xml", "mbsystem")
     {
         mbsystem_ = system;
         restart_folder_ = "./rstfile";
@@ -235,13 +236,12 @@ namespace SPH {
     //===============================================================//
     void StateEngine::writeStateInfoToXml(int ite_rst_, const SimTK::State& state_)
     {
-        std::string filefullpath = restart_folder_ + "/Simbody_Rst_" + std::to_string(ite_rst_) + ".xml";
- 		std::unique_ptr<XmlEngine> state_xml(new XmlEngine("sate_xml", "mbsystem"));
-
         const SimTK::SimbodyMatterSubsystem& matter_ = getMultibodySystem().getMatterSubsystem();
-        for (SimTK::MobilizedBodyIndex mbx(0); mbx < matter_.getNumBodies(); ++mbx) 
+        simbody_xml_engine_.resizeXmlDocForParticles(matter_.getNumBodies());
+        SimTK::Xml::element_iterator ele_ite = simbody_xml_engine_.root_element_.element_begin();
+        SimTK::MobilizedBodyIndex mbx(0);
+        for (; ele_ite != simbody_xml_engine_.root_element_.element_end(); ++ele_ite)
         {
-            state_xml->creatXmlElement("mbbody");
             const SimTK::MobilizedBody& mobod = matter_.getMobilizedBody(mbx);
 
             int num_q_ = mobod.getNumQ(state_);
@@ -249,7 +249,7 @@ namespace SPH {
             {
                 Real mobod_q = mobod.getOneQ(state_, SimTK::QIndex(i));
                 std::string ele_name = "QIndx_" + std::to_string(i);
-                state_xml->AddAttributeToElement(ele_name,mobod_q);
+                simbody_xml_engine_.setAttributeToElement(ele_ite, ele_name,mobod_q);
             }
             
             int num_u_ = mobod.getNumU(state_);
@@ -257,14 +257,15 @@ namespace SPH {
             {
                 Real mobod_u = mobod.getOneU(state_, SimTK::UIndex(i));
                 std::string ele_name = "UIndx_" + std::to_string(i);
-                state_xml->AddAttributeToElement(ele_name, mobod_u);
+                simbody_xml_engine_.setAttributeToElement(ele_ite, ele_name, mobod_u);
             }
             Vec3d transform_ = mobod.getBodyTransform(state_).p();
-            state_xml->AddAttributeToElement("Transform", transform_);
+            simbody_xml_engine_.setAttributeToElement(ele_ite, "Transform", transform_);
 
-            state_xml->AddElementToXmlDoc();
+            ++mbx;
         }
-        state_xml->WriteToXmlFile(filefullpath);
+        std::string filefullpath = restart_folder_ + "/Simbody_Rst_" + std::to_string(ite_rst_) + ".xml";
+        simbody_xml_engine_.writeToXmlFile(filefullpath);
     }
     //===============================================================//
     SimTK::State StateEngine::readAndSetStateInfoFromXml(int ite_rst_, SimTK::MultibodySystem& system_)
@@ -279,10 +280,9 @@ namespace SPH {
             exit(1);
         }else{
             int num_mobod = 0;
-			std::unique_ptr<XmlEngine> read_xml(new XmlEngine());
-           read_xml->LoadXmlFile(filefullpath);
-            SimTK::Xml::element_iterator ele_ite_ = read_xml->root_element_.element_begin();
-            for (; ele_ite_ != read_xml->root_element_.element_end(); ++ele_ite_)
+            simbody_xml_engine_.loadXmlFile(filefullpath);
+            SimTK::Xml::element_iterator ele_ite_ = simbody_xml_engine_.root_element_.element_begin();
+            for (; ele_ite_ != simbody_xml_engine_.root_element_.element_end(); ++ele_ite_)
             {
                 const SimTK::MobilizedBody& mobod = matter_.getMobilizedBody(SimTK::MobilizedBodyIndex(num_mobod));
                 int num_q_ = mobod.getNumQ(state_);
@@ -292,7 +292,7 @@ namespace SPH {
                     for (int i = 0; i < num_q_; i++)
                     {
                         std::string attr_name = "QIndx_" + std::to_string(i);
-                        Real q_tmp_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, attr_name);
+                        simbody_xml_engine_.getRequiredAttributeValue(ele_ite_, attr_name, q_tmp_);
                         mobod.setOneQ(state_, SimTK::QIndex(i), q_tmp_);
                     }
                 }
@@ -303,11 +303,12 @@ namespace SPH {
                     for (int i = 0; i < num_u_; i++)
                     {
                         std::string attr_name = "UIndx_" + std::to_string(i);
-                        Real u_tmp_ = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, attr_name);
+                        simbody_xml_engine_.getRequiredAttributeValue<Real>(ele_ite_, attr_name, u_tmp_);
                         mobod.setOneU(state_, SimTK::UIndex(i), u_tmp_);
                     }
                 }
-                Vec3d transform_ = read_xml->GetRequiredAttributeValue<Vec3d>(ele_ite_, "Transform");
+                Vec3d transform_(0);
+                simbody_xml_engine_.getRequiredAttributeValue<Vec3d>(ele_ite_, "Transform", transform_);
                 mobod.setQToFitTransform(state_, SimTK::Transform(transform_));
 
                 num_mobod++;

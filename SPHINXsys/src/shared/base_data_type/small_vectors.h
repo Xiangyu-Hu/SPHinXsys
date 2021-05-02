@@ -20,8 +20,6 @@
 * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
 *                                                                           *
 * --------------------------------------------------------------------------*/
-#ifndef SPHINXSYS_BASE_SMALLVEC_H
-#define SPHINXSYS_BASE_SMALLVEC_H
 
 #pragma once
 
@@ -38,7 +36,6 @@
 #include <vector>
 #include <map>
 
-using namespace std;
 namespace SPH {
 
 	template<int N, class T>
@@ -298,11 +295,11 @@ namespace SPH {
 	using Real = SimTK::Real;
 
 	//useful float point constants 
-	const SimTK::Real Pi = SimTK::Pi;
-	const SimTK::Real Infinity = SimTK::Infinity;
-	const SimTK::Real Eps = SimTK::Eps;
-	const SimTK::Real TinyReal = SimTK::TinyReal;
-	constexpr size_t MaxSize_t = numeric_limits<size_t>::max();
+	const Real Pi = Real(M_PI);
+	using SimTK::Infinity;
+	using SimTK::Eps;
+	using SimTK::TinyReal;
+	constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
 
 	//vector with float point number
 	using Vec2d = SimTK::Vec2;
@@ -320,25 +317,26 @@ namespace SPH {
 	const int indexVector = 1;
 	const int indexMatrix = 2;
 	const int indexInteger = 3;
-	const int indexBoolean = 4;
 
-	Vec2d FirstAxisVector(Vec2d zero_vector);
-	Vec3d FirstAxisVector(Vec3d zero_vector);
-	Real getMinAbsoluteElement(Vec2d input);
-	Real getMinAbsoluteElement(Vec3d input);
-	Vec3d upgradeToVector3D(Real input);
-	Vec3d upgradeToVector3D(Vec2d input);
-	Vec3d upgradeToVector3D(Vec3d input);
+	Vec2d FirstAxisVector(const Vec2d& zero_vector);
+	Vec3d FirstAxisVector(const Vec3d& zero_vector);
+	Real getMaxAbsoluteElement(const Vec2d& input);
+	Real getMaxAbsoluteElement(const Vec3d& input);
+	Vec3d upgradeToVector3D(const Real& input);
+	Vec3d upgradeToVector3D(const Vec2d& input);
+	Vec3d upgradeToVector3D(const Vec3d& input);
+	Mat3d upgradeToMatrix3D(const Mat2d& input);
+	Mat3d upgradeToMatrix3D(const Mat3d& input);
 
 	template<typename OutVectorType>
-	OutVectorType upgradeVector(Real input)
+	OutVectorType upgradeVector(const Real& input)
 	{
 		OutVectorType out_vector(0);
 		out_vector[0] = input;
 		return out_vector;
 	};
 	template<typename OutVectorType>
-	OutVectorType upgradeVector(Vec2d input)
+	OutVectorType upgradeVector(const Vec2d& input)
 	{
 		OutVectorType out_vector(0);
 		out_vector[0] = input[0];
@@ -346,7 +344,7 @@ namespace SPH {
 		return out_vector;
 	};
 	template<typename OutVectorType>
-	OutVectorType upgradeVector(Vec3d input)
+	OutVectorType upgradeVector(const Vec3d& input)
 	{
 		OutVectorType out_vector(0);
 		out_vector[0] = input[0];
@@ -355,12 +353,12 @@ namespace SPH {
 		return out_vector;
 	};
 
-	Mat2d getInverse(Mat2d &A);
-	Mat3d getInverse(Mat3d &A);
-	Mat2d getAverageValue(Mat2d &A, Mat2d &B);
-	Mat3d getAverageValue(Mat3d &A, Mat3d &B);
-	Mat2d inverseCholeskyDecomposition(Mat2d &A);
-	Mat3d inverseCholeskyDecomposition(Mat3d &A);
+	Mat2d getInverse(const Mat2d& A);
+	Mat3d getInverse(const Mat3d& A);
+	Mat2d getAverageValue(const Mat2d &A, const Mat2d& B);
+	Mat3d getAverageValue(const Mat3d &A, const Mat3d& B);
+	Mat2d inverseCholeskyDecomposition(const Mat2d& A);
+	Mat3d inverseCholeskyDecomposition(const Mat3d& A);
 
 	/**
 	 * @class Transform2d
@@ -368,7 +366,6 @@ namespace SPH {
 	 */
 	class Transform2d 
 	{
-		using Real = SimTK::Real;
 		Real rotation_angle_;
 		Vec2d translation_;
 	public:
@@ -378,30 +375,19 @@ namespace SPH {
 			: rotation_angle_(rotation_angle), translation_(translation) {};
 		/** Forward tranformation. */
 		Vec2d imposeTransform(Vec2d& origin) {
-			Vec2d result(origin[0] * cos(rotation_angle_) - origin[1] * sin(rotation_angle_),
+			Vec2d target(origin[0] * cos(rotation_angle_) - origin[1] * sin(rotation_angle_),
 				origin[1] * cos(rotation_angle_) + origin[0] * sin(rotation_angle_));
-				return result + translation_;
+				return target + translation_;
 		};
 		/** Inverse tranformation. */
-		Vec2d imposeInverseTransform(Vec2d& result) {
-			Vec2d origin(result[0] * cos(-rotation_angle_) - result[1] * sin(-rotation_angle_),
-				result[1] * cos(-rotation_angle_) + result[0] * sin(-rotation_angle_));
+		Vec2d imposeInverseTransform(Vec2d& target) {
+			Vec2d origin(target[0] * cos(-rotation_angle_) - target[1] * sin(-rotation_angle_),
+			 target[1] * cos(-rotation_angle_) + target[0] * sin(-rotation_angle_));
 			return origin - translation_;
 		};
 	};
 
-	/** 
-	* @function getVectorAfterRotation
-	* @brief Each of these basic vector rotations appears counterclockwise 
-	* @brief when the axis about which they occur points toward the observer, 
-	* @brief and the coordinate system is right-handed. 
-	*/
-	Vec2d getVectorAfterRotation(Vec2d &initial_vector, Vec2d &rotation_angles);
-	Vec3d getVectorAfterRotation(Vec3d &initial_vector, Vec3d &rotation_angles);
-
-	/** Vector change rate after rotation. */
-	Vec2d getVectorChangeRateAfterRotation(Vec2d &initial_vector, Vec2d &rotation_angles, Vec2d &angular_vel);
-	Vec3d getVectorChangeRateAfterRotation(Vec3d &initial_vector, Vec3d &rotation_angles, Vec3d &angular_vel);
+	/** get transformation matrix. */
+	Mat2d getTransformationMatrix(const Vec2d& direction_of_y);
+	Mat3d getTransformationMatrix(const Vec3d& direction_of_z);
 }
-
-#endif //SPHINXSYS_BASE_SMALLVEC_H

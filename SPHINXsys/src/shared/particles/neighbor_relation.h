@@ -28,12 +28,11 @@
  * @author	Xiangyu Hu and Chi Zhang
  */
 #pragma once
+
 #include "base_data_package.h"
 #include "base_kernel.h"
 #include "base_body.h"
 #include "base_particles.h"
-
-using namespace std;
 
 namespace SPH {
 	/**
@@ -54,6 +53,8 @@ namespace SPH {
 
 		Neighborhood() : current_size_(0), allocated_size_(0) {};
 		~Neighborhood() {};
+
+		void removeANeighbor(size_t neighbor_n);
 	};
 
 	/** Inner neighborhoods for all particles in a body for a inner body relation. */

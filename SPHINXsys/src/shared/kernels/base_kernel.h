@@ -35,8 +35,6 @@
 
 #include <string>
 
-using namespace std;
-
 namespace SPH
 {
 	/**
@@ -54,7 +52,7 @@ namespace SPH
 	class Kernel
 	{
 	protected:
-		const string kernel_name_;
+		const std::string kernel_name_;
 		Real h_, inv_h_; /**< reference smoothing length and its inverse **/
 		Real kernel_size_; /**< non-dimensional size of the kernel **/
 		Real cutoff_radius_ref_; /** reference cut off radius **/
@@ -69,11 +67,11 @@ namespace SPH
 		void setDerivativeParameters();
 	public:
 		/** empty initialization in constructor, initialization will be carried out later. */
-		Kernel(string kernel_name = "Kernel");
+		Kernel(std::string kernel_name = "Kernel");
 		virtual ~Kernel() {};
 		
 		void initialize(Real h);
-		string Name() const { return kernel_name_; };
+		std::string Name() const { return kernel_name_; };
 		Real SmoothingLength() const { return h_; };
 		Real KernelSize() const { return kernel_size_; };
 		Real CutOffRadius() const { return cutoff_radius_ref_; };

@@ -15,25 +15,10 @@ namespace SPH
 	SPHSystem::SPHSystem(BoundingBox system_domain_bounds,
 		Real resolution_ref, size_t number_of_threads) :
 		system_domain_bounds_(system_domain_bounds),
-		resolution_ref_(resolution_ref), 
+		resolution_ref_(resolution_ref), in_output_(NULL),
 		tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
 		restart_step_(0), run_particle_relaxation_(false),
-		reload_particles_(false)
-	{
-		output_folder_ = "./output";
-		if (!fs::exists(output_folder_))
-		{
-			fs::create_directory(output_folder_);
-		}
-
-		restart_folder_ = "./restart";
-		if (!fs::exists(restart_folder_))
-		{
-			fs::create_directory(restart_folder_);
-		}
-
-		reload_folder_ = "./reload";
-	}
+		reload_particles_(false) {}
 	//=================================================================================================//
 	void SPHSystem::addABody(SPHBody* sph_body)
 	{
@@ -79,6 +64,7 @@ namespace SPH
 				("help", "produce help message")
 				("r", po::value<bool>(), "Particle relaxation.")
 				("i", po::value<bool>(), "Particle reload from input file.")
+				("restart_step", po::value<int>(), "Run form a restart file.")
 				;
 
 			po::variables_map vm;
@@ -86,35 +72,46 @@ namespace SPH
 			po::notify(vm);
 
 			if (vm.count("help")) {
-				cout << desc << "\n";
+				std::cout << desc << "\n";
 				exit(0);
 			}
 
 			if (vm.count("r")) {
 				run_particle_relaxation_ = vm["r"].as<bool>();
-				cout << "Particle relaxation was set to "
+				std::cout << "Particle relaxation was set to "
 					 << vm["r"].as<bool>() << ".\n";
 			}
 			else {
-				cout << "Particle relaxation was set to default (" 
+				std::cout << "Particle relaxation was set to default ("
 				     << run_particle_relaxation_ <<").\n";
 			}
+
 			if (vm.count("i")) {
 				reload_particles_ = vm["i"].as<bool>();
-				cout << "Particle reload from input file was set to "
+				std::cout << "Particle reload from input file was set to "
 					 << vm["i"].as<bool>() << ".\n";
 			}
 			else {
-				cout << "Particle reload from input file was set to default (" 
+				std::cout << "Particle reload from input file was set to default ("
 				     << reload_particles_ << ").\n";
+			}
+
+			if (vm.count("restart_step")) {
+				restart_step_ = vm["restart_step"].as<int>();
+				std::cout << "Restart step was set to "
+					 << vm["restart_step"].as<int>() << ".\n";
+			}
+			else {
+				std::cout << "Restart inactivated, i.e. restart_step ("
+				     << restart_step_ << ").\n";
 			}
 		}
 		catch (std::exception & e) {
-			cerr << "error: " << e.what() << "\n";
+			std::cerr << "error: " << e.what() << "\n";
 			exit(1);
 		}
 		catch (...) {
-			cerr << "Exception of unknown type!\n";
+			std::cerr << "Exception of unknown type!\n";
 		}
 
 	}

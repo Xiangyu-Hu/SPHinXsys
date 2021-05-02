@@ -39,7 +39,7 @@ Real physical_viscosity = 10000.0;
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &sph_system, string body_name) : SolidBody(sph_system, body_name)
+	WallBoundary(SPHSystem &sph_system, std::string body_name) : SolidBody(sph_system, body_name)
 	{
 		/** Geometry definition. */
 		std::vector<Vecd> outer_wall_shape;
@@ -65,7 +65,7 @@ public:
 class FreeBall : public SolidBody
 {
 public:
-	FreeBall(SPHSystem& system, string body_name) : SolidBody(system, body_name)
+	FreeBall(SPHSystem& system, std::string body_name) : SolidBody(system, body_name)
 	{
 		/** Geometry definition. */
 		ComplexShape original_body_shape;
@@ -77,7 +77,7 @@ public:
 class DampingBall : public SolidBody
 {
 public:
-	DampingBall(SPHSystem& system, string body_name) : SolidBody(system, body_name)
+	DampingBall(SPHSystem& system, std::string body_name) : SolidBody(system, body_name)
 	{
 		/** Geometry definition. */
 		ComplexShape original_body_shape;
@@ -121,11 +121,11 @@ public:
  * application dependent initial condition
  */
 class BallInitialCondition
-	: public solid_dynamics::ElasticSolidDynamicsInitialCondition
+	: public solid_dynamics::ElasticDynamicsInitialCondition
 {
 public:
 	BallInitialCondition(SolidBody* solid_body)
-		: solid_dynamics::ElasticSolidDynamicsInitialCondition(solid_body) {};
+		: solid_dynamics::ElasticDynamicsInitialCondition(solid_body) {};
 protected:
 	void Update(size_t index_i, Real dt) override 
 	{
@@ -136,20 +136,20 @@ protected:
 class FreeBallObserver : public FictitiousBody
 {
 public:
-	FreeBallObserver(SPHSystem& system, string body_name) : FictitiousBody(system, body_name)
+	FreeBallObserver(SPHSystem& system, std::string body_name) : FictitiousBody(system, body_name)
 	{
 		/** the measuring particle with zero volume */
-		body_input_points_volumes_.push_back(make_pair(ball_center_1, 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(ball_center_1, 0.0));
 	}
 };
 /** another observer body */
 class DampingBallObserver : public FictitiousBody
 {
 public:
-	DampingBallObserver(SPHSystem& system, string body_name) : FictitiousBody(system, body_name)
+	DampingBallObserver(SPHSystem& system, std::string body_name) : FictitiousBody(system, body_name)
 	{
 		/** the measuring particle with zero volume */
-		body_input_points_volumes_.push_back(make_pair(ball_center_2, 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(ball_center_2, 0.0));
 	}
 };
 /**
@@ -169,10 +169,10 @@ int main(int ac, char* av[])
 	sph_system.restart_step_ = 0;
 	/** Define external force.*/
 	Gravity gravity(Vecd(0.0, -gravity_g));
-	/** output environment. */
-	In_Output 	in_output(sph_system);
 	/** handle command line arguments. */
 	sph_system.handleCommandlineOptions(ac, av);
+	/** output environment. */
+	In_Output 	in_output(sph_system);
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
@@ -219,7 +219,7 @@ int main(int ac, char* av[])
 		/** Write the body state to Vtu file. */
 		WriteBodyStatesToVtu 		write_ball_state(in_output, sph_system.real_bodies_);
 		/** Write the particle reload files. */
-		WriteReloadParticle 		write_particle_reload_files(in_output, { free_ball, damping_ball});
+		ReloadParticleIO 		write_particle_reload_files(in_output, { free_ball, damping_ball});
 		/** Random reset the relax solid particle position. */
 		RandomizePartilePosition  			free_ball_random_particles(free_ball);
 		RandomizePartilePosition  			damping_ball_random_particles(damping_ball);
@@ -243,7 +243,7 @@ int main(int ac, char* av[])
 			ite += 1;
 			if (ite % 100 == 0)
 			{
-				cout << fixed << setprecision(9) << "Relaxation steps N = " << ite << "\n";
+				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite << "\n";
 				write_ball_state.WriteToFile(Real(ite) * 1.0e-4);
 			}
 		}
@@ -274,9 +274,9 @@ int main(int ac, char* av[])
 	solid_dynamics::StressRelaxationFirstHalf damping_ball_stress_relaxation_first_half(damping_ball_inner);
 	solid_dynamics::StressRelaxationSecondHalf damping_ball_stress_relaxation_second_half(damping_ball_inner);
 	/** Algorithms for solid-solid contact. */
-	solid_dynamics::SummationContactDensity free_ball_update_contact_density(free_ball_contact);
+	solid_dynamics::ContactDensitySummation free_ball_update_contact_density(free_ball_contact);
 	solid_dynamics::ContactForce free_ball_compute_solid_contact_forces(free_ball_contact);
-	solid_dynamics::SummationContactDensity damping_ball_update_contact_density(damping_ball_contact);
+	solid_dynamics::ContactDensitySummation damping_ball_update_contact_density(damping_ball_contact);
 	solid_dynamics::ContactForce damping_ball_compute_solid_contact_forces(damping_ball_contact);
 	/** Damping for one ball */
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec2d>>
@@ -320,7 +320,7 @@ int main(int ac, char* av[])
 				damping_ball_initialize_timestep.parallel_exec();
 				if (ite % 100 == 0) 
 				{
-					cout << "N=" << ite << " Time: "
+					std::cout << "N=" << ite << " Time: "
 						<< GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
 				}
 				free_ball_update_contact_density.parallel_exec();
@@ -361,6 +361,6 @@ int main(int ac, char* av[])
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 	return 0;
 }

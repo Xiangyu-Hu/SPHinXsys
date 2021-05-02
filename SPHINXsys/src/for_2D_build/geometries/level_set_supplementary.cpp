@@ -150,7 +150,7 @@ namespace SPH {
 		Vecd cell_position = CellPositionFromIndex(cell_index);
 		Real signed_distance = complex_shape_.findSignedDistance(cell_position);
 		Vecd normal_direction = complex_shape_.findNormalDirection(cell_position);
-		Real measure = getMinAbsoluteElement(normal_direction * signed_distance);
+		Real measure = getMaxAbsoluteElement(normal_direction * signed_distance);
 		if (measure < grid_spacing_) {
 			mutex_my_pool.lock();
 			LevelSetDataPackage* new_data_pkg = data_pkg_pool_.malloc();
@@ -229,8 +229,8 @@ namespace SPH {
 						for (int x = -4; x != 5; ++x)
 							for (int y = -4; y != 5; ++y)
 							{
-								pair<int, int>  x_pair = CellShiftAndDataIndex(i + x);
-								pair<int, int>  y_pair = CellShiftAndDataIndex(j + y);
+								std::pair<int, int>  x_pair = CellShiftAndDataIndex(i + x);
+								std::pair<int, int>  y_pair = CellShiftAndDataIndex(j + y);
 								LevelSetDataPackage* neighbor_pkg
 									= data_pkg_addrs_[l + x_pair.first][m + y_pair.first];
 								int neighbor_near_interface_id
@@ -254,8 +254,8 @@ namespace SPH {
 						for (int x = -4; x != 5; ++x)
 							for (int y = -4; y != 5; ++y)
 							{
-								pair<int, int>  x_pair = CellShiftAndDataIndex(i + x);
-								pair<int, int>  y_pair = CellShiftAndDataIndex(j + y);
+								std::pair<int, int>  x_pair = CellShiftAndDataIndex(i + x);
+								std::pair<int, int>  y_pair = CellShiftAndDataIndex(j + y);
 								LevelSetDataPackage* neighbor_pkg
 									= data_pkg_addrs_[l + x_pair.first][m + y_pair.first];
 								int neighbor_near_interface_id
@@ -277,7 +277,7 @@ namespace SPH {
 			}
 	}
 	//=============================================================================================//
-	void LevelSet::writeMeshToPltFile(ofstream& output_file)
+	void LevelSet::writeMeshToPltFile(std::ofstream& output_file)
 	{
 		Vecu number_of_operation = total_data_points_;
 

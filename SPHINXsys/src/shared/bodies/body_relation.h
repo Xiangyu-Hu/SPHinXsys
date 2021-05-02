@@ -64,7 +64,7 @@ namespace SPH
 			int body_refinement_level = body->particle_adaptation_->GlobalRefinementLevel();
 			int contact_body_refinement_level = contact_body->particle_adaptation_->GlobalRefinementLevel();
 			search_range_ = body_refinement_level >= contact_body_refinement_level ? 
-				1 : powern(2, contact_body_refinement_level - body_refinement_level);
+				1 : powerN(2, contact_body_refinement_level - body_refinement_level);
 		};
 		int operator () (size_t particle_index) const { return search_range_; };
 	};
@@ -77,7 +77,8 @@ namespace SPH
 		StdLargeVec<Real>& h_ratio_;
 		SearchRangeVariableSmoothingLength(SPHBody* body, MeshCellLinkedList* target_mesh_cell_linked_list) : 
 			inv_grid_spacing_(1.0 / target_mesh_cell_linked_list->GridSpacing()), 
-			kernel_(body->particle_adaptation_->getKernel()), h_ratio_(body->base_particles_->h_ratio_) {};
+			kernel_(body->particle_adaptation_->getKernel()), 
+			h_ratio_(*body->base_particles_->getVariableByName<indexScalar, Real>("SmoothingLengthRatio")) {};
 		int operator () (size_t particle_index) const 
 		{ 
 			return 1 + (int)floor(kernel_->CutOffRadius(h_ratio_[particle_index]) * inv_grid_spacing_); 

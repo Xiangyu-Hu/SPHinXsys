@@ -32,12 +32,12 @@ Real poisson = 0.3; 			                         /** Poisson ratio. */
 Real physical_viscosity = 200.0;                         /** physical damping, here we choose the same value as numerical viscosity. */
 
 Real time_to_full_external_force = 0.0;
-Real gravitational_acceleration = -98000;
+Real gravitational_acceleration = -400000;
 
 class Cylinder : public ThinStructure
 {
 public:
-	Cylinder(SPHSystem &system, string body_name, ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
+	Cylinder(SPHSystem &system, std::string body_name, ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
 		: ThinStructure(system, body_name, particle_adaptation, particle_generator)
 	{
 		// the cylinder and boundary
@@ -48,7 +48,7 @@ public:
 				Real x = radius_mid_surface * cos(-17.5 / 180.0 * Pi + (i - BWD + 0.5) * 215.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
 				Real y = particle_spacing_ref * j + particle_spacing_ref * 0.5;
 				Real z = radius_mid_surface * sin(-17.5 / 180.0 * Pi + (i - BWD + 0.5) * 215.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
-				body_input_points_volumes_.push_back(make_pair(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref * thickness));
+				body_input_points_volumes_.push_back(std::make_pair(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref * thickness));
 			}
 		}
 	}
@@ -69,6 +69,7 @@ protected:
 		n_0_[index_i] = Vec3d(pos_0_[index_i][0] / radius_mid_surface, 0.0, pos_0_[index_i][2] / radius_mid_surface);
 		n_[index_i] = n_0_[index_i];
 		pseudo_n_[index_i] = n_0_[index_i];
+		transformation_matrix_[index_i] = getTransformationMatrix(n_0_[index_i]);
 	};
 };
 
@@ -88,7 +89,7 @@ protected:
 		}
 	};
 public:
-	BoundaryGeometry(SPHBody *body, string body_part_name)
+	BoundaryGeometry(SPHBody *body, std::string body_part_name)
 		: BodyPartByParticle(body, body_part_name) {
 		tagBodyPart();
 	};
@@ -116,11 +117,11 @@ public:
 class CylinderObserver : public FictitiousBody
 {
 public:
-	CylinderObserver(SPHSystem &system, string body_name)
+	CylinderObserver(SPHSystem &system, std::string body_name)
 		: FictitiousBody(system, body_name)
 	{
 		/** the measuring particle with zero volume */
-		body_input_points_volumes_.push_back(make_pair(Vecd(0.0, height / 2.0, radius_mid_surface), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(0.0, height / 2.0, radius_mid_surface), 0.0));
 	}
 };
 
@@ -186,7 +187,7 @@ int main()
 	thin_structure_dynamics::ShellStressRelaxationSecondHalf
 		stress_relaxation_second_half(cylinder_body_inner);
 	/** Constrain the Boundary. */
-	thin_structure_dynamics::FixedFreeRotateShellBoundary
+	thin_structure_dynamics::ClampConstrainShellBodyRegion
 		constrain_holder(cylinder_body_inner, new BoundaryGeometry(cylinder_body, "BoundaryGeometry"));
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vecd>>
 		cylinder_position_damping(cylinder_body_inner, 0.1, "Velocity", physical_viscosity);
@@ -194,7 +195,7 @@ int main()
 		cylinder_rotation_damping(cylinder_body_inner, 0.1, "AngularVelocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
-	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
+	WriteBodyStatesToPlt write_states(in_output, system.real_bodies_);
 	WriteAnObservedQuantity<indexVector, Vecd>
 		write_cylinder_max_displacement("Position", in_output, cylinder_observer_contact);
 
@@ -230,7 +231,7 @@ int main()
 		while (integeral_time < output_period)
 		{
 			if (ite % 100 == 0) {
-				cout << "N=" << ite << " Time: "
+				std::cout << "N=" << ite << " Time: "
 					<< GlobalStaticVariables::physical_time_ << "	dt: "
 					<< dt << "\n";
 			}
@@ -259,7 +260,7 @@ int main()
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

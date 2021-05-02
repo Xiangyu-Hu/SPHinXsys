@@ -38,7 +38,6 @@
 #include "base_particles.h"
 
 #include <string>
-using namespace std;
 
 namespace SPH {
 
@@ -47,31 +46,106 @@ namespace SPH {
 
 	/** @class  BaseMaterial
 	 *  @brief Base of all materials
-	 *  @details Note that the case dependent material properties will defined in 
-	 *  applications.
-	*/
+	 *  @details Note that the case dependent parameters of the material properties
+	 *  will be defined in applications.
+	 */
 	class BaseMaterial
 	{
 	protected:
-		string material_name_;
+		std::string material_name_;
+		std::string parameters_name_;
 		Real rho_0_; /**< reference density. */
 		BaseParticles* base_particles_;
+		XmlEngine reload_material_xml_engine_;
+		//----------------------------------------------------------------------
+		//		Generalized data for parameters
+		//----------------------------------------------------------------------
+		ParticleData	parameter_data_;
+		ParticleDataMap parameter_maps_;
 
 		virtual void assignDerivedMaterialParameters() {};
 	public:
-		BaseMaterial() : material_name_("BaseMaterial"), rho_0_(1.0), base_particles_(NULL) {};
+		BaseMaterial() : material_name_("BaseMaterial"), parameters_name_("LocalParameters"),
+		rho_0_(1.0), base_particles_(NULL),
+		reload_material_xml_engine_("xml_material", "material_paramaters") {};
 		virtual ~BaseMaterial() {};
 
-		void assignBaseParticles(BaseParticles* base_particles) { base_particles_ = base_particles; };
-		string MaterialName() { return material_name_;}
+		/** This will be called in BaseParticle constructor
+		 * and is important because particles are not defined in SPHBody constructor.  
+		 * For a composite material, i.e. there is a material pointer with another material,
+		 * one need assign the base particle to that material too. */
+		virtual void assignBaseParticles(BaseParticles* base_particles) 
+		{ 
+			base_particles_ = base_particles; 
+		};
+		std::string MaterialName() { return material_name_;}
+		std::string LocalParametersName() { return parameters_name_;}
 		Real ReferenceDensity() { return rho_0_; };
-		virtual void initializeLocalProperties(BaseParticles* base_particles) {};
-		virtual void writeToXmlForReloadMaterialProperty(std::string &filefullpath) {};
-		virtual void readFromXmlForMaterialProperty(std::string &filefullpath) {};
-		virtual void writeMaterialPropertyToVtuFile(ofstream& output_file) {};
-		virtual BaseMaterial* pointToThisObject() { return this; };
-	};
 
+		virtual void writeToXmlForReloadLocalParameters(std::string &filefullpath)
+		{
+			std::cout << "\n Material properties writing. " << std::endl;
+			size_t total_real_particles = base_particles_->total_real_particles_;
+			reload_material_xml_engine_.resizeXmlDocForParticles(total_real_particles);
+			WriteAParticleVariableToXml write_variable_to_xml(reload_material_xml_engine_);
+			loopParticleData<loopParticleDataMap>(parameter_data_, parameter_maps_, write_variable_to_xml);
+			reload_material_xml_engine_.writeToXmlFile(filefullpath);
+			std::cout << "\n Material properties writing finished. " << std::endl;
+		};
+		virtual void readFromXmlForLocalParameters(std::string &filefullpath)
+		{
+			reload_material_xml_engine_.loadXmlFile(filefullpath);
+			ReadAParticleVariableFromXml read_variable_from_xml(reload_material_xml_engine_);
+			loopParticleData<loopParticleDataMap>(parameter_data_, parameter_maps_, read_variable_from_xml);
+
+			size_t total_real_particles = base_particles_->total_real_particles_;
+			if(total_real_particles != reload_material_xml_engine_.SizeOfXmlDoc())
+			{
+				std::cout << "\n Error: reload material properties does not match!" << std::endl;
+				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+				exit(1);
+			}	
+			else 
+			{
+				std::cout << "\n Material properties reading finished." << std::endl;
+			}		
+		};
+		
+		virtual void writeLocalParametersToVtuFile(std::ofstream& output_file) 
+		{
+			size_t total_real_particles = base_particles_->total_real_particles_;
+			//write vectors
+			for (auto const& name_index : parameter_maps_[indexVector])
+			{
+				std::string variable_name = name_index.first;
+				StdLargeVec<Vecd>& variable = *(std::get<indexVector>(parameter_data_)[name_index.second]);
+				output_file << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
+				output_file << "    ";
+				for (size_t i = 0; i != total_real_particles; ++i) {
+					Vec3d vector_value = upgradeToVector3D(variable[i]);
+					output_file << std::fixed << std::setprecision(9) << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
+				}
+				output_file << std::endl;
+				output_file << "    </DataArray>\n";
+			}
+		
+			//write scalars
+			for (auto const& name_index : parameter_maps_[indexScalar])
+			{
+				std::string variable_name = name_index.first;
+				StdLargeVec<Real>& variable = *(std::get<indexScalar>(parameter_data_)[name_index.second]);
+				output_file << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\" Format=\"ascii\">\n";
+				output_file << "    ";
+				for (size_t i = 0; i != total_real_particles; ++i) {
+					output_file << std::fixed << std::setprecision(9) << variable[i] << " ";
+				}
+				output_file << std::endl;
+				output_file << "    </DataArray>\n";
+			}			
+		};
+		
+		virtual BaseMaterial* ThisObjectPtr() { return this; };
+	};
 
 	/** @class  Fluid
 	 *  @brief Base class of all fluids
@@ -104,7 +178,7 @@ namespace SPH {
 		virtual Real getPressure(Real rho, Real rho_e) { return getPressure(rho); };
 		virtual Real DensityFromPressure(Real p) = 0;
 		virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) = 0;
-		virtual Fluid* pointToThisObject() override { return this; };
+		virtual Fluid* ThisObjectPtr() override { return this; };
 	};
 
 	/** @class  Solid
@@ -127,7 +201,7 @@ namespace SPH {
 
 		Real ContactFriction() { return contact_friction_; };
 		Real ContactStiffness() { return contact_stiffness_; };
-		virtual Solid* pointToThisObject() override { return this; };
+		virtual Solid* ThisObjectPtr() override { return this; };
 	protected:
 		Real contact_stiffness_; /**< contact-force stiffness related to bulk modulus*/
 		Real contact_friction_; /**< friction property mimic fluid viscosity*/

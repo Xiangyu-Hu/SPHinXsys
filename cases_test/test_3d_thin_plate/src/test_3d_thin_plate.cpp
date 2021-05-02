@@ -37,7 +37,7 @@ Real gravitational_acceleration = 0.009646;
 class Plate : public ThinStructure
 {
 public:
-	Plate(SPHSystem &system, string body_name, ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
+	Plate(SPHSystem &system, std::string body_name, ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
 		: ThinStructure(system, body_name, particle_adaptation, particle_generator)
 	{
 		// the plate and boundary
@@ -47,7 +47,7 @@ public:
 			{
 				Real x = resolution_ref * i - BW + resolution_ref * 0.5;
 				Real y = resolution_ref * j - BW + resolution_ref * 0.5;
-				body_input_points_volumes_.push_back(make_pair(Vecd(x, y, 0.0), resolution_ref * resolution_ref * PT));
+				body_input_points_volumes_.push_back(std::make_pair(Vecd(x, y, 0.0), resolution_ref * resolution_ref * PT));
 			}
 		}
 	}
@@ -88,7 +88,7 @@ protected:
 		}
 	};
 public:
-	BoundaryGeometry(SPHBody *body, string body_part_name)
+	BoundaryGeometry(SPHBody *body, std::string body_part_name)
 		: BodyPartByParticle(body, body_part_name) {
 		tagBodyPart();
 	};
@@ -117,11 +117,11 @@ public:
 class PlateObserver : public FictitiousBody
 {
 public:
-	PlateObserver(SPHSystem &system, string body_name)
+	PlateObserver(SPHSystem &system, std::string body_name)
 		: FictitiousBody(system, body_name)
 	{
 		/** the measuring particle with zero volume */
-		body_input_points_volumes_.push_back(make_pair(Vecd(0.5 * PL, 0.5 * PH, 0.0), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(0.5 * PL, 0.5 * PH, 0.0), 0.0));
 	}
 };
 
@@ -230,7 +230,7 @@ int main()
 		while (integral_time < output_period)
 		{
 			if (ite % 100 == 0) {
-				cout << "N=" << ite << " Time: "
+				std::cout << "N=" << ite << " Time: "
 					<< GlobalStaticVariables::physical_time_ << "	dt: "
 					<< dt << "\n";
 			}
@@ -258,7 +258,7 @@ int main()
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

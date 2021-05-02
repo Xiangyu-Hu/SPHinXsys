@@ -42,23 +42,23 @@ namespace SPH
 		* @brief when the axis about which they occur points toward the observer,
 		* @brief and the coordinate system is right-handed.
 		*/
-		Vec2d getVectorAfterThinStructureRotation(Vec2d &initial_vector, Vec2d &rotation_angles);
-		Vec3d getVectorAfterThinStructureRotation(Vec3d &initial_vector, Vec3d &rotation_angles);
+		Vec2d getVectorAfterThinStructureRotation(const Vec2d &initial_vector, const Vec2d &rotation_angles);
+		Vec3d getVectorAfterThinStructureRotation(const Vec3d &initial_vector, const Vec3d &rotation_angles);
 
 		/** Vector change rate after rotation. */
-		Vec2d getVectorChangeRateAfterThinStructureRotation(Vec2d &initial_vector, Vec2d &rotation_angles, Vec2d &angular_vel);
-		Vec3d getVectorChangeRateAfterThinStructureRotation(Vec3d &initial_vector, Vec3d &rotation_angles, Vec3d &angular_vel);
+		Vec2d getVectorChangeRateAfterThinStructureRotation(const Vec2d &initial_vector, const Vec2d &rotation_angles, const Vec2d &angular_vel);
+		Vec3d getVectorChangeRateAfterThinStructureRotation(const Vec3d &initial_vector, const Vec3d &rotation_angles, const Vec3d &angular_vel);
 
 		/** get transformation matrix. */
-		Matd getTransformationMatrix(Vec2d direction_of_y);
-		Matd getTransformationMatrix(Vec3d direction_of_Z);
+		Matd getTransformationMatrix(const Vec2d& direction_of_y);
+		Matd getTransformationMatrix(const Vec3d& direction_of_Z);
 
 		/** get the rotation from pseudo-normal for finite deformation. */
-		Vecd getRotationFromPseudoNormalForFiniteDeformation(Vec2d dpseudo_n_d2t, Vec2d rotation, Vec2d angular_vel, Real dt);
-		Vecd getRotationFromPseudoNormalForFiniteDeformation(Vec3d dpseudo_n_d2t, Vec3d rotation, Vec3d angular_vel, Real dt);
+		Vecd getRotationFromPseudoNormalForFiniteDeformation(const Vec2d& dpseudo_n_d2t, const Vec2d& rotation, const Vec2d angular_vel, Real dt);
+		Vecd getRotationFromPseudoNormalForFiniteDeformation(const Vec3d& dpseudo_n_d2t, const Vec3d& rotation, const Vec3d angular_vel, Real dt);
 
 		/** get the rotation from pseudo-normal for small deformation. */
-		Vecd getRotationFromPseudoNormalForSmallDeformation(Vec2d dpseudo_n_d2t, Vec2d rotation, Vec2d angular_vel, Real dt);
-		Vecd getRotationFromPseudoNormalForSmallDeformation(Vec3d dpseudo_n_d2t, Vec3d rotation, Vec3d angular_vel, Real dt);
+		Vecd getRotationFromPseudoNormalForSmallDeformation(const Vec2d& dpseudo_n_d2t, const Vec2d& rotation, const Vec2d& angular_vel, Real dt);
+		Vecd getRotationFromPseudoNormalForSmallDeformation(const Vec3d& dpseudo_n_d2t, const Vec3d& rotation, const Vec3d& angular_vel, Real dt);
 	}
 }

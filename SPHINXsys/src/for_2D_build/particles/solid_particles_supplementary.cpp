@@ -6,8 +6,6 @@
 #include "solid_particles.h"
 #include "base_body.h"
 
-using namespace std;
-
 namespace SPH {
 	//=============================================================================================//
 	void SolidParticles::ParticleTranslationAndRotation(Transformd& transform) 
@@ -16,21 +14,6 @@ namespace SPH {
 		{
 			pos_n_[i] = transform.imposeTransform(pos_n_[i]);
 			pos_0_[i] = transform.imposeTransform(pos_0_[i]);
-		}
-	}
-	//=================================================================================================//
-	void SolidParticles::writeParticlesToPltFile(ofstream& output_file)
-	{
-		output_file << " VARIABLES = \" x \", \"y\", \"ID\", \"v_x\", \"v_y\", \"x_norm\", \"y_norm\" \n";
-		for (size_t i = 0; i != total_real_particles_; ++i)
-		{
-			output_file << pos_n_[i][0] << "  "
-				<< pos_n_[i][1] << "  "
-				<< vel_n_[i][0] << " "
-				<< vel_n_[i][1] << " "
-				<< i << "  "
-				<< n_[i][0] << "  "
-				<< n_[i][1] << "\n ";
 		}
 	}
 	//=================================================================================================//
@@ -47,53 +30,6 @@ namespace SPH {
 
 		return sqrt(sigmaxx * sigmaxx + sigmayy * sigmayy - sigmaxx * sigmayy
 			+ 3.0 * sigmaxy * sigmaxy);
-	}
-	//=================================================================================================//
-	void ElasticSolidParticles::writeParticlesToPltFile(ofstream& output_file)
-	{
-		output_file << " VARIABLES = \" x \", \"y\", \"ID\",\"v_x\", \"v_y\", \"x_norm\", \"y_norm\", \"von Mises stress\" \n";
-		for (size_t i = 0; i != total_real_particles_; ++i)
-		{
-			output_file << pos_n_[i][0] << "  "
-				<< pos_n_[i][1] << "  "
-				<< i << "  "
-				<< vel_n_[i][0] << " "
-				<< vel_n_[i][1] << " "
-				<< n_[i][0] << "  "
-				<< n_[i][1] << "  "
-				<< von_Mises_stress(i) << "\n ";
-		}
-	}
-	//=================================================================================================//
-	void ActiveMuscleParticles::writeParticlesToPltFile(ofstream& output_file)
-	{
-		output_file << " VARIABLES = \" x \", \"y\", \"ID\", \"Vx\", \"Vy\", \"von Mises\", \" Ta \" \n";
-		for (size_t i = 0; i != total_real_particles_; ++i)
-		{
-			output_file << pos_n_[i][0] << "  "
-				<< pos_n_[i][1] << "  "
-				<< i << "  "
-				<< vel_n_[i][0] << " "
-				<< vel_n_[i][1] << " "
-				<< von_Mises_stress(i) << " "
-				<< active_contraction_stress_[i] << "\n ";
-		}
-	}
-	//=================================================================================================//
-	void ShellParticles::writeParticlesToPltFile(ofstream &output_file)
-	{
-		output_file << " VARIABLES = \" x \", \"y\", \"ID\",\"v_x\", \"v_y\", \"x_norm\", \"y_norm\", \"von Mises stress\" \n";
-		for (size_t i = 0; i != total_real_particles_; ++i)
-		{
-			output_file << pos_n_[i][0] << "  "
-				<< pos_n_[i][1] << "  "
-				<< i << "  "
-				<< vel_n_[i][0] << " "
-				<< vel_n_[i][1] << " "
-				<< n_[i][0] << "  "
-				<< n_[i][1] << "  "
-				<< von_Mises_stress(i) << "\n ";
-		}
 	}
 	//=================================================================================================//
 }

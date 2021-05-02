@@ -6,9 +6,7 @@
 #include "fluid_dynamics_inner.h"
 #include "in_output.h"
 #include "geometry_level_set.h"
-//=================================================================================================//
-using namespace std;
-//=================================================================================================//
+
 namespace SPH
 {
 //=================================================================================================//
@@ -27,9 +25,10 @@ namespace SPH
 			InteractionDynamicsWithUpdate(inner_relation->sph_body_),
 			FluidDataInner(inner_relation),
 			thereshold_by_dimensions_(thereshold*(Real)Dimensions), 
-			Vol_(particles_->Vol_), is_free_surface_(particles_->is_free_surface_)
+			Vol_(particles_->Vol_), 
+			pos_div_(*particles_->createAVariable<indexScalar, Real>("PositionDivergence")),
+			surface_indicator_(particles_->surface_indicator_)
 		{
-			particles_->registerAVariable<indexScalar, Real>(pos_div_, "PositionDivergence", true);
 			smoothing_length_ = inner_relation->sph_body_->particle_adaptation_->ReferenceSmoothingLength();
 		}
 		//=================================================================================================//
@@ -51,15 +50,13 @@ namespace SPH
 	
 			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-				/** Two layer particles.*/
+				/** Two layer particles. this should be clarified ...*/
 				if (pos_div_[inner_neighborhood.j_[n]] < thereshold_by_dimensions_ && inner_neighborhood.r_ij_[n] < smoothing_length_)
-				/** Three layer particles. */
-				//if (pos_div_[inner_neighborhood.j_[n]] < thereshold_by_dimensions_)
 				{
 					is_free_surface = true;
 					break;
 				}
-			is_free_surface_[index_i] = is_free_surface;
+			surface_indicator_[index_i] = is_free_surface ? 1 : 0;
 		}
 		//=================================================================================================//
 		DensitySummationInner::DensitySummationInner(BaseInnerBodyRelation* inner_relation) :
@@ -151,7 +148,7 @@ namespace SPH
 			FluidDataInner(inner_relation),
 			Vol_(particles_->Vol_), rho_n_(particles_->rho_n_), 
 			pos_n_(particles_->pos_n_), 
-			is_free_surface_(particles_->is_free_surface_), 
+			surface_indicator_(particles_->surface_indicator_),
 			p_background_(0) {}
 		//=================================================================================================//
 		void TransportVelocityCorrectionInner::setupDynamics(Real dt)
@@ -177,7 +174,7 @@ namespace SPH
 			}
 
 			/** correcting particle position */
-			if(!is_free_surface_[index_i]) pos_n_[index_i] += acceleration_trans * dt * dt * 0.5;
+			if(surface_indicator_[index_i] == 0) pos_n_[index_i] += acceleration_trans * dt * dt * 0.5;
 		}
 		//=================================================================================================//
 		TotalMechanicalEnergy::TotalMechanicalEnergy(FluidBody* body, Gravity* gravity)
@@ -185,6 +182,7 @@ namespace SPH
 			FluidDataSimple(body), mass_(particles_->mass_), 
 			vel_n_(particles_->vel_n_), pos_n_(particles_->pos_n_), gravity_(gravity)
 		{
+			quantity_name_ = "TotalMechanicalEnergy";
 			initial_reference_ = 0.0;
 		}
 		//=================================================================================================//
@@ -251,12 +249,10 @@ namespace SPH
 			VorticityInner(BaseInnerBodyRelation* body_inner_relation) : 
 			InteractionDynamics(body_inner_relation->sph_body_),
 			FluidDataInner(body_inner_relation),
-			Vol_(particles_->Vol_), vel_n_(particles_->vel_n_)
+			Vol_(particles_->Vol_), vel_n_(particles_->vel_n_),
+			vorticity_(*particles_->createAVariable<indexAngularVector, AngularVecd>("VorticityInner")) 
 		{
-			SPHBody* sph_body = body_inner_relation->sph_body_;
-			BaseParticles* base_particles = sph_body->base_particles_;
-			//register particle variable defined in this class
-			base_particles->registerAVariable<indexAngularVector, AngularVecd>(vorticity_, "VorticityInner", true);
+			particles_->addAVariableToWrite<indexAngularVector, AngularVecd>("VorticityInner");
 		}
 		//=================================================================================================//
 		void VorticityInner::Interaction(size_t index_i, Real dt)
@@ -549,7 +545,7 @@ namespace SPH
 			if (pos_n_[sorted_index_i][axis_] > body_part_bounds_.second[axis_]) {
 				if (particles_->total_real_particles_ >= particles_->real_particles_bound_)
 				{
-					cout << "EmitterInflowBoundaryCondition::ConstraintAParticle: \n"
+					std::cout << "EmitterInflowBoundaryCondition::ConstraintAParticle: \n"
 						<< "Not enough body buffer particles! Exit the code." << "\n";
 					exit(0);
 				}
@@ -569,7 +565,7 @@ namespace SPH
 			if (pos_n_[sorted_index_i][axis_] < body_part_bounds_.first[axis_]) {
 				if (particles_->total_real_particles_ >= particles_->real_particles_bound_)
 				{
-					cout << "EmitterInflowBoundaryCondition::ConstraintAParticle: \n"
+					std::cout << "EmitterInflowBoundaryCondition::ConstraintAParticle: \n"
 						<< "Not enough body buffer particles! Exit the code." << "\n";
 					exit(0);
 				}
@@ -582,27 +578,26 @@ namespace SPH
 		}
 		//=================================================================================================//
 		SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseInnerBodyRelation* inner_relation, Real gamma) 
-		: InteractionDynamics(inner_relation->sph_body_), FluidDataInner(inner_relation), Vol_(particles_->Vol_), 
-			mass_(particles_->mass_), dvel_dt_others_(particles_->dvel_dt_others_), gamma_(gamma)
-		{
-			color_grad_ = particles_->getVariableByName<indexVector, Vecd>("ColorGradient");
-			surface_norm_ = particles_->getVariableByName<indexVector, Vecd>("SurfaceNorm");
-			pos_div_ = particles_->getVariableByName<indexScalar, Real>("PositionDivergence");
-		}
+		: InteractionDynamics(inner_relation->sph_body_), FluidDataInner(inner_relation), gamma_(gamma), 
+			Vol_(particles_->Vol_), mass_(particles_->mass_), 
+			pos_div_(*particles_->getVariableByName<indexScalar, Real>("PositionDivergence")),
+			dvel_dt_others_(particles_->dvel_dt_others_),
+			color_grad_(*particles_->getVariableByName<indexVector, Vecd>("ColorGradient")),
+			surface_norm_(*particles_->getVariableByName<indexVector, Vecd>("SurfaceNormal")) {}
 		//=================================================================================================//
 		SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseInnerBodyRelation* inner_relation)
 		: SurfaceTensionAccelerationInner(inner_relation, 1.0) {}
 		//=================================================================================================//
 		void SurfaceTensionAccelerationInner::Interaction(size_t index_i, Real dt)
 		{
-			Vecd n_i = (*surface_norm_)[index_i];
+			Vecd n_i = surface_norm_[index_i];
 			Real curvature(0.0);
 			Real renormal_curvature(0);
 			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				Vecd n_j = (*surface_norm_)[index_j];
+				Vecd n_j = surface_norm_[index_j];
 				if(n_j.norm() > 1.0e-1)
 				{
 					Vecd n_ij = n_i - n_j;
@@ -610,8 +605,8 @@ namespace SPH
 				}
 			}
 			/** Normalize the curvature. */
-			renormal_curvature = n_i.size() * curvature / ABS((*pos_div_)[index_i] + TinyReal);
-			Vecd acceleration = gamma_ * renormal_curvature * ((*color_grad_)[index_i]) * Vol_[index_i];
+			renormal_curvature = n_i.size() * curvature / (ABS(pos_div_[index_i]) + TinyReal);
+			Vecd acceleration = gamma_ * renormal_curvature * color_grad_[index_i] * Vol_[index_i];
 			dvel_dt_others_[index_i] -= acceleration / mass_[index_i];
 		}
 		//=================================================================================================//

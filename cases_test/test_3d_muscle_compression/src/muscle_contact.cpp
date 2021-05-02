@@ -56,7 +56,7 @@ TriangleMeshShape* CreateMovingPlate()
 class Myocardium : public SolidBody
 {
 public:
-	Myocardium(SPHSystem &system, string body_name)
+	Myocardium(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
 		body_shape_ = new ComplexShape(body_name);
@@ -70,7 +70,7 @@ public:
 class MovingPlate : public SolidBody
 {
 public:
-	MovingPlate(SPHSystem &system, string body_name)
+	MovingPlate(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
 		body_shape_ = new ComplexShape(body_name);
@@ -85,7 +85,7 @@ public:
 class Holder : public BodyPartByParticle
 {
 public:
-	Holder(SolidBody *solid_body, string constrained_region_name)
+	Holder(SolidBody *solid_body, std::string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		body_part_shape_ = new ComplexShape(constrained_region_name);
@@ -101,7 +101,7 @@ class SimbodyPlate : public SolidBodyPartForSimbody
 {
 public:
 	SimbodyPlate(SolidBody* solid_body,
-		string constrained_region_name, Real solid_body_density)
+		std::string constrained_region_name, Real solid_body_density)
 		: SolidBodyPartForSimbody(solid_body,constrained_region_name)
 	{
 		body_part_shape_ = new ComplexShape(constrained_region_name);
@@ -172,10 +172,10 @@ int main()
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(myocardium_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(myocardium_body_inner);
 	/** Algorithms for solid-solid contact. */
-	solid_dynamics::SummationContactDensity myocardium_update_contact_density(myocardium_plate_contact);
+	solid_dynamics::ContactDensitySummation myocardium_update_contact_density(myocardium_plate_contact);
 	solid_dynamics::ContactForce myocardium_compute_solid_contact_forces(myocardium_plate_contact);
 	/** Algorithms for solid-solid contact. */
-	solid_dynamics::SummationContactDensity plate_update_contact_density(plate_myocardium_contact);
+	solid_dynamics::ContactDensitySummation plate_update_contact_density(plate_myocardium_contact);
 	solid_dynamics::ContactForce plate_compute_solid_contact_forces(plate_myocardium_contact);
 	/** Constrain the holder. */
 	solid_dynamics::ConstrainSolidBodyRegion
@@ -248,7 +248,7 @@ int main()
 		while (integration_time < output_period) 
 		{
 			if (ite % 100 == 0) {
-				cout << "N=" << ite << " Time: "
+				std::cout << "N=" << ite << " Time: "
 					<< GlobalStaticVariables::physical_time_ << "	dt: "
 					<< dt << "\n";
 			}
@@ -294,7 +294,7 @@ int main()
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

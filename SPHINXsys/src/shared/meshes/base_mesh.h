@@ -43,8 +43,6 @@
 #include <functional>
 using namespace std::placeholders;
 
-using namespace std;
-
 namespace SPH
 {
 	class Kernel;
@@ -126,7 +124,7 @@ namespace SPH
 		Vecd CellPositionFromIndex(Vecu cell_index);
 
 		/** output mesh data for Tecplot visualization */
-		virtual void writeMeshToPltFile(ofstream& output_file) {};
+		virtual void writeMeshToPltFile(std::ofstream& output_file) {};
 
 		/** allocate memories for the mesh data matrix*/
 		virtual void allocateMeshDataMatrix() {};
@@ -153,7 +151,7 @@ namespace SPH
 		{
 			Real zero_level_spacing = reference_spacing * maximum_spacing_ratio;
 			for (size_t level = 0; level != total_levels_; ++level) {
-				Real spacing_level = zero_level_spacing * powern(0.5, (int)level);
+				Real spacing_level = zero_level_spacing * powerN(0.5, (int)level);
 				/** all mesh levels aligned at the lower bound of tentative_bounds */
 				MeshLevelType* mesh_level = 
 					new MeshLevelType(mesh_composition, particle_adaptation, tentative_bounds, spacing_level, buffer_width);
@@ -168,7 +166,7 @@ namespace SPH
 
 		StdVec<MeshLevelType*> getMeshLevels() { return mesh_levels_; };
 
-		void writeMeshToPltFile(ofstream& output_file) override
+		void writeMeshToPltFile(std::ofstream& output_file) override
 		{
 			for (size_t l = 0; l != total_levels_; ++l) {
 				mesh_levels_[l]->writeMeshToPltFile(output_file);

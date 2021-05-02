@@ -24,9 +24,10 @@ int main(int ac, char* av[])
 	system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: start with initial condition. */
 	system.restart_step_ = 0;
-
 	//handle command line arguments
 	system.handleCommandlineOptions(ac, av);
+	/** output environment. */
+	In_Output in_output(system);
 
 	/**
 	 * @brief Creating body, materials and particles for a water block.
@@ -55,10 +56,8 @@ int main(int ac, char* av[])
 	/**
 	 * @brief define simple data file input and outputs functions.
 	 */
-	In_Output 							in_output(system);
 	WriteBodyStatesToVtu 				write_real_body_states(in_output, system.real_bodies_);
-	WriteRestart						write_restart_files(in_output, system.real_bodies_);
-	ReadRestart							read_restart_files(in_output, system.real_bodies_);
+	RestartIO							restart_io(in_output, system.real_bodies_);
 	/** topology */
 	InnerBodyRelation* water_block_inner = new InnerBodyRelation(water_block);
 	InnerBodyRelation* inserted_body_inner = new InnerBodyRelation(inserted_body);
@@ -78,7 +77,7 @@ int main(int ac, char* av[])
 		/** Write the body state to Vtu file. */
 		WriteBodyStatesToVtu 		write_inserted_body_to_vtu(in_output, { inserted_body });
 		/** Write the particle reload files. */
-		WriteReloadParticle 		write_particle_reload_files(in_output, { inserted_body });
+		ReloadParticleIO 		write_particle_reload_files(in_output, { inserted_body });
 
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(inserted_body_inner);
@@ -97,7 +96,7 @@ int main(int ac, char* av[])
 			ite_p += 1;
 			if (ite_p % 200 == 0)
 			{
-				cout << fixed << setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
+				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
 				write_inserted_body_to_vtu.WriteToFile(Real(ite_p) * 1.0e-4);
 			}
 		}
@@ -162,8 +161,8 @@ int main(int ac, char* av[])
 	/**
 	 * @brief Write observation data into files.
 	 */
-	WriteTotalViscousForceOnSolid 		write_total_viscous_force_on_inserted_body(in_output, inserted_body);
-
+	WriteBodyReducedQuantity<solid_dynamics::TotalViscousForceOnSolid>
+		write_total_viscous_force_on_inserted_body(in_output, inserted_body);
 	WriteAnObservedQuantity<indexVector, Vecd>
 		write_beam_tip_displacement("Position", in_output, beam_observer_contact);
 	WriteAnObservedQuantity<indexVector, Vecd>
@@ -174,8 +173,8 @@ int main(int ac, char* av[])
 	 */
 	 /** Using relaxed particle distribution if needed. */
 	if (system.reload_particles_) {
-		unique_ptr<ReadReloadParticle>	
-			reload_insert_body_particles(new ReadReloadParticle(in_output, { inserted_body }, { "InsertedBody" }));
+		std::unique_ptr<ReloadParticleIO>
+			reload_insert_body_particles(new ReloadParticleIO(in_output, { inserted_body }, { "InsertedBody" }));
 		reload_insert_body_particles->ReadFromFile();
 	}
 	/** initialize cell linked lists for all bodies. */
@@ -196,7 +195,7 @@ int main(int ac, char* av[])
 	 * @brief The time stepping starts here.
 	 */
 	if (system.restart_step_ != 0) {
-		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
+		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.restart_step_);
 		inserted_body->updateCellLinkedList();
 		water_block->updateCellLinkedList();
 		periodic_condition.update_cell_linked_list_.parallel_exec();
@@ -275,12 +274,12 @@ int main(int ac, char* av[])
 
 			if (number_of_iterations % screen_output_interval == 0)
 			{
-				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 					<< GlobalStaticVariables::physical_time_
 					<< "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "	dt / dt_s = " << inner_ite_dt_s << "\n";
 
 				if (number_of_iterations % restart_output_interval == 0 && number_of_iterations != system.restart_step_)
-					write_restart_files.WriteToFile(Real(number_of_iterations));
+					restart_io.WriteToFile(Real(number_of_iterations));
 			}
 			number_of_iterations++;
 
@@ -311,7 +310,7 @@ int main(int ac, char* av[])
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

@@ -42,7 +42,6 @@
 #include "particle_sorting.h"
 
 #include <string>
-using namespace std;
 
 namespace SPH 
 {
@@ -65,7 +64,7 @@ namespace SPH
 	{
 	protected:
 		SPHSystem& sph_system_;
-		string body_name_;
+		std::string body_name_;
 		bool newly_updated_;		/**< whether this body is in a newly updated state */
 		BoundingBox body_domain_bounds_; /**< Computational domain bounds for boundary conditions. */
 		bool prescribed_body_bounds_;
@@ -85,12 +84,12 @@ namespace SPH
 
 		StdVec<SPHBodyRelation*> body_relations_; /**< all contact relations centered from this body **/
 
-		explicit SPHBody(SPHSystem &sph_system, string body_name, 
+		explicit SPHBody(SPHSystem &sph_system, std::string body_name, 
 			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(),
 			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~SPHBody() {};
 
-		string getBodyName();
+		std::string getBodyName();
 		SPHSystem& getSPHSystem();
 		void setNewlyUpdated() { newly_updated_ = true; };
 		void setNotNewlyUpdated() { newly_updated_ = false; };
@@ -104,17 +103,15 @@ namespace SPH
 		/** This will be called in BaseParticle constructor
 		 * and is important because particles are not defined in SPHBody constructor.  */
 		virtual void assignBaseParticles(BaseParticles* base_particles);
-		virtual Real computeReferenceNumberDensity(Vec2d zero = Vec2d(0));
-		virtual Real computeReferenceNumberDensity(Vec3d zero = Vec3d(0));
 		void allocateConfigurationMemoriesForBufferParticles();
 
-		virtual void writeParticlesToVtuFile(ofstream &output_file);
-		virtual void writeParticlesToPltFile(ofstream &output_file);
+		virtual void writeParticlesToVtuFile(std::ofstream &output_file);
+		virtual void writeParticlesToPltFile(std::ofstream &output_file);
 		virtual void writeParticlesToXmlForRestart(std::string &filefullpath);
 		virtual void readParticlesFromXmlForRestart(std::string &filefullpath);
 		virtual void writeToXmlForReloadParticle(std::string &filefullpath);
 		virtual void readFromXmlForReloadParticle(std::string &filefullpath);
-		virtual SPHBody* pointToThisObject() {return this;};
+		virtual SPHBody* ThisObjectPtr() {return this;};
 	};
 	/**
 	 * @class RealBody
@@ -127,7 +124,7 @@ namespace SPH
 		ParticleSorting particle_sorting_;
 		BaseMeshCellLinkedList* mesh_cell_linked_list_; /**< Cell linked mesh of this body. */
 
-		RealBody(SPHSystem &sph_system, string body_name, ParticleAdaptation* particle_adaptation,
+		RealBody(SPHSystem &sph_system, std::string body_name, ParticleAdaptation* particle_adaptation,
 			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~RealBody() {};
 
@@ -146,7 +143,7 @@ namespace SPH
 	class FictitiousBody : public SPHBody
 	{
 	public:
-		FictitiousBody(SPHSystem& system, string body_name, 
+		FictitiousBody(SPHSystem& system, std::string body_name, 
 			ParticleAdaptation* particle_adaptation = new  ParticleAdaptation(),
 			ParticleGenerator* particle_generator = new ParticleGeneratorDirect());
 		virtual ~FictitiousBody() {};
@@ -159,15 +156,15 @@ namespace SPH
 	class BodyPart
 	{
 	public:
-		BodyPart(SPHBody *body, string body_part_name) : 
+		BodyPart(SPHBody *body, std::string body_part_name) : 
 			body_(body), body_part_name_(body_part_name) {};
 		virtual ~BodyPart() {};
 
 		SPHBody* getBody() { return body_; };
-		string BodyPartName() { return body_part_name_; };
+		std::string BodyPartName() { return body_part_name_; };
 	protected:
 		SPHBody* body_;
-		string body_part_name_;
+		std::string body_part_name_;
 
 		virtual void tagBodyPart() = 0;
 	};
@@ -180,7 +177,7 @@ namespace SPH
 	class BodyPartByShape : public BodyPart
 	{
 	public:
-		BodyPartByShape(SPHBody* body, string body_part_name);
+		BodyPartByShape(SPHBody* body, std::string body_part_name);
 		virtual ~BodyPartByShape() {};
 
 		ComplexShape* getBodyPartShape() { return body_part_shape_; };
@@ -198,7 +195,7 @@ namespace SPH
 	public:
 		IndexVector body_part_particles_; /**< Collection particle in this body part. */
 
-		BodyPartByParticle(SPHBody* body, string body_part_name)
+		BodyPartByParticle(SPHBody* body, std::string body_part_name)
 			: BodyPartByShape(body, body_part_name) {};
 		virtual ~BodyPartByParticle() {};
 	protected:
@@ -258,7 +255,7 @@ namespace SPH
 	public:
 		CellLists body_part_cells_; /**< Collection of cells to indicate the body part. */
 
-		BodyPartByCell(RealBody *real_body, string body_part_name);
+		BodyPartByCell(RealBody *real_body, std::string body_part_name);
 		virtual ~BodyPartByCell() {};
 	};
 
@@ -271,7 +268,7 @@ namespace SPH
 	{
 	public:
 		/** for the case that the body part shape is not that of the body */
-		NearShapeSurface(RealBody* real_body, ComplexShape* complex_shape, string body_part_name);
+		NearShapeSurface(RealBody* real_body, ComplexShape* complex_shape, std::string body_part_name);
 		/** for the case that the body part is the surface of the body shape */
 		NearShapeSurface(RealBody* real_body);
 		virtual ~NearShapeSurface() {};

@@ -54,7 +54,7 @@ TriangleMeshShape* CreateHolder()
 class Column : public SolidBody
 {
 public:
-	Column(SPHSystem& system, string body_name) : SolidBody(system, body_name, new ParticleAdaptation(1.15, 0))
+	Column(SPHSystem& system, std::string body_name) : SolidBody(system, body_name, new ParticleAdaptation(1.15, 0))
 	{
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addTriangleMeshShape(CreateCantilever(), ShapeBooleanOps::add);
@@ -69,7 +69,7 @@ public:
 class Holder : public BodyPartByParticle
 {
 public:
-	Holder(SolidBody* solid_body, string constrained_region_name)
+	Holder(SolidBody* solid_body, std::string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		body_part_shape_ = new ComplexShape(constrained_region_name);
@@ -96,11 +96,11 @@ public:
  * application dependent initial condition
  */
 class InitialCondition
-	: public solid_dynamics::ElasticSolidDynamicsInitialCondition
+	: public solid_dynamics::ElasticDynamicsInitialCondition
 {
 public:
 	InitialCondition(SolidBody* body)
-		: solid_dynamics::ElasticSolidDynamicsInitialCondition(body) {};
+		: solid_dynamics::ElasticDynamicsInitialCondition(body) {};
 protected:
 	void Update(size_t index_i, Real dt) override
 	{
@@ -123,9 +123,9 @@ protected:
 class MyObserver : public FictitiousBody
 {
 public:
-	MyObserver(SPHSystem& system, string body_name)
+	MyObserver(SPHSystem& system, std::string body_name)
 		: FictitiousBody(system, body_name)
 	{
-		body_input_points_volumes_.push_back(make_pair(Vecd(PL, 0.0, 0.0), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(PL, 0.0, 0.0), 0.0));
 	}
 };

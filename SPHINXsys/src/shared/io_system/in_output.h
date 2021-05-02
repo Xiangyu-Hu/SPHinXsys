@@ -27,6 +27,7 @@
  */
 
 #pragma once
+
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_data_package.h"
@@ -66,10 +67,28 @@ namespace SPH {
 		virtual ~In_Output() {};
 
 		SPHSystem &sph_system_;
-		std::string output_folder_;
-		std::string restart_folder_;
-		std::string reload_folder_;
+		std::string input_folder_;			/**< Folder for saving input files. */
+		std::string output_folder_;			/**< Folder for saving output files. */
+		std::string restart_folder_;		/**< Folder for saving restart files. */
+		std::string reload_folder_;			/**< Folder for saving particle reload files. */
+
 		std::string restart_step_;
+	};
+
+	/**
+	 * @class PltEngine
+	 * @brief The base class which defines Tecplot file related operation.
+	 */
+	class PltEngine
+	{
+	public:
+		PltEngine() {};
+		virtual ~PltEngine() {};
+
+		void writeAQuantityHeader(std::ofstream& out_file, const Real& quantity, std::string quantity_name);
+		void writeAQuantityHeader(std::ofstream& out_file, const Vecd& quantity, std::string quantity_name);
+		void writeAQuantity(std::ofstream& out_file, const Real& quantity);
+		void writeAQuantity(std::ofstream& out_file, const Vecd& quantity);
 	};
 
 	/**
@@ -106,21 +125,6 @@ namespace SPH {
 		virtual void WriteToFile(Real time) = 0;
 	};
 
-	/**
-	 * @class ReadBodyStates
-	 * @brief base class for read body states.
-	 */
-	class ReadBodyStates : public BodyStatesIO
-	{
-	public:
-		ReadBodyStates(In_Output &in_output, SPHBody *body)
-			: BodyStatesIO(in_output, body) {};
-		ReadBodyStates(In_Output &in_output, SPHBodyVector bodies)
-			: BodyStatesIO(in_output, bodies) {};
-		virtual ~ReadBodyStates() {};
-
-		virtual void ReadFromFile(size_t iteration_step) = 0;
-	};
 	/**
 	 * @class SimBodyStatesIO
 	 * @brief base class for write and read SimBody states.
@@ -246,39 +250,25 @@ namespace SPH {
 	{
 	protected:
 		SPHBody* observer_;
+		PltEngine plt_engine_;
 		BaseParticles* base_particles_;
 		std::string filefullpath_;
 
-		void writeFileHead(std::ofstream& out_file, Real& observed_quantity, string quantity_name, size_t i) {
-			out_file << "  " << quantity_name << "[" << i << "]" << " ";
-		};
-		void writeDataToFile(std::ofstream& out_file, Real& observed_quantity) {
-			out_file << "  " << observed_quantity << " ";
-		};
-
-		void writeFileHead(std::ofstream& out_file, Vecd& observed_quantity, string quantity_name, size_t i) {
-			for (int j = 0; j < observed_quantity.size(); ++j)
-				out_file << "  " << quantity_name <<"[" << i << "][" << j << "]" << " ";
-		};
-		void writeDataToFile(std::ofstream& out_file, Vecd& observed_quantity) {
-			for (int j = 0; j < observed_quantity.size(); ++j)
-				out_file << "  " << observed_quantity[j] << " ";
-		};
-
 	public:
-		WriteAnObservedQuantity(string quantity_name, In_Output& in_output, 
+		WriteAnObservedQuantity(std::string quantity_name, In_Output& in_output,
 			BaseContactBodyRelation* body_contact_relation) : 
 			WriteBodyStates(in_output, body_contact_relation->sph_body_), 
 			observer_dynamics::InterpolatingAQuantity<DataTypeIndex, VariableType>(body_contact_relation, quantity_name),
-			observer_(body_contact_relation->sph_body_), base_particles_(observer_->base_particles_)
+			observer_(body_contact_relation->sph_body_), plt_engine_(), base_particles_(observer_->base_particles_)
 		{
 			filefullpath_ = in_output_.output_folder_ + "/" + observer_->getBodyName()
 				+ "_" + quantity_name + "_" + in_output_.restart_step_ + ".dat";
-			std::ofstream out_file(filefullpath_.c_str(), ios::app);
+			std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
 			out_file << "run_time" << "   ";
 			for (size_t i = 0; i != base_particles_->total_real_particles_; ++i)
 			{
-				writeFileHead(out_file, this->interpolated_quantities_[i], quantity_name, i);
+				std::string quantity_name_i = quantity_name + "[" + std::to_string(i) + "]";
+				plt_engine_.writeAQuantityHeader(out_file, this->interpolated_quantities_[i], quantity_name_i);
 			}
 			out_file << "\n";
 			out_file.close();
@@ -288,11 +278,11 @@ namespace SPH {
 		virtual void WriteToFile(Real time = 0.0) override 
 		{
 			this->parallel_exec();
-			std::ofstream out_file(filefullpath_.c_str(), ios::app);
+			std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
 			out_file << time << "   ";
 			for (size_t i = 0; i != base_particles_->total_real_particles_; ++i)
 			{
-				writeDataToFile(out_file, this->interpolated_quantities_[i]);
+				plt_engine_.writeAQuantity(out_file, this->interpolated_quantities_[i]);
 			}
 			out_file << "\n";
 			out_file.close();
@@ -300,168 +290,85 @@ namespace SPH {
 	};
 
 	/**
-	 * @class WriteTotalMechanicalEnergy
-	 * @brief write files for the total mechanical energy of a weakly compressible fluid body
+	 * @class WriteBodyReducedQuantity
+	 * @brief write reduced quantity of a body
 	 */
-	class WriteTotalMechanicalEnergy 
-		: public WriteBodyStates, public fluid_dynamics::TotalMechanicalEnergy
+	template<class ReduceMethodType>
+	class WriteBodyReducedQuantity 
 	{
 	protected:
+		In_Output& in_output_; 
+		PltEngine plt_engine_;
+		ReduceMethodType reduce_method_;
+		std::string body_name_;
+		std::string quantity_name_;
 		std::string filefullpath_;
+
 	public:
-		WriteTotalMechanicalEnergy(In_Output& in_output, FluidBody* water_block, Gravity* gravity);
-		virtual ~WriteTotalMechanicalEnergy() {};
-		virtual void WriteToFile(Real time = 0.0) override;
+		template<typename... ConstructorArgs>
+		WriteBodyReducedQuantity(In_Output& in_output, ConstructorArgs... constructor_args) :
+			in_output_(in_output), plt_engine_(), reduce_method_(constructor_args...),
+			body_name_(reduce_method_.getSPHBody()->getBodyName()),
+			quantity_name_(reduce_method_.QuantityName())
+		{
+			filefullpath_ = in_output_.output_folder_ + "/" + body_name_
+				+ "_" + quantity_name_ + "_" + in_output_.restart_step_ + ".dat";
+			std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
+			out_file << "\"run_time\"" << "   ";
+			plt_engine_.writeAQuantityHeader(out_file, reduce_method_.InitialReference(), quantity_name_);
+			out_file << "\n";
+			out_file.close();
+		};
+		virtual ~WriteBodyReducedQuantity() {};
+
+		virtual void WriteToFile(Real time = 0.0)
+		{
+			std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
+			out_file << time << "   ";
+			plt_engine_.writeAQuantity(out_file, reduce_method_.parallel_exec());
+			out_file << "\n";
+			out_file.close();
+		};
 	};
 
 	/**
-	 * @class WriteMaximumSpeed
-	 * @brief write files for the maximum speed within the body
-	 */
-	class WriteMaximumSpeed : public WriteBodyStates, public MaximumSpeed
-	{
-	protected:
-		std::string filefullpath_;
-	public:
-		WriteMaximumSpeed(In_Output& in_output, SPHBody* sph_body);
-		virtual ~WriteMaximumSpeed() {};
-		virtual void WriteToFile(Real time = 0.0) override;
-	};
-
-	/**
-	 * @class WriteTotalViscousForceOnSolid
-	 * @brief write total viscous force acting a solid body
-	 */
-	class WriteTotalViscousForceOnSolid
-		: public WriteBodyStates, public solid_dynamics::TotalViscousForceOnSolid
-	{
-	protected:
-		int dimension_;
-		std::string filefullpath_;
-	public:
-		WriteTotalViscousForceOnSolid(In_Output& in_output, SolidBody *solid_body);
-		virtual ~WriteTotalViscousForceOnSolid() {};
-		virtual void WriteToFile(Real time = 0.0) override;
-	};
-
-	/** 
-	 * @class WriteTotalForceOnSolid
-	 * @brief Write total force acting a solid body.
-	 */
-	class WriteTotalForceOnSolid
-		: public WriteBodyStates, public solid_dynamics::TotalForceOnSolid
-	{
-	protected:
-		int dimension_;
-		std::string filefullpath_;
-	public:
-		WriteTotalForceOnSolid(In_Output& in_output, SolidBody *solid_body);
-		virtual ~WriteTotalForceOnSolid() {};
-		virtual void WriteToFile(Real time = 0.0) override;
-	};
-
-	/**
-	 * @class WriteUpperFrontInXDirection
-	 * @brief write files for water front in free surface flow
-	 */
-	class WriteUpperFrontInXDirection
-		: public WriteBodyStates, public UpperFrontInXDirection
-	{
-	protected:
-		std::string filefullpath_;
-	public:
-		WriteUpperFrontInXDirection(In_Output& in_output, SPHBody* body);
-		virtual ~WriteUpperFrontInXDirection() {};
-		virtual void WriteToFile(Real time = 0.0) override;
-	};
-
-	/**
-	 * @class ReloadParticleIO
-	 * @brief For write  and read particle reload.
-	 */
-	class ReloadParticleIO
+	  * @class ReloadParticleIO
+	  * @brief Write the reload particles file in XML format.
+	  */
+	class ReloadParticleIO : public BodyStatesIO
 	{
 	protected:
 		StdVec<std::string> file_paths_;
-
 	public:
 		ReloadParticleIO(In_Output& in_output, SPHBodyVector bodies);
+		ReloadParticleIO(In_Output& in_output, SPHBodyVector bodies, StdVec<std::string> given_body_names);
 		virtual ~ReloadParticleIO() {};
-	};
 
-	/**
-	  * @class WriteReloadParticle
-	  * @brief Write the reload particles file in XML format.
-	  */
-	class WriteReloadParticle : public ReloadParticleIO, public WriteBodyStates
-	{
-	public:
-		WriteReloadParticle(In_Output& in_output, SPHBodyVector bodies);
-		WriteReloadParticle(In_Output& in_output, SPHBodyVector bodies, StdVec<string> given_body_names);
-		virtual ~WriteReloadParticle() {};
-
-		virtual void WriteToFile(Real time = 0.0) override;
-	};
-
-	/**
-	  * @class ReadReloadParticle
-	  * @brief Write the reload particles file in XML format.
-	  */
-	class ReadReloadParticle : public ReloadParticleIO, public ReadBodyStates
-	{
-	public:
-		ReadReloadParticle(In_Output& in_output, SPHBodyVector bodies, StdVec<std::string> reload_body_names);
-		virtual ~ReadReloadParticle() { };
-
-		virtual void ReadFromFile(size_t iteration_step = 0) override;
+		virtual void WriteToFile(Real time = 0.0);
+		virtual void ReadFromFile(size_t iteration_step = 0);
 	};
 
 	/**
 	 * @class RestartIO
 	 * @brief Write the restart file in XML format.
 	 */
-	class RestartIO
+	class RestartIO : public BodyStatesIO
 	{
 	protected:
 		std::string overall_file_path_;
 		StdVec<std::string> file_paths_;
 
+		Real readRestartTime(size_t restart_step);
 	public:
 		RestartIO(In_Output& in_output, SPHBodyVector bodies);
 		virtual ~RestartIO() {};
-	};
 
-	/**
-	 * @class WriteRestart
-	 * @brief Write the restart file in XML format.
-	 */
-	class WriteRestart : public RestartIO, public WriteBodyStates
-	{
-	public:
-		WriteRestart(In_Output& in_output, SPHBodyVector bodies)
-			: RestartIO(in_output, bodies), WriteBodyStates(in_output, bodies) {};
-		virtual ~WriteRestart() {};
-
-		virtual void WriteToFile(Real time = 0.0) override;
-	};
-
-	/**
-	 * @class WriteRestart
-	 * @brief Write the restart file in XML format.
-	 */
-	class ReadRestart : public RestartIO, public ReadBodyStates
-	{
-	protected:
-		Real ReadRestartTime(size_t restart_step);
-	public:
-		ReadRestart(In_Output& in_output, SPHBodyVector bodies)
-			: RestartIO(in_output, bodies), ReadBodyStates(in_output, bodies) {};
-		virtual ~ReadRestart() {};
-		virtual Real ReadRestartFiles(size_t restart_step) {
+		virtual void WriteToFile(Real time = 0.0);
+		virtual void ReadFromFile(size_t iteration_step = 0);
+		virtual Real readRestartFiles(size_t restart_step) {
 			ReadFromFile(restart_step);
-			return ReadRestartTime(restart_step);
+			return readRestartTime(restart_step);
 		};
-		virtual void ReadFromFile(size_t iteration_step = 0) override;
 	};
 
 	/**
@@ -477,113 +384,23 @@ namespace SPH {
 		virtual ~WriteSimBodyPinData() {};
 		virtual void WriteToFile(Real time = 0.0) override;
 	};
-		/**
-	 * @class MaterialPropertyIO
-	 * @brief base class for write and read material property.
-	 */
-	class MaterialPropertyIO
-	{
-	protected:
-		In_Output &in_output_;
-		BaseMaterial *material_;
-		MaterialVector materials_;
-	public:
-		MaterialPropertyIO(In_Output &in_output, BaseMaterial *material)
-			: in_output_(in_output), material_(material) {};
-		MaterialPropertyIO(In_Output &in_output, MaterialVector materials)
-			: in_output_(in_output), materials_(materials) {};
-		virtual ~MaterialPropertyIO() {};
-	};
 
 	/**
-	 * @class WriteMaterialProperty
-	 * @brief base class for write material property.
-	 */
-	class WriteMaterialProperty : public MaterialPropertyIO
-	{
-	public:
-		WriteMaterialProperty(In_Output &in_output, BaseMaterial *material)
-			: MaterialPropertyIO(in_output, material) {};
-		WriteMaterialProperty(In_Output &in_output, MaterialVector materials)
-			: MaterialPropertyIO(in_output, materials) {};
-		virtual ~WriteMaterialProperty() {};
-
-		virtual void WriteToFile(Real time) = 0;
-	};
-
-	/**
-	 * @class ReadBodyStates
-	 * @brief base class for read material property.
-	 */
-	class ReadMaterialProperty : public MaterialPropertyIO
-	{
-	public:
-		ReadMaterialProperty(In_Output &in_output, BaseMaterial *material)
-			: MaterialPropertyIO(in_output, material) {};
-		ReadMaterialProperty(In_Output &in_output, MaterialVector materials)
-			: MaterialPropertyIO(in_output, materials) {};
-		virtual ~ReadMaterialProperty() {};
-
-		virtual void ReadFromFile(size_t iteration_step) = 0;
-	};
-
-	/**
-	 * @class ReloadMaterialPropertyIO
+	 * @class ReloadMaterialParameterIO
 	 * @brief For write  and read material property.
 	 */
-	class ReloadMaterialPropertyIO
+	class ReloadMaterialParameterIO
 	{
 	protected:
+		In_Output& in_output_;		
+		BaseMaterial *material_;
 		std::string file_path_;
 	public:
-		ReloadMaterialPropertyIO(In_Output& in_output, BaseMaterial *material);
-		virtual ~ReloadMaterialPropertyIO() {};
-	};
+		ReloadMaterialParameterIO(In_Output& in_output, BaseMaterial* material);
+		ReloadMaterialParameterIO(In_Output& in_output, BaseMaterial *material, std::string given_parameters_name);
+		virtual ~ReloadMaterialParameterIO() {};
 
-	/**
-	  * @class WriteReloadMaterialProperty
-	  * @brief Write the material property to file in XML format.
-	  */
-	class WriteReloadMaterialProperty : public ReloadMaterialPropertyIO, public WriteMaterialProperty
-	{
-	public:
-		WriteReloadMaterialProperty(In_Output& in_output, BaseMaterial *material)
-			: ReloadMaterialPropertyIO(in_output, material), WriteMaterialProperty(in_output, material) {};
-		WriteReloadMaterialProperty(In_Output& in_output, BaseMaterial* material, string given_material_name)
-			:WriteReloadMaterialProperty(in_output, material) {
-			file_path_ = in_output.reload_folder_ + "/Material_" + given_material_name + "_rld.xml";
-		};
-
-		virtual ~WriteReloadMaterialProperty() {};
-
-		virtual void WriteToFile(Real time = 0.0) override;
-	};
-
-	/**
-	  * @class ReadReloadMaterialProperty
-	  * @brief Read the material property to file in XML format.
-	  */
-	class ReadReloadMaterialProperty : public ReloadMaterialPropertyIO, public ReadMaterialProperty
-	{
-	public:
-		ReadReloadMaterialProperty(In_Output& in_output, BaseMaterial *material);
-		virtual ~ReadReloadMaterialProperty() {};
-
-		virtual void ReadFromFile(size_t iteration_step = 0) override;
-	};
-
-	/**
-	 * @class WriteFreeSurfaceElevation
-	 * @brief write files for the total mechanical energy of a weakly compressible fluid body
-	 */
-	class WriteFreeSurfaceElevation
-		: public WriteBodyStates, public fluid_dynamics::FreeSurfaceProbeOnFluidBody
-	{
-	protected:
-		std::string filefullpath_;
-	public:
-		WriteFreeSurfaceElevation(In_Output& in_output, FluidBody* water_block, BodyPartByCell* body_part);
-		virtual ~WriteFreeSurfaceElevation() {};
-		virtual void WriteToFile(Real time = 0.0) override;
+		virtual void WriteToFile(Real time = 0.0);
+		virtual void ReadFromFile(size_t iteration_step = 0);
 	};
 }

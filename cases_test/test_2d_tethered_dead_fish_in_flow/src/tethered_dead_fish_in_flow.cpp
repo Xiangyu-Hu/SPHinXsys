@@ -122,7 +122,7 @@ std::vector<Vecd> CreatFishBlockingShape()
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem& system, string body_name)
+	WaterBlock(SPHSystem& system, std::string body_name)
 		: FluidBody(system, body_name)
 	{
 		std::vector<Vecd> water_block_shape = CreatWaterBlockShape();
@@ -155,7 +155,7 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem& system, string body_name)
+	WallBoundary(SPHSystem& system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
 		std::vector<Vecd> outer_wall_shape = CreatOuterWallShape();
@@ -172,7 +172,7 @@ class FishBody : public SolidBody
 {
 
 public:
-	FishBody(SPHSystem& system, string body_name)
+	FishBody(SPHSystem& system, std::string body_name)
 		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1))
 	{
 		std::vector<Vecd> fish_shape 
@@ -206,7 +206,7 @@ class FishHead : public SolidBodyPartForSimbody
 {
 public:
 	FishHead(SolidBody* solid_body,
-		string constrained_region_name, Real solid_body_density)
+		std::string constrained_region_name, Real solid_body_density)
 		: SolidBodyPartForSimbody(solid_body,
 			constrained_region_name)
 	{
@@ -228,7 +228,7 @@ public:
 class InflowBuffer : public BodyPartByCell
 {
 public:
-	InflowBuffer(FluidBody* fluid_body, string constrained_region_name)
+	InflowBuffer(FluidBody* fluid_body, std::string constrained_region_name)
 		: BodyPartByCell(fluid_body, constrained_region_name)
 	{
 		/** Geomtry definition. */
@@ -246,12 +246,12 @@ public:
 class Observer : public FictitiousBody
 {
 public:
-	Observer(SPHSystem& system, string body_name)
+	Observer(SPHSystem& system, std::string body_name)
 		: FictitiousBody(system, body_name, new ParticleAdaptation(1.15, 1))
 	{
 		/** postion and volume. */
-		body_input_points_volumes_.push_back(make_pair(Vecd(cx + resolution_ref, cy), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(cx + fish_length - resolution_ref, cy), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(cx + resolution_ref, cy), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(cx + fish_length - resolution_ref, cy), 0.0));
 	}
 };
 /**
@@ -334,7 +334,7 @@ int main()
 	/** Output. */
 	In_Output in_output(system);
 	WriteBodyStatesToVtu        write_real_body_states(in_output, system.real_bodies_);
-	WriteTotalForceOnSolid      write_total_force_on_fish(in_output, fish_body);
+	WriteBodyReducedQuantity<solid_dynamics::TotalForceOnSolid> write_total_force_on_fish(in_output, fish_body);
 	WriteAnObservedQuantity<indexVector, Vecd> write_fish_displacement("Position", in_output, fish_observer_contact);
 
 	/** check whether run particle relaxation for body fitted particle distribution. */
@@ -347,7 +347,7 @@ int main()
 		/** Write the body state to Vtu file. */
 		WriteBodyStatesToVtu 		write_fish_body(in_output, { fish_body });
 		/** Write the particle reload files. */
-		WriteReloadParticle 		write_particle_reload_files(in_output, { fish_body });
+		ReloadParticleIO 		write_particle_reload_files(in_output, { fish_body });
 
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(fish_body_inner);
@@ -366,7 +366,7 @@ int main()
 			ite_p += 1;
 			if (ite_p % 200 == 0)
 			{
-				cout << fixed << setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
+				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
 				write_fish_body.WriteToFile(Real(ite_p) * 1.0e-4);
 			}
 		}
@@ -479,7 +479,7 @@ int main()
 	/** Initialize the system and state. */
 	SimTK::State state = MBsystem.realizeTopology();
 	viz.report(state);
-	cout << "Hit ENTER to run a short simulation ...";
+	std::cout << "Hit ENTER to run a short simulation ...";
 	getchar();
 	/** Time steping method for multibody system.*/
 	SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
@@ -502,7 +502,7 @@ int main()
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Using relaxed particle distribution if needed. */
 	if (system.reload_particles_) {
-		ReadReloadParticle		reload_insert_body_particles(in_output, { fish_body }, { "FishBody" });
+		ReloadParticleIO		reload_insert_body_particles(in_output, { fish_body }, { "FishBody" });
 		reload_insert_body_particles.ReadFromFile();
 	}
 	/**
@@ -592,7 +592,7 @@ int main()
 			}
 			if (number_of_iterations % screen_output_interval == 0)
 			{
-				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 					<< GlobalStaticVariables::physical_time_
 					<< "	Dt = " << Dt << "	dt = " << dt << "	dt_s = " << dt_s << "\n";
 			}
@@ -620,7 +620,7 @@ int main()
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

@@ -215,14 +215,12 @@ namespace SPH {
 	//=================================================================================================//
 	bool ComplexShape::checkNotFar(Vec2d& input_pnt, Real threshold)
 	{
-		return  multi_ploygen_.checkContain(input_pnt) 
-			|| getMinAbsoluteElement(input_pnt - multi_ploygen_.findClosestPoint(input_pnt)) < threshold ?
-			true : false;
+		return  multi_ploygen_.checkContain(input_pnt) || checkNearSurface(input_pnt, threshold) ? true : false;
 	}
 	//=================================================================================================//
 	bool ComplexShape::checkNearSurface(Vec2d& input_pnt, Real threshold)
 	{
-		return  getMinAbsoluteElement(input_pnt - multi_ploygen_.findClosestPoint(input_pnt)) < threshold ?
+		return  getMaxAbsoluteElement(input_pnt - multi_ploygen_.findClosestPoint(input_pnt)) < threshold ?
 			true : false;
 	}
 	//=================================================================================================//
@@ -268,7 +266,7 @@ namespace SPH {
 	}
 	//=================================================================================================//
 	void ComplexShape::
-		addAPolygonFromFile(string file_path_name, ShapeBooleanOps op, Vec2d translation, Real scale_factor)
+		addAPolygonFromFile(std::string file_path_name, ShapeBooleanOps op, Vec2d translation, Real scale_factor)
 	{
 		std::fstream dataFile(file_path_name);
 		Vecd temp_point;

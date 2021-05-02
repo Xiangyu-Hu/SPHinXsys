@@ -28,6 +28,7 @@
 * @author	Chi ZHang and Xiangyu Hu
 */
 #pragma once
+
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_geometry.h"
@@ -48,8 +49,6 @@ namespace fs = boost::filesystem;
 namespace fs = std::experimental::filesystem;
 #endif
 
-using namespace std;
-
 namespace SPH {
 
 	/**
@@ -61,7 +60,7 @@ namespace SPH {
 	{
 	public:
 		//constructor for load stl file from out side
-		TriangleMeshShape(string file_path_name, Vec3d translation, Real scale_factor);
+		TriangleMeshShape(std::string file_path_name, Vec3d translation, Real scale_factor);
 		// constructor for brick geometry
 		TriangleMeshShape(Vec3d halfsize, int resolution, Vec3d translation);
 		// constructor for sphere geometry
@@ -86,7 +85,7 @@ namespace SPH {
 		Vec3d findClosestPoint(Vec3d& input_pnt);
 	public:
 		ComplexShape() : Shape("ComplexShape") {};
-		ComplexShape(string complex_shape_name) : Shape(complex_shape_name) {};
+		ComplexShape(std::string complex_shape_name) : Shape(complex_shape_name) {};
 		virtual ~ComplexShape() {};
 		virtual BoundingBox findBounds() override;
 
@@ -95,7 +94,7 @@ namespace SPH {
 		void addBrick(Vec3d halfsize, int resolution, Vec3d translation, ShapeBooleanOps op);
 		void addSphere(Real radius, int resolution, Vec3d translation, ShapeBooleanOps op);
 		void addCylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resolution, Vec3d translation, ShapeBooleanOps op);
-		void addFormSTLFile(string file_path_name, Vec3d translation, Real scale_factor, ShapeBooleanOps op);
+		void addFormSTLFile(std::string file_path_name, Vec3d translation, Real scale_factor, ShapeBooleanOps op);
 
 		virtual bool checkContain(Vec3d& input_pnt, bool BOUNDARY_INCLUDED = true);
 		virtual bool checkNotFar(Vec3d& input_pnt, Real threshold);

@@ -9,43 +9,54 @@
 namespace SPH {
 
 	//=================================================================================================//
-	Vec2d FirstAxisVector(Vec2d zero_vector)
+	Vec2d FirstAxisVector(const Vec2d& zero_vector)
 	{
 		return Vec2d(1.0, 0.0);
 	}
 	//=================================================================================================//
-	Vec3d FirstAxisVector(Vec3d zero_vector)
+	Vec3d FirstAxisVector(const Vec3d& zero_vector)
 	{
 		return Vec3d(1.0, 0.0, 0.0);
 	};
 	//=================================================================================================//
-	Real getMinAbsoluteElement(Vec2d input)
+	Real getMaxAbsoluteElement(const Vec2d& input)
 	{
-		Real min = input.norm();
-		for (int n = 0; n != input.size(); n++) SMIN(fabs(input[n]), min);
-		return min;
+		Real max = 0.0;
+		for (int n = 0; n != input.size(); n++) max = SMAX(fabs(input[n]), max);
+		return max;
 	}
 	//=================================================================================================//
-	Real getMinAbsoluteElement(Vec3d input)
+	Real getMaxAbsoluteElement(const Vec3d& input)
 	{
-		Real min = input.norm();
-		for (int n = 0; n != input.size(); n++) SMIN(fabs(input[n]), min);
-		return min;
+		Real max = 0.0;
+		for (int n = 0; n != input.size(); n++) max = SMAX(fabs(input[n]), max);
+		return max;
 	}
 	//=================================================================================================//
-	Vec3d upgradeToVector3D(Real input) {
+	Vec3d upgradeToVector3D(const Real& input) {
 		return Vec3d(input, 0.0, 0.0);
 	}
 	//=================================================================================================//
-	Vec3d upgradeToVector3D(Vec2d input) {
+	Vec3d upgradeToVector3D(const Vec2d& input) {
 		return Vec3d(input[0], input[1], 0.0);
 	}
 	//=================================================================================================//
-	Vec3d upgradeToVector3D(Vec3d input) {
+	Vec3d upgradeToVector3D(const Vec3d& input) {
 		return input;
 	}
 	//=================================================================================================//
-	Mat2d getInverse(Mat2d& A)
+	Mat3d upgradeToMatrix3D(const Mat2d& input) {
+		Mat3d output(0);
+		output.col(0) = upgradeToVector3D(input.col(0));
+		output.col(1) = upgradeToVector3D(input.col(1));
+		return output;
+	}
+	//=================================================================================================//
+	Mat3d upgradeToMatrix3D(const Mat3d& input) {
+		return input;
+	}
+	//=================================================================================================//
+	Mat2d getInverse(const Mat2d& A)
 	{
 		Mat2d minv(0);
 		SimTK::Real det = A(0, 0) * A(1, 1) - A(0, 1) * A(1, 0);
@@ -57,7 +68,7 @@ namespace SPH {
 		return minv;
 	}
 	//=================================================================================================//
-	Mat3d getInverse(Mat3d& A)
+	Mat3d getInverse(const Mat3d& A)
 	{
 		SimTK::Real det = A(0, 0) * (A(1, 1) * A(2, 2) - A(2, 1) * A(1, 2)) -
 			A(0, 1) * (A(1, 0) * A(2, 2) - A(1, 2) * A(2, 0)) +
@@ -78,7 +89,7 @@ namespace SPH {
 		return minv;
 	}
 	//=================================================================================================//
-	Mat2d getAverageValue(Mat2d& A, Mat2d& B)
+	Mat2d getAverageValue(const Mat2d& A, const Mat2d& B)
 	{
 		Mat2d C(1.0);
 		for (int i = 0; i < 2; i++)
@@ -91,7 +102,7 @@ namespace SPH {
 		return C;
 	}
 	//=================================================================================================//
-	Mat3d getAverageValue(Mat3d& A, Mat3d& B)
+	Mat3d getAverageValue(const Mat3d& A, const Mat3d& B)
 	{
 		Mat3d C(1.0);
 		for (int i = 0; i < 3; i++)
@@ -104,7 +115,7 @@ namespace SPH {
 		return C;
 	}
 	//=================================================================================================//
-	Mat2d inverseCholeskyDecomposition(Mat2d& A)
+	Mat2d inverseCholeskyDecomposition(const Mat2d& A)
 	{
 		Mat2d lower(0);
 		int n = 2;
@@ -132,7 +143,7 @@ namespace SPH {
 		return inverse_lower;
 	}
 	//=================================================================================================//
-	Mat3d inverseCholeskyDecomposition(Mat3d& A)
+	Mat3d inverseCholeskyDecomposition(const Mat3d& A)
 	{
 		Mat3d lower(0);
 		int n = 3;
@@ -160,104 +171,29 @@ namespace SPH {
 		return inverse_lower;
 	}
 	//=================================================================================================//
-	Vec2d getVectorAfterRotation(Vec2d &initial_vector, Vec2d &rotation_angles)
+	Mat2d getTransformationMatrix(const Vec2d& direction_of_y)
 	{
-		/**The rotation matrix. */
-		Mat2d rotation_matrix(0.0);
-		rotation_matrix[0][0] = cos(rotation_angles[0]);
-		rotation_matrix[0][1] = -sin(rotation_angles[0]);
-		rotation_matrix[1][0] = -rotation_matrix[0][1];
-		rotation_matrix[1][1] = rotation_matrix[0][0];
-
-		return rotation_matrix * initial_vector;
+		Mat2d transformation_matrix(0.0);
+		transformation_matrix[0][0] = direction_of_y[1];
+		transformation_matrix[0][1] = -direction_of_y[0];
+		transformation_matrix[1][0] = direction_of_y[0];
+		transformation_matrix[1][1] = direction_of_y[1];
+		return transformation_matrix;
 	}
 	//=================================================================================================//
-	Vec3d getVectorAfterRotation(Vec3d &initial_vector, Vec3d &rotation_angles)
+	Mat3d getTransformationMatrix(const Vec3d& direction_of_z)
 	{
-		/**The rotation matrix about the X-axis. */
-		Mat3d rotation_matrix_x(0.0);
-		rotation_matrix_x[0][0] = 1.0;
-		rotation_matrix_x[1][1] = cos(rotation_angles[0]);
-		rotation_matrix_x[1][2] = -sin(rotation_angles[0]);
-		rotation_matrix_x[2][1] = -rotation_matrix_x[1][2];
-		rotation_matrix_x[2][2] = rotation_matrix_x[1][1];
-		/**The rotation matrix about the Y-axis. */
-		Mat3d rotation_matrix_y(0.0);
-		rotation_matrix_y[0][0] = cos(rotation_angles[1]);
-		rotation_matrix_y[0][2] = sin(rotation_angles[1]);
-		rotation_matrix_y[1][1] = 1.0;
-		rotation_matrix_y[2][0] = -rotation_matrix_y[0][2];
-		rotation_matrix_y[2][2] = rotation_matrix_y[0][0];
-		/**The rotation matrix about the Z-axis. */
-		Mat3d rotation_matrix_z(0.0);
-		rotation_matrix_z[0][0] = cos(rotation_angles[2]);
-		rotation_matrix_z[0][1] = -sin(rotation_angles[2]);
-		rotation_matrix_z[1][0] = -rotation_matrix_z[0][1];
-		rotation_matrix_z[1][1] = rotation_matrix_z[0][0];
-		rotation_matrix_z[2][2] = 1.0;
-
-		return rotation_matrix_z * rotation_matrix_y * rotation_matrix_x * initial_vector;
-	}
-	//=================================================================================================//
-	Vec2d getVectorChangeRateAfterRotation(Vec2d &initial_vector, Vec2d &rotation_angles, Vec2d &angular_vel)
-	{
-		/**The derivative of the rotation matrix. */
-		Mat2d drotation_matrix_dt(0.0);
-		drotation_matrix_dt[0][0] = -sin(rotation_angles[0]) * angular_vel[0];
-		drotation_matrix_dt[0][1] = -cos(rotation_angles[0]) * angular_vel[0];
-		drotation_matrix_dt[1][0] = -drotation_matrix_dt[0][1];
-		drotation_matrix_dt[1][1] = drotation_matrix_dt[0][0];
-
-		return drotation_matrix_dt * initial_vector;
-	}
-	//=================================================================================================//
-	Vec3d getVectorChangeRateAfterRotation(Vec3d& initial_vector, Vec3d& rotation_angles, Vec3d& angular_vel)
-	{
-		/**The rotation matrix about the X-axis. */
-		Mat3d rotation_matrix_x(0.0);
-		rotation_matrix_x[0][0] = 1.0;
-		rotation_matrix_x[1][1] = cos(rotation_angles[0]);
-		rotation_matrix_x[1][2] = -sin(rotation_angles[0]);
-		rotation_matrix_x[2][1] = -rotation_matrix_x[1][2];
-		rotation_matrix_x[2][2] = rotation_matrix_x[1][1];
-		/**The rotation matrix about the Y-axis. */
-		Mat3d rotation_matrix_y(0.0);
-		rotation_matrix_y[0][0] = cos(rotation_angles[1]);
-		rotation_matrix_y[0][2] = sin(rotation_angles[1]);
-		rotation_matrix_y[1][1] = 1.0;
-		rotation_matrix_y[2][0] = -rotation_matrix_y[0][2];
-		rotation_matrix_y[2][2] = rotation_matrix_y[0][0];
-		/**The rotation matrix about the Z-axis. */
-		Mat3d rotation_matrix_z(0.0);
-		rotation_matrix_z[0][0] = cos(rotation_angles[2]);
-		rotation_matrix_z[0][1] = -sin(rotation_angles[2]);
-		rotation_matrix_z[1][0] = -rotation_matrix_z[0][1];
-		rotation_matrix_z[1][1] = rotation_matrix_z[0][0];
-		rotation_matrix_z[2][2] = 1.0;
-
-		/**The derivative of the rotation matrix of the X-axis. */
-		Mat3d drotation_matrix_x_dt(0.0);
-		drotation_matrix_x_dt[1][1] = -sin(rotation_angles[0]) * angular_vel[0];
-		drotation_matrix_x_dt[1][2] = -cos(rotation_angles[0]) * angular_vel[0];
-		drotation_matrix_x_dt[2][1] = -drotation_matrix_x_dt[1][2];
-		drotation_matrix_x_dt[2][2] = drotation_matrix_x_dt[1][1];
-		/**The derivative of the rotation matrix of the Y-axis. */
-		Mat3d drotation_matrix_y_dt(0.0);
-		drotation_matrix_y_dt[0][0] = -sin(rotation_angles[1]) * angular_vel[1];
-		drotation_matrix_y_dt[0][2] = cos(rotation_angles[1]) * angular_vel[1];
-		drotation_matrix_y_dt[2][0] = -drotation_matrix_y_dt[0][2];
-		drotation_matrix_y_dt[2][2] = drotation_matrix_y_dt[0][0];
-		/**The derivative of the rotation matrix of the Z-axis. */
-		Mat3d drotation_matrix_z_dt(0.0);
-		drotation_matrix_z_dt[0][0] = -sin(rotation_angles[2]) * angular_vel[2];
-		drotation_matrix_z_dt[0][1] = -cos(rotation_angles[2]) * angular_vel[2];
-		drotation_matrix_z_dt[1][0] = -drotation_matrix_z_dt[0][1];
-		drotation_matrix_z_dt[1][1] = drotation_matrix_z_dt[0][0];
-
-		return (drotation_matrix_z_dt * rotation_matrix_y * rotation_matrix_x
-			+ rotation_matrix_z * drotation_matrix_y_dt * rotation_matrix_x
-			+ rotation_matrix_z * rotation_matrix_y * drotation_matrix_x_dt
-			)* initial_vector;
+		Mat3d transformation_matrix(0.0);
+		transformation_matrix[0][0] = direction_of_z[2] + powerN(direction_of_z[1], 2) / (1 + direction_of_z[2] + Eps);
+		transformation_matrix[0][1] = -direction_of_z[0] * direction_of_z[1] / (1 + direction_of_z[2] + Eps);
+		transformation_matrix[0][2] = -direction_of_z[0];
+		transformation_matrix[1][0] = transformation_matrix[0][1];
+		transformation_matrix[1][1] = direction_of_z[2] + powerN(direction_of_z[0], 2) / (1 + direction_of_z[2] + Eps);
+		transformation_matrix[1][2] = -direction_of_z[1];
+		transformation_matrix[2][0] = direction_of_z[0];
+		transformation_matrix[2][1] = direction_of_z[1];
+		transformation_matrix[2][2] = direction_of_z[2];
+		return transformation_matrix;
 	}
 	//=================================================================================================//
 }

@@ -37,7 +37,7 @@ int resolution(50);
 class WaterBlock : public FluidBody
 {
 	public:
-		WaterBlock(SPHSystem &system, string body_name)
+		WaterBlock(SPHSystem &system, std::string body_name)
 			: FluidBody(system, body_name)
 		{
 			Vecd halfsize_water(0.5 * LL, 0.5 * LH, 0.5 * LW);
@@ -64,7 +64,7 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &system, string body_name)
+	WallBoundary(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
 		Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
@@ -80,16 +80,16 @@ public:
 class FluidObserver : public FictitiousBody
 {
 public:
-	FluidObserver(SPHSystem &system, string body_name)
+	FluidObserver(SPHSystem &system, std::string body_name)
 		: FictitiousBody(system, body_name)
 	{
 		//add observation point
-		body_input_points_volumes_.push_back(make_pair(Vecd(DL, 0.01, 0.5 * DW), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(DL, 0.1, 0.5 * DW), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(DL, 0.2, 0.5 * DW), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(DL, 0.24, 0.5 * DW), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(DL, 0.252, 0.5 * DW), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(DL, 0.266, 0.5 * DW), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(DL, 0.01, 0.5 * DW), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(DL, 0.1, 0.5 * DW), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(DL, 0.2, 0.5 * DW), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(DL, 0.24, 0.5 * DW), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(DL, 0.252, 0.5 * DW), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(DL, 0.266, 0.5 * DW), 0.0));
 	}
 };
 
@@ -151,10 +151,10 @@ int main()
 	In_Output in_output(system);
 	WriteBodyStatesToVtu write_water_block_states(in_output, system.real_bodies_);
 	/** Output the body states for restart simulation. */
-	ReadRestart		read_restart_files(in_output, system.real_bodies_);
-	WriteRestart	write_restart_files(in_output, system.real_bodies_);
+	RestartIO		restart_io(in_output, system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	WriteTotalMechanicalEnergy 	write_water_mechanical_energy(in_output, water_block, &gravity);
+	WriteBodyReducedQuantity<fluid_dynamics::TotalMechanicalEnergy> 	
+		write_water_mechanical_energy(in_output, water_block, &gravity);
 	/** output the observed data from fluid body. */
 	WriteAnObservedQuantity<indexScalar, Real> write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact);
 	//-------------------------------------------------------------------
@@ -173,7 +173,7 @@ int main()
 	/** If the starting time is not zero, please setup the restart time step ro read in restart states. */
 	if (system.restart_step_ != 0)
 	{
-		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
+		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.restart_step_);
 		water_block->updateCellLinkedList();
 		water_block_complex->updateConfiguration();
 	}
@@ -226,12 +226,12 @@ int main()
 			
 			if (number_of_iterations % screen_output_interval == 0)
 			{
-				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 					<< GlobalStaticVariables::physical_time_
 					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
 
 				if (number_of_iterations % restart_output_interval == 0)
-					write_restart_files.WriteToFile(Real(number_of_iterations));
+					restart_io.WriteToFile(Real(number_of_iterations));
 			}
 			number_of_iterations++;
 
@@ -253,7 +253,7 @@ int main()
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

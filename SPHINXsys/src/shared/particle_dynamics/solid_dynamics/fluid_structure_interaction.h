@@ -215,14 +215,14 @@ namespace SPH
 		*/
 		class AverageVelocityAndAcceleration
 		{
+		protected:
+			StdLargeVec<Vecd>& pos_temp_;
 		public:
 			InitializeDisplacement initialize_displacement_;
 			UpdateAverageVelocityAndAcceleration update_averages_;
 
 			AverageVelocityAndAcceleration(SolidBody* body);
 			~AverageVelocityAndAcceleration() {};
-		protected:
-			StdLargeVec<Vecd> pos_temp_;
 		};
 	}
 }

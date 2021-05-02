@@ -35,3 +35,4 @@ capabilities. **/
 #include "all_physical_dynamics.h"
 #include "all_simbody.h"
 #include "in_output.h"
+#include "parameterization.h"

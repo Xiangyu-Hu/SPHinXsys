@@ -71,7 +71,7 @@ Real Youngs_modulus = Ae * rho0_f * U_f * U_f;
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem &system, string body_name)
+	WaterBlock(SPHSystem &system, std::string body_name)
 		: FluidBody(system, body_name)
 	{
 		/** Geomtry definition. */
@@ -105,7 +105,7 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &system, string body_name) : SolidBody(system, body_name)
+	WallBoundary(SPHSystem &system, std::string body_name) : SolidBody(system, body_name)
 	{
 		/** Geomtry definition. */
 		std::vector<Vecd> outer_wall_shape;
@@ -148,7 +148,7 @@ std::vector<Vecd> CreatGateShape()
 class Gate : public SolidBody
 {
 public:
-	Gate(SPHSystem &system, string body_name)
+	Gate(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1))
 	{
 		/** Geomtry definition. */
@@ -180,7 +180,7 @@ std::vector<Vecd> CreatGateConstrainShape()
 class GateConstrain : public BodyPartByParticle
 {
 public:
-	GateConstrain(SolidBody* solid_body, string constrained_region_name)
+	GateConstrain(SolidBody* solid_body, std::string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		/* Geometry definition */
@@ -215,11 +215,11 @@ public:
 class Observer : public FictitiousBody
 {
 public:
-	Observer(SPHSystem &system, string body_name) : 
+	Observer(SPHSystem &system, std::string body_name) :
 		FictitiousBody(system, body_name, new ParticleAdaptation(1.15, 1))
 	{
 		/** Add observation point. */
-		body_input_points_volumes_.push_back(make_pair(GateP_lb, 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(GateP_lb, 0.0));
 
 	}
 };
@@ -393,7 +393,7 @@ int main()
 
 			if (number_of_iterations % screen_output_interval == 0)
 			{
-				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 					<< GlobalStaticVariables::physical_time_
 					<< "	Dt = " << Dt << "	dt = " << dt << "	dt_s = " << dt_s << "\n";
 			}
@@ -415,7 +415,7 @@ int main()
 	tick_count t4 = tick_count::now();
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

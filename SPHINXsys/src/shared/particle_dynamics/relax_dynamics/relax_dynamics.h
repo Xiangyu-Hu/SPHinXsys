@@ -81,7 +81,7 @@ namespace SPH
 			RelaxationAccelerationInner(BaseInnerBodyRelation* body_inner_relation);
 			virtual ~RelaxationAccelerationInner() {};
 		protected:
-			StdLargeVec<Real>& Vol_, & h_ratio_;
+			StdLargeVec<Real>& Vol_;
 			StdLargeVec<Vecd>& dvel_dt_;
 			StdLargeVec<Vecd>& pos_n_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -114,7 +114,6 @@ namespace SPH
 			virtual ~UpdateParticlePosition() {};
 		protected:
 			StdLargeVec<Vecd>& pos_n_, & dvel_dt_;
-			StdLargeVec<Real>& h_ratio_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 

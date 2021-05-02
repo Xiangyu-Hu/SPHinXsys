@@ -29,8 +29,6 @@
 
 #include "base_particles.h"
 
-using namespace std;
-
 namespace SPH {
 
 	class Fluid;
@@ -49,11 +47,9 @@ namespace SPH {
 		StdLargeVec<Real> p_;		/**< pressure */
 		StdLargeVec<Real> drho_dt_;		/**< density change rate */
 		StdLargeVec<Real> rho_sum_;		/**< number density */
-		StdLargeVec<bool> is_free_surface_; /**< free surface indicator */
+		StdLargeVec<int> surface_indicator_; /**< free surface indicator */
 
-		virtual void writeParticlesToXmlForRestart(std::string &filefullpath) override;
-		virtual void readParticleFromXmlForRestart(std::string &filefullpath) override;
-		virtual FluidParticles* pointToThisObject() override {return this;};
+		virtual FluidParticles* ThisObjectPtr() override {return this;};
 	};
 
 	/**
@@ -69,8 +65,6 @@ namespace SPH {
 		StdLargeVec<Matd> tau_;	/**<  elastic stress */
 		StdLargeVec<Matd> dtau_dt_;	/**<  change rate of elastic stress */
 
-		virtual void writeParticlesToXmlForRestart(std::string &filefullpath) override;
-		virtual void readParticleFromXmlForRestart(std::string &filefullpath) override;
-		virtual ViscoelasticFluidParticles* pointToThisObject() override {return this;};
+		virtual ViscoelasticFluidParticles* ThisObjectPtr() override {return this;};
 	};
 }

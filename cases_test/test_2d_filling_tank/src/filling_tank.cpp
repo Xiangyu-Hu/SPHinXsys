@@ -63,7 +63,7 @@ std::vector<Vecd> CreateWaterBlockShape()
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem &system, string body_name, ParticleAdaptation* particle_adaptation)
+	WaterBlock(SPHSystem &system, std::string body_name, ParticleAdaptation* particle_adaptation)
 		: FluidBody(system, body_name, particle_adaptation)
 	{
 		/** initial water block is the inlet */
@@ -88,7 +88,7 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &system, string body_name)
+	WallBoundary(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
 		/** Geometry definition. */
@@ -106,7 +106,7 @@ public:
 class Inlet : public BodyPartByParticle
 {
 public:
-	Inlet(FluidBody* fluid_body, string constrained_region_name)
+	Inlet(FluidBody* fluid_body, std::string constrained_region_name)
 		: BodyPartByParticle(fluid_body, constrained_region_name)
 	{
 		/** Geometry definition. */
@@ -139,10 +139,10 @@ public:
 class FluidObserver : public FictitiousBody
 {
 public:
-	FluidObserver(SPHSystem &system, string body_name)
+	FluidObserver(SPHSystem &system, std::string body_name)
 		: FictitiousBody(system, body_name)
 	{
-		body_input_points_volumes_.push_back(make_pair(Vecd(DL, 0.2), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(DL, 0.2), 0.0));
 	}
 };
 //----------------------------------------------------------------------
@@ -166,7 +166,7 @@ int main()
 	FluidParticles 	fluid_particles(water_block, water_material);
 	/**note that, as particle sort is activated (by default) for fluid particles, 
 	 * the output occasionally does not reflect the real free surface indication due to sorting. */
-	fluid_particles.addAVariableToWrite<indexBoolean, bool>("FreeSurfaceIndication");
+	fluid_particles.addAVariableToWrite<indexInteger, int>("SurfaceIndicator");
 
 	WallBoundary *wall_boundary = new WallBoundary(system, "Wall");
 	SolidParticles	wall_particles(wall_boundary);
@@ -201,9 +201,9 @@ int main()
 	//----------------------------------------------------------------------
 	In_Output in_output(system);
 	WriteBodyStatesToVtu 		write_body_states(in_output, system.real_bodies_);
-	ReadRestart		read_restart_files(in_output, system.real_bodies_);
-	WriteRestart	write_restart_files(in_output, system.real_bodies_);
-	WriteTotalMechanicalEnergy 	write_water_mechanical_energy(in_output, water_block, &gravity);
+	RestartIO		restart_io(in_output, system.real_bodies_);
+	WriteBodyReducedQuantity<fluid_dynamics::TotalMechanicalEnergy> 	
+		write_water_mechanical_energy(in_output, water_block, &gravity);
 	WriteAnObservedQuantity<indexScalar, Real>
 		write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact_relation);
 	//----------------------------------------------------------------------
@@ -218,7 +218,7 @@ int main()
 	/** If the starting time is not zero, please setup the restart time step ro read in restart states. */
 	if (system.restart_step_ != 0)
 	{
-		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
+		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.restart_step_);
 		water_block->updateCellLinkedList();
 		water_block_complex_relation->updateConfiguration();
 	}
@@ -267,12 +267,12 @@ int main()
 
 			if (number_of_iterations % screen_output_interval == 0)
 			{
-				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 					<< GlobalStaticVariables::physical_time_
 					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
 
 				if (number_of_iterations % restart_output_interval == 0)
-					write_restart_files.WriteToFile(Real(number_of_iterations));
+					restart_io.WriteToFile(Real(number_of_iterations));
 			}
 			number_of_iterations++;
 
@@ -297,8 +297,8 @@ int main()
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds()
-		<< " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds()
+		<< " seconds." << std::endl;
 
 	return 0;
 }

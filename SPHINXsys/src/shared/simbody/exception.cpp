@@ -3,11 +3,10 @@
  * @author	Chi Zhang and Xiangyu Hu
  */
 #include "exception.h"
-using namespace std;
 
 namespace SPH {
 	//===============================================================//
-	Exception::Exception(const string &aMsg, const string &aFile, int aLine):
+	Exception::Exception(const std::string &aMsg, const std::string &aFile, int aLine):
 	exception()
 	{
     	setNull();
@@ -59,7 +58,7 @@ namespace SPH {
     	line_ = -1;
 	}
 	//===============================================================//
-	void Exception::setMessage(const string &aMsg)
+	void Exception::setMessage(const std::string &aMsg)
 	{
     	msg_ = aMsg;
 	}
@@ -69,7 +68,7 @@ namespace SPH {
     	return(msg_.c_str());
 	}
 	//===============================================================//
-	void Exception::print(ostream &aOut) const
+	void Exception::print(std::ostream &aOut) const
 	{
     	aOut << "\nException:\n";
 
@@ -80,6 +79,6 @@ namespace SPH {
     	if(line_ >= 0) {
         	aOut << "  line= " << line_ << '\n';
     	}
-   	 	aOut << '\n' << endl;
+   	 	aOut << '\n' << std::endl;
 	}
 }/** End of namespcae */

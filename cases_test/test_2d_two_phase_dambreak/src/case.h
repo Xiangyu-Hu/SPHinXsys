@@ -74,7 +74,7 @@ std::vector<Vecd> CreatInnerWallShape()
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem& sph_system, string body_name)
+	WaterBlock(SPHSystem& sph_system, std::string body_name)
 		: FluidBody(sph_system, body_name, new ParticleAdaptation(1.3, 1))
 	{
 		/** Geomtry definition. */
@@ -104,7 +104,7 @@ public:
 class AirBlock : public FluidBody
 {
 public:
-	AirBlock(SPHSystem& sph_system, string body_name)
+	AirBlock(SPHSystem& sph_system, std::string body_name)
 		: FluidBody(sph_system, body_name, new ParticleAdaptation(1.3, 0))
 	{
 		/** Geomtry definition. */
@@ -136,7 +136,7 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem& sph_system, string body_name)
+	WallBoundary(SPHSystem& sph_system, std::string body_name)
 		: SolidBody(sph_system, body_name, new ParticleAdaptation(1.3, 1))
 	{
 		/** Geomtry definition. */
@@ -153,9 +153,9 @@ public:
 class FluidObserver : public FictitiousBody
 {
 public:
-	FluidObserver(SPHSystem& sph_system, string body_name)
+	FluidObserver(SPHSystem& sph_system, std::string body_name)
 		: FictitiousBody(sph_system, body_name)
 	{
-		body_input_points_volumes_.push_back(make_pair(Vecd(DL, 0.2), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(DL, 0.2), 0.0));
 	}
 };

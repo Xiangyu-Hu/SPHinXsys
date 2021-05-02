@@ -59,7 +59,7 @@ namespace SPH {
 		virtual Real getPressure(Real rho) override;
 		virtual Real DensityFromPressure(Real p) override;
 		virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) override;
-		virtual WeaklyCompressibleFluid* pointToThisObject() override {return this;};
+		virtual WeaklyCompressibleFluid* ThisObjectPtr() override {return this;};
 	};
 
 	/**
@@ -148,6 +148,6 @@ namespace SPH {
 		};
 		Real getReferenceRelaxationTime() { return lambda_; };
 		Real ReferencePolymericViscosity() { return mu_p_; };
-		virtual Oldroyd_B_Fluid* pointToThisObject() override {return this;};
+		virtual Oldroyd_B_Fluid* ThisObjectPtr() override {return this;};
 	};
 }

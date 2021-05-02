@@ -135,7 +135,7 @@ namespace SPH {
 		virtual void tagBodyPartByCell(CellLists& cell_lists, std::function<bool(Vecd, Real)>& check_included) override;
 		virtual void tagBodyDomainBoundingCells(StdVec<CellLists>& cell_lists, BoundingBox& body_domain_bounds, int axis) override;
 		virtual void tagMirrorBoundingCells(CellLists& cell_lists, BoundingBox& body_domain_bounds, int axis, bool positive) override;
-		virtual void writeMeshToPltFile(ofstream& output_file) override;
+		virtual void writeMeshToPltFile(std::ofstream& output_file) override;
 
 		/** generalized particle search algorithm */
 		template<typename GetParticleIndex, typename GetSearchRange, typename GetNeighborRelation>
@@ -153,6 +153,7 @@ namespace SPH {
 		public MultilevelMesh<SPHBody, BaseMeshCellLinkedList, MeshCellLinkedList>
 	{
 	protected:
+		StdLargeVec<Real>& h_ratio_;	
 		virtual void updateSplitCellLists(SplitCellLists& split_cell_lists) override {};
 		/** determine mesh level from particle cutoff radius */
 		inline size_t getMeshLevel(Real particle_cutoff_radius);

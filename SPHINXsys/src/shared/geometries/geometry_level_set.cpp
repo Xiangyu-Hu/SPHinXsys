@@ -8,6 +8,8 @@
 #include "level_set.h"
 #include "base_body.h"
 #include "in_output.h"
+#include "sph_system.h"
+
 
 namespace SPH {
 	//=================================================================================================//
@@ -19,14 +21,21 @@ namespace SPH {
 		level_set_ = sph_body->particle_adaptation_->createLevelSet(complex_shape);
 		if (isCleaned) level_set_->cleanInterface();
 
-		In_Output in_output(sph_body->getSPHSystem());
-		WriteMeshToPlt 	write_level_set(in_output, sph_body, level_set_);
+		In_Output* in_output = sph_body->getSPHSystem().in_output_;
+		WriteMeshToPlt 	write_level_set(*in_output, sph_body, level_set_);
 		write_level_set.WriteToFile(0.0);
 	}
 	//=================================================================================================//
 	bool LevelSetComplexShape::checkContain(Vecd& input_pnt, bool BOUNDARY_INCLUDED)
 	{
 		return level_set_->probeSignedDistance(input_pnt) < 0.0 ? true : false;
+	}
+	//=================================================================================================//
+	bool LevelSetComplexShape::checkNearSurface(Vecd& input_pnt, Real threshold)
+	{
+		if(!checkNotFar(input_pnt, threshold)) return false;
+		return  getMaxAbsoluteElement(findSignedDistance(input_pnt) 
+			* findNormalDirection(input_pnt)) < threshold ? true : false;
 	}
 	//=================================================================================================//
 	Real LevelSetComplexShape::findSignedDistance(Vecd& input_pnt)

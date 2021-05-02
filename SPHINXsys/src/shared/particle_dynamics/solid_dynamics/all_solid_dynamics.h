@@ -5,3 +5,4 @@ solid dynamics used in SPHinXsys. **/
 #include "solid_dynamics.h"
 #include "thin_structure_dynamics.h"
 #include "fluid_structure_interaction.h"
+#include "thin_structure_math.h"

@@ -6,9 +6,7 @@
 #include "fluid_dynamics_complex.h"
 #include "in_output.h"
 #include "geometry_level_set.h"
-//=================================================================================================//
-using namespace std;
-//=================================================================================================//
+
 namespace SPH
 {
 //=================================================================================================//
@@ -99,7 +97,7 @@ namespace SPH
 			}
 
 			/** correcting particle position */
-			if (!is_free_surface_[index_i]) pos_n_[index_i] += acceleration_trans * dt * dt * 0.5;
+			if (surface_indicator_[index_i] == 0) pos_n_[index_i] += acceleration_trans * dt * dt * 0.5;
 		}
 		//=================================================================================================//
 		void PressureRelaxationRiemannWithWallOldroyd_B::Interaction(size_t index_i, Real dt)
@@ -155,12 +153,12 @@ namespace SPH
 		//=================================================================================================//
 		SurfaceNormWithWall::SurfaceNormWithWall(BaseContactBodyRelation* contact_relation, Real contact_angle) 
 		: InteractionDynamics(contact_relation->sph_body_), FSIContactData(contact_relation), 
-			is_free_surface_(particles_->is_free_surface_),
-			contact_angle_(contact_angle)
+			contact_angle_(contact_angle),
+			surface_norm_(*particles_->getVariableByName<indexVector, Vecd>("SurfaceNormal")),
+			surface_indicator_(particles_->surface_indicator_)
 		{
 			particle_spacing_ = contact_relation->sph_body_->particle_adaptation_->ReferenceSpacing();
 			smoothing_length_ = contact_relation->sph_body_->particle_adaptation_->ReferenceSmoothingLength();
-			surface_norm_ = particles_->getVariableByName<indexVector, Vecd>("SurfaceNorm");
 			std::cout<< " Dp " << particle_spacing_ << " H " << smoothing_length_ << std::endl;
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
@@ -171,12 +169,12 @@ namespace SPH
 		void SurfaceNormWithWall::Interaction(size_t index_i, Real dt)
 		{
 			Real large_dist(1.0e6);
-			Vecd n_i = (*surface_norm_)[index_i];
+			Vecd n_i = surface_norm_[index_i];
 			Vecd contact_norm(0.0);
 			Real smoothing_factor;
 
 			/** Contact interaction. */
-			if(n_i.norm() > 1.0e-1 && is_free_surface_[index_i])
+			if(n_i.norm() > 1.0e-1 && surface_indicator_[index_i] == 1)
 			{
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
 				{
@@ -204,7 +202,7 @@ namespace SPH
 							}
 							
 							Vecd smooth_norm = smoothing_factor * n_i + (1.0 - smoothing_factor) * n_i_w;
-								(*surface_norm_)[index_i] = smooth_norm / (smooth_norm.norm() + TinyReal);
+							surface_norm_[index_i] = smooth_norm / (smooth_norm.norm() + TinyReal);
 
 							large_dist = wall_neighborhood.r_ij_[n];
 						}

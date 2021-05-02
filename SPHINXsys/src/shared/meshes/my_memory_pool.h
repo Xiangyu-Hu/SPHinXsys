@@ -8,7 +8,6 @@
 
 #include <list>
 
-using namespace std;
 using namespace tbb;
 //-------------------------------------------------------------------------------------------------
 //my memory pool
@@ -60,4 +59,4 @@ public:
 	};
 };
 
-#endif
+#endif //MY_MEMORY_POOL_H

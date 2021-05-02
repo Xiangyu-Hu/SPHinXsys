@@ -31,11 +31,12 @@
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
+#include "xml_engine.h"
 
 #include <fstream>
-using namespace std;
 
-namespace SPH {
+namespace SPH 
+{
 
 	class SPHBody;
 	class BaseMaterial;
@@ -43,31 +44,31 @@ namespace SPH {
 	/**
 	 * @class BaseParticles
 	 * @brief Particles with essential (geometric and kinematic) data.
-	 * There are three types of particles， all particles of a same type are saved with continuous memory segments. 
-	 * The first type is real particles whose states are updated by particle dynamics. 
-	 * One is buffer particles whose state are not updated by particle dynamics. 
+	 * There are three types of particles， all particles of a same type are saved with continuous memory segments.
+	 * The first type is real particles whose states are updated by particle dynamics.
+	 * One is buffer particles whose state are not updated by particle dynamics.
 	 * Buffer particles are saved behind real particles.
 	 * The global value of total_real_particles_ separate the real and buffer particles.
-	 * They may be switched from real particles or switch to real particles. 
+	 * They may be switched from real particles or switch to real particles.
 	 * As the memory for both particles are continuous, such switch is achieved at the memory boundary sequentially.
-	 * The basic idea is swap the data of the last real particle with the one will be switched particle, 
+	 * The basic idea is swap the data of the last real particle with the one will be switched particle,
 	 * and then switch this swapped last particle as buffer particle by decrease the total_real_particles_ by one.
-	 * Switch from buffer particle to real particle is easy. One just need to assign expect state to 
-	 * the first buffer particle and increase total_real_particles_ by one.    
-	 * The other is ghost particles whose states are updated according to 
+	 * Switch from buffer particle to real particle is easy. One just need to assign expect state to
+	 * the first buffer particle and increase total_real_particles_ by one.
+	 * The other is ghost particles whose states are updated according to
 	 * boundary condition if their indices are included in the neighbor particle list.
 	 * The ghost particles are saved behind the buffer particles.
 	 * The global value of real_particles_bound_ separate the sum of real and buffer particles with ghost particles.
 	 * The global value of total_ghost_particles_ indicates the total number of ghost particles in use.
-	 * It will be initialized to zero before a time step. 
+	 * It will be initialized to zero before a time step.
 	 */
 	class BaseParticles
 	{
 	public:
-		BaseParticles(SPHBody *body, BaseMaterial* base_material);
+		BaseParticles(SPHBody* body, BaseMaterial* base_material);
 		BaseParticles(SPHBody* body);
 		virtual ~BaseParticles() {};
-	
+
 		BaseMaterial* base_material_; /**< for dynamic cast in particle data delegation */
 
 		StdLargeVec<Vecd> pos_n_;	/**< current position */
@@ -78,7 +79,6 @@ namespace SPH {
 		StdLargeVec<Real> Vol_;		/**< particle volume */
 		StdLargeVec<Real> rho_n_;	/**< current particle density */
 		StdLargeVec<Real> mass_;	/**< particle mass */
-		StdLargeVec<Real> h_ratio_;	/**< the ratio between reference smoothing length to variable smoothing length */
 		//----------------------------------------------------------------------
 		//Global information for all particles
 		//----------------------------------------------------------------------
@@ -87,7 +87,7 @@ namespace SPH {
 		Real speed_max_;		/**< Maximum particle speed. */
 		Real signal_speed_max_; /**< Maximum signal speed.*/
 		//----------------------------------------------------------------------
-		//Global information for defining partilce groups
+		//Global information for defining particle groups
 		//----------------------------------------------------------------------
 		size_t total_real_particles_;
 		size_t real_particles_bound_; /**< Maximum possible number of real particles. Also the start index of ghost particles. */
@@ -95,22 +95,19 @@ namespace SPH {
 		//----------------------------------------------------------------------
 		//		Generalized particle data for parameterized management
 		//----------------------------------------------------------------------
-		std::tuple<StdVec<StdLargeVec<Real>*>, StdVec<StdLargeVec<Vecd>*>, StdVec<StdLargeVec<Matd>*>,
-			StdVec<StdLargeVec<int>*>, StdVec<StdLargeVec<bool>*>> all_particle_data_;
-		std::array<map<string, size_t>, 5> name_index_maps_;
-		std::array<StdVec<string>, 5> variables_to_write_;
+		ParticleData	all_particle_data_;
+		ParticleDataMap all_variable_maps_;
 
-		/** register a defined variable into particles */
+		/** register a variable defined in a class (can be non-particle class) to base particles */
 		template<int DataTypeIndex, typename VariableType>
 		void registerAVariable(StdLargeVec<VariableType>& variable_addrs,
-			string variable_name, bool is_to_write = false, VariableType initial_value = VariableType(0))
+			std::string variable_name, VariableType initial_value = VariableType(0))
 		{
-			if (name_index_maps_[DataTypeIndex].find(variable_name) == name_index_maps_[DataTypeIndex].end()) 
+			if (all_variable_maps_[DataTypeIndex].find(variable_name) == all_variable_maps_[DataTypeIndex].end())
 			{
 				variable_addrs.resize(real_particles_bound_, initial_value);
 				std::get<DataTypeIndex>(all_particle_data_).push_back(&variable_addrs);
-				name_index_maps_[DataTypeIndex].insert(make_pair(variable_name, std::get<DataTypeIndex>(all_particle_data_).size() - 1));
-				if (is_to_write) variables_to_write_[DataTypeIndex].push_back(variable_name);
+				all_variable_maps_[DataTypeIndex].insert(make_pair(variable_name, std::get<DataTypeIndex>(all_particle_data_).size() - 1));
 			}
 			else
 			{
@@ -119,30 +116,55 @@ namespace SPH {
 				exit(1);
 			}
 		};
-		/** create and register a new variable, which has not been defined yet, into particles */
+		
+		/** Create and register a new variable which has not been defined yet in particles.
+		 * If the variable is registered already, the registered variable will be returned. */
 		template<int DataTypeIndex, typename VariableType>
-		StdLargeVec<VariableType>* createAVariable(string variable_name, bool is_to_write = false, VariableType initial_value = VariableType(0))
+		StdLargeVec<VariableType>* createAVariable(std::string new_variable_name, VariableType initial_value = VariableType(0))
 		{
-			if (name_index_maps_[DataTypeIndex].find(variable_name) == name_index_maps_[DataTypeIndex].end()) {
-				StdLargeVec<VariableType>* variable = new StdLargeVec<VariableType>;
-				variable->resize(real_particles_bound_, initial_value);
-				std::get<DataTypeIndex>(all_particle_data_).push_back(variable);
-				name_index_maps_[DataTypeIndex].insert(make_pair(variable_name, std::get<DataTypeIndex>(all_particle_data_).size() - 1));
-				if (is_to_write) variables_to_write_[DataTypeIndex].push_back(variable_name);
-				return variable;
+			if (all_variable_maps_[DataTypeIndex].find(new_variable_name) == all_variable_maps_[DataTypeIndex].end()) {
+				StdLargeVec<VariableType>* new_variable = new StdLargeVec<VariableType>;
+				registerAVariable<DataTypeIndex, VariableType>(*new_variable, new_variable_name, initial_value);
+				return new_variable;
 			}
-			std::cout << "\n Warning: the variable '" << variable_name << "' has already registered!" << std::endl;
+			std::cout << "\n Warning: the variable '" << new_variable_name << "' has already registered!";
 			std::cout << "\n So, the previously registered variable is assigned!" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-			return getVariableByName<DataTypeIndex, VariableType>(variable_name);
+			return getVariableByName<DataTypeIndex, VariableType>(new_variable_name);
+		};
+
+		/** create and register a new variable, which has not been defined yet in particles,
+		 *  by copying data from an exist variable */
+		template<int DataTypeIndex, typename VariableType>
+		StdLargeVec<VariableType>* createAVariable(std::string new_variable_name, std::string old_variable_name)
+		{
+			if (all_variable_maps_[DataTypeIndex].find(old_variable_name) != all_variable_maps_[DataTypeIndex].end())
+			{
+				if (all_variable_maps_[DataTypeIndex].find(new_variable_name) == all_variable_maps_[DataTypeIndex].end())
+				{
+					StdLargeVec<VariableType>* new_variable = new StdLargeVec<VariableType>;
+					registerAVariable<DataTypeIndex, VariableType>(*new_variable, new_variable_name);
+					StdLargeVec<VariableType>* old_variable =
+						std::get<DataTypeIndex>(all_particle_data_)[all_variable_maps_[DataTypeIndex][old_variable_name]];
+					for (size_t i = 0; i != real_particles_bound_; ++i) (*new_variable)[i] = (*old_variable)[i];
+					return new_variable;
+				}
+				std::cout << "\n Error: the new variable '" << new_variable_name << "' has already been registered!" << std::endl;
+				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+				exit(1);
+			}
+			std::cout << "\n Error: the old variable '" << old_variable_name << "' is not registered!" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
+			return NULL;
 		};
 
 		/** get a registered variable from particles by its name */
 		template<int DataTypeIndex, typename VariableType>
-		StdLargeVec<VariableType>* getVariableByName(string variable_name) 
+		StdLargeVec<VariableType>* getVariableByName(std::string variable_name)
 		{
-			if (name_index_maps_[DataTypeIndex].find(variable_name) != name_index_maps_[DataTypeIndex].end())
-				return std::get<DataTypeIndex>(all_particle_data_)[name_index_maps_[DataTypeIndex][variable_name]];
+			if (all_variable_maps_[DataTypeIndex].find(variable_name) != all_variable_maps_[DataTypeIndex].end())
+				return std::get<DataTypeIndex>(all_particle_data_)[all_variable_maps_[DataTypeIndex][variable_name]];
 
 			std::cout << "\n Error: the variable '" << variable_name << "' is not registered!" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -152,22 +174,9 @@ namespace SPH {
 
 		/** add a variable into the list for state output */
 		template<int DataTypeIndex, typename VariableType>
-		void addAVariableToWrite(string variable_name)
+		void addAVariableToWrite(std::string variable_name)
 		{
-			if (name_index_maps_[DataTypeIndex].find(variable_name) != name_index_maps_[DataTypeIndex].end())
-			{
-				bool is_to_write = true;
-				for (size_t i = 0; i != variables_to_write_[DataTypeIndex].size(); ++i) {
-					if (variables_to_write_[DataTypeIndex][i] == variable_name) is_to_write = false;
-				}
-				if (is_to_write) variables_to_write_[DataTypeIndex].push_back(variable_name);
-			}
-			else
-			{
-				std::cout << "\n Error: the variable '" << variable_name << "' you are going to write is not particle data!" << std::endl;
-				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-				exit(1);
-			}
+			addAVariableNameToList<DataTypeIndex, VariableType>(variables_to_write_, variable_name);
 		};
 
 		//----------------------------------------------------------------------
@@ -176,9 +185,35 @@ namespace SPH {
 		StdLargeVec<size_t> sequence_;
 		StdLargeVec<size_t> sorted_id_;
 		StdLargeVec<size_t> unsorted_id_;
-		StdVec<StdLargeVec<Matd>*> sortable_matrices_;
-		StdVec<StdLargeVec<Vecd>*> sortable_vectors_;
-		StdVec<StdLargeVec<Real>*> sortable_scalars_;
+		ParticleData	sortable_data_;
+		ParticleDataMap sortable_variable_maps_;
+
+		/** register an already defined variable as sortable */
+		template<int DataTypeIndex, typename VariableType>
+		void registerASortableVariable(std::string variable_name)
+		{
+			if (sortable_variable_maps_[DataTypeIndex].find(variable_name) == sortable_variable_maps_[DataTypeIndex].end())
+			{
+				if (all_variable_maps_[DataTypeIndex].find(variable_name) != all_variable_maps_[DataTypeIndex].end())
+				{
+					StdLargeVec<VariableType>* variable =
+						std::get<DataTypeIndex>(all_particle_data_)[all_variable_maps_[DataTypeIndex][variable_name]];
+					std::get<DataTypeIndex>(sortable_data_).push_back(variable);
+					sortable_variable_maps_[DataTypeIndex].insert(make_pair(variable_name, std::get<DataTypeIndex>(sortable_data_).size() - 1));
+				}
+				else
+				{
+					std::cout << "\n Error: the variable '" << variable_name << "' is not registered!" << std::endl;
+					std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+					exit(1);
+				}
+			}
+			else
+			{
+				std::cout << "\n Warning: the variable '" << variable_name << "' has already registered as a sortabele variable!" << std::endl;
+				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			}
+		};
 
 		SPHBody* getSPHBody() { return body_; };
 		void initializeABaseParticle(Vecd pnt, Real Vol_0);
@@ -189,22 +224,84 @@ namespace SPH {
 		void switchToBufferParticle(size_t index_i);
 
 		/** Write particle data in VTU format for Paraview. */
-		virtual void writeParticlesToVtuFile(ofstream &output_file);
+		virtual void writeParticlesToVtuFile(std::ofstream& output_file);
 		/** Write particle data in PLT format for Tecplot. */
-		virtual void writeParticlesToPltFile(ofstream& output_file);
-		virtual void writeParticlesToXmlForRestart(std::string& filefullpath) {};
-		virtual void readParticleFromXmlForRestart(std::string& filefullpath) {};
-		virtual void writeToXmlForReloadParticle(std::string &filefullpath);
-		virtual void readFromXmlForReloadParticle(std::string &filefullpath);
-		virtual BaseParticles* pointToThisObject() {return this;};
+		void writeParticlesToPltFile(std::ofstream& output_file);
+
+		void writeParticlesToXmlForRestart(std::string& filefullpath);
+		void readParticleFromXmlForRestart(std::string& filefullpath);
+		XmlEngine* getReloadXmlEngine() { return &reload_xml_engine_; };
+		void writeToXmlForReloadParticle(std::string& filefullpath);
+		void readFromXmlForReloadParticle(std::string& filefullpath);
+
+		virtual BaseParticles* ThisObjectPtr() { return this; };
 
 		/** Normalize the kernel gradient. */
 		virtual Vecd normalizeKernelGradient(size_t particle_index_i, Vecd& kernel_gradient) { return kernel_gradient; };
 		/** Get the kernel gradient in weak form. */
 		virtual Vecd getKernelGradient(size_t particle_index_i, size_t particle_index_j,
-			Real dW_ij, Vecd& e_ij) { return dW_ij * e_ij; };
+			Real dW_ij, Vecd& e_ij) {
+			return dW_ij * e_ij;
+		};
 	protected:
 		SPHBody* body_; /**< The body in which the particles belongs to. */
-		string body_name_;
+		std::string body_name_;
+		XmlEngine restart_xml_engine_;
+		XmlEngine reload_xml_engine_;
+		ParticleVariableList variables_to_write_;
+		ParticleVariableList variables_to_restart_;
+
+		virtual void writePltFileHeader(std::ofstream& output_file);
+		virtual void writePltFileParticleData(std::ofstream& output_file, size_t index_i);
+
+		/** add a variable into a particle vairable name list */
+		template<int DataTypeIndex, typename VariableType>
+		void addAVariableNameToList(ParticleVariableList& variable_name_list, std::string variable_name)
+		{
+			if (all_variable_maps_[DataTypeIndex].find(variable_name) != all_variable_maps_[DataTypeIndex].end())
+			{
+				bool is_to_add = true;
+				for (size_t i = 0; i != variable_name_list[DataTypeIndex].size(); ++i) {
+					if (variable_name_list[DataTypeIndex][i].first == variable_name) is_to_add = false;
+				}
+				if (is_to_add) {
+					size_t variable_index = all_variable_maps_[DataTypeIndex][variable_name];
+					variable_name_list[DataTypeIndex].push_back(make_pair(variable_name, variable_index));
+				}
+			}
+			else
+			{
+				std::cout << "\n Error: the variable '" << variable_name << "' you are going to write is not particle data!" << std::endl;
+				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+				exit(1);
+			}
+		};
+
+		template<int DataTypeIndex, typename VariableType>
+		struct addAParticleDataValue
+		{
+			void operator () (ParticleData& particle_data) const
+			{
+				for (size_t i = 0; i != std::get<DataTypeIndex>(particle_data).size(); ++i)
+					std::get<DataTypeIndex>(particle_data)[i]->push_back(VariableType(0));
+			};
+		};
+
+		/** operation by looping or going through a variable name list */
+		template<int DataTypeIndex, typename VariableType>
+		struct loopVariabaleNameList
+		{
+			template<typename VariableOperation>
+			void operator () (ParticleData& particle_data,
+				ParticleVariableList& variable_name_list, VariableOperation& variable_operation) const
+			{
+				for (std::pair<std::string, size_t>& name_index : variable_name_list[DataTypeIndex])
+				{
+					std::string variable_name = name_index.first;
+					StdLargeVec<VariableType>& variable = *(std::get<DataTypeIndex>(particle_data)[name_index.second]);
+					variable_operation(variable_name, variable);
+				}
+			};
+		};
 	};
 }

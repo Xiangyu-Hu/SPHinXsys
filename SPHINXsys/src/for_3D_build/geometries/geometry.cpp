@@ -1,11 +1,9 @@
 #include "geometry.h"
 
-using namespace std;
-
 namespace SPH 
 {
 	//=================================================================================================//
-	TriangleMeshShape::TriangleMeshShape(string filepathname, Vec3d translation, Real scale_factor)
+	TriangleMeshShape::TriangleMeshShape(std::string filepathname, Vec3d translation, Real scale_factor)
 		: Shape("TriangleMeshShape")
 	{
 		if (!fs::exists(filepathname))
@@ -65,7 +63,7 @@ namespace SPH
 		int face_id;
 		Vec3d closest_pnt = triangle_mesh_->findNearestPoint(pnt, inside, face_id, uv_coordinate);
 
-		vector<int> neighbor_face(4);
+		StdVec<int> neighbor_face(4);
 		neighbor_face[0] = face_id;
 		/** go throught the neighbor faces. */
 		for (int i = 1; i < 4; i++) {
@@ -217,35 +215,35 @@ namespace SPH
 	//=================================================================================================//
 	void ComplexShape::addTriangleMeshShape(TriangleMeshShape* triangle_mesh_shape, ShapeBooleanOps op)
 	{
-		pair<TriangleMeshShape*, ShapeBooleanOps> shape_and_op(triangle_mesh_shape, op);
+		std::pair<TriangleMeshShape*, ShapeBooleanOps> shape_and_op(triangle_mesh_shape, op);
 		triangle_mesh_shapes_.push_back(shape_and_op);
 	}
 	//=================================================================================================//
 	void ComplexShape::addBrick(Vec3d halfsize, int resolution, Vec3d translation, ShapeBooleanOps op)
 	{
 		TriangleMeshShape* triangle_mesh_shape = new TriangleMeshShape(halfsize, resolution, translation);
-		pair<TriangleMeshShape*, ShapeBooleanOps> shape_and_op(triangle_mesh_shape, op);
+		std::pair<TriangleMeshShape*, ShapeBooleanOps> shape_and_op(triangle_mesh_shape, op);
 		triangle_mesh_shapes_.push_back(shape_and_op);
 	}
 	//=================================================================================================//
 	void ComplexShape::addSphere(Real radius, int resolution, Vec3d translation, ShapeBooleanOps op)
 	{
 		TriangleMeshShape* triangle_mesh_shape = new TriangleMeshShape(radius, resolution, translation);
-		pair<TriangleMeshShape*, ShapeBooleanOps> shape_and_op(triangle_mesh_shape, op);
+		std::pair<TriangleMeshShape*, ShapeBooleanOps> shape_and_op(triangle_mesh_shape, op);
 		triangle_mesh_shapes_.push_back(shape_and_op);
 	}
 	//=================================================================================================//
 	void ComplexShape::addCylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resolution, Vec3d translation, ShapeBooleanOps op)
 	{
 		TriangleMeshShape* triangle_mesh_shape = new TriangleMeshShape(axis, radius, halflength, resolution, translation);
-		pair<TriangleMeshShape*, ShapeBooleanOps> shape_and_op(triangle_mesh_shape, op);
+		std::pair<TriangleMeshShape*, ShapeBooleanOps> shape_and_op(triangle_mesh_shape, op);
 		triangle_mesh_shapes_.push_back(shape_and_op);
 	}
 	//=================================================================================================//
-	void ComplexShape::addFormSTLFile(string file_path_name, Vec3d translation, Real scale_factor, ShapeBooleanOps op)
+	void ComplexShape::addFormSTLFile(std::string file_path_name, Vec3d translation, Real scale_factor, ShapeBooleanOps op)
 	{
 		TriangleMeshShape* triangle_mesh_shape = new TriangleMeshShape(file_path_name, translation, scale_factor);
-		pair<TriangleMeshShape*, ShapeBooleanOps> shape_and_op(triangle_mesh_shape, op);
+		std::pair<TriangleMeshShape*, ShapeBooleanOps> shape_and_op(triangle_mesh_shape, op);
 		triangle_mesh_shapes_.push_back(shape_and_op);
 	}
 	//=================================================================================================//
@@ -268,7 +266,7 @@ namespace SPH
 				TriangleMeshShape* sp = shape_and_op.first;
 				ShapeBooleanOps operation_string 
 					= shape_and_op.second == ShapeBooleanOps::add ? ShapeBooleanOps::sub : ShapeBooleanOps::add;
-				pair<TriangleMeshShape*, ShapeBooleanOps> substract_shape_and_op(sp, operation_string);
+				std::pair<TriangleMeshShape*, ShapeBooleanOps> substract_shape_and_op(sp, operation_string);
 
 				triangle_mesh_shapes_.push_back(substract_shape_and_op);
 			}
@@ -279,15 +277,12 @@ namespace SPH
 	//=================================================================================================//
 	bool ComplexShape::checkNotFar(Vec3d& input_pnt, Real threshold)
 	{
-		return  ComplexShape::checkContain(input_pnt)
-			|| getMinAbsoluteElement(input_pnt - ComplexShape::findClosestPoint(input_pnt)) < threshold ?
-			true : false;
+		return  checkContain(input_pnt) || checkNearSurface(input_pnt , threshold) ? true : false;
 	}
 	//=================================================================================================//
 	bool ComplexShape::checkNearSurface(Vec3d& input_pnt, Real threshold)
 	{
-		return  getMinAbsoluteElement(input_pnt - ComplexShape::findClosestPoint(input_pnt)) < threshold ?
-			true : false;
+		return  getMaxAbsoluteElement(input_pnt - findClosestPoint(input_pnt)) < threshold ? true : false;
 	}
 	//=================================================================================================//
 	BoundingBox ComplexShape::findBounds()

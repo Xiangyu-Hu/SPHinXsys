@@ -11,6 +11,7 @@
 */
 
 #pragma once
+
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 //boost library
@@ -76,14 +77,14 @@ namespace SPH {
 	public:
 		/** Default constructor. */
 		ComplexShape() : Shape("ComplexShape"), multi_ploygen_() {};
-		ComplexShape(string complex_shape_name) : Shape(complex_shape_name), multi_ploygen_() {};
+		ComplexShape(std::string complex_shape_name) : Shape(complex_shape_name), multi_ploygen_() {};
 		virtual ~ComplexShape() {};
 		virtual BoundingBox findBounds() override;
 		void addAMultiPolygon(MultiPolygon& multi_polygon, ShapeBooleanOps op);
 		void addABoostMultiPoly(boost_multi_poly& boost_multi_poly, ShapeBooleanOps op);
 		void addAPolygon(std::vector<Vecd>& points, ShapeBooleanOps op);
 		void addACircle(Vec2d center, Real radius, int resolution, ShapeBooleanOps op);
-		void addAPolygonFromFile(string file_path_name, ShapeBooleanOps op, Vec2d translation = Vecd(0), Real scale_factor = 1.0);
+		void addAPolygonFromFile(std::string file_path_name, ShapeBooleanOps op, Vec2d translation = Vecd(0), Real scale_factor = 1.0);
 
 		virtual bool checkContain(Vec2d& input_pnt, bool BOUNDARY_INCLUDED = true);
 		virtual	bool checkNotFar(Vec2d& input_pnt, Real threshold);

@@ -15,7 +15,7 @@
 namespace SPH
 {
 	//=================================================================================================//
-	SPHBody::SPHBody(SPHSystem &sph_system, string body_name,
+	SPHBody::SPHBody(SPHSystem &sph_system, std::string body_name,
 		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator) :
 		sph_system_(sph_system), body_name_(body_name), newly_updated_(true),
 		body_domain_bounds_(0, 0), prescribed_body_bounds_(false),
@@ -31,7 +31,7 @@ namespace SPH
 		return sph_system_.system_domain_bounds_;
 	}
 	//=================================================================================================//
-	string SPHBody::getBodyName()
+	std::string SPHBody::getBodyName()
 	{
 		return body_name_;
 	}
@@ -44,42 +44,6 @@ namespace SPH
 	void SPHBody::assignBaseParticles(BaseParticles* base_particles)
 	{
 		base_particles_ = base_particles;
-	}
-	//=================================================================================================//
-	Real SPHBody::computeReferenceNumberDensity(Vec2d zero)
-	{
-		Real sigma(0);
-		Kernel* kernel = particle_adaptation_->getKernel();
-		Real cutoff_radius = kernel->CutOffRadius();
-		Real particle_spacing = particle_adaptation_->ReferenceSpacing();
-		int search_range = int(cutoff_radius / particle_spacing) + 1;
-		for (int j = -search_range; j <= search_range; ++j)
-			for (int i = -search_range; i <= search_range; ++i)
-			{
-				Vec2d particle_location(Real(i) * particle_spacing, Real(j) * particle_spacing);
-				Real distance = particle_location.norm();
-				if (distance < cutoff_radius) sigma += kernel->W(distance, particle_location);
-			}
-		return sigma;
-	}
-	//=================================================================================================//
-	Real SPHBody::computeReferenceNumberDensity(Vec3d zero)
-	{
-		Real sigma(0);
-		Kernel* kernel = particle_adaptation_->getKernel();
-		Real cutoff_radius = kernel->CutOffRadius();
-		Real particle_spacing = particle_adaptation_->ReferenceSpacing();
-		int search_range = int(cutoff_radius / particle_spacing) + 1;
-		for (int k = -search_range; k <= search_range; ++k)
-			for (int j = -search_range; j <= search_range; ++j)
-				for (int i = -search_range; i <= search_range; ++i)
-				{
-					Vec3d particle_location(Real(i) * particle_spacing,
-						Real(j) * particle_spacing, Real(k) * particle_spacing);
-					Real distance = particle_location.norm();
-					if (distance < cutoff_radius) sigma += kernel->W(distance, particle_location);
-				}
-		return sigma;
 	}
 	//=================================================================================================//
 	void SPHBody::allocateConfigurationMemoriesForBufferParticles()
@@ -102,13 +66,13 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void SPHBody::writeParticlesToVtuFile(ofstream &output_file)
+	void SPHBody::writeParticlesToVtuFile(std::ofstream &output_file)
 	{
 		base_particles_->writeParticlesToVtuFile(output_file);
 		newly_updated_ = false;
 	}
 	//=================================================================================================//
-	void SPHBody::writeParticlesToPltFile(ofstream &output_file)
+	void SPHBody::writeParticlesToPltFile(std::ofstream &output_file)
 	{
 		if (newly_updated_) base_particles_->writeParticlesToPltFile(output_file);
 		newly_updated_ = false;
@@ -134,14 +98,14 @@ namespace SPH
 		base_particles_->readFromXmlForReloadParticle(filefullpath);
 	}
 	//=================================================================================================//
-	RealBody::RealBody(SPHSystem &sph_system, string body_name,
+	RealBody::RealBody(SPHSystem &sph_system, std::string body_name,
 		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator) : 
 		SPHBody(sph_system, body_name, particle_adaptation, particle_generator),
 		particle_sorting_(this)
 	{
 		sph_system.addARealBody(this);
 		mesh_cell_linked_list_ = particle_adaptation_->createMeshCellLinkedList();
-		size_t number_of_split_cell_lists = powern(3, Vecd(0).size());
+		size_t number_of_split_cell_lists = powerN(3, Vecd(0).size());
 		split_cell_lists_.resize(number_of_split_cell_lists);
 	}
 	//=================================================================================================//
@@ -164,14 +128,14 @@ namespace SPH
 	{
 		mesh_cell_linked_list_->UpdateCellLists();
 	}
-	FictitiousBody::FictitiousBody(SPHSystem &system, string body_name, 
+	FictitiousBody::FictitiousBody(SPHSystem &system, std::string body_name,
 		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
 	: SPHBody(system, body_name, particle_adaptation, particle_generator)
 	{
 		system.addAFictitiousBody(this);
 	}
 	//=================================================================================================//
-	BodyPartByShape::BodyPartByShape(SPHBody* body, string body_part_name) : 
+	BodyPartByShape::BodyPartByShape(SPHBody* body, std::string body_part_name) :
 	BodyPart(body, body_part_name), body_part_shape_(NULL) {}	
 	//=================================================================================================//
 	BoundingBox BodyPartByShape::BodyPartBounds() 
@@ -230,7 +194,7 @@ namespace SPH
 		std::cout << "Number of inner layers particles : " << body_part_particles_.size() << std::endl;
 	}
 	//=================================================================================================//
-	 BodyPartByCell::BodyPartByCell(RealBody *real_body, string body_part_name)	: 
+	 BodyPartByCell::BodyPartByCell(RealBody *real_body, std::string body_part_name)	:
 	 	BodyPartByShape(real_body, body_part_name), real_body_(real_body),
 		checkIncluded_(std::bind(&BodyPartByCell::checkIncluded, this, _1, _2)) {}
 	//=================================================================================================//
@@ -244,7 +208,7 @@ namespace SPH
 		real_body_->mesh_cell_linked_list_->tagBodyPartByCell(body_part_cells_, checkIncluded_);
 	}
 	//=================================================================================================//
-	NearShapeSurface::NearShapeSurface(RealBody* real_body, ComplexShape* complex_shape, string body_part_name) :
+	NearShapeSurface::NearShapeSurface(RealBody* real_body, ComplexShape* complex_shape, std::string body_part_name) :
 		BodyPartByCell(real_body, body_part_name)
 	{
 		level_set_complex_shape_ = new LevelSetComplexShape(real_body, *complex_shape, true);

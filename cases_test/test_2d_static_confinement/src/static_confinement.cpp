@@ -75,7 +75,7 @@ std::vector<Vecd> createStructureShape()
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem& sph_system, string body_name)
+	WaterBlock(SPHSystem& sph_system, std::string body_name)
 		: FluidBody(sph_system, body_name)
 	{
 		/** Geomtry definition. */
@@ -119,10 +119,10 @@ ComplexShape* createWallAndStructureShape()
 class FluidObserver : public FictitiousBody
 {
 public:
-	FluidObserver(SPHSystem &sph_system, string body_name)
+	FluidObserver(SPHSystem &sph_system, std::string body_name)
 		: FictitiousBody(sph_system, body_name)
 	{
-		body_input_points_volumes_.push_back(make_pair(Vecd(DL, 0.2), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(DL, 0.2), 0.0));
 	}
 };
 /**
@@ -138,6 +138,8 @@ int main()
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	sph_system.restart_step_ = 0;
+	/** output environment. */
+	In_Output 	in_output(sph_system);
 	/**
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
@@ -183,14 +185,13 @@ int main()
 	/**
 	 * @brief Output.
 	 */
-	In_Output in_output(sph_system);
 	/** Output the body states. */
 	WriteBodyStatesToVtu		write_body_states(in_output, sph_system.real_bodies_);
 	/** Output the body states for restart simulation. */
-	ReadRestart		read_restart_files(in_output, sph_system.real_bodies_);
-	WriteRestart	write_restart_files(in_output, sph_system.real_bodies_);
+	RestartIO		restart_io(in_output, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	WriteTotalMechanicalEnergy 	write_water_mechanical_energy(in_output, water_block, &gravity);
+	WriteBodyReducedQuantity<fluid_dynamics::TotalMechanicalEnergy> 	
+		write_water_mechanical_energy(in_output, water_block, &gravity);
 	/** output the observed data from fluid body. */
 	WriteAnObservedQuantity<indexScalar, Real> write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact);
 
@@ -203,7 +204,7 @@ int main()
 	 /** If the starting time is not zero, please setup the restart time step ro read in restart states. */
 	if (sph_system.restart_step_ != 0)
 	{
-		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(sph_system.restart_step_);
+		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
 		water_block->updateCellLinkedList();
 		water_block_inner->updateConfiguration();
 	}
@@ -263,7 +264,7 @@ int main()
 
 			if (number_of_iterations % screen_output_interval == 0)
 			{
-				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 					<< GlobalStaticVariables::physical_time_
 					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
 
@@ -272,7 +273,7 @@ int main()
 					write_recorded_water_pressure.WriteToFile(GlobalStaticVariables::physical_time_);
 				}
 				if (number_of_iterations % restart_output_interval == 0)
-					write_restart_files.WriteToFile(Real(number_of_iterations));
+					restart_io.WriteToFile(Real(number_of_iterations));
 			}
 			number_of_iterations++;
 
@@ -293,13 +294,13 @@ int main()
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds()
-		<< " seconds." << endl;
-	cout << fixed << setprecision(9) << "interval_computing_time_step ="
+	std::cout << "Total wall time for computation: " << tt.seconds()
+		<< " seconds." << std::endl;
+	std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="
 		<< interval_computing_time_step.seconds() << "\n";
-	cout << fixed << setprecision(9) << "interval_computing_pressure_relaxation = "
+	std::cout << std::fixed << std::setprecision(9) << "interval_computing_pressure_relaxation = "
 		<< interval_computing_pressure_relaxation.seconds() << "\n";
-	cout << fixed << setprecision(9) << "interval_updating_configuration = "
+	std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
 		<< interval_updating_configuration.seconds() << "\n";
 
 	return 0;

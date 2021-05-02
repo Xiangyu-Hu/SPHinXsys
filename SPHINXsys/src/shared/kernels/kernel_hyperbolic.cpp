@@ -23,10 +23,10 @@ namespace SPH
 	Real KernelHyperbolic::W_1D(const Real q) const
 	{
 		if (q < 1.0) {
-			return (6.0 - 6.0 * q + powern(q, 3));
+			return (6.0 - 6.0 * q + powerN(q, 3));
 		}
 		else  {
-			return powern(2.0 - q, 3);
+			return powerN(2.0 - q, 3);
 		}
 	}
 	//=================================================================================================//
@@ -43,10 +43,10 @@ namespace SPH
 	Real KernelHyperbolic::dW_1D(const Real q) const
 	{
 		if (q < 1.0) {
-			return (-6.0 + 3.0 * powern(q, 2));
+			return (-6.0 + 3.0 * powerN(q, 2));
 		}
 		else {
-			return powern(2.0 - q, 2) * (-1.0);
+			return powerN(2.0 - q, 2) * (-1.0);
 		}
 	}
 	//=================================================================================================//

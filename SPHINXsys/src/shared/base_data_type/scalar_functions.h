@@ -44,7 +44,7 @@ namespace SPH {
 
 	//Get the nth power
 	template<class T>
-	T powern(const T& a, int n)
+	T powerN(const T& a, int n)
 	{
 		T res = 1;
 		for (int i = 0; i < n; i++)

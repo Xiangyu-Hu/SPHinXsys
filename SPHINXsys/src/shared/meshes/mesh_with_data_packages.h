@@ -42,8 +42,6 @@
 #include <functional>
 using namespace std::placeholders;
 
-using namespace std;
-
 namespace SPH
 {
 	class Kernel;
@@ -244,9 +242,9 @@ namespace SPH
 		DataType DataValueFromGlobalIndex(Vecu global_data_index);
 		void initializePackageAddressesInACell(Vecu cell_index);
 		/** find related cell index and data index for a data package address matrix */
-		pair<int, int> CellShiftAndDataIndex(int data_addrs_index_component)
+		std::pair<int, int> CellShiftAndDataIndex(int data_addrs_index_component)
 		{
-			pair<int, int> shift_and_index;
+			std::pair<int, int> shift_and_index;
 			int signed_date_index = data_addrs_index_component - pkg_addrs_buffer_;
 			shift_and_index.first = (signed_date_index + pkg_size_) / pkg_size_ - 1;
 			shift_and_index.second = signed_date_index - shift_and_index.first * pkg_size_;

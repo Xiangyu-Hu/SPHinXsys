@@ -54,7 +54,7 @@ TriangleMeshShape* CreateHolder()
 class Myocardium : public SolidBody
 {
 public:
-	Myocardium(SPHSystem &system, string body_name)
+	Myocardium(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
 		body_shape_ = new ComplexShape(body_name);
@@ -69,7 +69,7 @@ public:
 class Holder : public BodyPartByParticle
 {
 public:
-	Holder(SolidBody *solid_body, string constrained_region_name)
+	Holder(SolidBody *solid_body, std::string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		body_part_shape_ = new ComplexShape(constrained_region_name);
@@ -123,14 +123,10 @@ protected:
  /**
  * Setup material properties of myocardium
  */
- /**
- * Setup material properties of myocardium
- */
-class MyocardiumMuscle
-	: public Muscle
+class ActiveMyocardiumMuscle : public ActiveMuscle<Muscle>
 {
 public:
-	MyocardiumMuscle() : Muscle()
+	ActiveMyocardiumMuscle() : ActiveMuscle<Muscle>()
 	{
 		rho_0_ = rho_0;
 		bulk_modulus_ = bulk_modulus;
@@ -153,7 +149,8 @@ int main()
 	/** Creat a Myocardium body, corresponding material, particles and reaction model. */
 	Myocardium *myocardium_muscle_body =
 		new Myocardium(system, "MyocardiumMuscleBody");
-	ActiveMuscleParticles 	myocardium_muscle_particles(myocardium_muscle_body, new ActiveMuscle(new MyocardiumMuscle()));
+	ActiveMyocardiumMuscle *active_myocardium_muscle = new ActiveMyocardiumMuscle();	
+	ActiveMuscleParticles 	myocardium_muscle_particles(myocardium_muscle_body, active_myocardium_muscle);
 
 	/** topology */
 	InnerBodyRelation* myocardium_muscle_body_inner = new InnerBodyRelation(myocardium_muscle_body);
@@ -207,7 +204,7 @@ int main()
 		{
 			if (ite % 100 == 0) 
 			{
-				cout << "N=" << ite << " Time: "
+				std::cout << "N=" << ite << " Time: "
 					<< GlobalStaticVariables::physical_time_ << "	dt: "
 					<< dt << "\n";
 			}
@@ -231,7 +228,7 @@ int main()
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

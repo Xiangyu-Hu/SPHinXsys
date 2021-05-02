@@ -18,25 +18,25 @@ Real thickness = 0.25;                                  /** Thickness of the cyl
 Real radius_mid_surface = radius + thickness / 2.0;      /** Radius of the mid surface. */
 int particle_number = 40;								 /** Particle number in the peripheral direction. */
 Real particle_spacing_ref = 2 * radius_mid_surface * Pi * 80.0 / 360.0 / (Real)particle_number;     /** Initial reference particle spacing. */
-int BWD = 4;
+int BWD = 1;
 Real BW = particle_spacing_ref * (Real)BWD;              /** Boundary width, determined by specific layer of boundary particles. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec3d(-radius - thickness, 0.0, -radius - thickness),
 	Vec3d(radius + thickness + BW, height, radius + thickness));
 
 /** For material properties of the solid. */
-Real rho0_s = 4.0; 			                     /** Normalized density. */
+Real rho0_s = 36.0; 			                     /** Normalized density. */
 Real Youngs_modulus = 4.32e8;	                         /** Normalized Youngs Modulus. */
 Real poisson = 0.0; 			                         /** Poisson ratio. */
-Real physical_viscosity = 200.0;                         /** physical damping, here we choose the same value as numerical viscosity. */
+Real physical_viscosity = 1.0e4;                         /** physical damping, here we choose the same value as numerical viscosity. */
 
-Real time_to_full_external_force = 0.0;
-Real gravitational_acceleration = -90.0;
+Real time_to_full_external_force = 0.1;
+Real gravitational_acceleration = -10.0;
 
 class Cylinder : public ThinStructure
 {
 public:
-	Cylinder(SPHSystem &system, string body_name, ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
+	Cylinder(SPHSystem &system, std::string body_name, ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
 		: ThinStructure(system, body_name, particle_adaptation, particle_generator)
 	{
 		// the cylinder and boundary
@@ -47,7 +47,7 @@ public:
 				Real x = radius_mid_surface * cos(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
 				Real y = particle_spacing_ref * j - BW + particle_spacing_ref * 0.5;
 				Real z = radius_mid_surface * sin(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
-				body_input_points_volumes_.push_back(make_pair(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref * thickness));
+				body_input_points_volumes_.push_back(std::make_pair(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref * thickness));
 			}
 		}
 	}
@@ -68,6 +68,7 @@ protected:
 		n_0_[index_i] = Vec3d(pos_0_[index_i][0] / radius_mid_surface, 0.0, pos_0_[index_i][2] / radius_mid_surface);
 		n_[index_i] = n_0_[index_i];
 		pseudo_n_[index_i] = n_0_[index_i];
+		transformation_matrix_[index_i] = getTransformationMatrix(n_0_[index_i]);
 	};
 };
 
@@ -87,7 +88,7 @@ protected:
 		}
 	};
 public:
-	BoundaryGeometry(SPHBody *body, string body_part_name)
+	BoundaryGeometry(SPHBody *body, std::string body_part_name)
 		: BodyPartByParticle(body, body_part_name) {
 		tagBodyPart();
 	};
@@ -115,11 +116,11 @@ public:
 class CylinderObserver : public FictitiousBody
 {
 public:
-	CylinderObserver(SPHSystem &system, string body_name)
+	CylinderObserver(SPHSystem &system, std::string body_name)
 		: FictitiousBody(system, body_name)
 	{
 		/** the measuring particle with zero volume */
-		body_input_points_volumes_.push_back(make_pair(Vecd(radius_mid_surface * cos(5.0 / 18.0 * Pi), 0.5 * height, radius_mid_surface * sin(5.0 / 18.0 * Pi)), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(radius_mid_surface * cos(5.0 / 18.0 * Pi), 0.5 * height, radius_mid_surface * sin(5.0 / 18.0 * Pi)), 0.0));
 	}
 };
 
@@ -154,6 +155,7 @@ int main()
 	CylinderMaterial *cylinder_material = new CylinderMaterial();
 	/** Creat particles for the elastic body. */
 	ShellParticles cylinder_body_particles(cylinder_body, cylinder_material, thickness);
+	cylinder_body_particles.addAVariableToWrite<indexMatrix, Mat3d>("FirstPiolaKirchhoffStress");
 
 	/** Define Observer. */
 	CylinderObserver *cylinder_observer = new CylinderObserver(system, "CylinderObserver");
@@ -184,12 +186,12 @@ int main()
 		stress_relaxation_first_half(cylinder_body_inner);
 	thin_structure_dynamics::ShellStressRelaxationSecondHalf
 		stress_relaxation_second_half(cylinder_body_inner);
-	thin_structure_dynamics::FixedFreeRotateShellBoundary
-		constrain_holder(cylinder_body_inner, new BoundaryGeometry(cylinder_body, "BoundaryGeometry"));
+	solid_dynamics::ConstrainSolidBodyRegionVelocity
+		constrain_holder(cylinder_body, new BoundaryGeometry(cylinder_body, "BoundaryGeometry"), Vecd(0.0, 1.0, 0.0));
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vecd>>
-		cylinder_position_damping(cylinder_body_inner, 0.5, "Velocity", physical_viscosity);
+		cylinder_position_damping(cylinder_body_inner, 0.1, "Velocity", physical_viscosity);
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vecd>>
-		cylinder_rotation_damping(cylinder_body_inner, 0.5, "AngularVelocity", physical_viscosity);
+		cylinder_rotation_damping(cylinder_body_inner, 0.1, "AngularVelocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
 	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
@@ -212,7 +214,7 @@ int main()
 	
 	/** Setup physical parameters. */
 	int ite = 0;
-	Real end_time = 0.005;
+	Real end_time = 3.0;
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	/** Statistics for computing time. */
@@ -227,21 +229,23 @@ int main()
 		while (integeral_time < output_period)
 		{
 			if (ite % 100 == 0) {
-				cout << "N=" << ite << " Time: "
+				std::cout << "N=" << ite << " Time: "
 					<< GlobalStaticVariables::physical_time_ << "	dt: "
 					<< dt << "\n";
 				write_states.WriteToFile(100);
 			}
+			dt = 0.3 * computing_time_step_size.parallel_exec();
 			initialize_external_force.parallel_exec(dt);
 			stress_relaxation_first_half.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+
+			constrain_holder.parallel_exec();
 			cylinder_position_damping.parallel_exec(dt);
 			cylinder_rotation_damping.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+			constrain_holder.parallel_exec();
+
 			stress_relaxation_second_half.parallel_exec(dt);
 
 			ite++;
-			dt = 0.2 * computing_time_step_size.parallel_exec();
 			integeral_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 			Real check_time = GlobalStaticVariables::physical_time_;
@@ -257,7 +261,7 @@ int main()
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

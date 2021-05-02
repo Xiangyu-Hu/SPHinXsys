@@ -3,6 +3,8 @@
  * @author	Chi ZHang and Xiangyu Hu
  */
 
+#pragma once
+
 #include "fluid_dynamics_inner.h"
 
 //=================================================================================================//

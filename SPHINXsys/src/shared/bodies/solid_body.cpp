@@ -13,11 +13,11 @@
 
 namespace SPH {
 	//=================================================================================================//
-	SolidBody::SolidBody(SPHSystem &system, string body_name,
+	SolidBody::SolidBody(SPHSystem &system, std::string body_name,
 		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
 		: RealBody(system, body_name, particle_adaptation, particle_generator) {}
 	//=================================================================================================//
-	ThinStructure::ThinStructure(SPHSystem& system, string body_name,
+	ThinStructure::ThinStructure(SPHSystem& system, std::string body_name,
 		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
 		: SolidBody(system, body_name, particle_adaptation, particle_generator)
 	{
@@ -25,7 +25,7 @@ namespace SPH {
 	}
 	//=================================================================================================//
 	SolidBodyPartForSimbody
-		::SolidBodyPartForSimbody(SPHBody* solid_body, string solid_body_part_name)
+		::SolidBodyPartForSimbody(SPHBody* solid_body, std::string solid_body_part_name)
 		: BodyPartByParticle(solid_body, solid_body_part_name)
 	{
 		solid_particles_ = dynamic_cast<SolidParticles*>(body_->base_particles_);

@@ -16,8 +16,9 @@ namespace SPH
 		DampingBySplittingInner(BaseInnerBodyRelation* body_inner_relation,
 			std::string variable_name, Real eta) :
 		InteractionDynamicsSplitting(body_inner_relation->sph_body_),
-		DissipationDataInner(body_inner_relation),
-		Vol_(particles_->Vol_), mass_(particles_->mass_), variable_(*particles_->getVariableByName<DataTypeIndex, VariableType>(variable_name)), eta_(eta) {}
+		DissipationDataInner(body_inner_relation), eta_(eta),
+		Vol_(particles_->Vol_), mass_(particles_->mass_), 
+		variable_(*particles_->getVariableByName<DataTypeIndex, VariableType>(variable_name)) {}
 	//=================================================================================================//
 	template <int DataTypeIndex, typename VariableType>
 	ErrorAndParameters<VariableType>

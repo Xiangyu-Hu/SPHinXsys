@@ -210,7 +210,7 @@ std::vector<Vecd> CreatWaveMakerShape()
 class WaterBlock : public FluidBody
 {
 	public:
-		WaterBlock(SPHSystem &system, string body_name)
+		WaterBlock(SPHSystem &system, std::string body_name)
 			: FluidBody(system, body_name)
 		{
 			std::vector<Vecd> water_block_shape = CreatWaterBlockShape();
@@ -241,7 +241,7 @@ public:
 class DampingBuffer : public BodyPartByCell
 {
 public:
-	DampingBuffer(FluidBody* fluid_body, string constrained_region_name)
+	DampingBuffer(FluidBody* fluid_body, std::string constrained_region_name)
 		: BodyPartByCell(fluid_body, constrained_region_name)
 	{
 		/** Geometry definition. */
@@ -256,7 +256,7 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &system, string body_name)
+	WallBoundary(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
 		body_shape_ = new ComplexShape(body_name);
@@ -275,7 +275,7 @@ public:
 class Flap : public SolidBody
 {
 public:
-	Flap(SPHSystem &system, string body_name)
+	Flap(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
 		body_shape_ = new ComplexShape(body_name);
@@ -302,7 +302,7 @@ class FlapSystemForSimbody : public SolidBodyPartForSimbody
 	}
 public:
 	FlapSystemForSimbody(SolidBody* solid_body,
-		string constrained_region_name, Real solid_body_density)
+		std::string constrained_region_name, Real solid_body_density)
 		: SolidBodyPartForSimbody(solid_body, constrained_region_name)
 	{
 		body_part_shape_ = new ComplexShape(constrained_region_name);
@@ -333,7 +333,7 @@ public:
 class WaveMaker : public BodyPartByParticle
 {
 public:
-	WaveMaker(SolidBody *solid_body, string constrained_region_name)
+	WaveMaker(SolidBody *solid_body, std::string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		body_part_shape_ = new ComplexShape(constrained_region_name);
@@ -471,7 +471,7 @@ std::vector<Vecd> CreatWaveProbeShape12()
 class WaveProbeBufferNo4 : public BodyPartByCell
 {
 public:
-	WaveProbeBufferNo4(FluidBody* fluid_body, string constrained_region_name)
+	WaveProbeBufferNo4(FluidBody* fluid_body, std::string constrained_region_name)
 		: BodyPartByCell(fluid_body, constrained_region_name)
 	{
 		/** Geometry definition. */
@@ -486,7 +486,7 @@ public:
 class WaveProbeBufferNo5 : public BodyPartByCell
 {
 public:
-	WaveProbeBufferNo5(FluidBody* fluid_body, string constrained_region_name)
+	WaveProbeBufferNo5(FluidBody* fluid_body, std::string constrained_region_name)
 		: BodyPartByCell(fluid_body, constrained_region_name)
 	{
 		/** Geometry definition. */
@@ -501,7 +501,7 @@ public:
 class WaveProbeBufferNo12 : public BodyPartByCell
 {
 public:
-	WaveProbeBufferNo12(FluidBody* fluid_body, string constrained_region_name)
+	WaveProbeBufferNo12(FluidBody* fluid_body, std::string constrained_region_name)
 		: BodyPartByCell(fluid_body, constrained_region_name)
 	{
 		/** Geometry definition. */
@@ -516,15 +516,15 @@ public:
 class FlapObserver : public FictitiousBody
 {
 public:
-	FlapObserver(SPHSystem& system, string body_name)
+	FlapObserver(SPHSystem& system, std::string body_name)
 		: FictitiousBody(system, body_name)
 	{
 		/** the measuring particle with zero volume */
-		body_input_points_volumes_.push_back(make_pair(Vecd(7.862, 0.645), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(7.862, 0.741), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(7.862, 0.391), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(7.862, 0.574), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(7.862, 0.716), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(7.862, 0.452), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(7.862, 0.645), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(7.862, 0.741), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(7.862, 0.391), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(7.862, 0.574), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(7.862, 0.716), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(7.862, 0.452), 0.0));
 	}
 };

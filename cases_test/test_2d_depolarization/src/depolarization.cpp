@@ -45,7 +45,7 @@ std::vector<Vecd> CreatShape()
 class MuscleBody : public SolidBody
 {
 public:
-	MuscleBody(SPHSystem& system, string body_name) : SolidBody(system, body_name)
+	MuscleBody(SPHSystem& system, std::string body_name) : SolidBody(system, body_name)
 	{
 
 		std::vector<Vecd> block_shape = CreatShape();
@@ -59,10 +59,10 @@ public:
 class VoltageObserver : public FictitiousBody
 {
 public:
-	VoltageObserver(SPHSystem &system, string body_name) : FictitiousBody(system, body_name)
+	VoltageObserver(SPHSystem &system, std::string body_name) : FictitiousBody(system, body_name)
 	{
 		/** postion and volume. */
-		body_input_points_volumes_.push_back(make_pair(Vecd(0.3, 0.7), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(0.3, 0.7), 0.0));
 	}
 };
 
@@ -140,7 +140,9 @@ int main()
 	 */
 	SPHSystem system(system_domain_bounds, resolution_ref);
 		GlobalStaticVariables::physical_time_ = 0.0;
-	/** 
+	/** output environment. */
+	In_Output in_output(system);
+	/**
 	 * Configuration of materials, crate particle container and muscle body. 
 	 */
 	MuscleBody *muscle_body  =  new MuscleBody(system, "MuscleBody");
@@ -185,7 +187,6 @@ int main()
 	/**
 	 * Simple input and outputs.
 	 */
-	In_Output 							in_output(system);
 	WriteBodyStatesToVtu 				write_states(in_output, system.real_bodies_);
 	WriteAnObservedQuantity<indexScalar, Real>
 		write_recorded_voltage("Voltage", in_output, voltage_observer_contact_relation);
@@ -223,7 +224,7 @@ int main()
 			{
 				if (ite % 1000 == 0) 
 				{
-					cout << "N=" << ite << " Time: "
+					std::cout << "N=" << ite << " Time: "
 						<< GlobalStaticVariables::physical_time_ << "	dt: "
 						<< dt << "\n";
 				}
@@ -250,7 +251,7 @@ int main()
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

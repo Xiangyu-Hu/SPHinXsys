@@ -23,6 +23,8 @@ int main(int ac, char* av[])
 	system.run_particle_relaxation_ = true;
 	//handle command line arguments
 	system.handleCommandlineOptions(ac, av);
+	/** output environment. */
+	In_Output 	in_output(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -32,8 +34,6 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
-	In_Output 							in_output(system);
-	/** Write the body state to Vtu file. */
 	WriteBodyStatesToVtu		write_imported_model_to_vtu(in_output, { imported_model });
 	WriteMeshToPlt 	write_mesh_cell_linked_list(in_output, imported_model, imported_model->mesh_cell_linked_list_);
 	//----------------------------------------------------------------------
@@ -70,7 +70,7 @@ int main(int ac, char* av[])
 		ite_p += 1;
 		if (ite_p % 100 == 0)
 		{
-			cout << fixed << setprecision(9) << "Relaxation steps for the imported model N = " << ite_p << "\n";
+			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the imported model N = " << ite_p << "\n";
 			write_imported_model_to_vtu.WriteToFile(Real(ite_p) * 1.0e-4);
 		}
 	}

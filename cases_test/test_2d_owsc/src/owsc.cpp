@@ -151,12 +151,15 @@ int main()
 	/** Output. */
 	In_Output in_output(system);
 	WriteBodyStatesToVtu 		write_real_body_states(in_output, system.real_bodies_);
-	WriteTotalForceOnSolid      write_total_force_on_flap(in_output, flap);
+	WriteBodyReducedQuantity<solid_dynamics::TotalForceOnSolid> write_total_force_on_flap(in_output, flap);
 	WriteSimBodyPinData			write_flap_pin_data(in_output, integ, pin_spot);
 	/** WaveProbe 1. */
-	WriteFreeSurfaceElevation 	wave_probe_4(in_output, water_block,  new WaveProbeBufferNo4(water_block, "WaveProbe_04"));
-	WriteFreeSurfaceElevation 	wave_probe_5(in_output, water_block,  new WaveProbeBufferNo5(water_block, "WaveProbe_05"));
-	WriteFreeSurfaceElevation 	wave_probe_12(in_output, water_block, new WaveProbeBufferNo12(water_block, "WaveProbe_12"));
+	WriteBodyReducedQuantity<fluid_dynamics::FreeSurfaceProbeOnFluidBody>
+		wave_probe_4(in_output, water_block,  new WaveProbeBufferNo4(water_block, "WaveProbe_04"));
+	WriteBodyReducedQuantity<fluid_dynamics::FreeSurfaceProbeOnFluidBody>
+		wave_probe_5(in_output, water_block,  new WaveProbeBufferNo5(water_block, "WaveProbe_05"));
+	WriteBodyReducedQuantity<fluid_dynamics::FreeSurfaceProbeOnFluidBody>
+		wave_probe_12(in_output, water_block, new WaveProbeBufferNo12(water_block, "WaveProbe_12"));
 	/** Pressure probe. */
 	WriteAnObservedQuantity<indexScalar, Real> pressure_probe("Pressure", in_output, observer_contact_with_water);
 	/** Interpolate the particle position in flap to move the observer accordingly. */
@@ -240,7 +243,7 @@ int main()
 			
 			if (number_of_iterations % screen_output_interval == 0)
 			{
-				cout << fixed << setprecision(9) << "N=" << number_of_iterations 
+				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations
 					 << "	Total Time = " << total_time 
 					 << "	Physical Time = " << GlobalStaticVariables::physical_time_ 
 					 << "	Dt = " << Dt << "	dt = " << dt << "\n";
@@ -274,7 +277,7 @@ int main()
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 	
 	return 0;
 }

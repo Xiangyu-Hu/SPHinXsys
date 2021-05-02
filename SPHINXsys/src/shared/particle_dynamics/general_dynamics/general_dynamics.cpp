@@ -58,7 +58,9 @@ namespace SPH {
 			body_domain_bounds.second[axis_direction] - body_domain_bounds.first[axis_direction];
 	}
 	//=================================================================================================//
-	PeriodicConditionInAxisDirection::PeriodicConditionInAxisDirection(RealBody* real_body, int axis_direction)
+	PeriodicConditionInAxisDirection::
+		PeriodicConditionInAxisDirection(RealBody* real_body, int axis_direction) :
+		periodic_translation_(0.0)
 	{
 		BoundingBox body_domain_bounds = real_body->findBodyDomainBounds();
 		setPeriodicTranslation(body_domain_bounds, axis_direction);
@@ -414,6 +416,7 @@ namespace SPH {
 		GeneralDataDelegateSimple(body),
 		pos_n_(particles_->pos_n_)
 	{
+		quantity_name_ = "UpperFrontInXDirection";
 		initial_reference_ = 0.0;
 	}
 	//=================================================================================================//
@@ -428,6 +431,7 @@ namespace SPH {
 		GeneralDataDelegateSimple(body),
 		vel_n_(particles_->vel_n_)
 	{
+		quantity_name_ = "MaximumSpeed";
 		initial_reference_ = 0.0;
 	}
 	//=================================================================================================//

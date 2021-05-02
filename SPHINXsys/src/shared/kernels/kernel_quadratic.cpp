@@ -43,10 +43,10 @@ namespace SPH
 	Real KernelQuadratic::dW_1D(const Real q) const
 	{
 		if (q < 1.0) {
-			return (-6.0 + 3.0 * powern(q, 2));
+			return (-6.0 + 3.0 * powerN(q, 2));
 		}
 		else {
-			return powern(2.0 - q, 2) * (-1.0);
+			return powerN(2.0 - q, 2) * (-1.0);
 		}
 	}
 	//=================================================================================================//

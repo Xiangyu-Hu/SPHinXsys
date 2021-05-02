@@ -52,7 +52,7 @@ TriangleMeshShape* CreateHolder()
 class Myocardium : public SolidBody
 {
 public:
-	Myocardium(SPHSystem &system, string body_name)
+	Myocardium(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
 		body_shape_ = new ComplexShape(body_name);
@@ -68,7 +68,7 @@ public:
 class Holder : public BodyPartByParticle
 {
 public:
-	Holder(SolidBody *solid_body, string constrained_region_name)
+	Holder(SolidBody *solid_body, std::string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		body_part_shape_ = new ComplexShape(constrained_region_name);
@@ -112,10 +112,10 @@ public:
 class MyocardiumObserver : public FictitiousBody
 {
 public:
-	MyocardiumObserver(SPHSystem &system, string body_name)
+	MyocardiumObserver(SPHSystem &system, std::string body_name)
 		: FictitiousBody(system, body_name)
 	{
-		body_input_points_volumes_.push_back(make_pair(Vecd(PL, PH, PW), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(PL, PH, PW), 0.0));
 	}
 };
 /**
@@ -197,7 +197,7 @@ int main()
 		while (integration_time < output_period) 
 		{
 			if (ite % 100 == 0) {
-				cout << "N=" << ite << " Time: "
+				std::cout << "N=" << ite << " Time: "
 					<< GlobalStaticVariables::physical_time_ << "	dt: "
 					<< dt << "\n";
 			}
@@ -224,7 +224,7 @@ int main()
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

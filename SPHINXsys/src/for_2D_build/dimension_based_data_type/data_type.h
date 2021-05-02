@@ -1,4 +1,5 @@
 #pragma once
+
 #include "small_vectors.h"
 #include "large_data_containers.h"
 
@@ -32,6 +33,6 @@ namespace SPH {
 	/** correction matrix, only works for thin structure dynamics. */
 	const Matd reduced_unit_matrix = { 1, 0, 0, 0 };
 
-	/** initial locald normal, only works for thin structure dynamics. */
-	const Vecd n_local_0 = Vecd(0.0, 1.0);
+	/** initial local normal, only works for thin structure dynamics. */
+	const Vecd local_pseudo_n_0 = Vecd(0.0, 1.0);
 }

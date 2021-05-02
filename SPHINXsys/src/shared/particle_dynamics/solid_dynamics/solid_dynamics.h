@@ -35,14 +35,19 @@
 
 namespace SPH
 {
+	template<int DataTypeIndex, typename VariableType>
+	class BodySummation;
+	template<int DataTypeIndex, typename VariableType>
+	class BodyMoment;
+
 	namespace solid_dynamics
 	{
 		//----------------------------------------------------------------------
 		//		for general solid dynamics 
 		//----------------------------------------------------------------------
-		typedef DataDelegateSimple<SolidBody, SolidParticles, Solid> SolidDataDelegateSimple;
-		typedef DataDelegateInner<SolidBody, SolidParticles, Solid> SolidDataDelegateInner;
-		typedef DataDelegateContact<SolidBody, SolidParticles, Solid, SolidBody, SolidParticles, Solid> ContactDynamicsDataDelegate;
+		typedef DataDelegateSimple<SolidBody, SolidParticles, Solid> SolidDataSimple;
+		typedef DataDelegateInner<SolidBody, SolidParticles, Solid> SolidDataInner;
+		typedef DataDelegateContact<SolidBody, SolidParticles, Solid, SolidBody, SolidParticles, Solid> ContactDynamicsData;
 
 		/**
 		 * @class SolidDynamicsInitialCondition
@@ -50,24 +55,24 @@ namespace SPH
 		 * This is a abstract class to be override for case specific initial conditions.
 		 */
 		class SolidDynamicsInitialCondition :
-			public ParticleDynamicsSimple, public SolidDataDelegateSimple
+			public ParticleDynamicsSimple, public SolidDataSimple
 		{
 		public:
 			SolidDynamicsInitialCondition(SolidBody* body) :
-				ParticleDynamicsSimple(body), SolidDataDelegateSimple(body) {};
+				ParticleDynamicsSimple(body), SolidDataSimple(body) {};
 			virtual ~SolidDynamicsInitialCondition() {};
 		};
 
 		/**
-		* @class SummationContactDensity
+		* @class ContactDensitySummation
 		* @brief Computing the summation density due to solid-solid contact model.
 		*/
-		class SummationContactDensity :
-			public PartInteractionDynamicsByParticle, public ContactDynamicsDataDelegate
+		class ContactDensitySummation :
+			public PartInteractionDynamicsByParticle, public ContactDynamicsData
 		{
 		public:
-			SummationContactDensity(SolidContactBodyRelation* solid_body_contact_relation);
-			virtual ~SummationContactDensity() {};
+			ContactDensitySummation(SolidContactBodyRelation* solid_body_contact_relation);
+			virtual ~ContactDensitySummation() {};
 		protected:
 			StdLargeVec<Real>& mass_, & contact_density_;
 			StdVec<StdLargeVec<Real>*> contact_mass_;
@@ -80,7 +85,7 @@ namespace SPH
 		* @brief Computing the contact force.
 		*/
 		class ContactForce :
-			public PartInteractionDynamicsByParticle, public ContactDynamicsDataDelegate
+			public PartInteractionDynamicsByParticle, public ContactDynamicsData
 		{
 		public:
 			ContactForce(SolidContactBodyRelation* solid_body_contact_relation);
@@ -93,33 +98,12 @@ namespace SPH
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
-		/**
-		* @class ContactForceFromFriction
-		* @brief  Computing the contact-force contribution from friction.
-		*/
-		class ContactForceFromFriction :
-			public InteractionDynamicsSplitting, public ContactDynamicsDataDelegate
-		{
-		public:
-			ContactForceFromFriction(BaseContactBodyRelation* body_contact_relation,
-				StdLargeVec<Vecd>& vel_n, Real eta);
-			virtual ~ContactForceFromFriction() {};
-		protected:
-			StdLargeVec<Real>& Vol_, & mass_;
-			StdLargeVec<Vecd>& contact_force_, & vel_n_;
-			StdVec<StdLargeVec<Real>*> contact_Vol_, contact_mass_;
-			StdVec<StdLargeVec<Vecd>*> contact_vel_n_, contact_contact_force_;
-			Real eta_; /**< friction coefficient */
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
+	   /**
 		* @class CorrectConfiguration
 		* @brief obtain the corrected initial configuration in strong form
 		*/
 		class CorrectConfiguration :
-			public InteractionDynamics, public SolidDataDelegateInner
+			public InteractionDynamics, public SolidDataInner
 		{
 		public:
 			CorrectConfiguration(BaseInnerBodyRelation* body_inner_relation);
@@ -136,7 +120,7 @@ namespace SPH
 		 * Note the average values for FSI are prescirbed also.
 		 */
 		class ConstrainSolidBodyRegion :
-			public PartSimpleDynamicsByParticle, public SolidDataDelegateSimple
+			public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
 		public:
 			ConstrainSolidBodyRegion(SPHBody* body, BodyPartByParticle* body_part);
@@ -154,13 +138,38 @@ namespace SPH
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
+
+		/**
+		 * @class ConstrainSolidBodyRegionVelocity
+		 * @brief Constrain the velocity of a solid body part.
+		 */
+		class ConstrainSolidBodyRegionVelocity : public ConstrainSolidBodyRegion
+		{
+		public:
+			ConstrainSolidBodyRegionVelocity(SPHBody* body, BodyPartByParticle* body_part,
+				Vecd constrained_direction = Vecd(0)) :
+				solid_dynamics::ConstrainSolidBodyRegion(body, body_part),
+				constrain_matrix_(Matd(1.0))
+			{
+				for (int k = 0; k != Dimensions; ++k) 
+					constrain_matrix_[k][k] = constrained_direction[k];
+			};
+			virtual ~ConstrainSolidBodyRegionVelocity() {};
+		protected:
+			Matd constrain_matrix_;
+			virtual Vecd getVelocity(Vecd& pos_0, Vecd& pos_n, Vecd& vel_n)
+			{
+				return constrain_matrix_ * vel_n;
+			};
+		};
+
 		/**
 		 * @class SoftConstrainSolidBodyRegion
 		 * @brief Soft the constrain of a solid body part
 		 */
 		class SoftConstrainSolidBodyRegion :
 			public PartInteractionDynamicsByParticleWithUpdate,
-			public SolidDataDelegateInner
+			public SolidDataInner
 		{
 		public:
 			SoftConstrainSolidBodyRegion(BaseInnerBodyRelation* body_inner_relation, BodyPartByParticle* body_part);
@@ -168,7 +177,7 @@ namespace SPH
 		protected:
 			StdLargeVec<Real>& Vol_;
 			StdLargeVec<Vecd>& vel_n_, & dvel_dt_, & vel_ave_, & dvel_dt_ave_;
-			StdLargeVec<Vecd> vel_temp_, dvel_dt_temp_;
+			StdLargeVec<Vecd>& vel_temp_, & dvel_dt_temp_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
@@ -190,12 +199,33 @@ namespace SPH
 			virtual void parallel_exec(Real dt = 0.0) override;
 		};
 
+		/**
+		 * @class ConstrainSolidBodyMassCenter
+		 * @brief Constrain the mass center of a solid body.
+		 */
+		class ConstrainSolidBodyMassCenter : 
+			public ParticleDynamicsSimple, public SolidDataSimple
+		{
+		public:
+			ConstrainSolidBodyMassCenter(SPHBody* body, Vecd constrain_direction = Vecd(1.0));
+			virtual ~ConstrainSolidBodyMassCenter() {};
+		protected:
+			virtual void setupDynamics(Real dt = 0.0) override;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		private:
+			Real total_mass_;
+			Matd correction_matrix_;
+			Vecd velocity_correction_;
+			StdLargeVec<Vecd>& vel_n_;
+			BodyMoment<indexVector, Vecd>* compute_total_momentum_;
+		};
+
 		/**@class ImposeExternalForce
 		 * @brief impose external force on a solid body part
 		 * by add extra acceleration
 		 */
 		class ImposeExternalForce :
-			public PartSimpleDynamicsByParticle, public SolidDataDelegateSimple
+			public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
 		public:
 			ImposeExternalForce(SolidBody* body, SolidBodyPartForSimbody* body_part);
@@ -212,20 +242,20 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		for elastic solid dynamics 
 		//----------------------------------------------------------------------
-		typedef DataDelegateSimple<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataDelegateSimple;
-		typedef DataDelegateInner<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataDelegateInner;
+		typedef DataDelegateSimple<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataSimple;
+		typedef DataDelegateInner<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataInner;
 
 		/**
-		 * @class ElasticSolidDynamicsInitialCondition
+		 * @class ElasticDynamicsInitialCondition
 		 * @brief  set initial condition for a solid body with different material
 		 * This is a abstract class to be override for case specific initial conditions.
 		 */
-		class ElasticSolidDynamicsInitialCondition : 
-			public ParticleDynamicsSimple, public ElasticSolidDataDelegateSimple
+		class ElasticDynamicsInitialCondition : 
+			public ParticleDynamicsSimple, public ElasticSolidDataSimple
 		{
 		public:
-			ElasticSolidDynamicsInitialCondition(SolidBody *body);
-			virtual ~ElasticSolidDynamicsInitialCondition() {};
+			ElasticDynamicsInitialCondition(SolidBody *body);
+			virtual ~ElasticDynamicsInitialCondition() {};
 		protected:
 			StdLargeVec<Vecd>& pos_n_, & vel_n_;
 		};
@@ -235,7 +265,7 @@ namespace SPH
 		* @brief update particle normal directions for elastic solid
 		*/
 		class UpdateElasticNormalDirection :
-			public ParticleDynamicsSimple, public ElasticSolidDataDelegateSimple
+			public ParticleDynamicsSimple, public ElasticSolidDataSimple
 		{
 		public:
 			explicit UpdateElasticNormalDirection(SolidBody *elastic_body);
@@ -253,7 +283,7 @@ namespace SPH
 		*/
 		class AcousticTimeStepSize :
 			public ParticleDynamicsReduce<Real, ReduceMin>,
-			public ElasticSolidDataDelegateSimple
+			public ElasticSolidDataSimple
 		{
 		public:
 			explicit AcousticTimeStepSize(SolidBody* body);
@@ -269,7 +299,7 @@ namespace SPH
 		* @brief computing deformation gradient tensor by summation
 		*/
 		class DeformationGradientTensorBySummation :
-			public InteractionDynamics, public ElasticSolidDataDelegateInner
+			public InteractionDynamics, public ElasticSolidDataInner
 		{
 		public:
 			DeformationGradientTensorBySummation(BaseInnerBodyRelation* body_inner_relation);
@@ -282,21 +312,35 @@ namespace SPH
 		};
 
 		/**
+		* @class BaseElasticRelaxation
+		* @brief base class for elastic relaxation
+		*/
+		class BaseElasticRelaxation
+			: public ParticleDynamics1Level, public ElasticSolidDataInner
+		{
+		public:
+			BaseElasticRelaxation(BaseInnerBodyRelation* body_inner_relation);
+			virtual ~BaseElasticRelaxation() {};
+		protected:
+			StdLargeVec<Real>& Vol_, & rho_n_, & mass_;
+			StdLargeVec<Vecd>& pos_n_, & vel_n_, & dvel_dt_;
+			StdLargeVec<Matd>& B_, & F_, & dF_dt_;
+		};
+
+		/**
 		* @class StressRelaxationFirstHalf
 		* @brief computing stress relaxation process by verlet time stepping
 		* This is the first step
 		*/
-		class StressRelaxationFirstHalf 
-			: public ParticleDynamics1Level, public ElasticSolidDataDelegateInner
+		class StressRelaxationFirstHalf : public BaseElasticRelaxation
 		{
 		public:
 			StressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation);
 			virtual ~StressRelaxationFirstHalf() {};
 		protected:
 			Real rho_0_, inv_rho_0_;
-			StdLargeVec<Real>& Vol_, & rho_n_, & mass_;
-			StdLargeVec<Vecd>& pos_n_, & vel_n_, & dvel_dt_, & dvel_dt_others_, & force_from_fluid_;
-			StdLargeVec<Matd>& B_, & F_, & dF_dt_, & stress_PK1_, & corrected_stress_;
+			StdLargeVec<Vecd>& dvel_dt_others_, & force_from_fluid_;
+			StdLargeVec<Matd>& stress_PK1_, & corrected_stress_;
 			Real numerical_viscosity_;
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
@@ -309,11 +353,11 @@ namespace SPH
 		* @brief computing stress relaxation process by verlet time stepping
 		* This is the second step
 		*/
-		class StressRelaxationSecondHalf : public StressRelaxationFirstHalf
+		class StressRelaxationSecondHalf : public BaseElasticRelaxation
 		{
 		public:
 			StressRelaxationSecondHalf(BaseInnerBodyRelation* body_inner_relation) :
-				StressRelaxationFirstHalf(body_inner_relation) {};
+				BaseElasticRelaxation(body_inner_relation) {};
 			virtual ~StressRelaxationSecondHalf() {};
 		protected:
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
@@ -355,7 +399,7 @@ namespace SPH
 		 */
 		class TotalForceOnSolidBodyPartForSimBody :
 			public PartDynamicsByParticleReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>>,
-			public SolidDataDelegateSimple
+			public SolidDataSimple
 		{
 		public:
 			TotalForceOnSolidBodyPartForSimBody(SolidBody* body,

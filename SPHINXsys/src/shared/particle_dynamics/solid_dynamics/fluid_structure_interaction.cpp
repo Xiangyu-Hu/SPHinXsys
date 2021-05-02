@@ -15,7 +15,7 @@ namespace SPH
 			InteractionDynamics(body_contact_relation->sph_body_),
 			FSIContactData(body_contact_relation),
 			Vol_(particles_->Vol_), vel_ave_(particles_->vel_ave_),
-			viscous_force_from_fluid_(particles_->viscous_force_from_fluid_)
+			viscous_force_from_fluid_(*particles_->createAVariable<indexVector, Vecd>("ViscousForceFromFluid"))
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
@@ -95,8 +95,9 @@ namespace SPH
 			::TotalViscousForceOnSolid(SolidBody* body) :
 			ParticleDynamicsReduce<Vecd, ReduceSum<Vecd>>(body),
 			SolidDataSimple(body),
-			viscous_force_from_fluid_(particles_->viscous_force_from_fluid_)
+			viscous_force_from_fluid_(*particles_->getVariableByName<indexVector, Vecd>("ViscousForceFromFluid"))
 		{
+			quantity_name_ = "TotalViscousForceOnSolid";
 			initial_reference_ = Vecd(0);
 		}
 		//=================================================================================================//
@@ -110,6 +111,7 @@ namespace SPH
 			SolidDataSimple(body),
 			force_from_fluid_(particles_->force_from_fluid_)
 		{
+			quantity_name_ = "TotalForceOnSolid";
 			initial_reference_ = Vecd(0);
 		}
 		//=================================================================================================//
@@ -140,13 +142,9 @@ namespace SPH
 		//=================================================================================================//
 		AverageVelocityAndAcceleration::
 			AverageVelocityAndAcceleration(SolidBody* body) :
+			pos_temp_(*body->base_particles_->createAVariable<indexVector, Vecd>("TemporaryPosition")),
 			initialize_displacement_(body, pos_temp_),
-			update_averages_(body, pos_temp_)
-		{
-			BaseParticles* base_particles = body->base_particles_;
-			//register particle variables defined in this class
-			base_particles->registerAVariable<indexVector, Vecd>(pos_temp_, "TemporaryPosition");
-		}
+			update_averages_(body, pos_temp_) {}
 		//=================================================================================================//
 	}
 }

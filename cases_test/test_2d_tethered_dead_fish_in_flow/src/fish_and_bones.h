@@ -10,13 +10,13 @@ Real outline(Real x, Real h, Real L)
 	Real a[5];
 	a[0] = 1.22 * h / L;
 	a[1] = 3.19 * h / L / L;
-	a[2] = -15.73 * h / powern(L, 3);
-	a[3] = 21.87 * h / powern(L, 4);
-	a[4] = -10.55 * h / powern(L, 5);
+	a[2] = -15.73 * h / powerN(L, 3);
+	a[3] = 21.87 * h / powerN(L, 4);
+	a[4] = -10.55 * h / powerN(L, 5);
 	Real y = 0.0;
 	for (int n = 0; n<5; n++)
 	{
-		y += a[n] * powern(x, n + 1);
+		y += a[n] * powerN(x, n + 1);
 	}
 	return y;
 }

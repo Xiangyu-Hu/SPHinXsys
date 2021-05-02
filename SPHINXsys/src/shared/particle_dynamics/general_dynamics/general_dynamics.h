@@ -433,4 +433,50 @@ namespace SPH
 		StdLargeVec<Vecd>& pos_n_;
 		Vecd ReduceFunction(size_t index_i, Real dt = 0.0) override;
 	};
+
+	/**
+	* @class BodySummation
+	* @brief Compute the summation of  a particle variable in a body
+	*/
+	template<int DataTypeIndex, typename VariableType>
+	class BodySummation :
+		public ParticleDynamicsReduce<VariableType, ReduceSum<VariableType>>, 
+		public GeneralDataDelegateSimple
+	{
+	public:
+		explicit BodySummation(SPHBody* body, std::string variable_name) :
+			ParticleDynamicsReduce<VariableType, ReduceSum<VariableType>>(body),
+			GeneralDataDelegateSimple(body),
+			variable_(*particles_->getVariableByName<DataTypeIndex, VariableType>(variable_name)) 
+		{
+			this->initial_reference_ = VariableType(0);
+		};
+		virtual ~BodySummation() {};
+	protected:
+		StdLargeVec<VariableType>& variable_;
+		VariableType ReduceFunction(size_t index_i, Real dt = 0.0) override
+		{
+			return variable_[index_i];
+		};
+	};
+
+	/**
+	* @class BodyMoment
+	* @brief Compute the moment of a body
+	*/
+	template<int DataTypeIndex, typename VariableType>
+	class BodyMoment : public BodySummation<DataTypeIndex, VariableType>
+	{
+	public:
+		explicit BodyMoment(SPHBody* body, std::string variable_name) : 
+			BodySummation<DataTypeIndex, VariableType>(body, variable_name),
+			mass_(this->particles_->mass_) {};
+		virtual ~BodyMoment() {};
+	protected:
+		StdLargeVec<Real>& mass_;
+		VariableType ReduceFunction(size_t index_i, Real dt = 0.0) override
+		{
+			return mass_[index_i] * this->variable_[index_i];
+		};
+	};
 }

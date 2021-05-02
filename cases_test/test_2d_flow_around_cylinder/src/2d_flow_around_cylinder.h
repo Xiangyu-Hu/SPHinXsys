@@ -73,7 +73,7 @@ std::vector<Vecd> CreatBufferShape()
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem& system, string body_name)
+	WaterBlock(SPHSystem& system, std::string body_name)
 		: FluidBody(system, body_name)
 	{
 		/** Geomtry definition. */
@@ -96,11 +96,22 @@ public:
 		assignDerivedMaterialParameters();
 	}
 };
+
+class ParameterizedWaterMaterial : public BaseParameterization<WaterMaterial>
+{
+public:
+	ParameterizedWaterMaterial(ParameterizationIO& parameterization_io) : 
+		BaseParameterization<WaterMaterial>(parameterization_io)
+	{
+		getAParameter("WaterMaterial", "Viscosity", mu_);
+	}
+};
+
 /** Definition of the cylinder. */
 class Cylinder : public SolidBody
 {
 public:
-	Cylinder(SPHSystem& system, string body_name)
+	Cylinder(SPHSystem& system, std::string body_name)
 		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1))
 	{
 		/** Geomtry definition. */
@@ -113,7 +124,7 @@ public:
 class FreeStreamBuffer : public BodyPartByCell
 {
 public:
-	FreeStreamBuffer(FluidBody* fluid_body, string constrained_region_name)
+	FreeStreamBuffer(FluidBody* fluid_body, std::string constrained_region_name)
 		: BodyPartByCell(fluid_body, constrained_region_name)
 	{
 		/** Geomtry definition. */
@@ -152,7 +163,7 @@ public:
 class FluidObserver : public FictitiousBody
 {
 public:
-	FluidObserver(SPHSystem& system, string body_name)
+	FluidObserver(SPHSystem& system, std::string body_name)
 		: FictitiousBody(system, body_name)
 	{
 		/** the measureing particles */
@@ -160,8 +171,8 @@ public:
 		Vec2d point_coordinate_2(4.0, 5.0);
 		Vec2d point_coordinate_3(5.0, 5.0);
 
-		body_input_points_volumes_.push_back(make_pair(point_coordinate_1, 0.0));
-		body_input_points_volumes_.push_back(make_pair(point_coordinate_2, 0.0));
-		body_input_points_volumes_.push_back(make_pair(point_coordinate_3, 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(point_coordinate_1, 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(point_coordinate_2, 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(point_coordinate_3, 0.0));
 	}
 };

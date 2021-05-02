@@ -3,6 +3,9 @@
  * @brief 	Here, Functions belong to BaseBody, RealBody and FictitiousBody are given.
  * @author	hi ZHang and Xiangyu Hu
  */
+
+#pragma once
+
 #include "body_relation.h"
 #include "base_particles.h"
 #include "base_kernel.h"

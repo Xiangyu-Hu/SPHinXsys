@@ -37,8 +37,7 @@ namespace SPH
 		RelaxationAccelerationInner::RelaxationAccelerationInner(BaseInnerBodyRelation* body_inner_relation) : 
 			InteractionDynamics(body_inner_relation->sph_body_), 
 			RelaxDataDelegateInner(body_inner_relation),
-			Vol_(particles_->Vol_), h_ratio_(particles_->h_ratio_),
-			dvel_dt_(particles_->dvel_dt_), pos_n_(particles_->pos_n_) {}
+			Vol_(particles_->Vol_), dvel_dt_(particles_->dvel_dt_), pos_n_(particles_->pos_n_) {}
 		//=================================================================================================//
 		void RelaxationAccelerationInner::Interaction(size_t index_i, Real dt)
 		{
@@ -69,22 +68,22 @@ namespace SPH
 		{
 			RelaxationAccelerationInner::Interaction(index_i, dt);
 			dvel_dt_[index_i] -= 2.0 * level_set_complex_shape_->
-				computeKernelGradientIntegral(pos_n_[index_i], h_ratio_[index_i]);
+				computeKernelGradientIntegral(pos_n_[index_i], particle_adaptation_->SmoothingLengthRatio(index_i));
 		}
 		//=================================================================================================//
 		UpdateParticlePosition::UpdateParticlePosition(SPHBody* body) :
 			ParticleDynamicsSimple(body), RelaxDataDelegateSimple(body), 
-			pos_n_(particles_->pos_n_), dvel_dt_(particles_->dvel_dt_),
-			h_ratio_(particles_->h_ratio_) {}
+			pos_n_(particles_->pos_n_), dvel_dt_(particles_->dvel_dt_) {}
 		//=================================================================================================//
 		void UpdateParticlePosition::Update(size_t index_i, Real dt_square)
 		{
-			pos_n_[index_i] += dvel_dt_[index_i] * dt_square * 0.5 / h_ratio_[index_i];
+			pos_n_[index_i] += dvel_dt_[index_i] * dt_square * 0.5 / particle_adaptation_->SmoothingLengthRatio(index_i);
 		}
 		//=================================================================================================//
 		UpdateSmoothingLengthRatioByBodyShape::UpdateSmoothingLengthRatioByBodyShape(SPHBody* body) :
 			ParticleDynamicsSimple(body), RelaxDataDelegateSimple(body),
-			h_ratio_(particles_->h_ratio_), Vol_(particles_->Vol_), pos_n_(particles_->pos_n_),
+			h_ratio_(*particles_->getVariableByName<indexScalar, Real>("SmoothingLengthRatio")), 
+			Vol_(particles_->Vol_), pos_n_(particles_->pos_n_),
 			body_shape_(*body->body_shape_), kernel_(*body->particle_adaptation_->getKernel())
 		{
 			particle_spacing_by_body_shape_ =
@@ -95,7 +94,7 @@ namespace SPH
 		{
 			Real local_spacing = particle_spacing_by_body_shape_->getLocalSpacing(body_shape_, pos_n_[index_i]);
 			h_ratio_[index_i] = particle_adaptation_->ReferenceSpacing() / local_spacing;
-			Vol_[index_i] = powern(local_spacing, Dimensions);
+			Vol_[index_i] = powerN(local_spacing, Dimensions);
 		}
 		//=================================================================================================//
 		RelaxationAccelerationComplex::

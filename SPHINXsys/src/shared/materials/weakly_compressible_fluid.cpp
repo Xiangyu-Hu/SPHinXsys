@@ -5,8 +5,6 @@
 
 #include "weakly_compressible_fluid.h"
 
-using namespace std;
-
 namespace SPH {
 	//===============================================================//
 	Real WeaklyCompressibleFluid::getPressure(Real rho)
@@ -28,8 +26,8 @@ namespace SPH {
 	{
 		Real rho_ratio = rho / rho_0_;
 		return rho_ratio > 1.0
-			? p0_ * (powern(rho_ratio, gamma_) - 1.0) / Real(gamma_)
-			: -p0_ * (powern(1.0 / rho_ratio, gamma_) - 1.0) / Real(gamma_);
+			? p0_ * (powerN(rho_ratio, gamma_) - 1.0) / Real(gamma_)
+			: -p0_ * (powerN(1.0 / rho_ratio, gamma_) - 1.0) / Real(gamma_);
 	}
 	//===============================================================//
 	Real SymmetricTaitFluid::DensityFromPressure(Real p)

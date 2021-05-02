@@ -23,8 +23,8 @@ BoundingBox system_domain_bounds(Vec2d(-0.5 * DL - BW, -0.5 * DH - BW),
 Real rho0_f = 1.0;
 Real gravity_g = 1.0;	/**< Gravity force of fluid. */
 Real Re = 0.1;			/**< Reynolds number*/
-Real mu_f = sqrt(0.25*rho0_f * powern(0.5*DT, 3)* gravity_g / Re);
-Real U_f = 0.25*powern(0.5 * DT, 2)* gravity_g / mu_f;
+Real mu_f = sqrt(0.25*rho0_f * powerN(0.5*DT, 3)* gravity_g / Re);
+Real U_f = 0.25*powerN(0.5 * DT, 2)* gravity_g / mu_f;
 // For low Reynolds number flow the weakly compressible formulation need to 
 // consider viscousity for artificial sound speed.
 Real c_f = 10.0 * SMAX(U_f, 2.0 * mu_f / rho0_f / DT);
@@ -35,7 +35,7 @@ Real lambda_f = 10.0;
 class FluidBlock : public FluidBody
 {
 	public:
-		FluidBlock(SPHSystem &system, string body_name)
+		FluidBlock(SPHSystem &system, std::string body_name)
 			: FluidBody(system, body_name)
 		{
 			std::vector<Vecd> pnts;
@@ -86,7 +86,7 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &system, string body_name)
+	WallBoundary(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
 		std::vector<Vecd> pnts3;
@@ -249,7 +249,7 @@ int main()
 
 			if (number_of_iterations % screen_output_interval == 0)
 			{
-				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 					<< GlobalStaticVariables::physical_time_
 					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
 			}
@@ -272,7 +272,7 @@ int main()
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

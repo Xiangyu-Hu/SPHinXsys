@@ -306,8 +306,8 @@ namespace SPH
 			Real smoothing_length_;
 			Real particle_spacing_;
 			StdVec<StdLargeVec<Vecd>*> wall_n_;
-			StdLargeVec<Vecd>* surface_norm_;
-			StdLargeVec<bool>& is_free_surface_;
+			StdLargeVec<Vecd>& surface_norm_;
+			StdLargeVec<int>& surface_indicator_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 	}

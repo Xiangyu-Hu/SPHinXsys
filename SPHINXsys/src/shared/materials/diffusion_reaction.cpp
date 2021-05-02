@@ -20,30 +20,30 @@ namespace SPH
 		transformed_diffusivity_ = inverseCholeskyDecomposition(diff_i);
 	};
 	//=================================================================================================//
-	void LocalDirectionalDiffusion::initializeLocalDiffusionProperties(BaseParticles* base_particles)
+	void LocalDirectionalDiffusion::assignBaseParticles(BaseParticles* base_particles)
 	{
-		size_t total_real_particles = base_particles->total_real_particles_;
-		for (size_t i = 0; i != total_real_particles; i++)
-		{
-			local_bias_direction_.push_back(Vecd(0));
-			local_transformed_diffusivity_.push_back(Matd(0));
-		}
+		DirectionalDiffusion::assignBaseParticles(base_particles);
+		initializeFiberDirection();
 	};
 	//=================================================================================================//
-	void LocalDirectionalDiffusion::setupLocalDiffusionProperties(StdVec<Vecd>& material_fiber)
+	void LocalDirectionalDiffusion::initializeFiberDirection()
 	{
-		if (material_fiber.size() != local_bias_direction_.size()) {
-			std::cout << "\n Error:  material properties does not matrch" << std::endl;
-			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-			exit(1);
-		}
-		for (size_t i = 0; i < material_fiber.size(); i++)
+		size_t total_real_particles = base_particles_->total_real_particles_;
+		registerAVariableToParticleData<indexVector, Vecd>(parameter_data_, parameter_maps_, local_bias_direction_, "Fiber");
+		local_bias_direction_.resize(total_real_particles, Vecd(0));
+	}
+	//=================================================================================================//
+	void LocalDirectionalDiffusion::readFromXmlForLocalParameters(std::string& filefullpath)
+	{
+		BaseMaterial::readFromXmlForLocalParameters(filefullpath);
+		size_t total_real_particles = base_particles_->total_real_particles_;
+		for (size_t i = 0; i != total_real_particles; i++)
 		{
-			local_bias_direction_[i] = material_fiber[i];
-			Matd diff_i = diff_cf_ * Matd(1.0) + bias_diff_cf_ * SimTK::outer(material_fiber[i], material_fiber[i]);
-			local_transformed_diffusivity_[i] = inverseCholeskyDecomposition(diff_i);
+			Matd diff_i = diff_cf_ * Matd(1.0) 
+				+ bias_diff_cf_ * SimTK::outer(local_bias_direction_[i], local_bias_direction_[i]);
+			local_transformed_diffusivity_.push_back(inverseCholeskyDecomposition(diff_i));
 		}
-		std::cout << "\n Local diffusion properties setup finished " << std::endl;
+		std::cout << "\n Local diffusion parameters setup finished " << std::endl;
 	};
 	//=================================================================================================//
 	void ElectroPhysiologyReaction::initializeElectroPhysiologyReaction(size_t voltage, size_t gate_variable, 
@@ -141,9 +141,9 @@ namespace SPH
 		species_diffusion_.push_back(voltage_diffusion);
 	}
 //=================================================================================================//
-	void LocalMonoFieldElectroPhysiology::assignFiberProperties(StdVec<Vecd> &material_fiber)
+	void LocalMonoFieldElectroPhysiology::readFromXmlForLocalParameters(std::string& filefullpath)
 	{
-		species_diffusion_[0]->setupLocalDiffusionProperties(material_fiber);
+		species_diffusion_[0]->readFromXmlForLocalParameters(filefullpath);
 	}
 //=================================================================================================//
 }

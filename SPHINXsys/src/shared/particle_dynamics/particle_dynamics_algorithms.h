@@ -63,13 +63,16 @@ namespace SPH
 	* @brief Base abstract class for reduce
 	*/
 	template <class ReturnType, typename ReduceOperation>
-		class ParticleDynamicsReduce : public ParticleDynamics<ReturnType>
+	class ParticleDynamicsReduce : public ParticleDynamics<ReturnType>
 	{
 	public:
 		explicit ParticleDynamicsReduce(SPHBody* sph_body) :
-			ParticleDynamics<ReturnType>(sph_body), initial_reference_(),
+			ParticleDynamics<ReturnType>(sph_body), quantity_name_("ReducedQuantity"), initial_reference_(),
 			functor_reduce_function_(std::bind(&ParticleDynamicsReduce::ReduceFunction, this, _1, _2)) {};
 		virtual ~ParticleDynamicsReduce() {};
+
+		ReturnType InitialReference() { return initial_reference_; };
+		std::string QuantityName() { return quantity_name_; };
 
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
@@ -91,6 +94,7 @@ namespace SPH
 		};
 	protected:
 		ReduceOperation reduce_operation_;
+		std::string quantity_name_;
 
 		/** inital or reference value */
 		ReturnType initial_reference_;
@@ -98,7 +102,7 @@ namespace SPH
 		virtual ReturnType ReduceFunction(size_t index_i, Real dt = 0.0) = 0;
 		virtual ReturnType OutputResult(ReturnType reduced_value) { return reduced_value; };
 		ReduceFunctor<ReturnType> functor_reduce_function_;
-		};
+	};
 
 	/**
 	* @class InteractionDynamics

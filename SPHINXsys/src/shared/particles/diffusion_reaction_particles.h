@@ -35,7 +35,6 @@
 #include "xml_engine.h"
 #include "solid_particles.h"
 
-using namespace std;
 namespace SPH {
 
 	/**
@@ -48,7 +47,7 @@ namespace SPH {
 	protected:
 		size_t number_of_species_;				/**< Total number of diffusion and reaction species . */
 		size_t number_of_diffusion_species_;	/**< Total number of diffusion species . */
-		map<string, size_t> species_indexes_map_;
+		std::map<std::string, size_t> species_indexes_map_;
 	public:
 		StdVec<StdLargeVec<Real>> species_n_;	/**< array of diffusion/reaction scalars */
 		StdVec<StdLargeVec<Real>> diffusion_dt_;/**< array of the time derivative of diffusion species */
@@ -62,13 +61,15 @@ namespace SPH {
 			number_of_species_ = diffusion_reaction_material->NumberOfSpecies();
 			species_n_.resize(number_of_species_);
 
-			map<string, size_t>::iterator itr;
+			std::map<std::string, size_t>::iterator itr;
 			for (itr = species_indexes_map_.begin(); itr != species_indexes_map_.end(); ++itr) 
 			{
 				//Register a species. Note that we call a template function from a template class
-				this->template registerAVariable<indexScalar, Real>(species_n_[itr->second], itr->first, true);
+				this->template registerAVariable<indexScalar, Real>(species_n_[itr->second], itr->first);
 				//the scalars will be sorted if particle sorting is called
-				this->sortable_scalars_.push_back(&species_n_[itr->second]);
+				this->template registerASortableVariable<indexScalar, Real>(itr->first);
+				// add species to basic output particle data
+				this->template addAVariableToWrite<indexScalar, Real>(itr->first);
 			}
 
 			number_of_diffusion_species_ = diffusion_reaction_material->NumberOfSpeciesDiffusion();
@@ -84,51 +85,10 @@ namespace SPH {
 		};
 		virtual ~DiffusionReactionParticles() {};
 
-		map<string, size_t> SpeciesIndexMap() { return  species_indexes_map_; };
+		std::map<std::string, size_t> SpeciesIndexMap() { return  species_indexes_map_; };
 
-		/** Write particle data in PLT format for Tecplot. */
-		virtual void writeParticlesToPltFile(ofstream& output_file) override
-		{
-			size_t total_real_particles = this->total_real_particles_;
-			map<string, size_t>::iterator itr;
-			
-			if(Vecd(0).size()==2)
-			{
-				output_file << " VARIABLES = \" x \", \"y\", \"ID \" " << " ";
-			}
-			if(Vecd(0).size()==3)
-			{
-				output_file << " VARIABLES = \" x \", \"y\" , \"z\", \" ID \" " << " ";
-			}
-
-			for (itr = species_indexes_map_.begin(); itr != species_indexes_map_.end(); ++itr) 
-			{
-				output_file << ","<< "\"" << itr->first << " \" " << "";
-			}
-			output_file << "\n";
-
-			for (size_t i = 0; i != total_real_particles; ++i)
-			{
-				for(int j = 0; j != Vecd(0).size(); ++j)
-				{
-					output_file << this->pos_n_[i][j] << "  ";
-				}
-
-				output_file << i << " ";
-
-				for (itr = species_indexes_map_.begin(); itr != species_indexes_map_.end(); ++itr) 
-				{
-					size_t k = itr->second;
-					output_file << species_n_[i][k] << " ";
-				}
-
-				output_file << "\n";
-			}
-		};
-		virtual void writeParticlesToXmlForRestart(std::string& filefullpath) override {};
-		virtual void readParticleFromXmlForRestart(std::string& filefullpath) override {};
 		virtual DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>*  
-			pointToThisObject() override { return this; };
+			ThisObjectPtr() override { return this; };
 	};
 
 	/**
@@ -142,7 +102,7 @@ namespace SPH {
 		ElectroPhysiologyParticles(SPHBody* body, 
 			DiffusionReactionMaterial<SolidParticles, Solid>* diffusion_reaction_material);
 		virtual ~ElectroPhysiologyParticles() {};
-		virtual ElectroPhysiologyParticles* pointToThisObject() override { return this; };
+		virtual ElectroPhysiologyParticles* ThisObjectPtr() override { return this; };
 
 	};
 }

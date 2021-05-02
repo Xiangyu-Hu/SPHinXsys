@@ -73,9 +73,8 @@ namespace SPH
 		protected:
 			Real smoothing_length_;
 			Real thereshold_by_dimensions_;
-			StdLargeVec<Real>& Vol_;
-			StdLargeVec<bool>& is_free_surface_;
-			StdLargeVec<Real> pos_div_;
+			StdLargeVec<Real>& Vol_, & pos_div_;
+			StdLargeVec<int>& surface_indicator_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -164,7 +163,7 @@ namespace SPH
 		protected:
 			StdLargeVec<Real>& Vol_, & rho_n_;
 			StdLargeVec<Vecd>& pos_n_;
-			StdLargeVec<bool>& is_free_surface_;
+			StdLargeVec<int>& surface_indicator_;
 			Real p_background_;
 
 			virtual void setupDynamics(Real dt = 0.0) override;
@@ -247,7 +246,7 @@ namespace SPH
 		protected:
 			StdLargeVec<Real>& Vol_;
 			StdLargeVec<Vecd>& vel_n_;
-			StdLargeVec<AngularVecd> vorticity_;
+			StdLargeVec<AngularVecd> & vorticity_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -574,6 +573,7 @@ namespace SPH
 				: PartDynamicsByCellReduce<Real, ReduceMax>(body, body_part), FluidDataSimple(body),
 				pos_n_(particles_->pos_n_)
 			{
+				quantity_name_ = "FreeSurfaceProbeOnFluidBody";
 				initial_reference_ = 0.0;
 			}
 			virtual ~FreeSurfaceProbeOnFluidBody() {};
@@ -596,11 +596,8 @@ namespace SPH
 			virtual ~SurfaceTensionAccelerationInner() {};
 		protected:
 			Real gamma_;
-			StdLargeVec<Real> &Vol_, &mass_;
-			StdLargeVec<Vecd> &dvel_dt_others_;
-			StdLargeVec<Real>* pos_div_;
-			StdLargeVec<Vecd>* color_grad_;
-			StdLargeVec<Vecd>* surface_norm_;
+			StdLargeVec<Real> &Vol_, &mass_, & pos_div_;
+			StdLargeVec<Vecd> &dvel_dt_others_, & color_grad_, & surface_norm_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};

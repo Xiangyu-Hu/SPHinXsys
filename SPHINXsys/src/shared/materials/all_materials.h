@@ -4,6 +4,11 @@
 *           material
 * @author	Xiangyu Hu and Chi Zhang
 */
+
+#pragma once
+
 #include "weakly_compressible_fluid.h"
 #include "elastic_solid.h"
+#include "complex_solid.h"
+#include "complex_solid.hpp"
 #include "diffusion_reaction.h"

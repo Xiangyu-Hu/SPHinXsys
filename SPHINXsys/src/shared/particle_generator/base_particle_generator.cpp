@@ -49,13 +49,15 @@ namespace SPH {
 	void ParticleGeneratorReload::createBaseParticles(BaseParticles* base_particles)
 	{
 		size_t total_real_particles = 0;
-		unique_ptr<XmlEngine> read_xml(new XmlEngine());
-		read_xml->LoadXmlFile(file_path_);
-		SimTK::Xml::element_iterator ele_ite_ = read_xml->root_element_.element_begin();
-		for (; ele_ite_ != read_xml->root_element_.element_end(); ++ele_ite_)
+		XmlEngine* reload_xml_engine = base_particles->getReloadXmlEngine();
+		reload_xml_engine->loadXmlFile(file_path_);
+		SimTK::Xml::element_iterator ele_ite_ = reload_xml_engine->root_element_.element_begin();
+		for (; ele_ite_ != reload_xml_engine->root_element_.element_end(); ++ele_ite_)
 		{
-			Vecd position = read_xml->GetRequiredAttributeValue<Vecd>(ele_ite_, "Position");
-			Real volume = read_xml->GetRequiredAttributeValue<Real>(ele_ite_, "Volume");
+			Vecd position(0);
+			reload_xml_engine->getRequiredAttributeValue(ele_ite_, "Position", position);
+			Real volume(0);
+			reload_xml_engine->getRequiredAttributeValue(ele_ite_, "Volume", volume);
 			base_particles->initializeABaseParticle(position, volume);
 			total_real_particles++;
 		}

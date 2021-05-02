@@ -96,7 +96,7 @@ std::vector<Vecd> CreatInflowBufferShape()
 class InflowBuffer : public BodyPartByCell
 {
 public:
-	InflowBuffer(FluidBody* fluid_body, string constrained_region_name)
+	InflowBuffer(FluidBody* fluid_body, std::string constrained_region_name)
 		: BodyPartByCell(fluid_body, constrained_region_name)
 	{
 		/** Geomtry definition. */
@@ -113,7 +113,7 @@ public:
 class ThermofluidBody : public FluidBody
 {
 public: 
-	ThermofluidBody(SPHSystem &system, string body_name)
+	ThermofluidBody(SPHSystem &system, std::string body_name)
 		: FluidBody(system, body_name)
 	{	
 		std::vector<Vecd> body_shape = CreatShape();	
@@ -126,7 +126,7 @@ public:
 class ThermosolidBody : public SolidBody
 {
 public:
-	ThermosolidBody(SPHSystem &system, string body_name)
+	ThermosolidBody(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
 		std::vector<Vecd>  outer_wall_shape = CreatOuterWallShape();
@@ -295,12 +295,12 @@ public:
 class TemperatureObserver : public FictitiousBody
 {
 public:
-	TemperatureObserver(SPHSystem& system, string body_name)
+	TemperatureObserver(SPHSystem& system, std::string body_name)
 		: FictitiousBody(system, body_name)
 	{
 		/** A measuring point at the center of the channel */
 			Vec2d point_coordinate(0.0,DH*0.5);
-			body_input_points_volumes_.push_back(make_pair(point_coordinate, 0.0));
+			body_input_points_volumes_.push_back(std::make_pair(point_coordinate, 0.0));
 			
 	}
 };
@@ -453,7 +453,7 @@ int main()
 
 			if (number_of_iterations % screen_output_interval == 0)
 			{
-				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 					<< GlobalStaticVariables::physical_time_
 					<< "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "\n";
 			}
@@ -479,7 +479,7 @@ int main()
 	tick_count t4 = tick_count::now();
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

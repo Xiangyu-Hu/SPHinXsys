@@ -62,16 +62,15 @@ namespace SPH
 			dvel_dt_others_[index_i] += acceleration;
 		}
 		//=================================================================================================//
-		MultiPhaseColorFunctionGradient::MultiPhaseColorFunctionGradient(BaseContactBodyRelation* contact_relation)
-		: InteractionDynamics(contact_relation->sph_body_), MultiPhaseData(contact_relation),
-			Vol_(particles_->Vol_), is_free_surface_(particles_->is_free_surface_), rho_0_(particles_->rho_0_)
+		MultiPhaseColorFunctionGradient::
+			MultiPhaseColorFunctionGradient(BaseContactBodyRelation* contact_relation) : 
+			InteractionDynamics(contact_relation->sph_body_), MultiPhaseData(contact_relation),
+			rho_0_(particles_->rho_0_), Vol_(particles_->Vol_),
+			pos_div_(*particles_->getVariableByName<indexScalar, Real>("PositionDivergence")), 
+			surface_indicator_(particles_->surface_indicator_),
+			color_grad_(*particles_->createAVariable<indexVector, Vecd>("ColorGradient")),
+			surface_norm_(*particles_->createAVariable<indexVector, Vecd>("SurfaceNormal"))
 		{
-			SPHBody* sph_body = contact_relation->sph_body_;
-			BaseParticles* base_particles = sph_body->base_particles_;
-			//register particle variable defined in this class
-			pos_div_ = particles_->getVariableByName<indexScalar, Real>("PositionDivergence");
-			base_particles->registerAVariable<indexVector, Vecd>(color_grad_, "ColorGradient", true);
-			base_particles->registerAVariable<indexVector, Vecd>(surface_norm_, "SurfaceNorm", true);
 			for (size_t k = 0; k != contact_particles_.size(); ++k) 
 			{	Real rho_0_k = contact_particles_[k]->rho_0_;
 				contact_rho_0_.push_back(rho_0_k);
@@ -94,7 +93,7 @@ namespace SPH
 					size_t index_j = contact_neighborhood.j_[n];
 					pos_div -= contact_neighborhood.dW_ij_[n] * contact_neighborhood.r_ij_[n] * contact_vol_k[index_j];
 					/** Norm of interface.*/
-					if(is_free_surface_[index_i])
+					if(surface_indicator_[index_i] == 1)
 					{
 						Real rho_ij = rho_0_ / (rho_0_ + rho_0_k);
 						Real area_ij = (vol_i * vol_i + contact_vol_k[index_j] * contact_vol_k[index_j]) * contact_neighborhood.dW_ij_[n];
@@ -102,7 +101,7 @@ namespace SPH
 					}
 				}
 			}
-			(*pos_div_)[index_i] += pos_div;
+			pos_div_[index_i] += pos_div;
 			color_grad_[index_i] = gradient;
 			surface_norm_[index_i] = gradient / (gradient.norm() + TinyReal);
 		}

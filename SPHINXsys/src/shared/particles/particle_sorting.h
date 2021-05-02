@@ -202,9 +202,21 @@ namespace SPH {
 	protected:
 		StdLargeVec<size_t>& sequence_;
 		StdLargeVec<size_t>& unsorted_id_;
-		StdVec<StdLargeVec<Matd>*>& sortable_matrices_;
-		StdVec<StdLargeVec<Vecd>*>& sortable_vectors_;
-		StdVec<StdLargeVec<Real>*>& sortable_scalars_;
+		ParticleData&	sortable_data_;
+
+		template<int DataTypeIndex, typename VariableType>
+		struct swapParticleDataValue
+		{
+			void operator () (ParticleData& particle_data, size_t index_a, size_t index_b) const
+			{
+				StdVec<StdLargeVec<VariableType>*> variables = std::get<DataTypeIndex>(particle_data);
+				for (size_t i = 0; i != variables.size(); ++i)
+				{
+					StdLargeVec<VariableType>& variable= *variables[i];
+					std::swap(variable[index_a], variable[index_b]);
+				}
+			};
+		};
 
 	public:
 		SwapParticleData(BaseParticles* base_particles);

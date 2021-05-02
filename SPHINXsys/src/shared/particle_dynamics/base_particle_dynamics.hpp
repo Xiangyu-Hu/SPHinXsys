@@ -75,9 +75,9 @@ namespace SPH {
 		{
 			// here we first obtain the pointer to the most derived class and then implicitly downcast it to
 			// the types defined in the base complex dynamics  
-			this->contact_bodies_.push_back(extra_body->pointToThisObject());
-			this->contact_particles_.push_back(extra_body->base_particles_->pointToThisObject());
-			this->contact_material_.push_back(extra_body->base_particles_->base_material_->pointToThisObject());
+			this->contact_bodies_.push_back(extra_body->ThisObjectPtr());
+			this->contact_particles_.push_back(extra_body->base_particles_->ThisObjectPtr());
+			this->contact_material_.push_back(extra_body->base_particles_->base_material_->ThisObjectPtr());
 		}
 
 		for (size_t i = 0; i != extra_contact_relation->contact_bodies_.size(); ++i)

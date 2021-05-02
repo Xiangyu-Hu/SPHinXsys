@@ -32,6 +32,7 @@
  * @author	Chi Zhang and Xiangyu Hu.
  */
 #pragma once
+
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_data_package.h"
@@ -58,6 +59,8 @@ namespace SPH {
     // PROTECTED
     //===============================================================//
     protected:
+
+        XmlEngine simbody_xml_engine_;
         /**
          * @class StateVariable
          * @details Derived simbodysate must create concrete StateVariables to expose their state 

@@ -35,7 +35,7 @@ Real mu_f = rho0_f * U_f * DL / Re;		/**< Dynamics viscosity. */
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem &system, string body_name)
+	WaterBlock(SPHSystem &system, std::string body_name)
 		: FluidBody(system, body_name)
 	{
 		/** Geomtry definition. */
@@ -160,14 +160,14 @@ int main(int ac, char* av[])
 	/** Output the body states. */
 	WriteBodyStatesToVtu 	write_body_states(in_output, sph_system.real_bodies_);
 	/** Write the particle reload files. */
-	WriteReloadParticle 		write_particle_reload_files(in_output, { water_block });
+	ReloadParticleIO 		write_particle_reload_files(in_output, { water_block });
 	/** Output the body states for restart simulation. */
-	ReadRestart				read_restart_files(in_output, sph_system.real_bodies_);
-	WriteRestart			write_restart_files(in_output, sph_system.real_bodies_);
+	RestartIO				restart_io(in_output, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	WriteTotalMechanicalEnergy 	write_total_mechanical_energy(in_output, water_block, new Gravity(Vec2d(0)));
+	WriteBodyReducedQuantity<fluid_dynamics::TotalMechanicalEnergy> 	
+		write_total_mechanical_energy(in_output, water_block, new Gravity(Vec2d(0)));
 	/** Output the maximum speed of the fluid body. */
-	WriteMaximumSpeed write_maximum_speed(in_output, water_block);
+	WriteBodyReducedQuantity<MaximumSpeed> write_maximum_speed(in_output, water_block);
 	/**
 	 * @brief Setup geomtry and initial conditions
 	 */
@@ -182,7 +182,7 @@ int main(int ac, char* av[])
 	/** If the starting time is not zero, please setup the restart time step ro read in restart states. */
 	if (sph_system.restart_step_ != 0)
 	{
-		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(sph_system.restart_step_);
+		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
 		water_block->updateCellLinkedList();
 		periodic_condition_x.update_cell_linked_list_.parallel_exec();
 		periodic_condition_y.update_cell_linked_list_.parallel_exec();
@@ -235,12 +235,12 @@ int main(int ac, char* av[])
 
 			if (number_of_iterations % screen_output_interval == 0)
 			{
-				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 					<< GlobalStaticVariables::physical_time_
 					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
 
 				if (number_of_iterations % restart_output_interval == 0) {
-					write_restart_files.WriteToFile(Real(number_of_iterations));
+					restart_io.WriteToFile(Real(number_of_iterations));
 				}
 			}
 			number_of_iterations++;
@@ -265,8 +265,8 @@ int main(int ac, char* av[])
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds()
-		<< " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds()
+		<< " seconds." << std::endl;
 
 	write_particle_reload_files.WriteToFile();
 	return 0;

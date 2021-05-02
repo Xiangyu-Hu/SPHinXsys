@@ -8,6 +8,16 @@
 namespace SPH
 {
 	//=================================================================================================//
+	void Neighborhood::removeANeighbor(size_t neighbor_n)
+	{
+		current_size_ --;
+		j_[neighbor_n] = j_[current_size_];
+		W_ij_[neighbor_n] = W_ij_[current_size_];
+		dW_ij_[neighbor_n] = dW_ij_[current_size_];
+		r_ij_[neighbor_n] = r_ij_[current_size_];
+		e_ij_[neighbor_n] = e_ij_[current_size_];
+	}
+	//=================================================================================================//
 	NeighborRelation::NeighborRelation() :
 		kernel_(NULL), cutoff_radius_(0.0) {}
 	//=================================================================================================//
@@ -86,7 +96,7 @@ namespace SPH
 	NeighborRelationInnerVariableSmoothingLength::
 		NeighborRelationInnerVariableSmoothingLength(SPHBody* body) :
 		NeighborRelationVariableSmoothingLength(),
-		h_ratio_(body->base_particles_->h_ratio_)
+		h_ratio_(*body->base_particles_->getVariableByName<indexScalar, Real>("SmoothingLengthRatio"))
 	{
 		kernel_ = body->particle_adaptation_->getKernel();
 	}

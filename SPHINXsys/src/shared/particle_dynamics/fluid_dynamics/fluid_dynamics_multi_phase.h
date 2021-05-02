@@ -132,16 +132,14 @@ namespace SPH
 		class MultiPhaseColorFunctionGradient : public InteractionDynamics, public MultiPhaseData
 		{
 		public:
-			StdLargeVec<Vecd> color_grad_;
-			StdLargeVec<Vecd> surface_norm_;
-			StdLargeVec<Real>* pos_div_;
-			StdLargeVec<bool>& is_free_surface_;
 			MultiPhaseColorFunctionGradient(BaseContactBodyRelation* contact_relation);
 			virtual ~MultiPhaseColorFunctionGradient() {};
 		protected:
 			Real rho_0_;
 			StdVec<Real> contact_rho_0_;
-			StdLargeVec<Real> &Vol_;
+			StdLargeVec<Real>& Vol_, & pos_div_;
+			StdLargeVec<int>& surface_indicator_;
+			StdLargeVec<Vecd>& color_grad_, & surface_norm_;
 			StdVec<StdLargeVec<Real>*> contact_Vol_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;

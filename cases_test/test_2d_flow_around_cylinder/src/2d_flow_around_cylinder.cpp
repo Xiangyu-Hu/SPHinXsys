@@ -15,6 +15,7 @@ int main(int ac, char* av[])
 {
 	/** Build up -- a SPHSystem -- */
 	SPHSystem system(system_domain_bounds, resolution_ref);
+	In_Output	in_output(system);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
 	system.run_particle_relaxation_ = false;
 	/** Tag for computation start with relaxed body fitted particles distribution. */
@@ -29,7 +30,8 @@ int main(int ac, char* av[])
 	 * @brief Creating body, materials and particles for a water block.
 	 */
 	WaterBlock* water_block = new WaterBlock(system, "WaterBody");
-	WaterMaterial* water_material = new WaterMaterial();
+	ParameterizationIO parameterization_io(in_output);
+	WaterMaterial* water_material = new ParameterizedWaterMaterial(parameterization_io);
 	FluidParticles 	fluid_particles(water_block, water_material);
 	/**
 	 * @brief 	Creating the cylinder.
@@ -44,10 +46,8 @@ int main(int ac, char* av[])
 	/**
 	 * @brief define simple data file input and outputs functions.
 	 */
-	In_Output 							in_output(system);
 	WriteBodyStatesToVtu 				write_real_body_states(in_output, system.real_bodies_);
-	WriteRestart						write_restart_files(in_output, system.real_bodies_);
-	ReadRestart							read_restart_files(in_output, system.real_bodies_);
+	RestartIO							restart_io(in_output, system.real_bodies_);
 	/** body topology */
 	ComplexBodyRelation* water_block_complex = new ComplexBodyRelation(water_block, {cylinder });
 	ContactBodyRelation* cylinder_contact = new ContactBodyRelation(cylinder, { water_block });
@@ -56,7 +56,7 @@ int main(int ac, char* av[])
 	/** check whether run particle relaxation for body fitted particle distribution. */
 	if (system.run_particle_relaxation_) 
 	{
-		/** body topology only for particle realxation */
+		/** body topology only for particle relaxation */
 		InnerBodyRelation* cylinder_inner = new InnerBodyRelation(cylinder);
 		/**
 		 * @brief 	Methods used for particle relaxation.
@@ -66,7 +66,7 @@ int main(int ac, char* av[])
 		/** Write the body state to Vtu file. */
 		WriteBodyStatesToVtu 		write_inserted_body_to_vtu(in_output, { cylinder });
 		/** Write the particle reload files. */
-		WriteReloadParticle 		write_particle_reload_files(in_output, { cylinder });
+		ReloadParticleIO 		write_particle_reload_files(in_output, { cylinder });
 
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner);
@@ -85,7 +85,7 @@ int main(int ac, char* av[])
 			ite_p += 1;
 			if (ite_p % 200 == 0)
 			{
-				cout << fixed << setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
+				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
 				write_inserted_body_to_vtu.WriteToFile(Real(ite_p) * 1.0e-4);
 			}
 		}
@@ -133,9 +133,10 @@ int main(int ac, char* av[])
 	/**
 	 * @brief Write observation data into files.
 	 */
-	WriteTotalViscousForceOnSolid 		write_total_viscous_force_on_inserted_body(in_output, cylinder);
-	WriteTotalForceOnSolid              write_total_force_on_inserted_body(in_output, cylinder);
-
+	WriteBodyReducedQuantity<solid_dynamics::TotalViscousForceOnSolid> 		
+		write_total_viscous_force_on_inserted_body(in_output, cylinder);
+	WriteBodyReducedQuantity<solid_dynamics::TotalForceOnSolid>
+		write_total_force_on_inserted_body(in_output, cylinder);
 	WriteAnObservedQuantity<indexVector, Vecd>
 		write_fluid_velocity("Velocity", in_output, fluid_observer_contact);
 
@@ -144,8 +145,8 @@ int main(int ac, char* av[])
 	 */
 	 /** Using relaxed particle distribution if needed. */
 	if (system.reload_particles_) {
-		unique_ptr<ReadReloadParticle>	
-			reload_insert_body_particles(new ReadReloadParticle(in_output, { cylinder }, { "InsertedBody" }));
+		std::unique_ptr<ReloadParticleIO>
+			reload_insert_body_particles(new ReloadParticleIO(in_output, { cylinder }));
 		reload_insert_body_particles->ReadFromFile();
 	}
 	/** initialize cell linked lists for all bodies. */
@@ -163,7 +164,7 @@ int main(int ac, char* av[])
 	 * @brief The time stepping starts here.
 	 */
 	if (system.restart_step_ != 0) {
-		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
+		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.restart_step_);
 		cylinder->updateCellLinkedList();
 		water_block->updateCellLinkedList();
 		periodic_condition_x.update_cell_linked_list_.parallel_exec();
@@ -226,12 +227,12 @@ int main(int ac, char* av[])
 
 			if (number_of_iterations % screen_output_interval == 0)
 			{
-				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 					<< GlobalStaticVariables::physical_time_
 					<< "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "\n";
 
 				if (number_of_iterations % restart_output_interval == 0 && number_of_iterations != system.restart_step_)
-					write_restart_files.WriteToFile(Real(number_of_iterations));
+					restart_io.WriteToFile(Real(number_of_iterations));
 			}
 			number_of_iterations++;
 
@@ -263,7 +264,7 @@ int main(int ac, char* av[])
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }

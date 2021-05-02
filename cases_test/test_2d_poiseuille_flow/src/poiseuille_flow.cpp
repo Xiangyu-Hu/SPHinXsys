@@ -35,7 +35,7 @@ Real c_f = 10.0*U_f;						/**< Reference sound speed. */
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem &system, string body_name)
+	WaterBlock(SPHSystem &system, std::string body_name)
 		: FluidBody(system, body_name)
 	{
 		/** Geomtry definition. */
@@ -70,7 +70,7 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &system, string body_name)
+	WallBoundary(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
 		/** Geomtry definition. */
@@ -153,8 +153,7 @@ int main()
 	/** Output the body states. */
 	WriteBodyStatesToVtu write_body_states(in_output, system.real_bodies_);
 	/** Output the body states for restart simulation. */
-	ReadRestart		read_restart_files(in_output, system.real_bodies_);
-	WriteRestart	write_restart_files(in_output, system.real_bodies_);
+	RestartIO		restart_io(in_output, system.real_bodies_);
 	/**
 	 * @brief Setup geomtry and initial conditions.
 	 */
@@ -168,7 +167,7 @@ int main()
 	 /** If the starting time is not zero, please setup the restart time step ro read in restart states. */
 	if (system.restart_step_ != 0)
 	{
-		GlobalStaticVariables::physical_time_ = read_restart_files.ReadRestartFiles(system.restart_step_);
+		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.restart_step_);
 		water_block->updateCellLinkedList();
 		periodic_condition.update_cell_linked_list_.parallel_exec();
 		water_block_complex->updateConfiguration();
@@ -226,12 +225,12 @@ int main()
 			interval_computing_pressure_relaxation += tick_count::now() - time_instance;
 			if (number_of_iterations % screen_output_interval == 0)
 			{
-				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
+				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 					<< GlobalStaticVariables::physical_time_
 					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
 
 				if (number_of_iterations % restart_output_interval == 0)
-					write_restart_files.WriteToFile(Real(number_of_iterations));
+					restart_io.WriteToFile(Real(number_of_iterations));
 			}
 			number_of_iterations++;
 			/** Update cell linked list and configuration. */
@@ -253,13 +252,13 @@ int main()
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds()
-		<< " seconds." << endl;
-	cout << fixed << setprecision(9) << "interval_computing_time_step ="
+	std::cout << "Total wall time for computation: " << tt.seconds()
+		<< " seconds." << std::endl;
+	std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="
 		<< interval_computing_time_step.seconds() << "\n";
-	cout << fixed << setprecision(9) << "interval_computing_pressure_relaxation = "
+	std::cout << std::fixed << std::setprecision(9) << "interval_computing_pressure_relaxation = "
 		<< interval_computing_pressure_relaxation.seconds() << "\n";
-	cout << fixed << setprecision(9) << "interval_updating_configuration = "
+	std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
 		<< interval_updating_configuration.seconds() << "\n";
 
 	return 0;

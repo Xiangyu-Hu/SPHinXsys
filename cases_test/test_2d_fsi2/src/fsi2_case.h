@@ -118,7 +118,7 @@ std::vector<Vecd> CreatInnerWallShape()
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem& system, string body_name)
+	WaterBlock(SPHSystem& system, std::string body_name)
 		: FluidBody(system, body_name)
 	{
 		/** Geomtry definition. */
@@ -148,7 +148,7 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem& system, string body_name)
+	WallBoundary(SPHSystem& system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
 		/** Geomtry definition. */
@@ -163,7 +163,7 @@ public:
 class InsertedBody : public SolidBody
 {
 public:
-	InsertedBody(SPHSystem& system, string body_name)
+	InsertedBody(SPHSystem& system, std::string body_name)
 		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1))
 	{
 		/** Geomtry definition. */
@@ -192,7 +192,7 @@ public:
 class BeamBase : public BodyPartByParticle
 {
 public:
-	BeamBase(SolidBody* solid_body, string constrained_region_name)
+	BeamBase(SolidBody* solid_body, std::string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		/** Geomtry definition. */
@@ -209,7 +209,7 @@ public:
 class InflowBuffer : public BodyPartByCell
 {
 public:
-	InflowBuffer(FluidBody* fluid_body, string constrained_region_name)
+	InflowBuffer(FluidBody* fluid_body, std::string constrained_region_name)
 		: BodyPartByCell(fluid_body, constrained_region_name)
 	{
 		/** Geomtry definition. */
@@ -254,18 +254,18 @@ public:
 class BeamObserver : public FictitiousBody
 {
 public:
-	BeamObserver(SPHSystem& system, string body_name)
+	BeamObserver(SPHSystem& system, std::string body_name)
 		: FictitiousBody(system, body_name, new ParticleAdaptation(1.15, 1))
 	{
 		/** the measuring particle with zero volume */
-		body_input_points_volumes_.push_back(make_pair(0.5 * (BRT + BRB), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(0.5 * (BRT + BRB), 0.0));
 	}
 };
 /** an observer body to measure the flow profile */
 class FluidObserver : public FictitiousBody
 {
 public:
-	FluidObserver(SPHSystem& system, string body_name)
+	FluidObserver(SPHSystem& system, std::string body_name)
 		: FictitiousBody(system, body_name)
 	{
 		/** A line of measuring points at the entrance of the channel. */
@@ -275,7 +275,7 @@ public:
 		/** the measureing particles */
 		for (size_t i = 0; i < number_observation_pionts; ++i) {
 			Vec2d point_coordinate(0.0, range_of_measure * Real(i) / Real(number_observation_pionts - 1) + start_of_measure);
-			body_input_points_volumes_.push_back(make_pair(point_coordinate, 0.0));
+			body_input_points_volumes_.push_back(std::make_pair(point_coordinate, 0.0));
 		}
 	}
 };

@@ -29,9 +29,6 @@
 
 #include "base_body.h"
 
-#include <fstream>
-
-using namespace std;
 namespace SPH {
 	class SPHSystem;
 	/**
@@ -42,14 +39,14 @@ namespace SPH {
 	class FluidBody : public RealBody
 	{
 	public:
-		explicit FluidBody(SPHSystem &system, string body_name, 
+		explicit FluidBody(SPHSystem &system, std::string body_name,
 			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(),
 			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~FluidBody() {};
 
 		/** Update cell linked list with particle sorting. */
 		virtual void updateCellLinkedList() override;
-		virtual FluidBody* pointToThisObject() override {return this;};
+		virtual FluidBody* ThisObjectPtr() override {return this;};
 	protected:
 		size_t iteration_count_;
 	};

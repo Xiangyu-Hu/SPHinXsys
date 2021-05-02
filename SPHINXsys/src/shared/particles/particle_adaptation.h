@@ -40,6 +40,7 @@ namespace SPH {
 	class Kernel;
 	class BaseMeshCellLinkedList;
 	class BaseLevelSet;
+	class BaseParticles;
 
 	/**
 	 * @class ParticleAdaptation
@@ -61,10 +62,16 @@ namespace SPH {
 		Real spacing_min_;
 		Real spacing_ratio_min_;
 		Real spacing_ratio_max_;
+		Real h_ratio_min_;
+		Real h_ratio_max_;
+		Real number_density_min_;
+		Real number_density_max_;
+
 
 		Kernel* kernel_;
 		SPHBody* sph_body_;
 		BoundingBox system_domain_bounds_;
+		BaseParticles* base_particles_;
 	public:
 		ParticleAdaptation(Real h_spacing_ratio = 1.3, int global_refinement_level = 0);
 		virtual ~ParticleAdaptation() {};
@@ -82,7 +89,13 @@ namespace SPH {
 		Real MinimumSpacing() { return spacing_min_; };
 		Real MinimumSpacingRatio() { return spacing_ratio_min_; };
 		Real MaximumSpacingRatio() { return spacing_ratio_max_; };
+		Real computeReferenceNumberDensity(Vec2d zero, Real h_ratio);
+		Real computeReferenceNumberDensity(Vec3d zero, Real h_ratio);
+		Real ReferenceNumberDensity();
+		Real probeNumberDensity(Vecd zero, Real h_ratio);
+		virtual Real SmoothingLengthRatio(size_t particle_index_i) {return 1.0; };
 
+		virtual void assignBaseParticles(BaseParticles* base_particles);
 		virtual BaseMeshCellLinkedList* createMeshCellLinkedList();
 		virtual BaseLevelSet* createLevelSet(ComplexShape& complex_shape);
 	protected:
@@ -96,12 +109,17 @@ namespace SPH {
 	class ParticleWithLocalRefinement : public ParticleAdaptation
 	{
 	public:
-		ParticleWithLocalRefinement(Real h_spacing_ratio_, 
+		StdLargeVec<Real> h_ratio_;	/**< the ratio between reference smoothing length to variable smoothing length */
+
+		ParticleWithLocalRefinement(Real h_spacing_ratio_,
 			int global_refinement_level, int local_refinement_level);
 		virtual ~ParticleWithLocalRefinement() {};
 
 		size_t getMeshCellLinkedListTotalLevel();
 		size_t getLevelSetTotalLevel();
+		virtual Real SmoothingLengthRatio(size_t particle_index_i) override {return h_ratio_[particle_index_i]; };
+
+		virtual void assignBaseParticles(BaseParticles* base_particles) override;
 		virtual BaseMeshCellLinkedList* createMeshCellLinkedList() override;
 		virtual BaseLevelSet* createLevelSet(ComplexShape& complex_shape) override;
 	};

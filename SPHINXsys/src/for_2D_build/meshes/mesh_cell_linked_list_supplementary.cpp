@@ -49,7 +49,7 @@ namespace SPH {
 						cell_list.cell_list_data_.clear();
 						for (size_t s = 0; s != cell_list.concurrent_particle_indexes_.size(); ++s) {
 							size_t particle_index = cell_list.concurrent_particle_indexes_[s];
-							cell_list.cell_list_data_.emplace_back(make_pair(particle_index, pos_n[particle_index]));
+							cell_list.cell_list_data_.emplace_back(std::make_pair(particle_index, pos_n[particle_index]));
 						}
 					}
 			}, ap);
@@ -87,7 +87,7 @@ namespace SPH {
 	{
 		Vecu cellpos = GridIndexFromPosition(particle_position);
 		cell_linked_lists_[cellpos[0]][cellpos[1]].cell_list_data_
-			.emplace_back(make_pair(particle_index, particle_position));
+			.emplace_back(std::make_pair(particle_index, particle_position));
 	}
 	//=================================================================================================//
 	ListData MeshCellLinkedList::findNearestListDataEntry(Vecd& position)
@@ -200,7 +200,7 @@ namespace SPH {
 		}
 	}
 	//=============================================================================================//
-	void MeshCellLinkedList::writeMeshToPltFile(ofstream& output_file)
+	void MeshCellLinkedList::writeMeshToPltFile(std::ofstream& output_file)
 	{
 		Vecu number_of_operation = number_of_cells_;
 

@@ -26,9 +26,11 @@
  * @author	Chi Zhang and Xiangyu Hu.
  */
 #pragma once
+
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_data_package.h"
+#include "sph_data_conainers.h"
 
 #include "SimTKcommon.h"
 #include "SimTKcommon/internal/Xml.h"
@@ -47,97 +49,101 @@ namespace fs = boost::filesystem;
 namespace fs = std::experimental::filesystem;
 #endif
 
-namespace SPH {
-	/**
-	 * @class 	XmlEngine
-	 * @brief 	XmlEngine class, in which SIMBody XML parse is used.
-	 */
-
+namespace SPH 
+{
 	class XmlEngine
 	{
-		std::string xml_name_;				  /**< xml name. */
-	public:
-        /**
-         * @brief   Defaut constructor.
-         */
-        XmlEngine(){};
-		/**
-	 	 * @brief 	Constructor for XML output.
-	 	 * @param[in]	xml_name 	The name the Xml object.
-	 	 * @param[in]	root_tag 	The name of the root tag.
-	 	 */
-  		XmlEngine(const std::string &xml_name, const std::string &root_tag);
-		/**
-	 	 * @brief 	Defaut distructor.
-	 	 */
-  		~XmlEngine();
-        SimTK::Xml::Document xmldoc_;         /**< the xml document. */
-        SimTK::Xml::Element root_element_;    /**< Root element of document. */
-        SimTK::Xml::Element* element_;        /**< pointer to element. */
-        //SimTK::Xml::element_iterator ele_ite_; /**< element iterator. */
-  		/**
-	 	 * @brief 	Creat an Xml Element.
-	 	 * @param[in]	ele_name Name of the element.
-	 	 */
-  		void creatXmlElement(const std::string &ele_name);
-  		/**
-  		 * @brief	Add existing element to root_element of Xml Doc.
-  		 */
-  		void AddElementToXmlDoc();
-		/**
-		 * @brief	Adds attribute of type string to an xml element.
-		 * @param[in] 	attrib_name  Name of the attribute.
-		 * @param[in] 	value_ 	String type value of the attribute.
-		 */
-		template<class T>
-		void AddAttributeToElement(const std::string& attrib_name, const T& value) {
-			SimTK::Xml::Attribute attr_(attrib_name, SimTK::String(value));
-			element_->setAttributeValue(attr_.getName(), attr_.getValue());
-		};
-		/**
-		* @brief Adds attribute of type matrix to an xml element.
-		* @param[in]   attrib_name Name of the attribute.
-		* @param[in]   value String type value of the attribute.
-		*/
-		void AddAttributeToElement(const std::string &attrib_name, const Matd value);
-		/**
-		  * @brief Get the required int attribute vlaue of an element
-		  * @param[in] ele input element.
-		  * @param[in] attrib_name required attribute name.
-		  * @returns Vector(in 2D or 3D) type value of rquaired attribute.
-		  */
-		template<class T>
-		T GetRequiredAttributeValue(SimTK::Xml::element_iterator& ele_ite_, const std::string& attrib_name) {
-			std::string value_in_string = ele_ite_->getRequiredAttributeValue(attrib_name);
-			return SimTK::convertStringTo<T>(value_in_string);
-		};
-		/**
-		* @brief Get the required int attribute valaue of an element
-		* @param[in] ele input element.
-		* @param[in] attrib_name required attribute name.
-		* @returns Vector(in 2D or 3D) type value of required attribute.
-		*/
-		Matd GetRequiredAttributeMatrixValue(SimTK::Xml::element_iterator &ele_ite_, const std::string &attrib_name);
-		/**
-  		 * @brief	Write to XML file
-  		 * @param[in] 	filefullpath  Full path to writting file.
-  		 */
-  		void WriteToXmlFile(const std::string &filefullpath);
-         /**
-         * @brief   Load XML file using XML parser.
-         * @param[in]   filefullpath  Full path to writting file.
-         */
-        void LoadXmlFile(const std::string &filefullpath);
-         /**
-         * @brief   Read from XML file
-         * @param[in]   filefullpath  Full path to writting file.
-         */
-        void ReadFromXmlFile(const std::string &filefullpath);
-        /**
-         * @ Get the Tag of root element as a string
-         * @returns Tag of root element.
-         */
-        std::string GetRootElementTag();
-    };
+	protected:
+		std::string xml_name_;			/**< xml name. */
+		SimTK::Xml::Document xmldoc_;	/**< the xml document. */
 
+	public:
+		/** Constructor for XML output.  */
+		XmlEngine(const std::string& xml_name, const std::string& root_tag);
+		/** Defaut distructor. */
+		virtual ~XmlEngine() {};
+
+		SimTK::Xml::Element root_element_;	/**< Root element of document. */
+
+		/**Add existing element to root_element of Xml Doc. */
+		void addElementToXmlDoc(const std::string& element_name);
+
+		/** Add an attribute of type string to an xml element.  */
+		template<class T>
+		void setAttributeToElement(const SimTK::Xml::element_iterator& ele_ite, const std::string& attrib_name, const T& value) 
+		{
+			SimTK::Xml::Attribute attr_(attrib_name, SimTK::String(value));
+			ele_ite->setAttributeValue(attr_.getName(), attr_.getValue());
+		};
+		/** Adds attribute of type matrix to an xml element. */
+		void setAttributeToElement(const SimTK::Xml::element_iterator& ele_ite, const std::string& attrib_name, const Matd& value);
+
+		/** Get the required attribute value of an element */
+		template<class T>
+		void getRequiredAttributeValue(SimTK::Xml::element_iterator& ele_ite_, const std::string& attrib_name, T& value) 
+		{
+			std::string value_in_string = ele_ite_->getRequiredAttributeValue(attrib_name);
+			value = SimTK::convertStringTo<T>(value_in_string);
+		};
+		/** Get the required int attribute valaue of an element */
+		void getRequiredAttributeMatrixValue(SimTK::Xml::element_iterator& ele_ite_, const std::string& attrib_name, Matd& value);
+
+		/** Write to XML file */
+		void writeToXmlFile(const std::string& filefullpath);
+		/**  Load XML file using XML parser. */
+		void loadXmlFile(const std::string& filefullpath);
+		/** Get the Tag of root element as a string */
+		std::string getRootElementTag();
+		/** resize of Xml doc */
+		void resizeXmlDocForParticles(size_t input_size);
+		/** Get the size of Xml doc */
+		size_t SizeOfXmlDoc();
+	};
+
+		template<int DataTypeIndex, typename VariableType>
+		struct copyAParticleDataValue
+		{
+			void operator () (ParticleData& particle_data, size_t this_index, size_t another_index) const
+			{
+				for (size_t i = 0; i != std::get<DataTypeIndex>(particle_data).size(); ++i)
+					(*std::get<DataTypeIndex>(particle_data)[i])[this_index] =
+					(*std::get<DataTypeIndex>(particle_data)[i])[another_index];
+			};
+		};
+
+		struct WriteAParticleVariableToXml
+		{
+			XmlEngine& xml_engine_;
+			WriteAParticleVariableToXml(XmlEngine& xml_engine) :
+				xml_engine_(xml_engine) {};
+			template<typename VariableType>
+			void operator () (std::string& variable_name, StdLargeVec<VariableType>& variable)  const
+			{
+				size_t index_i = 0;
+				SimTK::Xml::element_iterator ele_ite = xml_engine_.root_element_.element_begin();
+				for (; ele_ite != xml_engine_.root_element_.element_end(); ++ele_ite)
+				{
+					xml_engine_.setAttributeToElement(ele_ite, variable_name, variable[index_i]);
+					index_i++;
+				}
+			}
+		};
+
+		struct ReadAParticleVariableFromXml
+		{
+			XmlEngine& xml_engine_;
+			ReadAParticleVariableFromXml(XmlEngine& xml_engine) :
+				xml_engine_(xml_engine) {};
+			template<typename VariableType>
+			void operator () (std::string& variable_name, StdLargeVec<VariableType>& variable)  const
+			{
+				size_t index_i = 0;
+				SimTK::Xml::element_iterator ele_ite = xml_engine_.root_element_.element_begin();
+				for (; ele_ite != xml_engine_.root_element_.element_end(); ++ele_ite)
+				{
+					xml_engine_.getRequiredAttributeValue(ele_ite, variable_name, variable[index_i]);
+					index_i++;
+				}
+			}
+		};
 }

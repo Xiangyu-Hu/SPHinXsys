@@ -8,7 +8,7 @@
 
 namespace SPH {
 	//=================================================================================================//
-	FluidBody::FluidBody(SPHSystem &system, string body_name,
+	FluidBody::FluidBody(SPHSystem &system, std::string body_name,
 		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
 		: RealBody(system, body_name, particle_adaptation, particle_generator),
 		iteration_count_(0) {}

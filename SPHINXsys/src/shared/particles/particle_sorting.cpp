@@ -14,9 +14,7 @@ namespace SPH {
 	SwapParticleData::SwapParticleData(BaseParticles* base_particles) :
 		sequence_(base_particles->sequence_),
 		unsorted_id_(base_particles->unsorted_id_),
-		sortable_matrices_(base_particles->sortable_matrices_),
-		sortable_vectors_(base_particles->sortable_vectors_),
-		sortable_scalars_(base_particles->sortable_scalars_) {}
+		sortable_data_(base_particles->sortable_data_) {}
 	//=================================================================================================//
 	void SwapParticleData::operator () (size_t* a, size_t* b)
 	{
@@ -25,18 +23,7 @@ namespace SPH {
 		size_t index_a = a - sequence_.data();
 		size_t index_b = b - sequence_.data();
 		std::swap(unsorted_id_[index_a], unsorted_id_[index_b]);
-		for (size_t i = 0; i != sortable_matrices_.size(); ++i) {
-			StdLargeVec<Matd>& matrices = *(sortable_matrices_[i]);
-			std::swap(matrices[index_a], matrices[index_b]);
-		}
-		for (size_t i = 0; i != sortable_vectors_.size(); ++i) {
-			StdLargeVec<Vecd>& vectors = *(sortable_vectors_[i]);
-			std::swap(vectors[index_a], vectors[index_b]);
-		}
-		for (size_t i = 0; i != sortable_scalars_.size(); ++i) {
-			StdLargeVec<Real>& scalars = *(sortable_scalars_[i]);
-			std::swap(scalars[index_a], scalars[index_b]);
-		}
+		loopParticleData<swapParticleDataValue>(sortable_data_, index_a, index_b);
 	}	
 	//=================================================================================================//
 	ParticleSorting::ParticleSorting(RealBody* real_body) :

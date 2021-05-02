@@ -32,7 +32,7 @@ BoundingBox system_domain_bounds(Vec2d(-DL1, -DH), Vec2d(DL, DH));
 class Airfoil : public SolidBody
 {
 public:
-	Airfoil(SPHSystem &system, string body_name)
+	Airfoil(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name, 
 			new ParticleSpacingByBodyShape(1.15, 0, 2), 
 			new ParticleGeneratorMultiResolution())

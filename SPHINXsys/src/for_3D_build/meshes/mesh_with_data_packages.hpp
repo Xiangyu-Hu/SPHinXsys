@@ -3,6 +3,7 @@
 * @brief 	This is the implementation of the template function and class for base mesh
 * @author	Chi ZHang and Xiangyu Hu
 */
+
 #pragma once
 
 #include "mesh_with_data_packages.h"
@@ -139,9 +140,9 @@ namespace SPH {
 			for (int l = 0; l != pkg_addrs_size_; ++l)
 				for (int m = 0; m != pkg_addrs_size_; ++m)
 					for (int n = 0; n != pkg_addrs_size_; ++n) {
-						pair<int, int>  x_pair = CellShiftAndDataIndex(l);
-						pair<int, int>  y_pair = CellShiftAndDataIndex(m);
-						pair<int, int>  z_pair = CellShiftAndDataIndex(n);
+						std::pair<int, int>  x_pair = CellShiftAndDataIndex(l);
+						std::pair<int, int>  y_pair = CellShiftAndDataIndex(m);
+						std::pair<int, int>  z_pair = CellShiftAndDataIndex(n);
 
 						data_pkg->assignAllPackageDataAddress(Vecu(l, m, n),
 							data_pkg_addrs_[i + x_pair.first][j + y_pair.first][k + z_pair.first],

@@ -4,6 +4,7 @@
  */
 
 #include "solid_dynamics.h"
+#include "general_dynamics.h"
 
 using namespace SimTK;
 
@@ -12,11 +13,11 @@ namespace SPH
 	namespace solid_dynamics
 	{
 		//=================================================================================================//
-		SummationContactDensity::
-			SummationContactDensity(SolidContactBodyRelation* solid_body_contact_relation) :
+		ContactDensitySummation::
+			ContactDensitySummation(SolidContactBodyRelation* solid_body_contact_relation) :
 			PartInteractionDynamicsByParticle(solid_body_contact_relation->sph_body_,
 				&solid_body_contact_relation->body_surface_layer_),
-			ContactDynamicsDataDelegate(solid_body_contact_relation),
+			ContactDynamicsData(solid_body_contact_relation),
 			mass_(particles_->mass_), contact_density_(particles_->contact_density_)
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
@@ -25,7 +26,7 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		void SummationContactDensity::Interaction(size_t index_i, Real dt)
+		void ContactDensitySummation::Interaction(size_t index_i, Real dt)
 		{
 			/** Contact interaction. */
 			Real sigma = 0.0;
@@ -44,7 +45,7 @@ namespace SPH
 		ContactForce::ContactForce(SolidContactBodyRelation* solid_body_contact_relation) :
 			PartInteractionDynamicsByParticle(solid_body_contact_relation->sph_body_, 
 				&solid_body_contact_relation->body_surface_layer_),
-			ContactDynamicsDataDelegate(solid_body_contact_relation),
+			ContactDynamicsData(solid_body_contact_relation),
 			contact_density_(particles_->contact_density_), 
 			Vol_(particles_->Vol_), mass_(particles_->mass_),
 			dvel_dt_others_(particles_->dvel_dt_others_),
@@ -84,87 +85,9 @@ namespace SPH
 			dvel_dt_others_[index_i] += force / mass_[index_i];
 		}
 		//=================================================================================================//
-		ContactForceFromFriction::ContactForceFromFriction(BaseContactBodyRelation* body_contact_relation,
-			StdLargeVec<Vecd>& vel_n, Real eta) :
-			InteractionDynamicsSplitting(body_contact_relation->sph_body_),
-			ContactDynamicsDataDelegate(body_contact_relation),
-			Vol_(particles_->Vol_), mass_(particles_->mass_),
-			contact_force_(particles_->contact_force_), vel_n_(vel_n), eta_(eta)
-		{
-			for (size_t k = 0; k != contact_particles_.size(); ++k)
-			{
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-				contact_mass_.push_back(&(contact_particles_[k]->mass_));
-				contact_vel_n_.push_back(&(contact_particles_[k]->vel_n_));
-				contact_contact_force_.push_back(&(contact_particles_[k]->contact_force_));
-			}
-		}
-		//=================================================================================================//
-		void ContactForceFromFriction::Interaction(size_t index_i, Real dt)
-		{
-			Real Vol_i = Vol_[index_i];
-			Real mass_i = mass_[index_i];
-			Vecd& vel_n_i = vel_n_[index_i];
-
-			std::array<Real, MaximumNeighborhoodSize> parameter_b;
-			size_t neighbors = 0;
-			/** Contact interaction. */
-			for (size_t k = 0; k < contact_configuration_.size(); ++k)
-			{
-				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
-				StdLargeVec<Real>& mass_k = *(contact_mass_[k]);
-				StdLargeVec<Vecd>& vel_n_k = *(contact_vel_n_[k]);
-				StdLargeVec<Vecd>& contact_force_k = *(contact_contact_force_[k]);
-				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
-				//forward sweep
-				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-				{
-					size_t index_j = contact_neighborhood.j_[n];
-					Real mass_j = mass_k[index_j];
-
-					Vecd velocity_derivative = (vel_n_i - vel_n_k[index_j]);
-					parameter_b[neighbors] = eta_ * contact_neighborhood.dW_ij_[n]
-						* Vol_i * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
-					Vecd increment = parameter_b[neighbors] * velocity_derivative
-						/ (mass_i * mass_j - parameter_b[neighbors] * (mass_i + mass_j));
-					neighbors++;
-
-					vel_n_[index_i] += increment * mass_j;
-					vel_n_k[index_j] -= increment * mass_i;
-					contact_force_[index_i] += increment * mass_i * mass_j / (dt + TinyReal);
-					contact_force_k[index_j] -= increment * mass_i * mass_j / (dt + TinyReal);
-				}
-			}
-
-			/** Contact interaction. */
-			for (size_t k = contact_configuration_.size(); k != 0; --k)
-			{
-				StdLargeVec<Real>& mass_k = *(contact_mass_[k - 1]);
-				StdLargeVec<Vecd>& vel_n_k = *(contact_vel_n_[k - 1]);
-				StdLargeVec<Vecd>& contact_force_k = *(contact_contact_force_[k - 1]);
-				Neighborhood& contact_neighborhood = (*contact_configuration_[k - 1])[index_i];
-				//backward sweep
-				for (size_t n = contact_neighborhood.current_size_; n != 0; --n)
-				{
-					size_t index_j = contact_neighborhood.j_[n - 1];
-					Real mass_j = mass_k[index_j];
-
-					Vecd velocity_derivative = (vel_n_i - vel_n_k[index_j]);
-					neighbors--;
-					Vecd increment = parameter_b[neighbors] * velocity_derivative
-						/ (mass_i * mass_j - parameter_b[neighbors] * (mass_i + mass_j));
-
-					vel_n_[index_i] += increment * mass_j;
-					vel_n_k[index_j] -= increment * mass_i;
-					contact_force_[index_i] += increment * mass_i * mass_j / (dt + TinyReal);
-					contact_force_k[index_j] -= increment * mass_i * mass_j / (dt + TinyReal);
-				}
-			}
-		}
-		//=================================================================================================//
 		AcousticTimeStepSize::AcousticTimeStepSize(SolidBody* body) :
 			ParticleDynamicsReduce<Real, ReduceMin>(body),
-			ElasticSolidDataDelegateSimple(body),
+			ElasticSolidDataSimple(body),
 			vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_)
 		{
 			smoothing_length_ = particle_adaptation_->ReferenceSmoothingLength();
@@ -183,7 +106,7 @@ namespace SPH
 		CorrectConfiguration::
 			CorrectConfiguration(BaseInnerBodyRelation* body_inner_relation) :
 			InteractionDynamics(body_inner_relation->sph_body_),
-			SolidDataDelegateInner(body_inner_relation),
+			SolidDataInner(body_inner_relation),
 			Vol_(particles_->Vol_), B_(particles_->B_)
 		{
 		}
@@ -205,7 +128,7 @@ namespace SPH
 		//=================================================================================================//
 		ConstrainSolidBodyRegion::
 			ConstrainSolidBodyRegion(SPHBody* body, BodyPartByParticle* body_part) :
-			PartSimpleDynamicsByParticle(body, body_part), SolidDataDelegateSimple(body),
+			PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
 			pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
 			n_(particles_->n_), n_0_(particles_->n_0_),
 			vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
@@ -231,14 +154,12 @@ namespace SPH
 		SoftConstrainSolidBodyRegion::
 			SoftConstrainSolidBodyRegion(BaseInnerBodyRelation* body_inner_relation, BodyPartByParticle* body_part) :
 			PartInteractionDynamicsByParticleWithUpdate(body_inner_relation->sph_body_, body_part),
-			SolidDataDelegateInner(body_inner_relation),
+			SolidDataInner(body_inner_relation),
 			Vol_(particles_->Vol_),	
 			vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
-			vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_) 
-		{
-			particles_->registerAVariable<indexVector, Vecd>(vel_temp_, "TemporaryVelocity");
-			particles_->registerAVariable<indexVector, Vecd>(dvel_dt_temp_, "TemporaryAcceleration");
-		}
+			vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
+			vel_temp_(*particles_->createAVariable<indexVector, Vecd>("TemporaryVelocity")),
+			dvel_dt_temp_(*particles_->createAVariable<indexVector, Vecd>("TemporaryAcceleration")) {}
 		//=================================================================================================//
 		void SoftConstrainSolidBodyRegion::Interaction(size_t index_i, Real dt)
 		{
@@ -288,13 +209,33 @@ namespace SPH
 			softing_->parallel_exec();
 		}
 		//=================================================================================================//
+		ConstrainSolidBodyMassCenter::
+			ConstrainSolidBodyMassCenter(SPHBody* body, Vecd constrain_direction) :
+			ParticleDynamicsSimple(body), SolidDataSimple(body),
+			correction_matrix_(Matd(1.0)), vel_n_(particles_->vel_n_)
+		{
+			for (int i = 0; i != Dimensions; ++i) correction_matrix_[i][i] = constrain_direction[i];
+			BodySummation<indexScalar, Real> compute_total_mass_(body, "Mass");
+			total_mass_ = compute_total_mass_.parallel_exec();
+			compute_total_momentum_ = new BodyMoment<indexVector, Vecd>(body, "Velocity");
+		}
+		//=================================================================================================//
+		void ConstrainSolidBodyMassCenter::setupDynamics(Real dt)
+		{
+			velocity_correction_ = 
+				correction_matrix_ * compute_total_momentum_->parallel_exec(dt) / total_mass_;
+		}
+		//=================================================================================================//
+		void ConstrainSolidBodyMassCenter::Update(size_t index_i, Real dt)
+		{
+			vel_n_[index_i] -= velocity_correction_;
+		}
+		//=================================================================================================//
 		ImposeExternalForce::
 			ImposeExternalForce(SolidBody* body, SolidBodyPartForSimbody* body_part) :
-			PartSimpleDynamicsByParticle(body, body_part), SolidDataDelegateSimple(body),
+			PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
 			pos_0_(particles_->pos_0_), vel_n_(particles_->vel_n_),
-			vel_ave_(particles_->vel_ave_)
-		{
-		}
+			vel_ave_(particles_->vel_ave_) {}
 		//=================================================================================================//
 		void ImposeExternalForce::Update(size_t index_i, Real dt)
 		{
@@ -303,10 +244,10 @@ namespace SPH
 			vel_ave_[index_i] = vel_n_[index_i];
 		}
 		//=================================================================================================//	
-		ElasticSolidDynamicsInitialCondition::
-			ElasticSolidDynamicsInitialCondition(SolidBody* body) :
+		ElasticDynamicsInitialCondition::
+			ElasticDynamicsInitialCondition(SolidBody* body) :
 			ParticleDynamicsSimple(body),
-			ElasticSolidDataDelegateSimple(body),
+			ElasticSolidDataSimple(body),
 			pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_)
 		{
 		}
@@ -314,7 +255,7 @@ namespace SPH
 		UpdateElasticNormalDirection::
 			UpdateElasticNormalDirection(SolidBody* elastic_body) :
 			ParticleDynamicsSimple(elastic_body),
-			ElasticSolidDataDelegateSimple(elastic_body),
+			ElasticSolidDataSimple(elastic_body),
 			n_(particles_->n_), n_0_(particles_->n_0_), F_(particles_->F_)
 		{
 		}
@@ -322,7 +263,7 @@ namespace SPH
 		DeformationGradientTensorBySummation::
 			DeformationGradientTensorBySummation(BaseInnerBodyRelation* body_inner_relation) :
 			InteractionDynamics(body_inner_relation->sph_body_),
-			ElasticSolidDataDelegateInner(body_inner_relation),
+			ElasticSolidDataInner(body_inner_relation),
 			Vol_(particles_->Vol_), pos_n_(particles_->pos_n_),
 			B_(particles_->B_), F_(particles_->F_)
 		{
@@ -345,20 +286,24 @@ namespace SPH
 			F_[index_i] = B_[index_i] * deformation;
 		}
 		//=================================================================================================//
-		StressRelaxationFirstHalf::
-			StressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation) :
+		BaseElasticRelaxation::
+			BaseElasticRelaxation(BaseInnerBodyRelation* body_inner_relation) :
 			ParticleDynamics1Level(body_inner_relation->sph_body_),
-			ElasticSolidDataDelegateInner(body_inner_relation), Vol_(particles_->Vol_),
+			ElasticSolidDataInner(body_inner_relation), Vol_(particles_->Vol_),
 			rho_n_(particles_->rho_n_), mass_(particles_->mass_),
 			pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
+			B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}
+		//=================================================================================================//
+		StressRelaxationFirstHalf::
+			StressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation) :
+			BaseElasticRelaxation(body_inner_relation), 
 			dvel_dt_others_(particles_->dvel_dt_others_), force_from_fluid_(particles_->force_from_fluid_),
-			B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_), stress_PK1_(particles_->stress_PK1_),
-			corrected_stress_(particles_->corrected_stress_)
+			stress_PK1_(particles_->stress_PK1_), corrected_stress_(particles_->corrected_stress_)
 		{
 			rho_0_ = material_->ReferenceDensity();
 			inv_rho_0_ = 1.0 / rho_0_;
 			numerical_viscosity_
-				= material_->getNumericalViscosity(particle_adaptation_->ReferenceSmoothingLength());
+				= material_->NumericalViscosity(particle_adaptation_->ReferenceSmoothingLength());
 		}
 		//=================================================================================================//
 		void StressRelaxationFirstHalf::Initialization(size_t index_i, Real dt)
@@ -451,7 +396,7 @@ namespace SPH
 				SimTK::Force::DiscreteForces& force_on_bodies,
 				SimTK::RungeKuttaMersonIntegrator& integ)
 			: PartDynamicsByParticleReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>>(body, body_part),
-			SolidDataDelegateSimple(body),
+			SolidDataSimple(body),
 			force_from_fluid_(particles_->force_from_fluid_), contact_force_(particles_->contact_force_),
 			pos_n_(particles_->pos_n_),
 			MBsystem_(MBsystem), mobod_(mobod), force_on_bodies_(force_on_bodies), integ_(integ)

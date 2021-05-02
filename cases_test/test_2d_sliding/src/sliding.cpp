@@ -38,7 +38,7 @@ Real physical_viscosity = 1000000.0;
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem &sph_system, string body_name)
+	WallBoundary(SPHSystem &sph_system, std::string body_name)
 		: SolidBody(sph_system, body_name)
 	{
 		/** Geometry definition. */
@@ -56,7 +56,7 @@ public:
 class Cubic : public SolidBody
 {
 public:
-	Cubic(SPHSystem& system, string body_name)
+	Cubic(SPHSystem& system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
 		/** Geometry definition. */
@@ -92,11 +92,11 @@ Vecd cubic_center(BW + 0.5 * L, slop_h + 0.5 * L);
 class CubicObserver : public FictitiousBody
 {
 public:
-	CubicObserver(SPHSystem& system, string body_name)
+	CubicObserver(SPHSystem& system, std::string body_name)
 		: FictitiousBody(system, body_name)
 	{
 		/** the measuring particle with zero volume */
-		body_input_points_volumes_.push_back(make_pair(Vecd(7.2, 9.8), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(7.2, 9.8), 0.0));
 		//body_input_points_volumes_.push_back(make_pair(Vecd(0.95, 12), 0.0));
 	}
 };
@@ -152,7 +152,7 @@ int main(int ac, char* av[])
 	solid_dynamics::StressRelaxationFirstHalf free_cubic_stress_relaxation_first_half(free_cubic_inner);
 	solid_dynamics::StressRelaxationSecondHalf free_cubic_stress_relaxation_second_half(free_cubic_inner);
 	/** Algorithms for solid-solid contact. */
-	solid_dynamics::SummationContactDensity free_cubic_update_contact_density(free_cubic_contact);
+	solid_dynamics::ContactDensitySummation free_cubic_update_contact_density(free_cubic_contact);
 	solid_dynamics::ContactForce free_cubic_compute_solid_contact_forces(free_cubic_contact);
 	/** Damping*/
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec2d>>
@@ -192,7 +192,7 @@ int main(int ac, char* av[])
 				free_cubic_initialize_timestep.parallel_exec();
 				if (ite % 100 == 0) 
 				{
-					cout << "N=" << ite << " Time: "
+					std::cout << "N=" << ite << " Time: "
 						<< GlobalStaticVariables::physical_time_ << "	dt: " << dt 
 						<< "\n";
 				}
@@ -221,6 +221,6 @@ int main(int ac, char* av[])
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 	return 0;
 }

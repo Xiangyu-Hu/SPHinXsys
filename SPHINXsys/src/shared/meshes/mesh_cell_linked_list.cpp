@@ -12,11 +12,12 @@
 
 namespace SPH {
 	//=================================================================================================//
-	BaseMeshCellLinkedList
-		::BaseMeshCellLinkedList(SPHBody& sph_body, ParticleAdaptation& particle_adaptation,
-			BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width)
-		: Mesh(tentative_bounds, grid_spacing, buffer_width),
-		sph_body_(sph_body), kernel_(*particle_adaptation.getKernel()), base_particles_(NULL) {}
+	BaseMeshCellLinkedList::
+		BaseMeshCellLinkedList(SPHBody& sph_body, ParticleAdaptation& particle_adaptation,
+			BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width) : 
+		Mesh(tentative_bounds, grid_spacing, buffer_width),
+		sph_body_(sph_body), kernel_(*particle_adaptation.getKernel()), 
+		base_particles_(NULL) {}
 	//=================================================================================================//
 	void BaseMeshCellLinkedList::clearSplitCellLists(SplitCellLists& split_cell_lists)
 	{
@@ -69,7 +70,8 @@ namespace SPH {
 			BoundingBox tentative_bounds, Real reference_grid_spacing, 
 			size_t total_levels, Real maximum_spacing_ratio) :
 		MultilevelMesh<SPHBody, BaseMeshCellLinkedList, MeshCellLinkedList>(sph_body, particle_adaptation, 
-			tentative_bounds, reference_grid_spacing, total_levels, maximum_spacing_ratio, 2)
+			tentative_bounds, reference_grid_spacing, total_levels, maximum_spacing_ratio, 2),
+			h_ratio_(dynamic_cast<ParticleWithLocalRefinement&>(particle_adaptation).h_ratio_)
 	{
 		name_ = "MultilevelMeshCellLinkedList";
 	}
@@ -88,14 +90,14 @@ namespace SPH {
 	void MultilevelMeshCellLinkedList::
 		insertACellLinkedParticleIndex(size_t particle_index, Vecd particle_position)
 	{
-		size_t level = getMeshLevel(kernel_.CutOffRadius(base_particles_->h_ratio_[particle_index]));
+		size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
 		mesh_levels_[level]->insertACellLinkedParticleIndex(particle_index, particle_position);
 	}
 	//=================================================================================================//
 	void MultilevelMeshCellLinkedList::
 		InsertACellLinkedListDataEntry(size_t particle_index, Vecd particle_position)
 	{
-		size_t level = getMeshLevel(kernel_.CutOffRadius(base_particles_->h_ratio_[particle_index]));
+		size_t level = getMeshLevel(kernel_.CutOffRadius(h_ratio_[particle_index]));
 		mesh_levels_[level]->InsertACellLinkedListDataEntry(particle_index, particle_position);
 	}
 	//=================================================================================================//

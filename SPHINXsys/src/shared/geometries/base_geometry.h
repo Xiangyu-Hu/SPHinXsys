@@ -35,7 +35,6 @@
 #include "sph_data_conainers.h"
 
 #include <string>
-using namespace std;
 
 namespace SPH
 {
@@ -55,13 +54,13 @@ namespace SPH
 	class Shape
 	{
 	public:
-		Shape(string shape_name) : name_(shape_name) {};
+		Shape(std::string shape_name) : name_(shape_name) {};
 		virtual ~Shape() {};
 
-		string getName() { return name_; };
+		std::string getName() { return name_; };
 		virtual BoundingBox findBounds() = 0;
 	protected:
-		string name_;
+		std::string name_;
 	};
 
 	/**

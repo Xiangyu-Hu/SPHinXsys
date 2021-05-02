@@ -115,10 +115,10 @@ class MyocardiumPhysiology
  * Setup material properties of myocardium
  */
 class MyocardiumMuscle
- 	: public LocallyOrthotropicMuscle
+ 	: public ActiveMuscle<LocallyOrthotropicMuscle>
 {
  public:
- 	MyocardiumMuscle() : LocallyOrthotropicMuscle()
+ 	MyocardiumMuscle() : ActiveMuscle<LocallyOrthotropicMuscle>()
 	{
 		rho_0_ = rho_0;
 		bulk_modulus_ = bulk_modulus;
@@ -136,7 +136,7 @@ class MyocardiumMuscle
 class HeartBody : public SolidBody
 {
 public:
-	HeartBody(SPHSystem &system, string body_name)
+	HeartBody(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
 		ComplexShape original_body_shape;
@@ -270,7 +270,7 @@ public:
 class MuscleBase : public BodyPartByParticle
 {
 public:
-	 MuscleBase(SolidBody *solid_body, string constrained_region_name)
+	 MuscleBase(SolidBody *solid_body, std::string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		 body_part_shape_ = new ComplexShape(constrained_region_name);
@@ -344,15 +344,15 @@ public:
 class VoltageObserver : public FictitiousBody
 {
 public:
-	VoltageObserver(SPHSystem &system, string body_name)
+	VoltageObserver(SPHSystem &system, std::string body_name)
 		: FictitiousBody(system, body_name)
 	{
 		/** postion and volume. */
-		body_input_points_volumes_.push_back(make_pair(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0),  0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(0.0,   -30.0 * length_scale, 26.0 * length_scale), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(-30.0 * length_scale, -50.0 * length_scale, 0.0),  0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(0.0,   -50.0 * length_scale, 20.0 * length_scale), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(0.0,   -70.0 * length_scale, 0.0),  0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0),  0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(0.0,   -30.0 * length_scale, 26.0 * length_scale), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(-30.0 * length_scale, -50.0 * length_scale, 0.0),  0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(0.0,   -50.0 * length_scale, 20.0 * length_scale), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(0.0,   -70.0 * length_scale, 0.0),  0.0));
 	}
 };
 /**
@@ -361,15 +361,15 @@ public:
 class MyocardiumObserver : public FictitiousBody
 {
 public:
-	MyocardiumObserver(SPHSystem &system, string body_name)
+	MyocardiumObserver(SPHSystem &system, std::string body_name)
 		: FictitiousBody(system, body_name)
 	{
 		/** postion and volume. */
-		body_input_points_volumes_.push_back(make_pair(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0),  0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(0.0,   -30.0 * length_scale, 26.0 * length_scale), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(-30.0 * length_scale, -50.0 * length_scale, 0.0),  0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(0.0,   -50.0 * length_scale, 20.0 * length_scale), 0.0));
-		body_input_points_volumes_.push_back(make_pair(Vecd(0.0,   -70.0 * length_scale, 0.0),  0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0),  0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(0.0,   -30.0 * length_scale, 26.0 * length_scale), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(-30.0 * length_scale, -50.0 * length_scale, 0.0),  0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(0.0,   -50.0 * length_scale, 20.0 * length_scale), 0.0));
+		body_input_points_volumes_.push_back(std::make_pair(Vecd(0.0,   -70.0 * length_scale, 0.0),  0.0));
 	}
 };
 /** 
@@ -402,8 +402,7 @@ int main(int ac, char* av[])
 	/** Creat a SPH body, material and particles */
 	HeartBody* mechanics_body = new HeartBody(system, "ContractionHeart");
 	MyocardiumMuscle* myocardium_muscle = new MyocardiumMuscle();
-	ActiveMuscle* myocardium_contraction = new ActiveMuscle(myocardium_muscle);
-	ActiveMuscleParticles 	mechanics_particles(mechanics_body, myocardium_contraction);
+	ActiveMuscleParticles 	mechanics_particles(mechanics_body, myocardium_muscle);
 
 		/** check whether run particle relaxation for body fitted particle distribution. */
 	if (system.run_particle_relaxation_)
@@ -434,9 +433,9 @@ int main(int ac, char* av[])
 		/** Write the body state to Vtu file. */
 		WriteBodyStatesToVtu 		write_relax_body_state_to_vtu(in_output, { relax_body });
 		/** Write the particle reload files. */
-		WriteReloadParticle 		write_particle_reload_files(in_output, { relax_body, relax_body }, { physiology_body->getBodyName(), mechanics_body->getBodyName()});
+		ReloadParticleIO 		write_particle_reload_files(in_output, { relax_body, relax_body }, { physiology_body->getBodyName(), mechanics_body->getBodyName()});
 		/** Write material property to xml file. */
-		WriteReloadMaterialProperty write_material_property(in_output, relax_body_material, myocardium_muscle->MaterialName());
+		ReloadMaterialParameterIO write_material_property(in_output, relax_body_material, myocardium_muscle->LocalParametersName());
 		/**
 		 * @brief 	Physics relaxation starts here.
 		 */
@@ -457,7 +456,7 @@ int main(int ac, char* av[])
 			ite++;
 			if (ite % 100 == 0)
 			{
-				cout << fixed << setprecision(9) << "Relaxation steps N = " << ite << "\n";
+				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite << "\n";
 				write_relax_body_state_to_vtu.WriteToFile(Real(ite) * 1.0e-4);
 			}
 		}
@@ -476,7 +475,7 @@ int main(int ac, char* av[])
 			impose_diffusion_bc.parallel_exec();
 			if (ite % 10 == 0)
 			{
-				cout << "Diffusion steps N=" << ite - relax_step << "	dt: " << dt << "\n";
+				std::cout << "Diffusion steps N=" << ite - relax_step << "	dt: " << dt << "\n";
 				write_relax_body_state_to_vtu.WriteToFile(Real(ite) * 1.0e-4);
 			}
 			ite++;
@@ -501,10 +500,11 @@ int main(int ac, char* av[])
 	BaseParticles 	disp_observer_particles(myocardium_observer);
 
 	WriteBodyStatesToVtu 		write_states(in_output, system.real_bodies_);
-	ReadReloadParticle			excitation_reload_particles(in_output, { physiology_body }, { physiology_body->getBodyName() });
-	ReadReloadParticle			contraction_reload_particles(in_output, { mechanics_body }, { mechanics_body->getBodyName() });
+	ReloadParticleIO			excitation_reload_particles(in_output, { physiology_body }, { physiology_body->getBodyName() });
+	ReloadParticleIO			contraction_reload_particles(in_output, { mechanics_body }, { mechanics_body->getBodyName() });
 	/** Read material property, e.g., sheet and fiber, from xml file. */
-	ReadReloadMaterialProperty  read_material_property(in_output, myocardium_muscle);
+	ReloadMaterialParameterIO  read_muscle_fiber_and_sheet(in_output, myocardium_muscle);
+	ReloadMaterialParameterIO  read_myocardium_excitation_fiber(in_output, myocardium_excitation, myocardium_muscle->LocalParametersName());
 
 	/** topology */
 	InnerBodyRelation* physiology_body_inner = new InnerBodyRelation(physiology_body);	
@@ -519,8 +519,8 @@ int main(int ac, char* av[])
 	{
 		excitation_reload_particles.ReadFromFile();
 		contraction_reload_particles.ReadFromFile();
-		read_material_property.ReadFromFile();
-		myocardium_excitation->assignFiberProperties(myocardium_muscle->local_f0_);
+		read_muscle_fiber_and_sheet.ReadFromFile();
+		read_myocardium_excitation_fiber.ReadFromFile();
 	}
 	/** 
 	 * Corrected strong configuration. 
@@ -561,7 +561,7 @@ int main(int ac, char* av[])
 	/** */
 	observer_dynamics::CorrectInterpolationKernelWeights
 		correct_kernel_weights_for_interpolation(mechanics_body_contact);
-	/** Interpolate the active contract stress from eletrophyisology body. */
+	/** Interpolate the active contract stress from electrophysiology body. */
 	observer_dynamics::InterpolatingAQuantity<indexScalar, Real>
 		active_stress_interpolation(mechanics_body_contact, "ActiveContractionStress");
 	/** Interpolate the particle position in physiology_body  from mechanics_body. */
@@ -606,7 +606,7 @@ int main(int ac, char* av[])
 	/** Statistics for computing time. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
-	cout << "Main Loop Starts Here : " << "\n";
+	std::cout << "Main Loop Starts Here : " << "\n";
 	/** Main loop starts here. */ 
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
@@ -618,7 +618,7 @@ int main(int ac, char* av[])
 			{
 				if (ite % screen_output_interval == 0) 
 				{
-					cout << fixed << setprecision(9) << "N=" << ite << "	Time = "
+					std::cout << std::fixed << std::setprecision(9) << "N=" << ite << "	Time = "
 						<< GlobalStaticVariables::physical_time_
 						<< "	dt = " << dt 
 						<< "	dt_s = " << dt_s << "\n";
@@ -687,7 +687,7 @@ int main(int ac, char* av[])
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
+	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	return 0;
 }
