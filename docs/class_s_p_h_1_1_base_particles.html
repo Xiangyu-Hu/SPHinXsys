@@ -68,8 +68,10 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-attribs">Public Attributes</a> &#124;
+<a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="class_s_p_h_1_1_base_particles-members.html">List of all members</a>  </div>
   <div class="headertitle">
@@ -77,14 +79,20 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>Particles with essential (geometric and kinematic) data. There are three types of particles. One is real particles whose states are updated by particle dynamics. One is buffer particles whose state are not updated by particle dynamics. They may be switched from real particles or switch to real particles. The other is ghost particles whose states are updated according to boundary condition if their indices are included in the neighbor particle list. <br  />
-  
+<p>Particles with essential (geometric and kinematic) data. There are three types of particles， all particles of a same type are saved with continuous memory segments. The first type is real particles whose states are updated by particle dynamics. One is buffer particles whose state are not updated by particle dynamics. Buffer particles are saved behind real particles. The global value of total_real_particles_ separate the real and buffer particles. They may be switched from real particles or switch to real particles. As the memory for both particles are continuous, such switch is achieved at the memory boundary sequentially. The basic idea is swap the data of the last real particle with the one will be switched particle, and then switch this swapped last particle as buffer particle by decrease the total_real_particles_ by one. Switch from buffer particle to real particle is easy. One just need to assign expect state to the first buffer particle and increase total_real_particles_ by one. The other is ghost particles whose states are updated according to boundary condition if their indices are included in the neighbor particle list. The ghost particles are saved behind the buffer particles. The global value of real_particles_bound_ separate the sum of real and buffer particles with ghost particles. The global value of total_ghost_particles_ indicates the total number of ghost particles in use. It will be initialized to zero before a time step.  
  <a href="class_s_p_h_1_1_base_particles.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="base__particles_8h_source.html">base_particles.h</a>&gt;</code></p>
 
 <p>Inherited by <a class="el" href="class_s_p_h_1_1_fluid_particles.html">SPH::FluidParticles</a>, and <a class="el" href="class_s_p_h_1_1_solid_particles.html">SPH::SolidParticles</a>.</p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_s_p_h_1_1_base_particles_1_1add_a_particle_data_value.html">addAParticleDataValue</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_s_p_h_1_1_base_particles_1_1loop_variabale_name_list.html">loopVariabaleNameList</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a4ceaaa29fb12228b3ab883444f17c028"><td class="memItemLeft" align="right" valign="top"><a id="a4ceaaa29fb12228b3ab883444f17c028"></a>
@@ -93,35 +101,66 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ae2da99c389016be0faf7bec43dd638e8"><td class="memItemLeft" align="right" valign="top"><a id="ae2da99c389016be0faf7bec43dd638e8"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>BaseParticles</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *body)</td></tr>
 <tr class="separator:ae2da99c389016be0faf7bec43dd638e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aed26b7bc44f41c4474ab97acea2228a4"><td class="memTemplParams" colspan="2">template&lt;typename VariableType &gt; </td></tr>
-<tr class="memitem:aed26b7bc44f41c4474ab97acea2228a4"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#aed26b7bc44f41c4474ab97acea2228a4">registerAVariable</a> (StdLargeVec&lt; VariableType &gt; &amp;variable_addrs, StdVec&lt; StdLargeVec&lt; VariableType &gt; * &gt; &amp;registered_variables, map&lt; string, <a class="el" href="classsize__t.html">size_t</a> &gt; &amp;name_map, StdVec&lt; string &gt; &amp;variable_to_write, string variable_name, <a class="el" href="classbool.html">bool</a> is_to_write, VariableType initial_value=VariableType(0))</td></tr>
-<tr class="separator:aed26b7bc44f41c4474ab97acea2228a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3e1459f06c7b5bb9886ed642984a5c22"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a3e1459f06c7b5bb9886ed642984a5c22">getSPHBody</a> ()</td></tr>
+<tr class="memitem:a7eda51aeb6fc94339f9d28575a0df063"><td class="memTemplParams" colspan="2">template&lt;int DataTypeIndex, typename VariableType &gt; </td></tr>
+<tr class="memitem:a7eda51aeb6fc94339f9d28575a0df063"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a7eda51aeb6fc94339f9d28575a0df063">registerAVariable</a> (StdLargeVec&lt; <a class="el" href="class_variable_type.html">VariableType</a> &gt; &amp;variable_addrs, std::string variable_name, <a class="el" href="class_variable_type.html">VariableType</a> initial_value=<a class="el" href="class_variable_type.html">VariableType</a>(0))</td></tr>
+<tr class="separator:a7eda51aeb6fc94339f9d28575a0df063"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae9a9d99734c972e6cf1e4d9689545487"><td class="memTemplParams" colspan="2">template&lt;int DataTypeIndex, typename VariableType &gt; </td></tr>
+<tr class="memitem:ae9a9d99734c972e6cf1e4d9689545487"><td class="memTemplItemLeft" align="right" valign="top">StdLargeVec&lt; <a class="el" href="class_variable_type.html">VariableType</a> &gt; *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#ae9a9d99734c972e6cf1e4d9689545487">createAVariable</a> (std::string new_variable_name, <a class="el" href="class_variable_type.html">VariableType</a> initial_value=<a class="el" href="class_variable_type.html">VariableType</a>(0))</td></tr>
+<tr class="separator:ae9a9d99734c972e6cf1e4d9689545487"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a603b1f4b21d060ef0a036e341578bbe1"><td class="memTemplParams" colspan="2">template&lt;int DataTypeIndex, typename VariableType &gt; </td></tr>
+<tr class="memitem:a603b1f4b21d060ef0a036e341578bbe1"><td class="memTemplItemLeft" align="right" valign="top">StdLargeVec&lt; <a class="el" href="class_variable_type.html">VariableType</a> &gt; *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a603b1f4b21d060ef0a036e341578bbe1">createAVariable</a> (std::string new_variable_name, std::string old_variable_name)</td></tr>
+<tr class="separator:a603b1f4b21d060ef0a036e341578bbe1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6dc2dba5a7b84f2e814fba642ea8cba0"><td class="memTemplParams" colspan="2">template&lt;int DataTypeIndex, typename VariableType &gt; </td></tr>
+<tr class="memitem:a6dc2dba5a7b84f2e814fba642ea8cba0"><td class="memTemplItemLeft" align="right" valign="top">StdLargeVec&lt; <a class="el" href="class_variable_type.html">VariableType</a> &gt; *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a6dc2dba5a7b84f2e814fba642ea8cba0">getVariableByName</a> (std::string variable_name)</td></tr>
+<tr class="separator:a6dc2dba5a7b84f2e814fba642ea8cba0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0bfbad4c717e63466ba19c25e2f0d921"><td class="memTemplParams" colspan="2">template&lt;int DataTypeIndex, typename VariableType &gt; </td></tr>
+<tr class="memitem:a0bfbad4c717e63466ba19c25e2f0d921"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a0bfbad4c717e63466ba19c25e2f0d921">addAVariableToWrite</a> (std::string variable_name)</td></tr>
+<tr class="separator:a0bfbad4c717e63466ba19c25e2f0d921"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e3222c982fea6397f428581109f3eab"><td class="memTemplParams" colspan="2">template&lt;int DataTypeIndex, typename VariableType &gt; </td></tr>
+<tr class="memitem:a2e3222c982fea6397f428581109f3eab"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a2e3222c982fea6397f428581109f3eab">registerASortableVariable</a> (std::string variable_name)</td></tr>
+<tr class="separator:a2e3222c982fea6397f428581109f3eab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e1459f06c7b5bb9886ed642984a5c22"><td class="memItemLeft" align="right" valign="top"><a id="a3e1459f06c7b5bb9886ed642984a5c22"></a>
+<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>getSPHBody</b> ()</td></tr>
 <tr class="separator:a3e1459f06c7b5bb9886ed642984a5c22"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a27f6cbf386ec96c5b85cb214db9705af"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a27f6cbf386ec96c5b85cb214db9705af">initializeABaseParticle</a> (Vecd pnt, Real Vol_0)</td></tr>
+<tr class="memitem:a27f6cbf386ec96c5b85cb214db9705af"><td class="memItemLeft" align="right" valign="top"><a id="a27f6cbf386ec96c5b85cb214db9705af"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>initializeABaseParticle</b> (Vecd pnt, Real Vol_0)</td></tr>
 <tr class="separator:a27f6cbf386ec96c5b85cb214db9705af"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a503fbe475524e8544ece23013515d7f6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a503fbe475524e8544ece23013515d7f6">addABufferParticle</a> ()</td></tr>
+<tr class="memitem:a503fbe475524e8544ece23013515d7f6"><td class="memItemLeft" align="right" valign="top"><a id="a503fbe475524e8544ece23013515d7f6"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>addABufferParticle</b> ()</td></tr>
 <tr class="separator:a503fbe475524e8544ece23013515d7f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a88f56a5392d851bf25ea7fa9cf09842a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a88f56a5392d851bf25ea7fa9cf09842a">copyFromAnotherParticle</a> (<a class="el" href="classsize__t.html">size_t</a> this_index, <a class="el" href="classsize__t.html">size_t</a> another_index)</td></tr>
+<tr class="memitem:a88f56a5392d851bf25ea7fa9cf09842a"><td class="memItemLeft" align="right" valign="top"><a id="a88f56a5392d851bf25ea7fa9cf09842a"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>copyFromAnotherParticle</b> (<a class="el" href="classsize__t.html">size_t</a> this_index, <a class="el" href="classsize__t.html">size_t</a> another_index)</td></tr>
 <tr class="separator:a88f56a5392d851bf25ea7fa9cf09842a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afbf782f2e698af1e91cb6570a4c43184"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#afbf782f2e698af1e91cb6570a4c43184">updateFromAnotherParticle</a> (<a class="el" href="classsize__t.html">size_t</a> this_index, <a class="el" href="classsize__t.html">size_t</a> another_index)</td></tr>
+<tr class="memitem:afbf782f2e698af1e91cb6570a4c43184"><td class="memItemLeft" align="right" valign="top"><a id="afbf782f2e698af1e91cb6570a4c43184"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>updateFromAnotherParticle</b> (<a class="el" href="classsize__t.html">size_t</a> this_index, <a class="el" href="classsize__t.html">size_t</a> another_index)</td></tr>
 <tr class="separator:afbf782f2e698af1e91cb6570a4c43184"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7a07ff11234c5ec58ff67bbc4251f489"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a7a07ff11234c5ec58ff67bbc4251f489">insertAGhostParticle</a> (<a class="el" href="classsize__t.html">size_t</a> index_i)</td></tr>
 <tr class="separator:a7a07ff11234c5ec58ff67bbc4251f489"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a589c1a5daef87250e7c1cb7ff3311189"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a589c1a5daef87250e7c1cb7ff3311189">writeParticlesToVtuFile</a> (ofstream &amp;output_file)</td></tr>
-<tr class="separator:a589c1a5daef87250e7c1cb7ff3311189"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4dd8cd04c7911fd2bdb2b1613e453cda"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a4dd8cd04c7911fd2bdb2b1613e453cda">writeParticlesToPltFile</a> (ofstream &amp;output_file)</td></tr>
-<tr class="separator:a4dd8cd04c7911fd2bdb2b1613e453cda"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4ce04f417c47bd56a0744c4db7cd31e8"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a4ce04f417c47bd56a0744c4db7cd31e8">writeParticlesToXmlForRestart</a> (std::string &amp;filefullpath)</td></tr>
-<tr class="separator:a4ce04f417c47bd56a0744c4db7cd31e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1b2edff6c6dfdc1b4f20d561af80cdd0"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a1b2edff6c6dfdc1b4f20d561af80cdd0">readParticleFromXmlForRestart</a> (std::string &amp;filefullpath)</td></tr>
-<tr class="separator:a1b2edff6c6dfdc1b4f20d561af80cdd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5432ee0e4a327e2025b6462ed0b715f8"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a5432ee0e4a327e2025b6462ed0b715f8">writeToXmlForReloadParticle</a> (std::string &amp;filefullpath)</td></tr>
+<tr class="memitem:a639f415a5b9f3e0fcd662f2309a95a80"><td class="memItemLeft" align="right" valign="top"><a id="a639f415a5b9f3e0fcd662f2309a95a80"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>switchToBufferParticle</b> (<a class="el" href="classsize__t.html">size_t</a> index_i)</td></tr>
+<tr class="separator:a639f415a5b9f3e0fcd662f2309a95a80"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2b77e1d04a5955cee741defc108c1b75"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a2b77e1d04a5955cee741defc108c1b75">writeParticlesToVtuFile</a> (std::ofstream &amp;output_file)</td></tr>
+<tr class="separator:a2b77e1d04a5955cee741defc108c1b75"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af56c3d9d2de8bcd3811c77689101a352"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#af56c3d9d2de8bcd3811c77689101a352">writeParticlesToPltFile</a> (std::ofstream &amp;output_file)</td></tr>
+<tr class="separator:af56c3d9d2de8bcd3811c77689101a352"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaeeaf1adde26dc62650dc77f63907975"><td class="memItemLeft" align="right" valign="top"><a id="aaeeaf1adde26dc62650dc77f63907975"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>writeParticlesToXmlForRestart</b> (std::string &amp;filefullpath)</td></tr>
+<tr class="separator:aaeeaf1adde26dc62650dc77f63907975"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa37ad6e9dc1d1362a55bc056e75600b6"><td class="memItemLeft" align="right" valign="top"><a id="aa37ad6e9dc1d1362a55bc056e75600b6"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>readParticleFromXmlForRestart</b> (std::string &amp;filefullpath)</td></tr>
+<tr class="separator:aa37ad6e9dc1d1362a55bc056e75600b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeae361a6b2046bee2abd4c25c7366846"><td class="memItemLeft" align="right" valign="top"><a id="aeae361a6b2046bee2abd4c25c7366846"></a>
+<a class="el" href="class_s_p_h_1_1_xml_engine.html">XmlEngine</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>getReloadXmlEngine</b> ()</td></tr>
+<tr class="separator:aeae361a6b2046bee2abd4c25c7366846"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5432ee0e4a327e2025b6462ed0b715f8"><td class="memItemLeft" align="right" valign="top"><a id="a5432ee0e4a327e2025b6462ed0b715f8"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>writeToXmlForReloadParticle</b> (std::string &amp;filefullpath)</td></tr>
 <tr class="separator:a5432ee0e4a327e2025b6462ed0b715f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3234b920653432073f4feecc10f09409"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a3234b920653432073f4feecc10f09409">readFromXmlForReloadParticle</a> (std::string &amp;filefullpath)</td></tr>
+<tr class="memitem:a3234b920653432073f4feecc10f09409"><td class="memItemLeft" align="right" valign="top"><a id="a3234b920653432073f4feecc10f09409"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>readFromXmlForReloadParticle</b> (std::string &amp;filefullpath)</td></tr>
 <tr class="separator:a3234b920653432073f4feecc10f09409"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4abda61ce9e220e98ef008d976b4bdd5"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a4abda61ce9e220e98ef008d976b4bdd5">pointToThisObject</a> ()</td></tr>
-<tr class="separator:a4abda61ce9e220e98ef008d976b4bdd5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad41324c9d1f3687df6134624756eb953"><td class="memItemLeft" align="right" valign="top"><a id="ad41324c9d1f3687df6134624756eb953"></a>
+virtual <a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>ThisObjectPtr</b> ()</td></tr>
+<tr class="separator:ad41324c9d1f3687df6134624756eb953"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aacd901a6230deb7dfb2b6e5ca192072c"><td class="memItemLeft" align="right" valign="top">virtual Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#aacd901a6230deb7dfb2b6e5ca192072c">normalizeKernelGradient</a> (<a class="el" href="classsize__t.html">size_t</a> particle_index_i, Vecd &amp;kernel_gradient)</td></tr>
 <tr class="separator:aacd901a6230deb7dfb2b6e5ca192072c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:affce1d43813839bdc86d091ff8c77e2d"><td class="memItemLeft" align="right" valign="top">virtual Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#affce1d43813839bdc86d091ff8c77e2d">getKernelGradient</a> (<a class="el" href="classsize__t.html">size_t</a> particle_index_i, <a class="el" href="classsize__t.html">size_t</a> particle_index_j, Real dW_ij, Vecd &amp;e_ij)</td></tr>
@@ -145,9 +184,6 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a06420b0b549bd31847cc56cf86830091"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a02c7fc3468dcf92154a1a60c2a170e1a"><td class="memItemLeft" align="right" valign="top">StdLargeVec&lt; Real &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a02c7fc3468dcf92154a1a60c2a170e1a">mass_</a></td></tr>
 <tr class="separator:a02c7fc3468dcf92154a1a60c2a170e1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac19ec9160f91c30501ef811973e889ca"><td class="memItemLeft" align="right" valign="top"><a id="ac19ec9160f91c30501ef811973e889ca"></a>
-StdLargeVec&lt; Real &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>smoothing_length_</b></td></tr>
-<tr class="separator:ac19ec9160f91c30501ef811973e889ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2e3eca63a9bb993caec5396ce5f48be9"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a2e3eca63a9bb993caec5396ce5f48be9">rho_0_</a></td></tr>
 <tr class="separator:a2e3eca63a9bb993caec5396ce5f48be9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6e91adfca7218a340b59f6f1089d54d4"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a6e91adfca7218a340b59f6f1089d54d4">sigma_0_</a></td></tr>
@@ -156,32 +192,20 @@ StdLargeVec&lt; Real &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>
 <tr class="separator:ac5c08c3a1026bfd96469e902ebb9e934"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab8225845e6682236f4c7b11c162f76f3"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#ab8225845e6682236f4c7b11c162f76f3">signal_speed_max_</a></td></tr>
 <tr class="separator:ab8225845e6682236f4c7b11c162f76f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b4225bb534166d2fff443276cbaee23"><td class="memItemLeft" align="right" valign="top"><a id="a9b4225bb534166d2fff443276cbaee23"></a>
+<a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>total_real_particles_</b></td></tr>
+<tr class="separator:a9b4225bb534166d2fff443276cbaee23"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0501a7ad45113b5e671704ed6537c0fb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a0501a7ad45113b5e671704ed6537c0fb">real_particles_bound_</a></td></tr>
 <tr class="separator:a0501a7ad45113b5e671704ed6537c0fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a23a45e288c1b0e415e11c24170250136"><td class="memItemLeft" align="right" valign="top"><a id="a23a45e288c1b0e415e11c24170250136"></a>
-<a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>number_of_ghost_particles_</b></td></tr>
-<tr class="separator:a23a45e288c1b0e415e11c24170250136"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a22a6328b1b1f088016b9517a244c7f46"><td class="memItemLeft" align="right" valign="top"><a id="a22a6328b1b1f088016b9517a244c7f46"></a>
-StdVec&lt; StdLargeVec&lt; Matd &gt; * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>registered_matrices_</b></td></tr>
-<tr class="separator:a22a6328b1b1f088016b9517a244c7f46"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aad78e4b624d24484008f89b1fc5c396b"><td class="memItemLeft" align="right" valign="top"><a id="aad78e4b624d24484008f89b1fc5c396b"></a>
-StdVec&lt; StdLargeVec&lt; Vecd &gt; * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>registered_vectors_</b></td></tr>
-<tr class="separator:aad78e4b624d24484008f89b1fc5c396b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0c3ade6464af5a003e66fa60be4754a1"><td class="memItemLeft" align="right" valign="top"><a id="a0c3ade6464af5a003e66fa60be4754a1"></a>
-StdVec&lt; StdLargeVec&lt; Real &gt; * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>registered_scalars_</b></td></tr>
-<tr class="separator:a0c3ade6464af5a003e66fa60be4754a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad038c8a64dac2aa9c8dfbe3fd521a451"><td class="memItemLeft" align="right" valign="top">map&lt; string, <a class="el" href="classsize__t.html">size_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#ad038c8a64dac2aa9c8dfbe3fd521a451">matrices_map_</a></td></tr>
-<tr class="separator:ad038c8a64dac2aa9c8dfbe3fd521a451"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5e727a695bede73836165289bdabbec4"><td class="memItemLeft" align="right" valign="top">map&lt; string, <a class="el" href="classsize__t.html">size_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a5e727a695bede73836165289bdabbec4">vectors_map_</a></td></tr>
-<tr class="separator:a5e727a695bede73836165289bdabbec4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4228cd77f306e84e804c12374488f318"><td class="memItemLeft" align="right" valign="top">map&lt; string, <a class="el" href="classsize__t.html">size_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a4228cd77f306e84e804c12374488f318">scalars_map_</a></td></tr>
-<tr class="separator:a4228cd77f306e84e804c12374488f318"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4fe4aca3d6289cb33932490c8262ab14"><td class="memItemLeft" align="right" valign="top">StdVec&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a4fe4aca3d6289cb33932490c8262ab14">matrices_to_write_</a></td></tr>
-<tr class="separator:a4fe4aca3d6289cb33932490c8262ab14"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af28e463a6f94c26c6e1de33b07c19b3d"><td class="memItemLeft" align="right" valign="top">StdVec&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#af28e463a6f94c26c6e1de33b07c19b3d">vectors_to_write_</a></td></tr>
-<tr class="separator:af28e463a6f94c26c6e1de33b07c19b3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa83976ba6da5ad894f4f8a6f5e777d0d"><td class="memItemLeft" align="right" valign="top">StdVec&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#aa83976ba6da5ad894f4f8a6f5e777d0d">scalars_to_write_</a></td></tr>
-<tr class="separator:aa83976ba6da5ad894f4f8a6f5e777d0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9605682a266238420c90af7123dc3746"><td class="memItemLeft" align="right" valign="top"><a id="a9605682a266238420c90af7123dc3746"></a>
+<a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>total_ghost_particles_</b></td></tr>
+<tr class="separator:a9605682a266238420c90af7123dc3746"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ff104e070c2a8eab7eb508c0e771e16"><td class="memItemLeft" align="right" valign="top"><a id="a5ff104e070c2a8eab7eb508c0e771e16"></a>
+<a class="el" href="namespace_s_p_h.html#a25348a626f1536e232c52f9717945f59">ParticleData</a>&#160;</td><td class="memItemRight" valign="bottom"><b>all_particle_data_</b></td></tr>
+<tr class="separator:a5ff104e070c2a8eab7eb508c0e771e16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a223559c22f21f69c05bd630421848111"><td class="memItemLeft" align="right" valign="top"><a id="a223559c22f21f69c05bd630421848111"></a>
+<a class="el" href="namespace_s_p_h.html#ad964bd16bd649c1ee72aa32164405435">ParticleDataMap</a>&#160;</td><td class="memItemRight" valign="bottom"><b>all_variable_maps_</b></td></tr>
+<tr class="separator:a223559c22f21f69c05bd630421848111"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9791271d7da2a1266a2853b6158b2b14"><td class="memItemLeft" align="right" valign="top"><a id="a9791271d7da2a1266a2853b6158b2b14"></a>
 StdLargeVec&lt; <a class="el" href="classsize__t.html">size_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>sequence_</b></td></tr>
 <tr class="separator:a9791271d7da2a1266a2853b6158b2b14"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -191,63 +215,70 @@ StdLargeVec&lt; <a class="el" href="classsize__t.html">size_t</a> &gt;&#160;</td
 <tr class="memitem:ab304f934ce3fda6317fdc21a169ed8d7"><td class="memItemLeft" align="right" valign="top"><a id="ab304f934ce3fda6317fdc21a169ed8d7"></a>
 StdLargeVec&lt; <a class="el" href="classsize__t.html">size_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>unsorted_id_</b></td></tr>
 <tr class="separator:ab304f934ce3fda6317fdc21a169ed8d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abbca79c52ca983e4b5c3bd0b476339ea"><td class="memItemLeft" align="right" valign="top"><a id="abbca79c52ca983e4b5c3bd0b476339ea"></a>
-StdVec&lt; StdLargeVec&lt; Matd &gt; * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>sortable_matrices_</b></td></tr>
-<tr class="separator:abbca79c52ca983e4b5c3bd0b476339ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa1355aceffd946d0a20f489e13183f04"><td class="memItemLeft" align="right" valign="top"><a id="aa1355aceffd946d0a20f489e13183f04"></a>
-StdVec&lt; StdLargeVec&lt; Vecd &gt; * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>sortable_vectors_</b></td></tr>
-<tr class="separator:aa1355aceffd946d0a20f489e13183f04"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a510b76a582421c6f1df0a09d628a1a48"><td class="memItemLeft" align="right" valign="top"><a id="a510b76a582421c6f1df0a09d628a1a48"></a>
-StdVec&lt; StdLargeVec&lt; Real &gt; * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>sortable_scalars_</b></td></tr>
-<tr class="separator:a510b76a582421c6f1df0a09d628a1a48"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade9fa03e07902618072b4e2ecd0869ef"><td class="memItemLeft" align="right" valign="top"><a id="ade9fa03e07902618072b4e2ecd0869ef"></a>
+<a class="el" href="namespace_s_p_h.html#a25348a626f1536e232c52f9717945f59">ParticleData</a>&#160;</td><td class="memItemRight" valign="bottom"><b>sortable_data_</b></td></tr>
+<tr class="separator:ade9fa03e07902618072b4e2ecd0869ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac5b2d5e1c8db1e5876865faa89036130"><td class="memItemLeft" align="right" valign="top"><a id="ac5b2d5e1c8db1e5876865faa89036130"></a>
+<a class="el" href="namespace_s_p_h.html#ad964bd16bd649c1ee72aa32164405435">ParticleDataMap</a>&#160;</td><td class="memItemRight" valign="bottom"><b>sortable_variable_maps_</b></td></tr>
+<tr class="separator:ac5b2d5e1c8db1e5876865faa89036130"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
+<tr class="memitem:af2bf8e6505a26f4d9612135721a4961a"><td class="memItemLeft" align="right" valign="top"><a id="af2bf8e6505a26f4d9612135721a4961a"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>writePltFileHeader</b> (std::ofstream &amp;output_file)</td></tr>
+<tr class="separator:af2bf8e6505a26f4d9612135721a4961a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa1dafb593251d9dab994e04916e511dd"><td class="memItemLeft" align="right" valign="top"><a id="aa1dafb593251d9dab994e04916e511dd"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>writePltFileParticleData</b> (std::ofstream &amp;output_file, <a class="el" href="classsize__t.html">size_t</a> index_i)</td></tr>
+<tr class="separator:aa1dafb593251d9dab994e04916e511dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a94811df42700d9696b4f94264163c071"><td class="memTemplParams" colspan="2">template&lt;int DataTypeIndex, typename VariableType &gt; </td></tr>
+<tr class="memitem:a94811df42700d9696b4f94264163c071"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a94811df42700d9696b4f94264163c071">addAVariableNameToList</a> (<a class="el" href="namespace_s_p_h.html#a058f422301dc6671883a7ca3ef568075">ParticleVariableList</a> &amp;variable_name_list, std::string variable_name)</td></tr>
+<tr class="separator:a94811df42700d9696b4f94264163c071"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
 <tr class="memitem:a6c1c4100b6ee5f1691c1f719cdfb4f9c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html#a6c1c4100b6ee5f1691c1f719cdfb4f9c">body_</a></td></tr>
 <tr class="separator:a6c1c4100b6ee5f1691c1f719cdfb4f9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae0977d6d0bf5383d48776ecb598faada"><td class="memItemLeft" align="right" valign="top"><a id="ae0977d6d0bf5383d48776ecb598faada"></a>
-string&#160;</td><td class="memItemRight" valign="bottom"><b>body_name_</b></td></tr>
-<tr class="separator:ae0977d6d0bf5383d48776ecb598faada"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1da9f412b64791328fb8660754272c37"><td class="memItemLeft" align="right" valign="top"><a id="a1da9f412b64791328fb8660754272c37"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>body_name_</b></td></tr>
+<tr class="separator:a1da9f412b64791328fb8660754272c37"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af45ad736a13263d4227e443f445123ea"><td class="memItemLeft" align="right" valign="top"><a id="af45ad736a13263d4227e443f445123ea"></a>
+<a class="el" href="class_s_p_h_1_1_xml_engine.html">XmlEngine</a>&#160;</td><td class="memItemRight" valign="bottom"><b>restart_xml_engine_</b></td></tr>
+<tr class="separator:af45ad736a13263d4227e443f445123ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5bd3c18d4b179076a7fbc3f92688e236"><td class="memItemLeft" align="right" valign="top"><a id="a5bd3c18d4b179076a7fbc3f92688e236"></a>
+<a class="el" href="class_s_p_h_1_1_xml_engine.html">XmlEngine</a>&#160;</td><td class="memItemRight" valign="bottom"><b>reload_xml_engine_</b></td></tr>
+<tr class="separator:a5bd3c18d4b179076a7fbc3f92688e236"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a595aa6b13d6d987e7febf2c43be042a1"><td class="memItemLeft" align="right" valign="top"><a id="a595aa6b13d6d987e7febf2c43be042a1"></a>
+<a class="el" href="namespace_s_p_h.html#a058f422301dc6671883a7ca3ef568075">ParticleVariableList</a>&#160;</td><td class="memItemRight" valign="bottom"><b>variables_to_write_</b></td></tr>
+<tr class="separator:a595aa6b13d6d987e7febf2c43be042a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a230a6f05b5ece7f81b00ea8f9b3ac6d8"><td class="memItemLeft" align="right" valign="top"><a id="a230a6f05b5ece7f81b00ea8f9b3ac6d8"></a>
+<a class="el" href="namespace_s_p_h.html#a058f422301dc6671883a7ca3ef568075">ParticleVariableList</a>&#160;</td><td class="memItemRight" valign="bottom"><b>variables_to_restart_</b></td></tr>
+<tr class="separator:a230a6f05b5ece7f81b00ea8f9b3ac6d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Particles with essential (geometric and kinematic) data. There are three types of particles. One is real particles whose states are updated by particle dynamics. One is buffer particles whose state are not updated by particle dynamics. They may be switched from real particles or switch to real particles. The other is ghost particles whose states are updated according to boundary condition if their indices are included in the neighbor particle list. <br  />
- </p>
+<div class="textblock"><p>Particles with essential (geometric and kinematic) data. There are three types of particles， all particles of a same type are saved with continuous memory segments. The first type is real particles whose states are updated by particle dynamics. One is buffer particles whose state are not updated by particle dynamics. Buffer particles are saved behind real particles. The global value of total_real_particles_ separate the real and buffer particles. They may be switched from real particles or switch to real particles. As the memory for both particles are continuous, such switch is achieved at the memory boundary sequentially. The basic idea is swap the data of the last real particle with the one will be switched particle, and then switch this swapped last particle as buffer particle by decrease the total_real_particles_ by one. Switch from buffer particle to real particle is easy. One just need to assign expect state to the first buffer particle and increase total_real_particles_ by one. The other is ghost particles whose states are updated according to boundary condition if their indices are included in the neighbor particle list. The ghost particles are saved behind the buffer particles. The global value of real_particles_bound_ separate the sum of real and buffer particles with ghost particles. The global value of total_ghost_particles_ indicates the total number of ghost particles in use. It will be initialized to zero before a time step. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a503fbe475524e8544ece23013515d7f6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a503fbe475524e8544ece23013515d7f6">&#9670;&nbsp;</a></span>addABufferParticle()</h2>
+<a id="a94811df42700d9696b4f94264163c071"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a94811df42700d9696b4f94264163c071">&#9670;&nbsp;</a></span>addAVariableNameToList()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;int DataTypeIndex, typename VariableType &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void SPH::BaseParticles::addABufferParticle </td>
+          <td class="memname">void SPH::BaseParticles::addAVariableNameToList </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Add buffer particles which latter may be realized for particle dynamics, or used as ghost particle. </p>
-
-</div>
-</div>
-<a id="a88f56a5392d851bf25ea7fa9cf09842a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a88f56a5392d851bf25ea7fa9cf09842a">&#9670;&nbsp;</a></span>copyFromAnotherParticle()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void SPH::BaseParticles::copyFromAnotherParticle </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classsize__t.html">size_t</a>&#160;</td>
-          <td class="paramname"><em>this_index</em>, </td>
+          <td class="paramtype"><a class="el" href="namespace_s_p_h.html#a058f422301dc6671883a7ca3ef568075">ParticleVariableList</a> &amp;&#160;</td>
+          <td class="paramname"><em>variable_name_list</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classsize__t.html">size_t</a>&#160;</td>
-          <td class="paramname"><em>another_index</em>&#160;</td>
+          <td class="paramtype">std::string&#160;</td>
+          <td class="paramname"><em>variable_name</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -255,8 +286,120 @@ string&#160;</td><td class="memItemRight" valign="bottom"><b>body_name_</b></td>
           <td></td><td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
-<p>Copy physical state from another particle </p>
+<p>add a variable into a particle vairable name list </p>
+
+</div>
+</div>
+<a id="a0bfbad4c717e63466ba19c25e2f0d921"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0bfbad4c717e63466ba19c25e2f0d921">&#9670;&nbsp;</a></span>addAVariableToWrite()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int DataTypeIndex, typename VariableType &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SPH::BaseParticles::addAVariableToWrite </td>
+          <td>(</td>
+          <td class="paramtype">std::string&#160;</td>
+          <td class="paramname"><em>variable_name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>add a variable into the list for state output </p>
+
+</div>
+</div>
+<a id="a603b1f4b21d060ef0a036e341578bbe1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a603b1f4b21d060ef0a036e341578bbe1">&#9670;&nbsp;</a></span>createAVariable() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int DataTypeIndex, typename VariableType &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">StdLargeVec&lt;<a class="el" href="class_variable_type.html">VariableType</a>&gt;* SPH::BaseParticles::createAVariable </td>
+          <td>(</td>
+          <td class="paramtype">std::string&#160;</td>
+          <td class="paramname"><em>new_variable_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::string&#160;</td>
+          <td class="paramname"><em>old_variable_name</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>create and register a new variable, which has not been defined yet in particles, by copying data from an exist variable </p>
+
+</div>
+</div>
+<a id="ae9a9d99734c972e6cf1e4d9689545487"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae9a9d99734c972e6cf1e4d9689545487">&#9670;&nbsp;</a></span>createAVariable() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int DataTypeIndex, typename VariableType &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">StdLargeVec&lt;<a class="el" href="class_variable_type.html">VariableType</a>&gt;* SPH::BaseParticles::createAVariable </td>
+          <td>(</td>
+          <td class="paramtype">std::string&#160;</td>
+          <td class="paramname"><em>new_variable_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="class_variable_type.html">VariableType</a>&#160;</td>
+          <td class="paramname"><em>initial_value</em> = <code><a class="el" href="class_variable_type.html">VariableType</a>(0)</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Create and register a new variable which has not been defined yet in particles. If the variable is registered already, the registered variable will be returned. </p>
 
 </div>
 </div>
@@ -311,19 +454,22 @@ string&#160;</td><td class="memItemRight" valign="bottom"><b>body_name_</b></td>
 
 </div>
 </div>
-<a id="a3e1459f06c7b5bb9886ed642984a5c22"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3e1459f06c7b5bb9886ed642984a5c22">&#9670;&nbsp;</a></span>getSPHBody()</h2>
+<a id="a6dc2dba5a7b84f2e814fba642ea8cba0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6dc2dba5a7b84f2e814fba642ea8cba0">&#9670;&nbsp;</a></span>getVariableByName()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;int DataTypeIndex, typename VariableType &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a>* SPH::BaseParticles::getSPHBody </td>
+          <td class="memname">StdLargeVec&lt;<a class="el" href="class_variable_type.html">VariableType</a>&gt;* SPH::BaseParticles::getVariableByName </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype">std::string&#160;</td>
+          <td class="paramname"><em>variable_name</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -333,36 +479,7 @@ string&#160;</td><td class="memItemRight" valign="bottom"><b>body_name_</b></td>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>access the sph body </p>
-
-</div>
-</div>
-<a id="a27f6cbf386ec96c5b85cb214db9705af"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a27f6cbf386ec96c5b85cb214db9705af">&#9670;&nbsp;</a></span>initializeABaseParticle()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void SPH::BaseParticles::initializeABaseParticle </td>
-          <td>(</td>
-          <td class="paramtype">Vecd&#160;</td>
-          <td class="paramname"><em>pnt</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">Real&#160;</td>
-          <td class="paramname"><em>Vol_0</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Initialize a base particle by input a postion, volume and reference number density. </p>
+<p>get a registered variable from particles by its name </p>
 
 </div>
 </div>
@@ -381,7 +498,6 @@ string&#160;</td><td class="memItemRight" valign="bottom"><b>body_name_</b></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Insert a ghost particle into the particle list. </p>
 <p>For a ghost particle, its sorted id is that of corresponding real particle.</p>
 <p>For a ghost particle, its sorted id is that of corresponding real particle.</p>
 
@@ -426,99 +542,42 @@ string&#160;</td><td class="memItemRight" valign="bottom"><b>body_name_</b></td>
 
 </div>
 </div>
-<a id="a4abda61ce9e220e98ef008d976b4bdd5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4abda61ce9e220e98ef008d976b4bdd5">&#9670;&nbsp;</a></span>pointToThisObject()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> * SPH::BaseParticles::pointToThisObject </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Pointer to this object. </p>
-
-<p>Reimplemented in <a class="el" href="class_s_p_h_1_1_active_muscle_particles.html#a5f9989eab7a27602765dedff892c031d">SPH::ActiveMuscleParticles</a>, <a class="el" href="class_s_p_h_1_1_elastic_solid_particles.html#abb59fe87f3692f923bd9ebcb5fea66ea">SPH::ElasticSolidParticles</a>, <a class="el" href="class_s_p_h_1_1_viscoelastic_fluid_particles.html#a3b4ab2189c04c4fb7f1c8bcab34fd439">SPH::ViscoelasticFluidParticles</a>, <a class="el" href="class_s_p_h_1_1_solid_particles.html#a82990cbb85a8829262f112b165a2a7fb">SPH::SolidParticles</a>, and <a class="el" href="class_s_p_h_1_1_fluid_particles.html#acba6d4578eb5126f7653d5bd6129ae5c">SPH::FluidParticles</a>.</p>
-
-</div>
-</div>
-<a id="a3234b920653432073f4feecc10f09409"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3234b920653432073f4feecc10f09409">&#9670;&nbsp;</a></span>readFromXmlForReloadParticle()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void SPH::BaseParticles::readFromXmlForReloadParticle </td>
-          <td>(</td>
-          <td class="paramtype">std::string &amp;&#160;</td>
-          <td class="paramname"><em>filefullpath</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Reload particle position and volume from XML files. </p>
-
-<p>Reimplemented in <a class="el" href="class_s_p_h_1_1_solid_particles.html#ae4e6f953deaabff0e8aed792a0094e3c">SPH::SolidParticles</a>.</p>
-
-</div>
-</div>
-<a id="a1b2edff6c6dfdc1b4f20d561af80cdd0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1b2edff6c6dfdc1b4f20d561af80cdd0">&#9670;&nbsp;</a></span>readParticleFromXmlForRestart()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual void SPH::BaseParticles::readParticleFromXmlForRestart </td>
-          <td>(</td>
-          <td class="paramtype">std::string &amp;&#160;</td>
-          <td class="paramname"><em>filefullpath</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Initialize particle data from restart xml file. </p>
-
-<p>Reimplemented in <a class="el" href="class_s_p_h_1_1_active_muscle_particles.html#ab512618b584f929e1900b7ec71f0e9de">SPH::ActiveMuscleParticles</a>, <a class="el" href="class_s_p_h_1_1_elastic_solid_particles.html#abfa2c63714d19460576333471bf486f5">SPH::ElasticSolidParticles</a>, <a class="el" href="class_s_p_h_1_1_viscoelastic_fluid_particles.html#a8a25abcc533e948c9a266e714cf75465">SPH::ViscoelasticFluidParticles</a>, <a class="el" href="class_s_p_h_1_1_solid_particles.html#add65cbb89f41f21b06c5b970bed5a17d">SPH::SolidParticles</a>, and <a class="el" href="class_s_p_h_1_1_fluid_particles.html#a00787d57e1a0d3a1548583759e46e04c">SPH::FluidParticles</a>.</p>
-
-</div>
-</div>
-<a id="aed26b7bc44f41c4474ab97acea2228a4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aed26b7bc44f41c4474ab97acea2228a4">&#9670;&nbsp;</a></span>registerAVariable()</h2>
+<a id="a2e3222c982fea6397f428581109f3eab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e3222c982fea6397f428581109f3eab">&#9670;&nbsp;</a></span>registerASortableVariable()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename VariableType &gt; </div>
+template&lt;int DataTypeIndex, typename VariableType &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SPH::BaseParticles::registerASortableVariable </td>
+          <td>(</td>
+          <td class="paramtype">std::string&#160;</td>
+          <td class="paramname"><em>variable_name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>register an already defined variable as sortable </p>
+
+</div>
+</div>
+<a id="a7eda51aeb6fc94339f9d28575a0df063"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7eda51aeb6fc94339f9d28575a0df063">&#9670;&nbsp;</a></span>registerAVariable()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;int DataTypeIndex, typename VariableType &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -526,44 +585,20 @@ template&lt;typename VariableType &gt; </div>
         <tr>
           <td class="memname">void SPH::BaseParticles::registerAVariable </td>
           <td>(</td>
-          <td class="paramtype">StdLargeVec&lt; VariableType &gt; &amp;&#160;</td>
+          <td class="paramtype">StdLargeVec&lt; <a class="el" href="class_variable_type.html">VariableType</a> &gt; &amp;&#160;</td>
           <td class="paramname"><em>variable_addrs</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">StdVec&lt; StdLargeVec&lt; VariableType &gt; * &gt; &amp;&#160;</td>
-          <td class="paramname"><em>registered_variables</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">map&lt; string, <a class="el" href="classsize__t.html">size_t</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>name_map</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">StdVec&lt; string &gt; &amp;&#160;</td>
-          <td class="paramname"><em>variable_to_write</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">string&#160;</td>
+          <td class="paramtype">std::string&#160;</td>
           <td class="paramname"><em>variable_name</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classbool.html">bool</a>&#160;</td>
-          <td class="paramname"><em>is_to_write</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">VariableType&#160;</td>
-          <td class="paramname"><em>initial_value</em> = <code>VariableType(0)</code>&#160;</td>
+          <td class="paramtype"><a class="el" href="class_variable_type.html">VariableType</a>&#160;</td>
+          <td class="paramname"><em>initial_value</em> = <code><a class="el" href="class_variable_type.html">VariableType</a>(0)</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -577,70 +612,31 @@ template&lt;typename VariableType &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>register a variable into particles </p>
+<p>register a variable defined in a class (can be non-particle class) to base particles </p>
 
 </div>
 </div>
-<a id="afbf782f2e698af1e91cb6570a4c43184"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afbf782f2e698af1e91cb6570a4c43184">&#9670;&nbsp;</a></span>updateFromAnotherParticle()</h2>
+<a id="af56c3d9d2de8bcd3811c77689101a352"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af56c3d9d2de8bcd3811c77689101a352">&#9670;&nbsp;</a></span>writeParticlesToPltFile()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void SPH::BaseParticles::updateFromAnotherParticle </td>
+          <td class="memname">void SPH::BaseParticles::writeParticlesToPltFile </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classsize__t.html">size_t</a>&#160;</td>
-          <td class="paramname"><em>this_index</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classsize__t.html">size_t</a>&#160;</td>
-          <td class="paramname"><em>another_index</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Update physical state of a particle from another particle </p>
-
-</div>
-</div>
-<a id="a4dd8cd04c7911fd2bdb2b1613e453cda"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4dd8cd04c7911fd2bdb2b1613e453cda">&#9670;&nbsp;</a></span>writeParticlesToPltFile()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual void SPH::BaseParticles::writeParticlesToPltFile </td>
-          <td>(</td>
-          <td class="paramtype">ofstream &amp;&#160;</td>
+          <td class="paramtype">std::ofstream &amp;&#160;</td>
           <td class="paramname"><em>output_file</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 <p>Write particle data in PLT format for Tecplot. </p>
 
-<p>Reimplemented in <a class="el" href="class_s_p_h_1_1_active_muscle_particles.html#a9034d38c86832e721978efac05a3752c">SPH::ActiveMuscleParticles</a>, <a class="el" href="class_s_p_h_1_1_elastic_solid_particles.html#a82251377f1664edd773ce785b72c7f89">SPH::ElasticSolidParticles</a>, <a class="el" href="class_s_p_h_1_1_viscoelastic_fluid_particles.html#ab2addee4ccb70ddf1aa7af38517df0d0">SPH::ViscoelasticFluidParticles</a>, <a class="el" href="class_s_p_h_1_1_solid_particles.html#a5963a284e3ef90fa191e96894ed8153e">SPH::SolidParticles</a>, and <a class="el" href="class_s_p_h_1_1_fluid_particles.html#a331f334f387e9e9f0663b7ea0cc124c2">SPH::FluidParticles</a>.</p>
-
 </div>
 </div>
-<a id="a589c1a5daef87250e7c1cb7ff3311189"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a589c1a5daef87250e7c1cb7ff3311189">&#9670;&nbsp;</a></span>writeParticlesToVtuFile()</h2>
+<a id="a2b77e1d04a5955cee741defc108c1b75"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2b77e1d04a5955cee741defc108c1b75">&#9670;&nbsp;</a></span>writeParticlesToVtuFile()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -651,7 +647,7 @@ template&lt;typename VariableType &gt; </div>
         <tr>
           <td class="memname">void SPH::BaseParticles::writeParticlesToVtuFile </td>
           <td>(</td>
-          <td class="paramtype">ofstream &amp;&#160;</td>
+          <td class="paramtype">std::ofstream &amp;&#160;</td>
           <td class="paramname"><em>output_file</em></td><td>)</td>
           <td></td>
         </tr>
@@ -664,63 +660,7 @@ template&lt;typename VariableType &gt; </div>
 </div><div class="memdoc">
 <p>Write particle data in VTU format for Paraview. </p>
 
-<p>Reimplemented in <a class="el" href="class_s_p_h_1_1_active_muscle_particles.html#a7322408c5c2aa007949d47a37c062327">SPH::ActiveMuscleParticles</a>, <a class="el" href="class_s_p_h_1_1_elastic_solid_particles.html#aba7f48bd7c9d764384434897ba716dec">SPH::ElasticSolidParticles</a>, and <a class="el" href="class_s_p_h_1_1_viscoelastic_fluid_particles.html#a07617152940b306b8c9fcd8c059b51ca">SPH::ViscoelasticFluidParticles</a>.</p>
-
-</div>
-</div>
-<a id="a4ce04f417c47bd56a0744c4db7cd31e8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4ce04f417c47bd56a0744c4db7cd31e8">&#9670;&nbsp;</a></span>writeParticlesToXmlForRestart()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual void SPH::BaseParticles::writeParticlesToXmlForRestart </td>
-          <td>(</td>
-          <td class="paramtype">std::string &amp;&#160;</td>
-          <td class="paramname"><em>filefullpath</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Write particle data in XML format for restart. </p>
-
-<p>Reimplemented in <a class="el" href="class_s_p_h_1_1_active_muscle_particles.html#aecafae026f55332989c4b744773c3936">SPH::ActiveMuscleParticles</a>, <a class="el" href="class_s_p_h_1_1_elastic_solid_particles.html#aa982aecc3afd71caf50fc5420005b585">SPH::ElasticSolidParticles</a>, <a class="el" href="class_s_p_h_1_1_viscoelastic_fluid_particles.html#ac30c0347f110c24080d24ccb4e2041d0">SPH::ViscoelasticFluidParticles</a>, <a class="el" href="class_s_p_h_1_1_solid_particles.html#a5b596652f9704f4fb6e1ee82dd20c592">SPH::SolidParticles</a>, and <a class="el" href="class_s_p_h_1_1_fluid_particles.html#ace4660ba0932ac063b985a32252fadf2">SPH::FluidParticles</a>.</p>
-
-</div>
-</div>
-<a id="a5432ee0e4a327e2025b6462ed0b715f8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5432ee0e4a327e2025b6462ed0b715f8">&#9670;&nbsp;</a></span>writeToXmlForReloadParticle()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void SPH::BaseParticles::writeToXmlForReloadParticle </td>
-          <td>(</td>
-          <td class="paramtype">std::string &amp;&#160;</td>
-          <td class="paramname"><em>filefullpath</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Output particle position and volume in XML file for reloading particles. </p>
+<p>Reimplemented in <a class="el" href="class_s_p_h_1_1_elastic_solid_particles.html#adf465e0d090733967147060ff469d8f0">SPH::ElasticSolidParticles</a>.</p>
 
 </div>
 </div>
@@ -736,7 +676,7 @@ template&lt;typename VariableType &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Base material corresponding to base particles </p>
+<p>for dynamic cast in particle data delegation </p>
 
 </div>
 </div>
@@ -789,7 +729,7 @@ template&lt;typename VariableType &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>other, such as gravity and viscous acceleration </p>
+<p>other, such as gravity and viscous, accelerations </p>
 
 </div>
 </div>
@@ -805,36 +745,6 @@ template&lt;typename VariableType &gt; </div>
       </table>
 </div><div class="memdoc">
 <p>particle mass </p>
-
-</div>
-</div>
-<a id="ad038c8a64dac2aa9c8dfbe3fd521a451"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad038c8a64dac2aa9c8dfbe3fd521a451">&#9670;&nbsp;</a></span>matrices_map_</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">map&lt;string, <a class="el" href="classsize__t.html">size_t</a>&gt; SPH::BaseParticles::matrices_map_</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Map from matrix names to indexes. </p>
-
-</div>
-</div>
-<a id="a4fe4aca3d6289cb33932490c8262ab14"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4fe4aca3d6289cb33932490c8262ab14">&#9670;&nbsp;</a></span>matrices_to_write_</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">StdVec&lt;string&gt; SPH::BaseParticles::matrices_to_write_</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>matrix variables to be written in file </p>
 
 </div>
 </div>
@@ -879,7 +789,7 @@ template&lt;typename VariableType &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>global reference density </p>
+<p>reference density </p>
 
 </div>
 </div>
@@ -898,36 +808,6 @@ template&lt;typename VariableType &gt; </div>
 
 </div>
 </div>
-<a id="a4228cd77f306e84e804c12374488f318"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4228cd77f306e84e804c12374488f318">&#9670;&nbsp;</a></span>scalars_map_</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">map&lt;string, <a class="el" href="classsize__t.html">size_t</a>&gt; SPH::BaseParticles::scalars_map_</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Map from scalar names to indexes. </p>
-
-</div>
-</div>
-<a id="aa83976ba6da5ad894f4f8a6f5e777d0d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa83976ba6da5ad894f4f8a6f5e777d0d">&#9670;&nbsp;</a></span>scalars_to_write_</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">StdVec&lt;string&gt; SPH::BaseParticles::scalars_to_write_</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>scalar variables to be written in file </p>
-
-</div>
-</div>
 <a id="a6e91adfca7218a340b59f6f1089d54d4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6e91adfca7218a340b59f6f1089d54d4">&#9670;&nbsp;</a></span>sigma_0_</h2>
 
@@ -939,7 +819,7 @@ template&lt;typename VariableType &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>global reference number density. </p>
+<p>reference number density. </p>
 
 </div>
 </div>
@@ -970,36 +850,6 @@ template&lt;typename VariableType &gt; </div>
       </table>
 </div><div class="memdoc">
 <p>Maximum particle speed. </p>
-
-</div>
-</div>
-<a id="a5e727a695bede73836165289bdabbec4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5e727a695bede73836165289bdabbec4">&#9670;&nbsp;</a></span>vectors_map_</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">map&lt;string, <a class="el" href="classsize__t.html">size_t</a>&gt; SPH::BaseParticles::vectors_map_</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Map from vector names to indexes. </p>
-
-</div>
-</div>
-<a id="af28e463a6f94c26c6e1de33b07c19b3d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af28e463a6f94c26c6e1de33b07c19b3d">&#9670;&nbsp;</a></span>vectors_to_write_</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">StdVec&lt;string&gt; SPH::BaseParticles::vectors_to_write_</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>vactor variables to be written in file </p>
 
 </div>
 </div>

@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>SPHinXsys: SPH::MultilevelMesh&lt; BaseMeshType, MeshLevelType &gt; Class Template Reference</title>
+<title>SPHinXsys: SPH::MultilevelMesh&lt; MeshCompositionType, BaseMeshType, MeshLevelType &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -69,15 +69,14 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="class_s_p_h_1_1_multilevel_mesh-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">SPH::MultilevelMesh&lt; BaseMeshType, MeshLevelType &gt; Class Template Reference</div>  </div>
+<div class="title">SPH::MultilevelMesh&lt; MeshCompositionType, BaseMeshType, MeshLevelType &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Multi level Meshes with multi resolution mesh data.  
+<p>Multi level Meshes with successively double the resolutions.  
  <a href="class_s_p_h_1_1_multilevel_mesh.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="base__mesh_8h_source.html">base_mesh.h</a>&gt;</code></p>
@@ -86,57 +85,63 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a573d18b2a552ee2a4d9bdfdabf7dbc22"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_multilevel_mesh.html#a573d18b2a552ee2a4d9bdfdabf7dbc22">MultilevelMesh</a> (Vecd lower_bound, Vecd upper_bound, Real reference_cell_spacing, <a class="el" href="classsize__t.html">size_t</a> total_levels, <a class="el" href="classsize__t.html">size_t</a> buffer_width=0)</td></tr>
-<tr class="separator:a573d18b2a552ee2a4d9bdfdabf7dbc22"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:afa64abed6b88dc6e82de2cdcd62c4a10"><td class="memItemLeft" align="right" valign="top">StdVec&lt; MeshLevelType * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_multilevel_mesh.html#afa64abed6b88dc6e82de2cdcd62c4a10">mesh_levels_</a></td></tr>
-<tr class="separator:afa64abed6b88dc6e82de2cdcd62c4a10"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c25698f1f6a8224fa0d9d25d251e47f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_multilevel_mesh.html#a9c25698f1f6a8224fa0d9d25d251e47f">MultilevelMesh</a> (MeshCompositionType &amp;mesh_composition, <a class="el" href="class_s_p_h_1_1_particle_adaptation.html">ParticleAdaptation</a> &amp;particle_adaptation, <a class="el" href="namespace_s_p_h.html#ad185cdeb05bdee76bf975cc50f1c15b7">BoundingBox</a> tentative_bounds, Real reference_spacing, <a class="el" href="classsize__t.html">size_t</a> total_levels, Real maximum_spacing_ratio, <a class="el" href="classsize__t.html">size_t</a> buffer_width)</td></tr>
+<tr class="separator:a9c25698f1f6a8224fa0d9d25d251e47f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d5b140e8b8caa3c54e5a7255cd8955a"><td class="memItemLeft" align="right" valign="top"><a id="a3d5b140e8b8caa3c54e5a7255cd8955a"></a>
+StdVec&lt; MeshLevelType * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>getMeshLevels</b> ()</td></tr>
+<tr class="separator:a3d5b140e8b8caa3c54e5a7255cd8955a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a06b262f4d760545b5a31f9d6fc946260"><td class="memItemLeft" align="right" valign="top"><a id="a06b262f4d760545b5a31f9d6fc946260"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>writeMeshToPltFile</b> (std::ofstream &amp;output_file) override</td></tr>
+<tr class="separator:a06b262f4d760545b5a31f9d6fc946260"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
-<tr class="memitem:a517ea40629723ea3280632c581dd2cda"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_multilevel_mesh.html#a517ea40629723ea3280632c581dd2cda">total_levels_</a></td></tr>
-<tr class="separator:a517ea40629723ea3280632c581dd2cda"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad3967f97e9d1d0d607ef833dbaf8fa5e"><td class="memItemLeft" align="right" valign="top">StdVec&lt; Real &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_multilevel_mesh.html#ad3967f97e9d1d0d607ef833dbaf8fa5e">cell_spacing_levels_</a></td></tr>
-<tr class="separator:ad3967f97e9d1d0d607ef833dbaf8fa5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0e476bce39102a423ce49a78f95cff25"><td class="memItemLeft" align="right" valign="top">StdVec&lt; <a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_multilevel_mesh.html#a0e476bce39102a423ce49a78f95cff25">number_of_cells_levels_</a></td></tr>
-<tr class="separator:a0e476bce39102a423ce49a78f95cff25"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab5851c04d44fe36e84084c79b50c6878"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_multilevel_mesh.html#ab5851c04d44fe36e84084c79b50c6878">total_levels_</a></td></tr>
+<tr class="separator:ab5851c04d44fe36e84084c79b50c6878"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a05c418e450ba39667faf9f72cd25540b"><td class="memItemLeft" align="right" valign="top"><a id="a05c418e450ba39667faf9f72cd25540b"></a>
+StdVec&lt; MeshLevelType * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>mesh_levels_</b></td></tr>
+<tr class="separator:a05c418e450ba39667faf9f72cd25540b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;class BaseMeshType, class MeshLevelType&gt;<br />
-class SPH::MultilevelMesh&lt; BaseMeshType, MeshLevelType &gt;</h3>
+<div class="textblock"><h3>template&lt;class MeshCompositionType, class BaseMeshType, class MeshLevelType&gt;<br />
+class SPH::MultilevelMesh&lt; MeshCompositionType, BaseMeshType, MeshLevelType &gt;</h3>
 
-<p>Multi level Meshes with multi resolution mesh data. </p>
+<p>Multi level Meshes with successively double the resolutions. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a573d18b2a552ee2a4d9bdfdabf7dbc22"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a573d18b2a552ee2a4d9bdfdabf7dbc22">&#9670;&nbsp;</a></span>MultilevelMesh()</h2>
+<a id="a9c25698f1f6a8224fa0d9d25d251e47f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c25698f1f6a8224fa0d9d25d251e47f">&#9670;&nbsp;</a></span>MultilevelMesh()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType , class MeshLevelType &gt; </div>
+template&lt;class MeshCompositionType , class BaseMeshType , class MeshLevelType &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, MeshLevelType &gt;::<a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">MultilevelMesh</a> </td>
+          <td class="memname"><a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh</a>&lt; MeshCompositionType, <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, MeshLevelType &gt;::<a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">MultilevelMesh</a> </td>
           <td>(</td>
-          <td class="paramtype">Vecd&#160;</td>
-          <td class="paramname"><em>lower_bound</em>, </td>
+          <td class="paramtype">MeshCompositionType &amp;&#160;</td>
+          <td class="paramname"><em>mesh_composition</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Vecd&#160;</td>
-          <td class="paramname"><em>upper_bound</em>, </td>
+          <td class="paramtype"><a class="el" href="class_s_p_h_1_1_particle_adaptation.html">ParticleAdaptation</a> &amp;&#160;</td>
+          <td class="paramname"><em>particle_adaptation</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespace_s_p_h.html#ad185cdeb05bdee76bf975cc50f1c15b7">BoundingBox</a>&#160;</td>
+          <td class="paramname"><em>tentative_bounds</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">Real&#160;</td>
-          <td class="paramname"><em>reference_cell_spacing</em>, </td>
+          <td class="paramname"><em>reference_spacing</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -147,8 +152,14 @@ template&lt;class BaseMeshType , class MeshLevelType &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">Real&#160;</td>
+          <td class="paramname"><em>maximum_spacing_ratio</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype"><a class="el" href="classsize__t.html">size_t</a>&#160;</td>
-          <td class="paramname"><em>buffer_width</em> = <code>0</code>&#160;</td>
+          <td class="paramname"><em>buffer_width</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -162,26 +173,24 @@ template&lt;class BaseMeshType , class MeshLevelType &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>build the zero level mesh first.</p>
-<p>copy zero level mesh perperties to this.</p>
-<p>other levels.</p>
+<p>all mesh levels aligned at the lower bound of tentative_bounds</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
-<a id="ad3967f97e9d1d0d607ef833dbaf8fa5e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad3967f97e9d1d0d607ef833dbaf8fa5e">&#9670;&nbsp;</a></span>cell_spacing_levels_</h2>
+<a id="ab5851c04d44fe36e84084c79b50c6878"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab5851c04d44fe36e84084c79b50c6878">&#9670;&nbsp;</a></span>total_levels_</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class BaseMeshType , class MeshLevelType &gt; </div>
+template&lt;class MeshCompositionType , class BaseMeshType , class MeshLevelType &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">StdVec&lt;Real&gt; <a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, MeshLevelType &gt;::cell_spacing_levels_</td>
+          <td class="memname"><a class="el" href="classsize__t.html">size_t</a> <a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh</a>&lt; MeshCompositionType, <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, MeshLevelType &gt;::total_levels_</td>
         </tr>
       </table>
   </td>
@@ -190,74 +199,7 @@ template&lt;class BaseMeshType , class MeshLevelType &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>cell spacing for the mesh levels </p>
-
-</div>
-</div>
-<a id="afa64abed6b88dc6e82de2cdcd62c4a10"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afa64abed6b88dc6e82de2cdcd62c4a10">&#9670;&nbsp;</a></span>mesh_levels_</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class BaseMeshType , class MeshLevelType &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">StdVec&lt;MeshLevelType*&gt; <a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, MeshLevelType &gt;::mesh_levels_</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>point to every level. </p>
-
-</div>
-</div>
-<a id="a0e476bce39102a423ce49a78f95cff25"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0e476bce39102a423ce49a78f95cff25">&#9670;&nbsp;</a></span>number_of_cells_levels_</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class BaseMeshType , class MeshLevelType &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">StdVec&lt;<a class="el" href="class_s_p_h_1_1_s_vec.html">Vecu</a>&gt; <a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, MeshLevelType &gt;::number_of_cells_levels_</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>number of cells by dimension </p>
-
-</div>
-</div>
-<a id="a517ea40629723ea3280632c581dd2cda"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a517ea40629723ea3280632c581dd2cda">&#9670;&nbsp;</a></span>total_levels_</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class BaseMeshType , class MeshLevelType &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classsize__t.html">size_t</a> <a class="el" href="class_s_p_h_1_1_multilevel_mesh.html">SPH::MultilevelMesh</a>&lt; <a class="el" href="class_base_mesh_type.html">BaseMeshType</a>, MeshLevelType &gt;::total_levels_</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>total levels of the storage pyramid. </p>
+<p>level 0 is the coarsest </p>
 
 </div>
 </div>

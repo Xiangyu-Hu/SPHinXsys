@@ -76,8 +76,8 @@ $(function() {
 <li>using more meaningful names for class members, so that I do not need extra comments</li>
 <li>xml memory leaking (tried second time. Failed. Erasing XML elements will not decrease the memory usage.)</li>
 <li>user may forget impose constraint when apply an algorithm modifying velocity field</li>
-<li>clarify the body shape bound, body domain bound and its usages</li>
-<li>lower- and upper bounds can be represented by a pair (define a domain class to save bounds, size and the method to compute them, and mesh class can be derived from it, sph system can include it.)</li>
+<li>temporary and one time output, such as for level set, may open a temporary folder without related to system. <br  />
+</li>
 </ol>
 <h1>General principles on reviewing the code</h1>
 <p>SPHinXsys should be reviewed often to increase its quality continuously. The target is to achieve a good layout which arranges the corresponding classes, variables, functions, algorithms, methods and physics in reasonable way. Generally, there are several criteria, i.e. formality, locality, additivity, simplicity and consistency, to qualify the layout of a code. <br  />

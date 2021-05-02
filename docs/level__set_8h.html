@@ -86,13 +86,15 @@ $(function() {
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_level_set_data_package.html">SPH::LevelSetDataPackage</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fixed memory level set data packed in a package.  <a href="class_s_p_h_1_1_level_set_data_package.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fixed memory level set data packed in a package. Level set is the signed distance to an interface, here, the surface of a body.  <a href="class_s_p_h_1_1_level_set_data_package.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_level_set.html">SPH::BaseLevelSet</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A abstract describes a mesh with level set data packages.  <a href="class_s_p_h_1_1_base_level_set.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_level_set.html">SPH::LevelSet</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="class_s_p_h_1_1_mesh.html" title="Abstract base class for defining basic mesh properties. The mesh is proposed for several functions....">Mesh</a> with level set data as packages.  <a href="class_s_p_h_1_1_level_set.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="class_s_p_h_1_1_mesh.html" title="Abstract base class for cell-based mesh properties. The mesh is proposed for several functions....">Mesh</a> with level set data as packages.  <a href="class_s_p_h_1_1_level_set.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_multilevel_level_set.html">SPH::MultilevelLevelSet</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
@@ -103,9 +105,6 @@ Namespaces</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This is the base classes of mesh, which describe ordered and indexed data sets. Depending on application, there are different data saved on the mesh. The intersection points of mesh lines are called grid points, the element enclosed by mesh lines (2D) or faces (3D) called cells. The mesh line or face are also called cell faces. Grid points are also called cell corners. </p>
 <dl class="section author"><dt>Author</dt><dd>Chi ZHang and Xiangyu Hu </dd></dl>
-<dl class="section version"><dt>Version</dt><dd>0.1 </dd>
-<dd>
-0.2.0 Now narrow bounded levelset mesh is added to replace the whole domain background levelset mesh. </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

@@ -77,8 +77,9 @@ $(function() {
 
 <p>The topological relations between bodies are described here.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &quot;<a class="el" href="neighbor__relation_8h_source.html">neighbor_relation.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="base__body_8h_source.html">base_body.h</a>&quot;</code><br />
+<div class="textblock"><code>#include &quot;<a class="el" href="base__body_8h_source.html">base_body.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="mesh__cell__linked__list_8h_source.html">mesh_cell_linked_list.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="neighbor__relation_8h_source.html">neighbor_relation.h</a>&quot;</code><br />
 </div>
 <p><a href="body__relation_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -88,20 +89,35 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_s_p_h_1_1_body_part_particles_index.html">SPH::BodyPartParticlesIndex</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_body_base_relation.html">SPH::SPHBodyBaseRelation</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The relation within a <a class="el" href="namespace_s_p_h.html">SPH</a> body or with its contact <a class="el" href="namespace_s_p_h.html">SPH</a> bodies.  <a href="class_s_p_h_1_1_s_p_h_body_base_relation.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_s_p_h_1_1_search_range_single_resolution.html">SPH::SearchRangeSingleResolution</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_body_inner_relation.html">SPH::SPHBodyInnerRelation</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The relation within a <a class="el" href="namespace_s_p_h.html">SPH</a> body.  <a href="class_s_p_h_1_1_s_p_h_body_inner_relation.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_s_p_h_1_1_search_range_multi_resolution.html">SPH::SearchRangeMultiResolution</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_body_contact_relation.html">SPH::SPHBodyContactRelation</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The relation between a <a class="el" href="namespace_s_p_h.html">SPH</a> body and its contact <a class="el" href="namespace_s_p_h.html">SPH</a> bodies.  <a href="class_s_p_h_1_1_s_p_h_body_contact_relation.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_s_p_h_1_1_search_range_variable_smoothing_length.html">SPH::SearchRangeVariableSmoothingLength</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_solid_body_contact_relation.html">SPH::SolidBodyContactRelation</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The relation between a solid body and its contact solid bodies.  <a href="class_s_p_h_1_1_solid_body_contact_relation.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_body_relation.html">SPH::SPHBodyRelation</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The relation within a <a class="el" href="namespace_s_p_h.html">SPH</a> body or with its contact <a class="el" href="namespace_s_p_h.html">SPH</a> bodies.  <a href="class_s_p_h_1_1_s_p_h_body_relation.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_body_complex_relation.html">SPH::SPHBodyComplexRelation</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The relation within a <a class="el" href="namespace_s_p_h.html">SPH</a> body and with its contact <a class="el" href="namespace_s_p_h.html">SPH</a> bodies. The interaction is in a inner-boundary-condition fashion. Here inner interaction is different from conact interaction.  <a href="class_s_p_h_1_1_s_p_h_body_complex_relation.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_inner_body_relation.html">SPH::BaseInnerBodyRelation</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The base relation within a <a class="el" href="namespace_s_p_h.html">SPH</a> body.  <a href="class_s_p_h_1_1_base_inner_body_relation.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_inner_body_relation.html">SPH::InnerBodyRelation</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The relation within a <a class="el" href="namespace_s_p_h.html">SPH</a> body.  <a href="class_s_p_h_1_1_inner_body_relation.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_inner_body_relation_variable_smoothing_length.html">SPH::InnerBodyRelationVariableSmoothingLength</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The relation within a <a class="el" href="namespace_s_p_h.html">SPH</a> body with smoothing length adaptation.  <a href="class_s_p_h_1_1_inner_body_relation_variable_smoothing_length.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_contact_body_relation.html">SPH::BaseContactBodyRelation</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The base relation between a <a class="el" href="namespace_s_p_h.html">SPH</a> body and its contact <a class="el" href="namespace_s_p_h.html">SPH</a> bodies.  <a href="class_s_p_h_1_1_base_contact_body_relation.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_contact_body_relation.html">SPH::ContactBodyRelation</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The relation between a <a class="el" href="namespace_s_p_h.html">SPH</a> body and its contact <a class="el" href="namespace_s_p_h.html">SPH</a> bodies.  <a href="class_s_p_h_1_1_contact_body_relation.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_solid_contact_body_relation.html">SPH::SolidContactBodyRelation</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The relation between a solid body and its contact solid bodies.  <a href="class_s_p_h_1_1_solid_contact_body_relation.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_complex_body_relation.html">SPH::ComplexBodyRelation</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The relation combined an inner and a contactbody relation. The interaction is in a inner-boundary-condition fashion. Here inner interaction is different from contact interaction.  <a href="class_s_p_h_1_1_complex_body_relation.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>

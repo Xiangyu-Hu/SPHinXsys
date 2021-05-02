@@ -85,17 +85,8 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity.html">SPH::observer_dynamics::ObservingAQuantity&lt; DataType, TargetParticlesType, TrgtMemPtr &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Observering a given member data in the particles of a general body.  <a href="class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1observer__dynamics_1_1_observing_a_diffusion_reaction_quantity.html">SPH::observer_dynamics::ObservingADiffusionReactionQuantity&lt; DiffusionReactionParticlesType &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Observing a diffusion-reaction quantity from a body.  <a href="class_s_p_h_1_1observer__dynamics_1_1_observing_a_diffusion_reaction_quantity.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity.html">SPH::observer_dynamics::InterpolatingAQuantity&lt; DataType, ObserverParticlesType, TargetParticlesType, ObrsvrMemPtr, TrgtMemPtr &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">interpolate a given member data in the particles of a general body from another body  <a href="class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_diffusion_reaction_quantity.html">SPH::observer_dynamics::InterpolatingADiffusionReactionQuantity&lt; ObserverParticlesType, DiffusionReactionParticlesType, ObrsvrDataMemPtr &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">interpolate a diffusion-reaction member data in the particles of a general body from another body  <a href="class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_diffusion_reaction_quantity.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity.html">SPH::observer_dynamics::InterpolatingAQuantity&lt; DataTypeIndex, VariableType &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interpolate a given member data in the particles of a general body.  <a href="class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1observer__dynamics_1_1_correct_interpolation_kernel_weights.html">SPH::observer_dynamics::CorrectInterpolationKernelWeights</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">correct kernel weights for interpolation between general bodies  <a href="class_s_p_h_1_1observer__dynamics_1_1_correct_interpolation_kernel_weights.html#details">More...</a><br /></td></tr>
@@ -108,21 +99,14 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:a8c7137225ca94dff8f3ceaaee216c892"><td class="memTemplParams" colspan="2"><a id="a8c7137225ca94dff8f3ceaaee216c892"></a>
-template&lt;class ObserverParticlesType , class TargetParticlesType &gt; </td></tr>
-<tr class="memitem:a8c7137225ca94dff8f3ceaaee216c892"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>SPH::observer_dynamics::InterpolationDataDelegate</b> = DataDelegateContact&lt; SPHBody, ObserverParticlesType, BaseMaterial, SPHBody, TargetParticlesType &gt;</td></tr>
-<tr class="separator:a8c7137225ca94dff8f3ceaaee216c892"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af7855c8593934965a45045eccde6601a"><td class="memTemplParams" colspan="2"><a id="af7855c8593934965a45045eccde6601a"></a>
-template&lt;class TargetParticlesType &gt; </td></tr>
-<tr class="memitem:af7855c8593934965a45045eccde6601a"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>SPH::observer_dynamics::ObservationDataDelegate</b> = DataDelegateContact&lt; SPHBody, BaseParticles, BaseMaterial, SPHBody, TargetParticlesType, BaseMaterial &gt;</td></tr>
-<tr class="separator:af7855c8593934965a45045eccde6601a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b8b869d9d3af6ce44c3a32350a535e1"><td class="memItemLeft" align="right" valign="top"><a id="a9b8b869d9d3af6ce44c3a32350a535e1"></a>
+typedef DataDelegateContact&lt; SPHBody, BaseParticles, BaseMaterial, SPHBody, BaseParticles, BaseMaterial &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SPH::observer_dynamics::InterpolationContactData</b></td></tr>
+<tr class="separator:a9b8b869d9d3af6ce44c3a32350a535e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>There are the classes for observser bodies to record the state of the flow or solid in given locations. Mostly, this is done by an interpolation algorithm. <br  />
  </p>
 <dl class="section author"><dt>Author</dt><dd>Xiangyu Hu and Chi Zhang </dd></dl>
-<dl class="section version"><dt>Version</dt><dd>0.1 </dd></dl>
-<dl class="section note"><dt>Note</dt><dd>c++ knowledge : <a href="https://stackoverflow.com/questions/1120833/derived-template-class-access-to-base-class-member-data">https://stackoverflow.com/questions/1120833/derived-template-class-access-to-base-class-member-data</a> Chi ZHANG </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

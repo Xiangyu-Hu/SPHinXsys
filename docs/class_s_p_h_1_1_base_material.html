@@ -82,55 +82,69 @@ $(function() {
 
 <p><code>#include &lt;<a class="el" href="base__material_8h_source.html">base_material.h</a>&gt;</code></p>
 
-<p>Inherited by <a class="el" href="class_s_p_h_1_1_diffusion_reaction_material.html">SPH::DiffusionReactionMaterial&lt; BaseParticlesType, BaseMaterialType &gt;</a>, <a class="el" href="class_s_p_h_1_1_fluid.html">SPH::Fluid</a>, and <a class="el" href="class_s_p_h_1_1_solid.html">SPH::Solid</a>.</p>
+<p>Inherited by <a class="el" href="class_s_p_h_1_1_base_diffusion.html">SPH::BaseDiffusion</a>, <a class="el" href="class_s_p_h_1_1_diffusion_reaction_material.html">SPH::DiffusionReactionMaterial&lt; BaseParticlesType, BaseMaterialType &gt;</a>, <a class="el" href="class_s_p_h_1_1_fluid.html">SPH::Fluid</a>, and <a class="el" href="class_s_p_h_1_1_solid.html">SPH::Solid</a>.</p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a91271cddaf1b58ef2ff6ba6ccb0f8938"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_material.html#a91271cddaf1b58ef2ff6ba6ccb0f8938">BaseMaterial</a> ()</td></tr>
-<tr class="separator:a91271cddaf1b58ef2ff6ba6ccb0f8938"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6fcb03a399882c2e79dfcbc43bcef567"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_material.html#a6fcb03a399882c2e79dfcbc43bcef567">assignBaseParticles</a> (<a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *base_particles)</td></tr>
-<tr class="separator:a6fcb03a399882c2e79dfcbc43bcef567"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5e31ac9e275cb3256668e99fb2eb79f1"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="class_s_p_h_1_1_base_material.html">BaseMaterial</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_material.html#a5e31ac9e275cb3256668e99fb2eb79f1">pointToThisObject</a> ()</td></tr>
-<tr class="separator:a5e31ac9e275cb3256668e99fb2eb79f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a598de0e49e5b9805a0fea7a770d729c4"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_material.html#a598de0e49e5b9805a0fea7a770d729c4">MaterialName</a> ()</td></tr>
-<tr class="separator:a598de0e49e5b9805a0fea7a770d729c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab982ceed5715fee4081df6542a1584be"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_material.html#ab982ceed5715fee4081df6542a1584be">ReferenceDensity</a> ()</td></tr>
+<tr class="memitem:a6d527807557fca763861fc3720a07414"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_material.html#a6d527807557fca763861fc3720a07414">assignBaseParticles</a> (<a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *base_particles)</td></tr>
+<tr class="separator:a6d527807557fca763861fc3720a07414"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1761a471694fd68cd72e9530d7051f85"><td class="memItemLeft" align="right" valign="top"><a id="a1761a471694fd68cd72e9530d7051f85"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>MaterialName</b> ()</td></tr>
+<tr class="separator:a1761a471694fd68cd72e9530d7051f85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace7031c99c89449760c6b1353730546a"><td class="memItemLeft" align="right" valign="top"><a id="ace7031c99c89449760c6b1353730546a"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>LocalParametersName</b> ()</td></tr>
+<tr class="separator:ace7031c99c89449760c6b1353730546a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab982ceed5715fee4081df6542a1584be"><td class="memItemLeft" align="right" valign="top"><a id="ab982ceed5715fee4081df6542a1584be"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>ReferenceDensity</b> ()</td></tr>
 <tr class="separator:ab982ceed5715fee4081df6542a1584be"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0c5ae6b32855a48c9d61726a2dbffc3e"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_material.html#a0c5ae6b32855a48c9d61726a2dbffc3e">initializeLocalProperties</a> (<a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *base_particles)</td></tr>
-<tr class="separator:a0c5ae6b32855a48c9d61726a2dbffc3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2975ba6f67cd54c114d944370cd27645"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_material.html#a2975ba6f67cd54c114d944370cd27645">writeToXmlForReloadMaterialProperty</a> (std::string &amp;filefullpath)</td></tr>
-<tr class="memdesc:a2975ba6f67cd54c114d944370cd27645"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write the material property to xml file.  <a href="class_s_p_h_1_1_base_material.html#a2975ba6f67cd54c114d944370cd27645">More...</a><br /></td></tr>
-<tr class="separator:a2975ba6f67cd54c114d944370cd27645"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae993885d87e9149fdda3aacc73a0a72f"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_material.html#ae993885d87e9149fdda3aacc73a0a72f">readFromXmlForMaterialProperty</a> (std::string &amp;filefullpath)</td></tr>
-<tr class="memdesc:ae993885d87e9149fdda3aacc73a0a72f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the material property from xml file.  <a href="class_s_p_h_1_1_base_material.html#ae993885d87e9149fdda3aacc73a0a72f">More...</a><br /></td></tr>
-<tr class="separator:ae993885d87e9149fdda3aacc73a0a72f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a59a34121b71925928085a170861d4768"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_material.html#a59a34121b71925928085a170861d4768">WriteMaterialPropertyToVtuFile</a> (ofstream &amp;output_file)</td></tr>
-<tr class="memdesc:a59a34121b71925928085a170861d4768"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write local material properties particle data in VTU format for Paraview.  <a href="class_s_p_h_1_1_base_material.html#a59a34121b71925928085a170861d4768">More...</a><br /></td></tr>
-<tr class="separator:a59a34121b71925928085a170861d4768"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58b5c9789347d9438922caba58c27cfc"><td class="memItemLeft" align="right" valign="top"><a id="a58b5c9789347d9438922caba58c27cfc"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>writeToXmlForReloadLocalParameters</b> (std::string &amp;filefullpath)</td></tr>
+<tr class="separator:a58b5c9789347d9438922caba58c27cfc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d10f0355dcb6aaef0ce5ed899e01d42"><td class="memItemLeft" align="right" valign="top"><a id="a5d10f0355dcb6aaef0ce5ed899e01d42"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>readFromXmlForLocalParameters</b> (std::string &amp;filefullpath)</td></tr>
+<tr class="separator:a5d10f0355dcb6aaef0ce5ed899e01d42"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adeb7eb916d0fa8b2aceadd6ab15385c0"><td class="memItemLeft" align="right" valign="top"><a id="adeb7eb916d0fa8b2aceadd6ab15385c0"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>writeLocalParametersToVtuFile</b> (std::ofstream &amp;output_file)</td></tr>
+<tr class="separator:adeb7eb916d0fa8b2aceadd6ab15385c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0f008c8f845f6f4547aa8ccec42cd24"><td class="memItemLeft" align="right" valign="top"><a id="af0f008c8f845f6f4547aa8ccec42cd24"></a>
+virtual <a class="el" href="class_s_p_h_1_1_base_material.html">BaseMaterial</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>ThisObjectPtr</b> ()</td></tr>
+<tr class="separator:af0f008c8f845f6f4547aa8ccec42cd24"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:af3443a5928eb553f8afb94533f7a114d"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_material.html#af3443a5928eb553f8afb94533f7a114d">assignDerivedMaterialParameters</a> ()</td></tr>
+<tr class="memitem:af3443a5928eb553f8afb94533f7a114d"><td class="memItemLeft" align="right" valign="top"><a id="af3443a5928eb553f8afb94533f7a114d"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>assignDerivedMaterialParameters</b> ()</td></tr>
 <tr class="separator:af3443a5928eb553f8afb94533f7a114d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
-<tr class="memitem:a333efed89badd3e1d47b0331679616b5"><td class="memItemLeft" align="right" valign="top"><a id="a333efed89badd3e1d47b0331679616b5"></a>
-string&#160;</td><td class="memItemRight" valign="bottom"><b>material_name_</b></td></tr>
-<tr class="separator:a333efed89badd3e1d47b0331679616b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4629b03f3b702ead3a699bf88f2c3301"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_material.html#a4629b03f3b702ead3a699bf88f2c3301">inv_dimension_</a></td></tr>
-<tr class="separator:a4629b03f3b702ead3a699bf88f2c3301"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae0bac240c414c0ebac27709066df27b9"><td class="memItemLeft" align="right" valign="top"><a id="ae0bac240c414c0ebac27709066df27b9"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>material_name_</b></td></tr>
+<tr class="separator:ae0bac240c414c0ebac27709066df27b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2cfca881b60c9940f263382c272ddfe0"><td class="memItemLeft" align="right" valign="top"><a id="a2cfca881b60c9940f263382c272ddfe0"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>parameters_name_</b></td></tr>
+<tr class="separator:a2cfca881b60c9940f263382c272ddfe0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a719f71b050d882ef4290b244c45733d3"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_material.html#a719f71b050d882ef4290b244c45733d3">rho_0_</a></td></tr>
 <tr class="separator:a719f71b050d882ef4290b244c45733d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3191e8d463f5d56fe4820acab8289cff"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_material.html#a3191e8d463f5d56fe4820acab8289cff">base_particles_</a></td></tr>
+<tr class="memitem:a3191e8d463f5d56fe4820acab8289cff"><td class="memItemLeft" align="right" valign="top"><a id="a3191e8d463f5d56fe4820acab8289cff"></a>
+<a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>base_particles_</b></td></tr>
 <tr class="separator:a3191e8d463f5d56fe4820acab8289cff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac777c9aa6080bfa28fda1fdd651e5db8"><td class="memItemLeft" align="right" valign="top"><a id="ac777c9aa6080bfa28fda1fdd651e5db8"></a>
+<a class="el" href="class_s_p_h_1_1_xml_engine.html">XmlEngine</a>&#160;</td><td class="memItemRight" valign="bottom"><b>reload_material_xml_engine_</b></td></tr>
+<tr class="separator:ac777c9aa6080bfa28fda1fdd651e5db8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af9c494d663697f703e72b137297a842f"><td class="memItemLeft" align="right" valign="top"><a id="af9c494d663697f703e72b137297a842f"></a>
+<a class="el" href="namespace_s_p_h.html#a25348a626f1536e232c52f9717945f59">ParticleData</a>&#160;</td><td class="memItemRight" valign="bottom"><b>parameter_data_</b></td></tr>
+<tr class="separator:af9c494d663697f703e72b137297a842f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abaeb82ebd01dec231ee522a855472bfb"><td class="memItemLeft" align="right" valign="top"><a id="abaeb82ebd01dec231ee522a855472bfb"></a>
+<a class="el" href="namespace_s_p_h.html#ad964bd16bd649c1ee72aa32164405435">ParticleDataMap</a>&#160;</td><td class="memItemRight" valign="bottom"><b>parameter_maps_</b></td></tr>
+<tr class="separator:abaeb82ebd01dec231ee522a855472bfb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Base of all materials. </p>
-<p>Note that the case dependent material properties will defined in applications. </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a91271cddaf1b58ef2ff6ba6ccb0f8938"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a91271cddaf1b58ef2ff6ba6ccb0f8938">&#9670;&nbsp;</a></span>BaseMaterial()</h2>
+<p>Note that the case dependent parameters of the material properties will be defined in applications. </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a6d527807557fca763861fc3720a07414"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6d527807557fca763861fc3720a07414">&#9670;&nbsp;</a></span>assignBaseParticles()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -139,89 +153,7 @@ string&#160;</td><td class="memItemRight" valign="bottom"><b>material_name_</b><
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">SPH::BaseMaterial::BaseMaterial </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Default constructor </p>
-
-</div>
-</div>
-<h2 class="groupheader">Member Function Documentation</h2>
-<a id="a6fcb03a399882c2e79dfcbc43bcef567"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6fcb03a399882c2e79dfcbc43bcef567">&#9670;&nbsp;</a></span>assignBaseParticles()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void SPH::BaseMaterial::assignBaseParticles </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *&#160;</td>
-          <td class="paramname"><em>base_particles</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Assign base particles to this material for defining local material properties. </p>
-
-</div>
-</div>
-<a id="af3443a5928eb553f8afb94533f7a114d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af3443a5928eb553f8afb94533f7a114d">&#9670;&nbsp;</a></span>assignDerivedMaterialParameters()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual void SPH::BaseMaterial::assignDerivedMaterialParameters </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>assign derived material properties </p>
-
-<p>Reimplemented in <a class="el" href="class_s_p_h_1_1_local_mono_field_electro_physiology.html#af0d32cb1324fc692264a3014d69c2384">SPH::LocalMonoFieldElectroPhysiology</a>, <a class="el" href="class_s_p_h_1_1_mono_field_electro_physiology.html#a3926b5e0471f71195c23f24b4f2a6986">SPH::MonoFieldElectroPhysiology</a>, <a class="el" href="class_s_p_h_1_1_active_muscle.html#ae412706314e8c4f70ed0b0abeebe4ba9">SPH::ActiveMuscle</a>, <a class="el" href="class_s_p_h_1_1_diffusion_reaction_material.html#a79430183ccaea36384dd3d54b89a5160">SPH::DiffusionReactionMaterial&lt; BaseParticlesType, BaseMaterialType &gt;</a>, <a class="el" href="class_s_p_h_1_1_diffusion_reaction_material.html#a79430183ccaea36384dd3d54b89a5160">SPH::DiffusionReactionMaterial&lt; SolidParticles, Solid &gt;</a>, <a class="el" href="class_s_p_h_1_1_locally_orthotropic_muscle.html#a0becb71ec78d1db2a6157b5f0f8ee773">SPH::LocallyOrthotropicMuscle</a>, <a class="el" href="class_s_p_h_1_1_muscle.html#ab30cc6a5ce20e8ebfd49c5dcd68b61db">SPH::Muscle</a>, <a class="el" href="class_s_p_h_1_1_solid.html#a4a91763e6ab695151a2e4dae94cf2e2c">SPH::Solid</a>, <a class="el" href="class_s_p_h_1_1_oldroyd___b___fluid.html#ae3f0cb66d11d55b05811e657b0465de8">SPH::Oldroyd_B_Fluid</a>, <a class="el" href="class_s_p_h_1_1_symmetric_tait_fluid.html#abaa863714e0a1e66ccdfbf3138da587d">SPH::SymmetricTaitFluid</a>, <a class="el" href="class_s_p_h_1_1_linear_elastic_solid.html#af6f5b2c99ca81a2b41a211daa92d23e6">SPH::LinearElasticSolid</a>, <a class="el" href="class_s_p_h_1_1_fluid.html#a32ff9cf6b38aae02beb20699e57d276e">SPH::Fluid</a>, <a class="el" href="class_s_p_h_1_1_weakly_compressible_fluid.html#a2a244eebbee1fcc59032dc62049ba356">SPH::WeaklyCompressibleFluid</a>, and <a class="el" href="class_s_p_h_1_1_weakly_compressible_fluid_free_surface.html#a148d66069f6b0d7b52f7bf3c060cc897">SPH::WeaklyCompressibleFluidFreeSurface&lt; WeaklyCompressibleFluidType &gt;</a>.</p>
-
-</div>
-</div>
-<a id="a0c5ae6b32855a48c9d61726a2dbffc3e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0c5ae6b32855a48c9d61726a2dbffc3e">&#9670;&nbsp;</a></span>initializeLocalProperties()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual void SPH::BaseMaterial::initializeLocalProperties </td>
+          <td class="memname">virtual void SPH::BaseMaterial::assignBaseParticles </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *&#160;</td>
           <td class="paramname"><em>base_particles</em></td><td>)</td>
@@ -234,247 +166,14 @@ string&#160;</td><td class="memItemRight" valign="bottom"><b>material_name_</b><
   </tr>
 </table>
 </div><div class="memdoc">
-<p>initialize the local property. </p>
+<p>This will be called in BaseParticle constructor and is important because particles are not defined in <a class="el" href="class_s_p_h_1_1_s_p_h_body.html" title="SPHBody is a base body with basic data and functions. Its derived class can be a real fluid body,...">SPHBody</a> constructor. <br  />
+ For a composite material, i.e. there is a material pointer with another material, one need assign the base particle to that material too. </p>
 
-<p>Reimplemented in <a class="el" href="class_s_p_h_1_1_locally_orthotropic_muscle.html#ac019042340c66c7217f0c4fd7a1846d7">SPH::LocallyOrthotropicMuscle</a>.</p>
-
-</div>
-</div>
-<a id="a598de0e49e5b9805a0fea7a770d729c4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a598de0e49e5b9805a0fea7a770d729c4">&#9670;&nbsp;</a></span>MaterialName()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">string SPH::BaseMaterial::MaterialName </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>access the material name </p>
-
-</div>
-</div>
-<a id="a5e31ac9e275cb3256668e99fb2eb79f1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5e31ac9e275cb3256668e99fb2eb79f1">&#9670;&nbsp;</a></span>pointToThisObject()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual <a class="el" href="class_s_p_h_1_1_base_material.html">BaseMaterial</a>* SPH::BaseMaterial::pointToThisObject </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>The interface for dynamical cast. </p>
-
-<p>Reimplemented in <a class="el" href="class_s_p_h_1_1_local_mono_field_electro_physiology.html#a7faa0a5401821891a09979e03a5699f0">SPH::LocalMonoFieldElectroPhysiology</a>, <a class="el" href="class_s_p_h_1_1_mono_field_electro_physiology.html#a2fa91c7463fdade1fdbc8ca96059e921">SPH::MonoFieldElectroPhysiology</a>, <a class="el" href="class_s_p_h_1_1_diffusion_reaction_material.html#aba9000238b9095438ab1e6d292b8b355">SPH::DiffusionReactionMaterial&lt; BaseParticlesType, BaseMaterialType &gt;</a>, <a class="el" href="class_s_p_h_1_1_diffusion_reaction_material.html#aba9000238b9095438ab1e6d292b8b355">SPH::DiffusionReactionMaterial&lt; SolidParticles, Solid &gt;</a>, <a class="el" href="class_s_p_h_1_1_active_muscle.html#a0a9de755fd3853066ea26619394e25ca">SPH::ActiveMuscle</a>, <a class="el" href="class_s_p_h_1_1_locally_orthotropic_muscle.html#ade0f1520c36570ba6700e241afd2a5df">SPH::LocallyOrthotropicMuscle</a>, <a class="el" href="class_s_p_h_1_1_muscle.html#a1b82df9f5112927aafd8d73e0506dad5">SPH::Muscle</a>, <a class="el" href="class_s_p_h_1_1_oldroyd___b___fluid.html#ade521c3d288f71ae0411cdd0834f5428">SPH::Oldroyd_B_Fluid</a>, <a class="el" href="class_s_p_h_1_1_fene_neo_hookean_solid.html#a10f7b345118aef50aa8fb02baa72fe8a">SPH::FeneNeoHookeanSolid</a>, <a class="el" href="class_s_p_h_1_1_solid.html#a8bd33acb4f5f35bbc9223b9947b8d748">SPH::Solid</a>, <a class="el" href="class_s_p_h_1_1_neo_hookean_solid.html#a218e2609d9946fc419066cd47dfde6a5">SPH::NeoHookeanSolid</a>, <a class="el" href="class_s_p_h_1_1_symmetric_tait_fluid.html#a9990c8418e525177bab6f0237ade5e45">SPH::SymmetricTaitFluid</a>, <a class="el" href="class_s_p_h_1_1_fluid.html#ad72d14b4abe71452f9e8f79f36375bef">SPH::Fluid</a>, <a class="el" href="class_s_p_h_1_1_linear_elastic_solid.html#a281d3d9286d411d87b6663dfb5dcc12d">SPH::LinearElasticSolid</a>, <a class="el" href="class_s_p_h_1_1_elastic_solid.html#a5f2eb657983d5f3ba9b6602aca8261ef">SPH::ElasticSolid</a>, and <a class="el" href="class_s_p_h_1_1_weakly_compressible_fluid.html#af3a5e401c9cac0afd3a19ae709cde43f">SPH::WeaklyCompressibleFluid</a>.</p>
-
-</div>
-</div>
-<a id="ae993885d87e9149fdda3aacc73a0a72f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae993885d87e9149fdda3aacc73a0a72f">&#9670;&nbsp;</a></span>readFromXmlForMaterialProperty()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual void SPH::BaseMaterial::readFromXmlForMaterialProperty </td>
-          <td>(</td>
-          <td class="paramtype">std::string &amp;&#160;</td>
-          <td class="paramname"><em>filefullpath</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Read the material property from xml file. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">filefullpath</td><td>Full path the the output file. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p>Reimplemented in <a class="el" href="class_s_p_h_1_1_active_muscle.html#a0750e20e46b6f1bd45107885369eff10">SPH::ActiveMuscle</a>, and <a class="el" href="class_s_p_h_1_1_locally_orthotropic_muscle.html#a207abebafa3ccca6379cbd13b0fe1e00">SPH::LocallyOrthotropicMuscle</a>.</p>
-
-</div>
-</div>
-<a id="ab982ceed5715fee4081df6542a1584be"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab982ceed5715fee4081df6542a1584be">&#9670;&nbsp;</a></span>ReferenceDensity()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Real SPH::BaseMaterial::ReferenceDensity </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Access to reference density. </p>
-
-</div>
-</div>
-<a id="a59a34121b71925928085a170861d4768"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a59a34121b71925928085a170861d4768">&#9670;&nbsp;</a></span>WriteMaterialPropertyToVtuFile()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual void SPH::BaseMaterial::WriteMaterialPropertyToVtuFile </td>
-          <td>(</td>
-          <td class="paramtype">ofstream &amp;&#160;</td>
-          <td class="paramname"><em>output_file</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Write local material properties particle data in VTU format for Paraview. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">output_file</td><td>Ofstream of particle data. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p>Reimplemented in <a class="el" href="class_s_p_h_1_1_active_muscle.html#aacdb11d2a9c71f2c1669a4827d9ac3c1">SPH::ActiveMuscle</a>, and <a class="el" href="class_s_p_h_1_1_locally_orthotropic_muscle.html#a322aee10a5743d6b8a0b2da5d42e2d26">SPH::LocallyOrthotropicMuscle</a>.</p>
-
-</div>
-</div>
-<a id="a2975ba6f67cd54c114d944370cd27645"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2975ba6f67cd54c114d944370cd27645">&#9670;&nbsp;</a></span>writeToXmlForReloadMaterialProperty()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual void SPH::BaseMaterial::writeToXmlForReloadMaterialProperty </td>
-          <td>(</td>
-          <td class="paramtype">std::string &amp;&#160;</td>
-          <td class="paramname"><em>filefullpath</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Write the material property to xml file. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">filefullpath</td><td>Full path the the output file. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-<p>Reimplemented in <a class="el" href="class_s_p_h_1_1_active_muscle.html#a5015ec883ab10a0e0a11bf9b917e02e1">SPH::ActiveMuscle</a>, and <a class="el" href="class_s_p_h_1_1_locally_orthotropic_muscle.html#a7f1c0a4241eec5bd081ff690ebcd05e8">SPH::LocallyOrthotropicMuscle</a>.</p>
+<p>Reimplemented in <a class="el" href="class_s_p_h_1_1_local_directional_diffusion.html#aede084dfd911bec774d27ecdf1c6ef1a">SPH::LocalDirectionalDiffusion</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
-<a id="a3191e8d463f5d56fe4820acab8289cff"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3191e8d463f5d56fe4820acab8289cff">&#9670;&nbsp;</a></span>base_particles_</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a>* SPH::BaseMaterial::base_particles_</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>base particle information for defining local material properties </p>
-
-</div>
-</div>
-<a id="a4629b03f3b702ead3a699bf88f2c3301"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4629b03f3b702ead3a699bf88f2c3301">&#9670;&nbsp;</a></span>inv_dimension_</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Real SPH::BaseMaterial::inv_dimension_</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>inverse of dimension </p>
-
-</div>
-</div>
 <a id="a719f71b050d882ef4290b244c45733d3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a719f71b050d882ef4290b244c45733d3">&#9670;&nbsp;</a></span>rho_0_</h2>
 

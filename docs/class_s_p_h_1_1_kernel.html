@@ -82,42 +82,44 @@ $(function() {
 
 <p><code>#include &lt;<a class="el" href="base__kernel_8h_source.html">base_kernel.h</a>&gt;</code></p>
 
-<p>Inherited by <a class="el" href="class_s_p_h_1_1_kernel_hyperbolic.html">SPH::KernelHyperbolic</a>, <a class="el" href="class_s_p_h_1_1_kernel_tabulated.html">SPH::KernelTabulated&lt; KernelType &gt;</a>, and <a class="el" href="class_s_p_h_1_1_kernel_wendland_c2.html">SPH::KernelWendlandC2</a>.</p>
+<p>Inherited by <a class="el" href="class_s_p_h_1_1_kernel_hyperbolic.html">SPH::KernelHyperbolic</a>, <a class="el" href="class_s_p_h_1_1_kernel_quadratic.html">SPH::KernelQuadratic</a>, <a class="el" href="class_s_p_h_1_1_kernel_tabulated.html">SPH::KernelTabulated&lt; KernelType &gt;</a>, and <a class="el" href="class_s_p_h_1_1_kernel_wendland_c2.html">SPH::KernelWendlandC2</a>.</p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a8612cc6b245daed56a46dccc41c8052d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#a8612cc6b245daed56a46dccc41c8052d">Kernel</a> (Real h, string kernel_name=&quot;kernel&quot;)</td></tr>
-<tr class="separator:a8612cc6b245daed56a46dccc41c8052d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7aa251b63036bf57f3334658ec711dc9"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#a7aa251b63036bf57f3334658ec711dc9">~Kernel</a> ()</td></tr>
-<tr class="separator:a7aa251b63036bf57f3334658ec711dc9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abfa30e4afb735134ff4339e8a0aa8471"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#abfa30e4afb735134ff4339e8a0aa8471">GetKernelName</a> () const</td></tr>
-<tr class="separator:abfa30e4afb735134ff4339e8a0aa8471"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8ef795d8e290b92c8d280728f94f4e6e"><td class="memItemLeft" align="right" valign="top"><a id="a8ef795d8e290b92c8d280728f94f4e6e"></a>
-Real&#160;</td><td class="memItemRight" valign="bottom"><b>GetSmoothingLength</b> () const</td></tr>
-<tr class="separator:a8ef795d8e290b92c8d280728f94f4e6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3c70cbb51d900ba4d40a1a87f7be0869"><td class="memItemLeft" align="right" valign="top"><a id="a3c70cbb51d900ba4d40a1a87f7be0869"></a>
-Real&#160;</td><td class="memItemRight" valign="bottom"><b>GetKernelSize</b> () const</td></tr>
-<tr class="separator:a3c70cbb51d900ba4d40a1a87f7be0869"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ade16ca4cf60f872684ddaaacc84fc500"><td class="memItemLeft" align="right" valign="top"><a id="ade16ca4cf60f872684ddaaacc84fc500"></a>
-Real&#160;</td><td class="memItemRight" valign="bottom"><b>GetCutOffRadius</b> () const</td></tr>
-<tr class="separator:ade16ca4cf60f872684ddaaacc84fc500"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a952a8576fbe90c005fd58a582d1f1b6d"><td class="memItemLeft" align="right" valign="top"><a id="a952a8576fbe90c005fd58a582d1f1b6d"></a>
-Real&#160;</td><td class="memItemRight" valign="bottom"><b>GetFactorW1D</b> () const</td></tr>
-<tr class="separator:a952a8576fbe90c005fd58a582d1f1b6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6ceb37f5ac6697c15b761a48daf66bb2"><td class="memItemLeft" align="right" valign="top"><a id="a6ceb37f5ac6697c15b761a48daf66bb2"></a>
-Real&#160;</td><td class="memItemRight" valign="bottom"><b>GetFactorW2D</b> () const</td></tr>
-<tr class="separator:a6ceb37f5ac6697c15b761a48daf66bb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5bb02ea4a71ea8f8386e5977a6e98680"><td class="memItemLeft" align="right" valign="top"><a id="a5bb02ea4a71ea8f8386e5977a6e98680"></a>
-Real&#160;</td><td class="memItemRight" valign="bottom"><b>GetFactorW3D</b> () const</td></tr>
-<tr class="separator:a5bb02ea4a71ea8f8386e5977a6e98680"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a549ca6a450b21e54d3e676de3eb29e1e"><td class="memItemLeft" align="right" valign="top">virtual Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#a549ca6a450b21e54d3e676de3eb29e1e">W</a> (const Real &amp;r_ij) const</td></tr>
-<tr class="separator:a549ca6a450b21e54d3e676de3eb29e1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a46d9198a0172efc66066bb8c8e23753f"><td class="memItemLeft" align="right" valign="top"><a id="a46d9198a0172efc66066bb8c8e23753f"></a>
-virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>W</b> (const Vec2d &amp;r_ij) const</td></tr>
-<tr class="separator:a46d9198a0172efc66066bb8c8e23753f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a849dda6d403ca4f1b2e8f92d53f2c7c7"><td class="memItemLeft" align="right" valign="top"><a id="a849dda6d403ca4f1b2e8f92d53f2c7c7"></a>
-virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>W</b> (const Vec3d &amp;r_ij) const</td></tr>
-<tr class="separator:a849dda6d403ca4f1b2e8f92d53f2c7c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aacae57a3c1b7c73386d91ba0fa6c27f6"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#aacae57a3c1b7c73386d91ba0fa6c27f6">Kernel</a> (std::string kernel_name=&quot;Kernel&quot;)</td></tr>
+<tr class="separator:aacae57a3c1b7c73386d91ba0fa6c27f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a99db1962e50f90073490fc9fd81017a2"><td class="memItemLeft" align="right" valign="top"><a id="a99db1962e50f90073490fc9fd81017a2"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>initialize</b> (Real h)</td></tr>
+<tr class="separator:a99db1962e50f90073490fc9fd81017a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9717b07bccb780bf0375c4bacaba600e"><td class="memItemLeft" align="right" valign="top"><a id="a9717b07bccb780bf0375c4bacaba600e"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>Name</b> () const</td></tr>
+<tr class="separator:a9717b07bccb780bf0375c4bacaba600e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab00b50daad213017a908d8f0c00cf363"><td class="memItemLeft" align="right" valign="top"><a id="ab00b50daad213017a908d8f0c00cf363"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>SmoothingLength</b> () const</td></tr>
+<tr class="separator:ab00b50daad213017a908d8f0c00cf363"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5acac5753df6e135e5892dd0810ad65"><td class="memItemLeft" align="right" valign="top"><a id="ae5acac5753df6e135e5892dd0810ad65"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>KernelSize</b> () const</td></tr>
+<tr class="separator:ae5acac5753df6e135e5892dd0810ad65"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2082284bfe9cd68dd5c110f283c3e887"><td class="memItemLeft" align="right" valign="top"><a id="a2082284bfe9cd68dd5c110f283c3e887"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>CutOffRadius</b> () const</td></tr>
+<tr class="separator:a2082284bfe9cd68dd5c110f283c3e887"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a14f81219961eb656c993284f287a64b5"><td class="memItemLeft" align="right" valign="top"><a id="a14f81219961eb656c993284f287a64b5"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>FactorW1D</b> () const</td></tr>
+<tr class="separator:a14f81219961eb656c993284f287a64b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6476f8e4212d454f0c63f20320b5970a"><td class="memItemLeft" align="right" valign="top"><a id="a6476f8e4212d454f0c63f20320b5970a"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>FactorW2D</b> () const</td></tr>
+<tr class="separator:a6476f8e4212d454f0c63f20320b5970a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1299517fa94ecbd3f5cf08b4d927a576"><td class="memItemLeft" align="right" valign="top"><a id="a1299517fa94ecbd3f5cf08b4d927a576"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>FactorW3D</b> () const</td></tr>
+<tr class="separator:a1299517fa94ecbd3f5cf08b4d927a576"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa407e652a6a52a47c274f3c795242b45"><td class="memItemLeft" align="right" valign="top">virtual Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#aa407e652a6a52a47c274f3c795242b45">W</a> (const Real &amp;r_ij, const Real &amp;displacement) const</td></tr>
+<tr class="separator:aa407e652a6a52a47c274f3c795242b45"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a367c12e85ba2067e24bad9c7c7440464"><td class="memItemLeft" align="right" valign="top"><a id="a367c12e85ba2067e24bad9c7c7440464"></a>
+virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>W</b> (const Real &amp;r_ij, const Vec2d &amp;displacement) const</td></tr>
+<tr class="separator:a367c12e85ba2067e24bad9c7c7440464"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a31a5f6cc4cd71f906b211373222bed40"><td class="memItemLeft" align="right" valign="top"><a id="a31a5f6cc4cd71f906b211373222bed40"></a>
+virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>W</b> (const Real &amp;r_ij, const Vec3d &amp;displacement) const</td></tr>
+<tr class="separator:a31a5f6cc4cd71f906b211373222bed40"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4f6cfb5c2c4f69a9eaca48f38a4610ea"><td class="memItemLeft" align="right" valign="top">virtual Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#a4f6cfb5c2c4f69a9eaca48f38a4610ea">W_1D</a> (const Real q) const =0</td></tr>
 <tr class="separator:a4f6cfb5c2c4f69a9eaca48f38a4610ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a036e776083ab75baef7ef8057776d208"><td class="memItemLeft" align="right" valign="top"><a id="a036e776083ab75baef7ef8057776d208"></a>
@@ -126,22 +128,22 @@ virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>W_2D</b> (con
 <tr class="memitem:aa79258a04de5a75196583331cdfffe97"><td class="memItemLeft" align="right" valign="top"><a id="aa79258a04de5a75196583331cdfffe97"></a>
 virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>W_3D</b> (const Real q) const =0</td></tr>
 <tr class="separator:aa79258a04de5a75196583331cdfffe97"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa64d38633ea29afeedbbae701b9e1d76"><td class="memItemLeft" align="right" valign="top">virtual Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#aa64d38633ea29afeedbbae701b9e1d76">W0</a> (const Real &amp;r_i) const</td></tr>
-<tr class="separator:aa64d38633ea29afeedbbae701b9e1d76"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a9625ca131cb6542cc4ac04c2a1e4cf"><td class="memItemLeft" align="right" valign="top"><a id="a9a9625ca131cb6542cc4ac04c2a1e4cf"></a>
-virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>W0</b> (const Vec2d &amp;r_i) const</td></tr>
-<tr class="separator:a9a9625ca131cb6542cc4ac04c2a1e4cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab4a22a85a437d519bed80e59f7e0eb2f"><td class="memItemLeft" align="right" valign="top"><a id="ab4a22a85a437d519bed80e59f7e0eb2f"></a>
-virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>W0</b> (const Vec3d &amp;r_i) const</td></tr>
-<tr class="separator:ab4a22a85a437d519bed80e59f7e0eb2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a03bd24d34e815de1f625a30d168a2046"><td class="memItemLeft" align="right" valign="top">virtual Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#a03bd24d34e815de1f625a30d168a2046">dW</a> (const Real &amp;r_ij) const</td></tr>
-<tr class="separator:a03bd24d34e815de1f625a30d168a2046"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4bb76e9afd86c7074ab3a0765a5c3377"><td class="memItemLeft" align="right" valign="top"><a id="a4bb76e9afd86c7074ab3a0765a5c3377"></a>
-virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>dW</b> (const Vec2d &amp;r_ij) const</td></tr>
-<tr class="separator:a4bb76e9afd86c7074ab3a0765a5c3377"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a802369a2eaa96fa7db210208b4dbcaf4"><td class="memItemLeft" align="right" valign="top"><a id="a802369a2eaa96fa7db210208b4dbcaf4"></a>
-virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>dW</b> (const Vec3d &amp;r_ij) const</td></tr>
-<tr class="separator:a802369a2eaa96fa7db210208b4dbcaf4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a59ac5682fcb81ba4690f818041dfa1b9"><td class="memItemLeft" align="right" valign="top">virtual Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#a59ac5682fcb81ba4690f818041dfa1b9">W0</a> (const Real &amp;point_i) const</td></tr>
+<tr class="separator:a59ac5682fcb81ba4690f818041dfa1b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a75a5cc060ab264e80a735e7a4fbd3c93"><td class="memItemLeft" align="right" valign="top"><a id="a75a5cc060ab264e80a735e7a4fbd3c93"></a>
+virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>W0</b> (const Vec2d &amp;point_i) const</td></tr>
+<tr class="separator:a75a5cc060ab264e80a735e7a4fbd3c93"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a85d61444819b1bdbdc60494ad1c07be9"><td class="memItemLeft" align="right" valign="top"><a id="a85d61444819b1bdbdc60494ad1c07be9"></a>
+virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>W0</b> (const Vec3d &amp;point_i) const</td></tr>
+<tr class="separator:a85d61444819b1bdbdc60494ad1c07be9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad897d0832b3dc4c32899be9e7731eea9"><td class="memItemLeft" align="right" valign="top">virtual Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#ad897d0832b3dc4c32899be9e7731eea9">dW</a> (const Real &amp;r_ij, const Real &amp;displacement) const</td></tr>
+<tr class="separator:ad897d0832b3dc4c32899be9e7731eea9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a198abc31ee6c92e88624d4eb31c4f1b9"><td class="memItemLeft" align="right" valign="top"><a id="a198abc31ee6c92e88624d4eb31c4f1b9"></a>
+virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>dW</b> (const Real &amp;r_ij, const Vec2d &amp;displacement) const</td></tr>
+<tr class="separator:a198abc31ee6c92e88624d4eb31c4f1b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd717f9ace01212d18e209eeda863b95"><td class="memItemLeft" align="right" valign="top"><a id="afd717f9ace01212d18e209eeda863b95"></a>
+virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>dW</b> (const Real &amp;r_ij, const Vec3d &amp;displacement) const</td></tr>
+<tr class="separator:afd717f9ace01212d18e209eeda863b95"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a35311583b6d656c8f542bab91b688094"><td class="memItemLeft" align="right" valign="top">virtual Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#a35311583b6d656c8f542bab91b688094">dW_1D</a> (const Real q) const =0</td></tr>
 <tr class="separator:a35311583b6d656c8f542bab91b688094"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af865d376cc7e7b85c4a6fe677a8188ee"><td class="memItemLeft" align="right" valign="top"><a id="af865d376cc7e7b85c4a6fe677a8188ee"></a>
@@ -150,14 +152,14 @@ virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>dW_2D</b> (co
 <tr class="memitem:af923c8db5816ec59630d2bdc2ffddc8e"><td class="memItemLeft" align="right" valign="top"><a id="af923c8db5816ec59630d2bdc2ffddc8e"></a>
 virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>dW_3D</b> (const Real q) const =0</td></tr>
 <tr class="separator:af923c8db5816ec59630d2bdc2ffddc8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad99d53b30a277189118a7a553d462c9d"><td class="memItemLeft" align="right" valign="top">virtual Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#ad99d53b30a277189118a7a553d462c9d">d2W</a> (const Real &amp;r_ij) const</td></tr>
-<tr class="separator:ad99d53b30a277189118a7a553d462c9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab22710c05035d2f7f2f999e2fe9eedc5"><td class="memItemLeft" align="right" valign="top"><a id="ab22710c05035d2f7f2f999e2fe9eedc5"></a>
-virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>d2W</b> (const Vec2d &amp;r_ij) const</td></tr>
-<tr class="separator:ab22710c05035d2f7f2f999e2fe9eedc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae8c13f306b54dd2a8acd747e99039366"><td class="memItemLeft" align="right" valign="top"><a id="ae8c13f306b54dd2a8acd747e99039366"></a>
-virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>d2W</b> (const Vec3d &amp;r_ij) const</td></tr>
-<tr class="separator:ae8c13f306b54dd2a8acd747e99039366"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1bfee60be360913ac6bdaf85de3145ab"><td class="memItemLeft" align="right" valign="top">virtual Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#a1bfee60be360913ac6bdaf85de3145ab">d2W</a> (const Real &amp;r_ij, const Real &amp;displacement) const</td></tr>
+<tr class="separator:a1bfee60be360913ac6bdaf85de3145ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18dbc11b2a963e55c4a2b1e2cab13b7a"><td class="memItemLeft" align="right" valign="top"><a id="a18dbc11b2a963e55c4a2b1e2cab13b7a"></a>
+virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>d2W</b> (const Real &amp;r_ij, const Vec2d &amp;displacement) const</td></tr>
+<tr class="separator:a18dbc11b2a963e55c4a2b1e2cab13b7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a43afe6ed07ed36a945984cd01f6f7d28"><td class="memItemLeft" align="right" valign="top"><a id="a43afe6ed07ed36a945984cd01f6f7d28"></a>
+virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>d2W</b> (const Real &amp;r_ij, const Vec3d &amp;displacement) const</td></tr>
+<tr class="separator:a43afe6ed07ed36a945984cd01f6f7d28"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a310c2f9a29f9fa9698d38208cde7976e"><td class="memItemLeft" align="right" valign="top">virtual Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#a310c2f9a29f9fa9698d38208cde7976e">d2W_1D</a> (const Real q) const =0</td></tr>
 <tr class="separator:a310c2f9a29f9fa9698d38208cde7976e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeee7a70b30784b5942ee2c857b87119c"><td class="memItemLeft" align="right" valign="top"><a id="aeee7a70b30784b5942ee2c857b87119c"></a>
@@ -166,67 +168,81 @@ virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>d2W_2D</b> (c
 <tr class="memitem:a7a0e8eea815bf76b44b5076814119aab"><td class="memItemLeft" align="right" valign="top"><a id="a7a0e8eea815bf76b44b5076814119aab"></a>
 virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>d2W_3D</b> (const Real q) const =0</td></tr>
 <tr class="separator:a7a0e8eea815bf76b44b5076814119aab"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a16c1c6ccf1edd2fa38f20be4c4dc7349"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#a16c1c6ccf1edd2fa38f20be4c4dc7349">GetCutOffRadius</a> (Real smoothing_length) const</td></tr>
-<tr class="separator:a16c1c6ccf1edd2fa38f20be4c4dc7349"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4fd7eaabfc9f3791be8612f4638f3bfa"><td class="memItemLeft" align="right" valign="top"><a id="a4fd7eaabfc9f3791be8612f4638f3bfa"></a>
-Real&#160;</td><td class="memItemRight" valign="bottom"><b>W</b> (Real inv_h_in, const Real &amp;r_ij) const</td></tr>
-<tr class="separator:a4fd7eaabfc9f3791be8612f4638f3bfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa9dfed6f5bc0750fe579c0a4dd9d0633"><td class="memItemLeft" align="right" valign="top"><a id="aa9dfed6f5bc0750fe579c0a4dd9d0633"></a>
-Real&#160;</td><td class="memItemRight" valign="bottom"><b>W</b> (Real inv_h_in, const Vec2d &amp;r_ij) const</td></tr>
-<tr class="separator:aa9dfed6f5bc0750fe579c0a4dd9d0633"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6eac44fac41261764d917f6df37d9fec"><td class="memItemLeft" align="right" valign="top"><a id="a6eac44fac41261764d917f6df37d9fec"></a>
-Real&#160;</td><td class="memItemRight" valign="bottom"><b>W</b> (Real inv_h_in, const Vec3d &amp;r_ij) const</td></tr>
-<tr class="separator:a6eac44fac41261764d917f6df37d9fec"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a04bef4b91ff163fb667943330f744f59"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#a04bef4b91ff163fb667943330f744f59">W0</a> (Real inv_h_in, const Real &amp;r_i) const</td></tr>
-<tr class="separator:a04bef4b91ff163fb667943330f744f59"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acb38faa09229be656e16f1ca65cb2916"><td class="memItemLeft" align="right" valign="top"><a id="acb38faa09229be656e16f1ca65cb2916"></a>
-Real&#160;</td><td class="memItemRight" valign="bottom"><b>W0</b> (Real inv_h_in, const Vec2d &amp;r_i) const</td></tr>
-<tr class="separator:acb38faa09229be656e16f1ca65cb2916"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa47bf4aaa8624ec5f267da82005b61d1"><td class="memItemLeft" align="right" valign="top"><a id="aa47bf4aaa8624ec5f267da82005b61d1"></a>
-Real&#160;</td><td class="memItemRight" valign="bottom"><b>W0</b> (Real inv_h_in, const Vec3d &amp;r_i) const</td></tr>
-<tr class="separator:aa47bf4aaa8624ec5f267da82005b61d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad7b7821f3772a7872a445790a780c089"><td class="memItemLeft" align="right" valign="top">virtual Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#ad7b7821f3772a7872a445790a780c089">dW</a> (Real inv_h_in, const Real &amp;r_ij) const</td></tr>
-<tr class="separator:ad7b7821f3772a7872a445790a780c089"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a32fe3f672f8c80f270c4773e152569a2"><td class="memItemLeft" align="right" valign="top"><a id="a32fe3f672f8c80f270c4773e152569a2"></a>
-virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>dW</b> (Real inv_h_in, const Vec2d &amp;r_ij) const</td></tr>
-<tr class="separator:a32fe3f672f8c80f270c4773e152569a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab77b584d68cdfad0e4c997247d83ad17"><td class="memItemLeft" align="right" valign="top"><a id="ab77b584d68cdfad0e4c997247d83ad17"></a>
-virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>dW</b> (Real inv_h_in, const Vec3d &amp;r_ij) const</td></tr>
-<tr class="separator:ab77b584d68cdfad0e4c997247d83ad17"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3cc5bdc6393870ae63bf5d4a5c743d99"><td class="memItemLeft" align="right" valign="top">virtual Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#a3cc5bdc6393870ae63bf5d4a5c743d99">d2W</a> (Real inv_h_in, const Real &amp;r_ij) const</td></tr>
-<tr class="separator:a3cc5bdc6393870ae63bf5d4a5c743d99"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1fbb707026b121e0318dd52baaacb3ae"><td class="memItemLeft" align="right" valign="top"><a id="a1fbb707026b121e0318dd52baaacb3ae"></a>
-virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>d2W</b> (Real inv_h_in, const Vec2d &amp;r_ij) const</td></tr>
-<tr class="separator:a1fbb707026b121e0318dd52baaacb3ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad3674923f684fb759170f0789f3c02e4"><td class="memItemLeft" align="right" valign="top"><a id="ad3674923f684fb759170f0789f3c02e4"></a>
-virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>d2W</b> (Real inv_h_in, const Vec3d &amp;r_ij) const</td></tr>
-<tr class="separator:ad3674923f684fb759170f0789f3c02e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0769c166d1bc8d3be579f41c22947064"><td class="memItemLeft" align="right" valign="top"><a id="a0769c166d1bc8d3be579f41c22947064"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>CutOffRadius</b> (Real h_ratio) const</td></tr>
+<tr class="separator:a0769c166d1bc8d3be579f41c22947064"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98be703f9876bbec1f5e0c4cdff4b7ee"><td class="memItemLeft" align="right" valign="top"><a id="a98be703f9876bbec1f5e0c4cdff4b7ee"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>W</b> (const Real &amp;h_ratio, const Real &amp;r_ij, const Real &amp;displacement) const</td></tr>
+<tr class="separator:a98be703f9876bbec1f5e0c4cdff4b7ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21561f5efbbf3b586ca69abd79c39829"><td class="memItemLeft" align="right" valign="top"><a id="a21561f5efbbf3b586ca69abd79c39829"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>W</b> (const Real &amp;h_ratio, const Real &amp;r_ij, const Vec2d &amp;displacement) const</td></tr>
+<tr class="separator:a21561f5efbbf3b586ca69abd79c39829"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae19ffaf593d6b8319247e98bc92a88a1"><td class="memItemLeft" align="right" valign="top"><a id="ae19ffaf593d6b8319247e98bc92a88a1"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>W</b> (const Real &amp;h_ratio, const Real &amp;r_ij, const Vec3d &amp;displacement) const</td></tr>
+<tr class="separator:ae19ffaf593d6b8319247e98bc92a88a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa73cae1d21f7687f319a7aa361651591"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#aa73cae1d21f7687f319a7aa361651591">W0</a> (const Real &amp;h_ratio, const Real &amp;point_i) const</td></tr>
+<tr class="separator:aa73cae1d21f7687f319a7aa361651591"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f47451f95097b5962b018d6df3057c1"><td class="memItemLeft" align="right" valign="top"><a id="a8f47451f95097b5962b018d6df3057c1"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>W0</b> (const Real &amp;h_ratio, const Vec2d &amp;point_i) const</td></tr>
+<tr class="separator:a8f47451f95097b5962b018d6df3057c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace5d9122c0d86297ab91761641cfb4d8"><td class="memItemLeft" align="right" valign="top"><a id="ace5d9122c0d86297ab91761641cfb4d8"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>W0</b> (const Real &amp;h_ratio, const Vec3d &amp;point_i) const</td></tr>
+<tr class="separator:ace5d9122c0d86297ab91761641cfb4d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af4780cff0da18bcf7436639af5a81d48"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#af4780cff0da18bcf7436639af5a81d48">dW</a> (const Real &amp;h_ratio, const Real &amp;r_ij, const Real &amp;displacement) const</td></tr>
+<tr class="separator:af4780cff0da18bcf7436639af5a81d48"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a92bb202a0810833a8af3916ed7b8c663"><td class="memItemLeft" align="right" valign="top"><a id="a92bb202a0810833a8af3916ed7b8c663"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>dW</b> (const Real &amp;h_ratio, const Real &amp;r_ij, const Vec2d &amp;displacement) const</td></tr>
+<tr class="separator:a92bb202a0810833a8af3916ed7b8c663"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a42013950b5b04f9689ee3b6086416672"><td class="memItemLeft" align="right" valign="top"><a id="a42013950b5b04f9689ee3b6086416672"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>dW</b> (const Real &amp;h_ratio, const Real &amp;r_ij, const Vec3d &amp;displacement) const</td></tr>
+<tr class="separator:a42013950b5b04f9689ee3b6086416672"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a38e21551ee0adaeeadd75f75feb19261"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#a38e21551ee0adaeeadd75f75feb19261">d2W</a> (const Real &amp;h_ratio, const Real &amp;r_ij, const Real &amp;displacement) const</td></tr>
+<tr class="separator:a38e21551ee0adaeeadd75f75feb19261"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad87029577741ec638bf119baa3c7180d"><td class="memItemLeft" align="right" valign="top"><a id="ad87029577741ec638bf119baa3c7180d"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>d2W</b> (const Real &amp;h_ratio, const Real &amp;r_ij, const Vec2d &amp;displacement) const</td></tr>
+<tr class="separator:ad87029577741ec638bf119baa3c7180d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1690ef74cfb3e344fe05d4501b9e22b2"><td class="memItemLeft" align="right" valign="top"><a id="a1690ef74cfb3e344fe05d4501b9e22b2"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>d2W</b> (const Real &amp;h_ratio, const Real &amp;r_ij, const Vec3d &amp;displacement) const</td></tr>
+<tr class="separator:a1690ef74cfb3e344fe05d4501b9e22b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae46631ee2fa57d0895fe120a300c03a2"><td class="memItemLeft" align="right" valign="top"><a id="ae46631ee2fa57d0895fe120a300c03a2"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>reduceOnce</b> ()</td></tr>
+<tr class="separator:ae46631ee2fa57d0895fe120a300c03a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a479ba203d22a65399b49745ff6aa7a7b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#a479ba203d22a65399b49745ff6aa7a7b">reduceTwice</a> ()</td></tr>
+<tr class="separator:a479ba203d22a65399b49745ff6aa7a7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:a0c874bfa6a41df56508552fd43de66c9"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#a0c874bfa6a41df56508552fd43de66c9">SetDerivativeFactors</a> ()</td></tr>
-<tr class="separator:a0c874bfa6a41df56508552fd43de66c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6501479517672c9aa4f3000669efc1b5"><td class="memItemLeft" align="right" valign="top"><a id="a6501479517672c9aa4f3000669efc1b5"></a>
-Real&#160;</td><td class="memItemRight" valign="bottom"><b>getSmoothingLengthFactor1D</b> (Real inv_h_in) const</td></tr>
-<tr class="separator:a6501479517672c9aa4f3000669efc1b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a54da3856965717ee77083eefa56c8ccc"><td class="memItemLeft" align="right" valign="top"><a id="a54da3856965717ee77083eefa56c8ccc"></a>
-Real&#160;</td><td class="memItemRight" valign="bottom"><b>getSmoothingLengthFactor2D</b> (Real inv_h_in) const</td></tr>
-<tr class="separator:a54da3856965717ee77083eefa56c8ccc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad307c088265be0b753fa2711b2f62723"><td class="memItemLeft" align="right" valign="top"><a id="ad307c088265be0b753fa2711b2f62723"></a>
-Real&#160;</td><td class="memItemRight" valign="bottom"><b>getSmoothingLengthFactor3D</b> (Real inv_h_in) const</td></tr>
-<tr class="separator:ad307c088265be0b753fa2711b2f62723"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe10d8460c5104d11755a60bf1d1739f"><td class="memItemLeft" align="right" valign="top"><a id="afe10d8460c5104d11755a60bf1d1739f"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>setBasicParameters</b> ()=0</td></tr>
+<tr class="separator:afe10d8460c5104d11755a60bf1d1739f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f5d3bae3b116f20dc9973610a6fd377"><td class="memItemLeft" align="right" valign="top"><a id="a4f5d3bae3b116f20dc9973610a6fd377"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setDerivativeParameters</b> ()</td></tr>
+<tr class="separator:a4f5d3bae3b116f20dc9973610a6fd377"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a692ef10182fd4df3ad689b46e2a3cc8b"><td class="memItemLeft" align="right" valign="top"><a id="a692ef10182fd4df3ad689b46e2a3cc8b"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>SmoothingLengthFactor1D</b> (const Real &amp;h_ratio) const</td></tr>
+<tr class="separator:a692ef10182fd4df3ad689b46e2a3cc8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb9b7940fe67791ec4006cc6a1ec7d28"><td class="memItemLeft" align="right" valign="top"><a id="afb9b7940fe67791ec4006cc6a1ec7d28"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>SmoothingLengthFactor2D</b> (const Real &amp;h_ratio) const</td></tr>
+<tr class="separator:afb9b7940fe67791ec4006cc6a1ec7d28"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a256a4ef73a10b24127190cb96cb6a0a2"><td class="memItemLeft" align="right" valign="top"><a id="a256a4ef73a10b24127190cb96cb6a0a2"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>SmoothingLengthFactor3D</b> (const Real &amp;h_ratio) const</td></tr>
+<tr class="separator:a256a4ef73a10b24127190cb96cb6a0a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
-<tr class="memitem:ab014e8b2d257cddea9976dde2e6d63fe"><td class="memItemLeft" align="right" valign="top">const string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#ab014e8b2d257cddea9976dde2e6d63fe">kernel_name_</a></td></tr>
-<tr class="separator:ab014e8b2d257cddea9976dde2e6d63fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae9c91600939c132ad863393d2cdca533"><td class="memItemLeft" align="right" valign="top">const Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#ae9c91600939c132ad863393d2cdca533">h_</a></td></tr>
-<tr class="separator:ae9c91600939c132ad863393d2cdca533"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa739be109d19fa65e3e27d873d82637b"><td class="memItemLeft" align="right" valign="top"><a id="aa739be109d19fa65e3e27d873d82637b"></a>
-const Real&#160;</td><td class="memItemRight" valign="bottom"><b>inv_h_</b></td></tr>
-<tr class="separator:aa739be109d19fa65e3e27d873d82637b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abbc29e8a52aa758fe90ec5f959026107"><td class="memItemLeft" align="right" valign="top"><a id="abbc29e8a52aa758fe90ec5f959026107"></a>
+const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>kernel_name_</b></td></tr>
+<tr class="separator:abbc29e8a52aa758fe90ec5f959026107"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad8b7d4a245141e1e2424063ff9b32778"><td class="memItemLeft" align="right" valign="top"><a id="ad8b7d4a245141e1e2424063ff9b32778"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>h_</b></td></tr>
+<tr class="separator:ad8b7d4a245141e1e2424063ff9b32778"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6fc23142d06516e6fd9dbdfad1869114"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#a6fc23142d06516e6fd9dbdfad1869114">inv_h_</a></td></tr>
+<tr class="separator:a6fc23142d06516e6fd9dbdfad1869114"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a30bb850456a8ec2134a55a07dd0e21e8"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#a30bb850456a8ec2134a55a07dd0e21e8">kernel_size_</a></td></tr>
 <tr class="separator:a30bb850456a8ec2134a55a07dd0e21e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adae345a7a77dcd9c14e5ca0ad8f75dda"><td class="memItemLeft" align="right" valign="top"><a id="adae345a7a77dcd9c14e5ca0ad8f75dda"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>cutoff_radius_ref_</b></td></tr>
+<tr class="separator:adae345a7a77dcd9c14e5ca0ad8f75dda"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a020d84f32ef2d01ada898f44e696bd51"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_kernel.html#a020d84f32ef2d01ada898f44e696bd51">factor_W_1D_</a></td></tr>
 <tr class="separator:a020d84f32ef2d01ada898f44e696bd51"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5a2c2862530b8039655fc69475b69049"><td class="memItemLeft" align="right" valign="top"><a id="a5a2c2862530b8039655fc69475b69049"></a>
@@ -255,8 +271,8 @@ Real&#160;</td><td class="memItemRight" valign="bottom"><b>factor_d2W_3D_</b></t
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Abstract base class of a general <a class="el" href="namespace_s_p_h.html">SPH</a> kernel function which is a smoothed Dirac delta function, a kernel function is radial symmetric, and has a scaling factor. Based on difference data type in 2d or 3d buildings, the kernel is defined for 2 and 3 dimensions. The kernel gives value one at the origin. The naming of kernel function follows the stand <a class="el" href="namespace_s_p_h.html">SPH</a> literature. Currently, only constant smoothing length is applied. Basically, one can assign different kernel for different particle interactions. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a8612cc6b245daed56a46dccc41c8052d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8612cc6b245daed56a46dccc41c8052d">&#9670;&nbsp;</a></span>Kernel()</h2>
+<a id="aacae57a3c1b7c73386d91ba0fa6c27f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aacae57a3c1b7c73386d91ba0fa6c27f6">&#9670;&nbsp;</a></span>Kernel()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -264,82 +280,54 @@ Real&#160;</td><td class="memItemRight" valign="bottom"><b>factor_d2W_3D_</b></t
         <tr>
           <td class="memname">SPH::Kernel::Kernel </td>
           <td>(</td>
-          <td class="paramtype">Real&#160;</td>
-          <td class="paramname"><em>h</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">string&#160;</td>
-          <td class="paramname"><em>kernel_name</em> = <code>&quot;kernel&quot;</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Constructor </p>
-
-</div>
-</div>
-<a id="a7aa251b63036bf57f3334658ec711dc9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7aa251b63036bf57f3334658ec711dc9">&#9670;&nbsp;</a></span>~Kernel()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual SPH::Kernel::~Kernel </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype">std::string&#160;</td>
+          <td class="paramname"><em>kernel_name</em> = <code>&quot;Kernel&quot;</code></td><td>)</td>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
-<p>Base classes with virtual member functions should have a virtual destructor </p>
+<p>empty initialization in constructor, initialization will be carried out later. </p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="ad99d53b30a277189118a7a553d462c9d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad99d53b30a277189118a7a553d462c9d">&#9670;&nbsp;</a></span>d2W() <span class="overload">[1/2]</span></h2>
+<a id="a38e21551ee0adaeeadd75f75feb19261"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a38e21551ee0adaeeadd75f75feb19261">&#9670;&nbsp;</a></span>d2W() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">Real SPH::Kernel::d2W </td>
           <td>(</td>
           <td class="paramtype">const Real &amp;&#160;</td>
-          <td class="paramname"><em>r_ij</em></td><td>)</td>
-          <td> const</td>
+          <td class="paramname"><em>h_ratio</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Real &amp;&#160;</td>
+          <td class="paramname"><em>r_ij</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Real &amp;&#160;</td>
+          <td class="paramname"><em>displacement</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 <p>Calculates the kernel second order derivation for the given distance of two particles </p>
 
 </div>
 </div>
-<a id="a3cc5bdc6393870ae63bf5d4a5c743d99"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3cc5bdc6393870ae63bf5d4a5c743d99">&#9670;&nbsp;</a></span>d2W() <span class="overload">[2/2]</span></h2>
+<a id="a1bfee60be360913ac6bdaf85de3145ab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1bfee60be360913ac6bdaf85de3145ab">&#9670;&nbsp;</a></span>d2W() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -350,14 +338,14 @@ Real&#160;</td><td class="memItemRight" valign="bottom"><b>factor_d2W_3D_</b></t
         <tr>
           <td class="memname">Real SPH::Kernel::d2W </td>
           <td>(</td>
-          <td class="paramtype">Real&#160;</td>
-          <td class="paramname"><em>inv_h_in</em>, </td>
+          <td class="paramtype">const Real &amp;&#160;</td>
+          <td class="paramname"><em>r_ij</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const Real &amp;&#160;</td>
-          <td class="paramname"><em>r_ij</em>&#160;</td>
+          <td class="paramname"><em>displacement</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -398,59 +386,67 @@ Real&#160;</td><td class="memItemRight" valign="bottom"><b>factor_d2W_3D_</b></t
   </tr>
 </table>
 </div><div class="memdoc">
-<p>this value could be use to calculate the value of d2W </p>
+<p>this value could be use to calculate the value of d2W they are realized in specific kernel implementations </p>
 
-<p>Implemented in <a class="el" href="class_s_p_h_1_1_kernel_hyperbolic.html#a03b763908b1592151cd579a37dc85a79">SPH::KernelHyperbolic</a>, <a class="el" href="class_s_p_h_1_1_kernel_wendland_c2.html#a175eec2ea0d909637b2a4f99d112d80e">SPH::KernelWendlandC2</a>, and <a class="el" href="class_s_p_h_1_1_kernel_tabulated.html#aec02c2eb341aa195f2b0bba19eb52eba">SPH::KernelTabulated&lt; KernelType &gt;</a>.</p>
+<p>Implemented in <a class="el" href="class_s_p_h_1_1_kernel_hyperbolic.html#a03b763908b1592151cd579a37dc85a79">SPH::KernelHyperbolic</a>, <a class="el" href="class_s_p_h_1_1_kernel_quadratic.html#a4c5dcfd6b49b98e4fcad558c063a3c10">SPH::KernelQuadratic</a>, <a class="el" href="class_s_p_h_1_1_kernel_wendland_c2.html#a175eec2ea0d909637b2a4f99d112d80e">SPH::KernelWendlandC2</a>, and <a class="el" href="class_s_p_h_1_1_kernel_tabulated.html#aec02c2eb341aa195f2b0bba19eb52eba">SPH::KernelTabulated&lt; KernelType &gt;</a>.</p>
 
 </div>
 </div>
-<a id="a03bd24d34e815de1f625a30d168a2046"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a03bd24d34e815de1f625a30d168a2046">&#9670;&nbsp;</a></span>dW() <span class="overload">[1/2]</span></h2>
+<a id="af4780cff0da18bcf7436639af5a81d48"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af4780cff0da18bcf7436639af5a81d48">&#9670;&nbsp;</a></span>dW() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">Real SPH::Kernel::dW </td>
           <td>(</td>
           <td class="paramtype">const Real &amp;&#160;</td>
-          <td class="paramname"><em>r_ij</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Calculates the kernel derivation for the given distance of two particles </p>
-
-</div>
-</div>
-<a id="ad7b7821f3772a7872a445790a780c089"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad7b7821f3772a7872a445790a780c089">&#9670;&nbsp;</a></span>dW() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Real SPH::Kernel::dW </td>
-          <td>(</td>
-          <td class="paramtype">Real&#160;</td>
-          <td class="paramname"><em>inv_h_in</em>, </td>
+          <td class="paramname"><em>h_ratio</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const Real &amp;&#160;</td>
-          <td class="paramname"><em>r_ij</em>&#160;</td>
+          <td class="paramname"><em>r_ij</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Real &amp;&#160;</td>
+          <td class="paramname"><em>displacement</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Calculates the kernel derivation for the given distance of two particles </p>
+
+</div>
+</div>
+<a id="ad897d0832b3dc4c32899be9e7731eea9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad897d0832b3dc4c32899be9e7731eea9">&#9670;&nbsp;</a></span>dW() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">Real SPH::Kernel::dW </td>
+          <td>(</td>
+          <td class="paramtype">const Real &amp;&#160;</td>
+          <td class="paramname"><em>r_ij</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Real &amp;&#160;</td>
+          <td class="paramname"><em>displacement</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -491,93 +487,32 @@ Real&#160;</td><td class="memItemRight" valign="bottom"><b>factor_d2W_3D_</b></t
   </tr>
 </table>
 </div><div class="memdoc">
-<p>this value could be use to calculate the value of dW </p>
+<p>this value could be use to calculate the value of dW they are realized in specific kernel implementations </p>
 
-<p>Implemented in <a class="el" href="class_s_p_h_1_1_kernel_hyperbolic.html#a89ba46fc0cb0dbcd0c318b2b0106c695">SPH::KernelHyperbolic</a>, <a class="el" href="class_s_p_h_1_1_kernel_wendland_c2.html#a6167f2790edbde965c0347907f2e7432">SPH::KernelWendlandC2</a>, and <a class="el" href="class_s_p_h_1_1_kernel_tabulated.html#a062b971dbeeaf688f07f07bf3e691688">SPH::KernelTabulated&lt; KernelType &gt;</a>.</p>
+<p>Implemented in <a class="el" href="class_s_p_h_1_1_kernel_hyperbolic.html#a89ba46fc0cb0dbcd0c318b2b0106c695">SPH::KernelHyperbolic</a>, <a class="el" href="class_s_p_h_1_1_kernel_quadratic.html#abe93527e581621039da22f7867ad170b">SPH::KernelQuadratic</a>, <a class="el" href="class_s_p_h_1_1_kernel_wendland_c2.html#a6167f2790edbde965c0347907f2e7432">SPH::KernelWendlandC2</a>, and <a class="el" href="class_s_p_h_1_1_kernel_tabulated.html#a062b971dbeeaf688f07f07bf3e691688">SPH::KernelTabulated&lt; KernelType &gt;</a>.</p>
 
 </div>
 </div>
-<a id="a16c1c6ccf1edd2fa38f20be4c4dc7349"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a16c1c6ccf1edd2fa38f20be4c4dc7349">&#9670;&nbsp;</a></span>GetCutOffRadius()</h2>
+<a id="a479ba203d22a65399b49745ff6aa7a7b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a479ba203d22a65399b49745ff6aa7a7b">&#9670;&nbsp;</a></span>reduceTwice()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">Real SPH::Kernel::GetCutOffRadius </td>
-          <td>(</td>
-          <td class="paramtype">Real&#160;</td>
-          <td class="paramname"><em>smoothing_length</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>for variable smoothing length note that we input the inverse of the variable smoothing length. </p>
-
-</div>
-</div>
-<a id="abfa30e4afb735134ff4339e8a0aa8471"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abfa30e4afb735134ff4339e8a0aa8471">&#9670;&nbsp;</a></span>GetKernelName()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">string SPH::Kernel::GetKernelName </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>access essential information of the kernel </p>
-
-</div>
-</div>
-<a id="a0c874bfa6a41df56508552fd43de66c9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0c874bfa6a41df56508552fd43de66c9">&#9670;&nbsp;</a></span>SetDerivativeFactors()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void SPH::Kernel::SetDerivativeFactors </td>
+          <td class="memname">void SPH::Kernel::reduceTwice </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
-<p>Fractors for derivatives </p>
+<p>reduce for thin structures or films </p>
 
 </div>
 </div>
-<a id="a549ca6a450b21e54d3e676de3eb29e1e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a549ca6a450b21e54d3e676de3eb29e1e">&#9670;&nbsp;</a></span>W()</h2>
+<a id="aa407e652a6a52a47c274f3c795242b45"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa407e652a6a52a47c274f3c795242b45">&#9670;&nbsp;</a></span>W()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -589,8 +524,18 @@ Real&#160;</td><td class="memItemRight" valign="bottom"><b>factor_d2W_3D_</b></t
           <td class="memname">Real SPH::Kernel::W </td>
           <td>(</td>
           <td class="paramtype">const Real &amp;&#160;</td>
-          <td class="paramname"><em>r_ij</em></td><td>)</td>
-          <td> const</td>
+          <td class="paramname"><em>r_ij</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Real &amp;&#160;</td>
+          <td class="paramname"><em>displacement</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
         </tr>
       </table>
   </td>
@@ -603,8 +548,37 @@ Real&#160;</td><td class="memItemRight" valign="bottom"><b>factor_d2W_3D_</b></t
 
 </div>
 </div>
-<a id="aa64d38633ea29afeedbbae701b9e1d76"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa64d38633ea29afeedbbae701b9e1d76">&#9670;&nbsp;</a></span>W0() <span class="overload">[1/2]</span></h2>
+<a id="aa73cae1d21f7687f319a7aa361651591"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa73cae1d21f7687f319a7aa361651591">&#9670;&nbsp;</a></span>W0() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Real SPH::Kernel::W0 </td>
+          <td>(</td>
+          <td class="paramtype">const Real &amp;&#160;</td>
+          <td class="paramname"><em>h_ratio</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Real &amp;&#160;</td>
+          <td class="paramname"><em>point_i</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Calculates the kernel value at the origin </p>
+
+</div>
+</div>
+<a id="a59ac5682fcb81ba4690f818041dfa1b9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a59ac5682fcb81ba4690f818041dfa1b9">&#9670;&nbsp;</a></span>W0() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -616,7 +590,7 @@ Real&#160;</td><td class="memItemRight" valign="bottom"><b>factor_d2W_3D_</b></t
           <td class="memname">virtual Real SPH::Kernel::W0 </td>
           <td>(</td>
           <td class="paramtype">const Real &amp;&#160;</td>
-          <td class="paramname"><em>r_i</em></td><td>)</td>
+          <td class="paramname"><em>point_i</em></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
@@ -625,35 +599,6 @@ Real&#160;</td><td class="memItemRight" valign="bottom"><b>factor_d2W_3D_</b></t
 <span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
-</div><div class="memdoc">
-<p>Calculates the kernel value at the origin </p>
-
-</div>
-</div>
-<a id="a04bef4b91ff163fb667943330f744f59"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a04bef4b91ff163fb667943330f744f59">&#9670;&nbsp;</a></span>W0() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">Real SPH::Kernel::W0 </td>
-          <td>(</td>
-          <td class="paramtype">Real&#160;</td>
-          <td class="paramname"><em>inv_h_in</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const Real &amp;&#160;</td>
-          <td class="paramname"><em>r_i</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> const</td>
-        </tr>
-      </table>
 </div><div class="memdoc">
 <p>Calculates the kernel value at the origin </p>
 
@@ -682,9 +627,9 @@ Real&#160;</td><td class="memItemRight" valign="bottom"><b>factor_d2W_3D_</b></t
   </tr>
 </table>
 </div><div class="memdoc">
-<p>this value could be use to calculate the value of W </p>
+<p>this value could be use to calculate the value of W they are realized in specific kernel implementations </p>
 
-<p>Implemented in <a class="el" href="class_s_p_h_1_1_kernel_hyperbolic.html#ad8fb3b94da80e59ac924f357c5cf5d75">SPH::KernelHyperbolic</a>, <a class="el" href="class_s_p_h_1_1_kernel_wendland_c2.html#a961e8363b003559f9bbe4ceb641fafce">SPH::KernelWendlandC2</a>, and <a class="el" href="class_s_p_h_1_1_kernel_tabulated.html#aa36a4bb1c09b3eef3d4a0045cb85ae74">SPH::KernelTabulated&lt; KernelType &gt;</a>.</p>
+<p>Implemented in <a class="el" href="class_s_p_h_1_1_kernel_hyperbolic.html#ad8fb3b94da80e59ac924f357c5cf5d75">SPH::KernelHyperbolic</a>, <a class="el" href="class_s_p_h_1_1_kernel_quadratic.html#a93b5e387aa49b82447b829c2e8717657">SPH::KernelQuadratic</a>, <a class="el" href="class_s_p_h_1_1_kernel_wendland_c2.html#a961e8363b003559f9bbe4ceb641fafce">SPH::KernelWendlandC2</a>, and <a class="el" href="class_s_p_h_1_1_kernel_tabulated.html#aa36a4bb1c09b3eef3d4a0045cb85ae74">SPH::KernelTabulated&lt; KernelType &gt;</a>.</p>
 
 </div>
 </div>
@@ -756,13 +701,13 @@ Real&#160;</td><td class="memItemRight" valign="bottom"><b>factor_d2W_3D_</b></t
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Normalization factor for the kernel function <br  />
+<p>reference cut off radius Normalization factors for the kernel function <br  />
  </p>
 
 </div>
 </div>
-<a id="ae9c91600939c132ad863393d2cdca533"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae9c91600939c132ad863393d2cdca533">&#9670;&nbsp;</a></span>h_</h2>
+<a id="a6fc23142d06516e6fd9dbdfad1869114"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6fc23142d06516e6fd9dbdfad1869114">&#9670;&nbsp;</a></span>inv_h_</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -771,7 +716,7 @@ Real&#160;</td><td class="memItemRight" valign="bottom"><b>factor_d2W_3D_</b></t
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const Real SPH::Kernel::h_</td>
+          <td class="memname">Real SPH::Kernel::inv_h_</td>
         </tr>
       </table>
   </td>
@@ -780,30 +725,7 @@ Real&#160;</td><td class="memItemRight" valign="bottom"><b>factor_d2W_3D_</b></t
   </tr>
 </table>
 </div><div class="memdoc">
-<p>reference smoothing length </p>
-
-</div>
-</div>
-<a id="ab014e8b2d257cddea9976dde2e6d63fe"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab014e8b2d257cddea9976dde2e6d63fe">&#9670;&nbsp;</a></span>kernel_name_</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">const string SPH::Kernel::kernel_name_</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>name of the kernel </p>
+<p>reference smoothing length and its inverse </p>
 
 </div>
 </div>

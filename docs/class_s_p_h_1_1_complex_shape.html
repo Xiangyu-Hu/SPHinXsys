@@ -89,51 +89,46 @@ $(function() {
 Public Member Functions</h2></td></tr>
 <tr class="memitem:af9172c77de9ac21119b3d1db17cae6fe"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_complex_shape.html#af9172c77de9ac21119b3d1db17cae6fe">ComplexShape</a> ()</td></tr>
 <tr class="separator:af9172c77de9ac21119b3d1db17cae6fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad91fac208ba130af8006aa8e79d1c389"><td class="memItemLeft" align="right" valign="top"><a id="ad91fac208ba130af8006aa8e79d1c389"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>ComplexShape</b> (string complex_shape_name)</td></tr>
-<tr class="separator:ad91fac208ba130af8006aa8e79d1c389"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7d3b63397da388ac8c9128e5b3c997a8"><td class="memItemLeft" align="right" valign="top"><a id="a7d3b63397da388ac8c9128e5b3c997a8"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>findBounds</b> (Vec2d &amp;lower_bound, Vec2d &amp;upper_bound) override</td></tr>
-<tr class="separator:a7d3b63397da388ac8c9128e5b3c997a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a847741b29fd49d8459bdfb44eeb23f79"><td class="memItemLeft" align="right" valign="top"><a id="a847741b29fd49d8459bdfb44eeb23f79"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>ComplexShape</b> (std::string complex_shape_name)</td></tr>
+<tr class="separator:a847741b29fd49d8459bdfb44eeb23f79"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2633242a675b29b5ea1f6f623f7b0347"><td class="memItemLeft" align="right" valign="top"><a id="a2633242a675b29b5ea1f6f623f7b0347"></a>
+virtual <a class="el" href="namespace_s_p_h.html#ad185cdeb05bdee76bf975cc50f1c15b7">BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><b>findBounds</b> () override</td></tr>
+<tr class="separator:a2633242a675b29b5ea1f6f623f7b0347"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a37f5876bc47a7dfd1b1a0275b2815bab"><td class="memItemLeft" align="right" valign="top"><a id="a37f5876bc47a7dfd1b1a0275b2815bab"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>addAMultiPolygon</b> (<a class="el" href="class_s_p_h_1_1_multi_polygon.html">MultiPolygon</a> &amp;multi_polygon, <a class="el" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op)</td></tr>
 <tr class="separator:a37f5876bc47a7dfd1b1a0275b2815bab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aee8d4423d729d3983010af27e477fce8"><td class="memItemLeft" align="right" valign="top"><a id="aee8d4423d729d3983010af27e477fce8"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>addABoostMultiPoly</b> (boost_multi_poly &amp;boost_multi_poly, <a class="el" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op)</td></tr>
 <tr class="separator:aee8d4423d729d3983010af27e477fce8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afa3f6e3cf7eaf7f0d85734b93f419230"><td class="memItemLeft" align="right" valign="top"><a id="afa3f6e3cf7eaf7f0d85734b93f419230"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>addAPolygon</b> (std::vector&lt; Point &gt; &amp;points, <a class="el" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op)</td></tr>
-<tr class="separator:afa3f6e3cf7eaf7f0d85734b93f419230"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0027ea3ad4ac31c81f9640d27ff18a08"><td class="memItemLeft" align="right" valign="top"><a id="a0027ea3ad4ac31c81f9640d27ff18a08"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>addAPolygon</b> (std::vector&lt; Vecd &gt; &amp;points, <a class="el" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op)</td></tr>
+<tr class="separator:a0027ea3ad4ac31c81f9640d27ff18a08"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a58ffe6e7efae032a95bacc7bcea47d5b"><td class="memItemLeft" align="right" valign="top"><a id="a58ffe6e7efae032a95bacc7bcea47d5b"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>addACircle</b> (Vec2d center, Real radius, <a class="el" href="classint.html">int</a> resolution, <a class="el" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op)</td></tr>
 <tr class="separator:a58ffe6e7efae032a95bacc7bcea47d5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a92b6578b0562a0abbb926f58a73fc193"><td class="memItemLeft" align="right" valign="top"><a id="a92b6578b0562a0abbb926f58a73fc193"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>addAPolygonFromFile</b> (string file_path_name, <a class="el" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op, Vec2d translation=Vecd(0), Real scale_factor=1.0)</td></tr>
-<tr class="separator:a92b6578b0562a0abbb926f58a73fc193"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a424712a63bc2501896625cd383496756"><td class="memItemLeft" align="right" valign="top"><a id="a424712a63bc2501896625cd383496756"></a>
-virtual <a class="el" href="classbool.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>checkContain</b> (Vec2d input_pnt, <a class="el" href="classbool.html">bool</a> BOUNDARY_INCLUDED=true)</td></tr>
-<tr class="separator:a424712a63bc2501896625cd383496756"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a06c11b1caa5c4ed75356fffa07987ab3"><td class="memItemLeft" align="right" valign="top"><a id="a06c11b1caa5c4ed75356fffa07987ab3"></a>
-virtual <a class="el" href="classbool.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>checkNotFar</b> (Vec2d input_pnt, Real threshold)</td></tr>
-<tr class="separator:a06c11b1caa5c4ed75356fffa07987ab3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a39a677fe8a59d24dbffbc00851b10777"><td class="memItemLeft" align="right" valign="top"><a id="a39a677fe8a59d24dbffbc00851b10777"></a>
-virtual Vec2d&#160;</td><td class="memItemRight" valign="bottom"><b>findClosestPoint</b> (Vec2d input_pnt) override</td></tr>
-<tr class="separator:a39a677fe8a59d24dbffbc00851b10777"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a412b39fc3f5af016dc7a69d877edfd28"><td class="memItemLeft" align="right" valign="top"><a id="a412b39fc3f5af016dc7a69d877edfd28"></a>
-virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>findSignedDistance</b> (Vec2d input_pnt)</td></tr>
-<tr class="separator:a412b39fc3f5af016dc7a69d877edfd28"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3cae07d4863a73300f139e234ad85e15"><td class="memItemLeft" align="right" valign="top"><a id="a3cae07d4863a73300f139e234ad85e15"></a>
-virtual Vec2d&#160;</td><td class="memItemRight" valign="bottom"><b>findNormalDirection</b> (Vec2d input_pnt)</td></tr>
-<tr class="separator:a3cae07d4863a73300f139e234ad85e15"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab265a6690e65b00dc768f2860ddfdbf6"><td class="memItemLeft" align="right" valign="top"><a id="ab265a6690e65b00dc768f2860ddfdbf6"></a>
-virtual Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>computeKernelIntegral</b> (Vecd input_pnt, <a class="el" href="class_s_p_h_1_1_kernel.html">Kernel</a> *kernel)</td></tr>
-<tr class="separator:ab265a6690e65b00dc768f2860ddfdbf6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad91fac208ba130af8006aa8e79d1c389"><td class="memItemLeft" align="right" valign="top"><a id="ad91fac208ba130af8006aa8e79d1c389"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>ComplexShape</b> (string complex_shape_name)</td></tr>
-<tr class="separator:ad91fac208ba130af8006aa8e79d1c389"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5e21099a929357b255d8d8052d0aa896"><td class="memItemLeft" align="right" valign="top"><a id="a5e21099a929357b255d8d8052d0aa896"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>findBounds</b> (Vec3d &amp;lower_bound, Vec3d &amp;upper_bound) override</td></tr>
-<tr class="separator:a5e21099a929357b255d8d8052d0aa896"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acf7aebd9893fcc7281abf3332eb4565a"><td class="memItemLeft" align="right" valign="top"><a id="acf7aebd9893fcc7281abf3332eb4565a"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>addAPolygonFromFile</b> (std::string file_path_name, <a class="el" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op, Vec2d translation=Vecd(0), Real scale_factor=1.0)</td></tr>
+<tr class="separator:acf7aebd9893fcc7281abf3332eb4565a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a53db40b1b49f63ea377bda9d8adea4fc"><td class="memItemLeft" align="right" valign="top"><a id="a53db40b1b49f63ea377bda9d8adea4fc"></a>
+virtual <a class="el" href="classbool.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>checkContain</b> (Vec2d &amp;input_pnt, <a class="el" href="classbool.html">bool</a> BOUNDARY_INCLUDED=true)</td></tr>
+<tr class="separator:a53db40b1b49f63ea377bda9d8adea4fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a99e00550df1bad52c76c88bc045ac6af"><td class="memItemLeft" align="right" valign="top"><a id="a99e00550df1bad52c76c88bc045ac6af"></a>
+virtual <a class="el" href="classbool.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>checkNotFar</b> (Vec2d &amp;input_pnt, Real threshold)</td></tr>
+<tr class="separator:a99e00550df1bad52c76c88bc045ac6af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7393bdabdf744f45abb26a0f9a1d9c6d"><td class="memItemLeft" align="right" valign="top"><a id="a7393bdabdf744f45abb26a0f9a1d9c6d"></a>
+virtual <a class="el" href="classbool.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>checkNearSurface</b> (Vec2d &amp;input_pnt, Real threshold)</td></tr>
+<tr class="separator:a7393bdabdf744f45abb26a0f9a1d9c6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa17e093cba92b83aecac7d00c141777"><td class="memItemLeft" align="right" valign="top">virtual Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_complex_shape.html#aaa17e093cba92b83aecac7d00c141777">findSignedDistance</a> (Vec2d &amp;input_pnt)</td></tr>
+<tr class="separator:aaa17e093cba92b83aecac7d00c141777"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a291cb2caa01c16f8e4cf8ff93050a7de"><td class="memItemLeft" align="right" valign="top">virtual Vec2d&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_complex_shape.html#a291cb2caa01c16f8e4cf8ff93050a7de">findNormalDirection</a> (Vec2d &amp;input_pnt)</td></tr>
+<tr class="separator:a291cb2caa01c16f8e4cf8ff93050a7de"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a847741b29fd49d8459bdfb44eeb23f79"><td class="memItemLeft" align="right" valign="top"><a id="a847741b29fd49d8459bdfb44eeb23f79"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>ComplexShape</b> (std::string complex_shape_name)</td></tr>
+<tr class="separator:a847741b29fd49d8459bdfb44eeb23f79"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58b1ae9cd33f4fbdb6b5479851e04bcd"><td class="memItemLeft" align="right" valign="top"><a id="a58b1ae9cd33f4fbdb6b5479851e04bcd"></a>
+virtual <a class="el" href="namespace_s_p_h.html#ad185cdeb05bdee76bf975cc50f1c15b7">BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><b>findBounds</b> () override</td></tr>
+<tr class="separator:a58b1ae9cd33f4fbdb6b5479851e04bcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aae5b773c5416114a8b8391b9d59a4554"><td class="memItemLeft" align="right" valign="top"><a id="aae5b773c5416114a8b8391b9d59a4554"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>addTriangleMeshShape</b> (<a class="el" href="class_s_p_h_1_1_triangle_mesh_shape.html">TriangleMeshShape</a> *triangle_mesh_shape, <a class="el" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op)</td></tr>
 <tr class="separator:aae5b773c5416114a8b8391b9d59a4554"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -149,37 +144,29 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>addSphere</b> (Real r
 <tr class="memitem:a3fab66e3ff209ebfc66cdb46eebfdc09"><td class="memItemLeft" align="right" valign="top"><a id="a3fab66e3ff209ebfc66cdb46eebfdc09"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>addCylinder</b> (SimTK::UnitVec3 axis, Real radius, Real halflength, <a class="el" href="classint.html">int</a> resolution, Vec3d translation, <a class="el" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op)</td></tr>
 <tr class="separator:a3fab66e3ff209ebfc66cdb46eebfdc09"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac574eb21d097cfaf75316ecabc6026dc"><td class="memItemLeft" align="right" valign="top"><a id="ac574eb21d097cfaf75316ecabc6026dc"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>addFormSTLFile</b> (string file_path_name, Vec3d translation, Real scale_factor, <a class="el" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op)</td></tr>
-<tr class="separator:ac574eb21d097cfaf75316ecabc6026dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac5afc7e328e987c57d361e8c5770107f"><td class="memItemLeft" align="right" valign="top"><a id="ac5afc7e328e987c57d361e8c5770107f"></a>
-virtual <a class="el" href="classbool.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>checkContain</b> (Vec3d input_pnt, <a class="el" href="classbool.html">bool</a> BOUNDARY_INCLUDED=true)</td></tr>
-<tr class="separator:ac5afc7e328e987c57d361e8c5770107f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0834ac6717bd300879d15664338951d5"><td class="memItemLeft" align="right" valign="top"><a id="a0834ac6717bd300879d15664338951d5"></a>
-virtual <a class="el" href="classbool.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>checkNotFar</b> (Vec3d input_pnt, Real threshold)</td></tr>
-<tr class="separator:a0834ac6717bd300879d15664338951d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a23230fb0ad5bc00dd3ed2e8f9b390280"><td class="memItemLeft" align="right" valign="top"><a id="a23230fb0ad5bc00dd3ed2e8f9b390280"></a>
-virtual Vec3d&#160;</td><td class="memItemRight" valign="bottom"><b>findClosestPoint</b> (Vec3d input_pnt) override</td></tr>
-<tr class="separator:a23230fb0ad5bc00dd3ed2e8f9b390280"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa2ad49698d9daca766bb99696047ea1e"><td class="memItemLeft" align="right" valign="top"><a id="aa2ad49698d9daca766bb99696047ea1e"></a>
-virtual Real&#160;</td><td class="memItemRight" valign="bottom"><b>findSignedDistance</b> (Vec3d input_pnt)</td></tr>
-<tr class="separator:aa2ad49698d9daca766bb99696047ea1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a441450c4bc5aac0ecb4fa5f74a4fb935"><td class="memItemLeft" align="right" valign="top"><a id="a441450c4bc5aac0ecb4fa5f74a4fb935"></a>
-virtual Vec3d&#160;</td><td class="memItemRight" valign="bottom"><b>findNormalDirection</b> (Vec3d input_pnt)</td></tr>
-<tr class="separator:a441450c4bc5aac0ecb4fa5f74a4fb935"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af91d1684e83a4f9f01065ff8cb880949"><td class="memItemLeft" align="right" valign="top"><a id="af91d1684e83a4f9f01065ff8cb880949"></a>
-virtual Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>weightedIntegral</b> (Vecd input_pnt, <a class="el" href="class_s_p_h_1_1_kernel.html">Kernel</a> *kernel, Real smoothing_length)</td></tr>
-<tr class="separator:af91d1684e83a4f9f01065ff8cb880949"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a43957b4bbd2ac16d2001eba7e9699efb"><td class="memItemLeft" align="right" valign="top"><a id="a43957b4bbd2ac16d2001eba7e9699efb"></a>
-virtual Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>computeKernelIntegral</b> (Vecd input_pnt, <a class="el" href="class_s_p_h_1_1_kernel.html">Kernel</a> *kernel)</td></tr>
-<tr class="separator:a43957b4bbd2ac16d2001eba7e9699efb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad540fdca8189df981a74fbe2424cb2b8"><td class="memItemLeft" align="right" valign="top"><a id="ad540fdca8189df981a74fbe2424cb2b8"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>addFormSTLFile</b> (std::string file_path_name, Vec3d translation, Real scale_factor, <a class="el" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op)</td></tr>
+<tr class="separator:ad540fdca8189df981a74fbe2424cb2b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5c38b048e2510aee604d894bfb770af5"><td class="memItemLeft" align="right" valign="top"><a id="a5c38b048e2510aee604d894bfb770af5"></a>
+virtual <a class="el" href="classbool.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>checkContain</b> (Vec3d &amp;input_pnt, <a class="el" href="classbool.html">bool</a> BOUNDARY_INCLUDED=true)</td></tr>
+<tr class="separator:a5c38b048e2510aee604d894bfb770af5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab0f9ef6970efb7562ac9929125c80c95"><td class="memItemLeft" align="right" valign="top"><a id="ab0f9ef6970efb7562ac9929125c80c95"></a>
+virtual <a class="el" href="classbool.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>checkNotFar</b> (Vec3d &amp;input_pnt, Real threshold)</td></tr>
+<tr class="separator:ab0f9ef6970efb7562ac9929125c80c95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca341dc155698269ebdf1961145a336d"><td class="memItemLeft" align="right" valign="top"><a id="aca341dc155698269ebdf1961145a336d"></a>
+virtual <a class="el" href="classbool.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>checkNearSurface</b> (Vec3d &amp;input_pnt, Real threshold)</td></tr>
+<tr class="separator:aca341dc155698269ebdf1961145a336d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19077e410946e8b216fbc6c162941006"><td class="memItemLeft" align="right" valign="top">virtual Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_complex_shape.html#a19077e410946e8b216fbc6c162941006">findSignedDistance</a> (Vec3d &amp;input_pnt)</td></tr>
+<tr class="separator:a19077e410946e8b216fbc6c162941006"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12092c8484f4fe5a618e92f66372d255"><td class="memItemLeft" align="right" valign="top">virtual Vec3d&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_complex_shape.html#a12092c8484f4fe5a618e92f66372d255">findNormalDirection</a> (Vec3d &amp;input_pnt)</td></tr>
+<tr class="separator:a12092c8484f4fe5a618e92f66372d255"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_s_p_h_1_1_shape"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_shape')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_shape.html">SPH::Shape</a></td></tr>
-<tr class="memitem:a4476c696cd5ace075ab6c9dcd37a86c4 inherit pub_methods_class_s_p_h_1_1_shape"><td class="memItemLeft" align="right" valign="top"><a id="a4476c696cd5ace075ab6c9dcd37a86c4"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Shape</b> (string shape_name)</td></tr>
-<tr class="separator:a4476c696cd5ace075ab6c9dcd37a86c4 inherit pub_methods_class_s_p_h_1_1_shape"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8345e4a44bdb995a1bd5f956f0b33d41 inherit pub_methods_class_s_p_h_1_1_shape"><td class="memItemLeft" align="right" valign="top"><a id="a8345e4a44bdb995a1bd5f956f0b33d41"></a>
-string&#160;</td><td class="memItemRight" valign="bottom"><b>getName</b> ()</td></tr>
-<tr class="separator:a8345e4a44bdb995a1bd5f956f0b33d41 inherit pub_methods_class_s_p_h_1_1_shape"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0788d828fde0933f6e8493393667be9 inherit pub_methods_class_s_p_h_1_1_shape"><td class="memItemLeft" align="right" valign="top"><a id="af0788d828fde0933f6e8493393667be9"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Shape</b> (std::string shape_name)</td></tr>
+<tr class="separator:af0788d828fde0933f6e8493393667be9 inherit pub_methods_class_s_p_h_1_1_shape"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace0e6216880b5ccb462523aa821a50b3 inherit pub_methods_class_s_p_h_1_1_shape"><td class="memItemLeft" align="right" valign="top"><a id="ace0e6216880b5ccb462523aa821a50b3"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>getName</b> ()</td></tr>
+<tr class="separator:ace0e6216880b5ccb462523aa821a50b3 inherit pub_methods_class_s_p_h_1_1_shape"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
@@ -189,9 +176,9 @@ Protected Attributes</h2></td></tr>
 <tr class="memitem:a657b6cdcf51d09ce26105192142ab72c"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; <a class="el" href="class_s_p_h_1_1_triangle_mesh_shape.html">TriangleMeshShape</a> *, <a class="el" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_complex_shape.html#a657b6cdcf51d09ce26105192142ab72c">triangle_mesh_shapes_</a></td></tr>
 <tr class="separator:a657b6cdcf51d09ce26105192142ab72c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_class_s_p_h_1_1_shape"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_shape')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_shape.html">SPH::Shape</a></td></tr>
-<tr class="memitem:ae2f65ae337bc8dd13efb2df76ab491a3 inherit pro_attribs_class_s_p_h_1_1_shape"><td class="memItemLeft" align="right" valign="top"><a id="ae2f65ae337bc8dd13efb2df76ab491a3"></a>
-string&#160;</td><td class="memItemRight" valign="bottom"><b>name_</b></td></tr>
-<tr class="separator:ae2f65ae337bc8dd13efb2df76ab491a3 inherit pro_attribs_class_s_p_h_1_1_shape"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8e6dd281937b9208b4cdd221e7feaa51 inherit pro_attribs_class_s_p_h_1_1_shape"><td class="memItemLeft" align="right" valign="top"><a id="a8e6dd281937b9208b4cdd221e7feaa51"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>name_</b></td></tr>
+<tr class="separator:a8e6dd281937b9208b4cdd221e7feaa51 inherit pro_attribs_class_s_p_h_1_1_shape"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>gives the final geomtrical definition of the <a class="el" href="class_s_p_h_1_1_s_p_h_body.html" title="SPHBody is a base body with basic data and functions. Its derived class can be a real fluid body,...">SPHBody</a> </p>
@@ -219,6 +206,119 @@ string&#160;</td><td class="memItemRight" valign="bottom"><b>name_</b></td></tr>
 </table>
 </div><div class="memdoc">
 <p>Default constructor. </p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="a291cb2caa01c16f8e4cf8ff93050a7de"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a291cb2caa01c16f8e4cf8ff93050a7de">&#9670;&nbsp;</a></span>findNormalDirection() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">Vec2d SPH::ComplexShape::findNormalDirection </td>
+          <td>(</td>
+          <td class="paramtype">Vec2d &amp;&#160;</td>
+          <td class="paramname"><em>input_pnt</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Normal direction point toward outside of the complex shape. </p>
+
+<p>Reimplemented in <a class="el" href="class_s_p_h_1_1_level_set_complex_shape.html#aeae1679c2c195210d7a8117e3b98fdc4">SPH::LevelSetComplexShape</a>.</p>
+
+</div>
+</div>
+<a id="a12092c8484f4fe5a618e92f66372d255"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a12092c8484f4fe5a618e92f66372d255">&#9670;&nbsp;</a></span>findNormalDirection() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">Vec3d SPH::ComplexShape::findNormalDirection </td>
+          <td>(</td>
+          <td class="paramtype">Vec3d &amp;&#160;</td>
+          <td class="paramname"><em>input_pnt</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Normal direction point toward outside of the complex shape. </p>
+
+</div>
+</div>
+<a id="aaa17e093cba92b83aecac7d00c141777"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaa17e093cba92b83aecac7d00c141777">&#9670;&nbsp;</a></span>findSignedDistance() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">Real SPH::ComplexShape::findSignedDistance </td>
+          <td>(</td>
+          <td class="paramtype">Vec2d &amp;&#160;</td>
+          <td class="paramname"><em>input_pnt</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Signed distance is negative for point within the complex shape. </p>
+
+<p>Reimplemented in <a class="el" href="class_s_p_h_1_1_level_set_complex_shape.html#afc972a88cef63fdd74e04b678b0c5c0f">SPH::LevelSetComplexShape</a>.</p>
+
+</div>
+</div>
+<a id="a19077e410946e8b216fbc6c162941006"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a19077e410946e8b216fbc6c162941006">&#9670;&nbsp;</a></span>findSignedDistance() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">Real SPH::ComplexShape::findSignedDistance </td>
+          <td>(</td>
+          <td class="paramtype">Vec3d &amp;&#160;</td>
+          <td class="paramname"><em>input_pnt</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Signed distance is negative for point within the complex shape. </p>
 
 </div>
 </div>

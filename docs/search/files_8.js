@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['level_5fset_2ecpp_1311',['level_set.cpp',['../level__set_8cpp.html',1,'']]],
-  ['level_5fset_2eh_1312',['level_set.h',['../level__set_8h.html',1,'']]],
-  ['level_5fset_5fsupplementary_2ecpp_1313',['level_set_supplementary.cpp',['../for__2_d__build_2geometries_2level__set__supplementary_8cpp.html',1,'(Global Namespace)'],['../for__3_d__build_2geometries_2level__set__supplementary_8cpp.html',1,'(Global Namespace)']]]
+  ['kernel_5fhyperbolic_2ecpp_1396',['kernel_hyperbolic.cpp',['../kernel__hyperbolic_8cpp.html',1,'']]],
+  ['kernel_5fhyperbolic_2eh_1397',['kernel_hyperbolic.h',['../kernel__hyperbolic_8h.html',1,'']]],
+  ['kernel_5fquadratic_2eh_1398',['kernel_quadratic.h',['../kernel__quadratic_8h.html',1,'']]],
+  ['kernel_5fwenland_5fc2_2eh_1399',['kernel_wenland_c2.h',['../kernel__wenland__c2_8h.html',1,'']]]
 ];

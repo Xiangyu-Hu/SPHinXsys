@@ -85,24 +85,21 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a4476c696cd5ace075ab6c9dcd37a86c4"><td class="memItemLeft" align="right" valign="top"><a id="a4476c696cd5ace075ab6c9dcd37a86c4"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Shape</b> (string shape_name)</td></tr>
-<tr class="separator:a4476c696cd5ace075ab6c9dcd37a86c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8345e4a44bdb995a1bd5f956f0b33d41"><td class="memItemLeft" align="right" valign="top"><a id="a8345e4a44bdb995a1bd5f956f0b33d41"></a>
-string&#160;</td><td class="memItemRight" valign="bottom"><b>getName</b> ()</td></tr>
-<tr class="separator:a8345e4a44bdb995a1bd5f956f0b33d41"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2751b2bf692992d08c015f065faca698"><td class="memItemLeft" align="right" valign="top"><a id="a2751b2bf692992d08c015f065faca698"></a>
-virtual Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>findClosestPoint</b> (Vecd input_pnt)=0</td></tr>
-<tr class="separator:a2751b2bf692992d08c015f065faca698"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a21aff79f2143c0ce4a1d28ceb34b8061"><td class="memItemLeft" align="right" valign="top"><a id="a21aff79f2143c0ce4a1d28ceb34b8061"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>findBounds</b> (Vecd &amp;lower_bound, Vecd &amp;upper_bound)=0</td></tr>
-<tr class="separator:a21aff79f2143c0ce4a1d28ceb34b8061"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0788d828fde0933f6e8493393667be9"><td class="memItemLeft" align="right" valign="top"><a id="af0788d828fde0933f6e8493393667be9"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Shape</b> (std::string shape_name)</td></tr>
+<tr class="separator:af0788d828fde0933f6e8493393667be9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace0e6216880b5ccb462523aa821a50b3"><td class="memItemLeft" align="right" valign="top"><a id="ace0e6216880b5ccb462523aa821a50b3"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>getName</b> ()</td></tr>
+<tr class="separator:ace0e6216880b5ccb462523aa821a50b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b47e77a6d00d6ebfe4843b6201c6275"><td class="memItemLeft" align="right" valign="top"><a id="a6b47e77a6d00d6ebfe4843b6201c6275"></a>
+virtual <a class="el" href="namespace_s_p_h.html#ad185cdeb05bdee76bf975cc50f1c15b7">BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><b>findBounds</b> ()=0</td></tr>
+<tr class="separator:a6b47e77a6d00d6ebfe4843b6201c6275"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
-<tr class="memitem:ae2f65ae337bc8dd13efb2df76ab491a3"><td class="memItemLeft" align="right" valign="top"><a id="ae2f65ae337bc8dd13efb2df76ab491a3"></a>
-string&#160;</td><td class="memItemRight" valign="bottom"><b>name_</b></td></tr>
-<tr class="separator:ae2f65ae337bc8dd13efb2df76ab491a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8e6dd281937b9208b4cdd221e7feaa51"><td class="memItemLeft" align="right" valign="top"><a id="a8e6dd281937b9208b4cdd221e7feaa51"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>name_</b></td></tr>
+<tr class="separator:a8e6dd281937b9208b4cdd221e7feaa51"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Base class for all geometries. </p>

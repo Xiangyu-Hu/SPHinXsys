@@ -83,18 +83,16 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a3f06cceead3a41ecca61210c748dde45"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_neighborhood.html#a3f06cceead3a41ecca61210c748dde45">Neighborhood</a> ()</td></tr>
-<tr class="separator:a3f06cceead3a41ecca61210c748dde45"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af792e81d60a5504b18a3059d34208ad5"><td class="memItemLeft" align="right" valign="top"><a id="af792e81d60a5504b18a3059d34208ad5"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>addANeighbor</b> (<a class="el" href="class_s_p_h_1_1_kernel.html">Kernel</a> &amp;kernel, Vecd &amp;vec_r_ij, <a class="el" href="classsize__t.html">size_t</a> i_index, <a class="el" href="classsize__t.html">size_t</a> j_index)</td></tr>
-<tr class="separator:af792e81d60a5504b18a3059d34208ad5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae2ba8aefeb9a6f2c93fb7a477df21c3a"><td class="memItemLeft" align="right" valign="top"><a id="ae2ba8aefeb9a6f2c93fb7a477df21c3a"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>removeANeighbor</b> (<a class="el" href="classsize__t.html">size_t</a> neighbor_n)</td></tr>
+<tr class="separator:ae2ba8aefeb9a6f2c93fb7a477df21c3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a1e2d0d9c7af09e2ee0e58903b171902d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_neighborhood.html#a1e2d0d9c7af09e2ee0e58903b171902d">current_size_</a></td></tr>
 <tr class="separator:a1e2d0d9c7af09e2ee0e58903b171902d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2ddde59ec2c076390010b1f66f6d5379"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_neighborhood.html#a2ddde59ec2c076390010b1f66f6d5379">memory_size_</a></td></tr>
-<tr class="separator:a2ddde59ec2c076390010b1f66f6d5379"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58d054540758347561bf8597445c568c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_neighborhood.html#a58d054540758347561bf8597445c568c">allocated_size_</a></td></tr>
+<tr class="separator:a58d054540758347561bf8597445c568c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaec2f984f8c1afd41b2ea98ec7033f99"><td class="memItemLeft" align="right" valign="top">StdLargeVec&lt; <a class="el" href="classsize__t.html">size_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_neighborhood.html#aaec2f984f8c1afd41b2ea98ec7033f99">j_</a></td></tr>
 <tr class="separator:aaec2f984f8c1afd41b2ea98ec7033f99"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aead058787ca24c233d7d6d7825e1dac3"><td class="memItemLeft" align="right" valign="top">StdLargeVec&lt; Real &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_neighborhood.html#aead058787ca24c233d7d6d7825e1dac3">W_ij_</a></td></tr>
@@ -108,34 +106,23 @@ Public Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A neighborhood around particle i. </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a3f06cceead3a41ecca61210c748dde45"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3f06cceead3a41ecca61210c748dde45">&#9670;&nbsp;</a></span>Neighborhood()</h2>
+</div><h2 class="groupheader">Member Data Documentation</h2>
+<a id="a58d054540758347561bf8597445c568c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a58d054540758347561bf8597445c568c">&#9670;&nbsp;</a></span>allocated_size_</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">SPH::Neighborhood::Neighborhood </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
+          <td class="memname"><a class="el" href="classsize__t.html">size_t</a> SPH::Neighborhood::allocated_size_</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
-<p>default constructor </p>
+<p>the limit of neighors does not require memory allocation <br  />
+ </p>
 
 </div>
 </div>
-<h2 class="groupheader">Member Data Documentation</h2>
 <a id="a1e2d0d9c7af09e2ee0e58903b171902d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1e2d0d9c7af09e2ee0e58903b171902d">&#9670;&nbsp;</a></span>current_size_</h2>
 
@@ -147,7 +134,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>the currnet number of neighors </p>
+<p>the current number of neighors </p>
 
 </div>
 </div>
@@ -162,7 +149,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>derivative of kernel function </p>
+<p>derivative of kernel function or inter-particle surface contribution </p>
 
 </div>
 </div>
@@ -177,7 +164,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>unit vector pointing from j to i </p>
+<p>unit vector pointing from j to i or inter-particle surface direction </p>
 
 </div>
 </div>
@@ -193,22 +180,6 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>index of the neighbor particle. </p>
-
-</div>
-</div>
-<a id="a2ddde59ec2c076390010b1f66f6d5379"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2ddde59ec2c076390010b1f66f6d5379">&#9670;&nbsp;</a></span>memory_size_</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classsize__t.html">size_t</a> SPH::Neighborhood::memory_size_</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>the limit of neighors does not require memory allocation <br  />
- </p>
 
 </div>
 </div>
@@ -238,7 +209,7 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>kernel value </p>
+<p>kernel value or particle volume contribution </p>
 
 </div>
 </div>

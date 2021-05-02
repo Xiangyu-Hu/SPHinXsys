@@ -90,10 +90,10 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for all geometries.  <a href="class_s_p_h_1_1_shape.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_edge.html">SPH::Edge&lt; InEdgeType, OutEdgeType &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">template base class of linear structure  <a href="class_s_p_h_1_1_edge.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">template base class of linear structure only with topology information  <a href="class_s_p_h_1_1_edge.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_branch.html">SPH::Branch</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Each branch has a parent and several children, many branches compose a tree.  <a href="class_s_p_h_1_1_branch.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Each branch has a parent and several children, and geometric information. It is a decorated and realized edge. Many connected branches compose a tree.  <a href="class_s_p_h_1_1_branch.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_structure.html">SPH::Structure</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for all structures.  <a href="class_s_p_h_1_1_structure.html#details">More...</a><br /></td></tr>
@@ -118,8 +118,7 @@ Enumerations</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Shape is the base class for all geometries. </p>
-<p>Several pure virtual functions are defined here. (a) closet point on surface: to find the closet point on shape surface to a given point. (b) find the lower and upper bounds. </p><dl class="section author"><dt>Author</dt><dd>Luhui Han, Chi ZHang and Xiangyu Hu </dd></dl>
-<dl class="section version"><dt>Version</dt><dd>0.1 </dd></dl>
+<p>Several pure virtual functions are defined here. (a) closet point on surface: to find the closet point on shape surface to a given point. (b) find the lower and upper bounds. </p><dl class="section author"><dt>Author</dt><dd>Chi ZHang and Xiangyu Hu </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

@@ -93,41 +93,38 @@ $(function() {
 <div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="comment">* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *</span></div>
 <div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="comment">*                                                                           *</span></div>
 <div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="comment">* --------------------------------------------------------------------------*/</span></div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="preprocessor">#pragma once</span></div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160; </div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="preprocessor">#include &quot;base_data_package.h&quot;</span></div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160; </div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespace_s_p_h.html">SPH</a> {</div>
-<div class="line"><a name="l00039"></a><span class="lineno"><a class="line" href="class_s_p_h_1_1_external_force.html">   39</a></span>&#160;    <span class="keyword">class </span><a class="code" href="class_s_p_h_1_1_external_force.html">ExternalForce</a></div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    {</div>
-<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;    <span class="keyword">public</span>:</div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;        <a class="code" href="class_s_p_h_1_1_external_force.html">ExternalForce</a>();</div>
-<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;        <span class="keyword">virtual</span> ~<a class="code" href="class_s_p_h_1_1_external_force.html">ExternalForce</a>() {};</div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;        <span class="keyword">virtual</span> Vecd <a class="code" href="class_s_p_h_1_1_external_force.html#a6fb8e79c9f149f54f6686aa5f8a39e51">InducedAcceleration</a>(Vecd&amp; position) = 0;</div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;    };</div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160; </div>
-<div class="line"><a name="l00052"></a><span class="lineno"><a class="line" href="class_s_p_h_1_1_gravity.html">   52</a></span>&#160;    <span class="keyword">class </span><a class="code" href="class_s_p_h_1_1_gravity.html">Gravity</a> : <span class="keyword">public</span> <a class="code" href="class_s_p_h_1_1_external_force.html">ExternalForce</a></div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;    {</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;    <span class="keyword">protected</span>:</div>
-<div class="line"><a name="l00056"></a><span class="lineno"><a class="line" href="class_s_p_h_1_1_gravity.html#ad263839a34c225678c6f381b70636e42">   56</a></span>&#160;        Vecd <a class="code" href="class_s_p_h_1_1_gravity.html#ad263839a34c225678c6f381b70636e42">global_acceleration_</a>;</div>
-<div class="line"><a name="l00058"></a><span class="lineno"><a class="line" href="class_s_p_h_1_1_gravity.html#a07a0c44c4efc0852fdd2527432aa1380">   58</a></span>&#160;        Vecd <a class="code" href="class_s_p_h_1_1_gravity.html#a07a0c44c4efc0852fdd2527432aa1380">reference_position_</a>;</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;    <span class="keyword">public</span>:</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;        <a class="code" href="class_s_p_h_1_1_gravity.html">Gravity</a>(Vecd gravity_vector, Vecd reference_position = Vecd(0));</div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;        <span class="keyword">virtual</span> ~<a class="code" href="class_s_p_h_1_1_gravity.html">Gravity</a>() {};</div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160; </div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;        <span class="keyword">virtual</span> Vecd <a class="code" href="class_s_p_h_1_1_gravity.html#ae1759c861b24231d2e00f6708a383a21">InducedAcceleration</a>(Vecd&amp; position) <span class="keyword">override</span>;</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;        Real <a class="code" href="class_s_p_h_1_1_gravity.html#ae2aa9a3008afce5300fe50b72619186f">getPotential</a>(Vecd&amp; position);</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;    };</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;}</div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="preprocessor">#pragma once</span></div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160; </div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="preprocessor">#include &quot;base_data_package.h&quot;</span></div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160; </div>
+<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespace_s_p_h.html">SPH</a> {</div>
+<div class="line"><a name="l00038"></a><span class="lineno"><a class="line" href="class_s_p_h_1_1_external_force.html">   38</a></span>&#160;    <span class="keyword">class </span><a class="code" href="class_s_p_h_1_1_external_force.html">ExternalForce</a></div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;    {</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;        <a class="code" href="class_s_p_h_1_1_external_force.html">ExternalForce</a>();</div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;        <span class="keyword">virtual</span> ~<a class="code" href="class_s_p_h_1_1_external_force.html">ExternalForce</a>() {};</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;        <span class="keyword">virtual</span> Vecd <a class="code" href="class_s_p_h_1_1_external_force.html#a6fb8e79c9f149f54f6686aa5f8a39e51">InducedAcceleration</a>(Vecd&amp; position) = 0;</div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;    };</div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160; </div>
+<div class="line"><a name="l00051"></a><span class="lineno"><a class="line" href="class_s_p_h_1_1_gravity.html">   51</a></span>&#160;    <span class="keyword">class </span><a class="code" href="class_s_p_h_1_1_gravity.html">Gravity</a> : <span class="keyword">public</span> <a class="code" href="class_s_p_h_1_1_external_force.html">ExternalForce</a></div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;    {</div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;    <span class="keyword">protected</span>:</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;        Vecd global_acceleration_;</div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;        Vecd zero_potential_reference_;</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;    <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;        <a class="code" href="class_s_p_h_1_1_gravity.html">Gravity</a>(Vecd gravity_vector, Vecd reference_position = Vecd(0));</div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;        <span class="keyword">virtual</span> ~<a class="code" href="class_s_p_h_1_1_gravity.html">Gravity</a>() {};</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160; </div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;        <span class="keyword">virtual</span> Vecd <a class="code" href="class_s_p_h_1_1_gravity.html#ae1759c861b24231d2e00f6708a383a21">InducedAcceleration</a>(Vecd&amp; position) <span class="keyword">override</span>;</div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;        Real getPotential(Vecd&amp; position);</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;    };</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;}</div>
 </div><!-- fragment --></div><!-- contents -->
-<div class="ttc" id="aclass_s_p_h_1_1_gravity_html_ae2aa9a3008afce5300fe50b72619186f"><div class="ttname"><a href="class_s_p_h_1_1_gravity.html#ae2aa9a3008afce5300fe50b72619186f">SPH::Gravity::getPotential</a></div><div class="ttdeci">Real getPotential(Vecd &amp;position)</div><div class="ttdef"><b>Definition:</b> external_force.cpp:25</div></div>
-<div class="ttc" id="aclass_s_p_h_1_1_gravity_html_ae1759c861b24231d2e00f6708a383a21"><div class="ttname"><a href="class_s_p_h_1_1_gravity.html#ae1759c861b24231d2e00f6708a383a21">SPH::Gravity::InducedAcceleration</a></div><div class="ttdeci">virtual Vecd InducedAcceleration(Vecd &amp;position) override</div><div class="ttdef"><b>Definition:</b> external_force.cpp:20</div></div>
+<div class="ttc" id="aclass_s_p_h_1_1_gravity_html_ae1759c861b24231d2e00f6708a383a21"><div class="ttname"><a href="class_s_p_h_1_1_gravity.html#ae1759c861b24231d2e00f6708a383a21">SPH::Gravity::InducedAcceleration</a></div><div class="ttdeci">virtual Vecd InducedAcceleration(Vecd &amp;position) override</div><div class="ttdef"><b>Definition:</b> external_force.cpp:15</div></div>
 <div class="ttc" id="aclass_s_p_h_1_1_external_force_html_a6fb8e79c9f149f54f6686aa5f8a39e51"><div class="ttname"><a href="class_s_p_h_1_1_external_force.html#a6fb8e79c9f149f54f6686aa5f8a39e51">SPH::ExternalForce::InducedAcceleration</a></div><div class="ttdeci">virtual Vecd InducedAcceleration(Vecd &amp;position)=0</div></div>
-<div class="ttc" id="aclass_s_p_h_1_1_external_force_html"><div class="ttname"><a href="class_s_p_h_1_1_external_force.html">SPH::ExternalForce</a></div><div class="ttdoc">This class define external forces.</div><div class="ttdef"><b>Definition:</b> external_force.h:39</div></div>
-<div class="ttc" id="aclass_s_p_h_1_1_gravity_html_a07a0c44c4efc0852fdd2527432aa1380"><div class="ttname"><a href="class_s_p_h_1_1_gravity.html#a07a0c44c4efc0852fdd2527432aa1380">SPH::Gravity::reference_position_</a></div><div class="ttdeci">Vecd reference_position_</div><div class="ttdef"><b>Definition:</b> external_force.h:58</div></div>
-<div class="ttc" id="aclass_s_p_h_1_1_gravity_html_ad263839a34c225678c6f381b70636e42"><div class="ttname"><a href="class_s_p_h_1_1_gravity.html#ad263839a34c225678c6f381b70636e42">SPH::Gravity::global_acceleration_</a></div><div class="ttdeci">Vecd global_acceleration_</div><div class="ttdef"><b>Definition:</b> external_force.h:56</div></div>
-<div class="ttc" id="aclass_s_p_h_1_1_gravity_html"><div class="ttname"><a href="class_s_p_h_1_1_gravity.html">SPH::Gravity</a></div><div class="ttdoc">The gravity force, derived class of External force.</div><div class="ttdef"><b>Definition:</b> external_force.h:52</div></div>
-<div class="ttc" id="anamespace_s_p_h_html"><div class="ttname"><a href="namespace_s_p_h.html">SPH</a></div><div class="ttdef"><b>Definition:</b> base_body_supplementary.cpp:12</div></div>
+<div class="ttc" id="aclass_s_p_h_1_1_external_force_html"><div class="ttname"><a href="class_s_p_h_1_1_external_force.html">SPH::ExternalForce</a></div><div class="ttdoc">This class define external forces.</div><div class="ttdef"><b>Definition:</b> external_force.h:38</div></div>
+<div class="ttc" id="aclass_s_p_h_1_1_gravity_html"><div class="ttname"><a href="class_s_p_h_1_1_gravity.html">SPH::Gravity</a></div><div class="ttdoc">The gravity force, derived class of External force.</div><div class="ttdef"><b>Definition:</b> external_force.h:51</div></div>
+<div class="ttc" id="anamespace_s_p_h_html"><div class="ttname"><a href="namespace_s_p_h.html">SPH</a></div><div class="ttdef"><b>Definition:</b> solid_body_supplementary.cpp:9</div></div>
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
 Generated by &#160;<a href="http://www.doxygen.org/index.html">

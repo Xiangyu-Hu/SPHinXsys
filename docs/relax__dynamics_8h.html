@@ -95,14 +95,20 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_relaxation_acceleration_inner.html">SPH::relax_dynamics::RelaxationAccelerationInner</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">simple algorithm for physics relaxation without considering contact interaction. this is usually used for solid like bodies  <a href="class_s_p_h_1_1relax__dynamics_1_1_relaxation_acceleration_inner.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_relaxation_acceleration_inner_with_level_set_correction.html">SPH::relax_dynamics::RelaxationAccelerationInnerWithLevelSetCorrection</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">we constrain particles to a level function representing the interafce.  <a href="class_s_p_h_1_1relax__dynamics_1_1_relaxation_acceleration_inner_with_level_set_correction.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_update_particle_position.html">SPH::relax_dynamics::UpdateParticlePosition</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">update the particle position for a time step  <a href="class_s_p_h_1_1relax__dynamics_1_1_update_particle_position.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_update_smoothing_length_ratio_by_body_shape.html">SPH::relax_dynamics::UpdateSmoothingLengthRatioByBodyShape</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">update the particle smoothing length ratio  <a href="class_s_p_h_1_1relax__dynamics_1_1_update_smoothing_length_ratio_by_body_shape.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_relaxation_acceleration_complex.html">SPH::relax_dynamics::RelaxationAccelerationComplex</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">compute relaxation acceleration while consider the present of contact bodies with considering contact interaction this is usually used for fluid like bodies  <a href="class_s_p_h_1_1relax__dynamics_1_1_relaxation_acceleration_complex.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_body_surface_bounding.html">SPH::relax_dynamics::BodySurfaceBounding</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">constrain surface particles by map contrained particles to geometry face and r = r + phi * norm (vector distance to face)  <a href="class_s_p_h_1_1relax__dynamics_1_1_body_surface_bounding.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_shape_surface_bounding.html">SPH::relax_dynamics::ShapeSurfaceBounding</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">constrain surface particles by map contrained particles to geometry face and r = r + phi * norm (vector distance to face)  <a href="class_s_p_h_1_1relax__dynamics_1_1_shape_surface_bounding.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1relax__dynamics_1_1_constraint_surface_particles.html">SPH::relax_dynamics::ConstraintSurfaceParticles</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">constrain surface particles by map contrained particles to geometry face and r = r + phi * norm (vector distance to face)  <a href="class_s_p_h_1_1relax__dynamics_1_1_constraint_surface_particles.html#details">More...</a><br /></td></tr>
@@ -132,7 +138,6 @@ typedef DataDelegateComplex&lt; SPHBody, BaseParticles, BaseMaterial, SPHBody, B
 <div class="textblock"><p>This is the classes of particle relaxation in order to produce body fitted initial particle distribution. <br  />
  </p>
 <dl class="section author"><dt>Author</dt><dd>Chi ZHang and Xiangyu Hu </dd></dl>
-<dl class="section version"><dt>Version</dt><dd>0.1 </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

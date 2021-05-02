@@ -72,7 +72,8 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <a href="for__2_d__build_2geometries_2geometry_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160; </div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="preprocessor">#pragma once</span></div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="preprocessor">#pragma once</span></div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160; </div>
 <div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="preprocessor">#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING</span></div>
 <div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160; </div>
 <div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="comment">//boost library</span></div>
@@ -107,55 +108,55 @@ $(function() {
 <div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;        <a class="code" href="class_s_p_h_1_1_multi_polygon.html">MultiPolygon</a>() :<a class="code" href="class_s_p_h_1_1_shape.html">Shape</a>(<span class="stringliteral">&quot;MultiPolygon&quot;</span>) {};</div>
 <div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;        boost_multi_poly&amp; getBoostMultiPoly() { <span class="keywordflow">return</span> multi_poly_; };</div>
 <div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;        <span class="keywordtype">bool</span> checkContain(Vec2d pnt, <span class="keywordtype">bool</span> BOUNDARY_INCLUDED = <span class="keyword">true</span>);</div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;        <span class="keyword">virtual</span> Vec2d findClosestPoint(Vec2d input_pnt) <span class="keyword">override</span>;</div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;        <span class="keyword">virtual</span> <span class="keywordtype">void</span> findBounds(Vec2d &amp;lower_bound, Vec2d &amp;upper_bound) <span class="keyword">override</span>;</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;        Vec2d findClosestPoint(Vec2d&amp; input_pnt);</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;        <span class="keyword">virtual</span> <a class="code" href="namespace_s_p_h.html#ad185cdeb05bdee76bf975cc50f1c15b7">BoundingBox</a> findBounds() <span class="keyword">override</span>;</div>
 <div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160; </div>
 <div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;        <span class="keywordtype">void</span> addAMultiPolygon(<a class="code" href="class_s_p_h_1_1_multi_polygon.html">MultiPolygon</a>&amp; multi_polygon, <a class="code" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op);</div>
 <div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;        <span class="keywordtype">void</span> addABoostMultiPoly(boost_multi_poly&amp; boost_multi_poly, <a class="code" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op);</div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;        <span class="keywordtype">void</span> addAPolygon(std::vector&lt;Point&gt;&amp; points, <a class="code" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op);</div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;        <span class="keywordtype">void</span> addAPolygon(std::vector&lt;Vecd&gt;&amp; points, <a class="code" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op);</div>
 <div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;        <span class="keywordtype">void</span> addACircle(Vec2d center, Real radius, <span class="keywordtype">int</span> resolution, <a class="code" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op);</div>
 <div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160; </div>
 <div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;    <span class="keyword">protected</span>:</div>
 <div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;        boost_multi_poly multi_poly_;</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160; </div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;        boost_multi_poly MultiPolygonByBooleanOps(boost_multi_poly multi_poly_in,</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;                        boost_multi_poly multi_poly_op, <a class="code" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> boolean_op);</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;    };</div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160; </div>
-<div class="line"><a name="l00075"></a><span class="lineno"><a class="line" href="class_s_p_h_1_1_complex_shape.html">   75</a></span>&#160;    <span class="keyword">class </span><a class="code" href="class_s_p_h_1_1_complex_shape.html">ComplexShape</a> : <span class="keyword">public</span> <a class="code" href="class_s_p_h_1_1_shape.html">Shape</a></div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;    {</div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;        boost_multi_poly MultiPolygonByBooleanOps(boost_multi_poly multi_poly_in,</div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;                        boost_multi_poly multi_poly_op, <a class="code" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> boolean_op);</div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;    };</div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160; </div>
+<div class="line"><a name="l00074"></a><span class="lineno"><a class="line" href="class_s_p_h_1_1_complex_shape.html">   74</a></span>&#160;    <span class="keyword">class </span><a class="code" href="class_s_p_h_1_1_complex_shape.html">ComplexShape</a> : <span class="keyword">public</span> <a class="code" href="class_s_p_h_1_1_shape.html">Shape</a></div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;    {</div>
+<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;        Vec2d findClosestPoint(Vec2d&amp; input_pnt);</div>
 <div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;    <span class="keyword">public</span>:</div>
 <div class="line"><a name="l00079"></a><span class="lineno"><a class="line" href="class_s_p_h_1_1_complex_shape.html#af9172c77de9ac21119b3d1db17cae6fe">   79</a></span>&#160;        <a class="code" href="class_s_p_h_1_1_complex_shape.html#af9172c77de9ac21119b3d1db17cae6fe">ComplexShape</a>() : <a class="code" href="class_s_p_h_1_1_shape.html">Shape</a>(<span class="stringliteral">&quot;ComplexShape&quot;</span>), multi_ploygen_() {};</div>
-<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;        <a class="code" href="class_s_p_h_1_1_complex_shape.html">ComplexShape</a>(<span class="keywordtype">string</span> complex_shape_name) : <a class="code" href="class_s_p_h_1_1_shape.html">Shape</a>(complex_shape_name), multi_ploygen_() {};</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;        <a class="code" href="class_s_p_h_1_1_complex_shape.html">ComplexShape</a>(std::string complex_shape_name) : <a class="code" href="class_s_p_h_1_1_shape.html">Shape</a>(complex_shape_name), multi_ploygen_() {};</div>
 <div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;        <span class="keyword">virtual</span> ~ComplexShape() {};</div>
-<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;        <span class="keyword">virtual</span> <span class="keywordtype">void</span> findBounds(Vec2d&amp; lower_bound, Vec2d&amp; upper_bound) <span class="keyword">override</span>;</div>
+<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;        <span class="keyword">virtual</span> <a class="code" href="namespace_s_p_h.html#ad185cdeb05bdee76bf975cc50f1c15b7">BoundingBox</a> findBounds() <span class="keyword">override</span>;</div>
 <div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;        <span class="keywordtype">void</span> addAMultiPolygon(MultiPolygon&amp; multi_polygon, <a class="code" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op);</div>
 <div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;        <span class="keywordtype">void</span> addABoostMultiPoly(boost_multi_poly&amp; boost_multi_poly, <a class="code" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op);</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;        <span class="keywordtype">void</span> addAPolygon(std::vector&lt;Point&gt;&amp; points, <a class="code" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op);</div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;        <span class="keywordtype">void</span> addAPolygon(std::vector&lt;Vecd&gt;&amp; points, <a class="code" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op);</div>
 <div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;        <span class="keywordtype">void</span> addACircle(Vec2d center, <a class="code" href="class_real.html">Real</a> radius, <span class="keywordtype">int</span> resolution, <a class="code" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op);</div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;        <span class="keywordtype">void</span> addAPolygonFromFile(<span class="keywordtype">string</span> file_path_name, <a class="code" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op, Vec2d translation = <a class="code" href="class_vecd.html">Vecd</a>(0), <a class="code" href="class_real.html">Real</a> scale_factor = 1.0);</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;        <span class="keywordtype">void</span> addAPolygonFromFile(std::string file_path_name, <a class="code" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op, Vec2d translation = <a class="code" href="class_vecd.html">Vecd</a>(0), <a class="code" href="class_real.html">Real</a> scale_factor = 1.0);</div>
 <div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160; </div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;        <span class="keyword">virtual</span> <span class="keywordtype">bool</span> checkContain(Vec2d input_pnt, <span class="keywordtype">bool</span> BOUNDARY_INCLUDED = <span class="keyword">true</span>);</div>
-<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;        <span class="keyword">virtual</span> <span class="keywordtype">bool</span> checkNotFar(Vec2d input_pnt, <a class="code" href="class_real.html">Real</a> threshold);</div>
-<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;        <span class="keyword">virtual</span> Vec2d findClosestPoint(Vec2d input_pnt) <span class="keyword">override</span>;</div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;        <span class="keyword">virtual</span> <a class="code" href="class_real.html">Real</a> findSignedDistance(Vec2d input_pnt);</div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;        <span class="keyword">virtual</span> Vec2d findNormalDirection(Vec2d input_pnt);</div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;        <span class="keyword">virtual</span> <a class="code" href="class_vecd.html">Vecd</a> computeKernelIntegral(<a class="code" href="class_vecd.html">Vecd</a> input_pnt, Kernel* kernel);</div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;    <span class="keyword">protected</span>:</div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;        MultiPolygon multi_ploygen_;</div>
-<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;    };</div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;}</div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160; </div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;        <span class="keyword">virtual</span> <span class="keywordtype">bool</span> checkContain(Vec2d&amp; input_pnt, <span class="keywordtype">bool</span> BOUNDARY_INCLUDED = <span class="keyword">true</span>);</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;        <span class="keyword">virtual</span> <span class="keywordtype">bool</span> checkNotFar(Vec2d&amp; input_pnt, <a class="code" href="class_real.html">Real</a> threshold);</div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;        <span class="keyword">virtual</span> <span class="keywordtype">bool</span> checkNearSurface(Vec2d&amp; input_pnt, <a class="code" href="class_real.html">Real</a> threshold);</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;        <span class="keyword">virtual</span> <a class="code" href="class_real.html">Real</a> findSignedDistance(Vec2d&amp; input_pnt);</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;        <span class="keyword">virtual</span> Vec2d findNormalDirection(Vec2d&amp; input_pnt);</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;    <span class="keyword">protected</span>:</div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;        MultiPolygon multi_ploygen_;</div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;    };</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;}</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160; </div>
 </div><!-- fragment --></div><!-- contents -->
 <div class="ttc" id="aclass_vecd_html"><div class="ttname"><a href="class_vecd.html">Vecd</a></div></div>
 <div class="ttc" id="abase__geometry_8h_html"><div class="ttname"><a href="base__geometry_8h.html">base_geometry.h</a></div><div class="ttdoc">Shape is the base class for all geometries.</div></div>
 <div class="ttc" id="aclass_s_p_h_1_1_complex_shape_html_af9172c77de9ac21119b3d1db17cae6fe"><div class="ttname"><a href="class_s_p_h_1_1_complex_shape.html#af9172c77de9ac21119b3d1db17cae6fe">SPH::ComplexShape::ComplexShape</a></div><div class="ttdeci">ComplexShape()</div><div class="ttdef"><b>Definition:</b> geometry.h:79</div></div>
-<div class="ttc" id="aclass_shape_boolean_ops_html"><div class="ttname"><a href="class_shape_boolean_ops.html">ShapeBooleanOps</a></div><div class="ttdoc">Boolian operation for generate complex shapes.</div><div class="ttdef"><b>Definition:</b> base_geometry.h:44</div></div>
+<div class="ttc" id="aclass_shape_boolean_ops_html"><div class="ttname"><a href="class_shape_boolean_ops.html">ShapeBooleanOps</a></div><div class="ttdoc">Boolian operation for generate complex shapes.</div><div class="ttdef"><b>Definition:</b> base_geometry.h:41</div></div>
+<div class="ttc" id="anamespace_s_p_h_html_ad185cdeb05bdee76bf975cc50f1c15b7"><div class="ttname"><a href="namespace_s_p_h.html#ad185cdeb05bdee76bf975cc50f1c15b7">SPH::BoundingBox</a></div><div class="ttdeci">std::pair&lt; Vecd, Vecd &gt; BoundingBox</div><div class="ttdef"><b>Definition:</b> sph_data_conainers.h:19</div></div>
 <div class="ttc" id="aclass_s_p_h_1_1_multi_polygon_html"><div class="ttname"><a href="class_s_p_h_1_1_multi_polygon.html">SPH::MultiPolygon</a></div><div class="ttdoc">used to define a closed region</div><div class="ttdef"><b>Definition:</b> geometry.h:50</div></div>
 <div class="ttc" id="aclass_real_html"><div class="ttname"><a href="class_real.html">Real</a></div></div>
-<div class="ttc" id="anamespace_s_p_h_html"><div class="ttname"><a href="namespace_s_p_h.html">SPH</a></div><div class="ttdef"><b>Definition:</b> base_body_supplementary.cpp:12</div></div>
-<div class="ttc" id="aclass_s_p_h_1_1_complex_shape_html"><div class="ttname"><a href="class_s_p_h_1_1_complex_shape.html">SPH::ComplexShape</a></div><div class="ttdoc">gives the final geomtrical definition of the SPHBody</div><div class="ttdef"><b>Definition:</b> geometry.h:75</div></div>
-<div class="ttc" id="aclass_s_p_h_1_1_shape_html"><div class="ttname"><a href="class_s_p_h_1_1_shape.html">SPH::Shape</a></div><div class="ttdoc">Base class for all geometries.</div><div class="ttdef"><b>Definition:</b> base_geometry.h:57</div></div>
+<div class="ttc" id="anamespace_s_p_h_html"><div class="ttname"><a href="namespace_s_p_h.html">SPH</a></div><div class="ttdef"><b>Definition:</b> solid_body_supplementary.cpp:9</div></div>
+<div class="ttc" id="aclass_s_p_h_1_1_complex_shape_html"><div class="ttname"><a href="class_s_p_h_1_1_complex_shape.html">SPH::ComplexShape</a></div><div class="ttdoc">gives the final geomtrical definition of the SPHBody</div><div class="ttdef"><b>Definition:</b> geometry.h:74</div></div>
+<div class="ttc" id="aclass_s_p_h_1_1_shape_html"><div class="ttname"><a href="class_s_p_h_1_1_shape.html">SPH::Shape</a></div><div class="ttdoc">Base class for all geometries.</div><div class="ttdef"><b>Definition:</b> base_geometry.h:54</div></div>
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
 Generated by &#160;<a href="http://www.doxygen.org/index.html">

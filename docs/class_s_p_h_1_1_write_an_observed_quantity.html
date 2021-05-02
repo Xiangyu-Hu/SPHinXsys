@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.17"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>SPHinXsys: SPH::WriteAnObservedQuantity&lt; DataType, TargetParticlesType, TrgtMemPtr &gt; Class Template Reference</title>
+<title>SPHinXsys: SPH::WriteAnObservedQuantity&lt; DataTypeIndex, VariableType &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -69,11 +69,10 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="class_s_p_h_1_1_write_an_observed_quantity-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">SPH::WriteAnObservedQuantity&lt; DataType, TargetParticlesType, TrgtMemPtr &gt; Class Template Reference</div>  </div>
+<div class="title">SPH::WriteAnObservedQuantity&lt; DataTypeIndex, VariableType &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
@@ -82,16 +81,16 @@ $(function() {
 
 <p><code>#include &lt;<a class="el" href="in__output_8h_source.html">in_output.h</a>&gt;</code></p>
 
-<p>Inherits <a class="el" href="class_s_p_h_1_1_write_body_states.html">SPH::WriteBodyStates</a>, and <a class="el" href="class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity.html">SPH::observer_dynamics::ObservingAQuantity&lt; DataType, TargetParticlesType, TrgtMemPtr &gt;</a>.</p>
+<p>Inherits <a class="el" href="class_s_p_h_1_1_write_body_states.html">SPH::WriteBodyStates</a>, and <a class="el" href="class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity.html">SPH::observer_dynamics::InterpolatingAQuantity&lt; DataTypeIndex, VariableType &gt;</a>.</p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a57d2fde034c46458bbdfa1560d8d5447"><td class="memItemLeft" align="right" valign="top"><a id="a57d2fde034c46458bbdfa1560d8d5447"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>WriteAnObservedQuantity</b> (string quantity_name, <a class="el" href="class_s_p_h_1_1_in___output.html">In_Output</a> &amp;in_output, <a class="el" href="class_s_p_h_1_1_s_p_h_body_contact_relation.html">SPHBodyContactRelation</a> *body_contact_relation)</td></tr>
-<tr class="separator:a57d2fde034c46458bbdfa1560d8d5447"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4adb2712f9aeb2b6802c5bfa13020a11"><td class="memItemLeft" align="right" valign="top"><a id="a4adb2712f9aeb2b6802c5bfa13020a11"></a>
+<tr class="memitem:aaa2c091307d0121a6232527a87515bf2"><td class="memItemLeft" align="right" valign="top"><a id="aaa2c091307d0121a6232527a87515bf2"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>WriteAnObservedQuantity</b> (std::string quantity_name, <a class="el" href="class_s_p_h_1_1_in___output.html">In_Output</a> &amp;in_output, <a class="el" href="class_s_p_h_1_1_base_contact_body_relation.html">BaseContactBodyRelation</a> *body_contact_relation)</td></tr>
+<tr class="separator:aaa2c091307d0121a6232527a87515bf2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b881bc63687ed5e63b8dad8c7de5b41"><td class="memItemLeft" align="right" valign="top"><a id="a5b881bc63687ed5e63b8dad8c7de5b41"></a>
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>WriteToFile</b> (Real time=0.0) override</td></tr>
-<tr class="separator:a4adb2712f9aeb2b6802c5bfa13020a11"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a5b881bc63687ed5e63b8dad8c7de5b41"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_s_p_h_1_1_write_body_states"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_write_body_states')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_write_body_states.html">SPH::WriteBodyStates</a></td></tr>
 <tr class="memitem:aed3dd289154640a5477789f934d21570 inherit pub_methods_class_s_p_h_1_1_write_body_states"><td class="memItemLeft" align="right" valign="top"><a id="aed3dd289154640a5477789f934d21570"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>WriteBodyStates</b> (<a class="el" href="class_s_p_h_1_1_in___output.html">In_Output</a> &amp;in_output, <a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *body)</td></tr>
@@ -106,10 +105,13 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>WriteToFile</
 <tr class="memitem:a525381cb6787ab4ca5b9a5929e7bc306 inherit pub_methods_class_s_p_h_1_1_body_states_i_o"><td class="memItemLeft" align="right" valign="top"><a id="a525381cb6787ab4ca5b9a5929e7bc306"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>BodyStatesIO</b> (<a class="el" href="class_s_p_h_1_1_in___output.html">In_Output</a> &amp;in_output, <a class="el" href="namespace_s_p_h.html#ab8b3224d963eb73d7febbf0d5346f429">SPHBodyVector</a> bodies)</td></tr>
 <tr class="separator:a525381cb6787ab4ca5b9a5929e7bc306 inherit pub_methods_class_s_p_h_1_1_body_states_i_o"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity.html">SPH::observer_dynamics::ObservingAQuantity&lt; DataType, TargetParticlesType, TrgtMemPtr &gt;</a></td></tr>
-<tr class="memitem:a86a8741f1d961b551232d39800a520ba inherit pub_methods_class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity"><td class="memItemLeft" align="right" valign="top"><a id="a86a8741f1d961b551232d39800a520ba"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>ObservingAQuantity</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body_contact_relation.html">SPHBodyContactRelation</a> *body_contact_relation)</td></tr>
-<tr class="separator:a86a8741f1d961b551232d39800a520ba inherit pub_methods_class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity.html">SPH::observer_dynamics::InterpolatingAQuantity&lt; DataTypeIndex, VariableType &gt;</a></td></tr>
+<tr class="memitem:a1f0e09c13a45b6e974e28f705eef735b inherit pub_methods_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity"><td class="memItemLeft" align="right" valign="top"><a id="a1f0e09c13a45b6e974e28f705eef735b"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>InterpolatingAQuantity</b> (<a class="el" href="class_s_p_h_1_1_base_contact_body_relation.html">BaseContactBodyRelation</a> *body_contact_relation, std::string variable_name)</td></tr>
+<tr class="separator:a1f0e09c13a45b6e974e28f705eef735b inherit pub_methods_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f70e2a4db9adbba99e716867d1cdbcf inherit pub_methods_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity"><td class="memItemLeft" align="right" valign="top"><a id="a6f70e2a4db9adbba99e716867d1cdbcf"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>InterpolatingAQuantity</b> (<a class="el" href="class_s_p_h_1_1_base_contact_body_relation.html">BaseContactBodyRelation</a> *body_contact_relation, std::string interpolated_variable, std::string target_variable)</td></tr>
+<tr class="separator:a6f70e2a4db9adbba99e716867d1cdbcf inherit pub_methods_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_s_p_h_1_1_interaction_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_interaction_dynamics')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_interaction_dynamics.html">SPH::InteractionDynamics</a></td></tr>
 <tr class="memitem:a4e7bedd52e4b6a6c3423e13d2b799824 inherit pub_methods_class_s_p_h_1_1_interaction_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a4e7bedd52e4b6a6c3423e13d2b799824"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>InteractionDynamics</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *sph_body)</td></tr>
@@ -120,49 +122,35 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>WriteToFile</
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>parallel_exec</b> (Real dt=0.0) override</td></tr>
 <tr class="separator:a18f083982b63f32ffb2b382569366b36 inherit pub_methods_class_s_p_h_1_1_interaction_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_s_p_h_1_1_particle_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_particle_dynamics')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void &gt;</a></td></tr>
-<tr class="memitem:a79d1c47689c57d6f956032d4bd75cdc2 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_dynamics.html#a79d1c47689c57d6f956032d4bd75cdc2">ParticleDynamics</a> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *sph_body)</td></tr>
+<tr class="memitem:a79d1c47689c57d6f956032d4bd75cdc2 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a79d1c47689c57d6f956032d4bd75cdc2"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>ParticleDynamics</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *sph_body)</td></tr>
 <tr class="separator:a79d1c47689c57d6f956032d4bd75cdc2 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab84153bd29b90450a14c68750af60d1 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="aab84153bd29b90450a14c68750af60d1"></a>
+<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>getSPHBody</b> ()</td></tr>
+<tr class="separator:aab84153bd29b90450a14c68750af60d1 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_s_p_h_1_1_data_delegate_contact"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_data_delegate_contact')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_data_delegate_contact.html">SPH::DataDelegateContact&lt; BodyType, ParticlesType, MaterialType, ContactBodyType, ContactParticlesType, ContactMaterialType, BaseDataDelegateType &gt;</a></td></tr>
-<tr class="memitem:acaaeb4f632f392a7b12bd167faca33b3 inherit pub_methods_class_s_p_h_1_1_data_delegate_contact"><td class="memItemLeft" align="right" valign="top"><a id="acaaeb4f632f392a7b12bd167faca33b3"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>DataDelegateContact</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body_contact_relation.html">SPHBodyContactRelation</a> *body_contact_relation)</td></tr>
-<tr class="separator:acaaeb4f632f392a7b12bd167faca33b3 inherit pub_methods_class_s_p_h_1_1_data_delegate_contact"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91e8b7df69859580c537e26c05ace730 inherit pub_methods_class_s_p_h_1_1_data_delegate_contact"><td class="memItemLeft" align="right" valign="top"><a id="a91e8b7df69859580c537e26c05ace730"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>DataDelegateContact</b> (<a class="el" href="class_s_p_h_1_1_base_contact_body_relation.html">BaseContactBodyRelation</a> *body_contact_relation)</td></tr>
+<tr class="separator:a91e8b7df69859580c537e26c05ace730 inherit pub_methods_class_s_p_h_1_1_data_delegate_contact"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_s_p_h_1_1_data_delegate_simple"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_data_delegate_simple')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_data_delegate_simple.html">SPH::DataDelegateSimple&lt; SPHBody, BaseParticles, BaseMaterial &gt;</a></td></tr>
-<tr class="memitem:a8f9be49cf96804025fc7631790cc80d5 inherit pub_methods_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_data_delegate_simple.html#a8f9be49cf96804025fc7631790cc80d5">DataDelegateSimple</a> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *body)</td></tr>
+<tr class="memitem:a8f9be49cf96804025fc7631790cc80d5 inherit pub_methods_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top"><a id="a8f9be49cf96804025fc7631790cc80d5"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>DataDelegateSimple</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *body)</td></tr>
 <tr class="separator:a8f9be49cf96804025fc7631790cc80d5 inherit pub_methods_class_s_p_h_1_1_data_delegate_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
-Protected Member Functions</h2></td></tr>
-<tr class="memitem:aa670b1031f7b881aec4ab7685750889c"><td class="memItemLeft" align="right" valign="top"><a id="aa670b1031f7b881aec4ab7685750889c"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>writeFileHead</b> (std::ofstream &amp;out_file, Real &amp;observed_quantity, string quantity_name, <a class="el" href="classsize__t.html">size_t</a> i)</td></tr>
-<tr class="separator:aa670b1031f7b881aec4ab7685750889c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abb60d7020111e61328b2efa1219a62a5"><td class="memItemLeft" align="right" valign="top"><a id="abb60d7020111e61328b2efa1219a62a5"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>writeDataToFile</b> (std::ofstream &amp;out_file, Real &amp;observed_quantity)</td></tr>
-<tr class="separator:abb60d7020111e61328b2efa1219a62a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af4f532c0a8ecf6c7a9514ef958224917"><td class="memItemLeft" align="right" valign="top"><a id="af4f532c0a8ecf6c7a9514ef958224917"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>writeFileHead</b> (std::ofstream &amp;out_file, Vecd &amp;observed_quantity, string quantity_name, <a class="el" href="classsize__t.html">size_t</a> i)</td></tr>
-<tr class="separator:af4f532c0a8ecf6c7a9514ef958224917"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a13f50ddb0c00e27897f67b3e3049239a"><td class="memItemLeft" align="right" valign="top"><a id="a13f50ddb0c00e27897f67b3e3049239a"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>writeDataToFile</b> (std::ofstream &amp;out_file, Vecd &amp;observed_quantity)</td></tr>
-<tr class="separator:a13f50ddb0c00e27897f67b3e3049239a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pro_methods_class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity.html">SPH::observer_dynamics::ObservingAQuantity&lt; DataType, TargetParticlesType, TrgtMemPtr &gt;</a></td></tr>
-<tr class="memitem:aa409a09c5f1834854691f2310e8094ea inherit pro_methods_class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity"><td class="memItemLeft" align="right" valign="top"><a id="aa409a09c5f1834854691f2310e8094ea"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>Interaction</b> (<a class="el" href="classsize__t.html">size_t</a> index_i, Real dt=0.0) override</td></tr>
-<tr class="separator:aa409a09c5f1834854691f2310e8094ea inherit pro_methods_class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pro_methods_class_s_p_h_1_1_particle_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_class_s_p_h_1_1_particle_dynamics')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void &gt;</a></td></tr>
-<tr class="memitem:a6c3ffa11bc0514cd9eb1537b79b4975c inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a6c3ffa11bc0514cd9eb1537b79b4975c"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>setBodyUpdated</b> ()</td></tr>
-<tr class="separator:a6c3ffa11bc0514cd9eb1537b79b4975c inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab027ee6fb13881db2bc8277ef56d4b58 inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_dynamics.html#ab027ee6fb13881db2bc8277ef56d4b58">setupDynamics</a> (Real dt=0.0)</td></tr>
-<tr class="separator:ab027ee6fb13881db2bc8277ef56d4b58 inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
-<tr class="memitem:afc78a016a06cf5747e7bb7cfa246b852"><td class="memItemLeft" align="right" valign="top"><a id="afc78a016a06cf5747e7bb7cfa246b852"></a>
+<tr class="memitem:a61a873c002cf1cfa1f347e8ac2a67cf7"><td class="memItemLeft" align="right" valign="top"><a id="a61a873c002cf1cfa1f347e8ac2a67cf7"></a>
 <a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>observer_</b></td></tr>
-<tr class="separator:afc78a016a06cf5747e7bb7cfa246b852"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9f6bafcb9c47971b05f9915906b959c2"><td class="memItemLeft" align="right" valign="top"><a id="a9f6bafcb9c47971b05f9915906b959c2"></a>
+<tr class="separator:a61a873c002cf1cfa1f347e8ac2a67cf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6869ee55c3b410c9ebde57efca461c9"><td class="memItemLeft" align="right" valign="top"><a id="aa6869ee55c3b410c9ebde57efca461c9"></a>
+<a class="el" href="class_s_p_h_1_1_plt_engine.html">PltEngine</a>&#160;</td><td class="memItemRight" valign="bottom"><b>plt_engine_</b></td></tr>
+<tr class="separator:aa6869ee55c3b410c9ebde57efca461c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a022477c94a1d4688f922e25e76a40e3d"><td class="memItemLeft" align="right" valign="top"><a id="a022477c94a1d4688f922e25e76a40e3d"></a>
+<a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>base_particles_</b></td></tr>
+<tr class="separator:a022477c94a1d4688f922e25e76a40e3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa91e5b43ccb3be0522912388a430da6d"><td class="memItemLeft" align="right" valign="top"><a id="aa91e5b43ccb3be0522912388a430da6d"></a>
 std::string&#160;</td><td class="memItemRight" valign="bottom"><b>filefullpath_</b></td></tr>
-<tr class="separator:a9f6bafcb9c47971b05f9915906b959c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:aa91e5b43ccb3be0522912388a430da6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_class_s_p_h_1_1_body_states_i_o"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_body_states_i_o')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_body_states_i_o.html">SPH::BodyStatesIO</a></td></tr>
 <tr class="memitem:a483a0ddfbbd1ccce8876602ac10f79be inherit pro_attribs_class_s_p_h_1_1_body_states_i_o"><td class="memItemLeft" align="right" valign="top"><a id="a483a0ddfbbd1ccce8876602ac10f79be"></a>
 <a class="el" href="class_s_p_h_1_1_in___output.html">In_Output</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>in_output_</b></td></tr>
@@ -173,15 +161,16 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>filefullpath_<
 <tr class="memitem:adceaa5f0f2940b2e86732370642d3c03 inherit pro_attribs_class_s_p_h_1_1_body_states_i_o"><td class="memItemLeft" align="right" valign="top"><a id="adceaa5f0f2940b2e86732370642d3c03"></a>
 <a class="el" href="namespace_s_p_h.html#ab8b3224d963eb73d7febbf0d5346f429">SPHBodyVector</a>&#160;</td><td class="memItemRight" valign="bottom"><b>bodies_</b></td></tr>
 <tr class="separator:adceaa5f0f2940b2e86732370642d3c03 inherit pro_attribs_class_s_p_h_1_1_body_states_i_o"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pro_attribs_class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity.html">SPH::observer_dynamics::ObservingAQuantity&lt; DataType, TargetParticlesType, TrgtMemPtr &gt;</a></td></tr>
-<tr class="memitem:a40d80a9e345fc30198fb1d8ca4d6e611 inherit pro_attribs_class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity"><td class="memItemLeft" align="right" valign="top">StdLargeVec&lt; DataType &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity.html#a40d80a9e345fc30198fb1d8ca4d6e611">observed_quantities_</a></td></tr>
-<tr class="separator:a40d80a9e345fc30198fb1d8ca4d6e611 inherit pro_attribs_class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5ed73270512e56cb5e0fd16342fb1645 inherit pro_attribs_class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity"><td class="memItemLeft" align="right" valign="top"><a id="a5ed73270512e56cb5e0fd16342fb1645"></a>
+<tr class="inherit_header pro_attribs_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity.html">SPH::observer_dynamics::InterpolatingAQuantity&lt; DataTypeIndex, VariableType &gt;</a></td></tr>
+<tr class="memitem:a55af6b7e5059c6e6cba36acec1d25cb5 inherit pro_attribs_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity"><td class="memItemLeft" align="right" valign="top"><a id="a55af6b7e5059c6e6cba36acec1d25cb5"></a>
+StdLargeVec&lt; <a class="el" href="class_variable_type.html">VariableType</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>interpolated_quantities_</b></td></tr>
+<tr class="separator:a55af6b7e5059c6e6cba36acec1d25cb5 inherit pro_attribs_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a88ac0b1f70b1a6e82770ffa5ecf5d104 inherit pro_attribs_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity"><td class="memItemLeft" align="right" valign="top"><a id="a88ac0b1f70b1a6e82770ffa5ecf5d104"></a>
 StdVec&lt; StdLargeVec&lt; Real &gt; * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>contact_Vol_</b></td></tr>
-<tr class="separator:a5ed73270512e56cb5e0fd16342fb1645 inherit pro_attribs_class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af3b212172155166965d63edf49b430ac inherit pro_attribs_class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity"><td class="memItemLeft" align="right" valign="top"><a id="af3b212172155166965d63edf49b430ac"></a>
-StdVec&lt; StdLargeVec&lt; DataType &gt; * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>contact_data_</b></td></tr>
-<tr class="separator:af3b212172155166965d63edf49b430ac inherit pro_attribs_class_s_p_h_1_1observer__dynamics_1_1_observing_a_quantity"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a88ac0b1f70b1a6e82770ffa5ecf5d104 inherit pro_attribs_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4cd5fcc6e58891f5d8a5156579d9518b inherit pro_attribs_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity"><td class="memItemLeft" align="right" valign="top"><a id="a4cd5fcc6e58891f5d8a5156579d9518b"></a>
+StdVec&lt; StdLargeVec&lt; <a class="el" href="class_variable_type.html">VariableType</a> &gt; * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>contact_data_</b></td></tr>
+<tr class="separator:a4cd5fcc6e58891f5d8a5156579d9518b inherit pro_attribs_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_class_s_p_h_1_1_interaction_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_interaction_dynamics')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_interaction_dynamics.html">SPH::InteractionDynamics</a></td></tr>
 <tr class="memitem:a2d79cfd57642286dfcbb665dbec75c6c inherit pro_attribs_class_s_p_h_1_1_interaction_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a2d79cfd57642286dfcbb665dbec75c6c"></a>
 <a class="el" href="namespace_s_p_h.html#aa72cf1f63790f923a029b77f683b9a5e">ParticleFunctor</a>&#160;</td><td class="memItemRight" valign="bottom"><b>functor_interaction_</b></td></tr>
@@ -190,12 +179,12 @@ StdVec&lt; StdLargeVec&lt; DataType &gt; * &gt;&#160;</td><td class="memItemRigh
 <tr class="memitem:a2c547f5f8f9cc2506a6a726fe59b270e inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a2c547f5f8f9cc2506a6a726fe59b270e"></a>
 <a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>sph_body_</b></td></tr>
 <tr class="separator:a2c547f5f8f9cc2506a6a726fe59b270e inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4dd0aef601d02f17c374507809ec714a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a4dd0aef601d02f17c374507809ec714a"></a>
-<a class="el" href="namespace_s_p_h.html#ac592bbe202be73decfcbfe8201484ffa">SplitCellLists</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>split_cell_lists_</b></td></tr>
-<tr class="separator:a4dd0aef601d02f17c374507809ec714a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c5a47701f676e233197981ced019a1a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a9c5a47701f676e233197981ced019a1a"></a>
-<a class="el" href="class_s_p_h_1_1_base_mesh_cell_linked_list.html">BaseMeshCellLinkedList</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>mesh_cell_linked_list_</b></td></tr>
-<tr class="separator:a9c5a47701f676e233197981ced019a1a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5500b7cdde4aaf52d35109d51567ecc inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="ae5500b7cdde4aaf52d35109d51567ecc"></a>
+<a class="el" href="class_s_p_h_1_1_particle_adaptation.html">ParticleAdaptation</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>particle_adaptation_</b></td></tr>
+<tr class="separator:ae5500b7cdde4aaf52d35109d51567ecc inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a30723682b9301b81211d9f1c0aec4f5c inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a30723682b9301b81211d9f1c0aec4f5c"></a>
+<a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>base_particles_</b></td></tr>
+<tr class="separator:a30723682b9301b81211d9f1c0aec4f5c inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_class_s_p_h_1_1_data_delegate_contact"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_data_delegate_contact')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_data_delegate_contact.html">SPH::DataDelegateContact&lt; BodyType, ParticlesType, MaterialType, ContactBodyType, ContactParticlesType, ContactMaterialType, BaseDataDelegateType &gt;</a></td></tr>
 <tr class="memitem:a44a77a1ef61228a438c54bae0dbdbb90 inherit pro_attribs_class_s_p_h_1_1_data_delegate_contact"><td class="memItemLeft" align="right" valign="top"><a id="a44a77a1ef61228a438c54bae0dbdbb90"></a>
 StdVec&lt; ContactBodyType * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>contact_bodies_</b></td></tr>
@@ -206,8 +195,8 @@ StdVec&lt; ContactParticlesType * &gt;&#160;</td><td class="memItemRight" valign
 <tr class="memitem:a94c66fbba3da9f638bbf9da520ad1ea7 inherit pro_attribs_class_s_p_h_1_1_data_delegate_contact"><td class="memItemLeft" align="right" valign="top"><a id="a94c66fbba3da9f638bbf9da520ad1ea7"></a>
 StdVec&lt; ContactMaterialType * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>contact_material_</b></td></tr>
 <tr class="separator:a94c66fbba3da9f638bbf9da520ad1ea7 inherit pro_attribs_class_s_p_h_1_1_data_delegate_contact"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a96e8c0ed8d645d4211f90c022a63646b inherit pro_attribs_class_s_p_h_1_1_data_delegate_contact"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_s_p_h.html#ab3fc1b1f18f3097bb92b3d4cf6913139">ContatcParticleConfiguration</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_data_delegate_contact.html#a96e8c0ed8d645d4211f90c022a63646b">contact_configuration_</a></td></tr>
-<tr class="separator:a96e8c0ed8d645d4211f90c022a63646b inherit pro_attribs_class_s_p_h_1_1_data_delegate_contact"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c6f57fe46a57fef5ab82638eb446439 inherit pro_attribs_class_s_p_h_1_1_data_delegate_contact"><td class="memItemLeft" align="right" valign="top">StdVec&lt; <a class="el" href="namespace_s_p_h.html#a720b2214c518c3299a6d4895dacddc50">ParticleConfiguration</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_data_delegate_contact.html#a9c6f57fe46a57fef5ab82638eb446439">contact_configuration_</a></td></tr>
+<tr class="separator:a9c6f57fe46a57fef5ab82638eb446439 inherit pro_attribs_class_s_p_h_1_1_data_delegate_contact"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_data_delegate_simple')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_data_delegate_simple.html">SPH::DataDelegateSimple&lt; SPHBody, BaseParticles, BaseMaterial &gt;</a></td></tr>
 <tr class="memitem:a1d373bbac77e5237890e17ad7a234bea inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top"><a id="a1d373bbac77e5237890e17ad7a234bea"></a>
 <a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>body_</b></td></tr>
@@ -235,10 +224,23 @@ Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pub_static_attribs_class_s_p_h_1_1_global_static_variables"><td colspan="2" onclick="javascript:toggleInherit('pub_static_attribs_class_s_p_h_1_1_global_static_variables')"><img src="closed.png" alt="-"/>&#160;Static Public Attributes inherited from <a class="el" href="class_s_p_h_1_1_global_static_variables.html">SPH::GlobalStaticVariables</a></td></tr>
 <tr class="memitem:ade84c016ddfa66794108619277313c82 inherit pub_static_attribs_class_s_p_h_1_1_global_static_variables"><td class="memItemLeft" align="right" valign="top">static Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_global_static_variables.html#ade84c016ddfa66794108619277313c82">physical_time_</a> = 0.0</td></tr>
 <tr class="separator:ade84c016ddfa66794108619277313c82 inherit pub_static_attribs_class_s_p_h_1_1_global_static_variables"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_methods_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity.html">SPH::observer_dynamics::InterpolatingAQuantity&lt; DataTypeIndex, VariableType &gt;</a></td></tr>
+<tr class="memitem:a206a39f55e4c92385581764a5de833b3 inherit pro_methods_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity"><td class="memItemLeft" align="right" valign="top"><a id="a206a39f55e4c92385581764a5de833b3"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>Interaction</b> (<a class="el" href="classsize__t.html">size_t</a> index_i, Real dt=0.0) override</td></tr>
+<tr class="separator:a206a39f55e4c92385581764a5de833b3 inherit pro_methods_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a103c4c164aff76f99694ee5d9e2e619d inherit pro_methods_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity"><td class="memItemLeft" align="right" valign="top"><a id="a103c4c164aff76f99694ee5d9e2e619d"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>prepareContactData</b> (const std::string &amp;variable_name)</td></tr>
+<tr class="separator:a103c4c164aff76f99694ee5d9e2e619d inherit pro_methods_class_s_p_h_1_1observer__dynamics_1_1_interpolating_a_quantity"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_methods_class_s_p_h_1_1_particle_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_class_s_p_h_1_1_particle_dynamics')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void &gt;</a></td></tr>
+<tr class="memitem:a6c3ffa11bc0514cd9eb1537b79b4975c inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a6c3ffa11bc0514cd9eb1537b79b4975c"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setBodyUpdated</b> ()</td></tr>
+<tr class="separator:a6c3ffa11bc0514cd9eb1537b79b4975c inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab027ee6fb13881db2bc8277ef56d4b58 inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_dynamics.html#ab027ee6fb13881db2bc8277ef56d4b58">setupDynamics</a> (Real dt=0.0)</td></tr>
+<tr class="separator:ab027ee6fb13881db2bc8277ef56d4b58 inherit pro_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><h3>template&lt;class DataType, class TargetParticlesType, StdLargeVec&lt; DataType &gt; TargetParticlesType::* TrgtMemPtr&gt;<br />
-class SPH::WriteAnObservedQuantity&lt; DataType, TargetParticlesType, TrgtMemPtr &gt;</h3>
+<div class="textblock"><h3>template&lt;int DataTypeIndex, typename VariableType&gt;<br />
+class SPH::WriteAnObservedQuantity&lt; DataTypeIndex, VariableType &gt;</h3>
 
 <p>write files for observed quantity </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>

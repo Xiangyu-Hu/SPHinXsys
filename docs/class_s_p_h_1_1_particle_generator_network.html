@@ -77,7 +77,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>generate network or tree distributed particles from lattice positions for a body.  
+<p>Generate a tree-shape network for the conduction system of a heart with particles.  
  <a href="class_s_p_h_1_1_particle_generator_network.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="particle__generator__network_8h_source.html">particle_generator_network.h</a>&gt;</code></p>
@@ -92,29 +92,28 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a7866a7f036120762eba5f51f2df523b4"><td class="memItemLeft" align="right" valign="top"><a id="a7866a7f036120762eba5f51f2df523b4"></a>
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>initialize</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *sph_body) override</td></tr>
 <tr class="separator:a7866a7f036120762eba5f51f2df523b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a956e3b69157d92cca895afffab762257"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_generator_network.html#a956e3b69157d92cca895afffab762257">CreateBaseParticles</a> (<a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *base_particles) override</td></tr>
-<tr class="separator:a956e3b69157d92cca895afffab762257"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a35fa31d5cf783707c0e0d19fd79604bd"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_generator_network.html#a35fa31d5cf783707c0e0d19fd79604bd">createBaseParticles</a> (<a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *base_particles) override</td></tr>
+<tr class="separator:a35fa31d5cf783707c0e0d19fd79604bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:aad037343ffb2e11934623b21fabf7d4e"><td class="memItemLeft" align="right" valign="top"><a id="aad037343ffb2e11934623b21fabf7d4e"></a>
-Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>getGradientFromNearestPoints</b> (Point pt, Real delta, <a class="el" href="class_s_p_h_1_1_base_mesh_cell_linked_list.html">BaseMeshCellLinkedList</a> *mesh_cell_linked_list)</td></tr>
-<tr class="separator:aad037343ffb2e11934623b21fabf7d4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a20f38940d199f1b491f24c105747f320"><td class="memItemLeft" align="right" valign="top"><a id="a20f38940d199f1b491f24c105747f320"></a>
+Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>getGradientFromNearestPoints</b> (Vecd pt, Real delta, <a class="el" href="class_s_p_h_1_1_base_mesh_cell_linked_list.html">BaseMeshCellLinkedList</a> *mesh_cell_linked_list)</td></tr>
+<tr class="separator:a20f38940d199f1b491f24c105747f320"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6fc0fe7264c358a05b2fa1fe9cb70959"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classbool.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_generator_network.html#a6fc0fe7264c358a05b2fa1fe9cb70959">createABranchIfValid</a> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *sph_body, <a class="el" href="classsize__t.html">size_t</a> parent_id, Real angle, Real repulsivity, <a class="el" href="classsize__t.html">size_t</a> number_segments, <a class="el" href="class_s_p_h_1_1_tree.html">Tree</a> *tree)</td></tr>
 <tr class="separator:a6fc0fe7264c358a05b2fa1fe9cb70959"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a031a70516cb70005fa0d0202343db8b8"><td class="memItemLeft" align="right" valign="top">Point&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_generator_network.html#a031a70516cb70005fa0d0202343db8b8">creatNewBranchPoint</a> (Point init_point, Vecd dir)</td></tr>
-<tr class="memdesc:a031a70516cb70005fa0d0202343db8b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Functions that creates a new node in the mesh surface and it to the queue is it lies in the surface.  <a href="class_s_p_h_1_1_particle_generator_network.html#a031a70516cb70005fa0d0202343db8b8">More...</a><br /></td></tr>
-<tr class="separator:a031a70516cb70005fa0d0202343db8b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8c3bdc85cc02bfbdfab2be08d0f61729"><td class="memItemLeft" align="right" valign="top"><a id="a8c3bdc85cc02bfbdfab2be08d0f61729"></a>
-<a class="el" href="classbool.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isCollision</b> (Point &amp;new_point, <a class="el" href="namespace_s_p_h.html#a396df948ec4d9c109be8f94e59358c9b">ListData</a> &amp;nearest_neighbor, <a class="el" href="classsize__t.html">size_t</a> parent_id, <a class="el" href="class_s_p_h_1_1_tree.html">Tree</a> *tree)</td></tr>
-<tr class="separator:a8c3bdc85cc02bfbdfab2be08d0f61729"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a51317dc1b4c5bbf6bc6c9b37fbea5cf3"><td class="memItemLeft" align="right" valign="top">Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_generator_network.html#a51317dc1b4c5bbf6bc6c9b37fbea5cf3">creatATentativeNewBranchVecd</a> (Vecd init_point, Vecd dir)</td></tr>
+<tr class="separator:a51317dc1b4c5bbf6bc6c9b37fbea5cf3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aec90b2eed2b49bda1505e91fcdc1d080"><td class="memItemLeft" align="right" valign="top"><a id="aec90b2eed2b49bda1505e91fcdc1d080"></a>
+<a class="el" href="classbool.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isCollision</b> (Vecd &amp;new_point, <a class="el" href="namespace_s_p_h.html#a7fbc15167459a37683f40cb4a5aa0f06">ListData</a> &amp;nearest_neighbor, <a class="el" href="classsize__t.html">size_t</a> parent_id, <a class="el" href="class_s_p_h_1_1_tree.html">Tree</a> *tree)</td></tr>
+<tr class="separator:aec90b2eed2b49bda1505e91fcdc1d080"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
-<tr class="memitem:a2793e928299409ae34f7400cb414403d"><td class="memItemLeft" align="right" valign="top">Point&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_generator_network.html#a2793e928299409ae34f7400cb414403d">starting_pnt_</a></td></tr>
-<tr class="separator:a2793e928299409ae34f7400cb414403d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1da020d12dc0984bd93b6fa657f6d5ff"><td class="memItemLeft" align="right" valign="top">Point&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_generator_network.html#a1da020d12dc0984bd93b6fa657f6d5ff">second_pnt_</a></td></tr>
-<tr class="separator:a1da020d12dc0984bd93b6fa657f6d5ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2baf4f916c54a4015e52084cd7b864c6"><td class="memItemLeft" align="right" valign="top">Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_generator_network.html#a2baf4f916c54a4015e52084cd7b864c6">starting_pnt_</a></td></tr>
+<tr class="separator:a2baf4f916c54a4015e52084cd7b864c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a03ee576607b45f554338b90a415388d3"><td class="memItemLeft" align="right" valign="top">Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_generator_network.html#a03ee576607b45f554338b90a415388d3">second_pnt_</a></td></tr>
+<tr class="separator:a03ee576607b45f554338b90a415388d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a949b00f7ef44cedd0bdc80e36a36a5b8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_generator_network.html#a949b00f7ef44cedd0bdc80e36a36a5b8">n_it_</a></td></tr>
 <tr class="separator:a949b00f7ef44cedd0bdc80e36a36a5b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ff936b6fe133c56416238ee4c131488"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classbool.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_generator_network.html#a9ff936b6fe133c56416238ee4c131488">fascicles_</a></td></tr>
@@ -134,14 +133,54 @@ Protected Attributes</h2></td></tr>
 <tr class="memitem:a2e5ee48f20104a916dcf01ba35683bef"><td class="memItemLeft" align="right" valign="top"><a id="a2e5ee48f20104a916dcf01ba35683bef"></a>
 <a class="el" href="class_s_p_h_1_1_complex_shape.html">ComplexShape</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>body_shape_</b></td></tr>
 <tr class="separator:a2e5ee48f20104a916dcf01ba35683bef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8a8f10e8cbbb3d93f2da3cbbcf1ae47c"><td class="memItemLeft" align="right" valign="top"><a id="a8a8f10e8cbbb3d93f2da3cbbcf1ae47c"></a>
+<a class="el" href="class_s_p_h_1_1_real_body.html">RealBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>real_body_</b></td></tr>
+<tr class="separator:a8a8f10e8cbbb3d93f2da3cbbcf1ae47c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_class_s_p_h_1_1_particle_generator"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_particle_generator')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_particle_generator.html">SPH::ParticleGenerator</a></td></tr>
 <tr class="memitem:a09f4295c2b394e464c1737564e397f33 inherit pro_attribs_class_s_p_h_1_1_particle_generator"><td class="memItemLeft" align="right" valign="top"><a id="a09f4295c2b394e464c1737564e397f33"></a>
 <a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>sph_body_</b></td></tr>
 <tr class="separator:a09f4295c2b394e464c1737564e397f33 inherit pro_attribs_class_s_p_h_1_1_particle_generator"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>generate network or tree distributed particles from lattice positions for a body. </p>
+<div class="textblock"><p>Generate a tree-shape network for the conduction system of a heart with particles. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a51317dc1b4c5bbf6bc6c9b37fbea5cf3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a51317dc1b4c5bbf6bc6c9b37fbea5cf3">&#9670;&nbsp;</a></span>creatATentativeNewBranchVecd()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">Vecd SPH::ParticleGeneratorNetwork::creatATentativeNewBranchVecd </td>
+          <td>(</td>
+          <td class="paramtype">Vecd&#160;</td>
+          <td class="paramname"><em>init_point</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Vecd&#160;</td>
+          <td class="paramname"><em>dir</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Creates a new tentative point at the body surface </p>
+
+</div>
+</div>
 <a id="a6fc0fe7264c358a05b2fa1fe9cb70959"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6fc0fe7264c358a05b2fa1fe9cb70959">&#9670;&nbsp;</a></span>createABranchIfValid()</h2>
 
@@ -203,8 +242,8 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a956e3b69157d92cca895afffab762257"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a956e3b69157d92cca895afffab762257">&#9670;&nbsp;</a></span>CreateBaseParticles()</h2>
+<a id="a35fa31d5cf783707c0e0d19fd79604bd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a35fa31d5cf783707c0e0d19fd79604bd">&#9670;&nbsp;</a></span>createBaseParticles()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -213,7 +252,7 @@ Protected Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void SPH::ParticleGeneratorNetwork::CreateBaseParticles </td>
+          <td class="memname">void SPH::ParticleGeneratorNetwork::createBaseParticles </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *&#160;</td>
           <td class="paramname"><em>base_particles</em></td><td>)</td>
@@ -231,52 +270,6 @@ Protected Attributes</h2></td></tr>
 <p>Creating a new edge.</p>
 
 <p>Implements <a class="el" href="class_s_p_h_1_1_particle_generator.html">SPH::ParticleGenerator</a>.</p>
-
-</div>
-</div>
-<a id="a031a70516cb70005fa0d0202343db8b8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a031a70516cb70005fa0d0202343db8b8">&#9670;&nbsp;</a></span>creatNewBranchPoint()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Point SPH::ParticleGeneratorNetwork::creatNewBranchPoint </td>
-          <td>(</td>
-          <td class="paramtype">Point&#160;</td>
-          <td class="paramname"><em>init_point</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">Vecd&#160;</td>
-          <td class="paramname"><em>dir</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Functions that creates a new node in the mesh surface and it to the queue is it lies in the surface. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">init_node</td><td>vector that contains the coordinates of the last node added in the branch. vector that contains the coordinates of the last node added in the branch. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">dir</td><td>a vector that contains the direction from the init_node to the node to project. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">end</td><td>point of the created segment. </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -419,8 +412,8 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a1da020d12dc0984bd93b6fa657f6d5ff"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1da020d12dc0984bd93b6fa657f6d5ff">&#9670;&nbsp;</a></span>second_pnt_</h2>
+<a id="a03ee576607b45f554338b90a415388d3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a03ee576607b45f554338b90a415388d3">&#9670;&nbsp;</a></span>second_pnt_</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -429,7 +422,7 @@ Protected Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">Point SPH::ParticleGeneratorNetwork::second_pnt_</td>
+          <td class="memname">Vecd SPH::ParticleGeneratorNetwork::second_pnt_</td>
         </tr>
       </table>
   </td>
@@ -488,8 +481,8 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a2793e928299409ae34f7400cb414403d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2793e928299409ae34f7400cb414403d">&#9670;&nbsp;</a></span>starting_pnt_</h2>
+<a id="a2baf4f916c54a4015e52084cd7b864c6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2baf4f916c54a4015e52084cd7b864c6">&#9670;&nbsp;</a></span>starting_pnt_</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -498,7 +491,7 @@ Protected Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">Point SPH::ParticleGeneratorNetwork::starting_pnt_</td>
+          <td class="memname">Vecd SPH::ParticleGeneratorNetwork::starting_pnt_</td>
         </tr>
       </table>
   </td>

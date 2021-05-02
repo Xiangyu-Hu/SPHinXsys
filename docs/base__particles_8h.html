@@ -88,8 +88,11 @@ $(function() {
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_base_particles.html">SPH::BaseParticles</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Particles with essential (geometric and kinematic) data. There are three types of particles. One is real particles whose states are updated by particle dynamics. One is buffer particles whose state are not updated by particle dynamics. They may be switched from real particles or switch to real particles. The other is ghost particles whose states are updated according to boundary condition if their indices are included in the neighbor particle list. <br  />
-  <a href="class_s_p_h_1_1_base_particles.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Particles with essential (geometric and kinematic) data. There are three types of particles， all particles of a same type are saved with continuous memory segments. The first type is real particles whose states are updated by particle dynamics. One is buffer particles whose state are not updated by particle dynamics. Buffer particles are saved behind real particles. The global value of total_real_particles_ separate the real and buffer particles. They may be switched from real particles or switch to real particles. As the memory for both particles are continuous, such switch is achieved at the memory boundary sequentially. The basic idea is swap the data of the last real particle with the one will be switched particle, and then switch this swapped last particle as buffer particle by decrease the total_real_particles_ by one. Switch from buffer particle to real particle is easy. One just need to assign expect state to the first buffer particle and increase total_real_particles_ by one. The other is ghost particles whose states are updated according to boundary condition if their indices are included in the neighbor particle list. The ghost particles are saved behind the buffer particles. The global value of real_particles_bound_ separate the sum of real and buffer particles with ghost particles. The global value of total_ghost_particles_ indicates the total number of ghost particles in use. It will be initialized to zero before a time step.  <a href="class_s_p_h_1_1_base_particles.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_s_p_h_1_1_base_particles_1_1add_a_particle_data_value.html">SPH::BaseParticles::addAParticleDataValue&lt; DataTypeIndex, VariableType &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_s_p_h_1_1_base_particles_1_1loop_variabale_name_list.html">SPH::BaseParticles::loopVariabaleNameList&lt; DataTypeIndex, VariableType &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
@@ -101,7 +104,6 @@ Namespaces</h2></td></tr>
 <div class="textblock"><p>This is the base class of <a class="el" href="namespace_s_p_h.html">SPH</a> particles. The basic data of the particles is saved in separated large vectors. Each derived class will introduce several extra <br  />
  vectors for the new data. Note that there is no class of single particle. </p>
 <dl class="section author"><dt>Author</dt><dd>Xiangyu Hu and Chi Zhang </dd></dl>
-<dl class="section version"><dt>Version</dt><dd>0.1 </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

@@ -90,38 +90,22 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a7fb5f14adeb8bcdd213041cd5d2a32c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae1759c861b24231d2e00f6708a383a21"><td class="memItemLeft" align="right" valign="top">virtual Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_gravity.html#ae1759c861b24231d2e00f6708a383a21">InducedAcceleration</a> (Vecd &amp;position) override</td></tr>
 <tr class="separator:ae1759c861b24231d2e00f6708a383a21"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae2aa9a3008afce5300fe50b72619186f"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_gravity.html#ae2aa9a3008afce5300fe50b72619186f">getPotential</a> (Vecd &amp;position)</td></tr>
+<tr class="memitem:ae2aa9a3008afce5300fe50b72619186f"><td class="memItemLeft" align="right" valign="top"><a id="ae2aa9a3008afce5300fe50b72619186f"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>getPotential</b> (Vecd &amp;position)</td></tr>
 <tr class="separator:ae2aa9a3008afce5300fe50b72619186f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
-<tr class="memitem:ad263839a34c225678c6f381b70636e42"><td class="memItemLeft" align="right" valign="top">Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_gravity.html#ad263839a34c225678c6f381b70636e42">global_acceleration_</a></td></tr>
+<tr class="memitem:ad263839a34c225678c6f381b70636e42"><td class="memItemLeft" align="right" valign="top"><a id="ad263839a34c225678c6f381b70636e42"></a>
+Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>global_acceleration_</b></td></tr>
 <tr class="separator:ad263839a34c225678c6f381b70636e42"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a07a0c44c4efc0852fdd2527432aa1380"><td class="memItemLeft" align="right" valign="top">Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_gravity.html#a07a0c44c4efc0852fdd2527432aa1380">reference_position_</a></td></tr>
-<tr class="separator:a07a0c44c4efc0852fdd2527432aa1380"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaf77e65ea896ead4a7f658ebb5b842db"><td class="memItemLeft" align="right" valign="top"><a id="aaf77e65ea896ead4a7f658ebb5b842db"></a>
+Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>zero_potential_reference_</b></td></tr>
+<tr class="separator:aaf77e65ea896ead4a7f658ebb5b842db"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>The gravity force, derived class of External force. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="ae2aa9a3008afce5300fe50b72619186f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae2aa9a3008afce5300fe50b72619186f">&#9670;&nbsp;</a></span>getPotential()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">Real SPH::Gravity::getPotential </td>
-          <td>(</td>
-          <td class="paramtype">Vecd &amp;&#160;</td>
-          <td class="paramname"><em>position</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Compute potential. </p>
-
-</div>
-</div>
 <a id="ae1759c861b24231d2e00f6708a383a21"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae1759c861b24231d2e00f6708a383a21">&#9670;&nbsp;</a></span>InducedAcceleration()</h2>
 
@@ -148,53 +132,6 @@ Protected Attributes</h2></td></tr>
 <p>This function can be used for runtime control of external force. </p>
 
 <p>Implements <a class="el" href="class_s_p_h_1_1_external_force.html#a6fb8e79c9f149f54f6686aa5f8a39e51">SPH::ExternalForce</a>.</p>
-
-</div>
-</div>
-<h2 class="groupheader">Member Data Documentation</h2>
-<a id="ad263839a34c225678c6f381b70636e42"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad263839a34c225678c6f381b70636e42">&#9670;&nbsp;</a></span>global_acceleration_</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Vecd SPH::Gravity::global_acceleration_</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>global accerlaeration. </p>
-
-</div>
-</div>
-<a id="a07a0c44c4efc0852fdd2527432aa1380"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a07a0c44c4efc0852fdd2527432aa1380">&#9670;&nbsp;</a></span>reference_position_</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Vecd SPH::Gravity::reference_position_</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>global reference position for zero potential. </p>
 
 </div>
 </div>

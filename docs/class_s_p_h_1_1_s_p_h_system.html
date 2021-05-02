@@ -83,45 +83,44 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aff1f80d45ce8f125ae264bf114a61f3d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#aff1f80d45ce8f125ae264bf114a61f3d">SPHSystem</a> (Vecd lower_bound, Vecd upper_bound, Real particle_spacing_ref, <a class="el" href="classint.html">int</a> number_of_threads=tbb::task_scheduler_init::automatic)</td></tr>
-<tr class="memdesc:aff1f80d45ce8f125ae264bf114a61f3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default constructor. Note that the lower and upper domian bounds are used to build mesh cell linked list, therefore, should be bigger than the lower and upper bounds of all bodies plus the boundary width. Otherwise, it may come to the situation that a particle may can not found a valid cell to build the cell linked list.  <a href="class_s_p_h_1_1_s_p_h_system.html#aff1f80d45ce8f125ae264bf114a61f3d">More...</a><br /></td></tr>
-<tr class="separator:aff1f80d45ce8f125ae264bf114a61f3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a88965b8dd1302e84b4fb5fb957f2efdc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#a88965b8dd1302e84b4fb5fb957f2efdc">addABody</a> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *body)</td></tr>
-<tr class="separator:a88965b8dd1302e84b4fb5fb957f2efdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a25491938e4244cc2543e5d7a3b49a83f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#a25491938e4244cc2543e5d7a3b49a83f">addARealBody</a> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *body)</td></tr>
-<tr class="separator:a25491938e4244cc2543e5d7a3b49a83f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6252f269ee4e420cc67874736f5515e4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#a6252f269ee4e420cc67874736f5515e4">addAFictitiousBody</a> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *body)</td></tr>
-<tr class="separator:a6252f269ee4e420cc67874736f5515e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a442476fcfa07e8b77c9b2410fb22542c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#a442476fcfa07e8b77c9b2410fb22542c">initializeSystemCellLinkedLists</a> ()</td></tr>
+<tr class="memitem:a1d81d5d3a58821324298e2c90d27a31e"><td class="memItemLeft" align="right" valign="top"><a id="a1d81d5d3a58821324298e2c90d27a31e"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>SPHSystem</b> (<a class="el" href="namespace_s_p_h.html#ad185cdeb05bdee76bf975cc50f1c15b7">BoundingBox</a> system_domain_bounds, Real resolution_ref, <a class="el" href="classsize__t.html">size_t</a> number_of_threads=std::thread::hardware_concurrency())</td></tr>
+<tr class="separator:a1d81d5d3a58821324298e2c90d27a31e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a28cd00acbe20e0bf5396e6d359069c59"><td class="memItemLeft" align="right" valign="top"><a id="a28cd00acbe20e0bf5396e6d359069c59"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>addABody</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *sph_body)</td></tr>
+<tr class="separator:a28cd00acbe20e0bf5396e6d359069c59"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac199391e4649c3abb18f6f0bd9878e38"><td class="memItemLeft" align="right" valign="top"><a id="ac199391e4649c3abb18f6f0bd9878e38"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>addARealBody</b> (<a class="el" href="class_s_p_h_1_1_real_body.html">RealBody</a> *Real_body)</td></tr>
+<tr class="separator:ac199391e4649c3abb18f6f0bd9878e38"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6ac71d808481b87e5010d756c1860b0e"><td class="memItemLeft" align="right" valign="top"><a id="a6ac71d808481b87e5010d756c1860b0e"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>addAFictitiousBody</b> (<a class="el" href="class_s_p_h_1_1_fictitious_body.html">FictitiousBody</a> *fictitious_body)</td></tr>
+<tr class="separator:a6ac71d808481b87e5010d756c1860b0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a442476fcfa07e8b77c9b2410fb22542c"><td class="memItemLeft" align="right" valign="top"><a id="a442476fcfa07e8b77c9b2410fb22542c"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>initializeSystemCellLinkedLists</b> ()</td></tr>
 <tr class="separator:a442476fcfa07e8b77c9b2410fb22542c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a69841bcef00095b29dc237a2e1841a43"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#a69841bcef00095b29dc237a2e1841a43">initializeSystemConfigurations</a> ()</td></tr>
+<tr class="memitem:a69841bcef00095b29dc237a2e1841a43"><td class="memItemLeft" align="right" valign="top"><a id="a69841bcef00095b29dc237a2e1841a43"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>initializeSystemConfigurations</b> ()</td></tr>
 <tr class="separator:a69841bcef00095b29dc237a2e1841a43"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acc13a32d289db428a82a00721f727253"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#acc13a32d289db428a82a00721f727253">handleCommandlineOptions</a> (<a class="el" href="classint.html">int</a> ac, char *av[])</td></tr>
+<tr class="memitem:acc13a32d289db428a82a00721f727253"><td class="memItemLeft" align="right" valign="top"><a id="acc13a32d289db428a82a00721f727253"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>handleCommandlineOptions</b> (<a class="el" href="classint.html">int</a> ac, char *av[])</td></tr>
 <tr class="separator:acc13a32d289db428a82a00721f727253"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:afca183655964129adc02777f8b655141"><td class="memItemLeft" align="right" valign="top"><a id="afca183655964129adc02777f8b655141"></a>
-Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>lower_bound_</b></td></tr>
-<tr class="separator:afca183655964129adc02777f8b655141"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae4ffcd3165391e69937ff6d3a8e657cf"><td class="memItemLeft" align="right" valign="top">Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#ae4ffcd3165391e69937ff6d3a8e657cf">upper_bound_</a></td></tr>
-<tr class="separator:ae4ffcd3165391e69937ff6d3a8e657cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a56fee8e9bed249be5efddcb0f27cd2ad"><td class="memItemLeft" align="right" valign="top">task_scheduler_init&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#a56fee8e9bed249be5efddcb0f27cd2ad">tbb_init_</a></td></tr>
-<tr class="separator:a56fee8e9bed249be5efddcb0f27cd2ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a18aacd036d995a9eda973508ac985881"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#a18aacd036d995a9eda973508ac985881">particle_spacing_ref_</a></td></tr>
-<tr class="separator:a18aacd036d995a9eda973508ac985881"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a04e180b1f52b8cf07f1f0c0ef0ad184e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_s_p_h.html#ad185cdeb05bdee76bf975cc50f1c15b7">BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#a04e180b1f52b8cf07f1f0c0ef0ad184e">system_domain_bounds_</a></td></tr>
+<tr class="separator:a04e180b1f52b8cf07f1f0c0ef0ad184e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afdba04a89c69bd619884e27aeb1a0d85"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#afdba04a89c69bd619884e27aeb1a0d85">resolution_ref_</a></td></tr>
+<tr class="separator:afdba04a89c69bd619884e27aeb1a0d85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e0f4c97f651fb47b6efe70024b0161e"><td class="memItemLeft" align="right" valign="top">tbb::global_control&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#a6e0f4c97f651fb47b6efe70024b0161e">tbb_global_control_</a></td></tr>
+<tr class="separator:a6e0f4c97f651fb47b6efe70024b0161e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af8fa1222296aa6d6a189ed78fa1f11a5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_s_p_h_1_1_in___output.html">In_Output</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#af8fa1222296aa6d6a189ed78fa1f11a5">in_output_</a></td></tr>
+<tr class="separator:af8fa1222296aa6d6a189ed78fa1f11a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa8857ddbfa363705aed7220755d8bc6b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#aa8857ddbfa363705aed7220755d8bc6b">restart_step_</a></td></tr>
 <tr class="separator:aa8857ddbfa363705aed7220755d8bc6b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab7507f0cd0f83c6ccb5986ed23a58e91"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classbool.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#ab7507f0cd0f83c6ccb5986ed23a58e91">run_particle_relaxation_</a></td></tr>
 <tr class="separator:ab7507f0cd0f83c6ccb5986ed23a58e91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a66b753581ddeda0bf9ee71a8b7c126b2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classbool.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#a66b753581ddeda0bf9ee71a8b7c126b2">reload_particles_</a></td></tr>
 <tr class="separator:a66b753581ddeda0bf9ee71a8b7c126b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a06df4aa5fffedeffa77dedf91b3ad014"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#a06df4aa5fffedeffa77dedf91b3ad014">output_folder_</a></td></tr>
-<tr class="separator:a06df4aa5fffedeffa77dedf91b3ad014"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4d7b1c56a25c5d29f71da28411cf963e"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#a4d7b1c56a25c5d29f71da28411cf963e">restart_folder_</a></td></tr>
-<tr class="separator:a4d7b1c56a25c5d29f71da28411cf963e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2bd10d00be38e10b709ea0ac4c344c5f"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#a2bd10d00be38e10b709ea0ac4c344c5f">reload_folder_</a></td></tr>
-<tr class="separator:a2bd10d00be38e10b709ea0ac4c344c5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0d48a961d6eb6dd5b305a83f8740453b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_s_p_h.html#ab8b3224d963eb73d7febbf0d5346f429">SPHBodyVector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#a0d48a961d6eb6dd5b305a83f8740453b">bodies_</a></td></tr>
 <tr class="separator:a0d48a961d6eb6dd5b305a83f8740453b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac1c1dcabfcf5aa3b75d086c7f687a9f9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_s_p_h.html#ab8b3224d963eb73d7febbf0d5346f429">SPHBodyVector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_s_p_h_system.html#ac1c1dcabfcf5aa3b75d086c7f687a9f9">fictitious_bodies_</a></td></tr>
@@ -131,182 +130,7 @@ Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>lower_bound_</b></td>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>The <a class="el" href="namespace_s_p_h.html">SPH</a> system managing objects in the system level. </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="aff1f80d45ce8f125ae264bf114a61f3d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aff1f80d45ce8f125ae264bf114a61f3d">&#9670;&nbsp;</a></span>SPHSystem()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">SPH::SPHSystem::SPHSystem </td>
-          <td>(</td>
-          <td class="paramtype">Vecd&#160;</td>
-          <td class="paramname"><em>lower_bound</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">Vecd&#160;</td>
-          <td class="paramname"><em>upper_bound</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">Real&#160;</td>
-          <td class="paramname"><em>particle_spacing_ref</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classint.html">int</a>&#160;</td>
-          <td class="paramname"><em>number_of_threads</em> = <code>tbb::task_scheduler_init::automatic</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Default constructor. Note that the lower and upper domian bounds are used to build mesh cell linked list, therefore, should be bigger than the lower and upper bounds of all bodies plus the boundary width. Otherwise, it may come to the situation that a particle may can not found a valid cell to build the cell linked list. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">lower_bound</td><td>Lower bound of the system computational domain. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">upper_bound</td><td>Upper bound of the system computational domain. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">particle_spacing_ref</td><td>Reference particle spacing. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">smoothing_length_ratio</td><td>The Reference ratio of smoothing length to particle spacing. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<h2 class="groupheader">Member Function Documentation</h2>
-<a id="a88965b8dd1302e84b4fb5fb957f2efdc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a88965b8dd1302e84b4fb5fb957f2efdc">&#9670;&nbsp;</a></span>addABody()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void SPH::SPHSystem::addABody </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td>
-          <td class="paramname"><em>body</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Add a new body to the <a class="el" href="namespace_s_p_h.html">SPH</a> system. </p>
-
-</div>
-</div>
-<a id="a6252f269ee4e420cc67874736f5515e4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6252f269ee4e420cc67874736f5515e4">&#9670;&nbsp;</a></span>addAFictitiousBody()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void SPH::SPHSystem::addAFictitiousBody </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td>
-          <td class="paramname"><em>body</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Add a new body to the <a class="el" href="namespace_s_p_h.html">SPH</a> fictitious bodies. </p>
-
-</div>
-</div>
-<a id="a25491938e4244cc2543e5d7a3b49a83f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a25491938e4244cc2543e5d7a3b49a83f">&#9670;&nbsp;</a></span>addARealBody()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void SPH::SPHSystem::addARealBody </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td>
-          <td class="paramname"><em>body</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Add a new body to the <a class="el" href="namespace_s_p_h.html">SPH</a> real bodies. </p>
-
-</div>
-</div>
-<a id="acc13a32d289db428a82a00721f727253"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acc13a32d289db428a82a00721f727253">&#9670;&nbsp;</a></span>handleCommandlineOptions()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void SPH::SPHSystem::handleCommandlineOptions </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classint.html">int</a>&#160;</td>
-          <td class="paramname"><em>ac</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">char *&#160;</td>
-          <td class="paramname"><em>av</em>[]&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>handle the commandline options </p>
-
-</div>
-</div>
-<a id="a442476fcfa07e8b77c9b2410fb22542c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a442476fcfa07e8b77c9b2410fb22542c">&#9670;&nbsp;</a></span>initializeSystemCellLinkedLists()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void SPH::SPHSystem::initializeSystemCellLinkedLists </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Initialize cell linked lists. </p>
-
-</div>
-</div>
-<a id="a69841bcef00095b29dc237a2e1841a43"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a69841bcef00095b29dc237a2e1841a43">&#9670;&nbsp;</a></span>initializeSystemConfigurations()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void SPH::SPHSystem::initializeSystemConfigurations </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Initialize particle interacting configurations. </p>
-
-</div>
-</div>
-<h2 class="groupheader">Member Data Documentation</h2>
+</div><h2 class="groupheader">Member Data Documentation</h2>
 <a id="a0d48a961d6eb6dd5b305a83f8740453b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0d48a961d6eb6dd5b305a83f8740453b">&#9670;&nbsp;</a></span>bodies_</h2>
 
@@ -337,33 +161,18 @@ Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>lower_bound_</b></td>
 
 </div>
 </div>
-<a id="a06df4aa5fffedeffa77dedf91b3ad014"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a06df4aa5fffedeffa77dedf91b3ad014">&#9670;&nbsp;</a></span>output_folder_</h2>
+<a id="af8fa1222296aa6d6a189ed78fa1f11a5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af8fa1222296aa6d6a189ed78fa1f11a5">&#9670;&nbsp;</a></span>in_output_</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::string SPH::SPHSystem::output_folder_</td>
+          <td class="memname"><a class="el" href="class_s_p_h_1_1_in___output.html">In_Output</a>* SPH::SPHSystem::in_output_</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>folder for saving output files. </p>
-
-</div>
-</div>
-<a id="a18aacd036d995a9eda973508ac985881"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a18aacd036d995a9eda973508ac985881">&#9670;&nbsp;</a></span>particle_spacing_ref_</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">Real SPH::SPHSystem::particle_spacing_ref_</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Refernce initial particle spacing. </p>
+<p>in_output setup </p>
 
 </div>
 </div>
@@ -382,21 +191,6 @@ Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>lower_bound_</b></td>
 
 </div>
 </div>
-<a id="a2bd10d00be38e10b709ea0ac4c344c5f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2bd10d00be38e10b709ea0ac4c344c5f">&#9670;&nbsp;</a></span>reload_folder_</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::string SPH::SPHSystem::reload_folder_</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>folder for saving particle reload files. </p>
-
-</div>
-</div>
 <a id="a66b753581ddeda0bf9ee71a8b7c126b2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a66b753581ddeda0bf9ee71a8b7c126b2">&#9670;&nbsp;</a></span>reload_particles_</h2>
 
@@ -408,22 +202,22 @@ Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>lower_bound_</b></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>start the simulation with relaxed particles </p>
+<p>start the simulation with relaxed particles. </p>
 
 </div>
 </div>
-<a id="a4d7b1c56a25c5d29f71da28411cf963e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4d7b1c56a25c5d29f71da28411cf963e">&#9670;&nbsp;</a></span>restart_folder_</h2>
+<a id="afdba04a89c69bd619884e27aeb1a0d85"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afdba04a89c69bd619884e27aeb1a0d85">&#9670;&nbsp;</a></span>resolution_ref_</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::string SPH::SPHSystem::restart_folder_</td>
+          <td class="memname">Real SPH::SPHSystem::resolution_ref_</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>folder for saving restart files. </p>
+<p>refernce resolution of the <a class="el" href="namespace_s_p_h.html">SPH</a> system </p>
 
 </div>
 </div>
@@ -453,37 +247,37 @@ Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>lower_bound_</b></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>computing from roeload particles from files. </p>
+<p>run particle relaxation for body fitted particle distribution </p>
 
 </div>
 </div>
-<a id="a56fee8e9bed249be5efddcb0f27cd2ad"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a56fee8e9bed249be5efddcb0f27cd2ad">&#9670;&nbsp;</a></span>tbb_init_</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">task_scheduler_init SPH::SPHSystem::tbb_init_</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>TBB library. </p>
-
-</div>
-</div>
-<a id="ae4ffcd3165391e69937ff6d3a8e657cf"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae4ffcd3165391e69937ff6d3a8e657cf">&#9670;&nbsp;</a></span>upper_bound_</h2>
+<a id="a04e180b1f52b8cf07f1f0c0ef0ad184e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a04e180b1f52b8cf07f1f0c0ef0ad184e">&#9670;&nbsp;</a></span>system_domain_bounds_</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">Vecd SPH::SPHSystem::upper_bound_</td>
+          <td class="memname"><a class="el" href="namespace_s_p_h.html#ad185cdeb05bdee76bf975cc50f1c15b7">BoundingBox</a> SPH::SPHSystem::system_domain_bounds_</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Lower and Upper domain bound. </p>
+<p>Lower and Upper domain bounds. </p>
+
+</div>
+</div>
+<a id="a6e0f4c97f651fb47b6efe70024b0161e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6e0f4c97f651fb47b6efe70024b0161e">&#9670;&nbsp;</a></span>tbb_global_control_</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">tbb::global_control SPH::SPHSystem::tbb_global_control_</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>global controling on the total number parallel threads </p>
 
 </div>
 </div>

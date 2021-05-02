@@ -69,6 +69,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="class_s_p_h_1_1_particle_generator_lattice-members.html">List of all members</a>  </div>
   <div class="headertitle">
@@ -82,28 +83,32 @@ $(function() {
 <p><code>#include &lt;<a class="el" href="particle__generator__lattice_8h_source.html">particle_generator_lattice.h</a>&gt;</code></p>
 
 <p>Inherits <a class="el" href="class_s_p_h_1_1_particle_generator.html">SPH::ParticleGenerator</a>.</p>
+
+<p>Inherited by <a class="el" href="class_s_p_h_1_1_particle_generator_multi_resolution.html">SPH::ParticleGeneratorMultiResolution</a>.</p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:afbcdf047430f1e6905b354add9384439"><td class="memItemLeft" align="right" valign="top"><a id="afbcdf047430f1e6905b354add9384439"></a>
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>initialize</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *sph_body) override</td></tr>
 <tr class="separator:afbcdf047430f1e6905b354add9384439"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae917563b010e911bb82068bc167a8562"><td class="memItemLeft" align="right" valign="top"><a id="ae917563b010e911bb82068bc167a8562"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>CreateBaseParticles</b> (<a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *base_particles) override</td></tr>
-<tr class="separator:ae917563b010e911bb82068bc167a8562"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d3b1829d1c85d4afedb40f0762dd52f"><td class="memItemLeft" align="right" valign="top"><a id="a6d3b1829d1c85d4afedb40f0762dd52f"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>createBaseParticles</b> (<a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *base_particles) override</td></tr>
+<tr class="separator:a6d3b1829d1c85d4afedb40f0762dd52f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
+<tr class="memitem:ac7026c33034ee792fded5faf1064e1f1"><td class="memItemLeft" align="right" valign="top"><a id="ac7026c33034ee792fded5faf1064e1f1"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>createABaseParticle</b> (<a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *base_particles, Vecd &amp;particle_position, Real particle_volume, <a class="el" href="classsize__t.html">size_t</a> &amp;total_real_particles)</td></tr>
+<tr class="separator:ac7026c33034ee792fded5faf1064e1f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
-<tr class="memitem:af0ad6f213507782dc0f4e9dbaee508bb"><td class="memItemLeft" align="right" valign="top">Real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_generator_lattice.html#af0ad6f213507782dc0f4e9dbaee508bb">lattice_spacing_</a></td></tr>
+<tr class="memitem:af0ad6f213507782dc0f4e9dbaee508bb"><td class="memItemLeft" align="right" valign="top"><a id="af0ad6f213507782dc0f4e9dbaee508bb"></a>
+Real&#160;</td><td class="memItemRight" valign="bottom"><b>lattice_spacing_</b></td></tr>
 <tr class="separator:af0ad6f213507782dc0f4e9dbaee508bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5a980d8516592e2298afff4e18a99925"><td class="memItemLeft" align="right" valign="top"><a id="a5a980d8516592e2298afff4e18a99925"></a>
-Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>lower_bound_</b></td></tr>
-<tr class="separator:a5a980d8516592e2298afff4e18a99925"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a383774001bcf6c68d89b03bbc3d3e6d2"><td class="memItemLeft" align="right" valign="top">Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_generator_lattice.html#a383774001bcf6c68d89b03bbc3d3e6d2">upper_bound_</a></td></tr>
-<tr class="separator:a383774001bcf6c68d89b03bbc3d3e6d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab98fb03c2a9af9454105eb25f096a217"><td class="memItemLeft" align="right" valign="top"><a id="ab98fb03c2a9af9454105eb25f096a217"></a>
-std::unique_ptr&lt; <a class="el" href="class_s_p_h_1_1_mesh.html">Mesh</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>mesh_</b></td></tr>
-<tr class="separator:ab98fb03c2a9af9454105eb25f096a217"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9fa2d0f353795f4383d0b85ff87746a4"><td class="memItemLeft" align="right" valign="top"><a id="a9fa2d0f353795f4383d0b85ff87746a4"></a>
+<a class="el" href="namespace_s_p_h.html#ad185cdeb05bdee76bf975cc50f1c15b7">BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><b>domain_bounds_</b></td></tr>
+<tr class="separator:a9fa2d0f353795f4383d0b85ff87746a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad1a60cbd0801d3136a74b7b73161d378"><td class="memItemLeft" align="right" valign="top"><a id="ad1a60cbd0801d3136a74b7b73161d378"></a>
 <a class="el" href="class_s_p_h_1_1_complex_shape.html">ComplexShape</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>body_shape_</b></td></tr>
 <tr class="separator:ad1a60cbd0801d3136a74b7b73161d378"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -114,54 +119,7 @@ std::unique_ptr&lt; <a class="el" href="class_s_p_h_1_1_mesh.html">Mesh</a> &gt;
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>generate particles from lattice positions for a body. </p>
-</div><h2 class="groupheader">Member Data Documentation</h2>
-<a id="af0ad6f213507782dc0f4e9dbaee508bb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af0ad6f213507782dc0f4e9dbaee508bb">&#9670;&nbsp;</a></span>lattice_spacing_</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Real SPH::ParticleGeneratorLattice::lattice_spacing_</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Lattice size. </p>
-
-</div>
-</div>
-<a id="a383774001bcf6c68d89b03bbc3d3e6d2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a383774001bcf6c68d89b03bbc3d3e6d2">&#9670;&nbsp;</a></span>upper_bound_</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Vecd SPH::ParticleGeneratorLattice::upper_bound_</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Domain bounds. </p>
-
-</div>
-</div>
-<hr/>The documentation for this class was generated from the following files:<ul>
+</div><hr/>The documentation for this class was generated from the following files:<ul>
 <li>SPHINXsys/src/shared/particle_generator/<a class="el" href="particle__generator__lattice_8h_source.html">particle_generator_lattice.h</a></li>
 <li>SPHINXsys/src/for_2D_build/particle_generator/particle_generator_lattice_supplementary.cpp</li>
 <li>SPHINXsys/src/shared/particle_generator/<a class="el" href="particle__generator__lattice_8cpp.html">particle_generator_lattice.cpp</a></li>

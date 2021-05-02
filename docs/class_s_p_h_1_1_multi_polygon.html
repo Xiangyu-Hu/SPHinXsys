@@ -92,31 +92,31 @@ boost_multi_poly &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>get
 <tr class="memitem:ab70c2a0a1d5f40539a1b0164b2763fc5"><td class="memItemLeft" align="right" valign="top"><a id="ab70c2a0a1d5f40539a1b0164b2763fc5"></a>
 <a class="el" href="classbool.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>checkContain</b> (Vec2d pnt, <a class="el" href="classbool.html">bool</a> BOUNDARY_INCLUDED=true)</td></tr>
 <tr class="separator:ab70c2a0a1d5f40539a1b0164b2763fc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a24efff1f0bbf8a77b2a87fdb06d5d71c"><td class="memItemLeft" align="right" valign="top"><a id="a24efff1f0bbf8a77b2a87fdb06d5d71c"></a>
-virtual Vec2d&#160;</td><td class="memItemRight" valign="bottom"><b>findClosestPoint</b> (Vec2d input_pnt) override</td></tr>
-<tr class="separator:a24efff1f0bbf8a77b2a87fdb06d5d71c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2e9a5715a8a9a41a14094452468b130b"><td class="memItemLeft" align="right" valign="top"><a id="a2e9a5715a8a9a41a14094452468b130b"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>findBounds</b> (Vec2d &amp;lower_bound, Vec2d &amp;upper_bound) override</td></tr>
-<tr class="separator:a2e9a5715a8a9a41a14094452468b130b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aebfdb5c0cf71b53a41fcffd383fce05c"><td class="memItemLeft" align="right" valign="top"><a id="aebfdb5c0cf71b53a41fcffd383fce05c"></a>
+Vec2d&#160;</td><td class="memItemRight" valign="bottom"><b>findClosestPoint</b> (Vec2d &amp;input_pnt)</td></tr>
+<tr class="separator:aebfdb5c0cf71b53a41fcffd383fce05c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a81d9952ff6684b8918d64762b20952d3"><td class="memItemLeft" align="right" valign="top"><a id="a81d9952ff6684b8918d64762b20952d3"></a>
+virtual <a class="el" href="namespace_s_p_h.html#ad185cdeb05bdee76bf975cc50f1c15b7">BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><b>findBounds</b> () override</td></tr>
+<tr class="separator:a81d9952ff6684b8918d64762b20952d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abdeb7a9529f140c491d15a46c7c9016e"><td class="memItemLeft" align="right" valign="top"><a id="abdeb7a9529f140c491d15a46c7c9016e"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>addAMultiPolygon</b> (<a class="el" href="class_s_p_h_1_1_multi_polygon.html">MultiPolygon</a> &amp;multi_polygon, <a class="el" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op)</td></tr>
 <tr class="separator:abdeb7a9529f140c491d15a46c7c9016e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1509042c0dcb0cbdfd42ff71c732883e"><td class="memItemLeft" align="right" valign="top"><a id="a1509042c0dcb0cbdfd42ff71c732883e"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>addABoostMultiPoly</b> (boost_multi_poly &amp;boost_multi_poly, <a class="el" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op)</td></tr>
 <tr class="separator:a1509042c0dcb0cbdfd42ff71c732883e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8ff0b744b27aef8e43e118981a5d524d"><td class="memItemLeft" align="right" valign="top"><a id="a8ff0b744b27aef8e43e118981a5d524d"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>addAPolygon</b> (std::vector&lt; Point &gt; &amp;points, <a class="el" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op)</td></tr>
-<tr class="separator:a8ff0b744b27aef8e43e118981a5d524d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0808b9166b8ca1d251fbed957615f832"><td class="memItemLeft" align="right" valign="top"><a id="a0808b9166b8ca1d251fbed957615f832"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>addAPolygon</b> (std::vector&lt; Vecd &gt; &amp;points, <a class="el" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op)</td></tr>
+<tr class="separator:a0808b9166b8ca1d251fbed957615f832"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adb2f7483df1f3bd9a1ecf7266e60bb5d"><td class="memItemLeft" align="right" valign="top"><a id="adb2f7483df1f3bd9a1ecf7266e60bb5d"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>addACircle</b> (Vec2d center, Real radius, <a class="el" href="classint.html">int</a> resolution, <a class="el" href="class_shape_boolean_ops.html">ShapeBooleanOps</a> op)</td></tr>
 <tr class="separator:adb2f7483df1f3bd9a1ecf7266e60bb5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_s_p_h_1_1_shape"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_shape')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_shape.html">SPH::Shape</a></td></tr>
-<tr class="memitem:a4476c696cd5ace075ab6c9dcd37a86c4 inherit pub_methods_class_s_p_h_1_1_shape"><td class="memItemLeft" align="right" valign="top"><a id="a4476c696cd5ace075ab6c9dcd37a86c4"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Shape</b> (string shape_name)</td></tr>
-<tr class="separator:a4476c696cd5ace075ab6c9dcd37a86c4 inherit pub_methods_class_s_p_h_1_1_shape"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8345e4a44bdb995a1bd5f956f0b33d41 inherit pub_methods_class_s_p_h_1_1_shape"><td class="memItemLeft" align="right" valign="top"><a id="a8345e4a44bdb995a1bd5f956f0b33d41"></a>
-string&#160;</td><td class="memItemRight" valign="bottom"><b>getName</b> ()</td></tr>
-<tr class="separator:a8345e4a44bdb995a1bd5f956f0b33d41 inherit pub_methods_class_s_p_h_1_1_shape"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0788d828fde0933f6e8493393667be9 inherit pub_methods_class_s_p_h_1_1_shape"><td class="memItemLeft" align="right" valign="top"><a id="af0788d828fde0933f6e8493393667be9"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Shape</b> (std::string shape_name)</td></tr>
+<tr class="separator:af0788d828fde0933f6e8493393667be9 inherit pub_methods_class_s_p_h_1_1_shape"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace0e6216880b5ccb462523aa821a50b3 inherit pub_methods_class_s_p_h_1_1_shape"><td class="memItemLeft" align="right" valign="top"><a id="ace0e6216880b5ccb462523aa821a50b3"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>getName</b> ()</td></tr>
+<tr class="separator:ace0e6216880b5ccb462523aa821a50b3 inherit pub_methods_class_s_p_h_1_1_shape"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
@@ -130,9 +130,9 @@ Protected Attributes</h2></td></tr>
 boost_multi_poly&#160;</td><td class="memItemRight" valign="bottom"><b>multi_poly_</b></td></tr>
 <tr class="separator:ab87ac7670701d30021c60e5c4a9ea8b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_class_s_p_h_1_1_shape"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_shape')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_shape.html">SPH::Shape</a></td></tr>
-<tr class="memitem:ae2f65ae337bc8dd13efb2df76ab491a3 inherit pro_attribs_class_s_p_h_1_1_shape"><td class="memItemLeft" align="right" valign="top"><a id="ae2f65ae337bc8dd13efb2df76ab491a3"></a>
-string&#160;</td><td class="memItemRight" valign="bottom"><b>name_</b></td></tr>
-<tr class="separator:ae2f65ae337bc8dd13efb2df76ab491a3 inherit pro_attribs_class_s_p_h_1_1_shape"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8e6dd281937b9208b4cdd221e7feaa51 inherit pro_attribs_class_s_p_h_1_1_shape"><td class="memItemLeft" align="right" valign="top"><a id="a8e6dd281937b9208b4cdd221e7feaa51"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>name_</b></td></tr>
+<tr class="separator:a8e6dd281937b9208b4cdd221e7feaa51 inherit pro_attribs_class_s_p_h_1_1_shape"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>used to define a closed region </p>

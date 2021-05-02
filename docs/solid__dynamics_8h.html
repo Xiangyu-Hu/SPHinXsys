@@ -82,37 +82,25 @@ $(function() {
 <code>#include &quot;<a class="el" href="elastic__solid_8h_source.html">elastic_solid.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="weakly__compressible__fluid_8h_source.html">weakly_compressible_fluid.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="base__kernel_8h_source.html">base_kernel.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="fluid__dynamics_8h_source.html">fluid_dynamics.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="all__fluid__dynamics_8h_source.html">all_fluid_dynamics.h</a>&quot;</code><br />
 </div>
 <p><a href="solid__dynamics_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_body_summation.html">SPH::BodySummation&lt; DataTypeIndex, VariableType &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the summation of a particle variable in a body.  <a href="class_s_p_h_1_1_body_summation.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_body_moment.html">SPH::BodyMoment&lt; DataTypeIndex, VariableType &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the moment of a body.  <a href="class_s_p_h_1_1_body_moment.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_solid_dynamics_initial_condition.html">SPH::solid_dynamics::SolidDynamicsInitialCondition</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">set initial condition for solid fluid body This is a abstract class to be override for case specific initial conditions.  <a href="class_s_p_h_1_1solid__dynamics_1_1_solid_dynamics_initial_condition.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_summation_contact_density.html">SPH::solid_dynamics::SummationContactDensity</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computing the summation density due to solid-solid contact model.  <a href="class_s_p_h_1_1solid__dynamics_1_1_summation_contact_density.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_contact_density_summation.html">SPH::solid_dynamics::ContactDensitySummation</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computing the summation density due to solid-solid contact model.  <a href="class_s_p_h_1_1solid__dynamics_1_1_contact_density_summation.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_contact_force.html">SPH::solid_dynamics::ContactForce</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_contact_force_from_friction.html">SPH::solid_dynamics::ContactForceFromFriction</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computing the contact-force contribution from friction.  <a href="class_s_p_h_1_1solid__dynamics_1_1_contact_force_from_friction.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_fluid_viscous_force_on_solid.html">SPH::solid_dynamics::FluidViscousForceOnSolid</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computing the viscous force from the fluid.  <a href="class_s_p_h_1_1solid__dynamics_1_1_fluid_viscous_force_on_solid.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_fluid_angular_conservative_viscous_force_on_solid.html">SPH::solid_dynamics::FluidAngularConservativeViscousForceOnSolid</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computing the viscous force from the fluid.  <a href="class_s_p_h_1_1solid__dynamics_1_1_fluid_angular_conservative_viscous_force_on_solid.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_fluid_pressure_force_on_solid.html">SPH::solid_dynamics::FluidPressureForceOnSolid</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computing the pressure force from the fluid. The pressrue force is added on the viscous force of the latter is computed. This class is for FSI applications to achieve smaller solid dynamics time step size compared to the fluid dynamics.  <a href="class_s_p_h_1_1solid__dynamics_1_1_fluid_pressure_force_on_solid.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_total_viscous_force_on_solid.html">SPH::solid_dynamics::TotalViscousForceOnSolid</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computing the total viscous force from fluid.  <a href="class_s_p_h_1_1solid__dynamics_1_1_total_viscous_force_on_solid.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_total_force_on_solid.html">SPH::solid_dynamics::TotalForceOnSolid</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computing total force from fluid.  <a href="class_s_p_h_1_1solid__dynamics_1_1_total_force_on_solid.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_correct_configuration.html">SPH::solid_dynamics::CorrectConfiguration</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">obtain the corrected initial configuration in strong form  <a href="class_s_p_h_1_1solid__dynamics_1_1_correct_configuration.html#details">More...</a><br /></td></tr>
@@ -120,19 +108,23 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_constrain_solid_body_region.html">SPH::solid_dynamics::ConstrainSolidBodyRegion</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constrain a solid body part with prescribed motion. Note the average values for FSI are prescirbed also.  <a href="class_s_p_h_1_1solid__dynamics_1_1_constrain_solid_body_region.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_constrain_solid_body_region_velocity.html">SPH::solid_dynamics::ConstrainSolidBodyRegionVelocity</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constrain the velocity of a solid body part.  <a href="class_s_p_h_1_1solid__dynamics_1_1_constrain_solid_body_region_velocity.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_soft_constrain_solid_body_region.html">SPH::solid_dynamics::SoftConstrainSolidBodyRegion</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Soft the constrain of a solid body part.  <a href="class_s_p_h_1_1solid__dynamics_1_1_soft_constrain_solid_body_region.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_clamp_constrain_solid_body_region.html">SPH::solid_dynamics::ClampConstrainSolidBodyRegion</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constrain a solid body part with prescribed motion and smoothing to mimic the clamping effect.  <a href="class_s_p_h_1_1solid__dynamics_1_1_clamp_constrain_solid_body_region.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_constrain_solid_body_mass_center.html">SPH::solid_dynamics::ConstrainSolidBodyMassCenter</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constrain the mass center of a solid body.  <a href="class_s_p_h_1_1solid__dynamics_1_1_constrain_solid_body_mass_center.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_impose_external_force.html">SPH::solid_dynamics::ImposeExternalForce</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">impose external force on a solid body part by add extra acceleration  <a href="class_s_p_h_1_1solid__dynamics_1_1_impose_external_force.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_constrain_solid_body_part_by_sim_body.html">SPH::solid_dynamics::ConstrainSolidBodyPartBySimBody</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constrain a solid body part from the motion computed from Simbody.  <a href="class_s_p_h_1_1solid__dynamics_1_1_constrain_solid_body_part_by_sim_body.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_total_force_on_solid_body_part_for_sim_body.html">SPH::solid_dynamics::TotalForceOnSolidBodyPartForSimBody</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the force acting on the solid body part for applying to simbody forces latter.  <a href="class_s_p_h_1_1solid__dynamics_1_1_total_force_on_solid_body_part_for_sim_body.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_fluid_viscous_force_on_solid_wall_model.html">SPH::solid_dynamics::FluidViscousForceOnSolidWallModel</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_elastic_solid_dynamics_initial_condition.html">SPH::solid_dynamics::ElasticSolidDynamicsInitialCondition</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">set initial condition for a solid body with different material This is a abstract class to be override for case specific initial conditions.  <a href="class_s_p_h_1_1solid__dynamics_1_1_elastic_solid_dynamics_initial_condition.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_elastic_dynamics_initial_condition.html">SPH::solid_dynamics::ElasticDynamicsInitialCondition</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">set initial condition for a solid body with different material This is a abstract class to be override for case specific initial conditions.  <a href="class_s_p_h_1_1solid__dynamics_1_1_elastic_dynamics_initial_condition.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_update_elastic_normal_direction.html">SPH::solid_dynamics::UpdateElasticNormalDirection</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">update particle normal directions for elastic solid  <a href="class_s_p_h_1_1solid__dynamics_1_1_update_elastic_normal_direction.html#details">More...</a><br /></td></tr>
@@ -143,20 +135,20 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_deformation_gradient_tensor_by_summation.html">SPH::solid_dynamics::DeformationGradientTensorBySummation</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">computing deformation gradient tensor by summation  <a href="class_s_p_h_1_1solid__dynamics_1_1_deformation_gradient_tensor_by_summation.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_base_elastic_relaxation.html">SPH::solid_dynamics::BaseElasticRelaxation</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">base class for elastic relaxation  <a href="class_s_p_h_1_1solid__dynamics_1_1_base_elastic_relaxation.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_stress_relaxation_first_half.html">SPH::solid_dynamics::StressRelaxationFirstHalf</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">computing stress relaxation process by verlet time stepping This is the first step  <a href="class_s_p_h_1_1solid__dynamics_1_1_stress_relaxation_first_half.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_stress_relaxation_second_half.html">SPH::solid_dynamics::StressRelaxationSecondHalf</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">computing stress relaxation process by verlet time stepping This is the second step  <a href="class_s_p_h_1_1solid__dynamics_1_1_stress_relaxation_second_half.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_initialize_displacement.html">SPH::solid_dynamics::InitializeDisplacement</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">initialize the displacement for computing average velocity. This class is for FSI applications to achieve smaller solid dynamics time step size compared to the fluid dynamics  <a href="class_s_p_h_1_1solid__dynamics_1_1_initialize_displacement.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_constrain_solid_body_part_by_sim_body.html">SPH::solid_dynamics::ConstrainSolidBodyPartBySimBody</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constrain a solid body part from the motion computed from Simbody.  <a href="class_s_p_h_1_1solid__dynamics_1_1_constrain_solid_body_part_by_sim_body.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_update_average_velocity_and_acceleration.html">SPH::solid_dynamics::UpdateAverageVelocityAndAcceleration</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computing average velocity. This class is for FSI applications to achieve smaller solid dynamics time step size compared to the fluid dynamics.  <a href="class_s_p_h_1_1solid__dynamics_1_1_update_average_velocity_and_acceleration.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_average_velocity_and_acceleration.html">SPH::solid_dynamics::AverageVelocityAndAcceleration</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">impose force matching between fluid and solid dynamics  <a href="class_s_p_h_1_1solid__dynamics_1_1_average_velocity_and_acceleration.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_total_force_on_solid_body_part_for_sim_body.html">SPH::solid_dynamics::TotalForceOnSolidBodyPartForSimBody</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the force acting on the solid body part for applying to simbody forces latter.  <a href="class_s_p_h_1_1solid__dynamics_1_1_total_force_on_solid_body_part_for_sim_body.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
@@ -166,30 +158,23 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:a0237227f3c9bae6fd2da86c6834d726b"><td class="memItemLeft" align="right" valign="top"><a id="a0237227f3c9bae6fd2da86c6834d726b"></a>
-typedef DataDelegateSimple&lt; SolidBody, SolidParticles, Solid &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SPH::solid_dynamics::SolidDataDelegateSimple</b></td></tr>
-<tr class="separator:a0237227f3c9bae6fd2da86c6834d726b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3bc67ed34a428a08216084bd3f258b50"><td class="memItemLeft" align="right" valign="top"><a id="a3bc67ed34a428a08216084bd3f258b50"></a>
-typedef DataDelegateInner&lt; SolidBody, SolidParticles, Solid &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SPH::solid_dynamics::SolidDataDelegateInner</b></td></tr>
-<tr class="separator:a3bc67ed34a428a08216084bd3f258b50"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a43c50c995c37a8bfba041c5c765c5ff6"><td class="memItemLeft" align="right" valign="top"><a id="a43c50c995c37a8bfba041c5c765c5ff6"></a>
-typedef DataDelegateContact&lt; SolidBody, SolidParticles, Solid, FluidBody, FluidParticles, Fluid &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SPH::solid_dynamics::FSIDataDelegateContact</b></td></tr>
-<tr class="separator:a43c50c995c37a8bfba041c5c765c5ff6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a93b9c92c3c276d110402463ddafeeb97"><td class="memItemLeft" align="right" valign="top"><a id="a93b9c92c3c276d110402463ddafeeb97"></a>
-typedef DataDelegateContact&lt; SolidBody, SolidParticles, Solid, SolidBody, SolidParticles, Solid &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SPH::solid_dynamics::ContactDynamicsDataDelegate</b></td></tr>
-<tr class="separator:a93b9c92c3c276d110402463ddafeeb97"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a57c17360af02f1bb560b34a69cb86053"><td class="memItemLeft" align="right" valign="top"><a id="a57c17360af02f1bb560b34a69cb86053"></a>
-typedef DataDelegateSimple&lt; SolidBody, ElasticSolidParticles, ElasticSolid &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SPH::solid_dynamics::ElasticSolidDataDelegateSimple</b></td></tr>
-<tr class="separator:a57c17360af02f1bb560b34a69cb86053"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5f548e29edd81ce39408ddfef2521bc5"><td class="memItemLeft" align="right" valign="top"><a id="a5f548e29edd81ce39408ddfef2521bc5"></a>
-typedef DataDelegateInner&lt; SolidBody, ElasticSolidParticles, ElasticSolid &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SPH::solid_dynamics::ElasticSolidDataDelegateInner</b></td></tr>
-<tr class="separator:a5f548e29edd81ce39408ddfef2521bc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a57f3576c89411e4efb3dbab940d966b9"><td class="memItemLeft" align="right" valign="top"><a id="a57f3576c89411e4efb3dbab940d966b9"></a>
+typedef DataDelegateInner&lt; SolidBody, SolidParticles, Solid &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SPH::solid_dynamics::SolidDataInner</b></td></tr>
+<tr class="separator:a57f3576c89411e4efb3dbab940d966b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a660e198c5b366dc464c881ed498164f2"><td class="memItemLeft" align="right" valign="top"><a id="a660e198c5b366dc464c881ed498164f2"></a>
+typedef DataDelegateContact&lt; SolidBody, SolidParticles, Solid, SolidBody, SolidParticles, Solid &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SPH::solid_dynamics::ContactDynamicsData</b></td></tr>
+<tr class="separator:a660e198c5b366dc464c881ed498164f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb4a37d4126f2d8a04df1ccd67195dd9"><td class="memItemLeft" align="right" valign="top"><a id="acb4a37d4126f2d8a04df1ccd67195dd9"></a>
+typedef DataDelegateSimple&lt; SolidBody, ElasticSolidParticles, ElasticSolid &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SPH::solid_dynamics::ElasticSolidDataSimple</b></td></tr>
+<tr class="separator:acb4a37d4126f2d8a04df1ccd67195dd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b328aa564479d1e43e1f2120da0d06b"><td class="memItemLeft" align="right" valign="top"><a id="a6b328aa564479d1e43e1f2120da0d06b"></a>
+typedef DataDelegateInner&lt; SolidBody, ElasticSolidParticles, ElasticSolid &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>SPH::solid_dynamics::ElasticSolidDataInner</b></td></tr>
+<tr class="separator:a6b328aa564479d1e43e1f2120da0d06b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Here, we define the algorithm classes for solid dynamics. </p>
 <p>We consider here a weakly compressible solids. <br  />
  </p><dl class="section author"><dt>Author</dt><dd>Luhui Han, Chi ZHang and Xiangyu Hu </dd></dl>
-<dl class="section version"><dt>Version</dt><dd>0.1 </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

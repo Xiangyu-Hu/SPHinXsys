@@ -82,10 +82,10 @@ $(function() {
 <div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;    <span class="keyword">using</span> Veci = Vec3i;</div>
 <div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;    <span class="keyword">using</span> Vecu = Vec3u;</div>
 <div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;    <span class="keyword">using</span> <a class="code" href="class_vecd.html">Vecd</a> = Vec3d;</div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;    <span class="keyword">using</span> Point = Vec3d;</div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    <span class="keyword">using</span> Index = Vec3i;</div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    <span class="keyword">using</span> Matd = Mat3d;</div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    <span class="keyword">using</span> SymMatd = SymMat3d;</div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;    <span class="keyword">using</span> Matd = Mat3d;</div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    <span class="keyword">using</span> SymMatd = SymMat3d;</div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    <span class="keyword">using</span> AngularVecd = Vec3d;</div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    <span class="keyword">const</span> <span class="keywordtype">int</span> indexAngularVector = 1;</div>
 <div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160; </div>
 <div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;    <span class="keyword">using</span> Transformd = SimTK::Transform;</div>
 <div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160; </div>
@@ -98,12 +98,20 @@ $(function() {
 <div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;    <span class="keyword">template</span>&lt;<span class="keyword">class</span> DataType&gt;</div>
 <div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;    <span class="keyword">using</span> MeshDataMatrix = DataType***;</div>
 <div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160; </div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;    <span class="keyword">const</span> <span class="keywordtype">int</span> <a class="code" href="namespace_s_p_h.html#af07dda9e7654a6375955fc1b9a981a74">MaximumNeighborhoodSize</a> = <a class="code" href="classint.html">int</a>(1.33 * Pi * 27);</div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;}</div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;    constexpr <span class="keywordtype">int</span> <a class="code" href="namespace_s_p_h.html#acb6ae71ae3dec6c30fb00efeb396b2e3">MaximumNeighborhoodSize</a> = <a class="code" href="classint.html">int</a>(1.33 * M_PI * 27);</div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160; </div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;    <span class="keyword">const</span> <span class="keywordtype">int</span> Dimensions = 3;</div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160; </div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;    <span class="keyword">const</span> Matd <a class="code" href="namespace_s_p_h.html#aa1e125aa052a73c44e8032a8fa7244ef">reduced_unit_matrix</a> = { 1, 0, 0, 0, 1, 0, 0, 0, 0 };</div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160; </div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;    <span class="keyword">const</span> <a class="code" href="class_vecd.html">Vecd</a> <a class="code" href="namespace_s_p_h.html#afbcf63f92fe937b5dd9c0cbb2688b776">local_pseudo_n_0</a> = <a class="code" href="class_vecd.html">Vecd</a>(0.0, 0.0, 1.0);</div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;}</div>
 </div><!-- fragment --></div><!-- contents -->
-<div class="ttc" id="anamespace_s_p_h_html_af07dda9e7654a6375955fc1b9a981a74"><div class="ttname"><a href="namespace_s_p_h.html#af07dda9e7654a6375955fc1b9a981a74">SPH::MaximumNeighborhoodSize</a></div><div class="ttdeci">const int MaximumNeighborhoodSize</div><div class="ttdef"><b>Definition:</b> data_type.h:28</div></div>
+<div class="ttc" id="anamespace_s_p_h_html_afbcf63f92fe937b5dd9c0cbb2688b776"><div class="ttname"><a href="namespace_s_p_h.html#afbcf63f92fe937b5dd9c0cbb2688b776">SPH::local_pseudo_n_0</a></div><div class="ttdeci">const Vecd local_pseudo_n_0</div><div class="ttdef"><b>Definition:</b> data_type.h:37</div></div>
 <div class="ttc" id="aclass_vecd_html"><div class="ttname"><a href="class_vecd.html">Vecd</a></div></div>
-<div class="ttc" id="anamespace_s_p_h_html"><div class="ttname"><a href="namespace_s_p_h.html">SPH</a></div><div class="ttdef"><b>Definition:</b> base_body_supplementary.cpp:12</div></div>
+<div class="ttc" id="anamespace_s_p_h_html_acb6ae71ae3dec6c30fb00efeb396b2e3"><div class="ttname"><a href="namespace_s_p_h.html#acb6ae71ae3dec6c30fb00efeb396b2e3">SPH::MaximumNeighborhoodSize</a></div><div class="ttdeci">constexpr int MaximumNeighborhoodSize</div><div class="ttdef"><b>Definition:</b> data_type.h:30</div></div>
+<div class="ttc" id="anamespace_s_p_h_html_aa1e125aa052a73c44e8032a8fa7244ef"><div class="ttname"><a href="namespace_s_p_h.html#aa1e125aa052a73c44e8032a8fa7244ef">SPH::reduced_unit_matrix</a></div><div class="ttdeci">const Matd reduced_unit_matrix</div><div class="ttdef"><b>Definition:</b> data_type.h:34</div></div>
+<div class="ttc" id="anamespace_s_p_h_html"><div class="ttname"><a href="namespace_s_p_h.html">SPH</a></div><div class="ttdef"><b>Definition:</b> solid_body_supplementary.cpp:9</div></div>
 <div class="ttc" id="aclassint_html"><div class="ttname"><a href="classint.html">int</a></div></div>
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

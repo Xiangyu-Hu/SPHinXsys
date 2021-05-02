@@ -76,15 +76,13 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>template base class of linear structure  
+<p>template base class of linear structure only with topology information  
  <a href="class_s_p_h_1_1_edge.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="base__geometry_8h_source.html">base_geometry.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a1510c5c58ce7535539385a650fb0360b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_edge.html#a1510c5c58ce7535539385a650fb0360b">Edge</a> ()</td></tr>
-<tr class="separator:a1510c5c58ce7535539385a650fb0360b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab84200051c417afcf1a401cb6bd280f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_edge.html#aab84200051c417afcf1a401cb6bd280f">Edge</a> (InEdgeType in_edge)</td></tr>
 <tr class="separator:aab84200051c417afcf1a401cb6bd280f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -96,45 +94,15 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a9494c203e1bc96a659cfefe457371dec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2d0998989e26974827b3ab64d998c943"><td class="memItemLeft" align="right" valign="top">OutEdgeType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_edge.html#a2d0998989e26974827b3ab64d998c943">out_edge_</a></td></tr>
 <tr class="separator:a2d0998989e26974827b3ab64d998c943"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af7199bc613ae7b6c5561d9691c15556f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_s_p_h.html#abae56fd7f25f13487c7943ce4681d0ce">IndexVector</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_edge.html#af7199bc613ae7b6c5561d9691c15556f">elements_</a></td></tr>
-<tr class="separator:af7199bc613ae7b6c5561d9691c15556f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h3>template&lt;typename InEdgeType, typename OutEdgeType&gt;<br />
 class SPH::Edge&lt; InEdgeType, OutEdgeType &gt;</h3>
 
-<p>template base class of linear structure </p>
+<p>template base class of linear structure only with topology information </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a1510c5c58ce7535539385a650fb0360b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1510c5c58ce7535539385a650fb0360b">&#9670;&nbsp;</a></span>Edge() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename InEdgeType , typename OutEdgeType &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="class_s_p_h_1_1_edge.html">SPH::Edge</a>&lt; InEdgeType, OutEdgeType &gt;::<a class="el" href="class_s_p_h_1_1_edge.html">Edge</a> </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>constructor without specifying in edge </p>
-
-</div>
-</div>
 <a id="aab84200051c417afcf1a401cb6bd280f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aab84200051c417afcf1a401cb6bd280f">&#9670;&nbsp;</a></span>Edge() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aab84200051c417afcf1a401cb6bd280f">&#9670;&nbsp;</a></span>Edge()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -158,28 +126,11 @@ template&lt;typename InEdgeType , typename OutEdgeType &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>constructor with specifying in edge </p>
+<p>constructor without specifying a leading-in edge &lt; constructor with specifying a leading-in edge </p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
-<a id="af7199bc613ae7b6c5561d9691c15556f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af7199bc613ae7b6c5561d9691c15556f">&#9670;&nbsp;</a></span>elements_</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename InEdgeType , typename OutEdgeType &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="namespace_s_p_h.html#abae56fd7f25f13487c7943ce4681d0ce">IndexVector</a> <a class="el" href="class_s_p_h_1_1_edge.html">SPH::Edge</a>&lt; InEdgeType, OutEdgeType &gt;::elements_</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>element indexes of this edge(s) </p>
-
-</div>
-</div>
 <a id="a987f1047b34f06755f1a2339eafb7b0f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a987f1047b34f06755f1a2339eafb7b0f">&#9670;&nbsp;</a></span>id_</h2>
 

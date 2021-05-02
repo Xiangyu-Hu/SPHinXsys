@@ -80,17 +80,21 @@ $(function() {
 <p>Inject particles into the computational domain.  
  <a href="class_s_p_h_1_1fluid__dynamics_1_1_emitter_inflow_injecting.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="fluid__dynamics_8h_source.html">fluid_dynamics.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="fluid__dynamics__inner_8h_source.html">fluid_dynamics_inner.h</a>&gt;</code></p>
 
-<p>Inherits <a class="el" href="class_s_p_h_1_1_part_dynamics_by_particle.html">SPH::PartDynamicsByParticle</a>, and <a class="el" href="class_s_p_h_1_1_data_delegate_simple.html">SPH::DataDelegateSimple&lt; BodyType, ParticlesType, MaterialType &gt;</a>.</p>
+<p>Inherits <a class="el" href="class_s_p_h_1_1_part_simple_dynamics_by_particle.html">SPH::PartSimpleDynamicsByParticle</a>, and <a class="el" href="class_s_p_h_1_1_data_delegate_simple.html">SPH::DataDelegateSimple&lt; BodyType, ParticlesType, MaterialType &gt;</a>.</p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a3cef805b674f14784cca792007ec18e2"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1fluid__dynamics_1_1_emitter_inflow_injecting.html#a3cef805b674f14784cca792007ec18e2">EmitterInflowInjecting</a> (<a class="el" href="class_s_p_h_1_1_fluid_body.html">FluidBody</a> *body, <a class="el" href="class_s_p_h_1_1_body_part_by_particle.html">BodyPartByParticle</a> *body_part, <a class="el" href="classsize__t.html">size_t</a> body_buffer_width, <a class="el" href="classint.html">int</a> axis_direction, <a class="el" href="classbool.html">bool</a> positive)</td></tr>
-<tr class="memdesc:a3cef805b674f14784cca792007ec18e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructor.  <a href="class_s_p_h_1_1fluid__dynamics_1_1_emitter_inflow_injecting.html#a3cef805b674f14784cca792007ec18e2">More...</a><br /></td></tr>
+<tr class="memitem:a3cef805b674f14784cca792007ec18e2"><td class="memItemLeft" align="right" valign="top"><a id="a3cef805b674f14784cca792007ec18e2"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>EmitterInflowInjecting</b> (<a class="el" href="class_s_p_h_1_1_fluid_body.html">FluidBody</a> *body, <a class="el" href="class_s_p_h_1_1_body_part_by_particle.html">BodyPartByParticle</a> *body_part, <a class="el" href="classsize__t.html">size_t</a> body_buffer_width, <a class="el" href="classint.html">int</a> axis_direction, <a class="el" href="classbool.html">bool</a> positive)</td></tr>
 <tr class="separator:a3cef805b674f14784cca792007ec18e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a837e463b8446da0d485fab5ab8a38bbd"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1fluid__dynamics_1_1_emitter_inflow_injecting.html#a837e463b8446da0d485fab5ab8a38bbd">parallel_exec</a> (Real dt=0.0) override</td></tr>
 <tr class="separator:a837e463b8446da0d485fab5ab8a38bbd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_class_s_p_h_1_1_part_simple_dynamics_by_particle"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_part_simple_dynamics_by_particle')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_part_simple_dynamics_by_particle.html">SPH::PartSimpleDynamicsByParticle</a></td></tr>
+<tr class="memitem:abf0bc4301423149d61ae4cc3c8523fd7 inherit pub_methods_class_s_p_h_1_1_part_simple_dynamics_by_particle"><td class="memItemLeft" align="right" valign="top"><a id="abf0bc4301423149d61ae4cc3c8523fd7"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>PartSimpleDynamicsByParticle</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *sph_body, <a class="el" href="class_s_p_h_1_1_body_part_by_particle.html">BodyPartByParticle</a> *body_part)</td></tr>
+<tr class="separator:abf0bc4301423149d61ae4cc3c8523fd7 inherit pub_methods_class_s_p_h_1_1_part_simple_dynamics_by_particle"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_s_p_h_1_1_part_dynamics_by_particle"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_part_dynamics_by_particle')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_part_dynamics_by_particle.html">SPH::PartDynamicsByParticle</a></td></tr>
 <tr class="memitem:aa688c7aa4663b17a39db749a3575d461 inherit pub_methods_class_s_p_h_1_1_part_dynamics_by_particle"><td class="memItemLeft" align="right" valign="top"><a id="aa688c7aa4663b17a39db749a3575d461"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>PartDynamicsByParticle</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *sph_body, <a class="el" href="class_s_p_h_1_1_body_part_by_particle.html">BodyPartByParticle</a> *body_part)</td></tr>
@@ -98,10 +102,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a9d95efb3814fe94d1cc59f3814ec7b5d inherit pub_methods_class_s_p_h_1_1_part_dynamics_by_particle"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_part_dynamics_by_particle.html#a9d95efb3814fe94d1cc59f3814ec7b5d">exec</a> (Real dt=0.0) override</td></tr>
 <tr class="separator:a9d95efb3814fe94d1cc59f3814ec7b5d inherit pub_methods_class_s_p_h_1_1_part_dynamics_by_particle"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_s_p_h_1_1_particle_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_particle_dynamics')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void &gt;</a></td></tr>
-<tr class="memitem:a79d1c47689c57d6f956032d4bd75cdc2 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_dynamics.html#a79d1c47689c57d6f956032d4bd75cdc2">ParticleDynamics</a> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *sph_body)</td></tr>
+<tr class="memitem:a79d1c47689c57d6f956032d4bd75cdc2 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a79d1c47689c57d6f956032d4bd75cdc2"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>ParticleDynamics</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *sph_body)</td></tr>
 <tr class="separator:a79d1c47689c57d6f956032d4bd75cdc2 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab84153bd29b90450a14c68750af60d1 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="aab84153bd29b90450a14c68750af60d1"></a>
+<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>getSPHBody</b> ()</td></tr>
+<tr class="separator:aab84153bd29b90450a14c68750af60d1 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_s_p_h_1_1_data_delegate_simple"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_data_delegate_simple')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_data_delegate_simple.html">SPH::DataDelegateSimple&lt; BodyType, ParticlesType, MaterialType &gt;</a></td></tr>
-<tr class="memitem:a8f9be49cf96804025fc7631790cc80d5 inherit pub_methods_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_data_delegate_simple.html#a8f9be49cf96804025fc7631790cc80d5">DataDelegateSimple</a> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *body)</td></tr>
+<tr class="memitem:a8f9be49cf96804025fc7631790cc80d5 inherit pub_methods_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top"><a id="a8f9be49cf96804025fc7631790cc80d5"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>DataDelegateSimple</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *body)</td></tr>
 <tr class="separator:a8f9be49cf96804025fc7631790cc80d5 inherit pub_methods_class_s_p_h_1_1_data_delegate_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
@@ -127,12 +136,11 @@ StdLargeVec&lt; Vecd &gt; &amp;&#160;</td><td class="memItemRight" valign="botto
 <tr class="separator:acd8bcbd397c8fcc56ca3ec4bc7d3f2cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a45bef7b7680a610ae4bba08a78665a1f"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classint.html">int</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1fluid__dynamics_1_1_emitter_inflow_injecting.html#a45bef7b7680a610ae4bba08a78665a1f">axis_</a></td></tr>
 <tr class="separator:a45bef7b7680a610ae4bba08a78665a1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a72a1eac29537d15d6e0ef4f5e00b6179"><td class="memItemLeft" align="right" valign="top">Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1fluid__dynamics_1_1_emitter_inflow_injecting.html#a72a1eac29537d15d6e0ef4f5e00b6179">body_part_lower_bound_</a></td></tr>
-<tr class="separator:a72a1eac29537d15d6e0ef4f5e00b6179"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9094e47fc9239b9ce3de76a5f202431b"><td class="memItemLeft" align="right" valign="top"><a id="a9094e47fc9239b9ce3de76a5f202431b"></a>
-Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>body_part_upper_bound_</b></td></tr>
-<tr class="separator:a9094e47fc9239b9ce3de76a5f202431b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a005d69560d519f7c48bdd940bb82e1c6"><td class="memItemLeft" align="right" valign="top">Vecd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1fluid__dynamics_1_1_emitter_inflow_injecting.html#a005d69560d519f7c48bdd940bb82e1c6">periodic_translation_</a></td></tr>
+<tr class="memitem:aace870eb82389c282827c278f3f4f135"><td class="memItemLeft" align="right" valign="top"><a id="aace870eb82389c282827c278f3f4f135"></a>
+<a class="el" href="namespace_s_p_h.html#ad185cdeb05bdee76bf975cc50f1c15b7">BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><b>body_part_bounds_</b></td></tr>
+<tr class="separator:aace870eb82389c282827c278f3f4f135"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a005d69560d519f7c48bdd940bb82e1c6"><td class="memItemLeft" align="right" valign="top"><a id="a005d69560d519f7c48bdd940bb82e1c6"></a>
+Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>periodic_translation_</b></td></tr>
 <tr class="separator:a005d69560d519f7c48bdd940bb82e1c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a84532d633f58b1f2423f1348ebdda1e3"><td class="memItemLeft" align="right" valign="top"><a id="a84532d633f58b1f2423f1348ebdda1e3"></a>
 <a class="el" href="classsize__t.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>body_buffer_width_</b></td></tr>
@@ -141,19 +149,22 @@ Vecd&#160;</td><td class="memItemRight" valign="bottom"><b>body_part_upper_bound
 <a class="el" href="namespace_s_p_h.html#aa72cf1f63790f923a029b77f683b9a5e">ParticleFunctor</a>&#160;</td><td class="memItemRight" valign="bottom"><b>checking_bound_</b></td></tr>
 <tr class="separator:aaf324766abbc82b965b05fd8d2a2a42b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_class_s_p_h_1_1_part_dynamics_by_particle"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_part_dynamics_by_particle')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_part_dynamics_by_particle.html">SPH::PartDynamicsByParticle</a></td></tr>
-<tr class="memitem:af870223a8301cc9e24d0ff8d764725e1 inherit pro_attribs_class_s_p_h_1_1_part_dynamics_by_particle"><td class="memItemLeft" align="right" valign="top"><a id="af870223a8301cc9e24d0ff8d764725e1"></a>
-<a class="el" href="namespace_s_p_h.html#abae56fd7f25f13487c7943ce4681d0ce">IndexVector</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>constrained_particles_</b></td></tr>
-<tr class="separator:af870223a8301cc9e24d0ff8d764725e1 inherit pro_attribs_class_s_p_h_1_1_part_dynamics_by_particle"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a012837427ca9581d7ccdf1f184cef9d4 inherit pro_attribs_class_s_p_h_1_1_part_dynamics_by_particle"><td class="memItemLeft" align="right" valign="top"><a id="a012837427ca9581d7ccdf1f184cef9d4"></a>
+<a class="el" href="namespace_s_p_h.html#abae56fd7f25f13487c7943ce4681d0ce">IndexVector</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>body_part_particles_</b></td></tr>
+<tr class="separator:a012837427ca9581d7ccdf1f184cef9d4 inherit pro_attribs_class_s_p_h_1_1_part_dynamics_by_particle"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a62d3b03e23fbcfa38532dca73d863d11 inherit pro_attribs_class_s_p_h_1_1_part_dynamics_by_particle"><td class="memItemLeft" align="right" valign="top"><a id="a62d3b03e23fbcfa38532dca73d863d11"></a>
+<a class="el" href="namespace_s_p_h.html#aa72cf1f63790f923a029b77f683b9a5e">ParticleFunctor</a>&#160;</td><td class="memItemRight" valign="bottom"><b>particle_functor_</b></td></tr>
+<tr class="separator:a62d3b03e23fbcfa38532dca73d863d11 inherit pro_attribs_class_s_p_h_1_1_part_dynamics_by_particle"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_class_s_p_h_1_1_particle_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_particle_dynamics')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void &gt;</a></td></tr>
 <tr class="memitem:a2c547f5f8f9cc2506a6a726fe59b270e inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a2c547f5f8f9cc2506a6a726fe59b270e"></a>
 <a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>sph_body_</b></td></tr>
 <tr class="separator:a2c547f5f8f9cc2506a6a726fe59b270e inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4dd0aef601d02f17c374507809ec714a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a4dd0aef601d02f17c374507809ec714a"></a>
-<a class="el" href="namespace_s_p_h.html#ac592bbe202be73decfcbfe8201484ffa">SplitCellLists</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>split_cell_lists_</b></td></tr>
-<tr class="separator:a4dd0aef601d02f17c374507809ec714a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c5a47701f676e233197981ced019a1a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a9c5a47701f676e233197981ced019a1a"></a>
-<a class="el" href="class_s_p_h_1_1_base_mesh_cell_linked_list.html">BaseMeshCellLinkedList</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>mesh_cell_linked_list_</b></td></tr>
-<tr class="separator:a9c5a47701f676e233197981ced019a1a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5500b7cdde4aaf52d35109d51567ecc inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="ae5500b7cdde4aaf52d35109d51567ecc"></a>
+<a class="el" href="class_s_p_h_1_1_particle_adaptation.html">ParticleAdaptation</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>particle_adaptation_</b></td></tr>
+<tr class="separator:ae5500b7cdde4aaf52d35109d51567ecc inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a30723682b9301b81211d9f1c0aec4f5c inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a30723682b9301b81211d9f1c0aec4f5c"></a>
+<a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>base_particles_</b></td></tr>
+<tr class="separator:a30723682b9301b81211d9f1c0aec4f5c inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_data_delegate_simple')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_data_delegate_simple.html">SPH::DataDelegateSimple&lt; BodyType, ParticlesType, MaterialType &gt;</a></td></tr>
 <tr class="memitem:a1d373bbac77e5237890e17ad7a234bea inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top"><a id="a1d373bbac77e5237890e17ad7a234bea"></a>
 BodyType *&#160;</td><td class="memItemRight" valign="bottom"><b>body_</b></td></tr>
@@ -179,73 +190,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Inject particles into the computational domain. </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a3cef805b674f14784cca792007ec18e2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3cef805b674f14784cca792007ec18e2">&#9670;&nbsp;</a></span>EmitterInflowInjecting()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">SPH::fluid_dynamics::EmitterInflowInjecting::EmitterInflowInjecting </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="class_s_p_h_1_1_fluid_body.html">FluidBody</a> *&#160;</td>
-          <td class="paramname"><em>body</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="class_s_p_h_1_1_body_part_by_particle.html">BodyPartByParticle</a> *&#160;</td>
-          <td class="paramname"><em>body_part</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classsize__t.html">size_t</a>&#160;</td>
-          <td class="paramname"><em>body_buffer_width</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classint.html">int</a>&#160;</td>
-          <td class="paramname"><em>axis_direction</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classbool.html">bool</a>&#160;</td>
-          <td class="paramname"><em>positive</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Constructor. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">fluid</td><td>body. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">body</td><td>part by particles. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">axis</td><td>direction of in flow: 0, 1, 2 for x-, y- and z-axis. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">direction</td><td>sign of the inflow: true for positive direction. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<h2 class="groupheader">Member Function Documentation</h2>
+</div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a12390a7e04f0d55092bad55fd96fb31b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a12390a7e04f0d55092bad55fd96fb31b">&#9670;&nbsp;</a></span>checkLowerBound()</h2>
 
@@ -280,7 +225,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 <p>Buffer Particle state copied from real particle.</p>
-<p>Realize the buffer particle by increas�ng the number of real particle in the body. <br  />
+<p>Realize the buffer particle by increasing the number of real particle in the body. <br  />
 </p>
 
 </div>
@@ -378,55 +323,9 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a72a1eac29537d15d6e0ef4f5e00b6179"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a72a1eac29537d15d6e0ef4f5e00b6179">&#9670;&nbsp;</a></span>body_part_lower_bound_</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Vecd SPH::fluid_dynamics::EmitterInflowInjecting::body_part_lower_bound_</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>lower and upper bound for checking </p>
-
-</div>
-</div>
-<a id="a005d69560d519f7c48bdd940bb82e1c6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a005d69560d519f7c48bdd940bb82e1c6">&#9670;&nbsp;</a></span>periodic_translation_</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Vecd SPH::fluid_dynamics::EmitterInflowInjecting::periodic_translation_</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>periodic translation </p>
-
-</div>
-</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>SPHINXsys/src/shared/particle_dynamics/fluid_dynamics/<a class="el" href="fluid__dynamics_8h_source.html">fluid_dynamics.h</a></li>
-<li>SPHINXsys/src/shared/particle_dynamics/fluid_dynamics/<a class="el" href="fluid__dynamics_8cpp.html">fluid_dynamics.cpp</a></li>
+<li>SPHINXsys/src/shared/particle_dynamics/fluid_dynamics/<a class="el" href="fluid__dynamics__inner_8h_source.html">fluid_dynamics_inner.h</a></li>
+<li>SPHINXsys/src/shared/particle_dynamics/fluid_dynamics/fluid_dynamics_inner.cpp</li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->

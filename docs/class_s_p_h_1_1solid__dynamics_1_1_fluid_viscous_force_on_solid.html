@@ -80,17 +80,17 @@ $(function() {
 <p>Computing the viscous force from the fluid.  
  <a href="class_s_p_h_1_1solid__dynamics_1_1_fluid_viscous_force_on_solid.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="solid__dynamics_8h_source.html">solid_dynamics.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="fluid__structure__interaction_8h_source.html">fluid_structure_interaction.h</a>&gt;</code></p>
 
 <p>Inherits <a class="el" href="class_s_p_h_1_1_interaction_dynamics.html">SPH::InteractionDynamics</a>, and <a class="el" href="class_s_p_h_1_1_data_delegate_contact.html">SPH::DataDelegateContact&lt; BodyType, ParticlesType, MaterialType, ContactBodyType, ContactParticlesType, ContactMaterialType, BaseDataDelegateType &gt;</a>.</p>
 
-<p>Inherited by <a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_fluid_angular_conservative_viscous_force_on_solid.html">SPH::solid_dynamics::FluidAngularConservativeViscousForceOnSolid</a>, <a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_fluid_pressure_force_on_solid.html">SPH::solid_dynamics::FluidPressureForceOnSolid</a>, and <a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_fluid_viscous_force_on_solid_wall_model.html">SPH::solid_dynamics::FluidViscousForceOnSolidWallModel</a>.</p>
+<p>Inherited by <a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_base_fluid_pressure_force_on_solid.html">SPH::solid_dynamics::BaseFluidPressureForceOnSolid&lt; RiemannSolverType &gt;</a>, and <a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_fluid_angular_conservative_viscous_force_on_solid.html">SPH::solid_dynamics::FluidAngularConservativeViscousForceOnSolid</a>.</p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a815d8b24abe33be135a68db1b743e02c"><td class="memItemLeft" align="right" valign="top"><a id="a815d8b24abe33be135a68db1b743e02c"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>FluidViscousForceOnSolid</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body_contact_relation.html">SPHBodyContactRelation</a> *body_contact_relation)</td></tr>
-<tr class="separator:a815d8b24abe33be135a68db1b743e02c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae57e7183aa0ebb1895b72682dcb2149b"><td class="memItemLeft" align="right" valign="top"><a id="ae57e7183aa0ebb1895b72682dcb2149b"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>FluidViscousForceOnSolid</b> (<a class="el" href="class_s_p_h_1_1_base_contact_body_relation.html">BaseContactBodyRelation</a> *body_contact_relation)</td></tr>
+<tr class="separator:ae57e7183aa0ebb1895b72682dcb2149b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_s_p_h_1_1_interaction_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_interaction_dynamics')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_interaction_dynamics.html">SPH::InteractionDynamics</a></td></tr>
 <tr class="memitem:a4e7bedd52e4b6a6c3423e13d2b799824 inherit pub_methods_class_s_p_h_1_1_interaction_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a4e7bedd52e4b6a6c3423e13d2b799824"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>InteractionDynamics</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *sph_body)</td></tr>
@@ -101,14 +101,19 @@ Public Member Functions</h2></td></tr>
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>parallel_exec</b> (Real dt=0.0) override</td></tr>
 <tr class="separator:a18f083982b63f32ffb2b382569366b36 inherit pub_methods_class_s_p_h_1_1_interaction_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_s_p_h_1_1_particle_dynamics"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_particle_dynamics')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_particle_dynamics.html">SPH::ParticleDynamics&lt; void &gt;</a></td></tr>
-<tr class="memitem:a79d1c47689c57d6f956032d4bd75cdc2 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_particle_dynamics.html#a79d1c47689c57d6f956032d4bd75cdc2">ParticleDynamics</a> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *sph_body)</td></tr>
+<tr class="memitem:a79d1c47689c57d6f956032d4bd75cdc2 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a79d1c47689c57d6f956032d4bd75cdc2"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>ParticleDynamics</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *sph_body)</td></tr>
 <tr class="separator:a79d1c47689c57d6f956032d4bd75cdc2 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab84153bd29b90450a14c68750af60d1 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="aab84153bd29b90450a14c68750af60d1"></a>
+<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>getSPHBody</b> ()</td></tr>
+<tr class="separator:aab84153bd29b90450a14c68750af60d1 inherit pub_methods_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_s_p_h_1_1_data_delegate_contact"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_data_delegate_contact')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_data_delegate_contact.html">SPH::DataDelegateContact&lt; BodyType, ParticlesType, MaterialType, ContactBodyType, ContactParticlesType, ContactMaterialType, BaseDataDelegateType &gt;</a></td></tr>
-<tr class="memitem:acaaeb4f632f392a7b12bd167faca33b3 inherit pub_methods_class_s_p_h_1_1_data_delegate_contact"><td class="memItemLeft" align="right" valign="top"><a id="acaaeb4f632f392a7b12bd167faca33b3"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>DataDelegateContact</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body_contact_relation.html">SPHBodyContactRelation</a> *body_contact_relation)</td></tr>
-<tr class="separator:acaaeb4f632f392a7b12bd167faca33b3 inherit pub_methods_class_s_p_h_1_1_data_delegate_contact"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91e8b7df69859580c537e26c05ace730 inherit pub_methods_class_s_p_h_1_1_data_delegate_contact"><td class="memItemLeft" align="right" valign="top"><a id="a91e8b7df69859580c537e26c05ace730"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>DataDelegateContact</b> (<a class="el" href="class_s_p_h_1_1_base_contact_body_relation.html">BaseContactBodyRelation</a> *body_contact_relation)</td></tr>
+<tr class="separator:a91e8b7df69859580c537e26c05ace730 inherit pub_methods_class_s_p_h_1_1_data_delegate_contact"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_s_p_h_1_1_data_delegate_simple"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_s_p_h_1_1_data_delegate_simple')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_s_p_h_1_1_data_delegate_simple.html">SPH::DataDelegateSimple&lt; SPHBody, BaseParticles, BaseMaterial &gt;</a></td></tr>
-<tr class="memitem:a8f9be49cf96804025fc7631790cc80d5 inherit pub_methods_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_data_delegate_simple.html#a8f9be49cf96804025fc7631790cc80d5">DataDelegateSimple</a> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *body)</td></tr>
+<tr class="memitem:a8f9be49cf96804025fc7631790cc80d5 inherit pub_methods_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top"><a id="a8f9be49cf96804025fc7631790cc80d5"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>DataDelegateSimple</b> (<a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *body)</td></tr>
 <tr class="separator:a8f9be49cf96804025fc7631790cc80d5 inherit pub_methods_class_s_p_h_1_1_data_delegate_simple"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
@@ -156,12 +161,12 @@ StdVec&lt; Real &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>smoot
 <tr class="memitem:a2c547f5f8f9cc2506a6a726fe59b270e inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a2c547f5f8f9cc2506a6a726fe59b270e"></a>
 <a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>sph_body_</b></td></tr>
 <tr class="separator:a2c547f5f8f9cc2506a6a726fe59b270e inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4dd0aef601d02f17c374507809ec714a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a4dd0aef601d02f17c374507809ec714a"></a>
-<a class="el" href="namespace_s_p_h.html#ac592bbe202be73decfcbfe8201484ffa">SplitCellLists</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>split_cell_lists_</b></td></tr>
-<tr class="separator:a4dd0aef601d02f17c374507809ec714a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c5a47701f676e233197981ced019a1a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a9c5a47701f676e233197981ced019a1a"></a>
-<a class="el" href="class_s_p_h_1_1_base_mesh_cell_linked_list.html">BaseMeshCellLinkedList</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>mesh_cell_linked_list_</b></td></tr>
-<tr class="separator:a9c5a47701f676e233197981ced019a1a inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5500b7cdde4aaf52d35109d51567ecc inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="ae5500b7cdde4aaf52d35109d51567ecc"></a>
+<a class="el" href="class_s_p_h_1_1_particle_adaptation.html">ParticleAdaptation</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>particle_adaptation_</b></td></tr>
+<tr class="separator:ae5500b7cdde4aaf52d35109d51567ecc inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a30723682b9301b81211d9f1c0aec4f5c inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memItemLeft" align="right" valign="top"><a id="a30723682b9301b81211d9f1c0aec4f5c"></a>
+<a class="el" href="class_s_p_h_1_1_base_particles.html">BaseParticles</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>base_particles_</b></td></tr>
+<tr class="separator:a30723682b9301b81211d9f1c0aec4f5c inherit pro_attribs_class_s_p_h_1_1_particle_dynamics"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_class_s_p_h_1_1_data_delegate_contact"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_data_delegate_contact')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_data_delegate_contact.html">SPH::DataDelegateContact&lt; BodyType, ParticlesType, MaterialType, ContactBodyType, ContactParticlesType, ContactMaterialType, BaseDataDelegateType &gt;</a></td></tr>
 <tr class="memitem:a44a77a1ef61228a438c54bae0dbdbb90 inherit pro_attribs_class_s_p_h_1_1_data_delegate_contact"><td class="memItemLeft" align="right" valign="top"><a id="a44a77a1ef61228a438c54bae0dbdbb90"></a>
 StdVec&lt; ContactBodyType * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>contact_bodies_</b></td></tr>
@@ -172,8 +177,8 @@ StdVec&lt; ContactParticlesType * &gt;&#160;</td><td class="memItemRight" valign
 <tr class="memitem:a94c66fbba3da9f638bbf9da520ad1ea7 inherit pro_attribs_class_s_p_h_1_1_data_delegate_contact"><td class="memItemLeft" align="right" valign="top"><a id="a94c66fbba3da9f638bbf9da520ad1ea7"></a>
 StdVec&lt; ContactMaterialType * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>contact_material_</b></td></tr>
 <tr class="separator:a94c66fbba3da9f638bbf9da520ad1ea7 inherit pro_attribs_class_s_p_h_1_1_data_delegate_contact"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a96e8c0ed8d645d4211f90c022a63646b inherit pro_attribs_class_s_p_h_1_1_data_delegate_contact"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_s_p_h.html#ab3fc1b1f18f3097bb92b3d4cf6913139">ContatcParticleConfiguration</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_data_delegate_contact.html#a96e8c0ed8d645d4211f90c022a63646b">contact_configuration_</a></td></tr>
-<tr class="separator:a96e8c0ed8d645d4211f90c022a63646b inherit pro_attribs_class_s_p_h_1_1_data_delegate_contact"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c6f57fe46a57fef5ab82638eb446439 inherit pro_attribs_class_s_p_h_1_1_data_delegate_contact"><td class="memItemLeft" align="right" valign="top">StdVec&lt; <a class="el" href="namespace_s_p_h.html#a720b2214c518c3299a6d4895dacddc50">ParticleConfiguration</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_data_delegate_contact.html#a9c6f57fe46a57fef5ab82638eb446439">contact_configuration_</a></td></tr>
+<tr class="separator:a9c6f57fe46a57fef5ab82638eb446439 inherit pro_attribs_class_s_p_h_1_1_data_delegate_contact"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_s_p_h_1_1_data_delegate_simple')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_s_p_h_1_1_data_delegate_simple.html">SPH::DataDelegateSimple&lt; SPHBody, BaseParticles, BaseMaterial &gt;</a></td></tr>
 <tr class="memitem:a1d373bbac77e5237890e17ad7a234bea inherit pro_attribs_class_s_p_h_1_1_data_delegate_simple"><td class="memItemLeft" align="right" valign="top"><a id="a1d373bbac77e5237890e17ad7a234bea"></a>
 <a class="el" href="class_s_p_h_1_1_s_p_h_body.html">SPHBody</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>body_</b></td></tr>
@@ -204,7 +209,6 @@ Additional Inherited Members</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Computing the viscous force from the fluid. </p>
-<p>Computing the viscous force from the fluid with wall modeling. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="ad6983c97b416be22b60e240007457019"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad6983c97b416be22b60e240007457019">&#9670;&nbsp;</a></span>Interaction()</h2>
@@ -243,13 +247,13 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="class_s_p_h_1_1_interaction_dynamics.html">SPH::InteractionDynamics</a>.</p>
 
-<p>Reimplemented in <a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_fluid_viscous_force_on_solid_wall_model.html#a25df415a8250b95cb7befff654b6a790">SPH::solid_dynamics::FluidViscousForceOnSolidWallModel</a>, <a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_fluid_pressure_force_on_solid.html#ab2dfed8402895f910ea14fcb8a4c3d3c">SPH::solid_dynamics::FluidPressureForceOnSolid</a>, and <a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_fluid_angular_conservative_viscous_force_on_solid.html#a34adc7cce7b0e4915b935e51818a3041">SPH::solid_dynamics::FluidAngularConservativeViscousForceOnSolid</a>.</p>
+<p>Reimplemented in <a class="el" href="class_s_p_h_1_1solid__dynamics_1_1_fluid_angular_conservative_viscous_force_on_solid.html#a34adc7cce7b0e4915b935e51818a3041">SPH::solid_dynamics::FluidAngularConservativeViscousForceOnSolid</a>.</p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>SPHINXsys/src/shared/particle_dynamics/solid_dynamics/<a class="el" href="solid__dynamics_8h_source.html">solid_dynamics.h</a></li>
-<li>SPHINXsys/src/shared/particle_dynamics/solid_dynamics/<a class="el" href="solid__dynamics_8cpp.html">solid_dynamics.cpp</a></li>
+<li>SPHINXsys/src/shared/particle_dynamics/solid_dynamics/<a class="el" href="fluid__structure__interaction_8h_source.html">fluid_structure_interaction.h</a></li>
+<li>SPHINXsys/src/shared/particle_dynamics/solid_dynamics/<a class="el" href="fluid__structure__interaction_8cpp.html">fluid_structure_interaction.cpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->

@@ -93,6 +93,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_interaction_dynamics.html">SPH::InteractionDynamics</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">This is the class for particle interaction with other particles.  <a href="class_s_p_h_1_1_interaction_dynamics.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_combined_interaction_dynamics.html">SPH::CombinedInteractionDynamics</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">This is the class for combining several interactions dynamics, which share the particle loop but are independent from each other, aiming to increase computing intensity under the data caching environment.  <a href="class_s_p_h_1_1_combined_interaction_dynamics.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_s_p_h_1_1_interaction_dynamics_with_update.html">SPH::InteractionDynamicsWithUpdate</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">This class includes an interaction and a update steps.  <a href="class_s_p_h_1_1_interaction_dynamics_with_update.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -111,7 +114,6 @@ Namespaces</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This is the classes for algorithms particle dynamics. @detail Generally, there are four types dynamics. One is without particle interaction. One is with particle interaction within a body. One is with particle interaction between a center body and other contacted bodies. Still another is the combination of the last two. For the first dynamics, there is also reduce dynamics which carries reduced operations through the particles of the body. </p>
 <dl class="section author"><dt>Author</dt><dd>Chi ZHang and Xiangyu Hu </dd></dl>
-<dl class="section version"><dt>Version</dt><dd>0.1 </dd></dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
