@@ -25,6 +25,8 @@ int main(int ac, char* av[])
 	#ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
 	#endif
+	/** output environment. */
+	In_Output 	in_output(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
