@@ -26,7 +26,11 @@
  * @details The simple derived classes, such as gravity will be defined in applications.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */
-#pragma once
+
+#ifndef EXTERNAL_FORCE_H
+#define EXTERNAL_FORCE_H
+
+
 
 #include "base_data_package.h"
 
@@ -62,3 +66,4 @@ namespace SPH {
 		Real getPotential(Vecd& position);
 	};
 }
+#endif //EXTERNAL_FORCE_H

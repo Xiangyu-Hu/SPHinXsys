@@ -43,8 +43,11 @@ int main() {
     /** Visualize with default options; ask for a report every 1/30 of a second
       to match the Visualizer's default 30 frames per second rate.
      */
+    // Visualizer not included in dependency-free version
+    /*
     Visualizer viz(system);
     system.addEventReporter(new Visualizer::Reporter(viz, Real(1./30)));
+    */
     /** Initialize the system and state. */
     system.realizeTopology();
     State state = system.getDefaultState();
@@ -61,7 +64,10 @@ int main() {
 	    state.setTime(restart);
     }
 
+    // Visualizer not included in dependency-free version
+    /*
     viz.report(state);
+    */
     /** Simulate it. */
     cout << "Hit ENTER to run a short simulation ...";
     getchar();

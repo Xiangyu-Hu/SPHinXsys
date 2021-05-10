@@ -5,7 +5,8 @@
 * @author 	Xiangyu Hu, Chi Zhangand Luhui Han
 */
 
-#pragma once
+#ifndef _2D_FLOW_AROUND_CYLINDER_H
+#define _2D_FLOW_AROUND_CYLINDER_H
 
 #include "sphinxsys.h"
 
@@ -165,3 +166,4 @@ public:
 		body_input_points_volumes_.push_back(make_pair(point_coordinate_3, 0.0));
 	}
 };
+#endif //_2D_FLOW_AROUND_CYLINDER_H

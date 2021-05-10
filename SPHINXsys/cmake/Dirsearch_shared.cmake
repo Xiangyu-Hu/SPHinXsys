@@ -1,3 +1,8 @@
+include(Simbody_header_directories)
+if(NOT oneTBB_BUILD MATCHES "off")
+    include(oneTBB_header_directory)
+endif(NOT oneTBB_BUILD MATCHES "off")
+
 MACRO(HEADER_DIRECTORIES_SHARED return_list)
     FILE(GLOB_RECURSE new_list  ${PROJECT_SOURCE_DIR}/src/shared/*.h)
     FILE(GLOB_RECURSE new_list_hpp  ${PROJECT_SOURCE_DIR}/src/shared/*.hpp)
@@ -7,16 +12,27 @@ MACRO(HEADER_DIRECTORIES_SHARED return_list)
         SET(dir_list ${dir_list} ${dir_path})
     ENDFOREACH()
     LIST(REMOVE_DUPLICATES dir_list)
+
+    FOREACH(simbody_header_path ${SIMBODY_HEADER_DIRECTORIES})
+        SET(dir_list ${dir_list} ${simbody_header_path})
+    ENDFOREACH()
+
+    if(NOT oneTBB_BUILD MATCHES "off")
+        SET(dir_list ${dir_list} ${ONETBB_HEADER_DIRECTORY})
+    endif(NOT oneTBB_BUILD MATCHES "off")
+    
     SET(${return_list} ${dir_list})
 ENDMACRO()
 
 MACRO(SOURCE_DIRECTORIES_SHARED return_list)
     FILE(GLOB_RECURSE  new_list  ${PROJECT_SOURCE_DIR}/src/shared/*.cpp)
+    FILE(GLOB_RECURSE  new_list_c  ${PROJECT_SOURCE_DIR}/src/shared/*.c)
     SET(dir_list "")
-    FOREACH(file_path ${new_list})
+    FOREACH(file_path ${new_list} ${new_list_c})
         GET_FILENAME_COMPONENT(dir_path ${file_path} PATH)
         SET(dir_list ${dir_list} ${dir_path})
     ENDFOREACH()
     LIST(REMOVE_DUPLICATES dir_list)
     SET(${return_list} ${dir_list})
 ENDMACRO()
+

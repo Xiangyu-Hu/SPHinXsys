@@ -25,7 +25,10 @@
  * @brief 	This is the derived class of base particles.
  * @author	Xiangyu Hu and Chi Zhang
  */
-#pragma once
+
+#ifndef SOLID_PARTICLES_H
+#define SOLID_PARTICLES_H
+
 
 #include "base_particles.h"
 
@@ -172,3 +175,4 @@ namespace SPH {
 		virtual ShellParticles* pointToThisObject() override {return this;};
 	};
 }
+#endif //SOLID_PARTICLES_H

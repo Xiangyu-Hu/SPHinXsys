@@ -39,32 +39,47 @@ FOREACH(srcdir_path ${sourcedirs})
 	list(APPEND SCR_FILES ${DIR_scrs})
 ENDFOREACH()
 
-#FOREACH(file1 ${SCR_FILES})
-	#message(STATUS ${file1})
-#ENDFOREACH()
+if(NOT oneTBB_BUILD MATCHES "static")
+	### SPHinXsys dynamic lib ###
+	ADD_LIBRARY(sphinxsys_3d SHARED ${SCR_FILES})
 
-ADD_LIBRARY(sphinxsys_3d SHARED ${SCR_FILES})
+	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+		target_link_libraries(sphinxsys_3d)
+	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+			target_link_libraries(sphinxsys_3d stdc++)
+		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+			target_link_libraries(sphinxsys_3d stdc++ stdc++fs)
+		endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+
+	if(oneTBB_BUILD MATCHES "off")
+		target_link_libraries(sphinxsys_3d ${TBB_LIBRARYS}})
+	endif(oneTBB_BUILD MATCHES "off")
+
+	target_link_libraries(sphinxsys_3d TBB::tbb TBB::tbbmalloc) # TBB::tbbmalloc_proxy is not needed
+	### SPHinXsys dynamic lib ###
+endif(NOT oneTBB_BUILD MATCHES "static")
+
+### SPHinXsys static lib ###
 ADD_LIBRARY(sphinxsys_static_3d STATIC ${SCR_FILES})
 
-SET_TARGET_PROPERTIES(sphinxsys_static_3d PROPERTIES OUTPUT_NAME "sphinxsys_3d")
-#SET_TARGET_PROPERTIES(sphinxsys PROPERTIES VERSION 1.0 SOVERSION 0)
+target_link_libraries(sphinxsys_static_3d TBB::tbb TBB::tbbmalloc) # TBB::tbbmalloc_proxy is not needed
+### SPHinXsys static lib ###
 
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    target_link_libraries(sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES})
-else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-	if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    	target_link_libraries(sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} ${Boost_LIBRARIES} stdc++)
-	else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		target_link_libraries(sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} stdc++ stdc++fs)
-	endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(NOT oneTBB_BUILD MATCHES "static")
+	INSTALL(TARGETS sphinxsys_3d sphinxsys_static_3d
+	RUNTIME DESTINATION 3d_code/bin
+	LIBRARY DESTINATION 3d_code/lib
+	ARCHIVE DESTINATION 3d_code/lib)
+endif(NOT oneTBB_BUILD MATCHES "static")
 
-INSTALL(TARGETS sphinxsys_3d sphinxsys_static_3d
+INSTALL(TARGETS sphinxsys_static_3d
 RUNTIME DESTINATION 3d_code/bin
 LIBRARY DESTINATION 3d_code/lib
 ARCHIVE DESTINATION 3d_code/lib)
 
-FILE(GLOB_RECURSE hpp_headers  ${PROJECT_SOURCE_DIR}/src/shared/*.hpp ${PROJECT_SOURCE_DIR}/src/for_3D_build/*.hpp)
-INSTALL(FILES ${hpp_headers} DESTINATION 3d_code/include)
+# FILE(GLOB_RECURSE hpp_headers  ${PROJECT_SOURCE_DIR}/src/shared/*.hpp ${PROJECT_SOURCE_DIR}/src/for_3D_build/*.hpp)
+# INSTALL(FILES ${hpp_headers} DESTINATION 3d_code/include)
