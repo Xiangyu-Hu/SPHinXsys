@@ -20,7 +20,7 @@ namespace SPH
 		sph_system_(sph_system), body_name_(body_name), newly_updated_(true),
 		body_domain_bounds_(0, 0), prescribed_body_bounds_(false),
 		particle_adaptation_(particle_adaptation), particle_generator_(particle_generator),
-		body_shape_(NULL)
+		body_shape_(NULL), tree_(NULL)
 	{	
 		sph_system_.addABody(this);
 		particle_adaptation_->initialize(this);
@@ -238,6 +238,24 @@ namespace SPH
 	bool NearShapeSurface::checkIncluded(Vecd cell_position, Real threshold)
 	{
 		return body_part_shape_->checkNearSurface(cell_position, threshold);
+	}
+	//=================================================================================================//
+	TreeLeaves::TreeLeaves(SPHBody* body): BodyPartByParticle(body, "Leaves")
+	{
+		tagBodyPart();
 	}	
 	//=================================================================================================//
+	void TreeLeaves::tagBodyPart()
+	{
+		for (size_t branch_idx = 0; branch_idx != body_->tree_->branches_.size(); ++branch_idx)
+		{
+			if(body_->tree_->branches_[branch_idx]->is_end_)
+			{
+				size_t particle_id = body_->tree_->branches_[branch_idx]->inner_points_.back();
+				tagAParticle(particle_id);
+			}
+		}
+	}
+	//=================================================================================================//
 }
+//=================================================================================================//

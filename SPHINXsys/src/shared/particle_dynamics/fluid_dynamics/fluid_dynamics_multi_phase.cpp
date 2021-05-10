@@ -83,25 +83,24 @@ namespace SPH
 			Real vol_i = Vol_[index_i];
 			Real pos_div = 0.0;
 			Vecd gradient(0.0);
-			for (size_t k = 0; k < contact_configuration_.size(); ++k)
+			if(surface_indicator_[index_i])
 			{
-				Real rho_0_k = contact_rho_0_[k];
-				StdLargeVec<Real>& contact_vol_k = *(contact_Vol_[k]);
-				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
-				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				for (size_t k = 0; k < contact_configuration_.size(); ++k)
 				{
-					size_t index_j = contact_neighborhood.j_[n];
-					pos_div -= contact_neighborhood.dW_ij_[n] * contact_neighborhood.r_ij_[n] * contact_vol_k[index_j];
-					/** Norm of interface.*/
-					if(surface_indicator_[index_i] == 1)
+					Real rho_0_k = contact_rho_0_[k];
+					StdLargeVec<Real>& contact_vol_k = *(contact_Vol_[k]);
+					Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
+					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{
+						size_t index_j = contact_neighborhood.j_[n];
+						pos_div -= contact_neighborhood.dW_ij_[n] * contact_neighborhood.r_ij_[n] * contact_vol_k[index_j];
+						/** Norm of interface.*/
 						Real rho_ij = rho_0_ / (rho_0_ + rho_0_k);
 						Real area_ij = (vol_i * vol_i + contact_vol_k[index_j] * contact_vol_k[index_j]) * contact_neighborhood.dW_ij_[n];
 						gradient += rho_ij * area_ij * contact_neighborhood.e_ij_[n] / vol_i;
 					}
 				}
 			}
-			pos_div_[index_i] += pos_div;
 			color_grad_[index_i] = gradient;
 			surface_norm_[index_i] = gradient / (gradient.norm() + TinyReal);
 		}

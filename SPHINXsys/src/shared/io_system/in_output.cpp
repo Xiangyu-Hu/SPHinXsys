@@ -118,7 +118,7 @@ namespace SPH
 		{
 			if (body->checkNewlyUpdated())
 			{
-				std::string filefullpath = in_output_.output_folder_ + "/SPHBody_" + body->getBodyName() + "_" + std::to_string(time) + ".plt";
+				std::string filefullpath = in_output_.output_folder_ + "/SPHBody_" + body->getBodyName()+ "_" + std::to_string(time) +".plt";
 				if (fs::exists(filefullpath))
 				{
 					fs::remove(filefullpath);

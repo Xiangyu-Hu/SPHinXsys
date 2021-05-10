@@ -235,6 +235,7 @@ namespace SPH
 	//=================================================================================================//
 	void ComplexShape::addCylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resolution, Vec3d translation, ShapeBooleanOps op)
 	{
+		/** Here SimTK::UnitVec3 give the direction of the cylinder, viz. SimTK::UnitVec3(0,0,1) create a cylinder in z-axis.*/
 		TriangleMeshShape* triangle_mesh_shape = new TriangleMeshShape(axis, radius, halflength, resolution, translation);
 		std::pair<TriangleMeshShape*, ShapeBooleanOps> shape_and_op(triangle_mesh_shape, op);
 		triangle_mesh_shapes_.push_back(shape_and_op);

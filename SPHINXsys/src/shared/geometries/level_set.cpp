@@ -38,7 +38,7 @@ namespace SPH {
 		::BaseLevelSet(ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation,
 			BoundingBox tentative_bounds, Real data_spacing, size_t buffer_width)
 		: Mesh(tentative_bounds, LevelSetDataPackage().PackageSize() * data_spacing, buffer_width),
-		complex_shape_(complex_shape), particle_adaptation_(particle_adaptation) {}
+		complex_shape_(complex_shape), particle_adaptation_(particle_adaptation) {name_ =  "BaseLevelSet";}
 	//=================================================================================================//
 	LevelSet::LevelSet(ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation,
 		BoundingBox tentative_bounds, Real data_spacing, size_t buffer_width) : 

@@ -13,15 +13,12 @@
 namespace SPH {
 	//=============================================================================================//
 	SolidParticles::SolidParticles(SPHBody* body)
-		: SolidParticles(body, new Solid())
-	{
-	}
+		: SolidParticles(body, new Solid()){}
 	//=============================================================================================//
 	SolidParticles::SolidParticles(SPHBody* body, Solid* solid)
 		: BaseParticles(body, solid)
 	{
 		solid->assignSolidParticles(this);
-	
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
@@ -46,12 +43,10 @@ namespace SPH {
 		registerASortableVariable<indexVector, Vecd>("Position");
 		registerASortableVariable<indexVector, Vecd>("InitialPosition");
 		registerASortableVariable<indexScalar, Real>("Volume");
-
 		//set the initial value for initial particle position
 		for (size_t i = 0; i != pos_n_.size(); ++i) pos_0_[i] =  pos_n_[i];
-
 		//sorting particle once
-		dynamic_cast<RealBody*>(body)->sortParticleWithMeshCellLinkedList();
+		//dynamic_cast<RealBody*>(body)->sortParticleWithMeshCellLinkedList();
 	}
 	//=============================================================================================//
 	void SolidParticles::offsetInitialParticlePosition(Vecd offset)
