@@ -12,13 +12,9 @@ LIST(REMOVE_DUPLICATES usefuldirs)
 SET(usefulsubdirs ${usefuldirs})
 LIST(REMOVE_ITEM usefulsubdirs ${CMAKE_CURRENT_SOURCE_DIR})
 
-#Add all useful subdirectories
-FOREACH(subdir_path ${usefulsubdirs})
-	#message(STATUS ${subdir_path})
-	ADD_SUBDIRECTORY(${subdir_path})
-ENDFOREACH()
-
-ADD_SUBDIRECTORY(for_2D_build)
+if(NOT ONLY_3D)
+	ADD_SUBDIRECTORY(for_2D_build)
+endif()
 ADD_SUBDIRECTORY(for_3D_build)
 ADD_SUBDIRECTORY(shared)
 

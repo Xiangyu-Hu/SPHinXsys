@@ -390,7 +390,9 @@ int main(int ac, char* av[])
 	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
 	//handle command line arguments
+	#ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
+	#endif
 	/** Outputs. */
 	In_Output 	in_output(system);
 

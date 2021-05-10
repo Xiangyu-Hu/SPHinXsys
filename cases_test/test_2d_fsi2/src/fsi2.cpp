@@ -25,10 +25,15 @@ int main(int ac, char* av[])
 	/** Tag for computation from restart files. 0: start with initial condition. */
 	system.restart_step_ = 0;
 	//handle command line arguments
+	#ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
+<<<<<<< HEAD
 	/** output environment. */
 	In_Output in_output(system);
 
+=======
+	#endif
+>>>>>>> dep_free
 	/**
 	 * @brief Creating body, materials and particles for a water block.
 	 */

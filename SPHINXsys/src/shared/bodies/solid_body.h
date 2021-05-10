@@ -26,7 +26,10 @@
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
   */
 
-#pragma once
+
+#ifndef SOLID_BODY_H
+#define SOLID_BODY_H
+
 
 #include "base_body.h"
 
@@ -85,3 +88,4 @@ namespace SPH {
 		virtual void tagBodyPart() override;
 	};	
 }
+#endif //SOLID_BODY_H

@@ -22,10 +22,15 @@ int main(int ac, char* av[])
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
 	system.run_particle_relaxation_ = true;
 	//handle command line arguments
+	#ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
+<<<<<<< HEAD
 	/** output environment. */
 	In_Output 	in_output(system);
 
+=======
+	#endif
+>>>>>>> dep_free
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------

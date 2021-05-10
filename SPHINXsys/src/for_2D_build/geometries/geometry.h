@@ -10,7 +10,14 @@
 * @author	Luhui Han, Chi ZHang and Xiangyu Hu
 */
 
+<<<<<<< HEAD
 #pragma once
+=======
+
+#ifndef GEOMETRY_2D_H
+#define GEOMETRY_2D_H
+
+>>>>>>> dep_free
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
@@ -98,3 +105,4 @@ namespace SPH {
 	};
 }
 
+#endif //GEOMETRY_2D_H

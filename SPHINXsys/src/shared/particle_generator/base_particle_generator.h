@@ -27,7 +27,11 @@
  * 			particle with given position and volume. 
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */
-#pragma once
+
+#ifndef BASE_PARTICLE_GENERATOR_H
+#define BASE_PARTICLE_GENERATOR_H
+
+
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
@@ -79,3 +83,4 @@ namespace SPH {
 		virtual void createBaseParticles(BaseParticles* base_particles) override;
 	};
 }
+#endif //BASE_PARTICLE_GENERATOR_H

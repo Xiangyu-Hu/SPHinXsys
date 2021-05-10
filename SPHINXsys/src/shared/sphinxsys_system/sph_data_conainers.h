@@ -3,7 +3,11 @@
  * @brief 	Set up of basic data structure.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */
-#pragma once
+
+#ifndef SPH_DATA_CONTAINERS_H
+#define SPH_DATA_CONTAINERS_H
+
+
 
 #include "base_data_package.h"
 
@@ -106,3 +110,4 @@ namespace SPH {
 			};
 		};
 }
+#endif //SPH_DATA_CONTAINERS_H

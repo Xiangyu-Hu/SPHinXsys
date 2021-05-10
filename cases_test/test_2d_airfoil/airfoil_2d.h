@@ -7,7 +7,8 @@
 * @author 	Yongchuan Yu and Xiangyu Hu
 */
 
-#pragma once
+#ifndef AIRFOIL_2D_H
+#define AIRFOIL_2D_H
 
 #include "sphinxsys.h"
 
@@ -45,3 +46,4 @@ public:
 		body_shape_ = new LevelSetComplexShape(this, original_body_shape, true);
 	}
 };
+#endif //AIRFOIL_2D_H

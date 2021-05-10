@@ -21,7 +21,7 @@
 *                                                                           *
 * --------------------------------------------------------------------------*/
 
-#pragma once
+
 
 #include "Simbody.h"
 #include "SimTKcommon.h"
@@ -295,11 +295,19 @@ namespace SPH {
 	using Real = SimTK::Real;
 
 	//useful float point constants 
+<<<<<<< HEAD
 	const Real Pi = Real(M_PI);
 	using SimTK::Infinity;
 	using SimTK::Eps;
 	using SimTK::TinyReal;
 	constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
+=======
+	using SimTK::Pi;
+	using SimTK::Infinity;
+	using SimTK::Eps;
+	using SimTK::TinyReal;
+	constexpr size_t MaxSize_t = numeric_limits<size_t>::max();
+>>>>>>> dep_free
 
 	//vector with float point number
 	using Vec2d = SimTK::Vec2;

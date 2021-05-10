@@ -25,7 +25,11 @@
 * @brief 	Here, we define the algorithm classes for fluid structure interaction.   
 * @author	Chi ZHang and Xiangyu Hu
 */
-#pragma once
+
+#ifndef FLUID_STRUCTURE_INTERACTION_H
+#define FLUID_STRUCTURE_INTERACTION_H
+
+
 
 #include "all_particle_dynamics.h"
 #include "base_material.h"
@@ -226,3 +230,4 @@ namespace SPH
 		};
 	}
 }
+#endif //FLUID_STRUCTURE_INTERACTION_H

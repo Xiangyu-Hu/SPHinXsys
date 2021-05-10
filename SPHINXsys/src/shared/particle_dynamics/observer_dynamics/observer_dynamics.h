@@ -27,7 +27,11 @@
  * @author	Xiangyu Hu and Chi Zhang
  */
 
-#pragma once
+
+#ifndef OBSERVER_DYNAMICS_H
+#define OBSERVER_DYNAMICS_H
+
+
 
 #include "all_particle_dynamics.h"
 
@@ -94,7 +98,7 @@ namespace SPH
 				{
 					contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
 					StdLargeVec<VariableType>* contact_data =
-						this->contact_particles_[k]->getVariableByName<DataTypeIndex, VariableType>(variable_name);
+						this->contact_particles_[k]->template getVariableByName<DataTypeIndex, VariableType>(variable_name);
 					contact_data_.push_back(contact_data);
 				}
 			}
@@ -116,3 +120,4 @@ namespace SPH
 		};
 	}
 }
+#endif //OBSERVER_DYNAMICS_H

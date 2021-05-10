@@ -30,7 +30,11 @@
 * @author	Yongchuan Yu, Chi ZHang and Xiangyu Hu
 */
 
-#pragma once
+
+#ifndef MESH_CELL_LINKED_LIST_H
+#define MESH_CELL_LINKED_LIST_H
+
+
 
 #include "base_mesh.h"
 #include "neighbor_relation.h"
@@ -174,3 +178,4 @@ namespace SPH {
 		virtual void tagMirrorBoundingCells(CellLists& cell_lists, BoundingBox& body_domain_bounds, int axis, bool positive) override {};
 	};
 }
+#endif //MESH_CELL_LINKED_LIST_H

@@ -169,10 +169,19 @@ int main(int ac, char* av[])
 	sph_system.restart_step_ = 0;
 	/** Define external force.*/
 	Gravity gravity(Vecd(0.0, -gravity_g));
+<<<<<<< HEAD
 	/** handle command line arguments. */
 	sph_system.handleCommandlineOptions(ac, av);
 	/** output environment. */
 	In_Output 	in_output(sph_system);
+=======
+	/** output environment. */
+	In_Output 	in_output(sph_system);
+	#ifdef BOOST_AVAILABLE
+	/** handle command line arguments. */
+	sph_system.handleCommandlineOptions(ac, av);
+	#endif
+>>>>>>> dep_free
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */

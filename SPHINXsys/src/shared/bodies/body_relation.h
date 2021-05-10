@@ -26,7 +26,11 @@
  * @author	Xiangyu Hu
  */
 
-#pragma once
+
+#ifndef BODY_RELATION_H
+#define BODY_RELATION_H
+
+
 
 #include "base_body.h"
 #include "mesh_cell_linked_list.h"
@@ -242,3 +246,4 @@ namespace SPH
 		virtual void updateConfiguration()  override;
 	};
 }
+#endif //BODY_RELATION_H
