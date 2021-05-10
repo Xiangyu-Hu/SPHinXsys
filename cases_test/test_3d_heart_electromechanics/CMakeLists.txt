@@ -30,11 +30,6 @@ add_test(NAME ${PROJECT_NAME}
 if(oneTBB_BUILD MATCHES "off")
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
-<<<<<<< HEAD
-    target_link_libraries(${PROJECT_NAME} sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES})
-    add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
-else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-=======
 	target_link_libraries(${PROJECT_NAME} sphinxsys_3d ${TBB_LIBRARYS} debug)
 	target_link_libraries(${PROJECT_NAME} sphinxsys_3d ${TBB_LIBRARYS} optimized)
 	add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
@@ -67,7 +62,6 @@ if(oneTBB_BUILD MATCHES "static")
 		target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d optimized)
 		add_dependencies(${PROJECT_NAME} sphinxsys_static_3d)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
->>>>>>> dep_free
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 		target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

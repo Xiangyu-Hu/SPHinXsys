@@ -26,14 +26,10 @@
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-<<<<<<< HEAD
-#pragma once
-=======
 
 #ifndef IN_OUTPUT_H
 #define IN_OUTPUT_H
 
->>>>>>> dep_free
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 

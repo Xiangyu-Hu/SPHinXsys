@@ -20,8 +20,8 @@
 * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
 *                                                                           *
 * --------------------------------------------------------------------------*/
-
-
+#ifndef SMALL_VECTORS_H
+#define SMALL_VECTORS_H
 
 #include "Simbody.h"
 #include "SimTKcommon.h"
@@ -294,20 +294,12 @@ namespace SPH {
 	//float point number
 	using Real = SimTK::Real;
 
-	//useful float point constants 
-<<<<<<< HEAD
+	//useful float point constants s
 	const Real Pi = Real(M_PI);
 	using SimTK::Infinity;
 	using SimTK::Eps;
 	using SimTK::TinyReal;
 	constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
-=======
-	using SimTK::Pi;
-	using SimTK::Infinity;
-	using SimTK::Eps;
-	using SimTK::TinyReal;
-	constexpr size_t MaxSize_t = numeric_limits<size_t>::max();
->>>>>>> dep_free
 
 	//vector with float point number
 	using Vec2d = SimTK::Vec2;
@@ -399,3 +391,5 @@ namespace SPH {
 	Mat2d getTransformationMatrix(const Vec2d& direction_of_y);
 	Mat3d getTransformationMatrix(const Vec3d& direction_of_z);
 }
+
+#endif //SMALL_VECTORS_H

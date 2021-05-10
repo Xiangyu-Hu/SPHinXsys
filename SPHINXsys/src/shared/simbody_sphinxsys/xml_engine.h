@@ -25,14 +25,10 @@
  * @brief 	XML class for xml input and output, this is GUI of simbody xml parser.
  * @author	Chi Zhang and Xiangyu Hu.
  */
-<<<<<<< HEAD:SPHINXsys/src/shared/simbody/xml_engine.h
-#pragma once
-=======
 
 #ifndef XML_ENGINE_SIMBODY_H
 #define XML_ENGINE_SIMBODY_H
 
->>>>>>> dep_free:SPHINXsys/src/shared/simbody_sphinxsys/xml_engine.h
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
@@ -95,7 +91,6 @@ namespace SPH
 		/** Get the required int attribute valaue of an element */
 		void getRequiredAttributeMatrixValue(SimTK::Xml::element_iterator& ele_ite_, const std::string& attrib_name, Matd& value);
 
-<<<<<<< HEAD:SPHINXsys/src/shared/simbody/xml_engine.h
 		/** Write to XML file */
 		void writeToXmlFile(const std::string& filefullpath);
 		/**  Load XML file using XML parser. */
@@ -155,7 +150,5 @@ namespace SPH
 			}
 		};
 }
-=======
-}
+
 #endif //XML_ENGINE_SIMBODY_H
->>>>>>> dep_free:SPHINXsys/src/shared/simbody_sphinxsys/xml_engine.h

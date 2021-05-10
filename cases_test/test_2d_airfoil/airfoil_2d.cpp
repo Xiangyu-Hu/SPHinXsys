@@ -24,13 +24,10 @@ int main(int ac, char* av[])
 	//handle command line arguments
 	#ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
-<<<<<<< HEAD
+	#endif
 	/** output environment. */
 	In_Output 	in_output(system);
 
-=======
-	#endif
->>>>>>> dep_free
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------

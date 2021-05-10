@@ -12,12 +12,6 @@ ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
 
-<<<<<<< HEAD
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    target_link_libraries(${PROJECT_NAME} sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES})
-    add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
-else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-=======
 if(oneTBB_BUILD MATCHES "off")
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		target_link_libraries(${PROJECT_NAME} sphinxsys_3d ${TBB_LIBRARYS})
@@ -46,7 +40,6 @@ if(oneTBB_BUILD MATCHES "static")
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
->>>>>>> dep_free
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 		target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

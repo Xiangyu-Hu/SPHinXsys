@@ -4,14 +4,10 @@
  * @details Note that the system operation prefer these are application independent.
  * @author  Xiangyu Hu, Luhui Han and Chi Zhang
  */
-<<<<<<< HEAD
-#pragma once
-=======
 
 #ifndef SPH_SYSTEM_H
 #define SPH_SYSTEM_H
 
->>>>>>> dep_free
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 

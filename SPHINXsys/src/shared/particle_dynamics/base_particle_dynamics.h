@@ -27,14 +27,10 @@
 * differential operators for surface forces or fluxes in continuum mechanics
 * @author  Xiangyu Hu, Luhui Han and Chi Zhang
 */
-<<<<<<< HEAD
-#pragma once
-=======
 
 #ifndef BASE_PARTICLE_DYNAMICS_H
 #define BASE_PARTICLE_DYNAMICS_H
 
->>>>>>> dep_free
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
