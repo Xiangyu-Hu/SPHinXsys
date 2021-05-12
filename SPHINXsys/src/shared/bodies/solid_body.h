@@ -49,6 +49,9 @@ namespace SPH {
 		SolidBody(SPHSystem &system, std::string body_name,
 			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(1.15),
 			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
+		SolidBody(SPHSystem &system, std::string body_name, Real sph_body_resolution_ref,
+			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(1.15),
+			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~SolidBody() {};
 		virtual SolidBody* ThisObjectPtr()  override {return this;};
 	};

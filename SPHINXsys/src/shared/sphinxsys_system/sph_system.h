@@ -60,15 +60,18 @@ namespace SPH
 		bool run_particle_relaxation_;		/**< run particle relaxation for body fitted particle distribution */
 		bool reload_particles_;				/**< start the simulation with relaxed particles. */
 
-		SPHBodyVector bodies_;				/**< All sph bodies. */
+		SPHBodyVector bodies_;						/**< All sph bodies. */
 		SPHBodyVector fictitious_bodies_;	/**< The bodies without inner particle configuration. */
-		SPHBodyVector real_bodies_;			/**< The bodies with inner particle configuration. */
+		SPHBodyVector real_bodies_;				/**< The bodies with inner particle configuration. */
+		SolidBodyVector solid_bodies_;				/**< The bodies with inner particle configuration and acoustic time steps . */
 
 		void addABody(SPHBody* sph_body);
-		void addARealBody(RealBody* Real_body);
+		void addARealBody(RealBody* real_body);
+		void addASolidBody(SolidBody* solid_body);
 		void addAFictitiousBody(FictitiousBody* fictitious_body);
 		void initializeSystemCellLinkedLists();
 		void initializeSystemConfigurations();
+		Real getSmallestTimeStepAmongSolidBodies();
 		#ifdef BOOST_AVAILABLE
 		void handleCommandlineOptions(int ac, char* av[]);
 		#endif

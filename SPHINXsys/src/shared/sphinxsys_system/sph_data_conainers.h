@@ -7,8 +7,6 @@
 #ifndef SPH_DATA_CONTAINERS_H
 #define SPH_DATA_CONTAINERS_H
 
-
-
 #include "base_data_package.h"
 
 namespace SPH {
@@ -18,6 +16,7 @@ namespace SPH {
 	class BaseMaterial;
 	class SPHBody;
 	class RealBody;
+	class SolidBody;
 	class FictitiousBody;
 	class CellList;
 	class BaseParticles;
@@ -35,6 +34,7 @@ namespace SPH {
 	using MaterialVector = StdVec<BaseMaterial*>;
 	/** Vector of bodies */
 	using SPHBodyVector = StdVec<SPHBody*>;
+	using SolidBodyVector = StdVec<SolidBody*>;
 	using RealBodyVector = StdVec<RealBody*>;
 	using FictitiousBodyVector = StdVec<FictitiousBody*>;
 
