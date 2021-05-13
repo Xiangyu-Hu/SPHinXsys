@@ -27,6 +27,7 @@ int main()
 	WaterBlock* water_block = new WaterBlock(sph_system, "WaterBody");
 	WaterMaterial* water_material = new WaterMaterial();
 	FluidParticles 	water_particles(water_block, water_material);
+	water_particles.addAVariableToWrite<indexInteger, int>("SurfaceIndicator");
 	/**
 	 * @brief Material property, partilces and body creation of air.
 	 */
@@ -88,8 +89,12 @@ int main()
 	/** Suface tension. */
 	fluid_dynamics::FreeSurfaceIndicationInner
 		surface_detection(water_air_complex->inner_relation_);
-	fluid_dynamics::MultiPhaseColorFunctionGradient
-		color_gradient(water_air_complex->contact_relation_);
+	fluid_dynamics::ColorFunctionGradientInner
+		color_gradient(water_air_complex->inner_relation_);
+	// fluid_dynamics::MultiPhaseColorFunctionGradient
+	//  	color_gradient(water_air_complex->contact_relation_);
+	fluid_dynamics::ColorFunctionGradientInterplationInner
+		color_gradient_interpolation(water_air_complex->inner_relation_);
 	fluid_dynamics::SurfaceTensionAccelerationInner
 		surface_tension_acceleration(water_air_complex->inner_relation_, 1.0);
 	/**
@@ -97,7 +102,7 @@ int main()
 	 */
 	In_Output in_output(sph_system);
 	/** Output the body states. */
-	WriteBodyStatesToVtu 		write_body_states(in_output, sph_system.real_bodies_);
+	WriteBodyStatesToPlt 		write_body_states(in_output, sph_system.real_bodies_);
 	/** Output the body states for restart simulation. */
 	RestartIO		restart_io(in_output, sph_system.real_bodies_);
 	/** Pre-simulation*/
@@ -163,6 +168,11 @@ int main()
 			air_viscou_acceleration.parallel_exec();
 			water_viscou_acceleration.parallel_exec();
 
+			surface_detection.parallel_exec();
+			color_gradient.parallel_exec();
+			color_gradient_interpolation.parallel_exec();
+			surface_tension_acceleration.parallel_exec();
+
 			interval_computing_time_step += tick_count::now() - time_instance;
 
 			/** Dynamics including pressure relaxation. */
@@ -173,10 +183,6 @@ int main()
 				Real dt_f = get_water_time_step_size.parallel_exec();
 				Real dt_a = get_air_time_step_size.parallel_exec();
 				dt = SMIN(SMIN(dt_f, dt_a), Dt);
-
-				surface_detection.parallel_exec();
-				color_gradient.parallel_exec();
-				surface_tension_acceleration.parallel_exec();
 
 				water_pressure_relaxation.parallel_exec(dt);
 				air_pressure_relaxation.parallel_exec(dt);
@@ -214,8 +220,6 @@ int main()
 
 			interval_updating_configuration += tick_count::now() - time_instance;
 		}
-
-
 		tick_count t2 = tick_count::now();
 		write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
 		tick_count t3 = tick_count::now();

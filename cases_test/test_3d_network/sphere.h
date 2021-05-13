@@ -30,9 +30,9 @@ TriangleMeshShape* CreateCADGeometry()
 class MyPolygonBody : public SolidBody
 {
 public:
-	MyPolygonBody(SPHSystem &system, std::string body_name)
+	MyPolygonBody(SPHSystem &system, string body_name)
 		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 0),
-			new ParticleGeneratorNetwork(Vecd(-1.0, 0.0, 0.0), Vecd(-0.964, 0.0, 0.266)))
+			new ParticleGeneratorNetwork(Vecd(-1.0, 0.0, 0.0), Vecd(-0.964, 0.0, 0.266), 15, 5.0))
 	{
 		ComplexShape original_body_shape;
 		original_body_shape.addTriangleMeshShape(CreateCADGeometry(), ShapeBooleanOps::add);

@@ -15,4 +15,10 @@ namespace SPH
 	{
 	}
 	//=================================================================================================//
+	ElectroPhysiologyReducedParticles::ElectroPhysiologyReducedParticles(SPHBody* body, 
+			DiffusionReactionMaterial<SolidParticles, Solid>* diffusion_reaction_material)
+		: DiffusionReactionParticles<SolidParticles, Solid>(body, diffusion_reaction_material)
+	{
+	}
+	//=================================================================================================//
 }

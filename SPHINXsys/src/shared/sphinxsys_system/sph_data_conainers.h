@@ -15,6 +15,7 @@ namespace SPH {
 	class SPHBody;
 	class RealBody;
 	class SolidBody;
+	class BodyPart;
 	class FictitiousBody;
 	class CellList;
 	class BaseParticles;
@@ -34,6 +35,7 @@ namespace SPH {
 	using SPHBodyVector = StdVec<SPHBody*>;
 	using SolidBodyVector = StdVec<SolidBody*>;
 	using RealBodyVector = StdVec<RealBody*>;
+	using BodyPartVector = StdVec<BodyPart*>;
 	using FictitiousBodyVector = StdVec<FictitiousBody*>;
 
 	/** Index container with elements of size_t. */

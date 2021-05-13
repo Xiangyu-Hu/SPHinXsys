@@ -39,7 +39,8 @@
 namespace SPH
 {
 	class Tree;
-
+	class Neighborhood;
+	class BaseParticles;
 	/**
 	 * @class ShapeBooleanOps
 	 * @brief Boolian operation for generate complex shapes
@@ -139,5 +140,197 @@ namespace SPH
 		StdVec<Branch*> branches_;	/**< list of all branches */
 		void addANewBranch(Branch* branch);
 		void addANewBranchInnerVecd(Branch* branch, Vecd new_point, Vecd end_direction);
+		/** generalized particle search algorithm */
+		template<typename GetParticleIndex, typename GetSearchRange, typename GetNeighborRelation>
+		void searchNeighborsByParticles(size_t number_of_particles, BaseParticles& source_particles, 
+			StdLargeVec<Neighborhood>& particle_configuration, GetParticleIndex& get_particle_index,
+			GetSearchRange& get_search_range, GetNeighborRelation& get_neighbor_relation) 
+		{
+			size_t particle_id;
+			size_t parent_branch_id;
+			size_t child_branch_id;
+			size_t num_ele;
+			std::vector<size_t> neighboring_ids;
+			std::vector<size_t> child_ids;
+			/** First branch
+			* Note that the first branc has only one point, accordingly, one particle generated.
+			* Find the neibors in child branch, the first branch only have one child, id = 1.
+			*/
+			particle_id = branches_[0]->inner_points_.front();
+			neighboring_ids.clear();
+			neighboring_ids.push_back(branches_[1]->inner_points_[0]);
+			neighboring_ids.push_back(branches_[1]->inner_points_[1]);
+			/** Build configuration. */
+			Neighborhood& neighborhood = particle_configuration[particle_id];
+			for (size_t n = 0; n != neighboring_ids.size(); ++n)
+			{
+				Vecd displacement = source_particles.pos_n_[particle_id] - source_particles.pos_n_[neighboring_ids[n]];
+				get_neighbor_relation(neighborhood, displacement, particle_id, neighboring_ids[n]);
+			}
+			/** Second branch. 
+		 	* The second branch has special parent branch, branch 0, consisting only one point.
+		 	* The child branch are two normal branch. 
+		 	*/
+			num_ele = branches_[1]->inner_points_.size();
+			child_ids.clear();
+			for(int k = 0; k < branches_[1]->out_edge_.size(); ++k)
+			{
+				child_ids.push_back(branches_[1]->out_edge_[k]);
+			}
+
+			for(int i = 0; i != num_ele; i++)
+			{
+				neighboring_ids.clear();
+				particle_id = branches_[1]->inner_points_.front() + i;
+				if(i == 0)
+				{
+					neighboring_ids.push_back(branches_[0]->inner_points_.front());
+					neighboring_ids.push_back(particle_id + 1);
+					neighboring_ids.push_back(particle_id + 2);
+				} else if(i == 1){
+					neighboring_ids.push_back(branches_[0]->inner_points_.front());
+					neighboring_ids.push_back(particle_id - 1);
+					neighboring_ids.push_back(particle_id + 1);
+					neighboring_ids.push_back(particle_id + 2);
+				}else if(2 <= i &&  i <= (num_ele - 3))
+				{
+					neighboring_ids.push_back(particle_id - 1);
+					neighboring_ids.push_back(particle_id - 2);
+					neighboring_ids.push_back(particle_id + 1);
+					neighboring_ids.push_back(particle_id + 2);
+				} else if(i == (num_ele - 2)) 
+				{
+					neighboring_ids.push_back(particle_id - 2);
+					neighboring_ids.push_back(particle_id - 1);
+					neighboring_ids.push_back(particle_id + 1);
+
+					for(size_t k = 0; k < branches_[1]->out_edge_.size(); ++k)
+					{
+						child_branch_id = branches_[1]->out_edge_[k];
+						neighboring_ids.push_back(branches_[child_branch_id]->inner_points_.front());
+					}
+				}else if(i == (num_ele - 1))
+				{
+					neighboring_ids.push_back(particle_id - 1);
+					neighboring_ids.push_back(particle_id - 2);
+
+					for(int k = 0; k < branches_[1]->out_edge_.size(); ++k)
+					{
+						child_branch_id = branches_[1]->out_edge_[k];
+						neighboring_ids.push_back(branches_[child_branch_id]->inner_points_.front());
+						neighboring_ids.push_back(branches_[child_branch_id]->inner_points_.front() + 1);
+					}
+				}
+
+				Neighborhood& neighborhood = particle_configuration[particle_id];
+				for (int n = 0; n != neighboring_ids.size(); ++n)
+				{
+					Vecd displacement = source_particles.pos_n_[particle_id] - source_particles.pos_n_[neighboring_ids[n]];
+					get_neighbor_relation(neighborhood, displacement, particle_id, neighboring_ids[n]);
+				}
+			}
+			/** Other branches. 
+		 	* They are may normal branch (fully growed, has child and parent) or non-fully growed branch (no child or less segmetns)
+		 	*/
+			for (size_t branch_idx = 2; branch_idx != branches_.size(); ++branch_idx)
+			{
+				num_ele = branches_[branch_idx]->inner_points_.size();
+				parent_branch_id = branches_[branch_idx]->in_edge_;
+				if(!branches_[branch_idx]->is_end_)
+				{
+					/** This branch is fully growed. */
+					for(size_t i = 0; i != num_ele; i++)
+					{
+						neighboring_ids.clear();
+						particle_id = branches_[branch_idx]->inner_points_.front() + i;
+						if(i == 0)
+						{
+							neighboring_ids.push_back(branches_[parent_branch_id]->inner_points_.back());
+							neighboring_ids.push_back(branches_[parent_branch_id]->inner_points_.back() - 1);
+								
+							neighboring_ids.push_back(particle_id + 1);
+							neighboring_ids.push_back(particle_id + 2);
+						} else if(i == 1){
+							neighboring_ids.push_back(branches_[parent_branch_id]->inner_points_.back());
+							neighboring_ids.push_back(particle_id - 1);
+							neighboring_ids.push_back(particle_id + 1);
+							neighboring_ids.push_back(particle_id + 2);
+						}else if(2 <= i &&  i <= (num_ele - 3))
+						{
+							neighboring_ids.push_back(particle_id - 1);
+							neighboring_ids.push_back(particle_id - 2);
+							neighboring_ids.push_back(particle_id + 1);
+							neighboring_ids.push_back(particle_id + 2);
+						} else if(i == (num_ele - 2)) 
+						{
+							neighboring_ids.push_back(particle_id - 2);
+							neighboring_ids.push_back(particle_id - 1);
+							neighboring_ids.push_back(particle_id + 1);
+
+							for(int k = 0; k < branches_[branch_idx]->out_edge_.size(); ++k)
+							{
+								child_branch_id = branches_[branch_idx]->out_edge_[k];
+								neighboring_ids.push_back(branches_[child_branch_id]->inner_points_.front());
+							}
+						}else if(i == (num_ele - 1))
+						{
+							neighboring_ids.push_back(particle_id - 1);
+							neighboring_ids.push_back(particle_id - 2);
+
+							for(int k = 0; k < branches_[branch_idx]->out_edge_.size(); ++k)
+							{
+								child_branch_id = branches_[branch_idx]->out_edge_[k];
+								neighboring_ids.push_back(branches_[child_branch_id]->inner_points_.front());
+								if(branches_[child_branch_id]->inner_points_.size() >= 2)
+								{
+									neighboring_ids.push_back(branches_[child_branch_id]->inner_points_.front() + 1);
+
+								}
+							}
+						}
+
+						Neighborhood& neighborhood = particle_configuration[particle_id];
+						for (size_t n = 0; n != neighboring_ids.size(); ++n)
+						{
+							Vecd displacement = source_particles.pos_n_[particle_id] - source_particles.pos_n_[neighboring_ids[n]];
+							get_neighbor_relation(neighborhood, displacement, particle_id, neighboring_ids[n]);
+						}
+					}
+				}else
+				{
+					/** This branch is not fully growed. */
+					for(size_t i = 0; i != num_ele; i++)
+					{
+						neighboring_ids.clear();
+						particle_id = branches_[branch_idx]->inner_points_.front() + i;
+						if(i == 0){
+							neighboring_ids.push_back(branches_[parent_branch_id]->inner_points_.back());
+							if(branches_[parent_branch_id]->inner_points_.size() >= 2)
+								neighboring_ids.push_back(branches_[parent_branch_id]->inner_points_.back() - 1);
+						} else if(i == 1){
+							neighboring_ids.push_back(branches_[parent_branch_id]->inner_points_.back());
+							neighboring_ids.push_back(particle_id - 1);
+						}else{
+							neighboring_ids.push_back(particle_id - 1);
+							neighboring_ids.push_back(particle_id - 2);
+						}
+
+						if(i + 1 < num_ele)
+							neighboring_ids.push_back(particle_id + 1);
+						if(i + 2 < num_ele)
+							neighboring_ids.push_back(particle_id + 2);
+							
+						Neighborhood& neighborhood = particle_configuration[particle_id];
+						for (size_t n = 0; n != neighboring_ids.size(); ++n)
+						{
+							Vecd displacement = source_particles.pos_n_[particle_id] - source_particles.pos_n_[neighboring_ids[n]];
+							get_neighbor_relation(neighborhood, displacement, particle_id, neighboring_ids[n]);
+						}
+					}
+				}
+			}
+			/** Delete the data in tree. */
+			//~Tree();
+		};
 	};
 }

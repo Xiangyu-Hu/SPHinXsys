@@ -51,6 +51,7 @@ namespace SPH
 	class BaseMeshCellLinkedList;
 	class SPHBodyRelation;
 	class ComplexShape;
+	class Tree;
 	class LevelSetComplexShape;
 
 	/**
@@ -75,6 +76,8 @@ namespace SPH
 		BaseParticles* base_particles_;				/**< Base particles of this body. */
 		PositionsAndVolumes body_input_points_volumes_; /**< For direct generate particles. Note this should be moved to direct generator. */
 		ComplexShape*  body_shape_;		/** describe the geometry of the body*/
+		size_t number_of_particles_;				/**< Number of real particles of the body. */
+		Tree* tree_;					/** Tree for creating network. */
 		/**
 		 * @brief particle by cells lists is for parallel splitting algorithm.
 		 * All particles in each cell are collected together.
@@ -285,5 +288,20 @@ namespace SPH
 		LevelSetComplexShape* level_set_complex_shape_;
 		/** only cells near the surface of the body part shape are included */
 		virtual bool checkIncluded(Vecd cell_position, Real threshold) override;
+	};
+	
+	/**
+	 * @class TreeLeaves
+	 * @brief A auxillary class for a Tree-like Body to
+	 * indicate the leaves particle from tree data. 
+	 */
+	class TreeLeaves : public BodyPartByParticle
+	{
+	public:
+		TreeLeaves(SPHBody* body);
+		virtual~TreeLeaves() {};
+
+	protected:
+		virtual void tagBodyPart() override;
 	};
 }

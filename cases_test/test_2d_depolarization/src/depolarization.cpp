@@ -177,7 +177,7 @@ int main()
 	/** 
 	 * Diffusion process for diffusion body. 
 	 */
-	electro_physiology::ElectroPhysiologyDiffusionRelaxation 		diffusion_relaxation(muscle_body_inner_relation);
+	electro_physiology::ElectroPhysiologyDiffusionRelaxationInner 		diffusion_relaxation(muscle_body_inner_relation);
 	/** 
 	 * Solvers for ODE system 
 	 */

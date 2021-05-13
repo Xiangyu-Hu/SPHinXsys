@@ -142,6 +142,12 @@ namespace SPH {
 		void searchNeighborsByParticles(size_t total_real_particles, BaseParticles& source_particles, 
 			ParticleConfiguration& particle_configuration, GetParticleIndex& get_particle_index,
 			GetSearchRange& get_search_range, GetNeighborRelation& get_neighbor_relation);
+
+		/** generalized particle search algorithm for searching body part */
+		template<typename GetParticleIndex, typename GetSearchRange, typename GetNeighborRelation, typename PartParticleCheck>
+		void searchNeighborPartsByParticles(size_t total_real_particles, BaseParticles& source_particles, 
+			ParticleConfiguration& particle_configuration, GetParticleIndex& get_particle_index,
+			GetSearchRange& get_search_range, GetNeighborRelation& get_neighbor_relation, PartParticleCheck& part_check);
 	};
 
 	/**

@@ -50,12 +50,14 @@ namespace SPH
 	
 			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-				/** Two layer particles. this should be clarified ...*/
+			{
+				/** Two layer particles.*/
 				if (pos_div_[inner_neighborhood.j_[n]] < thereshold_by_dimensions_ && inner_neighborhood.r_ij_[n] < smoothing_length_)
 				{
 					is_free_surface = true;
 					break;
 				}
+			}
 			surface_indicator_[index_i] = is_free_surface ? 1 : 0;
 		}
 		//=================================================================================================//
@@ -577,13 +579,76 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseInnerBodyRelation* inner_relation, Real gamma) 
-		: InteractionDynamics(inner_relation->sph_body_), FluidDataInner(inner_relation), gamma_(gamma), 
-			Vol_(particles_->Vol_), mass_(particles_->mass_), 
-			pos_div_(*particles_->getVariableByName<indexScalar, Real>("PositionDivergence")),
-			dvel_dt_others_(particles_->dvel_dt_others_),
+		ColorFunctionGradientInner::ColorFunctionGradientInner(BaseInnerBodyRelation* inner_relation)
+		: InteractionDynamics(inner_relation->sph_body_), FluidDataInner(inner_relation),
+			Vol_(particles_->Vol_), surface_indicator_(particles_->surface_indicator_),
+			color_grad_(*particles_->createAVariable<indexVector, Vecd>("ColorGradient")),
+			surface_norm_(*particles_->createAVariable<indexVector, Vecd>("SurfaceNormal")),
+			pos_div_(*particles_->getVariableByName<indexScalar, Real>("PositionDivergence"))
+		{
+			//register particle variable defined in this class
+			thereshold_by_dimensions_ = (0.75 * (Real)Dimensions);
+		}
+		//=================================================================================================//
+		void ColorFunctionGradientInner::Interaction(size_t index_i, Real dt)
+		{
+			Vecd gradient(0);
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			if(pos_div_[index_i] < thereshold_by_dimensions_)
+			{
+				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = inner_neighborhood.j_[n];
+					gradient -= inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n] * Vol_[index_j];
+				}
+
+			}
+			color_grad_[index_i] = gradient;
+			surface_norm_[index_i] = gradient / (gradient.norm() + TinyReal);
+		}
+		//=================================================================================================//
+		ColorFunctionGradientInterplationInner::ColorFunctionGradientInterplationInner(BaseInnerBodyRelation* inner_relation) 
+		: InteractionDynamics(inner_relation->sph_body_), FluidDataInner(inner_relation), Vol_(particles_->Vol_), 
+			surface_indicator_(particles_->surface_indicator_),
 			color_grad_(*particles_->getVariableByName<indexVector, Vecd>("ColorGradient")),
-			surface_norm_(*particles_->getVariableByName<indexVector, Vecd>("SurfaceNormal")) {}
+			surface_norm_(*particles_->getVariableByName<indexVector, Vecd>("SurfaceNormal")),
+			pos_div_(*particles_->getVariableByName<indexScalar, Real>("PositionDivergence"))
+		{
+			thereshold_by_dimensions_ = (0.75 * (Real)Dimensions);
+			particles_->addAVariableToWrite<indexVector, Vecd>("SurfaceNormal");
+			particles_->addAVariableToWrite<indexVector, Vecd>("ColorGradient");
+		}
+		//=================================================================================================//
+		void ColorFunctionGradientInterplationInner::Interaction(size_t index_i, Real dt)
+		{
+			Vecd grad(0);
+			Real weight(0);
+			Real total_weight(0);
+			if (surface_indicator_[index_i] == 1 && pos_div_[index_i] > thereshold_by_dimensions_)
+			{
+				Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = inner_neighborhood.j_[n];
+					if (surface_indicator_[index_j] == 1 && pos_div_[index_j] < thereshold_by_dimensions_)
+					{
+						weight = inner_neighborhood.W_ij_[n] * Vol_[index_j];
+						grad += weight * color_grad_[index_j];
+						total_weight += weight;
+					}
+				}
+				Vecd grad_norm =  grad / (total_weight + TinyReal);
+				color_grad_[index_i] = grad_norm;
+				surface_norm_[index_i] =  grad_norm / (grad_norm.norm() + TinyReal);
+			}
+		}
+		//=================================================================================================//
+		SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseInnerBodyRelation* inner_relation, Real gamma) 
+		: InteractionDynamics(inner_relation->sph_body_), FluidDataInner(inner_relation), Vol_(particles_->Vol_), 
+			mass_(particles_->mass_), dvel_dt_others_(particles_->dvel_dt_others_), surface_indicator_(particles_->surface_indicator_),
+			gamma_(gamma),
+			color_grad_(*particles_->getVariableByName<indexVector, Vecd>("ColorGradient")),
+			surface_norm_(*particles_->getVariableByName<indexVector, Vecd>("SurfaceNormal")){}
 		//=================================================================================================//
 		SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseInnerBodyRelation* inner_relation)
 		: SurfaceTensionAccelerationInner(inner_relation, 1.0) {}
@@ -593,20 +658,30 @@ namespace SPH
 			Vecd n_i = surface_norm_[index_i];
 			Real curvature(0.0);
 			Real renormal_curvature(0);
-			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			Real pos_div(0);
+			if(surface_indicator_[index_i] == 1)
 			{
-				size_t index_j = inner_neighborhood.j_[n];
-				Vecd n_j = surface_norm_[index_j];
-				if(n_j.norm() > 1.0e-1)
+				Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 				{
-					Vecd n_ij = n_i - n_j;
-					curvature -= inner_neighborhood.dW_ij_[n] * Vol_[index_j] * dot(n_ij, inner_neighborhood.e_ij_[n]);
+					size_t index_j = inner_neighborhood.j_[n];
+					if(surface_indicator_[index_j] == 1)
+					{
+						Vecd n_j = surface_norm_[index_j];
+						Vecd n_ij = n_i - n_j;
+						curvature -= inner_neighborhood.dW_ij_[n] * Vol_[index_j] * dot(n_ij, inner_neighborhood.e_ij_[n]);
+						pos_div -= inner_neighborhood.dW_ij_[n] * inner_neighborhood.r_ij_[n] * Vol_[index_j];
+					}
 				}
 			}
-			/** Normalize the curvature. */
-			renormal_curvature = n_i.size() * curvature / (ABS(pos_div_[index_i]) + TinyReal);
-			Vecd acceleration = gamma_ * renormal_curvature * color_grad_[index_i] * Vol_[index_i];
+			/**
+			 Adami et al. 2010 is wrong in equation.
+			 (dv / dt)_s = (1.0 / rho) (-sigma * k * n * delta) 
+			 			 = (1/rho) * curvature * color_grad 
+						 = (1/m) * curvature * color_grad * vol
+			 */
+			renormal_curvature = (Real)Dimensions * curvature / ABS(pos_div + TinyReal);
+			Vecd acceleration = gamma_ * renormal_curvature* color_grad_[index_i] * Vol_[index_i];
 			dvel_dt_others_[index_i] -= acceleration / mass_[index_i];
 		}
 		//=================================================================================================//

@@ -153,8 +153,11 @@ You can find a installation instruction video: https://youtu.be/m0p1nybM4v4, and
         Unpack to source folder, like: c:\simbody-source 
         Create build folder, like: c:\simbody-build
         Use Cmake, configure with option Visual Studio 2017 x64 and then Generate the solution file for VS2017 (Note that install prefix should be a file folder not in system folder. For example : C:/simbody)
+        Choose RelWithDebInfo target, Right-clicking ALL_BUILD and selecting build
+        Right-clicking INSTALL and selecting build.
+        Choose Debug target (this important for debug with Simbody functions) 
         Right-clicking ALL_BUILD and selecting build
-        Right-clicking INSTALL and selecting build
+        Right-clicking INSTALL and selecting build.
         Set Environment Variable (User Variables) by add an entry SIMBODY_HOME to the simbody directory.
         Add the simbody\bin path to Environmental Variable (System variables)
 
