@@ -1,7 +1,7 @@
 /**
- * @file 	muscle_compression.cpp
- * @brief 	This is the test for muscle compression with our new contact model. 
- * @author 	Chi Zhang and Xiangyu Hu
+ * @file 	muscle_contact_soft_body_contact.cpp
+ * @brief 	This is the test for muscle compression with our new contact model. Different particle resolutions are used for the two soft bodies that are in contact.
+ * @author 	Chi Zhang and Xiangyu Hu, Bence Rochlitz
  */
 #include "sphinxsys.h"
 /** Name space. */
@@ -146,7 +146,7 @@ int main()
 	MyocardiumMuscle 	*muscle_material = new MyocardiumMuscle();
 	ElasticSolidParticles 	myocardium_particles(myocardium_body, muscle_material);
 	/** Plate. */
-	MovingPlate *moving_plate = new MovingPlate(system, "MovingPlate", resolution_ref*0.5);
+	MovingPlate *moving_plate = new MovingPlate(system, "MovingPlate", resolution_ref * 0.5);
 	MovingPlateMaterial* moving_plate_material = new MovingPlateMaterial();
 	ElasticSolidParticles 	moving_plate_particles(moving_plate, moving_plate_material);
 	/** topology */
