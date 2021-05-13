@@ -295,6 +295,12 @@ namespace SPH
 		};
 
 		/**
+		* @function getSmallestTimeStepAmongSolidBodies
+		* @brief computing smallest time step to use in a simulation
+		*/
+		Real getSmallestTimeStepAmongSolidBodies(SPHBodyVector solid_bodies);
+
+		/**
 		* @class DeformationGradientTensorBySummation
 		* @brief computing deformation gradient tensor by summation
 		*/
