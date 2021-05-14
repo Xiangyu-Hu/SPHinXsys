@@ -12,7 +12,7 @@ LIST(REMOVE_DUPLICATES usefuldirs)
 SET(usefulsubdirs ${usefuldirs})
 LIST(REMOVE_ITEM usefulsubdirs ${CMAKE_CURRENT_SOURCE_DIR})
 
-if(NOT ONLY_3D)
+if(DEFINED BOOST_AVAILABLE)
 	ADD_SUBDIRECTORY(for_2D_build)
 endif()
 ADD_SUBDIRECTORY(for_3D_build)
