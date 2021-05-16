@@ -6,8 +6,8 @@ project(SPHINXsys VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 
-###### Change settings in this file is you want to build with Simbody and/or oneTBB source code ######
-include(CMAKE_MODULE_PATH/Dependency_free_settings.cmake)
+###### Change settings in this file if you want to build with Simbody and/or oneTBB source code ######
+include("${CMAKE_MODULE_PATH}/Dependency_free_settings.cmake")
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
@@ -71,20 +71,17 @@ if(NOT WASM_BUILD)
 endif()
 
 add_subdirectory(SPHINXsys)
-if(oneTBB_BUILD MATCHES "static" OR oneTBB_BUILD MATCHES "dynamic")
+if(BUILD_WITH_ONETBB)
     add_subdirectory(oneTBB)
-endif(oneTBB_BUILD MATCHES "static" OR oneTBB_BUILD MATCHES "dynamic")
+endif()
 
 if(NOT WASM_BUILD)
     add_subdirectory(cases_test)
+    add_subdirectory(cases_user)
 endif()
 
 if(ACTIVATE_CUDA)
     add_subdirectory(cases_test_gpu)
-endif()
-
-if(NOT WASM_BUILD)
-    add_subdirectory(cases_user)
 endif()
 
 set(BUILD_WITH_BENCHMARK_CASES OFF CACHE BOOL "Include the benchmark cases into the project?")
