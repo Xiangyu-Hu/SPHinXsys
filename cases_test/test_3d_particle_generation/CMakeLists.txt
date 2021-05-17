@@ -28,8 +28,7 @@ add_test(NAME ${PROJECT_NAME}
 if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
-		target_link_libraries(${PROJECT_NAME} sphinxsys_3d debug)
-		target_link_libraries(${PROJECT_NAME} sphinxsys_3d optimized)
+		target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
 		add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -45,9 +44,7 @@ if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 else() # static build only
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
-		target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d debug)
-		target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d optimized)
-		add_dependencies(${PROJECT_NAME} sphinxsys_static_3d)
+		target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++)

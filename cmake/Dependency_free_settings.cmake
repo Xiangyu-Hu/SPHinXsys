@@ -1,5 +1,5 @@
 ## Build with Simbody and/or oneTBB source code
-set(BUILD_WITH_DEPENDENCIES 1)
+set(BUILD_WITH_DEPENDENCIES 0)
 ## Only static build is used
 set(SPH_ONLY_STATIC_BUILD 0)
 
@@ -17,7 +17,8 @@ if(BUILD_WITH_DEPENDENCIES)
     # select only 3D cases to build, if not, Boost is needed for 2D cases
     set(ONLY_3D 1)
     if(NOT ONLY_3D)
-        add_definitions(-DBOOST_AVAILABLE 1)
+        add_definitions(-DBOOST_AVAILABLE)
+        set(BOOST_AVAILABLE 1)
     endif()
     ###### Boost, only 3D ######
     ###### Webassembly ######
@@ -30,7 +31,8 @@ else(BUILD_WITH_DEPENDENCIES)
     ###### Do not change ######
     set(BUILD_WITH_SIMBODY 0)
     set(BUILD_WITH_ONETBB 0)
-    add_definitions(-DBOOST_AVAILABLE 1)
+    add_definitions(-DBOOST_AVAILABLE)
+    set(BOOST_AVAILABLE 1)
     set(WASM_BUILD 0)
     ###### Do not change ######
 endif(BUILD_WITH_DEPENDENCIES)

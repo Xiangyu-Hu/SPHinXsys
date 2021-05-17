@@ -63,7 +63,7 @@ if(NOT SPH_ONLY_STATIC_BUILD)
 		target_link_libraries(sphinxsys_3d TBB::tbb TBB::tbbmalloc) # TBB::tbbmalloc_proxy is not needed
 	endif()
 	if(NOT BUILD_WITH_SIMBODY) # link Simbody if not built by the project
-		target_link_libraries(sphinxsys_3d} ${Simbody_LIBRARIES})
+		target_link_libraries(sphinxsys_3d ${Simbody_LIBRARIES})
 	endif()
 	### SPHinXsys dynamic lib ###
 endif()
@@ -91,7 +91,7 @@ else()
 	target_link_libraries(sphinxsys_static_3d TBB::tbb TBB::tbbmalloc) # TBB::tbbmalloc_proxy is not needed
 endif()
 if(NOT BUILD_WITH_SIMBODY) # link Simbody if not built by the project
-	target_link_libraries(sphinxsys_static_3d} ${Simbody_LIBRARIES})
+	target_link_libraries(sphinxsys_static_3d ${Simbody_LIBRARIES})
 endif()
 ### SPHinXsys static lib ###
 
