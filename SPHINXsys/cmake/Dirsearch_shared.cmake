@@ -34,7 +34,15 @@ MACRO(SOURCE_DIRECTORIES_SHARED return_list)
     SET(dir_list "")
     FOREACH(file_path ${new_list} ${new_list_c})
         GET_FILENAME_COMPONENT(dir_path ${file_path} PATH)
-        SET(dir_list ${dir_list} ${dir_path})
+
+        if(BUILD_WITH_SIMBODY)
+            SET(dir_list ${dir_list} ${dir_path})
+        else() # if Simbody is not built, ignore the simbody and clapack folders
+            if(NOT dir_list MATCHES "./simbody/" OR "./clapack_for_SPHinXsys/")
+                SET(dir_list ${dir_list} ${dir_path})
+            endif()
+        endif()
+
     ENDFOREACH()
     LIST(REMOVE_DUPLICATES dir_list)
     SET(${return_list} ${dir_list})
