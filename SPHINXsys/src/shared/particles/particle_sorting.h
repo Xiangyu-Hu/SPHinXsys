@@ -40,8 +40,12 @@
 namespace tbb {
 	namespace interafce9 {
 		namespace internal {
-
+			
+			#ifdef TBB_2021_2_0
 			using tbb::detail::no_assign;
+			#else
+			using tbb::internal::no_assign;
+			#endif
 
 			/** sorting particle */
 			template<typename RandomAccessIterator, typename Compare, typename SwapType>

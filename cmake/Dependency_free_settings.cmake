@@ -12,6 +12,9 @@ if(BUILD_WITH_DEPENDENCIES)
     ###### oneTBB ######
     # oneTBB source code will be built with the project
     set(BUILD_WITH_ONETBB 1)
+    if(BUILD_WITH_ONETBB)
+        add_definitions(-DTBB_2021_2_0)
+    endif()
     ###### oneTBB ######
     ###### Boost, only 3D ######
     # select only 3D cases to build, if not, Boost is needed for 2D cases
