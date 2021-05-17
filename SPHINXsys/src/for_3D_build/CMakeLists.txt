@@ -44,7 +44,7 @@ if(NOT SPH_ONLY_STATIC_BUILD)
 	ADD_LIBRARY(sphinxsys_3d SHARED ${SCR_FILES})
 
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		target_link_libraries(sphinxsys_3d)
+		#target_link_libraries(sphinxsys_3d)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 			target_link_libraries(sphinxsys_3d stdc++)
@@ -53,7 +53,7 @@ if(NOT SPH_ONLY_STATIC_BUILD)
 		endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 		if(DEFINED BOOST_AVAILABLE) # link Boost if available (not for Windows)
-			target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
+			target_link_libraries(sphinxsys_3d ${Boost_LIBRARIES})
 		endif()
 	endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
@@ -72,16 +72,16 @@ endif()
 ADD_LIBRARY(sphinxsys_static_3d STATIC ${SCR_FILES})
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-	target_link_libraries(sphinxsys_3d)
+	#target_link_libraries(sphinxsys_static_3d)
 else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		target_link_libraries(sphinxsys_3d stdc++)
+		target_link_libraries(sphinxsys_static_3d stdc++)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		target_link_libraries(sphinxsys_3d stdc++ stdc++fs)
+		target_link_libraries(sphinxsys_static_3d stdc++ stdc++fs)
 	endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 	if(DEFINED BOOST_AVAILABLE) # link Boost if available (not for Windows)
-		target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
+		target_link_libraries(sphinxsys_static_3d ${Boost_LIBRARIES})
 	endif()
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
@@ -102,12 +102,12 @@ if(NOT SPH_ONLY_STATIC_BUILD)
 	RUNTIME DESTINATION 3d_code/bin
 	LIBRARY DESTINATION 3d_code/lib
 	ARCHIVE DESTINATION 3d_code/lib)
-endif()
-
+else()
 INSTALL(TARGETS sphinxsys_static_3d
 RUNTIME DESTINATION 3d_code/bin
 LIBRARY DESTINATION 3d_code/lib
 ARCHIVE DESTINATION 3d_code/lib)
+endif()
 
 # FILE(GLOB_RECURSE hpp_headers  ${PROJECT_SOURCE_DIR}/src/shared/*.hpp ${PROJECT_SOURCE_DIR}/src/for_3D_build/*.hpp)
 # INSTALL(FILES ${hpp_headers} DESTINATION 3d_code/include)
