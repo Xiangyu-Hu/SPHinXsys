@@ -51,12 +51,12 @@
 # (To distribute this file outside of CMake, substitute the full
 #  License text for the above reference.)
 
+if(NOT BUILD_WITH_ONETBB)
 
-#=============================================================================
-#  FindTBB helper functions and macros
-#
+  #=============================================================================
+  #  FindTBB helper functions and macros
+  #
 
-if(oneTBB_BUILD MATCHES "off")
   #===============================================
   # Do the final processing for the package find.
   #===============================================
@@ -306,4 +306,5 @@ if(oneTBB_BUILD MATCHES "off")
       TBB_LIB_DIR
       TBB_LIBRARYS
   )
-endif(oneTBB_BUILD MATCHES "off")
+
+endif(NOT BUILD_WITH_ONETBB)
