@@ -27,7 +27,10 @@
  * interaction, and also considered as the topology of the particles.
  * @author	Xiangyu Hu and Chi Zhang
  */
-#pragma once
+
+#ifndef NEIGHBOR_RELATION_H
+#define NEIGHBOR_RELATION_H
+
 
 #include "base_data_package.h"
 #include "base_kernel.h"
@@ -139,3 +142,4 @@ namespace SPH {
 			Vecd& displacement, size_t i_index, size_t j_index) const;
 	};
 }
+#endif //NEIGHBOR_RELATION_H

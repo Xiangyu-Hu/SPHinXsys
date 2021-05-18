@@ -1,4 +1,8 @@
-#pragma once
+
+#ifndef DATA_TYPE_3D_H
+#define DATA_TYPE_3D_H
+
+
 
 #include "small_vectors.h"
 #include "large_data_containers.h"
@@ -36,3 +40,4 @@ namespace SPH {
 	/** initial local normal, only works for thin structure dynamics. */
 	const Vecd local_pseudo_n_0 = Vecd(0.0, 0.0, 1.0);
 }
+#endif //DATA_TYPE_3D_H

@@ -28,7 +28,11 @@
  *			and chemical and biological reactions. 
  * @author  Xiangyu Hu, Chi Zhang
  */
-#pragma once
+
+#ifndef DIFFUSION_REACTION_H
+#define DIFFUSION_REACTION_H
+
+
 
 #include "base_material.h"
 #include "solid_particles.h"
@@ -331,3 +335,4 @@ namespace SPH
 		virtual void readFromXmlForLocalParameters(std::string& filefullpath) override;
 	};
 }
+#endif //DIFFUSION_REACTION_H

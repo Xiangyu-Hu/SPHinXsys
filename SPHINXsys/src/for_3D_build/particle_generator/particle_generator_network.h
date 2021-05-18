@@ -26,7 +26,10 @@
  * 			with in network or tree form. 
  * @author	Chi ZHang and Xiangyu Hu
  */
-#pragma once
+
+#ifndef PARTICLE_GENERATOR_NETWORK_H
+#define PARTICLE_GENERATOR_NETWORK_H
+
 
 #include "sph_data_conainers.h"
 #include "base_particle_generator.h"
@@ -113,3 +116,4 @@ namespace SPH
 		virtual bool extraCheck(Vecd& new_point){return false;};
 	};
 }
+#endif //PARTICLE_GENERATOR_NETWORK_H

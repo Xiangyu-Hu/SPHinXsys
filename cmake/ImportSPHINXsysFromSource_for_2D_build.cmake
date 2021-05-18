@@ -7,6 +7,19 @@ FOREACH(file_path ${SPHINXsysHeaderPathListShared} ${SPHINXsysHeaderPathListFor2
     GET_FILENAME_COMPONENT(dir_path ${file_path} PATH)
     SET(SPHINXsysHeaderPath ${SPHINXsysHeaderPath} ${dir_path})
 ENDFOREACH()
+
+if(BUILD_WITH_SIMBODY)
+    include("${CMAKE_SOURCE_DIR}/SPHINXsys/cmake/Simbody_header_directories.cmake")
+    FOREACH(simbody_header_path ${SIMBODY_HEADER_DIRECTORIES})
+        SET(SPHINXsysHeaderPath ${SPHINXsysHeaderPath} ${simbody_header_path})
+    ENDFOREACH()
+endif()
+
+if(BUILD_WITH_ONETBB)
+    include("${CMAKE_SOURCE_DIR}/SPHINXsys/cmake/oneTBB_header_directory.cmake")
+    SET(SPHINXsysHeaderPath ${SPHINXsysHeaderPath} ${ONETBB_HEADER_DIRECTORY})
+endif()
+
 LIST(REMOVE_DUPLICATES SPHINXsysHeaderPath)
 #message(STATUS ${SPHINXsysHeaderPath})
 

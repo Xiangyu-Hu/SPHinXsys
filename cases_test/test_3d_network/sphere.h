@@ -5,7 +5,8 @@
 * @author 	Xiangyu Hu, Chi Zhangand Luhui Han
 */
 
-#pragma once
+#ifndef TEST_3D_PARTICLE_GENERATION_SPHERE_H
+#define TEST_3D_PARTICLE_GENERATION_SPHERE_H
 
 #include "sphinxsys.h"
 using namespace SPH;
@@ -52,3 +53,4 @@ public:
 		assignDerivedMaterialParameters();
 	}
 };
+#endif //TEST_3D_PARTICLE_GENERATION_SPHERE_H

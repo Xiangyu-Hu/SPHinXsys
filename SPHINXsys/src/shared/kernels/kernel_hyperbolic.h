@@ -30,7 +30,11 @@
 * @author	Chi ZHang and Xiangyu Hu
 */
 
-#pragma once
+
+#ifndef KERNEL_HYPERBOLIC_H
+#define KERNEL_HYPERBOLIC_H
+
+
 
 #include "base_kernel.h"
 
@@ -60,3 +64,4 @@ namespace SPH
 		virtual Real d2W_3D(const Real q) const override;
 	};
 }
+#endif //KERNEL_HYPERBOLIC_H

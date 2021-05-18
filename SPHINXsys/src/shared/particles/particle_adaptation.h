@@ -27,7 +27,11 @@
  * @author	Xiangyu Hu and Chi Zhang
  */
 
-#pragma once
+
+#ifndef PARTICLE_ADAPTATION_H
+#define PARTICLE_ADAPTATION_H
+
+
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
@@ -137,3 +141,4 @@ namespace SPH {
 		Real getLocalSpacing(ComplexShape& complex_shape, Vecd& position);
 	};
 }
+#endif //PARTICLE_ADAPTATION_H

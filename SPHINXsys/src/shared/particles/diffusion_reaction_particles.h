@@ -26,7 +26,11 @@
 * @author	Xiangyu Huand Chi Zhang
 */
 
-#pragma once
+
+#ifndef DIFFUSION_REACTION_PARTICLES_H
+#define DIFFUSION_REACTION_PARTICLES_H
+
+
 
 #include "base_particles.h"
 #include "base_body.h"
@@ -126,3 +130,4 @@ namespace SPH {
 		};
 	};
 }
+#endif //DIFFUSION_REACTION_PARTICLES_H
