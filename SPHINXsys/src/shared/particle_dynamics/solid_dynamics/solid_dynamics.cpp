@@ -252,6 +252,12 @@ namespace SPH
 					dvel_dt_others_(particles_->dvel_dt_others_),
 					mass_(particles_->mass_)
 		{
+			stiffness_ = stiffness;
+		}
+		//=================================================================================================//
+		void ParticleWiseAcceleration::setupDynamics(Real dt)
+		{
+			particles_->total_ghost_particles_ = 0;
 		}
 		//=================================================================================================//
 		Vecd ParticleWiseAcceleration::getAcceleration(Vecd& disp, Real mass)
@@ -267,7 +273,7 @@ namespace SPH
 		void ParticleWiseAcceleration::Update(size_t index_i, Real dt)
 		{	
 			Vecd disp_from_0 = pos_n_[index_i] - pos_0_[index_i];
-			dvel_dt_others_[index_i] += getAcceleration(disp_from_0, mass_[index_i]);
+			dvel_dt_others_[index_i] += 99; //getAcceleration(disp_from_0, mass_[index_i]);
 		}
 		//=================================================================================================//	
 		ElasticDynamicsInitialCondition::

@@ -1,5 +1,5 @@
 ## Build with Simbody and/or oneTBB source code
-set(BUILD_WITH_DEPENDENCIES 0)
+set(BUILD_WITH_DEPENDENCIES 1)
 ## Only static build is used
 set(SPH_ONLY_STATIC_BUILD 0)
 

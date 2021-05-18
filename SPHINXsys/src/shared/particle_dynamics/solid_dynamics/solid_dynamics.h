@@ -254,6 +254,7 @@ namespace SPH
 			StdLargeVec<Real>& mass_;
 			StdLargeVec<Vecd>& pos_n_,& pos_0_,& dvel_dt_others_;
 			Vecd stiffness_;
+			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual Vecd getAcceleration(Vecd& disp, Real mass);
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
