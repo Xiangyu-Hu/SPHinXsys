@@ -1,6 +1,3 @@
-[submodule "oneTBB"]
-	path = oneTBB
-	url = https://github.com/oneapi-src/oneTBB
 [submodule "SPHINXsys/src/shared/simbody"]
 	path = SPHINXsys/src/shared/simbody
 	url = https://github.com/BenceVirtonomy/simbody
