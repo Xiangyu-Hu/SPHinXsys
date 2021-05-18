@@ -384,9 +384,9 @@ int main(int ac, char* av[])
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = false;
+	system.run_particle_relaxation_ = true;
 	/** Tag for reload initially repaxed particles. */
-	system.reload_particles_ = true;
+	system.reload_particles_ = false;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
 	//handle command line arguments
@@ -536,7 +536,7 @@ int main(int ac, char* av[])
 	/** 
 	 * Diffusion process for diffusion body. 
 	 */
-	electro_physiology::ElectroPhysiologyDiffusionRelaxation diffusion_relaxation(physiology_body_inner);
+	electro_physiology::ElectroPhysiologyDiffusionRelaxationInner diffusion_relaxation(physiology_body_inner);
 	/** 
 	 * Solvers for ODE system 
 	 */

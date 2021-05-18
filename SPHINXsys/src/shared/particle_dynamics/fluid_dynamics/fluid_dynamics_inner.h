@@ -586,6 +586,45 @@ namespace SPH
 			virtual void SetupReduce() override {};
 			virtual Real ReduceFunction(size_t index_i, Real dt = 0.0) override { return pos_n_[index_i][1]; };
 		};
+		/**
+		 * @class ColorFunctionGradientInner
+		 * @brief  indicate the particles near the interface of a fluid-fluid interaction and computing norm
+		 */
+		class ColorFunctionGradientInner : public InteractionDynamics, public FluidDataInner
+		{
+		public:
+			StdLargeVec<Vecd>& color_grad_;
+			StdLargeVec<Vecd>& surface_norm_;
+			StdLargeVec<int>& surface_indicator_;
+			StdLargeVec<Real> &pos_div_;
+			ColorFunctionGradientInner(BaseInnerBodyRelation* inner_relation);
+			virtual ~ColorFunctionGradientInner() {};
+		protected:
+			Real thereshold_by_dimensions_;
+			StdLargeVec<Real> &Vol_;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		 * @class ColorFunctionGradientInterplationInner
+		 * @brief  the viscous force induced acceleration
+		 */
+		class ColorFunctionGradientInterplationInner
+			: public InteractionDynamics, public FluidDataInner
+		{
+		public:
+			ColorFunctionGradientInterplationInner(BaseInnerBodyRelation* inner_relation);
+			virtual ~ColorFunctionGradientInterplationInner() {};
+		protected:
+			Real thereshold_by_dimensions_;
+			StdLargeVec<Real> &Vol_;
+			StdLargeVec<Real>& pos_div_;
+			StdLargeVec<Vecd>& color_grad_;
+			StdLargeVec<Vecd>& surface_norm_;
+			StdLargeVec<int>& surface_indicator_;
+
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
 
 		/**
 		 * @class SurfaceTensionAccelerationInner
@@ -600,8 +639,11 @@ namespace SPH
 			virtual ~SurfaceTensionAccelerationInner() {};
 		protected:
 			Real gamma_;
-			StdLargeVec<Real> &Vol_, &mass_, & pos_div_;
-			StdLargeVec<Vecd> &dvel_dt_others_, & color_grad_, & surface_norm_;
+			StdLargeVec<Real> &Vol_, &mass_;
+			StdLargeVec<Vecd> &dvel_dt_others_;
+			StdLargeVec<Vecd>& color_grad_;
+			StdLargeVec<Vecd>& surface_norm_;
+			StdLargeVec<int>& surface_indicator_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};

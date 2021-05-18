@@ -133,8 +133,6 @@ namespace SPH
 			StdLargeVec<Vecd>& pos_n_, & pos_0_;
 			StdLargeVec<Vecd>& n_, & n_0_;
 			StdLargeVec<Vecd>& vel_n_, & dvel_dt_, & vel_ave_, & dvel_dt_ave_;
-			/** The basic function does not constrain position, 
-			 * as constraining velocity and acceleration are already sufficient to fix the particle position. */
 			virtual Vecd getDisplacement(Vecd& pos_0, Vecd& pos_n) { return pos_n; };
 			virtual Vecd getVelocity(Vecd& pos_0, Vecd& pos_n, Vecd& vel_n) { return Vecd(0); };
 			virtual Vecd getAcceleration(Vecd& pos_0, Vecd& pos_n, Vecd& dvel_dt) { return Vecd(0); };

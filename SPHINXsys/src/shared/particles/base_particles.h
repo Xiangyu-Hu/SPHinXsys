@@ -126,7 +126,8 @@ namespace SPH
 		template<int DataTypeIndex, typename VariableType>
 		StdLargeVec<VariableType>* createAVariable(std::string new_variable_name, VariableType initial_value = VariableType(0))
 		{
-			if (all_variable_maps_[DataTypeIndex].find(new_variable_name) == all_variable_maps_[DataTypeIndex].end()) {
+			if (all_variable_maps_[DataTypeIndex].find(new_variable_name) == all_variable_maps_[DataTypeIndex].end()) 
+			{
 				StdLargeVec<VariableType>* new_variable = new StdLargeVec<VariableType>;
 				registerAVariable<DataTypeIndex, VariableType>(*new_variable, new_variable_name, initial_value);
 				return new_variable;

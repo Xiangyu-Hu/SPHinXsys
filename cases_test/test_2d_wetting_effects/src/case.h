@@ -24,14 +24,14 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
  * @brief Material properties of the fluid.
  */
 Real rho0_f = 1.0;					/**< Reference density of water. */
-Real rho0_a = 0.001;					/**< Reference density of air. */
+Real rho0_a = 1.0e-3;				/**< Reference density of air. */
 Real gravity_g = 0.0;				/**< Gravity force of fluid. */
 Real U_max = 1.0;					/**< Characteristic velocity. */
 Real c_f = 10.0 * U_max;			/**< Reference sound speed. */
 Real mu_f = 5.0e-2;					/**< Water viscosity. */
-Real mu_a = 5.0e-4;					/**< Air visocsity. */
-Real contact_angle = (90.0 / 180.0) * 3.1415926; 	/**< Contact angle with Wall. */
-Real tension_force = 0.2;
+Real mu_a = 5.0e-5;					/**< Air visocsity. */
+Real contact_angle = (150.0 / 180.0) * 3.1415926; 	/**< Contact angle with Wall. */
+Real tension_force = 0.008;
 /** create a water block shape */
 std::vector<Vecd> CreatWaterBlockShape()
 {
@@ -76,8 +76,8 @@ std::vector<Vecd> CreatInnerWallShape()
 class WaterBlock : public FluidBody
 {
 public:
-	WaterBlock(SPHSystem& sph_system, std::string body_name)
-		: FluidBody(sph_system, body_name, new ParticleAdaptation(1.3, 0))
+	WaterBlock(SPHSystem& sph_system, string body_name)
+		: FluidBody(sph_system, body_name, new ParticleAdaptation(1.3, 1))
 	{
 		/** Geomtry definition. */
 		std::vector<Vecd> water_block_shape = CreatWaterBlockShape();
@@ -140,8 +140,8 @@ public:
 class WallBoundary : public SolidBody
 {
 public:
-	WallBoundary(SPHSystem& sph_system, std::string body_name)
-		: SolidBody(sph_system, body_name, new ParticleAdaptation(1.3, 0))
+	WallBoundary(SPHSystem& sph_system, string body_name)
+		: SolidBody(sph_system, body_name, new ParticleAdaptation(1.3, 1))
 	{
 		/** Geomtry definition. */
 		std::vector<Vecd> outer_shape = CreatOuterWallShape();

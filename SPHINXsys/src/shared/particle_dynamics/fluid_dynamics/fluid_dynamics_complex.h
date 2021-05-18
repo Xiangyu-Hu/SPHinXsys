@@ -71,6 +71,7 @@ namespace SPH
 		class FreeSurfaceIndicationComplex : public FreeSurfaceIndicationInner, public FluidContactData
 		{
 		public:
+			FreeSurfaceIndicationComplex(BaseInnerBodyRelation* inner_relation, BaseContactBodyRelation* contact_relation, Real thereshold = 0.75);
 			FreeSurfaceIndicationComplex(ComplexBodyRelation* body_complex_relation, Real thereshold = 0.75);
 			virtual ~FreeSurfaceIndicationComplex() {};
 		protected:
@@ -297,6 +298,22 @@ namespace SPH
 		};
 
 		/**
+		* @class ColorFunctionGradientComplex
+		* @brief indicate the particles near the free fluid surface.
+		*/
+		class ColorFunctionGradientComplex : public ColorFunctionGradientInner, public FluidContactData
+		{
+		public:
+			ColorFunctionGradientComplex(BaseInnerBodyRelation* inner_relation, BaseContactBodyRelation* contact_relation);
+			ColorFunctionGradientComplex(ComplexBodyRelation* body_complex_relation);
+			virtual ~ColorFunctionGradientComplex() {};
+		protected:
+			StdVec<StdLargeVec<Real>*> contact_Vol_;
+
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
 		 * @class 	SurfaceNormWithWall
 		 * @brief  Modify surface norm when contact with wall
 		 */
@@ -311,6 +328,7 @@ namespace SPH
 			Real particle_spacing_;
 			StdVec<StdLargeVec<Vecd>*> wall_n_;
 			StdLargeVec<Vecd>& surface_norm_;
+			StdLargeVec<Real>& pos_div_;
 			StdLargeVec<int>& surface_indicator_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
