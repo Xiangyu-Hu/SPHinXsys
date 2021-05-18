@@ -4,3 +4,6 @@
 [submodule "SPHINXsys/src/shared/clapack_for_SPHinXsys"]
 	path = SPHINXsys/src/shared/clapack_for_SPHinXsys
 	url = https://github.com/BenceVirtonomy/clapack_for_SPHinXsys
+[submodule "oneTBB"]
+	path = oneTBB
+	url = https://github.com/BenceVirtonomy/oneTBB
