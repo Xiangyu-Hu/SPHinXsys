@@ -160,9 +160,9 @@ Here, we give the instructions for installing on Ubuntu Linux, Apple OS and Wind
         Set ONLY_3D to 1 if the 2D libraries and test cases are not needed. Note that Boost is still needed if this variable is set to 0
         Do not modify the other variables
 
-3. If you are building oneTBB, make sure to run the SPHinXsys/oneTBB_edit/oneTBB_edit.py to copy two the files next to it into the oneTBB folder, or copy them manually
+3. If you are building oneTBB, make sure to run the SPHinXsys/oneTBB_edit/oneTBB_edit.py to copy the files next to it into the oneTBB folder, or copy them manually
 
-4. Now build the SPHinXsys project as described in the previous section
+4. Build the SPHinXsys project as described in the previous section
 
 ### Install on Windows Visual Studio
 
