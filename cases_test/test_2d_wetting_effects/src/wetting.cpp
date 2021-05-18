@@ -81,21 +81,22 @@ int main()
 	fluid_dynamics::MultiPhaseDensityRelaxationRiemannWithWall
 		air_density_relaxation(air_water_complex, air_wall_contact);
 	/** Viscous acceleration. */
-	fluid_dynamics::ViscousAccelerationMultiPhaseWithWall
-		air_viscou_acceleration(air_water_complex, air_wall_contact);
-	fluid_dynamics::ViscousAccelerationMultiPhaseWithWall
-		water_viscou_acceleration(water_air_complex, water_wall_contact);
+	fluid_dynamics::ViscousAccelerationMultiPhase
+		air_viscou_acceleration(air_water_complex);
+	fluid_dynamics::ViscousAccelerationMultiPhase
+		water_viscou_acceleration(water_air_complex);
 	/** Suface tension and wetting effects. */
-	fluid_dynamics::FreeSurfaceIndicationInner
-		surface_detection(water_air_complex->inner_relation_);
-	fluid_dynamics::MultiPhaseColorFunctionGradient
-		color_gradient(water_air_complex->contact_relation_);
+	fluid_dynamics::FreeSurfaceIndicationComplex
+		surface_detection(water_air_complex->inner_relation_, water_wall_contact);
+	fluid_dynamics::ColorFunctionGradientComplex
+		color_gradient(water_air_complex->inner_relation_, water_wall_contact);
+	fluid_dynamics::ColorFunctionGradientInterplationInner
+		color_gradient_interpolation(water_air_complex->inner_relation_);
 	fluid_dynamics::SurfaceTensionAccelerationInner
 		surface_tension_acceleration(water_air_complex->inner_relation_, tension_force);
 	/** Wetting effects. */
 	fluid_dynamics::SurfaceNormWithWall
 		wetting_norm(water_wall_contact, contact_angle);
-	/** Suface tension. */
 	/**
 	 * @brief Output.
 	 */
@@ -131,7 +132,7 @@ int main()
 	int screen_output_interval = 100;
 	int observation_sample_interval = screen_output_interval * 2;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 2.0; 	/**< End time. */
+	Real End_Time = 5.0; 	/**< End time. */
 	Real D_Time = End_Time / 50;		/**< Time stamps for output of body states. */
 	Real Dt = 0.0;			/**< Default advection time step sizes. */
 	Real dt = 0.0; 			/**< Default acoustic time step sizes. */
@@ -170,6 +171,12 @@ int main()
 			air_viscou_acceleration.parallel_exec();
 			water_viscou_acceleration.parallel_exec();
 
+			surface_detection.parallel_exec();
+			color_gradient.parallel_exec();
+			color_gradient_interpolation.parallel_exec();
+			wetting_norm.parallel_exec();
+			surface_tension_acceleration.parallel_exec();
+
 			interval_computing_time_step += tick_count::now() - time_instance;
 
 			/** Dynamics including pressure relaxation. */
@@ -180,11 +187,6 @@ int main()
 				Real dt_f = get_water_time_step_size.parallel_exec();
 				Real dt_a = get_air_time_step_size.parallel_exec();
 				dt = SMIN(SMIN(dt_f, dt_a), Dt);
-
-				surface_detection.parallel_exec();
-				color_gradient.parallel_exec();
-				wetting_norm.parallel_exec();
-				surface_tension_acceleration.parallel_exec();
 
 				water_pressure_relaxation.parallel_exec(dt);
 				air_pressure_relaxation.parallel_exec(dt);

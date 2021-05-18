@@ -28,7 +28,11 @@
 * @author	Luhui Han, Chi ZHang and Xiangyu Hu
 */
 
-#pragma once
+
+#ifndef KERNEL_WENLAND_C2_H
+#define KERNEL_WENLAND_C2_H
+
+
 
 #include "base_kernel.h"
 
@@ -60,3 +64,4 @@ namespace SPH
 		virtual Real d2W_3D(const Real q) const override;
 	};
 }
+#endif //KERNEL_WENLAND_C2_H

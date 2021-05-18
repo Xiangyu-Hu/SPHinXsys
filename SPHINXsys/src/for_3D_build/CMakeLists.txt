@@ -39,32 +39,78 @@ FOREACH(srcdir_path ${sourcedirs})
 	list(APPEND SCR_FILES ${DIR_scrs})
 ENDFOREACH()
 
-#FOREACH(file1 ${SCR_FILES})
-	#message(STATUS ${file1})
-#ENDFOREACH()
-
-ADD_LIBRARY(sphinxsys_3d SHARED ${SCR_FILES})
-ADD_LIBRARY(sphinxsys_static_3d STATIC ${SCR_FILES})
-
-SET_TARGET_PROPERTIES(sphinxsys_static_3d PROPERTIES OUTPUT_NAME "sphinxsys_3d")
-#SET_TARGET_PROPERTIES(sphinxsys PROPERTIES VERSION 1.0 SOVERSION 0)
-
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    target_link_libraries(sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES})
-else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-	if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    	target_link_libraries(sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} ${Boost_LIBRARIES} stdc++)
-	else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		target_link_libraries(sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} stdc++ stdc++fs)
-	endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(NOT SPH_ONLY_STATIC_BUILD)
+	### SPHinXsys dynamic lib ###
+	ADD_LIBRARY(sphinxsys_3d SHARED ${SCR_FILES})
+	
+	ADD_LIBRARY(sphinxsys_static_3d STATIC ${SCR_FILES})
+	SET_TARGET_PROPERTIES(sphinxsys_static_3d PROPERTIES OUTPUT_NAME "sphinxsys_3d")
 
-INSTALL(TARGETS sphinxsys_3d sphinxsys_static_3d
-RUNTIME DESTINATION 3d_code/bin
-LIBRARY DESTINATION 3d_code/lib
-ARCHIVE DESTINATION 3d_code/lib)
+	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+		#target_link_libraries(sphinxsys_3d)
+	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+			target_link_libraries(sphinxsys_3d stdc++)
+		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+			target_link_libraries(sphinxsys_3d stdc++ stdc++fs)
+		endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+		if(DEFINED BOOST_AVAILABLE) # link Boost if available (not for Windows)
+			target_link_libraries(sphinxsys_3d ${Boost_LIBRARIES})
+		endif()
+	endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+
+	if(NOT BUILD_WITH_ONETBB) # link TBB if not built by the project
+		target_link_libraries(sphinxsys_3d ${TBB_LIBRARYS})
+	else()
+		target_link_libraries(sphinxsys_3d TBB::tbb TBB::tbbmalloc) # TBB::tbbmalloc_proxy is not needed
+	endif()
+	if(NOT BUILD_WITH_SIMBODY) # link Simbody if not built by the project
+		target_link_libraries(sphinxsys_3d ${Simbody_LIBRARIES})
+	endif()
+	### SPHinXsys dynamic lib ###
+else()
+	### SPHinXsys static lib ###
+	ADD_LIBRARY(sphinxsys_static_3d STATIC ${SCR_FILES})
+
+	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+		#target_link_libraries(sphinxsys_static_3d)
+	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+			target_link_libraries(sphinxsys_static_3d stdc++)
+		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+			target_link_libraries(sphinxsys_static_3d stdc++ stdc++fs)
+		endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+		if(DEFINED BOOST_AVAILABLE) # link Boost if available (not for Windows)
+			target_link_libraries(sphinxsys_static_3d ${Boost_LIBRARIES})
+		endif()
+	endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+
+	if(NOT BUILD_WITH_ONETBB) # link TBB if not built by the project
+		target_link_libraries(sphinxsys_static_3d ${TBB_LIBRARYS})
+	else()
+		target_link_libraries(sphinxsys_static_3d TBB::tbb TBB::tbbmalloc) # TBB::tbbmalloc_proxy is not needed
+	endif()
+	if(NOT BUILD_WITH_SIMBODY) # link Simbody if not built by the project
+		target_link_libraries(sphinxsys_static_3d ${Simbody_LIBRARIES})
+	endif()
+	### SPHinXsys static lib ###
+endif()
+
+if(NOT SPH_ONLY_STATIC_BUILD)
+	INSTALL(TARGETS sphinxsys_3d sphinxsys_static_3d
+	RUNTIME DESTINATION 3d_code/bin
+	LIBRARY DESTINATION 3d_code/lib
+	ARCHIVE DESTINATION 3d_code/lib)
+else()
+	INSTALL(TARGETS sphinxsys_static_3d
+	RUNTIME DESTINATION 3d_code/bin
+	LIBRARY DESTINATION 3d_code/lib
+	ARCHIVE DESTINATION 3d_code/lib)
+endif()
 
 FILE(GLOB_RECURSE hpp_headers  ${PROJECT_SOURCE_DIR}/src/shared/*.hpp ${PROJECT_SOURCE_DIR}/src/for_3D_build/*.hpp)
 INSTALL(FILES ${hpp_headers} DESTINATION 3d_code/include)

@@ -26,7 +26,11 @@
 * @details 	We consider here a weakly compressible solids.   
 * @author	Luhui Han, Chi ZHang and Xiangyu Hu
 */
-#pragma once
+
+#ifndef SOLID_DYNAMICS_H
+#define SOLID_DYNAMICS_H
+
+
 #include "all_particle_dynamics.h"
 #include "elastic_solid.h"
 #include "weakly_compressible_fluid.h"
@@ -129,8 +133,6 @@ namespace SPH
 			StdLargeVec<Vecd>& pos_n_, & pos_0_;
 			StdLargeVec<Vecd>& n_, & n_0_;
 			StdLargeVec<Vecd>& vel_n_, & dvel_dt_, & vel_ave_, & dvel_dt_ave_;
-			/** The basic function does not constrain position, 
-			 * as constraining velocity and acceleration are already sufficient to fix the particle position. */
 			virtual Vecd getDisplacement(Vecd& pos_0, Vecd& pos_n) { return pos_n; };
 			virtual Vecd getVelocity(Vecd& pos_0, Vecd& pos_n, Vecd& vel_n) { return Vecd(0); };
 			virtual Vecd getAcceleration(Vecd& pos_0, Vecd& pos_n, Vecd& dvel_dt) { return Vecd(0); };
@@ -238,6 +240,23 @@ namespace SPH
 			virtual Vecd getAcceleration(Vecd& pos) = 0;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
+		/**
+		* @class ParticleWiseAcceleration
+		* @brief ParticleWiseAcceleration
+		*/
+		class ParticleWiseAcceleration 
+			: public ParticleDynamicsSimple, public SolidDataSimple
+		{
+		public:
+			ParticleWiseAcceleration(SolidBody* body, Vecd stiffness);
+			virtual ~ParticleWiseAcceleration() {};
+		protected:
+			StdLargeVec<Real>& mass_;
+			StdLargeVec<Vecd>& pos_n_,& pos_0_,& dvel_dt_others_;
+			Vecd stiffness_;
+			virtual Vecd getAcceleration(Vecd& disp, Real mass);
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
 
 		//----------------------------------------------------------------------
 		//		for elastic solid dynamics 
@@ -293,6 +312,12 @@ namespace SPH
 			Real smoothing_length_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 		};
+
+		/**
+		* @function getSmallestTimeStepAmongSolidBodies
+		* @brief computing smallest time step to use in a simulation
+		*/
+		Real getSmallestTimeStepAmongSolidBodies(SPHBodyVector solid_bodies);
 
 		/**
 		* @class DeformationGradientTensorBySummation
@@ -423,3 +448,4 @@ namespace SPH
 		};		
 	}
 }
+#endif //SOLID_DYNAMICS_H

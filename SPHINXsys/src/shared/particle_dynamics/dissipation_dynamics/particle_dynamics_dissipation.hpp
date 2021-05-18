@@ -4,7 +4,11 @@
 * @author	Chi ZHang and Xiangyu Hu
 */
 
-#pragma once
+
+#ifndef PARTICLE_DYNAMICS_DISSIPATION_HPP
+#define PARTICLE_DYNAMICS_DISSIPATION_HPP
+
+
 
 #include "particle_dynamics_dissipation.h"
 
@@ -90,7 +94,7 @@ namespace SPH
 		{
 			contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 			contact_mass_.push_back(&(contact_particles_[k]->mass_));
-			contact_variable_.push_back(contact_particles_[k]->getVariableByName<DataTypeIndex, VariableType>(variable_name));
+			contact_variable_.push_back(contact_particles_[k]->template getVariableByName<DataTypeIndex, VariableType>(variable_name));
 		}
 	}
 	//=================================================================================================//
@@ -173,7 +177,7 @@ namespace SPH
 		for (size_t k = 0; k != DissipationDataWithWall::contact_particles_.size(); ++k)
 		{
 			wall_Vol_.push_back(&(contact_particles_[k]->Vol_));
-			wall_variable_.push_back(contact_particles_[k]->getVariableByName<DataTypeIndex, VariableType>(variable_name));
+			wall_variable_.push_back(contact_particles_[k]->template getVariableByName<DataTypeIndex, VariableType>(variable_name));
 		}
 	}
 	//=================================================================================================//
@@ -272,7 +276,7 @@ namespace SPH
 		{
 			contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 			contact_mass_.push_back(&(contact_particles_[k]->mass_));
-			contact_variable_.push_back(contact_particles_[k]->getVariableByName<DataTypeIndex, VariableType>(variable_name));
+			contact_variable_.push_back(contact_particles_[k]->template getVariableByName<DataTypeIndex, VariableType>(variable_name));
 		}
 	}
 	//=================================================================================================//
@@ -337,7 +341,7 @@ namespace SPH
 		for (size_t k = 0; k != DissipationDataWithWall::contact_particles_.size(); ++k)
 		{
 			wall_Vol_.push_back(&(contact_particles_[k]->Vol_));
-			wall_variable_.push_back(contact_particles_[k]->getVariableByName<DataTypeIndex, VariableType>(variable_name));
+			wall_variable_.push_back(contact_particles_[k]->template getVariableByName<DataTypeIndex, VariableType>(variable_name));
 		}
 	}
 	//=================================================================================================//
@@ -411,3 +415,4 @@ namespace SPH
 	}
 	//=================================================================================================//
 }
+#endif //PARTICLE_DYNAMICS_DISSIPATION_HPP

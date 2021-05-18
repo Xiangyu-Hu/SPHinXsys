@@ -2,6 +2,7 @@
  * @file 	particle_generator_network.cpp
  * @author	Chi ZHang and Xiangyu Hu
  */
+#include "sph_system.h"
 #include "particle_generator_network.h"
 #include "mesh_cell_linked_list.h"
 #include "level_set.h"
@@ -12,9 +13,9 @@
 namespace SPH 
 {
 	//=================================================================================================//
-	ParticleGeneratorNetwork::ParticleGeneratorNetwork(Vecd starting_pnt, Vecd second_pnt)
+	ParticleGeneratorNetwork::ParticleGeneratorNetwork(Vecd starting_pnt, Vecd second_pnt, int iterator, Real grad_factor)
 		: ParticleGenerator(), starting_pnt_(starting_pnt), second_pnt_(second_pnt),
-		n_it_(25), fascicles_(true), segments_in_branch_(10), segment_length_(0),
+		n_it_(iterator), fascicles_(true), segments_in_branch_(10), segment_length_(0), grad_factor_(grad_factor),
 		body_shape_(NULL){}
 	//=================================================================================================//
 	void ParticleGeneratorNetwork::initialize(SPHBody* sph_body)
@@ -23,6 +24,7 @@ namespace SPH
 		real_body_ = dynamic_cast<RealBody*>(sph_body);
 		segment_length_ = sph_body_->particle_adaptation_->ReferenceSpacing();
 		body_shape_ = sph_body_->body_shape_;
+		sph_body_->tree_ = new Tree(starting_pnt_, second_pnt_);
 	}
 	//=================================================================================================//
 	Vecd ParticleGeneratorNetwork::
@@ -50,8 +52,8 @@ namespace SPH
 		Real phi = body_shape_->findSignedDistance(pnt_to_project);
 		Vecd unit_normal = body_shape_->findNormalDirection(pnt_to_project);
 		unit_normal /= unit_normal.norm() + TinyReal;
-
-		return pnt_to_project - phi * unit_normal;
+		Vecd new_point = pnt_to_project - phi * unit_normal;
+		return new_point;
 	}
 	//=================================================================================================//
 	bool ParticleGeneratorNetwork::isCollision(Vecd& new_point, 
@@ -59,6 +61,8 @@ namespace SPH
 	{
 		bool collision = false;
 		bool is_family = false;
+
+		collision = extraCheck(new_point);
 
 		size_t edge_location = tree->EdgeLocation(nearest_neighbor.first);
 		if (edge_location == parent_id) is_family = true;
@@ -71,7 +75,7 @@ namespace SPH
 		if (!is_family)
 		{
 			Real min_distance = (new_point - nearest_neighbor.second).norm();
-			if (min_distance < segment_length_) collision = true;
+			if (min_distance < 5.0 * segment_length_) collision = true;
 		}
 
 		return collision;
@@ -90,7 +94,7 @@ namespace SPH
 
 		BaseMeshCellLinkedList* mesh_cell_linked_list = real_body_->mesh_cell_linked_list_;
 
-		Real delta = 5.0 * segment_length_;
+		Real delta = grad_factor_ * segment_length_;
 
 		Vecd surface_norm = body_shape_->findNormalDirection(init_point);
 		surface_norm /= surface_norm.norm() + TinyReal;
@@ -129,6 +133,12 @@ namespace SPH
 					std::cout << "Branch Collision Detected, Break! " << std::endl;
 					break;
 				}
+				/** This constraint imposed to avoid too small time step size. */
+				if((new_point - end_point).norm() < 0.5 * segment_length_)
+				{
+					new_branch->is_end_ = true;
+					break;					
+				}
 				tree->addANewBranchInnerVecd(new_branch, new_point, end_direction);
 			}
 
@@ -144,12 +154,11 @@ namespace SPH
 	//=================================================================================================//
 	void ParticleGeneratorNetwork::createBaseParticles(BaseParticles* base_particles)
 	{
-		In_Output in_output(sph_body_->getSPHSystem());
-		WriteBodyStatesToVtu 	write_states(in_output, { sph_body_ });
+		In_Output* in_output = sph_body_->getSPHSystem().in_output_;
+		WriteBodyStatesToVtu 	write_states(*in_output, { sph_body_ });
 
-		Tree my_tree(starting_pnt_, second_pnt_);
-		StdVec<Branch*>& branches = my_tree.branches_;
-		StdVec<Vecd>& points = my_tree.points_;
+		StdVec<Branch*>& branches = sph_body_->tree_->branches_;
+		StdVec<Vecd>& points = sph_body_->tree_->points_;
 
 		base_particles->initializeABaseParticle(starting_pnt_, segment_length_);
 		BaseMeshCellLinkedList* mesh_cell_linked_list = real_body_->mesh_cell_linked_list_;
@@ -157,7 +166,7 @@ namespace SPH
 		std::cout << "Now creating Particles on network... " << "\n" << std::endl;
 
 		//the first branch
-		bool is_valid = createABranchIfValid(sph_body_, 0, 0.0, 0.0, segments_in_branch_, &my_tree);
+		bool is_valid = createABranchIfValid(sph_body_, 0, 0.0, 0.0, segments_in_branch_, sph_body_->tree_);
 
 		size_t ite = 0;
 		sph_body_->setNewlyUpdated();
@@ -166,7 +175,7 @@ namespace SPH
 
 		IndexVector edges_to_grow;
 		IndexVector new_edges_to_grow;
-        if (is_valid) edges_to_grow.push_back(my_tree.last_branch_id_);
+        if (is_valid) edges_to_grow.push_back(sph_body_->tree_->last_branch_id_);
 	
 		if (fascicles_)
 		{
@@ -177,8 +186,8 @@ namespace SPH
 				/** Creating a new edge. */
 				Real  angle_to_use = fascicle_angles_[i];
 				size_t fascicles_segments = int(fascicle_ratio_ * segments_in_branch_);
-				bool is_valid = createABranchIfValid(sph_body_, 1, angle_to_use, 0.0, fascicles_segments, &my_tree);
-				if (is_valid) edges_to_grow.push_back(my_tree.last_branch_id_);
+				bool is_valid = createABranchIfValid(sph_body_, 1, angle_to_use, 0.0, fascicles_segments, sph_body_->tree_);
+				if (is_valid) edges_to_grow.push_back(sph_body_->tree_->last_branch_id_);
 			}
 
 			ite++;
@@ -190,23 +199,23 @@ namespace SPH
 
 		for(size_t i = 0; i != n_it_; i++)
         {
-			
 			new_edges_to_grow.clear();
 			random_shuffle(edges_to_grow.begin(), edges_to_grow.end());
             for(size_t j = 0; j != edges_to_grow.size(); j++)
             {
                 size_t grow_id = edges_to_grow[j];
-				Real angle_to_use = -2.0 * angle_ * (((double)rand() / (RAND_MAX)) - 0.5);
+				Real rand_num = ((double)rand() / (RAND_MAX)) - 0.5;
+				Real angle_to_use = angle_ + rand_num * 0.05;
                 for(size_t k = 0; k != 2; k++)
                 {   
                     /** Creating a new edge. */
-                    size_t random_number_segments = segments_in_branch_ + rand() % 10 + 1;
+                    size_t random_number_segments = segments_in_branch_;// + rand() % 10 + 1;
 					bool is_valid = createABranchIfValid(sph_body_, grow_id, angle_to_use, repulsivity_,
-						random_number_segments, &my_tree);
+						random_number_segments, sph_body_->tree_);
 
-					if(is_valid && !branches[my_tree.last_branch_id_]->is_end_)
+					if(is_valid && !branches[sph_body_->tree_->last_branch_id_]->is_end_)
                     {
-                        new_edges_to_grow.push_back(my_tree.last_branch_id_);
+                        new_edges_to_grow.push_back(sph_body_->tree_->last_branch_id_);
                     }
 
                     angle_to_use *= -1.0;

@@ -143,6 +143,27 @@ Here, we give the instructions for installing on Ubuntu Linux, Apple OS and Wind
         $ cd /bin
         $ ./your_application
 
+### Installing on Ubunutu Linux using the dependency-free version
+
+0. Note: Do not clone the submodules if you are using the default installation
+
+1. Get all submodules, run this command in the command line of the SPHinXsys project folder
+
+        $ git submodule update --init --recursive
+
+2. Edit the CMake variables to define which dependency to use. Simbody and/or TBB can be built by the project. If one is not built by the project, install that dependency in the usual way as written before.
+
+        Go to SPHinXsys/cmake/Dependency_free_settings.cmake
+        Set BUILD_WITH_DEPENDENCIES to 1
+        Set BUILD_WITH_SIMBODY to 1 if Simbody should be built by the project
+        Set BUILD_WITH_ONETBB to 1 if TBB should be built by the project
+        Set ONLY_3D to 1 if the 2D libraries and test cases are not needed. Note that Boost is still needed if this variable is set to 0
+        Do not modify the other variables
+
+3. If you are building oneTBB, make sure to run the SPHinXsys/oneTBB_edit/oneTBB_edit.py to copy the files next to it into the oneTBB folder, or copy them manually
+
+4. Build the SPHinXsys project as described in the previous section
+
 ### Install on Windows Visual Studio
 
 You can find a installation instruction video: https://youtu.be/m0p1nybM4v4, and install by the following steps: 
@@ -153,8 +174,11 @@ You can find a installation instruction video: https://youtu.be/m0p1nybM4v4, and
         Unpack to source folder, like: c:\simbody-source 
         Create build folder, like: c:\simbody-build
         Use Cmake, configure with option Visual Studio 2017 x64 and then Generate the solution file for VS2017 (Note that install prefix should be a file folder not in system folder. For example : C:/simbody)
+        Choose RelWithDebInfo target, Right-clicking ALL_BUILD and selecting build
+        Right-clicking INSTALL and selecting build.
+        Choose Debug target (this important for debug with Simbody functions) 
         Right-clicking ALL_BUILD and selecting build
-        Right-clicking INSTALL and selecting build
+        Right-clicking INSTALL and selecting build.
         Set Environment Variable (User Variables) by add an entry SIMBODY_HOME to the simbody directory.
         Add the simbody\bin path to Environmental Variable (System variables)
 

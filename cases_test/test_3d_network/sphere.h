@@ -5,7 +5,8 @@
 * @author 	Xiangyu Hu, Chi Zhangand Luhui Han
 */
 
-#pragma once
+#ifndef TEST_3D_PARTICLE_GENERATION_SPHERE_H
+#define TEST_3D_PARTICLE_GENERATION_SPHERE_H
 
 #include "sphinxsys.h"
 using namespace SPH;
@@ -30,9 +31,9 @@ TriangleMeshShape* CreateCADGeometry()
 class MyPolygonBody : public SolidBody
 {
 public:
-	MyPolygonBody(SPHSystem &system, std::string body_name)
+	MyPolygonBody(SPHSystem &system, string body_name)
 		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 0),
-			new ParticleGeneratorNetwork(Vecd(-1.0, 0.0, 0.0), Vecd(-0.964, 0.0, 0.266)))
+			new ParticleGeneratorNetwork(Vecd(-1.0, 0.0, 0.0), Vecd(-0.964, 0.0, 0.266), 15, 5.0))
 	{
 		ComplexShape original_body_shape;
 		original_body_shape.addTriangleMeshShape(CreateCADGeometry(), ShapeBooleanOps::add);
@@ -52,3 +53,4 @@ public:
 		assignDerivedMaterialParameters();
 	}
 };
+#endif //TEST_3D_PARTICLE_GENERATION_SPHERE_H

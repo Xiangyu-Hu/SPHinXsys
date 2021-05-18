@@ -1,10 +1,13 @@
 #---------------------------------------
 # SPHINXSYS V.1.0.0
 #---------------------------------------
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 project(SPHINXsys VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
+
+###### Change settings in this file if you want to build with Simbody and/or oneTBB source code ######
+include("${CMAKE_MODULE_PATH}/Dependency_free_settings.cmake")
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
@@ -35,7 +38,8 @@ if(MSVC)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" " /MP")
     add_definitions(-D_USE_MATH_DEFINES)
 else(MSVC)
-    set(CMAKE_CXX_FLAGS "-Wall -m64 -std=c++11 -DUNIX")
+    add_compile_definitions(__linux__=1)
+    set(CMAKE_CXX_FLAGS "-Wall -std=c++11 -DUNIX -pthread")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -ggdb")
     IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
@@ -61,16 +65,24 @@ endif()
 
 enable_testing()
 
-include(Common)
-include(Import3rdpartylibs)
+if(NOT WASM_BUILD)
+    include(Common)
+    include(Import3rdpartylibs) # TBB and Boost
+endif()
+
 add_subdirectory(SPHINXsys)
-add_subdirectory(cases_test)
+if(BUILD_WITH_ONETBB)
+    add_subdirectory(oneTBB)
+endif()
+
+if(NOT WASM_BUILD)
+    add_subdirectory(cases_test)
+    add_subdirectory(cases_user)
+endif()
 
 if(ACTIVATE_CUDA)
     add_subdirectory(cases_test_gpu)
 endif()
-
-add_subdirectory(cases_user)
 
 set(BUILD_WITH_BENCHMARK_CASES OFF CACHE BOOL "Include the benchmark cases into the project?")
 if(BUILD_WITH_BENCHMARK_CASES)

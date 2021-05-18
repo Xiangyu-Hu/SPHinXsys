@@ -6,7 +6,11 @@
 * @author	Yongchuan Yu, Massoud Rezevand, Chi ZHang and Xiangyu Hu
 */
 
-#pragma once
+
+#ifndef KERNEL_TABULATED_HPP
+#define KERNEL_TABULATED_HPP
+
+
 
 #include "base_kernel.h"
 #include <cmath>
@@ -144,3 +148,4 @@ namespace SPH
 	}
 	//=================================================================================================//
 }
+#endif //KERNEL_TABULATED_HPP

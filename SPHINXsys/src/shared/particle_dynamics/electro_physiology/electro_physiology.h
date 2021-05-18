@@ -26,7 +26,11 @@
  * including diffusion, reaction and muscle activation. 
  * @author 	Chi Zhang and Xiangyu Hu
  */
-#pragma once
+
+#ifndef ELECTRO_PHYSIOLOGY_H
+#define ELECTRO_PHYSIOLOGY_H
+
+
 
 #include "all_particle_dynamics.h"
 #include "diffusion_reaction_particles.h"
@@ -72,18 +76,32 @@ namespace SPH
 			virtual ~GetElectroPhysiologyTimeStepSize() {};
 		};
         /**
-		* @class ElectroPhysiologyDiffusionRelaxation
+		* @class ElectroPhysiologyDiffusionRelaxationInner
 		* @brief Compute the diffusion relaxation process
 		*/
-		class ElectroPhysiologyDiffusionRelaxation : 
+		class ElectroPhysiologyDiffusionRelaxationInner : 
 			public RelaxationOfAllDiffusionSpeciesRK2<SolidBody, SolidParticles, Solid,
 			RelaxationOfAllDiffussionSpeciesInner<SolidBody, SolidParticles, Solid>, 
 			BaseInnerBodyRelation>
 		{
 		public:
-			ElectroPhysiologyDiffusionRelaxation(BaseInnerBodyRelation* body_inner_relation)
+			ElectroPhysiologyDiffusionRelaxationInner(BaseInnerBodyRelation* body_inner_relation)
 				: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation) {};
-			virtual ~ElectroPhysiologyDiffusionRelaxation() {};
+			virtual ~ElectroPhysiologyDiffusionRelaxationInner() {};
+		};
+		/**
+		* @class ElectroPhysiologyDiffusionRelaxationComplex
+		* @brief Compute the diffusion relaxation process
+		*/
+		class ElectroPhysiologyDiffusionRelaxationComplex : 
+			public RelaxationOfAllDiffusionSpeciesRK2<SolidBody, SolidParticles, Solid,
+			RelaxationOfAllDiffussionSpeciesComplex<SolidBody, SolidParticles, Solid, SolidBody, SolidParticles, Solid>, 
+			ComplexBodyRelation>
+		{
+		public:
+			ElectroPhysiologyDiffusionRelaxationComplex(ComplexBodyRelation* body_complex_relation)
+				: RelaxationOfAllDiffusionSpeciesRK2(body_complex_relation) {};
+			virtual ~ElectroPhysiologyDiffusionRelaxationComplex() {};
 		};
         /**
 		 * @class ElectroPhysiologyReactionRelaxationForward
@@ -128,3 +146,4 @@ namespace SPH
 		};
     }
 }
+#endif //ELECTRO_PHYSIOLOGY_H

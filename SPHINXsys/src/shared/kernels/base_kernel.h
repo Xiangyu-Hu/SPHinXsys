@@ -27,9 +27,17 @@
 * 			between two neighboring particles. Basically, the further the two
 *			particles, the less relevance they have.     
 * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+* @version	0.1
+* @version  0.3.0 
+*			Add the reduced kernel for reduced dynamics of linear structure.
+*			-- Chi ZHANG
 */
 
-#pragma once
+
+#ifndef BASE_KERNELS_H
+#define BASE_KERNELS_H
+
+
 
 #include "base_data_package.h"
 
@@ -157,7 +165,6 @@ namespace SPH
 		Real d2W(const Real& h_ratio, const Real& r_ij, const Real& displacement) const;
 		Real d2W(const Real& h_ratio, const Real& r_ij, const Vec2d& displacement) const;
 		Real d2W(const Real& h_ratio, const Real& r_ij, const Vec3d& displacement) const;
-
 		//----------------------------------------------------------------------
 		//		Below are for reduced kernels.
 		//----------------------------------------------------------------------
@@ -166,3 +173,4 @@ namespace SPH
 		void reduceTwice(); /** reduce for linear structures or filaments */
 	};
 }
+#endif //BASE_KERNELS_H

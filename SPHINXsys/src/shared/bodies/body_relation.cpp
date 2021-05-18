@@ -82,6 +82,17 @@ namespace SPH
 		updateConfigurationMemories();
 	}
 	//=================================================================================================//
+	BaseContactBodyRelation::BaseContactBodyRelation(SPHBody* sph_body, BodyPartVector contact_bodyparts)
+		: SPHBodyRelation(sph_body)
+	{
+		for(size_t k = 0; k != contact_bodyparts.size(); ++k)
+		{
+			contact_bodies_.push_back(dynamic_cast<RealBody*>(contact_bodyparts[k]->getBody()));
+		}
+		subscribe_to_body();
+		updateConfigurationMemories();
+	}
+	//=================================================================================================//
 	void BaseContactBodyRelation::updateConfigurationMemories()
 	{
 		size_t updated_size = sph_body_->base_particles_->real_particles_bound_;
@@ -106,10 +117,22 @@ namespace SPH
 	ContactBodyRelation::ContactBodyRelation(SPHBody* sph_body, RealBodyVector contact_sph_bodies)
 		: BaseContactBodyRelation(sph_body, contact_sph_bodies)
 	{
-		for (size_t k = 0; k != contact_bodies_.size(); ++k) {
+		initializaiton();
+	}
+	//=================================================================================================//
+	ContactBodyRelation::ContactBodyRelation(SPHBody* sph_body, BodyPartVector contact_bodyparts)
+		: BaseContactBodyRelation(sph_body, contact_bodyparts)
+	{
+		initializaiton();
+	}
+	//=================================================================================================//
+	void ContactBodyRelation::initializaiton()
+	{
+		for (size_t k = 0; k != contact_bodies_.size(); ++k) 
+		{
 			target_mesh_cell_linked_lists_.push_back(dynamic_cast<MeshCellLinkedList*>(contact_bodies_[k]->mesh_cell_linked_list_));
-			get_search_ranges_.push_back(new SearchRangeMultiResolution(sph_body, contact_sph_bodies[k]));
-			get_contact_neighbors_.push_back(new NeighborRelationContact(sph_body, contact_sph_bodies[k]));
+			get_search_ranges_.push_back(new SearchRangeMultiResolution(sph_body_, contact_bodies_[k]));
+			get_contact_neighbors_.push_back(new NeighborRelationContact(sph_body_, contact_bodies_[k]));
 		}
 	}
 	//=================================================================================================//
@@ -154,6 +177,47 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
+	void ReducedInnerBodyRelation::updateConfiguration()
+	{
+		tree_->searchNeighborsByParticles(sph_body_->number_of_particles_, *base_particles_,
+			inner_configuration_, get_particle_index_, get_single_search_range_, get_inner_neighbor_);
+	}
+	//=================================================================================================//
+	PartContactBodyRelation::PartContactBodyRelation(BodyPart* body_part, RealBodyVector contact_bodies)
+		: ContactBodyRelation(body_part->getBody(), contact_bodies), body_part_(body_part),
+		body_part_particles_(dynamic_cast<BodyPartByParticle*>(body_part)->body_part_particles_),
+		get_body_part_particle_index_(dynamic_cast<BodyPartByParticle*>(body_part)->body_part_particles_)
+	{
+	}
+	//=================================================================================================//
+	void PartContactBodyRelation::updateConfiguration()
+	{
+		size_t number_of_particles = body_part_particles_.size();
+		for (size_t k = 0; k != contact_bodies_.size(); ++k) 
+		{
+			target_mesh_cell_linked_lists_[k]->searchNeighborsByParticles(number_of_particles, 
+				*base_particles_, contact_configuration_[k],
+				get_body_part_particle_index_, *get_search_ranges_[k], *get_contact_neighbors_[k]);
+		}
+	}
+	//=================================================================================================//
+	BodyContactPartRelation::BodyContactPartRelation(RealBody* real_body, BodyPartVector contact_bodyparts)
+		: ContactBodyRelation(real_body, contact_bodyparts), contact_bodyParts_(contact_bodyparts)
+	{
+	}
+	//=================================================================================================//
+	void BodyContactPartRelation::updateConfiguration()
+	{
+		size_t number_of_particles = base_particles_->total_real_particles_;
+		for (size_t k = 0; k != contact_bodyParts_.size(); ++k) 
+		{
+			BodyPartParticlesCheck check_body_part_particle_(dynamic_cast<BodyPartByParticle*>(contact_bodyParts_[k])->body_part_particles_);
+			target_mesh_cell_linked_lists_[k]->searchNeighborPartsByParticles(number_of_particles, 
+				*base_particles_, contact_configuration_[k],
+				get_particle_index_, *get_search_ranges_[k], *get_contact_neighbors_[k], check_body_part_particle_);
+		}
+	}
+	//=================================================================================================//
 	ComplexBodyRelation::ComplexBodyRelation(BaseInnerBodyRelation* inner_relation, BaseContactBodyRelation* contact_relation) : 
 		SPHBodyRelation(inner_relation->sph_body_),
 		inner_relation_(inner_relation), contact_relation_(contact_relation),
@@ -170,6 +234,9 @@ namespace SPH
 	ComplexBodyRelation::
 		ComplexBodyRelation(BaseInnerBodyRelation* inner_relation, RealBodyVector contact_bodies) :
 		ComplexBodyRelation(inner_relation, new ContactBodyRelation(inner_relation->sph_body_, contact_bodies)) {}
+	//=================================================================================================//
+	ComplexBodyRelation::ComplexBodyRelation(RealBody* real_body, BodyPartVector contact_bodyparts) 
+		:ComplexBodyRelation(new InnerBodyRelation(real_body), new BodyContactPartRelation(real_body, contact_bodyparts)) {}
 	//=================================================================================================//
 	void ComplexBodyRelation::updateConfigurationMemories()
 	{

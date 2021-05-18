@@ -26,7 +26,11 @@
 * @author	Xiangyu Huand Chi Zhang
 */
 
-#pragma once
+
+#ifndef DIFFUSION_REACTION_PARTICLES_H
+#define DIFFUSION_REACTION_PARTICLES_H
+
+
 
 #include "base_particles.h"
 #include "base_body.h"
@@ -105,4 +109,25 @@ namespace SPH {
 		virtual ElectroPhysiologyParticles* ThisObjectPtr() override { return this; };
 
 	};
+	/**
+	 * @class ElectroPhysiologyReducedParticles
+	 * @brief A group of reduced particles with electrophysiology particle data.
+	 */
+	class ElectroPhysiologyReducedParticles 
+		: public DiffusionReactionParticles<SolidParticles, Solid>
+	{
+	public:
+		/** Constructor. */
+		ElectroPhysiologyReducedParticles(SPHBody* body, 
+			DiffusionReactionMaterial<SolidParticles, Solid>* diffusion_reaction_material);
+		/** Destructor. */
+		virtual ~ElectroPhysiologyReducedParticles() {};
+		virtual ElectroPhysiologyReducedParticles* ThisObjectPtr() override { return this; };
+
+		virtual Vecd getKernelGradient(size_t particle_index_i, size_t particle_index_j, Real dW_ij, Vecd& e_ij) override
+		{
+			return dW_ij * e_ij;
+		};
+	};
 }
+#endif //DIFFUSION_REACTION_PARTICLES_H

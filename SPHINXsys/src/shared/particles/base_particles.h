@@ -27,7 +27,11 @@
  * 			vectors for the new data. Note that there is no class of single particle.
  * @author	Xiangyu Hu and Chi Zhang
  */
-#pragma once
+
+#ifndef BASE_PARTICLES_H
+#define BASE_PARTICLES_H
+
+
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
@@ -122,7 +126,8 @@ namespace SPH
 		template<int DataTypeIndex, typename VariableType>
 		StdLargeVec<VariableType>* createAVariable(std::string new_variable_name, VariableType initial_value = VariableType(0))
 		{
-			if (all_variable_maps_[DataTypeIndex].find(new_variable_name) == all_variable_maps_[DataTypeIndex].end()) {
+			if (all_variable_maps_[DataTypeIndex].find(new_variable_name) == all_variable_maps_[DataTypeIndex].end()) 
+			{
 				StdLargeVec<VariableType>* new_variable = new StdLargeVec<VariableType>;
 				registerAVariable<DataTypeIndex, VariableType>(*new_variable, new_variable_name, initial_value);
 				return new_variable;
@@ -305,3 +310,4 @@ namespace SPH
 		};
 	};
 }
+#endif //BASE_PARTICLES_H

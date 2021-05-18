@@ -33,7 +33,11 @@
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */
 
-#pragma once
+
+#ifndef BASE_BODY_H
+#define BASE_BODY_H
+
+
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
@@ -51,6 +55,7 @@ namespace SPH
 	class BaseMeshCellLinkedList;
 	class SPHBodyRelation;
 	class ComplexShape;
+	class Tree;
 	class LevelSetComplexShape;
 
 	/**
@@ -68,12 +73,15 @@ namespace SPH
 		bool newly_updated_;		/**< whether this body is in a newly updated state */
 		BoundingBox body_domain_bounds_; /**< Computational domain bounds for boundary conditions. */
 		bool prescribed_body_bounds_;
+		Real sph_body_resolution_ref_;
 	public:
 		ParticleAdaptation* particle_adaptation_;	/**< Particle adapation policy. */
 		ParticleGenerator* particle_generator_;	/**< Particle generator manner */
 		BaseParticles* base_particles_;				/**< Base particles of this body. */
 		PositionsAndVolumes body_input_points_volumes_; /**< For direct generate particles. Note this should be moved to direct generator. */
 		ComplexShape*  body_shape_;		/** describe the geometry of the body*/
+		size_t number_of_particles_;				/**< Number of real particles of the body. */
+		Tree* tree_;					/** Tree for creating network. */
 		/**
 		 * @brief particle by cells lists is for parallel splitting algorithm.
 		 * All particles in each cell are collected together.
@@ -87,10 +95,14 @@ namespace SPH
 		explicit SPHBody(SPHSystem &sph_system, std::string body_name, 
 			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(),
 			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
+		explicit SPHBody(SPHSystem &sph_system, std::string body_name, Real sph_body_resolution_ref, 
+			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(),
+			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~SPHBody() {};
 
 		std::string getBodyName();
 		SPHSystem& getSPHSystem();
+		Real getSPHBodyResolutionRef() { return sph_body_resolution_ref_; };
 		void setNewlyUpdated() { newly_updated_ = true; };
 		void setNotNewlyUpdated() { newly_updated_ = false; };
 		bool checkNewlyUpdated() { return newly_updated_; };
@@ -125,6 +137,8 @@ namespace SPH
 		BaseMeshCellLinkedList* mesh_cell_linked_list_; /**< Cell linked mesh of this body. */
 
 		RealBody(SPHSystem &sph_system, std::string body_name, ParticleAdaptation* particle_adaptation,
+			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
+		RealBody(SPHSystem &sph_system, std::string body_name, Real sph_body_resolution_ref, ParticleAdaptation* particle_adaptation, 
 			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~RealBody() {};
 
@@ -279,4 +293,20 @@ namespace SPH
 		/** only cells near the surface of the body part shape are included */
 		virtual bool checkIncluded(Vecd cell_position, Real threshold) override;
 	};
+	
+	/**
+	 * @class TreeLeaves
+	 * @brief A auxillary class for a Tree-like Body to
+	 * indicate the leaves particle from tree data. 
+	 */
+	class TreeLeaves : public BodyPartByParticle
+	{
+	public:
+		TreeLeaves(SPHBody* body);
+		virtual~TreeLeaves() {};
+
+	protected:
+		virtual void tagBodyPart() override;
+	};
 }
+#endif //BASE_BODY_H

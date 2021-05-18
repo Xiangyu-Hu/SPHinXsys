@@ -31,7 +31,11 @@
 * @author	Chi ZHang and Xiangyu Hu
 */
 
-#pragma once
+
+#ifndef BASE_MESH_H
+#define BASE_MESH_H
+
+
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
@@ -174,3 +178,4 @@ namespace SPH
 		}
 	};
 }
+#endif //BASE_MESH_H

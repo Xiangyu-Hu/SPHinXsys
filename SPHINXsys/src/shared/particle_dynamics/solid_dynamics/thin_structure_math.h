@@ -26,7 +26,11 @@
 * @author	Dong Wu and Xiangyu Hu
 * @version	0.1
 */
-#pragma once
+
+#ifndef THIN_STRUCTURE_MATH_H
+#define THIN_STRUCTURE_MATH_H
+
+
 #include "all_particle_dynamics.h"
 #include "elastic_solid.h"
 #include "weakly_compressible_fluid.h"
@@ -62,3 +66,4 @@ namespace SPH
 		Vecd getRotationFromPseudoNormalForSmallDeformation(const Vec3d& dpseudo_n_d2t, const Vec3d& rotation, const Vec3d& angular_vel, Real dt);
 	}
 }
+#endif //THIN_STRUCTURE_MATH_H
