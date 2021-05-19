@@ -244,8 +244,8 @@ namespace SPH
 			vel_ave_[index_i] = vel_n_[index_i];
 		}
 		//=================================================================================================//
-		ParticleWiseAcceleration
-			::ParticleWiseAcceleration(SolidBody* body, Vecd stiffness, Real damping_ratio)
+		SpringDamperConstraintParticleWise
+			::SpringDamperConstraintParticleWise(SolidBody* body, Vecd stiffness, Real damping_ratio)
 			: ParticleDynamicsSimple(body), SolidDataSimple(body),
 					pos_n_(particles_->pos_n_),
 					pos_0_(particles_->pos_0_),
@@ -257,12 +257,12 @@ namespace SPH
 			damping_ratio_ = damping_ratio;
 		}
 		//=================================================================================================//
-		void ParticleWiseAcceleration::setupDynamics(Real dt)
+		void SpringDamperConstraintParticleWise::setupDynamics(Real dt)
 		{
 			particles_->total_ghost_particles_ = 0;
 		}
 		//=================================================================================================//
-		Vecd ParticleWiseAcceleration::getAcceleration(Vecd& disp, Real mass)
+		Vecd SpringDamperConstraintParticleWise::getAcceleration(Vecd& disp, Real mass)
 		{
 			Vecd spring_force(0);
 			for(int i = 0; i < disp.size(); i++)
@@ -272,7 +272,7 @@ namespace SPH
 			return spring_force;
 		}
 		//=================================================================================================//
-		Vecd ParticleWiseAcceleration::getDampingForce(size_t index_i, Real mass)
+		Vecd SpringDamperConstraintParticleWise::getDampingForce(size_t index_i, Real mass)
 		{
 			Vecd damping_force(0);
 			for(int i = 0; i < vel_n_[index_i].size(); i++)
@@ -282,7 +282,7 @@ namespace SPH
 			return damping_force;
 		}
 		//=================================================================================================//
-		void ParticleWiseAcceleration::Update(size_t index_i, Real dt)
+		void SpringDamperConstraintParticleWise::Update(size_t index_i, Real dt)
 		{	
 			Vecd disp_from_0 = pos_n_[index_i] - pos_0_[index_i];
 			dvel_dt_others_[index_i] += getAcceleration(disp_from_0, mass_[index_i]);

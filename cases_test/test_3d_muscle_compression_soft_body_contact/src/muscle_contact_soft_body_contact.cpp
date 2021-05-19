@@ -183,7 +183,7 @@ int main()
 	solid_dynamics::ConstrainSolidBodyRegion
 		constrain_holder(myocardium_body, new Holder(myocardium_body, "Holder"));
 	/** Add spring contraint on the plate. */
-	solid_dynamics::ParticleWiseAcceleration spring_contraint(moving_plate, Vecd(0.2, 0, 0), 0.01);
+	solid_dynamics::SpringDamperConstraintParticleWise spring_contraint(moving_plate, Vecd(0.2, 0, 0), 0.01);
 
 	/** Damping with the solid body*/
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>

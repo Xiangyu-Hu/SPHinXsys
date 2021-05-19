@@ -241,15 +241,15 @@ namespace SPH
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 		/**
-		* @class ParticleWiseAcceleration
-		* @brief ParticleWiseAcceleration
+		* @class SpringDamperConstraintParticleWise
+		* @brief SpringDamperConstraintParticleWise
 		*/
-		class ParticleWiseAcceleration 
+		class SpringDamperConstraintParticleWise 
 			: public ParticleDynamicsSimple, public SolidDataSimple
 		{
 		public:
-			ParticleWiseAcceleration(SolidBody* body, Vecd stiffness, Real damping_ratio = 0.01);
-			virtual ~ParticleWiseAcceleration() {};
+			SpringDamperConstraintParticleWise(SolidBody* body, Vecd stiffness, Real damping_ratio = 0.01);
+			virtual ~SpringDamperConstraintParticleWise() {};
 		protected:
 			StdLargeVec<Real>& mass_;
 			StdLargeVec<Vecd>& pos_n_,& pos_0_,& vel_n_,& dvel_dt_others_;
