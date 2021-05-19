@@ -245,14 +245,16 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ParticleWiseAcceleration
-			::ParticleWiseAcceleration(SolidBody* body, Vecd stiffness)
+			::ParticleWiseAcceleration(SolidBody* body, Vecd stiffness, Real damping_ratio)
 			: ParticleDynamicsSimple(body), SolidDataSimple(body),
 					pos_n_(particles_->pos_n_),
 					pos_0_(particles_->pos_0_),
+					vel_n_(particles_->vel_n_),
 					dvel_dt_others_(particles_->dvel_dt_others_),
 					mass_(particles_->mass_)
 		{
 			stiffness_ = stiffness;
+			damping_ratio_ = damping_ratio;
 		}
 		//=================================================================================================//
 		void ParticleWiseAcceleration::setupDynamics(Real dt)
@@ -270,10 +272,21 @@ namespace SPH
 			return spring_force;
 		}
 		//=================================================================================================//
+		Vecd ParticleWiseAcceleration::getDampingForce(size_t index_i, Real mass)
+		{
+			Vecd damping_force(0);
+			for(int i = 0; i < vel_n_[index_i].size(); i++)
+			{
+				damping_force[i] = -stiffness_[i] * damping_ratio_ * vel_n_[index_i][i] / mass;
+			}
+			return damping_force;
+		}
+		//=================================================================================================//
 		void ParticleWiseAcceleration::Update(size_t index_i, Real dt)
 		{	
 			Vecd disp_from_0 = pos_n_[index_i] - pos_0_[index_i];
-			dvel_dt_others_[index_i] += getAcceleration(disp_from_0, mass_[index_i]); //Vecd(100.0, 0.0, 10.0);
+			dvel_dt_others_[index_i] += getAcceleration(disp_from_0, mass_[index_i]);
+			dvel_dt_others_[index_i] += getDampingForce(index_i, mass_[index_i]);
 		}
 		//=================================================================================================//	
 		ElasticDynamicsInitialCondition::

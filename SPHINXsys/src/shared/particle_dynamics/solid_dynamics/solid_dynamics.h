@@ -248,14 +248,18 @@ namespace SPH
 			: public ParticleDynamicsSimple, public SolidDataSimple
 		{
 		public:
-			ParticleWiseAcceleration(SolidBody* body, Vecd stiffness);
+			ParticleWiseAcceleration(SolidBody* body, Vecd stiffness, Real damping_ratio = 0.01);
 			virtual ~ParticleWiseAcceleration() {};
 		protected:
 			StdLargeVec<Real>& mass_;
-			StdLargeVec<Vecd>& pos_n_,& pos_0_,& dvel_dt_others_;
+			StdLargeVec<Vecd>& pos_n_,& pos_0_,& vel_n_,& dvel_dt_others_;
 			Vecd stiffness_;
+			// damping component parallel to the spring force component
+			// damping coefficient = stiffness_ * damping_ratio_
+			Real damping_ratio_;
 			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual Vecd getAcceleration(Vecd& disp, Real mass);
+			virtual Vecd getDampingForce(size_t index_i, Real mass);
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
