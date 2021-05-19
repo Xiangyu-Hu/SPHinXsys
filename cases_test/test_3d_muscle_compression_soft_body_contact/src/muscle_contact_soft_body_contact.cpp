@@ -178,11 +178,12 @@ int main()
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ContactDensitySummation plate_update_contact_density(plate_myocardium_contact);
 	solid_dynamics::ContactForce plate_compute_solid_contact_forces(plate_myocardium_contact);
+
 	/** Constrain the holder. */
 	solid_dynamics::ConstrainSolidBodyRegion
 		constrain_holder(myocardium_body, new Holder(myocardium_body, "Holder"));
 	/** Add spring contraint on the plate. */
-	solid_dynamics::ParticleWiseAcceleration spring_contraint(moving_plate, Vecd(1e6, 1e6, 1e6));
+	solid_dynamics::ParticleWiseAcceleration spring_contraint(moving_plate, Vecd(0.2, 0, 0));
 
 	/** Damping with the solid body*/
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>

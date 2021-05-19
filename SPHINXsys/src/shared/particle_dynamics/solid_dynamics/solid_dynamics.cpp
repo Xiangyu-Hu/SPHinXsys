@@ -273,7 +273,7 @@ namespace SPH
 		void ParticleWiseAcceleration::Update(size_t index_i, Real dt)
 		{	
 			Vecd disp_from_0 = pos_n_[index_i] - pos_0_[index_i];
-			dvel_dt_others_[index_i] += 99; //getAcceleration(disp_from_0, mass_[index_i]);
+			dvel_dt_others_[index_i] += getAcceleration(disp_from_0, mass_[index_i]); //Vecd(100.0, 0.0, 10.0);
 		}
 		//=================================================================================================//	
 		ElasticDynamicsInitialCondition::
