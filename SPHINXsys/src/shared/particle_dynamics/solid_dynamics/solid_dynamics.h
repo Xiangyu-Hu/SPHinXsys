@@ -242,7 +242,9 @@ namespace SPH
 		};
 		/**
 		* @class SpringDamperConstraintParticleWise
-		* @brief SpringDamperConstraintParticleWise
+		* @brief Exerts spring force and damping force in the form of acceleration to each particle.
+		* The spring force is calculated based on the difference from the particle's initial position.
+		* The damping force is calculated based on the particle's current velocity.
 		*/
 		class SpringDamperConstraintParticleWise 
 			: public ParticleDynamicsSimple, public SolidDataSimple
@@ -260,6 +262,23 @@ namespace SPH
 			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual Vecd getAcceleration(Vecd& disp, Real mass);
 			virtual Vecd getDampingForce(size_t index_i, Real mass);
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+		/**
+		* @class AccelerationForBodyPartInBoundingBox
+		* @brief Adds acceleration to the part of the body that's inside a bounding box
+		*/
+		class AccelerationForBodyPartInBoundingBox 
+			: public ParticleDynamicsSimple, public SolidDataSimple
+		{
+		public:
+			AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox* bounding_box, Vec3d acceleration);
+			virtual ~AccelerationForBodyPartInBoundingBox() {};
+		protected:
+			StdLargeVec<Vecd>& pos_n_,& dvel_dt_others_;
+			BoundingBox* bounding_box_;
+			Vecd acceleration_;
+			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
