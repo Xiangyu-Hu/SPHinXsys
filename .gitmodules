@@ -1,9 +1,9 @@
-[submodule "oneTBB"]
-	path = oneTBB
-	url = https://github.com/oneapi-src/oneTBB
 [submodule "SPHINXsys/src/shared/simbody"]
 	path = SPHINXsys/src/shared/simbody
 	url = https://github.com/BenceVirtonomy/simbody
 [submodule "SPHINXsys/src/shared/clapack_for_SPHinXsys"]
 	path = SPHINXsys/src/shared/clapack_for_SPHinXsys
 	url = https://github.com/BenceVirtonomy/clapack_for_SPHinXsys
+[submodule "oneTBB"]
+	path = oneTBB
+	url = https://github.com/BenceVirtonomy/oneTBB
