@@ -180,8 +180,9 @@ void SolidStructuralSimulation::InitializeAccelerationForBodyPartInBoundingBox()
 	for (auto body_index: body_indeces_accelerations_)
 	{
 		acceleration_for_body_part_.push_back(new solid_dynamics::AccelerationForBodyPartInBoundingBox(imported_model_list_[body_index], bounding_boxes_[i], accelerations_[i]));
-	}
-	i++;
+        i++;
+    }
+	
 }
 
 void SolidStructuralSimulation::AddAccelerationForBodyPartInBoundingBox(int body_index, BoundingBox* bounding_box, Vecd acceleration)
@@ -197,8 +198,8 @@ void SolidStructuralSimulation::InitializeSpringDamperConstraintParticleWise()
 	for (auto body_index: body_indeces_spring_damper_)
 	{
 		spring_damper_contraint_.push_back(new solid_dynamics::SpringDamperConstraintParticleWise(imported_model_list_[body_index], stiffnesses_[i], damping_ratios_[i]));
-	}
-	i++;
+        i++;
+    }
 }
 
 void SolidStructuralSimulation::AddSpringDamperConstraintParticleWise(int body_index, Vecd stiffness, Real damping_ratio)
