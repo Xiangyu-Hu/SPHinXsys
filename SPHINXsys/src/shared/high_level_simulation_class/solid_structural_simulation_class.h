@@ -33,6 +33,7 @@ struct SolidStructuralSimulationInput
 	std::string relative_input_path;
 	std::vector<std::string>* imported_stl_list;
 	Real scale_stl;
+	std::vector<Vec3d>* translation_list;
 	Real default_resolution;
 	std::vector<Real>* resolution_list;
 	std::vector<LinearElasticSolid*>* material_model_list;
@@ -46,6 +47,7 @@ class SolidStructuralSimulation
 		std::string relative_input_path_;
 		std::vector<std::string>* imported_stl_list_;
 		Real scale_stl_;
+		std::vector<Vec3d>* translation_list_;
 		Real default_resolution_;
 		std::vector<Real>* resolution_list_;
 		std::vector<LinearElasticSolid*>* material_model_list_;
@@ -73,16 +75,16 @@ class SolidStructuralSimulation
 		// for InitializeGravity
 		std::vector<InitializeATimeStep*> initialize_gravity_;
 		std::vector<int> body_indeces_gravity_;
-		std::vector<Vecd*> gravity_;
+		std::vector<Vec3d*> gravity_;
 		// for AddAccelerationForBodyPartInBoundingBox
 		std::vector<solid_dynamics::AccelerationForBodyPartInBoundingBox*> acceleration_for_body_part_;
 		std::vector<int> body_indeces_accelerations_;
 		std::vector<BoundingBox*> bounding_boxes_;
-		std::vector<Vecd> accelerations_;
+		std::vector<Vec3d> accelerations_;
 		// for AddSpringDamperConstraintParticleWise
 		std::vector<solid_dynamics::SpringDamperConstraintParticleWise*> spring_damper_contraint_;
 		std::vector<int> body_indeces_spring_damper_;
-		std::vector<Vecd> stiffnesses_;
+		std::vector<Vec3d> stiffnesses_;
 		std::vector<Real> damping_ratios_;
 		// for AddSpringDamperConstraintParticleWise
 		std::vector<solid_dynamics::ConstrainSolidBodyRegion*> fixed_contraint_;
@@ -119,10 +121,11 @@ class SolidStructuralSimulation
 	public:
  		SolidStructuralSimulation(SolidStructuralSimulationInput* input)
 		{
-			scale_stl_ = input->scale_stl;
-			default_resolution_ = input->default_resolution;
 			relative_input_path_ = input->relative_input_path;
 			imported_stl_list_ = input->imported_stl_list;
+			scale_stl_ = input->scale_stl;
+			translation_list_ = input->translation_list;
+			default_resolution_ = input->default_resolution;
 			resolution_list_ = input->resolution_list;
 			material_model_list_ = input->material_model_list;
 			physical_viscosity_ = input->physical_viscosity;
@@ -133,9 +136,9 @@ class SolidStructuralSimulation
 		TriangleMeshShape* GetBodyMesh(int body_index) { return body_mesh_list_[body_index]; };
 
 		// boundary conditions for user
-		void AddGravity(int body_index, Vecd* gravity);
-		void AddAccelerationForBodyPartInBoundingBox(int body_index, BoundingBox* bounding_box, Vecd acceleration);
-		void AddSpringDamperConstraintParticleWise(int body_index, Vecd stiffness, Real damping_ratio);
+		void AddGravity(int body_index, Vec3d* gravity);
+		void AddAccelerationForBodyPartInBoundingBox(int body_index, BoundingBox* bounding_box, Vec3d acceleration);
+		void AddSpringDamperConstraintParticleWise(int body_index, Vec3d stiffness, Real damping_ratio);
 		void AddConstrainSolidBodyRegion(int body_index);
 
 		// high level functions for user

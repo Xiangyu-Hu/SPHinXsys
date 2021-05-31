@@ -82,17 +82,19 @@ void RelaxParticlesSingleResolution(In_Output* in_output,
 ///////////////////////////////////////
 
 void SolidStructuralSimulation::ImportSTLModels()
-{
+{   
+    int i = 0;
 	for (auto imported_stl: *imported_stl_list_)
 	{	
 		std::string relative_input_path_copy = relative_input_path_;
-		body_mesh_list_.push_back(new TriangleMeshShape(relative_input_path_copy.append(imported_stl), Vecd(0, 0, 0), scale_stl_));
+		body_mesh_list_.push_back(new TriangleMeshShape(relative_input_path_copy.append(imported_stl), (*translation_list_)[i], scale_stl_));
+        i++;
 	}
 }
 
 BoundingBox* SolidStructuralSimulation::CalculateSystemBoundaries()
 {
-	BoundingBox* system_domain_bounds = new BoundingBox(Vecd(0, 0, 0), Vecd(0, 0, 0));
+	BoundingBox* system_domain_bounds = new BoundingBox(Vec3d(0, 0, 0), Vec3d(0, 0, 0));
 	
 	for (auto body_mesh: body_mesh_list_)
 	{
@@ -168,7 +170,7 @@ void SolidStructuralSimulation::InitializeGravity()
 	}
 }
 
-void SolidStructuralSimulation::AddGravity(int body_index, Vecd* gravity)
+void SolidStructuralSimulation::AddGravity(int body_index, Vec3d* gravity)
 {
 	body_indeces_gravity_.push_back(body_index);
 	gravity_.push_back(gravity);
@@ -185,7 +187,7 @@ void SolidStructuralSimulation::InitializeAccelerationForBodyPartInBoundingBox()
 	
 }
 
-void SolidStructuralSimulation::AddAccelerationForBodyPartInBoundingBox(int body_index, BoundingBox* bounding_box, Vecd acceleration)
+void SolidStructuralSimulation::AddAccelerationForBodyPartInBoundingBox(int body_index, BoundingBox* bounding_box, Vec3d acceleration)
 {
 	body_indeces_accelerations_.push_back(body_index);
 	bounding_boxes_.push_back(bounding_box);
@@ -202,7 +204,7 @@ void SolidStructuralSimulation::InitializeSpringDamperConstraintParticleWise()
     }
 }
 
-void SolidStructuralSimulation::AddSpringDamperConstraintParticleWise(int body_index, Vecd stiffness, Real damping_ratio)
+void SolidStructuralSimulation::AddSpringDamperConstraintParticleWise(int body_index, Vec3d stiffness, Real damping_ratio)
 {
 	body_indeces_spring_damper_.push_back(body_index);
 	stiffnesses_.push_back(stiffness);
