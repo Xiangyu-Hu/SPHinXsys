@@ -182,6 +182,19 @@ void SolidStructuralSimulation::InitializeContactBetweenTwoBodies(int first, int
 	contact_force_list_.push_back(new solid_dynamics::ContactForce (second_contact));
 }
 
+void SolidStructuralSimulation::InitializeAllContacts()
+{
+	for (auto pair: contacting_bodies_list_)
+	{
+		InitializeContactBetweenTwoBodies(pair.first, pair.second);
+	}
+}
+
+void SolidStructuralSimulation::AddContactPair(int first_id, int second_id)
+{
+	contacting_bodies_list_.push_back(std::pair<int, int>(first_id, second_id));
+}
+
 void SolidStructuralSimulation::InitializeGravity()
 {
 	int i = 0;

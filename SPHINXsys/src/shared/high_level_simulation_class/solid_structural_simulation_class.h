@@ -69,6 +69,7 @@ class SolidStructuralSimulation
 		std::vector<solid_dynamics::StressRelaxationSecondHalf*> stress_relaxation_second_half_list_;
 		std::vector<DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>*> damping_list_;
 
+		std::vector<std::pair<int, int>> contacting_bodies_list_;
 		std::vector<SolidContactBodyRelation*> contact_list_;
 		std::vector<solid_dynamics::ContactDensitySummation*> contact_density_list_;
 		std::vector<solid_dynamics::ContactForce*> contact_force_list_;
@@ -97,6 +98,7 @@ class SolidStructuralSimulation
 		void SetupSystem();
 		void InitializeElasticBodies(bool write_particle_relaxation);
 		void InitializeContactBetweenTwoBodies(int first, int second);
+		void InitializeAllContacts();
 
 		// for InitializeBoundaryConditions
 		void InitializeGravity();
@@ -139,6 +141,9 @@ class SolidStructuralSimulation
 		// get data from private members
 		TriangleMeshShape* GetBodyMesh(int body_index) { return body_mesh_list_[body_index]; };
 
+		// add contacting bodies
+		void AddContactPair(int first_id, int second_id);
+
 		// boundary conditions for user
 		void AddGravity(int body_index, Vec3d* gravity);
 		void AddAccelerationForBodyPartInBoundingBox(int body_index, BoundingBox* bounding_box, Vec3d acceleration);
@@ -151,7 +156,7 @@ class SolidStructuralSimulation
 			ImportSTLModelsAndAddPrimitives();
 			SetupSystem();
 			InitializeElasticBodies(write_particle_relaxation);
-			InitializeContactBetweenTwoBodies(0, 1);
+			InitializeAllContacts();
 		};
 		void InitializeBoundaryConditions()
 		{
