@@ -81,8 +81,16 @@ void RelaxParticlesSingleResolution(In_Output* in_output,
 /* SolidStructuralSimulation members */
 ///////////////////////////////////////
 
-void SolidStructuralSimulation::ImportSTLModels()
+void SolidStructuralSimulation::AddPrimitiveCuboid(Vec3d halfsize_cuboid, Vec3d translation, Real resolution, LinearElasticSolid* material)
+{
+    primitive_shape_list_.push_back( new TriangleMeshShape(halfsize_cuboid, 20, translation) );
+	(*resolution_list_).push_back(resolution);
+	(*material_model_list_).push_back(material);
+}
+
+void SolidStructuralSimulation::ImportSTLModelsAndAddPrimitives()
 {   
+    // add shapes that are imported from STLs
     int i = 0;
 	for (auto imported_stl: *imported_stl_list_)
 	{	
@@ -90,6 +98,11 @@ void SolidStructuralSimulation::ImportSTLModels()
 		body_mesh_list_.push_back(new TriangleMeshShape(relative_input_path_copy.append(imported_stl), (*translation_list_)[i], scale_stl_));
         i++;
 	}
+    // add primitive shapes
+    for (auto primitive: primitive_shape_list_)
+    {
+        body_mesh_list_.push_back(primitive);
+    }
 }
 
 BoundingBox* SolidStructuralSimulation::CalculateSystemBoundaries()
@@ -111,13 +124,25 @@ void SolidStructuralSimulation::SetupSystem()
 	in_output_ = new In_Output (*system_);
 };
 
-void SolidStructuralSimulation::InitializeElasticBodies()
+void SolidStructuralSimulation::InitializeElasticBodies(bool write_particle_relaxation)
 {	
 	int i = 0;
+	int number_stls = (*imported_stl_list_).size();
 	for (auto body_mesh: body_mesh_list_)
 	{	
-		std::string imported_stl = (*imported_stl_list_)[i];
-		ImportedModel* imported_model = new ImportedModel(*system_, imported_stl, body_mesh, (*resolution_list_)[i]);
+		std::string name;
+		// imported STLs
+		if (i < number_stls)
+		{
+			name = (*imported_stl_list_)[i];
+		}
+		// primitive bodies
+		else
+		{
+			name = "Primitive";
+			name.append(std::to_string(i));
+		}
+		ImportedModel* imported_model = new ImportedModel(*system_, name, body_mesh, (*resolution_list_)[i]);
 		imported_model_list_.push_back(imported_model);
 
 		ElasticSolidParticles* imported_model_particles = new ElasticSolidParticles(imported_model, (*material_model_list_)[i]);
@@ -125,8 +150,12 @@ void SolidStructuralSimulation::InitializeElasticBodies()
 
 		InnerBodyRelation* imported_model_inner = new InnerBodyRelation(imported_model);
 		imported_model_inner_list_.push_back(imported_model_inner);
-		RelaxParticlesSingleResolution(in_output_, false, imported_model, imported_model_particles, imported_model_inner);
-
+		// particle relaxtion, only for STL geometries, not for primitives
+		if (i < number_stls)
+		{
+			RelaxParticlesSingleResolution(in_output_, write_particle_relaxation, imported_model, imported_model_particles, imported_model_inner);
+		}
+		
 		correct_configuration_list_.push_back(new solid_dynamics::CorrectConfiguration(imported_model_inner));
 		stress_relaxation_first_half_list_.push_back(new solid_dynamics::StressRelaxationFirstHalf(imported_model_inner));
 		stress_relaxation_second_half_list_.push_back(new solid_dynamics::StressRelaxationSecondHalf(imported_model_inner));

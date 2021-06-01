@@ -58,7 +58,8 @@ class SolidStructuralSimulation
 		In_Output* in_output_;
 
 		std::vector<TriangleMeshShape*> body_mesh_list_;
-
+		std::vector<TriangleMeshShape*> primitive_shape_list_;
+		
 		std::vector<ImportedModel*> imported_model_list_;
 		std::vector<ElasticSolidParticles*> imported_model_particles_list_;
 		std::vector<InnerBodyRelation*> imported_model_inner_list_;
@@ -91,10 +92,10 @@ class SolidStructuralSimulation
 		std::vector<int> body_indeces_fixed_contraint_;
 		
 		// for PreprocessSimulation, the order is important
-		void ImportSTLModels();
+		void ImportSTLModelsAndAddPrimitives();
 		BoundingBox* CalculateSystemBoundaries(); //for SetupSystem
 		void SetupSystem();
-		void InitializeElasticBodies();
+		void InitializeElasticBodies(bool write_particle_relaxation);
 		void InitializeContactBetweenTwoBodies(int first, int second);
 
 		// for InitializeBoundaryConditions
@@ -131,6 +132,9 @@ class SolidStructuralSimulation
 			physical_viscosity_ = input->physical_viscosity;
 		};
 		virtual ~SolidStructuralSimulation() {};
+
+		//add primitive shapes
+		void AddPrimitiveCuboid(Vec3d halfsize_cuboid, Vec3d translation, Real resolution, LinearElasticSolid* material);
 		
 		// get data from private members
 		TriangleMeshShape* GetBodyMesh(int body_index) { return body_mesh_list_[body_index]; };
@@ -142,11 +146,11 @@ class SolidStructuralSimulation
 		void AddConstrainSolidBodyRegion(int body_index);
 
 		// high level functions for user
-		void PreprocessSimulation()
+		void PreprocessSimulation(bool write_particle_relaxation)
 		{
-			ImportSTLModels();
+			ImportSTLModelsAndAddPrimitives();
 			SetupSystem();
-			InitializeElasticBodies();
+			InitializeElasticBodies(write_particle_relaxation);
 			InitializeContactBetweenTwoBodies(0, 1);
 		};
 		void InitializeBoundaryConditions()
