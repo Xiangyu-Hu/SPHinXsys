@@ -81,21 +81,21 @@ void RelaxParticlesSingleResolution(In_Output* in_output,
 /* SolidStructuralSimulation members */
 ///////////////////////////////////////
 
-void SolidStructuralSimulation::AddPrimitiveCuboid(Vec3d halfsize_cuboid, Vec3d translation, Real resolution, LinearElasticSolid* material)
+void SolidStructuralSimulation::AddPrimitiveCuboid(Vec3d halfsize_cuboid, Vec3d translation, Real resolution, LinearElasticSolid& material)
 {
-    primitive_shape_list_.push_back( new TriangleMeshShape(halfsize_cuboid, 20, translation) );
-	(*resolution_list_).push_back(resolution);
-	(*material_model_list_).push_back(material);
+    primitive_shape_list_.push_back( TriangleMeshShape(halfsize_cuboid, 20, translation) );
+	resolution_list_.push_back(resolution);
+	material_model_list_.push_back(material);
 }
 
 void SolidStructuralSimulation::ImportSTLModelsAndAddPrimitives()
 {   
     // add shapes that are imported from STLs
     int i = 0;
-	for (auto imported_stl: *imported_stl_list_)
+	for (auto imported_stl: imported_stl_list_)
 	{	
 		std::string relative_input_path_copy = relative_input_path_;
-		body_mesh_list_.push_back(new TriangleMeshShape(relative_input_path_copy.append(imported_stl), (*translation_list_)[i], scale_stl_));
+		body_mesh_list_.push_back(TriangleMeshShape(relative_input_path_copy.append(imported_stl), translation_list_[i], scale_stl_));
         i++;
 	}
     // add primitive shapes
@@ -105,36 +105,32 @@ void SolidStructuralSimulation::ImportSTLModelsAndAddPrimitives()
     }
 }
 
-BoundingBox* SolidStructuralSimulation::CalculateSystemBoundaries()
-{
-	BoundingBox* system_domain_bounds = new BoundingBox(Vec3d(0, 0, 0), Vec3d(0, 0, 0));
-	
+void SolidStructuralSimulation::CalculateSystemBoundaries()
+{	
 	for (auto body_mesh: body_mesh_list_)
 	{
-		BoundingBox additional = body_mesh->findBounds();
-		ExpandBoundingBox(system_domain_bounds, &additional);
+		BoundingBox additional = body_mesh.findBounds();
+		ExpandBoundingBox(&system_.system_domain_bounds_, &additional);
 	}
-	return system_domain_bounds;
 }
 
 void SolidStructuralSimulation::SetupSystem()
 {
-	system_ = new SPHSystem (*CalculateSystemBoundaries(), default_resolution_);
-	system_->run_particle_relaxation_ = true;
-	in_output_ = new In_Output (*system_);
-};
+	CalculateSystemBoundaries();
+	system_.run_particle_relaxation_ = true;
+}
 
 void SolidStructuralSimulation::InitializeElasticBodies(bool write_particle_relaxation)
 {	
 	int i = 0;
-	int number_stls = (*imported_stl_list_).size();
+	int number_stls = imported_stl_list_.size();
 	for (auto body_mesh: body_mesh_list_)
 	{	
 		std::string name;
 		// imported STLs
 		if (i < number_stls)
 		{
-			name = (*imported_stl_list_)[i];
+			name = imported_stl_list_[i];
 		}
 		// primitive bodies
 		else
@@ -142,10 +138,10 @@ void SolidStructuralSimulation::InitializeElasticBodies(bool write_particle_rela
 			name = "Primitive";
 			name.append(std::to_string(i));
 		}
-		ImportedModel* imported_model = new ImportedModel(*system_, name, body_mesh, (*resolution_list_)[i]);
+		ImportedModel* imported_model = new ImportedModel(system_, name, &body_mesh, resolution_list_[i]);
 		imported_model_list_.push_back(imported_model);
 
-		ElasticSolidParticles* imported_model_particles = new ElasticSolidParticles(imported_model, (*material_model_list_)[i]);
+		ElasticSolidParticles* imported_model_particles = new ElasticSolidParticles(imported_model, &material_model_list_[i]);
 		imported_model_particles_list_.push_back(imported_model_particles);
 
 		InnerBodyRelation* imported_model_inner = new InnerBodyRelation(imported_model);
@@ -153,7 +149,7 @@ void SolidStructuralSimulation::InitializeElasticBodies(bool write_particle_rela
 		// particle relaxtion, only for STL geometries, not for primitives
 		if (i < number_stls)
 		{
-			RelaxParticlesSingleResolution(in_output_, write_particle_relaxation, imported_model, imported_model_particles, imported_model_inner);
+			RelaxParticlesSingleResolution(&in_output_, write_particle_relaxation, imported_model, imported_model_particles, imported_model_inner);
 		}
 		
 		correct_configuration_list_.push_back(new solid_dynamics::CorrectConfiguration(imported_model_inner));
@@ -257,7 +253,7 @@ void SolidStructuralSimulation::InitializeConstrainSolidBodyRegion()
 {	
 	for (auto body_index: body_indeces_fixed_contraint_)
 	{
-		BodyPartByParticle* bp = new BodyPartByParticle(imported_model_list_[body_index], (*imported_stl_list_)[body_index], body_mesh_list_[body_index]);
+		BodyPartByParticle* bp = new BodyPartByParticle(imported_model_list_[body_index], imported_stl_list_[body_index], &body_mesh_list_[body_index]);
 		fixed_contraint_.push_back(new solid_dynamics::ConstrainSolidBodyRegion(imported_model_list_[body_index], bp));
 	}
 }
@@ -385,7 +381,7 @@ void SolidStructuralSimulation::RunSimulationStep(int &ite, Real &dt, Real &inte
 	
 	/** UPDATE TIME STEP SIZE, INCREMENT */
 	ite++;
-	dt = system_->getSmallestTimeStepAmongSolidBodies();
+	dt = system_.getSmallestTimeStepAmongSolidBodies();
 	integration_time += dt;
 	GlobalStaticVariables::physical_time_ += dt;
 	
@@ -398,12 +394,12 @@ void SolidStructuralSimulation::RunSimulationStep(int &ite, Real &dt, Real &inte
 
 void SolidStructuralSimulation::RunSimulation(Real end_time)
 {
-	WriteBodyStatesToVtu write_states(*in_output_, system_->real_bodies_);
+	WriteBodyStatesToVtu write_states(in_output_, system_.real_bodies_);
 	GlobalStaticVariables::physical_time_ = 0.0;
 	
 	/** INITIALALIZE SYSTEM */
-	system_->initializeSystemCellLinkedLists();
-	system_->initializeSystemConfigurations();
+	system_.initializeSystemCellLinkedLists();
+	system_.initializeSystemConfigurations();
 
 	/** INITIAL CONDITION */
 	ExecuteCorrectConfiguration();

@@ -17,6 +17,7 @@ class ImportedModel : public SolidBody
 {
 public:
 	ImportedModel(SPHSystem &system, std::string body_name, TriangleMeshShape* triangle_mesh_shape, Real resolution);
+	~ImportedModel(){};
 };
 
 void ExpandBoundingBox(BoundingBox* original, BoundingBox* additional);
@@ -31,12 +32,12 @@ void RelaxParticlesSingleResolution(In_Output* in_output,
 struct SolidStructuralSimulationInput
 {
 	std::string relative_input_path;
-	std::vector<std::string>* imported_stl_list;
+	std::vector<std::string> imported_stl_list;
 	Real scale_stl;
-	std::vector<Vec3d>* translation_list;
+	std::vector<Vec3d> translation_list;
 	Real default_resolution;
-	std::vector<Real>* resolution_list;
-	std::vector<LinearElasticSolid*>* material_model_list;
+	std::vector<Real> resolution_list;
+	std::vector<LinearElasticSolid> material_model_list;
 	Real physical_viscosity;
 };
 
@@ -45,20 +46,20 @@ class SolidStructuralSimulation
 	private:
 		// input members
 		std::string relative_input_path_;
-		std::vector<std::string>* imported_stl_list_;
+		std::vector<std::string> imported_stl_list_;
 		Real scale_stl_;
-		std::vector<Vec3d>* translation_list_;
+		std::vector<Vec3d> translation_list_;
 		Real default_resolution_;
-		std::vector<Real>* resolution_list_;
-		std::vector<LinearElasticSolid*>* material_model_list_;
+		std::vector<Real> resolution_list_;
+		std::vector<LinearElasticSolid> material_model_list_;
 		Real physical_viscosity_;
 
 		// internal members
-		SPHSystem* system_;
-		In_Output* in_output_;
+		SPHSystem system_;
+		In_Output in_output_;
 
-		std::vector<TriangleMeshShape*> body_mesh_list_;
-		std::vector<TriangleMeshShape*> primitive_shape_list_;
+		std::vector<TriangleMeshShape> body_mesh_list_;
+		std::vector<TriangleMeshShape> primitive_shape_list_;
 		
 		std::vector<ImportedModel*> imported_model_list_;
 		std::vector<ElasticSolidParticles*> imported_model_particles_list_;
@@ -94,7 +95,7 @@ class SolidStructuralSimulation
 		
 		// for PreprocessSimulation, the order is important
 		void ImportSTLModelsAndAddPrimitives();
-		BoundingBox* CalculateSystemBoundaries(); //for SetupSystem
+		void CalculateSystemBoundaries(); //for SetupSystem
 		void SetupSystem();
 		void InitializeElasticBodies(bool write_particle_relaxation);
 		void InitializeContactBetweenTwoBodies(int first, int second);
@@ -123,23 +124,24 @@ class SolidStructuralSimulation
 
 	public:
  		SolidStructuralSimulation(SolidStructuralSimulationInput* input)
-		{
-			relative_input_path_ = input->relative_input_path;
-			imported_stl_list_ = input->imported_stl_list;
-			scale_stl_ = input->scale_stl;
-			translation_list_ = input->translation_list;
-			default_resolution_ = input->default_resolution;
-			resolution_list_ = input->resolution_list;
-			material_model_list_ = input->material_model_list;
-			physical_viscosity_ = input->physical_viscosity;
-		};
-		virtual ~SolidStructuralSimulation() {};
+		 : 	relative_input_path_(input->relative_input_path),
+		 	imported_stl_list_(input->imported_stl_list),
+		 	scale_stl_(input->scale_stl),
+			translation_list_(input->translation_list),
+			default_resolution_(input->default_resolution),
+			resolution_list_(input->resolution_list),
+			material_model_list_(input->material_model_list),
+			physical_viscosity_(input->physical_viscosity),
+		 	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), default_resolution_)),
+			in_output_(In_Output (system_))
+			{};
+ 		virtual ~SolidStructuralSimulation() {};
 
 		//add primitive shapes
-		void AddPrimitiveCuboid(Vec3d halfsize_cuboid, Vec3d translation, Real resolution, LinearElasticSolid* material);
+		void AddPrimitiveCuboid(Vec3d halfsize_cuboid, Vec3d translation, Real resolution, LinearElasticSolid& material);
 		
 		// get data from private members
-		TriangleMeshShape* GetBodyMesh(int body_index) { return body_mesh_list_[body_index]; };
+		TriangleMeshShape* GetBodyMesh(int body_index) { return &body_mesh_list_[body_index]; };
 
 		// add contacting bodies
 		void AddContactPair(int first_id, int second_id);
