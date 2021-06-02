@@ -261,7 +261,7 @@ void SolidStructuralSimulation::InitializeConstrainSolidBodyRegion()
 {	
 	for (auto body_index: body_indeces_fixed_contraint_)
 	{
-		BodyPartByParticle* bp = new BodyPartByParticle(imported_model_list_[body_index], imported_stl_list_[body_index], &body_mesh_list_[body_index]);
+		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(imported_model_list_[body_index], imported_stl_list_[body_index], &body_mesh_list_[body_index]);
 		fixed_contraint_.push_back(new solid_dynamics::ConstrainSolidBodyRegion(imported_model_list_[body_index], bp));
 	}
 }
