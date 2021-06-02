@@ -289,15 +289,13 @@ namespace SPH
 			dvel_dt_others_[index_i] += getDampingForce(index_i, mass_[index_i]);
 		}
 		//=================================================================================================//
-		AccelerationForBodyPartInBoundingBox
-			::AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox* bounding_box, Vecd acceleration)
-			: ParticleDynamicsSimple(body), SolidDataSimple(body),
-					pos_n_(particles_->pos_n_),
-					dvel_dt_others_(particles_->dvel_dt_others_)
-		{
-			bounding_box_ = bounding_box;
-			acceleration_ = acceleration;
-		}
+		AccelerationForBodyPartInBoundingBox::
+			AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox* bounding_box, Vecd acceleration) :
+			ParticleDynamicsSimple(body), SolidDataSimple(body),
+			pos_n_(particles_->pos_n_),
+			dvel_dt_others_(particles_->dvel_dt_others_),
+			bounding_box_(bounding_box),
+			acceleration_(acceleration){}
 		//=================================================================================================//
 		void AccelerationForBodyPartInBoundingBox::setupDynamics(Real dt)
 		{
@@ -306,7 +304,7 @@ namespace SPH
 		//=================================================================================================//
 		void AccelerationForBodyPartInBoundingBox::Update(size_t index_i, Real dt)
 		{	
-			Vec3d point = pos_n_[index_i];
+			Vecd point = pos_n_[index_i];
 			if ( 	point[0] >= bounding_box_->first[0] && point[0] <= bounding_box_->second[0] &&
 					point[1] >= bounding_box_->first[1] && point[1] <= bounding_box_->second[1] &&
 					point[2] >= bounding_box_->first[2] && point[2] <= bounding_box_->second[2]			)

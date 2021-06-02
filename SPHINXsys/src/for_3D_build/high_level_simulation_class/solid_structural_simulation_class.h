@@ -13,6 +13,13 @@
 
 using namespace SPH;
 
+class BodyPartByParticleTriMesh : public BodyPartByParticle
+{
+public:
+	BodyPartByParticleTriMesh(SPHBody* body, std::string body_part_name, TriangleMeshShape* triangle_mesh_shape);
+	virtual ~BodyPartByParticleTriMesh() {};
+};
+
 class ImportedModel : public SolidBody
 {
 public:

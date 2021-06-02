@@ -4,6 +4,14 @@
 /* global functions in SolidStructuralSimulation  */
 ////////////////////////////////////////////////////
 
+BodyPartByParticleTriMesh::BodyPartByParticleTriMesh(SPHBody* body, std::string body_part_name, TriangleMeshShape* triangle_mesh_shape)
+: BodyPartByParticle(body, body_part_name)
+{	
+	body_part_shape_ = new ComplexShape(body_part_name);
+	body_part_shape_->addTriangleMeshShape(triangle_mesh_shape, ShapeBooleanOps::add);
+	tagBodyPart();
+}
+
 ImportedModel::ImportedModel(SPHSystem &system, std::string body_name, TriangleMeshShape* triangle_mesh_shape, Real resolution)
     : SolidBody(system, body_name, resolution)
 {

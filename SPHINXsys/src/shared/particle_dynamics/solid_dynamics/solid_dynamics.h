@@ -272,7 +272,7 @@ namespace SPH
 			: public ParticleDynamicsSimple, public SolidDataSimple
 		{
 		public:
-			AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox* bounding_box, Vec3d acceleration);
+			AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox* bounding_box, Vecd acceleration);
 			virtual ~AccelerationForBodyPartInBoundingBox() {};
 		protected:
 			StdLargeVec<Vecd>& pos_n_,& dvel_dt_others_;

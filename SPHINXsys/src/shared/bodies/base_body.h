@@ -212,7 +212,6 @@ namespace SPH
 
 		BodyPartByParticle(SPHBody* body, std::string body_part_name)
 			: BodyPartByShape(body, body_part_name) {};
-		BodyPartByParticle(SPHBody* body, std::string body_part_name, TriangleMeshShape* triangle_mesh_shape);
 
 		virtual ~BodyPartByParticle() {};
 	protected:

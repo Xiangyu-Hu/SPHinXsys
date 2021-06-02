@@ -165,14 +165,6 @@ namespace SPH
 		return body_part_shape_->findBounds(); 
 	}
 	//=================================================================================================//
-	BodyPartByParticle::BodyPartByParticle(SPHBody* body, std::string body_part_name, TriangleMeshShape* triangle_mesh_shape)
-	: BodyPartByShape(body, body_part_name)
-	{	
-		body_part_shape_ = new ComplexShape(body_part_name);
-		body_part_shape_->addTriangleMeshShape(triangle_mesh_shape, ShapeBooleanOps::add);
-		tagBodyPart();
-	}
-	//=================================================================================================//
 	void BodyPartByParticle::tagAParticle(size_t particle_index)
 	{
 		body_part_particles_.push_back(particle_index);
