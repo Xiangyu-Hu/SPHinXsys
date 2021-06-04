@@ -13,12 +13,24 @@ BodyPartByParticleTriMesh::BodyPartByParticleTriMesh(SPHBody* body, std::string 
 }
 
 ImportedModel::ImportedModel(SPHSystem &system, std::string body_name, TriangleMeshShape* triangle_mesh_shape, Real resolution)
-    : SolidBody(system, body_name, resolution)
+	: SolidBody(system, body_name, resolution)
 {
-    ComplexShape original_body_shape;
-    original_body_shape.addTriangleMeshShape(triangle_mesh_shape, ShapeBooleanOps::add);
-    body_shape_ = new LevelSetComplexShape(this, original_body_shape, true);
+	ComplexShape original_body_shape;
+	original_body_shape.addTriangleMeshShape(triangle_mesh_shape, ShapeBooleanOps::add);
+	body_shape_ = new LevelSetComplexShape(this, original_body_shape, true);
 }
+
+SolidBodyForSimulation::SolidBodyForSimulation(SPHSystem &system, std::string body_name, TriangleMeshShape& triangle_mesh_shape, Real resolution, Real physical_viscosity, LinearElasticSolid& material_model):
+	imported_model_(ImportedModel(system, body_name, &triangle_mesh_shape, resolution)),
+	material_model_(material_model),
+	elastic_solid_particles_(ElasticSolidParticles(&imported_model_, &material_model)),
+	inner_body_relation_(InnerBodyRelation(&imported_model_)),
+
+	correct_configuration_(solid_dynamics::CorrectConfiguration(&inner_body_relation_)),
+	stress_relaxation_first_half_(solid_dynamics::StressRelaxationFirstHalf(&inner_body_relation_)),
+	stress_relaxation_second_half_(solid_dynamics::StressRelaxationSecondHalf(&inner_body_relation_)),
+	damping_random_(DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>(&inner_body_relation_, 0.1, "Velocity", physical_viscosity))
+{}
 
 void ExpandBoundingBox(BoundingBox* original, BoundingBox* additional)
 {

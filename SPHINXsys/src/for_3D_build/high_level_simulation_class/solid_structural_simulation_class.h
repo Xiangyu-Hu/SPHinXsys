@@ -27,6 +27,34 @@ public:
 	~ImportedModel(){};
 };
 
+class SolidBodyForSimulation
+{
+private:
+	ImportedModel imported_model_;
+	LinearElasticSolid material_model_;
+	ElasticSolidParticles elastic_solid_particles_;
+	InnerBodyRelation inner_body_relation_;
+
+	solid_dynamics::CorrectConfiguration correct_configuration_;
+	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half_;
+	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half_;
+	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>> damping_random_;
+
+public:
+	SolidBodyForSimulation(SPHSystem &system, std::string body_name, TriangleMeshShape& triangle_mesh_shape, Real resolution, Real physical_viscosity, LinearElasticSolid& material_model);
+	~SolidBodyForSimulation(){};
+
+	ImportedModel& GetImportedModel() { return imported_model_; };
+	LinearElasticSolid& GetLinearElasticSolid() { return material_model_; };
+	ElasticSolidParticles& GetElasticSolidParticles() { return elastic_solid_particles_; };
+	InnerBodyRelation& GetInnerBodyRelation() { return inner_body_relation_; };
+
+	solid_dynamics::CorrectConfiguration& GetCorrectConfiguration() { return correct_configuration_; };
+	solid_dynamics::StressRelaxationFirstHalf& GetStressRelaxationFirstHalf() { return stress_relaxation_first_half_; };
+	solid_dynamics::StressRelaxationSecondHalf& GetStressRelaxationSecondHalf() { return stress_relaxation_second_half_; };
+	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>& GetDampingWithRandomChoice() { return damping_random_; };
+};
+
 void ExpandBoundingBox(BoundingBox* original, BoundingBox* additional);
 
 void RelaxParticlesSingleResolution(In_Output* in_output,
@@ -58,7 +86,6 @@ class SolidStructuralSimulation
 		std::vector<Vec3d> translation_list_;
 		Real default_resolution_;
 		std::vector<Real> resolution_list_;
-		std::vector<LinearElasticSolid> material_model_list_;
 		Real physical_viscosity_;
 
 		// internal members
@@ -67,8 +94,9 @@ class SolidStructuralSimulation
 
 		std::vector<TriangleMeshShape> body_mesh_list_;
 		std::vector<TriangleMeshShape> primitive_shape_list_;
-		
+
 		std::vector<ImportedModel*> imported_model_list_;
+		std::vector<LinearElasticSolid> material_model_list_;
 		std::vector<ElasticSolidParticles*> imported_model_particles_list_;
 		std::vector<InnerBodyRelation*> imported_model_inner_list_;
 
