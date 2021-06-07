@@ -31,7 +31,7 @@ class SolidBodyForSimulation
 {
 private:
 	ImportedModel imported_model_;
-	LinearElasticSolid material_model_;
+	//LinearElasticSolid material_model_;
 	ElasticSolidParticles elastic_solid_particles_;
 	InnerBodyRelation inner_body_relation_;
 
@@ -45,7 +45,7 @@ public:
 	~SolidBodyForSimulation(){};
 
 	ImportedModel* GetImportedModel() { return &imported_model_; };
-	LinearElasticSolid* GetLinearElasticSolid() { return &material_model_; };
+	//LinearElasticSolid* GetMaterialModel() { return &material_model_; };
 	ElasticSolidParticles* GetElasticSolidParticles() { return &elastic_solid_particles_; };
 	InnerBodyRelation* GetInnerBodyRelation() { return &inner_body_relation_; };
 
@@ -95,15 +95,17 @@ class SolidStructuralSimulation
 		std::vector<TriangleMeshShape> body_mesh_list_;
 		std::vector<TriangleMeshShape> primitive_shape_list_;
 
-		std::vector<ImportedModel*> imported_model_list_;
-		std::vector<LinearElasticSolid> material_model_list_;
-		std::vector<ElasticSolidParticles*> imported_model_particles_list_;
-		std::vector<InnerBodyRelation*> imported_model_inner_list_;
+		std::vector<SolidBodyForSimulation*> solid_body_list_;
 
-		std::vector<solid_dynamics::CorrectConfiguration*> correct_configuration_list_;
-		std::vector<solid_dynamics::StressRelaxationFirstHalf*> stress_relaxation_first_half_list_;
-		std::vector<solid_dynamics::StressRelaxationSecondHalf*> stress_relaxation_second_half_list_;
-		std::vector<DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>*> damping_list_;
+		//std::vector<ImportedModel*> imported_model_list_;
+		//std::vector<LinearElasticSolid> material_model_list_;
+		//std::vector<ElasticSolidParticles*> imported_model_particles_list_;
+		//std::vector<InnerBodyRelation*> imported_model_inner_list_;
+
+		//std::vector<solid_dynamics::CorrectConfiguration*> correct_configuration_list_;
+		//std::vector<solid_dynamics::StressRelaxationFirstHalf*> stress_relaxation_first_half_list_;
+		//std::vector<solid_dynamics::StressRelaxationSecondHalf*> stress_relaxation_second_half_list_;
+		//std::vector<DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>*> damping_list_;
 
 		std::vector<std::pair<int, int>> contacting_bodies_list_;
 		std::vector<SolidContactBodyRelation*> contact_list_;
@@ -177,15 +179,15 @@ class SolidStructuralSimulation
 		void AddConstrainSolidBodyRegion(int body_index);
 
 		// high level functions for user
-		void PreprocessSimulation(bool write_particle_relaxation)
-		{
-			//ImportSTLModelsAndAddPrimitives();
-			//SetupSystem();
-			InitializeElasticBodies(write_particle_relaxation);
-			InitializeAllContacts();
-		};
+		//void PreprocessSimulation(bool write_particle_relaxation)
+		//{
+		//	//ImportSTLModelsAndAddPrimitives();
+		//	//SetupSystem();
+		//	//InitializeElasticBodies(write_particle_relaxation);
+		//};
 		void InitializeBoundaryConditions()
 		{
+			InitializeAllContacts();
 			InitializeGravity();
 			InitializeAccelerationForBodyPartInBoundingBox();
 			InitializeSpringDamperConstraintParticleWise();

@@ -22,7 +22,7 @@ ImportedModel::ImportedModel(SPHSystem &system, std::string body_name, TriangleM
 
 SolidBodyForSimulation::SolidBodyForSimulation(SPHSystem &system, std::string body_name, TriangleMeshShape& triangle_mesh_shape, Real resolution, Real physical_viscosity, LinearElasticSolid& material_model):
 	imported_model_(ImportedModel(system, body_name, &triangle_mesh_shape, resolution)),
-	material_model_(material_model),
+	//material_model_(material_model),
 	elastic_solid_particles_(ElasticSolidParticles(&imported_model_, &material_model)),
 	inner_body_relation_(InnerBodyRelation(&imported_model_)),
 
@@ -108,7 +108,6 @@ SolidStructuralSimulation::SolidStructuralSimulation(SolidStructuralSimulationIn
 	translation_list_(input->translation_list),
 	default_resolution_(input->default_resolution),
 	resolution_list_(input->resolution_list),
-	material_model_list_(input->material_model_list),
 	physical_viscosity_(input->physical_viscosity),
 	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), default_resolution_)),
 	in_output_(In_Output(system_))
@@ -122,14 +121,23 @@ SolidStructuralSimulation::SolidStructuralSimulation(SolidStructuralSimulationIn
 	}
 	CalculateSystemBoundaries();
 	system_.run_particle_relaxation_ = true;
+	//initialize solid bodies with their properties
+	i = 0;
+	for (auto body_mesh : body_mesh_list_)
+	{	
+		SolidBodyForSimulation* sb = new SolidBodyForSimulation(system_, imported_stl_list_[i], body_mesh_list_[i], resolution_list_[i], physical_viscosity_, input->material_model_list[i]);
+		solid_body_list_.push_back(sb);
+		RelaxParticlesSingleResolution(&in_output_, true, sb->GetImportedModel(), sb->GetElasticSolidParticles(), sb->GetInnerBodyRelation());
+		i++;
+	}
 }
 
-void SolidStructuralSimulation::AddPrimitiveCuboid(Vec3d halfsize_cuboid, Vec3d translation, Real resolution, LinearElasticSolid& material)
-{
-    primitive_shape_list_.push_back( TriangleMeshShape(halfsize_cuboid, 20, translation) );
-	resolution_list_.push_back(resolution);
-	material_model_list_.push_back(material);
-}
+//void SolidStructuralSimulation::AddPrimitiveCuboid(Vec3d halfsize_cuboid, Vec3d translation, Real resolution, LinearElasticSolid& material)
+//{
+//    primitive_shape_list_.push_back( TriangleMeshShape(halfsize_cuboid, 20, translation) );
+//	resolution_list_.push_back(resolution);
+//	material_model_list_.push_back(material);
+//}
 
 void SolidStructuralSimulation::ImportSTLModelsAndAddPrimitives()
 {   
@@ -163,52 +171,52 @@ void SolidStructuralSimulation::SetupSystem()
 	system_.run_particle_relaxation_ = true;
 }
 
-void SolidStructuralSimulation::InitializeElasticBodies(bool write_particle_relaxation)
-{	
-	int i = 0;
-	int number_stls = imported_stl_list_.size();
-	for (auto body_mesh: body_mesh_list_)
-	{	
-		std::string name;
-		// imported STLs
-		if (i < number_stls)
-		{
-			name = imported_stl_list_[i];
-		}
-		// primitive bodies
-		else
-		{
-			name = "Primitive";
-			name.append(std::to_string(i));
-		}
-		ImportedModel* imported_model = new ImportedModel(system_, name, &body_mesh, resolution_list_[i]);
-		imported_model_list_.push_back(imported_model);
-
-		ElasticSolidParticles* imported_model_particles = new ElasticSolidParticles(imported_model, &material_model_list_[i]);
-		imported_model_particles_list_.push_back(imported_model_particles);
-
-		InnerBodyRelation* imported_model_inner = new InnerBodyRelation(imported_model);
-		imported_model_inner_list_.push_back(imported_model_inner);
-		// particle relaxtion, only for STL geometries, not for primitives
-		if (i < number_stls)
-		{
-			RelaxParticlesSingleResolution(&in_output_, write_particle_relaxation, imported_model, imported_model_particles, imported_model_inner);
-		}
-		
-		correct_configuration_list_.push_back(new solid_dynamics::CorrectConfiguration(imported_model_inner));
-		stress_relaxation_first_half_list_.push_back(new solid_dynamics::StressRelaxationFirstHalf(imported_model_inner));
-		stress_relaxation_second_half_list_.push_back(new solid_dynamics::StressRelaxationSecondHalf(imported_model_inner));
-
-		damping_list_.push_back(new DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>(imported_model_inner, 0.1, "Velocity", physical_viscosity_));
-
-		i++;
-	}
-}
+//void SolidStructuralSimulation::InitializeElasticBodies(bool write_particle_relaxation)
+//{	
+//	int i = 0;
+//	int number_stls = imported_stl_list_.size();
+//	for (auto body_mesh: body_mesh_list_)
+//	{	
+//		std::string name;
+//		// imported STLs
+//		if (i < number_stls)
+//		{
+//			name = imported_stl_list_[i];
+//		}
+//		// primitive bodies
+//		else
+//		{
+//			name = "Primitive";
+//			name.append(std::to_string(i));
+//		}
+//		ImportedModel* imported_model = new ImportedModel(system_, name, &body_mesh, resolution_list_[i]);
+//		imported_model_list_.push_back(imported_model);
+//
+//		ElasticSolidParticles* imported_model_particles = new ElasticSolidParticles(imported_model, &material_model_list_[i]);
+//		imported_model_particles_list_.push_back(imported_model_particles);
+//
+//		InnerBodyRelation* imported_model_inner = new InnerBodyRelation(imported_model);
+//		imported_model_inner_list_.push_back(imported_model_inner);
+//		// particle relaxtion, only for STL geometries, not for primitives
+//		if (i < number_stls)
+//		{
+//			RelaxParticlesSingleResolution(&in_output_, write_particle_relaxation, imported_model, imported_model_particles, imported_model_inner);
+//		}
+//		
+//		correct_configuration_list_.push_back(new solid_dynamics::CorrectConfiguration(imported_model_inner));
+//		stress_relaxation_first_half_list_.push_back(new solid_dynamics::StressRelaxationFirstHalf(imported_model_inner));
+//		stress_relaxation_second_half_list_.push_back(new solid_dynamics::StressRelaxationSecondHalf(imported_model_inner));
+//
+//		damping_list_.push_back(new DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>(imported_model_inner, 0.1, "Velocity", physical_viscosity_));
+//
+//		i++;
+//	}
+//}
 
 void SolidStructuralSimulation::InitializeContactBetweenTwoBodies(int first, int second)
 {	
-	ImportedModel* first_body = imported_model_list_[first];
-	ImportedModel* second_body = imported_model_list_[second];
+	ImportedModel* first_body = solid_body_list_[first]->GetImportedModel();
+	ImportedModel* second_body = solid_body_list_[second]->GetImportedModel();
 	SolidContactBodyRelation* first_contact = new SolidContactBodyRelation(first_body, {second_body});
 	SolidContactBodyRelation* second_contact = new SolidContactBodyRelation(second_body, {first_body});
 	contact_list_.push_back(first_contact);
@@ -237,15 +245,15 @@ void SolidStructuralSimulation::AddContactPair(int first_id, int second_id)
 void SolidStructuralSimulation::InitializeGravity()
 {
 	int i = 0;
-	for (auto imported_model: imported_model_list_)
+	for (auto solid_body: solid_body_list_)
 	{	
 		if ( std::find(body_indeces_gravity_.begin(), body_indeces_gravity_.end(), i) != body_indeces_gravity_.end() )
 		{	
-			initialize_gravity_.push_back(new InitializeATimeStep(imported_model, new Gravity(*gravity_[i])));
+			initialize_gravity_.push_back(new InitializeATimeStep(solid_body->GetImportedModel(), new Gravity(*gravity_[i])));
 		}
 		else
 		{
-			initialize_gravity_.push_back(new InitializeATimeStep(imported_model));
+			initialize_gravity_.push_back(new InitializeATimeStep(solid_body->GetImportedModel()));
 		}
 		i++;
 	}
@@ -262,7 +270,7 @@ void SolidStructuralSimulation::InitializeAccelerationForBodyPartInBoundingBox()
 	int i = 0;
 	for (auto body_index: body_indeces_accelerations_)
 	{
-		acceleration_for_body_part_.push_back(new solid_dynamics::AccelerationForBodyPartInBoundingBox(imported_model_list_[body_index], bounding_boxes_[i], accelerations_[i]));
+		acceleration_for_body_part_.push_back(new solid_dynamics::AccelerationForBodyPartInBoundingBox(solid_body_list_[body_index]->GetImportedModel(), bounding_boxes_[i], accelerations_[i]));
         i++;
     }
 	
@@ -280,7 +288,7 @@ void SolidStructuralSimulation::InitializeSpringDamperConstraintParticleWise()
 	int i = 0;
 	for (auto body_index: body_indeces_spring_damper_)
 	{
-		spring_damper_contraint_.push_back(new solid_dynamics::SpringDamperConstraintParticleWise(imported_model_list_[body_index], stiffnesses_[i], damping_ratios_[i]));
+		spring_damper_contraint_.push_back(new solid_dynamics::SpringDamperConstraintParticleWise(solid_body_list_[body_index]->GetImportedModel(), stiffnesses_[i], damping_ratios_[i]));
         i++;
     }
 }
@@ -296,8 +304,8 @@ void SolidStructuralSimulation::InitializeConstrainSolidBodyRegion()
 {	
 	for (auto body_index: body_indeces_fixed_contraint_)
 	{
-		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(imported_model_list_[body_index], imported_stl_list_[body_index], &body_mesh_list_[body_index]);
-		fixed_contraint_.push_back(new solid_dynamics::ConstrainSolidBodyRegion(imported_model_list_[body_index], bp));
+		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(solid_body_list_[body_index]->GetImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
+		fixed_contraint_.push_back(new solid_dynamics::ConstrainSolidBodyRegion(solid_body_list_[body_index]->GetImportedModel(), bp));
 	}
 }
 
@@ -308,9 +316,9 @@ void SolidStructuralSimulation::AddConstrainSolidBodyRegion(int body_index)
 
 void SolidStructuralSimulation::ExecuteCorrectConfiguration()
 {
-	for (auto correct_configuration: correct_configuration_list_)
+	for (auto solid_body: solid_body_list_)
 	{
-		correct_configuration->parallel_exec();
+		solid_body->GetCorrectConfiguration()->parallel_exec();
 	}
 }
 
@@ -356,9 +364,9 @@ void SolidStructuralSimulation::ExecuteContactForce()
 
 void SolidStructuralSimulation::ExecuteStressRelaxationFirstHalf(Real dt)
 {
-	for (auto sr: stress_relaxation_first_half_list_)
+	for (auto solid_body : solid_body_list_)
 	{
-		sr->parallel_exec(dt);
+		solid_body->GetStressRelaxationFirstHalf()->parallel_exec(dt);
 	}
 }
 
@@ -372,25 +380,25 @@ void SolidStructuralSimulation::ExecuteConstrainSolidBodyRegion()
 
 void SolidStructuralSimulation::ExecuteDamping(Real dt)
 {
-	for (auto da: damping_list_)
+	for (auto solid_body : solid_body_list_)
 	{
-		da->parallel_exec(dt);
+		solid_body->GetDampingWithRandomChoice()->parallel_exec(dt);
 	}
 }
 
 void SolidStructuralSimulation::ExecuteStressRelaxationSecondHalf(Real dt)
 {
-	for (auto sr: stress_relaxation_second_half_list_)
+	for (auto solid_body : solid_body_list_)
 	{
-		sr->parallel_exec(dt);
+		solid_body->GetStressRelaxationSecondHalf()->parallel_exec(dt);
 	}
 }
 
 void SolidStructuralSimulation::ExecuteUpdateCellLinkedList()
 {
-	for (auto im: imported_model_list_)
+	for (auto solid_body : solid_body_list_)
 	{
-		im->updateCellLinkedList();
+		solid_body->GetImportedModel()->updateCellLinkedList();
 	}
 }
 
