@@ -66,11 +66,11 @@ namespace SPH {
 
 		virtual Real ViscousTimeStepSize(Real smoothing_length);
 		virtual Real NumericalViscosity(Real smoothing_length);
-		/** compute the stress through Constitutive relation. */
-		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) = 0;
+		/** compute the stress through defoemation, which can be green-lagrangian tensor, left or right cauchy tensor. */
+		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) = 0;
 		/** Compute physical and numerical damping stress. */
-		virtual Matd NumericalDampingStress(Matd& deform_grad, 
-			Matd& deform_grad_rate, Real numerical_viscosity, size_t particle_index_i);
+		virtual Matd NumericalDampingStress(Matd& deformation, 
+			Matd& deformation_rate, Real numerical_viscosity, size_t particle_index_i);
 		virtual Real YoungsModulus() = 0;
 		virtual Real PoissonRatio() = 0;
 	
@@ -99,7 +99,7 @@ namespace SPH {
 		};
 		virtual ~LinearElasticSolid() {};
 
-		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
+		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
 		virtual Real YoungsModulus() override { return E_0_; };
 		virtual Real PoissonRatio()  override { return nu_; };
 	};
@@ -116,7 +116,7 @@ namespace SPH {
 		};
 		virtual ~NeoHookeanSolid() {};
 	
-		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
+		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
 	};
 
 	/**
@@ -132,7 +132,7 @@ namespace SPH {
 			material_name_ = "FeneNeoHookeanSolid";
 		};
 		virtual ~FeneNeoHookeanSolid() {};
-		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
+		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
 	};
 
 	/**
@@ -160,7 +160,7 @@ namespace SPH {
 
 		virtual Matd MuscleFiberDirection(size_t particle_index_i) { return f0f0_; };
 		/** compute the stress through Constitutive relation. */
-		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
+		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
 
 		virtual Real YoungsModulus() override;
 		virtual Real PoissonRatio()  override;
@@ -199,7 +199,7 @@ namespace SPH {
 		virtual void assignElasticSolidParticles(ElasticSolidParticles* elastic_particles) override;
 		virtual Matd MuscleFiberDirection(size_t particle_index_i) override { return local_f0f0_[particle_index_i]; };
 		/** Compute the stress through Constitutive relation. */
-		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
+		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
 		virtual void readFromXmlForLocalParameters(std::string &filefullpath) override;
 	};
 }

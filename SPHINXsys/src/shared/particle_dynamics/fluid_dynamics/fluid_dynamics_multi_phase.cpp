@@ -59,7 +59,7 @@ namespace SPH
 				}
 			}
 
-			dvel_dt_others_[index_i] += acceleration;
+			dvel_dt_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
 		MultiPhaseColorFunctionGradient::

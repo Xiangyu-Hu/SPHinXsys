@@ -183,22 +183,14 @@ int main(int ac, char* av[])
 	 * @brief 	Creating body, materials and particles for the free ball.
 	 */
 	FreeBall* free_ball = new FreeBall(sph_system, "FreeBall");
-	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-	{
-		free_ball->particle_generator_->~ParticleGenerator();
-		free_ball->particle_generator_ = new ParticleGeneratorReload(&in_output, "FreeBall");
-	}
+	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_) free_ball->useParticleGeneratorReload();
 	BallMaterial* free_ball_material = new BallMaterial();
 	ElasticSolidParticles 	free_ball_particles(free_ball, free_ball_material);
 	/**
 	 * @brief 	Creating body, materials and particles for the damping ball.
 	 */
 	DampingBall* damping_ball = new DampingBall(sph_system, "DampingBall");
-	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-	{
-		damping_ball->particle_generator_->~ParticleGenerator();
-		damping_ball->particle_generator_ = new ParticleGeneratorReload(&in_output, "DampingBall");
-	}
+	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_) damping_ball->useParticleGeneratorReload();
 	BallMaterial* damping_ball_material = new BallMaterial();
 	ElasticSolidParticles 	damping_ball_particles(damping_ball, damping_ball_material);
 	/**

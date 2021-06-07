@@ -8,6 +8,7 @@
 #include "sph_system.h"
 #include "in_output.h"
 #include "base_particles.h"
+#include "base_particle_generator.h"
 #include "mesh_cell_linked_list.h"
 #include "geometry_level_set.h"
 
@@ -39,6 +40,12 @@ namespace SPH
 	SPHSystem& SPHBody::getSPHSystem()
 	{
 		return sph_system_;
+	}
+	//=================================================================================================//
+	void SPHBody::useParticleGeneratorReload()
+	{
+		particle_generator_->~ParticleGenerator();
+		particle_generator_ = new ParticleGeneratorReload(sph_system_.in_output_, body_name_);
 	}
 	//=================================================================================================//
 	void SPHBody::assignBaseParticles(BaseParticles* base_particles)

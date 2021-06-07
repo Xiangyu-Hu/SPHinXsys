@@ -48,7 +48,7 @@ namespace SPH
 			ContactDynamicsData(solid_body_contact_relation),
 			contact_density_(particles_->contact_density_), 
 			Vol_(particles_->Vol_), mass_(particles_->mass_),
-			dvel_dt_others_(particles_->dvel_dt_others_),
+			dvel_dt_prior_(particles_->dvel_dt_prior_),
 			contact_force_(particles_->contact_force_)
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
@@ -82,7 +82,7 @@ namespace SPH
 				}
 			}
 			contact_force_[index_i] = force;
-			dvel_dt_others_[index_i] += force / mass_[index_i];
+			dvel_dt_prior_[index_i] += force / mass_[index_i];
 		}
 		//=================================================================================================//
 		AcousticTimeStepSize::AcousticTimeStepSize(SolidBody* body) :
@@ -297,7 +297,7 @@ namespace SPH
 		StressRelaxationFirstHalf::
 			StressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation) :
 			BaseElasticRelaxation(body_inner_relation), 
-			dvel_dt_others_(particles_->dvel_dt_others_), force_from_fluid_(particles_->force_from_fluid_),
+			dvel_dt_prior_(particles_->dvel_dt_prior_), force_from_fluid_(particles_->force_from_fluid_),
 			stress_PK1_(particles_->stress_PK1_), corrected_stress_(particles_->corrected_stress_)
 		{
 			rho_0_ = material_->ReferenceDensity();
@@ -321,7 +321,7 @@ namespace SPH
 		void StressRelaxationFirstHalf::Interaction(size_t index_i, Real dt)
 		{
 			//including gravity and force from fluid
-			Vecd acceleration = dvel_dt_others_[index_i]
+			Vecd acceleration = dvel_dt_prior_[index_i]
 				+ force_from_fluid_[index_i] / mass_[index_i];
 			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)

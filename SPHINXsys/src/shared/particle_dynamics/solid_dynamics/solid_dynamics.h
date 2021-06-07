@@ -92,7 +92,7 @@ namespace SPH
 			virtual ~ContactForce() {};
 		protected:
 			StdLargeVec<Real>& contact_density_, & Vol_, & mass_;
-			StdLargeVec<Vecd>& dvel_dt_others_, & contact_force_;
+			StdLargeVec<Vecd>& dvel_dt_prior_, & contact_force_;
 			StdVec<StdLargeVec<Real>*> contact_contact_density_, contact_Vol_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -337,7 +337,7 @@ namespace SPH
 			virtual ~StressRelaxationFirstHalf() {};
 		protected:
 			Real rho_0_, inv_rho_0_;
-			StdLargeVec<Vecd>& dvel_dt_others_, & force_from_fluid_;
+			StdLargeVec<Vecd>& dvel_dt_prior_, & force_from_fluid_;
 			StdLargeVec<Matd>& stress_PK1_, & corrected_stress_;
 			Real numerical_viscosity_;
 

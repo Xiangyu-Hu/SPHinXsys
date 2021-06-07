@@ -114,7 +114,7 @@ namespace SPH
 			rho_n_(particles_->rho_n_), mass_(particles_->mass_),
 			shell_thickness_(particles_->shell_thickness_),
 			pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
-			dvel_dt_others_(particles_->dvel_dt_others_), force_from_fluid_(particles_->force_from_fluid_),
+			dvel_dt_prior_(particles_->dvel_dt_prior_), force_from_fluid_(particles_->force_from_fluid_),
 			n_0_(particles_->n_0_), pseudo_n_(particles_->pseudo_n_),
 			dpseudo_n_dt_(particles_->dpseudo_n_dt_), dpseudo_n_d2t_(particles_->dpseudo_n_d2t_),
 			rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
@@ -222,7 +222,7 @@ namespace SPH
 			}
 			/** including external force (body force) and force from fluid */
 			dvel_dt_[index_i] = acceleration * inv_rho_0_ / shell_thickness_[index_i]
-				+ dvel_dt_others_[index_i] + force_from_fluid_[index_i] / mass_[index_i];
+				+ dvel_dt_prior_[index_i] + force_from_fluid_[index_i] / mass_[index_i];
 			dpseudo_n_d2t_[index_i] = pseudo_normal_acceleration  * inv_rho_0_
 				* 12.0 / powerN(shell_thickness_[index_i], 3);
 

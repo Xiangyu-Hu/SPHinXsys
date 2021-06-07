@@ -74,7 +74,7 @@ namespace SPH
 		StdLargeVec<Vecd> pos_n_;	/**< current position */
 		StdLargeVec<Vecd> vel_n_;	/**< current particle velocity */
 		StdLargeVec<Vecd> dvel_dt_;	/**< inner pressure- or stress-induced acceleration */
-		StdLargeVec<Vecd> dvel_dt_others_; /**<  other, such as gravity and viscous, accelerations */
+		StdLargeVec<Vecd> dvel_dt_prior_; /**<  due to other, such as gravity and viscous forces, to be updated before dvel_dt */
 
 		StdLargeVec<Real> Vol_;		/**< particle volume */
 		StdLargeVec<Real> rho_n_;	/**< current particle density */
