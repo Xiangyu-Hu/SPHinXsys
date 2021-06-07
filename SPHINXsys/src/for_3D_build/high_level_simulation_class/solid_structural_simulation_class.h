@@ -178,13 +178,6 @@ class SolidStructuralSimulation
 		void AddSpringDamperConstraintParticleWise(int body_index, Vec3d stiffness, Real damping_ratio);
 		void AddConstrainSolidBodyRegion(int body_index);
 
-		// high level functions for user
-		//void PreprocessSimulation(bool write_particle_relaxation)
-		//{
-		//	//ImportSTLModelsAndAddPrimitives();
-		//	//SetupSystem();
-		//	//InitializeElasticBodies(write_particle_relaxation);
-		//};
 		void InitializeBoundaryConditions()
 		{
 			InitializeAllContacts();
