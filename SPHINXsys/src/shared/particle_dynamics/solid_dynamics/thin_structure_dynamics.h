@@ -126,7 +126,7 @@ namespace SPH
 			virtual ~BaseShellRelaxation() {};
 		protected:
 			StdLargeVec<Real>& Vol_, & rho_n_, & mass_, & shell_thickness_;
-			StdLargeVec<Vecd>& pos_n_, & vel_n_, & dvel_dt_, & dvel_dt_others_, & force_from_fluid_;
+			StdLargeVec<Vecd>& pos_n_, & vel_n_, & dvel_dt_, & dvel_dt_prior_, & force_from_fluid_;
 			StdLargeVec<Vecd>& n_0_, & pseudo_n_, & dpseudo_n_dt_, & dpseudo_n_d2t_, & rotation_,
 				& angular_vel_, dangular_vel_dt_;
 			StdLargeVec<Matd>& B_, & F_, & dF_dt_, & F_bending_, & dF_bending_dt_;

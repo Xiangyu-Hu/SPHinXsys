@@ -54,7 +54,7 @@ namespace SPH
 		InitializeATimeStep(SPHBody* body, Gravity* gravity = new Gravity(Vecd(0)));
 		virtual ~InitializeATimeStep() {};
 	protected:
-		StdLargeVec<Vecd>& pos_n_,& dvel_dt_others_;
+		StdLargeVec<Vecd>& pos_n_,& dvel_dt_prior_;
 		Gravity* gravity_;
 		virtual void setupDynamics(Real dt = 0.0) override;
 		virtual void Update(size_t index_i, Real dt = 0.0) override;

@@ -134,7 +134,7 @@ namespace SPH
 			Real mu_;
 			Real smoothing_length_;
 			StdLargeVec<Real> &Vol_, &rho_n_, &p_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_others_;
+			StdLargeVec<Vecd> &vel_n_, &dvel_dt_prior_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -265,7 +265,7 @@ namespace SPH
 			virtual ~BaseRelaxation() {};
 		protected:
 			StdLargeVec<Real>& Vol_, & mass_, & rho_n_, & p_, & drho_dt_;
-			StdLargeVec<Vecd>& pos_n_, & vel_n_, & dvel_dt_, & dvel_dt_others_;
+			StdLargeVec<Vecd>& pos_n_, & vel_n_, & dvel_dt_, & dvel_dt_prior_;
 		};
 
 		/**
@@ -640,7 +640,7 @@ namespace SPH
 		protected:
 			Real gamma_;
 			StdLargeVec<Real> &Vol_, &mass_;
-			StdLargeVec<Vecd> &dvel_dt_others_;
+			StdLargeVec<Vecd> &dvel_dt_prior_;
 			StdLargeVec<Vecd>& color_grad_;
 			StdLargeVec<Vecd>& surface_norm_;
 			StdLargeVec<int>& surface_indicator_;

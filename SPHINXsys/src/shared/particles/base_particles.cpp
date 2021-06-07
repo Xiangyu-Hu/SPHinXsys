@@ -29,7 +29,7 @@ namespace SPH
 		registerAVariable<indexVector, Vecd>(pos_n_, "Position");
 		registerAVariable<indexVector, Vecd>(vel_n_, "Velocity");
 		registerAVariable<indexVector, Vecd>(dvel_dt_, "Acceleration");
-		registerAVariable<indexVector, Vecd>(dvel_dt_others_, "OtherAcceleration");
+		registerAVariable<indexVector, Vecd>(dvel_dt_prior_, "OtherAcceleration");
 		registerAVariable<indexScalar, Real>(Vol_, "Volume");
 		registerAVariable<indexScalar, Real>(rho_n_, "Density");
 		registerAVariable<indexScalar, Real>(mass_, "Mass");		
@@ -67,7 +67,7 @@ namespace SPH
 		pos_n_.push_back(pnt);
 		vel_n_.push_back(Vecd(0));
 		dvel_dt_.push_back(Vecd(0));
-		dvel_dt_others_.push_back(Vecd(0));
+		dvel_dt_prior_.push_back(Vecd(0));
 
 		Vol_.push_back(Vol_0);
 		rho_n_.push_back(rho_0_);

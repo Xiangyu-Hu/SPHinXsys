@@ -93,7 +93,7 @@ namespace SPH
 			InteractionDynamics(inner_relation->sph_body_),
 			FluidDataInner(inner_relation),
 			Vol_(particles_->Vol_), rho_n_(particles_->rho_n_), p_(particles_->p_), 
-			vel_n_(particles_->vel_n_), dvel_dt_others_(particles_->dvel_dt_others_)
+			vel_n_(particles_->vel_n_), dvel_dt_prior_(particles_->dvel_dt_prior_)
 		{
 			mu_ = material_->ReferenceViscosity();
 			smoothing_length_ = particle_adaptation_->ReferenceSmoothingLength();
@@ -117,7 +117,7 @@ namespace SPH
 								* Vol_[index_j] * inner_neighborhood.dW_ij_[n] / rho_i;
 			}
 
-			dvel_dt_others_[index_i] += acceleration;
+			dvel_dt_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
 		void AngularConservativeViscousAccelerationInner::Interaction(size_t index_i, Real dt)
@@ -141,7 +141,7 @@ namespace SPH
 								* inner_neighborhood.dW_ij_[n] * e_ij;
 			}
 	
-			dvel_dt_others_[index_i] += acceleration;
+			dvel_dt_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
 		TransportVelocityCorrectionInner::
@@ -281,7 +281,7 @@ namespace SPH
 			Vol_(particles_->Vol_), mass_(particles_->mass_), rho_n_(particles_->rho_n_), 
 			p_(particles_->p_), drho_dt_(particles_->drho_dt_),
 			pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_),
-			dvel_dt_(particles_->dvel_dt_), dvel_dt_others_(particles_->dvel_dt_others_) {}
+			dvel_dt_(particles_->dvel_dt_), dvel_dt_prior_(particles_->dvel_dt_prior_) {}
 		//=================================================================================================//
 		BasePressureRelaxation::
 			BasePressureRelaxation(BaseInnerBodyRelation* inner_relation) :
@@ -304,7 +304,7 @@ namespace SPH
 		{
 			Real rho_i = rho_n_[index_i];
 			Real p_i = p_[index_i];
-			Vecd acceleration = dvel_dt_others_[index_i];
+			Vecd acceleration = dvel_dt_prior_[index_i];
 			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -645,7 +645,7 @@ namespace SPH
 		//=================================================================================================//
 		SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseInnerBodyRelation* inner_relation, Real gamma) 
 		: InteractionDynamics(inner_relation->sph_body_), FluidDataInner(inner_relation), Vol_(particles_->Vol_), 
-			mass_(particles_->mass_), dvel_dt_others_(particles_->dvel_dt_others_), surface_indicator_(particles_->surface_indicator_),
+			mass_(particles_->mass_), dvel_dt_prior_(particles_->dvel_dt_prior_), surface_indicator_(particles_->surface_indicator_),
 			gamma_(gamma),
 			color_grad_(*particles_->getVariableByName<indexVector, Vecd>("ColorGradient")),
 			surface_norm_(*particles_->getVariableByName<indexVector, Vecd>("SurfaceNormal")){}
@@ -682,7 +682,7 @@ namespace SPH
 			 */
 			renormal_curvature = (Real)Dimensions * curvature / ABS(pos_div + TinyReal);
 			Vecd acceleration = gamma_ * renormal_curvature* color_grad_[index_i] * Vol_[index_i];
-			dvel_dt_others_[index_i] -= acceleration / mass_[index_i];
+			dvel_dt_prior_[index_i] -= acceleration / mass_[index_i];
 		}
 		//=================================================================================================//
 	}		

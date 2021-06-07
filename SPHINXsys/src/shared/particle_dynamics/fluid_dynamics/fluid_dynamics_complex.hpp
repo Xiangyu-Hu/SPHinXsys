@@ -126,7 +126,7 @@ namespace SPH
 				}
 			}
 
-			this->dvel_dt_others_[index_i] += acceleration;
+			this->dvel_dt_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
         template<class BaseViscousAccelerationType>
@@ -163,7 +163,7 @@ namespace SPH
 			BasePressureRelaxationType::Interaction(index_i, dt);
 
 			FluidState state_i(this->rho_n_[index_i], this->vel_n_[index_i], this->p_[index_i]);
-			Vecd dvel_dt_others_i = computeNonConservativeAcceleration(index_i);
+			Vecd dvel_dt_prior_i = computeNonConservativeAcceleration(index_i);
 
 			Vecd acceleration(0.0);
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
@@ -180,7 +180,7 @@ namespace SPH
 					Real dW_ij = wall_neighborhood.dW_ij_[n];
 					Real r_ij = wall_neighborhood.r_ij_[n];
 
-					Real face_wall_external_acceleration = dot((dvel_dt_others_i - dvel_dt_ave_k[index_j]), -e_ij);
+					Real face_wall_external_acceleration = dot((dvel_dt_prior_i - dvel_dt_ave_k[index_j]), -e_ij);
 					Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - state_i.vel_;
 					Real p_in_wall = state_i.p_ + state_i.rho_ * r_ij * SMAX(0.0, face_wall_external_acceleration);
 					Real rho_in_wall = this->material_->DensityFromPressure(p_in_wall);
@@ -195,7 +195,7 @@ namespace SPH
         template<class BasePressureRelaxationType>   	
         Vecd PressureRelaxation<BasePressureRelaxationType>::computeNonConservativeAcceleration(size_t index_i)
 		{
-			return this->dvel_dt_others_[index_i];
+			return this->dvel_dt_prior_[index_i];
 		}
         //=================================================================================================//
         template<class BasePressureRelaxationType>   	
@@ -316,7 +316,7 @@ namespace SPH
 			Real density_change_rate = 0.0;
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
-				Vecd& dvel_dt_others_i = this->dvel_dt_others_[index_i];
+				Vecd& dvel_dt_prior_i = this->dvel_dt_prior_[index_i];
 
 				StdLargeVec<Real>& Vol_k = *(this->wall_Vol_[k]);
 				StdLargeVec<Vecd>& vel_ave_k = *(this->wall_vel_ave_[k]);
@@ -331,7 +331,7 @@ namespace SPH
 					Real dW_ij = wall_neighborhood.dW_ij_[n];
 
 					Real face_wall_external_acceleration
-						= dot((dvel_dt_others_i - dvel_dt_ave_k[index_j]), -e_ij);
+						= dot((dvel_dt_prior_i - dvel_dt_ave_k[index_j]), -e_ij);
 					Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - state_i.vel_;
 					Real p_in_wall = state_i.p_ + state_i.rho_ * r_ij * SMAX(0.0, face_wall_external_acceleration);
 					Real rho_in_wall = this->material_->DensityFromPressure(p_in_wall);

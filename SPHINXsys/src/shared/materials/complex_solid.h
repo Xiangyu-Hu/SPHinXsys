@@ -50,7 +50,7 @@ namespace SPH {
 
 		void assignActiveMuscleParticles(ActiveMuscleParticles* active_muscle_particles);
 		/** compute the stress through Constitutive relation. */
-		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t index_i) override;
+		virtual Matd ConstitutiveRelation(Matd& deformation, size_t index_i) override;
 		virtual ActiveMuscle<MuscleType>* ThisObjectPtr() override { return this; };
 	};
 }

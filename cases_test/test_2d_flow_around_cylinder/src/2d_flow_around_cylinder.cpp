@@ -38,6 +38,7 @@ int main(int ac, char* av[])
 	 * @brief 	Creating the cylinder.
 	 */
 	Cylinder* cylinder = new Cylinder(system, "Cylinder");
+	if (!system.run_particle_relaxation_ && system.reload_particles_) cylinder->useParticleGeneratorReload();
 	SolidParticles 	cylinder_particles(cylinder);
 	/**
 	 * @brief 	Particle and body creation of fluid observers.
@@ -144,12 +145,6 @@ int main(int ac, char* av[])
 	/**
 	 * @brief Pre-simulation.
 	 */
-	 /** Using relaxed particle distribution if needed. */
-	if (system.reload_particles_) {
-		std::unique_ptr<ReloadParticleIO>
-			reload_insert_body_particles(new ReloadParticleIO(in_output, { cylinder }));
-		reload_insert_body_particles->ReadFromFile();
-	}
 	/** initialize cell linked lists for all bodies. */
 	system.initializeSystemCellLinkedLists();
 	/** periodic condition applied after the mesh cell linked list build up

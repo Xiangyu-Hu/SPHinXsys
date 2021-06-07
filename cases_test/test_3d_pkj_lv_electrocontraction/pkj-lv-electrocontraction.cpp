@@ -36,17 +36,33 @@ int main(int ac, char* av[])
 	system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
-	/** Outputs. */
+	/** in- and output environment. */
 	In_Output 	in_output(system);
+	
 	/** Creat a heart body for physiology, material and particles */
 	HeartBody* physiology_body = new HeartBody(system, "ExcitationHeart");
+	if (!system.run_particle_relaxation_ && system.reload_particles_) physiology_body->useParticleGeneratorReload();
 	MuscleReactionModel* muscle_reaction_model = new MuscleReactionModel();
 	MyocardiumPhysiology* myocardium_excitation = new MyocardiumPhysiology(muscle_reaction_model);
 	ElectroPhysiologyParticles 	physiology_articles(physiology_body, myocardium_excitation);
+	
 	/** Creat a heart body for excitation-contraction, material and particles */
 	HeartBody* mechanics_body = new HeartBody(system, "ContractionHeart");
+	if (!system.run_particle_relaxation_ && system.reload_particles_) mechanics_body->useParticleGeneratorReload();
 	MyocardiumMuscle* myocardium_muscle = new MyocardiumMuscle();
 	ActiveMuscleParticles 	mechanics_particles(mechanics_body, myocardium_muscle);
+	
+	/** check whether reload material properties. */
+	if (!system.run_particle_relaxation_ && system.reload_particles_)
+	{
+		std::unique_ptr<ReloadMaterialParameterIO>
+			read_muscle_fiber_and_sheet(new ReloadMaterialParameterIO(in_output, myocardium_muscle));
+		std::unique_ptr<ReloadMaterialParameterIO>
+			read_myocardium_excitation_fiber(new ReloadMaterialParameterIO(in_output, myocardium_excitation, myocardium_muscle->LocalParametersName()));
+		read_muscle_fiber_and_sheet->ReadFromFile();
+		read_myocardium_excitation_fiber->ReadFromFile();
+	}
+	
 	/** Creat a Purkinje network for fast diffusion, material and particles */
 	PurkinjeBody *pkj_body = new PurkinjeBody(system, "Purkinje", new NetworkGeneratorwihtExtraCheck(starting_point, second_point, 50, 1.0));
 	MuscleReactionModel *pkj_reaction_model = new MuscleReactionModel();
@@ -140,12 +156,6 @@ int main(int ac, char* av[])
 	BaseParticles 	disp_observer_particles(myocardium_observer);
 
 	WriteBodyStatesToPlt 		write_states(in_output, system.real_bodies_);
-	ReloadParticleIO			excitation_reload_particles(in_output, { physiology_body }, { physiology_body->getBodyName() });
-	ReloadParticleIO			contraction_reload_particles(in_output, { mechanics_body }, { mechanics_body->getBodyName() });
-	/** Read material property, e.g., sheet and fiber, from xml file. */
-	ReloadMaterialParameterIO  read_muscle_fiber_and_sheet(in_output, myocardium_muscle);
-	ReloadMaterialParameterIO  read_myocardium_excitation_fiber(in_output, myocardium_excitation, myocardium_muscle->LocalParametersName());
-
 	/** topology */
 	InnerBodyRelation* physiology_body_inner = new InnerBodyRelation(physiology_body);	
 	InnerBodyRelation* mechanics_body_inner = new InnerBodyRelation(mechanics_body);
@@ -155,14 +165,7 @@ int main(int ac, char* av[])
 	ContactBodyRelation* myocardium_observer_contact = new ContactBodyRelation(myocardium_observer, { mechanics_body });
 	ComplexBodyRelation* physiology_body_complex = new ComplexBodyRelation(physiology_body, {pkj_leaves});
 	ReducedInnerBodyRelation* pkj_inner = new ReducedInnerBodyRelation(pkj_body);
-	/** check whether reload particles. */
-	if (system.reload_particles_)
-	{
-		excitation_reload_particles.ReadFromFile();
-		contraction_reload_particles.ReadFromFile();
-		read_muscle_fiber_and_sheet.ReadFromFile();
-		read_myocardium_excitation_fiber.ReadFromFile();
-	}
+
 	/** Corrected strong configuration. */	
 	solid_dynamics::CorrectConfiguration correct_configuration_excitation(physiology_body_inner);
 	/** Time step size calculation. */
