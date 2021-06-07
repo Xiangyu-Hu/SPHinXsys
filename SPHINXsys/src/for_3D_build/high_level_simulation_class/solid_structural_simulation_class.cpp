@@ -132,6 +132,14 @@ SolidStructuralSimulation::SolidStructuralSimulation(SolidStructuralSimulationIn
 	}
 }
 
+SolidStructuralSimulation::~SolidStructuralSimulation()
+{
+	for (auto sb: solid_body_list_)
+	{
+		delete sb;
+	}
+}
+
 //void SolidStructuralSimulation::AddPrimitiveCuboid(Vec3d halfsize_cuboid, Vec3d translation, Real resolution, LinearElasticSolid& material)
 //{
 //    primitive_shape_list_.push_back( TriangleMeshShape(halfsize_cuboid, 20, translation) );

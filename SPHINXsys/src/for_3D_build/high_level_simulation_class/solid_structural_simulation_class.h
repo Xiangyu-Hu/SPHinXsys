@@ -161,7 +161,7 @@ class SolidStructuralSimulation
 
 	public:
 		SolidStructuralSimulation(SolidStructuralSimulationInput* input);
- 		virtual ~SolidStructuralSimulation() {};
+ 		~SolidStructuralSimulation();
 
 		//add primitive shapes
 		void AddPrimitiveCuboid(Vec3d halfsize_cuboid, Vec3d translation, Real resolution, LinearElasticSolid& material);
