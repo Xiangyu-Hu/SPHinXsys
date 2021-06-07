@@ -134,9 +134,23 @@ SolidStructuralSimulation::SolidStructuralSimulation(SolidStructuralSimulationIn
 
 SolidStructuralSimulation::~SolidStructuralSimulation()
 {
+	// solid bodies
 	for (auto sb: solid_body_list_)
 	{
 		delete sb;
+	}
+	// contact
+	for (auto cl : contact_list_)
+	{
+		delete cl;
+	}
+	for (auto cd : contact_density_list_)
+	{
+		delete cd;
+	}
+	for (auto cf : contact_force_list_)
+	{
+		delete cf;
 	}
 }
 
@@ -178,48 +192,6 @@ void SolidStructuralSimulation::SetupSystem()
 	CalculateSystemBoundaries();
 	system_.run_particle_relaxation_ = true;
 }
-
-//void SolidStructuralSimulation::InitializeElasticBodies(bool write_particle_relaxation)
-//{	
-//	int i = 0;
-//	int number_stls = imported_stl_list_.size();
-//	for (auto body_mesh: body_mesh_list_)
-//	{	
-//		std::string name;
-//		// imported STLs
-//		if (i < number_stls)
-//		{
-//			name = imported_stl_list_[i];
-//		}
-//		// primitive bodies
-//		else
-//		{
-//			name = "Primitive";
-//			name.append(std::to_string(i));
-//		}
-//		ImportedModel* imported_model = new ImportedModel(system_, name, &body_mesh, resolution_list_[i]);
-//		imported_model_list_.push_back(imported_model);
-//
-//		ElasticSolidParticles* imported_model_particles = new ElasticSolidParticles(imported_model, &material_model_list_[i]);
-//		imported_model_particles_list_.push_back(imported_model_particles);
-//
-//		InnerBodyRelation* imported_model_inner = new InnerBodyRelation(imported_model);
-//		imported_model_inner_list_.push_back(imported_model_inner);
-//		// particle relaxtion, only for STL geometries, not for primitives
-//		if (i < number_stls)
-//		{
-//			RelaxParticlesSingleResolution(&in_output_, write_particle_relaxation, imported_model, imported_model_particles, imported_model_inner);
-//		}
-//		
-//		correct_configuration_list_.push_back(new solid_dynamics::CorrectConfiguration(imported_model_inner));
-//		stress_relaxation_first_half_list_.push_back(new solid_dynamics::StressRelaxationFirstHalf(imported_model_inner));
-//		stress_relaxation_second_half_list_.push_back(new solid_dynamics::StressRelaxationSecondHalf(imported_model_inner));
-//
-//		damping_list_.push_back(new DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>(imported_model_inner, 0.1, "Velocity", physical_viscosity_));
-//
-//		i++;
-//	}
-//}
 
 void SolidStructuralSimulation::InitializeContactBetweenTwoBodies(int first, int second)
 {	
