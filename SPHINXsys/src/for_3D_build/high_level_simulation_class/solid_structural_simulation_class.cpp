@@ -101,6 +101,29 @@ void RelaxParticlesSingleResolution(In_Output* in_output,
 /* SolidStructuralSimulation members */
 ///////////////////////////////////////
 
+SolidStructuralSimulation::SolidStructuralSimulation(SolidStructuralSimulationInput* input):
+	relative_input_path_(input->relative_input_path),
+	imported_stl_list_(input->imported_stl_list),
+	scale_stl_(input->scale_stl),
+	translation_list_(input->translation_list),
+	default_resolution_(input->default_resolution),
+	resolution_list_(input->resolution_list),
+	material_model_list_(input->material_model_list),
+	physical_viscosity_(input->physical_viscosity),
+	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), default_resolution_)),
+	in_output_(In_Output(system_))
+{
+	int i = 0;
+	for (auto imported_stl : imported_stl_list_)
+	{
+		std::string relative_input_path_copy = relative_input_path_;
+		body_mesh_list_.push_back(TriangleMeshShape(relative_input_path_copy.append(imported_stl), translation_list_[i], scale_stl_));
+		i++;
+	}
+	CalculateSystemBoundaries();
+	system_.run_particle_relaxation_ = true;
+}
+
 void SolidStructuralSimulation::AddPrimitiveCuboid(Vec3d halfsize_cuboid, Vec3d translation, Real resolution, LinearElasticSolid& material)
 {
     primitive_shape_list_.push_back( TriangleMeshShape(halfsize_cuboid, 20, translation) );

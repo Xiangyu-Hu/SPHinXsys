@@ -44,15 +44,15 @@ public:
 	SolidBodyForSimulation(SPHSystem &system, std::string body_name, TriangleMeshShape& triangle_mesh_shape, Real resolution, Real physical_viscosity, LinearElasticSolid& material_model);
 	~SolidBodyForSimulation(){};
 
-	ImportedModel& GetImportedModel() { return imported_model_; };
-	LinearElasticSolid& GetLinearElasticSolid() { return material_model_; };
-	ElasticSolidParticles& GetElasticSolidParticles() { return elastic_solid_particles_; };
-	InnerBodyRelation& GetInnerBodyRelation() { return inner_body_relation_; };
+	ImportedModel* GetImportedModel() { return &imported_model_; };
+	LinearElasticSolid* GetLinearElasticSolid() { return &material_model_; };
+	ElasticSolidParticles* GetElasticSolidParticles() { return &elastic_solid_particles_; };
+	InnerBodyRelation* GetInnerBodyRelation() { return &inner_body_relation_; };
 
-	solid_dynamics::CorrectConfiguration& GetCorrectConfiguration() { return correct_configuration_; };
-	solid_dynamics::StressRelaxationFirstHalf& GetStressRelaxationFirstHalf() { return stress_relaxation_first_half_; };
-	solid_dynamics::StressRelaxationSecondHalf& GetStressRelaxationSecondHalf() { return stress_relaxation_second_half_; };
-	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>& GetDampingWithRandomChoice() { return damping_random_; };
+	solid_dynamics::CorrectConfiguration* GetCorrectConfiguration() { return &correct_configuration_; };
+	solid_dynamics::StressRelaxationFirstHalf* GetStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
+	solid_dynamics::StressRelaxationSecondHalf* GetStressRelaxationSecondHalf() { return &stress_relaxation_second_half_; };
+	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>* GetDampingWithRandomChoice() { return &damping_random_; };
 };
 
 void ExpandBoundingBox(BoundingBox* original, BoundingBox* additional);
@@ -158,18 +158,7 @@ class SolidStructuralSimulation
 		void RunSimulationStep(int &ite, Real &dt, Real &integration_time);
 
 	public:
- 		SolidStructuralSimulation(SolidStructuralSimulationInput* input)
-		 : 	relative_input_path_(input->relative_input_path),
-		 	imported_stl_list_(input->imported_stl_list),
-		 	scale_stl_(input->scale_stl),
-			translation_list_(input->translation_list),
-			default_resolution_(input->default_resolution),
-			resolution_list_(input->resolution_list),
-			material_model_list_(input->material_model_list),
-			physical_viscosity_(input->physical_viscosity),
-		 	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), default_resolution_)),
-			in_output_(In_Output (system_))
-			{};
+		SolidStructuralSimulation(SolidStructuralSimulationInput* input);
  		virtual ~SolidStructuralSimulation() {};
 
 		//add primitive shapes
@@ -190,8 +179,8 @@ class SolidStructuralSimulation
 		// high level functions for user
 		void PreprocessSimulation(bool write_particle_relaxation)
 		{
-			ImportSTLModelsAndAddPrimitives();
-			SetupSystem();
+			//ImportSTLModelsAndAddPrimitives();
+			//SetupSystem();
 			InitializeElasticBodies(write_particle_relaxation);
 			InitializeAllContacts();
 		};
