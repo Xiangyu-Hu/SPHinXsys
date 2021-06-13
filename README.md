@@ -154,7 +154,7 @@ Here, we give the instructions for installing on Ubuntu Linux, Apple OS and Wind
 2. Edit the CMake variables to define which dependency to use. Simbody and/or TBB can be built by the project. If one is not built by the project, install that dependency in the usual way as written before.
 
         Go to SPHinXsys/cmake/Dependency_free_settings.cmake
-        Set BUILD_WITH_DEPENDENCIES to 1
+        Set BUILD_WITH_DEPENDENCIES_SOURCE to 1
         Set BUILD_WITH_SIMBODY to 1 if Simbody should be built by the project
         Set BUILD_WITH_ONETBB to 1 if TBB should be built by the project
         Set ONLY_3D to 1 if the 2D libraries and test cases are not needed. Note that Boost is still needed if this variable is set to 0
