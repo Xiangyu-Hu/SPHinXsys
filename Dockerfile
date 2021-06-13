@@ -49,3 +49,5 @@ COPY ./ /home/SPHinXsys/
 WORKDIR /home/SPHinXsys
 RUN rm -rf build
 RUN mkdir build && cd build && cmake .. -DWASM_BUILD=${was_build} -DBUILD_WITH_DEPENDENCIES_SOURCE=${build_with_dependencies_source} -DSPH_ONLY_STATIC_BUILD=${sph_only_static_build} && make -j$(nproc)
+RUN ctest
+RUN cd /home/SPHinXsys

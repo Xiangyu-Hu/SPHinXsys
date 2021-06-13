@@ -207,6 +207,28 @@ You can find a installation instruction video: https://youtu.be/m0p1nybM4v4, and
 
         Create your own application in the cases_user in the source folder simply by copying the entire folder of a similar test case and rename and modify application files
 
+8. Build with docker
+
+        Create docker image by using following command:
+
+        docker build .
+
+        Only Ubuntu 20.04 is supported and tested at this moment.
+        Add multiple of any build args after build keyword to specify different builds:
+       
+        Static build:
+        --build-arg sph_only_static_build=1
+        
+        Build with visualization support:
+        --build-arg build_with_visualization=on
+
+        Build all dependencies from source code:
+        --build-arg build_with_dependencies_source=1
+
+        Build for webassembly:
+        --build-arg was_build=1
+
+
 
 ### How to run gpuSPHinXsys cases on CUDA enabled GPUs?
 The build process for GPU cases are identical to the CPU cases on all platforms, viz. Linux, Windows and Mac OSX.
