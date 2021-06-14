@@ -64,19 +64,18 @@ void RelaxParticlesSingleResolution(In_Output* in_output,
 									InnerBodyRelation* imported_model_inner);
 
 
-struct SolidStructuralSimulationInput
+struct StructuralSimulationInput
 {
 	std::string relative_input_path;
 	std::vector<std::string> imported_stl_list;
 	Real scale_stl;
 	std::vector<Vec3d> translation_list;
-	Real default_resolution;
 	std::vector<Real> resolution_list;
 	std::vector<LinearElasticSolid> material_model_list;
 	Real physical_viscosity;
 };
 
-class SolidStructuralSimulation
+class StructuralSimulation
 	{
 	private:
 		// input members
@@ -86,6 +85,7 @@ class SolidStructuralSimulation
 		std::vector<Vec3d> translation_list_;
 		Real default_resolution_;
 		std::vector<Real> resolution_list_;
+		std::vector<LinearElasticSolid> material_model_list_;
 		Real physical_viscosity_;
 
 		// internal members
@@ -120,15 +120,15 @@ class SolidStructuralSimulation
 		std::vector<solid_dynamics::ConstrainSolidBodyRegion*> fixed_contraint_;
 		std::vector<int> body_indeces_fixed_contraint_;
 		
-		// for PreprocessSimulation, the order is important
-		void ImportSTLModelsAndAddPrimitives();
-		void CalculateSystemBoundaries(); //for SetupSystem
-		void SetupSystem();
-		void InitializeElasticBodies(bool write_particle_relaxation);
-		void InitializeContactBetweenTwoBodies(int first, int second);
-		void InitializeAllContacts();
+		// for constructor, the order is important
+		void ScaleTranslationAndResolution();
+		void CreateBodyMeshList();
+		void CalculateSystemBoundaries();
+		void InitializeElasticSolidBodies();
 
 		// for InitializeBoundaryConditions
+		void InitializeContactBetweenTwoBodies(int first, int second);
+		void InitializeAllContacts();
 		void InitializeGravity();
 		void InitializeAccelerationForBodyPartInBoundingBox();
 		void InitializeSpringDamperConstraintParticleWise();
@@ -150,8 +150,8 @@ class SolidStructuralSimulation
 		void RunSimulationStep(int &ite, Real &dt, Real &integration_time);
 
 	public:
-		SolidStructuralSimulation(SolidStructuralSimulationInput* input);
- 		~SolidStructuralSimulation();
+		StructuralSimulation(StructuralSimulationInput* input);
+ 		~StructuralSimulation();
 
 		//add primitive shapes
 		void AddPrimitiveCuboid(Vec3d halfsize_cuboid, Vec3d translation, Real resolution, LinearElasticSolid& material);
