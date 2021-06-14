@@ -102,6 +102,7 @@ void RelaxParticlesSingleResolution(In_Output* in_output,
 ///////////////////////////////////////
 
 StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input) :
+	// generic input
 	relative_input_path_(input->relative_input_path),
 	imported_stl_list_(input->imported_stl_list),
 	scale_stl_(input->scale_stl),
@@ -112,7 +113,10 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input) :
 	physical_viscosity_(input->physical_viscosity),
 	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), default_resolution_)),
 	in_output_(In_Output(system_)),
-	contacting_bodies_list_(input->contacting_bodies_list)
+	contacting_bodies_list_(input->contacting_bodies_list),
+
+	// boundary conditions
+	non_zero_gravity_(input->non_zero_gravity)
 {
 	// scaling of translation and resolution
 	ScaleTranslationAndResolution();
@@ -125,6 +129,9 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input) :
 	InitializeElasticSolidBodies();
 	// contacts
 	InitializeAllContacts();
+
+	// boundary conditions
+	InitializeGravity();
 }
 
 StructuralSimulation::~StructuralSimulation()
@@ -146,6 +153,11 @@ StructuralSimulation::~StructuralSimulation()
 	for (auto cf : contact_force_list_)
 	{
 		delete cf;
+	}
+	// boundary conditions
+	for (auto ig : initialize_gravity_)
+	{
+		delete ig;
 	}
 }
 
@@ -223,25 +235,24 @@ void StructuralSimulation::InitializeAllContacts()
 
 void StructuralSimulation::InitializeGravity()
 {
-	int i = 0;
-	for (auto solid_body: solid_body_list_)
+	// collect all the body indeces with non-zero gravity
+	vector<int> body_indeces_gravity = {};
+	for (auto pair : non_zero_gravity_)
+	{
+		body_indeces_gravity.push_back(pair.first);
+	}
+	// initialize gravity
+	for (int i = 0; i < solid_body_list_.size(); i++)
 	{	
-		if ( find(body_indeces_gravity_.begin(), body_indeces_gravity_.end(), i) != body_indeces_gravity_.end() )
+		if ( find(body_indeces_gravity.begin(), body_indeces_gravity.end(), i) != body_indeces_gravity.end() )
 		{	
-			initialize_gravity_.push_back(new InitializeATimeStep(solid_body->GetImportedModel(), new Gravity(*gravity_[i])));
+			initialize_gravity_.push_back(new InitializeATimeStep(solid_body_list_[i]->GetImportedModel(), new Gravity(non_zero_gravity_[i].second)));
 		}
 		else
 		{
-			initialize_gravity_.push_back(new InitializeATimeStep(solid_body->GetImportedModel()));
+			initialize_gravity_.push_back(new InitializeATimeStep(solid_body_list_[i]->GetImportedModel()));
 		}
-		i++;
 	}
-}
-
-void StructuralSimulation::AddGravity(int body_index, Vec3d* gravity)
-{
-	body_indeces_gravity_.push_back(body_index);
-	gravity_.push_back(gravity);
 }
 
 void StructuralSimulation::InitializeAccelerationForBodyPartInBoundingBox()

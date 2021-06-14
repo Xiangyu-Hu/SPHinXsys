@@ -14,6 +14,7 @@
 using namespace SPH;
 using namespace std;
 using IndexPair = pair<int, int>;
+using GravityPair = pair<int, Vec3d>;
 
 class BodyPartByParticleTriMesh : public BodyPartByParticle
 {
@@ -68,6 +69,7 @@ void RelaxParticlesSingleResolution(In_Output* in_output,
 
 struct StructuralSimulationInput
 {
+	// general input for simulation
 	string relative_input_path;
 	vector<string> imported_stl_list;
 	Real scale_stl;
@@ -76,6 +78,9 @@ struct StructuralSimulationInput
 	vector<LinearElasticSolid> material_model_list;
 	Real physical_viscosity;
 	vector<IndexPair> contacting_bodies_list;
+
+	// boundary conditions are optional
+	vector<GravityPair> non_zero_gravity = {};
 };
 
 class StructuralSimulation
@@ -107,8 +112,7 @@ class StructuralSimulation
 
 		// for InitializeGravity
 		vector<InitializeATimeStep*> initialize_gravity_;
-		vector<int> body_indeces_gravity_;
-		vector<Vec3d*> gravity_;
+		vector<GravityPair> non_zero_gravity_;
 		// for AddAccelerationForBodyPartInBoundingBox
 		vector<solid_dynamics::AccelerationForBodyPartInBoundingBox*> acceleration_for_body_part_;
 		vector<int> body_indeces_accelerations_;
@@ -163,14 +167,12 @@ class StructuralSimulation
 		TriangleMeshShape* GetBodyMesh(int body_index) { return &body_mesh_list_[body_index]; };
 
 		// boundary conditions for user
-		void AddGravity(int body_index, Vec3d* gravity);
 		void AddAccelerationForBodyPartInBoundingBox(int body_index, BoundingBox* bounding_box, Vec3d acceleration);
 		void AddSpringDamperConstraintParticleWise(int body_index, Vec3d stiffness, Real damping_ratio);
 		void AddConstrainSolidBodyRegion(int body_index);
 
 		void InitializeBoundaryConditions()
 		{
-			InitializeGravity();
 			InitializeAccelerationForBodyPartInBoundingBox();
 			InitializeSpringDamperConstraintParticleWise();
 			InitializeConstrainSolidBodyRegion();
