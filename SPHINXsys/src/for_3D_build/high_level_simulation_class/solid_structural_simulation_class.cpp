@@ -4,7 +4,7 @@
 /* global functions in StructuralSimulation  */
 ////////////////////////////////////////////////////
 
-BodyPartByParticleTriMesh::BodyPartByParticleTriMesh(SPHBody* body, std::string body_part_name, TriangleMeshShape* triangle_mesh_shape)
+BodyPartByParticleTriMesh::BodyPartByParticleTriMesh(SPHBody* body, string body_part_name, TriangleMeshShape* triangle_mesh_shape)
 : BodyPartByParticle(body, body_part_name)
 {	
 	body_part_shape_ = new ComplexShape(body_part_name);
@@ -12,7 +12,7 @@ BodyPartByParticleTriMesh::BodyPartByParticleTriMesh(SPHBody* body, std::string 
 	tagBodyPart();
 }
 
-ImportedModel::ImportedModel(SPHSystem &system, std::string body_name, TriangleMeshShape* triangle_mesh_shape, Real resolution)
+ImportedModel::ImportedModel(SPHSystem &system, string body_name, TriangleMeshShape* triangle_mesh_shape, Real resolution)
 	: SolidBody(system, body_name, resolution)
 {
 	ComplexShape original_body_shape;
@@ -20,7 +20,7 @@ ImportedModel::ImportedModel(SPHSystem &system, std::string body_name, TriangleM
 	body_shape_ = new LevelSetComplexShape(this, original_body_shape, true);
 }
 
-SolidBodyForSimulation::SolidBodyForSimulation(SPHSystem &system, std::string body_name, TriangleMeshShape& triangle_mesh_shape, Real resolution, Real physical_viscosity, LinearElasticSolid& material_model):
+SolidBodyForSimulation::SolidBodyForSimulation(SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape, Real resolution, Real physical_viscosity, LinearElasticSolid& material_model):
 	imported_model_(ImportedModel(system, body_name, &triangle_mesh_shape, resolution)),
 	//material_model_(material_model),
 	elastic_solid_particles_(ElasticSolidParticles(&imported_model_, &material_model)),
@@ -87,14 +87,14 @@ void RelaxParticlesSingleResolution(In_Output* in_output,
 		ite_p += 1;
 		if (ite_p % 100 == 0)
 		{
-			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the imported model N = " << ite_p << "\n";
+			cout << fixed << setprecision(9) << "Relaxation steps for the imported model N = " << ite_p << "\n";
 			if (write_particles_to_file)
 			{
 				write_imported_model_to_vtu.WriteToFile(Real(ite_p) * 1.0e-4);
 			}
 		}
 	}
-	std::cout << "The physics relaxation process of imported model finish !" << std::endl;
+	cout << "The physics relaxation process of imported model finish !" << endl;
 }
 
 ///////////////////////////////////////
@@ -111,7 +111,8 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input) :
 	material_model_list_(input->material_model_list),
 	physical_viscosity_(input->physical_viscosity),
 	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), default_resolution_)),
-	in_output_(In_Output(system_))
+	in_output_(In_Output(system_)),
+	contacting_bodies_list_(input->contacting_bodies_list)
 {
 	// scaling of translation and resolution
 	ScaleTranslationAndResolution();
@@ -122,6 +123,8 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input) :
 	system_.run_particle_relaxation_ = true;
 	// initialize solid bodies with their properties
 	InitializeElasticSolidBodies();
+	// contacts
+	InitializeAllContacts();
 }
 
 StructuralSimulation::~StructuralSimulation()
@@ -179,7 +182,7 @@ void StructuralSimulation::CreateBodyMeshList()
 {
 	for (int i = 0; i < imported_stl_list_.size(); i++)
 	{
-		std::string relative_input_path_copy = relative_input_path_;
+		string relative_input_path_copy = relative_input_path_;
 		body_mesh_list_.push_back(TriangleMeshShape(relative_input_path_copy.append(imported_stl_list_[i]), translation_list_[i], scale_stl_));
 	}
 }
@@ -218,17 +221,12 @@ void StructuralSimulation::InitializeAllContacts()
 	}
 }
 
-void StructuralSimulation::AddContactPair(int first_id, int second_id)
-{
-	contacting_bodies_list_.push_back(std::pair<int, int>(first_id, second_id));
-}
-
 void StructuralSimulation::InitializeGravity()
 {
 	int i = 0;
 	for (auto solid_body: solid_body_list_)
 	{	
-		if ( std::find(body_indeces_gravity_.begin(), body_indeces_gravity_.end(), i) != body_indeces_gravity_.end() )
+		if ( find(body_indeces_gravity_.begin(), body_indeces_gravity_.end(), i) != body_indeces_gravity_.end() )
 		{	
 			initialize_gravity_.push_back(new InitializeATimeStep(solid_body->GetImportedModel(), new Gravity(*gravity_[i])));
 		}

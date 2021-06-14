@@ -12,18 +12,20 @@
 #include <algorithm>
 
 using namespace SPH;
+using namespace std;
+using IndexPair = pair<int, int>;
 
 class BodyPartByParticleTriMesh : public BodyPartByParticle
 {
 public:
-	BodyPartByParticleTriMesh(SPHBody* body, std::string body_part_name, TriangleMeshShape* triangle_mesh_shape);
+	BodyPartByParticleTriMesh(SPHBody* body, string body_part_name, TriangleMeshShape* triangle_mesh_shape);
 	virtual ~BodyPartByParticleTriMesh() {};
 };
 
 class ImportedModel : public SolidBody
 {
 public:
-	ImportedModel(SPHSystem &system, std::string body_name, TriangleMeshShape* triangle_mesh_shape, Real resolution);
+	ImportedModel(SPHSystem &system, string body_name, TriangleMeshShape* triangle_mesh_shape, Real resolution);
 	~ImportedModel(){};
 };
 
@@ -41,7 +43,7 @@ private:
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>> damping_random_;
 
 public:
-	SolidBodyForSimulation(SPHSystem &system, std::string body_name, TriangleMeshShape& triangle_mesh_shape, Real resolution, Real physical_viscosity, LinearElasticSolid& material_model);
+	SolidBodyForSimulation(SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape, Real resolution, Real physical_viscosity, LinearElasticSolid& material_model);
 	~SolidBodyForSimulation(){};
 
 	ImportedModel* GetImportedModel() { return &imported_model_; };
@@ -66,69 +68,70 @@ void RelaxParticlesSingleResolution(In_Output* in_output,
 
 struct StructuralSimulationInput
 {
-	std::string relative_input_path;
-	std::vector<std::string> imported_stl_list;
+	string relative_input_path;
+	vector<string> imported_stl_list;
 	Real scale_stl;
-	std::vector<Vec3d> translation_list;
-	std::vector<Real> resolution_list;
-	std::vector<LinearElasticSolid> material_model_list;
+	vector<Vec3d> translation_list;
+	vector<Real> resolution_list;
+	vector<LinearElasticSolid> material_model_list;
 	Real physical_viscosity;
+	vector<IndexPair> contacting_bodies_list;
 };
 
 class StructuralSimulation
 	{
 	private:
 		// input members
-		std::string relative_input_path_;
-		std::vector<std::string> imported_stl_list_;
+		string relative_input_path_;
+		vector<string> imported_stl_list_;
 		Real scale_stl_;
-		std::vector<Vec3d> translation_list_;
+		vector<Vec3d> translation_list_;
 		Real default_resolution_;
-		std::vector<Real> resolution_list_;
-		std::vector<LinearElasticSolid> material_model_list_;
+		vector<Real> resolution_list_;
+		vector<LinearElasticSolid> material_model_list_;
 		Real physical_viscosity_;
 
 		// internal members
 		SPHSystem system_;
 		In_Output in_output_;
 
-		std::vector<TriangleMeshShape> body_mesh_list_;
-		std::vector<TriangleMeshShape> primitive_shape_list_;
+		vector<TriangleMeshShape> body_mesh_list_;
+		vector<TriangleMeshShape> primitive_shape_list_;
 
-		std::vector<SolidBodyForSimulation*> solid_body_list_;
+		vector<SolidBodyForSimulation*> solid_body_list_;
 
-		std::vector<std::pair<int, int>> contacting_bodies_list_;
-		std::vector<SolidContactBodyRelation*> contact_list_;
-		std::vector<solid_dynamics::ContactDensitySummation*> contact_density_list_;
-		std::vector<solid_dynamics::ContactForce*> contact_force_list_;
+		vector<IndexPair> contacting_bodies_list_;
+		vector<SolidContactBodyRelation*> contact_list_;
+		vector<solid_dynamics::ContactDensitySummation*> contact_density_list_;
+		vector<solid_dynamics::ContactForce*> contact_force_list_;
 
 		// for InitializeGravity
-		std::vector<InitializeATimeStep*> initialize_gravity_;
-		std::vector<int> body_indeces_gravity_;
-		std::vector<Vec3d*> gravity_;
+		vector<InitializeATimeStep*> initialize_gravity_;
+		vector<int> body_indeces_gravity_;
+		vector<Vec3d*> gravity_;
 		// for AddAccelerationForBodyPartInBoundingBox
-		std::vector<solid_dynamics::AccelerationForBodyPartInBoundingBox*> acceleration_for_body_part_;
-		std::vector<int> body_indeces_accelerations_;
-		std::vector<BoundingBox*> bounding_boxes_;
-		std::vector<Vec3d> accelerations_;
+		vector<solid_dynamics::AccelerationForBodyPartInBoundingBox*> acceleration_for_body_part_;
+		vector<int> body_indeces_accelerations_;
+		vector<BoundingBox*> bounding_boxes_;
+		vector<Vec3d> accelerations_;
 		// for AddSpringDamperConstraintParticleWise
-		std::vector<solid_dynamics::SpringDamperConstraintParticleWise*> spring_damper_contraint_;
-		std::vector<int> body_indeces_spring_damper_;
-		std::vector<Vec3d> stiffnesses_;
-		std::vector<Real> damping_ratios_;
+		vector<solid_dynamics::SpringDamperConstraintParticleWise*> spring_damper_contraint_;
+		vector<int> body_indeces_spring_damper_;
+		vector<Vec3d> stiffnesses_;
+		vector<Real> damping_ratios_;
 		// for AddSpringDamperConstraintParticleWise
-		std::vector<solid_dynamics::ConstrainSolidBodyRegion*> fixed_contraint_;
-		std::vector<int> body_indeces_fixed_contraint_;
+		vector<solid_dynamics::ConstrainSolidBodyRegion*> fixed_contraint_;
+		vector<int> body_indeces_fixed_contraint_;
 		
 		// for constructor, the order is important
 		void ScaleTranslationAndResolution();
 		void CreateBodyMeshList();
 		void CalculateSystemBoundaries();
 		void InitializeElasticSolidBodies();
-
-		// for InitializeBoundaryConditions
 		void InitializeContactBetweenTwoBodies(int first, int second);
 		void InitializeAllContacts();
+
+		// for InitializeBoundaryConditions
 		void InitializeGravity();
 		void InitializeAccelerationForBodyPartInBoundingBox();
 		void InitializeSpringDamperConstraintParticleWise();
@@ -159,9 +162,6 @@ class StructuralSimulation
 		// get data from private members
 		TriangleMeshShape* GetBodyMesh(int body_index) { return &body_mesh_list_[body_index]; };
 
-		// add contacting bodies
-		void AddContactPair(int first_id, int second_id);
-
 		// boundary conditions for user
 		void AddGravity(int body_index, Vec3d* gravity);
 		void AddAccelerationForBodyPartInBoundingBox(int body_index, BoundingBox* bounding_box, Vec3d acceleration);
@@ -170,7 +170,6 @@ class StructuralSimulation
 
 		void InitializeBoundaryConditions()
 		{
-			InitializeAllContacts();
 			InitializeGravity();
 			InitializeAccelerationForBodyPartInBoundingBox();
 			InitializeSpringDamperConstraintParticleWise();
