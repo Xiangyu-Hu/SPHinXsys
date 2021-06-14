@@ -1,9 +1,28 @@
 ## Build with Simbody and/or oneTBB source code
-set(BUILD_WITH_DEPENDENCIES 0)
-## Only static build is used
-set(SPH_ONLY_STATIC_BUILD 0)
+option(BUILD_WITH_DEPENDENCIES_SOURCE "BUILD_WITH_DEPENDENCIES_SOURCE" 0)
 
-if(BUILD_WITH_DEPENDENCIES)
+## Static build
+option(SPH_ONLY_STATIC_BUILD "SPH_ONLY_STATIC_BUILD" 0)
+if(SPH_ONLY_STATIC_BUILD)
+    set(BUILD_SHARED_LIBS OFF)
+    message(STATUS "SPH_ONLY_STATIC_BUILD is set on")
+endif(SPH_ONLY_STATIC_BUILD)
+
+## Webassembly ##
+if(NOT DEFINED WASM_BUILD)
+    set(WASM_BUILD 0)
+endif(NOT DEFINED WASM_BUILD)
+
+if(WASM_BUILD)
+    message(STATUS "WEBASSEMBLY IS BEING BUILT...")
+    set(BUILD_WITH_DEPENDENCIES_SOURCE 1)
+    message(WARNING "SPH_ONLY_STATIC_BUILD is forced on")
+    set(SPH_ONLY_STATIC_BUILD 1)
+endif(WASM_BUILD)
+
+
+if(BUILD_WITH_DEPENDENCIES_SOURCE)
+    message(STATUS "BUILD_WITH_DEPENDENCIES_SOURCE")
     ## Select which dependency source code is included
     ###### Simbody ######
     # Simbody and clapack source code will be built with the project
@@ -23,34 +42,16 @@ if(BUILD_WITH_DEPENDENCIES)
         add_definitions(-DBOOST_AVAILABLE)
         set(BOOST_AVAILABLE 1)
     endif()
-    ###### Boost, only 3D ######
-    ###### Webassembly ######
-    # this is for porting to javascript, do not change it, unless you're using the SPHinXsys_JS repo
-    # only works with static build
-    set(WASM_BUILD 0)
-    ###### Webassembly ######
-else(BUILD_WITH_DEPENDENCIES)
+
+else(BUILD_WITH_DEPENDENCIES_SOURCE)
     ## Default option, doesn't build any dependencies
-    ###### Do not change ######
     set(BUILD_WITH_SIMBODY 0)
     set(BUILD_WITH_ONETBB 0)
     add_definitions(-DBOOST_AVAILABLE)
     set(BOOST_AVAILABLE 1)
-    set(WASM_BUILD 0)
-    ###### Do not change ######
-endif(BUILD_WITH_DEPENDENCIES)
+endif(BUILD_WITH_DEPENDENCIES_SOURCE)
 
-###### WASM_BUILD ######
-if(WASM_BUILD)
-    set(SPH_ONLY_STATIC_BUILD 0)
-endif(WASM_BUILD)
-###### SPH_ONLY_STATIC_BUILD ######
 
-###### SPH_ONLY_STATIC_BUILD ######
-if(SPH_ONLY_STATIC_BUILD)
-    set(BUILD_SHARED_LIBS OFF)
-endif(SPH_ONLY_STATIC_BUILD)
-###### SPH_ONLY_STATIC_BUILD ######
 
 ###### Simbody ######
 if(BUILD_WITH_SIMBODY)

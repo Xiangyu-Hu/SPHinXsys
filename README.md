@@ -154,7 +154,7 @@ Here, we give the instructions for installing on Ubuntu Linux, Apple OS and Wind
 2. Edit the CMake variables to define which dependency to use. Simbody and/or TBB can be built by the project. If one is not built by the project, install that dependency in the usual way as written before.
 
         Go to SPHinXsys/cmake/Dependency_free_settings.cmake
-        Set BUILD_WITH_DEPENDENCIES to 1
+        Set BUILD_WITH_DEPENDENCIES_SOURCE to 1
         Set BUILD_WITH_SIMBODY to 1 if Simbody should be built by the project
         Set BUILD_WITH_ONETBB to 1 if TBB should be built by the project
         Set ONLY_3D to 1 if the 2D libraries and test cases are not needed. Note that Boost is still needed if this variable is set to 0
@@ -206,6 +206,28 @@ You can find a installation instruction video: https://youtu.be/m0p1nybM4v4, and
 7. Create and build your own application
 
         Create your own application in the cases_user in the source folder simply by copying the entire folder of a similar test case and rename and modify application files
+
+8. Build with docker
+
+        Create docker image by using following command:
+
+        docker build .
+
+        Only Ubuntu 20.04 is supported and tested at this moment.
+        Add multiple of any build args after build keyword to specify different builds:
+       
+        Static build:
+        --build-arg sph_only_static_build=1
+        
+        Build with visualization support:
+        --build-arg build_with_visualization=on
+
+        Build all dependencies from source code:
+        --build-arg build_with_dependencies_source=1
+
+        Build for webassembly:
+        --build-arg was_build=1
+
 
 
 ### How to run gpuSPHinXsys cases on CUDA enabled GPUs?
