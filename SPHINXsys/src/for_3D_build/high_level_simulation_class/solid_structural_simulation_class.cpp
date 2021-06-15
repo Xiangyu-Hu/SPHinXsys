@@ -12,12 +12,22 @@ BodyPartByParticleTriMesh::BodyPartByParticleTriMesh(SPHBody* body, string body_
 	tagBodyPart();
 }
 
+BodyPartByParticleTriMesh::~BodyPartByParticleTriMesh()
+{
+	delete body_part_shape_;
+}
+
 ImportedModel::ImportedModel(SPHSystem &system, string body_name, TriangleMeshShape* triangle_mesh_shape, Real resolution)
 	: SolidBody(system, body_name, resolution)
 {
 	ComplexShape original_body_shape;
 	original_body_shape.addTriangleMeshShape(triangle_mesh_shape, ShapeBooleanOps::add);
 	body_shape_ = new LevelSetComplexShape(this, original_body_shape, true);
+}
+
+ImportedModel::~ImportedModel()
+{
+	delete body_shape_;
 }
 
 SolidBodyForSimulation::SolidBodyForSimulation(SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape, Real resolution, Real physical_viscosity, LinearElasticSolid& material_model):

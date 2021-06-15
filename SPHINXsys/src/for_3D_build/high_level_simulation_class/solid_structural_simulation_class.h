@@ -22,14 +22,14 @@ class BodyPartByParticleTriMesh : public BodyPartByParticle
 {
 public:
 	BodyPartByParticleTriMesh(SPHBody* body, string body_part_name, TriangleMeshShape* triangle_mesh_shape);
-	virtual ~BodyPartByParticleTriMesh() {};
+	~BodyPartByParticleTriMesh();
 };
 
 class ImportedModel : public SolidBody
 {
 public:
 	ImportedModel(SPHSystem &system, string body_name, TriangleMeshShape* triangle_mesh_shape, Real resolution);
-	~ImportedModel(){};
+	~ImportedModel();
 };
 
 class SolidBodyForSimulation
