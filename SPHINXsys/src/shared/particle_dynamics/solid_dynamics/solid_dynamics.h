@@ -252,7 +252,7 @@ namespace SPH
 			virtual ~ParticleWiseAcceleration() {};
 		protected:
 			StdLargeVec<Real>& mass_;
-			StdLargeVec<Vecd>& pos_n_,& pos_0_,& dvel_dt_others_;
+			StdLargeVec<Vecd>& pos_n_,& pos_0_,& dvel_dt_prior_;
 			Vecd stiffness_;
 			virtual Vecd getAcceleration(Vecd& disp, Real mass);
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
