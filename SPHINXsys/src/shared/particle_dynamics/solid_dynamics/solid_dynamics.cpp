@@ -453,7 +453,7 @@ namespace SPH
 			rho0_ = material_->ReferenceDensity();
 			inv_rho0_ = 1.0 / rho0_;
 			smoothing_length_ = particle_adaptation_->ReferenceSmoothingLength();
-			numerical_dissipation_factor_ = 0.125;
+			numerical_dissipation_factor_ = 0.25;
 		}
 		//=================================================================================================//
 		void StressRelaxationFirstHalf::Initialization(size_t index_i, Real dt)
