@@ -213,6 +213,7 @@ void StructuralSimulation::CreateBodyMeshList()
 
 void StructuralSimulation::InitializeElasticSolidBodies()
 {
+	solid_body_list_ = {};
 	for (int i = 0; i < body_mesh_list_.size(); i++)
 	{
 		SolidBodyForSimulation* sb = new SolidBodyForSimulation(system_, imported_stl_list_[i], body_mesh_list_[i], resolution_list_[i], physical_viscosity_, material_model_list_[i]);
