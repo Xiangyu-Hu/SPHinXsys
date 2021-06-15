@@ -146,12 +146,12 @@ class MyocardiumMuscle
  public:
  	MyocardiumMuscle() : ActiveMuscle<LocallyOrthotropicMuscle>()
 	{
-		rho_0_ = rho_0;
+		rho0_ = rho_0;
 		bulk_modulus_ = bulk_modulus;
 		f0_ = fiber_direction;
 		s0_ = sheet_direction;
-		std::copy(a_0, a_0 + 4, a_0_);
-		std::copy(b_0, b_0 + 4, b_0_);
+		std::copy(a_0, a_0 + 4, a0_);
+		std::copy(b_0, b_0 + 4, b0_);
 
 		assignDerivedMaterialParameters();
 	}

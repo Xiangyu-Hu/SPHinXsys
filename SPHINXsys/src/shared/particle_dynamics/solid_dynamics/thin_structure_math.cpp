@@ -90,17 +90,17 @@ namespace SPH
 			return (drotation_matrix_y_dt * rotation_matrix_x + rotation_matrix_y * drotation_matrix_x_dt)* initial_vector;
 		}
 		//=================================================================================================//
-		Vecd getRotationFromPseudoNormalForFiniteDeformation(const Vec2d& dpseudo_n_d2t, const Vec2d& rotation, const Vec2d& angular_vel, Real dt)
+		Vec2d getRotationFromPseudoNormalForFiniteDeformation(const Vec2d& dpseudo_n_d2t, const Vec2d& rotation, const Vec2d& angular_vel, Real dt)
 		{
-			Vecd dangular_vel_dt(0.0);
+			Vec2d dangular_vel_dt(0.0);
 			dangular_vel_dt[0] = -(dpseudo_n_d2t[0] + sin(rotation[0]) * powerN(angular_vel[0], 2))
 				/ (2 * sin(rotation[0]) * angular_vel[0] * dt - cos(rotation[0]));
 			return dangular_vel_dt;
 		}
 		//=================================================================================================//
-		Vecd getRotationFromPseudoNormalForFiniteDeformation(const Vec3d& dpseudo_n_d2t, const Vec3d& rotation, const Vec3d& angular_vel, Real dt)
+		Vec3d getRotationFromPseudoNormalForFiniteDeformation(const Vec3d& dpseudo_n_d2t, const Vec3d& rotation, const Vec3d& angular_vel, Real dt)
 		{
-			Vecd dangular_vel_dt(0.0);
+			Vec3d dangular_vel_dt(0.0);
 			dangular_vel_dt[0] = (dpseudo_n_d2t[1] - sin(rotation[0]) * powerN(angular_vel[0], 2))
 				/ (2 * sin(rotation[0]) * angular_vel[0] * dt - cos(rotation[0]));
 			dangular_vel_dt[1] = (dpseudo_n_d2t[0] + cos(rotation[0]) * sin(rotation[1])
@@ -115,19 +115,33 @@ namespace SPH
 			return dangular_vel_dt;
 		}
 		//=================================================================================================//
-		Vecd getRotationFromPseudoNormalForSmallDeformation(const Vec2d& dpseudo_n_d2t, const Vec2d& rotation, const Vec2d& angular_vel, Real dt)
+		Vec2d getRotationFromPseudoNormalForSmallDeformation(const Vec2d& dpseudo_n_d2t, const Vec2d& rotation, const Vec2d& angular_vel, Real dt)
 		{
-			Vecd dangular_vel_dt(0.0);
+			Vec2d dangular_vel_dt(0.0);
 			dangular_vel_dt[0] = dpseudo_n_d2t[0];
 			return dangular_vel_dt;
 		}
 		//=================================================================================================//
-		Vecd getRotationFromPseudoNormalForSmallDeformation(const Vec3d& dpseudo_n_d2t, const Vec3d& rotation, const Vec3d& angular_vel, Real dt)
+		Vec3d getRotationFromPseudoNormalForSmallDeformation(const Vec3d& dpseudo_n_d2t, const Vec3d& rotation, const Vec3d& angular_vel, Real dt)
 		{
-			Vecd dangular_vel_dt(0.0);
+			Vec3d dangular_vel_dt(0.0);
 			dangular_vel_dt[0] = -dpseudo_n_d2t[1];
 			dangular_vel_dt[1] = dpseudo_n_d2t[0];
 			return dangular_vel_dt;
+		}
+		//=================================================================================================//
+		Vec2d getNormalFromDeformationGradientTensor(const Mat2d& F)
+		{
+			Vec2d n = Vec2d(-F.col(0)[1], F.col(0)[0]);
+			n = n / (n.norm() + Eps);
+			return n;
+		}
+		//=================================================================================================//
+		Vec3d getNormalFromDeformationGradientTensor(const Mat3d& F)
+		{
+			Vec3d n = F.col(0) % F.col(1);
+			n = n / (n.norm() + Eps);
+			return n;
 		}
 		//=================================================================================================//
 	}

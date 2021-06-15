@@ -79,10 +79,9 @@ class Material : public LinearElasticSolid
 public:
 	Material() : LinearElasticSolid()
 	{
-		rho_0_ = rho0_s;
-		E_0_ = Youngs_modulus;
-		nu_ = poisson;
-		eta_0_ = physical_viscosity;
+		rho0_ = rho0_s;
+		youngs_modulus_ = Youngs_modulus;
+		poisson_ratio_ = poisson;
 
 		assignDerivedMaterialParameters();
 	}

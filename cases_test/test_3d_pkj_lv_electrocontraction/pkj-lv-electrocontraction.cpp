@@ -36,6 +36,8 @@ int main(int ac, char* av[])
 	system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
+	//handle command line arguments
+	system.handleCommandlineOptions(ac, av);
 	/** in- and output environment. */
 	In_Output 	in_output(system);
 	

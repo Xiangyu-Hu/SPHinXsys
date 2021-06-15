@@ -47,7 +47,7 @@ public:
 				Real x = radius_mid_surface * cos(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
 				Real y = particle_spacing_ref * j - BW + particle_spacing_ref * 0.5;
 				Real z = radius_mid_surface * sin(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
-				body_input_points_volumes_.push_back(std::make_pair(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref * thickness));
+				body_input_points_volumes_.push_back(std::make_pair(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref));
 			}
 		}
 	}
@@ -129,10 +129,9 @@ class CylinderMaterial : public LinearElasticSolid
 public:
 	CylinderMaterial(): LinearElasticSolid()
 	{
-		rho_0_ = rho0_s;
-		E_0_ = Youngs_modulus;
-		nu_ = poisson;
-		eta_0_ = physical_viscosity;
+		rho0_ = rho0_s;
+		youngs_modulus_ = Youngs_modulus;
+		poisson_ratio_ = poisson;
 
 		assignDerivedMaterialParameters();
 	}
@@ -188,6 +187,8 @@ int main()
 		stress_relaxation_second_half(cylinder_body_inner);
 	solid_dynamics::ConstrainSolidBodyRegionVelocity
 		constrain_holder(cylinder_body, new BoundaryGeometry(cylinder_body, "BoundaryGeometry"), Vecd(0.0, 1.0, 0.0));
+	solid_dynamics::ConstrainSolidBodyMassCenter
+		constrain_mass_center(cylinder_body, Vecd(0.0, 1.0, 0.0));
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vecd>>
 		cylinder_position_damping(cylinder_body_inner, 0.1, "Velocity", physical_viscosity);
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vecd>>
@@ -214,7 +215,7 @@ int main()
 	
 	/** Setup physical parameters. */
 	int ite = 0;
-	Real end_time = 3.0;
+	Real end_time = 1.5;
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	/** Statistics for computing time. */

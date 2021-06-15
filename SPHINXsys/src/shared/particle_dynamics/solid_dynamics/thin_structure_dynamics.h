@@ -145,10 +145,10 @@ namespace SPH
 				int number_of_gaussian_points = 3);
 			virtual ~ShellStressRelaxationFirstHalf() {};
 		protected:
-			Real rho_0_, inv_rho_0_;
-			StdLargeVec<Matd>& stress_PK1_, &corrected_stress_, &corrected_moment_;
-			StdLargeVec<Vecd>& shear_stress_;
-			Real numerical_viscosity_;
+			Real rho0_, inv_rho0_;
+			StdLargeVec<Matd>& stress_PK1_, & global_stress_, & global_moment_;
+			StdLargeVec<Vecd>& global_shear_stress_, & n_;
+			Real smoothing_length_;
 
 			const Real shear_correction_factor_ = 5.0/6.0;
 			const StdVec<Real> three_gaussian_points_ = { 0.0, 0.77459667, -0.77459667 };
@@ -210,7 +210,7 @@ namespace SPH
 
 		/**
 		 * @class FixedFreeRotateShellBoundary
-		 * @brief Soft the constrain of a solid body part
+		 * @brief Soft the constraint of a solid body part
 		 */
 		class FixedFreeRotateShellBoundary :
 			public PartInteractionDynamicsByParticle1Level,
@@ -267,6 +267,34 @@ namespace SPH
 			StdLargeVec<Vecd>& pos_n_, &pos_0_;
 			StdLargeVec<Vecd>& vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
 			StdLargeVec<Vecd>& rotation_, &angular_vel_, &dangular_vel_dt_;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		 * @class DistributingAPointForceToShell
+		 * @brief Distribute a point force to its contact shell bodies.
+		 */
+		class DistributingAPointForceToShell :
+			public PartSimpleDynamicsByParticle, public ShellDataSimple
+		{
+		protected:
+			Vecd point_force_, point_force_time_;
+			Vecd reference_position_;
+			Real time_to_smallest_h_ratio_, time_to_full_external_force_;
+			Real particle_spacing_ref_, h_spacing_ratio_;
+			Real sum_of_weight_;
+			StdLargeVec<Vecd>& pos_0_, &dvel_dt_prior_;
+			StdLargeVec<Real>& Vol_, &mass_, &shell_thickness_;
+			StdLargeVec<Real>& weight_;
+		public:
+			DistributingAPointForceToShell(SolidBody* body, BodyPartByParticle* body_part,
+				Vecd point_force, Vecd reference_position,
+				Real time_to_smallest_h_ratio, Real time_to_full_external_force,
+				Real particle_spacing_ref, Real h_spacing_ratio = 1.3);
+			virtual ~DistributingAPointForceToShell() {};
+
+			void getWeight();
+			void getForce();
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 	}

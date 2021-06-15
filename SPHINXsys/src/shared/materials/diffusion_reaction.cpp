@@ -28,9 +28,8 @@ namespace SPH
 	//=================================================================================================//
 	void LocalDirectionalDiffusion::initializeFiberDirection()
 	{
-		size_t total_real_particles = base_particles_->total_real_particles_;
-		registerAVariableToParticleData<indexVector, Vecd>(parameter_data_, parameter_maps_, local_bias_direction_, "Fiber");
-		local_bias_direction_.resize(total_real_particles, Vecd(0));
+		base_particles_->registerAVariable<indexVector, Vecd>(local_bias_direction_, "Fiber");
+		base_particles_->addAVariableNameToList<indexVector, Vecd>(reload_local_parameters_, "Fiber");
 	}
 	//=================================================================================================//
 	void LocalDirectionalDiffusion::readFromXmlForLocalParameters(std::string& filefullpath)

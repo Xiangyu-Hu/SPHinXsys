@@ -25,10 +25,10 @@
  * @details The StateEngine class defines the interface used to add computational
  *          elements to the underlying SimTK::System (MultibodySystem). It specifies
  *          the interface that simbodystates must satisfy in order to be part of the system
- *          and provides a series of helper methods for adding variables 
+ *          and provides a series of helper methods for adding variables
  *          (state, discrete, cache, ...) to the underlying system. As such, SimbodyState
- *          handles all of the bookkeeping of system indices and provides convenience 
- *          access to variable values (incl. derivatives) via their names as strings. 
+ *          handles all of the bookkeeping of system indices and provides convenience
+ *          access to variable values (incl. derivatives) via their names as strings.
  * @author	Chi Zhang and Xiangyu Hu.
  */
 
@@ -57,40 +57,43 @@ namespace SPH {
     /**
      * @class StateEngine
      */
-    class StateEngine{
-    //===============================================================//
-    // PROTECTED
-    //===============================================================//
+    class StateEngine {
+        //===============================================================//
+        // PROTECTED
+        //===============================================================//
     protected:
 
         XmlEngine simbody_xml_engine_;
+
+        void resizeXmlDocForSimbody(size_t input_size);
+
         /**
          * @class StateVariable
-         * @details Derived simbodysate must create concrete StateVariables to expose their state 
+         * @details Derived simbodysate must create concrete StateVariables to expose their state
          *      variables. When exposing state variables allocated by the underlying Simbody
-         *      (MobilizedBody, Constraint, Force, etc...) use its interface to 
+         *      (MobilizedBody, Constraint, Force, etc...) use its interface to
          *      implement the virtual methods below.
          */
-        class StateVariable{
-           //friend void StateEngine::addStateVariable(StateVariable* sv);
+        class StateVariable {
+            //friend void StateEngine::addStateVariable(StateVariable* sv);
         public:
             /** Concstructor and destructor. */
             StateVariable() :name_(""), owner_(nullptr),
-                subsysindex_(SimTK::InvalidIndex), 
+                subsysindex_(SimTK::InvalidIndex),
                 varindex_(SimTK::InvalidIndex),
                 sysyindex_(SimTK::InvalidIndex) {}
             explicit StateVariable(std::string& name,    /**< state var name. */
-                        StateEngine& owner,                    /**< owning component. */
-                        SimTK::SubsystemIndex subsys,          /**< subsystem for allocation. */
-                        int varindex)                          /**< variable's index in subsystem.*/
-                    : name_(name),owner_(&owner),subsysindex_(subsys), 
-                    varindex_(varindex),sysyindex_(SimTK::InvalidIndex){}
+                StateEngine& owner,                    /**< owning component. */
+                SimTK::SubsystemIndex subsys,          /**< subsystem for allocation. */
+                int varindex)                          /**< variable's index in subsystem.*/
+                : name_(name), owner_(&owner), subsysindex_(subsys),
+                varindex_(varindex), sysyindex_(SimTK::InvalidIndex) {}
             virtual ~StateVariable() {}
 
-            std::string& getName(){ return name_; }
-            StateEngine& getOwner(){ return *owner_; }
+            std::string& getName() { return name_; }
+            StateEngine& getOwner() { return *owner_; }
             /** Get the index of simbody state variable. */
-            int& getVarIndex(){ return varindex_; }
+            int& getVarIndex() { return varindex_; }
             /** Return the index of the subsystem used to make resource allocations. */
             SimTK::SubsystemIndex& getSubsysIndex() { return subsysindex_; }
             /** Return the index in the global list of continuous state variables, Y. */
@@ -98,21 +101,21 @@ namespace SPH {
             /** Set the index of simbody variable. */
             void setVarIndex(int index) { varindex_ = index; }
             /** Set the index of the subsystem used to resource allocations. */
-            void setSubsystemIndex(SimTK::SubsystemIndex& subsysindx) 
+            void setSubsystemIndex(SimTK::SubsystemIndex& subsysindx)
             {
                 subsysindex_ = subsysindx;
             }
             /** Concrete StateEngines implement how the state variable value is evaluated. */
             virtual Real getValue() = 0;
-            virtual void setValue( Real value) = 0;
+            virtual void setValue(Real value) = 0;
             virtual Real getDerivative() = 0;
             /** The derivative a state should be a cache entry and thus does not change the state. */
             virtual void setDerivative(Real deriv) = 0;
         private:
             std::string name_;
             SimTK::ReferencePtr<StateEngine> owner_;
-            /** 
-             *  Identify which subsystem this state variable belongs to, which should 
+            /**
+             *  Identify which subsystem this state variable belongs to, which should
              *  be determined and set at creation time
              */
             SimTK::SubsystemIndex subsysindex_;
@@ -127,26 +130,26 @@ namespace SPH {
              */
             SimTK::SystemYIndex sysyindex_;
         };
-    //===============================================================//
-    // PRIVATE
-    //===============================================================//
-        /**
-         * @class AddedStateVariable
-         * @brief Class for handling state variable added (allocated) by this StateEngine.
-         */
+        //===============================================================//
+        // PRIVATE
+        //===============================================================//
+            /**
+             * @class AddedStateVariable
+             * @brief Class for handling state variable added (allocated) by this StateEngine.
+             */
         class AddedStateVariable : public StateVariable {
         public:
             /** Constructors adn destrucutors. */
-            AddedStateVariable() : StateVariable(), invalidatestage_(SimTK::Stage::Empty){}
+            AddedStateVariable() : StateVariable(), invalidatestage_(SimTK::Stage::Empty) {}
 
-            /** Convenience constructor for defining a StateEngine added state variable */ 
+            /** Convenience constructor for defining a StateEngine added state variable */
             explicit AddedStateVariable(std::string& name,     /**< state var name. */
-                        StateEngine& owner,
-                        SimTK::Stage invalidatestage):              /**< stage this variable invalidates. */ 
-                StateVariable(name,owner,
-                        SimTK::SubsystemIndex(SimTK::InvalidIndex),
-                        SimTK::InvalidIndex), 
-                        invalidatestage_(SimTK::Stage::Empty) {}
+                StateEngine& owner,
+                SimTK::Stage invalidatestage) :              /**< stage this variable invalidates. */
+                StateVariable(name, owner,
+                    SimTK::SubsystemIndex(SimTK::InvalidIndex),
+                    SimTK::InvalidIndex),
+                invalidatestage_(SimTK::Stage::Empty) {}
 
             /** override virtual methods. */
             Real getValue() override;
@@ -155,31 +158,31 @@ namespace SPH {
             void setDerivative(Real deriv) override;
 
         private:
-            /** Changes in state variables trigger recalculation of appropriate cache 
+            /** Changes in state variables trigger recalculation of appropriate cache
              * variables by automatically invalidating the realization stage specified
              * upon allocation of the state variable.
              */
             SimTK::Stage    invalidatestage_;
-        }; 
-                /** 
-         * @struct StateVariableInfo
-         * @breif   Structure to hold related info about discrete variables. 
-         */
+        };
+        /**
+ * @struct StateVariableInfo
+ * @breif   Structure to hold related info about discrete variables.
+ */
         struct StateVariableInfo {
             StateVariableInfo() {}
             explicit StateVariableInfo(StateEngine::StateVariable* sv, int order) :
-            statevariable_(sv), order(order) {}
+                statevariable_(sv), order(order) {}
 
-            /** Need empty copy constructor because default compiler generated 
+            /** Need empty copy constructor because default compiler generated
                 will fail since it cannot copy a unique_ptr. */
             StateVariableInfo(const StateVariableInfo&) {}
             /** Now handle assignment by moving ownership of the unique pointer. */
             StateVariableInfo& operator=(const StateVariableInfo& svi) {
-                if(this != &svi){
+                if (this != &svi) {
                     /** assignment has to be const but cannot swap const
                         want to keep unique pointer to guarantee no multiple reference
                         so use const_cast to swap under the covers. */
-                    StateVariableInfo* mutableSvi = const_cast<StateVariableInfo *>(&svi);
+                    StateVariableInfo* mutableSvi = const_cast<StateVariableInfo*>(&svi);
                     statevariable_.swap(mutableSvi->statevariable_);
                 }
                 order = svi.order;
@@ -191,13 +194,13 @@ namespace SPH {
             // order of allocation
             int order;
         };
-    //===============================================================//
-    // PULIC
-    //===============================================================//       
+        //===============================================================//
+        // PULIC
+        //===============================================================//       
     public:
 
         /** Add a continuous system state variable belonging to this Engine,
-            and assign a name by which to refer to it. Changing the value of this state 
+            and assign a name by which to refer to it. Changing the value of this state
             variable will automatically invalidate everything at and above its
             \a invalidatesStage, which is normally Stage::Dynamics meaning that there
             are forces that depend on this variable. If you define one or more
@@ -205,7 +208,7 @@ namespace SPH {
             to provide time derivatives for them. Note, all corresponding system
             indices are automatically determined using this interface. As an advanced
             option you may choose to hide the state variable from being accessed outside
-            of this component, in which case it is considered to be "hidden". 
+            of this component, in which case it is considered to be "hidden".
             You may also want to create an Output for this state variable; see
             #OpenSim_DECLARE_OUTPUT_FOR_STATE_VARIABLE for more information. Reporters
             should use such an Output to get the StateVariable's value (instead of using
@@ -219,7 +222,7 @@ namespace SPH {
                                      component as an Output
         */
         void addStateVariable(std::string  statevariablename,
-                SimTK::Stage invalidatestage);
+            SimTK::Stage invalidatestage);
 
         /** The above method provides a convenient interface to this method, which
             automatically creates an 'AddedStateVariable' and allocates resources in the
@@ -233,16 +236,16 @@ namespace SPH {
             should use such an Output to get the StateVariable's value (instead of
             using getStateVariableValue()).
         */
-        void addStateVariable(StateEngine::StateVariable*  statevariable);
+        void addStateVariable(StateEngine::StateVariable* statevariable);
         //===========================================================//
         SimTK::DefaultSystemSubsystem& getDefaultSubsystem()
-        {   
+        {
             return const_cast<SimTK::DefaultSystemSubsystem&>
-                        (getMultibodySystem().getDefaultSubsystem()); 
+                (getMultibodySystem().getDefaultSubsystem());
         }
         SimTK::DefaultSystemSubsystem& updDefaultSubsystem()
-        {   
-            return getMultibodySystem().updDefaultSubsystem(); 
+        {
+            return getMultibodySystem().updDefaultSubsystem();
         }
         //===========================================================//
         /**
@@ -252,15 +255,15 @@ namespace SPH {
         * path or if the path is invalid.
         */
         StateVariable* traverseToStateVariable(std::string& pathname);
-        /** Map names of continuous state variables of the Engine to their 
+        /** Map names of continuous state variables of the Engine to their
             underlying SimTK indices. */
         mutable std::map<std::string, StateVariableInfo> namedstatevariableinfo_;
         /** Check that the list of _allStateVariables is valid. */
         bool isAllStatesVariablesListValid();
 
         /** Array of all state variables for fast access during simulation. */
-        mutable SimTK::Array_<SimTK::ReferencePtr<StateVariable> > 
-                                                            allstatevariables_;
+        mutable SimTK::Array_<SimTK::ReferencePtr<StateVariable> >
+            allstatevariables_;
         /** A handle the System associated with the above state variables. */
         mutable SimTK::ReferencePtr<SimTK::System> statesassociatedsystem_;
 
@@ -276,7 +279,7 @@ namespace SPH {
         SimTK::State working_state_;
 
         /** Destructor is virtual to allow concrete StateEngine to cleanup. **/
-        virtual ~StateEngine(){};
+        virtual ~StateEngine() {};
         /** Set up the working state in presetn engine */
         void InitializeState();
         /**
@@ -296,11 +299,11 @@ namespace SPH {
          * State Engine.
          */
         int getNumOfStateVariables();
-        /** Get the number of continuous states that the State Engine added to the 
+        /** Get the number of continuous states that the State Engine added to the
             underlying computational system.*/
-        int getNumStateVariablesAddedByEngine() 
-        { 
-            return (int)namedstatevariableinfo_.size(); 
+        int getNumStateVariablesAddedByEngine()
+        {
+            return (int)namedstatevariableinfo_.size();
         }
         /**
          * Get the names of "continuous" state variables maintained by the Engine
@@ -322,17 +325,17 @@ namespace SPH {
         void reporter(SimTK::State& state_);
         /**
          * Write the state data to xml file.
-		 * For all bodies in the matter system, their generalized coordinates,
-		 * generalized velocities and transformations of the origin points are written in 
-		 * the output file
+         * For all bodies in the matter system, their generalized coordinates,
+         * generalized velocities and transformations of the origin points are written in
+         * the output file
          */
         std::string restart_folder_;
         void writeStateInfoToXml(int ite_rst_, const SimTK::State& state_);
         /**
-         * read state infor from xml and set it to sate. 
- 		 * For all bodies in the matter system, their generalized coordinates,
-		 * generalized velocities and transformations of the origin points are read from 
-		 * the restart file
+         * read state infor from xml and set it to sate.
+         * For all bodies in the matter system, their generalized coordinates,
+         * generalized velocities and transformations of the origin points are read from
+         * the restart file
         */
         SimTK::State readAndSetStateInfoFromXml(int ite_rst_, SimTK::MultibodySystem& system_);
         /**@name  Realize the Simbody System and State to Computational Stage.
@@ -341,35 +344,35 @@ namespace SPH {
                 computational (realization) Stage.
         */
 
-        /** 
-         * Perform computations that depend only on time and earlier stages. 
+        /**
+         * Perform computations that depend only on time and earlier stages.
          */
-        void realizeTime( );
-        /** 
+        void realizeTime();
+        /**
          * Perform computations that depend only on position-level state
-         * variables and computations performed in earlier stages (including time). 
+         * variables and computations performed in earlier stages (including time).
          */
         void realizePosition();
-        /** 
+        /**
          * Perform computations that depend only on velocity-level state
          * variables and computations performed in earlier stages (including position,
-         * and time). 
+         * and time).
          */
-        void realizeVelocity( );
-        /** 
+        void realizeVelocity();
+        /**
          * Perform computations (typically forces) that may depend on
          * dynamics-stage state variables, and on computations performed in earlier
          * stages (including velocity, position, and time), but not on other forces,
-         * accelerations, constraint multipliers, or reaction forces. 
+         * accelerations, constraint multipliers, or reaction forces.
          */
-        void realizeDynamics( );
-        /** 
-         * Perform computations that may depend on applied forces. 
+        void realizeDynamics();
+        /**
+         * Perform computations that may depend on applied forces.
          */
         void realizeAcceleration();
-        /** 
+        /**
          * Perform computations that may depend on anything but are only used
-         * for reporting and cannot affect subsequent simulation behavior. 
+         * for reporting and cannot affect subsequent simulation behavior.
          */
         void realizeReport();
     };

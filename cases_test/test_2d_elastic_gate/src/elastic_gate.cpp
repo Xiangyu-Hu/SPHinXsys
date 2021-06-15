@@ -93,8 +93,8 @@ class WaterMaterial : public WeaklyCompressibleFluid
 public:
 	WaterMaterial()	: WeaklyCompressibleFluid()
 	{
-		rho_0_ = rho0_f;
-		c_0_ = c_f;
+		rho0_ = rho0_f;
+		c0_ = c_f;
 
 		assignDerivedMaterialParameters();
 	}
@@ -202,9 +202,9 @@ class GateMaterial : public LinearElasticSolid
 public:
 	GateMaterial() : LinearElasticSolid()
 	{
-		rho_0_ = rho0_s;
-		E_0_ = Youngs_modulus;
-		nu_ = poisson;
+		rho0_ = rho0_s;
+		youngs_modulus_ = Youngs_modulus;
+		poisson_ratio_ = poisson;
 
 		assignDerivedMaterialParameters();
 	}

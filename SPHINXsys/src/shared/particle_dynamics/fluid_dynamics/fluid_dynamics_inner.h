@@ -95,7 +95,7 @@ namespace SPH
 			DensitySummationInner(BaseInnerBodyRelation* inner_relation);
 			virtual ~DensitySummationInner() {};
 		protected:
-			Real W0_, rho_0_, inv_sigma_0_;
+			Real W0_, rho0_, inv_sigma0_;
 			StdLargeVec<Real>& Vol_, & rho_n_, & mass_, & rho_sum_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -446,7 +446,7 @@ namespace SPH
 			StaticConfinementDensity(FluidBody* body, NearShapeSurface* near_surface);
 			virtual ~StaticConfinementDensity() {};
 		protected:
-			Real rho_0_, inv_sigma_0_;
+			Real rho0_, inv_sigma0_;
 			StdLargeVec<Real>& mass_, & rho_sum_;
 			StdLargeVec<Vecd>& pos_n_;
 			LevelSetComplexShape* level_set_complex_shape_;
@@ -525,7 +525,7 @@ namespace SPH
 			StdLargeVec<Vecd>& pos_n_, & vel_n_;
 			/** inflow pressure condition */
 			Real inflow_pressure_;
-			Real rho_0_;
+			Real rho0_;
 
 			/** inflow velocity profile to be defined in applications */
 			virtual Vecd getTargetVelocity(Vecd& position, Vecd& velocity) = 0;

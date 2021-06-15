@@ -17,9 +17,9 @@ using namespace SPH;
  */
 Real DL = 15.0; 					            /**< Channel length. */
 Real DH = 10.0; 						        /**< Channel height. */
-Real resolution_ref = 0.2; 	            /**< Initial reference particle spacing. */
-Real DL_sponge = resolution_ref * 10.0;	/**< Sponge region to impose inflow condition. */
-Real DH_sponge = resolution_ref * 2.0;	/**< Sponge region to impose inflow condition. */
+Real resolution_ref = 0.2; 	            		/**< Initial reference particle spacing. */
+Real DL_sponge = resolution_ref * 10.0;			/**< Sponge region to impose inflow condition. */
+Real DH_sponge = resolution_ref * 2.0;			/**< Sponge region to impose inflow condition. */
 Vec2d insert_circle_center(4.0, 5.0);		    /**< Location of the cylinder center. */
 Real insert_circle_radius = 0.75;			    /**< Radius of the cylinder. */
 /** Domain bounds of the system. */
@@ -90,8 +90,8 @@ class WaterMaterial : public WeaklyCompressibleFluid
 public:
 	WaterMaterial() : WeaklyCompressibleFluid()
 	{
-		rho_0_ = rho0_f;
-		c_0_ = c_f;
+		rho0_ = rho0_f;
+		c0_ = c_f;
 		mu_ = mu_f;
 		/** supplementary material paramters derived from basic parameters. */
 		assignDerivedMaterialParameters();

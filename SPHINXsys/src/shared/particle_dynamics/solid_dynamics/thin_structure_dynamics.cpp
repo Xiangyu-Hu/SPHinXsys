@@ -31,7 +31,6 @@ namespace SPH
 			smoothing_length_ = particle_adaptation_->ReferenceSmoothingLength();
 			initial_reference_ = DBL_MAX; 
 			rho_0_ = material_->ReferenceDensity(); 
-			physical_viscosity_ = 10.0 * (material_->PhysicalViscosity());
 			E_0_ = material_->YoungsModulus();
 			nu_ = material_->PoissonRatio();
 		}
@@ -40,7 +39,7 @@ namespace SPH
 		{
 			// Since the particle does not change its configuration in pressure relaxation step,
 			// I chose a time-step size according to Eulerian method.
-			Real sound_speed = material_->ReferenceSoundSpeed();
+			Real sound_speed = material_->SoundWaveSpeed();
 			Real time_setp_0 = 0.6 * SMIN(sqrt(smoothing_length_ / (dvel_dt_[index_i].norm() + TinyReal)),
 				smoothing_length_ / (sound_speed + vel_n_[index_i].norm()));
 			Real time_setp_1 = 0.6 * SMIN(sqrt(1.0 / (dangular_vel_dt_[index_i].norm() + TinyReal)),
@@ -127,16 +126,16 @@ namespace SPH
 			ShellStressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation, 
 				int number_of_gaussian_points) : BaseShellRelaxation(body_inner_relation),
 			stress_PK1_(particles_->stress_PK1_), 
-			corrected_stress_(particles_->corrected_stress_), 
-			corrected_moment_(particles_->corrected_moment_),
-			shear_stress_(particles_->shear_stress_),
+			global_stress_(particles_->global_stress_),
+			global_moment_(particles_->global_moment_),
+			global_shear_stress_(particles_->global_shear_stress_),
+			n_(particles_->n_),
 			number_of_gaussian_points_(number_of_gaussian_points)
 		{
-			rho_0_ = material_->ReferenceDensity();
-			inv_rho_0_ = 1.0 / rho_0_;
-			numerical_viscosity_
-				= material_->NumericalViscosity(particle_adaptation_->ReferenceSmoothingLength());
-			
+			rho0_ = material_->ReferenceDensity();
+			inv_rho0_ = 1.0 / rho0_;
+			smoothing_length_ = particle_adaptation_->ReferenceSmoothingLength();
+
 			/** Note that, only three-point and five-point Gaussian quadrature rules are defined. */
 			switch (number_of_gaussian_points)
 			{
@@ -161,7 +160,14 @@ namespace SPH
 
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
 			F_bending_[index_i] += dF_bending_dt_[index_i] * dt * 0.5;
-			rho_n_[index_i] = rho_0_ / det(F_[index_i]);
+			rho_n_[index_i] = rho0_ / det(F_[index_i]);
+
+			/** Calculate the current normal direction of mid-surface. */
+			Matd F_i = F_[index_i];
+			F_i.col(Dimensions - 1) = Vecd(0.0);
+			n_[index_i] = (~transformation_matrix_[index_i]) * getNormalFromDeformationGradientTensor(F_i);
+			/** Get transformation matrix from global coordinates to current local coordinates. */
+			Matd current_transformation_matrix = getTransformationMatrix(n_[index_i]);
 
 			/** Initialize the local stress to 0. */
 			Matd resultant_stress(0);
@@ -172,14 +178,25 @@ namespace SPH
 				Matd F_gaussian_point = F_[index_i] + gaussian_point_[i] * F_bending_[index_i] * shell_thickness_[index_i] * 0.5;
 				Matd dF_gaussian_point_dt = dF_dt_[index_i] + gaussian_point_[i] * dF_bending_dt_[index_i] * shell_thickness_[index_i] * 0.5;
 				Matd stress_PK2_gaussian_point = material_->ConstitutiveRelation(F_gaussian_point, index_i)
-					+ material_->NumericalDampingStress(F_gaussian_point, dF_gaussian_point_dt, numerical_viscosity_, index_i);
+					+ material_->NumericalDampingStress(F_gaussian_point, dF_gaussian_point_dt, smoothing_length_, index_i);
+
+				/** Get the mid-surface stress to output the von-Mises equivalent stress. */
+				if (i == 0) stress_PK1_[index_i] = F_gaussian_point * stress_PK2_gaussian_point;
+
+				/** Get Cauchy stress. */
+				Matd cauchy_stress = current_transformation_matrix * (~transformation_matrix_[index_i])
+					* F_gaussian_point * stress_PK2_gaussian_point * (~F_gaussian_point)
+					* transformation_matrix_[index_i] * (~current_transformation_matrix) / det(F_gaussian_point);
 
 				/** Impose modeling assumptions. */
-				stress_PK2_gaussian_point.col(Dimensions - 1) *= shear_correction_factor_;
-				stress_PK2_gaussian_point.row(Dimensions - 1) *= shear_correction_factor_;
-				/** Get the mid-surface stress to output the stress. */
-				if (i == 0) stress_PK1_[index_i] = F_gaussian_point * stress_PK2_gaussian_point;
-				stress_PK2_gaussian_point[Dimensions - 1][Dimensions - 1] = 0.0;
+				cauchy_stress.col(Dimensions - 1) *= shear_correction_factor_;
+				cauchy_stress.row(Dimensions - 1) *= shear_correction_factor_;
+				cauchy_stress[Dimensions - 1][Dimensions - 1] = 0.0;
+
+				stress_PK2_gaussian_point = det(F_gaussian_point) * SimTK::inverse(F_gaussian_point)
+					* transformation_matrix_[index_i] * (~current_transformation_matrix) * cauchy_stress
+					* current_transformation_matrix * (~transformation_matrix_[index_i])
+					* (~SimTK::inverse(F_gaussian_point));
 				Vecd shear_stress_PK2_gaussian_point = -stress_PK2_gaussian_point.col(Dimensions - 1);
 				Matd moment_PK2_gaussian_point = stress_PK2_gaussian_point * gaussian_point_[i] * shell_thickness_[index_i] * 0.5;
 
@@ -196,40 +213,40 @@ namespace SPH
 			resultant_shear_stress[Dimensions - 1] = 0.0;
 
 			/** stress and moment in global coordinates for pair interaction */
-			corrected_stress_[index_i] = 
-				(~transformation_matrix_[index_i]) * resultant_stress * (~B_[index_i]) * transformation_matrix_[index_i];
-			corrected_moment_[index_i] = 
-				(~transformation_matrix_[index_i]) * resultant_moment * (~B_[index_i]) * transformation_matrix_[index_i];
-			shear_stress_[index_i] = (~transformation_matrix_[index_i]) * resultant_shear_stress;
+			global_stress_[index_i] =
+				(~transformation_matrix_[index_i]) * resultant_stress * transformation_matrix_[index_i];
+			global_moment_[index_i] =
+				(~transformation_matrix_[index_i]) * resultant_moment * transformation_matrix_[index_i];
+			global_shear_stress_[index_i] = (~transformation_matrix_[index_i]) * resultant_shear_stress;
 		}
 		//=================================================================================================//
 		void ShellStressRelaxationFirstHalf::Interaction(size_t index_i, Real dt)
 		{
-			Vecd& shear_stress_i = shear_stress_[index_i];
-			Matd& corrected_stress_i = corrected_stress_[index_i];
-			Matd& corrected_moment_i = corrected_moment_[index_i];
+			Vecd& global_shear_stress_i = global_shear_stress_[index_i];
+			Matd& global_stress_i = global_stress_[index_i];
+			Matd& global_moment_i = global_moment_[index_i];
 
 			Vecd acceleration(0.0);
-			Vecd pseudo_normal_acceleration = shear_stress_i;
+			Vecd pseudo_normal_acceleration = global_shear_stress_i;
 			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				acceleration += (corrected_stress_i + corrected_stress_[index_j])
+				acceleration += (global_stress_i + global_stress_[index_j])
 					* inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n] * Vol_[index_j];
-				pseudo_normal_acceleration += (corrected_moment_i + corrected_moment_[index_j])
+				pseudo_normal_acceleration += (global_moment_i + global_moment_[index_j])
 					* inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n] * Vol_[index_j];
 			}
 			/** including external force (body force) and force from fluid */
-			dvel_dt_[index_i] = acceleration * inv_rho_0_ / shell_thickness_[index_i]
+			dvel_dt_[index_i] = acceleration * inv_rho0_ / shell_thickness_[index_i]
 				+ dvel_dt_prior_[index_i] + force_from_fluid_[index_i] / mass_[index_i];
-			dpseudo_n_d2t_[index_i] = pseudo_normal_acceleration  * inv_rho_0_
+			dpseudo_n_d2t_[index_i] = pseudo_normal_acceleration * inv_rho0_
 				* 12.0 / powerN(shell_thickness_[index_i], 3);
 
 			/** the relation between pseudo-normal and rotations */
 			Vecd local_dpseudo_n_d2t = transformation_matrix_[index_i] * dpseudo_n_d2t_[index_i];
 			dangular_vel_dt_[index_i] = getRotationFromPseudoNormalForSmallDeformation
-				(local_dpseudo_n_d2t, rotation_[index_i], angular_vel_[index_i], dt);
+			(local_dpseudo_n_d2t, rotation_[index_i], angular_vel_[index_i], dt);
 		}
 		//=================================================================================================//
 		void ShellStressRelaxationFirstHalf::Update(size_t index_i, Real dt)
@@ -437,6 +454,67 @@ namespace SPH
 			/** the average values are prescirbed also. */
 			vel_ave_[index_i] = vel_n_[index_i];
 			dvel_dt_ave_[index_i] = dvel_dt_[index_i];
+		}
+		//=================================================================================================//
+		DistributingAPointForceToShell::
+			DistributingAPointForceToShell(SolidBody* body, BodyPartByParticle* body_part,
+				Vecd point_force, Vecd reference_position,
+				Real time_to_smallest_h_ratio, Real time_to_full_external_force,
+				Real particle_spacing_ref, Real h_spacing_ratio)
+			: PartSimpleDynamicsByParticle(body, body_part), ShellDataSimple(body),
+			point_force_(point_force), reference_position_(reference_position),
+			time_to_smallest_h_ratio_(time_to_smallest_h_ratio),
+			time_to_full_external_force_(time_to_full_external_force),
+			particle_spacing_ref_(particle_spacing_ref), h_spacing_ratio_(h_spacing_ratio),
+			pos_0_(particles_->pos_0_), dvel_dt_prior_(particles_->dvel_dt_prior_),
+			Vol_(particles_->Vol_), mass_(particles_->mass_), shell_thickness_(particles_->shell_thickness_),
+			weight_(*particles_->createAVariable<indexScalar, Real>("Weight"))
+		{
+		}
+		//=================================================================================================//
+		void DistributingAPointForceToShell::getWeight()
+		{
+			sum_of_weight_ = 0.0;
+			Real current_time = GlobalStaticVariables::physical_time_;
+			Real h_spacing_ratio_time = current_time * (0.6 - h_spacing_ratio_)
+				/ time_to_smallest_h_ratio_ + h_spacing_ratio_;
+			Real h_spacing_ratio = current_time < time_to_smallest_h_ratio_ ? h_spacing_ratio_time : 0.6;
+
+			Real smooth_length = h_spacing_ratio * particle_spacing_ref_;
+			Real cutoff_radius_sqr = powerN(2.0 * smooth_length, 2);
+			for (size_t i = 0; i < particles_->total_real_particles_; ++i)
+			{
+				weight_[i] = 0.0;
+				Vecd displacement = reference_position_ - pos_0_[i];
+				if (displacement.normSqr() <= cutoff_radius_sqr)
+				{
+					Kernel* kernel_ = body_->particle_adaptation_->getKernel();
+					if (Dimensions == 2)
+					{
+						weight_[i] = 3.0 / 4.0 / smooth_length
+							* kernel_->W_2D(displacement.norm() / smooth_length) * Vol_[i];
+					}
+					else
+					{
+						weight_[i] = 7.0 / (4.0 * Pi) / smooth_length / smooth_length
+							* kernel_->W_3D(displacement.norm() / smooth_length) * Vol_[i];
+					}
+					sum_of_weight_ += weight_[i];
+				}
+			}
+		}
+		//=================================================================================================//
+		void DistributingAPointForceToShell::getForce()
+		{
+			Real current_time = GlobalStaticVariables::physical_time_;
+			point_force_time_ = current_time < time_to_full_external_force_ ?
+				current_time * point_force_ / time_to_full_external_force_ : point_force_;
+		}
+		//=================================================================================================//
+		void DistributingAPointForceToShell::Update(size_t index_i, Real dt)
+		{
+			Vecd force = weight_[index_i] / (sum_of_weight_ + TinyReal) * point_force_time_;
+			dvel_dt_prior_[index_i] = force / mass_[index_i] / shell_thickness_[index_i];
 		}
 		//=================================================================================================//
 	}
