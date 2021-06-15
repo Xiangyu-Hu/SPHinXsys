@@ -249,7 +249,7 @@ namespace SPH
 			: ParticleDynamicsSimple(body), SolidDataSimple(body),
 					pos_n_(particles_->pos_n_),
 					pos_0_(particles_->pos_0_),
-					dvel_dt_others_(particles_->dvel_dt_others_),
+					dvel_dt_prior_(particles_->dvel_dt_prior_),
 					mass_(particles_->mass_)
 		{
 		}
@@ -267,7 +267,7 @@ namespace SPH
 		void ParticleWiseAcceleration::Update(size_t index_i, Real dt)
 		{	
 			Vecd disp_from_0 = pos_n_[index_i] - pos_0_[index_i];
-			dvel_dt_others_[index_i] += getAcceleration(disp_from_0, mass_[index_i]);
+			dvel_dt_prior_[index_i] += getAcceleration(disp_from_0, mass_[index_i]);
 		}
 		//=================================================================================================//	
 		ElasticDynamicsInitialCondition::
