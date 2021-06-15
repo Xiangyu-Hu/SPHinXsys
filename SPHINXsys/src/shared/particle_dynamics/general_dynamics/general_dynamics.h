@@ -26,7 +26,11 @@
 * @author	Chi ZHang and Xiangyu Hu
 */
 
-#pragma once
+
+#ifndef GENERAL_DYNAMICS_H
+#define GENERAL_DYNAMICS_H
+
+
 
 #include "all_particle_dynamics.h"
 
@@ -480,3 +484,4 @@ namespace SPH
 		};
 	};
 }
+#endif //GENERAL_DYNAMICS_H

@@ -31,7 +31,11 @@
 * @author	Chi ZHang and Xiangyu Hu
 */
 
-#pragma once
+
+#ifndef MESH_WITH_DATA_PACKEGES_H
+#define MESH_WITH_DATA_PACKEGES_H
+
+
 
 #include "base_mesh.h"
 #include "my_memory_pool.h"
@@ -252,3 +256,4 @@ namespace SPH
 		}
 	};
 }
+#endif //MESH_WITH_DATA_PACKEGES_H

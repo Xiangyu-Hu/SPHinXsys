@@ -25,7 +25,10 @@
  * @brief 	XML class for xml input and output, this is GUI of simbody xml parser.
  * @author	Chi Zhang and Xiangyu Hu.
  */
-#pragma once
+
+#ifndef XML_ENGINE_SIMBODY_H
+#define XML_ENGINE_SIMBODY_H
+
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
@@ -147,3 +150,5 @@ namespace SPH
 			}
 		};
 }
+
+#endif //XML_ENGINE_SIMBODY_H

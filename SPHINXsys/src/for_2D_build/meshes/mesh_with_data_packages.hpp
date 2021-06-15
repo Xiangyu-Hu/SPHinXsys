@@ -4,7 +4,8 @@
 * @author	Chi ZHang and Xiangyu Hu
 */
 
-#pragma once
+#ifndef MESH_WITH_DATA_PACKAGES_2D_HPP
+#define MESH_WITH_DATA_PACKAGES_2D_HPP
 
 #include "mesh_with_data_packages.h"
 
@@ -164,3 +165,4 @@ namespace SPH {
 	//=================================================================================================//
 }
 //=================================================================================================//
+#endif //MESH_WITH_DATA_PACKAGES_2D_HPP

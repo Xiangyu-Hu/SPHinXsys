@@ -243,6 +243,32 @@ namespace SPH
 			vel_n_[index_i] += induced_acceleration * dt;
 			vel_ave_[index_i] = vel_n_[index_i];
 		}
+		//=================================================================================================//
+		ParticleWiseAcceleration
+			::ParticleWiseAcceleration(SolidBody* body, Vecd stiffness)
+			: ParticleDynamicsSimple(body), SolidDataSimple(body),
+					pos_n_(particles_->pos_n_),
+					pos_0_(particles_->pos_0_),
+					dvel_dt_prior_(particles_->dvel_dt_prior_),
+					mass_(particles_->mass_)
+		{
+		}
+		//=================================================================================================//
+		Vecd ParticleWiseAcceleration::getAcceleration(Vecd& disp, Real mass)
+		{
+			Vecd spring_force(0);
+			for(int i = 0; i < disp.size(); i++)
+			{
+				spring_force[i] = -stiffness_[i] * disp[i] / mass;
+			}
+			return spring_force;
+		}
+		//=================================================================================================//
+		void ParticleWiseAcceleration::Update(size_t index_i, Real dt)
+		{	
+			Vecd disp_from_0 = pos_n_[index_i] - pos_0_[index_i];
+			dvel_dt_prior_[index_i] += getAcceleration(disp_from_0, mass_[index_i]);
+		}
 		//=================================================================================================//	
 		ElasticDynamicsInitialCondition::
 			ElasticDynamicsInitialCondition(SolidBody* body) :

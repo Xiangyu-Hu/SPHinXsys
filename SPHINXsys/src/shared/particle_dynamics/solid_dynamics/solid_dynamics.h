@@ -26,7 +26,11 @@
 * @details 	We consider here a weakly compressible solids.   
 * @author	Luhui Han, Chi ZHang and Xiangyu Hu
 */
-#pragma once
+
+#ifndef SOLID_DYNAMICS_H
+#define SOLID_DYNAMICS_H
+
+
 #include "all_particle_dynamics.h"
 #include "elastic_solid.h"
 #include "weakly_compressible_fluid.h"
@@ -236,6 +240,23 @@ namespace SPH
 			virtual Vecd getAcceleration(Vecd& pos) = 0;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
+		/**
+		* @class ParticleWiseAcceleration
+		* @brief ParticleWiseAcceleration
+		*/
+		class ParticleWiseAcceleration 
+			: public ParticleDynamicsSimple, public SolidDataSimple
+		{
+		public:
+			ParticleWiseAcceleration(SolidBody* body, Vecd stiffness);
+			virtual ~ParticleWiseAcceleration() {};
+		protected:
+			StdLargeVec<Real>& mass_;
+			StdLargeVec<Vecd>& pos_n_,& pos_0_,& dvel_dt_prior_;
+			Vecd stiffness_;
+			virtual Vecd getAcceleration(Vecd& disp, Real mass);
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
 
 		//----------------------------------------------------------------------
 		//		for elastic solid dynamics 
@@ -291,6 +312,12 @@ namespace SPH
 			Real smoothing_length_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 		};
+
+		/**
+		* @function getSmallestTimeStepAmongSolidBodies
+		* @brief computing smallest time step to use in a simulation
+		*/
+		Real getSmallestTimeStepAmongSolidBodies(SPHBodyVector solid_bodies);
 
 		/**
 		* @class DeformationGradientTensorBySummation
@@ -421,3 +448,4 @@ namespace SPH
 		};		
 	}
 }
+#endif //SOLID_DYNAMICS_H

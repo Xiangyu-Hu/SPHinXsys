@@ -26,7 +26,10 @@
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
   */
 
-#pragma once
+
+#ifndef SOLID_BODY_H
+#define SOLID_BODY_H
+
 
 #include "base_body.h"
 
@@ -44,6 +47,9 @@ namespace SPH {
 	{
 	public:
 		SolidBody(SPHSystem &system, std::string body_name,
+			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(1.15),
+			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
+		SolidBody(SPHSystem &system, std::string body_name, Real sph_body_resolution_ref,
 			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(1.15),
 			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~SolidBody() {};
@@ -85,3 +91,4 @@ namespace SPH {
 		virtual void tagBodyPart() override;
 	};	
 }
+#endif //SOLID_BODY_H

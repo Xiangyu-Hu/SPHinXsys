@@ -27,7 +27,11 @@
 * @author	Xiangyu Hu
 */
 
-#pragma once
+
+#ifndef PARTICLE_SORTING_H
+#define PARTICLE_SORTING_H
+
+
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
@@ -36,8 +40,12 @@
 namespace tbb {
 	namespace interafce9 {
 		namespace internal {
-
+			
+			#ifdef TBB_2021_2_0
+			using tbb::detail::no_assign;
+			#else
 			using tbb::internal::no_assign;
+			#endif
 
 			/** sorting particle */
 			template<typename RandomAccessIterator, typename Compare, typename SwapType>
@@ -254,3 +262,4 @@ namespace SPH {
 		virtual void updateSortedId();
 	};
 }
+#endif //PARTICLE_SORTING_H

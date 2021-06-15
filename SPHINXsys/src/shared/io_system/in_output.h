@@ -26,7 +26,10 @@
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-#pragma once
+
+#ifndef IN_OUTPUT_H
+#define IN_OUTPUT_H
+
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
@@ -404,3 +407,4 @@ namespace SPH {
 		virtual void ReadFromFile(size_t iteration_step = 0);
 	};
 }
+#endif //IN_OUTPUT_H

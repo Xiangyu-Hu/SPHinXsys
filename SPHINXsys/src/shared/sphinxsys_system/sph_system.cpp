@@ -8,6 +8,7 @@
 
 #include "base_body.h"
 #include "body_relation.h"
+#include "solid_dynamics.h"
 
 namespace SPH
 {
@@ -28,6 +29,11 @@ namespace SPH
 	void SPHSystem::addARealBody(RealBody* real_body)
 	{
 		real_bodies_.push_back(real_body);
+	}
+	//=================================================================================================//
+	void SPHSystem::addASolidBody(SolidBody* solid_body)
+	{
+		solid_bodies_.push_back(solid_body);
 	}
 	//=================================================================================================//
 	void SPHSystem::addAFictitiousBody(FictitiousBody* fictitious_body)
@@ -55,6 +61,19 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
+	Real SPHSystem::getSmallestTimeStepAmongSolidBodies()
+	{	
+		Real dt = Infinity;
+		for (size_t i = 0; i < solid_bodies_.size(); i++)
+		{
+			solid_dynamics::AcousticTimeStepSize computing_time_step_size(solid_bodies_[i]);
+			Real dt_temp = computing_time_step_size.parallel_exec();
+			if (dt_temp < dt) dt = dt_temp;
+		}
+		return dt;
+	}
+	//=================================================================================================//
+	#ifdef BOOST_AVAILABLE
 	void SPHSystem::handleCommandlineOptions(int ac, char* av[])
 	{
 		try {
@@ -115,5 +134,6 @@ namespace SPH
 		}
 
 	}
+	#endif
 	//=================================================================================================//
 }

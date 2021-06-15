@@ -28,7 +28,10 @@
 *			and anisotropic muscle, are derived from the basic elastic solid class.
 * @author	Xiangyu Hu and Chi Zhang
 */
-#pragma once
+
+#ifndef ELASTIC_SOLID_H
+#define ELASTIC_SOLID_H
+
 
 #include "base_material.h"
 #include <fstream>
@@ -203,3 +206,4 @@ namespace SPH {
 		virtual void readFromXmlForLocalParameters(std::string &filefullpath) override;
 	};
 }
+#endif //ELASTIC_SOLID_H

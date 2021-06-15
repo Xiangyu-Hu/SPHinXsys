@@ -26,7 +26,11 @@
  * including diffusion, reaction and muscle activation. 
  * @author 	Chi Zhang and Xiangyu Hu
  */
-#pragma once
+
+#ifndef ELECTRO_PHYSIOLOGY_H
+#define ELECTRO_PHYSIOLOGY_H
+
+
 
 #include "all_particle_dynamics.h"
 #include "diffusion_reaction_particles.h"
@@ -142,3 +146,4 @@ namespace SPH
 		};
     }
 }
+#endif //ELECTRO_PHYSIOLOGY_H

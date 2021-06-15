@@ -33,7 +33,11 @@
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */
 
-#pragma once
+
+#ifndef BASE_BODY_H
+#define BASE_BODY_H
+
+
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
@@ -69,6 +73,7 @@ namespace SPH
 		bool newly_updated_;		/**< whether this body is in a newly updated state */
 		BoundingBox body_domain_bounds_; /**< Computational domain bounds for boundary conditions. */
 		bool prescribed_body_bounds_;
+		Real sph_body_resolution_ref_;
 	public:
 		ParticleAdaptation* particle_adaptation_;	/**< Particle adapation policy. */
 		ParticleGenerator* particle_generator_;	/**< Particle generator manner */
@@ -90,10 +95,14 @@ namespace SPH
 		explicit SPHBody(SPHSystem &sph_system, std::string body_name, 
 			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(),
 			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
+		explicit SPHBody(SPHSystem &sph_system, std::string body_name, Real sph_body_resolution_ref, 
+			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(),
+			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~SPHBody() {};
 
 		std::string getBodyName();
 		SPHSystem& getSPHSystem();
+		Real getSPHBodyResolutionRef() { return sph_body_resolution_ref_; };
 		void setNewlyUpdated() { newly_updated_ = true; };
 		void setNotNewlyUpdated() { newly_updated_ = false; };
 		bool checkNewlyUpdated() { return newly_updated_; };
@@ -129,6 +138,8 @@ namespace SPH
 		BaseMeshCellLinkedList* mesh_cell_linked_list_; /**< Cell linked mesh of this body. */
 
 		RealBody(SPHSystem &sph_system, std::string body_name, ParticleAdaptation* particle_adaptation,
+			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
+		RealBody(SPHSystem &sph_system, std::string body_name, Real sph_body_resolution_ref, ParticleAdaptation* particle_adaptation, 
 			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
 		virtual ~RealBody() {};
 
@@ -299,3 +310,4 @@ namespace SPH
 		virtual void tagBodyPart() override;
 	};
 }
+#endif //BASE_BODY_H

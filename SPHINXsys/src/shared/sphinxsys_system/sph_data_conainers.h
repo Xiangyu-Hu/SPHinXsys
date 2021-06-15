@@ -3,7 +3,9 @@
  * @brief 	Set up of basic data structure.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */
-#pragma once
+
+#ifndef SPH_DATA_CONTAINERS_H
+#define SPH_DATA_CONTAINERS_H
 
 #include "base_data_package.h"
 
@@ -14,6 +16,7 @@ namespace SPH {
 	class BaseMaterial;
 	class SPHBody;
 	class RealBody;
+	class SolidBody;
 	class BodyPart;
 	class FictitiousBody;
 	class CellList;
@@ -32,6 +35,7 @@ namespace SPH {
 	using MaterialVector = StdVec<BaseMaterial*>;
 	/** Vector of bodies */
 	using SPHBodyVector = StdVec<SPHBody*>;
+	using SolidBodyVector = StdVec<SolidBody*>;
 	using RealBodyVector = StdVec<RealBody*>;
 	using BodyPartVector = StdVec<BodyPart*>;
 	using FictitiousBodyVector = StdVec<FictitiousBody*>;
@@ -108,3 +112,4 @@ namespace SPH {
 			};
 		};
 }
+#endif //SPH_DATA_CONTAINERS_H

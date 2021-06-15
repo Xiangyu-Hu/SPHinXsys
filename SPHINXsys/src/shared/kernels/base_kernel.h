@@ -33,7 +33,11 @@
 *			-- Chi ZHANG
 */
 
-#pragma once
+
+#ifndef BASE_KERNELS_H
+#define BASE_KERNELS_H
+
+
 
 #include "base_data_package.h"
 
@@ -169,3 +173,4 @@ namespace SPH
 		void reduceTwice(); /** reduce for linear structures or filaments */
 	};
 }
+#endif //BASE_KERNELS_H
