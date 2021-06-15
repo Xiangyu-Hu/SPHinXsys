@@ -116,7 +116,10 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input) :
 	contacting_bodies_list_(input->contacting_bodies_list),
 
 	// boundary conditions
-	non_zero_gravity_(input->non_zero_gravity)
+	non_zero_gravity_(input->non_zero_gravity),
+	acceleration_bounding_box_tuple_(input->acceleration_bounding_box_tuple),
+	spring_damper_tuple_(input->spring_damper_tuple),
+	body_indeces_fixed_contraint_(input->body_indeces_fixed_contraint)
 {
 	// scaling of translation and resolution
 	ScaleTranslationAndResolution();
@@ -132,6 +135,9 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input) :
 
 	// boundary conditions
 	InitializeGravity();
+	InitializeAccelerationForBodyPartInBoundingBox();
+	InitializeSpringDamperConstraintParticleWise();
+	InitializeConstrainSolidBodyRegion();
 }
 
 StructuralSimulation::~StructuralSimulation()
@@ -159,14 +165,19 @@ StructuralSimulation::~StructuralSimulation()
 	{
 		delete ig;
 	}
+	for (auto acc : acceleration_bounding_box_)
+	{
+		delete acc;
+	}
+	for (auto sd : spring_damper_contraint_)
+	{
+		delete sd;
+	}
+	for (auto fc : fixed_contraint_)
+	{
+		delete fc;
+	}
 }
-
-//void StructuralSimulation::AddPrimitiveCuboid(Vec3d halfsize_cuboid, Vec3d translation, Real resolution, LinearElasticSolid& material)
-//{
-//    primitive_shape_list_.push_back( TriangleMeshShape(halfsize_cuboid, 20, translation) );
-//	resolution_list_.push_back(resolution);
-//	material_model_list_.push_back(material);
-//}
 
 void StructuralSimulation::ScaleTranslationAndResolution()
 {
@@ -192,6 +203,7 @@ void StructuralSimulation::CalculateSystemBoundaries()
 
 void StructuralSimulation::CreateBodyMeshList()
 {
+	body_mesh_list_ = {};
 	for (int i = 0; i < imported_stl_list_.size(); i++)
 	{
 		string relative_input_path_copy = relative_input_path_;
@@ -227,6 +239,9 @@ void StructuralSimulation::InitializeContactBetweenTwoBodies(int first, int seco
 
 void StructuralSimulation::InitializeAllContacts()
 {
+	contact_list_ = {};
+	contact_density_list_ = {};
+	contact_force_list_ = {};
 	for (auto pair: contacting_bodies_list_)
 	{
 		InitializeContactBetweenTwoBodies(pair.first, pair.second);
@@ -242,6 +257,7 @@ void StructuralSimulation::InitializeGravity()
 		body_indeces_gravity.push_back(pair.first);
 	}
 	// initialize gravity
+	initialize_gravity_ = {};
 	for (int i = 0; i < solid_body_list_.size(); i++)
 	{	
 		if ( find(body_indeces_gravity.begin(), body_indeces_gravity.end(), i) != body_indeces_gravity.end() )
@@ -257,51 +273,30 @@ void StructuralSimulation::InitializeGravity()
 
 void StructuralSimulation::InitializeAccelerationForBodyPartInBoundingBox()
 {	
-	int i = 0;
-	for (auto body_index: body_indeces_accelerations_)
+	acceleration_bounding_box_ = {};
+	for (auto acc: acceleration_bounding_box_tuple_)
 	{
-		acceleration_for_body_part_.push_back(new solid_dynamics::AccelerationForBodyPartInBoundingBox(solid_body_list_[body_index]->GetImportedModel(), bounding_boxes_[i], accelerations_[i]));
-        i++;
+		acceleration_bounding_box_.push_back(new solid_dynamics::AccelerationForBodyPartInBoundingBox(solid_body_list_[get<0>(acc)]->GetImportedModel(), &get<1>(acc), get<2>(acc)));
     }
-	
-}
-
-void StructuralSimulation::AddAccelerationForBodyPartInBoundingBox(int body_index, BoundingBox* bounding_box, Vec3d acceleration)
-{
-	body_indeces_accelerations_.push_back(body_index);
-	bounding_boxes_.push_back(bounding_box);
-	accelerations_.push_back(acceleration);
 }
 
 void StructuralSimulation::InitializeSpringDamperConstraintParticleWise()
 {	
-	int i = 0;
-	for (auto body_index: body_indeces_spring_damper_)
+	spring_damper_contraint_ = {};
+	for (auto sd: spring_damper_tuple_)
 	{
-		spring_damper_contraint_.push_back(new solid_dynamics::SpringDamperConstraintParticleWise(solid_body_list_[body_index]->GetImportedModel(), stiffnesses_[i], damping_ratios_[i]));
-        i++;
+		spring_damper_contraint_.push_back(new solid_dynamics::SpringDamperConstraintParticleWise(solid_body_list_[get<0>(sd)]->GetImportedModel(), get<1>(sd), get<2>(sd)));
     }
-}
-
-void StructuralSimulation::AddSpringDamperConstraintParticleWise(int body_index, Vec3d stiffness, Real damping_ratio)
-{
-	body_indeces_spring_damper_.push_back(body_index);
-	stiffnesses_.push_back(stiffness);
-	damping_ratios_.push_back(damping_ratio);
 }
 
 void StructuralSimulation::InitializeConstrainSolidBodyRegion()
 {	
+	fixed_contraint_ = {};
 	for (auto body_index: body_indeces_fixed_contraint_)
 	{
 		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(solid_body_list_[body_index]->GetImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
 		fixed_contraint_.push_back(new solid_dynamics::ConstrainSolidBodyRegion(solid_body_list_[body_index]->GetImportedModel(), bp));
 	}
-}
-
-void StructuralSimulation::AddConstrainSolidBodyRegion(int body_index)
-{
-	body_indeces_fixed_contraint_.push_back(body_index);
 }
 
 void StructuralSimulation::ExecuteCorrectConfiguration()
@@ -322,7 +317,7 @@ void StructuralSimulation::ExecuteInitializeATimeStep()
 
 void StructuralSimulation::ExecuteAccelerationForBodyPartInBoundingBox()
 {
-	for (auto acc: acceleration_for_body_part_)
+	for (auto acc: acceleration_bounding_box_)
 	{
 		acc->parallel_exec();
 	}

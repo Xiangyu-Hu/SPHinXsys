@@ -15,6 +15,8 @@ using namespace SPH;
 using namespace std;
 using IndexPair = pair<int, int>;
 using GravityPair = pair<int, Vec3d>;
+using AccelTuple = tuple<int, BoundingBox, Vec3d>;
+using SpringDamperTuple = tuple<int, Vec3d, Real>;
 
 class BodyPartByParticleTriMesh : public BodyPartByParticle
 {
@@ -81,6 +83,9 @@ struct StructuralSimulationInput
 
 	// boundary conditions are optional
 	vector<GravityPair> non_zero_gravity = {};
+	vector<AccelTuple> acceleration_bounding_box_tuple = {};
+	vector<SpringDamperTuple> spring_damper_tuple = {};
+	vector<int> body_indeces_fixed_contraint = {};
 };
 
 class StructuralSimulation
@@ -114,15 +119,11 @@ class StructuralSimulation
 		vector<InitializeATimeStep*> initialize_gravity_;
 		vector<GravityPair> non_zero_gravity_;
 		// for AddAccelerationForBodyPartInBoundingBox
-		vector<solid_dynamics::AccelerationForBodyPartInBoundingBox*> acceleration_for_body_part_;
-		vector<int> body_indeces_accelerations_;
-		vector<BoundingBox*> bounding_boxes_;
-		vector<Vec3d> accelerations_;
+		vector<solid_dynamics::AccelerationForBodyPartInBoundingBox*> acceleration_bounding_box_;
+		vector<AccelTuple> acceleration_bounding_box_tuple_;
 		// for AddSpringDamperConstraintParticleWise
 		vector<solid_dynamics::SpringDamperConstraintParticleWise*> spring_damper_contraint_;
-		vector<int> body_indeces_spring_damper_;
-		vector<Vec3d> stiffnesses_;
-		vector<Real> damping_ratios_;
+		vector<SpringDamperTuple> spring_damper_tuple_;
 		// for AddSpringDamperConstraintParticleWise
 		vector<solid_dynamics::ConstrainSolidBodyRegion*> fixed_contraint_;
 		vector<int> body_indeces_fixed_contraint_;
@@ -160,23 +161,6 @@ class StructuralSimulation
 		StructuralSimulation(StructuralSimulationInput* input);
  		~StructuralSimulation();
 
-		//add primitive shapes
-		void AddPrimitiveCuboid(Vec3d halfsize_cuboid, Vec3d translation, Real resolution, LinearElasticSolid& material);
-		
-		// get data from private members
-		TriangleMeshShape* GetBodyMesh(int body_index) { return &body_mesh_list_[body_index]; };
-
-		// boundary conditions for user
-		void AddAccelerationForBodyPartInBoundingBox(int body_index, BoundingBox* bounding_box, Vec3d acceleration);
-		void AddSpringDamperConstraintParticleWise(int body_index, Vec3d stiffness, Real damping_ratio);
-		void AddConstrainSolidBodyRegion(int body_index);
-
-		void InitializeBoundaryConditions()
-		{
-			InitializeAccelerationForBodyPartInBoundingBox();
-			InitializeSpringDamperConstraintParticleWise();
-			InitializeConstrainSolidBodyRegion();
-		};
 		void RunSimulation(Real end_time);
 	};
 
