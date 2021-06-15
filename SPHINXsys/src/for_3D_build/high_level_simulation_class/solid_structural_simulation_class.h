@@ -69,23 +69,33 @@ void RelaxParticlesSingleResolution(In_Output* in_output,
 									InnerBodyRelation* imported_model_inner);
 
 
-struct StructuralSimulationInput
+class StructuralSimulationInput
 {
-	// general input for simulation
-	string relative_input_path;
-	vector<string> imported_stl_list;
-	Real scale_stl;
-	vector<Vec3d> translation_list;
-	vector<Real> resolution_list;
-	vector<LinearElasticSolid> material_model_list;
-	Real physical_viscosity;
-	vector<IndexPair> contacting_bodies_list;
+public:
+	string relative_input_path_;
+	vector<string> imported_stl_list_;
+	Real scale_stl_;
+	vector<Vec3d> translation_list_;
+	vector<Real> resolution_list_;
+	vector<LinearElasticSolid> material_model_list_;
+	Real physical_viscosity_;
+	vector<IndexPair> contacting_bodies_list_;
+	// boundary conditions
+	vector<GravityPair> non_zero_gravity_;
+	vector<AccelTuple> acceleration_bounding_box_tuple_;
+	vector<SpringDamperTuple> spring_damper_tuple_;
+	vector<int> body_indeces_fixed_constraint_;
 
-	// boundary conditions are optional
-	vector<GravityPair> non_zero_gravity = {};
-	vector<AccelTuple> acceleration_bounding_box_tuple = {};
-	vector<SpringDamperTuple> spring_damper_tuple = {};
-	vector<int> body_indeces_fixed_constraint = {};
+	StructuralSimulationInput(
+		string relative_input_path,
+		vector<string> imported_stl_list,
+		Real scale_stl,
+		vector<Vec3d> translation_list,
+		vector<Real> resolution_list,
+		vector<LinearElasticSolid> material_model_list,
+		Real physical_viscosity,
+		vector<IndexPair> contacting_bodies_list
+		);
 };
 
 class StructuralSimulation
