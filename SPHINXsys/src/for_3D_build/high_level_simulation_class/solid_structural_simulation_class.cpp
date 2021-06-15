@@ -119,7 +119,7 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input) :
 	non_zero_gravity_(input->non_zero_gravity),
 	acceleration_bounding_box_tuple_(input->acceleration_bounding_box_tuple),
 	spring_damper_tuple_(input->spring_damper_tuple),
-	body_indeces_fixed_contraint_(input->body_indeces_fixed_contraint)
+	body_indeces_fixed_constraint_(input->body_indeces_fixed_constraint)
 {
 	// scaling of translation and resolution
 	ScaleTranslationAndResolution();
@@ -169,11 +169,11 @@ StructuralSimulation::~StructuralSimulation()
 	{
 		delete acc;
 	}
-	for (auto sd : spring_damper_contraint_)
+	for (auto sd : spring_damper_constraint_)
 	{
 		delete sd;
 	}
-	for (auto fc : fixed_contraint_)
+	for (auto fc : fixed_constraint_)
 	{
 		delete fc;
 	}
@@ -283,20 +283,20 @@ void StructuralSimulation::InitializeAccelerationForBodyPartInBoundingBox()
 
 void StructuralSimulation::InitializeSpringDamperConstraintParticleWise()
 {	
-	spring_damper_contraint_ = {};
+	spring_damper_constraint_ = {};
 	for (auto sd: spring_damper_tuple_)
 	{
-		spring_damper_contraint_.push_back(new solid_dynamics::SpringDamperConstraintParticleWise(solid_body_list_[get<0>(sd)]->GetImportedModel(), get<1>(sd), get<2>(sd)));
+		spring_damper_constraint_.push_back(new solid_dynamics::SpringDamperConstraintParticleWise(solid_body_list_[get<0>(sd)]->GetImportedModel(), get<1>(sd), get<2>(sd)));
     }
 }
 
 void StructuralSimulation::InitializeConstrainSolidBodyRegion()
 {	
-	fixed_contraint_ = {};
-	for (auto body_index: body_indeces_fixed_contraint_)
+	fixed_constraint_ = {};
+	for (auto body_index: body_indeces_fixed_constraint_)
 	{
 		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(solid_body_list_[body_index]->GetImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
-		fixed_contraint_.push_back(new solid_dynamics::ConstrainSolidBodyRegion(solid_body_list_[body_index]->GetImportedModel(), bp));
+		fixed_constraint_.push_back(new solid_dynamics::ConstrainSolidBodyRegion(solid_body_list_[body_index]->GetImportedModel(), bp));
 	}
 }
 
@@ -326,7 +326,7 @@ void StructuralSimulation::ExecuteAccelerationForBodyPartInBoundingBox()
 
 void StructuralSimulation::ExecuteSpringDamperConstraintParticleWise()
 {
-	for (auto sd: spring_damper_contraint_)
+	for (auto sd: spring_damper_constraint_)
 	{
 		sd->parallel_exec();
 	}
@@ -358,7 +358,7 @@ void StructuralSimulation::ExecuteStressRelaxationFirstHalf(Real dt)
 
 void StructuralSimulation::ExecuteConstrainSolidBodyRegion()
 {
-	for (auto fc: fixed_contraint_)
+	for (auto fc: fixed_constraint_)
 	{
 		fc->parallel_exec();
 	}

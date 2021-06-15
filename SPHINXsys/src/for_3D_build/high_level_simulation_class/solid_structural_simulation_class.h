@@ -85,7 +85,7 @@ struct StructuralSimulationInput
 	vector<GravityPair> non_zero_gravity = {};
 	vector<AccelTuple> acceleration_bounding_box_tuple = {};
 	vector<SpringDamperTuple> spring_damper_tuple = {};
-	vector<int> body_indeces_fixed_contraint = {};
+	vector<int> body_indeces_fixed_constraint = {};
 };
 
 class StructuralSimulation
@@ -122,11 +122,11 @@ class StructuralSimulation
 		vector<solid_dynamics::AccelerationForBodyPartInBoundingBox*> acceleration_bounding_box_;
 		vector<AccelTuple> acceleration_bounding_box_tuple_;
 		// for AddSpringDamperConstraintParticleWise
-		vector<solid_dynamics::SpringDamperConstraintParticleWise*> spring_damper_contraint_;
+		vector<solid_dynamics::SpringDamperConstraintParticleWise*> spring_damper_constraint_;
 		vector<SpringDamperTuple> spring_damper_tuple_;
 		// for AddSpringDamperConstraintParticleWise
-		vector<solid_dynamics::ConstrainSolidBodyRegion*> fixed_contraint_;
-		vector<int> body_indeces_fixed_contraint_;
+		vector<solid_dynamics::ConstrainSolidBodyRegion*> fixed_constraint_;
+		vector<int> body_indeces_fixed_constraint_;
 		
 		// for constructor, the order is important
 		void ScaleTranslationAndResolution();
