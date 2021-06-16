@@ -302,20 +302,17 @@ namespace SPH
 			: public ParticleDynamicsSimple, public SolidDataSimple
 		{
 		public:
-			SpringDamperConstraintParticleWise(SolidBody* body, Vecd stiffness, Real damping_ratio = 0.01);
+			SpringDamperConstraintParticleWise(SolidBody* body, Vecd stiffness, Real damping_ratio = 0.05);
 			~SpringDamperConstraintParticleWise();
 		protected:
-			StdLargeVec<Real>& mass_;
+			Real total_mass_;
 			StdLargeVec<Vecd>& pos_n_,& pos_0_,& vel_n_,& dvel_dt_prior_;
 			Vecd stiffness_;
 			Vecd damping_coeff_; // damping component parallel to the spring force component
-			StdLargeVec<Vecd> spring_force_running_avg_;
-			StdLargeVec<Vecd> damping_force_running_avg_;
-			Real smoothing_weight_;
 
 			virtual void setupDynamics(Real dt = 0.0) override;
-			virtual Vecd getSpringForce(size_t index_i, Vecd& disp, Real mass);
-			virtual Vecd getDampingForce(size_t index_i, Real mass);
+			virtual Vecd getSpringForce(size_t index_i, Vecd& disp);
+			virtual Vecd getDampingForce(size_t index_i);
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 		/**
@@ -391,12 +388,6 @@ namespace SPH
 			Real smoothing_length_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 		};
-
-		/**
-		* @function getSmallestTimeStepAmongSolidBodies
-		* @brief computing smallest time step to use in a simulation
-		*/
-		Real getSmallestTimeStepAmongSolidBodies(SPHBodyVector solid_bodies);
 
 		/**
 		* @class DeformationGradientTensorBySummation
