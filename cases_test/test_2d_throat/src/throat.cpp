@@ -73,8 +73,8 @@ class NonNewtonianMaterial : public Oldroyd_B_Fluid
 public:
 	NonNewtonianMaterial() : Oldroyd_B_Fluid()
 	{
-		rho_0_ = rho0_f;
-		c_0_ = c_f;
+		rho0_ = rho0_f;
+		c0_ = c_f;
 		mu_ = mu_f;
 		mu_p_ =  mu_p_f;
 		lambda_ = lambda_f;

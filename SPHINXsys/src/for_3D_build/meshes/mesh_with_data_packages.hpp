@@ -17,7 +17,7 @@ namespace SPH {
 	DataType BaseDataPackage<PKG_SIZE, ADDRS_SIZE>
 		::probeDataPackage(PackageDataAddress<DataType>& pkg_data_addrs, const Vecd& position)
 	{
-		Vec3u grid_idx = GridIndexFromPosition(position);
+		Vec3u grid_idx = CellIndexFromPosition(position);
 		Vec3d grid_pos = GridPositionFromIndex(grid_idx);
 		Vec3d alpha = (position - grid_pos) / grid_spacing_;
 		Vec3d beta = Vec3d(1.0) - alpha;
@@ -168,7 +168,7 @@ namespace SPH {
 	template<class DataType, typename PackageDataAddressType, PackageDataAddressType DataPackageType:: * MemPtr>
 	DataType MeshWithDataPackages<BaseMeshType, DataPackageType>::probeMesh(const Vecd& position)
 	{
-        Vecu grid_index = BaseMeshType::GridIndexFromPosition(position);
+        Vecu grid_index = BaseMeshType::CellIndexFromPosition(position);
 		size_t i = grid_index[0];
 		size_t j = grid_index[1];
 		size_t k = grid_index[2];

@@ -359,6 +359,8 @@ namespace SPH {
 	Mat3d getAverageValue(const Mat3d &A, const Mat3d& B);
 	Mat2d inverseCholeskyDecomposition(const Mat2d& A);
 	Mat3d inverseCholeskyDecomposition(const Mat3d& A);
+	Mat2d getDiagnal(const Mat2d& A);
+	Mat3d getDiagnal(const Mat3d& A);
 
 	/**
 	 * @class Transform2d

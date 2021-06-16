@@ -139,8 +139,8 @@ namespace SPH
 			MultiPhaseColorFunctionGradient(BaseContactBodyRelation* contact_relation);
 			virtual ~MultiPhaseColorFunctionGradient() {};
 		protected:
-			Real rho_0_;
-			StdVec<Real> contact_rho_0_;
+			Real rho0_;
+			StdVec<Real> contact_rho0_;
 			StdLargeVec<Real>& Vol_, & pos_div_;
 			StdLargeVec<int>& surface_indicator_;
 			StdLargeVec<Vecd>& color_grad_, & surface_norm_;

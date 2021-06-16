@@ -52,7 +52,7 @@ namespace SPH {
 		virtual void assignDerivedMaterialParameters() override 
 		{
 			Fluid::assignDerivedMaterialParameters();
-			p0_ = rho_0_ * c_0_ * c_0_;
+			p0_ = rho0_ * c0_ * c0_;
 		};
 	public:
 		explicit WeaklyCompressibleFluid() : Fluid(), p0_(1.0) {

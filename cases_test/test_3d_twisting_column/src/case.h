@@ -15,7 +15,7 @@ using namespace SPH;
 Real PL = 6.0; 		/**< X-direction domain. */
 Real PH = 1.0; 		/**< Y-direction domain. */
 Real PW = 1.0;		/**< Z-direction domain. */
-Real particle_spacing_ref = PH / 10.0;
+Real particle_spacing_ref = PH / 7.0;
 /** YOU can try PW = 0.2 and particle_spacing_ref = PH / 10.0 to see an interesting test. */
 Real BW = particle_spacing_ref * 0.0;	/**< no wall boundary in this case. */
 Real SL = particle_spacing_ref * 1.0; 	/**< Length of the holder is one layer particle. */
@@ -55,7 +55,7 @@ TriangleMeshShape* CreateHolder()
 class Column : public SolidBody
 {
 public:
-	Column(SPHSystem& system, std::string body_name) : SolidBody(system, body_name, new ParticleAdaptation(1.15, 0))
+	Column(SPHSystem& system, std::string body_name) : SolidBody(system, body_name, new ParticleAdaptation(1.3, 0))
 	{
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addTriangleMeshShape(CreateCantilever(), ShapeBooleanOps::add);
@@ -86,9 +86,9 @@ class NeoHookeanMaterial : public NeoHookeanSolid
 public:
 	NeoHookeanMaterial() : NeoHookeanSolid()
 	{
-		rho_0_ = rho_0;
-		E_0_ = Youngs_modulus;
-		nu_ = poisson;
+		rho0_ = rho_0;
+		youngs_modulus_ = Youngs_modulus;
+		poisson_ratio_ = poisson;
 
 		assignDerivedMaterialParameters();
 	}

@@ -149,8 +149,8 @@ public:
 	ThermofluidBodyMaterial()
 		: DiffusionReactionMaterial<FluidParticles, WeaklyCompressibleFluid>()
 	{
-		rho_0_ = rho0_f;
-		c_0_ = c_f;
+		rho0_ = rho0_f;
+		c0_ = c_f;
 		mu_ = mu_f;
 
 		//add a scalar for temperature in fluid

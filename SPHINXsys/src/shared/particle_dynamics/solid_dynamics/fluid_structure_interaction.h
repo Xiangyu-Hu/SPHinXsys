@@ -135,9 +135,10 @@ namespace SPH
 							= dot((dvel_dt_prior_k[index_j] - dvel_dt_ave_i), e_ij);
 						Real p_in_wall = p_k[index_j] + rho_n_k[index_j] * r_ij * SMAX(0.0, face_wall_external_acceleration);
 						Real rho_in_wall = fluid_k->DensityFromPressure(p_in_wall);
+						Vecd vel_in_wall = 2.0 * vel_ave_i - vel_n_k[index_j];
 
 						FluidState state_l(rho_n_k[index_j], vel_n_k[index_j], p_k[index_j]);
-						FluidState state_r(rho_in_wall, vel_ave_i, p_in_wall);
+						FluidState state_r(rho_in_wall, vel_in_wall, p_in_wall);
 						Real p_star = riemann_solver_k->getPStar(state_l, state_r, n_i);
 						force -= 2.0 * p_star * e_ij * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
 					}

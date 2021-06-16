@@ -83,14 +83,14 @@ namespace SPH {
 	void MeshCellLinkedList
 		::insertACellLinkedParticleIndex(size_t particle_index, Vecd particle_position)
 	{
-		Vecu cellpos = GridIndexFromPosition(particle_position);
+		Vecu cellpos = CellIndexFromPosition(particle_position);
 		cell_linked_lists_[cellpos[0]][cellpos[1]][cellpos[2]].concurrent_particle_indexes_.emplace_back(particle_index);
 	}
 	//=================================================================================================//
 	void MeshCellLinkedList
 		::InsertACellLinkedListDataEntry(size_t particle_index, Vecd particle_position)
 	{
-		Vecu cellpos = GridIndexFromPosition(particle_position);
+		Vecu cellpos = CellIndexFromPosition(particle_position);
 		cell_linked_lists_[cellpos[0]][cellpos[1]][cellpos[2]].cell_list_data_
 			.emplace_back(std::make_pair(particle_index, particle_position));
 	}
@@ -100,7 +100,7 @@ namespace SPH {
 		Real min_distance = Infinity;
 		ListData nearest_entry = std::make_pair(MaxSize_t, Vecd(Infinity));
 
-		Vecu cell_location = GridIndexFromPosition(position);
+		Vecu cell_location = CellIndexFromPosition(position);
 		int i = (int)cell_location[0];
 		int j = (int)cell_location[1];
 		int k = (int)cell_location[2];

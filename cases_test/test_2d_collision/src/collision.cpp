@@ -93,10 +93,9 @@ class WallMaterial : public LinearElasticSolid
 public:
 	WallMaterial() : LinearElasticSolid()
 	{
-		rho_0_ = rho0_s;
-		E_0_ = Youngs_modulus;
-		nu_ = poisson;
-		eta_0_ = physical_viscosity;
+		rho0_ = rho0_s;
+		youngs_modulus_ = Youngs_modulus;
+		poisson_ratio_ = poisson;
 
 		assignDerivedMaterialParameters();
 	}
@@ -109,10 +108,9 @@ class BallMaterial : public NeoHookeanSolid
 public:
 	BallMaterial() : NeoHookeanSolid()
 	{
-		rho_0_ 	= rho0_s;
-		E_0_ = Youngs_modulus;
-		nu_ = poisson;
-		eta_0_ = physical_viscosity;
+		rho0_ 	= rho0_s;
+		youngs_modulus_ = Youngs_modulus;
+		poisson_ratio_ = poisson;
 
 		assignDerivedMaterialParameters();
 	}

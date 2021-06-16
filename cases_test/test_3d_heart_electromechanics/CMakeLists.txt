@@ -21,7 +21,7 @@ aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
 add_test(NAME ${PROJECT_NAME}_particle_relaxation 
-		 COMMAND ${PROJECT_NAME} --r=true
+		 COMMAND ${PROJECT_NAME} --r=true --i=false
 		 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 add_test(NAME ${PROJECT_NAME} 
 		 COMMAND ${PROJECT_NAME} --r=false --i=true
