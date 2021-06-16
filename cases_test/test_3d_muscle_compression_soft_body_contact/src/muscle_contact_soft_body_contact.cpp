@@ -112,10 +112,9 @@ class MyocardiumMuscle : public NeoHookeanSolid
 public:
 	MyocardiumMuscle() : NeoHookeanSolid()
 	{
-		rho_0_ 	= rho_0;
-		E_0_ = Youngs_modulus;
+		rho0_ 	= rho_0;
+		E0_ = Youngs_modulus;
 		nu_ = poisson;
-		eta_0_ = physical_viscosity;
 
 		assignDerivedMaterialParameters();
 	}
@@ -128,9 +127,10 @@ class MovingPlateMaterial : public LinearElasticSolid
 public:
 	MovingPlateMaterial() : LinearElasticSolid()
 	{
-		rho_0_ = rho_0;
-		E_0_ = Youngs_modulus;
+		rho0_ = rho_0;
+		E0_ = Youngs_modulus;
 		nu_ = poisson;
+
 		assignDerivedMaterialParameters();
 	}
 };

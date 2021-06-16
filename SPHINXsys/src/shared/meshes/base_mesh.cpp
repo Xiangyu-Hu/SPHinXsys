@@ -14,16 +14,16 @@ namespace SPH {
 		mesh_lower_bound_(0), grid_spacing_(1.0),
 		number_of_grid_points_(number_of_grid_points) {};
 	//=================================================================================================//
-	Vecu BaseMesh::GridIndexFromPosition(const Vecd& position)
+	Vecu BaseMesh::CellIndexFromPosition(const Vecd& position)
 	{
 		Vecd rltpos = position - mesh_lower_bound_;
-		Vecu gird_pos(0);
+		Vecu cell_index(0);
 		for (int n = 0; n < rltpos.size(); n++)
 		{
-			gird_pos[n] = clamp((int)floor(rltpos[n] / grid_spacing_),
-				0, int(number_of_grid_points_[n]) - 1);
+			cell_index[n] = clamp((int)floor(rltpos[n] / grid_spacing_),
+				0, int(number_of_grid_points_[n]) - 2);
 		}
-		return gird_pos;
+		return cell_index;
 	}
 	//=================================================================================================//
 	Vecd BaseMesh::GridPositionFromIndex(Vecu grid_index)
@@ -84,19 +84,6 @@ namespace SPH {
 		number_of_grid_points_ = another_mesh->number_of_grid_points_;
 		number_of_cells_ = another_mesh->number_of_cells_;
 		buffer_width_ = another_mesh->buffer_width_;
-	}
-	//=================================================================================================//
-	Vecu Mesh::CellIndexFromPosition(Vecd& position)
-	{
-		Vecd rltpos(0);
-		Vecu cell_index(0);
-		for (int n = 0; n < rltpos.size(); n++)
-		{
-			rltpos[n] = position[n] - mesh_lower_bound_[n] - 0.5 * grid_spacing_;
-			cell_index[n] = clamp((int)floor(rltpos[n] / grid_spacing_),
-				0, int(number_of_cells_[n]) - 1);
-		}
-		return cell_index;
 	}
 	//=================================================================================================//
 	Vecd Mesh::CellPositionFromIndex(Vecu cell_index)

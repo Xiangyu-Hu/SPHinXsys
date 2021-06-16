@@ -60,7 +60,7 @@ namespace SPH {
 		parallel_for(blocked_range<size_t>(0, total_real_particles),
 			[&](const blocked_range<size_t>& r) {
 				for (size_t i = r.begin(); i != r.end(); ++i) {
-                    sequence[i] = transferMeshIndexToMortonOrder(GridIndexFromPosition(positions[i]));
+                    sequence[i] = transferMeshIndexToMortonOrder(CellIndexFromPosition(positions[i]));
 				}
 			}, ap);
 	}

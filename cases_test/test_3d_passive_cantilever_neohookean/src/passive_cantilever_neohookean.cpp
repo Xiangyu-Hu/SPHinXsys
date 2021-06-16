@@ -85,10 +85,9 @@ class MyocardiumMuscle : public NeoHookeanSolid
 public:
 	MyocardiumMuscle() : NeoHookeanSolid()
 	{
-		rho_0_ 	= rho_0;
-		E_0_ = Youngs_modulus;
-		nu_ = poisson;
-		eta_0_ = physical_viscosity;
+		rho0_ 	= rho_0;
+		youngs_modulus_ = Youngs_modulus;
+		poisson_ratio_ = poisson;
 
 		assignDerivedMaterialParameters();
 	}

@@ -14,7 +14,7 @@ namespace SPH {
 	//=================================================================================================//
 	Real ElasticSolidParticles::von_Mises_stress(size_t particle_i)
 	{
-		Real J = rho_0_ / rho_n_[particle_i];
+		Real J = rho0_ / rho_n_[particle_i];
 		Mat3d F = F_[particle_i];
 		Mat3d stress = stress_PK1_[particle_i];
 		Mat3d sigma = (stress * ~F) / J;

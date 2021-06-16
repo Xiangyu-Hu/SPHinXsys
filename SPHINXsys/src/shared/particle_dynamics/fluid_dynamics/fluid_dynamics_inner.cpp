@@ -68,8 +68,8 @@ namespace SPH
 			rho_sum_(particles_->rho_sum_)
 		{
 			W0_ = particle_adaptation_->getKernel()->W0(Vecd(0));
-			rho_0_ = particles_->rho_0_;
-			inv_sigma_0_ = 1.0 / particles_->sigma_0_;
+			rho0_ = particles_->rho0_;
+			inv_sigma0_ = 1.0 / particles_->sigma0_;
 		}
 		//=================================================================================================//
 		void DensitySummationInner::Interaction(size_t index_i, Real dt)
@@ -80,12 +80,12 @@ namespace SPH
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 				sigma += inner_neighborhood.W_ij_[n];
 
-			rho_sum_[index_i] = sigma * rho_0_ * inv_sigma_0_;
+			rho_sum_[index_i] = sigma * rho0_ * inv_sigma0_;
 		}
 		//=================================================================================================//
 		void DensitySummationInner::Update(size_t index_i, Real dt)
 		{
-			rho_n_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho_0_, rho_n_[index_i]);
+			rho_n_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_n_[index_i]);
 			Vol_[index_i] = mass_[index_i] / rho_n_[index_i];
 		}
 		//=================================================================================================//
@@ -413,7 +413,7 @@ namespace SPH
 		FlowRelaxationBuffer::
 			FlowRelaxationBuffer(FluidBody* body, BodyPartByCell* body_part) :
 			PartDynamicsByCell(body, body_part), FluidDataSimple(body),
-			pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_), relaxation_rate_(0.1)
+			pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_), relaxation_rate_(0.3)
 		{
 		};
 		//=================================================================================================//
@@ -442,15 +442,15 @@ namespace SPH
 		StaticConfinementDensity::
 			StaticConfinementDensity(FluidBody* body, NearShapeSurface* near_surface) :
 			PartDynamicsByCell(body, near_surface), FluidDataSimple(body),
-			rho_0_(particles_->rho_0_), inv_sigma_0_(1.0 / particles_->sigma_0_),
+			rho0_(particles_->rho0_), inv_sigma0_(1.0 / particles_->sigma0_),
 			mass_(particles_->mass_), rho_sum_(particles_->rho_sum_), pos_n_(particles_->pos_n_), 
 			level_set_complex_shape_(near_surface->getLevelSetComplexShape()) {}
 		//=================================================================================================//
 		void StaticConfinementDensity::Update(size_t index_i, Real dt)
 		{
-			Real inv_Vol_0_i = rho_0_ / mass_[index_i];
+			Real inv_Vol_0_i = rho0_ / mass_[index_i];
 			rho_sum_[index_i] += 
-				level_set_complex_shape_->computeKernelIntegral(pos_n_[index_i]) * inv_Vol_0_i * rho_0_ * inv_sigma_0_ ;
+				level_set_complex_shape_->computeKernelIntegral(pos_n_[index_i]) * inv_Vol_0_i * rho0_ * inv_sigma0_ ;
 		}
 		//=================================================================================================//
 		StaticConfinementPressureRelaxation::
@@ -508,7 +508,7 @@ namespace SPH
 			rho_n_(particles_->rho_n_), p_(particles_->p_),
 			pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_), inflow_pressure_(0)
 		{
-			rho_0_ = material_->ReferenceDensity();
+			rho0_ = material_->ReferenceDensity();
 		}
 		//=================================================================================================//
 		void EmitterInflowCondition
@@ -516,7 +516,7 @@ namespace SPH
 		{
 			size_t sorted_index_i = sorted_id_[unsorted_index_i];
 			vel_n_[sorted_index_i] = getTargetVelocity(pos_n_[sorted_index_i], vel_n_[sorted_index_i]);
-			rho_n_[sorted_index_i] = rho_0_;
+			rho_n_[sorted_index_i] = rho0_;
 			p_[sorted_index_i] = material_->getPressure(rho_n_[sorted_index_i]);
 		}
 		//=================================================================================================//

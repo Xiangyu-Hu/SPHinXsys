@@ -30,8 +30,8 @@ namespace SPH
 	
 			for (size_t k = 0; k != FluidWallData::contact_particles_.size(); ++k)
 			{
-				Real rho_0_k = FluidWallData::contact_particles_[k]->rho_0_;
-				wall_inv_rho_0_.push_back(1.0 / rho_0_k);
+				Real rho0_k = FluidWallData::contact_particles_[k]->rho0_;
+				wall_inv_rho0_.push_back(1.0 / rho0_k);
 				wall_mass_.push_back(&(FluidWallData::contact_particles_[k]->mass_));
 				wall_Vol_.push_back(&(FluidWallData::contact_particles_[k]->Vol_));
 				wall_vel_ave_.push_back(&(FluidWallData::contact_particles_[k]->vel_ave_));
@@ -66,8 +66,8 @@ namespace SPH
         void DensitySummation<DensitySummationInnerType>::prepareContactData()
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k) {
-				Real rho_0_k = this->contact_particles_[k]->rho_0_;
-				contact_inv_rho_0_.push_back(1.0 / rho_0_k);
+				Real rho0_k = this->contact_particles_[k]->rho0_;
+				contact_inv_rho0_.push_back(1.0 / rho0_k);
 				contact_mass_.push_back(&(this->contact_particles_[k]->mass_));
 			}
 		}
@@ -79,19 +79,19 @@ namespace SPH
 
 			/** Contact interaction. */
 			Real sigma(0.0);
-			Real inv_Vol_0_i = this->rho_0_ / this->mass_[index_i];
+			Real inv_Vol_0_i = this->rho0_ / this->mass_[index_i];
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real>& contact_mass_k = *(this->contact_mass_[k]);
-				Real contact_inv_rho_0_k = contact_inv_rho_0_[k];
+				Real contact_inv_rho0_k = contact_inv_rho0_[k];
 				Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
 					sigma += contact_neighborhood.W_ij_[n] * inv_Vol_0_i
-						* contact_inv_rho_0_k * contact_mass_k[contact_neighborhood.j_[n]];
+						* contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
 				}
 			}
-			this->rho_sum_[index_i] += sigma * this->rho_0_ * this->inv_sigma_0_;
+			this->rho_sum_[index_i] += sigma * this->rho0_ * this->inv_sigma0_;
 		}
 		//=================================================================================================//
         template<class BaseViscousAccelerationType>   	

@@ -57,8 +57,8 @@ class WaterMaterial : public WeaklyCompressibleFluid
 public:
 	WaterMaterial()	: WeaklyCompressibleFluid()
 	{
-		rho_0_ = rho0_f;
-		c_0_ = c_f;
+		rho0_ = rho0_f;
+		c0_ = c_f;
 		mu_ = mu_f;
 
 		assignDerivedMaterialParameters();
