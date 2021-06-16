@@ -296,22 +296,25 @@ namespace SPH
 		* @brief Exerts spring force and damping force in the form of acceleration to each particle.
 		* The spring force is calculated based on the difference from the particle's initial position.
 		* The damping force is calculated based on the particle's current velocity.
+		* Only for 3D applications
 		*/
 		class SpringDamperConstraintParticleWise 
 			: public ParticleDynamicsSimple, public SolidDataSimple
 		{
 		public:
 			SpringDamperConstraintParticleWise(SolidBody* body, Vecd stiffness, Real damping_ratio = 0.01);
-			virtual ~SpringDamperConstraintParticleWise() {};
+			~SpringDamperConstraintParticleWise();
 		protected:
 			StdLargeVec<Real>& mass_;
 			StdLargeVec<Vecd>& pos_n_,& pos_0_,& vel_n_,& dvel_dt_prior_;
 			Vecd stiffness_;
-			// damping component parallel to the spring force component
-			// damping coefficient = stiffness_ * damping_ratio_
-			Real damping_ratio_;
+			Vecd damping_coeff_; // damping component parallel to the spring force component
+			StdLargeVec<Vecd> spring_force_running_avg_;
+			StdLargeVec<Vecd> damping_force_running_avg_;
+			Real smoothing_weight_;
+
 			virtual void setupDynamics(Real dt = 0.0) override;
-			virtual Vecd getAcceleration(Vecd& disp, Real mass);
+			virtual Vecd getSpringForce(size_t index_i, Vecd& disp, Real mass);
 			virtual Vecd getDampingForce(size_t index_i, Real mass);
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
