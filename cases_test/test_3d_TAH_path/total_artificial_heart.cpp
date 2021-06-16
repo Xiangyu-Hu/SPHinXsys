@@ -24,7 +24,7 @@ int main()
 	Real physical_viscosity = 200;
 
 	/** STL IMPORT PARAMETERS */
-	std::string relative_input_path = "./input/"; //path definition for linux
+	string relative_input_path = "./input/"; //path definition for linux
 	string tah_stl;
 	string aorta_stl;
 	string diaphragm_stl;
