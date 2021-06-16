@@ -374,43 +374,51 @@ namespace SPH
 					pos_n_(particles_->pos_n_),
 					pos_0_(particles_->pos_0_),
 					vel_n_(particles_->vel_n_),
-					dvel_dt_prior_(particles_->dvel_dt_prior_),
-					mass_(particles_->mass_)
+					dvel_dt_prior_(particles_->dvel_dt_prior_)
 		{
-			stiffness_ = stiffness;
-			damping_ratio_ = damping_ratio;
+			// calculate total mass
+			total_mass_ = 0.0;
+			for (int i = 0; i < particles_->mass_.size(); i++)
+			{
+				total_mass_ += particles_->mass_[i];
+			}
+			// scale stiffness and damping by mass here, so it's not necessary in each iteration
+			stiffness_ = stiffness / total_mass_;
+			damping_coeff_ = stiffness * damping_ratio / total_mass_;
 		}
+		//=================================================================================================//
+		SpringDamperConstraintParticleWise::~SpringDamperConstraintParticleWise()
+		{}
 		//=================================================================================================//
 		void SpringDamperConstraintParticleWise::setupDynamics(Real dt)
 		{
 			particles_->total_ghost_particles_ = 0;
 		}
 		//=================================================================================================//
-		Vecd SpringDamperConstraintParticleWise::getAcceleration(Vecd& disp, Real mass)
-		{
+		Vecd SpringDamperConstraintParticleWise::getSpringForce(size_t index_i, Vecd& disp)
+		{	
 			Vecd spring_force(0);
 			for(int i = 0; i < disp.size(); i++)
 			{
-				spring_force[i] = -stiffness_[i] * disp[i] / mass;
-			}
+				spring_force[i] = -stiffness_[i] * disp[i];
+			}			
 			return spring_force;
 		}
 		//=================================================================================================//
-		Vecd SpringDamperConstraintParticleWise::getDampingForce(size_t index_i, Real mass)
+		Vecd SpringDamperConstraintParticleWise::getDampingForce(size_t index_i)
 		{
 			Vecd damping_force(0);
 			for(int i = 0; i < vel_n_[index_i].size(); i++)
 			{
-				damping_force[i] = -stiffness_[i] * damping_ratio_ * vel_n_[index_i][i] / mass;
+				damping_force[i] = -damping_coeff_[i] * vel_n_[index_i][i];
 			}
 			return damping_force;
 		}
 		//=================================================================================================//
 		void SpringDamperConstraintParticleWise::Update(size_t index_i, Real dt)
 		{	
-			Vecd disp_from_0 = pos_n_[index_i] - pos_0_[index_i];
-			dvel_dt_prior_[index_i] += getAcceleration(disp_from_0, mass_[index_i]);
-			dvel_dt_prior_[index_i] += getDampingForce(index_i, mass_[index_i]);
+			dvel_dt_prior_[index_i] += getSpringForce(index_i, pos_n_[index_i] - pos_0_[index_i]);
+			dvel_dt_prior_[index_i] += getDampingForce(index_i);
 		}
 		//=================================================================================================//
 		AccelerationForBodyPartInBoundingBox::
