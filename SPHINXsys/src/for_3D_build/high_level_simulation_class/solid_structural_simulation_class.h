@@ -80,6 +80,8 @@ public:
 	vector<LinearElasticSolid> material_model_list_;
 	Real physical_viscosity_;
 	vector<IndexPair> contacting_bodies_list_;
+	// particle relaxation
+	bool particle_relaxation_;
 	// boundary conditions
 	vector<GravityPair> non_zero_gravity_;
 	vector<AccelTuple> acceleration_bounding_box_tuple_;
@@ -110,6 +112,8 @@ class StructuralSimulation
 		vector<Real> resolution_list_;
 		vector<LinearElasticSolid> material_model_list_;
 		Real physical_viscosity_;
+		// particle relaxation
+		bool particle_relaxation_;
 
 		// internal members
 		SPHSystem system_;
@@ -142,7 +146,7 @@ class StructuralSimulation
 		void ScaleTranslationAndResolution();
 		void CreateBodyMeshList();
 		void CalculateSystemBoundaries();
-		void InitializeElasticSolidBodies();
+		void InitializeElasticSolidBodies(bool particle_relaxation);
 		void InitializeContactBetweenTwoBodies(int first, int second);
 		void InitializeAllContacts();
 

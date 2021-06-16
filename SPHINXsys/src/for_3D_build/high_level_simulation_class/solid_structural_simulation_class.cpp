@@ -126,6 +126,7 @@ StructuralSimulationInput::StructuralSimulationInput(
 	physical_viscosity_(physical_viscosity),
 	contacting_bodies_list_(contacting_bodies_list)
 {
+	particle_relaxation_ = true;
 	non_zero_gravity_ = {};
 	acceleration_bounding_box_tuple_ = {};
 	spring_damper_tuple_ = {};
@@ -136,7 +137,7 @@ StructuralSimulationInput::StructuralSimulationInput(
 /* StructuralSimulation members */
 ///////////////////////////////////////
 
-StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input) :
+StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input):
 	// generic input
 	relative_input_path_(input->relative_input_path_),
 	imported_stl_list_(input->imported_stl_list_),
@@ -149,6 +150,8 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input) :
 	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), default_resolution_)),
 	in_output_(In_Output(system_)),
 	contacting_bodies_list_(input->contacting_bodies_list_),
+	// particle relaxation
+	particle_relaxation_(input->particle_relaxation_),
 
 	// boundary conditions
 	non_zero_gravity_(input->non_zero_gravity_),
@@ -164,7 +167,7 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input) :
 	CalculateSystemBoundaries();
 	system_.run_particle_relaxation_ = true;
 	// initialize solid bodies with their properties
-	InitializeElasticSolidBodies();
+	InitializeElasticSolidBodies(particle_relaxation_);
 	// contacts
 	InitializeAllContacts();
 
@@ -246,14 +249,17 @@ void StructuralSimulation::CreateBodyMeshList()
 	}
 }
 
-void StructuralSimulation::InitializeElasticSolidBodies()
+void StructuralSimulation::InitializeElasticSolidBodies(bool particle_relaxation)
 {
 	solid_body_list_ = {};
 	for (unsigned int i = 0; i < body_mesh_list_.size(); i++)
 	{
 		SolidBodyForSimulation* sb = new SolidBodyForSimulation(system_, imported_stl_list_[i], body_mesh_list_[i], resolution_list_[i], physical_viscosity_, material_model_list_[i]);
 		solid_body_list_.push_back(sb);
-		RelaxParticlesSingleResolution(&in_output_, false, sb->GetImportedModel(), sb->GetElasticSolidParticles(), sb->GetInnerBodyRelation());
+		if (particle_relaxation)
+		{
+			RelaxParticlesSingleResolution(&in_output_, false, sb->GetImportedModel(), sb->GetElasticSolidParticles(), sb->GetInnerBodyRelation());
+		}
 	}
 }
 
