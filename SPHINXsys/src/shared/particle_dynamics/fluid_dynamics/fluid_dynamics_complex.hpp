@@ -30,8 +30,8 @@ namespace SPH
 	
 			for (size_t k = 0; k != FluidWallData::contact_particles_.size(); ++k)
 			{
-				Real rho_0_k = FluidWallData::contact_particles_[k]->rho_0_;
-				wall_inv_rho_0_.push_back(1.0 / rho_0_k);
+				Real rho0_k = FluidWallData::contact_particles_[k]->rho0_;
+				wall_inv_rho0_.push_back(1.0 / rho0_k);
 				wall_mass_.push_back(&(FluidWallData::contact_particles_[k]->mass_));
 				wall_Vol_.push_back(&(FluidWallData::contact_particles_[k]->Vol_));
 				wall_vel_ave_.push_back(&(FluidWallData::contact_particles_[k]->vel_ave_));
@@ -66,8 +66,8 @@ namespace SPH
         void DensitySummation<DensitySummationInnerType>::prepareContactData()
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k) {
-				Real rho_0_k = this->contact_particles_[k]->rho_0_;
-				contact_inv_rho_0_.push_back(1.0 / rho_0_k);
+				Real rho0_k = this->contact_particles_[k]->rho0_;
+				contact_inv_rho0_.push_back(1.0 / rho0_k);
 				contact_mass_.push_back(&(this->contact_particles_[k]->mass_));
 			}
 		}
@@ -79,19 +79,19 @@ namespace SPH
 
 			/** Contact interaction. */
 			Real sigma(0.0);
-			Real inv_Vol_0_i = this->rho_0_ / this->mass_[index_i];
+			Real inv_Vol_0_i = this->rho0_ / this->mass_[index_i];
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real>& contact_mass_k = *(this->contact_mass_[k]);
-				Real contact_inv_rho_0_k = contact_inv_rho_0_[k];
+				Real contact_inv_rho0_k = contact_inv_rho0_[k];
 				Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
 					sigma += contact_neighborhood.W_ij_[n] * inv_Vol_0_i
-						* contact_inv_rho_0_k * contact_mass_k[contact_neighborhood.j_[n]];
+						* contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
 				}
 			}
-			this->rho_sum_[index_i] += sigma * this->rho_0_ * this->inv_sigma_0_;
+			this->rho_sum_[index_i] += sigma * this->rho0_ * this->inv_sigma0_;
 		}
 		//=================================================================================================//
         template<class BaseViscousAccelerationType>   	
@@ -126,7 +126,7 @@ namespace SPH
 				}
 			}
 
-			this->dvel_dt_others_[index_i] += acceleration;
+			this->dvel_dt_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
         template<class BaseViscousAccelerationType>
@@ -163,7 +163,7 @@ namespace SPH
 			BasePressureRelaxationType::Interaction(index_i, dt);
 
 			FluidState state_i(this->rho_n_[index_i], this->vel_n_[index_i], this->p_[index_i]);
-			Vecd dvel_dt_others_i = computeNonConservativeAcceleration(index_i);
+			Vecd dvel_dt_prior_i = computeNonConservativeAcceleration(index_i);
 
 			Vecd acceleration(0.0);
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
@@ -180,7 +180,7 @@ namespace SPH
 					Real dW_ij = wall_neighborhood.dW_ij_[n];
 					Real r_ij = wall_neighborhood.r_ij_[n];
 
-					Real face_wall_external_acceleration = dot((dvel_dt_others_i - dvel_dt_ave_k[index_j]), -e_ij);
+					Real face_wall_external_acceleration = dot((dvel_dt_prior_i - dvel_dt_ave_k[index_j]), -e_ij);
 					Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - state_i.vel_;
 					Real p_in_wall = state_i.p_ + state_i.rho_ * r_ij * SMAX(0.0, face_wall_external_acceleration);
 					Real rho_in_wall = this->material_->DensityFromPressure(p_in_wall);
@@ -195,7 +195,7 @@ namespace SPH
         template<class BasePressureRelaxationType>   	
         Vecd PressureRelaxation<BasePressureRelaxationType>::computeNonConservativeAcceleration(size_t index_i)
 		{
-			return this->dvel_dt_others_[index_i];
+			return this->dvel_dt_prior_[index_i];
 		}
         //=================================================================================================//
         template<class BasePressureRelaxationType>   	
@@ -316,7 +316,7 @@ namespace SPH
 			Real density_change_rate = 0.0;
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
-				Vecd& dvel_dt_others_i = this->dvel_dt_others_[index_i];
+				Vecd& dvel_dt_prior_i = this->dvel_dt_prior_[index_i];
 
 				StdLargeVec<Real>& Vol_k = *(this->wall_Vol_[k]);
 				StdLargeVec<Vecd>& vel_ave_k = *(this->wall_vel_ave_[k]);
@@ -331,7 +331,7 @@ namespace SPH
 					Real dW_ij = wall_neighborhood.dW_ij_[n];
 
 					Real face_wall_external_acceleration
-						= dot((dvel_dt_others_i - dvel_dt_ave_k[index_j]), -e_ij);
+						= dot((dvel_dt_prior_i - dvel_dt_ave_k[index_j]), -e_ij);
 					Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - state_i.vel_;
 					Real p_in_wall = state_i.p_ + state_i.rho_ * r_ij * SMAX(0.0, face_wall_external_acceleration);
 					Real rho_in_wall = this->material_->DensityFromPressure(p_in_wall);

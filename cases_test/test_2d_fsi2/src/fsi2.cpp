@@ -46,6 +46,7 @@ int main(int ac, char* av[])
 	 * @brief 	Creating body, materials and particles for the elastic beam (inserted body).
 	 */
 	InsertedBody* inserted_body = new InsertedBody(system, "InsertedBody");
+	if (!system.run_particle_relaxation_ && system.reload_particles_) inserted_body->useParticleGeneratorReload();
 	InsertBodyMaterial* insert_body_material = new InsertBodyMaterial();
 	ElasticSolidParticles 	inserted_body_particles(inserted_body, insert_body_material);
 	/**
@@ -173,12 +174,6 @@ int main(int ac, char* av[])
 	/**
 	 * @brief Pre-simulation.
 	 */
-	 /** Using relaxed particle distribution if needed. */
-	if (system.reload_particles_) {
-		std::unique_ptr<ReloadParticleIO>
-			reload_insert_body_particles(new ReloadParticleIO(in_output, { inserted_body }, { "InsertedBody" }));
-		reload_insert_body_particles->ReadFromFile();
-	}
 	/** initialize cell linked lists for all bodies. */
 	system.initializeSystemCellLinkedLists();
 	/** periodic condition applied after the mesh cell linked list build up

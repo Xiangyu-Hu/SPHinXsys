@@ -47,7 +47,7 @@ public:
 			{
 				Real x = resolution_ref * i - BW + resolution_ref * 0.5;
 				Real y = resolution_ref * j - BW + resolution_ref * 0.5;
-				body_input_points_volumes_.push_back(std::make_pair(Vecd(x, y, 0.0), resolution_ref * resolution_ref * PT));
+				body_input_points_volumes_.push_back(std::make_pair(Vecd(x, y, 0.0), resolution_ref * resolution_ref));
 			}
 		}
 	}
@@ -130,10 +130,9 @@ class PlateMaterial : public LinearElasticSolid
 public:
 	PlateMaterial(): LinearElasticSolid()
 	{
-		rho_0_ = rho0_s;
-		E_0_ = Youngs_modulus;
-		nu_ = poisson;
-		eta_0_ = physical_viscosity;
+		rho0_ = rho0_s;
+		youngs_modulus_ = Youngs_modulus;
+		poisson_ratio_ = poisson;
 
 		assignDerivedMaterialParameters();
 	}

@@ -93,8 +93,8 @@ public:
 	WaterMaterial() : WeaklyCompressibleFluid()
 	{
 		/** Basic material parameters*/
-		rho_0_ = rho0_f;
-		c_0_ = c_f;
+		rho0_ = rho0_f;
+		c0_ = c_f;
 
 		/** Compute the derived material parameters*/
 		assignDerivedMaterialParameters();

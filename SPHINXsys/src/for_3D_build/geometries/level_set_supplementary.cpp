@@ -436,7 +436,7 @@ namespace SPH {
 							Vecd displacement = position - DataPositionFromGlobalIndex(neighbor_index);
 							Real distance = displacement.norm();
 							if (distance < cutoff_radius)
-								integral += kernel_.W(global_h_ratio_, displacement) 
+								integral += kernel_.W(global_h_ratio_, distance, displacement)
 									* computeHeaviside(phi_neighbor, data_spacing_);
 						}
 					}

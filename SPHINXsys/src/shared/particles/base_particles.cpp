@@ -13,7 +13,7 @@
 namespace SPH
 {
 	//=================================================================================================//
-	BaseParticles::BaseParticles(SPHBody* body, BaseMaterial* base_material) : 
+	BaseParticles::BaseParticles(SPHBody* body, BaseMaterial* base_material) :
 		base_material_(base_material), speed_max_(0.0), signal_speed_max_(0.0),
 		total_real_particles_(0), real_particles_bound_(0), total_ghost_particles_(0),
 		body_(body), body_name_(body->getBodyName()),
@@ -21,18 +21,18 @@ namespace SPH
 		reload_xml_engine_("xml_particle_reload", "particles")
 	{
 		body->assignBaseParticles(this);
-		rho_0_ = base_material->ReferenceDensity();
-		sigma_0_ = body->particle_adaptation_->ReferenceNumberDensity();
+		rho0_ = base_material->ReferenceDensity();
+		sigma0_ = body->particle_adaptation_->ReferenceNumberDensity();
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
 		registerAVariable<indexVector, Vecd>(pos_n_, "Position");
 		registerAVariable<indexVector, Vecd>(vel_n_, "Velocity");
 		registerAVariable<indexVector, Vecd>(dvel_dt_, "Acceleration");
-		registerAVariable<indexVector, Vecd>(dvel_dt_others_, "OtherAcceleration");
+		registerAVariable<indexVector, Vecd>(dvel_dt_prior_, "OtherAcceleration");
 		registerAVariable<indexScalar, Real>(Vol_, "Volume");
 		registerAVariable<indexScalar, Real>(rho_n_, "Density");
-		registerAVariable<indexScalar, Real>(mass_, "Mass");		
+		registerAVariable<indexScalar, Real>(mass_, "Mass");
 		//----------------------------------------------------------------------
 		//		add basic output particle data
 		//----------------------------------------------------------------------
@@ -67,11 +67,11 @@ namespace SPH
 		pos_n_.push_back(pnt);
 		vel_n_.push_back(Vecd(0));
 		dvel_dt_.push_back(Vecd(0));
-		dvel_dt_others_.push_back(Vecd(0));
+		dvel_dt_prior_.push_back(Vecd(0));
 
 		Vol_.push_back(Vol_0);
-		rho_n_.push_back(rho_0_);
-		mass_.push_back(rho_0_ * Vol_0);
+		rho_n_.push_back(rho0_);
+		mass_.push_back(rho0_ * Vol_0);
 	}
 	//=================================================================================================//
 	void BaseParticles::addABufferParticle()
@@ -93,7 +93,7 @@ namespace SPH
 		loopParticleData<copyAParticleDataValue>(all_particle_data_, this_index, another_index);
 	}
 	//=================================================================================================//
-	size_t BaseParticles ::insertAGhostParticle(size_t index_i)
+	size_t BaseParticles::insertAGhostParticle(size_t index_i)
 	{
 		total_ghost_particles_ += 1;
 		size_t expected_size = real_particles_bound_ + total_ghost_particles_;
@@ -190,7 +190,7 @@ namespace SPH
 			output_file << std::endl;
 			output_file << "    </DataArray>\n";
 		}
-		
+
 		//write scalars
 		for (std::pair<std::string, size_t>& name_index : variables_to_write_[indexScalar])
 		{
@@ -223,20 +223,11 @@ namespace SPH
 	void BaseParticles::writePltFileHeader(std::ofstream& output_file)
 	{
 		output_file << " VARIABLES = \"x\",\"y\",\"z\",\"ID\"";
-		
-		for (size_t l = 0; l != variables_to_write_[indexInteger].size(); ++l) 
-		{
-			std::string variable_name = variables_to_write_[indexInteger][l].first;
-			output_file << ",\"" << variable_name << "\"";
-		};
-
-		for (size_t l = 0; l != variables_to_write_[indexVector].size(); ++l) 
-		{
+		for (size_t l = 0; l != variables_to_write_[indexVector].size(); ++l) {
 			std::string variable_name = variables_to_write_[indexVector][l].first;
 			output_file << ",\"" << variable_name << "_x\"" << ",\"" << variable_name << "_y\"" << ",\"" << variable_name << "_z\"";
 		};
-		for (size_t l = 0; l != variables_to_write_[indexScalar].size(); ++l) 
-		{
+		for (size_t l = 0; l != variables_to_write_[indexScalar].size(); ++l) {
 			std::string variable_name = variables_to_write_[indexScalar][l].first;
 			output_file << ",\"" << variable_name << "\"";
 		};
@@ -248,13 +239,6 @@ namespace SPH
 		Vec3d particle_position = upgradeToVector3D(pos_n_[index_i]);
 		output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " "
 			<< index_i << " ";
-
-		for (std::pair<std::string, size_t>& name_index : variables_to_write_[indexInteger])
-		{
-			std::string variable_name = name_index.first;
-			StdLargeVec<int>& variable = *(std::get<indexInteger>(all_particle_data_)[name_index.second]);
-			output_file << variable[index_i] << " ";
-		};
 
 		for (std::pair<std::string, size_t>& name_index : variables_to_write_[indexVector])
 		{
@@ -284,10 +268,21 @@ namespace SPH
 		};
 	}
 	//=================================================================================================//
+	void BaseParticles::resizeXmlDocForParticles(XmlEngine& xml_engine)
+	{
+		size_t total_elements = xml_engine.SizeOfXmlDoc();
+
+		if (total_elements <= total_real_particles_)
+		{
+			for (size_t i = total_elements; i != total_real_particles_; ++i)
+				xml_engine.addElementToXmlDoc("particle");
+		}
+	}
+	//=================================================================================================//
 	void BaseParticles::writeParticlesToXmlForRestart(std::string& filefullpath)
 	{
-		restart_xml_engine_.resizeXmlDocForParticles(total_real_particles_);
-		WriteAParticleVariableToXml write_variable_to_xml(restart_xml_engine_);
+		resizeXmlDocForParticles(restart_xml_engine_);
+		WriteAParticleVariableToXml write_variable_to_xml(restart_xml_engine_, total_real_particles_);
 		loopParticleData<loopVariabaleNameList>(all_particle_data_, variables_to_restart_, write_variable_to_xml);
 		restart_xml_engine_.writeToXmlFile(filefullpath);
 	}
@@ -295,37 +290,35 @@ namespace SPH
 	void BaseParticles::readParticleFromXmlForRestart(std::string& filefullpath)
 	{
 		restart_xml_engine_.loadXmlFile(filefullpath);
-		ReadAParticleVariableFromXml read_variable_from_xml(restart_xml_engine_);
+		ReadAParticleVariableFromXml read_variable_from_xml(restart_xml_engine_, total_real_particles_);
 		loopParticleData<loopVariabaleNameList>(all_particle_data_, variables_to_restart_, read_variable_from_xml);
 	}
 	//=================================================================================================//
-	void BaseParticles::writeToXmlForReloadParticle(std::string &filefullpath)
+	void BaseParticles::writeToXmlForReloadParticle(std::string& filefullpath)
 	{
-		reload_xml_engine_.resizeXmlDocForParticles(total_real_particles_);
-		size_t index_i = 0;
+		resizeXmlDocForParticles(reload_xml_engine_);
 		SimTK::Xml::element_iterator ele_ite = reload_xml_engine_.root_element_.element_begin();
-		for (; ele_ite != reload_xml_engine_.root_element_.element_end(); ++ele_ite)
+		for (size_t i = 0; i != total_real_particles_; ++i)
 		{
-			reload_xml_engine_.setAttributeToElement(ele_ite, "Position", pos_n_[index_i]);
-			reload_xml_engine_.setAttributeToElement(ele_ite, "Volume", Vol_[index_i]);
-			index_i++;
+			reload_xml_engine_.setAttributeToElement(ele_ite, "Position", pos_n_[i]);
+			reload_xml_engine_.setAttributeToElement(ele_ite, "Volume", Vol_[i]);
+			ele_ite++;
 		}
 		reload_xml_engine_.writeToXmlFile(filefullpath);
 	}
 	//=================================================================================================//
-	void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
+	void BaseParticles::readFromXmlForReloadParticle(std::string& filefullpath)
 	{
-		size_t index_i = 0;
 		reload_xml_engine_.loadXmlFile(filefullpath);
 		SimTK::Xml::element_iterator ele_ite = reload_xml_engine_.root_element_.element_begin();
-		for (; ele_ite != reload_xml_engine_.root_element_.element_end(); ++ele_ite)
+		for (size_t i = 0; i != total_real_particles_; ++i)
 		{
-			reload_xml_engine_.getRequiredAttributeValue<Vecd>(ele_ite, "Position", pos_n_[index_i]);
-			reload_xml_engine_.getRequiredAttributeValue<Real>(ele_ite, "Volume", Vol_[index_i]);
-			 index_i++;
+			reload_xml_engine_.getRequiredAttributeValue<Vecd>(ele_ite, "Position", pos_n_[i]);
+			reload_xml_engine_.getRequiredAttributeValue<Real>(ele_ite, "Volume", Vol_[i]);
+			ele_ite++;
 		}
 
-		if(index_i != total_real_particles_)
+		if (reload_xml_engine_.SizeOfXmlDoc() != total_real_particles_)
 		{
 			std::cout << "\n Error: reload particle number does not match!" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;

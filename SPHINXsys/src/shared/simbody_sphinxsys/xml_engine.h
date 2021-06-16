@@ -52,7 +52,7 @@ namespace fs = boost::filesystem;
 namespace fs = std::experimental::filesystem;
 #endif
 
-namespace SPH 
+namespace SPH
 {
 	class XmlEngine
 	{
@@ -73,7 +73,7 @@ namespace SPH
 
 		/** Add an attribute of type string to an xml element.  */
 		template<class T>
-		void setAttributeToElement(const SimTK::Xml::element_iterator& ele_ite, const std::string& attrib_name, const T& value) 
+		void setAttributeToElement(const SimTK::Xml::element_iterator& ele_ite, const std::string& attrib_name, const T& value)
 		{
 			SimTK::Xml::Attribute attr_(attrib_name, SimTK::String(value));
 			ele_ite->setAttributeValue(attr_.getName(), attr_.getValue());
@@ -83,7 +83,7 @@ namespace SPH
 
 		/** Get the required attribute value of an element */
 		template<class T>
-		void getRequiredAttributeValue(SimTK::Xml::element_iterator& ele_ite_, const std::string& attrib_name, T& value) 
+		void getRequiredAttributeValue(SimTK::Xml::element_iterator& ele_ite_, const std::string& attrib_name, T& value)
 		{
 			std::string value_in_string = ele_ite_->getRequiredAttributeValue(attrib_name);
 			value = SimTK::convertStringTo<T>(value_in_string);
@@ -97,58 +97,9 @@ namespace SPH
 		void loadXmlFile(const std::string& filefullpath);
 		/** Get the Tag of root element as a string */
 		std::string getRootElementTag();
-		/** resize of Xml doc */
-		void resizeXmlDocForParticles(size_t input_size);
 		/** Get the size of Xml doc */
 		size_t SizeOfXmlDoc();
 	};
-
-		template<int DataTypeIndex, typename VariableType>
-		struct copyAParticleDataValue
-		{
-			void operator () (ParticleData& particle_data, size_t this_index, size_t another_index) const
-			{
-				for (size_t i = 0; i != std::get<DataTypeIndex>(particle_data).size(); ++i)
-					(*std::get<DataTypeIndex>(particle_data)[i])[this_index] =
-					(*std::get<DataTypeIndex>(particle_data)[i])[another_index];
-			};
-		};
-
-		struct WriteAParticleVariableToXml
-		{
-			XmlEngine& xml_engine_;
-			WriteAParticleVariableToXml(XmlEngine& xml_engine) :
-				xml_engine_(xml_engine) {};
-			template<typename VariableType>
-			void operator () (std::string& variable_name, StdLargeVec<VariableType>& variable)  const
-			{
-				size_t index_i = 0;
-				SimTK::Xml::element_iterator ele_ite = xml_engine_.root_element_.element_begin();
-				for (; ele_ite != xml_engine_.root_element_.element_end(); ++ele_ite)
-				{
-					xml_engine_.setAttributeToElement(ele_ite, variable_name, variable[index_i]);
-					index_i++;
-				}
-			}
-		};
-
-		struct ReadAParticleVariableFromXml
-		{
-			XmlEngine& xml_engine_;
-			ReadAParticleVariableFromXml(XmlEngine& xml_engine) :
-				xml_engine_(xml_engine) {};
-			template<typename VariableType>
-			void operator () (std::string& variable_name, StdLargeVec<VariableType>& variable)  const
-			{
-				size_t index_i = 0;
-				SimTK::Xml::element_iterator ele_ite = xml_engine_.root_element_.element_begin();
-				for (; ele_ite != xml_engine_.root_element_.element_end(); ++ele_ite)
-				{
-					xml_engine_.getRequiredAttributeValue(ele_ite, variable_name, variable[index_i]);
-					index_i++;
-				}
-			}
-		};
 }
 
 #endif //XML_ENGINE_SIMBODY_H

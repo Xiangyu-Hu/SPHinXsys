@@ -1,8 +1,9 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake) # main (top) cmake dir
 
 set(CMAKE_VERBOSE_MAKEFILE on)
 
-include(ImportSPHINXsysFromSource_for_2D_build)
+include(ImportSPHINXsysFromSource_for_3D_build)
 
 SET(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
@@ -14,12 +15,12 @@ add_test(NAME ${PROJECT_NAME}_particle_relaxation COMMAND ${PROJECT_NAME} --r=tr
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --r=false --i=true)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    target_link_libraries(${PROJECT_NAME} sphinxsys_2d ${TBB_LIBRARYS} ${Simbody_LIBRARIES})
-    add_dependencies(${PROJECT_NAME} sphinxsys_2d sphinxsys_static_2d)
+    target_link_libraries(${PROJECT_NAME} sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES})
+    add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
 else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    	target_link_libraries(${PROJECT_NAME} sphinxsys_2d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} ${Boost_LIBRARIES} stdc++)
+    	target_link_libraries(${PROJECT_NAME} sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} ${Boost_LIBRARIES} stdc++)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		target_link_libraries(${PROJECT_NAME} sphinxsys_2d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} ${Boost_LIBRARIES} stdc++ stdc++fs)
+		target_link_libraries(${PROJECT_NAME} sphinxsys_3d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} ${Boost_LIBRARIES} stdc++ stdc++fs)
 	endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")

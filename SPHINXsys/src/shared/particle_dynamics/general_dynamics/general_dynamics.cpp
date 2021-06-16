@@ -10,7 +10,7 @@ namespace SPH {
 	InitializeATimeStep
 		::InitializeATimeStep(SPHBody* body, Gravity* gravity)
 		: ParticleDynamicsSimple(body), GeneralDataDelegateSimple(body),
-		pos_n_(particles_->pos_n_), dvel_dt_others_(particles_->dvel_dt_others_),
+		pos_n_(particles_->pos_n_), dvel_dt_prior_(particles_->dvel_dt_prior_),
 		gravity_(gravity)
 	{
 	}
@@ -22,7 +22,7 @@ namespace SPH {
 	//=================================================================================================//
 	void InitializeATimeStep::Update(size_t index_i, Real dt)
 	{
-		dvel_dt_others_[index_i] = gravity_->InducedAcceleration(pos_n_[index_i]);
+		dvel_dt_prior_[index_i] = gravity_->InducedAcceleration(pos_n_[index_i]);
 	}
 	//=================================================================================================//
 	RandomizePartilePosition::RandomizePartilePosition(SPHBody* body)

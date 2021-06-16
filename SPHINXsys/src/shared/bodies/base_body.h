@@ -107,6 +107,7 @@ namespace SPH
 		void setNewlyUpdated() { newly_updated_ = true; };
 		void setNotNewlyUpdated() { newly_updated_ = false; };
 		bool checkNewlyUpdated() { return newly_updated_; };
+		void useParticleGeneratorReload();
 
 		void setBodyDomainBounds(BoundingBox body_domain_bounds) { body_domain_bounds_ = body_domain_bounds; };
 		BoundingBox getBodyDomainBounds() { return body_domain_bounds_; };

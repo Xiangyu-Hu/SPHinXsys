@@ -21,36 +21,36 @@
 *                                                                           *
 * --------------------------------------------------------------------------*/
 /**
-* @file 	complex_solid.h
-* @brief 	These are classes for define complex solid materials.
-* @author	Xiangyu Hu and Chi Zhang
+* @file 	inelastic_solid_dynamics.h
+* @brief 	Here, we define the algorithm classes for inelastic_solid dynamics.
+* @details 	We consider here a weakly compressible solids.
+* @author	Xiaojing Tang, Chi Zhang and Xiangyu Hu
 */
 #pragma once
 
-#include "elastic_solid.h"
+#include "solid_dynamics.h"
 
-namespace SPH {
-
-	class ActiveMuscleParticles;
-
-	/**
-	* @class ActiveMuscle
-	* @brief Here, the active reponse is considered.
-	*/
-	template<class MuscleType>
-	class ActiveMuscle : public MuscleType
+namespace SPH
+{
+	namespace solid_dynamics
 	{
-	protected:
-		ActiveMuscleParticles* active_muscle_particles_;
+		/**
+		 * @class PlasticStressRelaxationFirstHalf
+		 * @brief computing stress relaxation process by verlet time stepping
+		 * This is the first step
+		 */
+		class PlasticStressRelaxationFirstHalf
+			: public StressRelaxationFirstHalf
+		{
+		public:
+			PlasticStressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation);
+			virtual ~PlasticStressRelaxationFirstHalf() {};
+		protected:
+			PlasticSolid* plastic_solid_;
 
-		virtual void assignDerivedMaterialParameters() override;
-	public:
-		ActiveMuscle();
-		virtual ~ActiveMuscle() {};
-
-		void assignActiveMuscleParticles(ActiveMuscleParticles* active_muscle_particles);
-		/** compute the stress through Constitutive relation. */
-		virtual Matd ConstitutiveRelation(Matd& deformation, size_t index_i) override;
-		virtual ActiveMuscle<MuscleType>* ThisObjectPtr() override { return this; };
-	};
+			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
+		};
+	}
 }
+
+

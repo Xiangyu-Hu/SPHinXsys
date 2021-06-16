@@ -8,6 +8,7 @@
 #include "geometry.h"
 #include "base_body.h"
 #include "elastic_solid.h"
+#include "inelastic_solid.h"
 #include "xml_engine.h"
 
 namespace SPH {
@@ -89,7 +90,6 @@ namespace SPH {
 		registerAVariable<indexMatrix, Matd>(F_, "DeformationGradient", Matd(1.0));
 		registerAVariable<indexMatrix, Matd>(dF_dt_, "DeformationRate");
 		registerAVariable<indexMatrix, Matd>(stress_PK1_, "FirstPiolaKirchhoffStress");
-		registerAVariable<indexMatrix, Matd>(corrected_stress_, "CorrectedStress");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
@@ -155,8 +155,9 @@ namespace SPH {
 		registerAVariable<indexVector, Vecd>(dangular_vel_dt_, "AngularAcceleration");
 		registerAVariable<indexMatrix, Matd>(F_bending_, "BendingDeformationGradient");
 		registerAVariable<indexMatrix, Matd>(dF_bending_dt_, "BendingDeformationGradientChangeRate");
-		registerAVariable<indexVector, Vecd>(shear_stress_, "ShearStress");
-		registerAVariable<indexMatrix, Matd>(corrected_moment_, "CorrectedMoment");
+		registerAVariable<indexVector, Vecd>(global_shear_stress_, "GlobalShearStress");
+		registerAVariable<indexMatrix, Matd>(global_stress_, "GlobalStress");
+		registerAVariable<indexMatrix, Matd>(global_moment_, "GlobalMoment");
 		//----------------------------------------------------------------------
 		//		add basic output particle data
 		//----------------------------------------------------------------------
