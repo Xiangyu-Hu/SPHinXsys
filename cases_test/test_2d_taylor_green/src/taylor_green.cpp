@@ -57,8 +57,8 @@ class WaterMaterial : public WeaklyCompressibleFluid
 public:
 	WaterMaterial()	: WeaklyCompressibleFluid()
 	{
-		rho_0_ = rho0_f;
-		c_0_ = c_f;
+		rho0_ = rho0_f;
+		c0_ = c_f;
 		mu_ = mu_f;
 
 		assignDerivedMaterialParameters();
@@ -95,24 +95,20 @@ int main(int ac, char* av[])
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for computation start with relaxed body fitted particles distribution. */
-	sph_system.reload_particles_ = false;
+	sph_system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	sph_system.restart_step_ = 0;
+	//handle command line arguments
+	sph_system.handleCommandlineOptions(ac, av);
 	/** output environment. */
 	In_Output 	in_output(sph_system);
-	//handle command line arguments
-	#ifdef BOOST_AVAILABLE
-	sph_system.handleCommandlineOptions(ac, av);
-	#endif	
+
 	/**
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
 	WaterBlock *water_block = new WaterBlock(sph_system, "WaterBody");
-	if (sph_system.reload_particles_) 	 // Using relaxed particle distribution if needed
-	{
-		water_block->particle_generator_->~ParticleGenerator();
-		water_block->particle_generator_ = new ParticleGeneratorReload(&in_output, water_block->getBodyName());
-	}
+	// Using relaxed particle distribution if needed
+	if (sph_system.reload_particles_ && !sph_system.run_particle_relaxation_) water_block->useParticleGeneratorReload();
 	WaterMaterial 	*water_material = new WaterMaterial();
 	FluidParticles 	fluid_particles(water_block, water_material);
 	/** topology */

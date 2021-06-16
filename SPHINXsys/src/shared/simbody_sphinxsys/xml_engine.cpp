@@ -6,7 +6,7 @@
 
 #include "xml_engine.h"
 
-namespace SPH 
+namespace SPH
 {
 	//=================================================================================================//
 	XmlEngine::XmlEngine(const std::string& xml_name, const std::string& root_tag) :
@@ -22,7 +22,7 @@ namespace SPH
 		root_element_.insertNodeAfter(root_element_.node_end(), *element);
 	}
 	//=================================================================================================//
-	void XmlEngine::setAttributeToElement(const SimTK::Xml::element_iterator& ele_ite, 
+	void XmlEngine::setAttributeToElement(const SimTK::Xml::element_iterator& ele_ite,
 		const std::string& attrib_name, const Matd& value)
 	{
 		int num_dim = value.nrow();
@@ -73,23 +73,6 @@ namespace SPH
 	{
 		return xmldoc_.getRootTag();
 	}
-	//=================================================================================================//
-	void  XmlEngine::resizeXmlDocForParticles(size_t input_size)
-	{
-		size_t total_elements =  std::distance(root_element_.element_begin(),
-			root_element_.element_end());
-
-		if (total_elements <= input_size) 
-		{
-			for (size_t i = total_elements; i != input_size; ++i) addElementToXmlDoc("particle");
-		}
-		else
-		{
-			std::cout << "\n Error: XML Engine allows increase date size only!" << std::endl;
-			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-			exit(1);
-		}
-	};
 	//=================================================================================================//
 	size_t XmlEngine::SizeOfXmlDoc()
 	{

@@ -23,7 +23,7 @@
 /**
  * @file 	base_particles.h
  * @brief 	This is the base class of SPH particles. The basic data of the particles
- *			is saved in separated large vectors. Each derived class will introduce several extra     
+ *			is saved in separated large vectors. Each derived class will introduce several extra
  * 			vectors for the new data. Note that there is no class of single particle.
  * @author	Xiangyu Hu and Chi Zhang
  */
@@ -39,7 +39,7 @@
 
 #include <fstream>
 
-namespace SPH 
+namespace SPH
 {
 
 	class SPHBody;
@@ -78,7 +78,7 @@ namespace SPH
 		StdLargeVec<Vecd> pos_n_;	/**< current position */
 		StdLargeVec<Vecd> vel_n_;	/**< current particle velocity */
 		StdLargeVec<Vecd> dvel_dt_;	/**< inner pressure- or stress-induced acceleration */
-		StdLargeVec<Vecd> dvel_dt_others_; /**<  other, such as gravity and viscous, accelerations */
+		StdLargeVec<Vecd> dvel_dt_prior_; /**<  other, such as gravity and viscous, accelerations */
 
 		StdLargeVec<Real> Vol_;		/**< particle volume */
 		StdLargeVec<Real> rho_n_;	/**< current particle density */
@@ -86,8 +86,8 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//Global information for all particles
 		//----------------------------------------------------------------------
-		Real rho_0_;			/**< reference density*/
-		Real sigma_0_;			/**< reference number density. */
+		Real rho0_;			/**< reference density*/
+		Real sigma0_;			/**< reference number density. */
 		Real speed_max_;		/**< Maximum particle speed. */
 		Real signal_speed_max_; /**< Maximum signal speed.*/
 		//----------------------------------------------------------------------
@@ -120,14 +120,13 @@ namespace SPH
 				exit(1);
 			}
 		};
-		
+
 		/** Create and register a new variable which has not been defined yet in particles.
 		 * If the variable is registered already, the registered variable will be returned. */
 		template<int DataTypeIndex, typename VariableType>
 		StdLargeVec<VariableType>* createAVariable(std::string new_variable_name, VariableType initial_value = VariableType(0))
 		{
-			if (all_variable_maps_[DataTypeIndex].find(new_variable_name) == all_variable_maps_[DataTypeIndex].end()) 
-			{
+			if (all_variable_maps_[DataTypeIndex].find(new_variable_name) == all_variable_maps_[DataTypeIndex].end()) {
 				StdLargeVec<VariableType>* new_variable = new StdLargeVec<VariableType>;
 				registerAVariable<DataTypeIndex, VariableType>(*new_variable, new_variable_name, initial_value);
 				return new_variable;
@@ -177,11 +176,41 @@ namespace SPH
 			return NULL;
 		};
 
+		/** add a variable into a particle vairable name list */
+		template<int DataTypeIndex, typename VariableType>
+		void addAVariableNameToList(ParticleVariableList& variable_name_list, std::string variable_name)
+		{
+			if (all_variable_maps_[DataTypeIndex].find(variable_name) != all_variable_maps_[DataTypeIndex].end())
+			{
+				bool is_to_add = true;
+				for (size_t i = 0; i != variable_name_list[DataTypeIndex].size(); ++i) {
+					if (variable_name_list[DataTypeIndex][i].first == variable_name) is_to_add = false;
+				}
+				if (is_to_add) {
+					size_t variable_index = all_variable_maps_[DataTypeIndex][variable_name];
+					variable_name_list[DataTypeIndex].push_back(make_pair(variable_name, variable_index));
+				}
+			}
+			else
+			{
+				std::cout << "\n Error: the variable '" << variable_name << "' you are going to write is not particle data!" << std::endl;
+				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+				exit(1);
+			}
+		};
+
 		/** add a variable into the list for state output */
 		template<int DataTypeIndex, typename VariableType>
 		void addAVariableToWrite(std::string variable_name)
 		{
 			addAVariableNameToList<DataTypeIndex, VariableType>(variables_to_write_, variable_name);
+		};
+
+		/** add a variable into the list for restart */
+		template<int DataTypeIndex, typename VariableType>
+		void addAVariableToRestart(std::string variable_name)
+		{
+			addAVariableNameToList<DataTypeIndex, VariableType>(variables_to_restart_, variable_name);
 		};
 
 		//----------------------------------------------------------------------
@@ -233,6 +262,7 @@ namespace SPH
 		/** Write particle data in PLT format for Tecplot. */
 		void writeParticlesToPltFile(std::ofstream& output_file);
 
+		void resizeXmlDocForParticles(XmlEngine& xml_engine);
 		void writeParticlesToXmlForRestart(std::string& filefullpath);
 		void readParticleFromXmlForRestart(std::string& filefullpath);
 		XmlEngine* getReloadXmlEngine() { return &reload_xml_engine_; };
@@ -259,29 +289,6 @@ namespace SPH
 		virtual void writePltFileHeader(std::ofstream& output_file);
 		virtual void writePltFileParticleData(std::ofstream& output_file, size_t index_i);
 
-		/** add a variable into a particle vairable name list */
-		template<int DataTypeIndex, typename VariableType>
-		void addAVariableNameToList(ParticleVariableList& variable_name_list, std::string variable_name)
-		{
-			if (all_variable_maps_[DataTypeIndex].find(variable_name) != all_variable_maps_[DataTypeIndex].end())
-			{
-				bool is_to_add = true;
-				for (size_t i = 0; i != variable_name_list[DataTypeIndex].size(); ++i) {
-					if (variable_name_list[DataTypeIndex][i].first == variable_name) is_to_add = false;
-				}
-				if (is_to_add) {
-					size_t variable_index = all_variable_maps_[DataTypeIndex][variable_name];
-					variable_name_list[DataTypeIndex].push_back(make_pair(variable_name, variable_index));
-				}
-			}
-			else
-			{
-				std::cout << "\n Error: the variable '" << variable_name << "' you are going to write is not particle data!" << std::endl;
-				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-				exit(1);
-			}
-		};
-
 		template<int DataTypeIndex, typename VariableType>
 		struct addAParticleDataValue
 		{
@@ -292,22 +299,52 @@ namespace SPH
 			};
 		};
 
-		/** operation by looping or going through a variable name list */
 		template<int DataTypeIndex, typename VariableType>
-		struct loopVariabaleNameList
+		struct copyAParticleDataValue
 		{
-			template<typename VariableOperation>
-			void operator () (ParticleData& particle_data,
-				ParticleVariableList& variable_name_list, VariableOperation& variable_operation) const
+			void operator () (ParticleData& particle_data, size_t this_index, size_t another_index) const
 			{
-				for (std::pair<std::string, size_t>& name_index : variable_name_list[DataTypeIndex])
-				{
-					std::string variable_name = name_index.first;
-					StdLargeVec<VariableType>& variable = *(std::get<DataTypeIndex>(particle_data)[name_index.second]);
-					variable_operation(variable_name, variable);
-				}
+				for (size_t i = 0; i != std::get<DataTypeIndex>(particle_data).size(); ++i)
+					(*std::get<DataTypeIndex>(particle_data)[i])[this_index] =
+					(*std::get<DataTypeIndex>(particle_data)[i])[another_index];
 			};
 		};
+	};
+
+	struct WriteAParticleVariableToXml
+	{
+		XmlEngine& xml_engine_;
+		size_t& total_real_particles_;
+		WriteAParticleVariableToXml(XmlEngine& xml_engine, size_t& total_real_particles) :
+			xml_engine_(xml_engine), total_real_particles_(total_real_particles) {};
+		template<typename VariableType>
+		void operator () (std::string& variable_name, StdLargeVec<VariableType>& variable)  const
+		{
+			SimTK::Xml::element_iterator ele_ite = xml_engine_.root_element_.element_begin();
+			for (size_t i = 0; i != total_real_particles_; ++i)
+			{
+				xml_engine_.setAttributeToElement(ele_ite, variable_name, variable[i]);
+				ele_ite++;
+			}
+		}
+	};
+
+	struct ReadAParticleVariableFromXml
+	{
+		XmlEngine& xml_engine_;
+		size_t& total_real_particles_;
+		ReadAParticleVariableFromXml(XmlEngine& xml_engine, size_t& total_real_particles) :
+			xml_engine_(xml_engine), total_real_particles_(total_real_particles) {};
+		template<typename VariableType>
+		void operator () (std::string& variable_name, StdLargeVec<VariableType>& variable)  const
+		{
+			SimTK::Xml::element_iterator ele_ite = xml_engine_.root_element_.element_begin();
+			for (size_t i = 0; i != total_real_particles_; ++i)
+			{
+				xml_engine_.getRequiredAttributeValue(ele_ite, variable_name, variable[i]);
+				ele_ite++;
+			}
+		}
 	};
 }
 #endif //BASE_PARTICLES_H

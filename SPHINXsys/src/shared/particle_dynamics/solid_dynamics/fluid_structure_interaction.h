@@ -97,7 +97,7 @@ namespace SPH
 				for (size_t k = 0; k != contact_particles_.size(); ++k)
 				{
 					contact_p_.push_back(&(contact_particles_[k]->p_));
-					contact_dvel_dt_others_.push_back(&(contact_particles_[k]->dvel_dt_others_));
+					contact_dvel_dt_prior_.push_back(&(contact_particles_[k]->dvel_dt_prior_));
 					riemann_solvers_.push_back(new RiemannSolverType(*contact_material_[k], *contact_material_[k]));
 				}
 			};
@@ -105,7 +105,7 @@ namespace SPH
 		protected:
 			StdLargeVec<Vecd>& force_from_fluid_, & dvel_dt_ave_, & n_;
 			StdVec<StdLargeVec<Real>*> contact_p_;
-			StdVec<StdLargeVec<Vecd>*> contact_dvel_dt_others_;
+			StdVec<StdLargeVec<Vecd>*> contact_dvel_dt_prior_;
 			StdVec <RiemannSolverType*> riemann_solvers_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override
@@ -122,7 +122,7 @@ namespace SPH
 					StdLargeVec<Real>& rho_n_k = *(contact_rho_n_[k]);
 					StdLargeVec<Real>& p_k = *(contact_p_[k]);
 					StdLargeVec<Vecd>& vel_n_k = *(contact_vel_n_[k]);
-					StdLargeVec<Vecd>& dvel_dt_others_k = *(contact_dvel_dt_others_[k]);
+					StdLargeVec<Vecd>& dvel_dt_prior_k = *(contact_dvel_dt_prior_[k]);
 					Fluid* fluid_k = contact_material_[k];
 					RiemannSolverType* riemann_solver_k = riemann_solvers_[k];
 					Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
@@ -132,12 +132,13 @@ namespace SPH
 						Vecd e_ij = contact_neighborhood.e_ij_[n];
 						Real r_ij = contact_neighborhood.r_ij_[n];
 						Real face_wall_external_acceleration
-							= dot((dvel_dt_others_k[index_j] - dvel_dt_ave_i), e_ij);
+							= dot((dvel_dt_prior_k[index_j] - dvel_dt_ave_i), e_ij);
 						Real p_in_wall = p_k[index_j] + rho_n_k[index_j] * r_ij * SMAX(0.0, face_wall_external_acceleration);
 						Real rho_in_wall = fluid_k->DensityFromPressure(p_in_wall);
+						Vecd vel_in_wall = 2.0 * vel_ave_i - vel_n_k[index_j];
 
 						FluidState state_l(rho_n_k[index_j], vel_n_k[index_j], p_k[index_j]);
-						FluidState state_r(rho_in_wall, vel_ave_i, p_in_wall);
+						FluidState state_r(rho_in_wall, vel_in_wall, p_in_wall);
 						Real p_star = riemann_solver_k->getPStar(state_l, state_r, n_i);
 						force -= 2.0 * p_star * e_ij * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
 					}

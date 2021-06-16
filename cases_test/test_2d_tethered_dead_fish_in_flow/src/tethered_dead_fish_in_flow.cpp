@@ -142,8 +142,8 @@ class WaterMaterial : public SymmetricTaitFluid
 public:
 	WaterMaterial() : SymmetricTaitFluid()
 	{
-		rho_0_ = rho0_f;
-		c_0_ = c_f;
+		rho0_ = rho0_f;
+		c0_ = c_f;
 		mu_ = mu_f;
 
 		assignDerivedMaterialParameters();
@@ -191,9 +191,9 @@ class FishMaterial : public NeoHookeanSolid
 public:
 	FishMaterial() : NeoHookeanSolid()
 	{
-		rho_0_ = rho0_s;
-		E_0_ = Youngs_modulus;
-		nu_ = poisson;
+		rho0_ = rho0_s;
+		youngs_modulus_ = Youngs_modulus;
+		poisson_ratio_ = poisson;
 
 		assignDerivedMaterialParameters();
 	}
@@ -291,7 +291,7 @@ public:
 /**
 * Main program starts here.
 */
-int main()
+int main(int ac, char* av[])
 {
 	/**
 	* Build up context -- a SPHSystem.
@@ -303,6 +303,11 @@ int main()
 	system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: start with initial condition. */
 	system.restart_step_ = 0;
+	//handle command line arguments
+	system.handleCommandlineOptions(ac, av);
+	//Setup in- and output environment.
+	In_Output in_output(system);
+
 	/**
 	* @brief   Particles and body creation for water.
 	*/
@@ -318,6 +323,8 @@ int main()
 	* @brief   Particles and body creation for fish.
 	*/
 	FishBody* fish_body = new   FishBody(system, "FishBody");
+	// Using relaxed particle distribution if needed
+	if (system.reload_particles_ && !system.run_particle_relaxation_) fish_body->useParticleGeneratorReload();
 	FishMaterial   *fish_body_material = new FishMaterial();
 	ElasticSolidParticles  fish_body_particles(fish_body, fish_body_material);
 	/**
@@ -331,8 +338,7 @@ int main()
 	ComplexBodyRelation* water_block_complex = new ComplexBodyRelation(water_block_inner, { wall_boundary, fish_body });
 	ContactBodyRelation* fish_body_contact = new ContactBodyRelation(fish_body, { water_block });
 	ContactBodyRelation* fish_observer_contact = new ContactBodyRelation(fish_observer, { fish_body });
-	/** Output. */
-	In_Output in_output(system);
+
 	WriteBodyStatesToVtu        write_real_body_states(in_output, system.real_bodies_);
 	WriteBodyReducedQuantity<solid_dynamics::TotalForceOnSolid> write_total_force_on_fish(in_output, fish_body);
 	WriteAnObservedQuantity<indexVector, Vecd> write_fish_displacement("Position", in_output, fish_observer_contact);
@@ -402,7 +408,7 @@ int main()
 	fluid_dynamics::AcousticTimeStepSize		get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
 	fluid_dynamics::PressureRelaxationWithWall	pressure_relaxation(water_block_complex);
-		fluid_dynamics::PressureRelaxationRiemannWithWall	density_relaxation(water_block_complex);
+	fluid_dynamics::DensityRelaxationRiemannWithWall	density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
 	fluid_dynamics::ViscousAccelerationWithWall	viscous_acceleration(water_block_complex);
 	/** Impose transport velocity formulation. */

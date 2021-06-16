@@ -19,8 +19,8 @@ namespace SPH
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k) 
 			{
-				Real rho_0_k = contact_particles_[k]->rho_0_;
-				contact_inv_rho_0_.push_back(1.0 / rho_0_k);
+				Real rho0_k = contact_particles_[k]->rho0_;
+				contact_inv_rho0_.push_back(1.0 / rho0_k);
 				contact_mass_.push_back(&(contact_particles_[k]->mass_));
 			}
 		}
@@ -38,12 +38,12 @@ namespace SPH
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real>& contact_mass_k = *(contact_mass_[k]);
-				Real contact_inv_rho_0_k = contact_inv_rho_0_[k];
+				Real contact_inv_rho0_k = contact_inv_rho0_[k];
 				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
 					pos_div -= contact_neighborhood.dW_ij_[n] * contact_neighborhood.r_ij_[n]
-						* contact_inv_rho_0_k * contact_mass_k[contact_neighborhood.j_[n]];
+						* contact_inv_rho0_k * contact_mass_k[contact_neighborhood.j_[n]];
 				}
 			}
 			pos_div_[index_i] += pos_div;

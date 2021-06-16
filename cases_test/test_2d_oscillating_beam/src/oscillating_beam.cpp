@@ -100,9 +100,9 @@ class BeamMaterial : public LinearElasticSolid
 public:
 	BeamMaterial()	: LinearElasticSolid()
 	{
-		rho_0_ = rho0_s;
-		E_0_ = Youngs_modulus;
-		nu_ = poisson;
+		rho0_ = rho0_s;
+		youngs_modulus_ = Youngs_modulus;
+		poisson_ratio_ = poisson;
 
 		assignDerivedMaterialParameters();
 	}
@@ -123,7 +123,7 @@ protected:
 		Real x = pos_n_[index_i][0] / PL;
 		if (x > 0.0) {
 			vel_n_[index_i][1] 
-				= vf * material_->ReferenceSoundSpeed()*(M*(cos(kl*x) - cosh(kl*x)) - N * (sin(kl*x) - sinh(kl*x))) / Q;
+				= vf * material_->SoundWaveSpeed()*(M*(cos(kl*x) - cosh(kl*x)) - N * (sin(kl*x) - sinh(kl*x))) / Q;
 		}
 	};
 };

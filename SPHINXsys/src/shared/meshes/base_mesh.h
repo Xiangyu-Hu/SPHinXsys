@@ -77,8 +77,9 @@ namespace SPH
 		Vecd MeshLowerBound() { return mesh_lower_bound_; };
 		Real GridSpacing() { return grid_spacing_; };
 		Vecu NumberOfGridPoints() { return number_of_grid_points_; };
+		Vecu NumberOfCells() { return number_of_grid_points_ - Vecu(1); };
 
-		Vecu GridIndexFromPosition(const Vecd& position);
+		Vecu CellIndexFromPosition(const Vecd& position);
 		Vecd GridPositionFromIndex(Vecu grid_index);
 		Vecu transfer1DtoMeshIndex(Vecu number_of_grid_points, size_t i);
         size_t transferMeshIndexTo1D(Vecu number_of_grid_points, Vecu grid_index);
@@ -124,7 +125,6 @@ namespace SPH
 		size_t MeshBufferSize() { return buffer_width_; };
 		/** This function check whether a position well within in the mesh bounds */
 		bool isWithinMeshBound(Vecd position);
-		Vecu CellIndexFromPosition(Vecd& position);
 		Vecd CellPositionFromIndex(Vecu cell_index);
 
 		/** output mesh data for Tecplot visualization */

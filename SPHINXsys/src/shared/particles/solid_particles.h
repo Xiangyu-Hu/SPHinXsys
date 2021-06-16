@@ -39,6 +39,7 @@ namespace SPH {
 	//----------------------------------------------------------------------
 	class Solid;
 	class ElasticSolid;
+	class PlasticSolid;
 	template<class MuscleType> class ActiveMuscle;
 
 	/**
@@ -99,7 +100,6 @@ namespace SPH {
 		StdLargeVec<Matd>	F_;			/**<  deformation tensor */
 		StdLargeVec<Matd>	dF_dt_;		/**<  deformation tensor change rate */
 		StdLargeVec<Matd>	stress_PK1_;	/**<  first Piola-Kirchhoff stress tensor */
-		StdLargeVec<Matd>	corrected_stress_;	/**<  corrected stress for pair interaction */
 
 		virtual void writeParticlesToVtuFile(std::ofstream &output_file) override;
 
@@ -163,8 +163,9 @@ namespace SPH {
 		//----------------------------------------------------------------------
 		//	extra stress for pair interaction in global coordinate
 		//----------------------------------------------------------------------
-		StdLargeVec<Vecd> shear_stress_;	    /**< shear stress */
-		StdLargeVec<Matd> corrected_moment_;	/**<  corrected bending moment for pair interaction */
+		StdLargeVec<Vecd> global_shear_stress_;	    /**< global shear stress */
+		StdLargeVec<Matd> global_stress_;	/**<  global stress for pair interaction */
+		StdLargeVec<Matd> global_moment_;	/**<  global bending moment for pair interaction */
 
 		virtual ShellParticles* ThisObjectPtr() override {return this;};
 	};

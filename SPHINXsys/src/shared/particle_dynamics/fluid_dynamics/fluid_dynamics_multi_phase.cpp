@@ -59,21 +59,21 @@ namespace SPH
 				}
 			}
 
-			dvel_dt_others_[index_i] += acceleration;
+			dvel_dt_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
 		MultiPhaseColorFunctionGradient::
 			MultiPhaseColorFunctionGradient(BaseContactBodyRelation* contact_relation) : 
 			InteractionDynamics(contact_relation->sph_body_), MultiPhaseData(contact_relation),
-			rho_0_(particles_->rho_0_), Vol_(particles_->Vol_),
+			rho0_(particles_->rho0_), Vol_(particles_->Vol_),
 			pos_div_(*particles_->getVariableByName<indexScalar, Real>("PositionDivergence")), 
 			surface_indicator_(particles_->surface_indicator_),
 			color_grad_(*particles_->createAVariable<indexVector, Vecd>("ColorGradient")),
 			surface_norm_(*particles_->createAVariable<indexVector, Vecd>("SurfaceNormal"))
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k) 
-			{	Real rho_0_k = contact_particles_[k]->rho_0_;
-				contact_rho_0_.push_back(rho_0_k);
+			{	Real rho0_k = contact_particles_[k]->rho0_;
+				contact_rho0_.push_back(rho0_k);
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 			}
 		}
@@ -87,7 +87,7 @@ namespace SPH
 			{
 				for (size_t k = 0; k < contact_configuration_.size(); ++k)
 				{
-					Real rho_0_k = contact_rho_0_[k];
+					Real rho0_k = contact_rho0_[k];
 					StdLargeVec<Real>& contact_vol_k = *(contact_Vol_[k]);
 					Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -95,7 +95,7 @@ namespace SPH
 						size_t index_j = contact_neighborhood.j_[n];
 						pos_div -= contact_neighborhood.dW_ij_[n] * contact_neighborhood.r_ij_[n] * contact_vol_k[index_j];
 						/** Norm of interface.*/
-						Real rho_ij = rho_0_ / (rho_0_ + rho_0_k);
+						Real rho_ij = rho0_ / (rho0_ + rho0_k);
 						Real area_ij = (vol_i * vol_i + contact_vol_k[index_j] * contact_vol_k[index_j]) * contact_neighborhood.dW_ij_[n];
 						gradient += rho_ij * area_ij * contact_neighborhood.e_ij_[n] / vol_i;
 					}
