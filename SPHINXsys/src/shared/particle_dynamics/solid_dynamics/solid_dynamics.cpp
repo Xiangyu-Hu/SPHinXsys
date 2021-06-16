@@ -417,7 +417,8 @@ namespace SPH
 		//=================================================================================================//
 		void SpringDamperConstraintParticleWise::Update(size_t index_i, Real dt)
 		{	
-			dvel_dt_prior_[index_i] += getSpringForce(index_i, pos_n_[index_i] - pos_0_[index_i]);
+			Vecd delta_x = pos_n_[index_i] - pos_0_[index_i];
+			dvel_dt_prior_[index_i] += getSpringForce(index_i, delta_x);
 			dvel_dt_prior_[index_i] += getDampingForce(index_i);
 		}
 		//=================================================================================================//
