@@ -67,8 +67,8 @@ int main()
 		physical_viscosity,
 		contacting_bodies_list
 	};
-	input.non_zero_gravity = vector<GravityPair>{ GravityPair(0, Vec3d(0.0, 45.0, 0.0)) };// gravity for TAH
-	input.spring_damper_tuple = { SpringDamperTuple(1, Vec3d(0.1, 0.1, 0.1), 0.01),
+	input.non_zero_gravity_ = vector<GravityPair>{ GravityPair(0, Vec3d(0.0, 45.0, 0.0)) }; // gravity for TAH
+	input.spring_damper_tuple_ = { SpringDamperTuple(1, Vec3d(0.1, 0.1, 0.1), 0.01),
 									SpringDamperTuple(2, Vec3d(0.1, 0.1, 0.1), 0.01),
 									SpringDamperTuple(3, Vec3d(0.1, 0.1, 0.1), 0.01),
 									SpringDamperTuple(4, Vec3d(0.1, 0.1, 0.1), 0.01),

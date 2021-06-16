@@ -110,8 +110,8 @@ namespace SPH {
 		LinearElasticSolid(Real rho_0, Real Youngs_modulus, Real poisson) : ElasticSolid()
 		{
 			material_name_ = "LinearElasticSolid";
-			rho_0_ 	= rho_0;
-			E_0_ = Youngs_modulus;
+			rho0_ 	= rho_0;
+			E0_ = Youngs_modulus;
 			nu_ = poisson;
 			assignDerivedMaterialParameters();
 		};
