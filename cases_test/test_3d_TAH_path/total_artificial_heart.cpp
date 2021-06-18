@@ -25,21 +25,14 @@ int main()
 
 	/** STL IMPORT PARAMETERS */
 	string relative_input_path = "./input/"; //path definition for linux
-	string tah_stl;
-	string aorta_stl;
-	string diaphragm_stl;
-	string latrium_stl;
-	string partery_stl;
-	string ratrium_stl;
+	string tah_stl = "TAH_basic2_pos.stl";
+	string aorta_stl = "Aorta.stl";
+	string diaphragm_stl = "Diaphragm.stl";
+	string latrium_stl = "LA.stl";
+	string partery_stl = "PA.stl";
+	string ratrium_stl = "RA.stl";
 	Vec3d translation_tah = Vec3d(0, -200, 0);
 	
-	tah_stl = "TAH_basic2_pos.stl";
-	aorta_stl = "Aorta.stl";
-	diaphragm_stl = "Diaphragm.stl";
-	latrium_stl = "LA.stl";
-	partery_stl = "PA.stl";
-	ratrium_stl = "RA.stl";
-
 	vector<string> imported_stl_list = { tah_stl, aorta_stl, diaphragm_stl, latrium_stl, partery_stl, ratrium_stl };
 	vector<Vec3d> translation_list = { translation_tah, Vec3d(0), Vec3d(0), Vec3d(0), Vec3d(0), Vec3d(0) };
 	vector<Real> resolution_list = { resolution_tah, resolution_aorta, resolution_diaphragm, resolution_latrium, resolution_partery, resolution_ratrium };
