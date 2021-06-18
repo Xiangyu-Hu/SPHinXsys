@@ -146,7 +146,7 @@ int main()
 	MyocardiumMuscle 	*muscle_material = new MyocardiumMuscle();
 	ElasticSolidParticles 	myocardium_particles(myocardium_body, muscle_material);
 	/** Plate. */
-	MovingPlate *moving_plate = new MovingPlate(system, "MovingPlate", resolution_ref * 0.5);
+	MovingPlate *moving_plate = new MovingPlate(system, "MovingPlate", resolution_ref);
 	MovingPlateMaterial* moving_plate_material = new MovingPlateMaterial();
 	ElasticSolidParticles 	moving_plate_particles(moving_plate, moving_plate_material);
 	/** topology */
@@ -162,31 +162,29 @@ int main()
 	InitializeATimeStep 	myocardium_initialize_gravity(myocardium_body);
 	Gravity* gravity = new Gravity(Vecd(-100.0, 0.0, 0.0));
 	InitializeATimeStep plate_initialize_gravity(moving_plate, gravity);
+
 	/** Corrected strong configuration. */	
 	solid_dynamics::CorrectConfiguration corrected_configuration_in_strong_form(myocardium_body_inner);
 	solid_dynamics::CorrectConfiguration corrected_configuration_in_strong_form_2(moving_plate_inner);
-	/** Time step size calculation. */
-	solid_dynamics::AcousticTimeStepSize computing_time_step_size(myocardium_body);
-	solid_dynamics::AcousticTimeStepSize computing_time_step_size_2(moving_plate);
 	/** active and passive stress relaxation. */
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(myocardium_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(myocardium_body_inner);
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half_2(moving_plate_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half_2(moving_plate_inner);
+	//stress_relaxation_first_half_2.post_processes_(spring_constraint);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ContactDensitySummation myocardium_update_contact_density(myocardium_plate_contact);
 	solid_dynamics::ContactForce myocardium_compute_solid_contact_forces(myocardium_plate_contact);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ContactDensitySummation plate_update_contact_density(plate_myocardium_contact);
 	solid_dynamics::ContactForce plate_compute_solid_contact_forces(plate_myocardium_contact);
+
 	/** Constrain the holder. */
 	solid_dynamics::ConstrainSolidBodyRegion
 		constrain_holder(myocardium_body, new Holder(myocardium_body, "Holder"));
-	/** Add spring contraint on the plate. */
-	//solid_dynamics::ParticleWiseAcceleration spring_contraint(moving_plate, Vecd(1e6, 1e6, 1e6));
-	// active_muscle_dynamics::SpringConstrainMuscleRegion
-	// 	spring_contraint(moving_plate, new HolderSpring(moving_plate, "HolderSpring"));
-	// spring_contraint.setUpSpringStiffness(Vec3d(1e10, 1e10, 1e10));
+	/** Add spring constraint on the plate. */
+	solid_dynamics::SpringDamperConstraintParticleWise spring_constraint(moving_plate, Vecd(0.2, 0, 0), 0.01);
+
 	/** Damping with the solid body*/
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>
 		muscle_damping(myocardium_body_inner, 0.1, "Velocity", physical_viscosity);
@@ -232,6 +230,8 @@ int main()
 			myocardium_initialize_gravity.parallel_exec();
 			plate_initialize_gravity.parallel_exec();
 
+			spring_constraint.parallel_exec();
+
 			/** Contact model for myocardium. */
 			myocardium_update_contact_density.parallel_exec();
 			myocardium_compute_solid_contact_forces.parallel_exec();
@@ -247,9 +247,7 @@ int main()
 			stress_relaxation_second_half.parallel_exec(dt);
 
 			stress_relaxation_first_half_2.parallel_exec(dt);
-			//spring_contraint.parallel_exec(dt);
 			plate_damping.parallel_exec(dt);
-			//spring_contraint.parallel_exec(dt);
 			stress_relaxation_second_half_2.parallel_exec(dt);
 
 			ite++;

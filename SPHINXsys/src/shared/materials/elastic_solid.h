@@ -107,6 +107,14 @@ namespace SPH {
 		{
 			material_name_ = "LinearElasticSolid";
 		};
+		LinearElasticSolid(Real rho_0, Real Youngs_modulus, Real poisson) : ElasticSolid()
+		{
+			material_name_ = "LinearElasticSolid";
+			rho0_ 	= rho_0;
+			E0_ = Youngs_modulus;
+			nu_ = poisson;
+			assignDerivedMaterialParameters();
+		};
 		virtual ~LinearElasticSolid() {};
 
 		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
@@ -137,6 +145,11 @@ namespace SPH {
 	{
 	public:
 		NeoHookeanSolid() : LinearElasticSolid() 
+		{
+			material_name_ = "NeoHookeanSolid";
+		};
+		NeoHookeanSolid(Real rho_0, Real Youngs_modulus, Real poisson)
+			: LinearElasticSolid(rho_0, Youngs_modulus, poisson)
 		{
 			material_name_ = "NeoHookeanSolid";
 		};

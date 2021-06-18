@@ -18,7 +18,9 @@ int main(int ac, char* av[])
 	system.run_particle_relaxation_ = false;
 	system.reload_particles_ = true;
 	//handle command line arguments
+	#ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
+	#endif
 	In_Output in_output(system);
 
 	/** Creat a body with corresponding material, particles and reaction model. */

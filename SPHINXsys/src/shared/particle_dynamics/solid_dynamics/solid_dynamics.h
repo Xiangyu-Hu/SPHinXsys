@@ -292,20 +292,44 @@ namespace SPH
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 		/**
-		* @class ParticleWiseAcceleration
-		* @brief ParticleWiseAcceleration
+		* @class SpringDamperConstraintParticleWise
+		* @brief Exerts spring force and damping force in the form of acceleration to each particle.
+		* The spring force is calculated based on the difference from the particle's initial position.
+		* The damping force is calculated based on the particle's current velocity.
+		* Only for 3D applications
 		*/
-		class ParticleWiseAcceleration 
+		class SpringDamperConstraintParticleWise 
 			: public ParticleDynamicsSimple, public SolidDataSimple
 		{
 		public:
-			ParticleWiseAcceleration(SolidBody* body, Vecd stiffness);
-			virtual ~ParticleWiseAcceleration() {};
+			SpringDamperConstraintParticleWise(SolidBody* body, Vecd stiffness, Real damping_ratio = 0.05);
+			~SpringDamperConstraintParticleWise();
 		protected:
-			StdLargeVec<Real>& mass_;
-			StdLargeVec<Vecd>& pos_n_,& pos_0_,& dvel_dt_prior_;
+			Real total_mass_;
+			StdLargeVec<Vecd>& pos_n_,& pos_0_,& vel_n_,& dvel_dt_prior_;
 			Vecd stiffness_;
-			virtual Vecd getAcceleration(Vecd& disp, Real mass);
+			Vecd damping_coeff_; // damping component parallel to the spring force component
+
+			virtual void setupDynamics(Real dt = 0.0) override;
+			virtual Vecd getSpringForce(size_t index_i, Vecd& disp);
+			virtual Vecd getDampingForce(size_t index_i);
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+		/**
+		* @class AccelerationForBodyPartInBoundingBox
+		* @brief Adds acceleration to the part of the body that's inside a bounding box
+		*/
+		class AccelerationForBodyPartInBoundingBox 
+			: public ParticleDynamicsSimple, public SolidDataSimple
+		{
+		public:
+			AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox* bounding_box, Vecd acceleration);
+			virtual ~AccelerationForBodyPartInBoundingBox() {};
+		protected:
+			StdLargeVec<Vecd>& pos_n_,& dvel_dt_prior_;
+			BoundingBox* bounding_box_;
+			Vecd acceleration_;
+			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -364,12 +388,6 @@ namespace SPH
 			Real smoothing_length_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 		};
-
-		/**
-		* @function getSmallestTimeStepAmongSolidBodies
-		* @brief computing smallest time step to use in a simulation
-		*/
-		Real getSmallestTimeStepAmongSolidBodies(SPHBodyVector solid_bodies);
 
 		/**
 		* @class DeformationGradientTensorBySummation
