@@ -27,18 +27,13 @@ public:
 		Real Youngs_modulus = 1e5;
 		Real Youngs_modulus_tah = 1e6;
 		Real physical_viscosity = 200;
-
+		Real translation_tah_in[] = {0,-200,0};
+   		std::string stls[] = { "TAH_basic2_pos.stl", "Aorta.stl", "Diaphragm.stl", "LA.stl", "PA.stl", "RA.stl" };
 		/** STL IMPORT PARAMETERS */
 		string relative_input_path = "./input/"; //path definition for linux
-		string tah_stl = "TAH_basic2_pos.stl";
-		string aorta_stl = "Aorta.stl";
-		string diaphragm_stl = "Diaphragm.stl";
-		string latrium_stl = "LA.stl";
-		string partery_stl = "PA.stl";
-		string ratrium_stl = "RA.stl";
-		Vec3d translation_tah = Vec3d(0, -200, 0);
 
-		vector<string> imported_stl_list = {tah_stl, aorta_stl, diaphragm_stl, latrium_stl, partery_stl, ratrium_stl};
+		Vec3d translation_tah = Vec3d(translation_tah_in[0], translation_tah_in[1], translation_tah_in[2]);
+		vector<string> imported_stl_list(std::begin(stls), std::end(stls));
 		vector<Vec3d> translation_list = {translation_tah, Vec3d(0), Vec3d(0), Vec3d(0), Vec3d(0), Vec3d(0)};
 		vector<Real> resolution_list = {resolution_tah, resolution_aorta, resolution_diaphragm, resolution_latrium, 
 			resolution_partery, resolution_ratrium};
