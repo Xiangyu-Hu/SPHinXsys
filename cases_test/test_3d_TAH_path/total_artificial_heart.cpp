@@ -12,7 +12,7 @@ class SimTotalArtificialHeart
 public:
 	SimTotalArtificialHeart()
 	{
-		//set up struct
+		//TODO set up struct, move below values out of constructor
 
 		/** INPUT PARAMETERS */
 		Real scale_stl = 0.001;
@@ -28,9 +28,10 @@ public:
 		Real Youngs_modulus_tah = 1e6;
 		Real physical_viscosity = 200;
 		Real translation_tah[] = {0,-200,0};
+		//TODO load STL file into memory block and pass into constructor
    		std::string stls[] = { "TAH_basic2_pos.stl", "Aorta.stl", "Diaphragm.stl", "LA.stl", "PA.stl", "RA.stl" };
-		/** STL IMPORT PARAMETERS */
 		string relative_input_path = "./input/"; //path definition for linux
+
 
 		vector<string> imported_stl_list(std::begin(stls), std::end(stls));
 		vector<Vec3d> translation_list = {Vec3d(translation_tah[0], translation_tah[1], translation_tah[2]), Vec3d(0), Vec3d(0), Vec3d(0), Vec3d(0), Vec3d(0)};
