@@ -510,3 +510,44 @@ void StructuralSimulation::RunSimulation(Real end_time)
 	tt = t4 - t1 - interval;
 	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
 }
+
+void StructuralSimulation::InitSimulationJS()
+{	
+	/** INITIALALIZE SYSTEM */
+	system_.initializeSystemCellLinkedLists();
+	system_.initializeSystemConfigurations();
+
+	/** INITIAL CONDITION */
+	ExecuteCorrectConfiguration();	
+}
+
+double StructuralSimulation::RunSimulationFixedDurationJS(Real duration)
+{
+	GlobalStaticVariables::physical_time_ = 0.0;
+	WriteBodyStatesToVtu write_states(in_output_, system_.real_bodies_);
+	
+	/** Statistics for computing time. */
+	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+	int ite = 0;
+	Real output_period = 0.1 / 100.0;		
+	Real dt = 0.0;
+	tick_count t1 = tick_count::now();
+	tick_count::interval_t interval;
+	/** Main loop */
+	while (GlobalStaticVariables::physical_time_ < duration)
+	{
+		Real integration_time = 0.0;
+		while (integration_time < output_period) 
+		{
+			RunSimulationStep(ite, dt, integration_time);
+		}
+		tick_count t2 = tick_count::now();
+		write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		tick_count t3 = tick_count::now();
+		interval += t3 - t2;
+	}
+	tick_count t4 = tick_count::now();
+	tick_count::interval_t tt;
+	tt = t4 - t1 - interval;
+	return  tt.seconds();
+}

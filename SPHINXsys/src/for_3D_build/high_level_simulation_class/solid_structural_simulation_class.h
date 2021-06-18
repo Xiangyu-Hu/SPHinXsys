@@ -175,7 +175,13 @@ class StructuralSimulation
 		StructuralSimulation(StructuralSimulationInput* input);
  		~StructuralSimulation();
 
+		//For c++
 		void RunSimulation(Real end_time);
+		
+		//For JS
+		void InitSimulationJS();
+		double RunSimulationFixedDurationJS(Real duration);
+		
 	};
 
 #endif //SOLID_STRUCTURAL_SIMULATION_CLASS_H
