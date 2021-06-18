@@ -84,7 +84,7 @@ public:
 public: //C++ Backend functions
 	void initAndRunCompleteSimulation(float endTime) { sim->RunSimulation(SPH::Real(endTime)); };
 public: //WASM functions
-	void initSimulation() { sim->InitSimulationJS(); };
+	void initSimulationJS() { sim->InitSimulationJS(); };
 	void runSimulationFixedDurationJS(float duration) { sim->RunSimulationFixedDurationJS(SPH::Real(duration)); };
 
 private:
@@ -94,7 +94,7 @@ private:
 int main()
 {
 	SimTotalArtificialHeart simTotalArtificialHeart;
-	simTotalArtificialHeart.initSimulation();
+	simTotalArtificialHeart.initSimulationJS();
 	for (int step=0;step<5;step++){
 		simTotalArtificialHeart.runSimulationFixedDurationJS(0.1*step);
 	}
