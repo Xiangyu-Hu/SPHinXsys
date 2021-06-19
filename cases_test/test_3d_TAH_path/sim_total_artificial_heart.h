@@ -10,6 +10,43 @@
 #include "solid_structural_simulation_class.h"
 using namespace SPH;
 
+struct SimTotalArtificialHeartInput
+{
+public:
+		Real scale_stl;
+		Real resolution_tah;
+		Real resolution_aorta;
+		Real resolution_diaphragm;
+		Real resolution_latrium;
+		Real resolution_partery;
+		Real resolution_ratrium;
+		Real rho_0;
+		Real poisson;
+		Real Youngs_modulus;
+		Real Youngs_modulus_tah;
+		Real physical_viscosity;
+		std::array<Real,3> translation_tah;
+		std::vector<std::string> stls;
+		std::string relative_input_path;
+	SimTotalArtificialHeartInput(
+		Real scale_stl,
+		Real resolution_tah,
+		Real resolution_aorta,
+		Real resolution_diaphragm,
+		Real resolution_latrium,
+		Real resolution_partery,
+		Real resolution_ratrium,
+		Real rho_0,
+		Real poisson,
+		Real Youngs_modulus,
+		Real Youngs_modulus_tah,
+		Real physical_viscosity,
+		std::array<Real,3> translation_tah,
+   		std::vector<std::string> stls,
+		std::string relative_input_path
+		);
+};
+
 class SimTotalArtificialHeart
 {
 public:
@@ -31,9 +68,9 @@ public:
 		Real Youngs_modulus_tah = 1e6;
 		Real physical_viscosity = 200;
 		Real translation_tah[] = {0,-200,0};
-		//TODO load STL file into memory block and pass into constructor
    		std::string stls[] = { "TAH_basic2_pos.stl", "Aorta.stl", "Diaphragm.stl", "LA.stl", "PA.stl", "RA.stl" };
 		string relative_input_path = "./input/";
+
 		vector<string> imported_stl_list(std::begin(stls), std::end(stls));
 		vector<Vec3d> translation_list = {Vec3d(translation_tah[0], translation_tah[1], translation_tah[2]), Vec3d(0), Vec3d(0), Vec3d(0), Vec3d(0), Vec3d(0)};
 		vector<Real> resolution_list = {resolution_tah, resolution_aorta, resolution_diaphragm, resolution_latrium, 
