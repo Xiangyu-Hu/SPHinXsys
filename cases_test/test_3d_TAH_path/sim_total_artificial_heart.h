@@ -13,21 +13,22 @@ using namespace SPH;
 struct SimTotalArtificialHeartInput
 {
 public:
-		Real scale_stl;
-		Real resolution_tah;
-		Real resolution_aorta;
-		Real resolution_diaphragm;
-		Real resolution_latrium;
-		Real resolution_partery;
-		Real resolution_ratrium;
-		Real rho_0;
-		Real poisson;
-		Real Youngs_modulus;
-		Real Youngs_modulus_tah;
-		Real physical_viscosity;
-		std::array<Real,3> translation_tah;
-		std::vector<std::string> stls;
-		std::string relative_input_path;
+	Real scale_stl;
+	Real resolution_tah;
+	Real resolution_aorta;
+	Real resolution_diaphragm;
+	Real resolution_latrium;
+	Real resolution_partery;
+	Real resolution_ratrium;
+	Real rho_0;
+	Real poisson;
+	Real Youngs_modulus;
+	Real Youngs_modulus_tah;
+	Real physical_viscosity;
+	std::array<Real, 3> translation_tah;
+	std::vector<std::string> stls;
+	std::string relative_input_path;
+
 	SimTotalArtificialHeartInput(
 		Real scale_stl,
 		Real resolution_tah,
@@ -41,10 +42,9 @@ public:
 		Real Youngs_modulus,
 		Real Youngs_modulus_tah,
 		Real physical_viscosity,
-		std::array<Real,3> translation_tah,
-   		std::vector<std::string> stls,
-		std::string relative_input_path
-		);
+		std::array<Real, 3> translation_tah,
+		std::vector<std::string> stls,
+		std::string relative_input_path);
 };
 
 class SimTotalArtificialHeart
@@ -67,21 +67,21 @@ public:
 		Real Youngs_modulus = 1e5;
 		Real Youngs_modulus_tah = 1e6;
 		Real physical_viscosity = 200;
-		Real translation_tah[] = {0,-200,0};
-   		std::string stls[] = { "TAH_basic2_pos.stl", "Aorta.stl", "Diaphragm.stl", "LA.stl", "PA.stl", "RA.stl" };
+		Real translation_tah[] = {0, -200, 0};
+		std::string stls[] = {"TAH_basic2_pos.stl", "Aorta.stl", "Diaphragm.stl", "LA.stl", "PA.stl", "RA.stl"};
 		string relative_input_path = "./input/";
 
 		vector<string> imported_stl_list(std::begin(stls), std::end(stls));
 		vector<Vec3d> translation_list = {Vec3d(translation_tah[0], translation_tah[1], translation_tah[2]), Vec3d(0), Vec3d(0), Vec3d(0), Vec3d(0), Vec3d(0)};
-		vector<Real> resolution_list = {resolution_tah, resolution_aorta, resolution_diaphragm, resolution_latrium, 
-			resolution_partery, resolution_ratrium};
+		vector<Real> resolution_list = {resolution_tah, resolution_aorta, resolution_diaphragm, resolution_latrium,
+										resolution_partery, resolution_ratrium};
 
 		LinearElasticSolid material_tah = LinearElasticSolid(rho_0, Youngs_modulus_tah, poisson);
 		NeoHookeanSolid material_vessel = NeoHookeanSolid(rho_0, Youngs_modulus, poisson);
-		vector<LinearElasticSolid> material_model_list = {material_tah, 
-			material_vessel, material_vessel, material_vessel, material_vessel, material_vessel};
+		vector<LinearElasticSolid> material_model_list = {material_tah,
+														  material_vessel, material_vessel, material_vessel, material_vessel, material_vessel};
 
-		vector<IndexPair> contacting_bodies_list = {IndexPair(0, 1), IndexPair(0, 2), IndexPair(0, 3), IndexPair(0, 4), 
+		vector<IndexPair> contacting_bodies_list = {IndexPair(0, 1), IndexPair(0, 2), IndexPair(0, 3), IndexPair(0, 4),
 													IndexPair(0, 5), IndexPair(1, 4), IndexPair(3, 4), IndexPair(4, 5)};
 		/** CONTACT ORGANS WITH ORGANS*/
 		//IndexPair(1, 4); //Aorta with PA
@@ -110,17 +110,17 @@ public:
 		sim.reset(new StructuralSimulation(&input));
 	};
 
-	~SimTotalArtificialHeart()
-	{};	
+	~SimTotalArtificialHeart(){};
 
 public: //C++ Backend functions
 	void initAndRunCompleteSimulation(float endTime) { sim->RunSimulation(SPH::Real(endTime)); };
+
 public: //WASM functions
 	void initSimulationJS() { sim->InitSimulationJS(); };
 	void runSimulationFixedDurationJS(float duration) { sim->RunSimulationFixedDurationJS(SPH::Real(duration)); };
 
 private:
-	 std::unique_ptr<StructuralSimulation> sim;
+	std::unique_ptr<StructuralSimulation> sim;
 };
 
 #endif //SIM_TOTAL_ARTIFICIAL_HEART_H
