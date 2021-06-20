@@ -54,7 +54,7 @@ endif(BUILD_WITH_DEPENDENCIES_SOURCE)
 
 
 ###### Simbody ######
-if(BUILD_WITH_SIMBODY)
+# if(BUILD_WITH_SIMBODY)
     include_directories(${PLATFORM_INCLUDE_DIRECTORIES})
     set(SIMBODY_MAJOR_VERSION 3)
     set(SIMBODY_MINOR_VERSION 7)
@@ -93,5 +93,5 @@ if(BUILD_WITH_SIMBODY)
 
     add_definitions(-DBUILD_VISUALIZER=off)
     set(CMAKE_C_FLAGS "-DINTEGER_STAR_8")
-endif(BUILD_WITH_SIMBODY)
+# endif(BUILD_WITH_SIMBODY)
 ###### Simbody ######
