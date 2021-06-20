@@ -207,6 +207,12 @@ You can find a installation instruction video: https://youtu.be/m0p1nybM4v4, and
 
         Create your own application in the cases_user in the source folder simply by copying the entire folder of a similar test case and rename and modify application files
 
+### Build with docler
+
+Run following command to build docker image:
+        docker build . --build-arg build_with_dependencies_source=1
+
+where build_with_dependencies_source=1 builds dependencies from sourcetogether with Sphinxsys
 
 ### How to run gpuSPHinXsys cases on CUDA enabled GPUs?
 The build process for GPU cases are identical to the CPU cases on all platforms, viz. Linux, Windows and Mac OSX.
