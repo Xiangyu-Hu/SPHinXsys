@@ -13,12 +13,14 @@ int main(int argc, char *argv[])
 
 	SimTotalArtificialHeartInput input;
 	input.scale_stl = 0.001;
-	input.resolution_tah = 8.0;
-	input.resolution_aorta = 8.0;
-	input.resolution_diaphragm = 8.0;
-	input.resolution_latrium = 8.0;
-	input.resolution_partery = 8.0;
-	input.resolution_ratrium = 8.0;
+	input.resolution = {8.0,8.0,8.0,8.0,8.0,8.0};
+	// in order
+	// resolution_tah = 8.0;
+	// resolution_aorta = 8.0;
+	// resolution_diaphragm = 8.0;
+	// resolution_latrium = 8.0;
+	// resolution_partery = 8.0;
+	// resolution_ratrium = 8.0;
 	input.rho_0 = 1000.0;
 	input.poisson = 0.35;
 	input.Youngs_modulus = 1e5;

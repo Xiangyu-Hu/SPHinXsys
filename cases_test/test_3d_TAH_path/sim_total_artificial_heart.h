@@ -12,18 +12,14 @@ using namespace SPH;
 
 struct SimTotalArtificialHeartInput
 {
+	std::vector<std::string> material_model_name;
 	double scale_stl;
-	double resolution_tah;
-	double resolution_aorta;
-	double resolution_diaphragm;
-	double resolution_latrium;
-	double resolution_partery;
-	double resolution_ratrium;
+	std::vector<double> resolution;
 	double rho_0;
 	double poisson;
 	double Youngs_modulus;
 	double Youngs_modulus_tah;
-	double physical_viscosity;
+	double physical_viscosity;	
 	std::array<double, 3> translation_tah;
 	std::vector<std::string> stls;
 	std::string relative_input_path;
@@ -39,9 +35,7 @@ public:
 		std::vector<Vec3d> translation_list = {Vec3d(input.translation_tah[0], input.translation_tah[1],
 													 input.translation_tah[2]),
 											   Vec3d(0), Vec3d(0), Vec3d(0), Vec3d(0), Vec3d(0)};
-		std::vector<Real> resolution_list = {input.resolution_tah, input.resolution_aorta, input.resolution_diaphragm,
-											 input.resolution_latrium,
-											 input.resolution_partery, input.resolution_ratrium};
+		std::vector<Real> resolution_list = input.resolution;
 
 		LinearElasticSolid material_tah = LinearElasticSolid(input.rho_0, input.Youngs_modulus_tah, input.poisson);
 		NeoHookeanSolid material_vessel = NeoHookeanSolid(input.rho_0, input.Youngs_modulus, input.poisson);
