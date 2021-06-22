@@ -21,4 +21,8 @@ namespace SPH {
 		mesh_cell_linked_list_->UpdateCellLists();
 	}
 	//=================================================================================================//
+	EulerianFluidBody::EulerianFluidBody(SPHSystem &system, std::string body_name,
+		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
+		: RealBody(system, body_name, particle_adaptation, particle_generator) {}
+	//=================================================================================================//
 }

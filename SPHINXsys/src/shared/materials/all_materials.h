@@ -13,3 +13,4 @@
 #include "complex_solid.h"
 #include "complex_solid.hpp"
 #include "diffusion_reaction.h"
+#include "compressible_fluid.h"

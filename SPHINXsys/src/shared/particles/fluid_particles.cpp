@@ -7,6 +7,7 @@
 
 #include "base_body.h"
 #include "weakly_compressible_fluid.h"
+#include "compressible_fluid.h"
 #include "xml_engine.h"
 
 namespace SPH
@@ -51,6 +52,26 @@ namespace SPH
 		//		add restart output particle data
 		//----------------------------------------------------------------------
 		addAVariableNameToList<indexMatrix, Matd>(variables_to_restart_, "ElasticStress");
+	}
+	//=================================================================================================//
+	CompressibleFluidParticles
+		::CompressibleFluidParticles(SPHBody *body, CompressibleFluid* compressiblefluid)
+		: FluidParticles(body, compressiblefluid)
+	{
+		compressiblefluid->assignCompressibleFluidParticles(this);
+		//----------------------------------------------------------------------
+		//		register particle data
+		//----------------------------------------------------------------------
+		registerAVariable<indexVector, Vecd>(mom_, "Momentum");
+		registerAVariable<indexVector, Vecd>(dmom_dt_, "MomentumChangeRate");
+		registerAVariable<indexVector, Vecd>(dmom_dt_prior_, "OtherMomentumChangeRate");
+		registerAVariable<indexScalar, Real>(E_, "TotalEnergy");
+		registerAVariable<indexScalar, Real>(dE_dt_, "TotalEnergyChangeRate");
+		registerAVariable<indexScalar, Real>(dE_dt_prior_, "OtherEnergyChangeRate");
+		//----------------------------------------------------------------------
+		//		add output particle data
+		//----------------------------------------------------------------------
+		addAVariableToWrite<indexScalar, Real>("Pressure");
 	}
 	//=================================================================================================//
 }

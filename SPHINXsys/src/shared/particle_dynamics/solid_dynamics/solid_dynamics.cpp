@@ -371,12 +371,10 @@ namespace SPH
 		ParticleWiseAcceleration
 			::ParticleWiseAcceleration(SolidBody* body, Vecd stiffness)
 			: ParticleDynamicsSimple(body), SolidDataSimple(body),
-					pos_n_(particles_->pos_n_),
-					pos_0_(particles_->pos_0_),
-					dvel_dt_prior_(particles_->dvel_dt_prior_),
-					mass_(particles_->mass_)
-		{
-		}
+			mass_(particles_->mass_),
+			pos_n_(particles_->pos_n_),
+			pos_0_(particles_->pos_0_),
+			dvel_dt_prior_(particles_->dvel_dt_prior_) {}
 		//=================================================================================================//
 		Vecd ParticleWiseAcceleration::getAcceleration(Vecd& disp, Real mass)
 		{

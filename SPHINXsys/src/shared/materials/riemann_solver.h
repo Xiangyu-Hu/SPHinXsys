@@ -44,7 +44,16 @@ namespace SPH
 			vel_(vel), rho_(rho), p_(p) {};
 	};
 
+	struct CompressibleFluidState
+	{
+		Vecd vel_;
+		Real rho_, p_, E_;
+		CompressibleFluidState(Real& rho, Vecd& vel, Real& p, Real& E) :
+			vel_(vel), rho_(rho), p_(p), E_(E) {};
+	};
+
 	class Fluid;
+	class CompressibleFluid;
 
 	class NoRiemannSolver
 	{
@@ -71,6 +80,28 @@ namespace SPH
 		DissipativeRiemannSolver(Fluid& fluid_i, Fluid& fluid_j) : fluid_i_(fluid_i), fluid_j_(fluid_j) {};
 		Real getPStar(const FluidState& state_i, const FluidState& state_j, const Vecd& direction_to_i);
 		Vecd getVStar(const FluidState& state_i, const FluidState& state_j, const Vecd& direction_to_i);
+	};
+
+	class HLLCRiemannSolver
+	{
+		CompressibleFluid& compressible_fluid_i_, &compressible_fluid_j_;
+	public:
+		HLLCRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j) : compressible_fluid_i_(compressible_fluid_i), compressible_fluid_j_(compressible_fluid_j) {};
+		Real getPStar(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& direction_to_i);
+		Vecd getVStar(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& direction_to_i);
+		Real getRhoStar(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& direction_to_i);
+		Real getEStar(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& direction_to_i);
+	};
+
+	class HLLCWithLimiterRiemannSolver
+	{
+		CompressibleFluid& compressible_fluid_i_, &compressible_fluid_j_;
+	public:
+		HLLCWithLimiterRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j) : compressible_fluid_i_(compressible_fluid_i), compressible_fluid_j_(compressible_fluid_j) {};
+		Real getPStar(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& direction_to_i);
+		Vecd getVStar(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& direction_to_i);
+		Real getRhoStar(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& direction_to_i);
+		Real getEStar(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& direction_to_i);
 	};
 }
 #endif //RIEMANN_SOLVER_H
