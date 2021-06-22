@@ -96,10 +96,10 @@ if(NOT BUILD_WITH_SIMBODY)
 
     find_library(Simbody_LIB_DIR_TEMP 
         NAMES ${Simbody_LIBRARY_LIST}
-        PATHS ${Simbody_ROOT_DIR}/lib ${Simbody_ROOT_DIR}/lib64
+        PATHS ${Simbody_ROOT_DIR}/lib ${Simbody_ROOT_DIR}/lib64 ${Simbody_ROOT_DIR}/lib/x86_64-linux-gnu
         NO_DEFAULT_PATH)
 
-    get_filename_component(Simbody_LIB_DIR ${Simbody_LIB_DIR_TEMP} DIRECTORY)
+        get_filename_component(Simbody_LIB_DIR ${Simbody_LIB_DIR_TEMP} DIRECTORY)
 
     set(Simbody_LAPACK_LIBRARY_LIST )
     set(Simbody_EXTRA_LIBRARY_LIST )
