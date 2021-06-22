@@ -95,7 +95,7 @@ int main(int ac, char* av[])
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for computation start with relaxed body fitted particles distribution. */
-	sph_system.reload_particles_ = true;
+	sph_system.reload_particles_ = false;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	sph_system.restart_step_ = 0;
 	//handle command line arguments
@@ -108,7 +108,7 @@ int main(int ac, char* av[])
 	 */
 	WaterBlock *water_block = new WaterBlock(sph_system, "WaterBody");
 	// Using relaxed particle distribution if needed
-	if (sph_system.reload_particles_ && !sph_system.run_particle_relaxation_) water_block->useParticleGeneratorReload();
+	if (sph_system.reload_particles_) water_block->useParticleGeneratorReload();
 	WaterMaterial 	*water_material = new WaterMaterial();
 	FluidParticles 	fluid_particles(water_block, water_material);
 	/** topology */
