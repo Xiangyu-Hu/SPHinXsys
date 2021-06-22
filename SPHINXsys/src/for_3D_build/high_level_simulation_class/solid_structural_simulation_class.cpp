@@ -176,6 +176,8 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input):
 	InitializeAccelerationForBodyPartInBoundingBox();
 	InitializeSpringDamperConstraintParticleWise();
 	InitializeConstrainSolidBodyRegion();
+
+	InitSimulation();
 }
 
 StructuralSimulation::~StructuralSimulation()
@@ -475,8 +477,8 @@ void StructuralSimulation::RunSimulationStep(int &ite, Real &dt, Real &integrati
 
 void StructuralSimulation::RunSimulation(Real end_time)
 {
-	WriteBodyStatesToVtu write_states(in_output_, system_.real_bodies_);
 	GlobalStaticVariables::physical_time_ = 0.0;
+	WriteBodyStatesToVtu write_states(in_output_, system_.real_bodies_);
 
 	/** Statistics for computing time. */
 	write_states.WriteToFile(GlobalStaticVariables::physical_time_);

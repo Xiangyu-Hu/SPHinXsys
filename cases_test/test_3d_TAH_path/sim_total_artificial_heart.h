@@ -68,7 +68,6 @@ public:
 
 		/** SIMULATION MODEL */
 		sim.reset(new StructuralSimulation(&inputStructuralSim));
-		sim->InitSimulation();
 	};
 
 	~SimTotalArtificialHeart(){};

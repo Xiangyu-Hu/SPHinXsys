@@ -171,11 +171,12 @@ class StructuralSimulation
 		void ExecuteContactUpdateConfiguration();
 		void RunSimulationStep(int &ite, Real &dt, Real &integration_time);
 
+		void InitSimulation();
+
 	public:
 		StructuralSimulation(StructuralSimulationInput* input);
  		~StructuralSimulation();
 
-		void InitSimulation();
 
 		//For c++
 		void RunSimulation(Real end_time);
