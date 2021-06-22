@@ -469,5 +469,20 @@ namespace SPH {
 		return pos_n_[index_i];
 	}
 	//=================================================================================================//
+	TotalMechanicalEnergy::TotalMechanicalEnergy(SPHBody* body, Gravity* gravity)
+		: ParticleDynamicsReduce<Real, ReduceSum<Real>>(body), 
+		GeneralDataDelegateSimple(body), mass_(particles_->mass_), 
+		vel_n_(particles_->vel_n_), pos_n_(particles_->pos_n_), gravity_(gravity)
+	{
+		quantity_name_ = "TotalMechanicalEnergy";
+		initial_reference_ = 0.0;
+	}
+	//=================================================================================================//
+	Real TotalMechanicalEnergy::ReduceFunction(size_t index_i, Real dt)
+	{
+		return 0.5 * mass_[index_i] * vel_n_[index_i].normSqr()
+			+ mass_[index_i] * gravity_->getPotential(pos_n_[index_i]);
+	}
+	//=================================================================================================//
 }
 //=================================================================================================//

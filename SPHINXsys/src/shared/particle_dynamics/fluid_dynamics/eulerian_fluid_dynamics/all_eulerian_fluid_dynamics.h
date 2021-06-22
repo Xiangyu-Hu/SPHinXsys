@@ -21,20 +21,14 @@
 *                                                                           *
 * --------------------------------------------------------------------------*/
 /**
-* @file all_fluid_dynamics.h
-* @brief This is the header file that user code should include to pick up all
+* @file all_eulerian_fluid_dynamics.h
+* @brief This is the header file that user code should include to pick up all eulerian
 * fluid dynamics used in SPHinXsys.
-* @details The fluid dynamics algorithms begin for fluid bulk without boundary condition,
-* then algorithm interacting with wall is defined, further algorithms for multiphase flow interaction
-* built upon these basic algorithms.
-* @author	Chi ZHang and Xiangyu Hu
+* @details The eulerian fluid dynamics algorithms begin for fluid bulk without boundary condition,
+* then algorithm interacting with wall is defined.
+* @author	Zhentong Wang
 */
 #pragma once
 
-#include "fluid_dynamics_inner.h"
-#include "fluid_dynamics_inner.hpp"
-#include "fluid_dynamics_complex.h"
-#include "fluid_dynamics_complex.hpp"
-#include "fluid_dynamics_multi_phase.h"
-#include "fluid_dynamics_multi_phase.hpp"
-#include "all_eulerian_fluid_dynamics.h"
+#include "eulerian_fluid_dynamics_inner.h"
+#include "eulerian_fluid_dynamics_inner.hpp"

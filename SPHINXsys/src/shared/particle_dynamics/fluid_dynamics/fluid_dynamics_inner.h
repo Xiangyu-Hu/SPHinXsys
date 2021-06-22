@@ -175,23 +175,6 @@ namespace SPH
 		};
 
 		/**
-		 * @class TotalMechanicalEnergy
-		 * @brief Compute the total mechanical (kinematic and potential) energy
-		 */
-		class TotalMechanicalEnergy
-			: public ParticleDynamicsReduce<Real, ReduceSum<Real>>, public FluidDataSimple
-		{
-		public:
-			explicit TotalMechanicalEnergy(FluidBody* body, Gravity* gravity);
-			virtual ~TotalMechanicalEnergy() {};
-		protected:
-			StdLargeVec<Real>& mass_;
-			StdLargeVec<Vecd>& vel_n_, & pos_n_;
-			Gravity* gravity_;
-			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
 		* @class AcousticTimeStepSize
 		* @brief Computing the acoustic time step size
 		*/
@@ -593,15 +576,16 @@ namespace SPH
 		class ColorFunctionGradientInner : public InteractionDynamics, public FluidDataInner
 		{
 		public:
-			StdLargeVec<Vecd>& color_grad_;
-			StdLargeVec<Vecd>& surface_norm_;
-			StdLargeVec<int>& surface_indicator_;
-			StdLargeVec<Real> &pos_div_;
 			ColorFunctionGradientInner(BaseInnerBodyRelation* inner_relation);
 			virtual ~ColorFunctionGradientInner() {};
 		protected:
 			Real thereshold_by_dimensions_;
 			StdLargeVec<Real> &Vol_;
+			StdLargeVec<int>& surface_indicator_;
+			StdLargeVec<Vecd>& color_grad_;
+			StdLargeVec<Vecd>& surface_norm_;
+			StdLargeVec<Real> &pos_div_;
+
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -618,10 +602,10 @@ namespace SPH
 		protected:
 			Real thereshold_by_dimensions_;
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Real>& pos_div_;
+			StdLargeVec<int>& surface_indicator_;
 			StdLargeVec<Vecd>& color_grad_;
 			StdLargeVec<Vecd>& surface_norm_;
-			StdLargeVec<int>& surface_indicator_;
+			StdLargeVec<Real>& pos_div_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -641,9 +625,9 @@ namespace SPH
 			Real gamma_;
 			StdLargeVec<Real> &Vol_, &mass_;
 			StdLargeVec<Vecd> &dvel_dt_prior_;
+			StdLargeVec<int>& surface_indicator_;
 			StdLargeVec<Vecd>& color_grad_;
 			StdLargeVec<Vecd>& surface_norm_;
-			StdLargeVec<int>& surface_indicator_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};

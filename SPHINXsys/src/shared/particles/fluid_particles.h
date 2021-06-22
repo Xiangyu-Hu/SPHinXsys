@@ -37,6 +37,7 @@ namespace SPH {
 
 	class Fluid;
 	class Oldroyd_B_Fluid;
+	class CompressibleFluid;
 
 	/**
 	 * @class FluidParticles
@@ -70,6 +71,26 @@ namespace SPH {
 		StdLargeVec<Matd> dtau_dt_;	/**<  change rate of elastic stress */
 
 		virtual ViscoelasticFluidParticles* ThisObjectPtr() override {return this;};
+	};
+
+	/**
+	 * @class CompressibleFluidParticles
+	 * @brief Compressible fluid particles.
+	 */
+	class CompressibleFluidParticles : public FluidParticles
+	{
+	public:
+		explicit CompressibleFluidParticles(SPHBody *body, CompressibleFluid* compressiblefluid);
+		virtual ~CompressibleFluidParticles() {};
+
+		StdLargeVec<Vecd> mom_;            /**< momentum */
+		StdLargeVec<Vecd> dmom_dt_;        /**< change rate of momentum */
+		StdLargeVec<Vecd> dmom_dt_prior_;
+		StdLargeVec<Real> E_;		       /**< total energy per unit volume */
+		StdLargeVec<Real> dE_dt_;	       /**< change rate of total energy */
+		StdLargeVec<Real> dE_dt_prior_;
+
+		virtual CompressibleFluidParticles* ThisObjectPtr() override { return this; };
 	};
 }
 #endif //FLUID_PARTICLES_H
