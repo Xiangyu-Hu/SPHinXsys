@@ -68,15 +68,15 @@ public:
 
 		/** SIMULATION MODEL */
 		sim.reset(new StructuralSimulation(&inputStructuralSim));
+		sim->InitSimulation();
 	};
 
 	~SimTotalArtificialHeart(){};
 
 public: //C++ Backend functions
-	void initAndRunCompleteSimulation(double endTime) { sim->RunSimulation(SPH::Real(endTime)); };
+	void runCompleteSimulation(double endTime) { sim->RunSimulation(SPH::Real(endTime)); };
 
 public: //WASM functions
-	void initSimulationJS() { sim->InitSimulationJS(); };
 	void runSimulationFixedDurationJS(double duration) { sim->RunSimulationFixedDurationJS(SPH::Real(duration)); };
 
 private:

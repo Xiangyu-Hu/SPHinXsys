@@ -175,11 +175,12 @@ class StructuralSimulation
 		StructuralSimulation(StructuralSimulationInput* input);
  		~StructuralSimulation();
 
+		void InitSimulation();
+
 		//For c++
 		void RunSimulation(Real end_time);
 		
 		//For JS
-		void InitSimulationJS();
 		double RunSimulationFixedDurationJS(Real duration);
 		
 	};

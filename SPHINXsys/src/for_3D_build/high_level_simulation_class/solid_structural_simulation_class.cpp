@@ -477,14 +477,7 @@ void StructuralSimulation::RunSimulation(Real end_time)
 {
 	WriteBodyStatesToVtu write_states(in_output_, system_.real_bodies_);
 	GlobalStaticVariables::physical_time_ = 0.0;
-	
-	/** INITIALALIZE SYSTEM */
-	system_.initializeSystemCellLinkedLists();
-	system_.initializeSystemConfigurations();
 
-	/** INITIAL CONDITION */
-	ExecuteCorrectConfiguration();
-	
 	/** Statistics for computing time. */
 	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
 	int ite = 0;
@@ -511,7 +504,7 @@ void StructuralSimulation::RunSimulation(Real end_time)
 	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
 }
 
-void StructuralSimulation::InitSimulationJS()
+void StructuralSimulation::InitSimulation()
 {	
 	/** INITIALALIZE SYSTEM */
 	system_.initializeSystemCellLinkedLists();

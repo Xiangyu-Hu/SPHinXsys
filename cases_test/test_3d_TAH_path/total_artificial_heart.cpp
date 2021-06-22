@@ -39,7 +39,6 @@ int main(int argc, char *argv[])
 	//download STLs file
 
 	SimTotalArtificialHeart simTotalArtificialHeart(input);
-	simTotalArtificialHeart.initSimulationJS();
 	for (int step = 0; step < 5; step++)
 	{
 		simTotalArtificialHeart.runSimulationFixedDurationJS(0.02 * step);
