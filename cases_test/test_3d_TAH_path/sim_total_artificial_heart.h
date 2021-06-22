@@ -70,7 +70,7 @@ public: //C++ Backend functions
 	void runCompleteSimulation(double endTime) { sim->RunSimulation(SPH::Real(endTime)); };
 
 public: //WASM functions
-	void runSimulationFixedDurationJS(double duration) { sim->RunSimulationFixedDurationJS(SPH::Real(duration)); };
+	void runSimulationFixedDurationJS(int number_of_steps) { sim->RunSimulationFixedDurationJS(number_of_steps); };
 
 private:
 	std::unique_ptr<StructuralSimulation> sim;

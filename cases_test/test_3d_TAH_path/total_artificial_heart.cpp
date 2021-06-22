@@ -27,7 +27,15 @@ int main(int argc, char *argv[])
 	input.Youngs_modulus_tah = 1e6;
 	input.physical_viscosity = 200.0;
 	input.translation_tah = {0, -200.0, 0};
-	input.stls = {"TAH_basic2_pos.stl", "Aorta.stl", "Diaphragm.stl", "LA.stl", "PA.stl", "RA.stl"};
+
+	string tah_stl = "TAH_basic2_pos.stl";
+	string aorta_stl = "Aorta.stl";
+	string diaphragm_stl = "Diaphragm.stl";
+	string latrium_stl = "LA.stl";
+	string partery_stl = "PA.stl";
+	string ratrium_stl = "RA.stl";
+
+	input.stls = { tah_stl, aorta_stl, diaphragm_stl, latrium_stl, partery_stl, ratrium_stl };
 	input.relative_input_path = "./input/";
 	input.contacting_bodies_list = {{0,1}, {0,2}, {0,3}, {0,4}, {0,5}, {1,4}, {3,4}, {4,5}};
 
@@ -35,8 +43,8 @@ int main(int argc, char *argv[])
 
 	// set up the simulation
 	SimTotalArtificialHeart simTotalArtificialHeart(input);
-	// this will run 100 steps
-	simTotalArtificialHeart.runSimulationFixedDurationJS(100);
+	int number_of_steps = 700;
+	simTotalArtificialHeart.runSimulationFixedDurationJS(number_of_steps);
 	
 	return 0;
 }

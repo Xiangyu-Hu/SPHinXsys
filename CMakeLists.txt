@@ -47,6 +47,9 @@ else(MSVC)
     ELSE(${CMAKE_BUILD_TYPE} MATCHES "Debug")
         set(CMAKE_CXX_FLAGS "-fPIC ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
     ENDIF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+	if(NOT BUILD_WITH_DEPENDENCIES_SOURCE)
+		set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Werror=reorder")
+	endif()
 endif(MSVC)
 message("===========================================")
 message("${PROJECT_NAME}, VERSION ${PROJECT_VERSION}")
@@ -54,10 +57,6 @@ message("Cmake build type: ${CMAKE_BUILD_TYPE}")
 message("CXX flags: ${CMAKE_CXX_FLAGS}")
 message("CUDA flags: ${CMAKE_CUDA_FLAGS}")
 message("===========================================")
-
-if(NOT BUILD_WITH_DEPENDENCIES_SOURCE)
-    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Werror=reorder")
-endif()
 
 ########### GPU - compliler flags for physical properties #############
 # 1. Turn ON if the body force is time dependent, e.g. sloshing tank 

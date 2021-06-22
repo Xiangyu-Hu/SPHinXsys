@@ -143,7 +143,7 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input):
 	imported_stl_list_(input->imported_stl_list_),
 	scale_stl_(input->scale_stl_),
 	translation_list_(input->translation_list_),
-	default_resolution_(input->resolution_list_[0]),
+	default_resolution_(0.0),
 	resolution_list_(input->resolution_list_),
 	material_model_list_(input->material_model_list_),
 	physical_viscosity_(input->physical_viscosity_),
@@ -239,6 +239,7 @@ void StructuralSimulation::ScaleTranslationAndResolution()
 
 void StructuralSimulation::SetDefaultSystemResolutionMax()
 {
+	default_resolution_ = 0.0;
 	for (unsigned int i = 0; i < resolution_list_.size(); i++)
 	{
 		if (default_resolution_ < resolution_list_[i])
@@ -246,6 +247,7 @@ void StructuralSimulation::SetDefaultSystemResolutionMax()
 			default_resolution_ = resolution_list_[i];
 		}
 	}
+	system_.resolution_ref_ = default_resolution_;
 }
 
 void StructuralSimulation::CalculateSystemBoundaries()
@@ -273,7 +275,7 @@ void StructuralSimulation::CreateParticleAdaptationList()
 	for (unsigned int i = 0; i < resolution_list_.size(); i++)
 	{
 		Real h_spacing_ratio = resolution_list_[i] / default_resolution_;
-		particle_adaptation_list_.push_back(ParticleAdaptation(1, 0));
+		particle_adaptation_list_.push_back(ParticleAdaptation(h_spacing_ratio, 0));
 	}
 }
 
@@ -556,18 +558,20 @@ double StructuralSimulation::RunSimulationFixedDurationJS(int number_of_steps)
 	
 	/** Statistics for computing time. */
 	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	int ite = 0;
-	Real output_period = 0.1 / 100.0;		
+	int output_period = 100;
+	int ite = 0;	
 	Real dt = 0.0;
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
 	/** Main loop */
-	for (int i = 0; i < number_of_steps; i++)
+	while (ite < number_of_steps)
 	{
 		Real integration_time = 0.0;
-		while (integration_time < output_period) 
+		int output_step = 0;
+		while (output_step < output_period)
 		{
 			RunSimulationStep(ite, dt, integration_time);
+			output_step++;
 		}
 		tick_count t2 = tick_count::now();
 		write_states.WriteToFile(GlobalStaticVariables::physical_time_);
@@ -577,5 +581,5 @@ double StructuralSimulation::RunSimulationFixedDurationJS(int number_of_steps)
 	tick_count t4 = tick_count::now();
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	return  tt.seconds();
+	return tt.seconds();
 }
