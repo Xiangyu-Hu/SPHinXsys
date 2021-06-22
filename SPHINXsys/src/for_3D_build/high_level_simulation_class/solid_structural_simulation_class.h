@@ -17,6 +17,7 @@ using IndexPair = pair<int, int>;
 using GravityPair = pair<int, Vec3d>;
 using AccelTuple = tuple<int, BoundingBox, Vec3d>;
 using SpringDamperTuple = tuple<int, Vec3d, Real>;
+using PositionSolidBodyTuple = tuple<int, Real, Vec3d>;
 
 class BodyPartByParticleTriMesh : public BodyPartByParticle
 {
@@ -85,6 +86,7 @@ public:
 	vector<AccelTuple> acceleration_bounding_box_tuple_;
 	vector<SpringDamperTuple> spring_damper_tuple_;
 	vector<int> body_indeces_fixed_constraint_;
+	vector<PositionSolidBodyTuple> position_solid_body_tuple_;
 
 	StructuralSimulationInput(
 		string relative_input_path,
@@ -125,18 +127,21 @@ class StructuralSimulation
 		vector<solid_dynamics::ContactDensitySummation*> contact_density_list_;
 		vector<solid_dynamics::ContactForce*> contact_force_list_;
 
-		// for InitializeGravity
+		// for InitializeATimeStep
 		vector<InitializeATimeStep*> initialize_gravity_;
 		vector<GravityPair> non_zero_gravity_;
-		// for AddAccelerationForBodyPartInBoundingBox
+		// for AccelerationForBodyPartInBoundingBox
 		vector<solid_dynamics::AccelerationForBodyPartInBoundingBox*> acceleration_bounding_box_;
 		vector<AccelTuple> acceleration_bounding_box_tuple_;
-		// for AddSpringDamperConstraintParticleWise
+		// for SpringDamperConstraintParticleWise
 		vector<solid_dynamics::SpringDamperConstraintParticleWise*> spring_damper_constraint_;
 		vector<SpringDamperTuple> spring_damper_tuple_;
-		// for AddSpringDamperConstraintParticleWise
+		// for ConstrainSolidBodyRegion
 		vector<solid_dynamics::ConstrainSolidBodyRegion*> fixed_constraint_;
 		vector<int> body_indeces_fixed_constraint_;
+		// for PositionSolidBody
+		vector<solid_dynamics::PositionSolidBody*> position_solid_body_;
+		vector<PositionSolidBodyTuple> position_solid_body_tuple_;
 		
 		// for constructor, the order is important
 		void ScaleTranslationAndResolution();
@@ -151,6 +156,7 @@ class StructuralSimulation
 		void InitializeAccelerationForBodyPartInBoundingBox();
 		void InitializeSpringDamperConstraintParticleWise();
 		void InitializeConstrainSolidBodyRegion();
+		void InitializePositionSolidBody();
 
 		// for RunSimulation, the order is important
 		void ExecuteCorrectConfiguration();
@@ -161,6 +167,7 @@ class StructuralSimulation
 		void ExecuteContactForce();
 		void ExecuteStressRelaxationFirstHalf(Real dt);
 		void ExecuteConstrainSolidBodyRegion();
+		void ExecutePositionSolidBody();
 		void ExecuteDamping(Real dt);
 		void ExecuteStressRelaxationSecondHalf(Real dt);
 		void ExecuteUpdateCellLinkedList();

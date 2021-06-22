@@ -130,6 +130,7 @@ StructuralSimulationInput::StructuralSimulationInput(
 	acceleration_bounding_box_tuple_ = {};
 	spring_damper_tuple_ = {};
 	body_indeces_fixed_constraint_ = {};
+	position_solid_body_tuple_ = {};
 };
 
 ///////////////////////////////////////
@@ -154,7 +155,8 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input) :
 	non_zero_gravity_(input->non_zero_gravity_),
 	acceleration_bounding_box_tuple_(input->acceleration_bounding_box_tuple_),
 	spring_damper_tuple_(input->spring_damper_tuple_),
-	body_indeces_fixed_constraint_(input->body_indeces_fixed_constraint_)
+	body_indeces_fixed_constraint_(input->body_indeces_fixed_constraint_),
+	position_solid_body_tuple_(input->position_solid_body_tuple_)
 {
 	// scaling of translation and resolution
 	ScaleTranslationAndResolution();
@@ -173,6 +175,7 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input) :
 	InitializeAccelerationForBodyPartInBoundingBox();
 	InitializeSpringDamperConstraintParticleWise();
 	InitializeConstrainSolidBodyRegion();
+	InitializePositionSolidBody();
 }
 
 StructuralSimulation::~StructuralSimulation()
@@ -211,6 +214,10 @@ StructuralSimulation::~StructuralSimulation()
 	for (auto fc : fixed_constraint_)
 	{
 		delete fc;
+	}
+	for (auto ps : position_solid_body_)
+	{
+		delete ps;
 	}
 }
 
@@ -338,6 +345,19 @@ void StructuralSimulation::InitializeConstrainSolidBodyRegion()
 	}
 }
 
+void StructuralSimulation::InitializePositionSolidBody()
+{
+	position_solid_body_ = {};
+	for (unsigned int i = 0; i < position_solid_body_tuple_.size(); i++)
+	{
+		int body_index = get<0>(position_solid_body_tuple_[i]);
+		Real end_time = get<1>(position_solid_body_tuple_[i]);
+		Vecd pos_end_center = get<2>(position_solid_body_tuple_[i]);
+		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(solid_body_list_[body_index]->GetImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
+		position_solid_body_.push_back(new solid_dynamics::PositionSolidBody(solid_body_list_[body_index]->GetImportedModel(), bp, end_time, pos_end_center));
+	}
+}
+
 void StructuralSimulation::ExecuteCorrectConfiguration()
 {
 	for (auto solid_body: solid_body_list_)
@@ -402,6 +422,14 @@ void StructuralSimulation::ExecuteConstrainSolidBodyRegion()
 	}
 }
 
+void StructuralSimulation::ExecutePositionSolidBody()
+{
+	for (auto ps : position_solid_body_)
+	{
+		ps->parallel_exec();
+	}
+}
+
 void StructuralSimulation::ExecuteDamping(Real dt)
 {
 	for (auto solid_body : solid_body_list_)
@@ -450,8 +478,10 @@ void StructuralSimulation::RunSimulationStep(int &ite, Real &dt, Real &integrati
 	/** STRESS RELAXATOIN, DAMPING, PASSIVE CONSTRAINTS */
 	ExecuteStressRelaxationFirstHalf(dt);
 	ExecuteConstrainSolidBodyRegion();
+	ExecutePositionSolidBody();
 	ExecuteDamping(dt);
 	ExecuteConstrainSolidBodyRegion();
+	ExecutePositionSolidBody();
 	ExecuteStressRelaxationSecondHalf(dt);
 	
 	/** UPDATE TIME STEP SIZE, INCREMENT */
