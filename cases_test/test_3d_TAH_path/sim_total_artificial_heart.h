@@ -23,7 +23,7 @@ struct SimTotalArtificialHeartInput
 	std::array<double, 3> translation_tah;
 	std::vector<std::string> stls;
 	std::string relative_input_path;
-	std::vector<std::pair<int, int>> contacting_bodies_list;
+	std::vector<std::array<int, 2>> contacting_bodies_list;
 };
 
 class SimTotalArtificialHeart

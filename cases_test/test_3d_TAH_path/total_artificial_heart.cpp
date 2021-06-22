@@ -29,21 +29,14 @@ int main(int argc, char *argv[])
 	input.translation_tah = {0, -200.0, 0};
 	input.stls = {"TAH_basic2_pos.stl", "Aorta.stl", "Diaphragm.stl", "LA.stl", "PA.stl", "RA.stl"};
 	input.relative_input_path = "./input/";
-	input.contacting_bodies_list = {std::pair<int, int>(0, 1), std::pair<int, int>(0, 2), std::pair<int, int>(0, 3),
-									std::pair<int, int>(0, 4), std::pair<int, int>(0, 5), std::pair<int, int>(1, 4),
-									std::pair<int, int>(3, 4), std::pair<int, int>(4, 5)};
-	/** CONTACT ORGANS WITH ORGANS*/
-	//IndexPair(1, 4); //Aorta with PA
-	//IndexPair(2, 5); //Diaphragm with RA
-	//IndexPair(3, 4); //LA with PA
-	//IndexPair(4, 5); //PA with RA
+	input.contacting_bodies_list = {{0,1}, {0,2}, {0,3}, {0,4}, {0,5}, {1,4}, {3,4}, {4,5}};
 
-	//download STLs file
+	/* DOWNLOAD STLs files at this point */
 
+	// set up the simulation
 	SimTotalArtificialHeart simTotalArtificialHeart(input);
-	for (int step = 0; step < 5; step++)
-	{
-		simTotalArtificialHeart.runSimulationFixedDurationJS(0.02 * step);
-	}
+	// this will run 100 steps
+	simTotalArtificialHeart.runSimulationFixedDurationJS(100);
+	
 	return 0;
 }

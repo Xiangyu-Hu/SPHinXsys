@@ -13,7 +13,6 @@
 
 using namespace SPH;
 using namespace std;
-using IndexPair = pair<int, int>;
 using GravityPair = pair<int, Vec3d>;
 using AccelTuple = tuple<int, BoundingBox, Vec3d>;
 using SpringDamperTuple = tuple<int, Vec3d, Real>;
@@ -28,7 +27,7 @@ public:
 class ImportedModel : public SolidBody
 {
 public:
-	ImportedModel(SPHSystem &system, string body_name, TriangleMeshShape* triangle_mesh_shape, Real resolution);
+	ImportedModel(SPHSystem &system, string body_name, TriangleMeshShape* triangle_mesh_shape, ParticleAdaptation* particle_adaptation);
 	~ImportedModel();
 };
 
@@ -46,7 +45,7 @@ private:
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>> damping_random_;
 
 public:
-	SolidBodyForSimulation(SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape, Real resolution, Real physical_viscosity, LinearElasticSolid& material_model);
+	SolidBodyForSimulation(SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape, ParticleAdaptation& particle_adaptation, Real physical_viscosity, LinearElasticSolid& material_model);
 	~SolidBodyForSimulation(){};
 
 	ImportedModel* GetImportedModel() { return &imported_model_; };
@@ -79,7 +78,7 @@ public:
 	vector<Real> resolution_list_;
 	vector<LinearElasticSolid> material_model_list_;
 	Real physical_viscosity_;
-	vector<IndexPair> contacting_bodies_list_;
+	vector<array<int, 2>> contacting_bodies_list_;
 	// particle relaxation
 	bool particle_relaxation_;
 	// boundary conditions
@@ -96,7 +95,7 @@ public:
 		vector<Real> resolution_list,
 		vector<LinearElasticSolid> material_model_list,
 		Real physical_viscosity,
-		vector<IndexPair> contacting_bodies_list
+		vector<array<int, 2>> contacting_bodies_list
 		);
 };
 
@@ -120,11 +119,11 @@ class StructuralSimulation
 		In_Output in_output_;
 
 		vector<TriangleMeshShape> body_mesh_list_;
-		vector<TriangleMeshShape> primitive_shape_list_;
+		vector<ParticleAdaptation> particle_adaptation_list_;
 
 		vector<SolidBodyForSimulation*> solid_body_list_;
 
-		vector<IndexPair> contacting_bodies_list_;
+		vector<array<int, 2>> contacting_bodies_list_;
 		vector<SolidContactBodyRelation*> contact_list_;
 		vector<solid_dynamics::ContactDensitySummation*> contact_density_list_;
 		vector<solid_dynamics::ContactForce*> contact_force_list_;
@@ -144,7 +143,9 @@ class StructuralSimulation
 		
 		// for constructor, the order is important
 		void ScaleTranslationAndResolution();
+		void SetDefaultSystemResolutionMax();
 		void CreateBodyMeshList();
+		void CreateParticleAdaptationList();
 		void CalculateSystemBoundaries();
 		void InitializeElasticSolidBodies(bool particle_relaxation);
 		void InitializeContactBetweenTwoBodies(int first, int second);
@@ -171,19 +172,18 @@ class StructuralSimulation
 		void ExecuteContactUpdateConfiguration();
 		void RunSimulationStep(int &ite, Real &dt, Real &integration_time);
 
+		// Initialize simulation
 		void InitSimulation();
 
 	public:
 		StructuralSimulation(StructuralSimulationInput* input);
  		~StructuralSimulation();
 
-
 		//For c++
 		void RunSimulation(Real end_time);
-		
+	
 		//For JS
-		double RunSimulationFixedDurationJS(Real duration);
-		
+		double RunSimulationFixedDurationJS(int number_of_steps);
 	};
 
 #endif //SOLID_STRUCTURAL_SIMULATION_CLASS_H
