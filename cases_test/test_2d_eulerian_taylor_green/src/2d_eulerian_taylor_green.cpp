@@ -1,8 +1,8 @@
 /**
- * @file 	taylor_green.cpp
- * @brief 	2D taylor_green vortex flow example.
- * @details This is the one of the basic test cases.
- * @author 	Chi Zhang and Xiangyu Hu
+ * @file 	eulerian_taylor_green.cpp
+ * @brief 	This is the one of the basic test cases.
+ * @details 2D eulerian_taylor_green vortex flow example.
+ * @author 	Chi ZHang, Xiangyu Hu and Zhentong Wang
  */
  /**
   * @brief 	SPHinXsys Library.
@@ -17,7 +17,7 @@ using namespace SPH;
  */
 Real DL = 1.0; 						/**< box length. */
 Real DH = 1.0; 						/**< box height. */
-Real resolution_ref = 1.0/100.0; 	/**< Global reference resolution. */
+Real resolution_ref = 1.0/50.0; 	/**< Global reference resolution. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(0), Vec2d(DL, DH));
 /**
@@ -28,15 +28,15 @@ Real U_f = 1.0;							/**< Characteristic velocity. */
 Real c_f = 10.0*U_f;					/**< Reference sound speed. */
 Real Re = 100;							/**< Reynolds number. */
 Real mu_f = rho0_f * U_f * DL / Re;		/**< Dynamics viscosity. */
-
+Real heat_capacity_ratio = 1.4;         /**< heat capacity ratio. */
 /**
  * @brief 	Fluid body definition.
  */
-class WaterBlock : public FluidBody
+class WaterBlock : public EulerianFluidBody
 {
 public:
-	WaterBlock(SPHSystem &system, std::string body_name)
-		: FluidBody(system, body_name)
+	WaterBlock(SPHSystem &system, string body_name)
+		: EulerianFluidBody(system, body_name)
 	{
 		/** Geomtry definition. */
 		std::vector<Vecd> water_block_shape;
@@ -52,14 +52,15 @@ public:
 /**
  * @brief 	Case dependent material properties definition.
  */
-class WaterMaterial : public WeaklyCompressibleFluid
+class WaterMaterial : public CompressibleFluid
 {
 public:
-	WaterMaterial()	: WeaklyCompressibleFluid()
+	WaterMaterial()	: CompressibleFluid()
 	{
 		rho0_ = rho0_f;
 		c0_ = c_f;
 		mu_ = mu_f;
+		gamma_ = heat_capacity_ratio;
 
 		assignDerivedMaterialParameters();
 	}
@@ -68,19 +69,24 @@ public:
  * application dependent initial condition 
  */
 class TaylorGreenInitialCondition
-	: public fluid_dynamics::FluidInitialCondition
+	: public eulerian_fluid_dynamics::CompressibleFluidInitialCondition
 {
 public:
-	TaylorGreenInitialCondition(FluidBody *water)
-		: fluid_dynamics::FluidInitialCondition(water) {};
+	TaylorGreenInitialCondition(EulerianFluidBody *water)
+		: eulerian_fluid_dynamics::CompressibleFluidInitialCondition(water) {};
 protected:
 	void Update(size_t index_i, Real dt) override 
 	{
-		/** initial velocity profile */
+		/** initial momentum and energy profile */
+		rho_n_[index_i] = rho0_f;
+		p_[index_i] = pow(c_0_, 2) * rho_n_[index_i] / gamma_;
 		vel_n_[index_i][0] = -cos(2.0 * Pi * pos_n_[index_i][0]) *
-				sin(2.0 * Pi * pos_n_[index_i][1]);
+			sin(2.0 * Pi * pos_n_[index_i][1]);
 		vel_n_[index_i][1] = sin(2.0 * Pi * pos_n_[index_i][0]) *
-				cos(2.0 * Pi * pos_n_[index_i][1]);
+			cos(2.0 * Pi * pos_n_[index_i][1]);
+		mom_[index_i] = rho_n_[index_i] * vel_n_[index_i];
+		Real rho_e = p_[index_i] / (gamma_ - 1.0);
+		E_[index_i] = rho_e + 0.5 * rho_n_[index_i] * vel_n_[index_i].normSqr();
 	}
 };
 /**
@@ -94,23 +100,19 @@ int main(int ac, char* av[])
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
-	/** Tag for computation start with relaxed body fitted particles distribution. */
-	sph_system.reload_particles_ = false;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	sph_system.restart_step_ = 0;
-	//handle command line arguments
-	sph_system.handleCommandlineOptions(ac, av);
 	/** output environment. */
 	In_Output 	in_output(sph_system);
-
+	//handle command line arguments
+	sph_system.handleCommandlineOptions(ac, av);
+	
 	/**
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
 	WaterBlock *water_block = new WaterBlock(sph_system, "WaterBody");
-	// Using relaxed particle distribution if needed
-	if (sph_system.reload_particles_) water_block->useParticleGeneratorReload();
 	WaterMaterial 	*water_material = new WaterMaterial();
-	FluidParticles 	fluid_particles(water_block, water_material);
+	CompressibleFluidParticles 	compressible_fluid_particles(water_block, water_material);
 	/** topology */
 	BaseInnerBodyRelation* water_block_inner = new InnerBodyRelation(water_block);
 	/**
@@ -119,14 +121,13 @@ int main(int ac, char* av[])
 	 /**
 	  * @brief 	Methods used only once.
 	  */
-
-	/** Initial velocity field */
-	TaylorGreenInitialCondition setup_taylor_green_velocity(water_block);
+	/** Initial momentum and energy field */
+	TaylorGreenInitialCondition setup_taylor_green_momemun_and_energy(water_block);
 	/**
 	 * @brief 	Methods used for time stepping.
 	 */
 	 /** Initialize particle acceleration. */
-	InitializeATimeStep 	initialize_a_fluid_step(water_block);
+	eulerian_fluid_dynamics::CompressibleFlowTimeStepInitialization 	initialize_a_fluid_step(water_block);
 	/** Periodic BCs in x direction. */
 	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition_x(water_block, 0);
 	/** Periodic BCs in y direction. */
@@ -135,40 +136,30 @@ int main(int ac, char* av[])
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
-	 /** Evaluation of density by summation approach. */
-	fluid_dynamics::DensitySummationInner	update_density_by_summation(water_block_inner);
-	/** Time step size without considering sound wave speed. */
-	fluid_dynamics::AdvectionTimeStepSize 	get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
-	fluid_dynamics::AcousticTimeStepSize 	get_fluid_time_step_size(water_block);
+	eulerian_fluid_dynamics::AcousticTimeStepSize 	get_fluid_time_step_size(water_block);
 	/** Pressure relaxation algorithm by using verlet time stepping. */
-	/** Here, we do not use Riemann solver for pressure as the flow is viscous. 
-	  * The other reason is that we are using transport velocity formulation, 
-	  * which will also introduce numerical disspation slightly. */
-	fluid_dynamics::PressureRelaxationInner pressure_relaxation(water_block_inner);
-	fluid_dynamics::DensityRelaxationRiemannInner density_relaxation(water_block_inner);
+	/** Here, we can use HLLC with Limiter Riemann solver for pressure relaxation and density and energy relaxation  */
+	eulerian_fluid_dynamics::PressureRelaxationHLLCWithLimiterRiemannInner pressure_relaxation(water_block_inner);
+	eulerian_fluid_dynamics::DensityAndEnergyRelaxationHLLCWithLimiterRiemannInner density_and_energy_relaxation(water_block_inner);
 	/** Computing viscous acceleration. */
-	fluid_dynamics::ViscousAccelerationInner 	viscous_acceleration(water_block_inner);
-	/** Impose transport velocity. */
-	fluid_dynamics::TransportVelocityCorrectionInner transport_velocity_correction(water_block_inner);
+	eulerian_fluid_dynamics::ViscousAccelerationInner 	viscous_acceleration(water_block_inner);
 	/**
 	 * @brief Output.
 	 */
 	/** Output the body states. */
 	WriteBodyStatesToVtu 	write_body_states(in_output, sph_system.real_bodies_);
-	/** Write the particle reload files. */
-	ReloadParticleIO 		write_particle_reload_files(in_output, { water_block });
 	/** Output the body states for restart simulation. */
 	RestartIO				restart_io(in_output, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	WriteBodyReducedQuantity<TotalMechanicalEnergy> 	
+	WriteBodyReducedQuantity<TotalMechanicalEnergy>
 		write_total_mechanical_energy(in_output, water_block, new Gravity(Vec2d(0)));
 	/** Output the maximum speed of the fluid body. */
 	WriteBodyReducedQuantity<MaximumSpeed> write_maximum_speed(in_output, water_block);
 	/**
 	 * @brief Setup geomtry and initial conditions
 	 */
-	setup_taylor_green_velocity.exec();
+	setup_taylor_green_momemun_and_energy.exec();
 	sph_system.initializeSystemCellLinkedLists();
 	periodic_condition_x.update_cell_linked_list_.parallel_exec();
 	periodic_condition_y.update_cell_linked_list_.parallel_exec();
@@ -197,7 +188,6 @@ int main(int ac, char* av[])
 	int restart_output_interval = screen_output_interval*10;
 	Real End_Time = 5.0; 	/**< End time. */
 	Real D_Time = 0.1;		/**< Time stamps for output of body states. */
-	Real Dt = 0.0;			/**< Default advection time step sizes. */
 	Real dt = 0.0; 			/**< Default acoustic time step sizes. */
 	/** statistics for computing CPU time. */
 	tick_count t1 = tick_count::now();
@@ -213,42 +203,25 @@ int main(int ac, char* av[])
 		{
 			/** Acceleration due to viscous force. */
 			initialize_a_fluid_step.parallel_exec();
-			Dt = get_fluid_advection_time_step_size.parallel_exec();
-			update_density_by_summation.parallel_exec();
+			dt = get_fluid_time_step_size.parallel_exec();
 			viscous_acceleration.parallel_exec();
-			transport_velocity_correction.parallel_exec(Dt);
 			/** Dynamics including pressure relaxation. */
-			Real relaxation_time = 0.0;
-			while (relaxation_time < Dt)
-			{
-				//avoid possible smaller acoustic time step size for viscous flow
-				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
-				relaxation_time += dt;
-				integration_time += dt;
-				pressure_relaxation.parallel_exec(dt);
-				density_relaxation.parallel_exec(dt);
-				GlobalStaticVariables::physical_time_ += dt;
-			}
+			integration_time += dt;
+ 			pressure_relaxation.parallel_exec(dt);
+			density_and_energy_relaxation.parallel_exec(dt);
+			GlobalStaticVariables::physical_time_ += dt;
 
 			if (number_of_iterations % screen_output_interval == 0)
 			{
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 					<< GlobalStaticVariables::physical_time_
-					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
+					<< "	dt = " << dt << "\n";
 
 				if (number_of_iterations % restart_output_interval == 0) {
 					restart_io.WriteToFile(Real(number_of_iterations));
 				}
 			}
 			number_of_iterations++;
-
-			/** Water block configuration and periodic condition. */
-			periodic_condition_x.bounding_.parallel_exec();
-			periodic_condition_y.bounding_.parallel_exec();
-			water_block->updateCellLinkedList();
-			periodic_condition_x.update_cell_linked_list_.parallel_exec();
-			periodic_condition_y.update_cell_linked_list_.parallel_exec();
-			water_block_inner->updateConfiguration();
 		}
 
 		tick_count t2 = tick_count::now();
@@ -262,9 +235,8 @@ int main(int ac, char* av[])
 
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
-	std::cout << "Total wall time for computation: " << tt.seconds()
-		<< " seconds." << std::endl;
+	cout << "Total wall time for computation: " << tt.seconds()
+		<< " seconds." << endl;
 
-	write_particle_reload_files.WriteToFile();
 	return 0;
 }

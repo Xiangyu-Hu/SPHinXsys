@@ -34,8 +34,8 @@ namespace SPH
 	{
 		sph_body_ = sph_body;
 		system_domain_bounds_ = sph_body_->getSPHSystem().system_domain_bounds_;
-		Real body_resolution = sph_body_->getSPHBodyResolutionRef();
-		spacing_ref_ = RefinedSpacing(body_resolution, global_refinement_level_);
+		Real system_resolution = sph_body_->getSPHSystem().resolution_ref_;
+		spacing_ref_ = RefinedSpacing(system_resolution, global_refinement_level_);
 		Vol_ref_ = powerN(spacing_ref_, Dimensions);
 		h_ref_ = h_spacing_ratio_ * spacing_ref_;
 		kernel_->initialize(h_ref_);

@@ -263,8 +263,8 @@ namespace SPH
 
 	public:
 		BodyPart* body_part_;
-		BodyPartParticlesIndex get_body_part_particle_index_;
 		IndexVector& body_part_particles_;
+		BodyPartParticlesIndex get_body_part_particle_index_;
 
 		PartContactBodyRelation(BodyPart* body_part, RealBodyVector contact_bodies);
 		virtual ~PartContactBodyRelation() {};

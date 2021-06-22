@@ -16,9 +16,9 @@ namespace SPH
 	SPHSystem::SPHSystem(BoundingBox system_domain_bounds,
 		Real resolution_ref, size_t number_of_threads) :
 		system_domain_bounds_(system_domain_bounds),
-		resolution_ref_(resolution_ref), in_output_(NULL),
+		resolution_ref_(resolution_ref),
 		tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
-		restart_step_(0), run_particle_relaxation_(false),
+		in_output_(NULL), restart_step_(0), run_particle_relaxation_(false),
 		reload_particles_(false) {}
 	//=================================================================================================//
 	void SPHSystem::addABody(SPHBody* sph_body)

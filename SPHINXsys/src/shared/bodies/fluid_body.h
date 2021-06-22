@@ -54,5 +54,20 @@ namespace SPH {
 	protected:
 		size_t iteration_count_;
 	};
+
+	/**
+	 * @class EulerianFluidBody
+	 * @brief Eulerian Fluid body uses smoothing length to particle spacing 1.3 
+	 */
+	class EulerianFluidBody : public RealBody
+	{
+	public:
+		explicit EulerianFluidBody(SPHSystem &system, std::string body_name,
+			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(),
+			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
+		virtual ~EulerianFluidBody() {};
+
+		virtual EulerianFluidBody* ThisObjectPtr() override { return this; };
+	};
 }
 #endif //FLUID_BODY_H
