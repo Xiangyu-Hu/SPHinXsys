@@ -140,6 +140,29 @@ namespace SPH
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
+		/**
+		 * @class ConstrainSolidBodyRegion
+		 * @brief Constrain a solid body part with prescribed motion.
+		 * Note the average values for FSI are prescirbed also.
+		 */
+		class PositionSolidBody:
+			public PartSimpleDynamicsByParticle, public SolidDataSimple
+		{
+		public:
+			PositionSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real end_time, Vecd pos_end_center);
+			virtual ~PositionSolidBody() {};
+		protected:
+			StdLargeVec<Vecd>& pos_n_, &pos_0_;
+			StdLargeVec<Vecd>& vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			Real end_time_;
+			Vecd pos_0_center_;
+			Vecd pos_end_center_;
+			Vecd getDisplacement();
+			virtual Vecd getVelocity() { return Vecd(0); };
+			virtual Vecd getAcceleration() { return Vecd(0); };
+			virtual SimTK::Rotation getBodyRotation() { return SimTK::Rotation(); }
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
 
 		/**
 		 * @class ConstrainSolidBodyRegionVelocity
