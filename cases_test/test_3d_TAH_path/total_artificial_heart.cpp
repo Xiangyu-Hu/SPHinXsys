@@ -75,7 +75,7 @@ int main()
 									SpringDamperTuple(5, Vec3d(0.1, 0.1, 0.1), 0.01) };
 
 	/** SIMULATION MODEL */
-	StructuralSimulation sim (&input);
+	StructuralSimulation sim (input);
 	/** START SIMULATION */
 	sim.RunSimulation(0.1);
 

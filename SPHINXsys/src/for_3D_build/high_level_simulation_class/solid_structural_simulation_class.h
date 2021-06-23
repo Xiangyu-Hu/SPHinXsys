@@ -103,85 +103,85 @@ public:
 };
 
 class StructuralSimulation
-	{
-	private:
-		// input members
-		string relative_input_path_;
-		vector<string> imported_stl_list_;
-		Real scale_stl_;
-		vector<Vec3d> translation_list_;
-		Real default_resolution_;
-		vector<Real> resolution_list_;
-		vector<LinearElasticSolid> material_model_list_;
-		Real physical_viscosity_;
+{
+protected:
+	// input members
+	string relative_input_path_;
+	vector<string> imported_stl_list_;
+	Real scale_stl_;
+	vector<Vec3d> translation_list_;
+	Real default_resolution_;
+	vector<Real> resolution_list_;
+	vector<LinearElasticSolid> material_model_list_;
+	Real physical_viscosity_;
 
-		// internal members
-		SPHSystem system_;
-		Real scale_system_boundaries_;
-		In_Output in_output_;
+	// internal members
+	SPHSystem system_;
+	Real scale_system_boundaries_;
+	In_Output in_output_;
 
-		vector<TriangleMeshShape> body_mesh_list_;
-		vector<TriangleMeshShape> primitive_shape_list_;
+	vector<TriangleMeshShape> body_mesh_list_;
+	vector<TriangleMeshShape> primitive_shape_list_;
 
-		vector<SolidBodyForSimulation*> solid_body_list_;
+	vector<SolidBodyForSimulation*> solid_body_list_;
 
-		vector<IndexPair> contacting_bodies_list_;
-		vector<SolidContactBodyRelation*> contact_list_;
-		vector<solid_dynamics::ContactDensitySummation*> contact_density_list_;
-		vector<solid_dynamics::ContactForce*> contact_force_list_;
+	vector<IndexPair> contacting_bodies_list_;
+	vector<SolidContactBodyRelation*> contact_list_;
+	vector<solid_dynamics::ContactDensitySummation*> contact_density_list_;
+	vector<solid_dynamics::ContactForce*> contact_force_list_;
 
-		// for InitializeATimeStep
-		vector<InitializeATimeStep*> initialize_gravity_;
-		vector<GravityPair> non_zero_gravity_;
-		// for AccelerationForBodyPartInBoundingBox
-		vector<solid_dynamics::AccelerationForBodyPartInBoundingBox*> acceleration_bounding_box_;
-		vector<AccelTuple> acceleration_bounding_box_tuple_;
-		// for SpringDamperConstraintParticleWise
-		vector<solid_dynamics::SpringDamperConstraintParticleWise*> spring_damper_constraint_;
-		vector<SpringDamperTuple> spring_damper_tuple_;
-		// for ConstrainSolidBodyRegion
-		vector<solid_dynamics::ConstrainSolidBodyRegion*> fixed_constraint_;
-		vector<int> body_indeces_fixed_constraint_;
-		// for PositionSolidBody
-		vector<solid_dynamics::PositionSolidBody*> position_solid_body_;
-		vector<PositionSolidBodyTuple> position_solid_body_tuple_;
-		
-		// for constructor, the order is important
-		void ScaleTranslationAndResolution();
-		void CreateBodyMeshList();
-		void CalculateSystemBoundaries();
-		void InitializeElasticSolidBodies();
-		void InitializeContactBetweenTwoBodies(int first, int second);
-		void InitializeAllContacts();
+	// for InitializeATimeStep
+	vector<InitializeATimeStep*> initialize_gravity_;
+	vector<GravityPair> non_zero_gravity_;
+	// for AccelerationForBodyPartInBoundingBox
+	vector<solid_dynamics::AccelerationForBodyPartInBoundingBox*> acceleration_bounding_box_;
+	vector<AccelTuple> acceleration_bounding_box_tuple_;
+	// for SpringDamperConstraintParticleWise
+	vector<solid_dynamics::SpringDamperConstraintParticleWise*> spring_damper_constraint_;
+	vector<SpringDamperTuple> spring_damper_tuple_;
+	// for ConstrainSolidBodyRegion
+	vector<solid_dynamics::ConstrainSolidBodyRegion*> fixed_constraint_;
+	vector<int> body_indeces_fixed_constraint_;
+	// for PositionSolidBody
+	vector<solid_dynamics::PositionSolidBody*> position_solid_body_;
+	vector<PositionSolidBodyTuple> position_solid_body_tuple_;
+	
+	// for constructor, the order is important
+	void ScaleTranslationAndResolution();
+	void CreateBodyMeshList();
+	void CalculateSystemBoundaries();
+	void InitializeElasticSolidBodies();
+	void InitializeContactBetweenTwoBodies(int first, int second);
+	void InitializeAllContacts();
 
-		// for InitializeBoundaryConditions
-		void InitializeGravity();
-		void InitializeAccelerationForBodyPartInBoundingBox();
-		void InitializeSpringDamperConstraintParticleWise();
-		void InitializeConstrainSolidBodyRegion();
-		void InitializePositionSolidBody();
+	// for InitializeBoundaryConditions
+	void InitializeGravity();
+	void InitializeAccelerationForBodyPartInBoundingBox();
+	void InitializeSpringDamperConstraintParticleWise();
+	void InitializeConstrainSolidBodyRegion();
+	void InitializePositionSolidBody();
 
-		// for RunSimulation, the order is important
-		void ExecuteCorrectConfiguration();
-		void ExecuteInitializeATimeStep();
-		void ExecuteAccelerationForBodyPartInBoundingBox();
-		void ExecuteSpringDamperConstraintParticleWise();
-		void ExecuteContactDensitySummation();
-		void ExecuteContactForce();
-		void ExecuteStressRelaxationFirstHalf(Real dt);
-		void ExecuteConstrainSolidBodyRegion();
-		void ExecutePositionSolidBody();
-		void ExecuteDamping(Real dt);
-		void ExecuteStressRelaxationSecondHalf(Real dt);
-		void ExecuteUpdateCellLinkedList();
-		void ExecuteContactUpdateConfiguration();
-		void RunSimulationStep(int &ite, Real &dt, Real &integration_time);
+	// for RunSimulation, the order is important
+	void ExecuteCorrectConfiguration();
+	void ExecuteInitializeATimeStep();
+	void ExecuteAccelerationForBodyPartInBoundingBox();
+	void ExecuteSpringDamperConstraintParticleWise();
+	void ExecuteContactDensitySummation();
+	void ExecuteContactForce();
+	void ExecuteStressRelaxationFirstHalf(Real dt);
+	void ExecuteConstrainSolidBodyRegion();
+	void ExecutePositionSolidBody();
+	void ExecuteDamping(Real dt);
+	void ExecuteStressRelaxationSecondHalf(Real dt);
+	void ExecuteUpdateCellLinkedList();
+	void ExecuteContactUpdateConfiguration();
+	void RunSimulationStep(int &ite, Real &dt, Real &integration_time);
 
-	public:
-		StructuralSimulation(StructuralSimulationInput* input);
- 		~StructuralSimulation();
+public:
+	StructuralSimulation(StructuralSimulationInput& input);
+	~StructuralSimulation();
 
-		void RunSimulation(Real end_time);
-	};
+	void RunSimulation(Real end_time);
+};
 
 #endif //SOLID_STRUCTURAL_SIMULATION_CLASS_H

@@ -140,29 +140,29 @@ StructuralSimulationInput::StructuralSimulationInput(
 /* StructuralSimulation members */
 ///////////////////////////////////////
 
-StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input) :
+StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input) :
 	// generic input
-	relative_input_path_(input->relative_input_path_),
-	imported_stl_list_(input->imported_stl_list_),
-	scale_stl_(input->scale_stl_),
-	translation_list_(input->translation_list_),
-	default_resolution_(input->resolution_list_[0]),
-	resolution_list_(input->resolution_list_),
-	material_model_list_(input->material_model_list_),
-	physical_viscosity_(input->physical_viscosity_),
+	relative_input_path_(input.relative_input_path_),
+	imported_stl_list_(input.imported_stl_list_),
+	scale_stl_(input.scale_stl_),
+	translation_list_(input.translation_list_),
+	default_resolution_(input.resolution_list_[0]),
+	resolution_list_(input.resolution_list_),
+	material_model_list_(input.material_model_list_),
+	physical_viscosity_(input.physical_viscosity_),
 	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), default_resolution_)),
 	in_output_(In_Output(system_)),
-	contacting_bodies_list_(input->contacting_bodies_list_),
+	contacting_bodies_list_(input.contacting_bodies_list_),
 
 	// optional: scale_system_boundaries
-	scale_system_boundaries_(input->scale_system_boundaries_),
+	scale_system_boundaries_(input.scale_system_boundaries_),
 
 	// optional: boundary conditions
-	non_zero_gravity_(input->non_zero_gravity_),
-	acceleration_bounding_box_tuple_(input->acceleration_bounding_box_tuple_),
-	spring_damper_tuple_(input->spring_damper_tuple_),
-	body_indeces_fixed_constraint_(input->body_indeces_fixed_constraint_),
-	position_solid_body_tuple_(input->position_solid_body_tuple_)
+	non_zero_gravity_(input.non_zero_gravity_),
+	acceleration_bounding_box_tuple_(input.acceleration_bounding_box_tuple_),
+	spring_damper_tuple_(input.spring_damper_tuple_),
+	body_indeces_fixed_constraint_(input.body_indeces_fixed_constraint_),
+	position_solid_body_tuple_(input.position_solid_body_tuple_)
 {
 	// scaling of translation and resolution
 	ScaleTranslationAndResolution();
