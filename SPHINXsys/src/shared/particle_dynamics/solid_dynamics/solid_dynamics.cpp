@@ -152,12 +152,12 @@ namespace SPH
 		}
 		//=================================================================================================//
 		PositionSolidBody::
-			PositionSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real end_time, Vecd pos_end_center) :
+			PositionSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real end_time_position, Vecd pos_end_center) :
 			PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
 			pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
 			vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
 			vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
-			end_time_(end_time), pos_end_center_(pos_end_center)
+			end_time_position_(end_time_position), pos_end_center_(pos_end_center)
 		{
 			BoundingBox bounds = body->findBodyDomainBounds();
 			pos_0_center_ = (bounds.first + bounds.second) * 0.5;
@@ -166,13 +166,13 @@ namespace SPH
 		Vecd PositionSolidBody::getDisplacement()
 		{
 			Vecd displacement(Vecd(0)); // displacement from the initial position
-			if (GlobalStaticVariables::physical_time_ >= end_time_)
+			if (GlobalStaticVariables::physical_time_ >= end_time_position_)
 			{
 				displacement = pos_end_center_ - pos_0_center_;
 			}
 			else
 			{
-				displacement = (pos_end_center_ - pos_0_center_) * GlobalStaticVariables::physical_time_ / (end_time_ * 0.9);
+				displacement = (pos_end_center_ - pos_0_center_) * GlobalStaticVariables::physical_time_ / (end_time_position_);
 			}
 			return displacement;
 		}

@@ -149,12 +149,12 @@ namespace SPH
 			public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
 		public:
-			PositionSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real end_time, Vecd pos_end_center);
+			PositionSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real end_time_position, Vecd pos_end_center);
 			virtual ~PositionSolidBody() {};
 		protected:
 			StdLargeVec<Vecd>& pos_n_, &pos_0_;
 			StdLargeVec<Vecd>& vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
-			Real end_time_;
+			Real end_time_position_;
 			Vecd pos_0_center_;
 			Vecd pos_end_center_;
 			Vecd getDisplacement();

@@ -81,6 +81,8 @@ public:
 	vector<LinearElasticSolid> material_model_list_;
 	Real physical_viscosity_;
 	vector<IndexPair> contacting_bodies_list_;
+	// scale system boundaries
+	Real scale_system_boundaries_;
 	// boundary conditions
 	vector<GravityPair> non_zero_gravity_;
 	vector<AccelTuple> acceleration_bounding_box_tuple_;
@@ -115,6 +117,7 @@ class StructuralSimulation
 
 		// internal members
 		SPHSystem system_;
+		Real scale_system_boundaries_;
 		In_Output in_output_;
 
 		vector<TriangleMeshShape> body_mesh_list_;

@@ -126,6 +126,9 @@ StructuralSimulationInput::StructuralSimulationInput(
 	physical_viscosity_(physical_viscosity),
 	contacting_bodies_list_(contacting_bodies_list)
 {
+	// scale system boundaries
+	scale_system_boundaries_ = 1;
+	// boundary conditions
 	non_zero_gravity_ = {};
 	acceleration_bounding_box_tuple_ = {};
 	spring_damper_tuple_ = {};
@@ -151,7 +154,10 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input) :
 	in_output_(In_Output(system_)),
 	contacting_bodies_list_(input->contacting_bodies_list_),
 
-	// boundary conditions
+	// optional: scale_system_boundaries
+	scale_system_boundaries_(input->scale_system_boundaries_),
+
+	// optional: boundary conditions
 	non_zero_gravity_(input->non_zero_gravity_),
 	acceleration_bounding_box_tuple_(input->acceleration_bounding_box_tuple_),
 	spring_damper_tuple_(input->spring_damper_tuple_),
@@ -236,11 +242,20 @@ void StructuralSimulation::ScaleTranslationAndResolution()
 
 void StructuralSimulation::CalculateSystemBoundaries()
 {	
+	// calculate system bounds from all bodies
 	for (unsigned int i = 0; i < body_mesh_list_.size(); i++)
 	{
 		BoundingBox additional = body_mesh_list_[i].findBounds();
 		ExpandBoundingBox(&system_.system_domain_bounds_, &additional);
 	}
+	// scale the system bounds around the center point
+	Vecd center_point = (system_.system_domain_bounds_.first + system_.system_domain_bounds_.second) * 0.5;
+
+	Vecd distance_first = system_.system_domain_bounds_.first - center_point;
+	Vecd distance_second = system_.system_domain_bounds_.second - center_point;
+
+	system_.system_domain_bounds_.first = center_point + distance_first * scale_system_boundaries_;
+	system_.system_domain_bounds_.second = center_point + distance_second * scale_system_boundaries_;
 }
 
 void StructuralSimulation::CreateBodyMeshList()
@@ -351,10 +366,10 @@ void StructuralSimulation::InitializePositionSolidBody()
 	for (unsigned int i = 0; i < position_solid_body_tuple_.size(); i++)
 	{
 		int body_index = get<0>(position_solid_body_tuple_[i]);
-		Real end_time = get<1>(position_solid_body_tuple_[i]);
+		Real end_time_position = get<1>(position_solid_body_tuple_[i]);
 		Vecd pos_end_center = get<2>(position_solid_body_tuple_[i]);
 		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(solid_body_list_[body_index]->GetImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
-		position_solid_body_.push_back(new solid_dynamics::PositionSolidBody(solid_body_list_[body_index]->GetImportedModel(), bp, end_time, pos_end_center));
+		position_solid_body_.push_back(new solid_dynamics::PositionSolidBody(solid_body_list_[body_index]->GetImportedModel(), bp, end_time_position, pos_end_center));
 	}
 }
 
