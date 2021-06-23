@@ -221,7 +221,7 @@ command to run test:
 
 docker run sphinxsys:latest bash scripts/runTest.sh
 
-2. dev.Dockerfile:  development packages are all installed and development. This image is too big and can not be used for github testing. Only for local development purposes. 
+2. dev.Dockerfile:  development packages are all installed and simbody is downloaded and compiled in the image building process. This image is too big and can not be used for github testing. Only for local development purposes. 
 
 command to build:
 
@@ -232,7 +232,6 @@ additional build arguement can be added to the end of the docker build command u
 
 build_with_dependencies_source=0 : default, builds with preprecompiled dependencies
 build_with_dependencies_source=1 : builds dependencies together with Sphinxsys
-
 
 ### How to run gpuSPHinXsys cases on CUDA enabled GPUs?
 The build process for GPU cases are identical to the CPU cases on all platforms, viz. Linux, Windows and Mac OSX.

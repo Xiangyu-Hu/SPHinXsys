@@ -3,81 +3,48 @@
  * @brief This is the example of total artificial heart implantation path simulation
  * @author John Benjamin, Bence Rochlitz - Virtonomy GmbH
  */
-#include "sphinxsys.h"
-#include "solid_structural_simulation_class.h"
-using namespace SPH;
+#include "sim_total_artificial_heart.h"
 
-int main()
-{	
-	/** INPUT PARAMETERS */
-	Real scale_stl = 0.001;
-	Real resolution_tah = 8;
-	Real resolution_aorta = 8;
-	Real resolution_diaphragm = 8;
-	Real resolution_latrium = 8;
-	Real resolution_partery = 8;
-	Real resolution_ratrium = 8;
-	Real rho_0 = 1000.0;
-	Real poisson = 0.35;
-	Real Youngs_modulus = 1e5;
-	Real Youngs_modulus_tah = 1e6;
-	Real physical_viscosity = 200;
+int main(int argc, char *argv[])
+{
+	//use simulation collection id to get json file for simulation definittion
+	string ticket_id = argv[0];
+	//download JSON file and fill in the following struct	
 
-	/** STL IMPORT PARAMETERS */
-	string relative_input_path = "./input/"; //path definition for linux
-	string tah_stl;
-	string aorta_stl;
-	string diaphragm_stl;
-	string latrium_stl;
-	string partery_stl;
-	string ratrium_stl;
-	Vec3d translation_tah = Vec3d(0, -200, 0);
+	SimTotalArtificialHeartInput input;
+	input.scale_stl = 0.001;
+	input.resolution = {8.0,8.0,8.0,8.0,8.0,8.0};
+	// in order
+	// resolution_tah = 8.0;
+	// resolution_aorta = 8.0;
+	// resolution_diaphragm = 8.0;
+	// resolution_latrium = 8.0;
+	// resolution_partery = 8.0;
+	// resolution_ratrium = 8.0;
+	input.rho_0 = 1000.0;
+	input.poisson = 0.35;
+	input.Youngs_modulus = 1e5;
+	input.Youngs_modulus_tah = 1e6;
+	input.physical_viscosity = 200.0;
+	input.translation_tah = {0, -200.0, 0};
+
+	string tah_stl = "TAH_basic2_pos.stl";
+	string aorta_stl = "Aorta.stl";
+	string diaphragm_stl = "Diaphragm.stl";
+	string latrium_stl = "LA.stl";
+	string partery_stl = "PA.stl";
+	string ratrium_stl = "RA.stl";
+
+	input.stls = { tah_stl, aorta_stl, diaphragm_stl, latrium_stl, partery_stl, ratrium_stl };
+	input.relative_input_path = "./input/";
+	input.contacting_bodies_list = {{0,1}, {0,2}, {0,3}, {0,4}, {0,5}, {1,4}, {3,4}, {4,5}};
+
+	/* DOWNLOAD STLs files at this point */
+
+	// set up the simulation
+	SimTotalArtificialHeart simTotalArtificialHeart(input);
+	int number_of_steps = 700;
+	simTotalArtificialHeart.runSimulationFixedDurationJS(number_of_steps);
 	
-	tah_stl = "TAH_basic2_pos.stl";
-	aorta_stl = "Aorta.stl";
-	diaphragm_stl = "Diaphragm.stl";
-	latrium_stl = "LA.stl";
-	partery_stl = "PA.stl";
-	ratrium_stl = "RA.stl";
-
-	vector<string> imported_stl_list = { tah_stl, aorta_stl, diaphragm_stl, latrium_stl, partery_stl, ratrium_stl };
-	vector<Vec3d> translation_list = { translation_tah, Vec3d(0), Vec3d(0), Vec3d(0), Vec3d(0), Vec3d(0) };
-	vector<Real> resolution_list = { resolution_tah, resolution_aorta, resolution_diaphragm, resolution_latrium, resolution_partery, resolution_ratrium };
-
-	LinearElasticSolid material_tah = LinearElasticSolid(rho_0, Youngs_modulus_tah, poisson);
-	NeoHookeanSolid material_vessel = NeoHookeanSolid(rho_0, Youngs_modulus, poisson);
-	vector<LinearElasticSolid> material_model_list = { material_tah, material_vessel, material_vessel, material_vessel, material_vessel, material_vessel };
-
-	vector<IndexPair> contacting_bodies_list = { IndexPair(0, 1), IndexPair(0, 2), IndexPair(0, 3), IndexPair(0, 4), IndexPair(0, 5), IndexPair(1, 4), IndexPair(3, 4), IndexPair(4, 5) };
-	/** CONTACT ORGANS WITH ORGANS*/
-	//IndexPair(1, 4); //Aorta with PA
-	//IndexPair(2, 5); //Diaphragm with RA
-	//IndexPair(3, 4); //LA with PA
-	//IndexPair(4, 5); //PA with RA
-
-	/** INPUT DECLERATION */
-	StructuralSimulationInput input
-	{
-		relative_input_path,
-		imported_stl_list,
-		scale_stl,
-		translation_list,
-		resolution_list,
-		material_model_list,
-		physical_viscosity,
-		contacting_bodies_list
-	};
-	input.non_zero_gravity_ = vector<GravityPair>{ GravityPair(0, Vec3d(0.0, 45.0, 0.0)) }; // gravity for TAH
-	input.spring_damper_tuple_ = { SpringDamperTuple(1, Vec3d(0.1, 0.1, 0.1), 0.01),
-									SpringDamperTuple(2, Vec3d(0.1, 0.1, 0.1), 0.01),
-									SpringDamperTuple(3, Vec3d(0.1, 0.1, 0.1), 0.01),
-									SpringDamperTuple(4, Vec3d(0.1, 0.1, 0.1), 0.01),
-									SpringDamperTuple(5, Vec3d(0.1, 0.1, 0.1), 0.01) };
-
-	/** SIMULATION MODEL */
-	StructuralSimulation sim (&input);
-	/** START SIMULATION */
-	sim.RunSimulation(0.1);
-
 	return 0;
 }
