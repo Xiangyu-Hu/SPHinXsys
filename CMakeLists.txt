@@ -82,6 +82,7 @@ if(NOT WASM_BUILD)
     add_subdirectory(cases_test)
     add_subdirectory(cases_user)
 endif()
+add_subdirectory(cases_high_level_simulation)
 
 if(ACTIVATE_CUDA)
     add_subdirectory(cases_test_gpu)
