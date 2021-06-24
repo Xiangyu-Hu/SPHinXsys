@@ -41,5 +41,5 @@ jobs:
           cd build 
           cmake .. 
           make -j$(nproc)
-          ctest
+          ctest -R "test_2d_owsc" --output-on-failure
         # ctest -E "test_2d_owsc"
