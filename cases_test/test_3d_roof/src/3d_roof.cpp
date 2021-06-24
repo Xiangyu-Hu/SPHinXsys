@@ -249,7 +249,6 @@ int main()
 			ite++;
 			integeral_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
-			Real check_time = GlobalStaticVariables::physical_time_;
 
 		}
 		write_cylinder_max_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
