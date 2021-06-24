@@ -126,7 +126,6 @@ namespace SPH
 
 				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
 				StdLargeVec<Vecd>& vel_n_k = *(contact_vel_n_[k]);
-				Solid* solid_k = contact_material_[k];
 
 				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -184,7 +183,6 @@ namespace SPH
 				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
 				StdLargeVec<Vecd>& n_k = *(contact_n_[k]);
 				StdLargeVec<Vecd>& vel_n_k = *(contact_vel_n_[k]);
-				Solid* solid_k = contact_material_[k];
 
 				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -378,7 +376,7 @@ namespace SPH
 		{
 			// calculate total mass
 			total_mass_ = 0.0;
-			for (int i = 0; i < particles_->mass_.size(); i++)
+			for (size_t i = 0; i < particles_->mass_.size(); i++)
 			{
 				total_mass_ += particles_->mass_[i];
 			}
