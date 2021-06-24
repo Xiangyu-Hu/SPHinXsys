@@ -17,6 +17,7 @@ using GravityPair = pair<int, Vec3d>;
 using AccelTuple = tuple<int, BoundingBox, Vec3d>;
 using SpringDamperTuple = tuple<int, Vec3d, Real>;
 using PositionSolidBodyTuple = tuple<int, Real, Real, Vec3d>;
+using PositionScaleSolidBodyTuple = tuple<int, Real, Real, Real>;
 
 class BodyPartByParticleTriMesh : public BodyPartByParticle
 {
@@ -90,6 +91,7 @@ public:
 	vector<SpringDamperTuple> spring_damper_tuple_;
 	vector<int> body_indeces_fixed_constraint_;
 	vector<PositionSolidBodyTuple> position_solid_body_tuple_;
+	vector<PositionScaleSolidBodyTuple> position_scale_solid_body_tuple_;
 
 	StructuralSimulationInput(
 		string relative_input_path,
@@ -148,6 +150,9 @@ class StructuralSimulation
 		// for PositionSolidBody
 		vector<solid_dynamics::PositionSolidBody*> position_solid_body_;
 		vector<PositionSolidBodyTuple> position_solid_body_tuple_;
+		// for PositionScaleSolidBody
+		vector<solid_dynamics::PositionScaleSolidBody*> position_scale_solid_body_;
+		vector<PositionScaleSolidBodyTuple> position_scale_solid_body_tuple_;
 		
 		// for constructor, the order is important
 		void ScaleTranslationAndResolution();
@@ -165,6 +170,7 @@ class StructuralSimulation
 		void InitializeSpringDamperConstraintParticleWise();
 		void InitializeConstrainSolidBodyRegion();
 		void InitializePositionSolidBody();
+		void InitializePositionScaleSolidBody();
 
 		// for RunSimulation, the order is important
 		void ExecuteCorrectConfiguration();
@@ -176,6 +182,7 @@ class StructuralSimulation
 		void ExecuteStressRelaxationFirstHalf(Real dt);
 		void ExecuteConstrainSolidBodyRegion();
 		void ExecutePositionSolidBody(Real dt);
+		void ExecutePositionScaleSolidBody(Real dt);
 		void ExecuteDamping(Real dt);
 		void ExecuteStressRelaxationSecondHalf(Real dt);
 		void ExecuteUpdateCellLinkedList();
