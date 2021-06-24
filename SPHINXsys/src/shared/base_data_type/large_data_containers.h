@@ -23,7 +23,17 @@
 #ifndef SPHINXSYS_BASE_CONTAINER_H
 #define SPHINXSYS_BASE_CONTAINER_H
 
-#include "tbb_middle.h"
+#include "tbb/tbb.h"
+#include "tbb/blocked_range.h"
+#include "tbb/blocked_range2d.h"
+#include "tbb/blocked_range3d.h"
+#include "tbb/parallel_for.h"
+#include "tbb/parallel_reduce.h"
+#include "tbb/tick_count.h"
+#include "tbb/scalable_allocator.h"
+#include "tbb/concurrent_unordered_set.h"
+#include "tbb/concurrent_vector.h"
+#include "tbb/cache_aligned_allocator.h"
 
 #include <array>
 

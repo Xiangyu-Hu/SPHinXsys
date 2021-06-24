@@ -49,6 +49,8 @@ else(MSVC)
     ENDIF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 
 endif(MSVC)
+add_compile_definitions(TBB_SUPPRESS_DEPRECATED_MESSAGES=1)
+
 message("===========================================")
 message("${PROJECT_NAME}, VERSION ${PROJECT_VERSION}")
 message("Cmake build type: ${CMAKE_BUILD_TYPE}")
