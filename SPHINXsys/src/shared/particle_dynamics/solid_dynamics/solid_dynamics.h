@@ -151,6 +151,8 @@ namespace SPH
 		public:
 			PositionSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real end_time_position, Vecd pos_end_center);
 			virtual ~PositionSolidBody() {};
+			StdLargeVec<Vecd>& GetParticlePos0(){ return pos_0_; };
+			StdLargeVec<Vecd>& GetParticlePosN(){ return pos_n_; };
 		protected:
 			StdLargeVec<Vecd>& pos_n_, &pos_0_;
 			StdLargeVec<Vecd>& vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;

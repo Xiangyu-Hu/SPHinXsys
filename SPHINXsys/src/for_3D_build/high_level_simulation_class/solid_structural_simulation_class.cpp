@@ -229,6 +229,7 @@ StructuralSimulation::~StructuralSimulation()
 
 void StructuralSimulation::ScaleTranslationAndResolution()
 {
+	// scale the translation_list_, default_resolution_and resolution_list_
 	for (unsigned int i = 0; i < translation_list_.size(); i++)
 	{
 		translation_list_[i] *= scale_stl_;

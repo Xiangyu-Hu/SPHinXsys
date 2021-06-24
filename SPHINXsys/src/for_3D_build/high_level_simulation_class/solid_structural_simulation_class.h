@@ -121,7 +121,6 @@ class StructuralSimulation
 		In_Output in_output_;
 
 		vector<TriangleMeshShape> body_mesh_list_;
-		vector<TriangleMeshShape> primitive_shape_list_;
 
 		vector<SolidBodyForSimulation*> solid_body_list_;
 

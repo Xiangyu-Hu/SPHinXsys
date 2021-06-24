@@ -165,26 +165,23 @@ namespace SPH
 		//=================================================================================================//
 		Vecd PositionSolidBody::getDisplacement()
 		{
-			Vecd displacement(Vecd(0)); // displacement from the initial position
-			if (GlobalStaticVariables::physical_time_ >= end_time_position_)
-			{
-				displacement = pos_end_center_ - pos_0_center_;
-			}
-			else
-			{
-				displacement = (pos_end_center_ - pos_0_center_) * GlobalStaticVariables::physical_time_ / (end_time_position_);
-			}
+			// displacement from the initial position
+			Vecd displacement = (pos_end_center_ - pos_0_center_) * GlobalStaticVariables::physical_time_ / (end_time_position_);
 			return displacement;
 		}
 		//=================================================================================================//
 		void PositionSolidBody::Update(size_t index_i, Real dt)
 		{
-			pos_n_[index_i] = pos_0_[index_i] + getDisplacement(); // displacement from the initial position
-			vel_n_[index_i] = getVelocity();
-			dvel_dt_[index_i] = getAcceleration();
-			/** the average values are prescirbed also. */
-			vel_ave_[index_i] = vel_n_[index_i];
-			dvel_dt_ave_[index_i] = dvel_dt_[index_i];
+			// only apply in the defined time period
+			if (GlobalStaticVariables::physical_time_ <= end_time_position_)
+			{
+				pos_n_[index_i] = pos_0_[index_i] + getDisplacement(); // displacement from the initial position
+				vel_n_[index_i] = getVelocity();
+				dvel_dt_[index_i] = getAcceleration();
+				/** the average values are prescirbed also. */
+				vel_ave_[index_i] = vel_n_[index_i];
+				dvel_dt_ave_[index_i] = dvel_dt_[index_i];
+			}
 		}
 		//=================================================================================================//
 		SoftConstrainSolidBodyRegion::
