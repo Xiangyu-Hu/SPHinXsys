@@ -270,7 +270,7 @@ namespace SPH
 							neighboring_ids.push_back(particle_id - 1);
 							neighboring_ids.push_back(particle_id + 1);
 
-							for(int k = 0; k < branches_[branch_idx]->out_edge_.size(); ++k)
+							for(size_t k = 0; k < branches_[branch_idx]->out_edge_.size(); ++k)
 							{
 								child_branch_id = branches_[branch_idx]->out_edge_[k];
 								neighboring_ids.push_back(branches_[child_branch_id]->inner_points_.front());
