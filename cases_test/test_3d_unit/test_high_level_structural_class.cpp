@@ -37,7 +37,7 @@ public:
 	// other
 	vector<TriangleMeshShape> Get_body_mesh_list_(){ return body_mesh_list_; };
 	vector<SolidBodyForSimulation*> Get_solid_body_list_(){ return solid_body_list_; };
-	vector<IndexPair> Get_contacting_bodies_list_(){ return contacting_bodies_list_; };
+	vector<array<int, 2>> Get_contacting_bodies_list_(){ return contacting_bodies_list_; };
 	vector<SolidContactBodyRelation*> Get_contact_list_(){ return contact_list_; };
 	vector<solid_dynamics::ContactDensitySummation*> Get_contact_density_list_(){ return contact_density_list_; };
 	vector<solid_dynamics::ContactForce*> Get_contact_force_list_(){ return contact_force_list_; };

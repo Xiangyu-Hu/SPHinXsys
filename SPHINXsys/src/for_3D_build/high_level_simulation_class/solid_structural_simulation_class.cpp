@@ -141,21 +141,21 @@ StructuralSimulationInput::StructuralSimulationInput(
 /* StructuralSimulation members */
 ///////////////////////////////////////
 
-StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input):
+StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	// generic input
-	relative_input_path_(input->relative_input_path_),
-	imported_stl_list_(input->imported_stl_list_),
-	scale_stl_(input->scale_stl_),
-	translation_list_(input->translation_list_),
+	relative_input_path_(input.relative_input_path_),
+	imported_stl_list_(input.imported_stl_list_),
+	scale_stl_(input.scale_stl_),
+	translation_list_(input.translation_list_),
 	default_resolution_(0.0),
-	resolution_list_(input->resolution_list_),
-	material_model_list_(input->material_model_list_),
-	physical_viscosity_(input->physical_viscosity_),
+	resolution_list_(input.resolution_list_),
+	material_model_list_(input.material_model_list_),
+	physical_viscosity_(input.physical_viscosity_),
 	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), default_resolution_)),
 	in_output_(In_Output(system_)),
-	contacting_bodies_list_(input->contacting_bodies_list_),
+	contacting_bodies_list_(input.contacting_bodies_list_),
 	// particle relaxation
-	particle_relaxation_(input->particle_relaxation_),
+	particle_relaxation_(input.particle_relaxation_),
 
 	// optional: scale_system_boundaries
 	scale_system_boundaries_(input.scale_system_boundaries_),
