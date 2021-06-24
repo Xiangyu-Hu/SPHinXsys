@@ -16,7 +16,7 @@ using namespace std;
 using GravityPair = pair<int, Vec3d>;
 using AccelTuple = tuple<int, BoundingBox, Vec3d>;
 using SpringDamperTuple = tuple<int, Vec3d, Real>;
-using PositionSolidBodyTuple = tuple<int, Real, Vec3d>;
+using PositionSolidBodyTuple = tuple<int, Real, Real, Vec3d>;
 
 class BodyPartByParticleTriMesh : public BodyPartByParticle
 {
@@ -175,7 +175,7 @@ class StructuralSimulation
 		void ExecuteContactForce();
 		void ExecuteStressRelaxationFirstHalf(Real dt);
 		void ExecuteConstrainSolidBodyRegion();
-		void ExecutePositionSolidBody();
+		void ExecutePositionSolidBody(Real dt);
 		void ExecuteDamping(Real dt);
 		void ExecuteStressRelaxationSecondHalf(Real dt);
 		void ExecuteUpdateCellLinkedList();

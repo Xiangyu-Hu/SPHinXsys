@@ -403,10 +403,11 @@ void StructuralSimulation::InitializePositionSolidBody()
 	for (unsigned int i = 0; i < position_solid_body_tuple_.size(); i++)
 	{
 		int body_index = get<0>(position_solid_body_tuple_[i]);
-		Real end_time_position = get<1>(position_solid_body_tuple_[i]);
-		Vecd pos_end_center = get<2>(position_solid_body_tuple_[i]);
+		Real start_time = get<1>(position_solid_body_tuple_[i]);
+		Real end_time = get<2>(position_solid_body_tuple_[i]);
+		Vecd pos_end_center = get<3>(position_solid_body_tuple_[i]);
 		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(solid_body_list_[body_index]->GetImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
-		position_solid_body_.push_back(new solid_dynamics::PositionSolidBody(solid_body_list_[body_index]->GetImportedModel(), bp, end_time_position, pos_end_center));
+		position_solid_body_.push_back(new solid_dynamics::PositionSolidBody(solid_body_list_[body_index]->GetImportedModel(), bp, start_time, end_time, pos_end_center));
 	}
 }
 
@@ -474,11 +475,11 @@ void StructuralSimulation::ExecuteConstrainSolidBodyRegion()
 	}
 }
 
-void StructuralSimulation::ExecutePositionSolidBody()
+void StructuralSimulation::ExecutePositionSolidBody(Real dt)
 {
 	for (auto ps : position_solid_body_)
 	{
-		ps->parallel_exec();
+		ps->parallel_exec(dt);
 	}
 }
 
@@ -530,10 +531,10 @@ void StructuralSimulation::RunSimulationStep(int &ite, Real &dt, Real &integrati
 	/** STRESS RELAXATOIN, DAMPING, PASSIVE CONSTRAINTS */
 	ExecuteStressRelaxationFirstHalf(dt);
 	ExecuteConstrainSolidBodyRegion();
-	ExecutePositionSolidBody();
+	ExecutePositionSolidBody(dt);
 	ExecuteDamping(dt);
 	ExecuteConstrainSolidBodyRegion();
-	ExecutePositionSolidBody();
+	ExecutePositionSolidBody(dt);
 	ExecuteStressRelaxationSecondHalf(dt);
 	
 	/** UPDATE TIME STEP SIZE, INCREMENT */

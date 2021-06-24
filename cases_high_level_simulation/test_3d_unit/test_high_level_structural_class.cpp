@@ -90,7 +90,8 @@ TEST(StructuralSimulation, StructuralSimulation)
 	};
 	Real scale_system_bounds = 10;
 	input.scale_system_boundaries_ = scale_system_bounds;
-	input.position_solid_body_tuple_ = { PositionSolidBodyTuple(0, end_time, final_position_center ) };
+	input.position_solid_body_tuple_ = { PositionSolidBodyTuple(0, 0.0, end_time * 0.75, final_position_center ),
+											PositionSolidBodyTuple(0, end_time * 0.75, end_time, final_position_center ) };
 	//=================================================================================================//
 
 	//=================================================================================================//
@@ -130,8 +131,8 @@ TEST(StructuralSimulation, StructuralSimulation)
 	EXPECT_EQ(sim.Get_contact_force_list_().size(), 0);
 	//=================================================================================================//
 	// test Boundary Conditions
-	EXPECT_EQ(sim.Get_position_solid_body_().size(), number_of_bodies);
-	EXPECT_EQ(sim.Get_position_solid_body_tuple_().size(), number_of_bodies);
+	EXPECT_EQ(sim.Get_position_solid_body_().size(), 2);
+	EXPECT_EQ(sim.Get_position_solid_body_tuple_().size(), 2);
 	//=================================================================================================//
 
 	//=================================================================================================//
@@ -145,7 +146,7 @@ TEST(StructuralSimulation, StructuralSimulation)
 		for (int i = 0; i < 3; i++)
 		{
 			Vecd displ = pos_n[index] - pos_0[index];
-			EXPECT_NEAR(displ[i], final_position_center[i], final_position_center.norm() * 1e-2);
+			EXPECT_NEAR(displ[i], final_position_center[i], final_position_center.norm() * tolerance);
 		}
 	}
 	//=================================================================================================//

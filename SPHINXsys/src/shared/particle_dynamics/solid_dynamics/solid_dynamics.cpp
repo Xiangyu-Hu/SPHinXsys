@@ -276,30 +276,32 @@ namespace SPH
 		}
 		//=================================================================================================//
 		PositionSolidBody::
-			PositionSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real end_time_position, Vecd pos_end_center) :
+			PositionSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd pos_end_center):
 			PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
 			pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
 			vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
 			vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
-			end_time_position_(end_time_position), pos_end_center_(pos_end_center)
+			start_time_(start_time), end_time_(end_time), pos_end_center_(pos_end_center)
 		{
 			BoundingBox bounds = body->findBodyDomainBounds();
 			pos_0_center_ = (bounds.first + bounds.second) * 0.5;
+			translation_ = pos_end_center_ - pos_0_center_;
 		}
 		//=================================================================================================//
-		Vecd PositionSolidBody::getDisplacement()
+		Vecd PositionSolidBody::getDisplacement(size_t index_i, Real dt)
 		{
 			// displacement from the initial position
-			Vecd displacement = (pos_end_center_ - pos_0_center_) * GlobalStaticVariables::physical_time_ / (end_time_position_);
+			Vecd pos_final = pos_0_[index_i] + translation_;
+			Vecd displacement = (pos_final - pos_n_[index_i]) * dt / (end_time_ - GlobalStaticVariables::physical_time_);
 			return displacement;
 		}
 		//=================================================================================================//
 		void PositionSolidBody::Update(size_t index_i, Real dt)
 		{
 			// only apply in the defined time period
-			if (GlobalStaticVariables::physical_time_ <= end_time_position_)
+			if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
 			{
-				pos_n_[index_i] = pos_0_[index_i] + getDisplacement(); // displacement from the initial position
+				pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
 				vel_n_[index_i] = getVelocity();
 				dvel_dt_[index_i] = getAcceleration();
 				/** the average values are prescirbed also. */
