@@ -46,7 +46,7 @@ public:
 				cos(50.0 / 180.0 * Pi + (i + 0.5 - BWD) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
 			Real y = radius_mid_surface * 
 				sin(50.0 / 180.0 * Pi + (i + 0.5 - BWD) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
-			body_input_points_volumes_.push_back(std::make_pair(Vecd(x, y), particle_spacing_ref * thickness));
+			body_input_points_volumes_.push_back(std::make_pair(Vecd(x, y), particle_spacing_ref));
 		}
 	}
 };
@@ -129,10 +129,9 @@ class CylinderMaterial : public LinearElasticSolid
 public:
 	CylinderMaterial() : LinearElasticSolid()
 	{
-		rho_0_ = rho0_s;
-		E_0_ = Youngs_modulus;
-		nu_ = poisson;
-		eta_0_ = physical_viscosity;
+		rho0_ = rho0_s;
+		youngs_modulus_ = Youngs_modulus;
+		poisson_ratio_ = poisson;
 
 		assignDerivedMaterialParameters();
 	}

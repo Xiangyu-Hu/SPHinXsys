@@ -26,7 +26,7 @@ namespace SPH
 					size_t index_i = get_particle_index(num);
 					Vecd& particle_position = pos_n[index_i];
 					int search_range = get_search_range(index_i);
-					Vecu target_cell_index = GridIndexFromPosition(particle_position);
+					Vecu target_cell_index = CellIndexFromPosition(particle_position);
 					int i = (int)target_cell_index[0];
 					int j = (int)target_cell_index[1];
 					int k = (int)target_cell_index[2];
@@ -60,7 +60,7 @@ namespace SPH
 					size_t index_i = get_particle_index(num);
 					Vecd& particle_position = pos_n[index_i];
 					int search_range = get_search_range(index_i);
-					Vecu target_cell_index = GridIndexFromPosition(particle_position);
+					Vecu target_cell_index = CellIndexFromPosition(particle_position);
 					int i = (int)target_cell_index[0];
 					int j = (int)target_cell_index[1];
 					int k = (int)target_cell_index[2];

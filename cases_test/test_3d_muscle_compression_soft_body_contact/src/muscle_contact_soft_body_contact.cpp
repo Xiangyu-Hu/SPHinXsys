@@ -1,6 +1,7 @@
 /**
  * @file 	muscle_contact_soft_body_contact.cpp
- * @brief 	This is the test for muscle compression with our new contact model. Different particle resolutions are used for the two soft bodies that are in contact.
+ * @brief 	This is the test for muscle compression with our new contact model. 
+ * Different particle resolutions are used for the two soft bodies that are in contact.
  * @author 	Chi Zhang and Xiangyu Hu, Bence Rochlitz
  */
 #include "sphinxsys.h"
@@ -70,8 +71,8 @@ public:
 class MovingPlate : public SolidBody
 {
 public:
-	MovingPlate(SPHSystem &system, std::string body_name, Real resolution_ref)
-		: SolidBody(system, body_name, resolution_ref)
+	MovingPlate(SPHSystem &system, std::string body_name)
+		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1))
 	{
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addTriangleMeshShape(CreateMovingPlate(), ShapeBooleanOps::add);
@@ -112,10 +113,9 @@ class MyocardiumMuscle : public NeoHookeanSolid
 public:
 	MyocardiumMuscle() : NeoHookeanSolid()
 	{
-		rho_0_ 	= rho_0;
-		E_0_ = Youngs_modulus;
-		nu_ = poisson;
-		eta_0_ = physical_viscosity;
+		rho0_ 	= rho_0;
+		youngs_modulus_ = Youngs_modulus;
+		poisson_ratio_ = poisson;
 
 		assignDerivedMaterialParameters();
 	}
@@ -128,9 +128,10 @@ class MovingPlateMaterial : public LinearElasticSolid
 public:
 	MovingPlateMaterial() : LinearElasticSolid()
 	{
-		rho_0_ = rho_0;
-		E_0_ = Youngs_modulus;
-		nu_ = poisson;
+		rho0_ = rho_0;
+		youngs_modulus_ = Youngs_modulus;
+		poisson_ratio_ = poisson;
+
 		assignDerivedMaterialParameters();
 	}
 };
@@ -146,7 +147,7 @@ int main()
 	MyocardiumMuscle 	*muscle_material = new MyocardiumMuscle();
 	ElasticSolidParticles 	myocardium_particles(myocardium_body, muscle_material);
 	/** Plate. */
-	MovingPlate *moving_plate = new MovingPlate(system, "MovingPlate", resolution_ref);
+	MovingPlate *moving_plate = new MovingPlate(system, "MovingPlate");
 	MovingPlateMaterial* moving_plate_material = new MovingPlateMaterial();
 	ElasticSolidParticles 	moving_plate_particles(moving_plate, moving_plate_material);
 	/** topology */

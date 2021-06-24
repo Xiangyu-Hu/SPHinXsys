@@ -54,7 +54,7 @@ namespace SPH
 		InitializeATimeStep(SPHBody* body, Gravity* gravity = new Gravity(Vecd(0)));
 		virtual ~InitializeATimeStep() {};
 	protected:
-		StdLargeVec<Vecd>& pos_n_,& dvel_dt_others_;
+		StdLargeVec<Vecd>& pos_n_,& dvel_dt_prior_;
 		Gravity* gravity_;
 		virtual void setupDynamics(Real dt = 0.0) override;
 		virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -482,6 +482,23 @@ namespace SPH
 		{
 			return mass_[index_i] * this->variable_[index_i];
 		};
+	};
+
+	/**
+	 * @class TotalMechanicalEnergy
+	 * @brief Compute the total mechanical (kinematic and potential) energy
+	 */
+	class TotalMechanicalEnergy
+		: public ParticleDynamicsReduce<Real, ReduceSum<Real>>, public GeneralDataDelegateSimple
+	{
+	public:
+		explicit TotalMechanicalEnergy(SPHBody* body, Gravity* gravity);
+		virtual ~TotalMechanicalEnergy() {};
+	protected:
+		StdLargeVec<Real>& mass_;
+		StdLargeVec<Vecd>& vel_n_, & pos_n_;
+		Gravity* gravity_;
+		Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 	};
 }
 #endif //GENERAL_DYNAMICS_H

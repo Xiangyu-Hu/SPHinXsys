@@ -20,13 +20,6 @@ namespace SPH {
 		sph_system_.addASolidBody(this);
 	}
 	//=================================================================================================//
-	SolidBody::SolidBody(SPHSystem &system, std::string body_name,  Real sph_body_resolution_ref,
-		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
-		: RealBody(system, body_name, sph_body_resolution_ref, particle_adaptation, particle_generator)
-	{
-		sph_system_.addASolidBody(this);
-	}
-	//=================================================================================================//
 	ThinStructure::ThinStructure(SPHSystem& system, std::string body_name,
 		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
 		: SolidBody(system, body_name, particle_adaptation, particle_generator)

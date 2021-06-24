@@ -50,69 +50,92 @@ namespace SPH {
 	class ElasticSolid : public Solid
 	{
 	protected:
-		Real eta_0_; 		/*> physical viscosity */
-		Real c_0_; 			/*> speed of sound */
-		Real lambda_0_; 	/*> First Lame parameter */
+		Real c0_; 			/*< sound wave speed */
+		Real ct0_; 			/*< tensile wave speed */
+		Real cs0_;			/*< shear wave speed */
+		Real E0_; 			/*< Youngs or tensile modules  */
+		Real G0_; 			/*< shearmodules  */
+		Real K0_; 			/*< bulkmodules  */
+		Real nu_; 			/*< Poisson ratio  */
 		ElasticSolidParticles* elastic_particles_;
 
-		virtual void setSoundSpeed() = 0;
-		virtual void setLambda() = 0;
-		void setContactStiffness() { contact_stiffness_ = c_0_* c_0_; };
+		virtual void setSoundWaveSpeed() = 0;
+		virtual void setTensileWaveSpeed() = 0;
+		virtual void setShearWaveSpeed() = 0;
+		virtual void setYoungsModulus() = 0;
+		virtual void setShearModulus() = 0;
+		virtual void setBulkModulus() = 0;
+		virtual void setPoissonRatio() = 0;
+		void setContactStiffness() { contact_stiffness_ = c0_* c0_; };
+
+		virtual void assignDerivedMaterialParameters() override;
 	public:
-		ElasticSolid() : 
-		Solid(), eta_0_(0.0), c_0_(1.0), lambda_0_(0.375), elastic_particles_(NULL) {};
+		ElasticSolid() : Solid(), c0_(1.0), ct0_(1.0), cs0_(0.0717), 
+			E0_(1.0), G0_(0.5), K0_(1.0), nu_(0.0), elastic_particles_(NULL) {};
 		virtual ~ElasticSolid() {};
 
 		virtual void assignElasticSolidParticles(ElasticSolidParticles* elastic_particles);
-		Real ReferenceSoundSpeed() { return c_0_; };
-		Real PhysicalViscosity() { return eta_0_; };
+		Real SoundWaveSpeed() { return c0_; };
+		Real TensileWaveSpeed() { return ct0_; };
+		Real ShearWaveSpeed() { return cs0_; };
+		Real YoungsModulus() { return E0_; };
+		Real ShearModulus() { return G0_; };
+		Real BulkModulus() { return K0_; };
+		Real PoissonRatio() { return nu_; };
 
-		virtual Real ViscousTimeStepSize(Real smoothing_length);
+		/** compute the stress through defoemation, which can be green-lagrangian tensor, left or right cauchy tensor. */
+		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) = 0;
+		//TODO: the NumericalViscosity and NumericalDampingStress to be delete after shell model done.
 		virtual Real NumericalViscosity(Real smoothing_length);
-		/** compute the stress through Constitutive relation. */
-		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) = 0;
-		/** Compute physical and numerical damping stress. */
-		virtual Matd NumericalDampingStress(Matd& deform_grad, 
-			Matd& deform_grad_rate, Real numerical_viscosity, size_t particle_index_i);
-		virtual Real YoungsModulus() = 0;
-		virtual Real PoissonRatio() = 0;
-	
+		/** Compute numerical damping stress. */
+		virtual Matd NumericalDampingStress(Matd& deformation, Matd& deformation_rate, Real smoothing_length, size_t particle_index_i);
+		/** numerical demaping is computed between particles i and j */
+		virtual Real NumericalDamping(Real dE_dt_ij, Real smoothing_length);
+
 		virtual ElasticSolid* ThisObjectPtr() override {return this;};
 	};
 
 	/**
 	* @class LinearElasticSolid
-	* @brief Isotropic linear elastic solid
+	* @brief Isotropic linear elastic solid.
+	* Note that only basic parameters are used to set ElasticSolid parmaters 
 	*/
 	class LinearElasticSolid : public ElasticSolid
 	{
-	protected:
-		Real E_0_;	/*> Youngs modulus */
-		Real nu_;	/*> poisson ratio */
-		Real G_0_;  /*>Second Lame parameter, shear modulus. Derived material property. */
-
-		virtual void setSoundSpeed() override;
-		virtual void setShearModulus();
-		virtual void setLambda() override;
-		virtual void assignDerivedMaterialParameters() override;
 	public:
-		LinearElasticSolid() : ElasticSolid(),
-			E_0_(1.0), nu_(1.0 / 3.0), G_0_(0.75) {
+		LinearElasticSolid() : ElasticSolid(), youngs_modulus_(1.0), poisson_ratio_(0), lambda0_(1.0)
+		{
 			material_name_ = "LinearElasticSolid";
 		};
 		LinearElasticSolid(Real rho_0, Real Youngs_modulus, Real poisson) : ElasticSolid()
 		{
 			material_name_ = "LinearElasticSolid";
-			rho_0_ 	= rho_0;
-			E_0_ = Youngs_modulus;
-			nu_ = poisson;
+			rho0_ = rho_0;
+			youngs_modulus_ = Youngs_modulus;
+			poisson_ratio_ = poisson;
+
 			assignDerivedMaterialParameters();
 		};
 		virtual ~LinearElasticSolid() {};
 
-		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
-		virtual Real YoungsModulus() override { return E_0_; };
-		virtual Real PoissonRatio()  override { return nu_; };
+		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
+	protected:
+		Real youngs_modulus_; 		/*< Youngs modules as basic inpiut parameter */
+		Real poisson_ratio_; 		/*< Poisson ratio as basic inpiut parameter */
+		Real lambda0_; 				/*< first Lame parameter */
+
+		virtual void setSoundWaveSpeed() override;
+		virtual void setTensileWaveSpeed() override;
+		virtual void setShearWaveSpeed() override;
+		virtual void setYoungsModulus() override { E0_ = youngs_modulus_; };
+		virtual void setShearModulus() override;
+		virtual void setBulkModulus() override;
+		virtual void setPoissonRatio() override { nu_ = poisson_ratio_; };
+		virtual void assignDerivedMaterialParameters() override;
+	private:
+		Real getBulkModulus();
+		Real getShearModulus();
+		Real getLambda();
 	};
 
 	/**
@@ -122,7 +145,8 @@ namespace SPH {
 	class NeoHookeanSolid : public LinearElasticSolid
 	{
 	public:
-		NeoHookeanSolid() : LinearElasticSolid() {
+		NeoHookeanSolid() : LinearElasticSolid() 
+		{
 			material_name_ = "NeoHookeanSolid";
 		};
 		NeoHookeanSolid(Real rho_0, Real Youngs_modulus, Real poisson)
@@ -132,7 +156,8 @@ namespace SPH {
 		};
 		virtual ~NeoHookeanSolid() {};
 	
-		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
+		/** second Piola-Kirchhoff stress related with green-lagrangian defomeation tensor */
+		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
 	};
 
 	/**
@@ -142,13 +167,13 @@ namespace SPH {
 	class FeneNeoHookeanSolid : public LinearElasticSolid
 	{
 	protected:
-		Real j1_m_; /**< reference extension */
+		Real j1_m_; /**< reference extension as basic paramter */
 	public:
 		FeneNeoHookeanSolid() : LinearElasticSolid(), j1_m_(1.0) {
 			material_name_ = "FeneNeoHookeanSolid";
 		};
 		virtual ~FeneNeoHookeanSolid() {};
-		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
+		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
 	};
 
 	/**
@@ -157,30 +182,40 @@ namespace SPH {
 	*/
 	class Muscle : public ElasticSolid
 	{
-	protected:
-		Vecd f0_, s0_; 				/**< Reference fiber and sheet directions. */
-		Matd f0f0_, s0s0_, f0s0_;	/**< Tensor products of fiber and sheet directions. */
-		Real a_0_[4], b_0_[4]; 		/**< constitutive parameters */
-		Real bulk_modulus_;			/**< to achieve weakly compressible condition */
-
-		virtual void setSoundSpeed() override;
-		virtual void setLambda() override;
-		virtual void assignDerivedMaterialParameters() override;
 	public:
 		Muscle() : ElasticSolid(),
 			f0_(0), s0_(0), f0f0_(0), s0s0_(0), f0s0_(0),
-			a_0_{1.0, 0.0, 0.0, 0.0 }, b_0_{1.0, 0.0, 0.0, 0.0 }, bulk_modulus_(30.0) {
+			a0_{ 1.0, 0.0, 0.0, 0.0 }, b0_{ 1.0, 0.0, 0.0, 0.0 }, bulk_modulus_(30.0)
+		{
 			material_name_ = "Muscle";
 		};
 		virtual ~Muscle() {};
 
 		virtual Matd MuscleFiberDirection(size_t particle_index_i) { return f0f0_; };
 		/** compute the stress through Constitutive relation. */
-		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
+		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
 
-		virtual Real YoungsModulus() override;
-		virtual Real PoissonRatio()  override;
-		virtual Muscle* ThisObjectPtr() override {return this;};
+		virtual Muscle* ThisObjectPtr() override { return this; };
+	protected:
+		Vecd f0_, s0_; 				/**< Reference fiber and sheet directions as basic parameter. */
+		Matd f0f0_, s0s0_, f0s0_;	/**< Tensor products of fiber and sheet directions as basic parameter.. */
+		Real a0_[4], b0_[4]; 		/**< constitutive parameters  as basic parameter.*/
+		Real bulk_modulus_;			/**< to achieve weakly compressible condition  as basic parameter.*/
+		Real lambda0_; 				/*< first Lame parameter */
+
+		virtual void setSoundWaveSpeed() override;
+		virtual void setTensileWaveSpeed() override;
+		virtual void setShearWaveSpeed() override;
+		virtual void setYoungsModulus() override;
+		virtual void setShearModulus() override;
+		virtual void setBulkModulus() override { K0_ = bulk_modulus_; };
+		virtual void setPoissonRatio() override;
+		virtual void assignDerivedMaterialParameters() override;
+	private:
+		Real getPoissonRatio();
+		Real getShearModulus();
+		Real getYoungsModulus();
+		Real getLambda();
 	};
 
 	/**
@@ -215,7 +250,7 @@ namespace SPH {
 		virtual void assignElasticSolidParticles(ElasticSolidParticles* elastic_particles) override;
 		virtual Matd MuscleFiberDirection(size_t particle_index_i) override { return local_f0f0_[particle_index_i]; };
 		/** Compute the stress through Constitutive relation. */
-		virtual Matd ConstitutiveRelation(Matd& deform_grad, size_t particle_index_i) override;
+		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
 		virtual void readFromXmlForLocalParameters(std::string &filefullpath) override;
 	};
 }

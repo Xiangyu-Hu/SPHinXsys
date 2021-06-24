@@ -62,27 +62,10 @@ namespace SPH {
 	/** Pair of point and volume. */
 	using PositionsAndVolumes = StdVec<std::pair<Vecd, Real>>;
 
-	/** register a variable to generalized particle data and particle map */
-	template<int DataTypeIndex, typename VariableType>
-	void registerAVariableToParticleData(ParticleData& particle_data, 
-		ParticleDataMap& particle_map, StdLargeVec<VariableType>& variable_addrs, std::string variable_name)
-	{
-		if (particle_map[DataTypeIndex].find(variable_name) == particle_map[DataTypeIndex].end())
-		{
-			std::get<DataTypeIndex>(particle_data).push_back(&variable_addrs);
-			particle_map[DataTypeIndex].insert(make_pair(variable_name, std::get<DataTypeIndex>(particle_data).size() - 1));
-		}
-		else
-		{
-			std::cout << "\n Error: the variable '" << variable_name << "' has already been registered!" << std::endl;
-			exit(1);
-		}
-	};
-
 	/** loop particle data with operations */
-	template<template<int DataTypeIndex, typename VariableType> typename OperationType, 
+	template<template<int DataTypeIndex, typename VariableType> typename OperationType,
 		typename... ParticleArgs>
-	void loopParticleData(ParticleData& particle_data, ParticleArgs... particle_args)
+		void loopParticleData(ParticleData& particle_data, ParticleArgs... particle_args)
 	{
 		OperationType<indexScalar, Real>	scalar_operation;
 		OperationType<indexVector, Vecd>	vector_operation;
@@ -95,21 +78,38 @@ namespace SPH {
 		integer_operation(particle_data, particle_args...);
 	};
 
-		/** operation by looping or going through a particle data map */
-		template<int DataTypeIndex, typename VariableType>
-		struct loopParticleDataMap
+	/** operation by looping or going through a particle data map */
+	template<int DataTypeIndex, typename VariableType>
+	struct loopParticleDataMap
+	{
+		template<typename VariableOperation>
+		void operator () (ParticleData& particle_data,
+			ParticleDataMap& particle_data_map, VariableOperation& variable_operation) const
 		{
-			template<typename VariableOperation>
-			void operator () (ParticleData& particle_data,
-				ParticleDataMap& particle_data_map, VariableOperation& variable_operation) const
+			for (auto const& name_index : particle_data_map[DataTypeIndex])
 			{
-				for (auto const& name_index : particle_data_map[DataTypeIndex])
-				{
-					std::string variable_name = name_index.first;
-					StdLargeVec<VariableType>& variable = *(std::get<DataTypeIndex>(particle_data)[name_index.second]);
-					variable_operation(variable_name, variable);
-				}
-			};
+				std::string variable_name = name_index.first;
+				StdLargeVec<VariableType>& variable = *(std::get<DataTypeIndex>(particle_data)[name_index.second]);
+				variable_operation(variable_name, variable);
+			}
 		};
+	};
+
+	/** operation by looping or going through a variable name list */
+	template<int DataTypeIndex, typename VariableType>
+	struct loopVariabaleNameList
+	{
+		template<typename VariableOperation>
+		void operator () (ParticleData& particle_data,
+			ParticleVariableList& variable_name_list, VariableOperation& variable_operation) const
+		{
+			for (std::pair<std::string, size_t>& name_index : variable_name_list[DataTypeIndex])
+			{
+				std::string variable_name = name_index.first;
+				StdLargeVec<VariableType>& variable = *(std::get<DataTypeIndex>(particle_data)[name_index.second]);
+				variable_operation(variable_name, variable);
+			}
+		};
+	};
 }
 #endif //SPH_DATA_CONTAINERS_H

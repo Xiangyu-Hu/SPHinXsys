@@ -8,6 +8,7 @@
 #include "sph_system.h"
 #include "in_output.h"
 #include "base_particles.h"
+#include "base_particle_generator.h"
 #include "mesh_cell_linked_list.h"
 #include "geometry_level_set.h"
 
@@ -17,21 +18,10 @@ namespace SPH
 	//=================================================================================================//
 	SPHBody::SPHBody(SPHSystem &sph_system, std::string body_name,
 		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator) :
-		sph_system_(sph_system), body_name_(body_name), sph_body_resolution_ref_(sph_system.resolution_ref_), newly_updated_(true),
+		sph_system_(sph_system), body_name_(body_name), newly_updated_(true),
 		body_domain_bounds_(0, 0), prescribed_body_bounds_(false),
 		particle_adaptation_(particle_adaptation), particle_generator_(particle_generator),
 		body_shape_(NULL)
-	{	
-		sph_system_.addABody(this);
-		particle_adaptation_->initialize(this);
-	}
-	//=================================================================================================//
-	SPHBody::SPHBody(SPHSystem &sph_system, std::string body_name, Real sph_body_resolution_ref,
-		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator) :
-		sph_system_(sph_system), body_name_(body_name), sph_body_resolution_ref_(sph_body_resolution_ref), newly_updated_(true),
-		body_domain_bounds_(0, 0), prescribed_body_bounds_(false),
-		particle_adaptation_(particle_adaptation), particle_generator_(particle_generator),
-		body_shape_(NULL), tree_(NULL)
 	{	
 		sph_system_.addABody(this);
 		particle_adaptation_->initialize(this);
@@ -50,6 +40,12 @@ namespace SPH
 	SPHSystem& SPHBody::getSPHSystem()
 	{
 		return sph_system_;
+	}
+	//=================================================================================================//
+	void SPHBody::useParticleGeneratorReload()
+	{
+		particle_generator_->~ParticleGenerator();
+		particle_generator_ = new ParticleGeneratorReload(sph_system_.in_output_, body_name_);
 	}
 	//=================================================================================================//
 	void SPHBody::assignBaseParticles(BaseParticles* base_particles)
@@ -112,17 +108,6 @@ namespace SPH
 	RealBody::RealBody(SPHSystem &sph_system, std::string body_name,
 		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator) : 
 		SPHBody(sph_system, body_name, particle_adaptation, particle_generator),
-		particle_sorting_(this)
-	{
-		sph_system.addARealBody(this);
-		mesh_cell_linked_list_ = particle_adaptation_->createMeshCellLinkedList();
-		size_t number_of_split_cell_lists = powerN(3, Vecd(0).size());
-		split_cell_lists_.resize(number_of_split_cell_lists);
-	}
-	//=================================================================================================//
-	RealBody::RealBody(SPHSystem &sph_system, std::string body_name, Real sph_body_resolution_ref,
-		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator) : 
-		SPHBody(sph_system, body_name, sph_body_resolution_ref, particle_adaptation, particle_generator),
 		particle_sorting_(this)
 	{
 		sph_system.addARealBody(this);

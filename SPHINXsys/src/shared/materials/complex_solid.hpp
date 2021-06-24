@@ -32,9 +32,9 @@ namespace SPH {
 	}
   	//=============================================================================================//
 	template<class MuscleType>
-    Matd ActiveMuscle<MuscleType>::ConstitutiveRelation(Matd& deform_grad, size_t index_i)
+    Matd ActiveMuscle<MuscleType>::ConstitutiveRelation(Matd& deformation, size_t index_i)
 	{
-		return MuscleType::ConstitutiveRelation(deform_grad, index_i) + 
+		return MuscleType::ConstitutiveRelation(deformation, index_i) + 
 			active_muscle_particles_->active_contraction_stress_[index_i] * MuscleType::MuscleFiberDirection(index_i);
 	}
   //=============================================================================================//

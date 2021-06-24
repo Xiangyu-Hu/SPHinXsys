@@ -24,7 +24,7 @@ namespace SPH
     	void BasePressureRelaxationInner<RiemannSolverType>::Interaction(size_t index_i, Real dt)
 		{
 			FluidState state_i(rho_n_[index_i], vel_n_[index_i], p_[index_i]);
-			Vecd acceleration = dvel_dt_others_[index_i];
+			Vecd acceleration = dvel_dt_prior_[index_i];
 			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{

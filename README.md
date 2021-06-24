@@ -160,9 +160,7 @@ Here, we give the instructions for installing on Ubuntu Linux, Apple OS and Wind
         Set ONLY_3D to 1 if the 2D libraries and test cases are not needed. Note that Boost is still needed if this variable is set to 0
         Do not modify the other variables
 
-3. If you are building oneTBB, make sure to run the SPHinXsys/oneTBB_edit/oneTBB_edit.py to copy the files next to it into the oneTBB folder, or copy them manually
-
-4. Build the SPHinXsys project as described in the previous section
+3. Build the SPHinXsys project as described in the previous section
 
 ### Install on Windows Visual Studio
 
@@ -209,6 +207,31 @@ You can find a installation instruction video: https://youtu.be/m0p1nybM4v4, and
 
         Create your own application in the cases_user in the source folder simply by copying the entire folder of a similar test case and rename and modify application files
 
+### Build with docler
+
+Two docker files are provided:
+
+1. Dockerfile: C++ default docker image (x86_64 ubuntu 20.04). Every libraries are installed using debian packages (Simbody is 3.6 instead of 3.7). The docker image size is smallest and suitable for docker hub or CI/CD.
+
+command to  build: 
+
+docker build . -t sphinxsys:latest
+
+command to run test:
+
+docker run sphinxsys:latest bash scripts/runTest.sh
+
+2. dev.Dockerfile:  development packages are all installed and simbody is downloaded and compiled in the image building process. This image is too big and can not be used for github testing. Only for local development purposes. 
+
+command to build:
+
+docker build . -f dev.Dockerfile -t sphinxsys:dev
+
+
+additional build arguement can be added to the end of the docker build command using the following syntax: --build-arg <TAG>=<VALUE>
+
+build_with_dependencies_source=0 : default, builds with preprecompiled dependencies
+build_with_dependencies_source=1 : builds dependencies together with Sphinxsys
 
 ### How to run gpuSPHinXsys cases on CUDA enabled GPUs?
 The build process for GPU cases are identical to the CPU cases on all platforms, viz. Linux, Windows and Mac OSX.

@@ -120,12 +120,12 @@ class MyocardiumMuscle
  public:
  	MyocardiumMuscle() : ActiveMuscle<LocallyOrthotropicMuscle>()
 	{
-		rho_0_ = rho_0;
+		rho0_ = rho_0;
 		bulk_modulus_ = bulk_modulus;
 		f0_ = fiber_direction;
 		s0_ = sheet_direction;
-		std::copy(a_0, a_0 + 4, a_0_);
-		std::copy(b_0, b_0 + 4, b_0_);
+		std::copy(a_0, a_0 + 4, a0_);
+		std::copy(b_0, b_0 + 4, b0_);
 
 		assignDerivedMaterialParameters();
 	}
@@ -377,36 +377,54 @@ public:
  */
 int main(int ac, char* av[])
 {
-	/** 
-	 * Build up context -- a SPHSystem. 
-	 */
+	//----------------------------------------------------------------------
+	//	SPHSystem section
+	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, dp_0);
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = true;
+	system.run_particle_relaxation_ = false;
 	/** Tag for reload initially repaxed particles. */
-	system.reload_particles_ = false;
+	system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
 	//handle command line arguments
 	#ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
 	#endif
-	/** Outputs. */
+	/** in- and output environment. */
 	In_Output 	in_output(system);
-
+	//----------------------------------------------------------------------
+	//	SPHData section
+	//----------------------------------------------------------------------
 	/** Creat a SPH body, material and particles */
 	HeartBody* physiology_body = new HeartBody(system, "ExcitationHeart");
+	if (!system.run_particle_relaxation_ && system.reload_particles_) physiology_body->useParticleGeneratorReload();
 	MuscleReactionModel* muscle_reaction_model = new MuscleReactionModel();
 	MyocardiumPhysiology* myocardium_excitation = new MyocardiumPhysiology(muscle_reaction_model);
 	ElectroPhysiologyParticles 	physiology_articles(physiology_body, myocardium_excitation);
+
 	/** Creat a SPH body, material and particles */
 	HeartBody* mechanics_body = new HeartBody(system, "ContractionHeart");
+	if (!system.run_particle_relaxation_ && system.reload_particles_) mechanics_body->useParticleGeneratorReload();
 	MyocardiumMuscle* myocardium_muscle = new MyocardiumMuscle();
 	ActiveMuscleParticles 	mechanics_particles(mechanics_body, myocardium_muscle);
 
-		/** check whether run particle relaxation for body fitted particle distribution. */
+	/** check whether reload material properties. */
+	if (!system.run_particle_relaxation_ && system.reload_particles_)
+	{
+		std::unique_ptr<ReloadMaterialParameterIO>
+			read_muscle_fiber_and_sheet(new ReloadMaterialParameterIO(in_output, myocardium_muscle));
+		std::unique_ptr<ReloadMaterialParameterIO>
+			read_myocardium_excitation_fiber(new ReloadMaterialParameterIO(in_output, myocardium_excitation, myocardium_muscle->LocalParametersName()));
+		read_muscle_fiber_and_sheet->ReadFromFile();
+		read_myocardium_excitation_fiber->ReadFromFile();
+	}
+	//----------------------------------------------------------------------
+	//	SPH Particle relaxarion section
+	//----------------------------------------------------------------------
+	/** check whether run particle relaxation for body fitted particle distribution. */
 	if (system.run_particle_relaxation_)
 	{
 		HeartBody* relax_body = new HeartBody(system, "RelaxationHeart");
@@ -491,112 +509,73 @@ int main(int ac, char* av[])
 
 		return 0;
 	}
-
-	/**
-	 * Particle and body creation of fluid observer.
-	 */
+	//----------------------------------------------------------------------
+	//	SPH Observation section
+	//----------------------------------------------------------------------
 	VoltageObserver* voltage_observer = new VoltageObserver(system, "VoltageObserver");
 	BaseParticles 		observer_particles(voltage_observer);
 	/** Define muscle Observer. */
 	MyocardiumObserver* myocardium_observer	= new MyocardiumObserver(system, "MyocardiumObserver");
 	BaseParticles 	disp_observer_particles(myocardium_observer);
-
-	WriteBodyStatesToVtu 		write_states(in_output, system.real_bodies_);
-	ReloadParticleIO			excitation_reload_particles(in_output, { physiology_body }, { physiology_body->getBodyName() });
-	ReloadParticleIO			contraction_reload_particles(in_output, { mechanics_body }, { mechanics_body->getBodyName() });
-	/** Read material property, e.g., sheet and fiber, from xml file. */
-	ReloadMaterialParameterIO  read_muscle_fiber_and_sheet(in_output, myocardium_muscle);
-	ReloadMaterialParameterIO  read_myocardium_excitation_fiber(in_output, myocardium_excitation, myocardium_muscle->LocalParametersName());
-
-	/** topology */
-	InnerBodyRelation* physiology_body_inner = new InnerBodyRelation(physiology_body);	
+	//----------------------------------------------------------------------
+	//	SPHBody relation (topology) section
+	//----------------------------------------------------------------------
+	InnerBodyRelation* physiology_body_inner = new InnerBodyRelation(physiology_body);
 	InnerBodyRelation* mechanics_body_inner = new InnerBodyRelation(mechanics_body);
 	ContactBodyRelation* physiology_body_contact = new ContactBodyRelation(physiology_body, { mechanics_body });
 	ContactBodyRelation* mechanics_body_contact = new ContactBodyRelation(mechanics_body, { physiology_body });
 	ContactBodyRelation* voltage_observer_contact = new ContactBodyRelation(voltage_observer, { physiology_body });	
 	ContactBodyRelation* myocardium_observer_contact = new ContactBodyRelation(myocardium_observer, { mechanics_body });
-
-	/** check whether reload particles. */
-	if (system.reload_particles_)
-	{
-		excitation_reload_particles.ReadFromFile();
-		contraction_reload_particles.ReadFromFile();
-		read_muscle_fiber_and_sheet.ReadFromFile();
-		read_myocardium_excitation_fiber.ReadFromFile();
-	}
-	/** 
-	 * Corrected strong configuration. 
-	 */	
-	solid_dynamics::CorrectConfiguration 					
-		correct_configuration_excitation(physiology_body_inner);
-	/** 
-	 * Time step size calculation. 
-	 */
+	//----------------------------------------------------------------------
+	//	SPH Method section
+	//----------------------------------------------------------------------
+	// Corrected strong configuration. 	
+	solid_dynamics::CorrectConfiguration correct_configuration_excitation(physiology_body_inner);
+	// Time step size calculation. 
 	electro_physiology::GetElectroPhysiologyTimeStepSize get_physiology_time_step(physiology_body);
-	/** 
-	 * Diffusion process for diffusion body. 
-	 */
+	// Diffusion process for diffusion body. 
 	electro_physiology::ElectroPhysiologyDiffusionRelaxationInner diffusion_relaxation(physiology_body_inner);
-	/** 
-	 * Solvers for ODE system 
-	 */
-	electro_physiology::ElectroPhysiologyReactionRelaxationForward 		
-		reaction_relaxation_forward(physiology_body);
-	electro_physiology::ElectroPhysiologyReactionRelaxationBackward 	
-		reaction_relaxation_backward(physiology_body);
-	/**
-	 * IO for observer.
-	 */
+	// Solvers for ODE system. 
+	electro_physiology::ElectroPhysiologyReactionRelaxationForward 	reaction_relaxation_forward(physiology_body);
+	electro_physiology::ElectroPhysiologyReactionRelaxationBackward reaction_relaxation_backward(physiology_body);
+	//	Apply the Iron stimulus.
+	ApplyStimulusCurrentSI apply_stimulus_s1(physiology_body);
+	ApplyStimulusCurrentSII apply_stimulus_s2(physiology_body);
+	// Active mechanics.
+	solid_dynamics::CorrectConfiguration correct_configuration_contraction(mechanics_body_inner);
+	observer_dynamics::CorrectInterpolationKernelWeights correct_kernel_weights_for_interpolation(mechanics_body_contact);
+	/** Interpolate the active contract stress from electrophysiology body. */
+	observer_dynamics::InterpolatingAQuantity<indexScalar, Real> active_stress_interpolation(mechanics_body_contact, "ActiveContractionStress");
+	/** Interpolate the particle position in physiology_body  from mechanics_body. */
+	observer_dynamics::InterpolatingAQuantity<indexVector, Vecd> interpolation_particle_position(physiology_body_contact, "Position", "Position");
+	/** Time step size calculation. */
+	solid_dynamics::AcousticTimeStepSize get_mechanics_time_step(mechanics_body);
+	/** active and passive stress relaxation. */
+	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(mechanics_body_inner);
+	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(mechanics_body_inner);
+	/** Constrain region of the inserted body. */
+	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(mechanics_body, new MuscleBase(mechanics_body, "Holder"));
+	//----------------------------------------------------------------------
+	//	SPH Output section
+	//----------------------------------------------------------------------
+	WriteBodyStatesToVtu 		write_states(in_output, system.real_bodies_);
 	WriteAnObservedQuantity<indexScalar, Real> write_voltage("Voltage", in_output, voltage_observer_contact);
 	WriteAnObservedQuantity<indexVector, Vecd> write_displacement("Position", in_output, myocardium_observer_contact);
-	/**
-	 * Apply the Iron stimulus.
-	 */
-	ApplyStimulusCurrentSI		
-		apply_stimulus_s1(physiology_body);
-	ApplyStimulusCurrentSII		
-		apply_stimulus_s2(physiology_body);
-	/**
-	 * Active mechanics. */
-	solid_dynamics::CorrectConfiguration 
-		correct_configuration_contraction(mechanics_body_inner);
-	/** */
-	observer_dynamics::CorrectInterpolationKernelWeights
-		correct_kernel_weights_for_interpolation(mechanics_body_contact);
-	/** Interpolate the active contract stress from electrophysiology body. */
-	observer_dynamics::InterpolatingAQuantity<indexScalar, Real>
-		active_stress_interpolation(mechanics_body_contact, "ActiveContractionStress");
-	/** Interpolate the particle position in physiology_body  from mechanics_body. */
-	observer_dynamics::InterpolatingAQuantity<indexVector, Vecd>
-		interpolation_particle_position(physiology_body_contact, "Position", "Position");
-	/** Time step size calculation. */
-	solid_dynamics::AcousticTimeStepSize 
-		get_mechanics_time_step(mechanics_body);
-	/** active and passive stress relaxation. */
-	solid_dynamics::StressRelaxationFirstHalf
-		stress_relaxation_first_half(mechanics_body_inner);
-	solid_dynamics::StressRelaxationSecondHalf
-		stress_relaxation_second_half(mechanics_body_inner);
-	/** Constrain region of the inserted body. */
-	solid_dynamics::ConstrainSolidBodyRegion
-		constrain_holder(mechanics_body, new MuscleBase(mechanics_body, "Holder"));
-	/** 
-	 * Pre-simultion. 
-	 */
+	//----------------------------------------------------------------------
+	//	 Pre-simultion. 
+	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	correct_configuration_excitation.parallel_exec();
 	correct_configuration_contraction.parallel_exec();
 	correct_kernel_weights_for_interpolation.parallel_exec();
-	/** 
-	 * Output global basic parameters. 
-	 */
+	/** Output initial states and observations */
 	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
 	write_voltage.WriteToFile(GlobalStaticVariables::physical_time_);
 	write_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
-	/**
-	 * Physical parameters for main loop. 
-	 */
+	//----------------------------------------------------------------------
+	//	 Physical parameters for main loop. 
+	//----------------------------------------------------------------------
 	int screen_output_interval 	= 10;
 	int ite 					= 0;
 	int reaction_step 			= 2;

@@ -10,7 +10,7 @@ namespace SPH {
 	InitializeATimeStep
 		::InitializeATimeStep(SPHBody* body, Gravity* gravity)
 		: ParticleDynamicsSimple(body), GeneralDataDelegateSimple(body),
-		pos_n_(particles_->pos_n_), dvel_dt_others_(particles_->dvel_dt_others_),
+		pos_n_(particles_->pos_n_), dvel_dt_prior_(particles_->dvel_dt_prior_),
 		gravity_(gravity)
 	{
 	}
@@ -22,7 +22,7 @@ namespace SPH {
 	//=================================================================================================//
 	void InitializeATimeStep::Update(size_t index_i, Real dt)
 	{
-		dvel_dt_others_[index_i] = gravity_->InducedAcceleration(pos_n_[index_i]);
+		dvel_dt_prior_[index_i] = gravity_->InducedAcceleration(pos_n_[index_i]);
 	}
 	//=================================================================================================//
 	RandomizePartilePosition::RandomizePartilePosition(SPHBody* body)
@@ -467,6 +467,21 @@ namespace SPH {
 	Vecd BodyUpperBound::ReduceFunction(size_t index_i, Real dt)
 	{
 		return pos_n_[index_i];
+	}
+	//=================================================================================================//
+	TotalMechanicalEnergy::TotalMechanicalEnergy(SPHBody* body, Gravity* gravity)
+		: ParticleDynamicsReduce<Real, ReduceSum<Real>>(body), 
+		GeneralDataDelegateSimple(body), mass_(particles_->mass_), 
+		vel_n_(particles_->vel_n_), pos_n_(particles_->pos_n_), gravity_(gravity)
+	{
+		quantity_name_ = "TotalMechanicalEnergy";
+		initial_reference_ = 0.0;
+	}
+	//=================================================================================================//
+	Real TotalMechanicalEnergy::ReduceFunction(size_t index_i, Real dt)
+	{
+		return 0.5 * mass_[index_i] * vel_n_[index_i].normSqr()
+			+ mass_[index_i] * gravity_->getPotential(pos_n_[index_i]);
 	}
 	//=================================================================================================//
 }

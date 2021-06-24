@@ -59,7 +59,7 @@ namespace SPH
 				BaseContactBodyRelation* wall_contact_relation);
 			virtual ~RelaxationWithWall() {};
 		protected:
-			StdVec<Real> wall_inv_rho_0_;
+			StdVec<Real> wall_inv_rho0_;
 			StdVec<StdLargeVec<Real>*> wall_mass_, wall_Vol_;
 			StdVec<StdLargeVec<Vecd>*> wall_vel_ave_, wall_dvel_dt_ave_, wall_n_;
 		};
@@ -75,7 +75,7 @@ namespace SPH
 			FreeSurfaceIndicationComplex(ComplexBodyRelation* body_complex_relation, Real thereshold = 0.75);
 			virtual ~FreeSurfaceIndicationComplex() {};
 		protected:
-			StdVec<Real> contact_inv_rho_0_;
+			StdVec<Real> contact_inv_rho0_;
 			StdVec<StdLargeVec<Real>*> contact_mass_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -94,7 +94,7 @@ namespace SPH
 			DensitySummation(ComplexBodyRelation* complex_relation, BaseContactBodyRelation* extra_contact_relation);
 			virtual ~DensitySummation() {};
 		protected:
-			StdVec<Real> contact_inv_rho_0_;
+			StdVec<Real> contact_inv_rho0_;
 			StdVec<StdLargeVec<Real>*> contact_mass_;
 
 			virtual void prepareContactData() override;
@@ -326,10 +326,11 @@ namespace SPH
 			Real contact_angle_;
 			Real smoothing_length_;
 			Real particle_spacing_;
-			StdVec<StdLargeVec<Vecd>*> wall_n_;
+			StdLargeVec<int>& surface_indicator_;
 			StdLargeVec<Vecd>& surface_norm_;
 			StdLargeVec<Real>& pos_div_;
-			StdLargeVec<int>& surface_indicator_;
+			StdVec<StdLargeVec<Vecd>*> wall_n_;
+
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 	}

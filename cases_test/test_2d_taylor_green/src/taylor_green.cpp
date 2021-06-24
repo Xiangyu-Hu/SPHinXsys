@@ -57,8 +57,8 @@ class WaterMaterial : public WeaklyCompressibleFluid
 public:
 	WaterMaterial()	: WeaklyCompressibleFluid()
 	{
-		rho_0_ = rho0_f;
-		c_0_ = c_f;
+		rho0_ = rho0_f;
+		c0_ = c_f;
 		mu_ = mu_f;
 
 		assignDerivedMaterialParameters();
@@ -98,21 +98,17 @@ int main(int ac, char* av[])
 	sph_system.reload_particles_ = false;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	sph_system.restart_step_ = 0;
+	//handle command line arguments
+	sph_system.handleCommandlineOptions(ac, av);
 	/** output environment. */
 	In_Output 	in_output(sph_system);
-	//handle command line arguments
-	#ifdef BOOST_AVAILABLE
-	sph_system.handleCommandlineOptions(ac, av);
-	#endif	
+
 	/**
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
 	WaterBlock *water_block = new WaterBlock(sph_system, "WaterBody");
-	if (sph_system.reload_particles_) 	 // Using relaxed particle distribution if needed
-	{
-		water_block->particle_generator_->~ParticleGenerator();
-		water_block->particle_generator_ = new ParticleGeneratorReload(&in_output, water_block->getBodyName());
-	}
+	// Using relaxed particle distribution if needed
+	if (sph_system.reload_particles_) water_block->useParticleGeneratorReload();
 	WaterMaterial 	*water_material = new WaterMaterial();
 	FluidParticles 	fluid_particles(water_block, water_material);
 	/** topology */
@@ -165,7 +161,7 @@ int main(int ac, char* av[])
 	/** Output the body states for restart simulation. */
 	RestartIO				restart_io(in_output, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	WriteBodyReducedQuantity<fluid_dynamics::TotalMechanicalEnergy> 	
+	WriteBodyReducedQuantity<TotalMechanicalEnergy> 	
 		write_total_mechanical_energy(in_output, water_block, new Gravity(Vec2d(0)));
 	/** Output the maximum speed of the fluid body. */
 	WriteBodyReducedQuantity<MaximumSpeed> write_maximum_speed(in_output, water_block);

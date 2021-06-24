@@ -93,8 +93,8 @@ public:
 	WaterMaterial() : WeaklyCompressibleFluid()
 	{
 		/** Basic material parameters*/
-		rho_0_ = rho0_f;
-		c_0_ = c_f;
+		rho0_ = rho0_f;
+		c0_ = c_f;
 
 		/** Compute the derived material parameters*/
 		assignDerivedMaterialParameters();
@@ -190,7 +190,7 @@ int main()
 	/** Output the body states for restart simulation. */
 	RestartIO		restart_io(in_output, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	WriteBodyReducedQuantity<fluid_dynamics::TotalMechanicalEnergy> 	
+	WriteBodyReducedQuantity<TotalMechanicalEnergy> 	
 		write_water_mechanical_energy(in_output, water_block, &gravity);
 	/** output the observed data from fluid body. */
 	WriteAnObservedQuantity<indexScalar, Real> write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact);

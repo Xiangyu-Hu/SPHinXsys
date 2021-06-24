@@ -85,7 +85,7 @@ namespace SPH
 		};
 
 		/**
-		* @class ContactForceAcceleration
+		* @class ContactForce
 		* @brief Computing the contact force.
 		*/
 		class ContactForce :
@@ -96,13 +96,64 @@ namespace SPH
 			virtual ~ContactForce() {};
 		protected:
 			StdLargeVec<Real>& contact_density_, & Vol_, & mass_;
-			StdLargeVec<Vecd>& dvel_dt_others_, & contact_force_;
+			StdLargeVec<Vecd>& dvel_dt_prior_, & contact_force_;
 			StdVec<StdLargeVec<Real>*> contact_contact_density_, contact_Vol_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
-	   /**
+		/**
+		* @class DynamicContactForce
+		* @brief Computing the contact force for problems dominainted by the contact dynamic process itself.
+		* For example, the high speed impact problems in which the detailed contact behavior is crutial for 
+		* physical sound solutions. Therefore, for simple low speed problem in which contact force is 
+		* used merely prevent penetration. We can still use the simple formualation in the class ContactForce. 
+		* The idea is to introduce conact force based on Riemann problem like formulation, 
+		* in which the artficial dissipation is the main interaction force to prevent
+		* penetration. Furthermore, a panelty type force is used as supplementrary to prevent penetration 
+		* when the contact velocity is small.
+		*/
+		class DynamicContactForce :
+			public PartInteractionDynamicsByParticle, public ContactDynamicsData
+		{
+		public:
+			DynamicContactForce(SolidContactBodyRelation* solid_body_contact_relation, Real penalty_strength = 1.0);
+			virtual ~DynamicContactForce() {};
+		protected:
+			StdLargeVec<Real>& Vol_, & mass_;
+			StdLargeVec<Vecd>& vel_n_, & dvel_dt_prior_, & contact_force_;
+			StdVec<StdLargeVec<Real>*> contact_Vol_;
+			StdVec<StdLargeVec<Vecd>*>contact_vel_n_;
+			Real penalty_strength_;
+			StdVec<Real> contact_impedence_, contact_reference_pressure_;
+
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+		
+		/**
+		* @class ContactForceWithWall
+		* @brief Computing the contact force with a rigid wall.
+		*  Note that the body surface of the wall should be
+		*  updated beforce computing the contact force.
+		*/
+		class ContactForceWithWall :
+			public PartInteractionDynamicsByParticle, public ContactDynamicsData
+		{
+		public:
+			ContactForceWithWall(SolidContactBodyRelation* solid_body_contact_relation, Real penalty_strength = 1.0);
+			virtual ~ContactForceWithWall() {};
+		protected:
+			StdLargeVec<Real>& Vol_, & mass_;
+			StdLargeVec<Vecd>& vel_n_, & dvel_dt_prior_, & contact_force_;
+			StdVec<StdLargeVec<Real>*> contact_Vol_;
+			StdVec<StdLargeVec<Vecd>*>contact_vel_n_, contact_n_;
+			Real penalty_strength_;
+			Real impedence_, reference_pressure_;
+
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
 		* @class CorrectConfiguration
 		* @brief obtain the corrected initial configuration in strong form
 		*/
@@ -270,23 +321,23 @@ namespace SPH
 		* @brief Exerts spring force and damping force in the form of acceleration to each particle.
 		* The spring force is calculated based on the difference from the particle's initial position.
 		* The damping force is calculated based on the particle's current velocity.
+		* Only for 3D applications
 		*/
 		class SpringDamperConstraintParticleWise 
 			: public ParticleDynamicsSimple, public SolidDataSimple
 		{
 		public:
-			SpringDamperConstraintParticleWise(SolidBody* body, Vecd stiffness, Real damping_ratio = 0.01);
-			virtual ~SpringDamperConstraintParticleWise() {};
+			SpringDamperConstraintParticleWise(SolidBody* body, Vecd stiffness, Real damping_ratio = 0.05);
+			~SpringDamperConstraintParticleWise();
 		protected:
-			StdLargeVec<Real>& mass_;
-			StdLargeVec<Vecd>& pos_n_,& pos_0_,& vel_n_,& dvel_dt_others_;
+			Real total_mass_;
+			StdLargeVec<Vecd>& pos_n_,& pos_0_,& vel_n_,& dvel_dt_prior_;
 			Vecd stiffness_;
-			// damping component parallel to the spring force component
-			// damping coefficient = stiffness_ * damping_ratio_
-			Real damping_ratio_;
+			Vecd damping_coeff_; // damping component parallel to the spring force component
+
 			virtual void setupDynamics(Real dt = 0.0) override;
-			virtual Vecd getAcceleration(Vecd& disp, Real mass);
-			virtual Vecd getDampingForce(size_t index_i, Real mass);
+			virtual Vecd getSpringForce(size_t index_i, Vecd& disp);
+			virtual Vecd getDampingForce(size_t index_i);
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 		/**
@@ -300,7 +351,7 @@ namespace SPH
 			AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox* bounding_box, Vecd acceleration);
 			virtual ~AccelerationForBodyPartInBoundingBox() {};
 		protected:
-			StdLargeVec<Vecd>& pos_n_,& dvel_dt_others_;
+			StdLargeVec<Vecd>& pos_n_,& dvel_dt_prior_;
 			BoundingBox* bounding_box_;
 			Vecd acceleration_;
 			virtual void setupDynamics(Real dt = 0.0) override;
@@ -354,19 +405,14 @@ namespace SPH
 			public ElasticSolidDataSimple
 		{
 		public:
-			explicit AcousticTimeStepSize(SolidBody* body);
+			explicit AcousticTimeStepSize(SolidBody* body, Real CFL = 0.6);
 			virtual ~AcousticTimeStepSize() {};
 		protected:
+			Real CFL_;
 			StdLargeVec<Vecd>& vel_n_, & dvel_dt_;
 			Real smoothing_length_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 		};
-
-		/**
-		* @function getSmallestTimeStepAmongSolidBodies
-		* @brief computing smallest time step to use in a simulation
-		*/
-		Real getSmallestTimeStepAmongSolidBodies(SPHBodyVector solid_bodies);
 
 		/**
 		* @class DeformationGradientTensorBySummation
@@ -412,10 +458,12 @@ namespace SPH
 			StressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation);
 			virtual ~StressRelaxationFirstHalf() {};
 		protected:
-			Real rho_0_, inv_rho_0_;
-			StdLargeVec<Vecd>& dvel_dt_others_, & force_from_fluid_;
-			StdLargeVec<Matd>& stress_PK1_, & corrected_stress_;
-			Real numerical_viscosity_;
+			Real rho0_, inv_rho0_;
+			StdLargeVec<Vecd>& dvel_dt_prior_, & force_from_fluid_;
+			StdLargeVec<Matd>& stress_PK1_;
+			Real numerical_dissipation_factor_;
+			Real smoothing_length_;
+			Real inv_W0_ = 1.0 / body_->particle_adaptation_->getKernel()->W0(Vecd(0));
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;

@@ -46,9 +46,9 @@ class BodyMaterial : public LinearElasticSolid
 public:
 	BodyMaterial() : LinearElasticSolid()
 	{
-		rho_0_ = 1.0;
-		E_0_ = 1.0;
-		nu_ = 0.0;
+		rho0_ = 1.0;
+		youngs_modulus_ = 1.0;
+		poisson_ratio_ = 0.0;
 
 		assignDerivedMaterialParameters();
 	}

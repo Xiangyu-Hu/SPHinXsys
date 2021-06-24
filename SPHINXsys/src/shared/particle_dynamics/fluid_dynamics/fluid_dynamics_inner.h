@@ -95,7 +95,7 @@ namespace SPH
 			DensitySummationInner(BaseInnerBodyRelation* inner_relation);
 			virtual ~DensitySummationInner() {};
 		protected:
-			Real W0_, rho_0_, inv_sigma_0_;
+			Real W0_, rho0_, inv_sigma0_;
 			StdLargeVec<Real>& Vol_, & rho_n_, & mass_, & rho_sum_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -134,7 +134,7 @@ namespace SPH
 			Real mu_;
 			Real smoothing_length_;
 			StdLargeVec<Real> &Vol_, &rho_n_, &p_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_others_;
+			StdLargeVec<Vecd> &vel_n_, &dvel_dt_prior_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -172,23 +172,6 @@ namespace SPH
 
 			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void Interaction(size_t index_i, Real dt = 0.0)  override;
-		};
-
-		/**
-		 * @class TotalMechanicalEnergy
-		 * @brief Compute the total mechanical (kinematic and potential) energy
-		 */
-		class TotalMechanicalEnergy
-			: public ParticleDynamicsReduce<Real, ReduceSum<Real>>, public FluidDataSimple
-		{
-		public:
-			explicit TotalMechanicalEnergy(FluidBody* body, Gravity* gravity);
-			virtual ~TotalMechanicalEnergy() {};
-		protected:
-			StdLargeVec<Real>& mass_;
-			StdLargeVec<Vecd>& vel_n_, & pos_n_;
-			Gravity* gravity_;
-			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -265,7 +248,7 @@ namespace SPH
 			virtual ~BaseRelaxation() {};
 		protected:
 			StdLargeVec<Real>& Vol_, & mass_, & rho_n_, & p_, & drho_dt_;
-			StdLargeVec<Vecd>& pos_n_, & vel_n_, & dvel_dt_, & dvel_dt_others_;
+			StdLargeVec<Vecd>& pos_n_, & vel_n_, & dvel_dt_, & dvel_dt_prior_;
 		};
 
 		/**
@@ -446,7 +429,7 @@ namespace SPH
 			StaticConfinementDensity(FluidBody* body, NearShapeSurface* near_surface);
 			virtual ~StaticConfinementDensity() {};
 		protected:
-			Real rho_0_, inv_sigma_0_;
+			Real rho0_, inv_sigma0_;
 			StdLargeVec<Real>& mass_, & rho_sum_;
 			StdLargeVec<Vecd>& pos_n_;
 			LevelSetComplexShape* level_set_complex_shape_;
@@ -525,7 +508,7 @@ namespace SPH
 			StdLargeVec<Vecd>& pos_n_, & vel_n_;
 			/** inflow pressure condition */
 			Real inflow_pressure_;
-			Real rho_0_;
+			Real rho0_;
 
 			/** inflow velocity profile to be defined in applications */
 			virtual Vecd getTargetVelocity(Vecd& position, Vecd& velocity) = 0;
@@ -593,15 +576,16 @@ namespace SPH
 		class ColorFunctionGradientInner : public InteractionDynamics, public FluidDataInner
 		{
 		public:
-			StdLargeVec<Vecd>& color_grad_;
-			StdLargeVec<Vecd>& surface_norm_;
-			StdLargeVec<int>& surface_indicator_;
-			StdLargeVec<Real> &pos_div_;
 			ColorFunctionGradientInner(BaseInnerBodyRelation* inner_relation);
 			virtual ~ColorFunctionGradientInner() {};
 		protected:
 			Real thereshold_by_dimensions_;
 			StdLargeVec<Real> &Vol_;
+			StdLargeVec<int>& surface_indicator_;
+			StdLargeVec<Vecd>& color_grad_;
+			StdLargeVec<Vecd>& surface_norm_;
+			StdLargeVec<Real> &pos_div_;
+
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -618,10 +602,10 @@ namespace SPH
 		protected:
 			Real thereshold_by_dimensions_;
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Real>& pos_div_;
+			StdLargeVec<int>& surface_indicator_;
 			StdLargeVec<Vecd>& color_grad_;
 			StdLargeVec<Vecd>& surface_norm_;
-			StdLargeVec<int>& surface_indicator_;
+			StdLargeVec<Real>& pos_div_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -640,10 +624,10 @@ namespace SPH
 		protected:
 			Real gamma_;
 			StdLargeVec<Real> &Vol_, &mass_;
-			StdLargeVec<Vecd> &dvel_dt_others_;
+			StdLargeVec<Vecd> &dvel_dt_prior_;
+			StdLargeVec<int>& surface_indicator_;
 			StdLargeVec<Vecd>& color_grad_;
 			StdLargeVec<Vecd>& surface_norm_;
-			StdLargeVec<int>& surface_indicator_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
