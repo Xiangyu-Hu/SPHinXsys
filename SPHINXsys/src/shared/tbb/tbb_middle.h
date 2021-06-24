@@ -1,8 +1,14 @@
+/**
+ * @file 	tbb_middle.h
+ * @brief 	file to include TBB headers and suppress their warnings
+ * @author	Wen-Yang Chu
+ */
+
 #ifndef TBB_MIDDLE_H
 #define TBB_MIDDLE_H
-#pragma GCC system_header
+#pragma GCC system_header //for GCC/CLANG
 #define TBB_SUPPRESS_DEPRECATED_MESSAGES 1
-#pragma warning(push, 0)
+#pragma warning(push, 0) //for MSVC
 
 #include "tbb/tbb.h"
 #include "tbb/blocked_range.h"
@@ -15,5 +21,6 @@
 #include "tbb/concurrent_unordered_set.h"
 #include "tbb/concurrent_vector.h"
 #include "tbb/cache_aligned_allocator.h"
-#pragma warning(pop)
+
+#pragma warning(pop) //for MSVC
 #endif //TBB_MIDDLE_H

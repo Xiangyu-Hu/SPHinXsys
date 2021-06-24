@@ -251,7 +251,7 @@ namespace SPH {
         resizeXmlDocForSimbody(matter_.getNumBodies());
         SimTK::Xml::element_iterator ele_ite = simbody_xml_engine_.root_element_.element_begin();
         SimTK::MobilizedBodyIndex mbx(0);
-        for (size_t k = 0; k != matter_.getNumBodies(); ++k)
+        for (int k = 0; k != matter_.getNumBodies(); ++k)
         {
             const SimTK::MobilizedBody& mobod = matter_.getMobilizedBody(mbx);
 
