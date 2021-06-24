@@ -434,13 +434,18 @@ namespace SPH
 		}
 		//=================================================================================================//
 		void AccelerationForBodyPartInBoundingBox::Update(size_t index_i, Real dt)
-		{	
-			Vecd point = pos_n_[index_i];
-			if ( 	point[0] >= bounding_box_->first[0] && point[0] <= bounding_box_->second[0] &&
-					point[1] >= bounding_box_->first[1] && point[1] <= bounding_box_->second[1] &&
-					point[2] >= bounding_box_->first[2] && point[2] <= bounding_box_->second[2]			)
+		{
+			if (pos_n_.size() > index_i)
 			{
-				dvel_dt_prior_[index_i] += acceleration_;
+				Vecd point = pos_n_[index_i];
+				if (point.size() >= 3 && bounding_box_ != nullptr && bounding_box_->first.size() >= 3 && 
+					bounding_box_->second.size() >= 3 && point[0] >= bounding_box_->first[0] && 
+					point[0] <= bounding_box_->second[0] &&
+					point[1] >= bounding_box_->first[1] && point[1] <= bounding_box_->second[1] &&
+					point[2] >= bounding_box_->first[2] && point[2] <= bounding_box_->second[2])
+				{
+					dvel_dt_prior_[index_i] += acceleration_;
+				}
 			}
 		}
 		//=================================================================================================//	

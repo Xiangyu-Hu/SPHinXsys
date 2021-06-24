@@ -252,27 +252,30 @@ namespace SPH
 	{
 		switch (op)
 		{
-		case ShapeBooleanOps::add:
-		{
-			for (auto& shape_and_op : complex_shape->triangle_mesh_shapes_)
+			case ShapeBooleanOps::add:
 			{
-				triangle_mesh_shapes_.push_back(shape_and_op);
+				for (auto &shape_and_op : complex_shape->triangle_mesh_shapes_)
+				{
+					triangle_mesh_shapes_.push_back(shape_and_op);
+				}
+				break;
 			}
-			break;
-		}
-		case ShapeBooleanOps::sub:
-		{
-			for (auto& shape_and_op : complex_shape->triangle_mesh_shapes_)
+			case ShapeBooleanOps::sub:
 			{
-				TriangleMeshShape* sp = shape_and_op.first;
-				ShapeBooleanOps operation_string 
-					= shape_and_op.second == ShapeBooleanOps::add ? ShapeBooleanOps::sub : ShapeBooleanOps::add;
-				std::pair<TriangleMeshShape*, ShapeBooleanOps> substract_shape_and_op(sp, operation_string);
-
-				triangle_mesh_shapes_.push_back(substract_shape_and_op);
+				for (auto &shape_and_op : complex_shape->triangle_mesh_shapes_)
+				{
+					TriangleMeshShape *sp = shape_and_op.first;
+					ShapeBooleanOps operation_string = shape_and_op.second == ShapeBooleanOps::add ? ShapeBooleanOps::sub : ShapeBooleanOps::add;
+					std::pair<TriangleMeshShape *, ShapeBooleanOps> substract_shape_and_op(sp, operation_string);
+					triangle_mesh_shapes_.push_back(substract_shape_and_op);
+				}
+				break;
 			}
-			break;
-		}
+			case ShapeBooleanOps::sym_diff:
+			case ShapeBooleanOps::intersect:
+			{
+				break;
+			}
 		}
 	}
 	//=================================================================================================//
