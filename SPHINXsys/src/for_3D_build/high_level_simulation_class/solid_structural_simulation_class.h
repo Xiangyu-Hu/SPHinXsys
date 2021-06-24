@@ -111,6 +111,8 @@ class StructuralSimulation
 		vector<Real> resolution_list_;
 		vector<LinearElasticSolid> material_model_list_;
 		Real physical_viscosity_;
+		vector<array<int, 2>> contacting_bodies_list_;
+
 		// particle relaxation
 		bool particle_relaxation_;
 
@@ -123,7 +125,6 @@ class StructuralSimulation
 
 		vector<SolidBodyForSimulation*> solid_body_list_;
 
-		vector<array<int, 2>> contacting_bodies_list_;
 		vector<SolidContactBodyRelation*> contact_list_;
 		vector<solid_dynamics::ContactDensitySummation*> contact_density_list_;
 		vector<solid_dynamics::ContactForce*> contact_force_list_;

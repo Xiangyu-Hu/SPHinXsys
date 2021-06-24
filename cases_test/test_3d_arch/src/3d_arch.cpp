@@ -246,8 +246,6 @@ int main()
 			dt = computing_time_step_size.parallel_exec();
 			integeral_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
-			Real check_time = GlobalStaticVariables::physical_time_;
-
 		}
 		write_cylinder_max_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
 		tick_count t2 = tick_count::now();
