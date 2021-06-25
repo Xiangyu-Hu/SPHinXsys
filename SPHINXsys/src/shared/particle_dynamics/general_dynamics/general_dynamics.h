@@ -41,18 +41,18 @@ namespace SPH
 	typedef DataDelegateSimple<SPHBody, BaseParticles> GeneralDataDelegateSimple;
 	typedef DataDelegateContact<SPHBody, BaseParticles, BaseMaterial, SPHBody, BaseParticles, BaseMaterial, DataDelegateEmptyBase> GeneralDataDelegateContact;
 	/**
-	* @class InitializeATimeStep
+	* @class TimeStepInitialization
 	* @brief initialize a time step for a body.
 	* including initialize particle acceleration 
 	* induced by viscous, gravity and other forces,
 	* set the number of ghost particles into zero.
 	*/
-	class InitializeATimeStep 
+	class TimeStepInitialization 
 		: public ParticleDynamicsSimple, public GeneralDataDelegateSimple
 	{
 	public:
-		InitializeATimeStep(SPHBody* body, Gravity* gravity = new Gravity(Vecd(0)));
-		virtual ~InitializeATimeStep() {};
+		TimeStepInitialization(SPHBody* body, Gravity* gravity = new Gravity(Vecd(0)));
+		virtual ~TimeStepInitialization() {};
 	protected:
 		StdLargeVec<Vecd>& pos_n_,& dvel_dt_prior_;
 		Gravity* gravity_;

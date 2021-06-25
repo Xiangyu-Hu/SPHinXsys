@@ -18,7 +18,7 @@ namespace SPH {
 	void ElasticSolid::assignDerivedMaterialParameters()
 	{
 		Solid::assignDerivedMaterialParameters();
-		setSoundWaveSpeed();
+		setReferenceSoundSpeed();
 		setTensileWaveSpeed();
 		setShearWaveSpeed();
 		setYoungsModulus();
@@ -60,7 +60,7 @@ namespace SPH {
 		return nu_ * youngs_modulus_ / (1.0 + poisson_ratio_) / (1.0 - 2.0 * poisson_ratio_);
 	}
 	//=================================================================================================//
-	void LinearElasticSolid::setSoundWaveSpeed()
+	void LinearElasticSolid::setReferenceSoundSpeed()
 	{
 		c0_ = sqrt(getBulkModulus() / rho0_);
 	}
@@ -137,7 +137,7 @@ namespace SPH {
 		return 3.0 * bulk_modulus_ * (1.0 - 2.0 * getPoissonRatio());
 	}
 	//=================================================================================================//
-	void Muscle::setSoundWaveSpeed()
+	void Muscle::setReferenceSoundSpeed()
 	{
 		c0_ = sqrt(bulk_modulus_ / rho0_);
 	}

@@ -176,7 +176,7 @@ int main()
 		constrain_holder(myocardium_muscle_body, new Holder(myocardium_muscle_body, "Holder"), 0);
 	/** Output */
 	In_Output in_output(system);
-	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtu write_states(in_output, system.real_bodies_);
 	/**
 	 * From here the time stepping begines.
 	 * Set the starting time.
@@ -185,7 +185,7 @@ int main()
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	corrected_configuration_in_strong_form.parallel_exec();
-	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_states.writeToFile(0);
 	/** Setup physical parameters. */
 	int ite = 0;
 	Real end_time = 1.2;
@@ -220,7 +220,7 @@ int main()
 		}
 
 		tick_count t2 = tick_count::now();
-		write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

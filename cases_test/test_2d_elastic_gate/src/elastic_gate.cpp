@@ -20,46 +20,46 @@ Real DL = 500.0; 									/**< Tank length. */
 Real DH = 200.1; 									/**< Tank height. */
 Real Dam_L = 100.0; 								/**< Water block width. */
 Real Dam_H = 140.0; 								/**< Water block height. */
-Real Gate_width = 5.0;							/**< Width of the gate. */
+Real Gate_width = 5.0;								/**< Width of the gate. */
 Real Base_bottom_position = 79.0;					/**< Position of gate base. (In Y direction) */
-Real resolution_ref = Gate_width / 2.0; 	/**< Initial reference particle spacing. */
-Real BW = resolution_ref * 4.0; 				/**< Extending width for BCs. */
+Real resolution_ref = Gate_width / 2.0; 			/**< Initial reference particle spacing. */
+Real BW = resolution_ref * 4.0; 					/**< Extending width for BCs. */
 /** The offset that the rubber gate shifted above the tank. */
 Real dp_s = 0.5 * resolution_ref;
 Vec2d offset = Vec2d(0.0, Base_bottom_position - floor(Base_bottom_position / dp_s) * dp_s);
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 /**
- * @brief 	Define the corner point of water block geomtry.
+ * @brief 	Define the corner points of the water block geomtry.
  */
 Vec2d DamP_lb(DL - Dam_L, 0.0); 		/**< Left bottom. */
 Vec2d DamP_lt(DL - Dam_L, Dam_H); 		/**< Left top. */
 Vec2d DamP_rt(DL, Dam_H); 				/**< Right top. */
 Vec2d DamP_rb(DL, 0.0); 				/**< Right bottom. */
 /**
- * @brief 	Define the corner point of gate geomtry.
+ * @brief 	Define the corner points of the gate geomtry.
  */
-Vec2d GateP_lb(DL - Dam_L - Gate_width, 0.0); 					/**< Left bottom. */
-Vec2d GateP_lt(DL - Dam_L - Gate_width, Dam_H + BW); 			/**< Left top. */
+Vec2d GateP_lb(DL - Dam_L - Gate_width, 0.0); 				/**< Left bottom. */
+Vec2d GateP_lt(DL - Dam_L - Gate_width, Dam_H + BW); 		/**< Left top. */
 Vec2d GateP_rt(DL - Dam_L, Dam_H + BW); 					/**< Right top. */
-Vec2d GateP_rb(DL - Dam_L, 0.0); 									/**< Right bottom. */
+Vec2d GateP_rb(DL - Dam_L, 0.0); 							/**< Right bottom. */
 /**
- * @brief 	Define the geomtry for gate constrain.
+ * @brief 	Define the corner points of the gate constrain.
  */
 Vec2d ConstrainP_lb(DL - Dam_L - Gate_width, Base_bottom_position); 	/**< Left bottom. */
-Vec2d ConstrainP_lt(DL - Dam_L - Gate_width, Dam_H + BW); /**< Left top. */
-Vec2d ConstrainP_rt(DL - Dam_L, Dam_H + BW); 				/**< Right top. */
+Vec2d ConstrainP_lt(DL - Dam_L - Gate_width, Dam_H + BW); 				/**< Left top. */
+Vec2d ConstrainP_rt(DL - Dam_L, Dam_H + BW); 							/**< Right top. */
 Vec2d ConstrainP_rb(DL - Dam_L, Base_bottom_position); 					/**< Right bottom. */
 
 /**
- * @brief Material properties of the fluid.
+ * @brief Material parameters of the fluid.
  */
 Real rho0_f = 1.0;							/**< Reference density of fluid. */
 Real gravity_g = 9.8e-3; 					/**< Value of gravity. */
 Real U_f = 1.0;								/**< Characteristic velocity. */
 Real c_f = 20.0*sqrt(140.0*gravity_g); 		/**< Reference sound speed. */
 /**
- * @brief Material properties of the elastic gate.
+ * @brief Material parameters of the elastic gate.
  */
 Real rho0_s = 1.1; 						/**< Reference density of gate. */
 Real poisson = 0.47; 					/**< Poisson ratio. */
@@ -86,7 +86,7 @@ public:
 	}
 };
 /**
- * @brief 	Case dependent material properties definition.
+ * @brief 	Case-dependent material properties definition.
  */
 class WaterMaterial : public WeaklyCompressibleFluid
 {
@@ -127,11 +127,10 @@ public:
 		body_shape_->addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 	}
 };
-
 /**
 * @brief create a gate shape
 */
-std::vector<Vecd> CreatGateShape()
+std::vector<Vecd> createGateShape()
 {
 	std::vector<Vecd> gate_shape;
 	gate_shape.push_back(GateP_lb);
@@ -152,15 +151,15 @@ public:
 		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1))
 	{
 		/** Geomtry definition. */
-		std::vector<Vecd> gate_shape = CreatGateShape();
+		std::vector<Vecd> gate_shape = createGateShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(gate_shape, ShapeBooleanOps::add);
 	}
 };
 /**
-* @brief create a Gate constrain shape
+* @brief create the gate constrain shape
 */
-std::vector<Vecd> CreatGateConstrainShape()
+std::vector<Vecd> createGateConstrainShape()
 {
 	//geometry
 	std::vector<Vecd> gate_constrain_shape;
@@ -184,7 +183,7 @@ public:
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		/* Geometry definition */
-		std::vector<Vecd> gate_constrain_shape = CreatGateConstrainShape();
+		std::vector<Vecd> gate_constrain_shape = createGateConstrainShape();
 		body_part_shape_ = new ComplexShape(constrained_region_name);
 		body_part_shape_->addAPolygon(gate_constrain_shape, ShapeBooleanOps::add);
 
@@ -192,8 +191,6 @@ public:
 		tagBodyPart();
 	}
 };
-
-
 /**
  * @brief Define gate material.
  */
@@ -280,7 +277,7 @@ int main()
 	 * @brief 	Methods used for time stepping.
 	 */
 	 /** Initialize particle acceleration. */
-	InitializeATimeStep 	initialize_a_fluid_step(water_block, &gravity);
+	TimeStepInitialization 	initialize_a_fluid_step(water_block, &gravity);
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
@@ -319,11 +316,11 @@ int main()
 	 */
 	In_Output in_output(system);
 	/** Output body states for visualization. */
-	WriteBodyStatesToPlt 				write_real_body_states_to_plt(in_output, system.real_bodies_);
+	BodyStatesRecordingToPlt 				write_real_body_states_to_plt(in_output, system.real_bodies_);
 	/** Output body states for visualization. */
-	WriteBodyStatesToVtu 				write_real_body_states_to_vtu(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtu 				write_real_body_states_to_vtu(in_output, system.real_bodies_);
 	/** Output the observed displacement of gate free end. */
-	WriteAnObservedQuantity<indexVector, Vecd>
+	ObservedQuantityRecording<indexVector, Vecd>
 		write_beam_tip_displacement("Position", in_output, gate_observer_contact_relation);
 	/**
 	 * @brief The time stepping starts here.
@@ -337,8 +334,8 @@ int main()
 	gate_particles.initializeNormalDirectionFromGeometry();
 	gate_corrected_configuration_in_strong_form.parallel_exec();
 
-	write_real_body_states_to_vtu.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_beam_tip_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_real_body_states_to_vtu.writeToFile(0);
+	write_beam_tip_displacement.writeToFile(0);
 
 	int number_of_iterations = 0;
 	int screen_output_interval = 100;
@@ -405,10 +402,10 @@ int main()
 			water_block_complex_relation->updateConfiguration();
 			gate_water_contact_relation->updateConfiguration();
 			/** Output the observed data. */
-			write_beam_tip_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+			write_beam_tip_displacement.writeToFile(number_of_iterations);
 		}
 		tick_count t2 = tick_count::now();
-		write_real_body_states_to_vtu.WriteToFile(GlobalStaticVariables::physical_time_  * 0.001);
+		write_real_body_states_to_vtu.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

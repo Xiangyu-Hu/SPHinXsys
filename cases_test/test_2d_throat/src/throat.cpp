@@ -172,7 +172,7 @@ int main()
 	density_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
 
 	//-------- common particle dynamics ----------------------------------------
-	InitializeATimeStep 	initialize_a_fluid_step(fluid_block, &gravity);
+	TimeStepInitialization 	initialize_a_fluid_step(fluid_block, &gravity);
 	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(fluid_block_complex);
 	//computing viscous effect with update velocity directly other than viscous acceleration
 	DampingPairwiseWithWall<indexVector, Vec2d, DampingPairwiseInner>
@@ -186,7 +186,7 @@ int main()
 	//outputs
 	//-----------------------------------------------------------------------------
 	In_Output in_output(system);
-	WriteBodyStatesToVtu write_real_body_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtu write_real_body_states(in_output, system.real_bodies_);
 
 	//-------------------------------------------------------------------
 	//from here the time stepping begines
@@ -207,7 +207,7 @@ int main()
 	wall_particles.initializeNormalDirectionFromGeometry();
 
 	//initial output
-	write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_real_body_states.writeToFile(0);
 
 	int number_of_iterations = 0;
 	int screen_output_interval = 100;
@@ -264,7 +264,7 @@ int main()
 
 		tick_count t2 = tick_count::now();
 		compute_vorticity.parallel_exec();
-		write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_  * 0.001);
+		write_real_body_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

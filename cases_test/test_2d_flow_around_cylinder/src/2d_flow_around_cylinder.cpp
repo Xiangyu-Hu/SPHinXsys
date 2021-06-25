@@ -48,7 +48,7 @@ int main(int ac, char* av[])
 	/**
 	 * @brief define simple data file input and outputs functions.
 	 */
-	WriteBodyStatesToVtu 				write_real_body_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtu 				write_real_body_states(in_output, system.real_bodies_);
 	RestartIO							restart_io(in_output, system.real_bodies_);
 	/** body topology */
 	ComplexBodyRelation* water_block_complex = new ComplexBodyRelation(water_block, {cylinder });
@@ -66,7 +66,7 @@ int main(int ac, char* av[])
 		/** Random reset the insert body particle position. */
 		RandomizePartilePosition  random_inserted_body_particles(cylinder);
 		/** Write the body state to Vtu file. */
-		WriteBodyStatesToVtu 		write_inserted_body_to_vtu(in_output, { cylinder });
+		BodyStatesRecordingToVtu 		write_inserted_body_to_vtu(in_output, { cylinder });
 		/** Write the particle reload files. */
 		ReloadParticleIO 		write_particle_reload_files(in_output, { cylinder });
 
@@ -77,7 +77,7 @@ int main(int ac, char* av[])
 		  */
 		random_inserted_body_particles.parallel_exec(0.25);
 		relaxation_step_inner.surface_bounding_.parallel_exec();
-		write_real_body_states.WriteToFile(0.0);
+		write_real_body_states.writeToFile(0);
 
 		/** relax particles of the insert body. */
 		int ite_p = 0;
@@ -88,20 +88,20 @@ int main(int ac, char* av[])
 			if (ite_p % 200 == 0)
 			{
 				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
-				write_inserted_body_to_vtu.WriteToFile(Real(ite_p) * 1.0e-4);
+				write_inserted_body_to_vtu.writeToFile(ite_p);
 			}
 		}
 		std::cout << "The physics relaxation process of the cylinder finish !" << std::endl;
 
 		/** Output results. */
-		write_particle_reload_files.WriteToFile(0.0);
+		write_particle_reload_files.writeToFile(0);
 		return 0;
 	}
 	/**
 	 * @brief 	Methods used for time stepping.
 	 */
 	 /** Initialize particle acceleration. */
-	InitializeATimeStep 	initialize_a_fluid_step(water_block);
+	TimeStepInitialization 	initialize_a_fluid_step(water_block);
 	/** Periodic BCs in x direction. */
 	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition_x(water_block, 0);
 	/** Periodic BCs in y direction. */
@@ -135,11 +135,11 @@ int main(int ac, char* av[])
 	/**
 	 * @brief Write observation data into files.
 	 */
-	WriteBodyReducedQuantity<solid_dynamics::TotalViscousForceOnSolid> 		
+	BodyReducedQuantityRecording<solid_dynamics::TotalViscousForceOnSolid> 		
 		write_total_viscous_force_on_inserted_body(in_output, cylinder);
-	WriteBodyReducedQuantity<solid_dynamics::TotalForceOnSolid>
+	BodyReducedQuantityRecording<solid_dynamics::TotalForceOnSolid>
 		write_total_force_on_inserted_body(in_output, cylinder);
-	WriteAnObservedQuantity<indexVector, Vecd>
+	ObservedQuantityRecording<indexVector, Vecd>
 		write_fluid_velocity("Velocity", in_output, fluid_observer_contact);
 
 	/**
@@ -170,7 +170,7 @@ int main(int ac, char* av[])
 		cylinder_contact->updateConfiguration();
 	}
 	/** first output*/
-	write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_real_body_states.writeToFile(0);
 
 	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
@@ -228,7 +228,7 @@ int main(int ac, char* av[])
 					<< "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "\n";
 
 				if (number_of_iterations % restart_output_interval == 0 && number_of_iterations != system.restart_step_)
-					restart_io.WriteToFile(Real(number_of_iterations));
+					restart_io.writeToFile(number_of_iterations);
 			}
 			number_of_iterations++;
 
@@ -247,11 +247,11 @@ int main(int ac, char* av[])
 		tick_count t2 = tick_count::now();
 		/** write run-time observation into file */
 		compute_vorticity.parallel_exec();
-		write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
-		write_total_viscous_force_on_inserted_body.WriteToFile(GlobalStaticVariables::physical_time_);
-		write_total_force_on_inserted_body.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_real_body_states.writeToFile();
+		write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
+		write_total_force_on_inserted_body.writeToFile(number_of_iterations);
 		fluid_observer_contact->updateConfiguration();
-		write_fluid_velocity.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_fluid_velocity.writeToFile(number_of_iterations);
 		
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;

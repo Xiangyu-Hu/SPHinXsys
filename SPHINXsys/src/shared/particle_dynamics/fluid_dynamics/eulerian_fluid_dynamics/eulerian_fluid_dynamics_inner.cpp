@@ -41,8 +41,8 @@ namespace SPH
 			rho_n_(particles_->rho_n_), E_(particles_->E_), p_(particles_->p_)
 		{
 			gamma_ = material_->HeatCapacityRatio();
-			c_0_ = material_->ReferenceSoundSpeed();
-			rho_0_ = material_->ReferenceDensity();
+			c0_ = material_->ReferenceSoundSpeed();
+			rho0_ = material_->ReferenceDensity();
 		}
 		//=================================================================================================//
 		ViscousAccelerationInner::ViscousAccelerationInner(BaseInnerBodyRelation* inner_relation) :
