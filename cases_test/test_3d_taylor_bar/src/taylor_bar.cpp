@@ -18,7 +18,9 @@ int main(int ac, char* av[])
 	system.run_particle_relaxation_ = false;
 	system.reload_particles_ = true;
 	//handle command line arguments
+	#ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
+	#endif
 	In_Output in_output(system);
 
 	/** Creat a body with corresponding material, particles and reaction model. */
@@ -46,9 +48,9 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//	Output
 	//----------------------------------------------------------------------
-	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
-	WriteAnObservedQuantity<indexVector, Vecd> write_velocity("Velocity", in_output, my_observer_contact);
-	WriteAnObservedQuantity<indexVector, Vecd> write_displacement("Position", in_output, my_observer_contact);
+	BodyStatesRecordingToVtu write_states(in_output, system.real_bodies_);
+	ObservedQuantityRecording<indexVector, Vecd> write_velocity("Velocity", in_output, my_observer_contact);
+	ObservedQuantityRecording<indexVector, Vecd> write_displacement("Position", in_output, my_observer_contact);
 
 	if (system.run_particle_relaxation_)
 	{
@@ -58,7 +60,7 @@ int main(int ac, char* av[])
 		 /** Random reset the insert body particle position. */
 		RandomizePartilePosition  random_column_particles(column);
 		/** Write the body state to Vtu file. */
-		WriteBodyStatesToVtu 		write_column_to_vtu(in_output, { column });
+		BodyStatesRecordingToVtu 		write_column_to_vtu(in_output, { column });
 		/** Write the particle reload files. */
 
 		ReloadParticleIO 		write_particle_reload_files(in_output, { column });
@@ -69,7 +71,7 @@ int main(int ac, char* av[])
 		  */
 		random_column_particles.parallel_exec(0.25);
 		relaxation_step_inner.surface_bounding_.parallel_exec();
-		write_states.WriteToFile(0.0);
+		write_states.writeToFile(0.0);
 
 		/** relax particles of the insert body. */
 		int ite_p = 0;
@@ -80,12 +82,12 @@ int main(int ac, char* av[])
 			if (ite_p % 200 == 0)
 			{
 				cout << std::fixed << setprecision(9) << "Relaxation steps for the column body N = " << ite_p << "\n";
-				write_column_to_vtu.WriteToFile(Real(ite_p) * 1.0e-4);
+				write_column_to_vtu.writeToFile(Real(ite_p) * 1.0e-4);
 			}
 		}
 		std::cout << "The physics relaxation process of cyclinder body finish !" << std::endl;
 		/** Output results. */
-		write_particle_reload_files.WriteToFile(0.0);
+		write_particle_reload_files.writeToFile(0.0);
 		return 0;
 
 	}
@@ -113,9 +115,9 @@ int main(int ac, char* av[])
 	corrected_configuration_in_strong_form.parallel_exec();
 	initial_condition.parallel_exec();
 
-	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_velocity.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_states.writeToFile();
+	write_displacement.writeToFile(0);
+	write_velocity.writeToFile(0);
 	//----------------------------------------------------------------------
 	// Setup time-stepping realted simulation parameters.
 	//----------------------------------------------------------------------
@@ -143,8 +145,8 @@ int main(int ac, char* av[])
 					<< dt << "\n";
 
 				if (ite % observation_sample_interval == 0) {
-					write_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
-					write_velocity.WriteToFile(GlobalStaticVariables::physical_time_);
+					write_displacement.writeToFile(GlobalStaticVariables::physical_time_);
+					write_velocity.writeToFile(GlobalStaticVariables::physical_time_);
 				}
 			}
 			column_wall_contact_force.parallel_exec(dt);
@@ -160,7 +162,7 @@ int main(int ac, char* av[])
 			GlobalStaticVariables::physical_time_ += dt;
 		}
 		tick_count t2 = tick_count::now();
-		write_states.WriteToFile(1.0e3*GlobalStaticVariables::physical_time_);
+		write_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

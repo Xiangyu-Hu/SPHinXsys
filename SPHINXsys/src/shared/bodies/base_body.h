@@ -44,6 +44,7 @@
 #include "particle_adaptation.h"
 #include "all_particle_generators.h"
 #include "particle_sorting.h"
+#include "geometry.h"
 
 #include <string>
 
@@ -208,6 +209,7 @@ namespace SPH
 
 		BodyPartByParticle(SPHBody* body, std::string body_part_name)
 			: BodyPartByShape(body, body_part_name) {};
+
 		virtual ~BodyPartByParticle() {};
 	protected:
 		void tagAParticle(size_t particle_index);

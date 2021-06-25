@@ -2,7 +2,7 @@
  * @file 	shock_tube.cpp
  * @brief 	This is a test to show the sod shock tube.
  * @details We consider sod shock tube about two waves.
- * @author 	Zhentong Wang
+ * @author 	Zhentong Wang and Xiangyu Hu
  */
 #include "shock_tube.h"
 #include "sphinxsys.h"
@@ -58,7 +58,7 @@ int main(int ac, char* av[])
 	 * @brief Output.
 	 */
 	 /** Output the body states. */
-	WriteBodyStatesToPlt 		write_body_states(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToPlt 		body_states_recording(in_output, sph_system.real_bodies_);
 	/** Write the particle reload files. */
 	ReloadParticleIO 		write_particle_reload_files(in_output, { wave_block });
 	/** Output the body states for restart simulation. */
@@ -82,7 +82,7 @@ int main(int ac, char* av[])
 		wave_block_inner->updateConfiguration();
 	}
 	/** Output the start states of bodies. */
-	write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
+	body_states_recording.writeToFile(0);
 	/**
 	 * @brief 	Basic parameters.
 	 */
@@ -119,14 +119,14 @@ int main(int ac, char* av[])
 					<< "	dt = " << dt << "\n";
 
 				if (number_of_iterations % restart_output_interval == 0) {
-					restart_io.WriteToFile(Real(number_of_iterations));
+					restart_io.writeToFile(number_of_iterations);
 				}
 			}
 			number_of_iterations++;
 		}
 
 		tick_count t2 = tick_count::now();
-		write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		body_states_recording.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}
@@ -137,6 +137,6 @@ int main(int ac, char* av[])
 	cout << "Total wall time for computation: " << tt.seconds()
 		<< " seconds." << endl;
 
-	write_particle_reload_files.WriteToFile();
+	write_particle_reload_files.writeToFile();
 	return 0;
 }

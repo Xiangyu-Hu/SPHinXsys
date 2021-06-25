@@ -160,29 +160,31 @@ int main()
 	 * This section define all numerical methods will be used in this case.
 	 */
 	/** initialize a time step */
-	InitializeATimeStep 	myocardium_initialize_gravity(myocardium_body);
+	TimeStepInitialization 	myocardium_initialize_gravity(myocardium_body);
 	Gravity* gravity = new Gravity(Vecd(-100.0, 0.0, 0.0));
-	InitializeATimeStep plate_initialize_gravity(moving_plate, gravity);
+	TimeStepInitialization plate_initialize_gravity(moving_plate, gravity);
 	/** Corrected strong configuration. */	
 	solid_dynamics::CorrectConfiguration corrected_configuration_in_strong_form(myocardium_body_inner);
 	solid_dynamics::CorrectConfiguration corrected_configuration_in_strong_form_2(moving_plate_inner);
-	/** Time step size calculation. */
-	solid_dynamics::AcousticTimeStepSize computing_time_step_size(myocardium_body);
-	solid_dynamics::AcousticTimeStepSize computing_time_step_size_2(moving_plate);
 	/** active and passive stress relaxation. */
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(myocardium_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(myocardium_body_inner);
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half_2(moving_plate_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half_2(moving_plate_inner);
+	//stress_relaxation_first_half_2.post_processes_(spring_constraint);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ContactDensitySummation myocardium_update_contact_density(myocardium_plate_contact);
 	solid_dynamics::ContactForce myocardium_compute_solid_contact_forces(myocardium_plate_contact);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ContactDensitySummation plate_update_contact_density(plate_myocardium_contact);
 	solid_dynamics::ContactForce plate_compute_solid_contact_forces(plate_myocardium_contact);
+
 	/** Constrain the holder. */
 	solid_dynamics::ConstrainSolidBodyRegion
 		constrain_holder(myocardium_body, new Holder(myocardium_body, "Holder"));
+	/** Add spring constraint on the plate. */
+	solid_dynamics::SpringDamperConstraintParticleWise spring_constraint(moving_plate, Vecd(0.2, 0, 0), 0.01);
+
 	/** Damping with the solid body*/
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>
 		muscle_damping(myocardium_body_inner, 0.1, "Velocity", physical_viscosity);
@@ -190,7 +192,7 @@ int main()
 		plate_damping(moving_plate_inner, 0.1, "Velocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
-	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtu write_states(in_output, system.real_bodies_);
 
 	/**
 	 * From here the time stepping begines.
@@ -202,7 +204,7 @@ int main()
 	/** apply initial condition */
 	corrected_configuration_in_strong_form.parallel_exec();
 	corrected_configuration_in_strong_form_2.parallel_exec();
-	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_states.writeToFile(0);
 	/** Setup physical parameters. */
 	int ite = 0;
 	Real end_time = 0.1;
@@ -228,6 +230,8 @@ int main()
 			myocardium_initialize_gravity.parallel_exec();
 			plate_initialize_gravity.parallel_exec();
 
+			spring_constraint.parallel_exec();
+
 			/** Contact model for myocardium. */
 			myocardium_update_contact_density.parallel_exec();
 			myocardium_compute_solid_contact_forces.parallel_exec();
@@ -243,9 +247,7 @@ int main()
 			stress_relaxation_second_half.parallel_exec(dt);
 
 			stress_relaxation_first_half_2.parallel_exec(dt);
-			//spring_contraint.parallel_exec(dt);
 			plate_damping.parallel_exec(dt);
-			//spring_contraint.parallel_exec(dt);
 			stress_relaxation_second_half_2.parallel_exec(dt);
 
 			ite++;
@@ -260,7 +262,7 @@ int main()
 			plate_myocardium_contact->updateConfiguration();
 		}
 		tick_count t2 = tick_count::now();
-		write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

@@ -8,8 +8,7 @@
 
 #include "sphinxsys.h"
 
-//Case file to setup the test case
-#include "airfoil_2d.h"
+#include "airfoil_2d.h" //Header to setup the test case
 
 using namespace SPH;
 
@@ -27,7 +26,6 @@ int main(int ac, char* av[])
 	#endif
 	/** output environment. */
 	In_Output 	in_output(system);
-
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -37,9 +35,8 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
-	
-	WriteBodyStatesToVtu write_airfoil_to_vtu(in_output, { airfoil });
-	WriteMeshToPlt 	write_mesh_cell_linked_list(in_output, airfoil, airfoil->mesh_cell_linked_list_);
+	BodyStatesRecordingToVtu airfoil_recording_to_vtu(in_output, { airfoil });
+	MeshRecordingToPlt 	mesh_cell_linked_list_recording(in_output, airfoil, airfoil->mesh_cell_linked_list_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -53,14 +50,18 @@ int main(int ac, char* av[])
 	relax_dynamics::RelaxationStepInner relaxation_step_inner(airfoil_inner, true);
 	relax_dynamics::UpdateSmoothingLengthRatioByBodyShape update_smoothing_length_ratio(airfoil);
 	//----------------------------------------------------------------------
-	//	Particle relaxation starts here.
+	//	Prepare the simulation with cell linked list, configuration
+	//	and case specified initial condition if necessary. 
 	//----------------------------------------------------------------------
 	random_airfoil_particles.parallel_exec(0.25);
 	relaxation_step_inner.surface_bounding_.parallel_exec();
 	update_smoothing_length_ratio.parallel_exec();
-	write_airfoil_to_vtu.WriteToFile(0.0);
 	airfoil->updateCellLinkedList();
-	write_mesh_cell_linked_list.WriteToFile(0.0);
+	//----------------------------------------------------------------------
+	//	First output before the simulation.
+	//----------------------------------------------------------------------
+	airfoil_recording_to_vtu.writeToFile(0);
+	mesh_cell_linked_list_recording.writeToFile(0);
 	//----------------------------------------------------------------------
 	//	Particle relaxation time stepping start here.
 	//----------------------------------------------------------------------
@@ -73,7 +74,7 @@ int main(int ac, char* av[])
 		if (ite_p % 100 == 0)
 		{
 			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the airfoil N = " << ite_p << "\n";
-			write_airfoil_to_vtu.WriteToFile(Real(ite_p) * 1.0e-4);
+			airfoil_recording_to_vtu.writeToFile(ite_p);
 		}
 	}
 	std::cout << "The physics relaxation process of airfoil finish !" << std::endl;

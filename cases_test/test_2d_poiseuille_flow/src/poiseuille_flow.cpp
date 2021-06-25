@@ -126,7 +126,7 @@ int main()
 	 * @brief 	Methods used for time stepping.
 	 */
 	 /** Initialize particle acceleration. */
-	InitializeATimeStep 	initialize_a_fluid_step(water_block, &gravity);
+	TimeStepInitialization 	initialize_a_fluid_step(water_block, &gravity);
 	/** Periodic BCs in x direction. */
 	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition(water_block, 0);
 	/**
@@ -151,7 +151,7 @@ int main()
 	 */
 	In_Output in_output(system);
 	/** Output the body states. */
-	WriteBodyStatesToVtu write_body_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtu body_states_recording(in_output, system.real_bodies_);
 	/** Output the body states for restart simulation. */
 	RestartIO		restart_io(in_output, system.real_bodies_);
 	/**
@@ -173,7 +173,7 @@ int main()
 		water_block_complex->updateConfiguration();
 	}
 	/** Output the start states of bodies. */
-	write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
+	body_states_recording.writeToFile(0);
 	/**
 	 * @brief 	Basic parameters.
 	 */
@@ -230,7 +230,7 @@ int main()
 					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
 
 				if (number_of_iterations % restart_output_interval == 0)
-					restart_io.WriteToFile(Real(number_of_iterations));
+					restart_io.writeToFile(number_of_iterations);
 			}
 			number_of_iterations++;
 			/** Update cell linked list and configuration. */
@@ -243,7 +243,7 @@ int main()
 			interval_updating_configuration += tick_count::now() - time_instance;
 		}
 		tick_count t2 = tick_count::now();
-		write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		body_states_recording.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 

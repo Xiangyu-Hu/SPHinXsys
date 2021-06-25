@@ -95,7 +95,7 @@ int main(int ac, char* av[])
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for computation start with relaxed body fitted particles distribution. */
-	sph_system.reload_particles_ = true;
+	sph_system.reload_particles_ = false;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	sph_system.restart_step_ = 0;
 	//handle command line arguments
@@ -108,7 +108,7 @@ int main(int ac, char* av[])
 	 */
 	WaterBlock *water_block = new WaterBlock(sph_system, "WaterBody");
 	// Using relaxed particle distribution if needed
-	if (sph_system.reload_particles_ && !sph_system.run_particle_relaxation_) water_block->useParticleGeneratorReload();
+	if (sph_system.reload_particles_) water_block->useParticleGeneratorReload();
 	WaterMaterial 	*water_material = new WaterMaterial();
 	FluidParticles 	fluid_particles(water_block, water_material);
 	/** topology */
@@ -126,7 +126,7 @@ int main(int ac, char* av[])
 	 * @brief 	Methods used for time stepping.
 	 */
 	 /** Initialize particle acceleration. */
-	InitializeATimeStep 	initialize_a_fluid_step(water_block);
+	TimeStepInitialization 	initialize_a_fluid_step(water_block);
 	/** Periodic BCs in x direction. */
 	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition_x(water_block, 0);
 	/** Periodic BCs in y direction. */
@@ -155,16 +155,16 @@ int main(int ac, char* av[])
 	 * @brief Output.
 	 */
 	/** Output the body states. */
-	WriteBodyStatesToVtu 	write_body_states(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtu 	body_states_recording(in_output, sph_system.real_bodies_);
 	/** Write the particle reload files. */
 	ReloadParticleIO 		write_particle_reload_files(in_output, { water_block });
 	/** Output the body states for restart simulation. */
 	RestartIO				restart_io(in_output, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	WriteBodyReducedQuantity<TotalMechanicalEnergy> 	
+	BodyReducedQuantityRecording<TotalMechanicalEnergy> 	
 		write_total_mechanical_energy(in_output, water_block, new Gravity(Vec2d(0)));
 	/** Output the maximum speed of the fluid body. */
-	WriteBodyReducedQuantity<MaximumSpeed> write_maximum_speed(in_output, water_block);
+	BodyReducedQuantityRecording<MaximumSpeed> write_maximum_speed(in_output, water_block);
 	/**
 	 * @brief Setup geomtry and initial conditions
 	 */
@@ -186,9 +186,9 @@ int main(int ac, char* av[])
 		water_block_inner->updateConfiguration();
 	}
 	/** Output the start states of bodies. */
-	write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
+	body_states_recording.writeToFile(0);
 	/** Output the mechanical energy of fluid. */
-	write_total_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_total_mechanical_energy.writeToFile(0);
 	/**
 	 * @brief 	Basic parameters.
 	 */
@@ -237,7 +237,7 @@ int main(int ac, char* av[])
 					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
 
 				if (number_of_iterations % restart_output_interval == 0) {
-					restart_io.WriteToFile(Real(number_of_iterations));
+					restart_io.writeToFile(number_of_iterations);
 				}
 			}
 			number_of_iterations++;
@@ -252,9 +252,9 @@ int main(int ac, char* av[])
 		}
 
 		tick_count t2 = tick_count::now();
-		write_total_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
-		write_maximum_speed.WriteToFile(GlobalStaticVariables::physical_time_);
-		write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_total_mechanical_energy.writeToFile(number_of_iterations);
+		write_maximum_speed.writeToFile(number_of_iterations);
+		body_states_recording.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}
@@ -265,6 +265,6 @@ int main(int ac, char* av[])
 	std::cout << "Total wall time for computation: " << tt.seconds()
 		<< " seconds." << std::endl;
 
-	write_particle_reload_files.WriteToFile();
+	write_particle_reload_files.writeToFile();
 	return 0;
 }

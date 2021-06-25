@@ -59,7 +59,7 @@ namespace SPH {
 		Real nu_; 			/*< Poisson ratio  */
 		ElasticSolidParticles* elastic_particles_;
 
-		virtual void setSoundWaveSpeed() = 0;
+		virtual void setReferenceSoundSpeed() = 0;
 		virtual void setTensileWaveSpeed() = 0;
 		virtual void setShearWaveSpeed() = 0;
 		virtual void setYoungsModulus() = 0;
@@ -75,7 +75,7 @@ namespace SPH {
 		virtual ~ElasticSolid() {};
 
 		virtual void assignElasticSolidParticles(ElasticSolidParticles* elastic_particles);
-		Real SoundWaveSpeed() { return c0_; };
+		Real ReferenceSoundSpeed() { return c0_; };
 		Real TensileWaveSpeed() { return ct0_; };
 		Real ShearWaveSpeed() { return cs0_; };
 		Real YoungsModulus() { return E0_; };
@@ -107,6 +107,15 @@ namespace SPH {
 		{
 			material_name_ = "LinearElasticSolid";
 		};
+		LinearElasticSolid(Real rho_0, Real Youngs_modulus, Real poisson) : ElasticSolid()
+		{
+			material_name_ = "LinearElasticSolid";
+			rho0_ = rho_0;
+			youngs_modulus_ = Youngs_modulus;
+			poisson_ratio_ = poisson;
+
+			assignDerivedMaterialParameters();
+		};
 		virtual ~LinearElasticSolid() {};
 
 		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
@@ -115,7 +124,7 @@ namespace SPH {
 		Real poisson_ratio_; 		/*< Poisson ratio as basic inpiut parameter */
 		Real lambda0_; 				/*< first Lame parameter */
 
-		virtual void setSoundWaveSpeed() override;
+		virtual void setReferenceSoundSpeed() override;
 		virtual void setTensileWaveSpeed() override;
 		virtual void setShearWaveSpeed() override;
 		virtual void setYoungsModulus() override { E0_ = youngs_modulus_; };
@@ -137,6 +146,11 @@ namespace SPH {
 	{
 	public:
 		NeoHookeanSolid() : LinearElasticSolid() 
+		{
+			material_name_ = "NeoHookeanSolid";
+		};
+		NeoHookeanSolid(Real rho_0, Real Youngs_modulus, Real poisson)
+			: LinearElasticSolid(rho_0, Youngs_modulus, poisson)
 		{
 			material_name_ = "NeoHookeanSolid";
 		};
@@ -189,7 +203,7 @@ namespace SPH {
 		Real bulk_modulus_;			/**< to achieve weakly compressible condition  as basic parameter.*/
 		Real lambda0_; 				/*< first Lame parameter */
 
-		virtual void setSoundWaveSpeed() override;
+		virtual void setReferenceSoundSpeed() override;
 		virtual void setTensileWaveSpeed() override;
 		virtual void setShearWaveSpeed() override;
 		virtual void setYoungsModulus() override;

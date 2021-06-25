@@ -46,7 +46,7 @@ int main()
 	 * Methods used for time stepping
 	 */
 	/** Time step initialization, add gravity. */
-	InitializeATimeStep 	initialize_gravity_to_fluid(water_block, &gravity);
+	TimeStepInitialization 	initialize_gravity_to_fluid(water_block, &gravity);
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_block_complex);
 	/** time step size without considering sound wave speed. */
@@ -150,18 +150,18 @@ int main()
 		constraint_spot_flap(flap, flap_multibody, MBsystem, pin_spot, force_on_bodies, integ);
 	/** Output. */
 	In_Output in_output(system);
-	WriteBodyStatesToVtu 		write_real_body_states(in_output, system.real_bodies_);
-	WriteBodyReducedQuantity<solid_dynamics::TotalForceOnSolid> write_total_force_on_flap(in_output, flap);
+	BodyStatesRecordingToVtu 		write_real_body_states(in_output, system.real_bodies_);
+	BodyReducedQuantityRecording<solid_dynamics::TotalForceOnSolid> write_total_force_on_flap(in_output, flap);
 	WriteSimBodyPinData			write_flap_pin_data(in_output, integ, pin_spot);
 	/** WaveProbe 1. */
-	WriteBodyReducedQuantity<fluid_dynamics::FreeSurfaceProbeOnFluidBody>
+	BodyReducedQuantityRecording<fluid_dynamics::FreeSurfaceProbeOnFluidBody>
 		wave_probe_4(in_output, water_block,  new WaveProbeBufferNo4(water_block, "WaveProbe_04"));
-	WriteBodyReducedQuantity<fluid_dynamics::FreeSurfaceProbeOnFluidBody>
+	BodyReducedQuantityRecording<fluid_dynamics::FreeSurfaceProbeOnFluidBody>
 		wave_probe_5(in_output, water_block,  new WaveProbeBufferNo5(water_block, "WaveProbe_05"));
-	WriteBodyReducedQuantity<fluid_dynamics::FreeSurfaceProbeOnFluidBody>
+	BodyReducedQuantityRecording<fluid_dynamics::FreeSurfaceProbeOnFluidBody>
 		wave_probe_12(in_output, water_block, new WaveProbeBufferNo12(water_block, "WaveProbe_12"));
 	/** Pressure probe. */
-	WriteAnObservedQuantity<indexScalar, Real> pressure_probe("Pressure", in_output, observer_contact_with_water);
+	ObservedQuantityRecording<indexScalar, Real> pressure_probe("Pressure", in_output, observer_contact_with_water);
 	/** Interpolate the particle position in flap to move the observer accordingly. */
 	observer_dynamics::InterpolatingAQuantity<indexVector, Vecd>
 		interpolation_observer_position(observer_contact_with_flap, "Position", "Position");
@@ -176,13 +176,13 @@ int main()
 	flap_particles.initializeNormalDirectionFromGeometry();
 	flap_corrected_configuration.parallel_exec();
 
-	write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_total_force_on_flap.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_flap_pin_data.WriteToFile(GlobalStaticVariables::physical_time_);
-	wave_probe_4.WriteToFile(GlobalStaticVariables::physical_time_);
-	wave_probe_5.WriteToFile(GlobalStaticVariables::physical_time_);
-	wave_probe_12.WriteToFile(GlobalStaticVariables::physical_time_);
-	pressure_probe.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_real_body_states.writeToFile(0);
+	write_total_force_on_flap.writeToFile(0);
+	write_flap_pin_data.writeToFile(0);
+	wave_probe_4.writeToFile(0);
+	wave_probe_5.writeToFile(0);
+	wave_probe_12.writeToFile(0);
+	pressure_probe.writeToFile(0);
 	/** Simulation start here. */
 	/** starting time zero. */
 	GlobalStaticVariables::physical_time_ = 0.0;
@@ -258,18 +258,18 @@ int main()
 			observer_contact_with_water->updateConfiguration();
 			if(total_time >= relax_time)
 			{
-				write_total_force_on_flap.WriteToFile(GlobalStaticVariables::physical_time_);
-				write_flap_pin_data.WriteToFile(GlobalStaticVariables::physical_time_ );
-				wave_probe_4.WriteToFile(GlobalStaticVariables::physical_time_);
-				wave_probe_5.WriteToFile(GlobalStaticVariables::physical_time_);
-				wave_probe_12.WriteToFile(GlobalStaticVariables::physical_time_);
-				pressure_probe.WriteToFile(GlobalStaticVariables::physical_time_);
+				write_total_force_on_flap.writeToFile(number_of_iterations);
+				write_flap_pin_data.writeToFile(GlobalStaticVariables::physical_time_ );
+				wave_probe_4.writeToFile(number_of_iterations);
+				wave_probe_5.writeToFile(number_of_iterations);
+				wave_probe_12.writeToFile(number_of_iterations);
+				pressure_probe.writeToFile(number_of_iterations);
 			}
 		}
 
 		tick_count t2 = tick_count::now();
 		if(total_time >= relax_time)
-			write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_  * 0.001);
+			write_real_body_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

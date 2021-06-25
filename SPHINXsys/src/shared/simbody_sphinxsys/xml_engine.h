@@ -52,7 +52,7 @@ namespace fs = boost::filesystem;
 namespace fs = std::experimental::filesystem;
 #endif
 
-namespace SPH
+namespace SPH 
 {
 	class XmlEngine
 	{
@@ -70,6 +70,9 @@ namespace SPH
 
 		/**Add existing element to root_element of Xml Doc. */
 		void addElementToXmlDoc(const std::string& element_name);
+
+		/**Add child element to a given element. */
+		void addChildToElement(SimTK::Xml::Element& father_element, const std::string& child_name);
 
 		/** Add an attribute of type string to an xml element.  */
 		template<class T>
@@ -97,8 +100,14 @@ namespace SPH
 		void loadXmlFile(const std::string& filefullpath);
 		/** Get the Tag of root element as a string */
 		std::string getRootElementTag();
+		/** Get the Tag of a element as a string */
+		std::string getElementTag(SimTK::Xml::Element& element);
+		/** resize of Xml doc */
+		void resizeXmlDocForParticles(size_t input_size);
 		/** Get the size of Xml doc */
 		size_t SizeOfXmlDoc();
+		/** Get a reference to a child element */
+		SimTK::Xml::Element getChildElement(const std::string& tag);
 	};
 }
 

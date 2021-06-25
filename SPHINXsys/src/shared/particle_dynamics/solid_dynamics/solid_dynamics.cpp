@@ -222,7 +222,7 @@ namespace SPH
 		{
 			//since the particle does not change its configuration in pressure relaxation step
 			//I chose a time-step size according to Eulerian method
-			Real sound_speed = material_->SoundWaveSpeed();
+			Real sound_speed = material_->ReferenceSoundSpeed();
 			return CFL_ * SMIN(sqrt(smoothing_length_ / (dvel_dt_[index_i].norm() + TinyReal)),
 				smoothing_length_ / (sound_speed + vel_n_[index_i].norm()));
 		}
@@ -368,28 +368,82 @@ namespace SPH
 			vel_ave_[index_i] = vel_n_[index_i];
 		}
 		//=================================================================================================//
-		ParticleWiseAcceleration
-			::ParticleWiseAcceleration(SolidBody* body, Vecd stiffness)
+		SpringDamperConstraintParticleWise
+			::SpringDamperConstraintParticleWise(SolidBody* body, Vecd stiffness, Real damping_ratio)
 			: ParticleDynamicsSimple(body), SolidDataSimple(body),
-			mass_(particles_->mass_),
-			pos_n_(particles_->pos_n_),
-			pos_0_(particles_->pos_0_),
-			dvel_dt_prior_(particles_->dvel_dt_prior_) {}
-		//=================================================================================================//
-		Vecd ParticleWiseAcceleration::getAcceleration(Vecd& disp, Real mass)
+					pos_n_(particles_->pos_n_),
+					pos_0_(particles_->pos_0_),
+					vel_n_(particles_->vel_n_),
+					dvel_dt_prior_(particles_->dvel_dt_prior_)
 		{
+			// calculate total mass
+			total_mass_ = 0.0;
+			for (int i = 0; i < particles_->mass_.size(); i++)
+			{
+				total_mass_ += particles_->mass_[i];
+			}
+			// scale stiffness and damping by mass here, so it's not necessary in each iteration
+			stiffness_ = stiffness / total_mass_;
+			damping_coeff_ = stiffness * damping_ratio / total_mass_;
+		}
+		//=================================================================================================//
+		SpringDamperConstraintParticleWise::~SpringDamperConstraintParticleWise()
+		{}
+		//=================================================================================================//
+		void SpringDamperConstraintParticleWise::setupDynamics(Real dt)
+		{
+			particles_->total_ghost_particles_ = 0;
+		}
+		//=================================================================================================//
+		Vecd SpringDamperConstraintParticleWise::getSpringForce(size_t index_i, Vecd& disp)
+		{	
 			Vecd spring_force(0);
 			for(int i = 0; i < disp.size(); i++)
 			{
-				spring_force[i] = -stiffness_[i] * disp[i] / mass;
-			}
+				spring_force[i] = -stiffness_[i] * disp[i];
+			}			
 			return spring_force;
 		}
 		//=================================================================================================//
-		void ParticleWiseAcceleration::Update(size_t index_i, Real dt)
+		Vecd SpringDamperConstraintParticleWise::getDampingForce(size_t index_i)
+		{
+			Vecd damping_force(0);
+			for(int i = 0; i < vel_n_[index_i].size(); i++)
+			{
+				damping_force[i] = -damping_coeff_[i] * vel_n_[index_i][i];
+			}
+			return damping_force;
+		}
+		//=================================================================================================//
+		void SpringDamperConstraintParticleWise::Update(size_t index_i, Real dt)
 		{	
-			Vecd disp_from_0 = pos_n_[index_i] - pos_0_[index_i];
-			dvel_dt_prior_[index_i] += getAcceleration(disp_from_0, mass_[index_i]);
+			Vecd delta_x = pos_n_[index_i] - pos_0_[index_i];
+			dvel_dt_prior_[index_i] += getSpringForce(index_i, delta_x);
+			dvel_dt_prior_[index_i] += getDampingForce(index_i);
+		}
+		//=================================================================================================//
+		AccelerationForBodyPartInBoundingBox::
+			AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox* bounding_box, Vecd acceleration) :
+			ParticleDynamicsSimple(body), SolidDataSimple(body),
+			pos_n_(particles_->pos_n_),
+			dvel_dt_prior_(particles_->dvel_dt_prior_),
+			bounding_box_(bounding_box),
+			acceleration_(acceleration){}
+		//=================================================================================================//
+		void AccelerationForBodyPartInBoundingBox::setupDynamics(Real dt)
+		{
+			particles_->total_ghost_particles_ = 0;
+		}
+		//=================================================================================================//
+		void AccelerationForBodyPartInBoundingBox::Update(size_t index_i, Real dt)
+		{	
+			Vecd point = pos_n_[index_i];
+			if ( 	point[0] >= bounding_box_->first[0] && point[0] <= bounding_box_->second[0] &&
+					point[1] >= bounding_box_->first[1] && point[1] <= bounding_box_->second[1] &&
+					point[2] >= bounding_box_->first[2] && point[2] <= bounding_box_->second[2]			)
+			{
+				dvel_dt_prior_[index_i] += acceleration_;
+			}
 		}
 		//=================================================================================================//	
 		ElasticDynamicsInitialCondition::
