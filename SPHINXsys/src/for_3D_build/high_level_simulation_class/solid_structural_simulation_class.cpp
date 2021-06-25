@@ -304,9 +304,10 @@ void StructuralSimulation::CreateParticleAdaptationList()
 	particle_adaptation_list_ = {};
 	for (unsigned int i = 0; i < resolution_list_.size(); i++)
 	{
-		Real h_spacing_ratio = resolution_list_[i] / default_resolution_;
-		particle_adaptation_list_.push_back(ParticleAdaptation(h_spacing_ratio, 0));
+		Real refinement = resolution_list_[i] / default_resolution_;
+		particle_adaptation_list_.push_back(ParticleAdaptation(1.1, 0));
 	}
+	//particle_adaptation_list_[0] = ParticleAdaptation(1.3, 2);
 }
 
 void StructuralSimulation::InitializeElasticSolidBodies(bool particle_relaxation)
