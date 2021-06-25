@@ -56,8 +56,12 @@ public:
 	// for PositionSolidBody
 	vector<solid_dynamics::PositionSolidBody*> Get_position_solid_body_(){ return position_solid_body_; };
 	vector<PositionSolidBodyTuple> Get_position_solid_body_tuple_(){ return position_solid_body_tuple_; };
+	// for PositionScaleSolidBody
+	vector<solid_dynamics::PositionScaleSolidBody*> Get_position_scale_solid_body_(){ return position_scale_solid_body_; };
+	vector<PositionScaleSolidBodyTuple> Get_position_scale_solid_body_tuple_(){ return position_scale_solid_body_tuple_; };
 };
-TEST(StructuralSimulation, StructuralSimulation)
+
+TEST(StructuralSimulation, PositionSolidBodyTuple)
 {
 	/** INPUT PARAMETERS */
 	Real scale_stl = 0.001 / 4; // diameter of 0.025 m
@@ -136,9 +140,9 @@ TEST(StructuralSimulation, StructuralSimulation)
 	//=================================================================================================//
 
 	//=================================================================================================//
-	StdLargeVec<Vecd>& pos_0 = sim.Get_position_solid_body_()[0]->GetParticlePos0();
 	/** START SIMULATION */
 	sim.TestRunSimulation(end_time);
+	StdLargeVec<Vecd>& pos_0 = sim.Get_position_solid_body_()[0]->GetParticlePos0();
 	StdLargeVec<Vecd>& pos_n = sim.Get_position_solid_body_()[0]->GetParticlePosN();
 
 	for (unsigned int index = 0; index < pos_0.size(); index++)
@@ -150,8 +154,63 @@ TEST(StructuralSimulation, StructuralSimulation)
 		}
 	}
 	//=================================================================================================//
+}
+
+TEST(StructuralSimulation, PositionScaleSolidBodyTuple)
+{
+	Real scale_stl = 0.001;
+	Real twoGB_resolution_factor = 4;
+	Real resolution_stent = 0.25;
+	Real resolution_cylinder = 0.4;
+	Real end_time_simulation = 0.05;
+	Real end_time_position = end_time_simulation * 0.9;
+	Real rho_0 = 1000.0;
+	Real poisson = 0.35;
+	Real Youngs_modulus = 1e4;
+	Real physical_viscosity = 200;
+	string relative_input_path = "./input/"; //path definition for linux
+	string cylinder_stl = "cylinder.stl";
+	vector<string> imported_stl_list = { cylinder_stl };
+	vector<Vec3d> translation_list = { Vec3d(0) };
+	vector<Real> resolution_list = { resolution_cylinder };
+	LinearElasticSolid material = LinearElasticSolid(rho_0, Youngs_modulus, poisson);
+	vector<LinearElasticSolid> material_model_list = { material };
+	vector<array<int, 2>> contacting_bodies_list = {};
+	StructuralSimulationInput input
+	{
+		relative_input_path,
+		imported_stl_list,
+		scale_stl,
+		translation_list,
+		resolution_list,
+		material_model_list,
+		physical_viscosity,
+		contacting_bodies_list,
+	};
+	Real scale = 0.9;
+	input.position_scale_solid_body_tuple_ = { PositionScaleSolidBodyTuple(0, 0.0, end_time_position, scale) };
 
 	//=================================================================================================//
+	TestStructuralSimulation sim (input);
+	sim.TestRunSimulation(end_time_simulation);
+	//=================================================================================================//
+
+	StdLargeVec<Vecd>& pos_0 = sim.Get_position_scale_solid_body_()[0]->GetParticlePos0();
+	StdLargeVec<Vecd>& pos_n = sim.Get_position_scale_solid_body_()[0]->GetParticlePosN();
+
+	string name = "./input/cylinder.stl";
+	TriangleMeshShape cylinder_mesh(name, translation_list[0] * scale_stl, scale_stl);
+	BoundingBox bounding_box = cylinder_mesh.findBounds();
+	Vec3d center = (bounding_box.first + bounding_box.second) * 0.5;
+
+	for (unsigned int index = 0; index < pos_0.size(); index++)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			Vec3d displ = center + (pos_0[index] - center) * scale;
+			EXPECT_NEAR(pos_n[index][i], displ[i], displ.norm() * tolerance);
+		}
+	}
 }
 
 int main(int argc, char* argv[])
