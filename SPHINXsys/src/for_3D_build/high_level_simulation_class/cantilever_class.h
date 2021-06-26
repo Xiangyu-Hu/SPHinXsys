@@ -134,7 +134,7 @@ public:
     ContactBodyRelation* myocardium_observer_contact;
 
 	//-------- common particle dynamics ----------------------------------------
-	InitializeATimeStep *initialize_gravity;
+	TimeStepInitialization *initialize_gravity;
 	/** This section define all numerical methods will be used in this case. */
 	solid_dynamics::CorrectConfiguration *corrected_configuration_in_strong_form;
 	solid_dynamics::AcousticTimeStepSize *computing_time_step_size;
@@ -146,7 +146,7 @@ public:
 
 	/** Output */
 	/*In_Output in_output(system);
-	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtu write_states(in_output, system.real_bodies_);
 	WriteAnObservedQuantity<Vecd, BaseParticles, &BaseParticles::pos_n_>
 		write_displacement("Displacement", in_output, myocardium_observer_contact);*/
 
@@ -180,7 +180,7 @@ void PassiveCantilever::initialize_simulation(){
     myocardium_observer_contact = new ContactBodyRelation(myocardium_observer, { myocardium_body });
 
 	//--------common particle dynamics--------//
-	initialize_gravity = new InitializeATimeStep(myocardium_body, gravity);
+	initialize_gravity = new TimeStepInitialization(myocardium_body, gravity);
 
 	/** This section define all numerical methods will be used in this case. */
 	/** Corrected strong configuration. */	
@@ -202,8 +202,8 @@ void PassiveCantilever::initialize_simulation(){
 	system->initializeSystemCellLinkedLists();
 	system->initializeSystemConfigurations();
 	corrected_configuration_in_strong_form->parallel_exec();
-	/*write_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_displacement.WriteToFile(GlobalStaticVariables::physical_time_);*/
+	/*write_states.writeToFile(GlobalStaticVariables::physical_time_);
+	write_displacement.writeToFile(GlobalStaticVariables::physical_time_);*/
 
 	dt = 0.0; 
 }

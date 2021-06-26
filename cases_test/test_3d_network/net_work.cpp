@@ -45,7 +45,7 @@ int main()
 	BodyMaterial* body_material = new BodyMaterial();
 	ElasticSolidParticles 	body_particles(polygon_body, body_material);
 	/** Write particle data. */
-	WriteBodyStatesToVtu 		write_states(in_output, system.real_bodies_);
-	write_states.WriteToFile(0.0);
+	BodyStatesRecordingToVtu 		write_states(in_output, system.real_bodies_);
+	write_states.writeToFile(0);
 	return 0;
 }

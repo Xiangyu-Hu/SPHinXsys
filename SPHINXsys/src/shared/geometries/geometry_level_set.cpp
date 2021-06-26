@@ -22,8 +22,8 @@ namespace SPH {
 		if (isCleaned) level_set_->cleanInterface();
 
 		In_Output* in_output = sph_body->getSPHSystem().in_output_;
-		WriteMeshToPlt 	write_level_set(*in_output, sph_body, level_set_);
-		write_level_set.WriteToFile(0.0);
+		MeshRecordingToPlt 	write_level_set(*in_output, sph_body, level_set_);
+		write_level_set.writeToFile(0);
 	}
 	//=================================================================================================//
 	bool LevelSetComplexShape::checkContain(Vecd& input_pnt, bool BOUNDARY_INCLUDED)

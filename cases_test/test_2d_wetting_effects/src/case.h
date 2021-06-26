@@ -33,7 +33,7 @@ Real mu_a = 5.0e-5;					/**< Air visocsity. */
 Real contact_angle = (150.0 / 180.0) * 3.1415926; 	/**< Contact angle with Wall. */
 Real tension_force = 0.008;
 /** create a water block shape */
-std::vector<Vecd> CreatWaterBlockShape()
+std::vector<Vecd> createWaterBlockShape()
 {
 	//geometry
 	std::vector<Vecd> water_block_shape;
@@ -45,7 +45,7 @@ std::vector<Vecd> CreatWaterBlockShape()
 	return water_block_shape;
 }
 /** create outer wall shape */
-std::vector<Vecd> CreatOuterWallShape()
+std::vector<Vecd> createOuterWallShape()
 {
 	std::vector<Vecd> outer_wall_shape;
 	outer_wall_shape.push_back(Vecd(-BW, -BW));
@@ -59,7 +59,7 @@ std::vector<Vecd> CreatOuterWallShape()
 /**
 * @brief create inner wall shape
 */
-std::vector<Vecd> CreatInnerWallShape()
+std::vector<Vecd> createInnerWallShape()
 {
 	std::vector<Vecd> inner_wall_shape;
 	inner_wall_shape.push_back(Vecd(0.0, 0.0));
@@ -80,7 +80,7 @@ public:
 		: FluidBody(sph_system, body_name, new ParticleAdaptation(1.3, 1))
 	{
 		/** Geomtry definition. */
-		std::vector<Vecd> water_block_shape = CreatWaterBlockShape();
+		std::vector<Vecd> water_block_shape = createWaterBlockShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::add);
 	}
@@ -111,8 +111,8 @@ public:
 		: FluidBody(sph_system, body_name, new ParticleAdaptation(1.3, 0))
 	{
 		/** Geomtry definition. */
-		std::vector<Vecd> water_block_shape = CreatWaterBlockShape();
-		std::vector<Vecd> inner_wall_shape = CreatInnerWallShape();
+		std::vector<Vecd> water_block_shape = createWaterBlockShape();
+		std::vector<Vecd> inner_wall_shape = createInnerWallShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(inner_wall_shape, ShapeBooleanOps::add);
 		body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::sub);
@@ -144,8 +144,8 @@ public:
 		: SolidBody(sph_system, body_name, new ParticleAdaptation(1.3, 1))
 	{
 		/** Geomtry definition. */
-		std::vector<Vecd> outer_shape = CreatOuterWallShape();
-		std::vector<Vecd> inner_shape = CreatInnerWallShape();
+		std::vector<Vecd> outer_shape = createOuterWallShape();
+		std::vector<Vecd> inner_shape = createInnerWallShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(outer_shape, ShapeBooleanOps::add);
 		body_shape_->addAPolygon(inner_shape, ShapeBooleanOps::sub);

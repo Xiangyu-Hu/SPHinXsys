@@ -43,10 +43,10 @@ int main()
 	//	Output
 	//----------------------------------------------------------------------
 	In_Output in_output(system);
-	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
-	WriteAnObservedQuantity<indexVector, Vecd>
+	BodyStatesRecordingToVtu write_states(in_output, system.real_bodies_);
+	ObservedQuantityRecording<indexVector, Vecd>
 		write_velocity("Velocity", in_output, my_observer_contact);
-	WriteAnObservedQuantity<indexVector, Vecd>
+	ObservedQuantityRecording<indexVector, Vecd>
 		write_displacement("Position", in_output, my_observer_contact);
 	//----------------------------------------------------------------------
 	// From here the time stepping begines.
@@ -55,9 +55,9 @@ int main()
 	system.initializeSystemConfigurations();
 	initial_condition.parallel_exec();
 	corrected_configuration_in_strong_form.parallel_exec();
-	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_velocity.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_states.writeToFile(0);
+	write_displacement.writeToFile(0);
+	write_velocity.writeToFile(0);
 	//----------------------------------------------------------------------
 	// Setup time-stepping realted simulation parameters.
 	//----------------------------------------------------------------------
@@ -89,11 +89,11 @@ int main()
 			dt = computing_time_step_size.parallel_exec();
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
-			write_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
-			write_velocity.WriteToFile(GlobalStaticVariables::physical_time_);
+			write_displacement.writeToFile(ite);
+			write_velocity.writeToFile(ite);
 		}
 		tick_count t2 = tick_count::now();
-		write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

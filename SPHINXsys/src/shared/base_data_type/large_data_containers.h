@@ -50,6 +50,9 @@ namespace SPH {
 
 	template <typename T>
 	using StdVec = std::vector<T>;
+
+    template <typename T>
+	using DataVec = std::vector<std::vector<T>>;
 }
 
 #endif // SPHINXSYS_BASE_CONTAINER_H

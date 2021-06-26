@@ -168,7 +168,7 @@ int main()
 	ContactBodyRelation* cylinder_observer_contact = new ContactBodyRelation(cylinder_observer, { cylinder_body });
 
 	/** Common particle dynamics. */
-	InitializeATimeStep 	initialize_external_force(cylinder_body, &external_force);
+	TimeStepInitialization 	initialize_external_force(cylinder_body, &external_force);
 
 	/**
 	 * This section define all numerical methods will be used in this case.
@@ -187,16 +187,14 @@ int main()
 		stress_relaxation_second_half(cylinder_body_inner);
 	solid_dynamics::ConstrainSolidBodyRegionVelocity
 		constrain_holder(cylinder_body, new BoundaryGeometry(cylinder_body, "BoundaryGeometry"), Vecd(0.0, 1.0, 0.0));
-	solid_dynamics::ConstrainSolidBodyMassCenter
-		constrain_mass_center(cylinder_body, Vecd(0.0, 1.0, 0.0));
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vecd>>
 		cylinder_position_damping(cylinder_body_inner, 0.1, "Velocity", physical_viscosity);
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vecd>>
 		cylinder_rotation_damping(cylinder_body_inner, 0.1, "AngularVelocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
-	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
-	WriteAnObservedQuantity<indexVector, Vecd>
+	BodyStatesRecordingToVtu write_states(in_output, system.real_bodies_);
+	ObservedQuantityRecording<indexVector, Vecd>
 		write_cylinder_max_displacement("Position", in_output, cylinder_observer_contact);
 
 	/** Apply initial condition. */
@@ -210,12 +208,12 @@ int main()
 	* Set the starting time.
 	*/
 	GlobalStaticVariables::physical_time_ = 0.0;
-	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_cylinder_max_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_states.writeToFile(0);
+	write_cylinder_max_displacement.writeToFile(0);
 	
 	/** Setup physical parameters. */
 	int ite = 0;
-	Real end_time = 1.5;
+	Real end_time = 3.0;
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	/** Statistics for computing time. */
@@ -233,7 +231,7 @@ int main()
 				std::cout << "N=" << ite << " Time: "
 					<< GlobalStaticVariables::physical_time_ << "	dt: "
 					<< dt << "\n";
-				write_states.WriteToFile(100);
+				write_states.writeToFile(100);
 			}
 			dt = 0.3 * computing_time_step_size.parallel_exec();
 			initialize_external_force.parallel_exec(dt);
@@ -251,9 +249,9 @@ int main()
 			GlobalStaticVariables::physical_time_ += dt;
 
 		}
-		write_cylinder_max_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_cylinder_max_displacement.writeToFile(ite);
 		tick_count t2 = tick_count::now();
-		write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

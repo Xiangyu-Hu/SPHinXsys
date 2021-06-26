@@ -66,7 +66,7 @@ Real Youngs_modulus = Ae;
 //----------------------------------------------------------------------
 //	Fluid body definition.
 //----------------------------------------------------------------------
-std::vector<Vecd> CreatWaterBlockShape()
+std::vector<Vecd> createWaterBlockShape()
 {
 	std::vector<Vecd> water_block_shape;
 	water_block_shape.push_back(DamP_lb);
@@ -85,7 +85,7 @@ public:
 		: FluidBody(system, body_name)
 	{
 		/** Geomerty definition. */
-		std::vector<Vecd> water_block_shape = CreatWaterBlockShape();
+		std::vector<Vecd> water_block_shape = createWaterBlockShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::add);
 	}
@@ -106,7 +106,7 @@ public:
 //----------------------------------------------------------------------
 //	wall body definition.
 //----------------------------------------------------------------------
-std::vector<Vecd> CreatOuterWallShape()
+std::vector<Vecd> createOuterWallShape()
 {
 	std::vector<Vecd> outer_wall_shape;
 	outer_wall_shape.push_back(Vecd(-BW, 0.0));
@@ -118,7 +118,7 @@ std::vector<Vecd> CreatOuterWallShape()
 	return outer_wall_shape;
 }
 
-std::vector<Vecd> CreatInnerWallShape()
+std::vector<Vecd> createInnerWallShape()
 {
 	std::vector<Vecd> inner_wall_shape;
 	inner_wall_shape.push_back(Vecd(DL, 0.0));
@@ -137,8 +137,8 @@ public:
 		: SolidBody(system, body_name)
 	{
 		/** Geomerty definition. */
-		std::vector<Vecd> outer_wall_shape = CreatOuterWallShape();
-		std::vector<Vecd> inner_wall_shape = CreatInnerWallShape();
+		std::vector<Vecd> outer_wall_shape = createOuterWallShape();
+		std::vector<Vecd> inner_wall_shape = createInnerWallShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
 		body_shape_->addAPolygon(inner_wall_shape, ShapeBooleanOps::add);
@@ -147,7 +147,7 @@ public:
 //----------------------------------------------------------------------
 //	create a gate shape
 //----------------------------------------------------------------------
-std::vector<Vecd> CreatGateShape()
+std::vector<Vecd> createGateShape()
 {
 	std::vector<Vecd> gate_shape;
 	gate_shape.push_back(GateP_lb);
@@ -168,7 +168,7 @@ public:
 		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 0))
 	{
 		/** Geomerty definition. */
-		std::vector<Vecd> gate_shape = CreatGateShape();
+		std::vector<Vecd> gate_shape = createGateShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(gate_shape, ShapeBooleanOps::add);
 	}
@@ -236,7 +236,6 @@ public:
 		rho0_ = rho0_s;
 		youngs_modulus_ = Youngs_modulus;
 		poisson_ratio_ = poisson;
-
 		assignDerivedMaterialParameters();
 	}
 };
@@ -297,7 +296,7 @@ int main()
 	//	Define all numerical methods which are used in this case.
 	//----------------------------------------------------------------------
 	/** Initialize particle acceleration. */
-	InitializeATimeStep 	initialize_a_fluid_step(water_block, &gravity);
+	TimeStepInitialization 	initialize_a_fluid_step(water_block, &gravity);
 	 /** Evaluation of fluid density by summation approach. */
 	fluid_dynamics::DensitySummationFreeSurfaceComplex		update_fluid_desnity(water_block_complex);
 	/** Compute time step size without considering sound wave speed. */
@@ -332,12 +331,12 @@ int main()
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
 	In_Output in_output(system);
-	/** Output body states for visulaization. */
-	WriteBodyStatesToPlt 				write_real_body_states_to_plt(in_output, system.real_bodies_);
-	/** Output body states for visulaization. */
-	WriteBodyStatesToVtu 				write_real_body_states_to_vtu(in_output, system.real_bodies_);
+	/** Output body states for visualization. */
+	BodyStatesRecordingToPlt 	rite_real_body_states_to_plt(in_output, system.real_bodies_);
+	/** Output body states for visualization. */
+	BodyStatesRecordingToVtu 	write_real_body_states_to_vtu(in_output, system.real_bodies_);
 	/** Output the observed displacement of gate free end. */
-	WriteAnObservedQuantity<indexVector, Vecd>
+	ObservedQuantityRecording<indexVector, Vecd>
 		write_beam_tip_displacement("Position", in_output, gate_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare quantities will be used once only and initial condition.
@@ -350,10 +349,13 @@ int main()
 	wall_boundary_particles.initializeNormalDirectionFromGeometry();
 	/** computing surface normal direction for the insert body. */
 	gate_particles.initializeNormalDirectionFromGeometry();
-	/** computing linear reproducing configuration for the insert body. */
+	/**
+	 * @brief Pre-simulation.
+	 */
+	 /** computing linear reproducing configuration for the insert body. */
 	gate_corrected_configuration_in_strong_form.parallel_exec();
-	write_real_body_states_to_vtu.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_beam_tip_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_real_body_states_to_vtu.writeToFile(0);
+	write_beam_tip_displacement.writeToFile(0);
 	//----------------------------------------------------------------------
 	//	Basic control parameters for time stepping.
 	//----------------------------------------------------------------------
@@ -426,10 +428,10 @@ int main()
 			gate_contact->updateConfiguration();
 
 			/** Output the observed data. */
-			write_beam_tip_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+			write_beam_tip_displacement.writeToFile(number_of_iterations);
 		}
 		tick_count t2 = tick_count::now();
-		write_real_body_states_to_vtu.WriteToFile(GlobalStaticVariables::physical_time_ * 0.001);
+		write_real_body_states_to_vtu.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

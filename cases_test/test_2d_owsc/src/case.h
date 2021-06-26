@@ -75,7 +75,7 @@ Real Youngs_modulus = 7.8e6;
 /**
 * @brief create a water block shape
 */
-std::vector<Vecd> CreatWaterBlockShape()
+std::vector<Vecd> createWaterBlockShape()
 {
 	std::vector<Vecd> pnts;
 	pnts.push_back(Water_lb);
@@ -142,7 +142,7 @@ std::vector<Vecd> CreatFlapShape()
 /**
 * @brief create outer wall shape
 */
-std::vector<Vecd> CreatOuterWallShape()
+std::vector<Vecd> createOuterWallShape()
 {
 	std::vector<Vecd> pnts1;
 	pnts1.push_back(Vecd(-DL_Extra - BW, -BW));
@@ -214,7 +214,7 @@ class WaterBlock : public FluidBody
 		WaterBlock(SPHSystem &system, std::string body_name)
 			: FluidBody(system, body_name)
 		{
-			std::vector<Vecd> water_block_shape = CreatWaterBlockShape();
+			std::vector<Vecd> water_block_shape = createWaterBlockShape();
 			std::vector<Vecd> flap_shape = CreatFlapShape();
             std::vector<Vecd> flap_base_shape = CreatFlapConstrainShape();
 			body_shape_ = new ComplexShape(body_name);
@@ -261,7 +261,7 @@ public:
 		: SolidBody(system, body_name)
 	{
 		body_shape_ = new ComplexShape(body_name);
-		std::vector<Vecd> outer_wall_shape   = CreatOuterWallShape();
+		std::vector<Vecd> outer_wall_shape   = createOuterWallShape();
 		std::vector<Vecd> inner_wall_shape_1 = CreatInnerWallShape01();
 		std::vector<Vecd> inner_wall_shape_2 = CreatInnerWallShape02();
 		body_shape_->addAPolygon(outer_wall_shape, ShapeBooleanOps::add);

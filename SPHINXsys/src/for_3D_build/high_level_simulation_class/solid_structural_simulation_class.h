@@ -130,7 +130,7 @@ class StructuralSimulation
 		vector<solid_dynamics::ContactForce*> contact_force_list_;
 
 		// for InitializeGravity
-		vector<InitializeATimeStep*> initialize_gravity_;
+		vector<TimeStepInitialization*> initialize_gravity_;
 		vector<GravityPair> non_zero_gravity_;
 		// for AddAccelerationForBodyPartInBoundingBox
 		vector<solid_dynamics::AccelerationForBodyPartInBoundingBox*> acceleration_bounding_box_;

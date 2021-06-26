@@ -59,7 +59,7 @@ namespace SPH {
 		Real nu_; 			/*< Poisson ratio  */
 		ElasticSolidParticles* elastic_particles_;
 
-		virtual void setSoundWaveSpeed() = 0;
+		virtual void setReferenceSoundSpeed() = 0;
 		virtual void setTensileWaveSpeed() = 0;
 		virtual void setShearWaveSpeed() = 0;
 		virtual void setYoungsModulus() = 0;
@@ -75,7 +75,7 @@ namespace SPH {
 		virtual ~ElasticSolid() {};
 
 		virtual void assignElasticSolidParticles(ElasticSolidParticles* elastic_particles);
-		Real SoundWaveSpeed() { return c0_; };
+		Real ReferenceSoundSpeed() { return c0_; };
 		Real TensileWaveSpeed() { return ct0_; };
 		Real ShearWaveSpeed() { return cs0_; };
 		Real YoungsModulus() { return E0_; };
@@ -124,7 +124,7 @@ namespace SPH {
 		Real poisson_ratio_; 		/*< Poisson ratio as basic inpiut parameter */
 		Real lambda0_; 				/*< first Lame parameter */
 
-		virtual void setSoundWaveSpeed() override;
+		virtual void setReferenceSoundSpeed() override;
 		virtual void setTensileWaveSpeed() override;
 		virtual void setShearWaveSpeed() override;
 		virtual void setYoungsModulus() override { E0_ = youngs_modulus_; };
@@ -203,7 +203,7 @@ namespace SPH {
 		Real bulk_modulus_;			/**< to achieve weakly compressible condition  as basic parameter.*/
 		Real lambda0_; 				/*< first Lame parameter */
 
-		virtual void setSoundWaveSpeed() override;
+		virtual void setReferenceSoundSpeed() override;
 		virtual void setTensileWaveSpeed() override;
 		virtual void setShearWaveSpeed() override;
 		virtual void setYoungsModulus() override;

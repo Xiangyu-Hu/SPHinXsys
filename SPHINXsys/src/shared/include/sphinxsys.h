@@ -38,5 +38,6 @@ capabilities. **/
 #include "all_simbody.h"
 #include "in_output.h"
 #include "parameterization.h"
+#include "regression_testing.h"
 
 #endif //SPHINXSYS_H

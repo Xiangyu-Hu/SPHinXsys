@@ -168,7 +168,7 @@ int main()
 	ContactBodyRelation* plate_observer_contact = new ContactBodyRelation(plate_observer, { plate_body });
 
 	/** Common particle dynamics. */
-	InitializeATimeStep 	initialize_external_force(plate_body, &external_force);
+	TimeStepInitialization 	initialize_external_force(plate_body, &external_force);
 
 	/**
 	 * This section define all numerical methods will be used in this case.
@@ -194,8 +194,8 @@ int main()
 		plate_rotation_damping(plate_body_inner, 0.5, "AngularVelocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
-	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
-	WriteAnObservedQuantity<indexVector, Vecd>
+	BodyStatesRecordingToVtu write_states(in_output, system.real_bodies_);
+	ObservedQuantityRecording<indexVector, Vecd>
 		write_plate_max_displacement("Position", in_output, plate_observer_contact);
 
 	/** Apply initial condition. */
@@ -209,8 +209,8 @@ int main()
 	* Set the starting time.
 	*/
 	GlobalStaticVariables::physical_time_ = 0.0;
-	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_plate_max_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_states.writeToFile(0);
+	write_plate_max_displacement.writeToFile(0);
 	
 	/** Setup physical parameters. */
 	int ite = 0;
@@ -247,9 +247,9 @@ int main()
 			GlobalStaticVariables::physical_time_ += dt;
 
 		}
-		write_plate_max_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_plate_max_displacement.writeToFile(ite);
 		tick_count t2 = tick_count::now();
-		write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}
