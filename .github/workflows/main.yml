@@ -30,7 +30,6 @@ jobs:
           sudo apt-get install -y apt-utils \
           build-essential \
           cmake \
-          googletest \          
           libtbb-dev \
           libboost-all-dev \
           liblapack-dev \
