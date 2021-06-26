@@ -38,12 +38,15 @@ RUN if [ "$build_with_dependencies_source" = 0 ] ; then cd /home \
     && make -j$(nproc) \
     # && ctest -j$(nproc) \
     && make -j$(nproc) install; fi
+RUN rm -rf /home/simbody-Simbody-3.7
 
 ENV TBB_HOME=/usr/lib/x86_64-linux-gnu
 ENV BOOST_HOME=/usr/lib/x86_64-linux-gnu
 ENV SIMBODY_HOME=/home/simbody
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SIMBODY_HOME/lib
 ENV CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$SIMBODY_HOME/include
+
+RUN apt-get update && apt-get install -y googletest
 
 COPY ./ /home/SPHinXsys/
 WORKDIR /home/SPHinXsys
