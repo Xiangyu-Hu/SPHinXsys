@@ -27,6 +27,7 @@ jobs:
       - name: Build and test
         run: |
           sudo apt-get update 
+          sudo apt-get install -y googletest
           sudo apt-get install -y apt-utils \
           build-essential \
           cmake \
