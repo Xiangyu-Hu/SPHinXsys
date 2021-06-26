@@ -17,7 +17,6 @@ jobs:
   build:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -38,16 +37,17 @@ jobs:
           wget https://github.com/simbody/simbody/archive/Simbody-3.7.tar.gz
           tar xvzf Simbody-3.7.tar.gz
           rm Simbody-3.7.tar.gz
-          mkdir ~/simbody-build
-          mkdir ~/simbody
-          cd ~/simbody-build
-          cmake ~/simbody-Simbody-3.7 -DCMAKE_INSTALL_PREFIX=/home/simbody -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_STATIC_LIBRARIES=on
+          mkdir ./simbody-build
+          mkdir ./simbody
+          cd ./simbody-build
+          cmake ./simbody-Simbody-3.7 -DCMAKE_INSTALL_PREFIX=./simbody -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_STATIC_LIBRARIES=on
           make -j$(nproc)
           # && ctest -j$(nproc)
           make -j$(nproc) install
+          cd ..
           export TBB_HOME=/usr/lib/x86_64-linux-gnu
           export BOOST_HOME=/usr/lib/x86_64-linux-gnu
-          export SIMBODY_HOME=~/simbody
+          export SIMBODY_HOME=./simbody
           mkdir build
           cd build 
           cmake ..
