@@ -39,7 +39,7 @@ jobs:
           rm Simbody-3.7.tar.gz
           mkdir ./simbody-build
           mkdir ./simbody
-          export simbody_install_path = $(pwd)/simdody
+          export simbody_install_path=$(pwd)/simdody
           cd ./simbody-build
           cmake ../simbody-Simbody-3.7 -DCMAKE_INSTALL_PREFIX=$(simbody_install_path) -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_STATIC_LIBRARIES=on
           make -j$(nproc)
