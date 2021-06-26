@@ -20,6 +20,7 @@ namespace SPH
 		ParticleAdaptation(Real h_spacing_ratio, int global_refinement_level) :
 		h_spacing_ratio_(h_spacing_ratio),
 		global_refinement_level_(global_refinement_level),
+		system_resolution_ratio_(1.0),
 		local_refinement_level_(0),
 		local_coarse_level_(local_refinement_level_ / 2),
 		spacing_ref_(0), Vol_ref_(0), h_ref_(0),
@@ -34,8 +35,8 @@ namespace SPH
 	{
 		sph_body_ = sph_body;
 		system_domain_bounds_ = sph_body_->getSPHSystem().system_domain_bounds_;
-		Real system_resolution = sph_body_->getSPHSystem().resolution_ref_;
-		spacing_ref_ = RefinedSpacing(system_resolution, global_refinement_level_);
+		Real body_resololution = system_resolution_ratio_ * sph_body_->getSPHSystem().resolution_ref_;
+		spacing_ref_ = RefinedSpacing(body_resololution, global_refinement_level_);
 		Vol_ref_ = powerN(spacing_ref_, Dimensions);
 		h_ref_ = h_spacing_ratio_ * spacing_ref_;
 		kernel_->initialize(h_ref_);

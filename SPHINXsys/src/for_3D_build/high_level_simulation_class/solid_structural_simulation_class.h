@@ -84,7 +84,7 @@ public:
 	// scale system boundaries
 	Real scale_system_boundaries_;
 	// particle relaxation
-	bool particle_relaxation_;
+	vector<bool> particle_relaxation_;
 	// boundary conditions
 	vector<GravityPair> non_zero_gravity_;
 	vector<AccelTuple> acceleration_bounding_box_tuple_;
@@ -108,17 +108,18 @@ public:
 class StructuralSimulation
 	{
 	protected:
-		// input members
+		// mandatory input
 		string relative_input_path_;
 		vector<string> imported_stl_list_;
 		Real scale_stl_;
 		vector<Vec3d> translation_list_;
-		Real default_resolution_;
+		Real system_resolution_;
 		vector<Real> resolution_list_;
 		vector<LinearElasticSolid> material_model_list_;
 		Real physical_viscosity_;
+
 		// particle relaxation
-		bool particle_relaxation_;
+		vector<bool> particle_relaxation_;
 
 		// internal members
 		SPHSystem system_;
@@ -156,11 +157,11 @@ class StructuralSimulation
 		
 		// for constructor, the order is important
 		void ScaleTranslationAndResolution();
-		void SetDefaultSystemResolutionMax();
+		void SetSystemResolutionMax();
 		void CreateBodyMeshList();
 		void CreateParticleAdaptationList();
 		void CalculateSystemBoundaries();
-		void InitializeElasticSolidBodies(bool particle_relaxation);
+		void InitializeElasticSolidBodies();
 		void InitializeContactBetweenTwoBodies(int first, int second);
 		void InitializeAllContacts();
 

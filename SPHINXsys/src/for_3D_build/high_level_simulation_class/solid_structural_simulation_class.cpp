@@ -126,10 +126,12 @@ StructuralSimulationInput::StructuralSimulationInput(
 	physical_viscosity_(physical_viscosity),
 	contacting_bodies_list_(contacting_bodies_list)
 {
+	// particle_relaxation option
+	particle_relaxation_ = {};
+	for (unsigned i = 0; i < resolution_list_.size(); i++){ particle_relaxation_.push_back(true); }
 	// scale system boundaries
 	scale_system_boundaries_ = 1;
 	// boundary conditions
-	particle_relaxation_ = true;
 	non_zero_gravity_ = {};
 	acceleration_bounding_box_tuple_ = {};
 	spring_damper_tuple_ = {};
@@ -148,11 +150,11 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	imported_stl_list_(input.imported_stl_list_),
 	scale_stl_(input.scale_stl_),
 	translation_list_(input.translation_list_),
-	default_resolution_(0.0),
+	system_resolution_(0.0),
 	resolution_list_(input.resolution_list_),
 	material_model_list_(input.material_model_list_),
 	physical_viscosity_(input.physical_viscosity_),
-	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), default_resolution_)),
+	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), system_resolution_)),
 	in_output_(In_Output(system_)),
 	contacting_bodies_list_(input.contacting_bodies_list_),
 	// particle relaxation
@@ -172,7 +174,7 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	// scaling of translation and resolution
 	ScaleTranslationAndResolution();
 	// set the default resolution to the max in the resolution list
-	SetDefaultSystemResolutionMax();
+	SetSystemResolutionMax();
 	// create the body mesh list for triangular mesh shapes storage
 	CreateBodyMeshList();
 	// create the particle adaptions for the bodies
@@ -181,7 +183,7 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	CalculateSystemBoundaries();
 	system_.run_particle_relaxation_ = true;
 	// initialize solid bodies with their properties
-	InitializeElasticSolidBodies(particle_relaxation_);
+	InitializeElasticSolidBodies();
 	// contacts
 	InitializeAllContacts();
 
@@ -246,29 +248,29 @@ StructuralSimulation::~StructuralSimulation()
 
 void StructuralSimulation::ScaleTranslationAndResolution()
 {
-	// scale the translation_list_, default_resolution_and resolution_list_
+	// scale the translation_list_, system_resolution_ and resolution_list_
 	for (unsigned int i = 0; i < translation_list_.size(); i++)
 	{
 		translation_list_[i] *= scale_stl_;
 	}
-	default_resolution_ *= scale_stl_;
+	system_resolution_ *= scale_stl_;
 	for (unsigned int i = 0; i < resolution_list_.size(); i++)
 	{
 		resolution_list_[i] *= scale_stl_;
 	}
 }
 
-void StructuralSimulation::SetDefaultSystemResolutionMax()
+void StructuralSimulation::SetSystemResolutionMax()
 {
-	default_resolution_ = 0.0;
+	system_resolution_ = 0.0;
 	for (unsigned int i = 0; i < resolution_list_.size(); i++)
 	{
-		if (default_resolution_ < resolution_list_[i])
+		if (system_resolution_ < resolution_list_[i])
 		{
-			default_resolution_ = resolution_list_[i];
+			system_resolution_ = resolution_list_[i];
 		}
 	}
-	system_.resolution_ref_ = default_resolution_;
+	system_.resolution_ref_ = system_resolution_;
 }
 
 void StructuralSimulation::CalculateSystemBoundaries()
@@ -304,20 +306,21 @@ void StructuralSimulation::CreateParticleAdaptationList()
 	particle_adaptation_list_ = {};
 	for (unsigned int i = 0; i < resolution_list_.size(); i++)
 	{
-		Real refinement = resolution_list_[i] / default_resolution_;
-		particle_adaptation_list_.push_back(ParticleAdaptation(1.1, 0));
+		particle_adaptation_list_.push_back(ParticleAdaptation());
+
+		Real system_resolution_ratio = resolution_list_[i] / system_resolution_;
+		particle_adaptation_list_[i].SetSystemResolutionRatio(system_resolution_ratio);
 	}
-	//particle_adaptation_list_[0] = ParticleAdaptation(1.3, 2);
 }
 
-void StructuralSimulation::InitializeElasticSolidBodies(bool particle_relaxation)
+void StructuralSimulation::InitializeElasticSolidBodies()
 {
 	solid_body_list_ = {};
 	for (unsigned int i = 0; i < body_mesh_list_.size(); i++)
 	{
 		SolidBodyForSimulation* sb = new SolidBodyForSimulation(system_, imported_stl_list_[i], body_mesh_list_[i], particle_adaptation_list_[i], physical_viscosity_, material_model_list_[i]);
 		solid_body_list_.push_back(sb);
-		if (particle_relaxation)
+		if (particle_relaxation_[i])
 		{
 			RelaxParticlesSingleResolution(&in_output_, false, sb->GetImportedModel(), sb->GetElasticSolidParticles(), sb->GetInnerBodyRelation());
 		}
