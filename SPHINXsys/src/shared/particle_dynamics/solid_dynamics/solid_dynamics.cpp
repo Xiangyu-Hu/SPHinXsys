@@ -222,7 +222,7 @@ namespace SPH
 		{
 			//since the particle does not change its configuration in pressure relaxation step
 			//I chose a time-step size according to Eulerian method
-			Real sound_speed = material_->SoundWaveSpeed();
+			Real sound_speed = material_->ReferenceSoundSpeed();
 			return CFL_ * SMIN(sqrt(smoothing_length_ / (dvel_dt_[index_i].norm() + TinyReal)),
 				smoothing_length_ / (sound_speed + vel_n_[index_i].norm()));
 		}

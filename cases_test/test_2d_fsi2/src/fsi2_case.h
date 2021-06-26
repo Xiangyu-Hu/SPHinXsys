@@ -45,7 +45,7 @@ Real Youngs_modulus = Ae * rho0_f * U_f * U_f;
 * @brief define geometry of SPH bodies
 */
 /** create a water block shape */
-std::vector<Vecd> CreatWaterBlockShape()
+std::vector<Vecd> createWaterBlockShape()
 {
 	//geometry
 	std::vector<Vecd> water_block_shape;
@@ -87,7 +87,7 @@ std::vector<Vecd> CreatBeamShape()
 	return beam_shape;
 }
 /** create outer wall shape */
-std::vector<Vecd> CreatOuterWallShape()
+std::vector<Vecd> createOuterWallShape()
 {
 	std::vector<Vecd> outer_wall_shape;
 	outer_wall_shape.push_back(Vecd(-DL_sponge - BW, -BW));
@@ -101,7 +101,7 @@ std::vector<Vecd> CreatOuterWallShape()
 /**
 * @brief create inner wall shape
 */
-std::vector<Vecd> CreatInnerWallShape()
+std::vector<Vecd> createInnerWallShape()
 {
 	std::vector<Vecd> inner_wall_shape;
 	inner_wall_shape.push_back(Vecd(-DL_sponge - 2.0 * BW, 0.0));
@@ -123,7 +123,7 @@ public:
 		: FluidBody(system, body_name)
 	{
 		/** Geomtry definition. */
-		std::vector<Vecd> water_block_shape = CreatWaterBlockShape();
+		std::vector<Vecd> water_block_shape = createWaterBlockShape();
 		/** Geomtry definition. */
 		std::vector<Vecd> beam_shape = CreatBeamShape();
 		body_shape_ = new ComplexShape(body_name);
@@ -153,8 +153,8 @@ public:
 		: SolidBody(system, body_name)
 	{
 		/** Geomtry definition. */
-		std::vector<Vecd> outer_wall_shape = CreatOuterWallShape();
-		std::vector<Vecd> inner_wall_shape = CreatInnerWallShape();
+		std::vector<Vecd> outer_wall_shape = createOuterWallShape();
+		std::vector<Vecd> inner_wall_shape = createInnerWallShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
 		body_shape_->addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);

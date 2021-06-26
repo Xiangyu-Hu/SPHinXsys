@@ -418,8 +418,8 @@ int main(int ac, char* av[])
 			read_muscle_fiber_and_sheet(new ReloadMaterialParameterIO(in_output, myocardium_muscle));
 		std::unique_ptr<ReloadMaterialParameterIO>
 			read_myocardium_excitation_fiber(new ReloadMaterialParameterIO(in_output, myocardium_excitation, myocardium_muscle->LocalParametersName()));
-		read_muscle_fiber_and_sheet->ReadFromFile();
-		read_myocardium_excitation_fiber->ReadFromFile();
+		read_muscle_fiber_and_sheet->readFromFile();
+		read_myocardium_excitation_fiber->readFromFile();
 	}
 	//----------------------------------------------------------------------
 	//	SPH Particle relaxarion section
@@ -451,7 +451,7 @@ int main(int ac, char* av[])
 		/** Compute the fiber and sheet after diffusion. */
 		ComputeFiberandSheetDirections compute_fiber_sheet(relax_body);
 		/** Write the body state to Vtu file. */
-		WriteBodyStatesToVtu 		write_relax_body_state_to_vtu(in_output, { relax_body });
+		BodyStatesRecordingToVtu 		write_relax_body_state_to_vtu(in_output, { relax_body });
 		/** Write the particle reload files. */
 		ReloadParticleIO 		write_particle_reload_files(in_output, { relax_body, relax_body }, { physiology_body->getBodyName(), mechanics_body->getBodyName()});
 		/** Write material property to xml file. */
@@ -462,7 +462,7 @@ int main(int ac, char* av[])
 		 /** Relax the elastic structure. */
 		random_particles.parallel_exec(0.25);
 		relaxation_step_inner.surface_bounding_.parallel_exec();
-		write_relax_body_state_to_vtu.WriteToFile(0.0);
+		write_relax_body_state_to_vtu.writeToFile(0.0);
 		/**
 		 * From here the time stepping begines.
 		 * Set the starting time.
@@ -477,7 +477,7 @@ int main(int ac, char* av[])
 			if (ite % 100 == 0)
 			{
 				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite << "\n";
-				write_relax_body_state_to_vtu.WriteToFile(Real(ite) * 1.0e-4);
+				write_relax_body_state_to_vtu.writeToFile(Real(ite) * 1.0e-4);
 			}
 		}
 
@@ -486,7 +486,7 @@ int main(int ac, char* av[])
 		DiffusionBCs impose_diffusion_bc(relax_body, surface_part);
 		impose_diffusion_bc.parallel_exec();
 
-		write_relax_body_state_to_vtu.WriteToFile(Real(ite) * 1.0e-4);
+		write_relax_body_state_to_vtu.writeToFile(Real(ite) * 1.0e-4);
 
 		Real dt = get_time_step_size.parallel_exec();
 		while (ite <= diffusion_step + relax_step)
@@ -496,16 +496,16 @@ int main(int ac, char* av[])
 			if (ite % 10 == 0)
 			{
 				std::cout << "Diffusion steps N=" << ite - relax_step << "	dt: " << dt << "\n";
-				write_relax_body_state_to_vtu.WriteToFile(Real(ite) * 1.0e-4);
+				write_relax_body_state_to_vtu.writeToFile(Real(ite) * 1.0e-4);
 			}
 			ite++;
 		}
 		compute_fiber_sheet.exec();
 		ite++;
-		write_relax_body_state_to_vtu.WriteToFile(Real(ite) * 1.0e-4);
+		write_relax_body_state_to_vtu.writeToFile(Real(ite) * 1.0e-4);
 		compute_fiber_sheet.parallel_exec();
-		write_material_property.WriteToFile(0);
-		write_particle_reload_files.WriteToFile(0);
+		write_material_property.writeToFile(0);
+		write_particle_reload_files.writeToFile(0);
 
 		return 0;
 	}
@@ -558,9 +558,9 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//	SPH Output section
 	//----------------------------------------------------------------------
-	WriteBodyStatesToVtu 		write_states(in_output, system.real_bodies_);
-	WriteAnObservedQuantity<indexScalar, Real> write_voltage("Voltage", in_output, voltage_observer_contact);
-	WriteAnObservedQuantity<indexVector, Vecd> write_displacement("Position", in_output, myocardium_observer_contact);
+	BodyStatesRecordingToVtu 		write_states(in_output, system.real_bodies_);
+	ObservedQuantityRecording<indexScalar, Real> write_voltage("Voltage", in_output, voltage_observer_contact);
+	ObservedQuantityRecording<indexVector, Vecd> write_displacement("Position", in_output, myocardium_observer_contact);
 	//----------------------------------------------------------------------
 	//	 Pre-simultion. 
 	//----------------------------------------------------------------------
@@ -570,9 +570,9 @@ int main(int ac, char* av[])
 	correct_configuration_contraction.parallel_exec();
 	correct_kernel_weights_for_interpolation.parallel_exec();
 	/** Output initial states and observations */
-	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_voltage.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_states.writeToFile(0);
+	write_voltage.writeToFile(0);
+	write_displacement.writeToFile(0);
 	//----------------------------------------------------------------------
 	//	 Physical parameters for main loop. 
 	//----------------------------------------------------------------------
@@ -655,12 +655,12 @@ int main(int ac, char* av[])
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
-			write_voltage.WriteToFile(GlobalStaticVariables::physical_time_);
-			write_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+			write_voltage.writeToFile(ite);
+			write_displacement.writeToFile(ite);
 		}
 		tick_count t2 = tick_count::now();
 		interpolation_particle_position.parallel_exec();
-		write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

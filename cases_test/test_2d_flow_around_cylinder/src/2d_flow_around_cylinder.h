@@ -38,7 +38,7 @@ Real mu_f = rho0_f * U_f * (2.0 * insert_circle_radius) / Re;	/**< Dynamics visc
 * @brief define geometry of SPH bodies
 */
 /** create a water block shape */
-std::vector<Vecd> CreatWaterBlockShape()
+std::vector<Vecd> createWaterBlockShape()
 {
 	//geometry
 	std::vector<Vecd> water_block_shape;
@@ -78,7 +78,7 @@ public:
 		: FluidBody(system, body_name)
 	{
 		/** Geomtry definition. */
-		std::vector<Vecd> water_block_shape = CreatWaterBlockShape();
+		std::vector<Vecd> water_block_shape = createWaterBlockShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::add);
 		body_shape_->addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);

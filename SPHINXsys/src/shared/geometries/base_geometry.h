@@ -143,7 +143,7 @@ namespace SPH
 		size_t last_branch_id_;
 		StdVec<Branch*> branches_;	/**< list of all branches */
 		void addANewBranch(Branch* branch);
-		void addANewBranchInnerVecd(Branch* branch, Vecd new_point, Vecd end_direction);
+		void addANewBranchInnerPoints(Branch* branch, Vecd new_point, Vecd end_direction);
 		/** generalized particle search algorithm */
 		template<typename GetParticleIndex, typename GetSearchRange, typename GetNeighborRelation>
 		void searchNeighborsByParticles(size_t number_of_particles, BaseParticles& source_particles, 
@@ -157,8 +157,8 @@ namespace SPH
 			std::vector<size_t> neighboring_ids;
 			std::vector<size_t> child_ids;
 			/** First branch
-			* Note that the first branc has only one point, accordingly, one particle generated.
-			* Find the neibors in child branch, the first branch only have one child, id = 1.
+			* Note that the first branch has only one point, accordingly, one particle generated.
+			* Find the neighbors in child branch, the first branch only have one child, id = 1.
 			*/
 			particle_id = branches_[0]->inner_points_.front();
 			neighboring_ids.clear();

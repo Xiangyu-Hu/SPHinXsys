@@ -48,7 +48,7 @@ Real Youngs_modulus = Ae * rho0_f * U_f * U_f;
 /**
 * @brief create a water block shape
 */
-std::vector<Vecd> CreatWaterBlockShape()
+std::vector<Vecd> createWaterBlockShape()
 {
 	std::vector<Vecd> pnts_shaping_water_block;
 	pnts_shaping_water_block.push_back(Vecd(-DL_sponge, 0.0));
@@ -76,7 +76,7 @@ std::vector<Vecd> CreatInflowBufferShape()
 /**
 * @brief create outer wall shape
 */
-std::vector<Vecd> CreatOuterWallShape()
+std::vector<Vecd> createOuterWallShape()
 {
 	std::vector<Vecd> pnts_shaping_outer_wall;
 	pnts_shaping_outer_wall.push_back(Vecd(-DL_sponge - BW, -BW));
@@ -90,7 +90,7 @@ std::vector<Vecd> CreatOuterWallShape()
 /**
 * @brief create inner wall shape
 */
-std::vector<Vecd> CreatInnerWallShape()
+std::vector<Vecd> createInnerWallShape()
 {
 	std::vector<Vecd> pnts_shaping_inner_wall;
 	pnts_shaping_inner_wall.push_back(Vecd(-DL_sponge - 2.0 * BW, 0.0));
@@ -125,7 +125,7 @@ public:
 	WaterBlock(SPHSystem& system, std::string body_name)
 		: FluidBody(system, body_name)
 	{
-		std::vector<Vecd> water_block_shape = CreatWaterBlockShape();
+		std::vector<Vecd> water_block_shape = createWaterBlockShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(water_block_shape, ShapeBooleanOps::add);
 		/** Exclude the fish body. */
@@ -158,8 +158,8 @@ public:
 	WallBoundary(SPHSystem& system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
-		std::vector<Vecd> outer_wall_shape = CreatOuterWallShape();
-		std::vector<Vecd> inner_wall_shape = CreatInnerWallShape();
+		std::vector<Vecd> outer_wall_shape = createOuterWallShape();
+		std::vector<Vecd> inner_wall_shape = createInnerWallShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
 		body_shape_->addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
@@ -339,9 +339,9 @@ int main(int ac, char* av[])
 	ContactBodyRelation* fish_body_contact = new ContactBodyRelation(fish_body, { water_block });
 	ContactBodyRelation* fish_observer_contact = new ContactBodyRelation(fish_observer, { fish_body });
 
-	WriteBodyStatesToVtu        write_real_body_states(in_output, system.real_bodies_);
-	WriteBodyReducedQuantity<solid_dynamics::TotalForceOnSolid> write_total_force_on_fish(in_output, fish_body);
-	WriteAnObservedQuantity<indexVector, Vecd> write_fish_displacement("Position", in_output, fish_observer_contact);
+	BodyStatesRecordingToVtu        write_real_body_states(in_output, system.real_bodies_);
+	BodyReducedQuantityRecording<solid_dynamics::TotalForceOnSolid> write_total_force_on_fish(in_output, fish_body);
+	ObservedQuantityRecording<indexVector, Vecd> write_fish_displacement("Position", in_output, fish_observer_contact);
 
 	/** check whether run particle relaxation for body fitted particle distribution. */
 	if (system.run_particle_relaxation_) {
@@ -351,7 +351,7 @@ int main(int ac, char* av[])
 		 /** Random reset the insert body particle position. */
 		RandomizePartilePosition  random_fish_body_particles(fish_body);
 		/** Write the body state to Vtu file. */
-		WriteBodyStatesToVtu 		write_fish_body(in_output, { fish_body });
+		BodyStatesRecordingToVtu 		write_fish_body(in_output, { fish_body });
 		/** Write the particle reload files. */
 		ReloadParticleIO 		write_particle_reload_files(in_output, { fish_body });
 
@@ -362,7 +362,7 @@ int main(int ac, char* av[])
 		  */
 		random_fish_body_particles.parallel_exec(0.25);
 		relaxation_step_inner.surface_bounding_.parallel_exec();
-		write_fish_body.WriteToFile(0.0);
+		write_fish_body.writeToFile(0.0);
 
 		/** relax particles of the insert body. */
 		int ite_p = 0;
@@ -373,13 +373,13 @@ int main(int ac, char* av[])
 			if (ite_p % 200 == 0)
 			{
 				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
-				write_fish_body.WriteToFile(Real(ite_p) * 1.0e-4);
+				write_fish_body.writeToFile(Real(ite_p) * 1.0e-4);
 			}
 		}
 		std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
 
 		/** Output results. */
-		write_particle_reload_files.WriteToFile(0.0);
+		write_particle_reload_files.writeToFile(0.0);
 		return 0;
 	}
 
@@ -397,7 +397,7 @@ int main(int ac, char* av[])
 	/**
 	* Common particle dynamics.
 	*/
-	InitializeATimeStep
+	TimeStepInitialization
 		initialize_a_fluid_step(water_block);
 
 	/** Evaluation of density by summation approach. */
@@ -509,7 +509,7 @@ int main(int ac, char* av[])
 	/** Using relaxed particle distribution if needed. */
 	if (system.reload_particles_) {
 		ReloadParticleIO		reload_insert_body_particles(in_output, { fish_body }, { "FishBody" });
-		reload_insert_body_particles.ReadFromFile();
+		reload_insert_body_particles.readFromFile();
 	}
 	/**
 	* Initial periodic boundary condition which copies the particle identifies
@@ -526,8 +526,8 @@ int main(int ac, char* av[])
 	fish_body_particles.initializeNormalDirectionFromGeometry();
 	fish_body_corrected_configuration_in_strong_form.parallel_exec();
 	/** Output for initial condition. */
-	write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_fish_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_real_body_states.writeToFile(0);
+	write_fish_displacement.writeToFile(0);
 	/**
 	* Time parameters
 	*/
@@ -588,7 +588,7 @@ int main(int ac, char* av[])
 				}
 				//note that dt needs to sufficiently large to avoid divide zero
 				fish_body_average_velocity.update_averages_.parallel_exec(dt);
-				write_total_force_on_fish.WriteToFile(GlobalStaticVariables::physical_time_);
+				write_total_force_on_fish.writeToFile(number_of_iterations);
 
 				relaxation_time += dt;
 				integration_time += dt;
@@ -614,11 +614,11 @@ int main(int ac, char* av[])
 			water_block_complex->updateConfiguration();
 			/** Fish body contact configuration. */
 			fish_body_contact->updateConfiguration();
-			write_fish_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+			write_fish_displacement.writeToFile(number_of_iterations);
 		}
 		tick_count t2 = tick_count::now();
 		compute_vorticity.parallel_exec();
-		write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_ * 0.001);
+		write_real_body_states.writeToFile(GlobalStaticVariables::physical_time_ * 0.001);
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

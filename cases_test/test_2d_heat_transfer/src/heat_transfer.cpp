@@ -40,7 +40,7 @@ Real phi_lower_wall = 40.0;
 Real phi_fluid_initial = 20.0;
 
 /** create a water block shape */
-std::vector<Vecd> CreatShape()
+std::vector<Vecd> createShape()
 {
 	//geometry
 	std::vector<Vecd> shape;
@@ -53,7 +53,7 @@ std::vector<Vecd> CreatShape()
 }
 
 /** create outer wall shape */
-std::vector<Vecd> CreatOuterWallShape()
+std::vector<Vecd> createOuterWallShape()
 {
 	std::vector<Vecd> outer_wall_shape;
 	outer_wall_shape.push_back(Vecd(-DL_sponge - BW, -BW));
@@ -65,7 +65,7 @@ std::vector<Vecd> CreatOuterWallShape()
 }
 
 /** create inner wall shape */
-std::vector<Vecd> CreatInnerWallShape()
+std::vector<Vecd> createInnerWallShape()
 {
 	std::vector<Vecd> inner_wall_shape;
 	inner_wall_shape.push_back(Vecd(-DL_sponge - 2.0 * BW, 0.0));
@@ -116,7 +116,7 @@ public:
 	ThermofluidBody(SPHSystem &system, std::string body_name)
 		: FluidBody(system, body_name)
 	{	
-		std::vector<Vecd> body_shape = CreatShape();	
+		std::vector<Vecd> body_shape = createShape();	
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(body_shape, ShapeBooleanOps::add);
 	}
@@ -129,8 +129,8 @@ public:
 	ThermosolidBody(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
-		std::vector<Vecd>  outer_wall_shape = CreatOuterWallShape();
-		std::vector<Vecd> inner_wall_shape = CreatInnerWallShape();
+		std::vector<Vecd>  outer_wall_shape = createOuterWallShape();
+		std::vector<Vecd> inner_wall_shape = createInnerWallShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
 		body_shape_->addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
@@ -339,7 +339,7 @@ int main()
 	 * @brief define simple data file input and outputs functions.
 	 */
 	In_Output 							in_output(system);
-	WriteBodyStatesToVtu 				write_real_body_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtu 				write_real_body_states(in_output, system.real_bodies_);
 
 	/** topology */
 	InnerBodyRelation* fluid_body_inner = new InnerBodyRelation(thermofluid_body);
@@ -361,7 +361,7 @@ int main()
 	/** Corrected strong configuration for diffusion solid body. */
 	solid_dynamics::CorrectConfiguration 			correct_configuration(solid_body_inner);
 	 /** Initialize particle acceleration. */
-	InitializeATimeStep 	initialize_a_fluid_step(thermofluid_body);
+	TimeStepInitialization 	initialize_a_fluid_step(thermofluid_body);
 
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensitySummationComplex	update_density_by_summation(fluid_body_complex);
@@ -389,9 +389,9 @@ int main()
 	/**
 	 * @brief Write observation data into files.
 	 */
-	WriteAnObservedQuantity<indexScalar, Real>
+	ObservedQuantityRecording<indexScalar, Real>
 		write_fluid_phi("Phi", in_output, fluid_observer_contact);
-	WriteAnObservedQuantity<indexVector, Vecd>
+	ObservedQuantityRecording<indexVector, Vecd>
 		write_fluid_velocity("Velocity", in_output, fluid_observer_contact);
 
 	 /** Pre-simultion*/
@@ -410,7 +410,7 @@ int main()
 	Real dt_thermal = get_thermal_time_step.parallel_exec();
 
 	/** Output global basic parameters. */
-    write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
+    write_real_body_states.writeToFile(0);
 	
 	Real End_Time = 10;
 	Real dt = 0.0;
@@ -469,9 +469,9 @@ int main()
 		/** write run-time observation into file */
 		compute_vorticity.parallel_exec();
 		fluid_observer_contact->updateConfiguration();
-		write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	    write_fluid_phi.WriteToFile(GlobalStaticVariables::physical_time_);
-	    write_fluid_velocity.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_real_body_states.writeToFile();
+	    write_fluid_phi.writeToFile(number_of_iterations);
+	    write_fluid_velocity.writeToFile(number_of_iterations);
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

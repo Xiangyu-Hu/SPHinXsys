@@ -167,8 +167,8 @@ int main()
 		constrain_holder(myocardium_body, new Holder(myocardium_body, "Holder"));
 	/** Output */
 	In_Output in_output(system);
-	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
-	WriteAnObservedQuantity<indexVector, Vecd> 
+	BodyStatesRecordingToVtu write_states(in_output, system.real_bodies_);
+	ObservedQuantityRecording<indexVector, Vecd> 
 		write_displacement("Position", in_output, myocardium_observer_contact);
 	/**
 	 * From here the time stepping begines.
@@ -180,8 +180,8 @@ int main()
 	/** apply initial condition */
 	initialization.parallel_exec();
 	corrected_configuration_in_strong_form.parallel_exec();
-	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_states.writeToFile(0);
+	write_displacement.writeToFile(0);
 	/** Setup physical parameters. */
 	int ite = 0;
 	Real end_time = 3.0;
@@ -212,9 +212,9 @@ int main()
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 		}
-		write_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_displacement.writeToFile(ite);
 		tick_count t2 = tick_count::now();
-		write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

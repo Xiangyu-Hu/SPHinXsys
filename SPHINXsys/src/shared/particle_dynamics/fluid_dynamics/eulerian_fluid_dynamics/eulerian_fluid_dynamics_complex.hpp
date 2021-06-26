@@ -27,7 +27,7 @@ namespace SPH
 	
 			for (size_t k = 0; k != CompressibleFluidWallData::contact_particles_.size(); ++k)
 			{
-				Real rho_0_k = CompressibleFluidWallData::contact_particles_[k]->rho_0_;
+				Real rho_0_k = CompressibleFluidWallData::contact_particles_[k]->rho0_;
 				wall_inv_rho_0_.push_back(1.0 / rho_0_k);
 				wall_mass_.push_back(&(CompressibleFluidWallData::contact_particles_[k]->mass_));
 				wall_Vol_.push_back(&(CompressibleFluidWallData::contact_particles_[k]->Vol_));
