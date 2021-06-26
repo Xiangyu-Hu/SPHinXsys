@@ -59,7 +59,7 @@ int main(int ac, char* av[])
 	/**
 	 * @brief define simple data file input and outputs functions.
 	 */
-	WriteBodyStatesToVtu 				write_real_body_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtu 				write_real_body_states(in_output, system.real_bodies_);
 	RestartIO							restart_io(in_output, system.real_bodies_);
 	/** topology */
 	InnerBodyRelation* water_block_inner = new InnerBodyRelation(water_block);
@@ -78,7 +78,7 @@ int main(int ac, char* av[])
 		/** Random reset the insert body particle position. */
 		RandomizePartilePosition  random_inserted_body_particles(inserted_body);
 		/** Write the body state to Vtu file. */
-		WriteBodyStatesToVtu 		write_inserted_body_to_vtu(in_output, { inserted_body });
+		BodyStatesRecordingToVtu 		write_inserted_body_to_vtu(in_output, { inserted_body });
 		/** Write the particle reload files. */
 		ReloadParticleIO 		write_particle_reload_files(in_output, { inserted_body });
 
@@ -89,7 +89,7 @@ int main(int ac, char* av[])
 		  */
 		random_inserted_body_particles.parallel_exec(0.25);
 		relaxation_step_inner.surface_bounding_.parallel_exec();
-		write_real_body_states.WriteToFile(0.0);
+		write_real_body_states.writeToFile(0);
 
 		/** relax particles of the insert body. */
 		int ite_p = 0;
@@ -100,12 +100,12 @@ int main(int ac, char* av[])
 			if (ite_p % 200 == 0)
 			{
 				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
-				write_inserted_body_to_vtu.WriteToFile(Real(ite_p) * 1.0e-4);
+				write_inserted_body_to_vtu.writeToFile(ite_p);
 			}
 		}
 		std::cout << "The physics relaxation process of inserted body finish !" << std::endl;
 		/** Output results. */
-		write_particle_reload_files.WriteToFile(0.0);
+		write_particle_reload_files.writeToFile(0);
 		return 0;
 	}
 	/**
@@ -117,7 +117,7 @@ int main(int ac, char* av[])
 	 * @brief 	Methods used for time stepping.
 	 */
 	 /** Initialize particle acceleration. */
-	InitializeATimeStep 	initialize_a_fluid_step(water_block);
+	TimeStepInitialization 	initialize_a_fluid_step(water_block);
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensitySummationComplex	update_density_by_summation(water_block_complex);
 	/** Time step size without considering sound wave speed. */
@@ -164,11 +164,11 @@ int main(int ac, char* av[])
 	/**
 	 * @brief Write observation data into files.
 	 */
-	WriteBodyReducedQuantity<solid_dynamics::TotalViscousForceOnSolid>
+	BodyReducedQuantityRecording<solid_dynamics::TotalViscousForceOnSolid>
 		write_total_viscous_force_on_inserted_body(in_output, inserted_body);
-	WriteAnObservedQuantity<indexVector, Vecd>
+	ObservedQuantityRecording<indexVector, Vecd>
 		write_beam_tip_displacement("Position", in_output, beam_observer_contact);
-	WriteAnObservedQuantity<indexVector, Vecd>
+	ObservedQuantityRecording<indexVector, Vecd>
 		write_fluid_velocity("Velocity", in_output, fluid_observer_contact);
 
 	/**
@@ -202,8 +202,8 @@ int main(int ac, char* av[])
 		inserted_body_update_normal.parallel_exec();
 	}
 	/** first output*/
-	write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_beam_tip_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_real_body_states.writeToFile(0);
+	write_beam_tip_displacement.writeToFile(0);
 
 	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
@@ -276,7 +276,7 @@ int main(int ac, char* av[])
 					<< "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "	dt / dt_s = " << inner_ite_dt_s << "\n";
 
 				if (number_of_iterations % restart_output_interval == 0 && number_of_iterations != system.restart_step_)
-					restart_io.WriteToFile(Real(number_of_iterations));
+					restart_io.writeToFile(number_of_iterations);
 			}
 			number_of_iterations++;
 
@@ -290,16 +290,16 @@ int main(int ac, char* av[])
 			inserted_body->updateCellLinkedList();
 			inserted_body_contact->updateConfiguration();
 			/** write run-time observation into file */
-			write_beam_tip_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+			write_beam_tip_displacement.writeToFile(number_of_iterations);
 		}
 
 		tick_count t2 = tick_count::now();
 		/** write run-time observation into file */
 		compute_vorticity.parallel_exec();
-		write_real_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
-		write_total_viscous_force_on_inserted_body.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_real_body_states.writeToFile();
+		write_total_viscous_force_on_inserted_body.writeToFile(number_of_iterations);
 		fluid_observer_contact->updateConfiguration();
-		write_fluid_velocity.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_fluid_velocity.writeToFile(number_of_iterations);
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

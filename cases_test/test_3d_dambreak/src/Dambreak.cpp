@@ -21,8 +21,7 @@ Real LL = 2.0; 							//liquid length
 Real LH = 1.0; 							//liquid height
 Real LW = 0.5; 						//liquid width
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vecd(-BW, -BW, -BW),
-	Vecd(DL + BW, DH + BW, DW + BW));
+BoundingBox system_domain_bounds(Vecd(-BW, -BW, -BW), Vecd(DL + BW, DH + BW, DW + BW));
 
 //for material properties of the fluid
 Real rho0_f = 1.0;
@@ -131,8 +130,8 @@ int main()
 	//-------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
 	//-------------------------------------------------------------------
-	//-------- common paritcle dynamics ----------------------------------------
-	InitializeATimeStep 	initialize_a_fluid_step(water_block, &gravity);
+	//-------- common particle dynamics ----------------------------------------
+	TimeStepInitialization 	initialize_a_fluid_step(water_block, &gravity);
 	//-------- fluid dynamics --------------------------------------------------
 	//evaluation of density by summation approach
 	fluid_dynamics::DensitySummationFreeSurfaceComplex	update_density_by_summation(water_block_complex);
@@ -149,14 +148,14 @@ int main()
 	//outputs
 	//-----------------------------------------------------------------------------
 	In_Output in_output(system);
-	WriteBodyStatesToVtu write_water_block_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtu write_water_block_states(in_output, system.real_bodies_);
 	/** Output the body states for restart simulation. */
 	RestartIO		restart_io(in_output, system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	WriteBodyReducedQuantity<TotalMechanicalEnergy> 	
+	BodyReducedQuantityRecording<TotalMechanicalEnergy> 	
 		write_water_mechanical_energy(in_output, water_block, &gravity);
 	/** output the observed data from fluid body. */
-	WriteAnObservedQuantity<indexScalar, Real> write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact);
+	ObservedQuantityRecording<indexScalar, Real> write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact);
 	//-------------------------------------------------------------------
 	//from here the time stepping begines
 	//-------------------------------------------------------------------
@@ -179,9 +178,9 @@ int main()
 	}
 	
 	/** Output the start states of bodies. */
-	write_water_block_states.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_water_block_states.writeToFile(0);
 	/** Output the Hydrostatic mechanical energy of fluid. */
-	write_water_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_water_mechanical_energy.writeToFile(0);
 
 	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
@@ -193,7 +192,7 @@ int main()
 	Real dt = 0.0; //default acoustic time step sizes
 
 	//output for initial particles, global data
-	write_water_block_states.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_water_block_states.writeToFile();
 
 	//statistics for computing time
 	tick_count t1 = tick_count::now();
@@ -231,21 +230,21 @@ int main()
 					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
 
 				if (number_of_iterations % restart_output_interval == 0)
-					restart_io.WriteToFile(Real(number_of_iterations));
+					restart_io.writeToFile(number_of_iterations);
 			}
 			number_of_iterations++;
 
 			water_block->updateCellLinkedList();
 			water_block_complex->updateConfiguration();
 			fluid_observer_contact->updateConfiguration();
-			write_recorded_water_pressure.WriteToFile(GlobalStaticVariables::physical_time_);
+			write_recorded_water_pressure.writeToFile(number_of_iterations);
 
 		}
 
-		write_water_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_water_mechanical_energy.writeToFile(number_of_iterations);
 
 		tick_count t2 = tick_count::now();
-		write_water_block_states.WriteToFile(GlobalStaticVariables::physical_time_ * 0.001);
+		write_water_block_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

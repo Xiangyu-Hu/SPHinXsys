@@ -138,13 +138,13 @@ int main(int ac, char* av[])
 	CubicObserver* free_cubic_observer = new CubicObserver(sph_system, "FreeBallObserver");
 	BaseParticles 	free_cubic_observer_particles(free_cubic_observer);
 	/** Output the body states. */
-	WriteBodyStatesToVtu 		write_body_states(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtu 		body_states_recording(in_output, sph_system.real_bodies_);
 	/** Algorithms. */
 	InnerBodyRelation*   free_cubic_inner = new InnerBodyRelation(free_cubic);
 	SolidContactBodyRelation* free_cubic_contact = new SolidContactBodyRelation(free_cubic, {wall_boundary});
 	ContactBodyRelation* free_cubic_observer_contact = new ContactBodyRelation(free_cubic_observer, { free_cubic });
 	/** Dynamics. */
-	InitializeATimeStep 	free_cubic_initialize_timestep(free_cubic, &gravity);
+	TimeStepInitialization 	free_cubic_initialize_timestep(free_cubic, &gravity);
 	/** Kernel correction. */
 	solid_dynamics::CorrectConfiguration free_cubic_corrected_configuration(free_cubic_inner);
 	/** Time step size. */
@@ -159,7 +159,7 @@ int main(int ac, char* av[])
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec2d>>
 		damping(free_cubic_inner, 0.5, "Velocity", physical_viscosity);
 	/** Observer and output. */
-	WriteAnObservedQuantity<indexVector, Vecd> write_free_cubic_displacement("Position", in_output, free_cubic_observer_contact);
+	ObservedQuantityRecording<indexVector, Vecd> write_free_cubic_displacement("Position", in_output, free_cubic_observer_contact);
 	/** Now, pre-simulation. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	Transformd transform(-0.5235, Vecd(0));
@@ -169,8 +169,8 @@ int main(int ac, char* av[])
 	sph_system.initializeSystemConfigurations();
 	free_cubic_corrected_configuration.parallel_exec();
 	/** Initial states output. */
-	write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_free_cubic_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+	body_states_recording.writeToFile(0);
+	write_free_cubic_displacement.writeToFile(0);
 	/** Main loop. */
 	int ite 		= 0;
 	Real T0 		= 2.5;
@@ -211,10 +211,10 @@ int main(int ac, char* av[])
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
-			write_free_cubic_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+			write_free_cubic_displacement.writeToFile(ite);
 		}
 		tick_count t2 = tick_count::now();
-		write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		body_states_recording.writeToFile(ite);
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

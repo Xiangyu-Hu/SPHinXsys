@@ -58,8 +58,8 @@ namespace SPH {
         {
             std::stringstream msg;
             msg << "StateEngine::addStateVariable: invalidatestage "
-                "must be Position, Velocity or Dynamics." << ".";
-            throw (msg.str(), __FILE__, __LINE__);
+                "must be Position, Velocity or Dynamics. " << __FILE__ << __LINE__;
+            throw (msg.str());
         }
         /** Allocate space for a new state variable. */
         AddedStateVariable* asv =
@@ -78,8 +78,8 @@ namespace SPH {
         {
             std::stringstream msg;
             msg << "StateEngine::addStateVariable: State variable " <<
-                statevariablename << " already exists." << ".";
-            throw (msg.str(), __FILE__, __LINE__);
+                statevariablename << " already exists." << __FILE__ << __LINE__;
+            throw (msg.str());
         }
         int order = (int)namedstatevariableinfo_.size();
         /** assign a "slot" for a state variable by name
@@ -88,8 +88,6 @@ namespace SPH {
          */
         namedstatevariableinfo_[statevariablename] = StateVariableInfo(statevariable, order);
 
-        AddedStateVariable* asv =
-            dynamic_cast<StateEngine::AddedStateVariable*>(statevariable);
     }
     //===============================================================//
     StateEngine::StateVariable* StateEngine::
@@ -176,8 +174,8 @@ namespace SPH {
 
         std::stringstream msg;
         msg << "StateEngine::AddedStateVariable::getValue: ERR- variable '"
-            << getName() << "' is invalid! " << ".";
-        throw (msg.str(), __FILE__, __LINE__);
+            << getName() << "' is invalid! " << __FILE__ << __LINE__;
+        throw (msg.str());
         return SimTK::NaN;
     }
     //===============================================================//
@@ -192,8 +190,8 @@ namespace SPH {
 
         std::stringstream msg;
         msg << "StateEngine::AddedStateVariable::setValue: ERR- variable '"
-            << getName() << "' is invalid! " << ".";
-        throw (msg.str(), __FILE__, __LINE__);
+            << getName() << "' is invalid! " << __FILE__ << __LINE__;;
+        throw (msg.str());
     }
     //===============================================================//
     double StateEngine::AddedStateVariable::
@@ -251,7 +249,7 @@ namespace SPH {
         resizeXmlDocForSimbody(matter_.getNumBodies());
         SimTK::Xml::element_iterator ele_ite = simbody_xml_engine_.root_element_.element_begin();
         SimTK::MobilizedBodyIndex mbx(0);
-        for (size_t k = 0; k != matter_.getNumBodies(); ++k)
+        for (int k = 0; k != matter_.getNumBodies(); ++k)
         {
             const SimTK::MobilizedBody& mobod = matter_.getMobilizedBody(mbx);
 
