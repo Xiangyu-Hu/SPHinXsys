@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     apt-utils \
     build-essential \
     cmake \
+    googletest \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -45,8 +46,6 @@ ENV BOOST_HOME=/usr/lib/x86_64-linux-gnu
 ENV SIMBODY_HOME=/home/simbody
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SIMBODY_HOME/lib
 ENV CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$SIMBODY_HOME/include
-
-RUN apt-get update && apt-get install -y googletest
 
 COPY ./ /home/SPHinXsys/
 WORKDIR /home/SPHinXsys
