@@ -30,15 +30,26 @@ jobs:
           sudo apt-get install -y apt-utils \
           build-essential \
           cmake \
+          googletest \          
           libtbb-dev \
           libboost-all-dev \
-          libsimbody-dev \
-          libsimbody3.6
+          liblapack-dev \
+          wget
+          wget https://github.com/simbody/simbody/archive/Simbody-3.7.tar.gz
+          tar xvzf Simbody-3.7.tar.gz
+          rm Simbody-3.7.tar.gz
+          mkdir /home/simbody-build
+          mkdir /home/simbody
+          cd /home/simbody-build
+          cmake /home/simbody-Simbody-3.7 -DCMAKE_INSTALL_PREFIX=/home/simbody -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_STATIC_LIBRARIES=on
+          make -j$(nproc)
+          # && ctest -j$(nproc)
+          make -j$(nproc) install
           export TBB_HOME=/usr/lib/x86_64-linux-gnu
           export BOOST_HOME=/usr/lib/x86_64-linux-gnu
-          export SIMBODY_HOME=/usr
-          mkdir build 
+          export SIMBODY_HOME=/home/simbody
+          mkdir build
           cd build 
-          cmake .. 
-          make -j$(nproc)         
-          ctest -E "test_2d_owsc" --output-on-failure
+          cmake ..
+          make -j$(nproc)
+          ctest --output-on-failure
