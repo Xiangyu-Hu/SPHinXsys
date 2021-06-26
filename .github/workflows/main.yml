@@ -41,7 +41,7 @@ jobs:
           mkdir ./simbody
           export simbody_install_path=$(pwd)/simdody
           cd ./simbody-build
-          cmake ../simbody-Simbody-3.7 -DCMAKE_INSTALL_PREFIX=$(simbody_install_path) -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_STATIC_LIBRARIES=on
+          cmake ../simbody-Simbody-3.7 -DCMAKE_INSTALL_PREFIX=$(simbody_install_path) -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_VISUALIZER=off -DBUILD_STATIC_LIBRARIES=on
           make -j$(nproc)
           # && ctest -j$(nproc)
           make -j$(nproc) install
