@@ -40,7 +40,7 @@ jobs:
           mkdir ./simbody-build
           mkdir ./simbody
           cd ./simbody-build
-          cmake ../simbody-Simbody-3.7 -DCMAKE_INSTALL_PREFIX=./simbody -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_STATIC_LIBRARIES=on
+          cmake ../simbody-Simbody-3.7 -DCMAKE_INSTALL_PREFIX=../simbody -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_STATIC_LIBRARIES=on
           make -j$(nproc)
           # && ctest -j$(nproc)
           make -j$(nproc) install
