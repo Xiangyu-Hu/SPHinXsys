@@ -38,13 +38,13 @@ jobs:
           wget https://github.com/simbody/simbody/archive/Simbody-3.7.tar.gz
           tar xvzf Simbody-3.7.tar.gz
           rm Simbody-3.7.tar.gz
-          mkdir /home/simbody-build
-          mkdir /home/simbody
+          sudo mkdir /home/simbody-build
+          sudo mkdir /home/simbody
           cd /home/simbody-build
           cmake /home/simbody-Simbody-3.7 -DCMAKE_INSTALL_PREFIX=/home/simbody -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_STATIC_LIBRARIES=on
-          make -j$(nproc)
+          sudo make -j$(nproc)
           # && ctest -j$(nproc)
-          make -j$(nproc) install
+          sudo make -j$(nproc) install
           export TBB_HOME=/usr/lib/x86_64-linux-gnu
           export BOOST_HOME=/usr/lib/x86_64-linux-gnu
           export SIMBODY_HOME=/home/simbody
