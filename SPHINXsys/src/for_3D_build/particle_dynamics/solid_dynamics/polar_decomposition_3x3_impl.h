@@ -1296,7 +1296,6 @@ namespace polar
                         const vector<TReal, 4> H1 = multiply_minus_v_d(v1_temp, D);
                         const TReal H00 = dot(H0, v0_temp);
                         const TReal H10 = dot(H0, v1_temp);
-                        const TReal H01 = dot(H1, v0_temp);
                         const TReal H11 = dot(H1, v1_temp);
                         if (math_utils<TReal>::fabs(H10) < static_cast<TReal>(1.0e-15))
                         {

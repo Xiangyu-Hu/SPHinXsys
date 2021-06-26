@@ -152,6 +152,9 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input):
 	in_output_(In_Output(system_)),
 	contacting_bodies_list_(input->contacting_bodies_list_),
 
+	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), default_resolution_)),
+	in_output_(In_Output(system_)),
+
 	// boundary conditions
 	non_zero_gravity_(input->non_zero_gravity_),
 	acceleration_bounding_box_tuple_(input->acceleration_bounding_box_tuple_),

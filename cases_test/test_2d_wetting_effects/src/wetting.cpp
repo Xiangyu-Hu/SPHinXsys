@@ -130,14 +130,11 @@ int main()
 	 */
 	size_t number_of_iterations = sph_system.restart_step_;
 	int screen_output_interval = 100;
-	int observation_sample_interval = screen_output_interval * 2;
 	int restart_output_interval = screen_output_interval * 10;
 	Real End_Time = 5.0; 	/**< End time. */
 	Real D_Time = End_Time / 50;		/**< Time stamps for output of body states. */
 	Real Dt = 0.0;			/**< Default advection time step sizes. */
 	Real dt = 0.0; 			/**< Default acoustic time step sizes. */
-	Real dt_a = 0.0;
-	Real dt_f = 0.0;
 	/** statistics for computing CPU time. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
