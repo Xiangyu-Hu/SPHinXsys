@@ -18,10 +18,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 	
 RUN sudo apt-get install libgtest-dev
-    cd /usr/src/gtest
-    sudo cmake CMakeLists.txt
-    sudo make
-	cd /home/SPHinXsys
+	sudo /usr/src/gtest/cmake CMakeLists.txt
+	sudo /usr/src/gtest/make
 
 
 ENV TBB_HOME=/usr/lib/x86_64-linux-gnu

@@ -39,10 +39,8 @@ jobs:
           export SIMBODY_HOME=/usr
           
           sudo apt-get install libgtest-dev
-          cd /usr/src/gtest
-          sudo cmake CMakeLists.txt
-          sudo make
-          cd /home/SPHinXsys
+          sudo /usr/src/gtest/cmake CMakeLists.txt
+          sudo /usr/src/gtest/make
           
           mkdir build 
           cd build 
