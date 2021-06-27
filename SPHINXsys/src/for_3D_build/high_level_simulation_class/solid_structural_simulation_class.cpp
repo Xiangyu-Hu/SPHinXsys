@@ -148,10 +148,7 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input):
 	material_model_list_(input->material_model_list_),
 	physical_viscosity_(input->physical_viscosity_),
 	particle_relaxation_(input->particle_relaxation_), // particle relaxation
-	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), default_resolution_)),
-	in_output_(In_Output(system_)),
 	contacting_bodies_list_(input->contacting_bodies_list_),
-
 	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), default_resolution_)),
 	in_output_(In_Output(system_)),
 
