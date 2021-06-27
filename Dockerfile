@@ -17,7 +17,6 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN sudo apt-get install -y googletest
 
 ENV TBB_HOME=/usr/lib/x86_64-linux-gnu
 ENV BOOST_HOME=/usr/lib/x86_64-linux-gnu
