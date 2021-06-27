@@ -38,11 +38,12 @@ jobs:
           export BOOST_HOME=/usr/lib/x86_64-linux-gnu
           export SIMBODY_HOME=/usr
           
+          pwd
           sudo apt-get install libgtest-dev
           cd /usr/src/gtest
           sudo cmake CMakeLists.txt
           sudo make
-          cd /usr/bin/bash
+          cd ~/runner
           
           mkdir build 
           cd build 
