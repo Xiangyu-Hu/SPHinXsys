@@ -42,7 +42,7 @@ jobs:
           cd /usr/src/gtest
           sudo cmake CMakeLists.txt
           sudo make
-          cd ~
+          cd /home/runner/SPHinXsys
           
           mkdir build 
           cd build 
