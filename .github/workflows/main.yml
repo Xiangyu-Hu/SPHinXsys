@@ -39,8 +39,10 @@ jobs:
           export SIMBODY_HOME=/usr
           
           sudo apt-get install libgtest-dev
-          sudo /usr/src/gtest/cmake CMakeLists.txt
-          sudo /usr/src/gtest/make
+          cd /usr/src/gtest
+          sudo cmake CMakeLists.txt
+          sudo make
+          cd ~
           
           mkdir build 
           cd build 

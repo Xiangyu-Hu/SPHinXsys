@@ -16,11 +16,6 @@ RUN apt-get update && apt-get install -y \
     libsimbody3.6 \      
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-	
-RUN sudo apt-get install libgtest-dev
-	sudo /usr/src/gtest/cmake CMakeLists.txt
-	sudo /usr/src/gtest/make
-
 
 ENV TBB_HOME=/usr/lib/x86_64-linux-gnu
 ENV BOOST_HOME=/usr/lib/x86_64-linux-gnu
