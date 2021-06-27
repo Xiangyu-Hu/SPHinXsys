@@ -37,6 +37,13 @@ jobs:
           export TBB_HOME=/usr/lib/x86_64-linux-gnu
           export BOOST_HOME=/usr/lib/x86_64-linux-gnu
           export SIMBODY_HOME=/usr
+          
+          sudo apt-get install libgtest-dev
+          cd /usr/src/gtest
+          sudo cmake CMakeLists.txt
+          sudo make
+          cd /home/SPHinXsys
+          
           mkdir build 
           cd build 
           cmake .. 
