@@ -10,6 +10,7 @@
 
 #include "sphinxsys.h"
 #include <algorithm>
+#include <memory>
 
 using namespace SPH;
 using namespace std;
@@ -129,30 +130,30 @@ class StructuralSimulation
 		vector<TriangleMeshShape> body_mesh_list_;
 		vector<ParticleAdaptation> particle_adaptation_list_;
 
-		vector<SolidBodyForSimulation*> solid_body_list_;
+		vector<shared_ptr<SolidBodyForSimulation>> solid_body_list_;
 
 		vector<array<int, 2>> contacting_bodies_list_;
-		vector<SolidContactBodyRelation*> contact_list_;
-		vector<solid_dynamics::ContactDensitySummation*> contact_density_list_;
-		vector<solid_dynamics::ContactForce*> contact_force_list_;
+		vector<shared_ptr<SolidContactBodyRelation>> contact_list_;
+		vector<shared_ptr<solid_dynamics::ContactDensitySummation>> contact_density_list_;
+		vector<shared_ptr<solid_dynamics::ContactForce>> contact_force_list_;
 
 		// for InitializeATimeStep
-		vector<InitializeATimeStep*> initialize_gravity_;
+		vector<shared_ptr<InitializeATimeStep>> initialize_gravity_;
 		vector<GravityPair> non_zero_gravity_;
 		// for AccelerationForBodyPartInBoundingBox
-		vector<solid_dynamics::AccelerationForBodyPartInBoundingBox*> acceleration_bounding_box_;
+		vector<shared_ptr<solid_dynamics::AccelerationForBodyPartInBoundingBox>> acceleration_bounding_box_;
 		vector<AccelTuple> acceleration_bounding_box_tuple_;
 		// for SpringDamperConstraintParticleWise
-		vector<solid_dynamics::SpringDamperConstraintParticleWise*> spring_damper_constraint_;
+		vector<shared_ptr<solid_dynamics::SpringDamperConstraintParticleWise>> spring_damper_constraint_;
 		vector<SpringDamperTuple> spring_damper_tuple_;
 		// for ConstrainSolidBodyRegion
-		vector<solid_dynamics::ConstrainSolidBodyRegion*> fixed_constraint_;
+		vector<shared_ptr<solid_dynamics::ConstrainSolidBodyRegion>> fixed_constraint_;
 		vector<int> body_indeces_fixed_constraint_;
 		// for PositionSolidBody
-		vector<solid_dynamics::PositionSolidBody*> position_solid_body_;
+		vector<shared_ptr<solid_dynamics::PositionSolidBody>> position_solid_body_;
 		vector<PositionSolidBodyTuple> position_solid_body_tuple_;
 		// for PositionScaleSolidBody
-		vector<solid_dynamics::PositionScaleSolidBody*> position_scale_solid_body_;
+		vector<shared_ptr<solid_dynamics::PositionScaleSolidBody>> position_scale_solid_body_;
 		vector<PositionScaleSolidBodyTuple> position_scale_solid_body_tuple_;
 		
 		// for constructor, the order is important
