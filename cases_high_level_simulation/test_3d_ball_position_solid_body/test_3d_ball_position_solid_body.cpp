@@ -21,13 +21,14 @@ int main()
 	Vecd final_position_center = Vecd(0, 0, 0.1);
 
 	/** STL IMPORT PARAMETERS */
-	std::string relative_input_path = "./input/"; //path definition for linux
-	std::vector<std::string> imported_stl_list = { "ball_mass.stl" };
-	std::vector<Vec3d> translation_list = { Vec3d(0) };
-	std::vector<Real> resolution_list = { resolution_mass};
+	string relative_input_path = "./input/"; //path definition for linux
+	//string relative_input_path = "C:/SPHinXsys_Virtonomy/SPHinXsys/cases_high_level_simulation/test_3d_ball_position_solid_body/input/";
+	vector<std::string> imported_stl_list = { "ball_mass.stl" };
+	vector<Vec3d> translation_list = { Vec3d(0) };
+	vector<Real> resolution_list = { resolution_mass};
 
 	LinearElasticSolid material = LinearElasticSolid(rho_0, Youngs_modulus, poisson);
-	std::vector<LinearElasticSolid> material_model_list = { material };
+	vector<LinearElasticSolid> material_model_list = { material };
 
 	/** INPUT DECLERATION */
 	StructuralSimulationInput input

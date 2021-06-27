@@ -80,6 +80,16 @@ namespace SPH
 			pos_n_[index_i] += dvel_dt_[index_i] * dt_square * 0.5 / particle_adaptation_->SmoothingLengthRatio(index_i);
 		}
 		//=================================================================================================//
+		UpdateSolidParticlePosition::UpdateSolidParticlePosition(SPHBody* body) :
+			ParticleDynamicsSimple(body), solid_dynamics::SolidDataSimple(body),
+			pos_0_(particles_->pos_0_), pos_n_(particles_->pos_n_), dvel_dt_(particles_->dvel_dt_) {}
+		//=================================================================================================//
+		void UpdateSolidParticlePosition::Update(size_t index_i, Real dt_square)
+		{
+			pos_n_[index_i] += dvel_dt_[index_i] * dt_square * 0.5 / particle_adaptation_->SmoothingLengthRatio(index_i);
+			pos_0_[index_i] = pos_n_[index_i];
+		}
+		//=================================================================================================//
 		UpdateSmoothingLengthRatioByBodyShape::UpdateSmoothingLengthRatioByBodyShape(SPHBody* body) :
 			ParticleDynamicsSimple(body), RelaxDataDelegateSimple(body),
 			h_ratio_(*particles_->getVariableByName<indexScalar, Real>("SmoothingLengthRatio")), 
@@ -200,6 +210,26 @@ namespace SPH
 			relaxation_acceleration_inner_->parallel_exec();
 			Real dt_square = get_time_step_square_.parallel_exec();
 			update_particle_position_.parallel_exec(dt_square);
+			surface_bounding_.parallel_exec();
+		}
+		//=================================================================================================//
+		void SolidRelaxationStepInner::exec(Real dt)
+		{
+			real_body_->updateCellLinkedList();
+			inner_relation_->updateConfiguration();
+			relaxation_acceleration_inner_->exec();
+			Real dt_square = get_time_step_square_.exec();
+			update_solid_particle_position_.exec(dt_square);
+			surface_bounding_.exec();
+		}
+		//=================================================================================================//
+		void SolidRelaxationStepInner::parallel_exec(Real dt)
+		{
+			real_body_->updateCellLinkedList();
+			inner_relation_->updateConfiguration();
+			relaxation_acceleration_inner_->parallel_exec();
+			Real dt_square = get_time_step_square_.parallel_exec();
+			update_solid_particle_position_.parallel_exec(dt_square);
 			surface_bounding_.parallel_exec();
 		}
 		//=================================================================================================//

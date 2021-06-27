@@ -39,6 +39,7 @@
 #include "neighbor_relation.h"
 #include "base_kernel.h"
 #include "mesh_cell_linked_list.h"
+#include "solid_dynamics.h"
 
 namespace SPH
 {
@@ -220,6 +221,40 @@ namespace SPH
 			virtual void exec(Real dt = 0.0) override;
 			virtual void parallel_exec(Real dt = 0.0) override;
 		};
+
+		/**
+		* @class UpdateParticlePosition
+		* @brief update the particle position for a time step
+		*/
+		class UpdateSolidParticlePosition :
+			public ParticleDynamicsSimple, public solid_dynamics::SolidDataSimple
+		{
+		public:
+			explicit UpdateSolidParticlePosition(SPHBody* body);
+			virtual ~UpdateSolidParticlePosition() {};
+		protected:
+			StdLargeVec<Vecd>& pos_0_, & pos_n_, &dvel_dt_;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		* @class SolidRelaxationStepInner
+		* @brief carry out particle relaxation step of particles within the body
+		*/
+		class SolidRelaxationStepInner : public RelaxationStepInner
+		{
+		public:
+			explicit SolidRelaxationStepInner(BaseInnerBodyRelation* body_inner_relation, bool level_set_correction = false) :
+				RelaxationStepInner(body_inner_relation, level_set_correction),
+				update_solid_particle_position_(real_body_) {};
+			virtual ~SolidRelaxationStepInner() {};
+
+			UpdateSolidParticlePosition update_solid_particle_position_;
+
+			virtual void exec(Real dt = 0.0) override;
+			virtual void parallel_exec(Real dt = 0.0) override;
+		};
+
 	}
 }
 #endif //RELAX_DYNAMICS_H

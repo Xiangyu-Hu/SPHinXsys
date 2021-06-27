@@ -72,7 +72,7 @@ void RelaxParticlesSingleResolution(In_Output* in_output,
 	//----------------------------------------------------------------------
 	RandomizePartilePosition  random_imported_model_particles(imported_model);
 	/** A  Physics relaxation step. */
-	relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner, true);
+	relax_dynamics::SolidRelaxationStepInner relaxation_step_inner(imported_model_inner, true);
 	//----------------------------------------------------------------------
 	//	Particle relaxation starts here.
 	//----------------------------------------------------------------------
