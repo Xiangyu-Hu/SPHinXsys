@@ -58,6 +58,7 @@ namespace SPH {
 	protected:
 		Real h_spacing_ratio_;
 		int global_refinement_level_;
+		Real system_resolution_ratio_; // ratio of body resolution to system resolution, set to 1.0 by default
 		int local_refinement_level_;
 		int local_coarse_level_;
 		Real spacing_ref_;
@@ -106,7 +107,6 @@ namespace SPH {
 		void SetSystemResolutionRatio(Real system_resolution_ratio) { system_resolution_ratio_ = system_resolution_ratio; };
 	protected:
 		Real RefinedSpacing(Real coarse_particle_spacing, int refinement_level);
-		Real system_resolution_ratio_; // ratio of body resolution to system resolution, set to 1.0 bey default
 	};
 
 	/**
