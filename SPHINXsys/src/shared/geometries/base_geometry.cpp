@@ -52,7 +52,7 @@ namespace SPH {
 		last_branch_id_ = branch->id_;
 	}
 	//=================================================================================================//
-	void Tree::addANewBranchInnerVecd(Branch* branch, Vecd new_point, Vecd end_direction)
+	void Tree::addANewBranchInnerPoints(Branch* branch, Vecd new_point, Vecd end_direction)
 	{
 		points_.push_back(new_point);
 		edge_locations_.push_back(branch->id_);

@@ -1,7 +1,7 @@
 /**
  * @file 	1d_shock_tube.h
- * @brief 	Numerical parameters and body defination for 1D shock_tube.
- * @author 	Zhentong Wang
+ * @brief 	Numerical parameters and body definition for 1D shock_tube.
+ * @author 	Zhentong Wang and Xiangyu Hu
  */
  /**
   * @brief 	SPHinXsys Library.
@@ -102,7 +102,7 @@ protected:
 			p_[index_i] = p_r;
 			Real rho_e = p_[index_i] / (gamma_ - 1.0);
 			vel_n_[index_i] = velocity_r;
-			mom_[index_i] = rho0_l * velocity_l;
+			mom_[index_i] = rho0_r * velocity_r;
 			E_[index_i] = rho_e + 0.5 * rho_n_[index_i] * vel_n_[index_i].normSqr();
 		}
 	}

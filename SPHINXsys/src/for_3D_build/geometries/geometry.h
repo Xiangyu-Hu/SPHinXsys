@@ -35,9 +35,7 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_geometry.h"
-#include "SimTKcommon.h"
-#include "SimTKmath.h"
-#include "Simbody.h"
+#include "simbody_middle.h"
 
 #include <iostream>
 #include <string>

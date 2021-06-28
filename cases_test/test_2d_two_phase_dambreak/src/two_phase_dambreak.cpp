@@ -60,8 +60,8 @@ int main()
 	 * @brief 	Methods used for time stepping.
 	 */
 	 /** Initialize particle acceleration. */
-	InitializeATimeStep		initialize_a_water_step(water_block, &gravity);
-	InitializeATimeStep		initialize_a_air_step(air_block, &gravity);
+	TimeStepInitialization		initialize_a_water_step(water_block, &gravity);
+	TimeStepInitialization		initialize_a_air_step(air_block, &gravity);
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
@@ -93,14 +93,14 @@ int main()
 	 */
 	In_Output in_output(sph_system);
 	/** Output the body states. */
-	WriteBodyStatesToVtu 		write_body_states(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtu 		body_states_recording(in_output, sph_system.real_bodies_);
 	/** Output the body states for restart simulation. */
 	RestartIO		restart_io(in_output, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	WriteBodyReducedQuantity<TotalMechanicalEnergy> 	
+	BodyReducedQuantityRecording<TotalMechanicalEnergy> 	
 		write_water_mechanical_energy(in_output, water_block, &gravity);
 	/** output the observed data from fluid body. */
-	WriteAnObservedQuantity<indexScalar, Real>
+	ObservedQuantityRecording<indexScalar, Real>
 		write_recorded_pressure("Pressure", in_output, fluid_observer_contact);
 
 	/** Pre-simulation*/
@@ -123,9 +123,9 @@ int main()
 		air_wall_contact->updateConfiguration();
 	}
 	/** Output the start states of bodies. */
-	write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
+	body_states_recording.writeToFile(0);
 	/** Output the Hydrostatic mechanical energy of fluid. */
-	write_water_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_water_mechanical_energy.writeToFile(0);
 	/**
 	 * @brief 	Basic parameters.
 	 */
@@ -197,11 +197,11 @@ int main()
 					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
 
 				if (number_of_iterations % observation_sample_interval == 0) {
-					write_water_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
-					write_recorded_pressure.WriteToFile(GlobalStaticVariables::physical_time_);
+					write_water_mechanical_energy.writeToFile(number_of_iterations);
+					write_recorded_pressure.writeToFile(number_of_iterations);
 				}
 				if (number_of_iterations % restart_output_interval == 0)
-					restart_io.WriteToFile(Real(number_of_iterations));
+					restart_io.writeToFile(number_of_iterations);
 			}
 			number_of_iterations++;
 
@@ -222,7 +222,7 @@ int main()
 
 
 		tick_count t2 = tick_count::now();
-		write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		body_states_recording.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 

@@ -68,7 +68,7 @@ namespace SPH
 		protected:
 			StdLargeVec<Vecd>& pos_n_, & vel_n_, & mom_;
 			StdLargeVec<Real>& rho_n_, & E_, & p_;
-			Real gamma_, c_0_, rho_0_;
+			Real gamma_, c0_, rho0_;
 		};
 
 		/**

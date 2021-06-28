@@ -36,8 +36,8 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
-	WriteBodyStatesToVtu		write_imported_model_to_vtu(in_output, { imported_model });
-	WriteMeshToPlt 	write_mesh_cell_linked_list(in_output, imported_model, imported_model->mesh_cell_linked_list_);
+	BodyStatesRecordingToVtu		write_imported_model_to_vtu(in_output, { imported_model });
+	MeshRecordingToPlt 	mesh_cell_linked_list_recording(in_output, imported_model, imported_model->mesh_cell_linked_list_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -58,9 +58,9 @@ int main(int ac, char* av[])
 	random_imported_model_particles.parallel_exec(0.25);
 	relaxation_step_inner.surface_bounding_.parallel_exec();
 	update_smoothing_length_ratio.parallel_exec();
-	write_imported_model_to_vtu.WriteToFile(0.0);
+	write_imported_model_to_vtu.writeToFile();
 	imported_model->updateCellLinkedList();
-	write_mesh_cell_linked_list.WriteToFile(0.0);
+	mesh_cell_linked_list_recording.writeToFile(0);
 	//----------------------------------------------------------------------
 	//	Particle relaxation time stepping start here.
 	//----------------------------------------------------------------------
@@ -73,7 +73,7 @@ int main(int ac, char* av[])
 		if (ite_p % 100 == 0)
 		{
 			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the imported model N = " << ite_p << "\n";
-			write_imported_model_to_vtu.WriteToFile(Real(ite_p) * 1.0e-4);
+			write_imported_model_to_vtu.writeToFile(ite_p);
 		}
 	}
 	std::cout << "The physics relaxation process of imported model finish !" << std::endl;

@@ -22,6 +22,13 @@ namespace SPH
 		root_element_.insertNodeAfter(root_element_.node_end(), *element);
 	}
 	//=================================================================================================//
+	void XmlEngine::addChildToElement(SimTK::Xml::Element& father_element,
+		const std::string& child_name)
+	{
+		SimTK::Xml::Element* child_element = new SimTK::Xml::Element(child_name);
+		father_element.insertNodeAfter(father_element.node_end(), *child_element);
+	}
+	//=================================================================================================//
 	void XmlEngine::setAttributeToElement(const SimTK::Xml::element_iterator& ele_ite,
 		const std::string& attrib_name, const Matd& value)
 	{
@@ -74,9 +81,36 @@ namespace SPH
 		return xmldoc_.getRootTag();
 	}
 	//=================================================================================================//
+	std::string XmlEngine::getElementTag(SimTK::Xml::Element& element)
+	{
+		return element.getElementTag();
+	}
+	//=================================================================================================//
+	void  XmlEngine::resizeXmlDocForParticles(size_t input_size)
+	{
+		size_t total_elements =  std::distance(root_element_.element_begin(),
+			root_element_.element_end());
+
+		if (total_elements <= input_size) 
+		{
+			for (size_t i = total_elements; i != input_size; ++i) addElementToXmlDoc("particle");
+		}
+		else
+		{
+			std::cout << "\n Error: XML Engine allows increase date size only!" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
+		}
+	};
+	//=================================================================================================//
 	size_t XmlEngine::SizeOfXmlDoc()
 	{
 		return std::distance(root_element_.element_begin(), root_element_.element_end());
 	}
+	//=================================================================================================//
+	SimTK::Xml::Element XmlEngine::getChildElement(const std::string& tag)
+	{
+		return root_element_.getOptionalElement(tag);
+	};
 	//=================================================================================================//
 }

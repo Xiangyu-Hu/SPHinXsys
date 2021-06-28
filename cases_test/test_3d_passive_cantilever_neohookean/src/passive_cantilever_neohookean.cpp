@@ -141,7 +141,7 @@ int main()
 	ContactBodyRelation* myocardium_observer_contact = new ContactBodyRelation(myocardium_observer, { myocardium_body });
 
 	//-------- common particle dynamics ----------------------------------------
-	InitializeATimeStep 	initialize_gravity(myocardium_body, &gravity);
+	TimeStepInitialization 	initialize_gravity(myocardium_body, &gravity);
 
 	/** 
 	 * This section define all numerical methods will be used in this case.
@@ -166,8 +166,8 @@ int main()
 		muscle_damping(myocardium_body_inner, 0.1, "Velocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
-	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
-	WriteAnObservedQuantity<indexVector, Vecd>
+	BodyStatesRecordingToVtu write_states(in_output, system.real_bodies_);
+	ObservedQuantityRecording<indexVector, Vecd>
 		write_displacement("Position", in_output, myocardium_observer_contact);
 	/**
 	 * From here the time stepping begines.
@@ -177,8 +177,8 @@ int main()
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	corrected_configuration_in_strong_form.parallel_exec();
-	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_states.writeToFile(0);
+	write_displacement.writeToFile(0);
 	/** Setup physical parameters. */
 	int ite = 0;
 	Real end_time = 1.0;
@@ -213,9 +213,9 @@ int main()
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 		}
-		write_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_displacement.writeToFile(ite);
 		tick_count t2 = tick_count::now();
-		write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

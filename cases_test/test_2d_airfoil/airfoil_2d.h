@@ -27,9 +27,10 @@ Real DL = 1.25; 				/**< airfoil length rear part. */
 Real DL1 = 0.25;				/**< airfoil length front part. */
 Real DH = 0.25; 				/**< airfoil height. */
 Real resolution_ref = 0.01; 	/**< Reference resolution. */	
-/** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-DL1, -DH), Vec2d(DL, DH));
-/** Airfoil	as a solid body */
+//----------------------------------------------------------------------
+//	Airfoil	as a solid body
+//----------------------------------------------------------------------
 class Airfoil : public SolidBody
 {
 public:

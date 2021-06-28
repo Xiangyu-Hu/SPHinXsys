@@ -151,7 +151,7 @@ int main()
 
 	/** Creat a Cylinder body. */
 	Cylinder *cylinder_body = new Cylinder(system, "CylinderBody", new ParticleAdaptation(1.15, 0), new ParticleGeneratorDirect());
-	/** elastic soild material properties */
+	/** elastic solid material properties */
 	CylinderMaterial *cylinder_material = new CylinderMaterial();
 	/** Creat particles for the elastic body. */
 	ShellParticles cylinder_body_particles(cylinder_body, cylinder_material, thickness);
@@ -161,14 +161,14 @@ int main()
 	BaseParticles observer_particles(cylinder_observer);
 
 	/** Set body contact map
-	 *  The contact map gives the data conntections between the bodies
+	 *  The contact map gives the data connections between the bodies
 	 *  basically the the range of bodies to build neighbor particle lists
 	 */
 	InnerBodyRelation* cylinder_body_inner = new InnerBodyRelation(cylinder_body);
 	ContactBodyRelation* cylinder_observer_contact = new ContactBodyRelation(cylinder_observer, { cylinder_body });
 
 	/** Common particle dynamics. */
-	InitializeATimeStep 	initialize_external_force(cylinder_body, &external_force);
+	TimeStepInitialization 	initialize_external_force(cylinder_body, &external_force);
 
 	/**
 	 * This section define all numerical methods will be used in this case.
@@ -178,9 +178,9 @@ int main()
 	 /** Corrected strong configuration. */
 	thin_structure_dynamics::ShellCorrectConfiguration
 		corrected_configuration_in_strong_form(cylinder_body_inner);
-	/** Time step size caclutation. */
+	/** Time step size calculation. */
 	thin_structure_dynamics::ShellAcousticTimeStepSize computing_time_step_size(cylinder_body);
-	/** active-pative stress relaxation. */
+	/** stress relaxation. */
 	thin_structure_dynamics::ShellStressRelaxationFirstHalf
 		stress_relaxation_first_half(cylinder_body_inner);
 	thin_structure_dynamics::ShellStressRelaxationSecondHalf
@@ -194,8 +194,8 @@ int main()
 		cylinder_rotation_damping(cylinder_body_inner, 0.1, "AngularVelocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
-	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
-	WriteAnObservedQuantity<indexVector, Vecd>
+	BodyStatesRecordingToPlt write_states(in_output, system.real_bodies_);
+	ObservedQuantityRecording<indexVector, Vecd>
 		write_cylinder_max_displacement("Position", in_output, cylinder_observer_contact);
 
 
@@ -210,8 +210,8 @@ int main()
 	* Set the starting time.
 	*/
 	GlobalStaticVariables::physical_time_ = 0.0;
-	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_cylinder_max_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_states.writeToFile(0);
+	write_cylinder_max_displacement.writeToFile(0);
 	
 	/** Setup physical parameters. */
 	int ite = 0;
@@ -226,8 +226,8 @@ int main()
 	 */
 	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
-		Real integeral_time = 0.0;
-		while (integeral_time < output_period)
+		Real integral_time = 0.0;
+		while (integral_time < output_period)
 		{
 			if (ite % 100 == 0) {
 				std::cout << "N=" << ite << " Time: "
@@ -244,14 +244,12 @@ int main()
 
 			ite++;
 			dt = computing_time_step_size.parallel_exec();
-			integeral_time += dt;
+			integral_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
-			Real check_time = GlobalStaticVariables::physical_time_;
-
 		}
-		write_cylinder_max_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_cylinder_max_displacement.writeToFile(ite);
 		tick_count t2 = tick_count::now();
-		write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

@@ -2,7 +2,7 @@
  * @file 	eulerian_taylor_green.cpp
  * @brief 	This is the one of the basic test cases.
  * @details 2D eulerian_taylor_green vortex flow example.
- * @author 	Chi ZHang, Xiangyu Hu and Zhentong Wang
+ * @author 	Chi ZHang, Zhentong Wang and Xiangyu Hu
  */
  /**
   * @brief 	SPHinXsys Library.
@@ -79,7 +79,7 @@ protected:
 	{
 		/** initial momentum and energy profile */
 		rho_n_[index_i] = rho0_f;
-		p_[index_i] = pow(c_0_, 2) * rho_n_[index_i] / gamma_;
+		p_[index_i] = pow(c0_, 2) * rho_n_[index_i] / gamma_;
 		vel_n_[index_i][0] = -cos(2.0 * Pi * pos_n_[index_i][0]) *
 			sin(2.0 * Pi * pos_n_[index_i][1]);
 		vel_n_[index_i][1] = sin(2.0 * Pi * pos_n_[index_i][0]) *
@@ -148,14 +148,14 @@ int main(int ac, char* av[])
 	 * @brief Output.
 	 */
 	/** Output the body states. */
-	WriteBodyStatesToVtu 	write_body_states(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtu 	body_states_recording(in_output, sph_system.real_bodies_);
 	/** Output the body states for restart simulation. */
 	RestartIO				restart_io(in_output, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	WriteBodyReducedQuantity<TotalMechanicalEnergy>
+	BodyReducedQuantityRecording<TotalMechanicalEnergy>
 		write_total_mechanical_energy(in_output, water_block, new Gravity(Vec2d(0)));
 	/** Output the maximum speed of the fluid body. */
-	WriteBodyReducedQuantity<MaximumSpeed> write_maximum_speed(in_output, water_block);
+	BodyReducedQuantityRecording<MaximumSpeed> write_maximum_speed(in_output, water_block);
 	/**
 	 * @brief Setup geomtry and initial conditions
 	 */
@@ -177,9 +177,9 @@ int main(int ac, char* av[])
 		water_block_inner->updateConfiguration();
 	}
 	/** Output the start states of bodies. */
-	write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
+	body_states_recording.writeToFile(GlobalStaticVariables::physical_time_);
 	/** Output the mechanical energy of fluid. */
-	write_total_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_total_mechanical_energy.writeToFile(GlobalStaticVariables::physical_time_);
 	/**
 	 * @brief 	Basic parameters.
 	 */
@@ -218,16 +218,16 @@ int main(int ac, char* av[])
 					<< "	dt = " << dt << "\n";
 
 				if (number_of_iterations % restart_output_interval == 0) {
-					restart_io.WriteToFile(Real(number_of_iterations));
+					restart_io.writeToFile(number_of_iterations);
 				}
 			}
 			number_of_iterations++;
 		}
 
 		tick_count t2 = tick_count::now();
-		write_total_mechanical_energy.WriteToFile(GlobalStaticVariables::physical_time_);
-		write_maximum_speed.WriteToFile(GlobalStaticVariables::physical_time_);
-		write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_total_mechanical_energy.writeToFile(number_of_iterations);
+		write_maximum_speed.writeToFile(number_of_iterations);
+		body_states_recording.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

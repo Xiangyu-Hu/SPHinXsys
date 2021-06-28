@@ -118,6 +118,7 @@ class StructuralSimulation
 		vector<Real> resolution_list_;
 		vector<LinearElasticSolid> material_model_list_;
 		Real physical_viscosity_;
+		vector<array<int, 2>> contacting_bodies_list_;
 
 		// particle relaxation
 		vector<bool> particle_relaxation_;
@@ -129,16 +130,14 @@ class StructuralSimulation
 
 		vector<TriangleMeshShape> body_mesh_list_;
 		vector<ParticleAdaptation> particle_adaptation_list_;
-
 		vector<shared_ptr<SolidBodyForSimulation>> solid_body_list_;
 
-		vector<array<int, 2>> contacting_bodies_list_;
 		vector<shared_ptr<SolidContactBodyRelation>> contact_list_;
 		vector<shared_ptr<solid_dynamics::ContactDensitySummation>> contact_density_list_;
 		vector<shared_ptr<solid_dynamics::ContactForce>> contact_force_list_;
 
 		// for InitializeATimeStep
-		vector<shared_ptr<InitializeATimeStep>> initialize_gravity_;
+		vector<shared_ptr<TimeStepInitialization>> initialize_gravity_;
 		vector<GravityPair> non_zero_gravity_;
 		// for AccelerationForBodyPartInBoundingBox
 		vector<shared_ptr<solid_dynamics::AccelerationForBodyPartInBoundingBox>> acceleration_bounding_box_;

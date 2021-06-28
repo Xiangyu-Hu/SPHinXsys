@@ -126,7 +126,6 @@ namespace SPH
 
 				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
 				StdLargeVec<Vecd>& vel_n_k = *(contact_vel_n_[k]);
-				Solid* solid_k = contact_material_[k];
 
 				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -184,7 +183,6 @@ namespace SPH
 				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
 				StdLargeVec<Vecd>& n_k = *(contact_n_[k]);
 				StdLargeVec<Vecd>& vel_n_k = *(contact_vel_n_[k]);
-				Solid* solid_k = contact_material_[k];
 
 				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -222,7 +220,7 @@ namespace SPH
 		{
 			//since the particle does not change its configuration in pressure relaxation step
 			//I chose a time-step size according to Eulerian method
-			Real sound_speed = material_->SoundWaveSpeed();
+			Real sound_speed = material_->ReferenceSoundSpeed();
 			return CFL_ * SMIN(sqrt(smoothing_length_ / (dvel_dt_[index_i].norm() + TinyReal)),
 				smoothing_length_ / (sound_speed + vel_n_[index_i].norm()));
 		}
@@ -447,7 +445,7 @@ namespace SPH
 		{
 			// calculate total mass
 			total_mass_ = 0.0;
-			for (int i = 0; i < particles_->mass_.size(); i++)
+			for (size_t i = 0; i < particles_->mass_.size(); i++)
 			{
 				total_mass_ += particles_->mass_[i];
 			}
@@ -505,13 +503,18 @@ namespace SPH
 		}
 		//=================================================================================================//
 		void AccelerationForBodyPartInBoundingBox::Update(size_t index_i, Real dt)
-		{	
-			Vecd point = pos_n_[index_i];
-			if ( 	point[0] >= bounding_box_->first[0] && point[0] <= bounding_box_->second[0] &&
-					point[1] >= bounding_box_->first[1] && point[1] <= bounding_box_->second[1] &&
-					point[2] >= bounding_box_->first[2] && point[2] <= bounding_box_->second[2]			)
+		{
+			if (pos_n_.size() > index_i)
 			{
-				dvel_dt_prior_[index_i] += acceleration_;
+				Vecd point = pos_n_[index_i];
+				if (point.size() >= 3 && bounding_box_ != nullptr && bounding_box_->first.size() >= 3 && 
+					bounding_box_->second.size() >= 3 && point[0] >= bounding_box_->first[0] && 
+					point[0] <= bounding_box_->second[0] &&
+					point[1] >= bounding_box_->first[1] && point[1] <= bounding_box_->second[1] &&
+					point[2] >= bounding_box_->first[2] && point[2] <= bounding_box_->second[2])
+				{
+					dvel_dt_prior_[index_i] += acceleration_;
+				}
 			}
 		}
 		//=================================================================================================//	

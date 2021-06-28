@@ -26,21 +26,20 @@
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-
-#ifndef IN_OUTPUT_H
-#define IN_OUTPUT_H
-
-
+#pragma once
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
 #include "all_physical_dynamics.h"
+#include "xml_engine.h" 
  
 #include "SimTKcommon.h"
 #include "SimTKmath.h"
 #include "Simbody.h"
 
+#include <sstream>
+#include <iomanip>
 #include <fstream>
 /** Macro for APPLE compilers*/
 #ifdef __APPLE__
@@ -70,14 +69,14 @@ namespace SPH {
 		virtual ~In_Output() {};
 
 		SPHSystem &sph_system_;
-		std::string input_folder_;			/**< Folder for saving input files. */
-		std::string output_folder_;			/**< Folder for saving output files. */
-		std::string restart_folder_;		/**< Folder for saving restart files. */
-		std::string reload_folder_;			/**< Folder for saving particle reload files. */
-
+		std::string input_folder_;
+		std::string output_folder_;
+		std::string restart_folder_;
+		std::string reload_folder_;
+			
 		std::string restart_step_;
 	};
-
+	
 	/**
 	 * @class PltEngine
 	 * @brief The base class which defines Tecplot file related operation.
@@ -104,6 +103,8 @@ namespace SPH {
 		In_Output &in_output_;
 		SPHBody *body_;
 		SPHBodyVector bodies_;
+
+		std::string convertPhysicalTimeToString(Real physical_time);
 	public:
 		BodyStatesIO(In_Output &in_output, SPHBody *body)
 			: in_output_(in_output), body_(body), bodies_({body}) {};
@@ -113,19 +114,32 @@ namespace SPH {
 	};
 
 	/**
-	 * @class WriteBodyStates
+	 * @class BodyStatesRecording
 	 * @brief base class for write body states.
 	 */
-	class WriteBodyStates : public BodyStatesIO
+	class BodyStatesRecording : public BodyStatesIO
 	{
 	public:
-		WriteBodyStates(In_Output &in_output, SPHBody *body)
+		BodyStatesRecording(In_Output &in_output, SPHBody *body)
 			: BodyStatesIO(in_output, body) {};
-		WriteBodyStates(In_Output &in_output, SPHBodyVector bodies)
+		BodyStatesRecording(In_Output &in_output, SPHBodyVector bodies)
 			: BodyStatesIO(in_output, bodies) {};
-		virtual ~WriteBodyStates() {};
+		virtual ~BodyStatesRecording() {};
 
-		virtual void WriteToFile(Real time) = 0;
+		/** write with filename indicated by physical time */
+		void writeToFile() 
+		{
+			writeWithFileName(convertPhysicalTimeToString(GlobalStaticVariables::physical_time_));
+		};
+
+		/** write with filename indicated by iteration step */
+		virtual void writeToFile(size_t iteration_step)
+		{
+			writeWithFileName(std::to_string(iteration_step));
+		};
+
+	protected:
+		virtual void writeWithFileName(const std::string& sequence) = 0;
 	};
 
 	/**
@@ -157,7 +171,7 @@ namespace SPH {
 			: SimBodyStatesIO<MobilizedBodyType>(in_output,integ, mobody) {};
 		virtual ~WriteSimBodyStates() {};
 
-		virtual void WriteToFile(Real time) = 0;
+		virtual void writeToFile(size_t iteration_step) = 0;
 	};
 
 	/**
@@ -174,38 +188,40 @@ namespace SPH {
 			: SimBodyStatesIO<MobilizedBodyType>(in_output, mobodies) {};
 		virtual ~ReadSimBodyStates() {};
 
-		virtual void ReadFromFile(size_t iteration_step) = 0;
+		virtual void readFromFile(size_t iteration_step) = 0;
 	};
 
 	/**
-	 * @class WriteBodyStatesToVtu
+	 * @class BodyStatesRecordingToVtu
 	 * @brief  Write files for bodies
 	 * the output file is VTK XML format can visualized by ParaView
 	 * the data type vtkUnstructedGrid
 	 */
-	class WriteBodyStatesToVtu : public WriteBodyStates
+	class BodyStatesRecordingToVtu : public BodyStatesRecording
 	{
 	public:
-		WriteBodyStatesToVtu(In_Output& in_output, SPHBodyVector bodies)
-			: WriteBodyStates(in_output, bodies) {};
-		virtual ~WriteBodyStatesToVtu() {};
+		BodyStatesRecordingToVtu(In_Output& in_output, SPHBodyVector bodies)
+			: BodyStatesRecording(in_output, bodies) {};
+		virtual ~BodyStatesRecordingToVtu() {};
 
-		virtual void WriteToFile(Real time) override;
+	protected:
+		virtual void writeWithFileName(const std::string& sequence) override;
 	};
 	
 	/**
-	 * @class WriteBodyStatesToPlt
+	 * @class BodyStatesRecordingToPlt
 	 * @brief  Write files for bodies
 	 * the output file is dat format can visualized by TecPlot
 	 */
-	class WriteBodyStatesToPlt : public WriteBodyStates
+	class BodyStatesRecordingToPlt : public BodyStatesRecording
 	{
 	public:
-		WriteBodyStatesToPlt(In_Output& in_output, SPHBodyVector bodies)
-			: WriteBodyStates(in_output, bodies) {};
-		virtual ~WriteBodyStatesToPlt() {};
+		BodyStatesRecordingToPlt(In_Output& in_output, SPHBodyVector bodies)
+			: BodyStatesRecording(in_output, bodies) {};
+		virtual ~BodyStatesRecordingToPlt() {};
 
-		virtual void WriteToFile(Real time) override;
+	protected:
+		virtual void writeWithFileName(const std::string& sequence) override;
 	};
 
 	/**
@@ -214,59 +230,137 @@ namespace SPH {
 	 * out of a bound
 	 */
 	class WriteToVtuIfVelocityOutOfBound
-		: public WriteBodyStatesToVtu
+		: public BodyStatesRecordingToVtu
 	{
 	protected:
+		bool out_of_bound_;
 		StdVec<VelocityBoundCheck *> check_bodies_;
+		virtual void writeWithFileName(const std::string& sequence) override;
 	public:
 		WriteToVtuIfVelocityOutOfBound(In_Output& in_output,
 			SPHBodyVector bodies, Real velocity_bound);
 		virtual ~WriteToVtuIfVelocityOutOfBound() {};
-
-		bool out_of_bound_;
-		virtual void WriteToFile(Real time) override;
 	};
 
 	/**
-	 * @class WriteMeshToPlt
+	 * @class MeshRecordingToPlt
 	 * @brief  write the background mesh data for relax body
 	 */
-	class WriteMeshToPlt : public WriteBodyStates
+	class MeshRecordingToPlt : public BodyStatesRecording
 	{
 	protected:
 		std::string filefullpath_;
 		Mesh* mesh_;
+		virtual void writeWithFileName(const std::string& sequence) override;
 	public:
-		WriteMeshToPlt(In_Output& in_output, SPHBody* body, Mesh* mesh);
-		virtual ~WriteMeshToPlt() {};
-
-		virtual void WriteToFile(Real time = 0.0) override;
+		MeshRecordingToPlt(In_Output& in_output, SPHBody* body, Mesh* mesh);
+		virtual ~MeshRecordingToPlt() {};
 	};
 
 	/**
-	 * @class WriteAnObservedQuantity
+	 * @class ObservedQuantityRecording
 	 * @brief write files for observed quantity
 	 */
 	template <int DataTypeIndex, typename VariableType>
-	class WriteAnObservedQuantity : public WriteBodyStates,
+	class ObservedQuantityRecording : public BodyStatesRecording,
 		public observer_dynamics::InterpolatingAQuantity<DataTypeIndex, VariableType>
 	{
 	protected:
 		SPHBody* observer_;
 		PltEngine plt_engine_;
 		BaseParticles* base_particles_;
-		std::string filefullpath_;
+		std::string body_name_;
+		std::string quantity_name_;
+		XmlEngine observe_xml_engine_;
+		std::string filefullpath_input_;
+		std::string filefullpath_output_;
 
-	public:
-		WriteAnObservedQuantity(std::string quantity_name, In_Output& in_output,
-			BaseContactBodyRelation* body_contact_relation) : 
-			WriteBodyStates(in_output, body_contact_relation->sph_body_), 
-			observer_dynamics::InterpolatingAQuantity<DataTypeIndex, VariableType>(body_contact_relation, quantity_name),
-			observer_(body_contact_relation->sph_body_), plt_engine_(), base_particles_(observer_->base_particles_)
+		DataVec<VariableType> current_result_; /* the container of the current result. */
+		StdVec<string> element_tag_;           /* the container of the current tag. */
+
+		void WriteDataToXmlMemory(XmlEngine xmlengine, SimTK::Xml::Element element,
+			string element_name, size_t particle_n, const Real& quantity)
 		{
-			filefullpath_ = in_output_.output_folder_ + "/" + observer_->getBodyName()
+			SimTK::Xml::element_iterator ele_ite = element.element_begin(element_name);
+			std::string attribute_name_ = quantity_name_ + "_" + std::to_string(particle_n);
+			xmlengine.setAttributeToElement(ele_ite, attribute_name_, quantity);
+		};
+		void WriteDataToXmlMemory(XmlEngine xmlengine, SimTK::Xml::Element element,
+			string element_name, size_t particle_n, const Vecd& quantity)
+		{
+			SimTK::Xml::element_iterator ele_ite = element.element_begin(element_name);
+			std::string attribute_name_ = quantity_name_ + "_" + std::to_string(particle_n);
+			xmlengine.setAttributeToElement(ele_ite, attribute_name_, quantity);
+		};
+		void WriteDataToXmlMemory(XmlEngine xmlengine, SimTK::Xml::Element element,
+			string element_name, size_t particle_n, const Matd& quantity)
+		{
+			SimTK::Xml::element_iterator ele_ite = element.element_begin(element_name);
+			std::string attribute_name_ = quantity_name_ + "_" + std::to_string(particle_n);
+			xmlengine.setAttributeToElement(ele_ite, attribute_name_, quantity);
+		};
+		
+		void ReadDataFromXmlMemory(XmlEngine xmlengine, SimTK::Xml::Element element,
+			size_t particle_n, DataVec<Real>& container)
+		{
+			size_t index_i_ = 0;
+			SimTK::Xml::element_iterator ele_ite = element.element_begin();
+			for (; ele_ite != element.element_end(); ++ele_ite)
+			{
+				std::string attribute_name_ = quantity_name_ + "_" + std::to_string(particle_n);
+				xmlengine.getRequiredAttributeValue<Real>(ele_ite, attribute_name_, container[index_i_][particle_n]);
+				index_i_++;
+			}
+		};
+		void ReadDataFromXmlMemory(XmlEngine xmlengine, SimTK::Xml::Element element, 
+			size_t particle_n, DataVec<Vecd>& container)
+		{
+			size_t index_i_ = 0;
+			SimTK::Xml::element_iterator ele_ite = element.element_begin();
+			for (; ele_ite != element.element_end(); ++ele_ite)
+			{
+				std::string attribute_name_ = quantity_name_ + "_" + std::to_string(particle_n);
+				xmlengine.getRequiredAttributeValue<Vecd>(ele_ite, attribute_name_, container[index_i_][particle_n]);
+				index_i_++;
+			}
+		};
+		void ReadDataFromXmlMemory(XmlEngine xmlengine, SimTK::Xml::Element element, 
+			size_t particle_n, DataVec<Matd>& container)
+		{
+			size_t index_i_ = 0;
+			SimTK::Xml::element_iterator ele_ite = element.element_begin();
+			for (; ele_ite != element.element_end(); ++ele_ite)
+			{
+				std::string attribute_name_ = quantity_name_ + "_" + std::to_string(particle_n);
+				xmlengine.getRequiredAttributeMatrixValue(ele_ite, attribute_name_, container[index_i_][particle_n]);
+				index_i_++;
+			}
+		};
+
+		void ReadTagFromXmlMemory(SimTK::Xml::Element element, StdVec<string>& element_tag)
+		{
+			size_t index_i_ = 0;
+			SimTK::Xml::element_iterator ele_ite = element.element_begin();
+			for (; ele_ite != element.element_end(); ++ele_ite)
+			{
+				element_tag[index_i_] = ele_ite->getElementTag();
+				index_i_++;
+			}
+		};
+	
+	public:
+		ObservedQuantityRecording(std::string quantity_name, In_Output& in_output,
+			BaseContactBodyRelation* body_contact_relation) :
+			BodyStatesRecording(in_output, body_contact_relation->sph_body_),
+			observer_dynamics::InterpolatingAQuantity<DataTypeIndex, VariableType>(body_contact_relation, quantity_name),
+			observer_(body_contact_relation->sph_body_), plt_engine_(), base_particles_(observer_->base_particles_),
+			body_name_(body_contact_relation->sph_body_->getBodyName()), quantity_name_(quantity_name),
+			observe_xml_engine_("xml_observe", quantity_name_)
+		{
+			/** Output for .dat file. */
+			filefullpath_output_ = in_output_.output_folder_ + "/" + body_name_
 				+ "_" + quantity_name + "_" + in_output_.restart_step_ + ".dat";
-			std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
+			std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
 			out_file << "run_time" << "   ";
 			for (size_t i = 0; i != base_particles_->total_real_particles_; ++i)
 			{
@@ -275,14 +369,22 @@ namespace SPH {
 			}
 			out_file << "\n";
 			out_file.close();
-		};
-		virtual ~WriteAnObservedQuantity() {};
 
-		virtual void WriteToFile(Real time = 0.0) override 
+			/** Output for .xml file. */
+			filefullpath_input_ = in_output_.input_folder_ + "/" + body_name_
+				+ "_" + quantity_name + "_" + in_output_.restart_step_ + ".xml";
+		};
+		virtual ~ObservedQuantityRecording() {};
+
+		VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
+	
+		void WriteXmlToXmlFile() { observe_xml_engine_.writeToXmlFile(filefullpath_input_); }
+
+		virtual void writeWithFileName(const std::string& sequence) override
 		{
 			this->parallel_exec();
-			std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
-			out_file << time << "   ";
+			std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
+			out_file << GlobalStaticVariables::physical_time_ << "   ";
 			for (size_t i = 0; i != base_particles_->total_real_particles_; ++i)
 			{
 				plt_engine_.writeAQuantity(out_file, this->interpolated_quantities_[i]);
@@ -290,47 +392,190 @@ namespace SPH {
 			out_file << "\n";
 			out_file.close();
 		};
+
+		void WriteToXml(size_t iteration = 0)
+		{
+			this->parallel_exec();
+			std::string element_name_ = "Snapshot_" + std::to_string(iteration);
+			SimTK::Xml::Element element_ = observe_xml_engine_.root_element_;
+			observe_xml_engine_.addElementToXmlDoc(element_name_);
+			for (size_t i = 0; i != base_particles_->total_real_particles_; ++i)
+			{
+				WriteDataToXmlMemory(observe_xml_engine_, element_, element_name_, i, this->interpolated_quantities_[i]);
+			};
+		};
+
+		void ReadFromXml()
+		{
+			observe_xml_engine_.loadXmlFile(filefullpath_input_);
+			size_t number_of_particle_ = base_particles_->total_real_particles_;
+			size_t number_of_snapshot_ = std::distance(observe_xml_engine_.root_element_.element_begin(),
+				observe_xml_engine_.root_element_.element_end());
+			DataVec<VariableType> current_result_temp_(number_of_snapshot_, StdVec<VariableType>(number_of_particle_));
+			StdVec<string> element_tag_temp_(number_of_snapshot_);
+			current_result_ = current_result_temp_;
+			element_tag_ = element_tag_temp_;
+			SimTK::Xml::Element element_ = observe_xml_engine_.root_element_;
+			for (size_t j = 0; j != number_of_particle_; ++j)
+			{
+				ReadDataFromXmlMemory(observe_xml_engine_, element_, j, current_result_);
+				ReadTagFromXmlMemory(element_, element_tag_);
+			}
+		};
 	};
 
 	/**
-	 * @class WriteBodyReducedQuantity
+	 * @class BodyReducedQuantityRecording
 	 * @brief write reduced quantity of a body
 	 */
 	template<class ReduceMethodType>
-	class WriteBodyReducedQuantity 
+	class BodyReducedQuantityRecording
 	{
 	protected:
-		In_Output& in_output_; 
+		In_Output& in_output_;
 		PltEngine plt_engine_;
 		ReduceMethodType reduce_method_;
 		std::string body_name_;
 		std::string quantity_name_;
-		std::string filefullpath_;
+		XmlEngine observe_xml_engine_;
+		std::string filefullpath_input_;
+		std::string filefullpath_output_;
+
+		/*< deduce variable type from reduce method. */
+		using VariableType = decltype(reduce_method_.InitialReference());
+		DataVec<VariableType> current_result_; /* the container of the current result. */
+		StdVec<string> element_tag_;           /* the container of the current tag. */
+
+		void WriteDataToXmlMemory(XmlEngine xmlengine, SimTK::Xml::Element element,
+			string element_name, size_t particle_n, const Real& quantity)
+		{
+			SimTK::Xml::element_iterator ele_ite = element.element_begin(element_name);
+			std::string attribute_name_ = quantity_name_ + "_" + std::to_string(particle_n);
+			xmlengine.setAttributeToElement(ele_ite, attribute_name_, quantity);
+		};
+		void WriteDataToXmlMemory(XmlEngine xmlengine, SimTK::Xml::Element element,
+			string element_name, size_t particle_n, const Vecd& quantity)
+		{
+			SimTK::Xml::element_iterator ele_ite = element.element_begin(element_name);
+			std::string attribute_name_ = quantity_name_ + "_" + std::to_string(particle_n);
+			xmlengine.setAttributeToElement(ele_ite, attribute_name_, quantity);
+		};
+		void WriteDataToXmlMemory(XmlEngine xmlengine, SimTK::Xml::Element element,
+			string element_name, size_t particle_n, const Matd& quantity)
+		{
+			SimTK::Xml::element_iterator ele_ite = element.element_begin(element_name);
+			std::string attribute_name_ = quantity_name_ + "_" + std::to_string(particle_n);
+			xmlengine.setAttributeToElement(ele_ite, attribute_name_, quantity);
+		};
+
+		void ReadDataFromXmlMemory(XmlEngine xmlengine, SimTK::Xml::Element element_name, 
+			size_t particle_n, DataVec<Real>& container)
+		{
+			size_t index_i_ = 0;
+			SimTK::Xml::element_iterator ele_ite = element_name.element_begin();
+			for (; ele_ite != element_name.element_end(); ++ele_ite)
+			{
+				std::string attribute_name_ = quantity_name_ + "_" + std::to_string(particle_n);
+				xmlengine.getRequiredAttributeValue<Real>(ele_ite, attribute_name_, container[index_i_][particle_n]);
+				index_i_++;
+			}
+		};
+		void ReadDataFromXmlMemory(XmlEngine xmlengine, SimTK::Xml::Element element_name, 
+			size_t particle_n, DataVec<Vecd>& container)
+		{
+			size_t index_i_ = 0;
+			SimTK::Xml::element_iterator ele_ite = element_name.element_begin();
+			for (; ele_ite != element_name.element_end(); ++ele_ite)
+			{
+				std::string attribute_name_ = quantity_name_ + "_" + std::to_string(particle_n);
+				xmlengine.getRequiredAttributeValue<Vecd>(ele_ite, attribute_name_, container[index_i_][particle_n]);
+				index_i_++;
+			}
+		};
+		void ReadDataFromXmlMemory(XmlEngine xmlengine, SimTK::Xml::Element element_name, 
+			size_t particle_n, DataVec<Matd>& container)
+		{
+			size_t index_i_ = 0;
+			SimTK::Xml::element_iterator ele_ite = element_name.element_begin();
+			for (; ele_ite != element_name.element_end(); ++ele_ite)
+			{
+				std::string attribute_name_ = quantity_name_ + "_" + std::to_string(particle_n);
+				xmlengine.getRequiredAttributeMatrixValue(ele_ite, attribute_name_, container[index_i_][particle_n]);
+				index_i_++;
+			}
+		};
+
+		void ReadTagFromXmlMemory(SimTK::Xml::Element element, StdVec<string>& element_tag)
+		{
+			size_t index_i_ = 0;
+			SimTK::Xml::element_iterator ele_ite = element.element_begin();
+			for (; ele_ite != element.element_end(); ++ele_ite)
+			{
+				element_tag[index_i_] = ele_ite->getElementTag();
+				index_i_++;
+			}
+		};
 
 	public:
 		template<typename... ConstructorArgs>
-		WriteBodyReducedQuantity(In_Output& in_output, ConstructorArgs... constructor_args) :
+		BodyReducedQuantityRecording(In_Output& in_output, ConstructorArgs... constructor_args) :
 			in_output_(in_output), plt_engine_(), reduce_method_(constructor_args...),
 			body_name_(reduce_method_.getSPHBody()->getBodyName()),
-			quantity_name_(reduce_method_.QuantityName())
+			quantity_name_(reduce_method_.QuantityName()),
+			observe_xml_engine_("xml_reduce", quantity_name_)
 		{
-			filefullpath_ = in_output_.output_folder_ + "/" + body_name_
+			/** output for .dat file. */
+			filefullpath_output_ = in_output_.output_folder_ + "/" + body_name_
 				+ "_" + quantity_name_ + "_" + in_output_.restart_step_ + ".dat";
-			std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
+			std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
 			out_file << "\"run_time\"" << "   ";
 			plt_engine_.writeAQuantityHeader(out_file, reduce_method_.InitialReference(), quantity_name_);
 			out_file << "\n";
 			out_file.close();
-		};
-		virtual ~WriteBodyReducedQuantity() {};
 
-		virtual void WriteToFile(Real time = 0.0)
+			/** output for .xml file. */
+			filefullpath_input_ = in_output_.input_folder_ + "/" + body_name_
+				+ "_" + quantity_name_ + "_" + in_output_.restart_step_ + ".xml";
+		};
+		virtual ~BodyReducedQuantityRecording() {};
+
+		VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
+
+		void writeXmlToXmlFile() { observe_xml_engine_.writeToXmlFile(filefullpath_input_); }
+
+		virtual void writeToFile(size_t iteration_step = 0)
 		{
-			std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
-			out_file << time << "   ";
+			std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
+			out_file << GlobalStaticVariables::physical_time_ << "   ";
 			plt_engine_.writeAQuantity(out_file, reduce_method_.parallel_exec());
 			out_file << "\n";
 			out_file.close();
+		};
+
+		void WriteToXml(size_t iteration = 0)
+		{
+			std::string element_name_ = "Snapshot_" + std::to_string(iteration);
+			SimTK::Xml::Element element_ = observe_xml_engine_.root_element_;
+			observe_xml_engine_.addElementToXmlDoc(element_name_);
+			WriteDataToXmlMemory(observe_xml_engine_, element_, element_name_, 0,  reduce_method_.parallel_exec());
+		};
+
+		void ReadFromXml()
+		{
+			observe_xml_engine_.loadXmlFile(filefullpath_input_);
+			size_t number_of_particle_ = 1;
+			size_t number_of_snapshot_ = std::distance(observe_xml_engine_.root_element_.element_begin(),
+				observe_xml_engine_.root_element_.element_end());
+			DataVec<VariableType> current_result_temp_(number_of_snapshot_, StdVec<VariableType>(number_of_particle_));
+			StdVec<string> element_tag_temp_(number_of_snapshot_);
+			current_result_ = current_result_temp_;
+			element_tag_ = element_tag_temp_;
+			SimTK::Xml::Element element_ = observe_xml_engine_.root_element_;
+			for (size_t j = 0; j != number_of_particle_; ++j)
+			{
+				ReadDataFromXmlMemory(observe_xml_engine_, element_, j, current_result_);
+				ReadTagFromXmlMemory(element_, element_tag_);
+			}
 		};
 	};
 
@@ -347,8 +592,8 @@ namespace SPH {
 		ReloadParticleIO(In_Output& in_output, SPHBodyVector bodies, StdVec<std::string> given_body_names);
 		virtual ~ReloadParticleIO() {};
 
-		virtual void WriteToFile(Real time = 0.0);
-		virtual void ReadFromFile(size_t iteration_step = 0);
+		virtual void writeToFile(size_t iteration_step = 0);
+		virtual void readFromFile(size_t iteration_step = 0);
 	};
 
 	/**
@@ -366,10 +611,10 @@ namespace SPH {
 		RestartIO(In_Output& in_output, SPHBodyVector bodies);
 		virtual ~RestartIO() {};
 
-		virtual void WriteToFile(Real time = 0.0);
-		virtual void ReadFromFile(size_t iteration_step = 0);
+		virtual void writeToFile(size_t iteration_step = 0);
+		virtual void readFromFile(size_t iteration_step = 0);
 		virtual Real readRestartFiles(size_t restart_step) {
-			ReadFromFile(restart_step);
+			readFromFile(restart_step);
 			return readRestartTime(restart_step);
 		};
 	};
@@ -385,7 +630,7 @@ namespace SPH {
 	public:
 		WriteSimBodyPinData(In_Output& in_output, SimTK::RungeKuttaMersonIntegrator& integ, SimTK::MobilizedBody::Pin& pinbody);
 		virtual ~WriteSimBodyPinData() {};
-		virtual void WriteToFile(Real time = 0.0) override;
+		virtual void writeToFile(size_t iteration_step = 0) override;
 	};
 
 	/**
@@ -403,8 +648,7 @@ namespace SPH {
 		ReloadMaterialParameterIO(In_Output& in_output, BaseMaterial *material, std::string given_parameters_name);
 		virtual ~ReloadMaterialParameterIO() {};
 
-		virtual void WriteToFile(Real time = 0.0);
-		virtual void ReadFromFile(size_t iteration_step = 0);
+		virtual void writeToFile(size_t iteration_step = 0);
+		virtual void readFromFile(size_t iteration_step = 0);
 	};
 }
-#endif //IN_OUTPUT_H
