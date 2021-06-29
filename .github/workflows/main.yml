@@ -38,20 +38,18 @@ jobs:
           tar xvzf Simbody-3.7.tar.gz
           rm Simbody-3.7.tar.gz
           mkdir ./simbody-build
-          mkdir /home/runner/simbody
-          export simbody_install_path=$(pwd)/simdody
+          export SIMBODY_HOME=/home/runner/simbody
+          mkdir $SIMBODY_HOME
           cd ./simbody-build
-          cmake ../simbody-Simbody-3.7 -DCMAKE_INSTALL_PREFIX=/home/runner/simbody -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_VISUALIZER=off -DBUILD_STATIC_LIBRARIES=on
+          cmake ../simbody-Simbody-3.7 -DCMAKE_INSTALL_PREFIX=$SIMBODY_HOME -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_TESTING=off -DBUILD_EXAMPLES=off -DBUILD_VISUALIZER=off -DBUILD_STATIC_LIBRARIES=on
           make -j$(nproc)
-          # && ctest -j$(nproc)
           make -j$(nproc) install
           cd ..
           export TBB_HOME=/usr/lib/x86_64-linux-gnu
           export BOOST_HOME=/usr/lib/x86_64-linux-gnu
-          export SIMBODY_HOME=/home/runner/simbody
           cd /usr/src/gtest
           sudo cmake CMakeLists.txt
-          sudo make
+          sudo make -j$(nproc)
           cd /home/runner/work/SPHinXsys/SPHinXsys
           mkdir build
           cd build 

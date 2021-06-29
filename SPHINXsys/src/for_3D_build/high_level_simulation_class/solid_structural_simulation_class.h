@@ -85,7 +85,7 @@ public:
 	// scale system boundaries
 	Real scale_system_boundaries_;
 	// particle relaxation
-	vector<bool> particle_relaxation_;
+	vector<bool> particle_relaxation_list_;
 	// boundary conditions
 	vector<GravityPair> non_zero_gravity_;
 	vector<AccelTuple> acceleration_bounding_box_tuple_;
@@ -114,16 +114,14 @@ class StructuralSimulation
 		vector<string> imported_stl_list_;
 		Real scale_stl_;
 		vector<Vec3d> translation_list_;
-		Real system_resolution_;
 		vector<Real> resolution_list_;
 		vector<LinearElasticSolid> material_model_list_;
 		Real physical_viscosity_;
 		vector<array<int, 2>> contacting_bodies_list_;
-
-		// particle relaxation
-		vector<bool> particle_relaxation_;
+		vector<bool> particle_relaxation_list_; // optional: particle relaxation
 
 		// internal members
+		Real system_resolution_;
 		SPHSystem system_;
 		Real scale_system_boundaries_;
 		In_Output in_output_;

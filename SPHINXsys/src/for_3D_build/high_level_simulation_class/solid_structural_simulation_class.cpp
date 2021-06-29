@@ -127,8 +127,8 @@ StructuralSimulationInput::StructuralSimulationInput(
 	contacting_bodies_list_(contacting_bodies_list)
 {
 	// particle_relaxation option
-	particle_relaxation_ = {};
-	for (unsigned i = 0; i < resolution_list_.size(); i++){ particle_relaxation_.push_back(true); }
+	particle_relaxation_list_ = {};
+	for (unsigned i = 0; i < resolution_list_.size(); i++){ particle_relaxation_list_.push_back(true); }
 	// scale system boundaries
 	scale_system_boundaries_ = 1;
 	// boundary conditions
@@ -150,19 +150,17 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	imported_stl_list_(input.imported_stl_list_),
 	scale_stl_(input.scale_stl_),
 	translation_list_(input.translation_list_),
-	system_resolution_(0.0),
 	resolution_list_(input.resolution_list_),
 	material_model_list_(input.material_model_list_),
 	physical_viscosity_(input.physical_viscosity_),
-	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), system_resolution_)),
-	in_output_(In_Output(system_)),
 	contacting_bodies_list_(input.contacting_bodies_list_),
 
-	// optional: particle relaxation
-	particle_relaxation_(input.particle_relaxation_),
-
-	// optional: scale_system_boundaries
+	// default system, optional: particle relaxation, scale_system_boundaries
+	particle_relaxation_list_(input.particle_relaxation_list_),
+	system_resolution_(0.0),
+	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), system_resolution_)),
 	scale_system_boundaries_(input.scale_system_boundaries_),
+	in_output_(In_Output(system_)),
 
 	// optional: boundary conditions
 	non_zero_gravity_(input.non_zero_gravity_),
@@ -276,7 +274,7 @@ void StructuralSimulation::InitializeElasticSolidBodies()
 	for (unsigned int i = 0; i < body_mesh_list_.size(); i++)
 	{
 		solid_body_list_.emplace_back(make_shared<SolidBodyForSimulation>(system_, imported_stl_list_[i], body_mesh_list_[i], particle_adaptation_list_[i], physical_viscosity_, material_model_list_[i]));
-		if (particle_relaxation_[i])
+		if (particle_relaxation_list_[i])
 		{
 			RelaxParticlesSingleResolution(&in_output_, false, solid_body_list_[i]->GetImportedModel(), solid_body_list_[i]->GetElasticSolidParticles(), solid_body_list_[i]->GetInnerBodyRelation());
 		}
