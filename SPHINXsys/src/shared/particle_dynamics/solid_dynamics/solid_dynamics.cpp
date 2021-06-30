@@ -343,7 +343,7 @@ namespace SPH
 				dvel_dt_ave_[index_i] = dvel_dt_[index_i];
 			}
 		}
-				//=================================================================================================//
+		//=================================================================================================//
 		TranslateSolidBody::
 			TranslateSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd translation):
 			PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
