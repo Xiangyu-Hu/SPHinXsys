@@ -13,9 +13,6 @@ int main()
 
 	// SI setup - designed
 	Real rho_0 = 122231;
-	Real gravity_force = 10;
-	Real spring_coeff = 200;
-	Real spring_damper_ratio = 0.05;
 	Real end_time_simulation = 0.2;
 	Real end_time_position = end_time_simulation * 0.8;
 	Vecd final_position_center = Vecd(0, 0, 0.1);

@@ -34,7 +34,7 @@
 #define BASE_GEOMETRY_H
 
 
-
+#include "base_particles.h"
 #include "base_data_package.h"
 #include "sph_data_conainers.h"
 
@@ -44,7 +44,6 @@ namespace SPH
 {
 	class Tree;
 	class Neighborhood;
-	class BaseParticles;
 	/**
 	 * @class ShapeBooleanOps
 	 * @brief Boolian operation for generate complex shapes
@@ -143,7 +142,7 @@ namespace SPH
 		size_t last_branch_id_;
 		StdVec<Branch*> branches_;	/**< list of all branches */
 		void addANewBranch(Branch* branch);
-		void addANewBranchInnerVecd(Branch* branch, Vecd new_point, Vecd end_direction);
+		void addANewBranchInnerPoints(Branch* branch, Vecd new_point, Vecd end_direction);
 		/** generalized particle search algorithm */
 		template<typename GetParticleIndex, typename GetSearchRange, typename GetNeighborRelation>
 		void searchNeighborsByParticles(size_t number_of_particles, BaseParticles& source_particles, 
@@ -157,8 +156,8 @@ namespace SPH
 			std::vector<size_t> neighboring_ids;
 			std::vector<size_t> child_ids;
 			/** First branch
-			* Note that the first branc has only one point, accordingly, one particle generated.
-			* Find the neibors in child branch, the first branch only have one child, id = 1.
+			* Note that the first branch has only one point, accordingly, one particle generated.
+			* Find the neighbors in child branch, the first branch only have one child, id = 1.
 			*/
 			particle_id = branches_[0]->inner_points_.front();
 			neighboring_ids.clear();
@@ -177,12 +176,12 @@ namespace SPH
 		 	*/
 			num_ele = branches_[1]->inner_points_.size();
 			child_ids.clear();
-			for(int k = 0; k < branches_[1]->out_edge_.size(); ++k)
+			for(size_t k = 0; k < branches_[1]->out_edge_.size(); ++k)
 			{
 				child_ids.push_back(branches_[1]->out_edge_[k]);
 			}
 
-			for(int i = 0; i != num_ele; i++)
+			for(size_t i = 0; i != num_ele; i++)
 			{
 				neighboring_ids.clear();
 				particle_id = branches_[1]->inner_points_.front() + i;
@@ -218,7 +217,7 @@ namespace SPH
 					neighboring_ids.push_back(particle_id - 1);
 					neighboring_ids.push_back(particle_id - 2);
 
-					for(int k = 0; k < branches_[1]->out_edge_.size(); ++k)
+					for(size_t k = 0; k < branches_[1]->out_edge_.size(); ++k)
 					{
 						child_branch_id = branches_[1]->out_edge_[k];
 						neighboring_ids.push_back(branches_[child_branch_id]->inner_points_.front());
@@ -227,7 +226,7 @@ namespace SPH
 				}
 
 				Neighborhood& neighborhood = particle_configuration[particle_id];
-				for (int n = 0; n != neighboring_ids.size(); ++n)
+				for (size_t n = 0; n != neighboring_ids.size(); ++n)
 				{
 					Vecd displacement = source_particles.pos_n_[particle_id] - source_particles.pos_n_[neighboring_ids[n]];
 					get_neighbor_relation(neighborhood, displacement, particle_id, neighboring_ids[n]);
@@ -271,7 +270,7 @@ namespace SPH
 							neighboring_ids.push_back(particle_id - 1);
 							neighboring_ids.push_back(particle_id + 1);
 
-							for(int k = 0; k < branches_[branch_idx]->out_edge_.size(); ++k)
+							for(size_t k = 0; k < branches_[branch_idx]->out_edge_.size(); ++k)
 							{
 								child_branch_id = branches_[branch_idx]->out_edge_[k];
 								neighboring_ids.push_back(branches_[child_branch_id]->inner_points_.front());
@@ -281,7 +280,7 @@ namespace SPH
 							neighboring_ids.push_back(particle_id - 1);
 							neighboring_ids.push_back(particle_id - 2);
 
-							for(int k = 0; k < branches_[branch_idx]->out_edge_.size(); ++k)
+							for(size_t k = 0; k < branches_[branch_idx]->out_edge_.size(); ++k)
 							{
 								child_branch_id = branches_[branch_idx]->out_edge_[k];
 								neighboring_ids.push_back(branches_[child_branch_id]->inner_points_.front());

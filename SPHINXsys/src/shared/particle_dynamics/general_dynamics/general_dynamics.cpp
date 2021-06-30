@@ -7,20 +7,20 @@
 
 namespace SPH {
 	//=================================================================================================//
-	InitializeATimeStep
-		::InitializeATimeStep(SPHBody* body, Gravity* gravity)
+	TimeStepInitialization
+		::TimeStepInitialization(SPHBody* body, Gravity* gravity)
 		: ParticleDynamicsSimple(body), GeneralDataDelegateSimple(body),
 		pos_n_(particles_->pos_n_), dvel_dt_prior_(particles_->dvel_dt_prior_),
 		gravity_(gravity)
 	{
 	}
 	//=================================================================================================//
-	void InitializeATimeStep::setupDynamics(Real dt)
+	void TimeStepInitialization::setupDynamics(Real dt)
 	{
 		particles_->total_ghost_particles_ = 0;
 	}
 	//=================================================================================================//
-	void InitializeATimeStep::Update(size_t index_i, Real dt)
+	void TimeStepInitialization::Update(size_t index_i, Real dt)
 	{
 		dvel_dt_prior_[index_i] = gravity_->InducedAcceleration(pos_n_[index_i]);
 	}

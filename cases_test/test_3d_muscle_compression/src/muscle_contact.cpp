@@ -163,7 +163,7 @@ int main()
 	 * This section define all numerical methods will be used in this case.
 	 */
 	/** initialize a time step */
-	InitializeATimeStep 	myocardium_initialize_gravity(myocardium_body);
+	TimeStepInitialization 	myocardium_initialize_gravity(myocardium_body);
 	/** Corrected strong configuration. */	
 	solid_dynamics::CorrectConfiguration corrected_configuration_in_strong_form(myocardium_body_inner);
 	/** Time step size calculation. */
@@ -185,7 +185,7 @@ int main()
 		muscle_damping(myocardium_body_inner, 0.1, "Velocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
-	WriteBodyStatesToVtu write_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtu write_states(in_output, system.real_bodies_);
 	/** Simbody interface. */
 	/**
 	* The multi body system from simbody.
@@ -230,7 +230,7 @@ int main()
 	system.initializeSystemConfigurations();
 	/** apply initial condition */
 	corrected_configuration_in_strong_form.parallel_exec();
-	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_states.writeToFile(0);
 	/** Setup physical parameters. */
 	int ite = 0;
 	Real end_time = 0.1;
@@ -286,7 +286,7 @@ int main()
 			plate_myocardium_contact->updateConfiguration();
 		}
 		tick_count t2 = tick_count::now();
-		write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

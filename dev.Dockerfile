@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     apt-utils \
     build-essential \
     cmake \
+    googletest \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -37,7 +38,8 @@ RUN if [ "$build_with_dependencies_source" = 0 ] ; then cd /home \
     && cmake /home/simbody-Simbody-3.7 -DCMAKE_INSTALL_PREFIX=/home/simbody -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_VISUALIZER=${build_with_visualization} -DBUILD_STATIC_LIBRARIES=on \
     && make -j$(nproc) \
     # && ctest -j$(nproc) \
-    && make -j$(nproc) install; fi
+    && make -j$(nproc) install \
+    && rm -rf /home/simbody-Simbody-3.7 ; fi
 
 ENV TBB_HOME=/usr/lib/x86_64-linux-gnu
 ENV BOOST_HOME=/usr/lib/x86_64-linux-gnu

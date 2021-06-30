@@ -45,7 +45,7 @@ namespace SPH
 		return downgrad - upgrad;
 	}
 	//=================================================================================================//
-	Vecd ParticleGeneratorNetwork::creatATentativeNewBranchVecd(Vecd init_point, Vecd dir)
+	Vecd ParticleGeneratorNetwork::creatATentativeNewBranchPoint(Vecd init_point, Vecd dir)
 	{
 		Vecd pnt_to_project = init_point + dir * segment_length_;
 
@@ -106,13 +106,13 @@ namespace SPH
 		Vecd end_direction = (repulsivity * grad + dir) / ((repulsivity * grad + dir).norm() + TinyReal);
 		Vecd end_point = init_point;
 
-		Vecd new_point = creatATentativeNewBranchVecd(end_point, end_direction);
+		Vecd new_point = creatATentativeNewBranchPoint(end_point, end_direction);
 		ListData nearest_neighbor = mesh_cell_linked_list->findNearestListDataEntry(new_point);
 		if (!isCollision(new_point, nearest_neighbor, parent_id, tree)) {
 			is_valid = true;
 			Branch* new_branch = new Branch(parent_id, tree);
 			tree->addANewBranch(new_branch);
-			tree->addANewBranchInnerVecd(new_branch, new_point, end_direction);
+			tree->addANewBranchInnerPoints(new_branch, new_point, end_direction);
 
 			for (size_t i = 1; i < number_segments; i++)
 			{
@@ -125,7 +125,7 @@ namespace SPH
 				end_direction = dir;
 				end_point = new_point;
 
-				new_point = creatATentativeNewBranchVecd(end_point, end_direction);
+				new_point = creatATentativeNewBranchPoint(end_point, end_direction);
 				ListData nearest_neighbor = mesh_cell_linked_list->findNearestListDataEntry(new_point);
 				if (isCollision(new_point, nearest_neighbor, parent_id, tree))
 				{
@@ -139,7 +139,7 @@ namespace SPH
 					new_branch->is_end_ = true;
 					break;					
 				}
-				tree->addANewBranchInnerVecd(new_branch, new_point, end_direction);
+				tree->addANewBranchInnerPoints(new_branch, new_point, end_direction);
 			}
 
 			for (size_t i = 0; i != new_branch->inner_points_.size(); i++)
@@ -155,7 +155,7 @@ namespace SPH
 	void ParticleGeneratorNetwork::createBaseParticles(BaseParticles* base_particles)
 	{
 		In_Output* in_output = sph_body_->getSPHSystem().in_output_;
-		WriteBodyStatesToVtu 	write_states(*in_output, { sph_body_ });
+		BodyStatesRecordingToVtu 	write_states(*in_output, { sph_body_ });
 
 		StdVec<Branch*>& branches = sph_body_->tree_->branches_;
 		StdVec<Vecd>& points = sph_body_->tree_->points_;
@@ -171,7 +171,7 @@ namespace SPH
 		size_t ite = 0;
 		sph_body_->setNewlyUpdated();
 		base_particles->total_real_particles_ = base_particles->pos_n_.size();
-		write_states.WriteToFile(0.0);
+		write_states.writeToFile(0);
 
 		IndexVector edges_to_grow;
 		IndexVector new_edges_to_grow;
@@ -193,7 +193,7 @@ namespace SPH
 			ite++;
 			sph_body_->setNewlyUpdated();
 			base_particles->total_real_particles_ = base_particles->pos_n_.size();
-			write_states.WriteToFile(Real(ite));
+			write_states.writeToFile(ite);
 
 		}
 
@@ -226,7 +226,7 @@ namespace SPH
 			ite++;
 			sph_body_->setNewlyUpdated();
 			base_particles->total_real_particles_ = base_particles->pos_n_.size();
-			write_states.WriteToFile(Real(ite));
+			write_states.writeToFile(ite);
 		}
         
 		base_particles->total_real_particles_  = base_particles->pos_n_.size();

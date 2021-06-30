@@ -123,7 +123,7 @@ protected:
 		Real x = pos_n_[index_i][0] / PL;
 		if (x > 0.0) {
 			vel_n_[index_i][1] 
-				= vf * material_->SoundWaveSpeed()*(M*(cos(kl*x) - cosh(kl*x)) - N * (sin(kl*x) - sinh(kl*x))) / Q;
+				= vf * material_->ReferenceSoundSpeed()*(M*(cos(kl*x) - cosh(kl*x)) - N * (sin(kl*x) - sinh(kl*x))) / Q;
 		}
 	};
 };
@@ -211,8 +211,8 @@ int main()
 	//outputs
 	//-----------------------------------------------------------------------------
 	In_Output in_output(system);
-	WriteBodyStatesToVtu write_beam_states(in_output, system.real_bodies_);
-	WriteAnObservedQuantity<indexVector, Vecd>
+	BodyStatesRecordingToVtu write_beam_states(in_output, system.real_bodies_);
+	ObservedQuantityRecording<indexVector, Vecd>
 		write_beam_tip_displacement("Position", in_output, beam_observer_contact);
 	/**
 	 * @brief Setup geomtry and initial conditions
@@ -227,8 +227,8 @@ int main()
 	//-----------------------------------------------------------------------------
 	//starting time zero
 	GlobalStaticVariables::physical_time_ = 0.0;
-	write_beam_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_beam_tip_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_beam_states.writeToFile(0);
+	write_beam_tip_displacement.writeToFile(0);
 
 	int ite = 0;
 	Real T0 = 1.0;
@@ -270,10 +270,10 @@ int main()
 			}
 		}
 
-		write_beam_tip_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_beam_tip_displacement.writeToFile(ite);
 
 		tick_count t2 = tick_count::now();
-		write_beam_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_beam_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

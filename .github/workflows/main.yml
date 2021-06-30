@@ -17,7 +17,6 @@ jobs:
   build:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -30,22 +29,30 @@ jobs:
           sudo apt-get install -y apt-utils \
           build-essential \
           cmake \
+          libgtest-dev \
           libtbb-dev \
           libboost-all-dev \
-          libsimbody-dev \
-          libsimbody3.6
+          liblapack-dev \
+          wget
+          wget https://github.com/simbody/simbody/archive/Simbody-3.7.tar.gz
+          tar xvzf Simbody-3.7.tar.gz
+          rm Simbody-3.7.tar.gz
+          mkdir ./simbody-build
+          export SIMBODY_HOME=/home/runner/simbody
+          mkdir $SIMBODY_HOME
+          cd ./simbody-build
+          cmake ../simbody-Simbody-3.7 -DCMAKE_INSTALL_PREFIX=$SIMBODY_HOME -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_TESTING=off -DBUILD_EXAMPLES=off -DBUILD_VISUALIZER=off -DBUILD_STATIC_LIBRARIES=on
+          make -j$(nproc)
+          make -j$(nproc) install
+          cd ..
           export TBB_HOME=/usr/lib/x86_64-linux-gnu
           export BOOST_HOME=/usr/lib/x86_64-linux-gnu
-          export SIMBODY_HOME=/usr
-          
-          sudo apt-get install libgtest-dev
           cd /usr/src/gtest
           sudo cmake CMakeLists.txt
-          sudo make
+          sudo make -j$(nproc)
           cd /home/runner/work/SPHinXsys/SPHinXsys
-          
-          mkdir build 
+          mkdir build
           cd build 
-          cmake .. 
+          cmake ..
           make -j$(nproc)
-          ctest -E "test_2d_owsc"
+          ctest --output-on-failure

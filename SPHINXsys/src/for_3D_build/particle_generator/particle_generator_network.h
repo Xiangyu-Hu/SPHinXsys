@@ -100,7 +100,7 @@ namespace SPH
 		 *@param[in] dir a vector that contains the direction from the init_node to the node to project.
 		 *@param[out] end point of the created segment.
 		 */
-		Vecd creatATentativeNewBranchVecd(Vecd init_point, Vecd dir);
+		Vecd creatATentativeNewBranchPoint(Vecd init_point, Vecd dir);
 		/**
 		 *@brief Check if the new point has collision with the existing points.
 		 *@param[in] new_point(Vecd) The enquiry point.

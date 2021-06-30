@@ -30,8 +30,6 @@
 #ifndef RIEMANN_SOLVER_H
 #define RIEMANN_SOLVER_H
 
-
-
 #include "base_data_package.h"
 
 namespace SPH
@@ -86,7 +84,8 @@ namespace SPH
 	{
 		CompressibleFluid& compressible_fluid_i_, &compressible_fluid_j_;
 	public:
-		HLLCRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j) : compressible_fluid_i_(compressible_fluid_i), compressible_fluid_j_(compressible_fluid_j) {};
+		HLLCRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j) : 
+		compressible_fluid_i_(compressible_fluid_i), compressible_fluid_j_(compressible_fluid_j) {};
 		Real getPStar(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& direction_to_i);
 		Vecd getVStar(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& direction_to_i);
 		Real getRhoStar(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& direction_to_i);
@@ -97,11 +96,13 @@ namespace SPH
 	{
 		CompressibleFluid& compressible_fluid_i_, &compressible_fluid_j_;
 	public:
-		HLLCWithLimiterRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j) : compressible_fluid_i_(compressible_fluid_i), compressible_fluid_j_(compressible_fluid_j) {};
+		HLLCWithLimiterRiemannSolver(CompressibleFluid& compressible_fluid_i, CompressibleFluid& compressible_fluid_j) : 
+		compressible_fluid_i_(compressible_fluid_i), compressible_fluid_j_(compressible_fluid_j) {};
 		Real getPStar(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& direction_to_i);
 		Vecd getVStar(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& direction_to_i);
 		Real getRhoStar(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& direction_to_i);
 		Real getEStar(const CompressibleFluidState& state_i, const CompressibleFluidState& state_j, const Vecd& direction_to_i);
 	};
 }
+
 #endif //RIEMANN_SOLVER_H

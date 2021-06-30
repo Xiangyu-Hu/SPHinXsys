@@ -5,43 +5,35 @@
  * 			understanding SPH method for complex simulation.
  * @author 	Chi Zhang and Xiangyu Hu
  */
- /**
-  * @brief 	SPHinXsys Library.
-  */
-#include "sphinxsys.h"
-  /**
- * @brief Namespace cite here.
- */
-using namespace SPH;
-/**
- * @brief Global geometry and material parameters and numerical setup.
- */
-Real DL = 8.0; 						/**< box length. */
-Real DH = 4.0; 						/**< box height. */
+#include "sphinxsys.h"	//SPHinXsys Library.
+using namespace SPH;	//Namespace cite here.
+//----------------------------------------------------------------------
+//	Basic geometry parameters and numerical setup.
+//----------------------------------------------------------------------
+Real DL = 8.0; 					/**< box length. */
+Real DH = 4.0; 					/**< box height. */
 Real resolution_ref = 0.025; 	/**< reference resolution. */
-Real BW = resolution_ref * 4; /**< wall width for BCs. */
-/** Domain bounds of the system. */
+Real BW = resolution_ref * 4; 	/**< wall width for BCs. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
-Real rho0_s = 1.0e3; 		
-Real Youngs_modulus = 5.0e4;
-Real poisson = 0.45; 			
 Vec2d ball_center_1(2.0, 2.0);
 Vec2d ball_center_2(6.0, 2.0);
 Real ball_radius = 0.5;			
-Real initial_ball_speed = 1.0;
-Real initial_direction = 0.25 * M_PI;
-Vec2d initial_velocity = initial_ball_speed*Vec2d(cos(initial_direction), sin(initial_direction));
 Real gravity_g = 1.0;
+//----------------------------------------------------------------------
+//	Global paramters on material properties
+//----------------------------------------------------------------------
+Real rho0_s = 1.0e3;
+Real Youngs_modulus = 5.0e4;
+Real poisson = 0.45; 			
 Real physical_viscosity = 10000.0; 
-/**
- * @brief 	Wall boundary body definition.
- */
+//----------------------------------------------------------------------
+//	Bodies with cases-dependent geometries (ComplexShape).
+//----------------------------------------------------------------------
 class WallBoundary : public SolidBody
 {
 public:
 	WallBoundary(SPHSystem &sph_system, std::string body_name) : SolidBody(sph_system, body_name)
 	{
-		/** Geometry definition. */
 		std::vector<Vecd> outer_wall_shape;
 		outer_wall_shape.push_back(Vecd(-BW, -BW));
 		outer_wall_shape.push_back(Vecd(-BW, DH + BW));
@@ -61,19 +53,16 @@ public:
 		body_shape_->addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 	}
 };
-/** Definition of one ball as an elastic structure. */
 class FreeBall : public SolidBody
 {
 public:
 	FreeBall(SPHSystem& system, std::string body_name) : SolidBody(system, body_name)
 	{
-		/** Geometry definition. */
 		ComplexShape original_body_shape;
 		original_body_shape.addACircle(ball_center_1, ball_radius, 100, ShapeBooleanOps::add);
 		body_shape_ = new LevelSetComplexShape(this, original_body_shape);
 	}
 };
-/** Definition of the other ball as an elastic structure. */
 class DampingBall : public SolidBody
 {
 public:
@@ -85,9 +74,9 @@ public:
 		body_shape_ = new LevelSetComplexShape(this, original_body_shape);
 	}
 };
-/**
- * @brief Define wall material.
- */
+//----------------------------------------------------------------------
+//	Case dependent material properties
+//----------------------------------------------------------------------
 class WallMaterial : public LinearElasticSolid
 {
 public:
@@ -100,9 +89,6 @@ public:
 		assignDerivedMaterialParameters();
 	}
 };
-/**
- * Setup ball material properties
- */
 class BallMaterial : public NeoHookeanSolid
 {
 public:
@@ -115,117 +101,99 @@ public:
 		assignDerivedMaterialParameters();
 	}
 };
-/**
- * application dependent initial condition
- */
-class BallInitialCondition
-	: public solid_dynamics::ElasticDynamicsInitialCondition
-{
-public:
-	BallInitialCondition(SolidBody* solid_body)
-		: solid_dynamics::ElasticDynamicsInitialCondition(solid_body) {};
-protected:
-	void Update(size_t index_i, Real dt) override 
-	{
-		vel_n_[index_i] = initial_velocity;
-	};
-};
-/** an observer body */
+//----------------------------------------------------------------------
+//	Observer bodies with cases-dependent observation points.
+//	The observation particles have zero volume.
+//----------------------------------------------------------------------
 class FreeBallObserver : public FictitiousBody
 {
 public:
 	FreeBallObserver(SPHSystem& system, std::string body_name) : FictitiousBody(system, body_name)
 	{
-		/** the measuring particle with zero volume */
 		body_input_points_volumes_.push_back(std::make_pair(ball_center_1, 0.0));
 	}
 };
-/** another observer body */
 class DampingBallObserver : public FictitiousBody
 {
 public:
 	DampingBallObserver(SPHSystem& system, std::string body_name) : FictitiousBody(system, body_name)
 	{
-		/** the measuring particle with zero volume */
 		body_input_points_volumes_.push_back(std::make_pair(ball_center_2, 0.0));
 	}
 };
-/**
- * @brief 	Main program starts here.
- */
+//----------------------------------------------------------------------
+//	Main program starts here.
+//----------------------------------------------------------------------
 int main(int ac, char* av[])
 {
-	/**
-	 * @brief Build up -- a SPHSystem --
-	 */
+	//----------------------------------------------------------------------
+	//	Build up the environment of a SPHSystem with global controls.
+	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
-	/** tag for run particle relaxation for the initial body fitted distribution */
+	/** Tag for running particle relaxation for the initially body-fitted distribution */
 	sph_system.run_particle_relaxation_ = false;
-	/** tag for computation start with relaxed body fitted particles distribution */
+	/** Tag for starting with relaxed body-fitted particles distribution */
 	sph_system.reload_particles_ = true;
-	/** tag for computation from restart files. 0: start with initial condition */
+	/** Tag for computation from restart files. 0: start with initial condition */
 	sph_system.restart_step_ = 0;
 	/** Define external force.*/
 	Gravity gravity(Vecd(0.0, -gravity_g));
-	/** output environment. */
-	In_Output 	in_output(sph_system);
-	#ifdef BOOST_AVAILABLE
-	/** handle command line arguments. */
+	/** Handle command line arguments. */
 	sph_system.handleCommandlineOptions(ac, av);
-	#endif
-	/**
-	 * @brief 	Particle and body creation of wall boundary.
-	 */
+	/** I/O environment. */
+	In_Output 	in_output(sph_system);
+	//----------------------------------------------------------------------
+	//	Creating body, materials and particles.
+	//----------------------------------------------------------------------
 	WallBoundary *wall_boundary = new WallBoundary(sph_system, "Wall");
 	WallMaterial* wall_material = new WallMaterial();
 	SolidParticles 	solid_particles(wall_boundary, wall_material);
-	/**
-	 * @brief 	Creating body, materials and particles for the free ball.
-	 */
+
 	FreeBall* free_ball = new FreeBall(sph_system, "FreeBall");
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_) free_ball->useParticleGeneratorReload();
 	BallMaterial* free_ball_material = new BallMaterial();
 	ElasticSolidParticles 	free_ball_particles(free_ball, free_ball_material);
-	/**
-	 * @brief 	Creating body, materials and particles for the damping ball.
-	 */
+
 	DampingBall* damping_ball = new DampingBall(sph_system, "DampingBall");
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_) damping_ball->useParticleGeneratorReload();
 	BallMaterial* damping_ball_material = new BallMaterial();
 	ElasticSolidParticles 	damping_ball_particles(damping_ball, damping_ball_material);
-	/**
-	 * @brief 	Observers.
-	 */
+
 	FreeBallObserver* free_ball_observer = new FreeBallObserver(sph_system, "FreeBallObserver");
 	BaseParticles 	free_ball_observer_particles(free_ball_observer);
 	DampingBallObserver* damping_ball_observer = new DampingBallObserver(sph_system, "DampingBallObserver");
 	BaseParticles 	damping_ball_observer_particles(damping_ball_observer);
-	/** Output the body states. */
-	WriteBodyStatesToVtu 		write_body_states(in_output, sph_system.real_bodies_);
-	/** check whether run particle relaxation for body fitted particle distribution. */
+	//----------------------------------------------------------------------
+	//	Run particle relaxation for body-fitted distribution if chosen.
+	//----------------------------------------------------------------------
 	if (sph_system.run_particle_relaxation_)
 	{
-		/** topology */
+		//----------------------------------------------------------------------
+		//	Define body relation map used for particle relaxation.
+		//----------------------------------------------------------------------
 		InnerBodyRelation* free_ball_inner = new InnerBodyRelation(free_ball);
 		InnerBodyRelation* damping_ball_inner = new InnerBodyRelation(damping_ball);
-		/** Write the body state to Vtu file. */
-		WriteBodyStatesToVtu 		write_ball_state(in_output, sph_system.real_bodies_);
-		/** Write the particle reload files. */
-		ReloadParticleIO 		write_particle_reload_files(in_output, { free_ball, damping_ball});
-		/** Random reset the relax solid particle position. */
+		//----------------------------------------------------------------------
+		//	Define the methods for particle relaxation.
+		//----------------------------------------------------------------------
 		RandomizePartilePosition  			free_ball_random_particles(free_ball);
 		RandomizePartilePosition  			damping_ball_random_particles(damping_ball);
-		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner free_ball_relaxation_step_inner(free_ball_inner);
 		relax_dynamics::RelaxationStepInner damping_ball_relaxation_step_inner(damping_ball_inner);
-		/**Particle relaxation starts here.*/
+		//----------------------------------------------------------------------
+		//	Output for particle relaxation.
+		//----------------------------------------------------------------------
+		BodyStatesRecordingToVtu 		write_ball_state(in_output, sph_system.real_bodies_);
+		ReloadParticleIO 		write_particle_reload_files(in_output, { free_ball, damping_ball});
+		//----------------------------------------------------------------------
+		//	Particle relaxation starts here.
+		//----------------------------------------------------------------------
 		free_ball_random_particles.parallel_exec(0.25);
 		damping_ball_random_particles.parallel_exec(0.25);
-		write_ball_state.WriteToFile(0.0);
-		/**
-		 * From here the time stepping begines.
-		 * Set the starting time.
-		 */
+		write_ball_state.writeToFile(0.0);
+		//----------------------------------------------------------------------
+		//	From here iteration for particle relaxation begines.
+		//----------------------------------------------------------------------
 		int ite = 0;
 		int relax_step = 1000;
 		while (ite < relax_step)
@@ -236,28 +204,32 @@ int main(int ac, char* av[])
 			if (ite % 100 == 0)
 			{
 				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite << "\n";
-				write_ball_state.WriteToFile(Real(ite) * 1.0e-4);
+				write_ball_state.writeToFile(Real(ite) * 1.0e-4);
 			}
 		}
 		std::cout << "The physics relaxation process of ball particles finish !" << std::endl;
-		/** Output results. */
-		write_particle_reload_files.WriteToFile(0.0);
+		write_particle_reload_files.writeToFile(0.0);
 		return 0;
 	}
-	/** Algorithms for dynamics. */
+	//----------------------------------------------------------------------
+	//	Define body relation map.
+	//	The contact map gives the topological connections between the bodies.
+	//	Basically the the range of bodies to build neighbor particle lists.
+	//----------------------------------------------------------------------
 	InnerBodyRelation*   free_ball_inner = new InnerBodyRelation(free_ball);
 	SolidContactBodyRelation* free_ball_contact = new SolidContactBodyRelation(free_ball, {wall_boundary});
 	InnerBodyRelation*   damping_ball_inner = new InnerBodyRelation(damping_ball);
 	SolidContactBodyRelation* damping_ball_contact = new SolidContactBodyRelation(damping_ball, {wall_boundary});
 	ContactBodyRelation* free_ball_observer_contact = new ContactBodyRelation(free_ball_observer, { free_ball });
 	ContactBodyRelation* damping_all_observer_contact = new ContactBodyRelation(damping_ball_observer, { damping_ball });
-	/** Dynamics. */
-	InitializeATimeStep 	free_ball_initialize_timestep(free_ball, &gravity);
-	InitializeATimeStep 	damping_ball_initialize_timestep(damping_ball, &gravity);
-	/** Kernel correction. */
+	//----------------------------------------------------------------------
+	//	Define the main numerical methods used in the simultion.
+	//	Note that there may be data dependence on the constructors of these methods.
+	//----------------------------------------------------------------------
+	TimeStepInitialization 	free_ball_initialize_timestep(free_ball, &gravity);
+	TimeStepInitialization 	damping_ball_initialize_timestep(damping_ball, &gravity);
 	solid_dynamics::CorrectConfiguration free_ball_corrected_configuration(free_ball_inner);
 	solid_dynamics::CorrectConfiguration damping_ball_corrected_configuration(damping_ball_inner);
-	/** Time step size. */
 	solid_dynamics::AcousticTimeStepSize free_ball_get_time_step_size(free_ball);
 	solid_dynamics::AcousticTimeStepSize damping_ball_get_time_step_size(damping_ball);
 	/** stress relaxation for the balls. */
@@ -273,22 +245,26 @@ int main(int ac, char* av[])
 	/** Damping for one ball */
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec2d>>
 		damping(damping_ball_inner, 0.5, "Velocity", physical_viscosity);
-	/** Observer and output. */
-	WriteAnObservedQuantity<indexVector, Vecd>
-		write_free_ball_displacement("Position", in_output, free_ball_observer_contact);
-	WriteAnObservedQuantity<indexVector, Vecd>
-		write_damping_ball_displacement("Position", in_output, damping_all_observer_contact);
-
-	/** Now, pre-simulation. */
-	GlobalStaticVariables::physical_time_ = 0.0;
+	//----------------------------------------------------------------------
+	//	Define the methods for I/O operations and observations of the simulation.
+	//----------------------------------------------------------------------
+	BodyStatesRecordingToVtu	body_states_recording(in_output, sph_system.real_bodies_);
+	ObservedQuantityRecording<indexVector, Vecd>
+		free_ball_displacement_recording("Position", in_output, free_ball_observer_contact);
+	ObservedQuantityRecording<indexVector, Vecd>
+		damping_ball_displacement_recording("Position", in_output, damping_all_observer_contact);
+	//----------------------------------------------------------------------
+	//	Prepare the simulation with cell linked list, configuration
+	//	and case specified initial condition if necessary. 
+	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
 	free_ball_corrected_configuration.parallel_exec();
 	damping_ball_corrected_configuration.parallel_exec();
 	/** Initial states output. */
-	write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_free_ball_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
-	write_damping_ball_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+	body_states_recording.writeToFile(0);
+	free_ball_displacement_recording.writeToFile(0);
+	damping_ball_displacement_recording.writeToFile(0);
 	/** Main loop. */
 	int ite 		= 0;
 	Real T0 		= 10.0;
@@ -296,10 +272,14 @@ int main(int ac, char* av[])
 	Real D_Time 	= 0.01*T0;
 	Real Dt 		= 0.1*D_Time;			
 	Real dt 		= 0.0; 	
-	/** statistics for computing time. */
+	//----------------------------------------------------------------------
+	//	Statistics for CPU time
+	//----------------------------------------------------------------------
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
-	/** computation loop starts. */
+	//----------------------------------------------------------------------
+	//	Main loop starts here.
+	//----------------------------------------------------------------------
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
 		Real integration_time = 0.0;
@@ -340,12 +320,12 @@ int main(int ac, char* av[])
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 
-				write_free_ball_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
-				write_damping_ball_displacement.WriteToFile(GlobalStaticVariables::physical_time_);
+				free_ball_displacement_recording.writeToFile(ite);
+				damping_ball_displacement_recording.writeToFile(ite);
 			}
 		}
 		tick_count t2 = tick_count::now();
-		write_body_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		body_states_recording.writeToFile(ite);
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

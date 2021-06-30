@@ -13,7 +13,7 @@ TEST(StructuralSimulation, ExpandBoundingBox)
 	ExpandBoundingBox(&bb, &bb_3);
 
 	BoundingBox bb_ref(Vec3d(-0.5, -10.0, -20.0), Vec3d(10.05, 1.1, 2.2));
-	EXPECT_EQ(bb, bb_ref);
+	ASSERT_EQ(bb, bb_ref);
 }
 
 class TestStructuralSimulation : StructuralSimulation
@@ -42,7 +42,7 @@ public:
 	vector<shared_ptr<solid_dynamics::ContactDensitySummation>> Get_contact_density_list_(){ return contact_density_list_; };
 	vector<shared_ptr<solid_dynamics::ContactForce>> Get_contact_force_list_(){ return contact_force_list_; };
 	// for InitializeATimeStep
-	vector<shared_ptr<InitializeATimeStep>> Get_initialize_gravity_(){ return initialize_gravity_; };
+	vector<shared_ptr<TimeStepInitialization>> Get_initialize_gravity_(){ return initialize_gravity_; };
 	vector<GravityPair> Get_non_zero_gravity_(){ return non_zero_gravity_; };
 	// for AccelerationForBodyPartInBoundingBox
 	vector<shared_ptr<solid_dynamics::AccelerationForBodyPartInBoundingBox>> Get_acceleration_bounding_box_(){ return acceleration_bounding_box_; };
@@ -105,38 +105,38 @@ TEST(StructuralSimulation, PositionSolidBodyTuple)
 
 	//=================================================================================================//
 	// test ScaleTranslationAndResolution();
-	EXPECT_EQ(sim.Get_translation_list_().size(), sim.Get_resolution_list_().size());
+	ASSERT_EQ(sim.Get_translation_list_().size(), sim.Get_resolution_list_().size());
 	for (unsigned int i = 0; i < translation_list.size(); i++)
 	{	
-		EXPECT_EQ(sim.Get_translation_list_()[i], translation_list[i] * scale_stl);
-		EXPECT_EQ(sim.Get_resolution_list_()[i], resolution_list[i] * scale_stl);
+		ASSERT_EQ(sim.Get_translation_list_()[i], translation_list[i] * scale_stl);
+		ASSERT_EQ(sim.Get_resolution_list_()[i], resolution_list[i] * scale_stl);
 	}
-	EXPECT_EQ(sim.Get_system_resolution_(), resolution_mass * scale_stl);
+	ASSERT_EQ(sim.Get_system_resolution_(), resolution_mass * scale_stl);
 	//=================================================================================================//
 	// test CreateBodyMeshList();
-	EXPECT_EQ(sim.Get_body_mesh_list_().size(), number_of_bodies);
+	ASSERT_EQ(sim.Get_body_mesh_list_().size(), number_of_bodies);
 	//=================================================================================================//
 	// test CalculateSystemBoundaries();
 	Real ball_radius = 100 * scale_stl * 0.5;
 	BoundingBox test_bounds(Vec3d(-ball_radius * scale_system_bounds), Vec3d(ball_radius * scale_system_bounds));
 	for (int i = 0; i < 3; i++)
 	{
-		EXPECT_NEAR(sim.Get_system_().system_domain_bounds_.first[i], test_bounds.first[i], abs(test_bounds.first[i] * tolerance));
-		EXPECT_NEAR(sim.Get_system_().system_domain_bounds_.second[i], test_bounds.second[i], abs(test_bounds.first[i] * tolerance));
+		ASSERT_NEAR(sim.Get_system_().system_domain_bounds_.first[i], test_bounds.first[i], abs(test_bounds.first[i] * tolerance));
+		ASSERT_NEAR(sim.Get_system_().system_domain_bounds_.second[i], test_bounds.second[i], abs(test_bounds.first[i] * tolerance));
 	}
 	//=================================================================================================//
 	// test InitializeElasticSolidBodies();
-	EXPECT_EQ(sim.Get_solid_body_list_().size(), number_of_bodies);
+	ASSERT_EQ(sim.Get_solid_body_list_().size(), number_of_bodies);
 	//=================================================================================================//
 	// test InitializeAllContacts();
-	EXPECT_EQ(sim.Get_contacting_bodies_list_().size(), 0);
-	EXPECT_EQ(sim.Get_contact_list_().size(), 0);
-	EXPECT_EQ(sim.Get_contact_density_list_().size(), 0);
-	EXPECT_EQ(sim.Get_contact_force_list_().size(), 0);
+	ASSERT_EQ(sim.Get_contacting_bodies_list_().size(), 0);
+	ASSERT_EQ(sim.Get_contact_list_().size(), 0);
+	ASSERT_EQ(sim.Get_contact_density_list_().size(), 0);
+	ASSERT_EQ(sim.Get_contact_force_list_().size(), 0);
 	//=================================================================================================//
 	// test Boundary Conditions
-	EXPECT_EQ(sim.Get_position_solid_body_().size(), 2);
-	EXPECT_EQ(sim.Get_position_solid_body_tuple_().size(), 2);
+	ASSERT_EQ(sim.Get_position_solid_body_().size(), 2);
+	ASSERT_EQ(sim.Get_position_solid_body_tuple_().size(), 2);
 	//=================================================================================================//
 
 	//=================================================================================================//
@@ -150,7 +150,7 @@ TEST(StructuralSimulation, PositionSolidBodyTuple)
 		for (int i = 0; i < 3; i++)
 		{
 			Vecd displ = pos_n[index] - pos_0[index];
-			EXPECT_NEAR(displ[i], final_position_center[i], final_position_center.norm() * tolerance);
+			ASSERT_NEAR(displ[i], final_position_center[i], final_position_center.norm() * tolerance);
 		}
 	}
 	//=================================================================================================//
@@ -159,8 +159,6 @@ TEST(StructuralSimulation, PositionSolidBodyTuple)
 TEST(StructuralSimulation, PositionScaleSolidBodyTuple)
 {
 	Real scale_stl = 0.001;
-	Real twoGB_resolution_factor = 4;
-	Real resolution_stent = 0.25;
 	Real resolution_cylinder = 0.4;
 	Real end_time_simulation = 0.05;
 	Real end_time_position = end_time_simulation * 0.9;
@@ -208,7 +206,7 @@ TEST(StructuralSimulation, PositionScaleSolidBodyTuple)
 		for (int i = 0; i < 3; i++)
 		{
 			Vec3d displ = center + (pos_0[index] - center) * scale;
-			EXPECT_NEAR(pos_n[index][i], displ[i], displ.norm() * tolerance);
+			ASSERT_NEAR(pos_n[index][i], displ[i], displ.norm() * tolerance);
 		}
 	}
 }

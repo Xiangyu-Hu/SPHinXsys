@@ -23,9 +23,7 @@
 #ifndef SMALL_VECTORS_H
 #define SMALL_VECTORS_H
 
-#include "Simbody.h"
-#include "SimTKcommon.h"
-#include "SimTKmath.h"
+#include "simbody_middle.h"
 #include "scalar_functions.h"
 
 #include <cmath>

@@ -3,27 +3,26 @@
  * @brief 	This is the first test to validate our anisotropic diffusion solver.
  * @author 	Chi Zhang and Xiangyu Hu
  */
-/** SPHinXsys Library. */
-#include "sphinxsys.h"
-/** Namespace cite here. */
-using namespace SPH;
-/** Geometry parameter. */
+#include "sphinxsys.h" //SPHinXsys Library
+using namespace SPH; //Namespace cite here
+//----------------------------------------------------------------------
+//	Basic geometry parameters and numerical setup.
+//----------------------------------------------------------------------
 Real L = 2.0; 	
 Real H = 0.4;
-/** Particle spacing. */
 Real resolution_ref = H / 40.0;
-/** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(L, H));
-
-/** Material properties. */
+//----------------------------------------------------------------------
+//	Basic parameters for material properties.
+//----------------------------------------------------------------------
 Real diffusion_coff = 1.0e-4;
 Real bias_diffusion_coff = 0.0;
 Real alpha = Pi / 6.0;
 Vec2d bias_direction(cos(alpha), sin(alpha));
-/**
-* @brief create a block shape
-*/
-std::vector<Vecd> CreatShape()
+//----------------------------------------------------------------------
+//	Geometric shapes used in the system.
+//----------------------------------------------------------------------
+std::vector<Vecd> createShape()
 {
 	//geometry
 	std::vector<Vecd> shape;
@@ -35,21 +34,23 @@ std::vector<Vecd> CreatShape()
 
 	return shape;
 }
-/** Define geometry and initial conditions of SPH bodies. */
+//----------------------------------------------------------------------
+//	Define SPH bodies. 
+//----------------------------------------------------------------------
 class DiffusionBody : public SolidBody
 {
 public:
 	DiffusionBody(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
-		std::vector<Vecd> body_shape = CreatShape();
+		std::vector<Vecd> body_shape = createShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(body_shape, ShapeBooleanOps::add);
 	}
 };
-/**
- * Setup diffusion material properties
- */
+//----------------------------------------------------------------------
+//	Setup diffusion material properties. 
+//----------------------------------------------------------------------
 class DiffusionBodyMaterial
 	: public DiffusionReactionMaterial<SolidParticles, Solid>
 {
@@ -70,9 +71,9 @@ public:
 		species_diffusion_.push_back(phi_diffusion);
 	};
 };
-/**
- * application dependent initial condition 
- */
+//----------------------------------------------------------------------
+//	Application dependent initial condition. 
+//----------------------------------------------------------------------
 class DiffusionBodyInitialCondition 
 	: public DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>
 {
@@ -98,7 +99,9 @@ public:
 		phi_ = material_->SpeciesIndexMap()["Phi"];
 	};
 };
-/** Set diffusion relaxation. */
+//----------------------------------------------------------------------
+//	Specify diffusion relaxation method. 
+//----------------------------------------------------------------------
 class DiffusionBodyRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<SolidBody, SolidParticles, Solid,
 	RelaxationOfAllDiffussionSpeciesInner<SolidBody, SolidParticles, Solid>, 
@@ -110,28 +113,33 @@ public:
 	};
 	virtual ~DiffusionBodyRelaxation() {};
 };
-
-/** The main program. */
+//----------------------------------------------------------------------
+//	Main program starts here.
+//----------------------------------------------------------------------
 int main()
 {
-	/** Build up context -- a SPHSystem. */
+	//----------------------------------------------------------------------
+	//	Build up the environment of a SPHSystem.
+	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
-	GlobalStaticVariables::physical_time_ = 0.0;
 	/** output environment. */
 	In_Output in_output(sph_system);
-
-	/** Configuration of materials, crate particle container and diffusion body. */
+	//----------------------------------------------------------------------
+	//	Creating body, materials and particles.
+	//----------------------------------------------------------------------
 	DiffusionBody *diffusion_body  =  new DiffusionBody(sph_system, "DiffusionBody");
 	DiffusionBodyMaterial *diffusion_body_material = new DiffusionBodyMaterial();
 	DiffusionReactionParticles<SolidParticles, Solid>	diffusion_body_particles(diffusion_body, diffusion_body_material);
-
-	/** topology */
+	//----------------------------------------------------------------------
+	//	Define body relation map.
+	//	The contact map gives the topological connections between the bodies.
+	//	Basically the the range of bodies to build neighbor particle lists.
+	//----------------------------------------------------------------------
 	InnerBodyRelation* diffusion_body_inner_relation = new InnerBodyRelation(diffusion_body);
-
-	/**
-	 * The main dynamics algorithm is defined start here.
-	 */
-	/** Case setup */
+	//----------------------------------------------------------------------
+	//	Define the main numerical methods used in the simultion.
+	//	Note that there may be data dependence on the constructors of these methods.
+	//----------------------------------------------------------------------
 	DiffusionBodyInitialCondition setup_diffusion_initial_condition(diffusion_body);
 	/** Corrected strong configuration for diffusion body. */	
 	solid_dynamics::CorrectConfiguration 			correct_configuration(diffusion_body_inner_relation);
@@ -141,19 +149,21 @@ int main()
 	DiffusionBodyRelaxation 			diffusion_relaxation(diffusion_body_inner_relation);
 	/** Periodic BCs. */
 	PeriodicConditionInAxisDirectionUsingCellLinkedList	periodic_condition_y(diffusion_body, 1);
-	/**
-	 * @brief simple input and outputs.
-	 */
-	WriteBodyStatesToVtu 				write_states(in_output, sph_system.real_bodies_);
-
-	/** Pre-simultion*/
+	//----------------------------------------------------------------------
+	//	Define the methods for I/O operations and observations of the simulation.
+	//----------------------------------------------------------------------
+	BodyStatesRecordingToVtu 				write_states(in_output, sph_system.real_bodies_);
+	//----------------------------------------------------------------------
+	//	Prepare the simulation with cell linked list, configuration
+	//	and case specified initial condition if necessary. 
+	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	periodic_condition_y.update_cell_linked_list_.parallel_exec();
 	sph_system.initializeSystemConfigurations();
 	correct_configuration.parallel_exec();
 	setup_diffusion_initial_condition.exec();
 	/** Output global basic parameters. */
-	write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+	write_states.writeToFile(0);
 
 	int ite 				= 0;
 	Real T0 				= 1.0;
@@ -161,10 +171,14 @@ int main()
 	Real Output_Time 	    = 0.1 * End_Time;
 	Real Observe_time 		= 0.1 * Output_Time;
 	Real dt		 			= 0.0;
-	/** Statistics for computing time. */
+	//----------------------------------------------------------------------
+	//	Statistics for CPU time
+	//----------------------------------------------------------------------
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
-	/** Main loop starts here. */ 
+	//----------------------------------------------------------------------
+	//	Main loop starts here.
+	//----------------------------------------------------------------------
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
 		Real integration_time = 0.0;
@@ -187,12 +201,11 @@ int main()
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
-				write_states.WriteToFile(GlobalStaticVariables::physical_time_);
 			}
 		}
 
 		tick_count t2 = tick_count::now();
-		write_states.WriteToFile(GlobalStaticVariables::physical_time_);
+		write_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}
