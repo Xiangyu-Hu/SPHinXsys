@@ -288,23 +288,34 @@ namespace SPH
 		//=================================================================================================//
 		Vecd PositionSolidBody::getDisplacement(size_t index_i, Real dt)
 		{
-			// displacement from the initial position
-			Vecd pos_final = pos_0_[index_i] + translation_;
-			Vecd displacement = (pos_final - pos_n_[index_i]) * dt / (end_time_ - GlobalStaticVariables::physical_time_);
+			Vecd displacement;
+			try {
+				// displacement from the initial position
+				Vecd pos_final = pos_0_[index_i] + translation_;
+				displacement = (pos_final - pos_n_[index_i]) * dt / (end_time_ - GlobalStaticVariables::physical_time_);	
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("PositionSolidBody::getDisplacement: particle index out of bounds") + to_string(index_i));
+			}
 			return displacement;
 		}
 		//=================================================================================================//
 		void PositionSolidBody::Update(size_t index_i, Real dt)
 		{
-			// only apply in the defined time period
-			if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
-			{
-				pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
-				vel_n_[index_i] = getVelocity();
-				dvel_dt_[index_i] = getAcceleration();
-				/** the average values are prescirbed also. */
-				vel_ave_[index_i] = vel_n_[index_i];
-				dvel_dt_ave_[index_i] = dvel_dt_[index_i];
+			try {
+				// only apply in the defined time period
+				if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
+				{
+					pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
+					vel_n_[index_i] = getVelocity();
+					dvel_dt_[index_i] = getAcceleration();
+					/** the average values are prescirbed also. */
+					vel_ave_[index_i] = vel_n_[index_i];
+					dvel_dt_ave_[index_i] = dvel_dt_[index_i];
+				}		
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("PositionSolidBody::Update: particle index out of bounds") + to_string(index_i));
 			}
 		}
 		//=================================================================================================//
@@ -322,23 +333,34 @@ namespace SPH
 		//=================================================================================================//
 		Vecd PositionScaleSolidBody::getDisplacement(size_t index_i, Real dt)
 		{
-			// displacement from the initial position
-			Vecd pos_final = pos_0_center_ + end_scale_ * (pos_0_[index_i] - pos_0_center_);
-			Vecd displacement = (pos_final - pos_n_[index_i]) * dt / (end_time_ - GlobalStaticVariables::physical_time_);
+			Vecd displacement;
+			try {
+				// displacement from the initial position
+				Vecd pos_final = pos_0_center_ + end_scale_ * (pos_0_[index_i] - pos_0_center_);
+				displacement = (pos_final - pos_n_[index_i]) * dt / (end_time_ - GlobalStaticVariables::physical_time_);
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("PositionScaleSolidBody::getDisplacement: particle index out of bounds") + to_string(index_i));
+			}
 			return displacement;
 		}
 		//=================================================================================================//
 		void PositionScaleSolidBody::Update(size_t index_i, Real dt)
 		{
-			// only apply in the defined time period
-			if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
-			{
-				pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
-				vel_n_[index_i] = getVelocity();
-				dvel_dt_[index_i] = getAcceleration();
-				/** the average values are prescirbed also. */
-				vel_ave_[index_i] = vel_n_[index_i];
-				dvel_dt_ave_[index_i] = dvel_dt_[index_i];
+			try {
+				// only apply in the defined time period
+				if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
+				{
+					pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
+					vel_n_[index_i] = getVelocity();
+					dvel_dt_[index_i] = getAcceleration();
+					/** the average values are prescirbed also. */
+					vel_ave_[index_i] = vel_n_[index_i];
+					dvel_dt_ave_[index_i] = dvel_dt_[index_i];
+				}
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("PositionScaleSolidBody::Update: particle index out of bounds") + to_string(index_i));
 			}
 		}
 		//=================================================================================================//

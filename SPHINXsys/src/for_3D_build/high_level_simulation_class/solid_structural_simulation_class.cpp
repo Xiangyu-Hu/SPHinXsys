@@ -589,7 +589,7 @@ void StructuralSimulation::RunSimulation(Real end_time)
 	ExecuteCorrectConfiguration();	
 
 	/** Statistics for computing time. */
-	write_states.writeToFile(GlobalStaticVariables::physical_time_);
+	write_states.writeToFile(0);
 	int ite = 0;
 	Real output_period = 0.1 / 100.0;
 	Real dt = 0.0;
@@ -604,7 +604,7 @@ void StructuralSimulation::RunSimulation(Real end_time)
 			RunSimulationStep(ite, dt, integration_time);
 		}
 		tick_count t2 = tick_count::now();
-		write_states.writeToFile(GlobalStaticVariables::physical_time_);
+		write_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}
