@@ -396,7 +396,7 @@ namespace SPH
 				}
 			}
 			catch(out_of_range& e){
-				throw runtime_error(string("PositionScaleSolidBody::Update: particle index out of bounds") + to_string(index_i));
+				throw runtime_error(string("TranslateSolidBody::Update: particle index out of bounds") + to_string(index_i));
 			}
 		}
 		//=================================================================================================//
