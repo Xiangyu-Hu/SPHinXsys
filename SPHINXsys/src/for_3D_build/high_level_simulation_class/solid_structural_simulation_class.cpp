@@ -630,7 +630,7 @@ double StructuralSimulation::RunSimulationFixedDurationJS(int number_of_steps)
 	GlobalStaticVariables::physical_time_ = 0.0;
 	
 	/** Statistics for computing time. */
-	write_states.writeToFile(GlobalStaticVariables::physical_time_);
+	write_states.writeToFile(0);
 	int output_period = 100;
 	int ite = 0;	
 	Real dt = 0.0;
@@ -647,7 +647,7 @@ double StructuralSimulation::RunSimulationFixedDurationJS(int number_of_steps)
 			output_step++;
 		}
 		tick_count t2 = tick_count::now();
-		write_states.writeToFile(GlobalStaticVariables::physical_time_);
+		write_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}
