@@ -42,9 +42,9 @@ int main()
 		physical_viscosity,
 		{}
 	};
+	Vecd translation_vector = Vec3d(0,0,200)*scale_stl;
 	input.scale_system_boundaries_ = 10;
-	input.position_solid_body_tuple_ = { PositionSolidBodyTuple(0, 0.0, end_time_position, final_position_center ),
-											PositionSolidBodyTuple(0, end_time_position, end_time_simulation, final_position_center ) };
+	input.translation_solid_body_tuple_ = { TranslateSolidBodyTuple(0, 0.0, end_time_position, translation_vector ) };
 											
 	/** SIMULATION MODEL */
 	StructuralSimulation sim (input);

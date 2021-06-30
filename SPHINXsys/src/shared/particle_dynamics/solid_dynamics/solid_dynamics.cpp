@@ -343,6 +343,37 @@ namespace SPH
 				dvel_dt_ave_[index_i] = dvel_dt_[index_i];
 			}
 		}
+				//=================================================================================================//
+		TranslateSolidBody::
+			TranslateSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd translation):
+			PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
+			pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
+			vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
+			vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
+			start_time_(start_time), end_time_(end_time), translation_(translation)
+		{
+		}
+		//=================================================================================================//
+		Vecd TranslateSolidBody::getDisplacement(size_t index_i, Real dt)
+		{
+			// displacement from the initial position
+			Vecd displacement = translation_ * dt / (end_time_ - GlobalStaticVariables::physical_time_);
+			return displacement;
+		}
+		//=================================================================================================//
+		void TranslateSolidBody::Update(size_t index_i, Real dt)
+		{
+			// only apply in the defined time period
+			if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
+			{
+				pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
+				vel_n_[index_i] = getVelocity();
+				dvel_dt_[index_i] = getAcceleration();
+				/** the average values are prescirbed also. */
+				vel_ave_[index_i] = vel_n_[index_i];
+				dvel_dt_ave_[index_i] = dvel_dt_[index_i];
+			}
+		}
 		//=================================================================================================//
 		SoftConstrainSolidBodyRegion::
 			SoftConstrainSolidBodyRegion(BaseInnerBodyRelation* body_inner_relation, BodyPartByParticle* body_part) :
