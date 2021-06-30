@@ -106,7 +106,7 @@ TEST(StructuralSimulation, PositionSolidBodyTuple)
 	//=================================================================================================//
 	// test ScaleTranslationAndResolution();
 	EXPECT_EQ(sim.Get_translation_list_().size(), sim.Get_resolution_list_().size());
-	for (unsigned int i = 0; i < translation_list.size(); i++)
+	for (size_t i = 0; i < translation_list.size(); i++)
 	{	
 		EXPECT_EQ(sim.Get_translation_list_()[i], translation_list[i] * scale_stl);
 		EXPECT_EQ(sim.Get_resolution_list_()[i], resolution_list[i] * scale_stl);
@@ -119,7 +119,7 @@ TEST(StructuralSimulation, PositionSolidBodyTuple)
 	// test CalculateSystemBoundaries();
 	Real ball_radius = 100 * scale_stl * 0.5;
 	BoundingBox test_bounds(Vec3d(-ball_radius * scale_system_bounds), Vec3d(ball_radius * scale_system_bounds));
-	for (int i = 0; i < 3; i++)
+	for (size_t i = 0; i < 3; i++)
 	{
 		EXPECT_NEAR(sim.Get_system_().system_domain_bounds_.first[i], test_bounds.first[i], abs(test_bounds.first[i] * tolerance));
 		EXPECT_NEAR(sim.Get_system_().system_domain_bounds_.second[i], test_bounds.second[i], abs(test_bounds.first[i] * tolerance));
@@ -145,9 +145,9 @@ TEST(StructuralSimulation, PositionSolidBodyTuple)
 	StdLargeVec<Vecd>& pos_0 = sim.Get_position_solid_body_()[0]->GetParticlePos0();
 	StdLargeVec<Vecd>& pos_n = sim.Get_position_solid_body_()[0]->GetParticlePosN();
 
-	for (unsigned int index = 0; index < pos_0.size(); index++)
+	for (size_t index = 0; index < pos_0.size(); index++)
 	{
-		for (int i = 0; i < 3; i++)
+		for (size_t i = 0; i < 3; i++)
 		{
 			Vecd displ = pos_n[index] - pos_0[index];
 			EXPECT_NEAR(displ[i], final_position_center[i], final_position_center.norm() * tolerance);
@@ -201,9 +201,9 @@ TEST(StructuralSimulation, PositionScaleSolidBodyTuple)
 	BoundingBox bounding_box = cylinder_mesh.findBounds();
 	Vec3d center = (bounding_box.first + bounding_box.second) * 0.5;
 
-	for (unsigned int index = 0; index < pos_0.size(); index++)
+	for (size_t index = 0; index < pos_0.size(); index++)
 	{
-		for (int i = 0; i < 3; i++)
+		for (size_t i = 0; i < 3; i++)
 		{
 			Vec3d displ = center + (pos_0[index] - center) * scale;
 			EXPECT_NEAR(pos_n[index][i], displ[i], displ.norm() * tolerance);
