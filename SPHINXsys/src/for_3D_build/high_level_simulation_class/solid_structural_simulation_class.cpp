@@ -138,6 +138,7 @@ StructuralSimulationInput::StructuralSimulationInput(
 	body_indeces_fixed_constraint_ = {};
 	position_solid_body_tuple_ = {};
 	position_scale_solid_body_tuple_ = {};
+	translation_solid_body_tuple_ = {};
 };
 
 ///////////////////////////////////////
@@ -168,7 +169,8 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	spring_damper_tuple_(input.spring_damper_tuple_),
 	body_indeces_fixed_constraint_(input.body_indeces_fixed_constraint_),
 	position_solid_body_tuple_(input.position_solid_body_tuple_),
-	position_scale_solid_body_tuple_(input.position_scale_solid_body_tuple_)
+	position_scale_solid_body_tuple_(input.position_scale_solid_body_tuple_),
+	translation_solid_body_tuple_(input.translation_solid_body_tuple_)
 {
 	// scaling of translation and resolution
 	ScaleTranslationAndResolution();
@@ -193,6 +195,7 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	InitializeConstrainSolidBodyRegion();
 	InitializePositionSolidBody();
 	InitializePositionScaleSolidBody();
+	InitializeTranslateSolidBody();
 
 	// initialize simulation
 	InitSimulation();
@@ -395,6 +398,21 @@ void StructuralSimulation::InitializePositionScaleSolidBody()
 	}
 }
 
+void StructuralSimulation::InitializeTranslateSolidBody()
+{
+	translation_solid_body_ = {};
+	for (unsigned int i = 0; i < translation_solid_body_tuple_.size(); i++)
+	{
+		int body_index = get<0>(translation_solid_body_tuple_[i]);
+		Real start_time = get<1>(translation_solid_body_tuple_[i]);
+		Real end_time = get<2>(translation_solid_body_tuple_[i]);
+		Vecd translation = get<3>(translation_solid_body_tuple_[i]);
+		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(solid_body_list_[body_index]->GetImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
+			
+		translation_solid_body_.emplace_back(make_shared<solid_dynamics::TranslateSolidBody>(solid_body_list_[body_index]->GetImportedModel(), bp, start_time, end_time, translation));
+	}
+}
+
 void StructuralSimulation::ExecuteCorrectConfiguration()
 {
 	for (unsigned int i = 0; i < solid_body_list_.size(); i++)
@@ -475,6 +493,14 @@ void StructuralSimulation::ExecutePositionScaleSolidBody(Real dt)
 	}
 }
 
+void StructuralSimulation::ExecuteTranslateSolidBody(Real dt)
+{
+	for (unsigned int i = 0; i < translation_solid_body_.size(); i++)
+	{
+		translation_solid_body_[i]->parallel_exec(dt);
+	}
+}
+
 void StructuralSimulation::ExecuteDamping(Real dt)
 {
 	for (unsigned int i = 0; i < solid_body_list_.size(); i++)
@@ -526,12 +552,14 @@ void StructuralSimulation::RunSimulationStep(int &ite, Real &dt, Real &integrati
 	ExecuteConstrainSolidBodyRegion();
 	ExecutePositionSolidBody(dt);
 	ExecutePositionScaleSolidBody(dt);
+	ExecuteTranslateSolidBody(dt);
 
 	ExecuteDamping(dt);
 
 	ExecuteConstrainSolidBodyRegion();
 	ExecutePositionSolidBody(dt);
 	ExecutePositionScaleSolidBody(dt);
+	ExecuteTranslateSolidBody(dt);
 
 	ExecuteStressRelaxationSecondHalf(dt);
 	
