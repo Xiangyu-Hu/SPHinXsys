@@ -13,7 +13,7 @@ int main()
 
 	// SI setup - designed
 	Real rho_0 = 122231;
-	Real end_time_simulation = 0.2;
+	Real end_time_simulation = 0.5;
 	Real end_time_position = end_time_simulation * 0.8;
 	//Vecd final_position_center = Vecd(0, 0, 0.1);
 

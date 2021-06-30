@@ -138,6 +138,7 @@ StructuralSimulationInput::StructuralSimulationInput(
 	body_indeces_fixed_constraint_ = {};
 	position_solid_body_tuple_ = {};
 	position_scale_solid_body_tuple_ = {};
+	translation_solid_body_tuple_ = {};
 };
 
 ///////////////////////////////////////
@@ -168,7 +169,8 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	spring_damper_tuple_(input.spring_damper_tuple_),
 	body_indeces_fixed_constraint_(input.body_indeces_fixed_constraint_),
 	position_solid_body_tuple_(input.position_solid_body_tuple_),
-	position_scale_solid_body_tuple_(input.position_scale_solid_body_tuple_)
+	position_scale_solid_body_tuple_(input.position_scale_solid_body_tuple_),
+	translation_solid_body_tuple_(input.translation_solid_body_tuple_)
 {
 	// scaling of translation and resolution
 	ScaleTranslationAndResolution();
