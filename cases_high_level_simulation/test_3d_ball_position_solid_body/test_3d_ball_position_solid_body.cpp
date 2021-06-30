@@ -15,7 +15,7 @@ int main()
 	Real rho_0 = 122231;
 	Real end_time_simulation = 0.2;
 	Real end_time_position = end_time_simulation * 0.8;
-	Vecd final_position_center = Vecd(0, 0, 0.1);
+	//Vecd final_position_center = Vecd(0, 0, 0.1);
 
 	/** STL IMPORT PARAMETERS */
 	string relative_input_path = "./input/"; //path definition for linux

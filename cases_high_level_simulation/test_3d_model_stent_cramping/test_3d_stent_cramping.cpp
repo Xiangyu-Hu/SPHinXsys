@@ -20,9 +20,9 @@ int main()
 	Real end_time_cramping = 0.05;
 	Real end_time_cramping_position = end_time_cramping * 0.8;
 	Real end_time_simulation = 0.1;
-	Real end_time_position = end_time_simulation * 0.8;
+	//Real end_time_position = end_time_simulation * 0.8;
 
-	Real stent_r_outer = 25 + resolution_stent / 2;
+	//Real stent_r_outer = 25 + resolution_stent / 2;
 	Real stent_r_outer_end = 20;
 	Real cylinder_r_inner = 30 - resolution_cylinder / 2;
 	Real driving_scale = stent_r_outer_end / cylinder_r_inner;

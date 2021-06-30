@@ -13,7 +13,7 @@ TEST(StructuralSimulation, ExpandBoundingBox)
 	ExpandBoundingBox(&bb, &bb_3);
 
 	BoundingBox bb_ref(Vec3d(-0.5, -10.0, -20.0), Vec3d(10.05, 1.1, 2.2));
-	ASSERT_EQ(bb, bb_ref);
+	EXPECT_EQ(bb, bb_ref);
 }
 
 class TestStructuralSimulation : StructuralSimulation
@@ -105,38 +105,38 @@ TEST(StructuralSimulation, PositionSolidBodyTuple)
 
 	//=================================================================================================//
 	// test ScaleTranslationAndResolution();
-	ASSERT_EQ(sim.Get_translation_list_().size(), sim.Get_resolution_list_().size());
+	EXPECT_EQ(sim.Get_translation_list_().size(), sim.Get_resolution_list_().size());
 	for (unsigned int i = 0; i < translation_list.size(); i++)
 	{	
-		ASSERT_EQ(sim.Get_translation_list_()[i], translation_list[i] * scale_stl);
-		ASSERT_EQ(sim.Get_resolution_list_()[i], resolution_list[i] * scale_stl);
+		EXPECT_EQ(sim.Get_translation_list_()[i], translation_list[i] * scale_stl);
+		EXPECT_EQ(sim.Get_resolution_list_()[i], resolution_list[i] * scale_stl);
 	}
-	ASSERT_EQ(sim.Get_system_resolution_(), resolution_mass * scale_stl);
+	EXPECT_EQ(sim.Get_system_resolution_(), resolution_mass * scale_stl);
 	//=================================================================================================//
 	// test CreateBodyMeshList();
-	ASSERT_EQ(sim.Get_body_mesh_list_().size(), number_of_bodies);
+	EXPECT_EQ(sim.Get_body_mesh_list_().size(), number_of_bodies);
 	//=================================================================================================//
 	// test CalculateSystemBoundaries();
 	Real ball_radius = 100 * scale_stl * 0.5;
 	BoundingBox test_bounds(Vec3d(-ball_radius * scale_system_bounds), Vec3d(ball_radius * scale_system_bounds));
 	for (int i = 0; i < 3; i++)
 	{
-		ASSERT_NEAR(sim.Get_system_().system_domain_bounds_.first[i], test_bounds.first[i], abs(test_bounds.first[i] * tolerance));
-		ASSERT_NEAR(sim.Get_system_().system_domain_bounds_.second[i], test_bounds.second[i], abs(test_bounds.first[i] * tolerance));
+		EXPECT_NEAR(sim.Get_system_().system_domain_bounds_.first[i], test_bounds.first[i], abs(test_bounds.first[i] * tolerance));
+		EXPECT_NEAR(sim.Get_system_().system_domain_bounds_.second[i], test_bounds.second[i], abs(test_bounds.first[i] * tolerance));
 	}
 	//=================================================================================================//
 	// test InitializeElasticSolidBodies();
-	ASSERT_EQ(sim.Get_solid_body_list_().size(), number_of_bodies);
+	EXPECT_EQ(sim.Get_solid_body_list_().size(), number_of_bodies);
 	//=================================================================================================//
 	// test InitializeAllContacts();
-	ASSERT_EQ(sim.Get_contacting_bodies_list_().size(), 0);
-	ASSERT_EQ(sim.Get_contact_list_().size(), 0);
-	ASSERT_EQ(sim.Get_contact_density_list_().size(), 0);
-	ASSERT_EQ(sim.Get_contact_force_list_().size(), 0);
+	EXPECT_EQ(sim.Get_contacting_bodies_list_().size(), 0);
+	EXPECT_EQ(sim.Get_contact_list_().size(), 0);
+	EXPECT_EQ(sim.Get_contact_density_list_().size(), 0);
+	EXPECT_EQ(sim.Get_contact_force_list_().size(), 0);
 	//=================================================================================================//
 	// test Boundary Conditions
-	ASSERT_EQ(sim.Get_position_solid_body_().size(), 2);
-	ASSERT_EQ(sim.Get_position_solid_body_tuple_().size(), 2);
+	EXPECT_EQ(sim.Get_position_solid_body_().size(), 2);
+	EXPECT_EQ(sim.Get_position_solid_body_tuple_().size(), 2);
 	//=================================================================================================//
 
 	//=================================================================================================//
@@ -150,7 +150,7 @@ TEST(StructuralSimulation, PositionSolidBodyTuple)
 		for (int i = 0; i < 3; i++)
 		{
 			Vecd displ = pos_n[index] - pos_0[index];
-			ASSERT_NEAR(displ[i], final_position_center[i], final_position_center.norm() * tolerance);
+			EXPECT_NEAR(displ[i], final_position_center[i], final_position_center.norm() * tolerance);
 		}
 	}
 	//=================================================================================================//
@@ -206,7 +206,7 @@ TEST(StructuralSimulation, PositionScaleSolidBodyTuple)
 		for (int i = 0; i < 3; i++)
 		{
 			Vec3d displ = center + (pos_0[index] - center) * scale;
-			ASSERT_NEAR(pos_n[index][i], displ[i], displ.norm() * tolerance);
+			EXPECT_NEAR(pos_n[index][i], displ[i], displ.norm() * tolerance);
 		}
 	}
 }

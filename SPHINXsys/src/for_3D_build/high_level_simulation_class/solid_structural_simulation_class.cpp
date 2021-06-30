@@ -398,7 +398,7 @@ void StructuralSimulation::InitializePositionScaleSolidBody()
 
 void StructuralSimulation::InitializeTranslateSolidBody()
 {
-	position_solid_body_ = {};
+	translation_solid_body_ = {};
 	for (unsigned int i = 0; i < translation_solid_body_tuple_.size(); i++)
 	{
 		int body_index = get<0>(translation_solid_body_tuple_[i]);
