@@ -11,9 +11,14 @@ TEST(StructuralSimulation, ExpandBoundingBox)
 
 	ExpandBoundingBox(&bb, &bb_2);
 	ExpandBoundingBox(&bb, &bb_3);
-
+	
 	BoundingBox bb_ref(Vec3d(-0.5, -10.0, -20.0), Vec3d(10.05, 1.1, 2.2));
-	EXPECT_EQ(bb, bb_ref);
+
+	for (size_t i = 0; i < 3; i++)
+	{
+		EXPECT_EQ(bb.first[i], bb_ref.first[i]);
+		EXPECT_EQ(bb.second[i], bb_ref.second[i]);
+	}
 }
 
 class TestStructuralSimulation : StructuralSimulation
