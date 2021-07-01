@@ -446,6 +446,27 @@ namespace SPH
 		};
 
 		/**
+		* @class KirchhoffStressRelaxationFirstHalf
+		* @brief Decompose the stress into particle stress includes isetropic stress 
+		* and the stress due to non-homogeneous material properties.
+		* The preliminary shear stress is introduced by particle pair to avoid 
+		* sprurious stress and deforamtion.
+		*/
+		class KirchhoffStressRelaxationFirstHalf : public StressRelaxationFirstHalf
+		{
+		public:
+			KirchhoffStressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation);
+			virtual ~KirchhoffStressRelaxationFirstHalf() {};
+		protected:
+			StdLargeVec<Real>& J_to_minus_2_over_diemsnion_;
+			StdLargeVec<Matd>& stress_on_particle_, & inverse_F_T_;
+			const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
+
+			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
 		* @class StressRelaxationSecondHalf
 		* @brief computing stress relaxation process by verlet time stepping
 		* This is the second step
