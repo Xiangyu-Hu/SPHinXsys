@@ -139,5 +139,15 @@ namespace SPH
 		}
 	};
 	//=================================================================================================//
+	NeighborRelationSolidContact::NeighborRelationSolidContact(SPHBody* body, SPHBody* contact_body) 
+		: NeighborRelationContact(body, contact_body)
+	{
+		Real source_smoothing_length = body->particle_adaptation_->ReferenceSmoothingLength();
+		Real target_smoothing_length = contact_body->particle_adaptation_->ReferenceSmoothingLength();
+		kernel_ = new KernelWendlandC2();
+		kernel_->initialize(0.5 * (source_smoothing_length + target_smoothing_length));
+		cutoff_radius_ = kernel_->CutOffRadius();
+	}
+	//=================================================================================================//
 }
 //=================================================================================================//

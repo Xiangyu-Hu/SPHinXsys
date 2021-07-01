@@ -31,7 +31,7 @@ namespace SPH {
 	Matd ElasticSolid::NumericalDampingStress(Matd& F, Matd& dF_dt, Real smoothing_length, size_t particle_index_i)
 	{
 		Matd strain_rate = 0.5 * (~dF_dt * F + ~F * dF_dt);
-		Matd normal_rate = getDiagnal(strain_rate);
+		Matd normal_rate = getDiagonal(strain_rate);
 		return 0.5 * rho0_ * (cs0_ * (strain_rate - normal_rate) + c0_ * normal_rate) * smoothing_length;
 	}
 	//=================================================================================================//
@@ -43,6 +43,17 @@ namespace SPH {
 	Real ElasticSolid::NumericalViscosity(Real smoothing_length)
 	{
 		return 0.5 * rho0_ * c0_ * smoothing_length;
+	}
+	//=================================================================================================//
+	Matd ElasticSolid::DeviatoricKirchhoff(const Matd& deviatoric_be)
+	{
+		return G0_ * deviatoric_be;
+	}
+	//=================================================================================================//
+	Real  ElasticSolid::VolumetricKirchhoff(const Matd& deformation)
+	{
+		Real J = SimTK::det(deformation);
+		return  0.5 * K0_ * J * (J - 1);
 	}
 	//=================================================================================================//
 	Real LinearElasticSolid::getBulkModulus()

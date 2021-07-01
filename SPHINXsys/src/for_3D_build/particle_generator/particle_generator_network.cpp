@@ -45,7 +45,7 @@ namespace SPH
 		return downgrad - upgrad;
 	}
 	//=================================================================================================//
-	Vecd ParticleGeneratorNetwork::creatATentativeNewBranchPoint(Vecd init_point, Vecd dir)
+	Vecd ParticleGeneratorNetwork::createATentativeNewBranchPoint(Vecd init_point, Vecd dir)
 	{
 		Vecd pnt_to_project = init_point + dir * segment_length_;
 
@@ -106,7 +106,7 @@ namespace SPH
 		Vecd end_direction = (repulsivity * grad + dir) / ((repulsivity * grad + dir).norm() + TinyReal);
 		Vecd end_point = init_point;
 
-		Vecd new_point = creatATentativeNewBranchPoint(end_point, end_direction);
+		Vecd new_point = createATentativeNewBranchPoint(end_point, end_direction);
 		ListData nearest_neighbor = mesh_cell_linked_list->findNearestListDataEntry(new_point);
 		if (!isCollision(new_point, nearest_neighbor, parent_id, tree)) {
 			is_valid = true;
@@ -125,7 +125,7 @@ namespace SPH
 				end_direction = dir;
 				end_point = new_point;
 
-				new_point = creatATentativeNewBranchPoint(end_point, end_direction);
+				new_point = createATentativeNewBranchPoint(end_point, end_direction);
 				ListData nearest_neighbor = mesh_cell_linked_list->findNearestListDataEntry(new_point);
 				if (isCollision(new_point, nearest_neighbor, parent_id, tree))
 				{

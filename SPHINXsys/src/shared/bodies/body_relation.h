@@ -188,6 +188,10 @@ namespace SPH
 	class BaseContactBodyRelation : public SPHBodyRelation
 	{
 	protected:
+		StdVec<MeshCellLinkedList*> target_mesh_cell_linked_lists_;
+		StdVec<SearchRangeMultiResolution*> get_search_ranges_;
+		StdVec<NeighborRelationContact*> get_contact_neighbors_;
+
 		virtual void resetNeighborhoodCurrentSize();
 	public:
 		RealBodyVector contact_bodies_;
@@ -208,14 +212,12 @@ namespace SPH
 	{
 	protected:
 		SPHBodyParticlesIndex get_particle_index_;
-		StdVec<MeshCellLinkedList*> target_mesh_cell_linked_lists_;
-		StdVec<SearchRangeMultiResolution*> get_search_ranges_;
-		StdVec<NeighborRelationContact*> get_contact_neighbors_;
+
+		void initialization();
 	public:
 		ContactBodyRelation(SPHBody* body, RealBodyVector contact_bodies);
 		ContactBodyRelation(SPHBody* body, BodyPartVector contact_bodyparts);
 		virtual ~ContactBodyRelation() {};
-		void initializaiton();
 		virtual void updateConfiguration() override;
 	};
 
@@ -223,12 +225,13 @@ namespace SPH
 	 * @class SolidContactBodyRelation
 	 * @brief The relation between a solid body and its contact solid bodies
 	 */
-	class SolidContactBodyRelation : public ContactBodyRelation
+	class SolidContactBodyRelation : public BaseContactBodyRelation
 	{
 	protected:
 		IndexVector& body_part_particles_;
 		BodyPartParticlesIndex get_body_part_particle_index_;
 
+		void initialization();
 		virtual void resetNeighborhoodCurrentSize() override;
 	public:
 		ShapeSurfaceLayer body_surface_layer_;
