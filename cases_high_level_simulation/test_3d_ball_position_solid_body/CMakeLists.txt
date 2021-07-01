@@ -14,12 +14,7 @@ set(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
 
-set(FILES_STL			"Aorta.stl"
-				"Diaphragm.stl"
-				"LA.stl"
-				"PA.stl"
-				"RA.stl"
-				"TAH_basic2_pos.stl"
+set(FILES_STL			"ball_mass.stl"
 				)
 foreach(STL_FILE ${FILES_STL})
 	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/input/${STL_FILE} DESTINATION ${BUILD_INPUT_PATH})

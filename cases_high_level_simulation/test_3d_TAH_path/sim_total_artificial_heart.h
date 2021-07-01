@@ -61,7 +61,7 @@ public:
 												   SpringDamperTuple(5, Vec3d(0.1, 0.1, 0.1), 0.01)};
 
 		/** SIMULATION MODEL */
-		sim.reset(new StructuralSimulation(&inputStructuralSim));
+		sim.reset(new StructuralSimulation(inputStructuralSim));
 	};
 
 	~SimTotalArtificialHeart(){};

@@ -14,13 +14,7 @@ set(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
 
-set(FILES_STL			"Aorta.stl"
-				"Diaphragm.stl"
-				"LA.stl"
-				"PA.stl"
-				"RA.stl"
-				"TAH_basic2_pos.stl"
-				)
+set(FILES_STL "ball_mass.stl" "cylinder.stl")
 foreach(STL_FILE ${FILES_STL})
 	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/input/${STL_FILE} DESTINATION ${BUILD_INPUT_PATH})
 endforeach()
@@ -40,7 +34,7 @@ if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++)
 		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++ stdc++fs)
+			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++ stdc++fs gtest gtest_main)
 		endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 		if(DEFINED BOOST_AVAILABLE) # link Boost if available (not for Windows)
@@ -54,7 +48,7 @@ else() # static build only
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++)
 		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++ stdc++fs)
+			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++ stdc++fs gtest gtest_main)
 		endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 		if(DEFINED BOOST_AVAILABLE) # link Boost if available (not for Windows)

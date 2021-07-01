@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     apt-utils \
     build-essential \
     cmake \
-    googletest \
+    libgtest-dev \
     libtbb-dev \
     libboost-all-dev \
     libsimbody-dev \
@@ -24,5 +24,11 @@ ENV SIMBODY_HOME=/usr
 
 COPY ./ /home/SPHinXsys/
 WORKDIR /home/SPHinXsys
+
+RUN cd /usr/src/gtest
+    sudo cmake CMakeLists.txt
+    sudo make
+    cd /home/SPHinXsys
+	
 RUN rm -rf build
 RUN mkdir build && cd build && cmake .. -DBUILD_WITH_DEPENDENCIES_SOURCE=${build_with_dependencies_source} -DSPH_ONLY_STATIC_BUILD=${sph_only_static_build} && make -j$(nproc)

@@ -191,6 +191,80 @@ namespace SPH
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
+		/**
+		 * @class PositionSolidBody
+		 * @brief Moves the body into a defined position in a given time interval - position driven boundary condition
+		 * Note the average values for FSI are prescirbed also.
+		 */
+		class PositionSolidBody:
+			public PartSimpleDynamicsByParticle, public SolidDataSimple
+		{
+		public:
+			PositionSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd pos_end_center);
+			virtual ~PositionSolidBody() {};
+			StdLargeVec<Vecd>& GetParticlePos0(){ return pos_0_; };
+			StdLargeVec<Vecd>& GetParticlePosN(){ return pos_n_; };
+		protected:
+			StdLargeVec<Vecd>& pos_n_, &pos_0_;
+			StdLargeVec<Vecd>& vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			Real start_time_, end_time_;
+			Vecd pos_0_center_, pos_end_center_, translation_;
+			Vecd getDisplacement(size_t index_i, Real dt);
+			virtual Vecd getVelocity() { return Vecd(0); };
+			virtual Vecd getAcceleration() { return Vecd(0); };
+			virtual SimTK::Rotation getBodyRotation() { return SimTK::Rotation(); }
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		 * @class PositionScaleSolidBody
+		 * @brief Scales the body in a given time interval - position driven boundary condition
+		 * Note the average values for FSI are prescirbed also.
+		 */
+		class PositionScaleSolidBody:
+			public PartSimpleDynamicsByParticle, public SolidDataSimple
+		{
+		public:
+			PositionScaleSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Real end_scale);
+			virtual ~PositionScaleSolidBody() {};
+			StdLargeVec<Vecd>& GetParticlePos0(){ return pos_0_; };
+			StdLargeVec<Vecd>& GetParticlePosN(){ return pos_n_; };
+		protected:
+			StdLargeVec<Vecd>& pos_n_, &pos_0_;
+			StdLargeVec<Vecd>& vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			Real start_time_, end_time_, end_scale_;
+			Vecd pos_0_center_;
+			Vecd getDisplacement(size_t index_i, Real dt);
+			virtual Vecd getVelocity() { return Vecd(0); };
+			virtual Vecd getAcceleration() { return Vecd(0); };
+			virtual SimTK::Rotation getBodyRotation() { return SimTK::Rotation(); }
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+				/**
+		 * @class TranslateSolidBody
+		 * @brief Translates the body in a given time interval -translation driven boundary condition; only moving the body; end position irrelevant;
+		 * Note the average values for FSI are prescirbed also.
+		 */
+		class TranslateSolidBody:
+			public PartSimpleDynamicsByParticle, public SolidDataSimple
+		{
+		public:
+			TranslateSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd translation);
+			virtual ~TranslateSolidBody() {};
+			StdLargeVec<Vecd>& GetParticlePos0(){ return pos_0_; };
+			StdLargeVec<Vecd>& GetParticlePosN(){ return pos_n_; };
+		protected:
+			StdLargeVec<Vecd>& pos_n_, &pos_0_;
+			StdLargeVec<Vecd>& vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			Real start_time_, end_time_;
+			Vecd translation_;
+			Vecd getDisplacement(size_t index_i, Real dt);
+			virtual Vecd getVelocity() { return Vecd(0); };
+			virtual Vecd getAcceleration() { return Vecd(0); };
+			virtual SimTK::Rotation getBodyRotation() { return SimTK::Rotation(); }
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
 
 		/**
 		 * @class ConstrainSolidBodyRegionVelocity
