@@ -52,14 +52,16 @@ namespace SPH {
 
 		virtual void initialize(SPHBody* sph_body) override;
 		virtual void createBaseParticles(BaseParticles* base_particles) override;
+
+		Real get_lattice_spacing_(){ return lattice_spacing_; };
+		int get_number_of_particles_(){ return number_of_particles_; };
 	protected:
 		Real lattice_spacing_; // this will be the actual input, the particle spacing
 		BoundingBox domain_bounds_;
 		ComplexShape* body_shape_;
 
-		Real total_volume_plate_; // calculated from level set
-		Real total_volume_tube_;
-		Real body_surface_area_; // ??
+		Real total_volume_; // calculated from level set
+		//Real body_surface_area_;
 		Real global_avg_thickness_;
 		Real particle_spacing_; // input from ParticleAdaptation
 		Real avg_particle_volume_; // calculated as: particle spacing^2 * global avg thickness

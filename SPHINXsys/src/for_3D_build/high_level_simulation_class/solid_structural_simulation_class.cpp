@@ -17,8 +17,9 @@ BodyPartByParticleTriMesh::~BodyPartByParticleTriMesh()
 	delete body_part_shape_;
 }
 
-ImportedModel::ImportedModel(SPHSystem &system, string body_name, TriangleMeshShape* triangle_mesh_shape, ParticleAdaptation* particle_adaptation)
-	: SolidBody(system, body_name, particle_adaptation)
+ImportedModel::ImportedModel(SPHSystem &system, string body_name, TriangleMeshShape* triangle_mesh_shape,
+								ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator):
+	SolidBody(system, body_name, particle_adaptation, particle_generator)
 {
 	ComplexShape original_body_shape;
 	original_body_shape.addTriangleMeshShape(triangle_mesh_shape, ShapeBooleanOps::add);
@@ -30,8 +31,9 @@ ImportedModel::~ImportedModel()
 	delete body_shape_;
 }
 
-SolidBodyForSimulation::SolidBodyForSimulation(SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape, ParticleAdaptation& particle_adaptation, Real physical_viscosity, LinearElasticSolid& material_model):
-	imported_model_(ImportedModel(system, body_name, &triangle_mesh_shape, &particle_adaptation)),
+SolidBodyForSimulation::SolidBodyForSimulation(SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape,
+												ParticleAdaptation& particle_adaptation, ParticleGenerator& particle_generator, Real physical_viscosity, LinearElasticSolid& material_model):
+	imported_model_(ImportedModel(system, body_name, &triangle_mesh_shape, &particle_adaptation, &particle_generator)),
 	//material_model_(material_model),
 	elastic_solid_particles_(ElasticSolidParticles(&imported_model_, &material_model)),
 	inner_body_relation_(InnerBodyRelation(&imported_model_)),
@@ -178,8 +180,9 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	SetSystemResolutionMax();
 	// create the body mesh list for triangular mesh shapes storage
 	CreateBodyMeshList();
-	// create the particle adaptions for the bodies
+	// create the particle adaption and particle generator for the bodies
 	CreateParticleAdaptationList();
+	CreateParticleGeneratorList();
 	// set up the system
 	CalculateSystemBoundaries();
 	system_.run_particle_relaxation_ = true;
@@ -271,12 +274,21 @@ void StructuralSimulation::CreateParticleAdaptationList()
 	}
 }
 
+void StructuralSimulation::CreateParticleGeneratorList()
+{
+	particle_generator_list_ = {};
+	for (unsigned int i = 0; i < resolution_list_.size(); i++)
+	{
+		particle_generator_list_.push_back(ShellParticleGeneratorLattice());
+	}
+}
+
 void StructuralSimulation::InitializeElasticSolidBodies()
 {
 	solid_body_list_ = {};
 	for (unsigned int i = 0; i < body_mesh_list_.size(); i++)
 	{
-		solid_body_list_.emplace_back(make_shared<SolidBodyForSimulation>(system_, imported_stl_list_[i], body_mesh_list_[i], particle_adaptation_list_[i], physical_viscosity_, material_model_list_[i]));
+		solid_body_list_.emplace_back(make_shared<SolidBodyForSimulation>(system_, imported_stl_list_[i], body_mesh_list_[i], particle_adaptation_list_[i], particle_generator_list_[i], physical_viscosity_, material_model_list_[i]));
 		if (particle_relaxation_list_[i])
 		{
 			RelaxParticlesSingleResolution(&in_output_, false, solid_body_list_[i]->GetImportedModel(), solid_body_list_[i]->GetElasticSolidParticles(), solid_body_list_[i]->GetInnerBodyRelation());
@@ -578,18 +590,8 @@ void StructuralSimulation::RunSimulationStep(int &ite, Real &dt, Real &integrati
 
 void StructuralSimulation::RunSimulation(Real end_time)
 {
-	BodyStatesRecordingToVtu write_states(in_output_, system_.real_bodies_);
-	GlobalStaticVariables::physical_time_ = 0.0;
+	BodyStatesRecordingToVtu write_states_(in_output_, system_.real_bodies_);
 
-	/** INITIALALIZE SYSTEM */
-	system_.initializeSystemCellLinkedLists();
-	system_.initializeSystemConfigurations();
-
-	/** INITIAL CONDITION */
-	ExecuteCorrectConfiguration();	
-
-	/** Statistics for computing time. */
-	write_states.writeToFile(0);
 	int ite = 0;
 	Real output_period = 0.1 / 100.0;
 	Real dt = 0.0;
@@ -604,7 +606,7 @@ void StructuralSimulation::RunSimulation(Real end_time)
 			RunSimulationStep(ite, dt, integration_time);
 		}
 		tick_count t2 = tick_count::now();
-		write_states.writeToFile();
+		write_states_.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}
@@ -616,21 +618,24 @@ void StructuralSimulation::RunSimulation(Real end_time)
 
 void StructuralSimulation::InitSimulation()
 {	
+	BodyStatesRecordingToVtu write_states_(in_output_, system_.real_bodies_);
+	GlobalStaticVariables::physical_time_ = 0.0;
+
 	/** INITIALALIZE SYSTEM */
 	system_.initializeSystemCellLinkedLists();
 	system_.initializeSystemConfigurations();
 
 	/** INITIAL CONDITION */
-	ExecuteCorrectConfiguration();
+	ExecuteCorrectConfiguration();	
+
+	/** Statistics for computing time. */
+	write_states_.writeToFile(0);
 }
 
 double StructuralSimulation::RunSimulationFixedDurationJS(int number_of_steps)
 {
-	BodyStatesRecordingToVtu write_states(in_output_, system_.real_bodies_);
-	GlobalStaticVariables::physical_time_ = 0.0;
-	
-	/** Statistics for computing time. */
-	write_states.writeToFile(0);
+	BodyStatesRecordingToVtu write_states_(in_output_, system_.real_bodies_);
+
 	int output_period = 100;
 	int ite = 0;	
 	Real dt = 0.0;
@@ -647,7 +652,7 @@ double StructuralSimulation::RunSimulationFixedDurationJS(int number_of_steps)
 			output_step++;
 		}
 		tick_count t2 = tick_count::now();
-		write_states.writeToFile();
+		write_states_.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

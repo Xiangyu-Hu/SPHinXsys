@@ -11,6 +11,7 @@
 #include "sphinxsys.h"
 #include <algorithm>
 #include <memory>
+#include "particle_generator_lattice_shell.h"
 
 using namespace SPH;
 using namespace std;
@@ -31,7 +32,7 @@ public:
 class ImportedModel : public SolidBody
 {
 public:
-	ImportedModel(SPHSystem &system, string body_name, TriangleMeshShape* triangle_mesh_shape, ParticleAdaptation* particle_adaptation);
+	ImportedModel(SPHSystem &system, string body_name, TriangleMeshShape* triangle_mesh_shape, ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator);
 	~ImportedModel();
 };
 
@@ -39,7 +40,6 @@ class SolidBodyForSimulation
 {
 private:
 	ImportedModel imported_model_;
-	//LinearElasticSolid material_model_;
 	ElasticSolidParticles elastic_solid_particles_;
 	InnerBodyRelation inner_body_relation_;
 
@@ -49,7 +49,8 @@ private:
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>> damping_random_;
 
 public:
-	SolidBodyForSimulation(SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape, ParticleAdaptation& particle_adaptation, Real physical_viscosity, LinearElasticSolid& material_model);
+	SolidBodyForSimulation(SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape,
+							ParticleAdaptation& particle_adaptation, ParticleGenerator& particle_generator, Real physical_viscosity, LinearElasticSolid& material_model);
 	~SolidBodyForSimulation(){};
 
 	ImportedModel* GetImportedModel() { return &imported_model_; };
@@ -130,6 +131,7 @@ class StructuralSimulation
 
 		vector<TriangleMeshShape> body_mesh_list_;
 		vector<ParticleAdaptation> particle_adaptation_list_;
+		vector<ShellParticleGeneratorLattice> particle_generator_list_;
 		vector<shared_ptr<SolidBodyForSimulation>> solid_body_list_;
 
 		vector<shared_ptr<SolidContactBodyRelation>> contact_list_;
@@ -163,6 +165,7 @@ class StructuralSimulation
 		void SetSystemResolutionMax();
 		void CreateBodyMeshList();
 		void CreateParticleAdaptationList();
+		void CreateParticleGeneratorList();
 		void CalculateSystemBoundaries();
 		void InitializeElasticSolidBodies();
 		void InitializeContactBetweenTwoBodies(int first, int second);
@@ -201,6 +204,9 @@ class StructuralSimulation
 	public:
 		StructuralSimulation(StructuralSimulationInput& input);
 		~StructuralSimulation();
+
+		// Get methods
+		vector<ShellParticleGeneratorLattice>& get_patricle_generator_list_(){ return particle_generator_list_; };
 
 		//For c++
 		void RunSimulation(Real end_time);
