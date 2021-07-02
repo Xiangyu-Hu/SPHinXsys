@@ -117,7 +117,7 @@ namespace SPH {
 	protected:
 		/** The array for of mesh cells, i.e. mesh data.
 		 * Within each cell, a list is saved with the indexes of particles.*/
-		matrix_cell cell_linked_lists_;
+		MeshDataMatrix<CellList> cell_linked_lists_;
 
 		virtual void updateSplitCellLists(SplitCellLists& split_cell_lists) override;
 	public:

@@ -7,17 +7,6 @@
 
 namespace SPH {
 	//=================================================================================================//
-	Matd PlasticSolid::DeviatoricPK(const Matd& deviatoric_be)
-	{
-		return G0_ * deviatoric_be;
-	}
-	//=================================================================================================//
-	Real  PlasticSolid::VolumetricPK(const Matd& deformation_gradient)
-	{
-		Real J = SimTK::det(deformation_gradient);
-		return  0.5 * K0_ * J * (J - 1);
-	}
-	//=================================================================================================//
 	void HardeningPlasticSolid::initializePlasticParameters()
 	{
 		base_particles_->registerAVariable<indexMatrix, Matd>(inverse_plastic_strain_, "InversePlasticRightCauchyStrain", Matd(1.0));
@@ -37,7 +26,7 @@ namespace SPH {
 		Matd be = F * inverse_plastic_strain_[index_i] * (~F);
 		Matd normalized_be = be * pow(SimTK::det(be), -one_over_dimensions_);
 		Real normalized_be_isentropic = normalized_be.trace() * one_over_dimensions_;
-		Matd deviatoric_PK = DeviatoricPK(normalized_be - normalized_be_isentropic * Matd(1.0));
+		Matd deviatoric_PK = DeviatoricKirchhoff(normalized_be - normalized_be_isentropic * Matd(1.0));
 		Real deviatoric_PK_norm = deviatoric_PK.norm();
 		Real trial_function =
 			deviatoric_PK_norm - sqrt_2_over_3_ * (hardening_modulus_ * hardening_parameter_[index_i] + yield_stress_);
@@ -54,7 +43,7 @@ namespace SPH {
 		Matd inverse_F_T = ~inverse_F;
 		inverse_plastic_strain_[index_i] = inverse_F * normalized_be * inverse_F_T;
 
-		return (deviatoric_PK + VolumetricPK(F) * Matd(1.0)) * inverse_F_T;
+		return (deviatoric_PK + VolumetricKirchhoff(F) * Matd(1.0)) * inverse_F_T;
 	}
 	//=================================================================================================//
 }

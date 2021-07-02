@@ -166,7 +166,7 @@ namespace SPH {
         };
         /**
  * @struct StateVariableInfo
- * @breif   Structure to hold related info about discrete variables.
+ * @brief   To hold related info about discrete variables.
  */
         struct StateVariableInfo {
             StateVariableInfo() {}

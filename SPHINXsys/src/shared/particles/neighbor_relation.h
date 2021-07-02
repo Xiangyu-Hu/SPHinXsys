@@ -33,7 +33,7 @@
 
 
 #include "base_data_package.h"
-#include "base_kernel.h"
+#include "all_kernels.h"
 #include "base_body.h"
 #include "base_particles.h"
 
@@ -140,6 +140,17 @@ namespace SPH {
 		virtual ~NeighborRelationContact() {};
 		void operator () (Neighborhood& neighborhood,
 			Vecd& displacement, size_t i_index, size_t j_index) const;
+	};
+
+	/**
+	 * @class NeighborRelationSolidContact
+	 * @brief A solid contact neighbor relation functor between particles i and j.
+	 */
+	class NeighborRelationSolidContact : public NeighborRelationContact
+	{
+	public:
+		NeighborRelationSolidContact(SPHBody* body, SPHBody* contact_body);
+		virtual ~NeighborRelationSolidContact() {};
 	};
 }
 #endif //NEIGHBOR_RELATION_H

@@ -196,7 +196,7 @@ namespace SPH {
 		return transformation_matrix;
 	}
 	//=================================================================================================//
-	Mat2d getDiagnal(const Mat2d& A)
+	Mat2d getDiagonal(const Mat2d& A)
 	{
 		Mat2d diag(1.0);
 		diag[0][0] = A[0][0];
@@ -204,7 +204,7 @@ namespace SPH {
 
 		return diag;
 	}
-	Mat3d getDiagnal(const Mat3d& A)
+	Mat3d getDiagonal(const Mat3d& A)
 	{
 		Mat3d diag(1.0);
 		diag[0][0] = A[0][0];

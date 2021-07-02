@@ -44,10 +44,6 @@ namespace SPH {
 		Real yield_stress_;
 
 		virtual void initializePlasticParameters() = 0;
-		/** Deviatoric part of Piola-Kirchhoff stress related with left cauchy-green defomeation tensor */
-		virtual Matd DeviatoricPK(const Matd& deviatoric_be);
-		/** Volumetric part of Piola-Kirchhoff stress related with left cauchy-green defomeation tensor */
-		virtual Real VolumetricPK(const Matd& deformation_gradient);
 	public:
 		/** Constructor */
 		PlasticSolid() :LinearElasticSolid()

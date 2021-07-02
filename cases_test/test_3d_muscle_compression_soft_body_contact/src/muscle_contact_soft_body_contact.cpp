@@ -123,10 +123,10 @@ public:
 /**
  * @brief Define moving plate material.
  */
-class MovingPlateMaterial : public LinearElasticSolid
+class MovingPlateMaterial : public NeoHookeanSolid
 {
 public:
-	MovingPlateMaterial() : LinearElasticSolid()
+	MovingPlateMaterial() : NeoHookeanSolid()
 	{
 		rho0_ = rho_0;
 		youngs_modulus_ = Youngs_modulus;
@@ -167,9 +167,9 @@ int main()
 	solid_dynamics::CorrectConfiguration corrected_configuration_in_strong_form(myocardium_body_inner);
 	solid_dynamics::CorrectConfiguration corrected_configuration_in_strong_form_2(moving_plate_inner);
 	/** active and passive stress relaxation. */
-	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(myocardium_body_inner);
+	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half(myocardium_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(myocardium_body_inner);
-	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half_2(moving_plate_inner);
+	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half_2(moving_plate_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half_2(moving_plate_inner);
 	//stress_relaxation_first_half_2.post_processes_(spring_constraint);
 	/** Algorithms for solid-solid contact. */
