@@ -20,8 +20,8 @@
 * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
 *                                                                           *
 * --------------------------------------------------------------------------*/
-#ifndef SPHINXSYS_BASE_CONTAINER_H
-#define SPHINXSYS_BASE_CONTAINER_H
+#ifndef LARGE_DATA_CONTAINER_H
+#define LARGE_DATA_CONTAINER_H
 
 #include "tbb/tbb.h"
 #include "tbb/blocked_range.h"
@@ -55,4 +55,4 @@ namespace SPH {
 	using DataVec = std::vector<std::vector<T>>;
 }
 
-#endif // SPHINXSYS_BASE_CONTAINER_H
+#endif //LARGE_DATA_CONTAINER_H

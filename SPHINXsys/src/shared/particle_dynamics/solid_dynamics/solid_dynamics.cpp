@@ -20,7 +20,7 @@ namespace SPH
 			ContactDynamicsData(solid_body_contact_relation),
 			mass_(particles_->mass_), contact_density_(particles_->contact_density_)
 		{
-			for (size_t k = 0; k != contact_particles_.size(); ++k)
+				for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_mass_.push_back(&(contact_particles_[k]->mass_));
 			}
@@ -674,6 +674,51 @@ namespace SPH
 		void StressRelaxationFirstHalf::Update(size_t index_i, Real dt)
 		{
 			vel_n_[index_i] += dvel_dt_[index_i] * dt;
+		}
+		//=================================================================================================//
+		KirchhoffStressRelaxationFirstHalf::
+			KirchhoffStressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation)
+			: StressRelaxationFirstHalf(body_inner_relation),
+			J_to_minus_2_over_diemsnion_(*particles_->createAVariable<indexScalar, Real>("DeterminantTerm")),
+			stress_on_particle_(*particles_->createAVariable<indexMatrix, Matd>("StressOnParticle")),
+			inverse_F_T_(*particles_->createAVariable<indexMatrix, Matd>("InverseTransposedDeformation")) {};
+		//=================================================================================================//
+		void KirchhoffStressRelaxationFirstHalf::Initialization(size_t index_i, Real dt)
+		{
+			pos_n_[index_i] += vel_n_[index_i] * dt * 0.5;
+			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
+			Real J = det(F_[index_i]);
+			Real one_over_J = 1.0 / J;
+			rho_n_[index_i] = rho0_  * one_over_J;
+			J_to_minus_2_over_diemsnion_[index_i] = pow(one_over_J * one_over_J, one_over_dimensions_);
+			inverse_F_T_[index_i] = ~SimTK::inverse(F_[index_i]);
+			Matd be = F_[index_i] * ~F_[index_i];
+			stress_on_particle_[index_i] = (Matd(1.0) * 0.5 * material_->BulkModulus() * J * (J - 1.0)
+				- material_->ShearModulus() * J_to_minus_2_over_diemsnion_[index_i] *(Matd(1.0) * be.trace() * one_over_dimensions_));
+			stress_PK1_[index_i] = F_[index_i] * material_->ConstitutiveRelation(F_[index_i], index_i);
+		}
+		//=================================================================================================//
+		void KirchhoffStressRelaxationFirstHalf::Interaction(size_t index_i, Real dt)
+		{
+			//including gravity and force from fluid
+			Vecd acceleration = dvel_dt_prior_[index_i]
+				+ force_from_fluid_[index_i] / mass_[index_i];
+			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = inner_neighborhood.j_[n];
+				Vecd extension = (pos_n_[index_i] - pos_n_[index_j]) / inner_neighborhood.r_ij_[n];
+				Matd stress_ij = material_->ShearModulus() * SimTK::outer(extension, extension) 
+					* (J_to_minus_2_over_diemsnion_[index_i] + J_to_minus_2_over_diemsnion_[index_j]);
+				Vecd extension_rate = (vel_n_[index_i] - vel_n_[index_j]) / inner_neighborhood.r_ij_[n];
+				Real strain_rate = SimTK::dot(extension, extension_rate);
+				Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
+				Matd numerical_stress_ij = Matd(1.0) * weight * material_->NumericalDamping(strain_rate, smoothing_length_);
+				acceleration += ((stress_on_particle_[index_i] + stress_on_particle_[index_j] 
+					+ stress_ij + numerical_stress_ij) * (inverse_F_T_[index_i] + inverse_F_T_[index_j]) * 0.5)
+					* inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n] * Vol_[index_j] * inv_rho0_;
+			}
+			dvel_dt_[index_i] = acceleration;
 		}
 		//=================================================================================================//
 		void StressRelaxationSecondHalf::Initialization(size_t index_i, Real dt)

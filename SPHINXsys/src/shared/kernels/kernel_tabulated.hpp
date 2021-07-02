@@ -46,6 +46,8 @@ namespace SPH
 	public:
 		KernelTabulated(int kernel_resolution);
 
+		virtual Real KernelSize() const { return original_kernel_->KernelSize(); };
+
 		virtual Real W_1D(const Real q) const override;
 		virtual Real W_2D(const Real q) const override;
 		virtual Real W_3D(const Real q) const override;
@@ -67,13 +69,12 @@ namespace SPH
 	void KernelTabulated<KernelType>::setBasicParameters()
 	{
 		original_kernel_ = new KernelType();
-		kernel_size_ = original_kernel_->KernelSize();
 		original_kernel_->initialize(h_);
 		factor_W_1D_ = original_kernel_->FactorW1D();
 		factor_W_2D_ = original_kernel_->FactorW2D();
 		factor_W_3D_ = original_kernel_->FactorW3D();
 
-		dq_ = kernel_size_ / Real(kernel_resolution_);
+		dq_ = KernelSize() / Real(kernel_resolution_);
 		for (int i = 0; i < kernel_resolution_ + 4; i++) 
 		{
 			w_1d.push_back(original_kernel_->W_1D(Real(i - 1)*dq_));

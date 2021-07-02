@@ -20,15 +20,15 @@
 * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
 *                                                                           *
 * --------------------------------------------------------------------------*/
-#ifndef SPHINXSYS_BASE_PACKAGE_H
-#define SPHINXSYS_BASE_PACKAGE_H
+#ifndef BASE_DATA_PACKAGE_H
+#define BASE_DATA_PACKAGE_H
 
+#include "scalar_functions.h"
+#include "data_type.h"
 #include "small_vectors.h"
 #include "array_allocation.h"
 #include "large_data_containers.h"
-#include "scalar_functions.h"
-#include "data_type.h"
 
 #define TBB_PARALLEL true
 
-#endif //SPHINXSYS_BASE_PACKAGE_H
+#endif //BASE_DATA_PACKAGE_H

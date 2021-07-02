@@ -117,16 +117,16 @@ namespace SPH
 	ContactBodyRelation::ContactBodyRelation(SPHBody* sph_body, RealBodyVector contact_sph_bodies)
 		: BaseContactBodyRelation(sph_body, contact_sph_bodies)
 	{
-		initializaiton();
+		initialization();
 	}
 	//=================================================================================================//
 	ContactBodyRelation::ContactBodyRelation(SPHBody* sph_body, BodyPartVector contact_bodyparts)
 		: BaseContactBodyRelation(sph_body, contact_bodyparts)
 	{
-		initializaiton();
+		initialization();
 	}
 	//=================================================================================================//
-	void ContactBodyRelation::initializaiton()
+	void ContactBodyRelation::initialization()
 	{
 		for (size_t k = 0; k != contact_bodies_.size(); ++k) 
 		{
@@ -148,10 +148,13 @@ namespace SPH
 	}
 	//=================================================================================================//
 	SolidContactBodyRelation::SolidContactBodyRelation(SPHBody* sph_body, RealBodyVector contact_sph_bodies)
-		: ContactBodyRelation(sph_body, contact_sph_bodies), 
+		: BaseContactBodyRelation(sph_body, contact_sph_bodies), 
 		body_part_particles_(body_surface_layer_.body_part_particles_),
 		get_body_part_particle_index_(body_part_particles_),
-		body_surface_layer_(ShapeSurfaceLayer(sph_body)) {}
+		body_surface_layer_(ShapeSurfaceLayer(sph_body)) 
+	{
+		initialization();
+	}
 	//=================================================================================================//
 	void  SolidContactBodyRelation::resetNeighborhoodCurrentSize()
 	{
@@ -163,6 +166,16 @@ namespace SPH
 						contact_configuration_[k][index_i].current_size_ = 0;
 					}
 				}, ap);
+		}
+	}
+	//=================================================================================================//
+	void SolidContactBodyRelation::initialization()
+	{
+		for (size_t k = 0; k != contact_bodies_.size(); ++k)
+		{
+			target_mesh_cell_linked_lists_.push_back(dynamic_cast<MeshCellLinkedList*>(contact_bodies_[k]->mesh_cell_linked_list_));
+			get_search_ranges_.push_back(new SearchRangeMultiResolution(sph_body_, contact_bodies_[k]));
+			get_contact_neighbors_.push_back(new NeighborRelationSolidContact(sph_body_, contact_bodies_[k]));
 		}
 	}
 	//=================================================================================================//

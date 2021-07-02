@@ -34,7 +34,7 @@ int main()
 	/** Time step size calculation. */
 	solid_dynamics::AcousticTimeStepSize  computing_time_step_size(column);
 	/** active and passive stress relaxation. */
-	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(column_inner);
+	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half(column_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(column_inner);
 	/** Constrain the holder. */
 	solid_dynamics::ConstrainSolidBodyRegion

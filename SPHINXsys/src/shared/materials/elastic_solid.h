@@ -92,6 +92,12 @@ namespace SPH {
 		/** numerical demaping is computed between particles i and j */
 		virtual Real NumericalDamping(Real dE_dt_ij, Real smoothing_length);
 
+		/** Deviatoric Kirchhoff stress related with the deviatoric part of left cauchy-green deformation tensor.
+		 *  Note that, dependent of the normalizeation of the later, the returned stress can be normalized or non-normalized. */
+		virtual Matd DeviatoricKirchhoff(const Matd& deviatoric_be);
+		/** Volumetric Kirchhoff stress related with green-lagrangian tensor */
+		virtual Real VolumetricKirchhoff(const Matd& deformation);
+
 		virtual ElasticSolid* ThisObjectPtr() override {return this;};
 	};
 
