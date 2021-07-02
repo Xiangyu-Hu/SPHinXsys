@@ -51,13 +51,13 @@ Here, we give the instructions for installing on Ubuntu Linux, Apple OS and Wind
 
 ### Installing on Ubunutu Linux and Mac OS
 
-0. Make sure that gcc, gfrotran, wget, git, cmake are installed and uodated.
+0. Make sure that gcc, gfrotran, wget, git, cmake and google test are installed and updated.
 
 1. Install Boost and TBB libraries
 
         $ sudo apt-get install libtbb-dev
         $ sudo apt-get install libboost-all-dev
-
+ 
     and set the environment by
 
         $ echo 'export TBB_HOME=/usr/lib/x86_64-linux-gnu' >> ~/.bashrc
@@ -165,7 +165,7 @@ Here, we give the instructions for installing on Ubuntu Linux, Apple OS and Wind
 ### Install on Windows Visual Studio
 
 You can find a installation instruction video: https://youtu.be/m0p1nybM4v4, and install by the following steps: 
-1. Install latest version Cmake, SmartGit (choose non-commercial option) binary.
+1. Install latest version Cmake, SmartGit (choose non-commercial option) binary and make sure that google test is installed in Visual Studio.
 2. Build, test and install Simbody
 
         Downloading from https://github.com/simbody/simbody/releases
