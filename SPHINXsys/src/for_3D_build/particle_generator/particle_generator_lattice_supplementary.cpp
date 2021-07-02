@@ -50,6 +50,8 @@ namespace SPH {
 					}
 				}
 
+		std::cout << "number of cells: " << number_of_cells << std::endl;
+
 		size_t total_real_particles = 0;
 		int count = 0;
 		int interval = number_of_cells / number_of_particles_;
