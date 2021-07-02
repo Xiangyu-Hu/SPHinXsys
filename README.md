@@ -13,6 +13,14 @@ SPHinXsys is a multi-physics, multi-resolution SPH library.
 Although it is not a standalone application itself, 
 many examples designated for the specific type of applications are provided.
 
+## Reference Paper
+
+Please cite :
+
+1. Zhang et al. 
+"SPHinXsys: An open-source multi-physics and multi-resolution library based on smoothed particle hydrodynamics",
+Computer Physics Communications, 267 (2021) 108066
+
 ## Algorithm publications
 
 The algorithms in SPHinXsys are based on the following publications:
@@ -33,13 +41,21 @@ Software Impacts, 6 (2020) 100033
 "A multi-resolution SPH method for fluid-structure interactions",
 Journal of Computational Physics, in press (2021)
 
-5. Chi Zhang, Yanji Wei, Frederic Dias, Xiangyu Hu,
+5. Chi Zhang, Jianhang Wang, Massoud Rezavand, Dong Wu, Xiangyu Hu,
+"An integrative smoothed particle hydrodynamics method for modeling cardiac function",
+Computer Methods in Applied Mechanics and Engineering, 381 (2021) 113847
+
+6. Yujie Zhu, Chi Zhang, Yongchuan Yu, Xiangyu Hu,
+"A CAD-compatible body-fitted particle generator for arbitrarily complex geometry and its application to wave-structure interaction",
+Journal of Hydrodynamics 33 (2021) 195-206
+
+7. Zhang et al. 
+"SPHinXsys: An open-source multi-physics and multi-resolution library based on smoothed particle hydrodynamics",
+Computer Physics Communications, 267 (2021) 108066
+
+8. Chi Zhang, Yanji Wei, Frederic Dias, Xiangyu Hu,
 "An efficient fully Lagrangian solver for modeling wave interaction with oscillating wave energy converter",
 arXiv:2012.05323
-
-6. Chi Zhang, Jianhang Wang, Massoud Rezavand, Dong Wu, Xiangyu Hu,
-"An integrative smoothed particle hydrodynamics framework for modeling cardiac function",
- arXiv:2009.03759
 
 ## Software Architecture
 
