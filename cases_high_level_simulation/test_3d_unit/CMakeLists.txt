@@ -28,7 +28,7 @@ add_test(NAME ${PROJECT_NAME}_particle_relaxation
 
 if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
+		target_link_libraries(${PROJECT_NAME} sphinxsys_3d GTest::gtest GTest::gtest_main)
 		add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
