@@ -14,18 +14,17 @@
 
 using namespace SPH;
 
-//----------------------------------------------------------------------
-//	Set the file path to the data file.
-//----------------------------------------------------------------------
 std::string full_path_to_airfoil = "./input/plate_50_50_4.stl";
-//----------------------------------------------------------------------
-//	Basic geometry parameters and numerical setup.
-//----------------------------------------------------------------------
-Vec3d domain_lower_bound(-30, -30, -3);
-Vec3d domain_upper_bound(30, 30, 3);
-Real dp_0 = 1.5;
-/** Domain bounds of the system. */
-BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+//std::string full_path_to_airfoil = "./input/tube_100_90_100.stl";
+
+Vec3d domain_lower_bound_plate(-30, -30, -3);
+Vec3d domain_upper_bound_plate(30, 30, 3);
+// Vec3d domain_lower_bound_tube(-60, -60, -60);
+// Vec3d domain_upper_bound_tube(60, 60, 60);
+Real dp_0 = 1;
+
+BoundingBox system_domain_bounds(domain_lower_bound_plate, domain_upper_bound_plate);
+//BoundingBox system_domain_bounds(domain_lower_bound_tube, domain_upper_bound_tube);
 
 TriangleMeshShape *CreateImportedModelSurface()
 {

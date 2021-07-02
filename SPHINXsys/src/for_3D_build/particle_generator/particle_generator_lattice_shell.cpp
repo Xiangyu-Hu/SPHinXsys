@@ -15,12 +15,12 @@ namespace SPH {
 		: ParticleGenerator(), lattice_spacing_(0), 
 		domain_bounds_(0, 0), body_shape_(NULL)
 	{
-		// total_volume_ = 1000;
-		// global_avg_thickness_ = 4;
-		// particle_spacing_ = 4;
-		// avg_particle_size_ = 4 * 10 * 10; // calculated as: particle spacing^2 * global avg thickness
-		number_of_particles_ = 25;
-		number_of_cells_ = 10000;
+		total_volume_plate_ = 10000;
+		total_volume_tube_ = 149225.65104552;
+		global_avg_thickness_ = 4; // 4 plate, 5 tube
+		particle_spacing_ = 5;
+		avg_particle_volume_ = global_avg_thickness_ * particle_spacing_ * particle_spacing_;
+		number_of_particles_ = total_volume_plate_ / avg_particle_volume_;
 	}
 	//=================================================================================================//
 	void ShellParticleGeneratorLattice::initialize(SPHBody* sph_body)
