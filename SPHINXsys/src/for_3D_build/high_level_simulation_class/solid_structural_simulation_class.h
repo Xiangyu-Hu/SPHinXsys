@@ -130,7 +130,7 @@ class StructuralSimulation
 		In_Output in_output_;
 
 		vector<TriangleMeshShape> body_mesh_list_;
-		vector<ParticleAdaptation> particle_adaptation_list_;
+		vector<ShellParticleAdaptation> particle_adaptation_list_;
 		vector<ShellParticleGeneratorLattice> particle_generator_list_;
 		vector<shared_ptr<SolidBodyForSimulation>> solid_body_list_;
 

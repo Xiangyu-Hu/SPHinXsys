@@ -176,4 +176,14 @@ namespace SPH
 		return target_ratio * spacing_ref_;
 	}
 	//=================================================================================================//
+	ShellParticleAdaptation::ShellParticleAdaptation() : ParticleAdaptation()
+	{
+		global_avg_thickness_ = 4.0;
+	}
+	//=================================================================================================//
+	BaseLevelSet* ShellParticleAdaptation::createLevelSet(ComplexShape& complex_shape)
+	{
+		return new LevelSet(complex_shape, *this, complex_shape.findBounds(), RefinedReferenceSpacing());
+	}
+	//=================================================================================================//
 }

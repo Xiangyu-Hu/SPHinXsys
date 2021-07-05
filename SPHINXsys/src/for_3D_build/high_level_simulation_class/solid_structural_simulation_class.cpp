@@ -267,7 +267,7 @@ void StructuralSimulation::CreateParticleAdaptationList()
 	particle_adaptation_list_ = {};
 	for (unsigned int i = 0; i < resolution_list_.size(); i++)
 	{
-		particle_adaptation_list_.push_back(ParticleAdaptation());
+		particle_adaptation_list_.push_back(ShellParticleAdaptation());
 
 		Real system_resolution_ratio = resolution_list_[i] / system_resolution_;
 		particle_adaptation_list_[i].SetSystemResolutionRatio(system_resolution_ratio);

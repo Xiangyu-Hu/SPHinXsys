@@ -143,5 +143,22 @@ namespace SPH {
 
 		Real getLocalSpacing(ComplexShape& complex_shape, Vecd& position);
 	};
+	
+	/**
+	* @class ShellParticleAdaptation
+	* @brief Base class for ShellParticleAdaptation.
+	*/
+	class ShellParticleAdaptation : public ParticleAdaptation
+	{
+	protected:
+		Real global_avg_thickness_;
+	public:
+		ShellParticleAdaptation();
+		virtual ~ShellParticleAdaptation() {};
+
+		Real getGlobalAvgThickness(){ return global_avg_thickness_; };
+		Real RefinedReferenceSpacing() { return global_avg_thickness_ * 0.25; };
+		virtual BaseLevelSet* createLevelSet(ComplexShape& complex_shape) override;
+	};
 }
 #endif //PARTICLE_ADAPTATION_H

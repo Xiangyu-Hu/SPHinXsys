@@ -54,7 +54,9 @@ namespace SPH {
 		virtual void createBaseParticles(BaseParticles* base_particles) override;
 
 		Real get_lattice_spacing_(){ return lattice_spacing_; };
-		int get_number_of_particles_(){ return number_of_particles_; };
+		size_t get_planned_number_of_particles_(){ return planned_number_of_particles_; };
+		size_t get_number_of_cells_(){ return number_of_cells_; };
+		size_t get_total_real_particles_(){ return total_real_particles_; };
 	protected:
 		Real lattice_spacing_; // this will be the actual input, the particle spacing
 		BoundingBox domain_bounds_;
@@ -65,7 +67,10 @@ namespace SPH {
 		Real global_avg_thickness_;
 		Real particle_spacing_; // input from ParticleAdaptation
 		Real avg_particle_volume_; // calculated as: particle spacing^2 * global avg thickness
-		int number_of_particles_;
+
+		size_t planned_number_of_particles_;
+		size_t number_of_cells_;
+		size_t total_real_particles_;
 
 		// void calculateTotalVolume(){ total_volume_= 10000.0; };
 		// void calculateGlobalAvgThickness(){ global_avg_thickness_= 4.0; };
@@ -79,10 +84,11 @@ namespace SPH {
 			std::uniform_int_distribution<int> distr(min, max);
 
 			int random_int = distr(eng);
-			//std::cout << "random int: " << random_int << "\n";
 
 			return random_int;
 		};
+
+		size_t calculateNumberOfCells();
 
 		virtual void createABaseParticle(BaseParticles* base_particles, 
 			Vecd& particle_position, Real particle_volume, size_t& total_real_particles);
