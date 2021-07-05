@@ -210,6 +210,8 @@ You can find a installation instruction video: https://youtu.be/m0p1nybM4v4, and
         Use Cmake to build project file
         Configure x64 build and Generate
         After configuration, one can choose debug or release mode of the project file.
+        Note that you need choose the same debug or release mode in the Visual Studio as you have chosen in Cmake.
+        Otherwise, it may lead to compiling issues. 
 
 6. Build execute able and run test cases in Visual Studio
 
