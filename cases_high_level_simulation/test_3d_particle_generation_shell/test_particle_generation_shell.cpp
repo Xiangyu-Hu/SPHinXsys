@@ -5,8 +5,8 @@ Real tolerance = 1e-6;
 
 TEST(StructuralSimulation, ShellParticles)
 {
-	Real resolution_plate = 5;
-	Real resolution_tube = 5;
+	Real resolution_plate = 1.5;
+	Real resolution_tube = 1.5;
 	string relative_input_path = "./input/"; //path definition for linux
 	string plate_stl = "plate_50_50_4.stl";
 	string tube_stl = "tube_100_90_100.stl";

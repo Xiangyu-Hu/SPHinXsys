@@ -28,7 +28,7 @@ namespace SPH {
 
 		total_volume_ = 149225.65104552; // plate 10000, tube 149225.65104552
 		global_avg_thickness_ = 5.0; // 4 plate, 5 tube
-		avg_particle_volume_ = global_avg_thickness_ * lattice_spacing_ * lattice_spacing_;
+		avg_particle_volume_ = global_avg_thickness_ * 5 * 5;
 		Real number_of_particles = total_volume_ / avg_particle_volume_ + 0.5;
 		number_of_particles_ = int(number_of_particles);
 	}
