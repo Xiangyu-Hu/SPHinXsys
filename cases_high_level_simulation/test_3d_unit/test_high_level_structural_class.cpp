@@ -97,7 +97,7 @@ TEST(StructuralSimulation, PositionSolidBodyTuple)
 		physical_viscosity,
 		{}
 	};
-	Real scale_system_bounds = 10;
+	Real scale_system_bounds = 30;
 	input.scale_system_boundaries_ = scale_system_bounds;
 	input.position_solid_body_tuple_ = { PositionSolidBodyTuple(0, 0.0, end_time * 0.75, final_position_center ),
 											PositionSolidBodyTuple(0, end_time * 0.75, end_time, final_position_center ) };
@@ -247,6 +247,7 @@ TEST(StructuralSimulation, TranslateSolidBodyTuple)
 	};
 	Vecd translation_vector = Vec3d(0,0,200)*scale_stl;
 	input.translation_solid_body_tuple_ = { TranslateSolidBodyTuple(0, 0.0, end_time, translation_vector) };
+	input.scale_system_boundaries_ = 20;
 
 	//=================================================================================================//
 	TestStructuralSimulation sim (input);
