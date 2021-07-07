@@ -372,12 +372,15 @@ namespace SPH
 			vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
 			start_time_(start_time), end_time_(end_time), translation_(translation)
 		{
+
 		}
 		//=================================================================================================//
 		Vecd TranslateSolidBody::getDisplacement(size_t index_i, Real dt)
 		{
 			// displacement from the initial position
-			Vecd displacement = translation_ * dt / (end_time_ - GlobalStaticVariables::physical_time_);
+			//Vecd pos_final = pos_0_[index_i] + translation_;
+			//displacement = (pos_final - pos_n_[index_i]) * dt / (end_time_ - start_time_));
+			Vecd displacement = translation_ * dt / (end_time_ - start_time_); // *0.5 multiplying with it works
 			return displacement;
 		}
 		//=================================================================================================//
