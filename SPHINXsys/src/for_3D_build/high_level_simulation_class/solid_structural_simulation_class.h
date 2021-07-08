@@ -83,6 +83,7 @@ public:
 	vector<LinearElasticSolid> material_model_list_;
 	Real physical_viscosity_;
 	vector<array<int, 2>> contacting_bodies_list_;
+	vector<pair<array<int, 2>, array<Real, 2>>> time_dep_contacting_bodies_list_;
 	// scale system boundaries
 	Real scale_system_boundaries_;
 	// particle relaxation
@@ -105,7 +106,7 @@ public:
 		vector<LinearElasticSolid> material_model_list,
 		Real physical_viscosity,
 		vector<array<int, 2>> contacting_bodies_list
-		);
+	);
 };
 
 class StructuralSimulation
@@ -120,6 +121,7 @@ class StructuralSimulation
 		vector<LinearElasticSolid> material_model_list_;
 		Real physical_viscosity_;
 		vector<array<int, 2>> contacting_bodies_list_;
+		vector<pair<array<int, 2>, array<Real, 2>>> time_dep_contacting_bodies_list_; //optional: time dependent contact
 		vector<bool> particle_relaxation_list_; // optional: particle relaxation
 
 		// internal members

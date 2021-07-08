@@ -126,6 +126,8 @@ StructuralSimulationInput::StructuralSimulationInput(
 	physical_viscosity_(physical_viscosity),
 	contacting_bodies_list_(contacting_bodies_list)
 {
+	//time dependent contact
+	time_dep_contacting_bodies_list_ = {};
 	// particle_relaxation option
 	particle_relaxation_list_ = {};
 	for (unsigned i = 0; i < resolution_list_.size(); i++){ particle_relaxation_list_.push_back(true); }
@@ -155,6 +157,7 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	material_model_list_(input.material_model_list_),
 	physical_viscosity_(input.physical_viscosity_),
 	contacting_bodies_list_(input.contacting_bodies_list_),
+	time_dep_contacting_bodies_list_(input.time_dep_contacting_bodies_list_),
 
 	// default system, optional: particle relaxation, scale_system_boundaries
 	particle_relaxation_list_(input.particle_relaxation_list_),
@@ -311,6 +314,10 @@ void StructuralSimulation::InitializeAllContacts()
 	{
 		InitializeContactBetweenTwoBodies(contacting_bodies_list_[i][0], contacting_bodies_list_[i][1]);
 	}
+	for (unsigned int j = 0; j < time_dep_contacting_bodies_list_.size(); j++)
+	{
+		InitializeContactBetweenTwoBodies(time_dep_contacting_bodies_list_[j].first[0], time_dep_contacting_bodies_list_[j].first[1]); //vector with first element being array with indices
+	}
 }
 
 void StructuralSimulation::InitializeGravity()
@@ -447,17 +454,43 @@ void StructuralSimulation::ExecuteSpringDamperConstraintParticleWise()
 
 void StructuralSimulation::ExecuteContactDensitySummation()
 {
+	unsigned int size_contact_density = contact_density_list_.size();
 	for (unsigned int i = 0; i < contact_density_list_.size(); i++)
 	{
-		contact_density_list_[i]->parallel_exec();
+		if (i < size_contact_density)
+		{
+			contact_density_list_[i]->parallel_exec();
+		}
+		else
+		{
+			Real start_time = time_dep_contacting_bodies_list_[i - size_contact_density].second[0];
+			Real end_time = time_dep_contacting_bodies_list_[i - size_contact_density].second[1];
+			if(GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
+			{
+				contact_density_list_[i]->parallel_exec();
+			}
+		}
 	}
 }
 
 void StructuralSimulation::ExecuteContactForce()
 {
+	unsigned int size_contact_force = contact_force_list_.size();
 	for (unsigned int i = 0; i < contact_force_list_.size(); i++)
 	{
-		contact_force_list_[i]->parallel_exec();
+		if (i < size_contact_force)
+		{
+			contact_force_list_[i]->parallel_exec();
+		}
+		else
+		{
+			Real start_time = time_dep_contacting_bodies_list_[i - size_contact_force].second[0];
+			Real end_time = time_dep_contacting_bodies_list_[i - size_contact_force].second[1];
+			if(GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
+			{
+				contact_force_list_[i]->parallel_exec();
+			}
+		}
 	}
 }
 
@@ -526,11 +559,26 @@ void StructuralSimulation::ExecuteUpdateCellLinkedList()
 }
 
 void StructuralSimulation::ExecuteContactUpdateConfiguration()
-{
+{	
+	unsigned int size_contact = contacting_bodies_list_.size();
 	for (unsigned int i = 0; i < contact_list_.size(); i++)
 	{
-		contact_list_[i]->updateConfiguration();
+		if (i < size_contact)
+		{
+			contact_list_[i]->updateConfiguration();
+		}
+		else
+		{
+			Real start_time = time_dep_contacting_bodies_list_[i - size_contact].second[0];
+			Real end_time = time_dep_contacting_bodies_list_[i - size_contact].second[1];
+			if(GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
+			{
+				contact_list_[i]->updateConfiguration();
+			}
+		}
 	}
+
+
 }
 
 void StructuralSimulation::RunSimulationStep(int &ite, Real &dt, Real &integration_time)

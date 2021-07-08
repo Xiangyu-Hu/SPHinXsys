@@ -52,6 +52,11 @@ int main()
 	vector<LinearElasticSolid> material_model_list = { material, material, material_vessel };
 
 	vector<array<int, 2>> contacting_bodies_list = { {0, 1} };
+	vector<pair<array<int, 2>, array<Real, 2>>> time_dep_contacting_bodies_list;
+	time_dep_contacting_bodies_list[0].first[0] = 1;
+	time_dep_contacting_bodies_list[0].first[1] = 2;
+	time_dep_contacting_bodies_list[0].second[0] = end_time_cramping;
+	time_dep_contacting_bodies_list[0].second[1] = end_time_simulation;
 
 	/** INPUT DECLERATION */
 	StructuralSimulationInput input
