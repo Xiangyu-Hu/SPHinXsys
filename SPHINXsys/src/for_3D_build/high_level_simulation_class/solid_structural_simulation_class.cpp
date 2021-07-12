@@ -210,12 +210,12 @@ StructuralSimulation::~StructuralSimulation()
 void StructuralSimulation::ScaleTranslationAndResolution()
 {
 	// scale the translation_list_, system_resolution_ and resolution_list_
-	for (unsigned int i = 0; i < translation_list_.size(); i++)
+	for (size_t i = 0; i < translation_list_.size(); i++)
 	{
 		translation_list_[i] *= scale_stl_;
 	}
 	system_resolution_ *= scale_stl_;
-	for (unsigned int i = 0; i < resolution_list_.size(); i++)
+	for (size_t i = 0; i < resolution_list_.size(); i++)
 	{
 		resolution_list_[i] *= scale_stl_;
 	}
@@ -224,7 +224,7 @@ void StructuralSimulation::ScaleTranslationAndResolution()
 void StructuralSimulation::SetSystemResolutionMax()
 {
 	system_resolution_ = 0.0;
-	for (unsigned int i = 0; i < resolution_list_.size(); i++)
+	for (size_t i = 0; i < resolution_list_.size(); i++)
 	{
 		if (system_resolution_ < resolution_list_[i])
 		{
@@ -237,7 +237,7 @@ void StructuralSimulation::SetSystemResolutionMax()
 void StructuralSimulation::CalculateSystemBoundaries()
 {	
 	// calculate system bounds from all bodies
-	for (unsigned int i = 0; i < body_mesh_list_.size(); i++)
+	for (size_t i = 0; i < body_mesh_list_.size(); i++)
 	{
 		BoundingBox additional = body_mesh_list_[i].findBounds();
 		ExpandBoundingBox(&system_.system_domain_bounds_, &additional);
@@ -255,7 +255,7 @@ void StructuralSimulation::CalculateSystemBoundaries()
 void StructuralSimulation::CreateBodyMeshList()
 {
 	body_mesh_list_ = {};
-	for (unsigned int i = 0; i < imported_stl_list_.size(); i++)
+	for (size_t i = 0; i < imported_stl_list_.size(); i++)
 	{
 		string relative_input_path_copy = relative_input_path_;
 		body_mesh_list_.push_back(TriangleMeshShape(relative_input_path_copy.append(imported_stl_list_[i]), translation_list_[i], scale_stl_));
@@ -265,7 +265,7 @@ void StructuralSimulation::CreateBodyMeshList()
 void StructuralSimulation::CreateParticleAdaptationList()
 {
 	particle_adaptation_list_ = {};
-	for (unsigned int i = 0; i < resolution_list_.size(); i++)
+	for (size_t i = 0; i < resolution_list_.size(); i++)
 	{
 		particle_adaptation_list_.push_back(ParticleAdaptation());
 
@@ -277,7 +277,7 @@ void StructuralSimulation::CreateParticleAdaptationList()
 void StructuralSimulation::InitializeElasticSolidBodies()
 {
 	solid_body_list_ = {};
-	for (unsigned int i = 0; i < body_mesh_list_.size(); i++)
+	for (size_t i = 0; i < body_mesh_list_.size(); i++)
 	{
 		solid_body_list_.emplace_back(make_shared<SolidBodyForSimulation>(system_, imported_stl_list_[i], body_mesh_list_[i], particle_adaptation_list_[i], physical_viscosity_, material_model_list_[i]));
 		if (particle_relaxation_list_[i])
@@ -310,11 +310,11 @@ void StructuralSimulation::InitializeAllContacts()
 	contact_list_ = {};
 	contact_density_list_ = {};
 	contact_force_list_ = {};
-	for (unsigned int i = 0; i < contacting_bodies_list_.size(); i++)
+	for (size_t i = 0; i < contacting_bodies_list_.size(); i++)
 	{
 		InitializeContactBetweenTwoBodies(contacting_bodies_list_[i][0], contacting_bodies_list_[i][1]);
 	}
-	for (unsigned int j = 0; j < time_dep_contacting_bodies_list_.size(); j++)
+	for (size_t j = 0; j < time_dep_contacting_bodies_list_.size(); j++)
 	{
 		InitializeContactBetweenTwoBodies(time_dep_contacting_bodies_list_[j].first[0], time_dep_contacting_bodies_list_[j].first[1]); //vector with first element being array with indices
 	}
@@ -324,13 +324,13 @@ void StructuralSimulation::InitializeGravity()
 {
 	// collect all the body indeces with non-zero gravity
 	vector<int> body_indeces_gravity = {};
-	for (unsigned int i = 0; i < non_zero_gravity_.size(); i++)
+	for (size_t i = 0; i < non_zero_gravity_.size(); i++)
 	{
 		body_indeces_gravity.push_back(non_zero_gravity_[i].first);
 	}
 	// initialize gravity
 	initialize_gravity_ = {};
-	for (unsigned int i = 0; i < solid_body_list_.size(); i++)
+	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{	
 		if ( find(body_indeces_gravity.begin(), body_indeces_gravity.end(), i) != body_indeces_gravity.end() )
 		{	
@@ -346,7 +346,7 @@ void StructuralSimulation::InitializeGravity()
 void StructuralSimulation::InitializeAccelerationForBodyPartInBoundingBox()
 {	
 	acceleration_bounding_box_ = {};
-	for (unsigned int i = 0; i < acceleration_bounding_box_tuple_.size(); i++)
+	for (size_t i = 0; i < acceleration_bounding_box_tuple_.size(); i++)
 	{
 		SolidBody* solid_body = solid_body_list_[get<0>(acceleration_bounding_box_tuple_[i])]->GetImportedModel();
 		acceleration_bounding_box_.emplace_back(make_shared<solid_dynamics::AccelerationForBodyPartInBoundingBox>
@@ -357,7 +357,7 @@ void StructuralSimulation::InitializeAccelerationForBodyPartInBoundingBox()
 void StructuralSimulation::InitializeSpringDamperConstraintParticleWise()
 {	
 	spring_damper_constraint_ = {};
-	for (unsigned int i = 0; i < spring_damper_tuple_.size(); i++)
+	for (size_t i = 0; i < spring_damper_tuple_.size(); i++)
 	{
 		SolidBody* solid_body = solid_body_list_[get<0>(spring_damper_tuple_[i])]->GetImportedModel();
 		spring_damper_constraint_.emplace_back(make_shared<solid_dynamics::SpringDamperConstraintParticleWise>(solid_body, get<1>(spring_damper_tuple_[i]), get<2>(spring_damper_tuple_[i])));
@@ -367,7 +367,7 @@ void StructuralSimulation::InitializeSpringDamperConstraintParticleWise()
 void StructuralSimulation::InitializeConstrainSolidBodyRegion()
 {	
 	fixed_constraint_ = {};
-	for (unsigned int i = 0; i < body_indeces_fixed_constraint_.size(); i++)
+	for (size_t i = 0; i < body_indeces_fixed_constraint_.size(); i++)
 	{
 		int body_index = body_indeces_fixed_constraint_[i];
 		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(solid_body_list_[body_index]->GetImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
@@ -378,7 +378,7 @@ void StructuralSimulation::InitializeConstrainSolidBodyRegion()
 void StructuralSimulation::InitializePositionSolidBody()
 {
 	position_solid_body_ = {};
-	for (unsigned int i = 0; i < position_solid_body_tuple_.size(); i++)
+	for (size_t i = 0; i < position_solid_body_tuple_.size(); i++)
 	{
 		int body_index = get<0>(position_solid_body_tuple_[i]);
 		Real start_time = get<1>(position_solid_body_tuple_[i]);
@@ -393,7 +393,7 @@ void StructuralSimulation::InitializePositionSolidBody()
 void StructuralSimulation::InitializePositionScaleSolidBody()
 {
 	position_scale_solid_body_ = {};
-	for (unsigned int i = 0; i < position_scale_solid_body_tuple_.size(); i++)
+	for (size_t i = 0; i < position_scale_solid_body_tuple_.size(); i++)
 	{
 		int body_index = get<0>(position_scale_solid_body_tuple_[i]);
 		Real start_time = get<1>(position_scale_solid_body_tuple_[i]);
@@ -408,7 +408,7 @@ void StructuralSimulation::InitializePositionScaleSolidBody()
 void StructuralSimulation::InitializeTranslateSolidBody()
 {
 	translation_solid_body_ = {};
-	for (unsigned int i = 0; i < translation_solid_body_tuple_.size(); i++)
+	for (size_t i = 0; i < translation_solid_body_tuple_.size(); i++)
 	{
 		int body_index = get<0>(translation_solid_body_tuple_[i]);
 		Real start_time = get<1>(translation_solid_body_tuple_[i]);
@@ -422,7 +422,7 @@ void StructuralSimulation::InitializeTranslateSolidBody()
 
 void StructuralSimulation::ExecuteCorrectConfiguration()
 {
-	for (unsigned int i = 0; i < solid_body_list_.size(); i++)
+	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{
 		solid_body_list_[i]->GetCorrectConfiguration()->parallel_exec();
 	}
@@ -430,7 +430,7 @@ void StructuralSimulation::ExecuteCorrectConfiguration()
 
 void StructuralSimulation::ExecuteInitializeATimeStep()
 {
-	for (unsigned int i = 0; i < initialize_gravity_.size(); i++)
+	for (size_t i = 0; i < initialize_gravity_.size(); i++)
 	{
 		initialize_gravity_[i]->parallel_exec();
 	}
@@ -438,7 +438,7 @@ void StructuralSimulation::ExecuteInitializeATimeStep()
 
 void StructuralSimulation::ExecuteAccelerationForBodyPartInBoundingBox()
 {
-	for (unsigned int i = 0; i < acceleration_bounding_box_.size(); i++)
+	for (size_t i = 0; i < acceleration_bounding_box_.size(); i++)
 	{
 		acceleration_bounding_box_[i]->parallel_exec();
 	}
@@ -446,7 +446,7 @@ void StructuralSimulation::ExecuteAccelerationForBodyPartInBoundingBox()
 
 void StructuralSimulation::ExecuteSpringDamperConstraintParticleWise()
 {
-	for (unsigned int i = 0; i < spring_damper_constraint_.size(); i++)
+	for (size_t i = 0; i < spring_damper_constraint_.size(); i++)
 	{
 		spring_damper_constraint_[i]->parallel_exec();
 	}
@@ -454,17 +454,17 @@ void StructuralSimulation::ExecuteSpringDamperConstraintParticleWise()
 
 void StructuralSimulation::ExecuteContactDensitySummation()
 {
-	unsigned int size_contact_density = contact_density_list_.size();
-	for (unsigned int i = 0; i < contact_density_list_.size(); i++)
+	size_t number_of_general_contacts = contacting_bodies_list_.size() * 2;
+	for (size_t i = 0; i < contact_density_list_.size(); i++)
 	{
-		if (i < size_contact_density)
+		if (i < number_of_general_contacts)
 		{
 			contact_density_list_[i]->parallel_exec();
 		}
 		else
 		{
-			Real start_time = time_dep_contacting_bodies_list_[i - size_contact_density].second[0];
-			Real end_time = time_dep_contacting_bodies_list_[i - size_contact_density].second[1];
+			Real start_time = time_dep_contacting_bodies_list_[i - number_of_general_contacts].second[0];
+			Real end_time = time_dep_contacting_bodies_list_[i - number_of_general_contacts].second[1];
 			if(GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
 			{
 				contact_density_list_[i]->parallel_exec();
@@ -475,17 +475,17 @@ void StructuralSimulation::ExecuteContactDensitySummation()
 
 void StructuralSimulation::ExecuteContactForce()
 {
-	unsigned int size_contact_force = contact_force_list_.size();
-	for (unsigned int i = 0; i < contact_force_list_.size(); i++)
+	size_t number_of_general_contacts = contacting_bodies_list_.size() * 2;
+	for (size_t i = 0; i < contact_force_list_.size(); i++)
 	{
-		if (i < size_contact_force)
+		if (i < number_of_general_contacts)
 		{
 			contact_force_list_[i]->parallel_exec();
 		}
 		else
 		{
-			Real start_time = time_dep_contacting_bodies_list_[i - size_contact_force].second[0];
-			Real end_time = time_dep_contacting_bodies_list_[i - size_contact_force].second[1];
+			Real start_time = time_dep_contacting_bodies_list_[i - number_of_general_contacts].second[0];
+			Real end_time = time_dep_contacting_bodies_list_[i - number_of_general_contacts].second[1];
 			if(GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
 			{
 				contact_force_list_[i]->parallel_exec();
@@ -496,7 +496,7 @@ void StructuralSimulation::ExecuteContactForce()
 
 void StructuralSimulation::ExecuteStressRelaxationFirstHalf(Real dt)
 {
-	for (unsigned int i = 0; i < solid_body_list_.size(); i++)
+	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{
 		solid_body_list_[i]->GetStressRelaxationFirstHalf()->parallel_exec(dt);
 	}
@@ -504,7 +504,7 @@ void StructuralSimulation::ExecuteStressRelaxationFirstHalf(Real dt)
 
 void StructuralSimulation::ExecuteConstrainSolidBodyRegion()
 {
-	for (unsigned int i = 0; i < fixed_constraint_.size(); i++)
+	for (size_t i = 0; i < fixed_constraint_.size(); i++)
 	{
 		fixed_constraint_[i]->parallel_exec();
 	}
@@ -512,7 +512,7 @@ void StructuralSimulation::ExecuteConstrainSolidBodyRegion()
 
 void StructuralSimulation::ExecutePositionSolidBody(Real dt)
 {
-	for (unsigned int i = 0; i < position_solid_body_.size(); i++)
+	for (size_t i = 0; i < position_solid_body_.size(); i++)
 	{
 		position_solid_body_[i]->parallel_exec(dt);
 	}
@@ -520,7 +520,7 @@ void StructuralSimulation::ExecutePositionSolidBody(Real dt)
 
 void StructuralSimulation::ExecutePositionScaleSolidBody(Real dt)
 {
-	for (unsigned int i = 0; i < position_scale_solid_body_.size(); i++)
+	for (size_t i = 0; i < position_scale_solid_body_.size(); i++)
 	{
 		position_scale_solid_body_[i]->parallel_exec(dt);
 	}
@@ -528,7 +528,7 @@ void StructuralSimulation::ExecutePositionScaleSolidBody(Real dt)
 
 void StructuralSimulation::ExecuteTranslateSolidBody(Real dt)
 {
-	for (unsigned int i = 0; i < translation_solid_body_.size(); i++)
+	for (size_t i = 0; i < translation_solid_body_.size(); i++)
 	{
 		translation_solid_body_[i]->parallel_exec(dt);
 	}
@@ -536,7 +536,7 @@ void StructuralSimulation::ExecuteTranslateSolidBody(Real dt)
 
 void StructuralSimulation::ExecuteDamping(Real dt)
 {
-	for (unsigned int i = 0; i < solid_body_list_.size(); i++)
+	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{
 		solid_body_list_[i]->GetDampingWithRandomChoice()->parallel_exec(dt);
 	}
@@ -544,7 +544,7 @@ void StructuralSimulation::ExecuteDamping(Real dt)
 
 void StructuralSimulation::ExecuteStressRelaxationSecondHalf(Real dt)
 {
-	for (unsigned int i = 0; i < solid_body_list_.size(); i++)
+	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{
 		solid_body_list_[i]->GetStressRelaxationSecondHalf()->parallel_exec(dt);
 	}
@@ -552,7 +552,7 @@ void StructuralSimulation::ExecuteStressRelaxationSecondHalf(Real dt)
 
 void StructuralSimulation::ExecuteUpdateCellLinkedList()
 {
-	for (unsigned int i = 0; i < solid_body_list_.size(); i++)
+	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{
 		solid_body_list_[i]->GetImportedModel()->updateCellLinkedList();
 	}
@@ -560,25 +560,25 @@ void StructuralSimulation::ExecuteUpdateCellLinkedList()
 
 void StructuralSimulation::ExecuteContactUpdateConfiguration()
 {	
-	unsigned int size_contact = contacting_bodies_list_.size();
-	for (unsigned int i = 0; i < contact_list_.size(); i++)
+	size_t number_of_general_contacts = contacting_bodies_list_.size() * 2;
+	for (size_t i = 0; i < contact_list_.size(); i++)
 	{
-		if (i < size_contact)
+		// general contacts = contacting_bodies * 2
+		if (i < number_of_general_contacts)
 		{
 			contact_list_[i]->updateConfiguration();
 		}
+		// time dependent contacts = time dep. contacting_bodies * 2
 		else
 		{
-			Real start_time = time_dep_contacting_bodies_list_[i - size_contact].second[0];
-			Real end_time = time_dep_contacting_bodies_list_[i - size_contact].second[1];
+			Real start_time = time_dep_contacting_bodies_list_[i - number_of_general_contacts].second[0];
+			Real end_time = time_dep_contacting_bodies_list_[i - number_of_general_contacts].second[1];
 			if(GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
 			{
 				contact_list_[i]->updateConfiguration();
 			}
 		}
 	}
-
-
 }
 
 void StructuralSimulation::RunSimulationStep(int &ite, Real &dt, Real &integration_time)
