@@ -162,7 +162,7 @@ namespace SPH {
 		};
 		virtual ~NeoHookeanSolid() {};
 	
-		/** second Piola-Kirchhoff stress related with green-lagrangian defomeation tensor */
+		/** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
 		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
 	};
 
