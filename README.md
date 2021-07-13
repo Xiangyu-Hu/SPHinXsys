@@ -57,7 +57,7 @@ Here, we give the instructions for installing on Ubuntu Linux, Apple OS and Wind
 
         $ sudo apt-get install libtbb-dev
         $ sudo apt-get install libboost-all-dev
-
+ 
     and set the environment by
 
         $ echo 'export TBB_HOME=/usr/lib/x86_64-linux-gnu' >> ~/.bashrc
