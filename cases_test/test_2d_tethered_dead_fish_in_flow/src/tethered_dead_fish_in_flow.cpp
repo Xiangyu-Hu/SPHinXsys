@@ -333,11 +333,11 @@ int main(int ac, char* av[])
 	Observer* fish_observer = new Observer(system, "Observer");
 	BaseParticles           observer_particles(fish_observer);
 	/** topology */
-	InnerBodyRelation* water_block_inner = new InnerBodyRelation(water_block);
-	InnerBodyRelation* fish_body_inner = new InnerBodyRelation(fish_body);
+	BodyRelationInner* water_block_inner = new BodyRelationInner(water_block);
+	BodyRelationInner* fish_body_inner = new BodyRelationInner(fish_body);
 	ComplexBodyRelation* water_block_complex = new ComplexBodyRelation(water_block_inner, { wall_boundary, fish_body });
-	ContactBodyRelation* fish_body_contact = new ContactBodyRelation(fish_body, { water_block });
-	ContactBodyRelation* fish_observer_contact = new ContactBodyRelation(fish_observer, { fish_body });
+	BodyRelationContact* fish_body_contact = new BodyRelationContact(fish_body, { water_block });
+	BodyRelationContact* fish_observer_contact = new BodyRelationContact(fish_observer, { fish_body });
 
 	BodyStatesRecordingToVtu        write_real_body_states(in_output, system.real_bodies_);
 	BodyReducedQuantityRecording<solid_dynamics::TotalForceOnSolid> write_total_force_on_fish(in_output, fish_body);
@@ -390,7 +390,7 @@ int main(int ac, char* av[])
 	* @brief   Methods used for updating data structure.
 	*/
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition(water_block, 0);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition(water_block, xAxis);
 	/** Corrected strong configuration.*/
 	solid_dynamics::CorrectConfiguration
 		fish_body_corrected_configuration_in_strong_form(fish_body_inner);

@@ -182,8 +182,8 @@ int main()
 	BaseParticles observer_particles(beam_observer);
 
 	/** topology */
-	InnerBodyRelation* beam_body_inner = new InnerBodyRelation(beam_body);
-	ContactBodyRelation* beam_observer_contact = new ContactBodyRelation(beam_observer, { beam_body });
+	BodyRelationInner* beam_body_inner = new BodyRelationInner(beam_body);
+	BodyRelationContact* beam_observer_contact = new BodyRelationContact(beam_observer, { beam_body });
 
 	//-----------------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case

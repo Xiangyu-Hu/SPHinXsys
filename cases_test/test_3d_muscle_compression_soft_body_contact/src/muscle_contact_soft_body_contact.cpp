@@ -151,11 +151,11 @@ int main()
 	MovingPlateMaterial* moving_plate_material = new MovingPlateMaterial();
 	ElasticSolidParticles 	moving_plate_particles(moving_plate, moving_plate_material);
 	/** topology */
-	InnerBodyRelation*   myocardium_body_inner = new InnerBodyRelation(myocardium_body);
-	InnerBodyRelation*   moving_plate_inner = new InnerBodyRelation(moving_plate);
+	BodyRelationInner*   myocardium_body_inner = new BodyRelationInner(myocardium_body);
+	BodyRelationInner*   moving_plate_inner = new BodyRelationInner(moving_plate);
 	
-	SolidContactBodyRelation* myocardium_plate_contact = new SolidContactBodyRelation(myocardium_body, {moving_plate});
-	SolidContactBodyRelation* plate_myocardium_contact = new SolidContactBodyRelation(moving_plate, {myocardium_body});
+	SolidBodyRelationContact* myocardium_plate_contact = new SolidBodyRelationContact(myocardium_body, {moving_plate});
+	SolidBodyRelationContact* plate_myocardium_contact = new SolidBodyRelationContact(moving_plate, {myocardium_body});
 	/** 
 	 * This section define all numerical methods will be used in this case.
 	 */

@@ -114,7 +114,7 @@ int main(int ac, char* av[])
 	WaterMaterial 	*water_material = new WaterMaterial();
 	CompressibleFluidParticles 	compressible_fluid_particles(water_block, water_material);
 	/** topology */
-	BaseInnerBodyRelation* water_block_inner = new InnerBodyRelation(water_block);
+	BaseBodyRelationInner* water_block_inner = new BodyRelationInner(water_block);
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
@@ -129,9 +129,9 @@ int main(int ac, char* av[])
 	 /** Initialize particle acceleration. */
 	eulerian_fluid_dynamics::CompressibleFlowTimeStepInitialization 	initialize_a_fluid_step(water_block);
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition_x(water_block, 0);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition_x(water_block, xAxis);
 	/** Periodic BCs in y direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition_y(water_block, 1);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition_y(water_block, yAxis);
 	
 	/**
 	 * @brief 	Algorithms of fluid dynamics.

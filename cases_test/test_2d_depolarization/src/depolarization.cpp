@@ -152,8 +152,8 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	InnerBodyRelation* muscle_body_inner_relation = new InnerBodyRelation(muscle_body);
-	ContactBodyRelation* voltage_observer_contact_relation = new ContactBodyRelation(voltage_observer, { muscle_body });
+	BodyRelationInner* muscle_body_inner_relation = new BodyRelationInner(muscle_body);
+	BodyRelationContact* voltage_observer_contact_relation = new BodyRelationContact(voltage_observer, { muscle_body });
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simultion.
 	//	Note that there may be data dependence on the constructors of these methods.
