@@ -64,6 +64,9 @@ public:
 	// for PositionScaleSolidBody
 	vector<shared_ptr<solid_dynamics::PositionScaleSolidBody>> Get_position_scale_solid_body_(){ return position_scale_solid_body_; };
 	vector<PositionScaleSolidBodyTuple> Get_position_scale_solid_body_tuple_(){ return position_scale_solid_body_tuple_; };
+	// for TranslateSolidBody
+	vector<shared_ptr<solid_dynamics::TranslateSolidBody>> Get_translation_solid_body_(){ return translation_solid_body_; };
+	vector<TranslateSolidBodyTuple> Get_translation_solid_body_tuple_(){ return translation_solid_body_tuple_; };
 };
 
 TEST(StructuralSimulation, PositionSolidBodyTuple)
@@ -224,7 +227,6 @@ TEST(StructuralSimulation, TranslateSolidBodyTuple)
 	Real Youngs_modulus = 1e4;
 	Real physical_viscosity = 200;
 	Real rho_0 = 1000;
-	Real start_time = 0.0;
 	Real end_time = 0.1;
 
 		/** STL IMPORT PARAMETERS */
@@ -246,27 +248,21 @@ TEST(StructuralSimulation, TranslateSolidBodyTuple)
 		physical_viscosity,
 		{}
 	};
-	Real scale_system_bounds = 10; //changed to be more like PositionSolidBodyTuple
-	input.scale_system_boundaries_ = scale_system_bounds; //changed to be more like PositionSolidBodyTuple
-	Vecd translation_vector = Vec3d(0, 0, 0.1); //changed to be more like PositionSolidBodyTuple
-	input.translation_solid_body_tuple_ = { TranslateSolidBodyTuple(0, start_time, end_time, translation_vector) };
-	
+	Vecd translation_vector = Vec3d(0.0, 0.0, 0.1); //changed to be more like PositionSolidBodyTuple
+	input.translation_solid_body_tuple_ = { TranslateSolidBodyTuple(0, end_time * 0.32, end_time, translation_vector) };
 
 	//=================================================================================================//
 	TestStructuralSimulation sim (input);
 	sim.TestRunSimulation(end_time);
 	//=================================================================================================//
 
-	StdLargeVec<Vecd>& pos_0 = sim.Get_position_scale_solid_body_()[0]->GetParticlePos0();
-	StdLargeVec<Vecd>& pos_n = sim.Get_position_scale_solid_body_()[0]->GetParticlePosN();
+	StdLargeVec<Vecd>& pos_0 = sim.Get_translation_solid_body_()[0]->GetParticlePos0();
+	StdLargeVec<Vecd>& pos_n = sim.Get_translation_solid_body_()[0]->GetParticlePosN();
 
 	for (size_t index = 0; index < pos_0.size(); index++)
 	{
-		for (size_t i = 0; i < 3; i++)
-		{
-			Vec3d displ = pos_0[index] + translation_vector;
-			EXPECT_NEAR(pos_n[index][i], displ[i], displ.norm() * tolerance);
-		}
+		Vec3d end_pos = pos_0[index] + translation_vector;
+		EXPECT_NEAR(pos_n[index][2], end_pos[2], end_pos.norm() * 1e-2);
 	}
 }
 
