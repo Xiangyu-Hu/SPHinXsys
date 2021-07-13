@@ -639,7 +639,7 @@ void StructuralSimulation::RunSimulation(Real end_time)
 	/** Statistics for computing time. */
 	write_states.writeToFile(0);
 	int ite = 0;
-	Real output_period = 0.1 / 100.0;
+	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
