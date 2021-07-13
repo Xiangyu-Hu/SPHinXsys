@@ -125,7 +125,7 @@ int main()
 
 	/** topology */
 	ComplexBodyRelation* water_block_complex = new ComplexBodyRelation(water_block, { wall_boundary });
-	ContactBodyRelation* fluid_observer_contact = new ContactBodyRelation(fluid_observer, { water_block });
+	BodyRelationContact* fluid_observer_contact = new BodyRelationContact(fluid_observer, { water_block });
 
 	//-------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case

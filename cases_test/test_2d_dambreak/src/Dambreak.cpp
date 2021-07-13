@@ -144,7 +144,7 @@ int main(int ac, char* av[])
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
 	ComplexBodyRelation* water_block_complex = new ComplexBodyRelation(water_block, { wall_boundary });
-	ContactBodyRelation* fluid_observer_contact = new ContactBodyRelation(fluid_observer, { water_block });
+	BodyRelationContact* fluid_observer_contact = new BodyRelationContact(fluid_observer, { water_block });
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simultion.
 	//	Note that there may be data dependence on the constructors of these methods.

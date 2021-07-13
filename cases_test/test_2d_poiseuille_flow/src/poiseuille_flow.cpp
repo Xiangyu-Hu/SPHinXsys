@@ -128,7 +128,7 @@ int main()
 	 /** Initialize particle acceleration. */
 	TimeStepInitialization 	initialize_a_fluid_step(water_block, &gravity);
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition(water_block, 0);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition(water_block, xAxis);
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
 	 */

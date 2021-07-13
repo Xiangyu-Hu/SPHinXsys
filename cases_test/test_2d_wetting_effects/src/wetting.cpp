@@ -40,9 +40,9 @@ int main()
 	SolidParticles 		wall_particles(wall_boundary);
 	/** topology */
 	ComplexBodyRelation* water_air_complex = new ComplexBodyRelation(water_block, { air_block });
-	ContactBodyRelation* water_wall_contact = new ContactBodyRelation(water_block, { wall_boundary });
+	BodyRelationContact* water_wall_contact = new BodyRelationContact(water_block, { wall_boundary });
 	ComplexBodyRelation* air_water_complex = new ComplexBodyRelation(air_block, { water_block });
-	ContactBodyRelation* air_wall_contact = new ContactBodyRelation(air_block, { wall_boundary });
+	BodyRelationContact* air_wall_contact = new BodyRelationContact(air_block, { wall_boundary });
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
@@ -130,14 +130,11 @@ int main()
 	 */
 	size_t number_of_iterations = sph_system.restart_step_;
 	int screen_output_interval = 100;
-	int observation_sample_interval = screen_output_interval * 2;
 	int restart_output_interval = screen_output_interval * 10;
 	Real End_Time = 5.0; 	/**< End time. */
 	Real D_Time = End_Time / 50;		/**< Time stamps for output of body states. */
 	Real Dt = 0.0;			/**< Default advection time step sizes. */
 	Real dt = 0.0; 			/**< Default acoustic time step sizes. */
-	Real dt_a = 0.0;
-	Real dt_f = 0.0;
 	/** statistics for computing CPU time. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;

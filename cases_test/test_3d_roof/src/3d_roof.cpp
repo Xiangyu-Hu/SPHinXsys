@@ -164,8 +164,8 @@ int main()
 	 *  The contact map gives the data conntections between the bodies
 	 *  basically the the range of bodies to build neighbor particle lists
 	 */
-	InnerBodyRelation* cylinder_body_inner = new InnerBodyRelation(cylinder_body);
-	ContactBodyRelation* cylinder_observer_contact = new ContactBodyRelation(cylinder_observer, { cylinder_body });
+	BodyRelationInner* cylinder_body_inner = new BodyRelationInner(cylinder_body);
+	BodyRelationContact* cylinder_observer_contact = new BodyRelationContact(cylinder_observer, { cylinder_body });
 
 	/** Common particle dynamics. */
 	TimeStepInitialization 	initialize_external_force(cylinder_body, &external_force);
@@ -247,7 +247,6 @@ int main()
 			ite++;
 			integeral_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
-			Real check_time = GlobalStaticVariables::physical_time_;
 
 		}
 		write_cylinder_max_displacement.writeToFile(ite);

@@ -31,12 +31,12 @@ int main()
 	FlapObserver* observer = new FlapObserver(system, "FlapObserver");
 	BaseParticles 	observer_particles(observer);
 	/** topology */
-	InnerBodyRelation* water_block_inner 	= new InnerBodyRelation(water_block);
-	InnerBodyRelation* flap_inner 			= new InnerBodyRelation(flap);
+	BodyRelationInner* water_block_inner 	= new BodyRelationInner(water_block);
+	BodyRelationInner* flap_inner 			= new BodyRelationInner(flap);
 	ComplexBodyRelation* water_block_complex = new ComplexBodyRelation(water_block_inner, { wall_boundary, flap });
-	ContactBodyRelation* flap_contact 		= new ContactBodyRelation(flap, { water_block });
-	ContactBodyRelation* observer_contact_with_water = new ContactBodyRelation(observer, { water_block });
-	ContactBodyRelation* observer_contact_with_flap  = new ContactBodyRelation(observer, {flap});
+	BodyRelationContact* flap_contact 		= new BodyRelationContact(flap, { water_block });
+	BodyRelationContact* observer_contact_with_water = new BodyRelationContact(observer, { water_block });
+	BodyRelationContact* observer_contact_with_flap  = new BodyRelationContact(observer, {flap});
 	/**
 	 * Methods only used only once
 	 */

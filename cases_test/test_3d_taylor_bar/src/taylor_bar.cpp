@@ -42,9 +42,9 @@ int main(int ac, char* av[])
 	MyObserver* my_observer = new MyObserver(system, "MyObserver");
 	BaseParticles observer_particles(my_observer);
 	/**body relation topology */
-	InnerBodyRelation* column_inner = new InnerBodyRelation(column);
-	ContactBodyRelation* my_observer_contact = new ContactBodyRelation(my_observer, { column });
-	SolidContactBodyRelation* column_wall_contact = new SolidContactBodyRelation(column, { wall });
+	BodyRelationInner* column_inner = new BodyRelationInner(column);
+	BodyRelationContact* my_observer_contact = new BodyRelationContact(my_observer, { column });
+	SolidBodyRelationContact* column_wall_contact = new SolidBodyRelationContact(column, { wall });
 	//----------------------------------------------------------------------
 	//	Output
 	//----------------------------------------------------------------------

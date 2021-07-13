@@ -171,10 +171,10 @@ public:
 class DiffusionRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle,
 	RelaxationOfAllDiffussionSpeciesInner<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>,
-	InnerBodyRelation>
+	BodyRelationInner>
 {
 public:
-	DiffusionRelaxation(InnerBodyRelation* body_inner_relation)
+	DiffusionRelaxation(BodyRelationInner* body_inner_relation)
 		: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation) {};
 	virtual ~DiffusionRelaxation() {};
 };
@@ -432,7 +432,7 @@ int main(int ac, char* av[])
 		DiffusionReactionParticles<ElasticSolidParticles, LocallyOrthotropicMuscle>	diffusion_particles(relax_body, relax_body_material);
 
 		/** topology */
-		InnerBodyRelation* relax_body_inner = new InnerBodyRelation(relax_body);
+		BodyRelationInner* relax_body_inner = new BodyRelationInner(relax_body);
 		/** Random reset the relax solid particle position. */
 		RandomizePartilePosition  			random_particles(relax_body);
 
@@ -520,12 +520,12 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//	SPHBody relation (topology) section
 	//----------------------------------------------------------------------
-	InnerBodyRelation* physiology_body_inner = new InnerBodyRelation(physiology_body);
-	InnerBodyRelation* mechanics_body_inner = new InnerBodyRelation(mechanics_body);
-	ContactBodyRelation* physiology_body_contact = new ContactBodyRelation(physiology_body, { mechanics_body });
-	ContactBodyRelation* mechanics_body_contact = new ContactBodyRelation(mechanics_body, { physiology_body });
-	ContactBodyRelation* voltage_observer_contact = new ContactBodyRelation(voltage_observer, { physiology_body });	
-	ContactBodyRelation* myocardium_observer_contact = new ContactBodyRelation(myocardium_observer, { mechanics_body });
+	BodyRelationInner* physiology_body_inner = new BodyRelationInner(physiology_body);
+	BodyRelationInner* mechanics_body_inner = new BodyRelationInner(mechanics_body);
+	BodyRelationContact* physiology_body_contact = new BodyRelationContact(physiology_body, { mechanics_body });
+	BodyRelationContact* mechanics_body_contact = new BodyRelationContact(mechanics_body, { physiology_body });
+	BodyRelationContact* voltage_observer_contact = new BodyRelationContact(voltage_observer, { physiology_body });	
+	BodyRelationContact* myocardium_observer_contact = new BodyRelationContact(myocardium_observer, { mechanics_body });
 	//----------------------------------------------------------------------
 	//	SPH Method section
 	//----------------------------------------------------------------------
