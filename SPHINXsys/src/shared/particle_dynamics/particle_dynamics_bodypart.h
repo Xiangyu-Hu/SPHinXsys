@@ -165,7 +165,7 @@ namespace SPH {
 			this->SetupReduce();
 			for (size_t i = 0; i != body_part_cells_.size(); ++i)
 			{
-				CellListDataVector& list_data = body_part_cells_[i]->cell_list_data_;
+				ListDataVector& list_data = body_part_cells_[i]->cell_list_data_;
 				for (size_t num = 0; num < list_data.size(); ++num)
 				{
 					temp = reduce_operation_(temp, ReduceFunction(list_data[num].first, dt));
@@ -184,7 +184,7 @@ namespace SPH {
 				{
 					for (size_t i = r.begin(); i != r.end(); ++i)
 					{
-						CellListDataVector& list_data = body_part_cells_[i]->cell_list_data_;
+						ListDataVector& list_data = body_part_cells_[i]->cell_list_data_;
 						for (size_t num = 0; num < list_data.size(); ++num)
 						{
 							temp0 = reduce_operation_(temp0, ReduceFunction(list_data[num].first, dt));

@@ -71,7 +71,7 @@ namespace SPH {
 		virtual void assignDerivedMaterialParameters() override;
 	public:
 		ElasticSolid() : Solid(), c0_(1.0), ct0_(1.0), cs0_(0.0717), 
-			E0_(1.0), G0_(0.5), K0_(1.0), nu_(0.0), elastic_particles_(NULL) {};
+			E0_(1.0), G0_(0.5), K0_(1.0), nu_(0.0), elastic_particles_(nullptr) {};
 		virtual ~ElasticSolid() {};
 
 		virtual void assignElasticSolidParticles(ElasticSolidParticles* elastic_particles);

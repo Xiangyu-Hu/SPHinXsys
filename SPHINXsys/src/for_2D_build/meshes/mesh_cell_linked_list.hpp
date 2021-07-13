@@ -32,7 +32,7 @@ namespace SPH
 					for (int l = SMAX(i - search_range, 0); l <= SMIN(i + search_range, int(number_of_cells_[0]) - 1); ++l)
 						for (int m = SMAX(j - search_range, 0); m <= SMIN(j + search_range, int(number_of_cells_[1]) - 1); ++m)
 						{
-							CellListDataVector& target_particles = cell_linked_lists_[l][m].cell_list_data_;
+							ListDataVector& target_particles = cell_linked_lists_[l][m].cell_list_data_;
 							for (const ListData& list_data : target_particles)
 							{
 								//displacement pointing from neighboring particle to origin particle
@@ -44,11 +44,4 @@ namespace SPH
 			}, ap);
 	}
 	//=================================================================================================//
-	template<typename GetParticleIndex, typename GetSearchRange, typename GetNeighborRelation, typename PartParticleCheck>
-	void MeshCellLinkedList::searchNeighborPartsByParticles(size_t total_real_particles, BaseParticles& source_particles, 
-			ParticleConfiguration& particle_configuration, GetParticleIndex& get_particle_index,
-			GetSearchRange& get_search_range, GetNeighborRelation& get_neighbor_relation, PartParticleCheck& part_check)
-	{
-		// To be added. 
-	}
 }

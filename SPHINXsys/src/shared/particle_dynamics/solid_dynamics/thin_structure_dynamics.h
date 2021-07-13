@@ -87,7 +87,7 @@ namespace SPH
 			public InteractionDynamics, public ShellDataInner
 		{
 		public:
-			ShellCorrectConfiguration(BaseInnerBodyRelation* body_inner_relation);
+			ShellCorrectConfiguration(BaseBodyRelationInner* body_inner_relation);
 			virtual ~ShellCorrectConfiguration() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
@@ -105,7 +105,7 @@ namespace SPH
 			public InteractionDynamics, public ShellDataInner
 		{
 		public:
-			ShellDeformationGradientTensor(BaseInnerBodyRelation* body_inner_relation);
+			ShellDeformationGradientTensor(BaseBodyRelationInner* body_inner_relation);
 			virtual ~ShellDeformationGradientTensor() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
@@ -122,7 +122,7 @@ namespace SPH
 		class BaseShellRelaxation : public ParticleDynamics1Level, public ShellDataInner
 		{
 		public:
-			BaseShellRelaxation(BaseInnerBodyRelation* body_inner_relation);
+			BaseShellRelaxation(BaseBodyRelationInner* body_inner_relation);
 			virtual ~BaseShellRelaxation() {};
 		protected:
 			StdLargeVec<Real>& Vol_, & rho_n_, & mass_, & shell_thickness_;
@@ -141,7 +141,7 @@ namespace SPH
 		class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
 		{
 		public:
-			ShellStressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation,
+			ShellStressRelaxationFirstHalf(BaseBodyRelationInner* body_inner_relation,
 				int number_of_gaussian_points = 3);
 			virtual ~ShellStressRelaxationFirstHalf() {};
 		protected:
@@ -172,7 +172,7 @@ namespace SPH
 		class ShellStressRelaxationSecondHalf : public BaseShellRelaxation
 		{
 		public:
-			ShellStressRelaxationSecondHalf(BaseInnerBodyRelation* body_inner_relation)
+			ShellStressRelaxationSecondHalf(BaseBodyRelationInner* body_inner_relation)
 				: BaseShellRelaxation(body_inner_relation) {};
 			virtual ~ShellStressRelaxationSecondHalf() {};
 		protected:
@@ -217,7 +217,7 @@ namespace SPH
 			public ShellDataInner
 		{
 		public:
-			FixedFreeRotateShellBoundary(BaseInnerBodyRelation* body_inner_relation, 
+			FixedFreeRotateShellBoundary(BaseBodyRelationInner* body_inner_relation, 
 				BodyPartByParticle* body_part, Vecd constrained_direction = Vecd(0));
 			virtual ~FixedFreeRotateShellBoundary() {};
 		protected:
@@ -240,7 +240,7 @@ namespace SPH
 			public ShellDataInner
 		{
 		public:
-			ClampConstrainShellBodyRegion(BaseInnerBodyRelation* body_inner_relation, BodyPartByParticle* body_part);
+			ClampConstrainShellBodyRegion(BaseBodyRelationInner* body_inner_relation, BodyPartByParticle* body_part);
 			virtual ~ClampConstrainShellBodyRegion() {};
 		protected:
 			StdLargeVec<Real>& Vol_;

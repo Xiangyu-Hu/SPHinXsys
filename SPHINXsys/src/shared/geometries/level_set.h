@@ -90,8 +90,8 @@ namespace SPH
 	class BaseLevelSet : public Mesh
 	{
 	public:
-		BaseLevelSet(ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation,
-			BoundingBox tentative_bounds, Real data_spacing, size_t buffer_width = 4);
+		BaseLevelSet(BoundingBox tentative_bounds, Real data_spacing, 
+			ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation);
 		virtual ~BaseLevelSet() {};
 
 		virtual Real probeSignedDistance(const Vecd& position) = 0;
@@ -115,8 +115,8 @@ namespace SPH
 		ConcurrentVector<LevelSetDataPackage*> core_data_pkgs_; /**< packages near to zero level set. */
 		Real global_h_ratio_;
 
-		LevelSet(ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation,
-			BoundingBox tentative_bounds, Real data_spacing, size_t buffer_width = 4);
+		LevelSet(BoundingBox tentative_bounds, Real data_spacing, 
+			ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation);
 		virtual ~LevelSet() {};
 
 		virtual Real probeSignedDistance(const Vecd& position) override;
@@ -150,15 +150,15 @@ namespace SPH
 
 	/**
 	  * @class MultilevelMeshCellLinkedList
-	  * @brief Defining a multilvel level set for a complex region.
+	  * @brief Defining a multilevel level set for a complex region.
 	  */
 	class MultilevelLevelSet :
-		public MultilevelMesh<ComplexShape, BaseLevelSet, LevelSet>
+		public MultilevelMesh<BaseLevelSet, LevelSet>
 	{
 	public:
-		MultilevelLevelSet(ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation, 
-			BoundingBox tentative_bounds, Real reference_data_spacing, 
-			size_t total_levels, Real maximum_spacing_ratio);
+		MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, 
+			size_t total_levels, Real maximum_spacing_ratio,
+			ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation);
 		virtual ~MultilevelLevelSet() {};
 
 		virtual Real probeSignedDistance(const Vecd& position) override;

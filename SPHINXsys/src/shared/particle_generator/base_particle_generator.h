@@ -49,7 +49,7 @@ namespace SPH {
 	class ParticleGenerator
 	{
 	public:
-		ParticleGenerator() : sph_body_(NULL) {};
+		ParticleGenerator() : sph_body_(nullptr) {};
 		virtual ~ParticleGenerator() {};
 
 		virtual void initialize(SPHBody* sph_body);

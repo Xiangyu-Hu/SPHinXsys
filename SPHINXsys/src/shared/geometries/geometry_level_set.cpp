@@ -15,7 +15,7 @@ namespace SPH {
 	//=================================================================================================//
 	LevelSetComplexShape::
 		LevelSetComplexShape(SPHBody* sph_body, ComplexShape& complex_shape, bool isCleaned)
-		: ComplexShape(complex_shape), level_set_(NULL)
+		: ComplexShape(complex_shape), level_set_(nullptr)
 	{
 		name_ = sph_body->getBodyName();
 		level_set_ = sph_body->particle_adaptation_->createLevelSet(complex_shape);

@@ -41,7 +41,7 @@ private:
 	ImportedModel imported_model_;
 	//LinearElasticSolid material_model_;
 	ElasticSolidParticles elastic_solid_particles_;
-	InnerBodyRelation inner_body_relation_;
+	BodyRelationInner inner_body_relation_;
 
 	solid_dynamics::CorrectConfiguration correct_configuration_;
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half_;
@@ -55,7 +55,7 @@ public:
 	ImportedModel* GetImportedModel() { return &imported_model_; };
 	//LinearElasticSolid* GetMaterialModel() { return &material_model_; };
 	ElasticSolidParticles* GetElasticSolidParticles() { return &elastic_solid_particles_; };
-	InnerBodyRelation* GetInnerBodyRelation() { return &inner_body_relation_; };
+	BodyRelationInner* GetInnerBodyRelation() { return &inner_body_relation_; };
 
 	solid_dynamics::CorrectConfiguration* GetCorrectConfiguration() { return &correct_configuration_; };
 	solid_dynamics::StressRelaxationFirstHalf* GetStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
@@ -69,7 +69,7 @@ void RelaxParticlesSingleResolution(In_Output* in_output,
 									bool write_particles_to_file,
 									ImportedModel* imported_model,
 									ElasticSolidParticles* imported_model_particles,
-									InnerBodyRelation* imported_model_inner);
+									BodyRelationInner* imported_model_inner);
 
 
 class StructuralSimulationInput
@@ -132,7 +132,7 @@ class StructuralSimulation
 		vector<ParticleAdaptation> particle_adaptation_list_;
 		vector<shared_ptr<SolidBodyForSimulation>> solid_body_list_;
 
-		vector<shared_ptr<SolidContactBodyRelation>> contact_list_;
+		vector<shared_ptr<SolidBodyRelationContact>> contact_list_;
 		vector<shared_ptr<solid_dynamics::ContactDensitySummation>> contact_density_list_;
 		vector<shared_ptr<solid_dynamics::ContactForce>> contact_force_list_;
 

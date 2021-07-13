@@ -14,7 +14,7 @@ namespace SPH
 	{
 		//=================================================================================================//
 		ContactDensitySummation::
-			ContactDensitySummation(SolidContactBodyRelation* solid_body_contact_relation) :
+			ContactDensitySummation(SolidBodyRelationContact* solid_body_contact_relation) :
 			PartInteractionDynamicsByParticle(solid_body_contact_relation->sph_body_,
 				&solid_body_contact_relation->body_surface_layer_),
 			ContactDynamicsData(solid_body_contact_relation),
@@ -42,7 +42,7 @@ namespace SPH
 			contact_density_[index_i] = sigma;
 		}
 		//=================================================================================================//
-		ContactForce::ContactForce(SolidContactBodyRelation* solid_body_contact_relation) :
+		ContactForce::ContactForce(SolidBodyRelationContact* solid_body_contact_relation) :
 			PartInteractionDynamicsByParticle(solid_body_contact_relation->sph_body_, 
 				&solid_body_contact_relation->body_surface_layer_),
 			ContactDynamicsData(solid_body_contact_relation),
@@ -86,7 +86,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		DynamicContactForce::
-			DynamicContactForce(SolidContactBodyRelation* solid_body_contact_relation, Real penalty_strength) :
+			DynamicContactForce(SolidBodyRelationContact* solid_body_contact_relation, Real penalty_strength) :
 			PartInteractionDynamicsByParticle(solid_body_contact_relation->sph_body_,
 				&solid_body_contact_relation->body_surface_layer_),
 			ContactDynamicsData(solid_body_contact_relation),
@@ -149,7 +149,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ContactForceWithWall::
-			ContactForceWithWall(SolidContactBodyRelation* solid_body_contact_relation, Real penalty_strength) :
+			ContactForceWithWall(SolidBodyRelationContact* solid_body_contact_relation, Real penalty_strength) :
 			PartInteractionDynamicsByParticle(solid_body_contact_relation->sph_body_,
 				&solid_body_contact_relation->body_surface_layer_),
 			ContactDynamicsData(solid_body_contact_relation),
@@ -226,7 +226,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		CorrectConfiguration::
-			CorrectConfiguration(BaseInnerBodyRelation* body_inner_relation) :
+			CorrectConfiguration(BaseBodyRelationInner* body_inner_relation) :
 			InteractionDynamics(body_inner_relation->sph_body_),
 			SolidDataInner(body_inner_relation),
 			Vol_(particles_->Vol_), B_(particles_->B_)
@@ -281,7 +281,7 @@ namespace SPH
 			vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
 			start_time_(start_time), end_time_(end_time), pos_end_center_(pos_end_center)
 		{
-			BoundingBox bounds = body->findBodyDomainBounds();
+			BoundingBox bounds = body->getBodyDomainBounds();
 			pos_0_center_ = (bounds.first + bounds.second) * 0.5;
 			translation_ = pos_end_center_ - pos_0_center_;
 		}
@@ -327,7 +327,7 @@ namespace SPH
 			vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
 			start_time_(start_time), end_time_(end_time), end_scale_(end_scale)
 		{
-			BoundingBox bounds = body->findBodyDomainBounds();
+			BoundingBox bounds = body->getBodyDomainBounds();
 			pos_0_center_ = (bounds.first + bounds.second) * 0.5;
 		}
 		//=================================================================================================//
@@ -401,7 +401,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		SoftConstrainSolidBodyRegion::
-			SoftConstrainSolidBodyRegion(BaseInnerBodyRelation* body_inner_relation, BodyPartByParticle* body_part) :
+			SoftConstrainSolidBodyRegion(BaseBodyRelationInner* body_inner_relation, BodyPartByParticle* body_part) :
 			PartInteractionDynamicsByParticleWithUpdate(body_inner_relation->sph_body_, body_part),
 			SolidDataInner(body_inner_relation),
 			Vol_(particles_->Vol_),	
@@ -441,7 +441,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ClampConstrainSolidBodyRegion::
-			ClampConstrainSolidBodyRegion(BaseInnerBodyRelation* body_inner_relation, BodyPartByParticle* body_part) :
+			ClampConstrainSolidBodyRegion(BaseBodyRelationInner* body_inner_relation, BodyPartByParticle* body_part) :
 			ParticleDynamics<void>(body_inner_relation->sph_body_),
 			constrianing_(new ConstrainSolidBodyRegion(body_inner_relation->sph_body_, body_part)),
 			softing_(new SoftConstrainSolidBodyRegion(body_inner_relation, body_part)) {}
@@ -593,7 +593,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		DeformationGradientTensorBySummation::
-			DeformationGradientTensorBySummation(BaseInnerBodyRelation* body_inner_relation) :
+			DeformationGradientTensorBySummation(BaseBodyRelationInner* body_inner_relation) :
 			InteractionDynamics(body_inner_relation->sph_body_),
 			ElasticSolidDataInner(body_inner_relation),
 			Vol_(particles_->Vol_), pos_n_(particles_->pos_n_),
@@ -619,7 +619,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseElasticRelaxation::
-			BaseElasticRelaxation(BaseInnerBodyRelation* body_inner_relation) :
+			BaseElasticRelaxation(BaseBodyRelationInner* body_inner_relation) :
 			ParticleDynamics1Level(body_inner_relation->sph_body_),
 			ElasticSolidDataInner(body_inner_relation), Vol_(particles_->Vol_),
 			rho_n_(particles_->rho_n_), mass_(particles_->mass_),
@@ -627,7 +627,7 @@ namespace SPH
 			B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}
 		//=================================================================================================//
 		StressRelaxationFirstHalf::
-			StressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation) :
+			StressRelaxationFirstHalf(BaseBodyRelationInner* body_inner_relation) :
 			BaseElasticRelaxation(body_inner_relation), 
 			dvel_dt_prior_(particles_->dvel_dt_prior_), force_from_fluid_(particles_->force_from_fluid_),
 			stress_PK1_(particles_->stress_PK1_)
@@ -677,7 +677,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		KirchhoffStressRelaxationFirstHalf::
-			KirchhoffStressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation)
+			KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner* body_inner_relation)
 			: StressRelaxationFirstHalf(body_inner_relation),
 			J_to_minus_2_over_diemsnion_(*particles_->createAVariable<indexScalar, Real>("DeterminantTerm")),
 			stress_on_particle_(*particles_->createAVariable<indexMatrix, Matd>("StressOnParticle")),
