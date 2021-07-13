@@ -13,11 +13,10 @@
 namespace SPH {
 	//=================================================================================================//
 	BaseMeshCellLinkedList::
-		BaseMeshCellLinkedList(SPHBody& sph_body, ParticleAdaptation& particle_adaptation,
-			BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width) : 
-		Mesh(tentative_bounds, grid_spacing, buffer_width),
-		sph_body_(sph_body), kernel_(*particle_adaptation.getKernel()), 
-		base_particles_(NULL) {}
+		BaseMeshCellLinkedList(BoundingBox tentative_bounds, Real grid_spacing, 
+			SPHBody& sph_body, ParticleAdaptation& particle_adaptation) 
+		: Mesh(tentative_bounds, grid_spacing, 2),
+			sph_body_(sph_body), kernel_(*particle_adaptation.getKernel()), base_particles_(nullptr) {}
 	//=================================================================================================//
 	void BaseMeshCellLinkedList::clearSplitCellLists(SplitCellLists& split_cell_lists)
 	{
@@ -25,9 +24,9 @@ namespace SPH {
 			split_cell_lists[i].clear();
 	}
 	//=================================================================================================//
-	MeshCellLinkedList::MeshCellLinkedList(SPHBody& sph_body, ParticleAdaptation& particle_adaptation, 
-		BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width)
-		: BaseMeshCellLinkedList(sph_body, particle_adaptation, tentative_bounds, grid_spacing, buffer_width)
+	MeshCellLinkedList::MeshCellLinkedList(BoundingBox tentative_bounds, Real grid_spacing, 
+		SPHBody& sph_body, ParticleAdaptation& particle_adaptation)
+		: BaseMeshCellLinkedList(tentative_bounds, grid_spacing, sph_body, particle_adaptation)
 	{
 		name_ = "MeshCellLinkedList";
 		allocateMeshDataMatrix();
@@ -66,11 +65,11 @@ namespace SPH {
 	}
 	//=================================================================================================//
 	MultilevelMeshCellLinkedList
-		::MultilevelMeshCellLinkedList(SPHBody& sph_body, ParticleAdaptation& particle_adaptation, 
-			BoundingBox tentative_bounds, Real reference_grid_spacing, 
-			size_t total_levels, Real maximum_spacing_ratio) :
-		MultilevelMesh<SPHBody, BaseMeshCellLinkedList, MeshCellLinkedList>(sph_body, particle_adaptation, 
-			tentative_bounds, reference_grid_spacing, total_levels, maximum_spacing_ratio, 2),
+		::MultilevelMeshCellLinkedList(BoundingBox tentative_bounds, Real reference_grid_spacing, 
+			size_t total_levels, Real maximum_spacing_ratio, 
+			SPHBody& sph_body, ParticleAdaptation& particle_adaptation) 
+		: MultilevelMesh<BaseMeshCellLinkedList, MeshCellLinkedList>(tentative_bounds, 
+			reference_grid_spacing, total_levels, maximum_spacing_ratio, sph_body, particle_adaptation),
 			h_ratio_(dynamic_cast<ParticleWithLocalRefinement&>(particle_adaptation).h_ratio_)
 	{
 		name_ = "MultilevelMeshCellLinkedList";

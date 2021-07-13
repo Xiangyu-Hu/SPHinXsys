@@ -23,12 +23,11 @@
 #ifndef BASE_DATA_PACKAGE_H
 #define BASE_DATA_PACKAGE_H
 
+#include "scalar_functions.h"
 #include "data_type.h"
 #include "small_vectors.h"
 #include "array_allocation.h"
 #include "large_data_containers.h"
-#include "scalar_functions.h"
-
 
 #define TBB_PARALLEL true
 

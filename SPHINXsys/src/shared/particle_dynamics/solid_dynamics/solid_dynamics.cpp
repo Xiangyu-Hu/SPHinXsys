@@ -14,7 +14,7 @@ namespace SPH
 	{
 		//=================================================================================================//
 		ContactDensitySummation::
-			ContactDensitySummation(SolidContactBodyRelation* solid_body_contact_relation) :
+			ContactDensitySummation(SolidBodyRelationContact* solid_body_contact_relation) :
 			PartInteractionDynamicsByParticle(solid_body_contact_relation->sph_body_,
 				&solid_body_contact_relation->body_surface_layer_),
 			ContactDynamicsData(solid_body_contact_relation),
@@ -42,7 +42,7 @@ namespace SPH
 			contact_density_[index_i] = sigma;
 		}
 		//=================================================================================================//
-		ContactForce::ContactForce(SolidContactBodyRelation* solid_body_contact_relation) :
+		ContactForce::ContactForce(SolidBodyRelationContact* solid_body_contact_relation) :
 			PartInteractionDynamicsByParticle(solid_body_contact_relation->sph_body_, 
 				&solid_body_contact_relation->body_surface_layer_),
 			ContactDynamicsData(solid_body_contact_relation),
@@ -86,7 +86,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		DynamicContactForce::
-			DynamicContactForce(SolidContactBodyRelation* solid_body_contact_relation, Real penalty_strength) :
+			DynamicContactForce(SolidBodyRelationContact* solid_body_contact_relation, Real penalty_strength) :
 			PartInteractionDynamicsByParticle(solid_body_contact_relation->sph_body_,
 				&solid_body_contact_relation->body_surface_layer_),
 			ContactDynamicsData(solid_body_contact_relation),
@@ -126,7 +126,6 @@ namespace SPH
 
 				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
 				StdLargeVec<Vecd>& vel_n_k = *(contact_vel_n_[k]);
-				Solid* solid_k = contact_material_[k];
 
 				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -150,7 +149,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ContactForceWithWall::
-			ContactForceWithWall(SolidContactBodyRelation* solid_body_contact_relation, Real penalty_strength) :
+			ContactForceWithWall(SolidBodyRelationContact* solid_body_contact_relation, Real penalty_strength) :
 			PartInteractionDynamicsByParticle(solid_body_contact_relation->sph_body_,
 				&solid_body_contact_relation->body_surface_layer_),
 			ContactDynamicsData(solid_body_contact_relation),
@@ -184,7 +183,6 @@ namespace SPH
 				StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
 				StdLargeVec<Vecd>& n_k = *(contact_n_[k]);
 				StdLargeVec<Vecd>& vel_n_k = *(contact_vel_n_[k]);
-				Solid* solid_k = contact_material_[k];
 
 				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -228,7 +226,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		CorrectConfiguration::
-			CorrectConfiguration(BaseInnerBodyRelation* body_inner_relation) :
+			CorrectConfiguration(BaseBodyRelationInner* body_inner_relation) :
 			InteractionDynamics(body_inner_relation->sph_body_),
 			SolidDataInner(body_inner_relation),
 			Vol_(particles_->Vol_), B_(particles_->B_)
@@ -275,8 +273,135 @@ namespace SPH
 			dvel_dt_ave_[index_i] = dvel_dt_[index_i];
 		}
 		//=================================================================================================//
+		PositionSolidBody::
+			PositionSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd pos_end_center):
+			PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
+			pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
+			vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
+			vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
+			start_time_(start_time), end_time_(end_time), pos_end_center_(pos_end_center)
+		{
+			BoundingBox bounds = body->getBodyDomainBounds();
+			pos_0_center_ = (bounds.first + bounds.second) * 0.5;
+			translation_ = pos_end_center_ - pos_0_center_;
+		}
+		//=================================================================================================//
+		Vecd PositionSolidBody::getDisplacement(size_t index_i, Real dt)
+		{
+			Vecd displacement;
+			try {
+				// displacement from the initial position
+				Vecd pos_final = pos_0_[index_i] + translation_;
+				displacement = (pos_final - pos_n_[index_i]) * dt / (end_time_ - GlobalStaticVariables::physical_time_);	
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("PositionSolidBody::getDisplacement: particle index out of bounds") + to_string(index_i));
+			}
+			return displacement;
+		}
+		//=================================================================================================//
+		void PositionSolidBody::Update(size_t index_i, Real dt)
+		{
+			try {
+				// only apply in the defined time period
+				if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
+				{
+					pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
+					vel_n_[index_i] = getVelocity();
+					dvel_dt_[index_i] = getAcceleration();
+					/** the average values are prescirbed also. */
+					vel_ave_[index_i] = vel_n_[index_i];
+					dvel_dt_ave_[index_i] = dvel_dt_[index_i];
+				}		
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("PositionSolidBody::Update: particle index out of bounds") + to_string(index_i));
+			}
+		}
+		//=================================================================================================//
+		PositionScaleSolidBody::
+			PositionScaleSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Real end_scale):
+			PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
+			pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
+			vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
+			vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
+			start_time_(start_time), end_time_(end_time), end_scale_(end_scale)
+		{
+			BoundingBox bounds = body->getBodyDomainBounds();
+			pos_0_center_ = (bounds.first + bounds.second) * 0.5;
+		}
+		//=================================================================================================//
+		Vecd PositionScaleSolidBody::getDisplacement(size_t index_i, Real dt)
+		{
+			Vecd displacement;
+			try {
+				// displacement from the initial position
+				Vecd pos_final = pos_0_center_ + end_scale_ * (pos_0_[index_i] - pos_0_center_);
+				displacement = (pos_final - pos_n_[index_i]) * dt / (end_time_ - GlobalStaticVariables::physical_time_);
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("PositionScaleSolidBody::getDisplacement: particle index out of bounds") + to_string(index_i));
+			}
+			return displacement;
+		}
+		//=================================================================================================//
+		void PositionScaleSolidBody::Update(size_t index_i, Real dt)
+		{
+			try {
+				// only apply in the defined time period
+				if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
+				{
+					pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
+					vel_n_[index_i] = getVelocity();
+					dvel_dt_[index_i] = getAcceleration();
+					/** the average values are prescirbed also. */
+					vel_ave_[index_i] = vel_n_[index_i];
+					dvel_dt_ave_[index_i] = dvel_dt_[index_i];
+				}
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("PositionScaleSolidBody::Update: particle index out of bounds") + to_string(index_i));
+			}
+		}
+		//=================================================================================================//
+		TranslateSolidBody::
+			TranslateSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd translation):
+			PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
+			pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
+			vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
+			vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
+			start_time_(start_time), end_time_(end_time), translation_(translation)
+		{
+		}
+		//=================================================================================================//
+		Vecd TranslateSolidBody::getDisplacement(size_t index_i, Real dt)
+		{
+			// displacement from the initial position
+			Vecd displacement = translation_ * dt / (end_time_ - GlobalStaticVariables::physical_time_);
+			return displacement;
+		}
+		//=================================================================================================//
+		void TranslateSolidBody::Update(size_t index_i, Real dt)
+		{
+			try {
+				// only apply in the defined time period
+				if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
+				{
+					pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
+					vel_n_[index_i] = getVelocity();
+					dvel_dt_[index_i] = getAcceleration();
+					/** the average values are prescirbed also. */
+					vel_ave_[index_i] = vel_n_[index_i];
+					dvel_dt_ave_[index_i] = dvel_dt_[index_i];
+				}
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("TranslateSolidBody::Update: particle index out of bounds") + to_string(index_i));
+			}
+		}
+		//=================================================================================================//
 		SoftConstrainSolidBodyRegion::
-			SoftConstrainSolidBodyRegion(BaseInnerBodyRelation* body_inner_relation, BodyPartByParticle* body_part) :
+			SoftConstrainSolidBodyRegion(BaseBodyRelationInner* body_inner_relation, BodyPartByParticle* body_part) :
 			PartInteractionDynamicsByParticleWithUpdate(body_inner_relation->sph_body_, body_part),
 			SolidDataInner(body_inner_relation),
 			Vol_(particles_->Vol_),	
@@ -316,7 +441,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ClampConstrainSolidBodyRegion::
-			ClampConstrainSolidBodyRegion(BaseInnerBodyRelation* body_inner_relation, BodyPartByParticle* body_part) :
+			ClampConstrainSolidBodyRegion(BaseBodyRelationInner* body_inner_relation, BodyPartByParticle* body_part) :
 			ParticleDynamics<void>(body_inner_relation->sph_body_),
 			constrianing_(new ConstrainSolidBodyRegion(body_inner_relation->sph_body_, body_part)),
 			softing_(new SoftConstrainSolidBodyRegion(body_inner_relation, body_part)) {}
@@ -378,7 +503,7 @@ namespace SPH
 		{
 			// calculate total mass
 			total_mass_ = 0.0;
-			for (int i = 0; i < particles_->mass_.size(); i++)
+			for (size_t i = 0; i < particles_->mass_.size(); i++)
 			{
 				total_mass_ += particles_->mass_[i];
 			}
@@ -436,13 +561,18 @@ namespace SPH
 		}
 		//=================================================================================================//
 		void AccelerationForBodyPartInBoundingBox::Update(size_t index_i, Real dt)
-		{	
-			Vecd point = pos_n_[index_i];
-			if ( 	point[0] >= bounding_box_->first[0] && point[0] <= bounding_box_->second[0] &&
-					point[1] >= bounding_box_->first[1] && point[1] <= bounding_box_->second[1] &&
-					point[2] >= bounding_box_->first[2] && point[2] <= bounding_box_->second[2]			)
+		{
+			if (pos_n_.size() > index_i)
 			{
-				dvel_dt_prior_[index_i] += acceleration_;
+				Vecd point = pos_n_[index_i];
+				if (point.size() >= 3 && bounding_box_ != nullptr && bounding_box_->first.size() >= 3 && 
+					bounding_box_->second.size() >= 3 && point[0] >= bounding_box_->first[0] && 
+					point[0] <= bounding_box_->second[0] &&
+					point[1] >= bounding_box_->first[1] && point[1] <= bounding_box_->second[1] &&
+					point[2] >= bounding_box_->first[2] && point[2] <= bounding_box_->second[2])
+				{
+					dvel_dt_prior_[index_i] += acceleration_;
+				}
 			}
 		}
 		//=================================================================================================//	
@@ -463,7 +593,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		DeformationGradientTensorBySummation::
-			DeformationGradientTensorBySummation(BaseInnerBodyRelation* body_inner_relation) :
+			DeformationGradientTensorBySummation(BaseBodyRelationInner* body_inner_relation) :
 			InteractionDynamics(body_inner_relation->sph_body_),
 			ElasticSolidDataInner(body_inner_relation),
 			Vol_(particles_->Vol_), pos_n_(particles_->pos_n_),
@@ -489,7 +619,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseElasticRelaxation::
-			BaseElasticRelaxation(BaseInnerBodyRelation* body_inner_relation) :
+			BaseElasticRelaxation(BaseBodyRelationInner* body_inner_relation) :
 			ParticleDynamics1Level(body_inner_relation->sph_body_),
 			ElasticSolidDataInner(body_inner_relation), Vol_(particles_->Vol_),
 			rho_n_(particles_->rho_n_), mass_(particles_->mass_),
@@ -497,7 +627,7 @@ namespace SPH
 			B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}
 		//=================================================================================================//
 		StressRelaxationFirstHalf::
-			StressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation) :
+			StressRelaxationFirstHalf(BaseBodyRelationInner* body_inner_relation) :
 			BaseElasticRelaxation(body_inner_relation), 
 			dvel_dt_prior_(particles_->dvel_dt_prior_), force_from_fluid_(particles_->force_from_fluid_),
 			stress_PK1_(particles_->stress_PK1_)
@@ -547,7 +677,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		KirchhoffStressRelaxationFirstHalf::
-			KirchhoffStressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation)
+			KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner* body_inner_relation)
 			: StressRelaxationFirstHalf(body_inner_relation),
 			J_to_minus_2_over_diemsnion_(*particles_->createAVariable<indexScalar, Real>("DeterminantTerm")),
 			stress_on_particle_(*particles_->createAVariable<indexMatrix, Matd>("StressOnParticle")),

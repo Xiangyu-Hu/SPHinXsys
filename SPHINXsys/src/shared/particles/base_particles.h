@@ -160,7 +160,7 @@ namespace SPH
 			std::cout << "\n Error: the old variable '" << old_variable_name << "' is not registered!" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
-			return NULL;
+			return nullptr;
 		};
 
 		/** get a registered variable from particles by its name */
@@ -173,7 +173,7 @@ namespace SPH
 			std::cout << "\n Error: the variable '" << variable_name << "' is not registered!" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
-			return NULL;
+			return nullptr;
 		};
 
 		/** add a variable into a particle vairable name list */

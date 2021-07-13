@@ -20,6 +20,7 @@ namespace SPH
 		ParticleAdaptation(Real h_spacing_ratio, int global_refinement_level) :
 		h_spacing_ratio_(h_spacing_ratio),
 		global_refinement_level_(global_refinement_level),
+		system_resolution_ratio_(1.0),
 		local_refinement_level_(0),
 		local_coarse_level_(local_refinement_level_ / 2),
 		spacing_ref_(0), Vol_ref_(0), h_ref_(0),
@@ -27,15 +28,15 @@ namespace SPH
 		spacing_ratio_max_(1.0), h_ratio_min_(1.0), h_ratio_max_(1.0),
 		number_density_min_(1.0), number_density_max_(1.0),
 		kernel_(new KernelWendlandC2()), 
-		sph_body_(NULL), system_domain_bounds_(),
-		base_particles_(NULL) {};
+		sph_body_(nullptr), system_domain_bounds_(),
+		base_particles_(nullptr) {};
 	//=================================================================================================//
 	void ParticleAdaptation::initialize(SPHBody* sph_body)
 	{
 		sph_body_ = sph_body;
 		system_domain_bounds_ = sph_body_->getSPHSystem().system_domain_bounds_;
-		Real system_resolution = sph_body_->getSPHSystem().resolution_ref_;
-		spacing_ref_ = RefinedSpacing(system_resolution, global_refinement_level_);
+		Real body_resololution = system_resolution_ratio_ * sph_body_->getSPHSystem().resolution_ref_;
+		spacing_ref_ = RefinedSpacing(body_resololution, global_refinement_level_);
 		Vol_ref_ = powerN(spacing_ref_, Dimensions);
 		h_ref_ = h_spacing_ratio_ * spacing_ref_;
 		kernel_->initialize(h_ref_);
@@ -113,12 +114,12 @@ namespace SPH
 	//=================================================================================================//
 	BaseMeshCellLinkedList* ParticleAdaptation::createMeshCellLinkedList()
 	{
-		return new MeshCellLinkedList(*sph_body_, *this, system_domain_bounds_, kernel_->CutOffRadius());
+		return new MeshCellLinkedList(system_domain_bounds_, kernel_->CutOffRadius(), *sph_body_, *this);
 	}
 	//=================================================================================================//
 	BaseLevelSet* ParticleAdaptation::createLevelSet(ComplexShape& complex_shape)
 	{
-		return new LevelSet(complex_shape, *this, complex_shape.findBounds(), ReferenceSpacing());
+		return new LevelSet(complex_shape.findBounds(), ReferenceSpacing(), complex_shape, *this);
 	}
 	//=================================================================================================//
 	ParticleWithLocalRefinement::ParticleWithLocalRefinement(Real h_spacing_ratio,
@@ -147,14 +148,14 @@ namespace SPH
 	//=================================================================================================//
 	BaseMeshCellLinkedList* ParticleWithLocalRefinement::createMeshCellLinkedList()
 	{
-		return new MultilevelMeshCellLinkedList(*sph_body_, *this, system_domain_bounds_, 
-			kernel_->CutOffRadius(), getMeshCellLinkedListTotalLevel(), MaximumSpacingRatio());
+		return new MultilevelMeshCellLinkedList(system_domain_bounds_, kernel_->CutOffRadius(), 
+			getMeshCellLinkedListTotalLevel(), MaximumSpacingRatio(), *sph_body_, *this);
 	}
 	//=================================================================================================//
 	BaseLevelSet* ParticleWithLocalRefinement::createLevelSet(ComplexShape& complex_shape)
 	{
-		return new MultilevelLevelSet(complex_shape, *this, complex_shape.findBounds(), 
-			ReferenceSpacing(), getLevelSetTotalLevel(), MaximumSpacingRatio());
+		return new MultilevelLevelSet(complex_shape.findBounds(), 
+			ReferenceSpacing(), getLevelSetTotalLevel(), MaximumSpacingRatio(), complex_shape, *this);
 	}
 	//=================================================================================================//
 	ParticleSpacingByBodyShape::

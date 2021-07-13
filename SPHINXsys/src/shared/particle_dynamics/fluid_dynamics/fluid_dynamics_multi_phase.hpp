@@ -16,8 +16,8 @@ namespace SPH
 		//=================================================================================================//
 		template<class RelaxationInnerType>
         RelaxationMultiPhase<RelaxationInnerType>::
-            RelaxationMultiPhase(BaseInnerBodyRelation* inner_relation,
-				BaseContactBodyRelation* contact_relation) :
+            RelaxationMultiPhase(BaseBodyRelationInner* inner_relation,
+				BaseBodyRelationContact* contact_relation) :
 				RelaxationInnerType(inner_relation), MultiPhaseContactData(contact_relation)
 		{
 			if (inner_relation->sph_body_ != contact_relation->sph_body_)
@@ -38,8 +38,8 @@ namespace SPH
 		//=================================================================================================//
 		template<class PressureRelaxationInnerType>
         BasePressureRelaxationMultiPhase<PressureRelaxationInnerType>::
-            BasePressureRelaxationMultiPhase(BaseInnerBodyRelation* inner_relation,
-				BaseContactBodyRelation* contact_relation) :
+            BasePressureRelaxationMultiPhase(BaseBodyRelationInner* inner_relation,
+				BaseBodyRelationContact* contact_relation) :
 				RelaxationMultiPhase<PressureRelaxationInnerType>(inner_relation,
 					contact_relation)
 		{
@@ -115,8 +115,8 @@ namespace SPH
 		//=================================================================================================//
 		template<class DensityRelaxationInnerType>
         BaseDensityRelaxationMultiPhase<DensityRelaxationInnerType>::
-            BaseDensityRelaxationMultiPhase(BaseInnerBodyRelation* inner_relation,
-				BaseContactBodyRelation* contact_relation) :
+            BaseDensityRelaxationMultiPhase(BaseBodyRelationInner* inner_relation,
+				BaseBodyRelationContact* contact_relation) :
 				RelaxationMultiPhase<DensityRelaxationInnerType>(inner_relation,
 					contact_relation)
 			{

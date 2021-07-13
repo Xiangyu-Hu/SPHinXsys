@@ -10,12 +10,16 @@
 
 #include "sphinxsys.h"
 #include <algorithm>
+#include <memory>
 
 using namespace SPH;
 using namespace std;
 using GravityPair = pair<int, Vec3d>;
 using AccelTuple = tuple<int, BoundingBox, Vec3d>;
 using SpringDamperTuple = tuple<int, Vec3d, Real>;
+using PositionSolidBodyTuple = tuple<int, Real, Real, Vec3d>;
+using PositionScaleSolidBodyTuple = tuple<int, Real, Real, Real>;
+using TranslateSolidBodyTuple = tuple<int, Real, Real, Vec3d>;
 
 class BodyPartByParticleTriMesh : public BodyPartByParticle
 {
@@ -37,7 +41,7 @@ private:
 	ImportedModel imported_model_;
 	//LinearElasticSolid material_model_;
 	ElasticSolidParticles elastic_solid_particles_;
-	InnerBodyRelation inner_body_relation_;
+	BodyRelationInner inner_body_relation_;
 
 	solid_dynamics::CorrectConfiguration correct_configuration_;
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half_;
@@ -51,7 +55,7 @@ public:
 	ImportedModel* GetImportedModel() { return &imported_model_; };
 	//LinearElasticSolid* GetMaterialModel() { return &material_model_; };
 	ElasticSolidParticles* GetElasticSolidParticles() { return &elastic_solid_particles_; };
-	InnerBodyRelation* GetInnerBodyRelation() { return &inner_body_relation_; };
+	BodyRelationInner* GetInnerBodyRelation() { return &inner_body_relation_; };
 
 	solid_dynamics::CorrectConfiguration* GetCorrectConfiguration() { return &correct_configuration_; };
 	solid_dynamics::StressRelaxationFirstHalf* GetStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
@@ -65,7 +69,7 @@ void RelaxParticlesSingleResolution(In_Output* in_output,
 									bool write_particles_to_file,
 									ImportedModel* imported_model,
 									ElasticSolidParticles* imported_model_particles,
-									InnerBodyRelation* imported_model_inner);
+									BodyRelationInner* imported_model_inner);
 
 
 class StructuralSimulationInput
@@ -79,13 +83,18 @@ public:
 	vector<LinearElasticSolid> material_model_list_;
 	Real physical_viscosity_;
 	vector<array<int, 2>> contacting_bodies_list_;
+	// scale system boundaries
+	Real scale_system_boundaries_;
 	// particle relaxation
-	bool particle_relaxation_;
+	vector<bool> particle_relaxation_list_;
 	// boundary conditions
 	vector<GravityPair> non_zero_gravity_;
 	vector<AccelTuple> acceleration_bounding_box_tuple_;
 	vector<SpringDamperTuple> spring_damper_tuple_;
 	vector<int> body_indeces_fixed_constraint_;
+	vector<PositionSolidBodyTuple> position_solid_body_tuple_;
+	vector<PositionScaleSolidBodyTuple> position_scale_solid_body_tuple_;
+	vector<TranslateSolidBodyTuple> translation_solid_body_tuple_;
 
 	StructuralSimulationInput(
 		string relative_input_path,
@@ -101,53 +110,61 @@ public:
 
 class StructuralSimulation
 	{
-	private:
-		// input members
+	protected:
+		// mandatory input
 		string relative_input_path_;
 		vector<string> imported_stl_list_;
 		Real scale_stl_;
 		vector<Vec3d> translation_list_;
-		Real default_resolution_;
 		vector<Real> resolution_list_;
 		vector<LinearElasticSolid> material_model_list_;
 		Real physical_viscosity_;
-		// particle relaxation
-		bool particle_relaxation_;
+		vector<array<int, 2>> contacting_bodies_list_;
+		vector<bool> particle_relaxation_list_; // optional: particle relaxation
 
 		// internal members
+		Real system_resolution_;
 		SPHSystem system_;
+		Real scale_system_boundaries_;
 		In_Output in_output_;
 
 		vector<TriangleMeshShape> body_mesh_list_;
 		vector<ParticleAdaptation> particle_adaptation_list_;
+		vector<shared_ptr<SolidBodyForSimulation>> solid_body_list_;
 
-		vector<SolidBodyForSimulation*> solid_body_list_;
+		vector<shared_ptr<SolidBodyRelationContact>> contact_list_;
+		vector<shared_ptr<solid_dynamics::ContactDensitySummation>> contact_density_list_;
+		vector<shared_ptr<solid_dynamics::ContactForce>> contact_force_list_;
 
-		vector<array<int, 2>> contacting_bodies_list_;
-		vector<SolidContactBodyRelation*> contact_list_;
-		vector<solid_dynamics::ContactDensitySummation*> contact_density_list_;
-		vector<solid_dynamics::ContactForce*> contact_force_list_;
-
-		// for InitializeGravity
-		vector<TimeStepInitialization*> initialize_gravity_;
+		// for InitializeATimeStep
+		vector<shared_ptr<TimeStepInitialization>> initialize_gravity_;
 		vector<GravityPair> non_zero_gravity_;
-		// for AddAccelerationForBodyPartInBoundingBox
-		vector<solid_dynamics::AccelerationForBodyPartInBoundingBox*> acceleration_bounding_box_;
+		// for AccelerationForBodyPartInBoundingBox
+		vector<shared_ptr<solid_dynamics::AccelerationForBodyPartInBoundingBox>> acceleration_bounding_box_;
 		vector<AccelTuple> acceleration_bounding_box_tuple_;
-		// for AddSpringDamperConstraintParticleWise
-		vector<solid_dynamics::SpringDamperConstraintParticleWise*> spring_damper_constraint_;
+		// for SpringDamperConstraintParticleWise
+		vector<shared_ptr<solid_dynamics::SpringDamperConstraintParticleWise>> spring_damper_constraint_;
 		vector<SpringDamperTuple> spring_damper_tuple_;
-		// for AddSpringDamperConstraintParticleWise
-		vector<solid_dynamics::ConstrainSolidBodyRegion*> fixed_constraint_;
+		// for ConstrainSolidBodyRegion
+		vector<shared_ptr<solid_dynamics::ConstrainSolidBodyRegion>> fixed_constraint_;
 		vector<int> body_indeces_fixed_constraint_;
+		// for PositionSolidBody
+		vector<shared_ptr<solid_dynamics::PositionSolidBody>> position_solid_body_;
+		vector<PositionSolidBodyTuple> position_solid_body_tuple_;
+		// for PositionScaleSolidBody
+		vector<shared_ptr<solid_dynamics::PositionScaleSolidBody>> position_scale_solid_body_;
+		vector<PositionScaleSolidBodyTuple> position_scale_solid_body_tuple_;
+		// for TranslateSolidBody
+		vector<shared_ptr<solid_dynamics::TranslateSolidBody>> translation_solid_body_;
+		vector<TranslateSolidBodyTuple> translation_solid_body_tuple_;
 		
 		// for constructor, the order is important
 		void ScaleTranslationAndResolution();
-		void SetDefaultSystemResolutionMax();
+		void SetSystemResolutionMax();
 		void CreateBodyMeshList();
 		void CreateParticleAdaptationList();
 		void CalculateSystemBoundaries();
-		void InitializeElasticSolidBodies(bool particle_relaxation);
+		void InitializeElasticSolidBodies();
 		void InitializeContactBetweenTwoBodies(int first, int second);
 		void InitializeAllContacts();
 
@@ -156,6 +173,9 @@ class StructuralSimulation
 		void InitializeAccelerationForBodyPartInBoundingBox();
 		void InitializeSpringDamperConstraintParticleWise();
 		void InitializeConstrainSolidBodyRegion();
+		void InitializePositionSolidBody();
+		void InitializePositionScaleSolidBody();
+		void InitializeTranslateSolidBody();
 
 		// for RunSimulation, the order is important
 		void ExecuteCorrectConfiguration();
@@ -166,6 +186,9 @@ class StructuralSimulation
 		void ExecuteContactForce();
 		void ExecuteStressRelaxationFirstHalf(Real dt);
 		void ExecuteConstrainSolidBodyRegion();
+		void ExecutePositionSolidBody(Real dt);
+		void ExecutePositionScaleSolidBody(Real dt);
+		void ExecuteTranslateSolidBody(Real dt);
 		void ExecuteDamping(Real dt);
 		void ExecuteStressRelaxationSecondHalf(Real dt);
 		void ExecuteUpdateCellLinkedList();
@@ -176,8 +199,8 @@ class StructuralSimulation
 		void InitSimulation();
 
 	public:
-		StructuralSimulation(StructuralSimulationInput* input);
- 		~StructuralSimulation();
+		StructuralSimulation(StructuralSimulationInput& input);
+		~StructuralSimulation();
 
 		//For c++
 		void RunSimulation(Real end_time);

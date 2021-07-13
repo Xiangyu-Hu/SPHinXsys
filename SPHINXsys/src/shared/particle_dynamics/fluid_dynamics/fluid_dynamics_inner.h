@@ -71,7 +71,7 @@ namespace SPH
 			: public InteractionDynamicsWithUpdate, public FluidDataInner
 		{
 		public:
-			FreeSurfaceIndicationInner(BaseInnerBodyRelation* inner_relation, Real thereshold = 0.75);
+			FreeSurfaceIndicationInner(BaseBodyRelationInner* inner_relation, Real thereshold = 0.75);
 			virtual ~FreeSurfaceIndicationInner() {};
 
 		protected:
@@ -85,6 +85,56 @@ namespace SPH
 		};
 
 		/**
+        * @class MultilayeredSurfaceParticlesIdentification
+        * @brief extendedly indicate the 2nd and 3rd layers of surface particles.
+        * @brief In total, all indicator indexs of 3 layers of surface paritlces are set to 1.
+        * @brief in detail, index of second and third layer particles should be changed to 2 firstly as a temporary value.
+        * @brief then index 2 will be changed to 1 in the end.
+        * @brief applied in inlet-outlet case with wall boundary.
+        */
+		class MultilayeredSurfaceParticlesIdentification 
+			: public InteractionDynamicsWithUpdate, public FluidDataInner
+		{
+		public:
+			MultilayeredSurfaceParticlesIdentification(BaseBodyRelationInner* inner_relation);
+			virtual ~MultilayeredSurfaceParticlesIdentification() {};
+
+		protected:
+			StdLargeVec<Vecd>& pos_n_;
+			StdLargeVec<int>& surface_indicator_, &previous_surface_indicator_;
+
+			virtual void Interaction(size_t index_i, Real dt = 0.0)  override;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		* @class FreeStreamIndicateInletOutletSurfaceParticle 
+		* @brief further indicate the surface particles sepearately at inlet and outlet.
+		* @brief In total, index of internal fluid particles is 0. that of 3-layered surface particles is 1 or 2.
+		* @brief In detail, based on the result of MultilayeredSurfaceParticlesIdentification,
+		* @brief surface particles close to inlet and outler have the index 2,while other surface particles own index 1.
+		* @brief applied in the free-stream case without wall boundary.
+		*/
+		class FreeStreamInletOutletSurfaceParticleIdentification 
+			: public ParticleDynamicsSimple, public FluidDataInner
+		{
+		public:
+			FreeStreamInletOutletSurfaceParticleIdentification(BaseBodyRelationInner* inner_relation, int axis_direction);
+			virtual ~FreeStreamInletOutletSurfaceParticleIdentification() {};
+
+		protected:
+			StdLargeVec<Vecd>& pos_n_;
+			/**< lower and upper body domain bound for checking. */
+			BoundingBox fluid_body_domain_bounds_;
+			/** the axis direction for bounding*/
+			const int axis_;
+			Real particle_spacing_;
+			StdLargeVec<int>& surface_indicator_, &previous_surface_indicator_;
+			
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
 		* @class DensitySummationInner
 		* @brief  computing density by summation
 		*/
@@ -92,7 +142,7 @@ namespace SPH
 			: public InteractionDynamicsWithUpdate, public FluidDataInner
 		{
 		public:
-			DensitySummationInner(BaseInnerBodyRelation* inner_relation);
+			DensitySummationInner(BaseBodyRelationInner* inner_relation);
 			virtual ~DensitySummationInner() {};
 		protected:
 			Real W0_, rho0_, inv_sigma0_;
@@ -110,7 +160,7 @@ namespace SPH
 		class DensitySummationFreeSurfaceInner : public DensitySummationInner
 		{
 		public:
-			DensitySummationFreeSurfaceInner(BaseInnerBodyRelation* inner_relation) :
+			DensitySummationFreeSurfaceInner(BaseBodyRelationInner* inner_relation) :
 				DensitySummationInner(inner_relation) {};
 			virtual ~DensitySummationFreeSurfaceInner() {};
 		protected:
@@ -118,6 +168,23 @@ namespace SPH
 			{
 				return rho_sum + SMAX(0.0, (rho_n - rho_sum)) * rho_0 / rho_n;
 			};
+		};
+		/**
+		 * @class DensitySummationFreeStreamInner
+		 * @brief the density of three-layer surface particles is calculated by DensitySummationFreeSurface,
+		 * @brief and the density of other internal particles is obtained by DensitySummation.
+		 * @brief applied in free stream flow without wall boundary.
+		 */
+		class DensitySummationFreeStreamInner : public DensitySummationFreeSurfaceInner
+		{
+		public:
+			DensitySummationFreeStreamInner(BaseBodyRelationInner* inner_relation) :
+				DensitySummationFreeSurfaceInner(inner_relation),
+				surface_indicator_(*particles_->getVariableByName<indexInteger, int>("SurfaceIndicator")) {};
+			virtual ~DensitySummationFreeStreamInner() {};
+		protected:
+			StdLargeVec<int>& surface_indicator_;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -128,7 +195,7 @@ namespace SPH
 			: public InteractionDynamics, public FluidDataInner
 		{
 		public:
-			ViscousAccelerationInner(BaseInnerBodyRelation* inner_relation);
+			ViscousAccelerationInner(BaseBodyRelationInner* inner_relation);
 			virtual ~ViscousAccelerationInner() {};
 		protected:
 			Real mu_;
@@ -147,7 +214,7 @@ namespace SPH
 		class AngularConservativeViscousAccelerationInner : public ViscousAccelerationInner
 		{
 		public:
-			AngularConservativeViscousAccelerationInner(BaseInnerBodyRelation* inner_relation) : 
+			AngularConservativeViscousAccelerationInner(BaseBodyRelationInner* inner_relation) : 
 				ViscousAccelerationInner(inner_relation) {};
 			virtual ~AngularConservativeViscousAccelerationInner() {};
 		protected:
@@ -162,7 +229,7 @@ namespace SPH
 			: public InteractionDynamics, public FluidDataInner
 		{
 		public:
-			TransportVelocityCorrectionInner(BaseInnerBodyRelation* inner_relation);
+			TransportVelocityCorrectionInner(BaseBodyRelationInner* inner_relation);
 			virtual ~TransportVelocityCorrectionInner() {};
 		protected:
 			StdLargeVec<Real>& Vol_, & rho_n_;
@@ -228,7 +295,7 @@ namespace SPH
 			: public InteractionDynamics, public FluidDataInner
 		{
 		public:
-			VorticityInner(BaseInnerBodyRelation* body_inner_relation);
+			VorticityInner(BaseBodyRelationInner* body_inner_relation);
 			virtual ~VorticityInner() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
@@ -244,7 +311,7 @@ namespace SPH
 		class BaseRelaxation : public ParticleDynamics1Level, public FluidDataInner
 		{
 		public:
-			BaseRelaxation(BaseInnerBodyRelation* inner_relation);
+			BaseRelaxation(BaseBodyRelationInner* inner_relation);
 			virtual ~BaseRelaxation() {};
 		protected:
 			StdLargeVec<Real>& Vol_, & mass_, & rho_n_, & p_, & drho_dt_;
@@ -258,7 +325,7 @@ namespace SPH
 		class BasePressureRelaxation : public BaseRelaxation
 		{
 		public:
-			BasePressureRelaxation(BaseInnerBodyRelation* inner_relation);
+			BasePressureRelaxation(BaseBodyRelationInner* inner_relation);
 			virtual ~BasePressureRelaxation() {};
 		protected:
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
@@ -275,7 +342,7 @@ namespace SPH
 		class BasePressureRelaxationInner : public BasePressureRelaxation
 		{
 		public:
-			BasePressureRelaxationInner(BaseInnerBodyRelation* inner_relation);
+			BasePressureRelaxationInner(BaseBodyRelationInner* inner_relation);
 			virtual ~BasePressureRelaxationInner() {};
 			RiemannSolverType riemann_solver_;
 		protected:
@@ -293,11 +360,35 @@ namespace SPH
 		class BaseDensityRelaxation : public BaseRelaxation
 		{
 		public:
-			BaseDensityRelaxation(BaseInnerBodyRelation* inner_relation);
+			BaseDensityRelaxation(BaseBodyRelationInner* inner_relation);
 			virtual ~BaseDensityRelaxation() {};
 		protected:
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+        * @class FreeStreamBoundaryVelocityCorrection
+        * @brief this function is applied to freetream flows
+		* @brief modify the velocity of free surface particles with far-field velocity
+        */
+		class FreeStreamBoundaryVelocityCorrection: public ParticleDynamicsSimple, public FluidDataInner
+		{
+		public:
+			FreeStreamBoundaryVelocityCorrection(BaseBodyRelationInner* inner_relation)
+				: ParticleDynamicsSimple(inner_relation->sph_body_),
+				FluidDataInner(inner_relation), u_ref_(1.0), t_ref_(2.0),
+				rho_ref_(material_->ReferenceDensity()), rho_sum(particles_->rho_sum_),
+				vel_n_(particles_->vel_n_),dvel_dt_(particles_->dvel_dt_),
+				surface_indicator_(*particles_->getVariableByName<indexInteger, int>("SurfaceIndicator")) {};
+			virtual ~FreeStreamBoundaryVelocityCorrection() {};
+		protected:
+			Real u_ref_, t_ref_, rho_ref_;
+			StdLargeVec<Real>& rho_sum;
+			StdLargeVec<Vecd>& vel_n_, &dvel_dt_;
+			StdLargeVec<int>& surface_indicator_;
+
+			virtual void Update(size_t index_i, Real dt = 0.0) override ;
 		};
 
 		/**
@@ -308,7 +399,7 @@ namespace SPH
 		class BaseDensityRelaxationInner : public BaseDensityRelaxation
 		{
 		public:
-			BaseDensityRelaxationInner(BaseInnerBodyRelation* inner_relation);
+			BaseDensityRelaxationInner(BaseBodyRelationInner* inner_relation);
 			virtual ~BaseDensityRelaxationInner() {};
 			RiemannSolverType riemann_solver_;
 		protected:
@@ -339,7 +430,7 @@ namespace SPH
 		class PressureRelaxationRiemannInnerOldroyd_B : public PressureRelaxationRiemannInner
 		{
 		public:
-			PressureRelaxationRiemannInnerOldroyd_B(BaseInnerBodyRelation* inner_relation);
+			PressureRelaxationRiemannInnerOldroyd_B(BaseBodyRelationInner* inner_relation);
 			virtual ~PressureRelaxationRiemannInnerOldroyd_B() {};
 		protected:
 			StdLargeVec<Matd>& tau_, & dtau_dt_;
@@ -354,7 +445,7 @@ namespace SPH
 		class DensityRelaxationRiemannInnerOldroyd_B : public DensityRelaxationRiemannInner
 		{
 		public:
-			DensityRelaxationRiemannInnerOldroyd_B(BaseInnerBodyRelation* inner_relation);
+			DensityRelaxationRiemannInnerOldroyd_B(BaseBodyRelationInner* inner_relation);
 			virtual ~DensityRelaxationRiemannInnerOldroyd_B() {};
 		protected:
 			StdLargeVec<Matd>& tau_, & dtau_dt_;
@@ -519,6 +610,25 @@ namespace SPH
 		};
 
 		/**
+        * @class InletOutletInflowCondition
+        * @brief this function is for inlet-outlet flow 
+        */
+		class InletOutletInflowCondition
+			: public EmitterInflowCondition
+		{
+		public:
+			explicit InletOutletInflowCondition(FluidBody* body, BodyPartByParticle* body_part);
+			virtual ~InletOutletInflowCondition() {};
+		protected:
+			/** inflow velocity profile to be defined in applications */
+			virtual Vecd getTargetVelocity(Vecd& position, Vecd& velocity) = 0;
+			/** inflow parameters to be defined in applications */
+			virtual void SetInflowParameters() = 0;
+
+			virtual void Update(size_t unsorted_index_i, Real dt = 0.0) override;
+		};
+
+		/**
 		 * @class EmitterInflowInjecting
 		 * @brief Inject particles into the computational domain.
 		 */
@@ -534,10 +644,11 @@ namespace SPH
 			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
 		protected:
 			StdLargeVec<Vecd>& pos_n_;
+			StdLargeVec<Real>& rho_n_, &p_;
 			const int axis_; /**< the axis direction for bounding*/
-			BoundingBox body_part_bounds_;
 			Vecd periodic_translation_;
 			size_t body_buffer_width_;
+			BoundingBox body_part_bounds_;
 
 			virtual void checkLowerBound(size_t unsorted_index_i, Real dt = 0.0);
 			virtual void checkUpperBound(size_t unsorted_index_i, Real dt = 0.0);
@@ -576,7 +687,7 @@ namespace SPH
 		class ColorFunctionGradientInner : public InteractionDynamics, public FluidDataInner
 		{
 		public:
-			ColorFunctionGradientInner(BaseInnerBodyRelation* inner_relation);
+			ColorFunctionGradientInner(BaseBodyRelationInner* inner_relation);
 			virtual ~ColorFunctionGradientInner() {};
 		protected:
 			Real thereshold_by_dimensions_;
@@ -597,7 +708,7 @@ namespace SPH
 			: public InteractionDynamics, public FluidDataInner
 		{
 		public:
-			ColorFunctionGradientInterplationInner(BaseInnerBodyRelation* inner_relation);
+			ColorFunctionGradientInterplationInner(BaseBodyRelationInner* inner_relation);
 			virtual ~ColorFunctionGradientInterplationInner() {};
 		protected:
 			Real thereshold_by_dimensions_;
@@ -618,8 +729,8 @@ namespace SPH
 			: public InteractionDynamics, public FluidDataInner
 		{
 		public:
-			SurfaceTensionAccelerationInner(BaseInnerBodyRelation* inner_relation, Real gamma);
-			SurfaceTensionAccelerationInner(BaseInnerBodyRelation* inner_relation);
+			SurfaceTensionAccelerationInner(BaseBodyRelationInner* inner_relation, Real gamma);
+			SurfaceTensionAccelerationInner(BaseBodyRelationInner* inner_relation);
 			virtual ~SurfaceTensionAccelerationInner() {};
 		protected:
 			Real gamma_;

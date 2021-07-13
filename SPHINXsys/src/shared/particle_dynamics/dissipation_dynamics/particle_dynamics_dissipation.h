@@ -65,7 +65,7 @@ namespace SPH
 	{
 	protected:
 	public:
-		DampingBySplittingInner(BaseInnerBodyRelation* body_inner_relation,
+		DampingBySplittingInner(BaseBodyRelationInner* body_inner_relation,
 			std::string variable_name, Real eta);
 		virtual ~DampingBySplittingInner() {};
 		void resetDampingCoefficient(Real reset_ratio) { eta_ *= reset_ratio; };
@@ -125,7 +125,7 @@ namespace SPH
 		public InteractionDynamicsSplitting, public DissipationDataInner
 	{
 	public:
-		DampingPairwiseInner(BaseInnerBodyRelation* body_inner_relation,
+		DampingPairwiseInner(BaseBodyRelationInner* body_inner_relation,
 			std::string variable_name, Real eta);
 		virtual ~DampingPairwiseInner() {};
 		void resetDampingCoefficient(Real reset_ratio) { eta_ *= reset_ratio; };

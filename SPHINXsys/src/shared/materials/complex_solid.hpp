@@ -13,7 +13,7 @@ using namespace std;
 namespace SPH {
 	//=============================================================================================//
 	template<class MuscleType>
-    ActiveMuscle<MuscleType>::ActiveMuscle() : MuscleType(), active_muscle_particles_(NULL) 
+    ActiveMuscle<MuscleType>::ActiveMuscle() : MuscleType(), active_muscle_particles_(nullptr) 
 	{
 		MuscleType::material_name_ = "ActiveMuscle";
 	}

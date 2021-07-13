@@ -58,6 +58,7 @@ namespace SPH {
 	protected:
 		Real h_spacing_ratio_;
 		int global_refinement_level_;
+		Real system_resolution_ratio_; // ratio of body resolution to system resolution, set to 1.0 by default
 		int local_refinement_level_;
 		int local_coarse_level_;
 		Real spacing_ref_;
@@ -70,7 +71,7 @@ namespace SPH {
 		Real h_ratio_max_;
 		Real number_density_min_;
 		Real number_density_max_;
-
+		
 
 		Kernel* kernel_;
 		SPHBody* sph_body_;
@@ -102,6 +103,8 @@ namespace SPH {
 		virtual void assignBaseParticles(BaseParticles* base_particles);
 		virtual BaseMeshCellLinkedList* createMeshCellLinkedList();
 		virtual BaseLevelSet* createLevelSet(ComplexShape& complex_shape);
+
+		void SetSystemResolutionRatio(Real system_resolution_ratio) { system_resolution_ratio_ = system_resolution_ratio; };
 	protected:
 		Real RefinedSpacing(Real coarse_particle_spacing, int refinement_level);
 	};
