@@ -34,7 +34,7 @@ SolidBodyForSimulation::SolidBodyForSimulation(SPHSystem &system, string body_na
 	imported_model_(ImportedModel(system, body_name, &triangle_mesh_shape, &particle_adaptation)),
 	//material_model_(material_model),
 	elastic_solid_particles_(ElasticSolidParticles(&imported_model_, &material_model)),
-	inner_body_relation_(InnerBodyRelation(&imported_model_)),
+	inner_body_relation_(BodyRelationInner(&imported_model_)),
 
 	correct_configuration_(solid_dynamics::CorrectConfiguration(&inner_body_relation_)),
 	stress_relaxation_first_half_(solid_dynamics::StressRelaxationFirstHalf(&inner_body_relation_)),
@@ -61,7 +61,7 @@ void RelaxParticlesSingleResolution(In_Output* in_output,
 									bool write_particles_to_file,
 									ImportedModel* imported_model,
 									ElasticSolidParticles* imported_model_particles,
-									InnerBodyRelation* imported_model_inner)
+									BodyRelationInner* imported_model_inner)
 {	
 
 	BodyStatesRecordingToVtu write_imported_model_to_vtu(*in_output, { imported_model });
@@ -289,8 +289,8 @@ void StructuralSimulation::InitializeContactBetweenTwoBodies(int first, int seco
 	ImportedModel* first_body = solid_body_list_[first]->GetImportedModel();
 	ImportedModel* second_body = solid_body_list_[second]->GetImportedModel();
 
-	SolidContactBodyRelation* first_contact = new SolidContactBodyRelation(first_body, {second_body});
-	SolidContactBodyRelation* second_contact = new SolidContactBodyRelation(second_body, {first_body});
+	SolidBodyRelationContact* first_contact = new SolidBodyRelationContact(first_body, {second_body});
+	SolidBodyRelationContact* second_contact = new SolidBodyRelationContact(second_body, {first_body});
 
 	contact_list_.emplace_back(first_contact);
 	contact_list_.emplace_back(second_contact);

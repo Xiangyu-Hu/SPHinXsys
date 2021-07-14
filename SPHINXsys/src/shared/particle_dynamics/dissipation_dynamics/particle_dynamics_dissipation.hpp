@@ -17,7 +17,7 @@ namespace SPH
 	//=================================================================================================//
 	template <int DataTypeIndex, typename VariableType>
 	DampingBySplittingInner<DataTypeIndex, VariableType>::
-		DampingBySplittingInner(BaseInnerBodyRelation* body_inner_relation,
+		DampingBySplittingInner(BaseBodyRelationInner* body_inner_relation,
 			std::string variable_name, Real eta) :
 		InteractionDynamicsSplitting(body_inner_relation->sph_body_),
 		DissipationDataInner(body_inner_relation), eta_(eta),
@@ -217,7 +217,7 @@ namespace SPH
 	//=================================================================================================//
 	template <int DataTypeIndex, typename VariableType>
 	DampingPairwiseInner<DataTypeIndex, VariableType>::
-		DampingPairwiseInner(BaseInnerBodyRelation* body_inner_relation,
+		DampingPairwiseInner(BaseBodyRelationInner* body_inner_relation,
 			std::string variable_name, Real eta) :
 		InteractionDynamicsSplitting(body_inner_relation->sph_body_),
 		DissipationDataInner(body_inner_relation),

@@ -41,9 +41,9 @@ int main()
 	SolidParticles 		wall_particles(wall_boundary);
 	/** topology */
 	ComplexBodyRelation* water_air_complex = new ComplexBodyRelation(water_block, { air_block });
-	ContactBodyRelation* water_wall_contact = new ContactBodyRelation(water_block, { wall_boundary });
+	BodyRelationContact* water_wall_contact = new BodyRelationContact(water_block, { wall_boundary });
 	ComplexBodyRelation* air_water_complex = new ComplexBodyRelation(air_block, { water_block });
-	ContactBodyRelation* air_wall_contact = new ContactBodyRelation(air_block, { wall_boundary });
+	BodyRelationContact* air_wall_contact = new BodyRelationContact(air_block, { wall_boundary });
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */

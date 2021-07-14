@@ -42,8 +42,8 @@ int main(int ac, char* av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BaseInnerBodyRelation* imported_model_inner
-		= new InnerBodyRelation(imported_model);
+	BaseBodyRelationInner* imported_model_inner
+		= new BodyRelationInner(imported_model);
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------

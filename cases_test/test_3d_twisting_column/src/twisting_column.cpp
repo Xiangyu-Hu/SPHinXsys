@@ -23,8 +23,8 @@ int main()
 	MyObserver* my_observer = new MyObserver(system, "MyObserver");
 	BaseParticles observer_particles(my_observer);
 	/**body relation topology */
-	InnerBodyRelation* column_inner = new InnerBodyRelation(column);
-	ContactBodyRelation* my_observer_contact = new ContactBodyRelation(my_observer, { column });
+	BodyRelationInner* column_inner = new BodyRelationInner(column);
+	BodyRelationContact* my_observer_contact = new BodyRelationContact(my_observer, { column });
 	//----------------------------------------------------------------------
 	//	All numerical methods will be used in this case.
 	//----------------------------------------------------------------------

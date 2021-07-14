@@ -260,9 +260,9 @@ int main()
 
 	/** topology */
 	ComplexBodyRelation* water_block_complex_relation = new ComplexBodyRelation(water_block, { wall_boundary, gate});
-	InnerBodyRelation*	gate_inner_relation = new InnerBodyRelation(gate);
-	ContactBodyRelation* gate_water_contact_relation = new ContactBodyRelation(gate, { water_block });
-	ContactBodyRelation* gate_observer_contact_relation = new ContactBodyRelation(gate_observer, { gate });
+	BodyRelationInner*	gate_inner_relation = new BodyRelationInner(gate);
+	BodyRelationContact* gate_water_contact_relation = new BodyRelationContact(gate, { water_block });
+	BodyRelationContact* gate_observer_contact_relation = new BodyRelationContact(gate_observer, { gate });
 
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.

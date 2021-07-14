@@ -83,7 +83,7 @@ namespace SPH {
  		 */
 		virtual ~Array()
 		{
-    		if(array_!=NULL) { delete[] array_;  array_ = NULL; }
+    		if(array_!=nullptr) { delete[] array_;  array_ = nullptr; }
 		}
 	private:
 		/**
@@ -94,7 +94,7 @@ namespace SPH {
     		size_ = 0;
     		capacityIncrement_ = -1;
     		capacity_ = 0;
-    		array_ = NULL;
+    		array_ = nullptr;
 		}
 	//=============================================================================
 	// OPERATORS
@@ -145,7 +145,7 @@ namespace SPH {
     		defaultValue_ = aArray.defaultValue_;
 
     		// ARRAY
-    		if(array_!=NULL) delete[] array_;
+    		if(array_!=nullptr) delete[] array_;
     		array_ = new T[capacity_];
     		for(int i = 0;i < capacity_; i++) array_[i] = aArray.array_[i];
 
@@ -254,17 +254,17 @@ namespace SPH {
 
     		int i;
     		T *newArray = new T[aCapacity];
-    		if(newArray == NULL) 
+    		if(newArray == nullptr) 
     		{
         		std::cout << "Array.ensureCapacity: ERR- failed to increase capacity.\n";
         		return(false);
     		}
 
-    		if(array_ != NULL) {
+    		if(array_ != nullptr) {
         		for(i =0; i < size_; i++) newArray[i] = array_[i];
         		for(i = size_; i < aCapacity; i++) newArray[i] = defaultValue_;
         		delete []array_;  
-        		array_ = NULL;
+        		array_ = nullptr;
     		} else {
         		for(i = 0; i < aCapacity; i++) newArray[i] = defaultValue_;
     		}
@@ -279,7 +279,7 @@ namespace SPH {
  		* @details Trim the capacity of this array so that it is one larger than the size
  		* 	of this array.  This is useful for reducing the amount of memory used
  		* 	by this array.  This capacity is kept at one larger than the size so
- 		* 	that, for example, an array of characters can be treated as a NULL
+ 		* 	that, for example, an array of characters can be treated as a nullptr
  		* 	terminated string.
  		*/
 		void trim()
@@ -290,7 +290,7 @@ namespace SPH {
 
     		int i;
     		T *newArray = new T[newCapacity];
-    		if(newArray==NULL) {
+    		if(newArray==nullptr) {
         		std::cout << "Array.trim: ERR- unable to allocate temporary array.\n";
         		return;
     		}
@@ -430,7 +430,7 @@ namespace SPH {
 		int append(int aSize,const T *aArray)
 		{
     		if(aSize < 0) return(size_);
-    		if(aArray == NULL) return(size_);
+    		if(aArray == nullptr) return(size_);
 
     		int i;
     		for(i = 0;i < aSize; i++) {

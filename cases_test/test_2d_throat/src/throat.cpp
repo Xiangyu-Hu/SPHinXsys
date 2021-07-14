@@ -147,7 +147,7 @@ int main()
 	//creat solid particles
 	SolidParticles wall_particles(wall_boundary);
 	/** topology */
-	InnerBodyRelation* fluid_block_inner = new InnerBodyRelation(fluid_block);
+	BodyRelationInner* fluid_block_inner = new BodyRelationInner(fluid_block);
 	ComplexBodyRelation* fluid_block_complex = new ComplexBodyRelation(fluid_block_inner, { wall_boundary });
 	//-------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case

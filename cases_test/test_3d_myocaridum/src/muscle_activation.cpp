@@ -153,7 +153,7 @@ int main()
 	ActiveMuscleParticles 	myocardium_muscle_particles(myocardium_muscle_body, active_myocardium_muscle);
 
 	/** topology */
-	InnerBodyRelation* myocardium_muscle_body_inner = new InnerBodyRelation(myocardium_muscle_body);
+	BodyRelationInner* myocardium_muscle_body_inner = new BodyRelationInner(myocardium_muscle_body);
 
 	/** 
 	 * This section define all numerical methods will be used in this case.

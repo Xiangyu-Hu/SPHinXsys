@@ -140,9 +140,9 @@ int main(int ac, char* av[])
 	/** Output the body states. */
 	BodyStatesRecordingToVtu 		body_states_recording(in_output, sph_system.real_bodies_);
 	/** Algorithms. */
-	InnerBodyRelation*   free_cubic_inner = new InnerBodyRelation(free_cubic);
-	SolidContactBodyRelation* free_cubic_contact = new SolidContactBodyRelation(free_cubic, {wall_boundary});
-	ContactBodyRelation* free_cubic_observer_contact = new ContactBodyRelation(free_cubic_observer, { free_cubic });
+	BodyRelationInner*   free_cubic_inner = new BodyRelationInner(free_cubic);
+	SolidBodyRelationContact* free_cubic_contact = new SolidBodyRelationContact(free_cubic, {wall_boundary});
+	BodyRelationContact* free_cubic_observer_contact = new BodyRelationContact(free_cubic_observer, { free_cubic });
 	/** Dynamics. */
 	TimeStepInitialization 	free_cubic_initialize_timestep(free_cubic, &gravity);
 	/** Kernel correction. */

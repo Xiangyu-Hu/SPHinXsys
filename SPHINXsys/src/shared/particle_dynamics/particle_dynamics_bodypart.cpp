@@ -140,7 +140,7 @@ namespace SPH {
 		setBodyUpdated();
 		setupDynamics(dt);
 		for (size_t i = 0; i != body_part_cells_.size(); ++i) {
-			CellListDataVector& list_data = body_part_cells_[i]->cell_list_data_;
+			ListDataVector& list_data = body_part_cells_[i]->cell_list_data_;
 			for (size_t num = 0; num < list_data.size(); ++num) Update(list_data[num].first, dt);
 		}
 	}
@@ -152,7 +152,7 @@ namespace SPH {
 		parallel_for(blocked_range<size_t>(0, body_part_cells_.size()),
 			[&](const blocked_range<size_t>& r) {
 				for (size_t i = r.begin(); i < r.end(); ++i) {
-					CellListDataVector& list_data = body_part_cells_[i]->cell_list_data_;
+					ListDataVector& list_data = body_part_cells_[i]->cell_list_data_;
 					for (size_t num = 0; num < list_data.size(); ++num) Update(list_data[num].first, dt);
 				}
 			}, ap);

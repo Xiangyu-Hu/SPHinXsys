@@ -105,10 +105,10 @@ public:
 class DiffusionBodyRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<SolidBody, SolidParticles, Solid,
 	RelaxationOfAllDiffussionSpeciesInner<SolidBody, SolidParticles, Solid>, 
-	InnerBodyRelation>
+	BodyRelationInner>
 {
 public:
-	DiffusionBodyRelaxation(InnerBodyRelation* body_inner_relation)
+	DiffusionBodyRelaxation(BodyRelationInner* body_inner_relation)
 		: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation) {
 	};
 	virtual ~DiffusionBodyRelaxation() {};
@@ -135,7 +135,7 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	InnerBodyRelation* diffusion_body_inner_relation = new InnerBodyRelation(diffusion_body);
+	BodyRelationInner* diffusion_body_inner_relation = new BodyRelationInner(diffusion_body);
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simultion.
 	//	Note that there may be data dependence on the constructors of these methods.
@@ -148,7 +148,7 @@ int main()
 	/** Diffusion process for diffusion body. */
 	DiffusionBodyRelaxation 			diffusion_relaxation(diffusion_body_inner_relation);
 	/** Periodic BCs. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList	periodic_condition_y(diffusion_body, 1);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList	periodic_condition_y(diffusion_body, yAxis);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

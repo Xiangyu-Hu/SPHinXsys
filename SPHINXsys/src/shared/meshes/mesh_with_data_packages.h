@@ -32,8 +32,8 @@
 */
 
 
-#ifndef MESH_WITH_DATA_PACKEGES_H
-#define MESH_WITH_DATA_PACKEGES_H
+#ifndef MESH_WITH_DATA_PACKAGES_H
+#define MESH_WITH_DATA_PACKAGES_H
 
 
 
@@ -181,16 +181,15 @@ namespace SPH
 		virtual void allocateMeshDataMatrix() override;	/**< allocate memories for addresses of data packages. */
 		virtual void deleteMeshDataMatrix() override; 	/**< delete memories for addresses of data packages. */
 
-		template<class MeshCompositionType>
-		explicit MeshWithDataPackages(MeshCompositionType& mesh_composition, ParticleAdaptation& particle_adaptation,
-			BoundingBox tentative_bounds, Real data_spacing, size_t buffer_width) :
-			BaseMeshType(mesh_composition, particle_adaptation, tentative_bounds, data_spacing, buffer_width),
-			data_spacing_(data_spacing), 
-			pkg_size_((int)DataPackageType().PackageSize()),
-			pkg_addrs_buffer_((int)DataPackageType().AddressBufferWidth()),
-			pkg_operations_(pkg_size_ + pkg_addrs_buffer_),
-			pkg_addrs_size_(pkg_size_ + 2 * pkg_addrs_buffer_),
-			total_data_points_(this->number_of_cells_ * pkg_size_)
+		template<typename... Args>
+		explicit MeshWithDataPackages(BoundingBox tentative_bounds, Real data_spacing, Args&&... args)
+			: BaseMeshType(tentative_bounds, data_spacing, std::forward<Args>(args)...),
+				data_spacing_(data_spacing), 
+				pkg_size_((int)DataPackageType().PackageSize()),
+				pkg_addrs_buffer_((int)DataPackageType().AddressBufferWidth()),
+				pkg_operations_(pkg_size_ + pkg_addrs_buffer_),
+				pkg_addrs_size_(pkg_size_ + 2 * pkg_addrs_buffer_),
+				total_data_points_(this->number_of_cells_ * pkg_size_)
 		{
 			allocateMeshDataMatrix();
 		};
@@ -256,4 +255,4 @@ namespace SPH
 		}
 	};
 }
-#endif //MESH_WITH_DATA_PACKEGES_H
+#endif //MESH_WITH_DATA_PACKAGES_H

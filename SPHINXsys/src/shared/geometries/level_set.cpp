@@ -35,20 +35,23 @@ namespace SPH {
 	}
 	//=================================================================================================//
 	BaseLevelSet
-		::BaseLevelSet(ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation,
-			BoundingBox tentative_bounds, Real data_spacing, size_t buffer_width)
-		: Mesh(tentative_bounds, LevelSetDataPackage().PackageSize() * data_spacing, buffer_width),
-		complex_shape_(complex_shape), particle_adaptation_(particle_adaptation) {name_ =  "BaseLevelSet";}
+		::BaseLevelSet(BoundingBox tentative_bounds, Real data_spacing, 
+			ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation)
+		: Mesh(tentative_bounds, LevelSetDataPackage().PackageSize() * data_spacing, 4),
+		complex_shape_(complex_shape), particle_adaptation_(particle_adaptation) 
+	{
+		name_ =  "BaseLevelSet";
+	}
 	//=================================================================================================//
-	LevelSet::LevelSet(ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation,
-		BoundingBox tentative_bounds, Real data_spacing, size_t buffer_width) : 
-		MeshWithDataPackages<BaseLevelSet, LevelSetDataPackage>(complex_shape, 
-			particle_adaptation, tentative_bounds, data_spacing, buffer_width),
-		global_h_ratio_(particle_adaptation.ReferenceSpacing() / data_spacing),
-		kernel_(*particle_adaptation.getKernel())
+	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, 
+		ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation) 
+		: MeshWithDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, 
+			complex_shape, particle_adaptation),
+			global_h_ratio_(particle_adaptation.ReferenceSpacing() / data_spacing),
+			kernel_(*particle_adaptation.getKernel())
 	{
 		name_ =  "LevelSet";
-		Real far_field_distance = grid_spacing_ * (Real)buffer_width;
+		Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
 		LevelSetDataPackage* negative_far_field = new LevelSetDataPackage();
 		negative_far_field->initializeWithUniformData(-far_field_distance);
 		singular_data_pkgs_addrs.push_back(negative_far_field);
@@ -176,11 +179,11 @@ namespace SPH {
 	}
 	//=============================================================================================//
 	MultilevelLevelSet::
-		MultilevelLevelSet(ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation, 
-			BoundingBox tentative_bounds, Real reference_data_spacing,
-			size_t total_levels, Real maximum_spacing_ratio) :
-		MultilevelMesh<ComplexShape, BaseLevelSet, LevelSet>(complex_shape, particle_adaptation, 
-			tentative_bounds, reference_data_spacing, total_levels, maximum_spacing_ratio, 4)
+		MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing,
+			size_t total_levels, Real maximum_spacing_ratio,
+			ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation) 
+		: MultilevelMesh<BaseLevelSet, LevelSet>(tentative_bounds, reference_data_spacing, 
+			total_levels, maximum_spacing_ratio, complex_shape, particle_adaptation)
 	{
 		name_ = "MultilevelLevelSet";
 	}

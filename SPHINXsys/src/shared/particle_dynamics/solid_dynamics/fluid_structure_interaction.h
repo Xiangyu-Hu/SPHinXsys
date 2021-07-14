@@ -51,7 +51,7 @@ namespace SPH
 			public InteractionDynamics, public FSIContactData
 		{
 		public:
-			FluidViscousForceOnSolid(BaseContactBodyRelation* body_contact_relation);
+			FluidViscousForceOnSolid(BaseBodyRelationContact* body_contact_relation);
 			virtual ~FluidViscousForceOnSolid() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
@@ -71,7 +71,7 @@ namespace SPH
 		class FluidAngularConservativeViscousForceOnSolid : public FluidViscousForceOnSolid
 		{
 		public:
-			FluidAngularConservativeViscousForceOnSolid(BaseContactBodyRelation* body_contact_relation)
+			FluidAngularConservativeViscousForceOnSolid(BaseBodyRelationContact* body_contact_relation)
 				: FluidViscousForceOnSolid(body_contact_relation) {};
 			virtual ~FluidAngularConservativeViscousForceOnSolid() {};
 		protected:
@@ -89,7 +89,7 @@ namespace SPH
 		class BaseFluidPressureForceOnSolid : public FluidViscousForceOnSolid
 		{
 		public:
-			BaseFluidPressureForceOnSolid(BaseContactBodyRelation* body_contact_relation) :
+			BaseFluidPressureForceOnSolid(BaseBodyRelationContact* body_contact_relation) :
 				FluidViscousForceOnSolid(body_contact_relation), 
 				force_from_fluid_(particles_->force_from_fluid_),
 				dvel_dt_ave_(particles_->dvel_dt_ave_), n_(particles_->n_)
