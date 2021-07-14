@@ -184,7 +184,7 @@ TEST(StructuralSimulation, TimeDependentContactStiff)
 	// spring damper constraint
 	Real spring_stiffness = 100;
 	Real damping_ratio = 0.02;
-	input.spring_damper_tuple_ = { SpringDamperTuple(2, Vec3d(spring_stiffness), damping_ratio)};
+	input.spring_damper_tuple_ = { SpringDamperTuple(2, Vec3d(spring_stiffness), damping_ratio) };
 
 	/** SIMULATION MODEL */
 	TestStructuralSimulation sim(input);

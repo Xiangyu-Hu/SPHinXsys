@@ -17,6 +17,9 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
 set(FILES_STL			
 				"plate.stl"
 				"plate2.stl"
+				"mock_stent.stl"
+				"vessel_cylinder.stl"
+				"plate_stent.stl"
 				)
 foreach(STL_FILE ${FILES_STL})
 	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/input/${STL_FILE} DESTINATION ${BUILD_INPUT_PATH})
