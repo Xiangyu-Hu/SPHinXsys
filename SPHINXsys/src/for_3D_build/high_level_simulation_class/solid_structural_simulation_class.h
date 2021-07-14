@@ -11,6 +11,7 @@
 #include "sphinxsys.h"
 #include <algorithm>
 #include <memory>
+#include <vector>
 
 using namespace SPH;
 using namespace std;
@@ -33,6 +34,7 @@ class ImportedModel : public SolidBody
 public:
 	ImportedModel(SPHSystem &system, string body_name, TriangleMeshShape* triangle_mesh_shape, ParticleAdaptation* particle_adaptation);
 	~ImportedModel();
+	std::string GetBodyName(){ return body_name_; };
 };
 
 class SolidBodyForSimulation
@@ -82,8 +84,8 @@ public:
 	vector<Real> resolution_list_;
 	vector<LinearElasticSolid> material_model_list_;
 	Real physical_viscosity_;
-	vector<array<int, 2>> contacting_bodies_list_;
-	vector<pair<array<int, 2>, array<Real, 2>>> time_dep_contacting_bodies_list_;
+	vector<array<int, 2>> contacting_body_pairs_list_;
+	vector<pair<array<int, 2>, array<Real, 2>>> time_dep_contacting_body_pairs_list_;
 	// scale system boundaries
 	Real scale_system_boundaries_;
 	// particle relaxation
@@ -120,8 +122,8 @@ class StructuralSimulation
 		vector<Real> resolution_list_;
 		vector<LinearElasticSolid> material_model_list_;
 		Real physical_viscosity_;
-		vector<array<int, 2>> contacting_bodies_list_;
-		vector<pair<array<int, 2>, array<Real, 2>>> time_dep_contacting_bodies_list_; //optional: time dependent contact
+		vector<array<int, 2>> contacting_body_pairs_list_;
+		vector<pair<array<int, 2>, array<Real, 2>>> time_dep_contacting_body_pairs_list_; //optional: time dependent contact
 		vector<bool> particle_relaxation_list_; // optional: particle relaxation
 
 		// internal members

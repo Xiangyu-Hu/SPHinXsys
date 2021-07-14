@@ -124,10 +124,10 @@ StructuralSimulationInput::StructuralSimulationInput(
 	resolution_list_(resolution_list),
 	material_model_list_(material_model_list),
 	physical_viscosity_(physical_viscosity),
-	contacting_bodies_list_(contacting_bodies_list)
+	contacting_body_pairs_list_(contacting_bodies_list)
 {
 	//time dependent contact
-	time_dep_contacting_bodies_list_ = {};
+	time_dep_contacting_body_pairs_list_ = {};
 	// particle_relaxation option
 	particle_relaxation_list_ = {};
 	for (unsigned i = 0; i < resolution_list_.size(); i++){ particle_relaxation_list_.push_back(true); }
@@ -156,8 +156,8 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	resolution_list_(input.resolution_list_),
 	material_model_list_(input.material_model_list_),
 	physical_viscosity_(input.physical_viscosity_),
-	contacting_bodies_list_(input.contacting_bodies_list_),
-	time_dep_contacting_bodies_list_(input.time_dep_contacting_bodies_list_),
+	contacting_body_pairs_list_(input.contacting_body_pairs_list_),
+	time_dep_contacting_body_pairs_list_(input.time_dep_contacting_body_pairs_list_),
 
 	// default system, optional: particle relaxation, scale_system_boundaries
 	particle_relaxation_list_(input.particle_relaxation_list_),
@@ -291,6 +291,8 @@ void StructuralSimulation::InitializeContactBetweenTwoBodies(int first, int seco
 {	
 	ImportedModel* first_body = solid_body_list_[first]->GetImportedModel();
 	ImportedModel* second_body = solid_body_list_[second]->GetImportedModel();
+	
+	std::cout << "body_name_1: " << first_body->GetBodyName() << " body_name_2: " << second_body->GetBodyName() << std::endl;
 
 	SolidContactBodyRelation* first_contact = new SolidContactBodyRelation(first_body, {second_body});
 	SolidContactBodyRelation* second_contact = new SolidContactBodyRelation(second_body, {first_body});
@@ -310,31 +312,36 @@ void StructuralSimulation::InitializeAllContacts()
 	contact_list_ = {};
 	contact_density_list_ = {};
 	contact_force_list_ = {};
-	for (size_t i = 0; i < contacting_bodies_list_.size(); i++)
+	for (size_t i = 0; i < contacting_body_pairs_list_.size(); i++)
 	{
-		InitializeContactBetweenTwoBodies(contacting_bodies_list_[i][0], contacting_bodies_list_[i][1]);
+		InitializeContactBetweenTwoBodies(contacting_body_pairs_list_[i][0], contacting_body_pairs_list_[i][1]);
 	}
-	for (size_t j = 0; j < time_dep_contacting_bodies_list_.size(); j++)
-	{
-		InitializeContactBetweenTwoBodies(time_dep_contacting_bodies_list_[j].first[0], time_dep_contacting_bodies_list_[j].first[1]); //vector with first element being array with indices
+	for (size_t i = 0; i < time_dep_contacting_body_pairs_list_.size(); i++)
+	{	
+		int body_1 = time_dep_contacting_body_pairs_list_[i].first[0];
+		int body_2 = time_dep_contacting_body_pairs_list_[i].first[1];
+		InitializeContactBetweenTwoBodies(body_1, body_2); //vector with first element being array with indices
 	}
 }
 
 void StructuralSimulation::InitializeGravity()
 {
 	// collect all the body indeces with non-zero gravity
-	vector<int> body_indeces_gravity = {};
+	vector<int> gravity_indeces = {};
 	for (size_t i = 0; i < non_zero_gravity_.size(); i++)
 	{
-		body_indeces_gravity.push_back(non_zero_gravity_[i].first);
+		gravity_indeces.push_back(non_zero_gravity_[i].first);
 	}
 	// initialize gravity
 	initialize_gravity_ = {};
+	size_t gravity_index_i = 0; // iterating through gravity_indeces
 	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{	
-		if ( find(body_indeces_gravity.begin(), body_indeces_gravity.end(), i) != body_indeces_gravity.end() )
+		// check if i is in indeces_gravity
+		if ( count(gravity_indeces.begin(), gravity_indeces.end(), i) )
 		{	
-			initialize_gravity_.emplace_back(make_shared<TimeStepInitialization>(solid_body_list_[i]->GetImportedModel(), new Gravity(non_zero_gravity_[i].second)));
+			initialize_gravity_.emplace_back(make_shared<TimeStepInitialization>(solid_body_list_[i]->GetImportedModel(), new Gravity(non_zero_gravity_[gravity_index_i].second)));
+			gravity_index_i++;
 		}
 		else
 		{
@@ -454,7 +461,8 @@ void StructuralSimulation::ExecuteSpringDamperConstraintParticleWise()
 
 void StructuralSimulation::ExecuteContactDensitySummation()
 {
-	size_t number_of_general_contacts = contacting_bodies_list_.size() * 2;
+	// number of contacts that are not time dependent: contact pairs * 2
+	size_t number_of_general_contacts = contacting_body_pairs_list_.size() * 2;
 	for (size_t i = 0; i < contact_density_list_.size(); i++)
 	{
 		if (i < number_of_general_contacts)
@@ -463,8 +471,11 @@ void StructuralSimulation::ExecuteContactDensitySummation()
 		}
 		else
 		{
-			Real start_time = time_dep_contacting_bodies_list_[i - number_of_general_contacts].second[0];
-			Real end_time = time_dep_contacting_bodies_list_[i - number_of_general_contacts].second[1];
+			// index of the time dependent contact body pair
+			// for i = 0, 1 --> index = 0, i = 2, 3 --> index = 1, and so on..
+			int index = (i - number_of_general_contacts) / 2;
+			Real start_time = time_dep_contacting_body_pairs_list_[index].second[0];
+			Real end_time = time_dep_contacting_body_pairs_list_[index].second[1];
 			if(GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
 			{
 				contact_density_list_[i]->parallel_exec();
@@ -475,7 +486,8 @@ void StructuralSimulation::ExecuteContactDensitySummation()
 
 void StructuralSimulation::ExecuteContactForce()
 {
-	size_t number_of_general_contacts = contacting_bodies_list_.size() * 2;
+	// number of contacts that are not time dependent: contact pairs * 2
+	size_t number_of_general_contacts = contacting_body_pairs_list_.size() * 2;
 	for (size_t i = 0; i < contact_force_list_.size(); i++)
 	{
 		if (i < number_of_general_contacts)
@@ -484,11 +496,15 @@ void StructuralSimulation::ExecuteContactForce()
 		}
 		else
 		{
-			Real start_time = time_dep_contacting_bodies_list_[i - number_of_general_contacts].second[0];
-			Real end_time = time_dep_contacting_bodies_list_[i - number_of_general_contacts].second[1];
+			// index of the time dependent contact body pair
+			// for i = 0, 1 --> index = 0, i = 2, 3 --> index = 1, and so on..
+			int index = (i - number_of_general_contacts) / 2;
+			Real start_time = time_dep_contacting_body_pairs_list_[index].second[0];
+			Real end_time = time_dep_contacting_body_pairs_list_[index].second[1];
 			if(GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
 			{
 				contact_force_list_[i]->parallel_exec();
+				std::cout << "contact id: " << i << " body name: " << contact_force_list_[i].get()->getSPHBody()->getBodyName() << std::endl;
 			}
 		}
 	}
@@ -560,7 +576,8 @@ void StructuralSimulation::ExecuteUpdateCellLinkedList()
 
 void StructuralSimulation::ExecuteContactUpdateConfiguration()
 {	
-	size_t number_of_general_contacts = contacting_bodies_list_.size() * 2;
+	// number of contacts that are not time dependent: contact pairs * 2
+	size_t number_of_general_contacts = contacting_body_pairs_list_.size() * 2;
 	for (size_t i = 0; i < contact_list_.size(); i++)
 	{
 		// general contacts = contacting_bodies * 2
@@ -571,8 +588,11 @@ void StructuralSimulation::ExecuteContactUpdateConfiguration()
 		// time dependent contacts = time dep. contacting_bodies * 2
 		else
 		{
-			Real start_time = time_dep_contacting_bodies_list_[i - number_of_general_contacts].second[0];
-			Real end_time = time_dep_contacting_bodies_list_[i - number_of_general_contacts].second[1];
+			// index of the time dependent contact body pair
+			// for i = 0, 1 --> index = 0, i = 2, 3 --> index = 1, and so on..
+			int index = (i - number_of_general_contacts) / 2;
+			Real start_time = time_dep_contacting_body_pairs_list_[index].second[0];
+			Real end_time = time_dep_contacting_body_pairs_list_[index].second[1];
 			if(GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
 			{
 				contact_list_[i]->updateConfiguration();
