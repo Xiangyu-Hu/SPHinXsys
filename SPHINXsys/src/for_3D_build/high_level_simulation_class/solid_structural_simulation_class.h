@@ -34,7 +34,6 @@ class ImportedModel : public SolidBody
 public:
 	ImportedModel(SPHSystem &system, string body_name, TriangleMeshShape* triangle_mesh_shape, ParticleAdaptation* particle_adaptation);
 	~ImportedModel();
-	std::string GetBodyName(){ return body_name_; };
 };
 
 class SolidBodyForSimulation

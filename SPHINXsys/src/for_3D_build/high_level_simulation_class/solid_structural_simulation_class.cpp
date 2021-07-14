@@ -291,8 +291,6 @@ void StructuralSimulation::InitializeContactBetweenTwoBodies(int first, int seco
 {	
 	ImportedModel* first_body = solid_body_list_[first]->GetImportedModel();
 	ImportedModel* second_body = solid_body_list_[second]->GetImportedModel();
-	
-	std::cout << "body_name_1: " << first_body->GetBodyName() << " body_name_2: " << second_body->GetBodyName() << std::endl;
 
 	SolidContactBodyRelation* first_contact = new SolidContactBodyRelation(first_body, {second_body});
 	SolidContactBodyRelation* second_contact = new SolidContactBodyRelation(second_body, {first_body});
@@ -504,7 +502,6 @@ void StructuralSimulation::ExecuteContactForce()
 			if(GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
 			{
 				contact_force_list_[i]->parallel_exec();
-				std::cout << "contact id: " << i << " body name: " << contact_force_list_[i].get()->getSPHBody()->getBodyName() << std::endl;
 			}
 		}
 	}
