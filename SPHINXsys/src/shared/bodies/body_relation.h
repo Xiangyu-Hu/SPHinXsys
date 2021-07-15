@@ -32,9 +32,8 @@
 #ifndef BODY_RELATION_H
 #define BODY_RELATION_H
 
-
-
 #include "base_body.h"
+#include "base_particles.h"
 #include "mesh_cell_linked_list.h"
 #include "neighbor_relation.h"
 #include "base_geometry.h"
@@ -53,22 +52,6 @@ namespace SPH
 		IndexVector& body_part_particles_;
 		BodyPartParticlesIndex(IndexVector& body_part_particles) : body_part_particles_(body_part_particles) {};
 		size_t operator () (size_t particle_entry) const {return body_part_particles_[particle_entry]; };
-	};
-	/** a small functor for checking particle is body part */
-	struct BodyPartParticlesCheck
-	{
-		IndexVector& body_part_particles_;
-		BodyPartParticlesCheck(IndexVector& body_part_particles) : body_part_particles_(body_part_particles) {};
-		bool operator () (size_t particle_entry) const 
-		{
-			if (std::count(body_part_particles_.begin(), body_part_particles_.end(), particle_entry))
-			{
-				return true;
-			}
-			else {
-				return false;
-			}
-		};
 	};
 
 	/** a small functor for obtaining search range for the simplest case */
@@ -109,7 +92,7 @@ namespace SPH
 	
 	/**
 	 * @class SPHBodyRelation
-	 * @brief The relation within a SPH body or with its contact SPH bodies
+	 * @brief The abstract class for all relations within a SPH body or with its contact SPH bodies
 	 */
 	class SPHBodyRelation
 	{
@@ -120,16 +103,16 @@ namespace SPH
 		SPHBodyRelation(SPHBody* sph_body);
 		virtual ~SPHBodyRelation() {};
 
-		void subscribe_to_body() { sph_body_->body_relations_.push_back(this); };
+		void subscribeToBody() { sph_body_->body_relations_.push_back(this); };
 		virtual void updateConfigurationMemories() = 0;
 		virtual void updateConfiguration() = 0;
 	};
 
 	/**
-	 * @class BaseInnerBodyRelation
-	 * @brief The base relation within a SPH body
+	 * @class BaseBodyRelationInner
+	 * @brief The abstract relation within a SPH body
 	 */
-	class BaseInnerBodyRelation : public SPHBodyRelation
+	class BaseBodyRelationInner : public SPHBodyRelation
 	{
 	protected:
 		virtual void resetNeighborhoodCurrentSize();
@@ -137,17 +120,17 @@ namespace SPH
 		RealBody* real_body_;
 		ParticleConfiguration inner_configuration_; /**< inner configuration for the neighbor relations. */
 
-		BaseInnerBodyRelation(RealBody* real_body);
-		virtual ~BaseInnerBodyRelation() {};
+		BaseBodyRelationInner(RealBody* real_body);
+		virtual ~BaseBodyRelationInner() {};
 
 		virtual void updateConfigurationMemories() override;
 	};
 
 	/**
-	 * @class InnerBodyRelation
-	 * @brief The relation within a SPH body
+	 * @class BodyRelationInner
+	 * @brief The first concrete relation within a SPH body
 	 */
-	class InnerBodyRelation : public BaseInnerBodyRelation
+	class BodyRelationInner : public BaseBodyRelationInner
 	{
 	protected:
 		SPHBodyParticlesIndex get_particle_index_;
@@ -156,17 +139,17 @@ namespace SPH
 		MeshCellLinkedList* mesh_cell_linked_list_;
 
 	public:
-		InnerBodyRelation(RealBody* real_body);
-		virtual ~InnerBodyRelation() {};
+		BodyRelationInner(RealBody* real_body);
+		virtual ~BodyRelationInner() {};
 
 		virtual void updateConfiguration() override;
 	};
 
 	/**
-	 * @class InnerBodyRelationVariableSmoothingLength
+	 * @class BodyRelationInnerVariableSmoothingLength
 	 * @brief The relation within a SPH body with smoothing length adaptation
 	 */
-	class InnerBodyRelationVariableSmoothingLength : public BaseInnerBodyRelation
+	class BodyRelationInnerVariableSmoothingLength : public BaseBodyRelationInner
 	{
 	protected:
 		size_t total_levels_;
@@ -175,90 +158,95 @@ namespace SPH
 		NeighborRelationInnerVariableSmoothingLength get_inner_neighbor_variable_smoothing_length_;
 		StdVec<MeshCellLinkedList*> mesh_cell_linked_list_levels_;
 	public:
-		InnerBodyRelationVariableSmoothingLength(RealBody* real_body);
-		virtual ~InnerBodyRelationVariableSmoothingLength() {};
+		BodyRelationInnerVariableSmoothingLength(RealBody* real_body);
+		virtual ~BodyRelationInnerVariableSmoothingLength() {};
 
 		virtual void updateConfiguration() override;
 	};
 
 	/**
-	 * @class BaseContactBodyRelation
+	 * @class BaseBodyRelationContact
 	 * @brief The base relation between a SPH body and its contact SPH bodies
 	 */
-	class BaseContactBodyRelation : public SPHBodyRelation
+	class BaseBodyRelationContact : public SPHBodyRelation
 	{
 	protected:
+		StdVec<MeshCellLinkedList*> target_mesh_cell_linked_lists_;
+		StdVec<SearchRangeMultiResolution*> get_search_ranges_;
+		StdVec<NeighborRelationContact*> get_contact_neighbors_;
+
 		virtual void resetNeighborhoodCurrentSize();
 	public:
 		RealBodyVector contact_bodies_;
 		ContatcParticleConfiguration contact_configuration_; /**< Configurations for particle interaction between bodies. */
 
-		BaseContactBodyRelation(SPHBody* body, RealBodyVector contact_bodies);
-		BaseContactBodyRelation(SPHBody* body, BodyPartVector contact_bodyparts);
-		virtual ~BaseContactBodyRelation() {};
+		BaseBodyRelationContact(SPHBody* body, RealBodyVector contact_bodies);
+		BaseBodyRelationContact(SPHBody* body, BodyPartVector contact_body_parts);
+		virtual ~BaseBodyRelationContact() {};
 
 		virtual void updateConfigurationMemories() override;
 	};
 	
 	/**
-	 * @class ContactBodyRelation
+	 * @class BodyRelationContact
 	 * @brief The relation between a SPH body and its contact SPH bodies
 	 */
-	class ContactBodyRelation : public BaseContactBodyRelation
+	class BodyRelationContact : public BaseBodyRelationContact
 	{
 	protected:
 		SPHBodyParticlesIndex get_particle_index_;
-		StdVec<MeshCellLinkedList*> target_mesh_cell_linked_lists_;
-		StdVec<SearchRangeMultiResolution*> get_search_ranges_;
-		StdVec<NeighborRelationContact*> get_contact_neighbors_;
+
+		void initialization();
 	public:
-		ContactBodyRelation(SPHBody* body, RealBodyVector contact_bodies);
-		ContactBodyRelation(SPHBody* body, BodyPartVector contact_bodyparts);
-		virtual ~ContactBodyRelation() {};
-		void initializaiton();
+		BodyRelationContact(SPHBody* body, RealBodyVector contact_bodies);
+		BodyRelationContact(SPHBody* body, BodyPartVector contact_body_parts);
+		virtual ~BodyRelationContact() {};
 		virtual void updateConfiguration() override;
 	};
 
 	/**
-	 * @class SolidContactBodyRelation
+	 * @class SolidBodyRelationContact
 	 * @brief The relation between a solid body and its contact solid bodies
 	 */
-	class SolidContactBodyRelation : public ContactBodyRelation
+	class SolidBodyRelationContact : public BaseBodyRelationContact
 	{
 	protected:
 		IndexVector& body_part_particles_;
 		BodyPartParticlesIndex get_body_part_particle_index_;
 
+		void initialization();
 		virtual void resetNeighborhoodCurrentSize() override;
 	public:
 		ShapeSurfaceLayer body_surface_layer_;
 
-		SolidContactBodyRelation(SPHBody* body, RealBodyVector contact_bodies);
-		virtual ~SolidContactBodyRelation() {};
+		SolidBodyRelationContact(SPHBody* body, RealBodyVector contact_bodies);
+		virtual ~SolidBodyRelationContact() {};
 
 		virtual void updateConfiguration() override;
 	};
 
 	/**
-	 * @class ReducedInnerBodyRelation
+	 * @class GenerativeBodyRelationInner
 	 * @brief The relation within a reduced SPH body, viz. network
 	 */
-	class ReducedInnerBodyRelation : public InnerBodyRelation
+	class GenerativeBodyRelationInner : public BodyRelationInner
 	{
 	protected:
-		Tree* tree_;
+		GenerativeStructure* generative_structure_;
 	public:
-		ReducedInnerBodyRelation(RealBody* real_body):InnerBodyRelation(real_body),tree_(real_body->tree_){};
-		virtual ~ReducedInnerBodyRelation() {};
+		GenerativeBodyRelationInner(RealBody* real_body) 
+			: BodyRelationInner(real_body), 
+			  generative_structure_(real_body->generative_structure_){};
+		virtual ~GenerativeBodyRelationInner() {};
 
 		virtual void updateConfiguration() override;
 	};
 	
 	/**
-	 * @class PartContactBodyRelation
+	 * @class BodyPartRelationContact
 	 * @brief The relation between a Body part with a SPH body. 
 	 */
-	class PartContactBodyRelation : public ContactBodyRelation
+	class BodyPartRelationContact : public BodyRelationContact
 	{
 
 	public:
@@ -266,24 +254,25 @@ namespace SPH
 		IndexVector& body_part_particles_;
 		BodyPartParticlesIndex get_body_part_particle_index_;
 
-		PartContactBodyRelation(BodyPart* body_part, RealBodyVector contact_bodies);
-		virtual ~PartContactBodyRelation() {};
+		BodyPartRelationContact(BodyPart* body_part, RealBodyVector contact_bodies);
+		virtual ~BodyPartRelationContact() {};
 
 		virtual void updateConfiguration() override;
 	};
 
 	/**
-	 * @class BodyContactPartRelation
-	 * @brief The relation between a Body part with a SPH body. 
+	 * @class BodyRelationContactToBodyPart
+	 * @brief The relation between a SPH body and a vector of body parts. 
 	 */
-	class BodyContactPartRelation : public ContactBodyRelation
+	class BodyRelationContactToBodyPart : public BodyRelationContact
 	{
 
 	public:
-		BodyPartVector contact_bodyParts_;
+		BodyPartVector contact_body_parts_;
+		StdVec<NeighborRelationContactBodyPart*> get_part_contact_neighbors_;
 
-		BodyContactPartRelation(RealBody* real_body, BodyPartVector contact_bodyparts);
-		virtual ~BodyContactPartRelation() {};
+		BodyRelationContactToBodyPart(RealBody* real_body, BodyPartVector contact_body_parts);
+		virtual ~BodyRelationContactToBodyPart() {};
 
 		virtual void updateConfiguration() override;
 	};
@@ -297,16 +286,16 @@ namespace SPH
 	class ComplexBodyRelation : public SPHBodyRelation
 	{
 	public:
-		BaseInnerBodyRelation* inner_relation_;
-		BaseContactBodyRelation* contact_relation_;
+		BaseBodyRelationInner* inner_relation_;
+		BaseBodyRelationContact* contact_relation_;
 		RealBodyVector contact_bodies_;
 		ParticleConfiguration& inner_configuration_;
 		ContatcParticleConfiguration& contact_configuration_;
 
-		ComplexBodyRelation(BaseInnerBodyRelation* inner_relation, BaseContactBodyRelation* contact_relation);
+		ComplexBodyRelation(BaseBodyRelationInner* inner_relation, BaseBodyRelationContact* contact_relation);
 		ComplexBodyRelation(RealBody* real_body, RealBodyVector contact_bodies);
-		ComplexBodyRelation(BaseInnerBodyRelation* inner_relation, RealBodyVector contact_bodies);
-		ComplexBodyRelation(RealBody* real_body, BodyPartVector contact_bodyparts);
+		ComplexBodyRelation(BaseBodyRelationInner* inner_relation, RealBodyVector contact_bodies);
+		ComplexBodyRelation(RealBody* real_body, BodyPartVector contact_body_parts);
 		virtual ~ComplexBodyRelation() {
 			delete inner_relation_;
 			delete contact_relation_;

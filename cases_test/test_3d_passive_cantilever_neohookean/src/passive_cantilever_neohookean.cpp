@@ -137,8 +137,8 @@ int main()
 	BaseParticles observer_particles(myocardium_observer);
 
 	/** topology */
-	InnerBodyRelation* myocardium_body_inner = new InnerBodyRelation(myocardium_body);
-	ContactBodyRelation* myocardium_observer_contact = new ContactBodyRelation(myocardium_observer, { myocardium_body });
+	BodyRelationInner* myocardium_body_inner = new BodyRelationInner(myocardium_body);
+	BodyRelationContact* myocardium_observer_contact = new BodyRelationContact(myocardium_observer, { myocardium_body });
 
 	//-------- common particle dynamics ----------------------------------------
 	TimeStepInitialization 	initialize_gravity(myocardium_body, &gravity);

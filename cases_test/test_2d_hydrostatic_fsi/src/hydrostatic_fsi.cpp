@@ -287,11 +287,11 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	InnerBodyRelation* water_block_inner = new InnerBodyRelation(water_block);
-	InnerBodyRelation* gate_inner = new InnerBodyRelation(gate);
+	BodyRelationInner* water_block_inner = new BodyRelationInner(water_block);
+	BodyRelationInner* gate_inner = new BodyRelationInner(gate);
 	ComplexBodyRelation* water_block_complex = new ComplexBodyRelation(water_block_inner, { wall_boundary, gate });
-	ContactBodyRelation* gate_contact = new ContactBodyRelation(gate, { water_block });
-	ContactBodyRelation* gate_observer_contact = new ContactBodyRelation(gate_observer, { gate });
+	BodyRelationContact* gate_contact = new BodyRelationContact(gate, { water_block });
+	BodyRelationContact* gate_observer_contact = new BodyRelationContact(gate_observer, { gate });
 	//----------------------------------------------------------------------
 	//	Define all numerical methods which are used in this case.
 	//----------------------------------------------------------------------

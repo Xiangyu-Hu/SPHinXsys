@@ -179,7 +179,7 @@ int main()
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
 	ComplexBodyRelation* water_block_complex_relation = new ComplexBodyRelation(water_block, { wall_boundary });
-	ContactBodyRelation* fluid_observer_contact_relation = new ContactBodyRelation(fluid_observer, { water_block });
+	BodyRelationContact* fluid_observer_contact_relation = new BodyRelationContact(fluid_observer, { water_block });
 	//----------------------------------------------------------------------
 	//	Define all numerical methods which are used in this case.
 	//----------------------------------------------------------------------
@@ -189,9 +189,10 @@ int main()
 	InletInflowCondition inflow_condition(water_block, inlet);
 	fluid_dynamics::EmitterInflowInjecting inflow_emitter(water_block, inlet, 300, 0, true);
 	fluid_dynamics::DensitySummationFreeSurfaceComplex	update_density_by_summation(water_block_complex_relation);
-	fluid_dynamics::FreeSurfaceIndicationComplex	indicate_free_surface(water_block_complex_relation);
+	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex	indicate_free_surface(water_block_complex_relation);
 	/** We can output a method-specific particle data for debug reason */
 	fluid_particles.addAVariableToWrite<indexScalar, Real>("PositionDivergence");
+	fluid_particles.addAVariableToWrite<indexInteger, int>("SurfaceIndicator");
 	fluid_dynamics::AdvectionTimeStepSize 			get_fluid_advection_time_step_size(water_block, U_f);
 	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
 	fluid_dynamics::PressureRelaxationRiemannWithWall pressure_relaxation(water_block_complex_relation);
@@ -212,6 +213,7 @@ int main()
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	wall_particles.initializeNormalDirectionFromGeometry();
+	indicate_free_surface.parallel_exec();
 	//----------------------------------------------------------------------
 	//	The time stepping starts here.
 	//----------------------------------------------------------------------
@@ -231,7 +233,7 @@ int main()
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval*10;
 	Real End_Time = 50.0; 	/**< End time. */
-	Real D_Time = 0.1;		/**< Time stamps for output of body states. */
+	Real D_Time = 0.01;		/**< Time stamps for output of body states. */
 	Real Dt = 0.0;			/**< Default advection time step sizes. */
 	Real dt = 0.0; 			/**< Default acoustic time step sizes. */
 	/** statistics for computing CPU time. */
@@ -248,8 +250,7 @@ int main()
 		{
 			/** Acceleration due to viscous force and gravity. */
 			initialize_a_fluid_step.parallel_exec();
-			Dt = get_fluid_advection_time_step_size.parallel_exec();
-			indicate_free_surface.parallel_exec();
+			Dt = get_fluid_advection_time_step_size.parallel_exec();			
 			update_density_by_summation.parallel_exec();
 
 			/** Dynamics including pressure relaxation. */
@@ -283,6 +284,7 @@ int main()
 			water_block->updateCellLinkedList();
 			water_block_complex_relation->updateConfiguration();
 			fluid_observer_contact_relation->updateConfiguration();
+			indicate_free_surface.parallel_exec();
 		}
 
 		tick_count t2 = tick_count::now();

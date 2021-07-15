@@ -247,7 +247,7 @@ namespace SPH
 	public:
 		/** Constructor for material only with diffusion. */
 		DiffusionReactionMaterial() 
-			: BaseMaterialType(), number_of_species_(0), species_reaction_(NULL) 
+			: BaseMaterialType(), number_of_species_(0), species_reaction_(nullptr) 
 		{
 			BaseMaterialType::material_name_ = "DiffusionMaterial";
 		};

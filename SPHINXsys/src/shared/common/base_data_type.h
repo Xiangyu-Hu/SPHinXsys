@@ -20,10 +20,12 @@
 * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
 *                                                                           *
 * --------------------------------------------------------------------------*/
-#ifndef SMALL_VECTORS_H
-#define SMALL_VECTORS_H
+#ifndef BASE_DATA_TYPE_H
+#define BASE_DATA_TYPE_H
 
-#include "simbody_middle.h"
+#include "Simbody.h"
+#include "SimTKcommon.h"
+#include "SimTKmath.h"
 #include "scalar_functions.h"
 
 #include <cmath>
@@ -316,49 +318,13 @@ namespace SPH {
 	const int indexMatrix = 2;
 	const int indexInteger = 3;
 
-	Vec2d FirstAxisVector(const Vec2d& zero_vector);
-	Vec3d FirstAxisVector(const Vec3d& zero_vector);
-	Real getMaxAbsoluteElement(const Vec2d& input);
-	Real getMaxAbsoluteElement(const Vec3d& input);
-	Vec3d upgradeToVector3D(const Real& input);
-	Vec3d upgradeToVector3D(const Vec2d& input);
-	Vec3d upgradeToVector3D(const Vec3d& input);
-	Mat3d upgradeToMatrix3D(const Mat2d& input);
-	Mat3d upgradeToMatrix3D(const Mat3d& input);
+	//verbal boolean for positive and negative axis directions
+	const int xAxis = 0;
+	const int yAxis = 1;
+	const int zAxis = 2;
+	const bool positiveDirection = true;
+	const bool negativeDirection = false;
 
-	template<typename OutVectorType>
-	OutVectorType upgradeVector(const Real& input)
-	{
-		OutVectorType out_vector(0);
-		out_vector[0] = input;
-		return out_vector;
-	};
-	template<typename OutVectorType>
-	OutVectorType upgradeVector(const Vec2d& input)
-	{
-		OutVectorType out_vector(0);
-		out_vector[0] = input[0];
-		out_vector[1] = input[1];
-		return out_vector;
-	};
-	template<typename OutVectorType>
-	OutVectorType upgradeVector(const Vec3d& input)
-	{
-		OutVectorType out_vector(0);
-		out_vector[0] = input[0];
-		out_vector[1] = input[1];
-		out_vector[2] = input[2];
-		return out_vector;
-	};
-
-	Mat2d getInverse(const Mat2d& A);
-	Mat3d getInverse(const Mat3d& A);
-	Mat2d getAverageValue(const Mat2d &A, const Mat2d& B);
-	Mat3d getAverageValue(const Mat3d &A, const Mat3d& B);
-	Mat2d inverseCholeskyDecomposition(const Mat2d& A);
-	Mat3d inverseCholeskyDecomposition(const Mat3d& A);
-	Mat2d getDiagnal(const Mat2d& A);
-	Mat3d getDiagnal(const Mat3d& A);
 
 	/**
 	 * @class Transform2d
@@ -385,11 +351,13 @@ namespace SPH {
 			 target[1] * cos(-rotation_angle_) + target[0] * sin(-rotation_angle_));
 			return origin - translation_;
 		};
-	};
+	};	
 
-	/** get transformation matrix. */
-	Mat2d getTransformationMatrix(const Vec2d& direction_of_y);
-	Mat3d getTransformationMatrix(const Vec3d& direction_of_z);
+	/**
+	 * @class Transform3d
+	 * @brief Coordinate transfrom in 3D from SimTK
+	 */
+	using Transform3d = SimTK::Transform;
 }
 
-#endif //SMALL_VECTORS_H
+#endif //BASE_DATA_TYPE_H

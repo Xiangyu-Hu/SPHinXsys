@@ -12,8 +12,8 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
-		ViscousAccelerationMultiPhase::ViscousAccelerationMultiPhase(BaseInnerBodyRelation* inner_relation,
-			BaseContactBodyRelation* contact_relation)
+		ViscousAccelerationMultiPhase::ViscousAccelerationMultiPhase(BaseBodyRelationInner* inner_relation,
+			BaseBodyRelationContact* contact_relation)
 		: ViscousAccelerationInner(inner_relation), MultiPhaseContactData(contact_relation)
 		{
 			if (inner_relation->sph_body_ != contact_relation->sph_body_)
@@ -63,7 +63,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		MultiPhaseColorFunctionGradient::
-			MultiPhaseColorFunctionGradient(BaseContactBodyRelation* contact_relation) : 
+			MultiPhaseColorFunctionGradient(BaseBodyRelationContact* contact_relation) : 
 			InteractionDynamics(contact_relation->sph_body_), MultiPhaseData(contact_relation),
 			rho0_(particles_->rho0_), Vol_(particles_->Vol_),
 			pos_div_(*particles_->getVariableByName<indexScalar, Real>("PositionDivergence")), 

@@ -23,8 +23,8 @@ int main()
 	MyObserver* my_observer = new MyObserver(system, "MyObserver");
 	BaseParticles observer_particles(my_observer);
 	/**body relation topology */
-	InnerBodyRelation* column_inner = new InnerBodyRelation(column);
-	ContactBodyRelation* my_observer_contact = new ContactBodyRelation(my_observer, { column });
+	BodyRelationInner* column_inner = new BodyRelationInner(column);
+	BodyRelationContact* my_observer_contact = new BodyRelationContact(my_observer, { column });
 	//----------------------------------------------------------------------
 	//	All numerical methods will be used in this case.
 	//----------------------------------------------------------------------
@@ -34,7 +34,7 @@ int main()
 	/** Time step size calculation. */
 	solid_dynamics::AcousticTimeStepSize  computing_time_step_size(column);
 	/** active and passive stress relaxation. */
-	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(column_inner);
+	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half(column_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(column_inner);
 	/** Constrain the holder. */
 	solid_dynamics::ConstrainSolidBodyRegion

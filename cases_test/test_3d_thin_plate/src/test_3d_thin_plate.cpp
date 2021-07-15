@@ -164,8 +164,8 @@ int main()
 	 *  The contact map gives the data connections between the bodies
 	 *  basically the the range of bodies to build neighbor particle lists
 	 */
-	InnerBodyRelation* plate_body_inner = new InnerBodyRelation(plate_body);
-	ContactBodyRelation* plate_observer_contact = new ContactBodyRelation(plate_observer, { plate_body });
+	BodyRelationInner* plate_body_inner = new BodyRelationInner(plate_body);
+	BodyRelationContact* plate_observer_contact = new BodyRelationContact(plate_observer, { plate_body });
 
 	/** Common particle dynamics. */
 	TimeStepInitialization 	initialize_external_force(plate_body, &external_force);

@@ -2,7 +2,7 @@
 * @file 	sphere.h
 * @brief 	This is the case file for the network growing.
 * @details  We consider a flow - induced vibration of an elastic beam behind a cylinder in 2D.
-* @author 	Xiangyu Hu, Chi Zhangand Luhui Han
+* @author 	Chi Zhang and Xiangyu Hu
 */
 
 #ifndef TEST_3D_PARTICLE_GENERATION_SPHERE_H

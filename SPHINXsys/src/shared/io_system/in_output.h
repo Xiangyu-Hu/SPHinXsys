@@ -350,7 +350,7 @@ namespace SPH {
 	
 	public:
 		ObservedQuantityRecording(std::string quantity_name, In_Output& in_output,
-			BaseContactBodyRelation* body_contact_relation) :
+			BaseBodyRelationContact* body_contact_relation) :
 			BodyStatesRecording(in_output, body_contact_relation->sph_body_),
 			observer_dynamics::InterpolatingAQuantity<DataTypeIndex, VariableType>(body_contact_relation, quantity_name),
 			observer_(body_contact_relation->sph_body_), plt_engine_(), base_particles_(observer_->base_particles_),

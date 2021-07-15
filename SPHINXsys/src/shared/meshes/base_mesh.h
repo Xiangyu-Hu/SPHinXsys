@@ -140,25 +140,27 @@ namespace SPH
 	 * @class MultilevelMesh
 	 * @brief Multi level Meshes with successively double the resolutions
 	 */
-	template<class MeshCompositionType, class BaseMeshType, class MeshLevelType>
+	template<class BaseMeshType, class MeshLevelType>
 	class MultilevelMesh : public BaseMeshType
 	{
 	protected:
 		size_t total_levels_; /**< level 0 is the coarsest */
 		StdVec<MeshLevelType*> mesh_levels_;
 	public:
-		MultilevelMesh(MeshCompositionType& mesh_composition, ParticleAdaptation& particle_adaptation, 
-			BoundingBox tentative_bounds, Real reference_spacing, 
-			size_t total_levels, Real maximum_spacing_ratio, size_t buffer_width) : 
-			BaseMeshType(mesh_composition, particle_adaptation, tentative_bounds, 
-			reference_spacing, buffer_width), total_levels_(total_levels) 
+		/**template parameter pack is used with rvalue reference and perfect forwarding to keep 
+		 * the type of arguments when called by another function with template parameter pack too. */
+		template<typename... Args>
+		MultilevelMesh(BoundingBox tentative_bounds, Real reference_spacing, size_t total_levels, 
+			Real maximum_spacing_ratio, Args&&... args) 
+		: BaseMeshType(tentative_bounds, reference_spacing, std::forward<Args>(args)...), 
+			total_levels_(total_levels) 
 		{
 			Real zero_level_spacing = reference_spacing * maximum_spacing_ratio;
 			for (size_t level = 0; level != total_levels_; ++level) {
 				Real spacing_level = zero_level_spacing * powerN(0.5, (int)level);
 				/** all mesh levels aligned at the lower bound of tentative_bounds */
 				MeshLevelType* mesh_level = 
-					new MeshLevelType(mesh_composition, particle_adaptation, tentative_bounds, spacing_level, buffer_width);
+					new MeshLevelType(tentative_bounds, spacing_level, std::forward<Args>(args)...);
 				mesh_levels_.push_back(mesh_level);
 			}
 		};

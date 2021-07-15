@@ -45,7 +45,7 @@ namespace SPH
 			rho0_ = material_->ReferenceDensity();
 		}
 		//=================================================================================================//
-		ViscousAccelerationInner::ViscousAccelerationInner(BaseInnerBodyRelation* inner_relation) :
+		ViscousAccelerationInner::ViscousAccelerationInner(BaseBodyRelationInner* inner_relation) :
 			InteractionDynamics(inner_relation->sph_body_),
 			CompressibleFluidDataInner(inner_relation),
 			Vol_(particles_->Vol_), rho_n_(particles_->rho_n_), p_(particles_->p_), 
@@ -99,7 +99,7 @@ namespace SPH
 			return 0.6 * smoothing_length_ / (reduced_value + TinyReal);
 		}
 		//=================================================================================================//
-		BaseRelaxation::BaseRelaxation(BaseInnerBodyRelation* inner_relation) :
+		BaseRelaxation::BaseRelaxation(BaseBodyRelationInner* inner_relation) :
 			ParticleDynamics1Level(inner_relation->sph_body_),
 			CompressibleFluidDataInner(inner_relation),
 			Vol_(particles_->Vol_), rho_n_(particles_->rho_n_),p_(particles_->p_), 
@@ -109,7 +109,7 @@ namespace SPH
 			dmom_dt_(particles_->dmom_dt_), dmom_dt_prior_(particles_->dmom_dt_prior_) {}
 		//=================================================================================================//
 		BasePressureRelaxation::
-			BasePressureRelaxation(BaseInnerBodyRelation* inner_relation) :
+			BasePressureRelaxation(BaseBodyRelationInner* inner_relation) :
 			BaseRelaxation(inner_relation) {}
 		//=================================================================================================//
 		void BasePressureRelaxation::Initialization(size_t index_i, Real dt)
@@ -127,7 +127,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseDensityAndEnergyRelaxation::
-			BaseDensityAndEnergyRelaxation(BaseInnerBodyRelation* inner_relation) :
+			BaseDensityAndEnergyRelaxation(BaseBodyRelationInner* inner_relation) :
 			BaseRelaxation(inner_relation) {}
 		//=================================================================================================//
 		void BaseDensityAndEnergyRelaxation::Update(size_t index_i, Real dt)

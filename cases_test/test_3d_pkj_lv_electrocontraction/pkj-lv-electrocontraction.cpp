@@ -68,11 +68,11 @@ int main(int ac, char* av[])
 	}
 	
 	/** Creat a Purkinje network for fast diffusion, material and particles */
-	PurkinjeBody *pkj_body = new PurkinjeBody(system, "Purkinje", new NetworkGeneratorwihtExtraCheck(starting_point, second_point, 50, 1.0));
+	PurkinjeBody *pkj_body = new PurkinjeBody(system, "Purkinje", new NetworkGeneratorWithExtraCheck(starting_point, second_point, 50, 1.0));
 	MuscleReactionModel *pkj_reaction_model = new MuscleReactionModel();
 	FastMyocardiumMuscle 	*pkj_myocardium_muscle = new FastMyocardiumMuscle(pkj_reaction_model);
 	ElectroPhysiologyReducedParticles 		pkj_muscle_particles(pkj_body, pkj_myocardium_muscle);
-	TreeLeaves *pkj_leaves = new TreeLeaves(pkj_body);
+	TerminateBranches *pkj_leaves = new TerminateBranches(pkj_body);
 	/** check whether run particle relaxation for body fitted particle distribution. */
 	if (system.run_particle_relaxation_)
 	{
@@ -80,7 +80,7 @@ int main(int ac, char* av[])
 		DiffusionMaterial* relax_body_material = new DiffusionMaterial();
 		DiffusionReactionParticles<ElasticSolidParticles, LocallyOrthotropicMuscle>	diffusion_particles(relax_body, relax_body_material);
 		/** topology */
-		InnerBodyRelation* relax_body_inner = new InnerBodyRelation(relax_body);
+		BodyRelationInner* relax_body_inner = new BodyRelationInner(relax_body);
 		/** Random reset the relax solid particle position. */
 		RandomizePartilePosition  			random_particles(relax_body);
 		/**Algorithms for particle relaxation.*/
@@ -94,7 +94,7 @@ int main(int ac, char* av[])
 		/** Compute the fiber and sheet after diffusion. */
 		ComputeFiberandSheetDirections compute_fiber_sheet(relax_body);
 		/** Write the body state to Vtu file. */
-		BodyStatesRecordingToPlt 		write_relax_body_state(in_output, { relax_body });
+		BodyStatesRecordingToVtu 		write_relax_body_state(in_output, { relax_body });
 		/** Write the particle reload files. */
 		ReloadParticleIO 		
 			write_particle_reload_files(in_output, { relax_body, relax_body }, 
@@ -159,16 +159,16 @@ int main(int ac, char* av[])
 	MyocardiumObserver* myocardium_observer	= new MyocardiumObserver(system, "MyocardiumObserver");
 	BaseParticles 	disp_observer_particles(myocardium_observer);
 
-	BodyStatesRecordingToPlt 		write_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtu 		write_states(in_output, system.real_bodies_);
 	/** topology */
-	InnerBodyRelation* physiology_body_inner = new InnerBodyRelation(physiology_body);	
-	InnerBodyRelation* mechanics_body_inner = new InnerBodyRelation(mechanics_body);
-	ContactBodyRelation* physiology_body_contact = new ContactBodyRelation(physiology_body, { mechanics_body });
-	ContactBodyRelation* mechanics_body_contact = new ContactBodyRelation(mechanics_body, { physiology_body });
-	ContactBodyRelation* voltage_observer_contact = new ContactBodyRelation(voltage_observer, { physiology_body });	
-	ContactBodyRelation* myocardium_observer_contact = new ContactBodyRelation(myocardium_observer, { mechanics_body });
+	BodyRelationInner* physiology_body_inner = new BodyRelationInner(physiology_body);	
+	BodyRelationInner* mechanics_body_inner = new BodyRelationInner(mechanics_body);
+	BodyRelationContact* physiology_body_contact = new BodyRelationContact(physiology_body, { mechanics_body });
+	BodyRelationContact* mechanics_body_contact = new BodyRelationContact(mechanics_body, { physiology_body });
+	BodyRelationContact* voltage_observer_contact = new BodyRelationContact(voltage_observer, { physiology_body });	
+	BodyRelationContact* myocardium_observer_contact = new BodyRelationContact(myocardium_observer, { mechanics_body });
 	ComplexBodyRelation* physiology_body_complex = new ComplexBodyRelation(physiology_body, {pkj_leaves});
-	ReducedInnerBodyRelation* pkj_inner = new ReducedInnerBodyRelation(pkj_body);
+	GenerativeBodyRelationInner* pkj_inner = new GenerativeBodyRelationInner(pkj_body);
 
 	/** Corrected strong configuration. */	
 	solid_dynamics::CorrectConfiguration correct_configuration_excitation(physiology_body_inner);

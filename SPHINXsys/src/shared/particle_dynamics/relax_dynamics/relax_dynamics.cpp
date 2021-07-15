@@ -34,7 +34,7 @@ namespace SPH
 			return 0.0625 * h_ref_ / (reduced_value + TinyReal);
 		}
 		//=================================================================================================//
-		RelaxationAccelerationInner::RelaxationAccelerationInner(BaseInnerBodyRelation* body_inner_relation) : 
+		RelaxationAccelerationInner::RelaxationAccelerationInner(BaseBodyRelationInner* body_inner_relation) : 
 			InteractionDynamics(body_inner_relation->sph_body_), 
 			RelaxDataDelegateInner(body_inner_relation),
 			Vol_(particles_->Vol_), dvel_dt_(particles_->dvel_dt_), pos_n_(particles_->pos_n_) {}
@@ -52,11 +52,11 @@ namespace SPH
 		}
 		//=================================================================================================//
 		RelaxationAccelerationInnerWithLevelSetCorrection::
-			RelaxationAccelerationInnerWithLevelSetCorrection(BaseInnerBodyRelation* body_inner_relation) : 
+			RelaxationAccelerationInnerWithLevelSetCorrection(BaseBodyRelationInner* body_inner_relation) : 
 			RelaxationAccelerationInner(body_inner_relation)
 		{
 			level_set_complex_shape_ = dynamic_cast<LevelSetComplexShape*>(body_->body_shape_);
-			if (level_set_complex_shape_ == NULL)
+			if (level_set_complex_shape_ == nullptr)
 			{
 				std::cout << "\n FAILURE: LevelSetComplexShape is undefined!" << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -181,10 +181,10 @@ namespace SPH
 		}
 		//=================================================================================================//
 		RelaxationStepInner::
-			RelaxationStepInner(BaseInnerBodyRelation* body_inner_relation, bool level_set_correction) :
+			RelaxationStepInner(BaseBodyRelationInner* body_inner_relation, bool level_set_correction) :
 			ParticleDynamics<void>(body_inner_relation->sph_body_),
 			real_body_(body_inner_relation->real_body_), inner_relation_(body_inner_relation),
-			relaxation_acceleration_inner_(NULL),
+			relaxation_acceleration_inner_(nullptr),
 			get_time_step_square_(real_body_), update_particle_position_(real_body_),
 			surface_bounding_(real_body_, new NearShapeSurface(real_body_))
 		{

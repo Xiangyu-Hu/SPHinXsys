@@ -20,8 +20,8 @@
 * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
 *                                                                           *
 * --------------------------------------------------------------------------*/
-#ifndef ARRAYALLOCATE_H
-#define ARRAYALLOCATE_H
+#ifndef ARRAY_ALLOCATION_H
+#define ARRAY_ALLOCATION_H
 
 #include "small_vectors.h"
 
@@ -88,5 +88,4 @@ namespace SPH {
 
 }
 
-
-#endif //ARRAYALLOCATE_H
+#endif //ARRAY_ALLOCATION_H

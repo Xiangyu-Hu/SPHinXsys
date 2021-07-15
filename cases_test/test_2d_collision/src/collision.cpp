@@ -171,8 +171,8 @@ int main(int ac, char* av[])
 		//----------------------------------------------------------------------
 		//	Define body relation map used for particle relaxation.
 		//----------------------------------------------------------------------
-		InnerBodyRelation* free_ball_inner = new InnerBodyRelation(free_ball);
-		InnerBodyRelation* damping_ball_inner = new InnerBodyRelation(damping_ball);
+		BodyRelationInner* free_ball_inner = new BodyRelationInner(free_ball);
+		BodyRelationInner* damping_ball_inner = new BodyRelationInner(damping_ball);
 		//----------------------------------------------------------------------
 		//	Define the methods for particle relaxation.
 		//----------------------------------------------------------------------
@@ -216,12 +216,12 @@ int main(int ac, char* av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	InnerBodyRelation*   free_ball_inner = new InnerBodyRelation(free_ball);
-	SolidContactBodyRelation* free_ball_contact = new SolidContactBodyRelation(free_ball, {wall_boundary});
-	InnerBodyRelation*   damping_ball_inner = new InnerBodyRelation(damping_ball);
-	SolidContactBodyRelation* damping_ball_contact = new SolidContactBodyRelation(damping_ball, {wall_boundary});
-	ContactBodyRelation* free_ball_observer_contact = new ContactBodyRelation(free_ball_observer, { free_ball });
-	ContactBodyRelation* damping_all_observer_contact = new ContactBodyRelation(damping_ball_observer, { damping_ball });
+	BodyRelationInner*   free_ball_inner = new BodyRelationInner(free_ball);
+	SolidBodyRelationContact* free_ball_contact = new SolidBodyRelationContact(free_ball, {wall_boundary});
+	BodyRelationInner*   damping_ball_inner = new BodyRelationInner(damping_ball);
+	SolidBodyRelationContact* damping_ball_contact = new SolidBodyRelationContact(damping_ball, {wall_boundary});
+	BodyRelationContact* free_ball_observer_contact = new BodyRelationContact(free_ball_observer, { free_ball });
+	BodyRelationContact* damping_all_observer_contact = new BodyRelationContact(damping_ball_observer, { damping_ball });
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simultion.
 	//	Note that there may be data dependence on the constructors of these methods.

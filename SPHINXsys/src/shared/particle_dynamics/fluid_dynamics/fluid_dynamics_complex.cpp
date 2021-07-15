@@ -13,8 +13,8 @@ namespace SPH
 	namespace fluid_dynamics
 	{
 		//=================================================================================================//
-		FreeSurfaceIndicationComplex::FreeSurfaceIndicationComplex(BaseInnerBodyRelation* inner_relation,
-			BaseContactBodyRelation* conatct_relation, Real thereshold) 
+		FreeSurfaceIndicationComplex::FreeSurfaceIndicationComplex(BaseBodyRelationInner* inner_relation,
+			BaseBodyRelationContact* conatct_relation, Real thereshold) 
 		: FreeSurfaceIndicationInner(inner_relation, thereshold), FluidContactData(conatct_relation)
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k) 
@@ -49,13 +49,60 @@ namespace SPH
 			pos_div_[index_i] += pos_div;
 		}
 		//=================================================================================================//
-		TransportVelocityCorrectionComplex::
-			TransportVelocityCorrectionComplex(BaseInnerBodyRelation* inner_relation,
-			BaseContactBodyRelation* conatct_relation) :
-			ParticleDynamicsComplex<TransportVelocityCorrectionInner, FluidContactData>(
-				inner_relation, conatct_relation)
+		SpatialTemporalFreeSurfaceIdentificationComplex::SpatialTemporalFreeSurfaceIdentificationComplex
+		(BaseBodyRelationInner* inner_relation,BaseBodyRelationContact* conatct_relation, Real thereshold)
+			: FreeSurfaceIndicationComplex(inner_relation, conatct_relation, thereshold),
+			particle_spacing_(body_->particle_adaptation_->ReferenceSpacing()),
+			previous_surface_indicator_(*particles_->createAVariable<indexInteger, int>("PreviousSurfaceIndicator"))
 		{
-			prepareContactData();
+			particles_->registerASortableVariable<indexInteger, int>("PreviousSurfaceIndicator");
+			for (size_t n = 0; n != particles_->total_real_particles_; ++n)
+				previous_surface_indicator_[n] = 1;
+		}
+		//=================================================================================================//
+		SpatialTemporalFreeSurfaceIdentificationComplex::SpatialTemporalFreeSurfaceIdentificationComplex
+		(ComplexBodyRelation* body_complex_relation,Real thereshold)
+			: SpatialTemporalFreeSurfaceIdentificationComplex(body_complex_relation->inner_relation_,
+				body_complex_relation->contact_relation_, thereshold) {}
+		//=================================================================================================//
+		void SpatialTemporalFreeSurfaceIdentificationComplex::Interaction(size_t index_i, Real dt)
+		{
+			FreeSurfaceIndicationInner::Interaction(index_i, dt);
+
+			Real pos_div = 0.0;
+			for (size_t k = 0; k < contact_configuration_.size(); ++k)
+			{
+				StdLargeVec<Real>& contact_mass_k = *(contact_mass_[k]);
+				Real contact_inv_rho_0_k = contact_inv_rho0_[k];
+				Neighborhood& contact_neighborhood = (*contact_configuration_[k])[index_i];
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					pos_div -= contact_neighborhood.dW_ij_[n] * contact_neighborhood.r_ij_[n]
+						* contact_inv_rho_0_k * contact_mass_k[contact_neighborhood.j_[n]];
+				}
+			}
+			pos_div_[index_i] += pos_div;
+			
+			surface_indicator_[index_i] = 0;
+			if (pos_div_[index_i] < thereshold_by_dimensions_)
+			{
+				if (previous_surface_indicator_[index_i] == 1) surface_indicator_[index_i] = 1;
+				else
+				{
+					Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+					for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+					{
+						if (previous_surface_indicator_[inner_neighborhood.j_[n]] == 1 ||
+							previous_surface_indicator_[inner_neighborhood.j_[n]] == 2 )
+							surface_indicator_[index_i] = 1;
+					}
+				}
+			}				
+		}
+		//=================================================================================================//
+		void SpatialTemporalFreeSurfaceIdentificationComplex::Update(size_t index_i, Real dt)
+		{
+			previous_surface_indicator_[index_i] = surface_indicator_[index_i];
 		}
 		//=================================================================================================//
 		TransportVelocityCorrectionComplex::
@@ -65,7 +112,7 @@ namespace SPH
 		//=================================================================================================//
 		TransportVelocityCorrectionComplex::
 			TransportVelocityCorrectionComplex(ComplexBodyRelation* complex_relation,
-			BaseContactBodyRelation* extra_conatct_relation) :
+			BaseBodyRelationContact* extra_conatct_relation) :
 			ParticleDynamicsComplex<TransportVelocityCorrectionInner, FluidContactData>(
 				complex_relation, extra_conatct_relation)
 		{
@@ -102,7 +149,7 @@ namespace SPH
 			}
 
 			/** correcting particle position */
-			if (surface_indicator_[index_i] == 0) pos_n_[index_i] += acceleration_trans * dt * dt * 0.5;
+			if (surface_indicator_[index_i] == 0)pos_n_[index_i] += acceleration_trans * dt * dt * 0.5;
 		}
 		//=================================================================================================//
 		void PressureRelaxationRiemannWithWallOldroyd_B::Interaction(size_t index_i, Real dt)
@@ -155,8 +202,8 @@ namespace SPH
 			dtau_dt_[index_i] += stress_rate;
 		}
 		//=================================================================================================//
-		ColorFunctionGradientComplex::ColorFunctionGradientComplex(BaseInnerBodyRelation* inner_relation,
-			BaseContactBodyRelation* conatct_relation) 
+		ColorFunctionGradientComplex::ColorFunctionGradientComplex(BaseBodyRelationInner* inner_relation,
+			BaseBodyRelationContact* conatct_relation) 
 		: ColorFunctionGradientInner(inner_relation), FluidContactData(conatct_relation)
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k) 
@@ -191,7 +238,7 @@ namespace SPH
 			surface_norm_[index_i] = color_grad_[index_i] / (color_grad_[index_i].norm() + TinyReal);
 		}
 		//=================================================================================================//
-		SurfaceNormWithWall::SurfaceNormWithWall(BaseContactBodyRelation* contact_relation, Real contact_angle) 
+		SurfaceNormWithWall::SurfaceNormWithWall(BaseBodyRelationContact* contact_relation, Real contact_angle) 
 		: InteractionDynamics(contact_relation->sph_body_), FSIContactData(contact_relation), 
 			contact_angle_(contact_angle),
 			surface_indicator_(particles_->surface_indicator_),

@@ -342,13 +342,13 @@ int main()
 	BodyStatesRecordingToVtu 				write_real_body_states(in_output, system.real_bodies_);
 
 	/** topology */
-	InnerBodyRelation* fluid_body_inner = new InnerBodyRelation(thermofluid_body);
-	InnerBodyRelation* solid_body_inner = new InnerBodyRelation(thermosolid_body);
+	BodyRelationInner* fluid_body_inner = new BodyRelationInner(thermofluid_body);
+	BodyRelationInner* solid_body_inner = new BodyRelationInner(thermosolid_body);
 	ComplexBodyRelation* fluid_body_complex = new ComplexBodyRelation(fluid_body_inner, {thermosolid_body });
-	ContactBodyRelation* fluid_observer_contact = new ContactBodyRelation(temperature_observer, {thermofluid_body});
+	BodyRelationContact* fluid_observer_contact = new BodyRelationContact(temperature_observer, {thermofluid_body});
 	
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition(thermofluid_body, 0);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition(thermofluid_body, xAxis);
 
 	/**
 	 * The main dynamics algorithm is defined start here.

@@ -75,7 +75,7 @@ namespace SPH
 			public PartInteractionDynamicsByParticle, public ContactDynamicsData
 		{
 		public:
-			ContactDensitySummation(SolidContactBodyRelation* solid_body_contact_relation);
+			ContactDensitySummation(SolidBodyRelationContact* solid_body_contact_relation);
 			virtual ~ContactDensitySummation() {};
 		protected:
 			StdLargeVec<Real>& mass_, & contact_density_;
@@ -92,7 +92,7 @@ namespace SPH
 			public PartInteractionDynamicsByParticle, public ContactDynamicsData
 		{
 		public:
-			ContactForce(SolidContactBodyRelation* solid_body_contact_relation);
+			ContactForce(SolidBodyRelationContact* solid_body_contact_relation);
 			virtual ~ContactForce() {};
 		protected:
 			StdLargeVec<Real>& contact_density_, & Vol_, & mass_;
@@ -117,7 +117,7 @@ namespace SPH
 			public PartInteractionDynamicsByParticle, public ContactDynamicsData
 		{
 		public:
-			DynamicContactForce(SolidContactBodyRelation* solid_body_contact_relation, Real penalty_strength = 1.0);
+			DynamicContactForce(SolidBodyRelationContact* solid_body_contact_relation, Real penalty_strength = 1.0);
 			virtual ~DynamicContactForce() {};
 		protected:
 			StdLargeVec<Real>& Vol_, & mass_;
@@ -140,7 +140,7 @@ namespace SPH
 			public PartInteractionDynamicsByParticle, public ContactDynamicsData
 		{
 		public:
-			ContactForceWithWall(SolidContactBodyRelation* solid_body_contact_relation, Real penalty_strength = 1.0);
+			ContactForceWithWall(SolidBodyRelationContact* solid_body_contact_relation, Real penalty_strength = 1.0);
 			virtual ~ContactForceWithWall() {};
 		protected:
 			StdLargeVec<Real>& Vol_, & mass_;
@@ -161,7 +161,7 @@ namespace SPH
 			public InteractionDynamics, public SolidDataInner
 		{
 		public:
-			CorrectConfiguration(BaseInnerBodyRelation* body_inner_relation);
+			CorrectConfiguration(BaseBodyRelationInner* body_inner_relation);
 			virtual ~CorrectConfiguration() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
@@ -299,7 +299,7 @@ namespace SPH
 			public SolidDataInner
 		{
 		public:
-			SoftConstrainSolidBodyRegion(BaseInnerBodyRelation* body_inner_relation, BodyPartByParticle* body_part);
+			SoftConstrainSolidBodyRegion(BaseBodyRelationInner* body_inner_relation, BodyPartByParticle* body_part);
 			virtual ~SoftConstrainSolidBodyRegion() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
@@ -319,7 +319,7 @@ namespace SPH
 			ConstrainSolidBodyRegion* constrianing_;
 			SoftConstrainSolidBodyRegion* softing_;
 
-			ClampConstrainSolidBodyRegion(BaseInnerBodyRelation* body_inner_relation, BodyPartByParticle* body_part);
+			ClampConstrainSolidBodyRegion(BaseBodyRelationInner* body_inner_relation, BodyPartByParticle* body_part);
 			virtual ~ClampConstrainSolidBodyRegion() {};
 
 			virtual void exec(Real dt = 0.0) override;
@@ -471,7 +471,7 @@ namespace SPH
 			public InteractionDynamics, public ElasticSolidDataInner
 		{
 		public:
-			DeformationGradientTensorBySummation(BaseInnerBodyRelation* body_inner_relation);
+			DeformationGradientTensorBySummation(BaseBodyRelationInner* body_inner_relation);
 			virtual ~DeformationGradientTensorBySummation() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
@@ -488,7 +488,7 @@ namespace SPH
 			: public ParticleDynamics1Level, public ElasticSolidDataInner
 		{
 		public:
-			BaseElasticRelaxation(BaseInnerBodyRelation* body_inner_relation);
+			BaseElasticRelaxation(BaseBodyRelationInner* body_inner_relation);
 			virtual ~BaseElasticRelaxation() {};
 		protected:
 			StdLargeVec<Real>& Vol_, & rho_n_, & mass_;
@@ -504,7 +504,7 @@ namespace SPH
 		class StressRelaxationFirstHalf : public BaseElasticRelaxation
 		{
 		public:
-			StressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation);
+			StressRelaxationFirstHalf(BaseBodyRelationInner* body_inner_relation);
 			virtual ~StressRelaxationFirstHalf() {};
 		protected:
 			Real rho0_, inv_rho0_;
@@ -520,6 +520,27 @@ namespace SPH
 		};
 
 		/**
+		* @class KirchhoffStressRelaxationFirstHalf
+		* @brief Decompose the stress into particle stress includes isetropic stress 
+		* and the stress due to non-homogeneous material properties.
+		* The preliminary shear stress is introduced by particle pair to avoid 
+		* sprurious stress and deforamtion.
+		*/
+		class KirchhoffStressRelaxationFirstHalf : public StressRelaxationFirstHalf
+		{
+		public:
+			KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner* body_inner_relation);
+			virtual ~KirchhoffStressRelaxationFirstHalf() {};
+		protected:
+			StdLargeVec<Real>& J_to_minus_2_over_diemsnion_;
+			StdLargeVec<Matd>& stress_on_particle_, & inverse_F_T_;
+			const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
+
+			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
 		* @class StressRelaxationSecondHalf
 		* @brief computing stress relaxation process by verlet time stepping
 		* This is the second step
@@ -527,7 +548,7 @@ namespace SPH
 		class StressRelaxationSecondHalf : public BaseElasticRelaxation
 		{
 		public:
-			StressRelaxationSecondHalf(BaseInnerBodyRelation* body_inner_relation) :
+			StressRelaxationSecondHalf(BaseBodyRelationInner* body_inner_relation) :
 				BaseElasticRelaxation(body_inner_relation) {};
 			virtual ~StressRelaxationSecondHalf() {};
 		protected:

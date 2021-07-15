@@ -33,11 +33,10 @@
 
 #include "sph_data_conainers.h"
 #include "base_particle_generator.h"
-#include "base_geometry.h"
+#include "generative_structures.h"
 
 namespace SPH 
 {
-	class Tree;
 	class BaseLevelSet;
 	class BaseMeshCellLinkedList;
 	class ComplexShape;
@@ -62,7 +61,7 @@ namespace SPH
 		 */
 		virtual void createBaseParticles(BaseParticles* base_particles) override;
 	protected:
-		Vecd starting_pnt_;			/**< Starting point for net work. */
+		Vecd starting_pnt_;				/**< Starting point for net work. */
 		Vecd second_pnt_;				/**< Second point, approximate the growing direction. */
 		size_t n_it_; 					/**< Number of iterations (generations of branch. */
 		bool fascicles_;				/**< Create fascicles? */
@@ -74,14 +73,14 @@ namespace SPH
 		std::vector<Real> fascicle_angles_ = {-1.25, 0.75}; 	/**< angles with respect to the initial edge of the fascicles.*/
 		Real fascicle_ratio_ = 15.0; 						/**< ratio of length  of the fascicles. Include one per fascicle to include.*/
 		ComplexShape* body_shape_;
-		RealBody* real_body_;
+		BaseMeshCellLinkedList* mesh_cell_linked_list_;
+		GenerativeTree *tree_;
 		/**
 		 *@brief Get the gradient from nearest points, for imposing repulsive force. 
 		 *@param[in] pt(Vecd) Inquiry point.
 		 *@param[in] delta(Real) parameter for gradient calculation.
-		 *@param[in] mesh_cell_linked_list(BaseMeshCellLinkedList) CLL for nearest point searching. 
 		 */
-		Vecd getGradientFromNearestPoints(Vecd pt, Real delta, BaseMeshCellLinkedList* mesh_cell_linked_list);
+		Vecd getGradientFromNearestPoints(Vecd pt, Real delta);
 		/**
 		 *@brief Create a new branch if it is valid.
 		 *@param[in] sph_body(SPHBody) The SPHBody to whom the tree belongs.
@@ -89,10 +88,9 @@ namespace SPH
 		 *@param[in] angle(Real) The angle for growing new points.
 		 *@param[in] repulsivity(Real) The repulsivity for creating new points.
 		 *@param[in] number_segments(size_t) Number of segments in this branch.
-		 *@param[in] tree(Tree) The tree to whom the branch belongs.
 		 */
 		bool createABranchIfValid(SPHBody* sph_body, size_t parent_id, Real angle,
-			Real repulsivity, size_t number_segments, Tree* tree);
+			Real repulsivity, size_t number_segments);
 		/**
 		 *@brief Functions that creates a new node in the mesh surface and it to the queue is it lies in the surface.
 		 *@param[in] init_node vector that contains the coordinates of the last node added in the branch.
@@ -100,17 +98,16 @@ namespace SPH
 		 *@param[in] dir a vector that contains the direction from the init_node to the node to project.
 		 *@param[out] end point of the created segment.
 		 */
-		Vecd creatATentativeNewBranchPoint(Vecd init_point, Vecd dir);
+		Vecd createATentativeNewBranchPoint(Vecd init_point, Vecd dir);
 		/**
 		 *@brief Check if the new point has collision with the existing points.
 		 *@param[in] new_point(Vecd) The enquiry point.
 		 *@param[in] nearest_neighbor(ListData) The nearest point of the existing points.
 		 *@param[in] parent_id(size_t)  Id of parent branch
-		 *@param[in] tree(Tree) The tree to whom the branch belongs.
 		 */
-		bool isCollision(Vecd& new_point, ListData& nearest_neighbor, size_t parent_id, Tree* tree);
+		bool isCollision(Vecd& new_point, ListData& nearest_neighbor, size_t parent_id);
 		/**
-		 *@brief Check if the new point is valid accoring to extra constraint.
+		 *@brief Check if the new point is valid according to extra constraint.
 		 *@param[in] new_point(Vecd) The enquiry point.
 		 */
 		virtual bool extraCheck(Vecd& new_point){return false;};

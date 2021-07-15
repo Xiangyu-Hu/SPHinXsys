@@ -71,7 +71,7 @@ namespace SPH {
 		virtual void assignDerivedMaterialParameters() override;
 	public:
 		ElasticSolid() : Solid(), c0_(1.0), ct0_(1.0), cs0_(0.0717), 
-			E0_(1.0), G0_(0.5), K0_(1.0), nu_(0.0), elastic_particles_(NULL) {};
+			E0_(1.0), G0_(0.5), K0_(1.0), nu_(0.0), elastic_particles_(nullptr) {};
 		virtual ~ElasticSolid() {};
 
 		virtual void assignElasticSolidParticles(ElasticSolidParticles* elastic_particles);
@@ -91,6 +91,12 @@ namespace SPH {
 		virtual Matd NumericalDampingStress(Matd& deformation, Matd& deformation_rate, Real smoothing_length, size_t particle_index_i);
 		/** numerical demaping is computed between particles i and j */
 		virtual Real NumericalDamping(Real dE_dt_ij, Real smoothing_length);
+
+		/** Deviatoric Kirchhoff stress related with the deviatoric part of left cauchy-green deformation tensor.
+		 *  Note that, dependent of the normalizeation of the later, the returned stress can be normalized or non-normalized. */
+		virtual Matd DeviatoricKirchhoff(const Matd& deviatoric_be);
+		/** Volumetric Kirchhoff stress related with green-lagrangian tensor */
+		virtual Real VolumetricKirchhoff(const Matd& deformation);
 
 		virtual ElasticSolid* ThisObjectPtr() override {return this;};
 	};
@@ -156,7 +162,7 @@ namespace SPH {
 		};
 		virtual ~NeoHookeanSolid() {};
 	
-		/** second Piola-Kirchhoff stress related with green-lagrangian defomeation tensor */
+		/** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
 		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
 	};
 

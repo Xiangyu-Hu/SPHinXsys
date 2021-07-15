@@ -83,7 +83,7 @@ namespace SPH
 			public InteractionDynamics, public RelaxDataDelegateInner
 		{
 		public:
-			RelaxationAccelerationInner(BaseInnerBodyRelation* body_inner_relation);
+			RelaxationAccelerationInner(BaseBodyRelationInner* body_inner_relation);
 			virtual ~RelaxationAccelerationInner() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
@@ -100,7 +100,7 @@ namespace SPH
 			public RelaxationAccelerationInner
 		{
 		public:
-			RelaxationAccelerationInnerWithLevelSetCorrection(BaseInnerBodyRelation* body_inner_relation);
+			RelaxationAccelerationInnerWithLevelSetCorrection(BaseBodyRelationInner* body_inner_relation);
 			virtual ~RelaxationAccelerationInnerWithLevelSetCorrection() {};
 		protected:
 			LevelSetComplexShape* level_set_complex_shape_;
@@ -208,9 +208,9 @@ namespace SPH
 		{
 		protected:
 			RealBody* real_body_;
-			BaseInnerBodyRelation* inner_relation_;
+			BaseBodyRelationInner* inner_relation_;
 		public:
-			explicit RelaxationStepInner(BaseInnerBodyRelation* body_inner_relation, bool level_set_correction = false);
+			explicit RelaxationStepInner(BaseBodyRelationInner* body_inner_relation, bool level_set_correction = false);
 			virtual ~RelaxationStepInner() {};
 
 			RelaxationAccelerationInner* relaxation_acceleration_inner_;
@@ -244,7 +244,7 @@ namespace SPH
 		class SolidRelaxationStepInner : public RelaxationStepInner
 		{
 		public:
-			explicit SolidRelaxationStepInner(BaseInnerBodyRelation* body_inner_relation, bool level_set_correction = false) :
+			explicit SolidRelaxationStepInner(BaseBodyRelationInner* body_inner_relation, bool level_set_correction = false) :
 				RelaxationStepInner(body_inner_relation, level_set_correction),
 				update_solid_particle_position_(real_body_) {};
 			virtual ~SolidRelaxationStepInner() {};

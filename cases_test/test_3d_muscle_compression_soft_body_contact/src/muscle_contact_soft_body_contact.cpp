@@ -123,10 +123,10 @@ public:
 /**
  * @brief Define moving plate material.
  */
-class MovingPlateMaterial : public LinearElasticSolid
+class MovingPlateMaterial : public NeoHookeanSolid
 {
 public:
-	MovingPlateMaterial() : LinearElasticSolid()
+	MovingPlateMaterial() : NeoHookeanSolid()
 	{
 		rho0_ = rho_0;
 		youngs_modulus_ = Youngs_modulus;
@@ -151,11 +151,11 @@ int main()
 	MovingPlateMaterial* moving_plate_material = new MovingPlateMaterial();
 	ElasticSolidParticles 	moving_plate_particles(moving_plate, moving_plate_material);
 	/** topology */
-	InnerBodyRelation*   myocardium_body_inner = new InnerBodyRelation(myocardium_body);
-	InnerBodyRelation*   moving_plate_inner = new InnerBodyRelation(moving_plate);
+	BodyRelationInner*   myocardium_body_inner = new BodyRelationInner(myocardium_body);
+	BodyRelationInner*   moving_plate_inner = new BodyRelationInner(moving_plate);
 	
-	SolidContactBodyRelation* myocardium_plate_contact = new SolidContactBodyRelation(myocardium_body, {moving_plate});
-	SolidContactBodyRelation* plate_myocardium_contact = new SolidContactBodyRelation(moving_plate, {myocardium_body});
+	SolidBodyRelationContact* myocardium_plate_contact = new SolidBodyRelationContact(myocardium_body, {moving_plate});
+	SolidBodyRelationContact* plate_myocardium_contact = new SolidBodyRelationContact(moving_plate, {myocardium_body});
 	/** 
 	 * This section define all numerical methods will be used in this case.
 	 */
@@ -167,9 +167,9 @@ int main()
 	solid_dynamics::CorrectConfiguration corrected_configuration_in_strong_form(myocardium_body_inner);
 	solid_dynamics::CorrectConfiguration corrected_configuration_in_strong_form_2(moving_plate_inner);
 	/** active and passive stress relaxation. */
-	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(myocardium_body_inner);
+	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half(myocardium_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(myocardium_body_inner);
-	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half_2(moving_plate_inner);
+	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half_2(moving_plate_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half_2(moving_plate_inner);
 	//stress_relaxation_first_half_2.post_processes_(spring_constraint);
 	/** Algorithms for solid-solid contact. */

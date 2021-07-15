@@ -21,7 +21,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		FreeSurfaceIndicationInner::
-			FreeSurfaceIndicationInner(BaseInnerBodyRelation* inner_relation, Real thereshold) :
+			FreeSurfaceIndicationInner(BaseBodyRelationInner* inner_relation, Real thereshold) :
 			InteractionDynamicsWithUpdate(inner_relation->sph_body_),
 			FluidDataInner(inner_relation),
 			thereshold_by_dimensions_(thereshold*(Real)Dimensions), 
@@ -61,7 +61,67 @@ namespace SPH
 			surface_indicator_[index_i] = is_free_surface ? 1 : 0;
 		}
 		//=================================================================================================//
-		DensitySummationInner::DensitySummationInner(BaseInnerBodyRelation* inner_relation) :
+		MultilayeredSurfaceParticlesIdentification::
+			MultilayeredSurfaceParticlesIdentification(BaseBodyRelationInner* inner_relation) :
+			InteractionDynamicsWithUpdate(inner_relation->sph_body_),
+			FluidDataInner(inner_relation),pos_n_(particles_->pos_n_),
+			surface_indicator_(particles_->surface_indicator_),
+			previous_surface_indicator_(*particles_->createAVariable<indexInteger, int>("PreviousSurfaceIndicator")) {}
+		//=================================================================================================//
+		void MultilayeredSurfaceParticlesIdentification::Interaction(size_t index_i, Real dt)
+		{
+			if (surface_indicator_[index_i] != 1)
+			{
+				Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+				{
+					if (surface_indicator_[inner_neighborhood.j_[n]] == 1)
+					{
+						surface_indicator_[index_i] = 2;
+						break;
+					}
+				}
+			}
+		}
+		//=================================================================================================//
+		void MultilayeredSurfaceParticlesIdentification::Update(size_t index_i, Real dt)
+		{
+			if (surface_indicator_[index_i] == 2)surface_indicator_[index_i] = 1;
+			previous_surface_indicator_[index_i] = surface_indicator_[index_i];
+		}
+		//=================================================================================================//
+		FreeStreamInletOutletSurfaceParticleIdentification  ::
+			FreeStreamInletOutletSurfaceParticleIdentification(BaseBodyRelationInner* inner_relation,
+				int axis_direction) :ParticleDynamicsSimple(inner_relation->sph_body_),
+			FluidDataInner(inner_relation), pos_n_(particles_->pos_n_),
+			fluid_body_domain_bounds_(body_->getBodyDomainBounds()), axis_(axis_direction),
+			particle_spacing_(body_->particle_adaptation_->ReferenceSpacing()),
+			surface_indicator_(particles_->surface_indicator_),
+			previous_surface_indicator_(*particles_->createAVariable<indexInteger, int>("PreviousSurfaceIndicator")) {}
+		//=================================================================================================//
+		void FreeStreamInletOutletSurfaceParticleIdentification::Update(size_t index_i, Real dt)
+		{
+			if (surface_indicator_[index_i] == 1)
+			{
+				Real distance_to_inlet_bound = pos_n_[index_i][axis_] - fluid_body_domain_bounds_.first[axis_];
+				Real distance_to_outlet_bound = fluid_body_domain_bounds_.second[axis_] - pos_n_[index_i][axis_];
+
+				if (distance_to_inlet_bound < 3.5 * particle_spacing_ || distance_to_outlet_bound < 3.5 * particle_spacing_)
+					surface_indicator_[index_i] = 2;
+			}
+			previous_surface_indicator_[index_i] = surface_indicator_[index_i];
+		}
+		//=================================================================================================//
+		TransportVelocityCorrectionComplex::
+			TransportVelocityCorrectionComplex(BaseBodyRelationInner* inner_relation,
+				BaseBodyRelationContact* conatct_relation) :
+			ParticleDynamicsComplex<TransportVelocityCorrectionInner, FluidContactData>(
+				inner_relation, conatct_relation)
+		{
+			prepareContactData();
+		}
+		//=================================================================================================//
+		DensitySummationInner::DensitySummationInner(BaseBodyRelationInner* inner_relation) :
 			InteractionDynamicsWithUpdate(inner_relation->sph_body_),
 			FluidDataInner(inner_relation),
 			Vol_(particles_->Vol_), rho_n_(particles_->rho_n_), mass_(particles_->mass_),
@@ -89,7 +149,17 @@ namespace SPH
 			Vol_[index_i] = mass_[index_i] / rho_n_[index_i];
 		}
 		//=================================================================================================//
-		ViscousAccelerationInner::ViscousAccelerationInner(BaseInnerBodyRelation* inner_relation) :
+		void DensitySummationFreeStreamInner::Update(size_t index_i, Real dt)
+		{
+			if (surface_indicator_[index_i] == 1 || surface_indicator_[index_i] == 2)
+				rho_n_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_n_[index_i]);
+			else
+				rho_n_[index_i] = rho_sum_[index_i];
+
+			Vol_[index_i] = mass_[index_i] / rho_n_[index_i];
+		}
+		//=================================================================================================//
+		ViscousAccelerationInner::ViscousAccelerationInner(BaseBodyRelationInner* inner_relation) :
 			InteractionDynamics(inner_relation->sph_body_),
 			FluidDataInner(inner_relation),
 			Vol_(particles_->Vol_), rho_n_(particles_->rho_n_), p_(particles_->p_), 
@@ -145,19 +215,18 @@ namespace SPH
 		}
 		//=================================================================================================//
 		TransportVelocityCorrectionInner::
-			TransportVelocityCorrectionInner(BaseInnerBodyRelation* inner_relation) :
+			TransportVelocityCorrectionInner(BaseBodyRelationInner* inner_relation) :
 			InteractionDynamics(inner_relation->sph_body_),
 			FluidDataInner(inner_relation),
 			Vol_(particles_->Vol_), rho_n_(particles_->rho_n_), 
-			pos_n_(particles_->pos_n_), 
-			surface_indicator_(particles_->surface_indicator_),
-			p_background_(0) {}
+			pos_n_(particles_->pos_n_), 		
+			surface_indicator_(particles_->surface_indicator_), p_background_(0){}
 		//=================================================================================================//
 		void TransportVelocityCorrectionInner::setupDynamics(Real dt)
 		{
 			Real speed_max = particles_->speed_max_;
 			Real density = material_->ReferenceDensity();
-			p_background_ =  10.0 * density * speed_max * speed_max;
+			p_background_ =  7.0 * density * speed_max * speed_max;
 		}
 		//=================================================================================================//
 		void TransportVelocityCorrectionInner::Interaction(size_t index_i, Real dt)
@@ -175,8 +244,7 @@ namespace SPH
 				acceleration_trans -= 2.0 * p_background_*Vol_[index_j] * nablaW_ij / rho_i;
 			}
 
-			/** correcting particle position */
-			if(surface_indicator_[index_i] == 0) pos_n_[index_i] += acceleration_trans * dt * dt * 0.5;
+			if (surface_indicator_[index_i] == 0) pos_n_[index_i] += acceleration_trans * dt * dt * 0.5;			
 		}
 		//=================================================================================================//
 		AcousticTimeStepSize::AcousticTimeStepSize(FluidBody* body)
@@ -233,7 +301,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		VorticityInner::
-			VorticityInner(BaseInnerBodyRelation* body_inner_relation) : 
+			VorticityInner(BaseBodyRelationInner* body_inner_relation) : 
 			InteractionDynamics(body_inner_relation->sph_body_),
 			FluidDataInner(body_inner_relation),
 			Vol_(particles_->Vol_), vel_n_(particles_->vel_n_),
@@ -260,7 +328,7 @@ namespace SPH
 			vorticity_[index_i] = vorticity;
 		}
 		//=================================================================================================//
-		BaseRelaxation::BaseRelaxation(BaseInnerBodyRelation* inner_relation) :
+		BaseRelaxation::BaseRelaxation(BaseBodyRelationInner* inner_relation) :
 			ParticleDynamics1Level(inner_relation->sph_body_),
 			FluidDataInner(inner_relation),
 			Vol_(particles_->Vol_), mass_(particles_->mass_), rho_n_(particles_->rho_n_), 
@@ -269,7 +337,7 @@ namespace SPH
 			dvel_dt_(particles_->dvel_dt_), dvel_dt_prior_(particles_->dvel_dt_prior_) {}
 		//=================================================================================================//
 		BasePressureRelaxation::
-			BasePressureRelaxation(BaseInnerBodyRelation* inner_relation) :
+			BasePressureRelaxation(BaseBodyRelationInner* inner_relation) :
 			BaseRelaxation(inner_relation) {}
 		//=================================================================================================//
 		void BasePressureRelaxation::Initialization(size_t index_i, Real dt)
@@ -307,7 +375,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseDensityRelaxation::
-			BaseDensityRelaxation(BaseInnerBodyRelation* inner_relation) :
+			BaseDensityRelaxation(BaseBodyRelationInner* inner_relation) :
 			BaseRelaxation(inner_relation) {}
 		//=================================================================================================//
 		void BaseDensityRelaxation::Initialization(size_t index_i, Real dt)
@@ -320,8 +388,21 @@ namespace SPH
 			rho_n_[index_i] += drho_dt_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
+		void FreeStreamBoundaryVelocityCorrection::Update(size_t index_i, Real dt)
+		{
+			vel_n_[index_i] += dvel_dt_[index_i] * dt;
+			dvel_dt_[index_i] = Vecd(0.0, 0.0);
+			
+			if (surface_indicator_[index_i] == 1)
+			{
+				Real run_time_ = GlobalStaticVariables::physical_time_;
+				Real u_ave_ = run_time_ < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time_ / t_ref_)) : u_ref_;
+				vel_n_[index_i][0] = u_ave_ + SMIN(rho_sum[index_i], rho_ref_) * (vel_n_[index_i][0] - u_ave_) / rho_ref_;
+			}							
+		}
+		//=================================================================================================//
 		PressureRelaxationRiemannInnerOldroyd_B ::
-			PressureRelaxationRiemannInnerOldroyd_B(BaseInnerBodyRelation* inner_relation) : 
+			PressureRelaxationRiemannInnerOldroyd_B(BaseBodyRelationInner* inner_relation) : 
 			PressureRelaxationRiemannInner(inner_relation),
 			tau_(dynamic_cast<ViscoelasticFluidParticles*>(body_->base_particles_)->tau_),
 			dtau_dt_(dynamic_cast<ViscoelasticFluidParticles*>(body_->base_particles_)->dtau_dt_) {}
@@ -355,7 +436,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		DensityRelaxationRiemannInnerOldroyd_B::
-			DensityRelaxationRiemannInnerOldroyd_B(BaseInnerBodyRelation* inner_relation) :
+			DensityRelaxationRiemannInnerOldroyd_B(BaseBodyRelationInner* inner_relation) :
 			DensityRelaxationRiemannInner(inner_relation),
 			tau_(dynamic_cast<ViscoelasticFluidParticles*>(body_->base_particles_)->tau_),
 			dtau_dt_(dynamic_cast<ViscoelasticFluidParticles*>(body_->base_particles_)->dtau_dt_) 
@@ -505,11 +586,23 @@ namespace SPH
 			p_[sorted_index_i] = material_->getPressure(rho_n_[sorted_index_i]);
 		}
 		//=================================================================================================//
+		InletOutletInflowCondition::
+			InletOutletInflowCondition(FluidBody* body, BodyPartByParticle* body_part) :
+			EmitterInflowCondition(body, body_part){}
+		//=================================================================================================//
+		void InletOutletInflowCondition
+			::Update(size_t unsorted_index_i, Real dt)
+		{
+			size_t sorted_index_i = sorted_id_[unsorted_index_i];
+			vel_n_[sorted_index_i] = getTargetVelocity(pos_n_[sorted_index_i], vel_n_[sorted_index_i]);
+		}
+		//=================================================================================================//
 		EmitterInflowInjecting
 			::EmitterInflowInjecting(FluidBody* body, BodyPartByParticle* body_part,
 				size_t body_buffer_width, int axis_direction, bool positive)
-			: PartSimpleDynamicsByParticle(body, body_part), FluidDataSimple(body), pos_n_(particles_->pos_n_),
-			axis_(axis_direction), periodic_translation_(0), body_buffer_width_(body_buffer_width) 
+			: PartSimpleDynamicsByParticle(body, body_part), FluidDataSimple(body), 
+			pos_n_(particles_->pos_n_),rho_n_(particles_->rho_n_), p_(particles_->p_),
+			axis_(axis_direction), periodic_translation_(0), body_buffer_width_(body_buffer_width)			
 		{
 			body_part_bounds_ = body_part->getBodyPartShape()->findBounds();
 			periodic_translation_[axis_] = body_part_bounds_.second[axis_] - body_part_bounds_.first[axis_];
@@ -542,7 +635,8 @@ namespace SPH
 				particles_->total_real_particles_ += 1;
 				/** Periodic bounding. */
 				pos_n_[sorted_index_i][axis_] -= periodic_translation_[axis_];
-
+				rho_n_[sorted_index_i] = material_->ReferenceDensity();
+				p_[sorted_index_i] = material_->getPressure(rho_n_[sorted_index_i]);
 			}
 		}
 		//=================================================================================================//
@@ -564,7 +658,7 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		ColorFunctionGradientInner::ColorFunctionGradientInner(BaseInnerBodyRelation* inner_relation)
+		ColorFunctionGradientInner::ColorFunctionGradientInner(BaseBodyRelationInner* inner_relation)
 		: InteractionDynamics(inner_relation->sph_body_), FluidDataInner(inner_relation),
 			Vol_(particles_->Vol_), 
 			surface_indicator_(particles_->surface_indicator_),
@@ -593,7 +687,7 @@ namespace SPH
 			surface_norm_[index_i] = gradient / (gradient.norm() + TinyReal);
 		}
 		//=================================================================================================//
-		ColorFunctionGradientInterplationInner::ColorFunctionGradientInterplationInner(BaseInnerBodyRelation* inner_relation) 
+		ColorFunctionGradientInterplationInner::ColorFunctionGradientInterplationInner(BaseBodyRelationInner* inner_relation) 
 		: InteractionDynamics(inner_relation->sph_body_), FluidDataInner(inner_relation), Vol_(particles_->Vol_), 
 			surface_indicator_(particles_->surface_indicator_),
 			color_grad_(*particles_->getVariableByName<indexVector, Vecd>("ColorGradient")),
@@ -629,14 +723,14 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseInnerBodyRelation* inner_relation, Real gamma) 
+		SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseBodyRelationInner* inner_relation, Real gamma) 
 		: InteractionDynamics(inner_relation->sph_body_), FluidDataInner(inner_relation),
 			gamma_(gamma),  Vol_(particles_->Vol_), 
 			mass_(particles_->mass_), dvel_dt_prior_(particles_->dvel_dt_prior_), surface_indicator_(particles_->surface_indicator_),
 			color_grad_(*particles_->getVariableByName<indexVector, Vecd>("ColorGradient")),
 			surface_norm_(*particles_->getVariableByName<indexVector, Vecd>("SurfaceNormal")){}
 		//=================================================================================================//
-		SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseInnerBodyRelation* inner_relation)
+		SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseBodyRelationInner* inner_relation)
 		: SurfaceTensionAccelerationInner(inner_relation, 1.0) {}
 		//=================================================================================================//
 		void SurfaceTensionAccelerationInner::Interaction(size_t index_i, Real dt)

@@ -35,7 +35,7 @@ endif()
 
 if(MSVC)
     SET(CMAKE_CL_64 1)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" " -Werror /MP")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" " /MP")
     add_definitions(-D_USE_MATH_DEFINES)
 else(MSVC)
     add_compile_definitions(__linux__=1)

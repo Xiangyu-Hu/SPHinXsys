@@ -13,7 +13,7 @@ namespace SPH {
 	//=================================================================================================//
 	ParticleGeneratorLattice::ParticleGeneratorLattice()
 		: ParticleGenerator(), lattice_spacing_(0), 
-		domain_bounds_(0, 0), body_shape_(NULL)
+		domain_bounds_(0, 0), body_shape_(nullptr)
 	{
 	}
 	//=================================================================================================//
@@ -34,7 +34,7 @@ namespace SPH {
 	}
 	//=================================================================================================//
 	ParticleGeneratorMultiResolution::ParticleGeneratorMultiResolution()
-		: ParticleGeneratorLattice(), particle_adapation_(NULL) {}
+		: ParticleGeneratorLattice(), particle_adapation_(nullptr) {}
 	//=================================================================================================//
 	void ParticleGeneratorMultiResolution::initialize(SPHBody* sph_body)
 	{
