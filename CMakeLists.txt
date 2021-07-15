@@ -4,10 +4,11 @@
 cmake_minimum_required(VERSION 3.12)
 project(SPHINXsys VERSION 1.0.0 LANGUAGES CXX)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
+set(SPHINXSYS_PROJECT_DIR ${PROJECT_SOURCE_DIR})
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${SPHINXSYS_PROJECT_DIR}/cmake)
 
 ###### Change settings in this file if you want to build with Simbody and/or oneTBB source code ######
-include("${CMAKE_MODULE_PATH}/Dependency_free_settings.cmake")
+include(Dependency_free_settings)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
@@ -70,7 +71,7 @@ enable_testing()
 
 if(NOT WASM_BUILD)
     include(Common)
-    include(Import3rdpartylibs) # TBB and Boost
+    include(Import3rdpartylibs)
 endif()
 
 add_subdirectory(SPHINXsys)
