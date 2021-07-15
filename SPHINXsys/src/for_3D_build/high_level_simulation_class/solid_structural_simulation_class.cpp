@@ -292,8 +292,8 @@ void StructuralSimulation::InitializeContactBetweenTwoBodies(int first, int seco
 	ImportedModel* first_body = solid_body_list_[first]->GetImportedModel();
 	ImportedModel* second_body = solid_body_list_[second]->GetImportedModel();
 
-	SolidContactBodyRelation* first_contact = new SolidContactBodyRelation(first_body, {second_body});
-	SolidContactBodyRelation* second_contact = new SolidContactBodyRelation(second_body, {first_body});
+	SolidBodyRelationContact* first_contact = new SolidBodyRelationContact(first_body, {second_body});
+	SolidBodyRelationContact* second_contact = new SolidBodyRelationContact(second_body, {first_body});
 
 	contact_list_.emplace_back(first_contact);
 	contact_list_.emplace_back(second_contact);
