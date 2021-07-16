@@ -44,7 +44,7 @@ SolidBodyForSimulation::SolidBodyForSimulation(SPHSystem &system, string body_na
 
 void expandBoundingBox(BoundingBox* original, BoundingBox* additional)
 {
-	for(size_t i = 0; i < original->first.size(); i++)
+	for(int i = 0; i < original->first.size(); i++)
 	{
 		if ( additional->first[i] < original->first[i] )
 		{
