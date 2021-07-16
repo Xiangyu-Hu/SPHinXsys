@@ -141,6 +141,7 @@ StructuralSimulationInput::StructuralSimulationInput(
 	position_solid_body_tuple_ = {};
 	position_scale_solid_body_tuple_ = {};
 	translation_solid_body_tuple_ = {};
+	translation_solid_body_part_tuple_ = {};
 };
 
 ///////////////////////////////////////
@@ -173,7 +174,8 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	body_indeces_fixed_constraint_(input.body_indeces_fixed_constraint_),
 	position_solid_body_tuple_(input.position_solid_body_tuple_),
 	position_scale_solid_body_tuple_(input.position_scale_solid_body_tuple_),
-	translation_solid_body_tuple_(input.translation_solid_body_tuple_)
+	translation_solid_body_tuple_(input.translation_solid_body_tuple_),
+	translation_solid_body_part_tuple_(input.translation_solid_body_part_tuple_)
 {
 	// scaling of translation and resolution
 	scaleTranslationAndResolution();
@@ -199,6 +201,7 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	initializePositionSolidBody();
 	initializePositionScaleSolidBody();
 	initializeTranslateSolidBody();
+	initializeTranslateSolidBodyPart();
 
 	// initialize simulation
 	initializeSimulation();
@@ -355,7 +358,7 @@ void StructuralSimulation::initializeAccelerationForBodyPartInBoundingBox()
 	{
 		SolidBody* solid_body = solid_body_list_[get<0>(acceleration_bounding_box_tuple_[i])]->getImportedModel();
 		acceleration_bounding_box_.emplace_back(make_shared<solid_dynamics::AccelerationForBodyPartInBoundingBox>
-			(solid_body, &get<1>(acceleration_bounding_box_tuple_[i]), get<2>(acceleration_bounding_box_tuple_[i])));
+			(solid_body, get<1>(acceleration_bounding_box_tuple_[i]), get<2>(acceleration_bounding_box_tuple_[i])));
     }
 }
 
@@ -419,9 +422,29 @@ void StructuralSimulation::initializeTranslateSolidBody()
 		Real start_time = get<1>(translation_solid_body_tuple_[i]);
 		Real end_time = get<2>(translation_solid_body_tuple_[i]);
 		Vecd translation = get<3>(translation_solid_body_tuple_[i]);
-		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(solid_body_list_[body_index]->getImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
+		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(
+			solid_body_list_[body_index]->getImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
 			
-		translation_solid_body_.emplace_back(make_shared<solid_dynamics::TranslateSolidBody>(solid_body_list_[body_index]->getImportedModel(), bp, start_time, end_time, translation));
+		translation_solid_body_.emplace_back(make_shared<solid_dynamics::TranslateSolidBody>(
+			solid_body_list_[body_index]->getImportedModel(), bp, start_time, end_time, translation));
+	}
+}
+
+void StructuralSimulation::initializeTranslateSolidBodyPart()
+{
+	translation_solid_body_part_ = {};
+	for (size_t i = 0; i < translation_solid_body_part_tuple_.size(); i++)
+	{
+		int body_index = get<0>(translation_solid_body_part_tuple_[i]);
+		Real start_time = get<1>(translation_solid_body_part_tuple_[i]);
+		Real end_time = get<2>(translation_solid_body_part_tuple_[i]);
+		Vecd translation = get<3>(translation_solid_body_part_tuple_[i]);
+		BoundingBox bbox = get<4>(translation_solid_body_part_tuple_[i]);
+		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(
+			solid_body_list_[body_index]->getImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
+			
+		translation_solid_body_part_.emplace_back(make_shared<solid_dynamics::TranslateSolidBodyPart>(
+			solid_body_list_[body_index]->getImportedModel(), bp, start_time, end_time, translation, bbox));
 	}
 }
 
@@ -547,6 +570,14 @@ void StructuralSimulation::executeTranslateSolidBody(Real dt)
 	}
 }
 
+void StructuralSimulation::executeTranslateSolidBodyPart(Real dt)
+{
+	for (size_t i = 0; i < translation_solid_body_part_.size(); i++)
+	{
+		translation_solid_body_part_[i]->parallel_exec(dt);
+	}
+}
+
 void StructuralSimulation::executeDamping(Real dt)
 {
 	for (size_t i = 0; i < solid_body_list_.size(); i++)
@@ -603,9 +634,12 @@ void StructuralSimulation::runSimulationStep(int &ite, Real &dt, Real &integrati
 	if (ite % 100 == 0) cout << "N=" << ite << " Time: " << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
 
 	/** ACTIVE BOUNDARY CONDITIONS */
+	// force (acceleration) based
 	executeinitializeATimeStep();
 	executeAccelerationForBodyPartInBoundingBox();
 	executeSpringDamperConstraintParticleWise();
+	// velocity based
+	executeTranslateSolidBodyPart(dt);
 
 	/** CONTACT */
 	executeContactDensitySummation();
@@ -617,14 +651,13 @@ void StructuralSimulation::runSimulationStep(int &ite, Real &dt, Real &integrati
 	executeConstrainSolidBodyRegion();
 	executePositionSolidBody(dt);
 	executePositionScaleSolidBody(dt);
-	executeTranslateSolidBody(dt);
+	executeTranslateSolidBody(dt); // only one time
 
 	executeDamping(dt);
 
 	executeConstrainSolidBodyRegion();
 	executePositionSolidBody(dt);
 	executePositionScaleSolidBody(dt);
-	executeTranslateSolidBody(dt);
 
 	executeStressRelaxationSecondHalf(dt);
 	
