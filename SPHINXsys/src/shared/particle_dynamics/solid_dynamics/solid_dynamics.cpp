@@ -371,13 +371,22 @@ namespace SPH
 			vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
 			vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
 			start_time_(start_time), end_time_(end_time), translation_(translation)
-		{
-		}
+		{}
 		//=================================================================================================//
 		Vecd TranslateSolidBody::getDisplacement(size_t index_i, Real dt)
 		{
-			// displacement from the initial position
-			Vecd displacement = translation_ * dt / (end_time_ - GlobalStaticVariables::physical_time_);
+			Vecd displacement(0);
+			// if we are out of the time interval, return 0
+			if (GlobalStaticVariables::physical_time_ < start_time_ || GlobalStaticVariables::physical_time_ > end_time_) return displacement;
+			try {
+				// distance left to reach the final position
+				Vecd translation_left = translation_ * (end_time_ - GlobalStaticVariables::physical_time_) / (end_time_ - start_time_);
+				// displacement is a portion of distance left, scaled by dt and remaining time
+				displacement = 0.5 * translation_left * dt / (end_time_ - GlobalStaticVariables::physical_time_);
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("TranslateSolidBody::getDisplacement: particle index out of bounds") + to_string(index_i));
+			}
 			return displacement;
 		}
 		//=================================================================================================//

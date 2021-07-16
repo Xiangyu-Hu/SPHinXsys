@@ -1,4 +1,4 @@
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake) # main (top) cmake dir
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${SPHINXSYS_PROJECT_DIR}/cmake) # main (top) cmake dir
 set(CMAKE_VERBOSE_MAKEFILE on)
 
 STRING( REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR} )
@@ -21,7 +21,7 @@ foreach(STL_FILE ${FILES_STL})
 endforeach()
 
 aux_source_directory(. DIR_SRCS)
-ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
+ADD_EXECUTABLE(${PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH} ${DIR_SRCS})
 
 add_test(NAME ${PROJECT_NAME}_particle_relaxation 
 		 COMMAND ${PROJECT_NAME} --r=true

@@ -1,16 +1,14 @@
 #include <gtest/gtest.h>
-#include "solid_structural_simulation_class.h"
+#include "test_structural_simulation_class.h"
 
-Real tolerance = 1e-6;
-
-TEST(StructuralSimulation, ExpandBoundingBox)
+TEST(StructuralSimulation, expandBoundingBox)
 {
 	BoundingBox bb(Vec3d(0), Vec3d(0));
 	BoundingBox bb_2(Vec3d(-0.5, -1.0, -2.0), Vec3d(1.05, 1.1, 2.2));
 	BoundingBox bb_3(Vec3d(1.0, -10.0, -20.0), Vec3d(10.05, 0.0, 0.0));
 
-	ExpandBoundingBox(&bb, &bb_2);
-	ExpandBoundingBox(&bb, &bb_3);
+	expandBoundingBox(&bb, &bb_2);
+	expandBoundingBox(&bb, &bb_3);
 	
 	BoundingBox bb_ref(Vec3d(-0.5, -10.0, -20.0), Vec3d(10.05, 1.1, 2.2));
 
@@ -20,51 +18,6 @@ TEST(StructuralSimulation, ExpandBoundingBox)
 		EXPECT_EQ(bb.second[i], bb_ref.second[i]);
 	}
 }
-
-class TestStructuralSimulation : StructuralSimulation
-{
-public:
-	TestStructuralSimulation(StructuralSimulationInput& input) : StructuralSimulation(input){};
-	void TestRunSimulation(Real end_time){ RunSimulation(end_time); };
-	// input members
-	string Get_relative_input_path_(){ return relative_input_path_; };
-	vector<string> Get_imported_stl_list_(){ return imported_stl_list_; };
-	Real Get_scale_stl_(){ return scale_stl_; };
-	vector<Vec3d> Get_translation_list_(){ return translation_list_; };
-	Real Get_system_resolution_(){ return system_resolution_; };
-	vector<Real> Get_resolution_list_(){ return resolution_list_; };
-	vector<LinearElasticSolid> Get_material_model_list_(){ return material_model_list_; };
-	Real Get_physical_viscosity_(){ return physical_viscosity_; };
-	// internal members
-	SPHSystem Get_system_(){ return system_; };
-	Real Get_scale_system_boundaries_(){ return scale_system_boundaries_; };
-	In_Output Get_in_output_(){ return in_output_; };
-	// other
-	vector<TriangleMeshShape> Get_body_mesh_list_(){ return body_mesh_list_; };
-	vector<shared_ptr<SolidBodyForSimulation>> Get_solid_body_list_(){ return solid_body_list_; };
-	vector<array<int, 2>> Get_contacting_bodies_list_(){ return contacting_bodies_list_; };
-	vector<shared_ptr<SolidBodyRelationContact>> Get_contact_list_(){ return contact_list_; };
-	vector<shared_ptr<solid_dynamics::ContactDensitySummation>> Get_contact_density_list_(){ return contact_density_list_; };
-	vector<shared_ptr<solid_dynamics::ContactForce>> Get_contact_force_list_(){ return contact_force_list_; };
-	// for InitializeATimeStep
-	vector<shared_ptr<TimeStepInitialization>> Get_initialize_gravity_(){ return initialize_gravity_; };
-	vector<GravityPair> Get_non_zero_gravity_(){ return non_zero_gravity_; };
-	// for AccelerationForBodyPartInBoundingBox
-	vector<shared_ptr<solid_dynamics::AccelerationForBodyPartInBoundingBox>> Get_acceleration_bounding_box_(){ return acceleration_bounding_box_; };
-	vector<AccelTuple> Get_acceleration_bounding_box_tuple_(){ return acceleration_bounding_box_tuple_; };
-	// for SpringDamperConstraintParticleWise
-	vector<shared_ptr<solid_dynamics::SpringDamperConstraintParticleWise>> Get_spring_damper_constraint_(){ return spring_damper_constraint_; };
-	vector<SpringDamperTuple> Get_spring_damper_tuple_(){ return spring_damper_tuple_; };
-	// for ConstrainSolidBodyRegion
-	vector<shared_ptr<solid_dynamics::ConstrainSolidBodyRegion>> Get_fixed_constraint_(){ return fixed_constraint_; };
-	vector<int> Get_body_indeces_fixed_constraint_(){ return body_indeces_fixed_constraint_; };
-	// for PositionSolidBody
-	vector<shared_ptr<solid_dynamics::PositionSolidBody>> Get_position_solid_body_(){ return position_solid_body_; };
-	vector<PositionSolidBodyTuple> Get_position_solid_body_tuple_(){ return position_solid_body_tuple_; };
-	// for PositionScaleSolidBody
-	vector<shared_ptr<solid_dynamics::PositionScaleSolidBody>> Get_position_scale_solid_body_(){ return position_scale_solid_body_; };
-	vector<PositionScaleSolidBodyTuple> Get_position_scale_solid_body_tuple_(){ return position_scale_solid_body_tuple_; };
-};
 
 TEST(StructuralSimulation, PositionSolidBodyTuple)
 {
@@ -109,7 +62,7 @@ TEST(StructuralSimulation, PositionSolidBodyTuple)
 	//=================================================================================================//
 
 	//=================================================================================================//
-	// test ScaleTranslationAndResolution();
+	// test scaleTranslationAndResolution();
 	EXPECT_EQ(sim.Get_translation_list_().size(), sim.Get_resolution_list_().size());
 	for (size_t i = 0; i < translation_list.size(); i++)
 	{	
@@ -118,10 +71,10 @@ TEST(StructuralSimulation, PositionSolidBodyTuple)
 	}
 	EXPECT_EQ(sim.Get_system_resolution_(), resolution_mass * scale_stl);
 	//=================================================================================================//
-	// test CreateBodyMeshList();
+	// test createBodyMeshList();
 	EXPECT_EQ(sim.Get_body_mesh_list_().size(), number_of_bodies);
 	//=================================================================================================//
-	// test CalculateSystemBoundaries();
+	// test calculateSystemBoundaries();
 	Real ball_radius = 100 * scale_stl * 0.5;
 	BoundingBox test_bounds(Vec3d(-ball_radius * scale_system_bounds), Vec3d(ball_radius * scale_system_bounds));
 	for (size_t i = 0; i < 3; i++)
@@ -134,7 +87,7 @@ TEST(StructuralSimulation, PositionSolidBodyTuple)
 	EXPECT_EQ(sim.Get_solid_body_list_().size(), number_of_bodies);
 	//=================================================================================================//
 	// test InitializeAllContacts();
-	EXPECT_EQ(sim.Get_contacting_bodies_list_().size(), 0);
+	EXPECT_EQ(sim.Get_contacting_body_pairs_list_().size(), 0);
 	EXPECT_EQ(sim.Get_contact_list_().size(), 0);
 	EXPECT_EQ(sim.Get_contact_density_list_().size(), 0);
 	EXPECT_EQ(sim.Get_contact_force_list_().size(), 0);
@@ -213,6 +166,53 @@ TEST(StructuralSimulation, PositionScaleSolidBodyTuple)
 			Vec3d displ = center + (pos_0[index] - center) * scale;
 			EXPECT_NEAR(pos_n[index][i], displ[i], displ.norm() * tolerance);
 		}
+	}
+}
+
+TEST(StructuralSimulation, TranslateSolidBodyTuple)
+{
+	Real scale_stl = 0.001 / 4; // diameter of 0.025 m
+	Real resolution_mass = 8.0;
+	Real poisson = 0.35;
+	Real Youngs_modulus = 1e4;
+	Real physical_viscosity = 200;
+	Real rho_0 = 1000;
+	Real end_time = 0.1;
+
+		/** STL IMPORT PARAMETERS */
+	std::string relative_input_path = "./input/"; //path definition for linux
+	std::vector<std::string> imported_stl_list = { "ball_mass.stl" };
+	std::vector<Vec3d> translation_list = { Vec3d(0) };
+	std::vector<Real> resolution_list = { resolution_mass};
+	LinearElasticSolid material = LinearElasticSolid(rho_0, Youngs_modulus, poisson);
+	std::vector<LinearElasticSolid> material_model_list = { material };
+	
+	StructuralSimulationInput input
+	{
+		relative_input_path,
+		imported_stl_list,
+		scale_stl,
+		translation_list,
+		resolution_list,
+		material_model_list,
+		physical_viscosity,
+		{}
+	};
+	Vecd translation_vector = Vec3d(0.0, 0.0, 0.1); //changed to be more like PositionSolidBodyTuple
+	input.translation_solid_body_tuple_ = { TranslateSolidBodyTuple(0, end_time * 0.32, end_time, translation_vector) };
+
+	//=================================================================================================//
+	TestStructuralSimulation sim (input);
+	sim.TestRunSimulation(end_time);
+	//=================================================================================================//
+
+	StdLargeVec<Vecd>& pos_0 = sim.Get_translation_solid_body_()[0]->GetParticlePos0();
+	StdLargeVec<Vecd>& pos_n = sim.Get_translation_solid_body_()[0]->GetParticlePosN();
+
+	for (size_t index = 0; index < pos_0.size(); index++)
+	{
+		Vec3d end_pos = pos_0[index] + translation_vector;
+		EXPECT_NEAR(pos_n[index][2], end_pos[2], end_pos.norm() * 1e-2);
 	}
 }
 
