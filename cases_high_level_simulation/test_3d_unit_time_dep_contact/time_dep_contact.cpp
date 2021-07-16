@@ -48,8 +48,8 @@ TEST(StructuralSimulation, TimeDependentContact)
 	sim.TestRunSimulation(end_time);
 
 	// check that the two plates don't overlap, this will check if the contact works properly
-	StdLargeVec<Vecd>& pos_n_1 = sim.Get_solid_body_list_()[0].get()->GetElasticSolidParticles()->pos_n_; // plate 1 particles
-	StdLargeVec<Vecd>& pos_n_2 = sim.Get_solid_body_list_()[1].get()->GetElasticSolidParticles()->pos_n_; // plate 2 particles
+	StdLargeVec<Vecd>& pos_n_1 = sim.Get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_n_; // plate 1 particles
+	StdLargeVec<Vecd>& pos_n_2 = sim.Get_solid_body_list_()[1].get()->getElasticSolidParticles()->pos_n_; // plate 2 particles
 
 	// plate 1 max z-coordinate
 	Real max_z_1 = -1000.0;
@@ -116,8 +116,8 @@ TEST(StructuralSimulation, TimeDependentContactStiff)
 	sim.TestRunSimulation(end_time);
 
 	// check that the two plates don't overlap, this will check if the contact works properly
-	StdLargeVec<Vecd>& pos_n_1 = sim.Get_solid_body_list_()[0].get()->GetElasticSolidParticles()->pos_n_; // plate 1 particles
-	StdLargeVec<Vecd>& pos_n_2 = sim.Get_solid_body_list_()[1].get()->GetElasticSolidParticles()->pos_n_; // plate 2 particles
+	StdLargeVec<Vecd>& pos_n_1 = sim.Get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_n_; // plate 1 particles
+	StdLargeVec<Vecd>& pos_n_2 = sim.Get_solid_body_list_()[1].get()->getElasticSolidParticles()->pos_n_; // plate 2 particles
 
 	// plate 1 max z-coordinate
 	Real max_z_1 = -1000.0;
@@ -188,8 +188,8 @@ TEST(StructuralSimulation, MockStent)
 	sim.TestRunSimulation(end_time);
 
 	// check the plate position, that the translation is correct
-	StdLargeVec<Vecd>& pos_0 = sim.Get_solid_body_list_()[1].get()->GetElasticSolidParticles()->pos_0_;
-	StdLargeVec<Vecd>& pos_n = sim.Get_solid_body_list_()[1].get()->GetElasticSolidParticles()->pos_n_;
+	StdLargeVec<Vecd>& pos_0 = sim.Get_solid_body_list_()[1].get()->getElasticSolidParticles()->pos_0_;
+	StdLargeVec<Vecd>& pos_n = sim.Get_solid_body_list_()[1].get()->getElasticSolidParticles()->pos_n_;
 	for (size_t index = 0; index < pos_0.size(); index++)
 	{
 		Vec3d end_pos = pos_0[index] + translation_vector;
@@ -199,8 +199,8 @@ TEST(StructuralSimulation, MockStent)
 	// check that the stent is inside the vessel:
 	// 1. the max y pos is larger for the vessel than the stent
 	// 1. the min y pos is smaller for the vessel than the stent
-	StdLargeVec<Vecd>& pos_n_stent = sim.Get_solid_body_list_()[0].get()->GetElasticSolidParticles()->pos_n_; // stent particles
-	StdLargeVec<Vecd>& pos_n_vessel = sim.Get_solid_body_list_()[2].get()->GetElasticSolidParticles()->pos_n_; // vessel particles
+	StdLargeVec<Vecd>& pos_n_stent = sim.Get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_n_; // stent particles
+	StdLargeVec<Vecd>& pos_n_vessel = sim.Get_solid_body_list_()[2].get()->getElasticSolidParticles()->pos_n_; // vessel particles
 
 	Real max_y_stent = -1000.0;
 	Real min_y_stent = 1000.0;

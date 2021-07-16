@@ -6,7 +6,7 @@ class TestStructuralSimulation : StructuralSimulation
 {
 public:
 	TestStructuralSimulation(StructuralSimulationInput& input) : StructuralSimulation(input){};
-	void TestRunSimulation(Real end_time){ RunSimulation(end_time); };
+	void TestRunSimulation(Real end_time){ runSimulation(end_time); };
 	// input members
 	string Get_relative_input_path_(){ return relative_input_path_; };
 	vector<string> Get_imported_stl_list_(){ return imported_stl_list_; };
@@ -28,7 +28,7 @@ public:
 	vector<shared_ptr<SolidBodyRelationContact>> Get_contact_list_(){ return contact_list_; };
 	vector<shared_ptr<solid_dynamics::ContactDensitySummation>> Get_contact_density_list_(){ return contact_density_list_; };
 	vector<shared_ptr<solid_dynamics::ContactForce>> Get_contact_force_list_(){ return contact_force_list_; };
-	// for InitializeATimeStep
+	// for initializeATimeStep
 	vector<shared_ptr<TimeStepInitialization>> Get_initialize_gravity_(){ return initialize_gravity_; };
 	vector<GravityPair> Get_non_zero_gravity_(){ return non_zero_gravity_; };
 	// for AccelerationForBodyPartInBoundingBox

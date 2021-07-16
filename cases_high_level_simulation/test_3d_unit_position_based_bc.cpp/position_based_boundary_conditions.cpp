@@ -1,14 +1,14 @@
 #include <gtest/gtest.h>
 #include "test_structural_simulation_class.h"
 
-TEST(StructuralSimulation, ExpandBoundingBox)
+TEST(StructuralSimulation, expandBoundingBox)
 {
 	BoundingBox bb(Vec3d(0), Vec3d(0));
 	BoundingBox bb_2(Vec3d(-0.5, -1.0, -2.0), Vec3d(1.05, 1.1, 2.2));
 	BoundingBox bb_3(Vec3d(1.0, -10.0, -20.0), Vec3d(10.05, 0.0, 0.0));
 
-	ExpandBoundingBox(&bb, &bb_2);
-	ExpandBoundingBox(&bb, &bb_3);
+	expandBoundingBox(&bb, &bb_2);
+	expandBoundingBox(&bb, &bb_3);
 	
 	BoundingBox bb_ref(Vec3d(-0.5, -10.0, -20.0), Vec3d(10.05, 1.1, 2.2));
 
@@ -62,7 +62,7 @@ TEST(StructuralSimulation, PositionSolidBodyTuple)
 	//=================================================================================================//
 
 	//=================================================================================================//
-	// test ScaleTranslationAndResolution();
+	// test scaleTranslationAndResolution();
 	EXPECT_EQ(sim.Get_translation_list_().size(), sim.Get_resolution_list_().size());
 	for (size_t i = 0; i < translation_list.size(); i++)
 	{	
@@ -71,10 +71,10 @@ TEST(StructuralSimulation, PositionSolidBodyTuple)
 	}
 	EXPECT_EQ(sim.Get_system_resolution_(), resolution_mass * scale_stl);
 	//=================================================================================================//
-	// test CreateBodyMeshList();
+	// test createBodyMeshList();
 	EXPECT_EQ(sim.Get_body_mesh_list_().size(), number_of_bodies);
 	//=================================================================================================//
-	// test CalculateSystemBoundaries();
+	// test calculateSystemBoundaries();
 	Real ball_radius = 100 * scale_stl * 0.5;
 	BoundingBox test_bounds(Vec3d(-ball_radius * scale_system_bounds), Vec3d(ball_radius * scale_system_bounds));
 	for (size_t i = 0; i < 3; i++)
