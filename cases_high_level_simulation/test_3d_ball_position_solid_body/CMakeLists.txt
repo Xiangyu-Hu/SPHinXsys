@@ -21,7 +21,7 @@ foreach(STL_FILE ${FILES_STL})
 endforeach()
 
 aux_source_directory(. DIR_SRCS)
-ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
+ADD_EXECUTABLE(${PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH} ${DIR_SRCS})
 
 add_test(NAME ${PROJECT_NAME}_particle_relaxation 
 		 COMMAND ${PROJECT_NAME} --r=true
