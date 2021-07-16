@@ -66,7 +66,7 @@ namespace SPH {
 		virtual void assignDerivedMaterialParameters() {};
 	public:
 		BaseMaterial() : material_name_("BaseMaterial"), parameters_name_("LocalParameters"),
-			rho0_(1.0), base_particles_(NULL),
+			rho0_(1.0), base_particles_(nullptr),
 			reload_material_xml_engine_("xml_material", "material_paramaters") {};
 		virtual ~BaseMaterial() {};
 
@@ -134,7 +134,7 @@ namespace SPH {
 		};
 	public:
 		Fluid() : BaseMaterial(), c0_(1.0), mu_(0.0),
-			fluid_particles_(NULL) {
+			fluid_particles_(nullptr) {
 			material_name_ = "Fluid";
 		};
 		virtual ~Fluid() {};
@@ -160,7 +160,7 @@ namespace SPH {
 	{
 	public:
 		Solid() : BaseMaterial(), contact_stiffness_(1.0),
-			contact_friction_(0.0), solid_particles_(NULL)
+			contact_friction_(0.0), solid_particles_(nullptr)
 		{
 			material_name_ = "Solid";
 		};

@@ -32,7 +32,7 @@ int main(int ac, char* av[])
 	CompressibleFluidParticles 	wave_particles(wave_block, wave_material);
 	wave_particles.addAVariableToWrite<indexScalar, Real>("TotalEnergy");
 	/** topology */
-	BaseInnerBodyRelation* wave_block_inner = new InnerBodyRelation(wave_block);
+	BaseBodyRelationInner* wave_block_inner = new BodyRelationInner(wave_block);
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
@@ -44,7 +44,7 @@ int main(int ac, char* av[])
 	 /** Initialize particle acceleration. */
 	eulerian_fluid_dynamics::CompressibleFlowTimeStepInitialization		initialize_wave_step(wave_block);
 	/** Periodic BCs in y direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition_y(wave_block, 1);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition_y(wave_block, yAxis);
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
 	 */

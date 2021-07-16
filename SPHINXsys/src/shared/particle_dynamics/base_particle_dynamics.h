@@ -193,7 +193,7 @@ namespace SPH
 	class DataDelegateInner : public BaseDataDelegateType
 	{
 	public:
-		explicit DataDelegateInner(BaseInnerBodyRelation* body_inner_relation) : 
+		explicit DataDelegateInner(BaseBodyRelationInner* body_inner_relation) : 
 			BaseDataDelegateType(body_inner_relation->sph_body_),
 			inner_configuration_(body_inner_relation->inner_configuration_) {};
 		virtual ~DataDelegateInner() {};
@@ -216,7 +216,7 @@ namespace SPH
 	class DataDelegateContact : public BaseDataDelegateType
 	{
 	public:
-		explicit DataDelegateContact(BaseContactBodyRelation* body_contact_relation);
+		explicit DataDelegateContact(BaseBodyRelationContact* body_contact_relation);
 		virtual ~DataDelegateContact() {};
 	protected:
 		StdVec<ContactBodyType*>  contact_bodies_;
@@ -257,12 +257,12 @@ namespace SPH
 	class ParticleDynamicsComplex : public ParticleDynamicsInnerType, public ContactDataType
 	{
 	public:
-		ParticleDynamicsComplex(BaseInnerBodyRelation* inner_relation, 
-			BaseContactBodyRelation* contact_relation) :
+		ParticleDynamicsComplex(BaseBodyRelationInner* inner_relation, 
+			BaseBodyRelationContact* contact_relation) :
 			ParticleDynamicsInnerType(inner_relation), ContactDataType(contact_relation) {};
 
 		ParticleDynamicsComplex(ComplexBodyRelation* complex_relation, 
-			BaseContactBodyRelation* extra_contact_relation);
+			BaseBodyRelationContact* extra_contact_relation);
 
 		virtual ~ParticleDynamicsComplex() {};
 	protected:

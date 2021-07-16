@@ -32,6 +32,7 @@ capabilities. **/
 #include "all_particles.h"
 #include "all_geometries.h"
 #include "all_bodies.h"
+#include "generative_structures.h"
 #include "sph_system.h"
 #include "all_materials.h"
 #include "all_physical_dynamics.h"

@@ -11,7 +11,7 @@ namespace SPH
 	{
 		//=================================================================================================//
 		FluidViscousForceOnSolid::
-			FluidViscousForceOnSolid(BaseContactBodyRelation* body_contact_relation) :
+			FluidViscousForceOnSolid(BaseBodyRelationContact* body_contact_relation) :
 			InteractionDynamics(body_contact_relation->sph_body_),
 			FSIContactData(body_contact_relation),
 			Vol_(particles_->Vol_), vel_ave_(particles_->vel_ave_),

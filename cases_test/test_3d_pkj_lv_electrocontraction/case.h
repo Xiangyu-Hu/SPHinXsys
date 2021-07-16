@@ -195,10 +195,10 @@ public:
 /** Set diffusion relaxation. */
 class DiffusionRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle,
-	RelaxationOfAllDiffussionSpeciesInner<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>,InnerBodyRelation>
+	RelaxationOfAllDiffussionSpeciesInner<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>,BodyRelationInner>
 {
 public:
-	DiffusionRelaxation(InnerBodyRelation* body_inner_relation)
+	DiffusionRelaxation(BodyRelationInner* body_inner_relation)
 		: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation) {};
 	virtual ~DiffusionRelaxation() {};
 };
@@ -429,19 +429,20 @@ public:
 		voltage_ = material_->SpeciesIndexMap()["Voltage"];
 	};
 };
+
 /**
  * Derived particle generator. 
  */
-class NetworkGeneratorwihtExtraCheck : public ParticleGeneratorNetwork
+class NetworkGeneratorWithExtraCheck : public ParticleGeneratorNetwork
 {
 protected:
-	bool extraCheck(Vecd& new_point) override 
+	bool extraCheck(Vecd& new_position) override 
 	{
 		bool no_generation = false;
-		if(new_point[2] > 0) no_generation = true;
+		if(new_position[2] > 0) no_generation = true;
 		return no_generation;
 	};
 public:
-	NetworkGeneratorwihtExtraCheck(Vecd starting_pnt, Vecd second_pnt, int iterator, Real grad_factor)
+	NetworkGeneratorWithExtraCheck(Vecd starting_pnt, Vecd second_pnt, int iterator, Real grad_factor)
 	: ParticleGeneratorNetwork(starting_pnt, second_pnt, iterator, grad_factor) {};
 };

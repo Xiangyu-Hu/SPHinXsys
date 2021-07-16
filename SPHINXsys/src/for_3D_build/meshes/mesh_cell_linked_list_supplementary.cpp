@@ -111,7 +111,7 @@ namespace SPH {
 			{
 				for (int q = SMAX(k - 1, 0); q <= SMIN(k + 1, int(number_of_cells_[2]) - 1); ++q)
 				{
-					CellListDataVector& target_particles = cell_linked_lists_[l][m][q].cell_list_data_;
+					ListDataVector& target_particles = cell_linked_lists_[l][m][q].cell_list_data_;
 					for (size_t n = 0; n != target_particles.size(); ++n)
 					{
 						Real distance = (position - target_particles[n].second).norm();

@@ -114,7 +114,7 @@ namespace SPH
 		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		virtual void Update(size_t index_i, Real dt = 0.0) override;
 	public:
-		RelaxationOfAllDiffussionSpeciesInner(BaseInnerBodyRelation* body_inner_relation);
+		RelaxationOfAllDiffussionSpeciesInner(BaseBodyRelationInner* body_inner_relation);
 		virtual ~RelaxationOfAllDiffussionSpeciesInner() {};
 	};
 

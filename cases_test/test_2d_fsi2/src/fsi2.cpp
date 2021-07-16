@@ -62,12 +62,12 @@ int main(int ac, char* av[])
 	BodyStatesRecordingToVtu 				write_real_body_states(in_output, system.real_bodies_);
 	RestartIO							restart_io(in_output, system.real_bodies_);
 	/** topology */
-	InnerBodyRelation* water_block_inner = new InnerBodyRelation(water_block);
-	InnerBodyRelation* inserted_body_inner = new InnerBodyRelation(inserted_body);
+	BodyRelationInner* water_block_inner = new BodyRelationInner(water_block);
+	BodyRelationInner* inserted_body_inner = new BodyRelationInner(inserted_body);
 	ComplexBodyRelation* water_block_complex = new ComplexBodyRelation(water_block_inner, { wall_boundary, inserted_body });
-	ContactBodyRelation* inserted_body_contact = new ContactBodyRelation(inserted_body, { water_block });
-	ContactBodyRelation* beam_observer_contact = new ContactBodyRelation(beam_observer, { inserted_body });
-	ContactBodyRelation* fluid_observer_contact = new ContactBodyRelation(fluid_observer, { water_block });
+	BodyRelationContact* inserted_body_contact = new BodyRelationContact(inserted_body, { water_block });
+	BodyRelationContact* beam_observer_contact = new BodyRelationContact(beam_observer, { inserted_body });
+	BodyRelationContact* fluid_observer_contact = new BodyRelationContact(fluid_observer, { water_block });
 
 	/** check whether run particle relaxation for body fitted particle distribution. */
 	if (system.run_particle_relaxation_) 
@@ -139,7 +139,7 @@ int main(int ac, char* av[])
 	/** Inflow boundary condition. */
 	ParabolicInflow		parabolic_inflow(water_block, new InflowBuffer(water_block, "Buffer"));
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition(water_block, 0);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition(water_block, xAxis);
 	/**
 	 * @brief Algorithms of FSI.
 	 */

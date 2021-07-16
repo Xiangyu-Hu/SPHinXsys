@@ -82,10 +82,10 @@ namespace SPH
 		class ElectroPhysiologyDiffusionRelaxationInner : 
 			public RelaxationOfAllDiffusionSpeciesRK2<SolidBody, SolidParticles, Solid,
 			RelaxationOfAllDiffussionSpeciesInner<SolidBody, SolidParticles, Solid>, 
-			BaseInnerBodyRelation>
+			BaseBodyRelationInner>
 		{
 		public:
-			ElectroPhysiologyDiffusionRelaxationInner(BaseInnerBodyRelation* body_inner_relation)
+			ElectroPhysiologyDiffusionRelaxationInner(BaseBodyRelationInner* body_inner_relation)
 				: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation) {};
 			virtual ~ElectroPhysiologyDiffusionRelaxationInner() {};
 		};

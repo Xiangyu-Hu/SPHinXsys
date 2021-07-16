@@ -52,14 +52,14 @@ int main(int ac, char* av[])
 	RestartIO							restart_io(in_output, system.real_bodies_);
 	/** body topology */
 	ComplexBodyRelation* water_block_complex = new ComplexBodyRelation(water_block, {cylinder });
-	ContactBodyRelation* cylinder_contact = new ContactBodyRelation(cylinder, { water_block });
-	ContactBodyRelation* fluid_observer_contact = new ContactBodyRelation(fluid_observer, { water_block });
+	BodyRelationContact* cylinder_contact = new BodyRelationContact(cylinder, { water_block });
+	BodyRelationContact* fluid_observer_contact = new BodyRelationContact(fluid_observer, { water_block });
 
 	/** check whether run particle relaxation for body fitted particle distribution. */
 	if (system.run_particle_relaxation_) 
 	{
 		/** body topology only for particle relaxation */
-		InnerBodyRelation* cylinder_inner = new InnerBodyRelation(cylinder);
+		BodyRelationInner* cylinder_inner = new BodyRelationInner(cylinder);
 		/**
 		 * @brief 	Methods used for particle relaxation.
 		 */
@@ -103,9 +103,9 @@ int main(int ac, char* av[])
 	 /** Initialize particle acceleration. */
 	TimeStepInitialization 	initialize_a_fluid_step(water_block);
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition_x(water_block, 0);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition_x(water_block, xAxis);
 	/** Periodic BCs in y direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition_y(water_block, 1);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList 	periodic_condition_y(water_block, yAxis);
 
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensitySummationComplex 	update_density_by_summation(water_block_complex);

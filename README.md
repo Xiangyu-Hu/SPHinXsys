@@ -51,13 +51,13 @@ Here, we give the instructions for installing on Ubuntu Linux, Apple OS and Wind
 
 ### Installing on Ubunutu Linux and Mac OS
 
-0. Make sure that gcc, gfrotran, wget, git, cmake are installed and uodated.
+0. Make sure that gcc, gfrotran, wget, git, cmake and google test are installed and updated.
 
 1. Install Boost and TBB libraries
 
         $ sudo apt-get install libtbb-dev
         $ sudo apt-get install libboost-all-dev
-
+ 
     and set the environment by
 
         $ echo 'export TBB_HOME=/usr/lib/x86_64-linux-gnu' >> ~/.bashrc
@@ -165,7 +165,17 @@ Here, we give the instructions for installing on Ubuntu Linux, Apple OS and Wind
 ### Install on Windows Visual Studio
 
 You can find a installation instruction video: https://youtu.be/m0p1nybM4v4, and install by the following steps: 
-1. Install latest version Cmake, SmartGit (choose non-commercial option) binary.
+1. Install latest version Cmake, SmartGit (choose non-commercial option) binary and googel test.
+
+        Install google test, we download the release version from the github reporsitory: <https://github.com/google/googletest/releases>, 
+        build and install it. For this, you will extract the source and create a new build directory. 
+        Using Cmake, you will configurate and generate a Visual Studio project. 
+        Be sure that, in Cmake GUI, you have clicked the two options: build_shared_libs and install_gtest. 
+        The install prefix you can choose the default one (in winodws program files and, in this case, you later need run Visual Studio as admistrator) or other new directory. 
+        Open the generated project in Visual Studio, build all and install both for Debug and ReleaseWithDebugInfo targets. 
+        Then, you need setup Windows system environment variables: GTEST_HOME with the vaule of the install prefix directory. 
+        Also you need add the bin directory as new path. the dll files inside need to found when running the tests.
+
 2. Build, test and install Simbody
 
         Downloading from https://github.com/simbody/simbody/releases
@@ -200,6 +210,8 @@ You can find a installation instruction video: https://youtu.be/m0p1nybM4v4, and
         Use Cmake to build project file
         Configure x64 build and Generate
         After configuration, one can choose debug or release mode of the project file.
+        Note that you need choose the same debug or release mode in the Visual Studio as you have chosen in Cmake.
+        Otherwise, it may lead to compiling issues. 
 
 6. Build execute able and run test cases in Visual Studio
 

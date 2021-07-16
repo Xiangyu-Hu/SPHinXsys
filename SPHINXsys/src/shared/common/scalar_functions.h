@@ -20,8 +20,8 @@
 * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
 *                                                                           *
 * --------------------------------------------------------------------------*/
-#ifndef SPHINXSYS_BASE_SCALARFUNC_H
-#define SPHINXSYS_BASE_SCALARFUNC_H
+#ifndef SCALAR_FUNCTIONS_H
+#define SCALAR_FUNCTIONS_H
 
 #include <cmath>
 #include <algorithm>
@@ -181,4 +181,4 @@ namespace SPH {
 	  */
 	int ThirdAxis(int axis_direction);
 }
-#endif //SPHINXSYS_BASE_SCALARFUNC_H
+#endif //SCALAR_FUNCTIONS_H

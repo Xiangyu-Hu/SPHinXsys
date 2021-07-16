@@ -34,7 +34,7 @@ SolidBodyForSimulation::SolidBodyForSimulation(SPHSystem &system, string body_na
 	imported_model_(ImportedModel(system, body_name, &triangle_mesh_shape, &particle_adaptation)),
 	//material_model_(material_model),
 	elastic_solid_particles_(ElasticSolidParticles(&imported_model_, &material_model)),
-	inner_body_relation_(InnerBodyRelation(&imported_model_)),
+	inner_body_relation_(BodyRelationInner(&imported_model_)),
 
 	correct_configuration_(solid_dynamics::CorrectConfiguration(&inner_body_relation_)),
 	stress_relaxation_first_half_(solid_dynamics::StressRelaxationFirstHalf(&inner_body_relation_)),
@@ -42,7 +42,7 @@ SolidBodyForSimulation::SolidBodyForSimulation(SPHSystem &system, string body_na
 	damping_random_(DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>(&inner_body_relation_, 0.1, "Velocity", physical_viscosity))
 {}
 
-void ExpandBoundingBox(BoundingBox* original, BoundingBox* additional)
+void expandBoundingBox(BoundingBox* original, BoundingBox* additional)
 {
 	for(int i = 0; i < original->first.size(); i++)
 	{
@@ -57,11 +57,11 @@ void ExpandBoundingBox(BoundingBox* original, BoundingBox* additional)
 	}
 }
 
-void RelaxParticlesSingleResolution(In_Output* in_output,
+void relaxParticlesSingleResolution(In_Output* in_output,
 									bool write_particles_to_file,
 									ImportedModel* imported_model,
 									ElasticSolidParticles* imported_model_particles,
-									InnerBodyRelation* imported_model_inner)
+									BodyRelationInner* imported_model_inner)
 {	
 
 	BodyStatesRecordingToVtu write_imported_model_to_vtu(*in_output, { imported_model });
@@ -72,7 +72,7 @@ void RelaxParticlesSingleResolution(In_Output* in_output,
 	//----------------------------------------------------------------------
 	RandomizePartilePosition  random_imported_model_particles(imported_model);
 	/** A  Physics relaxation step. */
-	relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner, true);
+	relax_dynamics::SolidRelaxationStepInner relaxation_step_inner(imported_model_inner, true);
 	//----------------------------------------------------------------------
 	//	Particle relaxation starts here.
 	//----------------------------------------------------------------------
@@ -124,370 +124,509 @@ StructuralSimulationInput::StructuralSimulationInput(
 	resolution_list_(resolution_list),
 	material_model_list_(material_model_list),
 	physical_viscosity_(physical_viscosity),
-	contacting_bodies_list_(contacting_bodies_list)
+	contacting_body_pairs_list_(contacting_bodies_list)
 {
-	particle_relaxation_ = true;
+	//time dependent contact
+	time_dep_contacting_body_pairs_list_ = {};
+	// particle_relaxation option
+	particle_relaxation_list_ = {};
+	for (size_t i = 0; i < resolution_list_.size(); i++){ particle_relaxation_list_.push_back(true); }
+	// scale system boundaries
+	scale_system_boundaries_ = 1;
+	// boundary conditions
 	non_zero_gravity_ = {};
 	acceleration_bounding_box_tuple_ = {};
 	spring_damper_tuple_ = {};
 	body_indeces_fixed_constraint_ = {};
+	position_solid_body_tuple_ = {};
+	position_scale_solid_body_tuple_ = {};
+	translation_solid_body_tuple_ = {};
 };
 
 ///////////////////////////////////////
 /* StructuralSimulation members */
 ///////////////////////////////////////
 
-StructuralSimulation::StructuralSimulation(StructuralSimulationInput* input):
+StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	// generic input
-	relative_input_path_(input->relative_input_path_),
-	imported_stl_list_(input->imported_stl_list_),
-	scale_stl_(input->scale_stl_),
-	translation_list_(input->translation_list_),
-	default_resolution_(0.0),
-	resolution_list_(input->resolution_list_),
-	material_model_list_(input->material_model_list_),
-	physical_viscosity_(input->physical_viscosity_),
-	contacting_bodies_list_(input->contacting_bodies_list_),
-	particle_relaxation_(input->particle_relaxation_), // particle relaxation
-	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), default_resolution_)),
+	relative_input_path_(input.relative_input_path_),
+	imported_stl_list_(input.imported_stl_list_),
+	scale_stl_(input.scale_stl_),
+	translation_list_(input.translation_list_),
+	resolution_list_(input.resolution_list_),
+	material_model_list_(input.material_model_list_),
+	physical_viscosity_(input.physical_viscosity_),
+	contacting_body_pairs_list_(input.contacting_body_pairs_list_),
+	time_dep_contacting_body_pairs_list_(input.time_dep_contacting_body_pairs_list_),
+
+	// default system, optional: particle relaxation, scale_system_boundaries
+	particle_relaxation_list_(input.particle_relaxation_list_),
+	system_resolution_(0.0),
+	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), system_resolution_)),
+	scale_system_boundaries_(input.scale_system_boundaries_),
 	in_output_(In_Output(system_)),
 
-	// boundary conditions
-	non_zero_gravity_(input->non_zero_gravity_),
-	acceleration_bounding_box_tuple_(input->acceleration_bounding_box_tuple_),
-	spring_damper_tuple_(input->spring_damper_tuple_),
-	body_indeces_fixed_constraint_(input->body_indeces_fixed_constraint_)
+	// optional: boundary conditions
+	non_zero_gravity_(input.non_zero_gravity_),
+	acceleration_bounding_box_tuple_(input.acceleration_bounding_box_tuple_),
+	spring_damper_tuple_(input.spring_damper_tuple_),
+	body_indeces_fixed_constraint_(input.body_indeces_fixed_constraint_),
+	position_solid_body_tuple_(input.position_solid_body_tuple_),
+	position_scale_solid_body_tuple_(input.position_scale_solid_body_tuple_),
+	translation_solid_body_tuple_(input.translation_solid_body_tuple_)
 {
 	// scaling of translation and resolution
-	ScaleTranslationAndResolution();
+	scaleTranslationAndResolution();
 	// set the default resolution to the max in the resolution list
-	SetDefaultSystemResolutionMax();
+	setSystemResolutionMax();
 	// create the body mesh list for triangular mesh shapes storage
-	CreateBodyMeshList();
+	createBodyMeshList();
 	// create the particle adaptions for the bodies
-	CreateParticleAdaptationList();
+	createParticleAdaptationList();
 	// set up the system
-	CalculateSystemBoundaries();
+	calculateSystemBoundaries();
 	system_.run_particle_relaxation_ = true;
 	// initialize solid bodies with their properties
-	InitializeElasticSolidBodies(particle_relaxation_);
+	initializeElasticSolidBodies();
 	// contacts
-	InitializeAllContacts();
+	initializeAllContacts();
 
 	// boundary conditions
-	InitializeGravity();
-	InitializeAccelerationForBodyPartInBoundingBox();
-	InitializeSpringDamperConstraintParticleWise();
-	InitializeConstrainSolidBodyRegion();
+	initializeGravity();
+	initializeAccelerationForBodyPartInBoundingBox();
+	initializeSpringDamperConstraintParticleWise();
+	initializeConstrainSolidBodyRegion();
+	initializePositionSolidBody();
+	initializePositionScaleSolidBody();
+	initializeTranslateSolidBody();
 
 	// initialize simulation
-	InitSimulation();
+	initializeSimulation();
 }
 
 StructuralSimulation::~StructuralSimulation()
-{
-	// solid bodies
-	for (auto sb: solid_body_list_)
-	{
-		delete sb;
-	}
-	// contact
-	for (auto cl : contact_list_)
-	{
-		delete cl;
-	}
-	for (auto cd : contact_density_list_)
-	{
-		delete cd;
-	}
-	for (auto cf : contact_force_list_)
-	{
-		delete cf;
-	}
-	// boundary conditions
-	for (auto ig : initialize_gravity_)
-	{
-		delete ig;
-	}
-	for (auto acc : acceleration_bounding_box_)
-	{
-		delete acc;
-	}
-	for (auto sd : spring_damper_constraint_)
-	{
-		delete sd;
-	}
-	for (auto fc : fixed_constraint_)
-	{
-		delete fc;
-	}
-}
+{}
 
-void StructuralSimulation::ScaleTranslationAndResolution()
+void StructuralSimulation::scaleTranslationAndResolution()
 {
-	for (unsigned int i = 0; i < translation_list_.size(); i++)
+	// scale the translation_list_, system_resolution_ and resolution_list_
+	for (size_t i = 0; i < translation_list_.size(); i++)
 	{
 		translation_list_[i] *= scale_stl_;
 	}
-	default_resolution_ *= scale_stl_;
-	for (unsigned int i = 0; i < resolution_list_.size(); i++)
+	system_resolution_ *= scale_stl_;
+	for (size_t i = 0; i < resolution_list_.size(); i++)
 	{
 		resolution_list_[i] *= scale_stl_;
 	}
 }
 
-void StructuralSimulation::SetDefaultSystemResolutionMax()
+void StructuralSimulation::setSystemResolutionMax()
 {
-	default_resolution_ = 0.0;
-	for (unsigned int i = 0; i < resolution_list_.size(); i++)
+	system_resolution_ = 0.0;
+	for (size_t i = 0; i < resolution_list_.size(); i++)
 	{
-		if (default_resolution_ < resolution_list_[i])
+		if (system_resolution_ < resolution_list_[i])
 		{
-			default_resolution_ = resolution_list_[i];
+			system_resolution_ = resolution_list_[i];
 		}
 	}
-	system_.resolution_ref_ = default_resolution_;
+	system_.resolution_ref_ = system_resolution_;
 }
 
-void StructuralSimulation::CalculateSystemBoundaries()
+void StructuralSimulation::calculateSystemBoundaries()
 {	
-	for (unsigned int i = 0; i < body_mesh_list_.size(); i++)
+	// calculate system bounds from all bodies
+	for (size_t i = 0; i < body_mesh_list_.size(); i++)
 	{
 		BoundingBox additional = body_mesh_list_[i].findBounds();
-		ExpandBoundingBox(&system_.system_domain_bounds_, &additional);
+		expandBoundingBox(&system_.system_domain_bounds_, &additional);
 	}
+	// scale the system bounds around the center point
+	Vecd center_point = (system_.system_domain_bounds_.first + system_.system_domain_bounds_.second) * 0.5;
+
+	Vecd distance_first = system_.system_domain_bounds_.first - center_point;
+	Vecd distance_second = system_.system_domain_bounds_.second - center_point;
+
+	system_.system_domain_bounds_.first = center_point + distance_first * scale_system_boundaries_;
+	system_.system_domain_bounds_.second = center_point + distance_second * scale_system_boundaries_;
 }
 
-void StructuralSimulation::CreateBodyMeshList()
+void StructuralSimulation::createBodyMeshList()
 {
 	body_mesh_list_ = {};
-	for (unsigned int i = 0; i < imported_stl_list_.size(); i++)
+	for (size_t i = 0; i < imported_stl_list_.size(); i++)
 	{
 		string relative_input_path_copy = relative_input_path_;
 		body_mesh_list_.push_back(TriangleMeshShape(relative_input_path_copy.append(imported_stl_list_[i]), translation_list_[i], scale_stl_));
 	}
 }
 
-void StructuralSimulation::CreateParticleAdaptationList()
+void StructuralSimulation::createParticleAdaptationList()
 {
 	particle_adaptation_list_ = {};
-	for (unsigned int i = 0; i < resolution_list_.size(); i++)
+	for (size_t i = 0; i < resolution_list_.size(); i++)
 	{
-		Real h_spacing_ratio = resolution_list_[i] / default_resolution_;
-		particle_adaptation_list_.push_back(ParticleAdaptation(h_spacing_ratio, 0));
+		particle_adaptation_list_.push_back(ParticleAdaptation());
+
+		Real system_resolution_ratio = resolution_list_[i] / system_resolution_;
+		particle_adaptation_list_[i].SetSystemResolutionRatio(system_resolution_ratio);
 	}
 }
 
-void StructuralSimulation::InitializeElasticSolidBodies(bool particle_relaxation)
+void StructuralSimulation::initializeElasticSolidBodies()
 {
 	solid_body_list_ = {};
-	for (unsigned int i = 0; i < body_mesh_list_.size(); i++)
+	for (size_t i = 0; i < body_mesh_list_.size(); i++)
 	{
-		SolidBodyForSimulation* sb = new SolidBodyForSimulation(system_, imported_stl_list_[i], body_mesh_list_[i], particle_adaptation_list_[i], physical_viscosity_, material_model_list_[i]);
-		solid_body_list_.push_back(sb);
-		if (particle_relaxation)
+		solid_body_list_.emplace_back(make_shared<SolidBodyForSimulation>(system_, imported_stl_list_[i], body_mesh_list_[i], particle_adaptation_list_[i], physical_viscosity_, material_model_list_[i]));
+		if (particle_relaxation_list_[i])
 		{
-			RelaxParticlesSingleResolution(&in_output_, false, sb->GetImportedModel(), sb->GetElasticSolidParticles(), sb->GetInnerBodyRelation());
+			relaxParticlesSingleResolution(&in_output_, false, solid_body_list_[i]->getImportedModel(), solid_body_list_[i]->getElasticSolidParticles(), solid_body_list_[i]->getInnerBodyRelation());
 		}
 	}
 }
 
-void StructuralSimulation::InitializeContactBetweenTwoBodies(int first, int second)
+void StructuralSimulation::initializeContactBetweenTwoBodies(int first, int second)
 {	
-	ImportedModel* first_body = solid_body_list_[first]->GetImportedModel();
-	ImportedModel* second_body = solid_body_list_[second]->GetImportedModel();
-	SolidContactBodyRelation* first_contact = new SolidContactBodyRelation(first_body, {second_body});
-	SolidContactBodyRelation* second_contact = new SolidContactBodyRelation(second_body, {first_body});
-	contact_list_.push_back(first_contact);
-	contact_list_.push_back(second_contact);
+	ImportedModel* first_body = solid_body_list_[first]->getImportedModel();
+	ImportedModel* second_body = solid_body_list_[second]->getImportedModel();
 
-	contact_density_list_.push_back(new solid_dynamics::ContactDensitySummation (first_contact));
-	contact_density_list_.push_back(new solid_dynamics::ContactDensitySummation (second_contact));
+	SolidBodyRelationContact* first_contact = new SolidBodyRelationContact(first_body, {second_body});
+	SolidBodyRelationContact* second_contact = new SolidBodyRelationContact(second_body, {first_body});
 
-	contact_force_list_.push_back(new solid_dynamics::ContactForce (first_contact));
-	contact_force_list_.push_back(new solid_dynamics::ContactForce (second_contact));
+	contact_list_.emplace_back(first_contact);
+	contact_list_.emplace_back(second_contact);
+
+	contact_density_list_.emplace_back(make_shared<solid_dynamics::ContactDensitySummation>(first_contact));
+	contact_density_list_.emplace_back(make_shared<solid_dynamics::ContactDensitySummation>(second_contact));
+
+	contact_force_list_.emplace_back(make_shared<solid_dynamics::ContactForce>(first_contact));
+	contact_force_list_.emplace_back(make_shared<solid_dynamics::ContactForce>(second_contact));
 }
 
-void StructuralSimulation::InitializeAllContacts()
+void StructuralSimulation::initializeAllContacts()
 {
 	contact_list_ = {};
 	contact_density_list_ = {};
 	contact_force_list_ = {};
-	for (unsigned int i = 0; i < contacting_bodies_list_.size(); i++)
+	for (size_t i = 0; i < contacting_body_pairs_list_.size(); i++)
 	{
-		InitializeContactBetweenTwoBodies(contacting_bodies_list_[i][0], contacting_bodies_list_[i][1]);
+		initializeContactBetweenTwoBodies(contacting_body_pairs_list_[i][0], contacting_body_pairs_list_[i][1]);
+	}
+	for (size_t i = 0; i < time_dep_contacting_body_pairs_list_.size(); i++)
+	{	
+		int body_1 = time_dep_contacting_body_pairs_list_[i].first[0];
+		int body_2 = time_dep_contacting_body_pairs_list_[i].first[1];
+		initializeContactBetweenTwoBodies(body_1, body_2); //vector with first element being array with indices
 	}
 }
 
-void StructuralSimulation::InitializeGravity()
+void StructuralSimulation::initializeGravity()
 {
 	// collect all the body indeces with non-zero gravity
-	vector<int> body_indeces_gravity = {};
-	for (unsigned int i = 0; i < non_zero_gravity_.size(); i++)
+	vector<int> gravity_indeces = {};
+	for (size_t i = 0; i < non_zero_gravity_.size(); i++)
 	{
-		body_indeces_gravity.push_back(non_zero_gravity_[i].first);
+		gravity_indeces.push_back(non_zero_gravity_[i].first);
 	}
 	// initialize gravity
 	initialize_gravity_ = {};
-	for (unsigned int i = 0; i < solid_body_list_.size(); i++)
+	size_t gravity_index_i = 0; // iterating through gravity_indeces
+	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{	
-		if ( find(body_indeces_gravity.begin(), body_indeces_gravity.end(), i) != body_indeces_gravity.end() )
+		// check if i is in indeces_gravity
+		if ( count(gravity_indeces.begin(), gravity_indeces.end(), i) )
 		{	
-			initialize_gravity_.push_back(new TimeStepInitialization(solid_body_list_[i]->GetImportedModel(), new Gravity(non_zero_gravity_[i].second)));
+			initialize_gravity_.emplace_back(make_shared<TimeStepInitialization>(solid_body_list_[i]->getImportedModel(), new Gravity(non_zero_gravity_[gravity_index_i].second)));
+			gravity_index_i++;
 		}
 		else
 		{
-			initialize_gravity_.push_back(new TimeStepInitialization(solid_body_list_[i]->GetImportedModel()));
+			initialize_gravity_.emplace_back(make_shared<TimeStepInitialization>(solid_body_list_[i]->getImportedModel()));
 		}
 	}
 }
 
-void StructuralSimulation::InitializeAccelerationForBodyPartInBoundingBox()
+void StructuralSimulation::initializeAccelerationForBodyPartInBoundingBox()
 {	
 	acceleration_bounding_box_ = {};
-	for (unsigned int i = 0; i < acceleration_bounding_box_tuple_.size(); i++)
+	for (size_t i = 0; i < acceleration_bounding_box_tuple_.size(); i++)
 	{
-		SolidBody* solid_body = solid_body_list_[get<0>(acceleration_bounding_box_tuple_[i])]->GetImportedModel();
-		acceleration_bounding_box_.push_back(new solid_dynamics::AccelerationForBodyPartInBoundingBox(solid_body, &get<1>(acceleration_bounding_box_tuple_[i]), get<2>(acceleration_bounding_box_tuple_[i])));
+		SolidBody* solid_body = solid_body_list_[get<0>(acceleration_bounding_box_tuple_[i])]->getImportedModel();
+		acceleration_bounding_box_.emplace_back(make_shared<solid_dynamics::AccelerationForBodyPartInBoundingBox>
+			(solid_body, &get<1>(acceleration_bounding_box_tuple_[i]), get<2>(acceleration_bounding_box_tuple_[i])));
     }
 }
 
-void StructuralSimulation::InitializeSpringDamperConstraintParticleWise()
+void StructuralSimulation::initializeSpringDamperConstraintParticleWise()
 {	
 	spring_damper_constraint_ = {};
-	for (unsigned int i = 0; i < spring_damper_tuple_.size(); i++)
+	for (size_t i = 0; i < spring_damper_tuple_.size(); i++)
 	{
-		SolidBody* solid_body = solid_body_list_[get<0>(spring_damper_tuple_[i])]->GetImportedModel();
-		spring_damper_constraint_.push_back(new solid_dynamics::SpringDamperConstraintParticleWise(solid_body, get<1>(spring_damper_tuple_[i]), get<2>(spring_damper_tuple_[i])));
+		SolidBody* solid_body = solid_body_list_[get<0>(spring_damper_tuple_[i])]->getImportedModel();
+		spring_damper_constraint_.emplace_back(make_shared<solid_dynamics::SpringDamperConstraintParticleWise>(solid_body, get<1>(spring_damper_tuple_[i]), get<2>(spring_damper_tuple_[i])));
     }
 }
 
-void StructuralSimulation::InitializeConstrainSolidBodyRegion()
+void StructuralSimulation::initializeConstrainSolidBodyRegion()
 {	
 	fixed_constraint_ = {};
-	for (unsigned int i = 0; i < body_indeces_fixed_constraint_.size(); i++)
+	for (size_t i = 0; i < body_indeces_fixed_constraint_.size(); i++)
 	{
 		int body_index = body_indeces_fixed_constraint_[i];
-		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(solid_body_list_[body_index]->GetImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
-		fixed_constraint_.push_back(new solid_dynamics::ConstrainSolidBodyRegion(solid_body_list_[body_index]->GetImportedModel(), bp));
+		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(solid_body_list_[body_index]->getImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
+		fixed_constraint_.emplace_back(make_shared<solid_dynamics::ConstrainSolidBodyRegion>(solid_body_list_[body_index]->getImportedModel(), bp));
 	}
 }
 
-void StructuralSimulation::ExecuteCorrectConfiguration()
+void StructuralSimulation::initializePositionSolidBody()
 {
-	for (auto solid_body: solid_body_list_)
+	position_solid_body_ = {};
+	for (size_t i = 0; i < position_solid_body_tuple_.size(); i++)
 	{
-		solid_body->GetCorrectConfiguration()->parallel_exec();
+		int body_index = get<0>(position_solid_body_tuple_[i]);
+		Real start_time = get<1>(position_solid_body_tuple_[i]);
+		Real end_time = get<2>(position_solid_body_tuple_[i]);
+		Vecd pos_end_center = get<3>(position_solid_body_tuple_[i]);
+		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(solid_body_list_[body_index]->getImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
+			
+		position_solid_body_.emplace_back(make_shared<solid_dynamics::PositionSolidBody>(solid_body_list_[body_index]->getImportedModel(), bp, start_time, end_time, pos_end_center));
 	}
 }
 
-void StructuralSimulation::ExecuteInitializeATimeStep()
+void StructuralSimulation::initializePositionScaleSolidBody()
 {
-	for (auto ig: initialize_gravity_)
+	position_scale_solid_body_ = {};
+	for (size_t i = 0; i < position_scale_solid_body_tuple_.size(); i++)
 	{
-		ig->parallel_exec();
+		int body_index = get<0>(position_scale_solid_body_tuple_[i]);
+		Real start_time = get<1>(position_scale_solid_body_tuple_[i]);
+		Real end_time = get<2>(position_scale_solid_body_tuple_[i]);
+		Real scale = get<3>(position_scale_solid_body_tuple_[i]);
+		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(solid_body_list_[body_index]->getImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
+				
+		position_scale_solid_body_.emplace_back(make_shared<solid_dynamics::PositionScaleSolidBody>(solid_body_list_[body_index]->getImportedModel(), bp, start_time, end_time, scale));
 	}
 }
 
-void StructuralSimulation::ExecuteAccelerationForBodyPartInBoundingBox()
+void StructuralSimulation::initializeTranslateSolidBody()
 {
-	for (auto acc: acceleration_bounding_box_)
+	translation_solid_body_ = {};
+	for (size_t i = 0; i < translation_solid_body_tuple_.size(); i++)
 	{
-		acc->parallel_exec();
+		int body_index = get<0>(translation_solid_body_tuple_[i]);
+		Real start_time = get<1>(translation_solid_body_tuple_[i]);
+		Real end_time = get<2>(translation_solid_body_tuple_[i]);
+		Vecd translation = get<3>(translation_solid_body_tuple_[i]);
+		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(solid_body_list_[body_index]->getImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
+			
+		translation_solid_body_.emplace_back(make_shared<solid_dynamics::TranslateSolidBody>(solid_body_list_[body_index]->getImportedModel(), bp, start_time, end_time, translation));
 	}
 }
 
-void StructuralSimulation::ExecuteSpringDamperConstraintParticleWise()
+void StructuralSimulation::executeCorrectConfiguration()
 {
-	for (auto sd: spring_damper_constraint_)
+	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{
-		sd->parallel_exec();
+		solid_body_list_[i]->getCorrectConfiguration()->parallel_exec();
 	}
 }
 
-void StructuralSimulation::ExecuteContactDensitySummation()
+void StructuralSimulation::executeinitializeATimeStep()
 {
-	for (auto cd: contact_density_list_)
+	for (size_t i = 0; i < initialize_gravity_.size(); i++)
 	{
-		cd->parallel_exec();
+		initialize_gravity_[i]->parallel_exec();
 	}
 }
 
-void StructuralSimulation::ExecuteContactForce()
+void StructuralSimulation::executeAccelerationForBodyPartInBoundingBox()
 {
-	for (auto cf: contact_force_list_)
+	for (size_t i = 0; i < acceleration_bounding_box_.size(); i++)
 	{
-		cf->parallel_exec();
+		acceleration_bounding_box_[i]->parallel_exec();
 	}
 }
 
-void StructuralSimulation::ExecuteStressRelaxationFirstHalf(Real dt)
+void StructuralSimulation::executeSpringDamperConstraintParticleWise()
 {
-	for (auto solid_body : solid_body_list_)
+	for (size_t i = 0; i < spring_damper_constraint_.size(); i++)
 	{
-		solid_body->GetStressRelaxationFirstHalf()->parallel_exec(dt);
+		spring_damper_constraint_[i]->parallel_exec();
 	}
 }
 
-void StructuralSimulation::ExecuteConstrainSolidBodyRegion()
+void StructuralSimulation::executeContactDensitySummation()
 {
-	for (auto fc: fixed_constraint_)
+	// number of contacts that are not time dependent: contact pairs * 2
+	size_t number_of_general_contacts = contacting_body_pairs_list_.size() * 2;
+	for (size_t i = 0; i < contact_density_list_.size(); i++)
 	{
-		fc->parallel_exec();
+		if (i < number_of_general_contacts)
+		{
+			contact_density_list_[i]->parallel_exec();
+		}
+		else
+		{
+			// index of the time dependent contact body pair
+			// for i = 0, 1 --> index = 0, i = 2, 3 --> index = 1, and so on..
+			int index = (i - number_of_general_contacts) / 2;
+			Real start_time = time_dep_contacting_body_pairs_list_[index].second[0];
+			Real end_time = time_dep_contacting_body_pairs_list_[index].second[1];
+			if(GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
+			{
+				contact_density_list_[i]->parallel_exec();
+			}
+		}
 	}
 }
 
-void StructuralSimulation::ExecuteDamping(Real dt)
+void StructuralSimulation::executeContactForce()
 {
-	for (auto solid_body : solid_body_list_)
+	// number of contacts that are not time dependent: contact pairs * 2
+	size_t number_of_general_contacts = contacting_body_pairs_list_.size() * 2;
+	for (size_t i = 0; i < contact_force_list_.size(); i++)
 	{
-		solid_body->GetDampingWithRandomChoice()->parallel_exec(dt);
+		if (i < number_of_general_contacts)
+		{
+			contact_force_list_[i]->parallel_exec();
+		}
+		else
+		{
+			// index of the time dependent contact body pair
+			// for i = 0, 1 --> index = 0, i = 2, 3 --> index = 1, and so on..
+			int index = (i - number_of_general_contacts) / 2;
+			Real start_time = time_dep_contacting_body_pairs_list_[index].second[0];
+			Real end_time = time_dep_contacting_body_pairs_list_[index].second[1];
+			if(GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
+			{
+				contact_force_list_[i]->parallel_exec();
+			}
+		}
 	}
 }
 
-void StructuralSimulation::ExecuteStressRelaxationSecondHalf(Real dt)
+void StructuralSimulation::executeStressRelaxationFirstHalf(Real dt)
 {
-	for (auto solid_body : solid_body_list_)
+	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{
-		solid_body->GetStressRelaxationSecondHalf()->parallel_exec(dt);
+		solid_body_list_[i]->getStressRelaxationFirstHalf()->parallel_exec(dt);
 	}
 }
 
-void StructuralSimulation::ExecuteUpdateCellLinkedList()
+void StructuralSimulation::executeConstrainSolidBodyRegion()
 {
-	for (auto solid_body : solid_body_list_)
+	for (size_t i = 0; i < fixed_constraint_.size(); i++)
 	{
-		solid_body->GetImportedModel()->updateCellLinkedList();
+		fixed_constraint_[i]->parallel_exec();
 	}
 }
 
-void StructuralSimulation::ExecuteContactUpdateConfiguration()
+void StructuralSimulation::executePositionSolidBody(Real dt)
 {
-	for (auto cl: contact_list_)
+	for (size_t i = 0; i < position_solid_body_.size(); i++)
 	{
-		cl->updateConfiguration();
+		position_solid_body_[i]->parallel_exec(dt);
 	}
 }
 
-void StructuralSimulation::RunSimulationStep(int &ite, Real &dt, Real &integration_time)
+void StructuralSimulation::executePositionScaleSolidBody(Real dt)
+{
+	for (size_t i = 0; i < position_scale_solid_body_.size(); i++)
+	{
+		position_scale_solid_body_[i]->parallel_exec(dt);
+	}
+}
+
+void StructuralSimulation::executeTranslateSolidBody(Real dt)
+{
+	for (size_t i = 0; i < translation_solid_body_.size(); i++)
+	{
+		translation_solid_body_[i]->parallel_exec(dt);
+	}
+}
+
+void StructuralSimulation::executeDamping(Real dt)
+{
+	for (size_t i = 0; i < solid_body_list_.size(); i++)
+	{
+		solid_body_list_[i]->getDampingWithRandomChoice()->parallel_exec(dt);
+	}
+}
+
+void StructuralSimulation::executeStressRelaxationSecondHalf(Real dt)
+{
+	for (size_t i = 0; i < solid_body_list_.size(); i++)
+	{
+		solid_body_list_[i]->getStressRelaxationSecondHalf()->parallel_exec(dt);
+	}
+}
+
+void StructuralSimulation::executeUpdateCellLinkedList()
+{
+	for (size_t i = 0; i < solid_body_list_.size(); i++)
+	{
+		solid_body_list_[i]->getImportedModel()->updateCellLinkedList();
+	}
+}
+
+void StructuralSimulation::executeContactUpdateConfiguration()
+{	
+	// number of contacts that are not time dependent: contact pairs * 2
+	size_t number_of_general_contacts = contacting_body_pairs_list_.size() * 2;
+	for (size_t i = 0; i < contact_list_.size(); i++)
+	{
+		// general contacts = contacting_bodies * 2
+		if (i < number_of_general_contacts)
+		{
+			contact_list_[i]->updateConfiguration();
+		}
+		// time dependent contacts = time dep. contacting_bodies * 2
+		else
+		{
+			// index of the time dependent contact body pair
+			// for i = 0, 1 --> index = 0, i = 2, 3 --> index = 1, and so on..
+			int index = (i - number_of_general_contacts) / 2;
+			Real start_time = time_dep_contacting_body_pairs_list_[index].second[0];
+			Real end_time = time_dep_contacting_body_pairs_list_[index].second[1];
+			if(GlobalStaticVariables::physical_time_ >= start_time && GlobalStaticVariables::physical_time_ <= end_time)
+			{
+				contact_list_[i]->updateConfiguration();
+			}
+		}
+	}
+}
+
+void StructuralSimulation::runSimulationStep(int &ite, Real &dt, Real &integration_time)
 {
 	if (ite % 100 == 0) cout << "N=" << ite << " Time: " << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
 
 	/** ACTIVE BOUNDARY CONDITIONS */
-	ExecuteInitializeATimeStep();
-	ExecuteAccelerationForBodyPartInBoundingBox();
-	ExecuteSpringDamperConstraintParticleWise();
+	executeinitializeATimeStep();
+	executeAccelerationForBodyPartInBoundingBox();
+	executeSpringDamperConstraintParticleWise();
 
 	/** CONTACT */
-	ExecuteContactDensitySummation();
-	ExecuteContactForce();
+	executeContactDensitySummation();
+	executeContactForce();
 
-	/** STRESS RELAXATOIN, DAMPING, PASSIVE CONSTRAINTS */
-	ExecuteStressRelaxationFirstHalf(dt);
-	ExecuteConstrainSolidBodyRegion();
-	ExecuteDamping(dt);
-	ExecuteConstrainSolidBodyRegion();
-	ExecuteStressRelaxationSecondHalf(dt);
+	/** STRESS RELAXATOIN, DAMPING, POSITIONAL CONSTRAINTS */
+	executeStressRelaxationFirstHalf(dt);
+
+	executeConstrainSolidBodyRegion();
+	executePositionSolidBody(dt);
+	executePositionScaleSolidBody(dt);
+	executeTranslateSolidBody(dt);
+
+	executeDamping(dt);
+
+	executeConstrainSolidBodyRegion();
+	executePositionSolidBody(dt);
+	executePositionScaleSolidBody(dt);
+	executeTranslateSolidBody(dt);
+
+	executeStressRelaxationSecondHalf(dt);
 	
 	/** UPDATE TIME STEP SIZE, INCREMENT */
 	ite++;
@@ -496,13 +635,13 @@ void StructuralSimulation::RunSimulationStep(int &ite, Real &dt, Real &integrati
 	GlobalStaticVariables::physical_time_ += dt;
 	
 	/** UPDATE BODIES CELL LINKED LISTS */
-	ExecuteUpdateCellLinkedList();
+	executeUpdateCellLinkedList();
 	
 	/** UPDATE CONTACT CONFIGURATION */
-	ExecuteContactUpdateConfiguration();
+	executeContactUpdateConfiguration();
 }
 
-void StructuralSimulation::RunSimulation(Real end_time)
+void StructuralSimulation::runSimulation(Real end_time)
 {
 	BodyStatesRecordingToVtu write_states(in_output_, system_.real_bodies_);
 	GlobalStaticVariables::physical_time_ = 0.0;
@@ -512,12 +651,12 @@ void StructuralSimulation::RunSimulation(Real end_time)
 	system_.initializeSystemConfigurations();
 
 	/** INITIAL CONDITION */
-	ExecuteCorrectConfiguration();	
+	executeCorrectConfiguration();	
 
 	/** Statistics for computing time. */
-	write_states.writeToFile(GlobalStaticVariables::physical_time_);
+	write_states.writeToFile(0);
 	int ite = 0;
-	Real output_period = 0.1 / 100.0;
+	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
@@ -527,10 +666,10 @@ void StructuralSimulation::RunSimulation(Real end_time)
 		Real integration_time = 0.0;
 		while (integration_time < output_period) 
 		{
-			RunSimulationStep(ite, dt, integration_time);
+			runSimulationStep(ite, dt, integration_time);
 		}
 		tick_count t2 = tick_count::now();
-		write_states.writeToFile(GlobalStaticVariables::physical_time_);
+		write_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}
@@ -540,23 +679,23 @@ void StructuralSimulation::RunSimulation(Real end_time)
 	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
 }
 
-void StructuralSimulation::InitSimulation()
+void StructuralSimulation::initializeSimulation()
 {	
 	/** INITIALALIZE SYSTEM */
 	system_.initializeSystemCellLinkedLists();
 	system_.initializeSystemConfigurations();
 
 	/** INITIAL CONDITION */
-	ExecuteCorrectConfiguration();
+	executeCorrectConfiguration();
 }
 
-double StructuralSimulation::RunSimulationFixedDurationJS(int number_of_steps)
+double StructuralSimulation::runSimulationFixedDurationJS(int number_of_steps)
 {
 	BodyStatesRecordingToVtu write_states(in_output_, system_.real_bodies_);
 	GlobalStaticVariables::physical_time_ = 0.0;
 	
 	/** Statistics for computing time. */
-	write_states.writeToFile(GlobalStaticVariables::physical_time_);
+	write_states.writeToFile(0);
 	int output_period = 100;
 	int ite = 0;	
 	Real dt = 0.0;
@@ -569,11 +708,11 @@ double StructuralSimulation::RunSimulationFixedDurationJS(int number_of_steps)
 		int output_step = 0;
 		while (output_step < output_period)
 		{
-			RunSimulationStep(ite, dt, integration_time);
+			runSimulationStep(ite, dt, integration_time);
 			output_step++;
 		}
 		tick_count t2 = tick_count::now();
-		write_states.writeToFile(GlobalStaticVariables::physical_time_);
+		write_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}

@@ -4,8 +4,7 @@
 
 
 
-#include "small_vectors.h"
-#include "large_data_containers.h"
+#include "base_data_type.h"
 
 namespace SPH {
 
@@ -18,10 +17,7 @@ namespace SPH {
 	using AngularVecd = Vec3d;
 	const int indexAngularVector = 1;
 
-	using Transformd = SimTK::Transform;
-
-	class CellList;
-	using matrix_cell = CellList ***;
+	using Transformd = Transform3d;
 
 	template<class DataType, int ARRAY_SIZE>
 	using PackageDataMatrix = std::array<std::array<std::array<DataType, ARRAY_SIZE>, ARRAY_SIZE>, ARRAY_SIZE>;

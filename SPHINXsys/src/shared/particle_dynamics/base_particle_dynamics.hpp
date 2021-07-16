@@ -21,7 +21,7 @@ namespace SPH {
 			  class ContactMaterialType,
 			  class BaseDataDelegateType>
 	DataDelegateContact<BodyType, ParticlesType, MaterialType, ContactBodyType, ContactParticlesType, ContactMaterialType, BaseDataDelegateType>
-		::DataDelegateContact(BaseContactBodyRelation* body_contact_relation) :
+		::DataDelegateContact(BaseBodyRelationContact* body_contact_relation) :
 		BaseDataDelegateType(body_contact_relation->sph_body_)
 	{
 		RealBodyVector contact_sph_bodies = body_contact_relation->contact_bodies_;
@@ -64,7 +64,7 @@ namespace SPH {
 	template<class ParticleDynamicsInnerType, class ContactDataType>
 	ParticleDynamicsComplex<ParticleDynamicsInnerType, ContactDataType>:: 
 		ParticleDynamicsComplex(ComplexBodyRelation* complex_relation, 
-			BaseContactBodyRelation* extra_contact_relation) :
+			BaseBodyRelationContact* extra_contact_relation) :
 		ParticleDynamicsInnerType(complex_relation->inner_relation_),
 		ContactDataType(complex_relation->contact_relation_)
 	{

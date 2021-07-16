@@ -152,8 +152,8 @@ int main()
 	FluidObserver *fluid_observer = new FluidObserver(sph_system, "Fluidobserver");
 	BaseParticles 	observer_particles(fluid_observer);
 	/** topology */
-	BaseInnerBodyRelation* water_block_inner = new InnerBodyRelation(water_block);
-	ContactBodyRelation* fluid_observer_contact = new ContactBodyRelation(fluid_observer, { water_block });
+	BaseBodyRelationInner* water_block_inner = new BodyRelationInner(water_block);
+	BodyRelationContact* fluid_observer_contact = new BodyRelationContact(fluid_observer, { water_block });
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */

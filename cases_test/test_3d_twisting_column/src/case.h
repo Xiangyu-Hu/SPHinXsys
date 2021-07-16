@@ -28,7 +28,7 @@ int resolution(20);
 //	Material properties and global parameters
 //----------------------------------------------------------------------
 Real rho_0 = 1100.0; 			/**< Reference density. */
-Real poisson = 0.4995; 			/**< Poisson ratio. */
+Real poisson = 0.45; 			/**< Poisson ratio. */
 Real Youngs_modulus = 1.7e7;
 Real angular_0 = -200.0;
 /** Define the body geometry. */

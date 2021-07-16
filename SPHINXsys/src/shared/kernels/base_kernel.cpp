@@ -9,8 +9,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	Kernel::Kernel(std::string kernel_name)
-		: kernel_name_(kernel_name), h_(1.0), inv_h_(1.0), 
-		kernel_size_(2.0) {};
+		: kernel_name_(kernel_name), h_(1.0), inv_h_(1.0) {};
 	//=================================================================================================//
 	void Kernel::initialize(Real h)
 	{
@@ -30,7 +29,7 @@ namespace SPH
 	//=================================================================================================//
 	void Kernel::setDerivativeParameters()
 	{
-		cutoff_radius_ref_ = kernel_size_*h_; 
+		cutoff_radius_ref_ = KernelSize()*h_; 
 		factor_dW_1D_ = inv_h_ * factor_W_1D_;
 		factor_dW_2D_ = inv_h_ * factor_W_2D_;
 		factor_dW_3D_ = inv_h_ * factor_W_3D_;
