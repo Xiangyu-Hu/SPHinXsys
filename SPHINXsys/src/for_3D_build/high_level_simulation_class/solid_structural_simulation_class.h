@@ -90,6 +90,7 @@ public:
 	Real scale_system_boundaries_;
 	// particle relaxation
 	vector<bool> particle_relaxation_list_;
+	bool write_particle_relaxation_data_;
 	// boundary conditions
 	vector<GravityPair> non_zero_gravity_;
 	vector<AccelTuple> acceleration_bounding_box_tuple_;
@@ -126,6 +127,7 @@ class StructuralSimulation
 		vector<array<int, 2>> contacting_body_pairs_list_;
 		vector<pair<array<int, 2>, array<Real, 2>>> time_dep_contacting_body_pairs_list_; //optional: time dependent contact
 		vector<bool> particle_relaxation_list_; // optional: particle relaxation
+		bool write_particle_relaxation_data_;
 
 		// internal members
 		Real system_resolution_;

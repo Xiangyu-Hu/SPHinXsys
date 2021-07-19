@@ -58,7 +58,7 @@ void expandBoundingBox(BoundingBox* original, BoundingBox* additional)
 }
 
 void relaxParticlesSingleResolution(In_Output* in_output,
-									bool write_particles_to_file,
+									bool write_particle_relaxation_data,
 									ImportedModel* imported_model,
 									ElasticSolidParticles* imported_model_particles,
 									BodyRelationInner* imported_model_inner)
@@ -78,15 +78,11 @@ void relaxParticlesSingleResolution(In_Output* in_output,
 	//----------------------------------------------------------------------
 	random_imported_model_particles.parallel_exec(0.25);
 	relaxation_step_inner.surface_bounding_.parallel_exec();
-	if (write_particles_to_file)
+	if (write_particle_relaxation_data)
 	{
 		write_imported_model_to_vtu.writeToFile(0.0);
 	} 
 	imported_model->updateCellLinkedList();
-	if (write_particles_to_file)
-	{
-		mesh_cell_linked_list_recording.writeToFile(0.0);
-	}
 	//----------------------------------------------------------------------
 	//	Particle relaxation time stepping start here.
 	//----------------------------------------------------------------------
@@ -97,14 +93,14 @@ void relaxParticlesSingleResolution(In_Output* in_output,
 		ite_p += 1;
 		if (ite_p % 100 == 0)
 		{
-			cout << fixed << setprecision(9) << "Relaxation steps for the imported model N = " << ite_p << "\n";
-			if (write_particles_to_file)
+			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the imported model N = " << ite_p << "\n";
+			if (write_particle_relaxation_data)
 			{
-				write_imported_model_to_vtu.writeToFile(Real(ite_p) * 1.0e-4);
+				write_imported_model_to_vtu.writeToFile(ite_p);
 			}
 		}
 	}
-	cout << "The physics relaxation process of imported model finish !" << endl;
+	std::cout << "The physics relaxation process of the imported model finished !" << std::endl;
 }
 
 StructuralSimulationInput::StructuralSimulationInput(
@@ -131,6 +127,7 @@ StructuralSimulationInput::StructuralSimulationInput(
 	// particle_relaxation option
 	particle_relaxation_list_ = {};
 	for (size_t i = 0; i < resolution_list_.size(); i++){ particle_relaxation_list_.push_back(true); }
+	write_particle_relaxation_data_ = false;
 	// scale system boundaries
 	scale_system_boundaries_ = 1;
 	// boundary conditions
@@ -162,6 +159,7 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 
 	// default system, optional: particle relaxation, scale_system_boundaries
 	particle_relaxation_list_(input.particle_relaxation_list_),
+	write_particle_relaxation_data_(input.write_particle_relaxation_data_),
 	system_resolution_(0.0),
 	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), system_resolution_)),
 	scale_system_boundaries_(input.scale_system_boundaries_),
@@ -285,7 +283,7 @@ void StructuralSimulation::initializeElasticSolidBodies()
 		solid_body_list_.emplace_back(make_shared<SolidBodyForSimulation>(system_, imported_stl_list_[i], body_mesh_list_[i], particle_adaptation_list_[i], physical_viscosity_, material_model_list_[i]));
 		if (particle_relaxation_list_[i])
 		{
-			relaxParticlesSingleResolution(&in_output_, false, solid_body_list_[i]->getImportedModel(), solid_body_list_[i]->getElasticSolidParticles(), solid_body_list_[i]->getInnerBodyRelation());
+			relaxParticlesSingleResolution(&in_output_, write_particle_relaxation_data_, solid_body_list_[i]->getImportedModel(), solid_body_list_[i]->getElasticSolidParticles(), solid_body_list_[i]->getInnerBodyRelation());
 		}
 	}
 }
