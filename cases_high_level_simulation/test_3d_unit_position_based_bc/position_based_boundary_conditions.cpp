@@ -63,45 +63,45 @@ TEST(StructuralSimulation, PositionSolidBodyTuple)
 
 	//=================================================================================================//
 	// test scaleTranslationAndResolution();
-	EXPECT_EQ(sim.Get_translation_list_().size(), sim.Get_resolution_list_().size());
+	EXPECT_EQ(sim.get_translation_list_().size(), sim.get_resolution_list_().size());
 	for (size_t i = 0; i < translation_list.size(); i++)
 	{	
-		EXPECT_EQ(sim.Get_translation_list_()[i], translation_list[i] * scale_stl);
-		EXPECT_EQ(sim.Get_resolution_list_()[i], resolution_list[i] * scale_stl);
+		EXPECT_EQ(sim.get_translation_list_()[i], translation_list[i] * scale_stl);
+		EXPECT_EQ(sim.get_resolution_list_()[i], resolution_list[i] * scale_stl);
 	}
-	EXPECT_EQ(sim.Get_system_resolution_(), resolution_mass * scale_stl);
+	EXPECT_EQ(sim.get_system_resolution_(), resolution_mass * scale_stl);
 	//=================================================================================================//
 	// test createBodyMeshList();
-	EXPECT_EQ(sim.Get_body_mesh_list_().size(), number_of_bodies);
+	EXPECT_EQ(sim.get_body_mesh_list_().size(), number_of_bodies);
 	//=================================================================================================//
 	// test calculateSystemBoundaries();
 	Real ball_radius = 100 * scale_stl * 0.5;
 	BoundingBox test_bounds(Vec3d(-ball_radius * scale_system_bounds), Vec3d(ball_radius * scale_system_bounds));
 	for (size_t i = 0; i < 3; i++)
 	{
-		EXPECT_NEAR(sim.Get_system_().system_domain_bounds_.first[i], test_bounds.first[i], abs(test_bounds.first[i] * tolerance));
-		EXPECT_NEAR(sim.Get_system_().system_domain_bounds_.second[i], test_bounds.second[i], abs(test_bounds.first[i] * tolerance));
+		EXPECT_NEAR(sim.get_system_().system_domain_bounds_.first[i], test_bounds.first[i], abs(test_bounds.first[i] * tolerance));
+		EXPECT_NEAR(sim.get_system_().system_domain_bounds_.second[i], test_bounds.second[i], abs(test_bounds.first[i] * tolerance));
 	}
 	//=================================================================================================//
 	// test InitializeElasticSolidBodies();
-	EXPECT_EQ(sim.Get_solid_body_list_().size(), number_of_bodies);
+	EXPECT_EQ(sim.get_solid_body_list_().size(), number_of_bodies);
 	//=================================================================================================//
 	// test InitializeAllContacts();
-	EXPECT_EQ(sim.Get_contacting_body_pairs_list_().size(), 0);
-	EXPECT_EQ(sim.Get_contact_list_().size(), 0);
-	EXPECT_EQ(sim.Get_contact_density_list_().size(), 0);
-	EXPECT_EQ(sim.Get_contact_force_list_().size(), 0);
+	EXPECT_EQ(sim.get_contacting_body_pairs_list_().size(), 0);
+	EXPECT_EQ(sim.get_contact_list_().size(), 0);
+	EXPECT_EQ(sim.get_contact_density_list_().size(), 0);
+	EXPECT_EQ(sim.get_contact_force_list_().size(), 0);
 	//=================================================================================================//
 	// test Boundary Conditions
-	EXPECT_EQ(sim.Get_position_solid_body_().size(), 2);
-	EXPECT_EQ(sim.Get_position_solid_body_tuple_().size(), 2);
+	EXPECT_EQ(sim.get_position_solid_body_().size(), 2);
+	EXPECT_EQ(sim.get_position_solid_body_tuple_().size(), 2);
 	//=================================================================================================//
 
 	//=================================================================================================//
 	/** START SIMULATION */
 	sim.TestRunSimulation(end_time);
-	StdLargeVec<Vecd>& pos_0 = sim.Get_position_solid_body_()[0]->GetParticlePos0();
-	StdLargeVec<Vecd>& pos_n = sim.Get_position_solid_body_()[0]->GetParticlePosN();
+	StdLargeVec<Vecd>& pos_0 = sim.get_position_solid_body_()[0]->GetParticlePos0();
+	StdLargeVec<Vecd>& pos_n = sim.get_position_solid_body_()[0]->GetParticlePosN();
 
 	for (size_t index = 0; index < pos_0.size(); index++)
 	{
@@ -151,8 +151,8 @@ TEST(StructuralSimulation, PositionScaleSolidBodyTuple)
 	sim.TestRunSimulation(end_time_simulation);
 	//=================================================================================================//
 
-	StdLargeVec<Vecd>& pos_0 = sim.Get_position_scale_solid_body_()[0]->GetParticlePos0();
-	StdLargeVec<Vecd>& pos_n = sim.Get_position_scale_solid_body_()[0]->GetParticlePosN();
+	StdLargeVec<Vecd>& pos_0 = sim.get_position_scale_solid_body_()[0]->GetParticlePos0();
+	StdLargeVec<Vecd>& pos_n = sim.get_position_scale_solid_body_()[0]->GetParticlePosN();
 
 	string name = "./input/cylinder.stl";
 	TriangleMeshShape cylinder_mesh(name, translation_list[0] * scale_stl, scale_stl);
@@ -206,8 +206,8 @@ TEST(StructuralSimulation, TranslateSolidBodyTuple)
 	sim.TestRunSimulation(end_time);
 	//=================================================================================================//
 
-StdLargeVec<Vecd>& pos_0 = sim.Get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_0_;
-StdLargeVec<Vecd>& pos_n = sim.Get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_n_;
+StdLargeVec<Vecd>& pos_0 = sim.get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_0_;
+StdLargeVec<Vecd>& pos_n = sim.get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_n_;
 
 	for (size_t index = 0; index < pos_0.size(); index++)
 	{
@@ -258,8 +258,8 @@ TEST(StructuralSimulation, TranslateSolidBodyPartTuple)
 	sim.TestRunSimulation(end_time);
 	//=================================================================================================//
 
-	StdLargeVec<Vecd>& pos_0 = sim.Get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_0_;
-	StdLargeVec<Vecd>& pos_n = sim.Get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_n_;
+	StdLargeVec<Vecd>& pos_0 = sim.get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_0_;
+	StdLargeVec<Vecd>& pos_n = sim.get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_n_;
 
 	for (size_t index = 0; index < pos_0.size(); index++)
 	{
