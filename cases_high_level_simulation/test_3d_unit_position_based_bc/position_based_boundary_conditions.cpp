@@ -63,45 +63,45 @@ TEST(StructuralSimulation, PositionSolidBodyTuple)
 
 	//=================================================================================================//
 	// test scaleTranslationAndResolution();
-	EXPECT_EQ(sim.Get_translation_list_().size(), sim.Get_resolution_list_().size());
+	EXPECT_EQ(sim.get_translation_list_().size(), sim.get_resolution_list_().size());
 	for (size_t i = 0; i < translation_list.size(); i++)
 	{	
-		EXPECT_EQ(sim.Get_translation_list_()[i], translation_list[i] * scale_stl);
-		EXPECT_EQ(sim.Get_resolution_list_()[i], resolution_list[i] * scale_stl);
+		EXPECT_EQ(sim.get_translation_list_()[i], translation_list[i] * scale_stl);
+		EXPECT_EQ(sim.get_resolution_list_()[i], resolution_list[i] * scale_stl);
 	}
-	EXPECT_EQ(sim.Get_system_resolution_(), resolution_mass * scale_stl);
+	EXPECT_EQ(sim.get_system_resolution_(), resolution_mass * scale_stl);
 	//=================================================================================================//
 	// test createBodyMeshList();
-	EXPECT_EQ(sim.Get_body_mesh_list_().size(), number_of_bodies);
+	EXPECT_EQ(sim.get_body_mesh_list_().size(), number_of_bodies);
 	//=================================================================================================//
 	// test calculateSystemBoundaries();
 	Real ball_radius = 100 * scale_stl * 0.5;
 	BoundingBox test_bounds(Vec3d(-ball_radius * scale_system_bounds), Vec3d(ball_radius * scale_system_bounds));
 	for (size_t i = 0; i < 3; i++)
 	{
-		EXPECT_NEAR(sim.Get_system_().system_domain_bounds_.first[i], test_bounds.first[i], abs(test_bounds.first[i] * tolerance));
-		EXPECT_NEAR(sim.Get_system_().system_domain_bounds_.second[i], test_bounds.second[i], abs(test_bounds.first[i] * tolerance));
+		EXPECT_NEAR(sim.get_system_().system_domain_bounds_.first[i], test_bounds.first[i], abs(test_bounds.first[i] * tolerance));
+		EXPECT_NEAR(sim.get_system_().system_domain_bounds_.second[i], test_bounds.second[i], abs(test_bounds.first[i] * tolerance));
 	}
 	//=================================================================================================//
 	// test InitializeElasticSolidBodies();
-	EXPECT_EQ(sim.Get_solid_body_list_().size(), number_of_bodies);
+	EXPECT_EQ(sim.get_solid_body_list_().size(), number_of_bodies);
 	//=================================================================================================//
 	// test InitializeAllContacts();
-	EXPECT_EQ(sim.Get_contacting_body_pairs_list_().size(), 0);
-	EXPECT_EQ(sim.Get_contact_list_().size(), 0);
-	EXPECT_EQ(sim.Get_contact_density_list_().size(), 0);
-	EXPECT_EQ(sim.Get_contact_force_list_().size(), 0);
+	EXPECT_EQ(sim.get_contacting_body_pairs_list_().size(), 0);
+	EXPECT_EQ(sim.get_contact_list_().size(), 0);
+	EXPECT_EQ(sim.get_contact_density_list_().size(), 0);
+	EXPECT_EQ(sim.get_contact_force_list_().size(), 0);
 	//=================================================================================================//
 	// test Boundary Conditions
-	EXPECT_EQ(sim.Get_position_solid_body_().size(), 2);
-	EXPECT_EQ(sim.Get_position_solid_body_tuple_().size(), 2);
+	EXPECT_EQ(sim.get_position_solid_body_().size(), 2);
+	EXPECT_EQ(sim.get_position_solid_body_tuple_().size(), 2);
 	//=================================================================================================//
 
 	//=================================================================================================//
 	/** START SIMULATION */
 	sim.TestRunSimulation(end_time);
-	StdLargeVec<Vecd>& pos_0 = sim.Get_position_solid_body_()[0]->GetParticlePos0();
-	StdLargeVec<Vecd>& pos_n = sim.Get_position_solid_body_()[0]->GetParticlePosN();
+	StdLargeVec<Vecd>& pos_0 = sim.get_position_solid_body_()[0]->GetParticlePos0();
+	StdLargeVec<Vecd>& pos_n = sim.get_position_solid_body_()[0]->GetParticlePosN();
 
 	for (size_t index = 0; index < pos_0.size(); index++)
 	{
@@ -151,8 +151,8 @@ TEST(StructuralSimulation, PositionScaleSolidBodyTuple)
 	sim.TestRunSimulation(end_time_simulation);
 	//=================================================================================================//
 
-	StdLargeVec<Vecd>& pos_0 = sim.Get_position_scale_solid_body_()[0]->GetParticlePos0();
-	StdLargeVec<Vecd>& pos_n = sim.Get_position_scale_solid_body_()[0]->GetParticlePosN();
+	StdLargeVec<Vecd>& pos_0 = sim.get_position_scale_solid_body_()[0]->GetParticlePos0();
+	StdLargeVec<Vecd>& pos_n = sim.get_position_scale_solid_body_()[0]->GetParticlePosN();
 
 	string name = "./input/cylinder.stl";
 	TriangleMeshShape cylinder_mesh(name, translation_list[0] * scale_stl, scale_stl);
@@ -198,7 +198,7 @@ TEST(StructuralSimulation, TranslateSolidBodyTuple)
 		physical_viscosity,
 		{}
 	};
-	Vecd translation_vector = Vec3d(0.0, 0.0, 0.1); //changed to be more like PositionSolidBodyTuple
+	Vecd translation_vector = Vec3d(0.0, 0.0, 0.1);
 	input.translation_solid_body_tuple_ = { TranslateSolidBodyTuple(0, end_time * 0.32, end_time, translation_vector) };
 
 	//=================================================================================================//
@@ -206,13 +206,73 @@ TEST(StructuralSimulation, TranslateSolidBodyTuple)
 	sim.TestRunSimulation(end_time);
 	//=================================================================================================//
 
-	StdLargeVec<Vecd>& pos_0 = sim.Get_translation_solid_body_()[0]->GetParticlePos0();
-	StdLargeVec<Vecd>& pos_n = sim.Get_translation_solid_body_()[0]->GetParticlePosN();
+StdLargeVec<Vecd>& pos_0 = sim.get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_0_;
+StdLargeVec<Vecd>& pos_n = sim.get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_n_;
 
 	for (size_t index = 0; index < pos_0.size(); index++)
 	{
 		Vec3d end_pos = pos_0[index] + translation_vector;
 		EXPECT_NEAR(pos_n[index][2], end_pos[2], end_pos.norm() * 1e-2);
+	}
+}
+
+TEST(StructuralSimulation, TranslateSolidBodyPartTuple)
+{
+	Real scale_stl = 0.001 / 4; // diameter of 0.025 m
+	Real resolution_mass = 8.0;
+	Real poisson = 0.35;
+	Real Youngs_modulus = 1e4;
+	Real physical_viscosity = 200;
+	Real rho_0 = 1000;
+	Real end_time = 0.1;
+
+	/** STL IMPORT PARAMETERS */
+	std::string relative_input_path = "./input/"; //path definition for linux
+	std::vector<std::string> imported_stl_list = { "ball_mass.stl" };
+	std::vector<Vec3d> translation_list = { Vec3d(0) };
+	std::vector<Real> resolution_list = { resolution_mass};
+	LinearElasticSolid material = LinearElasticSolid(rho_0, Youngs_modulus, poisson);
+	std::vector<LinearElasticSolid> material_model_list = { material };
+
+	TriangleMeshShape ball_mesh("./input/ball_mass.stl", translation_list[0] * scale_stl, scale_stl);
+	BoundingBox bbox = ball_mesh.findBounds();
+	Real z_limit = 0.75 * bbox.first[2] + 0.25 * bbox.second[2]; // only apply to the bottom 25% of the ball
+	bbox.second[2] = z_limit;
+	
+	StructuralSimulationInput input
+	{
+		relative_input_path,
+		imported_stl_list,
+		scale_stl,
+		translation_list,
+		resolution_list,
+		material_model_list,
+		physical_viscosity,
+		{}
+	};
+	Vecd translation_vector = Vec3d(0.0, 0.0, 0.02);
+	input.translation_solid_body_part_tuple_ = { TranslateSolidBodyPartTuple(0, end_time * 0.124, end_time, translation_vector, bbox) };
+
+	//=================================================================================================//
+	TestStructuralSimulation sim (input);
+	sim.TestRunSimulation(end_time);
+	//=================================================================================================//
+
+	StdLargeVec<Vecd>& pos_0 = sim.get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_0_;
+	StdLargeVec<Vecd>& pos_n = sim.get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_n_;
+
+	for (size_t index = 0; index < pos_0.size(); index++)
+	{
+		if (pos_0[index][2] < z_limit)
+		{
+			Vec3d end_pos = pos_0[index] + translation_vector;
+			EXPECT_NEAR(pos_n[index][2], end_pos[2], end_pos.norm() * 0.05);
+		}
+		else
+		{
+			Real z_limit_end  = z_limit + translation_vector[2] * 0.95; // z_limit + translation_vector[2] = 0.01375 is the actual limit, but some particle go below this level
+			EXPECT_GT(pos_n[index][2], z_limit_end);
+		}
 	}
 }
 
