@@ -8,6 +8,7 @@
 #define SPH_DATA_CONTAINERS_H
 
 #include "base_data_package.h"
+#include "base_data_type.h"
 
 namespace SPH {
 	/**
@@ -24,6 +25,10 @@ namespace SPH {
 
 	/** Bounding box for system, body, body part and shape, first: lower bound, second: upper bound. */
 	typedef std::pair<Vecd, Vecd> BoundingBox;
+	/** Check if a point is inside the bounding box */
+	bool checkIfPointInBoundingBox(Vec3d point, BoundingBox& bbox);
+	bool checkIfPointInBoundingBox(Vec2d point, BoundingBox& bbox);
+
 	/** Generalized particle data type */
 	typedef std::tuple<StdVec<StdLargeVec<Real>*>, StdVec<StdLargeVec<Vecd>*>, StdVec<StdLargeVec<Matd>*>,
 		StdVec<StdLargeVec<int>*>> ParticleData;

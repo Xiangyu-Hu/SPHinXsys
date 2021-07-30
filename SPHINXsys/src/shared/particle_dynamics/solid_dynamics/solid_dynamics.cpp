@@ -385,7 +385,6 @@ namespace SPH
 			PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
 			pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
 			vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
-			vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
 			start_time_(start_time), end_time_(end_time), translation_(translation)
 		{}
 		//=================================================================================================//
@@ -398,7 +397,7 @@ namespace SPH
 				// distance left to reach the final position
 				Vecd translation_left = translation_ * (end_time_ - GlobalStaticVariables::physical_time_) / (end_time_ - start_time_);
 				// displacement is a portion of distance left, scaled by dt and remaining time
-				displacement = 0.5 * translation_left * dt / (end_time_ - GlobalStaticVariables::physical_time_);
+				displacement = translation_left * dt / (end_time_ - GlobalStaticVariables::physical_time_);
 			}
 			catch(out_of_range& e){
 				throw runtime_error(string("TranslateSolidBody::getDisplacement: particle index out of bounds") + to_string(index_i));
@@ -408,23 +407,40 @@ namespace SPH
 		//=================================================================================================//
 		void TranslateSolidBody::Update(size_t index_i, Real dt)
 		{
-			try
+			// only apply in the defined time period
+			if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
 			{
-				// only apply in the defined time period
-				if (GlobalStaticVariables::physical_time_ >= start_time_ &&
-					GlobalStaticVariables::physical_time_ <= end_time_)
-				{
+				try {
 					pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
 					vel_n_[index_i] = getVelocity();
 					dvel_dt_[index_i] = getAcceleration();
-					/** the average values are prescirbed also. */
-					vel_ave_[index_i] = vel_n_[index_i];
-					dvel_dt_ave_[index_i] = dvel_dt_[index_i];
+				}
+				catch(out_of_range& e){
+					throw runtime_error(string("TranslateSolidBody::Update: particle index out of bounds") + to_string(index_i));
 				}
 			}
-			catch (out_of_range &e)
+		}
+		//=================================================================================================//
+		TranslateSolidBodyPart::
+			TranslateSolidBodyPart(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd translation, BoundingBox bbox):
+			TranslateSolidBody(body, body_part, start_time, end_time, translation), bbox_(bbox)
+		{}
+		//=================================================================================================//
+		void TranslateSolidBodyPart::Update(size_t index_i, Real dt)
+		{
+			// only apply in the defined time period
+			if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
 			{
-				throw runtime_error(string("TranslateSolidBody::Update: particle index out of bounds") + to_string(index_i));
+				try {
+					Vecd point = pos_0_[index_i];
+					if (checkIfPointInBoundingBox(point, bbox_))
+					{
+						vel_n_[index_i] = getDisplacement(index_i, dt) / dt;
+					}
+				}
+				catch(out_of_range& e){
+					throw runtime_error(string("TranslateSolidBodyPart::Update: particle index out of bounds") + to_string(index_i));
+				}
 			}
 		}
 		//=================================================================================================//
@@ -578,12 +594,12 @@ namespace SPH
 		}
 		//=================================================================================================//
 		AccelerationForBodyPartInBoundingBox::
-			AccelerationForBodyPartInBoundingBox(SolidBody *body, BoundingBox *bounding_box, Vecd acceleration)
-			: ParticleDynamicsSimple(body), SolidDataSimple(body),
-			  pos_n_(particles_->pos_n_),
-			  dvel_dt_prior_(particles_->dvel_dt_prior_),
-			  bounding_box_(bounding_box),
-			  acceleration_(acceleration) {}
+			AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox& bounding_box, Vecd acceleration) :
+			ParticleDynamicsSimple(body), SolidDataSimple(body),
+			pos_n_(particles_->pos_n_),
+			dvel_dt_prior_(particles_->dvel_dt_prior_),
+			bounding_box_(bounding_box),
+			acceleration_(acceleration){}
 		//=================================================================================================//
 		void AccelerationForBodyPartInBoundingBox::setupDynamics(Real dt)
 		{
@@ -595,11 +611,7 @@ namespace SPH
 			if (pos_n_.size() > index_i)
 			{
 				Vecd point = pos_n_[index_i];
-				if (point.size() >= 3 && bounding_box_ != nullptr && bounding_box_->first.size() >= 3 &&
-					bounding_box_->second.size() >= 3 && point[0] >= bounding_box_->first[0] &&
-					point[0] <= bounding_box_->second[0] &&
-					point[1] >= bounding_box_->first[1] && point[1] <= bounding_box_->second[1] &&
-					point[2] >= bounding_box_->first[2] && point[2] <= bounding_box_->second[2])
+				if (checkIfPointInBoundingBox(point, bounding_box_))
 				{
 					dvel_dt_prior_[index_i] += acceleration_;
 				}

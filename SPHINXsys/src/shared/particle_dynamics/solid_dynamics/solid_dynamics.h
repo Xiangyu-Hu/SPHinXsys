@@ -241,7 +241,7 @@ namespace SPH
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
-				/**
+		/**
 		 * @class TranslateSolidBody
 		 * @brief Translates the body in a given time interval -translation driven boundary condition; only moving the body; end position irrelevant;
 		 * Note the average values for FSI are prescirbed also.
@@ -252,17 +252,31 @@ namespace SPH
 		public:
 			TranslateSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd translation);
 			virtual ~TranslateSolidBody() {};
-			StdLargeVec<Vecd>& GetParticlePos0(){ return pos_0_; };
-			StdLargeVec<Vecd>& GetParticlePosN(){ return pos_n_; };
 		protected:
 			StdLargeVec<Vecd>& pos_n_, &pos_0_;
-			StdLargeVec<Vecd>& vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			StdLargeVec<Vecd>& vel_n_, &dvel_dt_;
 			Real start_time_, end_time_;
 			Vecd translation_;
 			Vecd getDisplacement(size_t index_i, Real dt);
 			virtual Vecd getVelocity() { return Vecd(0); };
 			virtual Vecd getAcceleration() { return Vecd(0); };
 			virtual SimTK::Rotation getBodyRotation() { return SimTK::Rotation(); }
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		 * @class TranslateSolidBodyPart
+		 * @brief Translates the body in a given time interval -translation driven boundary condition; only moving the body; end position irrelevant;
+		 * Only the particles in a given Bounding Box are translated. The Bounding Box is defined for the undeformed shape.
+		 * Note the average values for FSI are prescirbed also.
+		 */
+		class TranslateSolidBodyPart: public TranslateSolidBody
+		{
+		public:
+			TranslateSolidBodyPart(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd translation, BoundingBox bbox);
+			virtual ~TranslateSolidBodyPart() {};
+		protected:
+			BoundingBox bbox_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -397,11 +411,11 @@ namespace SPH
 			: public ParticleDynamicsSimple, public SolidDataSimple
 		{
 		public:
-			AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox* bounding_box, Vecd acceleration);
+			AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox& bounding_box, Vecd acceleration);
 			virtual ~AccelerationForBodyPartInBoundingBox() {};
 		protected:
 			StdLargeVec<Vecd>& pos_n_,& dvel_dt_prior_;
-			BoundingBox* bounding_box_;
+			BoundingBox bounding_box_;
 			Vecd acceleration_;
 			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
