@@ -31,7 +31,7 @@ Software Impacts, 6 (2020) 100033
 
 4. Chi Zhang, Massoud Rezavand, Xiangyu Hu,
 "A multi-resolution SPH method for fluid-structure interactions",
-Journal of Computational Physics, in press (2021)
+Journal of Computational Physics, 2021(429) 110028
 
 5. Chi Zhang, Yanji Wei, Frederic Dias, Xiangyu Hu,
 "An efficient fully Lagrangian solver for modeling wave interaction with oscillating wave energy converter",
@@ -39,7 +39,11 @@ arXiv:2012.05323
 
 6. Chi Zhang, Jianhang Wang, Massoud Rezavand, Dong Wu, Xiangyu Hu,
 "An integrative smoothed particle hydrodynamics framework for modeling cardiac function",
- arXiv:2009.03759
+ Computer Methods in Applied Mechanics and Engineering, 381, 113847, 2021
+
+ 7. Yujie Zhu, Chi Zhang, Yongchuan Yu, Xiangyu Hu, 
+ “A CAD-compatible body-fitted particle generator for arbitrarily complex geometry and its application to wave-structure interaction”, 
+ Journal of Hydrodynamics, 33(2), 195-206, 2021.
 
 ## Software Architecture
 
