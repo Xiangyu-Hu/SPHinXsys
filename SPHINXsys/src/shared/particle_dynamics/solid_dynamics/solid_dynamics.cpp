@@ -364,27 +364,6 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		bool checkIfPointInBoundingBox(Vecd point, BoundingBox& bbox)
-		{
-			if (point.size() >= 3 && bbox.first.size() >= 3 && bbox.second.size() >= 3)
-			{
-				return point[0] >= bbox.first[0] && point[0] <= bbox.second[0] &&
-						point[1] >= bbox.first[1] && point[1] <= bbox.second[1] &&
-						point[2] >= bbox.first[2] && point[2] <= bbox.second[2];
-			}
-			if (point.size() >= 2 && bbox.first.size() >= 2 && bbox.second.size() >= 2)
-			{
-				return point[0] >= bbox.first[0] && point[0] <= bbox.second[0] &&
-						point[1] >= bbox.first[1] && point[1] <= bbox.second[1];
-			}
-			if (point.size() >= 1 && bbox.first.size() >= 1 && bbox.second.size() >= 1)
-			{
-				return point[0] >= bbox.first[0] && point[0] <= bbox.second[0];
-			}
-			throw runtime_error(string("checkIfPointInBoundingBox: Vecd point or BoundingBox& bbox has a dimension of <1"));
-			return false;
-		}
-		//=================================================================================================//
 		TranslateSolidBody::
 			TranslateSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd translation):
 			PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),

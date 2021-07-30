@@ -242,12 +242,6 @@ namespace SPH
 		};
 
 		/**
-		 * @class checkIfPointInBoundingBox
-		 * @brief checks if a point is inside a bounding box, incl. sides
-		*/
-		bool checkIfPointInBoundingBox(Vecd point, BoundingBox& bbox);
-
-		/**
 		 * @class TranslateSolidBody
 		 * @brief Translates the body in a given time interval -translation driven boundary condition; only moving the body; end position irrelevant;
 		 * Note the average values for FSI are prescirbed also.
