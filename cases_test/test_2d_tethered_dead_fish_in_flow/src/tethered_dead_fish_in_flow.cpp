@@ -173,7 +173,7 @@ class FishBody : public SolidBody
 
 public:
 	FishBody(SPHSystem& system, std::string body_name)
-		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1))
+		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 2.0))
 	{
 		std::vector<Vecd> fish_shape 
 			= CreatFishShape(cx, cy, fish_length, particle_adaptation_->ReferenceSpacing());
@@ -247,7 +247,7 @@ class Observer : public FictitiousBody
 {
 public:
 	Observer(SPHSystem& system, std::string body_name)
-		: FictitiousBody(system, body_name, new ParticleAdaptation(1.15, 1))
+		: FictitiousBody(system, body_name, new ParticleAdaptation(1.15, 2.0))
 	{
 		/** postion and volume. */
 		body_input_points_volumes_.push_back(std::make_pair(Vecd(cx + resolution_ref, cy), 0.0));

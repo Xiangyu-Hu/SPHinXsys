@@ -62,8 +62,8 @@ int main()
 	// Setup time-stepping realted simulation parameters.
 	//----------------------------------------------------------------------
 	int ite = 0;
-	Real end_time = 0.1;
-	Real output_period = end_time / 50.0;
+	Real end_time = 0.5;
+	Real output_period = end_time / 250.0;
 	Real dt = 0.0;
 	/** Statistics for computing time. */
 	tick_count t1 = tick_count::now();

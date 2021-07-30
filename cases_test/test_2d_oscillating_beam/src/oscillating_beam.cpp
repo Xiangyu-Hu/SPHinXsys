@@ -155,7 +155,7 @@ class BeamObserver : public FictitiousBody
 {
 public:
 	BeamObserver(SPHSystem &system, std::string body_name)
-		: FictitiousBody(system, body_name, new ParticleAdaptation(1.15, 1))
+		: FictitiousBody(system, body_name, new ParticleAdaptation(1.15, 2.0))
 	{
 		body_input_points_volumes_.push_back(std::make_pair(Vecd(PL, 0.0), 0.0));
 	}

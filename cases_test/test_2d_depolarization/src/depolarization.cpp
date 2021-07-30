@@ -187,7 +187,7 @@ int main()
 	write_recorded_voltage.writeToFile(0);
 
 	int ite 		= 0;
-	Real T0 		= 16.0;
+	Real T0 		= 8.0;
 	Real End_Time 	= T0;
 	Real D_Time 	= 0.5; 				/**< Time period for output */
 	Real Dt 		= 0.01 * D_Time;	/**< Time period for data observing */
