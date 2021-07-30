@@ -21,6 +21,7 @@ using SpringDamperTuple = tuple<int, Vec3d, Real>;
 using PositionSolidBodyTuple = tuple<int, Real, Real, Vec3d>;
 using PositionScaleSolidBodyTuple = tuple<int, Real, Real, Real>;
 using TranslateSolidBodyTuple = tuple<int, Real, Real, Vec3d>;
+using TranslateSolidBodyPartTuple = tuple<int, Real, Real, Vec3d, BoundingBox>;
 
 class BodyPartByParticleTriMesh : public BodyPartByParticle
 {
@@ -89,6 +90,7 @@ public:
 	Real scale_system_boundaries_;
 	// particle relaxation
 	vector<bool> particle_relaxation_list_;
+	bool write_particle_relaxation_data_;
 	// boundary conditions
 	vector<GravityPair> non_zero_gravity_;
 	vector<AccelTuple> acceleration_bounding_box_tuple_;
@@ -97,6 +99,7 @@ public:
 	vector<PositionSolidBodyTuple> position_solid_body_tuple_;
 	vector<PositionScaleSolidBodyTuple> position_scale_solid_body_tuple_;
 	vector<TranslateSolidBodyTuple> translation_solid_body_tuple_;
+	vector<TranslateSolidBodyPartTuple> translation_solid_body_part_tuple_;
 
 	StructuralSimulationInput(
 		string relative_input_path,
@@ -124,6 +127,7 @@ class StructuralSimulation
 		vector<array<int, 2>> contacting_body_pairs_list_;
 		vector<pair<array<int, 2>, array<Real, 2>>> time_dep_contacting_body_pairs_list_; //optional: time dependent contact
 		vector<bool> particle_relaxation_list_; // optional: particle relaxation
+		bool write_particle_relaxation_data_;
 
 		// internal members
 		Real system_resolution_;
@@ -160,6 +164,9 @@ class StructuralSimulation
 		// for TranslateSolidBody
 		vector<shared_ptr<solid_dynamics::TranslateSolidBody>> translation_solid_body_;
 		vector<TranslateSolidBodyTuple> translation_solid_body_tuple_;
+		// for TranslateSolidBodyPart
+		vector<shared_ptr<solid_dynamics::TranslateSolidBodyPart>> translation_solid_body_part_;
+		vector<TranslateSolidBodyPartTuple> translation_solid_body_part_tuple_;
 		
 		// for constructor, the order is important
 		void scaleTranslationAndResolution();
@@ -179,6 +186,7 @@ class StructuralSimulation
 		void initializePositionSolidBody();
 		void initializePositionScaleSolidBody();
 		void initializeTranslateSolidBody();
+		void initializeTranslateSolidBodyPart();
 
 		// for runSimulation, the order is important
 		void executeCorrectConfiguration();
@@ -192,6 +200,7 @@ class StructuralSimulation
 		void executePositionSolidBody(Real dt);
 		void executePositionScaleSolidBody(Real dt);
 		void executeTranslateSolidBody(Real dt);
+		void executeTranslateSolidBodyPart(Real dt);
 		void executeDamping(Real dt);
 		void executeStressRelaxationSecondHalf(Real dt);
 		void executeUpdateCellLinkedList();
