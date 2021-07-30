@@ -189,7 +189,7 @@ namespace SPH {
 
 	class RealBody;
 	class BaseParticles;
-	class BaseMeshCellLinkedList;
+	class BaseCellLinkedList;
 
 	/**
 	 * @class CompareParticleSequence

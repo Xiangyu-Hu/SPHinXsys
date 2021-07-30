@@ -38,7 +38,7 @@ namespace SPH {
 	* @class PlasticSolid
 	* @brief Abstract class for a generalized plastic solid
 	*/
-	class PlasticSolid : public LinearElasticSolid
+	class PlasticSolid : public NeoHookeanSolid
 	{
 	protected:
 		Real yield_stress_;
@@ -46,7 +46,7 @@ namespace SPH {
 		virtual void initializePlasticParameters() = 0;
 	public:
 		/** Constructor */
-		PlasticSolid() :LinearElasticSolid()
+		PlasticSolid() :NeoHookeanSolid()
 		{
 			material_name_ = "PlasticSolid";
 		};

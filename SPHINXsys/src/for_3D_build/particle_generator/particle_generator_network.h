@@ -38,7 +38,7 @@
 namespace SPH 
 {
 	class BaseLevelSet;
-	class BaseMeshCellLinkedList;
+	class BaseCellLinkedList;
 	class ComplexShape;
 
 	/**
@@ -73,7 +73,7 @@ namespace SPH
 		std::vector<Real> fascicle_angles_ = {-1.25, 0.75}; 	/**< angles with respect to the initial edge of the fascicles.*/
 		Real fascicle_ratio_ = 15.0; 						/**< ratio of length  of the fascicles. Include one per fascicle to include.*/
 		ComplexShape* body_shape_;
-		BaseMeshCellLinkedList* mesh_cell_linked_list_;
+		BaseCellLinkedList* cell_linked_list_;
 		GenerativeTree *tree_;
 		/**
 		 *@brief Get the gradient from nearest points, for imposing repulsive force. 

@@ -47,7 +47,7 @@ namespace SPH {
 		//set the initial value for initial particle position
 		for (size_t i = 0; i != pos_n_.size(); ++i) pos_0_[i] =  pos_n_[i];
 		//sorting particle once
-		//dynamic_cast<RealBody*>(body)->sortParticleWithMeshCellLinkedList();
+		//dynamic_cast<RealBody*>(body)->sortParticleWithCellLinkedList();
 	}
 	//=============================================================================================//
 	void SolidParticles::offsetInitialParticlePosition(Vecd offset)

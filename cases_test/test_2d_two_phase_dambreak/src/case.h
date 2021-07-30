@@ -105,7 +105,7 @@ class AirBlock : public FluidBody
 {
 public:
 	AirBlock(SPHSystem& sph_system, std::string body_name)
-		: FluidBody(sph_system, body_name, new ParticleAdaptation(1.3, 0))
+		: FluidBody(sph_system, body_name, new ParticleAdaptation(1.3, 1.0))
 	{
 		/** Geomtry definition. */
 		std::vector<Vecd> water_block_shape = createWaterBlockShape();

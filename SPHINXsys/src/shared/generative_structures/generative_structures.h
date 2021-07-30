@@ -74,7 +74,7 @@ namespace SPH
 	{
 	public:
 		class Branch;
-		StdVec<Branch *> branches_;	   /**< list of all branches */
+		StdVec<Branch *> branches_;	   /**< Contanier of all branches */
 		IndexVector branch_locations_; /**< in which branch are the particles located */
 		size_t last_branch_id_;
 		Branch *root_;
@@ -87,7 +87,8 @@ namespace SPH
 		Branch *LastBranch() { return branches_[last_branch_id_]; };
 
 		virtual void buildParticleConfiguration(BaseParticles &base_particles,
-												ParticleConfiguration &particle_configuration) override;
+			ParticleConfiguration &particle_configuration) override;
+		size_t ContainerSize() { return branches_.size(); };	
 	};
 
 	/**

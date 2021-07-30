@@ -149,7 +149,7 @@ namespace SPH
 			}
 
 			/** correcting particle position */
-			if (surface_indicator_[index_i] == 0)pos_n_[index_i] += acceleration_trans * dt * dt * 0.5;
+			if (surface_indicator_[index_i] == 0) pos_n_[index_i] += acceleration_trans * dt * dt * 0.5;
 		}
 		//=================================================================================================//
 		void PressureRelaxationRiemannWithWallOldroyd_B::Interaction(size_t index_i, Real dt)

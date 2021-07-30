@@ -59,7 +59,7 @@ namespace SPH {
 		ComplexShape* body_shape_;
 
 		virtual void createABaseParticle(BaseParticles* base_particles, 
-			Vecd& particle_position, Real particle_volume, size_t& total_real_particles);
+			Vecd& particle_position, Real particle_volume);
 	};
 
 	/**
@@ -76,7 +76,7 @@ namespace SPH {
 		ParticleSpacingByBodyShape* particle_adapation_;
 
 		virtual void createABaseParticle(BaseParticles* base_particles,
-			Vecd& particle_position, Real particle_volume, size_t& total_real_particles) override;
+			Vecd& particle_position, Real particle_volume) override;
 	};
 }
 #endif //PARTICLE_GENERATOR_LATTICE_H

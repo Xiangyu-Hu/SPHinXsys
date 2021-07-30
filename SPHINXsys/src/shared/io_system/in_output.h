@@ -250,10 +250,10 @@ namespace SPH {
 	{
 	protected:
 		std::string filefullpath_;
-		Mesh* mesh_;
+		BaseMeshField* mesh_field_;
 		virtual void writeWithFileName(const std::string& sequence) override;
 	public:
-		MeshRecordingToPlt(In_Output& in_output, SPHBody* body, Mesh* mesh);
+		MeshRecordingToPlt(In_Output& in_output, SPHBody* body, BaseMeshField* mesh_field);
 		virtual ~MeshRecordingToPlt() {};
 	};
 

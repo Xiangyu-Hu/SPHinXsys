@@ -37,7 +37,7 @@ int main(int ac, char* av[])
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtu		write_imported_model_to_vtu(in_output, { imported_model });
-	MeshRecordingToPlt 	mesh_cell_linked_list_recording(in_output, imported_model, imported_model->mesh_cell_linked_list_);
+	MeshRecordingToPlt 	cell_linked_list_recording(in_output, imported_model, imported_model->cell_linked_list_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -60,7 +60,7 @@ int main(int ac, char* av[])
 	update_smoothing_length_ratio.parallel_exec();
 	write_imported_model_to_vtu.writeToFile();
 	imported_model->updateCellLinkedList();
-	mesh_cell_linked_list_recording.writeToFile(0);
+	cell_linked_list_recording.writeToFile(0);
 	//----------------------------------------------------------------------
 	//	Particle relaxation time stepping start here.
 	//----------------------------------------------------------------------

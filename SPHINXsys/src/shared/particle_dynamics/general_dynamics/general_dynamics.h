@@ -88,7 +88,7 @@ namespace SPH
 		const int axis_; /**< the axis directions for bounding*/
 		BoundingBox body_domain_bounds_; /**< lower and upper bound for checking. */
 		StdLargeVec<Vecd>& pos_n_;
-		BaseMeshCellLinkedList* mesh_cell_linked_list_;
+		BaseCellLinkedList* cell_linked_list_;
 		Real cut_off_radius_max_; /**< maximum cut off radius to avoid boundary particle depletion */
 	public:
 		BoundingInAxisDirection(RealBody* real_body, int axis_direction);

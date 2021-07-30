@@ -46,7 +46,7 @@ int main()
 	/** SIMULATION MODEL */
 	StructuralSimulation sim (input);
 	/** START SIMULATION */
-	sim.RunSimulation(end_time_simulation);
+	sim.runSimulation(end_time_simulation);
 
 	return 0;
 }

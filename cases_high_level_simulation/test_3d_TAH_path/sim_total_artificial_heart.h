@@ -67,10 +67,10 @@ public:
 	~SimTotalArtificialHeart(){};
 
 public: //C++ Backend functions
-	void runCompleteSimulation(double endTime) { sim->RunSimulation(SPH::Real(endTime)); };
+	void runCompleteSimulation(double endTime) { sim->runSimulation(SPH::Real(endTime)); };
 
 public: //WASM functions
-	void runSimulationFixedDurationJS(int number_of_steps) { sim->RunSimulationFixedDurationJS(number_of_steps); };
+	void runSimulationFixedDurationJS(int number_of_steps) { sim->runSimulationFixedDurationJS(number_of_steps); };
 
 private:
 	std::unique_ptr<StructuralSimulation> sim;

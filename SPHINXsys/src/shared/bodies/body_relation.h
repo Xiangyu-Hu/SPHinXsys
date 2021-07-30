@@ -34,7 +34,7 @@
 
 #include "base_body.h"
 #include "base_particles.h"
-#include "mesh_cell_linked_list.h"
+#include "cell_linked_list.h"
 #include "neighbor_relation.h"
 #include "base_geometry.h"
 
@@ -55,33 +55,36 @@ namespace SPH
 	};
 
 	/** a small functor for obtaining search range for the simplest case */
-		struct SearchRangeSingleResolution
+		struct SearchDepthSingleResolution
 	{
 		int operator () (size_t particle_index) const { return 1; };
 	};
 
-	/** a small functor for obtaining search range across resolution */
-	struct SearchRangeMultiResolution
+	/** @brief a small functor for obtaining search depth across resolution 
+	 * @details Note that the search depth is defined on the target cell linked list.
+	 */
+	struct SearchDepthMultiResolution
 	{
-		int search_range_;
-		SearchRangeMultiResolution(SPHBody* body, SPHBody* contact_body) : search_range_(0)
+		int search_depth_;
+		SearchDepthMultiResolution(SPHBody* body, CellLinkedList* target_cell_linked_list) : search_depth_(1)
 		{
-			int body_refinement_level = body->particle_adaptation_->GlobalRefinementLevel();
-			int contact_body_refinement_level = contact_body->particle_adaptation_->GlobalRefinementLevel();
-			search_range_ = body_refinement_level >= contact_body_refinement_level ? 
-				1 : powerN(2, contact_body_refinement_level - body_refinement_level);
+			Real inv_grid_spacing_ = 1.0 / target_cell_linked_list->GridSpacing(); 
+			Kernel* kernel_ = body->particle_adaptation_->getKernel(); 
+			search_depth_ = 1 + (int)floor(kernel_->CutOffRadius() * inv_grid_spacing_); 
 		};
-		int operator () (size_t particle_index) const { return search_range_; };
+		int operator () (size_t particle_index) const { return search_depth_; };
 	};
 
-	/** a small functor for obtaining search for variable smoothing length */
-	struct SearchRangeVariableSmoothingLength
+	/** @brief a small functor for obtaining search depth for variable smoothing length 
+	 * @details Note that the search depth is defined on the target cell linked list.
+	 */
+	struct SearchDepthVariableSmoothingLength
 	{
 		Real inv_grid_spacing_;
 		Kernel* kernel_;
 		StdLargeVec<Real>& h_ratio_;
-		SearchRangeVariableSmoothingLength(SPHBody* body, MeshCellLinkedList* target_mesh_cell_linked_list) : 
-			inv_grid_spacing_(1.0 / target_mesh_cell_linked_list->GridSpacing()), 
+		SearchDepthVariableSmoothingLength(SPHBody* body, CellLinkedList* target_cell_linked_list) : 
+			inv_grid_spacing_(1.0 / target_cell_linked_list->GridSpacing()), 
 			kernel_(body->particle_adaptation_->getKernel()), 
 			h_ratio_(*body->base_particles_->getVariableByName<indexScalar, Real>("SmoothingLengthRatio")) {};
 		int operator () (size_t particle_index) const 
@@ -134,9 +137,9 @@ namespace SPH
 	{
 	protected:
 		SPHBodyParticlesIndex get_particle_index_;
-		SearchRangeSingleResolution get_single_search_range_;
+		SearchDepthSingleResolution get_single_search_depth_;
 		NeighborRelationInner get_inner_neighbor_;
-		MeshCellLinkedList* mesh_cell_linked_list_;
+		CellLinkedList* cell_linked_list_;
 
 	public:
 		BodyRelationInner(RealBody* real_body);
@@ -154,9 +157,9 @@ namespace SPH
 	protected:
 		size_t total_levels_;
 		SPHBodyParticlesIndex get_particle_index_;
-		StdVec<SearchRangeVariableSmoothingLength*> get_multi_level_search_range_;
+		StdVec<SearchDepthVariableSmoothingLength*> get_multi_level_search_depth_;
 		NeighborRelationInnerVariableSmoothingLength get_inner_neighbor_variable_smoothing_length_;
-		StdVec<MeshCellLinkedList*> mesh_cell_linked_list_levels_;
+		StdVec<CellLinkedList*> cell_linked_list_levels_;
 	public:
 		BodyRelationInnerVariableSmoothingLength(RealBody* real_body);
 		virtual ~BodyRelationInnerVariableSmoothingLength() {};
@@ -171,8 +174,8 @@ namespace SPH
 	class BaseBodyRelationContact : public SPHBodyRelation
 	{
 	protected:
-		StdVec<MeshCellLinkedList*> target_mesh_cell_linked_lists_;
-		StdVec<SearchRangeMultiResolution*> get_search_ranges_;
+		StdVec<CellLinkedList*> target_cell_linked_lists_;
+		StdVec<SearchDepthMultiResolution*> get_search_depths_;
 		StdVec<NeighborRelationContact*> get_contact_neighbors_;
 
 		virtual void resetNeighborhoodCurrentSize();

@@ -148,7 +148,7 @@ class Gate : public SolidBody
 {
 public:
 	Gate(SPHSystem &system, std::string body_name)
-		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1))
+		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 2.0))
 	{
 		/** Geomtry definition. */
 		std::vector<Vecd> gate_shape = createGateShape();
@@ -213,7 +213,7 @@ class Observer : public FictitiousBody
 {
 public:
 	Observer(SPHSystem &system, std::string body_name) :
-		FictitiousBody(system, body_name, new ParticleAdaptation(1.15, 1))
+		FictitiousBody(system, body_name, new ParticleAdaptation(1.15, 2.0))
 	{
 		/** Add observation point. */
 		body_input_points_volumes_.push_back(std::make_pair(GateP_lb, 0.0));
