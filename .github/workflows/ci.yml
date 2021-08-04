@@ -49,6 +49,6 @@ jobs:
           cd /home/runner/work/SPHinXsys/SPHinXsys
           mkdir build
           cd build 
-          cmake .. -DSIMBODY_HOME=/home/simbody
+          cmake .. -DSIMBODY_HOME=/home/runner/simbody
           make -j$(nproc)
           ctest --output-on-failure
