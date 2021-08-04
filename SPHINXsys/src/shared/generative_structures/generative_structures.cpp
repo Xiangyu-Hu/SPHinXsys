@@ -29,7 +29,7 @@ namespace SPH
 	GenerativeTree::~GenerativeTree()
 	{
 		for (size_t i = 0; i != branches_.size(); i++)
-			delete branches_[i];
+			if(branches_[i] != nullptr) delete branches_[i];
 	}
 	//=================================================================================================//
 	void GenerativeTree::buildParticleConfiguration(BaseParticles &base_particles,
@@ -250,18 +250,15 @@ namespace SPH
 	}
 	//=================================================================================================//
 	GenerativeTree::Branch::Branch(GenerativeTree *tree)
-		: Edge<size_t, IndexVector>(), is_terminated_(false)
+		: Edge<size_t, IndexVector>(tree), is_terminated_(false)
 	{
-		in_edge_ = 0;
-		id_ = 0;
 		tree->branches_.push_back(this);
 		tree->last_branch_id_ = id_;
 	}
 	//=================================================================================================//
 	GenerativeTree::Branch::Branch(size_t parent_id, GenerativeTree *tree)
-		: Edge<size_t, IndexVector>(parent_id), is_terminated_(false)
+		: Edge<size_t, IndexVector>(parent_id, tree), is_terminated_(false)
 	{
-		id_ = tree->branches_.size();
 		tree->branches_[parent_id]->out_edge_.push_back(id_);
 		tree->branches_.push_back(this);
 		tree->last_branch_id_ = id_;

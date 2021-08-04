@@ -112,25 +112,25 @@ namespace SPH {
 		return average * 0.125;
 	}
 	//=================================================================================================//
-	template<class BaseMeshType, class DataPackageType>
+	template<class MeshFieldType, class DataPackageType>
 	template<typename DataType, typename PackageDataType, PackageDataType DataPackageType:: * MemPtr>
-	DataType MeshWithDataPackages<BaseMeshType, DataPackageType>::
-		DataValueFromGlobalIndex(Vecu global_data_index)
+	DataType MeshWithDataPackages<MeshFieldType, DataPackageType>::
+		DataValueFromGlobalIndex(Vecu global_grid_index)
 	{
 		Vecu pkg_index_(0);
 		Vecu local_data_index(0);
 		for (int n = 0; n != 3; n++)
 		{
-			size_t cell_index_in_this_direction = global_data_index[n] / pkg_size_;
+			size_t cell_index_in_this_direction = global_grid_index[n] / pkg_size_;
 			pkg_index_[n] = cell_index_in_this_direction;
-			local_data_index[n] = global_data_index[n] - cell_index_in_this_direction * pkg_size_;
+			local_data_index[n] = global_grid_index[n] - cell_index_in_this_direction * pkg_size_;
 		}
 		PackageDataType& data = data_pkg_addrs_[pkg_index_[0]][pkg_index_[1]][pkg_index_[2]]->*MemPtr;
 		return data[local_data_index[0]][local_data_index[1]][local_data_index[2]];
 	}
 	//=================================================================================================//
-	template<class BaseMeshType, class DataPackageType>
-	void MeshWithDataPackages<BaseMeshType, DataPackageType>::initializePackageAddressesInACell(Vecu cell_index)
+	template<class MeshFieldType, class DataPackageType>
+	void MeshWithDataPackages<MeshFieldType, DataPackageType>::initializePackageAddressesInACell(Vecu cell_index)
 	{
 		int i = (int)cell_index[0];
 		int j = (int)cell_index[1];
@@ -152,23 +152,23 @@ namespace SPH {
 		}
 	}
 	//=================================================================================================//
-	template<class BaseMeshType, class DataPackageType>
-	void MeshWithDataPackages<BaseMeshType, DataPackageType>::allocateMeshDataMatrix()
+	template<class MeshFieldType, class DataPackageType>
+	void MeshWithDataPackages<MeshFieldType, DataPackageType>::allocateMeshDataMatrix()
 	{
-		Allocate3dArray(data_pkg_addrs_, BaseMeshType::number_of_cells_);
+		Allocate3dArray(data_pkg_addrs_, number_of_cells_);
 	}
 	//=================================================================================================//
-	template<class BaseMeshType, class DataPackageType>
-	void MeshWithDataPackages<BaseMeshType, DataPackageType>::deleteMeshDataMatrix()
+	template<class MeshFieldType, class DataPackageType>
+	void MeshWithDataPackages<MeshFieldType, DataPackageType>::deleteMeshDataMatrix()
 	{
-        Delete3dArray(data_pkg_addrs_, BaseMeshType::number_of_cells_);
+        Delete3dArray(data_pkg_addrs_, number_of_cells_);
 	}
 	//=================================================================================================//
-	template<class BaseMeshType, class DataPackageType>
+	template<class MeshFieldType, class DataPackageType>
 	template<class DataType, typename PackageDataAddressType, PackageDataAddressType DataPackageType:: * MemPtr>
-	DataType MeshWithDataPackages<BaseMeshType, DataPackageType>::probeMesh(const Vecd& position)
+	DataType MeshWithDataPackages<MeshFieldType, DataPackageType>::probeMesh(const Vecd& position)
 	{
-        Vecu grid_index = BaseMeshType::CellIndexFromPosition(position);
+        Vecu grid_index = CellIndexFromPosition(position);
 		size_t i = grid_index[0];
 		size_t j = grid_index[1];
 		size_t k = grid_index[2];

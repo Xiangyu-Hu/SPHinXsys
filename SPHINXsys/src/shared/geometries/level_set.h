@@ -31,11 +31,8 @@
 * @author	Chi ZHang and Xiangyu Hu
 */
 
-
 #ifndef LEVEL_SET_H
 #define LEVEL_SET_H
-
-
 
 #include "mesh_with_data_packages.h"
 #include "mesh_with_data_packages.hpp"
@@ -54,10 +51,10 @@ namespace SPH
 	class LevelSetDataPackage : public BaseDataPackage<4, 6>
 	{
 	public:
-		bool is_core_pkg_;	/**< If true, the package is near to zero level set. */
-		PackageData<Real> phi_; /**< the level set or signed distance. */
+		bool is_core_pkg_;					 /**< If true, the package is near to zero level set. */
+		PackageData<Real> phi_;				 /**< the level set or signed distance. */
 		PackageDataAddress<Real> phi_addrs_; /**< address for the level set. */
-		PackageData<Vecd> n_; /**< level set normalized gradient, to approximate interface normal direction */
+		PackageData<Vecd> n_;				 /**< level set normalized gradient, to approximate interface normal direction */
 		PackageDataAddress<Vecd> n_addrs_;
 		PackageData<Real> kernel_weight_;
 		PackageDataAddress<Real> kernel_weight_addrs_;
@@ -72,12 +69,12 @@ namespace SPH
 		PackageDataAddress<int> near_interface_id_addrs_;
 
 		LevelSetDataPackage();
-		virtual ~LevelSetDataPackage() {};
-	
-		void assignAllPackageDataAddress(Vecu data_index, LevelSetDataPackage* src_pkg, Vecu addrs_index);
-		void initializeBasicData(ComplexShape& complex_shape);
+		virtual ~LevelSetDataPackage(){};
+
+		void assignAllPackageDataAddress(Vecu data_index, LevelSetDataPackage *src_pkg, Vecu addrs_index);
+		void initializeBasicData(ComplexShape &complex_shape);
 		void initializeWithUniformData(Real level_set);
-		void computeKernelIntegrals(LevelSet& level_set);
+		void computeKernelIntegrals(LevelSet &level_set);
 		void computeNormalDirection();
 		void stepReinitialization();
 		void markNearInterface();
@@ -85,91 +82,98 @@ namespace SPH
 
 	/**
 	  * @class BaseLevelSet
-	  * @brief A abstract describes a mesh with level set data packages.
+	  * @brief A abstract describes a level set field defined on a mesh.
 	  */
-	class BaseLevelSet : public Mesh
+	class BaseLevelSet : public BaseMeshField
 	{
 	public:
-		BaseLevelSet(BoundingBox tentative_bounds, Real data_spacing, 
-			ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation);
-		virtual ~BaseLevelSet() {};
+		BaseLevelSet(ComplexShape &complex_shape, ParticleAdaptation &particle_adaptation);
+		virtual ~BaseLevelSet(){};
 
-		virtual Real probeSignedDistance(const Vecd& position) = 0;
-		virtual Vecd probeNormalDirection(const Vecd& position) = 0;
-		virtual Real probeKernelIntegral(const Vecd& position, Real h_ratio = 1.0) = 0;
-		virtual Vecd probeKernelGradientIntegral(const Vecd& position, Real h_ratio = 1.0) = 0;
+		virtual bool probeIsWithinMeshBound(const Vecd &position) = 0;
+		virtual Real probeSignedDistance(const Vecd &position) = 0;
+		virtual Vecd probeNormalDirection(const Vecd &position) = 0;
+		virtual Real probeKernelIntegral(const Vecd &position, Real h_ratio = 1.0) = 0;
+		virtual Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0) = 0;
 		virtual void cleanInterface(bool isSmoothed = false) = 0;
+
 	protected:
-		ComplexShape& complex_shape_; /**< the geometry is described by the level set. */
-		ParticleAdaptation& particle_adaptation_;
+		ComplexShape &complex_shape_; /**< the geometry is described by the level set. */
+		ParticleAdaptation &particle_adaptation_;
+
+		/** for computing volume fraction occupied by a shape.*/
+		Real computeHeaviside(Real phi, Real half_width);
 	};
 
 	/**
 	 * @class LevelSet
 	 * @brief Mesh with level set data as packages.
+	 * Note that the mesh containing the data packages are cell-based 
+	 * but within the data package, the data is grid-based.
 	 */
 	class LevelSet
 		: public MeshWithDataPackages<BaseLevelSet, LevelSetDataPackage>
 	{
 	public:
-		ConcurrentVector<LevelSetDataPackage*> core_data_pkgs_; /**< packages near to zero level set. */
+		ConcurrentVector<LevelSetDataPackage *> core_data_pkgs_; /**< packages near to zero level set. */
 		Real global_h_ratio_;
 
-		LevelSet(BoundingBox tentative_bounds, Real data_spacing, 
-			ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation);
-		virtual ~LevelSet() {};
+		LevelSet(BoundingBox tentative_bounds, Real data_spacing,
+				 ComplexShape &complex_shape, ParticleAdaptation &particle_adaptation);
+		virtual ~LevelSet(){};
 
-		virtual Real probeSignedDistance(const Vecd& position) override;
-		virtual Vecd probeNormalDirection(const Vecd& position) override;
-		virtual Real probeKernelIntegral(const Vecd& position, Real h_ratio = 1.0) override;
-		virtual Vecd probeKernelGradientIntegral(const Vecd& position, Real h_ratio = 1.0) override;
+		virtual bool probeIsWithinMeshBound(const Vecd &position) override;
+		virtual Real probeSignedDistance(const Vecd &position) override;
+		virtual Vecd probeNormalDirection(const Vecd &position) override;
+		virtual Real probeKernelIntegral(const Vecd &position, Real h_ratio = 1.0) override;
+		virtual Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0) override;
 		virtual void cleanInterface(bool isSmoothed = false) override;
-		virtual void writeMeshToPltFile(std::ofstream& output_file) override;
+		virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
 		bool isWithinCorePackage(Vecd position);
-		Real computeKernelIntegral(const Vecd& position);
-		Vecd computeKernelGradientIntegral(const Vecd& position);
-	protected:
-		Kernel& kernel_;
+		Real computeKernelIntegral(const Vecd &position);
+		Vecd computeKernelGradientIntegral(const Vecd &position);
 
-		Real computeHeaviside(Real phi, Real half_width);
+	protected:
+		Kernel &kernel_;
+
 		void reinitializeLevelSet();
 		void markNearInterface();
 		void redistanceInterface();
 		void updateNormalDirection();
-		void updateNormalDirectionForAPackage(LevelSetDataPackage* inner_data_pkg, Real dt = 0.0);
+		void updateNormalDirectionForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt = 0.0);
 		void updateKernelIntegrals();
-		void updateKernelIntegralsForAPackage(LevelSetDataPackage* inner_data_pkg, Real dt = 0.0);
-		void stepReinitializationForAPackage(LevelSetDataPackage* inner_data_pkg, Real dt = 0.0);
-		void markNearInterfaceForAPackage(LevelSetDataPackage* core_data_pkg, Real dt = 0.0);
-		void redistanceInterfaceForAPackage(LevelSetDataPackage* core_data_pkg, Real dt = 0.0);
-		virtual void initializeDataInACell(Vecu cell_index, Real dt) override;
-		virtual void initializeAddressesInACell(Vecu cell_index, Real dt) override;
-		virtual void tagACellIsInnerPackage(Vecu cell_index, Real dt) override;
+		void updateKernelIntegralsForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt = 0.0);
+		void stepReinitializationForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt = 0.0);
+		void markNearInterfaceForAPackage(LevelSetDataPackage *core_data_pkg, Real dt = 0.0);
+		void redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg, Real dt = 0.0);
+		virtual void initializeDataInACell(const Vecu &cell_index, Real dt) override;
+		virtual void initializeAddressesInACell(const Vecu &cell_index, Real dt) override;
+		virtual void tagACellIsInnerPackage(const Vecu &cell_index, Real dt) override;
 		virtual void initializeDataPackages() override;
 	};
 
 	/**
-	  * @class MultilevelMeshCellLinkedList
+	  * @class MultilevelCellLinkedList
 	  * @brief Defining a multilevel level set for a complex region.
 	  */
-	class MultilevelLevelSet :
-		public MultilevelMesh<BaseLevelSet, LevelSet>
+	class MultilevelLevelSet : public MultilevelMesh<BaseLevelSet, LevelSet>
 	{
 	public:
-		MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing, 
-			size_t total_levels, Real maximum_spacing_ratio,
-			ComplexShape& complex_shape, ParticleAdaptation& particle_adaptation);
-		virtual ~MultilevelLevelSet() {};
+		MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing,
+						   size_t total_levels, Real maximum_spacing_ratio,
+						   ComplexShape &complex_shape, ParticleAdaptation &particle_adaptation);
+		virtual ~MultilevelLevelSet(){};
 
-		virtual Real probeSignedDistance(const Vecd& position) override;
-		virtual Vecd probeNormalDirection(const Vecd& position) override;
-		virtual Real probeKernelIntegral(const Vecd& position, Real h_ratio = 1.0) override;
-		virtual Vecd probeKernelGradientIntegral(const Vecd& position, Real h_ratio = 1.0) override;
+		virtual bool probeIsWithinMeshBound(const Vecd &position) override;
+		virtual Real probeSignedDistance(const Vecd &position) override;
+		virtual Vecd probeNormalDirection(const Vecd &position) override;
+		virtual Real probeKernelIntegral(const Vecd &position, Real h_ratio = 1.0) override;
+		virtual Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0) override;
 		virtual void cleanInterface(bool isSmoothed = false) override;
-	protected:
-		inline size_t getProbeLevel(const Vecd& position);
-		inline size_t getMeshLevel(Real h_ratio);
 
+	protected:
+		inline size_t getProbeLevel(const Vecd &position);
+		inline size_t getMeshLevel(Real h_ratio);
 	};
 }
 #endif //LEVEL_SET_H

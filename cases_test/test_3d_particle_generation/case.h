@@ -39,7 +39,7 @@ class ImportedModel : public SolidBody
 public:
 	ImportedModel(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name,
-			new ParticleSpacingByBodyShape(1.15, 0, 2),
+			new ParticleSpacingByBodyShape(1.15, 1.0, 2),
 			new ParticleGeneratorMultiResolution())
 	{
 		/** Geometry definition. */

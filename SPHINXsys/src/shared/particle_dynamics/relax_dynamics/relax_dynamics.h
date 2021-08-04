@@ -38,7 +38,7 @@
 #include "all_particle_dynamics.h"
 #include "neighbor_relation.h"
 #include "base_kernel.h"
-#include "mesh_cell_linked_list.h"
+#include "cell_linked_list.h"
 #include "solid_dynamics.h"
 
 namespace SPH

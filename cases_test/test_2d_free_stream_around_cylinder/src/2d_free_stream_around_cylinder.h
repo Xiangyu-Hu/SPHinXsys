@@ -84,7 +84,7 @@ class Cylinder : public SolidBody
 {
 public:
 	Cylinder(SPHSystem& system, string body_name)
-		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1))
+		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 2.0))
 	{
 		/** Geomtry definition. */
 		ComplexShape original_body_shape;

@@ -72,7 +72,7 @@ class MovingPlate : public SolidBody
 {
 public:
 	MovingPlate(SPHSystem &system, std::string body_name)
-		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1))
+		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1.5))
 	{
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addTriangleMeshShape(CreateMovingPlate(), ShapeBooleanOps::add);
@@ -187,9 +187,9 @@ int main()
 
 	/** Damping with the solid body*/
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>
-		muscle_damping(myocardium_body_inner, 0.1, "Velocity", physical_viscosity);
+		muscle_damping(myocardium_body_inner, 0.2, "Velocity", physical_viscosity);
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>
-		plate_damping(moving_plate_inner, 0.1, "Velocity", physical_viscosity);
+		plate_damping(moving_plate_inner, 0.2, "Velocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
 	BodyStatesRecordingToVtu write_states(in_output, system.real_bodies_);

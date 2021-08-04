@@ -26,7 +26,7 @@ Real Re = 0.1;			/**< Reynolds number*/
 Real mu_f = sqrt(0.25*rho0_f * powerN(0.5*DT, 3)* gravity_g / Re);
 Real U_f = 0.25*powerN(0.5 * DT, 2)* gravity_g / mu_f;
 // For low Reynolds number flow the weakly compressible formulation need to 
-// consider viscousity for artificial sound speed.
+// consider viscosity for artificial sound speed.
 Real c_f = 10.0 * SMAX(U_f, 2.0 * mu_f / rho0_f / DT);
 Real mu_p_f = 0.6 * mu_f;
 Real lambda_f = 10.0;
@@ -156,12 +156,12 @@ int main()
 	//methods used for time stepping
 	//-------------------------------------------------------------------
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingGhostParticles 	periodic_condition(fluid_block, 0);
+	PeriodicConditionInAxisDirectionUsingGhostParticles 	periodic_condition(fluid_block, xAxis);
 
 	
 	//evaluation of density by summation approach
 	fluid_dynamics::DensitySummationComplex	update_density_by_summation(fluid_block_complex);
-	//time step size without considering sound wave speed
+	//time step size without considering sound wave speed and viscosity
 	fluid_dynamics::AdvectionTimeStepSizeForImplicitViscosity	get_fluid_advection_time_step_size(fluid_block, U_f);
 	//time step size with considering sound wave speed
 	fluid_dynamics::AcousticTimeStepSize		get_fluid_time_step_size(fluid_block);
@@ -174,7 +174,7 @@ int main()
 	//-------- common particle dynamics ----------------------------------------
 	TimeStepInitialization 	initialize_a_fluid_step(fluid_block, &gravity);
 	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(fluid_block_complex);
-	//computing viscous effect with update velocity directly other than viscous acceleration
+	//computing viscous effect implicitly and with update velocity directly other than viscous acceleration
 	DampingPairwiseWithWall<indexVector, Vec2d, DampingPairwiseInner>
 		implicit_viscous_damping(fluid_block_complex, "Velocity", mu_f);
 
@@ -194,12 +194,8 @@ int main()
 	//starting time zero
 	GlobalStaticVariables::physical_time_ = 0.0;
 	
-	//initial periodic boundary condition
-	//which copies the particle identifies
-	//as extra cell linked list form 
-	//periodic regions to the corresponding boundaries
-	//for building up of extra configuration
 	system.initializeSystemCellLinkedLists();
+	//initial periodic boundary condition
 	periodic_condition.ghost_creation_.parallel_exec();
 	system.initializeSystemConfigurations();
 

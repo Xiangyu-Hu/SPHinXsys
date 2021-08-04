@@ -65,7 +65,7 @@ void relaxParticlesSingleResolution(In_Output* in_output,
 {	
 
 	BodyStatesRecordingToVtu write_imported_model_to_vtu(*in_output, { imported_model });
-	MeshRecordingToPlt mesh_cell_linked_list_recording(*in_output, imported_model, imported_model->mesh_cell_linked_list_);
+	MeshRecordingToPlt cell_linked_list_recording(*in_output, imported_model, imported_model->cell_linked_list_);
 
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
@@ -268,10 +268,9 @@ void StructuralSimulation::createParticleAdaptationList()
 	particle_adaptation_list_ = {};
 	for (size_t i = 0; i < resolution_list_.size(); i++)
 	{
-		particle_adaptation_list_.push_back(ParticleAdaptation());
-
-		Real system_resolution_ratio = resolution_list_[i] / system_resolution_;
-		particle_adaptation_list_[i].SetSystemResolutionRatio(system_resolution_ratio);
+		Real system_resolution_ratio = system_resolution_ / resolution_list_[i];
+		// for solid bodies, slightly small h_spaing_ratio is used
+		particle_adaptation_list_.push_back(ParticleAdaptation(1.15, system_resolution_ratio));
 	}
 }
 

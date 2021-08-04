@@ -606,12 +606,9 @@ namespace SPH
 		{
 			body_part_bounds_ = body_part->getBodyPartShape()->findBounds();
 			periodic_translation_[axis_] = body_part_bounds_.second[axis_] - body_part_bounds_.first[axis_];
+
 			size_t total_body_buffer_particles = body_part_particles_.size() * body_buffer_width_;
-			for (size_t i = 0; i < total_body_buffer_particles; ++i)
-			{
-				particles_->addABufferParticle();
-			}
-			particles_->real_particles_bound_ += total_body_buffer_particles;
+			particles_->addBufferParticles(total_body_buffer_particles);
 			body_->allocateConfigurationMemoriesForBufferParticles();
 
 			checking_bound_ = positive ?
