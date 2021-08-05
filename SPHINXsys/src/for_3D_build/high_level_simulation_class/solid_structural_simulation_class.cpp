@@ -428,7 +428,6 @@ void StructuralSimulation::initializeTranslateSolidBody()
 		Vecd translation = get<3>(translation_solid_body_tuple_[i]);
 		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(
 			solid_body_list_[body_index]->getImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
-<<<<<<< HEAD
 			
 		translation_solid_body_.emplace_back(make_shared<solid_dynamics::TranslateSolidBody>(
 			solid_body_list_[body_index]->getImportedModel(), bp, start_time, end_time, translation));
@@ -448,27 +447,6 @@ void StructuralSimulation::initializeTranslateSolidBodyPart()
 		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(
 			solid_body_list_[body_index]->getImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
 			
-=======
-			
-		translation_solid_body_.emplace_back(make_shared<solid_dynamics::TranslateSolidBody>(
-			solid_body_list_[body_index]->getImportedModel(), bp, start_time, end_time, translation));
-	}
-}
-
-void StructuralSimulation::initializeTranslateSolidBodyPart()
-{
-	translation_solid_body_part_ = {};
-	for (size_t i = 0; i < translation_solid_body_part_tuple_.size(); i++)
-	{
-		int body_index = get<0>(translation_solid_body_part_tuple_[i]);
-		Real start_time = get<1>(translation_solid_body_part_tuple_[i]);
-		Real end_time = get<2>(translation_solid_body_part_tuple_[i]);
-		Vecd translation = get<3>(translation_solid_body_part_tuple_[i]);
-		BoundingBox bbox = get<4>(translation_solid_body_part_tuple_[i]);
-		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(
-			solid_body_list_[body_index]->getImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
-			
->>>>>>> 536775cb7b75f26b92df3b143b32d2e91efff551
 		translation_solid_body_part_.emplace_back(make_shared<solid_dynamics::TranslateSolidBodyPart>(
 			solid_body_list_[body_index]->getImportedModel(), bp, start_time, end_time, translation, bbox));
 	}
@@ -689,25 +667,18 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 	executeConstrainSolidBodyRegion();
 	executePositionSolidBody(dt);
 	executePositionScaleSolidBody(dt);
-<<<<<<< HEAD
-	executeTranslateSolidBody(dt); // only one time
-=======
 	executeTranslateSolidBody(dt);
 	// velocity based
 	executeTranslateSolidBodyPart(dt);
->>>>>>> 536775cb7b75f26b92df3b143b32d2e91efff551
 
 	executeDamping(dt);
 
 	executeConstrainSolidBodyRegion();
 	executePositionSolidBody(dt);
 	executePositionScaleSolidBody(dt);
-<<<<<<< HEAD
-=======
 	executeTranslateSolidBody(dt);
 	// velocity based
 	executeTranslateSolidBodyPart(dt);
->>>>>>> 536775cb7b75f26b92df3b143b32d2e91efff551
 
 	executeStressRelaxationSecondHalf(dt);
 	
