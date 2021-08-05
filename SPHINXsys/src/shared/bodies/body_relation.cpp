@@ -8,7 +8,7 @@
 
 #include "base_kernel.h"
 #include "base_particles.h"
-#include "mesh_cell_linked_list.hpp"
+#include "cell_linked_list.hpp"
 
 namespace SPH
 {
@@ -41,13 +41,13 @@ namespace SPH
 	//=================================================================================================//
 	BodyRelationInner::BodyRelationInner(RealBody* real_body)
 		: BaseBodyRelationInner(real_body), get_inner_neighbor_(real_body),
-		mesh_cell_linked_list_(dynamic_cast<MeshCellLinkedList*>(real_body->mesh_cell_linked_list_)) {}
+		cell_linked_list_(dynamic_cast<CellLinkedList*>(real_body->cell_linked_list_)) {}
 	//=================================================================================================//
 	void BodyRelationInner::updateConfiguration()
 	{
 		resetNeighborhoodCurrentSize();
-		mesh_cell_linked_list_->searchNeighborsByParticles(base_particles_->total_real_particles_, *base_particles_,
-			inner_configuration_, get_particle_index_, get_single_search_range_, get_inner_neighbor_);
+		cell_linked_list_->searchNeighborsByParticles(base_particles_->total_real_particles_, *base_particles_,
+			inner_configuration_, get_particle_index_, get_single_search_depth_, get_inner_neighbor_);
 	}
 	//=================================================================================================//
 	BodyRelationInnerVariableSmoothingLength::
@@ -55,13 +55,13 @@ namespace SPH
 		: BaseBodyRelationInner(real_body), total_levels_(0),
 		get_inner_neighbor_variable_smoothing_length_(real_body)
 	{
-		MultilevelMeshCellLinkedList* multi_level_mesh_cell_linked_list =
-			dynamic_cast<MultilevelMeshCellLinkedList*>(real_body->mesh_cell_linked_list_);
-		mesh_cell_linked_list_levels_ = multi_level_mesh_cell_linked_list->getMeshLevels();
-		total_levels_ = mesh_cell_linked_list_levels_.size();
+		MultilevelCellLinkedList* multi_level_cell_linked_list =
+			dynamic_cast<MultilevelCellLinkedList*>(real_body->cell_linked_list_);
+		cell_linked_list_levels_ = multi_level_cell_linked_list->getMeshLevels();
+		total_levels_ = cell_linked_list_levels_.size();
 		for (size_t l = 0; l != total_levels_; ++l) {
-			get_multi_level_search_range_.push_back(
-				new SearchRangeVariableSmoothingLength(real_body, mesh_cell_linked_list_levels_[l]));
+			get_multi_level_search_depth_.push_back(
+				new SearchDepthVariableSmoothingLength(real_body, cell_linked_list_levels_[l]));
 		}
 	}
 	//=================================================================================================//
@@ -69,9 +69,9 @@ namespace SPH
 	{
 		resetNeighborhoodCurrentSize();
 		for (size_t l = 0; l != total_levels_; ++l) {
-			mesh_cell_linked_list_levels_[l]->searchNeighborsByParticles(base_particles_->total_real_particles_,
+			cell_linked_list_levels_[l]->searchNeighborsByParticles(base_particles_->total_real_particles_,
 				*base_particles_, inner_configuration_, get_particle_index_,
-				*get_multi_level_search_range_[l], get_inner_neighbor_variable_smoothing_length_);
+				*get_multi_level_search_depth_[l], get_inner_neighbor_variable_smoothing_length_);
 		}
 	}	
 	//=================================================================================================//
@@ -130,8 +130,10 @@ namespace SPH
 	{
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
-			target_mesh_cell_linked_lists_.push_back(dynamic_cast<MeshCellLinkedList*>(contact_bodies_[k]->mesh_cell_linked_list_));
-			get_search_ranges_.push_back(new SearchRangeMultiResolution(sph_body_, contact_bodies_[k]));
+			CellLinkedList* target_cell_linked_list = 
+				dynamic_cast<CellLinkedList*>(contact_bodies_[k]->cell_linked_list_);
+			target_cell_linked_lists_.push_back(target_cell_linked_list);
+			get_search_depths_.push_back(new SearchDepthMultiResolution(sph_body_, target_cell_linked_list));
 			get_contact_neighbors_.push_back(new NeighborRelationContact(sph_body_, contact_bodies_[k]));
 		}
 	}
@@ -141,9 +143,9 @@ namespace SPH
 		resetNeighborhoodCurrentSize();
 		size_t total_real_particles = base_particles_->total_real_particles_;
 		for (size_t k = 0; k != contact_bodies_.size(); ++k) {
-			target_mesh_cell_linked_lists_[k]->searchNeighborsByParticles(total_real_particles,
+			target_cell_linked_lists_[k]->searchNeighborsByParticles(total_real_particles,
 				*base_particles_, contact_configuration_[k],
-				get_particle_index_, *get_search_ranges_[k], *get_contact_neighbors_[k]);
+				get_particle_index_, *get_search_depths_[k], *get_contact_neighbors_[k]);
 		}
 	}
 	//=================================================================================================//
@@ -173,8 +175,10 @@ namespace SPH
 	{
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{
-			target_mesh_cell_linked_lists_.push_back(dynamic_cast<MeshCellLinkedList*>(contact_bodies_[k]->mesh_cell_linked_list_));
-			get_search_ranges_.push_back(new SearchRangeMultiResolution(sph_body_, contact_bodies_[k]));
+			CellLinkedList* target_cell_linked_list = 
+				dynamic_cast<CellLinkedList*>(contact_bodies_[k]->cell_linked_list_);
+			target_cell_linked_lists_.push_back(target_cell_linked_list);
+			get_search_depths_.push_back(new SearchDepthMultiResolution(sph_body_, target_cell_linked_list));
 			get_contact_neighbors_.push_back(new NeighborRelationSolidContact(sph_body_, contact_bodies_[k]));
 		}
 	}
@@ -184,9 +188,9 @@ namespace SPH
 		resetNeighborhoodCurrentSize();
 		size_t total_real_particles = body_part_particles_.size();
 		for (size_t k = 0; k != contact_bodies_.size(); ++k) {
-			target_mesh_cell_linked_lists_[k]->searchNeighborsByParticles(total_real_particles, 
+			target_cell_linked_lists_[k]->searchNeighborsByParticles(total_real_particles, 
 				*base_particles_, contact_configuration_[k],
-				get_body_part_particle_index_,*get_search_ranges_[k], *get_contact_neighbors_[k]);
+				get_body_part_particle_index_,*get_search_depths_[k], *get_contact_neighbors_[k]);
 		}
 	}
 	//=================================================================================================//
@@ -207,9 +211,9 @@ namespace SPH
 		size_t number_of_particles = body_part_particles_.size();
 		for (size_t k = 0; k != contact_bodies_.size(); ++k) 
 		{
-			target_mesh_cell_linked_lists_[k]->searchNeighborsByParticles(number_of_particles, 
+			target_cell_linked_lists_[k]->searchNeighborsByParticles(number_of_particles, 
 				*base_particles_, contact_configuration_[k],
-				get_body_part_particle_index_, *get_search_ranges_[k], *get_contact_neighbors_[k]);
+				get_body_part_particle_index_, *get_search_depths_[k], *get_contact_neighbors_[k]);
 		}
 	}
 	//=================================================================================================//
@@ -227,9 +231,9 @@ namespace SPH
 		size_t number_of_particles = base_particles_->total_real_particles_;
 		for (size_t k = 0; k != contact_body_parts_.size(); ++k) 
 		{
-			target_mesh_cell_linked_lists_[k]->searchNeighborsByParticles(number_of_particles, 
+			target_cell_linked_lists_[k]->searchNeighborsByParticles(number_of_particles, 
 				*base_particles_, contact_configuration_[k],
-				get_particle_index_, *get_search_ranges_[k], *get_part_contact_neighbors_[k]);
+				get_particle_index_, *get_search_depths_[k], *get_part_contact_neighbors_[k]);
 		}
 	}
 	//=================================================================================================//

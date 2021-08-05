@@ -4,7 +4,7 @@
  */
 
 #include "fluid_body.h"
-#include "mesh_cell_linked_list.h"
+#include "cell_linked_list.h"
 
 namespace SPH {
 	//=================================================================================================//
@@ -16,9 +16,9 @@ namespace SPH {
 	void FluidBody::updateCellLinkedList()
 	{
 		//sorting is carried out once for 100 iterations
-		if (iteration_count_ % 100 == 0) sortParticleWithMeshCellLinkedList();
+		if (iteration_count_ % 100 == 0) sortParticleWithCellLinkedList();
 		iteration_count_++;
-		mesh_cell_linked_list_->UpdateCellLists();
+		cell_linked_list_->UpdateCellLists();
 	}
 	//=================================================================================================//
 	EulerianFluidBody::EulerianFluidBody(SPHSystem &system, std::string body_name,

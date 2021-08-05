@@ -30,7 +30,7 @@ int resolution(20);
 Real rho_0 = 1100.0; 			/**< Reference density. */
 Real poisson = 0.45; 			/**< Poisson ratio. */
 Real Youngs_modulus = 1.7e7;
-Real angular_0 = -200.0;
+Real angular_0 = -300.0;
 /** Define the body geometry. */
 TriangleMeshShape* CreateCantilever()
 {
@@ -55,7 +55,7 @@ TriangleMeshShape* CreateHolder()
 class Column : public SolidBody
 {
 public:
-	Column(SPHSystem& system, std::string body_name) : SolidBody(system, body_name, new ParticleAdaptation(1.15, 0))
+	Column(SPHSystem& system, std::string body_name) : SolidBody(system, body_name, new ParticleAdaptation(1.15, 1.0))
 	{
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addTriangleMeshShape(CreateCantilever(), ShapeBooleanOps::add);

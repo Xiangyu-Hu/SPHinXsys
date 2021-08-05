@@ -43,7 +43,7 @@ namespace SPH {
 		Matd inverse_F_T = ~inverse_F;
 		inverse_plastic_strain_[index_i] = inverse_F * normalized_be * inverse_F_T;
 
-		return (deviatoric_PK + VolumetricKirchhoff(F) * Matd(1.0)) * inverse_F_T;
+		return (deviatoric_PK + VolumetricKirchhoff(SimTK::det(F)) * Matd(1.0)) * inverse_F_T;
 	}
 	//=================================================================================================//
 }

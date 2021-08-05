@@ -37,7 +37,7 @@
 #define BASE_BODY_H
 
 #include "base_data_package.h"
-#include "sph_data_conainers.h"
+#include "sph_data_containers.h"
 #include "particle_adaptation.h"
 #include "all_particle_generators.h"
 #include "particle_sorting.h"
@@ -50,7 +50,7 @@ namespace SPH
 {
 	class SPHSystem;
 	class BaseParticles;
-	class BaseMeshCellLinkedList;
+	class BaseCellLinkedList;
 	class SPHBodyRelation;
 
 	/**
@@ -128,7 +128,7 @@ namespace SPH
 	{
 	public:
 		ParticleSorting particle_sorting_;
-		BaseMeshCellLinkedList *mesh_cell_linked_list_; /**< Cell linked mesh of this body. */
+		BaseCellLinkedList *cell_linked_list_; /**< Cell linked mesh of this body. */
 
 		RealBody(SPHSystem &sph_system, std::string body_name, ParticleAdaptation *particle_adaptation,
 				 ParticleGenerator *particle_generator = new ParticleGeneratorLattice());
@@ -140,7 +140,7 @@ namespace SPH
 		/** This will be called in BaseParticle constructor
 		 * and is important because particles are not defined in FluidBody constructor.  */
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;
-		virtual void sortParticleWithMeshCellLinkedList();
+		virtual void sortParticleWithCellLinkedList();
 		virtual void updateCellLinkedList();
 	};
 

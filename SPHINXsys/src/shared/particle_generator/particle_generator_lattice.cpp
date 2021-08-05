@@ -26,11 +26,9 @@ namespace SPH {
 	}
 	//=================================================================================================//
 	void ParticleGeneratorLattice::
-		createABaseParticle(BaseParticles* base_particles,
-			Vecd& particle_position, Real particle_volume, size_t& total_real_particles)
+		createABaseParticle(BaseParticles* base_particles, Vecd& particle_position, Real particle_volume)
 	{
 		base_particles->initializeABaseParticle(particle_position, particle_volume);
-		total_real_particles++;
 	}
 	//=================================================================================================//
 	ParticleGeneratorMultiResolution::ParticleGeneratorMultiResolution()
@@ -47,8 +45,7 @@ namespace SPH {
 	}
 	//=================================================================================================//
 	void ParticleGeneratorMultiResolution::
-		createABaseParticle(BaseParticles* base_particles,
-			Vecd& particle_position, Real particle_volume, size_t& total_real_particles)
+		createABaseParticle(BaseParticles* base_particles, Vecd& particle_position, Real particle_volume)
 	{
 		Real local_particle_spacing 
 			= particle_adapation_->getLocalSpacing(*body_shape_, particle_position);
@@ -56,7 +53,6 @@ namespace SPH {
 		if ((double)rand() / (RAND_MAX) < local_particle_volume_ratio)
 		{
 			base_particles->initializeABaseParticle(particle_position, particle_volume / local_particle_volume_ratio);
-			total_real_particles++;
 		}
 	}
 	//=================================================================================================//

@@ -242,12 +242,6 @@ namespace SPH
 		};
 
 		/**
-		 * @class checkIfPointInBoundingBox
-		 * @brief checks if a point is inside a bounding box, incl. sides
-		*/
-		bool checkIfPointInBoundingBox(Vecd point, BoundingBox& bbox);
-
-		/**
 		 * @class TranslateSolidBody
 		 * @brief Translates the body in a given time interval -translation driven boundary condition; only moving the body; end position irrelevant;
 		 * Note the average values for FSI are prescirbed also.
@@ -553,7 +547,7 @@ namespace SPH
 			KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner* body_inner_relation);
 			virtual ~KirchhoffStressRelaxationFirstHalf() {};
 		protected:
-			StdLargeVec<Real>& J_to_minus_2_over_diemsnion_;
+			StdLargeVec<Matd>& J_to_minus_2_over_dimension_;
 			StdLargeVec<Matd>& stress_on_particle_, & inverse_F_T_;
 			const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
 

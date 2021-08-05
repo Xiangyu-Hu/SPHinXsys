@@ -7,10 +7,12 @@
 
 using namespace boost::geometry;
 
-namespace SPH {
+namespace SPH
+{
 	//=================================================================================================//
-	boost_multi_poly MultiPolygon::MultiPolygonByBooleanOps(boost_multi_poly multi_poly_in,
-		boost_multi_poly multi_poly_op, ShapeBooleanOps boolean_op)
+	boost_multi_poly MultiPolygon::
+		MultiPolygonByBooleanOps(boost_multi_poly multi_poly_in,
+								 boost_multi_poly multi_poly_op, ShapeBooleanOps boolean_op)
 	{
 		boost_multi_poly multi_poly_tmp_in = multi_poly_in;
 		//out multi-poly need to be emtpy
@@ -19,20 +21,24 @@ namespace SPH {
 
 		switch (boolean_op)
 		{
-		case ShapeBooleanOps::add: {
+		case ShapeBooleanOps::add:
+		{
 			boost::geometry::union_(multi_poly_tmp_in, multi_poly_op, multi_poly_tmp_out);
 			break;
 		}
 
-		case ShapeBooleanOps::sub: {
+		case ShapeBooleanOps::sub:
+		{
 			boost::geometry::difference(multi_poly_tmp_in, multi_poly_op, multi_poly_tmp_out);
 			break;
 		}
-		case ShapeBooleanOps::sym_diff: {
+		case ShapeBooleanOps::sym_diff:
+		{
 			boost::geometry::sym_difference(multi_poly_tmp_in, multi_poly_op, multi_poly_tmp_out);
 			break;
 		}
-		case ShapeBooleanOps::intersect: {
+		case ShapeBooleanOps::intersect:
+		{
 			boost::geometry::intersection(multi_poly_tmp_in, multi_poly_op, multi_poly_tmp_out);
 			break;
 		}
@@ -41,19 +47,18 @@ namespace SPH {
 			std::cout << "\n FAILURE: the type of boolean operation is undefined!" << std::endl;
 			std::cout << "\n Please check the boost libraray reference." << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-			exit(1);
-			break;
+			throw;
 		}
 		}
 		return multi_poly_tmp_out;
 	}
 	//=================================================================================================//
-	void MultiPolygon::addAMultiPolygon(MultiPolygon& multi_polygon_op, ShapeBooleanOps op)
+	void MultiPolygon::addAMultiPolygon(MultiPolygon &multi_polygon_op, ShapeBooleanOps op)
 	{
 		multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_polygon_op.getBoostMultiPoly(), op);
 	}
 	//=================================================================================================//
-	void MultiPolygon::addABoostMultiPoly(boost_multi_poly& boost_multi_poly_op, ShapeBooleanOps op)
+	void MultiPolygon::addABoostMultiPoly(boost_multi_poly &boost_multi_poly_op, ShapeBooleanOps op)
 	{
 		multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, boost_multi_poly_op, op);
 	}
@@ -79,38 +84,41 @@ namespace SPH {
 
 		boost_multi_poly multi_poly_circle;
 		buffer(circle_center_pnt, multi_poly_circle,
-			circle_dist_strategy, side_strategy,
-			join_strategy, end_strategy, circle_strategy);
+			   circle_dist_strategy, side_strategy,
+			   join_strategy, end_strategy, circle_strategy);
 
-		if (!is_valid(multi_poly_circle)) {
+		if (!is_valid(multi_poly_circle))
+		{
 			std::cout << "\n Error: the multi ploygen is not valid." << std::endl;
 			std::cout << "\n The points must be in clockwise. Please check the boost libraray reference." << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-			exit(1);
+			throw;
 		}
 
 		multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_poly_circle, op);
 	}
 	//=================================================================================================//
-	void MultiPolygon::addAPolygon(std::vector<Vecd>& points, ShapeBooleanOps op)
+	void MultiPolygon::addAPolygon(std::vector<Vecd> &points, ShapeBooleanOps op)
 	{
 		std::vector<model::d2::point_xy<Real>> pts;
-		for (const Vecd& pnt : points)
+		for (const Vecd &pnt : points)
 		{
 			pts.push_back(model::d2::point_xy<Real>(pnt[0], pnt[1]));
 		}
 
 		boost_poly poly;
 		append(poly, pts);
-		if (!is_valid(poly)) {
+		if (!is_valid(poly))
+		{
 			std::cout << "\n Try to reverse the points to clockwise." << std::endl;
 			poly.clear();
 			std::vector<model::d2::point_xy<Real>> pts_reverse(pts.rbegin(), pts.rend());
 			append(poly, pts_reverse);
-			if (!is_valid(poly)) {
+			if (!is_valid(poly))
+			{
 				std::cout << "\n Error: the multi ploygen is still not valid. Please check the boost libraray reference." << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-				exit(1);
+				throw;
 			}
 		}
 
@@ -120,7 +128,7 @@ namespace SPH {
 		multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_poly_polygen, op);
 	}
 	//=================================================================================================//
-	bool MultiPolygon::checkContain(Vec2d pnt, bool BOUNDARY_INCLUDED /*= true*/)
+	bool MultiPolygon::checkContain(const Vec2d &pnt, bool BOUNDARY_INCLUDED /*= true*/)
 	{
 		if (BOUNDARY_INCLUDED)
 		{
@@ -132,7 +140,7 @@ namespace SPH {
 		}
 	}
 	//=================================================================================================//
-	Vec2d MultiPolygon::findClosestPoint(Vec2d& input_pnt)
+	Vec2d MultiPolygon::findClosestPoint(const Vec2d &input_pnt)
 	{
 		typedef model::d2::point_xy<Real> pnt_type;
 		typedef model::referring_segment<model::d2::point_xy<Real>> seg_type;
@@ -147,9 +155,11 @@ namespace SPH {
 		pnt_type input_p(input_pnt[0], input_pnt[1]);
 		model::segment<model::d2::point_xy<Real>> closest_seg;
 		Real closest_dist_2seg = boost::numeric::bounds<Real>::highest();
-		std::function<void(seg_type)> findclosestsegment = [&closest_seg, &closest_dist_2seg, &input_p](seg_type seg) {
+		std::function<void(seg_type)> findclosestsegment = [&closest_seg, &closest_dist_2seg, &input_p](seg_type seg)
+		{
 			Real dist = boost::geometry::distance(input_p, seg);
-			if (dist < closest_dist_2seg) {
+			if (dist < closest_dist_2seg)
+			{
 				closest_dist_2seg = dist;
 				//closest_seg.append(seg);
 				Real x0 = boost::geometry::get<0, 0>(seg);
@@ -176,15 +186,19 @@ namespace SPH {
 		Vec2d vec_w = input_pnt - p_0;
 
 		Real c1 = dot(vec_v, vec_w);
-		if (c1 <= 0) {
+		if (c1 <= 0)
+		{
 			p_find = p_0;
 		}
-		else {
+		else
+		{
 			Real c2 = dot(vec_v, vec_v);
-			if (c2 <= c1) {
+			if (c2 <= c1)
+			{
 				p_find = p_1;
 			}
-			else {
+			else
+			{
 				p_find = p_0 + vec_v * c1 / c2;
 			}
 		}
@@ -203,42 +217,42 @@ namespace SPH {
 		return BoundingBox(lower_bound, upper_bound);
 	}
 	//=================================================================================================//
-	bool ComplexShape::checkContain(Vecd& input_pnt, bool BOUNDARY_INCLUDED)
+	bool ComplexShape::checkContain(const Vecd &input_pnt, bool BOUNDARY_INCLUDED)
 	{
 		return multi_ploygen_.checkContain(input_pnt, BOUNDARY_INCLUDED);
 	}
 	//=================================================================================================//
-	Vec2d ComplexShape::findClosestPoint(Vec2d& input_pnt)
+	Vec2d ComplexShape::findClosestPoint(const Vec2d &input_pnt)
 	{
-		return  multi_ploygen_.findClosestPoint(input_pnt);
+		return multi_ploygen_.findClosestPoint(input_pnt);
 	}
 	//=================================================================================================//
-	bool ComplexShape::checkNotFar(Vec2d& input_pnt, Real threshold)
+	bool ComplexShape::checkNotFar(const Vec2d &input_pnt, Real threshold)
 	{
-		return  multi_ploygen_.checkContain(input_pnt) || checkNearSurface(input_pnt, threshold) ? true : false;
+		return multi_ploygen_.checkContain(input_pnt) || checkNearSurface(input_pnt, threshold) ? true : false;
 	}
 	//=================================================================================================//
-	bool ComplexShape::checkNearSurface(Vec2d& input_pnt, Real threshold)
+	bool ComplexShape::checkNearSurface(const Vec2d &input_pnt, Real threshold)
 	{
-		return  getMaxAbsoluteElement(input_pnt - multi_ploygen_.findClosestPoint(input_pnt)) < threshold ?
-			true : false;
+		return getMaxAbsoluteElement(input_pnt - multi_ploygen_.findClosestPoint(input_pnt)) < threshold ? true : false;
 	}
 	//=================================================================================================//
-	Real ComplexShape::findSignedDistance(Vec2d& input_pnt)
+	Real ComplexShape::findSignedDistance(const Vec2d &input_pnt)
 	{
 		Real distance_to_surface = (findClosestPoint(input_pnt) - input_pnt).norm();
 		return checkContain(input_pnt) ? -distance_to_surface : distance_to_surface;
 	}
 	//=================================================================================================//
-	Vec2d ComplexShape::findNormalDirection(Vec2d& input_pnt)
+	Vec2d ComplexShape::findNormalDirection(const Vec2d &input_pnt)
 	{
 		bool is_contain = checkContain(input_pnt);
 		Vecd displacement_to_surface = findClosestPoint(input_pnt) - input_pnt;
-		while(displacement_to_surface.norm() < Eps) {
+		while (displacement_to_surface.norm() < Eps)
+		{
 			Vecd jittered = input_pnt; //jittering
 			for (int l = 0; l != input_pnt.size(); ++l)
 				jittered[l] = input_pnt[l] + (((Real)rand() / (RAND_MAX)) - 0.5) * 100.0 * Eps;
-			if(checkContain(jittered) == is_contain) 
+			if (checkContain(jittered) == is_contain)
 				displacement_to_surface = findClosestPoint(jittered) - jittered;
 		}
 		Vecd direction_to_surface = displacement_to_surface.normalize();
@@ -250,17 +264,17 @@ namespace SPH {
 		return multi_ploygen_.findBounds();
 	}
 	//=================================================================================================//
-	void ComplexShape::addAMultiPolygon(MultiPolygon& multi_polygon, ShapeBooleanOps op)
+	void ComplexShape::addAMultiPolygon(MultiPolygon &multi_polygon, ShapeBooleanOps op)
 	{
 		multi_ploygen_.addAMultiPolygon(multi_polygon, op);
 	}
 	//=================================================================================================//
-	void ComplexShape::addABoostMultiPoly(boost_multi_poly& boost_multi_poly, ShapeBooleanOps op)
+	void ComplexShape::addABoostMultiPoly(boost_multi_poly &boost_multi_poly, ShapeBooleanOps op)
 	{
 		multi_ploygen_.addABoostMultiPoly(boost_multi_poly, op);
 	}
 	//=================================================================================================//
-	void ComplexShape::addAPolygon(std::vector<Vecd>& points, ShapeBooleanOps op)
+	void ComplexShape::addAPolygon(std::vector<Vecd> &points, ShapeBooleanOps op)
 	{
 		multi_ploygen_.addAPolygon(points, op);
 	}
@@ -274,7 +288,9 @@ namespace SPH {
 		double temp1 = 0.0, temp2 = 0.0;
 		if (dataFile.fail())
 		{
-			std::cout << "File can not open.\n" << std::endl;;
+			std::cout << "File can not open.\n"
+					  << std::endl;
+			;
 		}
 
 		while (!dataFile.fail() && !dataFile.eof())

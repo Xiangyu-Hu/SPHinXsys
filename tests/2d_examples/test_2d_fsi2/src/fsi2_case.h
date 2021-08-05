@@ -165,7 +165,7 @@ class InsertedBody : public SolidBody
 {
 public:
 	InsertedBody(SPHSystem& system, std::string body_name)
-		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1))
+		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 2.0))
 	{
 		/** Geomtry definition. */
 		std::vector<Vecd> beam_shape = CreatBeamShape();
@@ -256,7 +256,7 @@ class BeamObserver : public FictitiousBody
 {
 public:
 	BeamObserver(SPHSystem& system, std::string body_name)
-		: FictitiousBody(system, body_name, new ParticleAdaptation(1.15, 1))
+		: FictitiousBody(system, body_name, new ParticleAdaptation(1.15, 2.0))
 	{
 		/** the measuring particle with zero volume */
 		body_input_points_volumes_.push_back(std::make_pair(0.5 * (BRT + BRB), 0.0));

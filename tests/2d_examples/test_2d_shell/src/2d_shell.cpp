@@ -149,7 +149,7 @@ int main()
 	TimeDependentExternalForce external_force(Vec2d(0.0, gravitational_acceleration));
 
 	/** Creat a Cylinder body. */
-	Cylinder *cylinder_body = new Cylinder(system, "CylinderBody", new ParticleAdaptation(1.15, 0), new ParticleGeneratorDirect());
+	Cylinder *cylinder_body = new Cylinder(system, "CylinderBody", new ParticleAdaptation(1.15, 1.0), new ParticleGeneratorDirect());
 	/** elastic soild material properties */
 	CylinderMaterial *cylinder_material = new CylinderMaterial();
 	/** Creat particles for the elastic body. */

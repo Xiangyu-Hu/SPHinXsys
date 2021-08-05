@@ -36,7 +36,7 @@
 
 #include "base_particles.h"
 #include "base_data_package.h"
-#include "sph_data_conainers.h"
+#include "sph_data_containers.h"
 
 #include <string>
 
@@ -69,18 +69,23 @@ namespace SPH
 
 	/**
 	 * @class Edge
-	 * @brief template base class of linear structure
-	 * only with topology information
+	 * @brief template base class of linear structure only with topology information.
+	 * Note that a edge is defined together with a structure which is composed of edges.
+	 * Such structure should have an interface function ContainerSize() returning 
+	 * the curent total amount of edges.
 	 */
 	template<typename InEdgeType, typename OutEdgeType>
 	class Edge
 	{
 	public:
-		Edge() : id_(0) {}; /**< constructor without specifying a leading-in edge */
-		Edge(InEdgeType in_edge) : Edge() /**< constructor with specifying a leading-in edge */
-		{
-			in_edge_ = in_edge;
-		};
+		/** constructor without specifying a leading-in edge */
+		template<class EdgeStructureType>
+		Edge(EdgeStructureType *structure) 
+			: id_(structure->ContainerSize()), in_edge_(MaxSize_t) {}; 
+		 /** constructor with specifying a leading-in edge */	
+		template<class EdgeStructureType>
+		Edge(InEdgeType in_edge, EdgeStructureType *structure)
+			: id_(structure->ContainerSize()), in_edge_(in_edge) {};
 		virtual ~Edge() {};
 
 		size_t id_;					/**< id of this edge */

@@ -61,12 +61,12 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	Real SPHSystem::getSmallestTimeStepAmongSolidBodies()
+	Real SPHSystem::getSmallestTimeStepAmongSolidBodies(Real CFL)
 	{	
 		Real dt = Infinity;
 		for (size_t i = 0; i < solid_bodies_.size(); i++)
 		{
-			solid_dynamics::AcousticTimeStepSize computing_time_step_size(solid_bodies_[i]);
+			solid_dynamics::AcousticTimeStepSize computing_time_step_size(solid_bodies_[i], CFL);
 			Real dt_temp = computing_time_step_size.parallel_exec();
 			if (dt_temp < dt) dt = dt_temp;
 		}

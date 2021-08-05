@@ -34,7 +34,7 @@
 
 
 #include "base_data_package.h"
-#include "sph_data_conainers.h"
+#include "sph_data_containers.h"
 #include "xml_engine.h"
 
 #include <fstream>
@@ -251,7 +251,7 @@ namespace SPH
 
 		SPHBody* getSPHBody() { return body_; };
 		void initializeABaseParticle(Vecd pnt, Real Vol_0);
-		void addABufferParticle();
+		void addBufferParticles(size_t buffer_size);
 		void copyFromAnotherParticle(size_t this_index, size_t another_index);
 		void updateFromAnotherParticle(size_t this_index, size_t another_index);
 		size_t insertAGhostParticle(size_t index_i);
@@ -285,6 +285,7 @@ namespace SPH
 		XmlEngine reload_xml_engine_;
 		ParticleVariableList variables_to_write_;
 		ParticleVariableList variables_to_restart_;
+		void addAParticleEntry();
 
 		virtual void writePltFileHeader(std::ofstream& output_file);
 		virtual void writePltFileParticleData(std::ofstream& output_file, size_t index_i);

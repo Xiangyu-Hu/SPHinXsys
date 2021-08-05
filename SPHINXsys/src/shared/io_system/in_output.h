@@ -30,7 +30,7 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_data_package.h"
-#include "sph_data_conainers.h"
+#include "sph_data_containers.h"
 #include "all_physical_dynamics.h"
 #include "xml_engine.h" 
  
@@ -250,10 +250,10 @@ namespace SPH {
 	{
 	protected:
 		std::string filefullpath_;
-		Mesh* mesh_;
+		BaseMeshField* mesh_field_;
 		virtual void writeWithFileName(const std::string& sequence) override;
 	public:
-		MeshRecordingToPlt(In_Output& in_output, SPHBody* body, Mesh* mesh);
+		MeshRecordingToPlt(In_Output& in_output, SPHBody* body, BaseMeshField* mesh_field);
 		virtual ~MeshRecordingToPlt() {};
 	};
 

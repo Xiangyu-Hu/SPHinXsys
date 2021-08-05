@@ -8,7 +8,7 @@
 #include "sph_system.h"
 #include "base_particles.h"
 #include "body_relation.h"
-#include "mesh_cell_linked_list.h"
+#include "cell_linked_list.h"
 
 namespace SPH
 {
@@ -113,7 +113,7 @@ namespace SPH
 		  particle_sorting_(this)
 	{
 		sph_system.addARealBody(this);
-		mesh_cell_linked_list_ = particle_adaptation_->createMeshCellLinkedList();
+		cell_linked_list_ = particle_adaptation_->createCellLinkedList();
 		size_t number_of_split_cell_lists = powerN(3, Vecd(0).size());
 		split_cell_lists_.resize(number_of_split_cell_lists);
 	}
@@ -122,20 +122,20 @@ namespace SPH
 	{
 		SPHBody::assignBaseParticles(base_particles);
 		particle_sorting_.assignBaseParticles(base_particles);
-		mesh_cell_linked_list_->assignBaseParticles(base_particles);
+		cell_linked_list_->assignBaseParticles(base_particles);
 	}
 	//=================================================================================================//
-	void RealBody::sortParticleWithMeshCellLinkedList()
+	void RealBody::sortParticleWithCellLinkedList()
 	{
 		StdLargeVec<size_t> &sequence = base_particles_->sequence_;
 		size_t size = base_particles_->total_real_particles_;
-		mesh_cell_linked_list_->computingSequence(sequence);
+		cell_linked_list_->computingSequence(sequence);
 		particle_sorting_.sortingParticleData(sequence.data(), size);
 	}
 	//=================================================================================================//
 	void RealBody::updateCellLinkedList()
 	{
-		mesh_cell_linked_list_->UpdateCellLists();
+		cell_linked_list_->UpdateCellLists();
 	}
 	FictitiousBody::
 		FictitiousBody(SPHSystem &system, std::string body_name,
@@ -218,7 +218,7 @@ namespace SPH
 	//=================================================================================================//
 	void BodyPartByCell::tagBodyPart()
 	{
-		real_body_->mesh_cell_linked_list_->tagBodyPartByCell(body_part_cells_, checkIncluded_);
+		real_body_->cell_linked_list_->tagBodyPartByCell(body_part_cells_, checkIncluded_);
 	}
 	//=================================================================================================//
 	NearShapeSurface::
@@ -263,11 +263,11 @@ namespace SPH
 	//=================================================================================================//
 	void TerminateBranches::tagBodyPart()
 	{
-		for (size_t branch_idx = 0; branch_idx != tree_->branches_.size(); ++branch_idx)
+		for (const auto	*branch : tree_->branches_)
 		{
-			if (tree_->branches_[branch_idx]->is_terminated_)
+			if (branch->is_terminated_)
 			{
-				size_t particle_id = tree_->branches_[branch_idx]->inner_particles_.back();
+				size_t particle_id = branch->inner_particles_.back();
 				tagAParticle(particle_id);
 			}
 		}

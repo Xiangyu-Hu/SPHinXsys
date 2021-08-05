@@ -34,7 +34,7 @@
 
 
 #include "base_data_package.h"
-#include "sph_data_conainers.h"
+#include "sph_data_containers.h"
 
 /** this is a reformulation of tbb parallel_sort for particle data */
 namespace tbb {
@@ -189,7 +189,7 @@ namespace SPH {
 
 	class RealBody;
 	class BaseParticles;
-	class BaseMeshCellLinkedList;
+	class BaseCellLinkedList;
 
 	/**
 	 * @class CompareParticleSequence

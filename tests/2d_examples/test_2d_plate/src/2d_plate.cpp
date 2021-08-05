@@ -145,7 +145,7 @@ int main()
 	TimeDependentExternalForce external_force(Vec2d(0.0, q / (PT * rho0_s) - gravitational_acceleration));
 
 	/** Creat a plate body. */
-	Plate *plate_body = new Plate(system, "PlateBody", new ParticleAdaptation(1.15, 0), new ParticleGeneratorDirect());
+	Plate *plate_body = new Plate(system, "PlateBody", new ParticleAdaptation(1.15, 1.0), new ParticleGeneratorDirect());
 	/** elastic soild material properties */
 	PlateMaterial *plate_material = new PlateMaterial();
 	/** Creat particles for the elastic body. */

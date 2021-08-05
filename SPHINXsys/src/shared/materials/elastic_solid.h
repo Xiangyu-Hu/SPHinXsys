@@ -87,16 +87,18 @@ namespace SPH {
 		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) = 0;
 		//TODO: the NumericalViscosity and NumericalDampingStress to be delete after shell model done.
 		virtual Real NumericalViscosity(Real smoothing_length);
-		/** Compute numerical damping stress. */
-		virtual Matd NumericalDampingStress(Matd& deformation, Matd& deformation_rate, Real smoothing_length, size_t particle_index_i);
+		/** Compute numerical damping stress using right cauchy tensor. */
+		virtual Matd NumericalDampingRightCauchy(Matd& deformation, Matd& deformation_rate, Real smoothing_length, size_t particle_index_i);
+		/** Compute numerical damping stress using left cauchy tensor. */
+		virtual Matd NumericalDampingLeftCauchy(Matd& deformation, Matd& deformation_rate, Real smoothing_length, size_t particle_index_i);
 		/** numerical demaping is computed between particles i and j */
 		virtual Real NumericalDamping(Real dE_dt_ij, Real smoothing_length);
 
 		/** Deviatoric Kirchhoff stress related with the deviatoric part of left cauchy-green deformation tensor.
 		 *  Note that, dependent of the normalizeation of the later, the returned stress can be normalized or non-normalized. */
 		virtual Matd DeviatoricKirchhoff(const Matd& deviatoric_be);
-		/** Volumetric Kirchhoff stress related with green-lagrangian tensor */
-		virtual Real VolumetricKirchhoff(const Matd& deformation);
+		/** Volumetric Kirchhoff stress determinate */
+		virtual Real VolumetricKirchhoff(Real J) = 0;
 
 		virtual ElasticSolid* ThisObjectPtr() override {return this;};
 	};
@@ -125,6 +127,8 @@ namespace SPH {
 		virtual ~LinearElasticSolid() {};
 
 		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
+		/** Volumetric Kirchhoff stress determinate */
+		virtual Real VolumetricKirchhoff(Real J) override;
 	protected:
 		Real youngs_modulus_; 		/*< Youngs modules as basic inpiut parameter */
 		Real poisson_ratio_; 		/*< Poisson ratio as basic inpiut parameter */
@@ -164,6 +168,8 @@ namespace SPH {
 	
 		/** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
 		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
+		/** Volumetric Kirchhoff stress determinate */
+		virtual Real VolumetricKirchhoff(Real J) override;
 	};
 
 	/**
@@ -200,6 +206,8 @@ namespace SPH {
 		virtual Matd MuscleFiberDirection(size_t particle_index_i) { return f0f0_; };
 		/** compute the stress through Constitutive relation. */
 		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
+		/** Volumetric Kirchhoff stress determinate */
+		virtual Real VolumetricKirchhoff(Real J) override;
 
 		virtual Muscle* ThisObjectPtr() override { return this; };
 	protected:

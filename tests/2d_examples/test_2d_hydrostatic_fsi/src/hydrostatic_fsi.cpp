@@ -2,7 +2,7 @@
  * @file 	hydrostatic_fsi.cpp
  * @brief 	structure deformation due to hydrostatic pressue under gravity.
  * @details This is the one of the basic test cases 
- * for understanding SPH method for fluid-structure-interaction (FSI) similation.
+ * for understanding SPH method for fluid-structure-interaction (FSI) simulation.
  * @author 	Yujie Zhu, Chi Zhang and Xiangyu Hu
  * @version 0.1
  */
@@ -23,21 +23,21 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 Real dp_s = 0.5 * particle_spacing_ref;
 Vec2d offset = Vec2d(0.0, 0.0);
 //----------------------------------------------------------------------
-//	Define the corner point of water block geomerty.
+//	Define the corner point of water block geometry.
 //----------------------------------------------------------------------
 Vec2d DamP_lb(0.0, 0.0); 		/**< Left bottom. */
 Vec2d DamP_lt(0.0, Dam_H); 		/**< Left top. */
 Vec2d DamP_rt(Dam_L, Dam_H); 	/**< Right top. */
 Vec2d DamP_rb(Dam_L, 0.0); 		/**< Right bottom. */
 //----------------------------------------------------------------------
-//	Define the corner point of gate geomerty.
+//	Define the corner point of gate geometry.
 //----------------------------------------------------------------------
 Vec2d GateP_lb(-BW, -Gate_width);
 Vec2d GateP_lt(-BW, 0.0);
 Vec2d GateP_rt(Dam_L + BW, 0.0);
 Vec2d GateP_rb(Dam_L + BW, -Gate_width);
 //----------------------------------------------------------------------
-//	Define the geomerty for gate constrian.
+//	Define the geometry for gate constrian.
 //----------------------------------------------------------------------
 Vec2d ConstrainLP_lb(-BW, -Gate_width);
 Vec2d ConstrainLP_lt(-BW, 0.0);
@@ -136,7 +136,7 @@ public:
 	WallBoundary(SPHSystem& system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
-		/** Geomerty definition. */
+		/** Geometry definition. */
 		std::vector<Vecd> outer_wall_shape = createOuterWallShape();
 		std::vector<Vecd> inner_wall_shape = createInnerWallShape();
 		body_shape_ = new ComplexShape(body_name);
@@ -165,9 +165,9 @@ class Gate : public SolidBody
 {
 public:
 	Gate(SPHSystem& system, std::string body_name)
-		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 0))
+		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1.0))
 	{
-		/** Geomerty definition. */
+		/** Geometry definition. */
 		std::vector<Vecd> gate_shape = createGateShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(gate_shape, ShapeBooleanOps::add);
@@ -212,12 +212,12 @@ public:
 	GateConstrain(SolidBody* solid_body, std::string constrianed_region_name)
 		: BodyPartByParticle(solid_body, constrianed_region_name)
 	{
-		/* Geometry defination */
+		/* Geometry definition */
 		std::vector<Vecd> gate_constrain_shape_left = CreatGateConstrainShapeLeft();
 		body_part_shape_ = new ComplexShape(constrianed_region_name);
 		body_part_shape_->addAPolygon(gate_constrain_shape_left, ShapeBooleanOps::add);
 
-		/* Geometry defination */
+		/* Geometry definition */
 		std::vector<Vecd> gate_constrain_shape_right = CreatGateConstrainShapeRight();
 		body_part_shape_->addAPolygon(gate_constrain_shape_right, ShapeBooleanOps::add);
 
@@ -246,7 +246,7 @@ class Observer : public FictitiousBody
 {
 public:
 	Observer(SPHSystem& system, std::string body_name)
-		: FictitiousBody(system, body_name, new ParticleAdaptation(1.15, 0))
+		: FictitiousBody(system, body_name, new ParticleAdaptation(1.15, 1.0))
 	{
 		/** Add observation point. */
 		body_input_points_volumes_.push_back(std::make_pair(Vecd(0.5 * Dam_L, -0.5 * Gate_width), 0.0));
@@ -298,9 +298,9 @@ int main()
 	/** Initialize particle acceleration. */
 	TimeStepInitialization 	initialize_a_fluid_step(water_block, &gravity);
 	 /** Evaluation of fluid density by summation approach. */
-	fluid_dynamics::DensitySummationFreeSurfaceComplex		update_fluid_desnity(water_block_complex);
+	fluid_dynamics::DensitySummationFreeSurfaceComplex		update_fluid_density(water_block_complex);
 	/** Compute time step size without considering sound wave speed. */
-	fluid_dynamics::AdvectionTimeStepSize			get_fluid_adevction_time_step_size(water_block, U_max);
+	fluid_dynamics::AdvectionTimeStepSize			get_fluid_advection_time_step_size(water_block, U_max);
 	/** Compute time step size with considering sound wave speed. */
 	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
@@ -364,7 +364,7 @@ int main()
 	Real End_Time = 0.5;			/**< End time. */
 	Real D_Time = End_Time / 50.0;	/**< time stamps for output. */
 	Real Dt = 0.0;					/**< Default advection time step sizes. */
-	Real dt = 0.0; 					/**< Default accoustic time step sizes. */
+	Real dt = 0.0; 					/**< Default acoustic time step sizes. */
 	Real dt_s = 0.0;				/**< Default acoustic time step sizes for solid. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
@@ -373,14 +373,14 @@ int main()
 	//----------------------------------------------------------------------
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
-		Real integeral_time = 0.0;
+		Real integration_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
-		while (integeral_time < D_Time)
+		while (integration_time < D_Time)
 		{
 			/** Acceleration due to viscous force and gravity. */
 			initialize_a_fluid_step.parallel_exec();
-			Dt = get_fluid_adevction_time_step_size.parallel_exec();
-			update_fluid_desnity.parallel_exec();
+			Dt = get_fluid_advection_time_step_size.parallel_exec();
+			update_fluid_density.parallel_exec();
 			/** Update normal direction on elastic body. */
 			gate_update_normal.parallel_exec();
 			Real relaxation_time = 0.0;
@@ -406,7 +406,7 @@ int main()
 				}
 				average_velocity_and_acceleration.update_averages_.parallel_exec(dt);
 				relaxation_time += dt;
-				integeral_time += dt;
+				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
 
