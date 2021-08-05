@@ -212,7 +212,67 @@ StdLargeVec<Vecd>& pos_n = sim.get_solid_body_list_()[0].get()->getElasticSolidP
 	for (size_t index = 0; index < pos_0.size(); index++)
 	{
 		Vec3d end_pos = pos_0[index] + translation_vector;
-		EXPECT_NEAR(pos_n[index][2], end_pos[2], end_pos.norm() * 1e-2);
+		EXPECT_NEAR(pos_n[index][2], end_pos[2], end_pos.norm() * 1e-3); // 0.1% tolerance
+	}
+}
+
+TEST(StructuralSimulation, TranslateSolidBodyPartTuple)
+{
+	Real scale_stl = 0.001 / 4; // diameter of 0.025 m
+	Real resolution_mass = 8.0;
+	Real poisson = 0.35;
+	Real Youngs_modulus = 1e4;
+	Real physical_viscosity = 200;
+	Real rho_0 = 1000;
+	Real end_time = 0.1;
+
+	/** STL IMPORT PARAMETERS */
+	std::string relative_input_path = "./input/"; //path definition for linux
+	std::vector<std::string> imported_stl_list = { "ball_mass.stl" };
+	std::vector<Vec3d> translation_list = { Vec3d(0) };
+	std::vector<Real> resolution_list = { resolution_mass};
+	LinearElasticSolid material = LinearElasticSolid(rho_0, Youngs_modulus, poisson);
+	std::vector<LinearElasticSolid> material_model_list = { material };
+
+	TriangleMeshShape ball_mesh("./input/ball_mass.stl", translation_list[0] * scale_stl, scale_stl);
+	BoundingBox bbox = ball_mesh.findBounds();
+	Real z_limit = 0.75 * bbox.first[2] + 0.25 * bbox.second[2]; // only apply to the bottom 25% of the ball
+	bbox.second[2] = z_limit;
+	
+	StructuralSimulationInput input
+	{
+		relative_input_path,
+		imported_stl_list,
+		scale_stl,
+		translation_list,
+		resolution_list,
+		material_model_list,
+		physical_viscosity,
+		{}
+	};
+	Vecd translation_vector = Vec3d(0.0, 0.0, 0.02);
+	input.translation_solid_body_part_tuple_ = { TranslateSolidBodyPartTuple(0, end_time * 0.124, end_time * 0.751, translation_vector, bbox) };
+
+	//=================================================================================================//
+	TestStructuralSimulation sim (input);
+	sim.TestRunSimulation(end_time);
+	//=================================================================================================//
+
+	StdLargeVec<Vecd>& pos_0 = sim.get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_0_;
+	StdLargeVec<Vecd>& pos_n = sim.get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_n_;
+
+	for (size_t index = 0; index < pos_0.size(); index++)
+	{
+		if (pos_0[index][2] < z_limit)
+		{
+			Vec3d end_pos = pos_0[index] + translation_vector;
+			EXPECT_NEAR(pos_n[index][2], end_pos[2], end_pos.norm() * 0.015); // 1.5% tolerance
+		}
+		else
+		{
+			Real z_limit_end  = z_limit + translation_vector[2] * 0.95; // z_limit + translation_vector[2] = 0.01375 is the actual limit, but some particle go below this level
+			EXPECT_GT(pos_n[index][2], z_limit_end);
+		}
 	}
 }
 

@@ -167,6 +167,12 @@ class StructuralSimulation
 		// for TranslateSolidBodyPart
 		vector<shared_ptr<solid_dynamics::TranslateSolidBodyPart>> translation_solid_body_part_;
 		vector<TranslateSolidBodyPartTuple> translation_solid_body_part_tuple_;
+
+		// iterators
+		int iteration_;
+
+		// data storage
+		vector<Real> von_mises_stress_max_;
 		
 		// for constructor, the order is important
 		void scaleTranslationAndResolution();
@@ -205,10 +211,10 @@ class StructuralSimulation
 		void executeStressRelaxationSecondHalf(Real dt);
 		void executeUpdateCellLinkedList();
 		void executeContactUpdateConfiguration();
-		void runSimulationStep(int &ite, Real &dt, Real &integration_time);
 
-		// initialize simulation
 		void initializeSimulation();
+
+		void runSimulationStep(Real &dt, Real &integration_time);
 
 	public:
 		StructuralSimulation(StructuralSimulationInput& input);
