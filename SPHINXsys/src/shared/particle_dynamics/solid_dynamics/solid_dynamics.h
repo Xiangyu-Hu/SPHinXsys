@@ -260,6 +260,7 @@ namespace SPH
 			virtual ~TranslateSolidBody() {};
 		protected:
 			StdLargeVec<Vecd>& pos_n_, &pos_0_;
+			StdLargeVec<Vecd> pos_end_;
 			StdLargeVec<Vecd>& vel_n_, &dvel_dt_;
 			Real start_time_, end_time_;
 			Vecd translation_;

@@ -49,4 +49,7 @@ public:
     // for TranslateSolidBody
 	vector<shared_ptr<solid_dynamics::TranslateSolidBody>> get_translation_solid_body_(){ return translation_solid_body_; };
 	vector<TranslateSolidBodyTuple> get_translation_solid_body_tuple_(){ return translation_solid_body_tuple_; };
+
+	// get data
+	vector<Real> get_von_mises_stress_max_(){ return von_mises_stress_max_; };
 };

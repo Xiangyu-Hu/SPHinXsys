@@ -212,7 +212,7 @@ StdLargeVec<Vecd>& pos_n = sim.get_solid_body_list_()[0].get()->getElasticSolidP
 	for (size_t index = 0; index < pos_0.size(); index++)
 	{
 		Vec3d end_pos = pos_0[index] + translation_vector;
-		EXPECT_NEAR(pos_n[index][2], end_pos[2], end_pos.norm() * 1e-2);
+		EXPECT_NEAR(pos_n[index][2], end_pos[2], end_pos.norm() * 1e-3); // 0.1% tolerance
 	}
 }
 
@@ -251,7 +251,7 @@ TEST(StructuralSimulation, TranslateSolidBodyPartTuple)
 		{}
 	};
 	Vecd translation_vector = Vec3d(0.0, 0.0, 0.02);
-	input.translation_solid_body_part_tuple_ = { TranslateSolidBodyPartTuple(0, end_time * 0.124, end_time, translation_vector, bbox) };
+	input.translation_solid_body_part_tuple_ = { TranslateSolidBodyPartTuple(0, end_time * 0.124, end_time * 0.751, translation_vector, bbox) };
 
 	//=================================================================================================//
 	TestStructuralSimulation sim (input);
@@ -266,7 +266,7 @@ TEST(StructuralSimulation, TranslateSolidBodyPartTuple)
 		if (pos_0[index][2] < z_limit)
 		{
 			Vec3d end_pos = pos_0[index] + translation_vector;
-			EXPECT_NEAR(pos_n[index][2], end_pos[2], end_pos.norm() * 0.05);
+			EXPECT_NEAR(pos_n[index][2], end_pos[2], end_pos.norm() * 0.015); // 1.5% tolerance
 		}
 		else
 		{

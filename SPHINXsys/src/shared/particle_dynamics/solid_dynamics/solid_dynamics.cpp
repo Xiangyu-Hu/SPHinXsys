@@ -333,7 +333,7 @@ namespace SPH
 		//=================================================================================================//
 		Vecd PositionScaleSolidBody::getDisplacement(size_t index_i, Real dt)
 		{
-			Vecd displacement;
+			Vecd displacement(0);
 			try {
 				// displacement from the initial position
 				Vecd pos_final = pos_0_center_ + end_scale_ * (pos_0_[index_i] - pos_0_center_);
@@ -388,21 +388,22 @@ namespace SPH
 		TranslateSolidBody::
 			TranslateSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd translation):
 			PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
-			pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
+			pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_), pos_end_({}),
 			vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
 			start_time_(start_time), end_time_(end_time), translation_(translation)
-		{}
+		{
+			// record the particle positions that should be reached at end time
+			for (size_t index_i = 0; index_i < pos_n_.size(); index_i++)
+			{
+				pos_end_.push_back(pos_n_[index_i] + translation_);
+			}
+		}
 		//=================================================================================================//
 		Vecd TranslateSolidBody::getDisplacement(size_t index_i, Real dt)
 		{
 			Vecd displacement(0);
-			// if we are out of the time interval, return 0
-			if (GlobalStaticVariables::physical_time_ < start_time_ || GlobalStaticVariables::physical_time_ > end_time_) return displacement;
 			try {
-				// distance left to reach the final position
-				Vecd translation_left = translation_ * (end_time_ - GlobalStaticVariables::physical_time_) / (end_time_ - start_time_);
-				// displacement is a portion of distance left, scaled by dt and remaining time
-				displacement = translation_left * dt / (end_time_ - GlobalStaticVariables::physical_time_);
+				displacement = (pos_end_[index_i] - pos_n_[index_i]) * dt / (end_time_ - GlobalStaticVariables::physical_time_);
 			}
 			catch(out_of_range& e){
 				throw runtime_error(string("TranslateSolidBody::getDisplacement: particle index out of bounds") + to_string(index_i));
@@ -416,9 +417,8 @@ namespace SPH
 			if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
 			{
 				try {
-					pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
+					pos_n_[index_i] = pos_n_[index_i] + 0.5 * getDisplacement(index_i, dt); // displacement from the initial position, 0.5x because it's executed twice
 					vel_n_[index_i] = getVelocity();
-					dvel_dt_[index_i] = getAcceleration();
 				}
 				catch(out_of_range& e){
 					throw runtime_error(string("TranslateSolidBody::Update: particle index out of bounds") + to_string(index_i));
@@ -433,19 +433,24 @@ namespace SPH
 		//=================================================================================================//
 		void TranslateSolidBodyPart::Update(size_t index_i, Real dt)
 		{
-			// only apply in the defined time period
-			if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
-			{
-				try {
-					Vecd point = pos_0_[index_i];
-					if (checkIfPointInBoundingBox(point, bbox_))
+
+			try {
+				Vecd point = pos_0_[index_i];
+				if (checkIfPointInBoundingBox(point, bbox_))
+				{
+					if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
 					{
 						vel_n_[index_i] = getDisplacement(index_i, dt) / dt;
 					}
+					else
+					{
+						vel_n_[index_i] = 0;
+						dvel_dt_[index_i] = 0;
+					}
 				}
-				catch(out_of_range& e){
-					throw runtime_error(string("TranslateSolidBodyPart::Update: particle index out of bounds") + to_string(index_i));
-				}
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("TranslateSolidBodyPart::Update: particle index out of bounds") + to_string(index_i));
 			}
 		}
 		//=================================================================================================//
