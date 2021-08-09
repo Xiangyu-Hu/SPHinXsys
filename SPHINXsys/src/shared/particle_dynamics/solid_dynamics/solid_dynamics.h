@@ -449,7 +449,7 @@ namespace SPH
 			public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
 		public:
-			SurfacePressureFromSource(SPHBody* body, BodyPartByParticle* body_part, Real pressure);
+			SurfacePressureFromSource(SPHBody* body, BodyPartByParticle* body_part, Real pressure, Vecd source_point);
 			virtual ~SurfacePressureFromSource() {};
 		protected:
 			StdLargeVec<Vecd>& pos_0_,& n_,& dvel_dt_prior_;
