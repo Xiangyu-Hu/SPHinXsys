@@ -680,8 +680,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		SurfacePressureFromSource::
-			SurfacePressureFromSource(SPHBody* body, BodyPartByParticle* body_part, Real pressure, Vecd source_point)
-			: PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
+			SurfacePressureFromSource(SPHBody* body, Real pressure, Vecd source_point)
+			: ParticleDynamicsSimple(body), SolidDataSimple(body),
 			  pos_0_(particles_->pos_0_),
 			  n_(particles_->n_),
 			  dvel_dt_prior_(particles_->dvel_dt_prior_),
@@ -709,6 +709,10 @@ namespace SPH
 				Real dot_product = 0.0;
 				for (int i = 0; i < normal.size(); i++) dot_product += vector_to_particle[i] * normal[i];
 				Real cos_teta = dot_product / (normal.norm() * vector_to_particle.norm());
+
+				std::cout << "dot_product: " << dot_product << std::endl;
+				std::cout << "normal.norm(): " << normal.norm() << std::endl;
+				std::cout << "vector_to_particle.norm(): " << vector_to_particle.norm() << std::endl;
 				
 				// if the angle is less than 90°, we apply the pressure to the surface particle
 				if (cos_teta > 0.0) apply_pressure_to_particle_[particle_i] = true;

@@ -18,6 +18,7 @@ using namespace std;
 using GravityPair = pair<int, Vec3d>;
 using AccelTuple = tuple<int, BoundingBox, Vec3d>;
 using ForceTuple = tuple<int, BoundingBox, Vec3d, Real>;
+using PressureTuple = tuple<int, Real, Vec3d>;
 using SpringDamperTuple = tuple<int, Vec3d, Real>;
 using ConstrainedRegionPair = pair<int, BoundingBox>;
 using PositionSolidBodyTuple = tuple<int, Real, Real, Vec3d>;
@@ -97,6 +98,7 @@ public:
 	vector<GravityPair> non_zero_gravity_;
 	vector<AccelTuple> acceleration_bounding_box_tuple_;
 	vector<ForceTuple> force_in_body_region_tuple_;
+	vector<PressureTuple> surface_pressure_tuple_;
 	vector<SpringDamperTuple> spring_damper_tuple_;
 	vector<int> body_indeces_fixed_constraint_;
 	vector<ConstrainedRegionPair> body_indeces_fixed_constraint_region_;
@@ -156,6 +158,9 @@ class StructuralSimulation
 		// for ForceInBodyRegion
 		vector<shared_ptr<solid_dynamics::ForceInBodyRegion>> force_in_body_region_;
 		vector<ForceTuple> force_in_body_region_tuple_;
+		// for SurfacePressureFromSource
+		vector<shared_ptr<solid_dynamics::SurfacePressureFromSource>> surface_pressure_;
+		vector<PressureTuple> surface_pressure_tuple_;
 		// for SpringDamperConstraintParticleWise
 		vector<shared_ptr<solid_dynamics::SpringDamperConstraintParticleWise>> spring_damper_constraint_;
 		vector<SpringDamperTuple> spring_damper_tuple_;
@@ -198,6 +203,7 @@ class StructuralSimulation
 		void initializeGravity();
 		void initializeAccelerationForBodyPartInBoundingBox();
 		void initializeForceInBodyRegion();
+		void initializeSurfacePressure();
 		void initializeSpringDamperConstraintParticleWise();
 		void initializeConstrainSolidBody();
 		void initializeConstrainSolidBodyRegion();
@@ -211,6 +217,7 @@ class StructuralSimulation
 		void executeinitializeATimeStep();
 		void executeAccelerationForBodyPartInBoundingBox();
 		void executeForceInBodyRegion();
+		void executeSurfacePressure();
 		void executeSpringDamperConstraintParticleWise();
 		void executeContactDensitySummation();
 		void executeContactForce();

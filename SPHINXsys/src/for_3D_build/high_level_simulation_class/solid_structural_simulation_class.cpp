@@ -134,6 +134,7 @@ StructuralSimulationInput::StructuralSimulationInput(
 	non_zero_gravity_ = {};
 	acceleration_bounding_box_tuple_ = {};
 	force_in_body_region_tuple_ = {};
+	surface_pressure_tuple_ = {};
 	spring_damper_tuple_ = {};
 	body_indeces_fixed_constraint_ = {};
 	body_indeces_fixed_constraint_region_ = {};
@@ -171,6 +172,7 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	non_zero_gravity_(input.non_zero_gravity_),
 	acceleration_bounding_box_tuple_(input.acceleration_bounding_box_tuple_),
 	force_in_body_region_tuple_(input.force_in_body_region_tuple_),
+	surface_pressure_tuple_(input.surface_pressure_tuple_),
 	spring_damper_tuple_(input.spring_damper_tuple_),
 	body_indeces_fixed_constraint_(input.body_indeces_fixed_constraint_),
 	body_indeces_fixed_constraint_region_(input.body_indeces_fixed_constraint_region_),
@@ -206,6 +208,7 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	initializeGravity();
 	initializeAccelerationForBodyPartInBoundingBox();
 	initializeForceInBodyRegion();
+	initializeSurfacePressure();
 	initializeSpringDamperConstraintParticleWise();
 	initializeConstrainSolidBody();
 	initializeConstrainSolidBodyRegion();
@@ -399,6 +402,19 @@ void StructuralSimulation::initializeForceInBodyRegion()
     }
 }
 
+void StructuralSimulation::initializeSurfacePressure()
+{	
+	surface_pressure_ = {};
+	for (size_t i = 0; i < surface_pressure_tuple_.size(); i++)
+	{
+		int body_index = get<0>(surface_pressure_tuple_[i]);
+		Real pressure = get<1>(surface_pressure_tuple_[i]);
+		Vec3d point = get<2>(surface_pressure_tuple_[i]);
+
+		surface_pressure_.emplace_back(make_shared<solid_dynamics::SurfacePressureFromSource>(solid_body_list_[body_index]->getImportedModel(), pressure, point));
+    }
+}
+
 void StructuralSimulation::initializeSpringDamperConstraintParticleWise()
 {	
 	spring_damper_constraint_ = {};
@@ -539,6 +555,14 @@ void StructuralSimulation::executeForceInBodyRegion()
 	for (size_t i = 0; i < force_in_body_region_.size(); i++)
 	{
 		force_in_body_region_[i]->parallel_exec();
+	}
+}
+
+void StructuralSimulation::executeSurfacePressure()
+{
+	for (size_t i = 0; i < surface_pressure_.size(); i++)
+	{
+		surface_pressure_[i]->parallel_exec();
 	}
 }
 
@@ -728,6 +752,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 	executeinitializeATimeStep();
 	executeAccelerationForBodyPartInBoundingBox();
 	executeForceInBodyRegion();
+	executeSurfacePressure();
 	executeSpringDamperConstraintParticleWise();
 
 	/** CONTACT */
