@@ -679,6 +679,34 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
+		SurfacePressureFromSource::
+			SurfacePressureFromSource(SPHBody* body, BodyPartByParticle* body_part, Real pressure)
+			: PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
+			  pos_0_(particles_->pos_0_),
+			  n_(particles_->n_),
+			  dvel_dt_prior_(particles_->dvel_dt_prior_),
+			  mass_(particles_->mass_),
+			  pressure_(pressure),
+			  apply_pressure_to_particle_({})
+		{
+			ShapeSurface body_surface_layer_(body);
+		}
+		//=================================================================================================//
+		void SurfacePressureFromSource::setupDynamics(Real dt)
+		{
+			particles_->total_ghost_particles_ = 0;
+		}
+		//=================================================================================================//
+		void SurfacePressureFromSource::Update(size_t index_i, Real dt)
+		{
+			try{
+				dvel_dt_prior_[index_i] = pressure_;
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("SurfacePressureFromSource::Update: particle index out of bounds") + to_string(index_i));
+			}
+		}
+		//=================================================================================================//
 		ElasticDynamicsInitialCondition::
 			ElasticDynamicsInitialCondition(SolidBody *body)
 			: ParticleDynamicsSimple(body),
