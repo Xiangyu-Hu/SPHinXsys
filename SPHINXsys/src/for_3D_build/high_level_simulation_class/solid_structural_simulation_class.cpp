@@ -133,8 +133,10 @@ StructuralSimulationInput::StructuralSimulationInput(
 	// boundary conditions
 	non_zero_gravity_ = {};
 	acceleration_bounding_box_tuple_ = {};
+	force_in_body_region_tuple_ = {};
 	spring_damper_tuple_ = {};
 	body_indeces_fixed_constraint_ = {};
+	body_indeces_fixed_constraint_region_ = {};
 	position_solid_body_tuple_ = {};
 	position_scale_solid_body_tuple_ = {};
 	translation_solid_body_tuple_ = {};
@@ -168,8 +170,10 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	// optional: boundary conditions
 	non_zero_gravity_(input.non_zero_gravity_),
 	acceleration_bounding_box_tuple_(input.acceleration_bounding_box_tuple_),
+	force_in_body_region_tuple_(input.force_in_body_region_tuple_),
 	spring_damper_tuple_(input.spring_damper_tuple_),
 	body_indeces_fixed_constraint_(input.body_indeces_fixed_constraint_),
+	body_indeces_fixed_constraint_region_(input.body_indeces_fixed_constraint_region_),
 	position_solid_body_tuple_(input.position_solid_body_tuple_),
 	position_scale_solid_body_tuple_(input.position_scale_solid_body_tuple_),
 	translation_solid_body_tuple_(input.translation_solid_body_tuple_),
@@ -201,7 +205,9 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	// boundary conditions
 	initializeGravity();
 	initializeAccelerationForBodyPartInBoundingBox();
+	initializeForceInBodyRegion();
 	initializeSpringDamperConstraintParticleWise();
+	initializeConstrainSolidBody();
 	initializeConstrainSolidBodyRegion();
 	initializePositionSolidBody();
 	initializePositionScaleSolidBody();
@@ -366,6 +372,33 @@ void StructuralSimulation::initializeAccelerationForBodyPartInBoundingBox()
     }
 }
 
+void StructuralSimulation::initializeForceInBodyRegion()
+{	
+	force_in_body_region_ = {};
+	for (size_t i = 0; i < force_in_body_region_tuple_.size(); i++)
+	{
+		int body_index = get<0>(force_in_body_region_tuple_[i]);
+		BoundingBox bbox = get<1>(force_in_body_region_tuple_[i]);
+		Vec3d force = get<2>(force_in_body_region_tuple_[i]);
+		Real end_time = get<3>(force_in_body_region_tuple_[i]);
+
+		// get the length of each side to create the box
+		Real x_side = bbox.second[0] - bbox.first[0];
+		Real y_side = bbox.second[1] - bbox.first[1];
+		Real z_side = bbox.second[2] - bbox.first[2];
+		Vec3d halfsize_bbox(0.5 * x_side, 0.5 * y_side, 0.5 * z_side);
+		// get the center point for translation from the origin
+		Vec3d center = (bbox.second + bbox.first) * 0.5;
+		// SimTK geometric modeling resolution
+		int resolution(20);
+		// create the triangle mesh of the box
+		TriangleMeshShape* tmesh = new TriangleMeshShape(halfsize_bbox, resolution, center);
+
+		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(solid_body_list_[body_index]->getImportedModel(), imported_stl_list_[body_index], tmesh);
+		force_in_body_region_.emplace_back(make_shared<solid_dynamics::ForceInBodyRegion>(solid_body_list_[body_index]->getImportedModel(), bp, force, end_time));
+    }
+}
+
 void StructuralSimulation::initializeSpringDamperConstraintParticleWise()
 {	
 	spring_damper_constraint_ = {};
@@ -376,14 +409,39 @@ void StructuralSimulation::initializeSpringDamperConstraintParticleWise()
     }
 }
 
-void StructuralSimulation::initializeConstrainSolidBodyRegion()
+void StructuralSimulation::initializeConstrainSolidBody()
 {	
-	fixed_constraint_ = {};
+	fixed_constraint_body_ = {};
 	for (size_t i = 0; i < body_indeces_fixed_constraint_.size(); i++)
 	{
 		int body_index = body_indeces_fixed_constraint_[i];
 		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(solid_body_list_[body_index]->getImportedModel(), imported_stl_list_[body_index], &body_mesh_list_[body_index]);
-		fixed_constraint_.emplace_back(make_shared<solid_dynamics::ConstrainSolidBodyRegion>(solid_body_list_[body_index]->getImportedModel(), bp));
+		fixed_constraint_body_.emplace_back(make_shared<solid_dynamics::ConstrainSolidBodyRegion>(solid_body_list_[body_index]->getImportedModel(), bp));
+	}
+}
+
+void StructuralSimulation::initializeConstrainSolidBodyRegion()
+{	
+	fixed_constraint_region_ = {};
+	for (size_t i = 0; i < body_indeces_fixed_constraint_region_.size(); i++)
+	{
+		int body_index = body_indeces_fixed_constraint_region_[i].first;
+		BoundingBox bbox = body_indeces_fixed_constraint_region_[i].second;
+
+		// get the length of each side to create the box
+		Real x_side = bbox.second[0] - bbox.first[0];
+		Real y_side = bbox.second[1] - bbox.first[1];
+		Real z_side = bbox.second[2] - bbox.first[2];
+		Vec3d halfsize_bbox(0.5 * x_side, 0.5 * y_side, 0.5 * z_side);
+		// get the center point for translation from the origin
+		Vec3d center = (bbox.second + bbox.first) * 0.5;
+		// SimTK geometric modeling resolution
+		int resolution(20);
+		// create the triangle mesh of the box
+		TriangleMeshShape* tmesh = new TriangleMeshShape(halfsize_bbox, resolution, center);
+
+		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(solid_body_list_[body_index]->getImportedModel(), imported_stl_list_[body_index], tmesh);
+		fixed_constraint_region_.emplace_back(make_shared<solid_dynamics::ConstrainSolidBodyRegion>(solid_body_list_[body_index]->getImportedModel(), bp));
 	}
 }
 
@@ -476,6 +534,14 @@ void StructuralSimulation::executeAccelerationForBodyPartInBoundingBox()
 	}
 }
 
+void StructuralSimulation::executeForceInBodyRegion()
+{
+	for (size_t i = 0; i < force_in_body_region_.size(); i++)
+	{
+		force_in_body_region_[i]->parallel_exec();
+	}
+}
+
 void StructuralSimulation::executeSpringDamperConstraintParticleWise()
 {
 	for (size_t i = 0; i < spring_damper_constraint_.size(); i++)
@@ -542,11 +608,19 @@ void StructuralSimulation::executeStressRelaxationFirstHalf(Real dt)
 	}
 }
 
+void StructuralSimulation::executeConstrainSolidBody()
+{
+	for (size_t i = 0; i < fixed_constraint_body_.size(); i++)
+	{
+		fixed_constraint_body_[i]->parallel_exec();
+	}
+}
+
 void StructuralSimulation::executeConstrainSolidBodyRegion()
 {
-	for (size_t i = 0; i < fixed_constraint_.size(); i++)
+	for (size_t i = 0; i < fixed_constraint_region_.size(); i++)
 	{
-		fixed_constraint_[i]->parallel_exec();
+		fixed_constraint_region_[i]->parallel_exec();
 	}
 }
 
@@ -653,6 +727,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 	// force (acceleration) based
 	executeinitializeATimeStep();
 	executeAccelerationForBodyPartInBoundingBox();
+	executeForceInBodyRegion();
 	executeSpringDamperConstraintParticleWise();
 
 	/** CONTACT */
@@ -662,6 +737,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 	/** STRESS RELAXATOIN, DAMPING, POSITIONAL CONSTRAINTS */
 	executeStressRelaxationFirstHalf(dt);
 
+	executeConstrainSolidBody();
 	executeConstrainSolidBodyRegion();
 	executePositionSolidBody(dt);
 	executePositionScaleSolidBody(dt);
@@ -671,6 +747,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 
 	executeDamping(dt);
 
+	executeConstrainSolidBody();
 	executeConstrainSolidBodyRegion();
 	executePositionSolidBody(dt);
 	executePositionScaleSolidBody(dt);

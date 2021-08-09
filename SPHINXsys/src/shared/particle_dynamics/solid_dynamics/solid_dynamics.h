@@ -422,6 +422,25 @@ namespace SPH
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
+		/**
+		* @class ForceInBodyRegion
+		* @brief ForceInBodyRegion, distributes the force vector as acceleration among the particles in a given body part
+		*/
+		class ForceInBodyRegion :
+			public PartSimpleDynamicsByParticle, public SolidDataSimple
+		{
+		public:
+			ForceInBodyRegion(SPHBody* body, BodyPartByParticle* body_part, Vecd force, Real end_time);
+			virtual ~ForceInBodyRegion() {};
+		protected:
+			StdLargeVec<Vecd>& pos_0_,& dvel_dt_prior_;
+			StdLargeVec<Real>& mass_;
+			Vecd acceleration_;
+			Real end_time_;
+			virtual void setupDynamics(Real dt = 0.0) override;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
 		//----------------------------------------------------------------------
 		//		for elastic solid dynamics 
 		//----------------------------------------------------------------------

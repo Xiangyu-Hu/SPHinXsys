@@ -37,8 +37,8 @@ public:
 	// for SpringDamperConstraintParticleWise
 	vector<shared_ptr<solid_dynamics::SpringDamperConstraintParticleWise>> get_spring_damper_constraint_(){ return spring_damper_constraint_; };
 	vector<SpringDamperTuple> get_spring_damper_tuple_(){ return spring_damper_tuple_; };
-	// for ConstrainSolidBodyRegion
-	vector<shared_ptr<solid_dynamics::ConstrainSolidBodyRegion>> get_fixed_constraint_(){ return fixed_constraint_; };
+	// for ConstrainSolidBody
+	vector<shared_ptr<solid_dynamics::ConstrainSolidBodyRegion>> get_fixed_constraint_(){ return fixed_constraint_body_; };
 	vector<int> get_body_indeces_fixed_constraint_(){ return body_indeces_fixed_constraint_; };
 	// for PositionSolidBody
 	vector<shared_ptr<solid_dynamics::PositionSolidBody>> get_position_solid_body_(){ return position_solid_body_; };
@@ -51,5 +51,35 @@ public:
 	vector<TranslateSolidBodyTuple> get_translation_solid_body_tuple_(){ return translation_solid_body_tuple_; };
 
 	// get data
-	vector<Real> get_von_mises_stress_max_(){ return von_mises_stress_max_; };
+	vector<Real> getVonMisesStressMax(){ return von_mises_stress_max_; };
+	Real getVonMisesStressCloseToPoint(int body_index, Vec3d point)
+	{
+		// find particle id closest to point
+		StdLargeVec<Vecd>& pos_0 = solid_body_list_[body_index].get()->getElasticSolidParticles()->pos_0_;
+		size_t particle_id = 0;
+		Real min_distance = (pos_0[0] - point).norm();
+		for (size_t i = 0; i < pos_0.size(); i++)
+		{
+			Real distance = (pos_0[i] - point).norm();
+			if (min_distance > distance)
+			{
+				min_distance = distance;
+				particle_id = i;
+			}
+		}
+		Real stress = solid_body_list_[body_index].get()->getElasticSolidParticles()->von_Mises_stress(particle_id);
+		return stress;
+	};
+	Real getMaxDisplacement(int body_index)
+	{
+		StdLargeVec<Vecd>& pos_0 = solid_body_list_[body_index].get()->getElasticSolidParticles()->pos_0_;
+		StdLargeVec<Vecd>& pos_n = solid_body_list_[body_index].get()->getElasticSolidParticles()->pos_n_;
+		Real displ_max = 0;
+		for (size_t i = 0; i < pos_0.size(); i++)
+		{
+			Real displ = (pos_n[i] - pos_0[i]).norm();
+			if (displ > displ_max) displ_max = displ;
+		}
+		return displ_max;
+	}
 };

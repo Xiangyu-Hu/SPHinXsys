@@ -448,7 +448,6 @@ namespace SPH
 		//=================================================================================================//
 		void TranslateSolidBodyPart::Update(size_t index_i, Real dt)
 		{
-
 			try {
 				Vecd point = pos_0_[index_i];
 				if (checkIfPointInBoundingBox(point, bbox_))
@@ -633,13 +632,50 @@ namespace SPH
 		//=================================================================================================//
 		void AccelerationForBodyPartInBoundingBox::Update(size_t index_i, Real dt)
 		{
-			if (pos_n_.size() > index_i)
-			{
+			try{
 				Vecd point = pos_n_[index_i];
 				if (checkIfPointInBoundingBox(point, bounding_box_))
 				{
 					dvel_dt_prior_[index_i] += acceleration_;
 				}
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("AccelerationForBodyPartInBoundingBox::Update: particle index out of bounds") + to_string(index_i));
+			}
+		}
+		//=================================================================================================//
+		ForceInBodyRegion::
+			ForceInBodyRegion(SPHBody *body, BodyPartByParticle *body_part, Vecd force, Real end_time)
+			: PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
+			  pos_0_(particles_->pos_0_),
+			  dvel_dt_prior_(particles_->dvel_dt_prior_),
+			  mass_(particles_->mass_),
+			  acceleration_(0),
+			  end_time_(end_time)
+		{
+			// calculate total mass
+			Real total_mass = 0.0;
+			for (size_t i = 0; i < particles_->mass_.size(); i++)
+			{
+				total_mass += particles_->mass_[i];
+			}
+			// calculate acceleration
+			acceleration_ = force / total_mass;
+		}
+		//=================================================================================================//
+		void ForceInBodyRegion::setupDynamics(Real dt)
+		{
+			particles_->total_ghost_particles_ = 0;
+		}
+		//=================================================================================================//
+		void ForceInBodyRegion::Update(size_t index_i, Real dt)
+		{
+			try{
+				Real time_factor = std::min(GlobalStaticVariables::physical_time_ / end_time_, 1.0);
+				dvel_dt_prior_[index_i] = acceleration_ * time_factor;
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("ForceInBodyRegion::Update: particle index out of bounds") + to_string(index_i));
 			}
 		}
 		//=================================================================================================//
