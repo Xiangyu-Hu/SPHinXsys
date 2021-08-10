@@ -293,6 +293,7 @@ void StructuralSimulation::createParticleAdaptationList()
 void StructuralSimulation::initializeElasticSolidBodies()
 {
 	solid_body_list_ = {};
+	particle_normal_update_ = {};
 	for (size_t i = 0; i < body_mesh_list_.size(); i++)
 	{
 		solid_body_list_.emplace_back(make_shared<SolidBodyForSimulation>(system_, imported_stl_list_[i], body_mesh_list_[i], particle_adaptation_list_[i], physical_viscosity_, material_model_list_[i]));
@@ -300,6 +301,10 @@ void StructuralSimulation::initializeElasticSolidBodies()
 		{
 			relaxParticlesSingleResolution(&in_output_, write_particle_relaxation_data_, solid_body_list_[i]->getImportedModel(), solid_body_list_[i]->getElasticSolidParticles(), solid_body_list_[i]->getInnerBodyRelation());
 		}
+
+		// update normal direction of particles
+		solid_body_list_[i]->getElasticSolidParticles()->initializeNormalDirectionFromGeometry();
+		particle_normal_update_.emplace_back(make_shared<solid_dynamics::UpdateElasticNormalDirection>(solid_body_list_[i]->getImportedModel()));
 	}
 }
 
@@ -410,8 +415,9 @@ void StructuralSimulation::initializeSurfacePressure()
 		int body_index = get<0>(surface_pressure_tuple_[i]);
 		Real pressure = get<1>(surface_pressure_tuple_[i]);
 		Vec3d point = get<2>(surface_pressure_tuple_[i]);
+		Real end_time = get<3>(surface_pressure_tuple_[i]);
 
-		surface_pressure_.emplace_back(make_shared<solid_dynamics::SurfacePressureFromSource>(solid_body_list_[body_index]->getImportedModel(), pressure, point));
+		surface_pressure_.emplace_back(make_shared<solid_dynamics::SurfacePressureFromSource>(solid_body_list_[body_index]->getImportedModel(), pressure, point, end_time));
     }
 }
 
@@ -531,6 +537,14 @@ void StructuralSimulation::executeCorrectConfiguration()
 	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{
 		solid_body_list_[i]->getCorrectConfiguration()->parallel_exec();
+	}
+}
+
+void StructuralSimulation::executeUpdateElasticNormalDirection()
+{
+	for (size_t i = 0; i < particle_normal_update_.size(); i++)
+	{
+		particle_normal_update_[i]->parallel_exec();
 	}
 }
 
@@ -746,6 +760,9 @@ void StructuralSimulation::initializeSimulation()
 void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 {
 	if (iteration_ % 100 == 0) cout << "N=" << iteration_ << " Time: " << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
+
+	/** UPDATE NORMAL DIRECTIONS */
+	executeUpdateElasticNormalDirection();
 
 	/** ACTIVE BOUNDARY CONDITIONS */
 	// force (acceleration) based

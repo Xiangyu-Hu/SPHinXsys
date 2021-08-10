@@ -18,7 +18,7 @@ using namespace std;
 using GravityPair = pair<int, Vec3d>;
 using AccelTuple = tuple<int, BoundingBox, Vec3d>;
 using ForceTuple = tuple<int, BoundingBox, Vec3d, Real>;
-using PressureTuple = tuple<int, Real, Vec3d>;
+using PressureTuple = tuple<int, Real, Vec3d, Real>;
 using SpringDamperTuple = tuple<int, Vec3d, Real>;
 using ConstrainedRegionPair = pair<int, BoundingBox>;
 using PositionSolidBodyTuple = tuple<int, Real, Real, Vec3d>;
@@ -144,6 +144,7 @@ class StructuralSimulation
 		vector<TriangleMeshShape> body_mesh_list_;
 		vector<ParticleAdaptation> particle_adaptation_list_;
 		vector<shared_ptr<SolidBodyForSimulation>> solid_body_list_;
+		vector<shared_ptr<solid_dynamics::UpdateElasticNormalDirection>> particle_normal_update_;
 
 		vector<shared_ptr<SolidBodyRelationContact>> contact_list_;
 		vector<shared_ptr<solid_dynamics::ContactDensitySummation>> contact_density_list_;
@@ -214,6 +215,7 @@ class StructuralSimulation
 
 		// for runSimulation, the order is important
 		void executeCorrectConfiguration();
+		void executeUpdateElasticNormalDirection();
 		void executeinitializeATimeStep();
 		void executeAccelerationForBodyPartInBoundingBox();
 		void executeForceInBodyRegion();

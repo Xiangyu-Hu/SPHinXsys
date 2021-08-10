@@ -449,12 +449,13 @@ namespace SPH
 			public ParticleDynamicsSimple, public SolidDataSimple
 		{
 		public:
-			SurfacePressureFromSource(SPHBody* body, Real pressure, Vecd source_point);
+			SurfacePressureFromSource(SPHBody* body, Real pressure, Vecd source_point, Real end_time);
 			virtual ~SurfacePressureFromSource() {};
 		protected:
 			StdLargeVec<Vecd>& pos_0_,& n_,& dvel_dt_prior_;
 			StdLargeVec<Real>& mass_;
 			Real pressure_;
+			Real end_time_;
 			StdLargeVec<bool> apply_pressure_to_particle_;
 			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
