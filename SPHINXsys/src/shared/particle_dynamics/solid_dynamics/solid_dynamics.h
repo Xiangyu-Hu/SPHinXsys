@@ -451,6 +451,8 @@ namespace SPH
 		public:
 			SurfacePressureFromSource(SPHBody* body, Real pressure, Vecd source_point, Real end_time);
 			virtual ~SurfacePressureFromSource() {};
+
+			StdLargeVec<bool>& GetApplyPressureToParticle(){ return apply_pressure_to_particle_; }
 		protected:
 			StdLargeVec<Vecd>& pos_0_,& n_,& dvel_dt_prior_;
 			StdLargeVec<Real>& mass_;
