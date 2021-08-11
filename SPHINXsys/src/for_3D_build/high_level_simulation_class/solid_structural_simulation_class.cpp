@@ -771,6 +771,8 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 	executeForceInBodyRegion();
 	executeSurfacePressure();
 	executeSpringDamperConstraintParticleWise();
+	// velocity based
+	executeTranslateSolidBodyPart(dt);
 
 	/** CONTACT */
 	executeContactDensitySummation();
