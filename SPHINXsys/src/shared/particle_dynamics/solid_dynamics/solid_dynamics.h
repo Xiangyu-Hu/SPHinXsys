@@ -441,6 +441,28 @@ namespace SPH
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
+		/**
+		* @class SurfacePressureFromSource
+		* @brief SurfacePressureFromSource, applies pressure on the surface particles coming from a source point
+		*/
+		class SurfacePressureFromSource :
+			public ParticleDynamicsSimple, public SolidDataSimple
+		{
+		public:
+			SurfacePressureFromSource(SPHBody* body, Real pressure, Vecd source_point, Real end_time);
+			virtual ~SurfacePressureFromSource() {};
+
+			StdLargeVec<bool>& GetApplyPressureToParticle(){ return apply_pressure_to_particle_; }
+		protected:
+			StdLargeVec<Vecd>& pos_0_,& n_,& dvel_dt_prior_;
+			StdLargeVec<Real>& mass_;
+			Real pressure_;
+			Real end_time_;
+			StdLargeVec<bool> apply_pressure_to_particle_;
+			virtual void setupDynamics(Real dt = 0.0) override;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
 		//----------------------------------------------------------------------
 		//		for elastic solid dynamics 
 		//----------------------------------------------------------------------

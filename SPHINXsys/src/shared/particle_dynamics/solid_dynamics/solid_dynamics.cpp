@@ -679,6 +679,73 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
+		SurfacePressureFromSource::
+			SurfacePressureFromSource(SPHBody* body, Real pressure, Vecd source_point, Real end_time)
+			: ParticleDynamicsSimple(body), SolidDataSimple(body),
+			  pos_0_(particles_->pos_0_),
+			  n_(particles_->n_),
+			  dvel_dt_prior_(particles_->dvel_dt_prior_),
+			  mass_(particles_->mass_),
+			  pressure_(pressure),
+			  end_time_(end_time),
+			  apply_pressure_to_particle_({})
+		{
+			// set apply_pressure_to_particle_ to false for each particle
+			for (size_t i = 0; i < particles_->pos_0_.size(); i++)
+			{
+				apply_pressure_to_particle_.push_back(false);
+			}
+			// get the surface layer of particles
+			ShapeSurface surface_layer_(body);
+			// select which paricles the pressure is applied to
+			for (size_t i = 0; i < surface_layer_.body_part_particles_.size(); i++)
+			{
+				// index of surface particle
+				size_t particle_i = surface_layer_.body_part_particles_[i];
+				// vector to the source point from the particle
+				Vecd vector_to_particle = source_point - particles_->pos_0_[particle_i];
+				// normal of the particle
+				Vecd normal = particles_->n_0_[particle_i];
+
+				// get the cos of the angle between the vector and the normal
+				Real dot_product = 0.0;
+				for (int j = 0; j < normal.size(); j++) dot_product += vector_to_particle[j] * normal[j];
+				Real cos_teta = dot_product / vector_to_particle.norm(); // normal.norm() = 1
+				
+				// if the angle is less than 90°, we apply the pressure to the surface particle
+				if (cos_teta > 1e-3)
+				{
+					apply_pressure_to_particle_[particle_i] = true;
+				}
+			}
+		}
+		//=================================================================================================//
+		void SurfacePressureFromSource::setupDynamics(Real dt)
+		{
+			particles_->total_ghost_particles_ = 0;
+		}
+		//=================================================================================================//
+		void SurfacePressureFromSource::Update(size_t index_i, Real dt)
+		{
+			try{
+				if (apply_pressure_to_particle_[index_i])
+				{
+					// the acceleration is applied from 0 time to end_time gradually
+					Real time_factor = std::min(GlobalStaticVariables::physical_time_ / end_time_, 1.0);
+					// get the surface area of the particle, assuming it has a cubic volume
+					// acceleration is particle force / particle mass
+					Real area = pow(particles_->Vol_[index_i], 2.0 / 3.0);
+					Real acceleration_from_pressure = pressure_ * area / mass_[index_i];
+					// vector is made by multiplying it with the surface normal
+					// add the acceleration to the particle
+					dvel_dt_prior_[index_i] += (-1.0) * n_[index_i] * acceleration_from_pressure * time_factor;
+				}
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("SurfacePressureFromSource::Update: particle index out of bounds") + to_string(index_i));
+			}
+		}
+		//=================================================================================================//
 		ElasticDynamicsInitialCondition::
 			ElasticDynamicsInitialCondition(SolidBody *body)
 			: ParticleDynamicsSimple(body),

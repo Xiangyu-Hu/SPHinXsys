@@ -34,6 +34,9 @@ public:
 	// for AccelerationForBodyPartInBoundingBox
 	vector<shared_ptr<solid_dynamics::AccelerationForBodyPartInBoundingBox>> get_acceleration_bounding_box_(){ return acceleration_bounding_box_; };
 	vector<AccelTuple> get_acceleration_bounding_box_tuple_(){ return acceleration_bounding_box_tuple_; };
+	// for SurfacePressureFromSource
+	vector<shared_ptr<solid_dynamics::SurfacePressureFromSource>> get_surface_pressure_(){ return surface_pressure_; };
+	vector<PressureTuple> get_surface_pressure_tuple_(){ return surface_pressure_tuple_; };
 	// for SpringDamperConstraintParticleWise
 	vector<shared_ptr<solid_dynamics::SpringDamperConstraintParticleWise>> get_spring_damper_constraint_(){ return spring_damper_constraint_; };
 	vector<SpringDamperTuple> get_spring_damper_tuple_(){ return spring_damper_tuple_; };

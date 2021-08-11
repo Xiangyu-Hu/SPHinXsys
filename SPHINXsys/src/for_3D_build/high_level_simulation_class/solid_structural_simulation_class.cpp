@@ -134,6 +134,7 @@ StructuralSimulationInput::StructuralSimulationInput(
 	non_zero_gravity_ = {};
 	acceleration_bounding_box_tuple_ = {};
 	force_in_body_region_tuple_ = {};
+	surface_pressure_tuple_ = {};
 	spring_damper_tuple_ = {};
 	body_indeces_fixed_constraint_ = {};
 	body_indeces_fixed_constraint_region_ = {};
@@ -171,6 +172,7 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	non_zero_gravity_(input.non_zero_gravity_),
 	acceleration_bounding_box_tuple_(input.acceleration_bounding_box_tuple_),
 	force_in_body_region_tuple_(input.force_in_body_region_tuple_),
+	surface_pressure_tuple_(input.surface_pressure_tuple_),
 	spring_damper_tuple_(input.spring_damper_tuple_),
 	body_indeces_fixed_constraint_(input.body_indeces_fixed_constraint_),
 	body_indeces_fixed_constraint_region_(input.body_indeces_fixed_constraint_region_),
@@ -206,6 +208,7 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 	initializeGravity();
 	initializeAccelerationForBodyPartInBoundingBox();
 	initializeForceInBodyRegion();
+	initializeSurfacePressure();
 	initializeSpringDamperConstraintParticleWise();
 	initializeConstrainSolidBody();
 	initializeConstrainSolidBodyRegion();
@@ -290,6 +293,7 @@ void StructuralSimulation::createParticleAdaptationList()
 void StructuralSimulation::initializeElasticSolidBodies()
 {
 	solid_body_list_ = {};
+	particle_normal_update_ = {};
 	for (size_t i = 0; i < body_mesh_list_.size(); i++)
 	{
 		solid_body_list_.emplace_back(make_shared<SolidBodyForSimulation>(system_, imported_stl_list_[i], body_mesh_list_[i], particle_adaptation_list_[i], physical_viscosity_, material_model_list_[i]));
@@ -297,6 +301,10 @@ void StructuralSimulation::initializeElasticSolidBodies()
 		{
 			relaxParticlesSingleResolution(&in_output_, write_particle_relaxation_data_, solid_body_list_[i]->getImportedModel(), solid_body_list_[i]->getElasticSolidParticles(), solid_body_list_[i]->getInnerBodyRelation());
 		}
+
+		// update normal direction of particles
+		solid_body_list_[i]->getElasticSolidParticles()->initializeNormalDirectionFromGeometry();
+		particle_normal_update_.emplace_back(make_shared<solid_dynamics::UpdateElasticNormalDirection>(solid_body_list_[i]->getImportedModel()));
 	}
 }
 
@@ -396,6 +404,20 @@ void StructuralSimulation::initializeForceInBodyRegion()
 
 		BodyPartByParticleTriMesh* bp = new BodyPartByParticleTriMesh(solid_body_list_[body_index]->getImportedModel(), imported_stl_list_[body_index], tmesh);
 		force_in_body_region_.emplace_back(make_shared<solid_dynamics::ForceInBodyRegion>(solid_body_list_[body_index]->getImportedModel(), bp, force, end_time));
+    }
+}
+
+void StructuralSimulation::initializeSurfacePressure()
+{	
+	surface_pressure_ = {};
+	for (size_t i = 0; i < surface_pressure_tuple_.size(); i++)
+	{
+		int body_index = get<0>(surface_pressure_tuple_[i]);
+		Real pressure = get<1>(surface_pressure_tuple_[i]);
+		Vec3d point = get<2>(surface_pressure_tuple_[i]);
+		Real end_time = get<3>(surface_pressure_tuple_[i]);
+
+		surface_pressure_.emplace_back(make_shared<solid_dynamics::SurfacePressureFromSource>(solid_body_list_[body_index]->getImportedModel(), pressure, point, end_time));
     }
 }
 
@@ -518,6 +540,14 @@ void StructuralSimulation::executeCorrectConfiguration()
 	}
 }
 
+void StructuralSimulation::executeUpdateElasticNormalDirection()
+{
+	for (size_t i = 0; i < particle_normal_update_.size(); i++)
+	{
+		particle_normal_update_[i]->parallel_exec();
+	}
+}
+
 void StructuralSimulation::executeinitializeATimeStep()
 {
 	for (size_t i = 0; i < initialize_gravity_.size(); i++)
@@ -539,6 +569,14 @@ void StructuralSimulation::executeForceInBodyRegion()
 	for (size_t i = 0; i < force_in_body_region_.size(); i++)
 	{
 		force_in_body_region_[i]->parallel_exec();
+	}
+}
+
+void StructuralSimulation::executeSurfacePressure()
+{
+	for (size_t i = 0; i < surface_pressure_.size(); i++)
+	{
+		surface_pressure_[i]->parallel_exec();
 	}
 }
 
@@ -723,11 +761,15 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 {
 	if (iteration_ % 100 == 0) cout << "N=" << iteration_ << " Time: " << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
 
+	/** UPDATE NORMAL DIRECTIONS */
+	executeUpdateElasticNormalDirection();
+
 	/** ACTIVE BOUNDARY CONDITIONS */
 	// force (acceleration) based
 	executeinitializeATimeStep();
 	executeAccelerationForBodyPartInBoundingBox();
 	executeForceInBodyRegion();
+	executeSurfacePressure();
 	executeSpringDamperConstraintParticleWise();
 
 	/** CONTACT */
