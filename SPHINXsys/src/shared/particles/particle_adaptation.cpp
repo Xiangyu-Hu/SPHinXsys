@@ -178,8 +178,7 @@ namespace SPH
 	//=================================================================================================//
 	ShellParticleAdaptation::ShellParticleAdaptation(Real global_avg_thickness)
 	: ParticleAdaptation(),
-	global_avg_thickness_(global_avg_thickness),
-	total_volume_(0.0)
+	global_avg_thickness_(global_avg_thickness)
 	{
 	}
 	//=================================================================================================//

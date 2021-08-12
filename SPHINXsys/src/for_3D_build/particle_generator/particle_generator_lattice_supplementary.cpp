@@ -50,6 +50,8 @@ namespace SPH {
 						}
 					}
 				}
+		Real number_of_particles = total_volume_ / avg_particle_volume_ + 0.5;
+		planned_number_of_particles_ = int(number_of_particles);
 
 		// calculate the interval based on the number of particles
 		int count = 0;

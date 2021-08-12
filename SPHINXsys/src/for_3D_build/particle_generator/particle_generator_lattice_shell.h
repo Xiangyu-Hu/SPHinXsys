@@ -47,7 +47,7 @@ namespace SPH {
 	class ShellParticleGeneratorLattice : public ParticleGenerator
 	{
 	public:
-		ShellParticleGeneratorLattice();
+		ShellParticleGeneratorLattice(Real global_avg_thickness);
 		virtual ~ShellParticleGeneratorLattice() {};
 
 		virtual void initialize(SPHBody* sph_body) override;

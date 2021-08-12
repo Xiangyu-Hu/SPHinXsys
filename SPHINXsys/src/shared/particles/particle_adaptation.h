@@ -152,12 +152,10 @@ namespace SPH {
 	{
 	protected:
 		Real global_avg_thickness_;
-		Real total_volume_;
 	public:
 		ShellParticleAdaptation(Real global_avg_thickness);
 		virtual ~ShellParticleAdaptation() {};
 
-		Real getGlobalAvgThickness(){ return global_avg_thickness_; };
 		Real RefinedReferenceSpacing() { return global_avg_thickness_ * 0.25; };
 		virtual BaseLevelSet* createLevelSet(ComplexShape& complex_shape) override;
 

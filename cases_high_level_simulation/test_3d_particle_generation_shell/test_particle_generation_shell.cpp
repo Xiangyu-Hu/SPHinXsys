@@ -38,11 +38,11 @@ TEST(StructuralSimulation, ShellParticles)
 	vector<ShellParticleGeneratorLattice>& particle_generator_list = sim.get_patricle_generator_list_();
 	
 	Real tolerance_shell = 0.05;
-	EXPECT_EQ(particle_generator_list[0].get_lattice_spacing_(), 1);
-	EXPECT_EQ(particle_generator_list[0].get_planned_number_of_particles_(), 100);
-	EXPECT_EQ(particle_generator_list[0].getTotalVolume(), 10000);
-	EXPECT_EQ(particle_generator_list[0].get_number_of_cells_(), 10000);
-	EXPECT_EQ(particle_generator_list[0].get_total_real_particles_(), 100);
+	EXPECT_EQ(particle_generator_list[0].get_lattice_spacing_(), 4.0 * 0.25);
+	EXPECT_NEAR(particle_generator_list[0].get_planned_number_of_particles_(), 100, 100 * tolerance_shell);
+	EXPECT_NEAR(particle_generator_list[0].getTotalVolume(), 10000, 10000 * tolerance_shell);
+	EXPECT_NEAR(particle_generator_list[0].get_number_of_cells_(), 10000, 10000 * tolerance_shell);
+	EXPECT_NEAR(particle_generator_list[0].get_total_real_particles_(), 100, 100 * tolerance_shell);
 	
 	EXPECT_EQ(particle_generator_list[1].get_lattice_spacing_(), 5.0 * 0.25);
 	EXPECT_NEAR(particle_generator_list[1].get_planned_number_of_particles_(), 1194, 1194 * tolerance_shell);

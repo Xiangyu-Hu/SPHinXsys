@@ -281,7 +281,7 @@ void StructuralSimulation::CreateParticleGeneratorList()
 	particle_generator_list_ = {};
 	for (unsigned int i = 0; i < resolution_list_.size(); i++)
 	{
-		particle_generator_list_.push_back(ShellParticleGeneratorLattice());
+		particle_generator_list_.push_back(ShellParticleGeneratorLattice(shell_thickness_list_[i]));
 	}
 }
 
