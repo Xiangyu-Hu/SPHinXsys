@@ -48,14 +48,6 @@ namespace SPH {
 							number_of_cells_++;
 							total_volume_ += lattice_spacing_ * lattice_spacing_ * lattice_spacing_;
 						}
-						else
-						{
-							// Real phi = body_shape_->findSignedDistance(particle_position);
-							// if (phi > 0 && phi < lattice_spacing_)
-							// {
-							// 	total_volume_ += (lattice_spacing_ - phi) * lattice_spacing_ * lattice_spacing_;
-							// }
-						}
 					}
 				}
 

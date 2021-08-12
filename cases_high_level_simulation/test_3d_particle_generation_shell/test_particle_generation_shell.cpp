@@ -31,6 +31,7 @@ TEST(StructuralSimulation, ShellParticles)
 		{}
 	};
 	input.particle_relaxation_list_ = { false, false };
+	input.shell_thickness_list_ = { 4.0, 5.0 };
 
 	StructuralSimulation sim(input);
 

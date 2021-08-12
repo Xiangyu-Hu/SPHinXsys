@@ -130,6 +130,7 @@ StructuralSimulationInput::StructuralSimulationInput(
 {
 	// particle_relaxation option
 	particle_relaxation_list_ = {};
+	shell_thickness_list_ = {};
 	for (unsigned i = 0; i < resolution_list_.size(); i++){ particle_relaxation_list_.push_back(true); }
 	// scale system boundaries
 	scale_system_boundaries_ = 1;
@@ -160,6 +161,7 @@ StructuralSimulation::StructuralSimulation(StructuralSimulationInput& input):
 
 	// default system, optional: particle relaxation, scale_system_boundaries
 	particle_relaxation_list_(input.particle_relaxation_list_),
+	shell_thickness_list_(input.shell_thickness_list_),
 	system_resolution_(0.0),
 	system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), system_resolution_)),
 	scale_system_boundaries_(input.scale_system_boundaries_),
@@ -267,7 +269,7 @@ void StructuralSimulation::CreateParticleAdaptationList()
 	particle_adaptation_list_ = {};
 	for (unsigned int i = 0; i < resolution_list_.size(); i++)
 	{
-		particle_adaptation_list_.push_back(ShellParticleAdaptation(5.0));
+		particle_adaptation_list_.push_back(ShellParticleAdaptation(shell_thickness_list_[i]));
 
 		Real system_resolution_ratio = resolution_list_[i] / system_resolution_;
 		particle_adaptation_list_[i].SetSystemResolutionRatio(system_resolution_ratio);
