@@ -680,14 +680,13 @@ namespace SPH
 		}
 		//=================================================================================================//
 		SurfacePressureFromSource::
-			SurfacePressureFromSource(SPHBody* body, Real pressure, Vecd source_point, Real end_time)
+			SurfacePressureFromSource(SPHBody* body, Vecd source_point, StdVec<array<Real, 2>> pressure_over_time)
 			: ParticleDynamicsSimple(body), SolidDataSimple(body),
 			  pos_0_(particles_->pos_0_),
 			  n_(particles_->n_),
 			  dvel_dt_prior_(particles_->dvel_dt_prior_),
 			  mass_(particles_->mass_),
-			  pressure_(pressure),
-			  end_time_(end_time),
+			  pressure_over_time_(pressure_over_time),
 			  apply_pressure_to_particle_({})
 		{
 			// set apply_pressure_to_particle_ to false for each particle
@@ -725,20 +724,45 @@ namespace SPH
 			particles_->total_ghost_particles_ = 0;
 		}
 		//=================================================================================================//
+		Real SurfacePressureFromSource::getPressure()
+		{
+			// check if we have reached the max time, if yes, return the last pressure
+			bool max_time_reached = GlobalStaticVariables::physical_time_ > pressure_over_time_[pressure_over_time_.size()-1][0];
+			if (max_time_reached) return pressure_over_time_[pressure_over_time_.size()-1][1];
+			
+			int interval = 0;
+			// find out the interval
+			for (size_t i = 0; i < pressure_over_time_.size(); i++)
+			{
+				if (GlobalStaticVariables::physical_time_ < pressure_over_time_[i][0])
+				{
+					interval = i;
+					break;
+				}
+			}
+			// interval has to be at least 1
+			if (interval < 1) throw runtime_error(string("SurfacePressureFromSource::getPressure(): pressure_over_time input not correct, should start with {0.0, 0.0}"));
+			// scale the pressure to the current time
+			Real t_0 = pressure_over_time_[interval - 1][0];
+			Real t_1 = pressure_over_time_[interval][0];
+			Real p_0 = pressure_over_time_[interval - 1][1];
+			Real p_1 = pressure_over_time_[interval][1];
+
+			return p_0 + (p_1 - p_0) * (GlobalStaticVariables::physical_time_ - t_0) / (t_1 - t_0);
+		}
+		//=================================================================================================//
 		void SurfacePressureFromSource::Update(size_t index_i, Real dt)
 		{
 			try{
 				if (apply_pressure_to_particle_[index_i])
 				{
-					// the acceleration is applied from 0 time to end_time gradually
-					Real time_factor = std::min(GlobalStaticVariables::physical_time_ / end_time_, 1.0);
 					// get the surface area of the particle, assuming it has a cubic volume
 					// acceleration is particle force / particle mass
-					Real area = pow(particles_->Vol_[index_i], 2.0 / 3.0);
-					Real acceleration_from_pressure = pressure_ * area / mass_[index_i];
+					Real area = std::pow(particles_->Vol_[index_i], 2.0 / 3.0);
+					Real acc_from_pressure = getPressure() * area / mass_[index_i];
 					// vector is made by multiplying it with the surface normal
 					// add the acceleration to the particle
-					dvel_dt_prior_[index_i] += (-1.0) * n_[index_i] * acceleration_from_pressure * time_factor;
+					dvel_dt_prior_[index_i] += (-1.0) * n_[index_i] * acc_from_pressure;
 				}
 			}
 			catch(out_of_range& e){

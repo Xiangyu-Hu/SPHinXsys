@@ -413,11 +413,10 @@ void StructuralSimulation::initializeSurfacePressure()
 	for (size_t i = 0; i < surface_pressure_tuple_.size(); i++)
 	{
 		int body_index = get<0>(surface_pressure_tuple_[i]);
-		Real pressure = get<1>(surface_pressure_tuple_[i]);
-		Vec3d point = get<2>(surface_pressure_tuple_[i]);
-		Real end_time = get<3>(surface_pressure_tuple_[i]);
+		Vec3d point = get<1>(surface_pressure_tuple_[i]);
+		StdVec<array<Real, 2>> pressure_over_time = get<2>(surface_pressure_tuple_[i]);
 
-		surface_pressure_.emplace_back(make_shared<solid_dynamics::SurfacePressureFromSource>(solid_body_list_[body_index]->getImportedModel(), pressure, point, end_time));
+		surface_pressure_.emplace_back(make_shared<solid_dynamics::SurfacePressureFromSource>(solid_body_list_[body_index]->getImportedModel(), point, pressure_over_time));
     }
 }
 
@@ -771,8 +770,6 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 	executeForceInBodyRegion();
 	executeSurfacePressure();
 	executeSpringDamperConstraintParticleWise();
-	// velocity based
-	executeTranslateSolidBodyPart(dt);
 
 	/** CONTACT */
 	executeContactDensitySummation();

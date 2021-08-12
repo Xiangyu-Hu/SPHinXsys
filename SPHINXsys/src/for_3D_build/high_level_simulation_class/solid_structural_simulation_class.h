@@ -18,7 +18,7 @@ using namespace std;
 using GravityPair = pair<int, Vec3d>;
 using AccelTuple = tuple<int, BoundingBox, Vec3d>;
 using ForceTuple = tuple<int, BoundingBox, Vec3d, Real>;
-using PressureTuple = tuple<int, Real, Vec3d, Real>;
+using PressureTuple = tuple<int, Vec3d, StdVec<array<Real, 2>>>;
 using SpringDamperTuple = tuple<int, Vec3d, Real>;
 using ConstrainedRegionPair = pair<int, BoundingBox>;
 using PositionSolidBodyTuple = tuple<int, Real, Real, Vec3d>;
