@@ -55,6 +55,7 @@ namespace SPH {
 
 		Real get_lattice_spacing_(){ return lattice_spacing_; };
 		size_t get_planned_number_of_particles_(){ return planned_number_of_particles_; };
+		Real getTotalVolume(){ return total_volume_; };
 		size_t get_number_of_cells_(){ return number_of_cells_; };
 		size_t get_total_real_particles_(){ return total_real_particles_; };
 	protected:
@@ -72,7 +73,6 @@ namespace SPH {
 		size_t number_of_cells_;
 		size_t total_real_particles_;
 
-		// void calculateTotalVolume(){ total_volume_= 10000.0; };
 		// void calculateGlobalAvgThickness(){ global_avg_thickness_= 4.0; };
 		// void calculateAvgParticleSize(){ avg_particle_size_= particle_spacing_ * particle_spacing_ * global_avg_thickness_; };
 		// void calculateNumberOfParticles(){ number_of_particles_ = total_volume_ / avg_particle_size_; };
@@ -82,10 +82,7 @@ namespace SPH {
 			std::random_device rd;
 			std::default_random_engine eng(rd());
 			std::uniform_int_distribution<int> distr(min, max);
-
-			int random_int = distr(eng);
-
-			return random_int;
+			return distr(eng);
 		};
 
 		size_t calculateNumberOfCells();

@@ -33,6 +33,7 @@ namespace SPH {
 	//=================================================================================================//
 	void ShellParticleGeneratorLattice::createBaseParticles(BaseParticles* base_particles)
 	{
+		// calculate the total volume and
 		// count the number of cells inside the body volume, where we might put particles
 		std::unique_ptr<Mesh> mesh(new Mesh(domain_bounds_, lattice_spacing_, 0));
 		Vecu number_of_lattices = mesh->NumberOfCells();
@@ -45,6 +46,15 @@ namespace SPH {
 						if (body_shape_->checkContain(particle_position))
 						{
 							number_of_cells_++;
+							total_volume_ += lattice_spacing_ * lattice_spacing_ * lattice_spacing_;
+						}
+						else
+						{
+							// Real phi = body_shape_->findSignedDistance(particle_position);
+							// if (phi > 0 && phi < lattice_spacing_)
+							// {
+							// 	total_volume_ += (lattice_spacing_ - phi) * lattice_spacing_ * lattice_spacing_;
+							// }
 						}
 					}
 				}
