@@ -153,7 +153,7 @@ namespace SPH {
 	protected:
 		Real global_avg_thickness_;
 	public:
-		ShellParticleAdaptation();
+		ShellParticleAdaptation(Real global_avg_thickness);
 		virtual ~ShellParticleAdaptation() {};
 
 		Real getGlobalAvgThickness(){ return global_avg_thickness_; };
