@@ -840,8 +840,8 @@ namespace SPH
 			//obtain the first Piola-Kirchhoff stress from the second Piola-Kirchhoff stress
 			//it seems using reproducing correction here increases convergence rate
 			//near the free surface
-			stress_PK1_[index_i] = F_[index_i] * (material_->ConstitutiveRelation(F_[index_i], index_i) + 
-				material_->NumericalDampingRightCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i)) * B_[index_i];
+			stress_PK1_[index_i] = F_[index_i] * (material_->ConstitutiveRelation(F_[index_i], index_i) * B_[index_i] + 
+				material_->NumericalDampingRightCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i));
 		}
 		//=================================================================================================//
 		void StressRelaxationFirstHalf::Interaction(size_t index_i, Real dt)
