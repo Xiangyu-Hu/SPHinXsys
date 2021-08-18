@@ -37,11 +37,12 @@
 #define BASE_BODY_H
 
 #include "base_data_package.h"
-#include "sph_data_conainers.h"
+#include "sph_data_containers.h"
 #include "particle_adaptation.h"
 #include "all_particle_generators.h"
 #include "particle_sorting.h"
 #include "all_geometries.h"
+#include "generative_structures.h"
 
 #include <string>
 
@@ -49,7 +50,7 @@ namespace SPH
 {
 	class SPHSystem;
 	class BaseParticles;
-	class BaseMeshCellLinkedList;
+	class BaseCellLinkedList;
 	class SPHBodyRelation;
 
 	/**
@@ -65,17 +66,18 @@ namespace SPH
 		SPHSystem &sph_system_;
 		std::string body_name_;
 		bool newly_updated_;			 /**< whether this body is in a newly updated state */
-		BoundingBox body_domain_bounds_; /**< Computational domain bounds for boundary conditions. */
-		bool prescribed_body_bounds_;
+		/**< Computational domain bounds for boundary conditions. 
+		 * Note that domain bounds may be different from those of the initial body geometry. */
+		BoundingBox body_domain_bounds_; 
+		bool is_domain_bounds_determined_;
 
 	public:
 		ParticleAdaptation *particle_adaptation_;		/**< Particle adapation policy. */
 		ParticleGenerator *particle_generator_;			/**< Particle generator manner */
 		BaseParticles *base_particles_;					/**< Base particles of this body. */
 		PositionsAndVolumes body_input_points_volumes_; /**< For direct generate particles. Note this should be moved to direct generator. */
-		ComplexShape *body_shape_;						/** describe the geometry of the body*/
-		size_t number_of_particles_;					/**< Number of real particles of the body. */
-		Tree *tree_;									/** Tree for creating network. */
+		ComplexShape *body_shape_;						/**< describe the geometry of the body*/
+		GenerativeStructure *generative_structure_;		/**< structure which can be used to generate particles or/and configurations directly*/
 		/**
 		 * @brief particle by cells lists is for parallel splitting algorithm.
 		 * All particles in each cell are collected together.
@@ -99,9 +101,8 @@ namespace SPH
 		bool checkNewlyUpdated() { return newly_updated_; };
 		void useParticleGeneratorReload();
 
-		void setBodyDomainBounds(BoundingBox body_domain_bounds) { body_domain_bounds_ = body_domain_bounds; };
-		BoundingBox getBodyDomainBounds() { return body_domain_bounds_; };
-		BoundingBox findBodyDomainBounds();
+		void setBodyDomainBounds(BoundingBox body_domain_bounds);
+		BoundingBox getBodyDomainBounds();
 		BoundingBox getSPHSystemBounds();
 
 		/** This will be called in BaseParticle constructor
@@ -127,7 +128,7 @@ namespace SPH
 	{
 	public:
 		ParticleSorting particle_sorting_;
-		BaseMeshCellLinkedList *mesh_cell_linked_list_; /**< Cell linked mesh of this body. */
+		BaseCellLinkedList *cell_linked_list_; /**< Cell linked mesh of this body. */
 
 		RealBody(SPHSystem &sph_system, std::string body_name, ParticleAdaptation *particle_adaptation,
 				 ParticleGenerator *particle_generator = new ParticleGeneratorLattice());
@@ -139,12 +140,12 @@ namespace SPH
 		/** This will be called in BaseParticle constructor
 		 * and is important because particles are not defined in FluidBody constructor.  */
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;
-		virtual void sortParticleWithMeshCellLinkedList();
+		virtual void sortParticleWithCellLinkedList();
 		virtual void updateCellLinkedList();
 	};
 
 	/**
-	 * @class FictitiousBody.
+	 * @class FictitiousBody
 	 * @brief Derived class from SPHBody. 
 	 * Without inner configuration or inner interaction.
 	 */
@@ -295,17 +296,18 @@ namespace SPH
 	};
 
 	/**
-	 * @class TreeLeaves
+	 * @class TerminateBranches
 	 * @brief A auxillary class for a Tree-like Body to
-	 * indicate the leaves particle from tree data. 
+	 * indicate the particles from the terminates of the tree. 
 	 */
-	class TreeLeaves : public BodyPartByParticle
+	class TerminateBranches : public BodyPartByParticle
 	{
 	public:
-		TreeLeaves(SPHBody *body);
-		virtual ~TreeLeaves(){};
+		TerminateBranches(SPHBody *body);
+		virtual ~TerminateBranches(){};
 
 	protected:
+		GenerativeTree *tree_;
 		virtual void tagBodyPart() override;
 	};
 }

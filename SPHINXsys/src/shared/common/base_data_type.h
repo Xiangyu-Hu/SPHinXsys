@@ -318,6 +318,14 @@ namespace SPH {
 	const int indexMatrix = 2;
 	const int indexInteger = 3;
 
+	//verbal boolean for positive and negative axis directions
+	const int xAxis = 0;
+	const int yAxis = 1;
+	const int zAxis = 2;
+	const bool positiveDirection = true;
+	const bool negativeDirection = false;
+
+
 	/**
 	 * @class Transform2d
 	 * @brief Coordinate transfrom in 2D

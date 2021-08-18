@@ -19,7 +19,7 @@ namespace po = boost::program_options;
 #endif
 
 #include "base_data_package.h"
-#include "sph_data_conainers.h"
+#include "sph_data_containers.h"
 
 #include <thread>
 #include <fstream>
@@ -71,7 +71,7 @@ namespace SPH
 		void addAFictitiousBody(FictitiousBody* fictitious_body);
 		void initializeSystemCellLinkedLists();
 		void initializeSystemConfigurations();
-		Real getSmallestTimeStepAmongSolidBodies();
+		Real getSmallestTimeStepAmongSolidBodies(Real CFL = 0.6);
 		#ifdef BOOST_AVAILABLE
 		void handleCommandlineOptions(int ac, char* av[]);
 		#endif

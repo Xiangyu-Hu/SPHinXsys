@@ -4,17 +4,15 @@
 * @author	Luhui Han, Chi ZHang and Xiangyu Hu
 */
 
-
 #ifndef GEOMETRY_LEVEL_SET_H
 #define GEOMETRY_LEVEL_SET_H
-
-
 
 #include "geometry.h"
 
 #include <string>
 
-namespace SPH {
+namespace SPH
+{
 
 	class SPHBody;
 	class BaseLevelSet;
@@ -26,18 +24,19 @@ namespace SPH {
 	class LevelSetComplexShape : public ComplexShape
 	{
 	public:
-		LevelSetComplexShape(SPHBody* sph_body, ComplexShape &complex_shape, bool isCleaned = false);
-		virtual ~LevelSetComplexShape() {};
+		LevelSetComplexShape(SPHBody *sph_body, ComplexShape &complex_shape, bool isCleaned = false);
+		virtual ~LevelSetComplexShape(){};
 
-		virtual bool checkContain(Vecd& input_pnt, bool BOUNDARY_INCLUDED = true) override;
-		virtual bool checkNotFar(Vecd& input_pnt, Real threshold) override;
-		virtual bool checkNearSurface(Vecd& input_pnt, Real threshold) override;
-		virtual Real findSignedDistance(Vecd& input_pnt) override;
-		virtual Vecd findNormalDirection(Vecd& input_pnt) override;
-		virtual Real computeKernelIntegral(Vecd& input_pnt, Real h_ratio = 1.0);
-		virtual Vecd computeKernelGradientIntegral(Vecd& input_pnt, Real h_ratio = 1.0);
+		virtual bool checkContain(const Vecd &input_pnt, bool BOUNDARY_INCLUDED = true) override;
+		virtual bool checkNotFar(const Vecd &input_pnt, Real threshold) override;
+		virtual bool checkNearSurface(const Vecd &input_pnt, Real threshold) override;
+		virtual Real findSignedDistance(const Vecd &input_pnt) override;
+		virtual Vecd findNormalDirection(const Vecd &input_pnt) override;
+		virtual Real computeKernelIntegral(const Vecd &input_pnt, Real h_ratio = 1.0);
+		virtual Vecd computeKernelGradientIntegral(const Vecd &input_pnt, Real h_ratio = 1.0);
+
 	protected:
-		BaseLevelSet* level_set_;	/**< narrow bounded levelset mesh. */
+		BaseLevelSet *level_set_; /**< narrow bounded levelset mesh. */
 	};
 }
 

@@ -43,9 +43,9 @@ namespace SPH {
 	//=================================================================================================//
 	BoundingInAxisDirection::BoundingInAxisDirection(RealBody* real_body, int axis_direction) :
 		ParticleDynamics<void>(real_body), DataDelegateSimple<SPHBody, BaseParticles>(real_body),
-		axis_(axis_direction), body_domain_bounds_(real_body->findBodyDomainBounds()),
+		axis_(axis_direction), body_domain_bounds_(real_body->getBodyDomainBounds()),
 		pos_n_(particles_->pos_n_),
-		mesh_cell_linked_list_(real_body->mesh_cell_linked_list_)
+		cell_linked_list_(real_body->cell_linked_list_)
 	{
 		Real h_ratio_min = 1.0 / particle_adaptation_->MaximumSpacingRatio();
 		cut_off_radius_max_ = particle_adaptation_->getKernel()->CutOffRadius(h_ratio_min);
@@ -62,11 +62,11 @@ namespace SPH {
 		PeriodicConditionInAxisDirection(RealBody* real_body, int axis_direction) :
 		periodic_translation_(0.0)
 	{
-		BoundingBox body_domain_bounds = real_body->findBodyDomainBounds();
+		BoundingBox body_domain_bounds = real_body->getBodyDomainBounds();
 		setPeriodicTranslation(body_domain_bounds, axis_direction);
 		bound_cells_.resize(2);
-		BaseMeshCellLinkedList* mesh_cell_linked_list = real_body->mesh_cell_linked_list_;
-		mesh_cell_linked_list->tagBodyDomainBoundingCells(bound_cells_, body_domain_bounds, axis_direction);
+		BaseCellLinkedList* cell_linked_list = real_body->cell_linked_list_;
+		cell_linked_list->tagBodyDomainBoundingCells(bound_cells_, body_domain_bounds, axis_direction);
 		if (periodic_translation_.norm() < real_body->particle_adaptation_->ReferenceSpacing())
 		{
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -140,14 +140,14 @@ namespace SPH {
 		//check lower bound
 		CellLists& lower_bound_cells = bound_cells_[0];
 		for (size_t i = 0; i != lower_bound_cells.size(); ++i) {
-			CellListDataVector& cell_list_data = lower_bound_cells[i]->cell_list_data_;
+			ListDataVector& cell_list_data = lower_bound_cells[i]->cell_list_data_;
 			for (size_t num = 0; num < cell_list_data.size(); ++num) checkLowerBound(cell_list_data[num], dt);
 		}
 
 		//check upper bound
 		CellLists& upper_bound_cells = bound_cells_[1];
 		for (size_t i = 0; i != upper_bound_cells.size(); ++i) {
-			CellListDataVector& cell_list_data = upper_bound_cells[i]->cell_list_data_;
+			ListDataVector& cell_list_data = upper_bound_cells[i]->cell_list_data_;
 			for (size_t num = 0; num < cell_list_data.size(); ++num) checkUpperBound(cell_list_data[num], dt);
 		}
 	}
@@ -161,7 +161,7 @@ namespace SPH {
 		{
 			Vecd translated_position = particle_position - periodic_translation_;
 			/** insert ghost particle to cell linked list */
-			mesh_cell_linked_list_->InsertACellLinkedListDataEntry(list_data.first, translated_position);
+			cell_linked_list_->InsertACellLinkedListDataEntry(list_data.first, translated_position);
 		}
 	}
 	//=================================================================================================//
@@ -174,7 +174,54 @@ namespace SPH {
 		{
 			Vecd translated_position = particle_position + periodic_translation_;
 			/** insert ghost particle to cell linked list */
-			mesh_cell_linked_list_->InsertACellLinkedListDataEntry(list_data.first, translated_position);
+			cell_linked_list_->InsertACellLinkedListDataEntry(list_data.first, translated_position);
+		}
+	}
+	//=================================================================================================//
+	OpenBoundaryConditionInAxisDirection::
+		OpenBoundaryConditionInAxisDirection(RealBody* real_body, int axis_direction, bool positive):
+		particle_type_transfer(this->bound_cells_, real_body, axis_direction, positive)
+	{
+		BoundingBox body_domain_bounds = real_body->getBodyDomainBounds();
+		bound_cells_.resize(2);
+		BaseCellLinkedList* cell_linked_list = real_body->cell_linked_list_;
+		cell_linked_list->tagBodyDomainBoundingCells(bound_cells_, body_domain_bounds, axis_direction);
+	}
+	//=================================================================================================//
+	void OpenBoundaryConditionInAxisDirection ::
+		ParticleTypeTransfer::checkLowerBound(size_t index_i, Real dt)
+	{
+		Vecd particle_position = pos_n_[index_i];
+		if (particle_position[axis_] < body_domain_bounds_.first[axis_])
+			particles_->switchToBufferParticle(index_i);
+	}
+	//=================================================================================================//
+	void OpenBoundaryConditionInAxisDirection ::
+		ParticleTypeTransfer::checkUpperBound(size_t index_i, Real dt)
+	{
+		Vecd particle_position = pos_n_[index_i];
+		if (particle_position[axis_] > body_domain_bounds_.second[axis_])
+			particles_->switchToBufferParticle(index_i);
+	}
+	//=================================================================================================//
+	void OpenBoundaryConditionInAxisDirection::ParticleTypeTransfer::exec(Real dt)
+	{
+		setupDynamics(dt);
+
+		//check lower bound
+		CellLists& lower_bound_cells = bound_cells_[0];
+		for (size_t i = 0; i != lower_bound_cells.size(); ++i)
+		{
+			IndexVector& particle_indexes = lower_bound_cells[i]->real_particle_indexes_;
+			for (size_t num = 0; num < particle_indexes.size(); ++num) checking_bound_(particle_indexes[num], dt);
+		}
+
+		//check upper bound
+		CellLists& upper_bound_cells = bound_cells_[1];
+		for (size_t i = 0; i != upper_bound_cells.size(); ++i)
+		{
+			IndexVector& particle_indexes = upper_bound_cells[i]->real_particle_indexes_;
+			for (size_t num = 0; num < particle_indexes.size(); ++num) checking_bound_(particle_indexes[num], dt);
 		}
 	}
 	//=================================================================================================//
@@ -195,7 +242,7 @@ namespace SPH {
 			ghost_particles_[0].push_back(expected_particle_index);
 			Vecd translated_position = particle_position + periodic_translation_;
 			/** insert ghost particle to cell linked list */
-			mesh_cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
+			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
 		}
 	}
 	//=================================================================================================//
@@ -210,7 +257,7 @@ namespace SPH {
 			ghost_particles_[1].push_back(expected_particle_index);
 			Vecd translated_position = particle_position - periodic_translation_;
 			/** insert ghost particle to cell linked list */
-			mesh_cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
+			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
 		}
 	}
 	//=================================================================================================//
@@ -312,7 +359,7 @@ namespace SPH {
 	{
 		setupDynamics(dt);
 		for (size_t i = 0; i != bound_cells_.size(); ++i) {
-			CellListDataVector& list_data = bound_cells_[i]->cell_list_data_;
+			ListDataVector& list_data = bound_cells_[i]->cell_list_data_;
 			for (size_t num = 0; num < list_data.size(); ++num) checking_bound_(list_data[num].first, dt);
 		}
 	}
@@ -323,7 +370,7 @@ namespace SPH {
 		parallel_for(blocked_range<size_t>(0, bound_cells_.size()),
 			[&](const blocked_range<size_t>& r) {
 				for (size_t i = r.begin(); i < r.end(); ++i) {
-					CellListDataVector& list_data = bound_cells_[i]->cell_list_data_;
+					ListDataVector& list_data = bound_cells_[i]->cell_list_data_;
 					for (size_t num = 0; num < list_data.size(); ++num) checking_bound_(list_data[num].first, dt);
 				}
 			}, ap);
@@ -342,7 +389,7 @@ namespace SPH {
 			mirrorInAxisDirection(expected_particle_index, body_domain_bounds_.first, axis_);
 			Vecd translated_position = particles_->pos_n_[expected_particle_index];
 			/** insert ghost particle to cell linked list */
-			mesh_cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
+			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
 		}
 	}
 	//=================================================================================================//
@@ -359,7 +406,7 @@ namespace SPH {
 			mirrorInAxisDirection(expected_particle_index, body_domain_bounds_.second, axis_);
 			Vecd translated_position = particles_->pos_n_[expected_particle_index];
 			/** insert ghost particle to cell linked list */
-			mesh_cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
+			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
 		}
 	}
 	//=================================================================================================//

@@ -43,7 +43,7 @@ namespace SPH
 			: public StressRelaxationFirstHalf
 		{
 		public:
-			PlasticStressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation);
+			PlasticStressRelaxationFirstHalf(BaseBodyRelationInner* body_inner_relation);
 			virtual ~PlasticStressRelaxationFirstHalf() {};
 		protected:
 			PlasticSolid* plastic_solid_;

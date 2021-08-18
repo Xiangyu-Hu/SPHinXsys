@@ -7,7 +7,7 @@
 
 namespace SPH {
 	//=================================================================================================//
-	void MeshIterator(Vec3u index_begin, Vec3u index_end, MeshFunctor& mesh_functor, Real dt)
+	void MeshIterator(const Vec3u &index_begin, const Vec3u &index_end, MeshFunctor& mesh_functor, Real dt)
 	{
 		for (size_t i = index_begin[0]; i != index_end[0]; ++i)
 			for (size_t j = index_begin[1]; j != index_end[1]; ++j)
@@ -17,7 +17,7 @@ namespace SPH {
 				}
 	}
 	//=================================================================================================//
-	void MeshIterator_parallel(Vecu index_begin, Vecu index_end, MeshFunctor& mesh_functor, Real dt)
+	void MeshIterator_parallel(const Vecu &index_begin, const Vecu &index_end, MeshFunctor& mesh_functor, Real dt)
 	{
 		parallel_for(blocked_range3d<size_t>
 			(index_begin[0], index_end[0], index_begin[1], index_end[1], index_begin[2], index_end[2]),
@@ -31,7 +31,7 @@ namespace SPH {
 			}, ap);
 	}
 	//=================================================================================================//
-	Vecu BaseMesh::transfer1DtoMeshIndex(Vecu number_of_grid_points, size_t i)
+	Vecu BaseMesh::transfer1DtoMeshIndex(const Vecu &number_of_grid_points, size_t i)
 	{
 		size_t row_times_column_size = number_of_grid_points[1] * number_of_grid_points[2];
 		size_t page = i / row_times_column_size;
@@ -41,14 +41,14 @@ namespace SPH {
 		return Vecu(page, column, left_over - column * row_size);
 	}
 	//=================================================================================================//
-	size_t BaseMesh::transferMeshIndexTo1D(Vecu number_of_grid_points, Vecu grid_index)
+	size_t BaseMesh::transferMeshIndexTo1D(const Vecu &number_of_grid_points, const Vecu &grid_index)
 	{
 		return grid_index[0] * number_of_grid_points[1] * number_of_grid_points[2] 
 			 + grid_index[1] * number_of_grid_points[2] 
 			 + grid_index[2];
 	}
     //=================================================================================================//
-    size_t BaseMesh::transferMeshIndexToMortonOrder(Vecu grid_index)
+    size_t BaseMesh::transferMeshIndexToMortonOrder(const Vecu &grid_index)
     {
         return MortonCode(grid_index[0]) | (MortonCode(grid_index[1]) << 1)
                 | (MortonCode(grid_index[2]) << 2);

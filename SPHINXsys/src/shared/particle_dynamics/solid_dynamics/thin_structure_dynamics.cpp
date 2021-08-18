@@ -51,7 +51,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ShellCorrectConfiguration::
-			ShellCorrectConfiguration(BaseInnerBodyRelation* body_inner_relation) :
+			ShellCorrectConfiguration(BaseBodyRelationInner* body_inner_relation) :
 			InteractionDynamics(body_inner_relation->sph_body_),
 			ShellDataInner(body_inner_relation),
 			Vol_(particles_->Vol_), B_(particles_->B_), 
@@ -77,7 +77,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ShellDeformationGradientTensor::
-			ShellDeformationGradientTensor(BaseInnerBodyRelation* body_inner_relation) :
+			ShellDeformationGradientTensor(BaseBodyRelationInner* body_inner_relation) :
 			InteractionDynamics(body_inner_relation->sph_body_),
 			ShellDataInner(body_inner_relation),
 			Vol_(particles_->Vol_), pos_n_(particles_->pos_n_), 
@@ -107,7 +107,7 @@ namespace SPH
 			F_bending_[index_i] = transformation_matrix_i * deformation_part_two * (~transformation_matrix_i) * B_[index_i];
 		}
 		//=================================================================================================//
-		BaseShellRelaxation::BaseShellRelaxation(BaseInnerBodyRelation* body_inner_relation) :
+		BaseShellRelaxation::BaseShellRelaxation(BaseBodyRelationInner* body_inner_relation) :
 			ParticleDynamics1Level(body_inner_relation->sph_body_),
 			ShellDataInner(body_inner_relation), Vol_(particles_->Vol_),
 			rho_n_(particles_->rho_n_), mass_(particles_->mass_),
@@ -123,7 +123,7 @@ namespace SPH
 			transformation_matrix_(particles_->transformation_matrix_) {}
 		//=================================================================================================//
 		ShellStressRelaxationFirstHalf::
-			ShellStressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation, 
+			ShellStressRelaxationFirstHalf(BaseBodyRelationInner* body_inner_relation, 
 				int number_of_gaussian_points) : BaseShellRelaxation(body_inner_relation),
 			stress_PK1_(particles_->stress_PK1_), 
 			global_stress_(particles_->global_stress_),
@@ -178,7 +178,7 @@ namespace SPH
 				Matd F_gaussian_point = F_[index_i] + gaussian_point_[i] * F_bending_[index_i] * shell_thickness_[index_i] * 0.5;
 				Matd dF_gaussian_point_dt = dF_dt_[index_i] + gaussian_point_[i] * dF_bending_dt_[index_i] * shell_thickness_[index_i] * 0.5;
 				Matd stress_PK2_gaussian_point = material_->ConstitutiveRelation(F_gaussian_point, index_i)
-					+ material_->NumericalDampingStress(F_gaussian_point, dF_gaussian_point_dt, smoothing_length_, index_i);
+					+ material_->NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, smoothing_length_, index_i);
 
 				/** Get the mid-surface stress to output the von-Mises equivalent stress. */
 				if (i == 0) stress_PK1_[index_i] = F_gaussian_point * stress_PK2_gaussian_point;
@@ -334,7 +334,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		FixedFreeRotateShellBoundary::
-			FixedFreeRotateShellBoundary(BaseInnerBodyRelation* body_inner_relation,
+			FixedFreeRotateShellBoundary(BaseBodyRelationInner* body_inner_relation,
 				BodyPartByParticle* body_part, Vecd constrained_direction) :
 			PartInteractionDynamicsByParticle1Level(body_inner_relation->sph_body_, body_part),
 			ShellDataInner(body_inner_relation),
@@ -391,7 +391,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ClampConstrainShellBodyRegion::
-			ClampConstrainShellBodyRegion(BaseInnerBodyRelation* body_inner_relation, BodyPartByParticle* body_part) :
+			ClampConstrainShellBodyRegion(BaseBodyRelationInner* body_inner_relation, BodyPartByParticle* body_part) :
 			PartInteractionDynamicsByParticle1Level(body_inner_relation->sph_body_, body_part),
 			ShellDataInner(body_inner_relation),
 			Vol_(particles_->Vol_), vel_n_(particles_->vel_n_),
