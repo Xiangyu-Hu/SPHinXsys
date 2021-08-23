@@ -65,6 +65,7 @@ namespace SPH
 		ImageMeshShape(Real radius, int resolution, Vec3d translation, Mat3d rotation);
 		ImageMeshShape(SimTK::UnitVec3 axis, Real radius, Real halflength, int resolution, Vec3d translation, Mat3d rotation);
 		virtual ~ImageMeshShape();
+		void ImageMeshShape::split(const std::string &s, char delim, std::vector<std::string> &elems);
 
 		bool checkContain(const Vec3d& input_pnt, bool BOUNDARY_INCLUDED = true);
 		Vec3d findClosestPoint(const Vec3d& input_pnt);

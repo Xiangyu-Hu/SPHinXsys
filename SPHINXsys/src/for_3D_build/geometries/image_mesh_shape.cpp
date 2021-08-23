@@ -17,17 +17,96 @@ namespace SPH
     max_distance_(-INFINITY),
     min_distance_(INFINITY)
 	{
-		std::fstream dataFile(file_path_name);
-		if (dataFile.fail())
+		//- read mhd file
+		std::ifstream dataFile(file_path_name, std::ifstream::in);
+		std::string file_path_name_raw;
+		if(dataFile.is_open())
 		{
-			std::cout << "File can not open <<" << file_path_name << std::endl;
-		}
+			std::string line;
+			std::vector<std::string> values;
+			while(std::getline(dataFile, line))
+			{
+				std::stringstream ss(line);
+				std::vector<std::string> elements;
+				split(line, '=', elements);
+				if(elements.size() == 2)
+				{
+					if(elements[0].compare("TransformMatrix") == 0)
+					{
+						std::vector<std::string> values;
+						split(elements[1], ' ', values);
+						rotation_[0][0] = std::stof(values[0]);
+						rotation_[0][1] = std::stof(values[1]);
+						rotation_[0][2] = std::stof(values[2]);
+						rotation_[1][0] = std::stof(values[3]);
+						rotation_[1][1] = std::stof(values[4]);
+						rotation_[1][2] = std::stof(values[5]);
+						rotation_[2][0] = std::stof(values[6]);
+						rotation_[2][1] = std::stof(values[7]);
+						rotation_[2][2] = std::stof(values[8]);
+					}
+					else if(elements[0].compare("Offset") == 0)
+					{
+						std::vector<std::string> values;
+						split(elements[1], ' ', values);
+						translation_[0] = std::stof(values[0]);
+						translation_[1] = std::stof(values[1]);
+						translation_[2] = std::stof(values[2]);
+					}
+					else if(elements[0].compare("CenterOfRotation") == 0)
+					{
+						std::vector<std::string> values;
+						split(elements[1], ' ', values);
+						origin_[0] = std::stof(values[0]);
+						origin_[1] = std::stof(values[1]);
+						origin_[2] = std::stof(values[2]);
+					}
+					else if(elements[0].compare("ElementSpacing") == 0)
+					{
+						std::vector<std::string> values;
+						split(elements[1], ' ', values);
+						spacing_[0] = std::stof(values[0]);
+						spacing_[1] = std::stof(values[1]);
+						spacing_[2] = std::stof(values[2]);
+					}
+					else if(elements[0].compare("DimSize") == 0)
+					{
+						std::vector<std::string> values;
+						split(elements[1], ' ', values);
+						dimensions_[0] = std::stoi(values[0]);
+						dimensions_[1] = std::stoi(values[1]);
+						dimensions_[2] = std::stoi(values[2]);
 
-		while (!dataFile.fail() && !dataFile.eof())
-		{
+						data_ = new float[dimensions_[0]*dimensions_[1]*dimensions_[2]];
+					}
+					else if(elements[0].compare("ElementDataFile") == 0)
+					{
+						file_path_name_raw = file_path_name +'/'+ elements[1];
+					}
+				}
+			}
 		}
 		dataFile.close();
 
+		//- read raw file
+		std::ifstream dataFileRaw(file_path_name_raw, std::ifstream::in || std::ifstream::binary);
+
+		dataFileRaw.seekg(0, std::ifstream::end);
+		int size = (int)dataFileRaw.tellg();
+		dataFileRaw.seekg(0, std::ifstream::beg);
+		if(dataFileRaw.is_open())
+		{
+			int index = 0;
+			while(dataFileRaw.tellg() < size)
+			{
+				char buffer[32];
+				dataFileRaw.read(buffer, sizeof(data_[index]));
+				data_[index] = (float)std::strtod(buffer, NULL);
+				index++;
+			}
+			
+		}
+		dataFileRaw.close();
 	}
 	//=================================================================================================//
 	ImageMeshShape::ImageMeshShape(Vec3d halfsize, int resolution, Vec3d translation, Mat3d rotation) :
@@ -72,51 +151,31 @@ namespace SPH
         size_ = width_*height_*depth_;
         data_ = new float[size_];
 
-		std::ofstream output_file("sphere.dat",std::ofstream::out);
+		std::ofstream output_file("sphere.mhd",std::ofstream::out);
+		output_file << "ObjectType = Image" << "\n";
+		output_file << "NDims = 3" << "\n";
+		output_file << "BinaryData = True" << "\n";
+		output_file << "BinaryDataByteOrderMSB = False" << "\n";
+		output_file << "CompressedData = False" << "\n";
+		output_file << "TransformMatrix = " 
+			<< rotation[0][0] << " " << rotation[0][1] << " " << rotation[0][2] << " "
+			<< rotation[1][0] << " " << rotation[1][1] << " " << rotation[1][2] << " "
+			<< rotation[2][0] << " " << rotation[2][1] << " " << rotation[2][2] << "\n";
+		output_file << "Offset = " 
+			<< translation[0] << " " << translation[1] << " " << translation[2] << "\n";
+		output_file << "CenterOfRotation = "
+			<< origin_[0] << " " << origin_[1] << " " << origin_[2] << "\n";
+		output_file << "ElementSpacing = "
+			<< spacing_[0] << " " << spacing_[1] << " " << spacing_[2] << "\n";
+		output_file << "DimSize = "
+			<< dimensions_[0] << " " << dimensions_[1] << " " << dimensions_[2] << "\n";
+		output_file << "AnatomicalOrientation = ??? " << "\n";
+		output_file << "ElementType = MET_FLOAT" << "\n";
+		output_file << "ElementDataFile = sphere.raw" << "\n";
 
-		output_file << "\n";
-		output_file << "title='View'" << "\n";
-		output_file << "variables= " << "x, " << "y, " << "z, " << "phi " << "\n";
-		output_file << "zone i=" << width_ << "  j=" << height_ << "  k=" << depth_
-			<< "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
-
-		for (int z = 0; z < depth_; z++)
-		{
-			for (int y = 0; y < height_; y++)
-			{
-				for (int x = 0; x < width_; x++)
-				{
-					//std::cout << data_[index] << std::endl;
-					output_file << x << " ";
-				}
-				output_file << " \n";
-			}
-		}
-
-		for (int z = 0; z < depth_; z++)
-		{
-			for (int y = 0; y < height_; y++)
-			{
-				for (int x = 0; x < width_; x++)
-				{
-					//std::cout << data_[index] << std::endl;
-					output_file << y << " ";
-				}
-				output_file << " \n";
-			}
-		}
-		for (int z = 0; z < depth_; z++)
-		{
-			for (int y = 0; y < height_; y++)
-			{
-				for (int x = 0; x < width_; x++)
-				{
-					//std::cout << data_[index] << std::endl;
-					output_file << z << " ";
-				}
-				output_file << " \n";
-			}
-		}
+		output_file.close();
+		std::ofstream output_file_raw("sphere.raw", std::ofstream::binary);
+		Vec3d center(0.5*width_, 0.5*height_, 0.5*depth_);
 
         for(int z = 0; z < depth_; z++)
         {
@@ -125,25 +184,20 @@ namespace SPH
                 for (int x = 0; x < width_; x++)
                 {
                     int index = z*width_*height_ + y*width_ + x;
-                    double distance = (Vec3d(x,y,z) - origin_).norm()*spacing_[0]-radius*spacing_[0];
+                    double distance = (Vec3d(x,y,z) - center).norm()-radius;
                     if(distance < min_distance_) min_distance_ = distance;
                     if(distance > max_distance_) max_distance_ = distance;
 					data_[index] = float(distance);
-                    /*if(distance < radius)
-                    {
-                        data_[index] = -float(distance);
-                    }
-                    else
-                    {
-                        data_[index] = float(distance);
-                    }*/
-					//std::cout << data_[index] << std::endl;
-					output_file << data_[index] << " ";
+
+					//output_file << data_[index] << " ";
+					//char array[10];
+					//sprintf(array, "%f", data_[index]);
+					//std::cout << array << " " << data_[index] << std::endl;
+					output_file_raw.write((char*)(&(data_[index])), sizeof(data_[index]));
                 }
-				output_file << " \n";
             }
         }
-		output_file.close();
+		output_file_raw.close();
 	}
 	//=================================================================================================//
 	ImageMeshShape::ImageMeshShape(SimTK::UnitVec3 axis, Real radius, Real halflength, int resolution, Vec3d translation, Mat3d rotation) :
@@ -170,6 +224,15 @@ namespace SPH
 			delete data_;
 			data_ = nullptr;
 		}
+	}
+    //=================================================================================================//
+	void ImageMeshShape::split(const std::string &s, char delim, std::vector<std::string> &elems)
+	{
+    	std::stringstream ss(s);
+    	std::string item;
+    	while(std::getline(ss, item, delim)) {
+        	elems.push_back(item);
+    	}
 	}
 	//=================================================================================================//
 	bool ImageMeshShape::checkContain(const Vec3d& input_pnt, bool BOUNDARY_INCLUDED)
