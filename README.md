@@ -5,14 +5,13 @@
 SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle Hydrodynamics for industrial compleX systems. 
 It provides C++ APIs for physical accurate simulation and aims to model coupled industrial dynamic systems including fluid, solid, multi-body dynamics 
 and beyond with SPH (smoothed particle hydrodynamics), a meshless computational method using particle discretization. 
-Please check the documentation of the code at https://xiangyu-hu.github.io/SPHinXsys/.
 For more information on the SPHinXsys project, please check the project website: https://www.sphinxsys.org.
 
 SPHinXsys is a multi-physics, multi-resolution SPH library. 
 Although it is not a standalone application itself, 
 many examples designated for the specific type of applications are provided.
 
-## Algorithm publications
+## Journal publications
 
 The algorithms in SPHinXsys are based on the following publications:
 
@@ -49,9 +48,10 @@ Volume 236, (2021) 109540
 
 SPHinXsys is cross-platform can be compiled and used in Windows, Linux and Apple systems.
 
-## Installation and tutorials
+## Installation, tutorial and documentation
 
 For installation, program manual and tutorials, please check https://www.sphinxsys.org/html/sphinx_index.html. 
+Please check the documentation of the code at https://xiangyu-hu.github.io/SPHinXsys/.
 
 ## Contribute to SPHinXsys
 
