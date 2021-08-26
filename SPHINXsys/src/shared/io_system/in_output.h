@@ -30,7 +30,7 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_data_package.h"
-#include "sph_data_conainers.h"
+#include "sph_data_containers.h"
 #include "all_physical_dynamics.h"
 #include "xml_engine.h" 
  
@@ -250,10 +250,10 @@ namespace SPH {
 	{
 	protected:
 		std::string filefullpath_;
-		Mesh* mesh_;
+		BaseMeshField* mesh_field_;
 		virtual void writeWithFileName(const std::string& sequence) override;
 	public:
-		MeshRecordingToPlt(In_Output& in_output, SPHBody* body, Mesh* mesh);
+		MeshRecordingToPlt(In_Output& in_output, SPHBody* body, BaseMeshField* mesh_field);
 		virtual ~MeshRecordingToPlt() {};
 	};
 
@@ -350,7 +350,7 @@ namespace SPH {
 	
 	public:
 		ObservedQuantityRecording(std::string quantity_name, In_Output& in_output,
-			BaseContactBodyRelation* body_contact_relation) :
+			BaseBodyRelationContact* body_contact_relation) :
 			BodyStatesRecording(in_output, body_contact_relation->sph_body_),
 			observer_dynamics::InterpolatingAQuantity<DataTypeIndex, VariableType>(body_contact_relation, quantity_name),
 			observer_(body_contact_relation->sph_body_), plt_engine_(), base_particles_(observer_->base_particles_),

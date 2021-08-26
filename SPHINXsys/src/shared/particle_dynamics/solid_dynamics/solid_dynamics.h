@@ -75,7 +75,7 @@ namespace SPH
 			public PartInteractionDynamicsByParticle, public ContactDynamicsData
 		{
 		public:
-			ContactDensitySummation(SolidContactBodyRelation* solid_body_contact_relation);
+			ContactDensitySummation(SolidBodyRelationContact* solid_body_contact_relation);
 			virtual ~ContactDensitySummation() {};
 		protected:
 			StdLargeVec<Real>& mass_, & contact_density_;
@@ -92,7 +92,7 @@ namespace SPH
 			public PartInteractionDynamicsByParticle, public ContactDynamicsData
 		{
 		public:
-			ContactForce(SolidContactBodyRelation* solid_body_contact_relation);
+			ContactForce(SolidBodyRelationContact* solid_body_contact_relation);
 			virtual ~ContactForce() {};
 		protected:
 			StdLargeVec<Real>& contact_density_, & Vol_, & mass_;
@@ -117,7 +117,7 @@ namespace SPH
 			public PartInteractionDynamicsByParticle, public ContactDynamicsData
 		{
 		public:
-			DynamicContactForce(SolidContactBodyRelation* solid_body_contact_relation, Real penalty_strength = 1.0);
+			DynamicContactForce(SolidBodyRelationContact* solid_body_contact_relation, Real penalty_strength = 1.0);
 			virtual ~DynamicContactForce() {};
 		protected:
 			StdLargeVec<Real>& Vol_, & mass_;
@@ -140,7 +140,7 @@ namespace SPH
 			public PartInteractionDynamicsByParticle, public ContactDynamicsData
 		{
 		public:
-			ContactForceWithWall(SolidContactBodyRelation* solid_body_contact_relation, Real penalty_strength = 1.0);
+			ContactForceWithWall(SolidBodyRelationContact* solid_body_contact_relation, Real penalty_strength = 1.0);
 			virtual ~ContactForceWithWall() {};
 		protected:
 			StdLargeVec<Real>& Vol_, & mass_;
@@ -161,7 +161,7 @@ namespace SPH
 			public InteractionDynamics, public SolidDataInner
 		{
 		public:
-			CorrectConfiguration(BaseInnerBodyRelation* body_inner_relation);
+			CorrectConfiguration(BaseBodyRelationInner* body_inner_relation);
 			virtual ~CorrectConfiguration() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
@@ -241,7 +241,7 @@ namespace SPH
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
-				/**
+		/**
 		 * @class TranslateSolidBody
 		 * @brief Translates the body in a given time interval -translation driven boundary condition; only moving the body; end position irrelevant;
 		 * Note the average values for FSI are prescirbed also.
@@ -252,17 +252,32 @@ namespace SPH
 		public:
 			TranslateSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd translation);
 			virtual ~TranslateSolidBody() {};
-			StdLargeVec<Vecd>& GetParticlePos0(){ return pos_0_; };
-			StdLargeVec<Vecd>& GetParticlePosN(){ return pos_n_; };
 		protected:
 			StdLargeVec<Vecd>& pos_n_, &pos_0_;
-			StdLargeVec<Vecd>& vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			StdLargeVec<Vecd> pos_end_;
+			StdLargeVec<Vecd>& vel_n_, &dvel_dt_;
 			Real start_time_, end_time_;
 			Vecd translation_;
 			Vecd getDisplacement(size_t index_i, Real dt);
 			virtual Vecd getVelocity() { return Vecd(0); };
 			virtual Vecd getAcceleration() { return Vecd(0); };
 			virtual SimTK::Rotation getBodyRotation() { return SimTK::Rotation(); }
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		 * @class TranslateSolidBodyPart
+		 * @brief Translates the body in a given time interval -translation driven boundary condition; only moving the body; end position irrelevant;
+		 * Only the particles in a given Bounding Box are translated. The Bounding Box is defined for the undeformed shape.
+		 * Note the average values for FSI are prescirbed also.
+		 */
+		class TranslateSolidBodyPart: public TranslateSolidBody
+		{
+		public:
+			TranslateSolidBodyPart(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd translation, BoundingBox bbox);
+			virtual ~TranslateSolidBodyPart() {};
+		protected:
+			BoundingBox bbox_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -299,7 +314,7 @@ namespace SPH
 			public SolidDataInner
 		{
 		public:
-			SoftConstrainSolidBodyRegion(BaseInnerBodyRelation* body_inner_relation, BodyPartByParticle* body_part);
+			SoftConstrainSolidBodyRegion(BaseBodyRelationInner* body_inner_relation, BodyPartByParticle* body_part);
 			virtual ~SoftConstrainSolidBodyRegion() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
@@ -319,7 +334,7 @@ namespace SPH
 			ConstrainSolidBodyRegion* constrianing_;
 			SoftConstrainSolidBodyRegion* softing_;
 
-			ClampConstrainSolidBodyRegion(BaseInnerBodyRelation* body_inner_relation, BodyPartByParticle* body_part);
+			ClampConstrainSolidBodyRegion(BaseBodyRelationInner* body_inner_relation, BodyPartByParticle* body_part);
 			virtual ~ClampConstrainSolidBodyRegion() {};
 
 			virtual void exec(Real dt = 0.0) override;
@@ -397,11 +412,11 @@ namespace SPH
 			: public ParticleDynamicsSimple, public SolidDataSimple
 		{
 		public:
-			AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox* bounding_box, Vecd acceleration);
+			AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox& bounding_box, Vecd acceleration);
 			virtual ~AccelerationForBodyPartInBoundingBox() {};
 		protected:
 			StdLargeVec<Vecd>& pos_n_,& dvel_dt_prior_;
-			BoundingBox* bounding_box_;
+			BoundingBox bounding_box_;
 			Vecd acceleration_;
 			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -471,7 +486,7 @@ namespace SPH
 			public InteractionDynamics, public ElasticSolidDataInner
 		{
 		public:
-			DeformationGradientTensorBySummation(BaseInnerBodyRelation* body_inner_relation);
+			DeformationGradientTensorBySummation(BaseBodyRelationInner* body_inner_relation);
 			virtual ~DeformationGradientTensorBySummation() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
@@ -488,7 +503,7 @@ namespace SPH
 			: public ParticleDynamics1Level, public ElasticSolidDataInner
 		{
 		public:
-			BaseElasticRelaxation(BaseInnerBodyRelation* body_inner_relation);
+			BaseElasticRelaxation(BaseBodyRelationInner* body_inner_relation);
 			virtual ~BaseElasticRelaxation() {};
 		protected:
 			StdLargeVec<Real>& Vol_, & rho_n_, & mass_;
@@ -504,7 +519,7 @@ namespace SPH
 		class StressRelaxationFirstHalf : public BaseElasticRelaxation
 		{
 		public:
-			StressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation);
+			StressRelaxationFirstHalf(BaseBodyRelationInner* body_inner_relation);
 			virtual ~StressRelaxationFirstHalf() {};
 		protected:
 			Real rho0_, inv_rho0_;
@@ -529,10 +544,10 @@ namespace SPH
 		class KirchhoffStressRelaxationFirstHalf : public StressRelaxationFirstHalf
 		{
 		public:
-			KirchhoffStressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation);
+			KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner* body_inner_relation);
 			virtual ~KirchhoffStressRelaxationFirstHalf() {};
 		protected:
-			StdLargeVec<Real>& J_to_minus_2_over_diemsnion_;
+			StdLargeVec<Matd>& J_to_minus_2_over_dimension_;
 			StdLargeVec<Matd>& stress_on_particle_, & inverse_F_T_;
 			const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
 
@@ -548,7 +563,7 @@ namespace SPH
 		class StressRelaxationSecondHalf : public BaseElasticRelaxation
 		{
 		public:
-			StressRelaxationSecondHalf(BaseInnerBodyRelation* body_inner_relation) :
+			StressRelaxationSecondHalf(BaseBodyRelationInner* body_inner_relation) :
 				BaseElasticRelaxation(body_inner_relation) {};
 			virtual ~StressRelaxationSecondHalf() {};
 		protected:

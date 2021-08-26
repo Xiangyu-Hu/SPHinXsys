@@ -99,7 +99,7 @@ namespace SPH {
             return it->second.statevariable_.get();
         }
         else {
-            return NULL;
+            return nullptr;
         }
     }
     //===============================================================//.

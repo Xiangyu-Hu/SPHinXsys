@@ -11,7 +11,7 @@
 #include "base_data_package.h"
 #include "elastic_solid.h"
 #include "external_force.h"
-#include "mesh_cell_linked_list.h"
+#include "cell_linked_list.h"
 #include "fluid_particles.h"
 #include "weakly_compressible_fluid.h"
 

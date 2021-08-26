@@ -59,7 +59,7 @@ namespace SPH
 		public:
 			template<class BaseBodyRelationType>
 			RelaxationWithWall(BaseBodyRelationType* base_body_relation, 
-				BaseContactBodyRelation* wall_contact_relation);
+				BaseBodyRelationContact* wall_contact_relation);
 			virtual ~RelaxationWithWall() {};
 		protected:
 			StdVec<Real> wall_inv_rho_0_;
@@ -78,7 +78,7 @@ namespace SPH
 			// template for different combination of constructing body relations
 			template<class BaseBodyRelationType>
 			ViscousWithWall(BaseBodyRelationType* base_body_relation, 
-				BaseContactBodyRelation* wall_contact_relation);
+				BaseBodyRelationContact* wall_contact_relation);
 			virtual ~ViscousWithWall() {};
 		protected:
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -90,10 +90,10 @@ namespace SPH
 		{
 		public:
 			BaseViscousAccelerationWithWall(ComplexBodyRelation* fluid_wall_relation);
-			BaseViscousAccelerationWithWall(BaseInnerBodyRelation* fluid_inner_relation, 
-				BaseContactBodyRelation* wall_contact_relation);
+			BaseViscousAccelerationWithWall(BaseBodyRelationInner* fluid_inner_relation, 
+				BaseBodyRelationContact* wall_contact_relation);
 			BaseViscousAccelerationWithWall(ComplexBodyRelation* fluid_complex_relation, 
-				BaseContactBodyRelation* wall_contact_relation);
+				BaseBodyRelationContact* wall_contact_relation);
 		};
 		using ViscousAccelerationWithWall 
 			= BaseViscousAccelerationWithWall<ViscousWithWall<ViscousAccelerationInner>>;		
@@ -109,7 +109,7 @@ namespace SPH
 			// template for different combination of constructing body relations
 			template<class BaseBodyRelationType>
 			PressureRelaxation(BaseBodyRelationType* base_body_relation, 
-				BaseContactBodyRelation* wall_contact_relation);
+				BaseBodyRelationContact* wall_contact_relation);
 			virtual ~PressureRelaxation() {};
 		protected:
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -121,10 +121,10 @@ namespace SPH
 		{
 		public:
 			BasePressureRelaxationWithWall(ComplexBodyRelation* fluid_wall_relation);
-			BasePressureRelaxationWithWall(BaseInnerBodyRelation* fluid_inner_relation, 
-				BaseContactBodyRelation* wall_contact_relation);
+			BasePressureRelaxationWithWall(BaseBodyRelationInner* fluid_inner_relation, 
+				BaseBodyRelationContact* wall_contact_relation);
 			BasePressureRelaxationWithWall(ComplexBodyRelation* fluid_complex_relation, 
-				BaseContactBodyRelation* wall_contact_relation);
+				BaseBodyRelationContact* wall_contact_relation);
 		};
 		using PressureRelaxationHLLCRiemannWithWall
 			= BasePressureRelaxationWithWall<PressureRelaxation<PressureRelaxationHLLCRiemannInner>>;
@@ -142,7 +142,7 @@ namespace SPH
 			// template for different combination of constructing body relations
 			template<class BaseBodyRelationType>
 			DensityAndEnergyRelaxation(BaseBodyRelationType* base_body_relation,
-				BaseContactBodyRelation* wall_contact_relation);
+				BaseBodyRelationContact* wall_contact_relation);
 			virtual ~DensityAndEnergyRelaxation() {};
 		protected:
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -154,10 +154,10 @@ namespace SPH
 		{
 		public:
 			BaseDensityAndEnergyRelaxationWithWall(ComplexBodyRelation* fluid_wall_relation);
-			BaseDensityAndEnergyRelaxationWithWall(BaseInnerBodyRelation* fluid_inner_relation,
-				BaseContactBodyRelation* wall_contact_relation);
+			BaseDensityAndEnergyRelaxationWithWall(BaseBodyRelationInner* fluid_inner_relation,
+				BaseBodyRelationContact* wall_contact_relation);
 			BaseDensityAndEnergyRelaxationWithWall(ComplexBodyRelation* fluid_complex_relation,
-				BaseContactBodyRelation* wall_contact_relation);
+				BaseBodyRelationContact* wall_contact_relation);
 		};
 		using DensityAndEnergyRelaxationHLLCRiemannWithWall = BaseDensityAndEnergyRelaxationWithWall<DensityAndEnergyRelaxationHLLCRiemannInner>;
 		using DensityAndEnergyRelaxationHLLCRiemannAndLimiterWithWall = BaseDensityAndEnergyRelaxationWithWall<DensityAndEnergyRelaxationHLLCWithLimiterRiemannInner>;
@@ -169,7 +169,7 @@ namespace SPH
 		class SurfaceNormWithWall : public InteractionDynamics, public FSIContactData
 		{
 		public:
-			SurfaceNormWithWall(BaseContactBodyRelation* contact_relation, Real contact_angle);
+			SurfaceNormWithWall(BaseBodyRelationContact* contact_relation, Real contact_angle);
 			virtual ~SurfaceNormWithWall() {};
 		protected:
 			Real contact_angle_;

@@ -47,7 +47,7 @@ namespace SPH {
 		//set the initial value for initial particle position
 		for (size_t i = 0; i != pos_n_.size(); ++i) pos_0_[i] =  pos_n_[i];
 		//sorting particle once
-		//dynamic_cast<RealBody*>(body)->sortParticleWithMeshCellLinkedList();
+		//dynamic_cast<RealBody*>(body)->sortParticleWithCellLinkedList();
 	}
 	//=============================================================================================//
 	void SolidParticles::offsetInitialParticlePosition(Vecd offset)
@@ -94,6 +94,30 @@ namespace SPH {
 		//		add restart output particle data
 		//----------------------------------------------------------------------
 		addAVariableNameToList<indexMatrix, Matd>(variables_to_restart_, "DeformationGradient");
+	}
+	//=================================================================================================//
+	StdLargeVec<Real> ElasticSolidParticles::getVonMisesStress()
+	{
+		StdLargeVec<Real> von_Mises_stress_vector = {};
+		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
+		{
+			von_Mises_stress_vector.push_back(von_Mises_stress(index_i));
+		}
+		return von_Mises_stress_vector;
+	}
+	//=================================================================================================//
+	Real ElasticSolidParticles::getMaxVonMisesStress()
+	{
+		Real von_Mises_stress_max = 0;
+		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
+		{
+			Real von_Mises_stress_i = von_Mises_stress(index_i);
+			if (von_Mises_stress_max < von_Mises_stress_i)
+			{
+				von_Mises_stress_max = von_Mises_stress_i;
+			}
+		}
+		return von_Mises_stress_max;
 	}
 	//=================================================================================================//
 	void ElasticSolidParticles::writeParticlesToVtuFile(std::ofstream& output_file)
