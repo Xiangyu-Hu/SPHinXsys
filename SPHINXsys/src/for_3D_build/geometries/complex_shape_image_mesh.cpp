@@ -85,24 +85,23 @@ namespace SPH
 	//=================================================================================================//
 	void ComplexShapeImageMesh::addBrick(Vec3d halfsize, int resolution, Vec3d translation, Mat3d rotation, ShapeBooleanOps op)
 	{
-		ImageMeshShape* image_mesh_shape = new ImageMeshShape(halfsize, resolution, translation, rotation);
-		std::pair<ImageMeshShape*, ShapeBooleanOps> shape_and_op(image_mesh_shape, op);
-		image_mesh_shapes_.push_back(shape_and_op);
+		std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+		throw std::runtime_error("addBrick is not implemented");
 	}
 	//=================================================================================================//
 	void ComplexShapeImageMesh::addSphere(Real radius, int resolution, Vec3d translation, Mat3d rotation, ShapeBooleanOps op)
 	{
-		ImageMeshShape* image_mesh_shape = new ImageMeshShape(radius, resolution, translation, rotation);
+		Vec3d spacings(resolution,resolution,resolution);
+		Vec3d center(translation);
+		ImageMeshShape* image_mesh_shape = new ImageMeshShape(radius, spacings, center);
 		std::pair<ImageMeshShape*, ShapeBooleanOps> shape_and_op(image_mesh_shape, op);
 		image_mesh_shapes_.push_back(shape_and_op);
 	}
 	//=================================================================================================//
 	void ComplexShapeImageMesh::addCylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resolution, Vec3d translation, Mat3d rotation, ShapeBooleanOps op)
 	{
-		/** Here SimTK::UnitVec3 give the direction of the cylinder, viz. SimTK::UnitVec3(0,0,1) create a cylinder in z-axis.*/
-		ImageMeshShape* image_mesh_shape = new ImageMeshShape(axis, radius, halflength, resolution, translation, rotation);
-		std::pair<ImageMeshShape*, ShapeBooleanOps> shape_and_op(image_mesh_shape, op);
-		image_mesh_shapes_.push_back(shape_and_op);
+		std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+		throw std::runtime_error("addCylinder is not implemented");
 	}
 	//=================================================================================================//
 	void ComplexShapeImageMesh::addComplexShapeImageMesh(ComplexShapeImageMesh* complex_shape_image_mesh, ShapeBooleanOps op)
