@@ -87,7 +87,10 @@ int main()
 		{end_time * 0.1, pressure},
 		{end_time, pressure }
 	};
-	solid_dynamics::SurfacePressureFromSource surface_pressure(&beam_body, Vec3d(0.1, 0.0, 0.1), pressure_over_time);
+	beam_particles.initializeNormalDirectionFromGeometry();
+	solid_dynamics::UpdateElasticNormalDirection update_normals(&beam_body);
+	solid_dynamics::SurfacePressureFromSource surface_pressure(&beam_body, Vec3d(0.1, 0.5 * cross_section_side, 0.1), pressure_over_time);
+	
 	/** 
 	 * This section define all numerical methods will be used in this case.
 	 */
@@ -105,6 +108,7 @@ int main()
 	/** Output */
 	In_Output in_output(system);
 	BodyStatesRecordingToVtu write_states(in_output, system.real_bodies_);
+
 	/**
 	 * From here the time stepping begines.
 	 * Set the starting time.
@@ -112,6 +116,7 @@ int main()
 	GlobalStaticVariables::physical_time_ = 0.0;
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
+
 	corrected_configuration_in_strong_form.parallel_exec();
 	write_states.writeToFile(0);
 	/** Setup physical parameters. */
@@ -134,7 +139,7 @@ int main()
 					<< GlobalStaticVariables::physical_time_ << "	dt: "
 					<< dt << "\n";
 			}
-
+			update_normals.parallel_exec();
 			initialize_gravity.parallel_exec(); // gravity force
 			surface_pressure.parallel_exec();
 
