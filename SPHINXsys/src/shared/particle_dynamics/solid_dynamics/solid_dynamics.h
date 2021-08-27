@@ -422,6 +422,47 @@ namespace SPH
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
+		/**
+		* @class ForceInBodyRegion
+		* @brief ForceInBodyRegion, distributes the force vector as acceleration among the particles in a given body part
+		*/
+		class ForceInBodyRegion :
+			public PartSimpleDynamicsByParticle, public SolidDataSimple
+		{
+		public:
+			ForceInBodyRegion(SPHBody* body, BodyPartByParticle* body_part, Vecd force, Real end_time);
+			virtual ~ForceInBodyRegion() {};
+		protected:
+			StdLargeVec<Vecd>& pos_0_,& dvel_dt_prior_;
+			StdLargeVec<Real>& mass_;
+			Vecd acceleration_;
+			Real end_time_;
+			virtual void setupDynamics(Real dt = 0.0) override;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		* @class SurfacePressureFromSource
+		* @brief SurfacePressureFromSource, applies pressure on the surface particles coming from a source point
+		*/
+		class SurfacePressureFromSource :
+			public ParticleDynamicsSimple, public SolidDataSimple
+		{
+		public:
+			SurfacePressureFromSource(SPHBody* body, Vecd source_point, StdVec<array<Real, 2>> pressure_over_time);
+			virtual ~SurfacePressureFromSource() {};
+
+			StdLargeVec<bool>& GetApplyPressureToParticle(){ return apply_pressure_to_particle_; }
+		protected:
+			StdLargeVec<Vecd>& pos_0_,& n_,& dvel_dt_prior_;
+			StdLargeVec<Real>& mass_;
+			StdVec<array<Real, 2>> pressure_over_time_;
+			StdLargeVec<bool> apply_pressure_to_particle_;
+			Real getPressure();
+			virtual void setupDynamics(Real dt = 0.0) override;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
 		//----------------------------------------------------------------------
 		//		for elastic solid dynamics 
 		//----------------------------------------------------------------------
