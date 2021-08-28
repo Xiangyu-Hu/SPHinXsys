@@ -20,6 +20,13 @@
 * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
 *                                                                           *
 * --------------------------------------------------------------------------*/
+/**
+* @file image_mesh_shape.h
+* @brief x
+* @details x
+*			x
+* @author	Yijin Mao
+*/
 #ifndef IMAGE_MHD_H
 #define IMAGE_MHD_H
 
@@ -39,7 +46,13 @@ namespace SPH {
 		MET_LONG
 	};
 
-	template <typename T>
+	enum Output_Mode
+	{
+		BINARY,
+		ASCII
+	};
+
+	template <typename T, int nDims>
 	class ImageMHD
 	{
 	public:
@@ -55,10 +68,7 @@ namespace SPH {
 		{ 
 			objectType_ = objectType; 
 		};
-		void set_ndims(int ndims) 
-		{ 
-			ndims_ = ndims; 
-		};
+
 		void set_binaryData(bool binaryData) 
 		{ 
 			binaryData_ = binaryData; 
@@ -104,7 +114,6 @@ namespace SPH {
 			elementDataFile_ = elementDataFile;
 		};
 
-
 		T* get_data() { return data_; };
 
 		int get_size() { return size_; }
@@ -116,6 +125,8 @@ namespace SPH {
 		BoundingBox findBounds();
 		Real findValueAtPoint(const Vec3d& input_pnt);
 		Vec3d findNormalAtPoint(const Vec3d & input_pnt);
+
+		void write(std::string filename, Output_Mode=BINARY);
 
 	private:
 		std::string objectType_;

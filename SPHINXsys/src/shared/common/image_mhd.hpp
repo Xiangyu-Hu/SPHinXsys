@@ -20,7 +20,13 @@
 * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
 *                                                                           *
 * --------------------------------------------------------------------------*/
-
+/**
+* @file image_mesh_shape.h
+* @brief x
+* @details x
+*			x
+* @author	Yijin Mao
+*/
 #pragma once
 
 #include "image_mhd.h"
@@ -28,10 +34,10 @@
 
 namespace SPH {
 
-	template<typename T>
-	ImageMHD<T>::ImageMHD(std::string full_path_to_file):
+	template<typename T, int nDims>
+	ImageMHD<T, nDims>::ImageMHD(std::string full_path_to_file):
 		objectType_("Image"),
-		ndims_(3),
+		ndims_(nDims),
 		binaryData_(true),
 		binaryDataByteOrderMSB_(false),
 		compressedData_(false),
@@ -113,6 +119,7 @@ namespace SPH {
 					}
 					else if (elements[0].compare("ElementDataFile") == 0)
 					{
+						full_path_to_file = full_path_to_file.substr(0, full_path_to_file.find_last_of("\\/"));
 						file_path_to_raw_file = full_path_to_file + '/' + elements[1];
 					}
 				}
@@ -126,34 +133,35 @@ namespace SPH {
 		std::cout << "transformMatrix: " << transformMatrix_ << std::endl;
 
 		//- read raw file
-		std::ifstream dataFileRaw(file_path_to_raw_file, std::ifstream::in || std::ifstream::binary);
+		std::ifstream dataFileRaw(file_path_to_raw_file, std::ios::in | std::ios::binary);
 
-		dataFileRaw.seekg(0, std::ifstream::end);
-		int size = (int)dataFileRaw.tellg();
-		dataFileRaw.seekg(0, std::ifstream::beg);
 		if (dataFileRaw.is_open())
 		{
 			int index = 0;
-			while (dataFileRaw.tellg() < size)
+			dataFileRaw.read((char*)data_, sizeof(T)*size_);
+			T distance = 0;
+			for(int index = 0; index<size_; index++)
 			{
-				char buffer[32];
-				dataFileRaw.read(buffer, sizeof(data_[index]));
-				data_[index] = (float)std::strtod(buffer, NULL);
-				std::cout << data_[index] << std::endl;
-				index++;
+				distance = data_[index];
+				data_[index] = distance;
+				//std::cout <<index <<" "<< distance << '\n';
+				if (distance < min_value_) min_value_ = distance;
+				if (distance > max_value_) max_value_ = distance;
 			}
 		}
 		dataFileRaw.close();
+
+		//write(std::string("sphere-binary"),ASCII);
 	}
-	template<typename T>
-	ImageMHD<T>::ImageMHD(Real radius, Vec3i NxNyNz, Vec3d spacings):
+	template<typename T, int nDims>
+	ImageMHD<T, nDims>::ImageMHD(Real radius, Vec3i NxNyNz, Vec3d spacings):
 		objectType_("Image"),
-		ndims_(3),
+		ndims_(nDims),
 		binaryData_(true),
 		binaryDataByteOrderMSB_(false),
 		compressedData_(false),
 		transformMatrix_(Mat3d(1.0)),
-		offset_(Vec3d(-0.5*NxNyNz[0]*spacings[0], -0.5*NxNyNz[1] * spacings[1], -0.5*NxNyNz[1] * spacings[1])),
+		offset_(Vec3d(-0.5*NxNyNz[0]*spacings[0], -0.5*NxNyNz[1] * spacings[1], -0.5*NxNyNz[2] * spacings[2])),
 		centerOfRotation_(Vec3d(0.0, 0.0, 0.0)),
 		elementSpacing_(spacings),
 		dimSize_(NxNyNz),
@@ -171,35 +179,6 @@ namespace SPH {
 		if(data_ == nullptr) 
 			data_ = new float[size_];
 
-		std::ofstream output_file("sphere.mhd", std::ofstream::out);
-		output_file << "ObjectType = " << objectType_ << "\n";
-		output_file << "NDims = " << ndims_ << "\n";
-		output_file << "BinaryData = " << binaryData_ << "\n";
-		output_file << "BinaryDataByteOrderMSB = " << binaryDataByteOrderMSB_ << "\n";
-		output_file << "CompressedData = " << compressedData_ << "\n";
-		output_file << "TransformMatrix = "
-			<< transformMatrix_[0][0] << " " << transformMatrix_[0][1] << " " << transformMatrix_[0][2] << " "
-			<< transformMatrix_[1][0] << " " << transformMatrix_[1][1] << " " << transformMatrix_[1][2] << " "
-			<< transformMatrix_[2][0] << " " << transformMatrix_[2][1] << " " << transformMatrix_[2][2] << "\n";
-		output_file << "Offset = "
-			<< offset_[0] << " " << offset_[1] << " " << offset_[2] << "\n";
-		output_file << "CenterOfRotation = "
-			<< centerOfRotation_[0] << " " << centerOfRotation_[1] << " " << centerOfRotation_[2] << "\n";
-		output_file << "ElementSpacing = "
-			<< elementSpacing_[0] << " " << elementSpacing_[1] << " " << elementSpacing_[2] << "\n";
-		output_file << "DimSize = "
-			<< dimSize_[0] << " " << dimSize_[1] << " " << dimSize_[2] << "\n";
-		output_file << "AnatomicalOrientation = " << anatomicalOrientation_ << "\n";
-		if(elementType_ == MET_FLOAT)
-			output_file << "ElementType = MET_FLOAT" << "\n";
-		else if (elementType_ == MET_UCHAR)
-			output_file << "ElementType = MET_UCHAR" << "\n";
-		if (elementType_ == MET_LONG)
-			output_file << "ElementType = MET_LONG" << "\n";
-		output_file << "ElementDataFile = sphere.raw" << "\n";
-
-		output_file.close();
-		std::ofstream output_file_raw("sphere.raw", std::ofstream::binary);
 		Vec3d center(0.5*width_, 0.5*height_, 0.5*depth_);
 
 		for (int z = 0; z < depth_; z++)
@@ -213,16 +192,14 @@ namespace SPH {
 					if (distance < min_value_) min_value_ = distance;
 					if (distance > max_value_) max_value_ = distance;
 					data_[index] = float(distance);
-
-					output_file_raw.write((char*)(&(data_[index])), sizeof(data_[index]));
 				}
 			}
 		}
-		output_file_raw.close();
+		write(std::string("sphere"), BINARY);
 	}
 
-	template<typename T>
-	ImageMHD<T>::~ImageMHD()
+	template<typename T, int nDims>
+	ImageMHD<T, nDims>::~ImageMHD()
 	{
 		if (data_)
 		{
@@ -232,8 +209,8 @@ namespace SPH {
 	}
 
 	//=================================================================================================//
-	template <typename T>
-	std::vector<int> ImageMHD<T>::findNeighbors(const Vec3d& input_pnt, Vec3i& this_cell)
+	template<typename T, int nDims>
+	std::vector<int> ImageMHD<T, nDims>::findNeighbors(const Vec3d& input_pnt, Vec3i& this_cell)
 	{
 		std::vector<int> neighbors;
 
@@ -266,8 +243,8 @@ namespace SPH {
 
 	}
 	//=================================================================================================//
-	template<typename T>
-	Vec3d ImageMHD<T>::computeGradientAtCell(int i)
+	template<typename T, int nDims>
+	Vec3d ImageMHD<T, nDims>::computeGradientAtCell(int i)
 	{
 		//- translate 1D index to 3D index
 		int width = width_;
@@ -338,16 +315,16 @@ namespace SPH {
 
 	}
 	//=================================================================================================//
-	template<typename T>
-	Vec3d ImageMHD<T>::computeNormalAtCell(int i)
+	template<typename T, int nDims>
+	Vec3d ImageMHD<T, nDims>::computeNormalAtCell(int i)
 	{
 		Vec3d grad_phi = computeGradientAtCell(i);
 		Vec3d n = grad_phi.normalize();
 		return n;
 	}
 
-	template<typename T>
-	T ImageMHD<T>::getValueAtCell(int i)
+	template<typename T, int nDims>
+	T ImageMHD<T, nDims>::getValueAtCell(int i)
 	{
 		if (i < 0 || i > size_)
 		{
@@ -360,8 +337,8 @@ namespace SPH {
 
 	}
 	//=================================================================================================//
-	template<typename T>
-	Vec3d ImageMHD<T>::convertToPhysicalSpace(Vec3d p)
+	template<typename T, int nDims>
+	Vec3d ImageMHD<T, nDims>::convertToPhysicalSpace(Vec3d p)
 	{
 		Vec3d position = transformMatrix_ * p + offset_;
 		for (int i = 0; i < position.size(); i++)
@@ -372,8 +349,8 @@ namespace SPH {
 
 	}
 	//=================================================================================================//
-	template<typename T>
-	void ImageMHD<T>::split(const std::string &s, char delim, \
+	template<typename T, int nDims>
+	void ImageMHD<T, nDims>::split(const std::string &s, char delim, \
 		std::vector<std::string> &elems)
 	{
 		std::stringstream ss(s);
@@ -383,8 +360,8 @@ namespace SPH {
 		}
 	}
 	//=================================================================================================//
-	template<typename T>
-	Vec3d ImageMHD<T>::findClosestPoint(const Vec3d& input_pnt)
+	template<typename T, int nDims>
+	Vec3d ImageMHD<T, nDims>::findClosestPoint(const Vec3d& input_pnt)
 	{
 		Vec3i this_cell;
 		std::vector<int> neighbors = findNeighbors(input_pnt, this_cell);
@@ -410,8 +387,8 @@ namespace SPH {
 
 	}
 
-	template<typename T>
-	BoundingBox ImageMHD<T>::findBounds()
+	template<typename T, int nDims>
+	BoundingBox ImageMHD<T, nDims>::findBounds()
 	{
 		//initial reference values
 		Vec3d lower_bound = Vec3d(Infinity);
@@ -435,8 +412,8 @@ namespace SPH {
 		return BoundingBox(lower_bound, upper_bound);
 	}
 
-	template<typename T>
-	Real ImageMHD<T>::findValueAtPoint(const Vec3d& input_pnt)
+	template<typename T, int nDims>
+	Real ImageMHD<T, nDims>::findValueAtPoint(const Vec3d& input_pnt)
 	{
 		Vec3i this_cell;
 		std::vector<int> neighbors = findNeighbors(input_pnt, this_cell);
@@ -461,8 +438,8 @@ namespace SPH {
 
 	}
 	//=================================================================================================//
-	template<typename T>
-	Vec3d ImageMHD<T>::findNormalAtPoint(const Vec3d & input_pnt)
+	template<typename T, int nDims>
+	Vec3d ImageMHD<T, nDims>::findNormalAtPoint(const Vec3d & input_pnt)
 	{
 		Vec3i this_cell;
 		std::vector<int> neighbors = findNeighbors(input_pnt, this_cell);
@@ -488,5 +465,60 @@ namespace SPH {
 		{
 			return Vec3d(1.0, 1.0, 1.0).normalize();
 		}
+	}
+
+	//=================================================================================================//
+	template<typename T, int nDims>
+	void ImageMHD<T, nDims>::write(std::string filename, Output_Mode mode)
+	{
+		std::ofstream output_file(filename+".mhd", std::ofstream::out);
+		output_file << "ObjectType = " << objectType_ << "\n";
+		output_file << "NDims = " << ndims_ << "\n";
+		if (mode == BINARY)
+			output_file << "BinaryData = True" << "\n";
+		else
+			output_file << "BinaryData = False" << "\n";
+		output_file << "BinaryDataByteOrderMSB = " << binaryDataByteOrderMSB_ << "\n";
+		output_file << "CompressedData = " << compressedData_ << "\n";
+		output_file << "TransformMatrix = "
+			<< transformMatrix_[0][0] << " " << transformMatrix_[0][1] << " " << transformMatrix_[0][2] << " "
+			<< transformMatrix_[1][0] << " " << transformMatrix_[1][1] << " " << transformMatrix_[1][2] << " "
+			<< transformMatrix_[2][0] << " " << transformMatrix_[2][1] << " " << transformMatrix_[2][2] << "\n";
+		output_file << "Offset = "
+			<< offset_[0] << " " << offset_[1] << " " << offset_[2] << "\n";
+		output_file << "CenterOfRotation = "
+			<< centerOfRotation_[0] << " " << centerOfRotation_[1] << " " << centerOfRotation_[2] << "\n";
+		output_file << "ElementSpacing = "
+			<< elementSpacing_[0] << " " << elementSpacing_[1] << " " << elementSpacing_[2] << "\n";
+		output_file << "DimSize = "
+			<< dimSize_[0] << " " << dimSize_[1] << " " << dimSize_[2] << "\n";
+		output_file << "AnatomicalOrientation = " << anatomicalOrientation_ << "\n";
+		if (elementType_ == MET_FLOAT)
+			output_file << "ElementType = MET_FLOAT" << "\n";
+		else if (elementType_ == MET_UCHAR)
+			output_file << "ElementType = MET_UCHAR" << "\n";
+		if (elementType_ == MET_LONG)
+			output_file << "ElementType = MET_LONG" << "\n";
+		output_file << "ElementDataFile = "<< filename+".raw" << "\n";
+
+		output_file.close();
+		
+		if (mode == BINARY)
+		{
+			std::ofstream output_file_raw(filename + ".raw", std::ios::binary | std::ios::out);
+			output_file_raw.write((const char*)data_, sizeof(T)*size_);
+			output_file_raw.close();
+		}
+		else
+		{
+			std::ofstream output_file_raw(filename + ".raw");
+			for (int index = 0; index < size_; index++)
+			{
+				output_file_raw << data_[index] << std::endl;
+			}
+			output_file_raw.close();
+		}
+
+		
 	}
 }
