@@ -1,13 +1,13 @@
 /**
 * @file 	case.h
-* @brief 	This is the test of using levelset to generate particles relax particles.
+* @brief 	This is the test of using levelset(distance map) to generate particles relax particles.
 * @details	We use this case to test the particle generation and relaxation by levelset for a complex geometry (3D).
 *			Before particle generation, we clean the sharp corner and smooth 0 levelset value, then doing the re-initialization
-* @author 	Yongchuan Yu and Xiangyu Hu
+* @author 	Yijin Mao
 */
 
-#ifndef TEST_3D_PARTICLE_GENERATION_CASE_H
-#define TEST_3D_PARTICLE_GENERATION_CASE_H
+#ifndef TEST_3D_LOAD_IMAGE_CASE_H
+#define TEST_3D_LOAD_IMAGE_CASE_H
 
 #include "sphinxsys.h"
 
@@ -16,7 +16,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
-std::string full_path_to_airfoil = "./input/teapot.stl";
+std::string full_path_to_image = "./input/sphere.mhd";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -31,8 +31,10 @@ ImageMeshShape *CreateImportedModelSurface()
 	double radius = 10.0;
 	Vec3d center(0.0, 0.0, 0.0);
 	Vec3d spacings(1.0, 1.0, 1.0);
-	ImageMeshShape *geometry_imported_model = \
+	//ImageMeshShape *geometry_imported_model = \
 		new ImageMeshShape(radius, spacings, center);
+	ImageMeshShape *geometry_imported_model = \
+		new ImageMeshShape(full_path_to_image);
 
 	return geometry_imported_model;
 }
@@ -54,4 +56,4 @@ public:
 	}
 };
 
-#endif //TEST_3D_PARTICLE_GENERATION_CASE_Hs
+#endif //TEST_3D_LOAD_IMAGE_CASE_Hs
