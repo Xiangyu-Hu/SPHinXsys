@@ -59,9 +59,10 @@ public:
 	Myocardium(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
-		body_shape_ = new ComplexShape(body_name);
-		body_shape_->addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
-		body_shape_->addTriangleMeshShape(CreateStationaryPlate(), ShapeBooleanOps::add);
+		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		body_shape_ = new ComplexShape(mesh);
+		mesh->addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
+		mesh->addTriangleMeshShape(CreateStationaryPlate(), ShapeBooleanOps::add);
 	}
 };
 /**
@@ -73,8 +74,9 @@ public:
 	MovingPlate(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
-		body_shape_ = new ComplexShape(body_name);
-		body_shape_->addTriangleMeshShape(CreateMovingPlate(), ShapeBooleanOps::add);
+		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		body_shape_ = new ComplexShape(mesh);
+		mesh->addTriangleMeshShape(CreateMovingPlate(), ShapeBooleanOps::add);
 	}
 };
 /**
@@ -88,8 +90,9 @@ public:
 	Holder(SolidBody *solid_body, std::string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
-		body_part_shape_ = new ComplexShape(constrained_region_name);
-		body_part_shape_->addTriangleMeshShape(CreateStationaryPlate(), ShapeBooleanOps::add);
+		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		body_part_shape_ = new ComplexShape(mesh);
+		mesh->addTriangleMeshShape(CreateStationaryPlate(), ShapeBooleanOps::add);
 
 		tagBodyPart();
 	}
@@ -104,8 +107,9 @@ public:
 		std::string constrained_region_name, Real solid_body_density)
 		: SolidBodyPartForSimbody(solid_body,constrained_region_name)
 	{
-		body_part_shape_ = new ComplexShape(constrained_region_name);
-		body_part_shape_->addTriangleMeshShape(CreateMovingPlate(), ShapeBooleanOps::add);
+		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		body_part_shape_ = new ComplexShape(mesh);
+		mesh->addTriangleMeshShape(CreateMovingPlate(), ShapeBooleanOps::add);
 		/** tag the constrained particle. */
 		tagBodyPart();
 	}

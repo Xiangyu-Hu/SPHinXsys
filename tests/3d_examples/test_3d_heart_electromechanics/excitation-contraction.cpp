@@ -139,8 +139,9 @@ public:
 	HeartBody(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
-		ComplexShape original_body_shape;
-		original_body_shape.addTriangleMeshShape(CreateHeart(), ShapeBooleanOps::add);
+		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		ComplexShape original_body_shape(mesh);
+		mesh->addTriangleMeshShape(CreateHeart(), ShapeBooleanOps::add);
 		body_shape_ = new LevelSetComplexShape(this, original_body_shape);
 	}
 };
@@ -273,8 +274,9 @@ public:
 	 MuscleBase(SolidBody *solid_body, std::string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
-		 body_part_shape_ = new ComplexShape(constrained_region_name);
-		 body_part_shape_->addTriangleMeshShape(CreateBaseShape(), ShapeBooleanOps::add);
+		 ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		 body_part_shape_ = new ComplexShape(mesh);
+		 mesh->addTriangleMeshShape(CreateBaseShape(), ShapeBooleanOps::add);
 
 		/** Tag the constrained particles to the base for constraint. */
 		tagBodyPart();

@@ -41,8 +41,9 @@ class WaterBlock : public FluidBody
 		{
 			Vecd halfsize_water(0.5 * LL, 0.5 * LH, 0.5 * LW);
 			Vecd translation_water = halfsize_water;
-			body_shape_ = new ComplexShape(body_name);
-			body_shape_->addBrick(halfsize_water, resolution, translation_water, ShapeBooleanOps::add);
+			ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+			mesh->addBrick(halfsize_water, resolution, translation_water, ShapeBooleanOps::add);
+			body_shape_ = new ComplexShape(mesh);
 		}
 };
 /**
@@ -69,9 +70,11 @@ public:
 		Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
 		Vecd translation_wall(0.5 * DL, 0.5 * DH, 0.5 * DW);
 		Vecd halfsize_inner(0.5 * DL, 0.5 * DH, 0.5 * DW);
-		body_shape_ = new ComplexShape(body_name);
-		body_shape_->addBrick(halfsize_outer, resolution, translation_wall, ShapeBooleanOps::add);
-		body_shape_->addBrick(halfsize_inner, resolution, translation_wall, ShapeBooleanOps::sub);
+		
+		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		mesh->addBrick(halfsize_outer, resolution, translation_wall, ShapeBooleanOps::add);
+		mesh->addBrick(halfsize_inner, resolution, translation_wall, ShapeBooleanOps::sub);
+		body_shape_ = new ComplexShape(mesh);
 	}
 };
 

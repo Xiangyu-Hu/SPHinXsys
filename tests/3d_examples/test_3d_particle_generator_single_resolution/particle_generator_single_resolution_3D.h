@@ -41,7 +41,8 @@ public:
 		: SolidBody(system, body_name)
 	{
 		/** Geometry definition. */
-		ComplexShape original_body_shape;
+		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		ComplexShape original_body_shape(mesh);
 		original_body_shape.addTriangleMeshShape(CreateImportedModelSurface(), ShapeBooleanOps::add);
 		body_shape_ = new LevelSetComplexShape(this, original_body_shape, true);
 	}

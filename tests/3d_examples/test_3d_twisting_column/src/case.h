@@ -57,9 +57,10 @@ class Column : public SolidBody
 public:
 	Column(SPHSystem& system, std::string body_name) : SolidBody(system, body_name, new ParticleAdaptation(1.15, 1.0))
 	{
-		body_shape_ = new ComplexShape(body_name);
-		body_shape_->addTriangleMeshShape(CreateCantilever(), ShapeBooleanOps::add);
-		body_shape_->addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
+		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		body_shape_ = new ComplexShape(mesh);
+		mesh->addTriangleMeshShape(CreateCantilever(), ShapeBooleanOps::add);
+		mesh->addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
 	}
 };
 /**
@@ -73,8 +74,9 @@ public:
 	Holder(SolidBody* solid_body, std::string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
-		body_part_shape_ = new ComplexShape(constrained_region_name);
-		body_part_shape_->addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
+		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		body_part_shape_ = new ComplexShape(mesh);
+		mesh->addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
 		tagBodyPart();
 	}
 };
