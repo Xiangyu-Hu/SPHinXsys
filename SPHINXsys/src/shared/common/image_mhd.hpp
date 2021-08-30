@@ -53,8 +53,8 @@ namespace SPH {
 		anatomicalOrientation_("???"),
 		elementType_(MET_FLOAT),
 		elementDataFile_(""),
-		min_value_(INFINITE),
-		max_value_(-INFINITE),
+		min_value_(Infinity),
+		max_value_(-Infinity),
 		data_(nullptr)
 	{
 		//- read mhd file
@@ -172,8 +172,8 @@ namespace SPH {
 		anatomicalOrientation_("???"),
 		elementType_(MET_FLOAT),
 		elementDataFile_(""),
-		min_value_(INFINITE),
-		max_value_(-INFINITE),
+		min_value_(Infinity),
+		max_value_(-Infinity),
 		data_(nullptr)
 	{
 		if(data_ == nullptr) 
