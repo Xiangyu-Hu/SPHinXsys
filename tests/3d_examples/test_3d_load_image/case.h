@@ -31,8 +31,6 @@ ImageMeshShape *CreateImportedModelSurface()
 	double radius = 10.0;
 	Vec3d center(0.0, 0.0, 0.0);
 	Vec3d spacings(1.0, 1.0, 1.0);
-	//ImageMeshShape *geometry_imported_model = \
-		new ImageMeshShape(radius, spacings, center);
 	ImageMeshShape *geometry_imported_model = \
 		new ImageMeshShape(full_path_to_image);
 
