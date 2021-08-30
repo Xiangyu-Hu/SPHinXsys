@@ -82,17 +82,6 @@ namespace SPH
 		Real max_distance_;
 		Real min_distance_;
 
-//	private:
-		//std::vector<int> findNeighbors(const Vec3d& input_pnt, Vec3i& this_cell);
-		//Vec3d computeGradientAtCell(int i);
-		//Vec3d computeNormalAtCell(int i);
-		//float getValueAtCell(int i);
-		//Vec3d convertToPhysicalSpace(Vec3d p);
-		// void createSphere(double radius = 10.0, Vec3d origin=Vec3d(25.0,25.0,25.0), \
-		// Mat3d rotation=Mat3d(1.0), \
-		// Vec3d translation=Vec3d(0.0, 0.0, 0.0), \
-		// Vec3i dimensions=Vec3i(50,50,50));
-		// void checkIndexBound(int i);
 	};
 }
 

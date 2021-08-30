@@ -103,7 +103,7 @@ namespace SPH {
 		};
 		void set_anatomicalOrientation(std::string anatomicalOrientation) 
 		{
-			anatomicalOrientation_ = anatomicalOrientation
+			anatomicalOrientation_ = anatomicalOrientation;
 		};
 		void set_elementType(std::string elementType) 
 		{
