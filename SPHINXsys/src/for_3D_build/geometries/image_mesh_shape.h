@@ -75,9 +75,9 @@ namespace SPH
 
 	protected:
 		//- distance map has to be float type image
-		ImageMHD<float,3> *image_;
 		Vec3d translation_;
 		Mat3d rotation_;
+		ImageMHD<float,3> *image_;
 
 		Real max_distance_;
 		Real min_distance_;

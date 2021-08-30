@@ -137,7 +137,6 @@ namespace SPH {
 
 		if (dataFileRaw.is_open())
 		{
-			int index = 0;
 			dataFileRaw.read((char*)data_, sizeof(T)*size_);
 			T distance = 0;
 			for(int index = 0; index<size_; index++)
