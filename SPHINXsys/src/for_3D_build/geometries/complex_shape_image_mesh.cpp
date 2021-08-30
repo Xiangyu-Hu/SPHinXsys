@@ -129,6 +129,11 @@ namespace SPH
 			}
 			break;
 		}
+		default:
+		{
+			throw std::runtime_error("unknown operation shape boolean operator");
+			break;
+		}
 		}
 	}
 	//=================================================================================================//
