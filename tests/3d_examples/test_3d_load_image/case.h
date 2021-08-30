@@ -28,7 +28,6 @@ BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 
 ImageMeshShape *CreateImportedModelSurface()
 {
-	double radius = 10.0;
 	Vec3d center(0.0, 0.0, 0.0);
 	Vec3d spacings(1.0, 1.0, 1.0);
 	ImageMeshShape *geometry_imported_model = \
