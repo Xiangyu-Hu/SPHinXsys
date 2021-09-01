@@ -1,9 +1,9 @@
-[submodule "oneTBB"]
-	path = oneTBB
-	url = https://github.com/BenceVirtonomy/oneTBB
-[submodule "SPHINXsys/src/shared/clapack_for_SPHinXsys"]
-	path = SPHINXsys/src/shared/clapack_for_SPHinXsys
-	url = https://github.com/BenceVirtonomy/clapack_for_SPHinXsys
-[submodule "SPHINXsys/src/shared/simbody"]
-	path = SPHINXsys/src/shared/simbody
-	url = https://github.com/BenceVirtonomy/simbody
+[submodule "3rd_party/simbody"]
+	path = 3rd_party/simbody
+	url = https://github.com/BenceVirtonomy/simbody.git
+[submodule "3rd_party/eigen"]
+	path = 3rd_party/eigen
+	url = https://gitlab.com/libeigen/eigen.git
+[submodule "3rd_party/wasmtbb"]
+	path = 3rd_party/wasmtbb
+	url = https://github.com/hpcwasm/wasmtbb.git

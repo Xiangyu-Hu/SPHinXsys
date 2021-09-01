@@ -12,7 +12,7 @@ ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
 
-if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
+if(NOT STATIC_BUILD) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
 		add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
