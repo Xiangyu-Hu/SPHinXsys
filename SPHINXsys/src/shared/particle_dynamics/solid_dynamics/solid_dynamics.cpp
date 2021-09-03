@@ -617,6 +617,103 @@ namespace SPH
 			dvel_dt_prior_[index_i] += getDampingForce(index_i);
 		}
 		//=================================================================================================//
+		SpringNormalOnSurfaceParticles::
+			SpringNormalOnSurfaceParticles(SolidBody *body, Vecd source_point, Real stiffness, Real damping_ratio)
+			: ParticleDynamicsSimple(body), SolidDataSimple(body),
+			  pos_n_(particles_->pos_n_),
+			  pos_0_(particles_->pos_0_),
+			  n_(particles_->n_),
+			  n_0_(particles_->n_0_),
+			  vel_n_(particles_->vel_n_),
+			  dvel_dt_prior_(particles_->dvel_dt_prior_),
+			  mass_(particles_->mass_),
+			  apply_spring_force_to_particle_({})
+		{
+			// set apply_spring_force_to_particle_ to false for each particle
+			for (size_t i = 0; i < particles_->pos_0_.size(); i++)
+			{
+				apply_spring_force_to_particle_.push_back(false);
+			}
+			// get the surface layer of particles
+			ShapeSurface surface_layer_(body);
+			// select which paricles the spring is applied to
+			for (size_t i = 0; i < surface_layer_.body_part_particles_.size(); i++)
+			{
+				// index of surface particle
+				size_t particle_i = surface_layer_.body_part_particles_[i];
+				// vector to the source point from the particle
+				Vecd vector_to_particle = source_point - particles_->pos_0_[particle_i];
+				// normal of the particle
+				Vecd normal = particles_->n_0_[particle_i];
+
+				// get the cos of the angle between the vector and the normal
+				Real cos_teta = getAngleBetweenTwoVectors (vector_to_particle, normal);
+				
+				// if the angle is less than 90°, we apply the spring force to the surface particle
+				if (cos_teta > 1e-3)
+				{
+					apply_spring_force_to_particle_[particle_i] = true;
+				}
+			}
+			// scale stiffness and damping by area here, so it's not necessary in each iteration
+			//index of any uniform particle
+			size_t particle_j = 0;
+			Real area = std::pow(particles_->Vol_[particle_j], 2.0 / 3.0);
+			stiffness_ = stiffness * area;
+			damping_coeff_ = stiffness * area * damping_ratio;
+		}
+		//=================================================================================================//
+		SpringNormalOnSurfaceParticles::~SpringNormalOnSurfaceParticles()
+		{
+		}
+		//=================================================================================================//
+		void SpringNormalOnSurfaceParticles::setupDynamics(Real dt)
+		{
+			particles_->total_ghost_particles_ = 0;
+		}
+		//=================================================================================================//
+		Vecd SpringNormalOnSurfaceParticles::getSpringForce(size_t index_i, Vecd disp)
+		{
+			// normal of the particle
+			Vecd normal = particles_->n_0_[index_i];
+			// get the normal portion of the displacement, which is parallel to the normal of particles, meaning it is the normal vector * scalar
+			Vecd normal_disp = getVectorProjectionOfVector (disp, normal);
+			
+			Vecd spring_force_vector = -stiffness_ * normal_disp;
+
+			return spring_force_vector;
+		}
+		//=================================================================================================//
+		Vecd SpringNormalOnSurfaceParticles::getDampingForce(size_t index_i)
+		{
+			// normal of the particle
+			Vecd normal = particles_->n_0_[index_i];
+			//velocity of the particle
+			Vecd velocity_n = vel_n_[index_i];
+			// get the normal portion of the velocity, which is parallel to the normal of particles, meaning it is the normal vector * scalar
+			Vecd normal_vel = getVectorProjectionOfVector (velocity_n, normal);
+				
+			Vecd damping_force_vector = -damping_coeff_ * normal_vel;
+			
+			return damping_force_vector;
+		}
+		//=================================================================================================//
+		void SpringNormalOnSurfaceParticles::Update(size_t index_i, Real dt)
+		{
+			try{
+				if (apply_spring_force_to_particle_[index_i])
+				{
+					Vecd delta_x = pos_n_[index_i] - pos_0_[index_i];
+					dvel_dt_prior_[index_i] += getSpringForce(index_i, delta_x) / mass_[index_i];
+					dvel_dt_prior_[index_i] += getDampingForce(index_i) / mass_[index_i];
+
+				}
+			}
+				catch(out_of_range& e){
+				throw runtime_error(string("SpringNormalOnSurfaceParticles::Update: particle index out of bounds") + to_string(index_i));
+			}
+		}
+		//=================================================================================================//
 		AccelerationForBodyPartInBoundingBox::
 			AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox& bounding_box, Vecd acceleration) :
 			ParticleDynamicsSimple(body), SolidDataSimple(body),

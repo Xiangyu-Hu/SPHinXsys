@@ -405,6 +405,32 @@ namespace SPH
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 		/**
+		* @class SpringNormalOnSurfaceParticles
+		* @brief Exerts spring force force on the surface in normal direction in the form of acceleration to each particle.
+		* The spring force is calculated based on the difference from the particle's initial position.
+		* Only for 3D applications
+		*/
+		class SpringNormalOnSurfaceParticles 
+			: public ParticleDynamicsSimple, public SolidDataSimple
+		{
+		public:
+			SpringNormalOnSurfaceParticles(SolidBody* body, Vecd source_point, Real stiffness, Real damping_ratio = 0.05);
+			~SpringNormalOnSurfaceParticles();
+
+			StdLargeVec<bool>& GetApplySpringForceToParticle(){ return apply_spring_force_to_particle_; }
+		protected:
+			StdLargeVec<Vecd>& pos_n_,& pos_0_,& n_,& n_0_,& vel_n_,& dvel_dt_prior_;
+			StdLargeVec<Real>& mass_;
+			Real stiffness_;
+			Real damping_coeff_; // damping component parallel to the spring force component
+			StdLargeVec<bool> apply_spring_force_to_particle_;
+
+			virtual void setupDynamics(Real dt = 0.0) override;
+			virtual Vecd getSpringForce(size_t index_i, Vecd disp);
+			virtual Vecd getDampingForce(size_t index_i);
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+		/**
 		* @class AccelerationForBodyPartInBoundingBox
 		* @brief Adds acceleration to the part of the body that's inside a bounding box
 		*/

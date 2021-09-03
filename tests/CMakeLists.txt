@@ -2,6 +2,9 @@ option(BUILD_2D_EXAMPLES "BUILD_2D_EXAMPLES" 1)
 option(BUILD_3D_EXAMPLES "BUILD_3D_EXAMPLES" 1)
 option(BUILD_UNIT_TESTS "BUILD_UNIT_TESTS" 1)
 
+find_package(GTest REQUIRED)
+include(GoogleTest)
+
 if(ONLY_3D)
 	set(BUILD_2D_EXAMPLES 0)
 endif()
