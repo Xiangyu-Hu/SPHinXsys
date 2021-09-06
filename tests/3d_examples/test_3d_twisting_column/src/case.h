@@ -30,7 +30,7 @@ int resolution(20);
 Real rho_0 = 1100.0; 			/**< Reference density. */
 Real poisson = 0.45; 			/**< Poisson ratio. */
 Real Youngs_modulus = 1.7e7;
-Real angular_0 = -300.0;
+Real angular_0 = -400.0;
 /** Define the body geometry. */
 TriangleMeshShape* CreateCantilever()
 {

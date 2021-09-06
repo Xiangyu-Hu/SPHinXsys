@@ -155,6 +155,7 @@ int main()
 	MovingPlate *moving_plate = new MovingPlate(system, "MovingPlate");
 	MovingPlateMaterial* moving_plate_material = new MovingPlateMaterial();
 	SolidParticles 	moving_plate_particles(moving_plate, moving_plate_material);
+
 	/** topology */
 	BodyRelationInner*   myocardium_body_inner = new BodyRelationInner(myocardium_body);
 	SolidBodyRelationContact* myocardium_plate_contact = new SolidBodyRelationContact(myocardium_body, {moving_plate});
