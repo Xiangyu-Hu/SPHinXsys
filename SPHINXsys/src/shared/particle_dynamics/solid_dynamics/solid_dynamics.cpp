@@ -777,8 +777,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		SurfacePressureFromSource::
-			SurfacePressureFromSource(SPHBody* body, Vecd source_point, StdVec<array<Real, 2>> pressure_over_time)
-			: ParticleDynamicsSimple(body), SolidDataSimple(body),
+			SurfacePressureFromSource(SPHBody* body, BodyPartByParticle* body_part, Vecd source_point, StdVec<array<Real, 2>> pressure_over_time)
+			: PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
 			  pos_0_(particles_->pos_0_),
 			  n_(particles_->n_),
 			  dvel_dt_prior_(particles_->dvel_dt_prior_),
