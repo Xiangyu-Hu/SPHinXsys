@@ -13,202 +13,6 @@ namespace SPH
 	namespace solid_dynamics
 	{
 		//=================================================================================================//
-		ContactDensitySummation::
-			ContactDensitySummation(SolidBodyRelationContact *solid_body_contact_relation)
-			: PartInteractionDynamicsByParticle(solid_body_contact_relation->sph_body_,
-												&solid_body_contact_relation->body_surface_layer_),
-			  ContactDynamicsData(solid_body_contact_relation),
-			  mass_(particles_->mass_), contact_density_(particles_->contact_density_)
-		{
-			for (size_t k = 0; k != contact_particles_.size(); ++k)
-			{
-				contact_mass_.push_back(&(contact_particles_[k]->mass_));
-			}
-		}
-		//=================================================================================================//
-		void ContactDensitySummation::Interaction(size_t index_i, Real dt)
-		{
-			/** Contact interaction. */
-			Real sigma = 0.0;
-			for (size_t k = 0; k < contact_configuration_.size(); ++k)
-			{
-				StdLargeVec<Real> &contact_mass_k = *(contact_mass_[k]);
-				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-				{
-					sigma += contact_neighborhood.W_ij_[n] * contact_mass_k[contact_neighborhood.j_[n]];
-				}
-			}
-			contact_density_[index_i] = sigma;
-		}
-		//=================================================================================================//
-		ContactForce::ContactForce(SolidBodyRelationContact *solid_body_contact_relation)
-			: PartInteractionDynamicsByParticle(solid_body_contact_relation->sph_body_,
-												&solid_body_contact_relation->body_surface_layer_),
-			  ContactDynamicsData(solid_body_contact_relation),
-			  contact_density_(particles_->contact_density_),
-			  Vol_(particles_->Vol_), mass_(particles_->mass_),
-			  dvel_dt_prior_(particles_->dvel_dt_prior_),
-			  contact_force_(particles_->contact_force_)
-		{
-			for (size_t k = 0; k != contact_particles_.size(); ++k)
-			{
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-				contact_contact_density_.push_back(&(contact_particles_[k]->contact_density_));
-			}
-		}
-		//=================================================================================================//
-		void ContactForce::Interaction(size_t index_i, Real dt)
-		{
-			Real Vol_i = Vol_[index_i];
-			Real p_i = contact_density_[index_i] * material_->ContactStiffness();
-			/** Contact interaction. */
-			Vecd force(0.0);
-			for (size_t k = 0; k < contact_configuration_.size(); ++k)
-			{
-				StdLargeVec<Real> &contact_density_k = *(contact_contact_density_[k]);
-				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
-				Solid *solid_k = contact_material_[k];
-
-				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-				{
-					size_t index_j = contact_neighborhood.j_[n];
-					Vecd e_ij = contact_neighborhood.e_ij_[n];
-
-					Real p_star = 0.5 * (p_i + contact_density_k[index_j] * solid_k->ContactStiffness());
-					//force due to pressure
-					force -= 2.0 * p_star * e_ij * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
-				}
-			}
-			contact_force_[index_i] = force;
-			dvel_dt_prior_[index_i] += force / mass_[index_i];
-		}
-		//=================================================================================================//
-		DynamicContactForce::
-			DynamicContactForce(SolidBodyRelationContact *solid_body_contact_relation, Real penalty_strength)
-			: PartInteractionDynamicsByParticle(solid_body_contact_relation->sph_body_,
-												&solid_body_contact_relation->body_surface_layer_),
-			  ContactDynamicsData(solid_body_contact_relation),
-			  Vol_(particles_->Vol_), mass_(particles_->mass_),
-			  vel_n_(particles_->vel_n_), dvel_dt_prior_(particles_->dvel_dt_prior_),
-			  contact_force_(particles_->contact_force_), penalty_strength_(penalty_strength)
-		{
-			Real impedence = material_->ReferenceDensity() * sqrt(material_->ContactStiffness());
-			Real reference_pressure = material_->ReferenceDensity() * material_->ContactStiffness();
-			for (size_t k = 0; k != contact_particles_.size(); ++k)
-			{
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-				contact_vel_n_.push_back(&(contact_particles_[k]->vel_n_));
-				Real contact_impedence =
-					contact_material_[k]->ReferenceDensity() * sqrt(contact_material_[k]->ContactStiffness());
-				contact_impedence_.push_back(2.0 * impedence * contact_impedence / (impedence + contact_impedence));
-				Real contact_reference_pressure =
-					contact_material_[k]->ReferenceDensity() * contact_material_[k]->ContactStiffness();
-				contact_reference_pressure_.push_back(2.0 * reference_pressure * contact_reference_pressure /
-													  (reference_pressure + contact_reference_pressure));
-			}
-		}
-		//=================================================================================================//
-		void DynamicContactForce::Interaction(size_t index_i, Real dt)
-		{
-			Real Vol_i = Vol_[index_i];
-			Vecd vel_i = vel_n_[index_i];
-
-			/** Contact interaction. */
-			Vecd force(0.0);
-			for (size_t k = 0; k < contact_configuration_.size(); ++k)
-			{
-				Real particle_spacing_j1 = 1.0 / contact_bodies_[k]->particle_adaptation_->ReferenceSpacing();
-				Real particle_spacing_ratio2 =
-					1.0 / (this->body_->particle_adaptation_->ReferenceSpacing() * particle_spacing_j1);
-				particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
-
-				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
-				StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
-
-				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-				{
-					size_t index_j = contact_neighborhood.j_[n];
-					Vecd e_ij = contact_neighborhood.e_ij_[n];
-
-					Real impedence_p = 0.5 * contact_impedence_[k] * (SimTK::dot(vel_i - vel_n_k[index_j], -e_ij));
-					Real overlap = contact_neighborhood.r_ij_[n];
-					Real delta = 2.0 * overlap * particle_spacing_j1;
-					Real beta = delta < 1.0 ? (1.0 - delta) * (1.0 - delta) * particle_spacing_ratio2 : 0.0;
-					Real penalty_p = penalty_strength_ * beta * overlap * contact_reference_pressure_[k];
-
-					//force due to pressure
-					force -= 2.0 * (impedence_p + penalty_p) * e_ij *
-							 Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
-				}
-			}
-
-			contact_force_[index_i] = force;
-			dvel_dt_prior_[index_i] += force / mass_[index_i];
-		}
-		//=================================================================================================//
-		ContactForceWithWall::
-			ContactForceWithWall(SolidBodyRelationContact *solid_body_contact_relation, Real penalty_strength)
-			: PartInteractionDynamicsByParticle(solid_body_contact_relation->sph_body_,
-												&solid_body_contact_relation->body_surface_layer_),
-			  ContactDynamicsData(solid_body_contact_relation),
-			  Vol_(particles_->Vol_), mass_(particles_->mass_),
-			  vel_n_(particles_->vel_n_), dvel_dt_prior_(particles_->dvel_dt_prior_),
-			  contact_force_(particles_->contact_force_), penalty_strength_(penalty_strength)
-		{
-			impedence_ = material_->ReferenceDensity() * sqrt(material_->ContactStiffness());
-			reference_pressure_ = material_->ReferenceDensity() * material_->ContactStiffness();
-			for (size_t k = 0; k != contact_particles_.size(); ++k)
-			{
-				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-				contact_vel_n_.push_back(&(contact_particles_[k]->vel_n_));
-				contact_n_.push_back(&(contact_particles_[k]->n_));
-			}
-		}
-		//=================================================================================================//
-		void ContactForceWithWall::Interaction(size_t index_i, Real dt)
-		{
-			Real Vol_i = Vol_[index_i];
-			Vecd vel_i = vel_n_[index_i];
-
-			/** Contact interaction. */
-			Vecd force(0.0);
-			for (size_t k = 0; k < contact_configuration_.size(); ++k)
-			{
-				Real particle_spacing_j1 = 1.0 / contact_bodies_[k]->particle_adaptation_->ReferenceSpacing();
-				Real particle_spacing_ratio2 =
-					1.0 / (body_->particle_adaptation_->ReferenceSpacing() * particle_spacing_j1);
-				particle_spacing_ratio2 *= 0.1 * particle_spacing_ratio2;
-
-				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
-				StdLargeVec<Vecd> &n_k = *(contact_n_[k]);
-				StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
-
-				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-				{
-					size_t index_j = contact_neighborhood.j_[n];
-					Vecd e_ij = contact_neighborhood.e_ij_[n];
-					Vecd n_k_j = n_k[index_j];
-
-					Real impedence_p = 0.5 * impedence_ * (SimTK::dot(vel_i - vel_n_k[index_j], -n_k_j));
-					Real overlap = contact_neighborhood.r_ij_[n] * SimTK::dot(n_k_j, e_ij);
-					Real delta = 2.0 * overlap * particle_spacing_j1;
-					Real beta = delta < 1.0 ? (1.0 - delta) * (1.0 - delta) * particle_spacing_ratio2 : 0.0;
-					Real penalty_p = penalty_strength_ * beta * overlap * reference_pressure_;
-
-					//force due to pressure
-					force -= 2.0 * (impedence_p + penalty_p) * dot(e_ij, n_k_j) *
-							 n_k_j * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
-				}
-			}
-
-			contact_force_[index_i] = force;
-			dvel_dt_prior_[index_i] += force / mass_[index_i];
-		}
-		//=================================================================================================//
 		AcousticTimeStepSize::AcousticTimeStepSize(SolidBody *body, Real CFL)
 			: ParticleDynamicsReduce<Real, ReduceMin>(body),
 			  ElasticSolidDataSimple(body), CFL_(CFL),
@@ -343,9 +147,8 @@ namespace SPH
 		//=================================================================================================//
 		Vecd PositionScaleSolidBody::getDisplacement(size_t index_i, Real dt)
 		{
-			Vecd displacement;
-			try
-			{
+			Vecd displacement(0);
+			try {
 				// displacement from the initial position
 				Vecd pos_final = pos_0_center_ + end_scale_ * (pos_0_[index_i] - pos_0_center_);
 				displacement = (pos_final - pos_n_[index_i]) * dt /
@@ -380,25 +183,46 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
+		bool checkIfPointInBoundingBox(Vecd point, BoundingBox& bbox)
+		{
+			if (point.size() >= 3 && bbox.first.size() >= 3 && bbox.second.size() >= 3)
+			{
+				return point[0] >= bbox.first[0] && point[0] <= bbox.second[0] &&
+						point[1] >= bbox.first[1] && point[1] <= bbox.second[1] &&
+						point[2] >= bbox.first[2] && point[2] <= bbox.second[2];
+			}
+			if (point.size() >= 2 && bbox.first.size() >= 2 && bbox.second.size() >= 2)
+			{
+				return point[0] >= bbox.first[0] && point[0] <= bbox.second[0] &&
+						point[1] >= bbox.first[1] && point[1] <= bbox.second[1];
+			}
+			if (point.size() >= 1 && bbox.first.size() >= 1 && bbox.second.size() >= 1)
+			{
+				return point[0] >= bbox.first[0] && point[0] <= bbox.second[0];
+			}
+			throw runtime_error(string("checkIfPointInBoundingBox: Vecd point or BoundingBox& bbox has a dimension of <1"));
+			return false;
+		}
+		//=================================================================================================//
 		TranslateSolidBody::
 			TranslateSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd translation):
 			PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
-			pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
+			pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_), pos_end_({}),
 			vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
-			vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
 			start_time_(start_time), end_time_(end_time), translation_(translation)
-		{}
+		{
+			// record the particle positions that should be reached at end time
+			for (size_t index_i = 0; index_i < pos_n_.size(); index_i++)
+			{
+				pos_end_.push_back(pos_n_[index_i] + translation_);
+			}
+		}
 		//=================================================================================================//
 		Vecd TranslateSolidBody::getDisplacement(size_t index_i, Real dt)
 		{
 			Vecd displacement(0);
-			// if we are out of the time interval, return 0
-			if (GlobalStaticVariables::physical_time_ < start_time_ || GlobalStaticVariables::physical_time_ > end_time_) return displacement;
 			try {
-				// distance left to reach the final position
-				Vecd translation_left = translation_ * (end_time_ - GlobalStaticVariables::physical_time_) / (end_time_ - start_time_);
-				// displacement is a portion of distance left, scaled by dt and remaining time
-				displacement = 0.5 * translation_left * dt / (end_time_ - GlobalStaticVariables::physical_time_);
+				displacement = (pos_end_[index_i] - pos_n_[index_i]) * dt / (end_time_ - GlobalStaticVariables::physical_time_);
 			}
 			catch(out_of_range& e){
 				throw runtime_error(string("TranslateSolidBody::getDisplacement: particle index out of bounds") + to_string(index_i));
@@ -408,23 +232,44 @@ namespace SPH
 		//=================================================================================================//
 		void TranslateSolidBody::Update(size_t index_i, Real dt)
 		{
-			try
+			// only apply in the defined time period
+			if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
 			{
-				// only apply in the defined time period
-				if (GlobalStaticVariables::physical_time_ >= start_time_ &&
-					GlobalStaticVariables::physical_time_ <= end_time_)
-				{
-					pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
+				try {
+					pos_n_[index_i] = pos_n_[index_i] + 0.5 * getDisplacement(index_i, dt); // displacement from the initial position, 0.5x because it's executed twice
 					vel_n_[index_i] = getVelocity();
-					dvel_dt_[index_i] = getAcceleration();
-					/** the average values are prescirbed also. */
-					vel_ave_[index_i] = vel_n_[index_i];
-					dvel_dt_ave_[index_i] = dvel_dt_[index_i];
+				}
+				catch(out_of_range& e){
+					throw runtime_error(string("TranslateSolidBody::Update: particle index out of bounds") + to_string(index_i));
 				}
 			}
-			catch (out_of_range &e)
-			{
-				throw runtime_error(string("TranslateSolidBody::Update: particle index out of bounds") + to_string(index_i));
+		}
+		//=================================================================================================//
+		TranslateSolidBodyPart::
+			TranslateSolidBodyPart(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd translation, BoundingBox bbox):
+			TranslateSolidBody(body, body_part, start_time, end_time, translation), bbox_(bbox)
+		{}
+		//=================================================================================================//
+		void TranslateSolidBodyPart::Update(size_t index_i, Real dt)
+		{
+
+			try {
+				Vecd point = pos_0_[index_i];
+				if (checkIfPointInBoundingBox(point, bbox_))
+				{
+					if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
+					{
+						vel_n_[index_i] = getDisplacement(index_i, dt) / dt;
+					}
+					else
+					{
+						vel_n_[index_i] = 0;
+						dvel_dt_[index_i] = 0;
+					}
+				}
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("TranslateSolidBodyPart::Update: particle index out of bounds") + to_string(index_i));
 			}
 		}
 		//=================================================================================================//
@@ -578,12 +423,12 @@ namespace SPH
 		}
 		//=================================================================================================//
 		AccelerationForBodyPartInBoundingBox::
-			AccelerationForBodyPartInBoundingBox(SolidBody *body, BoundingBox *bounding_box, Vecd acceleration)
-			: ParticleDynamicsSimple(body), SolidDataSimple(body),
-			  pos_n_(particles_->pos_n_),
-			  dvel_dt_prior_(particles_->dvel_dt_prior_),
-			  bounding_box_(bounding_box),
-			  acceleration_(acceleration) {}
+			AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox& bounding_box, Vecd acceleration) :
+			ParticleDynamicsSimple(body), SolidDataSimple(body),
+			pos_n_(particles_->pos_n_),
+			dvel_dt_prior_(particles_->dvel_dt_prior_),
+			bounding_box_(bounding_box),
+			acceleration_(acceleration){}
 		//=================================================================================================//
 		void AccelerationForBodyPartInBoundingBox::setupDynamics(Real dt)
 		{
@@ -595,11 +440,7 @@ namespace SPH
 			if (pos_n_.size() > index_i)
 			{
 				Vecd point = pos_n_[index_i];
-				if (point.size() >= 3 && bounding_box_ != nullptr && bounding_box_->first.size() >= 3 &&
-					bounding_box_->second.size() >= 3 && point[0] >= bounding_box_->first[0] &&
-					point[0] <= bounding_box_->second[0] &&
-					point[1] >= bounding_box_->first[1] && point[1] <= bounding_box_->second[1] &&
-					point[2] >= bounding_box_->first[2] && point[2] <= bounding_box_->second[2])
+				if (checkIfPointInBoundingBox(point, bounding_box_))
 				{
 					dvel_dt_prior_[index_i] += acceleration_;
 				}
@@ -674,10 +515,8 @@ namespace SPH
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
 			rho_n_[index_i] = rho0_ / det(F_[index_i]);
 			//obtain the first Piola-Kirchhoff stress from the second Piola-Kirchhoff stress
-			//it seems using reproducing correction here increases convergence rate
-			//near the free surface
-			stress_PK1_[index_i] = F_[index_i] * (material_->ConstitutiveRelation(F_[index_i], index_i) + 
-				material_->NumericalDampingRightCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i)) * B_[index_i];
+			//it seems using reproducing correction here increases convergence rate near the free surface
+			stress_PK1_[index_i] = F_[index_i] * material_->ConstitutiveRelation(F_[index_i], index_i) * B_[index_i];
 		}
 		//=================================================================================================//
 		void StressRelaxationFirstHalf::Interaction(size_t index_i, Real dt)
@@ -685,12 +524,19 @@ namespace SPH
 			//including gravity and force from fluid
 			Vecd acceleration = dvel_dt_prior_[index_i] + force_from_fluid_[index_i] / mass_[index_i];
 			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+		for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 				Vecd e_ij = inner_neighborhood.e_ij_[n];
-				acceleration += (stress_PK1_[index_i] + stress_PK1_[index_j]) * inner_neighborhood.dW_ij_[n] *
-								e_ij * Vol_[index_j] * inv_rho0_;
+				Real r_ij = inner_neighborhood.r_ij_[n];
+				Real dim_r_ij_1 = Dimensions / r_ij;
+				Vecd pos_jump = pos_n_[index_i] - pos_n_[index_j];
+				Vecd vel_jump = vel_n_[index_i] - vel_n_[index_j];
+				Real strain_rate = SimTK::dot(pos_jump, vel_jump) * dim_r_ij_1 * dim_r_ij_1;
+				Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
+				Matd numerical_stress_ij = 0.5 * (F_[index_i] + F_[index_j]) * material_->NumericalDamping(strain_rate, smoothing_length_);
+				acceleration += (stress_PK1_[index_i] + stress_PK1_[index_j] + numerical_dissipation_factor_ * weight * numerical_stress_ij)
+					* inner_neighborhood.dW_ij_[n] * e_ij * Vol_[index_j] * inv_rho0_;
 			}
 
 			dvel_dt_[index_i] = acceleration;
@@ -701,10 +547,35 @@ namespace SPH
 			vel_n_[index_i] += dvel_dt_[index_i] * dt;
 		}
 		//=================================================================================================//
+		KirchhoffParticleStressRelaxationFirstHalf::
+			KirchhoffParticleStressRelaxationFirstHalf(BaseBodyRelationInner *body_inner_relation)
+			: StressRelaxationFirstHalf(body_inner_relation) {};
+		//=================================================================================================//
+		void KirchhoffParticleStressRelaxationFirstHalf::Initialization(size_t index_i, Real dt)
+		{
+			pos_n_[index_i] += vel_n_[index_i] * dt * 0.5;
+			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
+			rho_n_[index_i] = rho0_ / det(F_[index_i]);
+			Real J = det(F_[index_i]);
+			Real one_over_J = 1.0 / J;
+			rho_n_[index_i] = rho0_ * one_over_J;
+			Real J_to_minus_2_over_dimension = pow(one_over_J, 2.0 * one_over_dimensions_);
+			Matd normalized_b = (F_[index_i] * ~F_[index_i]) * J_to_minus_2_over_dimension;
+			Matd deviatoric_b = normalized_b - Matd(1.0) * normalized_b.trace() * one_over_dimensions_;
+			Matd inverse_F_T = ~SimTK::inverse(F_[index_i]);
+			//obtain the first Piola-Kirchhoff stress from the Kirchhoff stress
+			//it seems using reproducing correction here increases convergence rate
+			//near the free surface however, this correction is not used for the numerical disspation
+			stress_PK1_[index_i] = (Matd(1.0) * material_->VolumetricKirchhoff(J) +
+				material_->DeviatoricKirchhoff(deviatoric_b)) * inverse_F_T * B_[index_i] +
+				material_->NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i) *
+				inverse_F_T;
+		}
+		//=================================================================================================//
 		KirchhoffStressRelaxationFirstHalf::
 			KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner *body_inner_relation)
 			: StressRelaxationFirstHalf(body_inner_relation),
-			  J_to_minus_2_over_dimension_(*particles_->createAVariable<indexMatrix, Matd>("DeterminantTerm")),
+			  J_to_minus_2_over_dimension_(*particles_->createAVariable<indexScalar, Real>("DeterminantTerm")),
 			  stress_on_particle_(*particles_->createAVariable<indexMatrix, Matd>("StressOnParticle")),
 			  inverse_F_T_(*particles_->createAVariable<indexMatrix, Matd>("InverseTransposedDeformation")){};
 		//=================================================================================================//
@@ -715,12 +586,12 @@ namespace SPH
 			Real J = det(F_[index_i]);
 			Real one_over_J = 1.0 / J;
 			rho_n_[index_i] = rho0_ * one_over_J;
-			J_to_minus_2_over_dimension_[index_i] = B_[index_i] * pow(one_over_J * one_over_J, one_over_dimensions_);
+			J_to_minus_2_over_dimension_[index_i] = pow(one_over_J, 2.0 * one_over_dimensions_);
 			inverse_F_T_[index_i] = ~SimTK::inverse(F_[index_i]);
-			stress_on_particle_[index_i] = (Matd(1.0) * material_->VolumetricKirchhoff(J) +
-				material_->NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i)) * B_[index_i] -
-				Matd(1.0) * material_->ShearModulus() * J_to_minus_2_over_dimension_[index_i] *
-				(F_[index_i] * ~F_[index_i]).trace() * one_over_dimensions_;
+			stress_on_particle_[index_i] = inverse_F_T_[index_i] * (material_->VolumetricKirchhoff(J) * B_[index_i] -
+				Matd(correction_factor_) * material_->ShearModulus() * J_to_minus_2_over_dimension_[index_i] *
+				(F_[index_i] * ~F_[index_i]).trace() * one_over_dimensions_) +
+				material_->NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i) * inverse_F_T_[index_i];
 			stress_PK1_[index_i] = F_[index_i] * material_->ConstitutiveRelation(F_[index_i], index_i);
 		}
 		//=================================================================================================//
@@ -732,13 +603,11 @@ namespace SPH
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				Vecd extension = (pos_n_[index_i] - pos_n_[index_j]) / inner_neighborhood.r_ij_[n];
-				Matd stress_ij = material_->ShearModulus() *
-					(J_to_minus_2_over_dimension_[index_i] + J_to_minus_2_over_dimension_[index_j]) *
-					SimTK::outer(extension, extension);
-				acceleration += ((stress_on_particle_[index_i] + stress_on_particle_[index_j] + stress_ij) *
-					(inverse_F_T_[index_i] + inverse_F_T_[index_j]) * 0.5) *
-					inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n] * Vol_[index_j] * inv_rho0_;
+				Vecd shear_force_ij = correction_factor_ * material_->ShearModulus() * 
+					(J_to_minus_2_over_dimension_[index_i] + J_to_minus_2_over_dimension_[index_j]) * 
+					(pos_n_[index_i] - pos_n_[index_j]) / inner_neighborhood.r_ij_[n];
+				acceleration += ((stress_on_particle_[index_i] + stress_on_particle_[index_j]) * inner_neighborhood.e_ij_[n] + shear_force_ij) *
+					inner_neighborhood.dW_ij_[n]  * Vol_[index_j] * inv_rho0_;
 			}
 			dvel_dt_[index_i] = acceleration;
 		}

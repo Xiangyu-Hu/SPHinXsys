@@ -31,7 +31,7 @@
 #define PARTICLE_ADAPTATION_H
 
 #include "base_data_package.h"
-#include "sph_data_conainers.h"
+#include "sph_data_containers.h"
 
 namespace SPH
 {

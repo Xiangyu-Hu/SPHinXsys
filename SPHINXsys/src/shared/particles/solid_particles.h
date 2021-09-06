@@ -101,6 +101,9 @@ namespace SPH {
 		StdLargeVec<Matd>	dF_dt_;		/**<  deformation tensor change rate */
 		StdLargeVec<Matd>	stress_PK1_;	/**<  first Piola-Kirchhoff stress tensor */
 
+		StdLargeVec<Real> getVonMisesStress();
+		Real getMaxVonMisesStress();
+
 		virtual void writeParticlesToVtuFile(std::ofstream &output_file) override;
 
 		virtual ElasticSolidParticles* ThisObjectPtr() override {return this;};
