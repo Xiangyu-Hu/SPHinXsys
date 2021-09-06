@@ -618,8 +618,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		SpringNormalOnSurfaceParticles::
-			SpringNormalOnSurfaceParticles(SolidBody *body, Vecd source_point, Real stiffness, Real damping_ratio)
-			: ParticleDynamicsSimple(body), SolidDataSimple(body),
+			SpringNormalOnSurfaceParticles(SolidBody *body, BodyPartByParticle* body_part, Vecd source_point, Real stiffness, Real damping_ratio)
+			: PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
 			  pos_n_(particles_->pos_n_),
 			  pos_0_(particles_->pos_0_),
 			  n_(particles_->n_),
