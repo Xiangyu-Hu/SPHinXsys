@@ -90,8 +90,8 @@ public:
 	Holder(SolidBody *solid_body, std::string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
-		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
-		body_part_shape_ = new ComplexShape(mesh);
+		std::unique_ptr<ComplexShapeTriangleMesh> mesh(new ComplexShapeTriangleMesh());
+		body_part_shape_ = new ComplexShape(mesh.get());
 		mesh->addTriangleMeshShape(CreateStationaryPlate(), ShapeBooleanOps::add);
 
 		tagBodyPart();
