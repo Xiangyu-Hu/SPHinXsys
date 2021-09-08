@@ -43,14 +43,14 @@ int main(int ac, char* av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BaseBodyRelationInner* imported_model_inner
-		= new BodyRelationInnerVariableSmoothingLength(imported_model);
+	std::unique_ptr<BaseBodyRelationInner> imported_model_inner \
+		(new BodyRelationInnerVariableSmoothingLength(imported_model));
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
 	RandomizePartilePosition  random_imported_model_particles(imported_model);
 	/** A  Physics relaxation step. */
-	relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner, true);
+	relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner.get(), true);
 	relax_dynamics::UpdateSmoothingLengthRatioByBodyShape update_smoothing_length_ratio(imported_model);
 	//----------------------------------------------------------------------
 	//	Particle relaxation starts here.

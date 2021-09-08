@@ -30,9 +30,7 @@ namespace SPH
 			}
 			default:
 			{
-				std::cout << "\n FAILURE: the boolean operation is not applicable!" << std::endl;
-				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-				exit(1);
+				throw std::runtime_error("FAILURE: the boolean operation is not applicable!");
 				break;
 			}
 			}
@@ -66,7 +64,6 @@ namespace SPH
 	//=================================================================================================//
 	Real ComplexShapeImageMesh::findSignedDistance(const Vec3d& input_pnt)
 	{
-		//Real distance_to_surface = (input_pnt - findClosestPoint(input_pnt)).norm();
 		return image_mesh_shapes_[0].first->findValueAtPoint(input_pnt);
 	}
 	//=================================================================================================//

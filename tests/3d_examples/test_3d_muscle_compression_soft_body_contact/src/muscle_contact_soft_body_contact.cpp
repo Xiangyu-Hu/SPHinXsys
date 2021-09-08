@@ -60,8 +60,8 @@ public:
 	Myocardium(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
-		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
-		body_shape_ = new ComplexShape(mesh);
+		std::unique_ptr<ComplexShapeTriangleMesh> mesh(new ComplexShapeTriangleMesh());
+		body_shape_ = new ComplexShape(mesh.get());
 		mesh->addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
 		mesh->addTriangleMeshShape(CreateStationaryPlate(), ShapeBooleanOps::add);
 	}
@@ -75,8 +75,8 @@ public:
 	MovingPlate(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1.5))
 	{
-		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
-		body_shape_ = new ComplexShape(mesh);
+		std::unique_ptr<ComplexShapeTriangleMesh> mesh(new ComplexShapeTriangleMesh());
+		body_shape_ = new ComplexShape(mesh.get());
 		mesh->addTriangleMeshShape(CreateMovingPlate(), ShapeBooleanOps::add);
 	}
 };

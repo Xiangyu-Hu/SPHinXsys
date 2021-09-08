@@ -7,8 +7,8 @@
 BodyPartByParticleTriMesh::BodyPartByParticleTriMesh(SPHBody* body, string body_part_name, TriangleMeshShape* triangle_mesh_shape)
 : BodyPartByParticle(body, body_part_name)
 {	
-	ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
-	body_part_shape_ = new ComplexShape(mesh);
+	std::unique_ptr<ComplexShapeTriangleMesh> mesh(new ComplexShapeTriangleMesh());
+	body_part_shape_ = new ComplexShape(mesh.get());
 	mesh->addTriangleMeshShape(triangle_mesh_shape, ShapeBooleanOps::add);
 	tagBodyPart();
 }
@@ -21,8 +21,8 @@ BodyPartByParticleTriMesh::~BodyPartByParticleTriMesh()
 ImportedModel::ImportedModel(SPHSystem &system, string body_name, TriangleMeshShape* triangle_mesh_shape, ParticleAdaptation* particle_adaptation)
 	: SolidBody(system, body_name, particle_adaptation)
 {
-	ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
-	ComplexShape original_body_shape(mesh);
+	std::unique_ptr<ComplexShapeTriangleMesh> mesh(new ComplexShapeTriangleMesh());
+	ComplexShape original_body_shape(mesh.get());
 	mesh->addTriangleMeshShape(triangle_mesh_shape, ShapeBooleanOps::add);
 	body_shape_ = new LevelSetComplexShape(this, original_body_shape, true);
 }

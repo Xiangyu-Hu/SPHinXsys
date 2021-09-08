@@ -59,8 +59,8 @@ public:
 	Myocardium(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
-		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
-		body_shape_ = new ComplexShape(mesh);
+		std::unique_ptr<ComplexShapeTriangleMesh> mesh(new ComplexShapeTriangleMesh());
+		body_shape_ = new ComplexShape(mesh.get());
 		mesh->addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
 		mesh->addTriangleMeshShape(CreateStationaryPlate(), ShapeBooleanOps::add);
 	}
@@ -74,8 +74,8 @@ public:
 	MovingPlate(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
-		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
-		body_shape_ = new ComplexShape(mesh);
+		std::unique_ptr<ComplexShapeTriangleMesh> mesh(new ComplexShapeTriangleMesh());
+		body_shape_ = new ComplexShape(mesh.get());
 		mesh->addTriangleMeshShape(CreateMovingPlate(), ShapeBooleanOps::add);
 	}
 };
@@ -107,8 +107,8 @@ public:
 		std::string constrained_region_name, Real solid_body_density)
 		: SolidBodyPartForSimbody(solid_body,constrained_region_name)
 	{
-		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
-		body_part_shape_ = new ComplexShape(mesh);
+		std::unique_ptr<ComplexShapeTriangleMesh> mesh(new ComplexShapeTriangleMesh());
+		body_part_shape_ = new ComplexShape(mesh.get());
 		mesh->addTriangleMeshShape(CreateMovingPlate(), ShapeBooleanOps::add);
 		/** tag the constrained particle. */
 		tagBodyPart();

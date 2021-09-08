@@ -38,7 +38,6 @@
 #include "SimTKmath.h"
 #include "Simbody.h"
 #include "simbody_middle.h"
-//#include "geometry.h"
 #include "complex_shape_mesh.h"
 
 #include <iostream>

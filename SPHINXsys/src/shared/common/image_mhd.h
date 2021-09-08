@@ -61,7 +61,6 @@ namespace SPH {
 		ImageMHD(std::string full_path_file);
 		// constructor for sphere 
 		ImageMHD(Real radius, Vec3i dxdydz, Vec3d spacings);
-		//ImageMHD(Vec3i dxdydz, Vec3d spacings, T*data);
 		~ImageMHD();
 
 		void set_objectType(std::string objectType) 

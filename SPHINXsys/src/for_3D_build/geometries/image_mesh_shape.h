@@ -77,7 +77,7 @@ namespace SPH
 		//- distance map has to be float type image
 		Vec3d translation_;
 		Mat3d rotation_;
-		ImageMHD<float,3> *image_;
+		std::unique_ptr<ImageMHD<float, 3>> image_;
 
 		Real max_distance_;
 		Real min_distance_;

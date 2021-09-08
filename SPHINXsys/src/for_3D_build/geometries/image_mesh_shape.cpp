@@ -11,7 +11,7 @@ namespace SPH
     min_distance_(INFINITY)
 	{
 		if (image_ == nullptr)
-			image_ = new ImageMHD<float,3>(file_path_name);
+			image_.reset(new ImageMHD<float,3>(file_path_name));
 	}
 	//=================================================================================================//
 	ImageMeshShape::ImageMeshShape(Real radius, Vec3d spacings, Vec3d center) :
@@ -25,16 +25,11 @@ namespace SPH
 		int length = int(std::ceil(2.0*extend*radius));
 		Vec3i NxNyNz(length, length, length);
 		if(image_ == nullptr)
-			image_ = new ImageMHD<float,3>(radius, NxNyNz,spacings);
+			image_.reset(new ImageMHD<float,3>(radius, NxNyNz,spacings));
 	}
 	//=================================================================================================//
 	ImageMeshShape::~ImageMeshShape()
 	{
-		if (image_)
-		{
-			delete image_;
-			image_ = nullptr;
-		}
 	}
 	//=================================================================================================//
 	bool ImageMeshShape::checkContain(const Vec3d& input_pnt, bool BOUNDARY_INCLUDED)

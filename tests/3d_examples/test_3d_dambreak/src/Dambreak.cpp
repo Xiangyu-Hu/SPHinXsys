@@ -71,10 +71,10 @@ public:
 		Vecd translation_wall(0.5 * DL, 0.5 * DH, 0.5 * DW);
 		Vecd halfsize_inner(0.5 * DL, 0.5 * DH, 0.5 * DW);
 		
-		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		std::unique_ptr<ComplexShapeTriangleMesh> mesh(new ComplexShapeTriangleMesh());
 		mesh->addBrick(halfsize_outer, resolution, translation_wall, ShapeBooleanOps::add);
 		mesh->addBrick(halfsize_inner, resolution, translation_wall, ShapeBooleanOps::sub);
-		body_shape_ = new ComplexShape(mesh);
+		body_shape_ = new ComplexShape(mesh.get());
 	}
 };
 

@@ -61,9 +61,6 @@ namespace SPH
 		virtual bool checkContain(const Vec3d& input_pnt, bool BOUNDARY_INCLUDED = true) = 0;
 		virtual bool checkNotFar(const Vec3d& input_pnt, Real threshold) = 0;
 		virtual bool checkNearSurface(const Vec3d& input_pnt, Real threshold) = 0;
-		// virtual void addBrick(Vec3d halfsize, int resolution, Vec3d translation, ShapeBooleanOps op) = 0;
-		// virtual void addSphere(Real radius, int resolution, Vec3d translation, ShapeBooleanOps op) = 0;
-		// virtual void addCylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resolution, Vec3d translation, ShapeBooleanOps op) = 0;
 		/** Signed distance is negative for point within the complex shape. */
 		virtual Real findSignedDistance(const Vec3d& input_pnt) = 0;
 		/** Normal direction point toward outside of the complex shape. */

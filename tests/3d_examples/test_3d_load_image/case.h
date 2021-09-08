@@ -45,10 +45,10 @@ public:
 			new ParticleGeneratorMultiResolution())
 	{
 		/** Geometry definition. */
-		ComplexShapeImageMesh *original_body_shape_mesh = new ComplexShapeImageMesh();
+		std::unique_ptr<ComplexShapeImageMesh> original_body_shape_mesh(new ComplexShapeImageMesh());
 		original_body_shape_mesh->addImageMeshShape(CreateImportedModelSurface(), \
 			ShapeBooleanOps::add);
-		ComplexShape original_body_shape(original_body_shape_mesh);
+		ComplexShape original_body_shape(original_body_shape_mesh.get());
 		body_shape_ = new LevelSetComplexShape(this, original_body_shape, true);
 	}
 };
