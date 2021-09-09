@@ -214,4 +214,60 @@ namespace SPH {
 		return diag;
 	}
 	//=================================================================================================//
+	Real getAngleBetweenTwoVectors (Vec2d vector_1, Vec2d vector_2)
+	{
+		Real dot_product_1 = 0.0;
+		for (int i = 0; i < vector_1.size(); i++)
+		{
+			dot_product_1 += vector_1[i] * vector_2[i];
+		}
+		Real cos_teta = dot_product_1 / (vector_1.norm() * vector_2.norm());
+
+		return cos_teta;
+	}
+	//=================================================================================================//
+	Real getAngleBetweenTwoVectors (Vec3d vector_1, Vec3d vector_2)
+	{
+		Real dot_product_1 = 0.0;
+		for (int i = 0; i < vector_1.size(); i++)
+		{
+			dot_product_1 += vector_1[i] * vector_2[i];
+		}
+		Real cos_teta = dot_product_1 / (vector_1.norm() * vector_2.norm());
+
+		return cos_teta;
+	}
+	//=================================================================================================//
+	Vec2d getVectorProjectionOfVector (Vec2d vector_1, Vec2d vector_2)
+	{
+		// get the projection of the vector_1 on vector 2, which is parallel to the vector_2, meaning it is the vector_2 * scalar
+		Real dot_product_1 = 0.0;
+		Real dot_product_2 = std::pow(vector_2.norm(), 2.0);
+		for (int i = 0; i < vector_1.size(); i++)
+		{
+			dot_product_1 += vector_1[i] * vector_2[i];
+		}
+		//get scalar, which to multiply n_0 with
+		Real lambda = dot_product_1 / dot_product_2;
+		Vec2d proj_vector_1 = lambda * vector_2;
+
+		return proj_vector_1;
+	}
+	//=================================================================================================//
+	Vec3d getVectorProjectionOfVector (Vec3d vector_1, Vec3d vector_2)
+	{
+		// get the projection of the vector_1 on vector 2, which is parallel to the vector_2, meaning it is the vector_2 * scalar
+		Real dot_product_1 = 0.0;
+		Real dot_product_2 = std::pow(vector_2.norm(), 2.0);
+		for (int i = 0; i < vector_1.size(); i++)
+		{
+			dot_product_1 += vector_1[i] * vector_2[i];
+		}
+		//get scalar, which to multiply n_0 with
+		Real lambda = dot_product_1 / dot_product_2;
+		Vec3d proj_vector_1 = lambda * vector_2;
+
+		return proj_vector_1;
+	}
+	//=================================================================================================//
 }
