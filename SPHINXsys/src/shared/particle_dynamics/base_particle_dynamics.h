@@ -174,6 +174,7 @@ namespace SPH
 			sorted_id_(body_->base_particles_->sorted_id_),
 			unsorted_id_(body_->base_particles_->unsorted_id_) {};
 		virtual ~DataDelegateSimple() {};
+		ParticlesType* GetParticles(){ return particles_; };
 	protected:
 		BodyType* body_;
 		ParticlesType* particles_;
