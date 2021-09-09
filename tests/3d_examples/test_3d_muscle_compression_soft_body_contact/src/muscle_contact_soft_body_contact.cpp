@@ -60,10 +60,13 @@ public:
 	Myocardium(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
-		body_shape_ = new ComplexShape(body_name);
-		body_shape_->addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
-		body_shape_->addTriangleMeshShape(CreateStationaryPlate(), ShapeBooleanOps::add);
+		mesh_.reset(new ComplexShapeTriangleMesh());
+		body_shape_ = new ComplexShape(mesh_.get());
+		mesh_->addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
+		mesh_->addTriangleMeshShape(CreateStationaryPlate(), ShapeBooleanOps::add);
 	}
+private:
+	std::unique_ptr<ComplexShapeTriangleMesh> mesh_;
 };
 /**
 * @brief define the moving plate
@@ -74,9 +77,12 @@ public:
 	MovingPlate(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1.5))
 	{
-		body_shape_ = new ComplexShape(body_name);
-		body_shape_->addTriangleMeshShape(CreateMovingPlate(), ShapeBooleanOps::add);
+		mesh_.reset(new ComplexShapeTriangleMesh());
+		body_shape_ = new ComplexShape(mesh_.get());
+		mesh_->addTriangleMeshShape(CreateMovingPlate(), ShapeBooleanOps::add);
 	}
+private:
+	std::unique_ptr<ComplexShapeTriangleMesh> mesh_;
 };
 /**
 * @brief define the Holder base which will be constrained.
@@ -89,11 +95,14 @@ public:
 	Holder(SolidBody *solid_body, std::string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
-		body_part_shape_ = new ComplexShape(constrained_region_name);
-		body_part_shape_->addTriangleMeshShape(CreateStationaryPlate(), ShapeBooleanOps::add);
+		mesh_.reset(new ComplexShapeTriangleMesh());
+		body_part_shape_ = new ComplexShape(mesh_.get());
+		mesh_->addTriangleMeshShape(CreateStationaryPlate(), ShapeBooleanOps::add);
 
 		tagBodyPart();
 	}
+private:
+	std::unique_ptr<ComplexShapeTriangleMesh> mesh_;
 };
 class HolderSpring : public BodyPartByParticle
 {
@@ -101,9 +110,12 @@ public:
 	HolderSpring(SolidBody *solid_body, std::string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
-		body_part_shape_ = new ComplexShape(constrained_region_name);
-		body_part_shape_->addTriangleMeshShape(CreateMovingPlate(), ShapeBooleanOps::add);
+		mesh_.reset(new ComplexShapeTriangleMesh());
+		body_part_shape_ = new ComplexShape(mesh_.get());
+		mesh_->addTriangleMeshShape(CreateMovingPlate(), ShapeBooleanOps::add);
 	}
+private:
+	std::unique_ptr<ComplexShapeTriangleMesh> mesh_;
 };
 /**
  * Setup material properties of myocardium
