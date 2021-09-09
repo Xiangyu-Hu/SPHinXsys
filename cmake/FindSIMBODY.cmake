@@ -166,7 +166,6 @@ if(NOT BUILD_WITH_SIMBODY)
         endif()
     ENDIF()
 
-    set(LIBS ${LIBS} gtest)
     if (LIBS)
         foreach(lapack_lib IN LISTS Simbody_LAPACK_LIBRARY_LIST)
             set(LIBS ${LIBS} "${lapack_lib}")
