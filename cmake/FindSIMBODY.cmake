@@ -93,11 +93,21 @@ if(NOT BUILD_WITH_SIMBODY)
     )
 
     set(Simbody_LIBRARY_LIST SimTKsimbody SimTKmath SimTKcommon)
-
-    find_library(Simbody_LIB_DIR_TEMP 
-        NAMES ${Simbody_LIBRARY_LIST}
-        PATHS ${Simbody_ROOT_DIR}/lib ${Simbody_ROOT_DIR}/lib64 ${Simbody_ROOT_DIR}/lib/x86_64-linux-gnu
-        NO_DEFAULT_PATH)
+    set(Simbody_LIBRARY_LIST_D SimTKsimbody_d SimTKmath_d SimTKcommon_d)
+    set(Simbody_LIB_DIR_TEMP)
+    
+    # searching for lib per debug/release mode
+    IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+        find_library(Simbody_LIB_DIR_TEMP 
+            NAMES ${Simbody_LIBRARY_LIST_D}
+            PATHS ${Simbody_ROOT_DIR}/lib ${Simbody_ROOT_DIR}/lib64
+            NO_DEFAULT_PATH)
+    ELSE()
+        find_library(Simbody_LIB_DIR_TEMP 
+            NAMES ${Simbody_LIBRARY_LIST}
+            PATHS ${Simbody_ROOT_DIR}/lib ${Simbody_ROOT_DIR}/lib64
+            NO_DEFAULT_PATH)
+    ENDIF()
 
         get_filename_component(Simbody_LIB_DIR ${Simbody_LIB_DIR_TEMP} DIRECTORY)
 

@@ -28,13 +28,21 @@ class BodyPartByParticleTriMesh : public BodyPartByParticle
 public:
 	BodyPartByParticleTriMesh(SPHBody* body, string body_part_name, TriangleMeshShape* triangle_mesh_shape);
 	~BodyPartByParticleTriMesh();
+private:
+	std::unique_ptr<ComplexShapeTriangleMesh> mesh_;
 };
 
 class ImportedModel : public SolidBody
 {
 public:
-	ImportedModel(SPHSystem &system, string body_name, TriangleMeshShape* triangle_mesh_shape, ParticleAdaptation* particle_adaptation);
+	ImportedModel(\
+		SPHSystem &system, \
+		string body_name, \
+		TriangleMeshShape* triangle_mesh_shape, \
+		ParticleAdaptation* particle_adaptation);
 	~ImportedModel();
+private:
+	std::unique_ptr<ComplexShapeTriangleMesh> mesh_;
 };
 
 class SolidBodyForSimulation
@@ -51,7 +59,13 @@ private:
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>> damping_random_;
 
 public:
-	SolidBodyForSimulation(SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape, ParticleAdaptation& particle_adaptation, Real physical_viscosity, LinearElasticSolid& material_model);
+	SolidBodyForSimulation(\
+		SPHSystem &system, \
+		string body_name, \
+		TriangleMeshShape& triangle_mesh_shape, \
+		ParticleAdaptation& particle_adaptation, \
+		Real physical_viscosity, \
+		LinearElasticSolid& material_model);
 	~SolidBodyForSimulation(){};
 
 	ImportedModel* getImportedModel() { return &imported_model_; };

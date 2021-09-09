@@ -35,15 +35,20 @@ int resolution(50);
 //define the fluid body
 class WaterBlock : public FluidBody
 {
-	public:
-		WaterBlock(SPHSystem &system, std::string body_name)
-			: FluidBody(system, body_name)
-		{
-			Vecd halfsize_water(0.5 * LL, 0.5 * LH, 0.5 * LW);
-			Vecd translation_water = halfsize_water;
-			body_shape_ = new ComplexShape(body_name);
-			body_shape_->addBrick(halfsize_water, resolution, translation_water, ShapeBooleanOps::add);
-		}
+public:
+	WaterBlock(SPHSystem &system, std::string body_name)
+		: FluidBody(system, body_name)
+	{
+		Vecd halfsize_water(0.5 * LL, 0.5 * LH, 0.5 * LW);
+		Vecd translation_water = halfsize_water;
+		mesh_.reset(new ComplexShapeTriangleMesh());
+		mesh_->addBrick(halfsize_water, resolution, translation_water, ShapeBooleanOps::add);
+		body_shape_ = new ComplexShape(mesh_.get());
+	}
+
+private:
+	std::unique_ptr<ComplexShapeTriangleMesh> mesh_;
+
 };
 /**
  * @brief 	Case dependent material properties definition.
@@ -69,10 +74,14 @@ public:
 		Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
 		Vecd translation_wall(0.5 * DL, 0.5 * DH, 0.5 * DW);
 		Vecd halfsize_inner(0.5 * DL, 0.5 * DH, 0.5 * DW);
-		body_shape_ = new ComplexShape(body_name);
-		body_shape_->addBrick(halfsize_outer, resolution, translation_wall, ShapeBooleanOps::add);
-		body_shape_->addBrick(halfsize_inner, resolution, translation_wall, ShapeBooleanOps::sub);
+		
+		mesh_.reset(new ComplexShapeTriangleMesh());
+		mesh_->addBrick(halfsize_outer, resolution, translation_wall, ShapeBooleanOps::add);
+		mesh_->addBrick(halfsize_inner, resolution, translation_wall, ShapeBooleanOps::sub);
+		body_shape_ = new ComplexShape(mesh_.get());
 	}
+private:
+	std::unique_ptr<ComplexShapeTriangleMesh> mesh_;
 };
 
 //define an observer body
