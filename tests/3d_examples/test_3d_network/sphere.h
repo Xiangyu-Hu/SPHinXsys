@@ -35,8 +35,9 @@ public:
 		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1.0),
 			new ParticleGeneratorNetwork(Vecd(-1.0, 0.0, 0.0), Vecd(-0.964, 0.0, 0.266), 15, 5.0))
 	{
-		ComplexShape original_body_shape;
-		original_body_shape.addTriangleMeshShape(CreateCADGeometry(), ShapeBooleanOps::add);
+		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		ComplexShape original_body_shape(mesh);
+		mesh->addTriangleMeshShape(CreateCADGeometry(), ShapeBooleanOps::add);
 		body_shape_ = new LevelSetComplexShape(this, original_body_shape);
 	}
 };
