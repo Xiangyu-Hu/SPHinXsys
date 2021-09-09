@@ -1,15 +1,21 @@
-set(SHP_SOURCE_DIRECTORY_FOR_INCLUDE_PATHS "")
-set(SHP_SOURCE_DIRECTORY_FOR_INCLUDE_PATHS "${SPHINXSYS_PROJECT_DIR}") #SPHinXsys
+set(simbody_root "${SPHINXSYS_PROJECT_DIR}/3rd_party/simbody")
 
 set(SIMBODY_HEADER_DIRECTORIES
-    "${SHP_SOURCE_DIRECTORY_FOR_INCLUDE_PATHS}/SPHINXsys/src/shared/simbody/SimTKcommon/BigMatrix/include"
-    "${SHP_SOURCE_DIRECTORY_FOR_INCLUDE_PATHS}/SPHINXsys/src/shared/simbody/SimTKcommon/Geometry/include"
-    "${SHP_SOURCE_DIRECTORY_FOR_INCLUDE_PATHS}/SPHINXsys/src/shared/simbody/SimTKcommon/Mechanics/include"
-    "${SHP_SOURCE_DIRECTORY_FOR_INCLUDE_PATHS}/SPHINXsys/src/shared/simbody/SimTKcommon/Polynomial/include"
-    "${SHP_SOURCE_DIRECTORY_FOR_INCLUDE_PATHS}/SPHINXsys/src/shared/simbody/SimTKcommon/Random/include"
-    "${SHP_SOURCE_DIRECTORY_FOR_INCLUDE_PATHS}/SPHINXsys/src/shared/simbody/SimTKcommon/Scalar/include"
-    "${SHP_SOURCE_DIRECTORY_FOR_INCLUDE_PATHS}/SPHINXsys/src/shared/simbody/SimTKcommon/Simulation/include"
-    "${SHP_SOURCE_DIRECTORY_FOR_INCLUDE_PATHS}/SPHINXsys/src/shared/simbody/SimTKcommon/SmallMatrix/include"
-    "${SHP_SOURCE_DIRECTORY_FOR_INCLUDE_PATHS}/SPHINXsys/src/shared/simbody/SimTKmath/Geometry/include"
-    "${SHP_SOURCE_DIRECTORY_FOR_INCLUDE_PATHS}/SPHINXsys/src/shared/simbody/SimTKmath/Integrators/include"
+    "${simbody_root}/SimTKcommon/BigMatrix/include"
+    "${simbody_root}/SimTKcommon/Geometry/include"
+    "${simbody_root}/SimTKcommon/Mechanics/include"
+    "${simbody_root}/SimTKcommon/Polynomial/include"
+    "${simbody_root}/SimTKcommon/Random/include"
+    "${simbody_root}/SimTKcommon/Scalar/include"
+    "${simbody_root}/SimTKcommon/Simulation/include"
+    "${simbody_root}/SimTKcommon/SmallMatrix/include"
+    "${simbody_root}/SimTKcommon/include"
+
+    "${simbody_root}/SimTKmath/Geometry/include"
+    "${simbody_root}/SimTKmath/Integrators/include"
+    "${simbody_root}/SimTKmath/include"
+
+    "${simbody_root}/Simbody/include"
+    "${simbody_root}/Simbody/include/simbody/internal"
+    "${simbody_root}/Simbody/Visualizer/include"
 )

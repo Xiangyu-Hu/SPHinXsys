@@ -83,7 +83,7 @@ namespace SPH
 			{
 				for (size_t index_i = 0; index_i != meanvalue[0][0].size(); ++index_i)
 				{
-					for (size_t index_j = 0; index_j != meanvalue[0][0].size(); +index_j)
+					for (size_t index_j = 0; index_j != meanvalue[0][0].size(); ++index_j)
 					{
 						meanvalue_new[i][j][index_i][index_j] = (meanvalue[i][j][index_i][index_j] * 
 							(number_of_run_ - 1) + current_result[i][j][index_i][index_j]) / number_of_run_;

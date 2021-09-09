@@ -15,15 +15,25 @@ using namespace tbb;
 template<class T>
 class MyMemoryPool {
 	T sample;
+
+#ifdef __EMSCRIPTEN__
+	std::allocator<T> my_pool;				//memory pool
+	std::list<T> data_list;					//list of all nodes allocated
+#else
 	tbb::memory_pool< std::allocator<T> > my_pool;				//memory pool
 	typedef tbb::memory_pool_allocator<T> pool_allocator_t;		//memory allocator
 	std::list<T, pool_allocator_t> data_list;					//list of all nodes allocated
+#endif
 	std::list<T*> free_list;									//list of all free nodes
 
 public:
 
 	//constructor
-	MyMemoryPool() : data_list((pool_allocator_t(my_pool))) {};
+#ifdef __EMSCRIPTEN__
+	MyMemoryPool() : data_list(my_pool) {};
+#else
+	MyMemoryPool() : data_list(pool_allocator_t(my_pool)) {};
+#endif
 	//deconstructor
 	~MyMemoryPool() {
 		//my_pool.recycle();

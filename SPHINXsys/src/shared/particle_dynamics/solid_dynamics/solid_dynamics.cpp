@@ -448,7 +448,6 @@ namespace SPH
 		//=================================================================================================//
 		void TranslateSolidBodyPart::Update(size_t index_i, Real dt)
 		{
-
 			try {
 				Vecd point = pos_0_[index_i];
 				if (checkIfPointInBoundingBox(point, bbox_))
@@ -618,6 +617,103 @@ namespace SPH
 			dvel_dt_prior_[index_i] += getDampingForce(index_i);
 		}
 		//=================================================================================================//
+		SpringNormalOnSurfaceParticles::
+			SpringNormalOnSurfaceParticles(SolidBody *body, Vecd source_point, Real stiffness, Real damping_ratio)
+			: ParticleDynamicsSimple(body), SolidDataSimple(body),
+			  pos_n_(particles_->pos_n_),
+			  pos_0_(particles_->pos_0_),
+			  n_(particles_->n_),
+			  n_0_(particles_->n_0_),
+			  vel_n_(particles_->vel_n_),
+			  dvel_dt_prior_(particles_->dvel_dt_prior_),
+			  mass_(particles_->mass_),
+			  apply_spring_force_to_particle_({})
+		{
+			// set apply_spring_force_to_particle_ to false for each particle
+			for (size_t i = 0; i < particles_->pos_0_.size(); i++)
+			{
+				apply_spring_force_to_particle_.push_back(false);
+			}
+			// get the surface layer of particles
+			ShapeSurface surface_layer_(body);
+			// select which paricles the spring is applied to
+			for (size_t i = 0; i < surface_layer_.body_part_particles_.size(); i++)
+			{
+				// index of surface particle
+				size_t particle_i = surface_layer_.body_part_particles_[i];
+				// vector to the source point from the particle
+				Vecd vector_to_particle = source_point - particles_->pos_0_[particle_i];
+				// normal of the particle
+				Vecd normal = particles_->n_0_[particle_i];
+
+				// get the cos of the angle between the vector and the normal
+				Real cos_teta = getAngleBetweenTwoVectors (vector_to_particle, normal);
+				
+				// if the angle is less than 90°, we apply the spring force to the surface particle
+				if (cos_teta > 1e-3)
+				{
+					apply_spring_force_to_particle_[particle_i] = true;
+				}
+			}
+			// scale stiffness and damping by area here, so it's not necessary in each iteration
+			//index of any uniform particle
+			size_t particle_j = 0;
+			Real area = std::pow(particles_->Vol_[particle_j], 2.0 / 3.0);
+			stiffness_ = stiffness * area;
+			damping_coeff_ = stiffness * area * damping_ratio;
+		}
+		//=================================================================================================//
+		SpringNormalOnSurfaceParticles::~SpringNormalOnSurfaceParticles()
+		{
+		}
+		//=================================================================================================//
+		void SpringNormalOnSurfaceParticles::setupDynamics(Real dt)
+		{
+			particles_->total_ghost_particles_ = 0;
+		}
+		//=================================================================================================//
+		Vecd SpringNormalOnSurfaceParticles::getSpringForce(size_t index_i, Vecd disp)
+		{
+			// normal of the particle
+			Vecd normal = particles_->n_0_[index_i];
+			// get the normal portion of the displacement, which is parallel to the normal of particles, meaning it is the normal vector * scalar
+			Vecd normal_disp = getVectorProjectionOfVector (disp, normal);
+			
+			Vecd spring_force_vector = -stiffness_ * normal_disp;
+
+			return spring_force_vector;
+		}
+		//=================================================================================================//
+		Vecd SpringNormalOnSurfaceParticles::getDampingForce(size_t index_i)
+		{
+			// normal of the particle
+			Vecd normal = particles_->n_0_[index_i];
+			//velocity of the particle
+			Vecd velocity_n = vel_n_[index_i];
+			// get the normal portion of the velocity, which is parallel to the normal of particles, meaning it is the normal vector * scalar
+			Vecd normal_vel = getVectorProjectionOfVector (velocity_n, normal);
+				
+			Vecd damping_force_vector = -damping_coeff_ * normal_vel;
+			
+			return damping_force_vector;
+		}
+		//=================================================================================================//
+		void SpringNormalOnSurfaceParticles::Update(size_t index_i, Real dt)
+		{
+			try{
+				if (apply_spring_force_to_particle_[index_i])
+				{
+					Vecd delta_x = pos_n_[index_i] - pos_0_[index_i];
+					dvel_dt_prior_[index_i] += getSpringForce(index_i, delta_x) / mass_[index_i];
+					dvel_dt_prior_[index_i] += getDampingForce(index_i) / mass_[index_i];
+
+				}
+			}
+				catch(out_of_range& e){
+				throw runtime_error(string("SpringNormalOnSurfaceParticles::Update: particle index out of bounds") + to_string(index_i));
+			}
+		}
+		//=================================================================================================//
 		AccelerationForBodyPartInBoundingBox::
 			AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox& bounding_box, Vecd acceleration) :
 			ParticleDynamicsSimple(body), SolidDataSimple(body),
@@ -633,13 +729,141 @@ namespace SPH
 		//=================================================================================================//
 		void AccelerationForBodyPartInBoundingBox::Update(size_t index_i, Real dt)
 		{
-			if (pos_n_.size() > index_i)
-			{
+			try{
 				Vecd point = pos_n_[index_i];
 				if (checkIfPointInBoundingBox(point, bounding_box_))
 				{
 					dvel_dt_prior_[index_i] += acceleration_;
 				}
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("AccelerationForBodyPartInBoundingBox::Update: particle index out of bounds") + to_string(index_i));
+			}
+		}
+		//=================================================================================================//
+		ForceInBodyRegion::
+			ForceInBodyRegion(SPHBody *body, BodyPartByParticle *body_part, Vecd force, Real end_time)
+			: PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
+			  pos_0_(particles_->pos_0_),
+			  dvel_dt_prior_(particles_->dvel_dt_prior_),
+			  mass_(particles_->mass_),
+			  acceleration_(0),
+			  end_time_(end_time)
+		{
+			// calculate total mass
+			Real total_mass = 0.0;
+			for (size_t i = 0; i < particles_->mass_.size(); i++)
+			{
+				total_mass += particles_->mass_[i];
+			}
+			// calculate acceleration
+			acceleration_ = force / total_mass;
+		}
+		//=================================================================================================//
+		void ForceInBodyRegion::setupDynamics(Real dt)
+		{
+			particles_->total_ghost_particles_ = 0;
+		}
+		//=================================================================================================//
+		void ForceInBodyRegion::Update(size_t index_i, Real dt)
+		{
+			try{
+				Real time_factor = std::min(GlobalStaticVariables::physical_time_ / end_time_, 1.0);
+				dvel_dt_prior_[index_i] = acceleration_ * time_factor;
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("ForceInBodyRegion::Update: particle index out of bounds") + to_string(index_i));
+			}
+		}
+		//=================================================================================================//
+		SurfacePressureFromSource::
+			SurfacePressureFromSource(SPHBody* body, Vecd source_point, StdVec<array<Real, 2>> pressure_over_time)
+			: ParticleDynamicsSimple(body), SolidDataSimple(body),
+			  pos_0_(particles_->pos_0_),
+			  n_(particles_->n_),
+			  dvel_dt_prior_(particles_->dvel_dt_prior_),
+			  mass_(particles_->mass_),
+			  pressure_over_time_(pressure_over_time),
+			  apply_pressure_to_particle_({})
+		{
+			// set apply_pressure_to_particle_ to false for each particle
+			for (size_t i = 0; i < particles_->pos_0_.size(); i++)
+			{
+				apply_pressure_to_particle_.push_back(false);
+			}
+			// get the surface layer of particles
+			ShapeSurface surface_layer_(body);
+			// select which paricles the pressure is applied to
+			for (size_t i = 0; i < surface_layer_.body_part_particles_.size(); i++)
+			{
+				// index of surface particle
+				size_t particle_i = surface_layer_.body_part_particles_[i];
+				// vector to the source point from the particle
+				Vecd vector_to_particle = source_point - particles_->pos_0_[particle_i];
+				// normal of the particle
+				Vecd normal = particles_->n_0_[particle_i];
+
+				// get the cos of the angle between the vector and the normal
+				Real dot_product = 0.0;
+				for (int j = 0; j < normal.size(); j++) dot_product += vector_to_particle[j] * normal[j];
+				Real cos_teta = dot_product / vector_to_particle.norm(); // normal.norm() = 1
+				
+				// if the angle is less than 90°, we apply the pressure to the surface particle
+				if (cos_teta > 1e-3)
+				{
+					apply_pressure_to_particle_[particle_i] = true;
+				}
+			}
+		}
+		//=================================================================================================//
+		void SurfacePressureFromSource::setupDynamics(Real dt)
+		{
+			particles_->total_ghost_particles_ = 0;
+		}
+		//=================================================================================================//
+		Real SurfacePressureFromSource::getPressure()
+		{
+			// check if we have reached the max time, if yes, return the last pressure
+			bool max_time_reached = GlobalStaticVariables::physical_time_ > pressure_over_time_[pressure_over_time_.size()-1][0];
+			if (max_time_reached) return pressure_over_time_[pressure_over_time_.size()-1][1];
+			
+			int interval = 0;
+			// find out the interval
+			for (size_t i = 0; i < pressure_over_time_.size(); i++)
+			{
+				if (GlobalStaticVariables::physical_time_ < pressure_over_time_[i][0])
+				{
+					interval = i;
+					break;
+				}
+			}
+			// interval has to be at least 1
+			if (interval < 1) throw runtime_error(string("SurfacePressureFromSource::getPressure(): pressure_over_time input not correct, should start with {0.0, 0.0}"));
+			// scale the pressure to the current time
+			Real t_0 = pressure_over_time_[interval - 1][0];
+			Real t_1 = pressure_over_time_[interval][0];
+			Real p_0 = pressure_over_time_[interval - 1][1];
+			Real p_1 = pressure_over_time_[interval][1];
+
+			return p_0 + (p_1 - p_0) * (GlobalStaticVariables::physical_time_ - t_0) / (t_1 - t_0);
+		}
+		//=================================================================================================//
+		void SurfacePressureFromSource::Update(size_t index_i, Real dt)
+		{
+			try{
+				if (apply_pressure_to_particle_[index_i])
+				{
+					// get the surface area of the particle, assuming it has a cubic volume
+					// acceleration is particle force / particle mass
+					Real area = std::pow(particles_->Vol_[index_i], 2.0 / 3.0);
+					Real acc_from_pressure = getPressure() * area / mass_[index_i];
+					// vector is made by multiplying it with the surface normal
+					// add the acceleration to the particle
+					dvel_dt_prior_[index_i] += (-1.0) * n_[index_i] * acc_from_pressure;
+				}
+			}
+			catch(out_of_range& e){
+				throw runtime_error(string("SurfacePressureFromSource::Update: particle index out of bounds") + to_string(index_i));
 			}
 		}
 		//=================================================================================================//
@@ -713,8 +937,8 @@ namespace SPH
 			//obtain the first Piola-Kirchhoff stress from the second Piola-Kirchhoff stress
 			//it seems using reproducing correction here increases convergence rate
 			//near the free surface
-			stress_PK1_[index_i] = F_[index_i] * (material_->ConstitutiveRelation(F_[index_i], index_i) + 
-				material_->NumericalDampingRightCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i)) * B_[index_i];
+			stress_PK1_[index_i] = F_[index_i] * (material_->ConstitutiveRelation(F_[index_i], index_i) * B_[index_i] + 
+				material_->NumericalDampingRightCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i));
 		}
 		//=================================================================================================//
 		void StressRelaxationFirstHalf::Interaction(size_t index_i, Real dt)
