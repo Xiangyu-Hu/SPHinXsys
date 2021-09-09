@@ -13,7 +13,7 @@ Real PL = 0.2;
 Real PH = 0.01;
 Real PW = 0.01;
 Real SL = 0.01;
-Real resolution_ref = PH / 4.0;		/**< Initial particle spacing. */
+Real resolution_ref = PH / 6.0;		/**< Initial particle spacing. */
 Real BW = resolution_ref * 4; 		/**< Boundary width. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vecd(-SL, 0, 0), Vecd(PL, PH, PH));
@@ -21,16 +21,13 @@ BoundingBox system_domain_bounds(Vecd(-SL, 0, 0), Vecd(PL, PH, PH));
 /**< SimTK geometric modeling resolution. */
 int resolution(20);
 /** For material properties of the solid. */
-Real rho_0 = 6.45e3; // Nitinol
+Real rho_0 = 1000.0;
 Real poisson = 0.3;
-Real Youngs_modulus = 5.0e8;
+Real Youngs_modulus = 5e8;
 Real physical_viscosity = Youngs_modulus/100.0; //physical damping
-Real end_time = 0.15;
-
-Real gravity_g = 0.0; 					/**< Value of gravity. */
+Real gravity_g = 100.0; 					/**< Value of gravity. */
 Real time_to_full_gravity = 0.0;
 
-Vec3d d_0(1.0e-4, 0.0, 0.0);
 /** Define the geometry. */
 TriangleMeshShape* CreateMyocardium()
 {
@@ -122,11 +119,10 @@ public:
 		body_input_points_volumes_.push_back(std::make_pair(Vecd(PL, PH, PW), 0.0));
 	}
 };
-
 /**
  *  The main program
  */
-TEST(VerificationCases, BernoulliBeam)
+int main()
 {
 	/** Setup the system. */
 	SPHSystem system(system_domain_bounds, resolution_ref);
@@ -138,8 +134,6 @@ TEST(VerificationCases, BernoulliBeam)
 	Myocardium *myocardium_body = new Myocardium(system, "MyocardiumBody");
 	MyocardiumMuscle 	*muscle_material = new MyocardiumMuscle();
 	ElasticSolidParticles 	myocardium_particles(myocardium_body, muscle_material);
-	myocardium_particles.initializeNormalDirectionFromGeometry();
-	solid_dynamics::UpdateElasticNormalDirection update_normals(myocardium_body);
 	/** Define Observer. */
 	MyocardiumObserver *myocardium_observer = new MyocardiumObserver(system, "MyocardiumObserver");
 	BaseParticles observer_particles(myocardium_observer);
@@ -149,23 +143,8 @@ TEST(VerificationCases, BernoulliBeam)
 	BodyRelationContact* myocardium_observer_contact = new BodyRelationContact(myocardium_observer, { myocardium_body });
 
 	//-------- common particle dynamics ----------------------------------------
-	TimeStepInitialization initialize_gravity(myocardium_body);
-	Real pressure = 1e3;
-	StdVec<array<Real, 2>> pressure_over_time = {
-		{0.0, 0.0},
-		{end_time * 0.1, pressure},
-		{end_time, pressure }
-	};
-	BodyPartByParticle bp(myocardium_body, "MyocardiumBody");
-	solid_dynamics::SurfacePressureFromSource surface_pressure(myocardium_body, &bp, Vec3d(0.1, 0.005, 0.1), pressure_over_time);
+	TimeStepInitialization 	initialize_gravity(myocardium_body, &gravity);
 
-	StdLargeVec<bool>& apply_pressure_to_particle_ = surface_pressure.GetApplyPressureToParticle();
-	int particles_with_pressure = 0;
-	for (size_t i = 0; i < apply_pressure_to_particle_.size(); i++)
-	{
-		if (apply_pressure_to_particle_[i]) particles_with_pressure++;
-	}
-	EXPECT_EQ(particles_with_pressure, 336);
 	/** 
 	 * This section define all numerical methods will be used in this case.
 	 */
@@ -204,6 +183,7 @@ TEST(VerificationCases, BernoulliBeam)
 	write_displacement.writeToFile(0);
 	/** Setup physical parameters. */
 	int ite = 0;
+	Real end_time = 0.15;
 	Real output_period = end_time / 100.0;		
 	Real dt = 0.0; 
 	/** Statistics for computing time. */
@@ -222,10 +202,8 @@ TEST(VerificationCases, BernoulliBeam)
 					<< GlobalStaticVariables::physical_time_ << "	dt: "
 					<< dt << "\n";
 			}
-			update_normals.parallel_exec();
-			initialize_gravity.parallel_exec(); // gravity force
-			surface_pressure.parallel_exec();
 
+			initialize_gravity.parallel_exec(); // gravity force
 			stress_relaxation_first_half.parallel_exec(dt);
 			constrain_holder.parallel_exec(dt);
 			muscle_damping.parallel_exec(dt);
@@ -249,7 +227,7 @@ TEST(VerificationCases, BernoulliBeam)
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	
+
 	StdLargeVec<Vecd>& pos_0 = myocardium_particles.pos_0_;
 	StdLargeVec<Vecd>& pos_n = myocardium_particles.pos_n_;
 	Real displ_max = 0;
@@ -259,13 +237,10 @@ TEST(VerificationCases, BernoulliBeam)
 		if (displ > displ_max) displ_max = displ;
 	}
 	Real displ_max_analytical = 4.8e-3; // in mm, absolute max displacement
-	EXPECT_NEAR(displ_max, displ_max_analytical, displ_max_analytical * 0.06); // 6% tolerance with 8 particles/thickness
+	EXPECT_NEAR(displ_max, displ_max_analytical, displ_max_analytical * 0.25); // 25% tolerance with 6 particles/thickness
+	// the tolerance goes down if the number of particles / thickness is higher
+	// for CI testing use 6 particles to be faster
 	std::cout << "displ_max: " << displ_max << std::endl;
-}
 
-int main(int argc, char* argv[])
-{	
-	testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
+	return 0;
 }
-
