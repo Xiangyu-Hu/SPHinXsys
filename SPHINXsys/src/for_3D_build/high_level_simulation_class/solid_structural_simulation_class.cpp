@@ -7,9 +7,9 @@
 BodyPartByParticleTriMesh::BodyPartByParticleTriMesh(SPHBody* body, string body_part_name, TriangleMeshShape* triangle_mesh_shape)
 : BodyPartByParticle(body, body_part_name)
 {	
-	std::unique_ptr<ComplexShapeTriangleMesh> mesh(new ComplexShapeTriangleMesh());
-	body_part_shape_ = new ComplexShape(mesh.get());
-	mesh->addTriangleMeshShape(triangle_mesh_shape, ShapeBooleanOps::add);
+	mesh_.reset(new ComplexShapeTriangleMesh());
+	body_part_shape_ = new ComplexShape(mesh_.get());
+	mesh_->addTriangleMeshShape(triangle_mesh_shape, ShapeBooleanOps::add);
 	tagBodyPart();
 }
 
@@ -18,12 +18,16 @@ BodyPartByParticleTriMesh::~BodyPartByParticleTriMesh()
 	delete body_part_shape_;
 }
 
-ImportedModel::ImportedModel(SPHSystem &system, string body_name, TriangleMeshShape* triangle_mesh_shape, ParticleAdaptation* particle_adaptation)
+ImportedModel::ImportedModel(\
+	SPHSystem &system, \
+	string body_name, \
+	TriangleMeshShape* triangle_mesh_shape, \
+	ParticleAdaptation* particle_adaptation)
 	: SolidBody(system, body_name, particle_adaptation)
 {
-	std::unique_ptr<ComplexShapeTriangleMesh> mesh(new ComplexShapeTriangleMesh());
-	ComplexShape original_body_shape(mesh.get());
-	mesh->addTriangleMeshShape(triangle_mesh_shape, ShapeBooleanOps::add);
+	mesh_.reset(new ComplexShapeTriangleMesh());
+	ComplexShape original_body_shape(mesh_.get());
+	mesh_->addTriangleMeshShape(triangle_mesh_shape, ShapeBooleanOps::add);
 	body_shape_ = new LevelSetComplexShape(this, original_body_shape, true);
 }
 
@@ -32,8 +36,14 @@ ImportedModel::~ImportedModel()
 	delete body_shape_;
 }
 
-SolidBodyForSimulation::SolidBodyForSimulation(SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape, ParticleAdaptation& particle_adaptation, Real physical_viscosity, LinearElasticSolid& material_model):
-	imported_model_(ImportedModel(system, body_name, &triangle_mesh_shape, &particle_adaptation)),
+SolidBodyForSimulation::SolidBodyForSimulation(\
+	SPHSystem &system, \
+	string body_name, \
+	TriangleMeshShape& triangle_mesh_shape, \
+	ParticleAdaptation& particle_adaptation, \
+	Real physical_viscosity, \
+	LinearElasticSolid& material_model):
+	imported_model_(system, body_name, &triangle_mesh_shape, &particle_adaptation),
 	//material_model_(material_model),
 	elastic_solid_particles_(ElasticSolidParticles(&imported_model_, &material_model)),
 	inner_body_relation_(BodyRelationInner(&imported_model_)),
