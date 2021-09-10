@@ -411,10 +411,10 @@ namespace SPH
 		* Only for 3D applications
 		*/
 		class SpringNormalOnSurfaceParticles 
-			: public ParticleDynamicsSimple, public SolidDataSimple
+			: public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
 		public:
-			SpringNormalOnSurfaceParticles(SolidBody* body, Vecd source_point, Real stiffness, Real damping_ratio = 0.05);
+			SpringNormalOnSurfaceParticles(SolidBody* body, BodyPartByParticle* body_part, bool outer_surface, Vecd source_point, Real stiffness, Real damping_ratio = 0.05);
 			~SpringNormalOnSurfaceParticles();
 
 			StdLargeVec<bool>& GetApplySpringForceToParticle(){ return apply_spring_force_to_particle_; }
@@ -472,10 +472,10 @@ namespace SPH
 		* @brief SurfacePressureFromSource, applies pressure on the surface particles coming from a source point
 		*/
 		class SurfacePressureFromSource :
-			public ParticleDynamicsSimple, public SolidDataSimple
+			public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
 		public:
-			SurfacePressureFromSource(SPHBody* body, Vecd source_point, StdVec<array<Real, 2>> pressure_over_time);
+			SurfacePressureFromSource(SPHBody* body, BodyPartByParticle* body_part, Vecd source_point, StdVec<array<Real, 2>> pressure_over_time);
 			virtual ~SurfacePressureFromSource() {};
 
 			StdLargeVec<bool>& GetApplyPressureToParticle(){ return apply_pressure_to_particle_; }

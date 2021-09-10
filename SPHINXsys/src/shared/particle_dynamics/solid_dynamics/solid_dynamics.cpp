@@ -618,8 +618,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		SpringNormalOnSurfaceParticles::
-			SpringNormalOnSurfaceParticles(SolidBody *body, Vecd source_point, Real stiffness, Real damping_ratio)
-			: ParticleDynamicsSimple(body), SolidDataSimple(body),
+			SpringNormalOnSurfaceParticles(SolidBody *body, BodyPartByParticle* body_part, bool outer_surface, Vecd source_point, Real stiffness, Real damping_ratio)
+			: PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
 			  pos_n_(particles_->pos_n_),
 			  pos_0_(particles_->pos_0_),
 			  n_(particles_->n_),
@@ -649,8 +649,16 @@ namespace SPH
 				// get the cos of the angle between the vector and the normal
 				Real cos_teta = getAngleBetweenTwoVectors (vector_to_particle, normal);
 				
+				// if outer surface, the normals close an angle greater than 90°
+				// if the angle is greater than 90°, we apply the spring force to the surface particle
+				Real epsilon = 1e-6; // to ignore exactly perpendicular surfaces
+				if (outer_surface && cos_teta < -epsilon)
+				{
+					apply_spring_force_to_particle_[particle_i] = true;
+				}
+				// if not outer surface, it's inner surface, meaning the normals close an angle smaller than 90°
 				// if the angle is less than 90°, we apply the spring force to the surface particle
-				if (cos_teta > 1e-3)
+				if (!outer_surface && cos_teta > epsilon)
 				{
 					apply_spring_force_to_particle_[particle_i] = true;
 				}
@@ -777,8 +785,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		SurfacePressureFromSource::
-			SurfacePressureFromSource(SPHBody* body, Vecd source_point, StdVec<array<Real, 2>> pressure_over_time)
-			: ParticleDynamicsSimple(body), SolidDataSimple(body),
+			SurfacePressureFromSource(SPHBody* body, BodyPartByParticle* body_part, Vecd source_point, StdVec<array<Real, 2>> pressure_over_time)
+			: PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
 			  pos_0_(particles_->pos_0_),
 			  n_(particles_->n_),
 			  dvel_dt_prior_(particles_->dvel_dt_prior_),
