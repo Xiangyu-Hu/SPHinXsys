@@ -404,6 +404,10 @@ namespace SPH
 		/**
 		* @class SpringNormalOnSurfaceParticles
 		* @brief Exerts spring force force on the surface in normal direction in the form of acceleration to each particle.
+		* The input stiffness should be defined in Pa/m. The stiffness is scaled by the surface area of the particle to get N/m
+		* The force is applied to all the surface particles that can be seen (outer_surface = false)
+		* or cannot be seen (outer_surface = true) from the source point.
+		* Can be used for outer or inner surface of a shell structure ofr example.
 		* The spring force is calculated based on the difference from the particle's initial position.
 		* Only for 3D applications
 		*/
