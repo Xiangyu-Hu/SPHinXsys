@@ -214,8 +214,9 @@ namespace SPH {
 		return diag;
 	}
 	//=================================================================================================//
-	Real getAngleBetweenTwoVectors (Vec2d vector_1, Vec2d vector_2)
+	Real getCosineOfAngleBetweenTwoVectors (Vec2d vector_1, Vec2d vector_2)
 	{
+		// returns the cosine of the angle between two vectors
 		Real dot_product_1 = 0.0;
 		for (int i = 0; i < vector_1.size(); i++)
 		{
@@ -226,8 +227,9 @@ namespace SPH {
 		return cos_teta;
 	}
 	//=================================================================================================//
-	Real getAngleBetweenTwoVectors (Vec3d vector_1, Vec3d vector_2)
+	Real getCosineOfAngleBetweenTwoVectors (Vec3d vector_1, Vec3d vector_2)
 	{
+		// returns the cosine of the angle between two vectors
 		Real dot_product_1 = 0.0;
 		for (int i = 0; i < vector_1.size(); i++)
 		{

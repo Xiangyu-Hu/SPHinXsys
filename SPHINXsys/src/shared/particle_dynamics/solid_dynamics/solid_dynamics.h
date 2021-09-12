@@ -392,14 +392,11 @@ namespace SPH
 		{
 		public:
 			SpringDamperConstraintParticleWise(SolidBody* body, Vecd stiffness, Real damping_ratio = 0.05);
-			~SpringDamperConstraintParticleWise();
 		protected:
-			Real total_mass_;
 			StdLargeVec<Vecd>& pos_n_,& pos_0_,& vel_n_,& dvel_dt_prior_;
 			Vecd stiffness_;
 			Vecd damping_coeff_; // damping component parallel to the spring force component
 
-			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual Vecd getSpringForce(size_t index_i, Vecd& disp);
 			virtual Vecd getDampingForce(size_t index_i);
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -415,7 +412,6 @@ namespace SPH
 		{
 		public:
 			SpringNormalOnSurfaceParticles(SolidBody* body, BodyPartByParticle* body_part, bool outer_surface, Vecd source_point, Real stiffness, Real damping_ratio = 0.05);
-			~SpringNormalOnSurfaceParticles();
 
 			StdLargeVec<bool>& GetApplySpringForceToParticle(){ return apply_spring_force_to_particle_; }
 		protected:
@@ -425,7 +421,6 @@ namespace SPH
 			Real damping_coeff_; // damping component parallel to the spring force component
 			StdLargeVec<bool> apply_spring_force_to_particle_;
 
-			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual Vecd getSpringForce(size_t index_i, Vecd disp);
 			virtual Vecd getDampingForce(size_t index_i);
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -444,7 +439,6 @@ namespace SPH
 			StdLargeVec<Vecd>& pos_n_,& dvel_dt_prior_;
 			BoundingBox bounding_box_;
 			Vecd acceleration_;
-			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -457,13 +451,10 @@ namespace SPH
 		{
 		public:
 			ForceInBodyRegion(SPHBody* body, BodyPartByParticle* body_part, Vecd force, Real end_time);
-			virtual ~ForceInBodyRegion() {};
 		protected:
 			StdLargeVec<Vecd>& pos_0_,& dvel_dt_prior_;
-			StdLargeVec<Real>& mass_;
 			Vecd acceleration_;
 			Real end_time_;
-			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -476,7 +467,6 @@ namespace SPH
 		{
 		public:
 			SurfacePressureFromSource(SPHBody* body, BodyPartByParticle* body_part, Vecd source_point, StdVec<array<Real, 2>> pressure_over_time);
-			virtual ~SurfacePressureFromSource() {};
 
 			StdLargeVec<bool>& GetApplyPressureToParticle(){ return apply_pressure_to_particle_; }
 		protected:
@@ -485,7 +475,6 @@ namespace SPH
 			StdVec<array<Real, 2>> pressure_over_time_;
 			StdLargeVec<bool> apply_pressure_to_particle_;
 			Real getPressure();
-			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 

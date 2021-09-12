@@ -570,23 +570,10 @@ namespace SPH
 			  vel_n_(particles_->vel_n_),
 			  dvel_dt_prior_(particles_->dvel_dt_prior_)
 		{
-			// calculate total mass
-			total_mass_ = 0.0;
-			for (size_t i = 0; i < particles_->mass_.size(); i++)
-			{
-				total_mass_ += particles_->mass_[i];
-			}
 			// scale stiffness and damping by mass here, so it's not necessary in each iteration
-			stiffness_ = stiffness / total_mass_;
-			damping_coeff_ = stiffness * damping_ratio / total_mass_;
-		}
-		//=================================================================================================//
-		SpringDamperConstraintParticleWise::~SpringDamperConstraintParticleWise()
-		{
-		}
-		//=================================================================================================//
-		void SpringDamperConstraintParticleWise::setupDynamics(Real dt)
-		{
+			stiffness_ = stiffness / std::accumulate(particles_->mass_.begin(), particles_->mass_.end(), 0.0);
+			damping_coeff_ = stiffness_ * damping_ratio;
+
 			particles_->total_ghost_particles_ = 0;
 		}
 		//=================================================================================================//
@@ -627,28 +614,19 @@ namespace SPH
 			  vel_n_(particles_->vel_n_),
 			  dvel_dt_prior_(particles_->dvel_dt_prior_),
 			  mass_(particles_->mass_),
-			  apply_spring_force_to_particle_({})
+			  apply_spring_force_to_particle_(StdLargeVec<bool>(pos_0_.size(), false))
 		{
-			// set apply_spring_force_to_particle_ to false for each particle
-			for (size_t i = 0; i < particles_->pos_0_.size(); i++)
-			{
-				apply_spring_force_to_particle_.push_back(false);
-			}
 			// get the surface layer of particles
-			ShapeSurface surface_layer_(body);
+			ShapeSurface surface_layer(body);
 			// select which paricles the spring is applied to
-			for (size_t i = 0; i < surface_layer_.body_part_particles_.size(); i++)
+			for (size_t particle_i: surface_layer.body_part_particles_)
 			{
-				// index of surface particle
-				size_t particle_i = surface_layer_.body_part_particles_[i];
 				// vector to the source point from the particle
-				Vecd vector_to_particle = source_point - particles_->pos_0_[particle_i];
+				Vecd vector_to_particle = source_point - pos_0_[particle_i];
 				// normal of the particle
-				Vecd normal = particles_->n_0_[particle_i];
-
+				Vecd normal = n_0_[particle_i];
 				// get the cos of the angle between the vector and the normal
-				Real cos_teta = getAngleBetweenTwoVectors (vector_to_particle, normal);
-				
+				Real cos_teta = getCosineOfAngleBetweenTwoVectors(vector_to_particle, normal);
 				// if outer surface, the normals close an angle greater than 90°
 				// if the angle is greater than 90°, we apply the spring force to the surface particle
 				Real epsilon = 1e-6; // to ignore exactly perpendicular surfaces
@@ -664,19 +642,11 @@ namespace SPH
 				}
 			}
 			// scale stiffness and damping by area here, so it's not necessary in each iteration
-			//index of any uniform particle
-			size_t particle_j = 0;
-			Real area = std::pow(particles_->Vol_[particle_j], 2.0 / 3.0);
+			// we take the area of the first particle, assuming they are uniform
+			Real area = std::pow(particles_->Vol_[0], 2.0 / 3.0);
 			stiffness_ = stiffness * area;
-			damping_coeff_ = stiffness * area * damping_ratio;
-		}
-		//=================================================================================================//
-		SpringNormalOnSurfaceParticles::~SpringNormalOnSurfaceParticles()
-		{
-		}
-		//=================================================================================================//
-		void SpringNormalOnSurfaceParticles::setupDynamics(Real dt)
-		{
+			damping_coeff_ = stiffness_ * damping_ratio;
+
 			particles_->total_ghost_particles_ = 0;
 		}
 		//=================================================================================================//
@@ -714,7 +684,6 @@ namespace SPH
 					Vecd delta_x = pos_n_[index_i] - pos_0_[index_i];
 					dvel_dt_prior_[index_i] += getSpringForce(index_i, delta_x) / mass_[index_i];
 					dvel_dt_prior_[index_i] += getDampingForce(index_i) / mass_[index_i];
-
 				}
 			}
 				catch(out_of_range& e){
@@ -728,9 +697,7 @@ namespace SPH
 			pos_n_(particles_->pos_n_),
 			dvel_dt_prior_(particles_->dvel_dt_prior_),
 			bounding_box_(bounding_box),
-			acceleration_(acceleration){}
-		//=================================================================================================//
-		void AccelerationForBodyPartInBoundingBox::setupDynamics(Real dt)
+			acceleration_(acceleration)
 		{
 			particles_->total_ghost_particles_ = 0;
 		}
@@ -754,22 +721,12 @@ namespace SPH
 			: PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
 			  pos_0_(particles_->pos_0_),
 			  dvel_dt_prior_(particles_->dvel_dt_prior_),
-			  mass_(particles_->mass_),
 			  acceleration_(0),
 			  end_time_(end_time)
 		{
-			// calculate total mass
-			Real total_mass = 0.0;
-			for (size_t i = 0; i < particles_->mass_.size(); i++)
-			{
-				total_mass += particles_->mass_[i];
-			}
-			// calculate acceleration
-			acceleration_ = force / total_mass;
-		}
-		//=================================================================================================//
-		void ForceInBodyRegion::setupDynamics(Real dt)
-		{
+			// calculate acceleration: force / total mass
+			acceleration_ = force / std::accumulate(particles_->mass_.begin(), particles_->mass_.end(), 0.0);
+			// set ghost particles to zero
 			particles_->total_ghost_particles_ = 0;
 		}
 		//=================================================================================================//
@@ -792,40 +749,25 @@ namespace SPH
 			  dvel_dt_prior_(particles_->dvel_dt_prior_),
 			  mass_(particles_->mass_),
 			  pressure_over_time_(pressure_over_time),
-			  apply_pressure_to_particle_({})
+			  // set apply_pressure_to_particle_ to false for each particle
+			  apply_pressure_to_particle_(StdLargeVec<bool>(pos_0_.size(), false))
 		{
-			// set apply_pressure_to_particle_ to false for each particle
-			for (size_t i = 0; i < particles_->pos_0_.size(); i++)
-			{
-				apply_pressure_to_particle_.push_back(false);
-			}
 			// get the surface layer of particles
-			ShapeSurface surface_layer_(body);
+			ShapeSurface surface_layer(body);
 			// select which paricles the pressure is applied to
-			for (size_t i = 0; i < surface_layer_.body_part_particles_.size(); i++)
+			for (size_t particle_i: surface_layer.body_part_particles_)
 			{
-				// index of surface particle
-				size_t particle_i = surface_layer_.body_part_particles_[i];
 				// vector to the source point from the particle
 				Vecd vector_to_particle = source_point - particles_->pos_0_[particle_i];
 				// normal of the particle
 				Vecd normal = particles_->n_0_[particle_i];
-
 				// get the cos of the angle between the vector and the normal
-				Real dot_product = 0.0;
-				for (int j = 0; j < normal.size(); j++) dot_product += vector_to_particle[j] * normal[j];
-				Real cos_teta = dot_product / vector_to_particle.norm(); // normal.norm() = 1
-				
+				Real cos_teta = getCosineOfAngleBetweenTwoVectors(vector_to_particle, normal);
 				// if the angle is less than 90°, we apply the pressure to the surface particle
-				if (cos_teta > 1e-3)
-				{
-					apply_pressure_to_particle_[particle_i] = true;
-				}
+				// ignore exactly perpendicular surfaces
+				if (cos_teta > 1e-6) apply_pressure_to_particle_[particle_i] = true;
 			}
-		}
-		//=================================================================================================//
-		void SurfacePressureFromSource::setupDynamics(Real dt)
-		{
+
 			particles_->total_ghost_particles_ = 0;
 		}
 		//=================================================================================================//
