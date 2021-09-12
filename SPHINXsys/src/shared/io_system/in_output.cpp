@@ -69,9 +69,9 @@ namespace SPH
 			out_file << std::fixed << std::setprecision(9) << quantity[i] << "   ";
 	}	
 	//=============================================================================================//
-	std::string BodyStatesIO::convertPhysicalTimeToString(Real convertPhysicalTimeToStream)
+	std::string BodyStatesIO::convertPhysicalTimeToString(Real physical_time)
 	{
-		int i_time = int(GlobalStaticVariables::physical_time_ * 1.0e6);
+		int i_time = int(physical_time * 1.0e6);
 		std::stringstream s_time;
 		s_time << std::setw(10) << std::setfill('0') << i_time;
 		return s_time.str();
