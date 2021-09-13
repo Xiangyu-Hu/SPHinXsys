@@ -53,7 +53,7 @@ Real dp_0 	= (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 /** Define the left ventricle geometry. */
-TriangleMeshShape* CreateHeart()
+TriangleMeshShape* createHeart()
 {
 	Vecd translation(0.0, 0.0, 0.0);
 	TriangleMeshShape *geometry = new TriangleMeshShape(full_path_to_lv, translation, length_scale);
@@ -166,7 +166,7 @@ public:
 	{
 		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
 		ComplexShape original_body_shape(mesh);
-		mesh->addTriangleMeshShape(CreateHeart(), ShapeBooleanOps::add);
+		mesh->addTriangleMeshShape(createHeart(), ShapeBooleanOps::add);
 		body_shape_ = new LevelSetComplexShape(this, original_body_shape);
 	}
 };
@@ -383,7 +383,7 @@ public:
 	{
 		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
 		ComplexShape original_body_shape(mesh);
-		mesh->addTriangleMeshShape(CreateHeart(), ShapeBooleanOps::add);
+		mesh->addTriangleMeshShape(createHeart(), ShapeBooleanOps::add);
 		body_shape_ = new LevelSetComplexShape(this, original_body_shape);
 		/** Use the reducedtwice kernel */
 		particle_adaptation_->getKernel()->reduceOnce();

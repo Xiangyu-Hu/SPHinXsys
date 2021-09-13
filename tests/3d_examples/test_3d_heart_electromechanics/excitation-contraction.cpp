@@ -53,7 +53,7 @@ Real epsilon = 0.002;
 Vec3d fiber_direction(1.0, 0.0, 0.0);
 Vec3d sheet_direction(0.0, 1.0, 0.0);
 /** Define the geometry. */
-TriangleMeshShape* CreateHeart()
+TriangleMeshShape* createHeart()
 {
 	Vecd translation(-53.5 * length_scale, -70.0 * length_scale, -32.5 * length_scale);
 	TriangleMeshShape *geometry_myocardium = new TriangleMeshShape(full_path_to_stl_file, translation, length_scale);
@@ -141,7 +141,7 @@ public:
 	{
 		std::unique_ptr<ComplexShapeTriangleMesh> mesh(new ComplexShapeTriangleMesh());
 		ComplexShape original_body_shape(mesh.get());
-		mesh->addTriangleMeshShape(CreateHeart(), ShapeBooleanOps::add);
+		mesh->addTriangleMeshShape(createHeart(), ShapeBooleanOps::add);
 		body_shape_ = new LevelSetComplexShape(this, original_body_shape);
 	}
 };

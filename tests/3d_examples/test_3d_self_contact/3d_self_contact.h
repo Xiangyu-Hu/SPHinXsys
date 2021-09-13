@@ -58,10 +58,11 @@ public:
 	Coil(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
-		/** Geometry definition. */
-		ComplexShape original_body_shape;
-		original_body_shape.addTriangleMeshShape(createImportedModelSurface(), ShapeBooleanOps::add);
-		body_shape_ = new LevelSetComplexShape(this, original_body_shape, true);
+		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		ComplexShape original_body_shape(mesh);
+		mesh->addTriangleMeshShape(createImportedModelSurface(), ShapeBooleanOps::add);
+		body_shape_ = new LevelSetComplexShape(this, original_body_shape);
+
 	}
 };
 class StationaryPlate : public SolidBody
@@ -70,9 +71,12 @@ public:
 	StationaryPlate(SPHSystem& system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
-		body_shape_ = new ComplexShape(body_name);
-		body_shape_->addTriangleMeshShape(createStationaryPlate(), ShapeBooleanOps::add);
+		mesh_.reset(new ComplexShapeTriangleMesh());
+		body_shape_ = new ComplexShape(mesh_.get());
+		mesh_->addTriangleMeshShape(createStationaryPlate(), ShapeBooleanOps::add);
 	}
+private:
+	std::unique_ptr<ComplexShapeTriangleMesh> mesh_;
 };
 //----------------------------------------------------------------------
 //	Materials used in the case.
