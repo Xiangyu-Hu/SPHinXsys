@@ -28,6 +28,7 @@ add_test(NAME ${PROJECT_NAME}_particle_relaxation
 
 if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+		set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 		IF(${CMAKE_BUILD_TYPE} MATCHES "Release")
 			target_link_libraries(${PROJECT_NAME} sphinxsys_3d gtest gtest_main)
 			add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
@@ -48,6 +49,7 @@ if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 else() # static build only
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+		add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
 		target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d gtest gtest_main)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

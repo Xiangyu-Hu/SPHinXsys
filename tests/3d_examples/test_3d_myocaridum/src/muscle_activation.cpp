@@ -31,7 +31,7 @@ Real linear_active_stress_factor = - 0.5;
 Real bulk_modulus = 30.0 * reference_voltage * fabs(linear_active_stress_factor);
 
 /** Define the geometry. */
-TriangleMeshShape* CreateMyocardium()
+TriangleMeshShape* createMyocardium()
 {
 	Vecd halfsize_myocardium(0.5 * (PL + SL), 0.5 * PH, 0.5 * PW);
 	Vecd translation_myocardium(0.5 * (PL - SL), 0.5 * PH, 0.5*PW);
@@ -59,7 +59,7 @@ public:
 	{
 		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
 		body_shape_ = new ComplexShape(mesh);
-		mesh->addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
+		mesh->addTriangleMeshShape(createMyocardium(), ShapeBooleanOps::add);
 	}
 };
 /**

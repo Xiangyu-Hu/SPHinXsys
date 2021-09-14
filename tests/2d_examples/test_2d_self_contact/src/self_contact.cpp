@@ -1,41 +1,37 @@
-/* ---------------------------------------------------------------------------*
-*            SPHinXsys: 2D oscillation beam example				              *
-* ----------------------------------------------------------------------------*
-* This is the one of the basic test cases, also the first case for            *
-* understanding SPH method for solid simulation.                              *
-* In this case, the constraint of the beam is implemented with                *
-* internal constrained subregion.                                             *
-* ----------------------------------------------------------------------------*/
-// SPHinXsys Library.
+/**
+* @file 	self_contact.cpp
+* @brief 	This is the case file for the test of dynamic self contact.
+* @author   Xiangyu Hu
+*/
+
 #include "sphinxsys.h"
-// Namespace cite here.
 using namespace SPH;
+
 //------------------------------------------------------------------------------
 //global parameters for the case
 //------------------------------------------------------------------------------
-Real PL = 0.2; 	//beam length
-Real PH = 0.02; //for thick plate; =0.01 for thin plate
-Real SL = 0.06; //depth of the insert
-//particle spacing, at least three particles
+Real PL = 0.2;	//beam length
+Real PH = 0.01; //for thick plate; 0.01 for thin plate
+Real SL = 0.04; //depth of the insert
 Real resolution_ref = PH / 10.0;
-Real BW = resolution_ref * 4; 	//boundary width
-/** Domain bounds of the system. */
+Real BW = resolution_ref * 4; //boundary width, at least three particles
+// Domain bounds of the system.
 BoundingBox system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
-	Vec2d(PL + 3.0 * BW, PL / 2.0));
+								 Vec2d(PL + 3.0 * BW, PL / 2.0));
 //----------------------------------------------------------------------
 //	Global parameters for material properties.
 //----------------------------------------------------------------------
-Real rho0_s = 1.0e3; 			//reference density
-Real Youngs_modulus = 2.0e6;	//reference Youngs modulus
-Real poisson = 0.3975; 			//Poisson ratio
+Real rho0_s = 1.0e3;		 //reference density
+Real Youngs_modulus = 1.0e5; //reference Youngs modulus
+Real poisson = 0.45;		 //Poisson ratio
 //----------------------------------------------------------------------
 //	Global parameters for initial condition
 //----------------------------------------------------------------------
 Real kl = 1.875;
 Real M = sin(kl) + sinh(kl);
 Real N = cos(kl) + cosh(kl);
-Real Q = 2.0 * (cos(kl)*sinh(kl) - sin(kl)*cosh(kl));
-Real vf = 0.05;
+Real Q = 2.0 * (cos(kl) * sinh(kl) - sin(kl) * cosh(kl));
+Real vf = 0.15;
 Real R = PL / (0.5 * Pi);
 //----------------------------------------------------------------------
 //	Geometries used in the case.
@@ -162,6 +158,7 @@ int main()
 	Beam *beam_body = new Beam(system, "BeamBody");
 	BeamMaterial *beam_material = new BeamMaterial();
 	ElasticSolidParticles beam_particles(beam_body, beam_material);
+	beam_particles.addAVariableToWrite<indexScalar, Real>("ContactDensity");
 
 	BeamObserver *beam_observer = new BeamObserver(system, "BeamObserver");
 	BaseParticles observer_particles(beam_observer);
@@ -170,26 +167,29 @@ int main()
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner* beam_body_inner = new BodyRelationInner(beam_body);
-	BodyRelationContact* beam_observer_contact = new BodyRelationContact(beam_observer, { beam_body });
+	BodyRelationInner *beam_body_inner = new BodyRelationInner(beam_body);
+	BodyRelationContact *beam_observer_contact = new BodyRelationContact(beam_observer, {beam_body});
+	SolidBodyRelationSelfContact *beam_self_contact = new SolidBodyRelationSelfContact(beam_body);
 	//-----------------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
 	//-----------------------------------------------------------------------------
 	// initial condition
 	BeamInitialCondition beam_initial_velocity(beam_body);
-	//corrected strong configuration	
+	//corrected strong configuration
 	solid_dynamics::CorrectConfiguration
 		beam_corrected_configuration_in_strong_form(beam_body_inner);
 	//time step size calculation
 	solid_dynamics::AcousticTimeStepSize computing_time_step_size(beam_body);
 	//stress relaxation for the beam
-	solid_dynamics::StressRelaxationFirstHalf	stress_relaxation_first_half(beam_body_inner);
-	solid_dynamics::StressRelaxationSecondHalf	stress_relaxation_second_half(beam_body_inner);
+	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half(beam_body_inner);
+	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(beam_body_inner);
+	// algorithms for solid self contact
+	solid_dynamics::DynamicSelfContactForce beam_self_contact_forces(beam_self_contact);
 	// clamping a solid body part. This is softer than a driect constraint
 	solid_dynamics::ClampConstrainSolidBodyRegion
 		clamp_constrain_beam_base(beam_body_inner, new BeamBase(beam_body, "BeamBase"));
 	//-----------------------------------------------------------------------------
-	//outputs
+	//	outputs
 	//-----------------------------------------------------------------------------
 	In_Output in_output(system);
 	BodyStatesRecordingToVtu write_beam_states(in_output, system.real_bodies_);
@@ -214,29 +214,36 @@ int main()
 	Real T0 = 1.0;
 	Real End_Time = T0;
 	//time step size for ouput file
-	Real D_Time = 0.01*T0;
-	Real Dt = 0.1*D_Time;			/**< Time period for data observing */
-	Real dt = 0.0; 					//default acoustic time step sizes
+	Real D_Time = 0.01 * T0;
+	Real Dt = 0.1 * D_Time; /**< Time period for data observing */
+	Real dt = 0.0;			//default acoustic time step sizes
 
 	//statistics for computing time
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
 
-	//computation loop starts 
+	//computation loop starts
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
 		Real integration_time = 0.0;
 		//integrate time (loop) until the next output time
-		while (integration_time < D_Time) {
+		while (integration_time < D_Time)
+		{
 
 			Real relaxation_time = 0.0;
-			while (relaxation_time < Dt) {
+			while (relaxation_time < Dt)
+			{
 
-				if (ite % 100 == 0) {
+				if (ite % 100 == 0)
+				{
 					std::cout << "N=" << ite << " Time: "
-						<< GlobalStaticVariables::physical_time_ << "	dt: "
-						<< dt << "\n";
+							  << GlobalStaticVariables::physical_time_ << "	dt: "
+							  << dt << "\n";
 				}
+
+				beam_self_contact_forces.parallel_exec();
+				beam_body->updateCellLinkedList();
+				beam_self_contact->updateConfiguration();
 
 				stress_relaxation_first_half.parallel_exec(dt);
 				clamp_constrain_beam_base.parallel_exec();
