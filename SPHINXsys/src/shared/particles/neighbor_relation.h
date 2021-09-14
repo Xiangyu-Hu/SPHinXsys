@@ -119,6 +119,21 @@ namespace SPH {
 	protected:
 		StdLargeVec<Real>& h_ratio_;
 	};
+	
+	/**
+	 * @class NeighborRelationSelfContact
+	 * @brief A solid contact neighbor relation functor between particles i and j.
+	 */
+	class NeighborRelationSelfContact : public NeighborRelation
+	{
+	public:
+		explicit NeighborRelationSelfContact(SPHBody* body);
+		virtual ~NeighborRelationSelfContact() {};
+		void operator () (Neighborhood& neighborhood, 
+			Vecd& displacement, size_t i_index, size_t j_index) const;
+	protected:
+		StdLargeVec<Vecd>& pos_0_;
+	};
 
 	/**
 	 * @class NeighborRelationContact

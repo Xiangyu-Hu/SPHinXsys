@@ -33,9 +33,7 @@
 
 #include "all_particle_dynamics.h"
 #include "elastic_solid.h"
-#include "weakly_compressible_fluid.h"
 #include "base_kernel.h"
-#include "all_fluid_dynamics.h"
 
 namespace SPH
 {
@@ -65,92 +63,6 @@ namespace SPH
 			SolidDynamicsInitialCondition(SolidBody* body) :
 				ParticleDynamicsSimple(body), SolidDataSimple(body) {};
 			virtual ~SolidDynamicsInitialCondition() {};
-		};
-
-		/**
-		* @class ContactDensitySummation
-		* @brief Computing the summation density due to solid-solid contact model.
-		*/
-		class ContactDensitySummation :
-			public PartInteractionDynamicsByParticle, public ContactDynamicsData
-		{
-		public:
-			ContactDensitySummation(SolidBodyRelationContact* solid_body_contact_relation);
-			virtual ~ContactDensitySummation() {};
-		protected:
-			StdLargeVec<Real>& mass_, & contact_density_;
-			StdVec<StdLargeVec<Real>*> contact_mass_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
-		* @class ContactForce
-		* @brief Computing the contact force.
-		*/
-		class ContactForce :
-			public PartInteractionDynamicsByParticle, public ContactDynamicsData
-		{
-		public:
-			ContactForce(SolidBodyRelationContact* solid_body_contact_relation);
-			virtual ~ContactForce() {};
-		protected:
-			StdLargeVec<Real>& contact_density_, & Vol_, & mass_;
-			StdLargeVec<Vecd>& dvel_dt_prior_, & contact_force_;
-			StdVec<StdLargeVec<Real>*> contact_contact_density_, contact_Vol_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
-		* @class DynamicContactForce
-		* @brief Computing the contact force for problems dominainted by the contact dynamic process itself.
-		* For example, the high speed impact problems in which the detailed contact behavior is crutial for 
-		* physical sound solutions. Therefore, for simple low speed problem in which contact force is 
-		* used merely prevent penetration. We can still use the simple formualation in the class ContactForce. 
-		* The idea is to introduce conact force based on Riemann problem like formulation, 
-		* in which the artficial dissipation is the main interaction force to prevent
-		* penetration. Furthermore, a panelty type force is used as supplementrary to prevent penetration 
-		* when the contact velocity is small.
-		*/
-		class DynamicContactForce :
-			public PartInteractionDynamicsByParticle, public ContactDynamicsData
-		{
-		public:
-			DynamicContactForce(SolidBodyRelationContact* solid_body_contact_relation, Real penalty_strength = 1.0);
-			virtual ~DynamicContactForce() {};
-		protected:
-			StdLargeVec<Real>& Vol_, & mass_;
-			StdLargeVec<Vecd>& vel_n_, & dvel_dt_prior_, & contact_force_;
-			StdVec<StdLargeVec<Real>*> contact_Vol_;
-			StdVec<StdLargeVec<Vecd>*>contact_vel_n_;
-			Real penalty_strength_;
-			StdVec<Real> contact_impedence_, contact_reference_pressure_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-		};
-		
-		/**
-		* @class ContactForceWithWall
-		* @brief Computing the contact force with a rigid wall.
-		*  Note that the body surface of the wall should be
-		*  updated beforce computing the contact force.
-		*/
-		class ContactForceWithWall :
-			public PartInteractionDynamicsByParticle, public ContactDynamicsData
-		{
-		public:
-			ContactForceWithWall(SolidBodyRelationContact* solid_body_contact_relation, Real penalty_strength = 1.0);
-			virtual ~ContactForceWithWall() {};
-		protected:
-			StdLargeVec<Real>& Vol_, & mass_;
-			StdLargeVec<Vecd>& vel_n_, & dvel_dt_prior_, & contact_force_;
-			StdVec<StdLargeVec<Real>*> contact_Vol_;
-			StdVec<StdLargeVec<Vecd>*>contact_vel_n_, contact_n_;
-			Real penalty_strength_;
-			Real impedence_, reference_pressure_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -595,11 +507,30 @@ namespace SPH
 		};
 
 		/**
+		* @class KirchhoffParticleStressRelaxationFirstHalf
+		*/
+		class KirchhoffParticleStressRelaxationFirstHalf : public StressRelaxationFirstHalf
+		{
+		public:
+			KirchhoffParticleStressRelaxationFirstHalf(BaseBodyRelationInner* body_inner_relation);
+			virtual ~KirchhoffParticleStressRelaxationFirstHalf() {};
+		protected:
+			const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
+
+			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
 		* @class KirchhoffStressRelaxationFirstHalf
-		* @brief Decompose the stress into particle stress includes isetropic stress 
+		* @brief Decompose the stress into particle stress includes isotropic stress 
 		* and the stress due to non-homogeneous material properties.
 		* The preliminary shear stress is introduced by particle pair to avoid 
-		* sprurious stress and deforamtion.
+		* spurious stress and deformation. 
+		* Note that, for the shear stress term, 
+		* due to the mismatch of the divergence contribution between 
+		* the pair-wise second-order derivative Laplacian formulation
+		* and particle-wise first-order gradient formulation, 
+		* a correction factor slight large than one is introduced.       
 		*/
 		class KirchhoffStressRelaxationFirstHalf : public StressRelaxationFirstHalf
 		{
@@ -607,9 +538,10 @@ namespace SPH
 			KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner* body_inner_relation);
 			virtual ~KirchhoffStressRelaxationFirstHalf() {};
 		protected:
-			StdLargeVec<Matd>& J_to_minus_2_over_dimension_;
+			StdLargeVec<Real>& J_to_minus_2_over_dimension_;
 			StdLargeVec<Matd>& stress_on_particle_, & inverse_F_T_;
 			const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
+			const Real correction_factor_ = 1.05;
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;

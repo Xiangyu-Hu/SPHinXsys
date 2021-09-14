@@ -1,3 +1,4 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${SPHINXSYS_PROJECT_DIR}/cmake) # main (top) cmake dir
 set(CMAKE_VERBOSE_MAKEFILE on)
 
@@ -6,38 +7,36 @@ PROJECT("${CURRENT_FOLDER}")
 
 include(ImportSPHINXsysFromSource_for_3D_build)
 
-set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
-set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
-set(BUILD_INPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/input")
-set(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
+SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
+SET(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
+SET(BUILD_INPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/input")
+SET(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 
 file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/coil.stl
+        DESTINATION ${BUILD_INPUT_PATH})
 
 aux_source_directory(. DIR_SRCS)
-ADD_EXECUTABLE(${PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH} ${DIR_SRCS})
-
-gtest_discover_tests(${PROJECT_NAME} WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
 add_test(NAME ${PROJECT_NAME}_particle_relaxation 
 		 COMMAND ${PROJECT_NAME} --r=true
+		 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+add_test(NAME ${PROJECT_NAME} 
+		 COMMAND ${PROJECT_NAME} --r=false --i=true
 		 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
 if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
-		IF(${CMAKE_BUILD_TYPE} MATCHES "Release")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_3d gtest gtest_main)
-			add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
-		elseif(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_3d gtestd gtest_maind)
-			add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
-		endif()
+		target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
+		add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++ gtest gtest_main)
+			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++)
 		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++ stdc++fs gtest gtest_main)
+			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++ stdc++fs dl)
 		endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 		if(DEFINED BOOST_AVAILABLE) # link Boost if available (not for Windows)
@@ -46,13 +45,13 @@ if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 else() # static build only
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
-		target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d gtest gtest_main)
+		set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
+		target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++ gtest gtest_main)
+			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++)
 		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++ stdc++fs gtest gtest_main)
+			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++ stdc++fs dl)
 		endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 		if(DEFINED BOOST_AVAILABLE) # link Boost if available (not for Windows)

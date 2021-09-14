@@ -6,18 +6,27 @@ PROJECT("${CURRENT_FOLDER}")
 
 include(ImportSPHINXsysFromSource_for_3D_build)
 
-set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
-set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
-set(BUILD_INPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/input")
-set(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
+SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
+SET(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
+SET(BUILD_INPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/input")
+SET(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 
 file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
 
+set(FILES_STL			
+				"plate.stl"
+				"plate2.stl"
+				"mock_stent.stl"
+				"vessel_cylinder.stl"
+				"plate_stent.stl"
+				)
+foreach(STL_FILE ${FILES_STL})
+	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/input/${STL_FILE} DESTINATION ${BUILD_INPUT_PATH})
+endforeach()
+
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH} ${DIR_SRCS})
-
-gtest_discover_tests(${PROJECT_NAME} WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
 add_test(NAME ${PROJECT_NAME}_particle_relaxation 
 		 COMMAND ${PROJECT_NAME} --r=true
@@ -46,13 +55,12 @@ if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 else() # static build only
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
-		target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d gtest gtest_main)
+		target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d GTest::gtest GTest::gtest_main)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++ gtest gtest_main)
 		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++ stdc++fs gtest gtest_main)
+			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++ stdc++fs)
 		endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 		if(DEFINED BOOST_AVAILABLE) # link Boost if available (not for Windows)
