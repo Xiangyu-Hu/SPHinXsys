@@ -14,19 +14,10 @@ set(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
 
-set(FILES_STL			"Aorta.stl"
-				"Diaphragm.stl"
-				"LA.stl"
-				"PA.stl"
-				"RA.stl"
-				"TAH_basic2_pos.stl"
-				)
-foreach(STL_FILE ${FILES_STL})
-	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/input/${STL_FILE} DESTINATION ${BUILD_INPUT_PATH})
-endforeach()
-
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH} ${DIR_SRCS})
+
+gtest_discover_tests(${PROJECT_NAME} WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
 add_test(NAME ${PROJECT_NAME}_particle_relaxation 
 		 COMMAND ${PROJECT_NAME} --r=true
@@ -34,13 +25,19 @@ add_test(NAME ${PROJECT_NAME}_particle_relaxation
 
 if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
-		add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
+		set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
+		IF(${CMAKE_BUILD_TYPE} MATCHES "Release")
+			target_link_libraries(${PROJECT_NAME} sphinxsys_3d gtest gtest_main)
+			add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
+		elseif(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+			target_link_libraries(${PROJECT_NAME} sphinxsys_3d gtestd gtest_maind)
+			add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
+		endif()
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++)
+			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++ gtest gtest_main)
 		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++ stdc++fs)
+			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++ stdc++fs gtest gtest_main)
 		endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 		if(DEFINED BOOST_AVAILABLE) # link Boost if available (not for Windows)
@@ -49,12 +46,13 @@ if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 else() # static build only
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d)
+		add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
+		target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d gtest gtest_main)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++)
+			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++ gtest gtest_main)
 		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++ stdc++fs)
+			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++ stdc++fs gtest gtest_main)
 		endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 		if(DEFINED BOOST_AVAILABLE) # link Boost if available (not for Windows)

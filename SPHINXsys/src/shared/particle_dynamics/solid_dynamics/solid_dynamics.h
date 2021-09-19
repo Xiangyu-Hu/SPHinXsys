@@ -304,15 +304,40 @@ namespace SPH
 		{
 		public:
 			SpringDamperConstraintParticleWise(SolidBody* body, Vecd stiffness, Real damping_ratio = 0.05);
-			~SpringDamperConstraintParticleWise();
 		protected:
-			Real total_mass_;
 			StdLargeVec<Vecd>& pos_n_,& pos_0_,& vel_n_,& dvel_dt_prior_;
 			Vecd stiffness_;
 			Vecd damping_coeff_; // damping component parallel to the spring force component
 
-			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual Vecd getSpringForce(size_t index_i, Vecd& disp);
+			virtual Vecd getDampingForce(size_t index_i);
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+		/**
+		* @class SpringNormalOnSurfaceParticles
+		* @brief Exerts spring force force on the surface in normal direction in the form of acceleration to each particle.
+		* The input stiffness should be defined in Pa/m. The stiffness is scaled by the surface area of the particle to get N/m
+		* The force is applied to all the surface particles that can be seen (outer_surface = false)
+		* or cannot be seen (outer_surface = true) from the source point.
+		* Can be used for outer or inner surface of a shell structure ofr example.
+		* The spring force is calculated based on the difference from the particle's initial position.
+		* Only for 3D applications
+		*/
+		class SpringNormalOnSurfaceParticles 
+			: public PartSimpleDynamicsByParticle, public SolidDataSimple
+		{
+		public:
+			SpringNormalOnSurfaceParticles(SolidBody* body, BodyPartByParticle* body_part, bool outer_surface, Vecd source_point, Real stiffness, Real damping_ratio = 0.05);
+
+			StdLargeVec<bool>& GetApplySpringForceToParticle(){ return apply_spring_force_to_particle_; }
+		protected:
+			StdLargeVec<Vecd>& pos_n_,& pos_0_,& n_,& n_0_,& vel_n_,& dvel_dt_prior_;
+			StdLargeVec<Real>& mass_;
+			Real stiffness_;
+			Real damping_coeff_; // damping component parallel to the spring force component
+			StdLargeVec<bool> apply_spring_force_to_particle_;
+
+			virtual Vecd getSpringForce(size_t index_i, Vecd disp);
 			virtual Vecd getDampingForce(size_t index_i);
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
@@ -330,7 +355,42 @@ namespace SPH
 			StdLargeVec<Vecd>& pos_n_,& dvel_dt_prior_;
 			BoundingBox bounding_box_;
 			Vecd acceleration_;
-			virtual void setupDynamics(Real dt = 0.0) override;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		* @class ForceInBodyRegion
+		* @brief ForceInBodyRegion, distributes the force vector as acceleration among the particles in a given body part
+		*/
+		class ForceInBodyRegion :
+			public PartSimpleDynamicsByParticle, public SolidDataSimple
+		{
+		public:
+			ForceInBodyRegion(SPHBody* body, BodyPartByParticle* body_part, Vecd force, Real end_time);
+		protected:
+			StdLargeVec<Vecd>& pos_0_,& dvel_dt_prior_;
+			Vecd acceleration_;
+			Real end_time_;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		* @class SurfacePressureFromSource
+		* @brief SurfacePressureFromSource, applies pressure on the surface particles coming from a source point
+		*/
+		class SurfacePressureFromSource :
+			public PartSimpleDynamicsByParticle, public SolidDataSimple
+		{
+		public:
+			SurfacePressureFromSource(SPHBody* body, BodyPartByParticle* body_part, Vecd source_point, StdVec<array<Real, 2>> pressure_over_time);
+
+			StdLargeVec<bool>& GetApplyPressureToParticle(){ return apply_pressure_to_particle_; }
+		protected:
+			StdLargeVec<Vecd>& pos_0_,& n_,& dvel_dt_prior_;
+			StdLargeVec<Real>& mass_;
+			StdVec<array<Real, 2>> pressure_over_time_;
+			StdLargeVec<bool> apply_pressure_to_particle_;
+			Real getPressure();
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
