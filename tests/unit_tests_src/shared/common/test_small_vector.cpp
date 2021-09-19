@@ -14,13 +14,13 @@ TEST(AngleBetweenTwo3DVectors, getAngleBetweenTwo3DVectors)
     Vec3d vector_5 = Vec3d(1, 0, 0);
     Vec3d vector_6 = Vec3d(-1, 0, 0);
 
-    Real cos_teta_1 = getAngleBetweenTwoVectors(vector_1, vector_2);
+    Real cos_teta_1 = getCosineOfAngleBetweenTwoVectors(vector_1, vector_2);
     Real cos_teta_ref_1 = -2 / (sqrt(20) * sqrt(38));
 
-    Real cos_teta_2 = getAngleBetweenTwoVectors(vector_3, vector_4);
+    Real cos_teta_2 = getCosineOfAngleBetweenTwoVectors(vector_3, vector_4);
     Real cos_teta_ref_2 = 0;
 
-    Real cos_teta_3 = getAngleBetweenTwoVectors(vector_5, vector_6);
+    Real cos_teta_3 = getCosineOfAngleBetweenTwoVectors(vector_5, vector_6);
     Real cos_teta_ref_3 = -1;
  
 	EXPECT_EQ(cos_teta_1, cos_teta_ref_1);

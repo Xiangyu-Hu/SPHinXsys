@@ -55,8 +55,9 @@ public:
 	Wall(SPHSystem& system, string body_name) :
 		SolidBody(system, body_name, new ParticleAdaptation(1.15, 1.0))
 	{
-		body_shape_ = new ComplexShape(body_name);
-		body_shape_->addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
+		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		body_shape_ = new ComplexShape(mesh);
+		mesh->addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
 	}
 };
 
@@ -68,8 +69,9 @@ public:
 	Column(SPHSystem& system, std::string body_name) : 
 		SolidBody(system, body_name, new ParticleAdaptation(1.3, 1.0))
 	{
-		ComplexShape original_body_shape;
-		original_body_shape.addTriangleMeshShape(CreateColumn(), ShapeBooleanOps::add);
+		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		ComplexShape original_body_shape(mesh);
+		mesh->addTriangleMeshShape(CreateColumn(), ShapeBooleanOps::add);
 		body_shape_ = new LevelSetComplexShape(this, original_body_shape);
 	}
 };

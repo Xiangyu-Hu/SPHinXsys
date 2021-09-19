@@ -24,7 +24,7 @@ Real poisson = 0.45;
 Real Youngs_modulus = 5e4;
 Real physical_viscosity = 200.0; 
 /** Define the geometry. */
-TriangleMeshShape* CreateMyocardium()
+TriangleMeshShape* createMyocardium()
 {
 	Vecd halfsize_myocardium(0.5 * L, 0.5 * L, 0.5 * L);
 	Vecd translation_myocardium(0.5 * L, 0.0, 0.0);
@@ -34,7 +34,7 @@ TriangleMeshShape* CreateMyocardium()
 	return geometry_myocardium;
 }
 /** Define the holder geometry. */
-TriangleMeshShape* CreateStationaryPlate()
+TriangleMeshShape* createStationaryPlate()
 {
 	Vecd halfsize_plate(0.5 * BW, 0.5 * L + BW , 0.5 * L + BW);
 	Vecd translation_plate(-0.5 * BW, 0.0, 0.0);
@@ -44,7 +44,7 @@ TriangleMeshShape* CreateStationaryPlate()
 	return geometry_plate;
 }
 /** Define the holder geometry. */
-TriangleMeshShape* CreateMovingPlate()
+TriangleMeshShape* createMovingPlate()
 {
 	Vecd halfsize_plate(0.5 * BW,0.5*PL, 0.5*PL);
 	Vecd translation_plate(L + BW, 0.0, 0.0);
@@ -60,10 +60,13 @@ public:
 	Myocardium(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
-		body_shape_ = new ComplexShape(body_name);
-		body_shape_->addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
-		body_shape_->addTriangleMeshShape(CreateStationaryPlate(), ShapeBooleanOps::add);
+		mesh_.reset(new ComplexShapeTriangleMesh());
+		body_shape_ = new ComplexShape(mesh_.get());
+		mesh_->addTriangleMeshShape(createMyocardium(), ShapeBooleanOps::add);
+		mesh_->addTriangleMeshShape(createStationaryPlate(), ShapeBooleanOps::add);
 	}
+private:
+	std::unique_ptr<ComplexShapeTriangleMesh> mesh_;
 };
 /**
 * @brief define the moving plate
@@ -74,9 +77,12 @@ public:
 	MovingPlate(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name, new ParticleAdaptation(1.15, 1.5))
 	{
-		body_shape_ = new ComplexShape(body_name);
-		body_shape_->addTriangleMeshShape(CreateMovingPlate(), ShapeBooleanOps::add);
+		mesh_.reset(new ComplexShapeTriangleMesh());
+		body_shape_ = new ComplexShape(mesh_.get());
+		mesh_->addTriangleMeshShape(createMovingPlate(), ShapeBooleanOps::add);
 	}
+private:
+	std::unique_ptr<ComplexShapeTriangleMesh> mesh_;
 };
 /**
 * @brief define the Holder base which will be constrained.
@@ -89,11 +95,14 @@ public:
 	Holder(SolidBody *solid_body, std::string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
-		body_part_shape_ = new ComplexShape(constrained_region_name);
-		body_part_shape_->addTriangleMeshShape(CreateStationaryPlate(), ShapeBooleanOps::add);
+		mesh_.reset(new ComplexShapeTriangleMesh());
+		body_part_shape_ = new ComplexShape(mesh_.get());
+		mesh_->addTriangleMeshShape(createStationaryPlate(), ShapeBooleanOps::add);
 
 		tagBodyPart();
 	}
+private:
+	std::unique_ptr<ComplexShapeTriangleMesh> mesh_;
 };
 class HolderSpring : public BodyPartByParticle
 {
@@ -101,9 +110,12 @@ public:
 	HolderSpring(SolidBody *solid_body, std::string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
-		body_part_shape_ = new ComplexShape(constrained_region_name);
-		body_part_shape_->addTriangleMeshShape(CreateMovingPlate(), ShapeBooleanOps::add);
+		mesh_.reset(new ComplexShapeTriangleMesh());
+		body_part_shape_ = new ComplexShape(mesh_.get());
+		mesh_->addTriangleMeshShape(createMovingPlate(), ShapeBooleanOps::add);
 	}
+private:
+	std::unique_ptr<ComplexShapeTriangleMesh> mesh_;
 };
 /**
  * Setup material properties of myocardium

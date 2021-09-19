@@ -29,7 +29,7 @@ Real time_to_full_gravity = 0.0;
 
 Vec3d d_0(1.0e-4, 0.0, 0.0);
 /** Define the geometry. */
-TriangleMeshShape* CreateMyocardium()
+TriangleMeshShape* createMyocardium()
 {
 	Vecd halfsize_myocardium(0.5 * (PL + SL), 0.5 * PH, 0.5 * PW);
 	Vecd translation_myocardium(0.5 * (PL - SL), 0.5 * PH, 0.5 * PW);
@@ -55,9 +55,10 @@ public:
 	Myocardium(SPHSystem &system, std::string body_name)
 		: SolidBody(system, body_name)
 	{
-		body_shape_ = new ComplexShape(body_name);
-		body_shape_->addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
-		body_shape_->addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
+		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		body_shape_ = new ComplexShape(mesh);
+		mesh->addTriangleMeshShape(createMyocardium(), ShapeBooleanOps::add);
+		mesh->addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
 	}
 };
 /**
@@ -71,8 +72,9 @@ public:
 	Holder(SolidBody *solid_body, std::string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
-		body_part_shape_ = new ComplexShape(constrained_region_name);
-		body_part_shape_->addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
+		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		body_part_shape_ = new ComplexShape(mesh);
+		mesh->addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
 
 		tagBodyPart();
 	}
