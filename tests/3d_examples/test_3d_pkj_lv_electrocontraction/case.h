@@ -53,7 +53,7 @@ Real dp_0 	= (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 /** Define the left ventricle geometry. */
-TriangleMeshShape* CreateHeart()
+TriangleMeshShape* createHeart()
 {
 	Vecd translation(0.0, 0.0, 0.0);
 	TriangleMeshShape *geometry = new TriangleMeshShape(full_path_to_lv, translation, length_scale);
@@ -164,8 +164,9 @@ class HeartBody : public SolidBody
 public:
 	HeartBody(SPHSystem &system, string body_name) : SolidBody(system, body_name)
 	{
-		ComplexShape original_body_shape;
-		original_body_shape.addTriangleMeshShape(CreateHeart(), ShapeBooleanOps::add);
+		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		ComplexShape original_body_shape(mesh);
+		mesh->addTriangleMeshShape(createHeart(), ShapeBooleanOps::add);
 		body_shape_ = new LevelSetComplexShape(this, original_body_shape);
 	}
 };
@@ -298,8 +299,9 @@ public:
 	 MuscleBase(SolidBody *solid_body, string constrained_region_name)
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
-		 body_part_shape_ = new ComplexShape(constrained_region_name);
-		 body_part_shape_->addTriangleMeshShape(CreateBaseShape(), ShapeBooleanOps::add);
+		 ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		 body_part_shape_ = new ComplexShape(mesh);
+		 mesh->addTriangleMeshShape(CreateBaseShape(), ShapeBooleanOps::add);
 
 		/** Tag the constrained particles to the base for constraint. */
 		tagBodyPart();
@@ -379,8 +381,9 @@ public:
 	PurkinjeBody(SPHSystem &system, string body_name, ParticleGenerator* particle_generator)
 		: SolidBody(system, body_name, new ParticleAdaptation(1.05, 1), particle_generator)
 	{
-		ComplexShape original_body_shape;
-		original_body_shape.addTriangleMeshShape(CreateHeart(), ShapeBooleanOps::add);
+		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		ComplexShape original_body_shape(mesh);
+		mesh->addTriangleMeshShape(createHeart(), ShapeBooleanOps::add);
 		body_shape_ = new LevelSetComplexShape(this, original_body_shape);
 		/** Use the reducedtwice kernel */
 		particle_adaptation_->getKernel()->reduceOnce();

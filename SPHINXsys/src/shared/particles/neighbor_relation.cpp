@@ -110,6 +110,27 @@ namespace SPH
 		}
 	};
 	//=================================================================================================//
+	NeighborRelationSelfContact::
+		NeighborRelationSelfContact(SPHBody* body) : NeighborRelation(),
+		pos_0_(*body->base_particles_->getVariableByName<indexVector, Vecd>("InitialPosition"))
+	{
+		kernel_ = body->particle_adaptation_->getKernel();
+	}
+	//=================================================================================================//
+	void NeighborRelationSelfContact::operator () (Neighborhood& neighborhood, 
+		Vecd& displacement, size_t i_index, size_t j_index) const
+	{
+		Real distance0 = (pos_0_[i_index] - pos_0_[j_index]).norm(); 
+		Real distance = displacement.norm();
+		if (distance < kernel_->CutOffRadius() && distance0 > kernel_->CutOffRadius())
+		{
+			neighborhood.current_size_ >= neighborhood.allocated_size_ ?
+				createRelation(neighborhood, distance, displacement, j_index)
+				: initializeRelation(neighborhood, distance, displacement, j_index);
+			neighborhood.current_size_++;
+		}
+	};
+	//=================================================================================================//
 	NeighborRelationContact::
 		NeighborRelationContact(SPHBody* body, SPHBody* contact_body) : NeighborRelation()
 	{

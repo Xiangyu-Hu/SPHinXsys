@@ -82,7 +82,7 @@ int main(int ac, char* av[])
 			if (ite_p % 200 == 0)
 			{
 				cout << std::fixed << setprecision(9) << "Relaxation steps for the column body N = " << ite_p << "\n";
-				write_column_to_vtu.writeToFile(Real(ite_p) * 1.0e-4);
+				write_column_to_vtu.writeToFile(ite_p * 1.0e-4);
 			}
 		}
 		std::cout << "The physics relaxation process of cyclinder body finish !" << std::endl;

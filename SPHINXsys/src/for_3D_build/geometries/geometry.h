@@ -34,7 +34,14 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_geometry.h"
+#include "SimTKcommon.h"
+#include "SimTKmath.h"
+#include "Simbody.h"
 #include "simbody_middle.h"
+#include "complex_shape_mesh.h"
+#include "complex_shape_triangle_mesh.h"
+#include "complex_shape_image_mesh.h"
+#include "image_mesh_shape.h"
 
 #include <iostream>
 #include <string>
@@ -86,17 +93,32 @@ namespace SPH
 		Vec3d findClosestPoint(const Vec3d &input_pnt);
 
 	public:
-		ComplexShape() : Shape("ComplexShape"){};
-		ComplexShape(std::string complex_shape_name) : Shape(complex_shape_name){};
-		virtual ~ComplexShape(){};
+		ComplexShape() : Shape("ComplexShape") { complex_shape_mesh_ = nullptr; };
+		ComplexShape(std::string complex_shape_name) : Shape(complex_shape_name) { complex_shape_mesh_ = nullptr; };
+		ComplexShape(ComplexShapeMesh*complex_shape_mesh) : Shape("ComplexShape") { complex_shape_mesh_ = complex_shape_mesh; };
+		virtual ~ComplexShape() {};
 		virtual BoundingBox findBounds() override;
 
-		void addTriangleMeshShape(TriangleMeshShape *triangle_mesh_shape, ShapeBooleanOps op);
-		void addComplexShape(ComplexShape *complex_shape, ShapeBooleanOps op);
-		void addBrick(Vec3d halfsize, int resolution, Vec3d translation, ShapeBooleanOps op);
-		void addSphere(Real radius, int resolution, Vec3d translation, ShapeBooleanOps op);
-		void addCylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resolution, Vec3d translation, ShapeBooleanOps op);
-		void addFormSTLFile(std::string file_path_name, Vec3d translation, Real scale_factor, ShapeBooleanOps op);
+		void addTriangleMeshShape(TriangleMeshShape *triangle_mesh_shape, ShapeBooleanOps op)		
+		{
+			if(complex_shape_mesh_->getName() == "ComplexShapeTriangleMesh")
+			{
+				ComplexShapeTriangleMesh *complex_shape_mesh = dynamic_cast<ComplexShapeTriangleMesh*>(complex_shape_mesh_);
+				complex_shape_mesh->addTriangleMeshShape(triangle_mesh_shape, op);
+			}
+		}
+		// void addComplexShape(ComplexShape *complex_shape, ShapeBooleanOps op);
+		void addBrick(Vec3d halfsize, int resolution, Vec3d translation, ShapeBooleanOps op)		
+		{
+			if(complex_shape_mesh_->getName() == "ComplexShapeTriangleMesh")
+			{
+				ComplexShapeTriangleMesh *complex_shape_mesh = dynamic_cast<ComplexShapeTriangleMesh*>(complex_shape_mesh_);
+				complex_shape_mesh->addBrick(halfsize, resolution, translation, op);
+			}			
+		}
+		//void addSphere(Real radius, int resolution, Vec3d translation, ShapeBooleanOps op);
+		//void addCylinder(SimTK::UnitVec3 axis, Real radius, Real halflength, int resolution, Vec3d translation, ShapeBooleanOps op);
+		//void addFormSTLFile(std::string file_path_name, Vec3d translation, Real scale_factor, ShapeBooleanOps op);
 
 		virtual bool checkContain(const Vec3d &input_pnt, bool BOUNDARY_INCLUDED = true);
 		virtual bool checkNotFar(const Vec3d &input_pnt, Real threshold);
@@ -108,7 +130,8 @@ namespace SPH
 
 	protected:
 		/** shape container<pointer to geomtry, operation> */
-		std::vector<std::pair<TriangleMeshShape *, ShapeBooleanOps>> triangle_mesh_shapes_;
+
+		ComplexShapeMesh* complex_shape_mesh_;
 	};
 }
 

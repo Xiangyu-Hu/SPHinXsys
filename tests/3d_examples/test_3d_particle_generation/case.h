@@ -43,8 +43,9 @@ public:
 			new ParticleGeneratorMultiResolution())
 	{
 		/** Geometry definition. */
-		ComplexShape original_body_shape;
-		original_body_shape.addTriangleMeshShape(CreateImportedModelSurface(), ShapeBooleanOps::add);
+		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
+		ComplexShape original_body_shape(mesh);
+		mesh->addTriangleMeshShape(CreateImportedModelSurface(), ShapeBooleanOps::add);
 		body_shape_ = new LevelSetComplexShape(this, original_body_shape, true);
 	}
 };
