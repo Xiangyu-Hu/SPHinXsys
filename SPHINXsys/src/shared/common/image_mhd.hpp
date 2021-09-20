@@ -21,13 +21,16 @@
 *                                                                           *
 * --------------------------------------------------------------------------*/
 /**
-* @file image_mesh_shape.h
+* @file image_mhd.hpp
 * @brief x
 * @details x
 *			x
 * @author	Yijin Mao
 */
-#pragma once
+#ifndef IMAGE_MHD_HPP
+#define IMAGE_MHD_HPP
+
+#ifndef __EMSCRIPTEN__
 
 #include "image_mhd.h"
 #include "boost/algorithm/string.hpp"
@@ -521,3 +524,6 @@ namespace SPH {
 		
 	}
 }
+#endif __EMSCRIPTEN__
+
+#endif IMAGE_MHD_HPP
