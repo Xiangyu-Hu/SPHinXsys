@@ -88,7 +88,8 @@ namespace SPH
 			  vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
 			  start_time_(start_time), end_time_(end_time), pos_end_center_(pos_end_center)
 		{
-			BoundingBox bounds = body->getBodyDomainBounds();
+			// it's important we call the bounds of the body part
+			BoundingBox bounds = body_part->getBodyPartBounds();
 			pos_0_center_ = (bounds.first + bounds.second) * 0.5;
 			translation_ = pos_end_center_ - pos_0_center_;
 		}
@@ -120,10 +121,6 @@ namespace SPH
 				{
 					pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
 					vel_n_[index_i] = getVelocity();
-					dvel_dt_[index_i] = getAcceleration();
-					/** the average values are prescirbed also. */
-					vel_ave_[index_i] = vel_n_[index_i];
-					dvel_dt_ave_[index_i] = dvel_dt_[index_i];
 				}
 			}
 			catch (out_of_range &e)
@@ -141,7 +138,8 @@ namespace SPH
 			  vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
 			  start_time_(start_time), end_time_(end_time), end_scale_(end_scale)
 		{
-			BoundingBox bounds = body->getBodyDomainBounds();
+			// it's important we call the bounds of the body part
+			BoundingBox bounds = body_part->getBodyPartBounds();
 			pos_0_center_ = (bounds.first + bounds.second) * 0.5;
 		}
 		//=================================================================================================//
@@ -171,10 +169,6 @@ namespace SPH
 				{
 					pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
 					vel_n_[index_i] = getVelocity();
-					dvel_dt_[index_i] = getAcceleration();
-					/** the average values are prescirbed also. */
-					vel_ave_[index_i] = vel_n_[index_i];
-					dvel_dt_ave_[index_i] = dvel_dt_[index_i];
 				}
 			}
 			catch (out_of_range &e)

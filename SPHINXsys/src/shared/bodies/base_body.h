@@ -207,13 +207,28 @@ namespace SPH
 		IndexVector body_part_particles_; /**< Collection particle in this body part. */
 
 		BodyPartByParticle(SPHBody *body, std::string body_part_name)
-			: BodyPartByShape(body, body_part_name){};
+			: BodyPartByShape(body, body_part_name),
+			body_part_bounds_(Vecd(0), Vecd(0)), body_part_bounds_set_(false)
+		{};
 
 		virtual ~BodyPartByParticle(){};
+
+		void setBodyPartBounds(BoundingBox bbox){
+			body_part_bounds_ = bbox;
+			body_part_bounds_set_ = true;
+		};
+
+		BoundingBox getBodyPartBounds(){
+			if (!body_part_bounds_set_) std::cout << "WARNING: the body part bounds are not set for BodyPartByParticle." << std::endl;
+			return body_part_bounds_;
+		}
 
 	protected:
 		void tagAParticle(size_t particle_index);
 		virtual void tagBodyPart() override;
+
+		BoundingBox body_part_bounds_;
+		bool body_part_bounds_set_;
 	};
 
 	/**
