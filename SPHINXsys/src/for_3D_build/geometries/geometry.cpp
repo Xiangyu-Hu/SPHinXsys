@@ -154,6 +154,30 @@ namespace SPH
 		return complex_shape_mesh_->findSignedDistance(input_pnt);
 	}
 	//=================================================================================================//
+	Vec3d ComplexShape::findNormalDirectionComplexShape(const Vec3d &input_pnt) //function to differentiate from LevelSetComplexShape::findNormalDirection
+	{
+		bool is_contain = checkContain(input_pnt);
+		Vecd displacement_to_surface = findClosestPoint(input_pnt) - input_pnt;
+		if(input_pnt[2] < 0.01)
+		{
+			if (input_pnt[0] > 0.01 && input_pnt[0] < 0.09 &&
+			input_pnt[1] > 0.01 && input_pnt[1] < 0.09)
+			{
+				std::cout << "displacement_to_surface: " << displacement_to_surface << std::endl;
+			}
+		}
+		while (displacement_to_surface.norm() < Eps)
+		{
+			Vecd jittered = input_pnt; //jittering
+			for (int l = 0; l != input_pnt.size(); ++l)
+				jittered[l] = input_pnt[l] + (((Real)rand() / (RAND_MAX)) - 0.5) * 100.0 * Eps;
+			if (checkContain(jittered) == is_contain)
+				displacement_to_surface = findClosestPoint(jittered) - jittered;
+		}
+		Vecd direction_to_surface = displacement_to_surface.normalize();
+		return is_contain ? direction_to_surface : -1.0 * direction_to_surface;
+	}
+		//=================================================================================================//
 	Vec3d ComplexShape::findNormalDirection(const Vec3d &input_pnt)
 	{
 		return complex_shape_mesh_->findNormalDirection(input_pnt);

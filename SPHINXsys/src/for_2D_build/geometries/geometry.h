@@ -99,6 +99,7 @@ namespace SPH
 		virtual Real findSignedDistance(const Vec2d &input_pnt);
 		/** Normal direction point toward outside of the complex shape. */
 		virtual Vec2d findNormalDirection(const Vec2d &input_pnt);
+		Vec2d findNormalDirectionComplexShape(const Vec2d &input_pnt);
 
 	protected:
 		MultiPolygon multi_ploygen_;

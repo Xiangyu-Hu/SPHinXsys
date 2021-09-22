@@ -49,6 +49,7 @@ namespace SPH
 	//=================================================================================================//
 	Vecd LevelSetComplexShape::findNormalDirection(const Vecd &input_pnt)
 	{
+		//std::cout << "LevelSetComplexShape::findNormalDirection called" << std::endl; //to check if LevelSetComplexShape::findNormalDirection is called
 		return level_set_->probeNormalDirection(input_pnt);
 	}
 	//=================================================================================================//

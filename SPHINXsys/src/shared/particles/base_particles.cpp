@@ -37,14 +37,14 @@ namespace SPH
 		//		add basic output particle data
 		//----------------------------------------------------------------------
 		addAVariableToWrite<indexVector, Vecd>("Velocity");
-		addAVariableToWrite<indexScalar, Real>("Density");
+		addAVariableToWrite<indexVector, Vecd>("Acceleration");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
 		addAVariableNameToList<indexVector, Vecd>(variables_to_restart_, "Position");
 		addAVariableNameToList<indexVector, Vecd>(variables_to_restart_, "Velocity");
+		addAVariableNameToList<indexVector, Vecd>(variables_to_restart_, "Acceleration");
 		addAVariableNameToList<indexScalar, Real>(variables_to_restart_, "Volume");
-		addAVariableNameToList<indexScalar, Real>(variables_to_restart_, "Density");
 
 		ParticleGenerator* particle_generator = body_->particle_generator_;
 		particle_generator->initialize(body_);
@@ -135,7 +135,7 @@ namespace SPH
 	{
 		size_t total_real_particles = total_real_particles_;
 
-		//write particle positions first
+		//write current/final particle positions first
 		output_file << "   <Points>\n";
 		output_file << "    <DataArray Name=\"Position\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
 		output_file << "    ";

@@ -127,6 +127,7 @@ namespace SPH
 		virtual Real findSignedDistance(const Vec3d &input_pnt);
 		/** Normal direction point toward outside of the complex shape. */
 		virtual Vec3d findNormalDirection(const Vec3d &input_pnt);
+		Vec3d findNormalDirectionComplexShape(const Vec3d &input_pnt); //function to differentiate from LevelSetComplexShape::findNormalDirection
 
 	protected:
 		/** shape container<pointer to geomtry, operation> */
