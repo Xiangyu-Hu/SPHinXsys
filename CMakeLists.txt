@@ -94,7 +94,9 @@ else()
 endif()
 
 if(NOT BUILD_WITH_SIMBODY)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+    if(NOT MSVC)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+    endif()
 endif()
 
 add_compile_definitions(TBB_SUPPRESS_DEPRECATED_MESSAGES=1)
