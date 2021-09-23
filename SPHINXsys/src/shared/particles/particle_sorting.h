@@ -34,7 +34,7 @@
 
 
 #include "base_data_package.h"
-#include "sph_data_conainers.h"
+#include "sph_data_containers.h"
 
 /** this is a reformulation of tbb parallel_sort for particle data */
 namespace tbb {
@@ -75,14 +75,14 @@ namespace tbb {
 					size_t j = range.size_;
 					// Partition interval [i+1,j-1] with key *key0.
 					for (;;) {
-						__TBB_ASSERT(i < j, NULL);
+						__TBB_ASSERT(i < j, nullptr);
 						// Loop must terminate since array[l]==*key0.
 						do {
 							--j;
 							__TBB_ASSERT(i <= j, "bad ordering relation?");
 						} while (comp_(*key0, array[j]));
 						do {
-							__TBB_ASSERT(i <= j, NULL);
+							__TBB_ASSERT(i <= j, nullptr);
 							if (i == j) goto quick_sort_particle_partition;
 							++i;
 						} while (comp_(array[i], *key0));
@@ -189,7 +189,7 @@ namespace SPH {
 
 	class RealBody;
 	class BaseParticles;
-	class BaseMeshCellLinkedList;
+	class BaseCellLinkedList;
 
 	/**
 	 * @class CompareParticleSequence

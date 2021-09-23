@@ -7,7 +7,7 @@
 
 #include "base_body.h"
 #include "base_particles.h"
-#include "mesh_cell_linked_list.h"
+#include "cell_linked_list.h"
 
 namespace SPH {
 	//=================================================================================================//
@@ -27,8 +27,8 @@ namespace SPH {
 	}	
 	//=================================================================================================//
 	ParticleSorting::ParticleSorting(RealBody* real_body) :
-		base_particles_(NULL), swap_particle_data_(NULL), compare_(), 
-		quick_sort_particle_range_(NULL), quick_sort_particle_body_() {}
+		base_particles_(nullptr), swap_particle_data_(nullptr), compare_(), 
+		quick_sort_particle_range_(nullptr), quick_sort_particle_body_() {}
 	//=================================================================================================//
 	void ParticleSorting::sortingParticleData(size_t* begin, size_t size)
 	{

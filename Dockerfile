@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 
 ARG build_with_dependencies_source=0
-ARG sph_only_static_build=0
+ARG STATIC_BUILD=0
 
 ENV TZ=Europe/Berlin
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     apt-utils \
     build-essential \
     cmake \
+    libgtest-dev \
     libtbb-dev \
     libboost-all-dev \
     libsimbody-dev \
@@ -23,5 +24,11 @@ ENV SIMBODY_HOME=/usr
 
 COPY ./ /home/SPHinXsys/
 WORKDIR /home/SPHinXsys
+
+RUN cd /usr/src/gtest
+    sudo cmake CMakeLists.txt
+    sudo make
+    cd /home/SPHinXsys
+	
 RUN rm -rf build
-RUN mkdir build && cd build && cmake .. -DBUILD_WITH_DEPENDENCIES_SOURCE=${build_with_dependencies_source} -DSPH_ONLY_STATIC_BUILD=${sph_only_static_build} && make -j$(nproc)
+RUN mkdir build && cd build && cmake .. -DBUILD_WITH_DEPENDENCIES_SOURCE=${build_with_dependencies_source} -DSTATIC_BUILD=${STATIC_BUILD} && make -j$(nproc)

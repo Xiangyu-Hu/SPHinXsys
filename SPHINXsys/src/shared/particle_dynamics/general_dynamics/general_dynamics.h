@@ -85,10 +85,10 @@ namespace SPH
 		public ParticleDynamics<void>, public GeneralDataDelegateSimple
 	{
 	protected:
-		const int axis_; /**< the axis direction for bounding*/
+		const int axis_; /**< the axis directions for bounding*/
 		BoundingBox body_domain_bounds_; /**< lower and upper bound for checking. */
 		StdLargeVec<Vecd>& pos_n_;
-		BaseMeshCellLinkedList* mesh_cell_linked_list_;
+		BaseCellLinkedList* cell_linked_list_;
 		Real cut_off_radius_max_; /**< maximum cut off radius to avoid boundary particle depletion */
 	public:
 		BoundingInAxisDirection(RealBody* real_body, int axis_direction);
@@ -155,7 +155,6 @@ namespace SPH
 			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
 		};
 
-
 	public:
 		PeriodicConditionInAxisDirection(RealBody* real_body, int axis_direction);
 		virtual ~PeriodicConditionInAxisDirection() {};
@@ -189,6 +188,7 @@ namespace SPH
 				: PeriodicCondition(periodic_translation, bound_cells, real_body, axis_direction) {};
 			virtual ~PeriodicCellLinkedList() {};
 		};
+
 	public:
 		PeriodicConditionInAxisDirectionUsingCellLinkedList(RealBody* real_body, int axis_direction) :
 			PeriodicConditionInAxisDirection(real_body, axis_direction),
@@ -198,6 +198,49 @@ namespace SPH
 
 		PeriodicBounding bounding_;
 		PeriodicCellLinkedList update_cell_linked_list_;
+	};
+
+    /**
+    * @class OpenBoundaryConditionInAxisDirection
+	* @brief In open boundary case, we transfer fluid particles to buffer paritcles at outlet
+	* @brief int axis_direction is used to choose direction in coordinate
+	* @brief bool positive is used to choose upper or lower bound in your choosed direction
+	*/
+	class OpenBoundaryConditionInAxisDirection
+	{
+	protected:
+		StdVec<CellLists> bound_cells_;
+
+		class ParticleTypeTransfer : public BoundingInAxisDirection
+		{
+		protected:
+			StdVec<CellLists>&bound_cells_;
+			ParticleFunctor checking_bound_;
+			virtual void checkLowerBound(size_t index_i, Real dt = 0.0) ;
+			virtual void checkUpperBound(size_t index_i, Real dt = 0.0) ;
+		public:
+			ParticleTypeTransfer(StdVec<CellLists>& bound_cells, RealBody* real_body, int axis_direction, bool positive) :
+				BoundingInAxisDirection(real_body, axis_direction),
+				bound_cells_(bound_cells) 
+			{
+				checking_bound_ = positive ?
+					std::bind(&OpenBoundaryConditionInAxisDirection::ParticleTypeTransfer::checkUpperBound, this, _1, _2)
+					: std::bind(&OpenBoundaryConditionInAxisDirection::ParticleTypeTransfer::checkLowerBound, this, _1, _2);
+			};
+			virtual ~ParticleTypeTransfer() {};
+
+			/** This class is only implemented in sequential due to memory conflicts.
+			* Because the cell list data is not concurrent vector.
+			*/
+			virtual void exec(Real dt = 0.0) override;
+			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
+		};
+
+	public:
+		OpenBoundaryConditionInAxisDirection(RealBody* real_body, int axis_direction, bool positive);
+		virtual ~OpenBoundaryConditionInAxisDirection() {};
+
+		ParticleTypeTransfer particle_type_transfer;
 	};
 
 	/**

@@ -18,7 +18,7 @@ namespace SPH
 		system_domain_bounds_(system_domain_bounds),
 		resolution_ref_(resolution_ref),
 		tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
-		in_output_(NULL), restart_step_(0), run_particle_relaxation_(false),
+		in_output_(nullptr), restart_step_(0), run_particle_relaxation_(false),
 		reload_particles_(false) {}
 	//=================================================================================================//
 	void SPHSystem::addABody(SPHBody* sph_body)
@@ -61,12 +61,12 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	Real SPHSystem::getSmallestTimeStepAmongSolidBodies()
+	Real SPHSystem::getSmallestTimeStepAmongSolidBodies(Real CFL)
 	{	
 		Real dt = Infinity;
 		for (size_t i = 0; i < solid_bodies_.size(); i++)
 		{
-			solid_dynamics::AcousticTimeStepSize computing_time_step_size(solid_bodies_[i]);
+			solid_dynamics::AcousticTimeStepSize computing_time_step_size(solid_bodies_[i], CFL);
 			Real dt_temp = computing_time_step_size.parallel_exec();
 			if (dt_temp < dt) dt = dt_temp;
 		}

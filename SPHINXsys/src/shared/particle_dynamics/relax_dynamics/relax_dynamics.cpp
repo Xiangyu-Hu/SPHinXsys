@@ -34,7 +34,7 @@ namespace SPH
 			return 0.0625 * h_ref_ / (reduced_value + TinyReal);
 		}
 		//=================================================================================================//
-		RelaxationAccelerationInner::RelaxationAccelerationInner(BaseInnerBodyRelation* body_inner_relation) : 
+		RelaxationAccelerationInner::RelaxationAccelerationInner(BaseBodyRelationInner* body_inner_relation) : 
 			InteractionDynamics(body_inner_relation->sph_body_), 
 			RelaxDataDelegateInner(body_inner_relation),
 			Vol_(particles_->Vol_), dvel_dt_(particles_->dvel_dt_), pos_n_(particles_->pos_n_) {}
@@ -52,11 +52,11 @@ namespace SPH
 		}
 		//=================================================================================================//
 		RelaxationAccelerationInnerWithLevelSetCorrection::
-			RelaxationAccelerationInnerWithLevelSetCorrection(BaseInnerBodyRelation* body_inner_relation) : 
+			RelaxationAccelerationInnerWithLevelSetCorrection(BaseBodyRelationInner* body_inner_relation) : 
 			RelaxationAccelerationInner(body_inner_relation)
 		{
 			level_set_complex_shape_ = dynamic_cast<LevelSetComplexShape*>(body_->body_shape_);
-			if (level_set_complex_shape_ == NULL)
+			if (level_set_complex_shape_ == nullptr)
 			{
 				std::cout << "\n FAILURE: LevelSetComplexShape is undefined!" << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -78,6 +78,16 @@ namespace SPH
 		void UpdateParticlePosition::Update(size_t index_i, Real dt_square)
 		{
 			pos_n_[index_i] += dvel_dt_[index_i] * dt_square * 0.5 / particle_adaptation_->SmoothingLengthRatio(index_i);
+		}
+		//=================================================================================================//
+		UpdateSolidParticlePosition::UpdateSolidParticlePosition(SPHBody* body) :
+			ParticleDynamicsSimple(body), solid_dynamics::SolidDataSimple(body),
+			pos_0_(particles_->pos_0_), pos_n_(particles_->pos_n_), dvel_dt_(particles_->dvel_dt_) {}
+		//=================================================================================================//
+		void UpdateSolidParticlePosition::Update(size_t index_i, Real dt_square)
+		{
+			pos_n_[index_i] += dvel_dt_[index_i] * dt_square * 0.5 / particle_adaptation_->SmoothingLengthRatio(index_i);
+			pos_0_[index_i] = pos_n_[index_i];
 		}
 		//=================================================================================================//
 		UpdateSmoothingLengthRatioByBodyShape::UpdateSmoothingLengthRatioByBodyShape(SPHBody* body) :
@@ -171,10 +181,10 @@ namespace SPH
 		}
 		//=================================================================================================//
 		RelaxationStepInner::
-			RelaxationStepInner(BaseInnerBodyRelation* body_inner_relation, bool level_set_correction) :
+			RelaxationStepInner(BaseBodyRelationInner* body_inner_relation, bool level_set_correction) :
 			ParticleDynamics<void>(body_inner_relation->sph_body_),
 			real_body_(body_inner_relation->real_body_), inner_relation_(body_inner_relation),
-			relaxation_acceleration_inner_(NULL),
+			relaxation_acceleration_inner_(nullptr),
 			get_time_step_square_(real_body_), update_particle_position_(real_body_),
 			surface_bounding_(real_body_, new NearShapeSurface(real_body_))
 		{
@@ -201,6 +211,29 @@ namespace SPH
 			Real dt_square = get_time_step_square_.parallel_exec();
 			update_particle_position_.parallel_exec(dt_square);
 			surface_bounding_.parallel_exec();
+		}
+		//=================================================================================================//
+		void SolidRelaxationStepInner::exec(Real dt)
+		{
+			real_body_->updateCellLinkedList();
+			inner_relation_->updateConfiguration();
+			relaxation_acceleration_inner_->exec();
+			Real dt_square = get_time_step_square_.exec();
+			update_solid_particle_position_.exec(dt_square);
+			surface_bounding_.exec();
+		}
+		//=================================================================================================//
+		void SolidRelaxationStepInner::parallel_exec(Real dt)
+		{
+			real_body_->updateCellLinkedList();
+			inner_relation_->updateConfiguration();
+			relaxation_acceleration_inner_->parallel_exec();
+			Real dt_square = get_time_step_square_.parallel_exec();
+			update_solid_particle_position_.parallel_exec(dt_square);
+			surface_bounding_.parallel_exec();
+
+			// copy the updated position at the end of the relaxation step to avoid bugs
+			std::copy(GetParticles()->pos_n_.begin(), GetParticles()->pos_n_.end(), GetParticles()->pos_0_.begin());
 		}
 		//=================================================================================================//
 	}

@@ -33,9 +33,7 @@
 
 #include "all_particle_dynamics.h"
 #include "elastic_solid.h"
-#include "weakly_compressible_fluid.h"
 #include "base_kernel.h"
-#include "all_fluid_dynamics.h"
 
 namespace SPH
 {
@@ -68,92 +66,6 @@ namespace SPH
 		};
 
 		/**
-		* @class ContactDensitySummation
-		* @brief Computing the summation density due to solid-solid contact model.
-		*/
-		class ContactDensitySummation :
-			public PartInteractionDynamicsByParticle, public ContactDynamicsData
-		{
-		public:
-			ContactDensitySummation(SolidContactBodyRelation* solid_body_contact_relation);
-			virtual ~ContactDensitySummation() {};
-		protected:
-			StdLargeVec<Real>& mass_, & contact_density_;
-			StdVec<StdLargeVec<Real>*> contact_mass_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
-		* @class ContactForce
-		* @brief Computing the contact force.
-		*/
-		class ContactForce :
-			public PartInteractionDynamicsByParticle, public ContactDynamicsData
-		{
-		public:
-			ContactForce(SolidContactBodyRelation* solid_body_contact_relation);
-			virtual ~ContactForce() {};
-		protected:
-			StdLargeVec<Real>& contact_density_, & Vol_, & mass_;
-			StdLargeVec<Vecd>& dvel_dt_prior_, & contact_force_;
-			StdVec<StdLargeVec<Real>*> contact_contact_density_, contact_Vol_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
-		* @class DynamicContactForce
-		* @brief Computing the contact force for problems dominainted by the contact dynamic process itself.
-		* For example, the high speed impact problems in which the detailed contact behavior is crutial for 
-		* physical sound solutions. Therefore, for simple low speed problem in which contact force is 
-		* used merely prevent penetration. We can still use the simple formualation in the class ContactForce. 
-		* The idea is to introduce conact force based on Riemann problem like formulation, 
-		* in which the artficial dissipation is the main interaction force to prevent
-		* penetration. Furthermore, a panelty type force is used as supplementrary to prevent penetration 
-		* when the contact velocity is small.
-		*/
-		class DynamicContactForce :
-			public PartInteractionDynamicsByParticle, public ContactDynamicsData
-		{
-		public:
-			DynamicContactForce(SolidContactBodyRelation* solid_body_contact_relation, Real penalty_strength = 1.0);
-			virtual ~DynamicContactForce() {};
-		protected:
-			StdLargeVec<Real>& Vol_, & mass_;
-			StdLargeVec<Vecd>& vel_n_, & dvel_dt_prior_, & contact_force_;
-			StdVec<StdLargeVec<Real>*> contact_Vol_;
-			StdVec<StdLargeVec<Vecd>*>contact_vel_n_;
-			Real penalty_strength_;
-			StdVec<Real> contact_impedence_, contact_reference_pressure_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-		};
-		
-		/**
-		* @class ContactForceWithWall
-		* @brief Computing the contact force with a rigid wall.
-		*  Note that the body surface of the wall should be
-		*  updated beforce computing the contact force.
-		*/
-		class ContactForceWithWall :
-			public PartInteractionDynamicsByParticle, public ContactDynamicsData
-		{
-		public:
-			ContactForceWithWall(SolidContactBodyRelation* solid_body_contact_relation, Real penalty_strength = 1.0);
-			virtual ~ContactForceWithWall() {};
-		protected:
-			StdLargeVec<Real>& Vol_, & mass_;
-			StdLargeVec<Vecd>& vel_n_, & dvel_dt_prior_, & contact_force_;
-			StdVec<StdLargeVec<Real>*> contact_Vol_;
-			StdVec<StdLargeVec<Vecd>*>contact_vel_n_, contact_n_;
-			Real penalty_strength_;
-			Real impedence_, reference_pressure_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
 		* @class CorrectConfiguration
 		* @brief obtain the corrected initial configuration in strong form
 		*/
@@ -161,7 +73,7 @@ namespace SPH
 			public InteractionDynamics, public SolidDataInner
 		{
 		public:
-			CorrectConfiguration(BaseInnerBodyRelation* body_inner_relation);
+			CorrectConfiguration(BaseBodyRelationInner* body_inner_relation);
 			virtual ~CorrectConfiguration() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
@@ -191,6 +103,95 @@ namespace SPH
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
+		/**
+		 * @class PositionSolidBody
+		 * @brief Moves the body into a defined position in a given time interval - position driven boundary condition
+		 * Note the average values for FSI are prescirbed also.
+		 */
+		class PositionSolidBody:
+			public PartSimpleDynamicsByParticle, public SolidDataSimple
+		{
+		public:
+			PositionSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd pos_end_center);
+			virtual ~PositionSolidBody() {};
+			StdLargeVec<Vecd>& GetParticlePos0(){ return pos_0_; };
+			StdLargeVec<Vecd>& GetParticlePosN(){ return pos_n_; };
+		protected:
+			StdLargeVec<Vecd>& pos_n_, &pos_0_;
+			StdLargeVec<Vecd>& vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			Real start_time_, end_time_;
+			Vecd pos_0_center_, pos_end_center_, translation_;
+			Vecd getDisplacement(size_t index_i, Real dt);
+			virtual Vecd getVelocity() { return Vecd(0); };
+			virtual Vecd getAcceleration() { return Vecd(0); };
+			virtual SimTK::Rotation getBodyRotation() { return SimTK::Rotation(); }
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		 * @class PositionScaleSolidBody
+		 * @brief Scales the body in a given time interval - position driven boundary condition
+		 * Note the average values for FSI are prescirbed also.
+		 */
+		class PositionScaleSolidBody:
+			public PartSimpleDynamicsByParticle, public SolidDataSimple
+		{
+		public:
+			PositionScaleSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Real end_scale);
+			virtual ~PositionScaleSolidBody() {};
+			StdLargeVec<Vecd>& GetParticlePos0(){ return pos_0_; };
+			StdLargeVec<Vecd>& GetParticlePosN(){ return pos_n_; };
+		protected:
+			StdLargeVec<Vecd>& pos_n_, &pos_0_;
+			StdLargeVec<Vecd>& vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			Real start_time_, end_time_, end_scale_;
+			Vecd pos_0_center_;
+			Vecd getDisplacement(size_t index_i, Real dt);
+			virtual Vecd getVelocity() { return Vecd(0); };
+			virtual Vecd getAcceleration() { return Vecd(0); };
+			virtual SimTK::Rotation getBodyRotation() { return SimTK::Rotation(); }
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		 * @class TranslateSolidBody
+		 * @brief Translates the body in a given time interval -translation driven boundary condition; only moving the body; end position irrelevant;
+		 * Note the average values for FSI are prescirbed also.
+		 */
+		class TranslateSolidBody:
+			public PartSimpleDynamicsByParticle, public SolidDataSimple
+		{
+		public:
+			TranslateSolidBody(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd translation);
+			virtual ~TranslateSolidBody() {};
+		protected:
+			StdLargeVec<Vecd>& pos_n_, &pos_0_;
+			StdLargeVec<Vecd> pos_end_;
+			StdLargeVec<Vecd>& vel_n_, &dvel_dt_;
+			Real start_time_, end_time_;
+			Vecd translation_;
+			Vecd getDisplacement(size_t index_i, Real dt);
+			virtual Vecd getVelocity() { return Vecd(0); };
+			virtual Vecd getAcceleration() { return Vecd(0); };
+			virtual SimTK::Rotation getBodyRotation() { return SimTK::Rotation(); }
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		 * @class TranslateSolidBodyPart
+		 * @brief Translates the body in a given time interval -translation driven boundary condition; only moving the body; end position irrelevant;
+		 * Only the particles in a given Bounding Box are translated. The Bounding Box is defined for the undeformed shape.
+		 * Note the average values for FSI are prescirbed also.
+		 */
+		class TranslateSolidBodyPart: public TranslateSolidBody
+		{
+		public:
+			TranslateSolidBodyPart(SPHBody* body, BodyPartByParticle* body_part, Real start_time, Real end_time, Vecd translation, BoundingBox bbox);
+			virtual ~TranslateSolidBodyPart() {};
+		protected:
+			BoundingBox bbox_;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
 
 		/**
 		 * @class ConstrainSolidBodyRegionVelocity
@@ -225,7 +226,7 @@ namespace SPH
 			public SolidDataInner
 		{
 		public:
-			SoftConstrainSolidBodyRegion(BaseInnerBodyRelation* body_inner_relation, BodyPartByParticle* body_part);
+			SoftConstrainSolidBodyRegion(BaseBodyRelationInner* body_inner_relation, BodyPartByParticle* body_part);
 			virtual ~SoftConstrainSolidBodyRegion() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
@@ -245,7 +246,7 @@ namespace SPH
 			ConstrainSolidBodyRegion* constrianing_;
 			SoftConstrainSolidBodyRegion* softing_;
 
-			ClampConstrainSolidBodyRegion(BaseInnerBodyRelation* body_inner_relation, BodyPartByParticle* body_part);
+			ClampConstrainSolidBodyRegion(BaseBodyRelationInner* body_inner_relation, BodyPartByParticle* body_part);
 			virtual ~ClampConstrainSolidBodyRegion() {};
 
 			virtual void exec(Real dt = 0.0) override;
@@ -303,15 +304,40 @@ namespace SPH
 		{
 		public:
 			SpringDamperConstraintParticleWise(SolidBody* body, Vecd stiffness, Real damping_ratio = 0.05);
-			~SpringDamperConstraintParticleWise();
 		protected:
-			Real total_mass_;
 			StdLargeVec<Vecd>& pos_n_,& pos_0_,& vel_n_,& dvel_dt_prior_;
 			Vecd stiffness_;
 			Vecd damping_coeff_; // damping component parallel to the spring force component
 
-			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual Vecd getSpringForce(size_t index_i, Vecd& disp);
+			virtual Vecd getDampingForce(size_t index_i);
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+		/**
+		* @class SpringNormalOnSurfaceParticles
+		* @brief Exerts spring force force on the surface in normal direction in the form of acceleration to each particle.
+		* The input stiffness should be defined in Pa/m. The stiffness is scaled by the surface area of the particle to get N/m
+		* The force is applied to all the surface particles that can be seen (outer_surface = false)
+		* or cannot be seen (outer_surface = true) from the source point.
+		* Can be used for outer or inner surface of a shell structure ofr example.
+		* The spring force is calculated based on the difference from the particle's initial position.
+		* Only for 3D applications
+		*/
+		class SpringNormalOnSurfaceParticles 
+			: public PartSimpleDynamicsByParticle, public SolidDataSimple
+		{
+		public:
+			SpringNormalOnSurfaceParticles(SolidBody* body, BodyPartByParticle* body_part, bool outer_surface, Vecd source_point, Real stiffness, Real damping_ratio = 0.05);
+
+			StdLargeVec<bool>& GetApplySpringForceToParticle(){ return apply_spring_force_to_particle_; }
+		protected:
+			StdLargeVec<Vecd>& pos_n_,& pos_0_,& n_,& n_0_,& vel_n_,& dvel_dt_prior_;
+			StdLargeVec<Real>& mass_;
+			Real stiffness_;
+			Real damping_coeff_; // damping component parallel to the spring force component
+			StdLargeVec<bool> apply_spring_force_to_particle_;
+
+			virtual Vecd getSpringForce(size_t index_i, Vecd disp);
 			virtual Vecd getDampingForce(size_t index_i);
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
@@ -323,13 +349,48 @@ namespace SPH
 			: public ParticleDynamicsSimple, public SolidDataSimple
 		{
 		public:
-			AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox* bounding_box, Vecd acceleration);
+			AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox& bounding_box, Vecd acceleration);
 			virtual ~AccelerationForBodyPartInBoundingBox() {};
 		protected:
 			StdLargeVec<Vecd>& pos_n_,& dvel_dt_prior_;
-			BoundingBox* bounding_box_;
+			BoundingBox bounding_box_;
 			Vecd acceleration_;
-			virtual void setupDynamics(Real dt = 0.0) override;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		* @class ForceInBodyRegion
+		* @brief ForceInBodyRegion, distributes the force vector as acceleration among the particles in a given body part
+		*/
+		class ForceInBodyRegion :
+			public PartSimpleDynamicsByParticle, public SolidDataSimple
+		{
+		public:
+			ForceInBodyRegion(SPHBody* body, BodyPartByParticle* body_part, Vecd force, Real end_time);
+		protected:
+			StdLargeVec<Vecd>& pos_0_,& dvel_dt_prior_;
+			Vecd acceleration_;
+			Real end_time_;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		* @class SurfacePressureFromSource
+		* @brief SurfacePressureFromSource, applies pressure on the surface particles coming from a source point
+		*/
+		class SurfacePressureFromSource :
+			public PartSimpleDynamicsByParticle, public SolidDataSimple
+		{
+		public:
+			SurfacePressureFromSource(SPHBody* body, BodyPartByParticle* body_part, Vecd source_point, StdVec<array<Real, 2>> pressure_over_time);
+
+			StdLargeVec<bool>& GetApplyPressureToParticle(){ return apply_pressure_to_particle_; }
+		protected:
+			StdLargeVec<Vecd>& pos_0_,& n_,& dvel_dt_prior_;
+			StdLargeVec<Real>& mass_;
+			StdVec<array<Real, 2>> pressure_over_time_;
+			StdLargeVec<bool> apply_pressure_to_particle_;
+			Real getPressure();
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -397,7 +458,7 @@ namespace SPH
 			public InteractionDynamics, public ElasticSolidDataInner
 		{
 		public:
-			DeformationGradientTensorBySummation(BaseInnerBodyRelation* body_inner_relation);
+			DeformationGradientTensorBySummation(BaseBodyRelationInner* body_inner_relation);
 			virtual ~DeformationGradientTensorBySummation() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
@@ -414,7 +475,7 @@ namespace SPH
 			: public ParticleDynamics1Level, public ElasticSolidDataInner
 		{
 		public:
-			BaseElasticRelaxation(BaseInnerBodyRelation* body_inner_relation);
+			BaseElasticRelaxation(BaseBodyRelationInner* body_inner_relation);
 			virtual ~BaseElasticRelaxation() {};
 		protected:
 			StdLargeVec<Real>& Vol_, & rho_n_, & mass_;
@@ -430,7 +491,7 @@ namespace SPH
 		class StressRelaxationFirstHalf : public BaseElasticRelaxation
 		{
 		public:
-			StressRelaxationFirstHalf(BaseInnerBodyRelation* body_inner_relation);
+			StressRelaxationFirstHalf(BaseBodyRelationInner* body_inner_relation);
 			virtual ~StressRelaxationFirstHalf() {};
 		protected:
 			Real rho0_, inv_rho0_;
@@ -446,6 +507,47 @@ namespace SPH
 		};
 
 		/**
+		* @class KirchhoffParticleStressRelaxationFirstHalf
+		*/
+		class KirchhoffParticleStressRelaxationFirstHalf : public StressRelaxationFirstHalf
+		{
+		public:
+			KirchhoffParticleStressRelaxationFirstHalf(BaseBodyRelationInner* body_inner_relation);
+			virtual ~KirchhoffParticleStressRelaxationFirstHalf() {};
+		protected:
+			const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
+
+			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		* @class KirchhoffStressRelaxationFirstHalf
+		* @brief Decompose the stress into particle stress includes isotropic stress 
+		* and the stress due to non-homogeneous material properties.
+		* The preliminary shear stress is introduced by particle pair to avoid 
+		* spurious stress and deformation. 
+		* Note that, for the shear stress term, 
+		* due to the mismatch of the divergence contribution between 
+		* the pair-wise second-order derivative Laplacian formulation
+		* and particle-wise first-order gradient formulation, 
+		* a correction factor slight large than one is introduced.       
+		*/
+		class KirchhoffStressRelaxationFirstHalf : public StressRelaxationFirstHalf
+		{
+		public:
+			KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner* body_inner_relation);
+			virtual ~KirchhoffStressRelaxationFirstHalf() {};
+		protected:
+			StdLargeVec<Real>& J_to_minus_2_over_dimension_;
+			StdLargeVec<Matd>& stress_on_particle_, & inverse_F_T_;
+			const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
+			const Real correction_factor_ = 1.05;
+
+			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
 		* @class StressRelaxationSecondHalf
 		* @brief computing stress relaxation process by verlet time stepping
 		* This is the second step
@@ -453,7 +555,7 @@ namespace SPH
 		class StressRelaxationSecondHalf : public BaseElasticRelaxation
 		{
 		public:
-			StressRelaxationSecondHalf(BaseInnerBodyRelation* body_inner_relation) :
+			StressRelaxationSecondHalf(BaseBodyRelationInner* body_inner_relation) :
 				BaseElasticRelaxation(body_inner_relation) {};
 			virtual ~StressRelaxationSecondHalf() {};
 		protected:

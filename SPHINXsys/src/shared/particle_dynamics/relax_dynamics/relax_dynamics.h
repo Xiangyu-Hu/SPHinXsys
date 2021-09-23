@@ -38,7 +38,8 @@
 #include "all_particle_dynamics.h"
 #include "neighbor_relation.h"
 #include "base_kernel.h"
-#include "mesh_cell_linked_list.h"
+#include "cell_linked_list.h"
+#include "solid_dynamics.h"
 
 namespace SPH
 {
@@ -82,7 +83,7 @@ namespace SPH
 			public InteractionDynamics, public RelaxDataDelegateInner
 		{
 		public:
-			RelaxationAccelerationInner(BaseInnerBodyRelation* body_inner_relation);
+			RelaxationAccelerationInner(BaseBodyRelationInner* body_inner_relation);
 			virtual ~RelaxationAccelerationInner() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
@@ -99,7 +100,7 @@ namespace SPH
 			public RelaxationAccelerationInner
 		{
 		public:
-			RelaxationAccelerationInnerWithLevelSetCorrection(BaseInnerBodyRelation* body_inner_relation);
+			RelaxationAccelerationInnerWithLevelSetCorrection(BaseBodyRelationInner* body_inner_relation);
 			virtual ~RelaxationAccelerationInnerWithLevelSetCorrection() {};
 		protected:
 			LevelSetComplexShape* level_set_complex_shape_;
@@ -207,15 +208,48 @@ namespace SPH
 		{
 		protected:
 			RealBody* real_body_;
-			BaseInnerBodyRelation* inner_relation_;
+			BaseBodyRelationInner* inner_relation_;
 		public:
-			explicit RelaxationStepInner(BaseInnerBodyRelation* body_inner_relation, bool level_set_correction = false);
+			explicit RelaxationStepInner(BaseBodyRelationInner* body_inner_relation, bool level_set_correction = false);
 			virtual ~RelaxationStepInner() {};
 
 			RelaxationAccelerationInner* relaxation_acceleration_inner_;
 			GetTimeStepSizeSquare get_time_step_square_;
 			UpdateParticlePosition update_particle_position_;
 			ShapeSurfaceBounding	surface_bounding_;
+
+			virtual void exec(Real dt = 0.0) override;
+			virtual void parallel_exec(Real dt = 0.0) override;
+		};
+
+		/**
+		* @class UpdateParticlePosition
+		* @brief update the particle position for a time step
+		*/
+		class UpdateSolidParticlePosition :
+			public ParticleDynamicsSimple, public solid_dynamics::SolidDataSimple
+		{
+		public:
+			explicit UpdateSolidParticlePosition(SPHBody* body);
+			virtual ~UpdateSolidParticlePosition() {};
+		protected:
+			StdLargeVec<Vecd>& pos_0_, & pos_n_, &dvel_dt_;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		* @class SolidRelaxationStepInner
+		* @brief carry out particle relaxation step of particles within the body
+		*/
+		class SolidRelaxationStepInner : public RelaxationStepInner, public solid_dynamics::SolidDataSimple
+		{
+		public:
+			explicit SolidRelaxationStepInner(BaseBodyRelationInner* body_inner_relation, bool level_set_correction = false) :
+				RelaxationStepInner(body_inner_relation, level_set_correction), solid_dynamics::SolidDataSimple(body_inner_relation->sph_body_),
+				update_solid_particle_position_(real_body_) {};
+			virtual ~SolidRelaxationStepInner() {};
+
+			UpdateSolidParticlePosition update_solid_particle_position_;
 
 			virtual void exec(Real dt = 0.0) override;
 			virtual void parallel_exec(Real dt = 0.0) override;

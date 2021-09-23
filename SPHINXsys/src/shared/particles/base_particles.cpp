@@ -60,6 +60,7 @@ namespace SPH
 	//=================================================================================================//
 	void BaseParticles::initializeABaseParticle(Vecd pnt, Real Vol_0)
 	{
+		total_real_particles_++;
 		sequence_.push_back(0);
 		sorted_id_.push_back(pos_n_.size());
 		unsorted_id_.push_back(pos_n_.size());
@@ -74,13 +75,22 @@ namespace SPH
 		mass_.push_back(rho0_ * Vol_0);
 	}
 	//=================================================================================================//
-	void BaseParticles::addABufferParticle()
+	void BaseParticles::addAParticleEntry()
 	{
 		sequence_.push_back(0);
 		sorted_id_.push_back(pos_n_.size());
 		unsorted_id_.push_back(pos_n_.size());
 
 		loopParticleData<addAParticleDataValue>(all_particle_data_);
+	}
+	//=================================================================================================//
+	void BaseParticles::addBufferParticles(size_t buffer_size)
+	{
+		for (size_t i = 0; i != buffer_size; ++i)
+		{
+			addAParticleEntry();
+		}
+		real_particles_bound_ += buffer_size;
 	}
 	//=================================================================================================//
 	void BaseParticles::copyFromAnotherParticle(size_t this_index, size_t another_index)
@@ -105,7 +115,7 @@ namespace SPH
 
 		}
 		else {
-			addABufferParticle();
+			addAParticleEntry();
 			copyFromAnotherParticle(expected_particle_index, index_i);
 			/** For a ghost particle, its sorted id is that of corresponding real particle. */
 			sorted_id_[expected_particle_index] = index_i;
@@ -223,6 +233,14 @@ namespace SPH
 	void BaseParticles::writePltFileHeader(std::ofstream& output_file)
 	{
 		output_file << " VARIABLES = \"x\",\"y\",\"z\",\"ID\"";
+		
+		for (size_t l = 0; l != variables_to_write_[indexInteger].size(); ++l) 
+		{
+			std::string variable_name = variables_to_write_[indexInteger][l].first;
+			output_file << ",\"" << variable_name << "\"";
+		};
+
+
 		for (size_t l = 0; l != variables_to_write_[indexVector].size(); ++l) {
 			std::string variable_name = variables_to_write_[indexVector][l].first;
 			output_file << ",\"" << variable_name << "_x\"" << ",\"" << variable_name << "_y\"" << ",\"" << variable_name << "_z\"";
@@ -239,6 +257,13 @@ namespace SPH
 		Vec3d particle_position = upgradeToVector3D(pos_n_[index_i]);
 		output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " "
 			<< index_i << " ";
+			
+		for (std::pair<std::string, size_t>& name_index : variables_to_write_[indexInteger])
+		{
+			std::string variable_name = name_index.first;
+			StdLargeVec<int>& variable = *(std::get<indexInteger>(all_particle_data_)[name_index.second]);
+			output_file << variable[index_i] << " ";
+		};
 
 		for (std::pair<std::string, size_t>& name_index : variables_to_write_[indexVector])
 		{

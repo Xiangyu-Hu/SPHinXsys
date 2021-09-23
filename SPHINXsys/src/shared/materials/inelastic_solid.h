@@ -38,19 +38,15 @@ namespace SPH {
 	* @class PlasticSolid
 	* @brief Abstract class for a generalized plastic solid
 	*/
-	class PlasticSolid : public LinearElasticSolid
+	class PlasticSolid : public NeoHookeanSolid
 	{
 	protected:
 		Real yield_stress_;
 
 		virtual void initializePlasticParameters() = 0;
-		/** Deviatoric part of Piola-Kirchhoff stress related with left cauchy-green defomeation tensor */
-		virtual Matd DeviatoricPK(const Matd& deviatoric_be);
-		/** Volumetric part of Piola-Kirchhoff stress related with left cauchy-green defomeation tensor */
-		virtual Real VolumetricPK(const Matd& deformation_gradient);
 	public:
 		/** Constructor */
-		PlasticSolid() :LinearElasticSolid()
+		PlasticSolid() :NeoHookeanSolid()
 		{
 			material_name_ = "PlasticSolid";
 		};

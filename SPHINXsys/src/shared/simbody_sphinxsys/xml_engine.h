@@ -33,7 +33,7 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_data_package.h"
-#include "sph_data_conainers.h"
+#include "sph_data_containers.h"
 
 #include "SimTKcommon.h"
 #include "SimTKcommon/internal/Xml.h"

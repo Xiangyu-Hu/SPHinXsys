@@ -1,6 +1,6 @@
-FILE(GLOB_RECURSE SPHINXsysHeaderPathListShared ${CMAKE_SOURCE_DIR}/SPHINXsys/src/shared/*.h)
-FILE(GLOB_RECURSE SPHINXsysHeaderPathListFor2DBuild ${CMAKE_SOURCE_DIR}/SPHINXsys/src/for_2D_build/*.h)
-FILE(GLOB_RECURSE SPHINXsysHeaderPathListFor2DBuildHpp ${CMAKE_SOURCE_DIR}/SPHINXsys/src/for_2D_build/*.hpp)
+FILE(GLOB_RECURSE SPHINXsysHeaderPathListShared ${SPHINXSYS_PROJECT_DIR}/SPHINXsys/src/shared/*.h)
+FILE(GLOB_RECURSE SPHINXsysHeaderPathListFor2DBuild ${SPHINXSYS_PROJECT_DIR}/SPHINXsys/src/for_2D_build/*.h)
+FILE(GLOB_RECURSE SPHINXsysHeaderPathListFor2DBuildHpp ${CMAKE_CURRENT_SOURCE_DIR}/SPHINXsys/src/for_2D_build/*.hpp)
 
 SET(SPHINXsysHeaderPath "")
 FOREACH(file_path ${SPHINXsysHeaderPathListShared} ${SPHINXsysHeaderPathListFor2DBuild} ${SPHINXsysHeaderPathListFor2DBuildHpp})
@@ -9,15 +9,10 @@ FOREACH(file_path ${SPHINXsysHeaderPathListShared} ${SPHINXsysHeaderPathListFor2
 ENDFOREACH()
 
 if(BUILD_WITH_SIMBODY)
-    include("${CMAKE_SOURCE_DIR}/SPHINXsys/cmake/Simbody_header_directories.cmake")
+    include("${SPHINXSYS_PROJECT_DIR}/SPHINXsys/cmake/Simbody_header_directories.cmake")
     FOREACH(simbody_header_path ${SIMBODY_HEADER_DIRECTORIES})
         SET(SPHINXsysHeaderPath ${SPHINXsysHeaderPath} ${simbody_header_path})
     ENDFOREACH()
-endif()
-
-if(BUILD_WITH_ONETBB)
-    include("${CMAKE_SOURCE_DIR}/SPHINXsys/cmake/oneTBB_header_directory.cmake")
-    SET(SPHINXsysHeaderPath ${SPHINXsysHeaderPath} ${ONETBB_HEADER_DIRECTORY})
 endif()
 
 LIST(REMOVE_DUPLICATES SPHINXsysHeaderPath)

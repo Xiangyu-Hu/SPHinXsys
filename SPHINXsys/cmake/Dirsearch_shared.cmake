@@ -1,9 +1,6 @@
 if(BUILD_WITH_SIMBODY)
     include(Simbody_header_directories)
 endif()
-if(BUILD_WITH_ONETBB)
-    include(oneTBB_header_directory)
-endif()
 
 MACRO(HEADER_DIRECTORIES_SHARED return_list)
     FILE(GLOB_RECURSE new_list  ${PROJECT_SOURCE_DIR}/src/shared/*.h)
@@ -19,10 +16,6 @@ MACRO(HEADER_DIRECTORIES_SHARED return_list)
         FOREACH(simbody_header_path ${SIMBODY_HEADER_DIRECTORIES})
             SET(dir_list ${dir_list} ${simbody_header_path})
         ENDFOREACH()
-    endif()
-
-    if(BUILD_WITH_ONETBB)
-        SET(dir_list ${dir_list} ${ONETBB_HEADER_DIRECTORY})
     endif()
     
     SET(${return_list} ${dir_list})

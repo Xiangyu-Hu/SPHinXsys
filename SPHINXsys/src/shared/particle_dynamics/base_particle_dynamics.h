@@ -33,12 +33,12 @@
 
 
 #include "base_data_package.h"
-#include "sph_data_conainers.h"
+#include "sph_data_containers.h"
 #include "all_particles.h"
 #include "all_materials.h"
 #include "neighbor_relation.h"
 #include "all_bodies.h"
-#include "mesh_cell_linked_list.h"
+#include "cell_linked_list.h"
 #include "external_force.h"
 #include "body_relation.h"
 #include <functional>
@@ -174,6 +174,7 @@ namespace SPH
 			sorted_id_(body_->base_particles_->sorted_id_),
 			unsorted_id_(body_->base_particles_->unsorted_id_) {};
 		virtual ~DataDelegateSimple() {};
+		ParticlesType* GetParticles(){ return particles_; };
 	protected:
 		BodyType* body_;
 		ParticlesType* particles_;
@@ -193,7 +194,7 @@ namespace SPH
 	class DataDelegateInner : public BaseDataDelegateType
 	{
 	public:
-		explicit DataDelegateInner(BaseInnerBodyRelation* body_inner_relation) : 
+		explicit DataDelegateInner(BaseBodyRelationInner* body_inner_relation) : 
 			BaseDataDelegateType(body_inner_relation->sph_body_),
 			inner_configuration_(body_inner_relation->inner_configuration_) {};
 		virtual ~DataDelegateInner() {};
@@ -216,7 +217,7 @@ namespace SPH
 	class DataDelegateContact : public BaseDataDelegateType
 	{
 	public:
-		explicit DataDelegateContact(BaseContactBodyRelation* body_contact_relation);
+		explicit DataDelegateContact(BaseBodyRelationContact* body_contact_relation);
 		virtual ~DataDelegateContact() {};
 	protected:
 		StdVec<ContactBodyType*>  contact_bodies_;
@@ -257,12 +258,12 @@ namespace SPH
 	class ParticleDynamicsComplex : public ParticleDynamicsInnerType, public ContactDataType
 	{
 	public:
-		ParticleDynamicsComplex(BaseInnerBodyRelation* inner_relation, 
-			BaseContactBodyRelation* contact_relation) :
+		ParticleDynamicsComplex(BaseBodyRelationInner* inner_relation, 
+			BaseBodyRelationContact* contact_relation) :
 			ParticleDynamicsInnerType(inner_relation), ContactDataType(contact_relation) {};
 
 		ParticleDynamicsComplex(ComplexBodyRelation* complex_relation, 
-			BaseContactBodyRelation* extra_contact_relation);
+			BaseBodyRelationContact* extra_contact_relation);
 
 		virtual ~ParticleDynamicsComplex() {};
 	protected:

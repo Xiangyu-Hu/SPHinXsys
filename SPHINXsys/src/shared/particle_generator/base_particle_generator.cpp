@@ -20,16 +20,12 @@ namespace SPH {
 	void ParticleGeneratorDirect
 		::createBaseParticles(BaseParticles* base_particles)
 	{
-		size_t total_real_particles = 0;
 		auto& body_input_points_volumes = sph_body_->body_input_points_volumes_;
 		for (size_t i = 0; i < body_input_points_volumes.size(); ++i)
 		{
 			base_particles->initializeABaseParticle(body_input_points_volumes[i].first,
 				body_input_points_volumes[i].second);
-			total_real_particles++;
 		}
-
-		base_particles->total_real_particles_ = total_real_particles;
 	}
 	//=================================================================================================//
 	ParticleGeneratorReload::
@@ -48,7 +44,6 @@ namespace SPH {
 	//=================================================================================================//
 	void ParticleGeneratorReload::createBaseParticles(BaseParticles* base_particles)
 	{
-		size_t total_real_particles = 0;
 		XmlEngine* reload_xml_engine = base_particles->getReloadXmlEngine();
 		reload_xml_engine->loadXmlFile(file_path_);
 		SimTK::Xml::element_iterator ele_ite_ = reload_xml_engine->root_element_.element_begin();
@@ -59,9 +54,7 @@ namespace SPH {
 			Real volume(0);
 			reload_xml_engine->getRequiredAttributeValue(ele_ite_, "Volume", volume);
 			base_particles->initializeABaseParticle(position, volume);
-			total_real_particles++;
 		}
-		base_particles->total_real_particles_ = total_real_particles;
 	}
 	//=================================================================================================//
 }

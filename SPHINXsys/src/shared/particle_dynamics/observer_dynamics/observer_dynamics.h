@@ -50,13 +50,13 @@ namespace SPH
 		class InterpolatingAQuantity : public InteractionDynamics, public InterpolationContactData
 		{
 		public:
-			explicit InterpolatingAQuantity(BaseContactBodyRelation* body_contact_relation, std::string variable_name) :
+			explicit InterpolatingAQuantity(BaseBodyRelationContact* body_contact_relation, std::string variable_name) :
 				InteractionDynamics(body_contact_relation->sph_body_), InterpolationContactData(body_contact_relation),
 				interpolated_quantities_(*particles_->createAVariable<DataTypeIndex, VariableType>(variable_name))
 			{
 				prepareContactData(variable_name);
 			};
-			explicit InterpolatingAQuantity(BaseContactBodyRelation* body_contact_relation,
+			explicit InterpolatingAQuantity(BaseBodyRelationContact* body_contact_relation,
 				std::string interpolated_variable, std::string target_variable) :
 				InteractionDynamics(body_contact_relation->sph_body_), InterpolationContactData(body_contact_relation),
 				interpolated_quantities_(*particles_->getVariableByName<DataTypeIndex, VariableType>(interpolated_variable))
@@ -112,7 +112,7 @@ namespace SPH
 			public InteractionDynamics, public InterpolationContactData
 		{
 		public:
-			CorrectInterpolationKernelWeights(BaseContactBodyRelation* body_contact_relation);
+			CorrectInterpolationKernelWeights(BaseBodyRelationContact* body_contact_relation);
 			virtual ~CorrectInterpolationKernelWeights() {};
 		protected:
 			StdVec<StdLargeVec<Real>*> contact_Vol_;

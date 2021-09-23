@@ -142,7 +142,7 @@ namespace SPH {
 		return data_pkg_addrs_[cell_index[0]][cell_index[1]]->is_core_pkg_;
 	}
 	//=============================================================================================//
-	void LevelSet::initializeDataInACell(Vecu cell_index, Real dt)
+	void LevelSet::initializeDataInACell(const Vecu &cell_index, Real dt)
 	{
 		int i = (int)cell_index[0];
 		int j = (int)cell_index[1];
@@ -169,7 +169,7 @@ namespace SPH {
 		}
 	}
 	//=============================================================================================//
-	void LevelSet::tagACellIsInnerPackage(Vecu cell_index, Real dt)
+	void LevelSet::tagACellIsInnerPackage(const Vecu &cell_index, Real dt)
 	{
 		int i = (int)cell_index[0];
 		int j = (int)cell_index[1];
@@ -277,9 +277,9 @@ namespace SPH {
 			}
 	}
 	//=============================================================================================//
-	void LevelSet::writeMeshToPltFile(std::ofstream& output_file)
+	void LevelSet::writeMeshFieldToPlt(std::ofstream& output_file)
 	{
-		Vecu number_of_operation = total_data_points_;
+		Vecu number_of_operation = global_mesh_.NumberOfGridPoints();
 
 		output_file << "\n";
 		output_file << "title='View'" << "\n";
@@ -292,7 +292,7 @@ namespace SPH {
 		{
 			for (size_t i = 0; i != number_of_operation[0]; ++i)
 			{
-				Vecd data_position = DataPositionFromGlobalIndex(Vecu(i, j));
+				Vecd data_position = global_mesh_.GridPositionFromIndex(Vecu(i, j));
 				output_file << data_position[0] << " ";
 			}
 			output_file << " \n";
@@ -302,7 +302,7 @@ namespace SPH {
 		{
 			for (size_t i = 0; i != number_of_operation[0]; ++i)
 			{
-				Vecd data_position = DataPositionFromGlobalIndex(Vecu(i, j));
+				Vecd data_position = global_mesh_.GridPositionFromIndex(Vecu(i, j));
 				output_file << data_position[1]<< " ";
 			}
 			output_file << " \n";
@@ -388,7 +388,7 @@ namespace SPH {
 		Real integral(0.0);
 		if (fabs(phi) < threshold)
 		{
-			Vecu global_index_ = DataGlobalIndexFromPosition(position);
+			Vecu global_index_ = global_mesh_.CellIndexFromPosition(position);
 			for (int i = -3; i != 4; ++i)
 				for (int j = -3; j != 4; ++j)
 				{
@@ -396,7 +396,7 @@ namespace SPH {
 					Real phi_neighbor = DataValueFromGlobalIndex<Real, LevelSetDataPackage::PackageData<Real>,
 						&LevelSetDataPackage::phi_>(neighbor_index) - 0.5 * data_spacing_;;
 					if (phi_neighbor > -data_spacing_) {
-						Vecd displacement = position - DataPositionFromGlobalIndex(neighbor_index);
+						Vecd displacement = position - global_mesh_.GridPositionFromIndex(neighbor_index);
 						Real distance = displacement.norm();
 						if (distance < cutoff_radius)
 							integral += kernel_.W(global_h_ratio_, distance, displacement) 
@@ -416,7 +416,7 @@ namespace SPH {
 		Vecd integral(0.0);
 		if (fabs(phi) < threshold)
 		{
-			Vecu global_index_ = DataGlobalIndexFromPosition(position);
+			Vecu global_index_ = global_mesh_.CellIndexFromPosition(position);
 			for (int i = -3; i != 4; ++i)
 				for (int j = -3; j != 4; ++j)
 				{
@@ -424,7 +424,7 @@ namespace SPH {
 					Real phi_neighbor = DataValueFromGlobalIndex<Real, LevelSetDataPackage::PackageData<Real>,
 						&LevelSetDataPackage::phi_>(neighbor_index);
 					if (phi_neighbor > -data_spacing_) {
-						Vecd displacement = position - DataPositionFromGlobalIndex(neighbor_index);
+						Vecd displacement = position - global_mesh_.GridPositionFromIndex(neighbor_index);
 						Real distance = displacement.norm();
 						if (distance < cutoff_radius)
 							integral += kernel_.dW(global_h_ratio_, distance, displacement)
