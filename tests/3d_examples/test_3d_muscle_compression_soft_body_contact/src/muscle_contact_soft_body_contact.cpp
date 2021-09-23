@@ -24,7 +24,7 @@ Real poisson = 0.45;
 Real Youngs_modulus = 5e4;
 Real physical_viscosity = 200.0; 
 /** Define the geometry. */
-TriangleMeshShape* CreateMyocardium()
+TriangleMeshShape* createMyocardium()
 {
 	Vecd halfsize_myocardium(0.5 * L, 0.5 * L, 0.5 * L);
 	Vecd translation_myocardium(0.5 * L, 0.0, 0.0);
@@ -34,7 +34,7 @@ TriangleMeshShape* CreateMyocardium()
 	return geometry_myocardium;
 }
 /** Define the holder geometry. */
-TriangleMeshShape* CreateStationaryPlate()
+TriangleMeshShape* createStationaryPlate()
 {
 	Vecd halfsize_plate(0.5 * BW, 0.5 * L + BW , 0.5 * L + BW);
 	Vecd translation_plate(-0.5 * BW, 0.0, 0.0);
@@ -44,7 +44,7 @@ TriangleMeshShape* CreateStationaryPlate()
 	return geometry_plate;
 }
 /** Define the holder geometry. */
-TriangleMeshShape* CreateMovingPlate()
+TriangleMeshShape* createMovingPlate()
 {
 	Vecd halfsize_plate(0.5 * BW,0.5*PL, 0.5*PL);
 	Vecd translation_plate(L + BW, 0.0, 0.0);
@@ -62,8 +62,8 @@ public:
 	{
 		mesh_.reset(new ComplexShapeTriangleMesh());
 		body_shape_ = new ComplexShape(mesh_.get());
-		mesh_->addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
-		mesh_->addTriangleMeshShape(CreateStationaryPlate(), ShapeBooleanOps::add);
+		mesh_->addTriangleMeshShape(createMyocardium(), ShapeBooleanOps::add);
+		mesh_->addTriangleMeshShape(createStationaryPlate(), ShapeBooleanOps::add);
 	}
 private:
 	std::unique_ptr<ComplexShapeTriangleMesh> mesh_;
@@ -79,7 +79,7 @@ public:
 	{
 		mesh_.reset(new ComplexShapeTriangleMesh());
 		body_shape_ = new ComplexShape(mesh_.get());
-		mesh_->addTriangleMeshShape(CreateMovingPlate(), ShapeBooleanOps::add);
+		mesh_->addTriangleMeshShape(createMovingPlate(), ShapeBooleanOps::add);
 	}
 private:
 	std::unique_ptr<ComplexShapeTriangleMesh> mesh_;
@@ -97,7 +97,7 @@ public:
 	{
 		mesh_.reset(new ComplexShapeTriangleMesh());
 		body_part_shape_ = new ComplexShape(mesh_.get());
-		mesh_->addTriangleMeshShape(CreateStationaryPlate(), ShapeBooleanOps::add);
+		mesh_->addTriangleMeshShape(createStationaryPlate(), ShapeBooleanOps::add);
 
 		tagBodyPart();
 	}
@@ -112,7 +112,7 @@ public:
 	{
 		mesh_.reset(new ComplexShapeTriangleMesh());
 		body_part_shape_ = new ComplexShape(mesh_.get());
-		mesh_->addTriangleMeshShape(CreateMovingPlate(), ShapeBooleanOps::add);
+		mesh_->addTriangleMeshShape(createMovingPlate(), ShapeBooleanOps::add);
 	}
 private:
 	std::unique_ptr<ComplexShapeTriangleMesh> mesh_;

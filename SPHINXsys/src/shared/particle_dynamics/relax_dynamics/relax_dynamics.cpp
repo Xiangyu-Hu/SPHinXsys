@@ -231,6 +231,9 @@ namespace SPH
 			Real dt_square = get_time_step_square_.parallel_exec();
 			update_solid_particle_position_.parallel_exec(dt_square);
 			surface_bounding_.parallel_exec();
+
+			// copy the updated position at the end of the relaxation step to avoid bugs
+			std::copy(GetParticles()->pos_n_.begin(), GetParticles()->pos_n_.end(), GetParticles()->pos_0_.begin());
 		}
 		//=================================================================================================//
 	}

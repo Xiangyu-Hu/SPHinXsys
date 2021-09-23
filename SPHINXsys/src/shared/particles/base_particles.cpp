@@ -233,6 +233,14 @@ namespace SPH
 	void BaseParticles::writePltFileHeader(std::ofstream& output_file)
 	{
 		output_file << " VARIABLES = \"x\",\"y\",\"z\",\"ID\"";
+		
+		for (size_t l = 0; l != variables_to_write_[indexInteger].size(); ++l) 
+		{
+			std::string variable_name = variables_to_write_[indexInteger][l].first;
+			output_file << ",\"" << variable_name << "\"";
+		};
+
+
 		for (size_t l = 0; l != variables_to_write_[indexVector].size(); ++l) {
 			std::string variable_name = variables_to_write_[indexVector][l].first;
 			output_file << ",\"" << variable_name << "_x\"" << ",\"" << variable_name << "_y\"" << ",\"" << variable_name << "_z\"";
@@ -249,6 +257,13 @@ namespace SPH
 		Vec3d particle_position = upgradeToVector3D(pos_n_[index_i]);
 		output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " "
 			<< index_i << " ";
+			
+		for (std::pair<std::string, size_t>& name_index : variables_to_write_[indexInteger])
+		{
+			std::string variable_name = name_index.first;
+			StdLargeVec<int>& variable = *(std::get<indexInteger>(all_particle_data_)[name_index.second]);
+			output_file << variable[index_i] << " ";
+		};
 
 		for (std::pair<std::string, size_t>& name_index : variables_to_write_[indexVector])
 		{

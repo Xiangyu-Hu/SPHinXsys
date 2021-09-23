@@ -167,7 +167,7 @@ namespace SPH
 	//=================================================================================================//
 	Real ParticleSpacingByBodyShape::getLocalSpacing(ComplexShape &complex_shape, Vecd &position)
 	{
-		Real phi = abs(complex_shape.findSignedDistance(position));
+		Real phi = fabs(complex_shape.findSignedDistance(position));
 		Real ratio_ref = phi / (2.0 * spacing_ref_ * spacing_ratio_max_);
 		Real target_ratio = spacing_ratio_max_;
 		if (ratio_ref < kernel_->KernelSize())

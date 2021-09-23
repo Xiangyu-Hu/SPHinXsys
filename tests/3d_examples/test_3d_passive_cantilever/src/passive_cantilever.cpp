@@ -34,7 +34,7 @@ Real bulk_modulus = Youngs_modulus / 3.0 / (1.0 - 2.0 * poisson);
 
 Vec3d d_0(1.0e-4, 0.0, 0.0);
 /** Define the geometry. */
-TriangleMeshShape* CreateMyocardium()
+TriangleMeshShape* createMyocardium()
 {
 	Vecd halfsize_myocardium(0.5 * (PL + SL), 0.5 * PH, 0.5 * PW);
 	Vecd translation_myocardium(0.5 * (PL - SL), 0.5 * PH, 0.5 * PW);
@@ -62,7 +62,7 @@ public:
 	{
 		ComplexShapeTriangleMesh *mesh = new ComplexShapeTriangleMesh();
 		body_shape_ = new ComplexShape(mesh);
-		mesh->addTriangleMeshShape(CreateMyocardium(), ShapeBooleanOps::add);
+		mesh->addTriangleMeshShape(createMyocardium(), ShapeBooleanOps::add);
 		mesh->addTriangleMeshShape(CreateHolder(), ShapeBooleanOps::add);
 	}
 };
