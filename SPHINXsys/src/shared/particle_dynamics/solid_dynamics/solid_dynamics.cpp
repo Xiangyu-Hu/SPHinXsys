@@ -6,6 +6,8 @@
 #include "solid_dynamics.h"
 #include "general_dynamics.h"
 
+#include <numeric>
+
 using namespace SimTK;
 
 namespace SPH
@@ -537,7 +539,7 @@ namespace SPH
 		void ForceInBodyRegion::Update(size_t index_i, Real dt)
 		{
 			try{
-				Real time_factor = std::min(GlobalStaticVariables::physical_time_ / end_time_, 1.0);
+				Real time_factor = SMIN(GlobalStaticVariables::physical_time_ / end_time_, 1.0);
 				dvel_dt_prior_[index_i] = acceleration_ * time_factor;
 			}
 			catch(out_of_range& e){
