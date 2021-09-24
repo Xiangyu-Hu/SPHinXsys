@@ -50,12 +50,11 @@ FOREACH(srcdir_path ${sourcedirs})
 ENDFOREACH()
 
 if(NOT STATIC_BUILD)
-	### SPHinXsys dynamic lib ###
-	ADD_LIBRARY(sphinxsys_2d SHARED ${SCR_FILES})
-
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		#target_link_libraries(sphinxsys_3d)
+		ADD_LIBRARY(sphinxsys_2d ${SCR_FILES})
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+		### SPHinXsys dynamic lib ###
+		ADD_LIBRARY(sphinxsys_2d SHARED ${SCR_FILES})
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 			target_link_libraries(sphinxsys_2d stdc++)
 		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
