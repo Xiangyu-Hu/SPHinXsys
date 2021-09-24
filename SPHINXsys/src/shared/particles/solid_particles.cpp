@@ -61,12 +61,9 @@ namespace SPH {
 	//=================================================================================================//
 	void SolidParticles::initializeNormalDirectionFromGeometry()
 	{
-		std::cout << "initialize function called" << std::endl; //to check if function is called
-		ComplexShape* body_shape = body_->body_shape_;
 		for (size_t i = 0; i != total_real_particles_; ++i)
 		{
-			//Vecd normal_direction = body_shape->findNormalDirection(pos_n_[i]); //calls LevelSetComplexShape::findNormalDirection
-			Vecd normal_direction = body_shape->findNormalDirectionComplexShape(pos_n_[i]); //function to differentiate from LevelSetComplexShape::findNormalDirection
+			Vecd normal_direction = body_->body_shape_->findNormalDirection(pos_n_[i]);
 			n_[i] = normal_direction;
 			n_0_[i] = normal_direction;
 		}

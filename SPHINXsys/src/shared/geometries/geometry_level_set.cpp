@@ -14,7 +14,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	LevelSetComplexShape::
-		LevelSetComplexShape(SPHBody *sph_body, ComplexShape &complex_shape, bool isCleaned)
+		LevelSetComplexShape(SPHBody *sph_body, ComplexShape &complex_shape, bool isCleaned, bool write_level_set)
 		: ComplexShape(complex_shape), level_set_(nullptr)
 	{
 		name_ = sph_body->getBodyName();
@@ -23,8 +23,11 @@ namespace SPH
 			level_set_->cleanInterface();
 
 		In_Output *in_output = sph_body->getSPHSystem().in_output_;
-		MeshRecordingToPlt write_level_set(*in_output, sph_body, level_set_);
-		write_level_set.writeToFile(0);
+		if (write_level_set)
+		{
+			MeshRecordingToPlt write_level_set(*in_output, sph_body, level_set_);
+			write_level_set.writeToFile(0);
+		}
 	}
 	//=================================================================================================//
 	bool LevelSetComplexShape::checkContain(const Vecd &input_pnt, bool BOUNDARY_INCLUDED)

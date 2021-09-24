@@ -90,12 +90,10 @@ namespace SPH
 
 	class ComplexShape : public Shape
 	{
-		Vec3d findClosestPoint(const Vec3d &input_pnt);
-
 	public:
 		ComplexShape() : Shape("ComplexShape") { complex_shape_mesh_ = nullptr; };
 		ComplexShape(std::string complex_shape_name) : Shape(complex_shape_name) { complex_shape_mesh_ = nullptr; };
-		ComplexShape(ComplexShapeMesh*complex_shape_mesh) : Shape("ComplexShape") { complex_shape_mesh_ = complex_shape_mesh; };
+		ComplexShape(ComplexShapeMesh* complex_shape_mesh) : Shape("ComplexShape") { complex_shape_mesh_ = complex_shape_mesh; };
 		virtual ~ComplexShape() {};
 		virtual BoundingBox findBounds() override;
 
@@ -125,12 +123,13 @@ namespace SPH
 		virtual bool checkNearSurface(const Vec3d &input_pnt, Real threshold);
 		/** Signed distance is negative for point within the complex shape. */
 		virtual Real findSignedDistance(const Vec3d &input_pnt);
+		/** find closest point on the surface */
+		virtual Vec3d findClosestPoint(const Vec3d &input_pnt);
 		/** Normal direction point toward outside of the complex shape. */
 		virtual Vec3d findNormalDirection(const Vec3d &input_pnt);
-		Vec3d findNormalDirectionComplexShape(const Vec3d &input_pnt); //function to differentiate from LevelSetComplexShape::findNormalDirection
 
 	protected:
-		/** shape container<pointer to geomtry, operation> */
+		/** shape container<pointer to geometry, operation> */
 
 		ComplexShapeMesh* complex_shape_mesh_;
 	};
