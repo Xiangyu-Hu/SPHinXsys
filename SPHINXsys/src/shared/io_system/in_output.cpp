@@ -123,6 +123,60 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
+	SurfaceOnlyBodyStatesRecordingToVtu::SurfaceOnlyBodyStatesRecordingToVtu(In_Output& in_output, SPHBodyVector bodies)
+			: BodyStatesRecording(in_output, bodies),
+			surface_body_layer_vector_({})
+	{
+		for (SPHBody* body : bodies_) surface_body_layer_vector_.push_back(ShapeSurface(body));
+	}
+	//=============================================================================================//
+	void SurfaceOnlyBodyStatesRecordingToVtu::writeWithFileName(const std::string& sequence)
+	{
+		for (size_t i = 0; i < bodies_.size(); i++)
+		//for (size_t i = 0; surface_body_layer_vector_.size(); i++)
+		{
+			SPHBody* body = bodies_[i];
+			if (body->checkNewlyUpdated())
+			{
+				std::string filefullpath = in_output_.output_folder_ + "/SPHBody_" + body->getBodyName() + "_" + sequence + ".vtu";
+				if (fs::exists(filefullpath))
+				{
+					fs::remove(filefullpath);
+				}
+				std::ofstream out_file(filefullpath.c_str(), std::ios::trunc);
+				//begin of the XML file
+				out_file << "<?xml version=\"1.0\"?>\n";
+				out_file << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
+				out_file << " <UnstructuredGrid>\n";
+
+				size_t total_surface_particles = surface_body_layer_vector_[i].body_part_particles_.size();
+				out_file << "  <Piece Name =\"" << bodies_[i]->getBodyName() << "\" NumberOfPoints=\"" << total_surface_particles << "\" NumberOfCells=\"0\">\n";
+
+				body->writeSurfaceParticlesToVtuFile(out_file, surface_body_layer_vector_[i]);
+
+				out_file << "   </PointData>\n";
+
+				//write empty cells
+				out_file << "   <Cells>\n";
+				out_file << "    <DataArray type=\"Int32\"  Name=\"connectivity\"  Format=\"ascii\">\n";
+				out_file << "    </DataArray>\n";
+				out_file << "    <DataArray type=\"Int32\"  Name=\"offsets\"  Format=\"ascii\">\n";
+				out_file << "    </DataArray>\n";
+				out_file << "    <DataArray type=\"types\"  Name=\"offsets\"  Format=\"ascii\">\n";
+				out_file << "    </DataArray>\n";
+				out_file << "   </Cells>\n";
+
+				out_file << "  </Piece>\n";
+
+				out_file << " </UnstructuredGrid>\n";
+				out_file << "</VTKFile>\n";
+
+				out_file.close();
+			}
+			body->setNotNewlyUpdated();
+		}
+	}
+	//=============================================================================================//
 	void BodyStatesRecordingToPlt::writeWithFileName(const std::string& sequence)
 	{
 		for (SPHBody* body : bodies_)

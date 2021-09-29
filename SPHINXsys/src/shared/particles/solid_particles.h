@@ -31,7 +31,7 @@
 
 
 #include "base_particles.h"
-
+	
 namespace SPH {
 
 	//----------------------------------------------------------------------
@@ -41,6 +41,7 @@ namespace SPH {
 	class ElasticSolid;
 	class PlasticSolid;
 	template<class MuscleType> class ActiveMuscle;
+	class ShapeSurface;
 
 	/**
 	 * @class SolidParticles
@@ -118,7 +119,8 @@ namespace SPH {
 		Real getMaxVonMisesStrain();
 
 		virtual void writeParticlesToVtuFile(std::ofstream &output_file) override;
-
+		/** Write only surface particle data in VTU format for Paraview. */
+		virtual void writeSurfaceParticlesToVtuFile(std::ofstream& output_file, ShapeSurface& surface_particles);
 		virtual ElasticSolidParticles* ThisObjectPtr() override {return this;};
 	};
 
