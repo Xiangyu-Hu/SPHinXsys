@@ -202,32 +202,10 @@ namespace SPH {
 	public:
 		BodyStatesRecordingToVtu(In_Output& in_output, SPHBodyVector bodies)
 			: BodyStatesRecording(in_output, bodies) {};
-		virtual ~BodyStatesRecordingToVtu() = default;
+		virtual ~BodyStatesRecordingToVtu() {};
 
 	protected:
 		virtual void writeWithFileName(const std::string& sequence) override;
-		virtual void writeVtu(std::ostream& stream, SPHBody* body) const;
-	};
-
-	/**
-	 * @class BodyStatesRecordingToVtuString
-	 * @brief  Write strings for bodies
-	 * the output is map of strings with VTK XML format can visualized by ParaView
-	 * the data type vtkUnstructedGrid
-	 */
-	class BodyStatesRecordingToVtuString : public BodyStatesRecordingToVtu
-	{
-	public:
-		BodyStatesRecordingToVtuString(In_Output& in_output, SPHBodyVector bodies);
-		virtual ~BodyStatesRecordingToVtuString() = default;
-
-		using VtuStringData = std::map<std::string, std::string>;
-
-		const VtuStringData& GetVtuData() const;
-	protected:
-		virtual void writeWithFileName(const std::string& sequence) override;
-	private:
-		VtuStringData _vtuData;
 	};
 
 	/**
