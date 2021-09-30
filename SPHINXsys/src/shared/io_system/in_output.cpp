@@ -88,39 +88,69 @@ namespace SPH
 				{
 					fs::remove(filefullpath);
 				}
-				std::ofstream out_file(filefullpath.c_str(), std::ios::trunc);
+				std::ofstream out_file{filefullpath.c_str(), std::ios::trunc};
 				//begin of the XML file
-				out_file << "<?xml version=\"1.0\"?>\n";
-				out_file << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
-				out_file << " <UnstructuredGrid>\n";
-
-				BaseParticles* base_particles = body->base_particles_;
-				size_t total_real_particles = base_particles->total_real_particles_;
-				out_file << "  <Piece Name =\"" << body->getBodyName() << "\" NumberOfPoints=\"" << total_real_particles << "\" NumberOfCells=\"0\">\n";
-
-				body->writeParticlesToVtuFile(out_file);
-
-				out_file << "   </PointData>\n";
-
-				//write empty cells
-				out_file << "   <Cells>\n";
-				out_file << "    <DataArray type=\"Int32\"  Name=\"connectivity\"  Format=\"ascii\">\n";
-				out_file << "    </DataArray>\n";
-				out_file << "    <DataArray type=\"Int32\"  Name=\"offsets\"  Format=\"ascii\">\n";
-				out_file << "    </DataArray>\n";
-				out_file << "    <DataArray type=\"types\"  Name=\"offsets\"  Format=\"ascii\">\n";
-				out_file << "    </DataArray>\n";
-				out_file << "   </Cells>\n";
-
-				out_file << "  </Piece>\n";
-
-				out_file << " </UnstructuredGrid>\n";
-				out_file << "</VTKFile>\n";
-
+				writeVtu(out_file, body);
 				out_file.close();
 			}
 			body->setNotNewlyUpdated();
 		}
+	}
+	//=============================================================================================//
+	void BodyStatesRecordingToVtu::writeVtu(std::ostream& stream, SPHBody* body) const
+	{
+		stream << "<?xml version=\"1.0\"?>\n";
+		stream << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
+		stream << " <UnstructuredGrid>\n";
+
+		BaseParticles* base_particles = body->base_particles_;
+		size_t total_real_particles = base_particles->total_real_particles_;
+		stream << "  <Piece Name =\"" << body->getBodyName() << "\" NumberOfPoints=\"" << total_real_particles << "\" NumberOfCells=\"0\">\n";
+
+		body->writeParticlesToVtuFile(stream);
+
+		stream << "   </PointData>\n";
+
+		//write empty cells
+		stream << "   <Cells>\n";
+		stream << "    <DataArray type=\"Int32\"  Name=\"connectivity\"  Format=\"ascii\">\n";
+		stream << "    </DataArray>\n";
+		stream << "    <DataArray type=\"Int32\"  Name=\"offsets\"  Format=\"ascii\">\n";
+		stream << "    </DataArray>\n";
+		stream << "    <DataArray type=\"types\"  Name=\"offsets\"  Format=\"ascii\">\n";
+		stream << "    </DataArray>\n";
+		stream << "   </Cells>\n";
+
+		stream << "  </Piece>\n";
+
+		stream << " </UnstructuredGrid>\n";
+		stream << "</VTKFile>\n";
+	}
+	//=============================================================================================//
+	BodyStatesRecordingToVtuString::BodyStatesRecordingToVtuString(In_Output& in_output, SPHBodyVector bodies) 
+			: BodyStatesRecordingToVtu(in_output, bodies)
+	{
+	}	
+	//=============================================================================================//
+	void BodyStatesRecordingToVtuString::writeWithFileName(const std::string& sequence)
+	{
+		for (SPHBody* body : bodies_)
+		{
+			if (body->checkNewlyUpdated())
+			{
+				const auto& vtuName = body->getBodyName() + "_" + sequence + ".vtu";
+				std::stringstream sstream;
+				//begin of the XML file
+				writeVtu(sstream, body);
+				_vtuData[vtuName] = sstream.str();
+			}
+			body->setNotNewlyUpdated();
+		}
+	}
+	//=============================================================================================//
+	const BodyStatesRecordingToVtuString::VtuStringData& BodyStatesRecordingToVtuString::GetVtuData() const
+	{
+		return _vtuData;
 	}
 	//=============================================================================================//
 	SurfaceOnlyBodyStatesRecordingToVtu::SurfaceOnlyBodyStatesRecordingToVtu(In_Output& in_output, SPHBodyVector bodies)

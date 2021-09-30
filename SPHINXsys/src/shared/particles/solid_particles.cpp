@@ -163,7 +163,7 @@ namespace SPH {
 		return von_Mises_strain_max;
 	}
 	//=================================================================================================//
-	void ElasticSolidParticles::writeParticlesToVtuFile(std::ofstream& output_file)
+	void ElasticSolidParticles::writeParticlesToVtuFile(std::ostream& output_file)
 	{
 		SolidParticles::writeParticlesToVtuFile(output_file);
 
