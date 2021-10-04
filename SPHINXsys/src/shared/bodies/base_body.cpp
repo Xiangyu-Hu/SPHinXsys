@@ -74,7 +74,7 @@ namespace SPH
 		return body_domain_bounds_;
 	}
 	//=================================================================================================//
-	void SPHBody::writeParticlesToVtuFile(std::ofstream &output_file)
+	void SPHBody::writeParticlesToVtuFile(std::ostream &output_file)
 	{
 		base_particles_->writeParticlesToVtuFile(output_file);
 		newly_updated_ = false;

@@ -118,7 +118,7 @@ namespace SPH {
 		StdLargeVec<Real> getVonMisesStrain();
 		Real getMaxVonMisesStrain();
 
-		virtual void writeParticlesToVtuFile(std::ofstream &output_file) override;
+		virtual void writeParticlesToVtuFile(std::ostream &output_file) override;
 		/** Write only surface particle data in VTU format for Paraview. */
 		virtual void writeSurfaceParticlesToVtuFile(std::ofstream& output_file, ShapeSurface& surface_particles);
 		virtual ElasticSolidParticles* ThisObjectPtr() override {return this;};

@@ -131,7 +131,7 @@ namespace SPH
 		total_real_particles_ -= 1;
 	}
 	//=================================================================================================//
-	void BaseParticles::writeParticlesToVtuFile(std::ofstream& output_file)
+	void BaseParticles::writeParticlesToVtuFile(std::ostream& output_file)
 	{
 		size_t total_real_particles = total_real_particles_;
 
