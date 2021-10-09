@@ -69,6 +69,10 @@ namespace SPH
 	public:
 		//constructor for load stl file from out side
 		TriangleMeshShape(std::string file_path_name, Vec3d translation, Real scale_factor);
+#ifdef __EMSCRIPTEN__
+		//constructor for load stl file from buffer
+		TriangleMeshShape(const uint8_t* buffer, Vec3d translation, Real scale_factor);
+#endif
 		// constructor for brick geometry
 		TriangleMeshShape(Vec3d halfsize, int resolution, Vec3d translation);
 		// constructor for sphere geometry
