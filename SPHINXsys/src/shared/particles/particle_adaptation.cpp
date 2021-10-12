@@ -16,7 +16,7 @@
 namespace SPH
 {
 	//=================================================================================================//
-	ParticleAdaptation::ParticleAdaptation(Real h_spacing_ratio, Real system_resolution_ratio)
+	ParticleAdaptation::ParticleAdaptation(Real h_spacing_ratio, Real system_resolution_ratio, Real small_shift_factor)
 		: h_spacing_ratio_(h_spacing_ratio),
 		  system_resolution_ratio_(system_resolution_ratio),
 		  local_refinement_level_(0),
@@ -27,7 +27,9 @@ namespace SPH
 		  number_density_min_(1.0), number_density_max_(1.0),
 		  kernel_(new KernelWendlandC2()),
 		  sph_body_(nullptr), system_domain_bounds_(),
-		  base_particles_(nullptr){};
+		  base_particles_(nullptr),
+		  small_shift_factor_(small_shift_factor)
+		  {};
 	//=================================================================================================//
 	void ParticleAdaptation::initialize(SPHBody *sph_body)
 	{
@@ -117,7 +119,7 @@ namespace SPH
 	//=================================================================================================//
 	BaseLevelSet *ParticleAdaptation::createLevelSet(ComplexShape &complex_shape)
 	{
-		return new LevelSet(complex_shape.findBounds(), ReferenceSpacing(), complex_shape, *this);
+		return new LevelSet(complex_shape.findBounds(), ReferenceSpacing(), complex_shape, *this, small_shift_factor_);
 	}
 	//=================================================================================================//
 	ParticleWithLocalRefinement::

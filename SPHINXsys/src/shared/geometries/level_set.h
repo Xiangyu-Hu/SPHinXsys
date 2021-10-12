@@ -77,7 +77,7 @@ namespace SPH
 		void computeKernelIntegrals(LevelSet &level_set);
 		void computeNormalDirection();
 		void stepReinitialization();
-		void markNearInterface();
+		void markNearInterface(Real small_shift_factor);
 	};
 
 	/**
@@ -117,9 +117,10 @@ namespace SPH
 	public:
 		ConcurrentVector<LevelSetDataPackage *> core_data_pkgs_; /**< packages near to zero level set. */
 		Real global_h_ratio_;
+		Real small_shift_factor_;
 
 		LevelSet(BoundingBox tentative_bounds, Real data_spacing,
-				 ComplexShape &complex_shape, ParticleAdaptation &particle_adaptation);
+				 ComplexShape &complex_shape, ParticleAdaptation &particle_adaptation, Real small_shift_factor = 0.75);
 		virtual ~LevelSet(){};
 
 		virtual bool probeIsWithinMeshBound(const Vecd &position) override;

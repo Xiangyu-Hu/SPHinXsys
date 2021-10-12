@@ -51,10 +51,11 @@ namespace SPH
 	}
 	//=================================================================================================//
 	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
-					   ComplexShape &complex_shape, ParticleAdaptation &particle_adaptation)
+					   ComplexShape &complex_shape, ParticleAdaptation &particle_adaptation, Real small_shift_factor)
 		: MeshWithDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, 4,
 																  complex_shape, particle_adaptation),
 		  global_h_ratio_(particle_adaptation.ReferenceSpacing() / data_spacing),
+		  small_shift_factor_(small_shift_factor),
 		  kernel_(*particle_adaptation.getKernel())
 	{
 		Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
@@ -157,7 +158,7 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSet::markNearInterfaceForAPackage(LevelSetDataPackage *core_data_pkg, Real dt)
 	{
-		core_data_pkg->markNearInterface();
+		core_data_pkg->markNearInterface(small_shift_factor_);
 	}
 	//=================================================================================================//
 	void LevelSet::redistanceInterface()

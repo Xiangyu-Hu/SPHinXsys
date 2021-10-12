@@ -24,7 +24,7 @@ namespace SPH
 	class LevelSetComplexShape : public ComplexShape
 	{
 	public:
-		LevelSetComplexShape(SPHBody *sph_body, ComplexShape &complex_shape, bool isCleaned = false);
+		LevelSetComplexShape(SPHBody *sph_body, ComplexShape &complex_shape, bool isCleaned = false, bool write_level_set = true);
 		virtual ~LevelSetComplexShape(){};
 
 		virtual bool checkContain(const Vecd &input_pnt, bool BOUNDARY_INCLUDED = true) override;

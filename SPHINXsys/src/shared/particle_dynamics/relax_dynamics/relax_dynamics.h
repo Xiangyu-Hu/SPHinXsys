@@ -31,8 +31,6 @@
 #ifndef RELAX_DYNAMICS_H
 #define RELAX_DYNAMICS_H
 
-
-
 #include "math.h"
 
 #include "all_particle_dynamics.h"
