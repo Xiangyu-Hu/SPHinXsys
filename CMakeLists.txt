@@ -133,3 +133,5 @@ endif()
 if(ACTIVATE_CUDA)
     add_subdirectory(cases_test_gpu)
 endif()
+
+add_subdirectory(modules)
