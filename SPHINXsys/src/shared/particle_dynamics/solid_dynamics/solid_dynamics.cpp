@@ -79,6 +79,30 @@ namespace SPH
 			dvel_dt_ave_[index_i] = dvel_dt_[index_i];
 		}
 		//=================================================================================================//
+		ConstrainSolidBodySurfaceRegion::
+			ConstrainSolidBodySurfaceRegion(SPHBody *body, BodyPartByParticle *body_part)
+			: PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
+			  pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
+			  vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
+			  apply_constrain_to_particle_(StdLargeVec<bool>(pos_0_.size(), false))
+		{
+			// get the surface layer of particles
+			ShapeSurface surface_layer(body);
+			// select which particles the spring is applied to
+			// if the particle is in the surface layer, the force is applied
+			for (size_t particle_i: surface_layer.body_part_particles_) apply_constrain_to_particle_[particle_i] = true;
+		}
+		//=================================================================================================//
+		void ConstrainSolidBodySurfaceRegion::Update(size_t index_i, Real dt)
+		{
+			if(apply_constrain_to_particle_[index_i])
+			{
+				pos_n_[index_i] = pos_0_[index_i];
+				vel_n_[index_i] = Vecd(0);
+				dvel_dt_[index_i] = Vecd(0);
+			}
+		}
+		//=================================================================================================//
 		PositionSolidBody::
 			PositionSolidBody(SPHBody *body, BodyPartByParticle *body_part,
 							  Real start_time, Real end_time, Vecd pos_end_center)
@@ -416,7 +440,7 @@ namespace SPH
 		{
 			// get the surface layer of particles
 			ShapeSurface surface_layer(body);
-			// select which paricles the spring is applied to
+			// select which particles the spring is applied to
 			for (size_t particle_i: surface_layer.body_part_particles_)
 			{
 				// vector to the source point from the particle
@@ -486,6 +510,45 @@ namespace SPH
 			}
 				catch(out_of_range& e){
 				throw runtime_error(string("SpringNormalOnSurfaceParticles::Update: particle index out of bounds") + to_string(index_i));
+			}
+		}
+		//=================================================================================================//
+		SpringOnSurfaceParticles::
+			SpringOnSurfaceParticles(SolidBody *body, Real stiffness, Real damping_ratio)
+			: ParticleDynamicsSimple(body), SolidDataSimple(body),
+			  pos_n_(particles_->pos_n_),
+			  pos_0_(particles_->pos_0_),
+			  vel_n_(particles_->vel_n_),
+			  dvel_dt_prior_(particles_->dvel_dt_prior_),
+			  mass_(particles_->mass_),
+			  apply_spring_force_to_particle_(StdLargeVec<bool>(pos_0_.size(), false))
+		{
+			// get the surface layer of particles
+			ShapeSurface surface_layer(body);
+			// select which particles the spring is applied to
+			// if the particle is in the surface layer, the force is applied
+			for (size_t particle_i: surface_layer.body_part_particles_) apply_spring_force_to_particle_[particle_i] = true;
+
+			// scale stiffness and damping by area here, so it's not necessary in each iteration
+			// we take the area of the first particle, assuming they are uniform
+			Real area = std::pow(particles_->Vol_[0], 2.0 / 3.0);
+			stiffness_ = stiffness * area;
+			damping_coeff_ = stiffness_ * damping_ratio;
+
+			particles_->total_ghost_particles_ = 0;
+		}
+		//=================================================================================================//
+		void SpringOnSurfaceParticles::Update(size_t index_i, Real dt)
+		{
+			try{
+				if (apply_spring_force_to_particle_[index_i])
+				{
+					dvel_dt_prior_[index_i] += -stiffness_ * (pos_n_[index_i] - pos_0_[index_i]) / mass_[index_i];
+					dvel_dt_prior_[index_i] += -damping_coeff_ * vel_n_[index_i]  / mass_[index_i];
+				}
+			}
+				catch(out_of_range& e){
+				throw runtime_error(string("SpringOnSurfaceParticles::Update: particle index out of bounds") + to_string(index_i));
 			}
 		}
 		//=================================================================================================//
@@ -753,7 +816,8 @@ namespace SPH
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
 			Real J = det(F_[index_i]);
 			//throw an exception if the determinant becomes negative
-			if (J <= 0) throw std::runtime_error(std::string("Determinant of F_ became negative!"));
+			if (J <= 0) throw std::runtime_error(std::string("Determinant of F_ became negative! SPHBody: ") + this->body_->getBodyName()
+				+ " particle ID: " + std::to_string(index_i));
 			Real one_over_J = 1.0 / J;
 			rho_n_[index_i] = rho0_ * one_over_J;
 			J_to_minus_2_over_dimension_[index_i] = pow(one_over_J, 2.0 * one_over_dimensions_);
@@ -791,7 +855,8 @@ namespace SPH
 
 			for (int i = 0; i < 3; i++){
 				if (std::isnan(acceleration[i])){
-					throw std::runtime_error(std::string("acceleration is Not A Number"));
+					throw std::runtime_error(std::string("acceleration is Not A Number! SPHBody: ") + this->body_->getBodyName() 
+						+ " particle ID: " + std::to_string(index_i));
 				}
 			}
 		}
