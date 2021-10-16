@@ -1,2 +1,3 @@
 name: cppcheck-action
 uses: deep5050/cppcheck-action@v3.0
+on: push
