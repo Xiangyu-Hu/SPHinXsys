@@ -231,6 +231,27 @@ namespace SPH {
 	};
 
 	/**
+	 * @class BodyStatesRecordingToVtuStringRunTime
+	 * @brief  Writes simulation results as strings for bodies in rum time
+	 * the output is a std::pair of strings with VTK XML format that can be visualized by ParaView
+	 * the data type vtkUnstructedGrid
+	 */
+	class BodyStatesRecordingToVtuStringRunTime : public BodyStatesRecordingToVtu
+	{
+	public:
+		BodyStatesRecordingToVtuStringRunTime(In_Output& in_output, SPHBodyVector bodies);
+		virtual ~BodyStatesRecordingToVtuStringRunTime() = default;
+
+		using VtuStringDataRunTime = std::pair<std::string, std::string>;
+
+		const VtuStringDataRunTime& GetVtuDataRunTime() const;
+	protected:
+		virtual void writeWithFileName(const std::string& sequence) override;
+	private:
+		VtuStringDataRunTime _vtuDataRunTime;
+	};
+
+	/**
 	 * @class SurfaceOnlyBodyStatesRecordingToVtu
 	 * @brief  Write files for surface particles of bodies
 	 * the output file is VTK XML format can visualized by ParaView
