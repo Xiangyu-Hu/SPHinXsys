@@ -47,6 +47,7 @@ jobs:
           sudo cmake CMakeLists.txt
           sudo make -j$(nproc)
           cd /home/runner/work/SPHinXsys/SPHinXsys
+          git submodule update --init
           mkdir build
           cd build 
           cmake .. -DSIMBODY_HOME=/home/runner/simbody

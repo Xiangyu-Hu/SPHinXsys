@@ -947,11 +947,11 @@ void StructuralSimulation::runSimulation(Real end_time)
 		}
 		tick_count t2 = tick_count::now();
 		// record data for test
-		von_mises_stress_max_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getMaxVonMisesStress());
-		von_mises_stress_particles_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getVonMisesStress());
+		von_mises_stress_max_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getVonMisesStressMax());
+		von_mises_stress_particles_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getVonMisesStressVector());
 		
-		von_mises_strain_max_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getMaxVonMisesStrain());
-		von_mises_strain_particles_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getVonMisesStrain());
+		von_Mises_strain_static_max_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getVonMisesStrainMax());
+		von_Mises_strain_static_particles_.push_back(solid_body_list_[0].get()->getElasticSolidParticles()->getVonMisesStrainVector());
 		// write data to file
 		if(surface_particles_only_to_vtu_) write_states_surface.writeToFile();
 		else write_states.writeToFile();

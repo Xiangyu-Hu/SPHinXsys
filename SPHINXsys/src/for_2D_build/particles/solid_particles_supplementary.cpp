@@ -17,34 +17,7 @@ namespace SPH {
 		}
 	}
 	//=================================================================================================//
-	Real ElasticSolidParticles::von_Mises_stress(size_t particle_i)
-	{
-		Real J = rho0_ / rho_n_[particle_i];
-		Mat2d F = F_[particle_i];
-		Mat2d stress = stress_PK1_[particle_i];
-		Mat2d sigma = (stress * ~F) / J;
-
-		Real sigmaxx = sigma(0, 0);
-		Real sigmayy = sigma(1, 1);
-		Real sigmaxy = sigma(0, 1);
-
-		return sqrt(sigmaxx * sigmaxx + sigmayy * sigmayy - sigmaxx * sigmayy
-			+ 3.0 * sigmaxy * sigmaxy);
-	}
-	//=================================================================================================//
-	Vecd ElasticSolidParticles::displacement(size_t particle_i) //not tested in 2D
-	{
-		Vecd disp = pos_n_[particle_i] - pos_0_[particle_i];
-		return disp;
-	}
-	//=================================================================================================//
-	Vecd ElasticSolidParticles::normal(size_t particle_i) //not tested in 2D
-	{
-		Vecd normal_vec = n_[particle_i];
-		return normal_vec;
-	}
-	//=================================================================================================//
-	Real ElasticSolidParticles::von_Mises_strain(size_t particle_i) //not tested in 2D
+	Real ElasticSolidParticles::von_Mises_strain_static(size_t particle_i) //not tested in 2D
 	{
 		
 		Mat2d F = F_[particle_i];
@@ -60,6 +33,50 @@ namespace SPH {
 
 		return sqrt( (1.0 / 3.0) * (std::pow(epsilonxx - epsilonyy, 2.0) + std::pow(epsilonyy - epsilonzz, 2.0) + std::pow(epsilonzz - epsilonxx, 2.0))
 		 + 2.0 * (std::pow(epsilonxy, 2.0) + std::pow(epsilonyz, 2.0) + std::pow(epsilonxz, 2.0)));
+	}
+	//=================================================================================================//
+	Real ElasticSolidParticles::von_Mises_strain_dynamic(size_t particle_i, Real poisson) //not tested in 2D
+	{
+		// calculation based on the Ansys formulation
+		Mat2d F = F_[particle_i];
+		Mat2d epsilon = 0.5 * (~F * F - Matd(1.0)); //calculation of the Green-Lagrange strain tensor
+		
+		Vec2d principal_strains = getPrincipalValuesFromMatrix(epsilon);
+		Real eps_1 = principal_strains[0];
+		Real eps_2 = principal_strains[1];
+
+		return 1.0/(1.0 + poisson) * std::sqrt(0.5 * (std::pow(eps_1 - eps_2, 2)));
+	}
+	//=================================================================================================//
+	Real ElasticSolidParticles::von_Mises_stress_Cauchy(size_t particle_i)
+	{
+		Real J = rho0_ / rho_n_[particle_i];
+		Mat2d F = F_[particle_i];
+		Mat2d stress = stress_PK1_[particle_i];
+		Mat2d sigma = (stress * ~F) / J; // Cauchy stress
+
+		return getVonMisesStressFromMatrix(sigma);
+	}
+	//=================================================================================================//
+	Real ElasticSolidParticles::von_Mises_stress_PK2(size_t particle_i)
+	{
+		Mat2d F = F_[particle_i];
+		Mat2d stress = stress_PK1_[particle_i];
+		Mat2d sigma = SimTK::inverse(F) * stress; // Second Piola-Kirchhof stress
+
+		return getVonMisesStressFromMatrix(sigma);
+	}
+	//=================================================================================================//
+	Vecd ElasticSolidParticles::displacement(size_t particle_i) //not tested in 2D
+	{
+		Vecd disp = pos_n_[particle_i] - pos_0_[particle_i];
+		return disp;
+	}
+	//=================================================================================================//
+	Vecd ElasticSolidParticles::normal(size_t particle_i) //not tested in 2D
+	{
+		Vecd normal_vec = n_[particle_i];
+		return normal_vec;
 	}
 	//=================================================================================================//
 }

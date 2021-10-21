@@ -63,6 +63,8 @@ if(NOT STATIC_BUILD)
 	else()
 		target_link_libraries(sphinxsys_3d ${Simbody_LIBRARIES} ${TBB_LIBRARYS})
 	endif()
+
+	target_include_directories(sphinxsys_3d PUBLIC ${SPHINXSYS_PROJECT_DIR}/3rd_party/eigen)
 	### SPHinXsys dynamic lib ###
 else()
 	### SPHinXsys static lib ###
@@ -91,6 +93,8 @@ else()
 	else()
 		target_link_libraries(sphinxsys_static_3d ${Simbody_LIBRARIES} ${TBB_LIBRARYS})
 	endif()
+
+	target_include_directories(sphinxsys_static_3d PUBLIC ${SPHINXSYS_PROJECT_DIR}/3rd_party/eigen)
 	### SPHinXsys static lib ###
 endif()
 

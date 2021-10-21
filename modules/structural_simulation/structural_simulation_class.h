@@ -221,8 +221,8 @@ class StructuralSimulation
 		vector<Real> von_mises_stress_max_;
 		StdLargeVec<StdLargeVec<Real>> von_mises_stress_particles_;
 
-		vector<Real> von_mises_strain_max_;
-		StdLargeVec<StdLargeVec<Real>> von_mises_strain_particles_;
+		vector<Real> von_Mises_strain_static_max_;
+		StdLargeVec<StdLargeVec<Real>> von_Mises_strain_static_particles_;
 		
 		// for constructor, the order is important
 		void scaleTranslationAndResolution();

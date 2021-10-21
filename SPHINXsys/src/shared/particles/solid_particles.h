@@ -81,7 +81,7 @@ namespace SPH {
 
 		virtual SolidParticles* ThisObjectPtr() override {return this;};
 	};
-	
+
 	/**
 	 * @class ElasticSolidParticles
 	 * @brief A group of particles with elastic body particle data.
@@ -100,10 +100,23 @@ namespace SPH {
 		StdLargeVec<Matd>	dF_dt_;		/**<  deformation tensor change rate */
 		StdLargeVec<Matd>	stress_PK1_;	/**<  first Piola-Kirchhoff stress tensor */
 
-		/**< Computing von_Mises_stress. */
-		Real von_Mises_stress(size_t particle_i);
-		StdLargeVec<Real> getVonMisesStress();
-		Real getMaxVonMisesStress();
+		/**< Computing von Mises equivalent strain from a static (constant) formulation. */
+		Real von_Mises_strain_static(size_t particle_i);
+		/**< Computing von Mises equivalent strain from a dynamic formulation. This depends on the Poisson's ratio (from Ansys Help). */
+		Real von_Mises_strain_dynamic(size_t particle_i, Real poisson);
+		/**< Computing von Mises strain for all particles. */
+		StdLargeVec<Real> getVonMisesStrainVector(std::string strain_measure = "static", Real poisson = 0.5); // "static" or "dynamic"
+		/**< Computing maximum von Mises strain from all particles. */
+		Real getVonMisesStrainMax(std::string strain_measure = "static", Real poisson = 0.5); // "static" or "dynamic"
+
+		/**< Computing von_Mises_stress_Cauchy. */
+		Real von_Mises_stress_Cauchy(size_t particle_i);
+		/**< Computing von_Mises_stress_PK2. */
+		Real von_Mises_stress_PK2(size_t particle_i);
+		/**< Computing von Mises stress for all particles. */
+		StdLargeVec<Real> getVonMisesStressVector(std::string stress_measure = "Cauchy"); // "Cauchy" or "PK2"
+		/**< Computing maximum von Mises stress from all particles. */
+		Real getVonMisesStressMax(std::string stress_measure = "Cauchy"); // "Cauchy" or "PK2"
 
 		/**< Computing displacemnt. */
 		Vecd displacement(size_t particle_i);
@@ -112,11 +125,6 @@ namespace SPH {
 		/**< Computing normal vector. */
 		Vecd normal (size_t particle_i);
 		StdLargeVec<Vecd> getNormal();
-
-		/**< Computing von Mises equivalent stress. */
-		Real von_Mises_strain (size_t particle_i);
-		StdLargeVec<Real> getVonMisesStrain();
-		Real getMaxVonMisesStrain();
 
 		virtual void writeParticlesToVtuFile(std::ostream &output_file) override;
 		/** Write only surface particle data in VTU format for Paraview. */

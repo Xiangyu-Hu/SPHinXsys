@@ -24,6 +24,7 @@
 #define SMALL_VECTORS_H
 
 #include "base_data_type.h"
+#include <Eigen/Eigenvalues>
 
 namespace SPH {
 
@@ -82,6 +83,15 @@ namespace SPH {
 	/** get orthogonal projection of a vactor. */
 	Vec2d getVectorProjectionOfVector (Vec2d vector_1, Vec2d vector_2);
 	Vec3d getVectorProjectionOfVector (Vec3d vector_1, Vec3d vector_2);
+
+	/** von Mises stress from stress matrix */
+	Real getVonMisesStressFromMatrix(const Mat2d& sigma);
+	Real getVonMisesStressFromMatrix(const Mat3d& sigma);
+
+	/** pricipal strain or stress from strain or stress matrix */
+	Vec2d getPrincipalValuesFromMatrix(const Mat2d& A);
+	Vec3d getPrincipalValuesFromMatrix(const Mat3d& A);
+
 }
 
 #endif //SMALL_VECTORS_H

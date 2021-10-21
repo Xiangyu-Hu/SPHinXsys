@@ -29,6 +29,7 @@ RUN cd /usr/src/gtest
     sudo cmake CMakeLists.txt
     sudo make
     cd /home/SPHinXsys
-	
+
+RUN git submodule update --init
 RUN rm -rf build
 RUN mkdir build && cd build && cmake .. -DBUILD_WITH_DEPENDENCIES_SOURCE=${build_with_dependencies_source} -DSTATIC_BUILD=${STATIC_BUILD} && make -j$(nproc)
