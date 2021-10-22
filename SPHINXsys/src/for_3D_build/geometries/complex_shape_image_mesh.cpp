@@ -1,3 +1,5 @@
+#ifndef __EMSCRIPTEN__
+
 #include "complex_shape_image_mesh.h"
 #include "image_mesh_shape.h"
 
@@ -162,3 +164,5 @@ namespace SPH
 	}
 	//=================================================================================================//
 }
+
+#endif // __EMSCRIPTEN__

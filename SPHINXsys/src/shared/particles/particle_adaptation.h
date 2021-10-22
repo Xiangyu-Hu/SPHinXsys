@@ -73,8 +73,10 @@ namespace SPH
 		BoundingBox system_domain_bounds_;
 		BaseParticles *base_particles_;
 
+		Real small_shift_factor_;
+
 	public:
-		ParticleAdaptation(Real h_spacing_ratio = 1.3, Real system_resolution_ratio = 1.0);
+		ParticleAdaptation(Real h_spacing_ratio = 1.3, Real system_resolution_ratio = 1.0, Real small_shift_factor = 0.75);
 		virtual ~ParticleAdaptation(){};
 		/** Note: called  after construction of this and derived classes. */
 		virtual void initialize(SPHBody *sph_body);

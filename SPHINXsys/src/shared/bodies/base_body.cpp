@@ -74,9 +74,15 @@ namespace SPH
 		return body_domain_bounds_;
 	}
 	//=================================================================================================//
-	void SPHBody::writeParticlesToVtuFile(std::ofstream &output_file)
+	void SPHBody::writeParticlesToVtuFile(std::ostream &output_file)
 	{
 		base_particles_->writeParticlesToVtuFile(output_file);
+		newly_updated_ = false;
+	}
+	//=================================================================================================//
+	void SPHBody::writeSurfaceParticlesToVtuFile(std::ofstream &output_file, ShapeSurface& surface_particles)
+	{
+		base_particles_->writeSurfaceParticlesToVtuFile(output_file, surface_particles);
 		newly_updated_ = false;
 	}
 	//=================================================================================================//
@@ -184,7 +190,7 @@ namespace SPH
 			if (fabs(phi) < particle_spacing_min_)
 				tagAParticle(i);
 		}
-		std::cout << "Number of surface particles : " << body_part_particles_.size() << std::endl;
+		//std::cout << "Number of surface particles : " << body_part_particles_.size() << std::endl;
 	}
 	//=================================================================================================//
 	ShapeSurfaceLayer::ShapeSurfaceLayer(SPHBody *body, Real layer_thickness)
