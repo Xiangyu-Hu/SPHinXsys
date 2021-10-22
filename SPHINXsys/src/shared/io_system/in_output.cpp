@@ -83,7 +83,7 @@ namespace SPH
 		{
 			if (body->checkNewlyUpdated())
 			{
-				std::string filefullpath = in_output_.output_folder_ + "/SPHBody_" + body->getBodyName() + "_" + sequence + ".vtu";
+				std::string filefullpath = in_output_.output_folder_ + "/" + body->getBodyName() + "_" + sequence + ".vtu";
 				if (fs::exists(filefullpath))
 				{
 					fs::remove(filefullpath);
@@ -168,7 +168,7 @@ namespace SPH
 			SPHBody* body = bodies_[i];
 			if (body->checkNewlyUpdated())
 			{
-				std::string filefullpath = in_output_.output_folder_ + "/SPHBody_" + body->getBodyName() + "_" + sequence + ".vtu";
+				std::string filefullpath = in_output_.output_folder_ + "/" + body->getBodyName() + "_" + sequence + ".vtu";
 				if (fs::exists(filefullpath))
 				{
 					fs::remove(filefullpath);
@@ -213,7 +213,7 @@ namespace SPH
 		{
 			if (body->checkNewlyUpdated())
 			{
-				std::string filefullpath = in_output_.output_folder_ + "/SPHBody_" + body->getBodyName()+ "_" + sequence +".plt";
+				std::string filefullpath = in_output_.output_folder_ + "/" + body->getBodyName()+ "_" + sequence +".plt";
 				if (fs::exists(filefullpath))
 				{
 					fs::remove(filefullpath);
@@ -279,7 +279,7 @@ namespace SPH
 
 		for (SPHBody* body : bodies)
 		{
-			file_paths_.push_back(in_output.reload_folder_ + "/SPHBody_" + body->getBodyName() + "_rld.xml");
+			file_paths_.push_back(in_output.reload_folder_ + "/" + body->getBodyName() + "_rld.xml");
 		}
 	};
 	//=============================================================================================//
@@ -288,7 +288,7 @@ namespace SPH
 	{
 		for (size_t i = 0; i != bodies.size(); ++i)
 		{
-			file_paths_[i] = in_output.reload_folder_ + "/SPHBody_" + given_body_names[i] + "_rld.xml";
+			file_paths_[i] = in_output.reload_folder_ + "/" + given_body_names[i] + "_rld.xml";
 		}
 	}
 	//=============================================================================================//
@@ -330,7 +330,7 @@ namespace SPH
 		overall_file_path_ = in_output.restart_folder_ + "/Restart_time_";
 		for (SPHBody* body : bodies)
 		{
-			file_paths_.push_back(in_output.restart_folder_ + "/SPHBody_" + body->getBodyName() + "_rst_");
+			file_paths_.push_back(in_output.restart_folder_ + "/" + body->getBodyName() + "_rst_");
 		}
 	}
 	//=============================================================================================//
