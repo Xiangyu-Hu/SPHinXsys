@@ -153,6 +153,33 @@ namespace SPH
 		return _vtuData;
 	}
 	//=============================================================================================//
+	BodyStatesRecordingToVtuStringRunTime::BodyStatesRecordingToVtuStringRunTime(In_Output& in_output, SPHBodyVector bodies) 
+			: BodyStatesRecordingToVtu(in_output, bodies)
+	{
+	}	
+	//=============================================================================================//
+	void BodyStatesRecordingToVtuStringRunTime::writeWithFileName(const std::string& sequence)
+	{
+		for (SPHBody* body : bodies_)
+		{
+			if (body->checkNewlyUpdated())
+			{
+				const auto& vtuName = body->getBodyName() + "_" + sequence + ".vtu";
+				std::stringstream sstream;
+				//begin of the XML file
+				writeVtu(sstream, body);
+				std::get<0>(_vtuDataRunTime) = vtuName;
+				std::get<1>(_vtuDataRunTime) = sstream.str();
+			}
+			body->setNotNewlyUpdated();
+		}
+	}
+	//=============================================================================================//
+	const BodyStatesRecordingToVtuStringRunTime::VtuStringDataRunTime& BodyStatesRecordingToVtuStringRunTime::GetVtuDataRunTime() const
+	{
+		return _vtuDataRunTime;
+	}
+	//=============================================================================================//
 	SurfaceOnlyBodyStatesRecordingToVtu::SurfaceOnlyBodyStatesRecordingToVtu(In_Output& in_output, SPHBodyVector bodies)
 			: BodyStatesRecording(in_output, bodies),
 			surface_body_layer_vector_({})
