@@ -214,6 +214,31 @@ namespace SPH {
 		return diag;
 	}
 	//=================================================================================================//
+	Real CalculateDoubleDotProduct(Mat2d Matrix1, Mat2d Matrix2 )
+	{
+		Real product = 0;
+		for(int i=0; i < 2; i++)
+		{
+			for(int j=0; j < 2; j++)
+			{
+				product += Matrix1[i][j] * Matrix2[i][j];
+			}
+		}
+		return product;
+	}
+	Real CalculateDoubleDotProduct(Mat3d Matrix1, Mat3d Matrix2 )
+	{
+		Real product = 0;
+		for(int i=0; i < 3; i++)
+		{
+			for(int j=0; j < 3; j++)
+			{
+				product += Matrix1[i][j] * Matrix2[i][j];
+			}
+		}
+		return product;
+	}
+	//=================================================================================================//
 	Real getCosineOfAngleBetweenTwoVectors (Vec2d vector_1, Vec2d vector_2)
 	{
 		// returns the cosine of the angle between two vectors

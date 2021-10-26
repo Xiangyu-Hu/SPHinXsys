@@ -93,6 +93,8 @@ namespace SPH {
 		//		add restart output particle data
 		//----------------------------------------------------------------------
 		addAVariableNameToList<indexMatrix, Matd>(variables_to_restart_, "DeformationGradient");
+		// get which stress measure is relevant for the material
+		stress_measure_ = elastic_solid->getRelevantStressMeasureName();
 	}
 	//=================================================================================================//
 	StdLargeVec<Real> ElasticSolidParticles::getVonMisesStrainVector(std::string strain_measure, Real poisson)
@@ -131,15 +133,15 @@ namespace SPH {
 		return strain_max;
 	}
 	//=================================================================================================//
-	StdLargeVec<Real> ElasticSolidParticles::getVonMisesStressVector(std::string stress_measure)
-	{
+	StdLargeVec<Real> ElasticSolidParticles::getVonMisesStressVector()
+	{	
 		StdLargeVec<Real> stress_vector = {};
 		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
 		{
 			Real stress = 0.0;
-			if (stress_measure == "Cauchy") {
+			if (stress_measure_ == "Cauchy") {
 				stress = von_Mises_stress_Cauchy(index_i);
-			} else if (stress_measure == "PK2") {
+			} else if (stress_measure_ == "PK2") {
 				stress = von_Mises_stress_PK2(index_i);
 			} else {
 				throw std::runtime_error("getVonMisesStressVector: wrong input");
@@ -149,15 +151,15 @@ namespace SPH {
 		return stress_vector;
 	}
 	//=================================================================================================//
-	Real ElasticSolidParticles::getVonMisesStressMax(std::string stress_measure)
+	Real ElasticSolidParticles::getVonMisesStressMax()
 	{
 		Real stress_max = 0.0;
 		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
 		{
 			Real stress = 0.0;
-			if (stress_measure == "Cauchy") {
+			if (stress_measure_ == "Cauchy") {
 				stress = von_Mises_stress_Cauchy(index_i);
-			} else if (stress_measure == "PK2") {
+			} else if (stress_measure_ == "PK2") {
 				stress = von_Mises_stress_PK2(index_i);
 			} else {
 				throw std::runtime_error("getVonMisesStressMax: wrong input");

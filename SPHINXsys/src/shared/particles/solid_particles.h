@@ -114,9 +114,9 @@ namespace SPH {
 		/**< Computing von_Mises_stress_PK2. */
 		Real von_Mises_stress_PK2(size_t particle_i);
 		/**< Computing von Mises stress for all particles. */
-		StdLargeVec<Real> getVonMisesStressVector(std::string stress_measure = "Cauchy"); // "Cauchy" or "PK2"
+		StdLargeVec<Real> getVonMisesStressVector(); // "Cauchy" or "PK2"
 		/**< Computing maximum von Mises stress from all particles. */
-		Real getVonMisesStressMax(std::string stress_measure = "Cauchy"); // "Cauchy" or "PK2"
+		Real getVonMisesStressMax(); // "Cauchy" or "PK2"
 
 		/**< Computing displacemnt. */
 		Vecd displacement(size_t particle_i);
@@ -130,6 +130,9 @@ namespace SPH {
 		/** Write only surface particle data in VTU format for Paraview. */
 		virtual void writeSurfaceParticlesToVtuFile(std::ofstream& output_file, ShapeSurface& surface_particles);
 		virtual ElasticSolidParticles* ThisObjectPtr() override {return this;};
+		
+		/** relevant stress measure */
+		std::string stress_measure_;
 	};
 
 	/**
