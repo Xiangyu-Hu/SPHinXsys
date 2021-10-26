@@ -242,7 +242,7 @@ namespace SPH {
 		BodyStatesRecordingToVtuStringRunTime(In_Output& in_output, SPHBodyVector bodies);
 		virtual ~BodyStatesRecordingToVtuStringRunTime() = default;
 
-		using VtuStringDataRunTime = std::pair<std::string, std::string>;
+		using VtuStringDataRunTime = std::vector<std::tuple<std::string, std::string, std::string>>;
 
 		const VtuStringDataRunTime& GetVtuDataRunTime() const;
 	protected:

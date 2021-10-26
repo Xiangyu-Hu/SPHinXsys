@@ -160,6 +160,7 @@ namespace SPH
 	//=============================================================================================//
 	void BodyStatesRecordingToVtuStringRunTime::writeWithFileName(const std::string& sequence)
 	{
+		_vtuDataRunTime.clear();
 		for (SPHBody* body : bodies_)
 		{
 			if (body->checkNewlyUpdated())
@@ -168,8 +169,11 @@ namespace SPH
 				std::stringstream sstream;
 				//begin of the XML file
 				writeVtu(sstream, body);
-				std::get<0>(_vtuDataRunTime) = vtuName;
-				std::get<1>(_vtuDataRunTime) = sstream.str();
+				std::tuple<std::string, std::string, std::string> vtuData;
+				std::get<0>(vtuData) = vtuName;
+				std::get<1>(vtuData) = sstream.str();
+				std::get<2>(vtuData) = body->getBodyName();
+				_vtuDataRunTime.push_back(vtuData);
 			}
 			body->setNotNewlyUpdated();
 		}
