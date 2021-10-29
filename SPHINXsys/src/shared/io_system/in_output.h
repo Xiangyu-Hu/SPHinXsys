@@ -224,6 +224,7 @@ namespace SPH {
 		using VtuStringData = std::map<std::string, std::string>;
 
 		const VtuStringData& GetVtuData() const;
+		void clear();
 	protected:
 		virtual void writeWithFileName(const std::string& sequence) override;
 	private:

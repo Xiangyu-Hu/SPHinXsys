@@ -153,6 +153,11 @@ namespace SPH
 		return _vtuData;
 	}
 	//=============================================================================================//
+	void BodyStatesRecordingToVtuString::clear()
+	{
+		_vtuData.clear();
+	}
+	//=============================================================================================//
 	BodyStatesRecordingToVtuStringRunTime::BodyStatesRecordingToVtuStringRunTime(In_Output& in_output, SPHBodyVector bodies) 
 			: BodyStatesRecordingToVtu(in_output, bodies)
 	{
