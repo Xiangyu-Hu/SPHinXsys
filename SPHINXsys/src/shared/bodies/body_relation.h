@@ -243,12 +243,14 @@ namespace SPH
 	public:
 		ShapeSurfaceLayer body_surface_layer_;
 
-		SolidBodyRelationContact(SPHBody *body, RealBodyVector contact_bodies);
+		SolidBodyRelationContact(SPHBody *sph_body, RealBodyVector contact_bodies);
 		SolidBodyRelationContact(SolidBodyRelationSelfContact *solid_body_relation_self_contact,
 								 RealBodyVector contact_bodies);
 		virtual ~SolidBodyRelationContact(){};
 
 		virtual void updateConfiguration() override;
+
+		SPHBody *sph_body_;
 	protected:
 		IndexVector &body_part_particles_;
 		BodyPartParticlesIndex get_body_part_particle_index_;

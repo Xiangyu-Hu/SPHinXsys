@@ -35,6 +35,7 @@ namespace SPH
 			: PartInteractionDynamicsByParticle(solid_body_contact_relation->sph_body_,
 												&solid_body_contact_relation->body_surface_layer_),
 			  ContactDynamicsData(solid_body_contact_relation),
+			  solid_body_contact_relation_(solid_body_contact_relation),
 			  mass_(particles_->mass_), contact_density_(particles_->contact_density_)
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
@@ -52,11 +53,20 @@ namespace SPH
 				StdLargeVec<Real> &contact_mass_k = *(contact_mass_[k]);
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-				{
-					sigma += contact_neighborhood.W_ij_[n] * contact_mass_k[contact_neighborhood.j_[n]];
+				{	
+					Real distance = solid_body_contact_relation_->sph_body_->particle_adaptation_->ReferenceSpacing();
+					Real offset_W_ij = solid_body_contact_relation_->sph_body_->particle_adaptation_->getKernel()->W(distance, Vec3d(0.0));
+					Real corrected_W_ij = std::max(contact_neighborhood.W_ij_[n] - offset_W_ij, 0.0);
+					sigma += corrected_W_ij * contact_mass_k[contact_neighborhood.j_[n]];
 				}
 			}
 			contact_density_[index_i] = sigma;
+
+			//neighborhood.W_ij_.push_back(kernel_->W(distance, displacement));
+
+			// subtract summation of the kernel function of 2 particles at 1 particle distance, and if the result is negative, we take 0
+            // different resolution: distance = 0.5 * dp1 + 0.5 * dp2
+            // dp1 = half smoothing length
 		}
 		//=================================================================================================//
 		SelfContactForce::
