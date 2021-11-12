@@ -243,7 +243,7 @@ namespace SPH
 	public:
 		ShapeSurfaceLayer body_surface_layer_;
 
-		SolidBodyRelationContact(SPHBody *body, RealBodyVector contact_bodies);
+		SolidBodyRelationContact(SPHBody *sph_body, RealBodyVector contact_bodies);
 		SolidBodyRelationContact(SolidBodyRelationSelfContact *solid_body_relation_self_contact,
 								 RealBodyVector contact_bodies);
 		virtual ~SolidBodyRelationContact(){};

@@ -206,9 +206,9 @@ namespace SPH
 	//=================================================================================================//
 	SolidBodyRelationContact::SolidBodyRelationContact(SPHBody *sph_body, RealBodyVector contact_bodies)
 		: BaseBodyRelationContact(sph_body, contact_bodies),
-		  body_surface_layer_(ShapeSurfaceLayer(sph_body)),
-		  body_part_particles_(body_surface_layer_.body_part_particles_),
-		  get_body_part_particle_index_(body_part_particles_)
+		  	body_surface_layer_(ShapeSurfaceLayer(sph_body)),
+		  	body_part_particles_(body_surface_layer_.body_part_particles_),
+		  	get_body_part_particle_index_(body_part_particles_)
 	{
 		initialization();
 	}
