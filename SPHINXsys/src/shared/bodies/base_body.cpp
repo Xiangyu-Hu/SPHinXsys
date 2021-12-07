@@ -80,7 +80,7 @@ namespace SPH
 		newly_updated_ = false;
 	}
 	//=================================================================================================//
-	void SPHBody::writeSurfaceParticlesToVtuFile(std::ofstream &output_file, ShapeSurface& surface_particles)
+	void SPHBody::writeSurfaceParticlesToVtuFile(std::ostream &output_file, ShapeSurface& surface_particles)
 	{
 		base_particles_->writeSurfaceParticlesToVtuFile(output_file, surface_particles);
 		newly_updated_ = false;

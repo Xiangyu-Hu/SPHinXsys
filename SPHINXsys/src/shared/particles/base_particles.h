@@ -261,7 +261,7 @@ namespace SPH
 		/** Write particle data in VTU format for Paraview. */
 		virtual void writeParticlesToVtuFile(std::ostream& output_file);
 		/** Write only surface particle data in VTU format for Paraview. */
-		virtual void writeSurfaceParticlesToVtuFile(std::ofstream& output_file, ShapeSurface& surface_particles);
+		virtual void writeSurfaceParticlesToVtuFile(std::ostream& output_file, ShapeSurface& surface_particles);
 		/** Write particle data in PLT format for Tecplot. */
 		void writeParticlesToPltFile(std::ofstream& output_file);
 

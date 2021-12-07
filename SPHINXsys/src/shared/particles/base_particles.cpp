@@ -230,18 +230,21 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void BaseParticles::writeSurfaceParticlesToVtuFile(std::ofstream& output_file, ShapeSurface& surface_particles)
+	void BaseParticles::writeSurfaceParticlesToVtuFile(std::ostream& output_file, ShapeSurface& surface_particles)
 	{
 		size_t total_surface_particles = surface_particles.body_part_particles_.size();
 
 		//write current/final particle positions first
+		// precision: 3 - 0.1 mm accuracy
 		output_file << "   <Points>\n";
 		output_file << "    <DataArray Name=\"Position\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != total_surface_particles; ++i) {
 			size_t particle_i = surface_particles.body_part_particles_[i];
 			Vec3d particle_position = upgradeToVector3D(pos_n_[particle_i]);
-			output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " ";
+			output_file << std::fixed << std::setprecision(1) << particle_position[0] << " "
+						<< std::fixed << std::setprecision(1) << particle_position[1] << " "
+						<< std::fixed << std::setprecision(1) << particle_position[2] << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -250,26 +253,7 @@ namespace SPH
 		//write header of particles data
 		output_file << "   <PointData  Vectors=\"vector\">\n";
 
-		//write sorted particles ID
-		output_file << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != total_surface_particles; ++i) {
-			size_t particle_i = surface_particles.body_part_particles_[i];
-			output_file << particle_i << " ";
-		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
-
-		//write unsorted particles ID
-		output_file << "    <DataArray Name=\"UnsortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != total_surface_particles; ++i) {
-			size_t particle_i = surface_particles.body_part_particles_[i];
-			output_file << unsorted_id_[particle_i] << " ";
-		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
-
+		/* // REMOVED FOR PRODUCTION
 		//write matrices
 		for (std::pair<std::string, size_t>& name_index : variables_to_write_[indexMatrix])
 		{
@@ -288,6 +272,7 @@ namespace SPH
 			output_file << std::endl;
 			output_file << "    </DataArray>\n";
 		}
+		*/
 
 		//write vectors
 		for (std::pair<std::string, size_t>& name_index : variables_to_write_[indexVector])
@@ -299,12 +284,12 @@ namespace SPH
 			for (size_t i = 0; i != total_surface_particles; ++i) {
 				size_t particle_i = surface_particles.body_part_particles_[i];
 				Vec3d vector_value = upgradeToVector3D(variable[particle_i]);
-				output_file << std::fixed << std::setprecision(9) << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
+				output_file << std::fixed << std::setprecision(2) << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
 			}
 			output_file << std::endl;
 			output_file << "    </DataArray>\n";
 		}
-
+		/*
 		//write scalars
 		for (std::pair<std::string, size_t>& name_index : variables_to_write_[indexScalar])
 		{
@@ -334,6 +319,7 @@ namespace SPH
 			output_file << std::endl;
 			output_file << "    </DataArray>\n";
 		}
+		*/
 	}
 	//=================================================================================================//
 	void BaseParticles::writePltFileHeader(std::ofstream& output_file)

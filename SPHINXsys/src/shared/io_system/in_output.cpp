@@ -129,68 +129,6 @@ namespace SPH
 		stream << "</VTKFile>\n";
 	}
 	//=============================================================================================//
-	BodyStatesRecordingToVtuString::BodyStatesRecordingToVtuString(In_Output& in_output, SPHBodyVector bodies) 
-			: BodyStatesRecordingToVtu(in_output, bodies)
-	{
-	}	
-	//=============================================================================================//
-	void BodyStatesRecordingToVtuString::writeWithFileName(const std::string& sequence)
-	{
-		for (SPHBody* body : bodies_)
-		{
-			if (body->checkNewlyUpdated())
-			{
-				const auto& vtuName = body->getBodyName() + "_" + sequence + ".vtu";
-				std::stringstream sstream;
-				//begin of the XML file
-				writeVtu(sstream, body);
-				_vtuData[vtuName] = sstream.str();
-			}
-			body->setNotNewlyUpdated();
-		}
-	}
-	//=============================================================================================//
-	const BodyStatesRecordingToVtuString::VtuStringData& BodyStatesRecordingToVtuString::GetVtuData() const
-	{
-		return _vtuData;
-	}
-	//=============================================================================================//
-	void BodyStatesRecordingToVtuString::clear()
-	{
-		_vtuData.clear();
-	}
-	//=============================================================================================//
-	BodyStatesRecordingToVtuStringRunTime::BodyStatesRecordingToVtuStringRunTime(In_Output& in_output, SPHBodyVector bodies) 
-			: BodyStatesRecordingToVtu(in_output, bodies)
-	{
-	}	
-	//=============================================================================================//
-	void BodyStatesRecordingToVtuStringRunTime::writeWithFileName(const std::string& sequence)
-	{
-		_vtuDataRunTime.clear();
-		for (SPHBody* body : bodies_)
-		{
-			if (body->checkNewlyUpdated())
-			{
-				const auto& vtuName = body->getBodyName() + "_" + sequence + ".vtu";
-				std::stringstream sstream;
-				//begin of the XML file
-				writeVtu(sstream, body);
-				std::tuple<std::string, std::string, std::string> vtuData;
-				std::get<0>(vtuData) = vtuName;
-				std::get<1>(vtuData) = sstream.str();
-				std::get<2>(vtuData) = body->getBodyName();
-				_vtuDataRunTime.push_back(vtuData);
-			}
-			body->setNotNewlyUpdated();
-		}
-	}
-	//=============================================================================================//
-	const BodyStatesRecordingToVtuStringRunTime::VtuStringDataRunTime& BodyStatesRecordingToVtuStringRunTime::GetVtuDataRunTime() const
-	{
-		return _vtuDataRunTime;
-	}
-	//=============================================================================================//
 	SurfaceOnlyBodyStatesRecordingToVtu::SurfaceOnlyBodyStatesRecordingToVtu(In_Output& in_output, SPHBodyVector bodies)
 			: BodyStatesRecording(in_output, bodies),
 			surface_body_layer_vector_({})
@@ -243,6 +181,130 @@ namespace SPH
 			}
 			body->setNotNewlyUpdated();
 		}
+	}
+	//=============================================================================================//
+	void SurfaceOnlyBodyStatesRecordingToVtu::writeVtu(std::ostream& stream, SPHBody* body, ShapeSurface& shape_surface) const
+	{
+		stream << "<?xml version=\"1.0\"?>\n";
+		stream << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
+		stream << " <UnstructuredGrid>\n";
+
+		size_t total_surface_particles = shape_surface.body_part_particles_.size();
+		stream << "  <Piece Name =\"" << body->getBodyName() << "\" NumberOfPoints=\"" << total_surface_particles << "\" NumberOfCells=\"0\">\n";
+
+		body->writeSurfaceParticlesToVtuFile(stream, shape_surface);
+
+		stream << "   </PointData>\n";
+
+		//write empty cells
+		stream << "   <Cells>\n";
+		stream << "    <DataArray type=\"Int32\"  Name=\"connectivity\"  Format=\"ascii\">\n";
+		stream << "    </DataArray>\n";
+		stream << "    <DataArray type=\"Int32\"  Name=\"offsets\"  Format=\"ascii\">\n";
+		stream << "    </DataArray>\n";
+		stream << "    <DataArray type=\"types\"  Name=\"offsets\"  Format=\"ascii\">\n";
+		stream << "    </DataArray>\n";
+		stream << "   </Cells>\n";
+
+		stream << "  </Piece>\n";
+
+		stream << " </UnstructuredGrid>\n";
+		stream << "</VTKFile>\n";
+	}
+	//=============================================================================================//
+	BodyStatesRecordingToVtuString::BodyStatesRecordingToVtuString(In_Output& in_output, SPHBodyVector bodies) 
+			: BodyStatesRecordingToVtu(in_output, bodies)
+	{
+	}	
+	//=============================================================================================//
+	void BodyStatesRecordingToVtuString::writeWithFileName(const std::string& sequence)
+	{
+		for (SPHBody* body : bodies_)
+		{
+			if (body->checkNewlyUpdated())
+			{
+				const auto& vtuName = body->getBodyName() + "_" + sequence + ".vtu";
+				std::stringstream sstream;
+				//begin of the XML file
+				writeVtu(sstream, body);
+				_vtuData[vtuName] = sstream.str();
+			}
+			body->setNotNewlyUpdated();
+		}
+	}
+	//=============================================================================================//
+	const BodyStatesRecordingToVtuString::VtuStringData& BodyStatesRecordingToVtuString::GetVtuData() const
+	{
+		return _vtuData;
+	}
+	//=============================================================================================//
+	void BodyStatesRecordingToVtuString::clear()
+	{
+		_vtuData.clear();
+	}
+	//=============================================================================================//
+	BodyStatesRecordingToVtuStringRunTime::BodyStatesRecordingToVtuStringRunTime(In_Output& in_output, SPHBodyVector bodies) 
+			: BodyStatesRecordingToVtu(in_output, bodies)
+	{
+	}	
+	//=============================================================================================//
+	void BodyStatesRecordingToVtuStringRunTime::writeWithFileName(const std::string& sequence)
+	{
+		_vtuDataRunTime.clear();
+		for (SPHBody* body : bodies_)
+		{
+			if (body->checkNewlyUpdated())
+			{
+				const auto& vtuName = body->getBodyName() + ".stl"  + "_" + "0000" + sequence + ".vtu";
+				std::stringstream sstream;
+				//begin of the XML file
+				writeVtu(sstream, body);
+				std::tuple<std::string, std::string, std::string> vtuData;
+				std::get<0>(vtuData) = vtuName;
+				std::get<1>(vtuData) = sstream.str();
+				std::get<2>(vtuData) = body->getBodyName();
+				_vtuDataRunTime.push_back(vtuData);
+			}
+			body->setNotNewlyUpdated();
+		}
+	}
+	//=============================================================================================//
+	const VtuStringDataRunTime& BodyStatesRecordingToVtuStringRunTime::GetVtuDataRunTime() const
+	{
+		return _vtuDataRunTime;
+	}
+		//=============================================================================================//
+	SurfaceOnlyBodyStatesRecordingToVtuStringRunTime::SurfaceOnlyBodyStatesRecordingToVtuStringRunTime(In_Output& in_output, SPHBodyVector bodies) 
+			: SurfaceOnlyBodyStatesRecordingToVtu(in_output, bodies)
+	{
+	}	
+	//=============================================================================================//
+	void SurfaceOnlyBodyStatesRecordingToVtuStringRunTime::writeWithFileName(const std::string& sequence)
+	{
+		_vtuDataRunTime.clear();
+		size_t i = 0;
+		for (SPHBody* body : bodies_)
+		{
+			if (body->checkNewlyUpdated())
+			{
+				const auto& vtuName = body->getBodyName() + ".stl" + "_" + "0000" + sequence + ".vtu";
+				std::stringstream sstream;
+				//begin of the XML file
+				writeVtu(sstream, body, surface_body_layer_vector_[i]);
+				std::tuple<std::string, std::string, std::string> vtuData;
+				std::get<0>(vtuData) = vtuName;
+				std::get<1>(vtuData) = sstream.str();
+				std::get<2>(vtuData) = body->getBodyName();
+				_vtuDataRunTime.push_back(vtuData);
+			}
+			body->setNotNewlyUpdated();
+			i++;
+		}
+	}
+	//=============================================================================================//
+	const VtuStringDataRunTime& SurfaceOnlyBodyStatesRecordingToVtuStringRunTime::GetVtuDataRunTime() const
+	{
+		return _vtuDataRunTime;
 	}
 	//=============================================================================================//
 	void BodyStatesRecordingToPlt::writeWithFileName(const std::string& sequence)

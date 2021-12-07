@@ -128,7 +128,7 @@ namespace SPH {
 
 		virtual void writeParticlesToVtuFile(std::ostream &output_file) override;
 		/** Write only surface particle data in VTU format for Paraview. */
-		virtual void writeSurfaceParticlesToVtuFile(std::ofstream& output_file, ShapeSurface& surface_particles);
+		virtual void writeSurfaceParticlesToVtuFile(std::ostream& output_file, ShapeSurface& surface_particles);
 		virtual ElasticSolidParticles* ThisObjectPtr() override {return this;};
 		
 		/** relevant stress measure */
