@@ -258,9 +258,9 @@ namespace SPH {
 		for (size_t i = 0; i != total_surface_particles; ++i) {
 			size_t particle_i = surface_particles.body_part_particles_[i];
 			Vecd displacement_vector = displacement(particle_i);
-			output_file << std::fixed << std::setprecision(1) << displacement_vector[0] << " "
-						<< std::fixed << std::setprecision(1) << displacement_vector[1] << " "
-						<< std::fixed << std::setprecision(1) << displacement_vector[2] << " ";
+			output_file << std::fixed << std::setprecision(4) << displacement_vector[0] << " "
+						<< std::fixed << std::setprecision(4) << displacement_vector[1] << " "
+						<< std::fixed << std::setprecision(4) << displacement_vector[2] << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
