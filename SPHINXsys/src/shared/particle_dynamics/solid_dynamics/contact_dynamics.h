@@ -35,8 +35,13 @@
 
 namespace SPH
 {
+
+	class SPHBody;
+	class Kernel;
+
 	namespace solid_dynamics
 	{
+
 		/**
 		* @class SelfContactDensitySummation
 		* @brief Computing the summation density due to solid self-contact model.
@@ -66,6 +71,28 @@ namespace SPH
 		protected:
 			StdLargeVec<Real>& mass_, & contact_density_;
 			StdVec<StdLargeVec<Real>*> contact_mass_;
+
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		* @class ShellContactDensitySummation
+		* @brief Computing the summation density due to shell-solid contact model.
+		*/
+		class ShellContactDensitySummation :
+			public PartInteractionDynamicsByParticle, public ContactDynamicsData
+		{
+		public:
+			explicit ShellContactDensitySummation(SolidBodyRelationContact* solid_body_contact_relation);
+			virtual ~ShellContactDensitySummation() {};
+		protected:
+			StdLargeVec<Real>& contact_density_;
+			StdVec<StdLargeVec<Vecd>*> contact_pos_, contact_normal_;
+			StdLargeVec<Vecd>& n_0_, &pos_n_;
+
+			Kernel *kernel_;
+			Real spacing_ref_;
+			SPHBody *sph_body_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};

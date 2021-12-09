@@ -215,7 +215,7 @@ int main(int ac, char* av[])
 	solid_dynamics::StressRelaxationFirstHalf free_ball_stress_relaxation_first_half(free_ball_inner);
 	solid_dynamics::StressRelaxationSecondHalf free_ball_stress_relaxation_second_half(free_ball_inner);
 	/** Algorithms for solid-solid contact. */
-	solid_dynamics::ContactDensitySummation free_ball_update_contact_density(free_ball_contact);
+	solid_dynamics::ShellContactDensitySummation free_ball_update_contact_density(free_ball_contact);
 	solid_dynamics::ContactForce free_ball_compute_solid_contact_forces(free_ball_contact);
 	/** initial condition */
 	BallInitialCondition ball_initial_velocity(free_ball);
@@ -231,6 +231,7 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
+	solid_particles.initializeNormalDirectionFromGeometry();
 	free_ball_corrected_configuration.parallel_exec();
 	ball_initial_velocity.exec();
 	

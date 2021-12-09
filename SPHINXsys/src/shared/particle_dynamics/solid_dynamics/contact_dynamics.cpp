@@ -59,6 +59,64 @@ namespace SPH
 			contact_density_[index_i] = sigma;
 		}
 		//=================================================================================================//
+		ShellContactDensitySummation::
+			ShellContactDensitySummation(SolidBodyRelationContact *solid_body_contact_relation)
+			: PartInteractionDynamicsByParticle(solid_body_contact_relation->sph_body_,
+												&solid_body_contact_relation->body_surface_layer_),
+			  ContactDynamicsData(solid_body_contact_relation), pos_n_(particles_->pos_n_),
+			  contact_density_(particles_->contact_density_), n_0_(particles_->n_0_),
+			  kernel_(solid_body_contact_relation->sph_body_->particle_adaptation_->getKernel()), 
+			  spacing_ref_(solid_body_contact_relation->sph_body_->particle_adaptation_->ReferenceSpacing())
+		{
+			for (size_t k = 0; k != contact_particles_.size(); ++k)
+			{
+				contact_pos_.push_back(&(contact_particles_[k]->pos_0_));
+				contact_normal_.push_back(&(contact_particles_[k]->n_0_));
+			}
+		}
+		//=================================================================================================//
+		void ShellContactDensitySummation::Interaction(size_t index_i, Real dt)
+		{
+			/** Shell contact interaction. */
+			Real sigma = 0.0;
+			/** Abscissas and weights for Gauss-Legendre quadrature for n=3 nodes */
+			Real x_0 = 0.774596669241483377035853079956;
+    		Real x_1 = 0.000000000000000000000000000000;
+			Real x_2 = -x_0;
+
+			Real w_0 = 0.555555555555555555555555555556;
+			Real w_1 = 0.888888888888888888888888888889;
+			Real w_2 = w_0;
+
+			for (size_t k = 0; k < contact_configuration_.size(); ++k)
+			{
+				StdLargeVec<Vecd> &contact_pos_k = *(contact_pos_[k]);
+				StdLargeVec<Vecd> &contact_normal_k = *(contact_normal_[k]);
+				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					const Real dp_2 = spacing_ref_/2.;
+					const Vecd contact_pos_j = contact_pos_k[contact_neighborhood.j_[n]];
+					const Vecd contact_n_j = contact_normal_k[contact_neighborhood.j_[n]];
+
+					const Vecd dp_2_t_0 = pos_n_[index_i] - Vecd(dp_2*x_0, contact_pos_j[1]) - contact_pos_j;
+					const Vecd dp_2_t_1 = pos_n_[index_i] - Vecd(dp_2*x_1, contact_pos_j[1]) - contact_pos_j;
+					const Vecd dp_2_t_2 = pos_n_[index_i] - Vecd(dp_2*x_2, contact_pos_j[1]) - contact_pos_j;
+
+					const Real W_rij_t_0 = kernel_->W(dp_2_t_0.norm(), dp_2_t_0);
+					const Real W_rij_t_1 = kernel_->W(dp_2_t_1.norm(), dp_2_t_1);
+					const Real W_rij_t_2 = kernel_->W(dp_2_t_2.norm(), dp_2_t_2);
+
+					sigma += w_0 * dot(dp_2_t_0, contact_n_j) * W_rij_t_0 * dp_2
+						   + w_1 * dot(dp_2_t_1, contact_n_j) * W_rij_t_1 * dp_2
+						   + w_2 * dot(dp_2_t_2, contact_n_j) * W_rij_t_2 * dp_2;
+
+				}
+				
+			}
+			contact_density_[index_i] = sigma / 3.;
+		}
+		//=================================================================================================//
 		SelfContactForce::
 			SelfContactForce(SolidBodyRelationSelfContact* self_contact_relation)
 			: PartInteractionDynamicsByParticle(self_contact_relation->sph_body_,
