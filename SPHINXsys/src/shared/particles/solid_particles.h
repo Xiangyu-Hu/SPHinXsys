@@ -88,8 +88,6 @@ namespace SPH {
 	class ElasticSolidParticles : public SolidParticles
 	{
 	protected:
-		/**< Computing von_Mises_stress. */
-		Real von_Mises_stress(size_t particle_i);
 		virtual void writePltFileHeader(std::ofstream& output_file);
 		virtual void writePltFileParticleData(std::ofstream& output_file, size_t index_i);
 
@@ -101,6 +99,8 @@ namespace SPH {
 		StdLargeVec<Matd>	dF_dt_;		/**<  deformation tensor change rate */
 		StdLargeVec<Matd>	stress_PK1_;	/**<  first Piola-Kirchhoff stress tensor */
 
+		/**< Computing von_Mises_stress. */
+		Real von_Mises_stress(size_t particle_i);
 		StdLargeVec<Real> getVonMisesStress();
 		Real getMaxVonMisesStress();
 

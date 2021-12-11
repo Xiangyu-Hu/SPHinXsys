@@ -17,7 +17,6 @@ LIST(REMOVE_ITEM usefulsubdirs ${CMAKE_CURRENT_SOURCE_DIR})
 
 ##Add all useful subdirectories
 FOREACH(subdir_path ${usefulsubdirs})
-	#message(STATUS ${subdir_path})
 	ADD_SUBDIRECTORY(${subdir_path})
 ENDFOREACH()
 
@@ -50,32 +49,66 @@ FOREACH(srcdir_path ${sourcedirs})
 	list(APPEND SCR_FILES ${DIR_scrs})
 ENDFOREACH()
 
-#FOREACH(file1 ${SCR_FILES})
-	#message(STATUS ${file1})
-#ENDFOREACH()
+if(NOT STATIC_BUILD)
+	### SPHinXsys dynamic lib ###
+	ADD_LIBRARY(sphinxsys_2d SHARED ${SCR_FILES})
 
-ADD_LIBRARY(sphinxsys_2d SHARED ${SCR_FILES})
-ADD_LIBRARY(sphinxsys_static_2d STATIC ${SCR_FILES})
+	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+		#target_link_libraries(sphinxsys_3d)
+	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+			target_link_libraries(sphinxsys_2d stdc++)
+		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+			target_link_libraries(sphinxsys_2d stdc++ stdc++fs)
+		endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
-SET_TARGET_PROPERTIES(sphinxsys_static_2d PROPERTIES OUTPUT_NAME "sphinxsys_2d")
-#SET_TARGET_PROPERTIES(sphinxsys PROPERTIES VERSION 1.0 SOVERSION 0)
+		if(DEFINED BOOST_AVAILABLE) # link Boost if available (not for Windows)
+			target_link_libraries(sphinxsys_2d ${Boost_LIBRARIES})
+		endif()
+	endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
-SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
+	if(BUILD_WITH_SIMBODY)
+		target_link_libraries(sphinxsys_2d SimTKcommon SimTKmath SimTKsimbody ${TBB_LIBRARYS})
+	else()
+		target_link_libraries(sphinxsys_2d ${Simbody_LIBRARIES} ${TBB_LIBRARYS})
+	endif()
+	### SPHinXsys dynamic lib ###
+else()
+	### SPHinXsys static lib ###
+	ADD_LIBRARY(sphinxsys_static_2d STATIC ${SCR_FILES})
+	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+		#target_link_libraries(sphinxsys_3d)
+	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+			target_link_libraries(sphinxsys_static_2d stdc++)
+		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+			target_link_libraries(sphinxsys_static_2d stdc++ stdc++fs)
+		endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
-if(MSVC)
-    target_link_libraries(sphinxsys_2d ${TBB_LIBRARYS} ${Simbody_LIBRARIES})
-else(MSVC)
-	if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    	target_link_libraries(sphinxsys_2d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} ${Boost_LIBRARIES} stdc++)
-	else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		target_link_libraries(sphinxsys_2d ${TBB_LIBRARYS} ${Simbody_LIBRARIES} stdc++ stdc++fs)
-	endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-endif(MSVC)
+		if(DEFINED BOOST_AVAILABLE) # link Boost if available (not for Windows)
+			target_link_libraries(sphinxsys_static_2d ${Boost_LIBRARIES})
+		endif()
+	endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
-INSTALL(TARGETS sphinxsys_2d sphinxsys_static_2d
-RUNTIME DESTINATION 2d_code/bin
-LIBRARY DESTINATION 2d_code/lib
-ARCHIVE DESTINATION 2d_code/lib)
+	if(BUILD_WITH_SIMBODY)
+		target_link_libraries(sphinxsys_static_2d SimTKcommon_static SimTKmath_static SimTKsimbody_static ${TBB_LIBRARYS})
+	else()
+		target_link_libraries(sphinxsys_static_2d ${Simbody_LIBRARIES} ${TBB_LIBRARYS})
+	endif()
+	### SPHinXsys static lib ###
+endif()
+
+if(NOT STATIC_BUILD)
+	INSTALL(TARGETS sphinxsys_2d
+	RUNTIME DESTINATION 2d_code/bin
+	LIBRARY DESTINATION 2d_code/lib
+	ARCHIVE DESTINATION 2d_code/lib)
+else()
+	INSTALL(TARGETS sphinxsys_static_2d
+	RUNTIME DESTINATION 2d_code/bin
+	LIBRARY DESTINATION 2d_code/lib
+	ARCHIVE DESTINATION 2d_code/lib)
+endif()
 
 FILE(GLOB_RECURSE hpp_headers  ${PROJECT_SOURCE_DIR}/src/shared/*.hpp ${PROJECT_SOURCE_DIR}/src/for_2D_build/*.hpp)
 INSTALL(FILES ${hpp_headers} DESTINATION 2d_code/include)

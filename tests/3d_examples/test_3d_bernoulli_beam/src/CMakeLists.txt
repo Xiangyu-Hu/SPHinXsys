@@ -1,40 +1,22 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${SPHINXSYS_PROJECT_DIR}/cmake) # main (top) cmake dir
-set(CMAKE_VERBOSE_MAKEFILE on)
 
-STRING( REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR} )
-PROJECT("${CURRENT_FOLDER}")
+set(CMAKE_VERBOSE_MAKEFILE on)
 
 include(ImportSPHINXsysFromSource_for_3D_build)
 
-set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
-set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
-set(BUILD_INPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/input")
-set(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
-
-file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
-execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
-
-set(FILES_STL "ball_mass.stl" "cylinder.stl")
-foreach(STL_FILE ${FILES_STL})
-	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/input/${STL_FILE} DESTINATION ${BUILD_INPUT_PATH})
-endforeach()
+SET(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
+SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
 aux_source_directory(. DIR_SRCS)
-ADD_EXECUTABLE(${PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH} ${DIR_SRCS})
+ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
-add_test(NAME ${PROJECT_NAME}_particle_relaxation 
-		 COMMAND ${PROJECT_NAME} --r=true
-		 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
 
-if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
+if(NOT STATIC_BUILD) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		IF(${CMAKE_BUILD_TYPE} MATCHES "Release")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_3d gtest gtest_main)
-			add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
-		elseif(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_3d gtestd gtest_maind)
-			add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
-		endif()
+		target_link_libraries(${PROJECT_NAME} sphinxsys_3d gtest gtest_main)
+		add_dependencies(${PROJECT_NAME} sphinxsys_3d)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++ gtest gtest_main)
@@ -62,8 +44,8 @@ else() # static build only
 	endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif()
 if(NOT BUILD_WITH_SIMBODY) # link Simbody if not built by the project
-target_link_libraries(${PROJECT_NAME} ${Simbody_LIBRARIES})
+	target_link_libraries(${PROJECT_NAME} ${Simbody_LIBRARIES})
 endif()
 if(NOT BUILD_WITH_ONETBB) # link TBB if not built by the project
-target_link_libraries(${PROJECT_NAME} ${TBB_LIBRARYS})
+	target_link_libraries(${PROJECT_NAME} ${TBB_LIBRARYS})
 endif()

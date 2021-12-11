@@ -1,25 +1,18 @@
 /* ---------------------------------------------------------------------------*
-*            SPHinXsys: 2D oscillation beam example-one body version           *
+*            SPHinXsys: 2D oscillation beam example				              *
 * ----------------------------------------------------------------------------*
 * This is the one of the basic test cases, also the first case for            *
 * understanding SPH method for solid simulation.                              *
 * In this case, the constraint of the beam is implemented with                *
 * internal constrained subregion.                                             *
 * ----------------------------------------------------------------------------*/
-/**
-  * @brief 	SPHinXsys Library.
-  */
+// SPHinXsys Library.
 #include "sphinxsys.h"
-/**
- * @brief Namespace cite here.
- */
+// Namespace cite here.
 using namespace SPH;
-
 //------------------------------------------------------------------------------
 //global parameters for the case
 //------------------------------------------------------------------------------
-
-//for geometry
 Real PL = 0.2; 	//beam length
 Real PH = 0.02; //for thick plate; =0.01 for thin plate
 Real SL = 0.06; //depth of the insert
@@ -29,27 +22,25 @@ Real BW = resolution_ref * 4; 	//boundary width
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
 	Vec2d(PL + 3.0 * BW, PL / 2.0));
-
-//for material properties of the beam
+//----------------------------------------------------------------------
+//	Global parameters for material properties.
+//----------------------------------------------------------------------
 Real rho0_s = 1.0e3; 			//reference density
 Real Youngs_modulus = 2.0e6;	//reference Youngs modulus
 Real poisson = 0.3975; 			//Poisson ratio
-
-//for initial condition on velocity
+//----------------------------------------------------------------------
+//	Global parameters for initial condition
+//----------------------------------------------------------------------
 Real kl = 1.875;
 Real M = sin(kl) + sinh(kl);
 Real N = cos(kl) + cosh(kl);
 Real Q = 2.0 * (cos(kl)*sinh(kl) - sin(kl)*cosh(kl));
 Real vf = 0.05;
 Real R = PL / (0.5 * Pi);
-
-/**
-* @brief define geometry and initial conditions of SPH bodies
-*/
-/**
-* @brief create a beam base shape
-*/
-std::vector<Vecd> CreatBeamBaseShape()
+//----------------------------------------------------------------------
+//	Geometries used in the case.
+//----------------------------------------------------------------------
+std::vector<Vecd> creatBeamBaseShape()
 {
 	//geometry
 	std::vector<Vecd> beam_base_shape;
@@ -58,13 +49,10 @@ std::vector<Vecd> CreatBeamBaseShape()
 	beam_base_shape.push_back(Vecd(0.0, PH / 2 + BW));
 	beam_base_shape.push_back(Vecd(0.0, -PH / 2 - BW));
 	beam_base_shape.push_back(Vecd(-SL - BW, -PH / 2 - BW));
-	
+
 	return beam_base_shape;
 }
-/**
-* @brief create a beam shape
-*/
-std::vector<Vecd> CreatBeamShape()
+std::vector<Vecd> creatBeamShape()
 {
 	std::vector<Vecd> beam_shape;
 	beam_shape.push_back(Vecd(-SL, -PH / 2));
@@ -75,9 +63,9 @@ std::vector<Vecd> CreatBeamShape()
 
 	return beam_shape;
 }
-/**
-* @brief define the beam body
-*/
+//----------------------------------------------------------------------
+//	Bodies used in the case.
+//----------------------------------------------------------------------
 class Beam : public SolidBody
 {
 public:
@@ -85,53 +73,16 @@ public:
 		: SolidBody(system, body_name)
 	{
 		/** Geometry definition. */
-		std::vector<Vecd> beam_base_shape = CreatBeamBaseShape();
+		std::vector<Vecd> beam_base_shape = creatBeamBaseShape();
 		body_shape_ = new ComplexShape(body_name);
 		body_shape_->addAPolygon(beam_base_shape, ShapeBooleanOps::add);
-		std::vector<Vecd> beam_shape = CreatBeamShape();
+		std::vector<Vecd> beam_shape = creatBeamShape();
 		body_shape_->addAPolygon(beam_shape, ShapeBooleanOps::add);
 	}
 };
-/**
- * @brief Define beam material.
- */
-class BeamMaterial : public LinearElasticSolid
-{
-public:
-	BeamMaterial()	: LinearElasticSolid()
-	{
-		rho0_ = rho0_s;
-		youngs_modulus_ = Youngs_modulus;
-		poisson_ratio_ = poisson;
-
-		assignDerivedMaterialParameters();
-	}
-};
-
-/**
- * application dependent initial condition 
- */
-class BeamInitialCondition
-	: public solid_dynamics::ElasticDynamicsInitialCondition
-{
-public:
-	BeamInitialCondition(SolidBody *beam)
-		: solid_dynamics::ElasticDynamicsInitialCondition(beam) {};
-protected:
-	void Update(size_t index_i, Real dt) override {
-		/** initial velocity profile */
-		Real x = pos_n_[index_i][0] / PL;
-		if (x > 0.0) {
-			vel_n_[index_i][1] 
-				= vf * material_->ReferenceSoundSpeed()*(M*(cos(kl*x) - cosh(kl*x)) - N * (sin(kl*x) - sinh(kl*x))) / Q;
-		}
-	};
-};
-/**
-* @brief define the beam base which will be constrained.
-* NOTE: this class can only be instanced after body particles
-* have been generated
-*/
+//----------------------------------------------------------------------
+//	Body parts usually for impose constraints.
+//----------------------------------------------------------------------
 class BeamBase : public BodyPartByParticle
 {
 public:
@@ -139,18 +90,17 @@ public:
 		: BodyPartByParticle(solid_body, constrained_region_name)
 	{
 		/* Geometry definition */
-		std::vector<Vecd> beam_base_shape = CreatBeamBaseShape();
+		std::vector<Vecd> beam_base_shape = creatBeamBaseShape();
 		body_part_shape_ = new ComplexShape(constrained_region_name);
 		body_part_shape_->addAPolygon(beam_base_shape, ShapeBooleanOps::add);
-		std::vector<Vecd> beam_shape = CreatBeamShape();
+		std::vector<Vecd> beam_shape = creatBeamShape();
 		body_part_shape_->addAPolygon(beam_shape, ShapeBooleanOps::sub);
 
 		//tag the particles within the body part
 		tagBodyPart();
 	}
 };
-
-//define an observer body
+// an observer body
 class BeamObserver : public FictitiousBody
 {
 public:
@@ -160,53 +110,84 @@ public:
 		body_input_points_volumes_.push_back(std::make_pair(Vecd(PL, 0.0), 0.0));
 	}
 };
+//----------------------------------------------------------------------
+//	Materials used in the case.
+//----------------------------------------------------------------------
+class BeamMaterial : public LinearElasticSolid
+{
+public:
+	BeamMaterial() : LinearElasticSolid()
+	{
+		rho0_ = rho0_s;
+		youngs_modulus_ = Youngs_modulus;
+		poisson_ratio_ = poisson;
+
+		assignDerivedMaterialParameters();
+	}
+};
+//----------------------------------------------------------------------
+//	Application dependent initial condition.
+//----------------------------------------------------------------------
+class BeamInitialCondition
+	: public solid_dynamics::ElasticDynamicsInitialCondition
+{
+public:
+	explicit BeamInitialCondition(SolidBody *beam)
+		: solid_dynamics::ElasticDynamicsInitialCondition(beam){};
+
+protected:
+	void Update(size_t index_i, Real dt) override
+	{
+		/** initial velocity profile */
+		Real x = pos_n_[index_i][0] / PL;
+		if (x > 0.0)
+		{
+			vel_n_[index_i][1] = vf * material_->ReferenceSoundSpeed() / Q *
+								 (M * (cos(kl * x) - cosh(kl * x)) - N * (sin(kl * x) - sinh(kl * x)));
+		}
+	};
+};
 //------------------------------------------------------------------------------
 //the main program
 //------------------------------------------------------------------------------
-
 int main()
 {
-
-	//build up context -- a SPHSystem
+	//----------------------------------------------------------------------
+	//	Build up -- a SPHSystem
+	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, resolution_ref);
-
-	//the oscillating beam
+	//----------------------------------------------------------------------
+	//	Creating body, materials and particles.
+	//----------------------------------------------------------------------
 	Beam *beam_body = new Beam(system, "BeamBody");
-	//Configuration of solid materials
 	BeamMaterial *beam_material = new BeamMaterial();
-	//creat particles for the elastic body
 	ElasticSolidParticles beam_particles(beam_body, beam_material);
 
 	BeamObserver *beam_observer = new BeamObserver(system, "BeamObserver");
-	//create observer particles
 	BaseParticles observer_particles(beam_observer);
-
-	/** topology */
+	//----------------------------------------------------------------------
+	//	Define body relation map.
+	//	The contact map gives the topological connections between the bodies.
+	//	Basically the the range of bodies to build neighbor particle lists.
+	//----------------------------------------------------------------------
 	BodyRelationInner* beam_body_inner = new BodyRelationInner(beam_body);
 	BodyRelationContact* beam_observer_contact = new BodyRelationContact(beam_observer, { beam_body });
-
 	//-----------------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
 	//-----------------------------------------------------------------------------
-	/** initial condition */
+	// initial condition
 	BeamInitialCondition beam_initial_velocity(beam_body);
 	//corrected strong configuration	
 	solid_dynamics::CorrectConfiguration
 		beam_corrected_configuration_in_strong_form(beam_body_inner);
-
 	//time step size calculation
 	solid_dynamics::AcousticTimeStepSize computing_time_step_size(beam_body);
-
 	//stress relaxation for the beam
-	solid_dynamics::StressRelaxationFirstHalf
-		stress_relaxation_first_half(beam_body_inner);
-	solid_dynamics::StressRelaxationSecondHalf
-		stress_relaxation_second_half(beam_body_inner);
-
+	solid_dynamics::StressRelaxationFirstHalf	stress_relaxation_first_half(beam_body_inner);
+	solid_dynamics::StressRelaxationSecondHalf	stress_relaxation_second_half(beam_body_inner);
 	// clamping a solid body part. This is softer than a driect constraint
 	solid_dynamics::ClampConstrainSolidBodyRegion
 		clamp_constrain_beam_base(beam_body_inner, new BeamBase(beam_body, "BeamBase"));
-
 	//-----------------------------------------------------------------------------
 	//outputs
 	//-----------------------------------------------------------------------------
@@ -214,14 +195,13 @@ int main()
 	BodyStatesRecordingToVtu write_beam_states(in_output, system.real_bodies_);
 	ObservedQuantityRecording<indexVector, Vecd>
 		write_beam_tip_displacement("Position", in_output, beam_observer_contact);
-	/**
-	 * @brief Setup geomtry and initial conditions
-	 */
+	//-----------------------------------------------------------------------------
+	//	Setup particle configuration and initial conditions
+	//-----------------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	beam_initial_velocity.exec();
 	beam_corrected_configuration_in_strong_form.parallel_exec();
-
 	//-----------------------------------------------------------------------------
 	//from here the time stepping begines
 	//-----------------------------------------------------------------------------

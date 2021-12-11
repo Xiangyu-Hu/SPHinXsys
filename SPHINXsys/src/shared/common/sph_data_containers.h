@@ -1,5 +1,5 @@
 /**
- * @file 	sph_data_conainers.h
+ * @file 	sph_data_containers.h
  * @brief 	Set up of basic data structure.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */

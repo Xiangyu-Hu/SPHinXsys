@@ -13,11 +13,6 @@ if(BUILD_WITH_SIMBODY)
     ENDFOREACH()
 endif()
 
-if(BUILD_WITH_ONETBB)
-    include("${SPHINXSYS_PROJECT_DIR}/SPHINXsys/cmake/oneTBB_header_directory.cmake")
-    SET(SPHINXsysHeaderPath ${SPHINXsysHeaderPath} ${ONETBB_HEADER_DIRECTORY})
-endif())
-
 LIST(REMOVE_DUPLICATES SPHINXsysHeaderPath)
 
 INCLUDE_DIRECTORIES("${SPHINXsysHeaderPath}")
