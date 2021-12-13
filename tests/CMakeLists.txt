@@ -17,10 +17,10 @@ if(NOT EMSCRIPTEN)
 	if(BUILD_UNIT_TESTS)
 		ADD_SUBDIRECTORY(unit_tests_src)
 	endif()
+
+	ADD_SUBDIRECTORY(modules)
 endif()
 
 if(BUILD_3D_EXAMPLES)
 	ADD_SUBDIRECTORY(3d_examples)
 endif()
-
-

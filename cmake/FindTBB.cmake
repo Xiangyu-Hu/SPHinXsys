@@ -264,34 +264,8 @@ find_package_handle_standard_args(TBB DEFAULT_MSG
   TBB_INCLUDE_DIR TBB_LIB_DIR TBB_LIBRARYS)
 
 #=============================================================================
-#parse all the version numbers from tbb
-if(NOT TBB_VERSION)
 
-#only read the start of the file
-file(READ
-      "${TBB_INCLUDE_DIR}/tbb/tbb_stddef.h"
-      TBB_VERSION_CONTENTS
-      LIMIT 2048)
-
-  string(REGEX REPLACE
-    ".*#define TBB_VERSION_MAJOR ([0-9]+).*" "\\1"
-    TBB_VERSION_MAJOR "${TBB_VERSION_CONTENTS}")
-
-  string(REGEX REPLACE
-    ".*#define TBB_VERSION_MINOR ([0-9]+).*" "\\1"
-    TBB_VERSION_MINOR "${TBB_VERSION_CONTENTS}")
-
-  string(REGEX REPLACE
-        ".*#define TBB_INTERFACE_VERSION ([0-9]+).*" "\\1"
-        TBB_INTERFACE_VERSION "${TBB_VERSION_CONTENTS}")
-
-  string(REGEX REPLACE
-        ".*#define TBB_COMPATIBLE_INTERFACE_VERSION ([0-9]+).*" "\\1"
-        TBB_COMPATIBLE_INTERFACE_VERSION "${TBB_VERSION_CONTENTS}")
-
-endif()
-
-if (TBB_FOUND)
+if(TBB_FOUND)
   set(TBB_LIBRARYS ${TBB_LIBRARYS} )
   set(TBB_INCLUDE_DIR ${TBB_INCLUDE_DIR} )
   set(TBB_LIB_DIR ${TBB_LIB_DIR} )

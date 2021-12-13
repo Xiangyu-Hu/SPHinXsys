@@ -6,6 +6,8 @@
 #include "solid_dynamics.h"
 #include "general_dynamics.h"
 
+#include <numeric>
+
 using namespace SimTK;
 
 namespace SPH
@@ -79,6 +81,30 @@ namespace SPH
 			dvel_dt_ave_[index_i] = dvel_dt_[index_i];
 		}
 		//=================================================================================================//
+		ConstrainSolidBodySurfaceRegion::
+			ConstrainSolidBodySurfaceRegion(SPHBody *body, BodyPartByParticle *body_part)
+			: PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
+			  pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
+			  vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
+			  apply_constrain_to_particle_(StdLargeVec<bool>(pos_0_.size(), false))
+		{
+			// get the surface layer of particles
+			ShapeSurface surface_layer(body);
+			// select which particles the spring is applied to
+			// if the particle is in the surface layer, the force is applied
+			for (size_t particle_i: surface_layer.body_part_particles_) apply_constrain_to_particle_[particle_i] = true;
+		}
+		//=================================================================================================//
+		void ConstrainSolidBodySurfaceRegion::Update(size_t index_i, Real dt)
+		{
+			if(apply_constrain_to_particle_[index_i])
+			{
+				pos_n_[index_i] = pos_0_[index_i];
+				vel_n_[index_i] = Vecd(0);
+				dvel_dt_[index_i] = Vecd(0);
+			}
+		}
+		//=================================================================================================//
 		PositionSolidBody::
 			PositionSolidBody(SPHBody *body, BodyPartByParticle *body_part,
 							  Real start_time, Real end_time, Vecd pos_end_center)
@@ -88,7 +114,8 @@ namespace SPH
 			  vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
 			  start_time_(start_time), end_time_(end_time), pos_end_center_(pos_end_center)
 		{
-			BoundingBox bounds = body->getBodyDomainBounds();
+			// it's important we call the bounds of the body part
+			BoundingBox bounds = body_part->getBodyPartBounds();
 			pos_0_center_ = (bounds.first + bounds.second) * 0.5;
 			translation_ = pos_end_center_ - pos_0_center_;
 		}
@@ -120,10 +147,6 @@ namespace SPH
 				{
 					pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
 					vel_n_[index_i] = getVelocity();
-					dvel_dt_[index_i] = getAcceleration();
-					/** the average values are prescirbed also. */
-					vel_ave_[index_i] = vel_n_[index_i];
-					dvel_dt_ave_[index_i] = dvel_dt_[index_i];
 				}
 			}
 			catch (out_of_range &e)
@@ -141,7 +164,8 @@ namespace SPH
 			  vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
 			  start_time_(start_time), end_time_(end_time), end_scale_(end_scale)
 		{
-			BoundingBox bounds = body->getBodyDomainBounds();
+			// it's important we call the bounds of the body part
+			BoundingBox bounds = body_part->getBodyPartBounds();
 			pos_0_center_ = (bounds.first + bounds.second) * 0.5;
 		}
 		//=================================================================================================//
@@ -171,10 +195,6 @@ namespace SPH
 				{
 					pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
 					vel_n_[index_i] = getVelocity();
-					dvel_dt_[index_i] = getAcceleration();
-					/** the average values are prescirbed also. */
-					vel_ave_[index_i] = vel_n_[index_i];
-					dvel_dt_ave_[index_i] = dvel_dt_[index_i];
 				}
 			}
 			catch (out_of_range &e)
@@ -422,7 +442,7 @@ namespace SPH
 		{
 			// get the surface layer of particles
 			ShapeSurface surface_layer(body);
-			// select which paricles the spring is applied to
+			// select which particles the spring is applied to
 			for (size_t particle_i: surface_layer.body_part_particles_)
 			{
 				// vector to the source point from the particle
@@ -495,6 +515,45 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
+		SpringOnSurfaceParticles::
+			SpringOnSurfaceParticles(SolidBody *body, Real stiffness, Real damping_ratio)
+			: ParticleDynamicsSimple(body), SolidDataSimple(body),
+			  pos_n_(particles_->pos_n_),
+			  pos_0_(particles_->pos_0_),
+			  vel_n_(particles_->vel_n_),
+			  dvel_dt_prior_(particles_->dvel_dt_prior_),
+			  mass_(particles_->mass_),
+			  apply_spring_force_to_particle_(StdLargeVec<bool>(pos_0_.size(), false))
+		{
+			// get the surface layer of particles
+			ShapeSurface surface_layer(body);
+			// select which particles the spring is applied to
+			// if the particle is in the surface layer, the force is applied
+			for (size_t particle_i: surface_layer.body_part_particles_) apply_spring_force_to_particle_[particle_i] = true;
+
+			// scale stiffness and damping by area here, so it's not necessary in each iteration
+			// we take the area of the first particle, assuming they are uniform
+			Real area = std::pow(particles_->Vol_[0], 2.0 / 3.0);
+			stiffness_ = stiffness * area;
+			damping_coeff_ = stiffness_ * damping_ratio;
+
+			particles_->total_ghost_particles_ = 0;
+		}
+		//=================================================================================================//
+		void SpringOnSurfaceParticles::Update(size_t index_i, Real dt)
+		{
+			try{
+				if (apply_spring_force_to_particle_[index_i])
+				{
+					dvel_dt_prior_[index_i] += -stiffness_ * (pos_n_[index_i] - pos_0_[index_i]) / mass_[index_i];
+					dvel_dt_prior_[index_i] += -damping_coeff_ * vel_n_[index_i]  / mass_[index_i];
+				}
+			}
+				catch(out_of_range& e){
+				throw runtime_error(string("SpringOnSurfaceParticles::Update: particle index out of bounds") + to_string(index_i));
+			}
+		}
+		//=================================================================================================//
 		AccelerationForBodyPartInBoundingBox::
 			AccelerationForBodyPartInBoundingBox(SolidBody* body, BoundingBox& bounding_box, Vecd acceleration) :
 			ParticleDynamicsSimple(body), SolidDataSimple(body),
@@ -537,7 +596,7 @@ namespace SPH
 		void ForceInBodyRegion::Update(size_t index_i, Real dt)
 		{
 			try{
-				Real time_factor = std::min(GlobalStaticVariables::physical_time_ / end_time_, 1.0);
+				Real time_factor = SMIN(GlobalStaticVariables::physical_time_ / end_time_, 1.0);
 				dvel_dt_prior_[index_i] = acceleration_ * time_factor;
 			}
 			catch(out_of_range& e){
@@ -758,15 +817,26 @@ namespace SPH
 			pos_n_[index_i] += vel_n_[index_i] * dt * 0.5;
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
 			Real J = det(F_[index_i]);
+			//throw an exception if the determinant becomes negative
+			if (J <= 0) throw std::runtime_error(std::string("Determinant of F_ became negative! SPHBody: ") + this->body_->getBodyName()
+				+ " particle ID: " + std::to_string(index_i));
 			Real one_over_J = 1.0 / J;
 			rho_n_[index_i] = rho0_ * one_over_J;
 			J_to_minus_2_over_dimension_[index_i] = pow(one_over_J, 2.0 * one_over_dimensions_);
 			inverse_F_T_[index_i] = ~SimTK::inverse(F_[index_i]);
-			stress_on_particle_[index_i] = inverse_F_T_[index_i] * (material_->VolumetricKirchhoff(J) * B_[index_i] -
+			stress_on_particle_[index_i] = inverse_F_T_[index_i] * (material_->VolumetricKirchhoff(J) * Matd(1.0) -
 				Matd(correction_factor_) * material_->ShearModulus() * J_to_minus_2_over_dimension_[index_i] *
 				(F_[index_i] * ~F_[index_i]).trace() * one_over_dimensions_) +
 				material_->NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i) * inverse_F_T_[index_i];
 			stress_PK1_[index_i] = F_[index_i] * material_->ConstitutiveRelation(F_[index_i], index_i);
+			
+			for (int i = 0; i < 3; i++){
+				for (int j = 0; j < 3; j++){
+					if (std::isnan(stress_on_particle_[index_i][i][j])){
+						throw std::runtime_error(std::string("stress_on_particle_ is Not A Number"));
+					}
+				}
+			}
 		}
 		//=================================================================================================//
 		void KirchhoffStressRelaxationFirstHalf::Interaction(size_t index_i, Real dt)
@@ -784,6 +854,13 @@ namespace SPH
 					inner_neighborhood.dW_ij_[n]  * Vol_[index_j] * inv_rho0_;
 			}
 			dvel_dt_[index_i] = acceleration;
+
+			for (int i = 0; i < 3; i++){
+				if (std::isnan(acceleration[i])){
+					throw std::runtime_error(std::string("acceleration is Not A Number! SPHBody: ") + this->body_->getBodyName() 
+						+ " particle ID: " + std::to_string(index_i));
+				}
+			}
 		}
 		//=================================================================================================//
 		void StressRelaxationSecondHalf::Initialization(size_t index_i, Real dt)

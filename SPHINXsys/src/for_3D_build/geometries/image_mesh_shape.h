@@ -31,6 +31,8 @@
 #ifndef IMAGE_MESH_SHAPE_H
 #define IMAGE_MESH_SHAPE_H
 
+#ifndef __EMSCRIPTEN__
+
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include "base_geometry.h"
@@ -84,5 +86,7 @@ namespace SPH
 
 	};
 }
+
+#endif // __EMSCRIPTEN__
 
 #endif //IMAGE_MESH_SHAPE_H

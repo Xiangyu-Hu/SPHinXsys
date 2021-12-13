@@ -31,7 +31,7 @@
 
 
 #include "base_particles.h"
-
+	
 namespace SPH {
 
 	//----------------------------------------------------------------------
@@ -41,6 +41,7 @@ namespace SPH {
 	class ElasticSolid;
 	class PlasticSolid;
 	template<class MuscleType> class ActiveMuscle;
+	class ShapeSurface;
 
 	/**
 	 * @class SolidParticles
@@ -104,8 +105,22 @@ namespace SPH {
 		StdLargeVec<Real> getVonMisesStress();
 		Real getMaxVonMisesStress();
 
-		virtual void writeParticlesToVtuFile(std::ofstream &output_file) override;
+		/**< Computing displacemnt. */
+		Vecd displacement(size_t particle_i);
+		StdLargeVec<Vecd> getDisplacement();
 
+		/**< Computing normal vector. */
+		Vecd normal (size_t particle_i);
+		StdLargeVec<Vecd> getNormal();
+
+		/**< Computing von Mises equivalent stress. */
+		Real von_Mises_strain (size_t particle_i);
+		StdLargeVec<Real> getVonMisesStrain();
+		Real getMaxVonMisesStrain();
+
+		virtual void writeParticlesToVtuFile(std::ostream &output_file) override;
+		/** Write only surface particle data in VTU format for Paraview. */
+		virtual void writeSurfaceParticlesToVtuFile(std::ofstream& output_file, ShapeSurface& surface_particles);
 		virtual ElasticSolidParticles* ThisObjectPtr() override {return this;};
 	};
 

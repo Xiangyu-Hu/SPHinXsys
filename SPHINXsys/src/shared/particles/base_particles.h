@@ -44,6 +44,7 @@ namespace SPH
 
 	class SPHBody;
 	class BaseMaterial;
+	class ShapeSurface;
 
 	/**
 	 * @class BaseParticles
@@ -258,7 +259,9 @@ namespace SPH
 		void switchToBufferParticle(size_t index_i);
 
 		/** Write particle data in VTU format for Paraview. */
-		virtual void writeParticlesToVtuFile(std::ofstream& output_file);
+		virtual void writeParticlesToVtuFile(std::ostream& output_file);
+		/** Write only surface particle data in VTU format for Paraview. */
+		virtual void writeSurfaceParticlesToVtuFile(std::ofstream& output_file, ShapeSurface& surface_particles);
 		/** Write particle data in PLT format for Tecplot. */
 		void writeParticlesToPltFile(std::ofstream& output_file);
 

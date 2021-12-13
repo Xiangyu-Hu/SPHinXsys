@@ -37,14 +37,14 @@ namespace SPH
 		//		add basic output particle data
 		//----------------------------------------------------------------------
 		addAVariableToWrite<indexVector, Vecd>("Velocity");
-		addAVariableToWrite<indexScalar, Real>("Density");
+		addAVariableToWrite<indexVector, Vecd>("Acceleration");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
 		addAVariableNameToList<indexVector, Vecd>(variables_to_restart_, "Position");
 		addAVariableNameToList<indexVector, Vecd>(variables_to_restart_, "Velocity");
+		addAVariableNameToList<indexVector, Vecd>(variables_to_restart_, "Acceleration");
 		addAVariableNameToList<indexScalar, Real>(variables_to_restart_, "Volume");
-		addAVariableNameToList<indexScalar, Real>(variables_to_restart_, "Density");
 
 		ParticleGenerator* particle_generator = body_->particle_generator_;
 		particle_generator->initialize(body_);
@@ -131,11 +131,11 @@ namespace SPH
 		total_real_particles_ -= 1;
 	}
 	//=================================================================================================//
-	void BaseParticles::writeParticlesToVtuFile(std::ofstream& output_file)
+	void BaseParticles::writeParticlesToVtuFile(std::ostream& output_file)
 	{
 		size_t total_real_particles = total_real_particles_;
 
-		//write particle positions first
+		//write current/final particle positions first
 		output_file << "   <Points>\n";
 		output_file << "    <DataArray Name=\"Position\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
 		output_file << "    ";
@@ -224,6 +224,112 @@ namespace SPH
 			output_file << "    ";
 			for (size_t i = 0; i != total_real_particles; ++i) {
 				output_file << std::fixed << std::setprecision(9) << variable[i] << " ";
+			}
+			output_file << std::endl;
+			output_file << "    </DataArray>\n";
+		}
+	}
+	//=================================================================================================//
+	void BaseParticles::writeSurfaceParticlesToVtuFile(std::ofstream& output_file, ShapeSurface& surface_particles)
+	{
+		size_t total_surface_particles = surface_particles.body_part_particles_.size();
+
+		//write current/final particle positions first
+		output_file << "   <Points>\n";
+		output_file << "    <DataArray Name=\"Position\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != total_surface_particles; ++i) {
+			size_t particle_i = surface_particles.body_part_particles_[i];
+			Vec3d particle_position = upgradeToVector3D(pos_n_[particle_i]);
+			output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+		output_file << "   </Points>\n";
+
+		//write header of particles data
+		output_file << "   <PointData  Vectors=\"vector\">\n";
+
+		//write sorted particles ID
+		output_file << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != total_surface_particles; ++i) {
+			size_t particle_i = surface_particles.body_part_particles_[i];
+			output_file << particle_i << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+
+		//write unsorted particles ID
+		output_file << "    <DataArray Name=\"UnsortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != total_surface_particles; ++i) {
+			size_t particle_i = surface_particles.body_part_particles_[i];
+			output_file << unsorted_id_[particle_i] << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+
+		//write matrices
+		for (std::pair<std::string, size_t>& name_index : variables_to_write_[indexMatrix])
+		{
+			std::string variable_name = name_index.first;
+			StdLargeVec<Matd>& variable = *(std::get<indexMatrix>(all_particle_data_)[name_index.second]);
+			output_file << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
+			output_file << "    ";
+			for (size_t i = 0; i != total_surface_particles; ++i) {
+				size_t particle_i = surface_particles.body_part_particles_[i];
+				Mat3d matrix_value = upgradeToMatrix3D(variable[particle_i]);
+				for (int k = 0; k != 3; ++k) {
+					Vec3d col_vector = matrix_value.col(k);
+					output_file << std::fixed << std::setprecision(9) << col_vector[0] << " " << col_vector[1] << " " << col_vector[2] << " ";
+				}
+			}
+			output_file << std::endl;
+			output_file << "    </DataArray>\n";
+		}
+
+		//write vectors
+		for (std::pair<std::string, size_t>& name_index : variables_to_write_[indexVector])
+		{
+			std::string variable_name = name_index.first;
+			StdLargeVec<Vecd>& variable = *(std::get<indexVector>(all_particle_data_)[name_index.second]);
+			output_file << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
+			output_file << "    ";
+			for (size_t i = 0; i != total_surface_particles; ++i) {
+				size_t particle_i = surface_particles.body_part_particles_[i];
+				Vec3d vector_value = upgradeToVector3D(variable[particle_i]);
+				output_file << std::fixed << std::setprecision(9) << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
+			}
+			output_file << std::endl;
+			output_file << "    </DataArray>\n";
+		}
+
+		//write scalars
+		for (std::pair<std::string, size_t>& name_index : variables_to_write_[indexScalar])
+		{
+			std::string variable_name = name_index.first;
+			StdLargeVec<Real>& variable = *(std::get<indexScalar>(all_particle_data_)[name_index.second]);
+			output_file << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\" Format=\"ascii\">\n";
+			output_file << "    ";
+			for (size_t i = 0; i != total_surface_particles; ++i) {
+				size_t particle_i = surface_particles.body_part_particles_[i];
+				output_file << std::fixed << std::setprecision(9) << variable[particle_i] << " ";
+			}
+			output_file << std::endl;
+			output_file << "    </DataArray>\n";
+		}
+
+		//write integers
+		for (std::pair<std::string, size_t>& name_index : variables_to_write_[indexInteger])
+		{
+			std::string variable_name = name_index.first;
+			StdLargeVec<int>& variable = *(std::get<indexInteger>(all_particle_data_)[name_index.second]);
+			output_file << "    <DataArray Name=\"" << variable_name << "\" type=\"Int32\" Format=\"ascii\">\n";
+			output_file << "    ";
+			for (size_t i = 0; i != total_surface_particles; ++i) {
+				size_t particle_i = surface_particles.body_part_particles_[i];
+				output_file << std::fixed << std::setprecision(9) << variable[particle_i] << " ";
 			}
 			output_file << std::endl;
 			output_file << "    </DataArray>\n";
