@@ -95,6 +95,10 @@ namespace SPH
 			SPHBody *sph_body_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+
+			int intOpt;
+
+			enum intOption{Gaussian, Trapezoidal};
 		};
 
 		/**

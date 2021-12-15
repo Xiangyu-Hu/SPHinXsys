@@ -144,7 +144,7 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	WallBoundary *wall_boundary = new WallBoundary(sph_system, "Wall");
 	WallMaterial* wall_material = new WallMaterial();
-	SolidParticles 	solid_particles(wall_boundary, wall_material);
+	ElasticSolidParticles 	solid_particles(wall_boundary, wall_material);
 
 	FreeBall* free_ball = new FreeBall(sph_system, "FreeBall");
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_) free_ball->useParticleGeneratorReload();

@@ -57,6 +57,9 @@ namespace SPH
 				}
 			}
 			contact_density_[index_i] = sigma;
+
+			if (sigma != Real(0.) and index_i % 50 == 0.)
+			printf ("index_i = %d    contact_dnesity_ (ContactDensitySummation) = %f \n", index_i, contact_density_[index_i]);
 		}
 		//=================================================================================================//
 		ShellContactDensitySummation::
@@ -79,42 +82,92 @@ namespace SPH
 		{
 			/** Shell contact interaction. */
 			Real sigma = 0.0;
-			/** Abscissas and weights for Gauss-Legendre quadrature for n=3 nodes */
-			Real x_0 = 0.774596669241483377035853079956;
-    		Real x_1 = 0.000000000000000000000000000000;
-			Real x_2 = -x_0;
+			intOpt = Trapezoidal;
 
-			Real w_0 = 0.555555555555555555555555555556;
-			Real w_1 = 0.888888888888888888888888888889;
-			Real w_2 = w_0;
-
-			for (size_t k = 0; k < contact_configuration_.size(); ++k)
+			if (intOpt == intOption::Gaussian)
 			{
-				StdLargeVec<Vecd> &contact_pos_k = *(contact_pos_[k]);
-				StdLargeVec<Vecd> &contact_normal_k = *(contact_normal_[k]);
-				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				/** Abscissas and weights for Gauss-Legendre quadrature for n=3 nodes */
+				Real x_0 = 0.774596669241483377035853079956;
+				Real x_1 = 0.000000000000000000000000000000;
+				Real x_2 = -x_0;
+
+				Real w_0 = 0.555555555555555555555555555556;
+				Real w_1 = 0.888888888888888888888888888889;
+				Real w_2 = w_0;
+
+				for (size_t k = 0; k < contact_configuration_.size(); ++k)
 				{
-					const Real dp_2 = spacing_ref_/2.;
-					const Vecd contact_pos_j = contact_pos_k[contact_neighborhood.j_[n]];
-					const Vecd contact_n_j = contact_normal_k[contact_neighborhood.j_[n]];
+					StdLargeVec<Vecd> &contact_pos_k = *(contact_pos_[k]);
+					StdLargeVec<Vecd> &contact_normal_k = *(contact_normal_[k]);
+					Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+					{
+						
+						const Real dp_2 = spacing_ref_/2.;
+						const Vecd contact_pos_j = contact_pos_k[contact_neighborhood.j_[n]];
+						const Vecd contact_n_j = contact_normal_k[contact_neighborhood.j_[n]];
+						
+						const Vecd dp_2_t_0 = pos_n_[index_i] - Vecd(dp_2*x_0, contact_pos_j[1]) - contact_pos_j;
+						const Vecd dp_2_t_1 = pos_n_[index_i] - Vecd(dp_2*x_1, contact_pos_j[1]) - contact_pos_j;
+						const Vecd dp_2_t_2 = pos_n_[index_i] - Vecd(dp_2*x_2, contact_pos_j[1]) - contact_pos_j;
 
-					const Vecd dp_2_t_0 = pos_n_[index_i] - Vecd(dp_2*x_0, contact_pos_j[1]) - contact_pos_j;
-					const Vecd dp_2_t_1 = pos_n_[index_i] - Vecd(dp_2*x_1, contact_pos_j[1]) - contact_pos_j;
-					const Vecd dp_2_t_2 = pos_n_[index_i] - Vecd(dp_2*x_2, contact_pos_j[1]) - contact_pos_j;
+						// Vecd eij_0 = dp_2_t_0 / (dp_2_t_0.norm() + 1e-16);
+						// Vecd eij_1 = dp_2_t_1 / (dp_2_t_1.norm() + 1e-16);
+						// Vecd eij_2 = dp_2_t_2 / (dp_2_t_2.norm() + 1e-16);
 
-					const Real W_rij_t_0 = kernel_->W(dp_2_t_0.norm(), dp_2_t_0);
-					const Real W_rij_t_1 = kernel_->W(dp_2_t_1.norm(), dp_2_t_1);
-					const Real W_rij_t_2 = kernel_->W(dp_2_t_2.norm(), dp_2_t_2);
+						const Real W_rij_t_0 = kernel_->W(dp_2_t_0.norm(), dp_2_t_0);
+						const Real W_rij_t_1 = kernel_->W(dp_2_t_1.norm(), dp_2_t_1);
+						const Real W_rij_t_2 = kernel_->W(dp_2_t_2.norm(), dp_2_t_2);
 
-					sigma += w_0 * dot(dp_2_t_0, contact_n_j) * W_rij_t_0 * dp_2
-						   + w_1 * dot(dp_2_t_1, contact_n_j) * W_rij_t_1 * dp_2
-						   + w_2 * dot(dp_2_t_2, contact_n_j) * W_rij_t_2 * dp_2;
+						sigma += w_0 * dot(dp_2_t_0.norm() * dp_2_t_0, - contact_n_j) * W_rij_t_0 * dp_2
+							+ w_1 * dot(dp_2_t_1.norm() * dp_2_t_1, - contact_n_j) * W_rij_t_1 * dp_2
+							+ w_2 * dot(dp_2_t_2.norm() * dp_2_t_2, - contact_n_j) * W_rij_t_2 * dp_2;
+
+					}
+
+					printf(" sigma Gaussian = %f \n", sigma);
 
 				}
-				
+
+			} else if (intOpt == intOption::Trapezoidal) {
+
+				for (size_t k = 0; k < contact_configuration_.size(); ++k)
+				{
+					StdLargeVec<Vecd> &contact_pos_k = *(contact_pos_[k]);
+					StdLargeVec<Vecd> &contact_normal_k = *(contact_normal_[k]);
+					Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+					{
+						
+						const Real dp_2 = spacing_ref_/2.;
+						const Vecd contact_pos_j = contact_pos_k[contact_neighborhood.j_[n]];
+						const Vecd contact_n_j = contact_normal_k[contact_neighborhood.j_[n]];
+
+						const Vecd ri_0 = pos_n_[index_i] - Vecd(contact_pos_j[0]-dp_2, contact_pos_j[1]);
+						const Vecd ri_1 = pos_n_[index_i] - Vecd(contact_pos_j[0], contact_pos_j[1]);
+						const Vecd ri_2 = pos_n_[index_i] - Vecd(contact_pos_j[0]+dp_2, contact_pos_j[1]);
+
+						const Real W_rij_0 = kernel_->W(ri_0.norm(), ri_0);
+						const Real W_rij_1 = kernel_->W(ri_1.norm(), ri_1);
+						const Real W_rij_2 = kernel_->W(ri_2.norm(), ri_2);
+
+						const Real T0 = dot(ri_0, - contact_n_j) * W_rij_0;
+						const Real T1 = dot(ri_1, - contact_n_j) * W_rij_1;
+						const Real T2 = dot(ri_2, - contact_n_j) * W_rij_2;
+
+						/* Trapezoidal method with n=3 nodes*/
+						sigma += 0.5 * dp_2 * (T0 + 2. * T1 + T2);
+
+					}
+
+					printf(" sigma trapoziodal = %f \n", sigma);
+		
+				}
+
 			}
+
 			contact_density_[index_i] = sigma / 3.;
+
 		}
 		//=================================================================================================//
 		SelfContactForce::
