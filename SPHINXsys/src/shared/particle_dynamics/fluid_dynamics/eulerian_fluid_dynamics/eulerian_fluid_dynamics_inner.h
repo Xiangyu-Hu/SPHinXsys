@@ -29,6 +29,8 @@
 
 #pragma once
 
+#include "fluid_dynamics_inner.h"
+
 #include "all_particle_dynamics.h"
 #include "base_kernel.h"
 #include "riemann_solver.h"
@@ -41,15 +43,21 @@ namespace SPH
 		typedef DataDelegateInner<EulerianFluidBody, CompressibleFluidParticles, CompressibleFluid> CompressibleFluidDataInner;
 
 		class CompressibleFlowTimeStepInitialization
-			: public ParticleDynamicsSimple, public CompressibleFluidDataSimple
+			: public ParticleDynamicsSimple,
+			  public CompressibleFluidDataSimple
 		{
+		private:
+			UniquePtrKeeper<Gravity> gravity_ptr_keeper_;
+
 		public:
-			CompressibleFlowTimeStepInitialization(SPHBody* body, Gravity* gravity = new Gravity(Vecd(0)));
-			virtual ~CompressibleFlowTimeStepInitialization() {};
+			explicit CompressibleFlowTimeStepInitialization(SPHBody &sph_body);
+			CompressibleFlowTimeStepInitialization(SPHBody &sph_body, Gravity &gravity);
+			virtual ~CompressibleFlowTimeStepInitialization(){};
+
 		protected:
-			StdLargeVec<Real>& rho_n_, & dE_dt_prior_;
-			StdLargeVec<Vecd>& pos_n_, & vel_n_, & dmom_dt_prior_;
-			Gravity* gravity_;
+			StdLargeVec<Real> &rho_n_, &dE_dt_prior_;
+			StdLargeVec<Vecd> &pos_n_, &vel_n_, &dmom_dt_prior_;
+			Gravity *gravity_;
 			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
@@ -60,15 +68,17 @@ namespace SPH
 		 * This is a abstract class to be override for case specific initial conditions
 		 */
 		class CompressibleFluidInitialCondition
-			: public ParticleDynamicsSimple, public CompressibleFluidDataSimple
+			: public ParticleDynamicsSimple,
+			  public CompressibleFluidDataSimple
 		{
 		public:
-			CompressibleFluidInitialCondition(EulerianFluidBody* body);
-			virtual ~CompressibleFluidInitialCondition() {};
+			explicit CompressibleFluidInitialCondition(EulerianFluidBody &body);
+			virtual ~CompressibleFluidInitialCondition(){};
+
 		protected:
-			StdLargeVec<Vecd>& pos_n_, & vel_n_, & mom_;
-			StdLargeVec<Real>& rho_n_, & E_, & p_;
-			Real gamma_, c0_, rho0_;
+			StdLargeVec<Vecd> &pos_n_, &vel_n_, &mom_;
+			StdLargeVec<Real> &rho_n_, &E_, &p_;
+			Real gamma_;
 		};
 
 		/**
@@ -76,16 +86,18 @@ namespace SPH
 		 * @brief  the viscosity force induced acceleration
 		 */
 		class ViscousAccelerationInner
-			: public InteractionDynamics, public CompressibleFluidDataInner
+			: public InteractionDynamics,
+			  public CompressibleFluidDataInner
 		{
 		public:
-			ViscousAccelerationInner(BaseBodyRelationInner* inner_relation);
-			virtual ~ViscousAccelerationInner() {};
+			explicit ViscousAccelerationInner(BaseBodyRelationInner &inner_relation);
+			virtual ~ViscousAccelerationInner(){};
+
 		protected:
 			Real mu_;
 			Real smoothing_length_;
-			StdLargeVec<Real>& Vol_, & rho_n_, & p_, & mass_, & dE_dt_prior_;
-			StdLargeVec<Vecd>& vel_n_, & dmom_dt_prior_;
+			StdLargeVec<Real> &Vol_, &rho_n_, &p_, &mass_, &dE_dt_prior_;
+			StdLargeVec<Vecd> &vel_n_, &dmom_dt_prior_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -94,15 +106,15 @@ namespace SPH
 		* @class AcousticTimeStepSize
 		* @brief Computing the acoustic time step size
 		*/
-		class AcousticTimeStepSize :
-			public ParticleDynamicsReduce<Real, ReduceMax>, public CompressibleFluidDataSimple
+		class AcousticTimeStepSize : public ParticleDynamicsReduce<Real, ReduceMax>, public CompressibleFluidDataSimple
 		{
 		public:
-			explicit AcousticTimeStepSize(EulerianFluidBody* body);
-			virtual ~AcousticTimeStepSize() {};
+			explicit AcousticTimeStepSize(EulerianFluidBody &body);
+			virtual ~AcousticTimeStepSize(){};
+
 		protected:
-			StdLargeVec<Real>& rho_n_, & p_;
-			StdLargeVec<Vecd>& vel_n_;
+			StdLargeVec<Real> &rho_n_, &p_;
+			StdLargeVec<Vecd> &vel_n_;
 			Real smoothing_length_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 			Real OutputResult(Real reduced_value) override;
@@ -115,11 +127,12 @@ namespace SPH
 		class BaseRelaxation : public ParticleDynamics1Level, public CompressibleFluidDataInner
 		{
 		public:
-			BaseRelaxation(BaseBodyRelationInner* inner_relation);
-			virtual ~BaseRelaxation() {};
+			explicit BaseRelaxation(BaseBodyRelationInner &inner_relation);
+			virtual ~BaseRelaxation(){};
+
 		protected:
-			StdLargeVec<Real>& Vol_, & rho_n_, & p_, & drho_dt_, & E_, & dE_dt_, & dE_dt_prior_;
-			StdLargeVec<Vecd>& vel_n_, & mom_, & dmom_dt_, & dmom_dt_prior_;
+			StdLargeVec<Real> &Vol_, &rho_n_, &p_, &drho_dt_, &E_, &dE_dt_, &dE_dt_prior_;
+			StdLargeVec<Vecd> &vel_n_, &mom_, &dmom_dt_, &dmom_dt_prior_;
 		};
 
 		/**
@@ -129,8 +142,9 @@ namespace SPH
 		class BasePressureRelaxation : public BaseRelaxation
 		{
 		public:
-			BasePressureRelaxation(BaseBodyRelationInner* inner_relation);
-			virtual ~BasePressureRelaxation() {};
+			explicit BasePressureRelaxation(BaseBodyRelationInner &inner_relation);
+			virtual ~BasePressureRelaxation(){};
+
 		protected:
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -141,13 +155,14 @@ namespace SPH
 		 * @brief Template class for pressure relaxation scheme with the Riemann solver
 		 * as template variable
 		 */
-		template<class RiemannSolverType>
+		template <class RiemannSolverType>
 		class BasePressureRelaxationInner : public BasePressureRelaxation
 		{
 		public:
-			BasePressureRelaxationInner(BaseBodyRelationInner* inner_relation);
-			virtual ~BasePressureRelaxationInner() {};
+			explicit BasePressureRelaxationInner(BaseBodyRelationInner &inner_relation);
+			virtual ~BasePressureRelaxationInner(){};
 			RiemannSolverType riemann_solver_;
+
 		protected:
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -161,10 +176,11 @@ namespace SPH
 		class BaseDensityAndEnergyRelaxation : public BaseRelaxation
 		{
 		public:
-			BaseDensityAndEnergyRelaxation(BaseBodyRelationInner* inner_relation);
-			virtual ~BaseDensityAndEnergyRelaxation() {};
+			explicit BaseDensityAndEnergyRelaxation(BaseBodyRelationInner &inner_relation);
+			virtual ~BaseDensityAndEnergyRelaxation(){};
+
 		protected:
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override {};
+			virtual void Initialization(size_t index_i, Real dt = 0.0) override{};
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -172,13 +188,14 @@ namespace SPH
 		 * @class BaseDensityAndEnergyRelaxationInner
 		 * @brief  Template density relaxation scheme in HLLC Riemann solver with and without limiter
 		 */
-		template<class RiemannSolverType>
+		template <class RiemannSolverType>
 		class BaseDensityAndEnergyRelaxationInner : public BaseDensityAndEnergyRelaxation
 		{
 		public:
-			BaseDensityAndEnergyRelaxationInner(BaseBodyRelationInner* inner_relation);
-			virtual ~BaseDensityAndEnergyRelaxationInner() {};
+			explicit BaseDensityAndEnergyRelaxationInner(BaseBodyRelationInner &inner_relation);
+			virtual ~BaseDensityAndEnergyRelaxationInner(){};
 			RiemannSolverType riemann_solver_;
+
 		protected:
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};

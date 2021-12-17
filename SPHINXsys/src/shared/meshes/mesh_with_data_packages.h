@@ -21,7 +21,7 @@
 *                                                                           *
 * --------------------------------------------------------------------------*/
 /**
-* @file 	base_mesh.h
+* @file 	mesh_with_data_packages.h
 * @brief 	This is the base classes of mesh, which describe ordered and indexed
 *			data sets.  Depending on application, there are different data 
 * 			saved on the mesh. The intersection points of mesh lines are called 
@@ -174,7 +174,7 @@ namespace SPH
 		DataType CornerAverage(PackageDataAddress<DataType> &pkg_data_addrs, Veci addrs_index, Veci corner_direction);
 	};
 
-    /**
+	/**
      * @class MeshWithDataPackages
      * @brief Abstract class for mesh with data packages
      * @details The idea is to save sparse data on a cell-based mesh.
@@ -189,10 +189,13 @@ namespace SPH
      * and then the address matrix by the function initializeAddressesInACell.
 	 * All these data packages are indexed by a concurrent vector inner_data_pkgs_.
 	 * Note that a data package should be not near the mesh bound, otherwise one will encouter the error "out of range". 
-     */ 
+     */
 	template <class MeshFieldType, class DataPackageType>
 	class MeshWithDataPackages : public MeshFieldType, public Mesh
 	{
+	private:
+		UniquePtrVectorKeeper<DataPackageType> singular_data_package_ptr_keeper_;
+
 	public:
 		MyMemoryPool<DataPackageType> data_pkg_pool_;		  /**< memory pool for all packages in the mesh. */
 		MeshDataMatrix<DataPackageType *> data_pkg_addrs_;	  /**< Address of data packages. */
@@ -221,14 +224,23 @@ namespace SPH
 		DataType probeMesh(const Vecd &position);
 
 	protected:
-		Real data_spacing_;									/**< spacing of data in the data packages*/
-		int pkg_size_;										/**< the size of the data package matrix*/
-		int pkg_addrs_buffer_;								/**< the size of address buffer, a value less than the package size. */
-		int pkg_operations_;								/**< the size of operation loops. */
-		int pkg_addrs_size_;								/**< the size of address matrix in the data packages. */
-		StdVec<DataPackageType *> singular_data_pkgs_addrs; /**< singular data packages. prodvied for far field condition. */
-		std::mutex mutex_my_pool;							/**< mutex exclusion for memory pool */
-		BaseMesh global_mesh_;								/**< the mesh for the locations of all possible data points. */
+		Real data_spacing_;		  /**< spacing of data in the data packages*/
+		int pkg_size_;			  /**< the size of the data package matrix*/
+		int pkg_addrs_buffer_;	  /**< the size of address buffer, a value less than the package size. */
+		int pkg_operations_;	  /**< the size of operation loops. */
+		int pkg_addrs_size_;	  /**< the size of address matrix in the data packages. */
+		std::mutex mutex_my_pool; /**< mutex exclusion for memory pool */
+		BaseMesh global_mesh_;	  /**< the mesh for the locations of all possible data points. */
+		/** Singular data packages. prodvied for far field condition with usually only two values.
+		 * The first value for inner farfield and second for outer far field */
+		StdVec<DataPackageType *> singular_data_pkgs_addrs_;
+
+		template <typename... ConstructorArgs>
+		void initializeASingularDataPackage(ConstructorArgs &&...args)
+		{
+			singular_data_pkgs_addrs_.push_back(
+				singular_data_package_ptr_keeper_.template createPtr<DataPackageType>(std::forward<ConstructorArgs>(args)...));
+		};
 
 		virtual void initializeDataInACell(const Vecu &cell_index, Real dt) = 0;
 		virtual void initializeAddressesInACell(const Vecu &cell_index, Real dt) = 0;

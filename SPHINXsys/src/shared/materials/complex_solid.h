@@ -29,7 +29,8 @@
 
 #include "elastic_solid.h"
 
-namespace SPH {
+namespace SPH
+{
 
 	class ActiveMuscleParticles;
 
@@ -37,20 +38,20 @@ namespace SPH {
 	* @class ActiveMuscle
 	* @brief Here, the active reponse is considered.
 	*/
-	template<class MuscleType>
+	template <class MuscleType>
 	class ActiveMuscle : public MuscleType
 	{
 	protected:
-		ActiveMuscleParticles* active_muscle_particles_;
+		ActiveMuscleParticles *active_muscle_particles_;
 
-		virtual void assignDerivedMaterialParameters() override;
 	public:
-		ActiveMuscle();
-		virtual ~ActiveMuscle() {};
+		template <typename... ConstructorArgs>
+		explicit ActiveMuscle(ConstructorArgs &&...args);
+		virtual ~ActiveMuscle(){};
 
-		void assignActiveMuscleParticles(ActiveMuscleParticles* active_muscle_particles);
+		void assignActiveMuscleParticles(ActiveMuscleParticles *active_muscle_particles);
 		/** compute the stress through Constitutive relation. */
-		virtual Matd ConstitutiveRelation(Matd& deformation, size_t index_i) override;
-		virtual ActiveMuscle<MuscleType>* ThisObjectPtr() override { return this; };
+		virtual Matd ConstitutiveRelation(Matd &deformation, size_t index_i) override;
+		virtual ActiveMuscle<MuscleType> *ThisObjectPtr() override { return this; };
 	};
 }

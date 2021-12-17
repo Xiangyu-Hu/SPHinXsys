@@ -180,5 +180,8 @@ namespace SPH {
 	  * The axis_direction must be 0, 1 for 2d and 0, 1, 2 for 3d
 	  */
 	int ThirdAxis(int axis_direction);
+
+	double getLeftStateInWeno(double v1, double v2, double v3, double v4);
+	double getRightStateInWeno(double v1, double v2, double v3, double v4);
 }
 #endif //SCALAR_FUNCTIONS_H

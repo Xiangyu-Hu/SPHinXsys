@@ -43,9 +43,8 @@ namespace SPH {
 	class FluidBody : public RealBody
 	{
 	public:
-		explicit FluidBody(SPHSystem &system, std::string body_name,
-			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(),
-			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
+		explicit FluidBody(SPHSystem &system, const std::string &body_name,
+			SharedPtr<SPHAdaptation> sph_adaptation_ptr =  makeShared<SPHAdaptation>());
 		virtual ~FluidBody() {};
 
 		/** Update cell linked list with particle sorting. */
@@ -62,9 +61,8 @@ namespace SPH {
 	class EulerianFluidBody : public RealBody
 	{
 	public:
-		explicit EulerianFluidBody(SPHSystem &system, std::string body_name,
-			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(),
-			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
+		explicit EulerianFluidBody(SPHSystem &system, const std::string &body_name,
+			SharedPtr<SPHAdaptation> sph_adaptation_ptr =  makeShared<SPHAdaptation>());
 		virtual ~EulerianFluidBody() {};
 
 		virtual EulerianFluidBody* ThisObjectPtr() override { return this; };

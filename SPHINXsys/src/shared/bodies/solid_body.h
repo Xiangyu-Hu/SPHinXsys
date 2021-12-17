@@ -26,14 +26,13 @@
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
   */
 
-
 #ifndef SOLID_BODY_H
 #define SOLID_BODY_H
 
-
 #include "base_body.h"
 
-namespace SPH {
+namespace SPH
+{
 	/**
 	 * @brief Preclaimed class.
 	 */
@@ -46,11 +45,10 @@ namespace SPH {
 	class SolidBody : public RealBody
 	{
 	public:
-		SolidBody(SPHSystem &system, std::string body_name,
-			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(1.15),
-			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
-		virtual ~SolidBody() {};
-		virtual SolidBody* ThisObjectPtr()  override {return this;};
+		SolidBody(SPHSystem &system, const std::string &body_name,
+				  SharedPtr<SPHAdaptation> sph_adaptation_ptr = makeShared<SPHAdaptation>(1.15));
+		virtual ~SolidBody(){};
+		virtual SolidBody *ThisObjectPtr() override { return this; };
 	};
 
 	/**
@@ -60,11 +58,10 @@ namespace SPH {
 	class ThinStructure : public SolidBody
 	{
 	public:
-		ThinStructure(SPHSystem& system, std::string body_name,
-			ParticleAdaptation* particle_adaptation = new ParticleAdaptation(1.15),
-			ParticleGenerator* particle_generator = new ParticleGeneratorLattice());
-		virtual ~ThinStructure() {};
-		virtual ThinStructure* ThisObjectPtr() override {return this;};
+		ThinStructure(SPHSystem &system, const std::string &body_name,
+					  SharedPtr<SPHAdaptation> sph_adaptation_ptr = makeShared<SPHAdaptation>(1.15));
+		virtual ~ThinStructure(){};
+		virtual ThinStructure *ThisObjectPtr() override { return this; };
 	};
 
 	/**
@@ -73,19 +70,23 @@ namespace SPH {
 	 * The mass, origin, and unit inertial matrix are computed.
 	 * Note: In Simbody, all spatial vectors are three dimensional.
 	 */
-	class SolidBodyPartForSimbody : public BodyPartByParticle
+	class SolidBodyPartForSimbody : public BodyRegionByParticle
 	{
+	protected:
+		UniquePtrKeeper<SimTK::MassProperties> mass_properties_ptr_keeper_;
+
 	public:
 		Vec3d initial_mass_center_;
-		SimTK::MassProperties* body_part_mass_properties_;
-		
-		SolidBodyPartForSimbody(SPHBody* body, std::string solid_body_part_name);
-		virtual~SolidBodyPartForSimbody() {};
+		SimTK::MassProperties *body_part_mass_properties_;
+
+		SolidBodyPartForSimbody(SPHBody &body, const std::string &body_part_name, Shape &shape);
+		virtual ~SolidBodyPartForSimbody(){};
+
 	protected:
 		Real solid_body_density_;
-		SolidParticles* solid_particles_;
-
-		virtual void tagBodyPart() override;
-	};	
+		SolidParticles *solid_particles_;
+	private:
+		void setMassProperties();	
+	};
 }
 #endif //SOLID_BODY_H

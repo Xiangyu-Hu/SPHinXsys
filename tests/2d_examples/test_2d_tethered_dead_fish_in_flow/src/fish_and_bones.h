@@ -22,7 +22,7 @@ Real outline(Real x, Real h, Real L)
 	return y;
 }
 
-//creat bone shape
+//create bone shape
 std::vector<Vecd> CreatFishShape(Real center_x, Real center_y, Real length, Real resolution)
 {
 	Real headtip = center_x;		//head position(cx, cy)
@@ -102,7 +102,7 @@ Real outline_zebra_fish(Real x, Real h, Real L)
 }
 
 
-//creat bone shape
+//create bone shape
 std::vector<Vecd> CreatZebraFishShape(Real center_x, Real center_y, Real length)
 {
 	Real headtip = center_x;		//head position(cx, cy)
@@ -155,7 +155,7 @@ std::vector<Vecd> CreatZebraFishShape(Real center_x, Real center_y, Real length)
 	return pnts1;
 }
 
-//creat bone shape
+//create bone shape
 std::vector<Vecd> CreatBoneShape(int Nh, Real ra, Real rab, Real center_x, Real center_y)
 {
 	Real rb = rab * ra;

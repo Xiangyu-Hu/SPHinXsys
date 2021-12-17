@@ -22,16 +22,13 @@
 * --------------------------------------------------------------------------*/
 /**
  * @file 	observer_dynamics.h
- * @brief 	There are the classes for observser bodies to record the state of the flow or
+ * @brief 	There are the classes for observing and recording the state of the flow or
  *			solid in given locations. Mostly, this is done by an interpolation algorithm.   
  * @author	Xiangyu Hu and Chi Zhang
  */
 
-
 #ifndef OBSERVER_DYNAMICS_H
 #define OBSERVER_DYNAMICS_H
-
-
 
 #include "all_particle_dynamics.h"
 
@@ -39,36 +36,36 @@ namespace SPH
 {
 	namespace observer_dynamics
 	{
-		typedef DataDelegateContact<SPHBody, BaseParticles, BaseMaterial, 
-			SPHBody, BaseParticles, BaseMaterial> InterpolationContactData;
+		typedef DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,
+									SPHBody, BaseParticles, BaseMaterial>
+			InterpolationContactData;
 
 		/**
-		 * @class InterpolatingAQuantity
-		 * @brief Interpolate a given member data in the particles of a general body
+		 * @class BaseInterpolation
+		 * @brief Base class for interpolation.
 		 */
 		template <int DataTypeIndex, typename VariableType>
-		class InterpolatingAQuantity : public InteractionDynamics, public InterpolationContactData
+		class BaseInterpolation : public InteractionDynamics, public InterpolationContactData
 		{
 		public:
-			explicit InterpolatingAQuantity(BaseBodyRelationContact* body_contact_relation, std::string variable_name) :
-				InteractionDynamics(body_contact_relation->sph_body_), InterpolationContactData(body_contact_relation),
-				interpolated_quantities_(*particles_->createAVariable<DataTypeIndex, VariableType>(variable_name))
+			explicit BaseInterpolation(BaseBodyRelationContact &contact_relation, const std::string &variable_name)
+				: InteractionDynamics(*contact_relation.sph_body_), InterpolationContactData(contact_relation),
+				  interpolated_quantities_(nullptr)
 			{
-				prepareContactData(variable_name);
+				for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+				{
+					contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
+					StdLargeVec<VariableType> *contact_data =
+						this->contact_particles_[k]->template getVariableByName<DataTypeIndex, VariableType>(variable_name);
+					contact_data_.push_back(contact_data);
+				}
 			};
-			explicit InterpolatingAQuantity(BaseBodyRelationContact* body_contact_relation,
-				std::string interpolated_variable, std::string target_variable) :
-				InteractionDynamics(body_contact_relation->sph_body_), InterpolationContactData(body_contact_relation),
-				interpolated_quantities_(*particles_->getVariableByName<DataTypeIndex, VariableType>(interpolated_variable))
-			{
-				prepareContactData(target_variable);
-			};
-			virtual ~InterpolatingAQuantity() {};
+			virtual ~BaseInterpolation(){};
 
 		protected:
-			StdLargeVec<VariableType>&  interpolated_quantities_;
-			StdVec<StdLargeVec<Real>*> contact_Vol_;
-			StdVec<StdLargeVec<VariableType>*> contact_data_;
+			StdLargeVec<VariableType> *interpolated_quantities_;
+			StdVec<StdLargeVec<Real> *> contact_Vol_;
+			StdVec<StdLargeVec<VariableType> *> contact_data_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override
 			{
@@ -77,9 +74,9 @@ namespace SPH
 
 				for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 				{
-					StdLargeVec<Real>& Vol_k = *(contact_Vol_[k]);
-					StdLargeVec<VariableType>& data_k = *(contact_data_[k]);
-					Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];
+					StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
+					StdLargeVec<VariableType> &data_k = *(contact_data_[k]);
+					Neighborhood &contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 					{
 						size_t index_j = contact_neighborhood.j_[n];
@@ -89,33 +86,73 @@ namespace SPH
 						ttl_weight += weight_j;
 					}
 				}
-				interpolated_quantities_[index_i] = observed_quantity / (ttl_weight + TinyReal);
+				(*interpolated_quantities_)[index_i] = observed_quantity / (ttl_weight + TinyReal);
 			};
+		};
 
-			void prepareContactData(const std::string& variable_name)
+		/**
+		 * @class InterpolatingAQuantity
+		 * @brief Interpolate a given member data in the particles of a general body
+		 */
+		template <int DataTypeIndex, typename VariableType>
+		class InterpolatingAQuantity : public BaseInterpolation<DataTypeIndex, VariableType>
+		{
+		public:
+			explicit InterpolatingAQuantity(BaseBodyRelationContact &contact_relation,
+											const std::string &interpolated_variable, const std::string &target_variable)
+				: BaseInterpolation<DataTypeIndex, VariableType>(contact_relation, target_variable)
 			{
-				for (size_t k = 0; k != this->contact_particles_.size(); ++k)
+				this->interpolated_quantities_ =
+					this->particles_-> template getVariableByName<DataTypeIndex, VariableType>(interpolated_variable);
+			};
+			virtual ~InterpolatingAQuantity(){};
+		};
+
+		/**
+		 * @class ObservingAQuantity
+		 * @brief Observing a variable from contact bodies.
+		 */
+		template <int DataTypeIndex, typename VariableType>
+		class ObservingAQuantity : public BaseInterpolation<DataTypeIndex, VariableType>
+		{
+		public:
+			explicit ObservingAQuantity(BaseBodyRelationContact &contact_relation, const std::string &variable_name)
+				: BaseInterpolation<DataTypeIndex, VariableType>(contact_relation, variable_name)
+			{
+				this->interpolated_quantities_ = registerObservedQuantity(variable_name);
+			};
+			virtual ~ObservingAQuantity(){};
+
+		protected:
+			StdLargeVec<VariableType> observed_quantities_;
+
+			/** Register the  observed variable if the variable name is new.
+		 	 * If the variable is registered already, the registered variable will be returned. */
+			StdLargeVec<VariableType> *registerObservedQuantity(const std::string &variable_name)
+			{
+				BaseParticles *particles = this->particles_;
+				if (particles->all_variable_maps_[DataTypeIndex].find(variable_name) == particles->all_variable_maps_[DataTypeIndex].end())
 				{
-					contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
-					StdLargeVec<VariableType>* contact_data =
-						this->contact_particles_[k]->template getVariableByName<DataTypeIndex, VariableType>(variable_name);
-					contact_data_.push_back(contact_data);
+					particles->registerAVariable<DataTypeIndex, VariableType>(observed_quantities_, variable_name, VariableType(0));
+					return &observed_quantities_;
 				}
-			}
+				return particles->getVariableByName<DataTypeIndex, VariableType>(variable_name);
+			};
 		};
 
 		/**
 		* @class CorrectInterpolationKernelWeights
 		* @brief  correct kernel weights for interpolation between general bodies
 		*/
-		class CorrectInterpolationKernelWeights : 
-			public InteractionDynamics, public InterpolationContactData
+		class CorrectInterpolationKernelWeights : public InteractionDynamics,
+												  public InterpolationContactData
 		{
 		public:
-			CorrectInterpolationKernelWeights(BaseBodyRelationContact* body_contact_relation);
-			virtual ~CorrectInterpolationKernelWeights() {};
+			explicit CorrectInterpolationKernelWeights(BaseBodyRelationContact &contact_relation);
+			virtual ~CorrectInterpolationKernelWeights(){};
+
 		protected:
-			StdVec<StdLargeVec<Real>*> contact_Vol_;
+			StdVec<StdLargeVec<Real> *> contact_Vol_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 	}

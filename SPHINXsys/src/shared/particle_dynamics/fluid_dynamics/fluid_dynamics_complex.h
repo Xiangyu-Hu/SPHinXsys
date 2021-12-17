@@ -28,40 +28,42 @@
 * @author	Chi ZHang and Xiangyu Hu
 */
 
-
-#ifndef FLUID_DYNAMCIS_COMPLEX_H
-#define FLUID_DYNAMCIS_COMPLEX_H
-
-
+#ifndef FLUID_DYNAMICS_COMPLEX_H
+#define FLUID_DYNAMICS_COMPLEX_H
 
 #include "fluid_dynamics_inner.h"
+#include "fluid_dynamics_inner.hpp"
 
 namespace SPH
 {
 	namespace fluid_dynamics
 	{
-		typedef DataDelegateContact<FluidBody, FluidParticles, Fluid, 
-			SolidBody, SolidParticles, Solid, DataDelegateEmptyBase> FluidWallData;
 		typedef DataDelegateContact<FluidBody, FluidParticles, Fluid,
-			SPHBody, BaseParticles, BaseMaterial, DataDelegateEmptyBase> FluidContactData;
-		typedef DataDelegateContact<FluidBody, FluidParticles, Fluid, 
-			SolidBody, SolidParticles, Solid> FSIContactData;
+									SolidBody, SolidParticles, Solid, DataDelegateEmptyBase>
+			FluidWallData;
+		typedef DataDelegateContact<FluidBody, FluidParticles, Fluid,
+									SPHBody, BaseParticles, BaseMaterial, DataDelegateEmptyBase>
+			FluidContactData;
+		typedef DataDelegateContact<FluidBody, FluidParticles, Fluid,
+									SolidBody, SolidParticles, Solid>
+			FSIContactData;
 		/**
 		* @class RelaxationWithWall
 		* @brief Abstract base class for general relaxation algorithms with wall
 		*/
-		template<class BaseRelaxationType>
+		template <class BaseRelaxationType>
 		class RelaxationWithWall : public BaseRelaxationType, public FluidWallData
 		{
 		public:
-			template<class BaseBodyRelationType>
-			RelaxationWithWall(BaseBodyRelationType* base_body_relation, 
-				BaseBodyRelationContact* wall_contact_relation);
-			virtual ~RelaxationWithWall() {};
+			template <class BaseBodyRelationType>
+			RelaxationWithWall(BaseBodyRelationType &base_body_relation,
+							   BaseBodyRelationContact &wall_contact_relation);
+			virtual ~RelaxationWithWall(){};
+
 		protected:
 			StdVec<Real> wall_inv_rho0_;
-			StdVec<StdLargeVec<Real>*> wall_mass_, wall_Vol_;
-			StdVec<StdLargeVec<Vecd>*> wall_vel_ave_, wall_dvel_dt_ave_, wall_n_;
+			StdVec<StdLargeVec<Real> *> wall_mass_, wall_Vol_;
+			StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_dvel_dt_ave_, wall_n_;
 		};
 
 		/**
@@ -71,56 +73,36 @@ namespace SPH
 		class FreeSurfaceIndicationComplex : public FreeSurfaceIndicationInner, public FluidContactData
 		{
 		public:
-			FreeSurfaceIndicationComplex(BaseBodyRelationInner* inner_relation, 
-				BaseBodyRelationContact* contact_relation, Real thereshold = 0.75);
-			FreeSurfaceIndicationComplex(ComplexBodyRelation* body_complex_relation, Real thereshold = 0.75);
-			virtual ~FreeSurfaceIndicationComplex() {};
+			FreeSurfaceIndicationComplex(BaseBodyRelationInner &inner_relation,
+										 BaseBodyRelationContact &contact_relation, Real thereshold = 0.75);
+			explicit FreeSurfaceIndicationComplex(ComplexBodyRelation &complex_relation, Real thereshold = 0.75);
+			virtual ~FreeSurfaceIndicationComplex(){};
+
 		protected:
 			StdVec<Real> contact_inv_rho0_;
-			StdVec<StdLargeVec<Real>*> contact_mass_;
+			StdVec<StdLargeVec<Real> *> contact_mass_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
-
-		/**
-        * @class Spatial-temporalFreeSurfaceIdentificationComplex
-        * @brief using the spatial-temporal method to indicate the surface particles without misjudgement.
-		* @brief the indicator index of 1st layer surface particles is set to 1.
-		* @brief the indicator index of internal fluid particles is set to 0.
-        */
-		class SpatialTemporalFreeSurfaceIdentificationComplex : public FreeSurfaceIndicationComplex
-		{
-		public:
-			SpatialTemporalFreeSurfaceIdentificationComplex(BaseBodyRelationInner* inner_relation, 
-				BaseBodyRelationContact* contact_relation, Real thereshold = 0.75);
-			SpatialTemporalFreeSurfaceIdentificationComplex(ComplexBodyRelation* body_complex_relation, 
-				Real thereshold = 0.75);
-			virtual ~SpatialTemporalFreeSurfaceIdentificationComplex() {};
-		protected:
-			Real particle_spacing_;
-			StdLargeVec<int>& previous_surface_indicator_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
-		};
-
-
+		using SpatialTemporalFreeSurfaceIdentificationComplex =
+			SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationComplex>;
 
 		/**
 		* @class DensitySummation
 		* @brief computing density by summation considering  contribution from contact bodies
 		*/
-		template<class DensitySummationInnerType>
+		template <class DensitySummationInnerType>
 		class DensitySummation : public ParticleDynamicsComplex<DensitySummationInnerType, FluidContactData>
 		{
 		public:
-			DensitySummation(BaseBodyRelationInner* inner_relation, BaseBodyRelationContact* contact_relation);
-			DensitySummation(ComplexBodyRelation* body_complex_relation);
-			DensitySummation(ComplexBodyRelation* complex_relation, BaseBodyRelationContact* extra_contact_relation);
-			virtual ~DensitySummation() {};
+			DensitySummation(BaseBodyRelationInner &inner_relation, BaseBodyRelationContact &contact_relation);
+			explicit DensitySummation(ComplexBodyRelation &complex_relation);
+			DensitySummation(ComplexBodyRelation &complex_relation, BaseBodyRelationContact &extra_contact_relation);
+			virtual ~DensitySummation(){};
+
 		protected:
 			StdVec<Real> contact_inv_rho0_;
-			StdVec<StdLargeVec<Real>*> contact_mass_;
+			StdVec<StdLargeVec<Real> *> contact_mass_;
 
 			virtual void prepareContactData() override;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -136,32 +118,32 @@ namespace SPH
 		 * @class ViscousWithWall
 		 * @brief  template class viscous acceleration with wall boundary
 		 */
-		template<class BaseViscousAccelerationType>
+		template <class BaseViscousAccelerationType>
 		class ViscousWithWall : public RelaxationWithWall<BaseViscousAccelerationType>
 		{
 		public:
 			// template for different combination of constructing body relations
-			template<class BaseBodyRelationType>
-			ViscousWithWall(BaseBodyRelationType* base_body_relation, 
-				BaseBodyRelationContact* wall_contact_relation);
-			virtual ~ViscousWithWall() {};
+			template <class BaseBodyRelationType>
+			ViscousWithWall(BaseBodyRelationType &base_body_relation,
+							BaseBodyRelationContact &wall_contact_relation);
+			virtual ~ViscousWithWall(){};
+
 		protected:
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/** template interface class for different pressure relaxation with wall schemes */
-		template<class BaseViscousAccelerationType>
+		template <class BaseViscousAccelerationType>
 		class BaseViscousAccelerationWithWall : public BaseViscousAccelerationType
 		{
 		public:
-			BaseViscousAccelerationWithWall(ComplexBodyRelation* fluid_wall_relation);
-			BaseViscousAccelerationWithWall(BaseBodyRelationInner* fluid_inner_relation, 
-				BaseBodyRelationContact* wall_contact_relation);
-			BaseViscousAccelerationWithWall(ComplexBodyRelation* fluid_complex_relation, 
-				BaseBodyRelationContact* wall_contact_relation);
+			explicit BaseViscousAccelerationWithWall(ComplexBodyRelation &fluid_wall_relation);
+			BaseViscousAccelerationWithWall(BaseBodyRelationInner &fluid_inner_relation,
+											BaseBodyRelationContact &wall_contact_relation);
+			BaseViscousAccelerationWithWall(ComplexBodyRelation &fluid_complex_relation,
+											BaseBodyRelationContact &wall_contact_relation);
 		};
-		using ViscousAccelerationWithWall 
-			= BaseViscousAccelerationWithWall<ViscousWithWall<ViscousAccelerationInner>>;
+		using ViscousAccelerationWithWall = BaseViscousAccelerationWithWall<ViscousWithWall<ViscousAccelerationInner>>;
 		/**
 		 * @class TransportVelocityCorrectionComplex
 		 * @brief  transport velocity correction consdiering  the contribution from contact bodies
@@ -170,58 +152,61 @@ namespace SPH
 			: public ParticleDynamicsComplex<TransportVelocityCorrectionInner, FluidContactData>
 		{
 		public:
-			TransportVelocityCorrectionComplex(BaseBodyRelationInner* inner_relation, 
-				BaseBodyRelationContact* conatct_relation);
+			TransportVelocityCorrectionComplex(BaseBodyRelationInner &inner_relation,
+											   BaseBodyRelationContact &contact_relation);
 
-			TransportVelocityCorrectionComplex(ComplexBodyRelation* body_complex_relation);
+			explicit TransportVelocityCorrectionComplex(ComplexBodyRelation &complex_relation);
 
-			TransportVelocityCorrectionComplex(ComplexBodyRelation* complex_relation, 
-				BaseBodyRelationContact* extra_conatct_relation);
-			virtual ~TransportVelocityCorrectionComplex() {};
+			TransportVelocityCorrectionComplex(ComplexBodyRelation &complex_relation,
+											   BaseBodyRelationContact &extra_contact_relation);
+			virtual ~TransportVelocityCorrectionComplex(){};
+
 		protected:
-			StdVec<StdLargeVec<Real>*> contact_Vol_;
+			StdVec<StdLargeVec<Real> *> contact_Vol_;
 
 			virtual void prepareContactData() override;
-			virtual void Interaction(size_t index_i, Real dt = 0.0)  override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
 		 * @class PressureRelaxation
 		 * @brief  template class pressure relaxation scheme with wall boundary
 		 */
-		template<class BasePressureRelaxationType>
+		template <class BasePressureRelaxationType>
 		class PressureRelaxation : public RelaxationWithWall<BasePressureRelaxationType>
 		{
 		public:
 			// template for different combination of constructing body relations
-			template<class BaseBodyRelationType>
-			PressureRelaxation(BaseBodyRelationType* base_body_relation, 
-				BaseBodyRelationContact* wall_contact_relation);
-			virtual ~PressureRelaxation() {};
+			template <class BaseBodyRelationType>
+			PressureRelaxation(BaseBodyRelationType &base_body_relation,
+							   BaseBodyRelationContact &wall_contact_relation);
+			virtual ~PressureRelaxation(){};
+
 		protected:
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
 		};
-		
+
 		/**
 		 * @class ExtendPressureRelaxation
 		 * @brief template class for pressure relaxation scheme with wall boundary
 		 * and considering non-conservative acceleration term and wall penalty to prevent 
 		 * particle penetration.
 		 */
-		template<class BasePressureRelaxationType>
+		template <class BasePressureRelaxationType>
 		class ExtendPressureRelaxation : public PressureRelaxation<BasePressureRelaxationType>
 		{
 		public:
 			// template for different combination of constructing body relations
-			template<class BaseBodyRelationType>
-			ExtendPressureRelaxation(BaseBodyRelationType* base_body_relation,
-				BaseBodyRelationContact* wall_contact_relation, Real penalty_strength = 1.0);
+			template <class BaseBodyRelationType>
+			ExtendPressureRelaxation(BaseBodyRelationType &base_body_relation,
+									 BaseBodyRelationContact &wall_contact_relation, Real penalty_strength = 1.0);
 
-			virtual ~ExtendPressureRelaxation() {};
+			virtual ~ExtendPressureRelaxation(){};
+
 		protected:
 			Real penalty_strength_;
-			StdLargeVec<Vecd>& non_cnsrv_dvel_dt_;
+			StdLargeVec<Vecd> non_cnsrv_dvel_dt_;
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -229,63 +214,61 @@ namespace SPH
 		};
 
 		/** template interface class for different pressure relaxation with wall schemes */
-		template<class BasePressureRelaxationType>
+		template <class BasePressureRelaxationType>
 		class BasePressureRelaxationWithWall : public BasePressureRelaxationType
 		{
 		public:
-			BasePressureRelaxationWithWall(ComplexBodyRelation* fluid_wall_relation);
-			BasePressureRelaxationWithWall(BaseBodyRelationInner* fluid_inner_relation, 
-				BaseBodyRelationContact* wall_contact_relation);
-			BasePressureRelaxationWithWall(ComplexBodyRelation* fluid_complex_relation, 
-				BaseBodyRelationContact* wall_contact_relation);
+			explicit BasePressureRelaxationWithWall(ComplexBodyRelation &fluid_wall_relation);
+			BasePressureRelaxationWithWall(BaseBodyRelationInner &fluid_inner_relation,
+										   BaseBodyRelationContact &wall_contact_relation);
+			BasePressureRelaxationWithWall(ComplexBodyRelation &fluid_complex_relation,
+										   BaseBodyRelationContact &wall_contact_relation);
 		};
-		using PressureRelaxationWithWall 
-			= BasePressureRelaxationWithWall<PressureRelaxation<PressureRelaxationInner>>;
-		using PressureRelaxationRiemannWithWall 
-			= BasePressureRelaxationWithWall<PressureRelaxation<PressureRelaxationRiemannInner>>;
+		using PressureRelaxationWithWall = BasePressureRelaxationWithWall<PressureRelaxation<PressureRelaxationInner>>;
+		using PressureRelaxationRiemannWithWall = BasePressureRelaxationWithWall<PressureRelaxation<PressureRelaxationRiemannInner>>;
 
 		/** template interface class for the extended pressure relaxation with wall schemes */
-		template<class BasePressureRelaxationType>
+		template <class BasePressureRelaxationType>
 		class ExtendPressureRelaxationWithWall : public BasePressureRelaxationType
 		{
 		public:
-			ExtendPressureRelaxationWithWall(ComplexBodyRelation* fluid_wall_relation, Real penalty_strength = 1.0);
-			ExtendPressureRelaxationWithWall(BaseBodyRelationInner* fluid_inner_relation,
-				BaseBodyRelationContact* wall_contact_relation, Real penalty_strength = 1.0);
-			ExtendPressureRelaxationWithWall(ComplexBodyRelation* fluid_complex_relation,
-				BaseBodyRelationContact* wall_contact_relation, Real penalty_strength = 1.0);
+			explicit ExtendPressureRelaxationWithWall(ComplexBodyRelation &fluid_wall_relation, Real penalty_strength = 1.0);
+			ExtendPressureRelaxationWithWall(BaseBodyRelationInner &fluid_inner_relation,
+											 BaseBodyRelationContact &wall_contact_relation, Real penalty_strength = 1.0);
+			ExtendPressureRelaxationWithWall(ComplexBodyRelation &fluid_complex_relation,
+											 BaseBodyRelationContact &wall_contact_relation, Real penalty_strength = 1.0);
 		};
-		using ExtendPressureRelaxationRiemannWithWall 
-			= ExtendPressureRelaxationWithWall<ExtendPressureRelaxation<PressureRelaxationRiemannInner>>;
+		using ExtendPressureRelaxationRiemannWithWall = ExtendPressureRelaxationWithWall<ExtendPressureRelaxation<PressureRelaxationRiemannInner>>;
 
 		/**
 		* @class DensityRelaxation
 		* @brief template density relaxation scheme without using different Riemann solvers.
 		* The difference from the free surface version is that no Riemann problem is applied
 		*/
-		template<class BaseDensityRelaxationType>
+		template <class BaseDensityRelaxationType>
 		class DensityRelaxation : public RelaxationWithWall<BaseDensityRelaxationType>
 		{
 		public:
 			// template for different combination of constructing body relations
-			template<class BaseBodyRelationType>
-			DensityRelaxation(BaseBodyRelationType* base_body_relation, 
-				BaseBodyRelationContact* wall_contact_relation);
-			virtual ~DensityRelaxation() {};
+			template <class BaseBodyRelationType>
+			DensityRelaxation(BaseBodyRelationType &base_body_relation,
+							  BaseBodyRelationContact &wall_contact_relation);
+			virtual ~DensityRelaxation(){};
+
 		protected:
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/** template interface class for different density relaxation schemes */
-		template<class BaseDensityRelaxationType>
+		template <class BaseDensityRelaxationType>
 		class BaseDensityRelaxationWithWall : public DensityRelaxation<BaseDensityRelaxationType>
 		{
 		public:
-			BaseDensityRelaxationWithWall(ComplexBodyRelation* fluid_wall_relation);
-			BaseDensityRelaxationWithWall(BaseBodyRelationInner* fluid_inner_relation,
-				BaseBodyRelationContact* wall_contact_relation);
-			BaseDensityRelaxationWithWall(ComplexBodyRelation* fluid_complex_relation,
-				BaseBodyRelationContact* wall_contact_relation);
+			explicit BaseDensityRelaxationWithWall(ComplexBodyRelation &fluid_wall_relation);
+			BaseDensityRelaxationWithWall(BaseBodyRelationInner &fluid_inner_relation,
+										  BaseBodyRelationContact &wall_contact_relation);
+			BaseDensityRelaxationWithWall(ComplexBodyRelation &fluid_complex_relation,
+										  BaseBodyRelationContact &wall_contact_relation);
 		};
 		using DensityRelaxationWithWall = BaseDensityRelaxationWithWall<DensityRelaxationInner>;
 		using DensityRelaxationRiemannWithWall = BaseDensityRelaxationWithWall<DensityRelaxationRiemannInner>;
@@ -294,15 +277,15 @@ namespace SPH
 		* @class PressureRelaxationRiemannWithWallOldroyd_B
 		* @brief  first half of the pressure relaxation scheme using Riemann solver.
 		*/
-		class PressureRelaxationRiemannWithWallOldroyd_B :
-			public PressureRelaxation<PressureRelaxationRiemannInnerOldroyd_B>
+		class PressureRelaxationRiemannWithWallOldroyd_B : public PressureRelaxation<PressureRelaxationRiemannInnerOldroyd_B>
 		{
 		public:
-			PressureRelaxationRiemannWithWallOldroyd_B(ComplexBodyRelation* fluid_wall_relation) :
-				PressureRelaxation<PressureRelaxationRiemannInnerOldroyd_B>(fluid_wall_relation->inner_relation_,
-					fluid_wall_relation->contact_relation_) {};
-	
-			virtual ~PressureRelaxationRiemannWithWallOldroyd_B() {};
+			explicit PressureRelaxationRiemannWithWallOldroyd_B(ComplexBodyRelation &fluid_wall_relation)
+				: PressureRelaxation<PressureRelaxationRiemannInnerOldroyd_B>(fluid_wall_relation.inner_relation_,
+																			  fluid_wall_relation.contact_relation_){};
+
+			virtual ~PressureRelaxationRiemannWithWallOldroyd_B(){};
+
 		protected:
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -311,15 +294,15 @@ namespace SPH
 		* @class DensityRelaxationRiemannWithWallOldroyd_B
 		* @brief  second half of the pressure relaxation scheme using Riemann solver.
 		*/
-		class DensityRelaxationRiemannWithWallOldroyd_B :
-			public DensityRelaxation<DensityRelaxationRiemannInnerOldroyd_B>
+		class DensityRelaxationRiemannWithWallOldroyd_B : public DensityRelaxation<DensityRelaxationRiemannInnerOldroyd_B>
 		{
 		public:
-			DensityRelaxationRiemannWithWallOldroyd_B(ComplexBodyRelation* fluid_wall_relation) :
-				DensityRelaxation<DensityRelaxationRiemannInnerOldroyd_B>(fluid_wall_relation->inner_relation_,
-					fluid_wall_relation->contact_relation_) {};
+			explicit DensityRelaxationRiemannWithWallOldroyd_B(ComplexBodyRelation &fluid_wall_relation)
+				: DensityRelaxation<DensityRelaxationRiemannInnerOldroyd_B>(fluid_wall_relation.inner_relation_,
+																			fluid_wall_relation.contact_relation_){};
 
-			virtual ~DensityRelaxationRiemannWithWallOldroyd_B() {};
+			virtual ~DensityRelaxationRiemannWithWallOldroyd_B(){};
+
 		protected:
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -331,11 +314,12 @@ namespace SPH
 		class ColorFunctionGradientComplex : public ColorFunctionGradientInner, public FluidContactData
 		{
 		public:
-			ColorFunctionGradientComplex(BaseBodyRelationInner* inner_relation, BaseBodyRelationContact* contact_relation);
-			ColorFunctionGradientComplex(ComplexBodyRelation* body_complex_relation);
-			virtual ~ColorFunctionGradientComplex() {};
+			ColorFunctionGradientComplex(BaseBodyRelationInner &inner_relation, BaseBodyRelationContact &contact_relation);
+			ColorFunctionGradientComplex(ComplexBodyRelation &complex_relation);
+			virtual ~ColorFunctionGradientComplex(){};
+
 		protected:
-			StdVec<StdLargeVec<Real>*> contact_Vol_;
+			StdVec<StdLargeVec<Real> *> contact_Vol_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -347,19 +331,20 @@ namespace SPH
 		class SurfaceNormWithWall : public InteractionDynamics, public FSIContactData
 		{
 		public:
-			SurfaceNormWithWall(BaseBodyRelationContact* contact_relation, Real contact_angle);
-			virtual ~SurfaceNormWithWall() {};
+			SurfaceNormWithWall(BaseBodyRelationContact &contact_relation, Real contact_angle);
+			virtual ~SurfaceNormWithWall(){};
+
 		protected:
 			Real contact_angle_;
 			Real smoothing_length_;
 			Real particle_spacing_;
-			StdLargeVec<int>& surface_indicator_;
-			StdLargeVec<Vecd>& surface_norm_;
-			StdLargeVec<Real>& pos_div_;
-			StdVec<StdLargeVec<Vecd>*> wall_n_;
+			StdLargeVec<int> &surface_indicator_;
+			StdLargeVec<Vecd> &surface_norm_;
+			StdLargeVec<Real> &pos_div_;
+			StdVec<StdLargeVec<Vecd> *> wall_n_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 	}
 }
-#endif //FLUID_DYNAMCIS_COMPLEX_H
+#endif //FLUID_DYNAMICS_COMPLEX_H
