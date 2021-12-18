@@ -133,7 +133,7 @@ int main()
 	/** Output the mechanical energy of fluid body. */
 	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
 		write_water_mechanical_energy(in_output, water_block, gravity);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<indexScalar, Real>>
+	ObservedQuantityRecording<indexScalar, Real>
 		write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact);
 	//-------------------------------------------------------------------
 	//from here the time stepping begins
@@ -232,7 +232,6 @@ int main()
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	write_water_mechanical_energy.newResultTest();
-	write_recorded_water_pressure.newResultTest();
 
 	return 0;
 }
