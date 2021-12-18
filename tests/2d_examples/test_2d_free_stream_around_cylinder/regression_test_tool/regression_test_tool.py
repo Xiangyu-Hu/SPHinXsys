@@ -35,9 +35,15 @@ class SphinxsysRegressionTest:
         os.system(self.enter_sphinxsys_case_folder + command)
         print('Copying threload file is finished...')
 
+    def run_particle_relaxation(self) -> None:
+        print('Start particle relaxation for the simulation...')
+        command = f"./{self.sphinxsys_case_name} --r=true"
+        os.system(self.enter_sphinxsys_exec_folder + command)
+        print('Simulating case is finished...')
+
     def run_case(self) -> None:
         print('Start case simulation...')
-        command = f"./{self.sphinxsys_case_name}"
+        command = f"./{self.sphinxsys_case_name} --r=false --i=true --rt=true"
         os.system(self.enter_sphinxsys_exec_folder + command)
         print('Simulating case is finished...')
 
@@ -59,8 +65,7 @@ parameter_name = "TotalViscousForceOnSolid"
 number_of_run_times = 0
 converged = 0
 sphinxsys = SphinxsysRegressionTest(case_name, body_name, parameter_name)
-sphinxsys.test_case()
-sphinxsys.copy_reload()
+sphinxsys.run_particle_relaxation()
 
 
 while True:
@@ -68,7 +73,7 @@ while True:
     sphinxsys.run_case()
     number_of_run_times += 1
     converged = sphinxsys.read_dat_file()
-    print("Please note: This is the", number_of_run_times, "run!")
+    print("Please note: This is the run number", number_of_run_times,".")
     if number_of_run_times <= 200:
         if converged == "true":
             print("The tested parameters of all variables are converged, and the run will stop here!")
