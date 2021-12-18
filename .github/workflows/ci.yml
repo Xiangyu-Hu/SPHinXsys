@@ -66,4 +66,4 @@ jobs:
           cd /home/runner/work/SPHinXsys/SPHinXsys
           cd build 
           ctest --rerun-failed
- 
+          
