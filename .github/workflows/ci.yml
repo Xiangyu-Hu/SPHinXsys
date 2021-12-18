@@ -51,7 +51,7 @@ jobs:
           cd build 
           cmake .. -DSIMBODY_HOME=/home/runner/simbody
           make -j$(nproc)
-        
+
       - name: Test with first try
         if: ${{ env.CI_SKIP == 'false' }}
         run: |
@@ -59,11 +59,10 @@ jobs:
           cd build 
           ctest 
         continue-on-error: true
- 
+
       - name: Test with second try for failed cases
         if: ${{ env.CI_SKIP == 'false' }}
         run: |
           cd /home/runner/work/SPHinXsys/SPHinXsys
           cd build 
           ctest --rerun-failed
-          
