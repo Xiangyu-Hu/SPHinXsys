@@ -54,10 +54,16 @@ jobs:
         
       - name: Test with first try
         if: ${{ env.CI_SKIP == 'false' }}
-        run: ctest 
+        run: |
+          cd /home/runner/work/SPHinXsys/SPHinXsys
+          cd build 
+          ctest 
         continue-on-error: true
  
       - name: Test with second try for failed cases
         if: ${{ env.CI_SKIP == 'false' }}
-        run: ctest --rerun-failed
+        run: |
+          cd /home/runner/work/SPHinXsys/SPHinXsys
+          cd build 
+          ctest --rerun-failed
  
