@@ -51,4 +51,5 @@ jobs:
           cd build 
           cmake .. -DSIMBODY_HOME=/home/runner/simbody
           make -j$(nproc)
-          ctest --output-on-failure
+          ctest 
+          ctest --rerun-failed --output-on-failure
