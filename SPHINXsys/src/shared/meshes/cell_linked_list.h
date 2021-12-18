@@ -80,7 +80,7 @@ namespace SPH
 
 	public:
 		/** The buffer size 2 used to expand computational domian for particle searching. */
-		BaseCellLinkedList(SPHBody &sph_body, ParticleAdaptation &particle_adaptation);
+		BaseCellLinkedList(SPHBody &sph_body, SPHAdaptation &sph_adaptation);
 		virtual ~BaseCellLinkedList(){};
 
 		/** Assign base particles to the mesh cell linked list,
@@ -121,7 +121,7 @@ namespace SPH
 
 	public:
 		CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
-						   SPHBody &sph_body, ParticleAdaptation &particle_adaptation);
+						   SPHBody &sph_body, SPHAdaptation &sph_adaptation);
 		virtual ~CellLinkedList() { deleteMeshDataMatrix(); };
 
 		virtual void allocateMeshDataMatrix() override;
@@ -170,7 +170,7 @@ namespace SPH
 	public:
 		MultilevelCellLinkedList(BoundingBox tentative_bounds, Real reference_grid_spacing,
 									 size_t total_levels, Real maximum_spacing_ratio,
-									 SPHBody &sph_body, ParticleAdaptation &particle_adaptation);
+									 SPHBody &sph_body, SPHAdaptation &sph_adaptation);
 		virtual ~MultilevelCellLinkedList(){};
 
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;

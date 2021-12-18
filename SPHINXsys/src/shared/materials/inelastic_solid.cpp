@@ -4,8 +4,10 @@
  */
 
 #include "inelastic_solid.h"
+#include "base_particles.hpp"
 
-namespace SPH {
+namespace SPH
+{
 	//=================================================================================================//
 	void HardeningPlasticSolid::initializePlasticParameters()
 	{
@@ -15,21 +17,21 @@ namespace SPH {
 		base_particles_->addAVariableToRestart<indexScalar, Real>("HardeningParameter");
 	}
 	//=================================================================================================//
-	void HardeningPlasticSolid::assignElasticSolidParticles(ElasticSolidParticles* elastic_particles)
+	void HardeningPlasticSolid::assignElasticSolidParticles(ElasticSolidParticles *elastic_particles)
 	{
 		ElasticSolid::assignElasticSolidParticles(elastic_particles);
 		initializePlasticParameters();
 	}
 	//=================================================================================================//
-	Matd HardeningPlasticSolid::PlasticConstitutiveRelation(const Matd& F, size_t index_i, Real dt)
+	Matd HardeningPlasticSolid::PlasticConstitutiveRelation(const Matd &F, size_t index_i, Real dt)
 	{
 		Matd be = F * inverse_plastic_strain_[index_i] * (~F);
 		Matd normalized_be = be * pow(SimTK::det(be), -one_over_dimensions_);
 		Real normalized_be_isentropic = normalized_be.trace() * one_over_dimensions_;
 		Matd deviatoric_PK = DeviatoricKirchhoff(normalized_be - normalized_be_isentropic * Matd(1.0));
 		Real deviatoric_PK_norm = deviatoric_PK.norm();
-		Real trial_function =
-			deviatoric_PK_norm - sqrt_2_over_3_ * (hardening_modulus_ * hardening_parameter_[index_i] + yield_stress_);
+		Real trial_function = deviatoric_PK_norm -
+							  sqrt_2_over_3_ * (hardening_modulus_ * hardening_parameter_[index_i] + yield_stress_);
 		if (trial_function > 0.0)
 		{
 			Real renormalized_shear_modulus = normalized_be_isentropic * G0_;

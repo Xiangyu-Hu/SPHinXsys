@@ -31,11 +31,11 @@
 #ifndef NEIGHBOR_RELATION_H
 #define NEIGHBOR_RELATION_H
 
-
 #include "base_data_package.h"
 #include "all_kernels.h"
 
-namespace SPH {
+namespace SPH
+{
 
 	class SPHBody;
 	class BodyPart;
@@ -47,17 +47,17 @@ namespace SPH {
 	class Neighborhood
 	{
 	public:
-		size_t current_size_; 		/**< the current number of neighors */
-		size_t allocated_size_; 	/**< the limit of neighors does not require memory allocation  */
+		size_t current_size_;	/**< the current number of neighors */
+		size_t allocated_size_; /**< the limit of neighors does not require memory allocation  */
 
-		StdLargeVec<size_t> j_;		/**< index of the neighbor particle. */
-		StdLargeVec<Real> W_ij_;	/**< kernel value or particle volume contribution */
-		StdLargeVec<Real> dW_ij_;	/**< derivative of kernel function or inter-particle surface contribution */
-		StdLargeVec<Real> r_ij_;	/**< distance between j and i. */
-		StdLargeVec<Vecd> e_ij_;	/**< unit vector pointing from j to i or inter-particle surface direction */
+		StdLargeVec<size_t> j_;	  /**< index of the neighbor particle. */
+		StdLargeVec<Real> W_ij_;  /**< kernel value or particle volume contribution */
+		StdLargeVec<Real> dW_ij_; /**< derivative of kernel function or inter-particle surface contribution */
+		StdLargeVec<Real> r_ij_;  /**< distance between j and i. */
+		StdLargeVec<Vecd> e_ij_;  /**< unit vector pointing from j to i or inter-particle surface direction */
 
-		Neighborhood() : current_size_(0), allocated_size_(0) {};
-		~Neighborhood() {};
+		Neighborhood() : current_size_(0), allocated_size_(0){};
+		~Neighborhood(){};
 
 		void removeANeighbor(size_t neighbor_n);
 	};
@@ -74,24 +74,25 @@ namespace SPH {
 	class NeighborRelation
 	{
 	protected:
-		Kernel* kernel_;
+		Kernel *kernel_;
 		//----------------------------------------------------------------------
 		//	Below are for constant smoothing length.
 		//----------------------------------------------------------------------
-		void createRelation(Neighborhood& neighborhood,	Real& distance, 
-			Vecd& displacement, size_t j_index) const;
-		void initializeRelation(Neighborhood& neighborhood, Real& distance, 
-			Vecd& displacement, size_t j_index) const;
+		void createRelation(Neighborhood &neighborhood, Real &distance,
+							Vecd &displacement, size_t j_index) const;
+		void initializeRelation(Neighborhood &neighborhood, Real &distance,
+								Vecd &displacement, size_t j_index) const;
 		//----------------------------------------------------------------------
 		//	Below are for variable smoothing length.
 		//----------------------------------------------------------------------
-		void createRelation(Neighborhood& neighborhood, Real& distance, 
-			Vecd& displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const;
-		void initializeRelation(Neighborhood& neighborhood, Real& distance, 
-			Vecd& displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const;
+		void createRelation(Neighborhood &neighborhood, Real &distance,
+							Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const;
+		void initializeRelation(Neighborhood &neighborhood, Real &distance,
+								Vecd &displacement, size_t j_index, Real i_h_ratio, Real h_ratio_min) const;
+
 	public:
-		NeighborRelation() : kernel_(nullptr) {};
-		virtual ~NeighborRelation() {};
+		NeighborRelation() : kernel_(nullptr){};
+		virtual ~NeighborRelation(){};
 	};
 
 	/**
@@ -101,9 +102,9 @@ namespace SPH {
 	class NeighborRelationInner : public NeighborRelation
 	{
 	public:
-		NeighborRelationInner(SPHBody* body);
-		void operator () (Neighborhood& neighborhood, 
-			Vecd& displacement, size_t i_index, size_t j_index) const;
+		explicit NeighborRelationInner(SPHBody *body);
+		void operator()(Neighborhood &neighborhood,
+						Vecd &displacement, size_t i_index, size_t j_index) const;
 	};
 
 	/**
@@ -113,13 +114,14 @@ namespace SPH {
 	class NeighborRelationInnerVariableSmoothingLength : public NeighborRelation
 	{
 	public:
-		NeighborRelationInnerVariableSmoothingLength(SPHBody* body);
-		void operator () (Neighborhood& neighborhood, 
-			Vecd& displacement, size_t i_index, size_t j_index) const;
+		explicit NeighborRelationInnerVariableSmoothingLength(SPHBody *body);
+		void operator()(Neighborhood &neighborhood,
+						Vecd &displacement, size_t i_index, size_t j_index) const;
+
 	protected:
-		StdLargeVec<Real>& h_ratio_;
+		StdLargeVec<Real> &h_ratio_;
 	};
-	
+
 	/**
 	 * @class NeighborRelationSelfContact
 	 * @brief A solid contact neighbor relation functor between particles i and j.
@@ -127,12 +129,13 @@ namespace SPH {
 	class NeighborRelationSelfContact : public NeighborRelation
 	{
 	public:
-		explicit NeighborRelationSelfContact(SPHBody* body);
-		virtual ~NeighborRelationSelfContact() {};
-		void operator () (Neighborhood& neighborhood, 
-			Vecd& displacement, size_t i_index, size_t j_index) const;
+		explicit NeighborRelationSelfContact(SPHBody *body);
+		virtual ~NeighborRelationSelfContact(){};
+		void operator()(Neighborhood &neighborhood,
+						Vecd &displacement, size_t i_index, size_t j_index) const;
+
 	protected:
-		StdLargeVec<Vecd>& pos_0_;
+		StdLargeVec<Vecd> &pos_0_;
 	};
 
 	/**
@@ -142,10 +145,10 @@ namespace SPH {
 	class NeighborRelationContact : public NeighborRelation
 	{
 	public:
-		NeighborRelationContact(SPHBody* body, SPHBody* contact_body);
-		virtual ~NeighborRelationContact() {};
-		void operator () (Neighborhood& neighborhood,
-			Vecd& displacement, size_t i_index, size_t j_index) const;
+		NeighborRelationContact(SPHBody *body, SPHBody *contact_body);
+		virtual ~NeighborRelationContact(){};
+		void operator()(Neighborhood &neighborhood,
+						Vecd &displacement, size_t i_index, size_t j_index) const;
 	};
 
 	/**
@@ -154,9 +157,12 @@ namespace SPH {
 	 */
 	class NeighborRelationSolidContact : public NeighborRelationContact
 	{
+	private:
+		UniquePtrKeeper<Kernel> kernel_keeper_;
+
 	public:
-		NeighborRelationSolidContact(SPHBody* body, SPHBody* contact_body);
-		virtual ~NeighborRelationSolidContact() {};
+		NeighborRelationSolidContact(SPHBody *body, SPHBody *contact_body);
+		virtual ~NeighborRelationSolidContact(){};
 	};
 
 	/**
@@ -166,12 +172,13 @@ namespace SPH {
 	class NeighborRelationContactBodyPart : public NeighborRelation
 	{
 	public:
-		NeighborRelationContactBodyPart(SPHBody* body, BodyPart* contact_body_part);
-		virtual ~NeighborRelationContactBodyPart() {};
-		void operator () (Neighborhood& neighborhood,
-			Vecd& displacement, size_t i_index, size_t j_index) const;
+		NeighborRelationContactBodyPart(SPHBody *body, BodyPart *contact_body_part);
+		virtual ~NeighborRelationContactBodyPart(){};
+		void operator()(Neighborhood &neighborhood,
+						Vecd &displacement, size_t i_index, size_t j_index) const;
+
 	protected:
-		StdLargeVec<int>& part_indicator_;	/**< indicator of the body part */
-	};	
+		StdLargeVec<int> part_indicator_; /**< indicator of the body part */
+	};
 }
 #endif //NEIGHBOR_RELATION_H
