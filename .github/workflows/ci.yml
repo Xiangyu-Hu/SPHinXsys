@@ -25,7 +25,7 @@ jobs:
       - uses: mstachniuk/ci-skip@v1
       
       # Runs a set of commands using the runners shell
-      - name: Build and test
+      - name: Build
         if: ${{ env.CI_SKIP == 'false' }}
         run: |
           echo "This step should not be executed when commit message contains [ci skip]"        
@@ -51,5 +51,13 @@ jobs:
           cd build 
           cmake .. -DSIMBODY_HOME=/home/runner/simbody
           make -j$(nproc)
-          ctest 
-          ctest --rerun-failed --output-on-failure
+        
+      - name: Test with first try
+        if: ${{ env.CI_SKIP == 'false' }}
+        run: ctest 
+        continue-on-error: true
+ 
+      - name: Test with second try for failed cases
+        if: ${{ env.CI_SKIP == 'false' }}
+        run: ctest --rerun-failed
+ 
