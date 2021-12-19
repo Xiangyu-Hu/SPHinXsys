@@ -62,7 +62,7 @@ jobs:
         continue-on-error: true
 
       - name: Test with second try for failed cases
-        if: ${{ env.CI_SKIP == 'false' }} && steps.first-try.outcome == 'failure'
+        if: ${{ env.CI_SKIP == 'false' && steps.first-try.outcome == 'failure' }} 
         run: |
           cd /home/runner/work/SPHinXsys/SPHinXsys
           cd build 
