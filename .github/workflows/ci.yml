@@ -53,6 +53,7 @@ jobs:
           make -j$(nproc)
 
       - name: Test with first try
+        id: first-try
         if: ${{ env.CI_SKIP == 'false' }}
         run: |
           cd /home/runner/work/SPHinXsys/SPHinXsys
@@ -61,7 +62,7 @@ jobs:
         continue-on-error: true
 
       - name: Test with second try for failed cases
-        if: ${{ env.CI_SKIP == 'false' }}
+        if: ${{ env.CI_SKIP == 'false' }} && steps.first-try.outcome == 'failure'
         run: |
           cd /home/runner/work/SPHinXsys/SPHinXsys
           cd build 
