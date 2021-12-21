@@ -133,7 +133,7 @@ int main(int ac, char* av[])
 	/** Tag for running particle relaxation for the initially body-fitted distribution */
 	sph_system.run_particle_relaxation_ = false;
 	/** Tag for starting with relaxed body-fitted particles distribution */
-	sph_system.reload_particles_ = true;
+	sph_system.reload_particles_ = false;
 	/** Tag for computation from restart files. 0: start with initial condition */
 	sph_system.restart_step_ = 0;
 	/** Define external force.*/
@@ -218,8 +218,10 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	BodyRelationInner*   free_ball_inner = new BodyRelationInner(free_ball);
 	SolidBodyRelationContact* free_ball_contact = new SolidBodyRelationContact(free_ball, {wall_boundary});
+	SolidBodyRelationContact* wall_free_ball_contact = new SolidBodyRelationContact(wall_boundary, {free_ball});
 	BodyRelationInner*   damping_ball_inner = new BodyRelationInner(damping_ball);
 	SolidBodyRelationContact* damping_ball_contact = new SolidBodyRelationContact(damping_ball, {wall_boundary});
+	SolidBodyRelationContact* wall_damping_ball_contact = new SolidBodyRelationContact(wall_boundary, {damping_ball});
 	BodyRelationContact* free_ball_observer_contact = new BodyRelationContact(free_ball_observer, { free_ball });
 	BodyRelationContact* damping_all_observer_contact = new BodyRelationContact(damping_ball_observer, { damping_ball });
 	//----------------------------------------------------------------------
@@ -239,8 +241,10 @@ int main(int ac, char* av[])
 	solid_dynamics::StressRelaxationSecondHalf damping_ball_stress_relaxation_second_half(damping_ball_inner);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ContactDensitySummation free_ball_update_contact_density(free_ball_contact);
+	solid_dynamics::ContactDensitySummation wall_free_ball_update_contact_density(wall_free_ball_contact);
 	solid_dynamics::ContactForce free_ball_compute_solid_contact_forces(free_ball_contact);
 	solid_dynamics::ContactDensitySummation damping_ball_update_contact_density(damping_ball_contact);
+	solid_dynamics::ContactDensitySummation wall_damping_ball_update_contact_density(wall_damping_ball_contact);
 	solid_dynamics::ContactForce damping_ball_compute_solid_contact_forces(damping_ball_contact);
 	/** Damping for one ball */
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec2d>>
@@ -296,14 +300,17 @@ int main(int ac, char* av[])
 						<< GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
 				}
 				free_ball_update_contact_density.parallel_exec();
+				wall_free_ball_update_contact_density.parallel_exec();
 				free_ball_compute_solid_contact_forces.parallel_exec();
 				free_ball_stress_relaxation_first_half.parallel_exec(dt);
 				free_ball_stress_relaxation_second_half.parallel_exec(dt);
 
 				free_ball->updateCellLinkedList();
 				free_ball_contact->updateConfiguration();
+				wall_free_ball_contact->updateConfiguration();
 
 				damping_ball_update_contact_density.parallel_exec();
+				wall_damping_ball_update_contact_density.parallel_exec();
 				damping_ball_compute_solid_contact_forces.parallel_exec();
 				damping_ball_stress_relaxation_first_half.parallel_exec(dt);
 				damping.parallel_exec(dt);
@@ -311,6 +318,7 @@ int main(int ac, char* av[])
 
 				damping_ball->updateCellLinkedList();
 				damping_ball_contact->updateConfiguration();
+				wall_damping_ball_contact->updateConfiguration();
 
 				ite++;
 				Real dt_free = free_ball_get_time_step_size.parallel_exec();
