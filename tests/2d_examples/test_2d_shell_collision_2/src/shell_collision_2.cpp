@@ -25,14 +25,13 @@ Vec2d initial_velocity = initial_ball_speed*Vec2d(0.0, -1.);
 Real rho0_s = 1.0e3;
 Real Youngs_modulus = 5.0e4;
 Real poisson = 0.45; 			
-Real physical_viscosity = 10000.0; 
 //----------------------------------------------------------------------
 //	Bodies with cases-dependent geometries (ComplexShape).
 //----------------------------------------------------------------------
-class WallBoundary : public SolidBody
+class WallBoundary : public ThinStructure
 {
 public:
-	WallBoundary(SPHSystem &sph_system, std::string body_name) : SolidBody(sph_system, body_name)
+	WallBoundary(SPHSystem &sph_system, std::string body_name) : ThinStructure(sph_system, body_name)
 	{
 		std::vector<Vecd> outer_wall_shape;
 		outer_wall_shape.push_back(Vecd(-BW, -BW));
@@ -142,9 +141,9 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	WallBoundary *wall_boundary = new WallBoundary(sph_system, "Wall");
+	WallBoundary* wall_boundary = new WallBoundary(sph_system, "Wall");
 	WallMaterial* wall_material = new WallMaterial();
-	ElasticSolidParticles 	solid_particles(wall_boundary, wall_material);
+	ShellParticles 	solid_particles(wall_boundary, wall_material, BW);
 
 	FreeBall* free_ball = new FreeBall(sph_system, "FreeBall");
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_) free_ball->useParticleGeneratorReload();
@@ -170,7 +169,7 @@ int main(int ac, char* av[])
 		//----------------------------------------------------------------------
 		//	Output for particle relaxation.
 		//----------------------------------------------------------------------
-		BodyStatesRecordingToVtu 		write_ball_state(in_output, sph_system.real_bodies_);
+		BodyStatesRecordingToVtu 		write_ball_state(in_output, { free_ball });
 		ReloadParticleIO 		write_particle_reload_files(in_output, { free_ball });
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
@@ -203,6 +202,7 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	BodyRelationInner*   free_ball_inner = new BodyRelationInner(free_ball);
 	SolidBodyRelationContact* free_ball_contact = new SolidBodyRelationContact(free_ball, {wall_boundary});
+	SolidBodyRelationContact* wall_ball_contact = new SolidBodyRelationContact(wall_boundary, {free_ball});
 	BodyRelationContact* free_ball_observer_contact = new BodyRelationContact(free_ball_observer, { free_ball });
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simultion.
@@ -216,6 +216,7 @@ int main(int ac, char* av[])
 	solid_dynamics::StressRelaxationSecondHalf free_ball_stress_relaxation_second_half(free_ball_inner);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ShellContactDensitySummation free_ball_update_contact_density(free_ball_contact);
+	solid_dynamics::ContactDensitySummation wall_ball_update_contact_density(wall_ball_contact);
 	solid_dynamics::ContactForce free_ball_compute_solid_contact_forces(free_ball_contact);
 	/** initial condition */
 	BallInitialCondition ball_initial_velocity(free_ball);
@@ -223,6 +224,7 @@ int main(int ac, char* av[])
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtu	body_states_recording(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtu 	write_ball_state(in_output, { free_ball });
 	ObservedQuantityRecording<indexVector, Vecd>
 		free_ball_displacement_recording("Position", in_output, free_ball_observer_contact);
 	//----------------------------------------------------------------------
@@ -268,12 +270,14 @@ int main(int ac, char* av[])
 						<< GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
 				}
 				free_ball_update_contact_density.parallel_exec();
+				wall_ball_update_contact_density.parallel_exec();
 				free_ball_compute_solid_contact_forces.parallel_exec();
 				free_ball_stress_relaxation_first_half.parallel_exec(dt);
 				free_ball_stress_relaxation_second_half.parallel_exec(dt);
 
 				free_ball->updateCellLinkedList();
 				free_ball_contact->updateConfiguration();
+				wall_ball_contact->updateConfiguration();
 
 				ite++;
 				Real dt_free = free_ball_get_time_step_size.parallel_exec();
@@ -286,7 +290,7 @@ int main(int ac, char* av[])
 			}
 		}
 		tick_count t2 = tick_count::now();
-		body_states_recording.writeToFile(ite);
+		write_ball_state.writeToFile(ite);
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}
