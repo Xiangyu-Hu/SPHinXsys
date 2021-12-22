@@ -76,22 +76,23 @@ namespace SPH
 		};
 
 		/**
-		* @class ShellContactDensitySummation
-		* @brief Computing the summation density due to shell-solid contact model.
+		* @class ShellContactDensity
+		* @brief Computing the contact density due to shell contact using a 
+		* 		 surfacic integral being solved by Gauss-Legendre quadrature integration.
 		*/
-		class ShellContactDensitySummation :
+		class ShellContactDensity :
 			public PartInteractionDynamicsByParticle, public ContactDynamicsData
 		{
 		public:
-			explicit ShellContactDensitySummation(SolidBodyRelationContact* solid_body_contact_relation);
-			virtual ~ShellContactDensitySummation() {};
+			explicit ShellContactDensity(SolidBodyRelationContact* solid_body_contact_relation);
+			virtual ~ShellContactDensity() {};
 		protected:
 			StdLargeVec<Real>& contact_density_;
-			StdVec<StdLargeVec<Vecd>*> contact_pos_, contact_normal_;
-			StdLargeVec<Vecd>& n_0_, &pos_n_;
+			StdVec<StdLargeVec<Vecd>*> contact_pos_;
+			StdLargeVec<Vecd> &pos_n_;
 
 			Kernel *kernel_;
-			Real spacing_ref_;
+			Real spacing_ref_, boundary_factor_;
 			SPHBody *sph_body_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -131,7 +132,7 @@ namespace SPH
 		protected:
 			StdLargeVec<Real>& contact_density_, & Vol_, & mass_;
 			StdLargeVec<Vecd>& dvel_dt_prior_, & contact_force_;
-			StdVec<StdLargeVec<Real>*> contact_contact_density_, contact_Vol_;
+			StdVec<StdLargeVec<Real>*> contact_contact_density_, contact_Vol_, contact_mass_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
