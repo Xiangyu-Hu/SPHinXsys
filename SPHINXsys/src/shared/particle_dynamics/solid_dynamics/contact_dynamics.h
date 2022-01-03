@@ -79,14 +79,13 @@ namespace SPH
 		* @brief Computing the contact density due to shell contact using a 
 		* 		 surfacic integral being solved by Gauss-Legendre quadrature integration.
 		*/
-		class ShellContactDensity :
-			public PartInteractionDynamicsByParticle, public ContactDynamicsData
+		class ShellContactDensity : public PartInteractionDynamicsByParticle, public ContactDynamicsData
 		{
 		public:
-			explicit ShellContactDensity(SolidBodyRelationContact* solid_body_contact_relation);
+			explicit ShellContactDensity(SolidBodyRelationContact &solid_body_contact_relation);
 			virtual ~ShellContactDensity() {};
 		protected:
-			StdLargeVec<Real>& contact_density_;
+			StdLargeVec<Real> &contact_density_;
 			StdVec<StdLargeVec<Vecd>*> contact_pos_;
 			StdLargeVec<Vecd> &pos_n_;
 

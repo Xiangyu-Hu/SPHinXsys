@@ -222,10 +222,8 @@ int main(int ac, char *av[])
 	solid_dynamics::StressRelaxationSecondHalf damping_ball_stress_relaxation_second_half(damping_ball_inner);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ContactDensitySummation free_ball_update_contact_density(free_ball_contact);
-	solid_dynamics::ContactDensitySummation wall_free_ball_update_contact_density(wall_free_ball_contact);
 	solid_dynamics::ContactForce free_ball_compute_solid_contact_forces(free_ball_contact);
 	solid_dynamics::ContactDensitySummation damping_ball_update_contact_density(damping_ball_contact);
-	solid_dynamics::ContactDensitySummation wall_damping_ball_update_contact_density(wall_damping_ball_contact);
 	solid_dynamics::ContactForce damping_ball_compute_solid_contact_forces(damping_ball_contact);
 	/** Damping for one ball */
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec2d>>
@@ -285,7 +283,6 @@ int main(int ac, char *av[])
 							  << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
 				}
 				free_ball_update_contact_density.parallel_exec();
-				wall_free_ball_update_contact_density.parallel_exec();
 				free_ball_compute_solid_contact_forces.parallel_exec();
 				free_ball_stress_relaxation_first_half.parallel_exec(dt);
 				free_ball_stress_relaxation_second_half.parallel_exec(dt);
@@ -294,7 +291,6 @@ int main(int ac, char *av[])
 				free_ball_contact.updateConfiguration();
 
 				damping_ball_update_contact_density.parallel_exec();
-				wall_damping_ball_update_contact_density.parallel_exec();
 				damping_ball_compute_solid_contact_forces.parallel_exec();
 				damping_ball_stress_relaxation_first_half.parallel_exec(dt);
 				damping.parallel_exec(dt);

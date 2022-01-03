@@ -59,13 +59,13 @@ namespace SPH
 			contact_density_[index_i] = sigma;
 		}
 		//=================================================================================================//
-		ShellContactDensity::ShellContactDensity(SolidBodyRelationContact *solid_body_contact_relation)
-			: PartInteractionDynamicsByParticle(solid_body_contact_relation->sph_body_,
-												&solid_body_contact_relation->body_surface_layer_),
+		ShellContactDensity::ShellContactDensity(SolidBodyRelationContact &solid_body_contact_relation)
+			: PartInteractionDynamicsByParticle(*solid_body_contact_relation.sph_body_,
+												*solid_body_contact_relation.body_surface_layer_),
 			  ContactDynamicsData(solid_body_contact_relation), pos_n_(particles_->pos_n_),
 			  contact_density_(particles_->contact_density_),
-			  kernel_(solid_body_contact_relation->sph_body_->particle_adaptation_->getKernel()), 
-			  spacing_ref_(solid_body_contact_relation->sph_body_->particle_adaptation_->ReferenceSpacing())
+			  kernel_(solid_body_contact_relation.sph_body_->sph_adaptation_->getKernel()), 
+			  spacing_ref_(solid_body_contact_relation.sph_body_->sph_adaptation_->ReferenceSpacing())
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
@@ -188,7 +188,6 @@ namespace SPH
 			{
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_contact_density_.push_back(&(contact_particles_[k]->contact_density_));
-				contact_mass_.push_back(&(contact_particles_[k]->mass_));
 			}
 			
 		}
@@ -203,7 +202,6 @@ namespace SPH
 			{
 				StdLargeVec<Real> &contact_density_k = *(contact_contact_density_[k]);
 				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
-				StdLargeVec<Real> &mass_k = *(contact_mass_[k]);
 				Solid *solid_k = contact_material_[k];
 
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
