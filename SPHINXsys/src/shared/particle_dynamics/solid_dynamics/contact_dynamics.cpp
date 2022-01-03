@@ -59,8 +59,7 @@ namespace SPH
 			contact_density_[index_i] = sigma;
 		}
 		//=================================================================================================//
-		ShellContactDensity::
-			ShellContactDensity(SolidBodyRelationContact *solid_body_contact_relation)
+		ShellContactDensity::ShellContactDensity(SolidBodyRelationContact *solid_body_contact_relation)
 			: PartInteractionDynamicsByParticle(solid_body_contact_relation->sph_body_,
 												&solid_body_contact_relation->body_surface_layer_),
 			  ContactDynamicsData(solid_body_contact_relation), pos_n_(particles_->pos_n_),
@@ -74,30 +73,20 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		// template<int intOpt>
 		void ShellContactDensity::Interaction(size_t index_i, Real dt)
 		{
-			/** Shell contact interaction. */
+			/** shell contact interaction. */
 			Real sigma = 0.0;
-			/** Abscissas and weights for Gauss-Legendre quadrature for n=3 nodes */
-			Real x_0 = 0.774596669241483377035853079956;
-			Real x_1 = 0.000000000000000000000000000000;
-			Real x_2 = -x_0;
-
-			Real w_0 = 0.555555555555555555555555555556;
-			Real w_1 = 0.888888888888888888888888888889;
-			Real w_2 = w_0;
-
-			boundary_factor_ = material_->ReferenceDensity() / (1.3*5.2*spacing_ref_*spacing_ref_*kernel_->W(0., Vecd(0., 0.)));
-
+			/** a calibraton factor to avoid particle penetratoin into shell structure */
+			boundary_factor_ = material_->ReferenceDensity() / (kernel_->SmoothingLength() * kernel_->W0(Vecd(0.)) * 2. * kernel_->CutOffRadius());
+			
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Vecd> &contact_pos_k = *(contact_pos_[k]);
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					
-					const Real dp_2 = spacing_ref_/2.;
+					const Real dp_2 = 0.5 * spacing_ref_;
 					const Vecd contact_pos_j = contact_pos_k[contact_neighborhood.j_[n]];
 					
 					const Vecd dp_2_t_0 = pos_n_[index_i] - Vecd(dp_2*x_0, 0.) - contact_pos_j;
@@ -108,7 +97,7 @@ namespace SPH
 					const Real W_rij_t_1 = kernel_->W(dp_2_t_1.norm(), dp_2_t_1);
 					const Real W_rij_t_2 = kernel_->W(dp_2_t_2.norm(), dp_2_t_2);
 
-					sigma  += (w_0 * W_rij_t_0 + w_1 * W_rij_t_1 + w_2 * W_rij_t_2) * dp_2 * boundary_factor_ * 1.3 * spacing_ref_;
+					sigma  += (w_0 * W_rij_t_0 + w_1 * W_rij_t_1 + w_2 * W_rij_t_2) * dp_2 * boundary_factor_ * kernel_->SmoothingLength();
 				}				
 			}
 			contact_density_[index_i] = sigma;

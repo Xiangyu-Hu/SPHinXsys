@@ -97,9 +97,14 @@ namespace SPH
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 
-			int intOpt;
+			/** Abscissas and weights for Gauss-Legendre quadrature integration with n=3 nodes */
+			Real x_0 = 0.774596669241483377035853079956;
+			Real x_1 = 0.000000000000000000000000000000;
+			Real x_2 = -x_0;
 
-			enum intOption{Gaussian, Trapezoidal};
+			Real w_0 = 0.555555555555555555555555555556;
+			Real w_1 = 0.888888888888888888888888888889;
+			Real w_2 = w_0;
 		};
 
 		/**
