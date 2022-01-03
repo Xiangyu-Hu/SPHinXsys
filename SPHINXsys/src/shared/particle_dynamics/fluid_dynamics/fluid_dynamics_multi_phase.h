@@ -30,9 +30,9 @@
 #ifndef FLUID_DYNAMICS_MULTI_PHASE_H
 #define FLUID_DYNAMICS_MULTI_PHASE_H
 
-
-
 #include "fluid_dynamics_complex.h"
+#include "fluid_dynamics_complex.hpp"
+
 namespace SPH
 {
 	namespace fluid_dynamics
@@ -47,9 +47,9 @@ namespace SPH
 		class ViscousAccelerationMultiPhase : public ViscousAccelerationInner, public MultiPhaseContactData
 		{
 		public:
-			ViscousAccelerationMultiPhase(BaseBodyRelationInner* inner_relation,
-				BaseBodyRelationContact* contact_relation);
-			ViscousAccelerationMultiPhase(ComplexBodyRelation* complex_relation);
+			ViscousAccelerationMultiPhase(BaseBodyRelationInner &inner_relation,
+				BaseBodyRelationContact &contact_relation);
+			explicit ViscousAccelerationMultiPhase(ComplexBodyRelation &complex_relation);
 			virtual ~ViscousAccelerationMultiPhase() {};
 		protected:
 			StdVec<StdLargeVec<Real>*> contact_Vol_;
@@ -68,8 +68,8 @@ namespace SPH
 		class RelaxationMultiPhase : public RelaxationInnerType, public MultiPhaseContactData
 		{
 		public:
-			RelaxationMultiPhase(BaseBodyRelationInner* inner_relation,
-				BaseBodyRelationContact* contact_relation);
+			RelaxationMultiPhase(BaseBodyRelationInner &inner_relation,
+				BaseBodyRelationContact &contact_relation);
 			virtual ~RelaxationMultiPhase() {};
 		protected:
 			StdVec<StdLargeVec<Real>*> contact_Vol_, contact_p_, contact_rho_n_;
@@ -84,13 +84,13 @@ namespace SPH
 		class BasePressureRelaxationMultiPhase : public RelaxationMultiPhase<PressureRelaxationInnerType>
 		{
 		public:
-			BasePressureRelaxationMultiPhase(BaseBodyRelationInner* inner_relation,
-				BaseBodyRelationContact* contact_relation);
-			BasePressureRelaxationMultiPhase(ComplexBodyRelation* complex_relation);
+			BasePressureRelaxationMultiPhase(BaseBodyRelationInner &inner_relation,
+				BaseBodyRelationContact &contact_relation);
+			explicit BasePressureRelaxationMultiPhase(ComplexBodyRelation &complex_relation);
 			virtual ~BasePressureRelaxationMultiPhase() {};
 		protected:
 			using CurrentRiemannSolver = decltype(PressureRelaxationInnerType::riemann_solver_);
-			StdVec<CurrentRiemannSolver*> riemann_solvers_;
+			StdVec<CurrentRiemannSolver> riemann_solvers_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
@@ -114,13 +114,13 @@ namespace SPH
 		class BaseDensityRelaxationMultiPhase : public RelaxationMultiPhase<DensityRelaxationInnerType>
 		{
 		public:
-			BaseDensityRelaxationMultiPhase(BaseBodyRelationInner* inner_relation,
-				BaseBodyRelationContact* contact_relation);
-			BaseDensityRelaxationMultiPhase(ComplexBodyRelation* complex_relation);
+			BaseDensityRelaxationMultiPhase(BaseBodyRelationInner &inner_relation,
+				BaseBodyRelationContact &contact_relation);
+			explicit BaseDensityRelaxationMultiPhase(ComplexBodyRelation &complex_relation);
 			virtual ~BaseDensityRelaxationMultiPhase() {};
 		protected:
 			using CurrentRiemannSolver = decltype(DensityRelaxationInnerType::riemann_solver_);
-			StdVec<CurrentRiemannSolver*> riemann_solvers_;
+			StdVec<CurrentRiemannSolver> riemann_solvers_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -136,14 +136,14 @@ namespace SPH
 		class MultiPhaseColorFunctionGradient : public InteractionDynamics, public MultiPhaseData
 		{
 		public:
-			MultiPhaseColorFunctionGradient(BaseBodyRelationContact* contact_relation);
+			explicit MultiPhaseColorFunctionGradient(BaseBodyRelationContact &contact_relation);
 			virtual ~MultiPhaseColorFunctionGradient() {};
 		protected:
 			Real rho0_;
 			StdVec<Real> contact_rho0_;
 			StdLargeVec<Real>& Vol_, & pos_div_;
 			StdLargeVec<int>& surface_indicator_;
-			StdLargeVec<Vecd>& color_grad_, & surface_norm_;
+			StdLargeVec<Vecd> color_grad_, surface_norm_;
 			StdVec<StdLargeVec<Real>*> contact_Vol_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;

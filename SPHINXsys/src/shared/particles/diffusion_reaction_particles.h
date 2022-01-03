@@ -26,11 +26,8 @@
 * @author	Xiangyu Huand Chi Zhang
 */
 
-
 #ifndef DIFFUSION_REACTION_PARTICLES_H
 #define DIFFUSION_REACTION_PARTICLES_H
-
-
 
 #include "base_particles.h"
 #include "base_body.h"
@@ -39,34 +36,37 @@
 #include "xml_engine.h"
 #include "solid_particles.h"
 
-namespace SPH {
+namespace SPH
+{
 
 	/**
 	 * @class DiffusionReactionParticles
 	 * @brief A group of particles with diffusion or/and reactions particle data.
 	 */
-	template<class BaseParticlesType = BaseParticles, class BaseMaterialType = BaseMaterial>
+	template <class BaseParticlesType = BaseParticles, class BaseMaterialType = BaseMaterial>
 	class DiffusionReactionParticles : public BaseParticlesType
 	{
 	protected:
-		size_t number_of_species_;				/**< Total number of diffusion and reaction species . */
-		size_t number_of_diffusion_species_;	/**< Total number of diffusion species . */
+		size_t number_of_species_;			 /**< Total number of diffusion and reaction species . */
+		size_t number_of_diffusion_species_; /**< Total number of diffusion species . */
 		std::map<std::string, size_t> species_indexes_map_;
-	public:
-		StdVec<StdLargeVec<Real>> species_n_;	/**< array of diffusion/reaction scalars */
-		StdVec<StdLargeVec<Real>> diffusion_dt_;/**< array of the time derivative of diffusion species */
 
-		DiffusionReactionParticles(SPHBody* body, 
-			DiffusionReactionMaterial<BaseParticlesType, BaseMaterialType>* diffusion_reaction_material)
-			: BaseParticlesType(body, diffusion_reaction_material)
+	public:
+		StdVec<StdLargeVec<Real>> species_n_;	 /**< array of diffusion/reaction scalars */
+		StdVec<StdLargeVec<Real>> diffusion_dt_; /**< array of the time derivative of diffusion species */
+
+		DiffusionReactionParticles(SPHBody &sph_body,
+								   SharedPtr<DiffusionReaction<BaseParticlesType, BaseMaterialType>> diffusion_reaction_material_ptr,
+								   SharedPtr<ParticleGenerator> particle_generator_ptr = makeShared<ParticleGeneratorLattice>())
+			: BaseParticlesType(sph_body, diffusion_reaction_material_ptr, particle_generator_ptr)
 		{
-			diffusion_reaction_material->assignDiffusionReactionParticles(this);
-			species_indexes_map_ = diffusion_reaction_material->SpeciesIndexMap();
-			number_of_species_ = diffusion_reaction_material->NumberOfSpecies();
+			diffusion_reaction_material_ptr->assignDiffusionReactionParticles(this);
+			species_indexes_map_ = diffusion_reaction_material_ptr->SpeciesIndexMap();
+			number_of_species_ = diffusion_reaction_material_ptr->NumberOfSpecies();
 			species_n_.resize(number_of_species_);
 
 			std::map<std::string, size_t>::iterator itr;
-			for (itr = species_indexes_map_.begin(); itr != species_indexes_map_.end(); ++itr) 
+			for (itr = species_indexes_map_.begin(); itr != species_indexes_map_.end(); ++itr)
 			{
 				//Register a species. Note that we call a template function from a template class
 				this->template registerAVariable<indexScalar, Real>(species_n_[itr->second], itr->first);
@@ -76,7 +76,7 @@ namespace SPH {
 				this->template addAVariableToWrite<indexScalar, Real>(itr->first);
 			}
 
-			number_of_diffusion_species_ = diffusion_reaction_material->NumberOfSpeciesDiffusion();
+			number_of_diffusion_species_ = diffusion_reaction_material_ptr->NumberOfSpeciesDiffusion();
 			diffusion_dt_.resize(number_of_diffusion_species_);
 			for (size_t m = 0; m < number_of_diffusion_species_; ++m)
 			{
@@ -87,44 +87,45 @@ namespace SPH {
 				diffusion_dt_[m].resize(this->real_particles_bound_, Real(0));
 			}
 		};
-		virtual ~DiffusionReactionParticles() {};
+		virtual ~DiffusionReactionParticles(){};
 
-		std::map<std::string, size_t> SpeciesIndexMap() { return  species_indexes_map_; };
+		std::map<std::string, size_t> SpeciesIndexMap() { return species_indexes_map_; };
 
-		virtual DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>*  
-			ThisObjectPtr() override { return this; };
+		virtual DiffusionReactionParticles<BaseParticlesType, BaseMaterialType> *
+		ThisObjectPtr() override { return this; };
 	};
 
 	/**
 	 * @class ElectroPhysiologyParticles
 	 * @brief A group of particles with electrophysiology particle data.
 	 */
-	class ElectroPhysiologyParticles 
+	class ElectroPhysiologyParticles
 		: public DiffusionReactionParticles<SolidParticles, Solid>
 	{
 	public:
-		ElectroPhysiologyParticles(SPHBody* body, 
-			DiffusionReactionMaterial<SolidParticles, Solid>* diffusion_reaction_material);
-		virtual ~ElectroPhysiologyParticles() {};
-		virtual ElectroPhysiologyParticles* ThisObjectPtr() override { return this; };
-
+		ElectroPhysiologyParticles(SPHBody &sph_body,
+								   SharedPtr<DiffusionReaction<SolidParticles, Solid>> diffusion_reaction_material_ptr,
+								   SharedPtr<ParticleGenerator> particle_generator_ptr = makeShared<ParticleGeneratorLattice>());
+		virtual ~ElectroPhysiologyParticles(){};
+		virtual ElectroPhysiologyParticles *ThisObjectPtr() override { return this; };
 	};
 	/**
 	 * @class ElectroPhysiologyReducedParticles
 	 * @brief A group of reduced particles with electrophysiology particle data.
 	 */
-	class ElectroPhysiologyReducedParticles 
+	class ElectroPhysiologyReducedParticles
 		: public DiffusionReactionParticles<SolidParticles, Solid>
 	{
 	public:
 		/** Constructor. */
-		ElectroPhysiologyReducedParticles(SPHBody* body, 
-			DiffusionReactionMaterial<SolidParticles, Solid>* diffusion_reaction_material);
+		ElectroPhysiologyReducedParticles(SPHBody &sph_body,
+										  SharedPtr<DiffusionReaction<SolidParticles, Solid>> diffusion_reaction_material_ptr,
+										  SharedPtr<ParticleGenerator> particle_generator_ptr = makeShared<ParticleGeneratorLattice>());
 		/** Destructor. */
-		virtual ~ElectroPhysiologyReducedParticles() {};
-		virtual ElectroPhysiologyReducedParticles* ThisObjectPtr() override { return this; };
+		virtual ~ElectroPhysiologyReducedParticles(){};
+		virtual ElectroPhysiologyReducedParticles *ThisObjectPtr() override { return this; };
 
-		virtual Vecd getKernelGradient(size_t particle_index_i, size_t particle_index_j, Real dW_ij, Vecd& e_ij) override
+		virtual Vecd getKernelGradient(size_t particle_index_i, size_t particle_index_j, Real dW_ij, Vecd &e_ij) override
 		{
 			return dW_ij * e_ij;
 		};

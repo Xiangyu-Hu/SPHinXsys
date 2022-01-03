@@ -59,7 +59,7 @@ namespace SPH
 			public ParticleDynamicsSimple, public ActiveMuscleDataDelegateSimple
 		{
 		public:
-			MuscleActivation(SolidBody *body);
+			explicit MuscleActivation(SolidBody &solid_body);
 			virtual ~MuscleActivation() {};
 		protected:
 			StdLargeVec<Vecd>& pos_0_;
@@ -74,7 +74,7 @@ namespace SPH
 			public PartSimpleDynamicsByParticle, public ActiveMuscleDataDelegateSimple
 		{
 		public:
-			SpringConstrainMuscleRegion(SolidBody *body, BodyPartByParticle*body_part);
+			SpringConstrainMuscleRegion(SolidBody &solid_body, BodyPartByParticle &body_part);
 			virtual ~SpringConstrainMuscleRegion() {};
 			void setUpSpringStiffness(Vecd stiffness){stiffness_ = stiffness;}
 		protected:
@@ -92,7 +92,7 @@ namespace SPH
 			public PartSimpleDynamicsByParticle, public ActiveMuscleDataDelegateSimple
 		{
 		public:
-			ImposingStress(SolidBody *body, SolidBodyPartForSimbody *body_part);
+			ImposingStress(SolidBody &solid_body, SolidBodyPartForSimbody &body_part);
 			virtual ~ImposingStress() {};
 		protected:
 			StdLargeVec<Vecd>& pos_0_;

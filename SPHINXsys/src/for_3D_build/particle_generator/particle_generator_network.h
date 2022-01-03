@@ -30,12 +30,11 @@
 #ifndef PARTICLE_GENERATOR_NETWORK_H
 #define PARTICLE_GENERATOR_NETWORK_H
 
-
 #include "sph_data_containers.h"
 #include "base_particle_generator.h"
 #include "generative_structures.h"
 
-namespace SPH 
+namespace SPH
 {
 	class BaseLevelSet;
 	class BaseCellLinkedList;
@@ -49,31 +48,32 @@ namespace SPH
 	{
 	public:
 		ParticleGeneratorNetwork(Vecd starting_pnt, Vecd second_pnt, int iterator, Real grad_factor);
-		virtual ~ParticleGeneratorNetwork() {};
+		virtual ~ParticleGeneratorNetwork(){};
 		/**
 		 *@brief Parameters initialization. 
 		 *@param[in] sph_body*(SPHBody) SPHBody to whom it generate particles.
 		 */
-		virtual void initialize(SPHBody* sph_body) override;
+		virtual void initialize(SPHBody *sph_body) override;
 		/**
 		 *@brief Created base particles based on edges in branch.
 		 *@param[in] base_particles(BaseParticles) Pointer to baseparticle link to a SPHBody.
 		 */
-		virtual void createBaseParticles(BaseParticles* base_particles) override;
+		virtual void createBaseParticles(BaseParticles *base_particles) override;
+
 	protected:
-		Vecd starting_pnt_;				/**< Starting point for net work. */
-		Vecd second_pnt_;				/**< Second point, approximate the growing direction. */
-		size_t n_it_; 					/**< Number of iterations (generations of branch. */
-		bool fascicles_;				/**< Create fascicles? */
-		size_t	segments_in_branch_;	/**< approximated number of segments in a branch. */
-		Real segment_length_;			/**< segment length of the branch. */
-		Real angle_ = 0.3;				/**< angle with respect to the direction of the previous edge and the new edge. */
-		Real repulsivity_ = 0.175; 		/**< repulsivity parameter. */
-		Real grad_factor_;				/**< Factor for computing gradient from nearest node. */
-		std::vector<Real> fascicle_angles_ = {-1.25, 0.75}; 	/**< angles with respect to the initial edge of the fascicles.*/
-		Real fascicle_ratio_ = 15.0; 						/**< ratio of length  of the fascicles. Include one per fascicle to include.*/
-		ComplexShape* body_shape_;
-		BaseCellLinkedList* cell_linked_list_;
+		Vecd starting_pnt_;									/**< Starting point for net work. */
+		Vecd second_pnt_;									/**< Second point, approximate the growing direction. */
+		size_t n_it_;										/**< Number of iterations (generations of branch. */
+		bool fascicles_;									/**< Create fascicles? */
+		size_t segments_in_branch_;							/**< approximated number of segments in a branch. */
+		Real segment_length_;								/**< segment length of the branch. */
+		Real angle_ = 0.3;									/**< angle with respect to the direction of the previous edge and the new edge. */
+		Real repulsivity_ = 0.175;							/**< repulsivity parameter. */
+		Real grad_factor_;									/**< Factor for computing gradient from nearest node. */
+		std::vector<Real> fascicle_angles_ = {-1.25, 0.75}; /**< angles with respect to the initial edge of the fascicles.*/
+		Real fascicle_ratio_ = 15.0;						/**< ratio of length  of the fascicles. Include one per fascicle to include.*/
+		ComplexShape *body_shape_;
+		BaseCellLinkedList *cell_linked_list_;
 		GenerativeTree *tree_;
 		/**
 		 *@brief Get the gradient from nearest points, for imposing repulsive force. 
@@ -89,8 +89,7 @@ namespace SPH
 		 *@param[in] repulsivity(Real) The repulsivity for creating new points.
 		 *@param[in] number_segments(size_t) Number of segments in this branch.
 		 */
-		bool createABranchIfValid(SPHBody* sph_body, size_t parent_id, Real angle,
-			Real repulsivity, size_t number_segments);
+		bool createABranchIfValid(size_t parent_id, Real angle, Real repulsivity, size_t number_segments);
 		/**
 		 *@brief Functions that creates a new node in the mesh surface and it to the queue is it lies in the surface.
 		 *@param[in] init_node vector that contains the coordinates of the last node added in the branch.
@@ -105,12 +104,12 @@ namespace SPH
 		 *@param[in] nearest_neighbor(ListData) The nearest point of the existing points.
 		 *@param[in] parent_id(size_t)  Id of parent branch
 		 */
-		bool isCollision(Vecd& new_point, ListData& nearest_neighbor, size_t parent_id);
+		bool isCollision(const Vecd &new_point, const ListData &nearest_neighbor, size_t parent_id);
 		/**
 		 *@brief Check if the new point is valid according to extra constraint.
 		 *@param[in] new_point(Vecd) The enquiry point.
 		 */
-		virtual bool extraCheck(Vecd& new_point){return false;};
+		virtual bool extraCheck(const Vecd &new_point) { return false; };
 	};
 }
 #endif //PARTICLE_GENERATOR_NETWORK_H

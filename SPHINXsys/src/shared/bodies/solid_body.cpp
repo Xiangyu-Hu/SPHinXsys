@@ -11,29 +11,30 @@
 #include "base_material.h"
 #include "solid_particles.h"
 
-namespace SPH {
+namespace SPH
+{
 	//=================================================================================================//
-	SolidBody::SolidBody(SPHSystem &system, std::string body_name,
-		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
-		: RealBody(system, body_name, particle_adaptation, particle_generator)
+	SolidBody::SolidBody(SPHSystem &system, const std::string &body_name,
+						 SharedPtr<SPHAdaptation> sph_adaptation_ptr)
+		: RealBody(system, body_name, sph_adaptation_ptr)
 	{
 		sph_system_.addASolidBody(this);
 	}
 	//=================================================================================================//
-	ThinStructure::ThinStructure(SPHSystem& system, std::string body_name,
-		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
-		: SolidBody(system, body_name, particle_adaptation, particle_generator)
+	ThinStructure::ThinStructure(SPHSystem &system, const std::string &body_name,
+								 SharedPtr<SPHAdaptation> sph_adaptation_ptr)
+		: SolidBody(system, body_name, sph_adaptation_ptr)
 	{
-		particle_adaptation->getKernel()->reduceOnce();
+		sph_adaptation_ptr->getKernel()->reduceOnce();
 	}
 	//=================================================================================================//
-	SolidBodyPartForSimbody
-		::SolidBodyPartForSimbody(SPHBody* solid_body, std::string solid_body_part_name)
-		: BodyPartByParticle(solid_body, solid_body_part_name)
+	SolidBodyPartForSimbody::
+		SolidBodyPartForSimbody(SPHBody &body, const std::string &body_part_name, Shape &shape)
+		: BodyRegionByParticle(body, body_part_name, shape),
+		  solid_particles_(DynamicCast<SolidParticles>(this, body.base_particles_)),
+		  solid_body_density_(DynamicCast<Solid>(this, base_particles_->base_material_)->ReferenceDensity())
 	{
-		solid_particles_ = dynamic_cast<SolidParticles*>(body_->base_particles_);
-		Solid* solid = dynamic_cast<Solid*>(body_->base_particles_->base_material_);
-		solid_body_density_ = solid->ReferenceDensity();
+		setMassProperties();
 	}
 	//=================================================================================================//
 }

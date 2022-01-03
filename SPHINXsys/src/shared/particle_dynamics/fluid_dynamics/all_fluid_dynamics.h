@@ -35,8 +35,6 @@
 #include "fluid_dynamics_inner.hpp"
 #include "fluid_dynamics_complex.h"
 #include "fluid_dynamics_complex.hpp"
-#include "fluid_dynamics_compound.h"
-#include "fluid_dynamics_compound.hpp"
 #include "fluid_dynamics_multi_phase.h"
 #include "fluid_dynamics_multi_phase.hpp"
 #include "all_eulerian_fluid_dynamics.h"

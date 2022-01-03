@@ -32,36 +32,36 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	InputBody* inputbody = new InputBody(system, "Airfoil");
+	InputBody inputbody(system, "SPHInXsysLogo");
 	SolidParticles inputbody_particles(inputbody);
-	//----------------------------------------------------------------------
-	//	Define simple file input and outputs functions.
-	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtu inputbody_recording_to_vtu(in_output, { inputbody });
-	MeshRecordingToPlt 	cell_linked_list_recording(in_output, inputbody, inputbody->cell_linked_list_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BaseBodyRelationInner* inputbody_inner = new BodyRelationInner(inputbody);
+	BodyRelationInner inputbody_inner(inputbody);
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
 	RandomizePartilePosition  random_inputbody_particles(inputbody);
 	relax_dynamics::RelaxationStepInner relaxation_step_inner(inputbody_inner, true);
 	//----------------------------------------------------------------------
+	//	Define simple file input and outputs functions.
+	//----------------------------------------------------------------------
+	BodyStatesRecordingToVtp inputbody_recording_to_vtp(in_output, inputbody);
+	MeshRecordingToPlt 	cell_linked_list_recording(in_output, inputbody, inputbody.cell_linked_list_);
+	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary. 
 	//----------------------------------------------------------------------
 	random_inputbody_particles.parallel_exec(0.25);
 	relaxation_step_inner.surface_bounding_.parallel_exec();
-	inputbody->updateCellLinkedList();
+	inputbody.updateCellLinkedList();
 	//----------------------------------------------------------------------
 	//	First output before the simulation.
 	//----------------------------------------------------------------------
-	inputbody_recording_to_vtu.writeToFile(0.0);
-	cell_linked_list_recording.writeToFile(0.0);
+	inputbody_recording_to_vtp.writeToFile();
+	cell_linked_list_recording.writeToFile();
 	//----------------------------------------------------------------------
 	//	Particle relaxation time stepping start here.
 	//----------------------------------------------------------------------
@@ -73,7 +73,7 @@ int main(int ac, char* av[])
 		if (ite_p % 100 == 0)
 		{
 			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the airfoil N = " << ite_p << "\n";
-			inputbody_recording_to_vtu.writeToFile(ite_p);
+			inputbody_recording_to_vtp.writeToFile(ite_p);
 		}
 	}
 	std::cout << "The physics relaxation process of airfoil finish !" << std::endl;

@@ -1,4 +1,4 @@
- /**
+/**
  * @file 	3d_self_contact.cpp
  * @brief 	This is the test to check self contact for solid dynamics
  * @author 	Xiangyu Hu
@@ -10,7 +10,7 @@
 
 using namespace SPH;
 
-int main(int ac, char* av[])
+int main(int ac, char *av[])
 {
 	//----------------------------------------------------------------------
 	//	Build up -- a SPHSystem
@@ -20,35 +20,35 @@ int main(int ac, char* av[])
 	system.run_particle_relaxation_ = false;
 	// Tag for reload initially repaxed particles.
 	system.reload_particles_ = true;
-	//handle command line arguments
-	#ifdef BOOST_AVAILABLE
+//handle command line arguments
+#ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
-	#endif
+#endif
 	// output environment
-	In_Output 	in_output(system);
+	In_Output in_output(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	Coil* coil = new Coil(system, "Coil");
-	if (!system.run_particle_relaxation_ && system.reload_particles_) coil->useParticleGeneratorReload();
-	CoilMaterial* coil_material = new CoilMaterial();
-	ElasticSolidParticles 	coil_particles(coil, coil_material);
+	Coil coil(system, "Coil");
+	SharedPtr<ParticleGenerator> coil_particle_generator = makeShared<ParticleGeneratorLattice>();
+	if (!system.run_particle_relaxation_ && system.reload_particles_)
+		coil_particle_generator = makeShared<ParticleGeneratorReload>(in_output, coil.getBodyName());
+	ElasticSolidParticles coil_particles(coil, makeShared<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson), coil_particle_generator);
 
-	StationaryPlate* stationary_plate = new StationaryPlate(system, "StationaryPlate");
-	StationaryPlateMaterial* stationary_plate_material = new StationaryPlateMaterial();
-	SolidParticles 	moving_plate_particles(stationary_plate, stationary_plate_material);
+	StationaryPlate stationary_plate(system, "StationaryPlate");
+	SolidParticles moving_plate_particles(stationary_plate, makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson));
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtu	write_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BaseBodyRelationInner* coil_inner = new BodyRelationInner(coil);
-	SolidBodyRelationSelfContact* coil_self_contact = new SolidBodyRelationSelfContact(coil);
-	SolidBodyRelationContact* coil_contact = new SolidBodyRelationContact(coil_self_contact, { stationary_plate });
+	BodyRelationInner coil_inner(coil);
+	SolidBodyRelationSelfContact coil_self_contact(coil);
+	SolidBodyRelationContact coil_contact(coil_self_contact, {&stationary_plate});
 	//----------------------------------------------------------------------
 	//	check whether run particle relaxation for body fitted particle distribution.
 	//----------------------------------------------------------------------
@@ -58,10 +58,10 @@ int main(int ac, char* av[])
 		//	Methods used for particle relaxation.
 		//----------------------------------------------------------------------
 		// Random reset the insert body particle position.
-		RandomizePartilePosition  random_inserted_body_particles(coil);
+		RandomizePartilePosition random_inserted_body_particles(coil);
 		// Write the particle reload files.
-		ReloadParticleIO 		write_particle_reload_files(in_output, { coil });
-		// A  Physics relaxation step. 
+		ReloadParticleIO write_particle_reload_files(in_output, {&coil});
+		// A  Physics relaxation step.
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(coil_inner);
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
@@ -91,11 +91,11 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//	This section define all numerical methods will be used in this case.
 	//----------------------------------------------------------------------
-	Gravity* gravity = new Gravity(Vecd(0.0, -1.0, 0.0));
+	Gravity gravity(Vecd(0.0, -1.0, 0.0));
 	// initialize a time step
-	TimeStepInitialization 	initialization_with_gravity(coil, gravity);
+	TimeStepInitialization initialization_with_gravity(coil, gravity);
 	// Corrected configuration for reproducing rigid rotation.
-	solid_dynamics::CorrectConfiguration corrected_configuration_in_strong_form(coil_inner);
+	solid_dynamics::CorrectConfiguration corrected_configuration(coil_inner);
 	// Time step size
 	solid_dynamics::AcousticTimeStepSize computing_time_step_size(coil);
 	//stress relaxation.
@@ -110,12 +110,12 @@ int main(int ac, char* av[])
 	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>
 		coil_damping(coil_inner, 0.2, "Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
-	//	From here the time stepping begines.
+	//	From here the time stepping begins.
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	// apply initial condition
-	corrected_configuration_in_strong_form.parallel_exec();
+	corrected_configuration.parallel_exec();
 	write_states.writeToFile(0);
 	// Setup time stepping control parameters.
 	int ite = 0;
@@ -133,10 +133,11 @@ int main(int ac, char* av[])
 		Real integration_time = 0.0;
 		while (integration_time < output_period)
 		{
-			if (ite % 100 == 0) {
+			if (ite % 100 == 0)
+			{
 				std::cout << "N=" << ite << " Time: "
-					<< GlobalStaticVariables::physical_time_ << "	dt: "
-					<< dt << "\n";
+						  << GlobalStaticVariables::physical_time_ << "	dt: "
+						  << dt << "\n";
 			}
 			initialization_with_gravity.parallel_exec();
 			// contact dynamics.
@@ -154,10 +155,10 @@ int main(int ac, char* av[])
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 
-			//update particle neighbor realtions for conact dynamics
-			coil->updateCellLinkedList();
-			coil_self_contact->updateConfiguration();
-			coil_contact->updateConfiguration();
+			//update particle neighbor relations for contact dynamics
+			coil.updateCellLinkedList();
+			coil_self_contact.updateConfiguration();
+			coil_contact.updateConfiguration();
 		}
 		tick_count t2 = tick_count::now();
 		write_states.writeToFile();

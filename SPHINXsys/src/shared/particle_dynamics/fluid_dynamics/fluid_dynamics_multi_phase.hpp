@@ -16,11 +16,11 @@ namespace SPH
 		//=================================================================================================//
 		template<class RelaxationInnerType>
         RelaxationMultiPhase<RelaxationInnerType>::
-            RelaxationMultiPhase(BaseBodyRelationInner* inner_relation,
-				BaseBodyRelationContact* contact_relation) :
+            RelaxationMultiPhase(BaseBodyRelationInner &inner_relation,
+				BaseBodyRelationContact &contact_relation) :
 				RelaxationInnerType(inner_relation), MultiPhaseContactData(contact_relation)
 		{
-			if (inner_relation->sph_body_ != contact_relation->sph_body_)
+			if (inner_relation.sph_body_ != contact_relation.sph_body_)
 			{
 				std::cout << "\n Error: the two body_realtions do not have the same source body!" << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -38,22 +38,21 @@ namespace SPH
 		//=================================================================================================//
 		template<class PressureRelaxationInnerType>
         BasePressureRelaxationMultiPhase<PressureRelaxationInnerType>::
-            BasePressureRelaxationMultiPhase(BaseBodyRelationInner* inner_relation,
-				BaseBodyRelationContact* contact_relation) :
+            BasePressureRelaxationMultiPhase(BaseBodyRelationInner &inner_relation,
+				BaseBodyRelationContact &contact_relation) :
 				RelaxationMultiPhase<PressureRelaxationInnerType>(inner_relation,
 					contact_relation)
 		{
 			for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 			{
-				riemann_solvers_.push_back(new CurrentRiemannSolver(*this->material_, *this->contact_material_[k]));
+				riemann_solvers_.push_back(CurrentRiemannSolver(*this->material_, *this->contact_material_[k]));
 			}
 		}
 		//=================================================================================================//
 		template<class PressureRelaxationInnerType>
         BasePressureRelaxationMultiPhase<PressureRelaxationInnerType>::
-            BasePressureRelaxationMultiPhase(ComplexBodyRelation* complex_relation) :
-				BasePressureRelaxationMultiPhase(complex_relation->inner_relation_,
-					complex_relation->contact_relation_) {}
+            BasePressureRelaxationMultiPhase(ComplexBodyRelation &complex_relation) :
+				BasePressureRelaxationMultiPhase(complex_relation.inner_relation_, complex_relation.contact_relation_) {}
 		//=================================================================================================//
 		template<class PressureRelaxationInnerType>
         void BasePressureRelaxationMultiPhase<PressureRelaxationInnerType>::Interaction(size_t index_i, Real dt)
@@ -68,7 +67,7 @@ namespace SPH
 				StdLargeVec<Real>& rho_k = *(this->contact_rho_n_[k]);
 				StdLargeVec<Real>& p_k = *(this->contact_p_[k]);
 				StdLargeVec<Vecd>& vel_k = *(this->contact_vel_n_[k]);
-				CurrentRiemannSolver* riemann_solver_k = riemann_solvers_[k];
+				CurrentRiemannSolver& riemann_solver_k = riemann_solvers_[k];
 				Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
@@ -77,7 +76,7 @@ namespace SPH
 					Real dW_ij = contact_neighborhood.dW_ij_[n];
 
 					FluidState state_j(rho_k[index_j], vel_k[index_j], p_k[index_j]);
-					Real p_star = riemann_solver_k->getPStar(state_i, state_j, e_ij);
+					Real p_star = riemann_solver_k.getPStar(state_i, state_j, e_ij);
 					acceleration -= 2.0 * p_star * e_ij * Vol_k[index_j] * dW_ij / state_i.rho_;
 				}
 			}
@@ -115,22 +114,21 @@ namespace SPH
 		//=================================================================================================//
 		template<class DensityRelaxationInnerType>
         BaseDensityRelaxationMultiPhase<DensityRelaxationInnerType>::
-            BaseDensityRelaxationMultiPhase(BaseBodyRelationInner* inner_relation,
-				BaseBodyRelationContact* contact_relation) :
+            BaseDensityRelaxationMultiPhase(BaseBodyRelationInner &inner_relation,
+				BaseBodyRelationContact &contact_relation) :
 				RelaxationMultiPhase<DensityRelaxationInnerType>(inner_relation,
 					contact_relation)
 			{
 				for (size_t k = 0; k != this->contact_particles_.size(); ++k)
 				{
-					riemann_solvers_.push_back(new CurrentRiemannSolver(*this->material_, *this->contact_material_[k]));
+					riemann_solvers_.push_back(CurrentRiemannSolver(*this->material_, *this->contact_material_[k]));
 				}
 			}
  		//=================================================================================================//
 		template<class DensityRelaxationInnerType>
         BaseDensityRelaxationMultiPhase<DensityRelaxationInnerType>::
-            BaseDensityRelaxationMultiPhase(ComplexBodyRelation* complex_relation) :
-				BaseDensityRelaxationMultiPhase(complex_relation->inner_relation_,
-					complex_relation->contact_relation_) {}
+            BaseDensityRelaxationMultiPhase(ComplexBodyRelation &complex_relation) :
+				BaseDensityRelaxationMultiPhase(complex_relation.inner_relation_, complex_relation.contact_relation_) {}
  		//=================================================================================================//
 		template<class DensityRelaxationInnerType>
         void BaseDensityRelaxationMultiPhase<DensityRelaxationInnerType>::Interaction(size_t index_i, Real dt)
@@ -145,7 +143,7 @@ namespace SPH
 				StdLargeVec<Real>& rho_k = *(this->contact_rho_n_[k]);
 				StdLargeVec<Real>& p_k = *(this->contact_p_[k]);
 				StdLargeVec<Vecd>& vel_k = *(this->contact_vel_n_[k]);
-				CurrentRiemannSolver* riemann_solver_k = riemann_solvers_[k];
+				CurrentRiemannSolver& riemann_solver_k = riemann_solvers_[k];
 				Neighborhood& contact_neighborhood = (*this->contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
@@ -154,7 +152,7 @@ namespace SPH
 					Real dW_ij = contact_neighborhood.dW_ij_[n];
 
 					FluidState state_j(rho_k[index_j], vel_k[index_j], p_k[index_j]);
-					Vecd vel_star = riemann_solver_k->getVStar(state_i, state_j, e_ij);
+					Vecd vel_star = riemann_solver_k.getVStar(state_i, state_j, e_ij);
 					density_change_rate += 2.0 * state_i.rho_ * Vol_k[index_j] * dot(state_i.vel_ - vel_star, e_ij) * dW_ij;
 				}
 			}

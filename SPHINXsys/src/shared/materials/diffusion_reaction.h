@@ -32,8 +32,6 @@
 #ifndef DIFFUSION_REACTION_H
 #define DIFFUSION_REACTION_H
 
-
-
 #include "base_material.h"
 #include "solid_particles.h"
 
@@ -41,9 +39,9 @@
 #include <functional>
 using namespace std::placeholders;
 
-namespace SPH 
+namespace SPH
 {
-	template<class BaseParticlesType, class BaseMaterialType>
+	template <class BaseParticlesType, class BaseMaterialType>
 	class DiffusionReactionParticles;
 	class ElectroPhysiologyParticles;
 	/**
@@ -53,16 +51,19 @@ namespace SPH
 	class BaseDiffusion : public BaseMaterial
 	{
 	public:
-		BaseDiffusion(size_t diffusion_species_index, size_t gradient_species_index) : 
-			BaseMaterial(), diffusion_species_index_(diffusion_species_index), 
-			gradient_species_index_(gradient_species_index) {};
-		virtual ~BaseDiffusion() {};
+		BaseDiffusion(size_t diffusion_species_index, size_t gradient_species_index)
+			: BaseMaterial(), diffusion_species_index_(diffusion_species_index),
+			  gradient_species_index_(gradient_species_index)
+		{
+			material_type_ = "BaseDiffusion";
+		};
+		virtual ~BaseDiffusion(){};
 
 		size_t diffusion_species_index_;
 		size_t gradient_species_index_;
 
 		virtual Real getReferenceDiffusivity() = 0;
-		virtual Real getInterParticleDiffusionCoff(size_t particle_i, size_t particle_j, Vecd& direction_from_j_to_i) = 0;
+		virtual Real getInterParticleDiffusionCoff(size_t particle_i, size_t particle_j, Vecd &direction_from_j_to_i) = 0;
 	};
 
 	/**
@@ -76,12 +77,16 @@ namespace SPH
 
 	public:
 		IsotropicDiffusion(size_t diffusion_species_index, size_t gradient_species_index,
-			Real diff_cf = 1.0) : BaseDiffusion(diffusion_species_index, gradient_species_index),
-			diff_cf_(diff_cf) {};
-		virtual ~IsotropicDiffusion() {};
+						   Real diff_cf = 1.0)
+			: BaseDiffusion(diffusion_species_index, gradient_species_index),
+			  diff_cf_(diff_cf)
+		{
+			material_type_ = "IsotropicDiffusion";
+		};
+		virtual ~IsotropicDiffusion(){};
 
 		virtual Real getReferenceDiffusivity() override { return diff_cf_; };
-		virtual Real getInterParticleDiffusionCoff(size_t particle_i, size_t particle_j, Vecd& direction_from_j_to_i) override
+		virtual Real getInterParticleDiffusionCoff(size_t particle_i, size_t particle_j, Vecd &direction_from_j_to_i) override
 		{
 			return diff_cf_;
 		};
@@ -94,29 +99,31 @@ namespace SPH
 	class DirectionalDiffusion : public IsotropicDiffusion
 	{
 	protected:
-		Vecd bias_direction_; 	/**< Reference bias direction. */
-		Real bias_diff_cf_;		/**< The bias diffusion coefficient along the fiber direction. */
-		Matd transformed_diffusivity_;	/**< The transformed diffusivity with inverse Cholesky decomposition. */
+		Vecd bias_direction_;		   /**< Reference bias direction. */
+		Real bias_diff_cf_;			   /**< The bias diffusion coefficient along the fiber direction. */
+		Matd transformed_diffusivity_; /**< The transformed diffusivity with inverse Cholesky decomposition. */
 
 		void initializeDirectionalDiffusivity(Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
+
 	public:
 		DirectionalDiffusion(size_t diffusion_species_index, size_t gradient_species_index,
-			Real diff_cf, Real bias_diff_cf, Vecd bias_direction) : 
-			IsotropicDiffusion(diffusion_species_index, gradient_species_index, diff_cf), 
-			bias_direction_(bias_direction), bias_diff_cf_(bias_diff_cf), 
-			transformed_diffusivity_(1.0) 
+							 Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
+			: IsotropicDiffusion(diffusion_species_index, gradient_species_index, diff_cf),
+			  bias_direction_(bias_direction), bias_diff_cf_(bias_diff_cf),
+			  transformed_diffusivity_(1.0)
 		{
+			material_type_ = "DirectionalDiffusion";
 			initializeDirectionalDiffusivity(diff_cf, bias_diff_cf, bias_direction);
 		};
-		virtual ~DirectionalDiffusion() {};
+		virtual ~DirectionalDiffusion(){};
 
 		virtual Real getReferenceDiffusivity() override
 		{
 			return SMAX(diff_cf_, diff_cf_ + bias_diff_cf_);
 		};
 
-		virtual Real getInterParticleDiffusionCoff(size_t particle_index_i, 
-			size_t particle_index_j, Vecd& inter_particle_direction) override
+		virtual Real getInterParticleDiffusionCoff(size_t particle_index_i,
+												   size_t particle_index_j, Vecd &inter_particle_direction) override
 		{
 			Vecd grad_ij = transformed_diffusivity_ * inter_particle_direction;
 			return 1.0 / grad_ij.scalarNormSqr();
@@ -134,23 +141,27 @@ namespace SPH
 		StdLargeVec<Matd> local_transformed_diffusivity_;
 
 		void initializeFiberDirection();
+
 	public:
 		LocalDirectionalDiffusion(size_t diffusion_species_index, size_t gradient_species_index,
-			Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
-			: DirectionalDiffusion(diffusion_species_index, gradient_species_index, diff_cf, bias_diff_cf, bias_direction) {};
-		virtual ~LocalDirectionalDiffusion() {};
-		virtual Real getInterParticleDiffusionCoff(size_t particle_index_i, size_t particle_index_j, Vecd& inter_particle_direction) override
+								  Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
+			: DirectionalDiffusion(diffusion_species_index, gradient_species_index, diff_cf, bias_diff_cf, bias_direction)
+		{
+			material_type_ = "LocalDirectionalDiffusion";
+		};
+		virtual ~LocalDirectionalDiffusion(){};
+		virtual Real getInterParticleDiffusionCoff(size_t particle_index_i, size_t particle_index_j, Vecd &inter_particle_direction) override
 		{
 			Matd trans_diffusivity = getAverageValue(local_transformed_diffusivity_[particle_index_i], local_transformed_diffusivity_[particle_index_j]);
 			Vecd grad_ij = trans_diffusivity * inter_particle_direction;
 			return 1.0 / grad_ij.scalarNormSqr();
 		};
-		virtual void assignBaseParticles(BaseParticles* base_particles);
-		virtual void readFromXmlForLocalParameters(std::string& filefullpath) override;
+		virtual void assignBaseParticles(BaseParticles *base_particles) override;
+		virtual void readFromXmlForLocalParameters(const std::string &filefullpath) override;
 	};
 
 	/** Reaction functor . */
-	typedef std::function<Real(StdVec<StdLargeVec<Real>>&, size_t particle_i)> ReactionFunctor;
+	typedef std::function<Real(StdVec<StdLargeVec<Real>> &, size_t particle_i)> ReactionFunctor;
 	/**
 	 * @class BaseReactionModel
 	 * @brief Base class for all reaction models.
@@ -158,14 +169,26 @@ namespace SPH
 	class BaseReactionModel
 	{
 	protected:
-		virtual void assignDerivedReactionParameters() = 0;
+		StdVec<std::string> species_name_list_;
+		std::map<std::string, size_t> species_indexes_map_;
+		std::string reaction_model_;
+
 	public:
-		BaseReactionModel() {};
-		virtual ~BaseReactionModel() {};
+		explicit BaseReactionModel(StdVec<std::string> species_name_list)
+			: reaction_model_("BaseReactionModel"), species_name_list_(species_name_list)
+		{
+			for (size_t i = 0; i != species_name_list.size(); ++i)
+			{
+				species_indexes_map_.insert(make_pair(species_name_list[i], i));
+			}
+		};
+		virtual ~BaseReactionModel(){};
 
 		IndexVector reactive_species_;
 		StdVec<ReactionFunctor> get_production_rates_;
 		StdVec<ReactionFunctor> get_loss_rates_;
+
+		StdVec<std::string> getSpeciesNameList() { return species_name_list_; };
 	};
 
 	/**
@@ -182,19 +205,26 @@ namespace SPH
 		size_t gate_variable_;
 		size_t active_contraction_stress_;
 
-		virtual Real getProductionRateIonicCurrent(StdVec<StdLargeVec<Real>>& species, size_t particle_i) = 0;
-		virtual Real getLossRateIonicCurrent(StdVec<StdLargeVec<Real>>& species, size_t particle_i) = 0;
-		virtual Real getProductionRateGateVariable(StdVec<StdLargeVec<Real>>& species, size_t particle_i) = 0;
-		virtual Real getLossRateGateVariable(StdVec<StdLargeVec<Real>>& species, size_t particle_i) = 0;
-		virtual Real getProductionActiveContractionStress(StdVec<StdLargeVec<Real>>& species, size_t particle_i);
-		virtual Real getLossRateActiveContractionStress(StdVec<StdLargeVec<Real>>& species, size_t particle_i);
-		virtual void assignDerivedReactionParameters() override {};
+		virtual Real getProductionRateIonicCurrent(StdVec<StdLargeVec<Real>> &species, size_t particle_i) = 0;
+		virtual Real getLossRateIonicCurrent(StdVec<StdLargeVec<Real>> &species, size_t particle_i) = 0;
+		virtual Real getProductionRateGateVariable(StdVec<StdLargeVec<Real>> &species, size_t particle_i) = 0;
+		virtual Real getLossRateGateVariable(StdVec<StdLargeVec<Real>> &species, size_t particle_i) = 0;
+		virtual Real getProductionActiveContractionStress(StdVec<StdLargeVec<Real>> &species, size_t particle_i);
+		virtual Real getLossRateActiveContractionStress(StdVec<StdLargeVec<Real>> &species, size_t particle_i);
+
 	public:
-		ElectroPhysiologyReaction() : BaseReactionModel(), k_a_(1.0),
-			voltage_(0), gate_variable_(1), active_contraction_stress_(2) {};
-		virtual ~ElectroPhysiologyReaction() {};
-		void initializeElectroPhysiologyReaction(size_t voltage,
-			size_t gate_variable, size_t active_contraction_stress);
+		explicit ElectroPhysiologyReaction(Real k_a)
+			: BaseReactionModel({"Voltage", "GateVariable", "ActiveContractionStress"}),
+			  k_a_(k_a), voltage_(species_indexes_map_["Voltage"]),
+			  gate_variable_(species_indexes_map_["GateVariable"]),
+			  active_contraction_stress_(species_indexes_map_["ActiveContractionStress"])
+		{
+			reaction_model_ = "ElectroPhysiologyReaction";
+			initializeElectroPhysiologyReaction();
+		};
+		virtual ~ElectroPhysiologyReaction(){};
+
+		void initializeElectroPhysiologyReaction();
 	};
 
 	class AlievPanfilowModel : public ElectroPhysiologyReaction
@@ -203,69 +233,74 @@ namespace SPH
 		/** Parameters for two variable cell model. */
 		Real k_, a_, b_, mu_1_, mu_2_, epsilon_, c_m_;
 
-		virtual Real getProductionRateIonicCurrent(StdVec<StdLargeVec<Real>>& species, size_t particle_i) override;
-		virtual Real getLossRateIonicCurrent(StdVec<StdLargeVec<Real>>& species, size_t particle_i) override;
-		virtual Real getProductionRateGateVariable(StdVec<StdLargeVec<Real>>& species, size_t particle_i) override;
-		virtual Real getLossRateGateVariable(StdVec<StdLargeVec<Real>>& species, size_t particle_i) override;
-		virtual void assignDerivedReactionParameters() override 
-		{
-			ElectroPhysiologyReaction::assignDerivedReactionParameters();
-		};
+		virtual Real getProductionRateIonicCurrent(StdVec<StdLargeVec<Real>> &species, size_t particle_i) override;
+		virtual Real getLossRateIonicCurrent(StdVec<StdLargeVec<Real>> &species, size_t particle_i) override;
+		virtual Real getProductionRateGateVariable(StdVec<StdLargeVec<Real>> &species, size_t particle_i) override;
+		virtual Real getLossRateGateVariable(StdVec<StdLargeVec<Real>> &species, size_t particle_i) override;
+
 	public:
-		AlievPanfilowModel() : ElectroPhysiologyReaction(),
-			k_(0.0), a_(0.0), b_(0.0), mu_1_(0.0), mu_2_(0.0),
-			epsilon_(0.0), c_m_(0.0) {};
-		virtual ~AlievPanfilowModel() {};
+		explicit AlievPanfilowModel(Real k_a, Real c_m, Real k, Real a, Real b, Real mu_1, Real mu_2, Real epsilon)
+			: ElectroPhysiologyReaction(k_a), k_(k), a_(a), b_(b), mu_1_(mu_1), mu_2_(mu_2),
+			  epsilon_(epsilon), c_m_(c_m)
+		{
+			reaction_model_ = "AlievPanfilowModel";
+		};
+		virtual ~AlievPanfilowModel(){};
 	};
-    
+
 	/**
-	 * @class DiffusionReactionMaterial
+	 * @class DiffusionReaction
 	 * @brief Complex material for diffusion or/and reactions.
 	 */
-	template<class BaseParticlesType = BaseParticles, class BaseMaterialType = BaseMaterial>
-	class DiffusionReactionMaterial : public BaseMaterialType
+	template <class BaseParticlesType = BaseParticles, class BaseMaterialType = BaseMaterial>
+	class DiffusionReaction : public BaseMaterialType
 	{
+	private:
+		UniquePtrVectorKeeper<BaseDiffusion> diffusion_ptr_keeper_;
+
 	protected:
-
+		StdVec<std::string> species_name_list_;
 		size_t number_of_species_;
-		size_t number_of_diffusion_species_;
 		std::map<std::string, size_t> species_indexes_map_;
-		StdVec<BaseDiffusion*> species_diffusion_;
-		BaseReactionModel* species_reaction_;
-		DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>* diffusion_reaction_particles_;
+		StdVec<BaseDiffusion *> species_diffusion_;
+		BaseReactionModel *species_reaction_;
+		DiffusionReactionParticles<BaseParticlesType, BaseMaterialType> *diffusion_reaction_particles_;
 
-		virtual void assignDerivedMaterialParameters() override 
-		{
-			BaseMaterialType::assignDerivedMaterialParameters();
-		};
-
-		void insertASpecies(std::string species_name)
-		{
-			species_indexes_map_.insert(make_pair(species_name, number_of_species_));
-			number_of_species_++;
-		};
 	public:
-		/** Constructor for material only with diffusion. */
-		DiffusionReactionMaterial() 
-			: BaseMaterialType(), number_of_species_(0), species_reaction_(nullptr) 
+		/** Constructor for material with diffusion only. */
+		template <typename... ConstructorArgs>
+		DiffusionReaction(StdVec<std::string> species_name_list, ConstructorArgs &&...args)
+			: BaseMaterialType(std::forward<ConstructorArgs>(args)...),
+			  species_name_list_(species_name_list),
+			  number_of_species_(species_name_list.size()),
+			  species_reaction_(nullptr),
+			  diffusion_reaction_particles_(nullptr)
 		{
-			BaseMaterialType::material_name_ = "DiffusionMaterial";
+			BaseMaterialType::material_type_ = "Diffusion";
+			for (size_t i = 0; i != number_of_species_; ++i)
+			{
+				species_indexes_map_.insert(make_pair(species_name_list[i], i));
+			}
 		};
 		/** Constructor for material with diffusion and reaction. */
-		DiffusionReactionMaterial(BaseReactionModel* species_reaction)
-			: BaseMaterialType(), number_of_species_(0), species_reaction_(species_reaction) 
+		template <typename... ConstructorArgs>
+		DiffusionReaction(BaseReactionModel &species_reaction,
+						  StdVec<std::string> species_name_list, ConstructorArgs &&...args)
+			: DiffusionReaction(species_name_list, std::forward<ConstructorArgs>(args)...)
 		{
-			BaseMaterialType::material_name_ = "DiffusionReactionMaterial";
+			species_reaction_ = &species_reaction;
+			BaseMaterialType::material_type_ = "DiffusionReaction";
 		};
-		virtual ~DiffusionReactionMaterial() {};
+		virtual ~DiffusionReaction(){};
 
 		size_t NumberOfSpecies() { return number_of_species_; };
 		size_t NumberOfSpeciesDiffusion() { return species_diffusion_.size(); };
-		StdVec<BaseDiffusion*> SpeciesDiffusion() { return species_diffusion_; };
-		BaseReactionModel* SpeciesReaction() { return species_reaction_; };
-		std::map<std::string, size_t> SpeciesIndexMap() { return  species_indexes_map_; };
-		void assignDiffusionReactionParticles(DiffusionReactionParticles<BaseParticlesType, 
-			BaseMaterialType>* diffusion_reaction_particles) 
+		StdVec<BaseDiffusion *> SpeciesDiffusion() { return species_diffusion_; };
+		BaseReactionModel *SpeciesReaction() { return species_reaction_; };
+		std::map<std::string, size_t> SpeciesIndexMap() { return species_indexes_map_; };
+		StdVec<std::string> getSpeciesNameList() { return species_name_list_; };
+		void assignDiffusionReactionParticles(DiffusionReactionParticles<BaseParticlesType,
+																		 BaseMaterialType> *diffusion_reaction_particles)
 		{
 			diffusion_reaction_particles_ = diffusion_reaction_particles;
 			for (size_t k = 0; k < species_diffusion_.size(); ++k)
@@ -275,7 +310,7 @@ namespace SPH
 		 * @brief Get diffusion time step size. Here, I follow the reference:
 		 * https://www.uni-muenster.de/imperia/md/content/physik_tp/lectures/ws2016-2017/num_methods_i/heat.pdf 
 		 */
-		Real getDiffusionTimeStepSize(Real smoothing_length) 
+		Real getDiffusionTimeStepSize(Real smoothing_length)
 		{
 			Real diff_coff_max = 0.0;
 			for (size_t k = 0; k < species_diffusion_.size(); ++k)
@@ -283,56 +318,48 @@ namespace SPH
 			Real dimension = Real(Vecd(0).size());
 			return 0.5 * smoothing_length * smoothing_length / diff_coff_max / dimension;
 		};
-		/** Initialize diffusion material. */
-		virtual void initializeDiffusion() = 0;
-		virtual DiffusionReactionMaterial<BaseParticlesType, BaseMaterialType>* 
-			ThisObjectPtr() override { return this; };	
+
+		/** Initialize a diffusion material. */
+		template <class DiffusionType, typename... ConstructorArgs>
+		void initializeAnDiffusion(const std::string &diffusion_species_name,
+								   const std::string &gradient_species_name, ConstructorArgs &&...args)
+		{
+			species_diffusion_.push_back(
+				diffusion_ptr_keeper_.createPtr<DiffusionType>(
+					species_indexes_map_[diffusion_species_name],
+					species_indexes_map_[diffusion_species_name], std::forward<ConstructorArgs>(args)...));
+		};
+
+		virtual DiffusionReaction<BaseParticlesType, BaseMaterialType> *
+		ThisObjectPtr() override { return this; };
 	};
 
 	/**
 	 * @class MonoFieldElectroPhysiology
 	 * @brief material class for electro_physiology.
 	 */
-	class MonoFieldElectroPhysiology 
-		: public DiffusionReactionMaterial<SolidParticles, Solid>
+	class MonoFieldElectroPhysiology
+		: public DiffusionReaction<SolidParticles, Solid>
 	{
-	protected:
-		Real diff_cf_;
-		Real bias_diff_cf_; 
-		Vecd bias_direction_;
-
-		virtual void assignDerivedMaterialParameters() override
-		{
-			DiffusionReactionMaterial<SolidParticles, Solid>::assignDerivedMaterialParameters();
-		};
 	public:
-		MonoFieldElectroPhysiology(ElectroPhysiologyReaction* electro_physiology_reaction);
-		virtual ~MonoFieldElectroPhysiology() {};
-
-		virtual void initializeDiffusion() override;
+		explicit MonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
+											Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
+		virtual ~MonoFieldElectroPhysiology(){};
 	};
 
 	/**
 	 * @class LocalMonoFieldElectroPhysiology
 	 * @brief material class for electro_physiology with locally oriented fibers.
 	 */
-	class LocalMonoFieldElectroPhysiology 
-		: public MonoFieldElectroPhysiology
+	class LocalMonoFieldElectroPhysiology
+		: public DiffusionReaction<SolidParticles, Solid>
 	{
-	protected:
-		virtual void assignDerivedMaterialParameters() override
-		{
-			MonoFieldElectroPhysiology::assignDerivedMaterialParameters();
-		};
 	public:
-		LocalMonoFieldElectroPhysiology(ElectroPhysiologyReaction* electro_physiology_reaction)
-			:MonoFieldElectroPhysiology(electro_physiology_reaction) {
-			MonoFieldElectroPhysiology::material_name_ = "LocalMonoFieldElectroPhysiology";
-		};
-		virtual ~LocalMonoFieldElectroPhysiology() {};
+		explicit LocalMonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
+												 Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
+		virtual ~LocalMonoFieldElectroPhysiology(){};
 
-		virtual void initializeDiffusion() override;
-		virtual void readFromXmlForLocalParameters(std::string& filefullpath) override;
+		virtual void readFromXmlForLocalParameters(const std::string &filefullpath) override;
 	};
 }
 #endif //DIFFUSION_REACTION_H

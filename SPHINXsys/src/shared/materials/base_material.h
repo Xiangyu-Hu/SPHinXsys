@@ -32,19 +32,17 @@
  * @author	Chi Zhang and Xiangyu Hu
  */
 
-
 #ifndef BASE_MATERIAL_H
 #define BASE_MATERIAL_H
 
-
-
 #include "base_data_package.h"
-#include "base_particles.h"
+#include "xml_engine.h"
 
 #include <string>
 
-namespace SPH {
-
+namespace SPH
+{
+	class BaseParticles;
 	class FluidParticles;
 	class SolidParticles;
 
@@ -56,67 +54,35 @@ namespace SPH {
 	class BaseMaterial
 	{
 	protected:
-		std::string material_name_;
+		std::string material_type_;
 		std::string parameters_name_;
 		Real rho0_; /**< reference density. */
-		BaseParticles* base_particles_;
+		BaseParticles *base_particles_;
 		XmlEngine reload_material_xml_engine_;
 		ParticleVariableList reload_local_parameters_;
 
-		virtual void assignDerivedMaterialParameters() {};
 	public:
-		BaseMaterial() : material_name_("BaseMaterial"), parameters_name_("LocalParameters"),
-			rho0_(1.0), base_particles_(nullptr),
-			reload_material_xml_engine_("xml_material", "material_paramaters") {};
-		virtual ~BaseMaterial() {};
+		explicit BaseMaterial(Real rho0)
+			: material_type_("BaseMaterial"),
+			  parameters_name_("LocalMaterialParameters"),
+			  rho0_(rho0), base_particles_(nullptr),
+			  reload_material_xml_engine_("xml_material", "local_material_paramaters"){};
+		BaseMaterial() : BaseMaterial(1.0){};
+		virtual ~BaseMaterial(){};
 
 		/** This will be called in BaseParticle constructor
 		 * and is important because particles are not defined in SPHBody constructor.
 		 * For a composite material, i.e. there is a material pointer with another material,
 		 * one need assign the base particle to that material too. */
-		virtual void assignBaseParticles(BaseParticles* base_particles)
-		{
-			base_particles_ = base_particles;
-		};
-		std::string MaterialName() { return material_name_; }
+		virtual void assignBaseParticles(BaseParticles *base_particles);
+		std::string MaterialType() { return material_type_; }
 		std::string LocalParametersName() { return parameters_name_; }
 		Real ReferenceDensity() { return rho0_; };
 
-		virtual void writeToXmlForReloadLocalParameters(std::string& filefullpath)
-		{
-			std::cout << "\n Material properties writing. " << std::endl;
-			size_t total_real_particles = base_particles_->total_real_particles_;
-			ParticleData& all_particle_data = base_particles_->all_particle_data_;
-			base_particles_->resizeXmlDocForParticles(reload_material_xml_engine_);
-			WriteAParticleVariableToXml
-				write_variable_to_xml(reload_material_xml_engine_, total_real_particles);
-			loopParticleData<loopVariabaleNameList>(all_particle_data, reload_local_parameters_, write_variable_to_xml);
-			reload_material_xml_engine_.writeToXmlFile(filefullpath);
-			std::cout << "\n Material properties writing finished. " << std::endl;
-		};
+		virtual void writeToXmlForReloadLocalParameters(const std::string &filefullpath);
+		virtual void readFromXmlForLocalParameters(const std::string &filefullpath);
 
-		virtual void readFromXmlForLocalParameters(std::string& filefullpath)
-		{
-			reload_material_xml_engine_.loadXmlFile(filefullpath);
-			size_t total_real_particles = base_particles_->total_real_particles_;
-			ParticleData& all_particle_data = base_particles_->all_particle_data_;
-			ReadAParticleVariableFromXml
-				read_variable_from_xml(reload_material_xml_engine_, total_real_particles);
-			loopParticleData<loopVariabaleNameList>(all_particle_data, reload_local_parameters_, read_variable_from_xml);
-
-			if (total_real_particles != reload_material_xml_engine_.SizeOfXmlDoc())
-			{
-				std::cout << "\n Error: reload material properties does not match!" << std::endl;
-				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-				exit(1);
-			}
-			else
-			{
-				std::cout << "\n Material properties reading finished." << std::endl;
-			}
-		};
-
-		virtual BaseMaterial* ThisObjectPtr() { return this; };
+		virtual BaseMaterial *ThisObjectPtr() { return this; };
 	};
 
 	/** @class  Fluid
@@ -125,32 +91,28 @@ namespace SPH {
 	class Fluid : public BaseMaterial
 	{
 	protected:
-		Real c0_, mu_; /**< reference sound speed, viscosity. */
-		FluidParticles* fluid_particles_;
+		Real mu_; /**< reference sound speed, viscosity. */
+		FluidParticles *fluid_particles_;
 
-		virtual void assignDerivedMaterialParameters() override
-		{
-			BaseMaterial::assignDerivedMaterialParameters();
-		};
 	public:
-		Fluid() : BaseMaterial(), c0_(1.0), mu_(0.0),
-			fluid_particles_(nullptr) {
-			material_name_ = "Fluid";
+		explicit Fluid(Real rho0, Real mu)
+			: BaseMaterial(rho0), mu_(mu), fluid_particles_(nullptr)
+		{
+			material_type_ = "Fluid";
 		};
-		virtual ~Fluid() {};
+		virtual ~Fluid(){};
 
-		void assignFluidParticles(FluidParticles* fluid_particles)
+		void assignFluidParticles(FluidParticles *fluid_particles)
 		{
 			fluid_particles_ = fluid_particles;
 		};
 
-		Real ReferenceSoundSpeed() { return c0_; };
 		Real ReferenceViscosity() { return mu_; };
 		virtual Real getPressure(Real rho) = 0;
 		virtual Real getPressure(Real rho, Real rho_e) { return getPressure(rho); };
 		virtual Real DensityFromPressure(Real p) = 0;
 		virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) = 0;
-		virtual Fluid* ThisObjectPtr() override { return this; };
+		virtual Fluid *ThisObjectPtr() override { return this; };
 	};
 
 	/** @class  Solid
@@ -159,30 +121,31 @@ namespace SPH {
 	class Solid : public BaseMaterial
 	{
 	public:
-		Solid() : BaseMaterial(), contact_stiffness_(1.0),
-			contact_friction_(0.0), solid_particles_(nullptr)
+		Solid(Real rho0, Real contact_stiffness, Real contact_friction = 0.0)
+		: BaseMaterial(rho0), contact_stiffness_(contact_stiffness),
+			  contact_friction_(contact_friction), solid_particles_(nullptr)
 		{
-			material_name_ = "Solid";
+			material_type_ = "Solid";
 		};
-		virtual ~Solid() {};
+		explicit Solid(Real rho0) : Solid(rho0, 1.0) {};
+		Solid() : Solid(1.0) {}; 
+		virtual ~Solid(){};
 
-		void assignSolidParticles(SolidParticles* solid_particles)
+		void assignSolidParticles(SolidParticles *solid_particles)
 		{
 			solid_particles_ = solid_particles;
 		};
 
 		Real ContactFriction() { return contact_friction_; };
 		Real ContactStiffness() { return contact_stiffness_; };
-		virtual Solid* ThisObjectPtr() override { return this; };
+		virtual Solid *ThisObjectPtr() override { return this; };
+
 	protected:
 		Real contact_stiffness_; /**< contact-force stiffness related to bulk modulus*/
-		Real contact_friction_; /**< friction property mimic fluid viscosity*/
-		SolidParticles* solid_particles_;
+		Real contact_friction_;	 /**< friction property mimic fluid viscosity*/
+		SolidParticles *solid_particles_;
 
-		virtual void assignDerivedMaterialParameters() override
-		{
-			BaseMaterial::assignDerivedMaterialParameters();
-		};
+		void setContactStiffness(Real c0) { contact_stiffness_ = c0 * c0; };
 	};
 }
 #endif //BASE_MATERIAL_H
