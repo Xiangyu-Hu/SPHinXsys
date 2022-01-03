@@ -47,9 +47,10 @@ public:
 		inner_wall_shape.push_back(Vecd(DL, 0.0));
 		inner_wall_shape.push_back(Vecd(0.0, 0.0));
 
-		body_shape_ = new ComplexShape(body_name);
-		body_shape_->addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-		body_shape_->addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+		MultiPolygon multi_polygon;
+		multi_polygon.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
+		multi_polygon.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+		body_shape_.add<MultiPolygonShape>(multi_polygon);
 	}
 };
 class FreeBall : public SolidBody
@@ -57,37 +58,10 @@ class FreeBall : public SolidBody
 public:
 	FreeBall(SPHSystem& system, std::string body_name) : SolidBody(system, body_name)
 	{
-		ComplexShape original_body_shape;
-		original_body_shape.addACircle(ball_center, ball_radius, 100, ShapeBooleanOps::add);
-		body_shape_ = new LevelSetComplexShape(this, original_body_shape);
-	}
-};
-
-//----------------------------------------------------------------------
-//	Case dependent material properties
-//----------------------------------------------------------------------
-class WallMaterial : public LinearElasticSolid
-{
-public:
-	WallMaterial() : LinearElasticSolid()
-	{
-		rho0_ = rho0_s;
-		youngs_modulus_ = Youngs_modulus;
-		poisson_ratio_ = poisson;
-
-		assignDerivedMaterialParameters();
-	}
-};
-class BallMaterial : public NeoHookeanSolid
-{
-public:
-	BallMaterial() : NeoHookeanSolid()
-	{
-		rho0_ 	= rho0_s;
-		youngs_modulus_ = Youngs_modulus;
-		poisson_ratio_ = poisson;
-
-		assignDerivedMaterialParameters();
+		MultiPolygon multi_polygon;
+		multi_polygon.addACircle(ball_center, ball_radius, 100, ShapeBooleanOps::add);
+		MultiPolygonShape multi_polygon_shape(multi_polygon);
+		body_shape_.add<LevelSetShape>(this, multi_polygon_shape);
 	}
 };
 /**
@@ -97,25 +71,13 @@ class BallInitialCondition
 	: public solid_dynamics::ElasticDynamicsInitialCondition
 {
 public:
-	BallInitialCondition(SolidBody* beam)
-		: solid_dynamics::ElasticDynamicsInitialCondition(beam) {};
+	BallInitialCondition(SolidBody &body)
+		: solid_dynamics::ElasticDynamicsInitialCondition(body) {};
 protected:
 	void Update(size_t index_i, Real dt) override 
 	{
 		vel_n_[index_i] = initial_velocity;
 	};
-};
-//----------------------------------------------------------------------
-//	Observer bodies with cases-dependent observation points.
-//	The observation particles have zero volume.
-//----------------------------------------------------------------------
-class FreeBallObserver : public FictitiousBody
-{
-public:
-	FreeBallObserver(SPHSystem& system, std::string body_name) : FictitiousBody(system, body_name)
-	{
-		body_input_points_volumes_.push_back(std::make_pair(ball_center, 0.0));
-	}
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -141,17 +103,17 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	WallBoundary* wall_boundary = new WallBoundary(sph_system, "Wall");
-	WallMaterial* wall_material = new WallMaterial();
-	ShellParticles 	solid_particles(wall_boundary, wall_material, BW);
+	FreeBall free_ball(sph_system, "FreeBall");
+	SharedPtr<ParticleGenerator> free_ball_particle_generator = makeShared<ParticleGeneratorLattice>();
+	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+		free_ball_particle_generator = makeShared<ParticleGeneratorReload>(in_output, free_ball.getBodyName());
+	SharedPtr<NeoHookeanSolid> free_ball_material = makeShared<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+	ElasticSolidParticles free_ball_particles(free_ball, free_ball_material, free_ball_particle_generator);
 
-	FreeBall* free_ball = new FreeBall(sph_system, "FreeBall");
-	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_) free_ball->useParticleGeneratorReload();
-	BallMaterial* free_ball_material = new BallMaterial();
-	ElasticSolidParticles 	free_ball_particles(free_ball, free_ball_material);
+	WallBoundary wall_boundary(sph_system, "Wall");
+	SharedPtr<Solid> wall_material = makeShared<Solid>(rho0_s, free_ball_material->ContactStiffness());
+	SolidParticles solid_particles(wall_boundary, wall_material);
 
-	FreeBallObserver* free_ball_observer = new FreeBallObserver(sph_system, "FreeBallObserver");
-	BaseParticles 	free_ball_observer_particles(free_ball_observer);
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
@@ -160,7 +122,7 @@ int main(int ac, char* av[])
 		//----------------------------------------------------------------------
 		//	Define body relation map used for particle relaxation.
 		//----------------------------------------------------------------------
-		BodyRelationInner* free_ball_inner = new BodyRelationInner(free_ball);
+		BodyRelationInner free_ball_inner(free_ball);
 		//----------------------------------------------------------------------
 		//	Define the methods for particle relaxation.
 		//----------------------------------------------------------------------
@@ -169,8 +131,9 @@ int main(int ac, char* av[])
 		//----------------------------------------------------------------------
 		//	Output for particle relaxation.
 		//----------------------------------------------------------------------
-		BodyStatesRecordingToVtu 		write_ball_state(in_output, { free_ball });
-		ReloadParticleIO 		write_particle_reload_files(in_output, { free_ball });
+		BodyStatesRecordingToVtp write_ball_state(in_output, sph_system.real_bodies_);
+				ReloadParticleIO write_particle_reload_files(in_output, {&free_ball});
+
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
@@ -200,15 +163,14 @@ int main(int ac, char* av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner*   free_ball_inner = new BodyRelationInner(free_ball);
-	SolidBodyRelationContact* free_ball_contact = new SolidBodyRelationContact(free_ball, {wall_boundary});
-	SolidBodyRelationContact* wall_ball_contact = new SolidBodyRelationContact(wall_boundary, {free_ball});
-	BodyRelationContact* free_ball_observer_contact = new BodyRelationContact(free_ball_observer, { free_ball });
+	BodyRelationInner free_ball_inner(free_ball);
+	SolidBodyRelationContact free_ball_contact(free_ball, {&wall_boundary});
+	SolidBodyRelationContact wall_ball_contact(wall_boundary, {&free_ball});
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simultion.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	TimeStepInitialization 	free_ball_initialize_timestep(free_ball, &gravity);
+	TimeStepInitialization 	free_ball_initialize_timestep(free_ball, gravity);
 	solid_dynamics::CorrectConfiguration free_ball_corrected_configuration(free_ball_inner);
 	solid_dynamics::AcousticTimeStepSize free_ball_get_time_step_size(free_ball);
 	/** stress relaxation for the balls. */
@@ -223,23 +185,20 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtu	body_states_recording(in_output, sph_system.real_bodies_);
-	BodyStatesRecordingToVtu 	write_ball_state(in_output, { free_ball });
-	ObservedQuantityRecording<indexVector, Vecd>
-		free_ball_displacement_recording("Position", in_output, free_ball_observer_contact);
+	BodyStatesRecordingToVtp	body_states_recording(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp 	write_ball_state(in_output, { free_ball });
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary. 
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	solid_particles.initializeNormalDirectionFromGeometry();
+	solid_particles.initializeNormalDirectionFromBodyShape();
 	free_ball_corrected_configuration.parallel_exec();
 	ball_initial_velocity.exec();
 	
 	/** Initial states output. */
 	body_states_recording.writeToFile(0);
-	free_ball_displacement_recording.writeToFile(0);
 	/** Main loop. */
 	int ite 		= 0;
 	Real T0 		= 10.0;
@@ -275,9 +234,9 @@ int main(int ac, char* av[])
 				free_ball_stress_relaxation_first_half.parallel_exec(dt);
 				free_ball_stress_relaxation_second_half.parallel_exec(dt);
 
-				free_ball->updateCellLinkedList();
-				free_ball_contact->updateConfiguration();
-				wall_ball_contact->updateConfiguration();
+				free_ball.updateCellLinkedList();
+				free_ball_contact.updateConfiguration();
+				wall_ball_contact.updateConfiguration();
 
 				ite++;
 				Real dt_free = free_ball_get_time_step_size.parallel_exec();
@@ -285,8 +244,6 @@ int main(int ac, char* av[])
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
-
-				free_ball_displacement_recording.writeToFile(ite);
 			}
 		}
 		tick_count t2 = tick_count::now();
