@@ -69,7 +69,7 @@ int main(int argc, char **argv)
 	//	Particle relaxation time stepping start here.
 	//----------------------------------------------------------------------
 	int ite_p = 0;
-	while (ite_p < 1000)
+	while (ite_p < 100)
 	{
 		relaxation_step_inner.parallel_exec();
 		ite_p += 1;
