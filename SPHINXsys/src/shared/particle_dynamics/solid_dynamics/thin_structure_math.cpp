@@ -144,5 +144,44 @@ namespace SPH
 			return n;
 		}
 		//=================================================================================================//
+		Real gaussianQuadratureIntegral(Real a, Real b, int number_of_nodes, const std::function<Real (Real)>& F) 
+		{
+			const LegendrePolynomialSet legendreSet(number_of_nodes);
+			const std::vector<Real>& abscissa = legendreSet.getAbscissas();
+			const std::vector<Real>& weight = legendreSet.getWeights();
+			/** number of nodes at each directons x, y and z, respectively. Typically same values */
+			int m, n, p;
+			m = n = p = number_of_nodes;
+
+			Real aj = 0.0;
+			const Real h1 = 0.5 * (b - a);
+			const Real h2 = 0.5 * (a + b);
+
+			for (int i=0; i != m; i++) {    
+				Real jx = 0.0;
+				const Real x = h1 * abscissa[i] + h2;     
+				const Real c1 = 0.;
+				const Real d1 = sqrt(4 - x * x);
+				const Real k1 = 0.5 * (d1 - c1);
+				const Real k2 = 0.5 * (d1 + c1);
+				for (int j = 0; j !=n; j++) { 
+					Real jy = 0.0;
+					const Real y = k1 * abscissa[j] + k2;  
+					/* use Z1 and Z2 as examples */
+					const Real z1 = 2.;
+					const Real z2 = sqrt(x * x + y * y); 
+					const Real l1 = 0.5 * (z1 - z2);
+					const Real l2 = 0.5 * (z1 + z2);
+					for (int k = 0; k != p; k++) { 
+						const Real z = l1 * abscissa[k] + l2;
+						const Real q = sqrt(x * x + y * y);
+						jy += weight[k] * q;
+					}
+					jx += weight[j] * l1 * jy;
+				}
+				aj += weight[i] * k1 * jx; 
+			}
+			return aj * h1;
+		}
 	}
 }

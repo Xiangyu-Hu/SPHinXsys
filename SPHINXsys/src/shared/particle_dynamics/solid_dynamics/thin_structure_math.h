@@ -64,6 +64,66 @@ namespace SPH
 		/** get the current normal direction from deformation gradient tensor. */
 		Vec2d getNormalFromDeformationGradientTensor(const Mat2d& F);
 		Vec3d getNormalFromDeformationGradientTensor(const Mat3d& F);
+
+		/** general Gauss-Legendre quadrature for up to 3-D surface integrals*/   
+		Real gaussianQuadratureIntegral(Real a, Real b, int n, const std::function<Real (Real)>& F);
+
+		/**
+		* @class LegendrePolynomialSet
+		* @brief returns abscissas (xi) and weights (wi) for 
+		* @brief Gauss-Legendre quadrature integration for 
+		* @brief n=3 or n=5 number of integration nodes *.
+		*/
+		class LegendrePolynomialSet
+		{
+		public:
+			LegendrePolynomialSet(int number_of_nodes)
+				: numberOfNodes(number_of_nodes), xi(number_of_nodes), wi(number_of_nodes) {
+				setAbscissasAndWeights();
+			}
+
+			const std::vector<Real>& getAbscissas() const { return xi; }
+			const std::vector<Real>& getWeights() const { return wi; }
+
+		private:
+			void setAbscissasAndWeights() 
+			{
+				if (numberOfNodes == 3)
+				{
+					xi[0] = -0.774596669241483377035853079956;
+					xi[1] = 0.000000000000000000000000000000;
+					xi[2] = 0.774596669241483377035853079956;
+
+					wi[0] = 0.555555555555555555555555555556;
+					wi[1] = 0.888888888888888888888888888889;
+					wi[2] = 0.555555555555555555555555555556;
+				}
+				else if (numberOfNodes == 5)
+				{
+					xi[0] = -0.906179845938663992797626878299;
+					xi[1] = -0.538469310105683091036314420700;
+					xi[2] = 0.000000000000000000000000000000;
+					xi[3] = 0.538469310105683091036314420700;
+					xi[4] = 0.906179845938663992797626878299;
+
+					wi[0] = 0.236926885056189087514264040720;
+					wi[1] = 0.478628670499366468041291514836;
+					wi[2] = 0.568888888888888888888888888889;
+					wi[3] = 0.478628670499366468041291514836;
+					wi[4] = 0.236926885056189087514264040720;
+				}
+				else
+				{
+					std::cout << "Illegal number of nodes for Gaussian Integration: n = " << numberOfNodes << std::endl;
+					std::cout << "Legal values are 3 or 5" << std::endl;
+					exit(1);
+				}
+			}
+
+			const int numberOfNodes;
+			std::vector<Real> xi;
+			std::vector<Real> wi;
+		};
 	}
 }
 #endif //THIN_STRUCTURE_MATH_H

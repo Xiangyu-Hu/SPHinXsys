@@ -31,6 +31,7 @@
 #define CONTACT_DYNAMICS_H
 
 #include "solid_dynamics.h"
+#include "thin_structure_math.h"
 
 namespace SPH
 {
