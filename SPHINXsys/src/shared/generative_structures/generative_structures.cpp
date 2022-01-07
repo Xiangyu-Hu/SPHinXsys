@@ -7,14 +7,14 @@
 
 #include "base_body.h"
 #include "base_particles.h"
-#include "particle_adaptation.h"
+#include "adaptation.h"
 
 namespace SPH
 {
 	//=================================================================================================//
 	GenerativeStructure::GenerativeStructure(SPHBody *sph_body)
 		: sph_body_(sph_body),
-		  spacing_ref_(sph_body_->particle_adaptation_->ReferenceSpacing()),
+		  spacing_ref_(sph_body_->sph_adaptation_->ReferenceSpacing()),
 		  base_particles_(sph_body->base_particles_),
 		  neighbor_relation_inner_(sph_body),
 		  pos_n_(base_particles_->pos_n_),
@@ -23,13 +23,7 @@ namespace SPH
 	GenerativeTree::GenerativeTree(SPHBody *sph_body)
 		: GenerativeStructure(sph_body), last_branch_id_(0)
 	{
-		root_ = new Branch(this);
-	}
-	//=================================================================================================//
-	GenerativeTree::~GenerativeTree()
-	{
-		for (size_t i = 0; i != branches_.size(); i++)
-			if(branches_[i] != nullptr) delete branches_[i];
+		root_ =  branches_ptr_keeper_.createPtr<Branch>(this);
 	}
 	//=================================================================================================//
 	void GenerativeTree::buildParticleConfiguration(BaseParticles &base_particles,

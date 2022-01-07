@@ -23,7 +23,7 @@
 #ifndef ARRAY_ALLOCATION_H
 #define ARRAY_ALLOCATION_H
 
-#include "small_vectors.h"
+#include "vector_functions.h"
 
 namespace SPH {
 	//-------------------------------------------------------------------------------------------------

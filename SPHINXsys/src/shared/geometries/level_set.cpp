@@ -5,7 +5,8 @@
 
 #include "level_set.h"
 #include "base_body.h"
-#include "particle_adaptation.h"
+#include "adaptation.h"
+#include "mesh_with_data_packages.hpp"
 
 namespace SPH
 {
@@ -18,6 +19,11 @@ namespace SPH
 		initializePackageDataAddress(kernel_weight_, kernel_weight_addrs_);
 		initializePackageDataAddress(kernel_gradient_, kernel_gradient_addrs_);
 		initializePackageDataAddress(near_interface_id_, near_interface_id_addrs_);
+	}
+	//=================================================================================================//
+	LevelSetDataPackage::LevelSetDataPackage(Real level_set) : LevelSetDataPackage()
+	{
+		initializeWithUniformData(level_set);
 	}
 	//=================================================================================================//
 	void LevelSetDataPackage::
@@ -35,9 +41,9 @@ namespace SPH
 		computeNormalizedGradient(phi_addrs_, n_addrs_);
 	}
 	//=================================================================================================//
-	BaseLevelSet ::BaseLevelSet(ComplexShape &complex_shape, ParticleAdaptation &particle_adaptation)
+	BaseLevelSet ::BaseLevelSet(Shape &shape, SPHAdaptation &sph_adaptation)
 		: BaseMeshField("LevelSet"),
-		  complex_shape_(complex_shape), particle_adaptation_(particle_adaptation) {}
+		  shape_(shape), sph_adaptation_(sph_adaptation) {}
 	//=================================================================================================//
 	Real BaseLevelSet::computeHeaviside(Real phi, Real half_width)
 	{
@@ -51,19 +57,15 @@ namespace SPH
 	}
 	//=================================================================================================//
 	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
-					   ComplexShape &complex_shape, ParticleAdaptation &particle_adaptation)
+					   Shape &shape, SPHAdaptation &sph_adaptation)
 		: MeshWithDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, 4,
-																  complex_shape, particle_adaptation),
-		  global_h_ratio_(particle_adaptation.ReferenceSpacing() / data_spacing),
-		  kernel_(*particle_adaptation.getKernel())
+																  shape, sph_adaptation),
+		  global_h_ratio_(sph_adaptation.ReferenceSpacing() / data_spacing),
+		  kernel_(*sph_adaptation.getKernel())
 	{
 		Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
-		LevelSetDataPackage *negative_far_field = new LevelSetDataPackage();
-		negative_far_field->initializeWithUniformData(-far_field_distance);
-		singular_data_pkgs_addrs.push_back(negative_far_field);
-		LevelSetDataPackage *positive_far_field = new LevelSetDataPackage();
-		positive_far_field->initializeWithUniformData(far_field_distance);
-		singular_data_pkgs_addrs.push_back(positive_far_field);
+		initializeASingularDataPackage(-far_field_distance);
+		initializeASingularDataPackage(far_field_distance);
 		initializeDataPackages();
 	}
 	//=================================================================================================//
@@ -157,7 +159,7 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSet::markNearInterfaceForAPackage(LevelSetDataPackage *core_data_pkg, Real dt)
 	{
-		core_data_pkg->markNearInterface();
+		core_data_pkg->markNearInterface(small_shift_factor_);
 	}
 	//=================================================================================================//
 	void LevelSet::redistanceInterface()
@@ -193,10 +195,10 @@ namespace SPH
 	MultilevelLevelSet::
 		MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing,
 						   size_t total_levels, Real maximum_spacing_ratio,
-						   ComplexShape &complex_shape, ParticleAdaptation &particle_adaptation)
+						   Shape &shape, SPHAdaptation &sph_adaptation)
 		: MultilevelMesh<BaseLevelSet, LevelSet>(tentative_bounds, reference_data_spacing,
 												 total_levels, maximum_spacing_ratio,
-												 complex_shape, particle_adaptation) {}
+												 shape, sph_adaptation) {}
 	//=================================================================================================//
 	size_t MultilevelLevelSet::getMeshLevel(Real h_ratio)
 	{

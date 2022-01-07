@@ -32,12 +32,11 @@
 #ifndef PARTICLE_DYNAMICS_BODYPART_H
 #define PARTICLE_DYNAMICS_BODYPART_H
 
-
-
 #include "base_particle_dynamics.h"
 #include "base_particle_dynamics.hpp"
 
-namespace SPH {
+namespace SPH
+{
 
 	/**
 	 * @class PartDynamicsByParticle
@@ -48,15 +47,16 @@ namespace SPH {
 	class PartDynamicsByParticle : public ParticleDynamics<void>
 	{
 	public:
-		PartDynamicsByParticle(SPHBody* sph_body, BodyPartByParticle *body_part)
+		PartDynamicsByParticle(SPHBody &sph_body, BodyPartByParticle &body_part)
 			: ParticleDynamics<void>(sph_body),
-			body_part_particles_(body_part->body_part_particles_) {};
-		virtual ~PartDynamicsByParticle() {};
+			  body_part_particles_(body_part.body_part_particles_){};
+		virtual ~PartDynamicsByParticle(){};
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
+
 	protected:
-		IndexVector& body_part_particles_;
+		IndexVector &body_part_particles_;
 		ParticleFunctor particle_functor_;
 	};
 
@@ -67,10 +67,11 @@ namespace SPH {
 	class PartSimpleDynamicsByParticle : public PartDynamicsByParticle
 	{
 	public:
-		PartSimpleDynamicsByParticle(SPHBody* sph_body, BodyPartByParticle *body_part);
-		virtual ~PartSimpleDynamicsByParticle() {};
+		PartSimpleDynamicsByParticle(SPHBody &sph_body, BodyPartByParticle &body_part);
+		virtual ~PartSimpleDynamicsByParticle(){};
+
 	protected:
-		virtual void  Update(size_t index_i, Real dt = 0.0) = 0;
+		virtual void Update(size_t index_i, Real dt = 0.0) = 0;
 	};
 
 	/**
@@ -80,10 +81,11 @@ namespace SPH {
 	class PartInteractionDynamicsByParticle : public PartDynamicsByParticle
 	{
 	public:
-		PartInteractionDynamicsByParticle(SPHBody* sph_body, BodyPartByParticle* body_part);
-		virtual ~PartInteractionDynamicsByParticle() {};
+		PartInteractionDynamicsByParticle(SPHBody &sph_body, BodyPartByParticle &body_part);
+		virtual ~PartInteractionDynamicsByParticle(){};
+
 	protected:
-		virtual void  Interaction(size_t index_i, Real dt = 0.0) = 0;
+		virtual void Interaction(size_t index_i, Real dt = 0.0) = 0;
 	};
 
 	/**
@@ -93,13 +95,14 @@ namespace SPH {
 	class PartInteractionDynamicsByParticleWithUpdate : public PartInteractionDynamicsByParticle
 	{
 	public:
-		PartInteractionDynamicsByParticleWithUpdate(SPHBody* sph_body, BodyPartByParticle* body_part);
-		virtual ~PartInteractionDynamicsByParticleWithUpdate() {};
+		PartInteractionDynamicsByParticleWithUpdate(SPHBody &sph_body, BodyPartByParticle &body_part);
+		virtual ~PartInteractionDynamicsByParticleWithUpdate(){};
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
+
 	protected:
-		virtual void  Update(size_t index_i, Real dt = 0.0) = 0;
+		virtual void Update(size_t index_i, Real dt = 0.0) = 0;
 		ParticleFunctor functor_update_;
 	};
 
@@ -110,14 +113,15 @@ namespace SPH {
 	class PartInteractionDynamicsByParticle1Level : public PartInteractionDynamicsByParticleWithUpdate
 	{
 	public:
-		PartInteractionDynamicsByParticle1Level(SPHBody* sph_body, BodyPartByParticle* body_part) :
-			PartInteractionDynamicsByParticleWithUpdate(sph_body, body_part),
-			functor_initialization_(std::bind(&PartInteractionDynamicsByParticle1Level::Initialization,
-				this, _1, _2)) {};
-		virtual ~PartInteractionDynamicsByParticle1Level() {};
+		PartInteractionDynamicsByParticle1Level(SPHBody &sph_body, BodyPartByParticle &body_part)
+			: PartInteractionDynamicsByParticleWithUpdate(sph_body, body_part),
+			  functor_initialization_(std::bind(&PartInteractionDynamicsByParticle1Level::Initialization,
+												this, _1, _2)){};
+		virtual ~PartInteractionDynamicsByParticle1Level(){};
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
+
 	protected:
 		virtual void Initialization(size_t index_i, Real dt = 0.0) = 0;
 		ParticleFunctor functor_initialization_;
@@ -131,17 +135,18 @@ namespace SPH {
 	class PartDynamicsByCell : public ParticleDynamics<void>
 	{
 	public:
-		PartDynamicsByCell(SPHBody* sph_body, BodyPartByCell *body_part)
+		PartDynamicsByCell(SPHBody &sph_body, BodyPartByCell &body_part)
 			: ParticleDynamics<void>(sph_body),
-			body_part_cells_(body_part->body_part_cells_) {};
-		virtual ~PartDynamicsByCell() {};
+			  body_part_cells_(body_part.body_part_cells_){};
+		virtual ~PartDynamicsByCell(){};
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
-	protected:
-		CellLists& body_part_cells_;
 
-		virtual void  Update(size_t index_i, Real dt = 0.0) = 0;
+	protected:
+		CellLists &body_part_cells_;
+
+		virtual void Update(size_t index_i, Real dt = 0.0) = 0;
 	};
 	/**
 	  * @class PartDynamicsByCellReduce
@@ -151,10 +156,10 @@ namespace SPH {
 	class PartDynamicsByCellReduce : public ParticleDynamics<ReturnType>
 	{
 	public:
-		PartDynamicsByCellReduce(SPHBody* sph_body, BodyPartByCell* body_part)
-			: ParticleDynamics<ReturnType>(sph_body), body_part_cells_(body_part->body_part_cells_),
-			quantity_name_("ReducedQuantity"), initial_reference_() {};
-		virtual ~PartDynamicsByCellReduce() {};
+		PartDynamicsByCellReduce(SPHBody &sph_body, BodyPartByCell &body_part)
+			: ParticleDynamics<ReturnType>(sph_body), body_part_cells_(body_part.body_part_cells_),
+			  quantity_name_("ReducedQuantity"), initial_reference_(){};
+		virtual ~PartDynamicsByCellReduce(){};
 
 		ReturnType InitialReference() { return initial_reference_; };
 		std::string QuantityName() { return quantity_name_; };
@@ -165,7 +170,7 @@ namespace SPH {
 			this->SetupReduce();
 			for (size_t i = 0; i != body_part_cells_.size(); ++i)
 			{
-				ListDataVector& list_data = body_part_cells_[i]->cell_list_data_;
+				ListDataVector &list_data = body_part_cells_[i]->cell_list_data_;
 				for (size_t num = 0; num < list_data.size(); ++num)
 				{
 					temp = reduce_operation_(temp, ReduceFunction(list_data[num].first, dt));
@@ -178,30 +183,33 @@ namespace SPH {
 		{
 			ReturnType temp = initial_reference_;
 			this->SetupReduce();
-			temp = parallel_reduce(blocked_range<size_t>(0, body_part_cells_.size()),
+			temp = parallel_reduce(
+				blocked_range<size_t>(0, body_part_cells_.size()),
 				temp,
-				[&](const blocked_range<size_t>& r, ReturnType temp0)->ReturnType
+				[&](const blocked_range<size_t> &r, ReturnType temp0) -> ReturnType
 				{
 					for (size_t i = r.begin(); i != r.end(); ++i)
 					{
-						ListDataVector& list_data = body_part_cells_[i]->cell_list_data_;
+						ListDataVector &list_data = body_part_cells_[i]->cell_list_data_;
 						for (size_t num = 0; num < list_data.size(); ++num)
 						{
 							temp0 = reduce_operation_(temp0, ReduceFunction(list_data[num].first, dt));
 						}
 					}
 					return temp0;
-				}, [this](ReturnType x, ReturnType y)->ReturnType { return reduce_operation_(x, y); }
-				);
+				},
+				[this](ReturnType x, ReturnType y) -> ReturnType
+				{ return reduce_operation_(x, y); });
 
 			return OutputResult(temp);
 		};
+
 	protected:
 		ReduceOperation reduce_operation_;
-		CellLists& body_part_cells_;
+		CellLists &body_part_cells_;
 		std::string quantity_name_;
 		ReturnType initial_reference_;
-		virtual void SetupReduce() {};
+		virtual void SetupReduce(){};
 		virtual ReturnType ReduceFunction(size_t index_i, Real dt = 0.0) = 0;
 		virtual ReturnType OutputResult(ReturnType reduced_value) { return reduced_value; };
 	};
@@ -213,11 +221,11 @@ namespace SPH {
 	class PartDynamicsByParticleReduce : public ParticleDynamics<ReturnType>
 	{
 	public:
-		PartDynamicsByParticleReduce(SPHBody* sph_body, BodyPartByParticle *body_part)
+		PartDynamicsByParticleReduce(SPHBody &sph_body, BodyPartByParticle &body_part)
 			: ParticleDynamics<ReturnType>(sph_body),
-			body_part_particles_(body_part->body_part_particles_),
-			quantity_name_("ReducedQuantity"), initial_reference_() {};
-		virtual ~PartDynamicsByParticleReduce() {};
+			  body_part_particles_(body_part.body_part_particles_),
+			  quantity_name_("ReducedQuantity"), initial_reference_(){};
+		virtual ~PartDynamicsByParticleReduce(){};
 
 		ReturnType InitialReference() { return initial_reference_; };
 		std::string QuantityName() { return quantity_name_; };
@@ -236,27 +244,31 @@ namespace SPH {
 		{
 			ReturnType temp = initial_reference_;
 			this->SetupReduce();
-			temp = parallel_reduce(blocked_range<size_t>(0, body_part_particles_.size()),
+			temp = parallel_reduce(
+				blocked_range<size_t>(0, body_part_particles_.size()),
 				temp,
-				[&](const blocked_range<size_t>& r, ReturnType temp0)->ReturnType {
-					for (size_t n = r.begin(); n != r.end(); ++n) {
+				[&](const blocked_range<size_t> &r, ReturnType temp0) -> ReturnType
+				{
+					for (size_t n = r.begin(); n != r.end(); ++n)
+					{
 						temp0 = reduce_operation_(temp0, ReduceFunction(body_part_particles_[n], dt));
 					}
 					return temp0;
 				},
-				[this](ReturnType x, ReturnType y)->ReturnType {
+				[this](ReturnType x, ReturnType y) -> ReturnType
+				{
 					return reduce_operation_(x, y);
-				}
-				);
+				});
 
 			return OutputResult(temp);
 		};
+
 	protected:
 		ReduceOperation reduce_operation_;
-		IndexVector& body_part_particles_;
+		IndexVector &body_part_particles_;
 		std::string quantity_name_;
 		ReturnType initial_reference_;
-		virtual void SetupReduce() {};
+		virtual void SetupReduce(){};
 		virtual ReturnType ReduceFunction(size_t index_i, Real dt = 0.0) = 0;
 		virtual ReturnType OutputResult(ReturnType reduced_value) { return reduced_value; };
 	};

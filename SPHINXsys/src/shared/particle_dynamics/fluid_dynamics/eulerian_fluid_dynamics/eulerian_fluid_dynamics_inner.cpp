@@ -5,23 +5,27 @@
 
 #include "eulerian_fluid_dynamics_inner.h"
 
- //=================================================================================================//
+//=================================================================================================//
 using namespace std;
 //=================================================================================================//
 namespace SPH
 {
-//=================================================================================================//
+	//=================================================================================================//
 	namespace eulerian_fluid_dynamics
 	{
 		//=================================================================================================//
-		CompressibleFlowTimeStepInitialization
-			::CompressibleFlowTimeStepInitialization(SPHBody* body, Gravity* gravity)
-			: ParticleDynamicsSimple(body), CompressibleFluidDataSimple(body),
-			rho_n_(particles_->rho_n_), dE_dt_prior_(particles_->dE_dt_prior_), pos_n_(particles_->pos_n_),
-			vel_n_(particles_->vel_n_), dmom_dt_prior_(particles_->dmom_dt_prior_),
-			gravity_(gravity)
-		{
-		}
+		CompressibleFlowTimeStepInitialization::CompressibleFlowTimeStepInitialization(SPHBody &sph_body)
+			: ParticleDynamicsSimple(sph_body), CompressibleFluidDataSimple(sph_body),
+			  rho_n_(particles_->rho_n_), dE_dt_prior_(particles_->dE_dt_prior_), pos_n_(particles_->pos_n_),
+			  vel_n_(particles_->vel_n_), dmom_dt_prior_(particles_->dmom_dt_prior_),
+			  gravity_(gravity_ptr_keeper_.createPtr<Gravity>(Vecd(0))) {}
+		//=================================================================================================//
+		CompressibleFlowTimeStepInitialization::
+			CompressibleFlowTimeStepInitialization(SPHBody &sph_body, Gravity &gravity)
+			: ParticleDynamicsSimple(sph_body), CompressibleFluidDataSimple(sph_body),
+			  rho_n_(particles_->rho_n_), dE_dt_prior_(particles_->dE_dt_prior_), pos_n_(particles_->pos_n_),
+			  vel_n_(particles_->vel_n_), dmom_dt_prior_(particles_->dmom_dt_prior_),
+			  gravity_(&gravity) {}
 		//=================================================================================================//
 		void CompressibleFlowTimeStepInitialization::setupDynamics(Real dt)
 		{
@@ -35,54 +39,46 @@ namespace SPH
 		}
 		//=================================================================================================//
 		CompressibleFluidInitialCondition::
-			CompressibleFluidInitialCondition(EulerianFluidBody* body)
+			CompressibleFluidInitialCondition(EulerianFluidBody &body)
 			: ParticleDynamicsSimple(body), CompressibleFluidDataSimple(body),
-			pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_), mom_(particles_->mom_),
-			rho_n_(particles_->rho_n_), E_(particles_->E_), p_(particles_->p_)
-		{
-			gamma_ = material_->HeatCapacityRatio();
-			c0_ = material_->ReferenceSoundSpeed();
-			rho0_ = material_->ReferenceDensity();
-		}
+			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_), mom_(particles_->mom_),
+			  rho_n_(particles_->rho_n_), E_(particles_->E_), p_(particles_->p_),
+			  gamma_(material_->HeatCapacityRatio()) {}
 		//=================================================================================================//
-		ViscousAccelerationInner::ViscousAccelerationInner(BaseBodyRelationInner* inner_relation) :
-			InteractionDynamics(inner_relation->sph_body_),
-			CompressibleFluidDataInner(inner_relation),
-			Vol_(particles_->Vol_), rho_n_(particles_->rho_n_), p_(particles_->p_), 
-			mass_(particles_->mass_), dE_dt_prior_(particles_->dE_dt_prior_), 
-			vel_n_(particles_->vel_n_), dmom_dt_prior_(particles_->dmom_dt_prior_)
-		{
-			smoothing_length_ = particle_adaptation_->ReferenceSmoothingLength();
-			mu_ = material_->ReferenceViscosity();
-		}
+		ViscousAccelerationInner::ViscousAccelerationInner(BaseBodyRelationInner &inner_relation)
+			: InteractionDynamics(*inner_relation.sph_body_),
+			  CompressibleFluidDataInner(inner_relation),
+			  Vol_(particles_->Vol_), rho_n_(particles_->rho_n_), p_(particles_->p_),
+			  mass_(particles_->mass_), dE_dt_prior_(particles_->dE_dt_prior_),
+			  vel_n_(particles_->vel_n_), dmom_dt_prior_(particles_->dmom_dt_prior_),
+			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength()),
+			  mu_(material_->ReferenceViscosity()) {}
 		//=================================================================================================//
 		void ViscousAccelerationInner::Interaction(size_t index_i, Real dt)
 		{
 			Real rho_i = rho_n_[index_i];
-			Vecd& vel_i = vel_n_[index_i];
+			const Vecd &vel_i = vel_n_[index_i];
 
 			Vecd acceleration(0), vel_derivative(0);
-			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
+			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 
 				//viscous force
-				vel_derivative = (vel_i - vel_n_[index_j])
-					/ (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
-				acceleration += 2.0 * mu_ * vel_derivative
-					* Vol_[index_j] * inner_neighborhood.dW_ij_[n] / rho_i;
+				vel_derivative = (vel_i - vel_n_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
+				acceleration += 2.0 * mu_ * vel_derivative * Vol_[index_j] * inner_neighborhood.dW_ij_[n] / rho_i;
 			}
 			dmom_dt_prior_[index_i] += rho_n_[index_i] * acceleration;
 			dE_dt_prior_[index_i] += rho_n_[index_i] * dot(acceleration, vel_n_[index_i]);
 		}
 		//=================================================================================================//
-		AcousticTimeStepSize::AcousticTimeStepSize(EulerianFluidBody* body)
+		AcousticTimeStepSize::AcousticTimeStepSize(EulerianFluidBody &body)
 			: ParticleDynamicsReduce<Real, ReduceMax>(body),
-			CompressibleFluidDataSimple(body), rho_n_(particles_->rho_n_),
-			p_(particles_->p_), vel_n_(particles_->vel_n_)
+			  CompressibleFluidDataSimple(body), rho_n_(particles_->rho_n_),
+			  p_(particles_->p_), vel_n_(particles_->vel_n_),
+			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength())
 		{
-			smoothing_length_ = particle_adaptation_->ReferenceSmoothingLength();
 			initial_reference_ = 0.0;
 		}
 		//=================================================================================================//
@@ -99,18 +95,17 @@ namespace SPH
 			return 0.6 * smoothing_length_ / (reduced_value + TinyReal);
 		}
 		//=================================================================================================//
-		BaseRelaxation::BaseRelaxation(BaseBodyRelationInner* inner_relation) :
-			ParticleDynamics1Level(inner_relation->sph_body_),
-			CompressibleFluidDataInner(inner_relation),
-			Vol_(particles_->Vol_), rho_n_(particles_->rho_n_),p_(particles_->p_), 
-			drho_dt_(particles_->drho_dt_), E_(particles_->E_), dE_dt_(particles_->dE_dt_),
-			dE_dt_prior_(particles_->dE_dt_prior_),
-			vel_n_(particles_->vel_n_), mom_(particles_->mom_),
-			dmom_dt_(particles_->dmom_dt_), dmom_dt_prior_(particles_->dmom_dt_prior_) {}
+		BaseRelaxation::BaseRelaxation(BaseBodyRelationInner &inner_relation)
+			: ParticleDynamics1Level(*inner_relation.sph_body_),
+			  CompressibleFluidDataInner(inner_relation),
+			  Vol_(particles_->Vol_), rho_n_(particles_->rho_n_), p_(particles_->p_),
+			  drho_dt_(particles_->drho_dt_), E_(particles_->E_), dE_dt_(particles_->dE_dt_),
+			  dE_dt_prior_(particles_->dE_dt_prior_),
+			  vel_n_(particles_->vel_n_), mom_(particles_->mom_),
+			  dmom_dt_(particles_->dmom_dt_), dmom_dt_prior_(particles_->dmom_dt_prior_) {}
 		//=================================================================================================//
 		BasePressureRelaxation::
-			BasePressureRelaxation(BaseBodyRelationInner* inner_relation) :
-			BaseRelaxation(inner_relation) {}
+			BasePressureRelaxation(BaseBodyRelationInner &inner_relation) : BaseRelaxation(inner_relation) {}
 		//=================================================================================================//
 		void BasePressureRelaxation::Initialization(size_t index_i, Real dt)
 		{
@@ -127,8 +122,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseDensityAndEnergyRelaxation::
-			BaseDensityAndEnergyRelaxation(BaseBodyRelationInner* inner_relation) :
-			BaseRelaxation(inner_relation) {}
+			BaseDensityAndEnergyRelaxation(BaseBodyRelationInner &inner_relation)
+			: BaseRelaxation(inner_relation) {}
 		//=================================================================================================//
 		void BaseDensityAndEnergyRelaxation::Update(size_t index_i, Real dt)
 		{
@@ -136,7 +131,7 @@ namespace SPH
 			rho_n_[index_i] += drho_dt_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
-	}		
-//=================================================================================================//
+	}
+	//=================================================================================================//
 }
 //=================================================================================================//

@@ -30,7 +30,9 @@
 #ifndef IMAGE_MHD_H
 #define IMAGE_MHD_H
 
-#include "small_vectors.h"
+#ifndef __EMSCRIPTEN__
+
+#include "vector_functions.h"
 #include "sph_data_containers.h"
 
 #include <iostream>
@@ -160,5 +162,7 @@ namespace SPH {
 }
 
 #include "image_mhd.hpp"
+
+#endif //__EMSCRIPTEN__
 
 #endif //IMAGE_MHD_H

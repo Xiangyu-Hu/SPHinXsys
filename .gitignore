@@ -1038,3 +1038,7 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# wasm build
+build_wasm_release
+build_wasm_debug

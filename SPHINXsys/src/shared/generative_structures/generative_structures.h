@@ -74,21 +74,30 @@ namespace SPH
 	{
 	public:
 		class Branch;
+
+	private:
+		UniquePtrVectorKeeper<Branch> branches_ptr_keeper_;
+
+	public:
 		StdVec<Branch *> branches_;	   /**< Contanier of all branches */
 		IndexVector branch_locations_; /**< in which branch are the particles located */
 		size_t last_branch_id_;
 		Branch *root_;
 
 		explicit GenerativeTree(SPHBody *sph_body);
-		virtual ~GenerativeTree();
+		virtual ~GenerativeTree(){};
 
+		Branch *createANewBranch(size_t parent_id)
+		{
+			return branches_ptr_keeper_.createPtr<Branch>(parent_id, this);
+		};
 		void growAParticleOnBranch(Branch *branch, const Vecd &new_point, const Vecd &end_direction);
 		size_t BranchLocation(size_t particle_idx);
 		Branch *LastBranch() { return branches_[last_branch_id_]; };
 
 		virtual void buildParticleConfiguration(BaseParticles &base_particles,
-			ParticleConfiguration &particle_configuration) override;
-		size_t ContainerSize() { return branches_.size(); };	
+												ParticleConfiguration &particle_configuration) override;
+		size_t ContainerSize() { return branches_.size(); };
 	};
 
 	/**
@@ -102,7 +111,7 @@ namespace SPH
 	{
 	public:
 		/** construct the root branch  */
-		Branch(GenerativeTree *tree);
+		explicit Branch(GenerativeTree *tree);
 		/** construct an branch connecting with its parent */
 		Branch(size_t parent_id, GenerativeTree *tree);
 		virtual ~Branch(){};

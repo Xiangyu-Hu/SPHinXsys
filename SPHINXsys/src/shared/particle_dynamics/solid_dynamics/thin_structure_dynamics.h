@@ -30,7 +30,6 @@
 #ifndef THIN_STRUCTURE_DYNAMICS_H
 #define THIN_STRUCTURE_DYNAMICS_H
 
-
 #include "all_particle_dynamics.h"
 #include "elastic_solid.h"
 #include "weakly_compressible_fluid.h"
@@ -49,31 +48,31 @@ namespace SPH
 		 * @brief  set initial condition for shell particles
 		 * This is a abstract class to be override for case specific initial conditions.
 		 */
-		class ShellDynamicsInitialCondition :
-			public ParticleDynamicsSimple, public ShellDataSimple
+		class ShellDynamicsInitialCondition : public ParticleDynamicsSimple, public ShellDataSimple
 		{
 		public:
-			ShellDynamicsInitialCondition(SolidBody *body);
-			virtual ~ShellDynamicsInitialCondition() {};
+			explicit ShellDynamicsInitialCondition(SolidBody &solid_body);
+			virtual ~ShellDynamicsInitialCondition(){};
+
 		protected:
-			StdLargeVec<Vecd>& n_0_, &n_, &pseudo_n_, &pos_0_;
-			StdLargeVec<Matd>& transformation_matrix_;
+			StdLargeVec<Vecd> &n_0_, &n_, &pseudo_n_, &pos_0_;
+			StdLargeVec<Matd> &transformation_matrix_;
 		};
 
 		/**
 		* @class ShellAcousticTimeStepSize
 		* @brief Computing the acoustic time step size for shell
 		*/
-		class ShellAcousticTimeStepSize :
-			public ParticleDynamicsReduce<Real, ReduceMin>,
-			public ShellDataSimple
+		class ShellAcousticTimeStepSize : public ParticleDynamicsReduce<Real, ReduceMin>,
+										  public ShellDataSimple
 		{
 		public:
-			explicit ShellAcousticTimeStepSize(SolidBody* body);
-			virtual ~ShellAcousticTimeStepSize() {};
+			explicit ShellAcousticTimeStepSize(SolidBody &sph_body);
+			virtual ~ShellAcousticTimeStepSize(){};
+
 		protected:
-			StdLargeVec<Vecd>& vel_n_, &dvel_dt_, &angular_vel_, &dangular_vel_dt_;
-			StdLargeVec<Real>& shell_thickness_;
+			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &angular_vel_, &dangular_vel_dt_;
+			StdLargeVec<Real> &shell_thickness_;
 			Real rho0_, physical_viscosity_, E0_, nu_;
 			Real smoothing_length_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
@@ -83,17 +82,17 @@ namespace SPH
 		* @class ShellCorrectConfiguration
 		* @brief obtain the corrected initial configuration in strong form
 		*/
-		class ShellCorrectConfiguration :
-			public InteractionDynamics, public ShellDataInner
+		class ShellCorrectConfiguration : public InteractionDynamics, public ShellDataInner
 		{
 		public:
-			ShellCorrectConfiguration(BaseBodyRelationInner* body_inner_relation);
-			virtual ~ShellCorrectConfiguration() {};
+			explicit ShellCorrectConfiguration(BaseBodyRelationInner &inner_relation);
+			virtual ~ShellCorrectConfiguration(){};
+
 		protected:
-			StdLargeVec<Real>& Vol_;
-			StdLargeVec<Matd>& B_;
-			StdLargeVec<Vecd>& n_0_;
-			StdLargeVec<Matd>& transformation_matrix_;
+			StdLargeVec<Real> &Vol_;
+			StdLargeVec<Matd> &B_;
+			StdLargeVec<Vecd> &n_0_;
+			StdLargeVec<Matd> &transformation_matrix_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -101,17 +100,17 @@ namespace SPH
 		* @class ShellDeformationGradientTensor
 		* @brief computing deformation gradient tensor for shell
 		*/
-		class ShellDeformationGradientTensor :
-			public InteractionDynamics, public ShellDataInner
+		class ShellDeformationGradientTensor : public InteractionDynamics, public ShellDataInner
 		{
 		public:
-			ShellDeformationGradientTensor(BaseBodyRelationInner* body_inner_relation);
-			virtual ~ShellDeformationGradientTensor() {};
+			explicit ShellDeformationGradientTensor(BaseBodyRelationInner &inner_relation);
+			virtual ~ShellDeformationGradientTensor(){};
+
 		protected:
-			StdLargeVec<Real>& Vol_;
-			StdLargeVec<Vecd>& pos_n_, &pseudo_n_, &n_0_;
-			StdLargeVec<Matd>& B_, &F_, &F_bending_;
-			StdLargeVec<Matd>& transformation_matrix_;
+			StdLargeVec<Real> &Vol_;
+			StdLargeVec<Vecd> &pos_n_, &pseudo_n_, &n_0_;
+			StdLargeVec<Matd> &B_, &F_, &F_bending_;
+			StdLargeVec<Matd> &transformation_matrix_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -122,15 +121,16 @@ namespace SPH
 		class BaseShellRelaxation : public ParticleDynamics1Level, public ShellDataInner
 		{
 		public:
-			BaseShellRelaxation(BaseBodyRelationInner* body_inner_relation);
-			virtual ~BaseShellRelaxation() {};
+			explicit BaseShellRelaxation(BaseBodyRelationInner &inner_relation);
+			virtual ~BaseShellRelaxation(){};
+
 		protected:
-			StdLargeVec<Real>& Vol_, & rho_n_, & mass_, & shell_thickness_;
-			StdLargeVec<Vecd>& pos_n_, & vel_n_, & dvel_dt_, & dvel_dt_prior_, & force_from_fluid_;
-			StdLargeVec<Vecd>& n_0_, & pseudo_n_, & dpseudo_n_dt_, & dpseudo_n_d2t_, & rotation_,
-				& angular_vel_, dangular_vel_dt_;
-			StdLargeVec<Matd>& B_, & F_, & dF_dt_, & F_bending_, & dF_bending_dt_;
-			StdLargeVec<Matd>& transformation_matrix_;
+			StdLargeVec<Real> &Vol_, &rho_n_, &mass_, &shell_thickness_;
+			StdLargeVec<Vecd> &pos_n_, &vel_n_, &dvel_dt_, &dvel_dt_prior_, &force_from_fluid_;
+			StdLargeVec<Vecd> &n_0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
+				&angular_vel_, dangular_vel_dt_;
+			StdLargeVec<Matd> &B_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_;
+			StdLargeVec<Matd> &transformation_matrix_;
 		};
 
 		/**
@@ -141,20 +141,21 @@ namespace SPH
 		class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
 		{
 		public:
-			ShellStressRelaxationFirstHalf(BaseBodyRelationInner* body_inner_relation,
-				int number_of_gaussian_points = 3);
-			virtual ~ShellStressRelaxationFirstHalf() {};
+			explicit ShellStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation,
+										   int number_of_gaussian_points = 3);
+			virtual ~ShellStressRelaxationFirstHalf(){};
+
 		protected:
 			Real rho0_, inv_rho0_;
-			StdLargeVec<Matd>& stress_PK1_, & global_stress_, & global_moment_;
-			StdLargeVec<Vecd>& global_shear_stress_, & n_;
+			StdLargeVec<Matd> &stress_PK1_, &global_stress_, &global_moment_;
+			StdLargeVec<Vecd> &global_shear_stress_, &n_;
 			Real smoothing_length_;
 
-			const Real shear_correction_factor_ = 5.0/6.0;
-			const StdVec<Real> three_gaussian_points_ = { 0.0, 0.77459667, -0.77459667 };
-			const StdVec<Real> three_gaussian_weights_ = { 8.0 / 9.0, 5.0 / 9.0, 5.0 / 9.0 };
-			const StdVec<Real> five_gaussian_points_ = { 0.0, 0.538469, -0.538469, 0.90618, -0.90618 };
-			const StdVec<Real> five_gaussian_weights_ = { 0.568889, 0.478629, 0.478629, 0.236927, 0.236927 };
+			const Real shear_correction_factor_ = 5.0 / 6.0;
+			const StdVec<Real> three_gaussian_points_ = {0.0, 0.77459667, -0.77459667};
+			const StdVec<Real> three_gaussian_weights_ = {8.0 / 9.0, 5.0 / 9.0, 5.0 / 9.0};
+			const StdVec<Real> five_gaussian_points_ = {0.0, 0.538469, -0.538469, 0.90618, -0.90618};
+			const StdVec<Real> five_gaussian_weights_ = {0.568889, 0.478629, 0.478629, 0.236927, 0.236927};
 			int number_of_gaussian_points_;
 			StdVec<Real> gaussian_point_;
 			StdVec<Real> gaussian_weight_;
@@ -172,9 +173,10 @@ namespace SPH
 		class ShellStressRelaxationSecondHalf : public BaseShellRelaxation
 		{
 		public:
-			ShellStressRelaxationSecondHalf(BaseBodyRelationInner* body_inner_relation)
-				: BaseShellRelaxation(body_inner_relation) {};
-			virtual ~ShellStressRelaxationSecondHalf() {};
+			explicit ShellStressRelaxationSecondHalf(BaseBodyRelationInner &inner_relation)
+				: BaseShellRelaxation(inner_relation){};
+			virtual ~ShellStressRelaxationSecondHalf(){};
+
 		protected:
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -185,26 +187,26 @@ namespace SPH
 		 * @brief Fix the position and angle of a shell body part.
 		 * Note that the average values for FSI are prescirbed also.
 		 */
-		class ConstrainShellBodyRegion :
-			public PartSimpleDynamicsByParticle, public ShellDataSimple
+		class ConstrainShellBodyRegion : public PartSimpleDynamicsByParticle, public ShellDataSimple
 		{
 		public:
-			ConstrainShellBodyRegion(SolidBody* body, BodyPartByParticle* body_part);
-			virtual ~ConstrainShellBodyRegion() {};
+			ConstrainShellBodyRegion(SolidBody &sph_body, BodyPartByParticle &body_part);
+			virtual ~ConstrainShellBodyRegion(){};
+
 		protected:
-			StdLargeVec<Vecd>& pos_n_, &pos_0_;
-			StdLargeVec<Vecd>& n_;
-			StdLargeVec<Vecd>& vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
-			StdLargeVec<Vecd>& rotation_, &angular_vel_, &dangular_vel_dt_;
-			StdLargeVec<Vecd>& pseudo_n_, &dpseudo_n_dt_;
-			virtual Vecd getDisplacement(const Vecd& pos_0, const Vecd& pos_n) { return pos_0; };
-			virtual Vecd getVelocity(const Vecd& pos_0, const Vecd& pos_n, const Vecd& vel_n) { return Vecd(0); };
-			virtual Vecd GetAcceleration(const Vecd& pos_0, const Vecd& pos_n, const Vecd& dvel_dt) { return Vecd(0); };
-			virtual Vecd GetRotationAngle(const Vecd& pos_0, const Vecd& pos_n, const Vecd& rotation_angles_0_) { return rotation_angles_0_; };
-			virtual Vecd GetAngularVelocity(const Vecd& pos_0, const Vecd& pos_n, const Vecd& angular_vel_) { return Vecd(0); };
-			virtual Vecd GetAngularAcceleration(const Vecd& pos_0, const Vecd& pos_n, const Vecd& dangular_vel_dt_) { return Vecd(0); };
-			virtual Vecd GetPseudoNormal(const Vecd& pos_0, const Vecd& pos_n, const Vecd& n_0) { return n_0; };
-			virtual Vecd GetPseudoNormalChangeRate(const Vecd& pos_0, const Vecd& pos_n, const Vecd& dpseudo_normal_dt_) { return Vecd(0); };
+			StdLargeVec<Vecd> &pos_n_, &pos_0_;
+			StdLargeVec<Vecd> &n_;
+			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
+			StdLargeVec<Vecd> &pseudo_n_, &dpseudo_n_dt_;
+			virtual Vecd getDisplacement(const Vecd &pos_0, const Vecd &pos_n) { return pos_0; };
+			virtual Vecd getVelocity(const Vecd &pos_0, const Vecd &pos_n, const Vecd &vel_n) { return Vecd(0); };
+			virtual Vecd GetAcceleration(const Vecd &pos_0, const Vecd &pos_n, const Vecd &dvel_dt) { return Vecd(0); };
+			virtual Vecd GetRotationAngle(const Vecd &pos_0, const Vecd &pos_n, const Vecd &rotation_angles_0_) { return rotation_angles_0_; };
+			virtual Vecd GetAngularVelocity(const Vecd &pos_0, const Vecd &pos_n, const Vecd &angular_vel_) { return Vecd(0); };
+			virtual Vecd GetAngularAcceleration(const Vecd &pos_0, const Vecd &pos_n, const Vecd &dangular_vel_dt_) { return Vecd(0); };
+			virtual Vecd GetPseudoNormal(const Vecd &pos_0, const Vecd &pos_n, const Vecd &n_0) { return n_0; };
+			virtual Vecd GetPseudoNormalChangeRate(const Vecd &pos_0, const Vecd &pos_n, const Vecd &dpseudo_normal_dt_) { return Vecd(0); };
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -212,19 +214,20 @@ namespace SPH
 		 * @class FixedFreeRotateShellBoundary
 		 * @brief Soft the constraint of a solid body part
 		 */
-		class FixedFreeRotateShellBoundary :
-			public PartInteractionDynamicsByParticle1Level,
-			public ShellDataInner
+		class FixedFreeRotateShellBoundary : public PartInteractionDynamicsByParticle1Level,
+											 public ShellDataInner
 		{
 		public:
-			FixedFreeRotateShellBoundary(BaseBodyRelationInner* body_inner_relation, 
-				BodyPartByParticle* body_part, Vecd constrained_direction = Vecd(0));
-			virtual ~FixedFreeRotateShellBoundary() {};
+			FixedFreeRotateShellBoundary(BaseBodyRelationInner &inner_relation,
+										 BodyPartByParticle &body_part, Vecd constrained_direction = Vecd(0));
+			virtual ~FixedFreeRotateShellBoundary(){};
+
 		protected:
 			Real W0_;
 			Matd constrain_matrix_, recover_matrix_;
-			StdLargeVec<Real>& Vol_;
-			StdLargeVec<Vecd>& vel_n_, & angular_vel_, &vel_n_temp_, &angular_vel_temp_;
+			StdLargeVec<Real> &Vol_;
+			StdLargeVec<Vecd> &vel_n_, &angular_vel_;
+			StdLargeVec<Vecd> vel_n_temp_, angular_vel_temp_;
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -235,16 +238,17 @@ namespace SPH
 		 * @class ClampConstrainShellBodyRegion
 		 * @brief The clamped constrain of a shell body part
 		 */
-		class ClampConstrainShellBodyRegion :
-			public PartInteractionDynamicsByParticle1Level,
-			public ShellDataInner
+		class ClampConstrainShellBodyRegion : public PartInteractionDynamicsByParticle1Level,
+											  public ShellDataInner
 		{
 		public:
-			ClampConstrainShellBodyRegion(BaseBodyRelationInner* body_inner_relation, BodyPartByParticle* body_part);
-			virtual ~ClampConstrainShellBodyRegion() {};
+			ClampConstrainShellBodyRegion(BaseBodyRelationInner &inner_relation, BodyPartByParticle &body_part);
+			virtual ~ClampConstrainShellBodyRegion(){};
+
 		protected:
-			StdLargeVec<Real>& Vol_;
-			StdLargeVec<Vecd>& vel_n_, &angular_vel_, & vel_n_temp_, & angular_vel_temp_;
+			StdLargeVec<Real> &Vol_;
+			StdLargeVec<Vecd> &vel_n_, &angular_vel_;
+			StdLargeVec<Vecd> vel_n_temp_, angular_vel_temp_;
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -256,17 +260,17 @@ namespace SPH
 	     * The axis_direction must be 0 or 1.
 		 * Note that the average values for FSI are prescirbed also.
 		 */
-		class ConstrainShellBodyRegionInAxisDirection :
-			public PartSimpleDynamicsByParticle, public ShellDataSimple
+		class ConstrainShellBodyRegionInAxisDirection : public PartSimpleDynamicsByParticle, public ShellDataSimple
 		{
 		public:
-			ConstrainShellBodyRegionInAxisDirection(SolidBody* body, BodyPartByParticle* body_part, int axis_direction);
-			virtual ~ConstrainShellBodyRegionInAxisDirection() {};
+			ConstrainShellBodyRegionInAxisDirection(SolidBody &sph_body, BodyPartByParticle &body_part, int axis_direction);
+			virtual ~ConstrainShellBodyRegionInAxisDirection(){};
+
 		protected:
-			const int axis_;    /**< the axis direction for bounding*/
-			StdLargeVec<Vecd>& pos_n_, &pos_0_;
-			StdLargeVec<Vecd>& vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
-			StdLargeVec<Vecd>& rotation_, &angular_vel_, &dangular_vel_dt_;
+			const int axis_; /**< the axis direction for bounding*/
+			StdLargeVec<Vecd> &pos_n_, &pos_0_;
+			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -274,8 +278,7 @@ namespace SPH
 		 * @class DistributingAPointForceToShell
 		 * @brief Distribute a point force to its contact shell bodies.
 		 */
-		class DistributingAPointForceToShell :
-			public PartSimpleDynamicsByParticle, public ShellDataSimple
+		class DistributingAPointForceToShell : public PartSimpleDynamicsByParticle, public ShellDataSimple
 		{
 		protected:
 			Vecd point_force_, point_force_time_;
@@ -283,15 +286,16 @@ namespace SPH
 			Real time_to_smallest_h_ratio_, time_to_full_external_force_;
 			Real particle_spacing_ref_, h_spacing_ratio_;
 			Real sum_of_weight_;
-			StdLargeVec<Vecd>& pos_0_, &dvel_dt_prior_;
-			StdLargeVec<Real>& Vol_, &mass_, &shell_thickness_;
-			StdLargeVec<Real>& weight_;
+			StdLargeVec<Vecd> &pos_0_, &dvel_dt_prior_;
+			StdLargeVec<Real> &Vol_, &mass_, &shell_thickness_;
+			StdLargeVec<Real> weight_;
+
 		public:
-			DistributingAPointForceToShell(SolidBody* body, BodyPartByParticle* body_part,
-				Vecd point_force, Vecd reference_position,
-				Real time_to_smallest_h_ratio, Real time_to_full_external_force,
-				Real particle_spacing_ref, Real h_spacing_ratio = 1.3);
-			virtual ~DistributingAPointForceToShell() {};
+			DistributingAPointForceToShell(SolidBody &sph_body, BodyPartByParticle &body_part,
+										   Vecd point_force, Vecd reference_position,
+										   Real time_to_smallest_h_ratio, Real time_to_full_external_force,
+										   Real particle_spacing_ref, Real h_spacing_ratio = 1.3);
+			virtual ~DistributingAPointForceToShell(){};
 
 			void getWeight();
 			void getForce();

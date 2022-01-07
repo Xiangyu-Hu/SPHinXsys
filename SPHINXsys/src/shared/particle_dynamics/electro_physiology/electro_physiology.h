@@ -57,7 +57,7 @@ namespace SPH
 			public ElectroPhysiologyDataDelegateSimple
 		{
 		public:
-			ElectroPhysiologyInitialCondition(SolidBody *body);
+			explicit ElectroPhysiologyInitialCondition(SolidBody &solid_body);
 			virtual ~ElectroPhysiologyInitialCondition() {};
 		protected:
 			StdLargeVec<Vecd>& pos_n_;
@@ -71,8 +71,8 @@ namespace SPH
 			: public GetDiffusionTimeStepSize<SolidBody, SolidParticles, Solid>
 		{
 		public:
-			explicit GetElectroPhysiologyTimeStepSize(SolidBody* body)
-				: GetDiffusionTimeStepSize<SolidBody, SolidParticles, Solid>(body) {};
+			explicit GetElectroPhysiologyTimeStepSize(SolidBody &solid_body)
+				: GetDiffusionTimeStepSize<SolidBody, SolidParticles, Solid>(solid_body) {};
 			virtual ~GetElectroPhysiologyTimeStepSize() {};
 		};
         /**
@@ -85,8 +85,8 @@ namespace SPH
 			BaseBodyRelationInner>
 		{
 		public:
-			ElectroPhysiologyDiffusionRelaxationInner(BaseBodyRelationInner* body_inner_relation)
-				: RelaxationOfAllDiffusionSpeciesRK2(body_inner_relation) {};
+			explicit ElectroPhysiologyDiffusionRelaxationInner(BaseBodyRelationInner &inner_relation)
+				: RelaxationOfAllDiffusionSpeciesRK2(inner_relation) {};
 			virtual ~ElectroPhysiologyDiffusionRelaxationInner() {};
 		};
 		/**
@@ -99,8 +99,8 @@ namespace SPH
 			ComplexBodyRelation>
 		{
 		public:
-			ElectroPhysiologyDiffusionRelaxationComplex(ComplexBodyRelation* body_complex_relation)
-				: RelaxationOfAllDiffusionSpeciesRK2(body_complex_relation) {};
+			explicit ElectroPhysiologyDiffusionRelaxationComplex(ComplexBodyRelation &complex_relation)
+				: RelaxationOfAllDiffusionSpeciesRK2(complex_relation) {};
 			virtual ~ElectroPhysiologyDiffusionRelaxationComplex() {};
 		};
         /**
@@ -112,8 +112,8 @@ namespace SPH
 			: public RelaxationOfAllReactionsForward<SolidBody, SolidParticles, Solid>
 		{
 		public:
-			ElectroPhysiologyReactionRelaxationForward(SolidBody* body)
-				: RelaxationOfAllReactionsForward<SolidBody, SolidParticles, Solid>(body) {};
+			explicit ElectroPhysiologyReactionRelaxationForward(SolidBody &solid_body)
+				: RelaxationOfAllReactionsForward<SolidBody, SolidParticles, Solid>(solid_body) {};
 			virtual ~ElectroPhysiologyReactionRelaxationForward() {};
 		};
 		/**
@@ -125,8 +125,8 @@ namespace SPH
 			: public RelaxationOfAllReactionsBackward<SolidBody, SolidParticles, Solid>
 		{
 		public:
-			ElectroPhysiologyReactionRelaxationBackward(SolidBody* body)
-				: RelaxationOfAllReactionsBackward<SolidBody, SolidParticles, Solid>(body) {};
+			explicit ElectroPhysiologyReactionRelaxationBackward(SolidBody &solid_body)
+				: RelaxationOfAllReactionsBackward<SolidBody, SolidParticles, Solid>(solid_body) {};
 			virtual ~ElectroPhysiologyReactionRelaxationBackward() {};
 		};
 		/**
@@ -139,9 +139,9 @@ namespace SPH
 			public ElectroPhysiologyDataDelegateSimple
 		{
 		public:
-			ApplyStimulusCurrents(SolidBody *body) : 
-				ParticleDynamicsSimple(body), 
-				ElectroPhysiologyDataDelegateSimple(body) {}
+			explicit ApplyStimulusCurrents(SolidBody &solid_body) : 
+				ParticleDynamicsSimple(solid_body), 
+				ElectroPhysiologyDataDelegateSimple(solid_body) {}
 			virtual ~ApplyStimulusCurrents() {};
 		};
     }

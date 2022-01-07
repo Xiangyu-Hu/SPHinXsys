@@ -12,7 +12,7 @@
 
 using namespace SPH;
 
-int main(int ac, char* av[])
+int main(int ac, char *av[])
 {
 	//----------------------------------------------------------------------
 	//	Build up -- a SPHSystem
@@ -20,47 +20,47 @@ int main(int ac, char* av[])
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
 	system.run_particle_relaxation_ = true;
-	//handle command line arguments
-	#ifdef BOOST_AVAILABLE
+//handle command line arguments
+#ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
-	#endif
+#endif
 	/** output environment. */
-	In_Output 	in_output(system);
+	In_Output in_output(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	Airfoil* airfoil = new Airfoil(system, "Airfoil");
-	SolidParticles airfoil_particles(airfoil);
+	Airfoil airfoil(system, "Airfoil");
+	SolidParticles airfoil_particles(airfoil, makeShared<ParticleGeneratorMultiResolution>());
 	airfoil_particles.addAVariableToWrite<indexScalar, Real>("SmoothingLengthRatio");
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtu airfoil_recording_to_vtu(in_output, { airfoil });
-	MeshRecordingToPlt 	cell_linked_list_recording(in_output, airfoil, airfoil->cell_linked_list_);
+	BodyStatesRecordingToVtp airfoil_recording_to_vtp(in_output, {&airfoil});
+	MeshRecordingToPlt cell_linked_list_recording(in_output, airfoil, airfoil.cell_linked_list_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BaseBodyRelationInner* airfoil_inner = new BodyRelationInnerVariableSmoothingLength(airfoil);
+	BodyRelationInnerVariableSmoothingLength airfoil_inner(airfoil);
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
-	RandomizePartilePosition  random_airfoil_particles(airfoil);
+	RandomizePartilePosition random_airfoil_particles(airfoil);
 	relax_dynamics::RelaxationStepInner relaxation_step_inner(airfoil_inner, true);
 	relax_dynamics::UpdateSmoothingLengthRatioByBodyShape update_smoothing_length_ratio(airfoil);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
-	//	and case specified initial condition if necessary. 
+	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
 	random_airfoil_particles.parallel_exec(0.25);
 	relaxation_step_inner.surface_bounding_.parallel_exec();
 	update_smoothing_length_ratio.parallel_exec();
-	airfoil->updateCellLinkedList();
+	airfoil.updateCellLinkedList();
 	//----------------------------------------------------------------------
 	//	First output before the simulation.
 	//----------------------------------------------------------------------
-	airfoil_recording_to_vtu.writeToFile(0);
+	airfoil_recording_to_vtp.writeToFile(0);
 	cell_linked_list_recording.writeToFile(0);
 	//----------------------------------------------------------------------
 	//	Particle relaxation time stepping start here.
@@ -74,7 +74,7 @@ int main(int ac, char* av[])
 		if (ite_p % 100 == 0)
 		{
 			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the airfoil N = " << ite_p << "\n";
-			airfoil_recording_to_vtu.writeToFile(ite_p);
+			airfoil_recording_to_vtp.writeToFile(ite_p);
 		}
 	}
 	std::cout << "The physics relaxation process of airfoil finish !" << std::endl;

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<meanvariance>
+    <Mean_Element>
+        <Snapshot_0 TotalMechanicalEnergy_0="0.49999999999999878" />
+        <Snapshot_108 TotalMechanicalEnergy_0="0.49951076848408199" />
+        <Snapshot_220 TotalMechanicalEnergy_0="0.49727609811298323" />
+        <Snapshot_332 TotalMechanicalEnergy_0="0.47896058641274397" />
+        <Snapshot_442 TotalMechanicalEnergy_0="0.4725894981446716" />
+        <Snapshot_551 TotalMechanicalEnergy_0="0.46982440748877008" />
+        <Snapshot_660 TotalMechanicalEnergy_0="0.46013232890163952" />
+        <Snapshot_771 TotalMechanicalEnergy_0="0.42586432104867705" />
+        <Snapshot_881 TotalMechanicalEnergy_0="0.39480336215874545" />
+        <Snapshot_992 TotalMechanicalEnergy_0="0.34727434460412687" />
+        <Snapshot_1106 TotalMechanicalEnergy_0="0.29476725535941128" />
+        <Snapshot_1215 TotalMechanicalEnergy_0="0.27156661886088052" />
+        <Snapshot_1324 TotalMechanicalEnergy_0="0.25950069255498792" />
+        <Snapshot_1431 TotalMechanicalEnergy_0="0.25280025160576458" />
+        <Snapshot_1539 TotalMechanicalEnergy_0="0.24736682597145473" />
+        <Snapshot_1648 TotalMechanicalEnergy_0="0.24296145607011788" />
+        <Snapshot_1756 TotalMechanicalEnergy_0="0.23958157241095449" />
+        <Snapshot_1865 TotalMechanicalEnergy_0="0.23169920196297628" />
+        <Snapshot_1973 TotalMechanicalEnergy_0="0.22670377642572773" />
+        <Snapshot_2083 TotalMechanicalEnergy_0="0.22036670187772336" />
+        <Snapshot_2190 TotalMechanicalEnergy_0="0.21499205790260137" />
+    </Mean_Element>
+    <Variance_Element>
+        <Snapshot_0 TotalMechanicalEnergy_0="6.2499999999999698e-06" />
+        <Snapshot_108 TotalMechanicalEnergy_0="6.2377756801801992e-06" />
+        <Snapshot_220 TotalMechanicalEnergy_0="6.1820884983977074e-06" />
+        <Snapshot_332 TotalMechanicalEnergy_0="5.7350872661724006e-06" />
+        <Snapshot_442 TotalMechanicalEnergy_0="5.5838544048852903e-06" />
+        <Snapshot_551 TotalMechanicalEnergy_0="5.5190478056538922e-06" />
+        <Snapshot_660 TotalMechanicalEnergy_0="5.295045592704769e-06" />
+        <Snapshot_771 TotalMechanicalEnergy_0="4.5419863042613259e-06" />
+        <Snapshot_881 TotalMechanicalEnergy_0="3.8973843297470436e-06" />
+        <Snapshot_992 TotalMechanicalEnergy_0="7.4535285619724917e-06" />
+        <Snapshot_1106 TotalMechanicalEnergy_0="3.144227792902422e-06" />
+        <Snapshot_1215 TotalMechanicalEnergy_0="1.8464974795626618e-06" />
+        <Snapshot_1324 TotalMechanicalEnergy_0="1.6864270411303647e-06" />
+        <Snapshot_1431 TotalMechanicalEnergy_0="1.603151003521706e-06" />
+        <Snapshot_1539 TotalMechanicalEnergy_0="2.3436957345255773e-06" />
+        <Snapshot_1648 TotalMechanicalEnergy_0="3.1546732038822656e-06" />
+        <Snapshot_1756 TotalMechanicalEnergy_0="6.7001314164666974e-06" />
+        <Snapshot_1865 TotalMechanicalEnergy_0="4.3561355117131385e-06" />
+        <Snapshot_1973 TotalMechanicalEnergy_0="5.3288392947137084e-06" />
+        <Snapshot_2083 TotalMechanicalEnergy_0="4.7842986597426255e-06" />
+        <Snapshot_2190 TotalMechanicalEnergy_0="3.3172417066133345e-06" />
+    </Variance_Element>
+</meanvariance>

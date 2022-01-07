@@ -32,11 +32,10 @@
 #ifndef PARTICLE_GENERATOR_LATTICE_H
 #define PARTICLE_GENERATOR_LATTICE_H
 
-
-
 #include "base_particle_generator.h"
 
-namespace SPH {
+namespace SPH
+{
 
 	class ComplexShape;
 	class ParticleSpacingByBodyShape;
@@ -49,17 +48,18 @@ namespace SPH {
 	{
 	public:
 		ParticleGeneratorLattice();
-		virtual ~ParticleGeneratorLattice() {};
+		virtual ~ParticleGeneratorLattice(){};
 
-		virtual void initialize(SPHBody* sph_body) override;
-		virtual void createBaseParticles(BaseParticles* base_particles) override;
+		virtual void initialize(SPHBody *sph_body) override;
+		virtual void createBaseParticles(BaseParticles *base_particles) override;
+
 	protected:
 		Real lattice_spacing_;
 		BoundingBox domain_bounds_;
-		ComplexShape* body_shape_;
+		ComplexShape *body_shape_;
 
-		virtual void createABaseParticle(BaseParticles* base_particles, 
-			Vecd& particle_position, Real particle_volume);
+		virtual void createABaseParticle(BaseParticles *base_particles,
+										 Vecd &particle_position, Real particle_volume);
 	};
 
 	/**
@@ -70,13 +70,14 @@ namespace SPH {
 	{
 	public:
 		ParticleGeneratorMultiResolution();
-		virtual ~ParticleGeneratorMultiResolution() {};
-		virtual void initialize(SPHBody* sph_body) override;
-	protected:
-		ParticleSpacingByBodyShape* particle_adapation_;
+		virtual ~ParticleGeneratorMultiResolution(){};
+		virtual void initialize(SPHBody *sph_body) override;
 
-		virtual void createABaseParticle(BaseParticles* base_particles,
-			Vecd& particle_position, Real particle_volume) override;
+	protected:
+		ParticleSpacingByBodyShape *particle_adapation_;
+
+		virtual void createABaseParticle(BaseParticles *base_particles,
+										 Vecd &particle_position, Real particle_volume) override;
 	};
 }
 #endif //PARTICLE_GENERATOR_LATTICE_H
