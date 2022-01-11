@@ -31,7 +31,8 @@ Real poisson = 0.45;
 class WallBoundary : public ThinStructure
 {
 public:
-	WallBoundary(SPHSystem &sph_system, std::string body_name) : ThinStructure(sph_system, body_name)
+	WallBoundary(SPHSystem &sph_system, std::string body_name) 
+	: ThinStructure(sph_system, body_name)
 	{
 		std::vector<Vecd> outer_wall_shape;
 		outer_wall_shape.push_back(Vecd(-BW, -BW));
@@ -111,9 +112,11 @@ int main(int ac, char* av[])
 	ElasticSolidParticles free_ball_particles(free_ball, free_ball_material, free_ball_particle_generator);
 
 	WallBoundary wall_boundary(sph_system, "Wall");
-	SharedPtr<Solid> wall_material = makeShared<Solid>(rho0_s, free_ball_material->ContactStiffness());
-	SolidParticles solid_particles(wall_boundary, wall_material);
-
+	SharedPtr<ParticleGenerator> wall_particle_generator = makeShared<ParticleGeneratorLattice>();
+	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+		wall_particle_generator = makeShared<ParticleGeneratorReload>(in_output, free_ball.getBodyName());
+	SharedPtr<LinearElasticSolid> wall_material = makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	ShellParticles solid_particles(wall_boundary, wall_material, wall_particle_generator, BW);
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
