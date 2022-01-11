@@ -14,13 +14,14 @@ Real DH = 4.0; 					/**< box height. */
 Real DW = 4.0;                  /**< box wedth. */
 Real resolution_ref = 0.025; 	/**< reference resolution. */
 Real BW = resolution_ref * 1.; 	/**< wall width for BCs. */
-BoundingBox system_domain_bounds(Vec3d(-DL - BW, -DH - BW, -DW - BW), Vec3d(DL + BW, DH + BW, DW + BW));
+BoundingBox system_domain_bounds(Vec3d(-DL/2. - BW, -DH/2. - BW, -DW/2. - BW), 
+								 Vec3d(DL/2. + BW, DH/2. + BW, DW/2. + BW));
 
 Real ball_radius = 0.5;			
 Real wall_radius = 0.5 * DL;	
 Real gravity_g = 1.0;
 Real initial_ball_speed = 4.0;
-Vec3d initial_velocity = initial_ball_speed*Vec3d(0.0, -1., 0.0);
+Vec3d initial_velocity = initial_ball_speed * Vec3d(0.0, -1., 0.0);
 /**< SimTK geometric modeling resolution, which should not exceed 3 for spheres. */
 int resolution(2);
 //----------------------------------------------------------------------

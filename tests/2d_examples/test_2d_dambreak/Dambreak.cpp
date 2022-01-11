@@ -206,8 +206,8 @@ int main(int ac, char *av[])
 
 				if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.restart_step_)
 				{
-					// write_water_mechanical_energy.writeToFile(number_of_iterations);
-					// write_recorded_water_pressure.writeToFile(number_of_iterations);
+					write_water_mechanical_energy.writeToFile(number_of_iterations);
+					write_recorded_water_pressure.writeToFile(number_of_iterations);
 				}
 				if (number_of_iterations % restart_output_interval == 0)
 					restart_io.writeToFile(number_of_iterations);
