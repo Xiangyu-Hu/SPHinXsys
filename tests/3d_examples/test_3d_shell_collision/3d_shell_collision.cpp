@@ -14,15 +14,15 @@ Real DH = 4.0; 					/**< box height. */
 Real DW = 4.0;                  /**< box wedth. */
 Real resolution_ref = 0.025; 	/**< reference resolution. */
 Real BW = resolution_ref * 1.; 	/**< wall width for BCs. */
-BoundingBox system_domain_bounds(Vec3d(-BW, -BW, -BW), Vec3d(DL + BW, DH + BW, DW + BW));
+BoundingBox system_domain_bounds(Vec3d(-DL - BW, -DH - BW, -DW - BW), Vec3d(DL + BW, DH + BW, DW + BW));
 
 Real ball_radius = 0.5;			
 Real wall_radius = 0.5 * DL;	
 Real gravity_g = 1.0;
 Real initial_ball_speed = 4.0;
 Vec3d initial_velocity = initial_ball_speed*Vec3d(0.0, -1., 0.0);
-/** resolution which controls the quality of polygonalmesh created by geometry system */
-int resolution(20);
+/**< SimTK geometric modeling resolution, which should not exceed 3 for spheres. */
+int resolution(2);
 //----------------------------------------------------------------------
 //	Global paramters on material properties
 //----------------------------------------------------------------------
@@ -48,10 +48,11 @@ public:
 class FreeBall : public SolidBody
 {
 public:
-	FreeBall(SPHSystem& system, std::string body_name) : SolidBody(system, body_name)
+	FreeBall(SPHSystem &system, const std::string &body_name) 
+	: SolidBody(system, body_name)
 	{
         Vecd translation_ball(0.0, 0.0, 0.0);
-        body_shape_.add<TriangleMeshShapeShere>(ball_radius, resolution, translation_ball);
+        body_shape_.add<TriangleMeshShapeShere>(ball_radius + BW, resolution, translation_ball);
 	}
 };
 /**
@@ -94,15 +95,15 @@ int main(int ac, char* av[])
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	FreeBall free_ball(sph_system, "FreeBall");
-	SharedPtr<ParticleGenerator> free_ball_particle_generator = makeShared<ParticleGeneratorLattice>();
-	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-		free_ball_particle_generator = makeShared<ParticleGeneratorReload>(in_output, free_ball.getBodyName());
-	SharedPtr<NeoHookeanSolid> free_ball_material = makeShared<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-	ElasticSolidParticles free_ball_particles(free_ball, free_ball_material, free_ball_particle_generator);
+	SharedPtr<LinearElasticSolid> free_ball_material = makeShared<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+	ElasticSolidParticles free_ball_particles(free_ball, free_ball_material);
 
 	WallBoundary wall_boundary(sph_system, "Wall");
-	SharedPtr<Solid> wall_material = makeShared<Solid>(rho0_s, free_ball_material->ContactStiffness());
-	SolidParticles solid_particles(wall_boundary, wall_material);
+	SharedPtr<ParticleGenerator> wall_particle_generator = makeShared<ParticleGeneratorLattice>();
+	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+		wall_particle_generator = makeShared<ParticleGeneratorReload>(in_output, free_ball.getBodyName());
+	SharedPtr<LinearElasticSolid> wall_material = makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	ShellParticles solid_particles(wall_boundary, wall_material, wall_particle_generator, BW);
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
