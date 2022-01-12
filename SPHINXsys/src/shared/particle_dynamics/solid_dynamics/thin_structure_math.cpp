@@ -144,7 +144,7 @@ namespace SPH
 			return n;
 		}
 		//=================================================================================================//
-		Real gaussianQuadratureIntegral(Real a, Real b, int number_of_nodes, const std::function<Real (Real)>& F) 
+		Real gaussianQuadratureIntegralTriple(Real a, Real b, int number_of_nodes, const std::function<Real (Real)>& F) 
 		{
 			const LegendrePolynomialSet legendreSet(number_of_nodes);
 			const std::vector<Real>& abscissa = legendreSet.getAbscissas();
@@ -178,6 +178,37 @@ namespace SPH
 						jy += weight[k] * q;
 					}
 					jx += weight[j] * l1 * jy;
+				}
+				aj += weight[i] * k1 * jx; 
+			}
+			return aj * h1;
+		}
+		//=================================================================================================//
+		Real gaussianQuadratureIntegralDouble(Real a, Real b, int number_of_nodes, const std::function<Real (Real)>& F) 
+		{
+			const LegendrePolynomialSet legendreSet(number_of_nodes);
+			const std::vector<Real>& abscissa = legendreSet.getAbscissas();
+			const std::vector<Real>& weight = legendreSet.getWeights();
+			/** number of nodes at each directons x and y, respectively. Typically same values */
+			int m, n;
+			m = n = number_of_nodes;
+
+			Real aj = 0.0;
+			const Real h1 = 0.5 * (b - a);
+			const Real h2 = 0.5 * (a + b);
+
+			for (int i=0; i != m; i++) {    
+				Real jx = 0.0;
+				const Real x = h1 * abscissa[i] + h2;     
+				/**c1 and c2 as examples*/
+				const Real c1 =  x * x * x;
+				const Real d1 = x * x;
+				const Real k1 = 0.5 * (d1 - c1);
+				const Real k2 = 0.5 * (d1 + c1);
+				for (int j = 0; j !=n; j++) { 
+					const Real y = k1 * abscissa[j] + k2;  
+					const Real q = exp(y / x);
+					jx += weight[j] * q;
 				}
 				aj += weight[i] * k1 * jx; 
 			}
