@@ -28,15 +28,13 @@
  * @author  Xiangyu Hu, Luhui Han and Chi Zhang
  */
 
-
 #ifndef WEAKLY_COMPRESSIBLE_FLUID_H
 #define WEAKLY_COMPRESSIBLE_FLUID_H
 
-
-
 #include "base_material.h"
 
-namespace SPH {
+namespace SPH
+{
 
 	class ViscoelasticFluidParticles;
 
@@ -47,51 +45,46 @@ namespace SPH {
 	class WeaklyCompressibleFluid : public Fluid
 	{
 	protected:
-		Real p0_; /**< reference pressure */
-
-		virtual void assignDerivedMaterialParameters() override 
-		{
-			Fluid::assignDerivedMaterialParameters();
-			p0_ = rho0_ * c0_ * c0_;
-		};
+		Real c0_, p0_; /**< reference sound speed and pressure */
 	public:
-		explicit WeaklyCompressibleFluid() : Fluid(), p0_(1.0) {
-			material_name_ = "WeaklyCompressibleFluid";
+		explicit WeaklyCompressibleFluid(Real rho0, Real c0, Real mu = 0.0)
+			: Fluid(rho0, mu), c0_(c0), p0_(rho0 * c0 * c0)
+		{
+			material_type_ = "WeaklyCompressibleFluid";
 		};
-		virtual ~WeaklyCompressibleFluid() {};
+		virtual ~WeaklyCompressibleFluid(){};
 
+		Real ReferenceSoundSpeed() { return c0_; };
 		virtual Real getPressure(Real rho) override;
 		virtual Real DensityFromPressure(Real p) override;
 		virtual Real getSoundSpeed(Real p = 0.0, Real rho = 1.0) override;
-		virtual WeaklyCompressibleFluid* ThisObjectPtr() override {return this;};
+		virtual WeaklyCompressibleFluid *ThisObjectPtr() override { return this; };
 	};
 
 	/**
 	* @class WeaklyCompressibleFluidFreeSurface
 	* @brief Equation of state (EOS) with cut-off pressure.
 	*/
-	template<class WeaklyCompressibleFluidType>
-	class WeaklyCompressibleFluidFreeSurface : public WeaklyCompressibleFluid
+	template <class WeaklyCompressibleFluidType>
+	class WeaklyCompressibleFluidFreeSurface : public WeaklyCompressibleFluidType
 	{
 	protected:
-		WeaklyCompressibleFluidType* fluid_;
 		Real cutoff_pressure_, cutoff_density_;
 
-		virtual void assignDerivedMaterialParameters() {
-			WeaklyCompressibleFluid::assignDerivedMaterialParameters();
-		};
 	public:
-		WeaklyCompressibleFluidFreeSurface(Real cutoff_pressure)
-			: WeaklyCompressibleFluid(),
-			cutoff_pressure_(cutoff_pressure) {
-			fluid_ = new WeaklyCompressibleFluidType();
-			material_name_ = fluid_->material_name_ + "FreeSurface";
-			cutoff_density_ = fluid_->DensityFromPressure(cutoff_pressure);
-		}; 
-		virtual ~WeaklyCompressibleFluidFreeSurface() {};
+		template <typename... ConstructorArgs>
+		explicit WeaklyCompressibleFluidFreeSurface(Real cutoff_pressure, ConstructorArgs  &&...args)
+			: WeaklyCompressibleFluidType(std::forward<ConstructorArgs>(args)...),
+			  cutoff_pressure_(cutoff_pressure),
+			  cutoff_density_(WeaklyCompressibleFluidType::DensityFromPressure(cutoff_pressure))
+		{
+			WeaklyCompressibleFluidType::aterial_type_ += "FreeSurface";
+		};
+		virtual ~WeaklyCompressibleFluidFreeSurface(){};
 
-		virtual Real getPressure(Real rho) override {
-			return rho < cutoff_density_ ? cutoff_pressure_ : fluid_->getPressure(rho);
+		virtual Real getPressure(Real rho) override
+		{
+			return rho < cutoff_density_ ? cutoff_pressure_ : WeaklyCompressibleFluid::getPressure(rho);
 		};
 	};
 
@@ -102,21 +95,14 @@ namespace SPH {
 	class SymmetricTaitFluid : public WeaklyCompressibleFluid
 	{
 	protected:
-		
 		int gamma_; /**< determine the stiffness of the fluid */
-
-		/** assign derived material properties*/
-		virtual void assignDerivedMaterialParameters() override 
-		{
-			WeaklyCompressibleFluid::assignDerivedMaterialParameters();
-		};
-
 	public:
-		SymmetricTaitFluid() : WeaklyCompressibleFluid(), gamma_(2) 
+		explicit SymmetricTaitFluid(Real rho0, Real c0, int gamma)
+			: WeaklyCompressibleFluid(rho0, c0), gamma_(gamma)
 		{
-			material_name_ = "SymmetricTaitFluid";
+			material_type_ = "SymmetricTaitFluid";
 		};
-		virtual ~SymmetricTaitFluid() {};
+		virtual ~SymmetricTaitFluid(){};
 
 		virtual Real getPressure(Real rho) override;
 		virtual Real DensityFromPressure(Real p) override;
@@ -131,28 +117,25 @@ namespace SPH {
 	{
 	protected:
 		Real lambda_; /**< relaxation time */
-		Real mu_p_; /**< polymeric viscosity */
-		ViscoelasticFluidParticles* viscoelastic_fluid_particles_;
+		Real mu_p_;	  /**< polymeric viscosity */
+		ViscoelasticFluidParticles *viscoelastic_fluid_particles_;
 
-		virtual void assignDerivedMaterialParameters() override 
-		{
-			WeaklyCompressibleFluid::assignDerivedMaterialParameters();
-		};
 	public:
-		explicit Oldroyd_B_Fluid() : WeaklyCompressibleFluid(),
-			lambda_(1.0), mu_p_(0.0) 
+		explicit Oldroyd_B_Fluid(Real rho0, Real c0, Real mu, Real lambda, Real mu_p)
+			: WeaklyCompressibleFluid(rho0, c0, mu),
+			  lambda_(lambda), mu_p_(mu_p), viscoelastic_fluid_particles_(nullptr)
 		{
-			material_name_ = "Oldroyd_B_Fluid";
+			material_type_ = "Oldroyd_B_Fluid";
 		};
-		virtual ~Oldroyd_B_Fluid() {};
+		virtual ~Oldroyd_B_Fluid(){};
 
-		void assignViscoelasticFluidParticles(ViscoelasticFluidParticles* viscoelastic_fluid_particles) 
+		void assignViscoelasticFluidParticles(ViscoelasticFluidParticles *viscoelastic_fluid_particles)
 		{
 			viscoelastic_fluid_particles_ = viscoelastic_fluid_particles;
 		};
 		Real getReferenceRelaxationTime() { return lambda_; };
 		Real ReferencePolymericViscosity() { return mu_p_; };
-		virtual Oldroyd_B_Fluid* ThisObjectPtr() override {return this;};
+		virtual Oldroyd_B_Fluid *ThisObjectPtr() override { return this; };
 	};
 }
 #endif //WEAKLY_COMPRESSIBLE_FLUID_H

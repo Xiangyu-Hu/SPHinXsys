@@ -25,11 +25,12 @@
 #define SPHINXSYS_H
 
 /** @file
-This is the header file that user code should include to pick up all sphinxsys
+This is the header file that user code should include to pick up all SPHinXsys
 capabilities. **/
 
 #include "all_kernels.h"
 #include "all_particles.h"
+#include "all_particle_generators.h"
 #include "all_geometries.h"
 #include "all_bodies.h"
 #include "generative_structures.h"
@@ -39,6 +40,6 @@ capabilities. **/
 #include "all_simbody.h"
 #include "in_output.h"
 #include "parameterization.h"
-#include "regression_testing.h"
+#include "regression_test.h"
 
 #endif //SPHINXSYS_H

@@ -29,11 +29,12 @@
 #ifndef FLUID_PARTICLES_H
 #define FLUID_PARTICLES_H
 
-
-
 #include "base_particles.h"
+#include "base_particles.hpp"
 
-namespace SPH {
+#include "particle_generator_lattice.h"
+namespace SPH
+{
 
 	class Fluid;
 	class Oldroyd_B_Fluid;
@@ -46,31 +47,35 @@ namespace SPH {
 	class FluidParticles : public BaseParticles
 	{
 	public:
-		explicit FluidParticles(SPHBody *body, Fluid *fluid);
-		virtual ~FluidParticles() {};
+		explicit FluidParticles(SPHBody &sph_body,
+								SharedPtr<Fluid> shared_fluid_ptr,
+								SharedPtr<ParticleGenerator> particle_generator_ptr = makeShared<ParticleGeneratorLattice>());
+		virtual ~FluidParticles(){};
 
-		StdLargeVec<Real> p_;		/**< pressure */
-		StdLargeVec<Real> drho_dt_;		/**< density change rate */
-		StdLargeVec<Real> rho_sum_;		/**< number density */
+		StdLargeVec<Real> p_;				 /**< pressure */
+		StdLargeVec<Real> drho_dt_;			 /**< density change rate */
+		StdLargeVec<Real> rho_sum_;			 /**< number density */
 		StdLargeVec<int> surface_indicator_; /**< free surface indicator */
 
-		virtual FluidParticles* ThisObjectPtr() override {return this;};
+		virtual FluidParticles *ThisObjectPtr() override { return this; };
 	};
 
 	/**
 	 * @class ViscoelasticFluidParticles
 	 * @brief Viscoelastic fluid particles.
-	 */	
+	 */
 	class ViscoelasticFluidParticles : public FluidParticles
 	{
 	public:
-		explicit ViscoelasticFluidParticles(SPHBody *body, Oldroyd_B_Fluid* oldroyd_b_fluid);
-		virtual ~ViscoelasticFluidParticles() {};
-		
-		StdLargeVec<Matd> tau_;	/**<  elastic stress */
-		StdLargeVec<Matd> dtau_dt_;	/**<  change rate of elastic stress */
+		explicit ViscoelasticFluidParticles(SPHBody &sph_body,
+											SharedPtr<Oldroyd_B_Fluid> shared_oldroyd_b_fluid_ptr,
+											SharedPtr<ParticleGenerator> particle_generator_ptr = makeShared<ParticleGeneratorLattice>());
+		virtual ~ViscoelasticFluidParticles(){};
 
-		virtual ViscoelasticFluidParticles* ThisObjectPtr() override {return this;};
+		StdLargeVec<Matd> tau_;		/**<  elastic stress */
+		StdLargeVec<Matd> dtau_dt_; /**<  change rate of elastic stress */
+
+		virtual ViscoelasticFluidParticles *ThisObjectPtr() override { return this; };
 	};
 
 	/**
@@ -80,17 +85,19 @@ namespace SPH {
 	class CompressibleFluidParticles : public FluidParticles
 	{
 	public:
-		explicit CompressibleFluidParticles(SPHBody *body, CompressibleFluid* compressiblefluid);
-		virtual ~CompressibleFluidParticles() {};
+		explicit CompressibleFluidParticles(SPHBody &sph_body,
+											SharedPtr<CompressibleFluid> compressiblefluid,
+											SharedPtr<ParticleGenerator> particle_generator_ptr = makeShared<ParticleGeneratorLattice>());
+		virtual ~CompressibleFluidParticles(){};
 
-		StdLargeVec<Vecd> mom_;            /**< momentum */
-		StdLargeVec<Vecd> dmom_dt_;        /**< change rate of momentum */
+		StdLargeVec<Vecd> mom_;		/**< momentum */
+		StdLargeVec<Vecd> dmom_dt_; /**< change rate of momentum */
 		StdLargeVec<Vecd> dmom_dt_prior_;
-		StdLargeVec<Real> E_;		       /**< total energy per unit volume */
-		StdLargeVec<Real> dE_dt_;	       /**< change rate of total energy */
+		StdLargeVec<Real> E_;	  /**< total energy per unit volume */
+		StdLargeVec<Real> dE_dt_; /**< change rate of total energy */
 		StdLargeVec<Real> dE_dt_prior_;
 
-		virtual CompressibleFluidParticles* ThisObjectPtr() override { return this; };
+		virtual CompressibleFluidParticles *ThisObjectPtr() override { return this; };
 	};
 }
 #endif //FLUID_PARTICLES_H

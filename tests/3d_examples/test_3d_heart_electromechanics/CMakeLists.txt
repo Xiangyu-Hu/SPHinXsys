@@ -16,6 +16,29 @@ file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/heart-new.stl
         DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/regression_test_tool.py
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/MyocardiumObserver_Position_runtimes.dat
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/MyocardiumObserver_Position_dtwdistance.xml
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/MyocardiumObserver_Position_Run_0_result.xml
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/MyocardiumObserver_Position_Run_3_result.xml
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/MyocardiumObserver_Position_Run_5_result.xml
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/VoltageObserver_Voltage_runtimes.dat
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/VoltageObserver_Voltage_dtwdistance.xml
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/VoltageObserver_Voltage_Run_0_result.xml
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/VoltageObserver_Voltage_Run_3_result.xml
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/VoltageObserver_Voltage_Run_5_result.xml
+        DESTINATION ${BUILD_INPUT_PATH})
+
 
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
@@ -27,11 +50,11 @@ add_test(NAME ${PROJECT_NAME}
 		 COMMAND ${PROJECT_NAME} --r=false --i=true
 		 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
-if(NOT STATIC_BUILD) # usual dynamic build
+if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 		target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
-		add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
+		add_dependencies(${PROJECT_NAME} sphinxsys_3d)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++)

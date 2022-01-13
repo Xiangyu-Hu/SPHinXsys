@@ -3,7 +3,11 @@
 
 using namespace SPH;
 
+<<<<<<< HEAD
 TEST(VonMisesStrain, StaticMeasure)
+=======
+TEST(VonMisesStrainCalc, vonMisesStrain)
+>>>>>>> f715470e424c1abf9de800921d9efd30aa6a0080
 {
     Real tolerance = 1e-6;
    
@@ -16,9 +20,15 @@ TEST(VonMisesStrain, StaticMeasure)
 	Real epsilonxz_1 = strain_tensor_1(0, 2);
 	Real epsilonyz_1 = strain_tensor_1(1, 2);
     
+<<<<<<< HEAD
     Real von_Mises_strain_static_1 = sqrt( (1.0 / 3.0) * (std::pow(epsilonxx_1 - epsilonyy_1, 2.0) + std::pow(epsilonyy_1 - epsilonzz_1, 2.0) + std::pow(epsilonzz_1 - epsilonxx_1, 2.0))
 		 + 2.0 * (std::pow(epsilonxy_1, 2.0) + std::pow(epsilonyz_1, 2.0) + std::pow(epsilonxz_1, 2.0)));
     Real von_Mises_strain_static_ref_1 = 11.4017543;
+=======
+    Real von_Mises_strain_1 = sqrt( (1.0 / 3.0) * (std::pow(epsilonxx_1 - epsilonyy_1, 2.0) + std::pow(epsilonyy_1 - epsilonzz_1, 2.0) + std::pow(epsilonzz_1 - epsilonxx_1, 2.0))
+		 + 2.0 * (std::pow(epsilonxy_1, 2.0) + std::pow(epsilonyz_1, 2.0) + std::pow(epsilonxz_1, 2.0)));
+    Real von_Mises_strain_ref_1 = 11.4017543;
+>>>>>>> f715470e424c1abf9de800921d9efd30aa6a0080
    
     Matd strain_tensor_2 = Matd( Vecd(-5, 9, 1), Vecd(9, 4, -7), Vecd(1, -7, -12));
     
@@ -29,12 +39,21 @@ TEST(VonMisesStrain, StaticMeasure)
 	Real epsilonxz_2 = strain_tensor_2(0, 2);
 	Real epsilonyz_2 = strain_tensor_2(1, 2);
 
+<<<<<<< HEAD
     Real von_Mises_strain_static_2 = sqrt( (1.0 / 3.0) * (std::pow(epsilonxx_2 - epsilonyy_2, 2.0) + std::pow(epsilonyy_2 - epsilonzz_2, 2.0) + std::pow(epsilonzz_2 - epsilonxx_2, 2.0))
 		 + 2.0 * (std::pow(epsilonxy_2, 2.0) + std::pow(epsilonyz_2, 2.0) + std::pow(epsilonxz_2, 2.0)));
     Real von_Mises_strain_static_ref_2 = 19.7652894;
 
 	EXPECT_NEAR(von_Mises_strain_static_1, von_Mises_strain_static_ref_1, tolerance);
     EXPECT_NEAR(von_Mises_strain_static_2, von_Mises_strain_static_ref_2, tolerance);
+=======
+    Real von_Mises_strain_2 = sqrt( (1.0 / 3.0) * (std::pow(epsilonxx_2 - epsilonyy_2, 2.0) + std::pow(epsilonyy_2 - epsilonzz_2, 2.0) + std::pow(epsilonzz_2 - epsilonxx_2, 2.0))
+		 + 2.0 * (std::pow(epsilonxy_2, 2.0) + std::pow(epsilonyz_2, 2.0) + std::pow(epsilonxz_2, 2.0)));
+    Real von_Mises_strain_ref_2 = 19.7652894;
+
+	EXPECT_NEAR(von_Mises_strain_1, von_Mises_strain_ref_1, tolerance);
+    EXPECT_NEAR(von_Mises_strain_2, von_Mises_strain_ref_2, tolerance);
+>>>>>>> f715470e424c1abf9de800921d9efd30aa6a0080
 
 }
 //=================================================================================================//

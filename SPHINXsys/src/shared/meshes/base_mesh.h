@@ -47,7 +47,7 @@ using namespace std::placeholders;
 namespace SPH
 {
 	class Kernel;
-	class ParticleAdaptation;
+	class SPHAdaptation;
 
 	/** Functor for operation on the mesh. */
 	typedef std::function<void(const Vecu &, Real)> MeshFunctor;
@@ -150,6 +150,9 @@ namespace SPH
 	template <class MeshFieldType, class MeshLevelType>
 	class MultilevelMesh : public MeshFieldType
 	{
+	private:
+		UniquePtrVectorKeeper<MeshLevelType> mesh_level_ptr_vector_keeper_;
+
 	protected:
 		size_t total_levels_; /**< level 0 is the coarsest */
 		StdVec<MeshLevelType *> mesh_levels_;
@@ -167,17 +170,13 @@ namespace SPH
 			{
 				Real spacing_level = zero_level_spacing * powerN(0.5, (int)level);
 				/** all mesh levels aligned at the lower bound of tentative_bounds */
-				MeshLevelType *mesh_level =
-					new MeshLevelType(tentative_bounds, spacing_level, std::forward<Args>(args)...);
-				mesh_levels_.push_back(mesh_level);
+				mesh_levels_.push_back(
+					mesh_level_ptr_vector_keeper_
+						.template createPtr<MeshLevelType>(tentative_bounds, spacing_level, std::forward<Args>(args)...));
 			}
 		};
 
-		virtual ~MultilevelMesh()
-		{
-			for (size_t l = 0; l != total_levels_; ++l)
-				mesh_levels_[l]->~MeshLevelType();
-		};
+		virtual ~MultilevelMesh() {};
 
 		StdVec<MeshLevelType *> getMeshLevels() { return mesh_levels_; };
 

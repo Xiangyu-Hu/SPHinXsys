@@ -11,4 +11,6 @@ bodies used in SPHinXsys. **/
 
 #include "fluid_body.h"
 #include "solid_body.h"
+#include "observer_body.h"
+
 #endif //ALL_BODIES_H

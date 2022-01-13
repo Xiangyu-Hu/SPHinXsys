@@ -21,7 +21,7 @@ namespace SPH
 	class KernelTabulated : public Kernel
 	{
 	protected:
-		KernelType *original_kernel_;
+		KernelType original_kernel_;
 		int kernel_resolution_;
 		Real dq_ , delta_q_0_, delta_q_1_, delta_q_2_, delta_q_3_;
 		StdVec<Real> w_1d, w_2d, w_3d;
@@ -44,9 +44,9 @@ namespace SPH
 				+ (fraction_0 * fraction_1 * fraction_2) / delta_q_3_ * data[i + 2]);
 		};
 	public:
-		KernelTabulated(int kernel_resolution);
+		explicit KernelTabulated(int kernel_resolution);
 
-		virtual Real KernelSize() const { return original_kernel_->KernelSize(); };
+		virtual Real KernelSize() const override { return original_kernel_.KernelSize(); };
 
 		virtual Real W_1D(const Real q) const override;
 		virtual Real W_2D(const Real q) const override;
@@ -63,29 +63,29 @@ namespace SPH
 	//=================================================================================================//
 	template<class KernelType>
 	KernelTabulated<KernelType>::KernelTabulated(int kernel_resolution)
-		: Kernel("KernelTabulated"), kernel_resolution_(kernel_resolution) {}
+		: Kernel("KernelTabulated"), original_kernel_(), 
+		kernel_resolution_(kernel_resolution) {}
 	//=================================================================================================//
 	template<class KernelType>
 	void KernelTabulated<KernelType>::setBasicParameters()
 	{
-		original_kernel_ = new KernelType();
-		original_kernel_->initialize(h_);
-		factor_W_1D_ = original_kernel_->FactorW1D();
-		factor_W_2D_ = original_kernel_->FactorW2D();
-		factor_W_3D_ = original_kernel_->FactorW3D();
+		original_kernel_.initialize(h_);
+		factor_W_1D_ = original_kernel_.FactorW1D();
+		factor_W_2D_ = original_kernel_.FactorW2D();
+		factor_W_3D_ = original_kernel_.FactorW3D();
 
 		dq_ = KernelSize() / Real(kernel_resolution_);
 		for (int i = 0; i < kernel_resolution_ + 4; i++) 
 		{
-			w_1d.push_back(original_kernel_->W_1D(Real(i - 1)*dq_));
-			w_2d.push_back(original_kernel_->W_2D(Real(i - 1)*dq_));
-			w_3d.push_back(original_kernel_->W_3D(Real(i - 1)*dq_));
-			dw_1d.push_back(original_kernel_->dW_1D(Real(i - 1)*dq_));
-			dw_2d.push_back(original_kernel_->dW_2D(Real(i - 1)*dq_));
-			dw_3d.push_back(original_kernel_->dW_3D(Real(i - 1)*dq_));	
-			d2w_1d.push_back(original_kernel_->d2W_1D(Real(i - 1) * dq_));
-			d2w_2d.push_back(original_kernel_->d2W_2D(Real(i - 1) * dq_));
-			d2w_3d.push_back(original_kernel_->d2W_3D(Real(i - 1) * dq_));
+			w_1d.push_back(original_kernel_.W_1D(Real(i - 1)*dq_));
+			w_2d.push_back(original_kernel_.W_2D(Real(i - 1)*dq_));
+			w_3d.push_back(original_kernel_.W_3D(Real(i - 1)*dq_));
+			dw_1d.push_back(original_kernel_.dW_1D(Real(i - 1)*dq_));
+			dw_2d.push_back(original_kernel_.dW_2D(Real(i - 1)*dq_));
+			dw_3d.push_back(original_kernel_.dW_3D(Real(i - 1)*dq_));	
+			d2w_1d.push_back(original_kernel_.d2W_1D(Real(i - 1) * dq_));
+			d2w_2d.push_back(original_kernel_.d2W_2D(Real(i - 1) * dq_));
+			d2w_3d.push_back(original_kernel_.d2W_3D(Real(i - 1) * dq_));
 		}
 
 		delta_q_0_ = (-1.0  *  dq_) * (-2.0 * dq_) * (-3.0 * dq_);

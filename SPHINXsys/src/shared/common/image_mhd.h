@@ -32,7 +32,11 @@
 
 #ifndef __EMSCRIPTEN__
 
+<<<<<<< HEAD
 #include "small_vectors.h"
+=======
+#include "vector_functions.h"
+>>>>>>> f715470e424c1abf9de800921d9efd30aa6a0080
 #include "sph_data_containers.h"
 
 #include <iostream>

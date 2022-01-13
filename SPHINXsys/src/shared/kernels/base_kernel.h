@@ -42,6 +42,9 @@
 #include "base_data_package.h"
 
 #include <string>
+#include <functional>
+
+using namespace std::placeholders;
 
 namespace SPH
 {
@@ -74,7 +77,7 @@ namespace SPH
 		void setDerivativeParameters();
 	public:
 		/** empty initialization in constructor, initialization will be carried out later. */
-		Kernel(std::string kernel_name = "Kernel");
+		Kernel(const std::string &kernel_name = "Kernel");
 		virtual ~Kernel() {};
 		
 		void initialize(Real h);
@@ -140,9 +143,21 @@ namespace SPH
 	 //		to the variable smoothing length.
 	 //----------------------------------------------------------------------
 	protected:
-		Real SmoothingLengthFactor1D(const Real& h_ratio) const { return h_ratio; };
-		Real SmoothingLengthFactor2D(const Real& h_ratio) const { return h_ratio * h_ratio; };
-		Real SmoothingLengthFactor3D(const Real& h_ratio)  const { return h_ratio * h_ratio * h_ratio; };
+		/** Functor for variable smoothing length. */
+		typedef std::function<Real(const Real&)> FactorFunctor;
+		FactorFunctor h_factor_W_1D_, h_factor_W_2D_, h_factor_W_3D_;
+		FactorFunctor h_factor_dW_1D_, h_factor_dW_2D_, h_factor_dW_3D_;
+		FactorFunctor h_factor_d2W_1D_, h_factor_d2W_2D_, h_factor_d2W_3D_;
+
+		Real factorW1D(const Real& h_ratio) const { return h_ratio; };
+		Real factorW2D(const Real& h_ratio) const { return h_ratio * h_ratio; };
+		Real factorW3D(const Real& h_ratio) const { return h_ratio * h_ratio * h_ratio; };
+		Real factordW1D(const Real& h_ratio) const { return factorW1D(h_ratio) * h_ratio; };
+		Real factordW2D(const Real& h_ratio) const { return factorW2D(h_ratio) * h_ratio; };
+		Real factordW3D(const Real& h_ratio) const { return factorW3D(h_ratio)* h_ratio; };
+		Real factord2W1D(const Real& h_ratio) const { return factordW1D(h_ratio) * h_ratio; };
+		Real factord2W2D(const Real& h_ratio) const { return factordW2D(h_ratio) * h_ratio; };
+		Real factord2W3D(const Real& h_ratio) const { return factordW3D(h_ratio) * h_ratio; };
 
 	public:
 		Real CutOffRadius(Real h_ratio) const { return cutoff_radius_ref_ / h_ratio; };

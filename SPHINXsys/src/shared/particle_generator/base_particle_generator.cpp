@@ -9,42 +9,44 @@
 #include "base_particles.h"
 #include "in_output.h"
 
-
-namespace SPH {
+namespace SPH
+{
 	//=================================================================================================//
-	void ParticleGenerator::initialize(SPHBody* sph_body)
+	void ParticleGenerator::initialize(SPHBody *sph_body)
 	{
 		sph_body_ = sph_body;
 	}
 	//=================================================================================================//
-	void ParticleGeneratorDirect
-		::createBaseParticles(BaseParticles* base_particles)
+	void ParticleGeneratorDirect ::createBaseParticles(BaseParticles *base_particles)
 	{
-		auto& body_input_points_volumes = sph_body_->body_input_points_volumes_;
-		for (size_t i = 0; i < body_input_points_volumes.size(); ++i)
+		for (size_t i = 0; i < positions_volumes_.size(); ++i)
 		{
-			base_particles->initializeABaseParticle(body_input_points_volumes[i].first,
-				body_input_points_volumes[i].second);
+			base_particles->initializeABaseParticle(positions_volumes_[i].first,
+													positions_volumes_[i].second);
 		}
 	}
 	//=================================================================================================//
 	ParticleGeneratorReload::
-		ParticleGeneratorReload(In_Output* in_output, std::string reload_body_name)
+		ParticleGeneratorReload(In_Output &in_output, const std::string &reload_body_name)
 		: ParticleGenerator()
 	{
-		if (!fs::exists(in_output->reload_folder_))
+		if (!fs::exists(in_output.reload_folder_))
 		{
-			std::cout << "\n Error: the particle reload folder:" << in_output->reload_folder_ << " is not exists" << std::endl;
+			std::cout << "\n Error: the particle reload folder:" << in_output.reload_folder_ << " is not exists" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
 
+<<<<<<< HEAD
 		file_path_ = in_output->reload_folder_ + "/" + reload_body_name + "_rld.xml";
+=======
+		file_path_ = in_output.reload_folder_ + "/SPHBody_" + reload_body_name + "_rld.xml";
+>>>>>>> f715470e424c1abf9de800921d9efd30aa6a0080
 	}
 	//=================================================================================================//
-	void ParticleGeneratorReload::createBaseParticles(BaseParticles* base_particles)
+	void ParticleGeneratorReload::createBaseParticles(BaseParticles *base_particles)
 	{
-		XmlEngine* reload_xml_engine = base_particles->getReloadXmlEngine();
+		XmlEngine *reload_xml_engine = base_particles->getReloadXmlEngine();
 		reload_xml_engine->loadXmlFile(file_path_);
 		SimTK::Xml::element_iterator ele_ite_ = reload_xml_engine->root_element_.element_begin();
 		for (; ele_ite_ != reload_xml_engine->root_element_.element_end(); ++ele_ite_)

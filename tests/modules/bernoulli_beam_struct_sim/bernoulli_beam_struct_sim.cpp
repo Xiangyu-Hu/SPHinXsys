@@ -17,10 +17,17 @@ TEST(BernoulliBeam20x, Pressure)
 	std::vector<std::string> imported_stl_list = { "bernoulli_beam_20x.stl" };
 	std::vector<Vec3d> translation_list = { Vec3d(0) };
 	std::vector<Real> resolution_list = { 10.0 / 6.0 };
+<<<<<<< HEAD
 	LinearElasticSolid material = LinearElasticSolid(rho_0, Youngs_modulus, poisson);
 	std::vector<LinearElasticSolid> material_model_list = { material };
 
 	TriangleMeshShape specimen("./input/bernoulli_beam_20x.stl", Vec3d(0), scale_stl);
+=======
+	SharedPtr<LinearElasticSolid> material = makeShared<LinearElasticSolid>(rho_0, Youngs_modulus, poisson);
+	std::vector<SharedPtr<LinearElasticSolid>> material_model_list = { material };
+
+	TriangleMeshShapeSTL specimen("./input/bernoulli_beam_20x.stl", Vec3d(0), scale_stl);
+>>>>>>> f715470e424c1abf9de800921d9efd30aa6a0080
 	BoundingBox fixation = specimen.findBounds();
 	fixation.second[0] = fixation.first[0] + 0.01;
 	
@@ -36,7 +43,11 @@ TEST(BernoulliBeam20x, Pressure)
 		{}
 	};
 	input.surface_particles_only_to_vtu_ = { true };
+<<<<<<< HEAD
 	input.body_indeces_fixed_constraint_region_ = StdVec<ConstrainedRegionPair>{ ConstrainedRegionPair(0, fixation) };
+=======
+	input.body_indices_fixed_constraint_region_ = StdVec<ConstrainedRegionPair>{ ConstrainedRegionPair(0, fixation) };
+>>>>>>> f715470e424c1abf9de800921d9efd30aa6a0080
 	StdVec<array<Real, 2>> pressure_over_time = {
 		{0.0, 0.0},
 		{end_time * 0.1, pressure},

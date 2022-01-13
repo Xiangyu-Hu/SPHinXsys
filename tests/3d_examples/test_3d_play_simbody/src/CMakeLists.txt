@@ -13,7 +13,7 @@ ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 if(NOT STATIC_BUILD) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
-		add_dependencies(${PROJECT_NAME} sphinxsys_3d sphinxsys_static_3d)
+		add_dependencies(${PROJECT_NAME} sphinxsys_3d)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++)
