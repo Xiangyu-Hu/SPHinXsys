@@ -184,14 +184,18 @@ namespace SPH
 			return aj * h1;
 		}
 		//=================================================================================================//
-		Real gaussianQuadratureIntegralDouble(Real a, Real b, int number_of_nodes, const std::function<Real (Real)>& F) 
+		Real gaussianQuadratureIntegralDouble(const Vecd &ri, const Vecd &rj, const Real & spacing_ref, Kernel *kernel_) 
 		{
+			int number_of_nodes = 3;//or 5
 			const LegendrePolynomialSet legendreSet(number_of_nodes);
 			const std::vector<Real>& abscissa = legendreSet.getAbscissas();
 			const std::vector<Real>& weight = legendreSet.getWeights();
 			/** number of nodes at each directons x and y, respectively. Typically same values */
 			int m, n;
 			m = n = number_of_nodes;
+
+			const Real a = rj[0] - spacing_ref/2.; const Real b = rj[0] + spacing_ref/2.;
+			const Real c1 = rj[1] - spacing_ref/2.; const Real d1 = rj[1] + spacing_ref/2.;
 
 			Real aj = 0.0;
 			const Real h1 = 0.5 * (b - a);
@@ -200,18 +204,16 @@ namespace SPH
 			for (int i=0; i != m; i++) {    
 				Real jx = 0.0;
 				const Real x = h1 * abscissa[i] + h2;     
-				/**c1 and c2 as examples*/
-				const Real c1 =  x * x * x;
-				const Real d1 = x * x;
 				const Real k1 = 0.5 * (d1 - c1);
 				const Real k2 = 0.5 * (d1 + c1);
 				for (int j = 0; j !=n; j++) { 
 					const Real y = k1 * abscissa[j] + k2;  
-					const Real q = exp(y / x);
+					const Real q = kernel_->W(Vecd(x, y).norm(), Vecd(x, y));
 					jx += weight[j] * q;
 				}
 				aj += weight[i] * k1 * jx; 
 			}
+			printf("aj = %.12f \n", aj);
 			return aj * h1;
 		}
 	}

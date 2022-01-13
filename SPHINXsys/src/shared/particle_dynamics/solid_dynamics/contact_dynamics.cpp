@@ -77,8 +77,12 @@ namespace SPH
 		{
 			/** shell contact interaction. */
 			Real sigma = 0.0;
+			const int dimension = Vecd(0).size();
 			/** a calibraton factor to avoid particle penetratoin into shell structure */
-			boundary_factor_ = material_->ReferenceDensity() / (kernel_->SmoothingLength() * kernel_->W0(Vecd(0.)) * 2. * kernel_->CutOffRadius());
+			boundary_factor_ = material_->ReferenceDensity() / 
+				(kernel_->SmoothingLength() * kernel_->W0(Vecd(0.)) * M_PI * std::pow(kernel_->CutOffRadius(), dimension-1));
+
+			const Real dp_2 = 0.5 * spacing_ref_;
 			
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
@@ -86,21 +90,20 @@ namespace SPH
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
-					const Real dp_2 = 0.5 * spacing_ref_;
 					const Vecd contact_pos_j = contact_pos_k[contact_neighborhood.j_[n]];
 					
-					const Vecd dp_2_t_0 = pos_n_[index_i] - Vecd(dp_2*x_0, 0.) - contact_pos_j;
-					const Vecd dp_2_t_1 = pos_n_[index_i] - Vecd(dp_2*x_1, 0.) - contact_pos_j;
-					const Vecd dp_2_t_2 = pos_n_[index_i] - Vecd(dp_2*x_2, 0.) - contact_pos_j;
+					const Vecd dp_2_t_0 = pos_n_[index_i] - Vecd(dp_2*x_0, dp_2*x_0) - contact_pos_j;
+					const Vecd dp_2_t_1 = pos_n_[index_i] - Vecd(dp_2*x_1, dp_2*x_0) - contact_pos_j;
+					const Vecd dp_2_t_2 = pos_n_[index_i] - Vecd(dp_2*x_2, dp_2*x_0) - contact_pos_j;
 
 					const Real W_rij_t_0 = kernel_->W(dp_2_t_0.norm(), dp_2_t_0);
 					const Real W_rij_t_1 = kernel_->W(dp_2_t_1.norm(), dp_2_t_1);
 					const Real W_rij_t_2 = kernel_->W(dp_2_t_2.norm(), dp_2_t_2);
 
-					sigma  += (w_0 * W_rij_t_0 + w_1 * W_rij_t_1 + w_2 * W_rij_t_2) * dp_2 * boundary_factor_ * kernel_->SmoothingLength();
-				}				
+					sigma  += (w_0 * W_rij_t_0 + w_1 * W_rij_t_1 + w_2 * W_rij_t_2) * dp_2;
+				}
 			}
-			contact_density_[index_i] = sigma;
+			contact_density_[index_i] = sigma * boundary_factor_ * kernel_->SmoothingLength();
 		}
 		//=================================================================================================//
 		SelfContactForce::

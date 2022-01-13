@@ -12,18 +12,18 @@ using namespace SPH;	//Namespace cite here.
 Real DL = 4.0; 					/**< box length. */
 Real DH = 4.0; 					/**< box height. */
 Real DW = 4.0;                  /**< box wedth. */
-Real resolution_ref = 0.025; 	/**< reference resolution. */
+Real resolution_ref = 0.05; 	/**< reference resolution. */
 Real BW = resolution_ref * 1.; 	/**< wall width for BCs. */
 BoundingBox system_domain_bounds(Vec3d(-DL/2. - BW, -DH/2. - BW, -DW/2. - BW), 
 								 Vec3d(DL/2. + BW, DH/2. + BW, DW/2. + BW));
 
 Real ball_radius = 0.5;			
 Real wall_radius = 0.5 * DL;	
-Real gravity_g = 1.0;
+Real gravity_g = 0.0;
 Real initial_ball_speed = 4.0;
-Vec3d initial_velocity = initial_ball_speed * Vec3d(0.0, -1., 0.0);
+Vec3d initial_velocity = initial_ball_speed*Vec3d(cos(M_PI/3.), sin(M_PI/3.), 0.0);
 /**< SimTK geometric modeling resolution, which should not exceed 3 for spheres. */
-int resolution(2);
+int resolution(3);
 //----------------------------------------------------------------------
 //	Global paramters on material properties
 //----------------------------------------------------------------------
@@ -190,7 +190,7 @@ int main(int ac, char* av[])
 	body_states_recording.writeToFile(0);
 	/** Main loop. */
 	int ite 		= 0;
-	Real T0 		= 10.0;
+	Real T0 		= 25.0;
 	Real End_Time 	= T0;
 	Real D_Time 	= 0.01*T0;
 	Real Dt 		= 0.1*D_Time;			

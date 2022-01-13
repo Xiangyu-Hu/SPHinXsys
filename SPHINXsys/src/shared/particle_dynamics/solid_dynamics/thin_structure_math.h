@@ -38,6 +38,8 @@
 
 namespace SPH
 {
+	class Kernel;
+
 	namespace thin_structure_dynamics
 	{
 		/**
@@ -68,7 +70,7 @@ namespace SPH
 		/** triple Gauss-Legendre quadrature for 3-D surface integrals*/   
 		Real gaussianQuadratureIntegralTriple(Real a, Real b, int n, const std::function<Real (Real)>& F);
 		/** double Gauss-Legendre quadrature for 2-D surface integrals*/
-		Real gaussianQuadratureIntegralDouble(Real a, Real b, int n, const std::function<Real (Real)>& F);
+		Real gaussianQuadratureIntegralDouble(const Vecd &ri, const Vecd &rj, const Real &spacing_ref, Kernel *kernel_);
 
 		/**
 		* @class LegendrePolynomialSet
