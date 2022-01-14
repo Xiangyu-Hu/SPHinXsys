@@ -19,7 +19,6 @@ BoundingBox system_domain_bounds(Vec3d(-DL/2. - BW, -DH/2. - BW, -DW/2. - BW),
 
 Real ball_radius = 0.5;			
 Real wall_radius = 0.5 * DL;	
-Real gravity_g = 0.0;
 Real initial_ball_speed = 4.0;
 Vec3d initial_velocity = initial_ball_speed*Vec3d(cos(Pi/3.), sin(Pi/3.), 0.0);
 /**< SimTK geometric modeling resolution, which should not exceed 3 for spheres. */
@@ -28,7 +27,7 @@ int resolution(3);
 //	Global paramters on material properties
 //----------------------------------------------------------------------
 Real rho0_s = 1.0e3;
-Real Youngs_modulus = 5.0e4;
+Real Youngs_modulus = 5.0e5;
 Real poisson = 0.45; 			
 //----------------------------------------------------------------------
 //	Bodies with cases-dependent geometries.
@@ -86,8 +85,6 @@ int main(int ac, char* av[])
 	sph_system.reload_particles_ = false;
 	/** Tag for computation from restart files. 0: start with initial condition */
 	sph_system.restart_step_ = 0;
-	/** Define external force.*/
-	Gravity gravity(Vecd(0.0, -gravity_g));
 	/** Handle command line arguments. */
 	sph_system.handleCommandlineOptions(ac, av);
 	/** I/O environment. */
@@ -160,7 +157,7 @@ int main(int ac, char* av[])
 	//	Define the main numerical methods used in the simultion.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	TimeStepInitialization 	free_ball_initialize_timestep(free_ball, gravity);
+	TimeStepInitialization 	free_ball_initialize_timestep(free_ball);
 	solid_dynamics::CorrectConfiguration free_ball_corrected_configuration(free_ball_inner);
 	solid_dynamics::AcousticTimeStepSize free_ball_get_time_step_size(free_ball);
 	/** stress relaxation for the balls. */
