@@ -21,7 +21,7 @@ Real ball_radius = 0.5;
 Real wall_radius = 0.5 * DL;	
 Real gravity_g = 0.0;
 Real initial_ball_speed = 4.0;
-Vec3d initial_velocity = initial_ball_speed*Vec3d(cos(M_PI/3.), sin(M_PI/3.), 0.0);
+Vec3d initial_velocity = initial_ball_speed*Vec3d(cos(Pi/3.), sin(Pi/3.), 0.0);
 /**< SimTK geometric modeling resolution, which should not exceed 3 for spheres. */
 int resolution(3);
 //----------------------------------------------------------------------

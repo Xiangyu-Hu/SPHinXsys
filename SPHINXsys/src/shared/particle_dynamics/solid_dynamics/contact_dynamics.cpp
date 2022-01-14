@@ -80,7 +80,7 @@ namespace SPH
 			const int dimension = Vecd(0).size();
 			/** a calibraton factor to avoid particle penetratoin into shell structure */
 			boundary_factor_ = material_->ReferenceDensity() / 
-				(kernel_->SmoothingLength() * kernel_->W0(Vecd(0.)) * M_PI * std::pow(kernel_->CutOffRadius(), dimension-1));
+				(kernel_->SmoothingLength() * kernel_->W0(Vecd(0.)) * Pi * std::pow(kernel_->CutOffRadius(), dimension-1));
 
 			const Real dp_2 = 0.5 * spacing_ref_;
 			
