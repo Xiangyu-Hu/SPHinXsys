@@ -68,9 +68,9 @@ namespace SPH
 		Vec3d getNormalFromDeformationGradientTensor(const Mat3d& F);
 
 		/** triple Gauss-Legendre quadrature for 3-D surface integrals*/   
-		Real gaussianQuadratureIntegralTriple(Real a, Real b, int n, const std::function<Real (Real)>& F);
+		Real gaussianQuadratureIntegralTriple(const Vecd& ri, const Vecd& rj, const Real& spacing_ref, Kernel* kernel_);
 		/** double Gauss-Legendre quadrature for 2-D surface integrals*/
-		Real gaussianQuadratureIntegralDouble(const Vecd &ri, const Vecd &rj, const Real &spacing_ref, Kernel *kernel_);
+		Real gaussianQuadratureIntegralDouble(const Vecd& ri, const Vecd& rj, const Real& spacing_ref, Kernel* kernel_);
 
 		/**
 		* @class LegendrePolynomialSet

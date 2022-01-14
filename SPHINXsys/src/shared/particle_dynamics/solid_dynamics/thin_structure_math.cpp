@@ -1,6 +1,6 @@
 /**
  * @file 	thin_structure_math.cpp
- * @author	Dong Wu, Chi ZHang and Xiangyu Hu
+ * @author	Dong Wu, Chi ZHang, Massoud Rezavand and Xiangyu Hu
  * @version	0.1
  */
 
@@ -144,37 +144,37 @@ namespace SPH
 			return n;
 		}
 		//=================================================================================================//
-		Real gaussianQuadratureIntegralTriple(Real a, Real b, int number_of_nodes, const std::function<Real (Real)>& F) 
+		Real gaussianQuadratureIntegralTriple(const Vecd& ri, const Vecd& rj, const Real& spacing_ref, Kernel* kernel_) 
 		{
+			const int number_of_nodes = 3; /** or 5 (typically, 3 nodes are enough) */
 			const LegendrePolynomialSet legendreSet(number_of_nodes);
 			const std::vector<Real>& abscissa = legendreSet.getAbscissas();
 			const std::vector<Real>& weight = legendreSet.getWeights();
 			/** number of nodes at each directons x, y and z, respectively. Typically same values */
 			int m, n, p;
 			m = n = p = number_of_nodes;
+			
+			const Real a1 = rj[0] - spacing_ref/2.; const Real b1 = rj[0] + spacing_ref/2.;
+			const Real c1 = rj[1] - spacing_ref/2.; const Real d1 = rj[1] + spacing_ref/2.;
+			const Real e1 = rj[2] - spacing_ref/2.; const Real f1 = rj[2] + spacing_ref/2.;
 
 			Real aj = 0.0;
-			const Real h1 = 0.5 * (b - a);
-			const Real h2 = 0.5 * (a + b);
+			const Real h1 = 0.5 * (b1 - a1);
+			const Real h2 = 0.5 * (a1 + b1);
 
 			for (int i=0; i != m; i++) {    
 				Real jx = 0.0;
 				const Real x = h1 * abscissa[i] + h2;     
-				const Real c1 = 0.;
-				const Real d1 = sqrt(4 - x * x);
 				const Real k1 = 0.5 * (d1 - c1);
 				const Real k2 = 0.5 * (d1 + c1);
 				for (int j = 0; j !=n; j++) { 
 					Real jy = 0.0;
 					const Real y = k1 * abscissa[j] + k2;  
-					/* use Z1 and Z2 as examples */
-					const Real z1 = 2.;
-					const Real z2 = sqrt(x * x + y * y); 
-					const Real l1 = 0.5 * (z1 - z2);
-					const Real l2 = 0.5 * (z1 + z2);
+					const Real l1 = 0.5 * (f1 - e1);
+					const Real l2 = 0.5 * (f1 + e1);
 					for (int k = 0; k != p; k++) { 
 						const Real z = l1 * abscissa[k] + l2;
-						const Real q = sqrt(x * x + y * y);
+						const Real q = kernel_->W(Vecd(x, y, z).norm(), Vecd(x, y, z));
 						jy += weight[k] * q;
 					}
 					jx += weight[j] * l1 * jy;
@@ -184,9 +184,9 @@ namespace SPH
 			return aj * h1;
 		}
 		//=================================================================================================//
-		Real gaussianQuadratureIntegralDouble(const Vecd &ri, const Vecd &rj, const Real & spacing_ref, Kernel *kernel_) 
+		Real gaussianQuadratureIntegralDouble(const Vecd& ri, const Vecd& rj, const Real& spacing_ref, Kernel* kernel_) 
 		{
-			int number_of_nodes = 3;//or 5
+			const int number_of_nodes = 3; /** or 5 (typically, 3 nodes are enough) */
 			const LegendrePolynomialSet legendreSet(number_of_nodes);
 			const std::vector<Real>& abscissa = legendreSet.getAbscissas();
 			const std::vector<Real>& weight = legendreSet.getWeights();
@@ -194,12 +194,12 @@ namespace SPH
 			int m, n;
 			m = n = number_of_nodes;
 
-			const Real a = rj[0] - spacing_ref/2.; const Real b = rj[0] + spacing_ref/2.;
+			const Real a1 = rj[0] - spacing_ref/2.; const Real b1 = rj[0] + spacing_ref/2.;
 			const Real c1 = rj[1] - spacing_ref/2.; const Real d1 = rj[1] + spacing_ref/2.;
 
 			Real aj = 0.0;
-			const Real h1 = 0.5 * (b - a);
-			const Real h2 = 0.5 * (a + b);
+			const Real h1 = 0.5 * (b1 - a1);
+			const Real h2 = 0.5 * (a1 + b1);
 
 			for (int i=0; i != m; i++) {    
 				Real jx = 0.0;
