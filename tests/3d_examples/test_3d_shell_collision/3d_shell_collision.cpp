@@ -27,7 +27,7 @@ int resolution(3);
 //	Global paramters on material properties
 //----------------------------------------------------------------------
 Real rho0_s = 1.0e3;
-Real Youngs_modulus = 5.0e5;
+Real Youngs_modulus = 5.0e4;
 Real poisson = 0.45; 			
 //----------------------------------------------------------------------
 //	Bodies with cases-dependent geometries.
