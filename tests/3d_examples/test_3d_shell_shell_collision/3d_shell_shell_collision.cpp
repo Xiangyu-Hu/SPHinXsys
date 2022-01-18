@@ -98,13 +98,13 @@ int main(int ac, char* av[])
 	SharedPtr<ParticleGenerator> ball_particle_generator = makeShared<ParticleGeneratorLattice>();
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 		ball_particle_generator = makeShared<ParticleGeneratorReload>(in_output, free_ball.getBodyName());
-	SharedPtr<LinearElasticSolid> ball_material = makeShared<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+	SharedPtr<NeoHookeanSolid> ball_material = makeShared<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	ShellParticles free_ball_particles(free_ball, ball_material, ball_particle_generator, BW);
 
 	WallBoundary wall_boundary(sph_system, "Wall");
 	SharedPtr<ParticleGenerator> wall_particle_generator = makeShared<ParticleGeneratorLattice>();
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-		wall_particle_generator = makeShared<ParticleGeneratorReload>(in_output, free_ball.getBodyName());
+		wall_particle_generator = makeShared<ParticleGeneratorReload>(in_output, wall_boundary.getBodyName());
 	SharedPtr<LinearElasticSolid> wall_material = makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	ShellParticles solid_particles(wall_boundary, wall_material, wall_particle_generator, BW);
 	//----------------------------------------------------------------------
@@ -156,6 +156,7 @@ int main(int ac, char* av[])
 	//	Basically the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
 	BodyRelationInner free_ball_inner(free_ball);
+	BodyRelationInner wall_inner(wall_boundary);
 	SolidBodyRelationContact free_ball_contact(free_ball, {&wall_boundary});
 	SolidBodyRelationContact wall_ball_contact(wall_boundary, {&free_ball});
 	//----------------------------------------------------------------------
@@ -164,6 +165,7 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	TimeStepInitialization 	free_ball_initialize_timestep(free_ball);
 	solid_dynamics::CorrectConfiguration free_ball_corrected_configuration(free_ball_inner);
+	solid_dynamics::CorrectConfiguration wall_corrected_configuration(wall_inner);
 	solid_dynamics::AcousticTimeStepSize free_ball_get_time_step_size(free_ball);
 	/** stress relaxation for the balls. */
 	thin_structure_dynamics::ShellStressRelaxationFirstHalf free_ball_stress_relaxation_first_half(free_ball_inner);
@@ -172,6 +174,7 @@ int main(int ac, char* av[])
 	solid_dynamics::ShellContactDensity free_ball_update_contact_density(free_ball_contact);
 	solid_dynamics::ShellContactDensity wall_ball_update_contact_density(wall_ball_contact);
 	solid_dynamics::ContactForce free_ball_compute_solid_contact_forces(free_ball_contact);
+	solid_dynamics::ContactForce wall_compute_solid_contact_forces(wall_ball_contact);
 	/** initial condition */
 	BallInitialCondition ball_initial_velocity(free_ball);
 	//----------------------------------------------------------------------
@@ -187,6 +190,7 @@ int main(int ac, char* av[])
 	sph_system.initializeSystemConfigurations();
 	solid_particles.initializeNormalDirectionFromBodyShape();
 	free_ball_corrected_configuration.parallel_exec();
+	wall_corrected_configuration.parallel_exec();
 	ball_initial_velocity.exec();
 	/** Initial states output. */
 	body_states_recording.writeToFile(0);
@@ -220,13 +224,17 @@ int main(int ac, char* av[])
 						<< GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
 				}
 				free_ball_update_contact_density.parallel_exec();
-				wall_ball_update_contact_density.parallel_exec();
 				free_ball_compute_solid_contact_forces.parallel_exec();
+
+				wall_ball_update_contact_density.parallel_exec();
+				wall_compute_solid_contact_forces.parallel_exec();
+				
 				free_ball_stress_relaxation_first_half.parallel_exec(dt);
 				free_ball_stress_relaxation_second_half.parallel_exec(dt);
 
 				free_ball.updateCellLinkedList();
 				free_ball_contact.updateConfiguration();
+				wall_boundary.updateCellLinkedList();
 				wall_ball_contact.updateConfiguration();
 
 				ite++;

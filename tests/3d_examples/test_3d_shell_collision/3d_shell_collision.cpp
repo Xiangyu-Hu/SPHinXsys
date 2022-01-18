@@ -93,7 +93,7 @@ int main(int ac, char* av[])
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	FreeBall free_ball(sph_system, "FreeBall");
-	SharedPtr<LinearElasticSolid> free_ball_material = makeShared<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+	SharedPtr<NeoHookeanSolid> free_ball_material = makeShared<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	ElasticSolidParticles free_ball_particles(free_ball, free_ball_material);
 
 	WallBoundary wall_boundary(sph_system, "Wall");
