@@ -1,7 +1,8 @@
 /**
  * @file 	shell_collision.cpp
  * @brief 	an elastic ball bouncing within a confined shell boundary
- * @details This is a case to test shell modeling.
+ * @details This is a case to test shell-shell modeling.
+ * @details Both te ball and box are thin shell structures.
  * @author 	Massoud Rezavand and Xiangyu Hu
  */
 #include "sphinxsys.h"	//SPHinXsys Library.
@@ -11,13 +12,13 @@ using namespace SPH;	//Namespace cite here.
 //----------------------------------------------------------------------
 Real DL = 4.0; 					/**< box length. */
 Real DH = 4.0; 					/**< box height. */
-Real resolution_ref = 0.025; 	/**< reference resolution. */
+Real resolution_ref = 0.0125; 	/**< reference resolution. */
 Real BW = resolution_ref * 1.; 	/**< wall width for BCs. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 Vec2d ball_center(2.0, 2.0);
 Real ball_radius = 0.5;			
 Real gravity_g = 1.0;
-Real initial_ball_speed = 4.0;
+Real initial_ball_speed = 1.0;
 Vec2d initial_velocity = initial_ball_speed*Vec2d(0.0, -1.);
 //----------------------------------------------------------------------
 //	Global paramters on material properties
@@ -54,13 +55,14 @@ public:
 		body_shape_.add<MultiPolygonShape>(multi_polygon);
 	}
 };
-class FreeBall : public SolidBody
+class FreeBall : public ThinStructure
 {
 public:
-	FreeBall(SPHSystem& system, std::string body_name) : SolidBody(system, body_name)
+	FreeBall(SPHSystem& system, std::string body_name) : ThinStructure(system, body_name)
 	{
 		MultiPolygon multi_polygon;
-		multi_polygon.addACircle(ball_center, ball_radius, 100, ShapeBooleanOps::add);
+		multi_polygon.addACircle(ball_center, ball_radius + BW, 100, ShapeBooleanOps::add);
+		multi_polygon.addACircle(ball_center, ball_radius, 100, ShapeBooleanOps::sub);
 		MultiPolygonShape multi_polygon_shape(multi_polygon);
 		body_shape_.add<LevelSetShape>(this, multi_polygon_shape);
 	}
@@ -108,8 +110,8 @@ int main(int ac, char* av[])
 	SharedPtr<ParticleGenerator> free_ball_particle_generator = makeShared<ParticleGeneratorLattice>();
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 		free_ball_particle_generator = makeShared<ParticleGeneratorReload>(in_output, free_ball.getBodyName());
-	SharedPtr<NeoHookeanSolid> free_ball_material = makeShared<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-	ElasticSolidParticles free_ball_particles(free_ball, free_ball_material, free_ball_particle_generator);
+	SharedPtr<LinearElasticSolid> free_ball_material = makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	ShellParticles free_ball_particles(free_ball, free_ball_material, free_ball_particle_generator, BW);
 
 	WallBoundary wall_boundary(sph_system, "Wall");
 	SharedPtr<ParticleGenerator> wall_particle_generator = makeShared<ParticleGeneratorLattice>();
@@ -174,15 +176,16 @@ int main(int ac, char* av[])
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	TimeStepInitialization 	free_ball_initialize_timestep(free_ball, gravity);
-	solid_dynamics::CorrectConfiguration free_ball_corrected_configuration(free_ball_inner);
-	solid_dynamics::AcousticTimeStepSize free_ball_get_time_step_size(free_ball);
+	thin_structure_dynamics::ShellCorrectConfiguration free_ball_corrected_configuration(free_ball_inner);
+	thin_structure_dynamics::ShellAcousticTimeStepSize free_ball_get_time_step_size(free_ball);
 	/** stress relaxation for the balls. */
-	solid_dynamics::StressRelaxationFirstHalf free_ball_stress_relaxation_first_half(free_ball_inner);
-	solid_dynamics::StressRelaxationSecondHalf free_ball_stress_relaxation_second_half(free_ball_inner);
+	thin_structure_dynamics::ShellStressRelaxationFirstHalf free_ball_stress_relaxation_first_half(free_ball_inner);
+	thin_structure_dynamics::ShellStressRelaxationSecondHalf free_ball_stress_relaxation_second_half(free_ball_inner);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ShellContactDensity free_ball_update_contact_density(free_ball_contact);
-	solid_dynamics::ContactDensitySummation wall_ball_update_contact_density(wall_ball_contact);
+	solid_dynamics::ShellContactDensity wall_ball_update_contact_density(wall_ball_contact);
 	solid_dynamics::ContactForce free_ball_compute_solid_contact_forces(free_ball_contact);
+	solid_dynamics::ContactForce wall_compute_solid_contact_forces(wall_ball_contact);
 	/** initial condition */
 	BallInitialCondition ball_initial_velocity(free_ball);
 	//----------------------------------------------------------------------
@@ -234,11 +237,13 @@ int main(int ac, char* av[])
 				free_ball_update_contact_density.parallel_exec();
 				wall_ball_update_contact_density.parallel_exec();
 				free_ball_compute_solid_contact_forces.parallel_exec();
+				wall_compute_solid_contact_forces.parallel_exec();
 				free_ball_stress_relaxation_first_half.parallel_exec(dt);
 				free_ball_stress_relaxation_second_half.parallel_exec(dt);
 
 				free_ball.updateCellLinkedList();
 				free_ball_contact.updateConfiguration();
+				wall_boundary.updateCellLinkedList();
 				wall_ball_contact.updateConfiguration();
 
 				ite++;
