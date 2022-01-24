@@ -100,23 +100,30 @@ namespace SPH {
 		StdLargeVec<Matd>	dF_dt_;		/**<  deformation tensor change rate */
 		StdLargeVec<Matd>	stress_PK1_;	/**<  first Piola-Kirchhoff stress tensor */
 
+		// STRAIN
+		Matd get_GreenLagrange_strain(size_t particle_i);
+		/**< Computing principal strain - returns the principal strains in descending order (starting from the largest) */
+		Vecd get_Principal_strains(size_t particle_i);
 		/**< Computing von Mises equivalent strain from a static (constant) formulation. */
 		Real von_Mises_strain_static(size_t particle_i);
-		/**< Computing von Mises equivalent strain from a dynamic formulation. This depends on the Poisson's ratio (from Ansys Help). */
+		/**< Computing von Mises equivalent strain from a "dynamic" formulation. This depends on the Poisson's ratio (from commercial FEM software Help). */
 		Real von_Mises_strain_dynamic(size_t particle_i, Real poisson);
-		/**< Computing von Mises strain for all particles. */
-		StdLargeVec<Real> getVonMisesStrainVector(std::string strain_measure = "static", Real poisson = 0.5); // "static" or "dynamic"
-		/**< Computing maximum von Mises strain from all particles. */
-		Real getVonMisesStrainMax(std::string strain_measure = "static", Real poisson = 0.5); // "static" or "dynamic"
+		/**< Computing von Mises strain for all particles. - "static" or "dynamic"*/
+		StdLargeVec<Real> getVonMisesStrainVector(std::string strain_measure = "static", Real poisson = 0.5);
+		/**< Computing maximum von Mises strain from all particles. - "static" or "dynamic" */
+		Real getVonMisesStrainMax(std::string strain_measure = "static", Real poisson = 0.5);
 
-		/**< Computing von_Mises_stress_Cauchy. */
-		Real von_Mises_stress_Cauchy(size_t particle_i);
-		/**< Computing von_Mises_stress_PK2. */
-		Real von_Mises_stress_PK2(size_t particle_i);
-		/**< Computing von Mises stress for all particles. */
-		StdLargeVec<Real> getVonMisesStressVector(); // "Cauchy" or "PK2"
-		/**< Computing maximum von Mises stress from all particles. */
-		Real getVonMisesStressMax(); // "Cauchy" or "PK2"
+		// STRESS
+		Matd get_Cauchy_stress(size_t particle_i);
+		Matd get_PK2_stress(size_t particle_i);
+		/**< Computing principal_stresses - returns the principal stresses in descending order (starting from the largest) */
+		Vecd get_Principal_stresses(size_t particle_i);
+		/**< Computing von_Mises_stress - "Cauchy" or "PK2" decided based on the stress_measure_ */
+		Real get_von_Mises_stress(size_t particle_i);
+		/**< Computing von Mises stress for all particles. - "Cauchy" or "PK2" decided based on the stress_measure_ */
+		StdLargeVec<Real> getVonMisesStressVector();
+		/**< Computing maximum von Mises stress from all particles. - "Cauchy" or "PK2" decided based on the stress_measure_ */
+		Real getVonMisesStressMax();
 
 		/**< Computing displacemnt. */
 		Vecd displacement(size_t particle_i);

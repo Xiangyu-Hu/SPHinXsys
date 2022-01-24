@@ -138,14 +138,7 @@ namespace SPH {
 		StdLargeVec<Real> stress_vector = {};
 		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
 		{
-			Real stress = 0.0;
-			if (stress_measure_ == "Cauchy") {
-				stress = von_Mises_stress_Cauchy(index_i);
-			} else if (stress_measure_ == "PK2") {
-				stress = von_Mises_stress_PK2(index_i);
-			} else {
-				throw std::runtime_error("getVonMisesStressVector: wrong input");
-			}
+			Real stress = get_von_Mises_stress(index_i);
 			stress_vector.push_back(stress);
 		}
 		return stress_vector;
@@ -156,14 +149,7 @@ namespace SPH {
 		Real stress_max = 0.0;
 		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
 		{
-			Real stress = 0.0;
-			if (stress_measure_ == "Cauchy") {
-				stress = von_Mises_stress_Cauchy(index_i);
-			} else if (stress_measure_ == "PK2") {
-				stress = von_Mises_stress_PK2(index_i);
-			} else {
-				throw std::runtime_error("getVonMisesStressMax: wrong input");
-			}
+			Real stress = get_von_Mises_stress(index_i);
 			if (stress_max < stress) stress_max = stress;
 		}
 		return stress_max;
@@ -199,7 +185,7 @@ namespace SPH {
 		output_file << "    <DataArray Name=\"von Mises stress\" type=\"Float32\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != total_real_particles; ++i) {
-			output_file << std::fixed << std::setprecision(9) << von_Mises_stress_Cauchy(i) << " ";
+			output_file << std::fixed << std::setprecision(9) << get_von_Mises_stress(i) << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
@@ -240,19 +226,54 @@ namespace SPH {
 
 		size_t total_surface_particles = surface_particles.body_part_particles_.size();
 
-		//write von Mises stress
-		// precision: 6 - higher precision because it depends on the E modulus
-		output_file << "    <DataArray Name=\"von Mises stress\" type=\"Float32\" Format=\"ascii\">\n";
+		/** write Min Principal stress */
+		/** precision: 6 - higher precision because it depends on the E modulus */
+		output_file << "    <DataArray Name=\"Principal stress\" type=\"Float32\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != total_surface_particles; ++i) {
 			size_t particle_i = surface_particles.body_part_particles_[i];
-			output_file << std::fixed << std::setprecision(6) << von_Mises_stress_Cauchy(particle_i) << " ";
+			Vecd stress = get_Principal_stresses(particle_i);
+			output_file << std::fixed << std::setprecision(6) << stress[0] << " "; // take the max. component, which is the first one, this represents the max. tension
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
 
-		//write Displacement
-		// precision: 3 - 0.1 mm accuracy
+		/** write von Mises stress */
+		/** precision: 6 - higher precision because it depends on the E modulus */
+		output_file << "    <DataArray Name=\"von Mises stress\" type=\"Float32\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != total_surface_particles; ++i) {
+			size_t particle_i = surface_particles.body_part_particles_[i];
+			output_file << std::fixed << std::setprecision(6) << get_von_Mises_stress(particle_i) << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+
+		/** write Min Principal strain */
+		/** precision: 3 - 0.1% accuracy */
+		output_file << "    <DataArray Name=\"Principal strain\" type=\"Float32\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != total_surface_particles; ++i) {
+			size_t particle_i = surface_particles.body_part_particles_[i];
+			Vecd strain = get_Principal_strains(particle_i);
+			output_file << std::fixed << std::setprecision(3) << strain[0] << " "; // take the max. component, which is the first one, this represents the max. tension
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+
+		/** write von Mises strain */
+		/** precision: 3 - 0.1% accuracy */
+		output_file << "    <DataArray Name=\"von Mises strain\" type=\"Float32\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != total_surface_particles; ++i) {
+			size_t particle_i = surface_particles.body_part_particles_[i];
+			output_file << std::fixed << std::setprecision(3) << von_Mises_strain_static(particle_i) << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+
+		/** write Displacement */
+		/** precision: 3 - 0.1 mm accuracy */
 		output_file << "    <DataArray Name=\"Displacement\" type=\"Float32\" NumberOfComponents=\"3\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != total_surface_particles; ++i) {
@@ -265,8 +286,9 @@ namespace SPH {
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
 
-		//write Normal Vectors
-		/* // removed for production
+		/** write Normal Vectors  */
+		/*
+		// removed for production
 		output_file << "    <DataArray Name=\"Normal Vector\" type=\"Float32\" NumberOfComponents=\"3\" Format=\"ascii\">\n";
 		output_file << "    ";
 		for (size_t i = 0; i != total_surface_particles; ++i) {
@@ -277,17 +299,6 @@ namespace SPH {
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
 		*/
-
-		//write von Mises strain
-		// precision: 3 - 0.1% accuracy
-		output_file << "    <DataArray Name=\"von Mises strain\" type=\"Float32\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != total_surface_particles; ++i) {
-			size_t particle_i = surface_particles.body_part_particles_[i];
-			output_file << std::fixed << std::setprecision(3) << von_Mises_strain_static(particle_i) << " ";
-		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
 	}
 	//=================================================================================================//
 	void ElasticSolidParticles::writePltFileHeader(std::ofstream& output_file)
@@ -304,7 +315,7 @@ namespace SPH {
 	{
 		SolidParticles::writePltFileParticleData(output_file, index_i);
 		
-		output_file << von_Mises_stress_Cauchy(index_i) << " ";
+		output_file << get_von_Mises_stress(index_i) << " ";
 		Vecd displacement_vector = displacement(index_i);
 		output_file << displacement_vector[0] << " " << displacement_vector[1] << " " << displacement_vector[2] << " "
 			<< index_i << " ";
