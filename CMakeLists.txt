@@ -8,14 +8,14 @@ set(SPHINXSYS_PROJECT_DIR ${PROJECT_SOURCE_DIR})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${SPHINXSYS_PROJECT_DIR}/cmake)
 
 ###### Change settings in this file if you want to build with Simbody and/or oneTBB source code ######
-option(STATIC_BUILD "STATIC_BUILD" 0)
+option(SPH_ONLY_STATIC_BUILD "SPH_ONLY_STATIC_BUILD" 0)
 option(ONLY_3D "ONLY_3D" 0)
 option(BUILD_WITH_SIMBODY "BUILD_WITH_SIMBODY" 0)
 option(EMSCRIPTEN "EMSCRIPTEN" 0)
 option(BUILD_SPHINXSYS_TESTS "BUILD_SPHINXSYS_TESTS" 1)
 
 if(EMSCRIPTEN)
-    set(STATIC_BUILD 1)
+    set(SPH_ONLY_STATIC_BUILD 1)
     set(BUILD_WITH_SIMBODY 1)
     set(ONLY_3D 1)
     set(BUILD_SPHINXSYS_TESTS 1)
@@ -41,7 +41,7 @@ if(BUILD_WITH_SIMBODY)
     include_directories("${EIGEN_ROOT}")
 endif()
 
-if(STATIC_BUILD)
+if(SPH_ONLY_STATIC_BUILD)
     set(BUILD_STATIC_LIBRARIES 1) # Simbody
     set(BUILD_DYNAMIC_LIBRARIES 0) # Simbody
 endif()
@@ -94,7 +94,9 @@ else()
 endif()
 
 if(NOT BUILD_WITH_SIMBODY)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+    if(NOT MSVC)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+    endif()
 endif()
 
 add_compile_definitions(TBB_SUPPRESS_DEPRECATED_MESSAGES=1)

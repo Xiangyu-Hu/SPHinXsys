@@ -8,9 +8,9 @@
 
 namespace SPH {
 	//=================================================================================================//
-	FluidBody::FluidBody(SPHSystem &system, std::string body_name,
-		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
-		: RealBody(system, body_name, particle_adaptation, particle_generator),
+	FluidBody::FluidBody(SPHSystem &system, const std::string &body_name,
+					 SharedPtr<SPHAdaptation> sph_adaptation_ptr)
+		: RealBody(system, body_name, sph_adaptation_ptr),
 		iteration_count_(0) {}
 	//=================================================================================================//
 	void FluidBody::updateCellLinkedList()
@@ -21,8 +21,8 @@ namespace SPH {
 		cell_linked_list_->UpdateCellLists();
 	}
 	//=================================================================================================//
-	EulerianFluidBody::EulerianFluidBody(SPHSystem &system, std::string body_name,
-		ParticleAdaptation* particle_adaptation, ParticleGenerator* particle_generator)
-		: RealBody(system, body_name, particle_adaptation, particle_generator) {}
+	EulerianFluidBody::EulerianFluidBody(SPHSystem &system, const std::string &body_name,
+					 SharedPtr<SPHAdaptation> sph_adaptation_ptr)
+		: RealBody(system, body_name, sph_adaptation_ptr) {}
 	//=================================================================================================//
 }

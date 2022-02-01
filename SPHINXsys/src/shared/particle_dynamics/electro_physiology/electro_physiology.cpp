@@ -13,9 +13,9 @@ namespace SPH
 	{
 		//=================================================================================================//
 		ElectroPhysiologyInitialCondition::
-			ElectroPhysiologyInitialCondition(SolidBody* body) :
-			ParticleDynamicsSimple(body),
-			ElectroPhysiologyDataDelegateSimple(body),
+			ElectroPhysiologyInitialCondition(SolidBody &sph_body) :
+			ParticleDynamicsSimple(sph_body),
+			ElectroPhysiologyDataDelegateSimple(sph_body),
 			pos_n_(particles_->pos_n_), species_n_(particles_->species_n_)
 		{
 		}

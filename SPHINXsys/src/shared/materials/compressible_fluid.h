@@ -31,7 +31,8 @@
 
 #include "base_material.h"
 
-namespace SPH {
+namespace SPH
+{
 
 	class CompressibleFluidParticles;
 
@@ -42,21 +43,18 @@ namespace SPH {
 	class CompressibleFluid : public Fluid
 	{
 	protected:
-		Real gamma_;  /** heat capacity ratio */
-		CompressibleFluidParticles * compressible_fluid_particles_;
+		Real gamma_; /** heat capacity ratio */
+		CompressibleFluidParticles *compressible_fluid_particles_;
 
-		virtual void assignDerivedMaterialParameters() override 
-		{
-			Fluid::assignDerivedMaterialParameters();
-		};
 	public:
-		explicit CompressibleFluid() : Fluid(), gamma_(1.0)
+		explicit CompressibleFluid(Real rho0, Real gamma, Real mu = 0.0)
+			: Fluid(rho0, mu), gamma_(gamma), compressible_fluid_particles_(nullptr)
 		{
-			material_name_ = "CompressibleFluid";
+			material_type_ = "CompressibleFluid";
 		};
-		virtual ~CompressibleFluid() {};
+		virtual ~CompressibleFluid(){};
 
-		void assignCompressibleFluidParticles(CompressibleFluidParticles* compressible_fluid_particles) 
+		void assignCompressibleFluidParticles(CompressibleFluidParticles *compressible_fluid_particles)
 		{
 			compressible_fluid_particles_ = compressible_fluid_particles;
 		};
@@ -65,6 +63,6 @@ namespace SPH {
 		virtual Real getPressure(Real rho) override { return 0.0; };
 		virtual Real DensityFromPressure(Real p) override { return 0.0; };
 		virtual Real getSoundSpeed(Real p, Real rho) override;
-		virtual CompressibleFluid* ThisObjectPtr() override { return this; };
+		virtual CompressibleFluid *ThisObjectPtr() override { return this; };
 	};
 }

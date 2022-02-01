@@ -31,12 +31,12 @@
 #ifndef BASE_PARTICLE_GENERATOR_H
 #define BASE_PARTICLE_GENERATOR_H
 
-
-
 #include "base_data_package.h"
 #include "sph_data_containers.h"
+#include "large_data_containers.h"
 
-namespace SPH {
+namespace SPH
+{
 
 	class SPHBody;
 	class BaseParticles;
@@ -49,13 +49,14 @@ namespace SPH {
 	class ParticleGenerator
 	{
 	public:
-		ParticleGenerator() : sph_body_(nullptr) {};
-		virtual ~ParticleGenerator() {};
+		ParticleGenerator() : sph_body_(nullptr){};
+		virtual ~ParticleGenerator(){};
 
-		virtual void initialize(SPHBody* sph_body);
-		virtual void createBaseParticles(BaseParticles* base_particles) = 0;
+		virtual void initialize(SPHBody *sph_body);
+		virtual void createBaseParticles(BaseParticles *base_particles) = 0;
+
 	protected:
-		SPHBody* sph_body_;
+		SPHBody *sph_body_;
 	};
 
 	/**
@@ -65,9 +66,13 @@ namespace SPH {
 	class ParticleGeneratorDirect : public ParticleGenerator
 	{
 	public:
-		ParticleGeneratorDirect() : ParticleGenerator() {};
-		virtual ~ParticleGeneratorDirect() {};
-		virtual void createBaseParticles(BaseParticles* base_particles) override;
+		ParticleGeneratorDirect() : ParticleGenerator(){};
+		ParticleGeneratorDirect(StdLargeVec<Vecd>& pos_0, StdLargeVec<Real>& volume);
+		virtual ~ParticleGeneratorDirect(){};
+		virtual void createBaseParticles(BaseParticles *base_particles) override;
+	
+	protected:
+		PositionsVolumes positions_volumes_;
 	};
 
 	/**
@@ -77,10 +82,11 @@ namespace SPH {
 	class ParticleGeneratorReload : public ParticleGenerator
 	{
 		std::string file_path_;
+
 	public:
-		ParticleGeneratorReload(In_Output* in_output, std::string reload_body_name);
-		virtual ~ParticleGeneratorReload() {};
-		virtual void createBaseParticles(BaseParticles* base_particles) override;
+		ParticleGeneratorReload(In_Output &in_output, const std::string &reload_body_name);
+		virtual ~ParticleGeneratorReload(){};
+		virtual void createBaseParticles(BaseParticles *base_particles) override;
 	};
 }
 #endif //BASE_PARTICLE_GENERATOR_H

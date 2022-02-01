@@ -40,13 +40,12 @@ ENDFOREACH()
 
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
-if(NOT STATIC_BUILD)
-	### SPHinXsys dynamic lib ###
-	ADD_LIBRARY(sphinxsys_3d SHARED ${SCR_FILES})
-
+if(NOT SPH_ONLY_STATIC_BUILD)
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		#target_link_libraries(sphinxsys_3d)
+		ADD_LIBRARY(sphinxsys_3d ${SCR_FILES})
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+		### SPHinXsys dynamic lib ###
+		ADD_LIBRARY(sphinxsys_3d SHARED ${SCR_FILES})
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 			target_link_libraries(sphinxsys_3d stdc++)
 		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -98,7 +97,7 @@ else()
 	### SPHinXsys static lib ###
 endif()
 
-if(NOT STATIC_BUILD)
+if(NOT SPH_ONLY_STATIC_BUILD)
 	INSTALL(TARGETS sphinxsys_3d
 	RUNTIME DESTINATION 3d_code/bin
 	LIBRARY DESTINATION 3d_code/lib

@@ -38,8 +38,8 @@
 
 #include "base_data_package.h"
 #include "sph_data_containers.h"
-#include "particle_adaptation.h"
-#include "all_particle_generators.h"
+#include "adaptation.h"
+#include "cell_linked_list.h"
 #include "particle_sorting.h"
 #include "all_geometries.h"
 #include "generative_structures.h"
@@ -50,9 +50,9 @@ namespace SPH
 {
 	class SPHSystem;
 	class BaseParticles;
-	class BaseCellLinkedList;
 	class SPHBodyRelation;
-	class ShapeSurface;
+	class ComplexShape;
+	class BodySurface;
 
 	/**
 	 * @class SPHBody
@@ -63,22 +63,24 @@ namespace SPH
 	 */
 	class SPHBody
 	{
+	private:
+		SharedPtrKeeper<SPHAdaptation> sph_adaptation_ptr_keeper_;
+		UniquePtrKeeper<GenerativeStructure> generative_structure_ptr_keeper_;
+
 	protected:
 		SPHSystem &sph_system_;
 		std::string body_name_;
-		bool newly_updated_;			 /**< whether this body is in a newly updated state */
+		bool newly_updated_; /**< whether this body is in a newly updated state */
 		/**< Computational domain bounds for boundary conditions. 
 		 * Note that domain bounds may be different from those of the initial body geometry. */
-		BoundingBox body_domain_bounds_; 
+		BoundingBox body_domain_bounds_;
 		bool is_domain_bounds_determined_;
 
 	public:
-		ParticleAdaptation *particle_adaptation_;		/**< Particle adapation policy. */
-		ParticleGenerator *particle_generator_;			/**< Particle generator manner */
-		BaseParticles *base_particles_;					/**< Base particles of this body. */
-		PositionsAndVolumes body_input_points_volumes_; /**< For direct generate particles. Note this should be moved to direct generator. */
-		ComplexShape *body_shape_;						/**< describe the geometry of the body*/
-		GenerativeStructure *generative_structure_;		/**< structure which can be used to generate particles or/and configurations directly*/
+		ComplexShape body_shape_;					/**< describe the volumetric geometry of the body */
+		SPHAdaptation *sph_adaptation_;				/**< Particle adapation policy. */
+		BaseParticles *base_particles_;				/**< Base particles of this body. */
+		GenerativeStructure *generative_structure_; /**< structure which can be used to generate particles or/and configurations directly*/
 		/**
 		 * @brief particle by cells lists is for parallel splitting algorithm.
 		 * All particles in each cell are collected together.
@@ -89,31 +91,36 @@ namespace SPH
 
 		StdVec<SPHBodyRelation *> body_relations_; /**< all contact relations centered from this body **/
 
-		explicit SPHBody(SPHSystem &sph_system, std::string body_name,
-						 ParticleAdaptation *particle_adaptation = new ParticleAdaptation(),
-						 ParticleGenerator *particle_generator = new ParticleGeneratorLattice());
+		explicit SPHBody(SPHSystem &sph_system, const std::string &body_name,
+						 SharedPtr<SPHAdaptation> sph_adaptation_ptr);
 		virtual ~SPHBody(){};
 
 		std::string getBodyName();
 		SPHSystem &getSPHSystem();
-		Real getSPHBodyResolutionRef() { return particle_adaptation_->ReferenceSpacing(); };
+		Real getSPHBodyResolutionRef() { return sph_adaptation_->ReferenceSpacing(); };
 		void setNewlyUpdated() { newly_updated_ = true; };
 		void setNotNewlyUpdated() { newly_updated_ = false; };
 		bool checkNewlyUpdated() { return newly_updated_; };
-		void useParticleGeneratorReload();
-
 		void setBodyDomainBounds(BoundingBox body_domain_bounds);
 		BoundingBox getBodyDomainBounds();
 		BoundingBox getSPHSystemBounds();
+		/** create the generative structure from outside */
+		template <class GenerativeStructureType, typename... ConstructorArgs>
+		GenerativeStructureType *createGenerativeStructure(ConstructorArgs &&...args)
+		{
+			generative_structure_ = generative_structure_ptr_keeper_.createPtr<GenerativeStructureType>(std::forward<ConstructorArgs>(args)...);
+			return DynamicCast<GenerativeStructureType>(this, generative_structure_);
+		};
 
 		/** This will be called in BaseParticle constructor
 		 * and is important because particles are not defined in SPHBody constructor.  */
 		virtual void assignBaseParticles(BaseParticles *base_particles);
 		void allocateConfigurationMemoriesForBufferParticles();
 
-		virtual void writeParticlesToVtuFile(std::ostream &output_file);
-		virtual void writeSurfaceParticlesToVtuFile(std::ostream &output_file, ShapeSurface& surface_particles);
+		virtual void writeParticlesToVtuFile(std::ostream &output_file);	
+		virtual void writeParticlesToVtpFile(std::ostream &output_file);;
 		virtual void writeParticlesToPltFile(std::ofstream &output_file);
+		virtual void writeSurfaceParticlesToVtuFile(std::ostream &output_file, BodySurface& surface_particles);
 		virtual void writeParticlesToXmlForRestart(std::string &filefullpath);
 		virtual void readParticlesFromXmlForRestart(std::string &filefullpath);
 		virtual void writeToXmlForReloadParticle(std::string &filefullpath);
@@ -128,15 +135,15 @@ namespace SPH
 	 */
 	class RealBody : public SPHBody
 	{
+	private:
+		UniquePtrKeeper<BaseCellLinkedList> cell_linked_list_keeper_;
+
 	public:
 		ParticleSorting particle_sorting_;
 		BaseCellLinkedList *cell_linked_list_; /**< Cell linked mesh of this body. */
 
-		RealBody(SPHSystem &sph_system, std::string body_name, ParticleAdaptation *particle_adaptation,
-				 ParticleGenerator *particle_generator = new ParticleGeneratorLattice());
-		RealBody(SPHSystem &sph_system, std::string body_name, Real sph_body_resolution_ref,
-				 ParticleAdaptation *particle_adaptation,
-				 ParticleGenerator *particle_generator = new ParticleGeneratorLattice());
+		RealBody(SPHSystem &sph_system, const std::string &body_name,
+				 SharedPtr<SPHAdaptation> sph_adaptation_ptr);
 		virtual ~RealBody(){};
 
 		/** This will be called in BaseParticle constructor
@@ -154,66 +161,26 @@ namespace SPH
 	class FictitiousBody : public SPHBody
 	{
 	public:
-		FictitiousBody(SPHSystem &system, std::string body_name,
-					   ParticleAdaptation *particle_adaptation = new ParticleAdaptation(),
-					   ParticleGenerator *particle_generator = new ParticleGeneratorDirect());
+		FictitiousBody(SPHSystem &system, const std::string &body_name,
+					   SharedPtr<SPHAdaptation> sph_adaptation_ptr);
 		virtual ~FictitiousBody(){};
 	};
 
 	/**
 	 * @class BodyPart
-	 * @brief An abstract auxillary class for SPHBody to indicate a part of the body.
+	 * @brief An auxillary class for SPHBody to indicate a part of the body.
 	 */
+	using namespace std::placeholders;
 	class BodyPart
 	{
 	public:
-		BodyPart(SPHBody *body, std::string body_part_name)
-			: body_(body), body_part_name_(body_part_name){};
+		BodyPart(SPHBody &sph_body, const std::string &body_part_name)
+			: sph_body_(&sph_body), body_part_name_(body_part_name), body_part_bounds_(Vecd(0), Vecd(0)), body_part_bounds_set_(false)
+			{};
 		virtual ~BodyPart(){};
 
-		SPHBody *getBody() { return body_; };
+		SPHBody *getSPHBody() { return sph_body_; };
 		std::string BodyPartName() { return body_part_name_; };
-
-	protected:
-		SPHBody *body_;
-		std::string body_part_name_;
-
-		virtual void tagBodyPart() = 0;
-	};
-
-	/**
-	 * @class BodyPartByShape
-	 * @brief An auxillary class for SPHBody to indicate 
-	 * a part of the body defined by a presribed complex shape.
-	 */
-	class BodyPartByShape : public BodyPart
-	{
-	public:
-		BodyPartByShape(SPHBody *body, std::string body_part_name);
-		virtual ~BodyPartByShape(){};
-
-		ComplexShape *getBodyPartShape() { return body_part_shape_; };
-		BoundingBox BodyPartBounds();
-
-	protected:
-		ComplexShape *body_part_shape_;
-	};
-	/**
-	 * @class BodyPartByParticle
-	 * @brief An auxillary class for SPHBody to 
-	 * indicate a part of the body moving together with particles.
-	 */
-	class BodyPartByParticle : public BodyPartByShape
-	{
-	public:
-		IndexVector body_part_particles_; /**< Collection particle in this body part. */
-
-		BodyPartByParticle(SPHBody *body, std::string body_part_name)
-			: BodyPartByShape(body, body_part_name),
-			body_part_bounds_(Vecd(0), Vecd(0)), body_part_bounds_set_(false)
-		{};
-
-		virtual ~BodyPartByParticle(){};
 
 		void setBodyPartBounds(BoundingBox bbox){
 			body_part_bounds_ = bbox;
@@ -221,111 +188,154 @@ namespace SPH
 		};
 
 		BoundingBox getBodyPartBounds(){
-			if (!body_part_bounds_set_) std::cout << "WARNING: the body part bounds are not set for BodyPartByParticle." << std::endl;
+			if (!body_part_bounds_set_) std::cout << "WARNING: the body part bounds are not set for BodyPart." << std::endl;
 			return body_part_bounds_;
 		}
 
 	protected:
-		void tagAParticle(size_t particle_index);
-		virtual void tagBodyPart() override;
+		SPHBody *sph_body_;
+		std::string body_part_name_;
 
 		BoundingBox body_part_bounds_;
 		bool body_part_bounds_set_;
 	};
 
 	/**
-	 * @class ShapeSurface
-	 * @brief A auxillary class for Body to
-	 * indicate the surface of a shape
+	 * @class BodyPartByParticle
+	 * @brief A body part with a collection of particles.
 	 */
-	class ShapeSurface : public BodyPartByParticle
+	class BodyPartByParticle : public BodyPart
 	{
 	public:
-		ShapeSurface(SPHBody *body);
-		virtual ~ShapeSurface(){};
+		IndexVector body_part_particles_; /**< Collection particle in this body part. */
+
+		BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name)
+			: BodyPart(sph_body, body_part_name), base_particles_(sph_body.base_particles_)
+			  {};
+		virtual ~BodyPartByParticle(){};
 
 	protected:
-		Real particle_spacing_min_;
-		virtual void tagBodyPart() override;
-	};
+		BaseParticles *base_particles_;
 
-	/**
-	 * @class ShapeSurfaceLayer
-	 * @brief A auxillary class for Body to
-	 * indicate the particles within the inner layers of a shape
-	 */
-	class ShapeSurfaceLayer : public BodyPartByParticle
-	{
-	public:
-		ShapeSurfaceLayer(SPHBody *body, Real layer_thickness = 3.0);
-		virtual ~ShapeSurfaceLayer(){};
-
-	protected:
-		Real thickness_threshold_;
-
-		virtual void tagBodyPart() override;
+		typedef std::function<void(size_t)> TaggingParticleMethod;
+		void tagParticles(TaggingParticleMethod &tagging_particle_method);
 	};
 
 	/**
 	 * @class BodyPartByCell
-	 * @brief An auxillary class for SPHBody to
-	 * indicate a part of the body fixed in space defined by mesh cells.
+	 * @brief A body part with a collection of cell lists.
 	 */
-	using namespace std::placeholders;
-	class BodyPartByCell : public BodyPartByShape
+	class BodyPartByCell : public BodyPart
 	{
-	protected:
-		RealBody *real_body_;
-		typedef std::function<bool(Vecd, Real)> CheckIncludedFunctor;
-		CheckIncludedFunctor checkIncluded_;
-
-		/** all cells near or contained by the body part shape are included */
-		virtual bool checkIncluded(Vecd cell_position, Real threshold);
-		virtual void tagBodyPart() override;
-
 	public:
 		CellLists body_part_cells_; /**< Collection of cells to indicate the body part. */
 
-		BodyPartByCell(RealBody *real_body, std::string body_part_name);
+		BodyPartByCell(RealBody &real_body, const std::string &body_part_name)
+			: BodyPart(real_body, body_part_name), cell_linked_list_(real_body.cell_linked_list_){};
 		virtual ~BodyPartByCell(){};
+
+	protected:
+		BaseCellLinkedList *cell_linked_list_;
+		typedef std::function<bool(Vecd, Real)> TaggingCellMethod;
+		void tagCells(TaggingCellMethod &tagging_cell_method);
+	};
+
+	/**
+	 * @class BodyRegionByParticle
+	 * @brief A  body part with the collection of particles within by a presribed shape.
+	 */
+	class BodyRegionByParticle : public BodyPartByParticle
+	{
+	public:
+		Shape &body_part_shape_;
+
+		BodyRegionByParticle(SPHBody &sph_body, const std::string &body_part_name, Shape &shape);
+		virtual ~BodyRegionByParticle(){};
+
+	private:
+		void tagByContain(size_t particle_index);
+	};
+
+	/**
+	 * @class BodySurface
+	 * @brief A  body part with the collection of particles at surface of a body
+	 */
+	class BodySurface : public BodyPartByParticle
+	{
+	public:
+		explicit BodySurface(SPHBody &sph_body);
+		virtual ~BodySurface(){};
+
+	private:
+		Real particle_spacing_min_;
+		void tagNearSurface(size_t particle_index);
+	};
+
+	/**
+	 * @class BodySurfaceLayer
+	 * @brief A  body part with the collection of particles within the surface layers of a body.
+	 */
+	class BodySurfaceLayer : public BodyPartByParticle
+	{
+	public:
+		explicit BodySurfaceLayer(SPHBody &sph_body, Real layer_thickness = 3.0);
+		virtual ~BodySurfaceLayer(){};
+
+	private:
+		Real thickness_threshold_;
+		void tagSurfaceLayer(size_t particle_index);
+	};
+
+	/**
+	 * @class BodyRegionByCell
+	 * @brief A body part with the cell lists within a prescribed shape.
+	 */
+	class BodyRegionByCell : public BodyPartByCell
+	{
+	public:
+		Shape &body_part_shape_;
+
+		BodyRegionByCell(RealBody &real_body, const std::string &body_part_name, Shape &shape);
+		virtual ~BodyRegionByCell(){};
+
+	private:
+		bool checkNotFar(Vecd cell_position, Real threshold);
 	};
 
 	/**
 	 * @class NearShapeSurface
-	 * @brief An auxillary class for SPHBody to
-	 * indicate the region close to the surface of shape.
+	 * @brief A body part with the cell lists near the surface of a prescribed shape.
 	 */
 	class NearShapeSurface : public BodyPartByCell
 	{
+	private:
+		UniquePtrKeeper<LevelSetShape> level_set_shape_keeper_;
+
 	public:
+		LevelSetShape &level_set_shape_;
+
 		/** for the case that the body part shape is not that of the body */
-		NearShapeSurface(RealBody *real_body, ComplexShape *complex_shape, std::string body_part_name);
+		NearShapeSurface(RealBody &real_body, const std::string &body_part_name, Shape &shape);
 		/** for the case that the body part is the surface of the body shape */
-		NearShapeSurface(RealBody *real_body);
+		explicit NearShapeSurface(RealBody &real_body);
 		virtual ~NearShapeSurface(){};
 
-		LevelSetComplexShape *getLevelSetComplexShape();
-
-	protected:
-		LevelSetComplexShape *level_set_complex_shape_;
+	private:
 		/** only cells near the surface of the body part shape are included */
-		virtual bool checkIncluded(Vecd cell_position, Real threshold) override;
+		bool checkNearSurface(Vecd cell_position, Real threshold);
 	};
 
 	/**
-	 * @class TerminateBranches
-	 * @brief A auxillary class for a Tree-like Body to
-	 * indicate the particles from the terminates of the tree. 
+	 * @class TreeTerminates
+	 * @brief A  body part with the collection of particles as the terminates of the tree. 
 	 */
-	class TerminateBranches : public BodyPartByParticle
+	class TreeTerminates : public BodyPartByParticle
 	{
 	public:
-		TerminateBranches(SPHBody *body);
-		virtual ~TerminateBranches(){};
+		GenerativeTree &tree_;
 
-	protected:
-		GenerativeTree *tree_;
-		virtual void tagBodyPart() override;
+		explicit TreeTerminates(SPHBody &sph_body);
+		virtual ~TreeTerminates(){};
 	};
 }
 #endif //BASE_BODY_H

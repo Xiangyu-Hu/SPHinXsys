@@ -1,6 +1,6 @@
 include(ImportSPHINXsysFromSource_for_3D_build)
 
-if(NOT STATIC_BUILD)
+if(NOT SPH_ONLY_STATIC_BUILD)
     add_library(structural_simulation_module SHARED structural_simulation/structural_simulation_class.cpp)
     target_link_libraries(structural_simulation_module sphinxsys_3d)
 else()

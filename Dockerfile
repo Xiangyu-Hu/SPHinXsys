@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 
 ARG build_with_dependencies_source=0
-ARG STATIC_BUILD=0
+ARG SPH_ONLY_STATIC_BUILD=0
 
 ENV TZ=Europe/Berlin
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
@@ -32,4 +32,4 @@ RUN cd /usr/src/gtest
 
 RUN git submodule update --init
 RUN rm -rf build
-RUN mkdir build && cd build && cmake .. -DBUILD_WITH_DEPENDENCIES_SOURCE=${build_with_dependencies_source} -DSTATIC_BUILD=${STATIC_BUILD} && make -j$(nproc)
+RUN mkdir build && cd build && cmake .. -DBUILD_WITH_DEPENDENCIES_SOURCE=${build_with_dependencies_source} -DSTATIC_BUILD=${SPH_ONLY_STATIC_BUILD} && make -j$(nproc)

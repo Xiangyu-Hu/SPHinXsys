@@ -65,8 +65,7 @@ namespace SPH
 	{
 	protected:
 	public:
-		DampingBySplittingInner(BaseBodyRelationInner* body_inner_relation,
-			std::string variable_name, Real eta);
+		DampingBySplittingInner(BaseBodyRelationInner &inner_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingBySplittingInner() {};
 		void resetDampingCoefficient(Real reset_ratio) { eta_ *= reset_ratio; };
 	protected:
@@ -84,8 +83,7 @@ namespace SPH
 		public DampingBySplittingInner<DataTypeIndex, VariableType>, public DissipationDataContact
 	{
 	public:
-		DampingBySplittingComplex(ComplexBodyRelation* body_complex_relation,
-			std::string variable_name, Real eta);
+		DampingBySplittingComplex(ComplexBodyRelation &complex_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingBySplittingComplex() {};
 	protected:
 		virtual ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0) override;
@@ -102,8 +100,7 @@ namespace SPH
 		public BaseDampingBySplittingType<DataTypeIndex, VariableType>, public DissipationDataWithWall
 	{
 	public:
-		DampingBySplittingWithWall(ComplexBodyRelation* body_wall_relation,
-			std::string variable_name, Real eta);
+		DampingBySplittingWithWall(ComplexBodyRelation &complex_wall_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingBySplittingWithWall() {};
 	protected:
 		virtual ErrorAndParameters<VariableType>  computeErrorAndParameters(size_t index_i, Real dt = 0.0) override;
@@ -125,8 +122,7 @@ namespace SPH
 		public InteractionDynamicsSplitting, public DissipationDataInner
 	{
 	public:
-		DampingPairwiseInner(BaseBodyRelationInner* body_inner_relation,
-			std::string variable_name, Real eta);
+		DampingPairwiseInner(BaseBodyRelationInner &inner_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseInner() {};
 		void resetDampingCoefficient(Real reset_ratio) { eta_ *= reset_ratio; };
 	protected:
@@ -142,8 +138,7 @@ namespace SPH
 		public DampingPairwiseInner<DataTypeIndex, VariableType>, public DissipationDataContact
 	{
 	public:
-		DampingPairwiseComplex(ComplexBodyRelation* body_complex_relation,
-			std::string variable_name, Real eta);
+		DampingPairwiseComplex(ComplexBodyRelation &complex_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseComplex() {};
 	protected:
 		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -165,8 +160,7 @@ namespace SPH
 		public DissipationDataWithWall
 	{
 	public:
-		DampingPairwiseWithWall(ComplexBodyRelation* body_wall_relation,
-			std::string variable_name, Real eta);
+		DampingPairwiseWithWall(ComplexBodyRelation &complex_wall_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseWithWall() {};
 	protected:
 		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -190,8 +184,7 @@ namespace SPH
 		bool RandomChoice();
 	public:
 		template<class BodyRelationType>
-		DampingWithRandomChoice(BodyRelationType* body_relation,
-			Real random_ratio, std::string variable_name, Real eta);
+		DampingWithRandomChoice(BodyRelationType &body_relation, Real random_ratio, const std::string &variable_name, Real eta);
 		virtual ~DampingWithRandomChoice() {};
 
 		virtual void exec(Real dt = 0.0) override;

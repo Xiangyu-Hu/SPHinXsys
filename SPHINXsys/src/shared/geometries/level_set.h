@@ -35,8 +35,7 @@
 #define LEVEL_SET_H
 
 #include "mesh_with_data_packages.h"
-#include "mesh_with_data_packages.hpp"
-#include "geometry.h"
+#include "base_geometry.h"
 
 namespace SPH
 {
@@ -69,10 +68,11 @@ namespace SPH
 		PackageDataAddress<int> near_interface_id_addrs_;
 
 		LevelSetDataPackage();
+		LevelSetDataPackage(Real level_set);
 		virtual ~LevelSetDataPackage(){};
 
-		void assignAllPackageDataAddress(Vecu data_index, LevelSetDataPackage *src_pkg, Vecu addrs_index);
-		void initializeBasicData(ComplexShape &complex_shape);
+		void assignAllPackageDataAddress(Vecu addrs_index, LevelSetDataPackage *src_pkg, Vecu data_index);
+		void initializeBasicData(Shape &shape);
 		void initializeWithUniformData(Real level_set);
 		void computeKernelIntegrals(LevelSet &level_set);
 		void computeNormalDirection();
@@ -87,7 +87,7 @@ namespace SPH
 	class BaseLevelSet : public BaseMeshField
 	{
 	public:
-		BaseLevelSet(ComplexShape &complex_shape, ParticleAdaptation &particle_adaptation);
+		BaseLevelSet(Shape &shape, SPHAdaptation &sph_adaptation);
 		virtual ~BaseLevelSet(){};
 
 		virtual bool probeIsWithinMeshBound(const Vecd &position) = 0;
@@ -98,8 +98,8 @@ namespace SPH
 		virtual void cleanInterface(bool isSmoothed = false) = 0;
 
 	protected:
-		ComplexShape &complex_shape_; /**< the geometry is described by the level set. */
-		ParticleAdaptation &particle_adaptation_;
+		Shape &shape_; /**< the geometry is described by the level set. */
+		SPHAdaptation &sph_adaptation_;
 
 		/** for computing volume fraction occupied by a shape.*/
 		Real computeHeaviside(Real phi, Real half_width);
@@ -120,7 +120,7 @@ namespace SPH
 		Real small_shift_factor_;
 
 		LevelSet(BoundingBox tentative_bounds, Real data_spacing,
-				 ComplexShape &complex_shape, ParticleAdaptation &particle_adaptation, Real small_shift_factor = 0.75);
+				 Shape &shape, SPHAdaptation &sph_adaptation, Real small_shift_factor = 0.75);
 		virtual ~LevelSet(){};
 
 		virtual bool probeIsWithinMeshBound(const Vecd &position) override;
@@ -162,7 +162,7 @@ namespace SPH
 	public:
 		MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing,
 						   size_t total_levels, Real maximum_spacing_ratio,
-						   ComplexShape &complex_shape, ParticleAdaptation &particle_adaptation);
+						   Shape &shape, SPHAdaptation &sph_adaptation);
 		virtual ~MultilevelLevelSet(){};
 
 		virtual bool probeIsWithinMeshBound(const Vecd &position) override;

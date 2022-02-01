@@ -4,8 +4,8 @@
  */
 
 #include "level_set.h"
-
-#include "particle_adaptation.h"
+#include "mesh_with_data_packages.hpp"
+#include "adaptation.h"
 #include "base_kernel.h"
 #include "base_particles.h"
 #include "base_body.h"
@@ -26,13 +26,13 @@ namespace SPH {
 			}
 	}
 	//=================================================================================================//
-	void  LevelSetDataPackage::initializeBasicData(ComplexShape& complex_shape)
+	void  LevelSetDataPackage::initializeBasicData(Shape& shape)
 	{
 		for (int i = 0; i != PackageSize(); ++i)
 			for (int j = 0; j != PackageSize(); ++j)
 			{
 				Vec2d position = data_lower_bound_ + Vec2d((Real)i * grid_spacing_, (Real)j * grid_spacing_);
-				phi_[i][j] = complex_shape.findSignedDistance(position);
+				phi_[i][j] = shape.findSignedDistance(position);
 				near_interface_id_[i][j] = phi_[i][j] < 0.0 ? -2 : 2;
 			}
 	}
@@ -148,8 +148,8 @@ namespace SPH {
 		int j = (int)cell_index[1];
 
 		Vecd cell_position = CellPositionFromIndex(cell_index);
-		Real signed_distance = complex_shape_.findSignedDistance(cell_position);
-		Vecd normal_direction = complex_shape_.findNormalDirection(cell_position);
+		Real signed_distance = shape_.findSignedDistance(cell_position);
+		Vecd normal_direction = shape_.findNormalDirection(cell_position);
 		Real measure = getMaxAbsoluteElement(normal_direction * signed_distance);
 		if (measure < grid_spacing_) {
 			mutex_my_pool.lock();
@@ -157,15 +157,15 @@ namespace SPH {
 			mutex_my_pool.unlock();
 			Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
 			new_data_pkg->initializePackageGeometry(pkg_lower_bound, data_spacing_);
-			new_data_pkg->initializeBasicData(complex_shape_);
+			new_data_pkg->initializeBasicData(shape_);
 			core_data_pkgs_.push_back(new_data_pkg);
 			new_data_pkg->pkg_index_ = Vecu(i, j);
 			new_data_pkg->is_core_pkg_ = true;
 			data_pkg_addrs_[i][j] = new_data_pkg;
 		}
 		else {
-			data_pkg_addrs_[i][j] = complex_shape_.checkContain(cell_position) ?
-			 singular_data_pkgs_addrs[0] : singular_data_pkgs_addrs[1];
+			data_pkg_addrs_[i][j] = shape_.checkContain(cell_position) ?
+			 singular_data_pkgs_addrs_[0] : singular_data_pkgs_addrs_[1];
 		}
 	}
 	//=============================================================================================//
@@ -193,7 +193,7 @@ namespace SPH {
 				Vecd cell_position = CellPositionFromIndex(cell_index);
 				Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
 				new_data_pkg->initializePackageGeometry(pkg_lower_bound, data_spacing_);
-				new_data_pkg->initializeBasicData(complex_shape_);
+				new_data_pkg->initializeBasicData(shape_);
 				new_data_pkg->pkg_index_ = Vecu(i, j);
 				new_data_pkg->is_inner_pkg_ = true;
 				inner_data_pkgs_.push_back(new_data_pkg);

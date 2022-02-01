@@ -13,14 +13,14 @@ namespace SPH
 	{
 		//=================================================================================================//
 		MuscleActivation::
-			MuscleActivation(SolidBody* body) :
-			ParticleDynamicsSimple(body), ActiveMuscleDataDelegateSimple(body),
+			MuscleActivation(SolidBody &solid_body) :
+			ParticleDynamicsSimple(solid_body), ActiveMuscleDataDelegateSimple(solid_body),
 			pos_0_(particles_->pos_0_), active_contraction_stress_(particles_->active_contraction_stress_) {};
 		//=================================================================================================//
 		SpringConstrainMuscleRegion::
-			SpringConstrainMuscleRegion(SolidBody* body, BodyPartByParticle* body_part) :
-			PartSimpleDynamicsByParticle(body, body_part),
-			ActiveMuscleDataDelegateSimple(body), mass_(particles_->mass_),
+			SpringConstrainMuscleRegion(SolidBody &solid_body, BodyPartByParticle &body_part) :
+			PartSimpleDynamicsByParticle(solid_body, body_part),
+			ActiveMuscleDataDelegateSimple(solid_body), mass_(particles_->mass_),
 			pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
 			vel_n_(particles_->vel_n_) {}
 		//=================================================================================================//
@@ -42,9 +42,9 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ImposingStress::
-			ImposingStress(SolidBody* body, SolidBodyPartForSimbody* body_part) :
-			PartSimpleDynamicsByParticle(body, body_part),
-			ActiveMuscleDataDelegateSimple(body),
+			ImposingStress(SolidBody &solid_body, SolidBodyPartForSimbody &body_part) :
+			PartSimpleDynamicsByParticle(solid_body, body_part),
+			ActiveMuscleDataDelegateSimple(solid_body),
 			pos_0_(particles_->pos_0_), active_stress_(particles_->active_stress_) {}
 		//=================================================================================================//
 		void ImposingStress

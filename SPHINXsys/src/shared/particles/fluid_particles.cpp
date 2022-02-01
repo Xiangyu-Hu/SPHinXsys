@@ -13,10 +13,12 @@
 namespace SPH
 {
 	//=================================================================================================//
-	FluidParticles::FluidParticles(SPHBody *body, Fluid* fluid)
-		: BaseParticles(body, fluid)
+	FluidParticles::FluidParticles(SPHBody &sph_body,
+								   SharedPtr<Fluid> shared_fluid_ptr,
+								   SharedPtr<ParticleGenerator> particle_generator_ptr)
+		: BaseParticles(sph_body, shared_fluid_ptr, particle_generator_ptr)
 	{
-		fluid->assignFluidParticles(this);
+		shared_fluid_ptr->assignFluidParticles(this);
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
@@ -32,13 +34,19 @@ namespace SPH
 		registerASortableVariable<indexScalar, Real>("Mass");
 		registerASortableVariable<indexScalar, Real>("Density");
 		registerASortableVariable<indexScalar, Real>("Pressure");
+		//----------------------------------------------------------------------
+		//		add restart output particle data
+		//----------------------------------------------------------------------
+		addAVariableNameToList<indexScalar, Real>(variables_to_restart_, "Pressure");
 	}
 	//=================================================================================================//
-	ViscoelasticFluidParticles
-		::ViscoelasticFluidParticles(SPHBody *body, Oldroyd_B_Fluid* oldroyd_b_fluid)
-		: FluidParticles(body, oldroyd_b_fluid)
+	ViscoelasticFluidParticles::
+		ViscoelasticFluidParticles(SPHBody &sph_body,
+								   SharedPtr<Oldroyd_B_Fluid> shared_oldroyd_b_fluid_ptr,
+								   SharedPtr<ParticleGenerator> particle_generator_ptr)
+		: FluidParticles(sph_body, shared_oldroyd_b_fluid_ptr, particle_generator_ptr)
 	{
-		oldroyd_b_fluid->assignViscoelasticFluidParticles(this);
+		shared_oldroyd_b_fluid_ptr->assignViscoelasticFluidParticles(this);
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
@@ -54,11 +62,13 @@ namespace SPH
 		addAVariableNameToList<indexMatrix, Matd>(variables_to_restart_, "ElasticStress");
 	}
 	//=================================================================================================//
-	CompressibleFluidParticles
-		::CompressibleFluidParticles(SPHBody *body, CompressibleFluid* compressiblefluid)
-		: FluidParticles(body, compressiblefluid)
+	CompressibleFluidParticles::
+		CompressibleFluidParticles(SPHBody &sph_body,
+								   SharedPtr<CompressibleFluid> shared_compressiblefluid_ptr,
+								   SharedPtr<ParticleGenerator> particle_generator_ptr)
+		: FluidParticles(sph_body, shared_compressiblefluid_ptr, particle_generator_ptr)
 	{
-		compressiblefluid->assignCompressibleFluidParticles(this);
+		shared_compressiblefluid_ptr->assignCompressibleFluidParticles(this);
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
