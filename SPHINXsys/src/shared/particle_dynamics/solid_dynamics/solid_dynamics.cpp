@@ -595,10 +595,18 @@ namespace SPH
 			  pos_0_(particles_->pos_0_),
 			  dvel_dt_prior_(particles_->dvel_dt_prior_),
 			  acceleration_(0),
-			  end_time_(end_time)
+			  end_time_(end_time),
+			  apply_force_to_particle_(StdLargeVec<bool>(pos_0_.size(), false))
 		{
-			// calculate acceleration: force / total mass
-			acceleration_ = force / std::accumulate(particles_->mass_.begin(), particles_->mass_.end(), 0.0);
+			Real mass_in_region = 0.0;
+			for(size_t i = 0; i < body_part_particles_.size(); i++)
+			{
+					int particle_ID = body_part_particles_[i];
+					mass_in_region += particles_->mass_[particle_ID];
+					apply_force_to_particle_[particle_ID] = true;
+			};
+			// calculate acceleration: force / mass of particles in region
+			acceleration_ = force / mass_in_region;
 			// set ghost particles to zero
 			particles_->total_ghost_particles_ = 0;
 		}

@@ -97,7 +97,8 @@ namespace SPH
 	Matd NeoHookeanSolid::ConstitutiveRelation(Matd &F, size_t particle_index_i)
 	{
 		Matd right_cauchy = ~F * F;
-		Matd sigmaPK2 = G0_ * Matd(1.0) + (lambda0_ * log(det(F)) - G0_) * inverse(right_cauchy); // same as: G0_ * Matd(1.0) + (K0_ * (J - 1) * J - G0_) * inverse(right_cauchy)
+		Real I_1 = right_cauchy.trace(); // first strain invariant
+		Matd sigmaPK2 = G0_ * std::pow(det(F), - 2.0 / 3.0) * (Matd(1.0) - I_1 / 3.0 * inverse(right_cauchy)) + K0_ * det(F) * (det(F) - 1.0) * inverse(right_cauchy); // sigmaPK2 calculation
 		return sigmaPK2;
 	}
 	//=================================================================================================//

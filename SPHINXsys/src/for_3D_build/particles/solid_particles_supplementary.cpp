@@ -53,11 +53,11 @@ namespace SPH {
 	//=================================================================================================//
 	Matd ElasticSolidParticles::get_Cauchy_stress(size_t particle_i)
 	{
-		Real J = rho0_ / rho_n_[particle_i];
 		Mat3d F = F_[particle_i];
+		Real J = det(F);
 		Mat3d stress = stress_PK1_[particle_i];
 
-		return (stress * ~F) / J; // Cauchy stress
+		return ( 1.0 / J ) * F * stress * ~F; // Cauchy stress 
 	}
 	//=================================================================================================//
 	Matd ElasticSolidParticles::get_PK2_stress(size_t particle_i)
