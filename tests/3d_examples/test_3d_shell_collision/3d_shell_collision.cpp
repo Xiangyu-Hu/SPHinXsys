@@ -99,7 +99,7 @@ int main(int ac, char* av[])
 	WallBoundary wall_boundary(sph_system, "Wall");
 	SharedPtr<ParticleGenerator> wall_particle_generator = makeShared<ParticleGeneratorLattice>();
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-		wall_particle_generator = makeShared<ParticleGeneratorReload>(in_output, free_ball.getBodyName());
+		wall_particle_generator = makeShared<ParticleGeneratorReload>(in_output, wall_boundary.getBodyName());
 	SharedPtr<LinearElasticSolid> wall_material = makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	ShellParticles solid_particles(wall_boundary, wall_material, wall_particle_generator, BW);
 	//----------------------------------------------------------------------
