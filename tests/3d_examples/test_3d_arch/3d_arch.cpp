@@ -19,7 +19,7 @@ Real radius_mid_surface = radius + thickness / 2.0; /** Radius of the mid surfac
 int particle_number = 10;							/** Particle number in the height direction. */
 Real particle_spacing_ref = height / (Real)particle_number;
 int particle_number_mid_surface = int(2.0 * radius_mid_surface * Pi * 215.0 / 360.0 / particle_spacing_ref);
-int BWD = 4;
+int BWD = 1;
 Real BW = particle_spacing_ref * (Real)BWD; /** Boundary width, determined by specific layer of boundary particles. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec3d(-radius - thickness, 0.0, -radius - thickness),
@@ -31,8 +31,8 @@ Real Youngs_modulus = 210e6;	 /** Normalized Youngs Modulus. */
 Real poisson = 0.3;				 /** Poisson ratio. */
 Real physical_viscosity = 200.0; /** physical damping, here we choose the same value as numerical viscosity. */
 
-Real time_to_full_external_force = 0.0;
-Real gravitational_acceleration = -400000.0;
+Real time_to_full_external_force = 0.001;
+Real gravitational_acceleration = -300000.0;
 
 /** Define application dependent particle generator for thin structure. */
 class CylinderParticleGenerator : public ParticleGeneratorDirect
@@ -167,15 +167,15 @@ int main()
 		stress_relaxation_second_half(cylinder_body_inner);
 	/** Constrain the Boundary. */
 	BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
-	thin_structure_dynamics::ClampConstrainShellBodyRegion constrain_holder(cylinder_body_inner, boundary_geometry);
-	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vecd>>
-		cylinder_position_damping(cylinder_body_inner, 0.1, "Velocity", physical_viscosity);
-	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vecd>>
-		cylinder_rotation_damping(cylinder_body_inner, 0.1, "AngularVelocity", physical_viscosity);
+	thin_structure_dynamics::ConstrainShellBodyRegion constrain_holder(cylinder_body, boundary_geometry);
+	DampingWithRandomChoice<DampingPairwiseInner<Vecd>>
+		cylinder_position_damping(cylinder_body_inner, 0.2, "Velocity", physical_viscosity);
+	DampingWithRandomChoice<DampingPairwiseInner<Vecd>>
+		cylinder_rotation_damping(cylinder_body_inner, 0.2, "AngularVelocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
-	BodyStatesRecordingToPlt write_states(in_output, system.real_bodies_);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<indexVector, Vecd>>
+	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_cylinder_max_displacement("Position", in_output, cylinder_observer_contact);
 
 	/** Apply initial condition. */
@@ -194,7 +194,7 @@ int main()
 
 	/** Setup physical parameters. */
 	int ite = 0;
-	Real end_time = 0.005;
+	Real end_time = 0.006;
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	/** Statistics for computing time. */

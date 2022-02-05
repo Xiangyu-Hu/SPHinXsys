@@ -435,9 +435,9 @@ int main(int ac, char *av[])
 	solid_dynamics::CorrectConfiguration correct_configuration_contraction(mechanics_body_inner);
 	observer_dynamics::CorrectInterpolationKernelWeights correct_kernel_weights_for_interpolation(mechanics_body_contact);
 	/** Interpolate the active contract stress from electrophysiology body. */
-	observer_dynamics::InterpolatingAQuantity<indexScalar, Real> active_stress_interpolation(mechanics_body_contact, "ActiveContractionStress", "ActiveContractionStress");
+	observer_dynamics::InterpolatingAQuantity<Real> active_stress_interpolation(mechanics_body_contact, "ActiveContractionStress", "ActiveContractionStress");
 	/** Interpolate the particle position in physiology_body  from mechanics_body. */
-	observer_dynamics::InterpolatingAQuantity<indexVector, Vecd> interpolation_particle_position(physiology_body_contact, "Position", "Position");
+	observer_dynamics::InterpolatingAQuantity<Vecd> interpolation_particle_position(physiology_body_contact, "Position", "Position");
 	/** Time step size calculation. */
 	solid_dynamics::AcousticTimeStepSize get_mechanics_time_step(mechanics_body);
 	/** active and passive stress relaxation. */
@@ -452,9 +452,9 @@ int main(int ac, char *av[])
 	//	SPH Output section
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<indexScalar, Real>>
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_voltage("Voltage", in_output, voltage_observer_contact);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<indexVector, Vecd>>
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_displacement("Position", in_output, myocardium_observer_contact);
 	//----------------------------------------------------------------------
 	//	 Pre-simulation.

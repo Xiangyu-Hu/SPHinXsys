@@ -18,7 +18,7 @@ namespace SPH
 		  resolution_ref_(resolution_ref),
 		  tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
 		  in_output_(nullptr), restart_step_(0), run_particle_relaxation_(false),
-		  reload_particles_(false), generate_regression_data_(false) {}
+		  reload_particles_(false), run_regression_test_(true) {}
 	//=================================================================================================//
 	void SPHSystem::addABody(SPHBody *sph_body)
 	{
@@ -121,14 +121,14 @@ namespace SPH
 
 			if (vm.count("rt"))
 			{
-				generate_regression_data_ = vm["rt"].as<bool>();
-				std::cout << "Generate regression test data set was set to "
+				run_regression_test_ = vm["rt"].as<bool>();
+				std::cout << "Regression test was set to "
 						  << vm["rt"].as<bool>() << ".\n";
 			}
 			else
 			{
-				std::cout << "Generate regression test data was set to default ("
-						  << generate_regression_data_ << ").\n";
+				std::cout << "Regression test was set to default ("
+						  << run_regression_test_ << ").\n";
 			}
 
 			if (vm.count("restart_step"))

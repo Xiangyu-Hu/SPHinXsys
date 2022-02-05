@@ -48,11 +48,11 @@ public:
 //	Application dependent initial condition
 //----------------------------------------------------------------------
 class TaylorGreenInitialCondition
-	: public eulerian_fluid_dynamics::CompressibleFluidInitialCondition
+	: public eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition
 {
 public:
 	explicit TaylorGreenInitialCondition(EulerianFluidBody &water)
-		: eulerian_fluid_dynamics::CompressibleFluidInitialCondition(water){};
+		: eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition(water){};
 
 protected:
 	void Update(size_t index_i, Real dt) override
@@ -105,19 +105,19 @@ int main(int ac, char *av[])
 	/** Initial condition with momentum and energy field */
 	TaylorGreenInitialCondition initial_condition(water_block);
 	/** Initialize a time step. */
-	eulerian_fluid_dynamics::CompressibleFlowTimeStepInitialization time_step_initialization(water_block);
+	eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization time_step_initialization(water_block);
 	/** Periodic BCs in x direction. */
 	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_x(water_block, xAxis);
 	/** Periodic BCs in y direction. */
 	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_y(water_block, yAxis);
 	/** Time step size with considering sound wave speed. */
-	eulerian_fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
+	eulerian_compressible_fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
 	/** Pressure relaxation algorithm by using verlet time stepping. */
 	/** Here, we can use HLLC with Limiter Riemann solver for pressure relaxation and density and energy relaxation  */
-	eulerian_fluid_dynamics::PressureRelaxationHLLCWithLimiterRiemannInner pressure_relaxation(water_block_inner);
-	eulerian_fluid_dynamics::DensityAndEnergyRelaxationHLLCWithLimiterRiemannInner density_and_energy_relaxation(water_block_inner);
+	eulerian_compressible_fluid_dynamics::PressureRelaxationHLLCWithLimiterRiemannInner pressure_relaxation(water_block_inner);
+	eulerian_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCWithLimiterRiemannInner density_and_energy_relaxation(water_block_inner);
 	/** Computing viscous acceleration. */
-	eulerian_fluid_dynamics::ViscousAccelerationInner viscous_acceleration(water_block_inner);
+	eulerian_compressible_fluid_dynamics::ViscousAccelerationInner viscous_acceleration(water_block_inner);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

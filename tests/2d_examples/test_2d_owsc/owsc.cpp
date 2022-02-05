@@ -170,9 +170,9 @@ int main()
 	BodyReducedQuantityRecording<fluid_dynamics::FreeSurfaceProbeOnFluidBody>
 		wave_probe_12(in_output, water_block, wave_probe_buffer_no_12);
 	/** Pressure probe. */
-	ObservedQuantityRecording<indexScalar, Real> pressure_probe("Pressure", in_output, observer_contact_with_water);
+	ObservedQuantityRecording<Real> pressure_probe("Pressure", in_output, observer_contact_with_water);
 	/** Interpolate the particle position in flap to move the observer accordingly. */
-	observer_dynamics::InterpolatingAQuantity<indexVector, Vecd>
+	observer_dynamics::InterpolatingAQuantity<Vecd>
 		interpolation_observer_position(observer_contact_with_flap, "Position", "Position");
 	/**
 	 * @brief Prepare quantities will be used once only and initial condition.

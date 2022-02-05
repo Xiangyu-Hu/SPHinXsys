@@ -90,7 +90,7 @@ namespace SPH
 	NeighborRelationInnerVariableSmoothingLength::
 		NeighborRelationInnerVariableSmoothingLength(SPHBody *body)
 		: NeighborRelation(),
-		  h_ratio_(*body->base_particles_->getVariableByName<indexScalar, Real>("SmoothingLengthRatio"))
+		  h_ratio_(*body->base_particles_->getVariableByName<Real>("SmoothingLengthRatio"))
 	{
 		kernel_ = body->sph_adaptation_->getKernel();
 	}
@@ -114,7 +114,7 @@ namespace SPH
 	NeighborRelationSelfContact::
 		NeighborRelationSelfContact(SPHBody *body)
 		: NeighborRelation(),
-		  pos_0_(*body->base_particles_->getVariableByName<indexVector, Vecd>("InitialPosition"))
+		  pos_0_(*body->base_particles_->getVariableByName<Vecd>("InitialPosition"))
 	{
 		kernel_ = body->sph_adaptation_->getKernel();
 	}
@@ -166,7 +166,7 @@ namespace SPH
 	NeighborRelationContactBodyPart::
 		NeighborRelationContactBodyPart(SPHBody *body, BodyPart *contact_body_part) : NeighborRelation()
 	{
-		contact_body_part->getSPHBody()->base_particles_->registerAVariable<indexInteger, int>(part_indicator_, "BodyPartByParticleIndicator");
+		contact_body_part->getSPHBody()->base_particles_->registerAVariable<int>(part_indicator_, "BodyPartByParticleIndicator");
 		Kernel *source_kernel = body->sph_adaptation_->getKernel();
 		Kernel *target_kernel = contact_body_part->getSPHBody()->sph_adaptation_->getKernel();
 		kernel_ = source_kernel->SmoothingLength() > target_kernel->SmoothingLength() ? source_kernel : target_kernel;

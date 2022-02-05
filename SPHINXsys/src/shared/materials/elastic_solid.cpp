@@ -84,6 +84,11 @@ namespace SPH
 		return sigmaPK2;
 	}
 	//=================================================================================================//
+	Matd LinearElasticSolid::EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i)
+	{
+		return lambda0_ * almansi_strain.trace() * Matd(1.0) + 2.0 * G0_ * almansi_strain;
+	}
+	//=================================================================================================//
 	Real LinearElasticSolid::VolumetricKirchhoff(Real J)
 	{
 		return K0_ * J * (J - 1);
@@ -94,6 +99,15 @@ namespace SPH
 		Matd right_cauchy = ~F * F;
 		Matd sigmaPK2 = G0_ * Matd(1.0) + (lambda0_ * log(det(F)) - G0_) * inverse(right_cauchy);
 		return sigmaPK2;
+	}
+	//=================================================================================================//
+	Matd NeoHookeanSolid::EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i)
+	{
+		Real J = det(F);
+		Matd B = inverse(-2.0 * almansi_strain + Matd(1.0));
+		Matd cauchy_stress = 0.5 * K0_ * (J - 1.0 / J) * Matd(1.0)
+			+ G0_ * pow(J, -2.0 / (Real)Dimensions - 1.0) * (B - B.trace() / (Real)Dimensions * Matd(1.0));
+		return cauchy_stress;
 	}
 	//=================================================================================================//
 	Real NeoHookeanSolid::VolumetricKirchhoff(Real J)
@@ -175,10 +189,10 @@ namespace SPH
 	//=================================================================================================//
 	void LocallyOrthotropicMuscle::initializeFiberAndSheet()
 	{
-		base_particles_->registerAVariable<indexVector, Vecd>(local_f0_, "Fiber");
-		base_particles_->registerAVariable<indexVector, Vecd>(local_s0_, "Sheet");
-		base_particles_->addAVariableNameToList<indexVector, Vecd>(reload_local_parameters_, "Fiber");
-		base_particles_->addAVariableNameToList<indexVector, Vecd>(reload_local_parameters_, "Sheet");
+		base_particles_->registerAVariable<Vecd>(local_f0_, "Fiber");
+		base_particles_->registerAVariable<Vecd>(local_s0_, "Sheet");
+		base_particles_->addAVariableNameToList<Vecd>(reload_local_parameters_, "Fiber");
+		base_particles_->addAVariableNameToList<Vecd>(reload_local_parameters_, "Sheet");
 	}
 	//=================================================================================================//
 	void LocallyOrthotropicMuscle::readFromXmlForLocalParameters(const std::string &filefullpath)

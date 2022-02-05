@@ -1,5 +1,5 @@
 /**
-* @file 	dw_2d_shell.cpp
+* @file 	2d_shell.cpp
 * @brief 	This is the benchmark test of the 2d shell.
 * @details  We consider large deformation of a 2D shell.
 * @author 	Dong Wu, Chi Zhang and Xiangyu Hu
@@ -15,10 +15,10 @@ using namespace SPH;
 Real radius = 24.5;											   /** Radius of the inner boundary of the cylinder. */
 Real thickness = 1.0;										   /** Thickness of the cylinder. */
 Real radius_mid_surface = radius + thickness / 2.0;			   /** Radius of the mid surface. */
-int particle_number = 4;									   /** Particle number in the thickness. */
+int particle_number = 2;									   /** Particle number in the thickness. */
 Real particle_spacing_ref = thickness / (Real)particle_number; /** Initial reference particle spacing. */
 int particle_number_mid_surface = 2 * radius_mid_surface * Pi * 80.0 / 360.0 / particle_spacing_ref;
-int BWD = 4;
+int BWD = 1;
 Real BW = particle_spacing_ref * (Real)BWD; /** Boundary width, determined by specific layer of boundary particles. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-radius - thickness, 0.0),
@@ -31,7 +31,7 @@ Real poisson = 0.3;				  /** Poisson ratio. */
 Real physical_viscosity = 1000.0; /** physical damping, here we choose the same value as numerical viscosity. */
 
 Real time_to_full_external_force = 0.1;
-Real gravitational_acceleration = -1500.0;
+Real gravitational_acceleration = -2000.0;
 /** Define application dependent particle generator for thin structure. */
 class CylinderParticleGenerator : public ParticleGeneratorDirect
 {
@@ -129,7 +129,7 @@ int main()
 	ShellParticles cylinder_body_particles(cylinder_body,
 										   makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson),
 										   makeShared<CylinderParticleGenerator>(), thickness);
-	cylinder_body_particles.addAVariableToWrite<indexVector, Vecd>("PseudoNormal");
+	cylinder_body_particles.addAVariableToWrite<Vecd>("PseudoNormal");
 
 	/** Define Observer. */
 	ObserverBody cylinder_observer(system, "CylinderObserver");
@@ -163,16 +163,16 @@ int main()
 		stress_relaxation_second_half(cylinder_body_inner);
 	/** Constrain the Boundary. */
 	BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
-	thin_structure_dynamics::ClampConstrainShellBodyRegion
-		fixed_free_rotate_shell_boundary(cylinder_body_inner, boundary_geometry);
-	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec2d>>
-		cylinder_position_damping(cylinder_body_inner, 0.5, "Velocity", physical_viscosity);
-	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec2d>>
-		cylinder_rotation_damping(cylinder_body_inner, 0.5, "AngularVelocity", physical_viscosity);
+	thin_structure_dynamics::ConstrainShellBodyRegion
+		fixed_free_rotate_shell_boundary(cylinder_body, boundary_geometry);
+	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
+		cylinder_position_damping(cylinder_body_inner, 0.2, "Velocity", physical_viscosity);
+	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
+		cylinder_rotation_damping(cylinder_body_inner, 0.2, "AngularVelocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<indexVector, Vecd>>
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_cylinder_max_displacement("Position", in_output, cylinder_observer_contact);
 
 	/** Apply initial condition. */

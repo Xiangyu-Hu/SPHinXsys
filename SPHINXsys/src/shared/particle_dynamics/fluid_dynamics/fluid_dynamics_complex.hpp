@@ -201,7 +201,7 @@ namespace SPH
 			: PressureRelaxation<BasePressureRelaxationType>(base_body_relation, wall_contact_relation),
 			  penalty_strength_(penalty_strength)
 		{
-			this->particles_->template registerAVariable<indexVector, Vecd>(non_cnsrv_dvel_dt_, "NonConservativeAcceleration");
+			this->particles_->template registerAVariable<Vecd>(non_cnsrv_dvel_dt_, "NonConservativeAcceleration");
 		}
 		//=================================================================================================//
 		template <class BasePressureRelaxationType>

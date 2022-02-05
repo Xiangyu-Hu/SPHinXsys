@@ -37,6 +37,7 @@ namespace SPH
 		virtual bool checkNearSurface(const Vecd &input_pnt, Real threshold) override;
 		virtual Real findSignedDistance(const Vecd &input_pnt) override;
 		virtual Vecd findNormalDirection(const Vecd &input_pnt) override;
+		virtual Vecd findNoneNormalizedNormalDirection(const Vecd& input_pnt);
 
 		virtual Real computeKernelIntegral(const Vecd &input_pnt, Real h_ratio = 1.0);
 		virtual Vecd computeKernelGradientIntegral(const Vecd &input_pnt, Real h_ratio = 1.0);

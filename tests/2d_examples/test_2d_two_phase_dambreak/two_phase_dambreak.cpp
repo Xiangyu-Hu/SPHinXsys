@@ -32,7 +32,7 @@ int main()
 
 	WallBoundary wall_boundary(sph_system, "Wall");
 	SolidParticles wall_particles(wall_boundary);
-	wall_particles.addAVariableToWrite<indexVector, Vecd>("NormalDirection");
+	wall_particles.addAVariableToWrite<Vecd>("NormalDirection");
 
 	ObserverBody fluid_observer(sph_system, "Fluidobserver");
 	ObserverParticles observer_particles(fluid_observer, makeShared<ObserverParticleGenerator>());
@@ -90,7 +90,7 @@ int main()
 	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
 		write_water_mechanical_energy(in_output, water_block, gravity);
 	/** output the observed data from fluid body. */
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<indexScalar, Real>>
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_pressure("Pressure", in_output, fluid_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

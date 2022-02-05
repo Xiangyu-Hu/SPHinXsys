@@ -56,4 +56,21 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
+	ShellParticleGeneratorLattice::ShellParticleGeneratorLattice(Real global_avg_thickness)
+		: ParticleGeneratorLattice(), total_volume_(0), global_avg_thickness_(global_avg_thickness)
+	{
+	}
+	//=================================================================================================//
+	void ShellParticleGeneratorLattice::initialize(SPHBody* sph_body)
+	{
+		sph_body_ = sph_body;
+		domain_bounds_ = sph_body_->getSPHSystemBounds();
+		body_shape_ = &sph_body_->body_shape_;
+
+		number_of_cells_ = 0;
+		particle_spacing_ = sph_body_->sph_adaptation_->ReferenceSpacing();
+		lattice_spacing_ = 0.5 * global_avg_thickness_;
+		avg_particle_volume_ = powerN(particle_spacing_, Dimensions - 1) * global_avg_thickness_;
+	}
+	//=================================================================================================//
 }

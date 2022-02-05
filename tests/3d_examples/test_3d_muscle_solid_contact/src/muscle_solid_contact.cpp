@@ -95,7 +95,7 @@ int main()
 	BodyRegionByParticle holder(myocardium_body, "Holder", holder_shape);
 	solid_dynamics::ConstrainSolidBodyRegion	constrain_holder(myocardium_body, holder);
 	/** Damping with the solid body*/
-	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>
+	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
 		muscle_damping(myocardium_body_inner, 0.1, "Velocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);

@@ -91,13 +91,13 @@ MultiPolygon createEmitterBufferShape()
 //----------------------------------------------------------------------
 //	Define emitter buffer inflow boundary condition
 //----------------------------------------------------------------------
-class EmitterBufferInflowCondition : public fluid_dynamics::InflowCondition
+class EmitterBufferInflowCondition : public fluid_dynamics::InflowBoundaryCondition
 {
 	Real u_ave_, u_ref_, t_ref_;
 
 public:
-	EmitterBufferInflowCondition(FluidBody &fluid_body, BodyRegionByParticle &constrained_region)
-		: fluid_dynamics::InflowCondition(fluid_body, constrained_region),
+	EmitterBufferInflowCondition(FluidBody &fluid_body, BodyPartByCell &constrained_region)
+		: InflowBoundaryCondition(fluid_body, constrained_region),
 		u_ave_(0), u_ref_(U_f), t_ref_(2.0) {}
 
 	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override

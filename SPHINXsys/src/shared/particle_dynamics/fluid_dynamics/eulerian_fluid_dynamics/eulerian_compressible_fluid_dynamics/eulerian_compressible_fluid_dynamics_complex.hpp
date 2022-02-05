@@ -1,14 +1,14 @@
 /**
- * @file 	eulerian_fluid_dynamics_complex.hpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @file 	eulerian_compressible_fluid_dynamics_complex.hpp
+ * @author	Zhentong Wang,Chi Zhang and Xiangyu Hu
  */
-#include "eulerian_fluid_dynamics_complex.h"
+#include "eulerian_compressible_fluid_dynamics_complex.h"
 
 //=================================================================================================//
 namespace SPH
 {
 //=================================================================================================//
-	namespace eulerian_fluid_dynamics
+	namespace eulerian_compressible_fluid_dynamics
 	{
 		//=================================================================================================//
 		template<class BaseRelaxationType>
@@ -18,7 +18,7 @@ namespace SPH
             BaseBodyRelationContact &wall_contact_relation) :
 				BaseRelaxationType(base_body_relation), CompressibleFluidWallData(wall_contact_relation)
 		{
-			if (base_body_relation->sph_body_ != wall_contact_relation->sph_body_)
+			if (base_body_relation.sph_body_ != wall_contact_relation.sph_body_)
 			{
 				std::cout << "\n Error: the two body_realtions do not have the same source body!" << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -69,8 +69,8 @@ namespace SPH
 				}
 			}
 			
-			this->dvel_dt_prior_[index_i] += acceleration;
-			this->dE_dt_prior_[index_i] += rho_i * dot(acceleration, vel_n_[index_i]);
+			this->dmom_dt_prior_[index_i] += rho_i * acceleration;
+			this->dE_dt_prior_[index_i] += rho_i * dot(acceleration, vel_i);
 		}
 		//=================================================================================================//
         template<class BaseViscousAccelerationType>
@@ -107,12 +107,10 @@ namespace SPH
 			BasePressureRelaxationType::Interaction(index_i, dt);
 
 			CompressibleFluidState state_i(this->rho_n_[index_i], this->vel_n_[index_i], this->p_[index_i], this->E_[index_i]);
-			Vecd acceleration(0.0);
+			Vecd momentum_change_rate(0.0);
 			for (size_t k = 0; k < CompressibleFluidWallData::contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Real>& Vol_k = *(this->wall_Vol_[k]);
-				StdLargeVec<Vecd>& vel_ave_k = *(this->wall_vel_ave_[k]);
-				StdLargeVec<Vecd>& dvel_dt_ave_k = *(this->wall_dvel_dt_ave_[k]);
 				StdLargeVec<Vecd>& n_k = *(this->wall_n_[k]);
 				Neighborhood& wall_neighborhood = (*CompressibleFluidWallData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
@@ -122,19 +120,21 @@ namespace SPH
 					Real dW_ij = wall_neighborhood.dW_ij_[n];
 					Real r_ij = wall_neighborhood.r_ij_[n];
 
-					Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - state_i.vel_;
+					Vecd vel_in_wall = -state_i.vel_;
 					Real p_in_wall = state_i.p_;
 					Real rho_in_wall = state_i.rho_;
 					Real E_in_wall = state_i.E_;
 					CompressibleFluidState state_j(rho_in_wall, vel_in_wall, p_in_wall, E_in_wall);
-					Real p_star = this->riemann_solver_.getPStar(state_i, state_j, n_k[index_j]);
-					Vecd vel_star = this->riemann_solver_.getVStar(state_i, state_j, n_k[index_j]);
-					Real rho_star = this->riemann_solver_.getRhoStar(state_i, state_j, n_k[index_j]);
-					acceleration -= 2.0 * Vol_k[index_j] * 
-						(SimTK::outer(rho_star * vel_star, vel_star) + p_star * Matd(1.0)) * e_ij * dW_ij / state_i.rho_;
+					CompressibleFluidState interface_state = this->riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
+					Vecd vel_star = interface_state.vel_;
+					Real p_star = interface_state.p_;
+					Real rho_star = interface_state.rho_;
+
+					momentum_change_rate -= 2.0 * Vol_k[index_j] *
+						(SimTK::outer(rho_star * vel_star, vel_star) + p_star * Matd(1.0)) * e_ij * dW_ij;
 				}
 			}
-			this->dvel_dt_[index_i] += acceleration;
+			this->dmom_dt_[index_i] += momentum_change_rate;
 		}
         //=================================================================================================//
         template<class BasePressureRelaxationType>
@@ -174,11 +174,7 @@ namespace SPH
 			Real energy_change_rate = 0.0;
 			for (size_t k = 0; k < CompressibleFluidWallData::contact_configuration_.size(); ++k)
 			{
-				//Vecd& dvel_dt_others_i = this->dvel_dt_others_[index_i];
-
 				StdLargeVec<Real>& Vol_k = *(this->wall_Vol_[k]);
-				StdLargeVec<Vecd>& vel_ave_k = *(this->wall_vel_ave_[k]);
-				StdLargeVec<Vecd>& dvel_dt_ave_k = *(this->wall_dvel_dt_ave_[k]);
 				StdLargeVec<Vecd>& n_k = *(this->wall_n_[k]);
 				Neighborhood& wall_neighborhood = (*CompressibleFluidWallData::contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
@@ -188,17 +184,17 @@ namespace SPH
 					Real r_ij = wall_neighborhood.r_ij_[n];
 					Real dW_ij = wall_neighborhood.dW_ij_[n];
 
-					/*Real face_wall_external_acceleration
-						= dot((dvel_dt_others_i - dvel_dt_ave_k[index_j]), -e_ij);*/
-					Vecd vel_in_wall = 2.0 * vel_ave_k[index_j] - state_i.vel_;
+					Vecd vel_in_wall = -state_i.vel_;
 					Real p_in_wall = state_i.p_;
 					Real rho_in_wall = state_i.rho_;
 					Real E_in_wall = state_i.E_;
 					CompressibleFluidState state_j(rho_in_wall, vel_in_wall, p_in_wall, E_in_wall);
-					Real p_star = this->riemann_solver_.getPStar(state_i, state_j, n_k[index_j]);
-					Vecd vel_star = this->riemann_solver_.getVStar(state_i, state_j, n_k[index_j]);
-					Real rho_star = this->riemann_solver_.getRhoStar(state_i, state_j, n_k[index_j]);
-					Real E_star = this->riemann_solver_.getEStar(state_i, state_j, n_k[index_j]);
+					CompressibleFluidState interface_state = this->riemann_solver_.getInterfaceState(state_i, state_j, n_k[index_j]);
+					Vecd vel_star = interface_state.vel_;
+					Real p_star = interface_state.p_;
+					Real rho_star = interface_state.rho_;
+					Real E_star = interface_state.E_;
+
 					density_change_rate -= 2.0 * Vol_k[index_j] * dot(rho_star * vel_star, e_ij) * dW_ij;
 					energy_change_rate -= 2.0 * Vol_k[index_j] * dot(E_star * vel_star + p_star * vel_star, e_ij) * dW_ij;
 				}
@@ -224,7 +220,7 @@ namespace SPH
 		BaseDensityAndEnergyRelaxationWithWall<BaseDensityAndenergyRelaxationType>::
 			BaseDensityAndEnergyRelaxationWithWall(ComplexBodyRelation &fluid_complex_relation,
 				BaseBodyRelationContact &wall_contact_relation) :
-			DensityAndEnergyRelaxation<BaseDensityRelaxationType>(fluid_complex_relation, wall_contact_relation) {}
+			DensityAndEnergyRelaxation<BaseDensityAndenergyRelaxationType>(fluid_complex_relation, wall_contact_relation) {}
 		//=================================================================================================//		
     }
 //=================================================================================================//

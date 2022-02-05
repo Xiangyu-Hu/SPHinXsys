@@ -54,7 +54,9 @@ namespace SPH
 		PackageData<Real> phi_;				 /**< the level set or signed distance. */
 		PackageDataAddress<Real> phi_addrs_; /**< address for the level set. */
 		PackageData<Vecd> n_;				 /**< level set normalized gradient, to approximate interface normal direction */
+		PackageData<Vecd> none_normalized_n_;
 		PackageDataAddress<Vecd> n_addrs_;
+		PackageDataAddress<Vecd> none_normalized_n_addrs_;
 		PackageData<Real> kernel_weight_;
 		PackageDataAddress<Real> kernel_weight_addrs_;
 		PackageData<Vecd> kernel_gradient_;
@@ -76,6 +78,7 @@ namespace SPH
 		void initializeWithUniformData(Real level_set);
 		void computeKernelIntegrals(LevelSet &level_set);
 		void computeNormalDirection();
+		void computeNoneNormalizedNormalDirection();
 		void stepReinitialization();
 		void markNearInterface(Real small_shift_factor);
 	};
@@ -93,6 +96,7 @@ namespace SPH
 		virtual bool probeIsWithinMeshBound(const Vecd &position) = 0;
 		virtual Real probeSignedDistance(const Vecd &position) = 0;
 		virtual Vecd probeNormalDirection(const Vecd &position) = 0;
+		virtual Vecd probeNoneNormalizedNormalDirection(const Vecd& position) = 0;
 		virtual Real probeKernelIntegral(const Vecd &position, Real h_ratio = 1.0) = 0;
 		virtual Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0) = 0;
 		virtual void cleanInterface(bool isSmoothed = false) = 0;
@@ -126,6 +130,7 @@ namespace SPH
 		virtual bool probeIsWithinMeshBound(const Vecd &position) override;
 		virtual Real probeSignedDistance(const Vecd &position) override;
 		virtual Vecd probeNormalDirection(const Vecd &position) override;
+		virtual Vecd probeNoneNormalizedNormalDirection(const Vecd& position) override;
 		virtual Real probeKernelIntegral(const Vecd &position, Real h_ratio = 1.0) override;
 		virtual Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0) override;
 		virtual void cleanInterface(bool isSmoothed = false) override;
@@ -142,6 +147,8 @@ namespace SPH
 		void redistanceInterface();
 		void updateNormalDirection();
 		void updateNormalDirectionForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt = 0.0);
+		void updateNoneNormalizedNormalDirection();
+		void updateNoneNormalizedNormalDirectionForAPackage(LevelSetDataPackage* inner_data_pkg, Real dt = 0.0);
 		void updateKernelIntegrals();
 		void updateKernelIntegralsForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt = 0.0);
 		void stepReinitializationForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt = 0.0);
@@ -168,6 +175,7 @@ namespace SPH
 		virtual bool probeIsWithinMeshBound(const Vecd &position) override;
 		virtual Real probeSignedDistance(const Vecd &position) override;
 		virtual Vecd probeNormalDirection(const Vecd &position) override;
+		virtual Vecd probeNoneNormalizedNormalDirection(const Vecd &position) override;
 		virtual Real probeKernelIntegral(const Vecd &position, Real h_ratio = 1.0) override;
 		virtual Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0) override;
 		virtual void cleanInterface(bool isSmoothed = false) override;

@@ -8,4 +8,5 @@
 #include "kernel_hyperbolic.h"
 #include "kernel_tabulated.hpp"
 #include "kernel_cubic_B_spline.h"
+#include "kernel_laguerre_gauss.h"
 #endif //ALL_KERNELS_H

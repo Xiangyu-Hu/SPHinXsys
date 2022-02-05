@@ -162,9 +162,9 @@ int main(int ac, char *av[])
 	RestartIO restart_io(in_output, system.real_bodies_);
 	RegressionTestTimeAveraged<BodyReducedQuantityRecording<solid_dynamics::TotalViscousForceOnSolid>>
 		write_total_viscous_force_on_inserted_body(in_output, inserted_body);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<indexVector, Vecd>>
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_beam_tip_displacement("Position", in_output, beam_observer_contact);
-	ObservedQuantityRecording<indexVector, Vecd>
+	ObservedQuantityRecording<Vecd>
 		write_fluid_velocity("Velocity", in_output, fluid_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
