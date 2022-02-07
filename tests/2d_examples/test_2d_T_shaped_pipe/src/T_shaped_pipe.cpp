@@ -99,13 +99,13 @@ MultiPolygon createEmitterBufferShape()
 //----------------------------------------------------------------------
 //	Define emitter buffer inflow boundary condition
 //----------------------------------------------------------------------
-class EmitterBufferInflowCondition : public fluid_dynamics::InflowCondition
+class EmitterBufferInflowCondition : public fluid_dynamics::InflowBoundaryCondition
 {
 	Real u_ave_, u_ref_, t_ref_;
 
 public:
-	EmitterBufferInflowCondition(FluidBody &body, BodyRegionByParticle &body_part)
-		: fluid_dynamics::InflowCondition(body, body_part),
+	EmitterBufferInflowCondition(FluidBody &body, BodyPartByCell &body_part)
+		: InflowBoundaryCondition(body, body_part),
 		  u_ave_(0), u_ref_(U_f), t_ref_(4.0) {}
 
 	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
@@ -169,7 +169,7 @@ int main(int ac, char *av[])
 	fluid_dynamics::EmitterInflowInjecting emitter_inflow_injecting(water_block, emitter, 300, 0, true);
 	/** Emitter condition. */
 	MultiPolygonShape emitter_buffer_shape(createEmitterBufferShape());
-	BodyRegionByParticle emitter_buffer(water_block, "EmitterBuffer", emitter_buffer_shape);
+	BodyRegionByCell emitter_buffer(water_block, "EmitterBuffer", emitter_buffer_shape);
 	EmitterBufferInflowCondition emitter_buffer_inflow_condition(water_block, emitter_buffer);
 	/** time-space method to detect surface particles. */
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex
@@ -177,8 +177,8 @@ int main(int ac, char *av[])
 	/** Evaluation of density by freestream approach. */
 	fluid_dynamics::DensitySummationFreeStreamComplex update_density_by_summation(water_block_complex_relation);
 	/** We can output a method-specific particle data for debug */
-	fluid_particles.addAVariableToWrite<indexScalar, Real>("Pressure");
-	fluid_particles.addAVariableToWrite<indexInteger, int>("SurfaceIndicator");
+	fluid_particles.addAVariableToWrite<Real>("Pressure");
+	fluid_particles.addAVariableToWrite<int>("SurfaceIndicator");
 	/** Time step size without considering sound wave speed. */
 	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */

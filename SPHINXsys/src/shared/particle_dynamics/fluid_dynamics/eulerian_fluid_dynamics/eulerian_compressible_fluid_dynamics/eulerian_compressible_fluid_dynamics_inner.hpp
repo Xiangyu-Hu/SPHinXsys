@@ -1,16 +1,15 @@
 /**
- * @file 	eulerian_fluid_dynamics_inner.hpp
- * @author	Chi ZHang, Xiangyu Hu and Zhentong Wang
+ * @file 	eulerian_compressible_fluid_dynamics_inner.hpp
+ * @author	Zhentong Wang,Chi Zhang and Xiangyu Hu
  */
 
-#include "eulerian_fluid_dynamics_inner.h"
-#include "fluid_dynamics_inner.hpp"
+#include "eulerian_compressible_fluid_dynamics_inner.h"
 
 //=================================================================================================//
 namespace SPH
 {
 	//=================================================================================================//
-	namespace eulerian_fluid_dynamics
+	namespace eulerian_compressible_fluid_dynamics
 	{
 		//=================================================================================================//
 		template <class RiemannSolverType>
@@ -32,9 +31,10 @@ namespace SPH
 				Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
 				CompressibleFluidState state_j(rho_n_[index_j], vel_n_[index_j], p_[index_j], E_[index_j]);
-				Real p_star = riemann_solver_.getPStar(state_i, state_j, e_ij);
-				Vecd vel_star = riemann_solver_.getVStar(state_i, state_j, e_ij);
-				Real rho_star = riemann_solver_.getRhoStar(state_i, state_j, e_ij);
+				CompressibleFluidState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
+				Vecd vel_star = interface_state.vel_;
+				Real p_star = interface_state.p_;
+				Real rho_star = interface_state.rho_;
 
 				momentum_change_rate -= 2.0 * Vol_[index_j] *
 										(SimTK::outer(rho_star * vel_star, vel_star) + p_star * Matd(1.0)) * e_ij * dW_ij;
@@ -62,10 +62,12 @@ namespace SPH
 				Real dW_ij = inner_neighborhood.dW_ij_[n];
 
 				CompressibleFluidState state_j(rho_n_[index_j], vel_n_[index_j], p_[index_j], E_[index_j]);
-				Vecd vel_star = riemann_solver_.getVStar(state_i, state_j, e_ij);
-				Real p_star = riemann_solver_.getPStar(state_i, state_j, e_ij);
-				Real rho_star = riemann_solver_.getRhoStar(state_i, state_j, e_ij);
-				Real E_star = riemann_solver_.getEStar(state_i, state_j, e_ij);
+				CompressibleFluidState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
+				//Vecd vel_star = interface_state.get_state_vel();
+				Vecd vel_star = interface_state.vel_;
+				Real p_star = interface_state.p_;
+				Real rho_star = interface_state.rho_;
+				Real E_star = interface_state.E_;
 
 				density_change_rate -= 2.0 * Vol_[index_j] * dot(rho_star * vel_star, e_ij) * dW_ij;
 				energy_change_rate -= 2.0 * Vol_[index_j] * dot(E_star * vel_star + p_star * vel_star, e_ij) * dW_ij;

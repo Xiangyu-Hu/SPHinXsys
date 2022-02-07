@@ -127,17 +127,21 @@ namespace SPH
 		//=================================================================================================//
 		ShellStressRelaxationFirstHalf::
 			ShellStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation,
-										   int number_of_gaussian_points)
+				int number_of_gaussian_points, bool hourglass_control)
 			: BaseShellRelaxation(inner_relation),
-			  stress_PK1_(particles_->stress_PK1_),
-			  global_stress_(particles_->global_stress_),
-			  global_moment_(particles_->global_moment_),
-			  global_shear_stress_(particles_->global_shear_stress_),
-			  n_(particles_->n_),
-			  number_of_gaussian_points_(number_of_gaussian_points),
-			  rho0_(material_->ReferenceDensity()),
-			  inv_rho0_(1.0 / rho0_),
-			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength())
+			stress_PK1_(particles_->stress_PK1_),
+			global_stress_(particles_->global_stress_),
+			global_moment_(particles_->global_moment_),
+			global_shear_stress_(particles_->global_shear_stress_),
+			n_(particles_->n_),
+			number_of_gaussian_points_(number_of_gaussian_points),
+			hourglass_control_(hourglass_control),
+			rho0_(material_->ReferenceDensity()),
+			inv_rho0_(1.0 / rho0_),
+			smoothing_length_(sph_adaptation_->ReferenceSmoothingLength()),
+			E0_(material_->YoungsModulus()),
+			G0_(material_->ShearModulus()),
+			nu_(material_->PoissonRatio())
 		{
 			/** Note that, only three-point and five-point Gaussian quadrature rules are defined. */
 			switch (number_of_gaussian_points)
@@ -150,12 +154,21 @@ namespace SPH
 				gaussian_point_ = three_gaussian_points_;
 				gaussian_weight_ = three_gaussian_weights_;
 			}
+			/** Define the factor of hourglass control algorithm according to the dimension. */
+			if (Dimensions == 2)
+			{
+				hourglass_control_factor_ = 0.05;
+			}
+			else
+			{
+				hourglass_control_factor_ = 1.0e-4;
+			}
 		}
 		//=================================================================================================//
 		void ShellStressRelaxationFirstHalf::Initialization(size_t index_i, Real dt)
 		{
 			// Note that F_[index_i], F_bending_[index_i], dF_dt_[index_i], dF_bending_dt_[index_i]
-			// and rotation_[index_i], angular_vel_[index_i], dangular_vel_dt_[index_i]
+			// and rotation_[index_i], angular_vel_[index_i], dangular_vel_dt_[index_i], B_[index_i]
 			// are defined in local coordinates, while others in global coordinates.
 			pos_n_[index_i] += vel_n_[index_i] * dt * 0.5;
 			rotation_[index_i] += angular_vel_[index_i] * dt * 0.5;
@@ -166,9 +179,7 @@ namespace SPH
 			rho_n_[index_i] = rho0_ / det(F_[index_i]);
 
 			/** Calculate the current normal direction of mid-surface. */
-			Matd F_i = F_[index_i];
-			F_i.col(Dimensions - 1) = Vecd(0.0);
-			n_[index_i] = (~transformation_matrix_[index_i]) * getNormalFromDeformationGradientTensor(F_i);
+			n_[index_i] = (~transformation_matrix_[index_i]) * getNormalFromDeformationGradientTensor(F_[index_i]);
 			/** Get transformation matrix from global coordinates to current local coordinates. */
 			Matd current_transformation_matrix = getTransformationMatrix(n_[index_i]);
 
@@ -180,26 +191,30 @@ namespace SPH
 			{
 				Matd F_gaussian_point = F_[index_i] + gaussian_point_[i] * F_bending_[index_i] * shell_thickness_[index_i] * 0.5;
 				Matd dF_gaussian_point_dt = dF_dt_[index_i] + gaussian_point_[i] * dF_bending_dt_[index_i] * shell_thickness_[index_i] * 0.5;
-				Matd stress_PK2_gaussian_point = material_->ConstitutiveRelation(F_gaussian_point, index_i) +
-												 material_->NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, smoothing_length_, index_i);
-
-				/** Get the mid-surface stress to output the von-Mises equivalent stress. */
-				if (i == 0)
-					stress_PK1_[index_i] = F_gaussian_point * stress_PK2_gaussian_point;
-
-				/** Get Cauchy stress. */
-				Matd cauchy_stress = current_transformation_matrix * (~transformation_matrix_[index_i]) *
-									 F_gaussian_point * stress_PK2_gaussian_point *
-									 (~F_gaussian_point) * transformation_matrix_[index_i] * (~current_transformation_matrix) / det(F_gaussian_point);
+				Matd inverse_F_gaussion_point = SimTK::inverse(F_gaussian_point);
+				Matd current_local_almansi_strain = current_transformation_matrix * (~transformation_matrix_[index_i])
+											* 0.5 * (Matd(1.0) - ~inverse_F_gaussion_point * inverse_F_gaussion_point)
+											* transformation_matrix_[index_i] * (~current_transformation_matrix);
+				/** correct Almansi strain tensor according to plane stress problem. */
+				current_local_almansi_strain = getCorrectedAlmansiStrain(current_local_almansi_strain, nu_);
+				Matd cauchy_stress = material_->EulerianConstitutiveRelation(current_local_almansi_strain, F_gaussian_point, index_i)
+					+ current_transformation_matrix * (~transformation_matrix_[index_i]) * F_gaussian_point
+					* material_->NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, smoothing_length_, index_i)
+					* (~F_gaussian_point) * transformation_matrix_[index_i] * (~current_transformation_matrix) / det(F_gaussian_point);
 
 				/** Impose modeling assumptions. */
 				cauchy_stress.col(Dimensions - 1) *= shear_correction_factor_;
 				cauchy_stress.row(Dimensions - 1) *= shear_correction_factor_;
 				cauchy_stress[Dimensions - 1][Dimensions - 1] = 0.0;
 
-				stress_PK2_gaussian_point = det(F_gaussian_point) * SimTK::inverse(F_gaussian_point) * transformation_matrix_[index_i] *
-											(~current_transformation_matrix) * cauchy_stress * current_transformation_matrix *
-											(~transformation_matrix_[index_i]) * (~SimTK::inverse(F_gaussian_point));
+				Matd stress_PK2_gaussian_point = det(F_gaussian_point) * SimTK::inverse(F_gaussian_point)
+					* transformation_matrix_[index_i] * (~current_transformation_matrix) * cauchy_stress
+					* current_transformation_matrix * (~transformation_matrix_[index_i])
+					* (~SimTK::inverse(F_gaussian_point));
+
+				/** Get the mid-surface stress to output the von-Mises equivalent stress. */
+				if (i == 0) stress_PK1_[index_i] = F_gaussian_point * stress_PK2_gaussian_point;
+
 				Vecd shear_stress_PK2_gaussian_point = -stress_PK2_gaussian_point.col(Dimensions - 1);
 				Matd moment_PK2_gaussian_point = stress_PK2_gaussian_point * gaussian_point_[i] * shell_thickness_[index_i] * 0.5;
 
@@ -235,16 +250,40 @@ namespace SPH
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				acceleration += (global_stress_i + global_stress_[index_j]) * inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n] * Vol_[index_j];
-				pseudo_normal_acceleration += (global_moment_i + global_moment_[index_j]) * inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n] * Vol_[index_j];
+
+				/** Whether or not to use hourglass control algorithm. */
+				if (hourglass_control_)
+				{
+					Vecd e_ij = inner_neighborhood.e_ij_[n];
+					Real r_ij = inner_neighborhood.r_ij_[n];
+					Real dim_inv_r_ij = Dimensions / r_ij;
+					Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
+					Vecd pos_jump = getLinearVariableJump(e_ij, r_ij, pos_n_[index_i], F_[index_i], pos_n_[index_j], F_[index_j]);
+					acceleration += hourglass_control_factor_ * weight * E0_ * pos_jump * dim_inv_r_ij
+									* inner_neighborhood.dW_ij_[n] * Vol_[index_j] * shell_thickness_[index_i];
+
+					Vecd pseudo_n_jump = getLinearVariableJump(e_ij, r_ij, pseudo_n_[index_i] - n_0_[index_i],
+											F_bending_[index_i], pseudo_n_[index_j] - n_0_[index_j], F_bending_[index_j]);
+					Vecd rotation_jump = getRotationJump(pseudo_n_jump, transformation_matrix_[index_i]);
+					pseudo_normal_acceleration += hourglass_control_factor_ / 3.0 * weight * Dimensions * r_ij * G0_
+								* rotation_jump * inner_neighborhood.dW_ij_[n] * Vol_[index_j] * shell_thickness_[index_i];
+				}
+
+				acceleration += (global_stress_i + global_stress_[index_j])
+							    * inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n] * Vol_[index_j];
+				pseudo_normal_acceleration += (global_moment_i + global_moment_[index_j])
+											  * inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n] * Vol_[index_j];
 			}
 			/** including external force (body force) and force from fluid */
-			dvel_dt_[index_i] = acceleration * inv_rho0_ / shell_thickness_[index_i] + dvel_dt_prior_[index_i] + force_from_fluid_[index_i] / mass_[index_i];
-			dpseudo_n_d2t_[index_i] = pseudo_normal_acceleration * inv_rho0_ * 12.0 / powerN(shell_thickness_[index_i], 3);
+			dvel_dt_[index_i] = acceleration * inv_rho0_ / shell_thickness_[index_i]
+				+ dvel_dt_prior_[index_i] + force_from_fluid_[index_i] / mass_[index_i] / shell_thickness_[index_i];
+			dpseudo_n_d2t_[index_i] = pseudo_normal_acceleration * inv_rho0_
+				* 12.0 / powerN(shell_thickness_[index_i], 3);
 
 			/** the relation between pseudo-normal and rotations */
 			Vecd local_dpseudo_n_d2t = transformation_matrix_[index_i] * dpseudo_n_d2t_[index_i];
-			dangular_vel_dt_[index_i] = getRotationFromPseudoNormalForSmallDeformation(local_dpseudo_n_d2t, rotation_[index_i], angular_vel_[index_i], dt);
+			dangular_vel_dt_[index_i] = getRotationFromPseudoNormalForFiniteDeformation
+										(local_dpseudo_n_d2t, rotation_[index_i], angular_vel_[index_i], dt);
 		}
 		//=================================================================================================//
 		void ShellStressRelaxationFirstHalf::Update(size_t index_i, Real dt)
@@ -339,8 +378,8 @@ namespace SPH
 			  Vol_(particles_->Vol_), vel_n_(particles_->vel_n_),
 			  angular_vel_(particles_->angular_vel_)
 		{
-			particles_->registerAVariable<indexVector, Vecd>(vel_n_temp_, "TemporaryVelocity");
-			particles_->registerAVariable<indexVector, Vecd>(angular_vel_temp_, "TemporaryAngularVelocity");
+			particles_->registerAVariable<Vecd>(vel_n_temp_, "TemporaryVelocity");
+			particles_->registerAVariable<Vecd>(angular_vel_temp_, "TemporaryAngularVelocity");
 			for (int k = 0; k != Dimensions; ++k)
 			{
 				constrain_matrix_[k][k] = constrained_direction[k];
@@ -394,8 +433,8 @@ namespace SPH
 			  Vol_(particles_->Vol_), vel_n_(particles_->vel_n_),
 			  angular_vel_(particles_->angular_vel_)
 		{
-			particles_->registerAVariable<indexVector, Vecd>(vel_n_temp_, "TemporaryVelocity");
-			particles_->registerAVariable<indexVector, Vecd>(angular_vel_temp_, "TemporaryAngularVelocity");
+			particles_->registerAVariable<Vecd>(vel_n_temp_, "TemporaryVelocity");
+			particles_->registerAVariable<Vecd>(angular_vel_temp_, "TemporaryAngularVelocity");
 		}
 		//=================================================================================================//
 		void ClampConstrainShellBodyRegion::Initialization(size_t index_i, Real dt)
@@ -455,62 +494,68 @@ namespace SPH
 			dvel_dt_ave_[index_i] = dvel_dt_[index_i];
 		}
 		//=================================================================================================//
-		DistributingAPointForceToShell::
-			DistributingAPointForceToShell(SolidBody &solid_body, BodyPartByParticle &body_part,
-										   Vecd point_force, Vecd reference_position,
-										   Real time_to_smallest_h_ratio, Real time_to_full_external_force,
-										   Real particle_spacing_ref, Real h_spacing_ratio)
-			: PartSimpleDynamicsByParticle(solid_body, body_part), ShellDataSimple(solid_body),
-			  point_force_(point_force), reference_position_(reference_position),
-			  time_to_smallest_h_ratio_(time_to_smallest_h_ratio),
-			  time_to_full_external_force_(time_to_full_external_force),
-			  particle_spacing_ref_(particle_spacing_ref), h_spacing_ratio_(h_spacing_ratio),
-			  pos_0_(particles_->pos_0_),
-			  dvel_dt_prior_(particles_->dvel_dt_prior_),
-			  Vol_(particles_->Vol_), mass_(particles_->mass_), shell_thickness_(particles_->shell_thickness_)
+		DistributingPointForcesToShell::
+			DistributingPointForcesToShell(SolidBody &solid_body, std::vector<Vecd> point_forces,
+				std::vector<Vecd> reference_positions, Real time_to_full_external_force,
+				Real particle_spacing_ref, Real h_spacing_ratio)
+			: ParticleDynamicsSimple(solid_body), ShellDataSimple(solid_body),
+			point_forces_(point_forces), reference_positions_(reference_positions),
+			time_to_full_external_force_(time_to_full_external_force),
+			particle_spacing_ref_(particle_spacing_ref), h_spacing_ratio_(h_spacing_ratio),
+			pos_0_(particles_->pos_0_), dvel_dt_prior_(particles_->dvel_dt_prior_),
+			Vol_(particles_->Vol_), mass_(particles_->mass_), shell_thickness_(particles_->shell_thickness_)
 		{
-			particles_->registerAVariable<indexScalar, Real>(weight_, "Weight");
-		}
-		//=================================================================================================//
-		void DistributingAPointForceToShell::getWeight()
-		{
-			sum_of_weight_ = 0.0;
-			Real current_time = GlobalStaticVariables::physical_time_;
-			Real h_spacing_ratio_time = current_time * (0.6 - h_spacing_ratio_) / time_to_smallest_h_ratio_ + h_spacing_ratio_;
-			Real h_spacing_ratio = current_time < time_to_smallest_h_ratio_ ? h_spacing_ratio_time : 0.6;
-
-			Real smooth_length = h_spacing_ratio * particle_spacing_ref_;
-			Real cutoff_radius_sqr = powerN(2.0 * smooth_length, 2);
-			for (size_t i = 0; i < particles_->total_real_particles_; ++i)
+			for (int i = 0; i < point_forces_.size(); i++)
 			{
-				weight_[i] = 0.0;
-				Vecd displacement = reference_position_ - pos_0_[i];
-				if (displacement.normSqr() <= cutoff_radius_sqr)
-				{
-					Kernel *kernel_ = sph_body_->sph_adaptation_->getKernel();
-					if (Dimensions == 2)
-					{
-						weight_[i] = 3.0 / 4.0 / smooth_length * kernel_->W_2D(displacement.norm() / smooth_length) * Vol_[i];
-					}
-					else
-					{
-						weight_[i] = 7.0 / (4.0 * Pi) / smooth_length / smooth_length * kernel_->W_3D(displacement.norm() / smooth_length) * Vol_[i];
-					}
-					sum_of_weight_ += weight_[i];
-				}
+				weight_.push_back(StdLargeVec<Real>(0.0));
+				time_dependent_point_forces_.push_back(Vecd(0.0));
+				sum_of_weight_.push_back(0.0);
+				particles_->registerAVariable<Real>(weight_[i], "Weight_" + std::to_string(i));
 			}
 		}
 		//=================================================================================================//
-		void DistributingAPointForceToShell::getForce()
+		void DistributingPointForcesToShell::getWeight()
 		{
-			Real current_time = GlobalStaticVariables::physical_time_;
-			point_force_time_ = current_time < time_to_full_external_force_ ? current_time * point_force_ / time_to_full_external_force_ : point_force_;
+			Kernel *kernel_ = sph_body_->sph_adaptation_->getKernel();
+			Real reference_smoothing_length = sph_adaptation_->ReferenceSmoothingLength();
+			Real smoothing_length = h_spacing_ratio_ * particle_spacing_ref_;
+			Real h_ratio = reference_smoothing_length / smoothing_length;
+			Real cutoff_radius_sqr = powerN(2.0 * smoothing_length, 2);
+			for (int i = 0; i < point_forces_.size(); ++i)
+			{
+				sum_of_weight_[i] = 0.0;
+				for (size_t index = 0; index < particles_->total_real_particles_; ++index)
+				{
+					weight_[i][index] = 0.0;
+					Vecd displacement = reference_positions_[i] - pos_0_[index];
+					if (displacement.normSqr() <= cutoff_radius_sqr)
+					{
+						weight_[i][index] = kernel_->W(h_ratio, displacement.norm(), displacement);
+						sum_of_weight_[i] += weight_[i][index];
+					}
+				}
+
+			}
 		}
 		//=================================================================================================//
-		void DistributingAPointForceToShell::Update(size_t index_i, Real dt)
+		void DistributingPointForcesToShell::getForce()
 		{
-			Vecd force = weight_[index_i] / (sum_of_weight_ + TinyReal) * point_force_time_;
-			dvel_dt_prior_[index_i] = force / mass_[index_i] / shell_thickness_[index_i];
+			Real current_time = GlobalStaticVariables::physical_time_;
+			for (int i = 0; i < point_forces_.size(); ++i)
+			{
+				time_dependent_point_forces_[i] = current_time < time_to_full_external_force_ ?
+					current_time * point_forces_[i] / time_to_full_external_force_ : point_forces_[i];
+			}
+		}
+		//=================================================================================================//
+		void DistributingPointForcesToShell::Update(size_t index_i, Real dt)
+		{
+			dvel_dt_prior_[index_i] = 0.0;
+			for (int i = 0; i < point_forces_.size(); ++i)
+			{
+				Vecd force = weight_[i][index_i] / (sum_of_weight_[i] + TinyReal) * time_dependent_point_forces_[i];
+				dvel_dt_prior_[index_i] += force / mass_[index_i] / shell_thickness_[index_i];
+			}
 		}
 		//=================================================================================================//
 	}

@@ -3,6 +3,13 @@
  * @brief 	2D in a channel with a throat.
  * @details This is the one of the basic test cases, also the first case for
  * 			understanding SPH method for non-Newtonian low Reynolds number flows.
+ *			The choice of maximum flow speed, sound speed and time step size follows
+ *			Morris et al. Modeling Low Reynolds Number Incompressible Flows Using SPH.
+ *			Journal of Computational Physics, Volume 136, 1997, 214-226.
+ *			https://doi.org/10.1006/jcph.1997.5776
+ *			Note that as we use implicit time stepping for the viscous term,
+ *			the time step size does not need to follow the viscous time step criteria 
+ *			and is the same of that for pressure and density relaxations.
  * @author 	Luhui Han, Chi Zhang and Xiangyu Hu
    */
 #include "sphinxsys.h"
@@ -23,14 +30,16 @@ BoundingBox system_domain_bounds(Vec2d(-0.5 * DL - BW, -0.5 * DH - BW),
 //----------------------------------------------------------------------
 Real rho0_f = 1.0;
 Real gravity_g = 1.0; /**< Gravity force of fluid. */
-Real Re = 0.1;		  /**< Reynolds number defined in the channel */
+Real Re = 0.001;		  /**< Reynolds number defined in the channel */
 // obtain viscosity according planar Poiseuille flow solution in the channel
 Real mu_f = rho0_f * sqrt(0.5 * rho0_f * powerN(0.5 * DH, 3) * gravity_g / Re);
 // maximum flow velocity in the channel
 Real U_c = 0.5 * powerN(0.5 * DH, 2) * gravity_g * rho0_f / mu_f;
 //	predicted overall maximum velocity for this case is in the throat according to incompressible condition
 Real U_f = U_c * DH / DT;
-Real c_f = 10.0 * U_f;
+// For low Reynolds number flow the weakly compressible formulation need to
+// consider viscosity for artificial sound speed.
+Real c_f = 10.0 * (U_f, sqrt(mu_f / rho0_f * U_f / DT));
 Real mu_p_f = 0.6 * mu_f;
 Real lambda_f = 10.0;
 //----------------------------------------------------------------------
@@ -157,16 +166,16 @@ int main()
 	//time step size with considering sound wave speed
 	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(fluid_block);
 	//pressure relaxation using verlet time stepping
-	fluid_dynamics::PressureRelaxationRiemannWithWallOldroyd_B pressure_relaxation(fluid_block_complex);
+	fluid_dynamics::PressureRelaxationWithWallOldroyd_B pressure_relaxation(fluid_block_complex);
 	pressure_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
-	fluid_dynamics::DensityRelaxationRiemannWithWallOldroyd_B density_relaxation(fluid_block_complex);
+	fluid_dynamics::DensityRelaxationWithWallOldroyd_B density_relaxation(fluid_block_complex);
 	density_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
 	//define external force
 	Gravity gravity(Vecd(gravity_g, 0.0));
 	TimeStepInitialization initialize_a_fluid_step(fluid_block, gravity);
 	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(fluid_block_complex);
 	//computing viscous effect implicitly and with update velocity directly other than viscous acceleration
-	DampingPairwiseWithWall<indexVector, Vec2d, DampingPairwiseInner>
+	DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>
 		implicit_viscous_damping(fluid_block_complex, "Velocity", mu_f);
 	//impose transport velocity
 	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(fluid_block_complex);
@@ -222,8 +231,8 @@ int main()
 			while (relaxation_time < Dt)
 			{
 				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
-				pressure_relaxation.parallel_exec(dt);
 				implicit_viscous_damping.parallel_exec(dt);
+				pressure_relaxation.parallel_exec(dt);
 				density_relaxation.parallel_exec(dt);
 
 				relaxation_time += dt;

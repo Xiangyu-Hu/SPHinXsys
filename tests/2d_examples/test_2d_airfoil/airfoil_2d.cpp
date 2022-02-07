@@ -31,7 +31,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	Airfoil airfoil(system, "Airfoil");
 	SolidParticles airfoil_particles(airfoil, makeShared<ParticleGeneratorMultiResolution>());
-	airfoil_particles.addAVariableToWrite<indexScalar, Real>("SmoothingLengthRatio");
+	airfoil_particles.addAVariableToWrite<Real>("SmoothingLengthRatio");
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------

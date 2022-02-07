@@ -276,7 +276,7 @@ int main()
 	//	Regression tests are also defined here.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_states(in_output, sph_system.real_bodies_);
-	RegressionTestEnsembleAveraged<ObservedQuantityRecording<indexScalar, Real>>
+	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Real>>
 		write_solid_temperature("Phi", in_output, temperature_observer_contact);
 	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<TotalAveragedParameterOnPartlyDiffusionBody<SolidBody, SolidParticles, Solid>>>
 		write_solid_average_temperature_part(in_output, diffusion_body, inner_domain, "Phi");

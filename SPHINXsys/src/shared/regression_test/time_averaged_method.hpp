@@ -587,7 +587,7 @@ namespace SPH
 
 		test_wrong = testNewResult(this->current_result_, meanvalue_, local_meanvalue_, variance_);
 		if (test_wrong == 0)
-			std::cout << "The result of " << this->quantity_name_ << "is correct based on the time-averaged regression test!" << endl;
+			std::cout << "The result of " << this->quantity_name_ << " is correct based on the time-averaged regression test!" << endl;
 		else
 		{
 			std::cout << "There are " << test_wrong << " particles are not within the expected range." << endl;

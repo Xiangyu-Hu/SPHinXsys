@@ -83,6 +83,8 @@ int main(int ac, char *av[])
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for computation start with relaxed body fitted particles distribution. */
 	sph_system.reload_particles_ = false;
+	/** Tag for whether conduct the regression test. */
+	sph_system.run_regression_test_ = true;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	sph_system.restart_step_ = 0;
 	//handle command line arguments
@@ -256,7 +258,7 @@ int main(int ac, char *av[])
 
 	write_particle_reload_files.writeToFile();
 
-	if (!sph_system.reload_particles_)
+	if (sph_system.run_regression_test_ == true)
 	{
 		write_total_mechanical_energy.newResultTest();
 		write_maximum_speed.newResultTest();

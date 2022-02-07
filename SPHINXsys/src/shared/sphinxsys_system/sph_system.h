@@ -54,11 +54,11 @@ namespace SPH
 		Real resolution_ref_;					 /**< reference resolution of the SPH system */
 		tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
 
-		In_Output *in_output_;			/**< in_output setup */
-		size_t restart_step_;			/**< restart step */
-		bool run_particle_relaxation_;	/**< run particle relaxation for body fitted particle distribution */
-		bool reload_particles_;			/**< start the simulation with relaxed particles. */
-		bool generate_regression_data_; /**< run and generate or enhancethe regression test data set. */
+		In_Output *in_output_;		   /**< in_output setup */
+		size_t restart_step_;		   /**< restart step */
+		bool run_particle_relaxation_; /**< run particle relaxation for body fitted particle distribution */
+		bool reload_particles_;		   /**< start the simulation with relaxed particles. */
+		bool run_regression_test_;	   /**< run the regression test. */
 
 		SPHBodyVector bodies_;			  /**< All sph bodies. */
 		SPHBodyVector fictitious_bodies_; /**< The bodies without inner particle configuration. */

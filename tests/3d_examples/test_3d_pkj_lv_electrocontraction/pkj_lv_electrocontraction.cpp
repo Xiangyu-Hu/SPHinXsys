@@ -196,8 +196,8 @@ int main(int ac, char *av[])
 	electro_physiology::ElectroPhysiologyReactionRelaxationForward pkj_reaction_relaxation_forward(pkj_body);
 	electro_physiology::ElectroPhysiologyReactionRelaxationBackward pkj_reaction_relaxation_backward(pkj_body);
 	/**IO for observer.*/
-	ObservedQuantityRecording<indexScalar, Real> write_voltage("Voltage", in_output, voltage_observer_contact);
-	ObservedQuantityRecording<indexVector, Vecd> write_displacement("Position", in_output, myocardium_observer_contact);
+	ObservedQuantityRecording<Real> write_voltage("Voltage", in_output, voltage_observer_contact);
+	ObservedQuantityRecording<Vecd> write_displacement("Position", in_output, myocardium_observer_contact);
 	/**Apply the Iron stimulus.*/
 	ApplyStimulusCurrentToMmyocardium apply_stimulus_myocardium(physiology_body);
 	ApplyStimulusCurrentToPKJ apply_stimulus_pkj(pkj_body);
@@ -207,10 +207,10 @@ int main(int ac, char *av[])
 	observer_dynamics::CorrectInterpolationKernelWeights
 		correct_kernel_weights_for_interpolation(mechanics_body_contact);
 	/** Interpolate the active contract stress from electrophysiology body. */
-	observer_dynamics::InterpolatingAQuantity<indexScalar, Real>
+	observer_dynamics::InterpolatingAQuantity<Real>
 		active_stress_interpolation(mechanics_body_contact, "ActiveContractionStress", "ActiveContractionStress");
 	/** Interpolate the particle position in physiology_body  from mechanics_body. */
-	observer_dynamics::InterpolatingAQuantity<indexVector, Vecd>
+	observer_dynamics::InterpolatingAQuantity<Vecd>
 		interpolation_particle_position(physiology_body_contact, "Position", "Position");
 	/** Time step size calculation. */
 	solid_dynamics::AcousticTimeStepSize get_mechanics_time_step(mechanics_body);

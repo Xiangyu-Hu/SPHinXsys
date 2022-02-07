@@ -497,7 +497,7 @@ namespace SPH
 	* @class BodySummation
 	* @brief Compute the summation of  a particle variable in a body
 	*/
-	template <int DataTypeIndex, typename VariableType>
+	template <typename VariableType>
 	class BodySummation : public ParticleDynamicsReduce<VariableType, ReduceSum<VariableType>>,
 						  public GeneralDataDelegateSimple
 	{
@@ -505,7 +505,7 @@ namespace SPH
 		explicit BodySummation(SPHBody &sph_body, std::string variable_name)
 			: ParticleDynamicsReduce<VariableType, ReduceSum<VariableType>>(sph_body),
 			  GeneralDataDelegateSimple(sph_body),
-			  variable_(*particles_->getVariableByName<DataTypeIndex, VariableType>(variable_name))
+			  variable_(*particles_->getVariableByName<VariableType>(variable_name))
 		{
 			this->initial_reference_ = VariableType(0);
 		};
@@ -523,12 +523,12 @@ namespace SPH
 	* @class BodyMoment
 	* @brief Compute the moment of a body
 	*/
-	template <int DataTypeIndex, typename VariableType>
-	class BodyMoment : public BodySummation<DataTypeIndex, VariableType>
+	template <typename VariableType>
+	class BodyMoment : public BodySummation<VariableType>
 	{
 	public:
 		explicit BodyMoment(SPHBody &sph_body, std::string variable_name)
-			: BodySummation<DataTypeIndex, VariableType>(sph_body, variable_name),
+			: BodySummation<VariableType>(sph_body, variable_name),
 			  mass_(this->particles_->mass_){};
 		virtual ~BodyMoment(){};
 

@@ -44,7 +44,7 @@ namespace SPH
 		 * @class BaseInterpolation
 		 * @brief Base class for interpolation.
 		 */
-		template <int DataTypeIndex, typename VariableType>
+		template <typename VariableType>
 		class BaseInterpolation : public InteractionDynamics, public InterpolationContactData
 		{
 		public:
@@ -56,7 +56,7 @@ namespace SPH
 				{
 					contact_Vol_.push_back(&(this->contact_particles_[k]->Vol_));
 					StdLargeVec<VariableType> *contact_data =
-						this->contact_particles_[k]->template getVariableByName<DataTypeIndex, VariableType>(variable_name);
+						this->contact_particles_[k]->template getVariableByName<VariableType>(variable_name);
 					contact_data_.push_back(contact_data);
 				}
 			};
@@ -94,16 +94,16 @@ namespace SPH
 		 * @class InterpolatingAQuantity
 		 * @brief Interpolate a given member data in the particles of a general body
 		 */
-		template <int DataTypeIndex, typename VariableType>
-		class InterpolatingAQuantity : public BaseInterpolation<DataTypeIndex, VariableType>
+		template <typename VariableType>
+		class InterpolatingAQuantity : public BaseInterpolation<VariableType>
 		{
 		public:
 			explicit InterpolatingAQuantity(BaseBodyRelationContact &contact_relation,
 											const std::string &interpolated_variable, const std::string &target_variable)
-				: BaseInterpolation<DataTypeIndex, VariableType>(contact_relation, target_variable)
+				: BaseInterpolation<VariableType>(contact_relation, target_variable)
 			{
 				this->interpolated_quantities_ =
-					this->particles_-> template getVariableByName<DataTypeIndex, VariableType>(interpolated_variable);
+					this->particles_-> template getVariableByName<VariableType>(interpolated_variable);
 			};
 			virtual ~InterpolatingAQuantity(){};
 		};
@@ -112,12 +112,12 @@ namespace SPH
 		 * @class ObservingAQuantity
 		 * @brief Observing a variable from contact bodies.
 		 */
-		template <int DataTypeIndex, typename VariableType>
-		class ObservingAQuantity : public BaseInterpolation<DataTypeIndex, VariableType>
+		template <typename VariableType>
+		class ObservingAQuantity : public BaseInterpolation<VariableType>
 		{
 		public:
 			explicit ObservingAQuantity(BaseBodyRelationContact &contact_relation, const std::string &variable_name)
-				: BaseInterpolation<DataTypeIndex, VariableType>(contact_relation, variable_name)
+				: BaseInterpolation<VariableType>(contact_relation, variable_name)
 			{
 				this->interpolated_quantities_ = registerObservedQuantity(variable_name);
 			};
@@ -131,12 +131,13 @@ namespace SPH
 			StdLargeVec<VariableType> *registerObservedQuantity(const std::string &variable_name)
 			{
 				BaseParticles *particles = this->particles_;
-				if (particles->all_variable_maps_[DataTypeIndex].find(variable_name) == particles->all_variable_maps_[DataTypeIndex].end())
+      			constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
+				if (particles->all_variable_maps_[type_index].find(variable_name) == particles->all_variable_maps_[type_index].end())
 				{
-					particles->registerAVariable<DataTypeIndex, VariableType>(observed_quantities_, variable_name, VariableType(0));
+					particles->registerAVariable<VariableType>(observed_quantities_, variable_name, VariableType(0));
 					return &observed_quantities_;
 				}
-				return particles->getVariableByName<DataTypeIndex, VariableType>(variable_name);
+				return particles->getVariableByName<VariableType>(variable_name);
 			};
 		};
 

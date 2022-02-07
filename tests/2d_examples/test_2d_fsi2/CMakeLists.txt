@@ -36,7 +36,7 @@ ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
 add_test(NAME ${PROJECT_NAME}_particle_relaxation COMMAND ${PROJECT_NAME} --r=true
               WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --r=false --i=true
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --r=false --i=true --rt=false
               WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")

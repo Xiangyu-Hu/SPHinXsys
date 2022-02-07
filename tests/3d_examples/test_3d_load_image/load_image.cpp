@@ -32,7 +32,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	ImportedModel imported_model(system, "ImportedModel");
 	SolidParticles imported_model_particles(imported_model, makeShared<ParticleGeneratorMultiResolution>());
-	imported_model_particles.addAVariableToWrite<indexScalar, Real>("SmoothingLengthRatio");
+	imported_model_particles.addAVariableToWrite<Real>("SmoothingLengthRatio");
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
