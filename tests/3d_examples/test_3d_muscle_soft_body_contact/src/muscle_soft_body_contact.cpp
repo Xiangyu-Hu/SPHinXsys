@@ -101,9 +101,9 @@ int main()
 	solid_dynamics::SpringDamperConstraintParticleWise spring_constraint(moving_plate, Vecd(0.2, 0, 0), 0.01);
 
 	/** Damping with the solid body*/
-	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>
+	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
 		muscle_damping(myocardium_body_inner, 0.2, "Velocity", physical_viscosity);
-	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>
+	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
 		plate_damping(moving_plate_inner, 0.2, "Velocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);

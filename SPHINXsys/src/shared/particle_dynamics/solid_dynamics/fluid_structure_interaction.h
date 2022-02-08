@@ -40,6 +40,8 @@ namespace SPH
 	{
 		typedef DataDelegateSimple<SolidBody, SolidParticles, Solid> SolidDataSimple;
 		typedef DataDelegateContact<SolidBody, SolidParticles, Solid, FluidBody, FluidParticles, Fluid> FSIContactData;
+		typedef DataDelegateContact<SolidBody, SolidParticles, Solid, EulerianFluidBody,
+			FluidParticles, Fluid> EFSIContactData; //EFSIContactData=Eulerian Fluid contact Data
 
 		/**
 		* @class FluidViscousForceOnSolid
@@ -50,6 +52,28 @@ namespace SPH
 		public:
 			explicit FluidViscousForceOnSolid(BaseBodyRelationContact &contact_relation);
 			virtual ~FluidViscousForceOnSolid(){};
+
+		protected:
+			StdLargeVec<Real> &Vol_;
+			StdLargeVec<Vecd> &vel_ave_;
+			StdVec<StdLargeVec<Real> *> contact_Vol_, contact_rho_n_;
+			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
+			StdVec<Real> mu_;
+			StdVec<Real> smoothing_length_;
+			StdLargeVec<Vecd> viscous_force_from_fluid_;
+
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		* @class FluidViscousForceOnSolidInEuler
+		* @brief Computing the viscous force from the fluid in eulerian framework
+		*/
+		class FluidViscousForceOnSolidInEuler : public InteractionDynamics, public EFSIContactData
+		{
+		public:
+			explicit FluidViscousForceOnSolidInEuler(BaseBodyRelationContact &contact_relation);
+			virtual ~FluidViscousForceOnSolidInEuler(){};
 
 		protected:
 			StdLargeVec<Real> &Vol_;
@@ -156,6 +180,81 @@ namespace SPH
 		using FluidPressureForceOnSolidRiemann = BaseFluidPressureForceOnSolid<AcousticRiemannSolver>;
 
 		/**
+		* @class BaseFluidPressureForceOnSolidInEuler
+		* @brief Template class fro computing the pressure force from the fluid with different Riemann solvers.
+		* The pressrue force is added on the viscous force of the latter is computed.
+		* This class is for FSI applications to achieve smaller solid dynamics
+		* time step size compared to the fluid dynamics
+		*/
+		template <class RiemannSolverType>
+		class BaseFluidPressureForceOnSolidInEuler : public InteractionDynamics, public EFSIContactData
+		{
+		public:
+			explicit BaseFluidPressureForceOnSolidInEuler(BaseBodyRelationContact &contact_relation)
+				: InteractionDynamics(*contact_relation.sph_body_),
+				EFSIContactData(contact_relation),
+				Vol_(particles_->Vol_), vel_ave_(particles_->vel_ave_),
+				force_from_fluid_(particles_->force_from_fluid_), n_(particles_->n_)
+			{
+				for (size_t k = 0; k != contact_particles_.size(); ++k)
+				{
+					contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+					contact_rho_n_.push_back(&(contact_particles_[k]->rho_n_));
+					contact_vel_n_.push_back(&(contact_particles_[k]->vel_n_));
+					contact_p_.push_back(&(contact_particles_[k]->p_));
+					riemann_solvers_.push_back(RiemannSolverType(*contact_material_[k], *contact_material_[k]));
+				}
+			};
+			virtual ~BaseFluidPressureForceOnSolidInEuler() {};
+
+		protected:
+			StdLargeVec<Real> &Vol_;
+			StdLargeVec<Vecd> &vel_ave_, &force_from_fluid_, &n_;
+			StdVec<StdLargeVec<Real> *> contact_Vol_, contact_rho_n_, contact_p_;
+			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
+			StdVec<RiemannSolverType> riemann_solvers_;
+
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override
+			{
+				Real Vol_i = Vol_[index_i];
+				const Vecd &vel_ave_i = vel_ave_[index_i];
+				const Vecd &n_i = n_[index_i];
+
+				Vecd force(0);
+				for (size_t k = 0; k < contact_configuration_.size(); ++k)
+				{
+					StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
+					StdLargeVec<Real> &rho_n_k = *(contact_rho_n_[k]);
+					StdLargeVec<Real> &p_k = *(contact_p_[k]);
+					StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
+					Fluid *fluid_k = contact_material_[k];
+					RiemannSolverType &riemann_solver_k = riemann_solvers_[k];
+					Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+					for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+					{
+						size_t index_j = contact_neighborhood.j_[n];
+						Vecd e_ij = contact_neighborhood.e_ij_[n];
+						Real r_ij = contact_neighborhood.r_ij_[n];
+						Real p_in_wall = p_k[index_j];
+						Real rho_in_wall = fluid_k->DensityFromPressure(p_in_wall);
+						Vecd vel_in_wall = - vel_n_k[index_j];
+
+						FluidState state_l(rho_n_k[index_j], vel_n_k[index_j], p_k[index_j]);
+						FluidState state_r(rho_in_wall, vel_in_wall, p_in_wall);
+						FluidState interface_state = riemann_solver_k.getInterfaceState(state_l, state_r, n_i);
+						Real p_star = interface_state.p_;
+						force -= 2.0 * p_star * e_ij * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+					}
+				}
+				force_from_fluid_[index_i] = force;
+			};
+		};
+		using FluidPressureForceOnSolidInEuler = BaseFluidPressureForceOnSolidInEuler<NoRiemannSolver>;
+		using FluidPressureForceOnSolidAcousticRiemannInEuler = BaseFluidPressureForceOnSolidInEuler<AcousticRiemannSolver>;
+		using FluidPressureForceOnSolidHLLCRiemannInEuler = BaseFluidPressureForceOnSolidInEuler<HLLCRiemannSolverInWeaklyCompressibleFluid>;
+		using FluidPressureForceOnSolidHLLCWithLimiterRiemannInEuler = BaseFluidPressureForceOnSolidInEuler<HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid>;
+
+		/**
 		* @class BaseFluidForceOnSolidUpdate
 		* @brief template class for computing force from fluid with updated viscous force
 		*/
@@ -165,7 +264,7 @@ namespace SPH
 		public:
 			explicit BaseFluidForceOnSolidUpdate(BaseBodyRelationContact &contact_relation)
 				: PressureForceType(contact_relation), viscous_force_(contact_relation),
-				  viscous_force_from_fluid_(*this->particles_->template getVariableByName<indexVector, Vecd>("ViscousForceFromFluid")){};
+				  viscous_force_from_fluid_(*this->particles_->template getVariableByName<Vecd>("ViscousForceFromFluid")){};
 			virtual ~BaseFluidForceOnSolidUpdate(){};
 
 			ViscousForceType viscous_force_;
@@ -183,6 +282,11 @@ namespace SPH
 			BaseFluidForceOnSolidUpdate<FluidPressureForceOnSolid, FluidViscousForceOnSolid>;
 		using FluidForceOnSolidUpdateRiemann =
 			BaseFluidForceOnSolidUpdate<FluidPressureForceOnSolidRiemann, FluidViscousForceOnSolid>;
+		using FluidForceOnSolidUpdateInEuler =
+			BaseFluidForceOnSolidUpdate<FluidPressureForceOnSolidHLLCRiemannInEuler, FluidViscousForceOnSolidInEuler>;
+		using FluidForceOnSolidUpdateRiemannWithLimiterInEuler =
+			BaseFluidForceOnSolidUpdate<FluidPressureForceOnSolidHLLCWithLimiterRiemannInEuler, FluidViscousForceOnSolidInEuler>;
+
 
 		/**
 		* @class TotalViscousForceOnSolid

@@ -1,9 +1,9 @@
 /**
- * @file 	fluid_dynamics_complex.cpp
- * @author	Chi ZHang and Xiangyu Hu
+ * @file 	eulerian_compressible_fluid_dynamics_complex.cpp
+ * @author	Zhentong wang, Chi Zhang and Xiangyu Hu
  */
 
-#include "eulerian_fluid_dynamics_complex.h"
+#include "eulerian_compressible_fluid_dynamics_complex.h"
 //=================================================================================================//
 using namespace std;
 //=================================================================================================//

@@ -265,7 +265,7 @@ int main()
 	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(water_block_complex);
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex);
 	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex);
-	DampingWithRandomChoice<DampingPairwiseWithWall<indexVector, Vec2d, DampingPairwiseInner>>
+	DampingWithRandomChoice<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
 		fluid_damping(water_block_complex, 0.2, "Velocity", mu_f);
 	/** Corrected configuration. */
 	solid_dynamics::CorrectConfiguration gate_corrected_configuration(gate_inner);
@@ -292,7 +292,7 @@ int main()
 	/** Output body states for visualization. */
 	BodyStatesRecordingToVtp write_real_body_states_to_vtp(in_output, system.real_bodies_);
 	/** Output the observed displacement of gate free end. */
-	RegressionTestEnsembleAveraged<ObservedQuantityRecording<indexVector, Vecd>>
+	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Vecd>>
 		write_beam_tip_displacement("Position", in_output, gate_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

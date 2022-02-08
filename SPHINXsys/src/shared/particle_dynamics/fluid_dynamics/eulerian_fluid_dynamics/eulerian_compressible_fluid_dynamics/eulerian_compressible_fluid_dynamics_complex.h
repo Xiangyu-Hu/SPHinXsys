@@ -21,20 +21,20 @@
 *                                                                           *
 * --------------------------------------------------------------------------*/
 /**
-* @file eulerian_fluid_dynamics_complex.h
-* @brief Here, we define the algorithm classes for complex compressible fluid dynamics, 
+* @file eulerian_compressible_fluid_dynamics_complex.h
+* @brief Here, we define the algorithm classes for eulerian complex compressible fluid dynamics, 
 * which is involving with either solid walls (with suffix WithWall) 
 * or/and other bodies treated as wall for the fluid (with suffix Complex).   
-* @author	Chi ZHang, Xiangyu Hu and Zhentong Wang
+* @author	Zhentong Wang,Xiangyu Hu and Chi Zhang 
 */
 
 #pragma once
 
-#include "eulerian_fluid_dynamics_inner.h"
+#include "eulerian_compressible_fluid_dynamics_inner.h"
 
 namespace SPH
 {
-	namespace eulerian_fluid_dynamics
+	namespace eulerian_compressible_fluid_dynamics
 	{
 		typedef DataDelegateContact<EulerianFluidBody, CompressibleFluidParticles, CompressibleFluid,
 									SolidBody, SolidParticles, Solid, DataDelegateEmptyBase>
@@ -45,16 +45,6 @@ namespace SPH
 		typedef DataDelegateContact<EulerianFluidBody, CompressibleFluidParticles, CompressibleFluid,
 									SolidBody, SolidParticles, Solid>
 			CFSIContactData; //CFSI= Compressible Fluid_Structure Interation
-
-		typedef DataDelegateContact<EulerianFluidBody, FluidParticles, Fluid,
-									SolidBody, SolidParticles, Solid, DataDelegateEmptyBase>
-			FluidWallData;
-		typedef DataDelegateContact<EulerianFluidBody, FluidParticles, Fluid,
-									SPHBody, BaseParticles, BaseMaterial, DataDelegateEmptyBase>
-			FluidContactData;
-		typedef DataDelegateContact<EulerianFluidBody, FluidParticles, Fluid,
-									SolidBody, SolidParticles, Solid>
-			FSIContactData;
 		/**
 		* @class RelaxationWithWall
 		* @brief Abstract base class for general relaxation algorithms with wall
@@ -168,25 +158,5 @@ namespace SPH
 		};
 		using DensityAndEnergyRelaxationHLLCRiemannWithWall = BaseDensityAndEnergyRelaxationWithWall<DensityAndEnergyRelaxationHLLCRiemannInner>;
 		using DensityAndEnergyRelaxationHLLCRiemannAndLimiterWithWall = BaseDensityAndEnergyRelaxationWithWall<DensityAndEnergyRelaxationHLLCWithLimiterRiemannInner>;
-
-		/**
-		 * @class 	SurfaceNormWithWall
-		 * @brief  Modify surface norm when contact with wall
-		 */
-		class SurfaceNormWithWall : public InteractionDynamics, public FSIContactData
-		{
-		public:
-			SurfaceNormWithWall(BaseBodyRelationContact &contact_relation, Real contact_angle);
-			virtual ~SurfaceNormWithWall(){};
-
-		protected:
-			Real contact_angle_;
-			Real smoothing_length_;
-			Real particle_spacing_;
-			StdVec<StdLargeVec<Vecd> *> wall_n_;
-			StdLargeVec<Vecd> *surface_norm_;
-			StdLargeVec<bool> &is_free_surface_;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-		};
 	}
 }

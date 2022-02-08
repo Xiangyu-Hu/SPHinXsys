@@ -139,6 +139,7 @@ namespace SPH
 		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList() override;
 		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape) override;
 	};
+
 	/**
 	 * @class ParticleSpacingByBodyShape
 	 * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.

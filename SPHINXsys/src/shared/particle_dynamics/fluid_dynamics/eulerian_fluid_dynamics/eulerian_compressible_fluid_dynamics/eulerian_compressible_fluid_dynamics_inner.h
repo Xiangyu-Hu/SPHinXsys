@@ -21,10 +21,10 @@
 *                                                                           *
 * --------------------------------------------------------------------------*/
 /**
-* @file 	eulerian_fluid_dynamics_inner.h
-* @brief 	Here, we define the algorithm classes for fluid dynamics within the body. 
+* @file 	eulerian_compressible_fluid_dynamics_inner.h
+* @brief 	Here, we define the algorithm classes for eulerian fluid dynamics within the body. 
 * @details 	We consider here compressible fluids. 
-* @author	Chi ZHang, Xiangyu Hu and Zhentong Wang
+* @author	Zhentong Wang,Chi Zhang and Xiangyu Hu
 */
 
 #pragma once
@@ -37,7 +37,7 @@
 
 namespace SPH
 {
-	namespace eulerian_fluid_dynamics
+	namespace eulerian_compressible_fluid_dynamics
 	{
 		typedef DataDelegateSimple<EulerianFluidBody, CompressibleFluidParticles, CompressibleFluid> CompressibleFluidDataSimple;
 		typedef DataDelegateInner<EulerianFluidBody, CompressibleFluidParticles, CompressibleFluid> CompressibleFluidDataInner;

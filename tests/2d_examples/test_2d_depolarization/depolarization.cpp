@@ -128,7 +128,7 @@ int main()
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
-	RegressionTestEnsembleAveraged<ObservedQuantityRecording<indexScalar, Real>>
+	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Real>>
 		write_recorded_voltage("Voltage", in_output, voltage_observer_contact_relation);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

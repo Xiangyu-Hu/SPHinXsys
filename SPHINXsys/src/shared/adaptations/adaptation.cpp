@@ -138,7 +138,7 @@ namespace SPH
 	void ParticleWithLocalRefinement::assignBaseParticles(BaseParticles *base_particles)
 	{
 		SPHAdaptation::assignBaseParticles(base_particles);
-		base_particles->registerAVariable<indexScalar, Real>(h_ratio_, "SmoothingLengthRatio", 1.0);
+		base_particles->registerAVariable<Real>(h_ratio_, "SmoothingLengthRatio", 1.0);
 	}
 	//=================================================================================================//
 	UniquePtr<BaseCellLinkedList> ParticleWithLocalRefinement::createCellLinkedList()

@@ -173,7 +173,7 @@ int main()
 	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<TotalMechanicalEnergy>> 	
 		write_water_mechanical_energy(in_output, water_block, gravity);
 	/** output the observed data from fluid body. */
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<indexScalar, Real>>
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact);
 
 	/** Pre-simulation*/

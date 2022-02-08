@@ -56,78 +56,37 @@ namespace SPH
 		Vec3d getVectorChangeRateAfterThinStructureRotation(const Vec3d &initial_vector, const Vec3d &rotation_angles, const Vec3d &angular_vel);
 
 		/** get the rotation from pseudo-normal for finite deformation. */
-		Vec2d getRotationFromPseudoNormalForFiniteDeformation(const Vec2d& dpseudo_n_d2t, const Vec2d& rotation, const Vec2d& angular_vel, Real dt);
-		Vec3d getRotationFromPseudoNormalForFiniteDeformation(const Vec3d& dpseudo_n_d2t, const Vec3d& rotation, const Vec3d& angular_vel, Real dt);
+		Vec2d getRotationFromPseudoNormalForFiniteDeformation(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt);
+		Vec3d getRotationFromPseudoNormalForFiniteDeformation(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt);
 
 		/** get the rotation from pseudo-normal for small deformation. */
-		Vec2d getRotationFromPseudoNormalForSmallDeformation(const Vec2d& dpseudo_n_d2t, const Vec2d& rotation, const Vec2d& angular_vel, Real dt);
-		Vec3d getRotationFromPseudoNormalForSmallDeformation(const Vec3d& dpseudo_n_d2t, const Vec3d& rotation, const Vec3d& angular_vel, Real dt);
+		Vec2d getRotationFromPseudoNormalForSmallDeformation(const Vec2d &dpseudo_n_d2t, const Vec2d &rotation, const Vec2d &angular_vel, Real dt);
+		Vec3d getRotationFromPseudoNormalForSmallDeformation(const Vec3d &dpseudo_n_d2t, const Vec3d &rotation, const Vec3d &angular_vel, Real dt);
 
 		/** get the current normal direction from deformation gradient tensor. */
-		Vec2d getNormalFromDeformationGradientTensor(const Mat2d& F);
-		Vec3d getNormalFromDeformationGradientTensor(const Mat3d& F);
+		Vec2d getNormalFromDeformationGradientTensor(const Mat2d &F);
+		Vec3d getNormalFromDeformationGradientTensor(const Mat3d &F);
 
-		/** triple Gauss-Legendre quadrature for 3-D surface integrals*/   
-		Real gaussianQuadratureIntegralTriple(const Vecd& ri, const Vecd& rj, const Real& spacing_ref, Kernel* kernel_);
-		/** double Gauss-Legendre quadrature for 2-D surface integrals*/
-		Real gaussianQuadratureIntegralDouble(const Vecd& ri, const Vecd& rj, const Real& spacing_ref, Kernel* kernel_);
+		/** get variable jump form gradient tensor. */
+		Vecd getLinearVariableJump(const Vecd &e_ij, const Real &r_ij, const Vecd &particle_i_value,
+			const Matd &gradient_particle_i_value, const Vecd &particle_j_value, const Matd &gradient_particle_j_value);
+		Vecd getWENOVariableJump(const Vecd &e_ij, const Real &r_ij, const Vecd &particle_i_value,
+			const Matd &gradient_particle_i_value, const Vecd &particle_j_value, const Matd &gradient_particle_j_value);
 
-		/**
-		* @class LegendrePolynomialSet
-		* @brief returns abscissas (xi) and weights (wi) for 
-		* @brief Gauss-Legendre quadrature integration for 
-		* @brief n=3 or n=5 number of integration nodes *.
-		*/
-		class LegendrePolynomialSet
-		{
-		public:
-			LegendrePolynomialSet(int number_of_nodes)
-				: numberOfNodes(number_of_nodes), xi(number_of_nodes), wi(number_of_nodes) {
-				setAbscissasAndWeights();
-			}
+		/** predict mid-point value by applying WENO reconstruction. */
+		Vecd getWENOStateWithStencilPoints(const Vecd &v1, const Vecd &v2, const Vecd &v3, const Vecd &v4);
+		Vecd getWENOLeftState(const Vecd &e_ij, const Real &r_ij, const Vecd &particle_i_value,
+			const Matd &gradient_particle_i_value, const Vecd &particle_j_value, const Matd &gradient_particle_j_value);
+		Vecd getWENORightState(const Vecd &e_ij, const Real &r_ij, const Vecd &particle_i_value,
+			const Matd &gradient_particle_i_value, const Vecd &particle_j_value, const Matd &gradient_particle_j_value);
 
-			const std::vector<Real>& getAbscissas() const { return xi; }
-			const std::vector<Real>& getWeights() const { return wi; }
+		/** get the artificial rotation from the pseudo-normal jump. */
+		Vec2d getRotationJump(const Vec2d &pseudo_n_jump, const Mat2d &transformation_matrix);
+		Vec3d getRotationJump(const Vec3d &pseudo_n_jump, const Mat3d &transformation_matrix);
 
-		private:
-			void setAbscissasAndWeights() 
-			{
-				if (numberOfNodes == 3)
-				{
-					xi[0] = -0.774596669241483377035853079956;
-					xi[1] = 0.000000000000000000000000000000;
-					xi[2] = 0.774596669241483377035853079956;
-
-					wi[0] = 0.555555555555555555555555555556;
-					wi[1] = 0.888888888888888888888888888889;
-					wi[2] = 0.555555555555555555555555555556;
-				}
-				else if (numberOfNodes == 5)
-				{
-					xi[0] = -0.906179845938663992797626878299;
-					xi[1] = -0.538469310105683091036314420700;
-					xi[2] = 0.000000000000000000000000000000;
-					xi[3] = 0.538469310105683091036314420700;
-					xi[4] = 0.906179845938663992797626878299;
-
-					wi[0] = 0.236926885056189087514264040720;
-					wi[1] = 0.478628670499366468041291514836;
-					wi[2] = 0.568888888888888888888888888889;
-					wi[3] = 0.478628670499366468041291514836;
-					wi[4] = 0.236926885056189087514264040720;
-				}
-				else
-				{
-					std::cout << "Illegal number of nodes for Gaussian Integration: n = " << numberOfNodes << std::endl;
-					std::cout << "Legal values are 3 or 5" << std::endl;
-					exit(1);
-				}
-			}
-
-			const int numberOfNodes;
-			std::vector<Real> xi;
-			std::vector<Real> wi;
-		};
+		/** get the corrected Eulerian Almansi strain tensor according to plane stress problem. */
+		Mat2d getCorrectedAlmansiStrain(const Mat2d &current_local_almansi_strain, const Real &nu_);
+		Mat3d getCorrectedAlmansiStrain(const Mat3d &current_local_almansi_strain, const Real &nu_);
 	}
 }
 #endif //THIN_STRUCTURE_MATH_H

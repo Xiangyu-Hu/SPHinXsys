@@ -131,7 +131,7 @@ int main(int ac, char *av[])
 	solid_dynamics::ContactDensitySummation free_cubic_update_contact_density(free_cubic_contact);
 	solid_dynamics::ContactForce free_cubic_compute_solid_contact_forces(free_cubic_contact);
 	/** Damping*/
-	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec2d>>
+	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
 		damping(free_cubic_inner, 0.5, "Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
@@ -139,7 +139,7 @@ int main(int ac, char *av[])
 	/** Output the body states. */
 	BodyStatesRecordingToVtp body_states_recording(in_output, sph_system.real_bodies_);
 	/** Observer and output. */
-	RegressionTestEnsembleAveraged<ObservedQuantityRecording<indexVector, Vecd>>
+	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Vecd>>
 		write_free_cubic_displacement("Position", in_output, free_cubic_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

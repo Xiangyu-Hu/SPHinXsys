@@ -234,7 +234,7 @@ namespace SPH
 			//the size should be the same as that in the base particles
 			species_s_[m].resize(this->particles_->real_particles_bound_);
 			//register data in base particles
-			std::get<indexScalar>(this->particles_->all_particle_data_).push_back(&species_s_[m]);
+			std::get<0>(this->particles_->all_particle_data_).push_back(&species_s_[m]);
 		}
 	}
 	//=================================================================================================//

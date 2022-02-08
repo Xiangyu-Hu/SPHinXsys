@@ -26,7 +26,7 @@ namespace SPH
 			  surface_indicator_(particles_->surface_indicator_),
 			  smoothing_length_(inner_relation.sph_body_->sph_adaptation_->ReferenceSmoothingLength())
 		{
-			particles_->registerAVariable<indexScalar, Real>(pos_div_, "PositionDivergence");
+			particles_->registerAVariable<Real>(pos_div_, "PositionDivergence");
 		}
 		//=================================================================================================//
 		void FreeSurfaceIndicationInner::Interaction(size_t index_i, Real dt)
@@ -237,8 +237,8 @@ namespace SPH
 			  FluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), vel_n_(particles_->vel_n_)
 		{
-			particles_->registerAVariable<indexAngularVector, AngularVecd>(vorticity_, "VorticityInner");
-			particles_->addAVariableToWrite<indexAngularVector, AngularVecd>("VorticityInner");
+			particles_->registerAVariable<AngularVecd>(vorticity_, "VorticityInner");
+			particles_->addAVariableToWrite<AngularVecd>("VorticityInner");
 		}
 		//=================================================================================================//
 		void VorticityInner::Interaction(size_t index_i, Real dt)
@@ -331,22 +331,22 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		PressureRelaxationRiemannInnerOldroyd_B ::
-			PressureRelaxationRiemannInnerOldroyd_B(BaseBodyRelationInner &inner_relation)
-			: PressureRelaxationRiemannInner(inner_relation),
+		PressureRelaxationInnerOldroyd_B ::
+			PressureRelaxationInnerOldroyd_B(BaseBodyRelationInner &inner_relation)
+			: PressureRelaxationDissipativeRiemannInner(inner_relation),
 			  tau_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_->base_particles_)->tau_),
 			  dtau_dt_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_->base_particles_)->dtau_dt_) {}
 		//=================================================================================================//
-		void PressureRelaxationRiemannInnerOldroyd_B::Initialization(size_t index_i, Real dt)
+		void PressureRelaxationInnerOldroyd_B::Initialization(size_t index_i, Real dt)
 		{
-			PressureRelaxationRiemannInner::Initialization(index_i, dt);
+			PressureRelaxationDissipativeRiemannInner::Initialization(index_i, dt);
 
 			tau_[index_i] += dtau_dt_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
-		void PressureRelaxationRiemannInnerOldroyd_B::Interaction(size_t index_i, Real dt)
+		void PressureRelaxationInnerOldroyd_B::Interaction(size_t index_i, Real dt)
 		{
-			PressureRelaxationRiemannInner::Interaction(index_i, dt);
+			PressureRelaxationDissipativeRiemannInner::Interaction(index_i, dt);
 
 			Real rho_i = rho_n_[index_i];
 			Matd tau_i = tau_[index_i];
@@ -365,20 +365,20 @@ namespace SPH
 			dvel_dt_[index_i] += acceleration;
 		}
 		//=================================================================================================//
-		DensityRelaxationRiemannInnerOldroyd_B::
-			DensityRelaxationRiemannInnerOldroyd_B(BaseBodyRelationInner &inner_relation)
-			: DensityRelaxationRiemannInner(inner_relation),
+		DensityRelaxationInnerOldroyd_B::
+			DensityRelaxationInnerOldroyd_B(BaseBodyRelationInner &inner_relation)
+			: DensityRelaxationDissipativeRiemannInner(inner_relation),
 			  tau_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_->base_particles_)->tau_),
 			  dtau_dt_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_->base_particles_)->dtau_dt_)
 		{
-			Oldroyd_B_Fluid *oldroy_b_fluid = DynamicCast<Oldroyd_B_Fluid>(this,sph_body_->base_particles_->base_material_);
+			Oldroyd_B_Fluid *oldroy_b_fluid = DynamicCast<Oldroyd_B_Fluid>(this, sph_body_->base_particles_->base_material_);
 			mu_p_ = oldroy_b_fluid->ReferencePolymericViscosity();
 			lambda_ = oldroy_b_fluid->getReferenceRelaxationTime();
 		}
 		//=================================================================================================//
-		void DensityRelaxationRiemannInnerOldroyd_B::Interaction(size_t index_i, Real dt)
+		void DensityRelaxationInnerOldroyd_B::Interaction(size_t index_i, Real dt)
 		{
-			DensityRelaxationRiemannInner::Interaction(index_i, dt);
+			DensityRelaxationDissipativeRiemannInner::Interaction(index_i, dt);
 
 			Vecd vel_i = vel_n_[index_i];
 			Matd tau_i = tau_[index_i];
@@ -398,9 +398,9 @@ namespace SPH
 			dtau_dt_[index_i] = stress_rate;
 		}
 		//=================================================================================================//
-		void DensityRelaxationRiemannInnerOldroyd_B::Update(size_t index_i, Real dt)
+		void DensityRelaxationInnerOldroyd_B::Update(size_t index_i, Real dt)
 		{
-			DensityRelaxationRiemannInner::Update(index_i, dt);
+			DensityRelaxationDissipativeRiemannInner::Update(index_i, dt);
 
 			tau_[index_i] += dtau_dt_[index_i] * dt * 0.5;
 		}
@@ -414,6 +414,11 @@ namespace SPH
 		{
 			vel_n_[index_i] +=
 				relaxation_rate_ * (getTargetVelocity(pos_n_[index_i], vel_n_[index_i]) - vel_n_[index_i]);
+		}
+		InflowBoundaryCondition::InflowBoundaryCondition(FluidBody& fluid_body, BodyPartByCell& body_part)
+			: FlowRelaxationBuffer(fluid_body, body_part) 
+		{
+			relaxation_rate_ = 1.0;
 		}
 		//=================================================================================================//
 		DampingBoundaryCondition::
@@ -492,19 +497,10 @@ namespace SPH
 			: density_summation_(fluid_body, near_surface), pressure_relaxation_(fluid_body, near_surface),
 			  density_relaxation_(fluid_body, near_surface) {}
 		//=================================================================================================//
-		InflowCondition::InflowCondition(FluidBody &fluid_body, BodyPartByParticle &body_part)
-			: PartSimpleDynamicsByParticle(fluid_body, body_part), FluidDataSimple(fluid_body),
-			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_) {}
-		//=================================================================================================//
-		void InflowCondition ::Update(size_t unsorted_index_i, Real dt)
-		{
-			size_t sorted_index_i = sorted_id_[unsorted_index_i];
-			vel_n_[sorted_index_i] = getTargetVelocity(pos_n_[sorted_index_i], vel_n_[sorted_index_i]);
-		}
-		//=================================================================================================//
 		EmitterInflowCondition::
 			EmitterInflowCondition(FluidBody &fluid_body, BodyPartByParticle &body_part)
-			: InflowCondition(fluid_body, body_part),
+			: PartSimpleDynamicsByParticle(fluid_body, body_part), FluidDataSimple(fluid_body),
+			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_),
 			  rho_n_(particles_->rho_n_), p_(particles_->p_), inflow_pressure_(0),
 			  rho0_(material_->ReferenceDensity()) {}
 		//=================================================================================================//
@@ -580,11 +576,11 @@ namespace SPH
 			: InteractionDynamics(*inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_),
 			  surface_indicator_(particles_->surface_indicator_),
-			  pos_div_(*particles_->getVariableByName<indexScalar, Real>("PositionDivergence")),
+			  pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
 			  thereshold_by_dimensions_((0.75 * (Real)Dimensions))
 		{
-			particles_->registerAVariable<indexVector, Vecd>(color_grad_, "ColorGradient");
-			particles_->registerAVariable<indexVector, Vecd>(surface_norm_, "SurfaceNormal");
+			particles_->registerAVariable<Vecd>(color_grad_, "ColorGradient");
+			particles_->registerAVariable<Vecd>(surface_norm_, "SurfaceNormal");
 		}
 		//=================================================================================================//
 		void ColorFunctionGradientInner::Interaction(size_t index_i, Real dt)
@@ -606,14 +602,14 @@ namespace SPH
 		ColorFunctionGradientInterplationInner::ColorFunctionGradientInterplationInner(BaseBodyRelationInner &inner_relation)
 			: InteractionDynamics(*inner_relation.sph_body_), FluidDataInner(inner_relation), Vol_(particles_->Vol_),
 			  surface_indicator_(particles_->surface_indicator_),
-			  color_grad_(*particles_->getVariableByName<indexVector, Vecd>("ColorGradient")),
-			  surface_norm_(*particles_->getVariableByName<indexVector, Vecd>("SurfaceNormal")),
-			  pos_div_(*particles_->getVariableByName<indexScalar, Real>("PositionDivergence")),
+			  color_grad_(*particles_->getVariableByName<Vecd>("ColorGradient")),
+			  surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")),
+			  pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
 			  thereshold_by_dimensions_((0.75 * (Real)Dimensions))
 
 		{
-			particles_->addAVariableToWrite<indexVector, Vecd>("SurfaceNormal");
-			particles_->addAVariableToWrite<indexVector, Vecd>("ColorGradient");
+			particles_->addAVariableToWrite<Vecd>("SurfaceNormal");
+			particles_->addAVariableToWrite<Vecd>("ColorGradient");
 		}
 		//=================================================================================================//
 		void ColorFunctionGradientInterplationInner::Interaction(size_t index_i, Real dt)
@@ -646,8 +642,8 @@ namespace SPH
 			  mass_(particles_->mass_),
 			  dvel_dt_prior_(particles_->dvel_dt_prior_),
 			  surface_indicator_(particles_->surface_indicator_),
-			  color_grad_(*particles_->getVariableByName<indexVector, Vecd>("ColorGradient")),
-			  surface_norm_(*particles_->getVariableByName<indexVector, Vecd>("SurfaceNormal")) {}
+			  color_grad_(*particles_->getVariableByName<Vecd>("ColorGradient")),
+			  surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")) {}
 		//=================================================================================================//
 		SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseBodyRelationInner &inner_relation)
 			: SurfaceTensionAccelerationInner(inner_relation, 1.0) {}

@@ -274,34 +274,34 @@ namespace SPH
 		using DensityRelaxationRiemannWithWall = BaseDensityRelaxationWithWall<DensityRelaxationRiemannInner>;
 
 		/**
-		* @class PressureRelaxationRiemannWithWallOldroyd_B
+		* @class PressureRelaxationWithWallOldroyd_B
 		* @brief  first half of the pressure relaxation scheme using Riemann solver.
 		*/
-		class PressureRelaxationRiemannWithWallOldroyd_B : public PressureRelaxation<PressureRelaxationRiemannInnerOldroyd_B>
+		class PressureRelaxationWithWallOldroyd_B : public PressureRelaxation<PressureRelaxationInnerOldroyd_B>
 		{
 		public:
-			explicit PressureRelaxationRiemannWithWallOldroyd_B(ComplexBodyRelation &fluid_wall_relation)
-				: PressureRelaxation<PressureRelaxationRiemannInnerOldroyd_B>(fluid_wall_relation.inner_relation_,
+			explicit PressureRelaxationWithWallOldroyd_B(ComplexBodyRelation &fluid_wall_relation)
+				: PressureRelaxation<PressureRelaxationInnerOldroyd_B>(fluid_wall_relation.inner_relation_,
 																			  fluid_wall_relation.contact_relation_){};
 
-			virtual ~PressureRelaxationRiemannWithWallOldroyd_B(){};
+			virtual ~PressureRelaxationWithWallOldroyd_B(){};
 
 		protected:
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
-		* @class DensityRelaxationRiemannWithWallOldroyd_B
+		* @class DensityRelaxationWithWallOldroyd_B
 		* @brief  second half of the pressure relaxation scheme using Riemann solver.
 		*/
-		class DensityRelaxationRiemannWithWallOldroyd_B : public DensityRelaxation<DensityRelaxationRiemannInnerOldroyd_B>
+		class DensityRelaxationWithWallOldroyd_B : public DensityRelaxation<DensityRelaxationInnerOldroyd_B>
 		{
 		public:
-			explicit DensityRelaxationRiemannWithWallOldroyd_B(ComplexBodyRelation &fluid_wall_relation)
-				: DensityRelaxation<DensityRelaxationRiemannInnerOldroyd_B>(fluid_wall_relation.inner_relation_,
+			explicit DensityRelaxationWithWallOldroyd_B(ComplexBodyRelation &fluid_wall_relation)
+				: DensityRelaxation<DensityRelaxationInnerOldroyd_B>(fluid_wall_relation.inner_relation_,
 																			fluid_wall_relation.contact_relation_){};
 
-			virtual ~DensityRelaxationRiemannWithWallOldroyd_B(){};
+			virtual ~DensityRelaxationWithWallOldroyd_B(){};
 
 		protected:
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;

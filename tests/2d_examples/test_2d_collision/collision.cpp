@@ -226,15 +226,15 @@ int main(int ac, char *av[])
 	solid_dynamics::ContactDensitySummation damping_ball_update_contact_density(damping_ball_contact);
 	solid_dynamics::ContactForce damping_ball_compute_solid_contact_forces(damping_ball_contact);
 	/** Damping for one ball */
-	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec2d>>
+	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
 		damping(damping_ball_inner, 0.5, "Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp body_states_recording(in_output, sph_system.real_bodies_);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<indexVector, Vecd>>
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		free_ball_displacement_recording("Position", in_output, free_ball_observer_contact);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<indexVector, Vecd>>
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		damping_ball_displacement_recording("Position", in_output, damping_all_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

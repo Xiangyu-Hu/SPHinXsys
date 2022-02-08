@@ -36,17 +36,16 @@
 #include <vector>
 #include <map>
 
-namespace SPH {
+namespace SPH
+{
 
-	template<int N, class T>
+	template <int N, class T>
 	class SVec
 	{
 	private:
-
 		T v[N];
 
 	public:
-
 		SVec<N, T>()
 		{
 			for (int i = 0; i < N; ++i)
@@ -59,7 +58,7 @@ namespace SPH {
 				v[i] = value_for_all;
 		}
 
-		template<class S>
+		template <class S>
 		explicit SVec<N, T>(const S *source)
 		{
 			for (int i = 0; i < N; ++i)
@@ -67,14 +66,14 @@ namespace SPH {
 		}
 
 		template <class S>
-		explicit SVec<N, T>(const SVec<N, S>& source)
+		explicit SVec<N, T>(const SVec<N, S> &source)
 		{
 			for (int i = 0; i < N; ++i)
 				v[i] = (T)source[i];
 		}
 
 		template <class S>
-		explicit SVec<N, T>(const SimTK::Vec<N, S>& source)
+		explicit SVec<N, T>(const SimTK::Vec<N, S> &source)
 		{
 			for (int i = 0; i < N; ++i)
 				v[i] = (T)source[i];
@@ -82,12 +81,15 @@ namespace SPH {
 
 		SVec<N, T>(T v0, T v1)
 		{
-			v[0] = v0; v[1] = v1;
+			v[0] = v0;
+			v[1] = v1;
 		}
 
 		SVec<N, T>(T v0, T v1, T v2)
 		{
-			v[0] = v0; v[1] = v1; v[2] = v2;
+			v[0] = v0;
+			v[1] = v1;
+			v[2] = v2;
 		}
 
 		T &operator[](int index)
@@ -101,15 +103,16 @@ namespace SPH {
 			assert(index >= 0 && index < N);
 			return v[index];
 		}
-		
+
 		bool nonzero(void) const
 		{
 			for (int i = 0; i < N; ++i)
-				if (v[i]) return true;
+				if (v[i])
+					return true;
 			return false;
 		}
 
-		bool operator==(const SVec<N, T>& b) const
+		bool operator==(const SVec<N, T> &b) const
 		{
 			bool res = true;
 			for (int i = 0; i < N; ++i)
@@ -117,7 +120,7 @@ namespace SPH {
 			return res;
 		}
 
-		bool operator!=(const SVec<N, T>& b) const
+		bool operator!=(const SVec<N, T> &b) const
 		{
 			bool res = false;
 			for (int i = 0; i < N; ++i)
@@ -126,7 +129,7 @@ namespace SPH {
 		}
 
 		// Arithmetic operators
-		SVec<N, T> operator=(const SVec<N, T>& b)
+		SVec<N, T> operator=(const SVec<N, T> &b)
 		{
 			for (int i = 0; i < N; ++i)
 				v[i] = b.v[i];
@@ -218,7 +221,7 @@ namespace SPH {
 			w *= a;
 			return w;
 		}
-		
+
 		SVec<N, T> operator*=(const SVec<N, T> &w)
 		{
 			for (int i = 0; i < N; ++i)
@@ -264,7 +267,7 @@ namespace SPH {
 		}
 	};
 
-	template<int N, class T>
+	template <int N, class T>
 	std::ostream &operator<<(std::ostream &out, const SVec<N, T> &v)
 	{
 		out << '[' << v[0];
@@ -274,8 +277,8 @@ namespace SPH {
 		return out;
 	}
 
-	template<int N, class T>
-	std::istream &operator >> (std::istream &in, SVec<N, T> &v)
+	template <int N, class T>
+	std::istream &operator>>(std::istream &in, SVec<N, T> &v)
 	{
 		in >> v[0];
 		for (int i = 1; i < N; ++i)
@@ -296,8 +299,8 @@ namespace SPH {
 
 	//useful float point constants s
 	const Real Pi = Real(M_PI);
-	using SimTK::Infinity;
 	using SimTK::Eps;
+	using SimTK::Infinity;
 	using SimTK::TinyReal;
 	constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
 
@@ -312,11 +315,42 @@ namespace SPH {
 	using SymMat2d = SimTK::SymMat22;
 	using SymMat3d = SimTK::SymMat33;
 
-	//particle data type index
-	const int indexScalar = 0;
-	const int indexVector = 1;
-	const int indexMatrix = 2;
-	const int indexInteger = 3;
+	//type trait for particle data type index
+	template <typename T>
+	struct ParticleDataTypeIndex
+	{
+		static constexpr int value = std::numeric_limits<int>::max();
+	};
+	template <>
+	struct ParticleDataTypeIndex<Real>
+	{
+		static constexpr int value = 0;
+	};
+	template <>
+	struct ParticleDataTypeIndex<Vec2d>
+	{
+		static constexpr int value = 1;
+	};
+	template <>
+	struct ParticleDataTypeIndex<Vec3d>
+	{
+		static constexpr int value = 1;
+	};
+	template <>
+	struct ParticleDataTypeIndex<Mat2d>
+	{
+		static constexpr int value = 2;
+	};
+	template <>
+	struct ParticleDataTypeIndex<Mat3d>
+	{
+		static constexpr int value = 2;
+	};
+	template <>
+	struct ParticleDataTypeIndex<int>
+	{
+		static constexpr int value = 3;
+	};
 
 	//verbal boolean for positive and negative axis directions
 	const int xAxis = 0;
@@ -325,33 +359,35 @@ namespace SPH {
 	const bool positiveDirection = true;
 	const bool negativeDirection = false;
 
-
 	/**
 	 * @class Transform2d
 	 * @brief Coordinate transfrom in 2D
 	 */
-	class Transform2d 
+	class Transform2d
 	{
 		Real rotation_angle_;
 		Vec2d translation_;
+
 	public:
 		Transform2d(SimTK::Real rotation_angle)
-			: rotation_angle_(rotation_angle), translation_(0) {};
+			: rotation_angle_(rotation_angle), translation_(0){};
 		Transform2d(SimTK::Real rotation_angle, Vec2d translation)
-			: rotation_angle_(rotation_angle), translation_(translation) {};
+			: rotation_angle_(rotation_angle), translation_(translation){};
 		/** Forward tranformation. */
-		Vec2d imposeTransform(Vec2d& origin) {
+		Vec2d imposeTransform(Vec2d &origin)
+		{
 			Vec2d target(origin[0] * cos(rotation_angle_) - origin[1] * sin(rotation_angle_),
-				origin[1] * cos(rotation_angle_) + origin[0] * sin(rotation_angle_));
-				return target + translation_;
+						 origin[1] * cos(rotation_angle_) + origin[0] * sin(rotation_angle_));
+			return target + translation_;
 		};
 		/** Inverse tranformation. */
-		Vec2d imposeInverseTransform(Vec2d& target) {
+		Vec2d imposeInverseTransform(Vec2d &target)
+		{
 			Vec2d origin(target[0] * cos(-rotation_angle_) - target[1] * sin(-rotation_angle_),
-			 target[1] * cos(-rotation_angle_) + target[0] * sin(-rotation_angle_));
+						 target[1] * cos(-rotation_angle_) + target[0] * sin(-rotation_angle_));
 			return origin - translation_;
 		};
-	};	
+	};
 
 	/**
 	 * @class Transform3d

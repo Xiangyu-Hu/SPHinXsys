@@ -1,9 +1,9 @@
 /**
- * @file 	eulerian_fluid_dynamics.cpp
- * @author	Chi ZHang, Xiangyu Hu and Zhentong Wang
+ * @file 	eulerian_compressible_fluid_dynamics.cpp
+ * @author	Zhentong Wang,Chi Zhang and Xiangyu Hu
  */
 
-#include "eulerian_fluid_dynamics_inner.h"
+#include "eulerian_compressible_fluid_dynamics_inner.h"
 
 //=================================================================================================//
 using namespace std;
@@ -11,7 +11,7 @@ using namespace std;
 namespace SPH
 {
 	//=================================================================================================//
-	namespace eulerian_fluid_dynamics
+	namespace eulerian_compressible_fluid_dynamics
 	{
 		//=================================================================================================//
 		CompressibleFlowTimeStepInitialization::CompressibleFlowTimeStepInitialization(SPHBody &sph_body)

@@ -14,8 +14,6 @@ namespace SPH {
 	using Matd = Mat2d;
 	using SymMatd = SymMat2d;
 	using AngularVecd = Real;
-	const int indexAngularVector = 0;
-
 
 	using Transformd = Transform2d;
 

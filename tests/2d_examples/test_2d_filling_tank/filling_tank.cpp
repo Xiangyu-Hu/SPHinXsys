@@ -138,7 +138,7 @@ int main()
 	FluidParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f));
 	/**note that, as particle sort is activated (by default) for fluid particles, 
 	 * the output occasionally does not reflect the real free surface indication due to sorting. */
-	fluid_particles.addAVariableToWrite<indexInteger, int>("SurfaceIndicator");
+	fluid_particles.addAVariableToWrite<int>("SurfaceIndicator");
 
 	WallBoundary wall_boundary(system, "Wall");
 	SolidParticles wall_particles(wall_boundary);
@@ -164,8 +164,8 @@ int main()
 	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_block_complex);
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex indicate_free_surface(water_block_complex);
 	/** We can output a method-specific particle data for debug */
-	fluid_particles.addAVariableToWrite<indexScalar, Real>("PositionDivergence");
-	fluid_particles.addAVariableToWrite<indexInteger, int>("SurfaceIndicator");
+	fluid_particles.addAVariableToWrite<Real>("PositionDivergence");
+	fluid_particles.addAVariableToWrite<int>("SurfaceIndicator");
 	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_block, U_f);
 	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
 	fluid_dynamics::PressureRelaxationRiemannWithWall pressure_relaxation(water_block_complex);
@@ -178,7 +178,7 @@ int main()
 	RestartIO restart_io(in_output, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
 		write_water_mechanical_energy(in_output, water_block, gravity);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<indexScalar, Real>>
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact_relation);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

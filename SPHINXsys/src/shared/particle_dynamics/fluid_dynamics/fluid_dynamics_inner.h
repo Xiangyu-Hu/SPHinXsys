@@ -153,7 +153,7 @@ namespace SPH
 		public:
 			explicit DensitySummationFreeStreamInner(BaseBodyRelationInner &inner_relation)
 				: DensitySummationFreeSurfaceInner(inner_relation),
-				  surface_indicator_(*particles_->getVariableByName<indexInteger, int>("SurfaceIndicator")){};
+				  surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")){};
 			virtual ~DensitySummationFreeStreamInner(){};
 
 		protected:
@@ -359,7 +359,7 @@ namespace SPH
 				  FluidDataInner(inner_relation), u_ref_(1.0), t_ref_(2.0),
 				  rho_ref_(material_->ReferenceDensity()), rho_sum(particles_->rho_sum_),
 				  vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
-				  surface_indicator_(*particles_->getVariableByName<indexInteger, int>("SurfaceIndicator")){};
+				  surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")){};
 			virtual ~FreeStreamBoundaryVelocityCorrection(){};
 
 		protected:
@@ -389,6 +389,7 @@ namespace SPH
 		using DensityRelaxationInner = BaseDensityRelaxationInner<NoRiemannSolver>;
 		/** define the mostly used density relaxation scheme using Riemann solver */
 		using DensityRelaxationRiemannInner = BaseDensityRelaxationInner<AcousticRiemannSolver>;
+		using DensityRelaxationDissipativeRiemannInner = BaseDensityRelaxationInner<DissipativeRiemannSolver>;
 
 		/**
 		 * @class Oldroyd_B_FluidInitialCondition
@@ -404,14 +405,14 @@ namespace SPH
 		};
 
 		/**
-		* @class PressureRelaxationRiemannInnerOldroyd_B
+		* @class PressureRelaxationInnerOldroyd_B
 		* @brief Pressure relaxation scheme with the mostly used Riemann solver.
 		*/
-		class PressureRelaxationRiemannInnerOldroyd_B : public PressureRelaxationRiemannInner
+		class PressureRelaxationInnerOldroyd_B : public PressureRelaxationDissipativeRiemannInner
 		{
 		public:
-			explicit PressureRelaxationRiemannInnerOldroyd_B(BaseBodyRelationInner &inner_relation);
-			virtual ~PressureRelaxationRiemannInnerOldroyd_B(){};
+			explicit PressureRelaxationInnerOldroyd_B(BaseBodyRelationInner &inner_relation);
+			virtual ~PressureRelaxationInnerOldroyd_B(){};
 
 		protected:
 			StdLargeVec<Matd> &tau_, &dtau_dt_;
@@ -420,14 +421,14 @@ namespace SPH
 		};
 
 		/**
-		* @class DensityRelaxationRiemannInnerOldroyd_B
+		* @class DensityRelaxationInnerOldroyd_B
 		* @brief Density relaxation scheme with the mostly used Riemann solver.
 		*/
-		class DensityRelaxationRiemannInnerOldroyd_B : public DensityRelaxationRiemannInner
+		class DensityRelaxationInnerOldroyd_B : public DensityRelaxationDissipativeRiemannInner
 		{
 		public:
-			explicit DensityRelaxationRiemannInnerOldroyd_B(BaseBodyRelationInner &inner_relation);
-			virtual ~DensityRelaxationRiemannInnerOldroyd_B(){};
+			explicit DensityRelaxationInnerOldroyd_B(BaseBodyRelationInner &inner_relation);
+			virtual ~DensityRelaxationInnerOldroyd_B(){};
 
 		protected:
 			StdLargeVec<Matd> &tau_, &dtau_dt_;
@@ -461,15 +462,12 @@ namespace SPH
 
 		/**
 		 * @class InflowBoundaryCondition
-		 * @brief inflow boundary condition which relaxes
-		 * the particles to a given velocity profile.
+		 * @brief Inflow boundary condition which imposes directly to a given velocity profile.
 		 */
 		class InflowBoundaryCondition : public FlowRelaxationBuffer
 		{
 		public:
-			InflowBoundaryCondition(FluidBody &fluid_body, BodyPartByCell &body_part)
-				: FlowRelaxationBuffer(fluid_body, body_part){};
-			;
+			InflowBoundaryCondition(FluidBody &fluid_body, BodyPartByCell &body_part);
 			virtual ~InflowBoundaryCondition(){};
 		};
 
@@ -565,41 +563,25 @@ namespace SPH
 		};
 
 		/**
-		 * @class InflowCondition
-		 * @brief Inflow boundary condition which impose target velocity profile.
-		 * The body part region is required to have parallel lower- and upper-bound surfaces.
-		 */
-		class InflowCondition : public PartSimpleDynamicsByParticle, public FluidDataSimple
-		{
-		public:
-			explicit InflowCondition(FluidBody &fluid_body, BodyPartByParticle &body_part);
-			virtual ~InflowCondition(){};
-
-		protected:
-			StdLargeVec<Vecd> &pos_n_, &vel_n_;
-
-			/** inflow velocity profile to be defined in applications */
-			virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) = 0;
-			virtual void Update(size_t unsorted_index_i, Real dt = 0.0) override;
-		};
-
-		/**
 		 * @class EmitterInflowCondition
 		 * @brief Inflow boundary condition imposed on an emitter, in which pressure and density profile are imposed too.
 		 * The body part region is required to have parallel lower- and upper-bound surfaces.
 		 */
-		class EmitterInflowCondition : public InflowCondition
+		class EmitterInflowCondition : public PartSimpleDynamicsByParticle, public FluidDataSimple
 		{
 		public:
 			explicit EmitterInflowCondition(FluidBody &fluid_body, BodyPartByParticle &body_part);
 			virtual ~EmitterInflowCondition(){};
 
 		protected:
+			StdLargeVec<Vecd> &pos_n_, &vel_n_;
 			StdLargeVec<Real> &rho_n_, &p_;
 			/** inflow pressure condition */
 			Real inflow_pressure_;
 			Real rho0_;
 
+			/** inflow velocity profile to be defined in applications */
+			virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) = 0;
 			virtual void Update(size_t unsorted_index_i, Real dt = 0.0) override;
 		};
 

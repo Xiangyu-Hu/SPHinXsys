@@ -56,6 +56,11 @@ namespace SPH
 		return level_set_->probeNormalDirection(input_pnt);
 	}
 	//=================================================================================================//
+	Vecd LevelSetShape::findNoneNormalizedNormalDirection(const Vecd& input_pnt)
+	{
+		return level_set_->probeNoneNormalizedNormalDirection(input_pnt);
+	}
+	//=================================================================================================//
 	bool LevelSetShape::checkNotFar(const Vecd &input_pnt, Real threshold)
 	{
 		return level_set_->probeIsWithinMeshBound(input_pnt);
