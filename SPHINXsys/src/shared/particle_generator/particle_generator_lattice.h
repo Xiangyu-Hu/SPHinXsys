@@ -32,11 +32,10 @@
 #ifndef PARTICLE_GENERATOR_LATTICE_H
 #define PARTICLE_GENERATOR_LATTICE_H
 
-
-
 #include "base_particle_generator.h"
 
-namespace SPH {
+namespace SPH
+{
 
 	class ComplexShape;
 	class ParticleSpacingByBodyShape;
@@ -49,17 +48,18 @@ namespace SPH {
 	{
 	public:
 		ParticleGeneratorLattice();
-		virtual ~ParticleGeneratorLattice() {};
+		virtual ~ParticleGeneratorLattice(){};
 
-		virtual void initialize(SPHBody* sph_body) override;
-		virtual void createBaseParticles(BaseParticles* base_particles) override;
+		virtual void initialize(SPHBody *sph_body) override;
+		virtual void createBaseParticles(BaseParticles *base_particles) override;
+
 	protected:
 		Real lattice_spacing_;
 		BoundingBox domain_bounds_;
-		ComplexShape* body_shape_;
+		ComplexShape *body_shape_;
 
-		virtual void createABaseParticle(BaseParticles* base_particles, 
-			Vecd& particle_position, Real particle_volume);
+		virtual void createABaseParticle(BaseParticles *base_particles,
+										 Vecd &particle_position, Real particle_volume);
 	};
 
 	/**
@@ -70,13 +70,37 @@ namespace SPH {
 	{
 	public:
 		ParticleGeneratorMultiResolution();
-		virtual ~ParticleGeneratorMultiResolution() {};
-		virtual void initialize(SPHBody* sph_body) override;
-	protected:
-		ParticleSpacingByBodyShape* particle_adapation_;
+		virtual ~ParticleGeneratorMultiResolution(){};
+		virtual void initialize(SPHBody *sph_body) override;
 
-		virtual void createABaseParticle(BaseParticles* base_particles,
-			Vecd& particle_position, Real particle_volume) override;
+	protected:
+		ParticleSpacingByBodyShape *particle_adapation_;
+
+		virtual void createABaseParticle(BaseParticles *base_particles,
+										 Vecd &particle_position, Real particle_volume) override;
+	};
+
+	/**
+	* @class ShellParticleGeneratorLattice
+	* @brief generate particles from lattice positions for a shell body.
+	*/
+	class ShellParticleGeneratorLattice : public ParticleGeneratorLattice
+	{
+	public:
+		ShellParticleGeneratorLattice(Real global_avg_thickness);
+		virtual ~ShellParticleGeneratorLattice() {};
+
+		virtual void initialize(SPHBody* sph_body) override;
+		virtual void createBaseParticles(BaseParticles* base_particles) override;
+
+	protected:
+		Real total_volume_;              /** Calculated from level set. */
+		Real global_avg_thickness_;
+		Real particle_spacing_;
+		Real avg_particle_volume_;
+
+		size_t number_of_cells_;
+		size_t planned_number_of_particles_;
 	};
 }
 #endif //PARTICLE_GENERATOR_LATTICE_H

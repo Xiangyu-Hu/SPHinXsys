@@ -6,16 +6,16 @@
 #include "cell_linked_list.h"
 #include "base_kernel.h"
 #include "base_body.h"
-#include "particle_adaptation.h"
+#include "adaptation.h"
 #include "base_particles.h"
 
 namespace SPH
 {
 	//=================================================================================================//
 	BaseCellLinkedList::
-		BaseCellLinkedList(SPHBody &sph_body, ParticleAdaptation &particle_adaptation)
+		BaseCellLinkedList(SPHBody &sph_body, SPHAdaptation &sph_adaptation)
 		: BaseMeshField("CellLinkedList"),
-		  sph_body_(sph_body), kernel_(*particle_adaptation.getKernel()), base_particles_(nullptr) {}
+		  sph_body_(sph_body), kernel_(*sph_adaptation.getKernel()), base_particles_(nullptr) {}
 	//=================================================================================================//
 	void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
 	{
@@ -24,8 +24,8 @@ namespace SPH
 	}
 	//=================================================================================================//
 	CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
-										   SPHBody &sph_body, ParticleAdaptation &particle_adaptation)
-		: BaseCellLinkedList(sph_body, particle_adaptation), Mesh(tentative_bounds, grid_spacing, 2)
+										   SPHBody &sph_body, SPHAdaptation &sph_adaptation)
+		: BaseCellLinkedList(sph_body, sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2)
 	{
 		allocateMeshDataMatrix();
 	}
@@ -73,12 +73,12 @@ namespace SPH
 	MultilevelCellLinkedList::
 		MultilevelCellLinkedList(BoundingBox tentative_bounds, Real reference_grid_spacing,
 									 size_t total_levels, Real maximum_spacing_ratio,
-									 SPHBody &sph_body, ParticleAdaptation &particle_adaptation)
+									 SPHBody &sph_body, SPHAdaptation &sph_adaptation)
 		: MultilevelMesh<BaseCellLinkedList, CellLinkedList>(tentative_bounds,
 																	 reference_grid_spacing, total_levels,
 																	 maximum_spacing_ratio, sph_body,
-																	 particle_adaptation),
-		  h_ratio_(dynamic_cast<ParticleWithLocalRefinement &>(particle_adaptation).h_ratio_) {}
+																	 sph_adaptation),
+		  h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_) {}
 	//=================================================================================================//
 	size_t MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
 	{

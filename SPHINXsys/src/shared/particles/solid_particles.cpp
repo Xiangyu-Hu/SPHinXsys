@@ -5,49 +5,49 @@
  */
 #include "solid_particles.h"
 
-#include "geometry.h"
 #include "base_body.h"
 #include "elastic_solid.h"
 #include "inelastic_solid.h"
 #include "xml_engine.h"
 
-namespace SPH {
+namespace SPH
+{
 	//=============================================================================================//
-	SolidParticles::SolidParticles(SPHBody* body)
-		: SolidParticles(body, new Solid()){}
-	//=============================================================================================//
-	SolidParticles::SolidParticles(SPHBody* body, Solid* solid)
-		: BaseParticles(body, solid)
+	SolidParticles::SolidParticles(SPHBody &sph_body,
+								   SharedPtr<Solid> shared_solid_ptr,
+								   SharedPtr<ParticleGenerator> particle_generator_ptr)
+		: BaseParticles(sph_body, shared_solid_ptr, particle_generator_ptr)
 	{
-		solid->assignSolidParticles(this);
+		shared_solid_ptr->assignSolidParticles(this);
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
-		registerAVariable<indexVector, Vecd>(pos_0_, "InitialPosition");
-		registerAVariable<indexVector, Vecd>(n_, "NormalDirection");
-		registerAVariable<indexVector, Vecd>(n_0_, "InitialNormalDirection");
-		registerAVariable<indexMatrix, Matd>(B_, "CorrectionMatrix", Matd(1.0));
+		registerAVariable<Vecd>(pos_0_, "InitialPosition");
+		registerAVariable<Vecd>(n_, "NormalDirection");
+		registerAVariable<Vecd>(n_0_, "InitialNormalDirection");
+		registerAVariable<Matd>(B_, "CorrectionMatrix", Matd(1.0));
 		//----------------------------------------------------------------------
 		//		for FSI
 		//----------------------------------------------------------------------
-		registerAVariable<indexVector, Vecd>(vel_ave_, "AverageVelocity");
-		registerAVariable<indexVector, Vecd>(dvel_dt_ave_, "AverageAcceleration");
-		registerAVariable<indexVector, Vecd>(force_from_fluid_, "ForceFromFluid");
+		registerAVariable<Vecd>(vel_ave_, "AverageVelocity");
+		registerAVariable<Vecd>(dvel_dt_ave_, "AverageAcceleration");
+		registerAVariable<Vecd>(force_from_fluid_, "ForceFromFluid");
 		//----------------------------------------------------------------------
 		//		For solid-solid contact
 		//----------------------------------------------------------------------
-		registerAVariable<indexScalar, Real>(contact_density_, "ContactDensity");
-		registerAVariable<indexVector, Vecd>(contact_force_, "ContactForce");
+		registerAVariable<Real>(contact_density_, "ContactDensity");
+		registerAVariable<Vecd>(contact_force_, "ContactForce");
 		//-----------------------------------------------------------------------------------------
 		//		register sortable particle data before building up particle configuration
 		//-----------------------------------------------------------------------------------------
-		registerASortableVariable<indexVector, Vecd>("Position");
-		registerASortableVariable<indexVector, Vecd>("InitialPosition");
-		registerASortableVariable<indexScalar, Real>("Volume");
+		registerASortableVariable<Vecd>("Position");
+		registerASortableVariable<Vecd>("InitialPosition");
+		registerASortableVariable<Real>("Volume");
 		//set the initial value for initial particle position
-		for (size_t i = 0; i != pos_n_.size(); ++i) pos_0_[i] =  pos_n_[i];
+		for (size_t i = 0; i != pos_n_.size(); ++i)
+			pos_0_[i] = pos_n_[i];
 		//sorting particle once
-		//dynamic_cast<RealBody*>(body)->sortParticleWithCellLinkedList();
+		//DynamicCast<RealBody>(this, body)->sortParticleWithCellLinkedList();
 	}
 	//=============================================================================================//
 	void SolidParticles::offsetInitialParticlePosition(Vecd offset)
@@ -59,41 +59,56 @@ namespace SPH {
 		}
 	}
 	//=================================================================================================//
-	void SolidParticles::initializeNormalDirectionFromGeometry()
+	void SolidParticles::initializeNormalDirectionFromBodyShape()
 	{
-		ComplexShape* body_shape = body_->body_shape_;
+		ComplexShape &body_shape = sph_body_->body_shape_;
 		for (size_t i = 0; i != total_real_particles_; ++i)
 		{
-			Vecd normal_direction = body_shape->findNormalDirection(pos_n_[i]);
+			Vecd normal_direction = body_shape.findNormalDirection(pos_n_[i]);
 			n_[i] = normal_direction;
 			n_0_[i] = normal_direction;
 		}
 	}
-	//=================================================================================================//	
-	Vecd SolidParticles::normalizeKernelGradient(size_t particle_index_i, Vecd& kernel_gradient) 
+	//=================================================================================================//
+	void SolidParticles::initializeNormalDirectionFromShapeAndOp(const std::string &shape_name)
 	{
-		return  B_[particle_index_i] * kernel_gradient;
+		ComplexShape &body_shape = sph_body_->body_shape_;
+		ShapeAndOp *shape_and_op = body_shape.getShapeAndOpByName(shape_name);
+		Real switch_sign = shape_and_op->second == ShapeBooleanOps::add ? 1.0 : -1.0;
+		for (size_t i = 0; i != total_real_particles_; ++i)
+		{
+			Vecd normal_direction = switch_sign * shape_and_op->first->findNormalDirection(pos_n_[i]);
+			n_[i] = normal_direction;
+			n_0_[i] = normal_direction;
+		}
 	}
 	//=================================================================================================//
-	Vecd SolidParticles::getKernelGradient(size_t particle_index_i, size_t particle_index_j, Real dW_ij, Vecd& e_ij) 
+	Vecd SolidParticles::normalizeKernelGradient(size_t particle_index_i, Vecd &kernel_gradient)
+	{
+		return B_[particle_index_i] * kernel_gradient;
+	}
+	//=================================================================================================//
+	Vecd SolidParticles::getKernelGradient(size_t particle_index_i, size_t particle_index_j, Real dW_ij, Vecd &e_ij)
 	{
 		return 0.5 * dW_ij * (B_[particle_index_i] + B_[particle_index_j]) * e_ij;
 	}
 	//=============================================================================================//
-	ElasticSolidParticles::ElasticSolidParticles(SPHBody* body, ElasticSolid* elastic_solid)
-		: SolidParticles(body, elastic_solid)
+	ElasticSolidParticles::ElasticSolidParticles(SPHBody &sph_body,
+												 SharedPtr<ElasticSolid> shared_elastic_solid_ptr,
+												 SharedPtr<ParticleGenerator> particle_generator_ptr)
+		: SolidParticles(sph_body, shared_elastic_solid_ptr, particle_generator_ptr)
 	{
-		elastic_solid->assignElasticSolidParticles(this);
+		shared_elastic_solid_ptr->assignElasticSolidParticles(this);
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
-		registerAVariable<indexMatrix, Matd>(F_, "DeformationGradient", Matd(1.0));
-		registerAVariable<indexMatrix, Matd>(dF_dt_, "DeformationRate");
-		registerAVariable<indexMatrix, Matd>(stress_PK1_, "FirstPiolaKirchhoffStress");
+		registerAVariable<Matd>(F_, "DeformationGradient", Matd(1.0));
+		registerAVariable<Matd>(dF_dt_, "DeformationRate");
+		registerAVariable<Matd>(stress_PK1_, "FirstPiolaKirchhoffStress");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
-		addAVariableNameToList<indexMatrix, Matd>(variables_to_restart_, "DeformationGradient");
+		addAVariableNameToList<Matd>(variables_to_restart_, "DeformationGradient");
 	}
 	//=================================================================================================//
 	StdLargeVec<Real> ElasticSolidParticles::getVonMisesStress()
@@ -120,33 +135,187 @@ namespace SPH {
 		return von_Mises_stress_max;
 	}
 	//=================================================================================================//
-	void ElasticSolidParticles::writeParticlesToVtuFile(std::ofstream& output_file)
+	void ElasticSolidParticles::writeParticlesToVtpFile(std::ofstream &output_file)
 	{
-		SolidParticles::writeParticlesToVtuFile(output_file);
+		SolidParticles::writeParticlesToVtpFile(output_file);
 
 		size_t total_real_particles = total_real_particles_;
 
 		output_file << "    <DataArray Name=\"von Mises stress\" type=\"Float32\" Format=\"ascii\">\n";
 		output_file << "    ";
-		for (size_t i = 0; i != total_real_particles; ++i) {
+		for (size_t i = 0; i != total_real_particles; ++i)
+		{
 			output_file << std::fixed << std::setprecision(9) << von_Mises_stress(i) << " ";
 		}
 		output_file << std::endl;
 		output_file << "    </DataArray>\n";
 	}
 	//=================================================================================================//
-	void ElasticSolidParticles::writePltFileHeader(std::ofstream& output_file)
+	StdLargeVec<Vecd> ElasticSolidParticles::getDisplacement()
+	{
+		StdLargeVec<Vecd> displacement_vector = {};
+		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
+		{
+			displacement_vector.push_back(displacement(index_i));
+		}
+		return displacement_vector;
+	}
+	//=================================================================================================//
+	StdLargeVec<Vecd> ElasticSolidParticles::getNormal()
+	{
+		StdLargeVec<Vecd> normal_vector = {};
+		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
+		{
+			normal_vector.push_back(normal(index_i));
+		}
+		return normal_vector;
+	}
+	//=================================================================================================//
+	StdLargeVec<Real> ElasticSolidParticles::getVonMisesStrain()
+	{
+		StdLargeVec<Real> von_Mises_strain_vector = {};
+		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
+		{
+			von_Mises_strain_vector.push_back(von_Mises_strain(index_i));
+		}
+		return von_Mises_strain_vector;
+	}
+	//=================================================================================================//
+	Real ElasticSolidParticles::getMaxVonMisesStrain()
+	{
+		Real von_Mises_strain_max = 0;
+		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
+		{
+			Real von_Mises_strain_i = von_Mises_strain(index_i);
+			if (von_Mises_strain_max < von_Mises_strain_i)
+			{
+				von_Mises_strain_max = von_Mises_strain_i;
+			}
+		}
+		return von_Mises_strain_max;
+	}
+	//=================================================================================================//
+	void ElasticSolidParticles::writeParticlesToVtuFile(std::ostream &output_file)
+	{
+		SolidParticles::writeParticlesToVtuFile(output_file);
+
+		size_t total_real_particles = total_real_particles_;
+
+		//write von Mises stress
+		output_file << "    <DataArray Name=\"von Mises stress\" type=\"Float32\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != total_real_particles; ++i)
+		{
+			output_file << std::fixed << std::setprecision(9) << von_Mises_stress(i) << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+
+		//write Displacement
+		output_file << "    <DataArray Name=\"Displacement\" type=\"Float32\" NumberOfComponents=\"3\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != total_real_particles; ++i)
+		{
+			Vecd displacement_vector = displacement(i);
+			output_file << displacement_vector[0] << " " << displacement_vector[1] << " " << displacement_vector[2] << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+
+		//write Normal Vectors
+		output_file << "    <DataArray Name=\"Normal Vector\" type=\"Float32\" NumberOfComponents=\"3\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != total_real_particles; ++i)
+		{
+			Vecd normal_vector = normal(i);
+			output_file << normal_vector[0] << " " << normal_vector[1] << " " << normal_vector[2] << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+
+		//write von Mises strain
+		output_file << "    <DataArray Name=\"von Mises strain\" type=\"Float32\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != total_real_particles; ++i)
+		{
+			output_file << std::fixed << std::setprecision(9) << von_Mises_strain(i) << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+	}
+	//=================================================================================================//
+	void ElasticSolidParticles::writeSurfaceParticlesToVtuFile(std::ofstream &output_file, BodySurface &surface_particles)
+	{
+		SolidParticles::writeSurfaceParticlesToVtuFile(output_file, surface_particles);
+
+		size_t total_surface_particles = surface_particles.body_part_particles_.size();
+
+		//write von Mises stress
+		output_file << "    <DataArray Name=\"von Mises stress\" type=\"Float32\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != total_surface_particles; ++i)
+		{
+			size_t particle_i = surface_particles.body_part_particles_[i];
+			output_file << std::fixed << std::setprecision(9) << von_Mises_stress(particle_i) << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+
+		//write Displacement
+		output_file << "    <DataArray Name=\"Displacement\" type=\"Float32\" NumberOfComponents=\"3\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != total_surface_particles; ++i)
+		{
+			size_t particle_i = surface_particles.body_part_particles_[i];
+			Vecd displacement_vector = displacement(particle_i);
+			output_file << displacement_vector[0] << " " << displacement_vector[1] << " " << displacement_vector[2] << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+
+		//write Normal Vectors
+		output_file << "    <DataArray Name=\"Normal Vector\" type=\"Float32\" NumberOfComponents=\"3\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != total_surface_particles; ++i)
+		{
+			size_t particle_i = surface_particles.body_part_particles_[i];
+			Vecd normal_vector = normal(particle_i);
+			output_file << normal_vector[0] << " " << normal_vector[1] << " " << normal_vector[2] << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+
+		//write von Mises strain
+		output_file << "    <DataArray Name=\"von Mises strain\" type=\"Float32\" Format=\"ascii\">\n";
+		output_file << "    ";
+		for (size_t i = 0; i != total_surface_particles; ++i)
+		{
+			size_t particle_i = surface_particles.body_part_particles_[i];
+			output_file << std::fixed << std::setprecision(9) << von_Mises_strain(particle_i) << " ";
+		}
+		output_file << std::endl;
+		output_file << "    </DataArray>\n";
+	}
+	//=================================================================================================//
+	void ElasticSolidParticles::writePltFileHeader(std::ofstream &output_file)
 	{
 		SolidParticles::writePltFileHeader(output_file);
 
 		output_file << ",\" von Mises stress \"";
+		output_file << ",\" Displacement \"";
+		output_file << ",\" Normal Vectors \"";
+		output_file << ",\" von Mises strain \"";
 	}
 	//=================================================================================================//
-	void ElasticSolidParticles::writePltFileParticleData(std::ofstream& output_file, size_t index_i)
+	void ElasticSolidParticles::writePltFileParticleData(std::ofstream &output_file, size_t index_i)
 	{
 		SolidParticles::writePltFileParticleData(output_file, index_i);
-		
+
 		output_file << von_Mises_stress(index_i) << " ";
+		Vecd displacement_vector = displacement(index_i);
+		output_file << displacement_vector[0] << " " << displacement_vector[1] << " " << displacement_vector[2] << " "
+					<< index_i << " ";
+		output_file << von_Mises_strain(index_i) << " ";
 	}
 	//=============================================================================================//
 	void ActiveMuscleParticles::initializeActiveMuscleParticleData()
@@ -154,44 +323,46 @@ namespace SPH {
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
-		registerAVariable<indexMatrix, Matd>(active_stress_, "ActiveStress");
-		registerAVariable<indexScalar, Real>(active_contraction_stress_, "ActiveContractionStress");
+		registerAVariable<Matd>(active_stress_, "ActiveStress");
+		registerAVariable<Real>(active_contraction_stress_, "ActiveContractionStress");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
-		addAVariableNameToList<indexScalar, Real>(variables_to_restart_, "ActiveContractionStress");
+		addAVariableNameToList<Real>(variables_to_restart_, "ActiveContractionStress");
 	}
 	//=============================================================================================//
-	ShellParticles::ShellParticles(SPHBody* body, ElasticSolid* elastic_solid, Real thickness)
-		: ElasticSolidParticles(body, elastic_solid)
+	ShellParticles::ShellParticles(SPHBody &sph_body,
+								   SharedPtr<ElasticSolid> shared_elastic_solid_ptr,
+								   SharedPtr<ParticleGenerator> particle_generator_ptr, Real thickness)
+		: ElasticSolidParticles(sph_body, shared_elastic_solid_ptr, particle_generator_ptr)
 	{
-		elastic_solid->assignElasticSolidParticles(this);
+		shared_elastic_solid_ptr->assignElasticSolidParticles(this);
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
-		registerAVariable<indexMatrix, Matd>(transformation_matrix_, "TransformationMatrix", Matd(1.0));
-		registerAVariable<indexScalar, Real>(shell_thickness_, "Thickness", thickness);
-		registerAVariable<indexVector, Vecd>(pseudo_n_, "PseudoNormal");
-		registerAVariable<indexVector, Vecd>(dpseudo_n_dt_, "PseudoNormalChangeRate");
-		registerAVariable<indexVector, Vecd>(dpseudo_n_d2t_, "PseudoNormal2ndOrderTimeDerivative");
-		registerAVariable<indexVector, Vecd>(rotation_, "Rotation");
-		registerAVariable<indexVector, Vecd>(angular_vel_, "AngularVelocity");
-		registerAVariable<indexVector, Vecd>(dangular_vel_dt_, "AngularAcceleration");
-		registerAVariable<indexMatrix, Matd>(F_bending_, "BendingDeformationGradient");
-		registerAVariable<indexMatrix, Matd>(dF_bending_dt_, "BendingDeformationGradientChangeRate");
-		registerAVariable<indexVector, Vecd>(global_shear_stress_, "GlobalShearStress");
-		registerAVariable<indexMatrix, Matd>(global_stress_, "GlobalStress");
-		registerAVariable<indexMatrix, Matd>(global_moment_, "GlobalMoment");
+		registerAVariable<Matd>(transformation_matrix_, "TransformationMatrix", Matd(1.0));
+		registerAVariable<Real>(shell_thickness_, "Thickness", thickness);
+		registerAVariable<Vecd>(pseudo_n_, "PseudoNormal");
+		registerAVariable<Vecd>(dpseudo_n_dt_, "PseudoNormalChangeRate");
+		registerAVariable<Vecd>(dpseudo_n_d2t_, "PseudoNormal2ndOrderTimeDerivative");
+		registerAVariable<Vecd>(rotation_, "Rotation");
+		registerAVariable<Vecd>(angular_vel_, "AngularVelocity");
+		registerAVariable<Vecd>(dangular_vel_dt_, "AngularAcceleration");
+		registerAVariable<Matd>(F_bending_, "BendingDeformationGradient");
+		registerAVariable<Matd>(dF_bending_dt_, "BendingDeformationGradientChangeRate");
+		registerAVariable<Vecd>(global_shear_stress_, "GlobalShearStress");
+		registerAVariable<Matd>(global_stress_, "GlobalStress");
+		registerAVariable<Matd>(global_moment_, "GlobalMoment");
 		//----------------------------------------------------------------------
 		//		add basic output particle data
 		//----------------------------------------------------------------------
-		addAVariableToWrite<indexVector, Vecd>("Rotation");
+		addAVariableToWrite<Vecd>("Rotation");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
-		addAVariableNameToList<indexVector, Vecd>(variables_to_restart_, "PseudoNormal");
-		addAVariableNameToList<indexVector, Vecd>(variables_to_restart_, "Rotation");
-		addAVariableNameToList<indexVector, Vecd>(variables_to_restart_, "AngularVelocity");
+		addAVariableNameToList<Vecd>(variables_to_restart_, "PseudoNormal");
+		addAVariableNameToList<Vecd>(variables_to_restart_, "Rotation");
+		addAVariableNameToList<Vecd>(variables_to_restart_, "AngularVelocity");
 	}
 	//=================================================================================================//
 }

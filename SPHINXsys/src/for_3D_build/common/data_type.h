@@ -15,7 +15,6 @@ namespace SPH {
 	using Matd = Mat3d;
 	using SymMatd = SymMat3d;
 	using AngularVecd = Vec3d;
-	const int indexAngularVector = 1;
 
 	using Transformd = Transform3d;
 

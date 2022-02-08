@@ -32,7 +32,8 @@
 
 #include "elastic_solid.h"
 
-namespace SPH {
+namespace SPH
+{
 
 	/**
 	* @class PlasticSolid
@@ -44,24 +45,26 @@ namespace SPH {
 		Real yield_stress_;
 
 		virtual void initializePlasticParameters() = 0;
+
 	public:
 		/** Constructor */
-		PlasticSolid() :NeoHookeanSolid()
+		explicit PlasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio, Real yield_stress)
+			: NeoHookeanSolid(rho0, youngs_modulus, poisson_ratio), yield_stress_(yield_stress)
 		{
-			material_name_ = "PlasticSolid";
+			material_type_ = "PlasticSolid";
 		};
-		virtual ~PlasticSolid() {};
+		virtual ~PlasticSolid(){};
 
 		Real YieldStress() { return yield_stress_; };
 		/** compute the stress through defoemation, and plastic relaxation. */
-		virtual Matd PlasticConstitutiveRelation(const Matd& deformation, size_t index_i, Real dt = 0.0) = 0;
+		virtual Matd PlasticConstitutiveRelation(const Matd &deformation, size_t index_i, Real dt = 0.0) = 0;
 
-		virtual PlasticSolid* ThisObjectPtr() override { return this; };
+		virtual PlasticSolid *ThisObjectPtr() override { return this; };
 	};
 
 	/**
 	 * @class HardeningPlasticSolid
-	 * @brief Class for a generalized plastic solid
+	 * @brief Class for plastic solid with hardening
 	 */
 	class HardeningPlasticSolid : public PlasticSolid
 	{
@@ -69,24 +72,26 @@ namespace SPH {
 		Real hardening_modulus_;
 		const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
 		const Real sqrt_2_over_3_ = sqrt(2.0 / 3.0);
-		StdLargeVec<Matd>	inverse_plastic_strain_;	/**< inverse of plastic right cauchy green strain tensor */
-		StdLargeVec<Real>	hardening_parameter_;		/**< hardening parameter */
+		StdLargeVec<Matd> inverse_plastic_strain_; /**< inverse of plastic right cauchy green strain tensor */
+		StdLargeVec<Real> hardening_parameter_;	   /**< hardening parameter */
 
 		virtual void initializePlasticParameters() override;
+
 	public:
 		/** Constructor */
-		HardeningPlasticSolid() :PlasticSolid()
+		explicit HardeningPlasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio, Real yield_stress, Real hardening_modulus)
+			: PlasticSolid(rho0, youngs_modulus, poisson_ratio, yield_stress), hardening_modulus_(hardening_modulus)
 		{
-			material_name_ = "HardeningPlasticSolid";
+			material_type_ = "HardeningPlasticSolid";
 		};
-		virtual ~HardeningPlasticSolid() {};
+		virtual ~HardeningPlasticSolid(){};
 
 		Real HardeningModulus() { return hardening_modulus_; };
 		/** assign particles to this material */
-		virtual void assignElasticSolidParticles(ElasticSolidParticles* elastic_particles) override;
+		virtual void assignElasticSolidParticles(ElasticSolidParticles *elastic_particles) override;
 		/** compute the stress through defoemation, and plastic relaxation. */
-		virtual Matd PlasticConstitutiveRelation(const Matd& deformation, size_t index_i, Real dt = 0.0) override;
+		virtual Matd PlasticConstitutiveRelation(const Matd &deformation, size_t index_i, Real dt = 0.0) override;
 
-		virtual HardeningPlasticSolid* ThisObjectPtr() override { return this; };
+		virtual HardeningPlasticSolid *ThisObjectPtr() override { return this; };
 	};
 }

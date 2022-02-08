@@ -59,14 +59,13 @@ namespace SPH
 	 * the parallelized version of the method requires the one using ghost particles
 	 * because the splitting partition only works in this case.
 	 */
-	template <int DataTypeIndex, typename VariableType>
+	template <typename VariableType>
 	class DampingBySplittingInner :
 		public InteractionDynamicsSplitting, public DissipationDataInner
 	{
 	protected:
 	public:
-		DampingBySplittingInner(BaseBodyRelationInner* body_inner_relation,
-			std::string variable_name, Real eta);
+		DampingBySplittingInner(BaseBodyRelationInner &inner_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingBySplittingInner() {};
 		void resetDampingCoefficient(Real reset_ratio) { eta_ *= reset_ratio; };
 	protected:
@@ -79,13 +78,12 @@ namespace SPH
 		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 	};
 
-	template <int DataTypeIndex, typename VariableType>
+	template <typename VariableType>
 	class DampingBySplittingComplex :
-		public DampingBySplittingInner<DataTypeIndex, VariableType>, public DissipationDataContact
+		public DampingBySplittingInner<VariableType>, public DissipationDataContact
 	{
 	public:
-		DampingBySplittingComplex(ComplexBodyRelation* body_complex_relation,
-			std::string variable_name, Real eta);
+		DampingBySplittingComplex(ComplexBodyRelation &complex_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingBySplittingComplex() {};
 	protected:
 		virtual ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0) override;
@@ -95,15 +93,14 @@ namespace SPH
 		StdVec<StdLargeVec<VariableType>*> contact_variable_;
 	};
 
-	template <int DataTypeIndex, typename VariableType,
-			template<int BaseDataTypeIndex, typename BaseVariableType>
+	template <typename VariableType,
+			template<typename BaseVariableType>
 			class BaseDampingBySplittingType>
 	class DampingBySplittingWithWall :
-		public BaseDampingBySplittingType<DataTypeIndex, VariableType>, public DissipationDataWithWall
+		public BaseDampingBySplittingType<VariableType>, public DissipationDataWithWall
 	{
 	public:
-		DampingBySplittingWithWall(ComplexBodyRelation* body_wall_relation,
-			std::string variable_name, Real eta);
+		DampingBySplittingWithWall(ComplexBodyRelation &complex_wall_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingBySplittingWithWall() {};
 	protected:
 		virtual ErrorAndParameters<VariableType>  computeErrorAndParameters(size_t index_i, Real dt = 0.0) override;
@@ -120,13 +117,12 @@ namespace SPH
 	* the parallelized version of the method requires the one using ghost particles
 	* because the splitting partition only works in this case.
 	*/
-	template <int DataTypeIndex, typename VariableType>
+	template <typename VariableType>
 	class DampingPairwiseInner :
 		public InteractionDynamicsSplitting, public DissipationDataInner
 	{
 	public:
-		DampingPairwiseInner(BaseBodyRelationInner* body_inner_relation,
-			std::string variable_name, Real eta);
+		DampingPairwiseInner(BaseBodyRelationInner &inner_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseInner() {};
 		void resetDampingCoefficient(Real reset_ratio) { eta_ *= reset_ratio; };
 	protected:
@@ -137,13 +133,12 @@ namespace SPH
 		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 	};
 
-	template<int DataTypeIndex, typename VariableType>
+	template<typename VariableType>
 	class DampingPairwiseComplex :
-		public DampingPairwiseInner<DataTypeIndex, VariableType>, public DissipationDataContact
+		public DampingPairwiseInner<VariableType>, public DissipationDataContact
 	{
 	public:
-		DampingPairwiseComplex(ComplexBodyRelation* body_complex_relation,
-			std::string variable_name, Real eta);
+		DampingPairwiseComplex(ComplexBodyRelation &complex_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseComplex() {};
 	protected:
 		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -157,16 +152,15 @@ namespace SPH
 	* @brief Damping with wall by which the wall velocity is not updated
 	* and the mass of wall particle is not considered.
 	*/
-	template <int DataTypeIndex, typename VariableType,
-		template<int BaseDataTypeIndex, typename BaseVariableType> 
+	template <typename VariableType,
+		template<typename BaseVariableType> 
 		class BaseDampingPairwiseType>
 	class DampingPairwiseWithWall :
-		public BaseDampingPairwiseType<DataTypeIndex, VariableType>, 
+		public BaseDampingPairwiseType<VariableType>, 
 		public DissipationDataWithWall
 	{
 	public:
-		DampingPairwiseWithWall(ComplexBodyRelation* body_wall_relation,
-			std::string variable_name, Real eta);
+		DampingPairwiseWithWall(ComplexBodyRelation &complex_wall_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseWithWall() {};
 	protected:
 		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -190,8 +184,7 @@ namespace SPH
 		bool RandomChoice();
 	public:
 		template<class BodyRelationType>
-		DampingWithRandomChoice(BodyRelationType* body_relation,
-			Real random_ratio, std::string variable_name, Real eta);
+		DampingWithRandomChoice(BodyRelationType &body_relation, Real random_ratio, const std::string &variable_name, Real eta);
 		virtual ~DampingWithRandomChoice() {};
 
 		virtual void exec(Real dt = 0.0) override;

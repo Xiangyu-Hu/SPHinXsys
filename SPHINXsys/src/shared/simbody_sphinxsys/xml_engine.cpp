@@ -16,17 +16,15 @@ namespace SPH
 		root_element_ = xmldoc_.getRootElement();
 	}
 	//=================================================================================================//
-	void XmlEngine::addElementToXmlDoc(const std::string& element_name)
+	void XmlEngine::addElementToXmlDoc(const std::string &element_name)
 	{
-		SimTK::Xml::Element* element = new SimTK::Xml::Element(element_name);
-		root_element_.insertNodeAfter(root_element_.node_end(), *element);
+		root_element_.insertNodeAfter(root_element_.node_end(), SimTK::Xml::Element(element_name));
 	}
 	//=================================================================================================//
-	void XmlEngine::addChildToElement(SimTK::Xml::Element& father_element,
-		const std::string& child_name)
+	void XmlEngine::addChildToElement(SimTK::Xml::Element &father_element,
+									  const std::string &child_name)
 	{
-		SimTK::Xml::Element* child_element = new SimTK::Xml::Element(child_name);
-		father_element.insertNodeAfter(father_element.node_end(), *child_element);
+		father_element.insertNodeAfter(father_element.node_end(), SimTK::Xml::Element(child_name));
 	}
 	//=================================================================================================//
 	void XmlEngine::setAttributeToElement(const SimTK::Xml::element_iterator& ele_ite,

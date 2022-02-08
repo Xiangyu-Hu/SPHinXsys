@@ -35,8 +35,7 @@
 #define LEVEL_SET_H
 
 #include "mesh_with_data_packages.h"
-#include "mesh_with_data_packages.hpp"
-#include "geometry.h"
+#include "base_geometry.h"
 
 namespace SPH
 {
@@ -55,7 +54,9 @@ namespace SPH
 		PackageData<Real> phi_;				 /**< the level set or signed distance. */
 		PackageDataAddress<Real> phi_addrs_; /**< address for the level set. */
 		PackageData<Vecd> n_;				 /**< level set normalized gradient, to approximate interface normal direction */
+		PackageData<Vecd> none_normalized_n_;
 		PackageDataAddress<Vecd> n_addrs_;
+		PackageDataAddress<Vecd> none_normalized_n_addrs_;
 		PackageData<Real> kernel_weight_;
 		PackageDataAddress<Real> kernel_weight_addrs_;
 		PackageData<Vecd> kernel_gradient_;
@@ -69,15 +70,17 @@ namespace SPH
 		PackageDataAddress<int> near_interface_id_addrs_;
 
 		LevelSetDataPackage();
+		LevelSetDataPackage(Real level_set);
 		virtual ~LevelSetDataPackage(){};
 
-		void assignAllPackageDataAddress(Vecu data_index, LevelSetDataPackage *src_pkg, Vecu addrs_index);
-		void initializeBasicData(ComplexShape &complex_shape);
+		void assignAllPackageDataAddress(Vecu addrs_index, LevelSetDataPackage *src_pkg, Vecu data_index);
+		void initializeBasicData(Shape &shape);
 		void initializeWithUniformData(Real level_set);
 		void computeKernelIntegrals(LevelSet &level_set);
 		void computeNormalDirection();
+		void computeNoneNormalizedNormalDirection();
 		void stepReinitialization();
-		void markNearInterface();
+		void markNearInterface(Real small_shift_factor);
 	};
 
 	/**
@@ -87,19 +90,20 @@ namespace SPH
 	class BaseLevelSet : public BaseMeshField
 	{
 	public:
-		BaseLevelSet(ComplexShape &complex_shape, ParticleAdaptation &particle_adaptation);
+		BaseLevelSet(Shape &shape, SPHAdaptation &sph_adaptation);
 		virtual ~BaseLevelSet(){};
 
 		virtual bool probeIsWithinMeshBound(const Vecd &position) = 0;
 		virtual Real probeSignedDistance(const Vecd &position) = 0;
 		virtual Vecd probeNormalDirection(const Vecd &position) = 0;
+		virtual Vecd probeNoneNormalizedNormalDirection(const Vecd& position) = 0;
 		virtual Real probeKernelIntegral(const Vecd &position, Real h_ratio = 1.0) = 0;
 		virtual Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0) = 0;
 		virtual void cleanInterface(bool isSmoothed = false) = 0;
 
 	protected:
-		ComplexShape &complex_shape_; /**< the geometry is described by the level set. */
-		ParticleAdaptation &particle_adaptation_;
+		Shape &shape_; /**< the geometry is described by the level set. */
+		SPHAdaptation &sph_adaptation_;
 
 		/** for computing volume fraction occupied by a shape.*/
 		Real computeHeaviside(Real phi, Real half_width);
@@ -117,14 +121,16 @@ namespace SPH
 	public:
 		ConcurrentVector<LevelSetDataPackage *> core_data_pkgs_; /**< packages near to zero level set. */
 		Real global_h_ratio_;
+		Real small_shift_factor_;
 
 		LevelSet(BoundingBox tentative_bounds, Real data_spacing,
-				 ComplexShape &complex_shape, ParticleAdaptation &particle_adaptation);
+				 Shape &shape, SPHAdaptation &sph_adaptation);
 		virtual ~LevelSet(){};
 
 		virtual bool probeIsWithinMeshBound(const Vecd &position) override;
 		virtual Real probeSignedDistance(const Vecd &position) override;
 		virtual Vecd probeNormalDirection(const Vecd &position) override;
+		virtual Vecd probeNoneNormalizedNormalDirection(const Vecd& position) override;
 		virtual Real probeKernelIntegral(const Vecd &position, Real h_ratio = 1.0) override;
 		virtual Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0) override;
 		virtual void cleanInterface(bool isSmoothed = false) override;
@@ -141,6 +147,8 @@ namespace SPH
 		void redistanceInterface();
 		void updateNormalDirection();
 		void updateNormalDirectionForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt = 0.0);
+		void updateNoneNormalizedNormalDirection();
+		void updateNoneNormalizedNormalDirectionForAPackage(LevelSetDataPackage* inner_data_pkg, Real dt = 0.0);
 		void updateKernelIntegrals();
 		void updateKernelIntegralsForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt = 0.0);
 		void stepReinitializationForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt = 0.0);
@@ -161,12 +169,13 @@ namespace SPH
 	public:
 		MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing,
 						   size_t total_levels, Real maximum_spacing_ratio,
-						   ComplexShape &complex_shape, ParticleAdaptation &particle_adaptation);
+						   Shape &shape, SPHAdaptation &sph_adaptation);
 		virtual ~MultilevelLevelSet(){};
 
 		virtual bool probeIsWithinMeshBound(const Vecd &position) override;
 		virtual Real probeSignedDistance(const Vecd &position) override;
 		virtual Vecd probeNormalDirection(const Vecd &position) override;
+		virtual Vecd probeNoneNormalizedNormalDirection(const Vecd &position) override;
 		virtual Real probeKernelIntegral(const Vecd &position, Real h_ratio = 1.0) override;
 		virtual Vecd probeKernelGradientIntegral(const Vecd &position, Real h_ratio = 1.0) override;
 		virtual void cleanInterface(bool isSmoothed = false) override;

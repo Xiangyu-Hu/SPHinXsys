@@ -4,20 +4,25 @@
  */
 #include "diffusion_reaction_particles.h"
 
- //=================================================================================================//
+//=================================================================================================//
 namespace SPH
 {
 	//=================================================================================================//
-	ElectroPhysiologyParticles
-		::ElectroPhysiologyParticles(SPHBody* body, 
-			DiffusionReactionMaterial<SolidParticles, Solid>* diffusion_reaction_material)
-		: DiffusionReactionParticles<SolidParticles, Solid>(body, diffusion_reaction_material)
+	ElectroPhysiologyParticles::
+		ElectroPhysiologyParticles(
+			SPHBody &sph_body,
+			SharedPtr<DiffusionReaction<SolidParticles, Solid>> diffusion_reaction_material_ptr,
+			SharedPtr<ParticleGenerator> particle_generator_ptr)
+		: DiffusionReactionParticles<SolidParticles, Solid>(sph_body,diffusion_reaction_material_ptr, particle_generator_ptr)
 	{
 	}
 	//=================================================================================================//
-	ElectroPhysiologyReducedParticles::ElectroPhysiologyReducedParticles(SPHBody* body, 
-			DiffusionReactionMaterial<SolidParticles, Solid>* diffusion_reaction_material)
-		: DiffusionReactionParticles<SolidParticles, Solid>(body, diffusion_reaction_material)
+	ElectroPhysiologyReducedParticles::
+		ElectroPhysiologyReducedParticles(
+			SPHBody &sph_body,
+			SharedPtr<DiffusionReaction<SolidParticles, Solid>> diffusion_reaction_material_ptr,
+			SharedPtr<ParticleGenerator> particle_generator_ptr)
+		: DiffusionReactionParticles<SolidParticles, Solid>(sph_body,diffusion_reaction_material_ptr, particle_generator_ptr)
 	{
 	}
 	//=================================================================================================//
