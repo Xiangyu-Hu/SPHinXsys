@@ -29,6 +29,7 @@ namespace SPH
 	/** Check if a point is inside the bounding box */
 	bool checkIfPointInBoundingBox(Vec3d point, BoundingBox &bbox);
 	bool checkIfPointInBoundingBox(Vec2d point, BoundingBox &bbox);
+	BoundingBox getIntersectionOfBoundingBoxes(BoundingBox &bb1, BoundingBox &bb2);
 
 	/** Generalized particle data type */
 	typedef std::tuple<StdVec<StdLargeVec<Real> *>, StdVec<StdLargeVec<Vecd> *>, StdVec<StdLargeVec<Matd> *>,
