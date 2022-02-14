@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <meanvariance>
     <MeanValue_Element>
-        <Snapshot_MeanValue TotalViscousForceOnSolid_0="~[0.348385,0.000170377]" />
+        <Snapshot_MeanValue TotalViscousForceOnSolid_0="~[0.336081,-0.000161513]" />
     </MeanValue_Element>
     <Variance_Element>
-        <Snapshot_Variance TotalViscousForceOnSolid_0="~[0.000500739,0.000861143]" />
+        <Snapshot_Variance TotalViscousForceOnSolid_0="~[0.000513618,0.00102117]" />
     </Variance_Element>
 </meanvariance>

@@ -37,4 +37,5 @@
 #include "fluid_dynamics_complex.hpp"
 #include "fluid_dynamics_multi_phase.h"
 #include "fluid_dynamics_multi_phase.hpp"
-#include "all_eulerian_fluid_dynamics.h"
+#include "all_eulerian_compressible_fluid_dynamics.h"
+#include "all_eulerian_weakly_compressible_fluid_dynamics.h"

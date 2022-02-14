@@ -407,7 +407,7 @@ the :code:`WriteBodyStatesToPlt` leads .plt files, which can be readed by Tecplo
 	/** Output body states for visualization. */
 	BodyStatesRecordingToPlt 	rite_real_body_states_to_plt(in_output, system.real_bodies_);
 	/** Output body states for visualization. */
-	BodyStatesRecordingToVtp 	write_real_body_states_to_vtu(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtu 	write_real_body_states_to_vtu(in_output, system.real_bodies_);
 	/** Output the observed displacement of gate free end. */
 	ObservedQuantityRecording<indexVector, Vecd>
 	write_beam_tip_displacement("Position", in_output, gate_observer_contact);

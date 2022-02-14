@@ -367,9 +367,9 @@ namespace SPH
 	 * @class ObservedQuantityRecording
 	 * @brief write files for observed quantity
 	 */
-	template <int DataTypeIndex, typename VariableType>
+	template <typename VariableType>
 	class ObservedQuantityRecording : public BodyStatesRecording,
-									  public observer_dynamics::ObservingAQuantity<DataTypeIndex, VariableType>
+									  public observer_dynamics::ObservingAQuantity<VariableType>
 	{
 	protected:
 		SPHBody *observer_;
@@ -389,7 +389,7 @@ namespace SPH
 		ObservedQuantityRecording(const std::string &quantity_name, In_Output &in_output,
 								  BaseBodyRelationContact &contact_relation)
 			: BodyStatesRecording(in_output, *contact_relation.sph_body_),
-			  observer_dynamics::ObservingAQuantity<DataTypeIndex, VariableType>(contact_relation, quantity_name),
+			  observer_dynamics::ObservingAQuantity<VariableType>(contact_relation, quantity_name),
 			  observer_(contact_relation.sph_body_), plt_engine_(), xmlmemory_io_(),
 			  base_particles_(observer_->base_particles_), body_name_(contact_relation.sph_body_->getBodyName()),
 			  quantity_name_(quantity_name), observe_xml_engine_("xml_observe", quantity_name_)

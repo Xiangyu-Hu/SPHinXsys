@@ -30,25 +30,25 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
-		registerAVariable<indexVector, Vecd>(pos_n_, "Position");
-		registerAVariable<indexVector, Vecd>(vel_n_, "Velocity");
-		registerAVariable<indexVector, Vecd>(dvel_dt_, "Acceleration");
-		registerAVariable<indexVector, Vecd>(dvel_dt_prior_, "PriorAcceleration");
-		registerAVariable<indexScalar, Real>(Vol_, "Volume");
-		registerAVariable<indexScalar, Real>(rho_n_, "Density");
-		registerAVariable<indexScalar, Real>(mass_, "Mass");
+		registerAVariable<Vecd>(pos_n_, "Position");
+		registerAVariable<Vecd>(vel_n_, "Velocity");
+		registerAVariable<Vecd>(dvel_dt_, "Acceleration");
+		registerAVariable<Vecd>(dvel_dt_prior_, "PriorAcceleration");
+		registerAVariable<Real>(Vol_, "Volume");
+		registerAVariable<Real>(rho_n_, "Density");
+		registerAVariable<Real>(mass_, "Mass");
 		//----------------------------------------------------------------------
 		//		add basic output particle data
 		//----------------------------------------------------------------------
-		addAVariableToWrite<indexVector, Vecd>("Velocity");
-		addAVariableToWrite<indexVector, Vecd>("Acceleration");
+		addAVariableToWrite<Vecd>("Velocity");
+		addAVariableToWrite<Vecd>("Acceleration");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
-		addAVariableNameToList<indexVector, Vecd>(variables_to_restart_, "Position");
-		addAVariableNameToList<indexVector, Vecd>(variables_to_restart_, "Velocity");
-		addAVariableNameToList<indexVector, Vecd>(variables_to_restart_, "Acceleration");
-		addAVariableNameToList<indexScalar, Real>(variables_to_restart_, "Volume");
+		addAVariableNameToList<Vecd>(variables_to_restart_, "Position");
+		addAVariableNameToList<Vecd>(variables_to_restart_, "Velocity");
+		addAVariableNameToList<Vecd>(variables_to_restart_, "Acceleration");
+		addAVariableNameToList<Real>(variables_to_restart_, "Volume");
 
 		particle_generator->initialize(&sph_body);
 		particle_generator->createBaseParticles(this);
@@ -254,10 +254,10 @@ namespace SPH
 		output_file << "   <PointData  Vectors=\"vector\">\n";
 
 		//write matrices
-		for (std::pair<std::string, size_t> &name_index : variables_to_write_[indexMatrix])
+		for (std::pair<std::string, size_t> &name_index : variables_to_write_[2])
 		{
 			std::string variable_name = name_index.first;
-			StdLargeVec<Matd> &variable = *(std::get<indexMatrix>(all_particle_data_)[name_index.second]);
+			StdLargeVec<Matd> &variable = *(std::get<2>(all_particle_data_)[name_index.second]);
 			output_file << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
 			output_file << "    ";
 			for (size_t i = 0; i != total_real_particles; ++i)
@@ -274,10 +274,10 @@ namespace SPH
 		}
 
 		//write vectors
-		for (std::pair<std::string, size_t> &name_index : variables_to_write_[indexVector])
+		for (std::pair<std::string, size_t> &name_index : variables_to_write_[1])
 		{
 			std::string variable_name = name_index.first;
-			StdLargeVec<Vecd> &variable = *(std::get<indexVector>(all_particle_data_)[name_index.second]);
+			StdLargeVec<Vecd> &variable = *(std::get<1>(all_particle_data_)[name_index.second]);
 			output_file << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
 			output_file << "    ";
 			for (size_t i = 0; i != total_real_particles; ++i)
@@ -290,10 +290,10 @@ namespace SPH
 		}
 		
 		//write scalars
-		for (std::pair<std::string, size_t> &name_index : variables_to_write_[indexScalar])
+		for (std::pair<std::string, size_t> &name_index : variables_to_write_[0])
 		{
 			std::string variable_name = name_index.first;
-			StdLargeVec<Real> &variable = *(std::get<indexScalar>(all_particle_data_)[name_index.second]);
+			StdLargeVec<Real> &variable = *(std::get<0>(all_particle_data_)[name_index.second]);
 			output_file << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\" Format=\"ascii\">\n";
 			output_file << "    ";
 			for (size_t i = 0; i != total_real_particles; ++i)
@@ -305,10 +305,10 @@ namespace SPH
 		}
 
 		//write integers
-		for (std::pair<std::string, size_t> &name_index : variables_to_write_[indexInteger])
+		for (std::pair<std::string, size_t> &name_index : variables_to_write_[3])
 		{
 			std::string variable_name = name_index.first;
-			StdLargeVec<int> &variable = *(std::get<indexInteger>(all_particle_data_)[name_index.second]);
+			StdLargeVec<int> &variable = *(std::get<3>(all_particle_data_)[name_index.second]);
 			output_file << "    <DataArray Name=\"" << variable_name << "\" type=\"Int32\" Format=\"ascii\">\n";
 			output_file << "    ";
 			for (size_t i = 0; i != total_real_particles; ++i)
@@ -324,22 +324,22 @@ namespace SPH
 	{
 		output_file << " VARIABLES = \"x\",\"y\",\"z\",\"ID\"";
 
-		for (size_t l = 0; l != variables_to_write_[indexInteger].size(); ++l)
+		for (size_t l = 0; l != variables_to_write_[3].size(); ++l)
 		{
-			std::string variable_name = variables_to_write_[indexInteger][l].first;
+			std::string variable_name = variables_to_write_[3][l].first;
 			output_file << ",\"" << variable_name << "\"";
 		};
 
-		for (size_t l = 0; l != variables_to_write_[indexVector].size(); ++l)
+		for (size_t l = 0; l != variables_to_write_[1].size(); ++l)
 		{
-			std::string variable_name = variables_to_write_[indexVector][l].first;
+			std::string variable_name = variables_to_write_[1][l].first;
 			output_file << ",\"" << variable_name << "_x\""
 						<< ",\"" << variable_name << "_y\""
 						<< ",\"" << variable_name << "_z\"";
 		};
-		for (size_t l = 0; l != variables_to_write_[indexScalar].size(); ++l)
+		for (size_t l = 0; l != variables_to_write_[0].size(); ++l)
 		{
-			std::string variable_name = variables_to_write_[indexScalar][l].first;
+			std::string variable_name = variables_to_write_[0][l].first;
 			output_file << ",\"" << variable_name << "\"";
 		};
 	}
@@ -351,25 +351,25 @@ namespace SPH
 		output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " "
 					<< index_i << " ";
 
-		for (std::pair<std::string, size_t> &name_index : variables_to_write_[indexInteger])
+		for (std::pair<std::string, size_t> &name_index : variables_to_write_[3])
 		{
 			std::string variable_name = name_index.first;
-			StdLargeVec<int> &variable = *(std::get<indexInteger>(all_particle_data_)[name_index.second]);
+			StdLargeVec<int> &variable = *(std::get<3>(all_particle_data_)[name_index.second]);
 			output_file << variable[index_i] << " ";
 		};
 
-		for (std::pair<std::string, size_t> &name_index : variables_to_write_[indexVector])
+		for (std::pair<std::string, size_t> &name_index : variables_to_write_[1])
 		{
 			std::string variable_name = name_index.first;
-			StdLargeVec<Vecd> &variable = *(std::get<indexVector>(all_particle_data_)[name_index.second]);
+			StdLargeVec<Vecd> &variable = *(std::get<1>(all_particle_data_)[name_index.second]);
 			Vec3d vector_value = upgradeToVector3D(variable[index_i]);
 			output_file << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
 		};
 
-		for (std::pair<std::string, size_t> &name_index : variables_to_write_[indexScalar])
+		for (std::pair<std::string, size_t> &name_index : variables_to_write_[0])
 		{
 			std::string variable_name = name_index.first;
-			StdLargeVec<Real> &variable = *(std::get<indexScalar>(all_particle_data_)[name_index.second]);
+			StdLargeVec<Real> &variable = *(std::get<0>(all_particle_data_)[name_index.second]);
 			output_file << variable[index_i] << " ";
 		};
 	}

@@ -131,7 +131,7 @@ int main()
 	//----------------------------------------------------------------------
 	Beam beam_body(system, "BeamBody");
 	ElasticSolidParticles beam_particles(beam_body, makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson));
-	beam_particles.addAVariableToWrite<indexScalar, Real>("ContactDensity");
+	beam_particles.addAVariableToWrite<Real>("ContactDensity");
 
 	ObserverBody beam_observer(system, "BeamObserver", makeShared<SPHAdaptation>(1.15, 2.0));
 	ObserverParticles observer_particles(beam_observer, makeShared<ObserverParticleGenerator>());
@@ -167,7 +167,7 @@ int main()
 	//-----------------------------------------------------------------------------
 	In_Output in_output(system);
 	BodyStatesRecordingToVtp write_beam_states(in_output, system.real_bodies_);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<indexVector, Vecd>>
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_beam_tip_displacement("Position", in_output, beam_observer_contact);
 	//-----------------------------------------------------------------------------
 	//	Setup particle configuration and initial conditions

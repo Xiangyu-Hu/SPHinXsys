@@ -14,7 +14,8 @@
 namespace SPH
 {
 	//=================================================================================================//
-	SPHAdaptation::SPHAdaptation(Real h_spacing_ratio, Real system_resolution_ratio, Real small_shift_factor)
+	SPHAdaptation::SPHAdaptation(Real h_spacing_ratio, Real system_resolution_ratio, 
+								 Real small_shift_factor, Real level_set_refinement_ratio)
 		: h_spacing_ratio_(h_spacing_ratio),
 		  system_resolution_ratio_(system_resolution_ratio),
 		  local_refinement_level_(0),
@@ -26,7 +27,8 @@ namespace SPH
 		  kernel_(kernel_ptr_keeper_.createPtr<KernelWendlandC2>()),
 		  sph_body_(nullptr), system_domain_bounds_(),
 		  base_particles_(nullptr),
-		  small_shift_factor_(small_shift_factor)
+		  small_shift_factor_(small_shift_factor),
+		  level_set_refinement_ratio_(level_set_refinement_ratio)
 		  {};
 	//=================================================================================================//
 	void SPHAdaptation::initialize(SPHBody *sph_body)
@@ -111,7 +113,7 @@ namespace SPH
 	//=================================================================================================//
 	UniquePtr<BaseLevelSet> SPHAdaptation::createLevelSet(Shape &shape)
 	{
-		return makeUnique<LevelSet>(shape.findBounds(), ReferenceSpacing(), shape, *this);
+		return makeUnique<LevelSet>(shape.findBounds(), ReferenceSpacing() / level_set_refinement_ratio_, shape, *this);
 	}
 	//=================================================================================================//
 	ParticleWithLocalRefinement::
@@ -136,7 +138,7 @@ namespace SPH
 	void ParticleWithLocalRefinement::assignBaseParticles(BaseParticles *base_particles)
 	{
 		SPHAdaptation::assignBaseParticles(base_particles);
-		base_particles->registerAVariable<indexScalar, Real>(h_ratio_, "SmoothingLengthRatio", 1.0);
+		base_particles->registerAVariable<Real>(h_ratio_, "SmoothingLengthRatio", 1.0);
 	}
 	//=================================================================================================//
 	UniquePtr<BaseCellLinkedList> ParticleWithLocalRefinement::createCellLinkedList()

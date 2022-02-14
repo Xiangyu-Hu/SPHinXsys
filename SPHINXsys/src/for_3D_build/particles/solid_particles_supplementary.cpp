@@ -108,4 +108,9 @@ namespace SPH {
 		return normal_vec;
 	}
 	//=================================================================================================//
+	Real ElasticSolidParticles::von_Mises_strain(size_t particle_i)
+	{
+		return von_Mises_strain_static(particle_i);
+	}
+	//=================================================================================================//
 }

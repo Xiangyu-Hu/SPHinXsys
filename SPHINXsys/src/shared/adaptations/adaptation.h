@@ -76,9 +76,11 @@ namespace SPH
 		BaseParticles *base_particles_;
 
 		Real small_shift_factor_; /**< small shift for level generation. TODO: this should be clarified for its usage. */
+		Real level_set_refinement_ratio_;/**< ratio of level set resolution to system resolution, set to 1.0 by default. */
 
 	public:
-		SPHAdaptation(Real h_spacing_ratio = 1.3, Real system_resolution_ratio = 1.0, Real small_shift_factor = 0.75);
+		SPHAdaptation(Real h_spacing_ratio = 1.3, Real system_resolution_ratio = 1.0, 
+					  Real small_shift_factor = 0.75, Real level_set_refinement_ratio = 1.0);
 		virtual ~SPHAdaptation(){};
 		/** Note: called  after construction of this and derived classes. */
 		virtual void initialize(SPHBody *sph_body);
@@ -137,6 +139,7 @@ namespace SPH
 		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList() override;
 		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape) override;
 	};
+
 	/**
 	 * @class ParticleSpacingByBodyShape
 	 * @brief Adaptive resolutions within a SPH body according to the distance to the body surface.

@@ -87,6 +87,26 @@ namespace SPH
 		Vecd getVStar(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
 	};
 
+	class HLLCRiemannSolverInWeaklyCompressibleFluid
+	{
+		Fluid& fluid_i_, &fluid_j_;
+
+	public:
+		HLLCRiemannSolverInWeaklyCompressibleFluid(Fluid& compressible_fluid_i, Fluid& compressible_fluid_j) :
+			fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j) {};
+		FluidState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
+	};
+
+	class HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid
+	{
+		Fluid& fluid_i_, &fluid_j_;
+
+	public:
+		HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid(Fluid& compressible_fluid_i, Fluid& compressible_fluid_j) :
+			fluid_i_(compressible_fluid_i), fluid_j_(compressible_fluid_j) {};
+		FluidState getInterfaceState(const FluidState &state_i, const FluidState &state_j, const Vecd &direction_to_i);
+	};
+
 	class HLLCRiemannSolver
 	{
 		CompressibleFluid &compressible_fluid_i_, &compressible_fluid_j_;
@@ -94,10 +114,7 @@ namespace SPH
 	public:
 		HLLCRiemannSolver(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j)
 			: compressible_fluid_i_(compressible_fluid_i), compressible_fluid_j_(compressible_fluid_j){};
-		Real getPStar(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &direction_to_i);
-		Vecd getVStar(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &direction_to_i);
-		Real getRhoStar(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &direction_to_i);
-		Real getEStar(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &direction_to_i);
+		CompressibleFluidState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &direction_to_i);
 	};
 
 	class HLLCWithLimiterRiemannSolver
@@ -107,10 +124,7 @@ namespace SPH
 	public:
 		HLLCWithLimiterRiemannSolver(CompressibleFluid &compressible_fluid_i, CompressibleFluid &compressible_fluid_j)
 			: compressible_fluid_i_(compressible_fluid_i), compressible_fluid_j_(compressible_fluid_j){};
-		Real getPStar(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &direction_to_i);
-		Vecd getVStar(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &direction_to_i);
-		Real getRhoStar(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &direction_to_i);
-		Real getEStar(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &direction_to_i);
+		CompressibleFluidState getInterfaceState(const CompressibleFluidState &state_i, const CompressibleFluidState &state_j, const Vecd &direction_to_i);
 	};
 }
 

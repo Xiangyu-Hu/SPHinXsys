@@ -115,6 +115,8 @@ namespace SPH
 		/**< Computing principal strain - returns the principal strains in descending order (starting from the largest) */
 		Vecd get_Principal_strains(size_t particle_i);
 		/**< Computing von Mises equivalent strain from a static (constant) formulation. */
+		Real von_Mises_strain(size_t particle_i);
+		/**< Computing von Mises equivalent strain from a static (constant) formulation. */
 		Real von_Mises_strain_static(size_t particle_i);
 		/**< Computing von Mises equivalent strain from a "dynamic" formulation. This depends on the Poisson's ratio (from commercial FEM software Help). */
 		Real von_Mises_strain_dynamic(size_t particle_i, Real poisson);

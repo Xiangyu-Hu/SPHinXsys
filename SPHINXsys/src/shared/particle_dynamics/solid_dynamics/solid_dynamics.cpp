@@ -304,8 +304,8 @@ namespace SPH
 			  vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
 			  vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_)
 		{
-			particles_->registerAVariable<indexVector, Vecd>(vel_temp_, "TemporaryVelocity");
-			particles_->registerAVariable<indexVector, Vecd>(dvel_dt_temp_, "TemporaryAcceleration");
+			particles_->registerAVariable<Vecd>(vel_temp_, "TemporaryVelocity");
+			particles_->registerAVariable<Vecd>(dvel_dt_temp_, "TemporaryAcceleration");
 		}
 		//=================================================================================================//
 		void SoftConstrainSolidBodyRegion::Interaction(size_t index_i, Real dt)
@@ -364,7 +364,7 @@ namespace SPH
 		{
 			for (int i = 0; i != Dimensions; ++i)
 				correction_matrix_[i][i] = constrain_direction[i];
-			BodySummation<indexScalar, Real> compute_total_mass_(sph_body, "Mass");
+			BodySummation<Real> compute_total_mass_(sph_body, "Mass");
 			total_mass_ = compute_total_mass_.parallel_exec();
 		}
 		//=================================================================================================//
@@ -834,13 +834,14 @@ namespace SPH
 			KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
 			: StressRelaxationFirstHalf(inner_relation)
 		{
-			particles_->registerAVariable<indexScalar, Real>(J_to_minus_2_over_dimension_, "DeterminantTerm");
-			particles_->registerAVariable<indexMatrix, Matd>(stress_on_particle_, "StressOnParticle");
-			particles_->registerAVariable<indexMatrix, Matd>(inverse_F_T_, "InverseTransposedDeformation");
+			particles_->registerAVariable<Real>(J_to_minus_2_over_dimension_, "DeterminantTerm");
+			particles_->registerAVariable<Matd>(stress_on_particle_, "StressOnParticle");
+			particles_->registerAVariable<Matd>(inverse_F_T_, "InverseTransposedDeformation");
 		};
 		//=================================================================================================//
 		void KirchhoffStressRelaxationFirstHalf::Initialization(size_t index_i, Real dt)
 		{
+			correction_factor_ = 1.1 / (particles_->sigma0_ * Vol_[index_i]);
 			pos_n_[index_i] += vel_n_[index_i] * dt * 0.5;
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
 			Real J = det(F_[index_i]);

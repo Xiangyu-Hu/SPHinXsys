@@ -109,12 +109,12 @@ int main()
 	TriangleMeshShapeBrick holder_shape(halfsize_holder, resolution, translation_holder);
 	BodyRegionByParticle holder(cantilever_body, "Holder", holder_shape);
 	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(cantilever_body, holder);
-	DampingWithRandomChoice<DampingBySplittingInner<indexVector, Vec3d>>
+	DampingWithRandomChoice<DampingBySplittingInner<Vec3d>>
 		muscle_damping(cantilever_body_inner, 0.1, "Velocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<indexVector, Vecd>>
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_displacement("Position", in_output, cantilever_observer_contact);
 	/**
 	 * From here the time stepping begins.

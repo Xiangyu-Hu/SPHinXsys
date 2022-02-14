@@ -38,7 +38,7 @@ First, We set the file path for loading the geometry file.
 	//----------------------------------------------------------------------
 	//	Set the file path to the data file.
 	//----------------------------------------------------------------------
-	std::string full_path_to_solid_body_from_mesh = "./input/cartoon.stl";
+	std::string full_path_to_imported_model = "./input/cartoon.stl";
 
 and define the basic geometry parameters, system domain size and refercnce resolution.
 
@@ -60,9 +60,9 @@ Here we create triangle mesh by loading the STL file.
 	TriangleMeshShape *CreateImportedModelSurface()
 	{
 		Vecd translation(0.0, 0.0, 0.0);
-		TriangleMeshShape *geometry_solid_body_from_mesh = new TriangleMeshShape(full_path_to_solid_body_from_mesh, translation, 1.0);
+		TriangleMeshShape *geometry_imported_model = new TriangleMeshShape(full_path_to_imported_model, translation, 1.0);
 		/** Read the input STL geometry and create polygonal mesh for imported geometry. */
-		return geometry_solid_body_from_mesh;
+		return geometry_imported_model;
 	}
 
 From the piece of code below, one can choose whether the geometry need to be clean or not by simply set the third value of constructor of :code:`LevelSetComplexShape` to :code:`true`.
@@ -100,9 +100,9 @@ In the main function, we create :code:`SPHBody` for imported model, generate lat
 .. code-block:: cpp
 
 	/**	Creating the imported body, materials and particles. */
-	ImportedModel* solid_body_from_mesh = new ImportedModel(system, "ImportedModel");
-	SolidParticles solid_body_from_mesh_particles(solid_body_from_mesh);
-	solid_body_from_mesh_particles.addAVariableToWrite<indexScalar, Real>("SmoothingLengthRatio");
+	ImportedModel* imported_model = new ImportedModel(system, "ImportedModel");
+	SolidParticles imported_model_particles(imported_model);
+	imported_model_particles.addAVariableToWrite<indexScalar, Real>("SmoothingLengthRatio");
 
 And define the in-out put function.
 
@@ -122,8 +122,8 @@ And define the in-out put function.
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
 	/** Write the body state to Vtu file，one can simply change "Vtu" to "Plt" to get ".plt" file output */
-	WriteBodyStatesToVtu		write_solid_body_from_mesh_to_vtu(in_output, { solid_body_from_mesh });
-	WriteMeshToPlt 	write_mesh_cell_linked_list(in_output, solid_body_from_mesh, solid_body_from_mesh->mesh_cell_linked_list_);
+	WriteBodyStatesToVtu		write_imported_model_to_vtu(in_output, { imported_model });
+	WriteMeshToPlt 	write_mesh_cell_linked_list(in_output, imported_model, imported_model->mesh_cell_linked_list_);
 
 Then, the topological relation of imported model is defined by	
 
@@ -134,8 +134,8 @@ Then, the topological relation of imported model is defined by
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BaseInnerBodyRelation* solid_body_from_mesh_inner
-		= new InnerBodyRelationVariableSmoothingLength(solid_body_from_mesh);
+	BaseInnerBodyRelation* imported_model_inner
+		= new InnerBodyRelationVariableSmoothingLength(imported_model);
 
 One should noted that, if the multi-resolution is selected, the :code:`InnerBodyRelationVariableSmoothingLength` is needed for define inner body relation.
 
@@ -147,13 +147,13 @@ After creating the body and its relation, the method for relax dynamics will be 
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
 	/** Let the particles make small disturbances in the initial position. */
-	RandomizePartilePosition  random_solid_body_from_mesh_particles(solid_body_from_mesh);
+	RandomizePartilePosition  random_imported_model_particles(imported_model);
 	/** Relaxation method for inner particles in a body, parameter "true" denotes using 
 		"static confinement" method for boundary condition.
 	*/ 
-	relax_dynamics::RelaxationStepInner relaxation_step_inner(solid_body_from_mesh_inner, true);
+	relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner, true);
 	/** Update the smoothing length ratio for each particle during relaxation process */
-	relax_dynamics::UpdateSmoothingLengthRatioByBodyShape update_smoothing_length_ratio(solid_body_from_mesh);
+	relax_dynamics::UpdateSmoothingLengthRatioByBodyShape update_smoothing_length_ratio(imported_model);
 
 Then, we start to initialize the process of relaxation from making a small random disturbance to the particle distribution.
 
@@ -162,14 +162,14 @@ Then, we start to initialize the process of relaxation from making a small rando
 	//----------------------------------------------------------------------
 	//	Particle relaxation starts here.
 	//----------------------------------------------------------------------
-	random_solid_body_from_mesh_particles.parallel_exec(0.25);
+	random_imported_model_particles.parallel_exec(0.25);
 	/** Ensure that the particles will not escape the geometry 
 		boundary during the relaxation process.
 	*/
 	relaxation_step_inner.surface_bounding_.parallel_exec();
 	update_smoothing_length_ratio.parallel_exec();
-	write_solid_body_from_mesh_to_vtu.WriteToFile(0.0);
-	solid_body_from_mesh->updateCellLinkedList();
+	write_imported_model_to_vtu.WriteToFile(0.0);
+	imported_model->updateCellLinkedList();
 	write_mesh_cell_linked_list.WriteToFile(0.0);
 
 The main relaxation loops are defined in the following piece of code.
@@ -188,7 +188,7 @@ The main relaxation loops are defined in the following piece of code.
 		if (ite_p % 100 == 0) /** output particle position every 100 step. */  
 		{
 			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the imported model N = " << ite_p << "\n";
-			write_solid_body_from_mesh_to_vtu.WriteToFile(Real(ite_p) * 1.0e-4);
+			write_imported_model_to_vtu.WriteToFile(Real(ite_p) * 1.0e-4);
 		}
 	}
 	

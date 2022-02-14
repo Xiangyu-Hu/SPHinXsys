@@ -117,29 +117,29 @@ namespace SPH
 		ParticleDataMap all_variable_maps_;
 
 		/** register a variable defined in a class (can be non-particle class) */
-		template <int DataTypeIndex, typename VariableType>
+		template <typename VariableType>
 		void registerAVariable(StdLargeVec<VariableType> &variable_addrs,
 							   const std::string &variable_name, VariableType initial_value = VariableType(0));
 
 		/** register a variable and copying data from an exist variable */
-		template <int DataTypeIndex, typename VariableType>
+		template <typename VariableType>
 		void registerAVariable(StdLargeVec<VariableType> &variable_addrs,
 							   const std::string &new_variable_name, const std::string &old_variable_name);
 
 		/** get a registered variable from particles by its name. return by pointer so that return nullptr if fail. */
-		template <int DataTypeIndex, typename VariableType>
+		template <typename VariableType>
 		StdLargeVec<VariableType> *getVariableByName(std::string variable_name);
 
 		/** add a variable into a particle vairable name list */
-		template <int DataTypeIndex, typename VariableType>
+		template <typename VariableType>
 		void addAVariableNameToList(ParticleVariableList &variable_name_list, std::string variable_name);
 
 		/** add a variable into the list for state output */
-		template <int DataTypeIndex, typename VariableType>
+		template <typename VariableType>
 		void addAVariableToWrite(std::string variable_name);
 
 		/** add a variable into the list for restart */
-		template <int DataTypeIndex, typename VariableType>
+		template <typename VariableType>
 		void addAVariableToRestart(std::string variable_name);
 
 		//----------------------------------------------------------------------
@@ -152,7 +152,7 @@ namespace SPH
 		ParticleDataMap sortable_variable_maps_;
 
 		/** register an already defined variable as sortable */
-		template <int DataTypeIndex, typename VariableType>
+		template <typename VariableType>
 		void registerASortableVariable(std::string variable_name);
 
 		SPHBody *getSPHBody() { return sph_body_; };
@@ -203,14 +203,14 @@ namespace SPH
 		virtual void writePltFileParticleData(std::ofstream &output_file, size_t index_i);
 
 		/** Fill a particle variable with default data. */
-		template <int DataTypeIndex, typename VariableType>
+		template <typename VariableType>
 		struct addAParticleDataValue
 		{
 			void operator()(ParticleData &particle_data) const;
 		};
 
 		/** Copy a particle variable value from another particle. */
-		template <int DataTypeIndex, typename VariableType>
+		template <typename VariableType>
 		struct copyAParticleDataValue
 		{
 			void operator()(ParticleData &particle_data, size_t this_index, size_t another_index) const;

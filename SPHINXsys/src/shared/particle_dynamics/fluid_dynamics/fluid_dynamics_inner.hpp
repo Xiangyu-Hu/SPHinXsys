@@ -20,8 +20,8 @@ namespace SPH
 			SpatialTemporalFreeSurfaceIdentification(ConstructorArgs &&...args)
 			: FreeSurfaceIdentification(std::forward<ConstructorArgs>(args)...)
 		{
-			this->particles_->template registerAVariable<indexInteger, int>(previous_surface_indicator_, "PreviousSurfaceIndicator", 1);
-			this->particles_->template registerASortableVariable<indexInteger, int>("PreviousSurfaceIndicator");
+			this->particles_->template registerAVariable<int>(previous_surface_indicator_, "PreviousSurfaceIndicator", 1);
+			this->particles_->template registerASortableVariable<int>("PreviousSurfaceIndicator");
 		}
 		//=================================================================================================//
 		template <class FreeSurfaceIdentification>

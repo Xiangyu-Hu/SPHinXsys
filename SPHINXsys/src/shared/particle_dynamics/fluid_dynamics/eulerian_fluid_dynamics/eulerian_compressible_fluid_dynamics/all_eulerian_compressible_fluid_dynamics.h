@@ -21,7 +21,7 @@
 *                                                                           *
 * --------------------------------------------------------------------------*/
 /**
-* @file all_eulerian_fluid_dynamics.h
+* @file all_compressible_eulerian_fluid_dynamics.h
 * @brief This is the header file that user code should include to pick up all eulerian
 * fluid dynamics used in SPHinXsys.
 * @details The eulerian fluid dynamics algorithms begin for fluid bulk without boundary condition,
@@ -30,5 +30,7 @@
 */
 #pragma once
 
-#include "eulerian_fluid_dynamics_inner.h"
-#include "eulerian_fluid_dynamics_inner.hpp"
+#include "eulerian_compressible_fluid_dynamics_inner.h"
+#include "eulerian_compressible_fluid_dynamics_inner.hpp"
+#include "eulerian_compressible_fluid_dynamics_complex.h"
+#include "eulerian_compressible_fluid_dynamics_complex.hpp"

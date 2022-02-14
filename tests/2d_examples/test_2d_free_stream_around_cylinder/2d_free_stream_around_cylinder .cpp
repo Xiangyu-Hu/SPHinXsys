@@ -106,15 +106,15 @@ int main(int ac, char *av[])
 	fluid_dynamics::EmitterInflowInjecting emitter_inflow_injecting(water_block, emitter, 50, 0, true);
 	/** Emitter buffer inflow condition. */
 	MultiPolygonShape emitter_buffer_shape(createEmitterBufferShape());
-	BodyRegionByParticle emitter_buffer(water_block, "EmitterBuffer", emitter_buffer_shape);
+	BodyRegionByCell emitter_buffer(water_block, "EmitterBuffer", emitter_buffer_shape);
 	EmitterBufferInflowCondition emitter_buffer_inflow_condition(water_block, emitter_buffer);
 	/** time-space method to detect surface particles. */
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex free_stream_surface_indicator(water_block_complex);
 	/** Evaluation of density by freestream approach. */
 	fluid_dynamics::DensitySummationFreeStreamComplex update_fluid_density(water_block_complex);
 	/** We can output a method-specific particle data for debug */
-	fluid_particles.addAVariableToWrite<indexScalar, Real>("Pressure");
-	fluid_particles.addAVariableToWrite<indexInteger, Real>("SurfaceIndicator");
+	fluid_particles.addAVariableToWrite<Real>("Pressure");
+	fluid_particles.addAVariableToWrite<int>("SurfaceIndicator");
 	/** Time step size without considering sound wave speed. */
 	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
@@ -146,7 +146,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_real_body_states(in_output, system.real_bodies_);
 	RestartIO restart_io(in_output, system.real_bodies_);
-	ObservedQuantityRecording<indexVector, Vecd>
+	ObservedQuantityRecording<Vecd>
 		write_fluid_velocity("Velocity", in_output, fluid_observer_contact);
 	RegressionTestTimeAveraged<BodyReducedQuantityRecording<solid_dynamics::TotalViscousForceOnSolid>>
 		write_total_viscous_force_on_inserted_body(in_output, cylinder);
@@ -268,15 +268,7 @@ int main(int ac, char *av[])
 	tt = t4 - t1 - interval;
 	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
 
-	if (system.generate_regression_data_)
-	{
-		//The lift force at the cylinder is very small and not important in this case. 
-		write_total_viscous_force_on_inserted_body.generateDataBase({0.01, 0.1}, {0.01, 0.1});
-	}
-	else
-	{
-		write_total_viscous_force_on_inserted_body.newResultTest();
-	}
+	write_total_viscous_force_on_inserted_body.newResultTest();
 
 	return 0;
 }

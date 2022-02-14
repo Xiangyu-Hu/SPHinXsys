@@ -22,22 +22,22 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
-		registerAVariable<indexScalar, Real>(p_, "Pressure");
-		registerAVariable<indexScalar, Real>(drho_dt_, "DensityChangeRate");
-		registerAVariable<indexScalar, Real>(rho_sum_, "DensitySummation");
-		registerAVariable<indexInteger, int>(surface_indicator_, "SurfaceIndicator");
+		registerAVariable<Real>(p_, "Pressure");
+		registerAVariable<Real>(drho_dt_, "DensityChangeRate");
+		registerAVariable<Real>(rho_sum_, "DensitySummation");
+		registerAVariable<int>(surface_indicator_, "SurfaceIndicator");
 		//----------------------------------------------------------------------
 		//		register sortable particle data
 		//----------------------------------------------------------------------
-		registerASortableVariable<indexVector, Vecd>("Position");
-		registerASortableVariable<indexVector, Vecd>("Velocity");
-		registerASortableVariable<indexScalar, Real>("Mass");
-		registerASortableVariable<indexScalar, Real>("Density");
-		registerASortableVariable<indexScalar, Real>("Pressure");
+		registerASortableVariable<Vecd>("Position");
+		registerASortableVariable<Vecd>("Velocity");
+		registerASortableVariable<Real>("Mass");
+		registerASortableVariable<Real>("Density");
+		registerASortableVariable<Real>("Pressure");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
-		addAVariableNameToList<indexScalar, Real>(variables_to_restart_, "Pressure");
+		addAVariableNameToList<Real>(variables_to_restart_, "Pressure");
 	}
 	//=================================================================================================//
 	ViscoelasticFluidParticles::
@@ -50,16 +50,16 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
-		registerAVariable<indexMatrix, Matd>(tau_, "ElasticStress");
-		registerAVariable<indexMatrix, Matd>(dtau_dt_, "ElasticStressChangeRate");
+		registerAVariable<Matd>(tau_, "ElasticStress");
+		registerAVariable<Matd>(dtau_dt_, "ElasticStressChangeRate");
 		//----------------------------------------------------------------------
 		//		register sortable particle data
 		//----------------------------------------------------------------------
-		registerASortableVariable<indexMatrix, Matd>("ElasticStress");
+		registerASortableVariable<Matd>("ElasticStress");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
-		addAVariableNameToList<indexMatrix, Matd>(variables_to_restart_, "ElasticStress");
+		addAVariableNameToList<Matd>(variables_to_restart_, "ElasticStress");
 	}
 	//=================================================================================================//
 	CompressibleFluidParticles::
@@ -72,16 +72,36 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
-		registerAVariable<indexVector, Vecd>(mom_, "Momentum");
-		registerAVariable<indexVector, Vecd>(dmom_dt_, "MomentumChangeRate");
-		registerAVariable<indexVector, Vecd>(dmom_dt_prior_, "OtherMomentumChangeRate");
-		registerAVariable<indexScalar, Real>(E_, "TotalEnergy");
-		registerAVariable<indexScalar, Real>(dE_dt_, "TotalEnergyChangeRate");
-		registerAVariable<indexScalar, Real>(dE_dt_prior_, "OtherEnergyChangeRate");
+		registerAVariable<Vecd>(mom_, "Momentum");
+		registerAVariable<Vecd>(dmom_dt_, "MomentumChangeRate");
+		registerAVariable<Vecd>(dmom_dt_prior_, "OtherMomentumChangeRate");
+		registerAVariable<Real>(E_, "TotalEnergy");
+		registerAVariable<Real>(dE_dt_, "TotalEnergyChangeRate");
+		registerAVariable<Real>(dE_dt_prior_, "OtherEnergyChangeRate");
 		//----------------------------------------------------------------------
 		//		add output particle data
 		//----------------------------------------------------------------------
-		addAVariableToWrite<indexScalar, Real>("Pressure");
+		addAVariableToWrite<Real>("Pressure");
+	}
+	//=================================================================================================//
+	WeaklyCompressibleFluidParticles
+		::WeaklyCompressibleFluidParticles(SPHBody &sph_body,
+								   SharedPtr<Fluid> shared_fluid_ptr,
+								   SharedPtr<ParticleGenerator> particle_generator_ptr)
+		: FluidParticles(sph_body, shared_fluid_ptr, particle_generator_ptr)
+	{
+		shared_fluid_ptr->assignFluidParticles(this);
+		//----------------------------------------------------------------------
+		//		register particle data
+		//----------------------------------------------------------------------
+		registerAVariable<Real>(dmass_dt_, "MassChangeRate");
+		registerAVariable<Vecd>(mom_, "Momentum");
+		registerAVariable<Vecd>(dmom_dt_, "MomentumChangeRate");
+		registerAVariable<Vecd>(dmom_dt_prior_, "OtherMomentumChangeRate");
+		//----------------------------------------------------------------------
+		//		add output particle data
+		//----------------------------------------------------------------------
+		addAVariableToWrite<Real>("Pressure");
 	}
 	//=================================================================================================//
 }

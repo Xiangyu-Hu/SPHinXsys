@@ -24,10 +24,10 @@ BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 //----------------------------------------------------------------------
 //	define a body from the imported model.
 //----------------------------------------------------------------------
-class SolidBodyFromMesh : public SolidBody
+class ImportedModel : public SolidBody
 {
 public:
-	SolidBodyFromMesh(SPHSystem &system, const std::string &body_name)
+	ImportedModel(SPHSystem &system, const std::string &body_name)
 		: SolidBody(system, body_name, makeShared<ParticleSpacingByBodyShape>(1.15, 1.0, 2))
 	{
 		/** Geometry definition. */
@@ -56,35 +56,35 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	SolidBodyFromMesh solid_body_from_mesh(system, "SolidBodyFromMesh");
-	SolidParticles solid_body_from_mesh_particles(solid_body_from_mesh, makeShared<ParticleGeneratorMultiResolution>());
-	solid_body_from_mesh_particles.addAVariableToWrite<indexScalar, Real>("SmoothingLengthRatio");
+	ImportedModel imported_model(system, "ImportedModel");
+	SolidParticles imported_model_particles(imported_model, makeShared<ParticleGeneratorMultiResolution>());
+	imported_model_particles.addAVariableToWrite<Real>("SmoothingLengthRatio");
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_solid_body_from_mesh_to_vtp(in_output, {solid_body_from_mesh});
-	MeshRecordingToPlt cell_linked_list_recording(in_output, solid_body_from_mesh, solid_body_from_mesh.cell_linked_list_);
+	BodyStatesRecordingToVtp write_imported_model_to_vtp(in_output, {imported_model});
+	MeshRecordingToPlt cell_linked_list_recording(in_output, imported_model, imported_model.cell_linked_list_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInnerVariableSmoothingLength solid_body_from_mesh_inner(solid_body_from_mesh);
+	BodyRelationInnerVariableSmoothingLength imported_model_inner(imported_model);
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
-	RandomizePartilePosition random_solid_body_from_mesh_particles(solid_body_from_mesh);
+	RandomizePartilePosition random_imported_model_particles(imported_model);
 	/** A  Physics relaxation step. */
-	relax_dynamics::RelaxationStepInner relaxation_step_inner(solid_body_from_mesh_inner, true);
-	relax_dynamics::UpdateSmoothingLengthRatioByBodyShape update_smoothing_length_ratio(solid_body_from_mesh);
+	relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner, true);
+	relax_dynamics::UpdateSmoothingLengthRatioByBodyShape update_smoothing_length_ratio(imported_model);
 	//----------------------------------------------------------------------
 	//	Particle relaxation starts here.
 	//----------------------------------------------------------------------
-	random_solid_body_from_mesh_particles.parallel_exec(0.25);
+	random_imported_model_particles.parallel_exec(0.25);
 	relaxation_step_inner.surface_bounding_.parallel_exec();
 	update_smoothing_length_ratio.parallel_exec();
-	write_solid_body_from_mesh_to_vtp.writeToFile();
-	solid_body_from_mesh.updateCellLinkedList();
+	write_imported_model_to_vtp.writeToFile();
+	imported_model.updateCellLinkedList();
 	cell_linked_list_recording.writeToFile(0);
 	//----------------------------------------------------------------------
 	//	Particle relaxation time stepping start here.
@@ -98,7 +98,7 @@ int main(int ac, char *av[])
 		if (ite_p % 100 == 0)
 		{
 			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the imported model N = " << ite_p << "\n";
-			write_solid_body_from_mesh_to_vtp.writeToFile(ite_p);
+			write_imported_model_to_vtp.writeToFile(ite_p);
 		}
 	}
 	std::cout << "The physics relaxation process of imported model finish !" << std::endl;

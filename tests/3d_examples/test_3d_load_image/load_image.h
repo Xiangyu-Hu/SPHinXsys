@@ -26,10 +26,10 @@ Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 50.0;
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 
-class SolidBodyFromMesh : public SolidBody
+class ImportedModel : public SolidBody
 {
 public:
-	SolidBodyFromMesh(SPHSystem &system, const std::string &body_name)
+	ImportedModel(SPHSystem &system, const std::string &body_name)
 		: SolidBody(system, body_name, makeShared<ParticleSpacingByBodyShape>(1.15, 1.0, 2))
 	{
 		/** Geometry definition. */

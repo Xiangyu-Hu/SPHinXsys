@@ -16,6 +16,7 @@ namespace SPH
 	{
 		initializePackageDataAddress(phi_, phi_addrs_);
 		initializePackageDataAddress(n_, n_addrs_);
+		initializePackageDataAddress(none_normalized_n_, none_normalized_n_addrs_);
 		initializePackageDataAddress(kernel_weight_, kernel_weight_addrs_);
 		initializePackageDataAddress(kernel_gradient_, kernel_gradient_addrs_);
 		initializePackageDataAddress(near_interface_id_, near_interface_id_addrs_);
@@ -31,6 +32,7 @@ namespace SPH
 	{
 		assignPackageDataAddress(phi_addrs_, addrs_index, src_pkg->phi_, data_index);
 		assignPackageDataAddress(n_addrs_, addrs_index, src_pkg->n_, data_index);
+		assignPackageDataAddress(none_normalized_n_addrs_, addrs_index, src_pkg->none_normalized_n_, data_index);
 		assignPackageDataAddress(kernel_weight_addrs_, addrs_index, src_pkg->kernel_weight_, data_index);
 		assignPackageDataAddress(kernel_gradient_addrs_, addrs_index, src_pkg->kernel_gradient_, data_index);
 		assignPackageDataAddress(near_interface_id_addrs_, addrs_index, src_pkg->near_interface_id_, data_index);
@@ -39,6 +41,11 @@ namespace SPH
 	void LevelSetDataPackage::computeNormalDirection()
 	{
 		computeNormalizedGradient(phi_addrs_, n_addrs_);
+	}
+	//=================================================================================================//
+	void LevelSetDataPackage::computeNoneNormalizedNormalDirection()
+	{
+		computeGradient(phi_addrs_, none_normalized_n_addrs_);
 	}
 	//=================================================================================================//
 	BaseLevelSet ::BaseLevelSet(Shape &shape, SPHAdaptation &sph_adaptation)
@@ -79,6 +86,7 @@ namespace SPH
 		MeshFunctor initial_address_in_a_cell = std::bind(&LevelSet::initializeAddressesInACell, this, _1, _2);
 		MeshIterator_parallel(Vecu(0), number_of_cells_, initial_address_in_a_cell);
 		updateNormalDirection();
+		updateNoneNormalizedNormalDirection();
 		updateKernelIntegrals();
 	}
 	//=================================================================================================//
@@ -94,6 +102,13 @@ namespace SPH
 		PackageIterator_parallel<LevelSetDataPackage>(inner_data_pkgs_, update_normal_diraction);
 	}
 	//=================================================================================================//
+	void LevelSet::updateNoneNormalizedNormalDirection()
+	{
+		PackageFunctor<void, LevelSetDataPackage> update_none_normalized_normal_diraction
+			= std::bind(&LevelSet::updateNoneNormalizedNormalDirectionForAPackage, this, _1, _2);
+		PackageIterator_parallel<LevelSetDataPackage>(inner_data_pkgs_, update_none_normalized_normal_diraction);
+	}
+	//=================================================================================================//
 	void LevelSet::updateKernelIntegrals()
 	{
 		PackageFunctor<void, LevelSetDataPackage> update_kernel_value =
@@ -105,6 +120,12 @@ namespace SPH
 	{
 		return probeMesh<Vecd, LevelSetDataPackage::PackageDataAddress<Vecd>,
 						 &LevelSetDataPackage::n_addrs_>(position);
+	}
+	//=================================================================================================//
+	Vecd LevelSet::probeNoneNormalizedNormalDirection(const Vecd& position)
+	{
+		return probeMesh<Vecd, LevelSetDataPackage::PackageDataAddress<Vecd>,
+			&LevelSetDataPackage::none_normalized_n_addrs_>(position);
 	}
 	//=================================================================================================//
 	Real LevelSet::probeSignedDistance(const Vecd &position)
@@ -129,6 +150,12 @@ namespace SPH
 		updateNormalDirectionForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt)
 	{
 		inner_data_pkg->computeNormalDirection();
+	}
+	//=================================================================================================//
+	void LevelSet::
+		updateNoneNormalizedNormalDirectionForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt)
+	{
+		inner_data_pkg->computeNoneNormalizedNormalDirection();
 	}
 	//=================================================================================================//
 	void LevelSet::
@@ -221,6 +248,11 @@ namespace SPH
 	Vecd MultilevelLevelSet::probeNormalDirection(const Vecd &position)
 	{
 		return mesh_levels_[getProbeLevel(position)]->probeNormalDirection(position);
+	}
+	//=============================================================================================//
+	Vecd MultilevelLevelSet::probeNoneNormalizedNormalDirection(const Vecd& position)
+	{
+		return 	mesh_levels_[getProbeLevel(position)]->probeNoneNormalizedNormalDirection(position);
 	}
 	//=============================================================================================//
 	size_t MultilevelLevelSet::getProbeLevel(const Vecd &position)
