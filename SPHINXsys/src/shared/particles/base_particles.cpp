@@ -128,7 +128,8 @@ namespace SPH
 	{
 		size_t last_real_particle_index = total_real_particles_ - 1;
 		updateFromAnotherParticle(index_i, last_real_particle_index);
-		unsorted_id_[index_i] = unsorted_id_[last_real_particle_index];
+		std::swap(unsorted_id_[index_i], unsorted_id_[last_real_particle_index]);
+		sorted_id_[unsorted_id_[index_i]] = index_i;
 		total_real_particles_ -= 1;
 	}
 //=================================================================================================//
