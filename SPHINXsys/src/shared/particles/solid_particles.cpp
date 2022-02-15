@@ -22,7 +22,6 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
-		registerAVariable<Vecd>(pos_0_, "InitialPosition");
 		registerAVariable<Vecd>(n_, "NormalDirection");
 		registerAVariable<Vecd>(n_0_, "InitialNormalDirection");
 		registerAVariable<Matd>(B_, "CorrectionMatrix", Matd(1.0));
@@ -43,9 +42,6 @@ namespace SPH
 		registerASortableVariable<Vecd>("Position");
 		registerASortableVariable<Vecd>("InitialPosition");
 		registerASortableVariable<Real>("Volume");
-		//set the initial value for initial particle position
-		for (size_t i = 0; i != pos_n_.size(); ++i)
-			pos_0_[i] = pos_n_[i];
 		//sorting particle once
 		//DynamicCast<RealBody>(this, body)->sortParticleWithCellLinkedList();
 	}

@@ -89,6 +89,7 @@ namespace SPH
 
 		BaseMaterial *base_material_; /**< for dynamic cast in particle data delegation */
 
+		StdLargeVec<Vecd> pos_0_; /**< initial position */
 		StdLargeVec<Vecd> pos_n_;		  /**< current position */
 		StdLargeVec<Vecd> vel_n_;		  /**< current particle velocity */
 		StdLargeVec<Vecd> dvel_dt_;		  /**< total acceleration including inner pressure- or stress-induced acceleration and other accelerations */
@@ -115,6 +116,7 @@ namespace SPH
 		//----------------------------------------------------------------------
 		ParticleData all_particle_data_;
 		ParticleDataMap all_variable_maps_;
+		ParticleVariableList variables_to_write_;
 
 		/** register a variable defined in a class (can be non-particle class) */
 		template <typename VariableType>
@@ -195,7 +197,6 @@ namespace SPH
 		std::string body_name_;
 		XmlEngine restart_xml_engine_;
 		XmlEngine reload_xml_engine_;
-		ParticleVariableList variables_to_write_;
 		ParticleVariableList variables_to_restart_;
 		void addAParticleEntry();
 

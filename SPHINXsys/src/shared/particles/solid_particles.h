@@ -61,7 +61,6 @@ namespace SPH
 			: SolidParticles(sph_body, makeShared<Solid>(), particle_generator_ptr){};
 		virtual ~SolidParticles(){};
 
-		StdLargeVec<Vecd> pos_0_; /**< initial position */
 		StdLargeVec<Vecd> n_;	  /**<  current normal direction */
 		StdLargeVec<Vecd> n_0_;	  /**<  inital normal direction */
 		StdLargeVec<Matd> B_;	  /**<  configuration correction for linear reproducing */
