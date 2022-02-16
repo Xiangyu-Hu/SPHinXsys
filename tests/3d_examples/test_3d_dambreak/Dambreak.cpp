@@ -231,8 +231,5 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_water_mechanical_energy.newResultTest();
-	write_recorded_water_pressure.newResultTest();
-
 	return 0;
 }
