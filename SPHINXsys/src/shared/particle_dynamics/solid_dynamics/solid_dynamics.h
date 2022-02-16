@@ -600,13 +600,16 @@ namespace SPH
 		class KirchhoffStressRelaxationFirstHalf : public StressRelaxationFirstHalf
 		{
 		public:
-			explicit KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
+			explicit KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation, Real correction_scalar = 1.1);
 			virtual ~KirchhoffStressRelaxationFirstHalf(){};
+
+			void setCorrectionScalar(Real correction_scalar){correction_scalar_ = correction_scalar;};
 
 		protected:
 			StdLargeVec<Real> J_to_minus_2_over_dimension_;
 			StdLargeVec<Matd> stress_on_particle_, inverse_F_T_;
 			const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
+			Real correction_scalar_;
 			Real correction_factor_;
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;

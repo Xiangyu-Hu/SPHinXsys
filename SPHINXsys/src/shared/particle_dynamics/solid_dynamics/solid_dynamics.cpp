@@ -831,17 +831,19 @@ namespace SPH
 		}
 		//=================================================================================================//
 		KirchhoffStressRelaxationFirstHalf::
-			KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
+			KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation, Real correction_scalar)
 			: StressRelaxationFirstHalf(inner_relation)
 		{
 			particles_->registerAVariable<Real>(J_to_minus_2_over_dimension_, "DeterminantTerm");
 			particles_->registerAVariable<Matd>(stress_on_particle_, "StressOnParticle");
 			particles_->registerAVariable<Matd>(inverse_F_T_, "InverseTransposedDeformation");
+
+			correction_scalar_ = correction_scalar;
 		};
 		//=================================================================================================//
 		void KirchhoffStressRelaxationFirstHalf::Initialization(size_t index_i, Real dt)
 		{
-			correction_factor_ = 1.1 / (particles_->sigma0_ * Vol_[index_i]);
+			correction_factor_ = correction_scalar_ / (particles_->sigma0_ * Vol_[index_i]);
 			pos_n_[index_i] += vel_n_[index_i] * dt * 0.5;
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
 			Real J = det(F_[index_i]);
