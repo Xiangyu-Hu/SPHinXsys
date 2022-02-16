@@ -425,10 +425,12 @@ namespace SPH
 		public:
 			ForceInBodyRegion(SPHBody &sph_body, BodyPartByParticle &body_part, Vecd force, Real end_time);
 
+			StdLargeVec<bool>& GetApplyForceToParticle(){ return apply_force_to_particle_; }
 		protected:
 			StdLargeVec<Vecd> &pos_0_, &dvel_dt_prior_;
 			Vecd acceleration_;
 			Real end_time_;
+			StdLargeVec<bool> apply_force_to_particle_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 

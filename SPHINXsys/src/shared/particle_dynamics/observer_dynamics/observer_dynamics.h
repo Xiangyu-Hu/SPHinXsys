@@ -60,12 +60,12 @@ namespace SPH
 					contact_data_.push_back(contact_data);
 				}
 			};
-			virtual ~BaseInterpolation(){};
+			virtual ~BaseInterpolation() {};
+			StdLargeVec<VariableType>*  interpolated_quantities_;
 
 		protected:
-			StdLargeVec<VariableType> *interpolated_quantities_;
-			StdVec<StdLargeVec<Real> *> contact_Vol_;
-			StdVec<StdLargeVec<VariableType> *> contact_data_;
+			StdVec<StdLargeVec<Real>*> contact_Vol_;
+			StdVec<StdLargeVec<VariableType>*> contact_data_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override
 			{

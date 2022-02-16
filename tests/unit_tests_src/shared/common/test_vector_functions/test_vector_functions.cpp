@@ -3,7 +3,14 @@
 
 using namespace SPH;
 
-TEST(AngleBetweenTwo3DVectors, getAngleBetweenTwo3DVectors)
+TEST(small_vectors, CalculateDoubleDotProduct)
+{
+    Mat3d matrix_1 = Mat3d(Vec3d(6.5, 7.8, 0.0), Vec3d(1.0, 2.0, 3.0), Vec3d(10.0, 10.0, 17.3));
+    Mat3d matrix_2 = Mat3d(Vec3d(4.6, 4.9, 9.0), Vec3d(1.0, 5.0, 7.0), Vec3d(0.0, 0.0, 0.2));
+    EXPECT_DOUBLE_EQ(CalculateDoubleDotProduct(matrix_1, matrix_2), 103.58);
+}
+
+TEST(small_vectors, getCosineOfAngleBetweenTwoVectors)
 {
     Vec3d vector_1 = Vec3d(2, -4, 0);
     Vec3d vector_2 = Vec3d(3, 2, 5);
@@ -29,7 +36,7 @@ TEST(AngleBetweenTwo3DVectors, getAngleBetweenTwo3DVectors)
 
 }
 //=================================================================================================//
-TEST(VectorProjectionOf3DVector, getVectorProjectionOf3DVector)
+TEST(small_vectors, getVectorProjectionOfVector)
 {
     Vec3d vector_1 = Vec3d(1, 2, 3);
     Vec3d vector_2 = Vec3d(2, -1, 4);
@@ -68,6 +75,29 @@ TEST(VectorProjectionOf3DVector, getVectorProjectionOf3DVector)
 	}
 
 }
+//=================================================================================================//
+TEST(small_vectors, getPrincipalValuesFromMatrix)
+{
+    Mat3d stress_tensor_1 = Mat3d(
+        Vec3d(50, 30, 20),
+        Vec3d(30, -20, -10),
+        Vec3d(20, -10, 10)
+    );
+    Vec3d principal_stress_1 = getPrincipalValuesFromMatrix(stress_tensor_1);
+    Vec3d principal_stress_1_ref = {65.527, 11.531, -37.058};
+    for (size_t i = 0; i < 3; i++) EXPECT_NEAR(principal_stress_1[i], principal_stress_1_ref[i], 1e-3);
+
+    Mat3d stress_tensor_2 = Mat3d(
+        Vec3d(12.5, 0, 0),
+        Vec3d(0, -50.4, 0),
+        Vec3d(0, 0, 15.3)
+    );
+    Vec3d principal_stress_2 = getPrincipalValuesFromMatrix(stress_tensor_2);
+    Vec3d principal_stress_2_ref = {15.3, 12.5, -50.4};
+    for (size_t i = 0; i < 3; i++) EXPECT_DOUBLE_EQ(principal_stress_2[i], principal_stress_2_ref[i]);
+}
+
+//=================================================================================================//
 //=================================================================================================//
 int main(int argc, char* argv[])
 {	

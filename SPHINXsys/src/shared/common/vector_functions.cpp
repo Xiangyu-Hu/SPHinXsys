@@ -214,6 +214,31 @@ namespace SPH {
 		return diag;
 	}
 	//=================================================================================================//
+	Real CalculateDoubleDotProduct(Mat2d Matrix1, Mat2d Matrix2 )
+	{
+		Real product = 0;
+		for(int i=0; i < 2; i++)
+		{
+			for(int j=0; j < 2; j++)
+			{
+				product += Matrix1[i][j] * Matrix2[i][j];
+			}
+		}
+		return product;
+	}
+	Real CalculateDoubleDotProduct(Mat3d Matrix1, Mat3d Matrix2 )
+	{
+		Real product = 0;
+		for(int i=0; i < 3; i++)
+		{
+			for(int j=0; j < 3; j++)
+			{
+				product += Matrix1[i][j] * Matrix2[i][j];
+			}
+		}
+		return product;
+	}
+	//=================================================================================================//
 	Real getCosineOfAngleBetweenTwoVectors (Vec2d vector_1, Vec2d vector_2)
 	{
 		// returns the cosine of the angle between two vectors
@@ -270,6 +295,77 @@ namespace SPH {
 		Vec3d proj_vector_1 = lambda * vector_2;
 
 		return proj_vector_1;
+	}
+	//=================================================================================================//
+	Real getVonMisesStressFromMatrix(const Mat2d& sigma)
+	{
+		Real sigmaxx = sigma(0, 0);
+		Real sigmayy = sigma(1, 1);
+		Real sigmaxy = sigma(0, 1);
+
+		return sqrt(sigmaxx * sigmaxx + sigmayy * sigmayy - sigmaxx * sigmayy
+			+ 3.0 * sigmaxy * sigmaxy);
+	}
+	//=================================================================================================//
+	Real getVonMisesStressFromMatrix(const Mat3d& sigma)
+	{
+		Real sigmaxx = sigma(0, 0);
+		Real sigmayy = sigma(1, 1);
+		Real sigmazz = sigma(2, 2);
+		Real sigmaxy = sigma(0, 1);
+		Real sigmaxz = sigma(0, 2);
+		Real sigmayz = sigma(1, 2);
+
+		return sqrt(sigmaxx * sigmaxx + sigmayy * sigmayy + sigmazz * sigmazz
+			- sigmaxx * sigmayy - sigmaxx * sigmazz - sigmayy * sigmazz
+			+ 3.0 * (sigmaxy * sigmaxy + sigmaxz * sigmaxz + sigmayz * sigmayz));
+	}
+	//=================================================================================================//
+	Vec2d getPrincipalValuesFromMatrix(const Mat2d& A)
+	{
+		int n = 2;
+		Eigen::MatrixXd matrix(n,n);
+		for(int row=0;row<n;row++) {
+			for(int col=0;col<n;col++)  {
+				matrix(row,col) = A[row][col];
+			}
+		}
+		Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces(matrix, /* computeEigenvectors = */ false);
+		auto eigen_values = ces.eigenvalues();
+
+		std::vector<Real> sorted_values = {
+			Real(eigen_values(0).real()),
+			Real(eigen_values(1).real())
+		};
+		// first sort into ascending order, and then reverse them
+		std::sort(sorted_values.begin(), sorted_values.end());
+		std::reverse(sorted_values.begin(), sorted_values.end());
+
+		return {sorted_values[0], sorted_values[1]};
+	}
+	//=================================================================================================//
+	Vec3d getPrincipalValuesFromMatrix(const Mat3d& A)
+	{
+		int n = 3;
+		Eigen::MatrixXd matrix(n,n);
+		for(int row=0;row<n;row++) {
+			for(int col=0;col<n;col++)  {
+				matrix(row,col) = A[row][col];
+			}
+		}
+		Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces(matrix, /* computeEigenvectors = */ false);
+		auto eigen_values = ces.eigenvalues();
+
+		std::vector<Real> sorted_values = {
+			Real(eigen_values(0).real()),
+			Real(eigen_values(1).real()),
+			Real(eigen_values(2).real())
+		};
+		// first sort into ascending order, and then reverse them
+		std::sort(sorted_values.begin(), sorted_values.end());
+		std::reverse(sorted_values.begin(), sorted_values.end());
+
+		return {sorted_values[0], sorted_values[1], sorted_values[2]};
 	}
 	//=================================================================================================//
 }

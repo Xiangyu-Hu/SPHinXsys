@@ -124,7 +124,7 @@ namespace SPH
 		Real small_shift_factor_;
 
 		LevelSet(BoundingBox tentative_bounds, Real data_spacing,
-				 Shape &shape, SPHAdaptation &sph_adaptation);
+				 Shape &shape, SPHAdaptation &sph_adaptation, Real small_shift_factor = 0.75);
 		virtual ~LevelSet(){};
 
 		virtual bool probeIsWithinMeshBound(const Vecd &position) override;

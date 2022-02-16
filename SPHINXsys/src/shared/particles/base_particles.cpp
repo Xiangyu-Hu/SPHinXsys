@@ -30,6 +30,7 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
+		registerAVariable<Vecd>(pos_0_, "InitialPosition");
 		registerAVariable<Vecd>(pos_n_, "Position");
 		registerAVariable<Vecd>(vel_n_, "Velocity");
 		registerAVariable<Vecd>(dvel_dt_, "Acceleration");
@@ -64,7 +65,8 @@ namespace SPH
 		sequence_.push_back(0);
 		sorted_id_.push_back(pos_n_.size());
 		unsorted_id_.push_back(pos_n_.size());
-
+		
+		pos_0_.push_back(pnt);
 		pos_n_.push_back(pnt);
 		vel_n_.push_back(Vecd(0));
 		dvel_dt_.push_back(Vecd(0));
@@ -133,7 +135,7 @@ namespace SPH
 		sorted_id_[unsorted_id_[index_i]] = index_i;
 		total_real_particles_ -= 1;
 	}
-//=================================================================================================//
+    //=================================================================================================//
 	void BaseParticles::writeParticlesToVtuFile(std::ostream& output_file)
 	{
 		size_t total_real_particles = total_real_particles_;
@@ -233,7 +235,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void BaseParticles::writeParticlesToVtpFile(std::ofstream &output_file)
+	void BaseParticles::writeParticlesToVtpFile(std::ostream &output_file)
 	{
 		size_t total_real_particles = total_real_particles_;
 
@@ -407,7 +409,7 @@ namespace SPH
 		};
 	}
 	//=================================================================================================//
-	void BaseParticles::writeSurfaceParticlesToVtuFile(std::ofstream& output_file, BodySurface& surface_particles)
+	void BaseParticles::writeSurfaceParticlesToVtuFile(std::ostream& output_file, BodySurface& surface_particles)
 	{
 		size_t total_surface_particles = surface_particles.body_part_particles_.size();
 

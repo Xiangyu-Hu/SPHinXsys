@@ -24,6 +24,7 @@
 #define SMALL_VECTORS_H
 
 #include "base_data_type.h"
+#include <Eigen/Eigenvalues>
 
 namespace SPH {
 
@@ -71,6 +72,10 @@ namespace SPH {
 	Mat2d getDiagonal(const Mat2d& A);
 	Mat3d getDiagonal(const Mat3d& A);
 
+	/** double dot product between two matrices, resulting in a scalar value (sum of products of element-wise) */
+	Real CalculateDoubleDotProduct(Mat2d Matrix1, Mat2d Matrix2 ); //calculate double dot
+	Real CalculateDoubleDotProduct(Mat3d Matrix1, Mat3d Matrix2 ); //calculate double dot
+
 	/** get transformation matrix. */
 	Mat2d getTransformationMatrix(const Vec2d& direction_of_y);
 	Mat3d getTransformationMatrix(const Vec3d& direction_of_z);
@@ -82,6 +87,15 @@ namespace SPH {
 	/** get orthogonal projection of a vactor. */
 	Vec2d getVectorProjectionOfVector (Vec2d vector_1, Vec2d vector_2);
 	Vec3d getVectorProjectionOfVector (Vec3d vector_1, Vec3d vector_2);
+
+	/** von Mises stress from stress matrix */
+	Real getVonMisesStressFromMatrix(const Mat2d& sigma);
+	Real getVonMisesStressFromMatrix(const Mat3d& sigma);
+
+	/** pricipal strain or stress from strain or stress matrix */
+	Vec2d getPrincipalValuesFromMatrix(const Mat2d& A);
+	Vec3d getPrincipalValuesFromMatrix(const Mat3d& A);
+
 }
 
 #endif //SMALL_VECTORS_H

@@ -595,10 +595,18 @@ namespace SPH
 			  pos_0_(particles_->pos_0_),
 			  dvel_dt_prior_(particles_->dvel_dt_prior_),
 			  acceleration_(0),
-			  end_time_(end_time)
+			  end_time_(end_time),
+			  apply_force_to_particle_(StdLargeVec<bool>(pos_0_.size(), false))
 		{
-			// calculate acceleration: force / total mass
-			acceleration_ = force / std::accumulate(particles_->mass_.begin(), particles_->mass_.end(), 0.0);
+			Real mass_in_region = 0.0;
+			for(size_t i = 0; i < body_part_particles_.size(); i++)
+			{
+					int particle_ID = body_part_particles_[i];
+					mass_in_region += particles_->mass_[particle_ID];
+					apply_force_to_particle_[particle_ID] = true;
+			};
+			// calculate acceleration: force / mass of particles in region
+			acceleration_ = force / mass_in_region;
 			// set ghost particles to zero
 			particles_->total_ghost_particles_ = 0;
 		}
@@ -849,6 +857,14 @@ namespace SPH
 					correction_factor_ * material_->ShearModulus() * J_to_minus_2_over_dimension_[index_i] * (F_[index_i] * ~F_[index_i]).trace() * one_over_dimensions_) +
 				material_->NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i) * inverse_F_T_[index_i];
 			stress_PK1_[index_i] = F_[index_i] * material_->ConstitutiveRelation(F_[index_i], index_i);
+			
+			for (int i = 0; i < 3; i++){
+				for (int j = 0; j < 3; j++){
+					if (std::isnan(stress_on_particle_[index_i][i][j])){
+						throw std::runtime_error(std::string("stress_on_particle_ is Not A Number"));
+					}
+				}
+			}
 		}
 		//=================================================================================================//
 		void KirchhoffStressRelaxationFirstHalf::Interaction(size_t index_i, Real dt)
@@ -866,6 +882,13 @@ namespace SPH
 								inner_neighborhood.dW_ij_[n] * Vol_[index_j] * inv_rho0_;
 			}
 			dvel_dt_[index_i] = acceleration;
+
+			for (int i = 0; i < 3; i++){
+				if (std::isnan(acceleration[i])){
+					throw std::runtime_error(std::string("acceleration is Not A Number! SPHBody: ") + this->body_->getBodyName() 
+						+ " particle ID: " + std::to_string(index_i));
+				}
+			}
 		}
 		//=================================================================================================//
 		void StressRelaxationSecondHalf::Initialization(size_t index_i, Real dt)
