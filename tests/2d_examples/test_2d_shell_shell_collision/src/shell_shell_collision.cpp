@@ -62,7 +62,7 @@ class BallParticleGenerator : public ParticleGeneratorDirect
 public:
 	BallParticleGenerator() : ParticleGeneratorDirect()
 	{
-		for (Real t = 0; t <= 4*Pi*ball_radius; t += resolution_ref / 2.) 
+		for (Real t = 0; t <= 4*Pi*ball_radius; t += 1.75 * resolution_ref) 
 		{
             Real x = ball_radius * cos(t) + ball_center[0];
             Real y = ball_radius * sin(t) + ball_center[1];
