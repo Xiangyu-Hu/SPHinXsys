@@ -31,10 +31,11 @@
 #define THIN_STRUCTURE_DYNAMICS_H
 
 #include "all_particle_dynamics.h"
-#include "elastic_solid.h"
-#include "weakly_compressible_fluid.h"
 #include "base_kernel.h"
-#include "all_fluid_dynamics.h"
+#include "body_relation.h"
+#include "solid_body.h"
+#include "solid_particles.h"
+#include "elastic_solid.h"
 
 namespace SPH
 {

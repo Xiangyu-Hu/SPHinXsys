@@ -33,9 +33,9 @@
 #include "math.h"
 
 #include "all_particle_dynamics.h"
-#include "neighbor_relation.h"
 #include "base_kernel.h"
 #include "cell_linked_list.h"
+#include "body_relation.h"
 #include "solid_dynamics.h"
 
 namespace SPH
@@ -266,40 +266,6 @@ namespace SPH
 		};
 
 		/**
-		* @class UpdateParticlePosition
-		* @brief update the particle position for a time step
-		*/
-		class UpdateSolidParticlePosition : public ParticleDynamicsSimple, public solid_dynamics::SolidDataSimple
-		{
-		public:
-			explicit UpdateSolidParticlePosition(SPHBody &sph_body);
-			virtual ~UpdateSolidParticlePosition(){};
-
-		protected:
-			StdLargeVec<Vecd> &pos_0_, &pos_n_, &dvel_dt_;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
-		* @class SolidRelaxationStepInner
-		* @brief carry out particle relaxation step of particles within the body
-		*/
-		class SolidRelaxationStepInner : public RelaxationStepInner, public solid_dynamics::SolidDataSimple
-		{
-		public:
-			explicit SolidRelaxationStepInner(BaseBodyRelationInner &inner_relation, bool level_set_correction = false)
-				: RelaxationStepInner(inner_relation, level_set_correction),
-				  solid_dynamics::SolidDataSimple(*inner_relation.sph_body_),
-				  update_solid_particle_position_(*real_body_){};
-			virtual ~SolidRelaxationStepInner(){};
-
-			UpdateSolidParticlePosition update_solid_particle_position_;
-
-			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override;
-		};
-
-		/**
 		* @class ShellMidSurfaceBounding
 		* @brief constrain particles by contraining particles to mid-surface.
 		*/
@@ -345,7 +311,7 @@ namespace SPH
 					                  thickness, level_set_refinement_ratio) {};
 			virtual ~ShellRelaxationStepInner() {};
 
-			UpdateSolidParticlePosition update_shell_particle_position_;
+			UpdateParticlePosition update_shell_particle_position_;
 			ShellMidSurfaceBounding mid_surface_bounding_;
 
 			virtual void exec(Real dt = 0.0) override;

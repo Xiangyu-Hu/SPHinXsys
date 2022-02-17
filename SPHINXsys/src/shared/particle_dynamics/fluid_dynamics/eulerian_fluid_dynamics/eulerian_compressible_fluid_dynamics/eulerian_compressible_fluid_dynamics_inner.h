@@ -33,7 +33,9 @@
 
 #include "all_particle_dynamics.h"
 #include "base_kernel.h"
+#include "external_force.h"
 #include "riemann_solver.h"
+#include "compressible_fluid.h"
 
 namespace SPH
 {

@@ -95,10 +95,6 @@ namespace SPH
 	 */
 	class ElasticSolidParticles : public SolidParticles
 	{
-	protected:
-		virtual void writePltFileHeader(std::ofstream &output_file) override;
-		virtual void writePltFileParticleData(std::ofstream &output_file, size_t index_i) override;
-
 	public:
 		ElasticSolidParticles(SPHBody &sph_body,
 							  SharedPtr<ElasticSolid> shared_elastic_solid_ptr,
@@ -115,24 +111,11 @@ namespace SPH
 		StdLargeVec<Real> getVonMisesStress();
 		Real getMaxVonMisesStress();
 
-
-		/**< Computing displacemnt. */
-		Vecd displacement(size_t particle_i);
-		StdLargeVec<Vecd> getDisplacement();
-
-		/**< Computing normal vector. */
-		Vecd normal (size_t particle_i);
-		StdLargeVec<Vecd> getNormal();
-
 		/**< Computing von Mises equivalent stress. */
 		Real von_Mises_strain (size_t particle_i);
 		StdLargeVec<Real> getVonMisesStrain();
 		Real getMaxVonMisesStrain();
 
-		virtual void writeParticlesToVtuFile(std::ostream &output_file) override;
-		/** Write only surface particle data in Vtu format for Paraview. */
-		virtual void writeSurfaceParticlesToVtuFile(std::ofstream& output_file, BodySurface& surface_particles) override;
-		virtual void writeParticlesToVtpFile(std::ofstream &output_file) override;
 		virtual ElasticSolidParticles *ThisObjectPtr() override { return this; };
 	};
 

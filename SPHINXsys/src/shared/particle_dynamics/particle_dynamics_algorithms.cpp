@@ -5,6 +5,8 @@
 */
 
 #include "particle_dynamics_algorithms.h"
+#include "base_body.h"
+#include "base_particles.h"
 
 //=================================================================================================//
 namespace SPH
@@ -138,6 +140,10 @@ namespace SPH
 			post_processes_[k]->parallel_exec(dt);
 		ParticleIterator_parallel(total_real_particles, functor_update_, dt);
 	}
+	//=================================================================================================//
+	InteractionDynamicsSplitting::InteractionDynamicsSplitting(SPHBody &sph_body)
+			: InteractionDynamics(sph_body),
+			  split_cell_lists_(sph_body.split_cell_lists_){};
 	//=================================================================================================//
 	void InteractionDynamicsSplitting::exec(Real dt)
 	{

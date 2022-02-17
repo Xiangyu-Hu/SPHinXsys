@@ -7,6 +7,7 @@
 
 #include "sph_system.h"
 #include "base_particles.h"
+#include "base_particles.hpp"
 #include "body_relation.h"
 
 namespace SPH
@@ -69,13 +70,13 @@ namespace SPH
 	//=================================================================================================//
 	void SPHBody::writeParticlesToVtuFile(std::ostream &output_file)
 	{
-		base_particles_->writeParticlesToVtuFile(output_file);
+		base_particles_->writeParticlesToVtk(output_file);
 		newly_updated_ = false;
 	}
 	//=================================================================================================//
 	void SPHBody::writeParticlesToVtpFile(std::ofstream &output_file)
 	{
-		base_particles_->writeParticlesToVtpFile(output_file);
+		base_particles_->writeParticlesToVtk(output_file);
 		newly_updated_ = false;
 	}
 	//=================================================================================================//

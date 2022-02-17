@@ -3,7 +3,7 @@
 * @brief 	The structural simulation module is licensed under the Aladdin Free Public License (https://spdx.org/licenses/Aladdin.html) regarding usage for medical device development.
 * Commercial use for medical device development is not permitted. This does not apply to applications in other fields.
 * @details	solid structural simulation class for general structural simulations
-* @author 	Bence Z. Rochlitz - Virtonomy GmbH
+* @author 	Bence Z. Rochlitz - Virtonomy GmbH, Xiangyu Hu
 */
 
 #ifndef SOLID_STRUCTURAL_SIMULATION_CLASS_H

@@ -21,10 +21,10 @@
 *                                                                           *
 * --------------------------------------------------------------------------*/
 /**
-* @file triangle_mesh_shape.h
-* @brief Here, we define the 3D geometric algortihms. they are based on the polymesh. 
-* @details The idea is to define complex geometry by passing stl, obj or other 
-*			polymesh files. 
+* @file 	triangle_mesh_shape.h
+* @brief 	Here, we define the 3D geometric algortihms. they are based on the polymesh. 
+* @details 	The idea is to define complex geometry by passing stl, obj or other 
+*			polymesh files. TODO: the translation needs to be generalized into transform.
 * @author	Chi ZHang and Xiangyu Hu
 */
 

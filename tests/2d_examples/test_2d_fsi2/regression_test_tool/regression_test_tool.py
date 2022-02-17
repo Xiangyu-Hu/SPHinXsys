@@ -35,9 +35,15 @@ class SphinxsysRegressionTest:
         os.system(self.enter_sphinxsys_case_folder + command)
         print('Copying threload file is finished...')
 
+    def run_particle_relaxation(self) -> None:
+        print('Start particle relaxation for the simulation...')
+        command = f"./{self.sphinxsys_case_name} --r=true"
+        os.system(self.enter_sphinxsys_exec_folder + command)
+        print('Simulating case is finished...')
+
     def run_case(self) -> None:
         print('Start case simulation...')
-        command = f"./{self.sphinxsys_case_name}"
+        command = f"./{self.sphinxsys_case_name} --r=false --i=true --rt=true"
         os.system(self.enter_sphinxsys_exec_folder + command)
         print('Simulating case is finished...')
 
@@ -62,9 +68,7 @@ number_of_run_times = 0
 converged = 0
 sphinxsys = SphinxsysRegressionTest(case_name, body_name, parameter_name)
 sphinxsys_1 = SphinxsysRegressionTest(case_name, body_name_1, parameter_name_1)
-sphinxsys.test_case()
-sphinxsys.copy_reload()
-
+sphinxsys.run_particle_relaxation()
 
 while True:
     print("Now start a new run......")

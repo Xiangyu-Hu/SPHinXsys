@@ -86,8 +86,7 @@ namespace SPH
 	/**
 	 * @class BinaryShapes
 	 * @brief a collections of shapes with binary operations
-	 * //TODO: I will reformulate this class so that it has ownship of all shapes 
-	 * by using a unique pointer vector.
+	 * This class so that it has ownship of all shapes by using a unique pointer vector.
 	 * In this way, add or substract a shape will call the shape's constructor other than 
 	 * passing the shape pointer.
 	 */

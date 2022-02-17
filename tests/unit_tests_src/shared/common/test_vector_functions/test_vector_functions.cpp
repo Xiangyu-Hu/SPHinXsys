@@ -59,14 +59,34 @@ TEST(VectorProjectionOf3DVector, getVectorProjectionOf3DVector)
     Vec3d proj_vector_4 = getVectorProjectionOfVector(vector_7, vector_8);
     Vec3d proj_vector_4_ref = Vec3d(5.60191499112963e-15, -0.000058164109562364, 2.29447132681609e-07);
 
-	for (size_t i = 0; i < 3; i++)
+	for (size_t i = 0; i < 3; ++i)
 	{
-        EXPECT_NEAR(proj_vector_1[i], proj_vector_1_ref[i], 1e-6);
-        EXPECT_NEAR(proj_vector_2[i], proj_vector_2_ref[i], 1e-6);
-        EXPECT_NEAR(proj_vector_3[i], proj_vector_3_ref[i], 1e-6);
-        EXPECT_NEAR(proj_vector_4[i], proj_vector_4_ref[i], 1e-8);
+        EXPECT_NEAR(proj_vector_1[i], proj_vector_1_ref[i], 1.0e-6);
+        EXPECT_NEAR(proj_vector_2[i], proj_vector_2_ref[i], 1.0e-6);
+        EXPECT_NEAR(proj_vector_3[i], proj_vector_3_ref[i], 1.0e-6);
+        EXPECT_NEAR(proj_vector_4[i], proj_vector_4_ref[i], 1.0e-8);
 	}
+}
+//=================================================================================================//
+TEST(TransformationMatrix, getTransformationMatrix)
+{
+	for (int i = 0; i < 10000; ++i)
+	{
+	    // Generate 3D unit vectors with a spherically symmetric probability distribution
+		// according to the link: https://mathworld.wolfram.com/SpherePointPicking.html
+		Real u = (double)rand() / (RAND_MAX);
+		Real v = (double)rand() / (RAND_MAX);
+		Real theta = 2.0 * Pi * u;
+		Real cos_phi = 2.0 * v - 1.0;
+		Real sin_phi = sqrt(1.0 - cos_phi * cos_phi);
+		Vec3d unit_vector = Vec3d(sin_phi * cos(theta), sin_phi * sin(theta), cos_phi);
+		Mat3d transformation_matrix = getTransformationMatrix(unit_vector);
+		Vec3d transformed_unit_vector = ~transformation_matrix * (transformation_matrix * unit_vector);
 
+		EXPECT_NEAR(unit_vector[0], transformed_unit_vector[0], 1.0e-14);
+		EXPECT_NEAR(unit_vector[1], transformed_unit_vector[1], 1.0e-14);
+		EXPECT_NEAR(unit_vector[2], transformed_unit_vector[2], 1.0e-14);
+	}
 }
 //=================================================================================================//
 int main(int argc, char* argv[])
