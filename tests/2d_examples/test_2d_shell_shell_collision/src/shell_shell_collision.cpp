@@ -1,7 +1,7 @@
 /**
  * @file 	shell_shell_collision.cpp
  * @brief 	An elastic shell ball bouncing within a confined shell boundary
- * @details This is a case to test shell->shell collision/impact.
+ * @details This is a case to test shell->shell collision without impact.
  * @details Both the ball and box are thin shell structures.
  * @author 	Massoud Rezavand, Virtonomy GmbH
  */
@@ -18,8 +18,6 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 Vec2d ball_center(2.0, 0.55);
 Real ball_radius = 0.5;			
 Real gravity_g = 0.05;
-Real initial_ball_speed = 0.0;
-Vec2d initial_velocity = initial_ball_speed * Vec2d(0.0, -1.);
 //----------------------------------------------------------------------
 //	Global paramters on material properties
 //----------------------------------------------------------------------
@@ -71,21 +69,6 @@ public:
 		}
 	}
 };
-/**
- * application dependent initial condition
- */
-class BallInitialCondition
-	: public solid_dynamics::ElasticDynamicsInitialCondition
-{
-public:
-	BallInitialCondition(SolidBody &body)
-		: solid_dynamics::ElasticDynamicsInitialCondition(body) {};
-protected:
-	void Update(size_t index_i, Real dt) override 
-	{
-		vel_n_[index_i] = initial_velocity;
-	};
-};
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -110,8 +93,8 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	ThinStructure free_ball(sph_system, "FreeBall", makeShared<SPHAdaptation>(1.15, 1.0));
-	ShellParticles free_ball_particles(free_ball,
+	ThinStructure ball(sph_system, "Ball", makeShared<SPHAdaptation>(1.15, 1.0));
+	ShellParticles ball_particles(ball,
 										makeShared<LinearElasticSolid>(rho0_ball, Youngs_modulus, poisson),
 										makeShared<BallParticleGenerator>(), BW);
 
@@ -126,34 +109,34 @@ int main(int ac, char* av[])
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner free_ball_inner(free_ball);
+	BodyRelationInner ball_inner(ball);
 	BodyRelationInner wall_inner(wall_boundary);
-	SolidBodyRelationContact free_ball_contact(free_ball, {&wall_boundary});
-	SolidBodyRelationContact wall_ball_contact(wall_boundary, {&free_ball});
+	SolidBodyRelationContact ball_contact(ball, {&wall_boundary});
+	SolidBodyRelationContact wall_ball_contact(wall_boundary, {&ball});
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simultion.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	TimeStepInitialization 	free_ball_initialize_timestep(free_ball, gravity);
+	TimeStepInitialization 	ball_initialize_timestep(ball, gravity);
 	TimeStepInitialization 	wall_initialize_timestep(wall_boundary);
-	thin_structure_dynamics::ShellCorrectConfiguration free_ball_corrected_configuration(free_ball_inner);
+	thin_structure_dynamics::ShellCorrectConfiguration ball_corrected_configuration(ball_inner);
 	thin_structure_dynamics::ShellCorrectConfiguration wall_corrected_configuration(wall_inner);
-	thin_structure_dynamics::ShellAcousticTimeStepSize free_ball_get_time_step_size(free_ball);
+	thin_structure_dynamics::ShellAcousticTimeStepSize ball_get_time_step_size(ball);
 	/** stress relaxation for the balls. */
-	thin_structure_dynamics::ShellStressRelaxationFirstHalf free_ball_stress_relaxation_first_half(free_ball_inner);
-	thin_structure_dynamics::ShellStressRelaxationSecondHalf free_ball_stress_relaxation_second_half(free_ball_inner);
+	thin_structure_dynamics::ShellStressRelaxationFirstHalf ball_stress_relaxation_first_half(ball_inner);
+	thin_structure_dynamics::ShellStressRelaxationSecondHalf ball_stress_relaxation_second_half(ball_inner);
 	thin_structure_dynamics::ShellStressRelaxationFirstHalf wall_stress_relaxation_first_half(wall_inner);
 	thin_structure_dynamics::ShellStressRelaxationSecondHalf wall_stress_relaxation_second_half(wall_inner);
 	/** Algorithms for solid-solid contact. */
-	solid_dynamics::ShellContactDensity free_ball_update_contact_density(free_ball_contact);
+	solid_dynamics::ShellContactDensity ball_update_contact_density(ball_contact);
 	solid_dynamics::ShellContactDensity wall_ball_update_contact_density(wall_ball_contact);
-	solid_dynamics::ShellShellContactForce free_ball_compute_solid_contact_forces(free_ball_contact);
+	solid_dynamics::ShellShellContactForce ball_compute_solid_contact_forces(ball_contact);
 	solid_dynamics::ShellShellContactForce wall_compute_solid_contact_forces(wall_ball_contact);
 	/** Damping */
 	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
-		ball_position_damping(free_ball_inner, 0.2, "Velocity", physical_viscosity);
+		ball_position_damping(ball_inner, 0.2, "Velocity", physical_viscosity);
 	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
-		ball_rotation_damping(free_ball_inner, 0.2, "AngularVelocity", physical_viscosity);
+		ball_rotation_damping(ball_inner, 0.2, "AngularVelocity", physical_viscosity);
 
 	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
 		wall_position_damping(wall_inner, 0.2, "Velocity", physical_viscosity);
@@ -178,14 +161,11 @@ int main(int ac, char* av[])
 	MultiPolygonShape holder_multibody_shape(multi_polygon_holder);
 	BodyRegionByParticle holder(wall_boundary, "Holder", holder_multibody_shape);
 	thin_structure_dynamics::ConstrainShellBodyRegion	constrain_holder(wall_boundary, holder);
-
-	/** initial condition */
-	BallInitialCondition ball_initial_velocity(free_ball);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp	body_states_recording(in_output, sph_system.real_bodies_);
-	BodyStatesRecordingToVtp 	write_ball_state(in_output, { free_ball });
+	BodyStatesRecordingToVtp 	write_ball_state(in_output, { ball });
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary. 
@@ -193,9 +173,8 @@ int main(int ac, char* av[])
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
 	solid_particles.initializeNormalDirectionFromBodyShape();
-	free_ball_corrected_configuration.parallel_exec();
+	ball_corrected_configuration.parallel_exec();
 	wall_corrected_configuration.parallel_exec();
-	// ball_initial_velocity.exec();
 	
 	/** Initial states output. */
 	body_states_recording.writeToFile(0);
@@ -222,23 +201,23 @@ int main(int ac, char* av[])
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt) 
 			{
-				free_ball_initialize_timestep.parallel_exec();
+				ball_initialize_timestep.parallel_exec();
 				wall_initialize_timestep.parallel_exec();
 				if (ite % 100 == 0) 
 				{
 					std::cout << "N=" << ite << " Time: "
 						<< GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
 				}
-				free_ball_update_contact_density.parallel_exec();
-				free_ball_compute_solid_contact_forces.parallel_exec();
+				ball_update_contact_density.parallel_exec();
+				ball_compute_solid_contact_forces.parallel_exec();
 
 				wall_ball_update_contact_density.parallel_exec();
 				wall_compute_solid_contact_forces.parallel_exec();
 
-				free_ball_stress_relaxation_first_half.parallel_exec(dt);
+				ball_stress_relaxation_first_half.parallel_exec(dt);
 				ball_position_damping.parallel_exec(dt);
 				ball_rotation_damping.parallel_exec(dt);
-				free_ball_stress_relaxation_second_half.parallel_exec(dt);
+				ball_stress_relaxation_second_half.parallel_exec(dt);
 				
 				wall_stress_relaxation_first_half.parallel_exec(dt);
 				constrain_holder.parallel_exec(dt);
@@ -247,13 +226,13 @@ int main(int ac, char* av[])
 				constrain_holder.parallel_exec(dt);
 				wall_stress_relaxation_second_half.parallel_exec(dt);
 
-				free_ball.updateCellLinkedList();
-				free_ball_contact.updateConfiguration();
+				ball.updateCellLinkedList();
+				ball_contact.updateConfiguration();
 				wall_boundary.updateCellLinkedList();
 				wall_ball_contact.updateConfiguration();
 
 				ite++;
-				Real dt_free = free_ball_get_time_step_size.parallel_exec();
+				Real dt_free = ball_get_time_step_size.parallel_exec();
 				dt = dt_free;
 				relaxation_time += dt;
 				integration_time += dt;
