@@ -148,7 +148,7 @@ namespace SPH
 		protected:
 			Real rho0_, inv_rho0_;
 			StdLargeVec<Matd> &stress_PK1_, &global_stress_, &global_moment_;
-			StdLargeVec<Vecd> &global_shear_stress_, &n_;
+			StdLargeVec<Vecd> &global_shear_stress_, &dvel_dt_prior_, &n_;
 			Real smoothing_length_, E0_, G0_, nu_, hourglass_control_factor_;
 			bool hourglass_control_;
 			const Real inv_W0_ = 1.0 / body_->sph_adaptation_->getKernel()->W0(Vecd(0));

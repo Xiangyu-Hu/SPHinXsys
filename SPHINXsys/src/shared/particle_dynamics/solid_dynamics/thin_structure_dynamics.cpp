@@ -141,7 +141,8 @@ namespace SPH
 			smoothing_length_(sph_adaptation_->ReferenceSmoothingLength()),
 			E0_(material_->YoungsModulus()),
 			G0_(material_->ShearModulus()),
-			nu_(material_->PoissonRatio())
+			nu_(material_->PoissonRatio()),
+			dvel_dt_prior_(particles_->dvel_dt_prior_)
 		{
 			/** Note that, only three-point and five-point Gaussian quadrature rules are defined. */
 			switch (number_of_gaussian_points)
