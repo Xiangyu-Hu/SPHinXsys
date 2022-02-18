@@ -147,8 +147,8 @@ int main(int ac, char* av[])
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ShellContactDensity free_ball_update_contact_density(free_ball_contact);
 	solid_dynamics::ShellContactDensity wall_ball_update_contact_density(wall_ball_contact);
-	solid_dynamics::ContactForce free_ball_compute_solid_contact_forces(free_ball_contact);
-	solid_dynamics::ContactForce wall_compute_solid_contact_forces(wall_ball_contact);
+	solid_dynamics::ShellShellContactForce free_ball_compute_solid_contact_forces(free_ball_contact);
+	solid_dynamics::ShellShellContactForce wall_compute_solid_contact_forces(wall_ball_contact);
 	/** Damping */
 	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
 		ball_position_damping(free_ball_inner, 0.2, "Velocity", physical_viscosity);

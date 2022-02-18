@@ -192,7 +192,6 @@ namespace SPH
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_contact_density_.push_back(&(contact_particles_[k]->contact_density_));
 			}
-			
 		}
 		//=================================================================================================//
 		void ContactForce::Interaction(size_t index_i, Real dt)
@@ -216,6 +215,51 @@ namespace SPH
 					Real p_star = 0.5 * (p_i + contact_density_k[index_j] * solid_k->ContactStiffness());
 					//force due to pressure
 					force -= 2.0 * p_star * e_ij * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+				}
+			}
+			contact_force_[index_i] = force;
+			dvel_dt_prior_[index_i] += force / mass_[index_i];
+		}
+		//=================================================================================================//
+		ShellShellContactForce::ShellShellContactForce(SolidBodyRelationContact &solid_body_contact_relation)
+			: PartInteractionDynamicsByParticle(*solid_body_contact_relation.sph_body_,
+												*solid_body_contact_relation.body_surface_layer_),
+			  ContactDynamicsData(solid_body_contact_relation),
+			  contact_density_(particles_->contact_density_),
+			  Vol_(particles_->Vol_), mass_(particles_->mass_),
+			  dvel_dt_prior_(particles_->dvel_dt_prior_),
+			  contact_force_(particles_->contact_force_),
+			  spacing_ref_(solid_body_contact_relation.sph_body_->sph_adaptation_->ReferenceSpacing())
+		{
+			for (size_t k = 0; k != contact_particles_.size(); ++k)
+			{
+				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+				contact_contact_density_.push_back(&(contact_particles_[k]->contact_density_));
+			}
+		}
+		//=================================================================================================//
+		void ShellShellContactForce::Interaction(size_t index_i, Real dt)
+		{
+			Real Vol_i = Vol_[index_i];
+			Real p_i = contact_density_[index_i] * material_->ContactStiffness();
+			/** Contact interaction. */
+			Vecd force(0.0);
+			for (size_t k = 0; k < contact_configuration_.size(); ++k)
+			{
+				StdLargeVec<Real> &contact_density_k = *(contact_contact_density_[k]);
+				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
+				Solid *solid_k = contact_material_[k];
+
+				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = contact_neighborhood.j_[n];
+					Vecd e_ij = contact_neighborhood.e_ij_[n];
+
+					Real p_star = 0.5 * (p_i + contact_density_k[index_j] * solid_k->ContactStiffness());
+					//force due to pressure
+					force -= 2.0 * p_star * e_ij * Vol_i * Vol_k[index_j] 
+							* contact_neighborhood.dW_ij_[n] * powerN(spacing_ref_, 3);
 				}
 			}
 			contact_force_[index_i] = force;
