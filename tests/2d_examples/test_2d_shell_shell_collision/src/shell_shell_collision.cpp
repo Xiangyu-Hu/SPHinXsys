@@ -1,9 +1,9 @@
 /**
- * @file 	shell_collision.cpp
- * @brief 	an elastic ball bouncing within a confined shell boundary
- * @details This is a case to test shell-shell modeling.
- * @details Both te ball and box are thin shell structures.
- * @author 	Massoud Rezavand and Xiangyu Hu
+ * @file 	shell_shell_collision.cpp
+ * @brief 	An elastic shell ball bouncing within a confined shell boundary
+ * @details This is a case to test shell->shell collision/impact.
+ * @details Both the ball and box are thin shell structures.
+ * @author 	Massoud Rezavand, Virtonomy GmbH
  */
 #include "sphinxsys.h"	//SPHinXsys Library.
 using namespace SPH;	//Namespace cite here.
@@ -15,18 +15,19 @@ Real DH = 4.0; 					/**< box height. */
 Real resolution_ref = 0.025; 	/**< reference resolution. */
 Real BW = resolution_ref * 1.; 	/**< wall width for BCs. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
-Vec2d ball_center(2.0, 2.0);
+Vec2d ball_center(2.0, 0.55);
 Real ball_radius = 0.5;			
-Real gravity_g = 1.0;
-Real initial_ball_speed = 1.0;
-Vec2d initial_velocity = initial_ball_speed*Vec2d(0.0, -1.);
+Real gravity_g = 0.05;
+Real initial_ball_speed = 0.0;
+Vec2d initial_velocity = initial_ball_speed * Vec2d(0.0, -1.);
 //----------------------------------------------------------------------
 //	Global paramters on material properties
 //----------------------------------------------------------------------
-Real rho0_s = 1.0;				   /** Normalized density. */
-Real Youngs_modulus = 1.3024653e6; /** Normalized Youngs Modulus. */
-Real poisson = 0.3;				   /** Poisson ratio. */
-Real physical_viscosity = 200.0;   /** physical damping, here we choose the same value as numerical viscosity. */
+Real rho0_s = 1.0;					/** Normalized density. */
+Real rho0_ball = 0.1;				/** Normalized density. */
+Real Youngs_modulus = 5e4;			/** Normalized Youngs Modulus. */
+Real poisson = 0.45;				/** Poisson ratio. */
+Real physical_viscosity = 200.0;	/** physical damping, here we choose the same value as numerical viscosity. */
 //----------------------------------------------------------------------
 //	Bodies with cases-dependent geometries (ComplexShape).
 //----------------------------------------------------------------------
@@ -62,7 +63,7 @@ class BallParticleGenerator : public ParticleGeneratorDirect
 public:
 	BallParticleGenerator() : ParticleGeneratorDirect()
 	{
-		for (Real t = 0; t <= 4*Pi*ball_radius; t += 1.75 * resolution_ref) 
+		for (Real t = 0; t <= 4.*Pi*ball_radius; t += 1.75 * resolution_ref) 
 		{
             Real x = ball_radius * cos(t) + ball_center[0];
             Real y = ball_radius * sin(t) + ball_center[1];
@@ -111,7 +112,7 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	ThinStructure free_ball(sph_system, "FreeBall", makeShared<SPHAdaptation>(1.15, 1.0));
 	ShellParticles free_ball_particles(free_ball,
-										makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson),
+										makeShared<LinearElasticSolid>(rho0_ball, Youngs_modulus, poisson),
 										makeShared<BallParticleGenerator>(), BW);
 
 	WallBoundary wall_boundary(sph_system, "Wall");
@@ -121,55 +122,12 @@ int main(int ac, char* av[])
 	SharedPtr<LinearElasticSolid> wall_material = makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	ShellParticles solid_particles(wall_boundary, wall_material, wall_particle_generator, BW);
 	//----------------------------------------------------------------------
-	//	Run particle relaxation for body-fitted distribution if chosen.
-	//----------------------------------------------------------------------
-	if (sph_system.run_particle_relaxation_)
-	{
-		//----------------------------------------------------------------------
-		//	Define body relation map used for particle relaxation.
-		//----------------------------------------------------------------------
-		BodyRelationInner free_ball_inner(free_ball);
-		//----------------------------------------------------------------------
-		//	Define the methods for particle relaxation.
-		//----------------------------------------------------------------------
-		RandomizePartilePosition  			free_ball_random_particles(free_ball);
-		relax_dynamics::RelaxationStepInner free_ball_relaxation_step_inner(free_ball_inner);
-		//----------------------------------------------------------------------
-		//	Output for particle relaxation.
-		//----------------------------------------------------------------------
-		BodyStatesRecordingToVtp write_ball_state(in_output, sph_system.real_bodies_);
-				ReloadParticleIO write_particle_reload_files(in_output, {&free_ball});
-
-		//----------------------------------------------------------------------
-		//	Particle relaxation starts here.
-		//----------------------------------------------------------------------
-		free_ball_random_particles.parallel_exec(0.25);
-		write_ball_state.writeToFile(0.0);
-		//----------------------------------------------------------------------
-		//	From here iteration for particle relaxation begines.
-		//----------------------------------------------------------------------
-		int ite = 0;
-		int relax_step = 1000;
-		while (ite < relax_step)
-		{
-			free_ball_relaxation_step_inner.exec();
-			ite += 1;
-			if (ite % 100 == 0)
-			{
-				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite << "\n";
-				write_ball_state.writeToFile(Real(ite) * 1.0e-4);
-			}
-		}
-		std::cout << "The physics relaxation process of ball particles finish !" << std::endl;
-		write_particle_reload_files.writeToFile(0.0);
-		return 0;
-	}
-	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
 	BodyRelationInner free_ball_inner(free_ball);
+	BodyRelationInner wall_inner(wall_boundary);
 	SolidBodyRelationContact free_ball_contact(free_ball, {&wall_boundary});
 	SolidBodyRelationContact wall_ball_contact(wall_boundary, {&free_ball});
 	//----------------------------------------------------------------------
@@ -177,16 +135,50 @@ int main(int ac, char* av[])
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	TimeStepInitialization 	free_ball_initialize_timestep(free_ball, gravity);
+	TimeStepInitialization 	wall_initialize_timestep(wall_boundary);
 	thin_structure_dynamics::ShellCorrectConfiguration free_ball_corrected_configuration(free_ball_inner);
+	thin_structure_dynamics::ShellCorrectConfiguration wall_corrected_configuration(wall_inner);
 	thin_structure_dynamics::ShellAcousticTimeStepSize free_ball_get_time_step_size(free_ball);
 	/** stress relaxation for the balls. */
 	thin_structure_dynamics::ShellStressRelaxationFirstHalf free_ball_stress_relaxation_first_half(free_ball_inner);
 	thin_structure_dynamics::ShellStressRelaxationSecondHalf free_ball_stress_relaxation_second_half(free_ball_inner);
+	thin_structure_dynamics::ShellStressRelaxationFirstHalf wall_stress_relaxation_first_half(wall_inner);
+	thin_structure_dynamics::ShellStressRelaxationSecondHalf wall_stress_relaxation_second_half(wall_inner);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ShellContactDensity free_ball_update_contact_density(free_ball_contact);
 	solid_dynamics::ShellContactDensity wall_ball_update_contact_density(wall_ball_contact);
 	solid_dynamics::ContactForce free_ball_compute_solid_contact_forces(free_ball_contact);
 	solid_dynamics::ContactForce wall_compute_solid_contact_forces(wall_ball_contact);
+	/** Damping */
+	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
+		ball_position_damping(free_ball_inner, 0.2, "Velocity", physical_viscosity);
+	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
+		ball_rotation_damping(free_ball_inner, 0.2, "AngularVelocity", physical_viscosity);
+
+	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
+		wall_position_damping(wall_inner, 0.2, "Velocity", physical_viscosity);
+	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
+		wall_rotation_damping(wall_inner, 0.2, "AngularVelocity", physical_viscosity);
+	/** Geometry and generation of the holder. */
+	std::vector<Vecd> holder_shape;
+		holder_shape.push_back(Vecd(-BW, -BW));
+		holder_shape.push_back(Vecd(-BW, BW));
+		holder_shape.push_back(Vecd(DL/4., BW));
+		holder_shape.push_back(Vecd(DL/4., -BW));
+		holder_shape.push_back(Vecd(-BW, -BW));
+	std::vector<Vecd> holder_shape2;
+		holder_shape2.push_back(Vecd(3.*DL/4., -BW));
+		holder_shape2.push_back(Vecd(3.*DL/4., BW));
+		holder_shape2.push_back(Vecd(DL + BW, BW));
+		holder_shape2.push_back(Vecd(DL + BW, -BW));
+		holder_shape2.push_back(Vecd(3.*DL/4., -BW));
+	MultiPolygon multi_polygon_holder;
+	multi_polygon_holder.addAPolygon(holder_shape, ShapeBooleanOps::add);
+	multi_polygon_holder.addAPolygon(holder_shape2, ShapeBooleanOps::add);
+	MultiPolygonShape holder_multibody_shape(multi_polygon_holder);
+	BodyRegionByParticle holder(wall_boundary, "Holder", holder_multibody_shape);
+	thin_structure_dynamics::ConstrainShellBodyRegion	constrain_holder(wall_boundary, holder);
+
 	/** initial condition */
 	BallInitialCondition ball_initial_velocity(free_ball);
 	//----------------------------------------------------------------------
@@ -202,7 +194,8 @@ int main(int ac, char* av[])
 	sph_system.initializeSystemConfigurations();
 	solid_particles.initializeNormalDirectionFromBodyShape();
 	free_ball_corrected_configuration.parallel_exec();
-	ball_initial_velocity.exec();
+	wall_corrected_configuration.parallel_exec();
+	// ball_initial_velocity.exec();
 	
 	/** Initial states output. */
 	body_states_recording.writeToFile(0);
@@ -230,17 +223,29 @@ int main(int ac, char* av[])
 			while (relaxation_time < Dt) 
 			{
 				free_ball_initialize_timestep.parallel_exec();
+				wall_initialize_timestep.parallel_exec();
 				if (ite % 100 == 0) 
 				{
 					std::cout << "N=" << ite << " Time: "
 						<< GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
 				}
 				free_ball_update_contact_density.parallel_exec();
-				wall_ball_update_contact_density.parallel_exec();
 				free_ball_compute_solid_contact_forces.parallel_exec();
+
+				wall_ball_update_contact_density.parallel_exec();
 				wall_compute_solid_contact_forces.parallel_exec();
+
 				free_ball_stress_relaxation_first_half.parallel_exec(dt);
+				ball_position_damping.parallel_exec(dt);
+				ball_rotation_damping.parallel_exec(dt);
 				free_ball_stress_relaxation_second_half.parallel_exec(dt);
+				
+				wall_stress_relaxation_first_half.parallel_exec(dt);
+				constrain_holder.parallel_exec(dt);
+				wall_position_damping.parallel_exec(dt);
+				wall_rotation_damping.parallel_exec(dt);
+				constrain_holder.parallel_exec(dt);
+				wall_stress_relaxation_second_half.parallel_exec(dt);
 
 				free_ball.updateCellLinkedList();
 				free_ball_contact.updateConfiguration();
@@ -256,7 +261,7 @@ int main(int ac, char* av[])
 			}
 		}
 		tick_count t2 = tick_count::now();
-		write_ball_state.writeToFile(ite);
+		body_states_recording.writeToFile(ite);
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}
