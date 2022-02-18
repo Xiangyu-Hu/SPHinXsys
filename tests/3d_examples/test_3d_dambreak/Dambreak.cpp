@@ -131,9 +131,9 @@ int main()
 	/** Output the body states for restart simulation. */
 	RestartIO restart_io(in_output, system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	BodyReducedQuantityRecording<TotalMechanicalEnergy>
+	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
 		write_water_mechanical_energy(in_output, water_block, gravity);
-	ObservedQuantityRecording<Real>
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact);
 	//-------------------------------------------------------------------
 	//from here the time stepping begins
@@ -230,6 +230,9 @@ int main()
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
+	write_water_mechanical_energy.newResultTest();
+	write_recorded_water_pressure.newResultTest();
 
 	return 0;
 }
