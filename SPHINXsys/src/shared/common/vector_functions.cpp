@@ -396,4 +396,9 @@ namespace SPH
 		return {sorted_values[0], sorted_values[1], sorted_values[2]};
 	}
 	//=================================================================================================//
+	Real MinimumDimension(const BoundingBox &bbox)
+	{
+		return getMinAbsoluteElement(bbox.second - bbox.first);
+	}
+	//=================================================================================================//	
 }

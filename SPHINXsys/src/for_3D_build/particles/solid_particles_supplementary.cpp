@@ -136,7 +136,20 @@ namespace SPH
 	//=============================================================================================//
 	void VonMisesStrain::operator()(size_t index_i, Real dt)
 	{
-		return von_Mises_strain_static(particle_i);
+		Mat3d F = F_[index_i];
+		Mat3d epsilon = 0.5 * (~F * F - Matd(1.0)); //calculation of the Green-Lagrange strain tensor
+
+		Real epsilonxx = epsilon(0, 0);
+		Real epsilonyy = epsilon(1, 1);
+		Real epsilonzz = epsilon(2, 2);
+		Real epsilonxy = epsilon(0, 1);
+		Real epsilonxz = epsilon(0, 2);
+		Real epsilonyz = epsilon(1, 2);
+
+		derived_variable_[index_i] =
+			sqrt((1.0 / 3.0) * (powerN(epsilonxx - epsilonyy, 2) + powerN(epsilonyy - epsilonzz, 2) +
+								powerN(epsilonzz - epsilonxx, 2)) +
+				 2.0 * (powerN(epsilonxy, 2) + powerN(epsilonyz, 2) + powerN(epsilonxz, 2)));
 	}
 	//=================================================================================================//
 }

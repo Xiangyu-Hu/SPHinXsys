@@ -74,7 +74,7 @@ void relaxParticlesSingleResolution(In_Output &in_output,
 	//----------------------------------------------------------------------
 	RandomizePartilePosition random_solid_body_from_mesh_particles(solid_body_from_mesh);
 	/** A  Physics relaxation step. */
-	relax_dynamics::SolidRelaxationStepInner relaxation_step_inner(solid_body_from_mesh_inner, true);
+	relax_dynamics::RelaxationStepInner relaxation_step_inner(solid_body_from_mesh_inner, true);
 	//----------------------------------------------------------------------
 	//	Particle relaxation starts here.
 	//----------------------------------------------------------------------

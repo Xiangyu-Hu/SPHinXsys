@@ -175,30 +175,6 @@ namespace SPH
 		}
 		return stress_max;
 	}
-	//=================================================================================================//
-	StdLargeVec<Real> ElasticSolidParticles::getVonMisesStrain()
-	{
-		StdLargeVec<Real> von_Mises_strain_vector = {};
-		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
-		{
-			von_Mises_strain_vector.push_back(von_Mises_strain(index_i));
-		}
-		return von_Mises_strain_vector;
-	}
-	//=================================================================================================//
-	Real ElasticSolidParticles::getMaxVonMisesStrain()
-	{
-		Real von_Mises_strain_max = 0;
-		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
-		{
-			Real von_Mises_strain_i = von_Mises_strain(index_i);
-			if (von_Mises_strain_max < von_Mises_strain_i)
-			{
-				von_Mises_strain_max = von_Mises_strain_i;
-			}
-		}
-		return von_Mises_strain_max;
-	}
 	//=============================================================================================//
 	void ActiveMuscleParticles::initializeActiveMuscleParticleData()
 	{

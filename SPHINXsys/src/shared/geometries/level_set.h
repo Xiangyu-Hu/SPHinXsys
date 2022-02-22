@@ -125,7 +125,7 @@ namespace SPH
 					   Shape &shape, SPHAdaptation &sph_adaptation);
 		//this constructor generate inner packages too
 		LevelSet(BoundingBox tentative_bounds, Real data_spacing,
-				 Shape &shape, SPHAdaptation &sph_adaptation, Real small_shift_factor = 0.75);
+				 Shape &shape, SPHAdaptation &sph_adaptation);
 		virtual ~LevelSet(){};
 
 		virtual void cleanInterface(bool isSmoothed = false) override;

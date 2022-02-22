@@ -60,12 +60,12 @@ namespace SPH
 		return heaviside;
 	}
 	//=================================================================================================//
-	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
-					   Shape &shape, SPHAdaptation &sph_adaptation, Real small_shift_factor)
-		: MeshWithDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, 4,
+	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size,
+					   Shape &shape, SPHAdaptation &sph_adaptation)
+		: MeshWithDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, buffer_size,
 																  shape, sph_adaptation),
 		  global_h_ratio_(sph_adaptation.ReferenceSpacing() / data_spacing),
-		  small_shift_factor_(small_shift_factor),
+		  small_shift_factor_(sph_adaptation.SmallShiftFactor()),
 		  kernel_(*sph_adaptation.getKernel())
 	{
 		Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
