@@ -267,7 +267,7 @@ namespace SPH
 		return product;
 	}
 	//=================================================================================================//
-	Real getCosineOfAngleBetweenTwoVectors (Vec2d vector_1, Vec2d vector_2)
+	Real getCosineOfAngleBetweenTwoVectors (const Vec2d& vector_1, const Vec2d& vector_2)
 	{
 		// returns the cosine of the angle between two vectors
 		Real dot_product_1 = 0.0;
