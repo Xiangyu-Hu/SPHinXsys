@@ -25,7 +25,7 @@ std::string input_body = "./input/SPHinXsys-2d.dat";
 Real DL = 2.3; 				/**< InputBody length right part. */
 Real DL1 = 2.3;				/**< InputBody length left part. */
 Real DH = 4.5; 				/**< InputBody height. */
-Real resolution_ref =(DL + DL1) / 80; 	/**< Reference resolution. */
+Real resolution_ref =(DL + DL1) / 120; 	/**< Reference resolution. */
 BoundingBox system_domain_bounds(Vec2d(-DL1, 0), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	InputBody as a solid body

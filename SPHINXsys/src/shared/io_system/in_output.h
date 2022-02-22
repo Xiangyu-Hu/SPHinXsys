@@ -106,7 +106,7 @@ namespace SPH
 
 		template <typename T>
 		void writeDataToXmlMemory(XmlEngine &xmlengine, SimTK::Xml::Element &element, const DoubleVec<T> &quantity,
-								  int snapshot_n, int particle_n, const std::string &quantity_name, StdVec<string> &element_tag)
+								  int snapshot_n, int particle_n, const std::string &quantity_name, StdVec<std::string> &element_tag)
 		{
 			for (int i = 0; i != snapshot_n; ++i)
 			{
@@ -157,7 +157,7 @@ namespace SPH
 			}
 		};
 
-		void readTagFromXmlMemory(SimTK::Xml::Element &element, StdVec<string> &element_tag)
+		void readTagFromXmlMemory(SimTK::Xml::Element &element, StdVec<std::string> &element_tag)
 		{
 			size_t index_i_ = 0;
 			SimTK::Xml::element_iterator ele_ite = element.element_begin();
@@ -383,7 +383,7 @@ namespace SPH
 		std::string filefullpath_output_;
 
 		DoubleVec<VariableType> current_result_; /* the container of the current result. */
-		StdVec<string> element_tag_;			 /* the container of the current tag. */
+		StdVec<std::string> element_tag_;			 /* the container of the current tag. */
 
 	public:
 		ObservedQuantityRecording(const std::string &quantity_name, In_Output &in_output,
@@ -449,7 +449,7 @@ namespace SPH
 			size_t number_of_snapshot_ = std::distance(observe_xml_engine_.root_element_.element_begin(),
 													   observe_xml_engine_.root_element_.element_end());
 			DoubleVec<VariableType> current_result_temp_(number_of_snapshot_, StdVec<VariableType>(number_of_particle_));
-			StdVec<string> element_tag_temp_(number_of_snapshot_);
+			StdVec<std::string> element_tag_temp_(number_of_snapshot_);
 			current_result_ = current_result_temp_;
 			element_tag_ = element_tag_temp_;
 			SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;
@@ -482,7 +482,7 @@ namespace SPH
 		/*< deduce variable type from reduce method. */
 		using VariableType = decltype(reduce_method_.InitialReference());
 		DoubleVec<VariableType> current_result_; /* the container of the current result. */
-		StdVec<string> element_tag_;			 /* the container of the current tag. */
+		StdVec<std::string> element_tag_;			 /* the container of the current tag. */
 
 	public:
 		template <typename... ConstructorArgs>
@@ -535,7 +535,7 @@ namespace SPH
 			size_t number_of_snapshot_ = std::distance(observe_xml_engine_.root_element_.element_begin(),
 													   observe_xml_engine_.root_element_.element_end());
 			DoubleVec<VariableType> current_result_temp_(number_of_snapshot_, StdVec<VariableType>(number_of_particle_));
-			StdVec<string> element_tag_temp_(number_of_snapshot_);
+			StdVec<std::string> element_tag_temp_(number_of_snapshot_);
 			current_result_ = current_result_temp_;
 			element_tag_ = element_tag_temp_;
 			SimTK::Xml::Element &element_ = observe_xml_engine_.root_element_;

@@ -46,9 +46,6 @@ using namespace std::placeholders;
 
 namespace SPH
 {
-	class Kernel;
-	class SPHAdaptation;
-
 	/** Functor for operation on the mesh. */
 	typedef std::function<void(const Vecu &, Real)> MeshFunctor;
 	/** Iterator on the mesh by looping index. sequential computing. */
@@ -58,7 +55,7 @@ namespace SPH
 
 	/**
 	 * @class BaseMesh
-	 * @brief Base class for all meshes which may be grid or cell based.
+	 * @brief Base class for all structured meshes which may be grid or cell based.
 	 * The basic properties of the mesh, such as lower bound, grid spacing 
 	 * and number of grid points may be determined by the derived class.
 	 * Note that there is no mesh-based data defined here.
@@ -71,7 +68,7 @@ namespace SPH
 		Vecu number_of_grid_points_; /**< number of grid points by dimension */
 	public:
 		BaseMesh();
-		BaseMesh(Vecu number_of_grid_points);
+		explicit BaseMesh(Vecu number_of_grid_points);
 		BaseMesh(Vecd mesh_lower_bound, Real grid_spacing, Vecu number_of_grid_points);
 		BaseMesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
 		virtual ~BaseMesh(){};
@@ -87,8 +84,8 @@ namespace SPH
 		Vecd CellPositionFromIndex(const Vecu &cell_index);
 		/** Note that, the lower corner grid of a cell has the same index as the cell. */
 		Vecd GridPositionFromIndex(const Vecu &grid_index);
-		Vecu transfer1DtoMeshIndex(const Vecu &number_of_grid_points, size_t i);
-		size_t transferMeshIndexTo1D(const Vecu &number_of_grid_points, const Vecu &grid_index);
+		Vecu transfer1DtoMeshIndex(const Vecu &number_of_mesh_indexes, size_t i);
+		size_t transferMeshIndexTo1D(const Vecu &number_of_mesh_indexes, const Vecu &mesh_index);
 		/** converts mesh index into a Morton order.
          * Interleave a 10 bit number in 32 bits, fill one bit and leave the other 2 as zeros
          * https://stackoverflow.com/questions/18529057/
@@ -96,13 +93,15 @@ namespace SPH
          */
 		size_t MortonCode(const size_t &i);
 		/** This function converts mesh index into a Morton order. */
-		size_t transferMeshIndexToMortonOrder(const Vecu &grid_index);
+		size_t transferMeshIndexToMortonOrder(const Vecu &mesh_index);
 	};
 
 	/**
 	 * @class Mesh
 	 * @brief Abstract base class for cell-based mesh 
 	 * by introducing number of cells, buffer width and mesh-based data in its derived classes.
+	 * Note that we identify the difference between grid spacing and data spacing. 
+	 * The latter is different from grid spacing when MeshWithDataPackage is considered. 
 	 */
 	class Mesh : public BaseMesh
 	{
@@ -111,10 +110,6 @@ namespace SPH
 		Vecu number_of_cells_; /**< number of cells by dimension */
 
 		void copyMeshProperties(Mesh *another_mesh);
-		/** allocate memories for the mesh data matrix*/
-		virtual void allocateMeshDataMatrix() = 0;
-		/** delete memories for mesh data */
-		virtual void deleteMeshDataMatrix() = 0;
 
 	public:
 		Mesh(BoundingBox tentative_bounds, Real grid_spacing, size_t buffer_width);
@@ -123,6 +118,7 @@ namespace SPH
 
 		Vecu NumberOfCells() { return number_of_cells_; };
 		size_t MeshBufferSize() { return buffer_width_; };
+		virtual Real DataSpacing() { return grid_spacing_; };
 	};
 
 	/**
@@ -135,7 +131,7 @@ namespace SPH
 		std::string name_;
 
 	public:
-		BaseMeshField(std::string name) : name_(name){};
+		explicit BaseMeshField(const std::string &name) : name_(name){};
 		virtual ~BaseMeshField(){};
 
 		std::string Name() { return name_; };
@@ -144,41 +140,63 @@ namespace SPH
 	};
 
 	/**
-	 * @class MultilevelMesh
-	 * @brief Multi level Meshes with successively double the resolutions
+	 * @class RefinedMesh
+	 * @brief Abstract base class for cell-based mesh which has
+	 * double resolution of a coarse mesh.
+	 * Currently, the design is simple but can be extending for more inter-mesh operations.
 	 */
-	template <class MeshFieldType, class MeshLevelType>
+	template <class CoarseMeshType>
+	class RefinedMesh : public CoarseMeshType
+	{
+	public:
+		template <typename... Args>
+		RefinedMesh(BoundingBox tentative_bounds, CoarseMeshType &coarse_mesh, Args &&...args)
+			: CoarseMeshType(tentative_bounds, 0.5 * coarse_mesh.DataSpacing(), std::forward<Args>(args)...),
+			  coarse_mesh_(coarse_mesh){};
+		virtual ~RefinedMesh(){};
+
+	protected:
+		CoarseMeshType &coarse_mesh_;
+	};
+
+	/**
+	 * @class MultilevelMesh
+	 * @brief Multi-level Meshes with successively double the resolution
+	 */
+	template <class MeshFieldType, class CoarsestMeshType, class RefinedMeshType>
 	class MultilevelMesh : public MeshFieldType
 	{
 	private:
-		UniquePtrVectorKeeper<MeshLevelType> mesh_level_ptr_vector_keeper_;
+		UniquePtrVectorKeeper<CoarsestMeshType> mesh_level_ptr_vector_keeper_;
 
 	protected:
 		size_t total_levels_; /**< level 0 is the coarsest */
-		StdVec<MeshLevelType *> mesh_levels_;
+		StdVec<CoarsestMeshType *> mesh_levels_;
 
 	public:
 		/**template parameter pack is used with rvalue reference and perfect forwarding to keep 
 		 * the type of arguments when called by another function with template parameter pack too. */
 		template <typename... Args>
-		MultilevelMesh(BoundingBox tentative_bounds, Real reference_spacing, size_t total_levels,
-					   Real maximum_spacing_ratio, Args &&...args)
+		MultilevelMesh(BoundingBox tentative_bounds, Real reference_spacing, size_t total_levels, Args &&...args)
 			: MeshFieldType(std::forward<Args>(args)...), total_levels_(total_levels)
 		{
-			Real zero_level_spacing = reference_spacing * maximum_spacing_ratio;
-			for (size_t level = 0; level != total_levels_; ++level)
+			Real coarsest_spacing = reference_spacing;
+			mesh_levels_.push_back(
+				mesh_level_ptr_vector_keeper_
+					.template createPtr<CoarsestMeshType>(tentative_bounds, coarsest_spacing, std::forward<Args>(args)...));
+
+			for (size_t level = 1; level != total_levels_; ++level)
 			{
-				Real spacing_level = zero_level_spacing * powerN(0.5, (int)level);
 				/** all mesh levels aligned at the lower bound of tentative_bounds */
 				mesh_levels_.push_back(
 					mesh_level_ptr_vector_keeper_
-						.template createPtr<MeshLevelType>(tentative_bounds, spacing_level, std::forward<Args>(args)...));
+						.template createPtr<RefinedMeshType>(tentative_bounds, *mesh_levels_.back(), std::forward<Args>(args)...));
 			}
 		};
 
-		virtual ~MultilevelMesh() {};
+		virtual ~MultilevelMesh(){};
 
-		StdVec<MeshLevelType *> getMeshLevels() { return mesh_levels_; };
+		StdVec<CoarsestMeshType *> getMeshLevels() { return mesh_levels_; };
 
 		void writeMeshFieldToPlt(std::ofstream &output_file) override
 		{

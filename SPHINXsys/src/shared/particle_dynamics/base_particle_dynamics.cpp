@@ -3,7 +3,7 @@
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */
 #include "base_particle_dynamics.h"
-#include "base_particle_dynamics.hpp"
+#include "cell_linked_list.h"
 //=============================================================================================//
 namespace SPH
 {
