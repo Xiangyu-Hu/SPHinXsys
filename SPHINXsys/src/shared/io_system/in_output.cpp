@@ -9,6 +9,20 @@
 #include "level_set.h"
 #include "sph_system.h"
 
+namespace
+{
+    /**
+     * @brief Convert any input to string and pad the output with zeros
+     * @todo Use external library for general string formatting, e.g. abseil, fmt library, or std::format
+     */
+    template<typename T>
+    std::string padValueWithZeros(T&& value, size_t max_string_width = 10)
+	{
+		std::ostringstream s_time;
+		s_time << std::setw(max_string_width) << std::setfill('0') << value;
+		return s_time.str();
+	}
+}
 namespace SPH
 {
 	//=============================================================================================//
@@ -43,7 +57,7 @@ namespace SPH
 			}
 		}
 
-		restart_step_ = std::to_string(sph_system.restart_step_);
+		restart_step_ = padValueWithZeros(sph_system.restart_step_);
 
 		sph_system.in_output_ = this;
 	}
@@ -77,10 +91,13 @@ namespace SPH
 	std::string BodyStatesIO::convertPhysicalTimeToString(Real convertPhysicalTimeToStream)
 	{
 		int i_time = int(GlobalStaticVariables::physical_time_ * 1.0e6);
-		std::stringstream s_time;
-		s_time << std::setw(10) << std::setfill('0') << i_time;
-		return s_time.str();
+		return padValueWithZeros(i_time);
 	}
+	//=============================================================================================//
+	void BodyStatesRecording::writeToFile(size_t iteration_step)
+    {
+        writeWithFileName(padValueWithZeros(iteration_step));
+    };
 	//=============================================================================================//
 	void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
 	{
@@ -312,7 +329,7 @@ namespace SPH
 	//=============================================================================================//
 	void RestartIO::writeToFile(size_t iteration_step)
 	{
-		std::string overall_filefullpath = overall_file_path_ + std::to_string(iteration_step) + ".dat";
+		std::string overall_filefullpath = overall_file_path_ + padValueWithZeros(iteration_step) + ".dat";
 		if (fs::exists(overall_filefullpath))
 		{
 			fs::remove(overall_filefullpath);
@@ -323,7 +340,7 @@ namespace SPH
 
 		for (size_t i = 0; i < bodies_.size(); ++i)
 		{
-			std::string filefullpath = file_paths_[i] + std::to_string(iteration_step) + ".xml";
+			std::string filefullpath = file_paths_[i] + padValueWithZeros(iteration_step) + ".xml";
 
 			if (fs::exists(filefullpath))
 			{
@@ -336,7 +353,7 @@ namespace SPH
 	Real RestartIO::readRestartTime(size_t restart_step)
 	{
 		std::cout << "\n Reading restart files from the restart step = " << restart_step << std::endl;
-		std::string overall_filefullpath = overall_file_path_ + std::to_string(restart_step) + ".dat";
+		std::string overall_filefullpath = overall_file_path_ + padValueWithZeros(restart_step) + ".dat";
 		if (!fs::exists(overall_filefullpath))
 		{
 			std::cout << "\n Error: the input file:" << overall_filefullpath << " is not exists" << std::endl;
@@ -355,7 +372,7 @@ namespace SPH
 	{
 		for (size_t i = 0; i < bodies_.size(); ++i)
 		{
-			std::string filefullpath = file_paths_[i] + std::to_string(restart_step) + ".xml";
+			std::string filefullpath = file_paths_[i] + padValueWithZeros(restart_step) + ".xml";
 
 			if (!fs::exists(filefullpath))
 			{
