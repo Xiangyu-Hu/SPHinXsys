@@ -616,7 +616,7 @@ namespace SPH
 			try
 			{
 				Real time_factor = SMIN(GlobalStaticVariables::physical_time_ / end_time_, 1.0);
-				dvel_dt_prior_[index_i] = acceleration_ * time_factor;
+				dvel_dt_prior_[index_i] += acceleration_ * time_factor;
 			}
 			catch (out_of_range &e)
 			{
@@ -841,7 +841,7 @@ namespace SPH
 		//=================================================================================================//
 		void KirchhoffStressRelaxationFirstHalf::Initialization(size_t index_i, Real dt)
 		{
-			correction_factor_ = 1.1 / (particles_->sigma0_ * Vol_[index_i]);
+			correction_factor_ = 1.0 / (particles_->sigma0_ * Vol_[index_i]);
 			pos_n_[index_i] += vel_n_[index_i] * dt * 0.5;
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
 			Real J = det(F_[index_i]);
