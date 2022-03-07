@@ -858,8 +858,8 @@ namespace SPH
 				material_->NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i) * inverse_F_T_[index_i];
 			stress_PK1_[index_i] = F_[index_i] * material_->ConstitutiveRelation(F_[index_i], index_i);
 			
-			for (int i = 0; i < 3; i++){
-				for (int j = 0; j < 3; j++){
+			for (int i = 0; i < stress_on_particle_[index_i].nrow(); i++){
+				for (int j = 0; j < stress_on_particle_[index_i].ncol(); j++){
 					if (std::isnan(stress_on_particle_[index_i][i][j])){
 						throw std::runtime_error(std::string("stress_on_particle_ is Not A Number"));
 					}
@@ -883,7 +883,7 @@ namespace SPH
 			}
 			dvel_dt_[index_i] = acceleration;
 
-			for (int i = 0; i < 3; i++){
+			for (int i = 0; i < acceleration.size(); i++){
 				if (std::isnan(acceleration[i])){
 					throw std::runtime_error(std::string("acceleration is Not A Number! SPHBody: ") + this->body_->getBodyName() 
 						+ " particle ID: " + std::to_string(index_i));
