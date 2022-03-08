@@ -31,6 +31,7 @@
 #pragma once
 
 #include "eulerian_weakly_compressible_fluid_dynamics_inner.h"
+#include "eulerian_weakly_compressible_fluid_dynamics_inner.hpp"
 namespace SPH
 {
 	namespace eulerian_weakly_compressible_fluid_dynamics

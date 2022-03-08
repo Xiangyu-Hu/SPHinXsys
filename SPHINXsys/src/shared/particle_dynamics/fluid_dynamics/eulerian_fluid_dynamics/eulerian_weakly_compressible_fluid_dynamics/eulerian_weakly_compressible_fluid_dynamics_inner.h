@@ -29,8 +29,11 @@
 
 #pragma once
 
+#include "fluid_dynamics_inner.h"
+
 #include "all_particle_dynamics.h"
 #include "base_kernel.h"
+#include "external_force.h"
 #include "riemann_solver.h"
 
 namespace SPH

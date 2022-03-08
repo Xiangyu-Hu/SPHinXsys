@@ -23,15 +23,19 @@
 #ifndef SMALL_VECTORS_H
 #define SMALL_VECTORS_H
 
-#include "base_data_type.h"
+#include "data_type.h"
 #include <Eigen/Eigenvalues>
 
 namespace SPH {
 
 	Vec2d FirstAxisVector(const Vec2d& zero_vector);
 	Vec3d FirstAxisVector(const Vec3d& zero_vector);
+
 	Real getMaxAbsoluteElement(const Vec2d& input);
 	Real getMaxAbsoluteElement(const Vec3d& input);
+	Real getMinAbsoluteElement(const Vec2d& input);
+	Real getMinAbsoluteElement(const Vec3d& input);
+
 	Vec3d upgradeToVector3D(const Real& input);
 	Vec3d upgradeToVector3D(const Vec2d& input);
 	Vec3d upgradeToVector3D(const Vec3d& input);
@@ -81,12 +85,12 @@ namespace SPH {
 	Mat3d getTransformationMatrix(const Vec3d& direction_of_z);
 
 	/** get angle between two vectors. */
-	Real getCosineOfAngleBetweenTwoVectors (Vec2d vector_1, Vec2d vector_2);
-	Real getCosineOfAngleBetweenTwoVectors (Vec3d vector_1, Vec3d vector_2);
+	Real getCosineOfAngleBetweenTwoVectors (const Vec2d &vector_1, const Vec2d &vector_2);
+	Real getCosineOfAngleBetweenTwoVectors (const Vec3d &vector_1, const Vec3d &vector_2);
 
 	/** get orthogonal projection of a vactor. */
-	Vec2d getVectorProjectionOfVector (Vec2d vector_1, Vec2d vector_2);
-	Vec3d getVectorProjectionOfVector (Vec3d vector_1, Vec3d vector_2);
+	Vec2d getVectorProjectionOfVector (const Vec2d& vector_1, const Vec2d& vector_2);
+	Vec3d getVectorProjectionOfVector (const Vec3d& vector_1, const Vec3d& vector_2);
 
 	/** von Mises stress from stress matrix */
 	Real getVonMisesStressFromMatrix(const Mat2d& sigma);
@@ -96,6 +100,7 @@ namespace SPH {
 	Vec2d getPrincipalValuesFromMatrix(const Mat2d& A);
 	Vec3d getPrincipalValuesFromMatrix(const Mat3d& A);
 
+	/** obtain minimum dimension of a bounding box */
+	Real MinimumDimension(const BoundingBox &bbox);
 }
-
 #endif //SMALL_VECTORS_H

@@ -127,9 +127,9 @@ namespace SPH
 				displacement = (pos_final - pos_n_[index_i]) * dt /
 							   (end_time_ - GlobalStaticVariables::physical_time_);
 			}
-			catch (out_of_range &e)
+			catch (std::out_of_range &e)
 			{
-				throw runtime_error(string("PositionSolidBody::getDisplacement: particle index out of bounds") + to_string(index_i));
+				throw std::runtime_error(std::string("PositionSolidBody::getDisplacement: particle index out of bounds") + std::to_string(index_i));
 			}
 			return displacement;
 		}
@@ -146,9 +146,9 @@ namespace SPH
 					vel_n_[index_i] = getVelocity();
 				}
 			}
-			catch (out_of_range &e)
+			catch (std::out_of_range &e)
 			{
-				throw runtime_error(string("PositionSolidBody::Update: particle index out of bounds") + to_string(index_i));
+				throw std::runtime_error(std::string("PositionSolidBody::Update: particle index out of bounds") + std::to_string(index_i));
 			}
 		}
 		//=================================================================================================//
@@ -175,9 +175,9 @@ namespace SPH
 				displacement = (pos_final - pos_n_[index_i]) * dt /
 							   (end_time_ - GlobalStaticVariables::physical_time_);
 			}
-			catch (out_of_range &e)
+			catch (std::out_of_range &e)
 			{
-				throw runtime_error(string("PositionScaleSolidBody::getDisplacement: particle index out of bounds") + to_string(index_i));
+				throw std::runtime_error(std::string("PositionScaleSolidBody::getDisplacement: particle index out of bounds") + std::to_string(index_i));
 			}
 			return displacement;
 		}
@@ -194,9 +194,9 @@ namespace SPH
 					vel_n_[index_i] = getVelocity();
 				}
 			}
-			catch (out_of_range &e)
+			catch (std::out_of_range &e)
 			{
-				throw runtime_error(string("PositionScaleSolidBody::Update: particle index out of bounds") + to_string(index_i));
+				throw std::runtime_error(std::string("PositionScaleSolidBody::Update: particle index out of bounds") + std::to_string(index_i));
 			}
 		}
 		//=================================================================================================//
@@ -217,7 +217,7 @@ namespace SPH
 			{
 				return point[0] >= bbox.first[0] && point[0] <= bbox.second[0];
 			}
-			throw runtime_error(string("checkIfPointInBoundingBox: Vecd point or BoundingBox& bbox has a dimension of <1"));
+			throw std::runtime_error(std::string("checkIfPointInBoundingBox: Vecd point or BoundingBox& bbox has a dimension of <1"));
 			return false;
 		}
 		//=================================================================================================//
@@ -242,9 +242,9 @@ namespace SPH
 			{
 				displacement = (pos_end_[index_i] - pos_n_[index_i]) * dt / (end_time_ - GlobalStaticVariables::physical_time_);
 			}
-			catch (out_of_range &e)
+			catch (std::out_of_range &e)
 			{
-				throw runtime_error(string("TranslateSolidBody::getDisplacement: particle index out of bounds") + to_string(index_i));
+				throw std::runtime_error(std::string("TranslateSolidBody::getDisplacement: particle index out of bounds") + std::to_string(index_i));
 			}
 			return displacement;
 		}
@@ -259,9 +259,9 @@ namespace SPH
 					pos_n_[index_i] = pos_n_[index_i] + 0.5 * getDisplacement(index_i, dt); // displacement from the initial position, 0.5x because it's executed twice
 					vel_n_[index_i] = getVelocity();
 				}
-				catch (out_of_range &e)
+				catch (std::out_of_range &e)
 				{
-					throw runtime_error(string("TranslateSolidBody::Update: particle index out of bounds") + to_string(index_i));
+					throw std::runtime_error(std::string("TranslateSolidBody::Update: particle index out of bounds") + std::to_string(index_i));
 				}
 			}
 		}
@@ -290,9 +290,9 @@ namespace SPH
 					}
 				}
 			}
-			catch (out_of_range &e)
+			catch (std::out_of_range &e)
 			{
-				throw runtime_error(string("TranslateSolidBodyPart::Update: particle index out of bounds") + to_string(index_i));
+				throw std::runtime_error(std::string("TranslateSolidBodyPart::Update: particle index out of bounds") + std::to_string(index_i));
 			}
 		}
 		//=================================================================================================//
@@ -517,9 +517,9 @@ namespace SPH
 					dvel_dt_prior_[index_i] += getDampingForce(index_i) / mass_[index_i];
 				}
 			}
-			catch (out_of_range &e)
+			catch (std::out_of_range &e)
 			{
-				throw runtime_error(string("SpringNormalOnSurfaceParticles::Update: particle index out of bounds") + to_string(index_i));
+				throw std::runtime_error(std::string("SpringNormalOnSurfaceParticles::Update: particle index out of bounds") + std::to_string(index_i));
 			}
 		}
 		//=================================================================================================//
@@ -557,8 +557,8 @@ namespace SPH
 					dvel_dt_prior_[index_i] += -damping_coeff_ * vel_n_[index_i]  / mass_[index_i];
 				}
 			}
-				catch(out_of_range& e){
-				throw runtime_error(string("SpringOnSurfaceParticles::Update: particle index out of bounds") + to_string(index_i));
+				catch(std::out_of_range& e){
+				throw std::runtime_error(std::string("SpringOnSurfaceParticles::Update: particle index out of bounds") + std::to_string(index_i));
 			}
 		}
 		//=================================================================================================//
@@ -583,9 +583,9 @@ namespace SPH
 					dvel_dt_prior_[index_i] += acceleration_;
 				}
 			}
-			catch (out_of_range &e)
+			catch (std::out_of_range &e)
 			{
-				throw runtime_error(string("AccelerationForBodyPartInBoundingBox::Update: particle index out of bounds") + to_string(index_i));
+				throw std::runtime_error(std::string("AccelerationForBodyPartInBoundingBox::Update: particle index out of bounds") + std::to_string(index_i));
 			}
 		}
 		//=================================================================================================//
@@ -618,14 +618,14 @@ namespace SPH
 				Real time_factor = SMIN(GlobalStaticVariables::physical_time_ / end_time_, 1.0);
 				dvel_dt_prior_[index_i] += acceleration_ * time_factor;
 			}
-			catch (out_of_range &e)
+			catch (std::out_of_range &e)
 			{
-				throw runtime_error(string("ForceInBodyRegion::Update: particle index out of bounds") + to_string(index_i));
+				throw std::runtime_error(std::string("ForceInBodyRegion::Update: particle index out of bounds") + std::to_string(index_i));
 			}
 		}
 		//=================================================================================================//
 		SurfacePressureFromSource::
-			SurfacePressureFromSource(SPHBody &sph_body, BodyPartByParticle &body_part, Vecd source_point, StdVec<array<Real, 2>> pressure_over_time)
+			SurfacePressureFromSource(SPHBody &sph_body, BodyPartByParticle &body_part, Vecd source_point, StdVec<std::array<Real, 2>> pressure_over_time)
 			: PartSimpleDynamicsByParticle(sph_body, body_part), SolidDataSimple(sph_body),
 			  pos_0_(particles_->pos_0_),
 			  n_(particles_->n_),
@@ -674,7 +674,7 @@ namespace SPH
 			}
 			// interval has to be at least 1
 			if (interval < 1)
-				throw runtime_error(string("SurfacePressureFromSource::getPressure(): pressure_over_time input not correct, should start with {0.0, 0.0}"));
+				throw std::runtime_error(std::string("SurfacePressureFromSource::getPressure(): pressure_over_time input not correct, should start with {0.0, 0.0}"));
 			// scale the pressure to the current time
 			Real t_0 = pressure_over_time_[interval - 1][0];
 			Real t_1 = pressure_over_time_[interval][0];
@@ -699,9 +699,9 @@ namespace SPH
 					dvel_dt_prior_[index_i] += (-1.0) * n_[index_i] * acc_from_pressure;
 				}
 			}
-			catch (out_of_range &e)
+			catch (std::out_of_range &e)
 			{
-				throw runtime_error(string("SurfacePressureFromSource::Update: particle index out of bounds") + to_string(index_i));
+				throw std::runtime_error(std::string("SurfacePressureFromSource::Update: particle index out of bounds") + std::to_string(index_i));
 			}
 		}
 		//=================================================================================================//
@@ -858,8 +858,8 @@ namespace SPH
 				material_->NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i) * inverse_F_T_[index_i];
 			stress_PK1_[index_i] = F_[index_i] * material_->ConstitutiveRelation(F_[index_i], index_i);
 			
-			for (int i = 0; i < 3; i++){
-				for (int j = 0; j < 3; j++){
+			for (int i = 0; i < stress_on_particle_[index_i].nrow(); i++){
+				for (int j = 0; j < stress_on_particle_[index_i].ncol(); j++){
 					if (std::isnan(stress_on_particle_[index_i][i][j])){
 						throw std::runtime_error(std::string("stress_on_particle_ is Not A Number"));
 					}
@@ -883,7 +883,7 @@ namespace SPH
 			}
 			dvel_dt_[index_i] = acceleration;
 
-			for (int i = 0; i < 3; i++){
+			for (int i = 0; i < acceleration.size(); i++){
 				if (std::isnan(acceleration[i])){
 					throw std::runtime_error(std::string("acceleration is Not A Number! SPHBody: ") + this->body_->getBodyName() 
 						+ " particle ID: " + std::to_string(index_i));

@@ -32,8 +32,13 @@
 
 #include "all_particle_dynamics.h"
 #include "general_dynamics.h"
-#include "elastic_solid.h"
 #include "base_kernel.h"
+#include "body_relation.h"
+#include "solid_body.h"
+#include "solid_particles.h"
+#include "elastic_solid.h"
+
+
 
 namespace SPH
 {
@@ -442,14 +447,14 @@ namespace SPH
 		{
 		public:
 			SurfacePressureFromSource(SPHBody &sph_body, BodyPartByParticle &body_part,
-									  Vecd source_point, StdVec<array<Real, 2>> pressure_over_time);
+									  Vecd source_point, StdVec<std::array<Real, 2>> pressure_over_time);
 
 			StdLargeVec<bool> &GetApplyPressureToParticle() { return apply_pressure_to_particle_; }
 
 		protected:
 			StdLargeVec<Vecd> &pos_0_, &n_, &dvel_dt_prior_;
 			StdLargeVec<Real> &mass_;
-			StdVec<array<Real, 2>> pressure_over_time_;
+			StdVec<std::array<Real, 2>> pressure_over_time_;
 			StdLargeVec<bool> apply_pressure_to_particle_;
 			Real getPressure();
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
