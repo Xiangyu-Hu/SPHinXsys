@@ -19,12 +19,12 @@ namespace SPH
     }
     //=============================================================================================//
     VonMisesStress::VonMisesStress(SPHBody &sph_body)
-        : BaseDerivedVariable<Real>(sph_body, "VonMiesStress"), ElasticSolidDataSimple(sph_body),
+        : BaseDerivedVariable<Real>(sph_body, "VonMisesStress"), ElasticSolidDataSimple(sph_body),
           rho0_(particles_->rho0_), rho_n_(particles_->rho_n_),
           F_(particles_->F_), stress_PK1_(particles_->stress_PK1_) {}
     //=============================================================================================//
     VonMisesStrain::VonMisesStrain(SPHBody &sph_body)
-        : BaseDerivedVariable<Real>(sph_body, "VonMiesStrain"),
+        : BaseDerivedVariable<Real>(sph_body, "VonMisesStrain"),
           ElasticSolidDataSimple(sph_body), F_(particles_->F_) {}
     //=================================================================================================//
 }
