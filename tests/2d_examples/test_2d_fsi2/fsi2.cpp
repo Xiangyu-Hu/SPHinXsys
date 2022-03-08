@@ -43,8 +43,8 @@ int main(int ac, char *av[])
 	SharedPtr<ParticleGenerator> inserted_body_particle_generator = makeShared<ParticleGeneratorLattice>();
 	if (!system.run_particle_relaxation_ && system.reload_particles_)
 		inserted_body_particle_generator = makeShared<ParticleGeneratorReload>(in_output, inserted_body.getBodyName());
-	ElasticSolidParticles inserted_body_particles(inserted_body,
-												  makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson), inserted_body_particle_generator);
+	ElasticSolidParticles inserted_body_particles(inserted_body, 
+		makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson), inserted_body_particle_generator);
 
 	ObserverBody beam_observer(system, "BeamObserver");
 	ObserverParticles beam_observer_particles(beam_observer, makeShared<BeamObserverParticleGenerator>());
@@ -308,7 +308,13 @@ int main(int ac, char *av[])
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	if (system.run_regression_test_ == true)
+	if (system.generate_regression_data_)
+	{
+		//The lift force at the cylinder is very small and not important in this case. 
+		write_total_viscous_force_on_inserted_body.generateDataBase({1.0e-2, 1.0e-2}, {1.0e-2, 1.0e-2});
+		write_beam_tip_displacement.generateDataBase(1.0e-2);
+	}
+	else
 	{
 		write_total_viscous_force_on_inserted_body.newResultTest();
 		write_beam_tip_displacement.newResultTest();

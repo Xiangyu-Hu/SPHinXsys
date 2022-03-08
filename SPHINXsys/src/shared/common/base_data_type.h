@@ -359,6 +359,10 @@ namespace SPH
 	const bool positiveDirection = true;
 	const bool negativeDirection = false;
 
+	/** Bounding box, first: lower bound, second: upper bound. */
+	typedef std::pair<Vec2d, Vec2d> BoundingBox2d;
+	typedef std::pair<Vec3d, Vec3d> BoundingBox3d;
+
 	/**
 	 * @class Transform2d
 	 * @brief Coordinate transfrom in 2D
@@ -369,19 +373,19 @@ namespace SPH
 		Vec2d translation_;
 
 	public:
-		Transform2d(SimTK::Real rotation_angle)
+		explicit Transform2d(SimTK::Real rotation_angle)
 			: rotation_angle_(rotation_angle), translation_(0){};
 		Transform2d(SimTK::Real rotation_angle, Vec2d translation)
 			: rotation_angle_(rotation_angle), translation_(translation){};
 		/** Forward tranformation. */
-		Vec2d imposeTransform(Vec2d &origin)
+		Vec2d imposeTransform(const Vec2d &origin)
 		{
 			Vec2d target(origin[0] * cos(rotation_angle_) - origin[1] * sin(rotation_angle_),
 						 origin[1] * cos(rotation_angle_) + origin[0] * sin(rotation_angle_));
 			return target + translation_;
 		};
 		/** Inverse tranformation. */
-		Vec2d imposeInverseTransform(Vec2d &target)
+		Vec2d imposeInverseTransform(const Vec2d &target)
 		{
 			Vec2d origin(target[0] * cos(-rotation_angle_) - target[1] * sin(-rotation_angle_),
 						 target[1] * cos(-rotation_angle_) + target[0] * sin(-rotation_angle_));

@@ -59,13 +59,10 @@ namespace SPH
 		Real h_spacing_ratio_;		   /**< ratio of reference kernel smoothing length to particle spacing */
 		Real system_resolution_ratio_; /**< ratio of body resolution to system resolution, set to 1.0 by default */
 		int local_refinement_level_;   /**< refinement level respect to reference particle spacing */
-		int local_coarse_level_;	   //TODO: try to delete this because it leads to confusion on particle resolutions
 		Real spacing_ref_;			   /**< reference particle spacing used to determine local particle spacing */
 		Real h_ref_;				   /**< reference particle spacing used to determine local particle smoothing length */
 		Real spacing_min_;			   /**< minimum particle spacing determined by local refinement level */
 		Real spacing_ratio_min_;
-		Real spacing_ratio_max_;
-		Real h_ratio_min_;
 		Real h_ratio_max_;
 		Real number_density_min_;
 		Real number_density_max_;
@@ -80,7 +77,7 @@ namespace SPH
 
 	public:
 		SPHAdaptation(Real h_spacing_ratio = 1.3, Real system_resolution_ratio = 1.0, 
-					  Real small_shift_factor = 0.75, Real level_set_refinement_ratio = 1.0);
+					  Real small_shift_factor = 1.0, Real level_set_refinement_ratio = 1.0);
 		virtual ~SPHAdaptation(){};
 		/** Note: called  after construction of this and derived classes. */
 		virtual void initialize(SPHBody *sph_body);
@@ -99,11 +96,10 @@ namespace SPH
 		};
 		Real MinimumSpacing() { return spacing_min_; };
 		Real MinimumSpacingRatio() { return spacing_ratio_min_; };
-		Real MaximumSpacingRatio() { return spacing_ratio_max_; };
 		Real computeReferenceNumberDensity(Vec2d zero, Real h_ratio);
 		Real computeReferenceNumberDensity(Vec3d zero, Real h_ratio);
 		Real ReferenceNumberDensity();
-		Real probeNumberDensity(Vecd zero, Real h_ratio);
+		Real SmallShiftFactor() { return small_shift_factor_; };
 		virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
 
 		virtual void assignBaseParticles(BaseParticles *base_particles);

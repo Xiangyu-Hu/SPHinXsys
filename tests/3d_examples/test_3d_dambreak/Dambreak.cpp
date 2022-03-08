@@ -40,9 +40,9 @@ public:
 		: FluidBody(system, body_name)
 	{
 		Vecd halfsize_water(0.5 * LL, 0.5 * LH, 0.5 * LW);
-		Vecd translation_water = halfsize_water;
+		SimTK::Transform translation_water(halfsize_water);
 
-		body_shape_.add<TriangleMeshShapeBrick>(halfsize_water, resolution, translation_water);
+		body_shape_.add<GeometricShapeBrick>(halfsize_water, translation_water);
 	}
 };
 //	define the static solid wall boundary
@@ -53,10 +53,10 @@ public:
 		: SolidBody(system, body_name)
 	{
 		Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
-		Vecd translation_wall(0.5 * DL, 0.5 * DH, 0.5 * DW);
 		Vecd halfsize_inner(0.5 * DL, 0.5 * DH, 0.5 * DW);
-		body_shape_.add<TriangleMeshShapeBrick>(halfsize_outer, resolution, translation_wall);
-		body_shape_.substract<TriangleMeshShapeBrick>(halfsize_inner, resolution, translation_wall);
+		SimTK::Transform  translation_wall(Vec3d(0.5 * DL, 0.5 * DH, 0.5 * DW));
+		body_shape_.add<GeometricShapeBrick>(halfsize_outer, translation_wall);
+		body_shape_.substract<GeometricShapeBrick>(halfsize_inner, translation_wall);
 	}
 };
 
@@ -96,6 +96,7 @@ int main()
 	WallBoundary wall_boundary(system, "Wall");
 	//create solid particles
 	SolidParticles wall_particles(wall_boundary);
+	wall_particles.addAVariableToWrite<Vec3d>("NormalDirection");
 
 	ObserverBody fluid_observer(system, "Fluidobserver");
 	//create observer particles

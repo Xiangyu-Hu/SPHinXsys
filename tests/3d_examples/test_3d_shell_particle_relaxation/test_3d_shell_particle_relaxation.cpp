@@ -10,7 +10,7 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
-std::string full_path_to_geometry = "./input/SPHinXsys.stl";
+std::string full_path_to_geometry = "./input/curved_tube.stl";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -35,7 +35,7 @@ Real poisson = 0.3; 			                         /** Poisson ratio. */
 class ImportedShellModel : public ThinStructure
 {
 public:
-	ImportedShellModel(SPHSystem &system, const std::string body_name)
+	ImportedShellModel(SPHSystem &system, const std::string &body_name)
 		: ThinStructure(system, body_name, makeShared<SPHAdaptation>(1.15, 1.0, 0.75, level_set_refinement_ratio))
 	{
 		/** Geometry definition. */
