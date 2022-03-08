@@ -5,9 +5,14 @@
 */
 
 #include "particle_dynamics_bodypart.h"
+#include "base_body.h"
 
 namespace SPH
 {
+	//=================================================================================================//
+	PartDynamicsByParticle::PartDynamicsByParticle(SPHBody &sph_body, BodyPartByParticle &body_part)
+		: ParticleDynamics<void>(sph_body),
+		  body_part_particles_(body_part.body_part_particles_) {}
 	//=================================================================================================//
 	void PartDynamicsByParticle::exec(Real dt)
 	{
@@ -36,21 +41,21 @@ namespace SPH
 	}
 	//=================================================================================================//
 	PartSimpleDynamicsByParticle::
-		PartSimpleDynamicsByParticle(SPHBody &sph_body, BodyPartByParticle &body_part) 
+		PartSimpleDynamicsByParticle(SPHBody &sph_body, BodyPartByParticle &body_part)
 		: PartDynamicsByParticle(sph_body, body_part)
 	{
 		particle_functor_ = std::bind(&PartSimpleDynamicsByParticle::Update, this, _1, _2);
 	};
 	//=================================================================================================//
 	PartInteractionDynamicsByParticle::
-		PartInteractionDynamicsByParticle(SPHBody &sph_body, BodyPartByParticle &body_part) 
+		PartInteractionDynamicsByParticle(SPHBody &sph_body, BodyPartByParticle &body_part)
 		: PartDynamicsByParticle(sph_body, body_part)
 	{
 		particle_functor_ = std::bind(&PartInteractionDynamicsByParticle::Interaction, this, _1, _2);
 	}
 	//=================================================================================================//
 	PartInteractionDynamicsByParticleWithUpdate::
-		PartInteractionDynamicsByParticleWithUpdate(SPHBody &sph_body, BodyPartByParticle &body_part) 
+		PartInteractionDynamicsByParticleWithUpdate(SPHBody &sph_body, BodyPartByParticle &body_part)
 		: PartInteractionDynamicsByParticle(sph_body, body_part)
 	{
 		functor_update_ = std::bind(&PartInteractionDynamicsByParticleWithUpdate::Update, this, _1, _2);
@@ -159,6 +164,10 @@ namespace SPH
 			},
 			ap);
 	}
+	//=================================================================================================//
+	PartDynamicsByCell::PartDynamicsByCell(SPHBody &sph_body, BodyPartByCell &body_part)
+		: ParticleDynamics<void>(sph_body),
+		  body_part_cells_(body_part.body_part_cells_){};
 	//=================================================================================================//
 	void PartDynamicsByCell::exec(Real dt)
 	{

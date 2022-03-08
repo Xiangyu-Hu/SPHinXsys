@@ -1,3 +1,5 @@
+#ifndef __EMSCRIPTEN__
+
 #include "image_shape.h"
 
 namespace SPH
@@ -70,3 +72,5 @@ namespace SPH
 	}
 	//=================================================================================================//
 }
+
+#endif // __EMSCRIPTEN__

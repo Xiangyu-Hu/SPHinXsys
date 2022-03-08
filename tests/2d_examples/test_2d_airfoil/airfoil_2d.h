@@ -26,7 +26,7 @@ std::string airfoil_flap_rear = "./input/airfoil_flap_rear.dat";
 Real DL = 1.25; 				/**< airfoil length rear part. */
 Real DL1 = 0.25;				/**< airfoil length front part. */
 Real DH = 0.25; 				/**< airfoil height. */
-Real resolution_ref = 0.01; 	/**< Reference resolution. */	
+Real resolution_ref = 0.02; 	/**< Reference resolution. */	
 BoundingBox system_domain_bounds(Vec2d(-DL1, -DH), Vec2d(DL, DH));
 //----------------------------------------------------------------------
 //	Airfoil	as a solid body
@@ -36,7 +36,7 @@ class Airfoil : public SolidBody
 public:
 	Airfoil(SPHSystem &system, const std::string &body_name)
 		: SolidBody(system, body_name, 
-			makeShared<ParticleSpacingByBodyShape>(1.15, 1.0, 2))
+			makeShared<ParticleSpacingByBodyShape>(1.15, 1.0, 3))
 	{
 		/** Geometry definition. */
 		MultiPolygon multi_polygon;

@@ -128,12 +128,12 @@ namespace SPH
 	{
 	public:
 		/** used to create a new derived object in the vector 
-		 * and output the base class pointer as observer */
+		 * and output its pointer as observer */
 		template <class DerivedType, typename... ConstructorArgs>
-		BaseType *createPtr(ConstructorArgs &&...args)
+		DerivedType *createPtr(ConstructorArgs &&...args)
 		{
 			ptr_vector_.push_back(makeUnique<DerivedType>(std::forward<ConstructorArgs>(args)...));
-			return ptr_vector_.back().get();
+			return dynamic_cast<DerivedType *>(ptr_vector_.back().get());
 		};
 
 	private:

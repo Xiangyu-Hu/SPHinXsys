@@ -21,10 +21,10 @@
 *                                                                           *
 * --------------------------------------------------------------------------*/
 /**
-* @file triangle_mesh_shape.h
-* @brief Here, we define the 3D geometric algortihms. they are based on the polymesh. 
-* @details The idea is to define complex geometry by passing stl, obj or other 
-*			polymesh files. 
+* @file 	triangle_mesh_shape.h
+* @brief 	Here, we define the 3D geometric algortihms. they are based on the polymesh. 
+* @details 	The idea is to define complex geometry by passing stl, obj or other 
+*			polymesh files. TODO: the translation needs to be generalized into transform.
 * @author	Chi ZHang and Xiangyu Hu
 */
 
@@ -79,6 +79,10 @@ namespace SPH
 		//constructor for load STL file from out side
 		explicit TriangleMeshShapeSTL(const std::string &file_path_name, Vec3d translation, Real scale_factor,
 									  const std::string &shape_name = "TriangleMeshShapeSTL");
+		#ifdef __EMSCRIPTEN__
+		//constructor for load stl file from buffer
+		TriangleMeshShapeSTL(const uint8_t* buffer, Vec3d translation, Real scale_factor, const std::string &shape_name = "TriangleMeshShapeSTL");
+		#endif
 		virtual ~TriangleMeshShapeSTL(){};
 	};
 
