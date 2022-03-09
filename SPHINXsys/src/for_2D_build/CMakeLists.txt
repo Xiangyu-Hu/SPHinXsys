@@ -49,7 +49,7 @@ FOREACH(srcdir_path ${sourcedirs})
 	list(APPEND SCR_FILES ${DIR_scrs})
 ENDFOREACH()
 
-if(NOT STATIC_BUILD)
+if(NOT SPH_ONLY_STATIC_BUILD)
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		ADD_LIBRARY(sphinxsys_2d ${SCR_FILES})
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -71,6 +71,8 @@ if(NOT STATIC_BUILD)
 	else()
 		target_link_libraries(sphinxsys_2d ${Simbody_LIBRARIES} ${TBB_LIBRARYS})
 	endif()
+
+	target_include_directories(sphinxsys_2d PUBLIC ${SPHINXSYS_PROJECT_DIR}/3rd_party/eigen)
 	### SPHinXsys dynamic lib ###
 else()
 	### SPHinXsys static lib ###
@@ -94,10 +96,12 @@ else()
 	else()
 		target_link_libraries(sphinxsys_static_2d ${Simbody_LIBRARIES} ${TBB_LIBRARYS})
 	endif()
+
+	target_include_directories(sphinxsys_static_2d PUBLIC ${SPHINXSYS_PROJECT_DIR}/3rd_party/eigen)
 	### SPHinXsys static lib ###
 endif()
 
-if(NOT STATIC_BUILD)
+if(NOT SPH_ONLY_STATIC_BUILD)
 	INSTALL(TARGETS sphinxsys_2d
 	RUNTIME DESTINATION 2d_code/bin
 	LIBRARY DESTINATION 2d_code/lib

@@ -29,6 +29,7 @@
 #pragma once
 
 #include "solid_dynamics.h"
+#include "inelastic_solid.h"
 
 namespace SPH
 {

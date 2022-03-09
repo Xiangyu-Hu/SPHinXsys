@@ -5,7 +5,7 @@
 
 #include "eulerian_weakly_compressible_fluid_dynamics_complex.h"
 #include "eulerian_weakly_compressible_fluid_dynamics_complex.hpp"
-#include "eulerian_weakly_compressible_fluid_dynamics_inner.hpp"
+
 //=================================================================================================//
 using namespace std;
 //=================================================================================================//

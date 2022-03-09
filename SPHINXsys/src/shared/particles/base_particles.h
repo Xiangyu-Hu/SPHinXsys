@@ -33,6 +33,7 @@
 
 #include "base_data_package.h"
 #include "sph_data_containers.h"
+#include "base_particle_dynamics.h"
 #include "base_material.h"
 #include "xml_engine.h"
 
@@ -42,6 +43,7 @@ namespace SPH
 {
 
 	class SPHBody;
+	class BaseMaterial;
 	class ParticleGenerator;
 	class BodySurface;
 
@@ -79,6 +81,7 @@ namespace SPH
 	{
 	private:
 		SharedPtrKeeper<BaseMaterial> base_material_ptr_keeper_;
+		UniquePtrVectorKeeper<ParticleDynamics<void>> derived_particle_data_;
 
 	public:
 		explicit BaseParticles(SPHBody &sph_body,
@@ -88,6 +91,7 @@ namespace SPH
 
 		BaseMaterial *base_material_; /**< for dynamic cast in particle data delegation */
 
+		StdLargeVec<Vecd> pos_0_; /**< initial position */
 		StdLargeVec<Vecd> pos_n_;		  /**< current position */
 		StdLargeVec<Vecd> vel_n_;		  /**< current particle velocity */
 		StdLargeVec<Vecd> dvel_dt_;		  /**< total acceleration including inner pressure- or stress-induced acceleration and other accelerations */
@@ -114,6 +118,8 @@ namespace SPH
 		//----------------------------------------------------------------------
 		ParticleData all_particle_data_;
 		ParticleDataMap all_variable_maps_;
+		StdVec<ParticleDynamics<void> *> derived_variables_;
+		ParticleVariableList variables_to_write_;
 
 		/** register a variable defined in a class (can be non-particle class) */
 		template <typename VariableType>
@@ -136,6 +142,10 @@ namespace SPH
 		/** add a variable into the list for state output */
 		template <typename VariableType>
 		void addAVariableToWrite(std::string variable_name);
+
+		/** add a derived variable into the list for state output */
+		template <class DerivedVariableMethod>
+		void addDerivedVariableToWrite();
 
 		/** add a variable into the list for restart */
 		template <typename VariableType>
@@ -162,15 +172,13 @@ namespace SPH
 		size_t insertAGhostParticle(size_t index_i);
 		void switchToBufferParticle(size_t index_i);
 
-
-		/** Write particle data in Vtu format for Paraview. */
-		virtual void writeParticlesToVtuFile(std::ostream& output_file);
-		/** Write particle data in Vtp format for Paraview. */
-		virtual void writeParticlesToVtpFile(std::ofstream &output_file);
+		/** Write particle data in Vtk format for Paraview. */
+		template<typename OutStreamType>
+		void writeParticlesToVtk(OutStreamType &output_stream);
 		/** Write particle data in PLT format for Tecplot. */
 		void writeParticlesToPltFile(std::ofstream &output_file);
 		/** Write only surface particle data in VTU format for Paraview. TODO: this should be generalized for body part by particles */
-		virtual void writeSurfaceParticlesToVtuFile(std::ofstream& output_file, BodySurface& surface_particles);
+		virtual void writeSurfaceParticlesToVtuFile(std::ostream &output_file, BodySurface &surface_particles);
 
 		void resizeXmlDocForParticles(XmlEngine &xml_engine);
 		void writeParticlesToXmlForRestart(std::string &filefullpath);
@@ -195,7 +203,6 @@ namespace SPH
 		std::string body_name_;
 		XmlEngine restart_xml_engine_;
 		XmlEngine reload_xml_engine_;
-		ParticleVariableList variables_to_write_;
 		ParticleVariableList variables_to_restart_;
 		void addAParticleEntry();
 
@@ -240,6 +247,24 @@ namespace SPH
 
 		template <typename VariableType>
 		void operator()(std::string &variable_name, StdLargeVec<VariableType> &variable) const;
+	};
+
+	/**
+	 * @class BaseDerivedVariable
+	 * @brief computing displacement from current and initial particle position
+	 */
+	template <typename VariableType>
+	class BaseDerivedVariable
+	{
+	public:
+		using DerivedVariableType = VariableType;
+		std::string variable_name_;
+
+		BaseDerivedVariable(const SPHBody &sph_body, const std::string &variable_name);
+		virtual ~BaseDerivedVariable(){};
+
+	protected:
+		StdLargeVec<VariableType> derived_variable_;
 	};
 }
 #endif //BASE_PARTICLES_H

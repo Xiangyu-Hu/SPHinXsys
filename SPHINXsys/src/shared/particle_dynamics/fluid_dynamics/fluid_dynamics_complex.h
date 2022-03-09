@@ -33,6 +33,8 @@
 
 #include "fluid_dynamics_inner.h"
 #include "fluid_dynamics_inner.hpp"
+#include "solid_body.h"
+#include "solid_particles.h"
 
 namespace SPH
 {

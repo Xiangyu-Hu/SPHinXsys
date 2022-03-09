@@ -40,7 +40,7 @@ ENDFOREACH()
 
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
-if(NOT STATIC_BUILD)
+if(NOT SPH_ONLY_STATIC_BUILD)
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		ADD_LIBRARY(sphinxsys_3d ${SCR_FILES})
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -62,6 +62,8 @@ if(NOT STATIC_BUILD)
 	else()
 		target_link_libraries(sphinxsys_3d ${Simbody_LIBRARIES} ${TBB_LIBRARYS})
 	endif()
+
+	target_include_directories(sphinxsys_3d PUBLIC ${SPHINXSYS_PROJECT_DIR}/3rd_party/eigen)
 	### SPHinXsys dynamic lib ###
 else()
 	### SPHinXsys static lib ###
@@ -90,10 +92,12 @@ else()
 	else()
 		target_link_libraries(sphinxsys_static_3d ${Simbody_LIBRARIES} ${TBB_LIBRARYS})
 	endif()
+
+	target_include_directories(sphinxsys_static_3d PUBLIC ${SPHINXSYS_PROJECT_DIR}/3rd_party/eigen)
 	### SPHinXsys static lib ###
 endif()
 
-if(NOT STATIC_BUILD)
+if(NOT SPH_ONLY_STATIC_BUILD)
 	INSTALL(TARGETS sphinxsys_3d
 	RUNTIME DESTINATION 3d_code/bin
 	LIBRARY DESTINATION 3d_code/lib
