@@ -19,10 +19,18 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/stomach_esophagus.stl
         DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/endoscope.stl
         DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/onlyEsophagus.stl
+        DESTINATION ${BUILD_INPUT_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/halfEndoscope.stl
+        DESTINATION ${BUILD_INPUT_PATH})
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/reload/SPHBody_Endoscope_rld.xml
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/reload/Endoscope_rld.xml
         DESTINATION ${BUILD_RELOAD_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/reload/SPHBody_EsophagusStomach_rld.xml
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/reload/EsophagusStomach_rld.xml
+        DESTINATION ${BUILD_RELOAD_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/reload/halfEndoscopeModel_rld.xml
+        DESTINATION ${BUILD_RELOAD_PATH})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/reload/onlyEsophagusShellModel_rld.xml
         DESTINATION ${BUILD_RELOAD_PATH})
 
 aux_source_directory(. DIR_SRCS)

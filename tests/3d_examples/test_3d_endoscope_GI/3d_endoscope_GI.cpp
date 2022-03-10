@@ -10,8 +10,10 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
-std::string full_path_to_geometry = "./input/stomach_esophagus.stl";
-std::string full_path_to_file_endoscope = "./input/endoscope.stl";
+// std::string full_path_to_geometry = "./input/stomach_esophagus.stl";
+// std::string full_path_to_file_endoscope = "./input/endoscope.stl";
+std::string full_path_to_geometry = "./input/onlyEsophagus.stl";
+std::string full_path_to_file_endoscope = "./input/halfEndoscope.stl";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -33,10 +35,10 @@ Real poisson = 0.45;
 //----------------------------------------------------------------------
 //	Define the body.
 //----------------------------------------------------------------------
-class ImportedShellModel : public ThinStructure
+class GIShellModel : public ThinStructure
 {
 public:
-	ImportedShellModel(SPHSystem &system, const std::string body_name)
+	GIShellModel(SPHSystem &system, const std::string body_name)
 		: ThinStructure(system, body_name, makeShared<SPHAdaptation>(1.15, 1.0, 0.75, level_set_refinement_ratio))
 	{
 		/** Geometry definition. */
@@ -70,7 +72,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Tag for run particle relaxation for the initial body fitted distribution.
 	//----------------------------------------------------------------------
-	system.run_particle_relaxation_ = true;
+	system.run_particle_relaxation_ = false;
 	system.reload_particles_ = true;
 	//----------------------------------------------------------------------
 	//	handle command line arguments.
@@ -83,17 +85,17 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	endoscope endoscope_model(system, "Endoscope");
+	endoscope endoscope_model(system, "halfEndoscopeModel");
 	ElasticSolidParticles endoscope_particles(endoscope_model, 
 											  makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson),
 											  makeShared<ParticleGeneratorReload>(in_output, endoscope_model.getBodyName()));
 	std::cout <<"Endoscope reloaded !" << std::endl;
 
-	ImportedShellModel imported_model(system, "EsophagusStomach");
-	ShellParticles imported_model_particles(imported_model,
-											makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson),
-											makeShared<ParticleGeneratorReload>(in_output, imported_model.getBodyName()),
-											thickness);
+	GIShellModel gi_model(system, "onlyEsophagusShellModel");
+	ShellParticles gi_model_particles(gi_model,
+									  makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson),
+									  makeShared<ParticleGeneratorReload>(in_output, gi_model.getBodyName()),
+									  thickness);
 	std::cout <<"EsophagusStomach reloaded !" << std::endl;
 	
 	//----------------------------------------------------------------------
