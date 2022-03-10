@@ -83,7 +83,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	ImportedShellModel imported_model(system, "onlyEsophagusShellModel");
+	ImportedShellModel imported_model(system, "EsophagusShellModel");
 	ShellParticles imported_model_particles(imported_model,
 											makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson),
 											// makeShared<ParticleGeneratorReload>(in_output, imported_model.getBodyName()), //for reloading
@@ -91,7 +91,7 @@ int main(int ac, char *av[])
 											makeShared<ShellParticleGeneratorLattice>(thickness),// for generation
 											thickness);
 
-	endoscope endoscope_model(system, "halfEndoscopeModel");
+	endoscope endoscope_model(system, "EndoscopeModel");
 	ElasticSolidParticles endoscope_particles(endoscope_model, makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson));
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
@@ -132,9 +132,8 @@ int main(int ac, char *av[])
 		relaxation_step_inner.parallel_exec();
 		ite_p += 1;
 	}
-	relaxation_step_inner.mid_surface_bounding_.calculateNormalDirection(); 
 	write_imported_model_to_vtp.writeToFile(ite_p);
-	std::cout << "The physics relaxation process of esophagus_stomach model finish !" << std::endl;
+	std::cout << "The physics relaxation process of esophagus_stomach model finished !" << std::endl;
 	/**
 	 * @brief Particle generation for endoscope side
 	 */
@@ -166,6 +165,8 @@ int main(int ac, char *av[])
 			write_endoscope_to_vtp.writeToFile(ite_2);
 		}
 	}
+	write_endoscope_to_vtp.writeToFile(ite_2);
+	std::cout << "The physics relaxation process of endoscope model finished !" << std::endl;
 	/** Output results. */
 	write_endoscope_reload_files.writeToFile(0);
 	write_particle_reload_files.writeToFile(0);
