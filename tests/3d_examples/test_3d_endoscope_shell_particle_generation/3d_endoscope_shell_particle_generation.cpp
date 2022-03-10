@@ -17,7 +17,7 @@ std::string full_path_to_file_endoscope = "./input/endoscope.stl";
 //----------------------------------------------------------------------
 Vec3d domain_lower_bound(-40.0, -100.0, -10.0);
 Vec3d domain_upper_bound(40.0, 100.0, 830.0);
-Real dp_0 = 0.5;
+Real dp_0 = 1.5;
 Real thickness = 1.23;
 Real level_set_refinement_ratio = dp_0 / (0.2 * thickness);
 //----------------------------------------------------------------------
@@ -83,63 +83,58 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	// ImportedShellModel imported_model(system, "StomachShellModel");
-	// ShellParticles imported_model_particles(imported_model,
-	// 										makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson),
-	// 										makeShared<ParticleGeneratorReload>(in_output, imported_model.getBodyName()), //for reloading
-	// 										// or makeShared<ShellParticleGeneratorLattice>(thickness) for generation
-	// 										thickness);
-	// imported_model_particles.addAVariableToWrite<indexVector, Vecd>("InitialNormalDirection");
-	// imported_model_particles.addAVariableToWrite<indexVector, Vecd>("NormalDirection");
+	ImportedShellModel imported_model(system, "onlyEsophagusShellModel");
+	ShellParticles imported_model_particles(imported_model,
+											makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson),
+											// makeShared<ParticleGeneratorReload>(in_output, imported_model.getBodyName()), //for reloading
+											// or 
+											makeShared<ShellParticleGeneratorLattice>(thickness),// for generation
+											thickness);
 
-	endoscope endoscope_model(system, "EndoscopeModel");
+	endoscope endoscope_model(system, "halfEndoscopeModel");
 	ElasticSolidParticles endoscope_particles(endoscope_model, makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson));
-
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
-	// BodyStatesRecordingToVtp write_imported_model_to_vtp(in_output, { imported_model});
+	BodyStatesRecordingToVtp write_imported_model_to_vtp(in_output, { imported_model});
 	BodyStatesRecordingToVtp write_endoscope_to_vtp(in_output, { endoscope_model});
-	// ReloadParticleIO write_particle_reload_files(in_output, { &imported_model });
+	ReloadParticleIO write_particle_reload_files(in_output, { &imported_model });
 	ReloadParticleIO write_endoscope_reload_files(in_output, { &endoscope_model });
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	// BodyRelationInner imported_model_inner(imported_model);
+	BodyRelationInner imported_model_inner(imported_model);
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
-	// RandomizePartilePosition  random_imported_model_particles(imported_model);
-	// /** A  Physics relaxation step. */
-	// relax_dynamics::ShellRelaxationStepInner relaxation_step_inner(imported_model_inner, thickness, level_set_refinement_ratio);
+	RandomizePartilePosition  random_imported_model_particles(imported_model);
+	/** A  Physics relaxation step. */
+	relax_dynamics::ShellRelaxationStepInner relaxation_step_inner(imported_model_inner, thickness, level_set_refinement_ratio);
 	//----------------------------------------------------------------------
 	//	Particle relaxation starts here.
 	//----------------------------------------------------------------------
-	// random_imported_model_particles.parallel_exec(0.25);
-	// relaxation_step_inner.mid_surface_bounding_.parallel_exec();
-	// write_imported_model_to_vtp.writeToFile(0.0);
-	// imported_model.updateCellLinkedList();
-	// write_mesh_cell_linked_list.writeToFile(0.0);
+	random_imported_model_particles.parallel_exec(0.25);
+	relaxation_step_inner.mid_surface_bounding_.parallel_exec();
+	write_imported_model_to_vtp.writeToFile(0.0);
 	//----------------------------------------------------------------------
 	//	Particle relaxation time stepping start here.
 	//----------------------------------------------------------------------
-	// int ite_p = 0;
-	// while (ite_p < 2000)
-	// {
-	// 	if (ite_p % 100 == 0)
-	// 	{
-	// 		std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the inserted body N = " << ite_p << "\n";
-	// 		write_imported_model_to_vtp.writeToFile(ite_p);
-	// 	}
-	// 	relaxation_step_inner.parallel_exec();
-	// 	ite_p += 1;
-	// }
-	// relaxation_step_inner.mid_surface_bounding_.calculateNormalDirection(); 
-	// write_imported_model_to_vtp.writeToFile(ite_p);
-	// std::cout << "The physics relaxation process of imported model finish !" << std::endl;
-
+	int ite_p = 0;
+	while (ite_p < 1000)
+	{
+		if (ite_p % 100 == 0)
+		{
+			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the esophagus_stomach body N = " << ite_p << "\n";
+			write_imported_model_to_vtp.writeToFile(ite_p);
+		}
+		relaxation_step_inner.parallel_exec();
+		ite_p += 1;
+	}
+	relaxation_step_inner.mid_surface_bounding_.calculateNormalDirection(); 
+	write_imported_model_to_vtp.writeToFile(ite_p);
+	std::cout << "The physics relaxation process of esophagus_stomach model finish !" << std::endl;
 	/**
 	 * @brief Particle generation for endoscope side
 	 */
@@ -157,8 +152,6 @@ int main(int ac, char *av[])
 	random_endoscope_particles.parallel_exec(0.25);
 	endoscope_relaxation_step_inner.surface_bounding_.parallel_exec();
 	write_endoscope_to_vtp.writeToFile(0.0);
-	endoscope_model.updateCellLinkedList();
-	write_endoscope_cell_linked_list.writeToFile(0.0);
 	//----------------------------------------------------------------------
 	//	Particle relaxation time stepping start here.
 	//----------------------------------------------------------------------
@@ -173,9 +166,9 @@ int main(int ac, char *av[])
 			write_endoscope_to_vtp.writeToFile(ite_2);
 		}
 	}
-
 	/** Output results. */
 	write_endoscope_reload_files.writeToFile(0);
+	write_particle_reload_files.writeToFile(0);
 
 	return 0;
 }
