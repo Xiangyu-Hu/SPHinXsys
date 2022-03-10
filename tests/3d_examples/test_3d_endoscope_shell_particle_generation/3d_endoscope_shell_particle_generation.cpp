@@ -83,12 +83,10 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	ImportedShellModel imported_model(system, "EsophagusShellModel");
+	ImportedShellModel imported_model(system, "StomachEsophagusShellModel");
 	ShellParticles imported_model_particles(imported_model,
 											makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson),
-											// makeShared<ParticleGeneratorReload>(in_output, imported_model.getBodyName()), //for reloading
-											// or 
-											makeShared<ShellParticleGeneratorLattice>(thickness),// for generation
+											makeShared<ShellParticleGeneratorLattice>(thickness),
 											thickness);
 
 	endoscope endoscope_model(system, "EndoscopeModel");
