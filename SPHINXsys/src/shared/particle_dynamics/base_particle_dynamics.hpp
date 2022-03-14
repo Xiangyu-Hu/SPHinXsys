@@ -9,7 +9,6 @@
 
 #include "base_particle_dynamics.h"
 #include "base_body.h"
-#include "body_relation.h"
 
 namespace SPH
 {

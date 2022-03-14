@@ -49,6 +49,7 @@
 namespace SPH
 {
 	class SPHSystem;
+	class SPHAdaptation;
 	class BaseParticles;
 	class SPHBodyRelation;
 	class ComplexShape;

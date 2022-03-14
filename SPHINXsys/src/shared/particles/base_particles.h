@@ -33,7 +33,6 @@
 
 #include "base_data_package.h"
 #include "sph_data_containers.h"
-#include "base_particle_dynamics.h"
 #include "base_material.h"
 #include "xml_engine.h"
 
@@ -46,6 +45,8 @@ namespace SPH
 	class BaseMaterial;
 	class ParticleGenerator;
 	class BodySurface;
+	template <class ReturnType>
+	class ParticleDynamics;
 
 	/**
 	 * @class BaseParticles

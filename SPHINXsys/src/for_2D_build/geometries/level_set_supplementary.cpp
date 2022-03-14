@@ -5,9 +5,9 @@
 
 #include "level_set.h"
 #include "mesh_with_data_packages.hpp"
-#include "adaptation.h"
 #include "base_kernel.h"
 #include "base_particles.h"
+#include "base_particle_dynamics.h"
 #include "base_body.h"
 
 //=================================================================================================//
