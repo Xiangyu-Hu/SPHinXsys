@@ -363,7 +363,7 @@ namespace SPH
 			pseudo_n_[index_i] = GetPseudoNormal(pos_0, pos_n, local_pseudo_n_0);
 			dpseudo_n_dt_[index_i] = GetPseudoNormalChangeRate(pos_0, pos_n, dpseudo_normal_dt);
 
-			/** the average values are prescirbed also. */
+			/** the average values are prescribed also. */
 			vel_ave_[index_i] = vel_n_[index_i];
 			dvel_dt_ave_[index_i] = dvel_dt_[index_i];
 		}
@@ -489,7 +489,7 @@ namespace SPH
 			angular_vel_[index_i][1 - axis_] = 0.0;
 			dangular_vel_dt_[index_i][1 - axis_] = 0.0;
 
-			/** the average values are prescirbed also. */
+			/** the average values are prescribed also. */
 			vel_ave_[index_i] = vel_n_[index_i];
 			dvel_dt_ave_[index_i] = dvel_dt_[index_i];
 		}

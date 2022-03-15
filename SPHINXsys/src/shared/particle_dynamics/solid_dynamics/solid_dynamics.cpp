@@ -74,7 +74,7 @@ namespace SPH
 			pos_n_[index_i] = getDisplacement(pos_0, pos_n);
 			vel_n_[index_i] = getVelocity(pos_0, pos_n, vel_n);
 			dvel_dt_[index_i] = getAcceleration(pos_0, pos_n, dvel_dt);
-			/** the average values are prescirbed also. */
+			/** the average values are prescribed also. */
 			vel_ave_[index_i] = vel_n_[index_i];
 			dvel_dt_ave_[index_i] = dvel_dt_[index_i];
 		}
@@ -333,7 +333,7 @@ namespace SPH
 		{
 			vel_n_[index_i] = vel_temp_[index_i];
 			dvel_dt_[index_i] = dvel_dt_temp_[index_i];
-			/** the average values are prescirbed also. */
+			/** the average values are prescribed also. */
 			vel_ave_[index_i] = vel_n_[index_i];
 			dvel_dt_ave_[index_i] = dvel_dt_[index_i];
 		}

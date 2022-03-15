@@ -190,7 +190,7 @@ namespace SPH
 
 		/**@class ConstrainShellBodyRegion
 		 * @brief Fix the position and angle of a shell body part.
-		 * Note that the average values for FSI are prescirbed also.
+		 * Note that the average values for FSI are prescribed also.
 		 */
 		class ConstrainShellBodyRegion : public PartSimpleDynamicsByParticle, public ShellDataSimple
 		{
@@ -263,7 +263,7 @@ namespace SPH
 		/**@class ConstrainShellBodyRegionInAxisDirection
 		 * @brief The boundary conditions are denoted by SS1 according to the references.
 	     * The axis_direction must be 0 or 1.
-		 * Note that the average values for FSI are prescirbed also.
+		 * Note that the average values for FSI are prescribed also.
 		 */
 		class ConstrainShellBodyRegionInAxisDirection : public PartSimpleDynamicsByParticle, public ShellDataSimple
 		{
