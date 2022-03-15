@@ -341,18 +341,18 @@ namespace SPH
 		ClampConstrainSolidBodyRegion::
 			ClampConstrainSolidBodyRegion(BaseBodyRelationInner &inner_relation, BodyPartByParticle &body_part)
 			: ParticleDynamics<void>(*inner_relation.sph_body_),
-			  constrianing_(ConstrainSolidBodyRegion(*inner_relation.sph_body_, body_part)),
+			  constraining_(ConstrainSolidBodyRegion(*inner_relation.sph_body_, body_part)),
 			  softing_(SoftConstrainSolidBodyRegion(inner_relation, body_part)) {}
 		//=================================================================================================//
 		void ClampConstrainSolidBodyRegion::exec(Real dt)
 		{
-			constrianing_.exec();
+			constraining_.exec();
 			softing_.exec();
 		}
 		//=================================================================================================//
 		void ClampConstrainSolidBodyRegion::parallel_exec(Real dt)
 		{
-			constrianing_.parallel_exec();
+			constraining_.parallel_exec();
 			softing_.parallel_exec();
 		}
 		//=================================================================================================//

@@ -266,7 +266,7 @@ namespace SPH
 		class ClampConstrainSolidBodyRegion : public ParticleDynamics<void>
 		{
 		public:
-			ConstrainSolidBodyRegion constrianing_;
+			ConstrainSolidBodyRegion constraining_;
 			SoftConstrainSolidBodyRegion softing_;
 
 			ClampConstrainSolidBodyRegion(BaseBodyRelationInner &inner_relation, BodyPartByParticle &body_part);

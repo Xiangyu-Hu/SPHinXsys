@@ -34,7 +34,7 @@ Vec2d GateP_lt(-BW, 0.0);
 Vec2d GateP_rt(Dam_L + BW, 0.0);
 Vec2d GateP_rb(Dam_L + BW, -Gate_width);
 //----------------------------------------------------------------------
-//	Define the geometry for gate constrian.
+//	Define the geometry for gate constrain.
 //----------------------------------------------------------------------
 Vec2d ConstrainLP_lb(-BW, -Gate_width);
 Vec2d ConstrainLP_lt(-BW, 0.0);
