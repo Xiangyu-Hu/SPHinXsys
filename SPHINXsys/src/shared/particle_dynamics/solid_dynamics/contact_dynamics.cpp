@@ -122,7 +122,7 @@ namespace SPH
 					const Real W_rij_t_2 = kernel_->W(dp_2_t_2.norm(), dp_2_t_2);
 
 					sigma  += (w_0 * W_rij_t_0 + w_1 * W_rij_t_1 + w_2 * W_rij_t_2) * dp_2;
-			}
+				}
 			}
 			contact_density_[index_i] = sigma * boundary_factor_ * kernel_->SmoothingLength();
 		}
