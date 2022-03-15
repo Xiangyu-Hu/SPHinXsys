@@ -226,6 +226,23 @@ namespace SPH
 		};
 
 		/**
+		* @class SolidRelaxationStepInner
+		* @brief carry out particle relaxation step of particles within the body
+		*/
+		class SolidRelaxationStepInner : public RelaxationStepInner, public solid_dynamics::SolidDataSimple
+		{
+		public:
+			explicit SolidRelaxationStepInner(BaseBodyRelationInner &inner_relation, bool level_set_correction = false)
+				: RelaxationStepInner(inner_relation, level_set_correction),
+				  solid_dynamics::SolidDataSimple(*inner_relation.sph_body_)
+				  {};//update_solid_particle_position_(*real_body_){};
+			virtual ~SolidRelaxationStepInner(){};
+
+			virtual void exec(Real dt = 0.0) override;
+			virtual void parallel_exec(Real dt = 0.0) override;
+		};
+
+		/**
 		* @class RelaxationAccelerationComplexWithLevelSetCorrection
 		* @brief compute relaxation acceleration while consider the present of contact bodies
 		* with considering contact interaction
