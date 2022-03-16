@@ -524,6 +524,6 @@ namespace SPH {
 		
 	}
 }
-#endif __EMSCRIPTEN__
+#endif //__EMSCRIPTEN__
 
-#endif IMAGE_MHD_HPP
+#endif //IMAGE_MHD_HPP

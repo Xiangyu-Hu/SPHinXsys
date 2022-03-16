@@ -3,7 +3,7 @@
 * @brief 	The structural simulation module is licensed under the Aladdin Free Public License (https://spdx.org/licenses/Aladdin.html) regarding usage for medical device development.
 * Commercial use for medical device development is not permitted. This does not apply to applications in other fields.
 * @details	solid structural simulation class for general structural simulations
-* @author 	Bence Z. Rochlitz - Virtonomy GmbH
+* @author 	Bence Z. Rochlitz - Virtonomy GmbH, Xiangyu Hu
 */
 
 #include "structural_simulation_class.h"
@@ -74,7 +74,7 @@ void relaxParticlesSingleResolution(In_Output &in_output,
 	//----------------------------------------------------------------------
 	RandomizePartilePosition random_solid_body_from_mesh_particles(solid_body_from_mesh);
 	/** A  Physics relaxation step. */
-	relax_dynamics::SolidRelaxationStepInner relaxation_step_inner(solid_body_from_mesh_inner, true);
+	relax_dynamics::RelaxationStepInner relaxation_step_inner(solid_body_from_mesh_inner, true);
 	//----------------------------------------------------------------------
 	//	Particle relaxation starts here.
 	//----------------------------------------------------------------------
@@ -129,8 +129,8 @@ std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMe
 		BodyRelationInner inner_relation(model);
 		relaxParticlesSingleResolution(in_output, write_particle_relaxation_data, model, inner_relation);
 	}
-
-	return std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>>(particles.pos_0_, particles.Vol_);
+	
+	return std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>>(particles.pos_n_, particles.Vol_);
 }
 
 StructuralSimulationInput::StructuralSimulationInput(
@@ -310,7 +310,7 @@ void StructuralSimulation::createBodyMeshList()
 	for (size_t i = 0; i < imported_stl_list_.size(); i++)
 	{
 		string relative_input_path_copy = relative_input_path_;
-		TriangleMeshShape *tri_mesh_shape = 
+		TriangleMeshShape *tri_mesh_shape =
 			tri_mesh_shape_ptr_keeper_.createPtr<TriangleMeshShapeSTL>(relative_input_path_copy.append(imported_stl_list_[i]), translation_list_[i], scale_stl_);
 		body_mesh_list_.push_back(tri_mesh_shape);
 	}

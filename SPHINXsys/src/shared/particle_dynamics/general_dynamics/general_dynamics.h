@@ -30,6 +30,9 @@
 #define GENERAL_DYNAMICS_H
 
 #include "all_particle_dynamics.h"
+#include "base_body.h"
+#include "base_particles.h"
+#include "external_force.h"
 
 #include <limits>
 
@@ -412,6 +415,27 @@ namespace SPH
 		virtual void parallel_exec(Real dt = 0.0) override{};
 	};
 
+	/**
+	 * @class BodyStateExtrema
+	 * @brief computing extrema from the body state
+	 */
+	template <int DataTypeIndex, typename VariableType, typename CompareOperation>
+	class BodyStateExtrema : public BaseReduce<VariableType, CompareOperation>, public GeneralDataDelegateSimple
+	{
+	public:
+		BodyStateExtrema(SPHBody &sph_body, const std::string &variable_name, const VariableType &initial_reference)
+			: BaseReduce<VariableType, CompareOperation>(variable_name, initial_reference), GeneralDataDelegateSimple(sph_body),
+			  extrema_(particles_->getVariableByName<DataTypeIndex, VariableType>(variable_name)){};
+		virtual ~BodyStateExtrema(){};
+
+		void setupReduce(){};
+		VariableType operator()(size_t index_i, Real dt = 0.0) { return extrema_[index_i]; };
+		VariableType outputResult(const VariableType &result) { return result; };
+
+	protected:
+		StdLargeVec<VariableType> &extrema_;
+	};
+	
 	/**
 	 * @class VelocityBoundCheck
 	 * @brief  check whether particle velocity within a given bound

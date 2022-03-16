@@ -7,6 +7,7 @@
 #include "base_kernel.h"
 #include "base_body.h"
 #include "base_particles.h"
+#include "base_particle_dynamics.h"
 #include "neighbor_relation.h"
 
 namespace SPH

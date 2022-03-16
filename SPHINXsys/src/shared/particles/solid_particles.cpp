@@ -4,6 +4,7 @@
  * @author	Xiangyu Hu and Chi Zhang
  */
 #include "solid_particles.h"
+#include "solid_particles_variable.h"
 
 #include "base_body.h"
 #include "elastic_solid.h"
@@ -105,6 +106,14 @@ namespace SPH
 		//		add restart output particle data
 		//----------------------------------------------------------------------
 		addAVariableNameToList<Matd>(variables_to_restart_, "DeformationGradient");
+		//----------------------------------------------------------------------
+		//		add basic output particle data
+		//----------------------------------------------------------------------
+		addAVariableToWrite<Vecd>("NormalDirection");
+		addDerivedVariableToWrite<Displacement>();
+		addDerivedVariableToWrite<VonMisesStress>();
+		addDerivedVariableToWrite<VonMisesStrain>();
+		addAVariableNameToList<Matd>(variables_to_restart_, "DeformationGradient");
 		// get which stress measure is relevant for the material
 		stress_measure_ = shared_elastic_solid_ptr->getRelevantStressMeasureName();
 	}
@@ -167,20 +176,14 @@ namespace SPH
 		return stress_max;
 	}
 	//=================================================================================================//
-	void ElasticSolidParticles::writeParticlesToVtpFile(std::ostream &output_file)
+	Vecd ElasticSolidParticles::displacement(size_t particle_i)
 	{
-		SolidParticles::writeParticlesToVtpFile(output_file);
-
-		size_t total_real_particles = total_real_particles_;
-
-		output_file << "    <DataArray Name=\"von Mises stress\" type=\"Float32\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != total_real_particles; ++i)
-		{
-			output_file << std::fixed << std::setprecision(9) << get_von_Mises_stress(i) << " ";
-		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
+		return pos_n_[particle_i]-pos_0_[particle_i];
+	}
+	//=================================================================================================//
+	Vecd ElasticSolidParticles::normal(size_t particle_i)
+	{
+		return n_[particle_i];
 	}
 	//=================================================================================================//
 	StdLargeVec<Vecd> ElasticSolidParticles::getDisplacement()
@@ -201,153 +204,6 @@ namespace SPH
 			normal_vector.push_back(normal(index_i));
 		}
 		return normal_vector;
-	}
-	//=================================================================================================//
-	void ElasticSolidParticles::writeParticlesToVtuFile(std::ostream &output_file)
-	{
-		SolidParticles::writeParticlesToVtuFile(output_file);
-
-		size_t total_real_particles = total_real_particles_;
-
-		//write von Mises stress
-		output_file << "    <DataArray Name=\"von Mises stress\" type=\"Float32\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != total_real_particles; ++i) {
-			output_file << std::fixed << std::setprecision(9) << get_von_Mises_stress(i) << " ";
-		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
-
-		//write Displacement
-		output_file << "    <DataArray Name=\"Displacement\" type=\"Float32\" NumberOfComponents=\"3\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != total_real_particles; ++i) {
-			Vecd displacement_vector = displacement(i);
-			output_file << displacement_vector[0] << " " << displacement_vector[1] << " " << displacement_vector[2] << " ";
-		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
-
-		//write Normal Vectors
-		output_file << "    <DataArray Name=\"Normal Vector\" type=\"Float32\" NumberOfComponents=\"3\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != total_real_particles; ++i) {
-			Vecd normal_vector = normal(i);
-			output_file << normal_vector[0] << " " << normal_vector[1] << " " << normal_vector[2] << " ";
-		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
-
-		//write von Mises strain
-		output_file << "    <DataArray Name=\"von Mises strain\" type=\"Float32\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != total_real_particles; ++i) {
-			output_file << std::fixed << std::setprecision(9) << von_Mises_strain_static(i) << " ";
-		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
-	}
-	//=================================================================================================//
-	void ElasticSolidParticles::writeSurfaceParticlesToVtuFile(std::ostream& output_file, BodySurface& surface_particles)
-	{
-		SolidParticles::writeSurfaceParticlesToVtuFile(output_file, surface_particles);
-
-		size_t total_surface_particles = surface_particles.body_part_particles_.size();
-
-		/** write Min Principal stress */
-		/** precision: 6 - higher precision because it depends on the E modulus */
-		output_file << "    <DataArray Name=\"Principal stress\" type=\"Float32\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != total_surface_particles; ++i) {
-			size_t particle_i = surface_particles.body_part_particles_[i];
-			Vecd stress = get_Principal_stresses(particle_i);
-			output_file << std::fixed << std::setprecision(6) << stress[0] << " "; // take the max. component, which is the first one, this represents the max. tension
-		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
-
-		/** write von Mises stress */
-		/** precision: 6 - higher precision because it depends on the E modulus */
-		output_file << "    <DataArray Name=\"von Mises stress\" type=\"Float32\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != total_surface_particles; ++i) {
-			size_t particle_i = surface_particles.body_part_particles_[i];
-			output_file << std::fixed << std::setprecision(6) << get_von_Mises_stress(particle_i) << " ";
-		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
-
-		/** write Min Principal strain */
-		/** precision: 3 - 0.1% accuracy */
-		output_file << "    <DataArray Name=\"Principal strain\" type=\"Float32\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != total_surface_particles; ++i) {
-			size_t particle_i = surface_particles.body_part_particles_[i];
-			Vecd strain = get_Principal_strains(particle_i);
-			output_file << std::fixed << std::setprecision(3) << strain[0] << " "; // take the max. component, which is the first one, this represents the max. tension
-		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
-
-		/** write von Mises strain */
-		/** precision: 3 - 0.1% accuracy */
-		output_file << "    <DataArray Name=\"von Mises strain\" type=\"Float32\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != total_surface_particles; ++i) {
-			size_t particle_i = surface_particles.body_part_particles_[i];
-			output_file << std::fixed << std::setprecision(3) << von_Mises_strain_static(particle_i) << " ";
-		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
-
-		/** write Displacement */
-		/** precision: 3 - 0.1 mm accuracy */
-		output_file << "    <DataArray Name=\"Displacement\" type=\"Float32\" NumberOfComponents=\"3\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != total_surface_particles; ++i) {
-			size_t particle_i = surface_particles.body_part_particles_[i];
-			Vecd displacement_vector = displacement(particle_i);
-			output_file << std::fixed << std::setprecision(4) << displacement_vector[0] << " "
-						<< std::fixed << std::setprecision(4) << displacement_vector[1] << " "
-						<< std::fixed << std::setprecision(4) << displacement_vector[2] << " ";
-		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
-
-		/** write Normal Vectors  */
-		/*
-		// removed for production
-		output_file << "    <DataArray Name=\"Normal Vector\" type=\"Float32\" NumberOfComponents=\"3\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != total_surface_particles; ++i) {
-			size_t particle_i = surface_particles.body_part_particles_[i];
-			Vecd normal_vector = normal(particle_i);
-			output_file << normal_vector[0] << " " << normal_vector[1] << " " << normal_vector[2] << " ";
-		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
-		*/
-	}
-	//=================================================================================================//
-	void ElasticSolidParticles::writePltFileHeader(std::ofstream &output_file)
-	{
-		SolidParticles::writePltFileHeader(output_file);
-
-		output_file << ",\" von Mises stress \"";
-		output_file << ",\" Displacement \"";
-		output_file << ",\" Normal Vectors \"";
-		output_file << ",\" von Mises strain \"";
-	}
-	//=================================================================================================//
-	void ElasticSolidParticles::writePltFileParticleData(std::ofstream &output_file, size_t index_i)
-	{
-		SolidParticles::writePltFileParticleData(output_file, index_i);
-		
-		output_file << get_von_Mises_stress(index_i) << " ";
-		Vecd displacement_vector = displacement(index_i);
-		output_file << displacement_vector[0] << " " << displacement_vector[1] << " " << displacement_vector[2] << " "
-			<< index_i << " ";
-		output_file << von_Mises_strain_static(index_i) << " ";
 	}
 	//=============================================================================================//
 	void ActiveMuscleParticles::initializeActiveMuscleParticleData()

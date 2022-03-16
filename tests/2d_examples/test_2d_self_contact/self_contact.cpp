@@ -154,7 +154,7 @@ int main()
 	//time step size calculation
 	solid_dynamics::AcousticTimeStepSize computing_time_step_size(beam_body);
 	//stress relaxation for the beam
-	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(beam_body_inner);
+	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half(beam_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(beam_body_inner);
 	// algorithms for solid self contact
 	solid_dynamics::DynamicSelfContactForce beam_self_contact_forces(beam_self_contact);

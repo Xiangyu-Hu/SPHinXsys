@@ -95,10 +95,6 @@ namespace SPH
 	 */
 	class ElasticSolidParticles : public SolidParticles
 	{
-	protected:
-		virtual void writePltFileHeader(std::ofstream &output_file) override;
-		virtual void writePltFileParticleData(std::ofstream &output_file, size_t index_i) override;
-
 	public:
 		ElasticSolidParticles(SPHBody &sph_body,
 							  SharedPtr<ElasticSolid> shared_elastic_solid_ptr,
@@ -144,12 +140,6 @@ namespace SPH
 		Vecd normal (size_t particle_i);
 		StdLargeVec<Vecd> getNormal();
 
-		virtual void writeParticlesToVtuFile(std::ostream &output_file) override;
-		/** Write only surface particle data in VTU format for Paraview. */
-		virtual void writeSurfaceParticlesToVtuFile(std::ostream& output_file, BodySurface& surface_particles);
-		virtual void writeParticlesToVtpFile(std::ostream &output_file);
-		virtual ElasticSolidParticles* ThisObjectPtr() override {return this;};
-		
 		/** relevant stress measure */
 		std::string stress_measure_;
 	};

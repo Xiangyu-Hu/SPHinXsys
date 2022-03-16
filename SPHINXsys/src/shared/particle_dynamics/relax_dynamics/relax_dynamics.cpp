@@ -80,16 +80,6 @@ namespace SPH
 			pos_n_[index_i] += dvel_dt_[index_i] * dt_square * 0.5 / sph_adaptation_->SmoothingLengthRatio(index_i);
 		}
 		//=================================================================================================//
-		UpdateSolidParticlePosition::UpdateSolidParticlePosition(SPHBody &sph_body)
-			: ParticleDynamicsSimple(sph_body), solid_dynamics::SolidDataSimple(sph_body),
-			  pos_0_(particles_->pos_0_), pos_n_(particles_->pos_n_), dvel_dt_(particles_->dvel_dt_) {}
-		//=================================================================================================//
-		void UpdateSolidParticlePosition::Update(size_t index_i, Real dt_square)
-		{
-			pos_n_[index_i] += dvel_dt_[index_i] * dt_square * 0.5 / sph_adaptation_->SmoothingLengthRatio(index_i);
-			pos_0_[index_i] = pos_n_[index_i];
-		}
-		//=================================================================================================//
 		UpdateSmoothingLengthRatioByBodyShape::UpdateSmoothingLengthRatioByBodyShape(SPHBody &sph_body)
 			: ParticleDynamicsSimple(sph_body), RelaxDataDelegateSimple(sph_body),
 			  h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")),
@@ -215,6 +205,30 @@ namespace SPH
 			update_particle_position_.parallel_exec(dt_square);
 			surface_bounding_.parallel_exec();
 		}
+        //=================================================================================================//
+  		void SolidRelaxationStepInner::exec(Real dt)
+		{
+			real_body_->updateCellLinkedList();
+			inner_relation_.updateConfiguration();
+			relaxation_acceleration_inner_->exec();
+			Real dt_square = get_time_step_square_.exec();
+			update_particle_position_.exec(dt_square);
+			surface_bounding_.exec();			
+            // copy the updated position at the end of the relaxation step to avoid bugs
+			std::copy(GetParticles()->pos_n_.begin(), GetParticles()->pos_n_.end(), GetParticles()->pos_0_.begin());
+		}
+		//=================================================================================================//
+		void SolidRelaxationStepInner::parallel_exec(Real dt)
+		{
+			real_body_->updateCellLinkedList();
+			inner_relation_.updateConfiguration();
+			relaxation_acceleration_inner_->parallel_exec();
+			Real dt_square = get_time_step_square_.parallel_exec();
+			update_particle_position_.parallel_exec(dt_square);
+			surface_bounding_.parallel_exec();
+			// copy the updated position at the end of the relaxation step to avoid bugs
+			std::copy(GetParticles()->pos_n_.begin(), GetParticles()->pos_n_.end(), GetParticles()->pos_0_.begin());
+		}
 		//=================================================================================================//
 		RelaxationAccelerationComplexWithLevelSetCorrection::
 			RelaxationAccelerationComplexWithLevelSetCorrection(ComplexBodyRelation &body_complex_relation) :
@@ -275,29 +289,6 @@ namespace SPH
 			Real dt_square = get_time_step_square_.parallel_exec();
 			update_particle_position_.parallel_exec(dt_square);
 			surface_bounding_.parallel_exec();
-		}
-		//=================================================================================================//
-		void SolidRelaxationStepInner::exec(Real dt)
-		{
-			real_body_->updateCellLinkedList();
-			inner_relation_.updateConfiguration();
-			relaxation_acceleration_inner_->exec();
-			Real dt_square = get_time_step_square_.exec();
-			update_solid_particle_position_.exec(dt_square);
-			surface_bounding_.exec();
-		}
-		//=================================================================================================//
-		void SolidRelaxationStepInner::parallel_exec(Real dt)
-		{
-			real_body_->updateCellLinkedList();
-			inner_relation_.updateConfiguration();
-			relaxation_acceleration_inner_->parallel_exec();
-			Real dt_square = get_time_step_square_.parallel_exec();
-			update_solid_particle_position_.parallel_exec(dt_square);
-			surface_bounding_.parallel_exec();
-
-			// copy the updated position at the end of the relaxation step to avoid bugs
-			std::copy(GetParticles()->pos_n_.begin(), GetParticles()->pos_n_.end(), GetParticles()->pos_0_.begin());
 		}
 		//=================================================================================================//
 		ShellMidSurfaceBounding::

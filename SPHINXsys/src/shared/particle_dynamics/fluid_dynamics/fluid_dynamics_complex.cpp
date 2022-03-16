@@ -5,7 +5,6 @@
 
 #include "fluid_dynamics_complex.h"
 #include "fluid_dynamics_complex.hpp"
-#include "fluid_dynamics_inner.hpp"
 
 namespace SPH
 {

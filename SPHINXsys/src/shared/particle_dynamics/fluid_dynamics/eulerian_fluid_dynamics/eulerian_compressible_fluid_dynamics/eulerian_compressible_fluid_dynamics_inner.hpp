@@ -3,6 +3,9 @@
  * @author	Zhentong Wang,Chi Zhang and Xiangyu Hu
  */
 
+#ifndef EULERIAN_COMPRESSIBLEFLUID_DYNAMICS_INNER_HPP
+#define EULERIAN_COMPRESSIBLEFLUID_DYNAMICS_INNER_HPP
+
 #include "eulerian_compressible_fluid_dynamics_inner.h"
 
 //=================================================================================================//
@@ -79,4 +82,5 @@ namespace SPH
 	}
 	//=================================================================================================//
 }
+#endif //EULERIAN_COMPRESSIBLEFLUID_DYNAMICS_INNER_HPP
 //=================================================================================================//
