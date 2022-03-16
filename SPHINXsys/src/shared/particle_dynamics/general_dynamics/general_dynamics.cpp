@@ -63,7 +63,7 @@ namespace SPH
 		bound_cells_.resize(2);
 		BaseCellLinkedList *cell_linked_list = real_body.cell_linked_list_;
 		cell_linked_list->tagBodyDomainBoundingCells(bound_cells_, body_domain_bounds, axis_direction);
-		if (periodic_translation_.norm() < real_body.sph_adaptation_->ReferenceSpacing())
+		if (periodic_translation_.norm() < real_body.sph_adaptation_->ReferenceSpacing()) //< use assert
 		{
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			std::cout << "\n Periodic bounding failure: bounds not defined!" << std::endl;

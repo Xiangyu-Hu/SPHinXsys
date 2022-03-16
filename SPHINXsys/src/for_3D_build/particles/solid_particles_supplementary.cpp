@@ -98,7 +98,7 @@ namespace SPH
 		return getVonMisesStressFromMatrix(sigma);
 	}
 	//=================================================================================================//
-	Real ElasticSolidParticles::von_Mises_strain(size_t particle_i)
+	Real ElasticSolidParticles::von_Mises_strain(size_t particle_i) //< const correctness all around this file needed
 	{
 
 		Mat3d F = F_[particle_i];

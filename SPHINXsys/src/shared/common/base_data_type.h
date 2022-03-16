@@ -301,7 +301,7 @@ namespace SPH
 	const Real Pi = Real(M_PI);
 	using SimTK::Eps;
 	using SimTK::Infinity;
-	using SimTK::TinyReal;
+	using SimTK::TinyReal;//< put this kind of constants inside `constants` file
 	constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
 
 	//vector with float point number

@@ -37,8 +37,8 @@
 
 #include <array>
 
-using namespace tbb;
-static tbb::affinity_partitioner ap;
+using namespace tbb; //< using namespace in header
+static tbb::affinity_partitioner ap;//< reason for static (i.e. copy of `ap` in each TU) ? It shows here embedded to the function https://oneapi-src.github.io/oneTBB/main/tbb_userguide/Bandwidth_and_Cache_Affinity_os.html
 
 namespace SPH {
 

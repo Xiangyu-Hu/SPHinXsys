@@ -15,14 +15,14 @@ namespace SPH
 	void Neighborhood::removeANeighbor(size_t neighbor_n)
 	{
 		current_size_--;
-		j_[neighbor_n] = j_[current_size_];
+		j_[neighbor_n] = j_[current_size_];//< could use (`.back()` or `std::exchange`) and `pop_back` 
 		W_ij_[neighbor_n] = W_ij_[current_size_];
 		dW_ij_[neighbor_n] = dW_ij_[current_size_];
 		r_ij_[neighbor_n] = r_ij_[current_size_];
 		e_ij_[neighbor_n] = e_ij_[current_size_];
 	}
 	//=================================================================================================//
-	void NeighborRelation::createRelation(Neighborhood &neighborhood,
+	void NeighborRelation::createRelation(Neighborhood &neighborhood, //< `emplace_back` instead of `push_back`
 										  Real &distance, Vecd &displacement, size_t j_index) const
 	{
 		neighborhood.j_.push_back(j_index);
@@ -33,8 +33,8 @@ namespace SPH
 		neighborhood.allocated_size_++;
 	}
 	//=================================================================================================//
-	void NeighborRelation::initializeRelation(Neighborhood &neighborhood,
-											  Real &distance, Vecd &displacement, size_t j_index) const
+	void NeighborRelation::initializeRelation(Neighborhood &neighborhood, //< this method can be merged with above using `clear` for `Neighborhood` content
+											  Real &distance, Vecd &displacement, size_t j_index) const 
 	{
 		size_t current_size = neighborhood.current_size_;
 		neighborhood.j_[current_size] = j_index;
@@ -81,7 +81,7 @@ namespace SPH
 		Real distance = displacement.norm();
 		if (distance < kernel_->CutOffRadius() && i_index != j_index)
 		{
-			neighborhood.current_size_ >= neighborhood.allocated_size_
+			neighborhood.current_size_ >= neighborhood.allocated_size_ //< this can be simplified moved inside a merge of `createRelation` and `initializeRelation`
 				? createRelation(neighborhood, distance, displacement, j_index)
 				: initializeRelation(neighborhood, distance, displacement, j_index);
 			neighborhood.current_size_++;

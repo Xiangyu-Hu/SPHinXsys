@@ -51,7 +51,7 @@ namespace SPH
 	{
 		Real local_particle_spacing = particle_adapation_->getLocalSpacing(*body_shape_, particle_position);
 		Real local_particle_volume_ratio = powerN(lattice_spacing_ / local_particle_spacing, Dimensions);
-		if ((double)rand() / (RAND_MAX) < local_particle_volume_ratio)
+		if ((double)rand() / (RAND_MAX) < local_particle_volume_ratio)//< random stuff here, why ?
 		{
 			base_particles->initializeABaseParticle(particle_position, particle_volume / local_particle_volume_ratio);
 		}

@@ -415,7 +415,7 @@ namespace SPH
 			virtual ~AccelerationForBodyPartInBoundingBox(){};
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &dvel_dt_prior_;
+			StdLargeVec<Vecd> &pos_n_, &dvel_dt_prior_;//< storing raw reference must be avoided, risk of dangling references (https://stackoverflow.com/a/892303)
 			BoundingBox bounding_box_;
 			Vecd acceleration_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;

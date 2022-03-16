@@ -38,7 +38,7 @@ namespace SPH
 			{
 				for (size_t num = r.begin(); num != r.end(); ++num)
 				{
-					inner_configuration_[num].current_size_ = 0;
+					inner_configuration_[num].current_size_ = 0; //< underlying container is vector. A `clear` would suffice
 				}
 			},
 			ap);

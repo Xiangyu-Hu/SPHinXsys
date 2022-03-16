@@ -16,7 +16,7 @@ namespace SPH {
 	void FluidBody::updateCellLinkedList()
 	{
 		//sorting is carried out once for 100 iterations
-		if (iteration_count_ % 100 == 0) sortParticleWithCellLinkedList();
+		if (iteration_count_ % 100 == 0) sortParticleWithCellLinkedList();//< why 100 ? Magic constant must be set as constexpr in a config file
 		iteration_count_++;
 		cell_linked_list_->UpdateCellLists();
 	}

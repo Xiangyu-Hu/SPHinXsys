@@ -120,7 +120,7 @@ namespace SPH
 		Vecd PositionSolidBody::getDisplacement(size_t index_i, Real dt)
 		{
 			Vecd displacement;
-			try
+			try 
 			{
 				// displacement from the initial position
 				Vecd pos_final = pos_0_[index_i] + translation_;
@@ -128,6 +128,7 @@ namespace SPH
 							   (end_time_ - GlobalStaticVariables::physical_time_);
 			}
 			catch (std::out_of_range &e)
+			catch (std::out_of_range &e)//< There is no bound checking with `operator[]`, only with `at`. So this code is never used, likewise elsewhere all around this file and codebase
 			{
 				throw std::runtime_error(std::string("PositionSolidBody::getDisplacement: particle index out of bounds") + std::to_string(index_i));
 			}
@@ -256,7 +257,7 @@ namespace SPH
 			{
 				try
 				{
-					pos_n_[index_i] = pos_n_[index_i] + 0.5 * getDisplacement(index_i, dt); // displacement from the initial position, 0.5x because it's executed twice
+					pos_n_[index_i] = pos_n_[index_i] + 0.5 * getDisplacement(index_i, dt); // displacement from the initial position, 0.5x because it's executed twice //< How are we supposed to know this, and why ?
 					vel_n_[index_i] = getVelocity();
 				}
 				catch (std::out_of_range &e)

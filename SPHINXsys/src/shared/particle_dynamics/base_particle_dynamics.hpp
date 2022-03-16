@@ -30,9 +30,9 @@ namespace SPH
 		DataDelegateContact(BaseBodyRelationContact &body_contact_relation) : BaseDataDelegateType(*body_contact_relation.sph_body_)
 	{
 		RealBodyVector contact_sph_bodies = body_contact_relation.contact_bodies_;
-		for (size_t i = 0; i != contact_sph_bodies.size(); ++i)
+		for (size_t i = 0; i != contact_sph_bodies.size(); ++i) 
 		{
-			contact_bodies_.push_back(DynamicCast<ContactBodyType>(this, contact_sph_bodies[i]));
+			contact_bodies_.push_back(DynamicCast<ContactBodyType>(this, contact_sph_bodies[i]));//< many `push_back` without `reserve` before
 			contact_particles_.push_back(DynamicCast<ContactParticlesType>(this, contact_sph_bodies[i]->base_particles_));
 			contact_material_.push_back(DynamicCast<ContactMaterialType>(this, contact_sph_bodies[i]->base_particles_->base_material_));
 			contact_configuration_.push_back(&body_contact_relation.contact_configuration_[i]);

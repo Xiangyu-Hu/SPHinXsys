@@ -49,7 +49,7 @@ namespace SPH
 	protected:
 		size_t number_of_species_;			 /**< Total number of diffusion and reaction species . */
 		size_t number_of_diffusion_species_; /**< Total number of diffusion species . */
-		std::map<std::string, size_t> species_indexes_map_;
+		std::map<std::string, size_t> species_indexes_map_;//< are ordered properties of std::map needed ? Otherwise unordered_map should be default map choice (or other external) 
 
 	public:
 		StdVec<StdLargeVec<Real>> species_n_;	 /**< array of diffusion/reaction scalars */

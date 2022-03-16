@@ -42,7 +42,7 @@ namespace SPH
 	 * @class Kernel Cubic B_Spline
 	 * @brief Kernel Cubic B_Spline
 	 */
-	class KernelCubicBSpline : public Kernel
+	class KernelCubicBSpline : public Kernel //< add `final` here and in other kernels 
 	{
 	protected:
 		virtual void setBasicParameters() override;

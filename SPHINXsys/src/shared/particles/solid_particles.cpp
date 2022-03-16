@@ -188,10 +188,10 @@ namespace SPH
 	//=================================================================================================//
 	StdLargeVec<Vecd> ElasticSolidParticles::getDisplacement()
 	{
-		StdLargeVec<Vecd> displacement_vector = {};
+		StdLargeVec<Vecd> displacement_vector;
 		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
 		{
-			displacement_vector.push_back(displacement(index_i));
+			displacement_vector.push_back(displacement(index_i)); //< use `resize` and `operator[]` or `std::transform` instead
 		}
 		return displacement_vector;
 	}
@@ -201,7 +201,7 @@ namespace SPH
 		StdLargeVec<Vecd> normal_vector = {};
 		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
 		{
-			normal_vector.push_back(normal(index_i));
+			normal_vector.push_back(normal(index_i));//< use `resize` and `operator[]` or `std::copy` instead
 		}
 		return normal_vector;
 	}

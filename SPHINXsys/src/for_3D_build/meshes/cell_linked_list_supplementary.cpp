@@ -81,9 +81,9 @@ namespace SPH
 							if (real_particles_in_cell != 0)
 							{
 								for (size_t s = 0; s != real_particles_in_cell; ++s)
-									cell_list.real_particle_indexes_.push_back(cell_list.concurrent_particle_indexes_[s]);
+									cell_list.real_particle_indexes_.push_back(cell_list.concurrent_particle_indexes_[s]);//< this is already needed for `UpdateCellListData` why not doing that first
 								split_cell_lists[transferMeshIndexTo1D(Vecu(3), Vecu(i % 3, j % 3, k % 3))]
-									.push_back(&cell_linked_lists_[i][j][k]);
+									.push_back(&cell_linked_lists_[i][j][k]);//< shouldn't split_cell_lists be a StdLargeVec instead of StdVec ? 
 							}
 						}
 			},

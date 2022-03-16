@@ -27,7 +27,7 @@ namespace SPH {
  	 * 		assignment operator (=), equality operator (==), and less than
  	 * 		operator (<).
  	 */
-	template<class T> class Array
+	template<class T> class Array //< Is it more than std::vector can offer ?
 	{
 	protected:
     	/** Size of the array.  Also the index of the first empty array element. */

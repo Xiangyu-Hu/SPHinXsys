@@ -8,12 +8,12 @@
 
 #include <list>
 
-using namespace tbb;
+using namespace tbb;//< again in header
 //-------------------------------------------------------------------------------------------------
 //my memory pool
 //-------------------------------------------------------------------------------------------------
 template<class T>
-class MyMemoryPool {
+class MyMemoryPool { //< this file should be moved in a `utils/` or `memory/` or other folder
 	T sample;
 
 #ifdef __EMSCRIPTEN__

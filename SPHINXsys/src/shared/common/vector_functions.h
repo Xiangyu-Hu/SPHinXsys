@@ -77,7 +77,7 @@ namespace SPH {
 	Mat3d getDiagonal(const Mat3d& A);
 
 	/** double dot product between two matrices, resulting in a scalar value (sum of products of element-wise) */
-	Real CalculateDoubleDotProduct(Mat2d Matrix1, Mat2d Matrix2 ); //calculate double dot
+	Real CalculateDoubleDotProduct(Mat2d Matrix1, Mat2d Matrix2 ); //calculate double dot //< should pass by const& instead of value
 	Real CalculateDoubleDotProduct(Mat3d Matrix1, Mat3d Matrix2 ); //calculate double dot
 
 	/** get transformation matrix. */

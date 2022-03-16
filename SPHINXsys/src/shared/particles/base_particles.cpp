@@ -62,7 +62,7 @@ namespace SPH
 	void BaseParticles::initializeABaseParticle(Vecd pnt, Real Vol_0)
 	{
 		total_real_particles_++;
-		sequence_.push_back(0);
+		sequence_.push_back(0);//< many `push_back` without `reserve` elsewhere
 		sorted_id_.push_back(pos_n_.size());
 		unsorted_id_.push_back(pos_n_.size());
 		

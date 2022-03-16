@@ -358,7 +358,7 @@ namespace SPH
 				matrix(row,col) = A[row][col];
 			}
 		}
-		Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces(matrix, /* computeEigenvectors = */ false);
+		Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces(matrix, /* computeEigenvectors = */ false); //< should call solver for small matrices instead
 		auto eigen_values = ces.eigenvalues();
 
 		std::vector<Real> sorted_values = {
@@ -381,7 +381,7 @@ namespace SPH
 				matrix(row,col) = A[row][col];
 			}
 		}
-		Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces(matrix, /* computeEigenvectors = */ false);
+		Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces(matrix, /* computeEigenvectors = */ false); //< should call solver for small matrices instead
 		auto eigen_values = ces.eigenvalues();
 
 		std::vector<Real> sorted_values = {

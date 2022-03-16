@@ -175,7 +175,7 @@ namespace SPH
 
 		/** Write particle data in Vtk format for Paraview. */
 		template<typename OutStreamType>
-		void writeParticlesToVtk(OutStreamType &output_stream);
+		void writeParticlesToVtk(OutStreamType &output_stream);//< input output functions should not be part of such core class, composition over inheritance
 		/** Write particle data in PLT format for Tecplot. */
 		void writeParticlesToPltFile(std::ofstream &output_file);
 		/** Write only surface particle data in VTU format for Paraview. TODO: this should be generalized for body part by particles */

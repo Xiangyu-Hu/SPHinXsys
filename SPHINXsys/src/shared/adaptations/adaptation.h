@@ -91,7 +91,7 @@ namespace SPH
 		 * which is called in SPHBody constructor.
 		 */
 		template <class KernelType, typename... ConstructorArgs>
-		void replaceKernel(ConstructorArgs &&...args)
+		void replaceKernel(ConstructorArgs &&...args)//< is it needed to allow changing the kernel at runtime ?
 		{
 			kernel_ = kernel_ptr_keeper_.createPtr<KernelType>(std::forward<ConstructorArgs>(args)...);
 		};
