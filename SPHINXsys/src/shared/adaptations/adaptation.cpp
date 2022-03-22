@@ -10,6 +10,7 @@
 #include "all_kernels.h"
 #include "base_body.h"
 #include "base_particles.h"
+#include "base_particle_dynamics.h"
 #include "mesh_with_data_packages.hpp"
 #include "vector_functions.h"
 

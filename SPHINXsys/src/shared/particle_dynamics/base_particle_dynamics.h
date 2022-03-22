@@ -34,6 +34,8 @@
 #include "base_data_package.h"
 #include "sph_data_containers.h"
 #include "neighbor_relation.h"
+#include "body_relation.h"
+#include "base_body.h"
 
 #include <functional>
 
@@ -41,12 +43,7 @@ using namespace std::placeholders;
 
 namespace SPH
 {
-	class SPHBody;
-	class SPHAdaptation;
-	class BaseParticles;
-	class BaseBodyRelationInner;
-	class ComplexBodyRelation;
-	class BaseBodyRelationContact;
+
 
 	/** Functor for operation on particles. */
 	typedef std::function<void(size_t, Real)> ParticleFunctor;

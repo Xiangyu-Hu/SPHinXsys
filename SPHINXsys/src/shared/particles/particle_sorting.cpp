@@ -7,6 +7,7 @@
 
 #include "base_body.h"
 #include "base_particles.h"
+#include "base_particle_dynamics.h"
 #include "cell_linked_list.h"
 
 namespace SPH

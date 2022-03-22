@@ -616,7 +616,7 @@ namespace SPH
 			try
 			{
 				Real time_factor = SMIN(GlobalStaticVariables::physical_time_ / end_time_, 1.0);
-				dvel_dt_prior_[index_i] = acceleration_ * time_factor;
+				dvel_dt_prior_[index_i] += acceleration_ * time_factor;
 			}
 			catch (std::out_of_range &e)
 			{

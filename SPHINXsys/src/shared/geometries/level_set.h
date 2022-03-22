@@ -30,6 +30,7 @@
 #define LEVEL_SET_H
 
 #include "mesh_with_data_packages.h"
+#include "adaptation.h"
 #include "base_geometry.h"
 
 namespace SPH

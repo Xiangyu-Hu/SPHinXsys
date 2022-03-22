@@ -210,10 +210,7 @@ namespace SPH
 		};
 
 		/** write with filename indicated by iteration step */
-		virtual void writeToFile(size_t iteration_step)
-		{
-			writeWithFileName(std::to_string(iteration_step));
-		};
+		virtual void writeToFile(size_t iteration_step);
 
 	protected:
 		virtual void writeWithFileName(const std::string &sequence) = 0;

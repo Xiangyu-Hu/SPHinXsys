@@ -33,7 +33,6 @@
 
 #include "base_data_package.h"
 #include "sph_data_containers.h"
-#include "base_particle_dynamics.h"
 #include "base_material.h"
 #include "xml_engine.h"
 
@@ -46,6 +45,8 @@ namespace SPH
 	class BaseMaterial;
 	class ParticleGenerator;
 	class BodySurface;
+	template <class ReturnType>
+	class ParticleDynamics;
 
 	/**
 	 * @class BaseParticles
@@ -91,7 +92,7 @@ namespace SPH
 
 		BaseMaterial *base_material_; /**< for dynamic cast in particle data delegation */
 
-		StdLargeVec<Vecd> pos_0_; /**< initial position */
+		StdLargeVec<Vecd> pos_0_;         /**< initial position */
 		StdLargeVec<Vecd> pos_n_;		  /**< current position */
 		StdLargeVec<Vecd> vel_n_;		  /**< current particle velocity */
 		StdLargeVec<Vecd> dvel_dt_;		  /**< total acceleration including inner pressure- or stress-induced acceleration and other accelerations */

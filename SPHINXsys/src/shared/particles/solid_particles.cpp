@@ -175,6 +175,36 @@ namespace SPH
 		}
 		return stress_max;
 	}
+	//=================================================================================================//
+	Vecd ElasticSolidParticles::displacement(size_t particle_i)
+	{
+		return pos_n_[particle_i]-pos_0_[particle_i];
+	}
+	//=================================================================================================//
+	Vecd ElasticSolidParticles::normal(size_t particle_i)
+	{
+		return n_[particle_i];
+	}
+	//=================================================================================================//
+	StdLargeVec<Vecd> ElasticSolidParticles::getDisplacement()
+	{
+		StdLargeVec<Vecd> displacement_vector = {};
+		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
+		{
+			displacement_vector.push_back(displacement(index_i));
+		}
+		return displacement_vector;
+	}
+	//=================================================================================================//
+	StdLargeVec<Vecd> ElasticSolidParticles::getNormal()
+	{
+		StdLargeVec<Vecd> normal_vector = {};
+		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
+		{
+			normal_vector.push_back(normal(index_i));
+		}
+		return normal_vector;
+	}
 	//=============================================================================================//
 	void ActiveMuscleParticles::initializeActiveMuscleParticleData()
 	{
