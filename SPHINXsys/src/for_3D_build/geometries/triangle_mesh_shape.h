@@ -104,13 +104,13 @@ namespace SPH
 		virtual ~TriangleMeshShapeBrick(){};
 	};
 
-	class TriangleMeshShapeShere : public TriangleMeshShape
+	class TriangleMeshShapeSphere : public TriangleMeshShape
 	{
 	public:
 		//constructor for sphere shape
-		explicit TriangleMeshShapeShere(Real radius, int resolution, Vec3d translation,
-										const std::string &shape_name = "TriangleMeshShapeShere");
-		virtual ~TriangleMeshShapeShere(){};
+		explicit TriangleMeshShapeSphere(Real radius, int resolution, Vec3d translation,
+										const std::string &shape_name = "TriangleMeshShapeSphere");
+		virtual ~TriangleMeshShapeSphere(){};
 	};
 
 	class TriangleMeshShapeCylinder : public TriangleMeshShape
