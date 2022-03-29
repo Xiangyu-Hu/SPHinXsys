@@ -191,9 +191,9 @@ namespace SPH
 			{
 				Matd F_gaussian_point = F_[index_i] + gaussian_point_[i] * F_bending_[index_i] * shell_thickness_[index_i] * 0.5;
 				Matd dF_gaussian_point_dt = dF_dt_[index_i] + gaussian_point_[i] * dF_bending_dt_[index_i] * shell_thickness_[index_i] * 0.5;
-				Matd inverse_F_gaussion_point = SimTK::inverse(F_gaussian_point);
+				Matd inverse_F_gaussian_point = SimTK::inverse(F_gaussian_point);
 				Matd current_local_almansi_strain = current_transformation_matrix * (~transformation_matrix_[index_i])
-											* 0.5 * (Matd(1.0) - ~inverse_F_gaussion_point * inverse_F_gaussion_point)
+											* 0.5 * (Matd(1.0) - ~inverse_F_gaussian_point * inverse_F_gaussian_point)
 											* transformation_matrix_[index_i] * (~current_transformation_matrix);
 				/** correct Almansi strain tensor according to plane stress problem. */
 				current_local_almansi_strain = getCorrectedAlmansiStrain(current_local_almansi_strain, nu_);
