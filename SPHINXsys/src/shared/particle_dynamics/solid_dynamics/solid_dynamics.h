@@ -88,7 +88,7 @@ namespace SPH
 		/**
 		 * @class ConstrainSolidBodyRegion
 		 * @brief Constrain a solid body part with prescribed motion.
-		 * Note the average values for FSI are prescirbed also.
+		 * Note the average values for FSI are prescribed also.
 		 */
 		class ConstrainSolidBodyRegion : public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
@@ -132,7 +132,7 @@ namespace SPH
 		/**
 		 * @class PositionSolidBody
 		 * @brief Moves the body into a defined position in a given time interval - position driven boundary condition
-		 * Note the average values for FSI are prescirbed also.
+		 * Note the average values for FSI are prescribed also.
 		 */
 		class PositionSolidBody : public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
@@ -157,7 +157,7 @@ namespace SPH
 		/**
 		 * @class PositionScaleSolidBody
 		 * @brief Scales the body in a given time interval - position driven boundary condition
-		 * Note the average values for FSI are prescirbed also.
+		 * Note the average values for FSI are prescribed also.
 		 */
 		class PositionScaleSolidBody : public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
@@ -182,7 +182,7 @@ namespace SPH
 		/**
 		 * @class TranslateSolidBody
 		 * @brief Translates the body in a given time interval -translation driven boundary condition; only moving the body; end position irrelevant;
-		 * Note the average values for FSI are prescirbed also.
+		 * Note the average values for FSI are prescribed also.
 		 */
 		class TranslateSolidBody : public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
@@ -207,7 +207,7 @@ namespace SPH
 		 * @class TranslateSolidBodyPart
 		 * @brief Translates the body in a given time interval -translation driven boundary condition; only moving the body; end position irrelevant;
 		 * Only the particles in a given Bounding Box are translated. The Bounding Box is defined for the nondeformed shape.
-		 * Note the average values for FSI are prescirbed also.
+		 * Note the average values for FSI are prescribed also.
 		 */
 		class TranslateSolidBodyPart : public TranslateSolidBody
 		{
@@ -271,7 +271,7 @@ namespace SPH
 		class ClampConstrainSolidBodyRegion : public ParticleDynamics<void>
 		{
 		public:
-			ConstrainSolidBodyRegion constrianing_;
+			ConstrainSolidBodyRegion constraining_;
 			SoftConstrainSolidBodyRegion softing_;
 
 			ClampConstrainSolidBodyRegion(BaseBodyRelationInner &inner_relation, BodyPartByParticle &body_part);

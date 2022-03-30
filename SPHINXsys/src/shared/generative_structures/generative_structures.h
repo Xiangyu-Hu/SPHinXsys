@@ -79,7 +79,7 @@ namespace SPH
 		UniquePtrVectorKeeper<Branch> branches_ptr_keeper_;
 
 	public:
-		StdVec<Branch *> branches_;	   /**< Contanier of all branches */
+		StdVec<Branch *> branches_;	   /**< Container of all branches */
 		IndexVector branch_locations_; /**< in which branch are the particles located */
 		size_t last_branch_id_;
 		Branch *root_;
@@ -102,7 +102,7 @@ namespace SPH
 
 	/**
 	 * @class GenerativeTree::Branch
-	 * @brief Each branch (excapt the root) has a parent and several children, and geometric information.
+	 * @brief Each branch (except the root) has a parent and several children, and geometric information.
 	 * It is a realized edge and has multi inner particles.
 	 * The first is the last particle from the parent or root,
 	 * and the last is the first particle of all its child branches.

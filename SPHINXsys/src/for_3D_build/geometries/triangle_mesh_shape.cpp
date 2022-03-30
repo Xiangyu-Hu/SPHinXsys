@@ -143,7 +143,7 @@ namespace SPH
 		: TriangleMeshShapeBrick(shape_parameters.halfsize_, shape_parameters.resolution_,
 								 shape_parameters.translation_, shape_name) {}
 	//=================================================================================================//
-	TriangleMeshShapeShere::TriangleMeshShapeShere(Real radius, int resolution, Vec3d translation,
+	TriangleMeshShapeSphere::TriangleMeshShapeSphere(Real radius, int resolution, Vec3d translation,
 												   const std::string &shape_name)
 		: TriangleMeshShape(shape_name)
 	{
