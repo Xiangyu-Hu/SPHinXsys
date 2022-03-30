@@ -49,7 +49,7 @@ First, we define the geometries for modeling the elastic plate and water.
 	Vec2d GateP_rt(Dam_L + BW, 0.0);
 	Vec2d GateP_rb(Dam_L + BW, -Gate_width);
 	//----------------------------------------------------------------------
-	//	Define the geomerty for gate constrian.
+	//	Define the geomerty for gate constrain.
 	//----------------------------------------------------------------------
 	Vec2d ConstrainLP_lb(-BW, -Gate_width);
 	Vec2d ConstrainLP_lt(-BW, 0.0);
@@ -246,12 +246,12 @@ Thus, the gate constrain needs to be defined.
 	class GateConstrain : public BodyPartByParticle
 	{
 	public:
-		GateConstrain(SolidBody* solid_body, std::string constrianed_region_name)
-			: BodyPartByParticle(solid_body, constrianed_region_name)
+		GateConstrain(SolidBody* solid_body, std::string constrained_region_name)
+			: BodyPartByParticle(solid_body, constrained_region_name)
 		{
 			/* Geometry defination */
 			std::vector<Vecd> gate_constrain_shape_left = CreatGateConstrainShapeLeft();
-			body_part_shape_ = new ComplexShape(constrianed_region_name);
+			body_part_shape_ = new ComplexShape(constrained_region_name);
 			body_part_shape_->addAPolygon(gate_constrain_shape_left, ShapeBooleanOps::add);
 	
 			/* Geometry defination */

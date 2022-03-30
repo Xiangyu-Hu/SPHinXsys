@@ -62,7 +62,7 @@ namespace SPH
 		virtual ~SolidParticles(){};
 
 		StdLargeVec<Vecd> n_;	  /**<  current normal direction */
-		StdLargeVec<Vecd> n_0_;	  /**<  inital normal direction */
+		StdLargeVec<Vecd> n_0_;	  /**<  initial normal direction */
 		StdLargeVec<Matd> B_;	  /**<  configuration correction for linear reproducing */
 		//----------------------------------------------------------------------
 		//		for fluid-structure interaction (FSI)

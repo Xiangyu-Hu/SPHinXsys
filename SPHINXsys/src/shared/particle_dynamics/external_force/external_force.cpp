@@ -1,5 +1,5 @@
 /**
- * @file 	sexternal_froce.cpp
+ * @file 	external_force.cpp
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */
 #include "external_force.h"

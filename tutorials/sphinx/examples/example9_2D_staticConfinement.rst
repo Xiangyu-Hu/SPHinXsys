@@ -170,7 +170,7 @@ As there is no solid wall body in the static confinment case, only :code:`BaseIn
   /** Tag for computation from restart files. 0: not from restart files. */
   sph_system.restart_step_ = 0;
   /**
-   * @brief Material property, partilces and body creation of fluid.
+   * @brief Material property, particles and body creation of fluid.
    */
   WaterBlock *water_block = new WaterBlock(sph_system, "WaterBody");
   WaterMaterial 	*water_material = new WaterMaterial();
