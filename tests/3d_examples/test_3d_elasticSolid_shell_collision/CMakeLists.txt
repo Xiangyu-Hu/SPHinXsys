@@ -17,7 +17,7 @@ aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
 add_test(NAME ${PROJECT_NAME}
-		 COMMAND ${PROJECT_NAME} --r=true
+		 COMMAND ${PROJECT_NAME} --r=false
 		 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
 if(NOT STATIC_BUILD) # usual dynamic build

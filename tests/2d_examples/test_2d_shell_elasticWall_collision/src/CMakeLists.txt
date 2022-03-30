@@ -6,12 +6,14 @@ include(ImportSPHINXsysFromSource_for_2D_build)
 
 SET(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
+SET(BUILD_INPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/input")
+SET(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
 add_test(NAME ${PROJECT_NAME}_particle_relaxation COMMAND ${PROJECT_NAME} --r=true)
-add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --r=false --i=true)
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --r=false --i=false)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(${PROJECT_NAME} sphinxsys_2d ${TBB_LIBRARYS} ${Simbody_LIBRARIES})
