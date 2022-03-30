@@ -104,6 +104,13 @@ namespace SPH
 		virtual ~TriangleMeshShapeBrick(){};
 	};
 
+	/**
+	 * Resolution 0 will produce an octahedron (8 triangular faces). 
+	 * Resolution 1 (the default) gives 32 faces, resolution 2 gives 128. 
+	 * In general for resolution n there will be 2*4^(n+1) faces.
+	 * So, for spheres, resolution can not be larger than 3 otherwise,
+	 * the particle generation will take a prohibitively long time!
+	 */
 	class TriangleMeshShapeShere : public TriangleMeshShape
 	{
 	public:
