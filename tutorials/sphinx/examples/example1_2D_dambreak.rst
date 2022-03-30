@@ -169,7 +169,7 @@ in which the water wave impacts the tank wall and producing splashes.
 		/** Tag for computation from restart files. 0: not from restart files. */
 		system.restart_step_ = 0;
 		/**
-		* @brief Material property, partilces and body creation of fluid.
+		* @brief Material property, particles and body creation of fluid.
 		*/
 		WeaklyCompressibleFluid 			fluid("Water", rho0_f, c_f, mu_f, k_f);
 		WeaklyCompressibleFluidParticles 	fluid_particles("WaterBody");
@@ -519,7 +519,7 @@ and whether the computation begin from restart files is checked.
 	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
 	/**
-	* @brief Material property, partilces and body creation of fluid.
+	* @brief Material property, particles and body creation of fluid.
 	*/
 	WeaklyCompressibleFluid 			fluid("Water", rho0_f, c_f, mu_f, k_f);
 	WeaklyCompressibleFluidParticles 	fluid_particles("WaterBody");

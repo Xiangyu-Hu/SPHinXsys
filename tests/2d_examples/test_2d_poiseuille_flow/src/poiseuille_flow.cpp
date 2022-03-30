@@ -93,7 +93,7 @@ int main()
 	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
 	/**
-	 * @brief Material property, partilces and body creation of fluid.
+	 * @brief Material property, particles and body creation of fluid.
 	 */
 	WaterBlock water_block(system, "WaterBody");
 	FluidParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f));

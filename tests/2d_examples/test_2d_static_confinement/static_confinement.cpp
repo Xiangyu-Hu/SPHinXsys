@@ -122,7 +122,7 @@ int main()
 	/** output environment. */
 	In_Output 	in_output(sph_system);
 	/**
-	 * @brief Material property, partilces and body creation of fluid.
+	 * @brief Material property, particles and body creation of fluid.
 	 */
 	WaterBlock water_block(sph_system, "WaterBody");
 	FluidParticles 	fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f));
