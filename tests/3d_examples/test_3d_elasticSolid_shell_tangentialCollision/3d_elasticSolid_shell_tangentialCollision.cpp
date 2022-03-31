@@ -53,7 +53,7 @@ public:
 	: SolidBody(system, body_name)
 	{
         Vecd translation_ball(0.0, 0.0, -1.0);
-        body_shape_.add<TriangleMeshShapeShere>(ball_radius + BW, resolution, translation_ball);
+        body_shape_.add<TriangleMeshShapeSphere>(ball_radius + BW, resolution, translation_ball);
 	}
 };
 /**

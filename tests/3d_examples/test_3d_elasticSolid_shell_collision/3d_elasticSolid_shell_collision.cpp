@@ -40,8 +40,8 @@ public:
     {
         Vecd translation_wall(0.0, 0.0, 0.0);
         
-        body_shape_.add<TriangleMeshShapeShere>(wall_radius + BW, resolution, translation_wall);
-        body_shape_.substract<TriangleMeshShapeShere>(wall_radius, resolution, translation_wall);
+        body_shape_.add<TriangleMeshShapeSphere>(wall_radius + BW, resolution, translation_wall);
+        body_shape_.substract<TriangleMeshShapeSphere>(wall_radius, resolution, translation_wall);
     }
 };
 
@@ -52,7 +52,7 @@ public:
 	: SolidBody(system, body_name)
 	{
         Vecd translation_ball(0.0, 0.0, 0.0);
-        body_shape_.add<TriangleMeshShapeShere>(ball_radius + BW, resolution, translation_ball);
+        body_shape_.add<TriangleMeshShapeSphere>(ball_radius + BW, resolution, translation_ball);
 	}
 };
 /**
