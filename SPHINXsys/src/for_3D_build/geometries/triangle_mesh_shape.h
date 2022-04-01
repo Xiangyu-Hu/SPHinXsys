@@ -57,8 +57,12 @@ namespace SPH
 		UniquePtrKeeper<SimTK::ContactGeometry::TriangleMesh> triangle_mesh_ptr_keeper_;
 
 	public:
-		explicit TriangleMeshShape(const std::string &shape_name)
-			: Shape(shape_name), triangle_mesh_(nullptr){};
+		explicit TriangleMeshShape(const std::string &shape_name, const SimTK::PolygonalMesh* mesh = nullptr)
+			: Shape(shape_name), triangle_mesh_(nullptr){
+                if(mesh)
+                    triangle_mesh_ = generateTriangleMesh(*mesh);
+
+            };
 
 		virtual bool checkContain(const Vec3d &pnt, bool BOUNDARY_INCLUDED = true) override;
 		virtual Vec3d findClosestPoint(const Vec3d &input_pnt) override;
@@ -70,7 +74,7 @@ namespace SPH
 		SimTK::ContactGeometry::TriangleMesh *triangle_mesh_;
 
 		//generate triangle mesh from polymesh
-		SimTK::ContactGeometry::TriangleMesh *generateTriangleMesh(SimTK::PolygonalMesh &ploy_mesh);
+		SimTK::ContactGeometry::TriangleMesh *generateTriangleMesh(const SimTK::PolygonalMesh &poly_mesh);
 	};
 
 	class TriangleMeshShapeSTL : public TriangleMeshShape
