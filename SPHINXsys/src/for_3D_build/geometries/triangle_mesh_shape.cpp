@@ -4,10 +4,10 @@ namespace SPH
 {
 	//=================================================================================================//
 	SimTK::ContactGeometry::TriangleMesh *TriangleMeshShape::
-		generateTriangleMesh(SimTK::PolygonalMesh &ploy_mesh)
+		generateTriangleMesh(const SimTK::PolygonalMesh &poly_mesh)
 	{
 		SimTK::ContactGeometry::TriangleMesh *triangle_mesh;
-		triangle_mesh = triangle_mesh_ptr_keeper_.createPtr<SimTK::ContactGeometry::TriangleMesh>(ploy_mesh);
+		triangle_mesh = triangle_mesh_ptr_keeper_.createPtr<SimTK::ContactGeometry::TriangleMesh>(poly_mesh);
 		if (!SimTK::ContactGeometry::TriangleMesh::isInstance(*triangle_mesh))
 		{
 			std::cout << "\n Error the triangle mesh is not valid" << std::endl;
