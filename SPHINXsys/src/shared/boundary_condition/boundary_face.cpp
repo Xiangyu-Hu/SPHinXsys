@@ -30,8 +30,7 @@ namespace SPH
     BodyRegionWithFace::BodyRegionWithFace(RealBody &real_body, SegmentFace &segment_face, Real scale)
         : segment_face_(segment_face)
     {
-        Real h_ratio_min = 1.0 / real_body.sph_adaptation_->MaximumSpacingRatio();
-        region_width_ = scale * real_body.sph_adaptation_->getKernel()->CutOffRadius(h_ratio_min);
+        region_width_ = scale * real_body.sph_adaptation_->getKernel()->CutOffRadius();
 
         calculate_region_bounds();
     }

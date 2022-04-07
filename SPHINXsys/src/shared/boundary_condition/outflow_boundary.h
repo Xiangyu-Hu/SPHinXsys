@@ -31,6 +31,8 @@
 #define OUTFLOW_BOUNDARY_H
 
 #include "boundary_face.h"
+#include "fluid_body.h"
+#include "fluid_particles.h"
 
 namespace SPH
 {

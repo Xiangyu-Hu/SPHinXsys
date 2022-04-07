@@ -1,4 +1,4 @@
-/* ---------------------------------------------------------------------------*
+/* --------------------------------------------------------------------------- *
  *                       SPHinXsys: 3D artery with stenosis example                        *
  * ----------------------------------------------------------------------------*
  * This is the test case for  3D artery with stenosis example by velocity boundary condition.  *
@@ -104,90 +104,112 @@ int main(int ac, char *av[])
 	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
 	GlobalStaticVariables::physical_time_ = 0;
+
+	/* relax wall particles at first */
+	system.run_particle_relaxation_ = false;
+	system.reload_particles_ = true;
+
 	// handle command line arguments
 	system.handleCommandlineOptions(ac, av);
 	In_Output in_output(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	WaterBlock water_block(system, "WaterBody");
-	// water_block.setBodyDomainBounds(fluid_body_domain_bounds);
-	FluidParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f));
+	WaterBlock water_body(system, "WaterBody");
+	// water_body.setBodyDomainBounds(fluid_body_domain_bounds);
+	FluidParticles fluid_particles(water_body, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f));
 
-	WallBoundary wall_boundary(system, "Wall");
-	SolidParticles wall_particles(wall_boundary);
+	WallBoundary wall_body(system, "Wall");
+	SharedPtr<ParticleGenerator> wall_particles_generator = makeShared<ParticleGeneratorLattice>();
+	if (!system.run_particle_relaxation_ && system.reload_particles_)
+		wall_particles_generator = makeShared<ParticleGeneratorReload>(in_output, wall_body.getBodyName());
+	SolidParticles wall_particles(wall_body, wall_particles_generator);
 	//---------------------------------------------
-	// Relaxing solid particles.
-	//--------------------------------------------
-	/* body topology only for particle relation */
-	BodyRelationInner wall_bound_model_inner(wall_boundary);
-	/* Random reset the insert body particle position */
-	RandomizePartilePosition random_wall_particles(wall_boundary);
-	/** A  Physics relaxation step. */
-	relax_dynamics::RelaxationStepInner relaxation_step_inner(wall_bound_model_inner, true);
-	//----------------------------------------------------------------------
-	//	Particle relaxation starts here.
-	//----------------------------------------------------------------------
-	random_wall_particles.parallel_exec(0.25);
-	relaxation_step_inner.surface_bounding_.parallel_exec();
-	//----------------------------------------------------------------------
-	//	Relax particles of the insert body.
-	//----------------------------------------------------------------------
-	int ite_p = 0;
-	while (ite_p < 1000)
-	{
-		relaxation_step_inner.parallel_exec();
-		ite_p++;
-		if (ite_p % 200 == 0)
-			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the imported model N = " << ite_p << "\n";
-	}
-	cout << "The physics relaxation process of wall_boundary body finish ! \n";
-	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner water_block_inner(water_block);
-	ComplexBodyRelation water_block_complex_relation(water_block_inner, {&wall_boundary});
+	BodyRelationInner water_body_inner(water_body);
+	ComplexBodyRelation water_body_complex_relation(water_body_inner, { &wall_body });
 	//----------------------------------------------------------------------
+	// Relaxing solid particles.
+	//--------------------------------------------
+	if (system.run_particle_relaxation_)
+	{
+		/* body topology only for particle relation */
+		BodyRelationInner wall_bound_model_inner(wall_body);
+		/* Random reset the insert body particle position */
+		RandomizePartilePosition random_wall_particles(wall_body);
+		/* write the body state to Vtp file. */
+		BodyStatesRecordingToVtp write_inserted_body_to_vtp(in_output, { &wall_body });
+		/* write the particle reload files. */
+		ReloadParticleIO write_particle_reload_files(in_output, { &wall_body });
+		/** A  Physics relaxation step. */
+		relax_dynamics::RelaxationStepInner relaxation_step_inner(wall_bound_model_inner, true);
+		//----------------------------------------------------------------------
+		//	Particle relaxation starts here.
+		//----------------------------------------------------------------------
+		random_wall_particles.parallel_exec(0.25);
+		relaxation_step_inner.surface_bounding_.parallel_exec();
+		write_inserted_body_to_vtp.writeToFile(0);
+		//----------------------------------------------------------------------
+		//	Relax particles of the insert body.
+		//----------------------------------------------------------------------
+		int ite_p = 0;
+		while (ite_p < 1000)
+		{
+			relaxation_step_inner.parallel_exec();
+			ite_p++;
+			if (ite_p % 200 == 0)
+				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the imported model N = " << ite_p << "\n";
+		}
+		cout << "The physics relaxation process of wall_body body finish ! \n";
+
+		/* output results. */
+		write_particle_reload_files.writeToFile(0);
+		return 0;
+	}
+	
+	//----------------------------------------------------------------------
+	
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	/** Initialize particle acceleration. */
-	TimeStepInitialization initialize_a_fluid_step(water_block);
+	TimeStepInitialization initialize_a_fluid_step(water_body);
 
 	/* Define particle emitter at inlet */
-	BodyRegionByParticleWithFace emitter(water_block, inlet_face, 4);
-	InflowInjectingWithFace emitter_inflow_injecting(water_block, emitter, 20);
+	BodyRegionByParticleWithFace emitter(water_body, inlet_face, 4);
+	InflowInjectingWithFace emitter_inflow_injecting(water_body, emitter, 20);
 
 	/** Define inflow condition. */
-	BodyRegionByCellsWithFace emitter_buffer(water_block, inlet_face, 4);
-	EmitterBufferInflowConditionWithFace emitter_buffer_inflow_condition(water_block, emitter_buffer);
+	BodyRegionByCellsWithFace emitter_buffer(water_body, inlet_face, 4);
+	EmitterBufferInflowConditionWithFace emitter_buffer_inflow_condition(water_body, emitter_buffer);
 
 	/** time-space method to detect surface particles. */
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex
-		inlet_outlet_surface_particle_indicator(water_block_complex_relation);
+		inlet_outlet_surface_particle_indicator(water_body_complex_relation);
 	/** Evaluation of density by freestream approach. */
-	fluid_dynamics::DensitySummationFreeStreamComplex update_density_by_summation(water_block_complex_relation);
+	fluid_dynamics::DensitySummationFreeStreamComplex update_density_by_summation(water_body_complex_relation);
 	/** We can output a method-specific particle data for debug */
 	fluid_particles.addAVariableToWrite<Real>("Pressure");
 	fluid_particles.addAVariableToWrite<int>("SurfaceIndicator");
 	/** Time step size without considering sound wave speed. */
-	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_block, U_f);
+	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_body, U_f);
 	/** Time step size with considering sound wave speed. */
-	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
+	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_body);
 	/** Pressure relaxation. */
-	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(water_block_complex_relation);
+	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(water_body_complex_relation);
 	/** Density relaxation. */
-	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex_relation);
+	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_body_complex_relation);
 	/** Computing viscous acceleration. */
-	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex_relation);
+	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_body_complex_relation);
 	/** Impose transport velocity. */
-	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(water_block_complex_relation);
+	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(water_body_complex_relation);
 	/** Define outlet face to */
-	BodyRegionByCellsWithFace face1(water_block, outlet_face);
+	BodyRegionByCellsWithFace face1(water_body, outlet_face);
 	/** recycle real fluid particle to buffer particles at outlet. */
-	DoNothingConditionWithFace outflow1(water_block, face1);
+	DoNothingConditionWithFace outflow1(water_body, face1);
 
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
@@ -209,8 +231,8 @@ int main(int ac, char *av[])
 	if (system.restart_step_ != 0)
 	{
 		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.restart_step_);
-		water_block.updateCellLinkedList();
-		water_block_complex_relation.updateConfiguration();
+		water_body.updateCellLinkedList();
+		water_body_complex_relation.updateConfiguration();
 	}
 	//----------------------------------------------------------------------
 	//	Setup computing and initial conditions.
@@ -279,8 +301,8 @@ int main(int ac, char *av[])
 			outflow1.parallel_exec();
 
 			/** Update cell linked list and configuration. */
-			water_block.updateCellLinkedList();
-			water_block_complex_relation.updateConfiguration();
+			water_body.updateCellLinkedList();
+			water_body_complex_relation.updateConfiguration();
 			inlet_outlet_surface_particle_indicator.parallel_exec();
 		}
 
