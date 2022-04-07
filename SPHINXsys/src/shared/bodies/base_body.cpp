@@ -187,7 +187,7 @@ namespace SPH
 	{
 		TaggingParticleMethod tagging_particle_method = std::bind(&BodySurface::tagNearSurface, this, _1);
 		tagParticles(tagging_particle_method);
-		//std::cout << "Number of surface particles : " << body_part_particles_.size() << std::endl;
+		std::cout << "Number of surface particles : " << body_part_particles_.size() << std::endl;
 	}
 	//=================================================================================================//
 	void BodySurface::tagNearSurface(size_t particle_index)
