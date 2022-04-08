@@ -24,22 +24,22 @@ Real c_f = 10.0 * U_max;
 Real mu_f = 3.5e-3; // in Pa-s
 
 // boundary faces
-Vecd inlet_center(-0.095000, 0.00055226, -0.010811);
+Vecd inlet_center(-0.077000, 0.00055226, -0.010811); 
 Vecd inlet_direction(1, 0, 0);
 StdVec<Vecd> inlet_points{
-	Vecd(-0.095, 0.0021, -0.0093),
-	Vecd(-0.095, 0.0021, -0.0122),
-	Vecd(-0.095, -0.001, -0.0093),
-	Vecd(-0.095, -0.001, -0.0122)};
+	inlet_center + Vecd(0,0.002,0),
+	inlet_center - Vecd(0,0.002,0),
+	inlet_center + Vecd(0,0,0.002),
+	inlet_center - Vecd(0,0,0.002) };
 SegmentFace inlet_face(inlet_points, inlet_direction, inlet_center);
 
-Vecd outlet_center(0, 0.00055226, -0.010811);
+Vecd outlet_center(-0.022000, 0.00055226, -0.010811); 
 Vecd outlet_direction(-1, 0, 0);
 StdVec<Vecd> outlet_points{
-	Vecd(0, 0.0021, -0.0093),
-	Vecd(0, 0.0021, -0.0122),
-	Vecd(0, -0.001, -0.0093),
-	Vecd(0, -0.001, -0.0122)};
+	outlet_center + Vecd(0,0.002,0),
+	outlet_center - Vecd(0,0.002,0),
+	outlet_center + Vecd(0,0,0.002),
+	outlet_center - Vecd(0,0,0.002) };
 SegmentFace outlet_face(outlet_points, outlet_direction, outlet_center);
 
 //	import the fluid body
@@ -49,7 +49,7 @@ public:
 	WaterBlock(SPHSystem &system, const std::string &body_name)
 		: FluidBody(system, body_name)
 	{
-		std::string file_name = "./input/artery_stenosis_fluid.stl"; // in milimeter
+		std::string file_name = "./input/fluid.stl"; // in milimeter
 		TriangleMeshShapeSTL stl_shape(file_name, Vecd(0), 0.001);	 // milimeter to meter
 		body_shape_.add<LevelSetShape>(this, stl_shape, true);
 	}
@@ -60,9 +60,9 @@ class WallBoundary : public SolidBody
 {
 public:
 	WallBoundary(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name, makeShared<SPHAdaptation>(1.15, 1.5))
+		: SolidBody(system, body_name)
 	{
-		std::string file_name = "./input/artery_stenosis_solid.stl";
+		std::string file_name = "./input/solid.stl";
 		TriangleMeshShapeSTL stlshape(file_name, Vecd(0), 0.001);
 		body_shape_.add<LevelSetShape>(this, stlshape, true);
 	}
@@ -240,8 +240,8 @@ int main(int ac, char *av[])
 	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 100.0;			 /**< End time. */
-	Real D_Time = End_Time / 4000.0; /**< Time stamps for output of body states. */
+	Real End_Time = 4.0;			 /**< End time. */
+	Real D_Time = End_Time / 100.0; /**< Time stamps for output of body states. */
 	Real dt = 0.0;					 /**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time

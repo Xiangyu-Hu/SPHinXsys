@@ -23,8 +23,10 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/input/T_shaped_tube_solid.stl
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
-add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}
-                   WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+add_test(NAME ${PROJECT_NAME}_particle_relaxation COMMAND ${PROJECT_NAME} --r=true
+                    WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --r=false --i=true
+                    WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
 if(NOT STATIC_BUILD) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")

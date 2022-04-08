@@ -252,8 +252,8 @@ int main(int ac, char *av[])
 	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 100.0;			/**< End time. */
-	Real D_Time = End_Time / 400.0; /**< Time stamps for output of body states. */
+	Real End_Time = 5.0;			/**< End time. */
+	Real D_Time = End_Time / 100.0; /**< Time stamps for output of body states. */
 	Real dt = 0.0;					/**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time

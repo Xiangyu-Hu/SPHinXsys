@@ -12,19 +12,20 @@ SET(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin/")
 SET(BUILD_INPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/input")
 SET(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 
-file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
-execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/input/artery_stenosis_fluid.stl
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/input/artery_stenosis_solid.stl
-        DESTINATION ${BUILD_INPUT_PATH})
+file(GLOB_RECURSE FILES_STL "./input/*.stl")
+foreach(STL_FILE ${FILES_STL})
+	file(COPY ${STL_FILE} DESTINATION ${BUILD_INPUT_PATH})
+endforeach()
 
 
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
-add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}
-                   WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+
+add_test(NAME ${PROJECT_NAME}_particle_relaxation COMMAND ${PROJECT_NAME} --r=true
+                    WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --r=false --i=true
+                    WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
 if(NOT STATIC_BUILD) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
