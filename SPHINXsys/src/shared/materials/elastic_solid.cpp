@@ -8,6 +8,10 @@
 #include "base_body.h"
 #include "solid_particles.h"
 
+#ifdef max
+#undef max
+#endif
+
 namespace SPH
 {
 	//=================================================================================================//

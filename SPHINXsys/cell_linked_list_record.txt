@@ -1,0 +1,4 @@
+SPHinXsys-master\SPHINXsys\src\shared\meshes\cell_linked_list.h
+
+Add public interface in class CellLinkedList：
+MeshDataMatrix<CellList> getCellLists() const { return cell_linked_lists_; }

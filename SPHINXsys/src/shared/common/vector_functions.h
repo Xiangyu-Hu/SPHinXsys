@@ -24,7 +24,7 @@
 #define SMALL_VECTORS_H
 
 #include "data_type.h"
-#include <Eigen/Eigenvalues>
+
 
 namespace SPH {
 
