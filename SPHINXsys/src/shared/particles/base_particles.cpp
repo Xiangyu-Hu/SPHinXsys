@@ -58,6 +58,21 @@ namespace SPH
 		sph_body.sph_adaptation_->assignBaseParticles(this);
 		base_material_->assignBaseParticles(this);
 	}
+    void BaseParticles::reserve(std::size_t n)
+    {
+		pos_0_.reserve(n);         
+		pos_n_.reserve(n);		  
+		vel_n_.reserve(n);		  
+		dvel_dt_.reserve(n);		
+		dvel_dt_prior_.reserve(n); 
+		Vol_.reserve(n);
+		rho_n_.reserve(n); 
+		mass_.reserve(n);
+        sequence_.reserve(n);
+		sorted_id_.reserve(n);
+		unsorted_id_.reserve(n);
+    }
+
 	//=================================================================================================//
 	void BaseParticles::initializeABaseParticle(Vecd pnt, Real Vol_0)
 	{

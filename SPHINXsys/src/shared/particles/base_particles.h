@@ -92,6 +92,8 @@ namespace SPH
 
 		BaseMaterial *base_material_; /**< for dynamic cast in particle data delegation */
 
+        void reserve(std::size_t n);
+
 		StdLargeVec<Vecd> pos_0_;         /**< initial position */
 		StdLargeVec<Vecd> pos_n_;		  /**< current position */
 		StdLargeVec<Vecd> vel_n_;		  /**< current particle velocity */
