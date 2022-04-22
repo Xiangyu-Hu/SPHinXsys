@@ -29,6 +29,7 @@
 #ifndef SOLID_PARTICLES_H
 #define SOLID_PARTICLES_H
 
+#include "elastic_solid.h"
 #include "base_particles.h"
 #include "base_particles.hpp"
 
@@ -95,8 +96,6 @@ namespace SPH
 	 */
 	class ElasticSolidParticles : public SolidParticles
 	{
-	private:
-		SharedPtr<ElasticSolid> shared_elastic_solid_ptr_;
 	public:
 		ElasticSolidParticles(SPHBody &sph_body,
 							  SharedPtr<ElasticSolid> shared_elastic_solid_ptr,
@@ -149,6 +148,8 @@ namespace SPH
 
 		/** relevant stress measure */
 		std::string stress_measure_;
+
+		SharedPtr<ElasticSolid> shared_elastic_solid_ptr_;
 	};
 
 	/**
