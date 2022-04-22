@@ -93,7 +93,8 @@ namespace SPH
 	ElasticSolidParticles::ElasticSolidParticles(SPHBody &sph_body,
 												 SharedPtr<ElasticSolid> shared_elastic_solid_ptr,
 												 SharedPtr<ParticleGenerator> particle_generator_ptr)
-		: SolidParticles(sph_body, shared_elastic_solid_ptr, particle_generator_ptr)
+		: SolidParticles(sph_body, shared_elastic_solid_ptr, particle_generator_ptr),
+	shared_elastic_solid_ptr_(shared_elastic_solid_ptr)
 	{
 		shared_elastic_solid_ptr->assignElasticSolidParticles(this);
 		//----------------------------------------------------------------------
@@ -118,7 +119,7 @@ namespace SPH
 		stress_measure_ = shared_elastic_solid_ptr->getRelevantStressMeasureName();
 	}
 	//=================================================================================================//
-	StdLargeVec<Real> ElasticSolidParticles::getVonMisesStrainVector(std::string strain_measure, Real poisson)
+	StdLargeVec<Real> ElasticSolidParticles::getVonMisesStrainVector(std::string strain_measure)
 	{
 		StdLargeVec<Real> strain_vector = {};
 		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
@@ -127,7 +128,7 @@ namespace SPH
 			if (strain_measure == "static") {
 				strain = von_Mises_strain_static(index_i);
 			} else if (strain_measure == "dynamic") {
-				strain = von_Mises_strain_dynamic(index_i, poisson);
+				strain = von_Mises_strain_dynamic(index_i, shared_elastic_solid_ptr_->PoissonRatio());
 			} else {
 				throw std::runtime_error("getVonMisesStrainVector: wrong input");
 			}
@@ -136,7 +137,7 @@ namespace SPH
 		return strain_vector;
 	}
 	//=================================================================================================//
-	Real ElasticSolidParticles::getVonMisesStrainMax(std::string strain_measure, Real poisson)
+	Real ElasticSolidParticles::getVonMisesStrainMax(std::string strain_measure)
 	{
 		Real strain_max = 0;
 		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
@@ -145,7 +146,7 @@ namespace SPH
 			if (strain_measure == "static") {
 				strain = von_Mises_strain_static(index_i);
 			} else if (strain_measure == "dynamic") {
-				strain = von_Mises_strain_dynamic(index_i, poisson);
+				strain = von_Mises_strain_dynamic(index_i, shared_elastic_solid_ptr_->PoissonRatio());
 			} else {
 				throw std::runtime_error("getVonMisesStrainMax: wrong input");
 			}
@@ -153,6 +154,17 @@ namespace SPH
 		}
 		return strain_max;
 	}
+	//=================================================================================================//
+	Real ElasticSolidParticles::getPrincipalStrainMax()
+	{
+		Real strain_max = 0.0;
+		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
+		{
+			Real strain = get_Principal_strains(index_i)[0]; // take the max. component, which is the first one, this represents the max. tension
+			if (strain_max < strain) strain_max = strain;
+		}
+		return strain_max;
+	};
 	//=================================================================================================//
 	StdLargeVec<Real> ElasticSolidParticles::getVonMisesStressVector()
 	{	
@@ -176,6 +188,17 @@ namespace SPH
 		return stress_max;
 	}
 	//=================================================================================================//
+	Real ElasticSolidParticles::getPrincipalStressMax()
+	{
+		Real stress_max = 0.0;
+		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
+		{
+			Real stress = get_Principal_stresses(index_i)[0]; // take the max. component, which is the first one, this represents the max. tension
+			if (stress_max < stress) stress_max = stress;
+		}
+		return stress_max;
+	};
+	//=================================================================================================//
 	Vecd ElasticSolidParticles::displacement(size_t particle_i)
 	{
 		return pos_n_[particle_i]-pos_0_[particle_i];
@@ -195,6 +218,17 @@ namespace SPH
 		}
 		return displacement_vector;
 	}
+	//=================================================================================================//
+	Real ElasticSolidParticles::getMaxDisplacement()
+	{
+		Real displ_max = 0.0;
+		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
+		{
+			Real displ = displacement(index_i).norm();
+			if (displ_max < displ) displ_max = displ;
+		}
+		return displ_max;
+	};
 	//=================================================================================================//
 	StdLargeVec<Vecd> ElasticSolidParticles::getNormal()
 	{
