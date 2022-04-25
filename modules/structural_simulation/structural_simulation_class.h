@@ -37,6 +37,18 @@ using PositionScaleSolidBodyTuple = tuple<int, Real, Real, Real>;
 using TranslateSolidBodyTuple = tuple<int, Real, Real, Vec3d>;
 using TranslateSolidBodyPartTuple = tuple<int, Real, Real, Vec3d, BoundingBox>;
 
+#ifdef __EMSCRIPTEN__
+	struct StlData
+	{
+		string name;
+		uintptr_t ptr;
+	};
+
+	using StlList = vector<StlData>;
+#else
+	using StlList = vector<string>;
+#endif
+
 class BodyPartFromMesh : public BodyRegionByParticle
 {
 public:
@@ -103,7 +115,7 @@ class StructuralSimulationInput
 {
 public:
 	string relative_input_path_;
-	vector<string> imported_stl_list_;
+	StlList imported_stl_list_;
 	Real scale_stl_;
 	vector<Vec3d> translation_list_;
 	vector<Real> resolution_list_;
@@ -132,7 +144,7 @@ public:
 
 	StructuralSimulationInput(
 		const string &relative_input_path,
-		const vector<string> &imported_stl_list,
+		const StlList imported_stl_list,
 		Real scale_stl,
 		const vector<Vec3d> &translation_list,
 		const vector<Real> &resolution_list,
@@ -152,7 +164,7 @@ private:
 protected:
 	// mandatory input
 	string relative_input_path_;
-	vector<string> imported_stl_list_;
+	StlList imported_stl_list_;
 	Real scale_stl_;
 	vector<Vec3d> translation_list_;
 	vector<Real> resolution_list_;
@@ -169,7 +181,7 @@ protected:
 	Real scale_system_boundaries_;
 	In_Output in_output_;
 
-	vector<TriangleMeshShape*> body_mesh_list_;
+	vector<shared_ptr<TriangleMeshShape>> body_mesh_list_;
 	vector<SharedPtr<SPHAdaptation>> particle_adaptation_list_;
 	vector<shared_ptr<SolidBodyForSimulation>> solid_body_list_;
 	vector<shared_ptr<solid_dynamics::UpdateElasticNormalDirection>> particle_normal_update_;
@@ -277,7 +289,7 @@ protected:
 	void runSimulationStep(Real &dt, Real &integration_time);
 
 public:
-	explicit StructuralSimulation(StructuralSimulationInput &input);
+	explicit StructuralSimulation(const StructuralSimulationInput &input);
 	~StructuralSimulation();
 
 	StdVec<shared_ptr<SolidBodyForSimulation>> get_solid_body_list_() { return solid_body_list_; };
@@ -289,5 +301,20 @@ public:
 	//For JS
 	double runSimulationFixedDurationJS(int number_of_steps);
 };
+
+class StructuralSimulationJS : public StructuralSimulation
+	{
+	public:
+		StructuralSimulationJS(const StructuralSimulationInput& input);
+		~StructuralSimulationJS() = default;
+		
+		void runSimulationFixedDuration(int number_of_steps);
+		
+		VtuStringData getVtuData();
+
+	private:
+		BodyStatesRecordingToVtpString write_states_;
+		Real dt;
+	};
 
 #endif //SOLID_STRUCTURAL_SIMULATION_CLASS_H

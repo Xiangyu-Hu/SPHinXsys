@@ -14,13 +14,7 @@ set(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
 
-set(FILES_STL	"Aorta.stl"
-				"Diaphragm.stl"
-				"LA.stl"
-				"PA.stl"
-				"RA.stl"
-				"TAH_basic2_pos.stl"
-				)
+set(FILES_STL	"bernoulli_beam_20x.stl")
 foreach(STL_FILE ${FILES_STL})
 	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/input/${STL_FILE} DESTINATION ${BUILD_INPUT_PATH})
 endforeach()
@@ -28,9 +22,9 @@ endforeach()
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${EXECUTABLE_OUTPUT_PATH} ${DIR_SRCS})
 target_link_directories(${PROJECT_NAME} PRIVATE ${TBBLIBDIR})
-target_link_libraries(${PROJECT_NAME} virtonomy_sph ${TBBLIB})
+target_link_libraries(${PROJECT_NAME} structural_simulation_module ${TBBLIB})
 
-include(${CMAKE_SOURCE_DIR}/cmake/executable_includes.cmake)
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/SPHinXsys/modules/structural_simulation ${SPHINXSYS_PROJECT_DIR}/3rd_party/eigen)
 
 if(NOT EMSCRIPTEN)
 	add_test(NAME ${PROJECT_NAME} 

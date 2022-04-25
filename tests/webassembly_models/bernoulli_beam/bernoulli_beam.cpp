@@ -35,14 +35,12 @@ EMSCRIPTEN_BINDINGS(SPHINXSYS)
         .field("rho_0", &BernoulliBeamInput::rho_0)
         .field("poisson", &BernoulliBeamInput::poisson)
         .field("Youngs_modulus", &BernoulliBeamInput::Youngs_modulus)
-        .field("Youngs_modulus", &BernoulliBeamInput::Youngs_modulus)
         .field("physical_viscosity", &BernoulliBeamInput::physical_viscosity)
         .field("translation", &BernoulliBeamInput::translation)
         .field("stls", &BernoulliBeamInput::stls)
-        .field("relative_input_path", &BernoulliBeamInput::relative_input_path)
-        .field("contacting_bodies_list", &BernoulliBeamInput::contacting_bodies_list);
+        .field("relative_input_path", &BernoulliBeamInput::relative_input_path);
 
-    emscripten::class_<BernoulliBeamJS>("SimTotalArtificialHeart")
+    emscripten::class_<BernoulliBeamJS>("BernoulliBeam")
         .constructor<BernoulliBeamInput>()
         .function("runSimulation", &BernoulliBeamJS::runSimulation)
         .function("onError", &BernoulliBeamJS::onError)
@@ -68,20 +66,21 @@ int main()
     input.relative_input_path = "./input/";
 
     /* DOWNLOAD STLs files at this point */
-
+#ifdef __EMSCRIPTEN__
     try
     {
         // set up the simulation
-        BernoulliBeamJS simTotalArtificialHeart(input);
+        BernoulliBeamJS BernoulliBeam(input);
         int number_of_steps = 700;
         std::cout << "About to run the simulation" << std::endl;
-        simTotalArtificialHeart.runSimulation(number_of_steps);
+        BernoulliBeam.runSimulation(number_of_steps);
     }
     catch (const std::exception& e)
     {
         std::cout << e.what() << std::endl;
         return 1;
     }
+#endif //__EMSCRIPTEN__
     return 0;
 }
 

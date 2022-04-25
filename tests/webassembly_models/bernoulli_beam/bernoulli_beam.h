@@ -6,7 +6,6 @@
 #ifndef SIM_BROWSER_BEAM_H
 #define SIM_BROWSER_BEAM_H
 
-#include "sphinxsys.h"
 #include "structural_simulation_class.h"
 using namespace SPH;
 
@@ -53,11 +52,11 @@ StructuralSimulationInput createSimulationInput(const BernoulliBeamInput& input,
 	};
 	inputStructuralSim.non_zero_gravity_ = std::vector<GravityPair>{GravityPair(0, Vec3d(0.0, -100.0, 0.0))}; // gravity
 
-	TriangleMeshShapeSTL specimen("./input/bernoulli_beam_20x.stl", Vec3d(0), scale_stl);
+	TriangleMeshShapeSTL specimen("./input/bernoulli_beam_20x.stl", Vec3d(0), input.scale_stl);
 	BoundingBox fixation = specimen.findBounds();
 	fixation.second[0] = fixation.first[0] + 0.01;
-	input.body_indices_fixed_constraint_region_ = StdVec<ConstrainedRegionPair>{ ConstrainedRegionPair(0, fixation) };
-	input.particle_relaxation_list_ = { true };
+	inputStructuralSim.body_indices_fixed_constraint_region_ = StdVec<ConstrainedRegionPair>{ ConstrainedRegionPair(0, fixation) };
+	inputStructuralSim.particle_relaxation_list_ = { true };
 	
 	return inputStructuralSim;
 }
@@ -65,9 +64,10 @@ StructuralSimulationInput createSimulationInput(const BernoulliBeamInput& input,
 class BernoulliBeam
 {
 public:	
-	SimTotalArtificialHeart(const BernoulliBeamInput& input):
+	BernoulliBeam(const BernoulliBeamInput& input):
 	material_(make_shared<LinearElasticSolid>(input.rho_0, input.Youngs_modulus, input.poisson))
-		sim.reset(new StructuralSimulation(createSimulationInput(input, material_, material_vessel_)));
+	{
+		sim.reset(new StructuralSimulation(createSimulationInput(input, material_)));
 	}
 
 public: //C++ Backend functions
@@ -78,11 +78,14 @@ private:
 	std::unique_ptr<StructuralSimulation> sim;
 };
 
+#ifdef __EMSCRIPTEN__
+
 class BernoulliBeamJS
 {
 public:
 	BernoulliBeamJS(const BernoulliBeamInput& input):
-	material_(make_shared<LinearElasticSolid>(input.rho_0, input.Youngs_modulus, input.poisson)),
+
+	material_(make_shared<LinearElasticSolid>(input.rho_0, input.Youngs_modulus, input.poisson))
 	{
 		sim_js_.reset(new StructuralSimulationJS(createSimulationInput(input, material_)));
 	}
@@ -100,7 +103,7 @@ public:
 		}
 	}
 
-	BodyStatesRecordingToVtuString::VtuStringData getVtuData() const { return sim_js_->getVtuData(); }
+	VtuStringData getVtuData() const { return sim_js_->getVtuData(); }
 
 	void onError(emscripten::val on_error) { on_error_ = [on_error](const std::string& error_message) { on_error(error_message); }; }
 
@@ -109,5 +112,7 @@ private:
 	std::unique_ptr<StructuralSimulationJS> sim_js_;
 	std::function<void(const std::string&)> on_error_;
 };
+
+#endif //__EMSCRIPTEN__
 
 #endif //SIM_BROWSER_BEAM_H
