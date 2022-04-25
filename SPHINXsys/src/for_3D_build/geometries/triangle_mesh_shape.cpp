@@ -117,6 +117,24 @@ namespace SPH
 		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(translation));
 	}
 	//=================================================================================================//
+	TriangleMeshShapeSTL::TriangleMeshShapeSTL(const std::string &filepathname, Mat3d rotation,
+												Vec3d translation, Real scale_factor, const std::string &shape_name)
+		: TriangleMeshShape(shape_name)
+	{
+		if (!fs::exists(filepathname))
+		{
+			std::cout << "\n Error: the input file:" << filepathname << " is not exists" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			throw;
+		}
+		SimTK::PolygonalMesh polymesh;
+		polymesh.loadStlFile(filepathname);
+
+        polymesh.scaleMesh(scale_factor);
+        SimTK::Transform_<Real> transform( SimTK::Rotation_<Real>(rotation), translation );
+		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(transform));
+	}
+	//=================================================================================================//
 	#ifdef __EMSCRIPTEN__	
 	TriangleMeshShapeSTL::TriangleMeshShapeSTL(const uint8_t* buffer, Vec3d translation, Real scale_factor, const std::string &shape_name)
 		: TriangleMeshShape(shape_name)
