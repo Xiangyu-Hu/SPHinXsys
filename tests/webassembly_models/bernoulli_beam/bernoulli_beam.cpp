@@ -28,75 +28,51 @@ EMSCRIPTEN_BINDINGS(SPHINXSYS)
     emscripten::register_vector<IndexVector>("BodiesList");
     emscripten::register_map<std::string, std::string>("VtuData");
 
-    emscripten::value_object<SimTotalArtificialHeartInput>("SimTotalArtificialHeartInput")
-        .field("material_model_name", &SimTotalArtificialHeartInput::material_model_name)
-        .field("scale_stl", &SimTotalArtificialHeartInput::scale_stl)
-        .field("resolution", &SimTotalArtificialHeartInput::resolution)
-        .field("rho_0", &SimTotalArtificialHeartInput::rho_0)
-        .field("poisson", &SimTotalArtificialHeartInput::poisson)
-        .field("Youngs_modulus", &SimTotalArtificialHeartInput::Youngs_modulus)
-        .field("Youngs_modulus_tah", &SimTotalArtificialHeartInput::Youngs_modulus_tah)
-        .field("physical_viscosity", &SimTotalArtificialHeartInput::physical_viscosity)
-        .field("translation_tah", &SimTotalArtificialHeartInput::translation_tah)
-        .field("stls", &SimTotalArtificialHeartInput::stls)
-        .field("relative_input_path", &SimTotalArtificialHeartInput::relative_input_path)
-        .field("contacting_bodies_list", &SimTotalArtificialHeartInput::contacting_bodies_list);
+    emscripten::value_object<BernoulliBeamInput>("BernoulliBeamInput")
+        .field("material_model_name", &BernoulliBeamInput::material_model_name)
+        .field("scale_stl", &BernoulliBeamInput::scale_stl)
+        .field("resolution", &BernoulliBeamInput::resolution)
+        .field("rho_0", &BernoulliBeamInput::rho_0)
+        .field("poisson", &BernoulliBeamInput::poisson)
+        .field("Youngs_modulus", &BernoulliBeamInput::Youngs_modulus)
+        .field("Youngs_modulus", &BernoulliBeamInput::Youngs_modulus)
+        .field("physical_viscosity", &BernoulliBeamInput::physical_viscosity)
+        .field("translation", &BernoulliBeamInput::translation)
+        .field("stls", &BernoulliBeamInput::stls)
+        .field("relative_input_path", &BernoulliBeamInput::relative_input_path)
+        .field("contacting_bodies_list", &BernoulliBeamInput::contacting_bodies_list);
 
-    emscripten::class_<SimTotalArtificialHeartJS>("SimTotalArtificialHeart")
-        .constructor<SimTotalArtificialHeartInput>()
-        .function("runSimulation", &SimTotalArtificialHeartJS::runSimulation)
-        .function("onError", &SimTotalArtificialHeartJS::onError)
-        .property("vtuData", &SimTotalArtificialHeartJS::getVtuData);
+    emscripten::class_<BernoulliBeamJS>("SimTotalArtificialHeart")
+        .constructor<BernoulliBeamInput>()
+        .function("runSimulation", &BernoulliBeamJS::runSimulation)
+        .function("onError", &BernoulliBeamJS::onError)
+        .property("vtuData", &BernoulliBeamJS::getVtuData);
 }
 
 #else
 
 int main()
 {
-    // use simulation collection id to get json file for simulation definittion
-    // download JSON file and fill in the following struct
-
-    SimTotalArtificialHeartInput input;
+    BernoulliBeamInput input;
     input.scale_stl = 0.001;
-    input.resolution = { 8.0, 8.0, 8.0, 8.0, 8.0, 8.0 };
-    // in order
-    // resolution_tah = 8.0;
-    // resolution_aorta = 8.0;
-    // resolution_diaphragm = 8.0;
-    // resolution_latrium = 8.0;
-    // resolution_partery = 8.0;
-    // resolution_ratrium = 8.0;
-    input.rho_0 = 6.45e3;
+    input.resolution = { 1.5 };
+    input.rho_0 = 1e3;
     input.poisson = 0.3;
     input.Youngs_modulus = 5e8;
-    input.Youngs_modulus_tah = 1e6;
-    input.physical_viscosity = 200.0;
-    input.translation_tah = { 0, -200.0, 0 };
+    input.physical_viscosity = 5e6;
+    input.translation = { 0, 0, 0 };
 
-    string tah_stl = "TAH_basic2_pos.stl";
-    string aorta_stl = "Aorta.stl";
-    string diaphragm_stl = "Diaphragm.stl";
-    string latrium_stl = "LA.stl";
-    string partery_stl = "PA.stl";
-    string ratrium_stl = "RA.stl";
+    string beam_stl = "bernoulli_beam_20x.stl";
 
-    input.stls = { tah_stl, aorta_stl, diaphragm_stl, latrium_stl, partery_stl, ratrium_stl };
+    input.stls = { beam_stl };
     input.relative_input_path = "./input/";
-    input.contacting_bodies_list = {
-        { 1, 2, 3, 4, 5 },
-        { 0, 4 },
-        { 0 },
-        { 0, 4 },
-        { 0, 3, 5 },
-        { 0, 4 }
-        };
 
     /* DOWNLOAD STLs files at this point */
 
     try
     {
         // set up the simulation
-        SimTotalArtificialHeartJS simTotalArtificialHeart(input);
+        BernoulliBeamJS simTotalArtificialHeart(input);
         int number_of_steps = 700;
         std::cout << "About to run the simulation" << std::endl;
         simTotalArtificialHeart.runSimulation(number_of_steps);

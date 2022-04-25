@@ -3,8 +3,8 @@
  * @brief This is the example of total artificial heart implantation path simulation
  * @author John Benjamin, Bence Rochlitz - Virtonomy GmbH
  */
-#ifndef SIM_TOTAL_ARTIFICIAL_HEART_H
-#define SIM_TOTAL_ARTIFICIAL_HEART_H
+#ifndef SIM_BROWSER_BEAM_H
+#define SIM_BROWSER_BEAM_H
 
 #include "sphinxsys.h"
 #include "structural_simulation_class.h"
@@ -22,26 +22,22 @@ struct BernoulliBeamInput
 	double rho_0;
 	double poisson;
 	double Youngs_modulus;
-	double Youngs_modulus_tah;
 	double physical_viscosity;	
-	std::array<double, 3> translation_tah;
+	std::array<double, 3> translation;
 	StlList stls;
 	std::string relative_input_path;
-	StdVec<IndexVector> contacting_bodies_list;
 };
 
-StructuralSimulationInput createSimulationInput(const BernoulliBeamInput& input, std::shared_ptr<LinearElasticSolid> material_tah, std::shared_ptr<NeoHookeanSolid> material_vessel)
+StructuralSimulationInput createSimulationInput(const BernoulliBeamInput& input, std::shared_ptr<LinearElasticSolid> material)
 {
 	StlList imported_stl_list = input.stls;
-	std::vector<Vec3d> translation_list = {Vec3d(input.translation_tah[0], input.translation_tah[1],
-													input.translation_tah[2]),
-											Vec3d(0), Vec3d(0), Vec3d(0), Vec3d(0), Vec3d(0)};
+	std::vector<Vec3d> translation_list = {
+		Vec3d(input.translation[0], input.translation[1], input.translation[2])
+	};
 	std::vector<Real> resolution_list = input.resolution;
 
 	std::vector<shared_ptr<LinearElasticSolid>> material_model_list = {
-		material_tah,
-		material_vessel, material_vessel, material_vessel,
-		material_vessel, material_vessel
+		material
 	};
 
 	/** INPUT DECLERATION */
@@ -52,9 +48,16 @@ StructuralSimulationInput createSimulationInput(const BernoulliBeamInput& input,
 		translation_list,
 		resolution_list,
 		material_model_list,
-		StdVec<Real>(6, input.physical_viscosity),
-		input.contacting_bodies_list};
-	inputStructuralSim.non_zero_gravity_ = std::vector<GravityPair>{GravityPair(0, Vec3d(0.0, 45.0, 0.0))}; // gravity for TAH
+		StdVec<Real>(1, input.physical_viscosity),
+		{}
+	};
+	inputStructuralSim.non_zero_gravity_ = std::vector<GravityPair>{GravityPair(0, Vec3d(0.0, -100.0, 0.0))}; // gravity
+
+	TriangleMeshShapeSTL specimen("./input/bernoulli_beam_20x.stl", Vec3d(0), scale_stl);
+	BoundingBox fixation = specimen.findBounds();
+	fixation.second[0] = fixation.first[0] + 0.01;
+	input.body_indices_fixed_constraint_region_ = StdVec<ConstrainedRegionPair>{ ConstrainedRegionPair(0, fixation) };
+	input.particle_relaxation_list_ = { true };
 	
 	return inputStructuralSim;
 }
@@ -63,18 +66,15 @@ class BernoulliBeam
 {
 public:	
 	SimTotalArtificialHeart(const BernoulliBeamInput& input):
-	material_tah_(make_shared<LinearElasticSolid>(input.rho_0, input.Youngs_modulus_tah, input.poisson)),
-	material_vessel_(make_shared<NeoHookeanSolid>(input.rho_0, input.Youngs_modulus, input.poisson))
-	{
-		sim.reset(new StructuralSimulation(createSimulationInput(input, material_tah_, material_vessel_)));
+	material_(make_shared<LinearElasticSolid>(input.rho_0, input.Youngs_modulus, input.poisson))
+		sim.reset(new StructuralSimulation(createSimulationInput(input, material_, material_vessel_)));
 	}
 
 public: //C++ Backend functions
 	void runCompleteSimulation(double endTime) { sim->runSimulation(SPH::Real(endTime)); };
 	
 private:
-	std::shared_ptr<LinearElasticSolid> material_tah_;
-	std::shared_ptr<NeoHookeanSolid> material_vessel_;
+	std::shared_ptr<LinearElasticSolid> material_;
 	std::unique_ptr<StructuralSimulation> sim;
 };
 
@@ -82,10 +82,9 @@ class BernoulliBeamJS
 {
 public:
 	BernoulliBeamJS(const BernoulliBeamInput& input):
-	material_tah_(make_shared<LinearElasticSolid>(input.rho_0, input.Youngs_modulus_tah, input.poisson)),
-	material_vessel_(make_shared<NeoHookeanSolid>(input.rho_0, input.Youngs_modulus, input.poisson))
+	material_(make_shared<LinearElasticSolid>(input.rho_0, input.Youngs_modulus, input.poisson)),
 	{
-		sim_js_.reset(new StructuralSimulationJS(createSimulationInput(input, material_tah_, material_vessel_)));
+		sim_js_.reset(new StructuralSimulationJS(createSimulationInput(input, material_)));
 	}
 
 	void runSimulation(int number_of_steps) 
@@ -106,10 +105,9 @@ public:
 	void onError(emscripten::val on_error) { on_error_ = [on_error](const std::string& error_message) { on_error(error_message); }; }
 
 private:
-	std::shared_ptr<LinearElasticSolid> material_tah_;
-	std::shared_ptr<NeoHookeanSolid> material_vessel_;
+	std::shared_ptr<LinearElasticSolid> material_;
 	std::unique_ptr<StructuralSimulationJS> sim_js_;
 	std::function<void(const std::string&)> on_error_;
 };
 
-#endif //SIM_TOTAL_ARTIFICIAL_HEART_H
+#endif //SIM_BROWSER_BEAM_H
