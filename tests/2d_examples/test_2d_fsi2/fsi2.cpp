@@ -162,9 +162,9 @@ int main(int ac, char *av[])
 	RestartIO restart_io(in_output, system.real_bodies_);
 	RegressionTestTimeAveraged<BodyReducedQuantityRecording<solid_dynamics::TotalViscousForceOnSolid>>
 		write_total_viscous_force_on_inserted_body(in_output, inserted_body);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<indexVector, Vecd>>
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_beam_tip_displacement("Position", in_output, beam_observer_contact);
-	ObservedQuantityRecording<indexVector, Vecd>
+	ObservedQuantityRecording<Vecd>
 		write_fluid_velocity("Velocity", in_output, fluid_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
@@ -308,8 +308,17 @@ int main(int ac, char *av[])
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_total_viscous_force_on_inserted_body.newResultTest();
-	write_beam_tip_displacement.newResultTest();
+	if (system.generate_regression_data_)
+	{
+		//The lift force at the cylinder is very small and not important in this case. 
+		write_total_viscous_force_on_inserted_body.generateDataBase({1.0e-2, 1.0e-2}, {1.0e-2, 1.0e-2});
+		write_beam_tip_displacement.generateDataBase(1.0e-2);
+	}
+	else
+	{
+		write_total_viscous_force_on_inserted_body.newResultTest();
+		write_beam_tip_displacement.newResultTest();
+	}
 
 	return 0;
 }

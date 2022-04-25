@@ -137,7 +137,7 @@ int main(int ac, char *av[])
 		write_total_viscous_force_on_inserted_body(in_output, cylinder);
 	BodyReducedQuantityRecording<solid_dynamics::TotalViscousForceOnSolid>
 		write_total_force_on_inserted_body(in_output, cylinder);
-	ObservedQuantityRecording<indexVector, Vecd>
+	ObservedQuantityRecording<Vecd>
 		write_fluid_velocity("Velocity", in_output, fluid_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

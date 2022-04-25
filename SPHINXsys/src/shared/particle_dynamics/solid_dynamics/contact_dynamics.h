@@ -31,9 +31,12 @@
 #define CONTACT_DYNAMICS_H
 
 #include "solid_dynamics.h"
+#include "thin_structure_math.h"
 
 namespace SPH
 {
+	class SPHBody;
+	class Kernel;
 	namespace solid_dynamics
 	{
 		/**
@@ -69,6 +72,37 @@ namespace SPH
 			StdVec<Real> offset_W_ij_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		* @class ShellContactDensity
+		* @brief Computing the contact density due to shell contact using a 
+		* 		 surfacic integral being solved by Gauss-Legendre quadrature integration.
+		*/
+		class ShellContactDensity : public PartInteractionDynamicsByParticle, public ContactDynamicsData
+		{
+		public:
+			explicit ShellContactDensity(SolidBodyRelationContact &solid_body_contact_relation);
+			virtual ~ShellContactDensity() {};
+		protected:
+			StdLargeVec<Real> &contact_density_;
+			StdVec<StdLargeVec<Vecd>*> contact_pos_;
+			StdLargeVec<Vecd> &pos_n_;
+
+			Kernel *kernel_;
+			Real spacing_ref_, boundary_factor_;
+			SPHBody *sph_body_;
+
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+
+			/** Abscissas and weights for Gauss-Legendre quadrature integration with n=3 nodes */
+			Real x_0 = 0.774596669241483377035853079956;
+			Real x_1 = 0.000000000000000000000000000000;
+			Real x_2 = -x_0;
+
+			Real w_0 = 0.555555555555555555555555555556;
+			Real w_1 = 0.888888888888888888888888888889;
+			Real w_2 = w_0;
 		};
 
 		/**

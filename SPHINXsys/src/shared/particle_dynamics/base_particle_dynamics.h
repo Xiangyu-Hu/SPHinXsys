@@ -33,19 +33,18 @@
 
 #include "base_data_package.h"
 #include "sph_data_containers.h"
-#include "all_particles.h"
-#include "all_materials.h"
 #include "neighbor_relation.h"
-#include "all_bodies.h"
-#include "cell_linked_list.h"
-#include "external_force.h"
 #include "body_relation.h"
+#include "base_body.h"
+
 #include <functional>
 
 using namespace std::placeholders;
 
 namespace SPH
 {
+
+
 	/** Functor for operation on particles. */
 	typedef std::function<void(size_t, Real)> ParticleFunctor;
 	/** Functors for reducing operation on particles. */
@@ -141,10 +140,7 @@ namespace SPH
 	class ParticleDynamics : public GlobalStaticVariables
 	{
 	public:
-		explicit ParticleDynamics(SPHBody &sph_body)
-			: GlobalStaticVariables(), sph_body_(&sph_body),
-			  sph_adaptation_(sph_body.sph_adaptation_),
-			  base_particles_(sph_body.base_particles_){};
+		explicit ParticleDynamics(SPHBody &sph_body);
 		virtual ~ParticleDynamics(){};
 
 		SPHBody *getSPHBody() { return sph_body_; };

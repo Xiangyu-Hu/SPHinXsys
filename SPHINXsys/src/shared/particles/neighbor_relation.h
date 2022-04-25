@@ -65,7 +65,7 @@ namespace SPH
 	/** Inner neighborhoods for all particles in a body for a inner body relation. */
 	using ParticleConfiguration = StdLargeVec<Neighborhood>;
 	/** All contact neighborhoods for all particles in a body for a contact body relation. */
-	using ContatcParticleConfiguration = StdVec<ParticleConfiguration>;
+	using ContactParticleConfiguration = StdVec<ParticleConfiguration>;
 
 	/**
 	 * @class NeighborRelation

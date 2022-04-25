@@ -89,6 +89,11 @@ namespace SPH
 		return sigmaPK2;
 	}
 	//=================================================================================================//
+	Matd LinearElasticSolid::EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i)
+	{
+		return lambda0_ * almansi_strain.trace() * Matd(1.0) + 2.0 * G0_ * almansi_strain;
+	}
+	//=================================================================================================//
 	Real LinearElasticSolid::VolumetricKirchhoff(Real J)
 	{
 		return K0_ * J * (J - 1);
@@ -100,6 +105,15 @@ namespace SPH
 		Real I_1 = right_cauchy.trace(); // first strain invariant
 		Matd sigmaPK2 = G0_ * std::pow(det(F), - 2.0 / 3.0) * (Matd(1.0) - I_1 / 3.0 * inverse(right_cauchy)) + K0_ * det(F) * (det(F) - 1.0) * inverse(right_cauchy); // sigmaPK2 calculation
 		return sigmaPK2;
+	}
+	//=================================================================================================//
+	Matd NeoHookeanSolid::EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i)
+	{
+		Real J = det(F);
+		Matd B = inverse(-2.0 * almansi_strain + Matd(1.0));
+		Matd cauchy_stress = 0.5 * K0_ * (J - 1.0 / J) * Matd(1.0)
+			+ G0_ * pow(J, -2.0 / (Real)Dimensions - 1.0) * (B - B.trace() / (Real)Dimensions * Matd(1.0));
+		return cauchy_stress;
 	}
 	//=================================================================================================//
 	Real NeoHookeanSolid::VolumetricKirchhoff(Real J)
@@ -114,6 +128,12 @@ namespace SPH
 		Real I_3 = det(right_cauchy); // first strain invariant
 		Matd sigmaPK2 = G0_* std::pow(I_3, - 1.0 / 3.0) * (Matd(1.0) - 1.0 / 3.0 * I_1 * inverse(right_cauchy));
 		return sigmaPK2;
+	}
+	//=================================================================================================//
+	Matd NeoHookeanSolidIncompressible::EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i)
+	{
+		// TODO: implement
+		return {};
 	}
 	//=================================================================================================//
 	Real NeoHookeanSolidIncompressible::VolumetricKirchhoff(Real J)
@@ -274,10 +294,10 @@ namespace SPH
 	//=================================================================================================//
 	void LocallyOrthotropicMuscle::initializeFiberAndSheet()
 	{
-		base_particles_->registerAVariable<indexVector, Vecd>(local_f0_, "Fiber");
-		base_particles_->registerAVariable<indexVector, Vecd>(local_s0_, "Sheet");
-		base_particles_->addAVariableNameToList<indexVector, Vecd>(reload_local_parameters_, "Fiber");
-		base_particles_->addAVariableNameToList<indexVector, Vecd>(reload_local_parameters_, "Sheet");
+		base_particles_->registerAVariable<Vecd>(local_f0_, "Fiber");
+		base_particles_->registerAVariable<Vecd>(local_s0_, "Sheet");
+		base_particles_->addAVariableNameToList<Vecd>(reload_local_parameters_, "Fiber");
+		base_particles_->addAVariableNameToList<Vecd>(reload_local_parameters_, "Sheet");
 	}
 	//=================================================================================================//
 	void LocallyOrthotropicMuscle::readFromXmlForLocalParameters(const std::string &filefullpath)

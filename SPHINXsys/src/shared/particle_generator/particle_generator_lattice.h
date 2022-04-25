@@ -79,5 +79,28 @@ namespace SPH
 		virtual void createABaseParticle(BaseParticles *base_particles,
 										 Vecd &particle_position, Real particle_volume) override;
 	};
+
+	/**
+	* @class ShellParticleGeneratorLattice
+	* @brief generate particles from lattice positions for a shell body.
+	*/
+	class ShellParticleGeneratorLattice : public ParticleGeneratorLattice
+	{
+	public:
+		ShellParticleGeneratorLattice(Real global_avg_thickness);
+		virtual ~ShellParticleGeneratorLattice() {};
+
+		virtual void initialize(SPHBody* sph_body) override;
+		virtual void createBaseParticles(BaseParticles* base_particles) override;
+
+	protected:
+		Real total_volume_;              /** Calculated from level set. */
+		Real global_avg_thickness_;
+		Real particle_spacing_;
+		Real avg_particle_volume_;
+
+		size_t number_of_cells_;
+		size_t planned_number_of_particles_;
+	};
 }
 #endif //PARTICLE_GENERATOR_LATTICE_H

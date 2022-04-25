@@ -100,7 +100,7 @@ namespace SPH
 		ReduceOperation reduce_operation_;
 		std::string quantity_name_;
 
-		/** inital or reference value */
+		/** initial or reference value */
 		ReturnType initial_reference_;
 		virtual void SetupReduce(){};
 		virtual ReturnType ReduceFunction(size_t index_i, Real dt = 0.0) = 0;
@@ -202,9 +202,7 @@ namespace SPH
 	class InteractionDynamicsSplitting : public InteractionDynamics
 	{
 	public:
-		explicit InteractionDynamicsSplitting(SPHBody &sph_body)
-			: InteractionDynamics(sph_body),
-			  split_cell_lists_(sph_body.split_cell_lists_){};
+		explicit InteractionDynamicsSplitting(SPHBody &sph_body);
 		virtual ~InteractionDynamicsSplitting(){};
 
 		virtual void exec(Real dt = 0.0) override;
@@ -212,6 +210,161 @@ namespace SPH
 
 	protected:
 		SplitCellLists &split_cell_lists_;
+	};
+
+	//----------------------------------------------------------------------
+	//		New version particle dynamics base classes.
+	//		Aiming to replace old version in the future.
+	//		In this version, std functors and dynamic bindings are replaced by
+	//		standard functors with static binding
+	//----------------------------------------------------------------------
+
+	/** loop for particle dynamics. sequential computing. */
+	template <typename LocalDynamicsType>
+	void particle_for(size_t total_real_particles, LocalDynamicsType &local_dynamics, Real dt = 0.0)
+	{
+		for (size_t i = 0; i < total_real_particles; ++i)
+			local_dynamics(i, dt);
+	};
+	/** loop for particle dynamics.  parallel computing. */
+	template <typename LocalDynamicsType>
+	void particle_parallel_for(size_t total_real_particles, LocalDynamicsType &local_dynamics, Real dt = 0.0)
+	{
+		parallel_for(
+			blocked_range<size_t>(0, total_real_particles),
+			[&](const blocked_range<size_t> &r)
+			{
+				for (size_t i = r.begin(); i < r.end(); ++i)
+				{
+					local_dynamics(i, dt);
+				}
+			},
+			ap);
+	};
+
+	template <class LocalDynamicsType>
+	class SimpleDynamics : public ParticleDynamics<void>
+	{
+	public:
+		LocalDynamicsType local_dynamics_;
+
+		explicit SimpleDynamics(SPHBody &sph_body)
+			: ParticleDynamics<void>(sph_body), local_dynamics_(sph_body){};
+		virtual ~SimpleDynamics(){};
+
+		virtual void exec(Real dt = 0.0) override
+		{
+			setBodyUpdated();
+			setupDynamics(dt);
+			size_t total_real_particles = base_particles_->total_real_particles_;
+			particle_for(total_real_particles, local_dynamics_, dt);
+		};
+
+		virtual void parallel_exec(Real dt = 0.0) override
+		{
+			setBodyUpdated();
+			setupDynamics(dt);
+			size_t total_real_particles = base_particles_->total_real_particles_;
+			particle_parallel_for(total_real_particles, local_dynamics_, dt);
+		};
+	};
+
+	/** loop particles for reducing. sequential computing. */
+	template <class ReturnType, typename ReduceOperation, class LocalEvaluation>
+	ReturnType particle_reduce(size_t total_real_particles, ReturnType temp,
+							   ReduceOperation &reduce_operation, LocalEvaluation &local_evaluation, Real dt = 0.0)
+	{
+		for (size_t i = 0; i < total_real_particles; ++i)
+		{
+			temp = reduce_operation(temp, local_evaluation(i, dt));
+		}
+		return temp;
+	};
+
+	/** loop particles for reducing. parallel computing. */
+	template <class ReturnType, typename ReduceOperation, class LocalEvaluation>
+	ReturnType particle_parallel_reduce(size_t total_real_particles, ReturnType temp,
+										ReduceOperation &reduce_operation, LocalEvaluation &local_evaluation, Real dt = 0.0)
+	{
+		return parallel_reduce(
+			blocked_range<size_t>(0, total_real_particles),
+			temp, [&](const blocked_range<size_t> &r, ReturnType temp0) -> ReturnType
+			{
+				for (size_t i = r.begin(); i != r.end(); ++i)
+				{
+					temp0 = reduce_operation(temp0, local_evaluation(i, dt));
+				}
+				return temp0;
+			},
+			[&](ReturnType x, ReturnType y) -> ReturnType
+			{
+				return reduce_operation(x, y);
+			});
+	};
+
+	/**
+	* @class BaseReduce
+	* @brief Base class for reduce operations
+	* @details Specific reduce methods will be derived from this class.
+	*		However, since I try to not use virtual functions for local particle based operations,
+	*		there is no virtual function to be overriden.
+	*/
+	template <typename ValueType, typename ReduceOperationType>
+	class BaseReduce
+	{
+	public:
+		std::string quantity_name_;
+		ValueType initial_reference_;
+		ReduceOperationType reduce_operation_;
+		typedef ValueType ReducedValueType;
+
+		BaseReduce(const std::string &quantity_name, const ValueType &initial_reference)
+			: quantity_name_(quantity_name), initial_reference_(initial_reference){};
+		virtual ~BaseReduce(){};
+	};
+
+	/**
+	* @class ReduceDynamics
+	* @brief Template class for reduce operation through all particles
+	* @details For this, the template LocalReducedMethod should be defined with signature functions
+	*		and operater overloading.
+	*/
+	template <class LocalReduceMethod, typename ReturnType = typename LocalReduceMethod::ReducedValueType>
+	class ReduceDynamics : public ParticleDynamics<ReturnType>
+	{
+	public:
+		LocalReduceMethod local_reduce_;
+
+		explicit ReduceDynamics(SPHBody &sph_body)
+			: ParticleDynamics<ReturnType>(sph_body), local_reduce_(sph_body),
+			  initial_reference_(local_reduce_.initial_reference_),
+			  quantity_name_(local_reduce_.quantity_name_){};
+		virtual ~ReduceDynamics(){};
+
+		ReturnType InitialReference() { return initial_reference_; };
+		std::string QuantityName() { return quantity_name_; };
+
+		virtual ReturnType exec(Real dt = 0.0) override
+		{
+			size_t total_real_particles = this->base_particles_->total_real_particles_;
+			local_reduce_.setupReduce();
+			ReturnType result = particle_reduce(total_real_particles, initial_reference_,
+												local_reduce_, local_reduce_.operation_, dt);
+			return local_reduce_.outputResult(result);
+		};
+		virtual ReturnType parallel_exec(Real dt = 0.0) override
+		{
+			size_t total_real_particles = this->base_particles_->total_real_particles_;
+			local_reduce_.setupReduce();
+			ReturnType result = particle_parallel_reduce(total_real_particles, initial_reference_,
+														 local_reduce_, local_reduce_.operation_, dt);
+			return local_reduce_.outputResult(result);
+		};
+
+	protected:
+		/** inital or reference value */
+		ReturnType initial_reference_;
+		std::string quantity_name_;
 	};
 }
 #endif //PARTICLE_DYNAMICS_ALGORITHMS_H

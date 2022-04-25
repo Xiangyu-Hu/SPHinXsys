@@ -15,9 +15,9 @@ using namespace SPH;
 Real PL = 10.0;									  /** Length of the square plate. */
 Real PT = 1.0;									  /** Thickness of the square plate. */
 Vec2d n_0 = Vec2d(0.0, 1.0);					  /** Pseudo-normal. */
-int particle_number = 20;						  /** Particle number in the direction of the length */
+int particle_number = 40;						  /** Particle number in the direction of the length */
 Real resolution_ref = PL / (Real)particle_number; /** Initial reference particle spacing. */
-int BWD = 4;
+int BWD = 1;
 Real BW = resolution_ref * (Real)BWD; /** Boundary width, determined by specific layer of boundary particles. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -0.5 * resolution_ref),
@@ -27,12 +27,13 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -0.5 * resolution_ref),
 Real rho0_s = 1.0;				   /** Normalized density. */
 Real Youngs_modulus = 1.3024653e6; /** Normalized Youngs Modulus. */
 Real poisson = 0.3;				   /** Poisson ratio. */
-Real physical_viscosity = 200.0;   /** physical damping, here we choose the same value as numerical viscosity. */
+Real physical_viscosity = 400.0;   /** physical damping, here we choose the same value as numerical viscosity. */
 
-Real q = 100.0 * Youngs_modulus * 1.0e-4; /** Total distributed load. */
-Real time_to_full_external_force = 0.1;
-
-Real gravitational_acceleration = 0.0;
+/** Difine point forces. */
+Real F_full = 50.0e3;
+std::vector<Vecd> point_force{Vec2d(0.0, F_full)};
+std::vector<Vecd> reference_position{Vec2d(0.5 * PL, 0.0)};
+Real time_to_full_external_force = 0.05;
 
 /** Define application dependent particle generator for thin structure. */
 class PlateParticleGenerator : public ParticleGeneratorDirect
@@ -90,21 +91,6 @@ private:
 	};
 };
 
-/**
- * define time dependent external force
- */
-class TimeDependentExternalForce : public Gravity
-{
-public:
-	explicit TimeDependentExternalForce(Vecd external_force)
-		: Gravity(external_force) {}
-	virtual Vecd InducedAcceleration(Vecd &position) override
-	{
-		Real current_time = GlobalStaticVariables::physical_time_;
-		return current_time < time_to_full_external_force ? current_time * global_acceleration_ / time_to_full_external_force : global_acceleration_;
-	}
-};
-
 /** Define an observer particle generator. */
 class ObserverParticleGenerator : public ParticleGeneratorDirect
 {
@@ -128,6 +114,7 @@ int main()
 	ShellParticles plate_body_particles(plate_body,
 										makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson),
 										makeShared<PlateParticleGenerator>(), PT);
+	plate_body_particles.addAVariableToWrite<Vecd>("PriorAcceleration");
 
 	/** Define Observer. */
 	ObserverBody plate_observer(system, "PlateObserver");
@@ -140,10 +127,6 @@ int main()
 	BodyRelationInner plate_body_inner(plate_body);
 	BodyRelationContact plate_observer_contact(plate_observer, {&plate_body});
 
-	/** Common particle dynamics. */
-	TimeDependentExternalForce external_force(Vec2d(0.0, q / (PT * rho0_s) - gravitational_acceleration));
-	TimeStepInitialization initialize_external_force(plate_body, external_force);
-
 	/**
 	 * This section define all numerical methods will be used in this case.
 	 */
@@ -155,19 +138,22 @@ int main()
 	/** Time step size. */
 	thin_structure_dynamics::ShellAcousticTimeStepSize computing_time_step_size(plate_body);
 	/** stress relaxation. */
-	thin_structure_dynamics::ShellStressRelaxationFirstHalf stress_relaxation_first_half(plate_body_inner);
+	thin_structure_dynamics::ShellStressRelaxationFirstHalf stress_relaxation_first_half(plate_body_inner, 3, true);
 	thin_structure_dynamics::ShellStressRelaxationSecondHalf stress_relaxation_second_half(plate_body_inner);
+	thin_structure_dynamics::DistributingPointForcesToShell 
+									apply_point_force(plate_body, point_force, reference_position,
+													   time_to_full_external_force, resolution_ref);
 	/** Constrain the Boundary. */
 	BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
-	thin_structure_dynamics::FixedFreeRotateShellBoundary constrain_holder(plate_body_inner, boundary_geometry);
-	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec2d>>
-		plate_position_damping(plate_body_inner, 0.5, "Velocity", physical_viscosity);
-	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec2d>>
-		plate_rotation_damping(plate_body_inner, 0.5, "AngularVelocity", physical_viscosity);
+	thin_structure_dynamics::ConstrainShellBodyRegion constrain_holder(plate_body, boundary_geometry);
+	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
+		plate_position_damping(plate_body_inner, 0.2, "Velocity", physical_viscosity);
+	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
+		plate_rotation_damping(plate_body_inner, 0.2, "AngularVelocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<indexVector, Vecd>>
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_plate_max_displacement("Position", in_output, plate_observer_contact);
 
 	/** Apply initial condition. */
@@ -175,6 +161,7 @@ int main()
 	system.initializeSystemConfigurations();
 	plate_initial_velocity.parallel_exec();
 	corrected_configuration.parallel_exec();
+	apply_point_force.getWeight();
 
 	/**
 	* From here the time stepping begins.
@@ -186,7 +173,7 @@ int main()
 
 	/** Setup physical parameters. */
 	int ite = 0;
-	Real end_time = 0.5;
+	Real end_time = 0.8;
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	/** Statistics for computing time. */
@@ -206,7 +193,8 @@ int main()
 						  << GlobalStaticVariables::physical_time_ << "	dt: "
 						  << dt << "\n";
 			}
-			initialize_external_force.parallel_exec(dt);
+			apply_point_force.getForce();
+			apply_point_force.parallel_exec(dt);
 			stress_relaxation_first_half.parallel_exec(dt);
 			constrain_holder.parallel_exec(dt);
 			plate_position_damping.parallel_exec(dt);

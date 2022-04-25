@@ -30,6 +30,9 @@
 #define GENERAL_DYNAMICS_H
 
 #include "all_particle_dynamics.h"
+#include "base_body.h"
+#include "base_particles.h"
+#include "external_force.h"
 
 #include <limits>
 
@@ -413,6 +416,27 @@ namespace SPH
 	};
 
 	/**
+	 * @class BodyStateExtrema
+	 * @brief computing extrema from the body state
+	 */
+	template <int DataTypeIndex, typename VariableType, typename CompareOperation>
+	class BodyStateExtrema : public BaseReduce<VariableType, CompareOperation>, public GeneralDataDelegateSimple
+	{
+	public:
+		BodyStateExtrema(SPHBody &sph_body, const std::string &variable_name, const VariableType &initial_reference)
+			: BaseReduce<VariableType, CompareOperation>(variable_name, initial_reference), GeneralDataDelegateSimple(sph_body),
+			  extrema_(particles_->getVariableByName<DataTypeIndex, VariableType>(variable_name)){};
+		virtual ~BodyStateExtrema(){};
+
+		void setupReduce(){};
+		VariableType operator()(size_t index_i, Real dt = 0.0) { return extrema_[index_i]; };
+		VariableType outputResult(const VariableType &result) { return result; };
+
+	protected:
+		StdLargeVec<VariableType> &extrema_;
+	};
+	
+	/**
 	 * @class VelocityBoundCheck
 	 * @brief  check whether particle velocity within a given bound
 	 */
@@ -497,7 +521,7 @@ namespace SPH
 	* @class BodySummation
 	* @brief Compute the summation of  a particle variable in a body
 	*/
-	template <int DataTypeIndex, typename VariableType>
+	template <typename VariableType>
 	class BodySummation : public ParticleDynamicsReduce<VariableType, ReduceSum<VariableType>>,
 						  public GeneralDataDelegateSimple
 	{
@@ -505,7 +529,7 @@ namespace SPH
 		explicit BodySummation(SPHBody &sph_body, std::string variable_name)
 			: ParticleDynamicsReduce<VariableType, ReduceSum<VariableType>>(sph_body),
 			  GeneralDataDelegateSimple(sph_body),
-			  variable_(*particles_->getVariableByName<DataTypeIndex, VariableType>(variable_name))
+			  variable_(*particles_->getVariableByName<VariableType>(variable_name))
 		{
 			this->initial_reference_ = VariableType(0);
 		};
@@ -523,12 +547,12 @@ namespace SPH
 	* @class BodyMoment
 	* @brief Compute the moment of a body
 	*/
-	template <int DataTypeIndex, typename VariableType>
-	class BodyMoment : public BodySummation<DataTypeIndex, VariableType>
+	template <typename VariableType>
+	class BodyMoment : public BodySummation<VariableType>
 	{
 	public:
 		explicit BodyMoment(SPHBody &sph_body, std::string variable_name)
-			: BodySummation<DataTypeIndex, VariableType>(sph_body, variable_name),
+			: BodySummation<VariableType>(sph_body, variable_name),
 			  mass_(this->particles_->mass_){};
 		virtual ~BodyMoment(){};
 

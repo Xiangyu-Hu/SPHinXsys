@@ -107,7 +107,7 @@ int main(int ac, char *av[])
 	solid_dynamics::SelfContactDensitySummation coil_self_contact_density(coil_self_contact);
 	solid_dynamics::SelfContactForce coil_self_contact_forces(coil_self_contact);
 	// Damping the velocity field for quasi-static solution
-	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>
+	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
 		coil_damping(coil_inner, 0.2, "Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	From here the time stepping begins.

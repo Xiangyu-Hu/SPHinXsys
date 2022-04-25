@@ -249,7 +249,7 @@ int main()
 	/** Output body states for visualization in Paraview. */
 	BodyStatesRecordingToVtp write_real_body_states_to_vtp(in_output, system.real_bodies_);
 	/** Output the observed displacement of gate free end. */
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<indexVector, Vecd>>
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_beam_tip_displacement("Position", in_output, gate_observer_contact_relation);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

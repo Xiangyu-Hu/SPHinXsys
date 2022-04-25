@@ -33,9 +33,9 @@
 #include "math.h"
 
 #include "all_particle_dynamics.h"
-#include "neighbor_relation.h"
 #include "base_kernel.h"
 #include "cell_linked_list.h"
+#include "body_relation.h"
 #include "solid_dynamics.h"
 
 namespace SPH
@@ -156,7 +156,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &dvel_dt_;
+			StdLargeVec<Vecd> &dvel_dt_, &pos_n_;
 			StdVec<StdLargeVec<Real> *> contact_Vol_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -226,21 +226,6 @@ namespace SPH
 		};
 
 		/**
-		* @class UpdateParticlePosition
-		* @brief update the particle position for a time step
-		*/
-		class UpdateSolidParticlePosition : public ParticleDynamicsSimple, public solid_dynamics::SolidDataSimple
-		{
-		public:
-			explicit UpdateSolidParticlePosition(SPHBody &sph_body);
-			virtual ~UpdateSolidParticlePosition(){};
-
-		protected:
-			StdLargeVec<Vecd> &pos_0_, &pos_n_, &dvel_dt_;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
 		* @class SolidRelaxationStepInner
 		* @brief carry out particle relaxation step of particles within the body
 		*/
@@ -249,11 +234,102 @@ namespace SPH
 		public:
 			explicit SolidRelaxationStepInner(BaseBodyRelationInner &inner_relation, bool level_set_correction = false)
 				: RelaxationStepInner(inner_relation, level_set_correction),
-				  solid_dynamics::SolidDataSimple(*inner_relation.sph_body_),
-				  update_solid_particle_position_(*real_body_){};
+				  solid_dynamics::SolidDataSimple(*inner_relation.sph_body_)
+				  {};//update_solid_particle_position_(*real_body_){};
 			virtual ~SolidRelaxationStepInner(){};
 
-			UpdateSolidParticlePosition update_solid_particle_position_;
+			virtual void exec(Real dt = 0.0) override;
+			virtual void parallel_exec(Real dt = 0.0) override;
+		};
+
+		/**
+		* @class RelaxationAccelerationComplexWithLevelSetCorrection
+		* @brief compute relaxation acceleration while consider the present of contact bodies
+		* with considering contact interaction
+		* this is usually used for fluid like bodies
+		* we constrain particles with a level-set correction function when the fluid boundary is not contacted with solid.
+		*/
+		class RelaxationAccelerationComplexWithLevelSetCorrection :public RelaxationAccelerationComplex
+		{
+		public:
+			RelaxationAccelerationComplexWithLevelSetCorrection(ComplexBodyRelation &body_complex_relation);
+			virtual ~RelaxationAccelerationComplexWithLevelSetCorrection() {};
+		protected:
+			LevelSetShape *level_set_complex_shape_;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		* @class RelaxationStepComplex
+		* @brief carry out particle relaxation step of particles within multi bodies
+		*/
+		class RelaxationStepComplex : public  ParticleDynamics<void>
+		{
+		protected:
+			RealBody *real_body_;
+			ComplexBodyRelation &complex_relation_;
+			NearShapeSurface near_shape_surface_;
+		public:
+			explicit RelaxationStepComplex(ComplexBodyRelation &body_complex_relation, bool level_set_correction = false);
+			virtual ~RelaxationStepComplex() {};
+
+			UniquePtr<RelaxationAccelerationComplex> relaxation_acceleration_complex_;
+			GetTimeStepSizeSquare get_time_step_square_;
+			UpdateParticlePosition update_particle_position_;
+			ShapeSurfaceBounding surface_bounding_;
+
+			virtual void exec(Real dt = 0.0) override;
+			virtual void parallel_exec(Real dt = 0.0) override;
+		};
+
+		/**
+		* @class ShellMidSurfaceBounding
+		* @brief constrain particles by contraining particles to mid-surface.
+		*/
+		class ShellMidSurfaceBounding : public PartDynamicsByCell,
+			public RelaxDataDelegateInner
+		{
+		public:
+			ShellMidSurfaceBounding(SPHBody &body, NearShapeSurface &body_part, BaseBodyRelationInner &inner_relation, 
+				                    Real thickness, Real level_set_refinement_ratio);
+			virtual ~ShellMidSurfaceBounding() {};
+			void getNormalDirection();
+			void setColorFunction();
+			void correctNormalDirection();
+			void averageNormalDirectionFirstHalf();
+			void averageNormalDirectionSecondHalf();
+			void getDirectionCriteria();
+			void getIncludedAngleCriteria();
+			void calculateNormalDirection();
+		protected:
+			SolidParticles *solid_particles_;
+			StdLargeVec<Vecd> &pos_n_, &n_0_;
+			Real constrained_distance_, direction_criteria_, included_angle_;
+			LevelSetShape *level_set_shape_;
+			StdLargeVec<Real> color_;
+			StdLargeVec<Vecd> temporary_n_0_, previous_n_0_;
+
+			Real particle_spacing_ref_, thickness_, level_set_refinement_ratio_;
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
+		* @class ShellRelaxationStepInner
+		* @brief carry out particle relaxation step of particles within the shell body
+		*/
+		class ShellRelaxationStepInner : public  RelaxationStepInner
+		{
+		public:
+			explicit ShellRelaxationStepInner(BaseBodyRelationInner &inner_relation, Real thickness, 
+				                              Real level_set_refinement_ratio, bool level_set_correction = false) :
+				RelaxationStepInner(inner_relation, level_set_correction),
+				update_shell_particle_position_(*real_body_),
+				mid_surface_bounding_(*real_body_, near_shape_surface_, inner_relation, 
+					                  thickness, level_set_refinement_ratio) {};
+			virtual ~ShellRelaxationStepInner() {};
+
+			UpdateParticlePosition update_shell_particle_position_;
+			ShellMidSurfaceBounding mid_surface_bounding_;
 
 			virtual void exec(Real dt = 0.0) override;
 			virtual void parallel_exec(Real dt = 0.0) override;

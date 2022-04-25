@@ -3,7 +3,7 @@
 * @brief 	The structural simulation module is licensed under the Aladdin Free Public License (https://spdx.org/licenses/Aladdin.html) regarding usage for medical device development.
 * Commercial use for medical device development is not permitted. This does not apply to applications in other fields.
 * @details	solid structural simulation class for general structural simulations
-* @author 	Bence Z. Rochlitz - Virtonomy GmbH
+* @author 	Bence Z. Rochlitz - Virtonomy GmbH, Xiangyu Hu
 */
 
 #ifndef SOLID_STRUCTURAL_SIMULATION_CLASS_H
@@ -63,7 +63,7 @@ private:
 	solid_dynamics::CorrectConfiguration correct_configuration_;
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half_;
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half_;
-	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>> damping_random_;
+	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>> damping_random_;
 
 public:
 	SolidBodyForSimulation(
@@ -78,7 +78,7 @@ public:
 	solid_dynamics::CorrectConfiguration *getCorrectConfiguration() { return &correct_configuration_; };
 	solid_dynamics::StressRelaxationFirstHalf *getStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
 	solid_dynamics::StressRelaxationSecondHalf *getStressRelaxationSecondHalf() { return &stress_relaxation_second_half_; };
-	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>> *getDampingWithRandomChoice() { return &damping_random_; };
+	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>> *getDampingWithRandomChoice() { return &damping_random_; };
 };
 
 void expandBoundingBox(BoundingBox *original, BoundingBox *additional);

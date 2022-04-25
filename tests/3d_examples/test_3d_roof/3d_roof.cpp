@@ -1,7 +1,7 @@
 /**
-* @file 	dw_3d_cylindrical_surface.cpp
+* @file 	3d_roof.cpp
 * @brief 	This is the benchmark test of the shell.
-* @details  We consider large deformation of a cylindrical surface.
+* @details  We consider the deformation of a cylindrical surface.
 * @author 	Dong Wu, Chi Zhang and Xiangyu Hu
 * @version  0.1
  */
@@ -16,7 +16,7 @@ Real radius = 24.875;								/** Radius of the inner boundary of the cylinder. *
 Real height = 50.0;									/** Height of the cylinder. */
 Real thickness = 0.25;								/** Thickness of the cylinder. */
 Real radius_mid_surface = radius + thickness / 2.0; /** Radius of the mid surface. */
-int particle_number = 40;							/** Particle number in the peripheral direction. */
+int particle_number = 16;							/** Particle number in the peripheral direction. */
 /** Initial reference particle spacing. */
 Real particle_spacing_ref = 2.0 * radius_mid_surface * Pi * 80.0 / 360.0 / (Real)particle_number;
 int BWD = 1;
@@ -29,7 +29,7 @@ BoundingBox system_domain_bounds(Vec3d(-radius - thickness, 0.0, -radius - thick
 Real rho0_s = 36.0;				 /** Normalized density. */
 Real Youngs_modulus = 4.32e8;	 /** Normalized Youngs Modulus. */
 Real poisson = 0.0;				 /** Poisson ratio. */
-Real physical_viscosity = 1.0e4; /** physical damping, here we choose the same value as numerical viscosity. */
+Real physical_viscosity = 7.0e3; /** physical damping, here we choose the same value as numerical viscosity. */
 
 Real time_to_full_external_force = 0.1;
 Real gravitational_acceleration = -10.0;
@@ -136,7 +136,7 @@ int main()
 	SharedPtr<LinearElasticSolid> cylinder_material = makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	/** Create particles for the elastic body. */
 	ShellParticles cylinder_body_particles(cylinder_body, cylinder_material, makeShared<CylinderParticleGenerator>(), thickness);
-	cylinder_body_particles.addAVariableToWrite<indexMatrix, Mat3d>("FirstPiolaKirchhoffStress");
+	cylinder_body_particles.addAVariableToWrite<Mat3d>("FirstPiolaKirchhoffStress");
 
 	/** Define Observer. */
 	ObserverBody cylinder_observer(system, "CylinderObserver");
@@ -171,14 +171,14 @@ int main()
 	BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
 	solid_dynamics::ConstrainSolidBodyRegionVelocity
 		constrain_holder(cylinder_body, boundary_geometry, Vecd(0.0, 1.0, 0.0));
-	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vecd>>
-		cylinder_position_damping(cylinder_body_inner, 0.1, "Velocity", physical_viscosity);
-	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vecd>>
-		cylinder_rotation_damping(cylinder_body_inner, 0.1, "AngularVelocity", physical_viscosity);
+	DampingWithRandomChoice<DampingBySplittingInner<Vecd>>
+		cylinder_position_damping(cylinder_body_inner, 0.2, "Velocity", physical_viscosity);
+	DampingWithRandomChoice<DampingBySplittingInner<Vecd>>
+		cylinder_rotation_damping(cylinder_body_inner, 0.2, "AngularVelocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
-	RegressionTestEnsembleAveraged<ObservedQuantityRecording<indexVector, Vecd>>
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_cylinder_max_displacement("Position", in_output, cylinder_observer_contact);
 
 	/** Apply initial condition. */
@@ -197,7 +197,7 @@ int main()
 
 	/** Setup physical parameters. */
 	int ite = 0;
-	Real end_time = 3.0;
+	Real end_time = 2.0;
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	/** Statistics for computing time. */
@@ -218,7 +218,7 @@ int main()
 						  << dt << "\n";
 				write_states.writeToFile(100);
 			}
-			dt = 0.3 * computing_time_step_size.parallel_exec();
+			dt = 0.1 * computing_time_step_size.parallel_exec();
 			initialize_external_force.parallel_exec(dt);
 			stress_relaxation_first_half.parallel_exec(dt);
 

@@ -16,7 +16,7 @@ namespace SPH
 			  FSIContactData(contact_relation),
 			  Vol_(particles_->Vol_), vel_ave_(particles_->vel_ave_)
 		{
-			particles_->registerAVariable<indexVector, Vecd>(viscous_force_from_fluid_, "ViscousForceFromFluid");
+			particles_->registerAVariable<Vecd>(viscous_force_from_fluid_, "ViscousForceFromFluid");
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
@@ -51,6 +51,53 @@ namespace SPH
 
 					force += 2.0 * mu_k * vel_derivative *
 							 Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+				}
+			}
+
+			viscous_force_from_fluid_[index_i] = force;
+		}
+		//=================================================================================================//
+		FluidViscousForceOnSolidInEuler::
+			FluidViscousForceOnSolidInEuler(BaseBodyRelationContact &contact_relation)
+			: InteractionDynamics(*contact_relation.sph_body_),
+			EFSIContactData(contact_relation),
+			Vol_(particles_->Vol_), vel_ave_(particles_->vel_ave_)
+		{
+			particles_->registerAVariable<Vecd>(viscous_force_from_fluid_, "ViscousForceFromFluid");
+			for (size_t k = 0; k != contact_particles_.size(); ++k)
+			{
+				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+				contact_rho_n_.push_back(&(contact_particles_[k]->rho_n_));
+				contact_vel_n_.push_back(&(contact_particles_[k]->vel_n_));
+
+				mu_.push_back(contact_material_[k]->ReferenceViscosity());
+				smoothing_length_.push_back(contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength());
+			}
+		}
+		//=================================================================================================//
+		void FluidViscousForceOnSolidInEuler::Interaction(size_t index_i, Real dt)
+		{
+			Real Vol_i = Vol_[index_i];
+			const Vecd &vel_ave_i = vel_ave_[index_i];
+
+			Vecd force(0);
+			/** Contact interaction. */
+			for (size_t k = 0; k < contact_configuration_.size(); ++k)
+			{
+				Real mu_k = mu_[k];
+				Real smoothing_length_k = smoothing_length_[k];
+				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
+				StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
+				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = contact_neighborhood.j_[n];
+
+					Vecd vel_derivative = 2.0 * (vel_ave_i - vel_n_k[index_j]) /
+						(contact_neighborhood.r_ij_[n] + 0.01 * smoothing_length_k);
+
+					force += 2.0 * mu_k * vel_derivative *
+						Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
 				}
 			}
 
@@ -92,7 +139,7 @@ namespace SPH
 		TotalViscousForceOnSolid ::TotalViscousForceOnSolid(SolidBody &solid_body)
 			: ParticleDynamicsReduce<Vecd, ReduceSum<Vecd>>(solid_body),
 			  SolidDataSimple(solid_body),
-			  viscous_force_from_fluid_(*particles_->getVariableByName<indexVector, Vecd>("ViscousForceFromFluid"))
+			  viscous_force_from_fluid_(*particles_->getVariableByName<Vecd>("ViscousForceFromFluid"))
 		{
 			quantity_name_ = "TotalViscousForceOnSolid";
 			initial_reference_ = Vecd(0);
@@ -105,8 +152,8 @@ namespace SPH
 		//=================================================================================================//
 		TotalForceOnSolid::TotalForceOnSolid(SolidBody &solid_body)
 			: ParticleDynamicsReduce<Vecd, ReduceSum<Vecd>>(solid_body),
-			  SolidDataSimple(solid_body),
-			  force_from_fluid_(particles_->force_from_fluid_)
+			SolidDataSimple(solid_body),
+			force_from_fluid_(particles_->force_from_fluid_)
 		{
 			quantity_name_ = "TotalForceOnSolid";
 			initial_reference_ = Vecd(0);
@@ -142,7 +189,7 @@ namespace SPH
 			: initialize_displacement_(solid_body, pos_temp_),
 			  update_averages_(solid_body, pos_temp_)
 		{
-			solid_body.base_particles_->registerAVariable<indexVector, Vecd>(pos_temp_, "TemporaryPosition");
+			solid_body.base_particles_->registerAVariable<Vecd>(pos_temp_, "TemporaryPosition");
 		}
 		//=================================================================================================//
 	}

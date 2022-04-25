@@ -45,11 +45,8 @@ namespace SPH
 		: ParticleDynamics<void>(real_body), DataDelegateSimple<SPHBody, BaseParticles>(real_body),
 		  axis_(axis_direction), body_domain_bounds_(real_body.getBodyDomainBounds()),
 		  pos_n_(particles_->pos_n_),
-		  cell_linked_list_(real_body.cell_linked_list_)
-	{
-		Real h_ratio_min = 1.0 / sph_adaptation_->MaximumSpacingRatio();
-		cut_off_radius_max_ = sph_adaptation_->getKernel()->CutOffRadius(h_ratio_min);
-	}
+		  cell_linked_list_(real_body.cell_linked_list_),
+		  cut_off_radius_max_(sph_adaptation_->getKernel()->CutOffRadius()) {}
 	//=================================================================================================//
 	void PeriodicConditionInAxisDirection::
 		setPeriodicTranslation(BoundingBox &body_domain_bounds, int axis_direction)
@@ -90,7 +87,7 @@ namespace SPH
 	{
 		setupDynamics(dt);
 
-		//check lower bound
+		// check lower bound
 		CellLists &lower_bound_cells = bound_cells_[0];
 		for (size_t i = 0; i != lower_bound_cells.size(); ++i)
 		{
@@ -99,7 +96,7 @@ namespace SPH
 				checkLowerBound(particle_indexes[num], dt);
 		}
 
-		//check upper bound
+		// check upper bound
 		CellLists &upper_bound_cells = bound_cells_[1];
 		for (size_t i = 0; i != upper_bound_cells.size(); ++i)
 		{
@@ -113,7 +110,7 @@ namespace SPH
 	{
 		setupDynamics(dt);
 
-		//check lower bound
+		// check lower bound
 		CellLists &lower_bound_cells = bound_cells_[0];
 		parallel_for(
 			blocked_range<size_t>(0, lower_bound_cells.size()),
@@ -128,7 +125,7 @@ namespace SPH
 			},
 			ap);
 
-		//check upper bound
+		// check upper bound
 		CellLists &upper_bound_cells = bound_cells_[1];
 		parallel_for(
 			blocked_range<size_t>(0, upper_bound_cells.size()),
@@ -148,7 +145,7 @@ namespace SPH
 	{
 		setupDynamics(dt);
 
-		//check lower bound
+		// check lower bound
 		CellLists &lower_bound_cells = bound_cells_[0];
 		for (size_t i = 0; i != lower_bound_cells.size(); ++i)
 		{
@@ -157,7 +154,7 @@ namespace SPH
 				checkLowerBound(cell_list_data[num], dt);
 		}
 
-		//check upper bound
+		// check upper bound
 		CellLists &upper_bound_cells = bound_cells_[1];
 		for (size_t i = 0; i != upper_bound_cells.size(); ++i)
 		{
@@ -223,7 +220,7 @@ namespace SPH
 	{
 		setupDynamics(dt);
 
-		//check lower bound
+		// check lower bound
 		CellLists &lower_bound_cells = bound_cells_[0];
 		for (size_t i = 0; i != lower_bound_cells.size(); ++i)
 		{
@@ -232,7 +229,7 @@ namespace SPH
 				checking_bound_(particle_indexes[num], dt);
 		}
 
-		//check upper bound
+		// check upper bound
 		CellLists &upper_bound_cells = bound_cells_[1];
 		for (size_t i = 0; i != upper_bound_cells.size(); ++i)
 		{
@@ -490,8 +487,8 @@ namespace SPH
 	//=================================================================================================//
 	UpperFrontInXDirection::
 		UpperFrontInXDirection(SPHBody &sph_body) : ParticleDynamicsReduce<Real, ReduceMax>(sph_body),
-												GeneralDataDelegateSimple(sph_body),
-												pos_n_(particles_->pos_n_)
+													GeneralDataDelegateSimple(sph_body),
+													pos_n_(particles_->pos_n_)
 	{
 		quantity_name_ = "UpperFrontInXDirection";
 		initial_reference_ = 0.0;
@@ -504,8 +501,8 @@ namespace SPH
 	//=================================================================================================//
 	MaximumSpeed::
 		MaximumSpeed(SPHBody &sph_body) : ParticleDynamicsReduce<Real, ReduceMax>(sph_body),
-									  GeneralDataDelegateSimple(sph_body),
-									  vel_n_(particles_->vel_n_)
+										  GeneralDataDelegateSimple(sph_body),
+										  vel_n_(particles_->vel_n_)
 	{
 		quantity_name_ = "MaximumSpeed";
 		initial_reference_ = 0.0;
@@ -532,8 +529,8 @@ namespace SPH
 	//=================================================================================================//
 	BodyUpperBound::
 		BodyUpperBound(SPHBody &sph_body) : ParticleDynamicsReduce<Vecd, ReduceUpperBound>(sph_body),
-										GeneralDataDelegateSimple(sph_body),
-										pos_n_(particles_->pos_n_)
+											GeneralDataDelegateSimple(sph_body),
+											pos_n_(particles_->pos_n_)
 	{
 		constexpr double min_real_number = (std::numeric_limits<double>::min)();
 		initial_reference_ = Vecd(min_real_number);
@@ -550,9 +547,9 @@ namespace SPH
 		  vel_n_(particles_->vel_n_), pos_n_(particles_->pos_n_),
 		  gravity_(gravity_ptr_keeper_.createPtr<Gravity>(Vecd(0)))
 	{
-		quantity_name_ = "TotalMechanicalEnergy"; //TODO: this need to ben changed as "TotalKineticEnergy"
+		quantity_name_ = "TotalMechanicalEnergy"; // TODO: this need to ben changed as "TotalKineticEnergy"
 		initial_reference_ = 0.0;
-	}	
+	}
 	//=================================================================================================//
 	TotalMechanicalEnergy::TotalMechanicalEnergy(SPHBody &sph_body, Gravity &gravity)
 		: ParticleDynamicsReduce<Real, ReduceSum<Real>>(sph_body),

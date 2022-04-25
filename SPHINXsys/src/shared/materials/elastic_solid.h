@@ -79,16 +79,18 @@ namespace SPH
 		Real BulkModulus() { return K0_; };
 		Real PoissonRatio() { return nu_; };
 
-		/** compute the stress through defoemation, which can be green-lagrangian tensor, left or right cauchy tensor. */
+		/** Compute the stress through deformation, which can be Green-Lagrangian tensor, left or right Cauchy tensor. */
 		virtual Matd ConstitutiveRelation(Matd &deformation, size_t particle_index_i) = 0;
-		/** Compute numerical damping stress using right cauchy tensor. */
+		/** Compute the Cauchy stress through Eulerian Almansi strain tensor. */
+		virtual Matd EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i) = 0;
+		/** Compute numerical damping stress using right Cauchy tensor. */
 		virtual Matd NumericalDampingRightCauchy(Matd &deformation, Matd &deformation_rate, Real smoothing_length, size_t particle_index_i);
-		/** Compute numerical damping stress using left cauchy tensor. */
+		/** Compute numerical damping stress using left Cauchy tensor. */
 		virtual Matd NumericalDampingLeftCauchy(Matd &deformation, Matd &deformation_rate, Real smoothing_length, size_t particle_index_i);
-		/** numerical demaping is computed between particles i and j */
+		/** Numerical demaping is computed between particles i and j */
 		virtual Real PairNumericalDamping(Real dE_dt_ij, Real smoothing_length);
 
-		/** Deviatoric Kirchhoff stress related with the deviatoric part of left cauchy-green deformation tensor.
+		/** Deviatoric Kirchhoff stress related with the deviatoric part of left Cauchy-Green deformation tensor.
 		 *  Note that, dependent of the normalizeation of the later, the returned stress can be normalized or non-normalized. */
 		virtual Matd DeviatoricKirchhoff(const Matd &deviatoric_be);
 		/** Volumetric Kirchhoff stress from determinate */
@@ -113,6 +115,7 @@ namespace SPH
 		virtual void assignElasticMaterialParameters(Real youngs_modulus, Real poisson_ratio);
 
 		virtual Matd ConstitutiveRelation(Matd &deformation, size_t particle_index_i) override;
+		virtual Matd EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
 		/** Volumetric Kirchhoff stress from determinate */
 		virtual Real VolumetricKirchhoff(Real J) override;
 		/** Define the calculation of the stress matrix for postprocessing */
@@ -146,6 +149,7 @@ namespace SPH
 
 		/** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
 		virtual Matd ConstitutiveRelation(Matd &deformation, size_t particle_index_i) override;
+		virtual Matd EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
 		/** Volumetric Kirchhoff stress from determinate */
 		virtual Real VolumetricKirchhoff(Real J) override;
 		/** Define the calculation of the stress matrix for postprocessing */
@@ -168,8 +172,9 @@ namespace SPH
 		virtual ~NeoHookeanSolidIncompressible() {};
 	
 		/** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
-		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
-		/** Volumetric Kirchhoff stress determinate */
+		virtual Matd ConstitutiveRelation(Matd &deformation, size_t particle_index_i) override;
+		virtual Matd EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
+		/** Volumetric Kirchhoff stress from determinate */
 		virtual Real VolumetricKirchhoff(Real J) override;
 	};
 
