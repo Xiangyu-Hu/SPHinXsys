@@ -70,16 +70,19 @@ int main()
     try
     {
         // set up the simulation
-        BernoulliBeamJS BernoulliBeam(input);
+        BernoulliBeamJS bernoulli_beam(input);
         int number_of_steps = 700;
         std::cout << "About to run the simulation" << std::endl;
-        BernoulliBeam.runSimulation(number_of_steps);
+        bernoulli_beam.runSimulation(number_of_steps);
     }
     catch (const std::exception& e)
     {
         std::cout << e.what() << std::endl;
         return 1;
     }
+#else
+    BernoulliBeam bernoulli_beam(input);
+    bernoulli_beam.runCompleteSimulation(0.1);
 #endif //__EMSCRIPTEN__
     return 0;
 }
