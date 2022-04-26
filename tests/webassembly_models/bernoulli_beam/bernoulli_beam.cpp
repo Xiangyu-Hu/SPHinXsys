@@ -29,7 +29,6 @@ EMSCRIPTEN_BINDINGS(SPHINXSYS)
     emscripten::register_map<std::string, std::string>("VtuData");
 
     emscripten::value_object<BernoulliBeamInput>("BernoulliBeamInput")
-        .field("material_model_name", &BernoulliBeamInput::material_model_name)
         .field("scale_stl", &BernoulliBeamInput::scale_stl)
         .field("resolution", &BernoulliBeamInput::resolution)
         .field("rho_0", &BernoulliBeamInput::rho_0)

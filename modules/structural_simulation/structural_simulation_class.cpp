@@ -21,31 +21,30 @@ BodyPartFromMesh::BodyPartFromMesh(SPHBody &body, const string &body_part_name, 
 }
 
 SolidBodyFromMesh::SolidBodyFromMesh(
-	SPHSystem &system, const string &body_name, TriangleMeshShape &triangle_mesh_shape,
-	SharedPtr<SPHAdaptation> particle_adaptation, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume)
+	SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape,
+	 shared_ptr<SPHAdaptation> particle_adaptation)
 	: SolidBody(system, body_name, particle_adaptation)
 {
 	body_shape_.add<LevelSetShape>(this, triangle_mesh_shape, true, false);
-
 	// set the body domain bounds because it is not set by default
 	BoundingBox bounds = body_shape_.findBounds();
 	setBodyDomainBounds(bounds);
 }
 
 SolidBodyForSimulation::SolidBodyForSimulation(
-	SPHSystem &system, const string &body_name, TriangleMeshShape &triangle_mesh_shape, SharedPtr<SPHAdaptation> particle_adaptation,
-	Real physical_viscosity, SharedPtr<LinearElasticSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume)
-	: solid_body_from_mesh_(system, body_name, triangle_mesh_shape, particle_adaptation, pos_0, volume),
-	  //material_model_(material_model),
-	  elastic_solid_particles_(solid_body_from_mesh_, material_model),
-	  inner_body_relation_(solid_body_from_mesh_),
+	SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape, shared_ptr<SPHAdaptation> particle_adaptation,
+	Real physical_viscosity, shared_ptr<LinearElasticSolid> material_model, StdLargeVec<Vecd>& pos_0, StdLargeVec<Real>& volume):
 
-	  correct_configuration_(solid_dynamics::CorrectConfiguration(inner_body_relation_)),
-	  stress_relaxation_first_half_(solid_dynamics::StressRelaxationFirstHalf(inner_body_relation_)),
-	  stress_relaxation_second_half_(solid_dynamics::StressRelaxationSecondHalf(inner_body_relation_)),
-	  damping_random_(DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>(inner_body_relation_, 0.2, "Velocity", physical_viscosity))
-{
-}
+	solid_body_from_mesh_(system, body_name, triangle_mesh_shape, particle_adaptation),
+	elastic_solid_particles_(solid_body_from_mesh_, material_model, makeShared<ParticleGeneratorDirect>(pos_0, volume)),
+	inner_body_relation_(solid_body_from_mesh_),
+
+	correct_configuration_(inner_body_relation_),
+	stress_relaxation_first_half_(inner_body_relation_),
+	stress_relaxation_second_half_(inner_body_relation_),
+	damping_random_(inner_body_relation_, 0.2, "Velocity", physical_viscosity)
+{}
+
 
 void expandBoundingBox(BoundingBox *original, BoundingBox *additional)
 {
@@ -230,12 +229,15 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
 	  von_mises_stress_particles_({})
 
 {
+	std::cout << "============================= 1" << std::endl;
 	// scaling of translation and resolution
 	scaleTranslationAndResolution();
 	// set the default resolution to the max in the resolution list
 	setSystemResolutionMax();
+		std::cout << "============================= 2" << std::endl;
 	// create the body mesh list for triangular mesh shapes storage
 	createBodyMeshList();
+		std::cout << "============================= 3" << std::endl;
 	// create the particle adaptions for the bodies
 	createParticleAdaptationList();
 	// set up the system
@@ -246,6 +248,7 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
 	// contacts
 	initializeAllContacts();
 
+		std::cout << "============================= 4" << std::endl;
 	// boundary conditions
 	initializeGravity();
 	initializeAccelerationForBodyPartInBoundingBox();
@@ -259,7 +262,7 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
 	initializePositionScaleSolidBody();
 	initializeTranslateSolidBody();
 	initializeTranslateSolidBodyPart();
-
+	std::cout << "============================= 5" << std::endl;
 	// initialize simulation
 	initializeSimulation();
 }
@@ -320,6 +323,8 @@ void StructuralSimulation::createBodyMeshList()
 	{
 		string relative_input_path_copy = relative_input_path_;
 #ifdef __EMSCRIPTEN__
+		std::cout << "relative_input_path_copy: " << relative_input_path_copy << std::endl;
+		std::cout << "imported_stl_list_[i].name: " << imported_stl_list_[i].name << std::endl;
 	body_mesh_list_.push_back(make_shared<TriangleMeshShapeSTL>(reinterpret_cast<const uint8_t*>(imported_stl_list_[i].ptr), translation_list_[i], scale_stl_, imported_stl_list_[i].name));
 #else
 	body_mesh_list_.push_back(make_shared<TriangleMeshShapeSTL>(relative_input_path_copy.append(imported_stl_list_[i]), translation_list_[i], scale_stl_, imported_stl_list_[i]));

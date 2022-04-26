@@ -59,9 +59,7 @@ public:
 class SolidBodyFromMesh : public SolidBody
 {
 public:
-	SolidBodyFromMesh(SPHSystem &system, const string &body_name, TriangleMeshShape &triangle_mesh_shape,
-				  SharedPtr<SPHAdaptation> particle_adaptation, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume);
-	~SolidBodyFromMesh(){};
+	SolidBodyFromMesh(SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape, shared_ptr<SPHAdaptation> particle_adaptation);
 };
 
 class SolidBodyForSimulation
@@ -78,19 +76,24 @@ private:
 	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>> damping_random_;
 
 public:
+	// no particle reload --> direct generator
 	SolidBodyForSimulation(
-		SPHSystem &system, const string &body_name, TriangleMeshShape &triangle_mesh_shape, SharedPtr<SPHAdaptation> particle_adaptation,
-		Real physical_viscosity, SharedPtr<LinearElasticSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume);
-	~SolidBodyForSimulation(){};
+		SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape, shared_ptr<SPHAdaptation> particle_adaptation,
+		Real physical_viscosity, shared_ptr<LinearElasticSolid> material_model, StdLargeVec<Vecd>& pos_0, StdLargeVec<Real>& volume);
+	// particle reload
+	SolidBodyForSimulation(
+		SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape, shared_ptr<SPHAdaptation> particle_adaptation,
+		Real physical_viscosity, shared_ptr<LinearElasticSolid> material_model);
 
-	SolidBodyFromMesh *getSolidBodyFromMesh() { return &solid_body_from_mesh_; };
-	ElasticSolidParticles *getElasticSolidParticles() { return &elastic_solid_particles_; };
-	BodyRelationInner *getInnerBodyRelation() { return &inner_body_relation_; };
+	SolidBodyFromMesh* getSolidBodyFromMesh() { return &solid_body_from_mesh_; };
+	ElasticSolidParticles* getElasticSolidParticles() { return &elastic_solid_particles_; };
+	BodyRelationInner* getInnerBodyRelation() { return &inner_body_relation_; };
 
-	solid_dynamics::CorrectConfiguration *getCorrectConfiguration() { return &correct_configuration_; };
-	solid_dynamics::StressRelaxationFirstHalf *getStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
-	solid_dynamics::StressRelaxationSecondHalf *getStressRelaxationSecondHalf() { return &stress_relaxation_second_half_; };
-	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>> *getDampingWithRandomChoice() { return &damping_random_; };
+	solid_dynamics::CorrectConfiguration* getCorrectConfiguration() { return &correct_configuration_; };
+	solid_dynamics::StressRelaxationFirstHalf* getStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
+	solid_dynamics::StressRelaxationSecondHalf* getStressRelaxationSecondHalf() { return &stress_relaxation_second_half_; };
+	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>* getDampingWithRandomChoice() { return &damping_random_; };
+
 };
 
 void expandBoundingBox(BoundingBox *original, BoundingBox *additional);

@@ -15,7 +15,6 @@ using namespace SPH;
 
 struct BernoulliBeamInput
 {
-	std::vector<std::string> material_model_name;
 	double scale_stl;
 	std::vector<double> resolution;
 	double rho_0;
