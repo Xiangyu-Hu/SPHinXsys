@@ -139,15 +139,10 @@ namespace SPH
 	TriangleMeshShapeSTL::TriangleMeshShapeSTL(const uint8_t* buffer, Vec3d translation, Real scale_factor, const std::string &shape_name)
 		: TriangleMeshShape(shape_name)
 	{
-				std::cout << "TriangleMeshShapeSTL: " << "0" << std::endl;
 		SimTK::PolygonalMesh polymesh;
-				std::cout << "TriangleMeshShapeSTL: " << "1" << std::endl;
 		polymesh.loadStlBuffer(buffer);
-				std::cout << "TriangleMeshShapeSTL: " << "2" << std::endl;
 		polymesh.scaleMesh(scale_factor);
-				std::cout << "TriangleMeshShapeSTL: " << "3" << std::endl;
 		triangle_mesh_ = generateTriangleMesh(polymesh.transformMesh(translation));
-				std::cout << "TriangleMeshShapeSTL: " << "4" << std::endl;
 	}
 	#endif
 	//=================================================================================================//
