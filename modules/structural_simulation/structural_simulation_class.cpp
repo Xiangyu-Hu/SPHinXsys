@@ -12,9 +12,9 @@
 /* global functions in StructuralSimulation  */
 ////////////////////////////////////////////////////
 
-BodyPartFromMesh::BodyPartFromMesh(SPHBody &body, const string &body_part_name, TriangleMeshShape &triangle_mesh_shape)
-	: BodyRegionByParticle(body, body_part_name, triangle_mesh_shape)
-{
+BodyPartFromMesh::BodyPartFromMesh(SPHBody& body, const string &body_part_name, TriangleMeshShape& triangle_mesh_shape)
+: BodyRegionByParticle(body, body_part_name, triangle_mesh_shape)
+{	
 	// set the body domain bounds because it is not set by default
 	BoundingBox bounds = body_part_shape_.findBounds();
 	setBodyPartBounds(bounds);
@@ -45,6 +45,19 @@ SolidBodyForSimulation::SolidBodyForSimulation(
 	damping_random_(inner_body_relation_, 0.2, "Velocity", physical_viscosity)
 {}
 
+SolidBodyForSimulation::SolidBodyForSimulation(
+	SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape, shared_ptr<SPHAdaptation> particle_adaptation,
+	Real physical_viscosity, shared_ptr<LinearElasticSolid> material_model):
+
+	solid_body_from_mesh_(system, body_name, triangle_mesh_shape, particle_adaptation),
+	elastic_solid_particles_(solid_body_from_mesh_, material_model),
+	inner_body_relation_(BodyRelationInner(solid_body_from_mesh_)),
+
+	correct_configuration_(solid_dynamics::CorrectConfiguration(inner_body_relation_)),
+	stress_relaxation_first_half_(solid_dynamics::KirchhoffStressRelaxationFirstHalf(inner_body_relation_)),
+	stress_relaxation_second_half_(solid_dynamics::StressRelaxationSecondHalf(inner_body_relation_)),
+	damping_random_(DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>(inner_body_relation_, 0.2, "Velocity", physical_viscosity))
+{}
 
 void expandBoundingBox(BoundingBox *original, BoundingBox *additional)
 {
@@ -142,14 +155,14 @@ BodyPartByParticle* createBodyPartFromMesh(SPHBody& body, const StlList& stl_lis
 }
 
 StructuralSimulationInput::StructuralSimulationInput(
-	const string &relative_input_path,
-	const StlList imported_stl_list,
+	string relative_input_path,
+	StlList imported_stl_list,
 	Real scale_stl,
-	const vector<Vec3d> &translation_list,
-	const vector<Real> &resolution_list,
-	const vector<SharedPtr<LinearElasticSolid>> &material_model_list,
-	const StdVec<Real> &physical_viscosity,
-	const StdVec<IndexVector> &contacting_bodies_list)
+	vector<Vec3d> translation_list,
+	vector<Real> resolution_list,
+	vector<shared_ptr<LinearElasticSolid>> material_model_list,
+	StdVec<Real> physical_viscosity,
+	StdVec<IndexVector> contacting_bodies_list)
 	: relative_input_path_(relative_input_path),
 	  imported_stl_list_(imported_stl_list),
 	  scale_stl_(scale_stl),
@@ -377,19 +390,18 @@ void StructuralSimulation::initializeElasticSolidBodies()
 
 void StructuralSimulation::initializeContactBetweenTwoBodies(int first, int second)
 {
-	SolidBodyFromMesh *first_body = solid_body_list_[first]->getSolidBodyFromMesh();
-	SolidBodyFromMesh *second_body = solid_body_list_[second]->getSolidBodyFromMesh();
-	SolidBodyRelationContact *first_contact = contact_relation_ptr_keeper_.createPtr<SolidBodyRelationContact>(*first_body, RealBodyVector({second_body}));
-	SolidBodyRelationContact *second_contact = contact_relation_ptr_keeper_.createPtr<SolidBodyRelationContact>(*second_body, RealBodyVector({first_body}));
+	SolidBodyFromMesh* first_body = solid_body_list_[first]->getSolidBodyFromMesh();
+	SolidBodyFromMesh* second_body = solid_body_list_[second]->getSolidBodyFromMesh();
 
-	contact_list_.emplace_back(first_contact);
-	contact_list_.emplace_back(second_contact);
+	contact_list_.emplace_back(make_shared<SolidBodyRelationContact>(*first_body, RealBodyVector({second_body})));
+	contact_list_.emplace_back(make_shared<SolidBodyRelationContact>(*second_body, RealBodyVector({first_body})));
 
-	contact_density_list_.emplace_back(make_shared<solid_dynamics::ContactDensitySummation>(*first_contact));
-	contact_density_list_.emplace_back(make_shared<solid_dynamics::ContactDensitySummation>(*second_contact));
+	int last = contact_list_.size()-1;
+	contact_density_list_.push_back(make_shared<solid_dynamics::ContactDensitySummation>(*contact_list_[last-1]));
+	contact_density_list_.push_back(make_shared<solid_dynamics::ContactDensitySummation>(*contact_list_[last]));
 
-	contact_force_list_.emplace_back(make_shared<solid_dynamics::ContactForce>(*first_contact));
-	contact_force_list_.emplace_back(make_shared<solid_dynamics::ContactForce>(*second_contact));
+	contact_force_list_.push_back(make_shared<solid_dynamics::ContactForce>(*contact_list_[last-1]));
+	contact_force_list_.push_back(make_shared<solid_dynamics::ContactForce>(*contact_list_[last]));
 }
 
 void StructuralSimulation::initializeAllContacts()
@@ -399,19 +411,19 @@ void StructuralSimulation::initializeAllContacts()
 	contact_force_list_ = {};
 	// first place all the regular contacts into the lists
 	for (size_t i = 0; i < contacting_body_pairs_list_.size(); i++)
-	{
-		SolidBodyFromMesh *contact_body = solid_body_list_[i]->getSolidBodyFromMesh();
-		RealBodyVector target_list = {};
-		for (size_t target_i : contacting_body_pairs_list_[i])
+	{	
+		SolidBodyFromMesh* contact_body = solid_body_list_[i]->getSolidBodyFromMesh();
+		RealBodyVector target_list= {};
+
+		for (size_t target_i: contacting_body_pairs_list_[i])
 		{
 			target_list.emplace_back(solid_body_list_[target_i]->getSolidBodyFromMesh());
 		}
 
-		SolidBodyRelationContact *contact = contact_relation_ptr_keeper_.createPtr<SolidBodyRelationContact>(*contact_body, target_list);
-
-		contact_list_.emplace_back(contact);
-		contact_density_list_.emplace_back(make_shared<solid_dynamics::ContactDensitySummation>(*contact));
-		contact_force_list_.emplace_back(make_shared<solid_dynamics::ContactForce>(*contact));
+		contact_list_.emplace_back(make_shared<SolidBodyRelationContact>(*contact_body, target_list));
+		int last = contact_list_.size()-1;
+		contact_density_list_.emplace_back(make_shared<solid_dynamics::ContactDensitySummation>(*contact_list_[last]));
+		contact_force_list_.emplace_back(make_shared<solid_dynamics::ContactForce>(*contact_list_[last]));
 	}
 	// continue appending the lists with the time dependent contacts
 	for (size_t i = 0; i < time_dep_contacting_body_pairs_list_.size(); i++)
@@ -424,21 +436,21 @@ void StructuralSimulation::initializeAllContacts()
 
 void StructuralSimulation::initializeGravity()
 {
-	// collect all the body indices with non-zero gravity
-	vector<int> gravity_indices = {};
+	// collect all the body indeces with non-zero gravity
+	vector<int> gravity_indeces = {};
 	for (size_t i = 0; i < non_zero_gravity_.size(); i++)
 	{
-		gravity_indices.push_back(non_zero_gravity_[i].first);
+		gravity_indeces.push_back(non_zero_gravity_[i].first);
 	}
 	// initialize gravity
 	initialize_gravity_ = {};
-	size_t gravity_index_i = 0; // iterating through gravity_indices
+	size_t gravity_index_i = 0; // iterating through gravity_indeces
 	for (size_t i = 0; i < solid_body_list_.size(); i++)
-	{
-		// check if i is in indices_gravity
-		if (count(gravity_indices.begin(), gravity_indices.end(), i))
-		{
-			Gravity *gravity = gravity_ptr_keeper_.createPtr<Gravity>(non_zero_gravity_[gravity_index_i].second);
+	{	
+		// check if i is in indeces_gravity
+		if ( count(gravity_indeces.begin(), gravity_indeces.end(), i) )
+		{	
+			Gravity *gravity = new Gravity(non_zero_gravity_[gravity_index_i].second);
 			initialize_gravity_.emplace_back(make_shared<TimeStepInitialization>(*solid_body_list_[i]->getSolidBodyFromMesh(), *gravity));
 			gravity_index_i++;
 		}
