@@ -242,15 +242,12 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
 	  von_mises_stress_particles_({})
 
 {
-	std::cout << "============================= 1" << std::endl;
 	// scaling of translation and resolution
 	scaleTranslationAndResolution();
 	// set the default resolution to the max in the resolution list
 	setSystemResolutionMax();
-		std::cout << "============================= 2" << std::endl;
 	// create the body mesh list for triangular mesh shapes storage
 	createBodyMeshList();
-		std::cout << "============================= 3" << std::endl;
 	// create the particle adaptions for the bodies
 	createParticleAdaptationList();
 	// set up the system
@@ -260,8 +257,6 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
 	initializeElasticSolidBodies();
 	// contacts
 	initializeAllContacts();
-
-		std::cout << "============================= 4" << std::endl;
 	// boundary conditions
 	initializeGravity();
 	initializeAccelerationForBodyPartInBoundingBox();
@@ -275,7 +270,6 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
 	initializePositionScaleSolidBody();
 	initializeTranslateSolidBody();
 	initializeTranslateSolidBodyPart();
-	std::cout << "============================= 5" << std::endl;
 	// initialize simulation
 	initializeSimulation();
 }
