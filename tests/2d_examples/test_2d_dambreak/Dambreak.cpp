@@ -240,8 +240,10 @@ int main(int ac, char *av[])
 	std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
 			  << interval_updating_configuration.seconds() << "\n";
 
+	/*
 	write_water_mechanical_energy.newResultTest();
 	write_recorded_water_pressure.newResultTest();
+	*/
 
 	return 0;
 };

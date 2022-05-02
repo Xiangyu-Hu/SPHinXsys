@@ -5,6 +5,10 @@
 
 #include "contact_dynamics.h"
 
+#ifdef max
+#undef max
+#endif
+
 using namespace SimTK;
 
 namespace SPH

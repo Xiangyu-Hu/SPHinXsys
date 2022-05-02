@@ -41,5 +41,6 @@ capabilities. **/
 #include "in_output.h"
 #include "parameterization.h"
 #include "regression_test.h"
+#include "all_boundaries.h"
 
 #endif //SPHINXSYS_H
