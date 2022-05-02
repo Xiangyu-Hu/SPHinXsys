@@ -45,6 +45,14 @@ namespace SPH
 		registerASortableVariable<Real>("Volume");
 		//sorting particle once
 		//DynamicCast<RealBody>(this, body)->sortParticleWithCellLinkedList();
+
+		registerAVariable<Matd>(F_, "DeformationGradient", Matd(1.0));
+		registerAVariable<Matd>(dF_dt_, "DeformationRate");
+		registerAVariable<Matd>(stress_PK1_, "FirstPiolaKirchhoffStress");
+
+		registerAVariable<Real>(J_to_minus_2_over_dimension_, "DeterminantTerm");
+		registerAVariable<Matd>(stress_on_particle_, "StressOnParticle", Matd(1.0));
+		registerAVariable<Matd>(inverse_F_T_, "InverseTransposedDeformation", Matd(1.0));
 	}
 	//=============================================================================================//
 	void SolidParticles::offsetInitialParticlePosition(Vecd offset)
@@ -99,9 +107,7 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
-		registerAVariable<Matd>(F_, "DeformationGradient", Matd(1.0));
-		registerAVariable<Matd>(dF_dt_, "DeformationRate");
-		registerAVariable<Matd>(stress_PK1_, "FirstPiolaKirchhoffStress");
+
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------

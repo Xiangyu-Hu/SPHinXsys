@@ -76,6 +76,14 @@ namespace SPH
 		StdLargeVec<Real> contact_density_; /**< density due to contact of solid-solid. */
 		StdLargeVec<Vecd> contact_force_;	/**< contact force from other solid body or bodies */
 
+		StdLargeVec<Matd> F_;		   /**<  deformation tensor */
+		StdLargeVec<Matd> dF_dt_;	   /**<  deformation tensor change rate */
+		StdLargeVec<Matd> stress_PK1_; /**<  first Piola-Kirchhoff stress tensor */
+
+		StdLargeVec<Real> J_to_minus_2_over_dimension_;
+		StdLargeVec<Matd> stress_on_particle_;
+		StdLargeVec<Matd> inverse_F_T_;
+
 		void offsetInitialParticlePosition(Vecd offset);
 		void initializeNormalDirectionFromBodyShape();
 		void initializeNormalDirectionFromShapeAndOp(const std::string &shape_name);
@@ -100,10 +108,6 @@ namespace SPH
 							  SharedPtr<ElasticSolid> shared_elastic_solid_ptr,
 							  SharedPtr<ParticleGenerator> particle_generator_ptr = makeShared<ParticleGeneratorLattice>());
 		virtual ~ElasticSolidParticles(){};
-
-		StdLargeVec<Matd> F_;		   /**<  deformation tensor */
-		StdLargeVec<Matd> dF_dt_;	   /**<  deformation tensor change rate */
-		StdLargeVec<Matd> stress_PK1_; /**<  first Piola-Kirchhoff stress tensor */
 
 		// STRAIN
 		Matd get_GreenLagrange_strain(size_t particle_i);

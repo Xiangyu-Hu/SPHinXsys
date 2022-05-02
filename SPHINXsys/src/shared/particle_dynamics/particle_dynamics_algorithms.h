@@ -189,6 +189,7 @@ namespace SPH
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
+		virtual void parallel_exec_2(Real dt = 0.0);
 
 	protected:
 		virtual void Initialization(size_t index_i, Real dt = 0.0) = 0;

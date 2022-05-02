@@ -415,7 +415,7 @@ namespace SPH
 			virtual ~AccelerationForBodyPartInBoundingBox(){};
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &dvel_dt_prior_;
+			StdLargeVec<Vecd> &pos_0_, &dvel_dt_prior_;
 			BoundingBox bounding_box_;
 			Vecd acceleration_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -609,8 +609,8 @@ namespace SPH
 			virtual ~KirchhoffStressRelaxationFirstHalf(){};
 
 		protected:
-			StdLargeVec<Real> J_to_minus_2_over_dimension_;
-			StdLargeVec<Matd> stress_on_particle_, inverse_F_T_;
+			StdLargeVec<Real> &J_to_minus_2_over_dimension_;
+			StdLargeVec<Matd> &stress_on_particle_, &inverse_F_T_;
 			const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
 			Real correction_factor_;
 

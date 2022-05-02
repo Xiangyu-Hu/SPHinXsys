@@ -235,12 +235,14 @@ namespace SPH
 		explicit DataDelegateContact(BaseBodyRelationContact &body_contact_relation);
 		virtual ~DataDelegateContact(){};
 
+		/** Configurations for particle interaction between bodies. */
+		StdVec<ParticleConfiguration *> contact_configuration_;
+
 	protected:
 		StdVec<ContactBodyType *> contact_bodies_;
 		StdVec<ContactParticlesType *> contact_particles_;
 		StdVec<ContactMaterialType *> contact_material_;
-		/** Configurations for particle interaction between bodies. */
-		StdVec<ParticleConfiguration *> contact_configuration_;
+
 	};
 
 	/**

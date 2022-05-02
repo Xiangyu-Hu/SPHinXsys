@@ -565,7 +565,7 @@ namespace SPH
 		AccelerationForBodyPartInBoundingBox::
 			AccelerationForBodyPartInBoundingBox(SolidBody &solid_body, BoundingBox &bounding_box, Vecd acceleration)
 			: ParticleDynamicsSimple(solid_body), SolidDataSimple(solid_body),
-			  pos_n_(particles_->pos_n_),
+			  pos_0_(particles_->pos_0_),
 			  dvel_dt_prior_(particles_->dvel_dt_prior_),
 			  bounding_box_(bounding_box),
 			  acceleration_(acceleration)
@@ -577,7 +577,7 @@ namespace SPH
 		{
 			try
 			{
-				Vecd point = pos_n_[index_i];
+				Vecd point = pos_0_[index_i];
 				if (checkIfPointInBoundingBox(point, bounding_box_))
 				{
 					dvel_dt_prior_[index_i] += acceleration_;
@@ -832,11 +832,11 @@ namespace SPH
 		//=================================================================================================//
 		KirchhoffStressRelaxationFirstHalf::
 			KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
-			: StressRelaxationFirstHalf(inner_relation)
+			: StressRelaxationFirstHalf(inner_relation),
+			J_to_minus_2_over_dimension_(particles_->J_to_minus_2_over_dimension_),
+			stress_on_particle_(particles_->stress_on_particle_),
+			inverse_F_T_(particles_->inverse_F_T_)
 		{
-			particles_->registerAVariable<Real>(J_to_minus_2_over_dimension_, "DeterminantTerm");
-			particles_->registerAVariable<Matd>(stress_on_particle_, "StressOnParticle");
-			particles_->registerAVariable<Matd>(inverse_F_T_, "InverseTransposedDeformation");
 		};
 		//=================================================================================================//
 		void KirchhoffStressRelaxationFirstHalf::Initialization(size_t index_i, Real dt)

@@ -135,6 +135,11 @@ namespace SPH
 		ParticleIterator_parallel(total_real_particles, functor_initialization_, dt);
 		for (size_t k = 0; k < pre_processes_.size(); ++k)
 			pre_processes_[k]->parallel_exec(dt);
+	}
+	//=================================================================================================//
+	void ParticleDynamics1Level::parallel_exec_2(Real dt)
+	{	
+		size_t total_real_particles = base_particles_->total_real_particles_;
 		ParticleIterator_parallel(total_real_particles, functor_interaction_, dt);
 		for (size_t k = 0; k < post_processes_.size(); ++k)
 			post_processes_[k]->parallel_exec(dt);
