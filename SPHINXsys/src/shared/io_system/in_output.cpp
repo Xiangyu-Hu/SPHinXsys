@@ -202,7 +202,7 @@ namespace SPH
 		stream << "</VTKFile>\n";
 	}
 	//=============================================================================================//
-	const BodyStatesRecordingToVtpString::VtuStringData& BodyStatesRecordingToVtpString::GetVtuData() const
+	const VtuStringData& BodyStatesRecordingToVtpString::GetVtuData() const
 	{
 		return _vtuData;
 	}
