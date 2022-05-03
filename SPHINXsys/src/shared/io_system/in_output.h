@@ -50,6 +50,8 @@ namespace fs = boost::filesystem;
 namespace fs = std::experimental::filesystem;
 #endif
 
+using VtuStringData = std::map<std::string, std::string>;
+
 namespace SPH
 {
 
@@ -297,9 +299,10 @@ namespace SPH
 			: BodyStatesRecording(in_output, bodies) {};
 		virtual ~BodyStatesRecordingToVtpString() = default;
 
-		using VtuStringData = std::map<std::string, std::string>;
-
 		const VtuStringData& GetVtuData() const;
+		void clear() {
+			_vtuData.clear();
+		}
 	protected:
 		virtual void writeWithFileName(const std::string& sequence) override;
 		virtual void writeVtu(std::ostream& stream, SPHBody* body) const;

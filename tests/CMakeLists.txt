@@ -25,4 +25,5 @@ endif()
 
 if(BUILD_3D_EXAMPLES)
 	ADD_SUBDIRECTORY(3d_examples)
+	ADD_SUBDIRECTORY(webassembly_models)
 endif()

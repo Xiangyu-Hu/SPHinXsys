@@ -774,7 +774,7 @@ namespace SPH
 			rho_n_[index_i] = rho0_ / det(F_[index_i]);
 			//obtain the first Piola-Kirchhoff stress from the second Piola-Kirchhoff stress
 			//it seems using reproducing correction here increases convergence rate near the free surface
-			stress_PK1_[index_i] = F_[index_i] * material_->ConstitutiveRelation(F_[index_i], index_i) * B_[index_i];
+			stress_PK1_[index_i] = F_[index_i] * material_->ConstitutiveRelation(F_[index_i], index_i);
 		}
 		//=================================================================================================//
 		void StressRelaxationFirstHalf::Interaction(size_t index_i, Real dt)
@@ -794,7 +794,7 @@ namespace SPH
 				Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
 				Matd numerical_stress_ij =
 					0.5 * (F_[index_i] + F_[index_j]) * material_->PairNumericalDamping(strain_rate, smoothing_length_);
-				acceleration += (stress_PK1_[index_i] + stress_PK1_[index_j] + numerical_dissipation_factor_ * weight * numerical_stress_ij) *
+				acceleration += (stress_PK1_[index_i] * B_[index_i] + stress_PK1_[index_j] * B_[index_j] + numerical_dissipation_factor_ * weight * numerical_stress_ij) *
 								inner_neighborhood.dW_ij_[n] * e_ij * Vol_[index_j] * inv_rho0_;
 			}
 
