@@ -29,6 +29,7 @@
 #ifndef SOLID_PARTICLES_H
 #define SOLID_PARTICLES_H
 
+#include "elastic_solid.h"
 #include "base_particles.h"
 #include "base_particles.hpp"
 
@@ -115,10 +116,12 @@ namespace SPH
 		Real von_Mises_strain_static(size_t particle_i);
 		/**< Computing von Mises equivalent strain from a "dynamic" formulation. This depends on the Poisson's ratio (from commercial FEM software Help). */
 		Real von_Mises_strain_dynamic(size_t particle_i, Real poisson);
+
 		/**< Computing von Mises strain for all particles. - "static" or "dynamic"*/
-		StdLargeVec<Real> getVonMisesStrainVector(std::string strain_measure = "static", Real poisson = 0.5);
+		StdLargeVec<Real> getVonMisesStrainVector(std::string strain_measure = "static");
 		/**< Computing maximum von Mises strain from all particles. - "static" or "dynamic" */
-		Real getVonMisesStrainMax(std::string strain_measure = "static", Real poisson = 0.5);
+		Real getVonMisesStrainMax(std::string strain_measure = "static");
+		Real getPrincipalStrainMax();
 
 		// STRESS
 		Matd get_Cauchy_stress(size_t particle_i);
@@ -127,14 +130,17 @@ namespace SPH
 		Vecd get_Principal_stresses(size_t particle_i);
 		/**< Computing von_Mises_stress - "Cauchy" or "PK2" decided based on the stress_measure_ */
 		Real get_von_Mises_stress(size_t particle_i);
+
 		/**< Computing von Mises stress for all particles. - "Cauchy" or "PK2" decided based on the stress_measure_ */
 		StdLargeVec<Real> getVonMisesStressVector();
 		/**< Computing maximum von Mises stress from all particles. - "Cauchy" or "PK2" decided based on the stress_measure_ */
 		Real getVonMisesStressMax();
+		Real getPrincipalStressMax();
 
 		/**< Computing displacemnt. */
 		Vecd displacement(size_t particle_i);
 		StdLargeVec<Vecd> getDisplacement();
+		Real getMaxDisplacement();
 
 		/**< Computing normal vector. */
 		Vecd normal (size_t particle_i);
@@ -142,6 +148,8 @@ namespace SPH
 
 		/** relevant stress measure */
 		std::string stress_measure_;
+
+		SharedPtr<ElasticSolid> shared_elastic_solid_ptr_;
 	};
 
 	/**

@@ -136,6 +136,5 @@ if(ACTIVATE_CUDA)
     add_subdirectory(cases_test_gpu)
 endif()
 
-if(NOT SPH_ONLY_STATIC_BUILD)
-    add_subdirectory(modules)
-endif()
+add_subdirectory(modules)
+
