@@ -46,10 +46,8 @@ namespace SPH
 	 */
 	class KernelQuadratic : public Kernel
 	{
-	protected:
-		virtual void setBasicParameters() override;
 	public:
-		KernelQuadratic();
+		KernelQuadratic(Real h);
 
 		virtual Real W_1D(const Real q) const override;
 		virtual Real W_2D(const Real q) const override;

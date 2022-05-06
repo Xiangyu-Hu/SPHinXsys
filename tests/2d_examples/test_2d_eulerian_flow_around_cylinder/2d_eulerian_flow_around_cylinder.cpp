@@ -6,81 +6,82 @@
  */
 #include "sphinxsys.h"
 
- /** case file to setup the test case */
+/** case file to setup the test case */
 #include "2d_eulerian_flow_around_cylinder.h"
 
 using namespace SPH;
 
-int main(int ac, char* av[])
+int main(int ac, char *av[])
 {
 	/** Build up -- a SPHSystem -- */
-	SPHSystem system(system_domain_bounds, resolution_ref);
-	In_Output	in_output(system);
+	SPHSystem sph_system(system_domain_bounds, resolution_ref);
+	InOutput in_output(sph_system);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = false;
+	sph_system.run_particle_relaxation_ = false;
 	/** Tag for computation start with relaxed body fitted particles distribution. */
-	system.reload_particles_ = true;
+	sph_system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: start with initial condition. */
-	system.restart_step_ = 0;
+	sph_system.restart_step_ = 0;
 
-	//handle command line arguments
+	// handle command line arguments
 #ifdef BOOST_AVAILABLE
-	system.handleCommandlineOptions(ac, av);
+	sph_system.handleCommandlineOptions(ac, av);
 #endif
 	/**
 	 * @brief Creating body, materials and particles for a water block.
 	 */
-	WaterBlock water_block(system, "WaterBody");
-	SharedPtr<ParticleGenerator> water_block__particle_generator = makeShared<ParticleGeneratorLattice>();
-	if (!system.run_particle_relaxation_ && system.reload_particles_)
-		water_block__particle_generator = makeShared<ParticleGeneratorReload>(in_output, water_block.getBodyName());
-	WeaklyCompressibleFluidParticles 	fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f),water_block__particle_generator);
-	fluid_particles.addAVariableToWrite<Real>("Pressure");
-	fluid_particles.addAVariableToWrite<int>("SurfaceIndicator");
+	EulerianFluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
+	water_block.defineComponentLevelSetShape("OuterBoundary");
+	water_block.defineParticlesAndMaterial<WeaklyCompressibleFluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+		? water_block.generateParticles<ParticleGeneratorReload>(in_output, water_block.getBodyName())
+		: water_block.generateParticles<ParticleGeneratorLattice>();
+	water_block.addBodyStateForRecording<int>("SurfaceIndicator");
 	/**
 	 * @brief 	Creating the cylinder.
 	 */
-	Cylinder cylinder(system, "Cylinder");
-	SharedPtr<ParticleGenerator> cylinder_particle_generator = makeShared<ParticleGeneratorLattice>();
-	if (!system.run_particle_relaxation_ && system.reload_particles_)
-		cylinder_particle_generator = makeShared<ParticleGeneratorReload>(in_output, cylinder.getBodyName());
-	SolidParticles 	cylinder_particles(cylinder, cylinder_particle_generator);
-
+	SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
+	cylinder.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
+	cylinder.defineBodyLevelSetShape();
+	cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
+	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+		? cylinder.generateParticles<ParticleGeneratorReload>(in_output, cylinder.getBodyName())
+		: cylinder.generateParticles<ParticleGeneratorLattice>();
 	/**
 	 * @brief define simple data file input and outputs functions.
 	 */
-	BodyStatesRecordingToVtp 				write_real_body_states(in_output, system.real_bodies_);
-	RestartIO							restart_io(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp write_real_body_states(in_output, sph_system.real_bodies_);
+	RestartIO restart_io(in_output, sph_system.real_bodies_);
 	/** body topology */
 	BodyRelationInner water_block_inner(water_block);
-	BodyRelationContact water_cylinder_contact(water_block, { &cylinder });
-	ComplexBodyRelation water_block_complex(water_block, { &cylinder });
-	BodyRelationContact cylinder_contact (cylinder, { &water_block });
+	BodyRelationContact water_cylinder_contact(water_block, {&cylinder});
+	ComplexBodyRelation water_block_complex(water_block, {&cylinder});
+	BodyRelationContact cylinder_contact(cylinder, {&water_block});
 
 	/** check whether run particle relaxation for body fitted particle distribution. */
-	if (system.run_particle_relaxation_)
+	if (sph_system.run_particle_relaxation_)
 	{
-		//body topology for particle realxation 
+		// body topology for particle relaxation
 		BodyRelationInner cylinder_inner(cylinder);
 		/*
 		 * @brief 	Methods used for particle relaxation.
 		 */
-		 /** Random reset the insert body particle position. */
-		RandomizePartilePosition  random_inserted_body_particles(cylinder);
-		RandomizePartilePosition  random_water_body_particles(water_block);
+		/** Random reset the insert body particle position. */
+		RandomizePartilePosition random_inserted_body_particles(cylinder);
+		RandomizePartilePosition random_water_body_particles(water_block);
 		/** Write the body state to Vtu file. */
-		BodyStatesRecordingToVtp 		write_inserted_body_to_vtu(in_output, { &cylinder });
-		BodyStatesRecordingToVtp 		write_water_body_to_vtu(in_output, { &water_block });
+		BodyStatesRecordingToVtp write_inserted_body_to_vtu(in_output, {&cylinder});
+		BodyStatesRecordingToVtp write_water_body_to_vtu(in_output, {&water_block});
 		/** Write the particle reload files. */
-		ReloadParticleIO 		write_inserted_particle_reload_files(in_output, { &cylinder });
-		ReloadParticleIO 		write_water_particle_reload_files(in_output, { &water_block });
+		ReloadParticleIO write_inserted_particle_reload_files(in_output, {&cylinder});
+		ReloadParticleIO write_water_particle_reload_files(in_output, {&water_block});
 
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner, true);
-		relax_dynamics::RelaxationStepComplex relaxation_step_complex(water_block_complex, true);
+		relax_dynamics::RelaxationStepComplex relaxation_step_complex(water_block_complex, "OuterBoundary", true);
 		/**
-		  * @brief 	Particle relaxation starts here.
-		  */
+		 * @brief 	Particle relaxation starts here.
+		 */
 		random_inserted_body_particles.parallel_exec(0.25);
 		random_water_body_particles.parallel_exec(0.25);
 		relaxation_step_inner.surface_bounding_.parallel_exec();
@@ -112,23 +113,24 @@ int main(int ac, char* av[])
 	/**
 	 * @brief 	Methods used for time stepping.
 	 */
-	 /** Initialize particle acceleration. */
-	eulerian_weakly_compressible_fluid_dynamics::EulerianFlowTimeStepInitialization 	initialize_a_fluid_step(water_block);
+	SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
+	/** Initialize particle acceleration. */
+	eulerian_weakly_compressible_fluid_dynamics::EulerianFlowTimeStepInitialization initialize_a_fluid_step(water_block);
 	/** Time step size with considering sound wave speed. */
-	eulerian_weakly_compressible_fluid_dynamics::AcousticTimeStepSize		get_fluid_time_step_size(water_block);
+	eulerian_weakly_compressible_fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
 	eulerian_weakly_compressible_fluid_dynamics::PressureRelaxationHLLCRiemannWithLimiterWithWall pressure_relaxation(water_block_complex);
 	eulerian_weakly_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCRiemannWithLimiterWithWall density_relaxation(water_block_complex);
 	eulerian_weakly_compressible_fluid_dynamics::FreeSurfaceIndicationComplex surface_indicator(water_block_complex.inner_relation_, water_block_complex.contact_relation_);
 	/** Computing viscous acceleration with wall model. */
-	eulerian_weakly_compressible_fluid_dynamics::ViscousAccelerationWithWall  viscous_acceleration(water_block_complex);
+	eulerian_weakly_compressible_fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex);
 	/** non_reflective boundary condition. */
 	FarFieldBoundary variable_reset_in_boundary_condition(water_block_complex.inner_relation_);
 	/**
 	 * @brief Algorithms of FSI.
 	 */
-	 /** Compute the force exerted on solid body due to fluid pressure and viscosity. */
+	/** Compute the force exerted on solid body due to fluid pressure and viscosity. */
 	solid_dynamics::FluidForceOnSolidUpdateRiemannWithLimiterInEuler fluid_force_on_solid_update(cylinder_contact);
 	/**
 	 * @brief Write solid data into files.
@@ -142,20 +144,21 @@ int main(int ac, char* av[])
 	/**
 	 * @brief Pre-simulation.
 	 */
-	 /** initialize cell linked lists for all bodies. */
-	system.initializeSystemCellLinkedLists();
+	/** initialize cell linked lists for all bodies. */
+	sph_system.initializeSystemCellLinkedLists();
 	/** initialize configurations for all bodies. */
-	system.initializeSystemConfigurations();
+	sph_system.initializeSystemConfigurations();
 	/** initialize surface normal direction for the insert body. */
-	cylinder_particles.initializeNormalDirectionFromBodyShape();
+	cylinder_normal_direction.parallel_exec();
 	surface_indicator.parallel_exec();
 	variable_reset_in_boundary_condition.parallel_exec();
 
 	/**
 	 * @brief The time stepping starts here.
 	 */
-	if (system.restart_step_ != 0) {
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.restart_step_);
+	if (sph_system.restart_step_ != 0)
+	{
+		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
 		cylinder.updateCellLinkedList();
 		water_block.updateCellLinkedList();
 		water_block_complex.updateConfiguration();
@@ -164,14 +167,11 @@ int main(int ac, char* av[])
 	/** first output*/
 	write_real_body_states.writeToFile(0);
 
-	size_t number_of_iterations = system.restart_step_;
+	size_t number_of_iterations = sph_system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 200.0;			    /**< End time. */
-	Real D_Time = 1.0;	/**< time stamps for output. */
-	Real Dt = 0.0;					    /**< Default advection time step sizes for fluid. */
-	Real dt = 0.0; 					    /**< Default acoustic time step sizes for fluid. */
-	size_t inner_ite_dt = 0;
+	Real End_Time = 200.0; /**< End time. */
+	Real D_Time = 1.0;	   /**< time stamps for output. */
 
 	/** Statistics for computing time. */
 	tick_count t1 = tick_count::now();
@@ -186,7 +186,7 @@ int main(int ac, char* av[])
 		while (integration_time < D_Time)
 		{
 			initialize_a_fluid_step.parallel_exec();
-			dt = get_fluid_time_step_size.parallel_exec();
+			Real dt = get_fluid_time_step_size.parallel_exec();
 			viscous_acceleration.parallel_exec();
 			/** FSI for viscous force. */
 			fluid_force_on_solid_update.viscous_force_.parallel_exec();
@@ -204,10 +204,10 @@ int main(int ac, char* av[])
 			if (number_of_iterations % screen_output_interval == 0)
 			{
 				cout << fixed << setprecision(9) << "N=" << number_of_iterations << "	Time = "
-					<< GlobalStaticVariables::physical_time_
-					<< "	dt = " << dt << "\n";
+					 << GlobalStaticVariables::physical_time_
+					 << "	dt = " << dt << "\n";
 
-				if (number_of_iterations % restart_output_interval == 0 && number_of_iterations != system.restart_step_)
+				if (number_of_iterations % restart_output_interval == 0 && number_of_iterations != sph_system.restart_step_)
 					restart_io.writeToFile(Real(number_of_iterations));
 			}
 			number_of_iterations++;
@@ -227,8 +227,10 @@ int main(int ac, char* av[])
 	tt = t4 - t1 - interval;
 	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
 
-	write_total_viscous_force_on_inserted_body.newResultTest();
+	if (!sph_system.restart_step_ == 0) // TODO: this case should be revsied latter.
+	{
+		write_total_viscous_force_on_inserted_body.newResultTest();
+	}
 
 	return 0;
 }
-

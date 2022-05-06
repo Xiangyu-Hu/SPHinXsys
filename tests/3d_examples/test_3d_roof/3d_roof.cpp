@@ -1,9 +1,9 @@
 /**
-* @file 	3d_roof.cpp
-* @brief 	This is the benchmark test of the shell.
-* @details  We consider the deformation of a cylindrical surface.
-* @author 	Dong Wu, Chi Zhang and Xiangyu Hu
-* @version  0.1
+ * @file 	3d_roof.cpp
+ * @brief 	This is the benchmark test of the shell.
+ * @details  We consider the deformation of a cylindrical surface.
+ * @author 	Dong Wu, Chi Zhang and Xiangyu Hu
+ * @version  0.1
  */
 #include "sphinxsys.h"
 
@@ -19,11 +19,13 @@ Real radius_mid_surface = radius + thickness / 2.0; /** Radius of the mid surfac
 int particle_number = 16;							/** Particle number in the peripheral direction. */
 /** Initial reference particle spacing. */
 Real particle_spacing_ref = 2.0 * radius_mid_surface * Pi * 80.0 / 360.0 / (Real)particle_number;
-int BWD = 1;
+int BWD = 1;								/** Width of the boundary layer measured by number of particles. */
 Real BW = particle_spacing_ref * (Real)BWD; /** Boundary width, determined by specific layer of boundary particles. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec3d(-radius - thickness, 0.0, -radius - thickness),
 								 Vec3d(radius + thickness + BW, height, radius + thickness));
+// Observer location
+StdVec<Vecd> observation_location = {Vecd(radius_mid_surface * cos(5.0 / 18.0 * Pi), 0.5 * height, radius_mid_surface *sin(5.0 / 18.0 * Pi))};
 
 /** For material properties of the solid. */
 Real rho0_s = 36.0;				 /** Normalized density. */
@@ -35,10 +37,11 @@ Real time_to_full_external_force = 0.1;
 Real gravitational_acceleration = -10.0;
 
 /** Define application dependent particle generator for thin structure. */
-class CylinderParticleGenerator : public ParticleGeneratorDirect
+class CylinderParticleGenerator : public SurfaceParticleGenerator
 {
 public:
-	CylinderParticleGenerator() : ParticleGeneratorDirect()
+	explicit CylinderParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+	virtual void initializeGeometricVariables() override
 	{
 		// the cylinder and boundary
 		for (int i = 0; i < particle_number; i++)
@@ -48,32 +51,13 @@ public:
 				Real x = radius_mid_surface * cos(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
 				Real y = particle_spacing_ref * j - BW + particle_spacing_ref * 0.5;
 				Real z = radius_mid_surface * sin(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
-				positions_volumes_.push_back(std::make_pair(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref));
+				initializePositionAndVolume(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref);
+				Vecd n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
+				initializeSurfaceProperties(n_0, thickness);
 			}
 		}
 	}
 };
-/**
- * application dependent initial condition
- */
-class CylinderDynamicsInitialCondition
-	: public thin_structure_dynamics::ShellDynamicsInitialCondition
-{
-public:
-	explicit CylinderDynamicsInitialCondition(SolidBody &plate)
-		: thin_structure_dynamics::ShellDynamicsInitialCondition(plate){};
-
-protected:
-	void Update(size_t index_i, Real dt) override
-	{
-		/** initial pseudo-normal. */
-		n_0_[index_i] = Vec3d(pos_0_[index_i][0] / radius_mid_surface, 0.0, pos_0_[index_i][2] / radius_mid_surface);
-		n_[index_i] = n_0_[index_i];
-		pseudo_n_[index_i] = n_0_[index_i];
-		transformation_matrix_[index_i] = getTransformationMatrix(n_0_[index_i]);
-	};
-};
-
 /** Define the boundary geometry. */
 class BoundaryGeometry : public BodyPartByParticle
 {
@@ -112,17 +96,6 @@ public:
 				   : global_acceleration_;
 	}
 };
-
-/** Define application dependent observer particle generator. */
-class ObserverParticleGenerator : public ParticleGeneratorDirect
-{
-public:
-	ObserverParticleGenerator() : ParticleGeneratorDirect()
-	{
-		positions_volumes_.push_back(
-			std::make_pair(Vecd(radius_mid_surface * cos(5.0 / 18.0 * Pi), 0.5 * height, radius_mid_surface * sin(5.0 / 18.0 * Pi)), 0.0));
-	}
-};
 /**
  *  The main program
  */
@@ -132,15 +105,13 @@ int main()
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
 
 	/** Create a Cylinder body. */
-	ThinStructure cylinder_body(system, "CylinderBody", makeShared<SPHAdaptation>(1.15, 1.0));
-	SharedPtr<LinearElasticSolid> cylinder_material = makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
-	/** Create particles for the elastic body. */
-	ShellParticles cylinder_body_particles(cylinder_body, cylinder_material, makeShared<CylinderParticleGenerator>(), thickness);
-	cylinder_body_particles.addAVariableToWrite<Mat3d>("FirstPiolaKirchhoffStress");
-
+	SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
+	cylinder_body.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	cylinder_body.generateParticles<CylinderParticleGenerator>();
+	cylinder_body.addBodyStateForRecording<Mat3d>("FirstPiolaKirchhoffStress");
 	/** Define Observer. */
 	ObserverBody cylinder_observer(system, "CylinderObserver");
-	ObserverParticles observer_particles(cylinder_observer, makeShared<ObserverParticleGenerator>());
+	cylinder_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
 	/** Set body contact map
 	 *  The contact map gives the data connections between the bodies
@@ -156,8 +127,6 @@ int main()
 	/**
 	 * This section define all numerical methods will be used in this case.
 	 */
-	/** initial condition */
-	CylinderDynamicsInitialCondition cylinder_initial_pseudo_normal(cylinder_body);
 	/** Corrected configuration. */
 	thin_structure_dynamics::ShellCorrectConfiguration
 		corrected_configuration(cylinder_body_inner);
@@ -176,7 +145,7 @@ int main()
 	DampingWithRandomChoice<DampingBySplittingInner<Vecd>>
 		cylinder_rotation_damping(cylinder_body_inner, 0.2, "AngularVelocity", physical_viscosity);
 	/** Output */
-	In_Output in_output(system);
+	InOutput in_output(system);
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_cylinder_max_displacement("Position", in_output, cylinder_observer_contact);
@@ -184,13 +153,12 @@ int main()
 	/** Apply initial condition. */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	cylinder_initial_pseudo_normal.parallel_exec();
 	corrected_configuration.parallel_exec();
 
 	/**
-	* From here the time stepping begins.
-	* Set the starting time.
-	*/
+	 * From here the time stepping begins.
+	 * Set the starting time.
+	 */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	write_states.writeToFile(0);
 	write_cylinder_max_displacement.writeToFile(0);

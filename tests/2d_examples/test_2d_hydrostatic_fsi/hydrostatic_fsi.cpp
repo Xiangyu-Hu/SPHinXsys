@@ -44,6 +44,8 @@ Vec2d ConstrainRP_lb(Dam_L, -Gate_width);
 Vec2d ConstrainRP_lt(Dam_L, 0.0);
 Vec2d ConstrainRP_rt(Dam_L + BW, 0.0);
 Vec2d ConstrainRP_rb(Dam_L + BW, -Gate_width);
+//observer location
+StdVec<Vecd> observation_location = {Vecd(0.5 * Dam_L, -0.5 * Gate_width)};
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -62,7 +64,7 @@ Real poisson = 0.34;  /**< Poisson ratio. */
 Real Ae = 6.75e10;	  /**< Normalized Youngs Modulus. */
 Real Youngs_modulus = Ae;
 //----------------------------------------------------------------------
-//	Fluid body definition.
+//	Geometry definition.
 //----------------------------------------------------------------------
 std::vector<Vecd> createWaterBlockShape()
 {
@@ -75,22 +77,16 @@ std::vector<Vecd> createWaterBlockShape()
 
 	return water_block_shape;
 }
-
-class WaterBlock : public FluidBody
+class WaterBlock : public MultiPolygonShape
 {
 public:
-	WaterBlock(SPHSystem &system, const std::string &body_name)
-		: FluidBody(system, body_name)
+	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geometry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
-
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
 	}
 };
 //----------------------------------------------------------------------
-//	wall body definition.
+//	wall body shape definition.
 //----------------------------------------------------------------------
 std::vector<Vecd> createOuterWallShape()
 {
@@ -116,17 +112,13 @@ std::vector<Vecd> createInnerWallShape()
 	return inner_wall_shape;
 }
 
-class WallBoundary : public SolidBody
+class WallBoundary : public MultiPolygonShape
 {
 public:
-	WallBoundary(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geometry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(createInnerWallShape(), ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::add);
 	}
 };
 //----------------------------------------------------------------------
@@ -144,18 +136,14 @@ std::vector<Vecd> createGateShape()
 	return gate_shape;
 }
 //----------------------------------------------------------------------
-//	Define the elastic gate body.
+//	Define the gate body shape.
 //----------------------------------------------------------------------
-class Gate : public SolidBody
+class Gate : public MultiPolygonShape
 {
 public:
-	Gate(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name, makeShared<SPHAdaptation>(1.15, 1.0))
+	explicit Gate(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geometry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(createGateShape(), ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(createGateShape(), ShapeBooleanOps::add);
 	}
 };
 //----------------------------------------------------------------------
@@ -199,19 +187,6 @@ std::vector<Vecd> createGateConstrainShapeRight()
 	return gate_constrain_shape;
 }
 //----------------------------------------------------------------------
-//	Define the observer particle generator.
-//----------------------------------------------------------------------
-class ObserverParticleGenerator : public ParticleGeneratorDirect
-{
-public:
-	ObserverParticleGenerator() : ParticleGeneratorDirect()
-	{
-		/** A measuring point at the center of the channel */
-		Vec2d point_coordinate(0.0, DH * 0.5);
-		positions_volumes_.push_back(std::make_pair(Vecd(0.5 * Dam_L, -0.5 * Gate_width), 0.0));
-	}
-};
-//----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
 int main()
@@ -223,21 +198,26 @@ int main()
 	/** Set the starting time to zero. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** output environment. */
-	In_Output in_output(system);
+	InOutput in_output(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	WaterBlock water_block(system, "WaterBody");
-	FluidParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f));
-	WallBoundary wall_boundary(system, "Wall");
-	SolidParticles wall_boundary_particles(wall_boundary);
-	Gate gate(system, "Gate");
-	ElasticSolidParticles gate_particles(gate, makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson));
+	FluidBody water_block(system,makeShared<WaterBlock>("WaterBody"));
+	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+	water_block.generateParticles<ParticleGeneratorLattice>();
+
+	SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+	wall_boundary.generateParticles<ParticleGeneratorLattice>();
+
+	SolidBody gate(system, makeShared<Gate>("Gate"));
+	gate.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	gate.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Particle and body creation of gate observer.
 	//----------------------------------------------------------------------
 	ObserverBody gate_observer(system, "Observer");
-	ObserverParticles observer_particles(gate_observer, makeShared<ObserverParticleGenerator>());
+	gate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -267,6 +247,8 @@ int main()
 	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex);
 	DampingWithRandomChoice<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
 		fluid_damping(water_block_complex, 0.2, "Velocity", mu_f);
+	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+	SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
 	/** Corrected configuration. */
 	solid_dynamics::CorrectConfiguration gate_corrected_configuration(gate_inner);
 	/** Compute time step size of elastic solid. */
@@ -275,8 +257,7 @@ int main()
 	solid_dynamics::StressRelaxationFirstHalf gate_stress_relaxation_first_half(gate_inner);
 	solid_dynamics::StressRelaxationSecondHalf gate_stress_relaxation_second_half(gate_inner);
 	/**Constrain a solid body part.  */
-	MultiPolygonShape gate_constrain_shape(createGateConstrainShape());
-	BodyRegionByParticle gate_constrain_part(gate, "GateConstrain", gate_constrain_shape);
+	BodyRegionByParticle gate_constrain_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
 	solid_dynamics::ConstrainSolidBodyRegion gate_constrain(gate, gate_constrain_part);
 	/** Update the norm of elastic gate. */
 	solid_dynamics::UpdateElasticNormalDirection gate_update_normal(gate);
@@ -303,9 +284,9 @@ int main()
 	/** initialize configurations for all bodies. */
 	system.initializeSystemConfigurations();
 	/** computing surface normal direction for the wall. */
-	wall_boundary_particles.initializeNormalDirectionFromBodyShape();
+	wall_boundary_normal_direction.parallel_exec();
 	/** computing surface normal direction for the insert body. */
-	gate_particles.initializeNormalDirectionFromBodyShape();
+	gate_normal_direction.parallel_exec();
 	/** computing linear reproducing configuration for the insert body. */
 	gate_corrected_configuration.parallel_exec();
 	//----------------------------------------------------------------------

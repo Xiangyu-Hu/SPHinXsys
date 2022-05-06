@@ -30,12 +30,14 @@
 #ifndef CONTACT_DYNAMICS_H
 #define CONTACT_DYNAMICS_H
 
-#include "solid_dynamics.h"
+#include "general_solid_dynamics.h"
 
 namespace SPH
 {
 	namespace solid_dynamics
 	{
+		typedef DataDelegateContact<SolidBody, SolidParticles, Solid, SolidBody, SolidParticles, Solid> ContactDynamicsData;
+
 		/**
 		* @class SelfContactDensitySummation
 		* @brief Computing the summation density due to solid self-contact model.
@@ -81,7 +83,8 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &mass_, &contact_density_, &Vol_;
-			StdLargeVec<Vecd> &dvel_dt_prior_, &contact_force_;
+			StdLargeVec<Vecd> &dvel_dt_prior_, &contact_force_, &vel_n_;
+			Real contact_impedance_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -98,8 +101,11 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &contact_density_, &Vol_, &mass_;
-			StdLargeVec<Vecd> &dvel_dt_prior_, &contact_force_;
+			StdLargeVec<Vecd> &dvel_dt_prior_, &contact_force_, &vel_n_;
 			StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
+			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
+			Real rho_c_i_;
+			StdVec<Real> contact_impedance_, contact_reference_pressure_, rho_c_k_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};

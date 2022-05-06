@@ -6,7 +6,7 @@ using namespace SPH;
 TEST(test_Kernel_Cubic_B_Spline, test_W)
 {
 	Real q = 0.5;
-	KernelCubicBSpline B_spline;
+	KernelCubicBSpline B_spline(1.0);
 	Real W_1D = B_spline.W_1D(q);
 
 	EXPECT_EQ(23.0/32.0, W_1D);
@@ -15,7 +15,7 @@ TEST(test_Kernel_Cubic_B_Spline, test_W)
 TEST(test_Kernel_Cubic_B_Spline, test_dW)
 {
 	Real q = 0.5;
-	KernelCubicBSpline B_spline;
+	KernelCubicBSpline B_spline(1.0);
 	Real dW_1D = B_spline.dW_1D(q);
 
 	EXPECT_EQ(-15.0 / 16.0, dW_1D);
@@ -24,7 +24,7 @@ TEST(test_Kernel_Cubic_B_Spline, test_dW)
 TEST(test_Kernel_Cubic_B_Spline, test_d2W)
 {
 	Real q = 0.5;
-	KernelCubicBSpline B_spline;
+	KernelCubicBSpline B_spline(1.0);
 	Real d2W_1D = B_spline.d2W_1D(q);
 
 	EXPECT_EQ(-3.0 / 4.0, d2W_1D);

@@ -26,7 +26,7 @@ namespace SPH
 			  ShellDataSimple(solid_body),
 			  vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
 			  angular_vel_(particles_->angular_vel_), dangular_vel_dt_(particles_->dangular_vel_dt_),
-			  shell_thickness_(particles_->shell_thickness_),
+			  thickness_(particles_->thickness_),
 			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength()),
 			  rho0_(material_->ReferenceDensity()),
 			  E0_(material_->YoungsModulus()),
@@ -47,7 +47,7 @@ namespace SPH
 										  1.0 / (angular_vel_[index_i].norm() + TinyReal));
 			Real time_setp_2 = smoothing_length_ * sqrt(rho0_ * (1.0 - nu_ * nu_) / E0_ /
 														(2.0 + (Pi * Pi / 12.0) * (1.0 - nu_) *
-																   (1.0 + 1.5 * powerN(smoothing_length_ / shell_thickness_[index_i], 2))));
+																   (1.0 + 1.5 * powerN(smoothing_length_ / thickness_[index_i], 2))));
 			return SMIN(time_setp_0, time_setp_1, time_setp_2);
 		}
 		//=================================================================================================//
@@ -112,7 +112,7 @@ namespace SPH
 			: ParticleDynamics1Level(*inner_relation.sph_body_),
 			  ShellDataInner(inner_relation), Vol_(particles_->Vol_),
 			  rho_n_(particles_->rho_n_), mass_(particles_->mass_),
-			  shell_thickness_(particles_->shell_thickness_),
+			  thickness_(particles_->thickness_),
 			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_),
 			  dvel_dt_(particles_->dvel_dt_),
 			  dvel_dt_prior_(particles_->dvel_dt_prior_),
@@ -189,8 +189,8 @@ namespace SPH
 			Vecd resultant_shear_stress(0);
 			for (int i = 0; i != number_of_gaussian_points_; ++i)
 			{
-				Matd F_gaussian_point = F_[index_i] + gaussian_point_[i] * F_bending_[index_i] * shell_thickness_[index_i] * 0.5;
-				Matd dF_gaussian_point_dt = dF_dt_[index_i] + gaussian_point_[i] * dF_bending_dt_[index_i] * shell_thickness_[index_i] * 0.5;
+				Matd F_gaussian_point = F_[index_i] + gaussian_point_[i] * F_bending_[index_i] * thickness_[index_i] * 0.5;
+				Matd dF_gaussian_point_dt = dF_dt_[index_i] + gaussian_point_[i] * dF_bending_dt_[index_i] * thickness_[index_i] * 0.5;
 				Matd inverse_F_gaussion_point = SimTK::inverse(F_gaussian_point);
 				Matd current_local_almansi_strain = current_transformation_matrix * (~transformation_matrix_[index_i])
 											* 0.5 * (Matd(1.0) - ~inverse_F_gaussion_point * inverse_F_gaussion_point)
@@ -216,14 +216,14 @@ namespace SPH
 				if (i == 0) stress_PK1_[index_i] = F_gaussian_point * stress_PK2_gaussian_point;
 
 				Vecd shear_stress_PK2_gaussian_point = -stress_PK2_gaussian_point.col(Dimensions - 1);
-				Matd moment_PK2_gaussian_point = stress_PK2_gaussian_point * gaussian_point_[i] * shell_thickness_[index_i] * 0.5;
+				Matd moment_PK2_gaussian_point = stress_PK2_gaussian_point * gaussian_point_[i] * thickness_[index_i] * 0.5;
 
 				resultant_stress +=
-					0.5 * shell_thickness_[index_i] * gaussian_weight_[i] * F_gaussian_point * stress_PK2_gaussian_point;
+					0.5 * thickness_[index_i] * gaussian_weight_[i] * F_gaussian_point * stress_PK2_gaussian_point;
 				resultant_moment +=
-					0.5 * shell_thickness_[index_i] * gaussian_weight_[i] * F_gaussian_point * moment_PK2_gaussian_point;
+					0.5 * thickness_[index_i] * gaussian_weight_[i] * F_gaussian_point * moment_PK2_gaussian_point;
 				resultant_shear_stress +=
-					0.5 * shell_thickness_[index_i] * gaussian_weight_[i] * F_gaussian_point * shear_stress_PK2_gaussian_point;
+					0.5 * thickness_[index_i] * gaussian_weight_[i] * F_gaussian_point * shear_stress_PK2_gaussian_point;
 			}
 			/** Only one (for 2D) or two (for 3D) angular momentum equations left. */
 			resultant_moment.col(Dimensions - 1) = Vecd(0);
@@ -260,13 +260,13 @@ namespace SPH
 					Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
 					Vecd pos_jump = getLinearVariableJump(e_ij, r_ij, pos_n_[index_i], F_[index_i], pos_n_[index_j], F_[index_j]);
 					acceleration += hourglass_control_factor_ * weight * E0_ * pos_jump * dim_inv_r_ij
-									* inner_neighborhood.dW_ij_[n] * Vol_[index_j] * shell_thickness_[index_i];
+									* inner_neighborhood.dW_ij_[n] * Vol_[index_j] * thickness_[index_i];
 
 					Vecd pseudo_n_jump = getLinearVariableJump(e_ij, r_ij, pseudo_n_[index_i] - n_0_[index_i],
 											F_bending_[index_i], pseudo_n_[index_j] - n_0_[index_j], F_bending_[index_j]);
 					Vecd rotation_jump = getRotationJump(pseudo_n_jump, transformation_matrix_[index_i]);
 					pseudo_normal_acceleration += hourglass_control_factor_ / 3.0 * weight * Dimensions * r_ij * G0_
-								* rotation_jump * inner_neighborhood.dW_ij_[n] * Vol_[index_j] * shell_thickness_[index_i];
+								* rotation_jump * inner_neighborhood.dW_ij_[n] * Vol_[index_j] * thickness_[index_i];
 				}
 
 				acceleration += (global_stress_i + global_stress_[index_j])
@@ -275,10 +275,10 @@ namespace SPH
 											  * inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n] * Vol_[index_j];
 			}
 			/** including external force (body force) and force from fluid */
-			dvel_dt_[index_i] = acceleration * inv_rho0_ / shell_thickness_[index_i]
-				+ dvel_dt_prior_[index_i] + force_from_fluid_[index_i] / mass_[index_i] / shell_thickness_[index_i];
+			dvel_dt_[index_i] = acceleration * inv_rho0_ / thickness_[index_i]
+				+ dvel_dt_prior_[index_i] + force_from_fluid_[index_i] / mass_[index_i] / thickness_[index_i];
 			dpseudo_n_d2t_[index_i] = pseudo_normal_acceleration * inv_rho0_
-				* 12.0 / powerN(shell_thickness_[index_i], 3);
+				* 12.0 / powerN(thickness_[index_i], 3);
 
 			/** the relation between pseudo-normal and rotations */
 			Vecd local_dpseudo_n_d2t = transformation_matrix_[index_i] * dpseudo_n_d2t_[index_i];
@@ -378,8 +378,8 @@ namespace SPH
 			  Vol_(particles_->Vol_), vel_n_(particles_->vel_n_),
 			  angular_vel_(particles_->angular_vel_)
 		{
-			particles_->registerAVariable<Vecd>(vel_n_temp_, "TemporaryVelocity");
-			particles_->registerAVariable<Vecd>(angular_vel_temp_, "TemporaryAngularVelocity");
+			particles_->registerAVariable(vel_n_temp_, "TemporaryVelocity");
+			particles_->registerAVariable(angular_vel_temp_, "TemporaryAngularVelocity");
 			for (int k = 0; k != Dimensions; ++k)
 			{
 				constrain_matrix_[k][k] = constrained_direction[k];
@@ -433,8 +433,8 @@ namespace SPH
 			  Vol_(particles_->Vol_), vel_n_(particles_->vel_n_),
 			  angular_vel_(particles_->angular_vel_)
 		{
-			particles_->registerAVariable<Vecd>(vel_n_temp_, "TemporaryVelocity");
-			particles_->registerAVariable<Vecd>(angular_vel_temp_, "TemporaryAngularVelocity");
+			particles_->registerAVariable(vel_n_temp_, "TemporaryVelocity");
+			particles_->registerAVariable(angular_vel_temp_, "TemporaryAngularVelocity");
 		}
 		//=================================================================================================//
 		void ClampConstrainShellBodyRegion::Initialization(size_t index_i, Real dt)
@@ -503,14 +503,14 @@ namespace SPH
 			time_to_full_external_force_(time_to_full_external_force),
 			particle_spacing_ref_(particle_spacing_ref), h_spacing_ratio_(h_spacing_ratio),
 			pos_0_(particles_->pos_0_), dvel_dt_prior_(particles_->dvel_dt_prior_),
-			Vol_(particles_->Vol_), mass_(particles_->mass_), shell_thickness_(particles_->shell_thickness_)
+			Vol_(particles_->Vol_), mass_(particles_->mass_), thickness_(particles_->thickness_)
 		{
 			for (int i = 0; i < point_forces_.size(); i++)
 			{
 				weight_.push_back(StdLargeVec<Real>(0.0));
 				time_dependent_point_forces_.push_back(Vecd(0.0));
 				sum_of_weight_.push_back(0.0);
-				particles_->registerAVariable<Real>(weight_[i], "Weight_" + std::to_string(i));
+				particles_->registerAVariable(weight_[i], "Weight_" + std::to_string(i));
 			}
 		}
 		//=================================================================================================//
@@ -554,7 +554,7 @@ namespace SPH
 			for (int i = 0; i < point_forces_.size(); ++i)
 			{
 				Vecd force = weight_[i][index_i] / (sum_of_weight_[i] + TinyReal) * time_dependent_point_forces_[i];
-				dvel_dt_prior_[index_i] += force / mass_[index_i] / shell_thickness_[index_i];
+				dvel_dt_prior_[index_i] += force / mass_[index_i] / thickness_[index_i];
 			}
 		}
 		//=================================================================================================//

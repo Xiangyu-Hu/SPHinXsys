@@ -12,10 +12,9 @@
 #include "sphinxsys.h"
 
 using namespace SPH;
-
-/**
- * @brief Basic geometry parameters.
- */
+//----------------------------------------------------------------------
+//	Basic geometry parameters and numerical setup.
+//----------------------------------------------------------------------
 Real DL = 15.0; 					            /**< Channel length. */
 Real DH = 10.0; 						        /**< Channel height. */
 Real resolution_ref = 1.0 / 5.0; 	            /**< Initial reference particle spacing. */
@@ -25,20 +24,17 @@ Vec2d insert_circle_center(4.0, 5.0);		    /**< Location of the cylinder center.
 Real insert_circle_radius = 1.0;			    /**< Radius of the cylinder. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -DH_sponge), Vec2d(DL, DH + DH_sponge));
-
-/**
- * @brief Material properties of the fluid.
- */
+//----------------------------------------------------------------------
+//	Material properties of the fluid.
+//----------------------------------------------------------------------
 Real rho0_f = 1.0;		/**< Density. */
 Real U_f = 1.0;			/**< freestream velocity. */
 Real c_f = 10.0 * U_f;	/**< Speed of sound. */
 Real Re = 100.0;		/**< Reynolds number. */
 Real mu_f = rho0_f * U_f * (2.0 * insert_circle_radius) / Re;	/**< Dynamics viscosity. */
-
-/**
-* @brief define geometry of SPH bodies
-*/
-/** create a water block shape */
+//----------------------------------------------------------------------
+//	define geometrices
+//----------------------------------------------------------------------
 std::vector<Vecd> createWaterBlockShape()
 {
 	//geometry
@@ -51,46 +47,34 @@ std::vector<Vecd> createWaterBlockShape()
 
 	return water_block_shape;
 }
-
-/**
- * @brief Define case dependent bodies material, constraint and boundary conditions.
- */
- /** Fluid body definition */
-class WaterBlock : public EulerianFluidBody
+class WaterBlock : public ComplexShape
 {
 public:
-	WaterBlock(SPHSystem& system, std::string body_name)
-		: EulerianFluidBody(system, body_name)
+	explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
 	{
 		/** Geomtry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
-		multi_polygon.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
-		MultiPolygonShape multi_polygon_shape(multi_polygon);
-		body_shape_.add<LevelSetShape>(this, multi_polygon_shape);
+		MultiPolygon outer_boundary(createWaterBlockShape());
+		add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
+		MultiPolygon circle(insert_circle_center, insert_circle_radius, 100);
+		substract<MultiPolygonShape>(circle);
 	}
 };
-
-/** Definition of the cylinder. */
-class Cylinder : public SolidBody
+class Cylinder : public MultiPolygonShape
 {
 public:
-	Cylinder(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name, makeShared<SPHAdaptation>(1.15, 2.0))
+	explicit Cylinder(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
 		/** Geomtry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
-		MultiPolygonShape multi_polygon_shape(multi_polygon);
-		body_shape_.add<LevelSetShape>(this, multi_polygon_shape);
+		multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
 	}
 };
-
-/** far field boundary condition and set up parameters. */
+//----------------------------------------------------------------------
+//	Far field boundary condition and set up parameters
+//----------------------------------------------------------------------
 class FarFieldBoundary : public eulerian_weakly_compressible_fluid_dynamics::NonReflectiveBoundaryVariableCorrection
 {
 public:
-	FarFieldBoundary(BaseBodyRelationInner &inner_relation) :
+	explicit FarFieldBoundary(BaseBodyRelationInner &inner_relation) :
 		eulerian_weakly_compressible_fluid_dynamics::NonReflectiveBoundaryVariableCorrection(inner_relation)
 	{
 		rho_farfield_ = rho0_f;

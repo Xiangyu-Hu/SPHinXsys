@@ -20,8 +20,8 @@ TEST(BernoulliBeam20x, Pressure)
 	SharedPtr<LinearElasticSolid> material = makeShared<LinearElasticSolid>(rho_0, Youngs_modulus, poisson);
 	std::vector<SharedPtr<LinearElasticSolid>> material_model_list = { material };
 
-	TriangleMeshShapeSTL specimen("./input/bernoulli_beam_20x.stl", Vec3d(0), scale_stl);
-	BoundingBox fixation = specimen.findBounds();
+	SharedPtr<TriangleMeshShapeSTL> specimen = makeShared<TriangleMeshShapeSTL>("./input/bernoulli_beam_20x.stl", Vec3d(0), scale_stl, "bernoulli_beam_20x");
+	BoundingBox fixation = specimen->findBounds();
 	fixation.second[0] = fixation.first[0] + 0.01;
 	
 	StructuralSimulationInput input
@@ -42,7 +42,7 @@ TEST(BernoulliBeam20x, Pressure)
 		{end_time * 0.1, pressure},
 		{end_time, pressure }
 	};
-	input.surface_pressure_tuple_ = StdVec<PressureTuple>{ PressureTuple(0, &specimen, Vec3d(0.1, 0.0, 0.1), pressure_over_time) };
+	input.surface_pressure_tuple_ = StdVec<PressureTuple>{ PressureTuple(0, specimen, Vec3d(0.1, 0.0, 0.1), pressure_over_time) };
 	input.particle_relaxation_list_ = { true };
 
 	//=================================================================================================//

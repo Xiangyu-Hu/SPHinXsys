@@ -10,7 +10,7 @@ TEST(test_ComplexShape, test_findNormalDirection)
 	Vec3d halfsize_outer(1.1, 0.6, 0.35);
 	SimTK::Transform transfrom(Vec3d(1.0, 0.5, 0.25));
 
-	ComplexShape body_shape;
+	ComplexShape body_shape("TestShape");
 	body_shape.add<GeometricShapeBrick>(halfsize_outer, transfrom);
 	body_shape.substract<GeometricShapeBrick>(halfsize_inner, transfrom);
 	Vec3d point(1.0, 0.5, -0.095);

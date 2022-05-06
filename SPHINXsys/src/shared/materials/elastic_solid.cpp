@@ -5,8 +5,7 @@
 
 #include "elastic_solid.h"
 
-#include "base_body.h"
-#include "solid_particles.h"
+#include "base_particles.hpp"
 
 namespace SPH
 {
@@ -17,11 +16,6 @@ namespace SPH
 		ct0_ = sqrt(E0_ / rho0_);
 		cs0_ = sqrt(G0_ / rho0_);
 	};
-	//=================================================================================================//
-	void ElasticSolid::assignElasticSolidParticles(ElasticSolidParticles *elastic_particles)
-	{
-		elastic_particles_ = elastic_particles;
-	}
 	//=================================================================================================//
 	Matd ElasticSolid::
 		NumericalDampingRightCauchy(Matd &F, Matd &dF_dt, Real smoothing_length, size_t particle_index_i)
@@ -52,7 +46,7 @@ namespace SPH
 	LinearElasticSolid::
 		LinearElasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio) : ElasticSolid(rho0)
 	{
-		material_type_ = "LinearElasticSolid";
+		material_type_name_ = "LinearElasticSolid";
 		E0_ = youngs_modulus;
 		nu_ = poisson_ratio;
 		G0_ = getShearModulus(youngs_modulus, poisson_ratio);
@@ -96,8 +90,12 @@ namespace SPH
 	//=================================================================================================//
 	Matd NeoHookeanSolid::ConstitutiveRelation(Matd &F, size_t particle_index_i)
 	{
+		// This formulation allows negative determinant of F. Please refer
+		// Smith et al. (2018) Stable Neo-Hookean Flesh Simulation.
+		// ACM Transactions on Graphics, Vol. 37, No. 2, Article 12.
 		Matd right_cauchy = ~F * F;
-		Matd sigmaPK2 = G0_ * Matd(1.0) + (lambda0_ * log(det(F)) - G0_) * inverse(right_cauchy);
+		Real J = det(F); 
+		Matd sigmaPK2 = G0_ * Matd(1.0) + (lambda0_ *(J - 1.0) -  G0_) * J * inverse(right_cauchy);
 		return sigmaPK2;
 	}
 	//=================================================================================================//
@@ -151,8 +149,9 @@ namespace SPH
 		Real I_ss_1 = SimTK::dot(right_cauchy * s0_, s0_) - 1.0;
 		Real I_fs = SimTK::dot(right_cauchy * f0_, s0_);
 		Real I_1_1 = right_cauchy.trace() - Real(Dimensions);
+		Real J = det(F); 
 		Matd sigmaPK2 = a0_[0] * exp(b0_[0] * I_1_1) * Matd(1.0) +
-						(lambda0_ * log(det(F)) - a0_[0]) * inverse(right_cauchy) +
+						(lambda0_ * (J - 1.0) - a0_[0]) * J * inverse(right_cauchy) +
 						2.0 * a0_[1] * I_ff_1 * exp(b0_[1] * I_ff_1 * I_ff_1) * f0f0_ +
 						2.0 * a0_[2] * I_ss_1 * exp(b0_[2] * I_ss_1 * I_ss_1) * s0s0_ +
 						a0_[3] * I_fs * exp(b0_[3] * I_fs * I_fs) * f0s0_;
@@ -181,16 +180,16 @@ namespace SPH
 		return sigmaPK2;
 	}
 	//=================================================================================================//
-	void LocallyOrthotropicMuscle::assignElasticSolidParticles(ElasticSolidParticles *elastic_particles)
+	void LocallyOrthotropicMuscle::assignBaseParticles(BaseParticles *base_particles)
 	{
-		Muscle::assignElasticSolidParticles(elastic_particles);
+		Muscle::assignBaseParticles(base_particles);
 		initializeFiberAndSheet();
 	}
 	//=================================================================================================//
 	void LocallyOrthotropicMuscle::initializeFiberAndSheet()
 	{
-		base_particles_->registerAVariable<Vecd>(local_f0_, "Fiber");
-		base_particles_->registerAVariable<Vecd>(local_s0_, "Sheet");
+		base_particles_->registerAVariable(local_f0_, "Fiber");
+		base_particles_->registerAVariable(local_s0_, "Sheet");
 		base_particles_->addAVariableNameToList<Vecd>(reload_local_parameters_, "Fiber");
 		base_particles_->addAVariableNameToList<Vecd>(reload_local_parameters_, "Sheet");
 	}

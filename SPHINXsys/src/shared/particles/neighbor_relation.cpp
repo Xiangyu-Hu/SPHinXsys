@@ -5,7 +5,7 @@
 
 #include "neighbor_relation.h"
 
-#include "base_body.h"
+#include "complex_body.h"
 #include "base_particles.h"
 
 namespace SPH
@@ -159,14 +159,13 @@ namespace SPH
 	{
 		Real source_smoothing_length = body->sph_adaptation_->ReferenceSmoothingLength();
 		Real target_smoothing_length = contact_body->sph_adaptation_->ReferenceSmoothingLength();
-		kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>();
-		kernel_->initialize(0.5 * (source_smoothing_length + target_smoothing_length));
+		kernel_ = kernel_keeper_.createPtr<KernelWendlandC2>(0.5 * (source_smoothing_length + target_smoothing_length));
 	}
 	//=================================================================================================//
 	NeighborRelationContactBodyPart::
 		NeighborRelationContactBodyPart(SPHBody *body, BodyPart *contact_body_part) : NeighborRelation()
 	{
-		contact_body_part->getSPHBody()->base_particles_->registerAVariable<int>(part_indicator_, "BodyPartByParticleIndicator");
+		contact_body_part->getSPHBody()->base_particles_->registerAVariable(part_indicator_, "BodyPartByParticleIndicator");
 		Kernel *source_kernel = body->sph_adaptation_->getKernel();
 		Kernel *target_kernel = contact_body_part->getSPHBody()->sph_adaptation_->getKernel();
 		kernel_ = source_kernel->SmoothingLength() > target_kernel->SmoothingLength() ? source_kernel : target_kernel;

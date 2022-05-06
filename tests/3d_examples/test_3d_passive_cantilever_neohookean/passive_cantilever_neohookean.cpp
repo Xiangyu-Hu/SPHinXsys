@@ -20,9 +20,8 @@ Vecd halfsize_holder(0.5 * SL, 0.5 * PH, 0.5 * PW);
 Vecd translation_holder(-0.5 * SL, 0.5 * PH, 0.5 * PW);
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vecd(-SL, 0, 0), Vecd(PL, PH, PH));
-
-/**< SimTK geometric modeling resolution. */
-int resolution(20);
+// Observer location
+StdVec<Vecd> observation_location = {Vecd(PL, PH, PW)};
 /** For material properties of the solid. */
 Real rho0_s = 1265.0;			// Gheorghe 2019
 Real poisson = 0.45;			// nearly incompressible
@@ -32,14 +31,13 @@ Real gravity_g = 9.8;			/**< Value of gravity. */
 Real time_to_full_gravity = 0.0;
 
 /** Define the cantilever body. */
-class Cantilever : public SolidBody
+class Cantilever : public ComplexShape
 {
 public:
-	Cantilever(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit Cantilever(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		body_shape_.add<TriangleMeshShapeBrick>(halfsize_cantilever, resolution, translation_cantilever);
-		body_shape_.add<TriangleMeshShapeBrick>(halfsize_holder, resolution, translation_holder);
+		add<GeometricShapeBrick>(halfsize_cantilever, translation_cantilever);
+		add<GeometricShapeBrick>(halfsize_holder, translation_holder);
 	}
 };
 /**
@@ -56,16 +54,6 @@ public:
 		return current_time < time_to_full_gravity ? current_time * global_acceleration_ / time_to_full_gravity : global_acceleration_;
 	}
 };
-//define an observer particle generator
-
-class ObserverParticleGenerator : public ParticleGeneratorDirect
-{
-public:
-	ObserverParticleGenerator() : ParticleGeneratorDirect()
-	{
-		positions_volumes_.push_back(std::make_pair(Vecd(PL, PH, PW), 0.0));
-	}
-};
 /**
  *  The main program
  */
@@ -75,11 +63,12 @@ int main()
 	SPHSystem system(system_domain_bounds, resolution_ref);
 
 	/** create a Cantilever body, corresponding material, particles and reaction model. */
-	Cantilever cantilever_body(system, "CantileverBody");
-	ElasticSolidParticles cantilever_particles(cantilever_body, makeShared<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson));
+	SolidBody cantilever_body(system, makeShared<Cantilever>("CantileverBody"));
+	cantilever_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+	cantilever_body.generateParticles<ParticleGeneratorLattice>();
 	/** Define Observer. */
 	ObserverBody cantilever_observer(system, "CantileverObserver");
-	ObserverParticles observer_particles(cantilever_observer, makeShared<ObserverParticleGenerator>());
+	cantilever_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
 	/** topology */
 	BodyRelationInner cantilever_body_inner(cantilever_body);
@@ -106,13 +95,13 @@ int main()
 	solid_dynamics::StressRelaxationSecondHalf
 		stress_relaxation_second_half(cantilever_body_inner);
 	/** Constrain the holder. */
-	TriangleMeshShapeBrick holder_shape(halfsize_holder, resolution, translation_holder);
-	BodyRegionByParticle holder(cantilever_body, "Holder", holder_shape);
+	BodyRegionByParticle holder(cantilever_body, 
+		makeShared<GeometricShapeBrick>(halfsize_holder, translation_holder, "Holder"));
 	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(cantilever_body, holder);
 	DampingWithRandomChoice<DampingBySplittingInner<Vec3d>>
 		muscle_damping(cantilever_body_inner, 0.1, "Velocity", physical_viscosity);
 	/** Output */
-	In_Output in_output(system);
+	InOutput in_output(system);
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_displacement("Position", in_output, cantilever_observer_contact);

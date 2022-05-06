@@ -4,6 +4,7 @@
  */
 
 #include "inelastic_solid.h"
+
 #include "base_particles.hpp"
 
 namespace SPH
@@ -11,15 +12,15 @@ namespace SPH
 	//=================================================================================================//
 	void HardeningPlasticSolid::initializePlasticParameters()
 	{
-		base_particles_->registerAVariable<Matd>(inverse_plastic_strain_, "InversePlasticRightCauchyStrain", Matd(1.0));
-		base_particles_->registerAVariable<Real>(hardening_parameter_, "HardeningParameter");
+		base_particles_->registerAVariable(inverse_plastic_strain_, "InversePlasticRightCauchyStrain", Matd(1.0));
+		base_particles_->registerAVariable(hardening_parameter_, "HardeningParameter");
 		base_particles_->addAVariableToRestart<Matd>("InversePlasticRightCauchyStrain");
 		base_particles_->addAVariableToRestart<Real>("HardeningParameter");
 	}
 	//=================================================================================================//
-	void HardeningPlasticSolid::assignElasticSolidParticles(ElasticSolidParticles *elastic_particles)
+	void HardeningPlasticSolid::assignBaseParticles(BaseParticles *base_particles)
 	{
-		ElasticSolid::assignElasticSolidParticles(elastic_particles);
+		ElasticSolid::assignBaseParticles(base_particles);
 		initializePlasticParameters();
 	}
 	//=================================================================================================//

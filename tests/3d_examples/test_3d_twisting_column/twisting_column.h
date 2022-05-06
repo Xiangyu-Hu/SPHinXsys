@@ -27,7 +27,8 @@ Vecd translation_holder(-0.5 * (SL + BW), 0.0, 0.0);
 Vec3d domain_lower_bound(-SL - BW, -0.5 * (PH + BW), -0.5 * (PW + BW));
 Vec3d domain_upper_bound(PL, 0.5 * (PH + BW), 0.5 * (PW + BW));
 BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
-int resolution(20);
+// Observer location
+StdVec<Vecd> observation_location = {Vecd(PL, 0.0, 0.0)};
 //----------------------------------------------------------------------
 //	Material properties and global parameters
 //----------------------------------------------------------------------
@@ -37,14 +38,13 @@ Real Youngs_modulus = 1.7e7;
 Real angular_0 = -400.0;
 
 /** Define the body. */
-class Column : public SolidBody
+class Column : public ComplexShape
 {
 public:
-	Column(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name, makeShared<SPHAdaptation>(1.15, 1.0))
+	explicit Column(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		body_shape_.add<TriangleMeshShapeBrick>(halfsize_column, resolution, translation_column);
-		body_shape_.add<TriangleMeshShapeBrick>(halfsize_holder, resolution, translation_holder);
+		add<GeometricShapeBrick>(halfsize_column, translation_column);
+		add<GeometricShapeBrick>(halfsize_holder, translation_holder);
 	}
 };
 /**
@@ -73,15 +73,5 @@ protected:
 			vel_n_[index_i][2] = -angular_velocity * local_radius * sin(angular);
 		}
 	};
-};
-
-//define an observer particle generator
-class ObserverParticleGenerator : public ParticleGeneratorDirect
-{
-public:
-	ObserverParticleGenerator() : ParticleGeneratorDirect()
-	{
-		positions_volumes_.push_back(std::make_pair(Vecd(PL, 0.0, 0.0), 0.0));
-	}
 };
 #endif //TEST_3D_TWISTING_COLUMN_CASE_H

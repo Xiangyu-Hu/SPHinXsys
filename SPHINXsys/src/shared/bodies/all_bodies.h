@@ -9,8 +9,9 @@ bodies used in SPHinXsys. **/
 
 #pragma once
 
+#include "base_body_part.h"
 #include "fluid_body.h"
 #include "solid_body.h"
 #include "observer_body.h"
-
+#include "complex_body.h"
 #endif //ALL_BODIES_H

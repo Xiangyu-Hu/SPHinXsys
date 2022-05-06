@@ -6,7 +6,7 @@
  * @author 	Chi Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library.
-using namespace SPH;   //Namespace cite here.
+using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -18,22 +18,24 @@ BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 Vec2d ball_center_1(2.0, 2.0);
 Vec2d ball_center_2(6.0, 2.0);
 Real ball_radius = 0.5;
-Real gravity_g = 1.0;
+// observer location
+StdVec<Vecd> observation_location_1 = {ball_center_1};
+StdVec<Vecd> observation_location_2 = {ball_center_2};
 //----------------------------------------------------------------------
 //	Global parameters on material properties
 //----------------------------------------------------------------------
+Real gravity_g = 1.0;
 Real rho0_s = 1.0e3;
 Real Youngs_modulus = 5.0e4;
 Real poisson = 0.45;
 Real physical_viscosity = 10000.0;
 //----------------------------------------------------------------------
-//	Bodies with cases-dependent geometries (ComplexShape).
+//	Geometric shapes
 //----------------------------------------------------------------------
-class WallBoundary : public SolidBody
+class WallBoundary : public MultiPolygonShape
 {
 public:
-	WallBoundary(SPHSystem &sph_system, const std::string &body_name)
-		: SolidBody(sph_system, body_name)
+	explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
 		std::vector<Vecd> outer_wall_shape;
 		outer_wall_shape.push_back(Vecd(-BW, -BW));
@@ -49,55 +51,24 @@ public:
 		inner_wall_shape.push_back(Vecd(DL, 0.0));
 		inner_wall_shape.push_back(Vecd(0.0, 0.0));
 
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 	}
 };
-class FreeBall : public SolidBody
+class FreeBall : public MultiPolygonShape
 {
 public:
-	FreeBall(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit FreeBall(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		MultiPolygon multi_polygon;
-		multi_polygon.addACircle(ball_center_1, ball_radius, 100, ShapeBooleanOps::add);
-		MultiPolygonShape multi_polygon_shape(multi_polygon);
-		body_shape_.add<LevelSetShape>(this, multi_polygon_shape);
+		multi_polygon_.addACircle(ball_center_1, ball_radius, 100, ShapeBooleanOps::add);
 	}
 };
-class DampingBall : public SolidBody
+class DampingBall : public MultiPolygonShape
 {
 public:
-	DampingBall(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit DampingBall(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geometry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addACircle(ball_center_2, ball_radius, 100, ShapeBooleanOps::add);
-		MultiPolygonShape multi_polygon_shape(multi_polygon);
-		body_shape_.add<LevelSetShape>(this, multi_polygon_shape);
-	}
-};
-//----------------------------------------------------------------------
-//	Observer particle generator.
-//----------------------------------------------------------------------
-
-class FreeBallObserverParticleGenerator : public ParticleGeneratorDirect
-{
-public:
-	FreeBallObserverParticleGenerator() : ParticleGeneratorDirect()
-	{
-		positions_volumes_.push_back(std::make_pair(ball_center_1, 0.0));
-	}
-};
-class DampingObserverParticleGenerator : public ParticleGeneratorDirect
-{
-public:
-	DampingObserverParticleGenerator() : ParticleGeneratorDirect()
-	{
-		positions_volumes_.push_back(std::make_pair(ball_center_2, 0.0));
+		multi_polygon_.addACircle(ball_center_2, ball_radius, 100, ShapeBooleanOps::add);
 	}
 };
 //----------------------------------------------------------------------
@@ -118,33 +89,32 @@ int main(int ac, char *av[])
 	/** Handle command line arguments. */
 	sph_system.handleCommandlineOptions(ac, av);
 	/** I/O environment. */
-	In_Output in_output(sph_system);
+	InOutput in_output(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	FreeBall free_ball(sph_system, "FreeBall");
-	SharedPtr<ParticleGenerator> free_ball_particle_generator = makeShared<ParticleGeneratorLattice>();
-	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-		free_ball_particle_generator = makeShared<ParticleGeneratorReload>(in_output, free_ball.getBodyName());
-	SharedPtr<NeoHookeanSolid> free_ball_material = makeShared<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-	ElasticSolidParticles free_ball_particles(free_ball, free_ball_material, free_ball_particle_generator);
+	SolidBody free_ball(sph_system, makeShared<FreeBall>("FreeBall"));
+	free_ball.defineBodyLevelSetShape();
+	free_ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+		? free_ball.generateParticles<ParticleGeneratorReload>(in_output, free_ball.getBodyName())
+		: free_ball.generateParticles<ParticleGeneratorLattice>();
 
-	DampingBall damping_ball(sph_system, "DampingBall");
-	SharedPtr<ParticleGenerator> damping_ball_particle_generator = makeShared<ParticleGeneratorLattice>();
-	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-		damping_ball_particle_generator = makeShared<ParticleGeneratorReload>(in_output, damping_ball.getBodyName());
-	SharedPtr<NeoHookeanSolid> damping_ball_material = makeShared<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-	ElasticSolidParticles damping_ball_particles(damping_ball, damping_ball_material, damping_ball_particle_generator);
+	SolidBody damping_ball(sph_system, makeShared<DampingBall>("DampingBall"));
+	damping_ball.defineBodyLevelSetShape();
+	damping_ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+		? damping_ball.generateParticles<ParticleGeneratorReload>(in_output, damping_ball.getBodyName())
+		: damping_ball.generateParticles<ParticleGeneratorLattice>();
 
-	WallBoundary wall_boundary(sph_system, "Wall");
-	SharedPtr<Solid> wall_material = makeShared<Solid>(rho0_s, free_ball_material->ContactStiffness());
-	SolidParticles solid_particles(wall_boundary, wall_material);
+	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary")); 
+	wall_boundary.defineParticlesAndMaterial<SolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody free_ball_observer(sph_system, "FreeBallObserver");
-	ObserverParticles free_ball_observer_particles(free_ball_observer, makeShared<FreeBallObserverParticleGenerator>());
-
+	free_ball_observer.generateParticles<ObserverParticleGenerator>(observation_location_1);
 	ObserverBody damping_ball_observer(sph_system, "DampingBallObserver");
-	ObserverParticles damping_ball_observer_particles(damping_ball_observer, makeShared<DampingObserverParticleGenerator>());
+	damping_ball_observer.generateParticles<ObserverParticleGenerator>(observation_location_2);
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------

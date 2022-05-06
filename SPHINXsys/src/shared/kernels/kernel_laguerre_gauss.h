@@ -44,10 +44,8 @@ namespace SPH
 	 */
 	class KernelLaguerreGauss : public Kernel
 	{
-	protected:
-		virtual void setBasicParameters() override;
 	public:
-		KernelLaguerreGauss();
+		KernelLaguerreGauss(Real h);
 
 		/** Calculates the kernel value for 
 		the given distance of two particles */

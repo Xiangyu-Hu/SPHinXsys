@@ -22,34 +22,30 @@ Vecd translation_moving_plate(L + BW, 0.0, 0.0);
 BoundingBox system_domain_bounds(Vecd(-BW, -0.5 * PL, -0.5 * PL),
 								 Vecd(2.0 * L + BW, 0.5 * PL, 0.5 * PL));
 
-/**< SimTK geometric modeling resolution. */
-int resolution(20);
 /** For material properties of the solid. */
 Real rho0_s = 1265.0;
 Real poisson = 0.45;
 Real Youngs_modulus = 5e4;
 Real physical_viscosity = 200.0;
-/** Define the myocardium body. */
-class Myocardium : public SolidBody
+/** Define the myocardium body shape. */
+class Myocardium : public ComplexShape
 {
 public:
-	Myocardium(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit Myocardium(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		body_shape_.add<TriangleMeshShapeBrick>(halfsize_myocardium, resolution, translation_myocardium);
-		body_shape_.add<TriangleMeshShapeBrick>(halfsize_stationary_plate, resolution, translation_stationary_plate);
+		add<GeometricShapeBrick>(halfsize_myocardium, translation_myocardium);
+		add<GeometricShapeBrick>(halfsize_stationary_plate, translation_stationary_plate);
 	}
 };
 /**
-* @brief define the moving plate
+* @brief define the moving plate shape
 */
-class MovingPlate : public SolidBody
+class MovingPlate : public ComplexShape
 {
 public:
-	MovingPlate(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name, makeShared<SPHAdaptation>(1.15, 1.5))
+	explicit MovingPlate(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		body_shape_.add<TriangleMeshShapeBrick>(halfsize_moving_plate, resolution, translation_moving_plate);
+		add<GeometricShapeBrick>(halfsize_moving_plate, translation_moving_plate);
 	}
 };
 /**
@@ -60,11 +56,14 @@ int main()
 	/** Setup the system. Please the make sure the global domain bounds are correctly defined. */
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Creat a Myocardium body, corresponding material, particles and reaction model. */
-	Myocardium myocardium_body(system, "MyocardiumBody");
-	ElasticSolidParticles myocardium_particles(myocardium_body, makeShared<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson));
+	SolidBody myocardium_body(system, makeShared<Myocardium>("MyocardiumBody"));
+	myocardium_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+	myocardium_body.generateParticles<ParticleGeneratorLattice>();
 	/** Plate. */
-	MovingPlate moving_plate(system, "MovingPlate");
-	ElasticSolidParticles moving_plate_particles(moving_plate, makeShared<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson));
+	SolidBody moving_plate(system, makeShared<MovingPlate>("MovingPlate"));
+	moving_plate.sph_adaptation_->resetAdapationRatios(1.15, 1.5);
+	moving_plate.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+	moving_plate.generateParticles<ParticleGeneratorLattice>();
 	/** topology */
 	BodyRelationInner myocardium_body_inner(myocardium_body);
 	BodyRelationInner moving_plate_inner(moving_plate);
@@ -81,9 +80,9 @@ int main()
 	solid_dynamics::CorrectConfiguration corrected_configuration(myocardium_body_inner);
 	solid_dynamics::CorrectConfiguration corrected_configuration_2(moving_plate_inner);
 	/** active and passive stress relaxation. */
-	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half(myocardium_body_inner);
+	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(myocardium_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(myocardium_body_inner);
-	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half_2(moving_plate_inner);
+	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half_2(moving_plate_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half_2(moving_plate_inner);
 	//stress_relaxation_first_half_2.post_processes_(spring_constraint);
 	/** Algorithms for solid-solid contact. */
@@ -94,8 +93,8 @@ int main()
 	solid_dynamics::ContactForce plate_compute_solid_contact_forces(plate_myocardium_contact);
 
 	/** Constrain the holder. */
-	TriangleMeshShapeBrick holder_shape(halfsize_stationary_plate, resolution, translation_stationary_plate);
-	BodyRegionByParticle holder(myocardium_body, "Holder", holder_shape);
+	BodyRegionByParticle holder(myocardium_body, 
+		makeShared<GeometricShapeBrick>(halfsize_stationary_plate, translation_stationary_plate, "Holder"));
 	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(myocardium_body, holder);
 	/** Add spring constraint on the plate. */
 	solid_dynamics::SpringDamperConstraintParticleWise spring_constraint(moving_plate, Vecd(0.2, 0, 0), 0.01);
@@ -106,7 +105,7 @@ int main()
 	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
 		plate_damping(moving_plate_inner, 0.2, "Velocity", physical_viscosity);
 	/** Output */
-	In_Output in_output(system);
+	InOutput in_output(system);
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
 
 	/**

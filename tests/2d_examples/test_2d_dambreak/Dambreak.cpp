@@ -6,7 +6,7 @@
  * @author 	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library.
-using namespace SPH;   //Namespace cite here.
+using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -17,6 +17,8 @@ Real LH = 1.0;						/**< Liquid column height. */
 Real particle_spacing_ref = 0.025;	/**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4; /**< Extending width for boundary conditions. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+// observer location
+StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -27,51 +29,33 @@ Real c_f = 10.0 * U_max;				 /**< Reference sound speed. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
-std::vector<Vecd> water_block_shape{
+StdVec<Vecd> water_block_shape{
 	Vecd(0.0, 0.0), Vecd(0.0, LH), Vecd(LL, LH), Vecd(LL, 0.0), Vecd(0.0, 0.0)};
-std::vector<Vecd> outer_wall_shape{
+StdVec<Vecd> outer_wall_shape{
 	Vecd(-BW, -BW), Vecd(-BW, DH + BW), Vecd(DL + BW, DH + BW), Vecd(DL + BW, -BW), Vecd(-BW, -BW)};
-std::vector<Vecd> inner_wall_shape{
+StdVec<Vecd> inner_wall_shape{
 	Vecd(0.0, 0.0), Vecd(0.0, DH), Vecd(DL, DH), Vecd(DL, 0.0), Vecd(0.0, 0.0)};
 //----------------------------------------------------------------------
-//	Fluid body with cases-dependent geometries (ComplexShape).
+//	Case-dependent geometries
 //----------------------------------------------------------------------
-class WaterBlock : public FluidBody
+class WaterBlock : public MultiPolygonShape
 {
 public:
-	WaterBlock(SPHSystem &sph_system, const std::string &body_name)
-		: FluidBody(sph_system, body_name)
+	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(water_block_shape, ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
 	}
 };
 //----------------------------------------------------------------------
-//	Wall boundary body with cases-dependent geometries.
+//	Cases-dependent wall geometry
 //----------------------------------------------------------------------
-class WallBoundary : public SolidBody
+class WallBoundary : public MultiPolygonShape
 {
 public:
-	WallBoundary(SPHSystem &sph_system, const std::string &body_name)
-		: SolidBody(sph_system, body_name)
+	explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
-
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
-	}
-};
-//----------------------------------------------------------------------
-//	Observer particle generator.
-//----------------------------------------------------------------------
-class FluidObserverParticleGenerator : public ParticleGeneratorDirect
-{
-public:
-	FluidObserverParticleGenerator() : ParticleGeneratorDirect()
-	{
-		positions_volumes_.push_back(std::make_pair(Vecd(DL, 0.2), 0.0));
+		multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 	}
 };
 //----------------------------------------------------------------------
@@ -85,18 +69,21 @@ int main(int ac, char *av[])
 	SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
 	sph_system.handleCommandlineOptions(ac, av);
 	/** I/O environment. */
-	In_Output in_output(sph_system);
+	InOutput in_output(sph_system);
 	//----------------------------------------------------------------------
-	//	Creating body, materials and particles.
+	//	Creating bodies with corresponding materials and particles.
 	//----------------------------------------------------------------------
-	WaterBlock water_block(sph_system, "WaterBody");
-	FluidParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f));
+	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+	water_block.generateParticles<ParticleGeneratorLattice>();
 
-	WallBoundary wall_boundary(sph_system, "Wall");
-	SolidParticles wall_particles(wall_boundary);
+	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
+	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+	wall_boundary.generateParticles<ParticleGeneratorLattice>();
+	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
 	ObserverBody fluid_observer(sph_system, "Fluidobserver");
-	ObserverParticles observer_particles(fluid_observer, makeShared<FluidObserverParticleGenerator>());
+	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -109,6 +96,7 @@ int main(int ac, char *av[])
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	Gravity gravity(Vecd(0.0, -gravity_g));
+	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	TimeStepInitialization fluid_step_initialization(water_block, gravity);
 	fluid_dynamics::DensitySummationFreeSurfaceComplex fluid_density_by_summation(water_block_complex);
 	fluid_dynamics::AdvectionTimeStepSize fluid_advection_time_step(water_block, U_max);
@@ -131,7 +119,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	wall_particles.initializeNormalDirectionFromBodyShape();
+	wall_boundary_normal_direction.parallel_exec();
 	//----------------------------------------------------------------------
 	//	Load restart file if necessary.
 	//----------------------------------------------------------------------
@@ -240,8 +228,11 @@ int main(int ac, char *av[])
 	std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
 			  << interval_updating_configuration.seconds() << "\n";
 
-	write_water_mechanical_energy.newResultTest();
-	write_recorded_water_pressure.newResultTest();
+	if (sph_system.restart_step_ == 0)
+	{
+		write_water_mechanical_energy.newResultTest();
+		write_recorded_water_pressure.newResultTest();
+	}
 
 	return 0;
 };

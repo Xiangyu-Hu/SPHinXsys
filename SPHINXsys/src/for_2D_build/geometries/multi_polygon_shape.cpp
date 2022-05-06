@@ -10,6 +10,18 @@ using namespace boost::geometry;
 namespace SPH
 {
 	//=================================================================================================//
+	MultiPolygon::MultiPolygon(const std::vector<Vecd> &points)
+	: MultiPolygon()
+	{
+		addAPolygon(points, ShapeBooleanOps::add);
+	}
+	//=================================================================================================//
+	MultiPolygon::MultiPolygon(const Vec2d &center, Real radius, int resolution)
+	: MultiPolygon()
+	{
+		addACircle(center, radius, resolution, ShapeBooleanOps::add);
+	}
+	//=================================================================================================//
 	boost_multi_poly MultiPolygon::
 		MultiPolygonByBooleanOps(boost_multi_poly multi_poly_in,
 								 boost_multi_poly multi_poly_op, ShapeBooleanOps boolean_op)
@@ -63,7 +75,7 @@ namespace SPH
 		multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, boost_multi_poly_op, op);
 	}
 	//=================================================================================================//
-	void MultiPolygon::addACircle(Vec2d center, Real radius, int resolution, ShapeBooleanOps op)
+	void MultiPolygon::addACircle(const Vec2d &center, Real radius, int resolution, ShapeBooleanOps op)
 	{
 		Vec2d buffer_center = center;
 		Real buffer_radius = radius;

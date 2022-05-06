@@ -16,28 +16,31 @@ int main(int ac, char *av[])
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
 	system.run_particle_relaxation_ = false;
 	system.reload_particles_ = true;
-//handle command line arguments
+// handle command line arguments
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
 #endif
-	In_Output in_output(system);
+	InOutput in_output(system);
 
 	/** create a body with corresponding material, particles and reaction model. */
-	Column column(system, "Column");
-	SharedPtr<ParticleGenerator> column_particle_generator = makeShared<ParticleGeneratorLattice>();
-	if (!system.run_particle_relaxation_ && system.reload_particles_)
-		column_particle_generator = makeShared<ParticleGeneratorReload>(in_output, column.getBodyName());
-	SharedPtr<HardeningPlasticSolid> plastic_column_material =
-		makeShared<HardeningPlasticSolid>(rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
-	ElasticSolidParticles column_particles(column, plastic_column_material, column_particle_generator);
-	column_particles.addAVariableToWrite<Vecd>("NormalDirection");
+	SolidBody column(system, makeShared<Column>("Column"));
+	column.sph_adaptation_->resetAdapationRatios(1.3, 1.0);
+	column.defineBodyLevelSetShape()->writeLevelSet(column);
+	column.defineParticlesAndMaterial<ElasticSolidParticles, HardeningPlasticSolid>(
+		rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
+	(!system.run_particle_relaxation_ && system.reload_particles_)
+		? column.generateParticles<ParticleGeneratorReload>(in_output, column.getBodyName())
+		: column.generateParticles<ParticleGeneratorLattice>();
+	column.addBodyStateForRecording<Vecd>("NormalDirection");
 
-	Wall wall(system, "Wall");
-	SolidParticles wall_particles(wall, makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson));
+	SolidBody wall(system, makeShared<Wall>("Wall"));
+	wall.defineParticlesAndMaterial<SolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	wall.generateParticles<ParticleGeneratorLattice>();
 
 	/** Define Observer. */
 	ObserverBody my_observer(system, "MyObserver");
-	ObserverParticles observer_particles(my_observer, makeShared<ObserverParticleGenerator>());
+	my_observer.generateParticles<ColumnObserverParticleGenerator>();
+
 	/**body relation topology */
 	BodyRelationInner column_inner(column);
 	BodyRelationContact my_observer_contact(my_observer, {&column});
@@ -60,8 +63,8 @@ int main(int ac, char *av[])
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(column_inner);
 		/**
-		  * @brief 	Particle relaxation starts here.
-		  */
+		 * @brief 	Particle relaxation starts here.
+		 */
 		random_column_particles.parallel_exec(0.25);
 		relaxation_step_inner.surface_bounding_.parallel_exec();
 		write_states.writeToFile(0.0);
@@ -75,7 +78,7 @@ int main(int ac, char *av[])
 			if (ite_p % 200 == 0)
 			{
 				std::cout << std::fixed << setprecision(9) << "Relaxation steps for the column body N = " << ite_p << "\n";
-				write_column_to_vtp.writeToFile(ite_p * 1.0e-4);
+				write_column_to_vtp.writeToFile(ite_p);
 			}
 		}
 		std::cout << "The physics relaxation process of cylinder body finish !" << std::endl;
@@ -86,6 +89,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	All numerical methods will be used in this case.
 	//----------------------------------------------------------------------
+	SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
 	InitialCondition initial_condition(column);
 	/** Corrected configuration. */
 	solid_dynamics::CorrectConfiguration corrected_configuration(column_inner);
@@ -111,7 +115,7 @@ int main(int ac, char *av[])
 	GlobalStaticVariables::physical_time_ = 0.0;
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	wall_particles.initializeNormalDirectionFromBodyShape();
+	wall_normal_direction.parallel_exec();
 	corrected_configuration.parallel_exec();
 	initial_condition.parallel_exec();
 	//----------------------------------------------------------------------
@@ -121,7 +125,7 @@ int main(int ac, char *av[])
 	Real end_time = 1.0e-4;
 	int screen_output_interval = 100;
 	int observation_sample_interval = screen_output_interval * 2;
-	Real output_period = 1.0e-6; //anyway 50 write_states files in total
+	Real output_period = 1.0e-6; // anyway 50 write_states files in total
 	Real dt = 0.0;
 	/** Statistics for computing time. */
 	tick_count t1 = tick_count::now();

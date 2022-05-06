@@ -1,7 +1,8 @@
 /**
  * @file 	poiseuille_flow.cpp
  * @brief 	2D poiseuille flow example
- * @details This is the one of the basic test cases for validating the splitting-implicit SPH method.
+ * @details This is the one of the basic test cases for validating viscous flow.
+ * 			//TODO: this case is too causal now, it should be revised to validate low-Reynolds number flow (Re = 10?).
  * @author 	Chi Zhang and Xiangyu Hu
  */
 /**
@@ -32,11 +33,10 @@ Real c_f = 10.0 * U_f;				   /**< Reference sound speed. */
 /**
  * @brief 	Fluid body definition.
  */
-class WaterBlock : public FluidBody
+class WaterBlock : public MultiPolygonShape
 {
 public:
-	WaterBlock(SPHSystem &system, const std::string &body_name)
-		: FluidBody(system, body_name)
+	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
 		/** Geomtry definition. */
 		std::vector<Vecd> water_block_shape;
@@ -45,19 +45,16 @@ public:
 		water_block_shape.push_back(Vecd(DL, DH));
 		water_block_shape.push_back(Vecd(DL, 0.0));
 		water_block_shape.push_back(Vecd(0.0, 0.0));
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(water_block_shape, ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
 	}
 };
 /**
  * @brief 	Wall boundary body definition.
  */
-class WallBoundary : public SolidBody
+class WallBoundary : public MultiPolygonShape
 {
 public:
-	WallBoundary(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
 		/** Geomtry definition. */
 		std::vector<Vecd> outer_wall_shape;
@@ -73,10 +70,8 @@ public:
 		inner_wall_shape.push_back(Vecd(DL + 2.0 * BW, 0.0));
 		inner_wall_shape.push_back(Vecd(-2.0 * BW, 0.0));
 
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 	}
 };
 /**
@@ -95,13 +90,15 @@ int main()
 	/**
 	 * @brief Material property, partilces and body creation of fluid.
 	 */
-	WaterBlock water_block(system, "WaterBody");
-	FluidParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f));
+	FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
+	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+	water_block.generateParticles<ParticleGeneratorLattice>();
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
-	WallBoundary wall_boundary(system, "Wall");
-	SolidParticles wall_particles(wall_boundary);
+	SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 	/** topology */
 	ComplexBodyRelation water_block_complex(water_block, {&wall_boundary});
 	/**
@@ -112,6 +109,7 @@ int main()
 	 */
 	/** Define external force. */
 	Gravity gravity(Vecd(gravity_g, 0.0));
+	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	/** Initialize particle acceleration. */
 	TimeStepInitialization initialize_a_fluid_step(water_block, gravity);
 	/** Periodic BCs in x direction. */
@@ -136,7 +134,7 @@ int main()
 	/**
 	 * @brief Output.
 	 */
-	In_Output in_output(system);
+	InOutput in_output(system);
 	/** Output the body states. */
 	BodyStatesRecordingToVtp body_states_recording(in_output, system.real_bodies_);
 	/** Output the body states for restart simulation. */
@@ -147,7 +145,7 @@ int main()
 	system.initializeSystemCellLinkedLists();
 	periodic_condition.update_cell_linked_list_.parallel_exec();
 	system.initializeSystemConfigurations();
-	wall_particles.initializeNormalDirectionFromBodyShape();
+	wall_boundary_normal_direction.parallel_exec();
 	/**
 	 * @brief The time stepping starts here.
 	 */

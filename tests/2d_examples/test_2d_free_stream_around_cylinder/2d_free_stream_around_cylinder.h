@@ -21,6 +21,11 @@ Real insert_circle_radius = 1.0;			  /**< Radius of the cylinder. */
 BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
 /** Prescribed fluid body domain bounds*/
 BoundingBox fluid_body_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
+// Observation locations
+Vec2d point_coordinate_1(3.0, 5.0);
+Vec2d point_coordinate_2(4.0, 5.0);
+Vec2d point_coordinate_3(5.0, 5.0);
+StdVec<Vecd> observation_locations = {point_coordinate_1, point_coordinate_2, point_coordinate_3};
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
@@ -28,7 +33,7 @@ Real rho0_f = 1.0;											/**< Density. */
 Real U_f = 1.0;												/**< Characteristic velocity. */
 Real c_f = 10.0 * U_f;										/**< Speed of sound. */
 Real Re = 100.0;											/**< Reynolds number. */
-Real mu = rho0_f * U_f * (2.0 * insert_circle_radius) / Re; /**< Dynamics viscosity. */
+Real mu_f = rho0_f * U_f * (2.0 * insert_circle_radius) / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	define geometry of SPH bodies
 //----------------------------------------------------------------------
@@ -36,37 +41,27 @@ Real mu = rho0_f * U_f * (2.0 * insert_circle_radius) / Re; /**< Dynamics viscos
 std::vector<Vecd> water_block_shape {
 Vecd(-DL_sponge, 0.0),Vecd(-DL_sponge, DH), Vecd(DL, DH), Vecd(DL, 0.0), Vecd(-DL_sponge, 0.0)};
 //----------------------------------------------------------------------
-//	Define case dependent SPH bodies.
+//	Define case dependent geometries
 //----------------------------------------------------------------------
-class WaterBlock : public FluidBody
+class WaterBlock : public MultiPolygonShape
 {
 public:
-	WaterBlock(SPHSystem &system, const std::string &body_name)
-		: FluidBody(system, body_name)
+	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geomtry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(water_block_shape, ShapeBooleanOps::add);
-		multi_polygon.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+		multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
 	}
 };
-/**  define solid body. */
-class Cylinder : public SolidBody
+class Cylinder : public MultiPolygonShape
 {
 public:
-	Cylinder(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name, makeShared<SPHAdaptation>(1.15, 2.0))
+	explicit Cylinder(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geomtry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
-		MultiPolygonShape multi_polygon_shape(multi_polygon);
-		body_shape_.add<LevelSetShape>(this, multi_polygon_shape);
+		multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
 	}
 };
 //----------------------------------------------------------------------
-//	Define case dependent SPH body parts.
+//	Define case dependent SPH body part shapes.
 //----------------------------------------------------------------------
 /** create the emitter shape. */
 MultiPolygon creatEmitterShape()
@@ -136,23 +131,5 @@ public:
 		du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
 
 		return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0) : global_acceleration_;
-	}
-};
-//----------------------------------------------------------------------
-//	Define Observer Particle Generator
-//----------------------------------------------------------------------
-class ObserverParticleGenerator : public ParticleGeneratorDirect
-{
-public:
-	ObserverParticleGenerator() : ParticleGeneratorDirect()
-	{
-		/** the measureing particles */
-		Vec2d point_coordinate_1(3.0, 5.0);
-		Vec2d point_coordinate_2(4.0, 5.0);
-		Vec2d point_coordinate_3(5.0, 5.0);
-
-		positions_volumes_.push_back(std::make_pair(point_coordinate_1, 0.0));
-		positions_volumes_.push_back(std::make_pair(point_coordinate_2, 0.0));
-		positions_volumes_.push_back(std::make_pair(point_coordinate_3, 0.0));
 	}
 };

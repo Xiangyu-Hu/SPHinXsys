@@ -1,38 +1,56 @@
 /**
  * @file 	load_image.cpp
  * @brief 	This is the test of using distance map to generate body fitted particles (3D).
- * @details We use this case to test the particle generation and relaxation for a complex geometry. 
- *			Before particle generation, we clean the sharp corners of the model. 
+ * @details We use this case to test the particle generation and relaxation for a complex geometry.
+ *			Before particle generation, we clean the sharp corners of the model.
  * @author 	Yijin Mao, Yongchuan Yu and Xiangyu Hu
  */
 
 #include "sphinxsys.h"
 
-/** case file to setup the test case */
-#include "load_image.h"
-
 using namespace SPH;
 
-int main(int ac, char *av[])
+//----------------------------------------------------------------------
+//	Set the file path to the data file.
+//----------------------------------------------------------------------
+std::string full_path_to_image = "./input/sphere.mhd";
+//----------------------------------------------------------------------
+//	Basic geometry parameters
+//----------------------------------------------------------------------
+Vec3d domain_lower_bound(-25.0, -25.0, -25.0);
+Vec3d domain_upper_bound(25.0, 25.0, 25.0);
+Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 50.0;
+/** Domain bounds of the system. */
+BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+
+class ImportedModel : public ComplexShape
+{
+public:
+	explicit ImportedModel(const std::string &shape_name) : ComplexShape(shape_name)
+	{
+		add<ImageShapeFromFile>(full_path_to_image);
+	}
+};
+//----------------------------------------------------------------------
+//	Main program begines here
+//----------------------------------------------------------------------
+int main()
 {
 	//----------------------------------------------------------------------
 	//	Build up -- a SPHSystem
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, dp_0);
-	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = true;
-//handle command line arguments
-#ifdef BOOST_AVAILABLE
-	system.handleCommandlineOptions(ac, av);
-#endif
 	/** output environment. */
-	In_Output in_output(system);
+	InOutput in_output(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	ImportedModel imported_model(system, "ImportedModel");
-	SolidParticles imported_model_particles(imported_model, makeShared<ParticleGeneratorMultiResolution>());
-	imported_model_particles.addAVariableToWrite<Real>("SmoothingLengthRatio");
+	RealBody imported_model(system, makeShared<ImportedModel>("ImportedModel"));
+	imported_model.defineAdaptation<ParticleSpacingByBodyShape>(1.15, 1.0, 2);
+	imported_model.defineBodyLevelSetShape()->writeLevelSet(imported_model);
+	imported_model.defineParticlesAndMaterial();
+	imported_model.generateParticles<ParticleGeneratorMultiResolution>();
+	imported_model.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
@@ -44,13 +62,13 @@ int main(int ac, char *av[])
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
 	BodyRelationInnerVariableSmoothingLength imported_model_inner(imported_model);
-	//BaseBodyRelationInner* imported_model_inner(imported_model);
+	// BaseBodyRelationInner* imported_model_inner(imported_model);
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
 	RandomizePartilePosition random_imported_model_particles(imported_model);
 	/** A  Physics relaxation step. */
-	//relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner.get(), true);
+	// relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner.get(), true);
 	relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner, true);
 	relax_dynamics::UpdateSmoothingLengthRatioByBodyShape update_smoothing_length_ratio(imported_model);
 	//----------------------------------------------------------------------
@@ -68,7 +86,7 @@ int main(int ac, char *av[])
 	int ite_p = 0;
 	while (ite_p < 1000)
 	{
-		//update_smoothing_length_ratio.parallel_exec();
+		// update_smoothing_length_ratio.parallel_exec();
 		relaxation_step_inner.parallel_exec();
 		ite_p += 1;
 		if (ite_p % 100 == 0)

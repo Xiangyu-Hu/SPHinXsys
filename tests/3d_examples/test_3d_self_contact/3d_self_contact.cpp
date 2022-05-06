@@ -5,11 +5,52 @@
  */
 
 #include "sphinxsys.h"
-// case file to setup the test case
-#include "3d_self_contact.h"
-
 using namespace SPH;
-
+//----------------------------------------------------------------------
+//	Set the file path to the data file.
+//----------------------------------------------------------------------
+std::string full_path_to_file = "./input/coil.stl";
+//----------------------------------------------------------------------
+//	Basic geometry parameters and numerical setup.
+//----------------------------------------------------------------------
+Real half_width = 55.0;
+Real resolution_ref = half_width / 30.0;
+Real BW = resolution_ref * 4;
+Vec3d domain_lower_bound(-half_width - BW, -half_width - 1.5 * BW, -BW);
+Vec3d domain_upper_bound(half_width + BW, half_width + BW, 2.0 * half_width + BW);
+// Domain bounds of the system.
+BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+//----------------------------------------------------------------------
+//	Global parameters for material properties.
+//----------------------------------------------------------------------
+Real rho0_s = 1.265;
+Real poisson = 0.45;
+Real Youngs_modulus = 5e4;
+Real physical_viscosity = 200.0;
+//----------------------------------------------------------------------
+//	Body shapes used in the case.
+//----------------------------------------------------------------------
+class Coil : public ComplexShape
+{
+public:
+	explicit Coil(const std::string &shape_name) : ComplexShape(shape_name)
+	{
+		add<TriangleMeshShapeSTL>(full_path_to_file, Vecd(0), 1.0);
+	}
+};
+class StationaryPlate : public ComplexShape
+{
+public:
+	explicit StationaryPlate(const std::string &shape_name) : ComplexShape(shape_name)
+	{
+		Vecd halfsize_plate(half_width + BW, 0.5 * BW, half_width + BW);
+		Vecd translation_plate(0.0, -half_width - 0.75 * BW, half_width);
+		add<GeometricShapeBrick>(halfsize_plate, translation_plate);
+	}
+};
+//----------------------------------------------------------------------
+//	The main program
+//----------------------------------------------------------------------
 int main(int ac, char *av[])
 {
 	//----------------------------------------------------------------------
@@ -20,23 +61,25 @@ int main(int ac, char *av[])
 	system.run_particle_relaxation_ = false;
 	// Tag for reload initially repaxed particles.
 	system.reload_particles_ = true;
-//handle command line arguments
+// handle command line arguments
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
 #endif
 	// output environment
-	In_Output in_output(system);
+	InOutput in_output(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	Coil coil(system, "Coil");
-	SharedPtr<ParticleGenerator> coil_particle_generator = makeShared<ParticleGeneratorLattice>();
-	if (!system.run_particle_relaxation_ && system.reload_particles_)
-		coil_particle_generator = makeShared<ParticleGeneratorReload>(in_output, coil.getBodyName());
-	ElasticSolidParticles coil_particles(coil, makeShared<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson), coil_particle_generator);
+	SolidBody coil(system, makeShared<Coil>("Coil"));
+	coil.defineBodyLevelSetShape()->writeLevelSet(coil);
+	coil.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+	(!system.run_particle_relaxation_ && system.reload_particles_)
+		? coil.generateParticles<ParticleGeneratorReload>(in_output, coil.getBodyName())
+		: coil.generateParticles<ParticleGeneratorLattice>();
 
-	StationaryPlate stationary_plate(system, "StationaryPlate");
-	SolidParticles moving_plate_particles(stationary_plate, makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson));
+	SolidBody stationary_plate(system, makeShared<StationaryPlate>("StationaryPlate"));
+	stationary_plate.defineParticlesAndMaterial<SolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	stationary_plate.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
@@ -98,7 +141,7 @@ int main(int ac, char *av[])
 	solid_dynamics::CorrectConfiguration corrected_configuration(coil_inner);
 	// Time step size
 	solid_dynamics::AcousticTimeStepSize computing_time_step_size(coil);
-	//stress relaxation.
+	// stress relaxation.
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(coil_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(coil_inner);
 	// Algorithms for solid-solid contacts.
@@ -155,7 +198,7 @@ int main(int ac, char *av[])
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
 
-			//update particle neighbor relations for contact dynamics
+			// update particle neighbor relations for contact dynamics
 			coil.updateCellLinkedList();
 			coil_self_contact.updateConfiguration();
 			coil_contact.updateConfiguration();

@@ -38,6 +38,8 @@ Vec2d ConstrainP_lb(DL - Dam_L - Gate_width, Base_bottom_position); /**< Left bo
 Vec2d ConstrainP_lt(DL - Dam_L - Gate_width, Dam_H + BW);			/**< Left top. */
 Vec2d ConstrainP_rt(DL - Dam_L, Dam_H + BW);						/**< Right top. */
 Vec2d ConstrainP_rb(DL - Dam_L, Base_bottom_position);				/**< Right bottom. */
+// observer location
+StdVec<Vecd> observation_location = {GateP_lb};
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -53,13 +55,12 @@ Real poisson = 0.47; /**< Poisson ratio. */
 Real Ae = 7.8e3;	 /**< Normalized Youngs Modulus. */
 Real Youngs_modulus = Ae * rho0_f * U_f * U_f;
 //----------------------------------------------------------------------
-//	Fluid body with cases-dependent geometries (ComplexShape).
+//	Cases-dependent geometries
 //----------------------------------------------------------------------
-class WaterBlock : public FluidBody
+class WaterBlock : public MultiPolygonShape
 {
 public:
-	WaterBlock(SPHSystem &system, const std::string &body_name)
-		: FluidBody(system, body_name)
+	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
 		/** Geometry definition. */
 		std::vector<Vecd> water_block_shape;
@@ -68,19 +69,16 @@ public:
 		water_block_shape.push_back(DamP_rt);
 		water_block_shape.push_back(DamP_rb);
 		water_block_shape.push_back(DamP_lb);
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(water_block_shape, ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
 	}
 };
 //----------------------------------------------------------------------
-//	Wall boundary body cases-dependent geometries.
+//	Wall cases-dependent geometries.
 //----------------------------------------------------------------------
-class WallBoundary : public SolidBody
+class WallBoundary : public MultiPolygonShape
 {
 public:
-	WallBoundary(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
 		/** Geometry definition. */
 		std::vector<Vecd> outer_wall_shape;
@@ -97,16 +95,14 @@ public:
 		inner_wall_shape.push_back(Vecd(DL, 0.0));
 		inner_wall_shape.push_back(Vecd(0.0, 0.0));
 
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 	}
 };
 //----------------------------------------------------------------------
 //	create a gate shape
 //----------------------------------------------------------------------
-std::vector<Vecd> createGateShape()
+MultiPolygon createGateShape()
 {
 	std::vector<Vecd> gate_shape;
 	gate_shape.push_back(GateP_lb);
@@ -115,29 +111,16 @@ std::vector<Vecd> createGateShape()
 	gate_shape.push_back(GateP_rb);
 	gate_shape.push_back(GateP_lb);
 
-	return gate_shape;
+	MultiPolygon multi_polygon;
+	multi_polygon.addAPolygon(gate_shape, ShapeBooleanOps::add);
+	return multi_polygon;
 }
-//----------------------------------------------------------------------
-//	Define the elastic gate body.
-//----------------------------------------------------------------------
-class Gate : public SolidBody
-{
-public:
-	Gate(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name, makeShared<SPHAdaptation>(1.15, 2.0))
-	{
-		/** Geometry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(createGateShape(), ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
-	}
-};
 //----------------------------------------------------------------------
 // Create the gate constrain shape
 //----------------------------------------------------------------------
 MultiPolygon createGateConstrainShape()
 {
-	//geometry
+	// geometry
 	std::vector<Vecd> gate_constrain_shape;
 	gate_constrain_shape.push_back(ConstrainP_lb);
 	gate_constrain_shape.push_back(ConstrainP_lt);
@@ -150,17 +133,6 @@ MultiPolygon createGateConstrainShape()
 	return multi_polygon;
 }
 //----------------------------------------------------------------------
-//	Observer particle generator.
-//----------------------------------------------------------------------
-class ObserverParticleGenerator : public ParticleGeneratorDirect
-{
-public:
-	ObserverParticleGenerator() : ParticleGeneratorDirect()
-	{
-		positions_volumes_.push_back(std::make_pair(GateP_lb, 0.0));
-	}
-};
-//----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
 int main()
@@ -172,29 +144,32 @@ int main()
 	/** Set the starting time to zero. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** I/O environment. */
-	In_Output in_output(system);
+	InOutput in_output(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	WaterBlock water_block(system, "WaterBody");
-	FluidParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f));
+	FluidBody water_block(system, makeShared<WaterBlock>("WaterBlock"));
+	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+	water_block.generateParticles<ParticleGeneratorLattice>();
 
-	WallBoundary wall_boundary(system, "Wall");
-	SolidParticles wall_boundary_particles(wall_boundary);
+	SolidBody wall_boundary(system, makeShared<WallBoundary>("WallBoundary"));
+	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-	Gate gate(system, "Gate");
-	ElasticSolidParticles gate_particles(gate, makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson));
-	/** offset particle position */
-	gate_particles.offsetInitialParticlePosition(offset);
+	SolidBody gate(system, makeShared<MultiPolygonShape>(createGateShape(), "Gate"));
+	gate.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
+	gate.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	gate.generateParticles<ParticleGeneratorLattice>();
 
-	ObserverBody gate_observer(system, "Observer", makeShared<SPHAdaptation>(1.15, 2.0));
-	ObserverParticles observer_particles(gate_observer, makeShared<ObserverParticleGenerator>());
+	ObserverBody gate_observer(system, "Observer");
+	gate_observer.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
+	gate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	ComplexBodyRelation water_block_complex_relation(water_block, {&wall_boundary, &gate});
+	ComplexBodyRelation water_block_complex_relation(water_block, RealBodyVector{&wall_boundary, &gate});
 	BodyRelationInner gate_inner_relation(gate);
 	BodyRelationContact gate_water_contact_relation(gate, {&water_block});
 	BodyRelationContact gate_observer_contact_relation(gate_observer, {&gate});
@@ -221,6 +196,10 @@ int main()
 	//----------------------------------------------------------------------
 	//	Algorithms of FSI.
 	//----------------------------------------------------------------------
+	/** offset particle position */
+	SimpleDynamics<OffsetInitialPosition> gate_offset_position(gate, offset);
+	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+	SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
 	/** Corrected configuration for solid dynamics. */
 	solid_dynamics::CorrectConfiguration gate_corrected_configuration(gate_inner_relation);
 	/** Compute the force exerted on elastic gate due to fluid pressure. */
@@ -234,8 +213,7 @@ int main()
 	solid_dynamics::StressRelaxationFirstHalf gate_stress_relaxation_first_half(gate_inner_relation);
 	solid_dynamics::StressRelaxationSecondHalf gate_stress_relaxation_second_half(gate_inner_relation);
 	/**Constrain a solid body part.  */
-	MultiPolygonShape gate_constrain_shape(createGateConstrainShape());
-	BodyRegionByParticle gate_constrain_part(gate, "GateConstrain", gate_constrain_shape);
+	BodyRegionByParticle gate_constrain_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
 	solid_dynamics::ConstrainSolidBodyRegion gate_constrain(gate, gate_constrain_part);
 	/** Update the surface normal direaction of elastic gate. */
 	solid_dynamics::UpdateElasticNormalDirection gate_update_normal(gate);
@@ -255,10 +233,11 @@ int main()
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
+	gate_offset_position.parallel_exec();
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	wall_boundary_particles.initializeNormalDirectionFromBodyShape();
-	gate_particles.initializeNormalDirectionFromBodyShape();
+	wall_boundary_normal_direction.parallel_exec();
+	gate_normal_direction.parallel_exec();
 	gate_corrected_configuration.parallel_exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control

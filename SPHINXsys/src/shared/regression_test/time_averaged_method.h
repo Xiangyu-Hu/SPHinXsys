@@ -45,23 +45,23 @@ namespace SPH
 		using VariableType = decltype(ObserveMethodType::type_indicator_);
 
 	protected:
-		int snapshot_for_converged_ ;                 /* the label for steady converged starting point. */
-		std::string mean_variance_filefullpath_;      /* the path for mean and variance. */
-		std::string filefullpath_filter_output_;      /* the path for filtered output. */
+		int snapshot_for_converged_ ;                 /* the index of the steady converged starting point. */
+		std::string mean_variance_filefullpath_;      /* the file path for mean and variance. (.xml) */
+		std::string filefullpath_filter_output_;      /* the file path for filtered output. */
 		XmlEngine mean_variance_xml_engine_in_;       /* xml engine for mean and variance input. */
 		XmlEngine mean_variance_xml_engine_out_;      /* xml engine for mean and variance output. */
 		
-		VariableType threshold_mean_, threshold_variance_;  /* the threshold container for mean and variance. */
+		VariableType threshold_mean_, threshold_variance_;  /* the container of threshold value for mean and variance. */
 		StdVec<VariableType> meanvalue_, meanvalue_new_;    /* the container of (new) meanvalue. */
 		StdVec<VariableType> variance_, variance_new_;      /* the container of (new) variance. */
-		StdVec<VariableType> local_meanvalue_;              /* the container for meanvalue of current result. */
+		StdVec<VariableType> local_meanvalue_;              /* the container of meanvalue for current result. */
 		
 		/** the method used for filtering local extreme values. */
 		void filterLocalResult(DoubleVec<Real> &current_result);
 		void filterLocalResult(DoubleVec<Vecd> &current_result);
 		void filterLocalResult(DoubleVec<Matd> &current_result);
 
-		/** the method used for test steady starting point. */
+		/** the method used for searching steady starting point. */
 		void searchSteadyStart(DoubleVec<Real> &current_result);
 		void searchSteadyStart(DoubleVec<Vecd> &current_result);
 		void searchSteadyStart(DoubleVec<Matd> &current_result);
@@ -95,10 +95,10 @@ namespace SPH
 
         /** initialize the threshold of meanvalue and variance. */
 		void initializeThreshold(VariableType &threshold_mean, VariableType &threshold_variance);
-		void settingupTheTest();  /** setup the test and define basic variables. */
+		void settingupTheTest();  /** setup the test environment and define basic variables. */
 		void readMeanVarianceFromXml();  /** read the mean and variance from the .xml file. */
 		void searchForStartPoint(); /** search for the starting point of the steady result. */
-		void filterExtremeValues();  /** filter out the extreme values. */
+		void filterExtremeValues();  /** filter out the extreme values, its default is false. */
 		void updateMeanVariance();  /** update the meanvalue and variance from new result. */
 		void writeMeanVarianceToXml();  /** write the meanvalue and variance to the .xml file. */
 		bool compareMeanVariance();  /** compare the meanvalue and variance between old and new ones. */
@@ -107,29 +107,31 @@ namespace SPH
 		/* the interface for generating the priori converged result with time-averaged meanvalue and variance. */
 		void generateDataBase(VariableType threshold_mean, VariableType threshold_variance, string filter = "false")
 		{
-			this->writeXmlToXmlFile();
-			this->readXmlFromXmlFile();
+			this->writeXmlToXmlFile(); /* currently defined in in_output. */
+			this->readXmlFromXmlFile();/* currently defined in in_output. */
 			initializeThreshold(threshold_mean, threshold_variance);
 			if (this->converged == "false")
 			{
 				settingupTheTest();
 				if (filter == "true")
-					filterExtremeValues();
-				searchForStartPoint();
-				this->transferTheIndex();
+					filterExtremeValues(); /* Pay attention to use this filter. */
+				searchForStartPoint(); /* searching starting point with snapshot*observation data structure, and it is dynamic varying. */
+				this->transposeTheIndex(); /* transpose the snapshot and observation, and it is defined in Base. */
 				readMeanVarianceFromXml();
 				updateMeanVariance();
-				this->writeResultToXml(this->number_of_run_ - 1);
+				this->writeResultToXml(this->number_of_run_ - 1); /* the result is output as separately. */
 				writeMeanVarianceToXml();
-				compareMeanVariance();
+				compareMeanVariance(); /* To identify whether the current mean and variance are converged or not.*/
 			}
+			else
+				std::cout << "The results have been converged." << endl;
 		};
 
 		/** the interface for testing new result. */
 		void newResultTest(string filter = "false")
 		{
-			this->writeXmlToXmlFile();
-			this->readXmlFromXmlFile();
+			this->writeXmlToXmlFile(); /* currently defined in in_output. */
+			this->readXmlFromXmlFile(); /* currently defined in in_output. */
 			settingupTheTest();
 			if (filter == "true")
 				filterExtremeValues();

@@ -1,8 +1,8 @@
 /**
  * @file 	particle_relaxation.cpp
  * @brief 	This is the test of using levelset to generate body fitted particles (3D).
- * @details We use this case to test the particle generation and relaxation for a complex geometry. 
- *			Before particle generation, we clean the sharp corners of the model. 
+ * @details We use this case to test the particle generation and relaxation for a complex geometry.
+ *			Before particle generation, we clean the sharp corners of the model.
  * @author 	Yongchuan Yu and Xiangyu Hu
  */
 
@@ -24,41 +24,35 @@ BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 //----------------------------------------------------------------------
 //	define a body from the imported model.
 //----------------------------------------------------------------------
-class ImportedModel : public SolidBody
+class ImportedModel : public ComplexShape
 {
 public:
-	ImportedModel(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name, makeShared<ParticleSpacingByBodyShape>(1.15, 1.0, 3))
+	explicit ImportedModel(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		/** Geometry definition. */
 		Vecd translation(0.0, 0.0, 0.0);
-		TriangleMeshShapeSTL triangle_mesh_shape_stl(full_path_to_file, translation, 1.0);
-		body_shape_.add<LevelSetShape>(this, triangle_mesh_shape_stl, true);
+		add<TriangleMeshShapeSTL>(full_path_to_file, translation, 1.0);
 	}
 };
 //-----------------------------------------------------------------------------------------------------------
 //	Main program starts here.
 //-----------------------------------------------------------------------------------------------------------
-int main(int ac, char *av[])
+int main()
 {
 	//----------------------------------------------------------------------
 	//	Build up -- a SPHSystem
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, dp_0);
-	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = true;
-//handle command line arguments
-#ifdef BOOST_AVAILABLE
-	system.handleCommandlineOptions(ac, av);
-#endif
 	/** output environment. */
-	In_Output in_output(system);
+	InOutput in_output(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	ImportedModel imported_model(system, "ImportedModel");
-	SolidParticles imported_model_particles(imported_model, makeShared<ParticleGeneratorMultiResolution>());
-	imported_model_particles.addAVariableToWrite<Real>("SmoothingLengthRatio");
+	RealBody imported_model(system, makeShared<ImportedModel>("ImportedModel"));
+	imported_model.defineAdaptation<ParticleSpacingByBodyShape>(1.15, 1.0, 3);
+	imported_model.defineBodyLevelSetShape()->writeLevelSet(imported_model);
+	imported_model.defineParticlesAndMaterial();
+	imported_model.generateParticles<ParticleGeneratorMultiResolution>();
+	imported_model.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------

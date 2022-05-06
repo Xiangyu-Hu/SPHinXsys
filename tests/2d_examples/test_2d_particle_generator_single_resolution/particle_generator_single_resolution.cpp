@@ -2,38 +2,55 @@
 * @file 	particle_generator_single_resolution.cpp
 * @brief 	This is the test of using levelset to generate particles with single resolution and relax particles.
 * @details	We use this case to test the particle generation and relaxation by levelset for a complex geometry (2D).
-*			Before particle generation, we clean the sharp corner and smooth 0 levelset value, then doing the re-initialization
+*			Before particle generation, we clean the level set, then do re-initialization.
 
 * @author 	Yongchuan Yu and Xiangyu Hu
-* @version 0.1
 */
 
 #include "sphinxsys.h"
 
-/** case file to setup the test case */
-#include "particle_generator_single_resolution.h"
-
 using namespace SPH;
 
-int main(int ac, char* av[])
+//----------------------------------------------------------------------
+//	Set the file path to the data file
+//----------------------------------------------------------------------
+std::string input_body = "./input/SPHinXsys-2d.dat";
+//----------------------------------------------------------------------
+//	Basic geometry parameters
+//----------------------------------------------------------------------
+Real DL = 2.3;							/**< InputBody length right part. */
+Real DL1 = 2.3;							/**< InputBody length left part. */
+Real DH = 4.5;							/**< InputBody height. */
+Real resolution_ref = (DL + DL1) / 120; /**< Reference resolution. */
+BoundingBox system_domain_bounds(Vec2d(-DL1, 0), Vec2d(DL, DH));
+//----------------------------------------------------------------------
+//	Shape of the InputBody
+//----------------------------------------------------------------------
+class InputBody : public MultiPolygonShape
+{
+public:
+	explicit InputBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
+	{
+		multi_polygon_.addAPolygonFromFile(input_body, ShapeBooleanOps::add);
+	}
+};
+//----------------------------------------------------------------------
+//	The main program
+//----------------------------------------------------------------------
+int main()
 {
 	//----------------------------------------------------------------------
 	//	Build up -- a SPHSystem
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, resolution_ref);
-	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = true;
-	//handle command line arguments
-	#ifdef BOOST_AVAILABLE
-	system.handleCommandlineOptions(ac, av);
-	#endif
-	/** output environment. */
-	In_Output 	in_output(system);
+	InOutput in_output(system); // output environment
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	InputBody inputbody(system, "SPHInXsysLogo");
-	SolidParticles inputbody_particles(inputbody);
+	RealBody inputbody(system, makeShared<InputBody>("SPHInXsysLogo"));
+	inputbody.defineBodyLevelSetShape();
+	inputbody.defineParticlesAndMaterial();
+	inputbody.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -43,16 +60,16 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
-	RandomizePartilePosition  random_inputbody_particles(inputbody);
+	RandomizePartilePosition random_inputbody_particles(inputbody);
 	relax_dynamics::RelaxationStepInner relaxation_step_inner(inputbody_inner, true);
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp inputbody_recording_to_vtp(in_output, inputbody);
-	MeshRecordingToPlt 	cell_linked_list_recording(in_output, inputbody, inputbody.cell_linked_list_);
+	MeshRecordingToPlt cell_linked_list_recording(in_output, inputbody, inputbody.cell_linked_list_);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
-	//	and case specified initial condition if necessary. 
+	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
 	random_inputbody_particles.parallel_exec(0.25);
 	relaxation_step_inner.surface_bounding_.parallel_exec();

@@ -14,23 +14,28 @@ namespace SPH
 {
 	//=================================================================================================//
 	ParticleGeneratorNetwork::
-		ParticleGeneratorNetwork(Vecd starting_pnt, Vecd second_pnt, int iterator, Real grad_factor)
-		: ParticleGenerator(), starting_pnt_(starting_pnt), second_pnt_(second_pnt),
-		  n_it_(iterator), fascicles_(true), segments_in_branch_(10), segment_length_(0),
-		  grad_factor_(grad_factor), body_shape_(nullptr), cell_linked_list_(nullptr), tree_(nullptr) {}
-	//=================================================================================================//
-	void ParticleGeneratorNetwork::initialize(SPHBody *sph_body)
+		ParticleGeneratorNetwork(SPHBody &sph_body, const Vecd &starting_pnt, const Vecd &second_pnt, int iterator, Real grad_factor)
+		: ParticleGenerator(sph_body), starting_pnt_(starting_pnt), second_pnt_(second_pnt),
+		  n_it_(iterator), fascicles_(true), segments_in_branch_(10),
+		  segment_length_(sph_body.sph_adaptation_->ReferenceSpacing()),
+		  grad_factor_(grad_factor), sph_body_(sph_body), body_shape_(*sph_body.body_shape_),
+		  cell_linked_list_(DynamicCast<RealBody>(this, sph_body).cell_linked_list_),
+		  tree_(DynamicCast<TreeBody>(this, &sph_body))
 	{
-		sph_body_ = sph_body;
-		cell_linked_list_ = DynamicCast<RealBody>(this, sph_body)->cell_linked_list_;
-		segment_length_ = sph_body_->sph_adaptation_->ReferenceSpacing();
-		body_shape_ = &sph_body_->body_shape_;
-		tree_ = sph_body_->createGenerativeStructure<GenerativeTree>(sph_body_);
 		Vecd displacement = second_pnt_ - starting_pnt_;
 		Vecd end_direction = displacement / (displacement.norm() + TinyReal);
-		//add particle to the first branch of the tree
-		tree_->growAParticleOnBranch(tree_->root_, starting_pnt_, end_direction);
-		cell_linked_list_->InsertACellLinkedListDataEntry(0, tree_->pos_n_[0]);
+		// add particle to the first branch of the tree
+		growAParticleOnBranch(tree_->root_, starting_pnt_, end_direction);
+		cell_linked_list_->InsertACellLinkedListDataEntry(0, pos_n_[0]);
+	}
+	//=================================================================================================//
+	void ParticleGeneratorNetwork::
+		growAParticleOnBranch(TreeBody::Branch *branch, const Vecd &new_point, const Vecd &end_direction)
+	{
+		initializePositionAndVolume(new_point, segment_length_);
+		tree_->branch_locations_.push_back(branch->id_);
+		branch->inner_particles_.push_back(pos_n_.size() - 1);
+		branch->end_direction_ = end_direction;
 	}
 	//=================================================================================================//
 	Vecd ParticleGeneratorNetwork::getGradientFromNearestPoints(Vecd pt, Real delta)
@@ -55,8 +60,8 @@ namespace SPH
 	{
 		Vecd pnt_to_project = init_point + dir * segment_length_;
 
-		Real phi = body_shape_->findSignedDistance(pnt_to_project);
-		Vecd unit_normal = body_shape_->findNormalDirection(pnt_to_project);
+		Real phi = body_shape_.findSignedDistance(pnt_to_project);
+		Vecd unit_normal = body_shape_.findNormalDirection(pnt_to_project);
 		unit_normal /= unit_normal.norm() + TinyReal;
 		Vecd new_point = pnt_to_project - phi * unit_normal;
 		return new_point;
@@ -95,14 +100,13 @@ namespace SPH
 		createABranchIfValid(size_t parent_id, Real angle, Real repulsivity, size_t number_segments)
 	{
 		bool is_valid = false;
-		GenerativeTree::Branch *parent_branch = tree_->branches_[parent_id];
+		TreeBody::Branch *parent_branch = tree_->branches_[parent_id];
 		IndexVector &parent_elements = parent_branch->inner_particles_;
-		StdLargeVec<Vecd> &tree_points = tree_->pos_n_;
 
-		Vecd init_point = tree_points[parent_elements.back()];
+		Vecd init_point = pos_n_[parent_elements.back()];
 		Vecd init_direction = parent_branch->end_direction_;
 
-		Vecd surface_norm = body_shape_->findNormalDirection(init_point);
+		Vecd surface_norm = body_shape_.findNormalDirection(init_point);
 		surface_norm /= surface_norm.norm() + TinyReal;
 		Vecd in_plane = -SimTK::cross(init_direction, surface_norm);
 
@@ -117,12 +121,12 @@ namespace SPH
 		if (!isCollision(new_point, cell_linked_list_->findNearestListDataEntry(new_point), parent_id))
 		{
 			is_valid = true;
-			GenerativeTree::Branch *new_branch = tree_->createANewBranch(parent_id);
-			tree_->growAParticleOnBranch(new_branch, new_point, end_direction);
+			TreeBody::Branch *new_branch = tree_->createANewBranch(parent_id);
+			growAParticleOnBranch(new_branch, new_point, end_direction);
 
 			for (size_t i = 1; i < number_segments; i++)
 			{
-				surface_norm = body_shape_->findNormalDirection(new_point);
+				surface_norm = body_shape_.findNormalDirection(new_point);
 				surface_norm /= surface_norm.norm() + TinyReal;
 				/** Project grad to surface. */
 				grad = getGradientFromNearestPoints(new_point, delta);
@@ -145,33 +149,33 @@ namespace SPH
 					std::cout << "New branch point is too close, Break! " << std::endl;
 					break;
 				}
-				tree_->growAParticleOnBranch(new_branch, new_point, end_direction);
+				growAParticleOnBranch(new_branch, new_point, end_direction);
 			}
 
 			for (const size_t &particle_idx : new_branch->inner_particles_)
 			{
-				cell_linked_list_->InsertACellLinkedListDataEntry(particle_idx, tree_points[particle_idx]);
+				cell_linked_list_->InsertACellLinkedListDataEntry(particle_idx, pos_n_[particle_idx]);
 			}
 		}
 
 		return is_valid;
 	}
 	//=================================================================================================//
-	void ParticleGeneratorNetwork::createBaseParticles(BaseParticles *base_particles)
+	void ParticleGeneratorNetwork::initializeGeometricVariables()
 	{
-		In_Output *in_output = sph_body_->getSPHSystem().in_output_;
+		InOutput *in_output = sph_body_.getSPHSystem().in_output_;
 		BodyStatesRecordingToVtp write_states(*in_output, {sph_body_});
 
 		std::cout << "Now creating Particles on network... " << std::endl;
 
 		size_t ite = 0;
-		sph_body_->setNewlyUpdated();
+		sph_body_.setNewlyUpdated();
 		write_states.writeToFile(0);
 
 		IndexVector branches_to_grow;
 		IndexVector new_branches_to_grow;
 
-		//the second branch
+		// the second branch
 		if (createABranchIfValid(0, 0.0, 0.0, segments_in_branch_))
 		{
 			branches_to_grow.push_back(tree_->last_branch_id_);
@@ -193,7 +197,7 @@ namespace SPH
 			}
 
 			ite++;
-			sph_body_->setNewlyUpdated();
+			sph_body_.setNewlyUpdated();
 			write_states.writeToFile(ite);
 		}
 
@@ -222,11 +226,11 @@ namespace SPH
 			branches_to_grow = new_branches_to_grow;
 
 			ite++;
-			sph_body_->setNewlyUpdated();
+			sph_body_.setNewlyUpdated();
 			write_states.writeToFile(ite);
 		}
 
-		std::cout << base_particles->total_real_particles_ << " Particles has been successfully created!" << std::endl;
+		std::cout << base_particles_->total_real_particles_ << " Particles has been successfully created!" << std::endl;
 	}
 	//=================================================================================================//
 }

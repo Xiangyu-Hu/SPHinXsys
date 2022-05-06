@@ -92,9 +92,6 @@ namespace SPH
 	 */
 	class BinaryShapes : public Shape
 	{
-	private:
-		UniquePtrVectorKeeper<Shape> shapes_ptr_keeper_;
-
 	public:
 		BinaryShapes() : Shape("BinaryShapes"){};
 		explicit BinaryShapes(const std::string &shapes_name) : Shape(shapes_name){};
@@ -121,8 +118,10 @@ namespace SPH
 		virtual Vecd findClosestPoint(const Vecd &input_pnt) override;
 		Shape *getShapeByName(const std::string &shape_name);
 		ShapeAndOp *getShapeAndOpByName(const std::string &shape_name);
+		size_t getShapeIndexByName(const std::string &shape_name);
 
 	protected:
+		UniquePtrKeepers<Shape> shapes_ptr_keeper_;
 		StdVec<ShapeAndOp> shapes_and_ops_;
 	};
 

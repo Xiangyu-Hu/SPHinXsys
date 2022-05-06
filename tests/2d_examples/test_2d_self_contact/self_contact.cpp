@@ -34,7 +34,11 @@ Real Q = 2.0 * (cos(kl) * sinh(kl) - sin(kl) * cosh(kl));
 Real vf = 0.15;
 Real R = PL / (0.5 * Pi);
 //----------------------------------------------------------------------
-//	Geometries used in the case.
+//	Global parameters for observation
+//----------------------------------------------------------------------
+StdVec<Vecd> beam_observation_location = {Vecd(PL, 0.0)};
+//----------------------------------------------------------------------
+//	Geometric elements used in the case.
 //----------------------------------------------------------------------
 std::vector<Vecd> createBeamBaseShape()
 {
@@ -60,19 +64,15 @@ std::vector<Vecd> createBeamShape()
 	return beam_shape;
 }
 //----------------------------------------------------------------------
-//	Bodies used in the case.
+//	Geometric shapes used in the case.
 //----------------------------------------------------------------------
-class Beam : public SolidBody
+class Beam : public MultiPolygonShape
 {
 public:
-	Beam(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geometry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(createBeamBaseShape(), ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(createBeamShape(), ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(createBeamBaseShape(), ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(createBeamShape(), ShapeBooleanOps::add);
 	}
 };
 //----------------------------------------------------------------------
@@ -84,16 +84,6 @@ MultiPolygon createBeamConstrainShape()
 	multi_polygon.addAPolygon(createBeamBaseShape(), ShapeBooleanOps::add);
 	multi_polygon.addAPolygon(createBeamShape(), ShapeBooleanOps::sub);
 	return multi_polygon;
-};
-
-// an observer particle generator
-class ObserverParticleGenerator : public ParticleGeneratorDirect
-{
-public:
-	ObserverParticleGenerator() : ParticleGeneratorDirect()
-	{
-		positions_volumes_.push_back(std::make_pair(Vecd(PL, 0.0), 0.0));
-	}
 };
 //----------------------------------------------------------------------
 //	Application dependent initial condition.
@@ -129,12 +119,14 @@ int main()
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	Beam beam_body(system, "BeamBody");
-	ElasticSolidParticles beam_particles(beam_body, makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson));
-	beam_particles.addAVariableToWrite<Real>("ContactDensity");
+	SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
+	beam_body.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	beam_body.generateParticles<ParticleGeneratorLattice>();
+	beam_body.addBodyStateForRecording<Real>("ContactDensity");
 
-	ObserverBody beam_observer(system, "BeamObserver", makeShared<SPHAdaptation>(1.15, 2.0));
-	ObserverParticles observer_particles(beam_observer, makeShared<ObserverParticleGenerator>());
+	ObserverBody beam_observer(system, "BeamObserver");
+	beam_observer.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
+	beam_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -148,6 +140,7 @@ int main()
 	//-----------------------------------------------------------------------------
 	// initial condition
 	BeamInitialCondition beam_initial_velocity(beam_body);
+	TimeStepInitialization reset_prior_acceleration(beam_body);
 	//corrected strong configuration
 	solid_dynamics::CorrectConfiguration
 		beam_corrected_configuration(beam_body_inner);
@@ -157,15 +150,15 @@ int main()
 	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half(beam_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(beam_body_inner);
 	// algorithms for solid self contact
-	solid_dynamics::DynamicSelfContactForce beam_self_contact_forces(beam_self_contact);
+	solid_dynamics::SelfContactDensitySummation beam_self_contact_density(beam_self_contact);
+	solid_dynamics::SelfContactForce beam_self_contact_forces(beam_self_contact);
 	// clamping a solid body part. This is softer than a direct constraint
-	MultiPolygonShape beam_cobstrain_shape(createBeamConstrainShape());
-	BodyRegionByParticle beam_base(beam_body, "BeamBase", beam_cobstrain_shape);
+	BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
 	solid_dynamics::ClampConstrainSolidBodyRegion clamp_constrain_beam_base(beam_body_inner, beam_base);
 	//-----------------------------------------------------------------------------
 	//	outputs
 	//-----------------------------------------------------------------------------
-	In_Output in_output(system);
+	InOutput in_output(system);
 	BodyStatesRecordingToVtp write_beam_states(in_output, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_beam_tip_displacement("Position", in_output, beam_observer_contact);
@@ -215,6 +208,8 @@ int main()
 							  << dt << "\n";
 				}
 
+				reset_prior_acceleration.parallel_exec();
+				beam_self_contact_density.parallel_exec();
 				beam_self_contact_forces.parallel_exec();
 				beam_body.updateCellLinkedList();
 				beam_self_contact.updateConfiguration();
@@ -244,7 +239,10 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_beam_tip_displacement.newResultTest();
+	if (!system.restart_step_ == 0) // TODO: this case should be revsied latter.
+	{
+		write_beam_tip_displacement.newResultTest();
+	}
 
 	return 0;
 }

@@ -56,55 +56,43 @@ namespace SPH
 		UniquePtrKeeper<Kernel> kernel_ptr_keeper_;
 
 	protected:
+		SPHBody *sph_body_;
 		Real h_spacing_ratio_;		   /**< ratio of reference kernel smoothing length to particle spacing */
 		Real system_resolution_ratio_; /**< ratio of body resolution to system resolution, set to 1.0 by default */
 		int local_refinement_level_;   /**< refinement level respect to reference particle spacing */
 		Real spacing_ref_;			   /**< reference particle spacing used to determine local particle spacing */
 		Real h_ref_;				   /**< reference particle spacing used to determine local particle smoothing length */
+		Kernel *kernel_;
 		Real spacing_min_;			   /**< minimum particle spacing determined by local refinement level */
 		Real spacing_ratio_min_;
 		Real h_ratio_max_;
 		Real number_density_min_;
 		Real number_density_max_;
-
-		Kernel *kernel_;
-		SPHBody *sph_body_;
 		BoundingBox system_domain_bounds_;
-		BaseParticles *base_particles_;
-
-		Real small_shift_factor_; /**< small shift for level generation. TODO: this should be clarified for its usage. */
-		Real level_set_refinement_ratio_;/**< ratio of level set resolution to system resolution, set to 1.0 by default. */
 
 	public:
-		SPHAdaptation(Real h_spacing_ratio = 1.3, Real system_resolution_ratio = 1.0, 
-					  Real small_shift_factor = 1.0, Real level_set_refinement_ratio = 1.0);
+		explicit SPHAdaptation(SPHBody *sph_body, Real h_spacing_ratio = 1.3, Real system_resolution_ratio = 1.0);
 		virtual ~SPHAdaptation(){};
-		/** Note: called  after construction of this and derived classes. */
-		virtual void initialize(SPHBody *sph_body);
 
 		int LocalRefinementLevel() { return local_refinement_level_; };
 		Real ReferenceSpacing() { return spacing_ref_; };
 		Real ReferenceSmoothingLength() { return h_ref_; };
 		Kernel *getKernel() { return kernel_; };
-		/**Note: replace a kernel should be done before kernel initialization,
-		 * which is called in SPHBody constructor.
-		 */
+		void resetAdapationRatios(Real h_spacing_ratio, Real system_resolution_ratio = 1.0);
 		template <class KernelType, typename... ConstructorArgs>
-		void replaceKernel(ConstructorArgs &&...args)
+		void resetKernel(ConstructorArgs &&...args)
 		{
-			kernel_ = kernel_ptr_keeper_.createPtr<KernelType>(std::forward<ConstructorArgs>(args)...);
+			kernel_ = kernel_ptr_keeper_.createPtr<KernelType>(h_ref_, std::forward<ConstructorArgs>(args)...);
 		};
 		Real MinimumSpacing() { return spacing_min_; };
 		Real MinimumSpacingRatio() { return spacing_ratio_min_; };
 		Real computeReferenceNumberDensity(Vec2d zero, Real h_ratio);
 		Real computeReferenceNumberDensity(Vec3d zero, Real h_ratio);
 		Real ReferenceNumberDensity();
-		Real SmallShiftFactor() { return small_shift_factor_; };
 		virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
 
-		virtual void assignBaseParticles(BaseParticles *base_particles);
 		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList();
-		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape);
+		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
 
 	protected:
 		Real RefinedSpacing(Real coarse_particle_spacing, int refinement_level);
@@ -119,7 +107,7 @@ namespace SPH
 	public:
 		StdLargeVec<Real> h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
 
-		ParticleWithLocalRefinement(Real h_spacing_ratio_,
+		ParticleWithLocalRefinement(SPHBody *sph_body, Real h_spacing_ratio_,
 									Real system_resolution_ratio,
 									int local_refinement_level);
 		virtual ~ParticleWithLocalRefinement(){};
@@ -131,9 +119,9 @@ namespace SPH
 			return h_ratio_[particle_index_i];
 		};
 
-		virtual void assignBaseParticles(BaseParticles *base_particles) override;
+		StdLargeVec<Real> &registerSmoothingLengthRatio(BaseParticles *base_particles);
 		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList() override;
-		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape) override;
+		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
 	};
 
 	/**
@@ -143,12 +131,12 @@ namespace SPH
 	class ParticleSpacingByBodyShape : public ParticleWithLocalRefinement
 	{
 	public:
-		ParticleSpacingByBodyShape(Real smoothing_length_ratio,
+		ParticleSpacingByBodyShape(SPHBody *sph_body, Real smoothing_length_ratio,
 								   Real system_resolution_ratio,
 								   int local_refinement_level);
 		virtual ~ParticleSpacingByBodyShape(){};
 
-		Real getLocalSpacing(Shape &shape, Vecd &position);
+		Real getLocalSpacing(Shape &shape, const Vecd &position);
 	};
 }
 #endif //PARTICLE_ADAPTATION_H

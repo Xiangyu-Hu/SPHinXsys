@@ -20,7 +20,7 @@ namespace SPH
 			for (int j = 0; j != PackageSize(); ++j)
 			{
 				phi_[i][j] = far_field_level_set;
-				n_[i][j] = Vecd(1.0);
+				phi_gradient_[i][j] = Vecd(1.0);
 				kernel_weight_[i][j] = far_field_level_set < 0.0 ? 0 : 1.0;
 				kernel_gradient_[i][j] = Vecd(0.0);
 				near_interface_id_[i][j] = far_field_level_set < 0.0 ? -2 : 2;
@@ -32,7 +32,7 @@ namespace SPH
 		for (int i = 0; i != PackageSize(); ++i)
 			for (int j = 0; j != PackageSize(); ++j)
 			{
-				Vec2d position = data_lower_bound_ + Vec2d((Real)i * grid_spacing_, (Real)j * grid_spacing_);
+				Vec2d position = DataLowerBound() + Vec2d(i, j) * grid_spacing_;
 				phi_[i][j] = shape.findSignedDistance(position);
 				near_interface_id_[i][j] = phi_[i][j] < 0.0 ? -2 : 2;
 			}
@@ -43,7 +43,7 @@ namespace SPH
 		for (int i = 0; i != PackageSize(); ++i)
 			for (int j = 0; j != PackageSize(); ++j)
 			{
-				Vec2d position = data_lower_bound_ + Vec2d((Real)i * grid_spacing_, (Real)j * grid_spacing_);
+				Vec2d position = DataLowerBound() + Vec2d(i, j) * grid_spacing_;
 				kernel_weight_[i][j] = level_set.computeKernelIntegral(position);
 				kernel_gradient_[i][j] = level_set.computeKernelGradientIntegral(position);
 			}
@@ -54,12 +54,12 @@ namespace SPH
 		for (int i = AddressBufferWidth(); i != OperationUpperBound(); ++i)
 			for (int j = AddressBufferWidth(); j != OperationUpperBound(); ++j)
 			{
-				//only reinitialize non cut cells
+				// only reinitialize non cut cells
 				if (*near_interface_id_addrs_[i][j] != 0)
 				{
 					Real phi_0 = *phi_addrs_[i][j];
 					Real s = phi_0 / sqrt(phi_0 * phi_0 + grid_spacing_ * grid_spacing_);
-					//x direction
+					// x direction
 					Real dv_xp = (*phi_addrs_[i + 1][j] - phi_0);
 					Real dv_xn = (phi_0 - *phi_addrs_[i - 1][j]);
 					Real dv_x = dv_xp;
@@ -75,7 +75,7 @@ namespace SPH
 						if (ss > 0.0)
 							dv_x = dv_xn;
 					}
-					//y direction
+					// y direction
 					Real dv_yp = (*phi_addrs_[i][j + 1] - phi_0);
 					Real dv_yn = (phi_0 - *phi_addrs_[i][j - 1]);
 					Real dv_y = dv_yp;
@@ -91,7 +91,7 @@ namespace SPH
 						if (ss > 0.0)
 							dv_y = dv_yn;
 					}
-					//time stepping
+					// time stepping
 					*phi_addrs_[i][j] -= 0.5 * s * (sqrt(dv_x * dv_x + dv_y * dv_y) - grid_spacing_);
 				}
 			}
@@ -99,9 +99,9 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::markNearInterface(Real small_shift_factor)
 	{
-		// small_shift_factor = 0.75 by default, can be increased for difficult geometries for smoothing
+		// small_shift_factor = 1.0 by default, can be increased for difficult geometries for smoothing
 		Real small_shift = small_shift_factor * grid_spacing_;
-		//corner averages, note that the first row and first column are not used
+		// corner averages, note that the first row and first column are not used
 		PackageTemporaryData<Real> corner_averages;
 		for (int i = 1; i != AddressSize(); ++i)
 			for (int j = 1; j != AddressSize(); ++j)
@@ -112,12 +112,12 @@ namespace SPH
 		for (int i = AddressBufferWidth(); i != OperationUpperBound(); ++i)
 			for (int j = AddressBufferWidth(); j != OperationUpperBound(); ++j)
 			{
-				//first assume far cells
+				// first assume far cells
 				Real phi_0 = *phi_addrs_[i][j];
 				int near_interface_id = phi_0 > 0.0 ? 2 : -2;
 
 				Real phi_average_0 = corner_averages[i][j];
-				//find outer cut cells by comparing the sign of corner averages
+				// find outer cut cells by comparing the sign of corner averages
 				for (int l = 0; l != 2; ++l)
 					for (int m = 0; m != 2; ++m)
 					{
@@ -130,7 +130,7 @@ namespace SPH
 							near_interface_id = -1;
 					}
 
-				//find zero cut cells by comparing the sign of corner averages
+				// find zero cut cells by comparing the sign of corner averages
 				for (int l = 0; l != 2; ++l)
 					for (int m = 0; m != 2; ++m)
 					{
@@ -141,11 +141,11 @@ namespace SPH
 							near_interface_id = 0;
 					}
 
-				//find cells between cut cells
+				// find cells between cut cells
 				if (fabs(phi_0) < small_shift && abs(near_interface_id) != 1)
 					near_interface_id = 0;
 
-				//assign this to package
+				// assign this to package
 				*near_interface_id_addrs_[i][j] = near_interface_id;
 			}
 	}
@@ -205,7 +205,8 @@ namespace SPH
 								if (neighbor_near_interface_id >= 1)
 								{
 									Real phi_p_ = neighbor_pkg->phi_[x_pair.second][y_pair.second];
-									Vecd norm_to_face = neighbor_pkg->n_[x_pair.second][y_pair.second];
+									Vecd norm_to_face = neighbor_pkg->phi_gradient_[x_pair.second][y_pair.second];
+									norm_to_face /= norm_to_face.norm() + TinyReal;
 									min_distance_p = SMIN(min_distance_p, (Vecd((Real)x, (Real)y) * data_spacing_ + phi_p_ * norm_to_face).norm());
 								}
 							}
@@ -228,7 +229,8 @@ namespace SPH
 								if (neighbor_near_interface_id <= -1)
 								{
 									Real phi_n_ = neighbor_pkg->phi_[x_pair.second][y_pair.second];
-									Vecd norm_to_face = neighbor_pkg->n_[x_pair.second][y_pair.second];
+									Vecd norm_to_face = neighbor_pkg->phi_gradient_[x_pair.second][y_pair.second];
+									norm_to_face /= norm_to_face.norm() + TinyReal;
 									min_distance_n = SMIN(min_distance_n, (Vecd((Real)x, (Real)y) * data_spacing_ - phi_n_ * norm_to_face).norm());
 								}
 							}
@@ -299,7 +301,7 @@ namespace SPH
 			for (size_t i = 0; i != number_of_operation[0]; ++i)
 			{
 				output_file << DataValueFromGlobalIndex<Vecd, LevelSetDataPackage::PackageData<Vecd>,
-														&LevelSetDataPackage::n_>(Vecu(i, j))[0]
+														&LevelSetDataPackage::phi_gradient_>(Vecu(i, j))[0]
 							<< " ";
 			}
 			output_file << " \n";
@@ -310,7 +312,7 @@ namespace SPH
 			for (size_t i = 0; i != number_of_operation[0]; ++i)
 			{
 				output_file << DataValueFromGlobalIndex<Vecd, LevelSetDataPackage::PackageData<Vecd>,
-														&LevelSetDataPackage::n_>(Vecu(i, j))[1]
+														&LevelSetDataPackage::phi_gradient_>(Vecu(i, j))[1]
 							<< " ";
 			}
 			output_file << " \n";
@@ -365,7 +367,7 @@ namespace SPH
 	{
 		Real phi = probeSignedDistance(position);
 		Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
-		Real threshold = cutoff_radius + data_spacing_; //consider that interface's half width is the data spacing
+		Real threshold = cutoff_radius + data_spacing_; // consider that interface's half width is the data spacing
 
 		Real integral(0.0);
 		if (fabs(phi) < threshold)

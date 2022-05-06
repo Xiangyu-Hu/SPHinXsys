@@ -1,25 +1,25 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * --------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+ * and HU1527/12-1.															*
+ *                                                                           *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * --------------------------------------------------------------------------*/
 /**
  * @file 	particle_generator_lattice.h
  * @brief 	This is the base class of particle generator, which generates particles
@@ -37,29 +37,37 @@
 namespace SPH
 {
 
-	class ComplexShape;
+	class Shape;
 	class ParticleSpacingByBodyShape;
+	class ShellParticles;
+
+	/**
+	 * @class BaseParticleGeneratorLattice
+	 * @brief Base class for generating particles from lattice positions for a body.
+	 */
+	class BaseParticleGeneratorLattice
+	{
+	public:
+		explicit BaseParticleGeneratorLattice(SPHBody &sph_body);
+		virtual ~BaseParticleGeneratorLattice(){};
+
+	protected:
+		Real lattice_spacing_;
+		BoundingBox domain_bounds_;
+		Shape &body_shape_;
+	};
 
 	/**
 	 * @class ParticleGeneratorLattice
 	 * @brief generate particles from lattice positions for a body.
 	 */
-	class ParticleGeneratorLattice : public ParticleGenerator
+	class ParticleGeneratorLattice : public BaseParticleGeneratorLattice, public ParticleGenerator
 	{
 	public:
-		ParticleGeneratorLattice();
+		explicit ParticleGeneratorLattice(SPHBody &sph_body);
 		virtual ~ParticleGeneratorLattice(){};
 
-		virtual void initialize(SPHBody *sph_body) override;
-		virtual void createBaseParticles(BaseParticles *base_particles) override;
-
-	protected:
-		Real lattice_spacing_;
-		BoundingBox domain_bounds_;
-		ComplexShape *body_shape_;
-
-		virtual void createABaseParticle(BaseParticles *base_particles,
-										 Vecd &particle_position, Real particle_volume);
+		virtual void initializeGeometricVariables() override;
 	};
 
 	/**
@@ -69,38 +77,36 @@ namespace SPH
 	class ParticleGeneratorMultiResolution : public ParticleGeneratorLattice
 	{
 	public:
-		ParticleGeneratorMultiResolution();
+		explicit ParticleGeneratorMultiResolution(SPHBody &sph_body);
 		virtual ~ParticleGeneratorMultiResolution(){};
-		virtual void initialize(SPHBody *sph_body) override;
 
 	protected:
 		ParticleSpacingByBodyShape *particle_adapation_;
+		StdLargeVec<Real> &h_ratio_;
 
-		virtual void createABaseParticle(BaseParticles *base_particles,
-										 Vecd &particle_position, Real particle_volume) override;
+		virtual void initializePositionAndVolume(const Vecd &position, Real volume) override;
+		virtual void initializeSmoothingLengthRatio(Real local_spacing);
 	};
 
 	/**
-	* @class ShellParticleGeneratorLattice
-	* @brief generate particles from lattice positions for a shell body.
-	*/
-	class ShellParticleGeneratorLattice : public ParticleGeneratorLattice
+	 * @class ShellParticleGeneratorLattice
+	 * @brief generate particles from lattice positions for a shell body.
+	 */
+	class ShellParticleGeneratorLattice : public BaseParticleGeneratorLattice, public SurfaceParticleGenerator
 	{
 	public:
-		ShellParticleGeneratorLattice(Real global_avg_thickness);
-		virtual ~ShellParticleGeneratorLattice() {};
+		ShellParticleGeneratorLattice(SPHBody &sph_body, Real global_avg_thickness);
+		virtual ~ShellParticleGeneratorLattice(){};
 
-		virtual void initialize(SPHBody* sph_body) override;
-		virtual void createBaseParticles(BaseParticles* base_particles) override;
+		virtual void initializeGeometricVariables() override;
 
 	protected:
-		Real total_volume_;              /** Calculated from level set. */
+		Real total_volume_; /** Calculated from level set. */
 		Real global_avg_thickness_;
 		Real particle_spacing_;
 		Real avg_particle_volume_;
-
 		size_t number_of_cells_;
 		size_t planned_number_of_particles_;
 	};
 }
-#endif //PARTICLE_GENERATOR_LATTICE_H
+#endif // PARTICLE_GENERATOR_LATTICE_H

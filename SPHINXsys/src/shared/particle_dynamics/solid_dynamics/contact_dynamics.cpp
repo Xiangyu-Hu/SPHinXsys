@@ -65,11 +65,14 @@ namespace SPH
 												self_contact_relation.body_surface_layer_),
 			  SolidDataInner(self_contact_relation),
 			  mass_(particles_->mass_), contact_density_(particles_->contact_density_), Vol_(particles_->Vol_),
-			  dvel_dt_prior_(particles_->dvel_dt_prior_), contact_force_(particles_->contact_force_) {}
+			  dvel_dt_prior_(particles_->dvel_dt_prior_), contact_force_(particles_->contact_force_),
+			  contact_impedance_(material_->ReferenceDensity() * sqrt(material_->ContactStiffness())),
+			  vel_n_(particles_->vel_n_) {}
 		//=================================================================================================//
 		void SelfContactForce::Interaction(size_t index_i, Real dt)
 		{
 			Real Vol_i = Vol_[index_i];
+			Vecd vel_i = vel_n_[index_i];
 			Real p_i = contact_density_[index_i] * material_->ContactStiffness();
 
 			/** Inner interaction. */
@@ -80,8 +83,9 @@ namespace SPH
 				size_t index_j = inner_neighborhood.j_[n];
 				const Vecd &e_ij = inner_neighborhood.e_ij_[n];
 				Real p_star = 0.5 * (p_i + contact_density_[index_j] * material_->ContactStiffness());
+				Real impedance_p = 0.5 * contact_impedance_ * (SimTK::dot(vel_i - vel_n_[index_j], -e_ij));
 				//force to mimic pressure
-				force -= 2.0 * p_star * e_ij * Vol_i * Vol_[index_j] * inner_neighborhood.dW_ij_[n];
+				force -= 2.0 * (p_star + impedance_p) * e_ij * Vol_i * Vol_[index_j] * inner_neighborhood.dW_ij_[n];
 			}
 			contact_force_[index_i] = force;
 			dvel_dt_prior_[index_i] += force / mass_[index_i];
@@ -138,12 +142,19 @@ namespace SPH
 			  contact_density_(particles_->contact_density_),
 			  Vol_(particles_->Vol_), mass_(particles_->mass_),
 			  dvel_dt_prior_(particles_->dvel_dt_prior_),
-			  contact_force_(particles_->contact_force_)
+			  contact_force_(particles_->contact_force_),
+			  vel_n_(particles_->vel_n_)
 		{
+			rho_c_i_ = material_->ReferenceDensity() * sqrt(material_->ContactStiffness());
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_contact_density_.push_back(&(contact_particles_[k]->contact_density_));
+				contact_vel_n_.push_back(&(contact_particles_[k]->vel_n_));
+
+				Real rho_c_k = contact_material_[k]->ReferenceDensity() * sqrt(contact_material_[k]->ContactStiffness());
+				rho_c_k_.push_back(rho_c_k);
+				contact_impedance_.push_back(2.0 * rho_c_i_ * rho_c_k / (rho_c_i_ + rho_c_k));
 			}
 		}
 		//=================================================================================================//
@@ -151,6 +162,7 @@ namespace SPH
 		{
 			Real Vol_i = Vol_[index_i];
 			Real p_i = contact_density_[index_i] * material_->ContactStiffness();
+			Vecd vel_i = vel_n_[index_i];
 			/** Contact interaction. */
 			Vecd force(0.0);
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -158,6 +170,7 @@ namespace SPH
 				StdLargeVec<Real> &contact_density_k = *(contact_contact_density_[k]);
 				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 				Solid *solid_k = contact_material_[k];
+				StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
 
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -165,9 +178,13 @@ namespace SPH
 					size_t index_j = contact_neighborhood.j_[n];
 					Vecd e_ij = contact_neighborhood.e_ij_[n];
 
-					Real p_star = 0.5 * (p_i + contact_density_k[index_j] * solid_k->ContactStiffness());
+					Real p_star = (p_i * rho_c_k_[k] + contact_density_k[index_j] * solid_k->ContactStiffness() * rho_c_i_)
+						           / (rho_c_i_ + rho_c_k_[k]);
+					Real impedance_p = 0.5 * contact_impedance_[k] * (SimTK::dot(vel_i - vel_n_k[index_j], -e_ij));
+
 					//force due to pressure
-					force -= 2.0 * p_star * e_ij * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+					force -= 2.0 * (p_star + impedance_p) * e_ij *
+						Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
 				}
 			}
 			contact_force_[index_i] = force;

@@ -1,7 +1,7 @@
 /**
  * @file 	xml.cpp
  * @brief 	XML functions are defined here
- * @author	Chi Zhang and Xiangyu Hu
+ * @author	Bo Zhang, Chi Zhang and Xiangyu Hu
  */
 
 #include "xml_engine.h"
