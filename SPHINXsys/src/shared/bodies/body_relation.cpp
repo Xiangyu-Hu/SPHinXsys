@@ -8,6 +8,7 @@
 
 #include "base_kernel.h"
 #include "base_particles.h"
+#include "base_particle_dynamics.h"
 #include "cell_linked_list.hpp"
 
 namespace SPH

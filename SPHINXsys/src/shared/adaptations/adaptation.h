@@ -42,6 +42,7 @@ namespace SPH
 	class Shape;
 	class Kernel;
 	class BaseParticles;
+	class BaseLevelSet;
 
 	/**
 	 * @class SPHAdaptation

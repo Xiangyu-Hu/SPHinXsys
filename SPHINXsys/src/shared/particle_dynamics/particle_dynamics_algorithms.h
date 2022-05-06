@@ -100,7 +100,7 @@ namespace SPH
 		ReduceOperation reduce_operation_;
 		std::string quantity_name_;
 
-		/** inital or reference value */
+		/** initial or reference value */
 		ReturnType initial_reference_;
 		virtual void SetupReduce(){};
 		virtual ReturnType ReduceFunction(size_t index_i, Real dt = 0.0) = 0;

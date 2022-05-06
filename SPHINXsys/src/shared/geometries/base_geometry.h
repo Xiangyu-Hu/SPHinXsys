@@ -24,7 +24,7 @@
 * @file base_geometry.h
 * @brief Shape is the base class for all geometries. 
 * @details Several pure virtual functions 
-* are defined here. (a) closet point on surface: to find the closet point on shape
+* are defined here. (a) closest point on surface: to find the closest point on shape
 * surface to a given point. (b) find the lower and upper bounds.
 * @author	Chi ZHang and Xiangyu Hu
 */
@@ -32,7 +32,6 @@
 #ifndef BASE_GEOMETRY_H
 #define BASE_GEOMETRY_H
 
-#include "base_particles.h"
 #include "base_data_package.h"
 #include "sph_data_containers.h"
 

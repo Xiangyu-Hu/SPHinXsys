@@ -79,52 +79,56 @@ namespace SPH
 		addAVariableToRestart<Matd>("DeformationGradient");
 	}
 	//=================================================================================================//
-	StdLargeVec<Real> ElasticSolidParticles::getVonMisesStress()
+	Real ElasticSolidParticles::getPrincipalStressMax()
 	{
-		StdLargeVec<Real> von_Mises_stress_vector = {};
+		Real stress_max = 0.0;
 		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
 		{
-			von_Mises_stress_vector.push_back(von_Mises_stress(index_i));
+			Real stress = get_Principal_stresses(index_i)[0]; // take the max. component, which is the first one, this represents the max. tension
+			if (stress_max < stress) stress_max = stress;
 		}
-		return von_Mises_stress_vector;
+		return stress_max;
+	};
+	//=================================================================================================//
+	Vecd ElasticSolidParticles::displacement(size_t particle_i)
+	{
+		return pos_n_[particle_i]-pos_0_[particle_i];
 	}
 	//=================================================================================================//
-	Real ElasticSolidParticles::getMaxVonMisesStress()
+	Vecd ElasticSolidParticles::normal(size_t particle_i)
 	{
-		Real von_Mises_stress_max = 0;
-		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
-		{
-			Real von_Mises_stress_i = von_Mises_stress(index_i);
-			if (von_Mises_stress_max < von_Mises_stress_i)
-			{
-				von_Mises_stress_max = von_Mises_stress_i;
-			}
-		}
-		return von_Mises_stress_max;
+		return n_[particle_i];
 	}
 	//=================================================================================================//
-	StdLargeVec<Real> ElasticSolidParticles::getVonMisesStrain()
+	StdLargeVec<Vecd> ElasticSolidParticles::getDisplacement()
 	{
-		StdLargeVec<Real> von_Mises_strain_vector = {};
+		StdLargeVec<Vecd> displacement_vector = {};
 		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
 		{
-			von_Mises_strain_vector.push_back(von_Mises_strain(index_i));
+			displacement_vector.push_back(displacement(index_i));
 		}
-		return von_Mises_strain_vector;
+		return displacement_vector;
 	}
 	//=================================================================================================//
-	Real ElasticSolidParticles::getMaxVonMisesStrain()
+	Real ElasticSolidParticles::getMaxDisplacement()
 	{
-		Real von_Mises_strain_max = 0;
+		Real displ_max = 0.0;
 		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
 		{
-			Real von_Mises_strain_i = von_Mises_strain(index_i);
-			if (von_Mises_strain_max < von_Mises_strain_i)
-			{
-				von_Mises_strain_max = von_Mises_strain_i;
-			}
+			Real displ = displacement(index_i).norm();
+			if (displ_max < displ) displ_max = displ;
 		}
-		return von_Mises_strain_max;
+		return displ_max;
+	};
+	//=================================================================================================//
+	StdLargeVec<Vecd> ElasticSolidParticles::getNormal()
+	{
+		StdLargeVec<Vecd> normal_vector = {};
+		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
+		{
+			normal_vector.push_back(normal(index_i));
+		}
+		return normal_vector;
 	}
 	//=============================================================================================//
 	ShellParticles::ShellParticles(SPHBody &sph_body, ElasticSolid *elastic_solid)

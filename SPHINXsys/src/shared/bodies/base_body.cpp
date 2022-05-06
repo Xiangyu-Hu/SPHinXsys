@@ -73,7 +73,7 @@ namespace SPH
 		newly_updated_ = false;
 	}
 	//=================================================================================================//
-	void SPHBody::writeParticlesToVtpFile(std::ofstream &output_file)
+	void SPHBody::writeParticlesToVtpFile(std::ostream &output_file)
 	{
 		base_particles_->writeParticlesToVtk(output_file);
 		newly_updated_ = false;

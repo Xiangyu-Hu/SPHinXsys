@@ -18,14 +18,14 @@ int main()
 	 */
 	SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
 	/**
-	 * @brief Material property, partilces and body creation of water.
+	 * @brief Material property, particles and body creation of water.
 	 */
 	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
 	water_block.addBodyStateForRecording<int>("SurfaceIndicator");
 	/**
-	 * @brief Material property, partilces and body creation of air.
+	 * @brief Material property, particles and body creation of air.
 	 */
 	FluidBody air_block(sph_system, makeShared<AirBlock>("AirBody"));
 	air_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_a, c_f, mu_a);

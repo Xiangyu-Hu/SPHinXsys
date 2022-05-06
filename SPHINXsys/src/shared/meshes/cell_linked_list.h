@@ -152,6 +152,8 @@ namespace SPH
 											ParticleConfiguration &particle_configuration, GetParticleIndex &get_particle_index,
 											GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation,
 											PartParticleCheck &part_check);
+		
+		MeshDataMatrix<CellList> getCellLists() const { return cell_linked_lists_; }
 	};
 
 	/**

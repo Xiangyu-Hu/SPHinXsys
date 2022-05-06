@@ -23,7 +23,7 @@ Real diffusion_coff = 1.0e-3;
 Real bias_coff = 0.0;
 Real alpha = Pi / 4.0;
 Vec2d bias_direction(cos(alpha), sin(alpha));
-Real initaltemperature = 0.0;
+Real initialtemperature = 0.0;
 Real hightemperature = 1.0;
 Real lowtemperature = 0.0;
 //----------------------------------------------------------------------
@@ -118,7 +118,7 @@ protected:
 	{
 		if (pos_n_[index_i][0] >= 0 && pos_n_[index_i][0] <= L && pos_n_[index_i][1] >= 0 && pos_n_[index_i][1] <= H)
 		{
-			species_n_[phi_][index_i] = initaltemperature;
+			species_n_[phi_][index_i] = initialtemperature;
 		}
 	};
 

@@ -216,4 +216,3 @@ namespace SPH
 		};
 	};
 }
-#endif // BASE_BODY_H

@@ -29,6 +29,7 @@
 #ifndef SOLID_PARTICLES_H
 #define SOLID_PARTICLES_H
 
+#include "elastic_solid.h"
 #include "base_particles.h"
 #include "base_particles.hpp"
 
@@ -51,9 +52,8 @@ namespace SPH
 		SolidParticles(SPHBody &sph_body, Solid *solid);
 		virtual ~SolidParticles(){};
 
-		StdLargeVec<Vecd> pos_0_; /**< initial position */
 		StdLargeVec<Vecd> n_;	  /**<  current normal direction */
-		StdLargeVec<Vecd> n_0_;	  /**<  inital normal direction */
+		StdLargeVec<Vecd> n_0_;	  /**<  initial normal direction */
 		StdLargeVec<Matd> B_;	  /**<  configuration correction for linear reproducing */
 		//----------------------------------------------------------------------
 		//		for fluid-structure interaction (FSI)
@@ -90,19 +90,77 @@ namespace SPH
 		StdLargeVec<Matd> dF_dt_;	   /**<  deformation tensor change rate */
 		StdLargeVec<Matd> stress_PK1_; /**<  first Piola-Kirchhoff stress tensor */
 
-		/**< Computing von_Mises_stress. */
-		Real von_Mises_stress(size_t particle_i);
-		//TODO: the following reduces should be revised.
-		StdLargeVec<Real> getVonMisesStress();
-		Real getMaxVonMisesStress();
+		// STRAIN
+		Matd get_GreenLagrange_strain(size_t particle_i);
+		/**< Computing principal strain - returns the principal strains in descending order (starting from the largest) */
+		Vecd get_Principal_strains(size_t particle_i);
+		/**< Computing von Mises equivalent strain from a static (constant) formulation. */
+		Real von_Mises_strain(size_t particle_i);
+		/**< Computing von Mises equivalent strain from a static (constant) formulation. */
+		Real von_Mises_strain_static(size_t particle_i);
+		/**< Computing von Mises equivalent strain from a "dynamic" formulation. This depends on the Poisson's ratio (from commercial FEM software Help). */
+		Real von_Mises_strain_dynamic(size_t particle_i, Real poisson);
 
-		/**< Computing von Mises equivalent stress. */
-		Real von_Mises_strain (size_t particle_i);
-		StdLargeVec<Real> getVonMisesStrain();
-		Real getMaxVonMisesStrain();
+		/**< Computing von Mises strain for all particles. - "static" or "dynamic"*/
+		StdLargeVec<Real> getVonMisesStrainVector(std::string strain_measure = "static");
+		/**< Computing maximum von Mises strain from all particles. - "static" or "dynamic" */
+		Real getVonMisesStrainMax(std::string strain_measure = "static");
+		Real getPrincipalStrainMax();
 
-		virtual void initializeOtherVariables() override;
-		virtual ElasticSolidParticles *ThisObjectPtr() override { return this; };
+		// STRESS
+		Matd get_Cauchy_stress(size_t particle_i);
+		Matd get_PK2_stress(size_t particle_i);
+		/**< Computing principal_stresses - returns the principal stresses in descending order (starting from the largest) */
+		Vecd get_Principal_stresses(size_t particle_i);
+		/**< Computing von_Mises_stress - "Cauchy" or "PK2" decided based on the stress_measure_ */
+		Real get_von_Mises_stress(size_t particle_i);
+
+		/**< Computing von Mises stress for all particles. - "Cauchy" or "PK2" decided based on the stress_measure_ */
+		StdLargeVec<Real> getVonMisesStressVector();
+		/**< Computing maximum von Mises stress from all particles. - "Cauchy" or "PK2" decided based on the stress_measure_ */
+		Real getVonMisesStressMax();
+		Real getPrincipalStressMax();
+
+		/**< Computing displacemnt. */
+		Vecd displacement(size_t particle_i);
+		StdLargeVec<Vecd> getDisplacement();
+		Real getMaxDisplacement();
+
+		/**< Computing normal vector. */
+		Vecd normal (size_t particle_i);
+		StdLargeVec<Vecd> getNormal();
+
+		/** relevant stress measure */
+		std::string stress_measure_;
+
+		SharedPtr<ElasticSolid> shared_elastic_solid_ptr_;
+	};
+
+	/**
+	 * @class ActiveMuscleParticles
+	 * @brief A group of particles with active muscle particle data.
+	 */
+	class ActiveMuscleParticles : public ElasticSolidParticles
+	{
+	public:
+		StdLargeVec<Real> active_contraction_stress_;			 /**<  active contraction stress */
+		StdLargeVec<Matd> active_stress_; /**<  active stress */ //seems to be moved to method class
+
+		template <class MuscleType>
+		ActiveMuscleParticles(SPHBody &sph_body,
+							  SharedPtr<ActiveMuscle<MuscleType>> shared_active_muscle_ptr,
+							  SharedPtr<ParticleGenerator> particle_generator_ptr = makeShared<ParticleGeneratorLattice>())
+			: ElasticSolidParticles(sph_body, shared_active_muscle_ptr, particle_generator_ptr)
+		{
+			shared_active_muscle_ptr->assignActiveMuscleParticles(this);
+			initializeActiveMuscleParticleData();
+		};
+		virtual ~ActiveMuscleParticles(){};
+
+		virtual ActiveMuscleParticles *ThisObjectPtr() override { return this; };
+
+	private:
+		void initializeActiveMuscleParticleData();
 	};
 
 	/**

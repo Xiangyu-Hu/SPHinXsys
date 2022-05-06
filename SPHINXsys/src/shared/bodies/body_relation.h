@@ -216,7 +216,7 @@ namespace SPH
 
 	public:
 		RealBodyVector contact_bodies_;
-		ContatcParticleConfiguration contact_configuration_; /**< Configurations for particle interaction between bodies. */
+		ContactParticleConfiguration contact_configuration_; /**< Configurations for particle interaction between bodies. */
 
 		BaseBodyRelationContact(SPHBody &sph_body, RealBodyVector contact_bodies);
 		BaseBodyRelationContact(SPHBody &sph_body, BodyPartVector contact_body_parts);
@@ -342,7 +342,7 @@ namespace SPH
 		BaseBodyRelationContact &contact_relation_;
 		RealBodyVector contact_bodies_;
 		ParticleConfiguration &inner_configuration_;
-		ContatcParticleConfiguration &contact_configuration_;
+		ContactParticleConfiguration &contact_configuration_;
 
 		ComplexBodyRelation(BaseBodyRelationInner &inner_relation, BaseBodyRelationContact &contact_relation);
 		ComplexBodyRelation(RealBody &real_body, RealBodyVector contact_bodies);

@@ -33,7 +33,6 @@
 
 #include "base_data_package.h"
 #include "sph_data_containers.h"
-#include "base_particle_dynamics.h"
 #include "base_material.h"
 #include "xml_engine.h"
 
@@ -43,8 +42,11 @@ namespace SPH
 {
 
 	class SPHBody;
+	class BaseMaterial;
 	class ParticleGenerator;
 	class BodySurface;
+	template <class ReturnType>
+	class ParticleDynamics;
 
 	/**
 	 * @class BaseParticles
@@ -112,6 +114,7 @@ namespace SPH
 		ParticleData all_particle_data_;
 		ParticleDataMap all_variable_maps_;
 		StdVec<ParticleDynamics<void> *> derived_variables_;
+		ParticleVariableList variables_to_write_;
 
 		/** register a variable defined in a class (can be non-particle class) */
 		template <typename VariableType>
@@ -175,7 +178,7 @@ namespace SPH
 		/** Write particle data in PLT format for Tecplot. */
 		void writeParticlesToPltFile(std::ofstream &output_file);
 		/** Write only surface particle data in VTU format for Paraview. TODO: this should be generalized for body part by particles */
-		virtual void writeSurfaceParticlesToVtuFile(std::ofstream &output_file, BodySurface &surface_particles);
+		virtual void writeSurfaceParticlesToVtuFile(std::ostream &output_file, BodySurface &surface_particles);
 
 		void resizeXmlDocForParticles(XmlEngine &xml_engine);
 		void writeParticlesToXmlForRestart(std::string &filefullpath);
@@ -200,7 +203,6 @@ namespace SPH
 		std::string body_name_;
 		XmlEngine restart_xml_engine_;
 		XmlEngine reload_xml_engine_;
-		ParticleVariableList variables_to_write_;
 		ParticleVariableList variables_to_restart_;
 		ParticleVariableList variables_to_reload_;
 		void addAParticleEntry();
@@ -266,4 +268,3 @@ namespace SPH
 		StdLargeVec<VariableType> derived_variable_;
 	};
 }
-#endif // BASE_PARTICLES_H

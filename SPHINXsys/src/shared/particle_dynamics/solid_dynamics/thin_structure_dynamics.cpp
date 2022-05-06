@@ -189,11 +189,17 @@ namespace SPH
 			Vecd resultant_shear_stress(0);
 			for (int i = 0; i != number_of_gaussian_points_; ++i)
 			{
+<<<<<<< HEAD
 				Matd F_gaussian_point = F_[index_i] + gaussian_point_[i] * F_bending_[index_i] * thickness_[index_i] * 0.5;
 				Matd dF_gaussian_point_dt = dF_dt_[index_i] + gaussian_point_[i] * dF_bending_dt_[index_i] * thickness_[index_i] * 0.5;
 				Matd inverse_F_gaussion_point = SimTK::inverse(F_gaussian_point);
+=======
+				Matd F_gaussian_point = F_[index_i] + gaussian_point_[i] * F_bending_[index_i] * shell_thickness_[index_i] * 0.5;
+				Matd dF_gaussian_point_dt = dF_dt_[index_i] + gaussian_point_[i] * dF_bending_dt_[index_i] * shell_thickness_[index_i] * 0.5;
+				Matd inverse_F_gaussian_point = SimTK::inverse(F_gaussian_point);
+>>>>>>> master
 				Matd current_local_almansi_strain = current_transformation_matrix * (~transformation_matrix_[index_i])
-											* 0.5 * (Matd(1.0) - ~inverse_F_gaussion_point * inverse_F_gaussion_point)
+											* 0.5 * (Matd(1.0) - ~inverse_F_gaussian_point * inverse_F_gaussian_point)
 											* transformation_matrix_[index_i] * (~current_transformation_matrix);
 				/** correct Almansi strain tensor according to plane stress problem. */
 				current_local_almansi_strain = getCorrectedAlmansiStrain(current_local_almansi_strain, nu_);
@@ -363,7 +369,7 @@ namespace SPH
 			pseudo_n_[index_i] = GetPseudoNormal(pos_0, pos_n, local_pseudo_n_0);
 			dpseudo_n_dt_[index_i] = GetPseudoNormalChangeRate(pos_0, pos_n, dpseudo_normal_dt);
 
-			/** the average values are prescirbed also. */
+			/** the average values are prescribed also. */
 			vel_ave_[index_i] = vel_n_[index_i];
 			dvel_dt_ave_[index_i] = dvel_dt_[index_i];
 		}
@@ -489,7 +495,7 @@ namespace SPH
 			angular_vel_[index_i][1 - axis_] = 0.0;
 			dangular_vel_dt_[index_i][1 - axis_] = 0.0;
 
-			/** the average values are prescirbed also. */
+			/** the average values are prescribed also. */
 			vel_ave_[index_i] = vel_n_[index_i];
 			dvel_dt_ave_[index_i] = dvel_dt_[index_i];
 		}

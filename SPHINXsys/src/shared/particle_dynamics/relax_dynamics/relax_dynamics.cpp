@@ -198,6 +198,30 @@ namespace SPH
 			update_particle_position_.parallel_exec(dt_square);
 			surface_bounding_.parallel_exec();
 		}
+        //=================================================================================================//
+  		void SolidRelaxationStepInner::exec(Real dt)
+		{
+			real_body_->updateCellLinkedList();
+			inner_relation_.updateConfiguration();
+			relaxation_acceleration_inner_->exec();
+			Real dt_square = get_time_step_square_.exec();
+			update_particle_position_.exec(dt_square);
+			surface_bounding_.exec();			
+            // copy the updated position at the end of the relaxation step to avoid bugs
+			std::copy(GetParticles()->pos_n_.begin(), GetParticles()->pos_n_.end(), GetParticles()->pos_0_.begin());
+		}
+		//=================================================================================================//
+		void SolidRelaxationStepInner::parallel_exec(Real dt)
+		{
+			real_body_->updateCellLinkedList();
+			inner_relation_.updateConfiguration();
+			relaxation_acceleration_inner_->parallel_exec();
+			Real dt_square = get_time_step_square_.parallel_exec();
+			update_particle_position_.parallel_exec(dt_square);
+			surface_bounding_.parallel_exec();
+			// copy the updated position at the end of the relaxation step to avoid bugs
+			std::copy(GetParticles()->pos_n_.begin(), GetParticles()->pos_n_.end(), GetParticles()->pos_0_.begin());
+		}
 		//=================================================================================================//
 		RelaxationAccelerationComplexWithLevelSetCorrection::
 			RelaxationAccelerationComplexWithLevelSetCorrection(ComplexBodyRelation &body_complex_relation, const std::string &shape_name)

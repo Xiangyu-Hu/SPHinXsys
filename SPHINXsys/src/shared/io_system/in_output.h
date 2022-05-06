@@ -47,6 +47,8 @@ namespace fs = boost::filesystem;
 namespace fs = std::experimental::filesystem;
 #endif
 
+using VtuStringData = std::map<std::string, std::string>;
+
 namespace SPH
 {
 
@@ -135,10 +137,7 @@ namespace SPH
 		};
 
 		/** write with filename indicated by iteration step */
-		virtual void writeToFile(size_t iteration_step)
-		{
-			writeWithFileName(std::to_string(iteration_step));
-		};
+		virtual void writeToFile(size_t iteration_step);
 
 	protected:
 		virtual void writeWithFileName(const std::string &sequence) = 0;
@@ -213,42 +212,27 @@ namespace SPH
 	};
 
 	/**
-	 * @class BodyStatesRecordingToVtuString
+	 * @class BodyStatesRecordingToVtpString
 	 * @brief  Write strings for bodies
 	 * the output is map of strings with VTK XML format can visualized by ParaView
 	 * the data type vtkUnstructedGrid
 	 */
-	class BodyStatesRecordingToVtuString : public BodyStatesRecording
+	class BodyStatesRecordingToVtpString : public BodyStatesRecording
 	{
 	public:
-		BodyStatesRecordingToVtuString(InOutput& in_output, SPHBodyVector bodies)
+		BodyStatesRecordingToVtpString(In_Output& in_output, SPHBodyVector bodies)
 			: BodyStatesRecording(in_output, bodies) {};
-		virtual ~BodyStatesRecordingToVtuString() = default;
-
-		using VtuStringData = std::map<std::string, std::string>;
+		virtual ~BodyStatesRecordingToVtpString() = default;
 
 		const VtuStringData& GetVtuData() const;
+		void clear() {
+			_vtuData.clear();
+		}
 	protected:
 		virtual void writeWithFileName(const std::string& sequence) override;
 		virtual void writeVtu(std::ostream& stream, SPHBody* body) const;
 	private:
 		VtuStringData _vtuData;
-	};
-
-	/**
-	 * @class SurfaceOnlyBodyStatesRecordingToVtu
-	 * @brief  Write files for surface particles of bodies
-	 * the output file is VTK XML format can visualized by ParaView
-	 * the data type vtkUnstructedGrid
-	 */
-	class SurfaceOnlyBodyStatesRecordingToVtu : public BodyStatesRecording
-	{
-	public:
-		SurfaceOnlyBodyStatesRecordingToVtu(InOutput& in_output, SPHBodyVector bodies);
-
-	protected:
-		virtual void writeWithFileName(const std::string& sequence) override;
-		StdVec<BodySurface> surface_body_layer_vector_;
 	};
 
 	/**

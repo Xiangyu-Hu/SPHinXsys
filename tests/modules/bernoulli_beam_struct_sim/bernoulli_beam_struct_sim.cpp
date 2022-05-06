@@ -35,7 +35,6 @@ TEST(BernoulliBeam20x, Pressure)
 		{physical_viscosity},
 		{}
 	};
-	input.surface_particles_only_to_vtu_ = { true };
 	input.body_indices_fixed_constraint_region_ = StdVec<ConstrainedRegionPair>{ ConstrainedRegionPair(0, fixation) };
 	StdVec<array<Real, 2>> pressure_over_time = {
 		{0.0, 0.0},

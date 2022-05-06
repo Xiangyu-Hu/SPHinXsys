@@ -78,7 +78,7 @@ namespace SPH
 			exit(1);
 		}
 
-		file_path_ = in_output.reload_folder_ + "/SPHBody_" + reload_body_name + "_rld.xml";
+		file_path_ = in_output.reload_folder_ + "/" + reload_body_name + "_rld.xml";
 	}
 	//=================================================================================================//
 	void ParticleGeneratorReload::initializeGeometricVariables()
