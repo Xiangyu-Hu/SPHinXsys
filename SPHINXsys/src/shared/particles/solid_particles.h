@@ -52,6 +52,7 @@ namespace SPH
 		SolidParticles(SPHBody &sph_body, Solid *solid);
 		virtual ~SolidParticles(){};
 
+		StdLargeVec<Vecd> pos_0_; /**< initial position */
 		StdLargeVec<Vecd> n_;	  /**<  current normal direction */
 		StdLargeVec<Vecd> n_0_;	  /**<  initial normal direction */
 		StdLargeVec<Matd> B_;	  /**<  configuration correction for linear reproducing */
@@ -134,33 +135,9 @@ namespace SPH
 		std::string stress_measure_;
 
 		SharedPtr<ElasticSolid> shared_elastic_solid_ptr_;
-	};
 
-	/**
-	 * @class ActiveMuscleParticles
-	 * @brief A group of particles with active muscle particle data.
-	 */
-	class ActiveMuscleParticles : public ElasticSolidParticles
-	{
-	public:
-		StdLargeVec<Real> active_contraction_stress_;			 /**<  active contraction stress */
-		StdLargeVec<Matd> active_stress_; /**<  active stress */ //seems to be moved to method class
-
-		template <class MuscleType>
-		ActiveMuscleParticles(SPHBody &sph_body,
-							  SharedPtr<ActiveMuscle<MuscleType>> shared_active_muscle_ptr,
-							  SharedPtr<ParticleGenerator> particle_generator_ptr = makeShared<ParticleGeneratorLattice>())
-			: ElasticSolidParticles(sph_body, shared_active_muscle_ptr, particle_generator_ptr)
-		{
-			shared_active_muscle_ptr->assignActiveMuscleParticles(this);
-			initializeActiveMuscleParticleData();
-		};
-		virtual ~ActiveMuscleParticles(){};
-
-		virtual ActiveMuscleParticles *ThisObjectPtr() override { return this; };
-
-	private:
-		void initializeActiveMuscleParticleData();
+		virtual void initializeOtherVariables() override;
+		virtual ElasticSolidParticles *ThisObjectPtr() override { return this; };
 	};
 
 	/**

@@ -26,7 +26,7 @@ namespace
 namespace SPH
 {
 	//=============================================================================================//
-	InOutput::InOutput(SPHSystem &sph_system)
+	InOutput::InOutput(SPHSystem &sph_system, bool delete_output)
 		: sph_system_(sph_system),
 		  input_folder_("./input"), output_folder_("./output"),
 		  restart_folder_("./restart"), reload_folder_("./reload")

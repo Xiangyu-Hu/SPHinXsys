@@ -6,7 +6,6 @@
 
 #include "solid_body.h"
 
-#include "base_kernel.h"
 #include "sph_system.h"
 #include "base_material.h"
 #include "solid_particles.h"

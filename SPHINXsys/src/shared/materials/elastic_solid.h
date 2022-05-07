@@ -104,8 +104,6 @@ namespace SPH
 		explicit LinearElasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio);
 		virtual ~LinearElasticSolid(){};
 
-		virtual void assignElasticMaterialParameters(Real youngs_modulus, Real poisson_ratio);
-
 		virtual Matd ConstitutiveRelation(Matd &deformation, size_t particle_index_i) override;
 		virtual Matd EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
 		/** Volumetric Kirchhoff stress from determinate */
@@ -159,7 +157,7 @@ namespace SPH
 		NeoHookeanSolidIncompressible(Real rho_0, Real Youngs_modulus, Real poisson)
 			: LinearElasticSolid(rho_0, Youngs_modulus, poisson)
 		{
-			material_type_ = "NeoHookeanSolidIncompressible";
+			material_type_name_ = "NeoHookeanSolidIncompressible";
 		};
 		virtual ~NeoHookeanSolidIncompressible() {};
 	

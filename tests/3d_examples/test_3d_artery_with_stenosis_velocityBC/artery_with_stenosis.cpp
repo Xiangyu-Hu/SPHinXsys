@@ -111,7 +111,7 @@ int main(int ac, char *av[])
 
 	// handle command line arguments
 	system.handleCommandlineOptions(ac, av);
-	In_Output in_output(system);
+	InOutput in_output(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------

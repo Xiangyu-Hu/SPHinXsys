@@ -4,7 +4,6 @@
  */
 
 #include "level_set.h"
-#include "base_body.h"
 #include "adaptation.h"
 #include "mesh_with_data_packages.hpp"
 

@@ -99,7 +99,7 @@ int main(int ac, char* av[])
 	/** Handle command line arguments. */
 	sph_system.handleCommandlineOptions(ac, av);
 	/** I/O environment. */
-	In_Output 	in_output(sph_system);
+	InOutput 	in_output(sph_system);
 	/** generate particles of the shell box. */
 	ShellBox shell_box(sph_system, "ShellBox");
 	SharedPtr<ParticleGenerator> shell_box_particle_generator = makeShared<ParticleGeneratorLattice>();

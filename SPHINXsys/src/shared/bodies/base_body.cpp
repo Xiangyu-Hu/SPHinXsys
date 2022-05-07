@@ -6,7 +6,6 @@
 #include "base_body.h"
 
 #include "sph_system.h"
-#include "base_particles.h"
 #include "base_particles.hpp"
 #include "body_relation.h"
 

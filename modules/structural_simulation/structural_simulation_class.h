@@ -185,7 +185,7 @@ protected:
 	Real scale_system_boundaries_;
 	InOutput in_output_;
 
-	In_Output in_output_;
+	InOutput in_output_;
 
 	vector<shared_ptr<TriangleMeshShape>> body_mesh_list_;
 	vector<shared_ptr<SPHAdaptation>> particle_adaptation_list_;

@@ -88,7 +88,7 @@ int main(int ac, char* av[])
 	/** Handle command line arguments. */
 	sph_system.handleCommandlineOptions(ac, av);
 	/** I/O environment. */
-	In_Output 	in_output(sph_system);
+	InOutput 	in_output(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------

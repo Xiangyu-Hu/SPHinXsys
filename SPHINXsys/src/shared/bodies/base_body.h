@@ -162,17 +162,17 @@ namespace SPH
 		template <typename VariableType>
 		void addBodyStateForRecording(const std::string &variable_name)
 		{
-			base_particles_->addAVariableToWrite<VariableType>(variable_name);
+			base_particles_->template addAVariableToWrite<VariableType>(variable_name);
 		};
 
 		template <class DerivedVariableMethod>
 		void addDerivedBodyStateForRecording()
 		{
-			base_particles_->addDerivedVariableToWrite<DerivedVariableMethod>();
+			base_particles_->template addDerivedVariableToWrite<DerivedVariableMethod>();
 		};
 
 		virtual void writeParticlesToVtuFile(std::ostream &output_file);
-		virtual void writeParticlesToVtpFile(std::ofstream &output_file);
+		virtual void writeParticlesToVtpFile(std::ostream &output_file);
 		virtual void writeParticlesToPltFile(std::ofstream &output_file);
 		virtual void writeSurfaceParticlesToVtuFile(std::ofstream &output_file, BodySurface &surface_particles);
 		virtual void writeParticlesToXmlForRestart(std::string &filefullpath);
@@ -216,3 +216,4 @@ namespace SPH
 		};
 	};
 }
+#endif //BASE_BODY_H

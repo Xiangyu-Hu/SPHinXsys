@@ -268,3 +268,4 @@ namespace SPH
 		StdLargeVec<VariableType> derived_variable_;
 	};
 }
+#endif // BASE_PARTICLES_H
