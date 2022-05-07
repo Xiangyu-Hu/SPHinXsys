@@ -13,6 +13,8 @@ Real DL = 4.0; 					/**< box length. */
 Real DH = 4.0; 					/**< box height. */
 Real resolution_ref = 0.025; 	/**< reference resolution. */
 Real BW = resolution_ref * 4.; 	/**< wall width for BCs. */
+Real thickness = resolution_ref * 1.; 	/**< shell thickness. */
+Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 Vec2d box_center(2.0, 2.0);
 Real box_size = 0.5;			
@@ -27,11 +29,10 @@ Real physical_viscosity = 200.0;	/** physical damping, here we choose the same v
 //----------------------------------------------------------------------
 //	Bodies with cases-dependent geometries (ComplexShape).
 //----------------------------------------------------------------------
-class WallBoundary : public SolidBody
+class WallBoundary : public MultiPolygonShape
 {
 public:
-	WallBoundary(SPHSystem &sph_system, std::string body_name) 
-	: SolidBody(sph_system, body_name)
+	explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
 		std::vector<Vecd> outer_wall_shape;
 		outer_wall_shape.push_back(Vecd(-BW, -BW));
@@ -47,24 +48,22 @@ public:
 		inner_wall_shape.push_back(Vecd(DL, 0.0));
 		inner_wall_shape.push_back(Vecd(0.0, 0.0));
 
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 	}
 };
 /** geometry of the rigid box */
-class ShellBox : public SolidBody
+class ShellBox : public MultiPolygonShape
 {
 public:
-	ShellBox(SPHSystem& system, std::string body_name) : SolidBody(system, body_name)
+	explicit ShellBox(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
 		std::vector<Vecd> outer_wall_shape;
-		outer_wall_shape.push_back(Vecd(-resolution_ref, -resolution_ref) + box_center);
-		outer_wall_shape.push_back(Vecd(-resolution_ref, box_size + resolution_ref) + box_center);
-		outer_wall_shape.push_back(Vecd(box_size + resolution_ref, box_size + resolution_ref) + box_center);
-		outer_wall_shape.push_back(Vecd(box_size + resolution_ref, -resolution_ref) + box_center);
-		outer_wall_shape.push_back(Vecd(-resolution_ref, -resolution_ref) + box_center);
+		outer_wall_shape.push_back(Vecd(-thickness, -thickness) + box_center);
+		outer_wall_shape.push_back(Vecd(-thickness, box_size + thickness) + box_center);
+		outer_wall_shape.push_back(Vecd(box_size + thickness, box_size + thickness) + box_center);
+		outer_wall_shape.push_back(Vecd(box_size + thickness, -thickness) + box_center);
+		outer_wall_shape.push_back(Vecd(-thickness, -thickness) + box_center);
 
 		std::vector<Vecd> inner_wall_shape;
 		inner_wall_shape.push_back(Vecd(0.0, 0.0) + box_center);
@@ -73,10 +72,8 @@ public:
 		inner_wall_shape.push_back(Vecd(box_size, 0.0) + box_center);
 		inner_wall_shape.push_back(Vecd(0.0, 0.0) + box_center);
 
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 	}
 };
 //----------------------------------------------------------------------
@@ -89,31 +86,30 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** Tag for running particle relaxation for the initially body-fitted distribution */
-	sph_system.run_particle_relaxation_ = false;
+	sph_system.run_particle_relaxation_ = true;
 	/** Tag for starting with relaxed body-fitted particles distribution */
 	sph_system.reload_particles_ = false;
 	/** Tag for computation from restart files. 0: start with initial condition */
 	sph_system.restart_step_ = 0;
-	/** Define external force.*/
-	Gravity gravity(Vecd(0.0, -gravity_g));
 	/** Handle command line arguments. */
 	sph_system.handleCommandlineOptions(ac, av);
 	/** I/O environment. */
 	InOutput 	in_output(sph_system);
-	/** generate particles of the shell box. */
-	ShellBox shell_box(sph_system, "ShellBox");
-	SharedPtr<ParticleGenerator> shell_box_particle_generator = makeShared<ParticleGeneratorLattice>();
-	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-		shell_box_particle_generator = makeShared<ParticleGeneratorReload>(in_output, shell_box.getBodyName());
-	SharedPtr<NeoHookeanSolid> shell_box_material = makeShared<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
-	ElasticSolidParticles shell_box_particles(shell_box, shell_box_material, shell_box_particle_generator);
-	/** generate particles of the elastic wall. */
-	WallBoundary wall_boundary(sph_system, "Wall");
-	SharedPtr<ParticleGenerator> wall_particle_generator = makeShared<ParticleGeneratorLattice>();
-	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-		wall_particle_generator = makeShared<ParticleGeneratorReload>(in_output, wall_boundary.getBodyName());
-	SharedPtr<LinearElasticSolid> wall_material = makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
-	ElasticSolidParticles solid_particles(wall_boundary, wall_material, wall_particle_generator);
+	//----------------------------------------------------------------------
+	//	Creating body, materials and particles.
+	//----------------------------------------------------------------------
+	SolidBody shell_box(sph_system, makeShared<ShellBox>("ShellBox"));
+	shell_box.defineAdaptation<SPHAdaptation>(1.15, 1.0);
+	shell_box.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(shell_box);
+	shell_box.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1.0, 1.0, 0.0);
+	shell_box.generateParticles<ShellParticleGeneratorLattice>(thickness);
+	shell_box.addBodyStateForRecording<Vecd>("NormalDirection");
+
+
+	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
+	wall_boundary.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	wall_boundary.generateParticles<ParticleGeneratorLattice>();
+	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -126,6 +122,8 @@ int main(int ac, char* av[])
 	//	Define the main numerical methods used in the simultion.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
+	/** Define external force.*/
+	Gravity gravity(Vecd(0.0, -gravity_g));
 	TimeStepInitialization wall_initialize_timestep(wall_boundary);
 	solid_dynamics::CorrectConfiguration wall_corrected_configuration(wall_inner);
 	solid_dynamics::AcousticTimeStepSize shell_box_get_time_step_size(wall_boundary);
@@ -166,8 +164,7 @@ int main(int ac, char* av[])
 	MultiPolygon multi_polygon;
 	multi_polygon.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
 	multi_polygon.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
-	MultiPolygonShape box_multibody_shape(multi_polygon);
-	SolidBodyPartForSimbody box_multibody(shell_box, "ShellBox", box_multibody_shape);
+	SolidBodyPartForSimbody box_multibody(shell_box, makeShared<MultiPolygonShape>(multi_polygon));
 	/** Geometry and generation of the holder. */
 	std::vector<Vecd> holder_shape;
 	holder_shape.push_back(Vecd(DL, -BW));
@@ -178,7 +175,7 @@ int main(int ac, char* av[])
 	MultiPolygon multi_polygon_holder;
 	multi_polygon_holder.addAPolygon(holder_shape, ShapeBooleanOps::add);
 	MultiPolygonShape holder_multibody_shape(multi_polygon_holder);
-	BodyRegionByParticle holder(wall_boundary, "Holder", holder_multibody_shape);
+	BodyRegionByParticle holder(wall_boundary, makeShared<MultiPolygonShape>(multi_polygon_holder));
 	solid_dynamics::ConstrainSolidBodyRegion	constrain_holder(wall_boundary, holder);
 	/** Damping with the solid body*/
 	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
@@ -209,7 +206,6 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	solid_particles.initializeNormalDirectionFromBodyShape();
 	wall_corrected_configuration.parallel_exec();
 	/** Initial states output. */
 	body_states_recording.writeToFile(0);
