@@ -46,8 +46,7 @@ namespace SPH
 	SurfaceParticleGenerator::SurfaceParticleGenerator(SPHBody &sph_body)
 		: ParticleGenerator(sph_body),
 		  n_(*base_particles_->getVariableByName<Vecd>("NormalDirection")),
-		  thickness_(*base_particles_->getVariableByName<Real>("Thickness")),
-		  transformation_matrix_(*base_particles_->getVariableByName<Matd>("TransformationMatrix"))
+		  thickness_(*base_particles_->getVariableByName<Real>("Thickness"))
 	{
 		sph_body.sph_adaptation_->getKernel()->reduceOnce();
 	}
@@ -56,7 +55,6 @@ namespace SPH
 	{
 		n_.push_back(surface_normal);
 		thickness_.push_back(thickness);
-		transformation_matrix_.push_back(getTransformationMatrix(surface_normal));
 	}
 	//=================================================================================================//
 	void ObserverParticleGenerator::initializeGeometricVariables()

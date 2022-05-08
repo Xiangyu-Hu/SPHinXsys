@@ -93,7 +93,6 @@ namespace SPH
 	protected:
 		StdLargeVec<Vecd> &n_;					   /**< surface normal */
 		StdLargeVec<Real> &thickness_;			   /**< surface thickness */
-		StdLargeVec<Matd> &transformation_matrix_; /**< initial transformation matrix from global to local coordinates */
 
 		virtual void initializeSurfaceProperties(const Vecd &surface_normal, Real thickness);
 	};

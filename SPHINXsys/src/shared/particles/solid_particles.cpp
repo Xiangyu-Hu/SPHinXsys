@@ -134,9 +134,16 @@ namespace SPH
 	ShellParticles::ShellParticles(SPHBody &sph_body, ElasticSolid *elastic_solid)
 		: ElasticSolidParticles(sph_body, elastic_solid), thickness_ref_(1.0)
 	{
+		//----------------------------------------------------------------------
+		//		register geometric data only
+		//----------------------------------------------------------------------
 		registerAVariable(n_, "NormalDirection");
 		registerAVariable(thickness_, "Thickness");
-		registerAVariable(transformation_matrix_, "TransformationMatrix");
+		//----------------------------------------------------------------------
+		//		add particle reload data
+		//----------------------------------------------------------------------
+		addAVariableNameToList<Vecd>(variables_to_reload_, "NormalDirection");
+		addAVariableNameToList<Real>(variables_to_reload_, "Thickness");
 	}
 	//=================================================================================================//
 	void ShellParticles::initializeOtherVariables()
@@ -147,6 +154,7 @@ namespace SPH
 		//----------------------------------------------------------------------
 		registerAVariable(pos_0_, "InitialPosition", "Position");
 		registerAVariable(n_0_, "InitialNormalDirection", "NormalDirection");
+		registerAVariable(transformation_matrix_, "TransformationMatrix");
 		registerAVariable(B_, "CorrectionMatrix", Matd(1.0));
 		registerAVariable(F_, "DeformationGradient", Matd(1.0));
 		registerAVariable(dF_dt_, "DeformationRate");
@@ -189,6 +197,13 @@ namespace SPH
 		addDerivedVariableToWrite<VonMisesStrain>();
 		addAVariableToRestart<Matd>("DeformationGradient");
 		addAVariableToWrite<Vecd>("Rotation");
+		//----------------------------------------------------------------------
+		//		initialize transformation matrix
+		//----------------------------------------------------------------------
+		for (size_t i = 0; i != real_particles_bound_; ++i)
+		{
+			transformation_matrix_[i] = getTransformationMatrix(n_[i]);
+		}
 	}
 	//=================================================================================================//
 }

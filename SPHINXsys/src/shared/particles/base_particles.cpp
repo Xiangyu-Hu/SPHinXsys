@@ -29,6 +29,11 @@ namespace SPH
 		//----------------------------------------------------------------------
 		registerAVariable(pos_n_, "Position");
 		registerAVariable(Vol_, "Volume");
+		//----------------------------------------------------------------------
+		//		add particle reload data
+		//----------------------------------------------------------------------
+		addAVariableNameToList<Vecd>(variables_to_reload_, "Position");
+		addAVariableNameToList<Real>(variables_to_reload_, "Volume");
 	}
 	//=================================================================================================//
 	void BaseParticles::initializeOtherVariables()
@@ -53,11 +58,6 @@ namespace SPH
 		addAVariableNameToList<Vecd>(variables_to_restart_, "Velocity");
 		addAVariableNameToList<Vecd>(variables_to_restart_, "Acceleration");
 		addAVariableNameToList<Real>(variables_to_restart_, "Volume");
-		//----------------------------------------------------------------------
-		//		add particle reload data
-		//----------------------------------------------------------------------
-		addAVariableNameToList<Vecd>(variables_to_reload_, "Position");
-		addAVariableNameToList<Real>(variables_to_reload_, "Volume");
 		//----------------------------------------------------------------------
 		//		initial particle mass and IDs
 		//----------------------------------------------------------------------

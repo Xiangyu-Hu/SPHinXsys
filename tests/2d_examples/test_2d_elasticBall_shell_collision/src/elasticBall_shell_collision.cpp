@@ -85,9 +85,9 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** Tag for running particle relaxation for the initially body-fitted distribution */
-	sph_system.run_particle_relaxation_ = true;
+	sph_system.run_particle_relaxation_ = false;
 	/** Tag for starting with relaxed body-fitted particles distribution */
-	sph_system.reload_particles_ = false;
+	sph_system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: start with initial condition */
 	sph_system.restart_step_ = 0;
 	/** Handle command line arguments. */
@@ -112,8 +112,14 @@ int main(int ac, char* av[])
 	wall_boundary.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(wall_boundary);
 	//here dummy linear elastic solid is use because no solid dynamics in particle relaxation
 	wall_boundary.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1.0, 1.0, 0.0);
-	wall_boundary.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
-	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
+	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+		? wall_boundary.generateParticles<ParticleGeneratorReload>(in_output, wall_boundary.getBodyName())
+		: wall_boundary.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
+	if(!sph_system.run_particle_relaxation_ && !sph_system.reload_particles_)
+	{
+		std::cout << "Error: This case requires reload shell particles for simulation!" << std::endl;
+		return 0;
+	}
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
