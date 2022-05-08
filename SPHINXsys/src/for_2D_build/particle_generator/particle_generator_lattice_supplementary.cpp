@@ -32,7 +32,7 @@ namespace SPH {
 			}
 	}
 	//=================================================================================================//
-	void ShellParticleGeneratorLattice::initializeGeometricVariables()
+	void ThickSurfaceParticleGeneratorLattice::initializeGeometricVariables()
 	{
 		// Calculate the total volume and
 		// count the number of cells inside the body volume, where we might put particles.
@@ -70,7 +70,7 @@ namespace SPH {
 						if (random_real <= interval && base_particles_->total_real_particles_ < planned_number_of_particles_)
 						{
 							initializePositionAndVolume(particle_position, avg_particle_volume_);
-							initializeSurfaceProperties(Vecd(1.0, 0.0), global_avg_thickness_);
+							initializeSurfaceProperties(body_shape_.findNormalDirection(particle_position), global_avg_thickness_);
 						}
 					}
 				}

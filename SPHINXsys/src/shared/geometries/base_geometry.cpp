@@ -39,6 +39,11 @@ namespace SPH
 		return is_contain ? direction_to_surface : -1.0 * direction_to_surface;
 	}
 	//=================================================================================================//
+	bool BinaryShapes::isValid()
+	{
+		return  shapes_and_ops_.size() == 0 ? false : true;
+	}
+	//=================================================================================================//
 	BoundingBox BinaryShapes::findBounds()
 	{
 		// initial reference values

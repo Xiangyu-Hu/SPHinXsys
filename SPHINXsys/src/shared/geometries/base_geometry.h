@@ -66,6 +66,7 @@ namespace SPH
 
 		std::string getName() { return name_; };
 		void setName(const std::string &name) { name_ = name; };
+		virtual bool isValid()  { return true; };
 		virtual BoundingBox findBounds() = 0;
 		virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) = 0;
 		virtual Vecd findClosestPoint(const Vecd &input_pnt) = 0;
@@ -112,6 +113,7 @@ namespace SPH
 			shapes_and_ops_.push_back(shape_and_op);
 		};
 
+		virtual bool isValid() override;
 		virtual BoundingBox findBounds() override;
 		virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) override;
 		virtual Vecd findClosestPoint(const Vecd &input_pnt) override;

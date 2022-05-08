@@ -302,7 +302,8 @@ namespace SPH
 			void correctNormalDirection();
 
 		public:
-			explicit ShellNormalDirectionPrediction(BaseBodyRelationInner &inner_relation, Real thickness);
+			explicit ShellNormalDirectionPrediction(BaseBodyRelationInner &inner_relation, 
+				Real thickness, Real consistency_criterion = cos(Pi / 20.0));
 			virtual ~ShellNormalDirectionPrediction(){};
 
 			virtual void exec(Real dt = 0.0) override;

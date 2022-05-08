@@ -255,6 +255,11 @@ namespace SPH
 		return BoundingBox(lower_bound, upper_bound);
 	}
 	//=================================================================================================//
+	bool MultiPolygonShape::isValid()
+	{
+		return  multi_polygon_.getBoostMultiPoly().size() == 0 ? false : true;
+	}
+	//=================================================================================================//
 	bool MultiPolygonShape::checkContain(const Vec2d &input_pnt, bool BOUNDARY_INCLUDED)
 	{
 		return multi_polygon_.checkContain(input_pnt, BOUNDARY_INCLUDED);

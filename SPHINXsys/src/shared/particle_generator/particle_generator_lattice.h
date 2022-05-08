@@ -89,14 +89,17 @@ namespace SPH
 	};
 
 	/**
-	 * @class ShellParticleGeneratorLattice
-	 * @brief generate particles from lattice positions for a shell body.
+	 * @class ThickSurfaceParticleGeneratorLattice
+	 * @brief Generate thick surface particles from lattice positions for a thin structure defined by a body shape.
+	 * @details Here, a thick surface is defined as that the thickness is equal or larger than the proposed particle spacing. 
+	 * Note that, this class should not be used for generating the thin surface particles, 
+	 * which may be better generated from a geometric surfce directly.
 	 */
-	class ShellParticleGeneratorLattice : public BaseParticleGeneratorLattice, public SurfaceParticleGenerator
+	class ThickSurfaceParticleGeneratorLattice : public BaseParticleGeneratorLattice, public SurfaceParticleGenerator
 	{
 	public:
-		ShellParticleGeneratorLattice(SPHBody &sph_body, Real global_avg_thickness);
-		virtual ~ShellParticleGeneratorLattice(){};
+		ThickSurfaceParticleGeneratorLattice(SPHBody &sph_body, Real global_avg_thickness);
+		virtual ~ThickSurfaceParticleGeneratorLattice(){};
 
 		virtual void initializeGeometricVariables() override;
 

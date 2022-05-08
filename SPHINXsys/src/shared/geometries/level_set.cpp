@@ -39,7 +39,15 @@ namespace SPH
 	//=================================================================================================//
 	BaseLevelSet ::BaseLevelSet(Shape &shape, SPHAdaptation &sph_adaptation)
 		: BaseMeshField("LevelSet"),
-		  shape_(shape), sph_adaptation_(sph_adaptation) {}
+		  shape_(shape), sph_adaptation_(sph_adaptation)
+	{
+		if (!shape_.isValid())
+		{
+			std::cout << "\n BaseLevelSet Error: shape_ is invalid." << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			throw;
+		}
+	}
 	//=================================================================================================//
 	Real BaseLevelSet::computeHeaviside(Real phi, Real half_width)
 	{
@@ -105,7 +113,16 @@ namespace SPH
 	Vecd LevelSet::probeNormalDirection(const Vecd &position)
 	{
 		Vecd probed_value = probeLevelSetGradient(position);
-		return probed_value / (probed_value.norm() + TinyReal);
+
+		Real threshold = 1.0e-2 * data_spacing_;
+		while (probed_value.norm() < threshold)
+		{
+			Vecd jittered = position; // jittering
+			for (int l = 0; l != position.size(); ++l)
+				jittered[l] += (((Real)rand() / (RAND_MAX)) - 0.5) * 0.5 * data_spacing_;
+			probed_value = probeLevelSetGradient(jittered);
+		}
+		return probed_value.normalize();
 	}
 	//=================================================================================================//
 	Vecd LevelSet::probeLevelSetGradient(const Vecd &position)

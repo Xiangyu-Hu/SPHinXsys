@@ -48,9 +48,8 @@ public:
 		inner_wall_shape.push_back(Vecd(DL, 0.0));
 		inner_wall_shape.push_back(Vecd(0.0, 0.0));
 
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+		multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
 	}
 };
 class BallBody : public MultiPolygonShape
@@ -105,13 +104,15 @@ int main(int ac, char* av[])
 		? ball.generateParticles<ParticleGeneratorReload>(in_output, ball.getBodyName())
 		: ball.generateParticles<ParticleGeneratorLattice>();
 
-	/** Creating body, materials and particles. */
+	// Note the wall boundary here has sharp corner, and is a numerical invalid elastic shell structure,
+	// and its dynamics is not able to be modeled by the shell dynamics in SPHinXsys in the current version.
+	// Here, we use it simply as a rigid shell.
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
 	wall_boundary.defineAdaptation<SPHAdaptation>(1.15, 1.0);
 	wall_boundary.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(wall_boundary);
 	//here dummy linear elastic solid is use because no solid dynamics in particle relaxation
 	wall_boundary.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1.0, 1.0, 0.0);
-	wall_boundary.generateParticles<ShellParticleGeneratorLattice>(thickness);
+	wall_boundary.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
 	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
@@ -134,7 +135,8 @@ int main(int ac, char* av[])
 		RandomizePartilePosition  			wall_boundary_random_particles(wall_boundary);
 		relax_dynamics::ShellRelaxationStepInner
 		relaxation_step_wall_boundary_inner(wall_boundary_inner, thickness, level_set_refinement_ratio);
-		relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(wall_boundary_inner, thickness);
+		relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(wall_boundary_inner, thickness, cos(Pi / 3.75));
+		wall_boundary.addBodyStateForRecording<int>("UpdatedIndicator");
 		//----------------------------------------------------------------------
 		//	Output for particle relaxation.
 		//----------------------------------------------------------------------
@@ -169,6 +171,7 @@ int main(int ac, char* av[])
 		}
 		std::cout << "The physics relaxation process of ball particles finish !" << std::endl;
 		shell_normal_prediction.exec();
+		write_relaxed_particles.writeToFile(ite);
 		write_particle_reload_files.writeToFile(0);
 		return 0;
 	}

@@ -46,7 +46,7 @@ int main()
 	pipe_body.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(pipe_body);
 	//here dummy linear elastic solid is use because no solid dynamics in particle relaxation
 	pipe_body.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1.0, 1.0, 0.0);
-	pipe_body.generateParticles<ShellParticleGeneratorLattice>(thickness);
+	pipe_body.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
 	pipe_body.addBodyStateForRecording<Vecd>("NormalDirection");
 	/**
 	 * @brief define simple data file input and outputs functions.
@@ -66,6 +66,7 @@ int main()
 	relax_dynamics::ShellRelaxationStepInner
 		relaxation_step_pipe_body_inner(pipe_body_inner, thickness, level_set_refinement_ratio);
 	relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(pipe_body_inner, thickness);
+	pipe_body.addBodyStateForRecording<int>("UpdatedIndicator");
 	/**
 	 * @brief 	Particle relaxation starts here.
 	 */

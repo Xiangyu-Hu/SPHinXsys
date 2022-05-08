@@ -102,7 +102,7 @@ int main(int ac, char* av[])
 	shell_box.defineAdaptation<SPHAdaptation>(1.15, 1.0);
 	shell_box.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(shell_box);
 	shell_box.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1.0, 1.0, 0.0);
-	shell_box.generateParticles<ShellParticleGeneratorLattice>(thickness);
+	shell_box.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
 	shell_box.addBodyStateForRecording<Vecd>("NormalDirection");
 
 
