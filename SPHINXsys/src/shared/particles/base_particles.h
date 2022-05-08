@@ -210,6 +210,13 @@ namespace SPH
 		virtual void writePltFileHeader(std::ofstream &output_file);
 		virtual void writePltFileParticleData(std::ofstream &output_file, size_t index_i);
 
+		/** resize a particle data. */
+		template <typename VariableType>
+		struct resizeParticleData
+		{
+			void operator()(ParticleData &particle_data, size_t new_size) const;
+		};
+
 		/** Fill a particle variable with default data. */
 		template <typename VariableType>
 		struct addAParticleDataValue
@@ -224,6 +231,7 @@ namespace SPH
 			void operator()(ParticleData &particle_data, size_t this_index, size_t another_index) const;
 		};
 
+		ParticleDataOperation<resizeParticleData> resize_particle_data_;
 		ParticleDataOperation<addAParticleDataValue> add_a_particle_value_;
 		ParticleDataOperation<copyAParticleDataValue> copy_a_particle_value_;
 	};

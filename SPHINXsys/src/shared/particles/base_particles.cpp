@@ -63,6 +63,9 @@ namespace SPH
 		//----------------------------------------------------------------------
 		for (size_t i = 0; i != real_particles_bound_; ++i)
 		{
+			sorted_id_.push_back(sequence_.size());
+			unsorted_id_.push_back(sequence_.size());
+			sequence_.push_back(0);
 			mass_[i] = rho_n_[i] * Vol_[i];
 		}
 	}
@@ -356,16 +359,11 @@ namespace SPH
 	void BaseParticles::readFromXmlForReloadParticle(std::string &filefullpath)
 	{
 		reload_xml_engine_.loadXmlFile(filefullpath);
+		total_real_particles_ = reload_xml_engine_.SizeOfXmlDoc();
+		resize_particle_data_(all_particle_data_, total_real_particles_);
 		ReadAParticleVariableFromXml read_variable_from_xml(reload_xml_engine_, total_real_particles_);
 		ParticleDataOperation<loopVariabaleNameList> loop_variable_namelist;
 		loop_variable_namelist(all_particle_data_, variables_to_reload_, read_variable_from_xml);
-
-		if (reload_xml_engine_.SizeOfXmlDoc() != total_real_particles_)
-		{
-			std::cout << "\n Error: reload particle number does not match!" << std::endl;
-			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-			exit(1);
-		}
 	}
 	//=================================================================================================//
 }

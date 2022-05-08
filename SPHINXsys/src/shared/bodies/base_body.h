@@ -172,7 +172,7 @@ namespace SPH
 		};
 
 		virtual void writeParticlesToVtuFile(std::ostream &output_file);
-		virtual void writeParticlesToVtpFile(std::ostream &output_file);
+		virtual void writeParticlesToVtpFile(std::ofstream &output_file);
 		virtual void writeParticlesToPltFile(std::ofstream &output_file);
 		virtual void writeSurfaceParticlesToVtuFile(std::ofstream &output_file, BodySurface &surface_particles);
 		virtual void writeParticlesToXmlForRestart(std::string &filefullpath);

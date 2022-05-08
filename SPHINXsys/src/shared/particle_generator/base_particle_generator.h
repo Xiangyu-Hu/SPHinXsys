@@ -57,9 +57,6 @@ namespace SPH
 	protected:
 		BaseParticles *base_particles_;
 		StdLargeVec<Vecd> &pos_n_; /**< current position */
-		StdLargeVec<size_t> &sequence_;
-		StdLargeVec<size_t> &sorted_id_;
-		StdLargeVec<size_t> &unsorted_id_;
 
 		virtual void initializePosition(const Vecd &position);
 	};

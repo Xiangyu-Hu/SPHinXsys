@@ -177,6 +177,16 @@ namespace SPH
     }
     //=================================================================================================//
     template <typename VariableType>
+    void BaseParticles::resizeParticleData<VariableType>::
+    operator()(ParticleData &particle_data, size_t new_size) const
+    {
+        constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
+
+        for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
+            std::get<type_index>(particle_data)[i]->resize(new_size, VariableType(0));
+    }
+    //=================================================================================================//
+    template <typename VariableType>
     void BaseParticles::addAParticleDataValue<VariableType>::
     operator()(ParticleData &particle_data) const
     {

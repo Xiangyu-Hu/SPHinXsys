@@ -434,10 +434,7 @@ namespace SPH
 			: RelaxationStepInner(inner_relation, level_set_correction),
 			  update_shell_particle_position_(*real_body_),
 			  mid_surface_bounding_(*real_body_, near_shape_surface_, inner_relation,
-									thickness, level_set_refinement_ratio)
-		{
-			base_particles_->addAVariableToReload<Vecd>("InitialNormalDirection");
-		}
+									thickness, level_set_refinement_ratio) {}
 		//=================================================================================================//
 		void ShellRelaxationStepInner::exec(Real ite_p)
 		{

@@ -14,8 +14,7 @@ namespace SPH
 	//=================================================================================================//
 	BaseParticleGenerator::BaseParticleGenerator(SPHBody &sph_body)
 		: base_particles_(sph_body.base_particles_),
-		pos_n_(base_particles_->pos_n_), sequence_(base_particles_->sequence_),
-		sorted_id_(base_particles_->sorted_id_), unsorted_id_(base_particles_->unsorted_id_)
+		pos_n_(base_particles_->pos_n_)
 	{
 		if (sph_body.base_particles_ == nullptr || sph_body.base_material_ == nullptr)
 		{
@@ -28,9 +27,6 @@ namespace SPH
 	void BaseParticleGenerator::initializePosition(const Vecd &position)
 	{
 		pos_n_.push_back(position);
-		sorted_id_.push_back(sequence_.size());
-		unsorted_id_.push_back(sequence_.size());
-		sequence_.push_back(0);
 		base_particles_->total_real_particles_ ++;
 	}
 	//=================================================================================================//
@@ -81,18 +77,7 @@ namespace SPH
 	//=================================================================================================//
 	void ParticleGeneratorReload::initializeGeometricVariables()
 	{
-		XmlEngine *reload_xml_engine = base_particles_->getReloadXmlEngine();
-		reload_xml_engine->loadXmlFile(file_path_);
-		SimTK::Xml::element_iterator ele_ite_ = reload_xml_engine->root_element_.element_begin();
-		for (; ele_ite_ != reload_xml_engine->root_element_.element_end(); ++ele_ite_)
-		{
-			Vecd position(0);
-			reload_xml_engine->getRequiredAttributeValue(ele_ite_, "Position", position);
-			Real volume(0);
-			reload_xml_engine->getRequiredAttributeValue(ele_ite_, "Volume", volume);
-
-			initializePositionAndVolume(position, volume);
-		}
+		base_particles_->readFromXmlForReloadParticle(file_path_);
 	}
 	//=================================================================================================//
 }

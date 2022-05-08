@@ -211,7 +211,6 @@ int main(int ac, char* av[])
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp	body_states_recording(in_output, sph_system.real_bodies_);
-	BodyStatesRecordingToVtp 	write_ball_state(in_output, { ball });
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary. 
@@ -271,7 +270,7 @@ int main(int ac, char* av[])
 			}
 		}
 		tick_count t2 = tick_count::now();
-		write_ball_state.writeToFile(ite);
+		body_states_recording.writeToFile(ite);
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}
