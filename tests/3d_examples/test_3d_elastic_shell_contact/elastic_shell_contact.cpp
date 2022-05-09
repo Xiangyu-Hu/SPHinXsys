@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "elastic_shell_contact.h"
 
-TEST(ElasticShellContact, elastic_shell_1)
+TEST(ElasticShellContact_3D, elastic_shell_1)
 {
 	bool elastic_shell = true;
 	Real shell_resolution = 5.0;
@@ -12,7 +12,7 @@ TEST(ElasticShellContact, elastic_shell_1)
 
 // this one breaks very often, shell particles blow up
 // commented out for CI testing
-// TEST(ElasticShellContact, elastic_shell_2)
+// TEST(ElasticShellContact_3D, elastic_shell_2)
 // {
 // 	bool elastic_shell = true;
 // 	Real shell_resolution = 8.0;
@@ -21,7 +21,7 @@ TEST(ElasticShellContact, elastic_shell_1)
 // 	ElasticShellContact(elastic_shell, shell_resolution, shell_thickness, solid_resolution);
 // }
 
-TEST(ElasticShellContact, rigid_shell_1)
+TEST(ElasticShellContact_3D, rigid_shell_1)
 {
 	bool elastic_shell = false;
 	Real shell_resolution = 5.0;
@@ -30,7 +30,7 @@ TEST(ElasticShellContact, rigid_shell_1)
 	ElasticShellContact(elastic_shell, shell_resolution, shell_thickness, solid_resolution);
 }
 
-TEST(ElasticShellContact, rigid_shell_2)
+TEST(ElasticShellContact_3D, rigid_shell_2)
 {
 	bool elastic_shell = false;
 	Real shell_resolution = 8.0;
