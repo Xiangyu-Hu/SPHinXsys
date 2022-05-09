@@ -85,9 +85,9 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** Tag for running particle relaxation for the initially body-fitted distribution */
-	sph_system.run_particle_relaxation_ = false;
+	sph_system.run_particle_relaxation_ = true;
 	/** Tag for starting with relaxed body-fitted particles distribution */
-	sph_system.reload_particles_ = true;
+	sph_system.reload_particles_ = false;
 	/** Tag for computation from restart files. 0: start with initial condition */
 	sph_system.restart_step_ = 0;
 	/** Handle command line arguments. */
@@ -97,8 +97,8 @@ int main(int ac, char* av[])
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	SolidBody ball(sph_system, makeShared<BallBody>("BallBody"));
-	ball.defineBodyLevelSetShape();
+	SolidBody ball(sph_system, makeShared<GeometricShapeCircle>(ball_center, ball_radius, "BallBody"));
+	ball.defineBodyLevelSetShape()->writeLevelSet(ball);
 	ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 		? ball.generateParticles<ParticleGeneratorReload>(in_output, ball.getBodyName())

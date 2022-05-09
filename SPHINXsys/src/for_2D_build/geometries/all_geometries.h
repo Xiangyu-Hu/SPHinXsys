@@ -6,6 +6,7 @@
 This is the header file that user code should include to pick up all
 geometry classes used in SPHinXsys. **/
 
+#include "geometric_shape.h"
 #include "multi_polygon_shape.h"
 #include "level_set_shape.h"
 #include "complex_shape.h"
