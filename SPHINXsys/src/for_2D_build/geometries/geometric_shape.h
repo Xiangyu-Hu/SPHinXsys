@@ -46,7 +46,9 @@ namespace SPH
         virtual bool checkContain(const Vec2d &pnt, bool BOUNDARY_INCLUDED = true) override;
         virtual Vec2d findClosestPoint(const Vec2d &pnt) override;
         virtual BoundingBox findBounds() override;
-    };
+
+		virtual Real findSignedDistance(const Vecd &input_pnt) override;
+   };
 }
 
 #endif // GEOMETRIC_SHAPE_H

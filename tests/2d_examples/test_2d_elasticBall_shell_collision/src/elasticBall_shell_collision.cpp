@@ -29,35 +29,13 @@ Real poisson = 0.45;
 //----------------------------------------------------------------------
 //	Bodies with cases-dependent geometries (ComplexShape).
 //----------------------------------------------------------------------
-class WallBoundary : public MultiPolygonShape
+class WallBoundary : public ComplexShape
 {
 public:
-	explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
+	explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		std::vector<Vecd> outer_wall_shape;
-		outer_wall_shape.push_back(Vecd(-thickness, -thickness));
-		outer_wall_shape.push_back(Vecd(-thickness, DH + thickness));
-		outer_wall_shape.push_back(Vecd(DL + thickness, DH + thickness));
-		outer_wall_shape.push_back(Vecd(DL + thickness, -thickness));
-		outer_wall_shape.push_back(Vecd(-thickness, -thickness));
-
-		std::vector<Vecd> inner_wall_shape;
-		inner_wall_shape.push_back(Vecd(0.0, 0.0));
-		inner_wall_shape.push_back(Vecd(0.0, DH));
-		inner_wall_shape.push_back(Vecd(DL, DH));
-		inner_wall_shape.push_back(Vecd(DL, 0.0));
-		inner_wall_shape.push_back(Vecd(0.0, 0.0));
-
-		multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
-	}
-};
-class BallBody : public MultiPolygonShape
-{
-public:
-	explicit BallBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
-	{
-		multi_polygon_.addACircle(ball_center, ball_radius, 100, ShapeBooleanOps::add);
+		add<GeometricShapeCircle>(ball_center, 0.5 * DH + resolution_ref);
+		substract<GeometricShapeCircle>(ball_center, 0.5 * DH);
 	}
 };
 /**
@@ -167,7 +145,7 @@ int main(int ac, char* av[])
 		while (ite < relax_step)
 		{
 			ball_relaxation_step_inner.parallel_exec();
-			relaxation_step_wall_boundary_inner.parallel_exec();
+			for(int k= 0; k<2; ++k) relaxation_step_wall_boundary_inner.parallel_exec();
 			ite += 1;
 			if (ite % 100 == 0)
 			{

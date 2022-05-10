@@ -21,17 +21,20 @@ namespace SPH
     {
         Vec2d displacement = input_pnt - center_;
         Real distance = displacement.norm();
-        Real level_set = distance - radius_ ;
-        Real cosine = displacement[0] / (distance + TinyReal);
-        Real sine_abs = sqrt(1.0 - cosine * cosine);
-        Real sine = displacement[1] > 0.0 ?  sine_abs : -sine_abs;
-       return input_pnt - level_set * Vec2d(cosine, sine);
+        Real cosine = (SGN(displacement[0])*(ABS(displacement[0])) + TinyReal) / (distance + TinyReal);
+        Real sine = displacement[1] / (distance + TinyReal);
+        return input_pnt + (radius_ - distance) * Vec2d(cosine, sine);
     }
     //=================================================================================================//
     BoundingBox GeometricShapeCircle::findBounds()
     {
-        Vec2d shift = Vec2d(0.70710678118, 0.70710678118) * radius_;
-        return BoundingBox(center_ - shift,  center_ + shift);
+        Vec2d shift = Vec2d(radius_, radius_);
+        return BoundingBox(center_ - shift, center_ + shift);
+    }
+    //=================================================================================================//
+    Real GeometricShapeCircle::findSignedDistance(const Vecd &input_pnt)
+    {
+        return (input_pnt - center_).norm() - radius_;
     }
     //=================================================================================================//
 }

@@ -78,7 +78,7 @@ int main()
 
 	/** relax particles of the insert body. */
 	int ite_p = 0;
-	while (ite_p < 1000)
+	while (ite_p < 2000)
 	{
 		if (ite_p % 100 == 0)
 		{

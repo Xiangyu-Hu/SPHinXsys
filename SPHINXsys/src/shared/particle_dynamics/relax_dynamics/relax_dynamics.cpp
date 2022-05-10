@@ -267,9 +267,8 @@ namespace SPH
 		void ShellMidSurfaceBounding::Update(size_t index_i, Real dt)
 		{
 			Vecd none_normalized_normal = level_set_shape_->findLevelSetGradient(pos_n_[index_i]);
-			Vecd normal = none_normalized_normal / (none_normalized_normal.norm() + TinyReal);
-			Real relaxation_factor_ratio = particle_spacing_ref_ / level_set_refinement_ratio_ / (0.1 * thickness_);
-			Real factor = none_normalized_normal.norm() / relaxation_factor_ratio / thickness_;
+			Vecd normal = level_set_shape_->findNormalDirection(pos_n_[index_i]);
+			Real factor = none_normalized_normal.normSqr() / level_set_refinement_ratio_;
 			pos_n_[index_i] -= factor * constrained_distance_ * normal;
 		}
 		//=================================================================================================//
