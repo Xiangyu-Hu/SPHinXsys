@@ -110,7 +110,7 @@ int main()
 	solid_dynamics::ContactForce free_cube_compute_solid_contact_forces(free_cube_contact);
 	/** Damping*/
 	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
-		damping(free_cube_inner, 0.5, "Velocity", physical_viscosity);
+		damping(0.5, free_cube_inner,"Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -193,10 +193,7 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	if (!sph_system.restart_step_ == 0) // TODO: this case should be revsied latter.
-	{
-		write_free_cube_displacement.newResultTest();
-	}
+	write_free_cube_displacement.newResultTest();
 
 	return 0;
 }

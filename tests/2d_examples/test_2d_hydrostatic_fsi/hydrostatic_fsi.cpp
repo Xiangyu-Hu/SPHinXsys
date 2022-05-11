@@ -246,7 +246,7 @@ int main()
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex);
 	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex);
 	DampingWithRandomChoice<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
-		fluid_damping(water_block_complex, 0.2, "Velocity", mu_f);
+		fluid_damping(0.2, water_block_complex, "Velocity", mu_f);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
 	/** Corrected configuration. */

@@ -179,7 +179,7 @@ int main(int ac, char* av[])
 	solid_dynamics::ConstrainSolidBodyRegion	constrain_holder(wall_boundary, holder);
 	/** Damping with the solid body*/
 	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
-	wall_damping(wall_inner, 0.5, "Velocity", physical_viscosity);
+	wall_damping(0.5, wall_inner, "Velocity", physical_viscosity);
 	/** Mass properties of the rigid shell box. 
 	 */
 	SimTK::Body::Rigid rigid_info(*box_multibody.body_part_mass_properties_);

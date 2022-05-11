@@ -197,7 +197,7 @@ int main(int ac, char *av[])
 	solid_dynamics::ContactForce damping_ball_compute_solid_contact_forces(damping_ball_contact);
 	/** Damping for one ball */
 	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
-		damping(damping_ball_inner, 0.5, "Velocity", physical_viscosity);
+		damping(0.5, damping_ball_inner, "Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

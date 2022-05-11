@@ -136,15 +136,12 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &contact_density_, &Vol_, &mass_;
-			StdLargeVec<Vecd> &dvel_dt_prior_, &contact_force_, &vel_n_;
+			StdLargeVec<Vecd> &dvel_dt_prior_, &contact_force_;
 			StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
-			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
-			Real rho_c_i_;
-			StdVec<Real> contact_impedance_, contact_reference_pressure_, rho_c_k_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
-
+		
 		/**
 		* @class DynamicContactForce
 		* @brief Computing the contact force for problems dominated by the contact dynamic process itself.

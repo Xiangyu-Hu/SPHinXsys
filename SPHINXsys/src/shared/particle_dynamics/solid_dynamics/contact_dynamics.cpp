@@ -22,17 +22,17 @@ namespace SPH
 												self_contact_relation.body_surface_layer_),
 			  SolidDataInner(self_contact_relation),
 			  mass_(particles_->mass_), contact_density_(particles_->contact_density_)
-			  {
-				Real dp_1 = self_contact_relation.sph_body_->sph_adaptation_->ReferenceSpacing();
-				offset_W_ij_ = self_contact_relation.sph_body_->sph_adaptation_->getKernel()->W(dp_1, Vecd(0.0));
-			  }
+		{
+			Real dp_1 = self_contact_relation.sph_body_->sph_adaptation_->ReferenceSpacing();
+			offset_W_ij_ = self_contact_relation.sph_body_->sph_adaptation_->getKernel()->W(dp_1, Vecd(0.0));
+		}
 		//=================================================================================================//
 		void SelfContactDensitySummation::Interaction(size_t index_i, Real dt)
-		{	
+		{
 			Real sigma = 0.0;
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-			{	
+			{
 				Real corrected_W_ij = std::max(inner_neighborhood.W_ij_[n] - offset_W_ij_, 0.0);
 				sigma += corrected_W_ij * mass_[inner_neighborhood.j_[n]];
 			}
@@ -51,7 +51,7 @@ namespace SPH
 			{
 				contact_mass_.push_back(&(contact_particles_[k]->mass_));
 			}
-			
+
 			// we modify the default formulation by an offset, so that exactly touching bodies produce 0 initial force
 			// subtract summation of the kernel function of 2 particles at 1 particle distance, and if the result is negative, we take 0
 			// different resolution: distance = 0.5 * dp1 + 0.5 * dp2
@@ -67,7 +67,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		void ContactDensitySummation::Interaction(size_t index_i, Real dt)
-		{	
+		{
 			/** Contact interaction. */
 			Real sigma = 0.0;
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -76,7 +76,7 @@ namespace SPH
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-				{	
+				{
 					Real corrected_W_ij = std::max(contact_neighborhood.W_ij_[n] - offset_W_ij_[k], 0.0);
 					sigma += corrected_W_ij * contact_mass_k[contact_neighborhood.j_[n]];
 				}
@@ -89,7 +89,7 @@ namespace SPH
 												*solid_body_contact_relation.body_surface_layer_),
 			  ContactDynamicsData(solid_body_contact_relation), pos_n_(particles_->pos_n_),
 			  contact_density_(particles_->contact_density_),
-			  kernel_(solid_body_contact_relation.sph_body_->sph_adaptation_->getKernel()), 
+			  kernel_(solid_body_contact_relation.sph_body_->sph_adaptation_->getKernel()),
 			  spacing_ref_(solid_body_contact_relation.sph_body_->sph_adaptation_->ReferenceSpacing())
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
@@ -104,11 +104,11 @@ namespace SPH
 			Real sigma = 0.0;
 			const int dimension = Vecd(0).size();
 			/** a calibraton factor to avoid particle penetratoin into shell structure */
-			boundary_factor_ = material_->ReferenceDensity() / 
-				(kernel_->SmoothingLength() * kernel_->W0(Vecd(0.)) * Pi * std::pow(kernel_->CutOffRadius(), dimension-1));
+			boundary_factor_ = material_->ReferenceDensity() /
+							   (kernel_->SmoothingLength() * kernel_->W0(Vecd(0.)) * Pi * std::pow(kernel_->CutOffRadius(), dimension - 1));
 
 			const Real dp_2 = 0.5 * spacing_ref_;
-			
+
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
 				StdLargeVec<Vecd> &contact_pos_k = *(contact_pos_[k]);
@@ -116,16 +116,16 @@ namespace SPH
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
 				{
 					const Vecd contact_pos_j = contact_pos_k[contact_neighborhood.j_[n]];
-					
-					const Vecd dp_2_t_0 = pos_n_[index_i] - Vecd(dp_2*x_0, dp_2*x_0) - contact_pos_j;
-					const Vecd dp_2_t_1 = pos_n_[index_i] - Vecd(dp_2*x_1, dp_2*x_1) - contact_pos_j;
-					const Vecd dp_2_t_2 = pos_n_[index_i] - Vecd(dp_2*x_2, dp_2*x_2) - contact_pos_j;
+
+					const Vecd dp_2_t_0 = pos_n_[index_i] - Vecd(dp_2 * x_0, dp_2 * x_0) - contact_pos_j;
+					const Vecd dp_2_t_1 = pos_n_[index_i] - Vecd(dp_2 * x_1, dp_2 * x_1) - contact_pos_j;
+					const Vecd dp_2_t_2 = pos_n_[index_i] - Vecd(dp_2 * x_2, dp_2 * x_2) - contact_pos_j;
 
 					const Real W_rij_t_0 = kernel_->W(dp_2_t_0.norm(), dp_2_t_0);
 					const Real W_rij_t_1 = kernel_->W(dp_2_t_1.norm(), dp_2_t_1);
 					const Real W_rij_t_2 = kernel_->W(dp_2_t_2.norm(), dp_2_t_2);
 
-					sigma  += (w_0 * W_rij_t_0 + w_1 * W_rij_t_1 + w_2 * W_rij_t_2) * dp_2;
+					sigma += (w_0 * W_rij_t_0 + w_1 * W_rij_t_1 + w_2 * W_rij_t_2) * dp_2;
 				}
 			}
 			contact_density_[index_i] = sigma * boundary_factor_ * kernel_->SmoothingLength();
@@ -156,7 +156,7 @@ namespace SPH
 				const Vecd &e_ij = inner_neighborhood.e_ij_[n];
 				Real p_star = 0.5 * (p_i + contact_density_[index_j] * material_->ContactStiffness());
 				Real impedance_p = 0.5 * contact_impedance_ * (SimTK::dot(vel_i - vel_n_[index_j], -e_ij));
-				//force to mimic pressure
+				// force to mimic pressure
 				force -= 2.0 * (p_star + impedance_p) * e_ij * Vol_i * Vol_[index_j] * inner_neighborhood.dW_ij_[n];
 			}
 			contact_force_[index_i] = force;
@@ -199,7 +199,7 @@ namespace SPH
 				Real beta = delta < 1.0 ? (1.0 - delta) * (1.0 - delta) * particle_spacing_ratio2_ : 0.0;
 				Real penalty_p = penalty_strength_ * beta * overlap * contact_reference_pressure_;
 
-				//force due to pressure
+				// force due to pressure
 				force -= 2.0 * (impedance_p + penalty_p) * e_ij *
 						 Vol_i * Vol_[index_j] * inner_neighborhood.dW_ij_[n];
 			}
@@ -214,19 +214,12 @@ namespace SPH
 			  contact_density_(particles_->contact_density_),
 			  Vol_(particles_->Vol_), mass_(particles_->mass_),
 			  dvel_dt_prior_(particles_->dvel_dt_prior_),
-			  contact_force_(particles_->contact_force_),
-			  vel_n_(particles_->vel_n_)
+			  contact_force_(particles_->contact_force_)
 		{
-			rho_c_i_ = material_->ReferenceDensity() * sqrt(material_->ContactStiffness());
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_contact_density_.push_back(&(contact_particles_[k]->contact_density_));
-				contact_vel_n_.push_back(&(contact_particles_[k]->vel_n_));
-
-				Real rho_c_k = contact_material_[k]->ReferenceDensity() * sqrt(contact_material_[k]->ContactStiffness());
-				rho_c_k_.push_back(rho_c_k);
-				contact_impedance_.push_back(2.0 * rho_c_i_ * rho_c_k / (rho_c_i_ + rho_c_k));
 			}
 		}
 		//=================================================================================================//
@@ -234,7 +227,6 @@ namespace SPH
 		{
 			Real Vol_i = Vol_[index_i];
 			Real p_i = contact_density_[index_i] * material_->ContactStiffness();
-			Vecd vel_i = vel_n_[index_i];
 			/** Contact interaction. */
 			Vecd force(0.0);
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
@@ -242,7 +234,6 @@ namespace SPH
 				StdLargeVec<Real> &contact_density_k = *(contact_contact_density_[k]);
 				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
 				Solid *solid_k = contact_material_[k];
-				StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
 
 				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
 				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
@@ -250,13 +241,9 @@ namespace SPH
 					size_t index_j = contact_neighborhood.j_[n];
 					Vecd e_ij = contact_neighborhood.e_ij_[n];
 
-					Real p_star = (p_i * rho_c_k_[k] + contact_density_k[index_j] * solid_k->ContactStiffness() * rho_c_i_)
-						           / (rho_c_i_ + rho_c_k_[k]);
-					Real impedance_p = 0.5 * contact_impedance_[k] * (SimTK::dot(vel_i - vel_n_k[index_j], -e_ij));
-
-					//force due to pressure
-					force -= 2.0 * (p_star + impedance_p) * e_ij *
-						Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+					Real p_star = 0.5 * (p_i + contact_density_k[index_j] * solid_k->ContactStiffness());
+					// force due to pressure
+					force -= 2.0 * p_star * e_ij * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
 				}
 			}
 			contact_force_[index_i] = force;
@@ -317,7 +304,7 @@ namespace SPH
 					Real beta = delta < 1.0 ? (1.0 - delta) * (1.0 - delta) * particle_spacing_ratio2 : 0.0;
 					Real penalty_p = penalty_strength_ * beta * overlap * contact_reference_pressure_[k];
 
-					//force due to pressure
+					// force due to pressure
 					force -= 2.0 * (impedance_p + penalty_p) * e_ij *
 							 Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
 				}
@@ -377,7 +364,7 @@ namespace SPH
 					Real beta = delta < 1.0 ? (1.0 - delta) * (1.0 - delta) * particle_spacing_ratio2 : 0.0;
 					Real penalty_p = penalty_strength_ * beta * fabs(overlap) * reference_pressure_;
 
-					//force due to pressure
+					// force due to pressure
 					force -= 2.0 * (impedance_p + penalty_p) * dot(e_ij, n_k_j) *
 							 n_k_j * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
 				}
