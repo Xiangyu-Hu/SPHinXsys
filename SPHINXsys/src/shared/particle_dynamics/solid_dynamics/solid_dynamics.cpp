@@ -304,8 +304,8 @@ namespace SPH
 			  vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
 			  vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_)
 		{
-			particles_->registerAVariable<Vecd>(vel_temp_, "TemporaryVelocity");
-			particles_->registerAVariable<Vecd>(dvel_dt_temp_, "TemporaryAcceleration");
+            vel_temp_.resize(vel_n_.size());
+            dvel_dt_temp_.resize(vel_n_.size());
 		}
 		//=================================================================================================//
 		void SoftConstrainSolidBodyRegion::Interaction(size_t index_i, Real dt)
