@@ -22,9 +22,9 @@ Real gravity_g = 1.0;
 //	Global paramters on material properties
 //----------------------------------------------------------------------
 Real rho0_s = 1.0e3;
-Real Youngs_modulus = 5.0e4;
+Real Youngs_modulus = 2.0e4;
 Real poisson = 0.45;
-Real physical_viscosity = 1.0e5;
+Real physical_viscosity = 1.0e6;
 //----------------------------------------------------------------------
 //	Bodies with cases-dependent geometries (ComplexShape).
 //----------------------------------------------------------------------
@@ -176,9 +176,9 @@ int main(int ac, char *av[])
 	solid_dynamics::StressRelaxationSecondHalf ball_stress_relaxation_second_half(ball_inner);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ShellContactDensity ball_update_contact_density(ball_contact);
-	solid_dynamics::ContactForce ball_compute_solid_contact_forces(ball_contact);
+	solid_dynamics::ContactForceWithWall ball_compute_solid_contact_forces(ball_contact);
 	DampingWithRandomChoice<DampingPairwiseToWall<Vec2d>>
-		ball_friction(0.2, ball_contact, "Velocity", physical_viscosity);
+		ball_friction(0.1, ball_contact, "Velocity", physical_viscosity);
 
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.

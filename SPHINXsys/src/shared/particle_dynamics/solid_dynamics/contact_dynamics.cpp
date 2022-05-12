@@ -250,6 +250,45 @@ namespace SPH
 			dvel_dt_prior_[index_i] += force / mass_[index_i];
 		}
 		//=================================================================================================//
+		ContactForceWithWall::ContactForceWithWall(SolidBodyRelationContact &solid_body_contact_relation)
+			: PartInteractionDynamicsByParticle(*solid_body_contact_relation.sph_body_,
+												*solid_body_contact_relation.body_surface_layer_),
+			  ContactWithWallData(solid_body_contact_relation),
+			  contact_density_(particles_->contact_density_),
+			  Vol_(particles_->Vol_), mass_(particles_->mass_),
+			  dvel_dt_prior_(particles_->dvel_dt_prior_),
+			  contact_force_(particles_->contact_force_)
+		{
+			for (size_t k = 0; k != contact_particles_.size(); ++k)
+			{
+				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
+			}
+		}
+		//=================================================================================================//
+		void ContactForceWithWall::Interaction(size_t index_i, Real dt)
+		{
+			Real Vol_i = Vol_[index_i];
+			Real p_i = contact_density_[index_i] * material_->ContactStiffness();
+			/** Contact interaction. */
+			Vecd force(0.0);
+			for (size_t k = 0; k < contact_configuration_.size(); ++k)
+			{
+				StdLargeVec<Real> &Vol_k = *(contact_Vol_[k]);
+
+				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = contact_neighborhood.j_[n];
+					Vecd e_ij = contact_neighborhood.e_ij_[n];
+
+					// force due to pressure
+					force -= 2.0 * p_i * e_ij * Vol_i * Vol_k[index_j] * contact_neighborhood.dW_ij_[n];
+				}
+			}
+			contact_force_[index_i] = force;
+			dvel_dt_prior_[index_i] += force / mass_[index_i];
+		}
+		//=================================================================================================//
 		DynamicContactForce::
 			DynamicContactForce(SolidBodyRelationContact &solid_body_contact_relation, Real penalty_strength)
 			: PartInteractionDynamicsByParticle(*solid_body_contact_relation.sph_body_,
@@ -314,8 +353,8 @@ namespace SPH
 			dvel_dt_prior_[index_i] += force / mass_[index_i];
 		}
 		//=================================================================================================//
-		ContactForceWithWall::
-			ContactForceWithWall(SolidBodyRelationContact &solid_body_contact_relation, Real penalty_strength)
+		DynamicContactForceWithWall::
+			DynamicContactForceWithWall(SolidBodyRelationContact &solid_body_contact_relation, Real penalty_strength)
 			: PartInteractionDynamicsByParticle(*solid_body_contact_relation.sph_body_,
 												*solid_body_contact_relation.body_surface_layer_),
 			  ContactDynamicsData(solid_body_contact_relation),
@@ -333,7 +372,7 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		void ContactForceWithWall::Interaction(size_t index_i, Real dt)
+		void DynamicContactForceWithWall::Interaction(size_t index_i, Real dt)
 		{
 			Real Vol_i = Vol_[index_i];
 			Vecd vel_i = vel_n_[index_i];

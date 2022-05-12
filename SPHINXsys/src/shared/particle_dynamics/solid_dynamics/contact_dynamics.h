@@ -39,6 +39,7 @@ namespace SPH
 	namespace solid_dynamics
 	{
 		typedef DataDelegateContact<SolidBody, SolidParticles, Solid, SolidBody, SolidParticles, Solid> ContactDynamicsData;
+		typedef DataDelegateContact<SolidBody, SolidParticles, ElasticSolid, SolidBody, SolidParticles, Solid> ContactWithWallData;
 
 		/**
 		* @class SelfContactDensitySummation
@@ -143,6 +144,26 @@ namespace SPH
 		};
 		
 		/**
+		 * @class ContactForceWithWall
+		 * @brief Computing the dynamic contact force with a rigid wall.
+		 *  Note that the body surface of the wall should be
+		 *  updated before computing the contact force.
+		 */
+		class ContactForceWithWall : public PartInteractionDynamicsByParticle, public ContactWithWallData
+		{
+		public:
+			explicit ContactForceWithWall(SolidBodyRelationContact &solid_body_contact_relation);
+			virtual ~ContactForceWithWall(){};
+
+		protected:
+			StdLargeVec<Real> &contact_density_, &Vol_, &mass_;
+			StdLargeVec<Vecd> &dvel_dt_prior_, &contact_force_;
+			StdVec<StdLargeVec<Real> *> contact_Vol_;
+
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
 		* @class DynamicContactForce
 		* @brief Computing the contact force for problems dominated by the contact dynamic process itself.
 		* For example, the high speed impact problems in which the detailed contact behavior is crucial for 
@@ -171,16 +192,16 @@ namespace SPH
 		};
 
 		/**
-		* @class ContactForceWithWall
+		* @class DynamicContactForceWithWall
 		* @brief Computing the contact force with a rigid wall.
 		*  Note that the body surface of the wall should be
 		*  updated before computing the contact force.
 		*/
-		class ContactForceWithWall : public PartInteractionDynamicsByParticle, public ContactDynamicsData
+		class DynamicContactForceWithWall : public PartInteractionDynamicsByParticle, public ContactDynamicsData
 		{
 		public:
-			explicit ContactForceWithWall(SolidBodyRelationContact &solid_body_contact_relation, Real penalty_strength = 1.0);
-			virtual ~ContactForceWithWall(){};
+			explicit DynamicContactForceWithWall(SolidBodyRelationContact &solid_body_contact_relation, Real penalty_strength = 1.0);
+			virtual ~DynamicContactForceWithWall(){};
 
 		protected:
 			StdLargeVec<Real> &Vol_, &mass_;

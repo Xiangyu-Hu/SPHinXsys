@@ -99,7 +99,7 @@ int main(int ac, char *av[])
 	/** stress and deformation relaxation. */
 	solid_dynamics::PlasticStressRelaxationFirstHalf stress_relaxation_first_half(column_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(column_inner);
-	solid_dynamics::ContactForceWithWall column_wall_contact_force(column_wall_contact);
+	solid_dynamics::DynamicContactForceWithWall column_wall_contact_force(column_wall_contact);
 
 	//----------------------------------------------------------------------
 	//	Output
