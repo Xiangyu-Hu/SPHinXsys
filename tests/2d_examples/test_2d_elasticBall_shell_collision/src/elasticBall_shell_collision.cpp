@@ -177,8 +177,8 @@ int main(int ac, char *av[])
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ShellContactDensity ball_update_contact_density(ball_contact);
 	solid_dynamics::ContactForce ball_compute_solid_contact_forces(ball_contact);
-	DampingWithRandomChoice<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
-		ball_damping(0.2, ball_inner, ball_contact, "Velocity", physical_viscosity);
+	DampingWithRandomChoice<DampingPairwiseToWall<Vec2d>>
+		ball_friction(0.2, ball_contact, "Velocity", physical_viscosity);
 
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
@@ -226,7 +226,7 @@ int main(int ac, char *av[])
 				ball_update_contact_density.parallel_exec();
 				ball_compute_solid_contact_forces.parallel_exec();
 				ball_stress_relaxation_first_half.parallel_exec(dt);
-				ball_damping.parallel_exec(dt);
+				ball_friction.parallel_exec(dt);
 				ball_stress_relaxation_second_half.parallel_exec(dt);
 
 				ball.updateCellLinkedList();

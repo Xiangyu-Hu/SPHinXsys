@@ -137,8 +137,8 @@ namespace SPH
 	class DampingPairwiseComplex : public DampingPairwiseInner<VariableType>, public DissipationDataContact
 	{
 	public:
-		DampingPairwiseComplex(BaseBodyRelationInner &inner_relation, 
-			BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta);
+		DampingPairwiseComplex(BaseBodyRelationInner &inner_relation,
+							   BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta);
 		DampingPairwiseComplex(ComplexBodyRelation &complex_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseComplex(){};
 
@@ -161,8 +161,8 @@ namespace SPH
 									public DissipationDataWithWall
 	{
 	public:
-		DampingPairwiseWithWall(BaseBodyRelationInner &inner_relation, 
-			BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta);
+		DampingPairwiseWithWall(BaseBodyRelationInner &inner_relation,
+								BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta);
 		DampingPairwiseWithWall(ComplexBodyRelation &complex_wall_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseWithWall(){};
 
@@ -170,6 +170,31 @@ namespace SPH
 		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 
 	private:
+		StdVec<StdLargeVec<Real> *> wall_Vol_;
+		StdVec<StdLargeVec<VariableType> *> wall_variable_;
+	};
+
+	/**
+	 * @class DampingPairwiseToWall
+	 * @brief Damping to wall by which the wall velocity is not updated
+	 * and the mass of wall particle is not considered.
+	 */
+	template <typename VariableType>
+	class DampingPairwiseToWall : public InteractionDynamicsSplitting,
+								  public DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,
+															 SolidBody, SolidParticles, Solid>
+	{
+	public:
+		DampingPairwiseToWall(BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta);
+		virtual ~DampingPairwiseToWall(){};
+
+	protected:
+		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+
+	private:
+		Real eta_; /**< damping coefficient */
+		StdLargeVec<Real> &Vol_, &mass_;
+		StdLargeVec<VariableType> &variable_;
 		StdVec<StdLargeVec<Real> *> wall_Vol_;
 		StdVec<StdLargeVec<VariableType> *> wall_variable_;
 	};

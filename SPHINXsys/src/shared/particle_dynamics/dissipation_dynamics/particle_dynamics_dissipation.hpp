@@ -382,6 +382,57 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
+	template <typename VariableType>
+	DampingPairwiseToWall<VariableType>::
+		DampingPairwiseToWall(BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta)
+		: InteractionDynamicsSplitting(*contact_relation.sph_body_),
+		  DataDelegateContact<SPHBody, BaseParticles, BaseMaterial, SolidBody, SolidParticles, Solid>(contact_relation),
+		  eta_(eta), Vol_(particles_->Vol_), mass_(particles_->mass_),
+		  variable_(*particles_->getVariableByName<VariableType>(variable_name))
+	{
+		for (size_t k = 0; k != contact_particles_.size(); ++k)
+		{
+			wall_Vol_.push_back(&(contact_particles_[k]->Vol_));
+			wall_variable_.push_back(contact_particles_[k]->template getVariableByName<VariableType>(variable_name));
+		}
+	}
+	//=================================================================================================//
+	template <typename VariableType>
+	void DampingPairwiseToWall<VariableType>::Interaction(size_t index_i, Real dt)
+	{
+		Real Vol_i = Vol_[index_i];
+		Real mass_i = mass_[index_i];
+		VariableType &variable_i = variable_[index_i];
+
+		std::array<Real, MaximumNeighborhoodSize> parameter_b;
+
+		/** Contact interaction. */
+		for (size_t k = 0; k < contact_configuration_.size(); ++k)
+		{
+			StdLargeVec<Real> &Vol_k = *(wall_Vol_[k]);
+			StdLargeVec<VariableType> &variable_k = *(wall_variable_[k]);
+			Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+			// forward sweep
+			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = contact_neighborhood.j_[n];
+
+				parameter_b[n] = eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
+
+				// only update particle i
+				variable_[index_i] += parameter_b[n] * (variable_i - variable_k[index_j]) / (mass_i - 2.0 * parameter_b[n]);
+			}
+			// backward sweep
+			for (size_t n = contact_neighborhood.current_size_; n != 0; --n)
+			{
+				size_t index_j = contact_neighborhood.j_[n - 1];
+
+				// only update particle i
+				variable_[index_i] += parameter_b[n - 1] * (variable_i - variable_k[index_j]) / (mass_i - 2.0 * parameter_b[n - 1]);
+			}
+		}
+	}
+	//=================================================================================================//
 	template <class DampingAlgorithmType>
 	template <typename... ConstructorArgs>
 	DampingWithRandomChoice<DampingAlgorithmType>::
