@@ -288,7 +288,66 @@ namespace SPH
 			contact_force_[index_i] = force;
 			dvel_dt_prior_[index_i] += force / mass_[index_i];
 		}
-		//=================================================================================================//
+	//=================================================================================================//
+	PairwiseFrictionToWall::
+		PairwiseFrictionToWall(BaseBodyRelationContact &contact_relation, Real eta)
+		: InteractionDynamicsSplitting(*contact_relation.sph_body_),
+		  ContactWithWallData(contact_relation),
+		  eta_(eta), Vol_(particles_->Vol_), mass_(particles_->mass_),
+		  vel_n_(particles_->vel_n_)
+	{
+		for (size_t k = 0; k != contact_particles_.size(); ++k)
+		{
+			wall_Vol_.push_back(&(contact_particles_[k]->Vol_));
+			wall_vel_n_.push_back(&contact_particles_[k]->vel_n_);
+			wall_n_.push_back(&contact_particles_[k]->n_);
+		}
+	}
+	//=================================================================================================//
+	void PairwiseFrictionToWall::Interaction(size_t index_i, Real dt)
+	{
+		Real Vol_i = Vol_[index_i];
+		Real mass_i = mass_[index_i];
+		Vecd &vel_i = vel_n_[index_i];
+
+		std::array<Real, MaximumNeighborhoodSize> parameter_b;
+
+		/** Contact interaction. */
+		for (size_t k = 0; k < contact_configuration_.size(); ++k)
+		{
+			StdLargeVec<Real> &Vol_k = *(wall_Vol_[k]);
+			StdLargeVec<Vecd> &vel_k = *(wall_vel_n_[k]);
+			StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
+			Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+			// forward sweep
+			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+			{
+				size_t index_j = contact_neighborhood.j_[n];
+				Vecd &e_ij = contact_neighborhood.e_ij_[n];
+
+				parameter_b[n] = eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
+
+				// only update particle i
+				Vecd vel_derivative = (vel_i - vel_k[index_j]);
+				Vecd n_j = SimTK::dot(e_ij, n_k[index_j]) > 0.0 ? n_k[index_j] : -1.0 * n_k[index_j];
+				vel_derivative -= SMAX(0.0, SimTK::dot(vel_derivative, n_j)) * n_j;
+				vel_i += parameter_b[n] * vel_derivative / (mass_i - 2.0 * parameter_b[n]);
+			}
+			// backward sweep
+			for (size_t n = contact_neighborhood.current_size_; n != 0; --n)
+			{
+				size_t index_j = contact_neighborhood.j_[n - 1];
+				Vecd &e_ij = contact_neighborhood.e_ij_[n];
+
+				// only update particle i
+				Vecd vel_derivative = (vel_i - vel_k[index_j]);
+				Vecd n_j = SimTK::dot(e_ij, n_k[index_j]) > 0.0 ? n_k[index_j] : -1.0 * n_k[index_j];
+				vel_derivative -= SMAX(0.0, SimTK::dot(vel_derivative, n_j)) * n_j;
+				vel_i += parameter_b[n - 1] * vel_derivative / (mass_i - 2.0 * parameter_b[n - 1]);
+			}
+		}
+	}
+	//=================================================================================================//
 		DynamicContactForce::
 			DynamicContactForce(SolidBodyRelationContact &solid_body_contact_relation, Real penalty_strength)
 			: PartInteractionDynamicsByParticle(*solid_body_contact_relation.sph_body_,
