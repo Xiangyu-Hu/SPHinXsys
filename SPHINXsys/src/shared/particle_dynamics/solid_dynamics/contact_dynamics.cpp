@@ -250,7 +250,7 @@ namespace SPH
 			dvel_dt_prior_[index_i] += force / mass_[index_i];
 		}
 		//=================================================================================================//
-		ContactForceWithWall::ContactForceWithWall(SolidBodyRelationContact &solid_body_contact_relation)
+		ContactForceFromWall::ContactForceFromWall(SolidBodyRelationContact &solid_body_contact_relation)
 			: PartInteractionDynamicsByParticle(*solid_body_contact_relation.sph_body_,
 												*solid_body_contact_relation.body_surface_layer_),
 			  ContactWithWallData(solid_body_contact_relation),
@@ -265,7 +265,7 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		void ContactForceWithWall::Interaction(size_t index_i, Real dt)
+		void ContactForceFromWall::Interaction(size_t index_i, Real dt)
 		{
 			Real Vol_i = Vol_[index_i];
 			Real p_i = contact_density_[index_i] * material_->ContactStiffness();
@@ -289,8 +289,8 @@ namespace SPH
 			dvel_dt_prior_[index_i] += force / mass_[index_i];
 		}
 	//=================================================================================================//
-	PairwiseFrictionToWall::
-		PairwiseFrictionToWall(BaseBodyRelationContact &contact_relation, Real eta)
+	PairwiseFrictionFromWall::
+		PairwiseFrictionFromWall(BaseBodyRelationContact &contact_relation, Real eta)
 		: InteractionDynamicsSplitting(*contact_relation.sph_body_),
 		  ContactWithWallData(contact_relation),
 		  eta_(eta), Vol_(particles_->Vol_), mass_(particles_->mass_),
@@ -304,7 +304,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void PairwiseFrictionToWall::Interaction(size_t index_i, Real dt)
+	void PairwiseFrictionFromWall::Interaction(size_t index_i, Real dt)
 	{
 		Real Vol_i = Vol_[index_i];
 		Real mass_i = mass_[index_i];

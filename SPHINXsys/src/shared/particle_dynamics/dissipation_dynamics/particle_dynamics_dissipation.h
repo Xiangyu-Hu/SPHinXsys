@@ -175,18 +175,18 @@ namespace SPH
 	};
 
 	/**
-	 * @class DampingPairwiseToWall
+	 * @class DampingPairwiseFromWall
 	 * @brief Damping to wall by which the wall velocity is not updated
 	 * and the mass of wall particle is not considered.
 	 */
 	template <typename VariableType>
-	class DampingPairwiseToWall : public InteractionDynamicsSplitting,
+	class DampingPairwiseFromWall : public InteractionDynamicsSplitting,
 								  public DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,
 															 SolidBody, SolidParticles, Solid>
 	{
 	public:
-		DampingPairwiseToWall(BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta);
-		virtual ~DampingPairwiseToWall(){};
+		DampingPairwiseFromWall(BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta);
+		virtual ~DampingPairwiseFromWall(){};
 
 	protected:
 		virtual void Interaction(size_t index_i, Real dt = 0.0) override;

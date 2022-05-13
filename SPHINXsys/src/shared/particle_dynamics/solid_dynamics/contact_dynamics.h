@@ -79,7 +79,7 @@ namespace SPH
 		/**
 		 * @class ShellContactDensity
 		 * @brief Computing the contact density due to shell contact using a
-		 * 		 surfacic integral being solved by Gauss-Legendre quadrature integration.
+		 * 		 surface integral being solved by Gauss-Legendre quadrature integration.
 		 */
 		class ShellContactDensity : public PartInteractionDynamicsByParticle, public ContactDynamicsData
 		{
@@ -145,16 +145,16 @@ namespace SPH
 		};
 
 		/**
-		 * @class ContactForceWithWall
+		 * @class ContactForceFromWall
 		 * @brief Computing the dynamic contact force with a rigid wall.
 		 *  Note that the body surface of the wall should be
 		 *  updated before computing the contact force.
 		 */
-		class ContactForceWithWall : public PartInteractionDynamicsByParticle, public ContactWithWallData
+		class ContactForceFromWall : public PartInteractionDynamicsByParticle, public ContactWithWallData
 		{
 		public:
-			explicit ContactForceWithWall(SolidBodyRelationContact &solid_body_contact_relation);
-			virtual ~ContactForceWithWall(){};
+			explicit ContactForceFromWall(SolidBodyRelationContact &solid_body_contact_relation);
+			virtual ~ContactForceFromWall(){};
 
 		protected:
 			StdLargeVec<Real> &contact_density_, &Vol_, &mass_;
@@ -165,15 +165,15 @@ namespace SPH
 		};
 
 		/**
-		 * @class PairwiseFrictionToWall
+		 * @class PairwiseFrictionFromWall
 		 * @brief Damping to wall by which the wall velocity is not updated
 		 * and the mass of wall particle is not considered.
 		 */
-		class PairwiseFrictionToWall : public InteractionDynamicsSplitting, public ContactWithWallData
+		class PairwiseFrictionFromWall : public InteractionDynamicsSplitting, public ContactWithWallData
 		{
 		public:
-			PairwiseFrictionToWall(BaseBodyRelationContact &contact_relation, Real eta);
-			virtual ~PairwiseFrictionToWall(){};
+			PairwiseFrictionFromWall(BaseBodyRelationContact &contact_relation, Real eta);
+			virtual ~PairwiseFrictionFromWall(){};
 
 		protected:
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;

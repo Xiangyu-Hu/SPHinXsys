@@ -23,7 +23,7 @@ Real gravity_g = 1.0;
 //	Global paramters on material properties
 //----------------------------------------------------------------------
 Real rho0_s = 1.0;				 /** Normalized density. */
-Real Youngs_modulus = 5e4;		 /** Normalized Young's modulus. */
+Real Youngs_modulus = 5e3;		 /** Normalized Young's modulus. */
 Real poisson = 0.45;			 /** Poisson ratio. */
 Real physical_viscosity = 200.0; /** physical damping, here we choose the same value as numerical viscosity. */
 //----------------------------------------------------------------------
@@ -246,7 +246,7 @@ int main(int ac, char *av[])
 	body_states_recording.writeToFile(0);
 	/** Main loop. */
 	int ite = 0;
-	Real T0 = 10.0;
+	Real T0 = 1.0;
 	Real End_Time = T0;
 	Real D_Time = 0.01 * T0;
 	Real Dt = 0.1 * D_Time;

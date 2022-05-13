@@ -383,8 +383,8 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <typename VariableType>
-	DampingPairwiseToWall<VariableType>::
-		DampingPairwiseToWall(BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta)
+	DampingPairwiseFromWall<VariableType>::
+		DampingPairwiseFromWall(BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta)
 		: InteractionDynamicsSplitting(*contact_relation.sph_body_),
 		  DataDelegateContact<SPHBody, BaseParticles, BaseMaterial, SolidBody, SolidParticles, Solid>(contact_relation),
 		  eta_(eta), Vol_(particles_->Vol_), mass_(particles_->mass_),
@@ -398,7 +398,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <typename VariableType>
-	void DampingPairwiseToWall<VariableType>::Interaction(size_t index_i, Real dt)
+	void DampingPairwiseFromWall<VariableType>::Interaction(size_t index_i, Real dt)
 	{
 		Real Vol_i = Vol_[index_i];
 		Real mass_i = mass_[index_i];
