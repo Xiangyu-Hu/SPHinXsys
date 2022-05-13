@@ -28,6 +28,7 @@ namespace SPH
 	//=================================================================================================//
 	void ParticleGeneratorDirect::createBaseParticles(BaseParticles *base_particles)
 	{
+        base_particles->reserve(positions_volumes_.size());
 		for (size_t i = 0; i < positions_volumes_.size(); ++i)
 		{
 			base_particles->initializeABaseParticle(positions_volumes_[i].first,
