@@ -1,85 +1,83 @@
 /**
- * @file 	shell_elasticWall_collision.cpp
+ * @file 	shell_elasticbeam_collision.cpp
  * @brief 	A rigid shell rigid box hitting an elasric wall boundary
  * @details This is a case to test shell contact formulations in a reverse way (shell to elaticSolid).
  * @author 	Massoud Rezavand, Virtonomy GmbH
  */
-#include "sphinxsys.h"	//SPHinXsys Library.
-using namespace SPH;	//Namespace cite here.
+#include "sphinxsys.h" //SPHinXsys Library.
+using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 4.0; 					/**< box length. */
-Real DH = 4.0; 					/**< box height. */
-Real resolution_ref = 0.025; 	/**< reference resolution. */
-Real BW = resolution_ref * 4.; 	/**< wall width for BCs. */
-Real thickness = resolution_ref * 1.; 	/**< shell thickness. */
+Real DL = 4.0;						  /**< box length. */
+Real DH = 4.0;						  /**< box height. */
+Real resolution_ref = 0.025;		  /**< reference resolution. */
+Real BW = resolution_ref * 4.;		  /**< wall width for BCs. */
+Real thickness = resolution_ref * 1.; /**< shell thickness. */
 Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
-Vec2d box_center(2.0, 2.0);
-Real box_size = 0.5;			
+Vec2d circle_center(2.0, 2.0);
+Real circle_radius = 0.5;
 Real gravity_g = 1.0;
 //----------------------------------------------------------------------
 //	Global paramters on material properties
 //----------------------------------------------------------------------
-Real rho0_s = 1.0;					/** Normalized density. */
-Real Youngs_modulus = 5e4;			/** Normalized Young's modulus. */
-Real poisson = 0.45;				/** Poisson ratio. */
-Real physical_viscosity = 200.0;	/** physical damping, here we choose the same value as numerical viscosity. */
+Real rho0_s = 1.0;				 /** Normalized density. */
+Real Youngs_modulus = 5e4;		 /** Normalized Young's modulus. */
+Real poisson = 0.45;			 /** Poisson ratio. */
+Real physical_viscosity = 200.0; /** physical damping, here we choose the same value as numerical viscosity. */
 //----------------------------------------------------------------------
 //	Bodies with cases-dependent geometries (ComplexShape).
 //----------------------------------------------------------------------
-class WallBoundary : public MultiPolygonShape
+class Beam : public MultiPolygonShape
 {
 public:
-	explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
+	explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		std::vector<Vecd> outer_wall_shape;
-		outer_wall_shape.push_back(Vecd(-BW, -BW));
-		outer_wall_shape.push_back(Vecd(-BW, DH + BW));
-		outer_wall_shape.push_back(Vecd(DL + BW, DH + BW));
-		outer_wall_shape.push_back(Vecd(DL + BW, -BW));
-		outer_wall_shape.push_back(Vecd(-BW, -BW));
+		std::vector<Vecd> outer_beam_shape;
+		outer_beam_shape.push_back(Vecd(-BW, -BW));
+		outer_beam_shape.push_back(Vecd(-BW, DH + BW));
+		outer_beam_shape.push_back(Vecd(0.0, DH + BW));
+		outer_beam_shape.push_back(Vecd(0.0, -BW));
+		outer_beam_shape.push_back(Vecd(-BW, -BW));
 
-		std::vector<Vecd> inner_wall_shape;
-		inner_wall_shape.push_back(Vecd(0.0, 0.0));
-		inner_wall_shape.push_back(Vecd(0.0, DH));
-		inner_wall_shape.push_back(Vecd(DL, DH));
-		inner_wall_shape.push_back(Vecd(DL, 0.0));
-		inner_wall_shape.push_back(Vecd(0.0, 0.0));
-
-		multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+		multi_polygon_.addAPolygon(outer_beam_shape, ShapeBooleanOps::add);
 	}
 };
-/** geometry of the rigid box */
-class ShellBox : public MultiPolygonShape
+class Shell : public ComplexShape
 {
 public:
-	explicit ShellBox(const std::string &shape_name) : MultiPolygonShape(shape_name)
+	explicit Shell(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		std::vector<Vecd> outer_wall_shape;
-		outer_wall_shape.push_back(Vecd(-thickness, -thickness) + box_center);
-		outer_wall_shape.push_back(Vecd(-thickness, box_size + thickness) + box_center);
-		outer_wall_shape.push_back(Vecd(box_size + thickness, box_size + thickness) + box_center);
-		outer_wall_shape.push_back(Vecd(box_size + thickness, -thickness) + box_center);
-		outer_wall_shape.push_back(Vecd(-thickness, -thickness) + box_center);
-
-		std::vector<Vecd> inner_wall_shape;
-		inner_wall_shape.push_back(Vecd(0.0, 0.0) + box_center);
-		inner_wall_shape.push_back(Vecd(0.0, box_size) + box_center);
-		inner_wall_shape.push_back(Vecd(box_size, box_size) + box_center);
-		inner_wall_shape.push_back(Vecd(box_size, 0.0) + box_center);
-		inner_wall_shape.push_back(Vecd(0.0, 0.0) + box_center);
-
-		multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+		add<GeometricShapeCircle>(circle_center, circle_radius + resolution_ref);
+		substract<GeometricShapeCircle>(circle_center, circle_radius);
 	}
+};
+//----------------------------------------------------------------------
+//	define the beam base which will be constrained.
+//----------------------------------------------------------------------
+MultiPolygon createBeamConstrainShape()
+{
+	// a beam base shape
+	std::vector<Vecd> bottom_beam_base_shape{
+		Vecd(-1.5 * BW, -1.5 * BW), Vecd(-1.5 * BW, 0.5 * resolution_ref),
+		Vecd(0.5 * resolution_ref, 0.5 * resolution_ref),
+		Vecd(0.5 * resolution_ref, -1.5 * BW), Vecd(-1.5 * BW, -1.5 * BW)};
+
+	std::vector<Vecd> top_beam_base_shape{
+		Vecd(-1.5 * BW, DH - 0.5 * resolution_ref), Vecd(-1.5 * BW, DH + 1.5 * BW),
+		Vecd(0.5 * resolution_ref, DH + 1.5 * BW),
+		Vecd(0.5 * resolution_ref, DH - 0.5 * resolution_ref), Vecd(-1.5 * BW, DH - 0.5 * resolution_ref)};
+
+	MultiPolygon multi_polygon;
+	multi_polygon.addAPolygon(bottom_beam_base_shape, ShapeBooleanOps::add);
+	multi_polygon.addAPolygon(top_beam_base_shape, ShapeBooleanOps::add);
+	return multi_polygon;
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main(int ac, char* av[])
+int main(int ac, char *av[])
 {
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem with global controls.
@@ -94,97 +92,134 @@ int main(int ac, char* av[])
 	/** Handle command line arguments. */
 	sph_system.handleCommandlineOptions(ac, av);
 	/** I/O environment. */
-	InOutput 	in_output(sph_system);
+	InOutput in_output(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	SolidBody shell_box(sph_system, makeShared<ShellBox>("ShellBox"));
-	shell_box.defineAdaptation<SPHAdaptation>(1.15, 1.0);
-	shell_box.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(shell_box);
-	shell_box.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1.0, 1.0, 0.0);
-	shell_box.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
-	shell_box.addBodyStateForRecording<Vecd>("NormalDirection");
+	SolidBody shell(sph_system, makeShared<Shell>("Shell"));
+	shell.defineAdaptation<SPHAdaptation>(1.15, 1.0);
+	// here dummy linear elastic solid is use because no solid dynamics in particle relaxation
+	shell.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1.0, 1.0, 0.0);
+	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+	{
+		shell.generateParticles<ParticleGeneratorReload>(in_output, shell.getBodyName());
+	}
+	else
+	{
+		shell.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(shell);
+		shell.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
+	}
 
+	if (!sph_system.run_particle_relaxation_ && !sph_system.reload_particles_)
+	{
+		std::cout << "Error: This case requires reload shell particles for simulation!" << std::endl;
+		return 0;
+	}
 
-	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-	wall_boundary.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
-	wall_boundary.generateParticles<ParticleGeneratorLattice>();
-	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
+	SolidBody beam(sph_system, makeShared<Beam>("Beam"));
+	beam.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	beam.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner wall_inner(wall_boundary);
-	SolidBodyRelationContact shell_box_contact(shell_box, {&wall_boundary});
-	SolidBodyRelationContact wall_box_contact(wall_boundary, {&shell_box});
+	BodyRelationInner beam_inner(beam);
+	SolidBodyRelationContact shell_contact(shell, {&beam});
+	SolidBodyRelationContact beam_contact(beam, {&shell});
+	//----------------------------------------------------------------------
+	//	Run particle relaxation for body-fitted distribution if chosen.
+	//----------------------------------------------------------------------
+	if (sph_system.run_particle_relaxation_)
+	{
+		//----------------------------------------------------------------------
+		//	Define body relation map used for particle relaxation.
+		//----------------------------------------------------------------------
+		BodyRelationInner shell_inner(shell);
+		//----------------------------------------------------------------------
+		//	Define the methods for particle relaxation for wall boundary.
+		//----------------------------------------------------------------------
+		RandomizePartilePosition shell_random_particles(shell);
+		relax_dynamics::ShellRelaxationStepInner
+			relaxation_step_shell_inner(shell_inner, thickness, level_set_refinement_ratio);
+		relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(shell_inner, thickness, cos(Pi / 3.75));
+		shell.addBodyStateForRecording<int>("UpdatedIndicator");
+		//----------------------------------------------------------------------
+		//	Output for particle relaxation.
+		//----------------------------------------------------------------------
+		BodyStatesRecordingToVtp write_relaxed_particles(in_output, sph_system.real_bodies_);
+		MeshRecordingToPlt write_mesh_cell_linked_list(in_output, shell, shell.cell_linked_list_);
+		ReloadParticleIO write_particle_reload_files(in_output, {&shell});
+		//----------------------------------------------------------------------
+		//	Particle relaxation starts here.
+		//----------------------------------------------------------------------
+		shell_random_particles.parallel_exec(0.25);
+
+		relaxation_step_shell_inner.mid_surface_bounding_.parallel_exec();
+		write_relaxed_particles.writeToFile(0);
+		shell.updateCellLinkedList();
+		write_mesh_cell_linked_list.writeToFile(0);
+		//----------------------------------------------------------------------
+		//	From here iteration for particle relaxation begines.
+		//----------------------------------------------------------------------
+		int ite = 0;
+		int relax_step = 1000;
+		while (ite < relax_step)
+		{
+			for (int k = 0; k < 2; ++k)
+				relaxation_step_shell_inner.parallel_exec();
+			ite += 1;
+			if (ite % 100 == 0)
+			{
+				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite << "\n";
+				write_relaxed_particles.writeToFile(ite);
+			}
+		}
+		std::cout << "The physics relaxation process of ball particles finish !" << std::endl;
+		shell_normal_prediction.exec();
+		write_relaxed_particles.writeToFile(ite);
+		write_particle_reload_files.writeToFile(0);
+		return 0;
+	}
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simultion.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	/** Define external force.*/
 	Gravity gravity(Vecd(0.0, -gravity_g));
-	TimeStepInitialization wall_initialize_timestep(wall_boundary);
-	solid_dynamics::CorrectConfiguration wall_corrected_configuration(wall_inner);
-	solid_dynamics::AcousticTimeStepSize shell_box_get_time_step_size(wall_boundary);
+	TimeStepInitialization beam_initialize_timestep(beam);
+	solid_dynamics::CorrectConfiguration beam_corrected_configuration(beam_inner);
+	solid_dynamics::AcousticTimeStepSize shell_get_time_step_size(beam);
 	/** stress relaxation for the walls. */
-	solid_dynamics::StressRelaxationFirstHalf wall_stress_relaxation_first_half(wall_inner);
-	solid_dynamics::StressRelaxationSecondHalf wall_stress_relaxation_second_half(wall_inner);
+	solid_dynamics::StressRelaxationFirstHalf beam_stress_relaxation_first_half(beam_inner);
+	solid_dynamics::StressRelaxationSecondHalf beam_stress_relaxation_second_half(beam_inner);
 	/** Algorithms for shell-solid contact. */
-	solid_dynamics::ContactDensitySummation shell_box_update_contact_density(shell_box_contact);
-	solid_dynamics::ShellContactDensity wall_box_update_contact_density(wall_box_contact);
-	solid_dynamics::ContactForce shell_box_compute_solid_contact_forces(shell_box_contact);
-	solid_dynamics::ContactForce wall_compute_solid_contact_forces(wall_box_contact);
+	solid_dynamics::ContactDensitySummation beam_shell_update_contact_density(beam_contact);
+	solid_dynamics::ContactForce shell_compute_solid_contact_forces(shell_contact);
+	solid_dynamics::ContactForce beam_compute_solid_contact_forces(beam_contact);
+	BodyRegionByParticle holder(beam, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
+	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(beam, holder);
+	/** Damping with the solid body*/
+	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
+		beam_damping(0.5, beam_inner, "Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp	body_states_recording(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp body_states_recording(in_output, sph_system.real_bodies_);
 	//----------------------------------------------------------------------
 	/**
-	* The multi body system from simbody.
-	*/
+	 * The multi body system from simbody.
+	 */
 	SimTK::MultibodySystem MBsystem;
 	/** The bodies or matter of the MBsystem. */
 	SimTK::SimbodyMatterSubsystem matter(MBsystem);
 	/** The forces of the MBsystem.*/
 	SimTK::GeneralForceSubsystem forces(MBsystem);
-	/** geometry and generation of the rigid body (the box). */
-	std::vector<Vecd> outer_wall_shape;
-	outer_wall_shape.push_back(Vecd(-resolution_ref, -resolution_ref) + box_center);
-	outer_wall_shape.push_back(Vecd(-resolution_ref, box_size + resolution_ref) + box_center);
-	outer_wall_shape.push_back(Vecd(box_size + resolution_ref, box_size + resolution_ref) + box_center);
-	outer_wall_shape.push_back(Vecd(box_size + resolution_ref, -resolution_ref) + box_center);
-	outer_wall_shape.push_back(Vecd(-resolution_ref, -resolution_ref) + box_center);
-	std::vector<Vecd> inner_wall_shape;
-	inner_wall_shape.push_back(Vecd(0.0, 0.0) + box_center);
-	inner_wall_shape.push_back(Vecd(0.0, box_size) + box_center);
-	inner_wall_shape.push_back(Vecd(box_size, box_size) + box_center);
-	inner_wall_shape.push_back(Vecd(box_size, 0.0) + box_center);
-	inner_wall_shape.push_back(Vecd(0.0, 0.0) + box_center);
-	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-	multi_polygon.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
-	SolidBodyPartForSimbody box_multibody(shell_box, makeShared<MultiPolygonShape>(multi_polygon));
-	/** Geometry and generation of the holder. */
-	std::vector<Vecd> holder_shape;
-	holder_shape.push_back(Vecd(DL, -BW));
-	holder_shape.push_back(Vecd(DL, DH + BW));
-	holder_shape.push_back(Vecd(DL + BW, DH + BW));
-	holder_shape.push_back(Vecd(DL + BW, -BW));
-	holder_shape.push_back(Vecd(DL, -BW));
-	MultiPolygon multi_polygon_holder;
-	multi_polygon_holder.addAPolygon(holder_shape, ShapeBooleanOps::add);
-	MultiPolygonShape holder_multibody_shape(multi_polygon_holder);
-	BodyRegionByParticle holder(wall_boundary, makeShared<MultiPolygonShape>(multi_polygon_holder));
-	solid_dynamics::ConstrainSolidBodyRegion	constrain_holder(wall_boundary, holder);
-	/** Damping with the solid body*/
-	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
-	wall_damping(0.5, wall_inner, "Velocity", physical_viscosity);
-	/** Mass properties of the rigid shell box. 
-	 */
-	SimTK::Body::Rigid rigid_info(*box_multibody.body_part_mass_properties_);
+	/** Mass properties of the rigid shell box. */
+	SolidBodyPartForSimbody shell_multibody(shell, makeShared<Shell>("Shell"));
+	SimTK::Body::Rigid rigid_info(*shell_multibody.body_part_mass_properties_);
 	SimTK::MobilizedBody::Slider
-		boxMBody(matter.Ground(), SimTK::Transform(SimTK::Vec3(0)), rigid_info, SimTK::Transform(SimTK::Vec3(0)));
+		shellMBody(matter.Ground(), SimTK::Transform(SimTK::Vec3(0)), rigid_info, SimTK::Transform(SimTK::Vec3(0)));
 	/** Gravity. */
 	SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTK::Vec3(Real(-150.), 0.0, 0.0));
 	/** discreted forces acting on the bodies. */
@@ -197,25 +232,25 @@ int main(int ac, char* av[])
 	integ.initialize(state);
 	/** Coupling between SimBody and SPH.*/
 	solid_dynamics::TotalForceOnSolidBodyPartForSimBody
-		force_on_box(shell_box, box_multibody, MBsystem, boxMBody, force_on_bodies, integ);
+		force_on_shell(shell, shell_multibody, MBsystem, shellMBody, force_on_bodies, integ);
 	solid_dynamics::ConstrainSolidBodyPartBySimBody
-		constraint_plate(shell_box, box_multibody, MBsystem, boxMBody, force_on_bodies, integ);
+		constraint_shell(shell, shell_multibody, MBsystem, shellMBody, force_on_bodies, integ);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
-	//	and case specified initial condition if necessary. 
+	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	wall_corrected_configuration.parallel_exec();
+	beam_corrected_configuration.parallel_exec();
 	/** Initial states output. */
 	body_states_recording.writeToFile(0);
 	/** Main loop. */
-	int ite 		= 0;
-	Real T0 		= 10.0;
-	Real End_Time 	= T0;
-	Real D_Time 	= 0.01*T0;
-	Real Dt 		= 0.1*D_Time;			
-	Real dt 		= 0.0; 	
+	int ite = 0;
+	Real T0 = 10.0;
+	Real End_Time = T0;
+	Real D_Time = 0.01 * T0;
+	Real Dt = 0.1 * D_Time;
+	Real dt = 0.0;
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
@@ -227,41 +262,39 @@ int main(int ac, char* av[])
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
 		Real integration_time = 0.0;
-		while (integration_time < D_Time) 
+		while (integration_time < D_Time)
 		{
-			wall_initialize_timestep.parallel_exec();
-			if (ite % 100 == 0) 
+			beam_initialize_timestep.parallel_exec();
+			if (ite % 100 == 0)
 			{
 				std::cout << "N=" << ite << " Time: "
-					<< GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
+						  << GlobalStaticVariables::physical_time_ << "	dt: " << dt << "\n";
 			}
-			wall_box_update_contact_density.parallel_exec();
-			wall_compute_solid_contact_forces.parallel_exec();
-
-			shell_box_update_contact_density.parallel_exec();
-			shell_box_compute_solid_contact_forces.parallel_exec();
+			beam_shell_update_contact_density.parallel_exec();
+			beam_compute_solid_contact_forces.parallel_exec();
+			shell_compute_solid_contact_forces.parallel_exec();
 
 			{
-			SimTK::State &state_for_update = integ.updAdvancedState();
-			force_on_bodies.clearAllBodyForces(state_for_update);
-			force_on_bodies.setOneBodyForce(state_for_update, boxMBody, force_on_box.parallel_exec());
-			integ.stepBy(dt);
-			constraint_plate.parallel_exec();
+				SimTK::State &state_for_update = integ.updAdvancedState();
+				force_on_bodies.clearAllBodyForces(state_for_update);
+				force_on_bodies.setOneBodyForce(state_for_update, shellMBody, force_on_shell.parallel_exec());
+				integ.stepBy(dt);
+				constraint_shell.parallel_exec();
 			}
-			
-			wall_stress_relaxation_first_half.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
-			wall_damping.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
-			wall_stress_relaxation_second_half.parallel_exec(dt);
 
-			shell_box.updateCellLinkedList();
-			shell_box_contact.updateConfiguration();
-			wall_boundary.updateCellLinkedList();
-			wall_box_contact.updateConfiguration();
+			beam_stress_relaxation_first_half.parallel_exec(dt);
+			constrain_holder.parallel_exec(dt);
+			beam_damping.parallel_exec(dt);
+			constrain_holder.parallel_exec(dt);
+			beam_stress_relaxation_second_half.parallel_exec(dt);
+
+			shell.updateCellLinkedList();
+			shell_contact.updateConfiguration();
+			beam.updateCellLinkedList();
+			beam_contact.updateConfiguration();
 
 			ite++;
-			Real dt_free = shell_box_get_time_step_size.parallel_exec();
+			Real dt_free = shell_get_time_step_size.parallel_exec();
 			dt = dt_free;
 			integration_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
