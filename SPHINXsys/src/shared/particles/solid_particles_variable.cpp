@@ -33,11 +33,18 @@ namespace SPH
         TranslationAndRotation(SPHBody &sph_body, Transformd &transform)
         : SolidDataSimple(sph_body), transform_(transform),
           pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_) {}
-   //=============================================================================================//
+    //=============================================================================================//
     NormalDirectionFromBodyShape::
         NormalDirectionFromBodyShape(SPHBody &sph_body)
         : SolidDataSimple(sph_body), body_shape_(*sph_body.body_shape_),
-          pos_n_(particles_->pos_n_), n_(particles_->n_), n_0_(particles_->n_0_) {}
+          pos_n_(particles_->pos_n_)
+    {
+        particles_->registerAVariable(n_, "NormalDirection");
+        particles_->registerAVariable(n_0_, "InitialNormalDirection");
+        particles_->addAVariableToReload<Vecd>("NormalDirection");
+        particles_->addAVariableToReload<Vecd>("InitialNormalDirection");
+        particles_->addAVariableToWrite<Vecd>("NormalDirection");
+   }
     //=============================================================================================//
     void NormalDirectionFromBodyShape::update(size_t index_i, Real dt)
     {
@@ -52,7 +59,15 @@ namespace SPH
           shape_and_op_(DynamicCast<ComplexShape>(this, sph_body.body_shape_)->getShapeAndOpByName(shape_name)),
           shape_(shape_and_op_->first),
           switch_sign_(shape_and_op_->second == ShapeBooleanOps::add ? 1.0 : -1.0),
-          pos_n_(particles_->pos_n_), n_(particles_->n_), n_0_(particles_->n_0_) {}
+          pos_n_(particles_->pos_n_)
+    {
+        particles_->registerAVariable(n_, "NormalDirection");
+        particles_->registerAVariable(n_0_, "InitialNormalDirection");
+        particles_->addAVariableToReload<Vecd>("NormalDirection");
+        particles_->addAVariableToReload<Vecd>("InitialNormalDirection");
+        particles_->addAVariableToWrite<Vecd>("NormalDirection");
+
+    }
     //=============================================================================================//
     void NormalDirectionFromShapeAndOp::update(size_t index_i, Real dt)
     {

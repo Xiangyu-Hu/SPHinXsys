@@ -24,47 +24,43 @@ Real c_f = 10.0 * U_max;
 Real mu_f = 3.5e-3; // in Pa-s
 
 // boundary faces
-Vecd inlet_center(-0.077000, 0.00055226, -0.010811); 
+Vecd inlet_center(-0.077000, 0.00055226, -0.010811);
 Vecd inlet_direction(1, 0, 0);
 StdVec<Vecd> inlet_points{
-	inlet_center + Vecd(0,0.002,0),
-	inlet_center - Vecd(0,0.002,0),
-	inlet_center + Vecd(0,0,0.002),
-	inlet_center - Vecd(0,0,0.002) };
+	inlet_center + Vecd(0, 0.002, 0),
+	inlet_center - Vecd(0, 0.002, 0),
+	inlet_center + Vecd(0, 0, 0.002),
+	inlet_center - Vecd(0, 0, 0.002)};
 SegmentFace inlet_face(inlet_points, inlet_direction, inlet_center);
 
-Vecd outlet_center(-0.022000, 0.00055226, -0.010811); 
+Vecd outlet_center(-0.022000, 0.00055226, -0.010811);
 Vecd outlet_direction(-1, 0, 0);
 StdVec<Vecd> outlet_points{
-	outlet_center + Vecd(0,0.002,0),
-	outlet_center - Vecd(0,0.002,0),
-	outlet_center + Vecd(0,0,0.002),
-	outlet_center - Vecd(0,0,0.002) };
+	outlet_center + Vecd(0, 0.002, 0),
+	outlet_center - Vecd(0, 0.002, 0),
+	outlet_center + Vecd(0, 0, 0.002),
+	outlet_center - Vecd(0, 0, 0.002)};
 SegmentFace outlet_face(outlet_points, outlet_direction, outlet_center);
 
 //	import the fluid body
-class WaterBlock : public FluidBody
+class Lumen : public ComplexShape
 {
 public:
-	WaterBlock(SPHSystem &system, const std::string &body_name)
-		: FluidBody(system, body_name)
+	explicit Lumen(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		std::string file_name = "./input/fluid.stl"; // in milimeter
-		TriangleMeshShapeSTL stl_shape(file_name, Vecd(0), 0.001);	 // milimeter to meter
-		body_shape_.add<LevelSetShape>(this, stl_shape, true);
+		std::string file_name = "./input/fluid.stl";		  // in millimeter
+		add<TriangleMeshShapeSTL>(file_name, Vecd(0), 0.001); // millimeter to meter
 	}
 };
 
 //	import the static solid wall boundary
-class WallBoundary : public SolidBody
+class Artery : public ComplexShape
 {
 public:
-	WallBoundary(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit Artery(const std::string &shape_name) : ComplexShape(shape_name)
 	{
 		std::string file_name = "./input/solid.stl";
-		TriangleMeshShapeSTL stlshape(file_name, Vecd(0), 0.001);
-		body_shape_.add<LevelSetShape>(this, stlshape, true);
+		add<TriangleMeshShapeSTL>(file_name, Vecd(0), 0.001);
 	}
 };
 
@@ -93,7 +89,6 @@ public:
 	}
 };
 
-
 // the main program
 int main(int ac, char *av[])
 {
@@ -113,39 +108,42 @@ int main(int ac, char *av[])
 	system.handleCommandlineOptions(ac, av);
 	InOutput in_output(system);
 	//----------------------------------------------------------------------
-	//	Creating body, materials and particles.
+	//	Creating body, defining materials and particles.
 	//----------------------------------------------------------------------
-	WaterBlock water_body(system, "WaterBody");
-	// water_body.setBodyDomainBounds(fluid_body_domain_bounds);
-	FluidParticles fluid_particles(water_body, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f));
-
-	WallBoundary wall_body(system, "Wall");
-	SharedPtr<ParticleGenerator> wall_particles_generator = makeShared<ParticleGeneratorLattice>();
+	FluidBody lumen(system, makeShared<Lumen>("Lumen"));
+	lumen.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+	SolidBody artery(system, makeShared<Artery>("Artery"));
+	artery.defineParticlesAndMaterial<SolidParticles, Solid>();
+	artery.addBodyStateToReloading<Vecd>("NormalDirection");
+	//----------------------------------------------------------------------
+	//	Reload particles, if simulation is carried out.
+	//	Otherwise, only generate or relax particles.
+	//----------------------------------------------------------------------
+	// generate particles without relaxation, for laters simulations
 	if (!system.run_particle_relaxation_ && system.reload_particles_)
-		wall_particles_generator = makeShared<ParticleGeneratorReload>(in_output, wall_body.getBodyName());
-	SolidParticles wall_particles(wall_body, wall_particles_generator);
-	//---------------------------------------------
-	//	Define body relation map.
-	//	The contact map gives the topological connections between the bodies.
-	//	Basically the the range of bodies to build neighbor particle lists.
-	//----------------------------------------------------------------------
-	BodyRelationInner water_body_inner(water_body);
-	ComplexBodyRelation water_body_complex_relation(water_body_inner, { &wall_body });
-	//----------------------------------------------------------------------
-	// Relaxing solid particles.
-	//--------------------------------------------
-	if (system.run_particle_relaxation_)
 	{
-		/* body topology only for particle relation */
-		BodyRelationInner wall_bound_model_inner(wall_body);
-		/* Random reset the insert body particle position */
-		RandomizePartilePosition random_wall_particles(wall_body);
-		/* write the body state to Vtp file. */
-		BodyStatesRecordingToVtp write_inserted_body_to_vtp(in_output, { &wall_body });
+		lumen.generateParticles<ParticleGeneratorReload>(in_output, lumen.getBodyName());
+		artery.generateParticles<ParticleGeneratorReload>(in_output, artery.getBodyName());
+	}
+	else
+	{
 		/* write the particle reload files. */
-		ReloadParticleIO write_particle_reload_files(in_output, { &wall_body });
+		ReloadParticleIO write_particle_reload_files(in_output, system.real_bodies_);
+		// generate particles without relaxation
+		lumen.generateParticles<ParticleGeneratorLattice>();
+		//----------------------------------------------------------------------
+		// Generate and Relaxing particles.
+		//----------------------------------------------------------------------
+		artery.defineBodyLevelSetShape()->writeLevelSet(artery);
+		artery.generateParticles<ParticleGeneratorLattice>();
+		/* body topology only for particle relation */
+		BodyRelationInner artery_inner(artery);
+		
+		RandomizePartilePosition random_wall_particles(artery);
+		SimpleDynamics<NormalDirectionFromBodyShape> artery_normal_direction(artery);
+		BodyStatesRecordingToVtp write_inserted_body_to_vtp(in_output, {&artery});
 		/** A  Physics relaxation step. */
-		relax_dynamics::RelaxationStepInner relaxation_step_inner(wall_bound_model_inner, true);
+		relax_dynamics::RelaxationStepInner relaxation_step_inner(artery_inner, true);
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
@@ -153,7 +151,7 @@ int main(int ac, char *av[])
 		relaxation_step_inner.surface_bounding_.parallel_exec();
 		write_inserted_body_to_vtp.writeToFile(0);
 		//----------------------------------------------------------------------
-		//	Relax particles of the insert body.
+		//	Loop for relaxing particles.
 		//----------------------------------------------------------------------
 		int ite_p = 0;
 		while (ite_p < 1000)
@@ -163,54 +161,58 @@ int main(int ac, char *av[])
 			if (ite_p % 200 == 0)
 				std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the imported model N = " << ite_p << "\n";
 		}
-		cout << "The physics relaxation process of wall_body body finish ! \n";
-
-		/* output results. */
+		cout << "The physics relaxation process of artery body finish ! \n";
+		//----------------------------------------------------------------------
+		//	Write particle reload files.
+		//----------------------------------------------------------------------
+		artery_normal_direction.parallel_exec();
 		write_particle_reload_files.writeToFile(0);
-		return 0;
+		
+		return 0; //exit the code particles generated
 	}
-	
+	//---------------------------------------------
+	//	Define body relation map.
+	//	The contact map gives the topological connections between the bodies.
+	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	
+	BodyRelationInner lumen_inner(lumen);
+	ComplexBodyRelation lumen_complex_relation(lumen_inner, {&artery});
+	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	/** Initialize particle acceleration. */
-	TimeStepInitialization initialize_a_fluid_step(water_body);
-
+	TimeStepInitialization initialize_a_fluid_step(lumen);
 	/* Define particle emitter at inlet */
-	BodyRegionByParticleWithFace emitter(water_body, inlet_face, 4);
-	InflowInjectingWithFace emitter_inflow_injecting(water_body, emitter, 20);
-
+	BodyRegionByParticleWithFace emitter(lumen, inlet_face, 4);
+	InflowInjectingWithFace emitter_inflow_injecting(lumen, emitter, 20);
 	/** Define inflow condition. */
-	BodyRegionByCellsWithFace emitter_buffer(water_body, inlet_face, 4);
-	EmitterBufferInflowConditionWithFace emitter_buffer_inflow_condition(water_body, emitter_buffer);
-
+	BodyRegionByCellsWithFace emitter_buffer(lumen, inlet_face, 4);
+	EmitterBufferInflowConditionWithFace emitter_buffer_inflow_condition(lumen, emitter_buffer);
 	/** time-space method to detect surface particles. */
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex
-		inlet_outlet_surface_particle_indicator(water_body_complex_relation);
+		inlet_outlet_surface_particle_indicator(lumen_complex_relation);
 	/** Evaluation of density by freestream approach. */
-	fluid_dynamics::DensitySummationFreeStreamComplex update_density_by_summation(water_body_complex_relation);
+	fluid_dynamics::DensitySummationFreeStreamComplex update_density_by_summation(lumen_complex_relation);
 	/** We can output a method-specific particle data for debug */
-	fluid_particles.addAVariableToWrite<Real>("Pressure");
-	fluid_particles.addAVariableToWrite<int>("SurfaceIndicator");
+	lumen.addBodyStateForRecording<Real>("Pressure");
+	lumen.addBodyStateForRecording<int>("SurfaceIndicator");
 	/** Time step size without considering sound wave speed. */
-	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_body, U_f);
+	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(lumen, U_f);
 	/** Time step size with considering sound wave speed. */
-	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_body);
+	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(lumen);
 	/** Pressure relaxation. */
-	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(water_body_complex_relation);
+	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(lumen_complex_relation);
 	/** Density relaxation. */
-	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_body_complex_relation);
+	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(lumen_complex_relation);
 	/** Computing viscous acceleration. */
-	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_body_complex_relation);
+	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(lumen_complex_relation);
 	/** Impose transport velocity. */
-	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(water_body_complex_relation);
+	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(lumen_complex_relation);
 	/** Define outlet face to */
-	BodyRegionByCellsWithFace face1(water_body, outlet_face);
+	BodyRegionByCellsWithFace face1(lumen, outlet_face);
 	/** recycle real fluid particle to buffer particles at outlet. */
-	DoNothingConditionWithFace outflow1(water_body, face1);
-
+	DoNothingConditionWithFace outflow1(lumen, face1);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -222,7 +224,6 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	wall_particles.initializeNormalDirectionFromBodyShape();
 	inlet_outlet_surface_particle_indicator.parallel_exec();
 	//----------------------------------------------------------------------
 	//	Load restart file if necessary.
@@ -231,8 +232,8 @@ int main(int ac, char *av[])
 	if (system.restart_step_ != 0)
 	{
 		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.restart_step_);
-		water_body.updateCellLinkedList();
-		water_body_complex_relation.updateConfiguration();
+		lumen.updateCellLinkedList();
+		lumen_complex_relation.updateConfiguration();
 	}
 	//----------------------------------------------------------------------
 	//	Setup computing and initial conditions.
@@ -240,9 +241,9 @@ int main(int ac, char *av[])
 	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 1.0;			 /**< End time. */
+	Real End_Time = 1.0;		   /**< End time. */
 	Real D_Time = End_Time / 50.0; /**< Time stamps for output of body states. */
-	Real dt = 0.0;					 /**< Default acoustic time step sizes. */
+	Real dt = 0.0;				   /**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
@@ -301,8 +302,8 @@ int main(int ac, char *av[])
 			outflow1.parallel_exec();
 
 			/** Update cell linked list and configuration. */
-			water_body.updateCellLinkedList();
-			water_body_complex_relation.updateConfiguration();
+			lumen.updateCellLinkedList();
+			lumen_complex_relation.updateConfiguration();
 			inlet_outlet_surface_particle_indicator.parallel_exec();
 		}
 

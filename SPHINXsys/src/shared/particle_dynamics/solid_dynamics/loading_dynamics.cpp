@@ -75,8 +75,8 @@ namespace SPH
 			: PartSimpleDynamicsByParticle(solid_body, body_part), SolidDataSimple(solid_body),
 			  pos_n_(particles_->pos_n_),
 			  pos_0_(particles_->pos_0_),
-			  n_(particles_->n_),
-			  n_0_(particles_->n_0_),
+			  n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
+			  n_0_(*particles_->getVariableByName<Vecd>("InitialNormalDirection")),
 			  vel_n_(particles_->vel_n_),
 			  dvel_dt_prior_(particles_->dvel_dt_prior_),
 			  mass_(particles_->mass_),
@@ -119,7 +119,7 @@ namespace SPH
 		Vecd SpringNormalOnSurfaceParticles::getSpringForce(size_t index_i, Vecd disp)
 		{
 			// normal of the particle
-			Vecd normal = particles_->n_0_[index_i];
+			Vecd normal = n_0_[index_i];
 			// get the normal portion of the displacement, which is parallel to the normal of particles, meaning it is the normal vector * scalar
 			Vecd normal_disp = getVectorProjectionOfVector(disp, normal);
 
@@ -131,7 +131,7 @@ namespace SPH
 		Vecd SpringNormalOnSurfaceParticles::getDampingForce(size_t index_i)
 		{
 			// normal of the particle
-			Vecd normal = particles_->n_0_[index_i];
+			Vecd normal = n_0_[index_i];
 			// velocity of the particle
 			Vecd velocity_n = vel_n_[index_i];
 			// get the normal portion of the velocity, which is parallel to the normal of particles, meaning it is the normal vector * scalar
@@ -259,7 +259,8 @@ namespace SPH
 			SurfacePressureFromSource(SPHBody &sph_body, BodyPartByParticle &body_part, Vecd source_point, StdVec<std::array<Real, 2>> pressure_over_time)
 			: PartSimpleDynamicsByParticle(sph_body, body_part), SolidDataSimple(sph_body),
 			  pos_0_(particles_->pos_0_),
-			  n_(particles_->n_),
+			  n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
+			  n_0_(*particles_->getVariableByName<Vecd>("InitialNormalDirection")),
 			  dvel_dt_prior_(particles_->dvel_dt_prior_),
 			  mass_(particles_->mass_),
 			  pressure_over_time_(pressure_over_time),
@@ -274,7 +275,7 @@ namespace SPH
 				// vector to the source point from the particle
 				Vecd vector_to_particle = source_point - particles_->pos_0_[particle_i];
 				// normal of the particle
-				Vecd normal = particles_->n_0_[particle_i];
+				Vecd normal = n_0_[particle_i];
 				// get the cos of the angle between the vector and the normal
 				Real cos_theta = getCosineOfAngleBetweenTwoVectors(vector_to_particle, normal);
 				// if the angle is less than 90°, we apply the pressure to the surface particle

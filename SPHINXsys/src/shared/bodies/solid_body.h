@@ -39,15 +39,29 @@ namespace SPH
 	 */
 	class SPHSystem;
 	class SolidParticles;
+	template <class ReturnType> class ParticleDynamics;
+	template <class LocalDynamicsType> class SimpleDynamics;
 	/**
 	 * @class SolidBody
 	 * @brief Declaration of solidbody which is used for Solid BCs and derived from RealBody.
 	 */
 	class SolidBody : public RealBody
 	{
+	private:
+		UniquePtrKeeper<ParticleDynamics<void>> normal_direction_ptr_keeper_;
 	public:
 		SolidBody(SPHSystem &system, SharedPtr<Shape> shape_ptr);
 		virtual ~SolidBody(){};
+
+		/** initialize surface normal direction. */
+		template <class NormalDirectionType, typename... ConstructorArgs>
+		void initializeNormalDirection(ConstructorArgs &&...args)
+		{
+			SimpleDynamics<NormalDirectionType> *normal_direction = normal_direction_ptr_keeper_
+			.createPtr<SimpleDynamics<NormalDirectionType>>(*this, std::forward<ConstructorArgs>(args)...);
+			normal_direction->parallel_exec();
+		};
+	
 		virtual SolidBody *ThisObjectPtr() override { return this; };
 	};
 

@@ -25,8 +25,6 @@ namespace SPH
 		//		register particle data
 		//----------------------------------------------------------------------
 		registerAVariable(pos_0_, "InitialPosition", "Position");
-		registerAVariable(n_, "NormalDirection");
-		registerAVariable(n_0_, "InitialNormalDirection");
 		registerAVariable(B_, "CorrectionMatrix", Matd(1.0));
 		//----------------------------------------------------------------------
 		//		for FSI
@@ -72,7 +70,6 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		add basic output particle data
 		//----------------------------------------------------------------------
-		addAVariableToWrite<Vecd>("NormalDirection");
 		addDerivedVariableToWrite<Displacement>();
 		addDerivedVariableToWrite<VonMisesStress>();
 		addDerivedVariableToWrite<VonMisesStrain>();
@@ -95,11 +92,6 @@ namespace SPH
 		return pos_n_[particle_i]-pos_0_[particle_i];
 	}
 	//=================================================================================================//
-	Vecd ElasticSolidParticles::normal(size_t particle_i)
-	{
-		return n_[particle_i];
-	}
-	//=================================================================================================//
 	StdLargeVec<Vecd> ElasticSolidParticles::getDisplacement()
 	{
 		StdLargeVec<Vecd> displacement_vector = {};
@@ -120,16 +112,6 @@ namespace SPH
 		}
 		return displ_max;
 	};
-	//=================================================================================================//
-	StdLargeVec<Vecd> ElasticSolidParticles::getNormal()
-	{
-		StdLargeVec<Vecd> normal_vector = {};
-		for (size_t index_i = 0; index_i < pos_0_.size(); index_i++)
-		{
-			normal_vector.push_back(normal(index_i));
-		}
-		return normal_vector;
-	}
 	//=============================================================================================//
 	ShellParticles::ShellParticles(SPHBody &sph_body, ElasticSolid *elastic_solid)
 		: ElasticSolidParticles(sph_body, elastic_solid), thickness_ref_(1.0)
