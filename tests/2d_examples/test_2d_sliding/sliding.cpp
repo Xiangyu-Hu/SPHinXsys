@@ -94,9 +94,9 @@ int main()
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	Gravity gravity(Vecd(0.0, -gravity_g));
-	Transformd transform(-0.5235, Vecd(0));
-	SimpleDynamics<TranslationAndRotation> wall_boundary_rotation(wall_boundary, transform);
-	SimpleDynamics<TranslationAndRotation> free_cube_rotation(free_cube, transform);
+	Transform2d transform2d(Rotation2d(-0.5235, Vecd(0)));
+	SimpleDynamics<TranslationAndRotation> wall_boundary_rotation(wall_boundary, transform2d);
+	SimpleDynamics<TranslationAndRotation> free_cube_rotation(free_cube, transform2d);
 	TimeStepInitialization free_cube_initialize_timestep(free_cube, gravity);
 	/** Kernel correction. */
 	solid_dynamics::CorrectConfiguration free_cube_corrected_configuration(free_cube_inner);
@@ -107,7 +107,7 @@ int main()
 	solid_dynamics::StressRelaxationSecondHalf free_cube_stress_relaxation_second_half(free_cube_inner);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ContactDensitySummation free_cube_update_contact_density(free_cube_contact);
-	solid_dynamics::ContactForce free_cube_compute_solid_contact_forces(free_cube_contact);
+	solid_dynamics::ContactForceFromWall free_cube_compute_solid_contact_forces(free_cube_contact);
 	/** Damping*/
 	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
 		damping(0.5, free_cube_inner,"Velocity", physical_viscosity);

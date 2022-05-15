@@ -44,7 +44,7 @@ Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer 
 // angle to rotate around the center
 Real rotate_angle = 135.0 / 180.0 * Pi;
 Vecd rotate_center((DL1 - DL_sponge) * 0.5, DH * 0.5);
-
+SPH::Transform2d my_transform(Rotation2d(rotate_angle, rotate_center));
 /* system domain bounds */
 BoundingBox new_bounding_box = calculateNewBoundingBox({Vec2d(-DL_sponge, -DH), Vec2d(DL + BW, 2.0 * DH)}, rotate_angle, rotate_center);
 BoundingBox system_domain_bounds(new_bounding_box);
@@ -60,43 +60,20 @@ Real c_f = 10.0 * U_f * SMAX(1.0, DH / (2.0 * (DL - DL1)));
 Real Re = 100.0;					/**< Reynolds number. */
 Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
-//	define geometry of SPH bodies
+//	define geometry of SPH bodies without transform
 //----------------------------------------------------------------------
 /** the water block in T shape polygen. */
 std::vector<Vecd> water_block_shape{
-	rotatePointAroundPoint(Vecd(-DL_sponge, 0.0), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(-DL_sponge, DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1, DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1, 2.0 * DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL, 2.0 * DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL, -DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1, -DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1, 0.0), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(-DL_sponge, 0.0), rotate_angle, rotate_center)};
+	Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(DL1, DH), Vecd(DL1, 2.0 * DH),
+	Vecd(DL, 2.0 * DH), Vecd(DL, -DH), Vecd(DL1, -DH), Vecd(DL1, 0.0), Vecd(-DL_sponge, 0.0)};
 /** the outer wall polygen. */
 std::vector<Vecd> outer_wall_shape{
-	rotatePointAroundPoint(Vecd(-DL_sponge, -BW), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(-DL_sponge, DH + BW), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1 - BW, DH + BW), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1 - BW, 2.0 * DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL + BW, 2.0 * DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL + BW, -DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1 - BW, -DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1 - BW, -BW), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(-DL_sponge, -BW), rotate_angle, rotate_center)};
+	Vecd(-DL_sponge, -BW), Vecd(-DL_sponge, DH + BW), Vecd(DL1 - BW, DH + BW), Vecd(DL1 - BW, 2.0 * DH),
+	Vecd(DL + BW, 2.0 * DH), Vecd(DL + BW, -DH), Vecd(DL1 - BW, -DH), Vecd(DL1 - BW, -BW), Vecd(-DL_sponge, -BW)};
 /** the inner wall polygen. */
 std::vector<Vecd> inner_wall_shape{
-	rotatePointAroundPoint(Vecd(-DL_sponge - BW, 0.0), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(-DL_sponge - BW, DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1, DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1, 2.0 * DH + BW), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL, 2.0 * DH + BW), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL, -DH - BW), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1, -DH - BW), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1, 0.0), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(-DL_sponge - BW, 0.0), rotate_angle, rotate_center)};
-//-------------------------------------------------
-
+	Vecd(-DL_sponge - BW, 0.0), Vecd(-DL_sponge - BW, DH), Vecd(DL1, DH), Vecd(DL1, 2.0 * DH + BW),
+	Vecd(DL, 2.0 * DH + BW), Vecd(DL, -DH - BW), Vecd(DL1, -DH - BW), Vecd(DL1, 0.0), Vecd(-DL_sponge - BW, 0.0)};
 // define boundary faces
 // points describing the border of face(line in 2D)
 StdVec<Vecd> outlet_points1{
@@ -120,19 +97,21 @@ SegmentFace inflow_face(inlet_points, rotatePointAroundPoint(Vecd(1, 0), rotate_
 //	Define case dependent body shapes.
 //----------------------------------------------------------------------
 /** Water block body definition. */
-class WaterBlock : public MultiPolygonShape
+class WaterBlock : public TransformShape<MultiPolygonShape>
 {
 public:
-	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+	explicit WaterBlock(const std::string &shape_name) 
+		: TransformShape<MultiPolygonShape>(my_transform, shape_name)
 	{
 		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
 	}
 };
 /** Wall boundary body definition. */
-class WallBoundary : public MultiPolygonShape
+class WallBoundary : public TransformShape<MultiPolygonShape>
 {
 public:
-	explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
+	explicit WallBoundary(const std::string &shape_name) 
+		: TransformShape<MultiPolygonShape>(my_transform, shape_name)
 	{
 		multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
 		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
@@ -146,11 +125,7 @@ public:
 MultiPolygon creatEmitterShape()
 {
 	std::vector<Vecd> emmiter_shape{
-		rotatePointAroundPoint(Vecd(-DL_sponge, 0.0), rotate_angle, rotate_center),
-		rotatePointAroundPoint(Vecd(-DL_sponge, DH), rotate_angle, rotate_center),
-		rotatePointAroundPoint(Vecd(-DL_sponge + BW, DH), rotate_angle, rotate_center),
-		rotatePointAroundPoint(Vecd(-DL_sponge + BW, 0.0), rotate_angle, rotate_center),
-		rotatePointAroundPoint(Vecd(-DL_sponge, 0.0), rotate_angle, rotate_center)};
+		Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(-DL_sponge + BW, DH), Vecd(-DL_sponge + BW, 0.0), Vecd(-DL_sponge, 0.0)};
 
 	MultiPolygon multi_polygon;
 	multi_polygon.addAPolygon(emmiter_shape, ShapeBooleanOps::add);
@@ -161,11 +136,7 @@ MultiPolygon creatEmitterShape()
 MultiPolygon createEmitterBufferShape()
 {
 	std::vector<Vecd> emitter_buffer_shape{
-		rotatePointAroundPoint(Vecd(-DL_sponge, 0.0), rotate_angle, rotate_center),
-		rotatePointAroundPoint(Vecd(-DL_sponge, DH), rotate_angle, rotate_center),
-		rotatePointAroundPoint(Vecd(0.0, DH), rotate_angle, rotate_center),
-		rotatePointAroundPoint(Vecd(0.0, 0.0), rotate_angle, rotate_center),
-		rotatePointAroundPoint(Vecd(-DL_sponge, 0.0), rotate_angle, rotate_center)};
+		Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(0.0, DH), Vecd(0.0, 0.0), Vecd(-DL_sponge, 0.0)};
 
 	MultiPolygon multi_polygon;
 	multi_polygon.addAPolygon(emitter_buffer_shape, ShapeBooleanOps::add);

@@ -1,25 +1,25 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * --------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+ * and HU1527/12-1.															*
+ *                                                                           *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * --------------------------------------------------------------------------*/
 #ifndef BASE_DATA_TYPE_H
 #define BASE_DATA_TYPE_H
 
@@ -286,36 +286,36 @@ namespace SPH
 		return in;
 	}
 
-	//vector with integers
+	// vector with integers
 	using Vec2i = SVec<2, int>;
 	using Vec3i = SVec<3, int>;
 
-	//vector with unsigned int
+	// vector with unsigned int
 	using Vec2u = SVec<2, size_t>;
 	using Vec3u = SVec<3, size_t>;
 
-	//float point number
+	// float point number
 	using Real = SimTK::Real;
 
-	//useful float point constants s
+	// useful float point constants s
 	const Real Pi = Real(M_PI);
 	using SimTK::Eps;
 	using SimTK::Infinity;
 	using SimTK::TinyReal;
 	constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
 
-	//vector with float point number
+	// vector with float point number
 	using Vec2d = SimTK::Vec2;
 	using Vec3d = SimTK::Vec3;
 
-	//small matrix with float point number
+	// small matrix with float point number
 	using Mat2d = SimTK::Mat22;
 	using Mat3d = SimTK::Mat33;
-	//small symmetric matrix with float point number
+	// small symmetric matrix with float point number
 	using SymMat2d = SimTK::SymMat22;
 	using SymMat3d = SimTK::SymMat33;
 
-	//type trait for particle data type index
+	// type trait for particle data type index
 	template <typename T>
 	struct ParticleDataTypeIndex
 	{
@@ -352,7 +352,7 @@ namespace SPH
 		static constexpr int value = 3;
 	};
 
-	//verbal boolean for positive and negative axis directions
+	// verbal boolean for positive and negative axis directions
 	const int xAxis = 0;
 	const int yAxis = 1;
 	const int zAxis = 2;
@@ -363,34 +363,60 @@ namespace SPH
 	typedef std::pair<Vec2d, Vec2d> BoundingBox2d;
 	typedef std::pair<Vec3d, Vec3d> BoundingBox3d;
 
+	class Rotation2d
+	{
+		Vec2d center_;
+		Real angle_, cosine_angle_, sine_angle_;
+
+	public:
+		explicit Rotation2d(SimTK::Real angle, const Vec2d &center = Vec2d(0))
+			: center_(center), angle_(angle),
+			  cosine_angle_(std::cos(angle)), sine_angle_(std::sin(angle)){};
+		virtual ~Rotation2d(){};
+
+		/** Forward tranformation. */
+		Vec2d imposeTransform(const Vec2d &origin)
+		{
+			Vec2d shift = origin - center_;
+			Vec2d temp(shift[0] * cosine_angle_ - shift[1] * sine_angle_,
+					   shift[1] * cosine_angle_ + shift[0] * sine_angle_);
+			return temp + center_;
+		};
+		/** Inverse tranformation. */
+		Vec2d imposeInverseTransform(const Vec2d &target)
+		{
+			Vec2d temp = target - center_;
+			Vec2d shift(temp[0] * cosine_angle_ + temp[1] * sine_angle_,
+						temp[1] * cosine_angle_ - temp[0] * sine_angle_);
+			return shift + center_;
+		};
+	};
+
 	/**
 	 * @class Transform2d
 	 * @brief Coordinate transfrom in 2D
 	 */
 	class Transform2d
 	{
-		Real rotation_angle_;
+	private:
+		Rotation2d rotation_;
 		Vec2d translation_;
 
 	public:
-		explicit Transform2d(SimTK::Real rotation_angle)
-			: rotation_angle_(rotation_angle), translation_(0){};
-		Transform2d(SimTK::Real rotation_angle, Vec2d translation)
-			: rotation_angle_(rotation_angle), translation_(translation){};
+		explicit Transform2d(const Rotation2d &rotation, const Vec2d &translation = Vec2d(0))
+			: rotation_(rotation), translation_(translation){};
 		/** Forward tranformation. */
 		Vec2d imposeTransform(const Vec2d &origin)
 		{
-			Vec2d target(origin[0] * cos(rotation_angle_) - origin[1] * sin(rotation_angle_),
-						 origin[1] * cos(rotation_angle_) + origin[0] * sin(rotation_angle_));
-			return target + translation_;
+			return rotation_.imposeTransform(origin) + translation_;
 		};
 		/** Inverse tranformation. */
 		Vec2d imposeInverseTransform(const Vec2d &target)
 		{
-			Vec2d origin(target[0] * cos(-rotation_angle_) - target[1] * sin(-rotation_angle_),
-						 target[1] * cos(-rotation_angle_) + target[0] * sin(-rotation_angle_));
-			return origin - translation_;
+			return rotation_.imposeInverseTransform(target) - translation_;
 		};
+
+		Rotation2d Rotation() { return rotation_; };
 	};
 
 	/**
@@ -400,4 +426,4 @@ namespace SPH
 	using Transform3d = SimTK::Transform;
 }
 
-#endif //BASE_DATA_TYPE_H
+#endif // BASE_DATA_TYPE_H
