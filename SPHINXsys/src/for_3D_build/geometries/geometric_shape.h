@@ -65,6 +65,23 @@ namespace SPH
 		virtual Vec3d findClosestPoint(const Vec3d &pnt) override;
 		virtual BoundingBox findBounds() override;
 	};
+
+	class GeometricShapeSphere : public GeometricShape
+	{
+	private:
+		Vec3d center_;
+		SimTK::ContactGeometry::Sphere sphere_;
+
+	public:
+		explicit GeometricShapeSphere(const Vec3d &center, const Real &radius, 
+									  const std::string &shape_name = "GeometricShapeSphere");
+		virtual ~GeometricShapeSphere(){};
+
+		virtual bool checkContain(const Vec3d &pnt, bool BOUNDARY_INCLUDED = true) override;
+		virtual Vec3d findClosestPoint(const Vec3d &pnt) override;
+		virtual BoundingBox findBounds() override;
+	};
+
 }
 
 #endif // GEOMETRIC_SHAPE_H

@@ -47,11 +47,11 @@ namespace SPH
     {
         Vec3d halfsize = brick_.getHalfLengths();
 
-        //initial reference values
+        // initial reference values
         Vec3d lower_bound = Vec3d(Infinity);
         Vec3d upper_bound = Vec3d(-Infinity);
 
-        //lower left corner
+        // lower left corner
         Vec3d lower_left = transform_.shiftFrameStationToBase(-halfsize);
         for (int j = 0; j != 3; ++j)
         {
@@ -59,7 +59,7 @@ namespace SPH
             upper_bound[j] = SMAX(upper_bound[j], lower_left[j]);
         }
 
-        //upper right corner
+        // upper right corner
         Vec3d upper_right = transform_.shiftFrameStationToBase(halfsize);
         for (int j = 0; j != 3; ++j)
         {
@@ -68,6 +68,34 @@ namespace SPH
         }
 
         return BoundingBox(lower_bound, upper_bound);
+    }
+    //=================================================================================================//
+    GeometricShapeSphere::
+        GeometricShapeSphere(const Vec3d &center, const Real &radius, const std::string &shape_name)
+        : GeometricShape(shape_name, SimTK::Transform()), center_(center), sphere_(radius)
+    {
+        contact_geometry_ = &sphere_;
+    }
+    //=================================================================================================//
+    bool GeometricShapeSphere::checkContain(const Vec3d &pnt, bool BOUNDARY_INCLUDED)
+    {
+        return (pnt - center_).norm() < sphere_.getRadius();
+    }
+    //=================================================================================================//
+    Vec3d GeometricShapeSphere::findClosestPoint(const Vec3d &pnt)
+    {
+        Vec3d displacement = pnt - center_;
+        Real distance = displacement.norm();
+        Real cosine0 = (SGN(displacement[0]) * (ABS(displacement[0])) + TinyReal) / (distance + TinyReal);
+        Real cosine1 = displacement[1] / (distance + TinyReal);
+        Real cosine2 = displacement[2] / (distance + TinyReal);
+        return pnt + (sphere_.getRadius() - distance) * Vec3d(cosine0, cosine1, cosine2);
+    }
+    //=================================================================================================//
+    BoundingBox GeometricShapeSphere::findBounds()
+    {
+        Vec3d shift = Vec3d(sphere_.getRadius(), sphere_.getRadius(), sphere_.getRadius());
+        return BoundingBox(center_ - shift, center_ + shift);
     }
     //=================================================================================================//
 }
