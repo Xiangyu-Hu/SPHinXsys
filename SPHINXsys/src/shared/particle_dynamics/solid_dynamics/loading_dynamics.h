@@ -203,7 +203,7 @@ namespace SPH
             StdLargeVec<bool> &GetApplyPressureToParticle() { return apply_pressure_to_particle_; }
 
         protected:
-            StdLargeVec<Vecd> &pos_0_, &n_, &n_0_, &dvel_dt_prior_;
+            StdLargeVec<Vecd> &pos_0_, &n_, &dvel_dt_prior_;
             StdLargeVec<Real> &mass_;
             StdVec<std::array<Real, 2>> pressure_over_time_;
             StdLargeVec<bool> apply_pressure_to_particle_;

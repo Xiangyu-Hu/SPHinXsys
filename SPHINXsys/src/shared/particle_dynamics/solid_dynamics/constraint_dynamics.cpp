@@ -19,8 +19,7 @@ namespace SPH
 			ConstrainSolidBodyRegion(SPHBody &sph_body, BodyPartByParticle &body_part)
 			: PartSimpleDynamicsByParticle(sph_body, body_part), SolidDataSimple(sph_body),
 			  pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
-			  n_(*particles_->getVariableByName<Vecd>("NormalDirection")), 
-			  n_0_(*particles_->getVariableByName<Vecd>("InitialNormalDirection")),
+			  n_(particles_->n_), n_0_(particles_->n_0_),
 			  vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
 			  vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_)
 		{

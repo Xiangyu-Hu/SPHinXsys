@@ -37,7 +37,7 @@ namespace SPH
 				wall_Vol_.push_back(&(WCFluidWallData::contact_particles_[k]->Vol_));
 				wall_vel_ave_.push_back(&(WCFluidWallData::contact_particles_[k]->vel_ave_));
 				wall_dvel_dt_ave_.push_back(&(WCFluidWallData::contact_particles_[k]->dvel_dt_ave_));
-				wall_n_.push_back(WCFluidWallData::contact_particles_[k]->getVariableByName<Vecd>("NormalDirection"));
+				wall_n_.push_back(&(WCFluidWallData::contact_particles_[k]->n_));
 			}
 		}
 		//=================================================================================================//

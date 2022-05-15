@@ -102,7 +102,7 @@ namespace SPH
 
 	protected:
 		Shape &body_shape_;
-		StdLargeVec<Vecd> &pos_n_, n_, n_0_;
+		StdLargeVec<Vecd> &pos_n_, &n_, &n_0_;
 	};
 	
 	/**
@@ -120,7 +120,7 @@ namespace SPH
 		ShapeAndOp *shape_and_op_;
 		Shape *shape_;
 		const Real switch_sign_;
-		StdLargeVec<Vecd> &pos_n_, n_, n_0_;
+		StdLargeVec<Vecd> &pos_n_, &n_, &n_0_;
 	};
 
 	//----------------------------------------------------------------------

@@ -300,7 +300,7 @@ namespace SPH
 		{
 			wall_Vol_.push_back(&(contact_particles_[k]->Vol_));
 			wall_vel_n_.push_back(&contact_particles_[k]->vel_n_);
-			wall_n_.push_back(contact_particles_[k]->getVariableByName<Vecd>("NormalDirection"));
+			wall_n_.push_back(&contact_particles_[k]->n_);
 		}
 	}
 	//=================================================================================================//
@@ -427,7 +427,7 @@ namespace SPH
 			{
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_vel_n_.push_back(&(contact_particles_[k]->vel_n_));
-				contact_n_.push_back(contact_particles_[k]->getVariableByName<Vecd>("NormalDirection"));
+				contact_n_.push_back(&(contact_particles_[k]->n_));
 			}
 		}
 		//=================================================================================================//

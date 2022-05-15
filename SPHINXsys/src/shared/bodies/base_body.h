@@ -171,12 +171,6 @@ namespace SPH
 			base_particles_->template addDerivedVariableToWrite<DerivedVariableMethod>();
 		};
 
-		template <typename VariableType>
-		void addBodyStateToReloading(const std::string &variable_name)
-		{
-			base_particles_->template addAVariableToReload<VariableType>(variable_name);
-		};
-
 		virtual void writeParticlesToVtuFile(std::ostream &output_file);
 		virtual void writeParticlesToVtpFile(std::ofstream &output_file);
 		virtual void writeParticlesToPltFile(std::ofstream &output_file);

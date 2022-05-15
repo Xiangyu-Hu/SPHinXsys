@@ -118,8 +118,7 @@ namespace SPH
 				  FSIContactData(contact_relation),
 				  Vol_(particles_->Vol_), vel_ave_(particles_->vel_ave_),
 				  force_from_fluid_(particles_->force_from_fluid_),
-				  dvel_dt_ave_(particles_->dvel_dt_ave_), 
-				  n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
+				  dvel_dt_ave_(particles_->dvel_dt_ave_), n_(particles_->n_)
 			{
 				for (size_t k = 0; k != contact_particles_.size(); ++k)
 				{
@@ -195,8 +194,7 @@ namespace SPH
 				: InteractionDynamics(*contact_relation.sph_body_),
 				EFSIContactData(contact_relation),
 				Vol_(particles_->Vol_), vel_ave_(particles_->vel_ave_),
-				force_from_fluid_(particles_->force_from_fluid_), 
-				n_(particles_->getVariableByName<Vecd>("NormalDirection"))
+				force_from_fluid_(particles_->force_from_fluid_), n_(particles_->n_)
 			{
 				for (size_t k = 0; k != contact_particles_.size(); ++k)
 				{

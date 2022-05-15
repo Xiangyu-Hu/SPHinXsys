@@ -53,6 +53,8 @@ namespace SPH
 		virtual ~SolidParticles(){};
 
 		StdLargeVec<Vecd> pos_0_; /**< initial position */
+		StdLargeVec<Vecd> n_;	  /**<  current normal direction */
+		StdLargeVec<Vecd> n_0_;	  /**<  initial normal direction */
 		StdLargeVec<Matd> B_;	  /**<  configuration correction for linear reproducing */
 		//----------------------------------------------------------------------
 		//		for fluid-structure interaction (FSI)
@@ -125,6 +127,10 @@ namespace SPH
 		StdLargeVec<Vecd> getDisplacement();
 		Real getMaxDisplacement();
 
+		/**< Computing normal vector. */
+		Vecd normal (size_t particle_i);
+		StdLargeVec<Vecd> getNormal();
+
 		/** relevant stress measure */
 		std::string stress_measure_;
 
@@ -145,8 +151,6 @@ namespace SPH
 		virtual ~ShellParticles(){};
 
 		Real thickness_ref_;
-		StdLargeVec<Vecd> n_;	  /**<  current normal direction */
-		StdLargeVec<Vecd> n_0_;	  /**<  initial normal direction */
 		StdLargeVec<Matd> transformation_matrix_; /**< initial transformation matrix from global to local coordinates */
 		StdLargeVec<Real> thickness_;		  /**< shell thickness */
 		//----------------------------------------------------------------------

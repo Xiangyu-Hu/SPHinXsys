@@ -155,13 +155,11 @@ int main()
 	SolidBody wall_boundary(system, makeShared<WallBoundary>("WallBoundary"));
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
-	wall_boundary.initializeNormalDirection<NormalDirectionFromBodyShape>();
 
 	SolidBody gate(system, makeShared<MultiPolygonShape>(createGateShape(), "Gate"));
 	gate.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
 	gate.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	gate.generateParticles<ParticleGeneratorLattice>();
-	gate.initializeNormalDirection<NormalDirectionFromBodyShape>();
 
 	ObserverBody gate_observer(system, "Observer");
 	gate_observer.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
@@ -200,6 +198,8 @@ int main()
 	//----------------------------------------------------------------------
 	/** offset particle position */
 	SimpleDynamics<OffsetInitialPosition> gate_offset_position(gate, offset);
+	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+	SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
 	/** Corrected configuration for solid dynamics. */
 	solid_dynamics::CorrectConfiguration gate_corrected_configuration(gate_inner_relation);
 	/** Compute the force exerted on elastic gate due to fluid pressure. */
@@ -236,6 +236,8 @@ int main()
 	gate_offset_position.parallel_exec();
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
+	wall_boundary_normal_direction.parallel_exec();
+	gate_normal_direction.parallel_exec();
 	gate_corrected_configuration.parallel_exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control

@@ -95,7 +95,7 @@ namespace SPH
 			smoothing_length_ = contact_relation.sph_body_->sph_adaptation_->ReferenceSmoothingLength();
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
-				wall_n_.push_back(contact_particles_[k]->getVariableByName<Vecd>("NormalDirection"));
+				wall_n_.push_back(&(contact_particles_[k]->n_));
 			}
 		}
 		//=================================================================================================//

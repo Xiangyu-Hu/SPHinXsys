@@ -45,16 +45,18 @@ namespace SPH
 			UpdateElasticNormalDirection(SolidBody &solid_body)
 			: ParticleDynamicsSimple(solid_body),
 			  ElasticSolidDataSimple(solid_body),
-			  n_(*particles_->getVariableByName<Vecd>("NormalDirection")), 
-			  n_0_(*particles_->getVariableByName<Vecd>("InitialNormalDirection")), 
-			  F_(particles_->F_) {}
+			  n_(particles_->n_), n_0_(particles_->n_0_), F_(particles_->F_)
+		{
+		}
 		//=================================================================================================//
 		DeformationGradientTensorBySummation::
 			DeformationGradientTensorBySummation(BaseBodyRelationInner &inner_relation)
 			: InteractionDynamics(*inner_relation.sph_body_),
 			  ElasticSolidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), pos_n_(particles_->pos_n_),
-			  B_(particles_->B_), F_(particles_->F_) {}
+			  B_(particles_->B_), F_(particles_->F_)
+		{
+		}
 		//=================================================================================================//
 		void DeformationGradientTensorBySummation::Interaction(size_t index_i, Real dt)
 		{
