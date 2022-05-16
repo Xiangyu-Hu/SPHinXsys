@@ -167,7 +167,7 @@ int main(int ac, char *av[])
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	/** Define external force.*/
-	Gravity gravity(Vecd(0.0, -gravity_g));
+	Gravity gravity(Vec2d(0.0, -gravity_g));
 	TimeStepInitialization ball_initialize_timestep(ball, gravity);
 	solid_dynamics::CorrectConfiguration ball_corrected_configuration(ball_inner);
 	solid_dynamics::AcousticTimeStepSize ball_get_time_step_size(ball);

@@ -21,18 +21,13 @@ Real BW = resolution_ref * (Real)BWD; /** Boundary width, determined by specific
 BoundingBox system_domain_bounds(Vec3d(- thickness, - thickness, -DH / 2.0 - thickness),
 								 Vec3d(DL  + thickness, DW + thickness, DH / 2.0 + thickness));
 Real ball_radius = 0.5;
-Real initial_ball_speed = 4.0;
-Vec3d initial_velocity = initial_ball_speed * Vec3d(0.0, 0.0, -1.0);
-Real gravity_g = 0.1;
+Real gravity_g = 1.0;
 //----------------------------------------------------------------------
 //	Global paramters on material properties
 //----------------------------------------------------------------------
 Real rho0_s = 1.0e3;
 Real Youngs_modulus = 5.0e4;
 Real poisson = 0.45;
-//----------------------------------------------------------------------
-//	Bodies with cases-dependent geometries.
-//----------------------------------------------------------------------
 //----------------------------------------------------------------------
 //	Bodies with cases-dependent geometries (ComplexShape).
 //----------------------------------------------------------------------
@@ -50,27 +45,11 @@ public:
 			{
 				Real x = resolution_ref * i - BW + resolution_ref * 0.5;
 				Real y = resolution_ref * j - BW + resolution_ref * 0.5;
-				initializePositionAndVolume(Vecd(x, y, -DL / 2.0), resolution_ref * resolution_ref);
+				initializePositionAndVolume(Vec3d(x, y, -DL / 2.0), resolution_ref * resolution_ref);
 				initializeSurfaceProperties(n_0, thickness);
 			}
 		}
 	}
-};
-/**
- * application dependent initial condition
- */
-class BallInitialCondition
-	: public solid_dynamics::ElasticDynamicsInitialCondition
-{
-public:
-	explicit BallInitialCondition(SolidBody &body)
-		: solid_dynamics::ElasticDynamicsInitialCondition(body){};
-
-protected:
-	void Update(size_t index_i, Real dt) override
-	{
-		vel_n_[index_i] = initial_velocity;
-	};
 };
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -82,9 +61,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** Tag for running particle relaxation for the initially body-fitted distribution */
-	sph_system.run_particle_relaxation_ = true;
+	sph_system.run_particle_relaxation_ = false;
 	/** Tag for starting with relaxed body-fitted particles distribution */
-	sph_system.reload_particles_ = false;
+	sph_system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: start with initial condition */
 	sph_system.restart_step_ = 0;
 	/** Handle command line arguments. */
@@ -99,7 +78,7 @@ int main(int ac, char *av[])
 	plate.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	plate.generateParticles<PlateParticleGenerator>();
 
-	SolidBody ball(sph_system, makeShared<GeometricShapeSphere>(Vecd(DL/2.0, DW/2.0, 0.0), ball_radius, "BallBody"));
+	SolidBody ball(sph_system, makeShared<GeometricShapeSphere>(Vec3d(DL/2.0, DW/2.0, 0.0), ball_radius, "BallBody"));
 	ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 	{
@@ -164,18 +143,16 @@ int main(int ac, char *av[])
 	//	Define the main numerical methods used in the simultion.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	Gravity gravity(Vecd(0.0, -gravity_g));
+	Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
 	TimeStepInitialization ball_initialize_timestep(ball, gravity);
 	solid_dynamics::CorrectConfiguration ball_corrected_configuration(ball_inner);
 	solid_dynamics::AcousticTimeStepSize ball_get_time_step_size(ball);
 	/** stress relaxation for the balls. */
-	solid_dynamics::StressRelaxationFirstHalf ball_stress_relaxation_first_half(ball_inner);
+	solid_dynamics::KirchhoffStressRelaxationFirstHalf ball_stress_relaxation_first_half(ball_inner);
 	solid_dynamics::StressRelaxationSecondHalf ball_stress_relaxation_second_half(ball_inner);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ShellContactDensity ball_update_contact_density(ball_contact);
 	solid_dynamics::ContactForce ball_compute_solid_contact_forces(ball_contact);
-	/** initial condition */
-	BallInitialCondition ball_initial_velocity(ball);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -188,12 +165,11 @@ int main(int ac, char *av[])
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
 	ball_corrected_configuration.parallel_exec();
-	ball_initial_velocity.exec();
 	/** Initial states output. */
 	body_states_recording.writeToFile(0);
 	/** Main loop. */
 	int ite = 0;
-	Real T0 = 25.0;
+	Real T0 = 10.0;
 	Real End_Time = T0;
 	Real D_Time = 0.01 * T0;
 	Real Dt = 0.1 * D_Time;
