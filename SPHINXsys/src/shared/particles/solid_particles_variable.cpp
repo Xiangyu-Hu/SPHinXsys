@@ -33,6 +33,12 @@ namespace SPH
         TranslationAndRotation(SPHBody &sph_body, Transformd &transform)
         : SolidDataSimple(sph_body), transform_(transform),
           pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_) {}
+	//=============================================================================================//
+	void TranslationAndRotation::update(size_t index_i, Real dt)
+	{
+		pos_n_[index_i] = transform_.shiftFrameStationToBase(pos_n_[index_i]);
+		pos_0_[index_i] = transform_.shiftFrameStationToBase(pos_0_[index_i]);
+	}
    //=============================================================================================//
     NormalDirectionFromBodyShape::
         NormalDirectionFromBodyShape(SPHBody &sph_body)

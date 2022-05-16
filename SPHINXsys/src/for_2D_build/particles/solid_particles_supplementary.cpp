@@ -113,12 +113,6 @@ namespace SPH
 					2.0 * (std::pow(epsilonxy, 2.0) + std::pow(epsilonyz, 2.0) + std::pow(epsilonxz, 2.0)));
 	}
 	//=============================================================================================//
-	void TranslationAndRotation::update(size_t index_i, Real dt)
-	{
-		pos_n_[index_i] = transform_.imposeTransform(pos_n_[index_i]);
-		pos_0_[index_i] = transform_.imposeTransform(pos_0_[index_i]);
-	}
-	//=============================================================================================//
 	void VonMisesStress::update(size_t index_i, Real dt)
 	{
 		Real J = rho0_ / rho_n_[index_i];

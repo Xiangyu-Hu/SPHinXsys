@@ -363,6 +363,10 @@ namespace SPH
 	typedef std::pair<Vec2d, Vec2d> BoundingBox2d;
 	typedef std::pair<Vec3d, Vec3d> BoundingBox3d;
 
+	/**
+	 * @class Rotation2d
+	 * @brief Rotation Coordinate transfrom in 2D with rotation center and angle.
+	 */
 	class Rotation2d
 	{
 		Vec2d center_;
@@ -375,7 +379,7 @@ namespace SPH
 		virtual ~Rotation2d(){};
 
 		/** Forward tranformation. */
-		Vec2d imposeTransform(const Vec2d &origin)
+		Vec2d shiftFrameStationToBase(const Vec2d &origin)
 		{
 			Vec2d shift = origin - center_;
 			Vec2d temp(shift[0] * cosine_angle_ - shift[1] * sine_angle_,
@@ -383,7 +387,7 @@ namespace SPH
 			return temp + center_;
 		};
 		/** Inverse tranformation. */
-		Vec2d imposeInverseTransform(const Vec2d &target)
+		Vec2d shiftBaseStationToFrame(const Vec2d &target)
 		{
 			Vec2d temp = target - center_;
 			Vec2d shift(temp[0] * cosine_angle_ + temp[1] * sine_angle_,
@@ -406,14 +410,14 @@ namespace SPH
 		explicit Transform2d(const Rotation2d &rotation, const Vec2d &translation = Vec2d(0))
 			: rotation_(rotation), translation_(translation){};
 		/** Forward tranformation. */
-		Vec2d imposeTransform(const Vec2d &origin)
+		Vec2d shiftFrameStationToBase(const Vec2d &origin)
 		{
-			return rotation_.imposeTransform(origin) + translation_;
+			return rotation_.shiftFrameStationToBase(origin) + translation_;
 		};
 		/** Inverse tranformation. */
-		Vec2d imposeInverseTransform(const Vec2d &target)
+		Vec2d shiftBaseStationToFrame(const Vec2d &target)
 		{
-			return rotation_.imposeInverseTransform(target) - translation_;
+			return rotation_.shiftBaseStationToFrame(target) - translation_;
 		};
 
 		Rotation2d Rotation() { return rotation_; };
@@ -424,6 +428,7 @@ namespace SPH
 	 * @brief Coordinate transfrom in 3D from SimTK
 	 */
 	using Transform3d = SimTK::Transform;
+	using Rotation3d = SimTK::Rotation;
 }
 
 #endif // BASE_DATA_TYPE_H
