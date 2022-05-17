@@ -177,7 +177,7 @@ namespace SPH
 			rho_n_[index_i] = rho0_ * one_over_J;
 			J_to_minus_2_over_dimension_[index_i] = pow(one_over_J * one_over_J, one_over_dimensions_);
 			inverse_F_T_[index_i] = ~SimTK::inverse(F_[index_i]);
-			stress_on_particle_[index_i] =
+			stress_on_particle_[index_i] = 
 				inverse_F_T_[index_i] * (material_->VolumetricKirchhoff(J) -
 										 correction_factor_ * material_->ShearModulus() * J_to_minus_2_over_dimension_[index_i] * (F_[index_i] * ~F_[index_i]).trace() * one_over_dimensions_) +
 				material_->NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i) * inverse_F_T_[index_i];

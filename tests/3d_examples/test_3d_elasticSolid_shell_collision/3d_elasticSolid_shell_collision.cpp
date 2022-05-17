@@ -9,17 +9,16 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 4.0;						  /**< plate length. */
-Real DW = 4.0;						  /**< plate width. */
-Real DH = 4.0;						  /**< plate height. */
-Vec3d n_0 = Vec3d(0.0, 0.0, 1.0);	  /** Pseudo-normal. */
-Real resolution_ref = 0.05;			  /**< reference resolution. */
-Real thickness = resolution_ref * 1.; /**< plate thickness. */
-size_t particle_number = 80;		  /** Initial reference particle spacing. */
+Real resolution_ref = 0.05;							/**< reference resolution. */
+Real thickness = resolution_ref * 1.;				/**< shell thickness. */
+Real radius = 2.0;									/**< cylinder radius. */
+Real half_height = 1.0;								/** Height of the cylinder. */
+Real radius_mid_surface = radius + thickness / 2.0; /** Radius of the mid surface. */
+int particle_number_mid_surface = int(2.0 * radius_mid_surface * Pi * 215.0 / 360.0 / resolution_ref);
+int particle_number_height = 2 * int(half_height / resolution_ref);
 int BWD = 1;						  /** Width of the boundary layer measured by number of particles. */
-Real BW = resolution_ref * (Real)BWD; /** Boundary width, determined by specific layer of boundary particles. */
-BoundingBox system_domain_bounds(Vec3d(- thickness, - thickness, -DH / 2.0 - thickness),
-								 Vec3d(DL  + thickness, DW + thickness, DH / 2.0 + thickness));
+BoundingBox system_domain_bounds(Vec3d(-radius - thickness, -half_height - thickness, -radius - thickness),
+								 Vec3d(radius + thickness, half_height + thickness, radius + thickness));
 Real ball_radius = 0.5;
 Real gravity_g = 1.0;
 //----------------------------------------------------------------------
@@ -28,24 +27,25 @@ Real gravity_g = 1.0;
 Real rho0_s = 1.0e3;
 Real Youngs_modulus = 2.0e4;
 Real poisson = 0.45;
-//----------------------------------------------------------------------
-//	Bodies with cases-dependent geometries (ComplexShape).
+Real physical_viscosity = 1.0e6;
 //----------------------------------------------------------------------
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public SurfaceParticleGenerator
+class CylinderParticleGenerator : public SurfaceParticleGenerator
 {
 public:
-	explicit PlateParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+	explicit CylinderParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
 	virtual void initializeGeometricVariables() override
 	{
-		// the plate and boundary
-		for (int i = 0; i < (particle_number + 2 * BWD); i++)
+		// the cylinder and boundary
+		for (int i = 0; i < particle_number_mid_surface + 2 * BWD; i++)
 		{
-			for (int j = 0; j < (particle_number + 2 * BWD); j++)
+			for (int j = 0; j < particle_number_height; j++)
 			{
-				Real x = resolution_ref * i - BW + resolution_ref * 0.5;
-				Real y = resolution_ref * j - BW + resolution_ref * 0.5;
-				initializePositionAndVolume(Vec3d(x, y, -DL / 2.0), resolution_ref * resolution_ref);
+				Real x = radius_mid_surface * cos(162.5 / 180.0 * Pi + (i - BWD + 0.5) * 215.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
+				Real y = (j -  particle_number_height / 2) * resolution_ref + resolution_ref * 0.5;
+				Real z = radius_mid_surface * sin(162.5 / 180.0 * Pi + (i - BWD + 0.5) * 215.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
+				initializePositionAndVolume(Vecd(x, y, z), resolution_ref * resolution_ref);
+				Vec3d n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
 				initializeSurfaceProperties(n_0, thickness);
 			}
 		}
@@ -73,12 +73,12 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	/** create a plate body. */
-	SolidBody plate(sph_system, makeShared<DefaultShape>("Plate"));
-	plate.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
-	plate.generateParticles<PlateParticleGenerator>();
+	/** create a shell body. */
+	SolidBody shell(sph_system, makeShared<DefaultShape>("shell"));
+	shell.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	shell.generateParticles<CylinderParticleGenerator>();
 
-	SolidBody ball(sph_system, makeShared<GeometricShapeSphere>(Vec3d(DL/2.0, DW/2.0, 0.0), ball_radius, "BallBody"));
+	SolidBody ball(sph_system, makeShared<GeometricShapeSphere>(Vec3d(radius / 2.0, 0.0, 0.0), ball_radius, "BallBody"));
 	ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 	{
@@ -138,7 +138,7 @@ int main(int ac, char *av[])
 	//	Basically the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
 	BodyRelationInner ball_inner(ball);
-	SolidBodyRelationContact ball_contact(ball, {&plate});
+	SolidBodyRelationContact ball_contact(ball, {&shell});
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simultion.
 	//	Note that there may be data dependence on the constructors of these methods.
@@ -146,13 +146,14 @@ int main(int ac, char *av[])
 	Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
 	TimeStepInitialization ball_initialize_timestep(ball, gravity);
 	solid_dynamics::CorrectConfiguration ball_corrected_configuration(ball_inner);
-	solid_dynamics::AcousticTimeStepSize ball_get_time_step_size(ball);
+	solid_dynamics::AcousticTimeStepSize ball_get_time_step_size(ball, 0.5);
 	/** stress relaxation for the balls. */
 	solid_dynamics::KirchhoffStressRelaxationFirstHalf ball_stress_relaxation_first_half(ball_inner);
 	solid_dynamics::StressRelaxationSecondHalf ball_stress_relaxation_second_half(ball_inner);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ShellContactDensity ball_update_contact_density(ball_contact);
-	solid_dynamics::ContactForce ball_compute_solid_contact_forces(ball_contact);
+	solid_dynamics::ContactForceFromWall ball_compute_solid_contact_forces(ball_contact);
+	DampingWithRandomChoice<solid_dynamics::PairwiseFrictionFromWall> ball_friction(0.1, ball_contact, physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -199,6 +200,7 @@ int main(int ac, char *av[])
 				ball_update_contact_density.parallel_exec();
 				ball_compute_solid_contact_forces.parallel_exec();
 				ball_stress_relaxation_first_half.parallel_exec(dt);
+				ball_friction.parallel_exec(dt);
 				ball_stress_relaxation_second_half.parallel_exec(dt);
 
 				ball.updateCellLinkedList();
