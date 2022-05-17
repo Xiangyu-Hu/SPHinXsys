@@ -29,6 +29,10 @@ namespace SPH
               transformd_(transformd){};
         virtual ~TransformShape(){};
 
+        /** variable transfrom is introduced here */
+        Transformd getTransform() { return transformd_; };
+        void setTransform(const Transformd &transformd) { transformd_ = transformd; };
+
         virtual BoundingBox findBounds() override
         {
             BoundingBox original_bound = BaseShapeType::findBounds();
