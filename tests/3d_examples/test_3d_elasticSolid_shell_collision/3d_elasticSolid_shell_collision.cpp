@@ -146,7 +146,7 @@ int main(int ac, char *av[])
 	Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
 	TimeStepInitialization ball_initialize_timestep(ball, gravity);
 	solid_dynamics::CorrectConfiguration ball_corrected_configuration(ball_inner);
-	solid_dynamics::AcousticTimeStepSize ball_get_time_step_size(ball, 0.5);
+	solid_dynamics::AcousticTimeStepSize ball_get_time_step_size(ball, 0.45);
 	/** stress relaxation for the balls. */
 	solid_dynamics::KirchhoffStressRelaxationFirstHalf ball_stress_relaxation_first_half(ball_inner);
 	solid_dynamics::StressRelaxationSecondHalf ball_stress_relaxation_second_half(ball_inner);
