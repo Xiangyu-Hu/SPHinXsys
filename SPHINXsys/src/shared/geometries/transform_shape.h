@@ -26,7 +26,7 @@ namespace SPH
         template <typename... ConstructorArgs>
         explicit TransformShape(const Transformd &transformd, ConstructorArgs &&...args)
             : BaseShapeType(std::forward<ConstructorArgs>(args)...),
-              transformd_(transformd), rotationd_(transformd_.Rotation()){};
+              transformd_(transformd){};
         virtual ~TransformShape(){};
 
         virtual BoundingBox findBounds() override
@@ -35,42 +35,41 @@ namespace SPH
             return BoundingBox(transformd_.shiftFrameStationToBase(original_bound.first),
                                transformd_.shiftFrameStationToBase(original_bound.second));
         };
-        virtual bool checkContain(const Vec2d &input_pnt, bool BOUNDARY_INCLUDED = true) override
+        virtual bool checkContain(const Vecd &input_pnt, bool BOUNDARY_INCLUDED = true) override
         {
-            Vec2d input_pnt_origin = transformd_.shiftBaseStationToFrame(input_pnt);
+            Vecd input_pnt_origin = transformd_.shiftBaseStationToFrame(input_pnt);
             return BaseShapeType::checkContain(input_pnt_origin);
         };
-        virtual Vec2d findClosestPoint(const Vec2d &input_pnt) override
+        virtual Vecd findClosestPoint(const Vecd &input_pnt) override
         {
-            Vec2d input_pnt_origin = transformd_.shiftBaseStationToFrame(input_pnt);
-            Vec2d closest_point_origin = BaseShapeType::findClosestPoint(input_pnt_origin);
+            Vecd input_pnt_origin = transformd_.shiftBaseStationToFrame(input_pnt);
+            Vecd closest_point_origin = BaseShapeType::findClosestPoint(input_pnt_origin);
             return transformd_.shiftFrameStationToBase(closest_point_origin);
         };
-        virtual bool checkNotFar(const Vec2d &input_pnt, Real threshold) override
+        virtual bool checkNotFar(const Vecd &input_pnt, Real threshold) override
         {
-            Vec2d input_pnt_origin = transformd_.shiftBaseStationToFrame(input_pnt);
+            Vecd input_pnt_origin = transformd_.shiftBaseStationToFrame(input_pnt);
             return BaseShapeType::checkNotFar(input_pnt_origin, threshold);
         };
-        virtual bool checkNearSurface(const Vec2d &input_pnt, Real threshold) override
+        virtual bool checkNearSurface(const Vecd &input_pnt, Real threshold) override
         {
-            Vec2d input_pnt_origin = transformd_.shiftBaseStationToFrame(input_pnt);
+            Vecd input_pnt_origin = transformd_.shiftBaseStationToFrame(input_pnt);
             return BaseShapeType::checkNearSurface(input_pnt_origin, threshold);
         };
-        virtual Real findSignedDistance(const Vec2d &input_pnt) override
+        virtual Real findSignedDistance(const Vecd &input_pnt) override
         {
-            Vec2d input_pnt_origin = transformd_.shiftBaseStationToFrame(input_pnt);
+            Vecd input_pnt_origin = transformd_.shiftBaseStationToFrame(input_pnt);
             return BaseShapeType::findSignedDistance(input_pnt_origin);
         };
-        virtual Vec2d findNormalDirection(const Vec2d &input_pnt) override
+        virtual Vecd findNormalDirection(const Vecd &input_pnt) override
         {
-            Vec2d input_pnt_origin = transformd_.shiftBaseStationToFrame(input_pnt);
-            Vec2d normal_direction_origin = BaseShapeType::findNormalDirection(input_pnt_origin);
-            return rotationd_.shiftFrameStationToBase(normal_direction_origin);
+            Vecd input_pnt_origin = transformd_.shiftBaseStationToFrame(input_pnt);
+            Vecd normal_direction_origin = BaseShapeType::findNormalDirection(input_pnt_origin);
+            return transformd_.xformFrameVecToBase(normal_direction_origin);
         };
 
     protected:
         Transformd transformd_;
-        Rotationd rotationd_;
     };
 }
 

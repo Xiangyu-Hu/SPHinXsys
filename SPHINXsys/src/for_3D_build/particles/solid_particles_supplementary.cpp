@@ -107,13 +107,6 @@ namespace SPH
 		return sqrt((1.0 / 3.0) * (std::pow(epsilonxx - epsilonyy, 2.0) + std::pow(epsilonyy - epsilonzz, 2.0) + std::pow(epsilonzz - epsilonxx, 2.0)) + 2.0 * (std::pow(epsilonxy, 2.0) + std::pow(epsilonyz, 2.0) + std::pow(epsilonxz, 2.0)));
 	}
 	//=============================================================================================//
-	void TranslationAndRotation::update(size_t index_i, Real dt)
-	{
-		std::cout << "\n Error: the function ParticleTranslationAndRotation in 3d is not defined!" << std::endl;
-		std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-		exit(1);
-	}
-	//=============================================================================================//
 	void VonMisesStress::update(size_t index_i, Real dt)
 	{
 		Real J = rho0_ / rho_n_[index_i];

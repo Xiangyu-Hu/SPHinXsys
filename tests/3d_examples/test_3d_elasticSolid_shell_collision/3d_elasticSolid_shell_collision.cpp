@@ -26,7 +26,7 @@ Real gravity_g = 1.0;
 //	Global paramters on material properties
 //----------------------------------------------------------------------
 Real rho0_s = 1.0e3;
-Real Youngs_modulus = 5.0e4;
+Real Youngs_modulus = 2.0e4;
 Real poisson = 0.45;
 //----------------------------------------------------------------------
 //	Bodies with cases-dependent geometries (ComplexShape).

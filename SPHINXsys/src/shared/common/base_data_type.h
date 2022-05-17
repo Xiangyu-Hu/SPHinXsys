@@ -378,6 +378,7 @@ namespace SPH
 			  cosine_angle_(std::cos(angle)), sine_angle_(std::sin(angle)){};
 		virtual ~Rotation2d(){};
 
+
 		/** Forward tranformation. */
 		Vec2d shiftFrameStationToBase(const Vec2d &origin)
 		{
@@ -409,18 +410,30 @@ namespace SPH
 	public:
 		explicit Transform2d(const Rotation2d &rotation, const Vec2d &translation = Vec2d(0))
 			: rotation_(rotation), translation_(translation){};
-		/** Forward tranformation. */
+	
+		/** Forward rotation. */
+		Vec2d xformFrameVecToBase(const Vec2d &origin)
+		{
+			return rotation_.shiftFrameStationToBase(origin);
+		};
+
+	/** Forward tranformation. */
 		Vec2d shiftFrameStationToBase(const Vec2d &origin)
 		{
-			return rotation_.shiftFrameStationToBase(origin) + translation_;
+			return xformFrameVecToBase(origin) + translation_;
 		};
+
+		/** Inverse rotation. */
+		Vec2d xformBaseVecToFrame(const Vec2d &target)
+		{
+			return rotation_.shiftBaseStationToFrame(target);
+		};
+
 		/** Inverse tranformation. */
 		Vec2d shiftBaseStationToFrame(const Vec2d &target)
 		{
-			return rotation_.shiftBaseStationToFrame(target) - translation_;
+			return xformBaseVecToFrame(target) - translation_;
 		};
-
-		Rotation2d Rotation() { return rotation_; };
 	};
 
 	/**
@@ -428,7 +441,6 @@ namespace SPH
 	 * @brief Coordinate transfrom in 3D from SimTK
 	 */
 	using Transform3d = SimTK::Transform;
-	using Rotation3d = SimTK::Rotation;
 }
 
 #endif // BASE_DATA_TYPE_H

@@ -18,7 +18,7 @@ namespace SPH {
 	using  BoundingBox = BoundingBox2d;
 
 	using Transformd = Transform2d;
-	using Rotationd = Rotation2d;
+
 	template<class DataType, int ARRAY_SIZE>
 	using PackageDataMatrix = std::array<std::array<DataType, ARRAY_SIZE>, ARRAY_SIZE>;
 

@@ -220,7 +220,7 @@ namespace SPH
 		Matd strain = 0.5 * (right_cauchy - Matd(1.0));
 		Real J = det(F);
 		Matd sigmaPK2 = G0_ / (1.0 - 2.0 * strain.trace() / j1_m_) * Matd(1.0) +
-						(lambda0_ * (J - 1.0) - a0_[0]) * J * inverse(right_cauchy);
+						(lambda0_ * (J - 1.0) - G0_) * J * inverse(right_cauchy);
 		return sigmaPK2;
 	}
 	//=================================================================================================//
