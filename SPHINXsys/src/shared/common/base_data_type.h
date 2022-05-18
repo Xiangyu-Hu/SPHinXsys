@@ -373,6 +373,7 @@ namespace SPH
 		Real angle_, cosine_angle_, sine_angle_;
 
 	public:
+		Rotation2d() : center_(Vec2d(0)), angle_(0), cosine_angle_(1.0), sine_angle_(0.0){};
 		explicit Rotation2d(SimTK::Real angle, const Vec2d &center = Vec2d(0))
 			: center_(center), angle_(angle),
 			  cosine_angle_(std::cos(angle)), sine_angle_(std::sin(angle)){};
@@ -408,6 +409,7 @@ namespace SPH
 		Vec2d translation_;
 
 	public:
+		Transform2d() : rotation_(Rotation2d()), translation_(Vec2d(0)){};
 		explicit Transform2d(const Rotation2d &rotation, const Vec2d &translation = Vec2d(0))
 			: rotation_(rotation), translation_(translation){};
 	

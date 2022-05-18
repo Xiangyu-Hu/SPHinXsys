@@ -1,8 +1,8 @@
 /**
- * @file 	shell_elasticbeam_collision.cpp
- * @brief 	A rigid shell rigid box hitting an elasric wall boundary
- * @details This is a case to test shell contact formulations in a reverse way (shell to elaticSolid).
- * @author 	Massoud Rezavand, Virtonomy GmbH
+ * @file 	shell_beam_collision.cpp
+ * @brief 	A rigid shell rigid box hitting an elastic wall boundary
+ * @details This is a case to test shell contact formulations in a reverse way (shell to elastic solid).
+ * @author 	Massoud Rezavand, Virtonomy GmbH and Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
