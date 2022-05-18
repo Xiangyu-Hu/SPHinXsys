@@ -29,7 +29,7 @@ namespace SPH
               transformd_(transformd){};
         virtual ~TransformShape(){};
 
-        /** variable transfrom is introduced here */
+        /** variable transform is introduced here */
         Transformd getTransform() { return transformd_; };
         void setTransform(const Transformd &transformd) { transformd_ = transformd; };
 

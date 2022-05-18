@@ -34,6 +34,20 @@
 
 namespace SPH
 {
+	class GeometricShapeRectangle : public Shape
+	{
+	public:
+		explicit GeometricShapeRectangle(const Vec2d &halfsize,
+            const std::string &shape_name = "GeometricShapeRectangle");
+		virtual ~GeometricShapeRectangle(){};
+
+		virtual bool checkContain(const Vec2d &pnt, bool BOUNDARY_INCLUDED = true) override;
+		virtual Vec2d findClosestPoint(const Vec2d &pnt) override;
+		virtual BoundingBox findBounds() override;
+    protected:
+        Vec2d halfsize_;
+	};
+
     class GeometricShapeCircle : public Shape
     {
         Vec2d center_;
@@ -46,7 +60,6 @@ namespace SPH
         virtual bool checkContain(const Vec2d &pnt, bool BOUNDARY_INCLUDED = true) override;
         virtual Vec2d findClosestPoint(const Vec2d &pnt) override;
         virtual BoundingBox findBounds() override;
-
 		virtual Real findSignedDistance(const Vecd &input_pnt) override;
    };
 }

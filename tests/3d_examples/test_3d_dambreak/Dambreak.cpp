@@ -35,7 +35,7 @@ public:
 	{
 		Vecd halfsize_water(0.5 * LL, 0.5 * LH, 0.5 * LW);
 		SimTK::Transform translation_water(halfsize_water);
-		add<GeometricShapeBrick>(halfsize_water, translation_water);
+		add<TransformShape<GeometricShapeBrick>>(translation_water, halfsize_water);
 	}
 };
 //	define the static solid wall boundary shape
@@ -46,13 +46,13 @@ public:
 	{
 		Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
 		Vecd halfsize_inner(0.5 * DL, 0.5 * DH, 0.5 * DW);
-		SimTK::Transform  translation_wall(Vec3d(0.5 * DL, 0.5 * DH, 0.5 * DW));
-		add<GeometricShapeBrick>(halfsize_outer, translation_wall);
-		substract<GeometricShapeBrick>(halfsize_inner, translation_wall);
+		SimTK::Transform  translation_wall(halfsize_inner);
+		add<TransformShape<GeometricShapeBrick>>(translation_wall, halfsize_outer);
+		subtract<TransformShape<GeometricShapeBrick>>(translation_wall, halfsize_inner);
 	}
 };
 
-//	define an observer particle geneerator
+//	define an observer particle generator
 class WaterObserverParticleGenerator : public ObserverParticleGenerator
 {
 public:

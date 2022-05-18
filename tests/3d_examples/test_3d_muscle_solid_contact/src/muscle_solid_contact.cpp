@@ -35,8 +35,8 @@ class Myocardium : public ComplexShape
 public:
 	explicit Myocardium(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<GeometricShapeBrick>(halfsize_myocardium, translation_myocardium);
-		add<GeometricShapeBrick>(halfsize_stationary_plate, translation_stationary_plate);
+		add<TransformShape<GeometricShapeBrick>>(translation_myocardium, halfsize_myocardium);
+		add<TransformShape<GeometricShapeBrick>>(translation_stationary_plate, halfsize_stationary_plate);
 	}
 };
 /**
@@ -47,7 +47,7 @@ class MovingPlate : public ComplexShape
 public:
 	explicit MovingPlate(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<GeometricShapeBrick>(halfsize_moving_plate, translation_moving_plate);
+		add<TransformShape<GeometricShapeBrick>>(translation_moving_plate, halfsize_moving_plate);
 	}
 };
 /**
@@ -89,11 +89,11 @@ int main()
 	solid_dynamics::ContactForce plate_compute_solid_contact_forces(plate_myocardium_contact);
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(myocardium_body, 
-		makeShared<GeometricShapeBrick>(halfsize_stationary_plate, translation_stationary_plate, "Holder"));
+		makeShared<TransformShape<GeometricShapeBrick>>(translation_stationary_plate, halfsize_stationary_plate, "Holder"));
 	solid_dynamics::ConstrainSolidBodyRegion	constrain_holder(myocardium_body, holder);
 	/** Damping with the solid body*/
 	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
-		muscle_damping(myocardium_body_inner, 0.1, "Velocity", physical_viscosity);
+		muscle_damping(0.1, myocardium_body_inner, "Velocity", physical_viscosity);
 	/** Output */
 	InOutput in_output(system);
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
@@ -109,7 +109,7 @@ int main()
 	SimTK::CableTrackerSubsystem cables(MBsystem);
 	/** mass proeprties of the fixed spot. */
 	SolidBodyPartForSimbody plate_multibody(moving_plate, 
-		makeShared<GeometricShapeBrick>(halfsize_moving_plate, translation_moving_plate, "Plate"));
+		makeShared<TransformShape<GeometricShapeBrick>>(translation_moving_plate, halfsize_moving_plate, "Plate"));
 	/** Mass properties of the consrained spot. 
 	 * SimTK::MassProperties(mass, center of mass, inertia)
 	 */

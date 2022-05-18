@@ -87,7 +87,7 @@ namespace SPH
 	 * @class BinaryShapes
 	 * @brief a collections of shapes with binary operations
 	 * This class so that it has ownship of all shapes by using a unique pointer vector.
-	 * In this way, add or substract a shape will call the shape's constructor other than 
+	 * In this way, add or subtract a shape will call the shape's constructor other than 
 	 * passing the shape pointer.
 	 */
 	class BinaryShapes : public Shape
@@ -106,7 +106,7 @@ namespace SPH
 		};
 
 		template <class ShapeType, typename... Args>
-		void substract(Args &&...args)
+		void subtract(Args &&...args)
 		{
 			Shape *shape = shapes_ptr_keeper_.createPtr<ShapeType>(std::forward<Args>(args)...);
 			ShapeAndOp shape_and_op(shape, ShapeBooleanOps::sub);

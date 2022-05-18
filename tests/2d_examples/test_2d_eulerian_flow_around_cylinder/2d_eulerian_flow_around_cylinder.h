@@ -56,7 +56,7 @@ public:
 		MultiPolygon outer_boundary(createWaterBlockShape());
 		add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
 		MultiPolygon circle(insert_circle_center, insert_circle_radius, 100);
-		substract<MultiPolygonShape>(circle);
+		subtract<MultiPolygonShape>(circle);
 	}
 };
 class Cylinder : public MultiPolygonShape
