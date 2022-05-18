@@ -34,7 +34,7 @@ public:
 	explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
 	{
 		add<GeometricShapeCircle>(circle_center, circle_radius + resolution_ref);
-		substract<GeometricShapeCircle>(circle_center, circle_radius);
+		subtract<GeometricShapeCircle>(circle_center, circle_radius);
 	}
 };
 //----------------------------------------------------------------------

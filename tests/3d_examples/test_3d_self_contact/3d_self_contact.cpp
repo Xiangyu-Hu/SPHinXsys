@@ -45,7 +45,7 @@ public:
 	{
 		Vecd halfsize_plate(half_width + BW, 0.5 * BW, half_width + BW);
 		Vecd translation_plate(0.0, -half_width - 0.75 * BW, half_width);
-		add<GeometricShapeBrick>(halfsize_plate, translation_plate);
+		add<TransformShape<GeometricShapeBrick>>(translation_plate, halfsize_plate);
 	}
 };
 //----------------------------------------------------------------------
@@ -151,7 +151,7 @@ int main(int ac, char *av[])
 	solid_dynamics::SelfContactForce coil_self_contact_forces(coil_self_contact);
 	// Damping the velocity field for quasi-static solution
 	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
-		coil_damping(coil_inner, 0.2, "Velocity", physical_viscosity);
+		coil_damping(0.2, coil_inner, "Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	From here the time stepping begins.
 	//----------------------------------------------------------------------

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "geometric_shape.h"
 #include "complex_shape.h"
+#include "transform_shape.h"
 
 using namespace SPH;
 
@@ -11,8 +12,8 @@ TEST(test_ComplexShape, test_findNormalDirection)
 	SimTK::Transform transfrom(Vec3d(1.0, 0.5, 0.25));
 
 	ComplexShape body_shape("TestShape");
-	body_shape.add<GeometricShapeBrick>(halfsize_outer, transfrom);
-	body_shape.substract<GeometricShapeBrick>(halfsize_inner, transfrom);
+	body_shape.add<TransformShape<GeometricShapeBrick>>(transfrom, halfsize_outer);
+	body_shape.subtract<TransformShape<GeometricShapeBrick>>(transfrom, halfsize_inner);
 	Vec3d point(1.0, 0.5, -0.095);
 	Vec3d normal = body_shape.findNormalDirection(point);
 

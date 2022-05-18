@@ -141,9 +141,9 @@ int main()
 	solid_dynamics::ConstrainSolidBodyRegionVelocity
 		constrain_holder(cylinder_body, boundary_geometry, Vecd(0.0, 1.0, 0.0));
 	DampingWithRandomChoice<DampingBySplittingInner<Vecd>>
-		cylinder_position_damping(cylinder_body_inner, 0.2, "Velocity", physical_viscosity);
+		cylinder_position_damping(0.2, cylinder_body_inner, "Velocity", physical_viscosity);
 	DampingWithRandomChoice<DampingBySplittingInner<Vecd>>
-		cylinder_rotation_damping(cylinder_body_inner, 0.2, "AngularVelocity", physical_viscosity);
+		cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
 	/** Output */
 	InOutput in_output(system);
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);

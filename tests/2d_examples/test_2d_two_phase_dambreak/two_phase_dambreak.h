@@ -95,6 +95,6 @@ public:
 	explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
 	{
 		add<MultiPolygonShape>(MultiPolygon(createOuterWallShape()), "OuterWall");
-		substract<MultiPolygonShape>(MultiPolygon(createInnerWallShape()), "InnerWall");
+		subtract<MultiPolygonShape>(MultiPolygon(createInnerWallShape()), "InnerWall");
 	}
 };
