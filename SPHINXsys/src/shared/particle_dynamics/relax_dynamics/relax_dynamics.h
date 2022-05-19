@@ -270,9 +270,12 @@ namespace SPH
 		};
 
 		/**
-		 * @class ShellMidSurfaceBounding
-		 * @brief constrain particles by contraining particles to mid-surface.
-		 */
+		* @class ShellMidSurfaceBounding
+		* @brief constrain particles by constraining particles to mid-surface.
+		* Note that level_set_refinement_ratio should be smaller than particle_spacing_ref_ / (0.05 * thickness_)
+		* because if level_set_refinement_ratio > particle_spacing_ref_ / (0.05 * thickness_), 
+		* there will be no level set field.
+		*/
 		class ShellMidSurfaceBounding : public PartDynamicsByCell,
 										public RelaxDataDelegateInner
 		{
