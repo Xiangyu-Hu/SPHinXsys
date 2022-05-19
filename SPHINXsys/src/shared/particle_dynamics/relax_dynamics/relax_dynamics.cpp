@@ -20,8 +20,8 @@ namespace SPH
 			  RelaxDataDelegateSimple(sph_body), dvel_dt_(particles_->dvel_dt_),
 			  h_ref_(sph_body.sph_adaptation_->ReferenceSmoothingLength())
 		{
-			//given by sound criteria by assuming unit speed of sound and zero particle velocity
-			initial_reference_ = 1.0 / h_ref_;
+			//The pressure is constant, so the speed of sound is zero
+			initial_reference_ = 0.0;
 		}
 		//=================================================================================================//
 		Real GetTimeStepSizeSquare::ReduceFunction(size_t index_i, Real dt)
@@ -323,7 +323,7 @@ namespace SPH
 				[&](const blocked_range<size_t>& r) {
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{
-					n_0_[i] = level_set_shape_->findNormalDirection(pos_n_[i] + 0.2 * thickness_ * n_0_[i]);
+					n_0_[i] = level_set_shape_->findNormalDirection(pos_n_[i] + 0.3 * thickness_ * n_0_[i]);
 					n_0_[i] /= n_0_[i].norm() + TinyReal;
 				}
 			}, ap);
