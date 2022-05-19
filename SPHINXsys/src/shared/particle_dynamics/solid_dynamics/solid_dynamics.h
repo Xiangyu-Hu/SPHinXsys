@@ -172,10 +172,6 @@ namespace SPH
 			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
 			Real start_time_, end_time_, end_scale_;
 			Vecd pos_0_center_;
-			Vecd getDisplacement(size_t index_i, Real dt);
-			virtual Vecd getVelocity() { return Vecd(0); };
-			virtual Vecd getAcceleration() { return Vecd(0); };
-			virtual SimTK::Rotation getBodyRotation() { return SimTK::Rotation(); }
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -190,16 +186,17 @@ namespace SPH
 			TranslateSolidBody(SPHBody &sph_body, BodyPartByParticle &body_part, Real start_time, Real end_time, Vecd translation);
 			virtual ~TranslateSolidBody(){};
 
+			// this needs to be called before every execution
+			void Init();
+
 		protected:
 			StdLargeVec<Vecd> &pos_n_, &pos_0_;
 			StdLargeVec<Vecd> pos_end_;
 			StdLargeVec<Vecd> &vel_n_, &dvel_dt_;
 			Real start_time_, end_time_;
 			Vecd translation_;
+			bool is_initialized_;
 			Vecd getDisplacement(size_t index_i, Real dt);
-			virtual Vecd getVelocity() { return Vecd(0); };
-			virtual Vecd getAcceleration() { return Vecd(0); };
-			virtual SimTK::Rotation getBodyRotation() { return SimTK::Rotation(); }
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
