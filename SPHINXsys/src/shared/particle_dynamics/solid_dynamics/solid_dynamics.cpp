@@ -173,8 +173,9 @@ namespace SPH
 				if (GlobalStaticVariables::physical_time_ >= start_time_ &&
 					GlobalStaticVariables::physical_time_ <= end_time_)
 				{
-					Real current_scale = end_scale_ * (GlobalStaticVariables::physical_time_ - start_time_) / (end_time_ - start_time_);
-					pos_n_[index_i] = pos_0_[index_i] + (pos_0_center_ - pos_0_[index_i]) * current_scale;
+					Real time_factor = (GlobalStaticVariables::physical_time_ - start_time_) / (end_time_ - start_time_);
+					Vec3d target_pos = pos_0_[index_i] + (pos_0_center_ - pos_0_[index_i]) * (1 - end_scale_);
+					pos_n_[index_i] = pos_0_[index_i] + (target_pos - pos_0_[index_i]) * time_factor;
 					vel_n_[index_i] = Vecd(0.);
 				}
 				vel_n_[index_i] = Vecd(0.);
