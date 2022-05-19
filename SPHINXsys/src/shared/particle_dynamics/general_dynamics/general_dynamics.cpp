@@ -28,11 +28,11 @@ namespace SPH
 		dvel_dt_prior_[index_i] = gravity_->InducedAcceleration(pos_n_[index_i]);
 	}
 	//=================================================================================================//
-	RandomizePartilePosition::RandomizePartilePosition(SPHBody &sph_body)
+	RandomizeParticlePosition::RandomizeParticlePosition(SPHBody &sph_body)
 		: ParticleDynamicsSimple(sph_body), DataDelegateSimple<SPHBody, BaseParticles>(sph_body),
 		  pos_n_(particles_->pos_n_), randomize_scale_(sph_body.sph_adaptation_->MinimumSpacing()) {}
 	//=================================================================================================//
-	void RandomizePartilePosition::Update(size_t index_i, Real dt)
+	void RandomizeParticlePosition::Update(size_t index_i, Real dt)
 	{
 		Vecd &pos_n_i = pos_n_[index_i];
 		for (int k = 0; k < pos_n_i.size(); ++k)

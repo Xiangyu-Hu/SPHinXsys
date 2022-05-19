@@ -17,9 +17,10 @@ Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
 BoundingBox system_domain_bounds(Vec2d(-thickness, -thickness), Vec2d(2.0 * circle_radius + thickness, 2.0 * circle_radius + thickness));
 Vec2d ball_center(3.0, 1.5);
 Real ball_radius = 0.5;
+StdVec<Vecd> beam_observation_location = {ball_center};
 Real gravity_g = 1.0;
 //----------------------------------------------------------------------
-//	Global paramters on material properties
+//	Global parameters on material properties
 //----------------------------------------------------------------------
 Real rho0_s = 1.0e3;
 Real Youngs_modulus = 2.0e4;
@@ -93,6 +94,9 @@ int main(int ac, char *av[])
 		std::cout << "Error: This case requires reload shell particles for simulation!" << std::endl;
 		return 0;
 	}
+
+	ObserverBody ball_observer(sph_system, "BallObserver");
+	ball_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
@@ -106,12 +110,12 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Define the methods for particle relaxation for ball.
 		//----------------------------------------------------------------------
-		RandomizePartilePosition ball_random_particles(ball);
+		RandomizeParticlePosition ball_random_particles(ball);
 		relax_dynamics::RelaxationStepInner ball_relaxation_step_inner(ball_inner);
 		//----------------------------------------------------------------------
 		//	Define the methods for particle relaxation for wall boundary.
 		//----------------------------------------------------------------------
-		RandomizePartilePosition wall_boundary_random_particles(wall_boundary);
+		RandomizeParticlePosition wall_boundary_random_particles(wall_boundary);
 		relax_dynamics::ShellRelaxationStepInner
 			relaxation_step_wall_boundary_inner(wall_boundary_inner, thickness, level_set_refinement_ratio);
 		relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(wall_boundary_inner, thickness, cos(Pi / 3.75));
@@ -133,7 +137,7 @@ int main(int ac, char *av[])
 		wall_boundary.updateCellLinkedList();
 		write_mesh_cell_linked_list.writeToFile(0);
 		//----------------------------------------------------------------------
-		//	From here iteration for particle relaxation begines.
+		//	From here iteration for particle relaxation begins.
 		//----------------------------------------------------------------------
 		int ite = 0;
 		int relax_step = 1000;
@@ -162,8 +166,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	BodyRelationInner ball_inner(ball);
 	SolidBodyRelationContact ball_contact(ball, {&wall_boundary});
+	BodyRelationContact ball_observer_contact(ball_observer, {&ball});
 	//----------------------------------------------------------------------
-	//	Define the main numerical methods used in the simultion.
+	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	/** Define external force.*/
@@ -178,11 +183,12 @@ int main(int ac, char *av[])
 	solid_dynamics::ShellContactDensity ball_update_contact_density(ball_contact);
 	solid_dynamics::ContactForceFromWall ball_compute_solid_contact_forces(ball_contact);
 	DampingWithRandomChoice<solid_dynamics::PairwiseFrictionFromWall> ball_friction(0.1, ball_contact, physical_viscosity);
-
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp body_states_recording(in_output, sph_system.real_bodies_);
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
+		write_ball_center_displacement("Position", in_output, ball_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -238,6 +244,8 @@ int main(int ac, char *av[])
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
+
+			write_ball_center_displacement.writeToFile(ite);
 		}
 		tick_count t2 = tick_count::now();
 		body_states_recording.writeToFile(ite);
@@ -249,5 +257,15 @@ int main(int ac, char *av[])
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
+	if (sph_system.generate_regression_data_)
+	{
+		write_ball_center_displacement.generateDataBase(1.0e-2);
+	}
+	else
+	{
+		write_ball_center_displacement.newResultTest();
+	}
+
 	return 0;
 }

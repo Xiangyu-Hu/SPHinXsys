@@ -277,7 +277,7 @@ int main(int ac, char *av[])
 		 * @brief 	Methods used for particle relaxation.
 		 */
 		/** Random reset the insert body particle position. */
-		RandomizePartilePosition random_fish_body_particles(fish_body);
+		RandomizeParticlePosition random_fish_body_particles(fish_body);
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_fish_body(in_output, fish_body);
 		/** Write the particle reload files. */

@@ -49,7 +49,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
-	RandomizePartilePosition random_airfoil_particles(airfoil);
+	RandomizeParticlePosition random_airfoil_particles(airfoil);
 	relax_dynamics::RelaxationStepInner relaxation_step_inner(airfoil_inner, true);
 	relax_dynamics::UpdateSmoothingLengthRatioByBodyShape update_smoothing_length_ratio(airfoil);
 	//----------------------------------------------------------------------

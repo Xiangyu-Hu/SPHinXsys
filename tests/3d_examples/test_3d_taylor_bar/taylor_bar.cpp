@@ -54,7 +54,7 @@ int main(int ac, char *av[])
 		 * @brief 	Methods used for particle relaxation.
 		 */
 		/** Random reset the insert body particle position. */
-		RandomizePartilePosition random_column_particles(column);
+		RandomizeParticlePosition random_column_particles(column);
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_column_to_vtp(in_output, column);
 		/** Write the particle reload files. */

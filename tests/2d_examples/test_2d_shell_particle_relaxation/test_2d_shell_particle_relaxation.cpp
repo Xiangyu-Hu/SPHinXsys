@@ -61,7 +61,7 @@ int main()
 	BodyRelationInner pipe_body_inner(pipe_body);
 
 	/** Random reset the particle position. */
-	RandomizePartilePosition random_pipe_body_particles(pipe_body);
+	RandomizeParticlePosition random_pipe_body_particles(pipe_body);
 	/** A  Physics relaxation step. */
 	relax_dynamics::ShellRelaxationStepInner
 		relaxation_step_pipe_body_inner(pipe_body_inner, thickness, level_set_refinement_ratio);

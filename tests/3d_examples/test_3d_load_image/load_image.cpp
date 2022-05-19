@@ -66,7 +66,7 @@ int main()
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
-	RandomizePartilePosition random_imported_model_particles(imported_model);
+	RandomizeParticlePosition random_imported_model_particles(imported_model);
 	/** A  Physics relaxation step. */
 	// relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner.get(), true);
 	relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner, true);

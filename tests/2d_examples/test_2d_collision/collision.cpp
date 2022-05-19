@@ -128,8 +128,8 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Define the methods for particle relaxation.
 		//----------------------------------------------------------------------
-		RandomizePartilePosition free_ball_random_particles(free_ball);
-		RandomizePartilePosition damping_ball_random_particles(damping_ball);
+		RandomizeParticlePosition free_ball_random_particles(free_ball);
+		RandomizeParticlePosition damping_ball_random_particles(damping_ball);
 		relax_dynamics::RelaxationStepInner free_ball_relaxation_step_inner(free_ball_inner);
 		relax_dynamics::RelaxationStepInner damping_ball_relaxation_step_inner(damping_ball_inner);
 		//----------------------------------------------------------------------
