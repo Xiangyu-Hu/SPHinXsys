@@ -60,13 +60,16 @@ public:
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
-	/** output environment. */
+// handle command line arguments
+#ifdef BOOST_AVAILABLE
+	sph_system.handleCommandlineOptions(ac, av);
+#endif	/** output environment. */
 	InOutput in_output(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles
@@ -193,7 +196,15 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
+	if (sph_system.generate_regression_data_)
+	{
+		// The lift force at the cylinder is very small and not important in this case.
+		write_free_cube_displacement.generateDataBase({1.0e-2, 1.0e-2}, {1.0e-2, 1.0e-2});
+	}
+	else
+	{
 	write_free_cube_displacement.newResultTest();
+	}
 
 	return 0;
 }

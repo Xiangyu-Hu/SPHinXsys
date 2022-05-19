@@ -176,14 +176,13 @@ namespace SPH
 			virtual ~PairwiseFrictionFromWall(){};
 
 		protected:
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-
-		private:
 			Real eta_; /**< friction coefficient */
 			StdLargeVec<Real> &Vol_, &mass_;
 			StdLargeVec<Vecd> &vel_n_;
 			StdVec<StdLargeVec<Real> *> wall_Vol_;
 			StdVec<StdLargeVec<Vecd> *> wall_vel_n_, wall_n_;
+
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -192,7 +191,7 @@ namespace SPH
 		 * For example, the high speed impact problems in which the detailed contact behavior is crucial for
 		 * physical sound solutions. Therefore, for simple low speed problem in which contact force is
 		 * used merely prevent penetration. We can still use the simple formulation in the class ContactForce.
-		 * The idea is to introduce conact force based on Riemann problem like formulation,
+		 * The idea is to introduce contact force based on Riemann problem like formulation,
 		 * in which the artificial dissipation is the main interaction force to prevent
 		 * penetration. Furthermore, a penalty type force is used as supplementary to prevent penetration
 		 * when the contact velocity is small.

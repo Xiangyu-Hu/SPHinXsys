@@ -108,7 +108,7 @@ int main()
 	beam_body.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody beam_observer(system, "BeamObserver");
-	beam_observer.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
+	beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
 	beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
