@@ -70,16 +70,16 @@ namespace SPH
 	};
 
 	/**
-	 * @class RandomizePartilePosition
+	 * @class RandomizeParticlePosition
 	 * @brief Randomize the initial particle position
 	 */
-	class RandomizePartilePosition
+	class RandomizeParticlePosition
 		: public ParticleDynamicsSimple,
 		  public GeneralDataDelegateSimple
 	{
 	public:
-		explicit RandomizePartilePosition(SPHBody &sph_body);
-		virtual ~RandomizePartilePosition(){};
+		explicit RandomizeParticlePosition(SPHBody &sph_body);
+		virtual ~RandomizeParticlePosition(){};
 
 	protected:
 		StdLargeVec<Vecd> &pos_n_;

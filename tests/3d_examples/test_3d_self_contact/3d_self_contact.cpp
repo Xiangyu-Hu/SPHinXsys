@@ -101,7 +101,7 @@ int main(int ac, char *av[])
 		//	Methods used for particle relaxation.
 		//----------------------------------------------------------------------
 		// Random reset the insert body particle position.
-		RandomizePartilePosition random_inserted_body_particles(coil);
+		RandomizeParticlePosition random_inserted_body_particles(coil);
 		// Write the particle reload files.
 		ReloadParticleIO write_particle_reload_files(in_output, {&coil});
 		// A  Physics relaxation step.

@@ -87,7 +87,7 @@ void relaxParticlesSingleResolution(InOutput &in_output,
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
-	RandomizePartilePosition random_solid_body_from_mesh_particles(solid_body_from_mesh);
+	RandomizeParticlePosition random_solid_body_from_mesh_particles(solid_body_from_mesh);
 	/** A  Physics relaxation step. */
 	relax_dynamics::RelaxationStepInner relaxation_step_inner(solid_body_from_mesh_inner, true);
 	//----------------------------------------------------------------------
