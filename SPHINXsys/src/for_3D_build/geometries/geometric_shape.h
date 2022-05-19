@@ -50,15 +50,15 @@ namespace SPH
 		SimTK::ContactGeometry *contact_geometry_;
 	};
 
-	class GeometricShapeBrick : public GeometricShape
+	class GeometricShapeBox : public GeometricShape
 	{
 	private:
 		SimTK::ContactGeometry::Brick brick_;
 
 	public:
-		explicit GeometricShapeBrick(const Vec3d &halfsize,
-									 const std::string &shape_name = "GeometricShapeBrick");
-		virtual ~GeometricShapeBrick(){};
+		explicit GeometricShapeBox(const Vec3d &halfsize,
+									 const std::string &shape_name = "GeometricShapeBox");
+		virtual ~GeometricShapeBox(){};
 
 		virtual bool checkContain(const Vec3d &pnt, bool BOUNDARY_INCLUDED = true) override;
 		virtual Vec3d findClosestPoint(const Vec3d &pnt) override;
@@ -67,16 +67,16 @@ namespace SPH
 		Vec3d halfsize_;
 	};
 
-	class GeometricShapeSphere : public GeometricShape
+	class GeometricShapeBall : public GeometricShape
 	{
 	private:
 		Vec3d center_;
 		SimTK::ContactGeometry::Sphere sphere_;
 
 	public:
-		explicit GeometricShapeSphere(const Vec3d &center, const Real &radius, 
-									  const std::string &shape_name = "GeometricShapeSphere");
-		virtual ~GeometricShapeSphere(){};
+		explicit GeometricShapeBall(const Vec3d &center, const Real &radius, 
+									  const std::string &shape_name = "GeometricShapeBall");
+		virtual ~GeometricShapeBall(){};
 
 		virtual bool checkContain(const Vec3d &pnt, bool BOUNDARY_INCLUDED = true) override;
 		virtual Vec3d findClosestPoint(const Vec3d &pnt) override;

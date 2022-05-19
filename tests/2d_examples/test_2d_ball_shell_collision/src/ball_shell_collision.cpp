@@ -34,8 +34,8 @@ class WallBoundary : public ComplexShape
 public:
 	explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<GeometricShapeCircle>(circle_center, circle_radius + resolution_ref);
-		subtract<GeometricShapeCircle>(circle_center, circle_radius);
+		add<GeometricShapeBall>(circle_center, circle_radius + resolution_ref);
+		subtract<GeometricShapeBall>(circle_center, circle_radius);
 	}
 };
 //----------------------------------------------------------------------
@@ -60,7 +60,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	SolidBody ball(sph_system, makeShared<GeometricShapeCircle>(ball_center, ball_radius, "BallBody"));
+	SolidBody ball(sph_system, makeShared<GeometricShapeBall>(ball_center, ball_radius, "BallBody"));
 	ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 	{

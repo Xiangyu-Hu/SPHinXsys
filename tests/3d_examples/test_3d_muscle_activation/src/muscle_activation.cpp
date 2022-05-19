@@ -37,7 +37,7 @@ class Myocardium : public ComplexShape
 public:
 	explicit Myocardium(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<TransformShape<GeometricShapeBrick>>(translation_myocardium, halfsize_myocardium);
+		add<TransformShape<GeometricShapeBox>>(translation_myocardium, halfsize_myocardium);
 	}
 };
 /**
@@ -115,7 +115,7 @@ int main()
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(myocardium_muscle_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(myocardium_muscle_body_inner);
 	/** Constrain region of the inserted body. */
-	BodyRegionByParticle holder(myocardium_muscle_body, makeShared<TransformShape<GeometricShapeBrick>>(translation_holder, halfsize_holder));
+	BodyRegionByParticle holder(myocardium_muscle_body, makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder));
 	ConstrainHolder constrain_holder(myocardium_muscle_body, holder, 0);
 	/** Output */
 	InOutput in_output(system);

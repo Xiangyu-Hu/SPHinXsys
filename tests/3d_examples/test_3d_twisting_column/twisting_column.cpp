@@ -37,7 +37,7 @@ int main()
 	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half(column_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(column_inner);
 	/** Constrain the holder. */
-	BodyRegionByParticle holder(column, makeShared<TransformShape<GeometricShapeBrick>>(translation_holder, halfsize_holder, "Holder"));
+	BodyRegionByParticle holder(column, makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder, "Holder"));
 	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(column, holder);
 	//----------------------------------------------------------------------
 	//	Output

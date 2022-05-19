@@ -133,7 +133,7 @@ int main(int ac, char *av[])
 	/** Apply transport velocity formulation. */
 	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(water_block_complex);
 	/** recycle real fluid particle to buffer particles at outlet. */
-	OpenBoundaryConditionInAxisDirection tansfer_to_buffer_particles_upper_bound(water_block, xAxis, positiveDirection);
+	OpenBoundaryConditionInAxisDirection transfer_to_buffer_particles_upper_bound(water_block, xAxis, positiveDirection);
 	/** compute the vorticity. */
 	fluid_dynamics::VorticityInner compute_vorticity(water_block_inner);
 	//----------------------------------------------------------------------
@@ -243,7 +243,7 @@ int main(int ac, char *av[])
 
 			/** Water block configuration and periodic condition. */
 			emitter_inflow_injecting.exec();
-			tansfer_to_buffer_particles_upper_bound.particle_type_transfer.parallel_exec();
+			transfer_to_buffer_particles_upper_bound.particle_type_transfer.parallel_exec();
 
 			water_block.updateCellLinkedList();
 			water_block_complex.updateConfiguration();

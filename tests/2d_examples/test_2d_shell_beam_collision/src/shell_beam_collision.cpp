@@ -49,8 +49,8 @@ class Shell : public ComplexShape
 public:
 	explicit Shell(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<GeometricShapeCircle>(circle_center, circle_radius + resolution_ref);
-		subtract<GeometricShapeCircle>(circle_center, circle_radius);
+		add<GeometricShapeBall>(circle_center, circle_radius + resolution_ref);
+		subtract<GeometricShapeBall>(circle_center, circle_radius);
 	}
 };
 //----------------------------------------------------------------------
