@@ -122,7 +122,7 @@ namespace SPH
 		Real getVonMisesStressMax();
 		Real getPrincipalStressMax();
 
-		/**< Computing displacemnt. */
+		/**< Computing displacement. */
 		Vecd displacement(size_t particle_i);
 		StdLargeVec<Vecd> getDisplacement();
 		Real getMaxDisplacement();
@@ -134,7 +134,7 @@ namespace SPH
 		/** relevant stress measure */
 		std::string stress_measure_;
 
-		SharedPtr<ElasticSolid> shared_elastic_solid_ptr_;
+		ElasticSolid *elastic_solid_;
 
 		virtual void initializeOtherVariables() override;
 		virtual ElasticSolidParticles *ThisObjectPtr() override { return this; };

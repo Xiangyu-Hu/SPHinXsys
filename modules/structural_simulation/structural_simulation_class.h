@@ -52,22 +52,22 @@ using TranslateSolidBodyPartTuple = tuple<int, Real, Real, Vec3d, BoundingBox>;
 class BodyPartFromMesh : public BodyRegionByParticle
 {
 public:
-	BodyPartByParticleTriMesh(SPHBody &body, SharedPtr<TriangleMeshShape> triangle_mesh_shape_ptr);
-	~BodyPartByParticleTriMesh(){};
+	BodyPartFromMesh(SPHBody &body, SharedPtr<TriangleMeshShape> triangle_mesh_shape_ptr);
+	~BodyPartFromMesh(){};
 };
 
 class SolidBodyFromMesh : public SolidBody
 {
 public:
-	ImportedModel(SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
+	SolidBodyFromMesh(SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
 				  SharedPtr<LinearElasticSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume);
-	~ImportedModel(){};
+	~SolidBodyFromMesh(){};
 };
 
 class SolidBodyForSimulation
 {
 private:
-	ImportedModel imported_model_;
+	SolidBodyFromMesh solid_body_from_mesh_;
 	BodyRelationInner inner_body_relation_;
 
 	SimpleDynamics<NormalDirectionFromBodyShape> initial_normal_direction_;
@@ -83,8 +83,8 @@ public:
 		Real physical_viscosity, SharedPtr<LinearElasticSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume);
 	~SolidBodyForSimulation(){};
 
-	ImportedModel *getImportedModel() { return &imported_model_; };
-	ElasticSolidParticles *getElasticSolidParticles() { return DynamicCast<ElasticSolidParticles>(this, imported_model_.base_particles_); };
+	SolidBodyFromMesh *getSolidBodyFromMesh() { return &solid_body_from_mesh_; };
+	ElasticSolidParticles *getElasticSolidParticles() { return DynamicCast<ElasticSolidParticles>(this, solid_body_from_mesh_.base_particles_); };
 	BodyRelationInner *getInnerBodyRelation() { return &inner_body_relation_; };
 
 	SimpleDynamics<NormalDirectionFromBodyShape> *getInitialNormalDirection() { return &initial_normal_direction_; };
@@ -142,8 +142,6 @@ public:
 	vector<PositionScaleSolidBodyTuple> position_scale_solid_body_tuple_;
 	vector<TranslateSolidBodyTuple> translation_solid_body_tuple_;
 	vector<TranslateSolidBodyPartTuple> translation_solid_body_part_tuple_;
-	// option to only write surface particles into vtu
-	bool surface_particles_only_to_vtu_;
 
 	StructuralSimulationInput(
 		string relative_input_path,
@@ -162,7 +160,7 @@ class StructuralSimulation
 private:
 	UniquePtrKeepers<SolidBodyRelationContact> contact_relation_ptr_keeper_;
 	UniquePtrKeepers<Gravity> gravity_ptr_keeper_;
-	UniquePtrKeepers<BodyPartByParticleTriMesh> body_part_tri_mesh_ptr_keeper_;
+	UniquePtrKeepers<BodyPartFromMesh> body_part_tri_mesh_ptr_keeper_;
 
 protected:
 	// mandatory input
@@ -171,7 +169,6 @@ protected:
 	Real scale_stl_;
 	vector<Vec3d> translation_list_;
 	vector<Real> resolution_list_;
-	vector<SharedPtr<TriangleMeshShape>> body_mesh_list_;
 	vector<SharedPtr<LinearElasticSolid>> material_model_list_;
 	StdVec<Real> physical_viscosity_;
 	StdVec<IndexVector> contacting_body_pairs_list_;
@@ -183,8 +180,6 @@ protected:
 	Real system_resolution_;
 	SPHSystem system_;
 	Real scale_system_boundaries_;
-	InOutput in_output_;
-
 	InOutput in_output_;
 
 	vector<shared_ptr<TriangleMeshShape>> body_mesh_list_;
