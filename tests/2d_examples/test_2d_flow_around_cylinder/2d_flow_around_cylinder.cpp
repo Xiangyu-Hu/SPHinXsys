@@ -36,7 +36,7 @@ int main(int ac, char *av[])
 	water_block.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
-	cylinder.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
+	cylinder.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
 	cylinder.defineBodyLevelSetShape();
 	cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)

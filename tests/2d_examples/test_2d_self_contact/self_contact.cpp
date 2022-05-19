@@ -125,7 +125,7 @@ int main()
 	beam_body.addBodyStateForRecording<Real>("ContactDensity");
 
 	ObserverBody beam_observer(system, "BeamObserver");
-	beam_observer.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
+	beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
 	beam_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
@@ -239,7 +239,11 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	if (!system.restart_step_ == 0) // TODO: this case should be revsied latter.
+	if (system.generate_regression_data_)
+	{
+		write_beam_tip_displacement.generateDataBase(1.0e-2);
+	}
+	else
 	{
 		write_beam_tip_displacement.newResultTest();
 	}

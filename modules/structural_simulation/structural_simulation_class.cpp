@@ -25,7 +25,7 @@ ImportedModel::ImportedModel(
 	SharedPtr<LinearElasticSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume)
 	: SolidBody(system, triangle_mesh_shape)
 {
-	sph_adaptation_->resetAdapationRatios(1.15, system.resolution_ref_ / resolution);
+	sph_adaptation_->resetAdaptationRatios(1.15, system.resolution_ref_ / resolution);
 	defineBodyLevelSetShape()->cleanLevelSet();
 	defineParticlesWithMaterial<ElasticSolidParticles>(material_model.get());
 	generateParticles<ParticleGeneratorLattice>();

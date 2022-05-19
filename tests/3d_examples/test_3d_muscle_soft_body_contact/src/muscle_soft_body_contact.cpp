@@ -61,7 +61,7 @@ int main()
 	myocardium_body.generateParticles<ParticleGeneratorLattice>();
 	/** Plate. */
 	SolidBody moving_plate(system, makeShared<MovingPlate>("MovingPlate"));
-	moving_plate.sph_adaptation_->resetAdapationRatios(1.15, 1.5);
+	moving_plate.sph_adaptation_->resetAdaptationRatios(1.15, 1.5);
 	moving_plate.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	moving_plate.generateParticles<ParticleGeneratorLattice>();
 	/** topology */

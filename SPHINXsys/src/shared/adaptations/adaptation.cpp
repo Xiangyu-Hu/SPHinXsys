@@ -78,7 +78,7 @@ namespace SPH
 		return computeReferenceNumberDensity(Vecd(0), 1.0);
 	}
 	//=================================================================================================//
-	void SPHAdaptation::resetAdapationRatios(Real h_spacing_ratio, Real system_resolution_ratio)
+	void SPHAdaptation::resetAdaptationRatios(Real h_spacing_ratio, Real system_resolution_ratio)
 	{
 		h_spacing_ratio_ = h_spacing_ratio;
 		system_resolution_ratio_ = system_resolution_ratio;

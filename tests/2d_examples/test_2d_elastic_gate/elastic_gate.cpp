@@ -157,12 +157,12 @@ int main()
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody gate(system, makeShared<MultiPolygonShape>(createGateShape(), "Gate"));
-	gate.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
+	gate.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
 	gate.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	gate.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody gate_observer(system, "Observer");
-	gate_observer.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
+	gate_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
 	gate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.

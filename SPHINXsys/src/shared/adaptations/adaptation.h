@@ -79,7 +79,7 @@ namespace SPH
 		Real ReferenceSpacing() { return spacing_ref_; };
 		Real ReferenceSmoothingLength() { return h_ref_; };
 		Kernel *getKernel() { return kernel_; };
-		void resetAdapationRatios(Real h_spacing_ratio, Real system_resolution_ratio = 1.0);
+		void resetAdaptationRatios(Real h_spacing_ratio, Real system_resolution_ratio = 1.0);
 		template <class KernelType, typename... ConstructorArgs>
 		void resetKernel(ConstructorArgs &&...args)
 		{
