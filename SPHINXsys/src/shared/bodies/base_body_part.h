@@ -114,7 +114,7 @@ namespace SPH
 
 	/**
 	 * @class BodyRegionByParticle
-	 * @brief A  body part with the collection of particles within by a presribed shape.
+	 * @brief A  body part with the collection of particles within by a prescribed shape.
 	 */
 	class BodyRegionByParticle : public BodyPartByParticle
 	{

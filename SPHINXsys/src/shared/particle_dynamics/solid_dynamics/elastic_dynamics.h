@@ -189,7 +189,10 @@ namespace SPH
 		* due to the mismatch of the divergence contribution between 
 		* the pair-wise second-order derivative Laplacian formulation
 		* and particle-wise first-order gradient formulation, 
-		* a correction factor slight large than one is introduced.       
+		* a correction factor slight large than one is introduced.
+		* Note that, if you see time step size goes unusually small, 
+		* it may be due to the determinate of deformation matrix become negative.
+		* In this case, you may need decrease CFL number when computing time-step size.
 		*/
 		class KirchhoffStressRelaxationFirstHalf : public StressRelaxationFirstHalf
 		{

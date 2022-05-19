@@ -78,7 +78,7 @@ int main(int ac, char *av[])
 	shell.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	shell.generateParticles<CylinderParticleGenerator>();
 
-	SolidBody ball(sph_system, makeShared<GeometricShapeSphere>(Vec3d(radius / 2.0, 0.0, 0.0), ball_radius, "BallBody"));
+	SolidBody ball(sph_system, makeShared<GeometricShapeBall>(Vec3d(radius / 2.0, 0.0, 0.0), ball_radius, "BallBody"));
 	ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 	{

@@ -149,7 +149,7 @@ namespace SPH
 				}
 				/** Buffer Particle state copied from real particle. */
 				particles_->copyFromAnotherParticle(particles_->total_real_particles_, sorted_index_i);
-				/** Realize the buffer particle by increas�ng the number of real particle in the body.  */
+				/** Realize the buffer particle by increasing the number of real particle in the body.  */
 				particles_->total_real_particles_ += 1;
 				/** Periodic bounding. */
 				pos_n_[sorted_index_i][axis_] -= periodic_translation_[axis_];

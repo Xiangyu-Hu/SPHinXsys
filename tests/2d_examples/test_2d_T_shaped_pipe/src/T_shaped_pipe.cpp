@@ -159,7 +159,7 @@ int main(int ac, char *av[])
 	/** Initialize particle acceleration. */
 	TimeStepInitialization initialize_a_fluid_step(water_block);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-	/** Emmiter. */
+	/** Emitter. */
 	BodyRegionByParticle emitter(water_block, makeShared<MultiPolygonShape>(creatEmitterShape()));
 	fluid_dynamics::EmitterInflowInjecting emitter_inflow_injecting(water_block, emitter, 10, 0, true);
 	/** Emitter condition. */
@@ -186,8 +186,8 @@ int main(int ac, char *av[])
 	/** Impose transport velocity. */
 	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(water_block_complex_relation);
 	/** recycle real fluid particle to buffer particles at outlet. */
-	OpenBoundaryConditionInAxisDirection tansfer_to_buffer_particles_lower_bound(water_block, yAxis, negativeDirection);
-	OpenBoundaryConditionInAxisDirection tansfer_to_buffer_particles_upper_bound(water_block, yAxis, positiveDirection);
+	OpenBoundaryConditionInAxisDirection transfer_to_buffer_particles_lower_bound(water_block, yAxis, negativeDirection);
+	OpenBoundaryConditionInAxisDirection transfer_to_buffer_particles_upper_bound(water_block, yAxis, positiveDirection);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -271,8 +271,8 @@ int main(int ac, char *av[])
 
 			/** inflow injecting*/
 			emitter_inflow_injecting.exec();
-			tansfer_to_buffer_particles_lower_bound.particle_type_transfer.parallel_exec();
-			tansfer_to_buffer_particles_upper_bound.particle_type_transfer.parallel_exec();
+			transfer_to_buffer_particles_lower_bound.particle_type_transfer.parallel_exec();
+			transfer_to_buffer_particles_upper_bound.particle_type_transfer.parallel_exec();
 
 			/** Update cell linked list and configuration. */
 			water_block.updateCellLinkedList();
