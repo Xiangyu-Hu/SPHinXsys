@@ -35,7 +35,8 @@ if(EMSCRIPTEN)
 	target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d)
 else()
 	ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
-	add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
+	add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}
+		WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
 	if(NOT STATIC_BUILD) # usual dynamic build
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
