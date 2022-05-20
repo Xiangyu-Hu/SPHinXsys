@@ -64,7 +64,6 @@ namespace SPH
 		for (size_t i = 0; i != real_particles_bound_; ++i)
 		{
 			sorted_id_.push_back(sequence_.size());
-			unsorted_id_.push_back(sequence_.size());
 			sequence_.push_back(0);
 			mass_[i] = rho_n_[i] * Vol_[i];
 		}
@@ -72,8 +71,8 @@ namespace SPH
 	//=================================================================================================//
 	void BaseParticles::addAParticleEntry()
 	{
-		sorted_id_.push_back(sequence_.size());
 		unsorted_id_.push_back(sequence_.size());
+		sorted_id_.push_back(sequence_.size());
 		sequence_.push_back(0);
 
 		add_a_particle_value_(all_particle_data_);

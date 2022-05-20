@@ -23,7 +23,7 @@
 /**
  * @file complex_body.h
  * @brief A complex body is characterized with a secondary structure,
- * which can be imported externally or created according to specifical rules.
+ * which can be imported externally or created according to specific rules.
  * The secondary structure will be used or even created by the corresponding
  * particle generator.
  * @author	Xiangyu Hu
@@ -41,7 +41,7 @@ namespace SPH
 	/**
 	 * @class SecondaryStructure
 	 * @brief Abstract class as interface for all secondary structures.
-	 * Currently, it provids interface on building inner configuration.
+	 * Currently, it provides interface on building inner configuration.
 	 * The interface can be extended.
 	 */
 	class SecondaryStructure
@@ -67,7 +67,7 @@ namespace SPH
 		UniquePtrKeepers<Branch> branches_ptr_keeper_;
 
 	public:
-		StdVec<Branch *> branches_;	   /**< Contanier of all branches */
+		StdVec<Branch *> branches_;	   /**< Container of all branches */
 		IndexVector branch_locations_; /**< in which branch are the particles located */
 		size_t last_branch_id_;
 		Branch *root_;
@@ -88,7 +88,7 @@ namespace SPH
 
 	/**
 	 * @class TreeBody::Branch
-	 * @brief Each branch (excapt the root) has a parent and several children, and geometric information.
+	 * @brief Each branch (except the root) has a parent and several children, and geometric information.
 	 * It is a realized edge and has multi inner particles.
 	 * The first is the last particle from the parent or root,
 	 * and the last is the first particle of all its child branches.

@@ -153,9 +153,9 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		Particle data for sorting
 		//----------------------------------------------------------------------
-		StdLargeVec<size_t> sequence_;
-		StdLargeVec<size_t> sorted_id_;
-		StdLargeVec<size_t> unsorted_id_;
+		StdLargeVec<size_t> unsorted_id_; /**< the ids assigned just after particle generated. */
+		StdLargeVec<size_t> sorted_id_;	/**< the sorted particle ids of particles from unsorted ids. */
+		StdLargeVec<size_t> sequence_;	/**< the sequence referred for sorting. */
 		ParticleData sortable_data_;
 		ParticleDataMap sortable_variable_maps_;
 
