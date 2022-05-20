@@ -81,7 +81,7 @@ namespace SPH
 		virtual ~ParticleGeneratorMultiResolution(){};
 
 	protected:
-		ParticleSpacingByBodyShape *particle_adapation_;
+		ParticleSpacingByBodyShape *particle_adaptation_;
 		StdLargeVec<Real> &h_ratio_;
 
 		virtual void initializePositionAndVolume(const Vecd &position, Real volume) override;

@@ -56,8 +56,8 @@ namespace SPH
 
 	protected:
 		BaseParticles *base_particles_;
-		StdLargeVec<Vecd> &pos_n_; /**< current position */
-
+		StdLargeVec<Vecd> &pos_n_;		   /**< current position */
+		StdLargeVec<size_t> &unsorted_id_; /**< original particle ids */
 		virtual void initializePosition(const Vecd &position);
 	};
 
@@ -88,8 +88,8 @@ namespace SPH
 		virtual ~SurfaceParticleGenerator(){};
 
 	protected:
-		StdLargeVec<Vecd> &n_;					   /**< surface normal */
-		StdLargeVec<Real> &thickness_;			   /**< surface thickness */
+		StdLargeVec<Vecd> &n_;		   /**< surface normal */
+		StdLargeVec<Real> &thickness_; /**< surface thickness */
 
 		virtual void initializeSurfaceProperties(const Vecd &surface_normal, Real thickness);
 	};
