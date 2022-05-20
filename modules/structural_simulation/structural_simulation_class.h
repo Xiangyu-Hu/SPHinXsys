@@ -169,6 +169,7 @@ protected:
 	Real scale_stl_;
 	vector<Vec3d> translation_list_;
 	vector<Real> resolution_list_;
+	vector<SharedPtr<TriangleMeshShape>> body_mesh_list_;
 	vector<SharedPtr<LinearElasticSolid>> material_model_list_;
 	StdVec<Real> physical_viscosity_;
 	StdVec<IndexVector> contacting_body_pairs_list_;
@@ -182,8 +183,6 @@ protected:
 	Real scale_system_boundaries_;
 	InOutput in_output_;
 
-	vector<shared_ptr<TriangleMeshShape>> body_mesh_list_;
-	vector<shared_ptr<SPHAdaptation>> particle_adaptation_list_;
 	vector<shared_ptr<SolidBodyForSimulation>> solid_body_list_;
 	vector<shared_ptr<solid_dynamics::UpdateElasticNormalDirection>> particle_normal_update_;
 

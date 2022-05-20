@@ -45,6 +45,8 @@ SolidBodyForSimulation::SolidBodyForSimulation(
 	  stress_relaxation_second_half_(inner_body_relation_),
 	  damping_random_(0.2, inner_body_relation_, "Velocity", physical_viscosity)
 {
+	initial_normal_direction_.parallel_exec();
+	std::cout << "  normal initialization done" << std::endl;
 }
 
 void expandBoundingBox(BoundingBox *original, BoundingBox *additional)
