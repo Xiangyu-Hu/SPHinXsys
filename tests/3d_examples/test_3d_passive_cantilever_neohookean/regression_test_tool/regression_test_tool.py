@@ -12,7 +12,7 @@ case name: test_3d_passive_cantilever_neohookean
 """
 
 case_name = "test_3d_passive_cantilever_neohookean"
-body_name = "MyocardiumObserver"
+body_name = "CantileverObserver"
 parameter_name = "Position"
 
 number_of_run_times = 0
