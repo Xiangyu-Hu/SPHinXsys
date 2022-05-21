@@ -89,7 +89,6 @@ namespace SPH
 		virtual ~MultiPolygonShape(){};
 
 		virtual bool isValid() override;
-		virtual BoundingBox findBounds() override;
 		virtual bool checkContain(const Vec2d &input_pnt, bool BOUNDARY_INCLUDED = true) override;
 		virtual Vec2d findClosestPoint(const Vec2d &input_pnt) override;
 		virtual bool checkNotFar(const Vec2d &input_pnt, Real threshold) override;
@@ -99,6 +98,8 @@ namespace SPH
 
 	protected:
 		MultiPolygon multi_polygon_;
+
+		virtual BoundingBox findBounds() override;
 	};
 }
 

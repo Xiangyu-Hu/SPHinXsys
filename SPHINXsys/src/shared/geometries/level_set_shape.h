@@ -53,7 +53,6 @@ namespace SPH
 		LevelSetShape(SPHBody *sph_body, Shape &shape, Real refinement_ratio = 1.0);
 		virtual ~LevelSetShape(){};
 
-		virtual BoundingBox findBounds() override { return bounding_box_; };
 		virtual Vecd findClosestPoint(const Vecd &input_pnt) override;
 		virtual bool checkContain(const Vecd &input_pnt, bool BOUNDARY_INCLUDED = true) override;
 		virtual bool checkNotFar(const Vecd &input_pnt, Real threshold) override;
@@ -70,6 +69,8 @@ namespace SPH
 	protected:
 		BoundingBox bounding_box_;
 		BaseLevelSet *level_set_; /**< narrow bounded levelset mesh. */
+
+		virtual BoundingBox findBounds() override { return bounding_box_; };
 	};
 }
 #endif // LEVEL_SET_SHAPE_H

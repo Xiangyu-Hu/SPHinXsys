@@ -96,12 +96,12 @@ namespace SPH
 	UniquePtr<BaseLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement_ratio)
 	{
 		// estimate the required mesh levels
-		size_t total_levels = (int)log10(MinimumDimension(shape.findBounds()) / ReferenceSpacing()) + 2;
+		size_t total_levels = (int)log10(MinimumDimension(shape.getBounds()) / ReferenceSpacing()) + 2;
 		Real coarsest_spacing = ReferenceSpacing() * powerN(2.0, total_levels - 1);
-		MultilevelLevelSet coarser_level_sets(shape.findBounds(), coarsest_spacing / refinement_ratio,
+		MultilevelLevelSet coarser_level_sets(shape.getBounds(), coarsest_spacing / refinement_ratio,
 											  total_levels - 1, shape, *this);
 		// return the finest level set only
-		return makeUnique<RefinedLevelSet>(shape.findBounds(), *coarser_level_sets.getMeshLevels().back(), shape, *this);
+		return makeUnique<RefinedLevelSet>(shape.getBounds(), *coarser_level_sets.getMeshLevels().back(), shape, *this);
 	}
 	//=================================================================================================//
 	ParticleWithLocalRefinement::
@@ -141,7 +141,7 @@ namespace SPH
 	//=================================================================================================//
 	UniquePtr<BaseLevelSet> ParticleWithLocalRefinement::createLevelSet(Shape &shape, Real refinement_ratio)
 	{
-		return makeUnique<MultilevelLevelSet>(shape.findBounds(), ReferenceSpacing() / refinement_ratio,
+		return makeUnique<MultilevelLevelSet>(shape.getBounds(), ReferenceSpacing() / refinement_ratio,
 											  getLevelSetTotalLevel(), shape, *this);
 	}
 	//=================================================================================================//

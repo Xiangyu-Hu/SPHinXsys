@@ -1,33 +1,33 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * --------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+ * and HU1527/12-1.															*
+ *                                                                           *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * --------------------------------------------------------------------------*/
 /**
-* @file base_geometry.h
-* @brief Shape is the base class for all geometries. 
-* @details Several pure virtual functions 
-* are defined here. (a) closest point on surface: to find the closest point on shape
-* surface to a given point. (b) find the lower and upper bounds.
-* @author	Chi ZHang and Xiangyu Hu
-*/
+ * @file base_geometry.h
+ * @brief Shape is the base class for all geometries.
+ * @details Several pure virtual functions
+ * are defined here. (a) closest point on surface: to find the closest point on shape
+ * surface to a given point. (b) find the lower and upper bounds.
+ * @author	Chi ZHang and Xiangyu Hu
+ */
 
 #ifndef BASE_GEOMETRY_H
 #define BASE_GEOMETRY_H
@@ -61,13 +61,14 @@ namespace SPH
 	class Shape
 	{
 	public:
-		explicit Shape(const std::string &shape_name) : name_(shape_name){};
+		explicit Shape(const std::string &shape_name)
+			: name_(shape_name), is_bounds_found_(false){};
 		virtual ~Shape(){};
 
 		std::string getName() { return name_; };
 		void setName(const std::string &name) { name_ = name; };
-		virtual bool isValid()  { return true; };
-		virtual BoundingBox findBounds() = 0;
+		BoundingBox getBounds();
+		virtual bool isValid() { return true; };
 		virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) = 0;
 		virtual Vecd findClosestPoint(const Vecd &input_pnt) = 0;
 
@@ -80,14 +81,18 @@ namespace SPH
 
 	protected:
 		std::string name_;
-	};
-	using ShapeAndOp = std::pair<Shape *, ShapeBooleanOps>;
+		BoundingBox bounding_box_;
+		bool is_bounds_found_;
 
+		virtual BoundingBox findBounds() = 0;
+	};
+
+	using ShapeAndOp = std::pair<Shape *, ShapeBooleanOps>;
 	/**
 	 * @class BinaryShapes
 	 * @brief a collections of shapes with binary operations
 	 * This class so that it has ownship of all shapes by using a unique pointer vector.
-	 * In this way, add or subtract a shape will call the shape's constructor other than 
+	 * In this way, add or subtract a shape will call the shape's constructor other than
 	 * passing the shape pointer.
 	 */
 	class BinaryShapes : public Shape
@@ -114,7 +119,6 @@ namespace SPH
 		};
 
 		virtual bool isValid() override;
-		virtual BoundingBox findBounds() override;
 		virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) override;
 		virtual Vecd findClosestPoint(const Vecd &input_pnt) override;
 		Shape *getShapeByName(const std::string &shape_name);
@@ -124,13 +128,15 @@ namespace SPH
 	protected:
 		UniquePtrKeepers<Shape> shapes_ptr_keeper_;
 		StdVec<ShapeAndOp> shapes_and_ops_;
+
+		virtual BoundingBox findBounds() override;
 	};
 
 	/**
 	 * @class Edge
 	 * @brief template base class of linear structure only with topology information.
 	 * Note that a edge is defined together with a structure which is composed of edges.
-	 * Such structure should have an interface function ContainerSize() returning 
+	 * Such structure should have an interface function ContainerSize() returning
 	 * the curent total amount of edges.
 	 */
 	template <typename InEdgeType, typename OutEdgeType>
@@ -152,4 +158,4 @@ namespace SPH
 		OutEdgeType out_edge_; /**< id(s) of child edge(s) */
 	};
 }
-#endif //BASE_GEOMETRY_H
+#endif // BASE_GEOMETRY_H

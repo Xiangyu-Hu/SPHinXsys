@@ -60,7 +60,7 @@ namespace SPH
 	{
 		if (!is_domain_bounds_determined_)
 		{
-			body_domain_bounds_ = body_shape_->findBounds();
+			body_domain_bounds_ = body_shape_->getBounds();
 			is_domain_bounds_determined_ = true;
 		}
 		return body_domain_bounds_;

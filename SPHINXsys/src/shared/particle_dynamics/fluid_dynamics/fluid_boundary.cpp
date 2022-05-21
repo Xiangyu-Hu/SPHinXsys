@@ -31,7 +31,7 @@ namespace SPH
 			DampingBoundaryCondition(FluidBody &fluid_body, BodyRegionByCell &body_part)
 			: PartDynamicsByCell(fluid_body, body_part), FluidDataSimple(fluid_body),
 			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_), strength_(5.0),
-			  damping_zone_bounds_(body_part.body_part_shape_.findBounds()){};
+			  damping_zone_bounds_(body_part.body_part_shape_.getBounds()){};
 		//=================================================================================================//
 		void DampingBoundaryCondition::Update(size_t index_i, Real dt)
 		{
@@ -123,7 +123,7 @@ namespace SPH
 			: PartSimpleDynamicsByParticle(fluid_body, body_part), FluidDataSimple(fluid_body),
 			  pos_n_(particles_->pos_n_), rho_n_(particles_->rho_n_), p_(particles_->p_),
 			  axis_(axis_direction), periodic_translation_(0), body_buffer_width_(body_buffer_width),
-			  body_part_bounds_(body_part.body_part_shape_.findBounds())
+			  body_part_bounds_(body_part.body_part_shape_.getBounds())
 		{
 			periodic_translation_[axis_] = body_part_bounds_.second[axis_] - body_part_bounds_.first[axis_];
 
