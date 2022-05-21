@@ -63,7 +63,6 @@ namespace SPH
 	{
 		lattice_spacing_ = global_avg_thickness_ > particle_spacing_ ? 
 						   0.5 * particle_spacing_ : 0.5 * global_avg_thickness_;
-		avg_particle_volume_ = powerN(particle_spacing_, Dimensions - 1) * global_avg_thickness_;
 	}
 	//=================================================================================================//
 }
