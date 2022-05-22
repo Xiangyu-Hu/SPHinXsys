@@ -42,8 +42,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		EmitterInflowCondition::
-			EmitterInflowCondition(FluidBody &fluid_body, BodyPartByParticle &body_part)
-			: PartSimpleDynamicsByParticle(fluid_body, body_part), FluidDataSimple(fluid_body),
+			EmitterInflowCondition(FluidBody &fluid_body, BodyAlignedBoxByParticle &aligned_box_part)
+			: PartSimpleDynamicsByParticle(fluid_body, aligned_box_part), FluidDataSimple(fluid_body),
 			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_),
 			  rho_n_(particles_->rho_n_), p_(particles_->p_), inflow_pressure_(0),
 			  rho0_(material_->ReferenceDensity()) {}

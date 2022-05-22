@@ -18,6 +18,8 @@ Real LL = 2.0 * BW;			  /**< Inflow region length. */
 Real LH = 0.125;			  /**< Inflows region height. */
 Real inlet_height = 1.0;	  /**< Inflow location height */
 Real inlet_distance = -BW;	  /**< Inflow location distance */
+Vec2d inlet_location = Vec2d(inlet_distance, inlet_height);
+Vec2d inlet_halfsize = Vec2d(0.5 * LL, 0.5 * LH);
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 // observer location
 StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
@@ -26,7 +28,7 @@ Real gravity_g = 1.0;									/**< Gravity force of fluid. */
 Real U_f = 2.0 * sqrt(gravity_g * (inlet_height + LH)); /**< Characteristic velocity. */
 Real c_f = 10.0 * U_f;									/**< Reference sound speed. */
 //----------------------------------------------------------------------
-//	Geometrices
+//	Geometries
 //----------------------------------------------------------------------
 /** create a outer wall polygon. */
 std::vector<Vecd> CreateOuterWallShape()
@@ -103,8 +105,8 @@ MultiPolygon createInletShape()
 class InletInflowCondition : public fluid_dynamics::EmitterInflowCondition
 {
 public:
-	InletInflowCondition(FluidBody &body, BodyPartByParticle &body_part)
-		: EmitterInflowCondition(body, body_part) 
+	InletInflowCondition(FluidBody &body, BodyAlignedBoxByParticle &aligned_box_part)
+		: EmitterInflowCondition(body, aligned_box_part) 
 	{
 		inflow_pressure_ = 0.0;
 	}
@@ -138,7 +140,7 @@ int main()
 	wall.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall.generateParticles<ParticleGeneratorLattice>();
 
-	ObserverBody fluid_observer(system, "Fluidobserver");
+	ObserverBody fluid_observer(system, "FluidObserver");
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location); 
 	//----------------------------------------------------------------------
 	//	Define body relation map.
@@ -153,9 +155,11 @@ int main()
 	Gravity gravity(Vecd(0.0, -gravity_g));
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
 	TimeStepInitialization initialize_a_fluid_step(water_body, gravity);
-	BodyRegionByParticle inlet(water_body, makeShared<MultiPolygonShape>(createInletShape()));
-	InletInflowCondition inflow_condition(water_body, inlet);
-	fluid_dynamics::EmitterInflowInjecting emitter_injection(water_body, inlet, 350, 0, true);
+	/** Emitter. */
+	BodyAlignedBoxByParticle emitter(
+		water_body, makeShared<AlignedBoxShape>(Transform2d(inlet_location + inlet_halfsize), inlet_halfsize));
+	InletInflowCondition inflow_condition(water_body, emitter);
+	fluid_dynamics::EmitterInflowInjecting emitter_injection(water_body, emitter, 350, 0, true);
 	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_body_complex);
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex indicate_free_surface(water_body_complex);
 	/** We can output a method-specific particle data for debug */

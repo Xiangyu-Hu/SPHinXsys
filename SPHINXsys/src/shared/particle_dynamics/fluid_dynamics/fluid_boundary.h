@@ -98,7 +98,7 @@ namespace SPH
         class EmitterInflowCondition : public PartSimpleDynamicsByParticle, public FluidDataSimple
         {
         public:
-            explicit EmitterInflowCondition(FluidBody &fluid_body, BodyPartByParticle &body_part);
+            explicit EmitterInflowCondition(FluidBody &fluid_body, BodyAlignedBoxByParticle &aligned_box_part);
             virtual ~EmitterInflowCondition(){};
 
         protected:
