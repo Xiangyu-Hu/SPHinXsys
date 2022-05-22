@@ -269,18 +269,14 @@ namespace SPH
 		{
 			try
 			{
-				Vecd point = pos_0_[index_i];
-				if (checkIfPointInBoundingBox(point, bbox_))
+				if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
 				{
-					if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
-					{
-						vel_n_[index_i] = getDisplacement(index_i, dt) / dt;
-					}
-					else
-					{
-						vel_n_[index_i] = Vecd(0.);
-						dvel_dt_[index_i] = Vecd(0.);
-					}
+					vel_n_[index_i] = getDisplacement(index_i, dt) / dt;
+				}
+				else
+				{
+					vel_n_[index_i] = Vecd(0.);
+					dvel_dt_[index_i] = Vecd(0.);
 				}
 			}
 			catch (std::out_of_range &e)
