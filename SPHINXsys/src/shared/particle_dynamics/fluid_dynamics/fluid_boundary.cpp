@@ -118,15 +118,13 @@ namespace SPH
 			p_[sorted_index_i] = material_->getPressure(rho_n_[sorted_index_i]);
 		}
 		//=================================================================================================//
-		EmitterInflowInjecting ::EmitterInflowInjecting(FluidBody &fluid_body, BodyRegionByParticle &body_part,
+		EmitterInflowInjecting ::EmitterInflowInjecting(FluidBody &fluid_body, BodyAlignedBoxByParticle &aligned_box_part,
 														size_t body_buffer_width, int axis_direction, bool positive)
-			: PartSimpleDynamicsByParticle(fluid_body, body_part), FluidDataSimple(fluid_body),
+			: PartSimpleDynamicsByParticle(fluid_body, aligned_box_part), FluidDataSimple(fluid_body),
 			  pos_n_(particles_->pos_n_), rho_n_(particles_->rho_n_), p_(particles_->p_),
-			  axis_(axis_direction), periodic_translation_(0), body_buffer_width_(body_buffer_width),
-			  body_part_bounds_(body_part.body_part_shape_.getBounds())
+			  axis_(axis_direction), body_buffer_width_(body_buffer_width),
+			  aligned_box_(aligned_box_part.aligned_box_)
 		{
-			periodic_translation_[axis_] = body_part_bounds_.second[axis_] - body_part_bounds_.first[axis_];
-
 			size_t total_body_buffer_particles = body_part_particles_.size() * body_buffer_width_;
 			particles_->addBufferParticles(total_body_buffer_particles);
 			sph_body_->allocateConfigurationMemoriesForBufferParticles();
@@ -138,7 +136,7 @@ namespace SPH
 		void EmitterInflowInjecting::checkUpperBound(size_t unsorted_index_i, Real dt)
 		{
 			size_t sorted_index_i = sorted_id_[unsorted_index_i];
-			if (pos_n_[sorted_index_i][axis_] > body_part_bounds_.second[axis_])
+			if (aligned_box_.checkUpperBound(axis_, pos_n_[sorted_index_i]))
 			{
 				if (particles_->total_real_particles_ >= particles_->real_particles_bound_)
 				{
@@ -152,7 +150,7 @@ namespace SPH
 				/** Realize the buffer particle by increasing the number of real particle in the body.  */
 				particles_->total_real_particles_ += 1;
 				/** Periodic bounding. */
-				pos_n_[sorted_index_i][axis_] -= periodic_translation_[axis_];
+				pos_n_[sorted_index_i] = aligned_box_.getUpperPeriodic(axis_, pos_n_[sorted_index_i]);
 				rho_n_[sorted_index_i] = material_->ReferenceDensity();
 				p_[sorted_index_i] = material_->getPressure(rho_n_[sorted_index_i]);
 			}
@@ -161,7 +159,7 @@ namespace SPH
 		void EmitterInflowInjecting::checkLowerBound(size_t unsorted_index_i, Real dt)
 		{
 			size_t sorted_index_i = sorted_id_[unsorted_index_i];
-			if (pos_n_[sorted_index_i][axis_] < body_part_bounds_.first[axis_])
+			if (aligned_box_.checkLowerBound(axis_, pos_n_[sorted_index_i]))
 			{
 				if (particles_->total_real_particles_ >= particles_->real_particles_bound_)
 				{
@@ -174,7 +172,7 @@ namespace SPH
 				particles_->copyFromAnotherParticle(particles_->total_real_particles_, sorted_index_i);
 				/** Realize the buffer particle by increasing the number of real particle in the body.  */
 				particles_->total_real_particles_ += 1;
-				pos_n_[sorted_index_i][axis_] += periodic_translation_[axis_];
+				pos_n_[sorted_index_i] = aligned_box_.getUpperPeriodic(axis_, pos_n_[sorted_index_i]);
 			}
 		}
 		//=================================================================================================//

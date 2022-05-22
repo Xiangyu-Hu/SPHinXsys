@@ -23,7 +23,7 @@
 /**
  * @file 	base_body_part.h
  * @brief 	This is the base classes of body parts.
- * @details	There two main type of body parts. One is part by particle. 
+ * @details	There two main type of body parts. One is part by particle.
  * 			The other is part by cell.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */
@@ -120,6 +120,7 @@ namespace SPH
 	{
 	private:
 		SharedPtrKeeper<Shape> shape_ptr_keeper_;
+
 	public:
 		Shape &body_part_shape_;
 
@@ -128,6 +129,19 @@ namespace SPH
 
 	private:
 		void tagByContain(size_t particle_index);
+	};
+
+	/**
+	 * @class BodyAlignedBoxByParticle
+	 * @brief A  body part with the collection of particles within by an AlignedBoxShape.
+	 */
+	class BodyAlignedBoxByParticle : public BodyRegionByParticle
+	{
+	public:
+		AlignedBoxShape &aligned_box_;
+
+		BodyAlignedBoxByParticle(SPHBody &sph_body, SharedPtr<AlignedBoxShape> aligned_box_ptr);
+		virtual ~BodyAlignedBoxByParticle(){};
 	};
 
 	/**
@@ -168,6 +182,7 @@ namespace SPH
 	{
 	private:
 		SharedPtrKeeper<Shape> shape_ptr_keeper_;
+
 	public:
 		Shape &body_part_shape_;
 

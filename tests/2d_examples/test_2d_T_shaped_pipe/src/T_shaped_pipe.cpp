@@ -23,8 +23,8 @@ BoundingBox fluid_body_domain_bounds(Vec2d(-DL_sponge, -DH), Vec2d(DL + BW, 2.0 
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;					/**< Reference density of fluid. */
-Real U_f = 1.0;						/**< Characteristic velocity. */
+Real rho0_f = 1.0; /**< Reference density of fluid. */
+Real U_f = 1.0;	   /**< Characteristic velocity. */
 /** Reference sound speed needs to consider the flow speed in the narrow channels. */
 Real c_f = 10.0 * U_f * SMAX(1.0, DH / (2.0 * (DL - DL1)));
 Real Re = 100.0;					/**< Reynolds number. */
@@ -131,7 +131,7 @@ int main(int ac, char *av[])
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
-	//handle command line arguments
+	// handle command line arguments
 	system.handleCommandlineOptions(ac, av);
 	InOutput in_output(system);
 	//----------------------------------------------------------------------
@@ -160,7 +160,8 @@ int main(int ac, char *av[])
 	TimeStepInitialization initialize_a_fluid_step(water_block);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	/** Emitter. */
-	BodyRegionByParticle emitter(water_block, makeShared<MultiPolygonShape>(creatEmitterShape()));
+	BodyAlignedBoxByParticle emitter(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(-DL_sponge + 0.5 * BW, 0.5 * DH)), Vec2d(0.5 * BW, 0.5 * DH)));
 	fluid_dynamics::EmitterInflowInjecting emitter_inflow_injecting(water_block, emitter, 10, 0, true);
 	/** Emitter condition. */
 	BodyRegionByCell emitter_buffer(water_block, makeShared<MultiPolygonShape>(createEmitterBufferShape()));

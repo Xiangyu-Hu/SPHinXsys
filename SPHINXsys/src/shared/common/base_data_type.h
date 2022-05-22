@@ -463,6 +463,7 @@ namespace SPH
 
 	public:
 		Transform2d() : rotation_(Rotation2d()), translation_(Vec2d(0)){};
+		explicit Transform2d(const Vec2d &translation) : rotation_(Rotation2d()), translation_(translation){};
 		explicit Transform2d(const Rotation2d &rotation, const Vec2d &translation = Vec2d(0))
 			: rotation_(rotation), translation_(translation){};
 

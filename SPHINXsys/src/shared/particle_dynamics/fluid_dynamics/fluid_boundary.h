@@ -190,7 +190,7 @@ namespace SPH
         class EmitterInflowInjecting : public PartSimpleDynamicsByParticle, public FluidDataSimple
         {
         public:
-            explicit EmitterInflowInjecting(FluidBody &fluid_body, BodyRegionByParticle &body_part,
+            explicit EmitterInflowInjecting(FluidBody &fluid_body, BodyAlignedBoxByParticle &aligned_box_part,
                                             size_t body_buffer_width, int axis_direction, bool positive);
             virtual ~EmitterInflowInjecting(){};
 
@@ -201,10 +201,9 @@ namespace SPH
             StdLargeVec<Vecd> &pos_n_;
             StdLargeVec<Real> &rho_n_, &p_;
             const int axis_; /**< the axis direction for bounding*/
-            Vecd periodic_translation_;
             size_t body_buffer_width_;
-            BoundingBox body_part_bounds_;
-
+            AlignedBoxShape &aligned_box_;
+ 
             virtual void checkLowerBound(size_t unsorted_index_i, Real dt = 0.0);
             virtual void checkUpperBound(size_t unsorted_index_i, Real dt = 0.0);
             ParticleFunctor checking_bound_;

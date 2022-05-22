@@ -24,8 +24,8 @@ namespace SPH
 	//=================================================================================================//
 	BodyRegionByParticle::
 		BodyRegionByParticle(SPHBody &sph_body, SharedPtr<Shape> shape_ptr)
-		: BodyPartByParticle(sph_body, shape_ptr->getName()), 
-		body_part_shape_(shape_ptr_keeper_.assignRef(shape_ptr))
+		: BodyPartByParticle(sph_body, shape_ptr->getName()),
+		  body_part_shape_(shape_ptr_keeper_.assignRef(shape_ptr))
 	{
 		TaggingParticleMethod tagging_particle_method = std::bind(&BodyRegionByParticle::tagByContain, this, _1);
 		tagParticles(tagging_particle_method);
@@ -38,6 +38,10 @@ namespace SPH
 			body_part_particles_.push_back(particle_index);
 		}
 	}
+	//=================================================================================================//
+	BodyAlignedBoxByParticle::
+		BodyAlignedBoxByParticle(SPHBody &sph_body, SharedPtr<AlignedBoxShape> aligned_box_ptr)
+		: BodyRegionByParticle(sph_body, aligned_box_ptr), aligned_box_(*aligned_box_ptr.get()) {}
 	//=================================================================================================//
 	BodySurface::BodySurface(SPHBody &sph_body)
 		: BodyPartByParticle(sph_body, "BodySurface"),
@@ -73,9 +77,9 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	BodyRegionByCell::BodyRegionByCell(RealBody &real_body,  SharedPtr<Shape> shape_ptr)
-		: BodyPartByCell(real_body, shape_ptr->getName()), 
-		body_part_shape_(shape_ptr_keeper_.assignRef(shape_ptr))
+	BodyRegionByCell::BodyRegionByCell(RealBody &real_body, SharedPtr<Shape> shape_ptr)
+		: BodyPartByCell(real_body, shape_ptr->getName()),
+		  body_part_shape_(shape_ptr_keeper_.assignRef(shape_ptr))
 	{
 		TaggingCellMethod tagging_cell_method = std::bind(&BodyRegionByCell::checkNotFar, this, _1, _2);
 		tagCells(tagging_cell_method);
