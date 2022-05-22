@@ -11,7 +11,7 @@ using namespace SPH;
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real DL = 5.0;						  /**< Reference length. */
-Real DH = 3.0;						  /**< Reference height. */
+Real DH = 3.0;						  /**< Reference and the height of main channel. */
 Real DL1 = 0.7 * DL;				  /**< The length of the main channel. */
 Real resolution_ref = 0.15;			  /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;		  /**< Reference size of the emitter. */
@@ -20,6 +20,11 @@ Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer 
 BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -DH), Vec2d(DL + BW, 2.0 * DH));
 /** Prescribed fluid body domain bounds*/
 BoundingBox fluid_body_domain_bounds(Vec2d(-DL_sponge, -DH), Vec2d(DL + BW, 2.0 * DH));
+Vec2d emitter_location = Vec2d(-DL_sponge, 0.0);
+Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
+Vec2d inlet_buffer_location = Vec2d(-DL_sponge, 0.0);
+Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
+//-------------------------------------------------------
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
@@ -78,17 +83,18 @@ public:
 		: InflowBoundaryCondition(body, aligned_box_part),
 		  u_ave_(0), u_ref_(U_f), t_ref_(4.0) {}
 
+	// here every argument parameters and return value are in frame (local) coordinate
 	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
 	{
 		Real u = velocity[0];
 		Real v = velocity[1];
 
-		if (position[0] < 0.0)
+		if (position[0] < halfsize_[0])
 		{
-			u = 6.0 * u_ave_ * position[1] * (DH - position[1]) / DH / DH;
+			u = 2.0 * u_ave_ * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
 			v = 0.0;
 		}
-		return transform_.xformFrameVecToBase(Vec2d(u, v));
+		return Vec2d(u, v);
 	}
 
 	void setupDynamics(Real dt = 0.0) override
@@ -138,11 +144,11 @@ int main(int ac, char *av[])
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	/** Emitter. */
 	BodyAlignedBoxByParticle emitter(
-		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(-DL_sponge + 0.5 * BW, 0.5 * DH)), Vec2d(0.5 * BW, 0.5 * DH)));
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_location + emitter_halfsize)), emitter_halfsize));
 	fluid_dynamics::EmitterInflowInjecting emitter_inflow_injecting(water_block, emitter, 10, 0, true);
 	/** Emitter condition. */
 	BodyAlignedBoxByCell emitter_buffer(
-		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(0.0, 0.5 * DH)), Vec2d(0.5 * DL_sponge, 0.5 * DH)));
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(inlet_buffer_location + inlet_buffer_halfsize)), inlet_buffer_halfsize));
 	EmitterBufferInflowCondition emitter_buffer_inflow_condition(water_block, emitter_buffer);
 	/** time-space method to detect surface particles. */
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex
@@ -229,7 +235,7 @@ int main(int ac, char *av[])
 			{
 				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt - relaxation_time);
 				pressure_relaxation.parallel_exec(dt);
-				emitter_buffer_inflow_condition.parallel_exec();
+				emitter_buffer_inflow_condition.exec();
 				density_relaxation.parallel_exec(dt);
 
 				relaxation_time += dt;

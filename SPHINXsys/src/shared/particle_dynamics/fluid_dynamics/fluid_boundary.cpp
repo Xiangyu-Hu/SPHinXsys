@@ -15,12 +15,15 @@ namespace SPH
 			FlowRelaxationBuffer(FluidBody &fluid_body, BodyAlignedBoxByCell &aligned_box_part)
 			: PartDynamicsByCell(fluid_body, aligned_box_part), FluidDataSimple(fluid_body),
 			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_), relaxation_rate_(0.3),
-			  transform_(aligned_box_part.aligned_box_.getTransform()){};
+			  transform_(aligned_box_part.aligned_box_.getTransform()),
+			  halfsize_(aligned_box_part.aligned_box_.HalfSize()){};
 		//=================================================================================================//
 		void FlowRelaxationBuffer ::Update(size_t index_i, Real dt)
 		{
-			vel_n_[index_i] +=
-				relaxation_rate_ * (getTargetVelocity(pos_n_[index_i], vel_n_[index_i]) - vel_n_[index_i]);
+			Vecd frame_position = transform_.shiftBaseStationToFrame(pos_n_[index_i]);
+			Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_n_[index_i]);
+			Vecd target_velocity = transform_.xformFrameVecToBase(getTargetVelocity(frame_position, frame_velocity));
+			vel_n_[index_i] += relaxation_rate_ * (target_velocity - vel_n_[index_i]);
 		}
 		InflowBoundaryCondition::InflowBoundaryCondition(FluidBody &fluid_body, BodyAlignedBoxByCell &aligned_box_part)
 			: FlowRelaxationBuffer(fluid_body, aligned_box_part)

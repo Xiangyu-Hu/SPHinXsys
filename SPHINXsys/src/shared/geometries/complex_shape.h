@@ -79,6 +79,7 @@ namespace SPH
 				  Transformd(0.5 * (shape.bounding_box_.second + shape.bounding_box_.first)),
 				  0.5 * (shape.bounding_box_.second - shape.bounding_box_.first), std::forward<Args>(args)...){};
 
+		Vecd HalfSize() { return halfsize_; }
 		bool checkInBounds(int axis, const Vecd &point);
 		bool checkUpperBound(int axis, const Vecd &point);
 		bool checkLowerBound(int axis, const Vecd &point);

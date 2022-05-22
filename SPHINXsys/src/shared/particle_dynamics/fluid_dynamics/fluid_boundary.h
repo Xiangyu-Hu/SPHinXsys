@@ -53,9 +53,11 @@ namespace SPH
             /** default value is 0.1 suggests reaching  target inflow velocity in about 10 time steps */
             Real relaxation_rate_;
            	Transformd &transform_;
+            Vecd halfsize_;
 
 
-            /** inflow profile to be defined in applications */
+            /** inflow profile to be defined in applications, 
+             * argument parameters and return value are in frame (local) coordinate */
             virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) = 0;
             virtual void Update(size_t index_i, Real dt = 0.0) override;
         };
