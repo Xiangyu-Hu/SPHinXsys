@@ -29,6 +29,9 @@ Real c_f = 10.0 * U_max;				 /**< Reference sound speed. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
+Vec2d water_block_location = Vec2d(0);
+Vec2d water_block_halfsize = Vec2d(0.5 * LL, 0.5 * LH);
+
 StdVec<Vecd> water_block_shape{
 	Vecd(0.0, 0.0), Vecd(0.0, LH), Vecd(LL, LH), Vecd(LL, 0.0), Vecd(0.0, 0.0)};
 StdVec<Vecd> outer_wall_shape{
@@ -73,7 +76,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Creating bodies with corresponding materials and particles.
 	//----------------------------------------------------------------------
-	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+	FluidBody water_block(sph_system, makeShared<TransformShape<GeometricShapeBox>>(
+										  Transform2d(water_block_halfsize), water_block_halfsize, "WaterBody"));
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
 
