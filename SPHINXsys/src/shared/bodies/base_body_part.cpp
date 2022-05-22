@@ -39,10 +39,6 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	BodyAlignedBoxByParticle::
-		BodyAlignedBoxByParticle(SPHBody &sph_body, SharedPtr<AlignedBoxShape> aligned_box_ptr)
-		: BodyRegionByParticle(sph_body, aligned_box_ptr), aligned_box_(*aligned_box_ptr.get()) {}
-	//=================================================================================================//
 	BodySurface::BodySurface(SPHBody &sph_body)
 		: BodyPartByParticle(sph_body, "BodySurface"),
 		  particle_spacing_min_(sph_body.sph_adaptation_->MinimumSpacing())

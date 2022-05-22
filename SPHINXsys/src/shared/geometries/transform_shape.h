@@ -30,7 +30,7 @@ namespace SPH
         virtual ~TransformShape(){};
 
         /** variable transform is introduced here */
-        Transformd getTransform() { return transformd_; };
+        Transformd &getTransform() { return transformd_; };
         void setTransform(const Transformd &transformd) { transformd_ = transformd; };
 
         virtual bool checkContain(const Vecd &input_pnt, bool BOUNDARY_INCLUDED = true) override

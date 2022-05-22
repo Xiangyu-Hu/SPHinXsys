@@ -132,19 +132,6 @@ namespace SPH
 	};
 
 	/**
-	 * @class BodyAlignedBoxByParticle
-	 * @brief A  body part with the collection of particles within by an AlignedBoxShape.
-	 */
-	class BodyAlignedBoxByParticle : public BodyRegionByParticle
-	{
-	public:
-		AlignedBoxShape &aligned_box_;
-
-		BodyAlignedBoxByParticle(SPHBody &sph_body, SharedPtr<AlignedBoxShape> aligned_box_ptr);
-		virtual ~BodyAlignedBoxByParticle(){};
-	};
-
-	/**
 	 * @class BodySurface
 	 * @brief A  body part with the collection of particles at surface of a body
 	 */
@@ -217,5 +204,23 @@ namespace SPH
 		/** only cells near the surface of the body part shape are included */
 		bool checkNearSurface(Vecd cell_position, Real threshold);
 	};
+
+	/**
+	 * @class AlignedBoxRegion
+	 * @brief A template body part with the collection of particles within by an AlignedBoxShape.
+	 */
+	template <class BodyRegionType>
+	class AlignedBoxRegion : public BodyRegionType
+	{
+	public:
+		AlignedBoxShape &aligned_box_;
+
+		AlignedBoxRegion(RealBody &real_body, SharedPtr<AlignedBoxShape> aligned_box_ptr)
+			: BodyRegionType(real_body, aligned_box_ptr), aligned_box_(*aligned_box_ptr.get()){};
+		virtual ~AlignedBoxRegion(){};
+	};
+
+	using BodyAlignedBoxByParticle = AlignedBoxRegion<BodyRegionByParticle>;
+	using BodyAlignedBoxByCell = AlignedBoxRegion<BodyRegionByCell>;
 }
 #endif // BASE_BODY_PART_H

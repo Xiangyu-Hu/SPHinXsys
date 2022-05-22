@@ -67,29 +67,6 @@ public:
 	}
 };
 //----------------------------------------------------------------------
-//	Define case dependent SPH body part shapes.
-//----------------------------------------------------------------------
-/** create the emitter shape. */
-MultiPolygon creatEmitterShape()
-{
-	std::vector<Vecd> emmiter_shape{
-		Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(-DL_sponge + BW, DH), Vecd(-DL_sponge + BW, 0.0), Vecd(-DL_sponge, 0.0)};
-
-	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(emmiter_shape, ShapeBooleanOps::add);
-	return multi_polygon;
-}
-/** create the emitter buffer shape . */
-MultiPolygon createEmitterBufferShape()
-{
-	std::vector<Vecd> emitter_buffer_shape{
-		Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(0.0, DH), Vecd(0.0, 0.0), Vecd(-DL_sponge, 0.0)};
-
-	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(emitter_buffer_shape, ShapeBooleanOps::add);
-	return multi_polygon;
-}
-//----------------------------------------------------------------------
 //	Define emitter buffer inflow boundary condition
 //----------------------------------------------------------------------
 class EmitterBufferInflowCondition : public fluid_dynamics::InflowBoundaryCondition
@@ -97,8 +74,8 @@ class EmitterBufferInflowCondition : public fluid_dynamics::InflowBoundaryCondit
 	Real u_ave_, u_ref_, t_ref_;
 
 public:
-	EmitterBufferInflowCondition(FluidBody &body, BodyPartByCell &body_part)
-		: InflowBoundaryCondition(body, body_part),
+	EmitterBufferInflowCondition(FluidBody &body, BodyAlignedBoxByCell &aligned_box_part)
+		: InflowBoundaryCondition(body, aligned_box_part),
 		  u_ave_(0), u_ref_(U_f), t_ref_(4.0) {}
 
 	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
@@ -111,7 +88,7 @@ public:
 			u = 6.0 * u_ave_ * position[1] * (DH - position[1]) / DH / DH;
 			v = 0.0;
 		}
-		return Vecd(u, v);
+		return transform_.xformFrameVecToBase(Vec2d(u, v));
 	}
 
 	void setupDynamics(Real dt = 0.0) override
@@ -164,7 +141,8 @@ int main(int ac, char *av[])
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(-DL_sponge + 0.5 * BW, 0.5 * DH)), Vec2d(0.5 * BW, 0.5 * DH)));
 	fluid_dynamics::EmitterInflowInjecting emitter_inflow_injecting(water_block, emitter, 10, 0, true);
 	/** Emitter condition. */
-	BodyRegionByCell emitter_buffer(water_block, makeShared<MultiPolygonShape>(createEmitterBufferShape()));
+	BodyAlignedBoxByCell emitter_buffer(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(0.0, 0.5 * DH)), Vec2d(0.5 * DL_sponge, 0.5 * DH)));
 	EmitterBufferInflowCondition emitter_buffer_inflow_condition(water_block, emitter_buffer);
 	/** time-space method to detect surface particles. */
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex
