@@ -46,7 +46,7 @@ namespace SPH
 			: PartSimpleDynamicsByParticle(fluid_body, aligned_box_part), FluidDataSimple(fluid_body),
 			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_),
 			  rho_n_(particles_->rho_n_), p_(particles_->p_), inflow_pressure_(0),
-			  rho0_(material_->ReferenceDensity()) {}
+			  rho0_(material_->ReferenceDensity()), transform_(aligned_box_part.aligned_box_.getTransform()) {}
 		//=================================================================================================//
 		void EmitterInflowCondition ::Update(size_t unsorted_index_i, Real dt)
 		{

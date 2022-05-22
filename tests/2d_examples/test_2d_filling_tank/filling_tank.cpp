@@ -113,7 +113,7 @@ public:
 
 	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
 	{
-		return Vec2d(2.0, 0.0);
+		return transform_.xformBaseVecToFrame(Vec2d(2.0, 0.0));
 	}
 };
 //----------------------------------------------------------------------

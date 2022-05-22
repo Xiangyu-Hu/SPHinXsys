@@ -107,6 +107,7 @@ namespace SPH
             /** inflow pressure condition */
             Real inflow_pressure_;
             Real rho0_;
+          	Transformd &transform_;
 
             /** inflow velocity profile to be defined in applications */
             virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) = 0;
