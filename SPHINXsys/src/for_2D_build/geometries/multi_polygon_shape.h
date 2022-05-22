@@ -91,10 +91,6 @@ namespace SPH
 		virtual bool isValid() override;
 		virtual bool checkContain(const Vec2d &input_pnt, bool BOUNDARY_INCLUDED = true) override;
 		virtual Vec2d findClosestPoint(const Vec2d &input_pnt) override;
-		virtual bool checkNotFar(const Vec2d &input_pnt, Real threshold) override;
-		virtual bool checkNearSurface(const Vec2d &input_pnt, Real threshold) override;
-		virtual Real findSignedDistance(const Vec2d &input_pnt) override;
-		virtual Vec2d findNormalDirection(const Vec2d &input_pnt) override;
 
 	protected:
 		MultiPolygon multi_polygon_;

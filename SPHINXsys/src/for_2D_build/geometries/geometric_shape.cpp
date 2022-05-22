@@ -60,9 +60,4 @@ namespace SPH
         return BoundingBox(center_ - shift, center_ + shift);
     }
     //=================================================================================================//
-    Real GeometricShapeBall::findSignedDistance(const Vecd &pnt)
-    {
-        return (pnt - center_).norm() - radius_;
-    }
-    //=================================================================================================//
 }

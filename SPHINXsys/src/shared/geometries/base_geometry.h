@@ -39,12 +39,13 @@
 
 namespace SPH
 {
-	class Tree;
-	class Neighborhood;
 	/**
 	 * @class ShapeBooleanOps
-	 * @brief Boolian operation for generate complex shapes
-	 * @details Note that, for 3D applications, only add and sub boolean operation have been defined right now
+	 * @brief Boolean operation for generate complex shapes
+	 * @details Note that, for 2d multi polygons, all four operations are implemented.
+	 * But for binary shapes and complex shapes, 
+	 * only add and sub boolean operation have been defined for right now.
+	 * Also after operations all surfaces of all shapes should be still surfaces.
 	 */
 	enum class ShapeBooleanOps
 	{
@@ -72,12 +73,12 @@ namespace SPH
 		virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) = 0;
 		virtual Vecd findClosestPoint(const Vecd &input_pnt) = 0;
 
-		virtual bool checkNotFar(const Vecd &input_pnt, Real threshold);
-		virtual bool checkNearSurface(const Vecd &input_pnt, Real threshold);
+		bool checkNotFar(const Vecd &input_pnt, Real threshold);
+		bool checkNearSurface(const Vecd &input_pnt, Real threshold);
 		/** Signed distance is negative for point within the complex shape. */
-		virtual Real findSignedDistance(const Vecd &input_pnt);
+		Real findSignedDistance(const Vecd &input_pnt);
 		/** Normal direction point toward outside of the complex shape. */
-		virtual Vecd findNormalDirection(const Vecd &input_pnt);
+		Vecd findNormalDirection(const Vecd &input_pnt);
 
 	protected:
 		std::string name_;
@@ -91,7 +92,7 @@ namespace SPH
 	/**
 	 * @class BinaryShapes
 	 * @brief a collections of shapes with binary operations
-	 * This class so that it has ownship of all shapes by using a unique pointer vector.
+	 * This class so that it has ownership of all shapes by using a unique pointer vector.
 	 * In this way, add or subtract a shape will call the shape's constructor other than
 	 * passing the shape pointer.
 	 */

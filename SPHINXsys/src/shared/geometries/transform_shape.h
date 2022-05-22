@@ -44,27 +44,6 @@ namespace SPH
             Vecd closest_point_origin = BaseShapeType::findClosestPoint(input_pnt_origin);
             return transformd_.shiftFrameStationToBase(closest_point_origin);
         };
-        virtual bool checkNotFar(const Vecd &input_pnt, Real threshold) override
-        {
-            Vecd input_pnt_origin = transformd_.shiftBaseStationToFrame(input_pnt);
-            return BaseShapeType::checkNotFar(input_pnt_origin, threshold);
-        };
-        virtual bool checkNearSurface(const Vecd &input_pnt, Real threshold) override
-        {
-            Vecd input_pnt_origin = transformd_.shiftBaseStationToFrame(input_pnt);
-            return BaseShapeType::checkNearSurface(input_pnt_origin, threshold);
-        };
-        virtual Real findSignedDistance(const Vecd &input_pnt) override
-        {
-            Vecd input_pnt_origin = transformd_.shiftBaseStationToFrame(input_pnt);
-            return BaseShapeType::findSignedDistance(input_pnt_origin);
-        };
-        virtual Vecd findNormalDirection(const Vecd &input_pnt) override
-        {
-            Vecd input_pnt_origin = transformd_.shiftBaseStationToFrame(input_pnt);
-            Vecd normal_direction_origin = BaseShapeType::findNormalDirection(input_pnt_origin);
-            return transformd_.xformFrameVecToBase(normal_direction_origin);
-        };
 
     protected:
         Transformd transformd_;
