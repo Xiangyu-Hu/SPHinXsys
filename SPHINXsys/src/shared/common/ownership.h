@@ -127,13 +127,19 @@ namespace SPH
 	class UniquePtrVectorKeeper
 	{
 	public:
+		UniquePtrVectorKeeper() = default;
+		UniquePtrVectorKeeper(const UniquePtrVectorKeeper&) = delete;
+		UniquePtrVectorKeeper& operator=(const UniquePtrVectorKeeper&) = delete;
+		UniquePtrVectorKeeper(UniquePtrVectorKeeper&&) = default;
+		UniquePtrVectorKeeper& operator=(UniquePtrVectorKeeper&&) = default;
+
 		/** used to create a new derived object in the vector 
-		 * and output the base class pointer as observer */
+		 * and output its pointer as observer */
 		template <class DerivedType, typename... ConstructorArgs>
-		BaseType *createPtr(ConstructorArgs &&...args)
+		DerivedType *createPtr(ConstructorArgs &&...args)
 		{
-			ptr_vector_.push_back(makeUnique<DerivedType>(std::forward<ConstructorArgs>(args)...));
-			return ptr_vector_.back().get();
+			ptr_vector_.emplace_back(std::move(makeUnique<DerivedType>(std::forward<ConstructorArgs>(args)...)));
+			return dynamic_cast<DerivedType *>(ptr_vector_.back().get());
 		};
 
 	private:

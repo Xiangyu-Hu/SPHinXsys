@@ -109,12 +109,12 @@ int main()
 	TriangleMeshShapeBrick holder_shape(halfsize_holder, resolution, translation_holder);
 	BodyRegionByParticle holder(beam_body, "Holder", holder_shape);
 	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(beam_body, holder);
-	DampingWithRandomChoice<DampingPairwiseInner<indexVector, Vec3d>>
+	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
 		muscle_damping(beam_body_inner, 0.1, "Velocity", physical_viscosity);
 	/** Output */
 	In_Output in_output(system);
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
-	ObservedQuantityRecording<indexVector, Vecd>
+	ObservedQuantityRecording<Vecd>
 		write_displacement("Position", in_output, beam_observer_contact);
 	/**
 	 * From here the time stepping begines.

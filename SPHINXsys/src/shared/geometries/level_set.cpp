@@ -12,18 +12,16 @@ namespace SPH
 {
 	//=================================================================================================//
 	LevelSetDataPackage::
-		LevelSetDataPackage() : BaseDataPackage<4, 6>(), is_core_pkg_(false)
+		LevelSetDataPackage() : BaseDataPackage<4, 6>(), is_core_pkg_(false) {}
+	//=================================================================================================//
+	void LevelSetDataPackage::initializeSingularDataAddress()
 	{
 		initializePackageDataAddress(phi_, phi_addrs_);
 		initializePackageDataAddress(n_, n_addrs_);
+		initializePackageDataAddress(none_normalized_n_, none_normalized_n_addrs_);
 		initializePackageDataAddress(kernel_weight_, kernel_weight_addrs_);
 		initializePackageDataAddress(kernel_gradient_, kernel_gradient_addrs_);
 		initializePackageDataAddress(near_interface_id_, near_interface_id_addrs_);
-	}
-	//=================================================================================================//
-	LevelSetDataPackage::LevelSetDataPackage(Real level_set) : LevelSetDataPackage()
-	{
-		initializeWithUniformData(level_set);
 	}
 	//=================================================================================================//
 	void LevelSetDataPackage::
@@ -31,6 +29,7 @@ namespace SPH
 	{
 		assignPackageDataAddress(phi_addrs_, addrs_index, src_pkg->phi_, data_index);
 		assignPackageDataAddress(n_addrs_, addrs_index, src_pkg->n_, data_index);
+		assignPackageDataAddress(none_normalized_n_addrs_, addrs_index, src_pkg->none_normalized_n_, data_index);
 		assignPackageDataAddress(kernel_weight_addrs_, addrs_index, src_pkg->kernel_weight_, data_index);
 		assignPackageDataAddress(kernel_gradient_addrs_, addrs_index, src_pkg->kernel_gradient_, data_index);
 		assignPackageDataAddress(near_interface_id_addrs_, addrs_index, src_pkg->near_interface_id_, data_index);
@@ -39,6 +38,11 @@ namespace SPH
 	void LevelSetDataPackage::computeNormalDirection()
 	{
 		computeNormalizedGradient(phi_addrs_, n_addrs_);
+	}
+	//=================================================================================================//
+	void LevelSetDataPackage::computeNoneNormalizedNormalDirection()
+	{
+		computeGradient(phi_addrs_, none_normalized_n_addrs_);
 	}
 	//=================================================================================================//
 	BaseLevelSet ::BaseLevelSet(Shape &shape, SPHAdaptation &sph_adaptation)
@@ -56,28 +60,36 @@ namespace SPH
 		return heaviside;
 	}
 	//=================================================================================================//
-	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
+	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size,
 					   Shape &shape, SPHAdaptation &sph_adaptation)
-		: MeshWithDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, 4,
+		: MeshWithDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, buffer_size,
 																  shape, sph_adaptation),
 		  global_h_ratio_(sph_adaptation.ReferenceSpacing() / data_spacing),
+		  small_shift_factor_(sph_adaptation.SmallShiftFactor()),
 		  kernel_(*sph_adaptation.getKernel())
 	{
 		Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
 		initializeASingularDataPackage(-far_field_distance);
 		initializeASingularDataPackage(far_field_distance);
-		initializeDataPackages();
 	}
 	//=================================================================================================//
-	void LevelSet::initializeDataPackages()
+	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing,
+					   Shape &shape, SPHAdaptation &sph_adaptation)
+		: LevelSet(tentative_bounds, data_spacing, 4, shape, sph_adaptation)
 	{
 		MeshFunctor initialize_data_in_a_cell = std::bind(&LevelSet::initializeDataInACell, this, _1, _2);
 		MeshIterator_parallel(Vecu(0), number_of_cells_, initialize_data_in_a_cell);
+		finishDataPackages();
+	}
+	//=================================================================================================//
+	void LevelSet::finishDataPackages()
+	{
 		MeshFunctor tag_a_cell_inner_pkg = std::bind(&LevelSet::tagACellIsInnerPackage, this, _1, _2);
 		MeshIterator_parallel(Vecu(0), number_of_cells_, tag_a_cell_inner_pkg);
 		MeshFunctor initial_address_in_a_cell = std::bind(&LevelSet::initializeAddressesInACell, this, _1, _2);
 		MeshIterator_parallel(Vecu(0), number_of_cells_, initial_address_in_a_cell);
 		updateNormalDirection();
+		updateNoneNormalizedNormalDirection();
 		updateKernelIntegrals();
 	}
 	//=================================================================================================//
@@ -93,6 +105,13 @@ namespace SPH
 		PackageIterator_parallel<LevelSetDataPackage>(inner_data_pkgs_, update_normal_diraction);
 	}
 	//=================================================================================================//
+	void LevelSet::updateNoneNormalizedNormalDirection()
+	{
+		PackageFunctor<void, LevelSetDataPackage> update_none_normalized_normal_diraction =
+			std::bind(&LevelSet::updateNoneNormalizedNormalDirectionForAPackage, this, _1, _2);
+		PackageIterator_parallel<LevelSetDataPackage>(inner_data_pkgs_, update_none_normalized_normal_diraction);
+	}
+	//=================================================================================================//
 	void LevelSet::updateKernelIntegrals()
 	{
 		PackageFunctor<void, LevelSetDataPackage> update_kernel_value =
@@ -104,6 +123,12 @@ namespace SPH
 	{
 		return probeMesh<Vecd, LevelSetDataPackage::PackageDataAddress<Vecd>,
 						 &LevelSetDataPackage::n_addrs_>(position);
+	}
+	//=================================================================================================//
+	Vecd LevelSet::probeNoneNormalizedNormalDirection(const Vecd &position)
+	{
+		return probeMesh<Vecd, LevelSetDataPackage::PackageDataAddress<Vecd>,
+						 &LevelSetDataPackage::none_normalized_n_addrs_>(position);
 	}
 	//=================================================================================================//
 	Real LevelSet::probeSignedDistance(const Vecd &position)
@@ -128,6 +153,12 @@ namespace SPH
 		updateNormalDirectionForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt)
 	{
 		inner_data_pkg->computeNormalDirection();
+	}
+	//=================================================================================================//
+	void LevelSet::
+		updateNoneNormalizedNormalDirectionForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt)
+	{
+		inner_data_pkg->computeNoneNormalizedNormalDirection();
 	}
 	//=================================================================================================//
 	void LevelSet::
@@ -191,26 +222,114 @@ namespace SPH
 		}
 		return is_bounded;
 	}
+	//=================================================================================================//
+	LevelSetDataPackage *LevelSet::createDataPackage(const Vecu &cell_index, const Vecd &cell_position)
+	{
+		mutex_my_pool.lock();
+		LevelSetDataPackage *new_data_pkg = data_pkg_pool_.malloc();
+		mutex_my_pool.unlock();
+		Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
+		new_data_pkg->initializePackageGeometry(pkg_lower_bound, data_spacing_);
+		new_data_pkg->initializeBasicData(shape_);
+		new_data_pkg->pkg_index_ = cell_index;
+		assignDataPackageAddress(cell_index, new_data_pkg);
+		return new_data_pkg;
+	}
+	//=================================================================================================//
+	void LevelSet::initializeDataInACell(const Vecu &cell_index, Real dt)
+	{
+		Vecd cell_position = CellPositionFromIndex(cell_index);
+		Real signed_distance = shape_.findSignedDistance(cell_position);
+		Vecd normal_direction = shape_.findNormalDirection(cell_position);
+		Real measure = getMaxAbsoluteElement(normal_direction * signed_distance);
+		if (measure < grid_spacing_)
+		{
+			LevelSetDataPackage *new_data_pkg = createDataPackage(cell_index, cell_position);
+			new_data_pkg->is_core_pkg_ = true;
+			core_data_pkgs_.push_back(new_data_pkg);
+		}
+		else
+		{
+			LevelSetDataPackage *singular_data_pkg =
+				shape_.checkContain(cell_position) ? singular_data_pkgs_addrs_[0] : singular_data_pkgs_addrs_[1];
+			assignDataPackageAddress(cell_index, singular_data_pkg);
+		}
+	}
+	//=============================================================================================//
+	void LevelSet::tagACellIsInnerPackage(const Vecu &cell_index, Real dt)
+	{
+		bool is_inner_pkg = isInnerPackage(cell_index);
+
+		if (is_inner_pkg)
+		{
+			LevelSetDataPackage *current_data_pkg = DataPackageFromCellIndex(cell_index);
+			if (current_data_pkg->is_core_pkg_)
+			{
+				current_data_pkg->is_inner_pkg_ = true;
+				inner_data_pkgs_.push_back(current_data_pkg);
+			}
+			else
+			{
+				Vecd cell_position = CellPositionFromIndex(cell_index);
+				LevelSetDataPackage *new_data_pkg = createDataPackage(cell_index, cell_position);
+				new_data_pkg->is_inner_pkg_ = true;
+				inner_data_pkgs_.push_back(new_data_pkg);
+			}
+		}
+	}
+	//=============================================================================================//
+	RefinedLevelSet::RefinedLevelSet(BoundingBox tentative_bounds, LevelSet &coarse_level_set,
+									 Shape &shape, SPHAdaptation &sph_adaptation)
+		: RefinedMesh(tentative_bounds, coarse_level_set, 4, shape, sph_adaptation)
+	{
+		MeshFunctor initialize_data_in_a_cell = std::bind(&RefinedLevelSet::initializeDataInACellFromCoarse, this, _1, _2);
+		MeshIterator_parallel(Vecu(0), number_of_cells_, initialize_data_in_a_cell);
+		finishDataPackages();
+	}
+	//=============================================================================================//
+	void RefinedLevelSet::initializeDataInACellFromCoarse(const Vecu &cell_index, Real dt)
+	{
+		Vecd cell_position = CellPositionFromIndex(cell_index);
+		LevelSetDataPackage *singular_data_pkg = coarse_mesh_.probeSignedDistance(cell_position) < 0.0
+													 ? singular_data_pkgs_addrs_[0]
+													 : singular_data_pkgs_addrs_[1];
+		assignDataPackageAddress(cell_index, singular_data_pkg);
+		if (coarse_mesh_.isWithinCorePackage(cell_position))
+		{
+			Real signed_distance = shape_.findSignedDistance(cell_position);
+			Vecd normal_direction = shape_.findNormalDirection(cell_position);
+			Real measure = getMaxAbsoluteElement(normal_direction * signed_distance);
+			if (measure < grid_spacing_)
+			{
+				LevelSetDataPackage *new_data_pkg = createDataPackage(cell_index, cell_position);
+				new_data_pkg->is_core_pkg_ = true;
+				core_data_pkgs_.push_back(new_data_pkg);
+			}
+		}
+	}
 	//=============================================================================================//
 	MultilevelLevelSet::
 		MultilevelLevelSet(BoundingBox tentative_bounds, Real reference_data_spacing,
-						   size_t total_levels, Real maximum_spacing_ratio,
-						   Shape &shape, SPHAdaptation &sph_adaptation)
-		: MultilevelMesh<BaseLevelSet, LevelSet>(tentative_bounds, reference_data_spacing,
-												 total_levels, maximum_spacing_ratio,
-												 shape, sph_adaptation) {}
+						   size_t total_levels, Shape &shape, SPHAdaptation &sph_adaptation)
+		: MultilevelMesh<BaseLevelSet, LevelSet, RefinedLevelSet>(tentative_bounds, reference_data_spacing,
+																  total_levels, shape, sph_adaptation) {}
 	//=================================================================================================//
 	size_t MultilevelLevelSet::getMeshLevel(Real h_ratio)
 	{
 		for (size_t level = total_levels_; level != 0; --level)
 			if (h_ratio - mesh_levels_[level - 1]->global_h_ratio_ > -Eps)
-				return level - 1; //jump out the loop!
+				return level - 1; // jump out the loop!
 
 		std::cout << "\n Error: LevelSet level searching out of bound!" << std::endl;
 		std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 		exit(1);
-		return 999; //means an error in level searching
+		return 999; // means an error in level searching
 	};
+	//=================================================================================================//
+	void MultilevelLevelSet::cleanInterface(bool isSmoothed)
+	{
+		mesh_levels_.back()->cleanInterface();
+	}
 	//=============================================================================================//
 	Real MultilevelLevelSet::probeSignedDistance(const Vecd &position)
 	{
@@ -222,18 +341,17 @@ namespace SPH
 		return mesh_levels_[getProbeLevel(position)]->probeNormalDirection(position);
 	}
 	//=============================================================================================//
+	Vecd MultilevelLevelSet::probeNoneNormalizedNormalDirection(const Vecd &position)
+	{
+		return mesh_levels_[getProbeLevel(position)]->probeNoneNormalizedNormalDirection(position);
+	}
+	//=============================================================================================//
 	size_t MultilevelLevelSet::getProbeLevel(const Vecd &position)
 	{
 		for (size_t level = total_levels_; level != 0; --level)
 			if (mesh_levels_[level - 1]->isWithinCorePackage(position))
-				return level - 1; //jump out of the loop!
+				return level - 1; // jump out of the loop!
 		return 0;
-	}
-	//=================================================================================================//
-	void MultilevelLevelSet::cleanInterface(bool isSmoothed)
-	{
-		//current only implement this, to be update later together with particle adaptation
-		return mesh_levels_[total_levels_ - 1]->cleanInterface(isSmoothed);
 	}
 	//=================================================================================================//
 	Real MultilevelLevelSet::probeKernelIntegral(const Vecd &position, Real h_ratio)

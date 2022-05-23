@@ -18,7 +18,7 @@ std::string full_path_to_file = "./input/teapot.stl";
 //----------------------------------------------------------------------
 Vec3d domain_lower_bound(-9.0, -6.0, 0.0);
 Vec3d domain_upper_bound(9.0, 6.0, 9.0);
-Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 25.0;
+Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 12.5;
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 //----------------------------------------------------------------------
@@ -28,7 +28,7 @@ class ImportedModel : public SolidBody
 {
 public:
 	ImportedModel(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name, makeShared<ParticleSpacingByBodyShape>(1.15, 1.0, 2))
+		: SolidBody(system, body_name, makeShared<ParticleSpacingByBodyShape>(1.15, 1.0, 3))
 	{
 		/** Geometry definition. */
 		Vecd translation(0.0, 0.0, 0.0);
@@ -58,7 +58,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	ImportedModel imported_model(system, "ImportedModel");
 	SolidParticles imported_model_particles(imported_model, makeShared<ParticleGeneratorMultiResolution>());
-	imported_model_particles.addAVariableToWrite<indexScalar, Real>("SmoothingLengthRatio");
+	imported_model_particles.addAVariableToWrite<Real>("SmoothingLengthRatio");
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------

@@ -32,14 +32,19 @@
 
 #include "all_particle_dynamics.h"
 #include "general_dynamics.h"
-#include "elastic_solid.h"
 #include "base_kernel.h"
+#include "body_relation.h"
+#include "solid_body.h"
+#include "solid_particles.h"
+#include "elastic_solid.h"
+
+
 
 namespace SPH
 {
-	template <int DataTypeIndex, typename VariableType>
+	template <typename VariableType>
 	class BodySummation;
-	template <int DataTypeIndex, typename VariableType>
+	template <typename VariableType>
 	class BodyMoment;
 
 	namespace solid_dynamics
@@ -83,7 +88,7 @@ namespace SPH
 		/**
 		 * @class ConstrainSolidBodyRegion
 		 * @brief Constrain a solid body part with prescribed motion.
-		 * Note the average values for FSI are prescirbed also.
+		 * Note the average values for FSI are prescribed also.
 		 */
 		class ConstrainSolidBodyRegion : public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
@@ -127,7 +132,7 @@ namespace SPH
 		/**
 		 * @class PositionSolidBody
 		 * @brief Moves the body into a defined position in a given time interval - position driven boundary condition
-		 * Note the average values for FSI are prescirbed also.
+		 * Note the average values for FSI are prescribed also.
 		 */
 		class PositionSolidBody : public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
@@ -152,7 +157,7 @@ namespace SPH
 		/**
 		 * @class PositionScaleSolidBody
 		 * @brief Scales the body in a given time interval - position driven boundary condition
-		 * Note the average values for FSI are prescirbed also.
+		 * Note the average values for FSI are prescribed also.
 		 */
 		class PositionScaleSolidBody : public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
@@ -177,7 +182,7 @@ namespace SPH
 		/**
 		 * @class TranslateSolidBody
 		 * @brief Translates the body in a given time interval -translation driven boundary condition; only moving the body; end position irrelevant;
-		 * Note the average values for FSI are prescirbed also.
+		 * Note the average values for FSI are prescribed also.
 		 */
 		class TranslateSolidBody : public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
@@ -202,7 +207,7 @@ namespace SPH
 		 * @class TranslateSolidBodyPart
 		 * @brief Translates the body in a given time interval -translation driven boundary condition; only moving the body; end position irrelevant;
 		 * Only the particles in a given Bounding Box are translated. The Bounding Box is defined for the nondeformed shape.
-		 * Note the average values for FSI are prescirbed also.
+		 * Note the average values for FSI are prescribed also.
 		 */
 		class TranslateSolidBodyPart : public TranslateSolidBody
 		{
@@ -266,7 +271,7 @@ namespace SPH
 		class ClampConstrainSolidBodyRegion : public ParticleDynamics<void>
 		{
 		public:
-			ConstrainSolidBodyRegion constrianing_;
+			ConstrainSolidBodyRegion constraining_;
 			SoftConstrainSolidBodyRegion softing_;
 
 			ClampConstrainSolidBodyRegion(BaseBodyRelationInner &inner_relation, BodyPartByParticle &body_part);
@@ -295,7 +300,7 @@ namespace SPH
 			Matd correction_matrix_;
 			Vecd velocity_correction_;
 			StdLargeVec<Vecd> &vel_n_;
-			BodyMoment<indexVector, Vecd> compute_total_momentum_;
+			BodyMoment<Vecd> compute_total_momentum_;
 		};
 
 		/**@class ImposeExternalForce
@@ -425,10 +430,12 @@ namespace SPH
 		public:
 			ForceInBodyRegion(SPHBody &sph_body, BodyPartByParticle &body_part, Vecd force, Real end_time);
 
+			StdLargeVec<bool>& GetApplyForceToParticle(){ return apply_force_to_particle_; }
 		protected:
 			StdLargeVec<Vecd> &pos_0_, &dvel_dt_prior_;
 			Vecd acceleration_;
 			Real end_time_;
+			StdLargeVec<bool> apply_force_to_particle_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -440,14 +447,14 @@ namespace SPH
 		{
 		public:
 			SurfacePressureFromSource(SPHBody &sph_body, BodyPartByParticle &body_part,
-									  Vecd source_point, StdVec<array<Real, 2>> pressure_over_time);
+									  Vecd source_point, StdVec<std::array<Real, 2>> pressure_over_time);
 
 			StdLargeVec<bool> &GetApplyPressureToParticle() { return apply_pressure_to_particle_; }
 
 		protected:
 			StdLargeVec<Vecd> &pos_0_, &n_, &dvel_dt_prior_;
 			StdLargeVec<Real> &mass_;
-			StdVec<array<Real, 2>> pressure_over_time_;
+			StdVec<std::array<Real, 2>> pressure_over_time_;
 			StdLargeVec<bool> apply_pressure_to_particle_;
 			Real getPressure();
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -605,7 +612,7 @@ namespace SPH
 			StdLargeVec<Real> J_to_minus_2_over_dimension_;
 			StdLargeVec<Matd> stress_on_particle_, inverse_F_T_;
 			const Real one_over_dimensions_ = 1.0 / (Real)Dimensions;
-			const Real correction_factor_ = 1.05;
+			Real correction_factor_;
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;

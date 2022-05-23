@@ -5,7 +5,6 @@
 
 #include "fluid_dynamics_complex.h"
 #include "fluid_dynamics_complex.hpp"
-#include "fluid_dynamics_inner.hpp"
 
 namespace SPH
 {
@@ -105,9 +104,9 @@ namespace SPH
 				pos_n_[index_i] += acceleration_trans * dt * dt * 0.5;
 		}
 		//=================================================================================================//
-		void PressureRelaxationRiemannWithWallOldroyd_B::Interaction(size_t index_i, Real dt)
+		void PressureRelaxationWithWallOldroyd_B::Interaction(size_t index_i, Real dt)
 		{
-			PressureRelaxation<PressureRelaxationRiemannInnerOldroyd_B>::Interaction(index_i, dt);
+			PressureRelaxation<PressureRelaxationInnerOldroyd_B>::Interaction(index_i, dt);
 
 			Real rho_i = rho_n_[index_i];
 			Matd tau_i = tau_[index_i];
@@ -129,9 +128,9 @@ namespace SPH
 			dvel_dt_[index_i] += acceleration;
 		}
 		//=================================================================================================//
-		void DensityRelaxationRiemannWithWallOldroyd_B::Interaction(size_t index_i, Real dt)
+		void DensityRelaxationWithWallOldroyd_B::Interaction(size_t index_i, Real dt)
 		{
-			DensityRelaxation<DensityRelaxationRiemannInnerOldroyd_B>::Interaction(index_i, dt);
+			DensityRelaxation<DensityRelaxationInnerOldroyd_B>::Interaction(index_i, dt);
 
 			Vecd vel_i = vel_n_[index_i];
 			Matd tau_i = tau_[index_i];
@@ -195,8 +194,8 @@ namespace SPH
 			: InteractionDynamics(*contact_relation.sph_body_), FSIContactData(contact_relation),
 			  contact_angle_(contact_angle),
 			  surface_indicator_(particles_->surface_indicator_),
-			  surface_norm_(*particles_->getVariableByName<indexVector, Vecd>("SurfaceNormal")),
-			  pos_div_(*particles_->getVariableByName<indexScalar, Real>("PositionDivergence"))
+			  surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")),
+			  pos_div_(*particles_->getVariableByName<Real>("PositionDivergence"))
 		{
 			particle_spacing_ = contact_relation.sph_body_->sph_adaptation_->ReferenceSpacing();
 			smoothing_length_ = contact_relation.sph_body_->sph_adaptation_->ReferenceSmoothingLength();

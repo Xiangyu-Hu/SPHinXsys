@@ -49,6 +49,7 @@
 namespace SPH
 {
 	class SPHSystem;
+	class SPHAdaptation;
 	class BaseParticles;
 	class SPHBodyRelation;
 	class ComplexShape;
@@ -118,9 +119,9 @@ namespace SPH
 		void allocateConfigurationMemoriesForBufferParticles();
 
 		virtual void writeParticlesToVtuFile(std::ostream &output_file);	
-		virtual void writeParticlesToVtpFile(std::ofstream &output_file);
+		virtual void writeParticlesToVtpFile(std::ostream &output_file);;
 		virtual void writeParticlesToPltFile(std::ofstream &output_file);
-		virtual void writeSurfaceParticlesToVtuFile(std::ofstream &output_file, BodySurface& surface_particles);
+		virtual void writeSurfaceParticlesToVtuFile(std::ostream &output_file, BodySurface& surface_particles);
 		virtual void writeParticlesToXmlForRestart(std::string &filefullpath);
 		virtual void readParticlesFromXmlForRestart(std::string &filefullpath);
 		virtual void writeToXmlForReloadParticle(std::string &filefullpath);
@@ -175,15 +176,29 @@ namespace SPH
 	{
 	public:
 		BodyPart(SPHBody &sph_body, const std::string &body_part_name)
-			: sph_body_(&sph_body), body_part_name_(body_part_name){};
+			: sph_body_(&sph_body), body_part_name_(body_part_name), body_part_bounds_(Vecd(0), Vecd(0)), body_part_bounds_set_(false)
+			{};
 		virtual ~BodyPart(){};
 
 		SPHBody *getSPHBody() { return sph_body_; };
 		std::string BodyPartName() { return body_part_name_; };
 
+		void setBodyPartBounds(BoundingBox bbox){
+			body_part_bounds_ = bbox;
+			body_part_bounds_set_ = true;
+		};
+
+		BoundingBox getBodyPartBounds(){
+			if (!body_part_bounds_set_) std::cout << "WARNING: the body part bounds are not set for BodyPart." << std::endl;
+			return body_part_bounds_;
+		}
+
 	protected:
 		SPHBody *sph_body_;
 		std::string body_part_name_;
+
+		BoundingBox body_part_bounds_;
+		bool body_part_bounds_set_;
 	};
 
 	/**
@@ -196,27 +211,12 @@ namespace SPH
 		IndexVector body_part_particles_; /**< Collection particle in this body part. */
 
 		BodyPartByParticle(SPHBody &sph_body, const std::string &body_part_name)
-			: BodyPart(sph_body, body_part_name), base_particles_(sph_body.base_particles_),
-			  body_part_bounds_(Vecd(0), Vecd(0)), body_part_bounds_set_(false){};
+			: BodyPart(sph_body, body_part_name), base_particles_(sph_body.base_particles_)
+			  {};
 		virtual ~BodyPartByParticle(){};
-
-		void setBodyPartBounds(BoundingBox bbox)
-		{
-			body_part_bounds_ = bbox;
-			body_part_bounds_set_ = true;
-		};
-
-		BoundingBox getBodyPartBounds()
-		{
-			if (!body_part_bounds_set_)
-				std::cout << "WARNING: the body part bounds are not set for BodyPartByParticle." << std::endl;
-			return body_part_bounds_;
-		}
 
 	protected:
 		BaseParticles *base_particles_;
-		BoundingBox body_part_bounds_;
-		bool body_part_bounds_set_;
 
 		typedef std::function<void(size_t)> TaggingParticleMethod;
 		void tagParticles(TaggingParticleMethod &tagging_particle_method);

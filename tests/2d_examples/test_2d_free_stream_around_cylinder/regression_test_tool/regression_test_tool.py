@@ -65,11 +65,10 @@ parameter_name = "TotalViscousForceOnSolid"
 number_of_run_times = 0
 converged = 0
 sphinxsys = SphinxsysRegressionTest(case_name, body_name, parameter_name)
-sphinxsys.run_particle_relaxation()
-
 
 while True:
     print("Now start a new run......")
+    sphinxsys.run_particle_relaxation()
     sphinxsys.run_case()
     number_of_run_times += 1
     converged = sphinxsys.read_dat_file()

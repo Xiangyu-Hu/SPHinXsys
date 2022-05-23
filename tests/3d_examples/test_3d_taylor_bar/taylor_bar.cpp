@@ -30,7 +30,7 @@ int main(int ac, char *av[])
 	SharedPtr<HardeningPlasticSolid> plastic_column_material =
 		makeShared<HardeningPlasticSolid>(rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
 	ElasticSolidParticles column_particles(column, plastic_column_material, column_particle_generator);
-	column_particles.addAVariableToWrite<indexVector, Vecd>("NormalDirection");
+	column_particles.addAVariableToWrite<Vecd>("NormalDirection");
 
 	Wall wall(system, "Wall");
 	SolidParticles wall_particles(wall, makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson));
@@ -100,9 +100,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Output
 	//----------------------------------------------------------------------
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<indexVector, Vecd>>
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_velocity("Velocity", in_output, my_observer_contact);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<indexVector, Vecd>>
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_displacement("Position", in_output, my_observer_contact);
 
 	//----------------------------------------------------------------------

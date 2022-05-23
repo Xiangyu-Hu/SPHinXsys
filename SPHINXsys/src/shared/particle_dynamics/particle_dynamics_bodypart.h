@@ -37,6 +37,8 @@
 
 namespace SPH
 {
+	class BodyPartByParticle;
+	class BodyPartByCell;
 
 	/**
 	 * @class PartDynamicsByParticle
@@ -47,9 +49,7 @@ namespace SPH
 	class PartDynamicsByParticle : public ParticleDynamics<void>
 	{
 	public:
-		PartDynamicsByParticle(SPHBody &sph_body, BodyPartByParticle &body_part)
-			: ParticleDynamics<void>(sph_body),
-			  body_part_particles_(body_part.body_part_particles_){};
+		PartDynamicsByParticle(SPHBody &sph_body, BodyPartByParticle &body_part);
 		virtual ~PartDynamicsByParticle(){};
 
 		virtual void exec(Real dt = 0.0) override;
@@ -135,9 +135,7 @@ namespace SPH
 	class PartDynamicsByCell : public ParticleDynamics<void>
 	{
 	public:
-		PartDynamicsByCell(SPHBody &sph_body, BodyPartByCell &body_part)
-			: ParticleDynamics<void>(sph_body),
-			  body_part_cells_(body_part.body_part_cells_){};
+		PartDynamicsByCell(SPHBody &sph_body, BodyPartByCell &body_part);
 		virtual ~PartDynamicsByCell(){};
 
 		virtual void exec(Real dt = 0.0) override;

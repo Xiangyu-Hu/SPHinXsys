@@ -18,9 +18,12 @@ if(NOT EMSCRIPTEN)
 		ADD_SUBDIRECTORY(unit_tests_src)
 	endif()
 
-	ADD_SUBDIRECTORY(modules)
+	if(NOT SPH_ONLY_STATIC_BUILD)
+		add_subdirectory(modules)
+	endif()
 endif()
 
 if(BUILD_3D_EXAMPLES)
 	ADD_SUBDIRECTORY(3d_examples)
+	ADD_SUBDIRECTORY(webassembly_models)
 endif()

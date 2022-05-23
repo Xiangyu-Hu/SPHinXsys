@@ -7,46 +7,47 @@
 #include "mesh_with_data_packages.hpp"
 #include "base_kernel.h"
 #include "base_particles.h"
+#include "base_particle_dynamics.h"
 #include "base_body.h"
-#include "adaptation.h"
 
-namespace SPH {
+namespace SPH
+{
 	//=================================================================================================//
-	void LevelSetDataPackage::initializeWithUniformData(Real level_set)
+	void LevelSetDataPackage::initializeSingularData(Real far_field_level_set)
 	{
 		for (int i = 0; i != PackageSize(); ++i)
 			for (int j = 0; j != PackageSize(); ++j)
 				for (int k = 0; k != PackageSize(); ++k)
 				{
-					phi_[i][j][k] = level_set;
+					phi_[i][j][k] = far_field_level_set;
 					n_[i][j][k] = Vecd(1.0);
-					kernel_weight_[i][j][k] = level_set < 0.0 ? 0 : 1.0;
+					kernel_weight_[i][j][k] = far_field_level_set < 0.0 ? 0 : 1.0;
 					kernel_gradient_[i][j][k] = Vecd(0.0);
-					near_interface_id_[i][j][k] = level_set < 0.0 ? -2 : 2;
+					near_interface_id_[i][j][k] = far_field_level_set < 0.0 ? -2 : 2;
 				}
 	}
 	//=================================================================================================//
-	void  LevelSetDataPackage::initializeBasicData(Shape& shape)
+	void LevelSetDataPackage::initializeBasicData(Shape &shape)
 	{
 		for (int i = 0; i != PackageSize(); ++i)
 			for (int j = 0; j != PackageSize(); ++j)
 				for (int k = 0; k != PackageSize(); ++k)
 				{
-					Vec3d position = data_lower_bound_ 
-								   + Vec3d((Real)i * grid_spacing_, (Real)j * grid_spacing_, (Real)k * grid_spacing_);
+					Vec3d position = data_lower_bound_ +
+									 Vec3d((Real)i * grid_spacing_, (Real)j * grid_spacing_, (Real)k * grid_spacing_);
 					phi_[i][j][k] = shape.findSignedDistance(position);
 					near_interface_id_[i][j][k] = phi_[i][j][k] < 0.0 ? -2 : 2;
 				}
 	}
 	//=================================================================================================//
-	void  LevelSetDataPackage::computeKernelIntegrals(LevelSet& level_set)
+	void LevelSetDataPackage::computeKernelIntegrals(LevelSet &level_set)
 	{
 		for (int i = 0; i != PackageSize(); ++i)
 			for (int j = 0; j != PackageSize(); ++j)
 				for (int k = 0; k != PackageSize(); ++k)
 				{
-					Vec3d position = data_lower_bound_
-						+ Vec3d((Real)i * grid_spacing_, (Real)j * grid_spacing_, (Real)k * grid_spacing_);
+					Vec3d position = data_lower_bound_ +
+									 Vec3d((Real)i * grid_spacing_, (Real)j * grid_spacing_, (Real)k * grid_spacing_);
 					kernel_weight_[i][j][k] = level_set.computeKernelIntegral(position);
 					kernel_gradient_[i][j][k] = level_set.computeKernelGradientIntegral(position);
 				}
@@ -67,50 +68,62 @@ namespace SPH {
 						Real dv_xp = (*phi_addrs_[i + 1][j][k] - phi_0);
 						Real dv_xn = (phi_0 - *phi_addrs_[i - 1][j][k]);
 						Real dv_x = dv_xp;
-						if (s * dv_xp >= 0.0 && s * dv_xn >= 0.0) dv_x = dv_xn;
-						if (s * dv_xp <= 0.0 && s * dv_xn <= 0.0) dv_x = dv_xp;
-						if (s * dv_xp > 0.0 && s * dv_xn < 0.0) dv_x = 0.0;
+						if (s * dv_xp >= 0.0 && s * dv_xn >= 0.0)
+							dv_x = dv_xn;
+						if (s * dv_xp <= 0.0 && s * dv_xn <= 0.0)
+							dv_x = dv_xp;
+						if (s * dv_xp > 0.0 && s * dv_xn < 0.0)
+							dv_x = 0.0;
 						if (s * dv_xp < 0.0 && s * dv_xn > 0.0)
 						{
 							Real ss = s * (fabs(dv_xp) - fabs(dv_xn)) / (dv_xp - dv_xn);
-							if (ss > 0.0) dv_x = dv_xn;
+							if (ss > 0.0)
+								dv_x = dv_xn;
 						}
 						//y direction
 						Real dv_yp = (*phi_addrs_[i][j + 1][k] - phi_0);
 						Real dv_yn = (phi_0 - *phi_addrs_[i][j - 1][k]);
 						Real dv_y = dv_yp;
-						if (s * dv_yp >= 0.0 && s * dv_yn >= 0.0) dv_y = dv_yn;
-						if (s * dv_yp <= 0.0 && s * dv_yn <= 0.0) dv_y = dv_yp;
-						if (s * dv_yp > 0.0 && s * dv_yn < 0.0) dv_y = 0.0;
+						if (s * dv_yp >= 0.0 && s * dv_yn >= 0.0)
+							dv_y = dv_yn;
+						if (s * dv_yp <= 0.0 && s * dv_yn <= 0.0)
+							dv_y = dv_yp;
+						if (s * dv_yp > 0.0 && s * dv_yn < 0.0)
+							dv_y = 0.0;
 						if (s * dv_yp < 0.0 && s * dv_yn > 0.0)
 						{
 							Real ss = s * (fabs(dv_yp) - fabs(dv_yn)) / (dv_yp - dv_yn);
-							if (ss > 0.0) dv_y = dv_yn;
+							if (ss > 0.0)
+								dv_y = dv_yn;
 						}
 						//z direction
 						Real dv_zp = (*phi_addrs_[i][j][k + 1] - phi_0);
 						Real dv_zn = (phi_0 - *phi_addrs_[i][j][k - 1]);
 						Real dv_z = dv_zp;
-						if (s * dv_zp >= 0.0 && s * dv_zn >= 0.0) dv_z = dv_zn;
-						if (s * dv_zp <= 0.0 && s * dv_zn <= 0.0) dv_z = dv_zp;
-						if (s * dv_zp > 0.0 && s * dv_zn < 0.0) dv_z = 0.0;
+						if (s * dv_zp >= 0.0 && s * dv_zn >= 0.0)
+							dv_z = dv_zn;
+						if (s * dv_zp <= 0.0 && s * dv_zn <= 0.0)
+							dv_z = dv_zp;
+						if (s * dv_zp > 0.0 && s * dv_zn < 0.0)
+							dv_z = 0.0;
 						if (s * dv_zp < 0.0 && s * dv_zn > 0.0)
 						{
 							Real ss = s * (fabs(dv_zp) - fabs(dv_zn)) / (dv_zp - dv_zn);
-							if (ss > 0.0) dv_z = dv_zn;
+							if (ss > 0.0)
+								dv_z = dv_zn;
 						}
 						//time stepping
-						*phi_addrs_[i][j][k] -= 
+						*phi_addrs_[i][j][k] -=
 							0.3 * s * (sqrt(dv_x * dv_x + dv_y * dv_y + dv_z * dv_z) - grid_spacing_);
 					}
 				}
 	}
 	//=================================================================================================//
-	void LevelSetDataPackage::markNearInterface(Real small_shift_factor) 
-	{	
-		 // small_shift_factor = 0.75 by default, can be increased for difficult geometries for smoothing
+	void LevelSetDataPackage::markNearInterface(Real small_shift_factor)
+	{
+		// small_shift_factor = 0.75 by default, can be increased for difficult geometries for smoothing
 		Real small_shift = small_shift_factor * grid_spacing_;
-		//corner averages, note that the first row and first column are not used 
+		//corner averages, note that the first row and first column are not used
 		PackageTemporaryData<Real> corner_averages;
 		for (int i = 1; i != AddressSize(); ++i)
 			for (int j = 1; j != AddressSize(); ++j)
@@ -137,8 +150,10 @@ namespace SPH {
 								int index_y = j + m;
 								int index_z = k + n;
 								Real phi_average = corner_averages[index_x][index_y][index_z];
-								if ((phi_average_0 - small_shift) * (phi_average - small_shift) < 0.0) near_interface_id = 1;
-								if ((phi_average_0 + small_shift) * (phi_average + small_shift) < 0.0) near_interface_id = -1;
+								if ((phi_average_0 - small_shift) * (phi_average - small_shift) < 0.0)
+									near_interface_id = 1;
+								if ((phi_average_0 + small_shift) * (phi_average + small_shift) < 0.0)
+									near_interface_id = -1;
 							}
 					//find zero cut cells
 					for (int l = 0; l != 2; ++l)
@@ -149,10 +164,12 @@ namespace SPH {
 								int index_y = j + m;
 								int index_z = k + n;
 								Real phi_average = corner_averages[index_x][index_y][index_z];
-								if (phi_average_0 * phi_average < 0.0) near_interface_id = 0;
+								if (phi_average_0 * phi_average < 0.0)
+									near_interface_id = 0;
 							}
 					//find cells between cut cells
-					if (fabs(phi_0) < small_shift && abs(near_interface_id) != 1)  near_interface_id = 0;
+					if (fabs(phi_0) < small_shift && abs(near_interface_id) != 1)
+						near_interface_id = 0;
 
 					//assign this is to package
 					*near_interface_id_addrs_[i][j][k] = near_interface_id;
@@ -164,73 +181,23 @@ namespace SPH {
 		Vecu cell_index = CellIndexFromPosition(position);
 		return data_pkg_addrs_[cell_index[0]][cell_index[1]][cell_index[2]]->is_core_pkg_;
 	}
-	//=================================================================================================//
-	void LevelSet::initializeDataInACell(const Vecu &cell_index, Real dt)
-	{
-		int i = (int)cell_index[0];
-		int j = (int)cell_index[1];
-		int k = (int)cell_index[2];
-
-		Vecd cell_position = CellPositionFromIndex(cell_index);
-		Real signed_distance = shape_.findSignedDistance(cell_position);
-		Vecd normal_direction = shape_.findNormalDirection(cell_position);
-		Real measure = getMaxAbsoluteElement(normal_direction * signed_distance);
-		if (measure < grid_spacing_) {
-			mutex_my_pool.lock();
-			LevelSetDataPackage* new_data_pkg = data_pkg_pool_.malloc();
-			mutex_my_pool.unlock();
-			Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
-			new_data_pkg->initializePackageGeometry(pkg_lower_bound, data_spacing_);
-			new_data_pkg->initializeBasicData(shape_);
-			core_data_pkgs_.push_back(new_data_pkg);
-			new_data_pkg->pkg_index_ = Vecu(i, j, k);
-			new_data_pkg->is_core_pkg_ = true;
-			data_pkg_addrs_[i][j][k] = new_data_pkg;
-		}
-		else {
-			data_pkg_addrs_[i][j][k] = shape_.checkContain(cell_position) ?
-				singular_data_pkgs_addrs_[0] : singular_data_pkgs_addrs_[1];
-		}
-	}	
-	//=================================================================================================//
-	void LevelSet::tagACellIsInnerPackage(const Vecu &cell_index, Real dt)
+	//=============================================================================================//
+	bool LevelSet::isInnerPackage(const Vecu &cell_index)
 	{
 		int i = (int)cell_index[0];
 		int j = (int)cell_index[1];
 		int k = (int)cell_index[2];
 
 		bool is_inner_pkg = false;
-
 		for (int l = SMAX(i - 1, 0); l <= SMIN(i + 1, int(number_of_cells_[0]) - 1); ++l)
 			for (int m = SMAX(j - 1, 0); m <= SMIN(j + 1, int(number_of_cells_[1]) - 1); ++m)
 				for (int n = SMAX(k - 1, 0); n <= SMIN(k + 1, int(number_of_cells_[2]) - 1); ++n)
-					if (data_pkg_addrs_[l][m][n]->is_core_pkg_) is_inner_pkg = true;
-		
-		if (is_inner_pkg) 
-		{
-			LevelSetDataPackage* current_data_pkg = data_pkg_addrs_[i][j][k];
-			if (current_data_pkg->is_core_pkg_) 
-			{
-				current_data_pkg->is_inner_pkg_ = true;
-				inner_data_pkgs_.push_back(current_data_pkg);
-			}
-			else {
-				mutex_my_pool.lock();
-				LevelSetDataPackage* new_data_pkg = data_pkg_pool_.malloc();
-				mutex_my_pool.unlock();
-				Vecd cell_position = CellPositionFromIndex(cell_index);
-				Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
-				new_data_pkg->initializePackageGeometry(pkg_lower_bound, data_spacing_);
-				new_data_pkg->initializeBasicData(shape_);
-				new_data_pkg->is_inner_pkg_ = true;
-				new_data_pkg->pkg_index_ = Vecu(i, j, k);
-				inner_data_pkgs_.push_back(new_data_pkg);
-				data_pkg_addrs_[i][j][k] = new_data_pkg;
-			}
-		}
-	}
+					if (data_pkg_addrs_[l][m][n]->is_core_pkg_)
+						is_inner_pkg = true;
+		return is_inner_pkg;
+	}	
 	//=================================================================================================//
-	void LevelSet::redistanceInterfaceForAPackage(LevelSetDataPackage* core_data_pkg, Real dt)
+	void LevelSet::redistanceInterfaceForAPackage(LevelSetDataPackage *core_data_pkg, Real dt)
 	{
 		int l = (int)core_data_pkg->pkg_index_[0];
 		int m = (int)core_data_pkg->pkg_index_[1];
@@ -251,8 +218,10 @@ namespace SPH {
 								{
 									int neighbor_near_interface_id =
 										*core_data_pkg->near_interface_id_addrs_[i + r][j + s][k + t];
-									if (neighbor_near_interface_id >= 1) positive_band = true;
-									if (neighbor_near_interface_id <= -1) negative_band = true;
+									if (neighbor_near_interface_id >= 1)
+										positive_band = true;
+									if (neighbor_near_interface_id <= -1)
+										negative_band = true;
 								}
 						if (positive_band == false)
 						{
@@ -261,13 +230,11 @@ namespace SPH {
 								for (int y = -4; y != 5; ++y)
 									for (int z = -4; z != 5; ++z)
 									{
-										std::pair<int, int>  x_pair = CellShiftAndDataIndex(i + x);
-										std::pair<int, int>  y_pair = CellShiftAndDataIndex(j + y);
-										std::pair<int, int>  z_pair = CellShiftAndDataIndex(k + z);
-										LevelSetDataPackage* neighbor_pkg
-											= data_pkg_addrs_[l + x_pair.first][m + y_pair.first][n + z_pair.first];
-										int neighbor_near_interface_id
-											= neighbor_pkg->near_interface_id_[x_pair.second][y_pair.second][z_pair.second];
+										std::pair<int, int> x_pair = CellShiftAndDataIndex(i + x);
+										std::pair<int, int> y_pair = CellShiftAndDataIndex(j + y);
+										std::pair<int, int> z_pair = CellShiftAndDataIndex(k + z);
+										LevelSetDataPackage *neighbor_pkg = data_pkg_addrs_[l + x_pair.first][m + y_pair.first][n + z_pair.first];
+										int neighbor_near_interface_id = neighbor_pkg->near_interface_id_[x_pair.second][y_pair.second][z_pair.second];
 										if (neighbor_near_interface_id >= 1)
 										{
 											Real phi_p_ = neighbor_pkg->phi_[x_pair.second][y_pair.second][z_pair.second];
@@ -276,7 +243,7 @@ namespace SPH {
 										}
 									}
 							*core_data_pkg->phi_addrs_[i][j][k] = -min_distance_p;
-							// this immediate switch of near interface id 
+							// this immediate switch of near interface id
 							// does not intervenning with the identification of unresolved interface
 							// based on the assumption that positive false_and negative bands are not close to each other
 							*core_data_pkg->near_interface_id_addrs_[i][j][k] = -1;
@@ -288,13 +255,11 @@ namespace SPH {
 								for (int y = -4; y != 5; ++y)
 									for (int z = -4; z != 5; ++z)
 									{
-										std::pair<int, int>  x_pair = CellShiftAndDataIndex(i + x);
-										std::pair<int, int>  y_pair = CellShiftAndDataIndex(j + y);
-										std::pair<int, int>  z_pair = CellShiftAndDataIndex(k + z);
-										LevelSetDataPackage* neighbor_pkg
-											= data_pkg_addrs_[l + x_pair.first][m + y_pair.first][n + z_pair.first];
-										int neighbor_near_interface_id
-											= neighbor_pkg->near_interface_id_[x_pair.second][y_pair.second][z_pair.second];
+										std::pair<int, int> x_pair = CellShiftAndDataIndex(i + x);
+										std::pair<int, int> y_pair = CellShiftAndDataIndex(j + y);
+										std::pair<int, int> z_pair = CellShiftAndDataIndex(k + z);
+										LevelSetDataPackage *neighbor_pkg = data_pkg_addrs_[l + x_pair.first][m + y_pair.first][n + z_pair.first];
+										int neighbor_near_interface_id = neighbor_pkg->near_interface_id_[x_pair.second][y_pair.second][z_pair.second];
 										if (neighbor_near_interface_id <= -1)
 										{
 											Real phi_n_ = neighbor_pkg->phi_[x_pair.second][y_pair.second][z_pair.second];
@@ -303,7 +268,7 @@ namespace SPH {
 										}
 									}
 							*core_data_pkg->phi_addrs_[i][j][k] = min_distance_n;
-							// this immediate switch of near interface id 
+							// this immediate switch of near interface id
 							// does not intervenning with the identification of unresolved interface
 							// based on the assumption that positive false_and negative bands are not close to each other
 							*core_data_pkg->near_interface_id_addrs_[i][j][k] = 1;
@@ -312,15 +277,24 @@ namespace SPH {
 				}
 	}
 	//=================================================================================================//
-	void LevelSet::writeMeshFieldToPlt(std::ofstream& output_file)
+	void LevelSet::writeMeshFieldToPlt(std::ofstream &output_file)
 	{
 		Vecu number_of_operation = global_mesh_.NumberOfGridPoints();
 
 		output_file << "\n";
-		output_file << "title='View'" << "\n";
-		output_file << "variables= " << "x, " << "y, " << "z, " << "phi, " << "n_x, "<< "n_y, " << "n_z " << "\n";
+		output_file << "title='View'"
+					<< "\n";
+		output_file << "variables= "
+					<< "x, "
+					<< "y, "
+					<< "z, "
+					<< "phi, "
+					<< "n_x, "
+					<< "n_y, "
+					<< "n_z "
+					<< "\n";
 		output_file << "zone i=" << number_of_operation[0] << "  j=" << number_of_operation[1] << "  k=" << number_of_operation[2]
-			<< "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
+					<< "  DATAPACKING=BLOCK  SOLUTIONTIME=" << 0 << "\n";
 
 		for (size_t k = 0; k != number_of_operation[2]; ++k)
 			for (size_t j = 0; j != number_of_operation[1]; ++j)
@@ -360,9 +334,9 @@ namespace SPH {
 			{
 				for (size_t i = 0; i != number_of_operation[0]; ++i)
 				{
-					output_file << DataValueFromGlobalIndex<Real, LevelSetDataPackage::PackageData<Real>, 
-						&LevelSetDataPackage::phi_>(Vecu(i, j, k)) << " ";
-
+					output_file << DataValueFromGlobalIndex<Real, LevelSetDataPackage::PackageData<Real>,
+															&LevelSetDataPackage::phi_>(Vecu(i, j, k))
+								<< " ";
 				}
 				output_file << " \n";
 			}
@@ -372,9 +346,9 @@ namespace SPH {
 			{
 				for (size_t i = 0; i != number_of_operation[0]; ++i)
 				{
-					output_file << DataValueFromGlobalIndex<Vecd, LevelSetDataPackage::PackageData<Vecd>, 
-						&LevelSetDataPackage::n_>(Vecu(i, j, k))[0] << " ";
-
+					output_file << DataValueFromGlobalIndex<Vecd, LevelSetDataPackage::PackageData<Vecd>,
+															&LevelSetDataPackage::n_>(Vecu(i, j, k))[0]
+								<< " ";
 				}
 				output_file << " \n";
 			}
@@ -384,9 +358,9 @@ namespace SPH {
 			{
 				for (size_t i = 0; i != number_of_operation[0]; ++i)
 				{
-					output_file << DataValueFromGlobalIndex<Vecd, LevelSetDataPackage::PackageData<Vecd>, 
-						&LevelSetDataPackage::n_>(Vecu(i, j, k))[1] << " ";
-
+					output_file << DataValueFromGlobalIndex<Vecd, LevelSetDataPackage::PackageData<Vecd>,
+															&LevelSetDataPackage::n_>(Vecu(i, j, k))[1]
+								<< " ";
 				}
 				output_file << " \n";
 			}
@@ -396,9 +370,9 @@ namespace SPH {
 			{
 				for (size_t i = 0; i != number_of_operation[0]; ++i)
 				{
-					output_file << DataValueFromGlobalIndex<Vecd, LevelSetDataPackage::PackageData<Vecd>, 
-					&LevelSetDataPackage::n_>(Vecu(i, j, k))[2] << " ";
-
+					output_file << DataValueFromGlobalIndex<Vecd, LevelSetDataPackage::PackageData<Vecd>,
+															&LevelSetDataPackage::n_>(Vecu(i, j, k))[2]
+								<< " ";
 				}
 				output_file << " \n";
 			}
@@ -409,14 +383,14 @@ namespace SPH {
 				for (size_t i = 0; i != number_of_operation[0]; ++i)
 				{
 					output_file << DataValueFromGlobalIndex<int, LevelSetDataPackage::PackageData<int>,
-						&LevelSetDataPackage::near_interface_id_>(Vecu(i, j, k)) << " ";
-
+															&LevelSetDataPackage::near_interface_id_>(Vecu(i, j, k))
+								<< " ";
 				}
 				output_file << " \n";
 			}
 	}
 	//=============================================================================================//
-	Real LevelSet::computeKernelIntegral(const Vecd& position)
+	Real LevelSet::computeKernelIntegral(const Vecd &position)
 	{
 		Real phi = probeSignedDistance(position);
 		Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
@@ -432,20 +406,20 @@ namespace SPH {
 					{
 						Vecu neighbor_index = Vecu(global_index_[0] + i, global_index_[1] + j, global_index_[2] + k);
 						Real phi_neighbor = DataValueFromGlobalIndex<Real, LevelSetDataPackage::PackageData<Real>,
-							&LevelSetDataPackage::phi_>(neighbor_index);
-						if (phi_neighbor > -data_spacing_) {
+																	 &LevelSetDataPackage::phi_>(neighbor_index);
+						if (phi_neighbor > -data_spacing_)
+						{
 							Vecd displacement = position - global_mesh_.GridPositionFromIndex(neighbor_index);
 							Real distance = displacement.norm();
 							if (distance < cutoff_radius)
-								integral += kernel_.W(global_h_ratio_, distance, displacement)
-									* computeHeaviside(phi_neighbor, data_spacing_);
+								integral += kernel_.W(global_h_ratio_, distance, displacement) * computeHeaviside(phi_neighbor, data_spacing_);
 						}
 					}
 		}
 		return phi > threshold ? 1.0 : integral * data_spacing_ * data_spacing_ * data_spacing_;
 	}
 	//=============================================================================================//
-	Vecd LevelSet::computeKernelGradientIntegral(const Vecd& position)
+	Vecd LevelSet::computeKernelGradientIntegral(const Vecd &position)
 	{
 		Real phi = probeSignedDistance(position);
 		Real cutoff_radius = kernel_.CutOffRadius(global_h_ratio_);
@@ -461,13 +435,14 @@ namespace SPH {
 					{
 						Vecu neighbor_index = Vecu(global_index_[0] + i, global_index_[1] + j, global_index_[2] + k);
 						Real phi_neighbor = DataValueFromGlobalIndex<Real, LevelSetDataPackage::PackageData<Real>,
-							&LevelSetDataPackage::phi_>(neighbor_index);
-						if (phi_neighbor > -data_spacing_) {
+																	 &LevelSetDataPackage::phi_>(neighbor_index);
+						if (phi_neighbor > -data_spacing_)
+						{
 							Vecd displacement = position - global_mesh_.GridPositionFromIndex(neighbor_index);
 							Real distance = displacement.norm();
 							if (distance < cutoff_radius)
-								integral += kernel_.dW(global_h_ratio_, distance, displacement)
-								* computeHeaviside(phi_neighbor, data_spacing_) * displacement / (distance + TinyReal);
+								integral += kernel_.dW(global_h_ratio_, distance, displacement) *
+											computeHeaviside(phi_neighbor, data_spacing_) * displacement / (distance + TinyReal);
 						}
 					}
 		}

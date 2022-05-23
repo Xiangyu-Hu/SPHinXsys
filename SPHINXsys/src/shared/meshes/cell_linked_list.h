@@ -43,7 +43,7 @@ namespace SPH
 	class SPHBody;
 	class BaseParticles;
 	class Kernel;
-
+	class SPHAdaptation;
 	/**
 	 * @class CellList
 	 * @brief The linked list for one cell
@@ -124,10 +124,10 @@ namespace SPH
 						   SPHBody &sph_body, SPHAdaptation &sph_adaptation);
 		virtual ~CellLinkedList() { deleteMeshDataMatrix(); };
 
-		virtual void allocateMeshDataMatrix() override;
-		virtual void deleteMeshDataMatrix() override;
-		virtual void assignBaseParticles(BaseParticles *base_particles) override;
+		void allocateMeshDataMatrix(); /**< allocate memories for addresses of data packages. */
+		void deleteMeshDataMatrix();	/**< delete memories for addresses of data packages. */
 
+		virtual void assignBaseParticles(BaseParticles *base_particles) override;
 		void clearCellLists();
 		void UpdateCellListData();
 		virtual void UpdateCellLists() override;
@@ -152,6 +152,8 @@ namespace SPH
 											ParticleConfiguration &particle_configuration, GetParticleIndex &get_particle_index,
 											GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation,
 											PartParticleCheck &part_check);
+		
+		MeshDataMatrix<CellList> getCellLists() const { return cell_linked_lists_; }
 	};
 
 	/**
@@ -159,7 +161,7 @@ namespace SPH
 	  * @brief Defining a multilevel mesh cell linked list for a body
 	  * for multiresolution particle configuration.
 	  */
-	class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellLinkedList>
+	class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>
 	{
 	protected:
 		StdLargeVec<Real> &h_ratio_;
@@ -169,8 +171,7 @@ namespace SPH
 
 	public:
 		MultilevelCellLinkedList(BoundingBox tentative_bounds, Real reference_grid_spacing,
-									 size_t total_levels, Real maximum_spacing_ratio,
-									 SPHBody &sph_body, SPHAdaptation &sph_adaptation);
+									 size_t total_levels, SPHBody &sph_body, SPHAdaptation &sph_adaptation);
 		virtual ~MultilevelCellLinkedList(){};
 
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;

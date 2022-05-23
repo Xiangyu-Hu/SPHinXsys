@@ -49,11 +49,11 @@ public:
 //	setup case-dependent initial condition.
 //----------------------------------------------------------------------
 class WavesInitialCondition
-	: public eulerian_fluid_dynamics::CompressibleFluidInitialCondition
+	: public eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition
 {
 public:
 	explicit WavesInitialCondition(EulerianFluidBody &water)
-		: eulerian_fluid_dynamics::CompressibleFluidInitialCondition(water){};
+		: eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition(water){};
 
 protected:
 	void Update(size_t index_i, Real dt) override
@@ -98,7 +98,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	WaveBlock wave_block(sph_system, "WaveBody");
 	CompressibleFluidParticles wave_particles(wave_block, makeShared<CompressibleFluid>(rho0_l, heat_capacity_ratio));
-	wave_particles.addAVariableToWrite<indexScalar, Real>("TotalEnergy");
+	wave_particles.addAVariableToWrite<Real>("TotalEnergy");
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The inner relation defines the particle configuration for particles within a body.
@@ -111,14 +111,14 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	WavesInitialCondition waves_initial_condition(wave_block);
 	// Initialize particle acceleration.
-	eulerian_fluid_dynamics::CompressibleFlowTimeStepInitialization initialize_wave_step(wave_block);
+	eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization initialize_wave_step(wave_block);
 	// Periodic BCs in y direction.
 	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_y(wave_block, yAxis);
 	// Time step size with considering sound wave speed.
-	eulerian_fluid_dynamics::AcousticTimeStepSize get_wave_time_step_size(wave_block);
+	eulerian_compressible_fluid_dynamics::AcousticTimeStepSize get_wave_time_step_size(wave_block);
 	// Pressure, density and energy relaxation algorithm by use HLLC Riemann solver.
-	eulerian_fluid_dynamics::PressureRelaxationHLLCRiemannInner pressure_relaxation(wave_block_inner);
-	eulerian_fluid_dynamics::DensityAndEnergyRelaxationHLLCRiemannInner density_and_energy_relaxation(wave_block_inner);
+	eulerian_compressible_fluid_dynamics::PressureRelaxationHLLCRiemannInner pressure_relaxation(wave_block_inner);
+	eulerian_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCRiemannInner density_and_energy_relaxation(wave_block_inner);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations, observations of the simulation.
 	//	Regression tests are also defined here.

@@ -22,13 +22,13 @@ int main()
 	/** Tag for computation from restart files. 0: not from restart files. */
 	sph_system.restart_step_ = 0;
 	/**
-	 * @brief Material property, partilces and body creation of water.
+	 * @brief Material property, particles and body creation of water.
 	 */
 	WaterBlock water_block(sph_system, "WaterBody");
 	FluidParticles 	water_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f));
-	water_particles.addAVariableToWrite<indexInteger, int>("SurfaceIndicator");
+	water_particles.addAVariableToWrite<int>("SurfaceIndicator");
 	/**
-	 * @brief Material property, partilces and body creation of air.
+	 * @brief Material property, particles and body creation of air.
 	 */
 	AirBlock air_block(sph_system, "AirBody");
 	FluidParticles 	air_particles(air_block, makeShared<WeaklyCompressibleFluid>(rho0_a, c_f, mu_a));

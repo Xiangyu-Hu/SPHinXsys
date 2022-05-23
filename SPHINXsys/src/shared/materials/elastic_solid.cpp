@@ -8,6 +8,10 @@
 #include "base_body.h"
 #include "solid_particles.h"
 
+#ifdef max
+#undef max
+#endif
+
 namespace SPH
 {
 	//=================================================================================================//
@@ -53,6 +57,11 @@ namespace SPH
 		LinearElasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio) : ElasticSolid(rho0)
 	{
 		material_type_ = "LinearElasticSolid";
+		assignElasticMaterialParameters(youngs_modulus, poisson_ratio);
+	}
+	//=================================================================================================//
+	void LinearElasticSolid::assignElasticMaterialParameters(Real youngs_modulus, Real poisson_ratio)
+	{
 		E0_ = youngs_modulus;
 		nu_ = poisson_ratio;
 		G0_ = getShearModulus(youngs_modulus, poisson_ratio);
@@ -84,6 +93,11 @@ namespace SPH
 		return sigmaPK2;
 	}
 	//=================================================================================================//
+	Matd LinearElasticSolid::EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i)
+	{
+		return lambda0_ * almansi_strain.trace() * Matd(1.0) + 2.0 * G0_ * almansi_strain;
+	}
+	//=================================================================================================//
 	Real LinearElasticSolid::VolumetricKirchhoff(Real J)
 	{
 		return K0_ * J * (J - 1);
@@ -92,8 +106,18 @@ namespace SPH
 	Matd NeoHookeanSolid::ConstitutiveRelation(Matd &F, size_t particle_index_i)
 	{
 		Matd right_cauchy = ~F * F;
-		Matd sigmaPK2 = G0_ * Matd(1.0) + (lambda0_ * log(det(F)) - G0_) * inverse(right_cauchy);
+		Real I_1 = right_cauchy.trace(); // first strain invariant
+		Matd sigmaPK2 = G0_ * std::pow(det(F), - 2.0 / 3.0) * (Matd(1.0) - I_1 / 3.0 * inverse(right_cauchy)) + K0_ * det(F) * (det(F) - 1.0) * inverse(right_cauchy); // sigmaPK2 calculation
 		return sigmaPK2;
+	}
+	//=================================================================================================//
+	Matd NeoHookeanSolid::EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i)
+	{
+		Real J = det(F);
+		Matd B = inverse(-2.0 * almansi_strain + Matd(1.0));
+		Matd cauchy_stress = 0.5 * K0_ * (J - 1.0 / J) * Matd(1.0)
+			+ G0_ * pow(J, -2.0 / (Real)Dimensions - 1.0) * (B - B.trace() / (Real)Dimensions * Matd(1.0));
+		return cauchy_stress;
 	}
 	//=================================================================================================//
 	Real NeoHookeanSolid::VolumetricKirchhoff(Real J)
@@ -101,7 +125,106 @@ namespace SPH
 		return 0.5 * K0_ * (J * J - 1);
 	}
 	//=================================================================================================//
-	Matd FeneNeoHookeanSolid::ConstitutiveRelation(Matd &F, size_t particle_index_i)
+	Matd NeoHookeanSolidIncompressible::ConstitutiveRelation(Matd& F, size_t particle_index_i)
+	{
+		Matd right_cauchy = ~F * F;
+		Real I_1 = right_cauchy.trace(); // first strain invariant
+		Real I_3 = det(right_cauchy); // first strain invariant
+		Matd sigmaPK2 = G0_* std::pow(I_3, - 1.0 / 3.0) * (Matd(1.0) - 1.0 / 3.0 * I_1 * inverse(right_cauchy));
+		return sigmaPK2;
+	}
+	//=================================================================================================//
+	Matd NeoHookeanSolidIncompressible::EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i)
+	{
+		// TODO: implement
+		return {};
+	}
+	//=================================================================================================//
+	Real NeoHookeanSolidIncompressible::VolumetricKirchhoff(Real J)
+	{
+		return  0.5 * K0_ * (J * J - 1);
+	}
+	//=================================================================================================//
+	OrthotropicSolid::OrthotropicSolid(Real rho_0, std::array<Vecd, 3> a, std::array<Real, 3> E, std::array<Real, 3> G, std::array<Real, 3> poisson)
+	// set parameters for parent class: LinearElasticSolid
+	// we take the max. E and max. possion to approxiamte the maximum of the Bulk modulus --> for time step size calculation
+		: LinearElasticSolid(rho_0, std::max({E[0], E[1], E[2]}), std::max({poisson[0], poisson[1], poisson[2]})),
+		a_(a), E_(E), G_(G), poisson_(poisson)
+	{
+		// parameters for derived class
+		material_type_ = "OrthotropicSolid";
+		CalculateA0();
+		CalculateAllMu();
+		CalculateAllLambda();
+	};
+	//=================================================================================================//
+	Matd OrthotropicSolid::ConstitutiveRelation(Matd& F, size_t particle_index_i)
+	{
+		Matd strain = 0.5 * (~F * F - Matd(1.0));
+		Matd sigmaPK2 = Matd(0);
+		for(int i=0; i<3; i++)
+		{
+			// outer sum (a{1-3})
+			Matd Summa2 = Matd(0);
+			for(int j=0; j<3; j++)
+			{
+				// inner sum (b{1-3})
+				Summa2 += Lambda_[i][j]*(CalculateDoubleDotProduct(A_[i],strain)*A_[j]+CalculateDoubleDotProduct(A_[j],strain)*A_[i]);
+			}
+			sigmaPK2 += Mu_[i]*(((A_[i]*strain)+(strain*A_[i]))+1/2*(Summa2));
+		}
+		return sigmaPK2;
+	}
+	//=================================================================================================//
+	Real OrthotropicSolid::VolumetricKirchhoff(Real J)
+	{
+		return  K0_ * J * (J - 1);
+	}
+	//=================================================================================================//
+	void OrthotropicSolid::CalculateA0()
+	{
+		A_[0] = SimTK::outer(a_[0], a_[0]);
+		A_[1] = SimTK::outer(a_[1], a_[1]);
+		A_[2] = SimTK::outer(a_[2], a_[2]);
+	}
+	//=================================================================================================//
+	void OrthotropicSolid::CalculateAllMu()
+	{
+		// the equations of G_, to calculate Mu the equations must be solved for Mu[0,1,2]
+		// G_[0]=2/(Mu_[0]+Mu_[1]);
+		// G_[1]=2/(Mu_[1]+Mu_[2]);
+		// G_[2]=2/(Mu_[2]+Mu_[0]);
+
+		Mu_[0]=1/G_[0]+1/G_[2]-1/G_[1];
+		Mu_[1]=1/G_[1]+1/G_[0]-1/G_[2];
+		Mu_[2]=1/G_[2]+1/G_[1]-1/G_[0];
+	}
+	//=================================================================================================//
+	void OrthotropicSolid::CalculateAllLambda()
+	{
+		// first we calculate the upper left part, a 3x3 matrix of the full compliance matrix
+		Matd Complience= Matd(
+			Vecd(1/E_[0], -poisson_[0]/E_[0], -poisson_[1]/E_[0]),
+			Vecd(-poisson_[0]/E_[1], 1/E_[1], -poisson_[2]/E_[1]),
+			Vecd(-poisson_[1]/E_[2], -poisson_[2]/E_[2], 1/E_[2])
+		);
+
+		// we calculate the inverse of the Complience matrix, and calculate the lambdas elementwise
+		Matd Compliance_inv= SimTK::inverse(Complience);
+		//Lambda_ is a 3x3 matrix
+		Lambda_[0][0]=Compliance_inv[0][0]-2*Mu_[0];
+		Lambda_[1][1]=Compliance_inv[1][1]-2*Mu_[1];
+		Lambda_[2][2]=Compliance_inv[2][2]-2*Mu_[2];
+		Lambda_[0][1]=Compliance_inv[0][1];
+		Lambda_[0][2]=Compliance_inv[0][2];
+		Lambda_[1][2]=Compliance_inv[1][2];
+		// the matrix is symmetric
+		Lambda_[1][0] = Lambda_[0][1];
+		Lambda_[2][0] = Lambda_[0][2];
+		Lambda_[2][1] = Lambda_[1][2];		
+	}	
+	//=================================================================================================//
+	Matd FeneNeoHookeanSolid::ConstitutiveRelation(Matd& F, size_t particle_index_i)
 	{
 		Matd right_cauchy = ~F * F;
 		Matd strain = 0.5 * (right_cauchy - Matd(1.0));
@@ -175,10 +298,10 @@ namespace SPH
 	//=================================================================================================//
 	void LocallyOrthotropicMuscle::initializeFiberAndSheet()
 	{
-		base_particles_->registerAVariable<indexVector, Vecd>(local_f0_, "Fiber");
-		base_particles_->registerAVariable<indexVector, Vecd>(local_s0_, "Sheet");
-		base_particles_->addAVariableNameToList<indexVector, Vecd>(reload_local_parameters_, "Fiber");
-		base_particles_->addAVariableNameToList<indexVector, Vecd>(reload_local_parameters_, "Sheet");
+		base_particles_->registerAVariable<Vecd>(local_f0_, "Fiber");
+		base_particles_->registerAVariable<Vecd>(local_s0_, "Sheet");
+		base_particles_->addAVariableNameToList<Vecd>(reload_local_parameters_, "Fiber");
+		base_particles_->addAVariableNameToList<Vecd>(reload_local_parameters_, "Sheet");
 	}
 	//=================================================================================================//
 	void LocallyOrthotropicMuscle::readFromXmlForLocalParameters(const std::string &filefullpath)

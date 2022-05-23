@@ -29,6 +29,7 @@
 #ifndef SOLID_PARTICLES_H
 #define SOLID_PARTICLES_H
 
+#include "elastic_solid.h"
 #include "base_particles.h"
 #include "base_particles.hpp"
 
@@ -42,6 +43,7 @@ namespace SPH
 	class Solid;
 	class ElasticSolid;
 	class PlasticSolid;
+	class BodySurface;
 	template <class MuscleType>
 	class ActiveMuscle;
 
@@ -60,9 +62,8 @@ namespace SPH
 			: SolidParticles(sph_body, makeShared<Solid>(), particle_generator_ptr){};
 		virtual ~SolidParticles(){};
 
-		StdLargeVec<Vecd> pos_0_; /**< initial position */
 		StdLargeVec<Vecd> n_;	  /**<  current normal direction */
-		StdLargeVec<Vecd> n_0_;	  /**<  inital normal direction */
+		StdLargeVec<Vecd> n_0_;	  /**<  initial normal direction */
 		StdLargeVec<Matd> B_;	  /**<  configuration correction for linear reproducing */
 		//----------------------------------------------------------------------
 		//		for fluid-structure interaction (FSI)
@@ -95,10 +96,6 @@ namespace SPH
 	 */
 	class ElasticSolidParticles : public SolidParticles
 	{
-	protected:
-		virtual void writePltFileHeader(std::ofstream &output_file) override;
-		virtual void writePltFileParticleData(std::ofstream &output_file, size_t index_i) override;
-
 	public:
 		ElasticSolidParticles(SPHBody &sph_body,
 							  SharedPtr<ElasticSolid> shared_elastic_solid_ptr,
@@ -109,31 +106,50 @@ namespace SPH
 		StdLargeVec<Matd> dF_dt_;	   /**<  deformation tensor change rate */
 		StdLargeVec<Matd> stress_PK1_; /**<  first Piola-Kirchhoff stress tensor */
 
-		/**< Computing von_Mises_stress. */
-		Real von_Mises_stress(size_t particle_i);
-		//TODO: the following reduces should be revised.
-		StdLargeVec<Real> getVonMisesStress();
-		Real getMaxVonMisesStress();
+		// STRAIN
+		Matd get_GreenLagrange_strain(size_t particle_i);
+		/**< Computing principal strain - returns the principal strains in descending order (starting from the largest) */
+		Vecd get_Principal_strains(size_t particle_i);
+		/**< Computing von Mises equivalent strain from a static (constant) formulation. */
+		Real von_Mises_strain(size_t particle_i);
+		/**< Computing von Mises equivalent strain from a static (constant) formulation. */
+		Real von_Mises_strain_static(size_t particle_i);
+		/**< Computing von Mises equivalent strain from a "dynamic" formulation. This depends on the Poisson's ratio (from commercial FEM software Help). */
+		Real von_Mises_strain_dynamic(size_t particle_i, Real poisson);
 
+		/**< Computing von Mises strain for all particles. - "static" or "dynamic"*/
+		StdLargeVec<Real> getVonMisesStrainVector(std::string strain_measure = "static");
+		/**< Computing maximum von Mises strain from all particles. - "static" or "dynamic" */
+		Real getVonMisesStrainMax(std::string strain_measure = "static");
+		Real getPrincipalStrainMax();
+
+		// STRESS
+		Matd get_Cauchy_stress(size_t particle_i);
+		Matd get_PK2_stress(size_t particle_i);
+		/**< Computing principal_stresses - returns the principal stresses in descending order (starting from the largest) */
+		Vecd get_Principal_stresses(size_t particle_i);
+		/**< Computing von_Mises_stress - "Cauchy" or "PK2" decided based on the stress_measure_ */
+		Real get_von_Mises_stress(size_t particle_i);
+
+		/**< Computing von Mises stress for all particles. - "Cauchy" or "PK2" decided based on the stress_measure_ */
+		StdLargeVec<Real> getVonMisesStressVector();
+		/**< Computing maximum von Mises stress from all particles. - "Cauchy" or "PK2" decided based on the stress_measure_ */
+		Real getVonMisesStressMax();
+		Real getPrincipalStressMax();
 
 		/**< Computing displacemnt. */
 		Vecd displacement(size_t particle_i);
 		StdLargeVec<Vecd> getDisplacement();
+		Real getMaxDisplacement();
 
 		/**< Computing normal vector. */
 		Vecd normal (size_t particle_i);
 		StdLargeVec<Vecd> getNormal();
 
-		/**< Computing von Mises equivalent stress. */
-		Real von_Mises_strain (size_t particle_i);
-		StdLargeVec<Real> getVonMisesStrain();
-		Real getMaxVonMisesStrain();
+		/** relevant stress measure */
+		std::string stress_measure_;
 
-		virtual void writeParticlesToVtuFile(std::ostream &output_file) override;
-		/** Write only surface particle data in Vtu format for Paraview. */
-		virtual void writeSurfaceParticlesToVtuFile(std::ofstream& output_file, BodySurface& surface_particles) override;
-		virtual void writeParticlesToVtpFile(std::ofstream &output_file) override;
-		virtual ElasticSolidParticles *ThisObjectPtr() override { return this; };
+		SharedPtr<ElasticSolid> shared_elastic_solid_ptr_;
 	};
 
 	/**

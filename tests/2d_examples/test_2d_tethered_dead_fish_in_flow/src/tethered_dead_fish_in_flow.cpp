@@ -277,7 +277,7 @@ int main(int ac, char *av[])
 
 	BodyStatesRecordingToVtp write_real_body_states(in_output, system.real_bodies_);
 	BodyReducedQuantityRecording<solid_dynamics::TotalForceOnSolid> write_total_force_on_fish(in_output, fish_body);
-	ObservedQuantityRecording<indexVector, Vecd> write_fish_displacement("Position", in_output, fish_observer_contact);
+	ObservedQuantityRecording<Vecd> write_fish_displacement("Position", in_output, fish_observer_contact);
 
 	/** check whether run particle relaxation for body fitted particle distribution. */
 	if (system.run_particle_relaxation_)

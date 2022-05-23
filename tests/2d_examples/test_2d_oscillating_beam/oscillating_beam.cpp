@@ -158,7 +158,7 @@ int main()
 	//-----------------------------------------------------------------------------
 	In_Output in_output(system);
 	BodyStatesRecordingToVtp write_beam_states(in_output, system.real_bodies_);
-	RegressionTestEnsembleAveraged<ObservedQuantityRecording<indexVector, Vecd>>
+	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Vecd>>
 		write_beam_tip_displacement("Position", in_output, beam_observer_contact);
 
 	/**

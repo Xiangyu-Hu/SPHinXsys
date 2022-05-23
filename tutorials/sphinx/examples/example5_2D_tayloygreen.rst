@@ -140,7 +140,7 @@ and whether the computation begin from restart files is checked.
 	//handle command line arguments
 	sph_system.handleCommandlineOptions(ac, av);
 	/**
-	* @brief Material property, partilces and body creation of fluid.
+	* @brief Material property, particles and body creation of fluid.
 	*/
 	WaterBlock *water_block = new WaterBlock(sph_system, "WaterBody");
 	if (sph_system.reload_particles_) 	 // Using relaxed particle distribution if needed
