@@ -55,7 +55,11 @@ Please check the documentation of the code at https://xiangyu-hu.github.io/SPHin
 
 ## Contribute to SPHinXsys
 
-You are welcomed to contribute to SPHinXsys. 
+You are welcomed to contribute to SPHinXsys.
+There are three main types of contributions. First is to report bugs or issues in SPHinXsys.
+Second is to suggest enhancements, including new test cases, or new features.
+Third is to write enhancements or new features by yourself.
+
 As the code is on git-hub, you can register an account there (if you do not have a github account yet) 
 and fork out the SPHinXsys repository.
 You can work on the forked repository and add new features, and then commit them. 
