@@ -54,7 +54,9 @@ namespace SPH
 		void EmitterInflowCondition ::Update(size_t unsorted_index_i, Real dt)
 		{
 			size_t sorted_index_i = sorted_id_[unsorted_index_i];
-			vel_n_[sorted_index_i] = getTargetVelocity(pos_n_[sorted_index_i], vel_n_[sorted_index_i]);
+			Vecd frame_position = transform_.shiftBaseStationToFrame(pos_n_[sorted_index_i]);
+			Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_n_[sorted_index_i]);
+			vel_n_[sorted_index_i] = transform_.xformFrameVecToBase(getTargetVelocity(frame_position, frame_velocity));
 			rho_n_[sorted_index_i] = rho0_;
 			p_[sorted_index_i] = material_->getPressure(rho_n_[sorted_index_i]);
 		}

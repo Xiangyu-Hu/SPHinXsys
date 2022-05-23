@@ -17,9 +17,10 @@ Real BW = resolution_ref * 4; /**< Extending width for wall boundary. */
 Real LL = 2.0 * BW;			  /**< Inflow region length. */
 Real LH = 0.125;			  /**< Inflows region height. */
 Real inlet_height = 1.0;	  /**< Inflow location height */
-Real inlet_distance = -BW;	  /**< Inflow location distance */
+Real inlet_distance = BW;	  /**< Inflow location distance */
 Vec2d inlet_location = Vec2d(inlet_distance, inlet_height);
 Vec2d inlet_halfsize = Vec2d(0.5 * LL, 0.5 * LH);
+Real inlet_angle = Pi / 6.0;
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 // observer location
 StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
@@ -91,15 +92,6 @@ public:
 	}
 };
 //----------------------------------------------------------------------
-//	inlet as a body part by particle 
-//----------------------------------------------------------------------
-MultiPolygon createInletShape()
-{
-	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(CreateWaterBlockShape(), ShapeBooleanOps::add);
-	return multi_polygon;
-};
-//----------------------------------------------------------------------
 //	Inlet inflow condition
 //----------------------------------------------------------------------
 class InletInflowCondition : public fluid_dynamics::EmitterInflowCondition
@@ -113,7 +105,7 @@ public:
 
 	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
 	{
-		return transform_.xformBaseVecToFrame(Vec2d(2.0, 0.0));
+		return Vec2d(2.0, 0.0);
 	}
 };
 //----------------------------------------------------------------------
@@ -130,7 +122,8 @@ int main()
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	FluidBody water_body(system, makeShared<WaterBlock>("WaterBody"));
+	FluidBody water_body(system, makeShared<TransformShape<GeometricShapeBox>>(
+										  Transform2d(Rotation2d(inlet_angle, inlet_location), inlet_location + inlet_halfsize), inlet_halfsize, "WaterBody"));
 	water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelWendlandC2>>(20);
 	water_body.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
 	water_body.generateParticles<ParticleGeneratorLattice>();
@@ -157,7 +150,7 @@ int main()
 	TimeStepInitialization initialize_a_fluid_step(water_body, gravity);
 	/** Emitter. */
 	BodyAlignedBoxByParticle emitter(
-		water_body, makeShared<AlignedBoxShape>(Transform2d(inlet_location + inlet_halfsize), inlet_halfsize));
+		water_body, makeShared<AlignedBoxShape>(Transform2d(Rotation2d(inlet_angle, inlet_location), inlet_location + inlet_halfsize), inlet_halfsize));
 	InletInflowCondition inflow_condition(water_body, emitter);
 	fluid_dynamics::EmitterInflowInjecting emitter_injection(water_body, emitter, 350, 0, true);
 	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_body_complex);
