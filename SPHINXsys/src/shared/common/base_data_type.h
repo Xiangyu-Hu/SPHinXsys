@@ -419,41 +419,36 @@ namespace SPH
 
 	/**
 	 * @class Rotation2d
-	 * @brief Rotation Coordinate transform in 2D with rotation center and angle.
+	 * @brief Rotation Coordinate transform (around the origin)
+	 * in 2D with rotation center and angle.
 	 */
 	class Rotation2d
 	{
-		Vec2d center_;
 		Real angle_, cosine_angle_, sine_angle_;
 
 	public:
-		Rotation2d() : center_(Vec2d(0)), angle_(0), cosine_angle_(1.0), sine_angle_(0.0){};
-		explicit Rotation2d(SimTK::Real angle, const Vec2d &center = Vec2d(0))
-			: center_(center), angle_(angle),
-			  cosine_angle_(std::cos(angle)), sine_angle_(std::sin(angle)){};
+		explicit Rotation2d(SimTK::Real angle) : angle_(angle),
+												 cosine_angle_(std::cos(angle)), sine_angle_(std::sin(angle)){};
 		virtual ~Rotation2d(){};
 
 		/** Forward transformation. */
 		Vec2d shiftFrameStationToBase(const Vec2d &origin)
 		{
-			Vec2d shift = origin - center_;
-			Vec2d temp(shift[0] * cosine_angle_ - shift[1] * sine_angle_,
-					   shift[1] * cosine_angle_ + shift[0] * sine_angle_);
-			return temp + center_;
+			return Vec2d(origin[0] * cosine_angle_ - origin[1] * sine_angle_,
+						 origin[1] * cosine_angle_ + origin[0] * sine_angle_);
 		};
 		/** Inverse transformation. */
 		Vec2d shiftBaseStationToFrame(const Vec2d &target)
 		{
-			Vec2d temp = target - center_;
-			Vec2d shift(temp[0] * cosine_angle_ + temp[1] * sine_angle_,
-						temp[1] * cosine_angle_ - temp[0] * sine_angle_);
-			return shift + center_;
+			return Vec2d(target[0] * cosine_angle_ + target[1] * sine_angle_,
+						 target[1] * cosine_angle_ - target[0] * sine_angle_);
 		};
 	};
 
 	/**
 	 * @class Transform2d
 	 * @brief Coordinate transform in 2D
+	 * Note that the rotation is around the frame (or local) origin.
 	 */
 	class Transform2d
 	{
@@ -462,8 +457,8 @@ namespace SPH
 		Vec2d translation_;
 
 	public:
-		Transform2d() : rotation_(Rotation2d()), translation_(Vec2d(0)){};
-		explicit Transform2d(const Vec2d &translation) : rotation_(Rotation2d()), translation_(translation){};
+		Transform2d() : rotation_(Rotation2d(0)), translation_(Vec2d(0)){};
+		explicit Transform2d(const Vec2d &translation) : rotation_(Rotation2d(0)), translation_(translation){};
 		explicit Transform2d(const Rotation2d &rotation, const Vec2d &translation = Vec2d(0))
 			: rotation_(rotation), translation_(translation){};
 
@@ -476,7 +471,7 @@ namespace SPH
 		/** Forward transformation. */
 		Vec2d shiftFrameStationToBase(const Vec2d &origin)
 		{
-			return xformFrameVecToBase(origin) + translation_;
+			return translation_ + xformFrameVecToBase(origin);
 		};
 
 		/** Inverse rotation. */
@@ -488,7 +483,7 @@ namespace SPH
 		/** Inverse transformation. */
 		Vec2d shiftBaseStationToFrame(const Vec2d &target)
 		{
-			return xformBaseVecToFrame(target) - translation_;
+			return xformBaseVecToFrame(target - translation_);
 		};
 	};
 

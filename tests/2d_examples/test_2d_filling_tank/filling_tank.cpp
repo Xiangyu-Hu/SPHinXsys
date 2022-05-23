@@ -16,8 +16,8 @@ Real resolution_ref = 0.025;  /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4; /**< Extending width for wall boundary. */
 Real LL = 2.0 * BW;			  /**< Inflow region length. */
 Real LH = 0.125;			  /**< Inflows region height. */
-Real inlet_height = 1.0;	  /**< Inflow location height */
-Real inlet_distance = BW;	  /**< Inflow location distance */
+Real inlet_height = 2.0;	  /**< Inflow location height */
+Real inlet_distance = 2.0;	  /**< Inflow location distance */
 Vec2d inlet_location = Vec2d(inlet_distance, inlet_height);
 Vec2d inlet_halfsize = Vec2d(0.5 * LL, 0.5 * LH);
 Real inlet_angle = Pi / 6.0;
@@ -123,7 +123,7 @@ int main()
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	FluidBody water_body(system, makeShared<TransformShape<GeometricShapeBox>>(
-										  Transform2d(Rotation2d(inlet_angle, inlet_location), inlet_location + inlet_halfsize), inlet_halfsize, "WaterBody"));
+										  Transform2d(Rotation2d(inlet_angle), inlet_location + inlet_halfsize), inlet_halfsize, "WaterBody"));
 	water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelWendlandC2>>(20);
 	water_body.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
 	water_body.generateParticles<ParticleGeneratorLattice>();
@@ -150,7 +150,7 @@ int main()
 	TimeStepInitialization initialize_a_fluid_step(water_body, gravity);
 	/** Emitter. */
 	BodyAlignedBoxByParticle emitter(
-		water_body, makeShared<AlignedBoxShape>(Transform2d(Rotation2d(inlet_angle, inlet_location), inlet_location + inlet_halfsize), inlet_halfsize));
+		water_body, makeShared<AlignedBoxShape>(Transform2d(Rotation2d(inlet_angle), inlet_location + inlet_halfsize), inlet_halfsize));
 	InletInflowCondition inflow_condition(water_body, emitter);
 	fluid_dynamics::EmitterInflowInjecting emitter_injection(water_body, emitter, 350, 0, true);
 	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_body_complex);
@@ -247,6 +247,8 @@ int main()
 			/** inflow emitter injection*/
 			emitter_injection.exec();
 			/** Update cell linked list and configuration. */
+
+
 			water_body.updateCellLinkedList();
 			water_body_complex.updateConfiguration();
 			fluid_observer_contact_relation.updateConfiguration();
