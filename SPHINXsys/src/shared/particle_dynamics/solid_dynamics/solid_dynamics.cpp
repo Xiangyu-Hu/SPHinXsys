@@ -165,23 +165,6 @@ namespace SPH
 			pos_0_center_ = (bounds.first + bounds.second) * 0.5;
 		}
 		//=================================================================================================//
-		Vecd PositionScaleSolidBody::getDisplacement(size_t index_i, Real dt)
-		{
-			Vecd displacement(0);
-			try
-			{
-				// displacement from the initial position
-				Vecd pos_final = pos_0_center_ + end_scale_ * (pos_0_[index_i] - pos_0_center_);
-				displacement = (pos_final - pos_n_[index_i]) * dt /
-							   (end_time_ - GlobalStaticVariables::physical_time_);
-			}
-			catch (std::out_of_range &e)
-			{
-				throw std::runtime_error(std::string("PositionScaleSolidBody::getDisplacement: particle index out of bounds") + std::to_string(index_i));
-			}
-			return displacement;
-		}
-		//=================================================================================================//
 		void PositionScaleSolidBody::Update(size_t index_i, Real dt)
 		{
 			try
@@ -190,9 +173,12 @@ namespace SPH
 				if (GlobalStaticVariables::physical_time_ >= start_time_ &&
 					GlobalStaticVariables::physical_time_ <= end_time_)
 				{
-					pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
-					vel_n_[index_i] = getVelocity();
+					Real time_factor = (GlobalStaticVariables::physical_time_ - start_time_) / (end_time_ - start_time_);
+					Vecd target_pos = pos_0_[index_i] + (pos_0_center_ - pos_0_[index_i]) * (1 - end_scale_);
+					pos_n_[index_i] = pos_0_[index_i] + (target_pos - pos_0_[index_i]) * time_factor;
+					vel_n_[index_i] = Vecd(0.);
 				}
+				vel_n_[index_i] = Vecd(0.);
 			}
 			catch (std::out_of_range &e)
 			{
@@ -224,40 +210,47 @@ namespace SPH
 		TranslateSolidBody::
 			TranslateSolidBody(SPHBody &sph_body, BodyPartByParticle &body_part, Real start_time, Real end_time, Vecd translation)
 			: PartSimpleDynamicsByParticle(sph_body, body_part), SolidDataSimple(sph_body),
-			  pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_), pos_end_({}),
+			  pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_), pos_end_(),
 			  vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
-			  start_time_(start_time), end_time_(end_time), translation_(translation)
+			  start_time_(start_time), end_time_(end_time), translation_(translation),
+			  is_initialized_(false)
 		{
-			// record the particle positions that should be reached at end time
-			for (size_t index_i = 0; index_i < pos_n_.size(); index_i++)
-			{
-				pos_end_.push_back(pos_n_[index_i] + translation_);
-			}
+			pos_end_.reserve(pos_n_.size());
+		}
+		//=================================================================================================//
+		void TranslateSolidBody::Init()
+		{
+			if (!is_initialized_ && GlobalStaticVariables::physical_time_ >= start_time_)
+				// record the particle positions that should be reached at end time
+				for (size_t index_i = 0; index_i < pos_n_.size(); index_i++)
+				{
+					is_initialized_ = true;
+					pos_end_[index_i] = pos_n_[index_i] + translation_;
+				}
 		}
 		//=================================================================================================//
 		Vecd TranslateSolidBody::getDisplacement(size_t index_i, Real dt)
 		{
-			Vecd displacement(0);
 			try
 			{
-				displacement = (pos_end_[index_i] - pos_n_[index_i]) * dt / (end_time_ - GlobalStaticVariables::physical_time_);
+				return (pos_end_[index_i] - pos_n_[index_i]) * dt / (end_time_ - GlobalStaticVariables::physical_time_);
 			}
 			catch (std::out_of_range &e)
 			{
 				throw std::runtime_error(std::string("TranslateSolidBody::getDisplacement: particle index out of bounds") + std::to_string(index_i));
 			}
-			return displacement;
+			return Vecd();
 		}
 		//=================================================================================================//
 		void TranslateSolidBody::Update(size_t index_i, Real dt)
 		{
 			// only apply in the defined time period
-			if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
+			if (is_initialized_ && GlobalStaticVariables::physical_time_ <= end_time_)
 			{
 				try
 				{
 					pos_n_[index_i] = pos_n_[index_i] + 0.5 * getDisplacement(index_i, dt); // displacement from the initial position, 0.5x because it's executed twice
-					vel_n_[index_i] = getVelocity();
+					vel_n_[index_i] = Vecd(0.);
 				}
 				catch (std::out_of_range &e)
 				{
@@ -276,18 +269,14 @@ namespace SPH
 		{
 			try
 			{
-				Vecd point = pos_0_[index_i];
-				if (checkIfPointInBoundingBox(point, bbox_))
+				if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
 				{
-					if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
-					{
-						vel_n_[index_i] = getDisplacement(index_i, dt) / dt;
-					}
-					else
-					{
-						vel_n_[index_i] = 0;
-						dvel_dt_[index_i] = 0;
-					}
+					vel_n_[index_i] = getDisplacement(index_i, dt) / dt;
+				}
+				else
+				{
+					vel_n_[index_i] = Vecd(0.);
+					dvel_dt_[index_i] = Vecd(0.);
 				}
 			}
 			catch (std::out_of_range &e)
