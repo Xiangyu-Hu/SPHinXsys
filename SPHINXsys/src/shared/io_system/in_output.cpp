@@ -48,12 +48,20 @@ namespace SPH
 
 		if (sph_system.restart_step_ == 0)
 		{
-			fs::remove_all(restart_folder_);
-			fs::create_directory(restart_folder_);
-			if(delete_output == true)
+			try
+			{	
+				fs::remove_all(restart_folder_);
+				fs::create_directory(restart_folder_);
+				if(delete_output == true)
+				{
+					fs::remove_all(output_folder_);
+					fs::create_directory(output_folder_);
+				}
+			}
+			catch (const std::exception &e)
 			{
-				fs::remove_all(output_folder_);
-				fs::create_directory(output_folder_);
+				std::cout << "WARNING - In_Output::In_Output: exception was caught: "  <<  e.what() << std::endl;
+				std::cout << "This warning can be ignored for testing." << std::endl;
 			}
 		}
 
