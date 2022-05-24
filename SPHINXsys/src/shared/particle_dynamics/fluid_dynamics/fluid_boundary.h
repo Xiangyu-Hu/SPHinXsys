@@ -52,11 +52,10 @@ namespace SPH
             StdLargeVec<Vecd> &pos_n_, &vel_n_;
             /** default value is 0.1 suggests reaching  target inflow velocity in about 10 time steps */
             Real relaxation_rate_;
-           	Transformd &transform_;
+            Transformd &transform_;
             Vecd halfsize_;
 
-
-            /** inflow profile to be defined in applications, 
+            /** inflow profile to be defined in applications,
              * argument parameters and return value are in frame (local) coordinate */
             virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) = 0;
             virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -92,7 +91,7 @@ namespace SPH
             virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
         };
 
-         /**
+        /**
          * @class EmitterInflowCondition
          * @brief Inflow boundary condition imposed on an emitter, in which pressure and density profile are imposed too.
          * The body part region is required to have parallel lower- and upper-bound surfaces.
@@ -109,10 +108,13 @@ namespace SPH
             /** inflow pressure condition */
             Real inflow_pressure_;
             Real rho0_;
-          	Transformd &transform_;
+            AlignedBoxShape &aligned_box_;
+            Transformd &updated_transform_, old_transform_;
 
-            /** inflow velocity profile to be defined in applications */
+            /** no transform by default */
+            virtual void updateTransform() {};
             virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) = 0;
+            virtual void setupDynamics(Real dt = 0.0) override { updateTransform(); };
             virtual void Update(size_t unsorted_index_i, Real dt = 0.0) override;
         };
 
@@ -129,6 +131,7 @@ namespace SPH
 
             /** This class is only implemented in sequential due to memory conflicts. */
             virtual void parallel_exec(Real dt = 0.0) override { exec(); };
+            AlignedBoxShape &getBodyPartByParticle(){};
 
         protected:
             StdLargeVec<Vecd> &pos_n_;
@@ -136,7 +139,7 @@ namespace SPH
             const int axis_; /**< the axis direction for bounding*/
             size_t body_buffer_width_;
             AlignedBoxShape &aligned_box_;
- 
+
             virtual void checkLowerBound(size_t unsorted_index_i, Real dt = 0.0);
             virtual void checkUpperBound(size_t unsorted_index_i, Real dt = 0.0);
             ParticleFunctor checking_bound_;
@@ -147,7 +150,7 @@ namespace SPH
             };
         };
 
-       /**
+        /**
          * @class StaticConfinementDensity
          * @brief static confinement condition for density summation
          */

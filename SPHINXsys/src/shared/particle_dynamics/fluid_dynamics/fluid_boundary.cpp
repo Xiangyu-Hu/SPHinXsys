@@ -49,15 +49,18 @@ namespace SPH
 			: PartSimpleDynamicsByParticle(fluid_body, aligned_box_part), FluidDataSimple(fluid_body),
 			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_),
 			  rho_n_(particles_->rho_n_), p_(particles_->p_), inflow_pressure_(0),
-			  rho0_(material_->ReferenceDensity()), transform_(aligned_box_part.aligned_box_.getTransform()) {}
+			  rho0_(material_->ReferenceDensity()),
+			  aligned_box_(aligned_box_part.aligned_box_), 
+			  updated_transform_(aligned_box_.getTransform()),
+			  old_transform_(updated_transform_) {}
 		//=================================================================================================//
 		void EmitterInflowCondition ::Update(size_t unsorted_index_i, Real dt)
 		{
 			size_t sorted_index_i = sorted_id_[unsorted_index_i];
-			Vecd frame_position = transform_.shiftBaseStationToFrame(pos_n_[sorted_index_i]);
-			Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_n_[sorted_index_i]);
-			vel_n_[sorted_index_i] = transform_.xformFrameVecToBase(getTargetVelocity(frame_position, frame_velocity));
-
+			Vecd frame_position = old_transform_.shiftBaseStationToFrame(pos_n_[sorted_index_i]);
+			Vecd frame_velocity = old_transform_.xformBaseVecToFrame(vel_n_[sorted_index_i]);
+			pos_n_[sorted_index_i] = updated_transform_.shiftFrameStationToBase(frame_position);
+			vel_n_[sorted_index_i] = updated_transform_.xformFrameVecToBase(getTargetVelocity(frame_position, frame_velocity));
 			rho_n_[sorted_index_i] = rho0_;
 			p_[sorted_index_i] = material_->getPressure(rho_n_[sorted_index_i]);
 		}
