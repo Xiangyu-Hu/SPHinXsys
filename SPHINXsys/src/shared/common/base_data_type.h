@@ -420,25 +420,25 @@ namespace SPH
 	/**
 	 * @class Rotation2d
 	 * @brief Rotation Coordinate transform (around the origin)
-	 * in 2D with rotation center and angle.
+	 * in 2D with an angle.
 	 */
 	class Rotation2d
 	{
 		Real angle_, cosine_angle_, sine_angle_;
 
 	public:
-		explicit Rotation2d(SimTK::Real angle) : angle_(angle),
-												 cosine_angle_(std::cos(angle)), sine_angle_(std::sin(angle)){};
+		explicit Rotation2d(SimTK::Real angle)
+			: angle_(angle), cosine_angle_(std::cos(angle)), sine_angle_(std::sin(angle)){};
 		virtual ~Rotation2d(){};
 
 		/** Forward transformation. */
-		Vec2d shiftFrameStationToBase(const Vec2d &origin)
+		Vec2d xformFrameVecToBase(const Vec2d &origin)
 		{
 			return Vec2d(origin[0] * cosine_angle_ - origin[1] * sine_angle_,
 						 origin[1] * cosine_angle_ + origin[0] * sine_angle_);
 		};
 		/** Inverse transformation. */
-		Vec2d shiftBaseStationToFrame(const Vec2d &target)
+		Vec2d xformBaseVecToFrame(const Vec2d &target)
 		{
 			return Vec2d(target[0] * cosine_angle_ + target[1] * sine_angle_,
 						 target[1] * cosine_angle_ - target[0] * sine_angle_);
@@ -465,10 +465,10 @@ namespace SPH
 		/** Forward rotation. */
 		Vec2d xformFrameVecToBase(const Vec2d &origin)
 		{
-			return rotation_.shiftFrameStationToBase(origin);
+			return rotation_.xformFrameVecToBase(origin);
 		};
 
-		/** Forward transformation. */
+		/** Forward transformation. Note that the rotation operation is carried out first. */
 		Vec2d shiftFrameStationToBase(const Vec2d &origin)
 		{
 			return translation_ + xformFrameVecToBase(origin);
@@ -477,10 +477,10 @@ namespace SPH
 		/** Inverse rotation. */
 		Vec2d xformBaseVecToFrame(const Vec2d &target)
 		{
-			return rotation_.shiftBaseStationToFrame(target);
+			return rotation_.xformBaseVecToFrame(target);
 		};
 
-		/** Inverse transformation. */
+		/** Inverse transformation. Note that the inverse translation operation is carried out first. */
 		Vec2d shiftBaseStationToFrame(const Vec2d &target)
 		{
 			return xformBaseVecToFrame(target - translation_);
