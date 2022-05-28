@@ -29,38 +29,24 @@ Real c_f = 10.0 * U_max;				 /**< Reference sound speed. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
-Vec2d water_block_location = Vec2d(0);
-Vec2d water_block_halfsize = Vec2d(0.5 * LL, 0.5 * LH);
-
-StdVec<Vecd> water_block_shape{
-	Vecd(0.0, 0.0), Vecd(0.0, LH), Vecd(LL, LH), Vecd(LL, 0.0), Vecd(0.0, 0.0)};
-StdVec<Vecd> outer_wall_shape{
-	Vecd(-BW, -BW), Vecd(-BW, DH + BW), Vecd(DL + BW, DH + BW), Vecd(DL + BW, -BW), Vecd(-BW, -BW)};
-StdVec<Vecd> inner_wall_shape{
-	Vecd(0.0, 0.0), Vecd(0.0, DH), Vecd(DL, DH), Vecd(DL, 0.0), Vecd(0.0, 0.0)};
+Vec2d water_block_halfsize = Vec2d(0.5 * LL, 0.5 * LH); // local center at origin:
+Vec2d water_block_translation = water_block_halfsize;
+Vec2d outer_wall_halfsize = Vec2d(0.5 * DL + BW, 0.5 * DH + BW);
+Vec2d outer_wall_translation = Vec2d(-BW, -BW) + outer_wall_halfsize;
+Vec2d inner_wall_halfsize = Vec2d(0.5 * DL, 0.5 * DH);
+Vec2d inner_wall_translation = inner_wall_halfsize;
 //----------------------------------------------------------------------
-//	Case-dependent geometries
+//	Complex for wall boundary
 //----------------------------------------------------------------------
-class WaterBlock : public MultiPolygonShape
+class WallBoundary : public ComplexShape
 {
 public:
-	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
+	explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+		add<TransformShape<GeometricShapeBox>>(Transform2d(outer_wall_translation), outer_wall_halfsize);
+		subtract<TransformShape<GeometricShapeBox>>(Transform2d(inner_wall_translation), inner_wall_halfsize);
 	}
-};
-//----------------------------------------------------------------------
-//	Cases-dependent wall geometry
-//----------------------------------------------------------------------
-class WallBoundary : public MultiPolygonShape
-{
-public:
-	explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
-	{
-		multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
-	}
-};
+}; 
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -76,8 +62,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Creating bodies with corresponding materials and particles.
 	//----------------------------------------------------------------------
-	FluidBody water_block(sph_system, makeShared<TransformShape<GeometricShapeBox>>(
-										  Transform2d(water_block_halfsize), water_block_halfsize, "WaterBody"));
+	FluidBody water_block(
+		sph_system, makeShared<TransformShape<GeometricShapeBox>>(
+						Transform2d(water_block_translation), water_block_halfsize, "WaterBody"));
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
 
@@ -86,7 +73,7 @@ int main(int ac, char *av[])
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
-	ObserverBody fluid_observer(sph_system, "Fluidobserver");
+	ObserverBody fluid_observer(sph_system, "FluidObserver");
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
