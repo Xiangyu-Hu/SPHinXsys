@@ -24,7 +24,8 @@
  * @file T_shaped_pipe.h
  * @brief 	This is the benchmark test of inlet and outlet condition in any direction.
  * @details We consider a flow with one inlet and two outlets in a T-shaped pipe in 2D.
- * @author	Huiqiang Yue and Anyong Zhang
+ * @author	Huiqiang Yue and Anyong Zhang, 
+ * //TODO: Xiangyu: better revised to only use one time transform
  */
 
 #include "sphinxsys.h"
