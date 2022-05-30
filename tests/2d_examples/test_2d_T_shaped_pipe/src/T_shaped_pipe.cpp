@@ -17,7 +17,7 @@ Real resolution_ref = 0.15;			  /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;		  /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer to impose inflow condition. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -DH), Vec2d(DL + BW, 2.0 * DH));
+BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -DH - BW), Vec2d(DL + BW, 2.0 * DH + BW));
 /** Prescribed fluid body domain bounds*/
 BoundingBox fluid_body_domain_bounds(Vec2d(-DL_sponge, -DH), Vec2d(DL + BW, 2.0 * DH));
 Vec2d emitter_location = Vec2d(-DL_sponge, 0.0);
@@ -43,8 +43,8 @@ std::vector<Vecd> water_block_shape{
 	Vecd(DL, 2.0 * DH), Vecd(DL, -DH), Vecd(DL1, -DH), Vecd(DL1, 0.0), Vecd(-DL_sponge, 0.0)};
 /** the outer wall polygon. */
 std::vector<Vecd> outer_wall_shape{
-	Vecd(-DL_sponge, -BW), Vecd(-DL_sponge, DH + BW), Vecd(DL1 - BW, DH + BW), Vecd(DL1 - BW, 2.0 * DH),
-	Vecd(DL + BW, 2.0 * DH), Vecd(DL + BW, -DH), Vecd(DL1 - BW, -DH), Vecd(DL1 - BW, -BW), Vecd(-DL_sponge, -BW)};
+	Vecd(-DL_sponge - BW, -BW), Vecd(-DL_sponge - BW, DH + BW), Vecd(DL1 - BW, DH + BW), Vecd(DL1 - BW, 2.0 * DH + BW),
+	Vecd(DL + BW, 2.0 * DH + BW), Vecd(DL + BW, -DH - BW), Vecd(DL1 - BW, -DH - BW), Vecd(DL1 - BW, -BW), Vecd(-DL_sponge - BW, -BW)};
 /** the inner wall polygon. */
 std::vector<Vecd> inner_wall_shape{
 	Vecd(-DL_sponge - BW, 0.0), Vecd(-DL_sponge - BW, DH), Vecd(DL1, DH), Vecd(DL1, 2.0 * DH + BW),
@@ -68,7 +68,6 @@ public:
 	{
 		multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
 		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
-		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::sub);
 	}
 };
 //----------------------------------------------------------------------
