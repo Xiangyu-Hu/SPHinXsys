@@ -457,43 +457,80 @@ Installing on Windows
 ---------------------
 
 We provide pre-built binaries for use with Visual Studio 2017. 
-If you have an earlier or later version of Visual Studio, or if you are using Visual Studio Express you will likely need to build from source (not hard). See the separate build from source document referenced at the start of this chapter.
+If you have an earlier or later version of Visual Studio, 
+or if you are using Visual Studio Express you will likely need to build from source (not hard). 
+See the separate build from source document referenced at the start of this chapter.
 
-The only prerequisite on Windows is that you have a development environment (Visual Studio) and a way to unzip the .zip package. If you don’t have one already, you’ll need to install software that can perform the unzip operation. 
-The installation of Simbody on Windows is refer to `Simbody's page
-<https://github.com/simbody/simbody#windows-using-visual-studio>`_, 
-and after that please set the system environment variable SIMBODY_HOME to the simbody prefix directory and the simbody bin path to environmental variable( System variable).
+The only prerequisite on Windows is that you have a development environment (Visual Studio) and a way to unzip the `.zip` package. 
+If you don’t have one, you’ll need to install software that can perform the unzip operation. 
 
+Step1: Install CMake
 
-Install google test, we download the release version from the github repository: <https://github.com/google/googletest/releases>, build and install it.
-For this, you will extract the source and create a new build directory. Using Cmake, you will configure and generate a Visual Studio project. 
-Be sure that, in Cmake GUI,  you have clicked the two options: build_shared_libs and install_gtest. The install prefix you can choose the default one 
-(in windows program files and, in this case, you later need run Visual Studio as administrator) or other new directory. 
-Open the generated project in Visual Studio, build all and install both for Debug and ReleaseWithDebugInfo targets.
-Then, you need setup Windows system environment variables: GTEST_HOME with the value of the install prefix directory.
-Also you need add the bin directory as new path. the dll files inside need to found when running the tests.    
+	CMake is cross-plateform project manager and generates files for a project.
 
-Install TBB, actually extract the file to the assigned folder , e.g. $C:/ tbb_2019$
-set environment variable: TBB_HOME to the tbb directory, and set the path $path/to/tbb/bin/intel64/vc14$ to environmental variable (System variables).
+	- Install CMake on Windows and extract the file to the assigned folder, details refering to `CMake's page <https://cmake.org/>`_. 
+	- After installation, please set the CMake bin path to environmental variables (System variables).
 
-Install boost, actually extract the file to the assigned folder, e.g. $C:/boost, and set environment: BOOST_HOME to its directory
+Step2: Install Tbb
 
-Download the sphinxsys-win file,
-and then unzip it to the appropriate directory on your computer. 
-Please note you should use simple name for the  directory, 
-especially not number '0', which may trigger a bug in Cmake and leads to linking error in Visual Studio. 
-Set environment variable BOOST_HOME to its directory.
-Using cmake for configure project as follows 
+	- Download TBB (Thread Building Blocks) `Tbb's page <https://github.com/oneapi-src/oneTBB/releases/tag/2019_U9>`_.
+	- Extract the file to the assigned folder.
+	- Set environment variables: TBB_HOME to the tbb directory (User variables), and set the path $TbbDirectory/bin/intel64/vc14$ to environmental variables (System variables).
 
+.. figure:: figures/TBB.png
+   :width: 600 px
+   :align: center
 
- 
+Step3: Install Boost
+
+	- Download Boost `Boost's page <https://sourceforge.net/projects/boost/files/boost-binaries/>`_. Choose the right version according to your visual studio verson (For VS 2017 you choose msvc-14.1-64, VS2019 msvc-14.2-64.).
+	- Extract the file to the assigned folder. 
+	- Set environment: BOOST_HOME to its directory (User variables), and the path $BoostDirectory/lib64-msvc-14.1$ to enviromental variables (System variables).
+
+.. figure:: figures/Boost_1.png
+   :width: 600 px
+   :align: center
+
+.. figure:: figures/Boost_2.png
+   :width: 600 px
+   :align: center
+
+Step4: Install Simbody
+
+	- The installation of Simbody on Windows is refer to `Simbody's page <https://github.com/simbody/simbody#windows-using-visual-studio>`_.
+	- Extract the source and create a new build directory. 
+	- Using CMake, you will configure and generate a Visual Studio project and then open the project in Visual Studio. The install prefix you can choose the default one or other new directory. 
+	- Note that if you choose the default installation prefix (the system disk C:/), you need to run Visual Studio as administrator and then open the Simbody.sln file in the build directory instead of directly click `Open Project` in CMake GUI.
+	- Then build `ALL_BUILD` and `INSTALL` with `Debug` and `ReleaseWithDebugInfo` modes respectively in Visual Studio, refering to the following figure.
+	- After that, please set the system environment variable SIMBODY_HOME to the simbody prefix directory (User variables) and the simbody bin path to environmental variables (System variables).
+	- Note that `pthreadVC2_x64.dll` and `pthreadVC2_x64.lib` are lost in the latest Simbody version. You need to copy these two files from the old version, Simbody 3.5, and then put these files into the Simbody installation folder, $**/Simbody/bin$ and $**/Simbody/lib$. 
+
+.. figure:: figures/Simbody_1.png
+   :width: 600 px
+   :align: center
+
+Step5: Install Goole test
+
+	- Install google test, we download the release version from the github repository: <https://github.com/google/googletest/releases>, build and install it.
+	- For this, you will extract the source and create a new build directory. Using CMake, you will configure and generate a Visual Studio project. Be sure that, in CMake GUI, you have to click the two options: `build_shared_libs` and `install_gtest`. The install prefix you can choose the default one or other new directory. 
+	- Note that if you choose the default installation prefix (the system disk C:/), you need to run Visual Studio as administrator and then open the googletest-distribution.sln file in the build directory instead of directly click 'Open Project' in CMake GUI.
+	- Similar to the installation of Simbody, build `ALL_BUILD` and `INSTALL` with `Debug` and `ReleaseWithDebugInfo` modes respectively.
+	- Set up Windows system environment variables: GTEST_HOME with the value of the install prefix directory (User variables). Also you need add the bin directory as new path. the dll files inside need to found when running the tests.    
+
+Step6: SPHinXsys
+
+	- Download the release version of SPHinXsys <https://github.com/Xiangyu-Hu/SPHinXsys/releases>, and then unzip it to the appropriate directory on your computer and create a new build directory.
+	- Please note that you should use simple name for the directory, especially not including number '0', which may trigger a bug in Cmake and leads to linking error in Visual Studio. 
+	- Use CMake to build project file. Configure with the option Visual Studio 2017 x64, generate the project and open the project by Visual Studio. 
+	- Using CMake for configure project as follows 
+
 .. figure:: figures/cmake-sphinxsys.png
    :width: 600 px
    :align: center
 
-   Cmake configure sphinxsys library
-
-After configuration, one can use Visual Studio to play with SPHinXsys. GOOD LUCK!
+   CMake configure SPHinXsys library
+   
+You can use Visual Studio to play with SPHinXsys. GOOD LUCK!
 
 
 Installing on Ubunutu Linux using the dependency-free version
