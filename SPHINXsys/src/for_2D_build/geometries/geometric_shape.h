@@ -31,6 +31,7 @@
 #define GEOMETRIC_SHAPE_H
 
 #include "base_geometry.h"
+#include "multi_polygon_shape.h"
 
 namespace SPH
 {
@@ -46,6 +47,8 @@ namespace SPH
 
     protected:
         Vec2d halfsize_;
+   		MultiPolygon multi_polygon_;
+
 
         virtual BoundingBox findBounds() override;
     };

@@ -9,7 +9,9 @@ namespace SPH
 {
     //=================================================================================================//
     GeometricShapeBox::GeometricShapeBox(const Vec2d &halfsize, const std::string &shape_name)
-        : Shape(shape_name), halfsize_(halfsize)
+        : Shape(shape_name), halfsize_(halfsize),
+          multi_polygon_({-halfsize, Vec2d(-halfsize[0], halfsize[1]), halfsize,
+                          Vec2d(halfsize[0], -halfsize[1]), -halfsize})
     {
         if (halfsize[0] < 0.0 || halfsize[1] < 0.0)
         {
@@ -26,9 +28,8 @@ namespace SPH
     //=================================================================================================//
     Vec2d GeometricShapeBox::findClosestPoint(const Vec2d &pnt)
     {
-        Real x = pnt[0] + halfsize_[0] > halfsize_[0] - pnt[0] ? halfsize_[0] : -halfsize_[0];
-        Real y = pnt[1] + halfsize_[1] > halfsize_[1] - pnt[1] ? halfsize_[1] : -halfsize_[1];
-        return Vec2d(x, y);
+        return multi_polygon_.findClosestPoint(pnt);
+        ;
     }
     //=================================================================================================//
     BoundingBox GeometricShapeBox::findBounds()
@@ -37,7 +38,7 @@ namespace SPH
     }
     //=================================================================================================//
     GeometricShapeBall::GeometricShapeBall(const Vec2d &center, Real radius,
-                                               const std::string &shape_name)
+                                           const std::string &shape_name)
         : Shape(shape_name), center_(center), radius_(radius) {}
     //=================================================================================================//
     bool GeometricShapeBall::checkContain(const Vec2d &pnt, bool BOUNDARY_INCLUDED)

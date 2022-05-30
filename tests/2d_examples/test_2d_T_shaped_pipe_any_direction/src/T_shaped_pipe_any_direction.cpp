@@ -24,7 +24,8 @@
  * @file T_shaped_pipe.h
  * @brief 	This is the benchmark test of inlet and outlet condition in any direction.
  * @details We consider a flow with one inlet and two outlets in a T-shaped pipe in 2D.
- * @author	Huiqiang Yue and Anyong Zhang
+ * @author	Huiqiang Yue and Anyong Zhang, 
+ * //TODO: Xiangyu: better revised to only use one time transform
  */
 
 #include "sphinxsys.h"
@@ -44,7 +45,6 @@ Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer 
 // angle to rotate around the center
 Real rotate_angle = 135.0 / 180.0 * Pi;
 Vecd rotate_center((DL1 - DL_sponge) * 0.5, DH * 0.5);
-SPH::Transform2d my_transform(Rotation2d(rotate_angle, rotate_center));
 /* system domain bounds */
 BoundingBox new_bounding_box = calculateNewBoundingBox({Vec2d(-DL_sponge, -DH), Vec2d(DL + BW, 2.0 * DH)}, rotate_angle, rotate_center);
 BoundingBox system_domain_bounds(new_bounding_box);
@@ -97,25 +97,28 @@ SegmentFace inflow_face(inlet_points, rotatePointAroundPoint(Vecd(1, 0), rotate_
 //	Define case dependent body shapes.
 //----------------------------------------------------------------------
 /** Water block body definition. */
-class WaterBlock : public TransformShape<MultiPolygonShape>
+class WaterBlock : public TransformShape<TransformShape<MultiPolygonShape>>
 {
 public:
 	explicit WaterBlock(const std::string &shape_name) 
-		: TransformShape<MultiPolygonShape>(my_transform, shape_name)
+		: TransformShape<TransformShape<MultiPolygonShape>>(
+			Transform2d(Rotation2d(rotate_angle), rotate_center), 
+			Transform2d(-rotate_center), shape_name)
 	{
 		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
 	}
 };
 /** Wall boundary body definition. */
-class WallBoundary : public TransformShape<MultiPolygonShape>
+class WallBoundary : public TransformShape<TransformShape<MultiPolygonShape>>
 {
 public:
-	explicit WallBoundary(const std::string &shape_name) 
-		: TransformShape<MultiPolygonShape>(my_transform, shape_name)
+	explicit WallBoundary(const std::string &shape_name)  
+		: TransformShape<TransformShape<MultiPolygonShape>>(
+			Transform2d(Rotation2d(rotate_angle), rotate_center), 
+			Transform2d(-rotate_center), shape_name)
 	{
 		multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
 		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
-		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::sub);
 	}
 };
 //----------------------------------------------------------------------

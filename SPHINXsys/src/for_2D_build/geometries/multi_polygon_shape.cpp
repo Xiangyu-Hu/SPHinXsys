@@ -11,13 +11,13 @@ namespace SPH
 {
 	//=================================================================================================//
 	MultiPolygon::MultiPolygon(const std::vector<Vecd> &points)
-	: MultiPolygon()
+		: MultiPolygon()
 	{
 		addAPolygon(points, ShapeBooleanOps::add);
 	}
 	//=================================================================================================//
 	MultiPolygon::MultiPolygon(const Vec2d &center, Real radius, int resolution)
-	: MultiPolygon()
+		: MultiPolygon()
 	{
 		addACircle(center, radius, resolution, ShapeBooleanOps::add);
 	}
@@ -27,8 +27,8 @@ namespace SPH
 								 boost_multi_poly multi_poly_op, ShapeBooleanOps boolean_op)
 	{
 		boost_multi_poly multi_poly_tmp_in = multi_poly_in;
-		//out multi-poly need to be emtpy
-		//otherwise the operation is not valid
+		// out multi-poly need to be emtpy
+		// otherwise the operation is not valid
 		boost_multi_poly multi_poly_tmp_out;
 
 		switch (boolean_op)
@@ -73,6 +73,17 @@ namespace SPH
 	void MultiPolygon::addABoostMultiPoly(boost_multi_poly &boost_multi_poly_op, ShapeBooleanOps op)
 	{
 		multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, boost_multi_poly_op, op);
+	}
+	//=================================================================================================//
+	void MultiPolygon::addABox(Transform2d transform2d, const Vec2d &halfsize, ShapeBooleanOps op)
+	{
+		Vec2d point0 = transform2d.shiftFrameStationToBase(-halfsize);
+		Vec2d point1 = transform2d.shiftFrameStationToBase(Vec2d(-halfsize[0], halfsize[1]));
+		Vec2d point2 = transform2d.shiftFrameStationToBase(halfsize);
+		Vec2d point3 = transform2d.shiftFrameStationToBase(Vec2d(halfsize[0], -halfsize[1]));
+		
+		std::vector<Vecd> points = { point0, point1, point2, point3, point0};
+		addAPolygon(points, op);
 	}
 	//=================================================================================================//
 	void MultiPolygon::addACircle(const Vec2d &center, Real radius, int resolution, ShapeBooleanOps op)
@@ -150,7 +161,7 @@ namespace SPH
 		if (dataFile.fail())
 		{
 			std::cout << "File can not open.\n"
-				<< std::endl;
+					  << std::endl;
 			;
 		}
 
@@ -199,7 +210,7 @@ namespace SPH
 			if (dist < closest_dist_2seg)
 			{
 				closest_dist_2seg = dist;
-				//closest_seg.append(seg);
+				// closest_seg.append(seg);
 				Real x0 = boost::geometry::get<0, 0>(seg);
 				Real y0 = boost::geometry::get<0, 1>(seg);
 				Real x1 = boost::geometry::get<1, 0>(seg);
@@ -257,7 +268,7 @@ namespace SPH
 	//=================================================================================================//
 	bool MultiPolygonShape::isValid()
 	{
-		return  multi_polygon_.getBoostMultiPoly().size() == 0 ? false : true;
+		return multi_polygon_.getBoostMultiPoly().size() == 0 ? false : true;
 	}
 	//=================================================================================================//
 	bool MultiPolygonShape::checkContain(const Vec2d &input_pnt, bool BOUNDARY_INCLUDED)
