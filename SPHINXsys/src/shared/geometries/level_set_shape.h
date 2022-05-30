@@ -59,6 +59,7 @@ namespace SPH
 		Vecd findLevelSetGradient(const Vecd &input_pnt);
 		Real computeKernelIntegral(const Vecd &input_pnt, Real h_ratio = 1.0);
 		Vecd computeKernelGradientIntegral(const Vecd &input_pnt, Real h_ratio = 1.0);
+		/** small_shift_factor = 1.0 by default, can be increased for difficult geometries for smoothing */
 		LevelSetShape *cleanLevelSet(Real small_shift_factor = 1.0);
 		void writeLevelSet(SPHBody &sph_body);
 

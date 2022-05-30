@@ -99,7 +99,6 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::markNearInterface(Real small_shift_factor)
 	{
-		// small_shift_factor = 1.0 by default, can be increased for difficult geometries for smoothing
 		Real small_shift = small_shift_factor * grid_spacing_;
 		// corner averages, note that the first row and first column are not used
 		PackageTemporaryData<Real> corner_averages;
