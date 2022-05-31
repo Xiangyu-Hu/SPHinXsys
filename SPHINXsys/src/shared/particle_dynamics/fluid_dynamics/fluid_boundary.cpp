@@ -12,30 +12,36 @@ namespace SPH
 	{
 		//=================================================================================================//
 		FlowRelaxationBuffer::
-			FlowRelaxationBuffer(FluidBody &fluid_body, BodyAlignedBoxByCell &aligned_box_part)
-			: PartDynamicsByCell(fluid_body, aligned_box_part), FluidDataSimple(fluid_body),
-			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_), relaxation_rate_(0.3),
-			  transform_(aligned_box_part.aligned_box_.getTransform()),
-			  halfsize_(aligned_box_part.aligned_box_.HalfSize()){};
+			FlowRelaxationBuffer(FluidBody &fluid_body, BodyPartByCell &body_part)
+			: PartDynamicsByCell(fluid_body, body_part), FluidDataSimple(fluid_body),
+			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_), relaxation_rate_(0.3){};
 		//=================================================================================================//
 		void FlowRelaxationBuffer ::Update(size_t index_i, Real dt)
+		{
+			vel_n_[index_i] += relaxation_rate_ * (getTargetVelocity(pos_n_[index_i], vel_n_[index_i]) - vel_n_[index_i]);
+		}
+		//=================================================================================================//
+		InflowBoundaryCondition::InflowBoundaryCondition(FluidBody &fluid_body, BodyAlignedBoxByCell &aligned_box_part)
+			: FlowRelaxationBuffer(fluid_body, aligned_box_part),
+			  transform_(aligned_box_part.aligned_box_.getTransform()),
+			  halfsize_(aligned_box_part.aligned_box_.HalfSize())
+		{
+			relaxation_rate_ = 1.0;
+		}
+		//=================================================================================================//
+		void InflowBoundaryCondition::Update(size_t index_i, Real dt)
 		{
 			Vecd frame_position = transform_.shiftBaseStationToFrame(pos_n_[index_i]);
 			Vecd frame_velocity = transform_.xformBaseVecToFrame(vel_n_[index_i]);
 			Vecd target_velocity = transform_.xformFrameVecToBase(getTargetVelocity(frame_position, frame_velocity));
 			vel_n_[index_i] += relaxation_rate_ * (target_velocity - vel_n_[index_i]);
 		}
-		InflowBoundaryCondition::InflowBoundaryCondition(FluidBody &fluid_body, BodyAlignedBoxByCell &aligned_box_part)
-			: FlowRelaxationBuffer(fluid_body, aligned_box_part)
-		{
-			relaxation_rate_ = 1.0;
-		}
 		//=================================================================================================//
 		DampingBoundaryCondition::
-			DampingBoundaryCondition(FluidBody &fluid_body, BodyAlignedBoxByCell &aligned_box_part)
-			: PartDynamicsByCell(fluid_body, aligned_box_part), FluidDataSimple(fluid_body),
+			DampingBoundaryCondition(FluidBody &fluid_body, BodyRegionByCell &body_part)
+			: PartDynamicsByCell(fluid_body, body_part), FluidDataSimple(fluid_body),
 			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_), strength_(5.0),
-			  damping_zone_bounds_(aligned_box_part.body_part_shape_.getBounds()){};
+			  damping_zone_bounds_(body_part.body_part_shape_.getBounds()){};
 		//=================================================================================================//
 		void DampingBoundaryCondition::Update(size_t index_i, Real dt)
 		{
@@ -50,7 +56,7 @@ namespace SPH
 			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_),
 			  rho_n_(particles_->rho_n_), p_(particles_->p_), inflow_pressure_(0),
 			  rho0_(material_->ReferenceDensity()),
-			  aligned_box_(aligned_box_part.aligned_box_), 
+			  aligned_box_(aligned_box_part.aligned_box_),
 			  updated_transform_(aligned_box_.getTransform()),
 			  old_transform_(updated_transform_) {}
 		//=================================================================================================//

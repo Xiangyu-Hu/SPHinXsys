@@ -20,10 +20,11 @@ Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer 
 BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -DH - BW), Vec2d(DL + BW, 2.0 * DH + BW));
 /** Prescribed fluid body domain bounds*/
 BoundingBox fluid_body_domain_bounds(Vec2d(-DL_sponge, -DH), Vec2d(DL + BW, 2.0 * DH));
-Vec2d emitter_location = Vec2d(-DL_sponge, 0.0);
 Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
-Vec2d inlet_buffer_location = Vec2d(-DL_sponge, 0.0);
+Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
 Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
+Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize;
+
 //-------------------------------------------------------
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
@@ -143,11 +144,11 @@ int main(int ac, char *av[])
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	/** Emitter. */
 	BodyAlignedBoxByParticle emitter(
-		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_location + emitter_halfsize)), emitter_halfsize));
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_translation)), emitter_halfsize));
 	fluid_dynamics::EmitterInflowInjecting emitter_inflow_injecting(water_block, emitter, 10, 0, true);
 	/** Emitter condition. */
 	BodyAlignedBoxByCell emitter_buffer(
-		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(inlet_buffer_location + inlet_buffer_halfsize)), inlet_buffer_halfsize));
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
 	EmitterBufferInflowCondition emitter_buffer_inflow_condition(water_block, emitter_buffer);
 	/** time-space method to detect surface particles. */
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex

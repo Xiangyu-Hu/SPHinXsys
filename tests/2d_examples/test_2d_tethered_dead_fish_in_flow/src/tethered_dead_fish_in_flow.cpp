@@ -59,22 +59,8 @@ std::vector<Vecd> createWaterBlockShape()
 
 	return pnts_shaping_water_block;
 }
-/**
- * @brief create a buffer for water block shape
- */
-MultiPolygon createInflowBufferShape()
-{
-	std::vector<Vecd> pnts_buffer;
-	pnts_buffer.push_back(Vecd(-DL_sponge, 0.0));
-	pnts_buffer.push_back(Vecd(-DL_sponge, DH));
-	pnts_buffer.push_back(Vecd(0.0, DH));
-	pnts_buffer.push_back(Vecd(0.0, 0.0));
-	pnts_buffer.push_back(Vecd(-DL_sponge, 0.0));
-
-	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(pnts_buffer, ShapeBooleanOps::add);
-	return multi_polygon;
-}
+Vec2d buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
+Vec2d buffer_translation = Vec2d(-DL_sponge, 0.0) + buffer_halfsize;
 /**
  * @brief create outer wall shape
  */
@@ -189,8 +175,8 @@ class ParabolicInflow : public fluid_dynamics::InflowBoundaryCondition
 	Real u_ave_, u_ref_, t_ref;
 
 public:
-	ParabolicInflow(FluidBody &fluid_body, BodyPartByCell &constrained_region)
-		: InflowBoundaryCondition(fluid_body, constrained_region),
+	ParabolicInflow(FluidBody &fluid_body, BodyAlignedBoxByCell &aligned_box_part)
+		: InflowBoundaryCondition(fluid_body, aligned_box_part),
 		  u_ave_(0), u_ref_(1.0), t_ref(4.0) {}
 
 	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
@@ -344,7 +330,8 @@ int main(int ac, char *av[])
 	/** Computing vorticity in the flow. */
 	fluid_dynamics::VorticityInner compute_vorticity(water_block_inner);
 	/** Inflow boundary condition. */
-	BodyRegionByCell inflow_buffer(water_block, makeShared<MultiPolygonShape>(createInflowBufferShape(), "Buffer"));
+	BodyAlignedBoxByCell inflow_buffer(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
 	ParabolicInflow parabolic_inflow(water_block, inflow_buffer);
 
 	/**

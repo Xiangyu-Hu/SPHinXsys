@@ -1,9 +1,9 @@
 /**
-* @file 	freestream_flow_around_cylinder_case.h
-* @brief 	This is the case file for the test of free-stream flow.
-* @details  We consider a flow pass the cylinder with freestream boundary condition in 2D.
-* @author 	Xiangyu Hu, Shuoguo Zhang
-*/
+ * @file 	freestream_flow_around_cylinder_case.h
+ * @brief 	This is the case file for the test of free-stream flow.
+ * @details  We consider a flow pass the cylinder with freestream boundary condition in 2D.
+ * @author 	Xiangyu Hu, Shuoguo Zhang
+ */
 
 #include "sphinxsys.h"
 #include "2d_free_stream_around_cylinder.h"
@@ -103,11 +103,12 @@ int main(int ac, char *av[])
 	TimeDependentAcceleration gravity(Vec2d(0.0, 0.0));
 	/** Initialize particle acceleration. */
 	TimeStepInitialization initialize_a_fluid_step(water_block, gravity);
-	/** Emmiter. */
-	BodyRegionByParticle emitter(water_block, makeShared<MultiPolygonShape>(creatEmitterShape()));
+	BodyAlignedBoxByParticle emitter(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_translation)), emitter_halfsize));
 	fluid_dynamics::EmitterInflowInjecting emitter_inflow_injecting(water_block, emitter, 10, 0, true);
 	/** Emitter buffer inflow condition. */
-	BodyRegionByCell emitter_buffer(water_block, makeShared<MultiPolygonShape>(createEmitterBufferShape()));
+	BodyAlignedBoxByCell emitter_buffer(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
 	EmitterBufferInflowCondition emitter_buffer_inflow_condition(water_block, emitter_buffer);
 	/** time-space method to detect surface particles. */
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex free_stream_surface_indicator(water_block_complex);
@@ -271,7 +272,7 @@ int main(int ac, char *av[])
 
 	if (sph_system.generate_regression_data_)
 	{
-		//The lift force at the cylinder is very small and not important in this case. 
+		// The lift force at the cylinder is very small and not important in this case.
 		write_total_viscous_force_on_inserted_body.generateDataBase({1.0e-2, 1.0e-2}, {1.0e-2, 1.0e-2});
 	}
 	else
