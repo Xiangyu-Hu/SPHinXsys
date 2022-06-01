@@ -91,7 +91,7 @@ public:
 
 		if (position[0] < halfsize_[0])
 		{
-			u = 2.0 * u_ave_ * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
+			u = 1.5 * u_ave_ * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
 			v = 0.0;
 		}
 		return Vec2d(u, v);

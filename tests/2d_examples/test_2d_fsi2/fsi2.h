@@ -157,7 +157,7 @@ public:
 		Real v = velocity[1];
 		if (position[0] < 0.0)
 		{
-			u = 6.0 * u_ave_ * position[1] * (DH - position[1]) / DH / DH;
+			u = 1.5 * u_ave_ * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
 			v = 0.0;
 		}
 		return Vecd(u, v);
