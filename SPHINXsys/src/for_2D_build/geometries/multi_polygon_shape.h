@@ -77,7 +77,7 @@ namespace SPH
 
 	/**
 	 * @class MultiPolygonShape
-	 * @brief A shape whose geometry is defined by a multipolygen.
+	 * @brief A shape whose geometry is defined by a multi polygon.
 	 */
 	class MultiPolygonShape : public Shape
 	{

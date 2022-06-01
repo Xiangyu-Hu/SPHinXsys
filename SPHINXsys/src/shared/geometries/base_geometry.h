@@ -43,7 +43,7 @@ namespace SPH
 	 * @class ShapeBooleanOps
 	 * @brief Boolean operation for generate complex shapes
 	 * @details Note that, for 2d multi polygons, all four operations are implemented.
-	 * But for binary shapes and complex shapes, 
+	 * But for binary shapes and complex shapes,
 	 * only add and sub boolean operation have been defined for right now.
 	 * Also after operations all surfaces of all shapes should be still surfaces.
 	 */
@@ -58,6 +58,8 @@ namespace SPH
 	/**
 	 * @class Shape
 	 * @brief Base class for all volumetric geometries
+	 * Note that checkContain and findClosest point are  basic function,
+	 * They should not call other functions in shape.
 	 */
 	class Shape
 	{

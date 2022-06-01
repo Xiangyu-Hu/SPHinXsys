@@ -7,7 +7,7 @@ namespace SPH
 	//=================================================================================================//
 	bool ImageShape::checkContain(const Vec3d &input_pnt, bool BOUNDARY_INCLUDED)
 	{
-		Real value = findSignedDistance(input_pnt);
+		Real value = image_->findValueAtPoint(input_pnt);
 		if (BOUNDARY_INCLUDED == true)
 		{
 			if (value > 0.0)
