@@ -29,9 +29,7 @@
 
 
 #pragma once
-#include "in_output.h"
-#include "xml_engine.h"
-#include "all_physical_dynamics.h"
+#include "regression_test_base.hpp"
 
 namespace SPH
 {
