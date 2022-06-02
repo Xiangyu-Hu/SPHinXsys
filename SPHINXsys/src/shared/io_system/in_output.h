@@ -408,7 +408,7 @@ namespace SPH
 
 	public:
 		ReloadParticleIO(InOutput &in_output, SPHBodyVector bodies);
-		ReloadParticleIO(InOutput &in_output, SPHBodyVector bodies, StdVec<std::string> given_body_names);
+		ReloadParticleIO(InOutput &in_output, SPHBodyVector bodies, const StdVec<std::string> &given_body_names);
 		virtual ~ReloadParticleIO(){};
 
 		virtual void writeToFile(size_t iteration_step = 0);
