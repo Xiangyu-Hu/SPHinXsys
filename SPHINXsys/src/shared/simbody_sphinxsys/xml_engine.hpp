@@ -4,6 +4,9 @@
  * @author	Bo Zhang and Xiangyu Hu
  */
 
+#ifndef XML_ENGINE_SIMBODY_HPP
+#define XML_ENGINE_SIMBODY_HPP
+
 #include "xml_engine.h"
 
 namespace SPH
@@ -76,3 +79,4 @@ namespace SPH
 	
 	//=================================================================================================//
 }
+#endif //XML_ENGINE_SIMBODY_HPP

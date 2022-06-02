@@ -2,6 +2,7 @@
  * @file 	regression_test_base.cpp
  * @author	Bo Zhang and Xiangyu Hu
  */
+#pragma once
 
 #include "regression_test_base.h"
 

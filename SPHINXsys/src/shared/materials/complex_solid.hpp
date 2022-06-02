@@ -25,8 +25,7 @@ namespace SPH
 	template <class MuscleType>
 	void ActiveMuscle<MuscleType>::initializeContractionStress()
 	{
-		this->base_particles_
-			->template registerAVariable(active_contraction_stress_, "ActiveContractionStress");
+		this->base_particles_->registerAVariable(active_contraction_stress_, "ActiveContractionStress");
 	}
 	//=============================================================================================//
 	template <class MuscleType>
