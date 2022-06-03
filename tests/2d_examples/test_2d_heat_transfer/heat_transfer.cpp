@@ -15,13 +15,12 @@ Real DL_sponge = resolution_ref * 20.0; /**< Sponge region to impose inflow cond
 /** Boundary width, determined by specific layer of boundary particles. */
 Real BW = resolution_ref * 4.0; /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW));
+//temperature observer location
+StdVec<Vecd> observation_location = {Vecd(0.0, DH * 0.5)};
 //----------------------------------------------------------------------
 //	Global parameters on the material properties
 //----------------------------------------------------------------------
 Real diffusion_coff = 1.0e-3;
-Real bias_coff = 0.0;
-Real alpha = Pi / 6.0;
-Vec2d bias_direction(cos(alpha), sin(alpha));
 Real rho0_f = 1.0;					/**< Density. */
 Real U_f = 1.0;						/**< Characteristic velocity. */
 Real c_f = 10.0 * U_f;				/**< Speed of sound. */
@@ -39,7 +38,7 @@ Real phi_fluid_initial = 20.0;
 /** create a water block shape */
 std::vector<Vecd> createShape()
 {
-	//geometry
+	// geometry
 	std::vector<Vecd> shape;
 	shape.push_back(Vecd(0.0 - DL_sponge, 0.0));
 	shape.push_back(Vecd(0.0 - DL_sponge, DH));
@@ -86,57 +85,47 @@ MultiPolygon createInflowBufferShape()
 	return multi_polygon;
 }
 //----------------------------------------------------------------------
-//	Bodies with cases-dependent geometries (ComplexShape).
+//	Case-dependent geometries
 //----------------------------------------------------------------------
-/**  Thermo fluid body definition */
-class ThermofluidBody : public FluidBody
+class ThermofluidBody : public MultiPolygonShape
 {
 public:
-	ThermofluidBody(SPHSystem &system, const std::string &body_name)
-		: FluidBody(system, body_name)
+	explicit ThermofluidBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(createShape(), ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(createShape(), ShapeBooleanOps::add);
 	}
 };
-/**  Thermo solid body definition */
-class ThermosolidBody : public SolidBody
+class ThermosolidBody : public MultiPolygonShape
 {
 public:
-	ThermosolidBody(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit ThermosolidBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
 	}
 };
 //----------------------------------------------------------------------
 //	Setup heat conduction material properties for diffusion fluid body
 //----------------------------------------------------------------------
-class ThermofluidBodyMaterial
-	: public DiffusionReaction<FluidParticles, WeaklyCompressibleFluid>
+class ThermofluidBodyMaterial : public DiffusionReaction<WeaklyCompressibleFluid>
 {
 public:
 	ThermofluidBodyMaterial()
-		: DiffusionReaction<FluidParticles, WeaklyCompressibleFluid>({"Phi"}, rho0_f, c_f, mu_f)
+		: DiffusionReaction<WeaklyCompressibleFluid>({"Phi"}, rho0_f, c_f, mu_f)
 	{
-		initializeAnDiffusion<DirectionalDiffusion>("Phi", "Phi", diffusion_coff, bias_coff, bias_direction);
+		initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coff);
 	};
 };
 //----------------------------------------------------------------------
 //	Setup heat conduction material properties for diffusion solid body
 //----------------------------------------------------------------------
-class ThermosolidBodyMaterial
-	: public DiffusionReaction<SolidParticles, Solid>
+class ThermosolidBodyMaterial : public DiffusionReaction<Solid>
 {
 public:
-	ThermosolidBodyMaterial()
-		: DiffusionReaction<SolidParticles, Solid>({"Phi"})
+	ThermosolidBodyMaterial() : DiffusionReaction<Solid>({"Phi"})
 	{
-		initializeAnDiffusion<DirectionalDiffusion>("Phi", "Phi", diffusion_coff, bias_coff, bias_direction);
+		//only default property is gieven, as no heat transfer within solid considered here.
+		initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi");
 	};
 };
 //----------------------------------------------------------------------
@@ -199,10 +188,8 @@ public:
 //----------------------------------------------------------------------
 class ThermalRelaxationComplex
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  FluidBody, FluidParticles, WeaklyCompressibleFluid,
 		  RelaxationOfAllDiffussionSpeciesComplex<
-			  FluidBody, FluidParticles, WeaklyCompressibleFluid, SolidBody, SolidParticles, Solid>,
-		  ComplexBodyRelation>
+			  FluidBody, FluidParticles, WeaklyCompressibleFluid, SolidBody, SolidParticles, Solid>>
 {
 public:
 	explicit ThermalRelaxationComplex(ComplexBodyRelation &body_complex_relation)
@@ -239,19 +226,6 @@ public:
 	}
 };
 //----------------------------------------------------------------------
-//	An observer particle generator
-//----------------------------------------------------------------------
-class ObserverParticleGenerator : public ParticleGeneratorDirect
-{
-public:
-	ObserverParticleGenerator() : ParticleGeneratorDirect()
-	{
-		/** A measuring point at the center of the channel */
-		Vec2d point_coordinate(0.0, DH * 0.5);
-		positions_volumes_.push_back(std::make_pair(point_coordinate, 0.0));
-	}
-};
-//----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
 int main()
@@ -261,20 +235,20 @@ int main()
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	GlobalStaticVariables::physical_time_ = 0.0;
-	In_Output in_output(system);
+	InOutput in_output(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	ThermofluidBody thermofluid_body(system, "ThermofluidBody");
-	DiffusionReactionParticles<FluidParticles, WeaklyCompressibleFluid>
-		diffusion_fluid_body_particles(thermofluid_body, makeShared<ThermofluidBodyMaterial>());
+	FluidBody thermofluid_body(system, makeShared<ThermofluidBody>("ThermofluidBody"));
+	thermofluid_body.defineParticlesAndMaterial<DiffusionReactionParticles<FluidParticles>, ThermofluidBodyMaterial>();
+	thermofluid_body.generateParticles<ParticleGeneratorLattice>();
 
-	ThermosolidBody thermosolid_body(system, "ThermosolidBody");
-	DiffusionReactionParticles<SolidParticles, Solid>
-		diffusion_solid_body_particles(thermosolid_body, makeShared<ThermosolidBodyMaterial>());
+	SolidBody thermosolid_body(system, makeShared<ThermosolidBody>("ThermosolidBody"));
+	thermosolid_body.defineParticlesAndMaterial<DiffusionReactionParticles<SolidParticles>, ThermosolidBodyMaterial>();
+	thermosolid_body.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody temperature_observer(system, "FluidObserver");
-	ObserverParticles temperature_observer_particles(temperature_observer, makeShared<ObserverParticleGenerator>());
+	temperature_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -292,8 +266,7 @@ int main()
 	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition(thermofluid_body, xAxis);
 	ThermosolidBodyInitialCondition thermosolid_condition(thermosolid_body);
 	ThermofluidBodyInitialCondition thermofluid_initial_condition(thermofluid_body);
-	/** Corrected configuration for diffusion solid body. */
-	solid_dynamics::CorrectConfiguration correct_configuration(solid_body_inner);
+	SimpleDynamics<NormalDirectionFromBodyShape> thermosolid_body_normal_direction(thermosolid_body);
 	/** Initialize particle acceleration. */
 	TimeStepInitialization initialize_a_fluid_step(thermofluid_body);
 	/** Evaluation of density by summation approach. */
@@ -317,8 +290,7 @@ int main()
 	/** Computing vorticity in the flow. */
 	fluid_dynamics::VorticityInner compute_vorticity(fluid_body_inner);
 	/** Inflow boundary condition. */
-	MultiPolygonShape inflow_buffer_shape(createInflowBufferShape());
-	BodyRegionByCell inflow_buffer(thermofluid_body, "Buffer", inflow_buffer_shape);
+	BodyRegionByCell inflow_buffer(thermofluid_body, makeShared<MultiPolygonShape>(createInflowBufferShape()));
 	ParabolicInflow parabolic_inflow(thermofluid_body, inflow_buffer);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
@@ -334,13 +306,12 @@ int main()
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	/** periodic condition applied after the mesh cell linked list build up
-      * but before the configuration build up. */
+	 * but before the configuration build up. */
 	periodic_condition.update_cell_linked_list_.parallel_exec();
 	/** initialize configurations for all bodies. */
 	system.initializeSystemConfigurations();
 	/** computing surface normal direction for the wall. */
-	diffusion_solid_body_particles.initializeNormalDirectionFromBodyShape();
-	correct_configuration.parallel_exec();
+	thermosolid_body_normal_direction.parallel_exec();
 	thermosolid_condition.parallel_exec();
 	thermofluid_initial_condition.parallel_exec();
 	Real dt_thermal = get_thermal_time_step.parallel_exec();

@@ -36,16 +36,11 @@
 #include "particle_generator_lattice.h"
 namespace SPH
 {
-
 	//----------------------------------------------------------------------
 	//		preclaimed classes
 	//----------------------------------------------------------------------
 	class Solid;
 	class ElasticSolid;
-	class PlasticSolid;
-	class BodySurface;
-	template <class MuscleType>
-	class ActiveMuscle;
 
 	/**
 	 * @class SolidParticles
@@ -54,14 +49,10 @@ namespace SPH
 	class SolidParticles : public BaseParticles
 	{
 	public:
-		SolidParticles(SPHBody &sph_body,
-					   SharedPtr<Solid> shared_solid_ptr,
-					   SharedPtr<ParticleGenerator> particle_generator_ptr = makeShared<ParticleGeneratorLattice>());
-		explicit SolidParticles(SPHBody &sph_body,
-								SharedPtr<ParticleGenerator> particle_generator_ptr = makeShared<ParticleGeneratorLattice>())
-			: SolidParticles(sph_body, makeShared<Solid>(), particle_generator_ptr){};
+		SolidParticles(SPHBody &sph_body, Solid *solid);
 		virtual ~SolidParticles(){};
 
+		StdLargeVec<Vecd> pos_0_; /**< initial position */
 		StdLargeVec<Vecd> n_;	  /**<  current normal direction */
 		StdLargeVec<Vecd> n_0_;	  /**<  initial normal direction */
 		StdLargeVec<Matd> B_;	  /**<  configuration correction for linear reproducing */
@@ -77,16 +68,12 @@ namespace SPH
 		StdLargeVec<Real> contact_density_; /**< density due to contact of solid-solid. */
 		StdLargeVec<Vecd> contact_force_;	/**< contact force from other solid body or bodies */
 
-		void offsetInitialParticlePosition(Vecd offset);
-		void initializeNormalDirectionFromBodyShape();
-		void initializeNormalDirectionFromShapeAndOp(const std::string &shape_name);
-		void ParticleTranslationAndRotation(Transformd &transform);
-
 		/** Normalize a gradient. */
 		virtual Vecd normalizeKernelGradient(size_t particle_index_i, Vecd &gradient) override;
 		/** Get the kernel gradient in weak form. */
 		virtual Vecd getKernelGradient(size_t particle_index_i, size_t particle_index_j, Real dW_ij, Vecd &e_ij) override;
 
+		virtual void initializeOtherVariables() override;
 		virtual SolidParticles *ThisObjectPtr() override { return this; };
 	};
 
@@ -97,9 +84,7 @@ namespace SPH
 	class ElasticSolidParticles : public SolidParticles
 	{
 	public:
-		ElasticSolidParticles(SPHBody &sph_body,
-							  SharedPtr<ElasticSolid> shared_elastic_solid_ptr,
-							  SharedPtr<ParticleGenerator> particle_generator_ptr = makeShared<ParticleGeneratorLattice>());
+		ElasticSolidParticles(SPHBody &sph_body, ElasticSolid *elastic_solid);
 		virtual ~ElasticSolidParticles(){};
 
 		StdLargeVec<Matd> F_;		   /**<  deformation tensor */
@@ -137,7 +122,7 @@ namespace SPH
 		Real getVonMisesStressMax();
 		Real getPrincipalStressMax();
 
-		/**< Computing displacemnt. */
+		/**< Computing displacement. */
 		Vecd displacement(size_t particle_i);
 		StdLargeVec<Vecd> getDisplacement();
 		Real getMaxDisplacement();
@@ -149,34 +134,10 @@ namespace SPH
 		/** relevant stress measure */
 		std::string stress_measure_;
 
-		SharedPtr<ElasticSolid> shared_elastic_solid_ptr_;
-	};
+		ElasticSolid *elastic_solid_;
 
-	/**
-	 * @class ActiveMuscleParticles
-	 * @brief A group of particles with active muscle particle data.
-	 */
-	class ActiveMuscleParticles : public ElasticSolidParticles
-	{
-	public:
-		StdLargeVec<Real> active_contraction_stress_;			 /**<  active contraction stress */
-		StdLargeVec<Matd> active_stress_; /**<  active stress */ //seems to be moved to method class
-
-		template <class MuscleType>
-		ActiveMuscleParticles(SPHBody &sph_body,
-							  SharedPtr<ActiveMuscle<MuscleType>> shared_active_muscle_ptr,
-							  SharedPtr<ParticleGenerator> particle_generator_ptr = makeShared<ParticleGeneratorLattice>())
-			: ElasticSolidParticles(sph_body, shared_active_muscle_ptr, particle_generator_ptr)
-		{
-			shared_active_muscle_ptr->assignActiveMuscleParticles(this);
-			initializeActiveMuscleParticleData();
-		};
-		virtual ~ActiveMuscleParticles(){};
-
-		virtual ActiveMuscleParticles *ThisObjectPtr() override { return this; };
-
-	private:
-		void initializeActiveMuscleParticleData();
+		virtual void initializeOtherVariables() override;
+		virtual ElasticSolidParticles *ThisObjectPtr() override { return this; };
 	};
 
 	/**
@@ -186,13 +147,12 @@ namespace SPH
 	class ShellParticles : public ElasticSolidParticles
 	{
 	public:
-		ShellParticles(SPHBody &sph_body,
-					   SharedPtr<ElasticSolid> shared_elastic_solid_ptr,
-					   SharedPtr<ParticleGenerator> particle_generator_ptr, Real thickness);
+		ShellParticles(SPHBody &sph_body, ElasticSolid *elastic_solid);
 		virtual ~ShellParticles(){};
 
+		Real thickness_ref_;
 		StdLargeVec<Matd> transformation_matrix_; /**< initial transformation matrix from global to local coordinates */
-		StdLargeVec<Real> shell_thickness_;		  /**< shell thickness */
+		StdLargeVec<Real> thickness_;		  /**< shell thickness */
 		//----------------------------------------------------------------------
 		//	extra generalized coordinates in global coordinate
 		//----------------------------------------------------------------------
@@ -217,6 +177,7 @@ namespace SPH
 		StdLargeVec<Matd> global_stress_;		/**<  global stress for pair interaction */
 		StdLargeVec<Matd> global_moment_;		/**<  global bending moment for pair interaction */
 
+		virtual void initializeOtherVariables() override;
 		virtual ShellParticles *ThisObjectPtr() override { return this; };
 	};
 }

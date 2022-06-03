@@ -66,6 +66,7 @@ namespace SPH
 
 		std::string getName() { return name_; };
 		void setName(const std::string &name) { name_ = name; };
+		virtual bool isValid()  { return true; };
 		virtual BoundingBox findBounds() = 0;
 		virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) = 0;
 		virtual Vecd findClosestPoint(const Vecd &input_pnt) = 0;
@@ -86,14 +87,11 @@ namespace SPH
 	 * @class BinaryShapes
 	 * @brief a collections of shapes with binary operations
 	 * This class so that it has ownship of all shapes by using a unique pointer vector.
-	 * In this way, add or substract a shape will call the shape's constructor other than 
+	 * In this way, add or subtract a shape will call the shape's constructor other than 
 	 * passing the shape pointer.
 	 */
 	class BinaryShapes : public Shape
 	{
-	private:
-		UniquePtrVectorKeeper<Shape> shapes_ptr_keeper_;
-
 	public:
 		BinaryShapes() : Shape("BinaryShapes"){};
 		explicit BinaryShapes(const std::string &shapes_name) : Shape(shapes_name){};
@@ -108,20 +106,23 @@ namespace SPH
 		};
 
 		template <class ShapeType, typename... Args>
-		void substract(Args &&...args)
+		void subtract(Args &&...args)
 		{
 			Shape *shape = shapes_ptr_keeper_.createPtr<ShapeType>(std::forward<Args>(args)...);
 			ShapeAndOp shape_and_op(shape, ShapeBooleanOps::sub);
 			shapes_and_ops_.push_back(shape_and_op);
 		};
 
+		virtual bool isValid() override;
 		virtual BoundingBox findBounds() override;
 		virtual bool checkContain(const Vecd &pnt, bool BOUNDARY_INCLUDED = true) override;
 		virtual Vecd findClosestPoint(const Vecd &input_pnt) override;
 		Shape *getShapeByName(const std::string &shape_name);
 		ShapeAndOp *getShapeAndOpByName(const std::string &shape_name);
+		size_t getShapeIndexByName(const std::string &shape_name);
 
 	protected:
+		UniquePtrKeepers<Shape> shapes_ptr_keeper_;
 		StdVec<ShapeAndOp> shapes_and_ops_;
 	};
 

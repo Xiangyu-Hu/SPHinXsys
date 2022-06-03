@@ -20,6 +20,7 @@ Real DL_sponge = resolution_ref * 20.0; /**< Sponge region to impose inflow cond
 Real BW = resolution_ref * 4.0;			/**< Boundary width, determined by specific layer of boundary particles. */
 Vec2d insert_circle_center(2.0, 2.0);	/**< Location of the cylinder center. */
 Real insert_circle_radius = 0.5;		/**< Radius of the cylinder. */
+/** Beam related parameters. */
 Real bh = 0.4 * insert_circle_radius;	/**< Height of the beam. */
 Real bl = 7.0 * insert_circle_radius;	/**< Length of the beam. */
 /** Domain bounds of the system. */
@@ -61,6 +62,8 @@ Vec2d BLB(insert_circle_center[0], insert_circle_center[1] - hbh);
 Vec2d BLT(insert_circle_center[0], insert_circle_center[1] + hbh);
 Vec2d BRB(insert_circle_center[0] + insert_circle_radius + bl, insert_circle_center[1] - hbh);
 Vec2d BRT(insert_circle_center[0] + insert_circle_radius + bl, insert_circle_center[1] + hbh);
+//Beam observer location
+StdVec<Vecd> beam_observation_location = {0.5 * (BRT + BRB)};
 std::vector<Vecd> createBeamShape()
 {
 	std::vector<Vecd> beam_shape;
@@ -99,53 +102,37 @@ std::vector<Vecd> createInnerWallShape()
 	return inner_wall_shape;
 }
 //----------------------------------------------------------------------
-//	Define case dependent bodies material, constraint and boundary conditions.
+//	Define case dependent geometrices
 //----------------------------------------------------------------------
-/** Fluid body definition */
-class WaterBlock : public FluidBody
+class WaterBlock : public MultiPolygonShape
 {
 public:
-	WaterBlock(SPHSystem &system, const std::string &body_name)
-		: FluidBody(system, body_name)
+	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geomtry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
-		multi_polygon.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
-		multi_polygon.addAPolygon(createBeamShape(), ShapeBooleanOps::sub);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+		multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
+		multi_polygon_.addAPolygon(createBeamShape(), ShapeBooleanOps::sub);
 	}
 };
-/* Definition of the solid body. */
-class WallBoundary : public SolidBody
+class WallBoundary : public MultiPolygonShape
 {
 public:
-	WallBoundary(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geomtry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
 	}
 };
-/** Definition of the inserted body as a elastic structure. */
-class InsertedBody : public SolidBody
+class Insert : public MultiPolygonShape
 {
 public:
-	InsertedBody(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name, makeShared<SPHAdaptation>(1.15, 2.0))
+	explicit Insert(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geomtry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(createBeamShape(), ShapeBooleanOps::add);
-		MultiPolygonShape multi_polygon_shape(multi_polygon);
-		body_shape_.add<LevelSetShape>(this, multi_polygon_shape);
+		multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(createBeamShape(), ShapeBooleanOps::add);
 	}
 };
-/** create the beam base for constrain . */
+/** create the beam base as constrain shape. */
 MultiPolygon createBeamBaseShape()
 {
 	MultiPolygon multi_polygon;
@@ -193,20 +180,11 @@ public:
 		u_ave_ = run_time < t_ref ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time / t_ref)) : u_ref_;
 	}
 };
-/** beam observer particle generator */
-class BeamObserverParticleGenerator : public ParticleGeneratorDirect
-{
-public:
-	BeamObserverParticleGenerator() : ParticleGeneratorDirect()
-	{
-		positions_volumes_.push_back(std::make_pair(0.5 * (BRT + BRB), 0.0));
-	}
-};
 /** fluid observer particle generator */
-class FluidObserverParticleGenerator : public ParticleGeneratorDirect
+class FluidObserverParticleGenerator : public ObserverParticleGenerator
 {
 public:
-	FluidObserverParticleGenerator() : ParticleGeneratorDirect()
+	explicit FluidObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
 	{
 		/** A line of measuring points at the entrance of the channel. */
 		size_t number_observation_points = 21;
@@ -216,7 +194,7 @@ public:
 		for (size_t i = 0; i < number_observation_points; ++i)
 		{
 			Vec2d point_coordinate(0.0, range_of_measure * (Real)i / (Real)(number_observation_points - 1) + start_of_measure);
-			positions_volumes_.push_back(std::make_pair(point_coordinate, 0.0));
+			positions_.push_back(point_coordinate);
 		}
 	}
 };

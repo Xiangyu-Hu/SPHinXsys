@@ -1,31 +1,31 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * --------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+ * and HU1527/12-1.															*
+ *                                                                           *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * --------------------------------------------------------------------------*/
 /**
  * @file 	diffussion_reaction.h
- * @brief 	Describe the diffusive and reaction in which 
+ * @brief 	Describe the diffusive and reaction in which
  *          the dynamics is characterized by diffusion equation and reactive source terms.
- *			Typical physical processes are diffusion, heat conduction 
- *			and chemical and biological reactions. 
+ *			Typical physical processes are diffusion, heat conduction
+ *			and chemical and biological reactions.
  * @author  Xiangyu Hu, Chi Zhang
  */
 
@@ -33,7 +33,6 @@
 #define DIFFUSION_REACTION_H
 
 #include "base_material.h"
-#include "solid_particles.h"
 
 #include <map>
 #include <functional>
@@ -41,9 +40,6 @@ using namespace std::placeholders;
 
 namespace SPH
 {
-	template <class BaseParticlesType, class BaseMaterialType>
-	class DiffusionReactionParticles;
-	class ElectroPhysiologyParticles;
 	/**
 	 * @class BaseDiffusion
 	 * @brief diffusion property abstract base class.
@@ -55,7 +51,7 @@ namespace SPH
 			: BaseMaterial(), diffusion_species_index_(diffusion_species_index),
 			  gradient_species_index_(gradient_species_index)
 		{
-			material_type_ = "BaseDiffusion";
+			material_type_name_ = "BaseDiffusion";
 		};
 		virtual ~BaseDiffusion(){};
 
@@ -81,7 +77,7 @@ namespace SPH
 			: BaseDiffusion(diffusion_species_index, gradient_species_index),
 			  diff_cf_(diff_cf)
 		{
-			material_type_ = "IsotropicDiffusion";
+			material_type_name_ = "IsotropicDiffusion";
 		};
 		virtual ~IsotropicDiffusion(){};
 
@@ -112,7 +108,7 @@ namespace SPH
 			  bias_direction_(bias_direction), bias_diff_cf_(bias_diff_cf),
 			  transformed_diffusivity_(1.0)
 		{
-			material_type_ = "DirectionalDiffusion";
+			material_type_name_ = "DirectionalDiffusion";
 			initializeDirectionalDiffusivity(diff_cf, bias_diff_cf, bias_direction);
 		};
 		virtual ~DirectionalDiffusion(){};
@@ -147,7 +143,7 @@ namespace SPH
 								  Real diff_cf, Real bias_diff_cf, Vecd bias_direction)
 			: DirectionalDiffusion(diffusion_species_index, gradient_species_index, diff_cf, bias_diff_cf, bias_direction)
 		{
-			material_type_ = "LocalDirectionalDiffusion";
+			material_type_name_ = "LocalDirectionalDiffusion";
 		};
 		virtual ~LocalDirectionalDiffusion(){};
 		virtual Real getInterParticleDiffusionCoff(size_t particle_index_i, size_t particle_index_j, Vecd &inter_particle_direction) override
@@ -160,8 +156,6 @@ namespace SPH
 		virtual void readFromXmlForLocalParameters(const std::string &filefullpath) override;
 	};
 
-	/** Reaction functor . */
-	typedef std::function<Real(StdVec<StdLargeVec<Real>> &, size_t particle_i)> ReactionFunctor;
 	/**
 	 * @class BaseReactionModel
 	 * @brief Base class for all reaction models.
@@ -169,6 +163,8 @@ namespace SPH
 	class BaseReactionModel
 	{
 	protected:
+		/** Reaction functor . */
+		typedef std::function<Real(StdVec<StdLargeVec<Real>> &, size_t particle_i)> ReactionFunctor;
 		StdVec<std::string> species_name_list_;
 		std::map<std::string, size_t> species_indexes_map_;
 		std::string reaction_model_;
@@ -192,71 +188,14 @@ namespace SPH
 	};
 
 	/**
-	 * @class AlievPanfilowModel
- 	 * @brief The simplest Electrophysiology Reaction model,
-	 * which reduces the complex of array of ion currents to two variables that
-	 * describe excitation and recovery.
-	 */
-	class ElectroPhysiologyReaction : public BaseReactionModel
-	{
-	protected:
-		Real k_a_;
-		size_t voltage_;
-		size_t gate_variable_;
-		size_t active_contraction_stress_;
-
-		virtual Real getProductionRateIonicCurrent(StdVec<StdLargeVec<Real>> &species, size_t particle_i) = 0;
-		virtual Real getLossRateIonicCurrent(StdVec<StdLargeVec<Real>> &species, size_t particle_i) = 0;
-		virtual Real getProductionRateGateVariable(StdVec<StdLargeVec<Real>> &species, size_t particle_i) = 0;
-		virtual Real getLossRateGateVariable(StdVec<StdLargeVec<Real>> &species, size_t particle_i) = 0;
-		virtual Real getProductionActiveContractionStress(StdVec<StdLargeVec<Real>> &species, size_t particle_i);
-		virtual Real getLossRateActiveContractionStress(StdVec<StdLargeVec<Real>> &species, size_t particle_i);
-
-	public:
-		explicit ElectroPhysiologyReaction(Real k_a)
-			: BaseReactionModel({"Voltage", "GateVariable", "ActiveContractionStress"}),
-			  k_a_(k_a), voltage_(species_indexes_map_["Voltage"]),
-			  gate_variable_(species_indexes_map_["GateVariable"]),
-			  active_contraction_stress_(species_indexes_map_["ActiveContractionStress"])
-		{
-			reaction_model_ = "ElectroPhysiologyReaction";
-			initializeElectroPhysiologyReaction();
-		};
-		virtual ~ElectroPhysiologyReaction(){};
-
-		void initializeElectroPhysiologyReaction();
-	};
-
-	class AlievPanfilowModel : public ElectroPhysiologyReaction
-	{
-	protected:
-		/** Parameters for two variable cell model. */
-		Real k_, a_, b_, mu_1_, mu_2_, epsilon_, c_m_;
-
-		virtual Real getProductionRateIonicCurrent(StdVec<StdLargeVec<Real>> &species, size_t particle_i) override;
-		virtual Real getLossRateIonicCurrent(StdVec<StdLargeVec<Real>> &species, size_t particle_i) override;
-		virtual Real getProductionRateGateVariable(StdVec<StdLargeVec<Real>> &species, size_t particle_i) override;
-		virtual Real getLossRateGateVariable(StdVec<StdLargeVec<Real>> &species, size_t particle_i) override;
-
-	public:
-		explicit AlievPanfilowModel(Real k_a, Real c_m, Real k, Real a, Real b, Real mu_1, Real mu_2, Real epsilon)
-			: ElectroPhysiologyReaction(k_a), k_(k), a_(a), b_(b), mu_1_(mu_1), mu_2_(mu_2),
-			  epsilon_(epsilon), c_m_(c_m)
-		{
-			reaction_model_ = "AlievPanfilowModel";
-		};
-		virtual ~AlievPanfilowModel(){};
-	};
-
-	/**
 	 * @class DiffusionReaction
 	 * @brief Complex material for diffusion or/and reactions.
 	 */
-	template <class BaseParticlesType = BaseParticles, class BaseMaterialType = BaseMaterial>
+	template <class BaseMaterialType = BaseMaterial>
 	class DiffusionReaction : public BaseMaterialType
 	{
 	private:
-		UniquePtrVectorKeeper<BaseDiffusion> diffusion_ptr_keeper_;
+		UniquePtrKeepers<BaseDiffusion> diffusion_ptr_keeper_;
 
 	protected:
 		StdVec<std::string> species_name_list_;
@@ -264,7 +203,6 @@ namespace SPH
 		std::map<std::string, size_t> species_indexes_map_;
 		StdVec<BaseDiffusion *> species_diffusion_;
 		BaseReactionModel *species_reaction_;
-		DiffusionReactionParticles<BaseParticlesType, BaseMaterialType> *diffusion_reaction_particles_;
 
 	public:
 		/** Constructor for material with diffusion only. */
@@ -273,10 +211,9 @@ namespace SPH
 			: BaseMaterialType(std::forward<ConstructorArgs>(args)...),
 			  species_name_list_(species_name_list),
 			  number_of_species_(species_name_list.size()),
-			  species_reaction_(nullptr),
-			  diffusion_reaction_particles_(nullptr)
+			  species_reaction_(nullptr)
 		{
-			BaseMaterialType::material_type_ = "Diffusion";
+			BaseMaterialType::material_type_name_ = "Diffusion";
 			for (size_t i = 0; i != number_of_species_; ++i)
 			{
 				species_indexes_map_.insert(make_pair(species_name_list[i], i));
@@ -289,7 +226,7 @@ namespace SPH
 			: DiffusionReaction(species_name_list, std::forward<ConstructorArgs>(args)...)
 		{
 			species_reaction_ = &species_reaction;
-			BaseMaterialType::material_type_ = "DiffusionReaction";
+			BaseMaterialType::material_type_name_ = "DiffusionReaction";
 		};
 		virtual ~DiffusionReaction(){};
 
@@ -299,16 +236,15 @@ namespace SPH
 		BaseReactionModel *SpeciesReaction() { return species_reaction_; };
 		std::map<std::string, size_t> SpeciesIndexMap() { return species_indexes_map_; };
 		StdVec<std::string> getSpeciesNameList() { return species_name_list_; };
-		void assignDiffusionReactionParticles(DiffusionReactionParticles<BaseParticlesType,
-																		 BaseMaterialType> *diffusion_reaction_particles)
+		void assignBaseParticles(BaseParticles *base_particles) override
 		{
-			diffusion_reaction_particles_ = diffusion_reaction_particles;
+			BaseMaterialType::assignBaseParticles(base_particles);
 			for (size_t k = 0; k < species_diffusion_.size(); ++k)
-				species_diffusion_[k]->assignBaseParticles(diffusion_reaction_particles);
+				species_diffusion_[k]->assignBaseParticles(base_particles);
 		};
 		/**
 		 * @brief Get diffusion time step size. Here, I follow the reference:
-		 * https://www.uni-muenster.de/imperia/md/content/physik_tp/lectures/ws2016-2017/num_methods_i/heat.pdf 
+		 * https://www.uni-muenster.de/imperia/md/content/physik_tp/lectures/ws2016-2017/num_methods_i/heat.pdf
 		 */
 		Real getDiffusionTimeStepSize(Real smoothing_length)
 		{
@@ -330,36 +266,7 @@ namespace SPH
 					species_indexes_map_[diffusion_species_name], std::forward<ConstructorArgs>(args)...));
 		};
 
-		virtual DiffusionReaction<BaseParticlesType, BaseMaterialType> *
-		ThisObjectPtr() override { return this; };
-	};
-
-	/**
-	 * @class MonoFieldElectroPhysiology
-	 * @brief material class for electro_physiology.
-	 */
-	class MonoFieldElectroPhysiology
-		: public DiffusionReaction<SolidParticles, Solid>
-	{
-	public:
-		explicit MonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
-											Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
-		virtual ~MonoFieldElectroPhysiology(){};
-	};
-
-	/**
-	 * @class LocalMonoFieldElectroPhysiology
-	 * @brief material class for electro_physiology with locally oriented fibers.
-	 */
-	class LocalMonoFieldElectroPhysiology
-		: public DiffusionReaction<SolidParticles, Solid>
-	{
-	public:
-		explicit LocalMonoFieldElectroPhysiology(ElectroPhysiologyReaction &electro_physiology_reaction,
-												 Real diff_cf, Real bias_diff_cf, Vecd bias_direction);
-		virtual ~LocalMonoFieldElectroPhysiology(){};
-
-		virtual void readFromXmlForLocalParameters(const std::string &filefullpath) override;
+		virtual DiffusionReaction<BaseMaterialType> *ThisObjectPtr() override { return this; };
 	};
 }
-#endif //DIFFUSION_REACTION_H
+#endif // DIFFUSION_REACTION_H

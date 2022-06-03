@@ -125,7 +125,7 @@ namespace SPH
 
 	/** operation by looping or going through a variable name list */
 	template <typename VariableType>
-	struct loopVariabaleNameList
+	struct loopVariableNameList
 	{
 		template <typename VariableOperation>
 		void operator()(ParticleData &particle_data,

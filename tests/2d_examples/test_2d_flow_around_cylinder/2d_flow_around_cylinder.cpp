@@ -14,33 +14,37 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem.
 	//----------------------------------------------------------------------
-	SPHSystem system(system_domain_bounds, resolution_ref);
-	In_Output in_output(system);
+	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = false;
+	sph_system.run_particle_relaxation_ = false;
 	/** Tag for computation start with relaxed body fitted particles distribution. */
-	system.reload_particles_ = true;
-	/** Tag for computation from restart files. 0: start with initial condition. */
-	system.restart_step_ = 0;
+	sph_system.reload_particles_ = true;
 //handle command line arguments
 #ifdef BOOST_AVAILABLE
-	system.handleCommandlineOptions(ac, av);
+	sph_system.handleCommandlineOptions(ac, av);
 #endif
+	//----------------------------------------------------------------------
+	//	define IO relevant classes.
+	//----------------------------------------------------------------------
+	InOutput in_output(sph_system);
+	ParameterizationIO &parameterization_io = in_output.defineParameterizationIO();
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	WaterBlock water_block(system, "WaterBody");
-	ParameterizationIO parameterization_io(in_output);
-	FluidParticles fluid_particles(water_block, makeShared<ParameterizedWaterMaterial>(parameterization_io, rho0_f, c_f, mu_f));
+	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
+	water_block.defineParticlesAndMaterial<FluidParticles, ParameterizedWaterMaterial>(parameterization_io, rho0_f, c_f, mu_f);
+	water_block.generateParticles<ParticleGeneratorLattice>();
 
-	Cylinder cylinder(system, "Cylinder");
-	SharedPtr<ParticleGenerator> cylinder_particle_generator = makeShared<ParticleGeneratorLattice>();
-	if (!system.run_particle_relaxation_ && system.reload_particles_)
-		cylinder_particle_generator = makeShared<ParticleGeneratorReload>(in_output, cylinder.getBodyName());
-	SolidParticles cylinder_particles(cylinder, cylinder_particle_generator);
+	SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
+	cylinder.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
+	cylinder.defineBodyLevelSetShape();
+	cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
+	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
+		? cylinder.generateParticles<ParticleGeneratorReload>(in_output, cylinder.getBodyName())
+		: cylinder.generateParticles<ParticleGeneratorLattice>();
 
-	ObserverBody fluid_observer(system, "FluidObserver");
-	ObserverParticles flow_observer_particles(fluid_observer, makeShared<ObserverParticleGenerator>());
+	ObserverBody fluid_observer(sph_system, "FluidObserver");
+	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_locations);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -52,7 +56,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
-	if (system.run_particle_relaxation_)
+	if (sph_system.run_particle_relaxation_)
 	{
 		/** body topology only for particle relaxation */
 		BodyRelationInner cylinder_inner(cylinder);
@@ -60,7 +64,7 @@ int main(int ac, char *av[])
 		//	Methods used for particle relaxation.
 		//----------------------------------------------------------------------
 		/** Random reset the insert body particle position. */
-		RandomizePartilePosition random_inserted_body_particles(cylinder);
+		RandomizeParticlePosition random_inserted_body_particles(cylinder);
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_inserted_body_to_vtp(in_output, {&cylinder});
 		/** Write the particle reload files. */
@@ -95,6 +99,7 @@ int main(int ac, char *av[])
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
+	SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
 	/** Initialize particle acceleration. */
 	TimeStepInitialization initialize_a_fluid_step(water_block);
 	/** Periodic BCs in x direction. */
@@ -118,8 +123,7 @@ int main(int ac, char *av[])
 	/** Computing vorticity in the flow. */
 	fluid_dynamics::VorticityInner compute_vorticity(water_block_complex.inner_relation_);
 	/** free stream boundary condition. */
-	MultiPolygonShape buffer_shape(createBufferShape());
-	BodyRegionByCell free_stream_buffer(water_block, "FreestreamBuffer", buffer_shape);
+	BodyRegionByCell free_stream_buffer(water_block, makeShared<MultiPolygonShape>(createBufferShape()));
 	FreeStreamCondition freestream_condition(water_block, free_stream_buffer);
 	//----------------------------------------------------------------------
 	//	Algorithms of FSI.
@@ -131,8 +135,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_real_body_states(in_output, system.real_bodies_);
-	RestartIO restart_io(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp write_real_body_states(in_output, sph_system.real_bodies_);
+	RestartIO restart_io(in_output, sph_system.real_bodies_);
 	RegressionTestTimeAveraged<BodyReducedQuantityRecording<solid_dynamics::TotalViscousForceOnSolid>>
 		write_total_viscous_force_on_inserted_body(in_output, cylinder);
 	BodyReducedQuantityRecording<solid_dynamics::TotalViscousForceOnSolid>
@@ -144,21 +148,21 @@ int main(int ac, char *av[])
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
 	/** initialize cell linked lists for all bodies. */
-	system.initializeSystemCellLinkedLists();
+	sph_system.initializeSystemCellLinkedLists();
 	/** periodic condition applied after the mesh cell linked list build up
 	  * but before the configuration build up. */
 	periodic_condition_x.update_cell_linked_list_.parallel_exec();
 	periodic_condition_y.update_cell_linked_list_.parallel_exec();
 	/** initialize configurations for all bodies. */
-	system.initializeSystemConfigurations();
+	sph_system.initializeSystemConfigurations();
 	/** initialize surface normal direction for the insert body. */
-	cylinder_particles.initializeNormalDirectionFromBodyShape();
+	cylinder_normal_direction.parallel_exec();
 	//----------------------------------------------------------------------
 	//	Load restart file if necessary.
 	//----------------------------------------------------------------------
-	if (system.restart_step_ != 0)
+	if (sph_system.restart_step_ != 0)
 	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.restart_step_);
+		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
 		cylinder.updateCellLinkedList();
 		water_block.updateCellLinkedList();
 		periodic_condition_x.update_cell_linked_list_.parallel_exec();
@@ -170,7 +174,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Setup computing and initial conditions.
 	//----------------------------------------------------------------------
-	size_t number_of_iterations = system.restart_step_;
+	size_t number_of_iterations = sph_system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
 	Real End_Time = 200.0;			/**< End time. */
@@ -227,7 +231,7 @@ int main(int ac, char *av[])
 						  << GlobalStaticVariables::physical_time_
 						  << "	Dt = " << Dt << "	Dt / dt = " << inner_ite_dt << "\n";
 
-				if (number_of_iterations % restart_output_interval == 0 && number_of_iterations != system.restart_step_)
+				if (number_of_iterations % restart_output_interval == 0 && number_of_iterations != sph_system.restart_step_)
 					restart_io.writeToFile(number_of_iterations);
 			}
 			number_of_iterations++;

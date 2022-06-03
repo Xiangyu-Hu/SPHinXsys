@@ -10,19 +10,13 @@
 namespace SPH
 {
 	//=================================================================================================//
-	KernelQuadratic::KernelQuadratic()
-		: Kernel("QuadraticKernel") 
-		{
-			std::cout << "\n Error: The KernelQuadratic is not implemented yet! \n";
-			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-			exit(1);
-		}
-	//=================================================================================================//
-	void KernelQuadratic::setBasicParameters()
+	KernelQuadratic::KernelQuadratic(Real h)
+		: Kernel(h, "QuadraticKernel")
 	{
 		factor_W_1D_ = inv_h_ / 7.0;
 		factor_W_2D_ = inv_h_ * inv_h_ / (3.0 * Pi);
 		factor_W_3D_ = inv_h_ * inv_h_ * inv_h_ / Pi;
+		setDerivativeParameters();
 	}
 	//=================================================================================================//
 	Real KernelQuadratic::W_1D(const Real q) const
@@ -42,10 +36,12 @@ namespace SPH
 	//=================================================================================================//
 	Real KernelQuadratic::dW_1D(const Real q) const
 	{
-		if (q < 1.0) {
+		if (q < 1.0)
+		{
 			return (-6.0 + 3.0 * powerN(q, 2));
 		}
-		else {
+		else
+		{
 			return powerN(2.0 - q, 2) * (-1.0);
 		}
 	}
@@ -62,10 +58,12 @@ namespace SPH
 	//=================================================================================================//
 	Real KernelQuadratic::d2W_1D(const Real q) const
 	{
-		if (q < 1.0) {
+		if (q < 1.0)
+		{
 			return 6.0 * q;
 		}
-		else {
+		else
+		{
 			return 2.0 * (2.0 - q);
 		}
 	}
@@ -81,4 +79,3 @@ namespace SPH
 	}
 	//=================================================================================================//
 }
-	

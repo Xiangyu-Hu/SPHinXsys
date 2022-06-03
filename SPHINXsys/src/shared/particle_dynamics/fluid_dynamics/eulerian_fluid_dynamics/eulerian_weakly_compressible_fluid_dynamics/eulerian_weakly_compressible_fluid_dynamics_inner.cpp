@@ -47,7 +47,7 @@ namespace SPH
 			surface_indicator_(particles_->surface_indicator_),
 			smoothing_length_(inner_relation.sph_body_->sph_adaptation_->ReferenceSmoothingLength())
 		{
-			particles_->registerAVariable<Real>(pos_div_, "PositionDivergence");
+			particles_->registerAVariable(pos_div_, "PositionDivergence");
 		}
 		//=================================================================================================//
 		void FreeSurfaceIndicationInner::Interaction(size_t index_i, Real dt)
@@ -135,7 +135,7 @@ namespace SPH
 			EulerianWeaklyCompressibleFluidDataInner(inner_relation),
 			Vol_(particles_->Vol_), vel_n_(particles_->vel_n_)
 		{
-			particles_->registerAVariable<AngularVecd>(vorticity_, "VorticityInner");
+			particles_->registerAVariable(vorticity_, "VorticityInner");
 			particles_->addAVariableToWrite<AngularVecd>("VorticityInner");
 		}
 		//=================================================================================================//
@@ -189,7 +189,7 @@ namespace SPH
 		//=================================================================================================//
 		void NonReflectiveBoundaryVariableCorrection::Interaction(size_t index_i, Real dt)
 		{
-			ComplexShape &body_shape = sph_body_->body_shape_;
+			Shape &body_shape = *sph_body_->body_shape_;
 			if (surface_indicator_[index_i] == 1)
 			{
 				Vecd normal_direction = body_shape.findNormalDirection(pos_n_[index_i]);

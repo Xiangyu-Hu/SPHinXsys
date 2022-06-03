@@ -34,7 +34,7 @@ namespace SPH
 		{
 			contact_bodies_.push_back(DynamicCast<ContactBodyType>(this, contact_sph_bodies[i]));
 			contact_particles_.push_back(DynamicCast<ContactParticlesType>(this, contact_sph_bodies[i]->base_particles_));
-			contact_material_.push_back(DynamicCast<ContactMaterialType>(this, contact_sph_bodies[i]->base_particles_->base_material_));
+			contact_material_.push_back(DynamicCast<ContactMaterialType>(this, contact_sph_bodies[i]->base_material_));
 			contact_configuration_.push_back(&body_contact_relation.contact_configuration_[i]);
 		}
 	}
@@ -90,7 +90,7 @@ namespace SPH
 			// the types defined in the base complex dynamics
 			this->contact_bodies_.push_back(extra_body->ThisObjectPtr());
 			this->contact_particles_.push_back(extra_body->base_particles_->ThisObjectPtr());
-			this->contact_material_.push_back(extra_body->base_particles_->base_material_->ThisObjectPtr());
+			this->contact_material_.push_back(extra_body->base_material_->ThisObjectPtr());
 		}
 
 		for (size_t i = 0; i != extra_contact_relation.contact_bodies_.size(); ++i)

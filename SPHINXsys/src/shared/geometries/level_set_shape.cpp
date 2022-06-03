@@ -12,22 +12,21 @@
 namespace SPH
 {
 	//=================================================================================================//
-	LevelSetShape::
-		LevelSetShape(SPHBody *sph_body, Shape &shape, bool isCleaned, bool write_level_set)
-		: Shape(sph_body->getBodyName()), level_set_(nullptr)
+	LevelSetShape::LevelSetShape(SPHBody *sph_body, Shape &shape, Real refinement_ratio)
+		: Shape(shape.getName()),
+		  level_set_(level_set_keeper_.movePtr(
+			  sph_body->sph_adaptation_->createLevelSet(shape, refinement_ratio))) {}
+	//=================================================================================================//
+	void LevelSetShape::writeLevelSet(SPHBody &sph_body)
 	{
-		name_ = sph_body->getBodyName();
-		bounding_box_ = shape.findBounds();
-		level_set_ = level_set_keeper_.movePtr(sph_body->sph_adaptation_->createLevelSet(shape));
-		if (isCleaned)
-			level_set_->cleanInterface();
-
-		if (write_level_set)
-		{
-			In_Output *in_output = sph_body->getSPHSystem().in_output_;
-			MeshRecordingToPlt write_level_set_to_plt(*in_output, *sph_body, level_set_);
-			write_level_set_to_plt.writeToFile(0);
-		}
+		InOutput *in_output = sph_body.getSPHSystem().in_output_;
+		MeshRecordingToPlt write_level_set_to_plt(*in_output, sph_body, level_set_);
+		write_level_set_to_plt.writeToFile(0);
+	}
+	LevelSetShape *LevelSetShape::cleanLevelSet(Real small_shift_factor)
+	{
+		level_set_->cleanInterface(small_shift_factor);
+		return this;
 	}
 	//=================================================================================================//
 	bool LevelSetShape::checkContain(const Vecd &input_pnt, bool BOUNDARY_INCLUDED)
@@ -55,9 +54,9 @@ namespace SPH
 		return level_set_->probeNormalDirection(input_pnt);
 	}
 	//=================================================================================================//
-	Vecd LevelSetShape::findNoneNormalizedNormalDirection(const Vecd &input_pnt)
+	Vecd LevelSetShape::findLevelSetGradient(const Vecd &input_pnt)
 	{
-		return level_set_->probeNoneNormalizedNormalDirection(input_pnt);
+		return level_set_->probeLevelSetGradient(input_pnt);
 	}
 	//=================================================================================================//
 	bool LevelSetShape::checkNotFar(const Vecd &input_pnt, Real threshold)

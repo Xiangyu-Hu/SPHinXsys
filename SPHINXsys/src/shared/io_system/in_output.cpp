@@ -26,7 +26,7 @@ namespace
 namespace SPH
 {
 	//=============================================================================================//
-	In_Output::In_Output(SPHSystem& sph_system, bool delete_output)
+	InOutput::InOutput(SPHSystem &sph_system, bool delete_output)
 		: sph_system_(sph_system),
 		  input_folder_("./input"), output_folder_("./output"),
 		  restart_folder_("./restart"), reload_folder_("./reload")
@@ -60,6 +60,11 @@ namespace SPH
 		restart_step_ = padValueWithZeros(sph_system.restart_step_);
 
 		sph_system.in_output_ = this;
+	}
+	//=============================================================================================//
+	ParameterizationIO &InOutput::defineParameterizationIO()
+	{
+		return parameterization_io_ptr_keeper_.createRef<ParameterizationIO>(input_folder_);
 	}
 	//=============================================================================================//
 	void PltEngine::
@@ -231,7 +236,7 @@ namespace SPH
 	}
 	//=============================================================================================//
 	WriteToVtpIfVelocityOutOfBound::
-		WriteToVtpIfVelocityOutOfBound(In_Output &in_output, SPHBodyVector bodies, Real velocity_bound)
+		WriteToVtpIfVelocityOutOfBound(InOutput &in_output, SPHBodyVector bodies, Real velocity_bound)
 		: BodyStatesRecordingToVtp(in_output, bodies), out_of_bound_(false)
 	{
 		std::transform(bodies.begin(), bodies.end(), std::back_inserter(check_bodies_),
@@ -254,7 +259,7 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	MeshRecordingToPlt ::MeshRecordingToPlt(In_Output &in_output, SPHBody &body, BaseMeshField *mesh_field)
+	MeshRecordingToPlt ::MeshRecordingToPlt(InOutput &in_output, SPHBody &body, BaseMeshField *mesh_field)
 		: BodyStatesRecording(in_output, body), mesh_field_(mesh_field)
 	{
 		filefullpath_ = in_output_.output_folder_ + "/" + body.getBodyName() + "_" + mesh_field_->Name() + ".dat";
@@ -267,7 +272,7 @@ namespace SPH
 		out_file.close();
 	}
 	//=============================================================================================//
-	ReloadParticleIO::ReloadParticleIO(In_Output &in_output, SPHBodyVector bodies) : BodyStatesIO(in_output, bodies)
+	ReloadParticleIO::ReloadParticleIO(InOutput &in_output, SPHBodyVector bodies) : BodyStatesIO(in_output, bodies)
 	{
 		if (!fs::exists(in_output.reload_folder_))
 		{
@@ -279,7 +284,7 @@ namespace SPH
 					   { return in_output.reload_folder_ + "/" + body->getBodyName() + "_rld.xml"; });
 	};
 	//=============================================================================================//
-	ReloadParticleIO::ReloadParticleIO(In_Output &in_output, SPHBodyVector bodies,
+	ReloadParticleIO::ReloadParticleIO(InOutput &in_output, SPHBodyVector bodies,
 									   StdVec<std::string> given_body_names) : ReloadParticleIO(in_output, bodies)
 	{
 		std::transform(given_body_names.begin(), given_body_names.end(), file_paths_.begin(),
@@ -319,7 +324,7 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	RestartIO::RestartIO(In_Output &in_output, SPHBodyVector bodies)
+	RestartIO::RestartIO(InOutput &in_output, SPHBodyVector bodies)
 		: BodyStatesIO(in_output, bodies), overall_file_path_(in_output.restart_folder_ + "/Restart_time_")
 	{
 		std::transform(bodies.begin(), bodies.end(), std::back_inserter(file_paths_),
@@ -386,7 +391,7 @@ namespace SPH
 	}
 	//=============================================================================================//
 	WriteSimBodyPinData::
-		WriteSimBodyPinData(In_Output &in_output, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Pin &pinbody)
+		WriteSimBodyPinData(InOutput &in_output, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Pin &pinbody)
 		: WriteSimBodyStates<SimTK::MobilizedBody::Pin>(in_output, integ, pinbody),
 		filefullpath_(in_output_.output_folder_ + "/mb_pinbody_data.dat")
 	{
@@ -417,13 +422,13 @@ namespace SPH
 		out_file.close();
 	};
 	//=================================================================================================//
-	ReloadMaterialParameterIO::ReloadMaterialParameterIO(In_Output &in_output, SharedPtr<BaseMaterial> material)
-		: in_output_(in_output), material_(material.get()),
-		  file_path_(in_output.reload_folder_ + "/Material_" + material->LocalParametersName() + "_rld.xml") {}
+	ReloadMaterialParameterIO::ReloadMaterialParameterIO(InOutput &in_output, BaseMaterial *base_material)
+		: in_output_(in_output), base_material_(base_material),
+		  file_path_(in_output.reload_folder_ + "/Material_" + base_material->LocalParametersName() + "_rld.xml") {}
 	//=================================================================================================//
 	ReloadMaterialParameterIO::
-		ReloadMaterialParameterIO(In_Output &in_output, SharedPtr<BaseMaterial> material, const std::string &given_parameters_name)
-		: in_output_(in_output), material_(material.get()),
+		ReloadMaterialParameterIO(InOutput &in_output, BaseMaterial *base_material, const std::string &given_parameters_name)
+		: in_output_(in_output), base_material_(base_material),
 		  file_path_(in_output.reload_folder_ + "/Material_" + given_parameters_name + "_rld.xml") {}
 	//=================================================================================================//
 	void ReloadMaterialParameterIO::writeToFile(size_t iteration_step)
@@ -438,7 +443,7 @@ namespace SPH
 		{
 			fs::remove(file_path_);
 		}
-		material_->writeToXmlForReloadLocalParameters(file_path_);
+		base_material_->writeToXmlForReloadLocalParameters(file_path_);
 	}
 	//=================================================================================================//
 	void ReloadMaterialParameterIO::readFromFile(size_t restart_step)
@@ -449,7 +454,7 @@ namespace SPH
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			exit(1);
 		}
-		material_->readFromXmlForLocalParameters(file_path_);
+		base_material_->readFromXmlForLocalParameters(file_path_);
 	}
 	//=================================================================================================//
 }

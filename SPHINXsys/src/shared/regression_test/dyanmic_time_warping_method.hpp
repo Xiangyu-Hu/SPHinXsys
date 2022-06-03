@@ -19,8 +19,8 @@ namespace SPH
 	Real RegressionTestDynamicTimeWarping<ObserveMethodType>::calculatePNorm(Vecd variable_a, Vecd variable_b)
 	{
 		Real distance = 0;
-		for (int i = 0; i < variable_a.size(); ++i)
-			distance = std::pow(std::abs(variable_a[i] - variable_b[i]), 2);
+		for (int dimension_index = 0; dimension_index < variable_a.size(); ++dimension_index)
+			distance = std::pow(std::abs(variable_a[dimension_index] - variable_b[dimension_index]), 2);
 		return std::pow(distance, 0.5);
 	};
 	//=================================================================================================//
@@ -29,9 +29,9 @@ namespace SPH
 	{
 		/** the current method is TBD. */
 		Real distance = 0;
-		for (int i = 0; i != variable_a.size(); ++i)
-			for (int j = 0; j != variable_a.size(); ++j)
-				distance = std::pow(std::abs(variable_a[i][j] - variable_b[i][j]), 2);
+		for (int dimension_index_i = 0; dimension_index_i != variable_a.size(); ++dimension_index_i)
+			for (int dimension_index_j = 0; dimension_index_j != variable_a.size(); ++dimension_index_j)
+				distance = std::pow(std::abs(variable_a[dimension_index_i][dimension_index_j] - variable_b[dimension_index_i][dimension_index_j]), 2);
 		return std::pow(distance, 0.5);
 	};
 	//=================================================================================================//
@@ -41,25 +41,25 @@ namespace SPH
 	{
 		/* define the container to hold the dtw distance.*/
 		StdVec<Real> dtw_distance;
-		for (int n = 0; n != this->j_; ++n)
+		for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 		{
 			int window_size_ = 5;
-			int a_length = dataset_a_[n].size();
-			int b_length = dataset_b_[n].size();
+			int a_length = dataset_a_[observation_index].size();
+			int b_length = dataset_b_[observation_index].size();
 			/** create a 2D vector with [a_length, b_length] to contain the local DTW distance value. */
 			DoubleVec<Real> local_dtw_distance(a_length, StdVec<Real>(b_length, 0));
-			local_dtw_distance[0][0] = calculatePNorm(dataset_a_[n][0], dataset_b_[n][0]);
-			for (int i = 1; i < a_length; ++i)
-				local_dtw_distance[i][0] = local_dtw_distance[i - 1][0] + calculatePNorm(dataset_a_[n][i], dataset_b_[n][0]);
-			for (int j = 1; j < b_length; ++j)
-				local_dtw_distance[0][j] = local_dtw_distance[0][j - 1] + calculatePNorm(dataset_a_[n][0], dataset_b_[n][j]);
+			local_dtw_distance[0][0] = calculatePNorm(dataset_a_[observation_index][0], dataset_b_[observation_index][0]);
+			for (int index_i = 1; index_i < a_length; ++index_i)
+				local_dtw_distance[index_i][0] = local_dtw_distance[index_i - 1][0] + calculatePNorm(dataset_a_[observation_index][index_i], dataset_b_[observation_index][0]);
+			for (int index_j = 1; index_j < b_length; ++index_j)
+				local_dtw_distance[0][index_j] = local_dtw_distance[0][index_j - 1] + calculatePNorm(dataset_a_[observation_index][0], dataset_b_[observation_index][index_j]);
 
 			/** add locality constraint */
 			window_size_ = SMAX(window_size_, ABS(a_length - b_length));
-			for (int i = 1; i != a_length; ++i)
-				for (int j = SMAX(1, i - window_size_); j != SMIN(b_length, i + window_size_); ++j)
-					local_dtw_distance[i][j] = calculatePNorm(dataset_a_[n][i], dataset_b_[n][j]) +
-						SMIN(local_dtw_distance[i - 1][j], local_dtw_distance[i][j - 1], local_dtw_distance[i - 1][j - 1]);
+			for (int index_i = 1; index_i != a_length; ++index_i)
+				for (int index_j = SMAX(1, index_i - window_size_); index_j != SMIN(b_length, index_i + window_size_); ++index_j)
+					local_dtw_distance[index_i][index_j] = calculatePNorm(dataset_a_[observation_index][index_i], dataset_b_[observation_index][index_j]) +
+						SMIN(local_dtw_distance[index_i - 1][index_j], local_dtw_distance[index_i][index_j - 1], local_dtw_distance[index_i - 1][index_j - 1]);
 			dtw_distance.push_back(local_dtw_distance[a_length - 1][b_length - 1]);
 		}
 		return dtw_distance;
@@ -68,10 +68,10 @@ namespace SPH
 	template<class ObserveMethodType>
 	void RegressionTestDynamicTimeWarping<ObserveMethodType>::settingupTheTest()
 	{
-		this->i_ = this->current_result_.size();
-		this->j_ = this->current_result_[0].size();
+		this->snapshot_ = this->current_result_.size();
+		this->observation_ = this->current_result_[0].size();
 
-		StdVec<Real> dtw_distance_temp_(this->j_, 0);
+		StdVec<Real> dtw_distance_temp_(this->observation_, 0);
 		dtw_distance_ = dtw_distance_temp_;
 		dtw_distance_new_ = dtw_distance_;
 
@@ -92,10 +92,10 @@ namespace SPH
 			SimTK::Xml::Element element_name_dtw_distance_ = dtw_distance_xml_engine_in_.root_element_;
 			SimTK::Xml::element_iterator ele_ite = element_name_dtw_distance_.element_begin();
 			for (; ele_ite != element_name_dtw_distance_.element_end(); ++ele_ite)
-				for (int particle_n_ = 0; particle_n_ != this->j_; ++particle_n_)
+				for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 				{
-					std::string attribute_name_ = this->quantity_name_ + "_" + std::to_string(particle_n_);
-					dtw_distance_xml_engine_in_.getRequiredAttributeValue<Real>(ele_ite, attribute_name_, dtw_distance_[particle_n_]);
+					std::string attribute_name_ = this->quantity_name_ + "_" + std::to_string(observation_index);
+					dtw_distance_xml_engine_in_.getRequiredAttributeValue<Real>(ele_ite, attribute_name_, dtw_distance_[observation_index]);
 				}
 		}
 	};
@@ -105,11 +105,11 @@ namespace SPH
 	{
 		if (this->number_of_run_ > 1)
 		{
-			StdVec<Real> dtw_distance_local_(this->j_, 0);
-			dtw_distance_local_ = calculateDTWDistance(this->current_result_ji_, this->result_in_);
-			for (int j = 0; j != this->j_; ++j)
+			StdVec<Real> dtw_distance_local_(this->observation_, 0);
+			dtw_distance_local_ = calculateDTWDistance(this->current_result_trans_, this->result_in_);
+			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 			{
-				dtw_distance_new_[j] = SMAX(dtw_distance_local_[j], dtw_distance_[j], dtw_distance_new_[j]);
+				dtw_distance_new_[observation_index] = SMAX(dtw_distance_local_[observation_index], dtw_distance_[observation_index], dtw_distance_new_[observation_index]);
 			}	
 			this->result_in_.clear();
 		}
@@ -121,10 +121,10 @@ namespace SPH
 		SimTK::Xml::Element DTWElement = dtw_distance_xml_engine_out_.root_element_;
 		dtw_distance_xml_engine_out_.addChildToElement(DTWElement, "DTWDistance");
 		SimTK::Xml::element_iterator ele_ite = DTWElement.element_begin();
-		for (int particle_n_ = 0; particle_n_ != this->j_; ++particle_n_)
+		for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 		{
-			std::string attribute_name_ = this->quantity_name_ + "_" + std::to_string(particle_n_);
-			dtw_distance_xml_engine_out_.setAttributeToElement(ele_ite, attribute_name_, dtw_distance_new_[particle_n_]);
+			std::string attribute_name_ = this->quantity_name_ + "_" + std::to_string(observation_index);
+			dtw_distance_xml_engine_out_.setAttributeToElement(ele_ite, attribute_name_, dtw_distance_new_[observation_index]);
 		}
 		dtw_distance_xml_engine_out_.writeToXmlFile(dtw_distance_filefullpath_);
 	};
@@ -135,13 +135,13 @@ namespace SPH
 		if (this->number_of_run_ > 1)
 		{
 			int count_not_converged_ = 0;
-			for (int j = 0; j != this->j_; ++j)
+			for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 			{
-				if (std::abs(dtw_distance_[j] - dtw_distance_new_[j]) > threshold_value)
+				if (std::abs(dtw_distance_[observation_index] - dtw_distance_new_[observation_index]) > threshold_value)
 				{
 					count_not_converged_++;
-					std::cout << "The DTW distance of " << this->quantity_name_ << " [" << j << "] is not converged." << endl;
-					std::cout << "The old DTW distance is " << dtw_distance_[j] << ", and the new DTW distance is " << dtw_distance_new_[j] << "." << endl;
+					std::cout << "The DTW distance of " << this->quantity_name_ << " [" << observation_index << "] is not converged." << endl;
+					std::cout << "The old DTW distance is " << dtw_distance_[observation_index] << ", and the new DTW distance is " << dtw_distance_new_[observation_index] << "." << endl;
 				}
 			};
 
@@ -176,13 +176,13 @@ namespace SPH
 	{
 		int test_wrong = 0;
 		StdVec<Real> dtw_distance_current_;
-		dtw_distance_current_ = calculateDTWDistance(this->result_in_, this->current_result_ji_);
-		for (int i = 0; i != this->j_; ++i)
+		dtw_distance_current_ = calculateDTWDistance(this->result_in_, this->current_result_trans_);
+		for (int observation_index = 0; observation_index != this->observation_; ++observation_index)
 		{
-			if (dtw_distance_current_[i] > 1.01 * dtw_distance_[i])
+			if (dtw_distance_current_[observation_index] > 1.01 * dtw_distance_[observation_index])
 			{
-				std::cout << "The maximum distance of " << this->quantity_name_ << "[" << i << "] is " << dtw_distance_[i] 
-					<< ", and the current distance is " << dtw_distance_current_[i] << "." << endl;
+				std::cout << "The maximum distance of " << this->quantity_name_ << "[" << observation_index << "] is " << dtw_distance_[observation_index] 
+					<< ", and the current distance is " << dtw_distance_current_[observation_index] << "." << endl;
 				test_wrong++;
 			}
 		};

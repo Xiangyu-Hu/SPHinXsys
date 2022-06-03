@@ -25,43 +25,34 @@
  * @brief 	This is the example of generating a neural network on a sphere 
  * @author 	Chi Zhang and Xiangyu Hu
  */
-/** header file and namespace. */
 #include "sphinxsys.h"
 using namespace SPH;
 
-/** Set the file path to the stl file. */
-std::string full_path_to_stl = "./input/sphere.stl";
 Vec3d domain_lower_bound(-1.0, -1.0, -1.0);
 Vec3d domain_upper_bound(1.0, 1.0, 1.0);
 Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
+/** Network starting point. */
+Vecd starting_point(-1.0, 0.0, 0.0);
+/** Network second point. */
+Vecd second_point(-0.964, 0.0, 0.266);
+/** Network iterative levels. */
+int iteration_levels = 15;
+/** Network defecting angle. */
+Real grad_factor = 5.0;
 
-/** Define the my heart body. */
-class MyPolygonBody : public SolidBody
-{
-public:
-	MyPolygonBody(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name, makeShared<SPHAdaptation>(1.15, 1.0))
-	{
-		Vecd translation(-1.0, -1.0, -1.0);
-		TriangleMeshShapeSTL triangle_mesh_shape(full_path_to_stl, translation, 0.025);
-		body_shape_.add<LevelSetShape>(this, triangle_mesh_shape);
-	}
-};
-/**
- *  The main program
- */
 int main()
 {
 	/** Setup the system. */
 	SPHSystem system(system_domain_bounds, dp_0);
 	/** Output */
-	In_Output in_output(system);
-	/** Creat a sphere, corresponding material and particles. */
-	MyPolygonBody polygon_body(system, "Polygon");
-	SolidParticles body_particles(
-		polygon_body, makeShared<ParticleGeneratorNetwork>(Vecd(-1.0, 0.0, 0.0), Vecd(-0.964, 0.0, 0.266), 15, 5.0));
+	InOutput in_output(system);
+	/** Creat a body, corresponding material and particles. */
+	TreeBody tree_on_sphere(system, makeShared<GeometricShapeBall>(Vec3d(0), 1.0, "Sphere"));
+	tree_on_sphere.defineBodyLevelSetShape()->writeLevelSet(tree_on_sphere);
+	tree_on_sphere.defineParticlesAndMaterial();
+	tree_on_sphere.generateParticles<ParticleGeneratorNetwork>(starting_point, second_point, iteration_levels, grad_factor);
 	/** Write particle data. */
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
 	write_states.writeToFile(0);

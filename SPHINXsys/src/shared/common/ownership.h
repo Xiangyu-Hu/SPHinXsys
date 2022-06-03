@@ -1,38 +1,38 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * --------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+ * and HU1527/12-1.															*
+ *                                                                           *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * --------------------------------------------------------------------------*/
 /**
  * @file 	ownership.h
- * @brief 	Here, the classes related to the ownship of objects are defined 
+ * @brief 	Here, the classes related to the ownship of objects are defined
  * 			by implementing Resource Acquisition Is Initialization (RAII).
  *          The basic idea in SPHinXsys to use defined ownership.
- * 			Unique pointers are used as much as possible and shared pointer only used 
+ * 			Unique pointers are used as much as possible and shared pointer only used
  * 			when a default smart pointer is generated as argument in the constructors.
  *          In this case, for objects with statically defined lifetime, references will be used.
  *          For those with dynamical lifetime, we will use smart-pointer keepers to handel.
- *          Basically, newing a raw pointer is forbiden through out the code except for 
+ *          Basically, newing a raw pointer is forbiden through out the code except for
  * 			raw matrixes, such as the cell linked list mesh, that will be deleted in destructor,
  *          especially, when new features are introduced.
- *          Generally, the classes here are private member and 
+ *          Generally, the classes here are private member and
  * 			the smart pointer is used only when the memory is allocated.
  *          After that, we take reference or raw pointer out and use them as observer.
  * @author	Xiangyu Hu
@@ -50,7 +50,7 @@ namespace SPH
 	CastingType *DynamicCast(OwnerType *owner, CastedType *casted)
 	{
 		CastingType *tmp = dynamic_cast<CastingType *>(casted);
-		if (tmp == nullptr) 
+		if (tmp == nullptr)
 		{
 			std::cout << "\n Error: pointer DynamicCasting " << typeid(*casted).name() << " leads to nullptr! \n";
 			std::cout << "\n This error locates in " << typeid(*owner).name() << '\n';
@@ -63,7 +63,7 @@ namespace SPH
 	CastingType &DynamicCast(OwnerType *owner, CastedType &casted)
 	{
 		CastingType *tmp = dynamic_cast<CastingType *>(&casted);
-		if (tmp == nullptr) 
+		if (tmp == nullptr)
 		{
 			std::cout << "\n Error: reference DynamicCasting " << typeid(casted).name() << " leads to nullptr! \n";
 			std::cout << "\n This error locates in " << typeid(*owner).name() << '\n';
@@ -83,27 +83,27 @@ namespace SPH
 
 	/**
 	 * @class UniquePtrKeeper
-	 * @brief A wrapper to provide an ownership for a new derived object 
+	 * @brief A wrapper to provide an ownership for a new derived object
 	 * which previous often generated by newing a raw pointer.
 	 */
 	template <class BaseType>
 	class UniquePtrKeeper
 	{
 	public:
-		/** output the observer as pointer */
+		/** output the observer as derived pointer */
 		template <class DerivedType, typename... ConstructorArgs>
-		BaseType *createPtr(ConstructorArgs &&...args)
+		DerivedType *createPtr(ConstructorArgs &&...args)
 		{
 			ptr_member_.reset(new DerivedType(std::forward<ConstructorArgs>(args)...));
-			return ptr_member_.get();
+			return dynamic_cast<DerivedType *>(ptr_member_.get());
 		};
 
-		/** output the observer as reference */
+		/** output the observer as derived reference */
 		template <class DerivedType, typename... ConstructorArgs>
-		BaseType &createRef(ConstructorArgs &&...args)
+		DerivedType &createRef(ConstructorArgs &&...args)
 		{
 			ptr_member_.reset(new DerivedType(std::forward<ConstructorArgs>(args)...));
-			return *ptr_member_.get();
+			return *dynamic_cast<DerivedType *>(ptr_member_.get());
 		};
 
 		/** output the observer as pointer */
@@ -116,36 +116,41 @@ namespace SPH
 	private:
 		UniquePtr<BaseType> ptr_member_;
 	};
-	
+
 	/**
-	 * @class UniquePtrVectorKeeper
-	 * @brief A wrapper to provide an ownership for 
+	 * @class UniquePtrKeepers
+	 * @brief A wrapper to provide an ownership for
 	 * a vector of base class pointers which point to derived objects.
 	 * It should be a private member.
 	 */
 	template <class BaseType>
-	class UniquePtrVectorKeeper
+	class UniquePtrKeepers
 	{
 	public:
-		UniquePtrVectorKeeper() = default;
-		UniquePtrVectorKeeper(const UniquePtrVectorKeeper&) = delete;
-		UniquePtrVectorKeeper& operator=(const UniquePtrVectorKeeper&) = delete;
-		UniquePtrVectorKeeper(UniquePtrVectorKeeper&&) = default;
-		UniquePtrVectorKeeper& operator=(UniquePtrVectorKeeper&&) = default;
-
-		/** used to create a new derived object in the vector 
+		/** used to create a new derived object in the vector
 		 * and output its pointer as observer */
 		template <class DerivedType, typename... ConstructorArgs>
 		DerivedType *createPtr(ConstructorArgs &&...args)
 		{
-			ptr_vector_.emplace_back(std::move(makeUnique<DerivedType>(std::forward<ConstructorArgs>(args)...)));
-			return dynamic_cast<DerivedType *>(ptr_vector_.back().get());
+			ptr_keepers_.push_back(UniquePtrKeeper<BaseType>());
+			BaseType *observer = ptr_keepers_.back()
+									 .template createPtr<DerivedType>(std::forward<ConstructorArgs>(args)...);
+			return dynamic_cast<DerivedType *>(observer);
 		};
 
-	private:
-		std::vector<UniquePtr<BaseType>> ptr_vector_;
-	};
+		UniquePtrKeeper<BaseType> &operator[](size_t index)
+		{
+			if (index < ptr_keepers_.size())
+			{
+				return ptr_keepers_[index];
+			}
+			std::cout << "\n Error in UniquePtrKeepers : UniquePtr index is out of bound! \n";
+			exit(1);
+		}
 
+	private:
+		std::vector<UniquePtrKeeper<BaseType>> ptr_keepers_;
+	};
 
 	template <class T>
 	using SharedPtr = std::shared_ptr<T>;
@@ -158,7 +163,7 @@ namespace SPH
 
 	/**
 	 * @class SharedPtrKeeper
-	 * @brief A wrapper to provide an shared ownership for a new derived object 
+	 * @brief A wrapper to provide an shared ownership for a new derived object
 	 * which previous often generated by newing a raw pointer.
 	 */
 	template <class BaseType>
@@ -167,11 +172,19 @@ namespace SPH
 	public:
 		/** output the observer as pointer */
 		template <class DerivedType, typename... ConstructorArgs>
-		BaseType *resetPtr(ConstructorArgs &&...args)
+		DerivedType *resetPtr(ConstructorArgs &&...args)
 		{
-			ptr_member_= makeShared<DerivedType>(std::forward<ConstructorArgs>(args)...);
-			return ptr_member_.get();
+			ptr_member_ = makeShared<DerivedType>(std::forward<ConstructorArgs>(args)...);
+			return  dynamic_cast<DerivedType *>(ptr_member_.get());
 		};
+
+		/** output the observer as derived reference */
+		template <class DerivedType, typename... ConstructorArgs>
+		DerivedType &resetRef(ConstructorArgs &&...args)
+		{
+			return *resetPtr<DerivedType>(std::forward<ConstructorArgs>(args)...);
+		};
+
 		/** output the observer as pointer */
 		BaseType *assignPtr(SharedPtr<BaseType> shared_ptr)
 		{
@@ -179,8 +192,15 @@ namespace SPH
 			return ptr_member_.get();
 		};
 
+		/** output the observer as reference */
+		BaseType &assignRef(SharedPtr<BaseType> shared_ptr)
+		{
+			ptr_member_ = shared_ptr;
+			return *ptr_member_.get();
+		};
+
 	private:
 		SharedPtr<BaseType> ptr_member_;
-	};	
+	};
 }
-#endif //OWNERSHIP_H
+#endif // OWNERSHIP_H

@@ -1,10 +1,10 @@
 /**
-* @file 	structural_simulation_class.h
-* @brief 	The structural simulation module is licensed under the Aladdin Free Public License (https://spdx.org/licenses/Aladdin.html) regarding usage for medical device development.
-* Commercial use for medical device development is not permitted. This does not apply to applications in other fields.
-* @details	solid structural simulation class for general structural simulations
-* @author 	Bence Z. Rochlitz - Virtonomy GmbH, Xiangyu Hu
-*/
+ * @file 	structural_simulation_class.h
+ * @brief 	The structural simulation module is licensed under the Aladdin Free Public License (https://spdx.org/licenses/Aladdin.html) regarding usage for medical device development.
+ * Commercial use for medical device development is not permitted. This does not apply to applications in other fields.
+ * @details	solid structural simulation class for general structural simulations
+ * @author 	Bence Z. Rochlitz - Virtonomy GmbH, Xiangyu Hu
+ */
 
 #ifndef SOLID_STRUCTURAL_SIMULATION_CLASS_H
 #define SOLID_STRUCTURAL_SIMULATION_CLASS_H
@@ -19,18 +19,18 @@ using namespace std;
 using GravityPair = pair<int, Vec3d>;
 using AccelTuple = tuple<int, BoundingBox, Vec3d>;
 using ForceTuple = tuple<int, BoundingBox, Vec3d, Real>;
-using PressureTuple = tuple<int, TriangleMeshShape *, Vec3d, StdVec<array<Real, 2>>>;
+using PressureTuple = tuple<int, SharedPtr<TriangleMeshShape>, Vec3d, StdVec<array<Real, 2>>>;
 using SpringDamperTuple = tuple<int, Vec3d, Real>;
 /**
-* @brief SurfaceSpringTuple
-* int: body index
-* TriangleMeshShape*: the body part, the normal spring is applied to
-* bool: if true, the "outer" surface is considered (particle normals > 90° from the particle-source point vector), if false, the "inner" surface
-* Vec3d: source point to relate inner and outer surface
-* Real: normal spring stiffness
-* Real: damping coefficient
-*/
-using SurfaceSpringTuple = tuple<int, TriangleMeshShape *, bool, Vec3d, Real, Real>;
+ * @brief SurfaceSpringTuple
+ * int: body index
+ * TriangleMeshShape*: the body part, the normal spring is applied to
+ * bool: if true, the "outer" surface is considered (particle normals > 90° from the particle-source point vector), if false, the "inner" surface
+ * Vec3d: source point to relate inner and outer surface
+ * Real: normal spring stiffness
+ * Real: damping coefficient
+ */
+using SurfaceSpringTuple = tuple<int, SharedPtr<TriangleMeshShape>, bool, Vec3d, Real, Real>;
 using ConstrainedRegionPair = pair<int, BoundingBox>;
 using PositionSolidBodyTuple = tuple<int, Real, Real, Vec3d>;
 using PositionScaleSolidBodyTuple = tuple<int, Real, Real, Real>;
@@ -52,22 +52,25 @@ using TranslateSolidBodyPartTuple = tuple<int, Real, Real, Vec3d, BoundingBox>;
 class BodyPartFromMesh : public BodyRegionByParticle
 {
 public:
-	BodyPartFromMesh(SPHBody &body, const string &body_part_name, TriangleMeshShape &triangle_mesh_shape);
+	BodyPartFromMesh(SPHBody &body, SharedPtr<TriangleMeshShape> triangle_mesh_shape_ptr);
+	~BodyPartFromMesh(){};
 };
 
 class SolidBodyFromMesh : public SolidBody
 {
 public:
-	SolidBodyFromMesh(SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape, shared_ptr<SPHAdaptation> particle_adaptation);
+	SolidBodyFromMesh(SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
+				  SharedPtr<LinearElasticSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume);
+	~SolidBodyFromMesh(){};
 };
 
 class SolidBodyForSimulation
 {
 private:
 	SolidBodyFromMesh solid_body_from_mesh_;
-	ElasticSolidParticles elastic_solid_particles_;
 	BodyRelationInner inner_body_relation_;
 
+	SimpleDynamics<NormalDirectionFromBodyShape> initial_normal_direction_;
 	solid_dynamics::CorrectConfiguration correct_configuration_;
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half_;
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half_;
@@ -76,26 +79,24 @@ private:
 public:
 	// no particle reload --> direct generator
 	SolidBodyForSimulation(
-		SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape, shared_ptr<SPHAdaptation> particle_adaptation,
-		Real physical_viscosity, shared_ptr<LinearElasticSolid> material_model, StdLargeVec<Vecd>& pos_0, StdLargeVec<Real>& volume);
-	// particle reload
-	SolidBodyForSimulation(
-		SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape, shared_ptr<SPHAdaptation> particle_adaptation,
-		Real physical_viscosity, shared_ptr<LinearElasticSolid> material_model);
+		SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
+		Real physical_viscosity, SharedPtr<LinearElasticSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume);
+	~SolidBodyForSimulation(){};
 
-	SolidBodyFromMesh* getSolidBodyFromMesh() { return &solid_body_from_mesh_; };
-	ElasticSolidParticles* getElasticSolidParticles() { return &elastic_solid_particles_; };
-	BodyRelationInner* getInnerBodyRelation() { return &inner_body_relation_; };
+	SolidBodyFromMesh *getSolidBodyFromMesh() { return &solid_body_from_mesh_; };
+	ElasticSolidParticles *getElasticSolidParticles() { return DynamicCast<ElasticSolidParticles>(this, solid_body_from_mesh_.base_particles_); };
+	BodyRelationInner *getInnerBodyRelation() { return &inner_body_relation_; };
 
-	solid_dynamics::CorrectConfiguration* getCorrectConfiguration() { return &correct_configuration_; };
-	solid_dynamics::StressRelaxationFirstHalf* getStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
-	solid_dynamics::StressRelaxationSecondHalf* getStressRelaxationSecondHalf() { return &stress_relaxation_second_half_; };
-	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>* getDampingWithRandomChoice() { return &damping_random_; };
+	SimpleDynamics<NormalDirectionFromBodyShape> *getInitialNormalDirection() { return &initial_normal_direction_; };
+	solid_dynamics::CorrectConfiguration *getCorrectConfiguration() { return &correct_configuration_; };
+	solid_dynamics::StressRelaxationFirstHalf *getStressRelaxationFirstHalf() { return &stress_relaxation_first_half_; };
+	solid_dynamics::StressRelaxationSecondHalf *getStressRelaxationSecondHalf() { return &stress_relaxation_second_half_; };
+	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>> *getDampingWithRandomChoice() { return &damping_random_; };
 };
 
 void expandBoundingBox(BoundingBox *original, BoundingBox *additional);
 
-void relaxParticlesSingleResolution(In_Output &in_output,
+void relaxParticlesSingleResolution(InOutput &in_output,
 									bool write_particles_to_file,
 									SolidBodyFromMesh &solid_body_from_mesh,
 									ElasticSolidParticles &solid_body_from_mesh_particles,
@@ -156,6 +157,11 @@ public:
 
 class StructuralSimulation
 {
+private:
+	UniquePtrKeepers<SolidBodyRelationContact> contact_relation_ptr_keeper_;
+	UniquePtrKeepers<Gravity> gravity_ptr_keeper_;
+	UniquePtrKeepers<BodyPartFromMesh> body_part_tri_mesh_ptr_keeper_;
+
 protected:
 	// mandatory input
 	string relative_input_path_;
@@ -163,10 +169,11 @@ protected:
 	Real scale_stl_;
 	vector<Vec3d> translation_list_;
 	vector<Real> resolution_list_;
+	vector<SharedPtr<TriangleMeshShape>> body_mesh_list_;
 	vector<SharedPtr<LinearElasticSolid>> material_model_list_;
 	StdVec<Real> physical_viscosity_;
 	StdVec<IndexVector> contacting_body_pairs_list_;
-	vector<pair<array<int, 2>, array<Real, 2>>> time_dep_contacting_body_pairs_list_; //optional: time dependent contact
+	vector<pair<array<int, 2>, array<Real, 2>>> time_dep_contacting_body_pairs_list_; // optional: time dependent contact
 	vector<bool> particle_relaxation_list_;											  // optional: particle relaxation
 	bool write_particle_relaxation_data_;
 
@@ -174,10 +181,8 @@ protected:
 	Real system_resolution_;
 	SPHSystem system_;
 	Real scale_system_boundaries_;
-	In_Output in_output_;
+	InOutput in_output_;
 
-	vector<shared_ptr<TriangleMeshShape>> body_mesh_list_;
-	vector<shared_ptr<SPHAdaptation>> particle_adaptation_list_;
 	vector<shared_ptr<SolidBodyForSimulation>> solid_body_list_;
 	vector<shared_ptr<solid_dynamics::UpdateElasticNormalDirection>> particle_normal_update_;
 
@@ -236,7 +241,6 @@ protected:
 	void scaleTranslationAndResolution();
 	void setSystemResolutionMax();
 	void createBodyMeshList();
-	void createParticleAdaptationList();
 	void calculateSystemBoundaries();
 	void initializeElasticSolidBodies();
 	void initializeContactBetweenTwoBodies(int first, int second);
@@ -257,6 +261,7 @@ protected:
 	void initializeTranslateSolidBodyPart();
 
 	// for runSimulation, the order is important
+	void executeInitialNormalDirection();
 	void executeCorrectConfiguration();
 	void executeUpdateElasticNormalDirection();
 	void executeinitializeATimeStep();
@@ -290,10 +295,10 @@ public:
 	StdVec<shared_ptr<SolidBodyForSimulation>> get_solid_body_list_() { return solid_body_list_; };
 	Real getMaxDisplacement(int body_index);
 
-	//For c++
+	// For c++
 	void runSimulation(Real end_time);
 
-	//For JS
+	// For JS
 	double runSimulationFixedDurationJS(int number_of_steps);
 };
 

@@ -46,8 +46,8 @@ namespace SPH
 		using VariableType = decltype(ObserveMethodType::type_indicator_);
 
 	protected:
-		DoubleVec<VariableType> meanvalue_, meanvalue_new_;  /* the container of (new) meanvalue. */
-		DoubleVec<VariableType> variance_, variance_new_;    /* the container of (new) variance. */
+		DoubleVec<VariableType> meanvalue_, meanvalue_new_;  /* the container of (new) meanvalue. [different from time-averaged]*/
+		DoubleVec<VariableType> variance_, variance_new_;    /* the container of (new) variance. [different from time-averaged]*/
 		
 		/** the method used for calculating the new variance. */
 		void calculateNewVariance(TripleVec<Real> &result, DoubleVec<Real> &meanvalue_new, DoubleVec<Real> &variance, DoubleVec<Real> &variance_new);
@@ -99,6 +99,8 @@ namespace SPH
 				writeMeanVarianceToXml();
 				compareMeanVariance();
 			};
+			/*else
+				std::cout << "The results have been converged." << endl;*/
 		};
 
 		/** the interface for testing new result. */

@@ -1,8 +1,8 @@
 /**
-* @file 	taylor_bar.h
-* @brief 	This is the case setup for plastic taylor bar.
-* @author 	xiaojing tang Chi Zhang and Xiangyu Hu
-*/
+ * @file 	taylor_bar.h
+ * @brief 	This is the case setup for plastic taylor bar.
+ * @author 	xiaojing tang Chi Zhang and Xiangyu Hu
+ */
 #pragma once
 
 #include "sphinxsys.h"
@@ -31,29 +31,26 @@ Real Youngs_modulus = 1.17e11;
 Real yield_stress = 0.4e9;
 Real hardening_modulus = 0.1e9;
 
-class Wall : public SolidBody
+class Wall : public ComplexShape
 {
 public:
-	Wall(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name, makeShared<SPHAdaptation>(1.15, 1.0))
+	explicit Wall(const std::string &shape_name) : ComplexShape(shape_name)
 	{
 		Vecd halfsize_holder(3.0 * PL, 3.0 * PL, 0.5 * SL);
 		Vecd translation_holder(0.0, 0.0, -0.5 * SL);
-		body_shape_.add<TriangleMeshShapeBrick>(halfsize_holder, resolution, translation_holder);
+		add<TriangleMeshShapeBrick>(halfsize_holder, resolution, translation_holder);
 	}
 };
 
 /** Define the body. */
-class Column : public SolidBody
+class Column : public ComplexShape
 {
 public:
-	Column(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name, makeShared<SPHAdaptation>(1.3, 1.0))
+	explicit Column(const std::string &shape_name) : ComplexShape(shape_name)
 	{
 		Vecd translation_column(0.0, 0.0, 0.6 * PW);
-		TriangleMeshShapeCylinder triangle_mesh_shape(SimTK::UnitVec3(0, 0, 1.0), inner_circle_radius,
-													  0.5 * PW, resolution, translation_column);
-		body_shape_.add<LevelSetShape>(this, triangle_mesh_shape);
+		add<TriangleMeshShapeCylinder>(SimTK::UnitVec3(0, 0, 1.0), inner_circle_radius,
+									   0.5 * PW, resolution, translation_column);
 	}
 };
 
@@ -75,13 +72,13 @@ protected:
 	}
 };
 
-//define an observer body
-class ObserverParticleGenerator : public ParticleGeneratorDirect
+// define an observer body
+class ColumnObserverParticleGenerator : public ObserverParticleGenerator
 {
 public:
-	ObserverParticleGenerator() : ParticleGeneratorDirect()
+	explicit ColumnObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
 	{
-		positions_volumes_.push_back(make_pair(Vecd(0.0, 0.0, PW), 0.0));
-		positions_volumes_.push_back(make_pair(Vecd(PL, 0.0, 0.0), 0.0));
+		positions_.push_back(Vecd(0.0, 0.0, PW));
+		positions_.push_back(Vecd(PL, 0.0, 0.0));
 	}
 };

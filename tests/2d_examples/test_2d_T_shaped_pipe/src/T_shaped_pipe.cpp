@@ -45,36 +45,29 @@ std::vector<Vecd> inner_wall_shape{
 	Vecd(-DL_sponge - BW, 0.0), Vecd(-DL_sponge - BW, DH), Vecd(DL1, DH), Vecd(DL1, 2.0 * DH + BW),
 	Vecd(DL, 2.0 * DH + BW), Vecd(DL, -DH - BW), Vecd(DL1, -DH - BW), Vecd(DL1, 0.0), Vecd(-DL_sponge - BW, 0.0)};
 //----------------------------------------------------------------------
-//	Define case dependent SPH bodies.
+//	Define case dependent body shapes.
 //----------------------------------------------------------------------
-/** Water block body definition. */
-class WaterBlock : public FluidBody
+class WaterBlock : public MultiPolygonShape
 {
 public:
-	WaterBlock(SPHSystem &system, const std::string &body_name)
-		: FluidBody(system, body_name)
+	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(water_block_shape, ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
 	}
 };
-/** Wall boundary body definition. */
-class WallBoundary : public SolidBody
+
+class WallBoundary : public MultiPolygonShape
 {
 public:
-	WallBoundary(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
-		multi_polygon.addAPolygon(water_block_shape, ShapeBooleanOps::sub);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::sub);
 	}
 };
 //----------------------------------------------------------------------
-//	Define case dependent SPH body parts.
+//	Define case dependent SPH body part shapes.
 //----------------------------------------------------------------------
 /** create the emitter shape. */
 MultiPolygon creatEmitterShape()
@@ -140,16 +133,18 @@ int main(int ac, char *av[])
 	system.restart_step_ = 0;
 	//handle command line arguments
 	system.handleCommandlineOptions(ac, av);
-	In_Output in_output(system);
+	InOutput in_output(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.cd
 	//----------------------------------------------------------------------
-	WaterBlock water_block(system, "WaterBody");
+	FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
 	water_block.setBodyDomainBounds(fluid_body_domain_bounds);
-	FluidParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f));
+	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+	water_block.generateParticles<ParticleGeneratorLattice>();
 
-	WallBoundary wall_boundary(system, "Wall");
-	SolidParticles wall_particles(wall_boundary);
+	SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -163,13 +158,12 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	/** Initialize particle acceleration. */
 	TimeStepInitialization initialize_a_fluid_step(water_block);
-	/** Emmiter. */
-	MultiPolygonShape emitter_shape(creatEmitterShape());
-	BodyRegionByParticle emitter(water_block, "Emitter", emitter_shape);
-	fluid_dynamics::EmitterInflowInjecting emitter_inflow_injecting(water_block, emitter, 300, 0, true);
+	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
+	/** Emitter. */
+	BodyRegionByParticle emitter(water_block, makeShared<MultiPolygonShape>(creatEmitterShape()));
+	fluid_dynamics::EmitterInflowInjecting emitter_inflow_injecting(water_block, emitter, 10, 0, true);
 	/** Emitter condition. */
-	MultiPolygonShape emitter_buffer_shape(createEmitterBufferShape());
-	BodyRegionByCell emitter_buffer(water_block, "EmitterBuffer", emitter_buffer_shape);
+	BodyRegionByCell emitter_buffer(water_block, makeShared<MultiPolygonShape>(createEmitterBufferShape()));
 	EmitterBufferInflowCondition emitter_buffer_inflow_condition(water_block, emitter_buffer);
 	/** time-space method to detect surface particles. */
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex
@@ -177,8 +171,8 @@ int main(int ac, char *av[])
 	/** Evaluation of density by freestream approach. */
 	fluid_dynamics::DensitySummationFreeStreamComplex update_density_by_summation(water_block_complex_relation);
 	/** We can output a method-specific particle data for debug */
-	fluid_particles.addAVariableToWrite<Real>("Pressure");
-	fluid_particles.addAVariableToWrite<int>("SurfaceIndicator");
+	water_block.addBodyStateForRecording<Real>("Pressure");
+	water_block.addBodyStateForRecording<int>("SurfaceIndicator");
 	/** Time step size without considering sound wave speed. */
 	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
@@ -192,8 +186,8 @@ int main(int ac, char *av[])
 	/** Impose transport velocity. */
 	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(water_block_complex_relation);
 	/** recycle real fluid particle to buffer particles at outlet. */
-	OpenBoundaryConditionInAxisDirection tansfer_to_buffer_particles_lower_bound(water_block, yAxis, negativeDirection);
-	OpenBoundaryConditionInAxisDirection tansfer_to_buffer_particles_upper_bound(water_block, yAxis, positiveDirection);
+	OpenBoundaryConditionInAxisDirection transfer_to_buffer_particles_lower_bound(water_block, yAxis, negativeDirection);
+	OpenBoundaryConditionInAxisDirection transfer_to_buffer_particles_upper_bound(water_block, yAxis, positiveDirection);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -205,8 +199,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	wall_particles.initializeNormalDirectionFromBodyShape();
-	inlet_outlet_surface_particle_indicator.parallel_exec();
+	wall_boundary_normal_direction.parallel_exec();
 	//----------------------------------------------------------------------
 	//	Load restart file if necessary.
 	//----------------------------------------------------------------------
@@ -246,6 +239,7 @@ int main(int ac, char *av[])
 		{
 			initialize_a_fluid_step.parallel_exec();
 			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
+			inlet_outlet_surface_particle_indicator.parallel_exec();
 			update_density_by_summation.parallel_exec();
 			viscous_acceleration.parallel_exec();
 			transport_velocity_correction.parallel_exec(Dt);
@@ -277,13 +271,12 @@ int main(int ac, char *av[])
 
 			/** inflow injecting*/
 			emitter_inflow_injecting.exec();
-			tansfer_to_buffer_particles_lower_bound.particle_type_transfer.parallel_exec();
-			tansfer_to_buffer_particles_upper_bound.particle_type_transfer.parallel_exec();
+			transfer_to_buffer_particles_lower_bound.particle_type_transfer.parallel_exec();
+			transfer_to_buffer_particles_upper_bound.particle_type_transfer.parallel_exec();
 
 			/** Update cell linked list and configuration. */
 			water_block.updateCellLinkedList();
 			water_block_complex_relation.updateConfiguration();
-			inlet_outlet_surface_particle_indicator.parallel_exec();
 		}
 
 		tick_count t2 = tick_count::now();

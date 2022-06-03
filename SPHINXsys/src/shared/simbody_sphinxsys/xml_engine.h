@@ -23,7 +23,7 @@
 /**
  * @file 	xml_engine.h
  * @brief 	XML class for xml input and output, this is GUI of simbody xml parser.
- * @author	Chi Zhang and Xiangyu Hu.
+ * @author	Bo Zhang, Chi Zhang and Xiangyu Hu.
  */
 
 #ifndef XML_ENGINE_SIMBODY_H
@@ -63,7 +63,7 @@ namespace SPH
 	public:
 		/** Constructor for XML output.  */
 		XmlEngine(const std::string& xml_name, const std::string& root_tag);
-		/** Defaut distructor. */
+		/** Default destructor. */
 		virtual ~XmlEngine() {};
 
 		SimTK::Xml::Element root_element_;	/**< Root element of document. */
@@ -91,7 +91,7 @@ namespace SPH
 			std::string value_in_string = ele_ite_->getRequiredAttributeValue(attrib_name);
 			value = SimTK::convertStringTo<T>(value_in_string);
 		};
-		/** Get the required int attribute valaue of an element */
+		/** Get the required int attribute value of an element */
 		void getRequiredAttributeMatrixValue(SimTK::Xml::element_iterator& ele_ite_, const std::string& attrib_name, Matd& value);
 
 		/** Write to XML file */
@@ -108,6 +108,34 @@ namespace SPH
 		size_t SizeOfXmlDoc();
 		/** Get a reference to a child element */
 		SimTK::Xml::Element getChildElement(const std::string& tag);
+	};
+
+	/**
+	 * @class XMLMemoryIO
+	 * @brief The base class defines xml memory data operation.
+	 */
+	class XmlMemoryIO
+	{
+	public:
+		XmlMemoryIO() {};
+		virtual ~XmlMemoryIO() {};
+
+		template <typename T>
+		void writeDataToXmlMemory(XmlEngine &xmlengine, SimTK::Xml::Element &element, const DoubleVec<T> &quantity,
+			int snapshot_, int observation_, const std::string &quantity_name, StdVec<std::string> &element_tag);
+
+		template <typename T>
+		void writeDataToXmlMemory(XmlEngine &xmlengine, SimTK::Xml::Element &element,
+			std::string element_name, int observation_index, const T &quantity, const std::string &quantity_name);
+
+		template <typename T>
+		void readDataFromXmlMemory(XmlEngine &xmlengine, SimTK::Xml::Element &element,
+			int observation_index, DoubleVec<T> &result_container, const std::string &quantity_name);
+
+		void readDataFromXmlMemory(XmlEngine &xmlengine, SimTK::Xml::Element &element,
+			size_t observation_index, DoubleVec<Matd> &result_container, const std::string &quantity_name);
+
+		void readTagFromXmlMemory(SimTK::Xml::Element &element, StdVec<std::string> &element_tag);
 	};
 }
 

@@ -10,5 +10,6 @@ interface function to Simbody library. **/
 
 #include "xml_engine.h"
 #include "state_engine.h"
+#include "xml_engine.hpp"
 
 #endif //ALL_SIMBODY_H

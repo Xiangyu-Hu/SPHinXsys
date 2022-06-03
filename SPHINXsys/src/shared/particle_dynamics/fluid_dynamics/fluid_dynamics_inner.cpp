@@ -17,47 +17,6 @@ namespace SPH
 			: ParticleDynamicsSimple(fluid_body), FluidDataSimple(fluid_body),
 			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_) {}
 		//=================================================================================================//
-		FreeSurfaceIndicationInner::
-			FreeSurfaceIndicationInner(BaseBodyRelationInner &inner_relation, Real thereshold)
-			: InteractionDynamicsWithUpdate(*inner_relation.sph_body_),
-			  FluidDataInner(inner_relation),
-			  thereshold_by_dimensions_(thereshold * (Real)Dimensions),
-			  Vol_(particles_->Vol_),
-			  surface_indicator_(particles_->surface_indicator_),
-			  smoothing_length_(inner_relation.sph_body_->sph_adaptation_->ReferenceSmoothingLength())
-		{
-			particles_->registerAVariable<Real>(pos_div_, "PositionDivergence");
-		}
-		//=================================================================================================//
-		void FreeSurfaceIndicationInner::Interaction(size_t index_i, Real dt)
-		{
-			Real pos_div = 0.0;
-			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-			{
-				pos_div -= inner_neighborhood.dW_ij_[n] * inner_neighborhood.r_ij_[n] * Vol_[inner_neighborhood.j_[n]];
-			}
-			pos_div_[index_i] = pos_div;
-		}
-		//=================================================================================================//
-		void FreeSurfaceIndicationInner::Update(size_t index_i, Real dt)
-		{
-			bool is_free_surface = pos_div_[index_i] < thereshold_by_dimensions_ ? true : false;
-
-			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-			{
-				/** Two layer particles.*/
-				if (pos_div_[inner_neighborhood.j_[n]] < thereshold_by_dimensions_ &&
-					inner_neighborhood.r_ij_[n] < smoothing_length_)
-				{
-					is_free_surface = true;
-					break;
-				}
-			}
-			surface_indicator_[index_i] = is_free_surface ? 1 : 0;
-		}
-		//=================================================================================================//
 		DensitySummationInner::DensitySummationInner(BaseBodyRelationInner &inner_relation)
 			: InteractionDynamicsWithUpdate(*inner_relation.sph_body_),
 			  FluidDataInner(inner_relation),
@@ -80,16 +39,6 @@ namespace SPH
 		void DensitySummationInner::Update(size_t index_i, Real dt)
 		{
 			rho_n_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_n_[index_i]);
-			Vol_[index_i] = mass_[index_i] / rho_n_[index_i];
-		}
-		//=================================================================================================//
-		void DensitySummationFreeStreamInner::Update(size_t index_i, Real dt)
-		{
-			if (surface_indicator_[index_i] == 1 || surface_indicator_[index_i] == 2)
-				rho_n_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_n_[index_i]);
-			else
-				rho_n_[index_i] = rho_sum_[index_i];
-
 			Vol_[index_i] = mass_[index_i] / rho_n_[index_i];
 		}
 		//=================================================================================================//
@@ -237,7 +186,7 @@ namespace SPH
 			  FluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), vel_n_(particles_->vel_n_)
 		{
-			particles_->registerAVariable<AngularVecd>(vorticity_, "VorticityInner");
+			particles_->registerAVariable(vorticity_, "VorticityInner");
 			particles_->addAVariableToWrite<AngularVecd>("VorticityInner");
 		}
 		//=================================================================================================//
@@ -318,19 +267,6 @@ namespace SPH
 			rho_n_[index_i] += drho_dt_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
-		void FreeStreamBoundaryVelocityCorrection::Update(size_t index_i, Real dt)
-		{
-			vel_n_[index_i] += dvel_dt_[index_i] * dt;
-			dvel_dt_[index_i] = Vecd(0.0, 0.0);
-
-			if (surface_indicator_[index_i] == 1)
-			{
-				Real run_time_ = GlobalStaticVariables::physical_time_;
-				Real u_ave_ = run_time_ < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time_ / t_ref_)) : u_ref_;
-				vel_n_[index_i][0] = u_ave_ + SMIN(rho_sum[index_i], rho_ref_) * (vel_n_[index_i][0] - u_ave_) / rho_ref_;
-			}
-		}
-		//=================================================================================================//
 		PressureRelaxationInnerOldroyd_B ::
 			PressureRelaxationInnerOldroyd_B(BaseBodyRelationInner &inner_relation)
 			: PressureRelaxationDissipativeRiemannInner(inner_relation),
@@ -371,7 +307,7 @@ namespace SPH
 			  tau_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_->base_particles_)->tau_),
 			  dtau_dt_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_->base_particles_)->dtau_dt_)
 		{
-			Oldroyd_B_Fluid *oldroy_b_fluid = DynamicCast<Oldroyd_B_Fluid>(this, sph_body_->base_particles_->base_material_);
+			Oldroyd_B_Fluid *oldroy_b_fluid = DynamicCast<Oldroyd_B_Fluid>(this, sph_body_->base_material_);
 			mu_p_ = oldroy_b_fluid->ReferencePolymericViscosity();
 			lambda_ = oldroy_b_fluid->getReferenceRelaxationTime();
 		}
@@ -403,281 +339,6 @@ namespace SPH
 			DensityRelaxationDissipativeRiemannInner::Update(index_i, dt);
 
 			tau_[index_i] += dtau_dt_[index_i] * dt * 0.5;
-		}
-		//=================================================================================================//
-		FlowRelaxationBuffer::
-			FlowRelaxationBuffer(FluidBody &fluid_body, BodyPartByCell &body_part)
-			: PartDynamicsByCell(fluid_body, body_part), FluidDataSimple(fluid_body),
-			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_), relaxation_rate_(0.3){};
-		//=================================================================================================//
-		void FlowRelaxationBuffer ::Update(size_t index_i, Real dt)
-		{
-			vel_n_[index_i] +=
-				relaxation_rate_ * (getTargetVelocity(pos_n_[index_i], vel_n_[index_i]) - vel_n_[index_i]);
-		}
-		InflowBoundaryCondition::InflowBoundaryCondition(FluidBody& fluid_body, BodyPartByCell& body_part)
-			: FlowRelaxationBuffer(fluid_body, body_part) 
-		{
-			relaxation_rate_ = 1.0;
-		}
-		//=================================================================================================//
-		DampingBoundaryCondition::
-			DampingBoundaryCondition(FluidBody &fluid_body, BodyRegionByCell &body_part)
-			: PartDynamicsByCell(fluid_body, body_part), FluidDataSimple(fluid_body),
-			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_), strength_(5.0),
-			  damping_zone_bounds_(body_part.body_part_shape_.findBounds()){};
-		//=================================================================================================//
-		void DampingBoundaryCondition::Update(size_t index_i, Real dt)
-		{
-			Real damping_factor = (pos_n_[index_i][0] - damping_zone_bounds_.first[0]) /
-								  (damping_zone_bounds_.second[0] - damping_zone_bounds_.first[0]);
-			vel_n_[index_i] *= (1.0 - dt * strength_ * damping_factor * damping_factor);
-		}
-		//=================================================================================================//
-		StaticConfinementDensity::
-			StaticConfinementDensity(FluidBody &fluid_body, NearShapeSurface &near_surface)
-			: PartDynamicsByCell(fluid_body, near_surface), FluidDataSimple(fluid_body),
-			  rho0_(particles_->rho0_), inv_sigma0_(1.0 / particles_->sigma0_),
-			  mass_(particles_->mass_), rho_sum_(particles_->rho_sum_), pos_n_(particles_->pos_n_),
-			  level_set_shape_(&near_surface.level_set_shape_) {}
-		//=================================================================================================//
-		void StaticConfinementDensity::Update(size_t index_i, Real dt)
-		{
-			Real inv_Vol_0_i = rho0_ / mass_[index_i];
-			rho_sum_[index_i] +=
-				level_set_shape_->computeKernelIntegral(pos_n_[index_i]) * inv_Vol_0_i * rho0_ * inv_sigma0_;
-		}
-		//=================================================================================================//
-		StaticConfinementPressureRelaxation::
-			StaticConfinementPressureRelaxation(FluidBody &fluid_body, NearShapeSurface &near_surface)
-			: PartDynamicsByCell(fluid_body, near_surface), FluidDataSimple(fluid_body),
-			  rho_n_(particles_->rho_n_), p_(particles_->p_),
-			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_),
-			  dvel_dt_(particles_->dvel_dt_),
-			  level_set_shape_(&near_surface.level_set_shape_),
-			  riemann_solver_(*material_, *material_) {}
-		//=================================================================================================//
-		void StaticConfinementPressureRelaxation::Update(size_t index_i, Real dt)
-		{
-			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_n_[index_i]);
-			Vecd normal_to_fluid = -kernel_gradient / (kernel_gradient.norm() + TinyReal);
-
-			FluidState state(rho_n_[index_i], vel_n_[index_i], p_[index_i]);
-			Vecd vel_in_wall = -state.vel_;
-			FluidState state_in_wall(rho_n_[index_i], vel_in_wall, p_[index_i]);
-
-			//always solving one-side Riemann problem for wall boundaries
-			Real p_star = riemann_solver_.getPStar(state, state_in_wall, normal_to_fluid);
-			dvel_dt_[index_i] -= 2.0 * p_star * kernel_gradient / state.rho_;
-		}
-		//=================================================================================================//
-		StaticConfinementDensityRelaxation::
-			StaticConfinementDensityRelaxation(FluidBody &fluid_body, NearShapeSurface &near_surface)
-			: PartDynamicsByCell(fluid_body, near_surface), FluidDataSimple(fluid_body),
-			  rho_n_(particles_->rho_n_), p_(particles_->p_), drho_dt_(particles_->drho_dt_),
-			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_),
-			  level_set_shape_(&near_surface.level_set_shape_),
-			  riemann_solver_(*material_, *material_) {}
-		//=================================================================================================//
-		void StaticConfinementDensityRelaxation::Update(size_t index_i, Real dt)
-		{
-			Vecd kernel_gradient = level_set_shape_->computeKernelGradientIntegral(pos_n_[index_i]);
-			Vecd normal_to_fluid = -kernel_gradient / (kernel_gradient.norm() + TinyReal);
-
-			FluidState state(rho_n_[index_i], vel_n_[index_i], p_[index_i]);
-			Vecd vel_in_wall = -state.vel_;
-			FluidState state_in_wall(rho_n_[index_i], vel_in_wall, p_[index_i]);
-
-			//always solving one-side Riemann problem for wall boundaries
-			Vecd vel_star = riemann_solver_.getVStar(state, state_in_wall, normal_to_fluid);
-			drho_dt_[index_i] += 2.0 * state.rho_ * dot(state.vel_ - vel_star, kernel_gradient);
-		}
-		//=================================================================================================//
-		StaticConfinement::StaticConfinement(FluidBody &fluid_body, NearShapeSurface &near_surface)
-			: density_summation_(fluid_body, near_surface), pressure_relaxation_(fluid_body, near_surface),
-			  density_relaxation_(fluid_body, near_surface) {}
-		//=================================================================================================//
-		EmitterInflowCondition::
-			EmitterInflowCondition(FluidBody &fluid_body, BodyPartByParticle &body_part)
-			: PartSimpleDynamicsByParticle(fluid_body, body_part), FluidDataSimple(fluid_body),
-			  pos_n_(particles_->pos_n_), vel_n_(particles_->vel_n_),
-			  rho_n_(particles_->rho_n_), p_(particles_->p_), inflow_pressure_(0),
-			  rho0_(material_->ReferenceDensity()) {}
-		//=================================================================================================//
-		void EmitterInflowCondition ::Update(size_t unsorted_index_i, Real dt)
-		{
-			size_t sorted_index_i = sorted_id_[unsorted_index_i];
-			vel_n_[sorted_index_i] = getTargetVelocity(pos_n_[sorted_index_i], vel_n_[sorted_index_i]);
-			rho_n_[sorted_index_i] = rho0_;
-			p_[sorted_index_i] = material_->getPressure(rho_n_[sorted_index_i]);
-		}
-		//=================================================================================================//
-		EmitterInflowInjecting ::EmitterInflowInjecting(FluidBody &fluid_body, BodyRegionByParticle &body_part,
-														size_t body_buffer_width, int axis_direction, bool positive)
-			: PartSimpleDynamicsByParticle(fluid_body, body_part), FluidDataSimple(fluid_body),
-			  pos_n_(particles_->pos_n_), rho_n_(particles_->rho_n_), p_(particles_->p_),
-			  axis_(axis_direction), periodic_translation_(0), body_buffer_width_(body_buffer_width),
-			  body_part_bounds_(body_part.body_part_shape_.findBounds())
-		{
-			periodic_translation_[axis_] = body_part_bounds_.second[axis_] - body_part_bounds_.first[axis_];
-
-			size_t total_body_buffer_particles = body_part_particles_.size() * body_buffer_width_;
-			particles_->addBufferParticles(total_body_buffer_particles);
-			sph_body_->allocateConfigurationMemoriesForBufferParticles();
-
-			checking_bound_ = positive ? std::bind(&EmitterInflowInjecting::checkUpperBound, this, _1, _2)
-									   : std::bind(&EmitterInflowInjecting::checkLowerBound, this, _1, _2);
-		}
-		//=================================================================================================//
-		void EmitterInflowInjecting::checkUpperBound(size_t unsorted_index_i, Real dt)
-		{
-			size_t sorted_index_i = sorted_id_[unsorted_index_i];
-			if (pos_n_[sorted_index_i][axis_] > body_part_bounds_.second[axis_])
-			{
-				if (particles_->total_real_particles_ >= particles_->real_particles_bound_)
-				{
-					std::cout << "EmitterInflowBoundaryCondition::ConstraintAParticle: \n"
-							  << "Not enough body buffer particles! Exit the code."
-							  << "\n";
-					exit(0);
-				}
-				/** Buffer Particle state copied from real particle. */
-				particles_->copyFromAnotherParticle(particles_->total_real_particles_, sorted_index_i);
-				/** Realize the buffer particle by increas�ng the number of real particle in the body.  */
-				particles_->total_real_particles_ += 1;
-				/** Periodic bounding. */
-				pos_n_[sorted_index_i][axis_] -= periodic_translation_[axis_];
-				rho_n_[sorted_index_i] = material_->ReferenceDensity();
-				p_[sorted_index_i] = material_->getPressure(rho_n_[sorted_index_i]);
-			}
-		}
-		//=================================================================================================//
-		void EmitterInflowInjecting::checkLowerBound(size_t unsorted_index_i, Real dt)
-		{
-			size_t sorted_index_i = sorted_id_[unsorted_index_i];
-			if (pos_n_[sorted_index_i][axis_] < body_part_bounds_.first[axis_])
-			{
-				if (particles_->total_real_particles_ >= particles_->real_particles_bound_)
-				{
-					std::cout << "EmitterInflowBoundaryCondition::ConstraintAParticle: \n"
-							  << "Not enough body buffer particles! Exit the code."
-							  << "\n";
-					exit(0);
-				}
-				/** Buffer Particle state copied from real particle. */
-				particles_->copyFromAnotherParticle(particles_->total_real_particles_, sorted_index_i);
-				/** Realize the buffer particle by increasing the number of real particle in the body.  */
-				particles_->total_real_particles_ += 1;
-				pos_n_[sorted_index_i][axis_] += periodic_translation_[axis_];
-			}
-		}
-		//=================================================================================================//
-		ColorFunctionGradientInner::ColorFunctionGradientInner(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(*inner_relation.sph_body_), FluidDataInner(inner_relation),
-			  Vol_(particles_->Vol_),
-			  surface_indicator_(particles_->surface_indicator_),
-			  pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
-			  thereshold_by_dimensions_((0.75 * (Real)Dimensions))
-		{
-			particles_->registerAVariable<Vecd>(color_grad_, "ColorGradient");
-			particles_->registerAVariable<Vecd>(surface_norm_, "SurfaceNormal");
-		}
-		//=================================================================================================//
-		void ColorFunctionGradientInner::Interaction(size_t index_i, Real dt)
-		{
-			Vecd gradient(0);
-			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-			if (pos_div_[index_i] < thereshold_by_dimensions_)
-			{
-				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-				{
-					size_t index_j = inner_neighborhood.j_[n];
-					gradient -= inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n] * Vol_[index_j];
-				}
-			}
-			color_grad_[index_i] = gradient;
-			surface_norm_[index_i] = gradient / (gradient.norm() + TinyReal);
-		}
-		//=================================================================================================//
-		ColorFunctionGradientInterplationInner::ColorFunctionGradientInterplationInner(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(*inner_relation.sph_body_), FluidDataInner(inner_relation), Vol_(particles_->Vol_),
-			  surface_indicator_(particles_->surface_indicator_),
-			  color_grad_(*particles_->getVariableByName<Vecd>("ColorGradient")),
-			  surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")),
-			  pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
-			  thereshold_by_dimensions_((0.75 * (Real)Dimensions))
-
-		{
-			particles_->addAVariableToWrite<Vecd>("SurfaceNormal");
-			particles_->addAVariableToWrite<Vecd>("ColorGradient");
-		}
-		//=================================================================================================//
-		void ColorFunctionGradientInterplationInner::Interaction(size_t index_i, Real dt)
-		{
-			Vecd grad(0);
-			Real weight(0);
-			Real total_weight(0);
-			if (surface_indicator_[index_i] == 1 && pos_div_[index_i] > thereshold_by_dimensions_)
-			{
-				Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-				{
-					size_t index_j = inner_neighborhood.j_[n];
-					if (surface_indicator_[index_j] == 1 && pos_div_[index_j] < thereshold_by_dimensions_)
-					{
-						weight = inner_neighborhood.W_ij_[n] * Vol_[index_j];
-						grad += weight * color_grad_[index_j];
-						total_weight += weight;
-					}
-				}
-				Vecd grad_norm = grad / (total_weight + TinyReal);
-				color_grad_[index_i] = grad_norm;
-				surface_norm_[index_i] = grad_norm / (grad_norm.norm() + TinyReal);
-			}
-		}
-		//=================================================================================================//
-		SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseBodyRelationInner &inner_relation, Real gamma)
-			: InteractionDynamics(*inner_relation.sph_body_), FluidDataInner(inner_relation),
-			  gamma_(gamma), Vol_(particles_->Vol_),
-			  mass_(particles_->mass_),
-			  dvel_dt_prior_(particles_->dvel_dt_prior_),
-			  surface_indicator_(particles_->surface_indicator_),
-			  color_grad_(*particles_->getVariableByName<Vecd>("ColorGradient")),
-			  surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")) {}
-		//=================================================================================================//
-		SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseBodyRelationInner &inner_relation)
-			: SurfaceTensionAccelerationInner(inner_relation, 1.0) {}
-		//=================================================================================================//
-		void SurfaceTensionAccelerationInner::Interaction(size_t index_i, Real dt)
-		{
-			Vecd n_i = surface_norm_[index_i];
-			Real curvature(0.0);
-			Real renormalized_curvature(0);
-			Real pos_div(0);
-			if (surface_indicator_[index_i] == 1)
-			{
-				Neighborhood &inner_neighborhood = inner_configuration_[index_i];
-				for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
-				{
-					size_t index_j = inner_neighborhood.j_[n];
-					if (surface_indicator_[index_j] == 1)
-					{
-						Vecd n_j = surface_norm_[index_j];
-						Vecd n_ij = n_i - n_j;
-						curvature -= inner_neighborhood.dW_ij_[n] * Vol_[index_j] * dot(n_ij, inner_neighborhood.e_ij_[n]);
-						pos_div -= inner_neighborhood.dW_ij_[n] * inner_neighborhood.r_ij_[n] * Vol_[index_j];
-					}
-				}
-			}
-			/**
-			 Adami et al. 2010 is wrong in equation.
-			 (dv / dt)_s = (1.0 / rho) (-sigma * k * n * delta) 
-			 			 = (1/rho) * curvature * color_grad 
-						 = (1/m) * curvature * color_grad * vol
-			 */
-			renormalized_curvature = (Real)Dimensions * curvature / ABS(pos_div + TinyReal);
-			Vecd acceleration = gamma_ * renormalized_curvature * color_grad_[index_i] * Vol_[index_i];
-			dvel_dt_prior_[index_i] -= acceleration / mass_[index_i];
 		}
 		//=================================================================================================//
 	}

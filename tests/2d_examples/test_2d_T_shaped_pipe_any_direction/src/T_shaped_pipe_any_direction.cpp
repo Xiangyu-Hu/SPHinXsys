@@ -44,7 +44,7 @@ Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer 
 // angle to rotate around the center
 Real rotate_angle = 135.0 / 180.0 * Pi;
 Vecd rotate_center((DL1 - DL_sponge) * 0.5, DH * 0.5);
-
+SPH::Transform2d my_transform(Rotation2d(rotate_angle, rotate_center));
 /* system domain bounds */
 BoundingBox new_bounding_box = calculateNewBoundingBox({Vec2d(-DL_sponge, -DH), Vec2d(DL + BW, 2.0 * DH)}, rotate_angle, rotate_center);
 BoundingBox system_domain_bounds(new_bounding_box);
@@ -60,43 +60,20 @@ Real c_f = 10.0 * U_f * SMAX(1.0, DH / (2.0 * (DL - DL1)));
 Real Re = 100.0;					/**< Reynolds number. */
 Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
-//	define geometry of SPH bodies
+//	define geometry of SPH bodies without transform
 //----------------------------------------------------------------------
 /** the water block in T shape polygen. */
 std::vector<Vecd> water_block_shape{
-	rotatePointAroundPoint(Vecd(-DL_sponge, 0.0), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(-DL_sponge, DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1, DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1, 2.0 * DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL, 2.0 * DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL, -DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1, -DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1, 0.0), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(-DL_sponge, 0.0), rotate_angle, rotate_center)};
+	Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(DL1, DH), Vecd(DL1, 2.0 * DH),
+	Vecd(DL, 2.0 * DH), Vecd(DL, -DH), Vecd(DL1, -DH), Vecd(DL1, 0.0), Vecd(-DL_sponge, 0.0)};
 /** the outer wall polygen. */
 std::vector<Vecd> outer_wall_shape{
-	rotatePointAroundPoint(Vecd(-DL_sponge, -BW), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(-DL_sponge, DH + BW), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1 - BW, DH + BW), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1 - BW, 2.0 * DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL + BW, 2.0 * DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL + BW, -DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1 - BW, -DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1 - BW, -BW), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(-DL_sponge, -BW), rotate_angle, rotate_center)};
+	Vecd(-DL_sponge, -BW), Vecd(-DL_sponge, DH + BW), Vecd(DL1 - BW, DH + BW), Vecd(DL1 - BW, 2.0 * DH),
+	Vecd(DL + BW, 2.0 * DH), Vecd(DL + BW, -DH), Vecd(DL1 - BW, -DH), Vecd(DL1 - BW, -BW), Vecd(-DL_sponge, -BW)};
 /** the inner wall polygen. */
 std::vector<Vecd> inner_wall_shape{
-	rotatePointAroundPoint(Vecd(-DL_sponge - BW, 0.0), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(-DL_sponge - BW, DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1, DH), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1, 2.0 * DH + BW), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL, 2.0 * DH + BW), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL, -DH - BW), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1, -DH - BW), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(DL1, 0.0), rotate_angle, rotate_center),
-	rotatePointAroundPoint(Vecd(-DL_sponge - BW, 0.0), rotate_angle, rotate_center)};
-//-------------------------------------------------
-
+	Vecd(-DL_sponge - BW, 0.0), Vecd(-DL_sponge - BW, DH), Vecd(DL1, DH), Vecd(DL1, 2.0 * DH + BW),
+	Vecd(DL, 2.0 * DH + BW), Vecd(DL, -DH - BW), Vecd(DL1, -DH - BW), Vecd(DL1, 0.0), Vecd(-DL_sponge - BW, 0.0)};
 // define boundary faces
 // points describing the border of face(line in 2D)
 StdVec<Vecd> outlet_points1{
@@ -116,34 +93,29 @@ StdVec<Vecd> inlet_points{
 	rotatePointAroundPoint(Vecd(-DL_sponge, -BW), rotate_angle, rotate_center),
 	rotatePointAroundPoint(Vecd(-DL_sponge, DH + BW), rotate_angle, rotate_center)};
 SegmentFace inflow_face(inlet_points, rotatePointAroundPoint(Vecd(1, 0), rotate_angle));
-
 //----------------------------------------------------------------------
-//	Define case dependent SPH bodies.
+//	Define case dependent body shapes.
 //----------------------------------------------------------------------
 /** Water block body definition. */
-class WaterBlock : public FluidBody
+class WaterBlock : public TransformShape<MultiPolygonShape>
 {
 public:
-	WaterBlock(SPHSystem &system, const std::string &body_name)
-		: FluidBody(system, body_name)
+	explicit WaterBlock(const std::string &shape_name) 
+		: TransformShape<MultiPolygonShape>(my_transform, shape_name)
 	{
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(water_block_shape, ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
 	}
 };
 /** Wall boundary body definition. */
-class WallBoundary : public SolidBody
+class WallBoundary : public TransformShape<MultiPolygonShape>
 {
 public:
-	WallBoundary(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit WallBoundary(const std::string &shape_name) 
+		: TransformShape<MultiPolygonShape>(my_transform, shape_name)
 	{
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
-		multi_polygon.addAPolygon(water_block_shape, ShapeBooleanOps::sub);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
+		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::sub);
 	}
 };
 //----------------------------------------------------------------------
@@ -153,11 +125,7 @@ public:
 MultiPolygon creatEmitterShape()
 {
 	std::vector<Vecd> emmiter_shape{
-		rotatePointAroundPoint(Vecd(-DL_sponge, 0.0), rotate_angle, rotate_center),
-		rotatePointAroundPoint(Vecd(-DL_sponge, DH), rotate_angle, rotate_center),
-		rotatePointAroundPoint(Vecd(-DL_sponge + BW, DH), rotate_angle, rotate_center),
-		rotatePointAroundPoint(Vecd(-DL_sponge + BW, 0.0), rotate_angle, rotate_center),
-		rotatePointAroundPoint(Vecd(-DL_sponge, 0.0), rotate_angle, rotate_center)};
+		Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(-DL_sponge + BW, DH), Vecd(-DL_sponge + BW, 0.0), Vecd(-DL_sponge, 0.0)};
 
 	MultiPolygon multi_polygon;
 	multi_polygon.addAPolygon(emmiter_shape, ShapeBooleanOps::add);
@@ -168,11 +136,7 @@ MultiPolygon creatEmitterShape()
 MultiPolygon createEmitterBufferShape()
 {
 	std::vector<Vecd> emitter_buffer_shape{
-		rotatePointAroundPoint(Vecd(-DL_sponge, 0.0), rotate_angle, rotate_center),
-		rotatePointAroundPoint(Vecd(-DL_sponge, DH), rotate_angle, rotate_center),
-		rotatePointAroundPoint(Vecd(0.0, DH), rotate_angle, rotate_center),
-		rotatePointAroundPoint(Vecd(0.0, 0.0), rotate_angle, rotate_center),
-		rotatePointAroundPoint(Vecd(-DL_sponge, 0.0), rotate_angle, rotate_center)};
+		Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(0.0, DH), Vecd(0.0, 0.0), Vecd(-DL_sponge, 0.0)};
 
 	MultiPolygon multi_polygon;
 	multi_polygon.addAPolygon(emitter_buffer_shape, ShapeBooleanOps::add);
@@ -219,16 +183,19 @@ int main(int ac, char *av[])
 	system.restart_step_ = 0;
 	// handle command line arguments
 	system.handleCommandlineOptions(ac, av);
-	In_Output in_output(system);
+	InOutput in_output(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.cd
 	//----------------------------------------------------------------------
-	WaterBlock water_block(system, "WaterBody");
+	FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
 	water_block.setBodyDomainBounds(fluid_body_domain_bounds);
-	FluidParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f));
+	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+	water_block.generateParticles<ParticleGeneratorLattice>();
 
-	WallBoundary wall_boundary(system, "Wall");
-	SolidParticles wall_particles(wall_boundary);
+
+	SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -240,8 +207,19 @@ int main(int ac, char *av[])
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
+	/** Pressure relaxation. */
+	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(water_block_complex_relation);
+	/** Density relaxation. */
+	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex_relation);
+	/** Evaluation of density by freestream approach. */
+	fluid_dynamics::DensitySummationFreeStreamComplex update_density_by_summation(water_block_complex_relation);
+	//----------------------------------------------------------------------
+	//	Define the main numerical methods used in the simulation.
+	//	Note that there may be data dependence on the constructors of these methods.
+	//----------------------------------------------------------------------
 	/** Initialize particle acceleration. */
 	TimeStepInitialization initialize_a_fluid_step(water_block);
+	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	/** Emmiter. */
 	BodyRegionByParticleWithFace emitter(water_block, inflow_face, 4);
 	InflowInjectingWithFace emitter_inflow_injecting(water_block, emitter, 10);
@@ -252,19 +230,13 @@ int main(int ac, char *av[])
 	/** time-space method to detect surface particles. */
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex
 		inlet_outlet_surface_particle_indicator(water_block_complex_relation);
-	/** Evaluation of density by freestream approach. */
-	fluid_dynamics::DensitySummationFreeStreamComplex update_density_by_summation(water_block_complex_relation);
 	/** We can output a method-specific particle data for debug */
-	fluid_particles.addAVariableToWrite<Real>("Pressure");
-	fluid_particles.addAVariableToWrite<int>("SurfaceIndicator");
+	water_block.addBodyStateForRecording<Real>("Pressure");
+	water_block.addBodyStateForRecording<int>("SurfaceIndicator");
 	/** Time step size without considering sound wave speed. */
 	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
 	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
-	/** Pressure relaxation. */
-	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(water_block_complex_relation);
-	/** Density relaxation. */
-	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex_relation);
 	/** Computing viscous acceleration. */
 	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex_relation);
 	/** Impose transport velocity. */
@@ -290,7 +262,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	wall_particles.initializeNormalDirectionFromBodyShape();
+	wall_boundary_normal_direction.parallel_exec();
 	inlet_outlet_surface_particle_indicator.parallel_exec();
 	//----------------------------------------------------------------------
 	//	Load restart file if necessary.
@@ -308,7 +280,7 @@ int main(int ac, char *av[])
 	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 30;			/**< End time. */
+	Real End_Time = 30;				/**< End time. */
 	Real D_Time = End_Time / 200.0; /**< Time stamps for output of body states. */
 	Real dt = 0.0;					/**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------

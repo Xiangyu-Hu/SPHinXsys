@@ -8,7 +8,7 @@
 
 #include "base_body.h"
 #include "body_relation.h"
-#include "solid_dynamics.h"
+#include "elastic_dynamics.h"
 
 namespace SPH
 {
@@ -20,26 +20,6 @@ namespace SPH
 		  in_output_(nullptr), restart_step_(0), run_particle_relaxation_(false),
 		  reload_particles_(false), generate_regression_data_(false) {}
 	//=================================================================================================//
-	void SPHSystem::addABody(SPHBody *sph_body)
-	{
-		bodies_.push_back(sph_body);
-	}
-	//=================================================================================================//
-	void SPHSystem::addARealBody(RealBody *real_body)
-	{
-		real_bodies_.push_back(real_body);
-	}
-	//=================================================================================================//
-	void SPHSystem::addASolidBody(SolidBody *solid_body)
-	{
-		solid_bodies_.push_back(solid_body);
-	}
-	//=================================================================================================//
-	void SPHSystem::addAFictitiousBody(FictitiousBody *fictitious_body)
-	{
-		fictitious_bodies_.push_back(fictitious_body);
-	}
-	//=================================================================================================//
 	void SPHSystem::initializeSystemCellLinkedLists()
 	{
 		for (auto &body : real_bodies_)
@@ -50,7 +30,7 @@ namespace SPH
 	//=================================================================================================//
 	void SPHSystem::initializeSystemConfigurations()
 	{
-		for (auto &body : bodies_)
+		for (auto &body : sph_bodies_)
 		{
 			for (size_t i = 0; i < body->body_relations_.size(); i++)
 			{

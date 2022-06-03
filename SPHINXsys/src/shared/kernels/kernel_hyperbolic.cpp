@@ -10,22 +10,23 @@
 namespace SPH
 {
 	//=================================================================================================//
-	KernelHyperbolic::KernelHyperbolic()
-		: Kernel("HyperbolicKernel") {}
-	//=================================================================================================//
-	void KernelHyperbolic::setBasicParameters()
+	KernelHyperbolic::KernelHyperbolic(Real h)
+		: Kernel(h, "HyperbolicKernel")
 	{
 		factor_W_1D_ = inv_h_ / 7.0;
 		factor_W_2D_ = inv_h_ * inv_h_ / (3.0 * Pi);
-		factor_W_3D_ = inv_h_ * inv_h_ * inv_h_ * 15.0 / (62.0 *Pi);
+		factor_W_3D_ = inv_h_ * inv_h_ * inv_h_ * 15.0 / (62.0 * Pi);
+		setDerivativeParameters();
 	}
 	//=================================================================================================//
 	Real KernelHyperbolic::W_1D(const Real q) const
 	{
-		if (q < 1.0) {
+		if (q < 1.0)
+		{
 			return (6.0 - 6.0 * q + powerN(q, 3));
 		}
-		else  {
+		else
+		{
 			return powerN(2.0 - q, 3);
 		}
 	}
@@ -42,10 +43,12 @@ namespace SPH
 	//=================================================================================================//
 	Real KernelHyperbolic::dW_1D(const Real q) const
 	{
-		if (q < 1.0) {
+		if (q < 1.0)
+		{
 			return (-6.0 + 3.0 * powerN(q, 2));
 		}
-		else {
+		else
+		{
 			return powerN(2.0 - q, 2) * (-1.0);
 		}
 	}
@@ -62,10 +65,12 @@ namespace SPH
 	//=================================================================================================//
 	Real KernelHyperbolic::d2W_1D(const Real q) const
 	{
-		if (q < 1.0) {
+		if (q < 1.0)
+		{
 			return 6.0 * q;
 		}
-		else {
+		else
+		{
 			return 2.0 * (2.0 - q);
 		}
 	}
@@ -81,4 +86,3 @@ namespace SPH
 	}
 	//=================================================================================================//
 }
-	

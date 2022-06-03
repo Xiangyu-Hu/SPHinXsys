@@ -1,4 +1,4 @@
-/** 
+/**
  * @file fluid_particles.cpp
  * @author	Xiangyu Hu and Chi Zhang
  */
@@ -13,19 +13,17 @@
 namespace SPH
 {
 	//=================================================================================================//
-	FluidParticles::FluidParticles(SPHBody &sph_body,
-								   SharedPtr<Fluid> shared_fluid_ptr,
-								   SharedPtr<ParticleGenerator> particle_generator_ptr)
-		: BaseParticles(sph_body, shared_fluid_ptr, particle_generator_ptr)
+	FluidParticles::FluidParticles(SPHBody &sph_body, Fluid *fluid)
+		: BaseParticles(sph_body, fluid) {}
+	//=================================================================================================//
+	void FluidParticles::initializeOtherVariables()
 	{
-		shared_fluid_ptr->assignFluidParticles(this);
-		//----------------------------------------------------------------------
-		//		register particle data
-		//----------------------------------------------------------------------
-		registerAVariable<Real>(p_, "Pressure");
-		registerAVariable<Real>(drho_dt_, "DensityChangeRate");
-		registerAVariable<Real>(rho_sum_, "DensitySummation");
-		registerAVariable<int>(surface_indicator_, "SurfaceIndicator");
+		BaseParticles::initializeOtherVariables();
+
+		registerAVariable(p_, "Pressure");
+		registerAVariable(drho_dt_, "DensityChangeRate");
+		registerAVariable(rho_sum_, "DensitySummation");
+		registerAVariable(surface_indicator_, "SurfaceIndicator");
 		//----------------------------------------------------------------------
 		//		register sortable particle data
 		//----------------------------------------------------------------------
@@ -37,21 +35,19 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
-		addAVariableNameToList<Real>(variables_to_restart_, "Pressure");
+		addAVariableToRestart<Real>("Pressure");
 	}
 	//=================================================================================================//
 	ViscoelasticFluidParticles::
-		ViscoelasticFluidParticles(SPHBody &sph_body,
-								   SharedPtr<Oldroyd_B_Fluid> shared_oldroyd_b_fluid_ptr,
-								   SharedPtr<ParticleGenerator> particle_generator_ptr)
-		: FluidParticles(sph_body, shared_oldroyd_b_fluid_ptr, particle_generator_ptr)
+		ViscoelasticFluidParticles(SPHBody &sph_body, Oldroyd_B_Fluid *oldroyd_b_fluid)
+		: FluidParticles(sph_body, oldroyd_b_fluid) {}
+	//=================================================================================================//
+	void ViscoelasticFluidParticles::initializeOtherVariables()
 	{
-		shared_oldroyd_b_fluid_ptr->assignViscoelasticFluidParticles(this);
-		//----------------------------------------------------------------------
-		//		register particle data
-		//----------------------------------------------------------------------
-		registerAVariable<Matd>(tau_, "ElasticStress");
-		registerAVariable<Matd>(dtau_dt_, "ElasticStressChangeRate");
+		FluidParticles::initializeOtherVariables();
+
+		registerAVariable(tau_, "ElasticStress");
+		registerAVariable(dtau_dt_, "ElasticStressChangeRate");
 		//----------------------------------------------------------------------
 		//		register sortable particle data
 		//----------------------------------------------------------------------
@@ -59,45 +55,41 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
-		addAVariableNameToList<Matd>(variables_to_restart_, "ElasticStress");
+		addAVariableToRestart<Matd>("ElasticStress");
 	}
 	//=================================================================================================//
 	CompressibleFluidParticles::
-		CompressibleFluidParticles(SPHBody &sph_body,
-								   SharedPtr<CompressibleFluid> shared_compressiblefluid_ptr,
-								   SharedPtr<ParticleGenerator> particle_generator_ptr)
-		: FluidParticles(sph_body, shared_compressiblefluid_ptr, particle_generator_ptr)
+		CompressibleFluidParticles(SPHBody &sph_body, CompressibleFluid *compressible_fluid)
+		: FluidParticles(sph_body, compressible_fluid) {}
+	//=================================================================================================//
+	void CompressibleFluidParticles::initializeOtherVariables()
 	{
-		shared_compressiblefluid_ptr->assignCompressibleFluidParticles(this);
-		//----------------------------------------------------------------------
-		//		register particle data
-		//----------------------------------------------------------------------
-		registerAVariable<Vecd>(mom_, "Momentum");
-		registerAVariable<Vecd>(dmom_dt_, "MomentumChangeRate");
-		registerAVariable<Vecd>(dmom_dt_prior_, "OtherMomentumChangeRate");
-		registerAVariable<Real>(E_, "TotalEnergy");
-		registerAVariable<Real>(dE_dt_, "TotalEnergyChangeRate");
-		registerAVariable<Real>(dE_dt_prior_, "OtherEnergyChangeRate");
+		FluidParticles::initializeOtherVariables();
+
+		registerAVariable(mom_, "Momentum");
+		registerAVariable(dmom_dt_, "MomentumChangeRate");
+		registerAVariable(dmom_dt_prior_, "OtherMomentumChangeRate");
+		registerAVariable(E_, "TotalEnergy");
+		registerAVariable(dE_dt_, "TotalEnergyChangeRate");
+		registerAVariable(dE_dt_prior_, "OtherEnergyChangeRate");
 		//----------------------------------------------------------------------
 		//		add output particle data
 		//----------------------------------------------------------------------
 		addAVariableToWrite<Real>("Pressure");
 	}
 	//=================================================================================================//
-	WeaklyCompressibleFluidParticles
-		::WeaklyCompressibleFluidParticles(SPHBody &sph_body,
-								   SharedPtr<Fluid> shared_fluid_ptr,
-								   SharedPtr<ParticleGenerator> particle_generator_ptr)
-		: FluidParticles(sph_body, shared_fluid_ptr, particle_generator_ptr)
+	WeaklyCompressibleFluidParticles::
+		WeaklyCompressibleFluidParticles(SPHBody &sph_body, Fluid *fluid)
+		: FluidParticles(sph_body, fluid) {}
+	//=================================================================================================//
+	void WeaklyCompressibleFluidParticles::initializeOtherVariables()
 	{
-		shared_fluid_ptr->assignFluidParticles(this);
-		//----------------------------------------------------------------------
-		//		register particle data
-		//----------------------------------------------------------------------
-		registerAVariable<Real>(dmass_dt_, "MassChangeRate");
-		registerAVariable<Vecd>(mom_, "Momentum");
-		registerAVariable<Vecd>(dmom_dt_, "MomentumChangeRate");
-		registerAVariable<Vecd>(dmom_dt_prior_, "OtherMomentumChangeRate");
+		FluidParticles::initializeOtherVariables();
+
+		registerAVariable(dmass_dt_, "MassChangeRate");
+		registerAVariable(mom_, "Momentum");
+		registerAVariable(dmom_dt_, "MomentumChangeRate");
+		registerAVariable(dmom_dt_prior_, "OtherMomentumChangeRate");
 		//----------------------------------------------------------------------
 		//		add output particle data
 		//----------------------------------------------------------------------

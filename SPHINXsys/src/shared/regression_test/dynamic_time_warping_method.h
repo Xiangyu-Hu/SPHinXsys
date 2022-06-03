@@ -83,7 +83,7 @@ namespace SPH
 		{
 			this->writeXmlToXmlFile();
 			this->readXmlFromXmlFile();
-			this->transferTheIndex();
+			this->transposeTheIndex();
 			if (this->converged == "false")
 			{
 				settingupTheTest();
@@ -100,6 +100,8 @@ namespace SPH
 				writeDTWDistanceToXml();
 				compareDTWDistance(threshold_value);
 			}
+			else
+				std::cout << "The results have been converged." << endl;
 		};
 
 		/** the interface for generating the priori converged result with DTW. */
@@ -107,7 +109,7 @@ namespace SPH
 		{
 			this->writeXmlToXmlFile();
 			this->readXmlFromXmlFile();
-			this->transferTheIndex();
+			this->transposeTheIndex();
 			settingupTheTest();
 			if (filter == "true")
 				this->filterExtremeValues();
