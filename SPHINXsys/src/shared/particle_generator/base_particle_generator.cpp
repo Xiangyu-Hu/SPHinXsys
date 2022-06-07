@@ -24,7 +24,7 @@ namespace SPH
 	ParticleGeneratorDirect::ParticleGeneratorDirect(StdVec<Vecd>& pos_0, Real volume) : ParticleGenerator()
 	{
 		// we add the generated particles for the direct generator
-		for(auto pos: pos_0)
+		for(auto& pos: pos_0)
 		{
 			positions_volumes_.push_back(std::make_pair(pos, volume));
 		}

@@ -4,6 +4,7 @@
  */
 
 #include "general_dynamics.h"
+#include <limits>
 
 namespace SPH
 {

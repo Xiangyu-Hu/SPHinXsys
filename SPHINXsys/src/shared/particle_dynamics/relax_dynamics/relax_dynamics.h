@@ -91,7 +91,7 @@ namespace SPH
 
 		/**
 		* @class RelaxationAccelerationInnerWithLevelSetCorrection
-		* @brief we constrain particles to a level function representing the interafce.
+		* @brief we constrain particles to a level function representing the interface.
 		*/
 		class RelaxationAccelerationInnerWithLevelSetCorrection : public RelaxationAccelerationInner
 		{
