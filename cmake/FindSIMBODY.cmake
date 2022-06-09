@@ -97,12 +97,12 @@ set(Simbody_LIB_DIR_TEMP)
 IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
     find_library(Simbody_LIB_DIR_TEMP 
         NAMES ${Simbody_LIBRARY_LIST_D}
-        PATHS ${Simbody_ROOT_DIR}/lib ${Simbody_ROOT_DIR}/lib64
+        PATHS ${Simbody_ROOT_DIR}/lib ${Simbody_ROOT_DIR}/lib64 ${Simbody_ROOT_DIR}/lib/x86_64-linux-gnu
         NO_DEFAULT_PATH)
 ELSE()
     find_library(Simbody_LIB_DIR_TEMP 
         NAMES ${Simbody_LIBRARY_LIST}
-        PATHS ${Simbody_ROOT_DIR}/lib ${Simbody_ROOT_DIR}/lib64
+        PATHS ${Simbody_ROOT_DIR}/lib ${Simbody_ROOT_DIR}/lib64 ${Simbody_ROOT_DIR}/lib/x86_64-linux-gnu
         NO_DEFAULT_PATH)
 ENDIF()
 
