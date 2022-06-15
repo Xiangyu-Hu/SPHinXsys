@@ -21,7 +21,7 @@ TEST(BernoulliBeam20x, Pressure)
 	std::vector<SharedPtr<LinearElasticSolid>> material_model_list = { material };
 
 	SharedPtr<TriangleMeshShapeSTL> specimen = makeShared<TriangleMeshShapeSTL>("./input/bernoulli_beam_20x.stl", Vec3d(0), scale_stl, "bernoulli_beam_20x");
-	BoundingBox fixation = specimen->findBounds();
+	BoundingBox fixation = specimen->getBounds();
 	fixation.second[0] = fixation.first[0] + 0.01;
 	
 	StructuralSimulationInput input

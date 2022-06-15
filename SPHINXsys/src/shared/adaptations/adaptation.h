@@ -47,7 +47,7 @@ namespace SPH
 	/**
 	 * @class SPHAdaptation
 	 * @brief Base class for adaptation.
-	 * The base class defines essential global parameteres. It is also used for single-resolution SPH method. 
+	 * The base class defines essential global parameters. It is also used for single-resolution SPH method. 
 	 * In the constructor parameter, system_resolution_ratio defines the relation between present resolution to the system reference resolution.
 	 * The derived class will be used if further adaptation is introduced.
 	 */

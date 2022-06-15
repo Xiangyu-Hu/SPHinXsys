@@ -218,38 +218,64 @@ namespace SPH
 	//		it can be used in different dynamics.
 	//----------------------------------------------------------------------
 
-	template <class LocalDynamicsType>
-	class SimpleDynamics : public ParticleDynamics<void>
+	class BodyParticleDynamics : public ParticleDynamics<void>
 	{
-		LocalDynamicsType local_dynamics_;
-		ParticleFunctor functor_update_;
-
 	public:
-		template <typename... ConstructorArgs>
-		SimpleDynamics(SPHBody &sph_body, ConstructorArgs &&...args)
-			: ParticleDynamics<void>(sph_body),
-			  local_dynamics_(sph_body, std::forward<ConstructorArgs>(args)...),
-			  functor_update_(std::bind(&LocalDynamicsType::update, &local_dynamics_, _1, _2)){};
+		explicit BodyParticleDynamics(SPHBody &sph_body)
+			: ParticleDynamics<void>(sph_body){};
 
-		virtual ~SimpleDynamics(){};
-
-		LocalDynamicsType &LocalDynamics() { return local_dynamics_; };
+		virtual ~BodyParticleDynamics(){};
 
 		virtual void exec(Real dt = 0.0) override
 		{
-			setBodyUpdated();
-			setupDynamics(dt);
 			size_t total_real_particles = base_particles_->total_real_particles_;
-			ParticleIterator(total_real_particles, functor_update_, dt);
+			ParticleIterator(total_real_particles, particle_functor_, dt);
 		};
 
 		virtual void parallel_exec(Real dt = 0.0) override
 		{
-			setBodyUpdated();
-			setupDynamics(dt);
 			size_t total_real_particles = base_particles_->total_real_particles_;
-			ParticleIterator_parallel(total_real_particles, functor_update_, dt);
+			ParticleIterator_parallel(total_real_particles, particle_functor_, dt);
+		};
+
+	protected:
+		ParticleFunctor particle_functor_;
+	};
+
+	template <class BodyDynamicsType, class LocalDynamicsSimple>
+	class SimpleParticleDynamics : public BodyDynamicsType
+	{
+		LocalDynamicsSimple local_dynamics_;
+
+	public:
+		template <typename... ConstructorArgs>
+		SimpleParticleDynamics(SPHBody &sph_body, ConstructorArgs &&...args)
+			: BodyDynamicsType(sph_body),
+			  local_dynamics_(sph_body, std::forward<ConstructorArgs>(args)...)
+		{
+			this->particle_functor_ = std::bind(&LocalDynamicsSimple::update, &local_dynamics_, _1, _2);
+		};
+		virtual ~SimpleParticleDynamics(){};
+
+		LocalDynamicsSimple &LocalDynamics() { return local_dynamics_; };
+
+		virtual void exec(Real dt = 0.0) override
+		{
+			this->setBodyUpdated();
+			this->setupDynamics(dt); //TODO: this function should be in LocalDynamicsSimple
+			BodyDynamicsType::exec(dt);
+		};
+
+		virtual void parallel_exec(Real dt = 0.0) override
+		{
+			this->setBodyUpdated();
+			this->setupDynamics(dt); //TODO: this function should be in LocalDynamicsSimple
+			BodyDynamicsType::parallel_exec(dt);
 		};
 	};
+
+	//temporary usage before full revamping the code.
+	template <class LocalDynamicsType>
+	using SimpleDynamics = SimpleParticleDynamics<BodyParticleDynamics, LocalDynamicsType>;
 }
 #endif // PARTICLE_DYNAMICS_ALGORITHMS_H

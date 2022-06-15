@@ -216,8 +216,7 @@ namespace SPH
 		{
 			try
 			{
-				Vecd point = pos_n_[index_i];
-				if (checkIfPointInBoundingBox(point, bounding_box_))
+				if (bounding_box_.checkContain(pos_n_[index_i]))
 				{
 					dvel_dt_prior_[index_i] += acceleration_;
 				}

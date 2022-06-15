@@ -3,6 +3,8 @@
  * @author	Bo Zhang and Xiangyu Hu
  */
 
+#pragma once
+
 #include "ensemble_averaged_method.h"
 
  //=================================================================================================//

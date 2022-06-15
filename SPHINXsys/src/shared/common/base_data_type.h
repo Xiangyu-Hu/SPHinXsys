@@ -359,48 +359,96 @@ namespace SPH
 	const bool positiveDirection = true;
 	const bool negativeDirection = false;
 
-	/** Bounding box, first: lower bound, second: upper bound. */
-	typedef std::pair<Vec2d, Vec2d> BoundingBox2d;
-	typedef std::pair<Vec3d, Vec3d> BoundingBox3d;
+	/** Bounding box for system, body, body part and shape, first: lower bound, second: upper bound. */
+	template <typename VecType>
+	class BaseBoundingBox
+	{
+	public:
+		VecType first, second;
+		int dimension_;
+
+		BaseBoundingBox() : first(VecType(0)), second(VecType(0)), dimension_(VecType(0).size()){};
+		BaseBoundingBox(const VecType &lower_bound, const VecType &upper_bound)
+			: first(lower_bound), second(upper_bound),
+			  dimension_(lower_bound.size()){};
+
+		bool checkContain(const VecType &point)
+		{
+			bool is_contain = true;
+			for (int i = 0; i < dimension_; ++i)
+			{
+				if (point[i] < first[i] || point[i] > second[i])
+				{
+					is_contain = false;
+					break;
+				}
+			}
+			return is_contain;
+		};
+	};
+
+	template <class T>
+	bool operator==(const BaseBoundingBox<T> &bb1, const BaseBoundingBox<T> &bb2)
+	{
+		return bb1.first == bb2.first && bb1.second == bb2.second ? true : false;
+	};
+
+	template <class BoundingBoxType>
+	BoundingBoxType getIntersectionOfBoundingBoxes(const BoundingBoxType &bb1, const BoundingBoxType &bb2)
+	{
+		// check that the inputs are correct
+		int dimension = bb1.dimension_;
+		// Get the Bounding Box of the intersection of the two meshes
+		BoundingBoxType bb(bb1);
+		// #1 check that there is overlap, if not, exception
+		for (int i = 0; i < dimension; ++i)
+			if (bb2.first[i] > bb1.second[i] || bb2.second[i] < bb1.first[i])
+				std::runtime_error("getIntersectionOfBoundingBoxes: no overlap!");
+		// #2 otherwise modify the first one to get the intersection
+		for (int i = 0; i < dimension; ++i)
+		{
+			// if the lower limit is inside change the lower limit
+			if (bb1.first[i] < bb2.first[i] && bb2.first[i] < bb1.second[i])
+				bb.first[i] = bb2.first[i];
+			// if the upper limit is inside, change the upper limit
+			if (bb1.second[i] > bb2.second[i] && bb2.second[i] > bb1.first[i])
+				bb.second[i] = bb2.second[i];
+		}
+		return bb;
+	}
 
 	/**
 	 * @class Rotation2d
-	 * @brief Rotation Coordinate transfrom in 2D with rotation center and angle.
+	 * @brief Rotation Coordinate transform (around the origin)
+	 * in 2D with an angle.
 	 */
 	class Rotation2d
 	{
-		Vec2d center_;
 		Real angle_, cosine_angle_, sine_angle_;
 
 	public:
-		Rotation2d() : center_(Vec2d(0)), angle_(0), cosine_angle_(1.0), sine_angle_(0.0){};
-		explicit Rotation2d(SimTK::Real angle, const Vec2d &center = Vec2d(0))
-			: center_(center), angle_(angle),
-			  cosine_angle_(std::cos(angle)), sine_angle_(std::sin(angle)){};
+		explicit Rotation2d(SimTK::Real angle)
+			: angle_(angle), cosine_angle_(std::cos(angle)), sine_angle_(std::sin(angle)){};
 		virtual ~Rotation2d(){};
 
-
-		/** Forward tranformation. */
-		Vec2d shiftFrameStationToBase(const Vec2d &origin)
+		/** Forward transformation. */
+		Vec2d xformFrameVecToBase(const Vec2d &origin)
 		{
-			Vec2d shift = origin - center_;
-			Vec2d temp(shift[0] * cosine_angle_ - shift[1] * sine_angle_,
-					   shift[1] * cosine_angle_ + shift[0] * sine_angle_);
-			return temp + center_;
+			return Vec2d(origin[0] * cosine_angle_ - origin[1] * sine_angle_,
+						 origin[1] * cosine_angle_ + origin[0] * sine_angle_);
 		};
-		/** Inverse tranformation. */
-		Vec2d shiftBaseStationToFrame(const Vec2d &target)
+		/** Inverse transformation. */
+		Vec2d xformBaseVecToFrame(const Vec2d &target)
 		{
-			Vec2d temp = target - center_;
-			Vec2d shift(temp[0] * cosine_angle_ + temp[1] * sine_angle_,
-						temp[1] * cosine_angle_ - temp[0] * sine_angle_);
-			return shift + center_;
+			return Vec2d(target[0] * cosine_angle_ + target[1] * sine_angle_,
+						 target[1] * cosine_angle_ - target[0] * sine_angle_);
 		};
 	};
 
 	/**
 	 * @class Transform2d
-	 * @brief Coordinate transfrom in 2D
+	 * @brief Coordinate transform in 2D
+	 * Note that the rotation is around the frame (or local) origin.
 	 */
 	class Transform2d
 	{
@@ -409,38 +457,39 @@ namespace SPH
 		Vec2d translation_;
 
 	public:
-		Transform2d() : rotation_(Rotation2d()), translation_(Vec2d(0)){};
+		Transform2d() : rotation_(Rotation2d(0)), translation_(Vec2d(0)){};
+		explicit Transform2d(const Vec2d &translation) : rotation_(Rotation2d(0)), translation_(translation){};
 		explicit Transform2d(const Rotation2d &rotation, const Vec2d &translation = Vec2d(0))
 			: rotation_(rotation), translation_(translation){};
-	
+
 		/** Forward rotation. */
 		Vec2d xformFrameVecToBase(const Vec2d &origin)
 		{
-			return rotation_.shiftFrameStationToBase(origin);
+			return rotation_.xformFrameVecToBase(origin);
 		};
 
-	/** Forward tranformation. */
+		/** Forward transformation. Note that the rotation operation is carried out first. */
 		Vec2d shiftFrameStationToBase(const Vec2d &origin)
 		{
-			return xformFrameVecToBase(origin) + translation_;
+			return translation_ + xformFrameVecToBase(origin);
 		};
 
 		/** Inverse rotation. */
 		Vec2d xformBaseVecToFrame(const Vec2d &target)
 		{
-			return rotation_.shiftBaseStationToFrame(target);
+			return rotation_.xformBaseVecToFrame(target);
 		};
 
-		/** Inverse tranformation. */
+		/** Inverse transformation. Note that the inverse translation operation is carried out first. */
 		Vec2d shiftBaseStationToFrame(const Vec2d &target)
 		{
-			return xformBaseVecToFrame(target) - translation_;
+			return xformBaseVecToFrame(target - translation_);
 		};
 	};
 
 	/**
 	 * @class Transform3d
-	 * @brief Coordinate transfrom in 3D from SimTK
+	 * @brief Coordinate transform in 3D from SimTK
 	 */
 	using Transform3d = SimTK::Transform;
 }

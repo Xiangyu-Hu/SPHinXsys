@@ -49,7 +49,7 @@ int main(int ac, char *av[])
 		? insert_body.generateParticles<ParticleGeneratorReload>(in_output, insert_body.getBodyName())
 		: insert_body.generateParticles<ParticleGeneratorLattice>();
 
-	ObserverBody beam_observer(sph_system,"BeamObserver");
+	ObserverBody beam_observer(sph_system, "BeamObserver");
 	beam_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
 	ObserverBody fluid_observer(sph_system, "FluidObserver");
 	fluid_observer.generateParticles<FluidObserverParticleGenerator>();
@@ -129,7 +129,8 @@ int main(int ac, char *av[])
 	/** Computing vorticity in the flow. */
 	fluid_dynamics::VorticityInner compute_vorticity(water_block_complex.inner_relation_);
 	/** Inflow boundary condition. */
-	BodyRegionByCell inflow_buffer(water_block, makeShared<MultiPolygonShape>(createInflowBufferShape()));
+	BodyAlignedBoxByCell inflow_buffer(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
 	ParabolicInflow parabolic_inflow(water_block, inflow_buffer);
 	/** Periodic BCs in x direction. */
 	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition(water_block, xAxis);

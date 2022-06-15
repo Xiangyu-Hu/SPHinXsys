@@ -15,7 +15,7 @@ Real DL_sponge = resolution_ref * 20.0; /**< Sponge region to impose inflow cond
 /** Boundary width, determined by specific layer of boundary particles. */
 Real BW = resolution_ref * 4.0; /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW));
-//temperature observer location
+// temperature observer location
 StdVec<Vecd> observation_location = {Vecd(0.0, DH * 0.5)};
 //----------------------------------------------------------------------
 //	Global parameters on the material properties
@@ -70,20 +70,8 @@ std::vector<Vecd> createInnerWallShape()
 
 	return inner_wall_shape;
 }
-/** create a inflow buffer shape. */
-MultiPolygon createInflowBufferShape()
-{
-	std::vector<Vecd> inflow_buffer_shape;
-	inflow_buffer_shape.push_back(Vecd(0.0 - DL_sponge, 0.0));
-	inflow_buffer_shape.push_back(Vecd(0.0 - DL_sponge, DH));
-	inflow_buffer_shape.push_back(Vecd(0, DH));
-	inflow_buffer_shape.push_back(Vecd(0, 0));
-	inflow_buffer_shape.push_back(Vecd(0.0 - DL_sponge, 0.0));
-
-	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(inflow_buffer_shape, ShapeBooleanOps::add);
-	return multi_polygon;
-}
+Vec2d buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
+Vec2d buffer_translation = Vec2d(-DL_sponge, 0.0) + buffer_halfsize;
 //----------------------------------------------------------------------
 //	Case-dependent geometries
 //----------------------------------------------------------------------
@@ -124,7 +112,7 @@ class ThermosolidBodyMaterial : public DiffusionReaction<Solid>
 public:
 	ThermosolidBodyMaterial() : DiffusionReaction<Solid>({"Phi"})
 	{
-		//only default property is gieven, as no heat transfer within solid considered here.
+		// only default property is gieven, as no heat transfer within solid considered here.
 		initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi");
 	};
 };
@@ -204,8 +192,8 @@ class ParabolicInflow : public fluid_dynamics::InflowBoundaryCondition
 	Real u_ave_, u_ref_, t_ref;
 
 public:
-	ParabolicInflow(FluidBody &fluid_body, BodyPartByCell &constrained_region)
-		: InflowBoundaryCondition(fluid_body, constrained_region),
+	ParabolicInflow(FluidBody &fluid_body, BodyAlignedBoxByCell &aligned_box_part)
+		: InflowBoundaryCondition(fluid_body, aligned_box_part),
 		  u_ave_(0.0), u_ref_(1.0), t_ref(2.0) {}
 
 	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
@@ -214,7 +202,7 @@ public:
 		Real v = velocity[1];
 		if (position[0] < 0.0)
 		{
-			u = 6.0 * u_ave_ * position[1] * (DH - position[1]) / DH / DH;
+			u = 1.5 * u_ave_ * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
 			v = 0.0;
 		}
 		return Vecd(u, v);
@@ -290,7 +278,8 @@ int main()
 	/** Computing vorticity in the flow. */
 	fluid_dynamics::VorticityInner compute_vorticity(fluid_body_inner);
 	/** Inflow boundary condition. */
-	BodyRegionByCell inflow_buffer(thermofluid_body, makeShared<MultiPolygonShape>(createInflowBufferShape()));
+	BodyAlignedBoxByCell inflow_buffer(
+		thermofluid_body, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
 	ParabolicInflow parabolic_inflow(thermofluid_body, inflow_buffer);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.

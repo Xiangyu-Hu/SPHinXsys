@@ -18,6 +18,8 @@ Real LL = 2.0 * BW;			  /**< Inflow region length. */
 Real LH = 0.125;			  /**< Inflows region height. */
 Real inlet_height = 1.0;	  /**< Inflow location height */
 Real inlet_distance = -BW;	  /**< Inflow location distance */
+Vec2d inlet_halfsize = Vec2d(0.5 * LL, 0.5 * LH);
+Vec2d inlet_translation = Vec2d(inlet_distance, inlet_height) + inlet_halfsize;
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 // observer location
 StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
@@ -26,7 +28,7 @@ Real gravity_g = 1.0;									/**< Gravity force of fluid. */
 Real U_f = 2.0 * sqrt(gravity_g * (inlet_height + LH)); /**< Characteristic velocity. */
 Real c_f = 10.0 * U_f;									/**< Reference sound speed. */
 //----------------------------------------------------------------------
-//	Geometrices
+//	Geometries
 //----------------------------------------------------------------------
 /** create a outer wall polygon. */
 std::vector<Vecd> CreateOuterWallShape()
@@ -52,29 +54,6 @@ std::vector<Vecd> CreateInnerWallShape()
 
 	return inner_wall_shape;
 }
-/** create a water block shape for the inlet. */
-std::vector<Vecd> CreateWaterBlockShape()
-{
-	std::vector<Vecd> water_body_shape;
-	water_body_shape.push_back(Vecd(inlet_distance, inlet_height));
-	water_body_shape.push_back(Vecd(inlet_distance, LH + inlet_height));
-	water_body_shape.push_back(Vecd(LL + inlet_distance, LH + inlet_height));
-	water_body_shape.push_back(Vecd(LL + inlet_distance, inlet_height));
-	water_body_shape.push_back(Vecd(inlet_distance, inlet_height));
-
-	return water_body_shape;
-}
-//----------------------------------------------------------------------
-//	Case-dependent water block Geometrices
-//----------------------------------------------------------------------
-class WaterBlock : public MultiPolygonShape
-{
-public:
-	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
-	{
-		multi_polygon_.addAPolygon(CreateWaterBlockShape(), ShapeBooleanOps::add);
-	}
-};
 //----------------------------------------------------------------------
 //	Case-dependent wall boundary
 //----------------------------------------------------------------------
@@ -85,17 +64,8 @@ public:
 	{
 		multi_polygon_.addAPolygon(CreateOuterWallShape(), ShapeBooleanOps::add);
 		multi_polygon_.addAPolygon(CreateInnerWallShape(), ShapeBooleanOps::sub);
-		multi_polygon_.addAPolygon(CreateWaterBlockShape(), ShapeBooleanOps::sub);
+		multi_polygon_.addABox(Transform2d(inlet_translation), inlet_halfsize, ShapeBooleanOps::sub);
 	}
-};
-//----------------------------------------------------------------------
-//	inlet as a body part by particle 
-//----------------------------------------------------------------------
-MultiPolygon createInletShape()
-{
-	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(CreateWaterBlockShape(), ShapeBooleanOps::add);
-	return multi_polygon;
 };
 //----------------------------------------------------------------------
 //	Inlet inflow condition
@@ -103,8 +73,8 @@ MultiPolygon createInletShape()
 class InletInflowCondition : public fluid_dynamics::EmitterInflowCondition
 {
 public:
-	InletInflowCondition(FluidBody &body, BodyPartByParticle &body_part)
-		: EmitterInflowCondition(body, body_part) 
+	InletInflowCondition(FluidBody &body, BodyAlignedBoxByParticle &aligned_box_part)
+		: EmitterInflowCondition(body, aligned_box_part)
 	{
 		inflow_pressure_ = 0.0;
 	}
@@ -128,18 +98,19 @@ int main()
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	FluidBody water_body(system, makeShared<WaterBlock>("WaterBody"));
+	FluidBody water_body(system, makeShared<TransformShape<GeometricShapeBox>>(
+									 Transform2d(inlet_translation), inlet_halfsize, "WaterBody"));
 	water_body.sph_adaptation_->resetKernel<KernelTabulated<KernelWendlandC2>>(20);
 	water_body.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
 	water_body.generateParticles<ParticleGeneratorLattice>();
-	/**note that, as particle sort is activated (by default) for fluid particles, 
+	/**note that, as particle sort is activated (by default) for fluid particles,
 	 * the output occasionally does not reflect the real free surface indication due to sorting. */
 	SolidBody wall(system, makeShared<WallBoundary>("Wall"));
 	wall.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall.generateParticles<ParticleGeneratorLattice>();
 
-	ObserverBody fluid_observer(system, "Fluidobserver");
-	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location); 
+	ObserverBody fluid_observer(system, "FluidObserver");
+	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -153,9 +124,11 @@ int main()
 	Gravity gravity(Vecd(0.0, -gravity_g));
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
 	TimeStepInitialization initialize_a_fluid_step(water_body, gravity);
-	BodyRegionByParticle inlet(water_body, makeShared<MultiPolygonShape>(createInletShape()));
-	InletInflowCondition inflow_condition(water_body, inlet);
-	fluid_dynamics::EmitterInflowInjecting emitter_injection(water_body, inlet, 350, 0, true);
+	/** Emitter. */
+	BodyAlignedBoxByParticle emitter(
+		water_body, makeShared<AlignedBoxShape>(Transform2d(inlet_translation), inlet_halfsize));
+	InletInflowCondition inflow_condition(water_body, emitter);
+	fluid_dynamics::EmitterInflowInjecting emitter_injection(water_body, emitter, 350, 0, true);
 	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_body_complex);
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex indicate_free_surface(water_body_complex);
 	/** We can output a method-specific particle data for debug */
@@ -250,6 +223,7 @@ int main()
 			/** inflow emitter injection*/
 			emitter_injection.exec();
 			/** Update cell linked list and configuration. */
+
 			water_body.updateCellLinkedList();
 			water_body_complex.updateConfiguration();
 			fluid_observer_contact_relation.updateConfiguration();

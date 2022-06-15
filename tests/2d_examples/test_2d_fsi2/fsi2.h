@@ -101,6 +101,8 @@ std::vector<Vecd> createInnerWallShape()
 
 	return inner_wall_shape;
 }
+Vec2d buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
+Vec2d buffer_translation = Vec2d(-DL_sponge, 0.0) + buffer_halfsize;
 //----------------------------------------------------------------------
 //	Define case dependent geometrices
 //----------------------------------------------------------------------
@@ -140,28 +142,14 @@ MultiPolygon createBeamBaseShape()
 	multi_polygon.addAPolygon(createBeamShape(), ShapeBooleanOps::sub);
 	return multi_polygon;
 }
-/** create a inflow buffer shape. */
-MultiPolygon createInflowBufferShape()
-{
-	std::vector<Vecd> inflow_buffer_shape;
-	inflow_buffer_shape.push_back(Vecd(-DL_sponge, 0.0));
-	inflow_buffer_shape.push_back(Vecd(-DL_sponge, DH));
-	inflow_buffer_shape.push_back(Vecd(0.0, DH));
-	inflow_buffer_shape.push_back(Vecd(0.0, 0.0));
-	inflow_buffer_shape.push_back(Vecd(-DL_sponge, 0.0));
-
-	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(inflow_buffer_shape, ShapeBooleanOps::add);
-	return multi_polygon;
-}
 /** Case dependent inflow boundary condition. */
 class ParabolicInflow : public fluid_dynamics::InflowBoundaryCondition
 {
 	Real u_ave_, u_ref_, t_ref;
 
 public:
-	ParabolicInflow(FluidBody &fluid_body, BodyPartByCell &constrained_region)
-		: InflowBoundaryCondition(fluid_body, constrained_region),
+	ParabolicInflow(FluidBody &fluid_body, BodyAlignedBoxByCell &aligned_box_part)
+		: InflowBoundaryCondition(fluid_body, aligned_box_part),
 		  u_ave_(0), u_ref_(1.0), t_ref(2.0) {}
 	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
 	{
@@ -169,7 +157,7 @@ public:
 		Real v = velocity[1];
 		if (position[0] < 0.0)
 		{
-			u = 6.0 * u_ave_ * position[1] * (DH - position[1]) / DH / DH;
+			u = 1.5 * u_ave_ * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
 			v = 0.0;
 		}
 		return Vecd(u, v);
@@ -190,7 +178,7 @@ public:
 		size_t number_observation_points = 21;
 		Real range_of_measure = DH - resolution_ref * 4.0;
 		Real start_of_measure = resolution_ref * 2.0;
-		/** the measureing particles */
+		/** the measuring locations */
 		for (size_t i = 0; i < number_observation_points; ++i)
 		{
 			Vec2d point_coordinate(0.0, range_of_measure * (Real)i / (Real)(number_observation_points - 1) + start_of_measure);

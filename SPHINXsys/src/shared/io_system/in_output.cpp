@@ -285,7 +285,8 @@ namespace SPH
 	};
 	//=============================================================================================//
 	ReloadParticleIO::ReloadParticleIO(InOutput &in_output, SPHBodyVector bodies,
-									   StdVec<std::string> given_body_names) : ReloadParticleIO(in_output, bodies)
+									   const StdVec<std::string> &given_body_names) 
+		: ReloadParticleIO(in_output, bodies)
 	{
 		std::transform(given_body_names.begin(), given_body_names.end(), file_paths_.begin(),
 					   [&](const std::string &body_name) -> std::string

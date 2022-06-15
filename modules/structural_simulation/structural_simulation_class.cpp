@@ -16,7 +16,7 @@ BodyPartFromMesh::BodyPartFromMesh(SPHBody &body, SharedPtr<TriangleMeshShape> t
 	: BodyRegionByParticle(body, triangle_mesh_shape_ptr)
 {
 	// set the body domain bounds because it is not set by default
-	BoundingBox bounds = body_part_shape_.findBounds();
+	BoundingBox bounds = body_part_shape_.getBounds();
 	setBodyPartBounds(bounds);
 }
 
@@ -30,7 +30,7 @@ SolidBodyFromMesh::SolidBodyFromMesh(
 	defineParticlesWithMaterial<ElasticSolidParticles>(material_model.get());
 	generateParticles<ParticleGeneratorLattice>();
 	// set the body domain bounds because it is not set by default
-	BoundingBox bounds = body_shape_->findBounds();
+	BoundingBox bounds = body_shape_->getBounds();
 	setBodyDomainBounds(bounds);
 }
 
@@ -110,7 +110,7 @@ void relaxParticlesSingleResolution(InOutput &in_output,
 std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMesh(
 	SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution, bool particle_relaxation, bool write_particle_relaxation_data)
 {
-	BoundingBox bb = triangle_mesh_shape->findBounds();
+	BoundingBox bb = triangle_mesh_shape->getBounds();
 	SPHSystem system(bb, resolution);
 	SolidBody model(system, triangle_mesh_shape);
 	model.defineBodyLevelSetShape()->cleanLevelSet();
@@ -118,7 +118,7 @@ std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMe
 	model.generateParticles<ParticleGeneratorLattice>();
 
 	// set the body domain bounds because it is not set by default
-	BoundingBox bounds = model.body_shape_->findBounds();
+	BoundingBox bounds = model.body_shape_->getBounds();
 	model.setBodyDomainBounds(bounds);
 
 	if (particle_relaxation)
@@ -296,7 +296,7 @@ void StructuralSimulation::calculateSystemBoundaries()
 	// calculate system bounds from all bodies
 	for (size_t i = 0; i < body_mesh_list_.size(); i++)
 	{
-		BoundingBox additional = body_mesh_list_[i]->findBounds();
+		BoundingBox additional = body_mesh_list_[i]->getBounds();
 		expandBoundingBox(&system_.system_domain_bounds_, &additional);
 	}
 	// scale the system bounds around the center point

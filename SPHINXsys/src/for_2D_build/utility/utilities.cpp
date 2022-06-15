@@ -32,6 +32,6 @@ namespace SPH
         Vecd new_lower_left(SMIN(p1[0], p2[0], p3[0], p4[0]), SMIN(p1[1], p2[1], p3[1], p4[1]));
         Vecd new_top_right(SMAX(p1[0], p2[0], p3[0], p4[0]), SMAX(p1[1], p2[1], p3[1], p4[1]));
 
-        return std::make_pair(new_lower_left, new_top_right);
+        return BoundingBox(new_lower_left, new_top_right);
     }
 }
