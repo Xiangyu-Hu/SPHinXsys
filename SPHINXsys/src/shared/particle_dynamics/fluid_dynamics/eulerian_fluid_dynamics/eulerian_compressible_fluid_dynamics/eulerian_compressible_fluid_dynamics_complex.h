@@ -31,6 +31,8 @@
 #pragma once
 
 #include "eulerian_compressible_fluid_dynamics_inner.h"
+#include "solid_body.h"
+#include "solid_particles.h"
 
 namespace SPH
 {

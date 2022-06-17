@@ -153,6 +153,13 @@ Examples:
 
    examples/example12_2D_flowaroundcylinder.rst
 
+
+
+.. toctree::
+   :maxdepth: 2
+
+   examples/example13_2D_oscillating_beam.rst
+
 ******************************************
 Contribute to SPHinXsys
 ******************************************

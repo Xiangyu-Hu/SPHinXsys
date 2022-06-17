@@ -17,46 +17,40 @@ std::string full_path_to_file = "./input/SPHinXsys.stl";
 //----------------------------------------------------------------------
 Vec3d domain_lower_bound(-2.3, -0.1, -0.3);
 Vec3d domain_upper_bound(2.3, 4.5, 0.3);
-Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 80.0;
+Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 //----------------------------------------------------------------------
-//	define a body from the imported model.
+//	define the imported model.
 //----------------------------------------------------------------------
-class ImportedModel : public SolidBody
+class SolidBodyFromMesh : public ComplexShape
 {
 public:
-	ImportedModel(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit SolidBodyFromMesh(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		/** Geometry definition. */
 		Vecd translation(0.0, 0.0, 0.0);
-		TriangleMeshShapeSTL triangle_mesh_shape_stl(full_path_to_file, translation, 1.0);
-		body_shape_.add<LevelSetShape>(this, triangle_mesh_shape_stl, true);
+		add<TriangleMeshShapeSTL>(full_path_to_file, translation, 1.0);
 	}
 };
 //-----------------------------------------------------------------------------------------------------------
 //	Main program starts here.
 //-----------------------------------------------------------------------------------------------------------
-int main(int ac, char *av[])
+int main()
 {
 	//----------------------------------------------------------------------
 	//	Build up -- a SPHSystem
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, dp_0);
-	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = true;
-//handle command line arguments
-#ifdef BOOST_AVAILABLE
-	system.handleCommandlineOptions(ac, av);
-#endif
 	/** output environment. */
-	In_Output in_output(system);
+	InOutput in_output(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	ImportedModel imported_model(system, "ImportedModel");
-	SolidParticles imported_model_particles(imported_model);
+	RealBody imported_model(system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
+	// level set shape is used for particle relaxation
+	imported_model.defineBodyLevelSetShape()->writeLevelSet(imported_model);
+	imported_model.defineParticlesAndMaterial();
+	imported_model.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
@@ -71,7 +65,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
-	RandomizePartilePosition random_imported_model_particles(imported_model);
+	RandomizeParticlePosition random_imported_model_particles(imported_model);
 	/** A  Physics relaxation step. */
 	relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner, true);
 	//----------------------------------------------------------------------

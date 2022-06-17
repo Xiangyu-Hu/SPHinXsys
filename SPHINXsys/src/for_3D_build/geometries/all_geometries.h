@@ -11,6 +11,6 @@ geometry classes used in SPHinXsys. **/
 #include "image_shape.h"
 #include "level_set_shape.h"
 #include "complex_shape.h"
-
+#include "transform_shape.h"
 
 #endif //ALL_GEOMETRIES_H

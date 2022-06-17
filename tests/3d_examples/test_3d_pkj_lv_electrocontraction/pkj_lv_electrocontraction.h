@@ -1,28 +1,28 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * --------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+ * and HU1527/12-1.															*
+ *                                                                           *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * --------------------------------------------------------------------------*/
 /**
  * @file 	pkj_lv_electrocontraction.h
- * @brief 	Electro-contraction of left ventricle heart model. 
+ * @brief 	Electro-contraction of left ventricle heart model.
  * @author 	Chi ZHANG and Xiangyu HU
  * @version  0.3
  * @version 0.2.1
@@ -36,7 +36,7 @@
  *			diffusion d = (mm)^(2) * (ms)^(-2)
  *@version 0.3
  *			Here, the coupling with Purkinje network will be condcuted.
-*/
+ */
 #pragma once
 #include "sphinxsys.h"
 using namespace SPH;
@@ -67,6 +67,7 @@ Real acceleration_factor = 27.5; /** Acceleration factor for fast dissuion on pu
 Real diffusion_coff = 0.8;
 Real bias_coff = 0.0;
 /** Electrophysiology parameters. */
+StdVec<std::string> species_name_list{"Phi"};
 Real c_m = 1.0;
 Real k = 8.0;
 Real a = 0.01;
@@ -77,24 +78,38 @@ Real epsilon = 0.002;
 /** Fibers and sheet. */
 Vec3d fiber_direction(1.0, 0.0, 0.0);
 Vec3d sheet_direction(0.0, 1.0, 0.0);
-/** 
- * Define geometry and initial conditions of SPH bodies. 
- */
-class HeartBody : public SolidBody
+/** Purkinje Network. */
+Vec3d starting_point(-21.9347 * length_scale, 4.0284 * length_scale, 0.0 * length_scale);
+Vec3d second_point(-21.9347 * length_scale, 4.0284 * length_scale, -1.1089 * length_scale);
+//----------------------------------------------------------------------
+//	Define heart shape
+//----------------------------------------------------------------------
+class Heart : public ComplexShape
 {
 public:
-	HeartBody(SPHSystem &system, const std::string &body_name) : SolidBody(system, body_name)
+	explicit Heart(const std::string &shape_name) : ComplexShape(shape_name)
 	{
 		Vecd translation(0.0, 0.0, 0.0);
-		TriangleMeshShapeSTL triangle_mesh_heart_shape(full_path_to_lv, translation, length_scale);
-		body_shape_.add<LevelSetShape>(this, triangle_mesh_heart_shape);
+		add<TriangleMeshShapeSTL>(full_path_to_lv, translation, length_scale);
 	}
+};
+//----------------------------------------------------------------------
+//	Setup diffusion material properties.
+//----------------------------------------------------------------------
+class FiberDirectionDiffusion : public DiffusionReaction<LocallyOrthotropicMuscle>
+{
+public:
+	FiberDirectionDiffusion()
+		: DiffusionReaction<LocallyOrthotropicMuscle>(
+			  species_name_list, rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0)
+	{
+		initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi", diffusion_coff);
+	};
 };
 /** Set diffusion relaxation. */
 class DiffusionRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle,
-		  RelaxationOfAllDiffussionSpeciesInner<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>, BodyRelationInner>
+		  RelaxationOfAllDiffussionSpeciesInner<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>>
 {
 public:
 	explicit DiffusionRelaxation(BodyRelationInner &body_inner_relation)
@@ -109,7 +124,7 @@ protected:
 	size_t phi_;
 	virtual void Update(size_t index_i, Real dt = 0.0) override
 	{
-		Vecd dist_2_face = body_->body_shape_.findNormalDirection(pos_n_[index_i]);
+		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_n_[index_i]);
 		Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
 
 		Vecd center_norm = pos_n_[index_i] / (pos_n_[index_i].norm() + 1.0e-15);
@@ -150,7 +165,7 @@ protected:
 		 * 		Present  doi.org/10.1016/j.cma.2016.05.031
 		 */
 		/** Probe the face norm from Levelset field. */
-		Vecd dist_2_face = body_->body_shape_.findNormalDirection(pos_n_[index_i]);
+		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_n_[index_i]);
 		Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
 		Vecd center_norm = pos_n_[index_i] / (pos_n_[index_i].norm() + 1.0e-15);
 		if (dot(face_norm, center_norm) <= 0.0)
@@ -204,7 +219,7 @@ public:
 	}
 };
 /**
- * application dependent initial condition 
+ * application dependent initial condition
  */
 class ApplyStimulusCurrentToMmyocardium
 	: public electro_physiology::ElectroPhysiologyInitialCondition
@@ -234,40 +249,21 @@ public:
 	};
 };
 // Observer particle generator.
-class ObserverParticleGenerator : public ParticleGeneratorDirect
+class HeartObserverParticleGenerator : public ObserverParticleGenerator
 {
 public:
-	ObserverParticleGenerator() : ParticleGeneratorDirect()
+	explicit HeartObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
 	{
 		/** position and volume. */
-		positions_volumes_.push_back(std::make_pair(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0), 0.0));
-		positions_volumes_.push_back(std::make_pair(Vecd(0.0, -30.0 * length_scale, 26.0 * length_scale), 0.0));
-		positions_volumes_.push_back(std::make_pair(Vecd(-30.0 * length_scale, -50.0 * length_scale, 0.0), 0.0));
-		positions_volumes_.push_back(std::make_pair(Vecd(0.0, -50.0 * length_scale, 20.0 * length_scale), 0.0));
-		positions_volumes_.push_back(std::make_pair(Vecd(0.0, -70.0 * length_scale, 0.0), 0.0));
-	}
-};
-/** 
- * Purkinje Network. 
- * */
-Vec3d starting_point(-21.9347 * length_scale, 4.0284 * length_scale, 0.0 * length_scale);
-Vec3d second_point(-21.9347 * length_scale, 4.0284 * length_scale, -1.1089 * length_scale);
-class PurkinjeBody : public SolidBody
-{
-public:
-	PurkinjeBody(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name, makeShared<SPHAdaptation>(1.05, 1))
-	{
-		Vecd translation(0.0, 0.0, 0.0);
-		TriangleMeshShapeSTL triangle_mesh_heart_shape(full_path_to_lv, translation, length_scale);
-
-		body_shape_.add<LevelSetShape>(this, triangle_mesh_heart_shape);
-		/** Use the reducedtwice kernel */
-		sph_adaptation_->getKernel()->reduceOnce();
+		positions_.push_back(Vecd(-45.0 * length_scale, -30.0 * length_scale, 0.0));
+		positions_.push_back(Vecd(0.0, -30.0 * length_scale, 26.0 * length_scale));
+		positions_.push_back(Vecd(-30.0 * length_scale, -50.0 * length_scale, 0.0));
+		positions_.push_back(Vecd(0.0, -50.0 * length_scale, 20.0 * length_scale));
+		positions_.push_back(Vecd(0.0, -70.0 * length_scale, 0.0));
 	}
 };
 /**
- * application dependent initial condition 
+ * application dependent initial condition
  */
 class ApplyStimulusCurrentToPKJ
 	: public electro_physiology::ElectroPhysiologyInitialCondition
@@ -284,7 +280,7 @@ protected:
 	};
 
 public:
-	ApplyStimulusCurrentToPKJ(SolidBody &muscle)
+	explicit ApplyStimulusCurrentToPKJ(RealBody &muscle)
 		: electro_physiology::ElectroPhysiologyInitialCondition(muscle)
 	{
 		voltage_ = material_->SpeciesIndexMap()["Voltage"];
@@ -292,7 +288,7 @@ public:
 };
 
 /**
- * Derived network particle generator. 
+ * Derived network particle generator.
  */
 class NetworkGeneratorWithExtraCheck : public ParticleGeneratorNetwork
 {
@@ -306,6 +302,6 @@ protected:
 	};
 
 public:
-	NetworkGeneratorWithExtraCheck(Vecd starting_pnt, Vecd second_pnt, int iterator, Real grad_factor)
-		: ParticleGeneratorNetwork(starting_pnt, second_pnt, iterator, grad_factor){};
+	NetworkGeneratorWithExtraCheck(SPHBody &sph_body, Vecd starting_pnt, Vecd second_pnt, int iterator, Real grad_factor)
+		: ParticleGeneratorNetwork(sph_body, starting_pnt, second_pnt, iterator, grad_factor){};
 };

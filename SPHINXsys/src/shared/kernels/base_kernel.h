@@ -73,14 +73,12 @@ namespace SPH
 		/** Auxiliary factors for the second order derivative of kernel function  **/
 		Real factor_d2W_1D_, factor_d2W_2D_, factor_d2W_3D_;
 
-		virtual void setBasicParameters() = 0;
 		void setDerivativeParameters();
 	public:
 		/** empty initialization in constructor, initialization will be carried out later. */
-		Kernel(const std::string &kernel_name = "Kernel");
+		explicit Kernel(Real h, const std::string &kernel_name = "Kernel");
 		virtual ~Kernel() {};
 		
-		void initialize(Real h);
 		std::string Name() const { return kernel_name_; };
 		Real SmoothingLength() const { return h_; };
 		/**< non-dimensional size of the kernel, generally 2.0 **/

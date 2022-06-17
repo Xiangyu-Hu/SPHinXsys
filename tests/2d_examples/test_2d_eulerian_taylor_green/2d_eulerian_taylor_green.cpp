@@ -24,24 +24,21 @@ Real Re = 100;						/**< Reynolds number. */
 Real mu_f = rho0_f * U_f * DL / Re; /**< Dynamics viscosity. */
 Real heat_capacity_ratio = 1.4;		/**< heat capacity ratio. */
 //----------------------------------------------------------------------
-//	Fluid body with cases-dependent geometries (ComplexShape).
+//	Cases-dependent geometries
 //----------------------------------------------------------------------
-class WaterBlock : public EulerianFluidBody
+class WaterBlock : public MultiPolygonShape
 {
 public:
-	WaterBlock(SPHSystem &system, const std::string &body_name)
-		: EulerianFluidBody(system, body_name)
+	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
 		/** Geometry definition. */
-		std::vector<Vecd> water_block_shape;
-		water_block_shape.push_back(Vecd(0.0, 0.0));
-		water_block_shape.push_back(Vecd(0.0, DH));
-		water_block_shape.push_back(Vecd(DL, DH));
-		water_block_shape.push_back(Vecd(DL, 0.0));
-		water_block_shape.push_back(Vecd(0.0, 0.0));
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(water_block_shape, ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		std::vector<Vecd> water_body_shape;
+		water_body_shape.push_back(Vecd(0.0, 0.0));
+		water_body_shape.push_back(Vecd(0.0, DH));
+		water_body_shape.push_back(Vecd(DL, DH));
+		water_body_shape.push_back(Vecd(DL, 0.0));
+		water_body_shape.push_back(Vecd(0.0, 0.0));
+		multi_polygon_.addAPolygon(water_body_shape, ShapeBooleanOps::add);
 	}
 };
 //----------------------------------------------------------------------
@@ -83,41 +80,41 @@ int main(int ac, char *av[])
 	/** Tag for computation from restart files. 0: not from restart files. */
 	sph_system.restart_step_ = 0;
 	/** output environment. */
-	In_Output in_output(sph_system);
+	InOutput in_output(sph_system);
 	//handle command line arguments
 	sph_system.handleCommandlineOptions(ac, av);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	WaterBlock water_block(sph_system, "WaterBody");
-	CompressibleFluidParticles compressible_fluid_particles(
-		water_block, makeShared<CompressibleFluid>(rho0_f, heat_capacity_ratio, mu_f));
+	EulerianFluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
+	water_body.defineParticlesAndMaterial<CompressibleFluidParticles, CompressibleFluid>(rho0_f, heat_capacity_ratio, mu_f);
+	water_body.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner water_block_inner(water_block);
+	BodyRelationInner water_body_inner(water_body);
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	/** Initial condition with momentum and energy field */
-	TaylorGreenInitialCondition initial_condition(water_block);
+	TaylorGreenInitialCondition initial_condition(water_body);
 	/** Initialize a time step. */
-	eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization time_step_initialization(water_block);
+	eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization time_step_initialization(water_body);
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_x(water_block, xAxis);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_x(water_body, xAxis);
 	/** Periodic BCs in y direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_y(water_block, yAxis);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_y(water_body, yAxis);
 	/** Time step size with considering sound wave speed. */
-	eulerian_compressible_fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
+	eulerian_compressible_fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_body);
 	/** Pressure relaxation algorithm by using verlet time stepping. */
 	/** Here, we can use HLLC with Limiter Riemann solver for pressure relaxation and density and energy relaxation  */
-	eulerian_compressible_fluid_dynamics::PressureRelaxationHLLCWithLimiterRiemannInner pressure_relaxation(water_block_inner);
-	eulerian_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCWithLimiterRiemannInner density_and_energy_relaxation(water_block_inner);
+	eulerian_compressible_fluid_dynamics::PressureRelaxationHLLCWithLimiterRiemannInner pressure_relaxation(water_body_inner);
+	eulerian_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCWithLimiterRiemannInner density_and_energy_relaxation(water_body_inner);
 	/** Computing viscous acceleration. */
-	eulerian_compressible_fluid_dynamics::ViscousAccelerationInner viscous_acceleration(water_block_inner);
+	eulerian_compressible_fluid_dynamics::ViscousAccelerationInner viscous_acceleration(water_body_inner);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -127,10 +124,10 @@ int main(int ac, char *av[])
 	RestartIO restart_io(in_output, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
 	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
-		write_total_mechanical_energy(in_output, water_block);
+		write_total_mechanical_energy(in_output, water_body);
 	/** Output the maximum speed of the fluid body. */
 	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<MaximumSpeed>>
-		write_maximum_speed(in_output, water_block);
+		write_maximum_speed(in_output, water_body);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -146,10 +143,10 @@ int main(int ac, char *av[])
 	if (sph_system.restart_step_ != 0)
 	{
 		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
-		water_block.updateCellLinkedList();
+		water_body.updateCellLinkedList();
 		periodic_condition_x.update_cell_linked_list_.parallel_exec();
 		periodic_condition_y.update_cell_linked_list_.parallel_exec();
-		water_block_inner.updateConfiguration();
+		water_body_inner.updateConfiguration();
 	}
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control

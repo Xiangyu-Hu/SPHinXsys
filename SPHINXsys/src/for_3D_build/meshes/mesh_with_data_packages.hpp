@@ -46,7 +46,7 @@ namespace SPH
 					Real dphidx = (*in_pkg_data_addrs[i + 1][j][k] - *in_pkg_data_addrs[i - 1][j][k]);
 					Real dphidy = (*in_pkg_data_addrs[i][j + 1][k] - *in_pkg_data_addrs[i][j - 1][k]);
 					Real dphidz = (*in_pkg_data_addrs[i][j][k + 1] - *in_pkg_data_addrs[i][j][k - 1]);
-					*out_pkg_data_addrs[i][j][k] = Vecd(dphidx, dphidy, dphidz);
+					*out_pkg_data_addrs[i][j][k] = 0.5 * Vecd(dphidx, dphidy, dphidz) / grid_spacing_;
 				}
 	}
 	//=================================================================================================//

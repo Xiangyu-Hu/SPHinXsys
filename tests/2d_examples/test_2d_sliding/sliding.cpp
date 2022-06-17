@@ -1,9 +1,9 @@
 /**
- * @file 	collision.cpp
- * @brief 	a soft ball with initial velocity bouncing within a confined boundary
- * @details This is the first case for test collision dynamics for
+ * @file 	sliding.cpp
+ * @brief 	a 2D elastic cube sildes on a rigid slope.
+ * @details This is the a case for test collision dynamics for
  * 			understanding SPH method for complex simulation.
- * @author 	Xiangyu Hu
+ * @author 	chi Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h" //	SPHinXsys Library.
 using namespace SPH;   //	Namespace cite here.
@@ -18,6 +18,8 @@ Real resolution_ref = L / 10.0; /**< reference particle spacing. */
 Real BW = resolution_ref * 4;	/**< wall width for BCs. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(25, 15));
+// Observer location
+StdVec<Vecd> observation_location = {Vecd(7.2, 9.8)};
 //----------------------------------------------------------------------
 //	Global parameters on material properties
 //----------------------------------------------------------------------
@@ -27,28 +29,23 @@ Real poisson = 0.45;
 Real gravity_g = 9.8;
 Real physical_viscosity = 1000000.0;
 //----------------------------------------------------------------------
-//	Bodies with cases-dependent geometries (ComplexShape).
+//	Cases-dependent geometries
 //----------------------------------------------------------------------
-// Wall boundary body definition.
-class WallBoundary : public SolidBody
+class WallBoundary : public MultiPolygonShape
 {
 public:
-	WallBoundary(SPHSystem &sph_system, const std::string &body_name)
-		: SolidBody(sph_system, body_name)
+	explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
 		/** Geometry definition. */
 		std::vector<Vecd> wall_shape{Vecd(0, 0), Vecd(0, slop_h), Vecd(DL, slop_h), Vecd(0, 0)};
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(wall_shape, ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(wall_shape, ShapeBooleanOps::add);
 	}
 };
-/** Definition of the ball as a elastic structure. */
-class Cubic : public SolidBody
+
+class Cube : public MultiPolygonShape
 {
 public:
-	Cubic(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit Cube(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
 		/** Geometry definition. */
 		std::vector<Vecd> cubic_shape;
@@ -57,20 +54,7 @@ public:
 		cubic_shape.push_back(Vecd(BW + L, slop_h + L + resolution_ref));
 		cubic_shape.push_back(Vecd(BW + L, slop_h + resolution_ref));
 		cubic_shape.push_back(Vecd(BW, slop_h + resolution_ref));
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(cubic_shape, ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
-	}
-};
-//----------------------------------------------------------------------
-//	Observer particle generator.
-//----------------------------------------------------------------------
-class ObserverParticleGenerator : public ParticleGeneratorDirect
-{
-public:
-	ObserverParticleGenerator() : ParticleGeneratorDirect()
-	{
-		positions_volumes_.push_back(std::make_pair(Vecd(7.2, 9.8), 0.0));
+		multi_polygon_.addAPolygon(cubic_shape, ShapeBooleanOps::add);
 	}
 };
 //----------------------------------------------------------------------
@@ -82,57 +66,54 @@ int main(int ac, char *av[])
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
-	/** tag for run particle relaxation for the initial body fitted distribution */
-	sph_system.run_particle_relaxation_ = false;
-	/** tag for computation start with relaxed body fitted particles distribution */
-	sph_system.reload_particles_ = true;
-	/** tag for computation from restart files. 0: start with initial condition */
-	sph_system.restart_step_ = 0;
-	/** output environment. */
-	In_Output in_output(sph_system);
-/** handle command line arguments. */
+// handle command line arguments
 #ifdef BOOST_AVAILABLE
 	sph_system.handleCommandlineOptions(ac, av);
-#endif
+#endif	/** output environment. */
+	InOutput in_output(sph_system);
 	//----------------------------------------------------------------------
-	//	Creating body, materials and particles.cd
+	//	Creating body, materials and particles
 	//----------------------------------------------------------------------
-	Cubic free_cubic(sph_system, "FreeBall");
-	SharedPtr<LinearElasticSolid> cubic_material = makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
-	ElasticSolidParticles free_cubic_particles(free_cubic, cubic_material);
+	SolidBody free_cube(sph_system, makeShared<Cube>("FreeCube"));
+	free_cube.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	free_cube.generateParticles<ParticleGeneratorLattice>();
 
-	WallBoundary wall_boundary(sph_system, "Wall");
-	SolidParticles solid_particles(wall_boundary, makeShared<Solid>(rho0_s, cubic_material->ContactStiffness()));
+	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+	wall_boundary.defineParticlesAndMaterial<SolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
-	ObserverBody free_cubic_observer(sph_system, "FreeBallObserver");
-	ObserverParticles free_cubic_observer_particles(free_cubic_observer, makeShared<ObserverParticleGenerator>());
+	ObserverBody cube_observer(sph_system, "CubeObserver");
+	cube_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner free_cubic_inner(free_cubic);
-	SolidBodyRelationContact free_cubic_contact(free_cubic, {&wall_boundary});
-	BodyRelationContact free_cubic_observer_contact(free_cubic_observer, {&free_cubic});
+	BodyRelationInner free_cube_inner(free_cube);
+	SolidBodyRelationContact free_cube_contact(free_cube, {&wall_boundary});
+	BodyRelationContact cube_observer_contact(cube_observer, {&free_cube});
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	Gravity gravity(Vecd(0.0, -gravity_g));
-	TimeStepInitialization free_cubic_initialize_timestep(free_cubic, gravity);
+	Transform2d transform2d(Rotation2d(-0.5235));
+	SimpleDynamics<TranslationAndRotation> wall_boundary_rotation(wall_boundary, transform2d);
+	SimpleDynamics<TranslationAndRotation> free_cube_rotation(free_cube, transform2d);
+	TimeStepInitialization free_cube_initialize_timestep(free_cube, gravity);
 	/** Kernel correction. */
-	solid_dynamics::CorrectConfiguration free_cubic_corrected_configuration(free_cubic_inner);
+	solid_dynamics::CorrectConfiguration free_cube_corrected_configuration(free_cube_inner);
 	/** Time step size. */
-	solid_dynamics::AcousticTimeStepSize free_cubic_get_time_step_size(free_cubic);
+	solid_dynamics::AcousticTimeStepSize free_cube_get_time_step_size(free_cube);
 	/** stress relaxation for the solid body. */
-	solid_dynamics::StressRelaxationFirstHalf free_cubic_stress_relaxation_first_half(free_cubic_inner);
-	solid_dynamics::StressRelaxationSecondHalf free_cubic_stress_relaxation_second_half(free_cubic_inner);
+	solid_dynamics::StressRelaxationFirstHalf free_cube_stress_relaxation_first_half(free_cube_inner);
+	solid_dynamics::StressRelaxationSecondHalf free_cube_stress_relaxation_second_half(free_cube_inner);
 	/** Algorithms for solid-solid contact. */
-	solid_dynamics::ContactDensitySummation free_cubic_update_contact_density(free_cubic_contact);
-	solid_dynamics::ContactForce free_cubic_compute_solid_contact_forces(free_cubic_contact);
+	solid_dynamics::ContactDensitySummation free_cube_update_contact_density(free_cube_contact);
+	solid_dynamics::ContactForceFromWall free_cube_compute_solid_contact_forces(free_cube_contact);
 	/** Damping*/
 	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
-		damping(free_cubic_inner, 0.5, "Velocity", physical_viscosity);
+		damping(0.5, free_cube_inner,"Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -140,23 +121,22 @@ int main(int ac, char *av[])
 	BodyStatesRecordingToVtp body_states_recording(in_output, sph_system.real_bodies_);
 	/** Observer and output. */
 	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Vecd>>
-		write_free_cubic_displacement("Position", in_output, free_cubic_observer_contact);
+		write_free_cube_displacement("Position", in_output, cube_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
 	GlobalStaticVariables::physical_time_ = 0.0;
-	Transformd transform(-0.5235, Vecd(0));
-	solid_particles.ParticleTranslationAndRotation(transform);
-	free_cubic_particles.ParticleTranslationAndRotation(transform);
+	wall_boundary_rotation.parallel_exec();
+	free_cube_rotation.parallel_exec();
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	free_cubic_corrected_configuration.parallel_exec();
+	free_cube_corrected_configuration.parallel_exec();
 	//----------------------------------------------------------------------
 	//	Initial states output.
 	//----------------------------------------------------------------------
 	body_states_recording.writeToFile(0);
-	write_free_cubic_displacement.writeToFile(0);
+	write_free_cube_displacement.writeToFile(0);
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
@@ -182,28 +162,28 @@ int main(int ac, char *av[])
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				free_cubic_initialize_timestep.parallel_exec();
+				free_cube_initialize_timestep.parallel_exec();
 				if (ite % 100 == 0)
 				{
 					std::cout << "N=" << ite << " Time: "
 							  << GlobalStaticVariables::physical_time_ << "	dt: " << dt
 							  << "\n";
 				}
-				free_cubic_update_contact_density.parallel_exec();
-				free_cubic_compute_solid_contact_forces.parallel_exec();
-				free_cubic_stress_relaxation_first_half.parallel_exec(dt);
-				free_cubic_stress_relaxation_second_half.parallel_exec(dt);
+				free_cube_update_contact_density.parallel_exec();
+				free_cube_compute_solid_contact_forces.parallel_exec();
+				free_cube_stress_relaxation_first_half.parallel_exec(dt);
+				free_cube_stress_relaxation_second_half.parallel_exec(dt);
 
-				free_cubic.updateCellLinkedList();
-				free_cubic_contact.updateConfiguration();
+				free_cube.updateCellLinkedList();
+				free_cube_contact.updateConfiguration();
 
 				ite++;
-				dt = free_cubic_get_time_step_size.parallel_exec();
+				dt = free_cube_get_time_step_size.parallel_exec();
 				relaxation_time += dt;
 				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 			}
-			write_free_cubic_displacement.writeToFile(ite);
+			write_free_cube_displacement.writeToFile(ite);
 		}
 		tick_count t2 = tick_count::now();
 		body_states_recording.writeToFile(ite);
@@ -216,7 +196,15 @@ int main(int ac, char *av[])
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_free_cubic_displacement.newResultTest();
+	if (sph_system.generate_regression_data_)
+	{
+		// The lift force at the cylinder is very small and not important in this case.
+		write_free_cube_displacement.generateDataBase({1.0e-2, 1.0e-2}, {1.0e-2, 1.0e-2});
+	}
+	else
+	{
+	write_free_cube_displacement.newResultTest();
+	}
 
 	return 0;
 }

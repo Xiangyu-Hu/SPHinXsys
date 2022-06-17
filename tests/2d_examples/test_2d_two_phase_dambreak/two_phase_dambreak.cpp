@@ -20,22 +20,25 @@ int main()
 	/** Tag for computation from restart files. 0: not from restart files. */
 	sph_system.restart_step_ = 0;
 	/** I/O environment. */
-	In_Output in_output(sph_system);
+	InOutput in_output(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	WaterBlock water_block(sph_system, "WaterBody");
-	FluidParticles water_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f));
+	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+	water_block.generateParticles<ParticleGeneratorLattice>();
 
-	AirBlock air_block(sph_system, "AirBody");
-	FluidParticles air_particles(air_block, makeShared<WeaklyCompressibleFluid>(rho0_a, c_f));
+	FluidBody air_block(sph_system, makeShared<AirBlock>("AirBody"));
+	air_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_a, c_f);
+	air_block.generateParticles<ParticleGeneratorLattice>();
 
-	WallBoundary wall_boundary(sph_system, "Wall");
-	SolidParticles wall_particles(wall_boundary);
-	wall_particles.addAVariableToWrite<Vecd>("NormalDirection");
+	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+	wall_boundary.generateParticles<ParticleGeneratorLattice>();
+	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
 	ObserverBody fluid_observer(sph_system, "Fluidobserver");
-	ObserverParticles observer_particles(fluid_observer, makeShared<ObserverParticleGenerator>());
+	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -45,7 +48,7 @@ int main()
 	BodyRelationContact water_wall_contact(water_block, {&wall_boundary});
 	ComplexBodyRelation air_water_complex(air_block, {&water_block});
 	BodyRelationContact air_wall_contact(air_block, {&wall_boundary});
-	BodyRelationContact fluid_observer_contact(fluid_observer, {&water_block, &air_block});
+	BodyRelationContact fluid_observer_contact(fluid_observer, RealBodyVector{&water_block, &air_block});
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
@@ -53,6 +56,7 @@ int main()
 	/** Define external force. */
 	Gravity gravity(Vecd(0.0, -gravity_g));
 	/** Initialize particle acceleration. */
+	SimpleDynamics<NormalDirectionFromShapeAndOp> inner_normal_direction(wall_boundary, "InnerWall");
 	TimeStepInitialization initialize_a_water_step(water_block, gravity);
 	TimeStepInitialization initialize_a_air_step(air_block, gravity);
 	/** Evaluation of density by summation approach. */
@@ -98,7 +102,7 @@ int main()
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	wall_particles.initializeNormalDirectionFromShapeAndOp("InnerWall");
+	inner_normal_direction.parallel_exec();
 	//----------------------------------------------------------------------
 	//	Load restart file if necessary.
 	//----------------------------------------------------------------------

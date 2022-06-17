@@ -51,7 +51,7 @@ namespace SPH
 	class CellList
 	{
 	public:
-		/** using concurrent vectors due to writting conflicts when building the list */
+		/** using concurrent vectors due to writing conflicts when building the list */
 		ConcurrentIndexVector concurrent_particle_indexes_;
 		/** non-concurrent cell linked list rewritten for building neighbor list */
 		ListDataVector cell_list_data_;
@@ -79,7 +79,7 @@ namespace SPH
 		virtual void updateSplitCellLists(SplitCellLists &split_cell_lists) = 0;
 
 	public:
-		/** The buffer size 2 used to expand computational domian for particle searching. */
+		/** The buffer size 2 used to expand computational domain for particle searching. */
 		BaseCellLinkedList(SPHBody &sph_body, SPHAdaptation &sph_adaptation);
 		virtual ~BaseCellLinkedList(){};
 
