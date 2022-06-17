@@ -7,6 +7,16 @@
 namespace SPH
 {
 	//=================================================================================================//
+	BoundingBox Shape::getBounds()
+	{
+		if (!is_bounds_found_)
+		{
+			bounding_box_ = findBounds();
+			is_bounds_found_ = true;
+		}
+		return bounding_box_;
+	}
+	//=================================================================================================//
 	bool Shape::checkNotFar(const Vecd &input_pnt, Real threshold)
 	{
 		return checkContain(input_pnt) || checkNearSurface(input_pnt, threshold) ? true : false;
@@ -29,7 +39,7 @@ namespace SPH
 		Vecd displacement_to_surface = findClosestPoint(input_pnt) - input_pnt;
 		while (displacement_to_surface.norm() < Eps)
 		{
-			Vecd jittered = input_pnt; //jittering
+			Vecd jittered = input_pnt; // jittering
 			for (int l = 0; l != input_pnt.size(); ++l)
 				jittered[l] = input_pnt[l] + (((Real)rand() / (RAND_MAX)) - 0.5) * 100.0 * Eps;
 			if (checkContain(jittered) == is_contain)
@@ -39,15 +49,20 @@ namespace SPH
 		return is_contain ? direction_to_surface : -1.0 * direction_to_surface;
 	}
 	//=================================================================================================//
+	bool BinaryShapes::isValid()
+	{
+		return shapes_and_ops_.size() == 0 ? false : true;
+	}
+	//=================================================================================================//
 	BoundingBox BinaryShapes::findBounds()
 	{
-		//initial reference values
+		// initial reference values
 		Vecd lower_bound = Vecd(Infinity);
 		Vecd upper_bound = Vecd(-Infinity);
 
 		for (auto &shape_and_op : shapes_and_ops_)
 		{
-			BoundingBox shape_bounds = shape_and_op.first->findBounds();
+			BoundingBox shape_bounds = shape_and_op.first->getBounds();
 			for (int j = 0; j != Dimensions; ++j)
 			{
 				lower_bound[j] = SMIN(lower_bound[j], shape_bounds.first[j]);
@@ -93,7 +108,7 @@ namespace SPH
 	//=================================================================================================//
 	Vecd BinaryShapes::findClosestPoint(const Vecd &input_pnt)
 	{
-		//a big positive number
+		// a big positive number
 		Real large_number(Infinity);
 		Real dist_min = large_number;
 		Vecd pnt_closest(0);
@@ -132,6 +147,21 @@ namespace SPH
 	Shape *BinaryShapes::getShapeByName(const std::string &shape_name)
 	{
 		return getShapeAndOpByName(shape_name)->first;
+	}
+	//=================================================================================================//
+	size_t BinaryShapes::getShapeIndexByName(const std::string &shape_name)
+	{
+		for (size_t index = 0; index != shapes_and_ops_.size(); ++index)
+		{
+			if (shapes_and_ops_[index].first->getName() == shape_name)
+			{
+				return index;
+			}
+		}
+		std::cout << "\n FAILURE: the shape " << shape_name << " has not been created!" << std::endl;
+		std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+
+		return MaxSize_t;
 	}
 	//=================================================================================================//
 }

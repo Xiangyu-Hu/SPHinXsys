@@ -72,8 +72,8 @@ namespace SPH
 			  pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
 			  surface_indicator_(particles_->surface_indicator_)
 		{
-			particles_->registerAVariable<Vecd>(color_grad_, "ColorGradient");
-			particles_->registerAVariable<Vecd>(surface_norm_, "SurfaceNormal");
+			particles_->registerAVariable(color_grad_, "ColorGradient");
+			particles_->registerAVariable(surface_norm_, "SurfaceNormal");
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				Real rho0_k = contact_particles_[k]->rho0_;

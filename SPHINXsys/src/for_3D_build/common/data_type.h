@@ -16,6 +16,8 @@ namespace SPH {
 	using SymMatd = SymMat3d;
 	using AngularVecd = Vec3d;
 
+	using  BoundingBox = BaseBoundingBox<Vec3d>;
+
 	using Transformd = Transform3d;
 
 	template<class DataType, int ARRAY_SIZE>

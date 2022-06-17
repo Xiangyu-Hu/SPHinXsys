@@ -30,13 +30,12 @@ Real Re = 100;						/**< Reynolds number. */
 Real mu_f = rho0_f * U_f * DL / Re; /**< Dynamics viscosity. */
 
 /**
- * @brief 	Fluid body definition.
+ * @brief 	Fluid body shape definition.
  */
-class WaterBlock : public FluidBody
+class WaterBlock : public MultiPolygonShape
 {
 public:
-	WaterBlock(SPHSystem &system, const std::string &body_name)
-		: FluidBody(system, body_name)
+	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
 		/** Geometry definition. */
 		std::vector<Vecd> water_block_shape;
@@ -45,9 +44,7 @@ public:
 		water_block_shape.push_back(Vecd(DL, DH));
 		water_block_shape.push_back(Vecd(DL, 0.0));
 		water_block_shape.push_back(Vecd(0.0, 0.0));
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(water_block_shape, ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
 	}
 };
 /**
@@ -79,37 +76,26 @@ int main(int ac, char *av[])
 	 * @brief Build up -- a SPHSystem --
 	 */
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
-	/** Set the starting time. */
-	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for computation start with relaxed body fitted particles distribution. */
 	sph_system.reload_particles_ = false;
-	/** Tag for whether conduct the regression test. */
-	sph_system.run_regression_test_ = true;
-	/** Tag for computation from restart files. 0: not from restart files. */
-	sph_system.restart_step_ = 0;
 	//handle command line arguments
 	sph_system.handleCommandlineOptions(ac, av);
 	/** output environment. */
-	In_Output in_output(sph_system);
-
+	InOutput in_output(sph_system);
 	/**
-	 * @brief Material property, particles and body creation of fluid.
+	 * @brief create body, particle and material property.
 	 */
-	WaterBlock water_block(sph_system, "WaterBody");
+	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	// Using relaxed particle distribution if needed
-	SharedPtr<ParticleGenerator> water_block_particle_generator = makeShared<ParticleGeneratorLattice>();
-	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-		water_block_particle_generator = makeShared<ParticleGeneratorReload>(in_output, water_block.getBodyName());
-	FluidParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f), water_block_particle_generator);
+	sph_system.reload_particles_
+		? water_block.generateParticles<ParticleGeneratorReload>(in_output, water_block.getBodyName())
+		: water_block.generateParticles<ParticleGeneratorLattice>();
 	/** topology */
 	BodyRelationInner water_block_inner(water_block);
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
-	/**
-	  * @brief 	Methods used only once.
-	  */
-
 	/** Initial velocity field */
 	TaylorGreenInitialCondition initial_condition(water_block);
 	/**
@@ -258,7 +244,7 @@ int main(int ac, char *av[])
 
 	write_particle_reload_files.writeToFile();
 
-	if (sph_system.run_regression_test_ == true)
+	if (!sph_system.reload_particles_)
 	{
 		write_total_mechanical_energy.newResultTest();
 		write_maximum_speed.newResultTest();

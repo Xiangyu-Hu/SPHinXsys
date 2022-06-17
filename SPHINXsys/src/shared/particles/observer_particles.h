@@ -38,8 +38,8 @@ namespace SPH
 	class ObserverParticles : public BaseParticles
 	{
 	public:
-		explicit ObserverParticles(SPHBody &sph_body, SharedPtr<ParticleGenerator> particle_generator_ptr)
-        : BaseParticles(sph_body, makeShared<BaseMaterial>(), particle_generator_ptr) {};
+		explicit ObserverParticles(SPHBody &sph_body,  BaseMaterial *base_material)
+        : BaseParticles(sph_body, base_material) {};
 		virtual ~ObserverParticles(){};
 	};
 }

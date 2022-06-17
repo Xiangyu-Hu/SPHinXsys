@@ -15,17 +15,17 @@ SET(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 
 file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/SPHinXsys.stl
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/curved_tube.stl
         DESTINATION ${BUILD_INPUT_PATH})
 
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
 add_test(NAME ${PROJECT_NAME}
-		 COMMAND ${PROJECT_NAME} --r=true
+		 COMMAND ${PROJECT_NAME}
 		 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
-if(NOT STATIC_BUILD) # usual dynamic build
+if(NOT SPH_ONLY_STATIC_BUILD ) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 		target_link_libraries(${PROJECT_NAME} sphinxsys_3d)

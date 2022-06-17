@@ -30,6 +30,7 @@
 #define SOLID_BODY_H
 
 #include "base_body.h"
+#include "base_body_part.h"
 
 namespace SPH
 {
@@ -45,23 +46,9 @@ namespace SPH
 	class SolidBody : public RealBody
 	{
 	public:
-		SolidBody(SPHSystem &system, const std::string &body_name,
-				  SharedPtr<SPHAdaptation> sph_adaptation_ptr = makeShared<SPHAdaptation>(1.15));
+		SolidBody(SPHSystem &system, SharedPtr<Shape> shape_ptr);
 		virtual ~SolidBody(){};
 		virtual SolidBody *ThisObjectPtr() override { return this; };
-	};
-
-	/**
-	 * @class ThinStructure
-	 * @brief Declaration of thin structure solidbody.
-	 */
-	class ThinStructure : public SolidBody
-	{
-	public:
-		ThinStructure(SPHSystem &system, const std::string &body_name,
-					  SharedPtr<SPHAdaptation> sph_adaptation_ptr = makeShared<SPHAdaptation>(1.15));
-		virtual ~ThinStructure(){};
-		virtual ThinStructure *ThisObjectPtr() override { return this; };
 	};
 
 	/**
@@ -79,7 +66,7 @@ namespace SPH
 		Vec3d initial_mass_center_;
 		SimTK::MassProperties *body_part_mass_properties_;
 
-		SolidBodyPartForSimbody(SPHBody &body, const std::string &body_part_name, Shape &shape);
+		SolidBodyPartForSimbody(SPHBody &body, SharedPtr<Shape> shape_ptr);
 		virtual ~SolidBodyPartForSimbody(){};
 
 	protected:

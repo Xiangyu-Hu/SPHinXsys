@@ -34,7 +34,6 @@
 
 namespace SPH
 {
-
 	/**
 	* @class PlasticSolid
 	* @brief Abstract class for a generalized plastic solid
@@ -51,7 +50,7 @@ namespace SPH
 		explicit PlasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio, Real yield_stress)
 			: NeoHookeanSolid(rho0, youngs_modulus, poisson_ratio), yield_stress_(yield_stress)
 		{
-			material_type_ = "PlasticSolid";
+			material_type_name_ = "PlasticSolid";
 		};
 		virtual ~PlasticSolid(){};
 
@@ -82,13 +81,13 @@ namespace SPH
 		explicit HardeningPlasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio, Real yield_stress, Real hardening_modulus)
 			: PlasticSolid(rho0, youngs_modulus, poisson_ratio, yield_stress), hardening_modulus_(hardening_modulus)
 		{
-			material_type_ = "HardeningPlasticSolid";
+			material_type_name_ = "HardeningPlasticSolid";
 		};
 		virtual ~HardeningPlasticSolid(){};
 
 		Real HardeningModulus() { return hardening_modulus_; };
 		/** assign particles to this material */
-		virtual void assignElasticSolidParticles(ElasticSolidParticles *elastic_particles) override;
+		virtual void assignBaseParticles(BaseParticles *base_particles) override;;
 		/** compute the stress through defoemation, and plastic relaxation. */
 		virtual Matd PlasticConstitutiveRelation(const Matd &deformation, size_t index_i, Real dt = 0.0) override;
 

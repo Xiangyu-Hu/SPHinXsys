@@ -19,18 +19,21 @@ int main()
 	/** Tag for computation from restart files. 0: not from restart files. */
 	sph_system.restart_step_ = 0;
 	/** I/O environment. */
-	In_Output in_output(sph_system);
+	InOutput in_output(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	WaterBlock water_block(sph_system, "WaterBody");
-	FluidParticles water_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f));
+	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+	water_block.generateParticles<ParticleGeneratorLattice>();	
 
-	AirBlock air_block(sph_system, "AirBody");
-	FluidParticles air_particles(air_block, makeShared<WeaklyCompressibleFluid>(rho0_a, c_f, mu_a));
+	FluidBody air_block(sph_system, makeShared<AirBlock>("AirBody"));
+	air_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_a, c_f, mu_a);
+	air_block.generateParticles<ParticleGeneratorLattice>();	
 
-	WallBoundary wall_boundary(sph_system, "Wall");
-	SolidParticles wall_particles(wall_boundary);
+	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -46,6 +49,7 @@ int main()
 	//----------------------------------------------------------------------
 	/** Define external force. */
 	Gravity gravity(Vecd(0.0, -gravity_g));
+	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	/** Initialize particle acceleration. */
 	TimeStepInitialization initialize_a_water_step(water_block, gravity);
 	TimeStepInitialization initialize_a_air_step(air_block, gravity);
@@ -104,7 +108,7 @@ int main()
 	//----------------------------------------------------------------------
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	wall_particles.initializeNormalDirectionFromBodyShape();
+	wall_boundary_normal_direction.parallel_exec();
 	//----------------------------------------------------------------------
 	//	Load restart file if necessary.
 	//----------------------------------------------------------------------

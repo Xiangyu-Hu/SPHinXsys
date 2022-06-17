@@ -24,12 +24,6 @@ namespace SPH
 	class CellList;
 	class BaseParticles;
 
-	/** Bounding box for system, body, body part and shape, first: lower bound, second: upper bound. */
-	typedef std::pair<Vecd, Vecd> BoundingBox;
-	/** Check if a point is inside the bounding box */
-	bool checkIfPointInBoundingBox(Vec3d point, BoundingBox &bbox);
-	bool checkIfPointInBoundingBox(Vec2d point, BoundingBox &bbox);
-
 	/** Generalized particle data type */
 	typedef std::tuple<StdVec<StdLargeVec<Real> *>, StdVec<StdLargeVec<Vecd> *>, StdVec<StdLargeVec<Matd> *>,
 					   StdVec<StdLargeVec<int> *>>
@@ -124,7 +118,7 @@ namespace SPH
 
 	/** operation by looping or going through a variable name list */
 	template <typename VariableType>
-	struct loopVariabaleNameList
+	struct loopVariableNameList
 	{
 		template <typename VariableOperation>
 		void operator()(ParticleData &particle_data,

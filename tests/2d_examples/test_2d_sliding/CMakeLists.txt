@@ -16,9 +16,9 @@ file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/regression_test_tool.py
         DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FreeBallObserver_Position_runtimes.dat
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/CubeObserver_Position_runtimes.dat
         DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FreeBallObserver_Position_ensemble_averaged_mean_variance.xml
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/CubeObserver_Position_ensemble_averaged_mean_variance.xml
         DESTINATION ${BUILD_INPUT_PATH})
 
 aux_source_directory(. DIR_SRCS)

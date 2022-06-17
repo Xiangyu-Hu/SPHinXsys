@@ -37,8 +37,8 @@ namespace SPH
 	 * @brief Preclaimed classes.
 	 */
 	class SPHBody;
-	class In_Output;
-
+	class InOutput;
+	class ComplexShape;
 	/**
 	 * @class SPHSystem
 	 * @brief The SPH system managing objects in the system level.
@@ -54,21 +54,17 @@ namespace SPH
 		Real resolution_ref_;					 /**< reference resolution of the SPH system */
 		tbb::global_control tbb_global_control_; /**< global controlling on the total number parallel threads */
 
-		In_Output *in_output_;		   /**< in_output setup */
-		size_t restart_step_;		   /**< restart step */
-		bool run_particle_relaxation_; /**< run particle relaxation for body fitted particle distribution */
-		bool reload_particles_;		   /**< start the simulation with relaxed particles. */
-		bool run_regression_test_;	   /**< run the regression test. */
+		InOutput *in_output_;			/**< in_output setup */
+		size_t restart_step_;			/**< restart step */
+		bool run_particle_relaxation_;	/**< run particle relaxation for body fitted particle distribution */
+		bool reload_particles_;			/**< start the simulation with relaxed particles. */
+		bool generate_regression_data_; /**< run and generate or enhancethe regression test data set. */
 
-		SPHBodyVector bodies_;			  /**< All sph bodies. */
-		SPHBodyVector fictitious_bodies_; /**< The bodies without inner particle configuration. */
+		SPHBodyVector sph_bodies_;		  /**< All sph bodies. */
+		SPHBodyVector observation_bodies_; /**< The bodies without inner particle configuration. */
 		SPHBodyVector real_bodies_;		  /**< The bodies with inner particle configuration. */
 		SolidBodyVector solid_bodies_;	  /**< The bodies with inner particle configuration and acoustic time steps . */
 
-		void addABody(SPHBody *sph_body);
-		void addARealBody(RealBody *real_body);
-		void addASolidBody(SolidBody *solid_body);
-		void addAFictitiousBody(FictitiousBody *fictitious_body);
 		void initializeSystemCellLinkedLists();
 		void initializeSystemConfigurations();
 		Real getSmallestTimeStepAmongSolidBodies(Real CFL = 0.6);
@@ -77,4 +73,4 @@ namespace SPH
 #endif
 	};
 }
-#endif //SPH_SYSTEM_H
+#endif // SPH_SYSTEM_H

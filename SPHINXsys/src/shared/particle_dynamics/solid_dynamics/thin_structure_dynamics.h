@@ -31,17 +31,18 @@
 #define THIN_STRUCTURE_DYNAMICS_H
 
 #include "all_particle_dynamics.h"
-#include "elastic_solid.h"
-#include "weakly_compressible_fluid.h"
 #include "base_kernel.h"
-#include "all_fluid_dynamics.h"
+#include "body_relation.h"
+#include "solid_body.h"
+#include "solid_particles.h"
+#include "elastic_solid.h"
 
 namespace SPH
 {
 	namespace thin_structure_dynamics
 	{
-		typedef DataDelegateSimple<ThinStructure, ShellParticles, ElasticSolid> ShellDataSimple;
-		typedef DataDelegateInner<ThinStructure, ShellParticles, ElasticSolid> ShellDataInner;
+		typedef DataDelegateSimple<SolidBody, ShellParticles, ElasticSolid> ShellDataSimple;
+		typedef DataDelegateInner<SolidBody, ShellParticles, ElasticSolid> ShellDataInner;
 
 		/**
 		 * @class ShellDynamicsInitialCondition
@@ -72,7 +73,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &angular_vel_, &dangular_vel_dt_;
-			StdLargeVec<Real> &shell_thickness_;
+			StdLargeVec<Real> &thickness_;
 			Real rho0_, physical_viscosity_, E0_, nu_;
 			Real smoothing_length_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
@@ -125,7 +126,7 @@ namespace SPH
 			virtual ~BaseShellRelaxation(){};
 
 		protected:
-			StdLargeVec<Real> &Vol_, &rho_n_, &mass_, &shell_thickness_;
+			StdLargeVec<Real> &Vol_, &rho_n_, &mass_, &thickness_;
 			StdLargeVec<Vecd> &pos_n_, &vel_n_, &dvel_dt_, &dvel_dt_prior_, &force_from_fluid_;
 			StdLargeVec<Vecd> &n_0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
 				&angular_vel_, dangular_vel_dt_;
@@ -190,7 +191,7 @@ namespace SPH
 
 		/**@class ConstrainShellBodyRegion
 		 * @brief Fix the position and angle of a shell body part.
-		 * Note that the average values for FSI are prescirbed also.
+		 * Note that the average values for FSI are prescribed also.
 		 */
 		class ConstrainShellBodyRegion : public PartSimpleDynamicsByParticle, public ShellDataSimple
 		{
@@ -263,7 +264,7 @@ namespace SPH
 		/**@class ConstrainShellBodyRegionInAxisDirection
 		 * @brief The boundary conditions are denoted by SS1 according to the references.
 	     * The axis_direction must be 0 or 1.
-		 * Note that the average values for FSI are prescirbed also.
+		 * Note that the average values for FSI are prescribed also.
 		 */
 		class ConstrainShellBodyRegionInAxisDirection : public PartSimpleDynamicsByParticle, public ShellDataSimple
 		{
@@ -290,7 +291,7 @@ namespace SPH
 			Real time_to_full_external_force_;
 			Real particle_spacing_ref_, h_spacing_ratio_;
 			StdLargeVec<Vecd> &pos_0_, &dvel_dt_prior_;
-			StdLargeVec<Real> &Vol_, &mass_, &shell_thickness_;
+			StdLargeVec<Real> &Vol_, &mass_, &thickness_;
 			std::vector <StdLargeVec<Real>> weight_;
 			std::vector<Real> sum_of_weight_;
 

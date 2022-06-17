@@ -1,25 +1,25 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * --------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+ * and HU1527/12-1.															*
+ *                                                                           *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * --------------------------------------------------------------------------*/
 #ifndef BASE_DATA_TYPE_H
 #define BASE_DATA_TYPE_H
 
@@ -286,36 +286,36 @@ namespace SPH
 		return in;
 	}
 
-	//vector with integers
+	// vector with integers
 	using Vec2i = SVec<2, int>;
 	using Vec3i = SVec<3, int>;
 
-	//vector with unsigned int
+	// vector with unsigned int
 	using Vec2u = SVec<2, size_t>;
 	using Vec3u = SVec<3, size_t>;
 
-	//float point number
+	// float point number
 	using Real = SimTK::Real;
 
-	//useful float point constants s
+	// useful float point constants s
 	const Real Pi = Real(M_PI);
 	using SimTK::Eps;
 	using SimTK::Infinity;
 	using SimTK::TinyReal;
 	constexpr size_t MaxSize_t = std::numeric_limits<size_t>::max();
 
-	//vector with float point number
+	// vector with float point number
 	using Vec2d = SimTK::Vec2;
 	using Vec3d = SimTK::Vec3;
 
-	//small matrix with float point number
+	// small matrix with float point number
 	using Mat2d = SimTK::Mat22;
 	using Mat3d = SimTK::Mat33;
-	//small symmetric matrix with float point number
+	// small symmetric matrix with float point number
 	using SymMat2d = SimTK::SymMat22;
 	using SymMat3d = SimTK::SymMat33;
 
-	//type trait for particle data type index
+	// type trait for particle data type index
 	template <typename T>
 	struct ParticleDataTypeIndex
 	{
@@ -352,48 +352,146 @@ namespace SPH
 		static constexpr int value = 3;
 	};
 
-	//verbal boolean for positive and negative axis directions
+	// verbal boolean for positive and negative axis directions
 	const int xAxis = 0;
 	const int yAxis = 1;
 	const int zAxis = 2;
 	const bool positiveDirection = true;
 	const bool negativeDirection = false;
 
+	/** Bounding box for system, body, body part and shape, first: lower bound, second: upper bound. */
+	template <typename VecType>
+	class BaseBoundingBox
+	{
+	public:
+		VecType first, second;
+		int dimension_;
+
+		BaseBoundingBox() : first(VecType(0)), second(VecType(0)), dimension_(VecType(0).size()){};
+		BaseBoundingBox(const VecType &lower_bound, const VecType &upper_bound)
+			: first(lower_bound), second(upper_bound),
+			  dimension_(lower_bound.size()){};
+
+		bool checkContain(const VecType &point)
+		{
+			bool is_contain = true;
+			for (int i = 0; i < dimension_; ++i)
+			{
+				if (point[i] < first[i] || point[i] > second[i])
+				{
+					is_contain = false;
+					break;
+				}
+			}
+			return is_contain;
+		};
+	};
+
+	template <class T>
+	bool operator==(const BaseBoundingBox<T> &bb1, const BaseBoundingBox<T> &bb2)
+	{
+		return bb1.first == bb2.first && bb1.second == bb2.second ? true : false;
+	};
+
+	template <class BoundingBoxType>
+	BoundingBoxType getIntersectionOfBoundingBoxes(const BoundingBoxType &bb1, const BoundingBoxType &bb2)
+	{
+		// check that the inputs are correct
+		int dimension = bb1.dimension_;
+		// Get the Bounding Box of the intersection of the two meshes
+		BoundingBoxType bb(bb1);
+		// #1 check that there is overlap, if not, exception
+		for (int i = 0; i < dimension; ++i)
+			if (bb2.first[i] > bb1.second[i] || bb2.second[i] < bb1.first[i])
+				std::runtime_error("getIntersectionOfBoundingBoxes: no overlap!");
+		// #2 otherwise modify the first one to get the intersection
+		for (int i = 0; i < dimension; ++i)
+		{
+			// if the lower limit is inside change the lower limit
+			if (bb1.first[i] < bb2.first[i] && bb2.first[i] < bb1.second[i])
+				bb.first[i] = bb2.first[i];
+			// if the upper limit is inside, change the upper limit
+			if (bb1.second[i] > bb2.second[i] && bb2.second[i] > bb1.first[i])
+				bb.second[i] = bb2.second[i];
+		}
+		return bb;
+	}
+
+	/**
+	 * @class Rotation2d
+	 * @brief Rotation Coordinate transform (around the origin)
+	 * in 2D with an angle.
+	 */
+	class Rotation2d
+	{
+		Real angle_, cosine_angle_, sine_angle_;
+
+	public:
+		explicit Rotation2d(SimTK::Real angle)
+			: angle_(angle), cosine_angle_(std::cos(angle)), sine_angle_(std::sin(angle)){};
+		virtual ~Rotation2d(){};
+
+		/** Forward transformation. */
+		Vec2d xformFrameVecToBase(const Vec2d &origin)
+		{
+			return Vec2d(origin[0] * cosine_angle_ - origin[1] * sine_angle_,
+						 origin[1] * cosine_angle_ + origin[0] * sine_angle_);
+		};
+		/** Inverse transformation. */
+		Vec2d xformBaseVecToFrame(const Vec2d &target)
+		{
+			return Vec2d(target[0] * cosine_angle_ + target[1] * sine_angle_,
+						 target[1] * cosine_angle_ - target[0] * sine_angle_);
+		};
+	};
+
 	/**
 	 * @class Transform2d
-	 * @brief Coordinate transfrom in 2D
+	 * @brief Coordinate transform in 2D
+	 * Note that the rotation is around the frame (or local) origin.
 	 */
 	class Transform2d
 	{
-		Real rotation_angle_;
+	private:
+		Rotation2d rotation_;
 		Vec2d translation_;
 
 	public:
-		Transform2d(SimTK::Real rotation_angle)
-			: rotation_angle_(rotation_angle), translation_(0){};
-		Transform2d(SimTK::Real rotation_angle, Vec2d translation)
-			: rotation_angle_(rotation_angle), translation_(translation){};
-		/** Forward tranformation. */
-		Vec2d imposeTransform(Vec2d &origin)
+		Transform2d() : rotation_(Rotation2d(0)), translation_(Vec2d(0)){};
+		explicit Transform2d(const Vec2d &translation) : rotation_(Rotation2d(0)), translation_(translation){};
+		explicit Transform2d(const Rotation2d &rotation, const Vec2d &translation = Vec2d(0))
+			: rotation_(rotation), translation_(translation){};
+
+		/** Forward rotation. */
+		Vec2d xformFrameVecToBase(const Vec2d &origin)
 		{
-			Vec2d target(origin[0] * cos(rotation_angle_) - origin[1] * sin(rotation_angle_),
-						 origin[1] * cos(rotation_angle_) + origin[0] * sin(rotation_angle_));
-			return target + translation_;
+			return rotation_.xformFrameVecToBase(origin);
 		};
-		/** Inverse tranformation. */
-		Vec2d imposeInverseTransform(Vec2d &target)
+
+		/** Forward transformation. Note that the rotation operation is carried out first. */
+		Vec2d shiftFrameStationToBase(const Vec2d &origin)
 		{
-			Vec2d origin(target[0] * cos(-rotation_angle_) - target[1] * sin(-rotation_angle_),
-						 target[1] * cos(-rotation_angle_) + target[0] * sin(-rotation_angle_));
-			return origin - translation_;
+			return translation_ + xformFrameVecToBase(origin);
+		};
+
+		/** Inverse rotation. */
+		Vec2d xformBaseVecToFrame(const Vec2d &target)
+		{
+			return rotation_.xformBaseVecToFrame(target);
+		};
+
+		/** Inverse transformation. Note that the inverse translation operation is carried out first. */
+		Vec2d shiftBaseStationToFrame(const Vec2d &target)
+		{
+			return xformBaseVecToFrame(target - translation_);
 		};
 	};
 
 	/**
 	 * @class Transform3d
-	 * @brief Coordinate transfrom in 3D from SimTK
+	 * @brief Coordinate transform in 3D from SimTK
 	 */
 	using Transform3d = SimTK::Transform;
 }
 
-#endif //BASE_DATA_TYPE_H
+#endif // BASE_DATA_TYPE_H

@@ -29,21 +29,18 @@
 #ifndef SOLID_PARTICLES_H
 #define SOLID_PARTICLES_H
 
+#include "elastic_solid.h"
 #include "base_particles.h"
 #include "base_particles.hpp"
 
 #include "particle_generator_lattice.h"
 namespace SPH
 {
-
 	//----------------------------------------------------------------------
 	//		preclaimed classes
 	//----------------------------------------------------------------------
 	class Solid;
 	class ElasticSolid;
-	class PlasticSolid;
-	template <class MuscleType>
-	class ActiveMuscle;
 
 	/**
 	 * @class SolidParticles
@@ -52,17 +49,12 @@ namespace SPH
 	class SolidParticles : public BaseParticles
 	{
 	public:
-		SolidParticles(SPHBody &sph_body,
-					   SharedPtr<Solid> shared_solid_ptr,
-					   SharedPtr<ParticleGenerator> particle_generator_ptr = makeShared<ParticleGeneratorLattice>());
-		explicit SolidParticles(SPHBody &sph_body,
-								SharedPtr<ParticleGenerator> particle_generator_ptr = makeShared<ParticleGeneratorLattice>())
-			: SolidParticles(sph_body, makeShared<Solid>(), particle_generator_ptr){};
+		SolidParticles(SPHBody &sph_body, Solid *solid);
 		virtual ~SolidParticles(){};
 
 		StdLargeVec<Vecd> pos_0_; /**< initial position */
 		StdLargeVec<Vecd> n_;	  /**<  current normal direction */
-		StdLargeVec<Vecd> n_0_;	  /**<  inital normal direction */
+		StdLargeVec<Vecd> n_0_;	  /**<  initial normal direction */
 		StdLargeVec<Matd> B_;	  /**<  configuration correction for linear reproducing */
 		//----------------------------------------------------------------------
 		//		for fluid-structure interaction (FSI)
@@ -76,16 +68,12 @@ namespace SPH
 		StdLargeVec<Real> contact_density_; /**< density due to contact of solid-solid. */
 		StdLargeVec<Vecd> contact_force_;	/**< contact force from other solid body or bodies */
 
-		void offsetInitialParticlePosition(Vecd offset);
-		void initializeNormalDirectionFromBodyShape();
-		void initializeNormalDirectionFromShapeAndOp(const std::string &shape_name);
-		void ParticleTranslationAndRotation(Transformd &transform);
-
 		/** Normalize a gradient. */
 		virtual Vecd normalizeKernelGradient(size_t particle_index_i, Vecd &gradient) override;
 		/** Get the kernel gradient in weak form. */
 		virtual Vecd getKernelGradient(size_t particle_index_i, size_t particle_index_j, Real dW_ij, Vecd &e_ij) override;
 
+		virtual void initializeOtherVariables() override;
 		virtual SolidParticles *ThisObjectPtr() override { return this; };
 	};
 
@@ -95,72 +83,61 @@ namespace SPH
 	 */
 	class ElasticSolidParticles : public SolidParticles
 	{
-	protected:
-		virtual void writePltFileHeader(std::ofstream &output_file) override;
-		virtual void writePltFileParticleData(std::ofstream &output_file, size_t index_i) override;
-
 	public:
-		ElasticSolidParticles(SPHBody &sph_body,
-							  SharedPtr<ElasticSolid> shared_elastic_solid_ptr,
-							  SharedPtr<ParticleGenerator> particle_generator_ptr = makeShared<ParticleGeneratorLattice>());
+		ElasticSolidParticles(SPHBody &sph_body, ElasticSolid *elastic_solid);
 		virtual ~ElasticSolidParticles(){};
 
 		StdLargeVec<Matd> F_;		   /**<  deformation tensor */
 		StdLargeVec<Matd> dF_dt_;	   /**<  deformation tensor change rate */
 		StdLargeVec<Matd> stress_PK1_; /**<  first Piola-Kirchhoff stress tensor */
 
-		/**< Computing von_Mises_stress. */
-		Real von_Mises_stress(size_t particle_i);
-		//TODO: the following reduces should be revised.
-		StdLargeVec<Real> getVonMisesStress();
-		Real getMaxVonMisesStress();
+		// STRAIN
+		Matd get_GreenLagrange_strain(size_t particle_i);
+		/**< Computing principal strain - returns the principal strains in descending order (starting from the largest) */
+		Vecd get_Principal_strains(size_t particle_i);
+		/**< Computing von Mises equivalent strain from a static (constant) formulation. */
+		Real von_Mises_strain(size_t particle_i);
+		/**< Computing von Mises equivalent strain from a static (constant) formulation. */
+		Real von_Mises_strain_static(size_t particle_i);
+		/**< Computing von Mises equivalent strain from a "dynamic" formulation. This depends on the Poisson's ratio (from commercial FEM software Help). */
+		Real von_Mises_strain_dynamic(size_t particle_i, Real poisson);
 
+		/**< Computing von Mises strain for all particles. - "static" or "dynamic"*/
+		StdLargeVec<Real> getVonMisesStrainVector(std::string strain_measure = "static");
+		/**< Computing maximum von Mises strain from all particles. - "static" or "dynamic" */
+		Real getVonMisesStrainMax(std::string strain_measure = "static");
+		Real getPrincipalStrainMax();
 
-		/**< Computing displacemnt. */
+		// STRESS
+		Matd get_Cauchy_stress(size_t particle_i);
+		Matd get_PK2_stress(size_t particle_i);
+		/**< Computing principal_stresses - returns the principal stresses in descending order (starting from the largest) */
+		Vecd get_Principal_stresses(size_t particle_i);
+		/**< Computing von_Mises_stress - "Cauchy" or "PK2" decided based on the stress_measure_ */
+		Real get_von_Mises_stress(size_t particle_i);
+
+		/**< Computing von Mises stress for all particles. - "Cauchy" or "PK2" decided based on the stress_measure_ */
+		StdLargeVec<Real> getVonMisesStressVector();
+		/**< Computing maximum von Mises stress from all particles. - "Cauchy" or "PK2" decided based on the stress_measure_ */
+		Real getVonMisesStressMax();
+		Real getPrincipalStressMax();
+
+		/**< Computing displacement. */
 		Vecd displacement(size_t particle_i);
 		StdLargeVec<Vecd> getDisplacement();
+		Real getMaxDisplacement();
 
 		/**< Computing normal vector. */
 		Vecd normal (size_t particle_i);
 		StdLargeVec<Vecd> getNormal();
 
-		/**< Computing von Mises equivalent stress. */
-		Real von_Mises_strain (size_t particle_i);
-		StdLargeVec<Real> getVonMisesStrain();
-		Real getMaxVonMisesStrain();
+		/** relevant stress measure */
+		std::string stress_measure_;
 
-		virtual void writeParticlesToVtuFile(std::ostream &output_file) override;
-		/** Write only surface particle data in Vtu format for Paraview. */
-		virtual void writeSurfaceParticlesToVtuFile(std::ofstream& output_file, BodySurface& surface_particles) override;
-		virtual void writeParticlesToVtpFile(std::ofstream &output_file) override;
+		ElasticSolid *elastic_solid_;
+
+		virtual void initializeOtherVariables() override;
 		virtual ElasticSolidParticles *ThisObjectPtr() override { return this; };
-	};
-
-	/**
-	 * @class ActiveMuscleParticles
-	 * @brief A group of particles with active muscle particle data.
-	 */
-	class ActiveMuscleParticles : public ElasticSolidParticles
-	{
-	public:
-		StdLargeVec<Real> active_contraction_stress_;			 /**<  active contraction stress */
-		StdLargeVec<Matd> active_stress_; /**<  active stress */ //seems to be moved to method class
-
-		template <class MuscleType>
-		ActiveMuscleParticles(SPHBody &sph_body,
-							  SharedPtr<ActiveMuscle<MuscleType>> shared_active_muscle_ptr,
-							  SharedPtr<ParticleGenerator> particle_generator_ptr = makeShared<ParticleGeneratorLattice>())
-			: ElasticSolidParticles(sph_body, shared_active_muscle_ptr, particle_generator_ptr)
-		{
-			shared_active_muscle_ptr->assignActiveMuscleParticles(this);
-			initializeActiveMuscleParticleData();
-		};
-		virtual ~ActiveMuscleParticles(){};
-
-		virtual ActiveMuscleParticles *ThisObjectPtr() override { return this; };
-
-	private:
-		void initializeActiveMuscleParticleData();
 	};
 
 	/**
@@ -170,13 +147,12 @@ namespace SPH
 	class ShellParticles : public ElasticSolidParticles
 	{
 	public:
-		ShellParticles(SPHBody &sph_body,
-					   SharedPtr<ElasticSolid> shared_elastic_solid_ptr,
-					   SharedPtr<ParticleGenerator> particle_generator_ptr, Real thickness);
+		ShellParticles(SPHBody &sph_body, ElasticSolid *elastic_solid);
 		virtual ~ShellParticles(){};
 
+		Real thickness_ref_;
 		StdLargeVec<Matd> transformation_matrix_; /**< initial transformation matrix from global to local coordinates */
-		StdLargeVec<Real> shell_thickness_;		  /**< shell thickness */
+		StdLargeVec<Real> thickness_;		  /**< shell thickness */
 		//----------------------------------------------------------------------
 		//	extra generalized coordinates in global coordinate
 		//----------------------------------------------------------------------
@@ -201,6 +177,7 @@ namespace SPH
 		StdLargeVec<Matd> global_stress_;		/**<  global stress for pair interaction */
 		StdLargeVec<Matd> global_moment_;		/**<  global bending moment for pair interaction */
 
+		virtual void initializeOtherVariables() override;
 		virtual ShellParticles *ThisObjectPtr() override { return this; };
 	};
 }

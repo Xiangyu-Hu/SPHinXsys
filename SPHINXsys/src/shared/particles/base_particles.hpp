@@ -1,28 +1,28 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * --------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+ * and HU1527/12-1.															*
+ *                                                                           *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * --------------------------------------------------------------------------*/
 /**
  * @file 	base_particles.hpp
- * @brief 	This is the implementation of the template functions in base_particles.h 
+ * @brief 	This is the implementation of the template functions in base_particles.h
  * @author	Xiangyu Hu
  */
 
@@ -30,6 +30,7 @@
 #define BASE_PARTICLES_HPP
 
 #include "base_particles.h"
+#include "particle_dynamics_algorithms.h"
 
 namespace SPH
 {
@@ -60,12 +61,11 @@ namespace SPH
         registerAVariable(StdLargeVec<VariableType> &variable_addrs,
                           const std::string &new_variable_name, const std::string &old_variable_name)
     {
-        registerAVariable(variable_addrs, new_variable_name);
-
         constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
 
         if (all_variable_maps_[type_index].find(old_variable_name) != all_variable_maps_[type_index].end())
         {
+            registerAVariable(variable_addrs, new_variable_name);
             StdLargeVec<VariableType> *old_variable =
                 std::get<type_index>(all_particle_data_)[all_variable_maps_[type_index][old_variable_name]];
             for (size_t i = 0; i != real_particles_bound_; ++i)
@@ -80,7 +80,7 @@ namespace SPH
     }
     //=================================================================================================//
     template <typename VariableType>
-    StdLargeVec<VariableType> *BaseParticles::getVariableByName(std::string variable_name)
+    StdLargeVec<VariableType> *BaseParticles::getVariableByName(const std::string &variable_name)
     {
         constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
 
@@ -95,7 +95,7 @@ namespace SPH
     //=================================================================================================//
     template <typename VariableType>
     void BaseParticles::
-        addAVariableNameToList(ParticleVariableList &variable_name_list, std::string variable_name)
+        addAVariableNameToList(ParticleVariableList &variable_name_list, const std::string &variable_name)
     {
         constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
 
@@ -122,19 +122,34 @@ namespace SPH
     }
     //=================================================================================================//
     template <typename VariableType>
-    void BaseParticles::addAVariableToWrite(std::string variable_name)
+    void BaseParticles::addAVariableToWrite(const std::string &variable_name)
     {
         addAVariableNameToList<VariableType>(variables_to_write_, variable_name);
     }
     //=================================================================================================//
-    template <typename VariableType>
-    void BaseParticles::addAVariableToRestart(std::string variable_name)
+    template <class DerivedVariableMethod>
+    void BaseParticles::addDerivedVariableToWrite()
     {
-        addAVariableNameToList<VariableType>(variables_to_restart_, variable_name);
+        SimpleDynamics<DerivedVariableMethod> *derived_data = derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(*sph_body_);
+        derived_variables_.push_back(derived_data);
+        using DerivedVariableType = typename DerivedVariableMethod::DerivedVariableType;
+        addAVariableNameToList<DerivedVariableType>(variables_to_write_, derived_data->LocalDynamics().variable_name_);
     }
     //=================================================================================================//
     template <typename VariableType>
-    void BaseParticles::registerASortableVariable(std::string variable_name)
+    void BaseParticles::addAVariableToRestart(const std::string &variable_name)
+    {
+        addAVariableNameToList<VariableType>(variables_to_restart_, variable_name);
+    }
+   //=================================================================================================//
+    template <typename VariableType>
+    void BaseParticles::addAVariableToReload(const std::string &variable_name)
+    {
+        addAVariableNameToList<VariableType>(variables_to_reload_, variable_name);
+    }
+    //=================================================================================================//
+    template <typename VariableType>
+    void BaseParticles::registerASortableVariable(const std::string &variable_name)
     {
         constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
 
@@ -162,6 +177,16 @@ namespace SPH
     }
     //=================================================================================================//
     template <typename VariableType>
+    void BaseParticles::resizeParticleData<VariableType>::
+    operator()(ParticleData &particle_data, size_t new_size) const
+    {
+        constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
+
+        for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
+            std::get<type_index>(particle_data)[i]->resize(new_size, VariableType(0));
+    }
+    //=================================================================================================//
+    template <typename VariableType>
     void BaseParticles::addAParticleDataValue<VariableType>::
     operator()(ParticleData &particle_data) const
     {
@@ -180,6 +205,120 @@ namespace SPH
         for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
             (*std::get<type_index>(particle_data)[i])[this_index] =
                 (*std::get<type_index>(particle_data)[i])[another_index];
+    }
+    //=================================================================================================//
+    template <typename StreamType>
+    void BaseParticles::writeParticlesToVtk(StreamType &output_stream)
+    {
+        size_t total_real_particles = total_real_particles_;
+
+        // write current/final particle positions first
+        output_stream << "   <Points>\n";
+        output_stream << "    <DataArray Name=\"Position\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
+        output_stream << "    ";
+        for (size_t i = 0; i != total_real_particles; ++i)
+        {
+            Vec3d particle_position = upgradeToVector3D(pos_n_[i]);
+            output_stream << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " ";
+        }
+        output_stream << std::endl;
+        output_stream << "    </DataArray>\n";
+        output_stream << "   </Points>\n";
+
+        // write header of particles data
+        output_stream << "   <PointData  Vectors=\"vector\">\n";
+
+        // write sorted particles ID
+        output_stream << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
+        output_stream << "    ";
+        for (size_t i = 0; i != total_real_particles; ++i)
+        {
+            output_stream << i << " ";
+        }
+        output_stream << std::endl;
+        output_stream << "    </DataArray>\n";
+
+        // write unsorted particles ID
+        output_stream << "    <DataArray Name=\"UnsortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
+        output_stream << "    ";
+        for (size_t i = 0; i != total_real_particles; ++i)
+        {
+            output_stream << unsorted_id_[i] << " ";
+        }
+        output_stream << std::endl;
+        output_stream << "    </DataArray>\n";
+
+        // compute derived particle variables
+        for (ParticleDynamics<void> *derived_variable : derived_variables_)
+        {
+            derived_variable->parallel_exec();
+        }
+
+        // write matrices
+        for (std::pair<std::string, size_t> &name_index : variables_to_write_[2])
+        {
+            std::string variable_name = name_index.first;
+            StdLargeVec<Matd> &variable = *(std::get<2>(all_particle_data_)[name_index.second]);
+            output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"  NumberOfComponents=\"9\" Format=\"ascii\">\n";
+            output_stream << "    ";
+            for (size_t i = 0; i != total_real_particles; ++i)
+            {
+                Mat3d matrix_value = upgradeToMatrix3D(variable[i]);
+                for (int k = 0; k != 3; ++k)
+                {
+                    Vec3d col_vector = matrix_value.col(k);
+                    output_stream << std::fixed << std::setprecision(9) << col_vector[0] << " " << col_vector[1] << " " << col_vector[2] << " ";
+                }
+            }
+            output_stream << std::endl;
+            output_stream << "    </DataArray>\n";
+        }
+
+        // write vectors
+        for (std::pair<std::string, size_t> &name_index : variables_to_write_[1])
+        {
+            std::string variable_name = name_index.first;
+            StdLargeVec<Vecd> &variable = *(std::get<1>(all_particle_data_)[name_index.second]);
+            output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\"  NumberOfComponents=\"3\" Format=\"ascii\">\n";
+            output_stream << "    ";
+            for (size_t i = 0; i != total_real_particles; ++i)
+            {
+                Vec3d vector_value = upgradeToVector3D(variable[i]);
+                output_stream << std::fixed << std::setprecision(9) << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
+            }
+            output_stream << std::endl;
+            output_stream << "    </DataArray>\n";
+        }
+
+        // write scalars
+        for (std::pair<std::string, size_t> &name_index : variables_to_write_[0])
+        {
+            std::string variable_name = name_index.first;
+            StdLargeVec<Real> &variable = *(std::get<0>(all_particle_data_)[name_index.second]);
+            output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Float32\" Format=\"ascii\">\n";
+            output_stream << "    ";
+            for (size_t i = 0; i != total_real_particles; ++i)
+            {
+                output_stream << std::fixed << std::setprecision(9) << variable[i] << " ";
+            }
+            output_stream << std::endl;
+            output_stream << "    </DataArray>\n";
+        }
+
+        // write integers
+        for (std::pair<std::string, size_t> &name_index : variables_to_write_[3])
+        {
+            std::string variable_name = name_index.first;
+            StdLargeVec<int> &variable = *(std::get<3>(all_particle_data_)[name_index.second]);
+            output_stream << "    <DataArray Name=\"" << variable_name << "\" type=\"Int32\" Format=\"ascii\">\n";
+            output_stream << "    ";
+            for (size_t i = 0; i != total_real_particles; ++i)
+            {
+                output_stream << std::fixed << std::setprecision(9) << variable[i] << " ";
+            }
+            output_stream << std::endl;
+            output_stream << "    </DataArray>\n";
+        }
     }
     //=================================================================================================//
     template <typename VariableType>
@@ -206,5 +345,13 @@ namespace SPH
         }
     }
     //=================================================================================================//
+    template <typename VariableType>
+    BaseDerivedVariable<VariableType>::
+        BaseDerivedVariable(const SPHBody &sph_body, const std::string &variable_name)
+        : variable_name_(variable_name)
+    {
+        sph_body.base_particles_->registerAVariable(derived_variable_, variable_name_);
+    };
+    //=================================================================================================//
 }
-#endif //BASE_PARTICLES_HPP
+#endif // BASE_PARTICLES_HPP

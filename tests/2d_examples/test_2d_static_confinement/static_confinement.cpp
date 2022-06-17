@@ -1,8 +1,7 @@
 /**
  * @file 	static_confinement.cpp
  * @brief 	2D dambreak example in which the solid wall boundary are static confinement.
- * @details This is the one of the basic test cases, also the first case for
- * 			understanding SPH method for fluid simulation.
+ * @details This is the one of the basic test cases.
  * @author 	Xiangyu Hu
  */
  /**
@@ -24,6 +23,8 @@ Real resolution_ref = 0.025; 			/**< Global reference resolution. */
 Real BW = resolution_ref * 4; 			/**< Extending width for BCs. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+//Observer location
+StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 /**
  * @brief Material properties of the fluid.
  */
@@ -70,40 +71,26 @@ std::vector<Vecd> createStructureShape()
 	return water_block_shape;
 }
 /**
-*@brief 	Fluid body definition.
+*@brief 	Fluid body shape definition.
 */
-class WaterBlock : public FluidBody
+class WaterBlock : public MultiPolygonShape
 {
 public:
-	WaterBlock(SPHSystem& sph_system, const std::string &body_name)
-		: FluidBody(sph_system, body_name)
+	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geomtry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
 	}
 };
 /**
  * @brief 	wall and structure surface definition.
  */
-MultiPolygonShape* createWallAndStructureShape()
-{
-	/** Geomtry definition. */
-	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(createWallShape(), ShapeBooleanOps::add);
-	multi_polygon.addAPolygon(createStructureShape(), ShapeBooleanOps::sub);
-	return new MultiPolygonShape(multi_polygon);
-}
-/**
- * @brief 	Fluid observer particle generator.
- */
-class ObserverParticleGenerator : public ParticleGeneratorDirect
+class WallAndStructure : public MultiPolygonShape
 {
 public:
-	ObserverParticleGenerator() : ParticleGeneratorDirect()
+	explicit WallAndStructure(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		positions_volumes_.push_back(std::make_pair(Vecd(DL, 0.2), 0.0));
+	multi_polygon_.addAPolygon(createWallShape(), ShapeBooleanOps::add);
+	multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::sub);
 	}
 };
 /**
@@ -120,17 +107,18 @@ int main()
 	/** Tag for computation from restart files. 0: not from restart files. */
 	sph_system.restart_step_ = 0;
 	/** output environment. */
-	In_Output 	in_output(sph_system);
+	InOutput 	in_output(sph_system);
 	/**
-	 * @brief Material property, partilces and body creation of fluid.
+	 * @brief Material property, particles and body creation of fluid.
 	 */
-	WaterBlock water_block(sph_system, "WaterBody");
-	FluidParticles 	fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f));
+	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f);
+	water_block.generateParticles<ParticleGeneratorLattice>();
 	/**
 	 * @brief 	Particle and body creation of fluid observer.
 	 */
 	ObserverBody fluid_observer(sph_system, "Fluidobserver");
-	ObserverParticles 	observer_particles(fluid_observer, makeShared<ObserverParticleGenerator>());
+	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	/** topology */
 	BodyRelationInner water_block_inner(water_block);
 	BodyRelationContact fluid_observer_contact(fluid_observer, { &water_block });
@@ -157,7 +145,7 @@ int main()
 	fluid_dynamics::PressureRelaxationRiemannInner pressure_relaxation(water_block_inner);
 		fluid_dynamics::DensityRelaxationRiemannInner	density_relaxation(water_block_inner);
 	/** Confinement condition for wall and structure. */
-	NearShapeSurface near_surface(water_block, "WallAndStructure", *createWallAndStructureShape());
+	NearShapeSurface near_surface(water_block, makeShared<WallAndStructure>("WallAndStructure"));
 	fluid_dynamics::StaticConfinement confinement_condition(water_block, near_surface);
 	update_density_by_summation.post_processes_.push_back(&confinement_condition.density_summation_);
 	pressure_relaxation.post_processes_.push_back(&confinement_condition.pressure_relaxation_);

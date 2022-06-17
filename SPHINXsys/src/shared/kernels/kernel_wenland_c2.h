@@ -44,10 +44,8 @@ namespace SPH
 	 */
 	class KernelWendlandC2 : public Kernel
 	{
-	protected:
-		virtual void setBasicParameters() override;
 	public:
-		KernelWendlandC2();
+		explicit KernelWendlandC2(Real h);
 
 		/** Calculates the kernel value for 
 		the given distance of two particles */

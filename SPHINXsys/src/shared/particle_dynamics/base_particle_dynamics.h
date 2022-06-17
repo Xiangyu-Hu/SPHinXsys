@@ -33,19 +33,18 @@
 
 #include "base_data_package.h"
 #include "sph_data_containers.h"
-#include "all_particles.h"
-#include "all_materials.h"
 #include "neighbor_relation.h"
-#include "all_bodies.h"
-#include "cell_linked_list.h"
-#include "external_force.h"
 #include "body_relation.h"
+#include "base_body.h"
+
 #include <functional>
 
 using namespace std::placeholders;
 
 namespace SPH
 {
+
+
 	/** Functor for operation on particles. */
 	typedef std::function<void(size_t, Real)> ParticleFunctor;
 	/** Functors for reducing operation on particles. */
@@ -53,9 +52,9 @@ namespace SPH
 	using ReduceFunctor = std::function<ReturnType(size_t, Real)>;
 
 	/** Iterators for particle functors. sequential computing. */
-	void ParticleIterator(size_t total_real_particles, ParticleFunctor &particle_functor, Real dt = 0.0);
+	void ParticleIterator(size_t total_real_particles, const ParticleFunctor &particle_functor, Real dt = 0.0);
 	/** Iterators for particle functors. parallel computing. */
-	void ParticleIterator_parallel(size_t total_real_particles, ParticleFunctor &particle_functor, Real dt = 0.0);
+	void ParticleIterator_parallel(size_t total_real_particles, const ParticleFunctor &particle_functor, Real dt = 0.0);
 
 	/** Iterators for reduce functors. sequential computing. */
 	template <class ReturnType, typename ReduceOperation>
@@ -68,10 +67,10 @@ namespace SPH
 
 	/** Iterators for particle functors with splitting. sequential computing. */
 	void ParticleIteratorSplittingSweep(SplitCellLists &split_cell_lists,
-										ParticleFunctor &particle_functor, Real dt = 0.0);
+										const ParticleFunctor &particle_functor, Real dt = 0.0);
 	/** Iterators for particle functors with splitting. parallel computing. */
 	void ParticleIteratorSplittingSweep_parallel(SplitCellLists &split_cell_lists,
-												 ParticleFunctor &particle_functor, Real dt = 0.0);
+												 const ParticleFunctor &particle_functor, Real dt = 0.0);
 
 	/** A Functor for Summation */
 	template <class ReturnType>
@@ -93,6 +92,11 @@ namespace SPH
 	struct ReduceOR
 	{
 		bool operator()(bool x, bool y) const { return x || y; };
+	};
+	/** A Functor for AND operator */
+	struct ReduceAND
+	{
+		bool operator()(bool x, bool y) const { return x && y; };
 	};
 	/** A Functor for lower bound */
 	struct ReduceLowerBound
@@ -141,10 +145,7 @@ namespace SPH
 	class ParticleDynamics : public GlobalStaticVariables
 	{
 	public:
-		explicit ParticleDynamics(SPHBody &sph_body)
-			: GlobalStaticVariables(), sph_body_(&sph_body),
-			  sph_adaptation_(sph_body.sph_adaptation_),
-			  base_particles_(sph_body.base_particles_){};
+		explicit ParticleDynamics(SPHBody &sph_body);
 		virtual ~ParticleDynamics(){};
 
 		SPHBody *getSPHBody() { return sph_body_; };
@@ -187,11 +188,14 @@ namespace SPH
 		explicit DataDelegateSimple(SPHBody &sph_body)
 			: body_(DynamicCast<BodyType>(this, &sph_body)),
 			  particles_(DynamicCast<ParticlesType>(this, sph_body.base_particles_)),
-			  material_(DynamicCast<MaterialType>(this, sph_body.base_particles_->base_material_)),
+			  material_(DynamicCast<MaterialType>(this, sph_body.base_material_)),
 			  sorted_id_(sph_body.base_particles_->sorted_id_),
 			  unsorted_id_(sph_body.base_particles_->unsorted_id_){};
 		virtual ~DataDelegateSimple(){};
-		ParticlesType *GetParticles() { return particles_; };
+
+		BodyType *getBody() { return body_; };
+		ParticlesType *getParticles() { return particles_; };
+		MaterialType *getMaterial() { return material_; };
 
 	protected:
 		BodyType *body_;

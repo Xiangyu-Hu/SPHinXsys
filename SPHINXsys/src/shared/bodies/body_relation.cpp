@@ -8,6 +8,7 @@
 
 #include "base_kernel.h"
 #include "base_particles.h"
+#include "base_particle_dynamics.h"
 #include "cell_linked_list.hpp"
 
 namespace SPH
@@ -273,9 +274,9 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void GenerativeBodyRelationInner::updateConfiguration()
+	void TreeBodyRelationInner::updateConfiguration()
 	{
-		generative_structure_->buildParticleConfiguration(*base_particles_, inner_configuration_);
+		generative_tree_.buildParticleConfiguration(inner_configuration_);
 	}
 	//=================================================================================================//
 	BodyPartRelationContact::BodyPartRelationContact(BodyPart &body_part, RealBodyVector contact_bodies)

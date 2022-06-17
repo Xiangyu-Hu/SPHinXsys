@@ -8,7 +8,7 @@
 
 #include "base_body.h"
 #include "body_relation.h"
-#include "solid_dynamics.h"
+#include "elastic_dynamics.h"
 
 namespace SPH
 {
@@ -18,27 +18,7 @@ namespace SPH
 		  resolution_ref_(resolution_ref),
 		  tbb_global_control_(tbb::global_control::max_allowed_parallelism, number_of_threads),
 		  in_output_(nullptr), restart_step_(0), run_particle_relaxation_(false),
-		  reload_particles_(false), run_regression_test_(true) {}
-	//=================================================================================================//
-	void SPHSystem::addABody(SPHBody *sph_body)
-	{
-		bodies_.push_back(sph_body);
-	}
-	//=================================================================================================//
-	void SPHSystem::addARealBody(RealBody *real_body)
-	{
-		real_bodies_.push_back(real_body);
-	}
-	//=================================================================================================//
-	void SPHSystem::addASolidBody(SolidBody *solid_body)
-	{
-		solid_bodies_.push_back(solid_body);
-	}
-	//=================================================================================================//
-	void SPHSystem::addAFictitiousBody(FictitiousBody *fictitious_body)
-	{
-		fictitious_bodies_.push_back(fictitious_body);
-	}
+		  reload_particles_(false), generate_regression_data_(false) {}
 	//=================================================================================================//
 	void SPHSystem::initializeSystemCellLinkedLists()
 	{
@@ -50,7 +30,7 @@ namespace SPH
 	//=================================================================================================//
 	void SPHSystem::initializeSystemConfigurations()
 	{
-		for (auto &body : bodies_)
+		for (auto &body : sph_bodies_)
 		{
 			for (size_t i = 0; i < body->body_relations_.size(); i++)
 			{
@@ -121,14 +101,14 @@ namespace SPH
 
 			if (vm.count("rt"))
 			{
-				run_regression_test_ = vm["rt"].as<bool>();
-				std::cout << "Regression test was set to "
+				generate_regression_data_ = vm["rt"].as<bool>();
+				std::cout << "Generate regression test data set was set to "
 						  << vm["rt"].as<bool>() << ".\n";
 			}
 			else
 			{
-				std::cout << "Regression test was set to default ("
-						  << run_regression_test_ << ").\n";
+				std::cout << "Generate regression test data was set to default ("
+						  << generate_regression_data_ << ").\n";
 			}
 
 			if (vm.count("restart_step"))

@@ -31,7 +31,7 @@
 #ifndef BODY_RELATION_H
 #define BODY_RELATION_H
 
-#include "base_body.h"
+#include "complex_body.h"
 #include "base_particles.h"
 #include "cell_linked_list.h"
 #include "neighbor_relation.h"
@@ -157,7 +157,7 @@ namespace SPH
 	class BodyRelationInnerVariableSmoothingLength : public BaseBodyRelationInner
 	{
 	private:
-		UniquePtrVectorKeeper<SearchDepthVariableSmoothingLength> search_variable_smoothinglength_ptr_vector_keeper_;
+		UniquePtrKeepers<SearchDepthVariableSmoothingLength> search_variable_smoothinglength_ptr_vector_keeper_;
 
 	protected:
 		size_t total_levels_;
@@ -204,8 +204,8 @@ namespace SPH
 	class BaseBodyRelationContact : public SPHBodyRelation
 	{
 	protected:
-		UniquePtrVectorKeeper<SearchDepthMultiResolution> search_depth_multi_resolution_ptr_vector_keeper_;
-		UniquePtrVectorKeeper<NeighborRelationContact> neighbor_relation_contact_ptr_vector_keeper_;
+		UniquePtrKeepers<SearchDepthMultiResolution> search_depth_multi_resolution_ptr_vector_keeper_;
+		UniquePtrKeepers<NeighborRelationContact> neighbor_relation_contact_ptr_vector_keeper_;
 
 	protected:
 		StdVec<CellLinkedList *> target_cell_linked_lists_;
@@ -216,7 +216,7 @@ namespace SPH
 
 	public:
 		RealBodyVector contact_bodies_;
-		ContatcParticleConfiguration contact_configuration_; /**< Configurations for particle interaction between bodies. */
+		ContactParticleConfiguration contact_configuration_; /**< Configurations for particle interaction between bodies. */
 
 		BaseBodyRelationContact(SPHBody &sph_body, RealBodyVector contact_bodies);
 		BaseBodyRelationContact(SPHBody &sph_body, BodyPartVector contact_body_parts);
@@ -272,19 +272,19 @@ namespace SPH
 	};
 
 	/**
-	 * @class GenerativeBodyRelationInner
+	 * @class TreeBodyRelationInner
 	 * @brief The relation within a reduced SPH body, viz. network
 	 */
-	class GenerativeBodyRelationInner : public BodyRelationInner
+	class TreeBodyRelationInner : public BodyRelationInner
 	{
 	protected:
-		GenerativeStructure *generative_structure_;
+		TreeBody &generative_tree_;
 
 	public:
-		explicit GenerativeBodyRelationInner(RealBody &real_body)
+		explicit TreeBodyRelationInner(RealBody &real_body)
 			: BodyRelationInner(real_body),
-			  generative_structure_(real_body.generative_structure_){};
-		virtual ~GenerativeBodyRelationInner(){};
+			  generative_tree_(DynamicCast<TreeBody>(this, real_body)){};
+		virtual ~TreeBodyRelationInner(){};
 
 		virtual void updateConfiguration() override;
 	};
@@ -313,7 +313,7 @@ namespace SPH
 	class BodyRelationContactToBodyPart : public BodyRelationContact
 	{
 	protected:
-		UniquePtrVectorKeeper<NeighborRelationContactBodyPart> neighbor_relation_contact_body_part_ptr_vector_keeper_;
+		UniquePtrKeepers<NeighborRelationContactBodyPart> neighbor_relation_contact_body_part_ptr_vector_keeper_;
 
 	public:
 		BodyPartVector contact_body_parts_;
@@ -342,7 +342,7 @@ namespace SPH
 		BaseBodyRelationContact &contact_relation_;
 		RealBodyVector contact_bodies_;
 		ParticleConfiguration &inner_configuration_;
-		ContatcParticleConfiguration &contact_configuration_;
+		ContactParticleConfiguration &contact_configuration_;
 
 		ComplexBodyRelation(BaseBodyRelationInner &inner_relation, BaseBodyRelationContact &contact_relation);
 		ComplexBodyRelation(RealBody &real_body, RealBodyVector contact_bodies);

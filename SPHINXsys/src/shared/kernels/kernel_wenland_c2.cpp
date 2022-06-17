@@ -9,29 +9,28 @@
 namespace SPH
 {
 	//=================================================================================================//
-	KernelWendlandC2::KernelWendlandC2()
-		: Kernel("Wendland2CKernel") {}
-	//=================================================================================================//
-	void KernelWendlandC2::setBasicParameters()
+	KernelWendlandC2::KernelWendlandC2(Real h)
+		: Kernel(h, "Wendland2CKernel")
 	{
-		factor_W_1D_ = inv_h_  * 3.0 / 4.0;
+		factor_W_1D_ = inv_h_ * 3.0 / 4.0;
 		factor_W_2D_ = inv_h_ * inv_h_ * 7.0 / (4.0 * Pi);
 		factor_W_3D_ = inv_h_ * inv_h_ * inv_h_ * 21.0 / (16.0 * Pi);
+		setDerivativeParameters();
 	}
 	//=================================================================================================//
 	Real KernelWendlandC2::W_1D(const Real q) const
 	{
-			return  powerN(1.0 - 0.5*q, 4) * (1.0 + 2.0 * q);
+		return powerN(1.0 - 0.5 * q, 4) * (1.0 + 2.0 * q);
 	}
 	//=================================================================================================//
 	Real KernelWendlandC2::W_2D(const Real q) const
 	{
-			return  W_1D(q);
+		return W_1D(q);
 	}
 	//=================================================================================================//
 	Real KernelWendlandC2::W_3D(const Real q) const
 	{
-			return W_2D(q);
+		return W_2D(q);
 	}
 	//=================================================================================================//
 	Real KernelWendlandC2::dW_1D(const Real q) const

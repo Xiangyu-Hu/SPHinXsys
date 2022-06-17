@@ -10,42 +10,26 @@
 #include "all_kernels.h"
 #include "base_body.h"
 #include "base_particles.h"
+#include "base_particle_dynamics.h"
+#include "mesh_with_data_packages.hpp"
+#include "vector_functions.h"
 
 namespace SPH
 {
 	//=================================================================================================//
-	SPHAdaptation::SPHAdaptation(Real h_spacing_ratio, Real system_resolution_ratio, 
-								 Real small_shift_factor, Real level_set_refinement_ratio)
-		: h_spacing_ratio_(h_spacing_ratio),
+	SPHAdaptation::SPHAdaptation(SPHBody *sph_body, Real h_spacing_ratio, Real system_resolution_ratio)
+		: sph_body_(sph_body),
+		  h_spacing_ratio_(h_spacing_ratio),
 		  system_resolution_ratio_(system_resolution_ratio),
 		  local_refinement_level_(0),
-		  local_coarse_level_(local_refinement_level_ / 2),
-		  spacing_ref_(0), h_ref_(0),
-		  spacing_min_(0), spacing_ratio_min_(1.0),
-		  spacing_ratio_max_(1.0), h_ratio_min_(1.0), h_ratio_max_(1.0),
-		  number_density_min_(1.0), number_density_max_(1.0),
-		  kernel_(kernel_ptr_keeper_.createPtr<KernelWendlandC2>()),
-		  sph_body_(nullptr), system_domain_bounds_(),
-		  base_particles_(nullptr),
-		  small_shift_factor_(small_shift_factor),
-		  level_set_refinement_ratio_(level_set_refinement_ratio)
-		  {};
-	//=================================================================================================//
-	void SPHAdaptation::initialize(SPHBody *sph_body)
-	{
-		sph_body_ = sph_body;
-		system_domain_bounds_ = sph_body_->getSPHSystem().system_domain_bounds_;
-		spacing_ref_ = sph_body_->getSPHSystem().resolution_ref_ / system_resolution_ratio_;
-		h_ref_ = h_spacing_ratio_ * spacing_ref_;
-		kernel_->initialize(h_ref_);
-		spacing_min_ = RefinedSpacing(spacing_ref_, local_refinement_level_);
-		spacing_ratio_min_ = powerN(0.5, local_refinement_level_);
-		spacing_ratio_max_ = powerN(2.0, local_coarse_level_);
-		h_ratio_min_ = powerN(0.5, local_coarse_level_);
-		h_ratio_max_ = powerN(2.0, local_refinement_level_);
-		number_density_min_ = computeReferenceNumberDensity(Vecd(0), h_ratio_max_);
-		number_density_max_ = computeReferenceNumberDensity(Vecd(0), h_ratio_min_);
-	}
+		  spacing_ref_(sph_body_->getSPHSystem().resolution_ref_ / system_resolution_ratio_),
+		  h_ref_(h_spacing_ratio_ * spacing_ref_),
+		  kernel_(kernel_ptr_keeper_.createPtr<KernelWendlandC2>(h_ref_)),
+		  spacing_min_(this->RefinedSpacing(spacing_ref_, local_refinement_level_)),
+		  spacing_ratio_min_(powerN(0.5, local_refinement_level_)),
+		  h_ratio_max_(powerN(2.0, local_refinement_level_)),
+		  number_density_max_(this->computeReferenceNumberDensity(Vecd(0), h_ratio_max_)),
+		  system_domain_bounds_(sph_body->getSPHSystem().system_domain_bounds_){};
 	//=================================================================================================//
 	Real SPHAdaptation::
 		RefinedSpacing(Real coarse_particle_spacing, int refinement_level)
@@ -94,16 +78,14 @@ namespace SPH
 		return computeReferenceNumberDensity(Vecd(0), 1.0);
 	}
 	//=================================================================================================//
-	Real SPHAdaptation::probeNumberDensity(Vecd zero, Real h_ratio)
+	void SPHAdaptation::resetAdaptationRatios(Real h_spacing_ratio, Real system_resolution_ratio)
 	{
-		Real alpha = (h_ratio_max_ - h_ratio) / (h_ratio_max_ - h_ratio_min_ + TinyReal);
-
-		return alpha * number_density_max_ + (1.0 - alpha) * number_density_min_;
-	}
-	//=================================================================================================//
-	void SPHAdaptation::assignBaseParticles(BaseParticles *base_particles)
-	{
-		base_particles_ = base_particles;
+		h_spacing_ratio_ = h_spacing_ratio;
+		system_resolution_ratio_ = system_resolution_ratio;
+		spacing_ref_ = sph_body_->getSPHSystem().resolution_ref_ / system_resolution_ratio_;
+		h_ref_ = h_spacing_ratio_ * spacing_ref_;
+		kernel_ = kernel_ptr_keeper_.createPtr<KernelWendlandC2>(h_ref_);
+		spacing_min_ = RefinedSpacing(spacing_ref_, local_refinement_level_);
 	}
 	//=================================================================================================//
 	UniquePtr<BaseCellLinkedList> SPHAdaptation::createCellLinkedList()
@@ -111,23 +93,32 @@ namespace SPH
 		return makeUnique<CellLinkedList>(system_domain_bounds_, kernel_->CutOffRadius(), *sph_body_, *this);
 	}
 	//=================================================================================================//
-	UniquePtr<BaseLevelSet> SPHAdaptation::createLevelSet(Shape &shape)
+	UniquePtr<BaseLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement_ratio)
 	{
-		return makeUnique<LevelSet>(shape.findBounds(), ReferenceSpacing() / level_set_refinement_ratio_, shape, *this);
+		// estimate the required mesh levels
+		size_t total_levels = (int)log10(MinimumDimension(shape.getBounds()) / ReferenceSpacing()) + 2;
+		Real coarsest_spacing = ReferenceSpacing() * powerN(2.0, total_levels - 1);
+		MultilevelLevelSet coarser_level_sets(shape.getBounds(), coarsest_spacing / refinement_ratio,
+											  total_levels - 1, shape, *this);
+		// return the finest level set only
+		return makeUnique<RefinedLevelSet>(shape.getBounds(), *coarser_level_sets.getMeshLevels().back(), shape, *this);
 	}
 	//=================================================================================================//
 	ParticleWithLocalRefinement::
-		ParticleWithLocalRefinement(Real h_spacing_ratio,
+		ParticleWithLocalRefinement(SPHBody *sph_body, Real h_spacing_ratio,
 									Real system_resolution_ratio, int local_refinement_level)
-		: SPHAdaptation(h_spacing_ratio, system_resolution_ratio)
+		: SPHAdaptation(sph_body, h_spacing_ratio, system_resolution_ratio)
 	{
 		local_refinement_level_ = local_refinement_level;
-		local_coarse_level_ = local_refinement_level_ / 2;
+		spacing_min_ = RefinedSpacing(spacing_ref_, local_refinement_level_);
+		spacing_ratio_min_ = powerN(0.5, local_refinement_level_);
+		h_ratio_max_ = powerN(2.0, local_refinement_level_);
+		number_density_max_ = computeReferenceNumberDensity(Vecd(0), h_ratio_max_);
 	}
 	//=================================================================================================//
 	size_t ParticleWithLocalRefinement::getCellLinkedListTotalLevel()
 	{
-		return size_t(local_coarse_level_ + local_refinement_level_);
+		return size_t(local_refinement_level_);
 	}
 	//=================================================================================================//
 	size_t ParticleWithLocalRefinement::getLevelSetTotalLevel()
@@ -135,41 +126,40 @@ namespace SPH
 		return getCellLinkedListTotalLevel() + 1;
 	}
 	//=================================================================================================//
-	void ParticleWithLocalRefinement::assignBaseParticles(BaseParticles *base_particles)
+	StdLargeVec<Real> &ParticleWithLocalRefinement::
+		registerSmoothingLengthRatio(BaseParticles *base_particles)
 	{
-		SPHAdaptation::assignBaseParticles(base_particles);
-		base_particles->registerAVariable<Real>(h_ratio_, "SmoothingLengthRatio", 1.0);
+		base_particles->registerAVariable(h_ratio_, "SmoothingLengthRatio", 1.0);
+		return h_ratio_;
 	}
 	//=================================================================================================//
 	UniquePtr<BaseCellLinkedList> ParticleWithLocalRefinement::createCellLinkedList()
 	{
 		return makeUnique<MultilevelCellLinkedList>(system_domain_bounds_, kernel_->CutOffRadius(),
-													getCellLinkedListTotalLevel(),
-													MaximumSpacingRatio(), *sph_body_, *this);
+													getCellLinkedListTotalLevel(), *sph_body_, *this);
 	}
 	//=================================================================================================//
-	UniquePtr<BaseLevelSet> ParticleWithLocalRefinement::createLevelSet(Shape &shape)
+	UniquePtr<BaseLevelSet> ParticleWithLocalRefinement::createLevelSet(Shape &shape, Real refinement_ratio)
 	{
-		return makeUnique<MultilevelLevelSet>(shape.findBounds(),
-											  ReferenceSpacing(), getLevelSetTotalLevel(),
-											  MaximumSpacingRatio(), shape, *this);
+		return makeUnique<MultilevelLevelSet>(shape.getBounds(), ReferenceSpacing() / refinement_ratio,
+											  getLevelSetTotalLevel(), shape, *this);
 	}
 	//=================================================================================================//
 	ParticleSpacingByBodyShape::
-		ParticleSpacingByBodyShape(Real smoothing_length_ratio,
+		ParticleSpacingByBodyShape(SPHBody *sph_body, Real smoothing_length_ratio,
 								   Real system_resolution_ratio, int local_refinement_level)
-		: ParticleWithLocalRefinement(smoothing_length_ratio,
+		: ParticleWithLocalRefinement(sph_body, smoothing_length_ratio,
 									  system_resolution_ratio, local_refinement_level){};
 	//=================================================================================================//
-	Real ParticleSpacingByBodyShape::getLocalSpacing(Shape &shape, Vecd &position)
+	Real ParticleSpacingByBodyShape::getLocalSpacing(Shape &shape, const Vecd &position)
 	{
 		Real phi = fabs(shape.findSignedDistance(position));
-		Real ratio_ref = phi / (2.0 * spacing_ref_ * spacing_ratio_max_);
-		Real target_ratio = spacing_ratio_max_;
+		Real ratio_ref = phi / (2.0 * spacing_ref_);
+		Real target_ratio = 1.0;
 		if (ratio_ref < kernel_->KernelSize())
 		{
 			Real weight = kernel_->W_1D(ratio_ref);
-			target_ratio = weight * spacing_ratio_min_ + (1.0 - weight) * spacing_ratio_max_;
+			target_ratio = weight * spacing_ratio_min_ + (1.0 - weight);
 		}
 		return target_ratio * spacing_ref_;
 	}

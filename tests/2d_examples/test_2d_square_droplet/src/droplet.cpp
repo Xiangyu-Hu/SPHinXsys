@@ -1,6 +1,6 @@
 /**
- * @file 	two_phase_dambreak.cpp
- * @brief 	2D two-phase dambreak flow.
+ * @file 	droplet.cpp
+ * @brief 	A square droplet deforms to circle due to surface tension.
  * @details This is the one of the basic test cases, also the first case for
  * 			understanding SPH method for multi-phase simulation.
  * @author 	Chi Zhang and Xiangyu Hu
@@ -17,62 +17,59 @@ int main()
 	 * @brief Build up -- a SPHSystem --
 	 */
 	SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-	/** Set the starting time. */
-	GlobalStaticVariables::physical_time_ = 0.0;
-	/** Tag for computation from restart files. 0: not from restart files. */
-	sph_system.restart_step_ = 0;
 	/**
-	 * @brief Material property, partilces and body creation of water.
+	 * @brief Material property, particles and body creation of water.
 	 */
-	WaterBlock water_block(sph_system, "WaterBody");
-	FluidParticles 	water_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f, mu_f));
-	water_particles.addAVariableToWrite<int>("SurfaceIndicator");
+	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
+	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
+	water_block.generateParticles<ParticleGeneratorLattice>();
+	water_block.addBodyStateForRecording<int>("SurfaceIndicator");
 	/**
-	 * @brief Material property, partilces and body creation of air.
+	 * @brief Material property, particles and body creation of air.
 	 */
-	AirBlock air_block(sph_system, "AirBody");
-	FluidParticles 	air_particles(air_block, makeShared<WeaklyCompressibleFluid>(rho0_a, c_f, mu_a));
+	FluidBody air_block(sph_system, makeShared<AirBlock>("AirBody"));
+	air_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_a, c_f, mu_a);
+	air_block.generateParticles<ParticleGeneratorLattice>();
 	/**
 	 * @brief 	Particle and body creation of wall boundary.
 	 */
-	WallBoundary wall_boundary(sph_system, "Wall");
-	SolidParticles 		wall_particles(wall_boundary);
-	/** topology */
-	ComplexBodyRelation water_air_complex(water_block, { &air_block });
-	BodyRelationContact water_wall_contact(water_block, { &wall_boundary });
-	ComplexBodyRelation air_water_complex(air_block, { &water_block });
-	BodyRelationContact air_wall_contact(air_block, { &wall_boundary });
+	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
+	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+	wall_boundary.generateParticles<ParticleGeneratorLattice>();
+	/** body topology */
+	ComplexBodyRelation water_air_complex(water_block, {&air_block});
+	BodyRelationContact water_wall_contact(water_block, {&wall_boundary});
+	ComplexBodyRelation air_water_complex(air_block, {&water_block});
+	BodyRelationContact air_wall_contact(air_block, {&wall_boundary});
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
-	/**
-	 * @brief 	Methods used for time stepping.
-	 */
-	 /** Define external force. */
-	Gravity	gravity(Vecd(0.0, -gravity_g));
-	 /** Initialize particle acceleration. */
-	TimeStepInitialization		initialize_a_water_step(water_block, gravity);
-	TimeStepInitialization		initialize_a_air_step(air_block, gravity);
+	/** Define external force. */
+	Gravity gravity(Vecd(0.0, -gravity_g));
+	/** Initialize particle acceleration. */
+	TimeStepInitialization initialize_a_water_step(water_block, gravity);
+	TimeStepInitialization initialize_a_air_step(air_block, gravity);
+	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
-	 /** Evaluation of density by summation approach. */
-	fluid_dynamics::DensitySummationFreeSurfaceComplex 	
+	/** Evaluation of density by summation approach. */
+	fluid_dynamics::DensitySummationFreeSurfaceComplex
 		update_water_density_by_summation(water_air_complex.inner_relation_, water_wall_contact);
 	fluid_dynamics::DensitySummationComplex
 		update_air_density_by_summation(air_water_complex, air_wall_contact);
 	fluid_dynamics::TransportVelocityCorrectionComplex
 		air_transport_correction(air_water_complex, air_wall_contact);
 	/** Time step size without considering sound wave speed. */
-	fluid_dynamics::AdvectionTimeStepSize 	get_water_advection_time_step_size(water_block, U_max);
-	fluid_dynamics::AdvectionTimeStepSize 	get_air_advection_time_step_size(air_block, U_max);
+	fluid_dynamics::AdvectionTimeStepSize get_water_advection_time_step_size(water_block, U_max);
+	fluid_dynamics::AdvectionTimeStepSize get_air_advection_time_step_size(air_block, U_max);
 	/** Time step size with considering sound wave speed. */
 	fluid_dynamics::AcousticTimeStepSize get_water_time_step_size(water_block);
 	fluid_dynamics::AcousticTimeStepSize get_air_time_step_size(air_block);
 	/** Pressure relaxation for water by using position verlet time stepping. */
-	fluid_dynamics::PressureRelaxationRiemannWithWall 
+	fluid_dynamics::PressureRelaxationRiemannWithWall
 		water_pressure_relaxation(water_air_complex.inner_relation_, water_wall_contact);
-	fluid_dynamics::DensityRelaxationRiemannWithWall 
+	fluid_dynamics::DensityRelaxationRiemannWithWall
 		water_density_relaxation(water_air_complex.inner_relation_, water_wall_contact);
 	/** Extend Pressure relaxation is used for air. */
 	fluid_dynamics::ExtendMultiPhasePressureRelaxationRiemannWithWall
@@ -98,29 +95,13 @@ int main()
 	/**
 	 * @brief Output.
 	 */
-	In_Output in_output(sph_system);
+	InOutput in_output(sph_system);
 	/** Output the body states. */
-	BodyStatesRecordingToVtp 		body_states_recording(in_output, sph_system.real_bodies_);
-	/** Output the body states for restart simulation. */
-	RestartIO		restart_io(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp body_states_recording(in_output, sph_system.real_bodies_);
 	/** Pre-simulation*/
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	wall_particles.initializeNormalDirectionFromBodyShape();
-	/**
-	 * @brief The time stepping starts here.
-	 */
-	 /** If the starting time is not zero, please setup the restart time step ro read in restart states. */
-	if (sph_system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
-		water_block.updateCellLinkedList();
-		air_block.updateCellLinkedList();
-		water_air_complex.updateConfiguration();
-		water_wall_contact.updateConfiguration();
-		air_water_complex.updateConfiguration();
-		air_wall_contact.updateConfiguration();
-	}
+	wall_boundary_normal_direction.parallel_exec();
 	/** Output the start states of bodies. */
 	body_states_recording.writeToFile(0);
 	/**
@@ -128,10 +109,9 @@ int main()
 	 */
 	size_t number_of_iterations = sph_system.restart_step_;
 	int screen_output_interval = 100;
-	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 1.0; 	/**< End time. */
-	Real D_Time = 0.02;		/**< Time stamps for output of body states. */
-	Real dt = 0.0; 			/**< Default acoustic time step sizes. */
+	Real End_Time = 1.0; /**< End time. */
+	Real D_Time = 0.02;	 /**< Time stamps for output of body states. */
+	Real dt = 0.0;		 /**< Default acoustic time step sizes. */
 	/** statistics for computing CPU time. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
@@ -196,17 +176,15 @@ int main()
 			if (number_of_iterations % screen_output_interval == 0)
 			{
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-					<< GlobalStaticVariables::physical_time_
-					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
+						  << GlobalStaticVariables::physical_time_
+						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
 
-				if (number_of_iterations % restart_output_interval == 0)
-					restart_io.writeToFile(number_of_iterations);
 			}
 			number_of_iterations++;
 
 			/** Update cell linked list and configuration. */
 			time_instance = tick_count::now();
-			
+
 			water_block.updateCellLinkedList();
 			water_air_complex.updateConfiguration();
 			water_wall_contact.updateConfiguration();
@@ -221,7 +199,6 @@ int main()
 		body_states_recording.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
-
 	}
 
 	tick_count t4 = tick_count::now();
@@ -229,13 +206,13 @@ int main()
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds()
-		<< " seconds." << std::endl;
+			  << " seconds." << std::endl;
 	std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="
-		<< interval_computing_time_step.seconds() << "\n";
+			  << interval_computing_time_step.seconds() << "\n";
 	std::cout << std::fixed << std::setprecision(9) << "interval_computing_pressure_relaxation = "
-		<< interval_computing_pressure_relaxation.seconds() << "\n";
+			  << interval_computing_pressure_relaxation.seconds() << "\n";
 	std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
-		<< interval_updating_configuration.seconds() << "\n";
+			  << interval_updating_configuration.seconds() << "\n";
 
 	return 0;
 }

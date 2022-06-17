@@ -148,7 +148,7 @@ namespace SPH
 			const Matd &gradient_particle_i_value, const Vecd &particle_j_value, const Matd &gradient_particle_j_value)
 		{
 			return particle_i_value - particle_j_value
-				   + 0.5 * r_ij * (gradient_particle_i_value + gradient_particle_j_value) * e_ij;
+				   - 0.5 * r_ij * (gradient_particle_i_value + gradient_particle_j_value) * e_ij;
 		}
 		//=================================================================================================//
 		Vecd getWENOVariableJump(const Vecd &e_ij, const Real &r_ij, const Vecd &particle_i_value,
@@ -192,10 +192,10 @@ namespace SPH
 		Vecd getWENOLeftState(const Vecd &e_ij, const Real &r_ij, const Vecd &particle_i_value,
 			const Matd &gradient_particle_i_value, const Vecd &particle_j_value, const Matd &gradient_particle_j_value)
 		{
-			Vecd v1 = particle_i_value - gradient_particle_i_value * e_ij * r_ij;
+			Vecd v1 = particle_i_value + gradient_particle_i_value * e_ij * r_ij;
 			Vecd v2 = particle_i_value;
 			Vecd v3 = particle_j_value;
-			Vecd v4 = particle_j_value + gradient_particle_j_value * e_ij * r_ij;
+			Vecd v4 = particle_j_value - gradient_particle_j_value * e_ij * r_ij;
 
 			return getWENOStateWithStencilPoints(v1, v2, v3, v4);
 		}
@@ -203,10 +203,10 @@ namespace SPH
 		Vecd getWENORightState(const Vecd &e_ij, const Real &r_ij, const Vecd &particle_i_value,
 			const Matd &gradient_particle_i_value, const Vecd &particle_j_value, const Matd &gradient_particle_j_value)
 		{
-			Vecd v1 = particle_j_value + gradient_particle_j_value * e_ij * r_ij;
+			Vecd v1 = particle_j_value - gradient_particle_j_value * e_ij * r_ij;
 			Vecd v2 = particle_j_value;
 			Vecd v3 = particle_i_value;
-			Vecd v4 = particle_i_value - gradient_particle_i_value * e_ij * r_ij;
+			Vecd v4 = particle_i_value + gradient_particle_i_value * e_ij * r_ij;
 
 			return getWENOStateWithStencilPoints(v1, v2, v3, v4);
 		}
@@ -230,17 +230,17 @@ namespace SPH
 		//=================================================================================================//
 		Mat2d getCorrectedAlmansiStrain(const Mat2d &current_local_almansi_strain, const Real &nu_)
 		{
-			Mat2d corredted_almansi_strain = current_local_almansi_strain;
-			corredted_almansi_strain[1][1] = -nu_ * corredted_almansi_strain[0][0] / (1.0 - nu_);
-			return corredted_almansi_strain;
+			Mat2d corrected_almansi_strain = current_local_almansi_strain;
+			corrected_almansi_strain[1][1] = -nu_ * corrected_almansi_strain[0][0] / (1.0 - nu_);
+			return corrected_almansi_strain;
 		}
 		//=================================================================================================//
 		Mat3d getCorrectedAlmansiStrain(const Mat3d &current_local_almansi_strain, const Real &nu_)
 		{
-			Mat3d corredted_almansi_strain = current_local_almansi_strain;
-			corredted_almansi_strain[2][2]
-				= -nu_ * (corredted_almansi_strain[0][0] + corredted_almansi_strain[1][1]) / (1.0 - nu_);
-			return corredted_almansi_strain;
+			Mat3d corrected_almansi_strain = current_local_almansi_strain;
+			corrected_almansi_strain[2][2]
+				= -nu_ * (corrected_almansi_strain[0][0] + corrected_almansi_strain[1][1]) / (1.0 - nu_);
+			return corrected_almansi_strain;
 		}
 		//=================================================================================================//
 	}

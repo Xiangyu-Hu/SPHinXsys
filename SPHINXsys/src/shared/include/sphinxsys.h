@@ -33,7 +33,6 @@ capabilities. **/
 #include "all_particle_generators.h"
 #include "all_geometries.h"
 #include "all_bodies.h"
-#include "generative_structures.h"
 #include "sph_system.h"
 #include "all_materials.h"
 #include "all_physical_dynamics.h"
@@ -41,5 +40,6 @@ capabilities. **/
 #include "in_output.h"
 #include "parameterization.h"
 #include "regression_test.h"
+#include "all_boundaries.h"
 
 #endif //SPHINXSYS_H

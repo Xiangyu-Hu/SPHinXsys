@@ -31,6 +31,9 @@
 #define OBSERVER_DYNAMICS_H
 
 #include "all_particle_dynamics.h"
+#include "base_body.h"
+#include "base_particles.h"
+#include "body_relation.h"
 
 namespace SPH
 {
@@ -60,12 +63,12 @@ namespace SPH
 					contact_data_.push_back(contact_data);
 				}
 			};
-			virtual ~BaseInterpolation(){};
+			virtual ~BaseInterpolation() {};
+			StdLargeVec<VariableType>*  interpolated_quantities_;
 
 		protected:
-			StdLargeVec<VariableType> *interpolated_quantities_;
-			StdVec<StdLargeVec<Real> *> contact_Vol_;
-			StdVec<StdLargeVec<VariableType> *> contact_data_;
+			StdVec<StdLargeVec<Real>*> contact_Vol_;
+			StdVec<StdLargeVec<VariableType>*> contact_data_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override
 			{
@@ -134,7 +137,7 @@ namespace SPH
       			constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
 				if (particles->all_variable_maps_[type_index].find(variable_name) == particles->all_variable_maps_[type_index].end())
 				{
-					particles->registerAVariable<VariableType>(observed_quantities_, variable_name, VariableType(0));
+					particles->registerAVariable(observed_quantities_, variable_name, VariableType(0));
 					return &observed_quantities_;
 				}
 				return particles->getVariableByName<VariableType>(variable_name);

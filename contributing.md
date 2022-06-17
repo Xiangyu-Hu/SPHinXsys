@@ -1,4 +1,4 @@
-# Contributing to Atom
+# Contributing to SPHinXsys
 
 :+1::tada: First off, thanks for taking the time to contribute! :tada::+1:
 
@@ -21,7 +21,7 @@ Use your best judgment, and feel free to propose changes to this document in a p
 
 [Styleguides](#styleguides)
   * [Git Commit Messages](#git-commit-messages)
-  * [C++ Styleguide](#javascript-styleguide)
+  * [C++ Styleguide](#C++ Styleguide)
   * [Documentation Styleguide](#documentation-styleguide)
 
 [Additional Notes](#additional-notes)
@@ -42,7 +42,7 @@ aims to model coupled industrial dynamic systems including fluid, solid, multi-b
 and beyond with SPH (smoothed particle hydrodynamics), 
 a meshless computational method using particle discretization.
 
-SPHinXsys has two major compnents: one is for the modelling classes, 
+SPHinXsys has two major components: one is for the modelling classes, 
 such as SPHBodies, Materials, Particles, Particle Configurations; 
 the other is for the physical dynamics which are derived from the base class of ParticleDynamics. 
 Both the models and physical dynamics can be extended.
@@ -51,26 +51,27 @@ Both the models and physical dynamics can be extended.
 
 There are a few conventions that have developed over time around SPHinXsys:
 
-* The main source is in the folder SPHINXsys and the examples are in the folder cases_test.
+* The main source is in the folder SPHINXsys and the examples and test problems are in the folder tests.
     * In SPHINXsys, the cmake file are in the folder cmake, and the sources are in the folder src.
     * In src, the sources which will be used for both 2D and 3D are in the folder shared.
     * In shared, each folder is spefical model or physical dynamics. 
 	For example, the folder materials is for modeling fluid, solid and more complex material properties. 
 	Another example is the folder particle dynamics. In it, for each sub field of physical dynamics, 
 	a separated folder is assigned.
-    * When different codes are required for 2D of 3D impleementation. 
+    * When different codes are required for 2D of 3D implementations. 
 	One need to create the folders with the same names in both the folders for 2D and 3D build.
-    * Each test case has been assigned with a unique folder in cases_test.
+    * Each test case has been assigned with a unique folder in tests.
 
 ## How Can I Contribute?
 
-### Reporting Bugs
+### Reporting Bugs or Issues
 
-When you are creating a bug report, please include as many details as possible. 
+When you are creating a bug or issue report, please include as many details as possible. 
+
 
 ### Suggesting Enhancements
 
-You are welcomed to submit an enhancement suggestion for SPHinXsys, 
+You are welcomed to submit an enhancement suggestion for SPHinXsys in the issues, 
 including completely new features and minor improvements to existing functionality. 
 
 ### Your First Code Contribution
