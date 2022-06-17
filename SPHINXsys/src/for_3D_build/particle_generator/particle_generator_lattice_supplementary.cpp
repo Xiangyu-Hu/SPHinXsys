@@ -16,7 +16,6 @@ namespace SPH
 		BaseMesh mesh(domain_bounds_, lattice_spacing_, 0);
 		Real particle_volume = lattice_spacing_ * lattice_spacing_ * lattice_spacing_;
 		Vecu number_of_lattices = mesh.NumberOfCellsFromNumberOfGridPoints(mesh.NumberOfGridPoints());
-        base_particles->reserve(1.25*number_of_lattices[0]*number_of_lattices[1]*number_of_lattices[2]);
 		for (size_t i = 0; i < number_of_lattices[0]; ++i)
 			for (size_t j = 0; j < number_of_lattices[1]; ++j)
 				for (size_t k = 0; k < number_of_lattices[2]; ++k)
@@ -54,7 +53,6 @@ namespace SPH
 				}
 		Real number_of_particles = total_volume_ / avg_particle_volume_ + 0.5;
 		planned_number_of_particles_ = int(number_of_particles);
-    base_particles->reserve(1.25*planned_number_of_particles_);
 
 		// Calculate the interval based on the number of particles.
 		Real interval = planned_number_of_particles_ / (number_of_cells_ + TinyReal);
