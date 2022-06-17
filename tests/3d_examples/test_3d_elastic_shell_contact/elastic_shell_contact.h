@@ -4,15 +4,14 @@
 #include "sphinxsys.h"
 using namespace SPH;
 
-class ShellBodyFromMesh : public ThinStructure
+class ShellBodyFromMesh : public SolidBody
 {
 public:
-    ShellBodyFromMesh(SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape, SharedPtr<SPHAdaptation> particle_adaptation)
-	: ThinStructure(system, body_name, particle_adaptation)
+    ShellBodyFromMesh(SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape)
+	: SolidBody(system, triangle_mesh_shape)
     {
-        body_shape_.add<LevelSetShape>(this, triangle_mesh_shape, true, false);
         // set the body domain bounds because it is not set by default
-        BoundingBox bounds = body_shape_.findBounds();
+        BoundingBox bounds = body_shape_->getBounds();
         setBodyDomainBounds(bounds);
     }
 };
@@ -20,25 +19,23 @@ public:
 class SolidBodyFromMesh : public SolidBody
 {
 public:
-	SolidBodyFromMesh(SPHSystem &system, string body_name, TriangleMeshShape& triangle_mesh_shape,
-	 shared_ptr<SPHAdaptation> particle_adaptation)
-	: SolidBody(system, body_name, particle_adaptation)
+	SolidBodyFromMesh(SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape)
+	: SolidBody(system, triangle_mesh_shape)
 	{
-		body_shape_.add<LevelSetShape>(this, triangle_mesh_shape, true, false);
 		// set the body domain bounds because it is not set by default
-		BoundingBox bounds = body_shape_.findBounds();
+		BoundingBox bounds = body_shape_->getBounds();
 		setBodyDomainBounds(bounds);
 	}
 };
 
-void ShellParticleRelaxation(In_Output& in_output, ShellBodyFromMesh& imported_model, BodyRelationInner& imported_model_inner, Real thickness, Real level_set_refinement_ratio)
+void ShellParticleRelaxation(InOutput& in_output, ShellBodyFromMesh& imported_model, BodyRelationInner& imported_model_inner, Real thickness, Real level_set_refinement_ratio)
 {
 	BodyStatesRecordingToVtp write_imported_model_to_vtp(in_output, { imported_model });
 	MeshRecordingToPlt 	write_mesh_cell_linked_list(in_output, imported_model, imported_model.cell_linked_list_);
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
-	RandomizePartilePosition  random_imported_model_particles(imported_model);
+	RandomizeParticlePosition  random_imported_model_particles(imported_model);
 	/** A  Physics relaxation step. */
 	relax_dynamics::ShellRelaxationStepInner relaxation_step_inner(imported_model_inner, thickness, level_set_refinement_ratio);
 	//----------------------------------------------------------------------
@@ -63,7 +60,7 @@ void ShellParticleRelaxation(In_Output& in_output, ShellBodyFromMesh& imported_m
 		relaxation_step_inner.parallel_exec();
 		ite_p += 1;
 	}
-	relaxation_step_inner.mid_surface_bounding_.calculateNormalDirection();
+	//relaxation_step_inner.mid_surface_bounding_.calculateNormalDirection();//not available after update
 	//write_imported_model_to_vtp.writeToFile(ite_p);
 	std::cout << "The physics relaxation process of imported model finish !" << std::endl;
 }
@@ -125,29 +122,28 @@ void ElasticShellContact(bool elastic_shell, Real shell_resolution, Real shell_t
 	Gravity gravity_shell(Vec3d(0.0, 0.0, 0.0));
 
 	// Import meshes
-	TriangleMeshShapeSTL mesh_1("./input/solid_cube.stl", Vecd(0.0)*scale, scale);
-	TriangleMeshShapeSTL mesh_2("./input/curved_shell.stl", Vecd(20.0, 0.0, 0.0)*scale, scale);
+	auto mesh_1 = makeShared<TriangleMeshShapeSTL>("./input/solid_cube.stl", Vecd(0.0)*scale, scale);
+	auto mesh_2 = makeShared<TriangleMeshShapeSTL>("./input/curved_shell.stl", Vecd(20.0, 0.0, 0.0)*scale, scale);
 
-	BoundingBox system_bb = mesh_1.findBounds();
-	BoundingBox bb2 = mesh_2.findBounds();
+	BoundingBox system_bb = mesh_1->getBounds();
+	BoundingBox bb2 = mesh_2->getBounds();
 	expandBoundingBox(&system_bb, &bb2);
 
 	// System
 	SPHSystem system(system_bb, resolution_ref);
-	In_Output in_output(system);
+	InOutput in_output(system);
 
 	// Create solid and shell objects
-	SolidBodyFromMesh myocardium_body(system, "Solid_cube", mesh_1, makeShared<SPHAdaptation>());
-	ElasticSolidParticles myocardium_particles(myocardium_body, makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson));
+	SolidBodyFromMesh myocardium_body(system, mesh_2);
+    myocardium_body.defineBodyLevelSetShape();
+    myocardium_body.defineParticlesAndMaterial<ElasticSolidParticles,LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	BodyRelationInner myocardium_body_inner(myocardium_body);
 
-	shared_ptr<SPHAdaptation> shell_adaptation = makeShared<SPHAdaptation>(1.15, res_factor, 0.75, level_set_refinement_ratio);
-	ShellBodyFromMesh shell_body (system, "Shell_plate", mesh_2, shell_adaptation);
-	ShellParticles shell_body_particles(
-		shell_body,
-		makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus_shell, poisson),
-		makeShared<ShellParticleGeneratorLattice>(thickness), thickness
-	);
+	ShellBodyFromMesh shell_body(system, mesh_1);
+    shell_body.defineBodyLevelSetShape();
+    shell_body.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
+    shell_body.defineParticlesAndMaterial<ElasticSolidParticles,LinearElasticSolid>(rho0_s, Youngs_modulus_shell, poisson);
+
 	BodyRelationInner shell_body_inner(shell_body);
 	ShellParticleRelaxation(in_output, shell_body, shell_body_inner, thickness, level_set_refinement_ratio);
 
@@ -164,7 +160,7 @@ void ElasticShellContact(bool elastic_shell, Real shell_resolution, Real shell_t
 	solid_dynamics::CorrectConfiguration corrected_configuration(myocardium_body_inner);
 	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half(myocardium_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(myocardium_body_inner);
-	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>> muscle_damping(myocardium_body_inner, 0.2, "Velocity", physical_viscosity);
+	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>> muscle_damping(0.2, myocardium_body_inner, "Velocity", physical_viscosity);
 	
     // // Constraint - not used
 	// TriangleMeshShapeBrick holder_shape(Vec3d(10.0, 100.0, 100.0)*scale, 20, Vec3d(-10.0, 0.0, 0.0)*scale);
@@ -177,7 +173,7 @@ void ElasticShellContact(bool elastic_shell, Real shell_resolution, Real shell_t
 	thin_structure_dynamics::ShellAcousticTimeStepSize computing_time_step_size_2(shell_body);
 	thin_structure_dynamics::ShellStressRelaxationFirstHalf stress_relaxation_first_half_2(shell_body_inner);
 	thin_structure_dynamics::ShellStressRelaxationSecondHalf stress_relaxation_second_half_2(shell_body_inner);
-	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>> shell_damping(shell_body_inner, 0.2, "Velocity", physical_viscosity);
+	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>> shell_damping(0.2, shell_body_inner, "Velocity", physical_viscosity);
 
 	// Output
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
@@ -264,13 +260,14 @@ void ElasticShellContact(bool elastic_shell, Real shell_resolution, Real shell_t
 
 	// the shell particles can blow up sometimes, when the particle relaxation is not proper
 	// max strain should be small, less than 1e-3
-	EXPECT_LT(shell_body_particles.getVonMisesStrainMax(), 1e-3);
+    auto shell_body_particles = static_cast<ShellParticles*>(shell_body.base_particles_);
+	EXPECT_LT(shell_body_particles->getVonMisesStrainMax(), 1e-3);
 	// check that there is contact, the solid body particles don't go through the shell
 	Real shell_x_min = Infinity;
-	for (auto pos: shell_body_particles.pos_n_)
+	for (auto pos: shell_body_particles->pos_n_)
 		if (pos[0] < shell_x_min)
 			shell_x_min = pos[0];
-	for (auto pos: myocardium_particles.pos_n_)
+	for (auto pos: myocardium_body.base_particles_->pos_n_)
 		EXPECT_LT(pos[0], shell_x_min);
 }
 
