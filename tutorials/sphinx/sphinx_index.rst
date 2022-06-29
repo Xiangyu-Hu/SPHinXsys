@@ -66,6 +66,14 @@ Installing SPHinXsys
 
    installation.rst
 
+************************
+Creating your own cases
+************************
+
+.. toctree::
+   :maxdepth: 2
+
+   user_cases.rst
 
 **********
 Examples:
