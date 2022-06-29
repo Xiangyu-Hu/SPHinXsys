@@ -23,7 +23,7 @@
 /**
  * @file 	base_body_part.h
  * @brief 	This is the base classes of body parts.
- * @details	There two main type of body parts. One is part by particle. 
+ * @details	There two main type of body parts. One is part by particle.
  * 			The other is part by cell.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */
@@ -120,6 +120,7 @@ namespace SPH
 	{
 	private:
 		SharedPtrKeeper<Shape> shape_ptr_keeper_;
+
 	public:
 		Shape &body_part_shape_;
 
@@ -168,6 +169,7 @@ namespace SPH
 	{
 	private:
 		SharedPtrKeeper<Shape> shape_ptr_keeper_;
+
 	public:
 		Shape &body_part_shape_;
 
@@ -202,5 +204,23 @@ namespace SPH
 		/** only cells near the surface of the body part shape are included */
 		bool checkNearSurface(Vecd cell_position, Real threshold);
 	};
+
+	/**
+	 * @class AlignedBoxRegion
+	 * @brief A template body part with the collection of particles within by an AlignedBoxShape.
+	 */
+	template <class BodyRegionType>
+	class AlignedBoxRegion : public BodyRegionType
+	{
+	public:
+		AlignedBoxShape &aligned_box_;
+
+		AlignedBoxRegion(RealBody &real_body, SharedPtr<AlignedBoxShape> aligned_box_ptr)
+			: BodyRegionType(real_body, aligned_box_ptr), aligned_box_(*aligned_box_ptr.get()){};
+		virtual ~AlignedBoxRegion(){};
+	};
+
+	using BodyAlignedBoxByParticle = AlignedBoxRegion<BodyRegionByParticle>;
+	using BodyAlignedBoxByCell = AlignedBoxRegion<BodyRegionByCell>;
 }
 #endif // BASE_BODY_PART_H

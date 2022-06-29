@@ -53,7 +53,8 @@ namespace SPH
             /** default value is 0.1 suggests reaching  target inflow velocity in about 10 time steps */
             Real relaxation_rate_;
 
-            /** inflow profile to be defined in applications */
+            /** inflow profile to be defined in applications,
+             * argument parameters and return value are in frame (local) coordinate */
             virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) = 0;
             virtual void Update(size_t index_i, Real dt = 0.0) override;
         };
@@ -65,14 +66,22 @@ namespace SPH
         class InflowBoundaryCondition : public FlowRelaxationBuffer
         {
         public:
-            InflowBoundaryCondition(FluidBody &fluid_body, BodyPartByCell &body_part);
+            InflowBoundaryCondition(FluidBody &fluid_body, BodyAlignedBoxByCell &aligned_box_part);
             virtual ~InflowBoundaryCondition(){};
+
+        protected:
+            Transformd &transform_;
+            Vecd halfsize_;
+
+            virtual void Update(size_t index_i, Real dt = 0.0) override;
         };
 
         /**
          * @class DampingBoundaryCondition
          * @brief damping boundary condition which relaxes
          * the particles to zero velocity profile.
+         * TODO: one can using aligned box shape and generalize the damping factor along 
+         * one axis direction.
          */
         class DampingBoundaryCondition : public PartDynamicsByCell, public FluidDataSimple
         {
@@ -86,6 +95,65 @@ namespace SPH
             Real strength_;
             BoundingBox damping_zone_bounds_;
             virtual void Update(size_t index_particle_i, Real dt = 0.0) override;
+        };
+
+        /**
+         * @class EmitterInflowCondition
+         * @brief Inflow boundary condition imposed on an emitter, in which pressure and density profile are imposed too.
+         * The body part region is required to have parallel lower- and upper-bound surfaces.
+         */
+        class EmitterInflowCondition : public PartSimpleDynamicsByParticle, public FluidDataSimple
+        {
+        public:
+            explicit EmitterInflowCondition(FluidBody &fluid_body, BodyAlignedBoxByParticle &aligned_box_part);
+            virtual ~EmitterInflowCondition(){};
+
+        protected:
+            StdLargeVec<Vecd> &pos_n_, &vel_n_;
+            StdLargeVec<Real> &rho_n_, &p_;
+            /** inflow pressure condition */
+            Real inflow_pressure_;
+            Real rho0_;
+            AlignedBoxShape &aligned_box_;
+            Transformd &updated_transform_, old_transform_;
+
+            /** no transform by default */
+            virtual void updateTransform(){};
+            virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) = 0;
+            virtual void setupDynamics(Real dt = 0.0) override { updateTransform(); };
+            virtual void Update(size_t unsorted_index_i, Real dt = 0.0) override;
+        };
+
+        /**
+         * @class EmitterInflowInjecting
+         * @brief Inject particles into the computational domain.
+         */
+        class EmitterInflowInjecting : public PartSimpleDynamicsByParticle, public FluidDataSimple
+        {
+        public:
+            explicit EmitterInflowInjecting(FluidBody &fluid_body, BodyAlignedBoxByParticle &aligned_box_part,
+                                            size_t body_buffer_width, int axis_direction, bool positive);
+            virtual ~EmitterInflowInjecting(){};
+
+            /** This class is only implemented in sequential due to memory conflicts. */
+            virtual void parallel_exec(Real dt = 0.0) override { exec(); };
+            AlignedBoxShape &getBodyPartByParticle(){};
+
+        protected:
+            StdLargeVec<Vecd> &pos_n_;
+            StdLargeVec<Real> &rho_n_, &p_;
+            const int axis_; /**< the axis direction for bounding*/
+            size_t body_buffer_width_;
+            AlignedBoxShape &aligned_box_;
+
+            virtual void checkLowerBound(size_t unsorted_index_i, Real dt = 0.0);
+            virtual void checkUpperBound(size_t unsorted_index_i, Real dt = 0.0);
+            ParticleFunctor checking_bound_;
+
+            virtual void Update(size_t unsorted_index_i, Real dt = 0.0) override
+            {
+                checking_bound_(unsorted_index_i, dt);
+            };
         };
 
         /**
@@ -160,60 +228,6 @@ namespace SPH
             virtual ~StaticConfinement(){};
         };
 
-        /**
-         * @class EmitterInflowCondition
-         * @brief Inflow boundary condition imposed on an emitter, in which pressure and density profile are imposed too.
-         * The body part region is required to have parallel lower- and upper-bound surfaces.
-         */
-        class EmitterInflowCondition : public PartSimpleDynamicsByParticle, public FluidDataSimple
-        {
-        public:
-            explicit EmitterInflowCondition(FluidBody &fluid_body, BodyPartByParticle &body_part);
-            virtual ~EmitterInflowCondition(){};
-
-        protected:
-            StdLargeVec<Vecd> &pos_n_, &vel_n_;
-            StdLargeVec<Real> &rho_n_, &p_;
-            /** inflow pressure condition */
-            Real inflow_pressure_;
-            Real rho0_;
-
-            /** inflow velocity profile to be defined in applications */
-            virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) = 0;
-            virtual void Update(size_t unsorted_index_i, Real dt = 0.0) override;
-        };
-
-        /**
-         * @class EmitterInflowInjecting
-         * @brief Inject particles into the computational domain.
-         */
-        class EmitterInflowInjecting : public PartSimpleDynamicsByParticle, public FluidDataSimple
-        {
-        public:
-            explicit EmitterInflowInjecting(FluidBody &fluid_body, BodyRegionByParticle &body_part,
-                                            size_t body_buffer_width, int axis_direction, bool positive);
-            virtual ~EmitterInflowInjecting(){};
-
-            /** This class is only implemented in sequential due to memory conflicts. */
-            virtual void parallel_exec(Real dt = 0.0) override { exec(); };
-
-        protected:
-            StdLargeVec<Vecd> &pos_n_;
-            StdLargeVec<Real> &rho_n_, &p_;
-            const int axis_; /**< the axis direction for bounding*/
-            Vecd periodic_translation_;
-            size_t body_buffer_width_;
-            BoundingBox body_part_bounds_;
-
-            virtual void checkLowerBound(size_t unsorted_index_i, Real dt = 0.0);
-            virtual void checkUpperBound(size_t unsorted_index_i, Real dt = 0.0);
-            ParticleFunctor checking_bound_;
-
-            virtual void Update(size_t unsorted_index_i, Real dt = 0.0) override
-            {
-                checking_bound_(unsorted_index_i, dt);
-            };
-        };
     }
 }
 #endif // FLUID_BOUNDARY_H

@@ -7,7 +7,7 @@ namespace SPH
 	//=================================================================================================//
 	bool ImageShape::checkContain(const Vec3d &input_pnt, bool BOUNDARY_INCLUDED)
 	{
-		Real value = findSignedDistance(input_pnt);
+		Real value = image_->findValueAtPoint(input_pnt);
 		if (BOUNDARY_INCLUDED == true)
 		{
 			if (value > 0.0)
@@ -32,26 +32,6 @@ namespace SPH
 	BoundingBox ImageShape::findBounds()
 	{
 		return image_->findBounds();
-	}
-	//=================================================================================================//
-	Real ImageShape::findSignedDistance(const Vec3d &input_pnt)
-	{
-		return image_->findValueAtPoint(input_pnt);
-	}
-	//=================================================================================================//
-	Vec3d ImageShape::findNormalDirection(const Vec3d &input_pnt)
-	{
-		return image_->findNormalAtPoint(input_pnt);
-	}
-	//=================================================================================================//
-	bool ImageShape::checkNotFar(const Vec3d &input_pnt, Real threshold)
-	{
-		return checkContain(input_pnt) || checkNearSurface(input_pnt, threshold) ? true : false;
-	}
-	//=================================================================================================//
-	bool ImageShape::checkNearSurface(const Vec3d &input_pnt, Real threshold)
-	{
-		return getMaxAbsoluteElement(input_pnt - findClosestPoint(input_pnt)) < threshold ? true : false;
 	}
 	//=================================================================================================//
 	ImageShapeFromFile::

@@ -11,20 +11,26 @@ using namespace SPH;
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
 Real DL = 5.0;						  /**< Reference length. */
-Real DH = 3.0;						  /**< Reference height. */
+Real DH = 3.0;						  /**< Reference and the height of main channel. */
 Real DL1 = 0.7 * DL;				  /**< The length of the main channel. */
 Real resolution_ref = 0.15;			  /**< Initial reference particle spacing. */
 Real BW = resolution_ref * 4;		  /**< Reference size of the emitter. */
 Real DL_sponge = resolution_ref * 20; /**< Reference size of the emitter buffer to impose inflow condition. */
 /** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -DH), Vec2d(DL + BW, 2.0 * DH));
+BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -DH - BW), Vec2d(DL + BW, 2.0 * DH + BW));
 /** Prescribed fluid body domain bounds*/
 BoundingBox fluid_body_domain_bounds(Vec2d(-DL_sponge, -DH), Vec2d(DL + BW, 2.0 * DH));
+Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
+Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
+Vec2d inlet_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
+Vec2d inlet_buffer_translation = Vec2d(-DL_sponge, 0.0) + inlet_buffer_halfsize;
+
+//-------------------------------------------------------
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
-Real rho0_f = 1.0;					/**< Reference density of fluid. */
-Real U_f = 1.0;						/**< Characteristic velocity. */
+Real rho0_f = 1.0; /**< Reference density of fluid. */
+Real U_f = 1.0;	   /**< Characteristic velocity. */
 /** Reference sound speed needs to consider the flow speed in the narrow channels. */
 Real c_f = 10.0 * U_f * SMAX(1.0, DH / (2.0 * (DL - DL1)));
 Real Re = 100.0;					/**< Reynolds number. */
@@ -32,15 +38,15 @@ Real mu_f = rho0_f * U_f * DH / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	define geometry of SPH bodies
 //----------------------------------------------------------------------
-/** the water block in T shape polygen. */
+/** the water block in T shape polygon. */
 std::vector<Vecd> water_block_shape{
 	Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(DL1, DH), Vecd(DL1, 2.0 * DH),
 	Vecd(DL, 2.0 * DH), Vecd(DL, -DH), Vecd(DL1, -DH), Vecd(DL1, 0.0), Vecd(-DL_sponge, 0.0)};
-/** the outer wall polygen. */
+/** the outer wall polygon. */
 std::vector<Vecd> outer_wall_shape{
-	Vecd(-DL_sponge, -BW), Vecd(-DL_sponge, DH + BW), Vecd(DL1 - BW, DH + BW), Vecd(DL1 - BW, 2.0 * DH),
-	Vecd(DL + BW, 2.0 * DH), Vecd(DL + BW, -DH), Vecd(DL1 - BW, -DH), Vecd(DL1 - BW, -BW), Vecd(-DL_sponge, -BW)};
-/** the inner wall polygen. */
+	Vecd(-DL_sponge - BW, -BW), Vecd(-DL_sponge - BW, DH + BW), Vecd(DL1 - BW, DH + BW), Vecd(DL1 - BW, 2.0 * DH + BW),
+	Vecd(DL + BW, 2.0 * DH + BW), Vecd(DL + BW, -DH - BW), Vecd(DL1 - BW, -DH - BW), Vecd(DL1 - BW, -BW), Vecd(-DL_sponge - BW, -BW)};
+/** the inner wall polygon. */
 std::vector<Vecd> inner_wall_shape{
 	Vecd(-DL_sponge - BW, 0.0), Vecd(-DL_sponge - BW, DH), Vecd(DL1, DH), Vecd(DL1, 2.0 * DH + BW),
 	Vecd(DL, 2.0 * DH + BW), Vecd(DL, -DH - BW), Vecd(DL1, -DH - BW), Vecd(DL1, 0.0), Vecd(-DL_sponge - BW, 0.0)};
@@ -63,32 +69,8 @@ public:
 	{
 		multi_polygon_.addAPolygon(outer_wall_shape, ShapeBooleanOps::add);
 		multi_polygon_.addAPolygon(inner_wall_shape, ShapeBooleanOps::sub);
-		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::sub);
 	}
 };
-//----------------------------------------------------------------------
-//	Define case dependent SPH body part shapes.
-//----------------------------------------------------------------------
-/** create the emitter shape. */
-MultiPolygon creatEmitterShape()
-{
-	std::vector<Vecd> emmiter_shape{
-		Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(-DL_sponge + BW, DH), Vecd(-DL_sponge + BW, 0.0), Vecd(-DL_sponge, 0.0)};
-
-	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(emmiter_shape, ShapeBooleanOps::add);
-	return multi_polygon;
-}
-/** create the emitter buffer shape . */
-MultiPolygon createEmitterBufferShape()
-{
-	std::vector<Vecd> emitter_buffer_shape{
-		Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(0.0, DH), Vecd(0.0, 0.0), Vecd(-DL_sponge, 0.0)};
-
-	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(emitter_buffer_shape, ShapeBooleanOps::add);
-	return multi_polygon;
-}
 //----------------------------------------------------------------------
 //	Define emitter buffer inflow boundary condition
 //----------------------------------------------------------------------
@@ -97,21 +79,22 @@ class EmitterBufferInflowCondition : public fluid_dynamics::InflowBoundaryCondit
 	Real u_ave_, u_ref_, t_ref_;
 
 public:
-	EmitterBufferInflowCondition(FluidBody &body, BodyPartByCell &body_part)
-		: InflowBoundaryCondition(body, body_part),
+	EmitterBufferInflowCondition(FluidBody &body, BodyAlignedBoxByCell &aligned_box_part)
+		: InflowBoundaryCondition(body, aligned_box_part),
 		  u_ave_(0), u_ref_(U_f), t_ref_(4.0) {}
 
+	// here every argument parameters and return value are in frame (local) coordinate
 	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
 	{
 		Real u = velocity[0];
 		Real v = velocity[1];
 
-		if (position[0] < 0.0)
+		if (position[0] < halfsize_[0])
 		{
-			u = 6.0 * u_ave_ * position[1] * (DH - position[1]) / DH / DH;
+			u = 1.5 * u_ave_ * (1.0 - position[1] * position[1] / halfsize_[1] / halfsize_[1]);
 			v = 0.0;
 		}
-		return Vecd(u, v);
+		return Vec2d(u, v);
 	}
 
 	void setupDynamics(Real dt = 0.0) override
@@ -131,7 +114,7 @@ int main(int ac, char *av[])
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
-	//handle command line arguments
+	// handle command line arguments
 	system.handleCommandlineOptions(ac, av);
 	InOutput in_output(system);
 	//----------------------------------------------------------------------
@@ -160,10 +143,12 @@ int main(int ac, char *av[])
 	TimeStepInitialization initialize_a_fluid_step(water_block);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	/** Emitter. */
-	BodyRegionByParticle emitter(water_block, makeShared<MultiPolygonShape>(creatEmitterShape()));
+	BodyAlignedBoxByParticle emitter(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_translation)), emitter_halfsize));
 	fluid_dynamics::EmitterInflowInjecting emitter_inflow_injecting(water_block, emitter, 10, 0, true);
 	/** Emitter condition. */
-	BodyRegionByCell emitter_buffer(water_block, makeShared<MultiPolygonShape>(createEmitterBufferShape()));
+	BodyAlignedBoxByCell emitter_buffer(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
 	EmitterBufferInflowCondition emitter_buffer_inflow_condition(water_block, emitter_buffer);
 	/** time-space method to detect surface particles. */
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex
@@ -250,7 +235,7 @@ int main(int ac, char *av[])
 			{
 				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt - relaxation_time);
 				pressure_relaxation.parallel_exec(dt);
-				emitter_buffer_inflow_condition.parallel_exec();
+				emitter_buffer_inflow_condition.exec();
 				density_relaxation.parallel_exec(dt);
 
 				relaxation_time += dt;

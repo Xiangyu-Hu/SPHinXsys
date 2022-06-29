@@ -15,7 +15,7 @@ namespace SPH
 	SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
 		: body_shape_(shape_ptr_keeper_.assignPtr(shape_ptr)),
 		  sph_system_(sph_system), body_name_(body_shape_->getName()), newly_updated_(true),
-		  body_domain_bounds_(0, 0), is_domain_bounds_determined_(false),
+		  body_domain_bounds_(), is_domain_bounds_determined_(false),
 		  sph_adaptation_(sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(this)),
 		  base_material_(nullptr), base_particles_(nullptr)
 	{
@@ -60,7 +60,7 @@ namespace SPH
 	{
 		if (!is_domain_bounds_determined_)
 		{
-			body_domain_bounds_ = body_shape_->findBounds();
+			body_domain_bounds_ = body_shape_->getBounds();
 			is_domain_bounds_determined_ = true;
 		}
 		return body_domain_bounds_;

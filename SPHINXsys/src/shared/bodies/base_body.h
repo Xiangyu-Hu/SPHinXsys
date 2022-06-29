@@ -29,7 +29,7 @@
  * 			such as intersection, should be produced first.
  * 			Then, all shapes used in body definition should be either contain
  * 			or not contain each other.
- *			Partial overlap between them are not premitted.
+ *			Partial overlap between them are not permitted.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */
 
@@ -83,13 +83,13 @@ namespace SPH
 		bool is_domain_bounds_determined_;
 
 	public:
-		SPHAdaptation *sph_adaptation_; /**< numerical adapation policy. */
+		SPHAdaptation *sph_adaptation_; /**< numerical adaptation policy. */
 		BaseMaterial *base_material_;	/**< base material for dynamic cast in particle dynamics */
 		BaseParticles *base_particles_; /**< Base particles for dynamic cast particle dynamics  */
 		/**
 		 * @brief particle by cells lists is for parallel splitting algorithm.
 		 * All particles in each cell are collected together.
-		 * If two partiles each belongs two different cell entries,
+		 * If two particles each belongs two different cell entries,
 		 * they have no interaction because they are too far.
 		 */
 		SplitCellLists split_cell_lists_;

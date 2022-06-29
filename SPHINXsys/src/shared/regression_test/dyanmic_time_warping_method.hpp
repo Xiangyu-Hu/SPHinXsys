@@ -3,6 +3,8 @@
  * @author	Bo Zhang and Xiangyu Hu
  */
 
+#pragma once
+
 #include "dynamic_time_warping_method.h"
 
  //=================================================================================================//

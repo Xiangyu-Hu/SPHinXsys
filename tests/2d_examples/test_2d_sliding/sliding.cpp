@@ -97,7 +97,7 @@ int main(int ac, char *av[])
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	Gravity gravity(Vecd(0.0, -gravity_g));
-	Transform2d transform2d(Rotation2d(-0.5235, Vecd(0)));
+	Transform2d transform2d(Rotation2d(-0.5235));
 	SimpleDynamics<TranslationAndRotation> wall_boundary_rotation(wall_boundary, transform2d);
 	SimpleDynamics<TranslationAndRotation> free_cube_rotation(free_cube, transform2d);
 	TimeStepInitialization free_cube_initialize_timestep(free_cube, gravity);

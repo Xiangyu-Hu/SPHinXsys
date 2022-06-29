@@ -7,6 +7,16 @@
 namespace SPH
 {
 	//=================================================================================================//
+	BoundingBox Shape::getBounds()
+	{
+		if (!is_bounds_found_)
+		{
+			bounding_box_ = findBounds();
+			is_bounds_found_ = true;
+		}
+		return bounding_box_;
+	}
+	//=================================================================================================//
 	bool Shape::checkNotFar(const Vecd &input_pnt, Real threshold)
 	{
 		return checkContain(input_pnt) || checkNearSurface(input_pnt, threshold) ? true : false;
@@ -41,7 +51,7 @@ namespace SPH
 	//=================================================================================================//
 	bool BinaryShapes::isValid()
 	{
-		return  shapes_and_ops_.size() == 0 ? false : true;
+		return shapes_and_ops_.size() == 0 ? false : true;
 	}
 	//=================================================================================================//
 	BoundingBox BinaryShapes::findBounds()
@@ -52,7 +62,7 @@ namespace SPH
 
 		for (auto &shape_and_op : shapes_and_ops_)
 		{
-			BoundingBox shape_bounds = shape_and_op.first->findBounds();
+			BoundingBox shape_bounds = shape_and_op.first->getBounds();
 			for (int j = 0; j != Dimensions; ++j)
 			{
 				lower_bound[j] = SMIN(lower_bound[j], shape_bounds.first[j]);

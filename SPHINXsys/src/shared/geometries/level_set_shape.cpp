@@ -15,7 +15,11 @@ namespace SPH
 	LevelSetShape::LevelSetShape(SPHBody *sph_body, Shape &shape, Real refinement_ratio)
 		: Shape(shape.getName()),
 		  level_set_(level_set_keeper_.movePtr(
-			  sph_body->sph_adaptation_->createLevelSet(shape, refinement_ratio))) {}
+			  sph_body->sph_adaptation_->createLevelSet(shape, refinement_ratio)))
+	{
+		bounding_box_ = shape.getBounds();
+		is_bounds_found_ = true;
+	}
 	//=================================================================================================//
 	void LevelSetShape::writeLevelSet(SPHBody &sph_body)
 	{
@@ -23,6 +27,7 @@ namespace SPH
 		MeshRecordingToPlt write_level_set_to_plt(*in_output, sph_body, level_set_);
 		write_level_set_to_plt.writeToFile(0);
 	}
+	//=================================================================================================//
 	LevelSetShape *LevelSetShape::cleanLevelSet(Real small_shift_factor)
 	{
 		level_set_->cleanInterface(small_shift_factor);
@@ -34,34 +39,27 @@ namespace SPH
 		return level_set_->probeSignedDistance(input_pnt) < 0.0 ? true : false;
 	}
 	//=================================================================================================//
-	bool LevelSetShape::checkNearSurface(const Vecd &input_pnt, Real threshold)
+	Vecd LevelSetShape::findClosestPoint(const Vecd &input_pnt)
 	{
-		if (!checkNotFar(input_pnt, threshold))
-			return false;
-		return getMaxAbsoluteElement(findSignedDistance(input_pnt) *
-									 findNormalDirection(input_pnt)) < threshold
-				   ? true
-				   : false;
+		Real phi = level_set_->probeSignedDistance(input_pnt);
+		Vecd normal = level_set_->probeNormalDirection(input_pnt);
+		return input_pnt - phi * normal;
 	}
 	//=================================================================================================//
-	Real LevelSetShape::findSignedDistance(const Vecd &input_pnt)
+	BoundingBox LevelSetShape::findBounds()
 	{
-		return level_set_->probeSignedDistance(input_pnt);
-	}
-	//=================================================================================================//
-	Vecd LevelSetShape::findNormalDirection(const Vecd &input_pnt)
-	{
-		return level_set_->probeNormalDirection(input_pnt);
+		if (!is_bounds_found_)
+		{
+			std::cout << "\n FAILURE: LevelSetShape bounds should be defined at construction!" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
+		}
+		return bounding_box_;
 	}
 	//=================================================================================================//
 	Vecd LevelSetShape::findLevelSetGradient(const Vecd &input_pnt)
 	{
 		return level_set_->probeLevelSetGradient(input_pnt);
-	}
-	//=================================================================================================//
-	bool LevelSetShape::checkNotFar(const Vecd &input_pnt, Real threshold)
-	{
-		return level_set_->probeIsWithinMeshBound(input_pnt);
 	}
 	//=================================================================================================//
 	Real LevelSetShape::computeKernelIntegral(const Vecd &input_pnt, Real h_ratio)
@@ -72,13 +70,6 @@ namespace SPH
 	Vecd LevelSetShape::computeKernelGradientIntegral(const Vecd &input_pnt, Real h_ratio)
 	{
 		return level_set_->probeKernelGradientIntegral(input_pnt, h_ratio);
-	}
-	//=================================================================================================//
-	Vecd LevelSetShape::findClosestPoint(const Vecd &input_pnt)
-	{
-		Real phi = level_set_->probeSignedDistance(input_pnt);
-		Vecd normal = level_set_->probeNormalDirection(input_pnt);
-		return input_pnt - phi * normal;
 	}
 	//=================================================================================================//
 }

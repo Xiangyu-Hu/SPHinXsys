@@ -112,7 +112,7 @@ int main(int ac, char *av[])
 	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
 	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
-	/** Pressure relaxation using verlet time stepping. */
+	/** Pressure relaxation using Verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
 	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(water_block_complex);
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex);
