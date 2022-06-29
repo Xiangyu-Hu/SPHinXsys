@@ -40,7 +40,7 @@ namespace SPH
 	//----------------------------------------------------------------------
 	//		for general solid dynamics variables
 	//----------------------------------------------------------------------
-	typedef DataDelegateSimple<SolidBody, SolidParticles, Solid> SolidDataSimple;
+	typedef DataDelegateSimple<RealBody, SolidParticles, Solid> SolidDataSimple;
 
 	/**
 	 * @class Displacement
@@ -51,16 +51,82 @@ namespace SPH
 	public:
 		explicit Displacement(SPHBody &sph_body);
 		virtual ~Displacement(){};
-		void operator()(size_t index_i, Real dt = 0.0);
+		void update(size_t index_i, Real dt = 0.0);
 
 	protected:
 		StdLargeVec<Vecd> &pos_n_, &pos_0_;
 	};
 
+	/**
+	 * @class OffsetInitialPosition
+	 * @brief offset initial particle position
+	 */
+	class OffsetInitialPosition : public SolidDataSimple
+	{
+	public:
+		explicit OffsetInitialPosition(SPHBody &sph_body, Vecd &offset);
+		virtual ~OffsetInitialPosition(){};
+		void update(size_t index_i, Real dt = 0.0);
+
+	protected:
+		Vecd offset_;
+		StdLargeVec<Vecd> &pos_n_, &pos_0_;
+	};
+
+	/**
+	 * @class TranslationAndRotation
+	 * @brief transfermation on particle position and rotation
+	 */
+	class TranslationAndRotation : public SolidDataSimple
+	{
+	public:
+		explicit TranslationAndRotation(SPHBody &sph_body, Transformd &transform);
+		virtual ~TranslationAndRotation(){};
+		void update(size_t index_i, Real dt = 0.0);
+
+	protected:
+		Transformd &transform_;
+		StdLargeVec<Vecd> &pos_n_, &pos_0_;
+	};
+
+	/**
+	 * @class NormalDirectionFromBodyShape
+	 * @brief normal direction at particles
+	 */
+	class NormalDirectionFromBodyShape : public SolidDataSimple
+	{
+	public:
+		explicit NormalDirectionFromBodyShape(SPHBody &sph_body);
+		virtual ~NormalDirectionFromBodyShape(){};
+		void update(size_t index_i, Real dt = 0.0);
+
+	protected:
+		Shape &body_shape_;
+		StdLargeVec<Vecd> &pos_n_, &n_, &n_0_;
+	};
+	
+	/**
+	 * @class NormalDirectionFromBodyShape
+	 * @brief normal direction at particles
+	 */
+	class NormalDirectionFromShapeAndOp : public SolidDataSimple
+	{
+	public:
+		explicit NormalDirectionFromShapeAndOp(SPHBody &sph_body, const std::string &shape_name);
+		virtual ~NormalDirectionFromShapeAndOp(){};
+		void update(size_t index_i, Real dt = 0.0);
+
+	protected:
+		ShapeAndOp *shape_and_op_;
+		Shape *shape_;
+		const Real switch_sign_;
+		StdLargeVec<Vecd> &pos_n_, &n_, &n_0_;
+	};
+
 	//----------------------------------------------------------------------
 	//		for general elastic solid dynamics variables
 	//----------------------------------------------------------------------
-	typedef DataDelegateSimple<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataSimple;
+	typedef DataDelegateSimple<RealBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataSimple;
 
 	/**
 	 * @class VonMisesStress
@@ -71,7 +137,7 @@ namespace SPH
 	public:
 		explicit VonMisesStress(SPHBody &sph_body);
 		virtual ~VonMisesStress(){};
-		void operator()(size_t index_i, Real dt = 0.0);
+		void update(size_t index_i, Real dt = 0.0);
 
 	protected:
 		Real rho0_;
@@ -88,7 +154,7 @@ namespace SPH
 	public:
 		explicit VonMisesStrain(SPHBody &sph_body);
 		virtual ~VonMisesStrain(){};
-		void operator()(size_t index_i, Real dt = 0.0);
+		void update(size_t index_i, Real dt = 0.0);
 
 	protected:
 		StdLargeVec<Matd> &F_;

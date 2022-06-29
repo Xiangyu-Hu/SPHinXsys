@@ -4,7 +4,7 @@
  * @author 	Chi Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library
-using namespace SPH;   //Namespace cite here
+using namespace SPH;   // Namespace cite here
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -23,41 +23,27 @@ StdVec<std::string> species_name_list{"Phi"};
 //----------------------------------------------------------------------
 //	Geometric shapes used in the case.
 //----------------------------------------------------------------------
-std::vector<Vecd> createShape()
-{
-	//geometry
-	std::vector<Vecd> shape;
-	shape.push_back(Vecd(0.0, 0.0));
-	shape.push_back(Vecd(0.0, H));
-	shape.push_back(Vecd(L, H));
-	shape.push_back(Vecd(L, 0.0));
-	shape.push_back(Vecd(0.0, 0.0));
-
-	return shape;
-}
-//----------------------------------------------------------------------
-//	Define SPH bodies.
-//----------------------------------------------------------------------
-class DiffusionBody : public SolidBody
+class DiffusionBlock : public MultiPolygonShape
 {
 public:
-	DiffusionBody(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit DiffusionBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(createShape(), ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		std::vector<Vecd> shape;
+		shape.push_back(Vecd(0.0, 0.0));
+		shape.push_back(Vecd(0.0, H));
+		shape.push_back(Vecd(L, H));
+		shape.push_back(Vecd(L, 0.0));
+		shape.push_back(Vecd(0.0, 0.0));
+		multi_polygon_.addAPolygon(shape, ShapeBooleanOps::add);
 	}
 };
 //----------------------------------------------------------------------
 //	Setup diffusion material properties.
 //----------------------------------------------------------------------
-class DiffusionMaterial
-	: public DiffusionReaction<SolidParticles, Solid>
+class DiffusionMaterial : public DiffusionReaction<Solid>
 {
 public:
-	DiffusionMaterial()
-		: DiffusionReaction<SolidParticles, Solid>(species_name_list)
+	DiffusionMaterial() : DiffusionReaction<Solid>(species_name_list)
 	{
 		initializeAnDiffusion<DirectionalDiffusion>("Phi", "Phi", diffusion_coff, bias_coff, bias_direction);
 	};
@@ -95,9 +81,8 @@ public:
 //	Specify diffusion relaxation method.
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
-	: public RelaxationOfAllDiffusionSpeciesRK2<SolidBody, SolidParticles, Solid,
-												RelaxationOfAllDiffussionSpeciesInner<SolidBody, SolidParticles, Solid>,
-												BodyRelationInner>
+	: public RelaxationOfAllDiffusionSpeciesRK2<
+		  RelaxationOfAllDiffussionSpeciesInner<SolidBody, SolidParticles, Solid>>
 {
 public:
 	explicit DiffusionBodyRelaxation(BodyRelationInner &body_inner_relation)
@@ -107,10 +92,10 @@ public:
 //----------------------------------------------------------------------
 //	An observer particle generator.
 //----------------------------------------------------------------------
-class ObserverParticleGenerator : public ParticleGeneratorDirect
+class TemperatureObserverParticleGenerator : public ObserverParticleGenerator
 {
 public:
-	ObserverParticleGenerator() : ParticleGeneratorDirect()
+	explicit TemperatureObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
 	{
 		size_t number_of_observation_points = 11;
 		Real range_of_measure = 0.9 * L;
@@ -119,7 +104,7 @@ public:
 		for (size_t i = 0; i < number_of_observation_points; ++i)
 		{
 			Vec2d point_coordinate(range_of_measure * (Real)i / (Real)(number_of_observation_points - 1) + start_of_measure, 0.5 * H);
-			positions_volumes_.push_back(std::make_pair(point_coordinate, 0.0));
+			positions_.push_back(point_coordinate);
 		}
 	}
 };
@@ -133,18 +118,18 @@ int main()
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
 	/** output environment. */
-	In_Output in_output(sph_system);
+	InOutput in_output(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	DiffusionBody diffusion_body(sph_system, "DiffusionBody");
-	DiffusionReactionParticles<SolidParticles, Solid>
-		diffusion_body_particles(diffusion_body, makeShared<DiffusionMaterial>());
+	SolidBody diffusion_body(sph_system, makeShared<DiffusionBlock>("DiffusionBlock"));
+	diffusion_body.defineParticlesAndMaterial<DiffusionReactionParticles<SolidParticles>, DiffusionMaterial>();
+	diffusion_body.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Particle and body creation of fluid observers.
 	//----------------------------------------------------------------------
 	ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-	ObserverParticles temperature_observer_particles(temperature_observer, makeShared<ObserverParticleGenerator>());
+	temperature_observer.generateParticles<TemperatureObserverParticleGenerator>();
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.

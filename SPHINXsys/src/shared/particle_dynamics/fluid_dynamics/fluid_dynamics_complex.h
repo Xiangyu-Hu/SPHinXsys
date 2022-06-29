@@ -69,27 +69,6 @@ namespace SPH
 		};
 
 		/**
-		* @class FreeSurfaceIndicationComplex
-		* @brief indicate the particles near the free fluid surface.
-		*/
-		class FreeSurfaceIndicationComplex : public FreeSurfaceIndicationInner, public FluidContactData
-		{
-		public:
-			FreeSurfaceIndicationComplex(BaseBodyRelationInner &inner_relation,
-										 BaseBodyRelationContact &contact_relation, Real thereshold = 0.75);
-			explicit FreeSurfaceIndicationComplex(ComplexBodyRelation &complex_relation, Real thereshold = 0.75);
-			virtual ~FreeSurfaceIndicationComplex(){};
-
-		protected:
-			StdVec<Real> contact_inv_rho0_;
-			StdVec<StdLargeVec<Real> *> contact_mass_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-		};
-		using SpatialTemporalFreeSurfaceIdentificationComplex =
-			SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationComplex>;
-
-		/**
 		* @class DensitySummation
 		* @brief computing density by summation considering  contribution from contact bodies
 		*/
@@ -111,10 +90,6 @@ namespace SPH
 		};
 		/** the case without free surface */
 		using DensitySummationComplex = DensitySummation<DensitySummationInner>;
-		/** the case with free surface */
-		using DensitySummationFreeSurfaceComplex = DensitySummation<DensitySummationFreeSurfaceInner>;
-		/** the case with free stream */
-		using DensitySummationFreeStreamComplex = DensitySummation<DensitySummationFreeStreamInner>;
 
 		/**
 		 * @class ViscousWithWall
@@ -306,45 +281,6 @@ namespace SPH
 			virtual ~DensityRelaxationWithWallOldroyd_B(){};
 
 		protected:
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
-		* @class ColorFunctionGradientComplex
-		* @brief indicate the particles near the free fluid surface.
-		*/
-		class ColorFunctionGradientComplex : public ColorFunctionGradientInner, public FluidContactData
-		{
-		public:
-			ColorFunctionGradientComplex(BaseBodyRelationInner &inner_relation, BaseBodyRelationContact &contact_relation);
-			ColorFunctionGradientComplex(ComplexBodyRelation &complex_relation);
-			virtual ~ColorFunctionGradientComplex(){};
-
-		protected:
-			StdVec<StdLargeVec<Real> *> contact_Vol_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
-		 * @class 	SurfaceNormWithWall
-		 * @brief  Modify surface norm when contact with wall
-		 */
-		class SurfaceNormWithWall : public InteractionDynamics, public FSIContactData
-		{
-		public:
-			SurfaceNormWithWall(BaseBodyRelationContact &contact_relation, Real contact_angle);
-			virtual ~SurfaceNormWithWall(){};
-
-		protected:
-			Real contact_angle_;
-			Real smoothing_length_;
-			Real particle_spacing_;
-			StdLargeVec<int> &surface_indicator_;
-			StdLargeVec<Vecd> &surface_norm_;
-			StdLargeVec<Real> &pos_div_;
-			StdVec<StdLargeVec<Vecd> *> wall_n_;
-
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 	}

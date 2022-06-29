@@ -53,6 +53,8 @@ namespace SPH
 	{
 	public:
 		MultiPolygon(){};
+		explicit MultiPolygon(const std::vector<Vecd> &points);
+		explicit MultiPolygon(const Vec2d &center, Real radius, int resolution);
 		boost_multi_poly &getBoostMultiPoly() { return multi_poly_; };
 
 		BoundingBox findBounds();
@@ -62,7 +64,8 @@ namespace SPH
 		void addAMultiPolygon(MultiPolygon &multi_polygon, ShapeBooleanOps op);
 		void addABoostMultiPoly(boost_multi_poly &boost_multi_poly, ShapeBooleanOps op);
 		void addAPolygon(const std::vector<Vecd> &points, ShapeBooleanOps op);
-		void addACircle(Vec2d center, Real radius, int resolution, ShapeBooleanOps op);
+		void addABox(Transform2d transform2d, const Vec2d &halfsize, ShapeBooleanOps op);
+		void addACircle(const Vec2d &center, Real radius, int resolution, ShapeBooleanOps op);
 		void addAPolygonFromFile(std::string file_path_name, ShapeBooleanOps op, Vec2d translation = Vecd(0), Real scale_factor = 1.0);
 
 	protected:
@@ -74,27 +77,26 @@ namespace SPH
 
 	/**
 	 * @class MultiPolygonShape
-	 * @brief A shape whose geometry is defined by a multipolygen.
+	 * @brief A shape whose geometry is defined by a multi polygon.
 	 */
 	class MultiPolygonShape : public Shape
 	{
 
 	public:
 		/** Default constructor. */
+		explicit MultiPolygonShape(const std::string &shape_name) : Shape(shape_name){};
 		explicit MultiPolygonShape(const MultiPolygon &multi_polygon, const std::string &shape_name = "MultiPolygonShape")
 			: Shape(shape_name), multi_polygon_(multi_polygon){};
 		virtual ~MultiPolygonShape(){};
 
-		virtual BoundingBox findBounds() override;
+		virtual bool isValid() override;
 		virtual bool checkContain(const Vec2d &input_pnt, bool BOUNDARY_INCLUDED = true) override;
 		virtual Vec2d findClosestPoint(const Vec2d &input_pnt) override;
-		virtual bool checkNotFar(const Vec2d &input_pnt, Real threshold) override;
-		virtual bool checkNearSurface(const Vec2d &input_pnt, Real threshold) override;
-		virtual Real findSignedDistance(const Vec2d &input_pnt) override;
-		virtual Vec2d findNormalDirection(const Vec2d &input_pnt) override;
 
 	protected:
 		MultiPolygon multi_polygon_;
+
+		virtual BoundingBox findBounds() override;
 	};
 }
 

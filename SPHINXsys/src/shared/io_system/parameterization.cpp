@@ -8,10 +8,10 @@
 namespace SPH
 {
 	//=============================================================================================//
-	ParameterizationIO::ParameterizationIO(In_Output& in_output) :
-		xml_paremeters_("xml_parameters", "parameters")
+	ParameterizationIO::ParameterizationIO(const std::string &input_path)
+		: xml_paremeters_("xml_parameters", "parameters"),
+		filefullpath_(input_path + "/" + "project_parameters.dat")
 	{
-		filefullpath_ = in_output.input_folder_ + "/" + "project_parameters.dat";
 		xml_paremeters_.loadXmlFile(filefullpath_);
 	}
 	//=============================================================================================//

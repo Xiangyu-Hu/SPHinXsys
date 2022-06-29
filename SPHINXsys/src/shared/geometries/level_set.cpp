@@ -4,7 +4,6 @@
  */
 
 #include "level_set.h"
-#include "base_body.h"
 #include "adaptation.h"
 #include "mesh_with_data_packages.hpp"
 
@@ -17,8 +16,7 @@ namespace SPH
 	void LevelSetDataPackage::initializeSingularDataAddress()
 	{
 		initializePackageDataAddress(phi_, phi_addrs_);
-		initializePackageDataAddress(n_, n_addrs_);
-		initializePackageDataAddress(none_normalized_n_, none_normalized_n_addrs_);
+		initializePackageDataAddress(phi_gradient_, phi_gradient_addrs_);
 		initializePackageDataAddress(kernel_weight_, kernel_weight_addrs_);
 		initializePackageDataAddress(kernel_gradient_, kernel_gradient_addrs_);
 		initializePackageDataAddress(near_interface_id_, near_interface_id_addrs_);
@@ -28,26 +26,28 @@ namespace SPH
 		assignAllPackageDataAddress(Vecu addrs_index, LevelSetDataPackage *src_pkg, Vecu data_index)
 	{
 		assignPackageDataAddress(phi_addrs_, addrs_index, src_pkg->phi_, data_index);
-		assignPackageDataAddress(n_addrs_, addrs_index, src_pkg->n_, data_index);
-		assignPackageDataAddress(none_normalized_n_addrs_, addrs_index, src_pkg->none_normalized_n_, data_index);
+		assignPackageDataAddress(phi_gradient_addrs_, addrs_index, src_pkg->phi_gradient_, data_index);
 		assignPackageDataAddress(kernel_weight_addrs_, addrs_index, src_pkg->kernel_weight_, data_index);
 		assignPackageDataAddress(kernel_gradient_addrs_, addrs_index, src_pkg->kernel_gradient_, data_index);
 		assignPackageDataAddress(near_interface_id_addrs_, addrs_index, src_pkg->near_interface_id_, data_index);
 	}
 	//=================================================================================================//
-	void LevelSetDataPackage::computeNormalDirection()
+	void LevelSetDataPackage::computeLevelSetGradient()
 	{
-		computeNormalizedGradient(phi_addrs_, n_addrs_);
-	}
-	//=================================================================================================//
-	void LevelSetDataPackage::computeNoneNormalizedNormalDirection()
-	{
-		computeGradient(phi_addrs_, none_normalized_n_addrs_);
+		computeGradient(phi_addrs_, phi_gradient_addrs_);
 	}
 	//=================================================================================================//
 	BaseLevelSet ::BaseLevelSet(Shape &shape, SPHAdaptation &sph_adaptation)
 		: BaseMeshField("LevelSet"),
-		  shape_(shape), sph_adaptation_(sph_adaptation) {}
+		  shape_(shape), sph_adaptation_(sph_adaptation)
+	{
+		if (!shape_.isValid())
+		{
+			std::cout << "\n BaseLevelSet Error: shape_ is invalid." << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			throw;
+		}
+	}
 	//=================================================================================================//
 	Real BaseLevelSet::computeHeaviside(Real phi, Real half_width)
 	{
@@ -65,7 +65,6 @@ namespace SPH
 		: MeshWithDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, buffer_size,
 																  shape, sph_adaptation),
 		  global_h_ratio_(sph_adaptation.ReferenceSpacing() / data_spacing),
-		  small_shift_factor_(sph_adaptation.SmallShiftFactor()),
 		  kernel_(*sph_adaptation.getKernel())
 	{
 		Real far_field_distance = grid_spacing_ * (Real)buffer_width_;
@@ -88,8 +87,7 @@ namespace SPH
 		MeshIterator_parallel(Vecu(0), number_of_cells_, tag_a_cell_inner_pkg);
 		MeshFunctor initial_address_in_a_cell = std::bind(&LevelSet::initializeAddressesInACell, this, _1, _2);
 		MeshIterator_parallel(Vecu(0), number_of_cells_, initial_address_in_a_cell);
-		updateNormalDirection();
-		updateNoneNormalizedNormalDirection();
+		updateLevelSetGradient();
 		updateKernelIntegrals();
 	}
 	//=================================================================================================//
@@ -98,17 +96,10 @@ namespace SPH
 		initializePackageAddressesInACell(cell_index);
 	}
 	//=================================================================================================//
-	void LevelSet::updateNormalDirection()
-	{
-		PackageFunctor<void, LevelSetDataPackage> update_normal_diraction =
-			std::bind(&LevelSet::updateNormalDirectionForAPackage, this, _1, _2);
-		PackageIterator_parallel<LevelSetDataPackage>(inner_data_pkgs_, update_normal_diraction);
-	}
-	//=================================================================================================//
-	void LevelSet::updateNoneNormalizedNormalDirection()
+	void LevelSet::updateLevelSetGradient()
 	{
 		PackageFunctor<void, LevelSetDataPackage> update_none_normalized_normal_diraction =
-			std::bind(&LevelSet::updateNoneNormalizedNormalDirectionForAPackage, this, _1, _2);
+			std::bind(&LevelSet::updateLevelSetGradientForAPackage, this, _1, _2);
 		PackageIterator_parallel<LevelSetDataPackage>(inner_data_pkgs_, update_none_normalized_normal_diraction);
 	}
 	//=================================================================================================//
@@ -121,14 +112,23 @@ namespace SPH
 	//=================================================================================================//
 	Vecd LevelSet::probeNormalDirection(const Vecd &position)
 	{
-		return probeMesh<Vecd, LevelSetDataPackage::PackageDataAddress<Vecd>,
-						 &LevelSetDataPackage::n_addrs_>(position);
+		Vecd probed_value = probeLevelSetGradient(position);
+
+		Real threshold = 1.0e-2 * data_spacing_;
+		while (probed_value.norm() < threshold)
+		{
+			Vecd jittered = position; // jittering
+			for (int l = 0; l != position.size(); ++l)
+				jittered[l] += (((Real)rand() / (RAND_MAX)) - 0.5) * 0.5 * data_spacing_;
+			probed_value = probeLevelSetGradient(jittered);
+		}
+		return probed_value.normalize();
 	}
 	//=================================================================================================//
-	Vecd LevelSet::probeNoneNormalizedNormalDirection(const Vecd &position)
+	Vecd LevelSet::probeLevelSetGradient(const Vecd &position)
 	{
 		return probeMesh<Vecd, LevelSetDataPackage::PackageDataAddress<Vecd>,
-						 &LevelSetDataPackage::none_normalized_n_addrs_>(position);
+						 &LevelSetDataPackage::phi_gradient_addrs_>(position);
 	}
 	//=================================================================================================//
 	Real LevelSet::probeSignedDistance(const Vecd &position)
@@ -150,15 +150,9 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void LevelSet::
-		updateNormalDirectionForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt)
+		updateLevelSetGradientForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt)
 	{
-		inner_data_pkg->computeNormalDirection();
-	}
-	//=================================================================================================//
-	void LevelSet::
-		updateNoneNormalizedNormalDirectionForAPackage(LevelSetDataPackage *inner_data_pkg, Real dt)
-	{
-		inner_data_pkg->computeNoneNormalizedNormalDirection();
+		inner_data_pkg->computeLevelSetGradient();
 	}
 	//=================================================================================================//
 	void LevelSet::
@@ -181,16 +175,16 @@ namespace SPH
 			PackageIterator_parallel<LevelSetDataPackage>(inner_data_pkgs_, reinitialize_levelset);
 	}
 	//=================================================================================================//
-	void LevelSet::markNearInterface()
+	void LevelSet::markNearInterface(Real small_shift_factor)
 	{
 		PackageFunctor<void, LevelSetDataPackage> mark_cutcell_by_levelset =
 			std::bind(&LevelSet::markNearInterfaceForAPackage, this, _1, _2);
-		PackageIterator_parallel<LevelSetDataPackage>(core_data_pkgs_, mark_cutcell_by_levelset);
+		PackageIterator_parallel<LevelSetDataPackage>(core_data_pkgs_, mark_cutcell_by_levelset, small_shift_factor);
 	}
 	//=================================================================================================//
-	void LevelSet::markNearInterfaceForAPackage(LevelSetDataPackage *core_data_pkg, Real dt)
+	void LevelSet::markNearInterfaceForAPackage(LevelSetDataPackage *core_data_pkg, Real small_shift_factor)
 	{
-		core_data_pkg->markNearInterface(small_shift_factor_);
+		core_data_pkg->markNearInterface(small_shift_factor);
 	}
 	//=================================================================================================//
 	void LevelSet::redistanceInterface()
@@ -200,12 +194,12 @@ namespace SPH
 		PackageIterator_parallel<LevelSetDataPackage>(core_data_pkgs_, clean_levelset);
 	}
 	//=================================================================================================//
-	void LevelSet::cleanInterface(bool isSmoothed)
+	void LevelSet::cleanInterface(Real small_shift_factor)
 	{
-		markNearInterface();
+		markNearInterface(small_shift_factor);
 		redistanceInterface();
 		reinitializeLevelSet();
-		updateNormalDirection();
+		updateLevelSetGradient();
 		updateKernelIntegrals();
 	}
 	//=================================================================================================//
@@ -226,14 +220,14 @@ namespace SPH
 	LevelSetDataPackage *LevelSet::createDataPackage(const Vecu &cell_index, const Vecd &cell_position)
 	{
 		mutex_my_pool.lock();
-		LevelSetDataPackage *new_data_pkg = data_pkg_pool_.malloc();
+		LevelSetDataPackage &new_data_pkg = *data_pkg_pool_.malloc();
 		mutex_my_pool.unlock();
 		Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
-		new_data_pkg->initializePackageGeometry(pkg_lower_bound, data_spacing_);
-		new_data_pkg->initializeBasicData(shape_);
-		new_data_pkg->pkg_index_ = cell_index;
-		assignDataPackageAddress(cell_index, new_data_pkg);
-		return new_data_pkg;
+		new_data_pkg.initializePackageGeometry(pkg_lower_bound, data_spacing_);
+		new_data_pkg.initializeBasicData(shape_);
+		new_data_pkg.pkg_index_ = cell_index;
+		assignDataPackageAddress(cell_index, &new_data_pkg);
+		return &new_data_pkg;
 	}
 	//=================================================================================================//
 	void LevelSet::initializeDataInACell(const Vecu &cell_index, Real dt)
@@ -326,9 +320,9 @@ namespace SPH
 		return 999; // means an error in level searching
 	};
 	//=================================================================================================//
-	void MultilevelLevelSet::cleanInterface(bool isSmoothed)
+	void MultilevelLevelSet::cleanInterface(Real small_shift_factor)
 	{
-		mesh_levels_.back()->cleanInterface();
+		mesh_levels_.back()->cleanInterface(small_shift_factor);
 	}
 	//=============================================================================================//
 	Real MultilevelLevelSet::probeSignedDistance(const Vecd &position)
@@ -341,9 +335,9 @@ namespace SPH
 		return mesh_levels_[getProbeLevel(position)]->probeNormalDirection(position);
 	}
 	//=============================================================================================//
-	Vecd MultilevelLevelSet::probeNoneNormalizedNormalDirection(const Vecd &position)
+	Vecd MultilevelLevelSet::probeLevelSetGradient(const Vecd &position)
 	{
-		return mesh_levels_[getProbeLevel(position)]->probeNoneNormalizedNormalDirection(position);
+		return mesh_levels_[getProbeLevel(position)]->probeLevelSetGradient(position);
 	}
 	//=============================================================================================//
 	size_t MultilevelLevelSet::getProbeLevel(const Vecd &position)

@@ -7,12 +7,11 @@
 /** Name space. */
 using namespace SPH;
 /** Geometry parameters. */
-Real PL = 1.0; /**< Length. */
-Real PH = 1.0; /**< Thickness for myocardium body. */
-Real PW = 1.0; /**< Width. */
-/**< Initial particle spacing. */
-Real resolution_ref = PH / 25.0;
-Real SL = 4.0 * resolution_ref; /**< Extension for holder. */
+Real PL = 1.0;					 /**< Length of the myocardium body. */
+Real PH = 1.0;					 /**< Thickness of the myocardium body. */
+Real PW = 1.0;					 /**< Width of the myocardium body. */
+Real resolution_ref = PH / 25.0; /**< Initial particle spacing. */
+Real SL = 4.0 * resolution_ref;	 /**< Extension for holder. */
 Vecd halfsize_myocardium(0.5 * (PL + SL), 0.5 * PH, 0.5 * PW);
 Vecd translation_myocardium(0.5 * (PL - SL), 0.5 * PH, 0.5 * PW);
 Vecd halfsize_holder(0.5 * SL, 0.5 * PH, 0.5 * PW);
@@ -21,8 +20,6 @@ Vecd translation_holder(-0.5 * SL, 0.5 * PH, 0.5 * PW);
 BoundingBox system_domain_bounds(Vecd(-SL, -SL, -SL),
 								 Vecd(PL + SL, PH + SL, PW + SL));
 
-/**< SimTK geometric modeling resolution. */
-int resolution(20);
 /** For material properties of the solid. */
 Real rho0_s = 1.0;
 Real a0[4] = {0.059, 0.0, 0.0, 0.0};
@@ -31,21 +28,20 @@ Vec3d fiber_direction(1.0, 0.0, 0.0);
 Vec3d sheet_direction(0.0, 1.0, 0.0);
 Real reference_voltage = 30.0;
 Real linear_active_stress_factor = -0.5;
-/** reference stress to achieve weakly compressible condition */
+/** reference stress or bulk modulus to achieve weakly compressible condition */
 Real bulk_modulus = 30.0 * reference_voltage * fabs(linear_active_stress_factor);
 
-/** Define the myocardium body. */
-class Myocardium : public SolidBody
+/** Define the myocardium body shape. */
+class Myocardium : public ComplexShape
 {
 public:
-	Myocardium(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit Myocardium(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		body_shape_.add<TriangleMeshShapeBrick>(halfsize_myocardium, resolution, translation_myocardium);
+		add<TransformShape<GeometricShapeBox>>(translation_myocardium, halfsize_myocardium);
 	}
 };
 /**
- * Assign case dependent muscle activation histroy  
+ * Assign case dependent muscle activation histroy
  */
 class MyocardiumActivation
 	: public active_muscle_dynamics::MuscleActivation
@@ -99,38 +95,30 @@ int main()
 {
 	/** Setup the system. */
 	SPHSystem system(system_domain_bounds, resolution_ref);
-
-	/** Creat a Myocardium body, corresponding material, particles and reaction model. */
-	Myocardium myocardium_muscle_body(system, "MyocardiumMuscleBody");
-	SharedPtr<ActiveMuscle<Muscle>> active_myocardium_muscle =
-		makeShared<ActiveMuscle<Muscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
-	ActiveMuscleParticles myocardium_muscle_particles(myocardium_muscle_body, active_myocardium_muscle);
-
+	/** Creat a Myocardium body, corresponding material and particles. */
+	SolidBody myocardium_muscle_body(system, makeShared<Myocardium>("MyocardiumMuscleBody"));
+	myocardium_muscle_body.defineParticlesAndMaterial<
+		ElasticSolidParticles, ActiveMuscle<Muscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
+	myocardium_muscle_body.generateParticles<ParticleGeneratorLattice>();
 	/** topology */
 	BodyRelationInner myocardium_muscle_body_inner(myocardium_muscle_body);
-
-	/** 
+	/**
 	 * This section define all numerical methods will be used in this case.
 	 */
 	/** Corrected configuration. */
-	solid_dynamics::CorrectConfiguration
-		corrected_configuration(myocardium_muscle_body_inner);
+	solid_dynamics::CorrectConfiguration corrected_configuration(myocardium_muscle_body_inner);
 	/** Time step size calculation. */
-	solid_dynamics::AcousticTimeStepSize
-		computing_time_step_size(myocardium_muscle_body);
+	solid_dynamics::AcousticTimeStepSize computing_time_step_size(myocardium_muscle_body);
 	/** Compute the active contraction stress */
 	MyocardiumActivation myocardium_activation(myocardium_muscle_body);
 	/** active and passive stress relaxation. */
-	solid_dynamics::StressRelaxationFirstHalf
-		stress_relaxation_first_half(myocardium_muscle_body_inner);
-	solid_dynamics::StressRelaxationSecondHalf
-		stress_relaxation_second_half(myocardium_muscle_body_inner);
+	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(myocardium_muscle_body_inner);
+	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(myocardium_muscle_body_inner);
 	/** Constrain region of the inserted body. */
-	TriangleMeshShapeBrick holder_shape(halfsize_holder, resolution, translation_holder);
-	BodyRegionByParticle holder(myocardium_muscle_body, "Holder", holder_shape);
+	BodyRegionByParticle holder(myocardium_muscle_body, makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder));
 	ConstrainHolder constrain_holder(myocardium_muscle_body, holder, 0);
 	/** Output */
-	In_Output in_output(system);
+	InOutput in_output(system);
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
 	/**
 	 * From here the time stepping begines.

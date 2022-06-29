@@ -9,13 +9,13 @@ namespace SPH
 {
 	Real GlobalStaticVariables::physical_time_ = 0.0;
 	//=============================================================================================//
-	void ParticleIterator(size_t total_real_particles, ParticleFunctor &particle_functor, Real dt)
+	void ParticleIterator(size_t total_real_particles, const ParticleFunctor &particle_functor, Real dt)
 	{
 		for (size_t i = 0; i < total_real_particles; ++i)
 			particle_functor(i, dt);
 	}
 	//=============================================================================================//
-	void ParticleIterator_parallel(size_t total_real_particles, ParticleFunctor &particle_functor, Real dt)
+	void ParticleIterator_parallel(size_t total_real_particles, const ParticleFunctor &particle_functor, Real dt)
 	{
 		parallel_for(blocked_range<size_t>(0, total_real_particles),
 			[&](const blocked_range<size_t>& r) {
@@ -26,7 +26,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void ParticleIteratorSplittingSweep(SplitCellLists& split_cell_lists,
-		ParticleFunctor& particle_functor, Real dt)
+		const ParticleFunctor& particle_functor, Real dt)
 	{
 		Real dt2 = dt * 0.5;
 		//forward sweeping
@@ -59,7 +59,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void ParticleIteratorSplittingSweep_parallel(SplitCellLists& split_cell_lists,
-		ParticleFunctor &particle_functor, Real dt)
+		const ParticleFunctor &particle_functor, Real dt)
 	{
 		Real dt2 = dt * 0.5;
 		//forward sweeping

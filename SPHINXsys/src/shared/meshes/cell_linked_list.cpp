@@ -16,7 +16,8 @@ namespace SPH
 	BaseCellLinkedList::
 		BaseCellLinkedList(SPHBody &sph_body, SPHAdaptation &sph_adaptation)
 		: BaseMeshField("CellLinkedList"),
-		  sph_body_(sph_body), kernel_(*sph_adaptation.getKernel()), base_particles_(nullptr) {}
+		  sph_body_(sph_body), kernel_(*sph_adaptation.getKernel()), 
+		  base_particles_(nullptr) {}
 	//=================================================================================================//
 	void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
 	{

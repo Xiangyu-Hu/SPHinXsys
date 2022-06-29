@@ -116,9 +116,8 @@ namespace SPH
 	class BaseDataPackage : public BaseMesh
 	{
 	public:
-		Vecd data_lower_bound_; /**< lower bound coordinate for the data as reference */
-		Vecu pkg_index_;		/**< index of a inner package (or occupied) in the mesh, 0 for non-occupied packages. */
-		bool is_inner_pkg_;		/**< If true, its data saved in memory pool. */
+		Vecu pkg_index_;	/**< index of a inner package (or occupied) in the mesh, 0 for non-occupied packages. */
+		bool is_inner_pkg_; /**< If true, its data saved in memory pool. */
 		/** define package data type */
 		template <typename DataType>
 		using PackageData = PackageDataMatrix<DataType, PKG_SIZE>;
@@ -130,20 +129,21 @@ namespace SPH
 		using PackageTemporaryData = PackageDataMatrix<DataType, ADDRS_SIZE>;
 
 		/** default constructor,  data and address arraries are not intialized */
-		BaseDataPackage() : BaseMesh(Vecu(ADDRS_SIZE)),
-							data_lower_bound_(0), pkg_index_(0), is_inner_pkg_(false){};
+		BaseDataPackage()
+			: BaseMesh(Vecu(ADDRS_SIZE)), pkg_index_(0), is_inner_pkg_(false){};
 		virtual ~BaseDataPackage(){};
 
 		constexpr int PackageSize() { return PKG_SIZE; };
 		constexpr int AddressSize() { return ADDRS_SIZE; };
 		constexpr int AddressBufferWidth() { return (ADDRS_SIZE - PKG_SIZE) / 2; };
 		constexpr int OperationUpperBound() { return PKG_SIZE + AddressBufferWidth(); };
+		/** lower bound coordinate for the data as reference */
+		Vecd DataLowerBound() { return mesh_lower_bound_ + Vecd(grid_spacing_) * (Real)AddressBufferWidth(); };
 		/** initialize package mesh geometric information. */
 		void initializePackageGeometry(const Vecd &pkg_lower_bound, Real data_spacing)
 		{
 			mesh_lower_bound_ = pkg_lower_bound - Vecd(data_spacing) * ((Real)AddressBufferWidth() - 0.5);
 			grid_spacing_ = data_spacing;
-			data_lower_bound_ = pkg_lower_bound + Vecd(data_spacing) * 0.5;
 		};
 		/** This function probes by applying bi and tri-linear interpolation within the package. */
 		template <typename DataType>

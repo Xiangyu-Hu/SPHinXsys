@@ -66,7 +66,6 @@ namespace SPH
 
 		virtual bool checkContain(const Vec3d &pnt, bool BOUNDARY_INCLUDED = true) override;
 		virtual Vec3d findClosestPoint(const Vec3d &input_pnt) override;
-		virtual BoundingBox findBounds() override;
 
 		SimTK::ContactGeometry::TriangleMesh *getTriangleMesh() { return triangle_mesh_; };
 
@@ -75,6 +74,7 @@ namespace SPH
 
 		//generate triangle mesh from polymesh
 		SimTK::ContactGeometry::TriangleMesh *generateTriangleMesh(const SimTK::PolygonalMesh &poly_mesh);
+		virtual BoundingBox findBounds() override;
 	};
 
 	class TriangleMeshShapeSTL : public TriangleMeshShape

@@ -1,7 +1,7 @@
 /**
-* @file 	particle_dynamics_diffusion_reaction.hpp
-* @author	Xiaojing Tang, Chi ZHang and Xiangyu Hu
-*/
+ * @file 	particle_dynamics_diffusion_reaction.hpp
+ * @author	Xiaojing Tang, Chi ZHang and Xiangyu Hu
+ */
 
 #ifndef PARTICLE_DYNAMICS_DIFFUSION_REACTION_HPP
 #define PARTICLE_DYNAMICS_DIFFUSION_REACTION_HPP
@@ -77,7 +77,7 @@ namespace SPH
 	void RelaxationOfAllDiffussionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>::
 		Interaction(size_t index_i, Real dt)
 	{
-		DiffusionReactionParticles<BaseParticlesType, BaseMaterialType> *particles = this->particles_;
+		DiffusionReactionParticles<BaseParticlesType> *particles = this->particles_;
 		Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
 
 		initializeDiffusionChangeRate(index_i);
@@ -125,7 +125,7 @@ namespace SPH
 	void RelaxationOfAllDiffussionSpeciesComplex<BodyType, BaseParticlesType, BaseMaterialType,
 												 ContactBodyType, ContactBaseParticlesType, ContactBaseMaterialType>::
 		getDiffusionChangeRateContact(size_t particle_i, size_t particle_j, Vecd &e_ij,
-									  Real surface_area_ij, StdVec<StdLargeVec<Real>> &species_n_k)
+									  Real surface_area_ij, const StdVec<StdLargeVec<Real>> &species_n_k)
 	{
 		for (size_t m = 0; m < species_diffusion_.size(); ++m)
 		{
@@ -143,7 +143,7 @@ namespace SPH
 		Interaction(size_t index_i, Real dt)
 	{
 		RelaxationOfAllDiffussionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>::Interaction(index_i, dt);
-		DiffusionReactionParticles<BaseParticlesType, BaseMaterialType> *particles = this->particles_;
+		DiffusionReactionParticles<BaseParticlesType> *particles = this->particles_;
 
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 		{
@@ -166,8 +166,8 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	RungeKuttaInitialization<BodyType, BaseParticlesType, BaseMaterialType>::
-		RungeKuttaInitialization(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &species_s)
+	InitializationRK<BodyType, BaseParticlesType, BaseMaterialType>::
+		InitializationRK(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &species_s)
 		: ParticleDynamicsSimple(sph_body),
 		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 		  species_n_(this->particles_->species_n_), species_s_(species_s)
@@ -176,7 +176,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	void RungeKuttaInitialization<BodyType, BaseParticlesType, BaseMaterialType>::
+	void InitializationRK<BodyType, BaseParticlesType, BaseMaterialType>::
 		initializeIntermediateValue(size_t particle_i)
 	{
 		for (size_t m = 0; m < species_diffusion_.size(); ++m)
@@ -187,75 +187,70 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	void RungeKuttaInitialization<BodyType, BaseParticlesType, BaseMaterialType>::
+	void InitializationRK<BodyType, BaseParticlesType, BaseMaterialType>::
 		Update(size_t index_i, Real dt)
 	{
 		initializeIntermediateValue(index_i);
 	}
 	//=================================================================================================//
-	template <class RungeKutta2Stages1stStageType, class BodyRelationType>
-	RungeKutta2Stages2ndStage<RungeKutta2Stages1stStageType, BodyRelationType>::
-		RungeKutta2Stages2ndStage(BodyRelationType &body_relation, StdVec<StdLargeVec<Real>> &species_s)
-		: RungeKutta2Stages1stStageType(body_relation),
+	template <class FirstStageType>
+	SecondStageRK2<FirstStageType>::
+		SecondStageRK2(typename FirstStageType::BodyRelationType &body_relation,
+					   StdVec<StdLargeVec<Real>> &species_s)
+		: FirstStageType(body_relation),
 		  species_n_(this->particles_->species_n_), diffusion_dt_(this->particles_->diffusion_dt_),
 		  species_s_(species_s)
 	{
 		species_diffusion_ = this->material_->SpeciesDiffusion();
 	}
 	//=================================================================================================//
-	template <class RungeKutta2Stages1stStageType, class BodyRelationType>
-	void RungeKutta2Stages2ndStage<RungeKutta2Stages1stStageType, BodyRelationType>::
+	template <class FirstStageType>
+	void SecondStageRK2<FirstStageType>::
 		updateSpeciesDiffusion(size_t particle_i, Real dt)
 	{
 		for (size_t m = 0; m < this->species_diffusion_.size(); ++m)
 		{
 			size_t k = species_diffusion_[m]->diffusion_species_index_;
-			species_n_[k][particle_i] = 0.5 * species_s_[m][particle_i] + 0.5 * (species_n_[k][particle_i] + dt * diffusion_dt_[m][particle_i]);
+			species_n_[k][particle_i] = 0.5 * species_s_[m][particle_i] +
+										0.5 * (species_n_[k][particle_i] + dt * diffusion_dt_[m][particle_i]);
 		}
 	}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType,
-			  class RungeKutta2Stages1stStageType, class BodyRelationType>
-	RelaxationOfAllDiffusionSpeciesRK2<BodyType, BaseParticlesType, BaseMaterialType,
-									   RungeKutta2Stages1stStageType, BodyRelationType>::
-		RelaxationOfAllDiffusionSpeciesRK2(BodyRelationType &body_relation)
+	template <class FirstStageType>
+	RelaxationOfAllDiffusionSpeciesRK2<FirstStageType>::
+		RelaxationOfAllDiffusionSpeciesRK2(typename FirstStageType::BodyRelationType &body_relation)
 		: ParticleDynamics<void>(*body_relation.sph_body_),
-		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(*body_relation.sph_body_),
-		  runge_kutta_initialization_(*body_relation.sph_body_, species_s_),
-		  runge_kutta_1st_stage_(body_relation),
-		  runge_kutta_2nd_stage_(body_relation, species_s_)
+		  rk2_initialization_(*body_relation.sph_body_, species_s_),
+		  rk2_1st_stage_(body_relation),
+		  rk2_2nd_stage_(body_relation, species_s_)
 	{
-		StdVec<BaseDiffusion *> species_diffusion_ = this->material_->SpeciesDiffusion();
+		StdVec<BaseDiffusion *> species_diffusion_ = rk2_1st_stage_.getMaterial()->SpeciesDiffusion();
 
 		size_t number_of_diffusion_species = species_diffusion_.size();
 		species_s_.resize(number_of_diffusion_species);
 		for (size_t m = 0; m < number_of_diffusion_species; ++m)
 		{
-			//the size should be the same as that in the base particles
-			species_s_[m].resize(this->particles_->real_particles_bound_);
-			//register data in base particles
-			std::get<0>(this->particles_->all_particle_data_).push_back(&species_s_[m]);
+			// the size should be the same as that in the base particles
+			species_s_[m].resize(rk2_1st_stage_.getParticles()->real_particles_bound_);
+			// register data in base particles
+			std::get<0>(rk2_1st_stage_.getParticles()->all_particle_data_).push_back(&species_s_[m]);
 		}
 	}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType,
-			  class RungeKutta2Stages1stStageType, class BodyRelationType>
-	void RelaxationOfAllDiffusionSpeciesRK2<BodyType, BaseParticlesType, BaseMaterialType,
-											RungeKutta2Stages1stStageType, BodyRelationType>::exec(Real dt)
+	template <class FirstStageType>
+	void RelaxationOfAllDiffusionSpeciesRK2<FirstStageType>::exec(Real dt)
 	{
-		runge_kutta_initialization_.exec();
-		runge_kutta_1st_stage_.exec(dt);
-		runge_kutta_2nd_stage_.exec(dt);
+		rk2_initialization_.exec();
+		rk2_1st_stage_.exec(dt);
+		rk2_2nd_stage_.exec(dt);
 	}
 	//=================================================================================================//
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType,
-			  class RungeKutta2Stages1stStageType, class BodyRelationType>
-	void RelaxationOfAllDiffusionSpeciesRK2<BodyType, BaseParticlesType, BaseMaterialType,
-											RungeKutta2Stages1stStageType, BodyRelationType>::parallel_exec(Real dt)
+	template <class FirstStageType>
+	void RelaxationOfAllDiffusionSpeciesRK2<FirstStageType>::parallel_exec(Real dt)
 	{
-		runge_kutta_initialization_.parallel_exec();
-		runge_kutta_1st_stage_.parallel_exec(dt);
-		runge_kutta_2nd_stage_.parallel_exec(dt);
+		rk2_initialization_.parallel_exec();
+		rk2_1st_stage_.parallel_exec(dt);
+		rk2_2nd_stage_.parallel_exec(dt);
 	}
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
@@ -309,4 +304,4 @@ namespace SPH
 	}
 	//=================================================================================================//
 }
-#endif //PARTICLE_DYNAMICS_DIFFUSION_REACTION_HPP
+#endif // PARTICLE_DYNAMICS_DIFFUSION_REACTION_HPP

@@ -16,7 +16,7 @@ namespace SPH {
 	using SymMatd = SymMat3d;
 	using AngularVecd = Vec3d;
 
-	using  BoundingBox = BoundingBox3d;
+	using  BoundingBox = BaseBoundingBox<Vec3d>;
 
 	using Transformd = Transform3d;
 

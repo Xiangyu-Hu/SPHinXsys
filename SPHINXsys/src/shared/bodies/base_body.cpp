@@ -6,22 +6,20 @@
 #include "base_body.h"
 
 #include "sph_system.h"
-#include "base_particles.h"
 #include "base_particles.hpp"
 #include "body_relation.h"
 
 namespace SPH
 {
 	//=================================================================================================//
-	SPHBody::SPHBody(SPHSystem &sph_system, const std::string &body_name,
-					 SharedPtr<SPHAdaptation> sph_adaptation_ptr)
-		: sph_system_(sph_system), body_name_(body_name), newly_updated_(true),
-		  body_domain_bounds_(0, 0), is_domain_bounds_determined_(false),
-		  sph_adaptation_(sph_adaptation_ptr_keeper_.assignPtr(sph_adaptation_ptr)),
-		  generative_structure_(nullptr)
+	SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
+		: body_shape_(shape_ptr_keeper_.assignPtr(shape_ptr)),
+		  sph_system_(sph_system), body_name_(body_shape_->getName()), newly_updated_(true),
+		  body_domain_bounds_(), is_domain_bounds_determined_(false),
+		  sph_adaptation_(sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(this)),
+		  base_material_(nullptr), base_particles_(nullptr)
 	{
-		sph_system_.addABody(this);
-		sph_adaptation_->initialize(this);
+		sph_system_.sph_bodies_.push_back(this);
 	}
 	//=================================================================================================//
 	BoundingBox SPHBody::getSPHSystemBounds()
@@ -52,7 +50,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void SPHBody::setBodyDomainBounds(BoundingBox body_domain_bounds)
+	void SPHBody::setBodyDomainBounds(const BoundingBox &body_domain_bounds)
 	{
 		body_domain_bounds_ = body_domain_bounds;
 		is_domain_bounds_determined_ = true;
@@ -62,7 +60,7 @@ namespace SPH
 	{
 		if (!is_domain_bounds_determined_)
 		{
-			body_domain_bounds_ = body_shape_.findBounds();
+			body_domain_bounds_ = body_shape_->getBounds();
 			is_domain_bounds_determined_ = true;
 		}
 		return body_domain_bounds_;
@@ -74,13 +72,13 @@ namespace SPH
 		newly_updated_ = false;
 	}
 	//=================================================================================================//
-	void SPHBody::writeParticlesToVtpFile(std::ostream &output_file)
+	void SPHBody::writeParticlesToVtpFile(std::ofstream &output_file)
 	{
 		base_particles_->writeParticlesToVtk(output_file);
 		newly_updated_ = false;
 	}
 	//=================================================================================================//
-	void SPHBody::writeSurfaceParticlesToVtuFile(std::ostream &output_file, BodySurface& surface_particles)
+	void SPHBody::writeSurfaceParticlesToVtuFile(std::ofstream &output_file, BodySurface &surface_particles)
 	{
 		base_particles_->writeSurfaceParticlesToVtuFile(output_file, surface_particles);
 		newly_updated_ = false;
@@ -113,12 +111,10 @@ namespace SPH
 		base_particles_->readFromXmlForReloadParticle(filefullpath);
 	}
 	//=================================================================================================//
-	RealBody::RealBody(SPHSystem &sph_system, const std::string &body_name,
-					   SharedPtr<SPHAdaptation> sph_adaptation_ptr)
-		: SPHBody(sph_system, body_name, sph_adaptation_ptr),
-		  particle_sorting_(this)
+	RealBody::RealBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
+		: SPHBody(sph_system, shape_ptr), particle_sorting_(this)
 	{
-		sph_system.addARealBody(this);
+		sph_system.real_bodies_.push_back(this);
 		cell_linked_list_ = cell_linked_list_keeper_.movePtr(sph_adaptation_->createCellLinkedList());
 		size_t number_of_split_cell_lists = powerN(3, Vecd(0).size());
 		split_cell_lists_.resize(number_of_split_cell_lists);
@@ -142,127 +138,6 @@ namespace SPH
 	void RealBody::updateCellLinkedList()
 	{
 		cell_linked_list_->UpdateCellLists();
-	}
-	//=================================================================================================//
-	FictitiousBody::
-		FictitiousBody(SPHSystem &system, const std::string &body_name,
-					   SharedPtr<SPHAdaptation> sph_adaptation_ptr)
-		: SPHBody(system, body_name, sph_adaptation_ptr)
-	{
-		system.addAFictitiousBody(this);
-	}
-	//=================================================================================================//
-	void BodyPartByParticle::tagParticles(TaggingParticleMethod &tagging_particle_method)
-	{
-		for (size_t i = 0; i < base_particles_->total_real_particles_; ++i)
-		{
-			tagging_particle_method(i);
-		}
-	};
-	//=================================================================================================//
-	void BodyPartByCell::tagCells(TaggingCellMethod &tagging_cell_method)
-	{
-		cell_linked_list_->tagBodyPartByCell(body_part_cells_, tagging_cell_method);
-	}
-	//=================================================================================================//
-	BodyRegionByParticle::
-		BodyRegionByParticle(SPHBody &sph_body, const std::string &body_part_name, Shape &shape)
-		: BodyPartByParticle(sph_body, body_part_name), body_part_shape_(shape)
-	{
-		TaggingParticleMethod tagging_particle_method = std::bind(&BodyRegionByParticle::tagByContain, this, _1);
-		tagParticles(tagging_particle_method);
-	}
-	//=================================================================================================//
-	void BodyRegionByParticle::tagByContain(size_t particle_index)
-	{
-		if (body_part_shape_.checkContain(base_particles_->pos_n_[particle_index]))
-		{
-			body_part_particles_.push_back(particle_index);
-		}
-	}
-	//=================================================================================================//
-	BodySurface::BodySurface(SPHBody &sph_body)
-		: BodyPartByParticle(sph_body, "BodySurface"),
-		  particle_spacing_min_(sph_body.sph_adaptation_->MinimumSpacing())
-	{
-		TaggingParticleMethod tagging_particle_method = std::bind(&BodySurface::tagNearSurface, this, _1);
-		tagParticles(tagging_particle_method);
-		std::cout << "Number of surface particles : " << body_part_particles_.size() << std::endl;
-	}
-	//=================================================================================================//
-	void BodySurface::tagNearSurface(size_t particle_index)
-	{
-		Real phi = sph_body_->body_shape_.findSignedDistance(base_particles_->pos_n_[particle_index]);
-		if (fabs(phi) < particle_spacing_min_)
-			body_part_particles_.push_back(particle_index);
-	}
-	//=================================================================================================//
-	BodySurfaceLayer::BodySurfaceLayer(SPHBody &sph_body, Real layer_thickness)
-		: BodyPartByParticle(sph_body, "InnerLayers"),
-		  thickness_threshold_(sph_body.sph_adaptation_->ReferenceSpacing() * layer_thickness)
-	{
-		TaggingParticleMethod tagging_particle_method = std::bind(&BodySurfaceLayer::tagSurfaceLayer, this, _1);
-		tagParticles(tagging_particle_method);
-		std::cout << "Number of inner layers particles : " << body_part_particles_.size() << std::endl;
-	}
-	//=================================================================================================//
-	void BodySurfaceLayer::tagSurfaceLayer(size_t particle_index)
-	{
-		Real distance = fabs(sph_body_->body_shape_.findSignedDistance(base_particles_->pos_n_[particle_index]));
-		if (distance < thickness_threshold_)
-		{
-			body_part_particles_.push_back(particle_index);
-		}
-	}
-	//=================================================================================================//
-	BodyRegionByCell::BodyRegionByCell(RealBody &real_body, const std::string &body_part_name, Shape &shape)
-		: BodyPartByCell(real_body, body_part_name), body_part_shape_(shape)
-	{
-		TaggingCellMethod tagging_cell_method = std::bind(&BodyRegionByCell::checkNotFar, this, _1, _2);
-		tagCells(tagging_cell_method);
-	};
-	//=================================================================================================//
-	bool BodyRegionByCell::checkNotFar(Vecd cell_position, Real threshold)
-	{
-		return body_part_shape_.checkNotFar(cell_position, threshold);
-	}
-	//=================================================================================================//
-	NearShapeSurface::
-		NearShapeSurface(RealBody &real_body, const std::string &body_part_name, Shape &shape)
-		: BodyPartByCell(real_body, body_part_name),
-		  level_set_shape_(
-			  level_set_shape_keeper_.createRef<LevelSetShape>(&real_body, shape, true))
-	{
-		TaggingCellMethod tagging_cell_method = std::bind(&NearShapeSurface::checkNearSurface, this, _1, _2);
-		tagCells(tagging_cell_method);
-	}
-	//=================================================================================================//
-	NearShapeSurface::NearShapeSurface(RealBody &real_body)
-		: BodyPartByCell(real_body, "NearShapeSurface"),
-		  level_set_shape_(
-			  DynamicCast<LevelSetShape>(this, *real_body.body_shape_.getShapeByName(real_body.getBodyName())))
-	{
-		TaggingCellMethod tagging_cell_method = std::bind(&NearShapeSurface::checkNearSurface, this, _1, _2);
-		tagCells(tagging_cell_method);
-	}
-	//=================================================================================================//
-	bool NearShapeSurface::checkNearSurface(Vecd cell_position, Real threshold)
-	{
-		return level_set_shape_.checkNearSurface(cell_position, threshold);
-	}
-	//=================================================================================================//
-	TreeTerminates::TreeTerminates(SPHBody &sph_body)
-		: BodyPartByParticle(sph_body, "Leaves"),
-		  tree_(*DynamicCast<GenerativeTree>(this, sph_body.generative_structure_))
-	{
-		for (const auto *branch : tree_.branches_)
-		{
-			if (branch->is_terminated_)
-			{
-				size_t particle_index = branch->inner_particles_.back();
-				body_part_particles_.push_back(particle_index);
-			}
-		}
 	}
 	//=================================================================================================//
 }

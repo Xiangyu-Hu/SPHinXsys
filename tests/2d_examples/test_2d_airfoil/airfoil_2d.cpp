@@ -25,13 +25,16 @@ int main(int ac, char *av[])
 	system.handleCommandlineOptions(ac, av);
 #endif
 	/** output environment. */
-	In_Output in_output(system);
+	InOutput in_output(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	Airfoil airfoil(system, "Airfoil");
-	SolidParticles airfoil_particles(airfoil, makeShared<ParticleGeneratorMultiResolution>());
-	airfoil_particles.addAVariableToWrite<Real>("SmoothingLengthRatio");
+	RealBody airfoil(system, makeShared<ImportModel>("AirFoil"));
+	airfoil.defineAdaptation<ParticleSpacingByBodyShape>(1.15, 1.0, 3);
+	airfoil.defineBodyLevelSetShape()->cleanLevelSet()->writeLevelSet(airfoil);
+	airfoil.defineParticlesAndMaterial();
+	airfoil.generateParticles<ParticleGeneratorMultiResolution>();
+	airfoil.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
@@ -39,14 +42,14 @@ int main(int ac, char *av[])
 	MeshRecordingToPlt cell_linked_list_recording(in_output, airfoil, airfoil.cell_linked_list_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
-	//	The contact map gives the topological connections between the bodies.
-	//	Basically the the range of bodies to build neighbor particle lists.
+	//	The contact map gives the topological connections between the bodies,
+	//	basically, in the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
 	BodyRelationInnerVariableSmoothingLength airfoil_inner(airfoil);
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
-	RandomizePartilePosition random_airfoil_particles(airfoil);
+	RandomizeParticlePosition random_airfoil_particles(airfoil);
 	relax_dynamics::RelaxationStepInner relaxation_step_inner(airfoil_inner, true);
 	relax_dynamics::UpdateSmoothingLengthRatioByBodyShape update_smoothing_length_ratio(airfoil);
 	//----------------------------------------------------------------------

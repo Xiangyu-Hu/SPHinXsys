@@ -138,3 +138,6 @@ endif()
 
 add_subdirectory(modules)
 
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonScriptStore/RegressionTest/regression_test_base_tool.py
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/PythonScriptStore/RegressionTest)
+        
