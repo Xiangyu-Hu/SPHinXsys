@@ -318,7 +318,8 @@ namespace SPH
 			virtual ~TotalForceOnSolidBodyPartForSimBody(){};
 
 		protected:
-			StdLargeVec<Vecd> &force_from_fluid_, &contact_force_, &pos_n_;
+			StdLargeVec<Real> &mass_;
+			StdLargeVec<Vecd> &force_from_fluid_, &dvel_dt_prior_, &pos_n_;
 			SimTK::MultibodySystem &MBsystem_;
 			SimTK::MobilizedBody &mobod_;
 			SimTK::Force::DiscreteForces &force_on_bodies_;

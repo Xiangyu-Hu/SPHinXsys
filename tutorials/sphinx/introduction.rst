@@ -4,7 +4,7 @@ The SPHinXsys library
 
 SPHinXsys (pronunciation: s'finksis) is an acronym from 
 Smoothed Particle Hydrodynamics 
-for Idustiral compleX systems.
+for industrial complex systems.
 It aims to model coupled industrial dynamic systems including fluid, 
 solid, multi-body dynamics and beyond with SPH (smoothed particle hydrodynamics), 
 a Lagrangian computational method using particle discretization.
@@ -141,12 +141,35 @@ the insert is composed of a rigid and an elastic solid components.
 
 The SPH algorithms are used to discretize the continuum mechanics equations, 
 and compute the dynamics of particles, i.e. their trajectory, velocity and acceleration. 
-The algorithms for the discretization of the fluid dynamics equations are based on a weakly compressible fluid formulation, which is suitable for the problems with incompressible flows, and compressible flows with low Mach number (less than 0.3). The solid dynamics equations are discretized by a total Lagrangian formulation, which is suitable to study the problems involving linear and non-linear elastic materials. The FSI coupling algorithm is implemented in a kinematic-force fashion, in which the solid structure surface describes the material-interface and, at the same time, experiences the surface forces imposed by the fluid pressure and friction. 
+The algorithms for the discretization of the fluid dynamics equations are based on a weakly compressible fluid formulation, 
+which is suitable for the problems with incompressible flows, and compressible flows with low Mach number (less than 0.3). 
+The solid dynamics equations are discretized by a total Lagrangian formulation, 
+which is suitable to study the problems involving linear and non-linear elastic materials. 
+The FSI coupling algorithm is implemented in a kinematic-force fashion, 
+in which the solid structure surface describes the material-interface and, at the same time, 
+experiences the surface forces imposed by the fluid pressure and friction. 
 SPHinxSys couples the rigid bodies with elastic solid and fluid in a kinematic-force fashion too,
 in which, while experiencing forces from elastic solid and/or fluid, 
 the rigid bodies and their interactions (handled by Simbody library) 
 determines the position and velocity their own particles. 
 
+=============================
+Ownership design in SPHinXsys
+=============================
+
+SPHinXsys aims to follow the concept of resource acquisition is initialization (RAII) strictly. 
+Therefore, the ownership of all objects have been clarified.
+Basically, there are three types of ownerships.  
+
+First, the SPHsystem, bodies, body relations, gravities and particle-dynamics methods are owned by the application,
+i.e. the main function. This requires that these objects are defined in the main function.
+Second, the particles and materials are owned by SPHbody; 
+Third, though the geometries, are owned by SPHBody; the shapes owned by complex shape or body part during the simualtion,
+these objects are temporaly owned by base and derived constrcutors.   
+Therefore, we need to use shared pointer for them.
+
+One important choice in SPHinXsys is that the ownship is only clarified at the constrcution phase.
+After that, observers of raw pointers are assigned and used during the simulation.
 
 
 

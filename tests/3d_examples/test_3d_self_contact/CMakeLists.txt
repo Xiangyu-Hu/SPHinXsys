@@ -26,6 +26,7 @@ add_test(NAME ${PROJECT_NAME}_particle_relaxation
 add_test(NAME ${PROJECT_NAME} 
 		 COMMAND ${PROJECT_NAME} --r=false --i=true
 		 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+set_tests_properties(${PROJECT_NAME}_particle_relaxation ${PROJECT_NAME} PROPERTIES LABELS "solid_dynamics; self_contact")
 
 if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")

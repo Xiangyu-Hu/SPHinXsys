@@ -62,11 +62,6 @@ namespace SPH
 		StdLargeVec<Vecd> vel_ave_;			 /**<  fluid time-step averaged particle velocity */
 		StdLargeVec<Vecd> dvel_dt_ave_;		 /**<  fluid time-step averaged particle acceleration */
 		StdLargeVec<Vecd> force_from_fluid_; /**<  forces (including pressure and viscous) from fluid */
-		//----------------------------------------------------------------------
-		//		for solid-solid contact dynamics
-		//----------------------------------------------------------------------
-		StdLargeVec<Real> contact_density_; /**< density due to contact of solid-solid. */
-		StdLargeVec<Vecd> contact_force_;	/**< contact force from other solid body or bodies */
 
 		/** Normalize a gradient. */
 		virtual Vecd normalizeKernelGradient(size_t particle_index_i, Vecd &gradient) override;

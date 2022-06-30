@@ -83,9 +83,8 @@ int main()
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(myocardium_body_inner);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ContactDensitySummation myocardium_update_contact_density(myocardium_plate_contact);
-	solid_dynamics::ContactForce myocardium_compute_solid_contact_forces(myocardium_plate_contact);
-	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ContactDensitySummation plate_update_contact_density(plate_myocardium_contact);
+	solid_dynamics::ContactForce myocardium_compute_solid_contact_forces(myocardium_plate_contact);
 	solid_dynamics::ContactForce plate_compute_solid_contact_forces(plate_myocardium_contact);
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(myocardium_body, 
@@ -107,10 +106,10 @@ int main()
 	/** The forces of the MBsystem.*/
 	SimTK::GeneralForceSubsystem forces(MBsystem);
 	SimTK::CableTrackerSubsystem cables(MBsystem);
-	/** mass proeprties of the fixed spot. */
+	/** mass properties of the fixed spot. */
 	SolidBodyPartForSimbody plate_multibody(moving_plate, 
 		makeShared<TransformShape<GeometricShapeBox>>(translation_moving_plate, halfsize_moving_plate, "Plate"));
-	/** Mass properties of the consrained spot. 
+	/** Mass properties of the constrained spot. 
 	 * SimTK::MassProperties(mass, center of mass, inertia)
 	 */
 	SimTK::Body::Rigid rigid_info(*plate_multibody.body_part_mass_properties_);
@@ -122,7 +121,7 @@ int main()
 	SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
 	/** Damper. */
 	SimTK::Force::MobilityLinearDamper linear_damper(forces, plateMBody, SimTK::MobilizerUIndex(0), 20.0);
-	/** Time steping method for multibody system.*/
+	/** Time stepping method for multibody system.*/
 	SimTK::State state = MBsystem.realizeTopology();
 	SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
 	integ.setAccuracy(1e-3);

@@ -87,9 +87,8 @@ int main()
 	//stress_relaxation_first_half_2.post_processes_(spring_constraint);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ContactDensitySummation myocardium_update_contact_density(myocardium_plate_contact);
-	solid_dynamics::ContactForce myocardium_compute_solid_contact_forces(myocardium_plate_contact);
-	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ContactDensitySummation plate_update_contact_density(plate_myocardium_contact);
+	solid_dynamics::ContactForce myocardium_compute_solid_contact_forces(myocardium_plate_contact);
 	solid_dynamics::ContactForce plate_compute_solid_contact_forces(plate_myocardium_contact);
 
 	/** Constrain the holder. */

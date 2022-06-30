@@ -19,7 +19,8 @@ namespace SPH
 			: ParticleDynamicsReduce<Real, ReduceMin>(solid_body),
 			  ElasticSolidDataSimple(solid_body), CFL_(CFL),
 			  vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
-			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength())
+			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength()),
+			  c0_(material_->ReferenceSoundSpeed())
 		{
 			initial_reference_ = DBL_MAX;
 		}
@@ -28,9 +29,8 @@ namespace SPH
 		{
 			// since the particle does not change its configuration in pressure relaxation step
 			// I chose a time-step size according to Eulerian method
-			Real sound_speed = material_->ReferenceSoundSpeed();
 			return CFL_ * SMIN(sqrt(smoothing_length_ / (dvel_dt_[index_i].norm() + TinyReal)),
-							   smoothing_length_ / (sound_speed + vel_n_[index_i].norm()));
+							   smoothing_length_ / (c0_ + vel_n_[index_i].norm()));
 		}
 		//=================================================================================================//
 		ElasticDynamicsInitialCondition::
