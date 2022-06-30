@@ -74,7 +74,7 @@ namespace SPH
 		protected:
 			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &angular_vel_, &dangular_vel_dt_;
 			StdLargeVec<Real> &thickness_;
-			Real rho0_, physical_viscosity_, E0_, nu_;
+			Real rho0_, physical_viscosity_, E0_, nu_, c0_;
 			Real smoothing_length_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 		};

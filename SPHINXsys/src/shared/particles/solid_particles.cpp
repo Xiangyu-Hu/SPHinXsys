@@ -34,11 +34,6 @@ namespace SPH
 		registerAVariable(vel_ave_, "AverageVelocity");
 		registerAVariable(dvel_dt_ave_, "AverageAcceleration");
 		registerAVariable(force_from_fluid_, "ForceFromFluid");
-		//----------------------------------------------------------------------
-		//		For solid-solid contact
-		//----------------------------------------------------------------------
-		registerAVariable(contact_density_, "ContactDensity");
-		registerAVariable(contact_force_, "ContactForce");
 	}
 	//=================================================================================================//
 	Vecd SolidParticles::normalizeKernelGradient(size_t particle_index_i, Vecd &kernel_gradient)
@@ -237,11 +232,6 @@ namespace SPH
 		registerAVariable(vel_ave_, "AverageVelocity");
 		registerAVariable(dvel_dt_ave_, "AverageAcceleration");
 		registerAVariable(force_from_fluid_, "ForceFromFluid");
-		//----------------------------------------------------------------------
-		//		For solid-solid contact
-		//----------------------------------------------------------------------
-		registerAVariable(contact_density_, "ContactDensity");
-		registerAVariable(contact_force_, "ContactForce");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------

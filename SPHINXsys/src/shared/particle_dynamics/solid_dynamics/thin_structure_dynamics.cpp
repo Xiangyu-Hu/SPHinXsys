@@ -30,7 +30,8 @@ namespace SPH
 			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength()),
 			  rho0_(material_->ReferenceDensity()),
 			  E0_(material_->YoungsModulus()),
-			  nu_(material_->PoissonRatio())
+			  nu_(material_->PoissonRatio()),
+			  c0_(material_->ReferenceSoundSpeed())
 
 		{
 			initial_reference_ = DBL_MAX;
@@ -40,9 +41,8 @@ namespace SPH
 		{
 			// Since the particle does not change its configuration in pressure relaxation step,
 			// I chose a time-step size according to Eulerian method.
-			Real sound_speed = material_->ReferenceSoundSpeed();
 			Real time_setp_0 = 0.6 * SMIN(sqrt(smoothing_length_ / (dvel_dt_[index_i].norm() + TinyReal)),
-										  smoothing_length_ / (sound_speed + vel_n_[index_i].norm()));
+										  smoothing_length_ / (c0_ + vel_n_[index_i].norm()));
 			Real time_setp_1 = 0.6 * SMIN(sqrt(1.0 / (dangular_vel_dt_[index_i].norm() + TinyReal)),
 										  1.0 / (angular_vel_[index_i].norm() + TinyReal));
 			Real time_setp_2 = smoothing_length_ * sqrt(rho0_ * (1.0 - nu_ * nu_) / E0_ /

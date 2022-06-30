@@ -125,7 +125,6 @@ int main(int ac, char *av[])
 	SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
 	beam_body.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	beam_body.generateParticles<ParticleGeneratorLattice>();
-	beam_body.addBodyStateForRecording<Real>("ContactDensity");
 
 	ObserverBody beam_observer(system, "BeamObserver");
 	beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
@@ -162,6 +161,7 @@ int main(int ac, char *av[])
 	//	outputs
 	//-----------------------------------------------------------------------------
 	InOutput in_output(system);
+	beam_body.addBodyStateForRecording<Real>("SelfContactDensity");
 	BodyStatesRecordingToVtp write_beam_states(in_output, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_beam_tip_displacement("Position", in_output, beam_observer_contact);

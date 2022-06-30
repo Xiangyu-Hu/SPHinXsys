@@ -57,7 +57,7 @@ namespace SPH
 		SimTK::SpatialVec TotalForceOnSolidBodyPartForSimBody
 			::ReduceFunction(size_t index_i, Real dt)
 		{
-			Vec3 force_from_particle = force_from_fluid_[index_i] + contact_force_[index_i];
+			Vec3 force_from_particle = force_from_fluid_[index_i] + dvel_dt_prior_[index_i] * mass_[index_i];
 			Vec3 displacement(0);
 			displacement = pos_n_[index_i] - current_mobod_origin_location_;
 			Vec3 torque_from_particle = cross(displacement, force_from_particle);

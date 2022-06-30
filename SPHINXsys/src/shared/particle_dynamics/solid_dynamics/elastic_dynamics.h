@@ -101,7 +101,7 @@ namespace SPH
 		protected:
 			Real CFL_;
 			StdLargeVec<Vecd> &vel_n_, &dvel_dt_;
-			Real smoothing_length_;
+			Real smoothing_length_, c0_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 		};
 
