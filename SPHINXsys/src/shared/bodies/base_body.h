@@ -191,6 +191,7 @@ namespace SPH
 	{
 	private:
 		UniquePtrKeeper<BaseCellLinkedList> cell_linked_list_keeper_;
+		BoundingBox system_domain_bounds_;
 
 	public:
 		ParticleSorting particle_sorting_;
@@ -212,7 +213,8 @@ namespace SPH
 		{
 			sph_adaptation_ = sph_adaptation_ptr_keeper_
 								  .createPtr<AdaptationType>(this, std::forward<ConstructorArgs>(args)...);
-			cell_linked_list_ = cell_linked_list_keeper_.movePtr(sph_adaptation_->createCellLinkedList());
+			cell_linked_list_ = cell_linked_list_keeper_.movePtr(
+				sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));
 		};
 	};
 }

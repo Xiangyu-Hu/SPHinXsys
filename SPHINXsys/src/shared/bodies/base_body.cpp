@@ -112,10 +112,13 @@ namespace SPH
 	}
 	//=================================================================================================//
 	RealBody::RealBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
-		: SPHBody(sph_system, shape_ptr), particle_sorting_(this)
+		: SPHBody(sph_system, shape_ptr), 
+		system_domain_bounds_(this->getSPHSystem().system_domain_bounds_),
+		particle_sorting_(this)
 	{
 		sph_system.real_bodies_.push_back(this);
-		cell_linked_list_ = cell_linked_list_keeper_.movePtr(sph_adaptation_->createCellLinkedList());
+		cell_linked_list_ = cell_linked_list_keeper_.movePtr(
+			sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));
 		size_t number_of_split_cell_lists = powerN(3, Vecd(0).size());
 		split_cell_lists_.resize(number_of_split_cell_lists);
 	}
