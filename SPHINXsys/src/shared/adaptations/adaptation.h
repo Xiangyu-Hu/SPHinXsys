@@ -48,14 +48,14 @@ namespace SPH
 	 * @class SPHAdaptation
 	 * @brief Base class for all adaptations.
 	 * The base class defines essential global parameters. It is also used for single-resolution method.
-	 * In the constructor parameter, system_resolution_ratio defines the relation between present resolution to the system reference resolution.
+	 * In the constructor parameter, system_refinement_ratio defines the relation between present resolution to the system reference resolution.
 	 * The derived classes are defined for more complex adaptations.
 	 */
 	class SPHAdaptation
 	{
 	protected:
 		Real h_spacing_ratio_;		   /**< ratio of reference kernel smoothing length to particle spacing */
-		Real system_resolution_ratio_; /**< ratio of system resolution to body resolution, set to 1.0 by default */
+		Real system_refinement_ratio_; /**< ratio of system resolution to body resolution, set to 1.0 by default */
 		int local_refinement_level_;   /**< refinement level respect to reference particle spacing */
 		Real spacing_ref_;			   /**< reference particle spacing used to determine local particle spacing */
 		Real h_ref_;				   /**< reference smoothing length */
@@ -66,14 +66,14 @@ namespace SPH
 		Real number_density_max_;
 
 	public:
-		explicit SPHAdaptation(SPHBody *sph_body, Real h_spacing_ratio = 1.3, Real system_resolution_ratio = 1.0);
+		explicit SPHAdaptation(SPHBody *sph_body, Real h_spacing_ratio = 1.3, Real system_refinement_ratio = 1.0);
 		virtual ~SPHAdaptation(){};
 
 		int LocalRefinementLevel() { return local_refinement_level_; };
 		Real ReferenceSpacing() { return spacing_ref_; };
 		Real ReferenceSmoothingLength() { return h_ref_; };
 		Kernel *getKernel() { return kernel_ptr_.get(); };
-		void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_resolution_ratio = 1.0);
+		void resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
 		template <class KernelType, typename... ConstructorArgs>
 		void resetKernel(ConstructorArgs &&...args)
 		{
@@ -104,7 +104,7 @@ namespace SPH
 		StdLargeVec<Real> h_ratio_; /**< the ratio between reference smoothing length to variable smoothing length */
 
 		ParticleWithLocalRefinement(SPHBody *sph_body, Real h_spacing_ratio_,
-									Real system_resolution_ratio,
+									Real system_refinement_ratio,
 									int local_refinement_level);
 		virtual ~ParticleWithLocalRefinement(){};
 
@@ -128,7 +128,7 @@ namespace SPH
 	{
 	public:
 		ParticleSpacingByBodyShape(SPHBody *sph_body, Real smoothing_length_ratio,
-								   Real system_resolution_ratio,
+								   Real system_refinement_ratio,
 								   int local_refinement_level);
 		virtual ~ParticleSpacingByBodyShape(){};
 

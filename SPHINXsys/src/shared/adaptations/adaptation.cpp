@@ -17,11 +17,11 @@
 namespace SPH
 {
 	//=================================================================================================//
-	SPHAdaptation::SPHAdaptation(SPHBody *sph_body, Real h_spacing_ratio, Real system_resolution_ratio)
+	SPHAdaptation::SPHAdaptation(SPHBody *sph_body, Real h_spacing_ratio, Real system_refinement_ratio)
 		: h_spacing_ratio_(h_spacing_ratio),
-		  system_resolution_ratio_(system_resolution_ratio),
+		  system_refinement_ratio_(system_refinement_ratio),
 		  local_refinement_level_(0),
-		  spacing_ref_(sph_body->getSPHSystem().resolution_ref_ / system_resolution_ratio_),
+		  spacing_ref_(sph_body->getSPHSystem().resolution_ref_ / system_refinement_ratio_),
 		  h_ref_(h_spacing_ratio_ * spacing_ref_),
 		  kernel_ptr_(makeUnique<KernelWendlandC2>(h_ref_)),
 		  spacing_min_(this->RefinedSpacing(spacing_ref_, local_refinement_level_)),
@@ -75,11 +75,11 @@ namespace SPH
 		return computeReferenceNumberDensity(Vecd(0), 1.0);
 	}
 	//=================================================================================================//
-	void SPHAdaptation::resetAdaptationRatios(Real h_spacing_ratio, Real new_system_resolution_ratio)
+	void SPHAdaptation::resetAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
 	{
 		h_spacing_ratio_ = h_spacing_ratio;
-		spacing_ref_ = spacing_ref_ * system_resolution_ratio_ / new_system_resolution_ratio;
-		system_resolution_ratio_ = new_system_resolution_ratio;
+		spacing_ref_ = spacing_ref_ * system_refinement_ratio_ / new_system_refinement_ratio;
+		system_refinement_ratio_ = new_system_refinement_ratio;
 		h_ref_ = h_spacing_ratio_ * spacing_ref_;
 		kernel_ptr_.reset(new KernelWendlandC2(h_ref_));
 		spacing_min_ = RefinedSpacing(spacing_ref_, local_refinement_level_);
@@ -104,8 +104,8 @@ namespace SPH
 	//=================================================================================================//
 	ParticleWithLocalRefinement::
 		ParticleWithLocalRefinement(SPHBody *sph_body, Real h_spacing_ratio,
-									Real system_resolution_ratio, int local_refinement_level)
-		: SPHAdaptation(sph_body, h_spacing_ratio, system_resolution_ratio)
+									Real system_refinement_ratio, int local_refinement_level)
+		: SPHAdaptation(sph_body, h_spacing_ratio, system_refinement_ratio)
 	{
 		local_refinement_level_ = local_refinement_level;
 		spacing_min_ = RefinedSpacing(spacing_ref_, local_refinement_level_);
@@ -145,9 +145,9 @@ namespace SPH
 	//=================================================================================================//
 	ParticleSpacingByBodyShape::
 		ParticleSpacingByBodyShape(SPHBody *sph_body, Real smoothing_length_ratio,
-								   Real system_resolution_ratio, int local_refinement_level)
+								   Real system_refinement_ratio, int local_refinement_level)
 		: ParticleWithLocalRefinement(sph_body, smoothing_length_ratio,
-									  system_resolution_ratio, local_refinement_level){};
+									  system_refinement_ratio, local_refinement_level){};
 	//=================================================================================================//
 	Real ParticleSpacingByBodyShape::getLocalSpacing(Shape &shape, const Vecd &position)
 	{
