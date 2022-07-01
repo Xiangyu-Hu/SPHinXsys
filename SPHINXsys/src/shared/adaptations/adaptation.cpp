@@ -78,7 +78,7 @@ namespace SPH
 	void SPHAdaptation::resetAdaptationRatios(Real h_spacing_ratio, Real new_system_resolution_ratio)
 	{
 		h_spacing_ratio_ = h_spacing_ratio;
-		spacing_ref_ = spacing_ref_ * new_system_resolution_ratio / system_resolution_ratio_;
+		spacing_ref_ = spacing_ref_ * system_resolution_ratio_ / new_system_resolution_ratio;
 		system_resolution_ratio_ = new_system_resolution_ratio;
 		h_ref_ = h_spacing_ratio_ * spacing_ref_;
 		kernel_ptr_.reset(new KernelWendlandC2(h_ref_));

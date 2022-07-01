@@ -55,7 +55,7 @@ namespace SPH
 	{
 	protected:
 		Real h_spacing_ratio_;		   /**< ratio of reference kernel smoothing length to particle spacing */
-		Real system_resolution_ratio_; /**< ratio of body resolution to system resolution, set to 1.0 by default */
+		Real system_resolution_ratio_; /**< ratio of system resolution to body resolution, set to 1.0 by default */
 		int local_refinement_level_;   /**< refinement level respect to reference particle spacing */
 		Real spacing_ref_;			   /**< reference particle spacing used to determine local particle spacing */
 		Real h_ref_;				   /**< reference smoothing length */
