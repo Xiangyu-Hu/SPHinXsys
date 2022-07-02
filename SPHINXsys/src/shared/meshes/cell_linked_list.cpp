@@ -14,14 +14,10 @@ namespace SPH
 {
 	//=================================================================================================//
 	BaseCellLinkedList::
-		BaseCellLinkedList(SPHBody &sph_body, SPHAdaptation &sph_adaptation)
+		BaseCellLinkedList(RealBody &real_body, SPHAdaptation &sph_adaptation)
 		: BaseMeshField("CellLinkedList"),
-		  sph_body_(sph_body), kernel_(*sph_adaptation.getKernel()),
-		  base_particles_(nullptr)
-	{
-		size_t number_of_split_cell_lists = powerN(3, Vecd(0).size());
-		split_cell_lists_.resize(number_of_split_cell_lists);
-	}
+		  real_body_(real_body), kernel_(*sph_adaptation.getKernel()),
+		  base_particles_(nullptr) {}
 	//=================================================================================================//
 	void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
 	{
@@ -30,8 +26,8 @@ namespace SPH
 	}
 	//=================================================================================================//
 	CellLinkedList::CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
-								   SPHBody &sph_body, SPHAdaptation &sph_adaptation)
-		: BaseCellLinkedList(sph_body, sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2)
+								   RealBody &real_body, SPHAdaptation &sph_adaptation)
+		: BaseCellLinkedList(real_body, sph_adaptation), Mesh(tentative_bounds, grid_spacing, 2)
 	{
 		allocateMeshDataMatrix();
 	}
@@ -54,9 +50,9 @@ namespace SPH
 
 		UpdateCellListData();
 
-		if (use_split_cell_lists_)
+		if (real_body_.getUseSplitCellLists())
 		{
-			updateSplitCellLists(split_cell_lists_);
+			updateSplitCellLists(real_body_.getSplitCellLists());
 		}
 	}
 	//=================================================================================================//
@@ -83,9 +79,9 @@ namespace SPH
 	//=================================================================================================//
 	MultilevelCellLinkedList::
 		MultilevelCellLinkedList(BoundingBox tentative_bounds, Real reference_grid_spacing,
-								 size_t total_levels, SPHBody &sph_body, SPHAdaptation &sph_adaptation)
+								 size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation)
 		: MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>(
-			  tentative_bounds, reference_grid_spacing, total_levels, sph_body, sph_adaptation),
+			  tentative_bounds, reference_grid_spacing, total_levels, real_body, sph_adaptation),
 		  h_ratio_(DynamicCast<ParticleWithLocalRefinement>(this, &sph_adaptation)->h_ratio_) {}
 	//=================================================================================================//
 	size_t MultilevelCellLinkedList::getMeshLevel(Real particle_cutoff_radius)
@@ -147,9 +143,9 @@ namespace SPH
 			mesh_levels_[level]->UpdateCellListData();
 		}
 
-		if (use_split_cell_lists_)
+		if (real_body_.getUseSplitCellLists())
 		{
-			updateSplitCellLists(split_cell_lists_);
+			updateSplitCellLists(real_body_.getSplitCellLists());
 		}
 	}
 	//=================================================================================================//

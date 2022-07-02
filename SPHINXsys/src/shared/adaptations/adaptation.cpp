@@ -86,9 +86,9 @@ namespace SPH
 	}
 	//=================================================================================================//
 	UniquePtr<BaseCellLinkedList> SPHAdaptation::
-		createCellLinkedList(const BoundingBox &domain_bounds, SPHBody &sph_body)
+		createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body)
 	{
-		return makeUnique<CellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(), sph_body, *this);
+		return makeUnique<CellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(), real_body, *this);
 	}
 	//=================================================================================================//
 	UniquePtr<BaseLevelSet> SPHAdaptation::createLevelSet(Shape &shape, Real refinement_ratio)
@@ -131,10 +131,10 @@ namespace SPH
 	}
 	//=================================================================================================//
 	UniquePtr<BaseCellLinkedList> ParticleWithLocalRefinement::
-		createCellLinkedList(const BoundingBox &domain_bounds, SPHBody &sph_body)
+		createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body)
 	{
 		return makeUnique<MultilevelCellLinkedList>(domain_bounds, kernel_ptr_->CutOffRadius(),
-													getCellLinkedListTotalLevel(), sph_body, *this);
+													getCellLinkedListTotalLevel(), real_body, *this);
 	}
 	//=================================================================================================//
 	UniquePtr<BaseLevelSet> ParticleWithLocalRefinement::createLevelSet(Shape &shape, Real refinement_ratio)

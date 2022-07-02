@@ -39,6 +39,7 @@ namespace SPH
 {
 
 	class SPHBody;
+	class RealBody;
 	class Shape;
 	class Kernel;
 	class BaseParticles;
@@ -85,7 +86,7 @@ namespace SPH
 		Real ReferenceNumberDensity();
 		virtual Real SmoothingLengthRatio(size_t particle_index_i) { return 1.0; };
 
-		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, SPHBody &sph_body);
+		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body);
 		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio);
 
 	protected:
@@ -116,7 +117,7 @@ namespace SPH
 		};
 
 		StdLargeVec<Real> &registerSmoothingLengthRatio(BaseParticles *base_particles);
-		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, SPHBody &sph_body) override;
+		virtual UniquePtr<BaseCellLinkedList> createCellLinkedList(const BoundingBox &domain_bounds, RealBody &real_body) override;
 		virtual UniquePtr<BaseLevelSet> createLevelSet(Shape &shape, Real refinement_ratio) override;
 	};
 

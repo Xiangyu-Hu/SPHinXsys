@@ -184,6 +184,14 @@ namespace SPH
 	private:
 		UniquePtrKeeper<BaseCellLinkedList> cell_linked_list_keeper_;
 		BoundingBox system_domain_bounds_;
+		/**
+		 * @brief particle by cells lists is for parallel splitting algorithm.
+		 * All particles in each cell are collected together.
+		 * If two particles each belongs two different cell entries,
+		 * they have no interaction because they are too far.
+		 */
+		SplitCellLists split_cell_lists_;
+		bool use_split_cell_lists_;
 
 	public:
 		ParticleSorting particle_sorting_;
@@ -192,6 +200,9 @@ namespace SPH
 		explicit RealBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
 		virtual ~RealBody(){};
 
+		void setUseSplitCellLists() { use_split_cell_lists_ = true; };
+		bool getUseSplitCellLists() { return use_split_cell_lists_; };
+		SplitCellLists &getSplitCellLists() { return split_cell_lists_; };
 		/** This will be called in BaseParticle constructor
 		 * and is important because particles are not defined in FluidBody constructor.  */
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;

@@ -209,7 +209,7 @@ namespace SPH
 		virtual void parallel_exec(Real dt = 0.0) override;
 
 	protected:
-		BaseCellLinkedList *cell_linked_list_; /**< Cell linked mesh of this body. */
+		RealBody &real_body_;
 		SplitCellLists &split_cell_lists_;
 	};
 

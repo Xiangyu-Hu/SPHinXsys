@@ -69,17 +69,9 @@ namespace SPH
 	class BaseCellLinkedList : public BaseMeshField
 	{
 	protected:
-		SPHBody &sph_body_;
+		RealBody &real_body_;
 		Kernel &kernel_;
 		BaseParticles *base_particles_;
-		/**
-		 * @brief particle by cells lists is for parallel splitting algorithm.
-		 * All particles in each cell are collected together.
-		 * If two particles each belongs two different cell entries,
-		 * they have no interaction because they are too far.
-		 */
-		SplitCellLists split_cell_lists_;
-		bool use_split_cell_lists_;
 
 		/** clear split cell lists in this mesh*/
 		virtual void clearSplitCellLists(SplitCellLists &split_cell_lists);
@@ -88,11 +80,8 @@ namespace SPH
 
 	public:
 		/** The buffer size 2 used to expand computational domain for particle searching. */
-		BaseCellLinkedList(SPHBody &sph_body, SPHAdaptation &sph_adaptation);
+		BaseCellLinkedList(RealBody &real_body, SPHAdaptation &sph_adaptation);
 		virtual ~BaseCellLinkedList(){};
-
-		void setUseSplitCellLists() { use_split_cell_lists_ = true; };
-		SplitCellLists &getSplitCellLists() { return split_cell_lists_; };
 
 		/** Assign base particles to the mesh cell linked list,
 		 * and is important because particles are not defined in the constructor.  */
@@ -132,7 +121,7 @@ namespace SPH
 
 	public:
 		CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
-					   SPHBody &sph_body, SPHAdaptation &sph_adaptation);
+					   RealBody &real_body, SPHAdaptation &sph_adaptation);
 		virtual ~CellLinkedList() { deleteMeshDataMatrix(); };
 
 		void allocateMeshDataMatrix(); /**< allocate memories for addresses of data packages. */
@@ -170,7 +159,7 @@ namespace SPH
 	/**
 	 * @class MultilevelCellLinkedList
 	 * @brief Defining a multilevel mesh cell linked list for a body
-	 * for multiresolution particle configuration.
+	 * for multi-resolution particle configuration.
 	 */
 	class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>
 	{
@@ -182,7 +171,7 @@ namespace SPH
 
 	public:
 		MultilevelCellLinkedList(BoundingBox tentative_bounds, Real reference_grid_spacing,
-								 size_t total_levels, SPHBody &sph_body, SPHAdaptation &sph_adaptation);
+								 size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation);
 		virtual ~MultilevelCellLinkedList(){};
 
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;

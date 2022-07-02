@@ -143,10 +143,10 @@ namespace SPH
 	//=================================================================================================//
 	InteractionDynamicsSplitting::InteractionDynamicsSplitting(SPHBody &sph_body)
 		: InteractionDynamics(sph_body),
-		  cell_linked_list_(DynamicCast<RealBody>(this, sph_body).cell_linked_list_),
-		  split_cell_lists_(cell_linked_list_->getSplitCellLists())
+		  real_body_(DynamicCast<RealBody>(this, sph_body)),
+		  split_cell_lists_(real_body_.getSplitCellLists())
 	{
-		cell_linked_list_->setUseSplitCellLists();
+		real_body_.setUseSplitCellLists();
 	};
 	//=================================================================================================//
 	void InteractionDynamicsSplitting::exec(Real dt)
