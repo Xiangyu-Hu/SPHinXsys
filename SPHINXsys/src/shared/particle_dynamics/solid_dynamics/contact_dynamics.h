@@ -92,7 +92,7 @@ namespace SPH
 		protected:
 			StdLargeVec<Real> contact_density_;
 			StdVec<StdLargeVec<Vecd> *> contact_pos_;
-			StdLargeVec<Vecd> &pos_n_;
+			StdLargeVec<Vecd> &pos_;
 
 			Kernel *kernel_;
 			Real spacing_ref_, boundary_factor_;
@@ -121,7 +121,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &mass_, &self_contact_density_, &Vol_;
-			StdLargeVec<Vecd> &dvel_dt_prior_, &vel_n_;
+			StdLargeVec<Vecd> &acc_prior_, &vel_;
 			Real contact_impedance_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -139,7 +139,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &contact_density_, &Vol_, &mass_;
-			StdLargeVec<Vecd> &dvel_dt_prior_;
+			StdLargeVec<Vecd> &acc_prior_;
 			StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -159,7 +159,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &contact_density_, &Vol_, &mass_;
-			StdLargeVec<Vecd> &dvel_dt_prior_;
+			StdLargeVec<Vecd> &acc_prior_;
 			StdVec<StdLargeVec<Real> *> contact_Vol_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -177,7 +177,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &Vol_, &mass_;
-			StdLargeVec<Vecd> &dvel_dt_prior_;
+			StdLargeVec<Vecd> &acc_prior_;
 			StdVec<StdLargeVec<Real> *> contact_contact_density_, contact_Vol_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -197,7 +197,7 @@ namespace SPH
 		protected:
 			Real eta_; /**< friction coefficient */
 			StdLargeVec<Real> &Vol_, &mass_;
-			StdLargeVec<Vecd> &vel_n_;
+			StdLargeVec<Vecd> &vel_;
 			StdVec<StdLargeVec<Real> *> wall_Vol_;
 			StdVec<StdLargeVec<Vecd> *> wall_vel_n_, wall_n_;
 
@@ -218,7 +218,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &Vol_, &mass_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_prior_;
+			StdLargeVec<Vecd> &vel_, &acc_prior_;
 			StdVec<StdLargeVec<Real> *> contact_Vol_;
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_, contact_n_;
 			Real penalty_strength_;

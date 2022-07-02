@@ -115,7 +115,7 @@ namespace SPH
 	NeighborRelationSelfContact::
 		NeighborRelationSelfContact(SPHBody *body)
 		: NeighborRelation(),
-		  pos_0_(*body->base_particles_->getVariableByName<Vecd>("InitialPosition"))
+		  pos0_(*body->base_particles_->getVariableByName<Vecd>("InitialPosition"))
 	{
 		kernel_ = body->sph_adaptation_->getKernel();
 	}
@@ -123,7 +123,7 @@ namespace SPH
 	void NeighborRelationSelfContact::operator()(Neighborhood &neighborhood,
 												 Vecd &displacement, size_t i_index, size_t j_index) const
 	{
-		Real distance0 = (pos_0_[i_index] - pos_0_[j_index]).norm();
+		Real distance0 = (pos0_[i_index] - pos0_[j_index]).norm();
 		Real distance = displacement.norm();
 		if (distance < kernel_->CutOffRadius() && distance0 > kernel_->CutOffRadius())
 		{

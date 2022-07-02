@@ -66,9 +66,9 @@ namespace SPH
 			virtual ~ConstrainSolidBodyRegion(){};
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &pos_0_;
-			StdLargeVec<Vecd> &n_, &n_0_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			StdLargeVec<Vecd> &pos_, &pos0_;
+			StdLargeVec<Vecd> &n_, &n0_;
+			StdLargeVec<Vecd> &vel_, &acc_, &vel_ave_, &acc_ave_;
 			virtual Vecd getDisplacement(Vecd &pos_0, Vecd &pos_n) { return pos_n; };
 			virtual Vecd getVelocity(Vecd &pos_0, Vecd &pos_n, Vecd &vel_n) { return Vecd(0); };
 			virtual Vecd getAcceleration(Vecd &pos_0, Vecd &pos_n, Vecd &dvel_dt) { return Vecd(0); };
@@ -89,8 +89,8 @@ namespace SPH
 			StdLargeVec<bool> &GetApplyConstrainToParticle() { return apply_constrain_to_particle_; }
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &pos_0_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_;
+			StdLargeVec<Vecd> &pos_, &pos0_;
+			StdLargeVec<Vecd> &vel_, &acc_;
 			StdLargeVec<bool> apply_constrain_to_particle_;
 
 			virtual Vecd getDisplacement(Vecd &pos_0, Vecd &pos_n) { return pos_n; };
@@ -107,12 +107,12 @@ namespace SPH
 		public:
 			PositionSolidBody(SPHBody &sph_body, BodyPartByParticle &body_part, Real start_time, Real end_time, Vecd pos_end_center);
 			virtual ~PositionSolidBody(){};
-			StdLargeVec<Vecd> &GetParticlePos0() { return pos_0_; };
-			StdLargeVec<Vecd> &GetParticlePosN() { return pos_n_; };
+			StdLargeVec<Vecd> &GetParticlePos0() { return pos0_; };
+			StdLargeVec<Vecd> &GetParticlePosN() { return pos_; };
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &pos_0_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			StdLargeVec<Vecd> &pos_, &pos0_;
+			StdLargeVec<Vecd> &vel_, &acc_, &vel_ave_, &acc_ave_;
 			Real start_time_, end_time_;
 			Vecd pos_0_center_, pos_end_center_, translation_;
 			Vecd getDisplacement(size_t index_i, Real dt);
@@ -132,12 +132,12 @@ namespace SPH
 		public:
 			PositionScaleSolidBody(SPHBody &sph_body, BodyPartByParticle &body_part, Real start_time, Real end_time, Real end_scale);
 			virtual ~PositionScaleSolidBody(){};
-			StdLargeVec<Vecd> &GetParticlePos0() { return pos_0_; };
-			StdLargeVec<Vecd> &GetParticlePosN() { return pos_n_; };
+			StdLargeVec<Vecd> &GetParticlePos0() { return pos0_; };
+			StdLargeVec<Vecd> &GetParticlePosN() { return pos_; };
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &pos_0_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			StdLargeVec<Vecd> &pos_, &pos0_;
+			StdLargeVec<Vecd> &vel_, &acc_, &vel_ave_, &acc_ave_;
 			Real start_time_, end_time_, end_scale_;
 			Vecd pos_0_center_;
 			Vecd getDisplacement(size_t index_i, Real dt);
@@ -159,9 +159,9 @@ namespace SPH
 			virtual ~TranslateSolidBody(){};
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &pos_0_;
+			StdLargeVec<Vecd> &pos_, &pos0_;
 			StdLargeVec<Vecd> pos_end_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_;
+			StdLargeVec<Vecd> &vel_, &acc_;
 			Real start_time_, end_time_;
 			Vecd translation_;
 			Vecd getDisplacement(size_t index_i, Real dt);
@@ -226,7 +226,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			StdLargeVec<Vecd> &vel_, &acc_, &vel_ave_, &acc_ave_;
 			StdLargeVec<Vecd> vel_temp_, dvel_dt_temp_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -267,7 +267,7 @@ namespace SPH
 			Real total_mass_;
 			Matd correction_matrix_;
 			Vecd velocity_correction_;
-			StdLargeVec<Vecd> &vel_n_;
+			StdLargeVec<Vecd> &vel_;
 			BodyMoment<Vecd> compute_total_momentum_;
 		};
 
@@ -319,7 +319,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &mass_;
-			StdLargeVec<Vecd> &force_from_fluid_, &dvel_dt_prior_, &pos_n_;
+			StdLargeVec<Vecd> &force_from_fluid_, &acc_prior_, &pos_;
 			SimTK::MultibodySystem &MBsystem_;
 			SimTK::MobilizedBody &mobod_;
 			SimTK::Force::DiscreteForces &force_on_bodies_;

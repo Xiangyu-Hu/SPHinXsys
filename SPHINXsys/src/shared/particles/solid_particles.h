@@ -52,21 +52,21 @@ namespace SPH
 		SolidParticles(SPHBody &sph_body, Solid *solid);
 		virtual ~SolidParticles(){};
 
-		StdLargeVec<Vecd> pos_0_; /**< initial position */
+		StdLargeVec<Vecd> pos0_; /**< initial position */
 		StdLargeVec<Vecd> n_;	  /**<  current normal direction */
-		StdLargeVec<Vecd> n_0_;	  /**<  initial normal direction */
+		StdLargeVec<Vecd> n0_;	  /**<  initial normal direction */
 		StdLargeVec<Matd> B_;	  /**<  configuration correction for linear reproducing */
 		//----------------------------------------------------------------------
 		//		for fluid-structure interaction (FSI)
 		//----------------------------------------------------------------------
 		StdLargeVec<Vecd> vel_ave_;			 /**<  fluid time-step averaged particle velocity */
-		StdLargeVec<Vecd> dvel_dt_ave_;		 /**<  fluid time-step averaged particle acceleration */
+		StdLargeVec<Vecd> acc_ave_;		 /**<  fluid time-step averaged particle acceleration */
 		StdLargeVec<Vecd> force_from_fluid_; /**<  forces (including pressure and viscous) from fluid */
 
 		/** Normalize a gradient. */
-		virtual Vecd normalizeKernelGradient(size_t particle_index_i, Vecd &gradient) override;
+		virtual Vecd normalizeKernelGradient(size_t index_i, Vecd &gradient) override;
 		/** Get the kernel gradient in weak form. */
-		virtual Vecd getKernelGradient(size_t particle_index_i, size_t particle_index_j, Real dW_ij, Vecd &e_ij) override;
+		virtual Vecd getKernelGradient(size_t index_i, size_t index_j, Real dW_ij, Vecd &e_ij) override;
 
 		virtual void initializeOtherVariables() override;
 		virtual SolidParticles *ThisObjectPtr() override { return this; };

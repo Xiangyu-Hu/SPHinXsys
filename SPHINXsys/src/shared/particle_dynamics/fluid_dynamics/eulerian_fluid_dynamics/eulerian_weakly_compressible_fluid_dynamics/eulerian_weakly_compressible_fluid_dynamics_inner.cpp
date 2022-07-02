@@ -17,15 +17,15 @@ namespace SPH
 		//=================================================================================================//
 		EulerianFlowTimeStepInitialization::EulerianFlowTimeStepInitialization(SPHBody &sph_body)
 			: ParticleDynamicsSimple(sph_body), EulerianWeaklyCompressibleFluidDataSimple(sph_body),
-			rho_n_(particles_->rho_n_), pos_n_(particles_->pos_n_), mass_(particles_->mass_),
-			vel_n_(particles_->vel_n_), dmom_dt_prior_(particles_->dmom_dt_prior_),
+			rho_(particles_->rho_), pos_(particles_->pos_), mass_(particles_->mass_),
+			vel_(particles_->vel_), dmom_dt_prior_(particles_->dmom_dt_prior_),
 			gravity_(gravity_ptr_keeper_.createPtr<Gravity>(Vecd(0))) {}
 		//=================================================================================================//
 		EulerianFlowTimeStepInitialization::
 			EulerianFlowTimeStepInitialization(SPHBody &sph_body, Gravity &gravity)
 			: ParticleDynamicsSimple(sph_body), EulerianWeaklyCompressibleFluidDataSimple(sph_body),
-			rho_n_(particles_->rho_n_), pos_n_(particles_->pos_n_), mass_(particles_->mass_),
-			vel_n_(particles_->vel_n_), dmom_dt_prior_(particles_->dmom_dt_prior_),
+			rho_(particles_->rho_), pos_(particles_->pos_), mass_(particles_->mass_),
+			vel_(particles_->vel_), dmom_dt_prior_(particles_->dmom_dt_prior_),
 			gravity_(&gravity) {}
 		//=================================================================================================//
 		void EulerianFlowTimeStepInitialization::setupDynamics(Real dt)
@@ -35,7 +35,7 @@ namespace SPH
 		//=================================================================================================//
 		void EulerianFlowTimeStepInitialization::Update(size_t index_i, Real dt)
 		{
-			dmom_dt_prior_[index_i] = rho_n_[index_i] * gravity_->InducedAcceleration(pos_n_[index_i]);
+			dmom_dt_prior_[index_i] = rho_[index_i] * gravity_->InducedAcceleration(pos_[index_i]);
 		}
 		//=================================================================================================//
 		FreeSurfaceIndicationInner::
@@ -82,16 +82,16 @@ namespace SPH
 		ViscousAccelerationInner::ViscousAccelerationInner(BaseBodyRelationInner &inner_relation)
 			: InteractionDynamics(*inner_relation.sph_body_),
 			EulerianWeaklyCompressibleFluidDataInner(inner_relation),
-			Vol_(particles_->Vol_), rho_n_(particles_->rho_n_), p_(particles_->p_),
-			vel_n_(particles_->vel_n_),
+			Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
+			vel_(particles_->vel_),
 			dmom_dt_prior_(particles_->dmom_dt_prior_),
 			mu_(material_->ReferenceViscosity()),
 			smoothing_length_(sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
 		void ViscousAccelerationInner::Interaction(size_t index_i, Real dt)
 		{
-			Real rho_i = rho_n_[index_i];
-			const Vecd &vel_i = vel_n_[index_i];
+			Real rho_i = rho_[index_i];
+			const Vecd &vel_i = vel_[index_i];
 
 			Vecd acceleration(0), vel_derivative(0);
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -100,7 +100,7 @@ namespace SPH
 				size_t index_j = inner_neighborhood.j_[n];
 
 				//viscous force
-				vel_derivative = (vel_i - vel_n_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
+				vel_derivative = (vel_i - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
 				acceleration += 2.0 * mu_ * vel_derivative * Vol_[index_j] * inner_neighborhood.dW_ij_[n] / rho_i;
 			}
 
@@ -109,8 +109,8 @@ namespace SPH
 		//=================================================================================================//
 		AcousticTimeStepSize::AcousticTimeStepSize(EulerianFluidBody &fluid_body)
 			: ParticleDynamicsReduce<Real, ReduceMax>(fluid_body),
-			EulerianWeaklyCompressibleFluidDataSimple(fluid_body), rho_n_(particles_->rho_n_),
-			p_(particles_->p_), vel_n_(particles_->vel_n_),
+			EulerianWeaklyCompressibleFluidDataSimple(fluid_body), rho_(particles_->rho_),
+			p_(particles_->p_), vel_(particles_->vel_),
 			smoothing_length_(sph_adaptation_->ReferenceSmoothingLength())
 		{
 			initial_reference_ = 0.0;
@@ -118,7 +118,7 @@ namespace SPH
 		//=================================================================================================//
 		Real AcousticTimeStepSize::ReduceFunction(size_t index_i, Real dt)
 		{
-			return material_->getSoundSpeed(p_[index_i], rho_n_[index_i]) + vel_n_[index_i].norm();
+			return material_->getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
 		}
 		//=================================================================================================//
 		Real AcousticTimeStepSize::OutputResult(Real reduced_value)
@@ -133,7 +133,7 @@ namespace SPH
 			VorticityInner(BaseBodyRelationInner &inner_relation)
 			: InteractionDynamics(*inner_relation.sph_body_),
 			EulerianWeaklyCompressibleFluidDataInner(inner_relation),
-			Vol_(particles_->Vol_), vel_n_(particles_->vel_n_)
+			Vol_(particles_->Vol_), vel_(particles_->vel_)
 		{
 			particles_->registerAVariable(vorticity_, "VorticityInner");
 			particles_->addAVariableToWrite<AngularVecd>("VorticityInner");
@@ -141,7 +141,7 @@ namespace SPH
 		//=================================================================================================//
 		void VorticityInner::Interaction(size_t index_i, Real dt)
 		{
-			const Vecd &vel_i = vel_n_[index_i];
+			const Vecd &vel_i = vel_[index_i];
 
 			AngularVecd vorticity(0);
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -150,7 +150,7 @@ namespace SPH
 				size_t index_j = inner_neighborhood.j_[n];
 				Vecd r_ij = inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
 
-				Vecd vel_diff = vel_i - vel_n_[index_j];
+				Vecd vel_diff = vel_i - vel_[index_j];
 				vorticity += SimTK::cross(vel_diff, r_ij) * Vol_[index_j] * inner_neighborhood.dW_ij_[n];
 			}
 
@@ -160,8 +160,8 @@ namespace SPH
 		BaseRelaxation::BaseRelaxation(BaseBodyRelationInner &inner_relation)
 			: ParticleDynamics1Level(*inner_relation.sph_body_),
 			EulerianWeaklyCompressibleFluidDataInner(inner_relation),
-			Vol_(particles_->Vol_), mass_(particles_->mass_), rho_n_(particles_->rho_n_),
-			p_(particles_->p_), drho_dt_(particles_->drho_dt_), vel_n_(particles_->vel_n_), mom_(particles_->mom_),
+			Vol_(particles_->Vol_), mass_(particles_->mass_), rho_(particles_->rho_),
+			p_(particles_->p_), drho_dt_(particles_->drho_dt_), vel_(particles_->vel_), mom_(particles_->mom_),
 			dmom_dt_(particles_->dmom_dt_), dmom_dt_prior_(particles_->dmom_dt_prior_) {}
 		//=================================================================================================//
 		BasePressureRelaxation::
@@ -169,14 +169,14 @@ namespace SPH
 		//=================================================================================================//
 		void BasePressureRelaxation::Initialization(size_t index_i, Real dt)
 		{
-			rho_n_[index_i] += drho_dt_[index_i] * dt * 0.5;
-			p_[index_i] = material_->getPressure(rho_n_[index_i]);
+			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
+			p_[index_i] = material_->getPressure(rho_[index_i]);
 		}
 		//=================================================================================================//
 		void BasePressureRelaxation::Update(size_t index_i, Real dt)
 		{
 			mom_[index_i] += dmom_dt_[index_i] * dt;
-			vel_n_[index_i] = mom_[index_i] / rho_n_[index_i];
+			vel_[index_i] = mom_[index_i] / rho_[index_i];
 		}
 		//=================================================================================================//
 		BaseDensityAndEnergyRelaxation::
@@ -184,7 +184,7 @@ namespace SPH
 		//=================================================================================================//
 		void BaseDensityAndEnergyRelaxation::Update(size_t index_i, Real dt)
 		{
-			rho_n_[index_i] += drho_dt_[index_i] * dt * 0.5;
+			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
 		void NonReflectiveBoundaryVariableCorrection::Interaction(size_t index_i, Real dt)
@@ -192,10 +192,10 @@ namespace SPH
 			Shape &body_shape = *sph_body_->body_shape_;
 			if (surface_indicator_[index_i] == 1)
 			{
-				Vecd normal_direction = body_shape.findNormalDirection(pos_n_[index_i]);
+				Vecd normal_direction = body_shape.findNormalDirection(pos_[index_i]);
 				n_[index_i] = normal_direction;
 				Real velocity_farfield_normal = dot(vel_farfield_, n_[index_i]);
-				Real velocity_boundary_normal = dot(vel_n_[index_i], n_[index_i]);
+				Real velocity_boundary_normal = dot(vel_[index_i], n_[index_i]);
 
 				//judge it is the inflow condition
 				if (n_[index_i][0] <= 0.0 | fabs(n_[index_i][1]) > fabs(n_[index_i][0]))
@@ -203,10 +203,10 @@ namespace SPH
 					//supersonic inflow condition
 					if (fabs(velocity_boundary_normal) >= sound_speed_)
 					{
-						vel_n_[index_i] = vel_farfield_;
+						vel_[index_i] = vel_farfield_;
 						p_[index_i] = p_farfield_;
-						rho_n_[index_i] = rho_farfield_;
-						mom_[index_i] = rho_n_[index_i] * vel_n_[index_i];
+						rho_[index_i] = rho_farfield_;
+						mom_[index_i] = rho_[index_i] * vel_[index_i];
 					}
 
 					//subsonic inflow condition
@@ -225,8 +225,8 @@ namespace SPH
 							{
 								Real W_ij = inner_neighborhood.W_ij_[n];
 								inner_weight_summation += W_ij * Vol_[index_j];
-								rho_summation += rho_n_[index_j];
-								vel_normal_summation += dot(vel_n_[index_j], n_[index_i]);
+								rho_summation += rho_[index_j];
+								vel_normal_summation += dot(vel_[index_j], n_[index_i]);
 								p_summation += p_[index_j];
 								total_inner_neighbor_particles += 1;
 							}
@@ -236,10 +236,10 @@ namespace SPH
 						Real p_average = p_summation / (total_inner_neighbor_particles + TinyReal);
 
 						p_[index_i] = p_average * inner_weight_summation + p_farfield_ * (1.0 - inner_weight_summation);
-						rho_n_[index_i] = rho_average * inner_weight_summation + rho_farfield_ * (1.0 - inner_weight_summation);
+						rho_[index_i] = rho_average * inner_weight_summation + rho_farfield_ * (1.0 - inner_weight_summation);
 						Real vel_normal = vel_normal_average * inner_weight_summation + velocity_farfield_normal * (1.0 - inner_weight_summation);
-						vel_n_[index_i] = vel_normal * n_[index_i] + (vel_farfield_ - velocity_farfield_normal * n_[index_i]);
-						mom_[index_i] = rho_n_[index_i] * vel_n_[index_i];
+						vel_[index_i] = vel_normal * n_[index_i] + (vel_farfield_ - velocity_farfield_normal * n_[index_i]);
+						mom_[index_i] = rho_[index_i] * vel_[index_i];
 					}
 				}
 				//judge it is the outflow condition
@@ -259,8 +259,8 @@ namespace SPH
 							if (surface_indicator_[index_j] != 1)
 							{
 								Real W_ij = inner_neighborhood.W_ij_[n];
-								rho_summation += rho_n_[index_j];
-								vel_summation += vel_n_[index_j];
+								rho_summation += rho_[index_j];
+								vel_summation += vel_[index_j];
 								p_summation += p_[index_j];
 								total_inner_neighbor_particles += 1;
 							}
@@ -271,9 +271,9 @@ namespace SPH
 
 
 						p_[index_i] = p_average + TinyReal;
-						rho_n_[index_i] = rho_average + TinyReal;
-						vel_n_[index_i] = vel_average + TinyReal;
-						mom_[index_i] = rho_n_[index_i] * vel_n_[index_i];
+						rho_[index_i] = rho_average + TinyReal;
+						vel_[index_i] = vel_average + TinyReal;
+						mom_[index_i] = rho_[index_i] * vel_[index_i];
 					}
 
 					//subsonic outflow condition
@@ -293,9 +293,9 @@ namespace SPH
 							{
 								Real W_ij = inner_neighborhood.W_ij_[n];
 								inner_weight_summation += W_ij * Vol_[index_j];
-								rho_summation += rho_n_[index_j];
-								vel_normal_summation += dot(vel_n_[index_j], n_[index_i]);
-								vel_tangential_summation += vel_n_[index_j] - dot(vel_n_[index_j], n_[index_i])*n_[index_i];
+								rho_summation += rho_[index_j];
+								vel_normal_summation += dot(vel_[index_j], n_[index_i]);
+								vel_tangential_summation += vel_[index_j] - dot(vel_[index_j], n_[index_i])*n_[index_i];
 								p_summation += p_[index_j];
 								total_inner_neighbor_particles += 1;
 							}
@@ -307,10 +307,10 @@ namespace SPH
 
 
 						p_[index_i] = p_average * inner_weight_summation + p_farfield_ * (1.0 - inner_weight_summation);
-						rho_n_[index_i] = rho_average * inner_weight_summation + rho_farfield_ * (1.0 - inner_weight_summation);
+						rho_[index_i] = rho_average * inner_weight_summation + rho_farfield_ * (1.0 - inner_weight_summation);
 						Real vel_normal = vel_normal_average * inner_weight_summation + velocity_farfield_normal * (1.0 - inner_weight_summation);
-						vel_n_[index_i] = vel_normal * n_[index_i] + vel_tangential_average;
-						mom_[index_i] = rho_n_[index_i] * vel_n_[index_i];
+						vel_[index_i] = vel_normal * n_[index_i] + vel_tangential_average;
+						mom_[index_i] = rho_[index_i] * vel_[index_i];
 					}
 				}
 			}

@@ -167,7 +167,7 @@ namespace SPH
 			virtual ~ElectroPhysiologyInitialCondition(){};
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_;
+			StdLargeVec<Vecd> &pos_;
 			StdVec<StdLargeVec<Real>> &species_n_;
 		};
 		/**

@@ -53,7 +53,7 @@ public:
 protected:
 	void Update(size_t index_i, Real dt) override
 	{
-		Real voltage = pos_0_[index_i][0] <= 0 ? 0.0 : reference_voltage * pos_0_[index_i][0] / PL;
+		Real voltage = pos0_[index_i][0] <= 0 ? 0.0 : reference_voltage * pos0_[index_i][0] / PL;
 		active_contraction_stress_[index_i] += GlobalStaticVariables::physical_time_ <= 1.0
 												   ? linear_active_stress_factor * voltage * dt
 												   : 0.0;

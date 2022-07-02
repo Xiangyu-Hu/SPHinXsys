@@ -67,7 +67,7 @@ namespace SPH
 			virtual ~ElasticDynamicsInitialCondition(){};
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &vel_n_;
+			StdLargeVec<Vecd> &pos_, &vel_;
 		};
 
 		/**
@@ -81,7 +81,7 @@ namespace SPH
 			virtual ~UpdateElasticNormalDirection(){};
 
 		protected:
-			StdLargeVec<Vecd> &n_, &n_0_;
+			StdLargeVec<Vecd> &n_, &n0_;
 			StdLargeVec<Matd> &F_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
@@ -100,7 +100,7 @@ namespace SPH
 
 		protected:
 			Real CFL_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_;
+			StdLargeVec<Vecd> &vel_, &acc_;
 			Real smoothing_length_, c0_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -117,7 +117,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &pos_n_;
+			StdLargeVec<Vecd> &pos_;
 			StdLargeVec<Matd> &B_, &F_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -135,8 +135,8 @@ namespace SPH
 			virtual ~BaseElasticRelaxation(){};
 
 		protected:
-			StdLargeVec<Real> &Vol_, &rho_n_, &mass_;
-			StdLargeVec<Vecd> &pos_n_, &vel_n_, &dvel_dt_;
+			StdLargeVec<Real> &Vol_, &rho_, &mass_;
+			StdLargeVec<Vecd> &pos_, &vel_, &acc_;
 			StdLargeVec<Matd> &B_, &F_, &dF_dt_;
 		};
 
@@ -153,7 +153,7 @@ namespace SPH
 
 		protected:
 			Real rho0_, inv_rho0_;
-			StdLargeVec<Vecd> &dvel_dt_prior_, &force_from_fluid_;
+			StdLargeVec<Vecd> &acc_prior_, &force_from_fluid_;
 			StdLargeVec<Matd> &stress_PK1_;
 			Real numerical_dissipation_factor_;
 			Real smoothing_length_;

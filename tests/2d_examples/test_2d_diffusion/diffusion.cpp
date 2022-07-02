@@ -60,13 +60,13 @@ protected:
 	void Update(size_t index_i, Real dt) override
 	{
 
-		if (pos_n_[index_i][0] >= 0.45 && pos_n_[index_i][0] <= 0.55)
+		if (pos_[index_i][0] >= 0.45 && pos_[index_i][0] <= 0.55)
 		{
 			species_n_[phi_][index_i] = 1.0;
 		}
-		if (pos_n_[index_i][0] >= 1.0)
+		if (pos_[index_i][0] >= 1.0)
 		{
-			species_n_[phi_][index_i] = exp(-2500.0 * ((pos_n_[index_i][0] - 1.5) * (pos_n_[index_i][0] - 1.5)));
+			species_n_[phi_][index_i] = exp(-2500.0 * ((pos_[index_i][0] - 1.5) * (pos_[index_i][0] - 1.5)));
 		}
 	};
 

@@ -133,14 +133,14 @@ namespace SPH
 				: ParticleDynamicsSimple(*inner_relation.sph_body_),
 				  FluidDataInner(inner_relation), u_ref_(1.0), t_ref_(2.0),
 				  rho_ref_(material_->ReferenceDensity()), rho_sum(particles_->rho_sum_),
-				  vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
+				  vel_(particles_->vel_), acc_(particles_->acc_),
 				  surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")){};
 			virtual ~FreeStreamBoundaryVelocityCorrection(){};
 
 		protected:
 			Real u_ref_, t_ref_, rho_ref_;
 			StdLargeVec<Real> &rho_sum;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_;
+			StdLargeVec<Vecd> &vel_, &acc_;
 			StdLargeVec<int> &surface_indicator_;
 
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -156,7 +156,7 @@ namespace SPH
 		public:
 			FreeSurfaceProbeOnFluidBody(FluidBody &fluid_body, BodyPartByCell &body_part)
 				: PartDynamicsByCellReduce<Real, ReduceMax>(fluid_body, body_part), FluidDataSimple(fluid_body),
-				  pos_n_(particles_->pos_n_)
+				  pos_(particles_->pos_)
 			{
 				quantity_name_ = body_part.BodyPartName() + "FreeSurface";
 				initial_reference_ = 0.0;
@@ -164,9 +164,9 @@ namespace SPH
 			virtual ~FreeSurfaceProbeOnFluidBody(){};
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_;
+			StdLargeVec<Vecd> &pos_;
 			virtual void SetupReduce() override{};
-			virtual Real ReduceFunction(size_t index_i, Real dt = 0.0) override { return pos_n_[index_i][1]; };
+			virtual Real ReduceFunction(size_t index_i, Real dt = 0.0) override { return pos_[index_i][1]; };
 		};
 		/**
 		 * @class ColorFunctionGradientInner
@@ -224,7 +224,7 @@ namespace SPH
 		protected:
 			Real gamma_;
 			StdLargeVec<Real> &Vol_, &mass_;
-			StdLargeVec<Vecd> &dvel_dt_prior_;
+			StdLargeVec<Vecd> &acc_prior_;
 			StdLargeVec<int> &surface_indicator_;
 			StdLargeVec<Vecd> &color_grad_;
 			StdLargeVec<Vecd> &surface_norm_;

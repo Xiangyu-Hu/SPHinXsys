@@ -36,7 +36,7 @@ namespace SPH
 				wall_mass_.push_back(&(WCFluidWallData::contact_particles_[k]->mass_));
 				wall_Vol_.push_back(&(WCFluidWallData::contact_particles_[k]->Vol_));
 				wall_vel_ave_.push_back(&(WCFluidWallData::contact_particles_[k]->vel_ave_));
-				wall_dvel_dt_ave_.push_back(&(WCFluidWallData::contact_particles_[k]->dvel_dt_ave_));
+				wall_dvel_dt_ave_.push_back(&(WCFluidWallData::contact_particles_[k]->acc_ave_));
 				wall_n_.push_back(&(WCFluidWallData::contact_particles_[k]->n_));
 			}
 		}
@@ -53,8 +53,8 @@ namespace SPH
 		{
 			BaseViscousAccelerationType::Interaction(index_i, dt);
 
-			Real rho_i = this->rho_n_[index_i];
-			const Vecd &vel_i = this->vel_n_[index_i];
+			Real rho_i = this->rho_[index_i];
+			const Vecd &vel_i = this->vel_[index_i];
 
 			Vecd acceleration(0), vel_derivative(0);
 			for (size_t k = 0; k < WCFluidWallData::contact_configuration_.size(); ++k)
@@ -105,7 +105,7 @@ namespace SPH
 		{
 			BasePressureRelaxationType::Interaction(index_i, dt);
 
-			FluidState state_i(this->rho_n_[index_i], this->vel_n_[index_i], this->p_[index_i]);
+			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 
 			Vecd momentum_change_rate(0.0);
 			for (size_t k = 0; k < WCFluidWallData::contact_configuration_.size(); ++k)
@@ -167,7 +167,7 @@ namespace SPH
 		{
 			BaseDensityAndEnergyRelaxationType::Interaction(index_i, dt);
 
-			FluidState state_i(this->rho_n_[index_i], this->vel_n_[index_i], this->p_[index_i]);
+			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 			Real density_change_rate = 0.0;
 			for (size_t k = 0; k < WCFluidWallData::contact_configuration_.size(); ++k)
 			{

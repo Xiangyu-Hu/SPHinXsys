@@ -68,7 +68,7 @@ namespace SPH
 	 * The global value of real_particles_bound_ separate the sum of real and buffer particles with ghost particles.
 	 * The global value of total_ghost_particles_ indicates the total number of ghost particles in use.
 	 * It will be initialized to zero before a time step.
-	 * In SPHinXsys, the variables registered in general particle data (ParticleData) belong to a heirachy of two layers.
+	 * In SPHinXsys, the variables registered in general particle data (ParticleData) belong to a hierarchy of two layers.
 	 * The first is for the global basic physical states to describe the physical process.
 	 * These variables are defined within the classes of particles.
 	 * The second is for the local, dynamics-method-related variables, which are defined in specific methods,
@@ -87,14 +87,14 @@ namespace SPH
 		explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
 		virtual ~BaseParticles(){};
 
-		StdLargeVec<Vecd> pos_n_;		  /**< current position */
-		StdLargeVec<Vecd> vel_n_;		  /**< current particle velocity */
-		StdLargeVec<Vecd> dvel_dt_;		  /**< total acceleration including inner pressure- or stress-induced acceleration and other accelerations */
-		StdLargeVec<Vecd> dvel_dt_prior_; /**< other, such as gravity and viscous, accelerations */
+		StdLargeVec<Vecd> pos_;		  /**< particle position */
+		StdLargeVec<Vecd> vel_;		  /**< particle velocity */
+		StdLargeVec<Vecd> acc_;		  /**< total acceleration including inner pressure- or stress-induced acceleration and other accelerations */
+		StdLargeVec<Vecd> acc_prior_; /**< other, such as gravity and viscous, accelerations */
 
-		StdLargeVec<Real> Vol_;	  /**< particle volume */
-		StdLargeVec<Real> rho_n_; /**< current particle density */
-		StdLargeVec<Real> mass_;  /**< particle mass */
+		StdLargeVec<Real> Vol_;	 /**< particle volumetric measure, also referred to area of surface particle and length of linear particle */
+		StdLargeVec<Real> rho_;	 /**< particle density */
+		StdLargeVec<Real> mass_; /**< particle mass */
 		//----------------------------------------------------------------------
 		// Global information for all particles
 		//----------------------------------------------------------------------
@@ -130,7 +130,7 @@ namespace SPH
 		template <typename VariableType>
 		StdLargeVec<VariableType> *getVariableByName(const std::string &variable_name);
 
-		/** add a variable into a particle vairable name list */
+		/** add a variable into a particle variable name list */
 		template <typename VariableType>
 		void addAVariableNameToList(ParticleVariableList &variable_name_list, const std::string &variable_name);
 
@@ -154,8 +154,8 @@ namespace SPH
 		//		Particle data for sorting
 		//----------------------------------------------------------------------
 		StdLargeVec<size_t> unsorted_id_; /**< the ids assigned just after particle generated. */
-		StdLargeVec<size_t> sorted_id_;	/**< the sorted particle ids of particles from unsorted ids. */
-		StdLargeVec<size_t> sequence_;	/**< the sequence referred for sorting. */
+		StdLargeVec<size_t> sorted_id_;	  /**< the sorted particle ids of particles from unsorted ids. */
+		StdLargeVec<size_t> sequence_;	  /**< the sequence referred for sorting. */
 		ParticleData sortable_data_;
 		ParticleDataMap sortable_variable_maps_;
 
@@ -190,10 +190,9 @@ namespace SPH
 		virtual BaseParticles *ThisObjectPtr() { return this; };
 
 		/** Normalize the kernel gradient. */
-		virtual Vecd normalizeKernelGradient(size_t particle_index_i, Vecd &kernel_gradient) { return kernel_gradient; };
+		virtual Vecd normalizeKernelGradient(size_t index_i, Vecd &kernel_gradient) { return kernel_gradient; };
 		/** Get the kernel gradient in weak form. */
-		virtual Vecd getKernelGradient(size_t particle_index_i, size_t particle_index_j,
-									   Real dW_ij, Vecd &e_ij)
+		virtual Vecd getKernelGradient(size_t index_i, size_t index_j, Real dW_ij, Vecd &e_ij)
 		{
 			return dW_ij * e_ij;
 		};

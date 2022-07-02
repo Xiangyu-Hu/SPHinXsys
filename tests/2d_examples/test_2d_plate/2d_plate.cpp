@@ -68,7 +68,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_n_[index_i][0] < 0.0 || base_particles_->pos_n_[index_i][0] > PL)
+		if (base_particles_->pos_[index_i][0] < 0.0 || base_particles_->pos_[index_i][0] > PL)
 		{
 			body_part_particles_.push_back(index_i);
 		}

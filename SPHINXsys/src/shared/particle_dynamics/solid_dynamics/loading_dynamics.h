@@ -64,7 +64,7 @@ namespace SPH
             virtual ~ImposeExternalForce(){};
 
         protected:
-            StdLargeVec<Vecd> &pos_0_, &vel_n_, &vel_ave_;
+            StdLargeVec<Vecd> &pos0_, &vel_, &vel_ave_;
             /**
              * @brief acceleration will be specified by the application
              */
@@ -87,7 +87,7 @@ namespace SPH
             SpringDamperConstraintParticleWise(SolidBody &solid_body, Vecd stiffness, Real damping_ratio = 0.05);
 
         protected:
-            StdLargeVec<Vecd> &pos_n_, &pos_0_, &vel_n_, &dvel_dt_prior_;
+            StdLargeVec<Vecd> &pos_, &pos0_, &vel_, &acc_prior_;
             Vecd stiffness_;
             Vecd damping_coeff_; // damping component parallel to the spring force component
 
@@ -117,7 +117,7 @@ namespace SPH
             StdLargeVec<bool> &GetApplySpringForceToParticle() { return apply_spring_force_to_particle_; }
 
         protected:
-            StdLargeVec<Vecd> &pos_n_, &pos_0_, &n_, &n_0_, &vel_n_, &dvel_dt_prior_;
+            StdLargeVec<Vecd> &pos_, &pos0_, &n_, &n0_, &vel_, &acc_prior_;
             StdLargeVec<Real> &mass_;
             Real stiffness_;
             Real damping_coeff_; // damping component parallel to the spring force component
@@ -147,7 +147,7 @@ namespace SPH
             StdLargeVec<bool> &GetApplySpringForceToParticle() { return apply_spring_force_to_particle_; }
 
         protected:
-            StdLargeVec<Vecd> &pos_n_, &pos_0_, &vel_n_, &dvel_dt_prior_;
+            StdLargeVec<Vecd> &pos_, &pos0_, &vel_, &acc_prior_;
             StdLargeVec<Real> &mass_;
             Real stiffness_;
             Real damping_coeff_; // damping component parallel to the spring force component
@@ -168,7 +168,7 @@ namespace SPH
             virtual ~AccelerationForBodyPartInBoundingBox(){};
 
         protected:
-            StdLargeVec<Vecd> &pos_n_, &dvel_dt_prior_;
+            StdLargeVec<Vecd> &pos_, &acc_prior_;
             BoundingBox bounding_box_;
             Vecd acceleration_;
             virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -184,7 +184,7 @@ namespace SPH
             ForceInBodyRegion(SPHBody &sph_body, BodyPartByParticle &body_part, Vecd force, Real end_time);
 
         protected:
-            StdLargeVec<Vecd> &pos_0_, &dvel_dt_prior_;
+            StdLargeVec<Vecd> &pos0_, &acc_prior_;
             Vecd acceleration_;
             Real end_time_;
             virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -203,7 +203,7 @@ namespace SPH
             StdLargeVec<bool> &GetApplyPressureToParticle() { return apply_pressure_to_particle_; }
 
         protected:
-            StdLargeVec<Vecd> &pos_0_, &n_, &dvel_dt_prior_;
+            StdLargeVec<Vecd> &pos0_, &n_, &acc_prior_;
             StdLargeVec<Real> &mass_;
             StdVec<std::array<Real, 2>> pressure_over_time_;
             StdLargeVec<bool> apply_pressure_to_particle_;

@@ -109,7 +109,7 @@ namespace SPH
 	//=============================================================================================//
 	void VonMisesStress::update(size_t index_i, Real dt)
 	{
-		Real J = rho0_ / rho_n_[index_i];
+		Real J = rho0_ / rho_[index_i];
 		Mat3d F = F_[index_i];
 		Mat3d stress = stress_PK1_[index_i] * SimTK::inverse(particles_->B_[index_i]);
 		Mat3d sigma = (stress * ~F) / J;

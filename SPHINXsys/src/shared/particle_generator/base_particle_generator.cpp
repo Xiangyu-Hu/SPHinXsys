@@ -14,7 +14,7 @@ namespace SPH
 	//=================================================================================================//
 	BaseParticleGenerator::BaseParticleGenerator(SPHBody &sph_body)
 		: base_particles_(sph_body.base_particles_),
-		pos_n_(base_particles_->pos_n_), unsorted_id_(base_particles_->unsorted_id_)
+		pos_(base_particles_->pos_), unsorted_id_(base_particles_->unsorted_id_)
 	{
 		if (sph_body.base_particles_ == nullptr || sph_body.base_material_ == nullptr)
 		{
@@ -26,7 +26,7 @@ namespace SPH
 	//=================================================================================================//
 	void BaseParticleGenerator::initializePosition(const Vecd &position)
 	{
-		pos_n_.push_back(position);
+		pos_.push_back(position);
 		unsorted_id_.push_back(base_particles_->total_real_particles_);
 		base_particles_->total_real_particles_ ++;
 	}

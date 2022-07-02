@@ -27,7 +27,7 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register geometric data only
 		//----------------------------------------------------------------------
-		registerAVariable(pos_n_, "Position");
+		registerAVariable(pos_, "Position");
 		registerAVariable(Vol_, "Volume");
 		//----------------------------------------------------------------------
 		//		add particle reload data
@@ -42,10 +42,10 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register non-geometric data
 		//----------------------------------------------------------------------
-		registerAVariable(vel_n_, "Velocity");
-		registerAVariable(dvel_dt_, "Acceleration");
-		registerAVariable(dvel_dt_prior_, "PriorAcceleration");
-		registerAVariable(rho_n_, "Density", rho0_);
+		registerAVariable(vel_, "Velocity");
+		registerAVariable(acc_, "Acceleration");
+		registerAVariable(acc_prior_, "PriorAcceleration");
+		registerAVariable(rho_, "Density", rho0_);
 		registerAVariable(mass_, "Mass");
 		//----------------------------------------------------------------------
 		//		add basic output particle data
@@ -65,7 +65,7 @@ namespace SPH
 		{
 			sorted_id_.push_back(sequence_.size());
 			sequence_.push_back(0);
-			mass_[i] = rho_n_[i] * Vol_[i];
+			mass_[i] = rho_[i] * Vol_[i];
 		}
 	}
 	//=================================================================================================//
@@ -102,7 +102,7 @@ namespace SPH
 		total_ghost_particles_ += 1;
 		size_t expected_size = real_particles_bound_ + total_ghost_particles_;
 		size_t expected_particle_index = expected_size - 1;
-		if (expected_size <= pos_n_.size())
+		if (expected_size <= pos_.size())
 		{
 			copyFromAnotherParticle(expected_particle_index, index_i);
 			/** For a ghost particle, its sorted id is that of corresponding real particle. */
@@ -158,7 +158,7 @@ namespace SPH
 	void BaseParticles::writePltFileParticleData(std::ofstream &output_file, size_t index_i)
 	{
 		// write particle positions and index first
-		Vec3d particle_position = upgradeToVector3D(pos_n_[index_i]);
+		Vec3d particle_position = upgradeToVector3D(pos_[index_i]);
 		output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " "
 					<< index_i << " ";
 
@@ -215,7 +215,7 @@ namespace SPH
 		for (size_t i = 0; i != total_surface_particles; ++i)
 		{
 			size_t particle_i = surface_particles.body_part_particles_[i];
-			Vec3d particle_position = upgradeToVector3D(pos_n_[particle_i]);
+			Vec3d particle_position = upgradeToVector3D(pos_[particle_i]);
 			output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " ";
 		}
 		output_file << std::endl;

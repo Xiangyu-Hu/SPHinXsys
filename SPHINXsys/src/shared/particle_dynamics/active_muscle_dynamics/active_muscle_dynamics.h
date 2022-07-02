@@ -62,7 +62,7 @@ namespace SPH
 			explicit MuscleActivation(SolidBody &solid_body);
 			virtual ~MuscleActivation() {};
 		protected:
-			StdLargeVec<Vecd>& pos_0_;
+			StdLargeVec<Vecd>& pos0_;
 			StdLargeVec<Real>& active_contraction_stress_;
 		};
 
@@ -79,7 +79,7 @@ namespace SPH
 			void setUpSpringStiffness(Vecd stiffness){stiffness_ = stiffness;}
 		protected:
 			StdLargeVec<Real>& mass_;
-			StdLargeVec<Vecd>& pos_n_, & pos_0_, & vel_n_;
+			StdLargeVec<Vecd>& pos_, & pos0_, & vel_;
 			Vecd stiffness_;
 			virtual Vecd getAcceleration(Vecd& disp, Real mass);
 			virtual void Update(size_t index_i, Real dt = 0.0) override;

@@ -49,7 +49,7 @@ public:
 	LoadForce(SPHBody& sph_body, BodyPartByParticle& body_part, StdVec<array<Real, 2>> f_arr)
 		:PartSimpleDynamicsByParticle(sph_body, body_part),
 		solid_dynamics::ElasticSolidDataSimple(sph_body),
-		dvel_dt_prior(particles_->dvel_dt_prior_),
+		dvel_dt_prior(particles_->acc_prior_),
 		force_arr_(f_arr),
 		mass_n_(particles_->mass_),
 	    vol_(particles_->Vol_),

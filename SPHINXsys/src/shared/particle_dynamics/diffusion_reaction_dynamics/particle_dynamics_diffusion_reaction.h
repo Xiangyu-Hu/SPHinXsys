@@ -71,7 +71,7 @@ namespace SPH
 		virtual ~DiffusionReactionInitialCondition(){};
 
 	protected:
-		StdLargeVec<Vecd> &pos_n_;
+		StdLargeVec<Vecd> &pos_;
 		StdVec<StdLargeVec<Real>> &species_n_;
 	};
 
@@ -286,11 +286,11 @@ namespace SPH
 		ConstrainDiffusionBodyRegion(BodyType &body, BodyPartByParticleType &body_part)
 			: PartSimpleDynamicsByParticle(body, body_part),
 			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(body),
-			  pos_n_(this->particles_->pos_n_), species_n_(this->particles_->species_n_){};
+			  pos_(this->particles_->pos_), species_n_(this->particles_->species_n_){};
 		virtual ~ConstrainDiffusionBodyRegion(){};
 
 	protected:
-		StdLargeVec<Vecd> &pos_n_;
+		StdLargeVec<Vecd> &pos_;
 		StdVec<StdLargeVec<Real>> &species_n_;
 	};
 
@@ -308,11 +308,11 @@ namespace SPH
 		explicit DiffusionBasedMapping(BodyType &body)
 			: ParticleDynamicsSimple(body),
 			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(body),
-			  pos_n_(this->particles_->pos_n_), species_n_(this->particles_->species_n_){};
+			  pos_(this->particles_->pos_), species_n_(this->particles_->species_n_){};
 		virtual ~DiffusionBasedMapping(){};
 
 	protected:
-		StdLargeVec<Vecd> &pos_n_;
+		StdLargeVec<Vecd> &pos_;
 		StdVec<StdLargeVec<Real>> &species_n_;
 	};
 

@@ -35,7 +35,7 @@ namespace SPH
 				wall_mass_.push_back(&(FluidWallData::contact_particles_[k]->mass_));
 				wall_Vol_.push_back(&(FluidWallData::contact_particles_[k]->Vol_));
 				wall_vel_ave_.push_back(&(FluidWallData::contact_particles_[k]->vel_ave_));
-				wall_dvel_dt_ave_.push_back(&(FluidWallData::contact_particles_[k]->dvel_dt_ave_));
+				wall_dvel_dt_ave_.push_back(&(FluidWallData::contact_particles_[k]->acc_ave_));
 				wall_n_.push_back(&(FluidWallData::contact_particles_[k]->n_));
 			}
 		}
@@ -105,8 +105,8 @@ namespace SPH
 		{
 			BaseViscousAccelerationType::Interaction(index_i, dt);
 
-			Real rho_i = this->rho_n_[index_i];
-			const Vecd &vel_i = this->vel_n_[index_i];
+			Real rho_i = this->rho_[index_i];
+			const Vecd &vel_i = this->vel_[index_i];
 
 			Vecd acceleration(0), vel_derivative(0);
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
@@ -124,7 +124,7 @@ namespace SPH
 				}
 			}
 
-			this->dvel_dt_prior_[index_i] += acceleration;
+			this->acc_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
 		template <class BaseViscousAccelerationType>
@@ -157,7 +157,7 @@ namespace SPH
 		{
 			BasePressureRelaxationType::Interaction(index_i, dt);
 
-			FluidState state_i(this->rho_n_[index_i], this->vel_n_[index_i], this->p_[index_i]);
+			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 			Vecd dvel_dt_prior_i = computeNonConservativeAcceleration(index_i);
 
 			Vecd acceleration(0.0);
@@ -184,13 +184,13 @@ namespace SPH
 					acceleration -= 2.0 * p_star * e_ij * Vol_k[index_j] * dW_ij / state_i.rho_;
 				}
 			}
-			this->dvel_dt_[index_i] += acceleration;
+			this->acc_[index_i] += acceleration;
 		}
 		//=================================================================================================//
 		template <class BasePressureRelaxationType>
 		Vecd PressureRelaxation<BasePressureRelaxationType>::computeNonConservativeAcceleration(size_t index_i)
 		{
-			return this->dvel_dt_prior_[index_i];
+			return this->acc_prior_[index_i];
 		}
 		//=================================================================================================//
 		template <class BasePressureRelaxationType>
@@ -216,7 +216,7 @@ namespace SPH
 		{
 			PressureRelaxation<BasePressureRelaxationType>::Interaction(index_i, dt);
 
-			Real rho_i = this->rho_n_[index_i];
+			Real rho_i = this->rho_[index_i];
 			Real penalty_pressure = this->p_[index_i];
 			Vecd acceleration(0);
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
@@ -247,7 +247,7 @@ namespace SPH
 					acceleration -= 2.0 * penalty * n_j * Vol_k[index_j] * dW_ij / rho_i;
 				}
 			}
-			this->dvel_dt_[index_i] += acceleration;
+			this->acc_[index_i] += acceleration;
 		}
 		//=================================================================================================//
 		template <class BasePressureRelaxationType>
@@ -311,11 +311,11 @@ namespace SPH
 		{
 			BaseDensityRelaxationType::Interaction(index_i, dt);
 
-			FluidState state_i(this->rho_n_[index_i], this->vel_n_[index_i], this->p_[index_i]);
+			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 			Real density_change_rate = 0.0;
 			for (size_t k = 0; k < FluidWallData::contact_configuration_.size(); ++k)
 			{
-				Vecd &dvel_dt_prior_i = this->dvel_dt_prior_[index_i];
+				Vecd &dvel_dt_prior_i = this->acc_prior_[index_i];
 
 				StdLargeVec<Real> &Vol_k = *(this->wall_Vol_[k]);
 				StdLargeVec<Vecd> &vel_ave_k = *(this->wall_vel_ave_[k]);

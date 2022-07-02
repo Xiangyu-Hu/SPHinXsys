@@ -42,7 +42,7 @@ namespace SPH
 	//=================================================================================================//
 	void CellLinkedList::UpdateCellListData()
 	{
-		StdLargeVec<Vecd> &pos_n = base_particles_->pos_n_;
+		StdLargeVec<Vecd> &pos_n = base_particles_->pos_;
 		parallel_for(
 			blocked_range3d<size_t>(0, number_of_cells_[0], 0, number_of_cells_[1], 0, number_of_cells_[2]),
 			[&](const blocked_range3d<size_t> &r)

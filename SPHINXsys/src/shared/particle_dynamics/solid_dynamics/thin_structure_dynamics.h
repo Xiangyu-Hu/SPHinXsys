@@ -56,7 +56,7 @@ namespace SPH
 			virtual ~ShellDynamicsInitialCondition(){};
 
 		protected:
-			StdLargeVec<Vecd> &n_0_, &n_, &pseudo_n_, &pos_0_;
+			StdLargeVec<Vecd> &n0_, &n_, &pseudo_n_, &pos0_;
 			StdLargeVec<Matd> &transformation_matrix_;
 		};
 
@@ -72,7 +72,7 @@ namespace SPH
 			virtual ~ShellAcousticTimeStepSize(){};
 
 		protected:
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &angular_vel_, &dangular_vel_dt_;
+			StdLargeVec<Vecd> &vel_, &acc_, &angular_vel_, &dangular_vel_dt_;
 			StdLargeVec<Real> &thickness_;
 			Real rho0_, physical_viscosity_, E0_, nu_, c0_;
 			Real smoothing_length_;
@@ -92,7 +92,7 @@ namespace SPH
 		protected:
 			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Matd> &B_;
-			StdLargeVec<Vecd> &n_0_;
+			StdLargeVec<Vecd> &n0_;
 			StdLargeVec<Matd> &transformation_matrix_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -109,7 +109,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &pos_n_, &pseudo_n_, &n_0_;
+			StdLargeVec<Vecd> &pos_, &pseudo_n_, &n0_;
 			StdLargeVec<Matd> &B_, &F_, &F_bending_;
 			StdLargeVec<Matd> &transformation_matrix_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -126,9 +126,9 @@ namespace SPH
 			virtual ~BaseShellRelaxation(){};
 
 		protected:
-			StdLargeVec<Real> &Vol_, &rho_n_, &mass_, &thickness_;
-			StdLargeVec<Vecd> &pos_n_, &vel_n_, &dvel_dt_, &dvel_dt_prior_, &force_from_fluid_;
-			StdLargeVec<Vecd> &n_0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
+			StdLargeVec<Real> &Vol_, &rho_, &mass_, &thickness_;
+			StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_, &force_from_fluid_;
+			StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
 				&angular_vel_, dangular_vel_dt_;
 			StdLargeVec<Matd> &B_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_;
 			StdLargeVec<Matd> &transformation_matrix_;
@@ -200,9 +200,9 @@ namespace SPH
 			virtual ~ConstrainShellBodyRegion(){};
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &pos_0_;
+			StdLargeVec<Vecd> &pos_, &pos0_;
 			StdLargeVec<Vecd> &n_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			StdLargeVec<Vecd> &vel_, &acc_, &vel_ave_, &acc_ave_;
 			StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
 			StdLargeVec<Vecd> &pseudo_n_, &dpseudo_n_dt_;
 			virtual Vecd getDisplacement(const Vecd &pos_0, const Vecd &pos_n) { return pos_0; };
@@ -232,7 +232,7 @@ namespace SPH
 			Real W0_;
 			Matd constrain_matrix_, recover_matrix_;
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &vel_n_, &angular_vel_;
+			StdLargeVec<Vecd> &vel_, &angular_vel_;
 			StdLargeVec<Vecd> vel_n_temp_, angular_vel_temp_;
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
@@ -253,7 +253,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &vel_n_, &angular_vel_;
+			StdLargeVec<Vecd> &vel_, &angular_vel_;
 			StdLargeVec<Vecd> vel_n_temp_, angular_vel_temp_;
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
@@ -274,8 +274,8 @@ namespace SPH
 
 		protected:
 			const int axis_; /**< the axis direction for bounding*/
-			StdLargeVec<Vecd> &pos_n_, &pos_0_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			StdLargeVec<Vecd> &pos_, &pos0_;
+			StdLargeVec<Vecd> &vel_, &acc_, &vel_ave_, &acc_ave_;
 			StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
@@ -290,7 +290,7 @@ namespace SPH
 			std::vector<Vecd> point_forces_, reference_positions_, time_dependent_point_forces_;
 			Real time_to_full_external_force_;
 			Real particle_spacing_ref_, h_spacing_ratio_;
-			StdLargeVec<Vecd> &pos_0_, &dvel_dt_prior_;
+			StdLargeVec<Vecd> &pos0_, &acc_prior_;
 			StdLargeVec<Real> &Vol_, &mass_, &thickness_;
 			std::vector <StdLargeVec<Real>> weight_;
 			std::vector<Real> sum_of_weight_;

@@ -21,7 +21,7 @@ namespace SPH
 	{
 		parallel_for(blocked_range<size_t>(0, total_real_particles),
 			[&](const blocked_range<size_t>& r) {
-				StdLargeVec<Vecd>& pos_n = source_particles.pos_n_;
+				StdLargeVec<Vecd>& pos_n = source_particles.pos_;
 				for (size_t num = r.begin(); num != r.end(); ++num) {
 					size_t index_i = get_particle_index(num);
 					Vecd& particle_position = pos_n[index_i];

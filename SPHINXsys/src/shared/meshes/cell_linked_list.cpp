@@ -35,7 +35,7 @@ namespace SPH
 	void CellLinkedList::UpdateCellLists()
 	{
 		clearCellLists();
-		StdLargeVec<Vecd> &pos_n = base_particles_->pos_n_;
+		StdLargeVec<Vecd> &pos_n = base_particles_->pos_;
 		size_t total_real_particles = base_particles_->total_real_particles_;
 		parallel_for(
 			blocked_range<size_t>(0, total_real_particles),
@@ -63,7 +63,7 @@ namespace SPH
 	//=================================================================================================//
 	void CellLinkedList::computingSequence(StdLargeVec<size_t> &sequence)
 	{
-		StdLargeVec<Vecd> &positions = base_particles_->pos_n_;
+		StdLargeVec<Vecd> &positions = base_particles_->pos_;
 		size_t total_real_particles = base_particles_->total_real_particles_;
 		parallel_for(
 			blocked_range<size_t>(0, total_real_particles),
@@ -124,7 +124,7 @@ namespace SPH
 		for (size_t level = 0; level != total_levels_; ++level)
 			mesh_levels_[level]->clearCellLists();
 
-		StdLargeVec<Vecd> &pos_n = base_particles_->pos_n_;
+		StdLargeVec<Vecd> &pos_n = base_particles_->pos_;
 		size_t total_real_particles = base_particles_->total_real_particles_;
 		// rebuild the corresponding particle list.
 		parallel_for(

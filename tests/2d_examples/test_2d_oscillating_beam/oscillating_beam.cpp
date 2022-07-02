@@ -73,10 +73,10 @@ protected:
 	void Update(size_t index_i, Real dt) override
 	{
 		/** initial velocity profile */
-		Real x = pos_n_[index_i][0] / PL;
+		Real x = pos_[index_i][0] / PL;
 		if (x > 0.0)
 		{
-			vel_n_[index_i][1] = vf * material_->ReferenceSoundSpeed() *
+			vel_[index_i][1] = vf * material_->ReferenceSoundSpeed() *
 								 (M * (cos(kl * x) - cosh(kl * x)) - N * (sin(kl * x) - sinh(kl * x))) / Q;
 		}
 	};

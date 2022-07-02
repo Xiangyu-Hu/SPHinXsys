@@ -16,7 +16,7 @@ namespace SPH
 		DiffusionReactionInitialCondition(BodyType &body)
 		: ParticleDynamicsSimple(body),
 		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(body),
-		  pos_n_(this->particles_->pos_n_), species_n_(this->particles_->species_n_) {}
+		  pos_(this->particles_->pos_), species_n_(this->particles_->species_n_) {}
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	GetDiffusionTimeStepSize<BodyType, BaseParticlesType, BaseMaterialType>::

@@ -54,7 +54,7 @@ namespace SPH
 		void update(size_t index_i, Real dt = 0.0);
 
 	protected:
-		StdLargeVec<Vecd> &pos_n_, &pos_0_;
+		StdLargeVec<Vecd> &pos_, &pos0_;
 	};
 
 	/**
@@ -70,7 +70,7 @@ namespace SPH
 
 	protected:
 		Vecd offset_;
-		StdLargeVec<Vecd> &pos_n_, &pos_0_;
+		StdLargeVec<Vecd> &pos_, &pos0_;
 	};
 
 	/**
@@ -86,7 +86,7 @@ namespace SPH
 
 	protected:
 		Transformd &transform_;
-		StdLargeVec<Vecd> &pos_n_, &pos_0_;
+		StdLargeVec<Vecd> &pos_, &pos0_;
 	};
 
 	/**
@@ -102,7 +102,7 @@ namespace SPH
 
 	protected:
 		Shape &body_shape_;
-		StdLargeVec<Vecd> &pos_n_, &n_, &n_0_;
+		StdLargeVec<Vecd> &pos_, &n_, &n0_;
 	};
 	
 	/**
@@ -120,7 +120,7 @@ namespace SPH
 		ShapeAndOp *shape_and_op_;
 		Shape *shape_;
 		const Real switch_sign_;
-		StdLargeVec<Vecd> &pos_n_, &n_, &n_0_;
+		StdLargeVec<Vecd> &pos_, &n_, &n0_;
 	};
 
 	//----------------------------------------------------------------------
@@ -141,7 +141,7 @@ namespace SPH
 
 	protected:
 		Real rho0_;
-		StdLargeVec<Real> &rho_n_;
+		StdLargeVec<Real> &rho_;
 		StdLargeVec<Matd> &F_, &stress_PK1_;
 	};
 

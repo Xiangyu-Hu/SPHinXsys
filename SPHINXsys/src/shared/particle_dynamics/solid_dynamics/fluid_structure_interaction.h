@@ -118,15 +118,15 @@ namespace SPH
 				  FSIContactData(contact_relation),
 				  Vol_(particles_->Vol_), vel_ave_(particles_->vel_ave_),
 				  force_from_fluid_(particles_->force_from_fluid_),
-				  dvel_dt_ave_(particles_->dvel_dt_ave_), n_(particles_->n_)
+				  acc_ave_(particles_->acc_ave_), n_(particles_->n_)
 			{
 				for (size_t k = 0; k != contact_particles_.size(); ++k)
 				{
 					contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-					contact_rho_n_.push_back(&(contact_particles_[k]->rho_n_));
-					contact_vel_n_.push_back(&(contact_particles_[k]->vel_n_));
+					contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
+					contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 					contact_p_.push_back(&(contact_particles_[k]->p_));
-					contact_dvel_dt_prior_.push_back(&(contact_particles_[k]->dvel_dt_prior_));
+					contact_dvel_dt_prior_.push_back(&(contact_particles_[k]->acc_prior_));
 					riemann_solvers_.push_back(RiemannSolverType(*contact_material_[k], *contact_material_[k]));
 				}
 			};
@@ -134,14 +134,14 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &vel_ave_, &force_from_fluid_, &dvel_dt_ave_, &n_;
+			StdLargeVec<Vecd> &vel_ave_, &force_from_fluid_, &acc_ave_, &n_;
 			StdVec<StdLargeVec<Real> *> contact_Vol_, contact_rho_n_, contact_p_;
 			StdVec<StdLargeVec<Vecd> *> contact_vel_n_, contact_dvel_dt_prior_;
 			StdVec<RiemannSolverType> riemann_solvers_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override
 			{
-				const Vecd &dvel_dt_ave_i = dvel_dt_ave_[index_i];
+				const Vecd &dvel_dt_ave_i = acc_ave_[index_i];
 				Real Vol_i = Vol_[index_i];
 				const Vecd &vel_ave_i = vel_ave_[index_i];
 				const Vecd &n_i = n_[index_i];
@@ -199,8 +199,8 @@ namespace SPH
 				for (size_t k = 0; k != contact_particles_.size(); ++k)
 				{
 					contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-					contact_rho_n_.push_back(&(contact_particles_[k]->rho_n_));
-					contact_vel_n_.push_back(&(contact_particles_[k]->vel_n_));
+					contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
+					contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 					contact_p_.push_back(&(contact_particles_[k]->p_));
 					riemann_solvers_.push_back(RiemannSolverType(*contact_material_[k], *contact_material_[k]));
 				}
@@ -331,7 +331,7 @@ namespace SPH
 			virtual ~InitializeDisplacement(){};
 
 		protected:
-			StdLargeVec<Vecd> &pos_temp_, &pos_n_, &vel_ave_, &dvel_dt_ave_;
+			StdLargeVec<Vecd> &pos_temp_, &pos_, &vel_ave_, &acc_ave_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 

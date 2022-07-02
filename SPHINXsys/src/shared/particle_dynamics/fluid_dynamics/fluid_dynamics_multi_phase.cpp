@@ -26,7 +26,7 @@ namespace SPH
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-				contact_vel_n_.push_back(&(contact_particles_[k]->vel_n_));
+				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 			}
 		}
 		//=================================================================================================//
@@ -39,8 +39,8 @@ namespace SPH
 		{
 			ViscousAccelerationInner::Interaction(index_i, dt);
 
-			Real rho_i = this->rho_n_[index_i];
-			const Vecd &vel_i = this->vel_n_[index_i];
+			Real rho_i = this->rho_[index_i];
+			const Vecd &vel_i = this->vel_[index_i];
 
 			Vecd acceleration(0), vel_derivative(0);
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
@@ -62,7 +62,7 @@ namespace SPH
 				}
 			}
 
-			dvel_dt_prior_[index_i] += acceleration;
+			acc_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
 		MultiPhaseColorFunctionGradient::

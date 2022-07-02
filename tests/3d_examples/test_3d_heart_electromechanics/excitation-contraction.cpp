@@ -92,10 +92,10 @@ protected:
 	size_t phi_;
 	virtual void Update(size_t index_i, Real dt = 0.0) override
 	{
-		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_n_[index_i]);
+		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_[index_i]);
 		Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
 
-		Vecd center_norm = pos_n_[index_i] / (pos_n_[index_i].norm() + 1.0e-15);
+		Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
 
 		Real angle = dot(face_norm, center_norm);
 		if (angle >= 0.0)
@@ -104,7 +104,7 @@ protected:
 		}
 		else
 		{
-			if (pos_n_[index_i][1] < -body_->sph_adaptation_->ReferenceSpacing())
+			if (pos_[index_i][1] < -body_->sph_adaptation_->ReferenceSpacing())
 				species_n_[phi_][index_i] = 0.0;
 		}
 	};
@@ -133,9 +133,9 @@ protected:
 		 * 		Present  doi.org/10.1016/j.cma.2016.05.031
 		 */
 		/** Probe the face norm from Levelset field. */
-		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_n_[index_i]);
+		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_[index_i]);
 		Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
-		Vecd center_norm = pos_n_[index_i] / (pos_n_[index_i].norm() + 1.0e-15);
+		Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
 		if (dot(face_norm, center_norm) <= 0.0)
 		{
 			face_norm = -face_norm;
@@ -149,7 +149,7 @@ protected:
 		Vecd f_0 = cos(beta) * cd_norm + sin(beta) * SimTK::cross(face_norm, cd_norm) +
 				   dot(face_norm, cd_norm) * (1.0 - cos(beta)) * face_norm;
 
-		if (pos_n_[index_i][1] < -body_->sph_adaptation_->ReferenceSpacing())
+		if (pos_[index_i][1] < -body_->sph_adaptation_->ReferenceSpacing())
 		{
 			material_->local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
 			material_->local_s0_[index_i] = face_norm;
@@ -194,11 +194,11 @@ protected:
 
 	void Update(size_t index_i, Real dt) override
 	{
-		if (-30.0 * length_scale <= pos_n_[index_i][0] && pos_n_[index_i][0] <= -15.0 * length_scale)
+		if (-30.0 * length_scale <= pos_[index_i][0] && pos_[index_i][0] <= -15.0 * length_scale)
 		{
-			if (-2.0 * length_scale <= pos_n_[index_i][1] && pos_n_[index_i][1] <= 0.0)
+			if (-2.0 * length_scale <= pos_[index_i][1] && pos_[index_i][1] <= 0.0)
 			{
-				if (-3.0 * length_scale <= pos_n_[index_i][2] && pos_n_[index_i][2] <= 3.0 * length_scale)
+				if (-3.0 * length_scale <= pos_[index_i][2] && pos_[index_i][2] <= 3.0 * length_scale)
 				{
 					species_n_[voltage_][index_i] = 0.92;
 				}
@@ -224,11 +224,11 @@ protected:
 
 	void Update(size_t index_i, Real dt) override
 	{
-		if (0.0 <= pos_n_[index_i][0] && pos_n_[index_i][0] <= 6.0 * length_scale)
+		if (0.0 <= pos_[index_i][0] && pos_[index_i][0] <= 6.0 * length_scale)
 		{
-			if (-6.0 * length_scale <= pos_n_[index_i][1])
+			if (-6.0 * length_scale <= pos_[index_i][1])
 			{
-				if (12.0 * length_scale <= pos_n_[index_i][2])
+				if (12.0 * length_scale <= pos_[index_i][2])
 				{
 					species_n_[voltage_][index_i] = 0.95;
 				}

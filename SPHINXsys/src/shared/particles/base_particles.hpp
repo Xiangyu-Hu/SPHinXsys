@@ -218,7 +218,7 @@ namespace SPH
         output_stream << "    ";
         for (size_t i = 0; i != total_real_particles; ++i)
         {
-            Vec3d particle_position = upgradeToVector3D(pos_n_[i]);
+            Vec3d particle_position = upgradeToVector3D(pos_[i]);
             output_stream << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " ";
         }
         output_stream << std::endl;
