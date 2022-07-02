@@ -31,7 +31,7 @@
 #define SOLID_PARTICLES_VARIABLE_H
 
 #include "particle_dynamics_algorithms.h"
-#include "body_relation.h"
+#include "all_body_relations.h"
 #include "solid_body.h"
 #include "solid_particles.h"
 

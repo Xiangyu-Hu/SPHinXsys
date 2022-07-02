@@ -1,25 +1,25 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * --------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+ * and HU1527/12-1.															*
+ *                                                                           *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * --------------------------------------------------------------------------*/
 /**
  * @file 	solid_particles.h
  * @brief 	This is the derived class of base particles.
@@ -53,18 +53,16 @@ namespace SPH
 		virtual ~SolidParticles(){};
 
 		StdLargeVec<Vecd> pos0_; /**< initial position */
-		StdLargeVec<Vecd> n_;	  /**<  current normal direction */
-		StdLargeVec<Vecd> n0_;	  /**<  initial normal direction */
-		StdLargeVec<Matd> B_;	  /**<  configuration correction for linear reproducing */
+		StdLargeVec<Vecd> n_;	 /**< normal direction */
+		StdLargeVec<Vecd> n0_;	 /**< initial normal direction */
+		StdLargeVec<Matd> B_;	 /**< configuration correction for linear reproducing */
 		//----------------------------------------------------------------------
 		//		for fluid-structure interaction (FSI)
 		//----------------------------------------------------------------------
 		StdLargeVec<Vecd> vel_ave_;			 /**<  fluid time-step averaged particle velocity */
-		StdLargeVec<Vecd> acc_ave_;		 /**<  fluid time-step averaged particle acceleration */
+		StdLargeVec<Vecd> acc_ave_;			 /**<  fluid time-step averaged particle acceleration */
 		StdLargeVec<Vecd> force_from_fluid_; /**<  forces (including pressure and viscous) from fluid */
 
-		/** Normalize a gradient. */
-		virtual Vecd normalizeKernelGradient(size_t index_i, Vecd &gradient) override;
 		/** Get the kernel gradient in weak form. */
 		virtual Vecd getKernelGradient(size_t index_i, size_t index_j, Real dW_ij, Vecd &e_ij) override;
 
@@ -123,7 +121,7 @@ namespace SPH
 		Real getMaxDisplacement();
 
 		/**< Computing normal vector. */
-		Vecd normal (size_t particle_i);
+		Vecd normal(size_t particle_i);
 		StdLargeVec<Vecd> getNormal();
 
 		/** relevant stress measure */
@@ -147,7 +145,7 @@ namespace SPH
 
 		Real thickness_ref_;
 		StdLargeVec<Matd> transformation_matrix_; /**< initial transformation matrix from global to local coordinates */
-		StdLargeVec<Real> thickness_;		  /**< shell thickness */
+		StdLargeVec<Real> thickness_;			  /**< shell thickness */
 		//----------------------------------------------------------------------
 		//	extra generalized coordinates in global coordinate
 		//----------------------------------------------------------------------
@@ -159,7 +157,7 @@ namespace SPH
 		//----------------------------------------------------------------------
 		StdLargeVec<Vecd> rotation_;		/**< rotation angle of the initial normal respective to each axis */
 		StdLargeVec<Vecd> angular_vel_;		/**< angular velocity respective to each axis */
-		StdLargeVec<Vecd> dangular_vel_dt_; /**< angular accelration of respective to each axis*/
+		StdLargeVec<Vecd> dangular_vel_dt_; /**< angular acceleration of respective to each axis*/
 		//----------------------------------------------------------------------
 		//	extra deformation and deformation rate in local coordinate
 		//----------------------------------------------------------------------
@@ -176,4 +174,4 @@ namespace SPH
 		virtual ShellParticles *ThisObjectPtr() override { return this; };
 	};
 }
-#endif //SOLID_PARTICLES_H
+#endif // SOLID_PARTICLES_H

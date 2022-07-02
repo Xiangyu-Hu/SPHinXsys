@@ -33,7 +33,7 @@
 #include "all_particle_dynamics.h"
 #include "base_kernel.h"
 #include "cell_linked_list.h"
-#include "body_relation.h"
+#include "all_body_relations.h"
 #include "general_dynamics.h"
 
 namespace SPH

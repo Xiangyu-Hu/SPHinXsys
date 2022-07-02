@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "body_relation.h"
 #include "base_particles.h"
 #include "base_kernel.h"
 #include "cell_linked_list.h"

@@ -189,8 +189,6 @@ namespace SPH
 
 		virtual BaseParticles *ThisObjectPtr() { return this; };
 
-		/** Normalize the kernel gradient. */
-		virtual Vecd normalizeKernelGradient(size_t index_i, Vecd &kernel_gradient) { return kernel_gradient; };
 		/** Get the kernel gradient in weak form. */
 		virtual Vecd getKernelGradient(size_t index_i, size_t index_j, Real dW_ij, Vecd &e_ij)
 		{

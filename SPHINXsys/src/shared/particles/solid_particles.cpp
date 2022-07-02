@@ -36,11 +36,6 @@ namespace SPH
 		registerAVariable(force_from_fluid_, "ForceFromFluid");
 	}
 	//=================================================================================================//
-	Vecd SolidParticles::normalizeKernelGradient(size_t index_i, Vecd &kernel_gradient)
-	{
-		return B_[index_i] * kernel_gradient;
-	}
-	//=================================================================================================//
 	Vecd SolidParticles::getKernelGradient(size_t index_i, size_t index_j, Real dW_ij, Vecd &e_ij)
 	{
 		return 0.5 * dW_ij * (B_[index_i] + B_[index_j]) * e_ij;

@@ -33,7 +33,7 @@
 
 #include "all_particle_dynamics.h"
 #include "base_kernel.h"
-#include "body_relation.h"
+#include "all_body_relations.h"
 #include "fluid_body.h"
 #include "fluid_particles.h"
 #include "weakly_compressible_fluid.h"

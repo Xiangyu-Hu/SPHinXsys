@@ -33,7 +33,7 @@
 #include "all_particle_dynamics.h"
 #include "base_body.h"
 #include "base_particles.h"
-#include "body_relation.h"
+#include "contact_body_relation.h"
 
 namespace SPH
 {
