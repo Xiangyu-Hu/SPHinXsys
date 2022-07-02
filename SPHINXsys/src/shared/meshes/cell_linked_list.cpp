@@ -16,8 +16,12 @@ namespace SPH
 	BaseCellLinkedList::
 		BaseCellLinkedList(SPHBody &sph_body, SPHAdaptation &sph_adaptation)
 		: BaseMeshField("CellLinkedList"),
-		  sph_body_(sph_body), kernel_(*sph_adaptation.getKernel()), 
-		  base_particles_(nullptr) {}
+		  sph_body_(sph_body), kernel_(*sph_adaptation.getKernel()),
+		  base_particles_(nullptr)
+	{
+		size_t number_of_split_cell_lists = powerN(3, Vecd(0).size());
+		split_cell_lists_.resize(number_of_split_cell_lists);
+	}
 	//=================================================================================================//
 	void BaseCellLinkedList::clearSplitCellLists(SplitCellLists &split_cell_lists)
 	{
@@ -47,8 +51,13 @@ namespace SPH
 				}
 			},
 			ap);
+
 		UpdateCellListData();
-		updateSplitCellLists(sph_body_.split_cell_lists_);
+
+		if (use_split_cell_lists_)
+		{
+			updateSplitCellLists(split_cell_lists_);
+		}
 	}
 	//=================================================================================================//
 	void CellLinkedList::assignBaseParticles(BaseParticles *base_particles)
@@ -134,8 +143,14 @@ namespace SPH
 			ap);
 
 		for (size_t level = 0; level != total_levels_; ++level)
+		{
 			mesh_levels_[level]->UpdateCellListData();
-		updateSplitCellLists(sph_body_.split_cell_lists_);
+		}
+
+		if (use_split_cell_lists_)
+		{
+			updateSplitCellLists(split_cell_lists_);
+		}
 	}
 	//=================================================================================================//
 	void MultilevelCellLinkedList::

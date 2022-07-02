@@ -1,8 +1,8 @@
 /**
-* @file 	particle_dynamics_algorithms.cpp
-* @brief 	This is the implementation of the template class particle dynamics algorithms
-* @author	Chi ZHang and Xiangyu Hu
-*/
+ * @file 	particle_dynamics_algorithms.cpp
+ * @brief 	This is the implementation of the template class particle dynamics algorithms
+ * @author	Chi ZHang and Xiangyu Hu
+ */
 
 #include "particle_dynamics_algorithms.h"
 #include "base_body.h"
@@ -142,8 +142,12 @@ namespace SPH
 	}
 	//=================================================================================================//
 	InteractionDynamicsSplitting::InteractionDynamicsSplitting(SPHBody &sph_body)
-			: InteractionDynamics(sph_body),
-			  split_cell_lists_(sph_body.split_cell_lists_){};
+		: InteractionDynamics(sph_body),
+		  cell_linked_list_(DynamicCast<RealBody>(this, sph_body).cell_linked_list_),
+		  split_cell_lists_(cell_linked_list_->getSplitCellLists())
+	{
+		cell_linked_list_->setUseSplitCellLists();
+	};
 	//=================================================================================================//
 	void InteractionDynamicsSplitting::exec(Real dt)
 	{

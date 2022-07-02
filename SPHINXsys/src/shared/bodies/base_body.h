@@ -86,14 +86,6 @@ namespace SPH
 		SPHAdaptation *sph_adaptation_; /**< numerical adaptation policy. */
 		BaseMaterial *base_material_;	/**< base material for dynamic cast in particle dynamics */
 		BaseParticles *base_particles_; /**< Base particles for dynamic cast particle dynamics  */
-		/**
-		 * @brief particle by cells lists is for parallel splitting algorithm.
-		 * All particles in each cell are collected together.
-		 * If two particles each belongs two different cell entries,
-		 * they have no interaction because they are too far.
-		 */
-		SplitCellLists split_cell_lists_;
-
 		StdVec<SPHBodyRelation *> body_relations_; /**< all contact relations centered from this body **/
 
 		explicit SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
