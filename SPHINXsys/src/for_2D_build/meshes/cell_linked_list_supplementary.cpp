@@ -59,6 +59,7 @@ namespace SPH
 						for (size_t s = 0; s != cell_list.concurrent_particle_indexes_.size(); ++s)
 						{
 							size_t particle_index = cell_list.concurrent_particle_indexes_[s];
+							cell_list.real_particle_indexes_.push_back(particle_index);
 							cell_list.cell_list_data_.emplace_back(std::make_pair(particle_index, pos_n[particle_index]));
 						}
 					}
@@ -82,8 +83,6 @@ namespace SPH
 						size_t real_particles_in_cell = cell_list.concurrent_particle_indexes_.size();
 						if (real_particles_in_cell != 0)
 						{
-							for (size_t s = 0; s != real_particles_in_cell; ++s)
-								cell_list.real_particle_indexes_.push_back(cell_list.concurrent_particle_indexes_[s]);
 							split_cell_lists[transferMeshIndexTo1D(Vecu(3), Vecu(i % 3, j % 3))].push_back(&cell_linked_lists_[i][j]);
 						}
 					}
