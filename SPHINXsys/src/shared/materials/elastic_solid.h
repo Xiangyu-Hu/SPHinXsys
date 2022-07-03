@@ -268,15 +268,16 @@ namespace SPH
 	* there are local fiber direction and cross-fiber sheet direction.
 	* the model here is from
 	* Holzapfel and Ogden, 2009, Phil. Trans. R. Soc. 367:3445-3475
-	* we consider a neo-hookean model for the background isotropic contribution.
+	* we consider a neo-Hookean model for the background isotropic contribution.
 	*/
 	class LocallyOrthotropicMuscle : public Muscle
 	{
 	protected:
 		StdLargeVec<Matd> local_f0f0_, local_s0s0_, local_f0s0_; /**< Sheet direction. */
 
-		/** initialize the local properties, fiber and sheet direction. */
-		void initializeFiberAndSheet();
+		/** Default initialization of the fiber and sheet directions */
+		virtual void initializeFiberAndSheet();
+		void initializeFiberAndSheetTensors();
 
 	public:
 		StdLargeVec<Vecd> local_f0_; /**< local fiber direction. */

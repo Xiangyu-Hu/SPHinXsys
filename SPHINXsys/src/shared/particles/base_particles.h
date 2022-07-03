@@ -126,6 +126,11 @@ namespace SPH
 		void registerAVariable(StdLargeVec<VariableType> &variable_addrs,
 							   const std::string &new_variable_name, const std::string &old_variable_name);
 
+		/** register a variable from a lambda function */
+		template <typename VariableType, class LambdaFunction>
+		void registerVariableFromFunction(StdLargeVec<VariableType> &variable_addrs,
+							   const std::string &new_variable_name, const LambdaFunction &lambda);
+
 		/** get a registered variable from particles by its name. return by pointer so that return nullptr if fail. */
 		template <typename VariableType>
 		StdLargeVec<VariableType> *getVariableByName(const std::string &variable_name);

@@ -72,6 +72,18 @@ namespace SPH
 		stress_measure_ = elastic_solid_->getRelevantStressMeasureName();
 	}
 	//=================================================================================================//
+	Matd ElasticSolidParticles::getGreenLagrangeStrain(size_t particle_i)
+	{
+		Matd F = F_[particle_i];
+		return 0.5 * (~F * F - Matd(1.0));
+	}
+	//=================================================================================================//
+	Vecd ElasticSolidParticles::getPrincipalStrains(size_t particle_i)
+	{
+		Matd epsilon = getGreenLagrangeStrain(particle_i); // calculation of the Green-Lagrange strain tensor
+		return getPrincipalValuesFromMatrix(epsilon);
+	}
+	//=================================================================================================//
 	StdLargeVec<Real> ElasticSolidParticles::getVonMisesStrainVector(std::string strain_measure)
 	{
 		StdLargeVec<Real> strain_vector = {};
@@ -80,11 +92,11 @@ namespace SPH
 			Real strain = 0.0;
 			if (strain_measure == "static")
 			{
-				strain = von_Mises_strain_static(index_i);
+				strain = getVonMisesStrain(index_i);
 			}
 			else if (strain_measure == "dynamic")
 			{
-				strain = von_Mises_strain_dynamic(index_i, elastic_solid_->PoissonRatio());
+				strain = getVonMisesStrainDynamic(index_i, elastic_solid_->PoissonRatio());
 			}
 			else
 			{
@@ -103,11 +115,11 @@ namespace SPH
 			Real strain = 0.0;
 			if (strain_measure == "static")
 			{
-				strain = von_Mises_strain_static(index_i);
+				strain = getVonMisesStrain(index_i);
 			}
 			else if (strain_measure == "dynamic")
 			{
-				strain = von_Mises_strain_dynamic(index_i, elastic_solid_->PoissonRatio());
+				strain = getVonMisesStrainDynamic(index_i, elastic_solid_->PoissonRatio());
 			}
 			else
 			{

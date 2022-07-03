@@ -150,7 +150,7 @@ public:
 	virtual ~DiffusionBCs(){};
 };
 /** Compute Fiber and Sheet direction after diffusion */
-class ComputeFiberandSheetDirections
+class ComputeFiberAndSheetDirections
 	: public DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>
 {
 protected:
@@ -194,7 +194,7 @@ protected:
 	};
 
 public:
-	explicit ComputeFiberandSheetDirections(SolidBody &body)
+	explicit ComputeFiberAndSheetDirections(SolidBody &body)
 		: DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(body)
 	{
 		phi_ = material_->SpeciesIndexMap()["Phi"];
@@ -202,7 +202,7 @@ public:
 		beta_epi_ = -(70.0 / 180.0) * M_PI;
 		beta_endo_ = (80.0 / 180.0) * M_PI;
 	};
-	virtual ~ComputeFiberandSheetDirections(){};
+	virtual ~ComputeFiberAndSheetDirections(){};
 };
 //	define shape parameters which will be used for the constrained body part.
 class MuscleBaseShapeParameters : public TriangleMeshShapeBrick::ShapeParameters

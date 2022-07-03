@@ -1,28 +1,28 @@
-/* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
 * @file 	solid_particle_variable.h
-* @brief 	Here, we define the algorithm classes for computing derived solid dynamics varabales. 
+* @brief 	Here, we define the algorithm classes for computing derived solid dynamics variables. 
 * @details 	These variable can be added into variable list for state output.   
 * @author	Xiangyu Hu
 */
@@ -75,7 +75,7 @@ namespace SPH
 
 	/**
 	 * @class TranslationAndRotation
-	 * @brief transfermation on particle position and rotation
+	 * @brief transformation on particle position and rotation
 	 */
 	class TranslationAndRotation : public SolidDataSimple
 	{
@@ -128,6 +128,17 @@ namespace SPH
 	//----------------------------------------------------------------------
 	typedef DataDelegateSimple<RealBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataSimple;
 
+	class GreenLagrangeStrain : public BaseDerivedVariable<Matd>, public ElasticSolidDataSimple
+	{
+	public:
+		explicit GreenLagrangeStrain(SPHBody &sph_body);
+		virtual ~GreenLagrangeStrain(){};
+		void update(size_t index_i, Real dt = 0.0);
+
+	protected:
+		StdLargeVec<Matd> &F_;
+	};
+
 	/**
 	 * @class VonMisesStress
 	 * @brief computing von_Mises_stress
@@ -142,22 +153,25 @@ namespace SPH
 	protected:
 		Real rho0_;
 		StdLargeVec<Real> &rho_;
-		StdLargeVec<Matd> &F_, &stress_PK1_;
+		StdLargeVec<Matd> &F_;
 	};
 
-	/**
-	 * @class VonMisesStress
-	 * @brief computing von_Mises_stress
-	 */
 	class VonMisesStrain : public BaseDerivedVariable<Real>, public ElasticSolidDataSimple
 	{
 	public:
 		explicit VonMisesStrain(SPHBody &sph_body);
 		virtual ~VonMisesStrain(){};
 		void update(size_t index_i, Real dt = 0.0);
+	};
 
+	class VonMisesStrainDynamic : public BaseDerivedVariable<Real>, public ElasticSolidDataSimple
+	{
+	public:
+		explicit VonMisesStrainDynamic(SPHBody &sph_body);
+		virtual ~VonMisesStrainDynamic(){};
+		void update(size_t index_i, Real dt = 0.0);
 	protected:
-		StdLargeVec<Matd> &F_;
+		Real poisson_ratio_;
 	};
 }
 #endif //SOLID_PARTICLES_VARIABLE_H

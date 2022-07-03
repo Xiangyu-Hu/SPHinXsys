@@ -79,6 +79,20 @@ namespace SPH
         }
     }
     //=================================================================================================//
+    template <typename VariableType, class LambdaFunction>
+    void BaseParticles::
+        registerVariableFromFunction(StdLargeVec<VariableType> &variable_addrs,
+                          const std::string &new_variable_name, const LambdaFunction &lambda)
+    {
+        constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
+
+        registerAVariable(variable_addrs, new_variable_name);
+        for (size_t i = 0; i != real_particles_bound_; ++i) 
+        {
+            variable_addrs[i] = lambda(i);
+        }
+    }
+    //=================================================================================================//
     template <typename VariableType>
     StdLargeVec<VariableType> *BaseParticles::getVariableByName(const std::string &variable_name)
     {
@@ -141,7 +155,7 @@ namespace SPH
     {
         addAVariableNameToList<VariableType>(variables_to_restart_, variable_name);
     }
-   //=================================================================================================//
+    //=================================================================================================//
     template <typename VariableType>
     void BaseParticles::addAVariableToReload(const std::string &variable_name)
     {

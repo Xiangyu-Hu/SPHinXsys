@@ -118,7 +118,7 @@ public:
 	virtual ~DiffusionBCs(){};
 };
 /** Compute Fiber and Sheet direction after diffusion */
-class ComputeFiberandSheetDirections
+class ComputeFiberAndSheetDirections
 	: public DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>
 {
 protected:
@@ -162,7 +162,7 @@ protected:
 	};
 
 public:
-	explicit ComputeFiberandSheetDirections(SolidBody &body)
+	explicit ComputeFiberAndSheetDirections(SolidBody &body)
 		: DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(body)
 	{
 		phi_ = material_->SpeciesIndexMap()["Phi"];
@@ -170,7 +170,7 @@ public:
 		beta_epi_ = -(70.0 / 180.0) * M_PI;
 		beta_endo_ = (80.0 / 180.0) * M_PI;
 	};
-	virtual ~ComputeFiberandSheetDirections(){};
+	virtual ~ComputeFiberAndSheetDirections(){};
 };
 //	define shape parameters which will be used for the constrained body part.
 class MuscleBaseShapeParameters : public TriangleMeshShapeBrick::ShapeParameters
@@ -271,7 +271,7 @@ int main(int ac, char *av[])
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = false;
+	system.run_particle_relaxation_ = true;
 	/** Tag for reload initially relaxed particles. */
 	system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: not from restart files. */
@@ -303,7 +303,7 @@ int main(int ac, char *av[])
 		/** Diffusion process for diffusion body. */
 		DiffusionRelaxation diffusion_relaxation(herat_model_inner);
 		/** Compute the fiber and sheet after diffusion. */
-		ComputeFiberandSheetDirections compute_fiber_sheet(herat_model);
+		ComputeFiberAndSheetDirections compute_fiber_sheet(herat_model);
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_herat_model_state_to_vtp(in_output, {herat_model});
 		/** Write the particle reload files. */
@@ -362,7 +362,7 @@ int main(int ac, char *av[])
 		return 0;
 	}
 	//----------------------------------------------------------------------
-	//	SPH simultion section
+	//	SPH simulation section
 	//----------------------------------------------------------------------
 	/** create a SPH body, material and particles */
 	SolidBody physiology_heart(system, makeShared<Heart>("PhysiologyHeart"));

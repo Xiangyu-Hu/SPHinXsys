@@ -295,6 +295,20 @@ namespace SPH
 		base_particles_->registerAVariable(local_s0_, "Sheet");
 		base_particles_->addAVariableNameToList<Vecd>(reload_local_parameters_, "Fiber");
 		base_particles_->addAVariableNameToList<Vecd>(reload_local_parameters_, "Sheet");
+		initializeFiberAndSheetTensors();
+	}
+	//=================================================================================================//
+	void LocallyOrthotropicMuscle::initializeFiberAndSheetTensors()
+	{
+		base_particles_->registerVariableFromFunction(local_f0f0_, "FiberFiberTensor",
+													  [&](size_t i) -> Matd
+													  { return SimTK::outer(local_f0_[i], local_f0_[i]); });
+		base_particles_->registerVariableFromFunction(local_s0s0_, "SheetSheetTensor",
+													  [&](size_t i) -> Matd
+													  { return SimTK::outer(local_s0_[i], local_s0_[i]); });
+		base_particles_->registerVariableFromFunction(local_f0s0_, "FiberSheetTensor",
+													  [&](size_t i) -> Matd
+													  { return SimTK::outer(local_f0_[i], local_s0_[i]); });
 	}
 	//=================================================================================================//
 	void LocallyOrthotropicMuscle::readFromXmlForLocalParameters(const std::string &filefullpath)
@@ -303,9 +317,9 @@ namespace SPH
 		size_t total_real_particles = base_particles_->total_real_particles_;
 		for (size_t i = 0; i != total_real_particles; i++)
 		{
-			local_f0f0_.push_back(SimTK::outer(local_f0_[i], local_f0_[i]));
-			local_s0s0_.push_back(SimTK::outer(local_s0_[i], local_s0_[i]));
-			local_f0s0_.push_back(SimTK::outer(local_f0_[i], local_s0_[i]));
+			local_f0f0_[i] = SimTK::outer(local_f0_[i], local_f0_[i]);
+			local_s0s0_[i] = SimTK::outer(local_s0_[i], local_s0_[i]);
+			local_f0s0_[i] = SimTK::outer(local_f0_[i], local_s0_[i]);
 		}
 	}
 	//=================================================================================================//

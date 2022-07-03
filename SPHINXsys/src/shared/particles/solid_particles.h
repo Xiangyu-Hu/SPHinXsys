@@ -85,15 +85,13 @@ namespace SPH
 		StdLargeVec<Matd> stress_PK1_; /**<  first Piola-Kirchhoff stress tensor */
 
 		// STRAIN
-		Matd get_GreenLagrange_strain(size_t particle_i);
+		Matd getGreenLagrangeStrain(size_t particle_i);
 		/**< Computing principal strain - returns the principal strains in descending order (starting from the largest) */
-		Vecd get_Principal_strains(size_t particle_i);
+		Vecd getPrincipalStrains(size_t particle_i);
 		/**< Computing von Mises equivalent strain from a static (constant) formulation. */
-		Real von_Mises_strain(size_t particle_i);
-		/**< Computing von Mises equivalent strain from a static (constant) formulation. */
-		Real von_Mises_strain_static(size_t particle_i);
+		Real getVonMisesStrain(size_t particle_i);
 		/**< Computing von Mises equivalent strain from a "dynamic" formulation. This depends on the Poisson's ratio (from commercial FEM software Help). */
-		Real von_Mises_strain_dynamic(size_t particle_i, Real poisson);
+		Real getVonMisesStrainDynamic(size_t particle_i, Real poisson);
 
 		/**< Computing von Mises strain for all particles. - "static" or "dynamic"*/
 		StdLargeVec<Real> getVonMisesStrainVector(std::string strain_measure = "static");
