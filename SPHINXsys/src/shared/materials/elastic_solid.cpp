@@ -21,16 +21,16 @@ namespace SPH
 		cs0_ = sqrt(G0_ / rho0_);
 	};
 	//=================================================================================================//
-	Matd ElasticSolid::
-		NumericalDampingRightCauchy(Matd &F, Matd &dF_dt, Real smoothing_length, size_t particle_index_i)
+	Matd ElasticSolid::NumericalDampingRightCauchy(
+		Matd &F, Matd &dF_dt, Real smoothing_length, size_t particle_index_i)
 	{
 		Matd strain_rate = 0.5 * (~dF_dt * F + ~F * dF_dt);
 		Matd normal_rate = getDiagonal(strain_rate);
 		return 0.5 * rho0_ * (cs0_ * (strain_rate - normal_rate) + c0_ * normal_rate) * smoothing_length;
 	}
 	//=================================================================================================//
-	Matd ElasticSolid::
-		NumericalDampingLeftCauchy(Matd &F, Matd &dF_dt, Real smoothing_length, size_t particle_index_i)
+	Matd ElasticSolid::NumericalDampingLeftCauchy(
+		Matd &F, Matd &dF_dt, Real smoothing_length, size_t particle_index_i)
 	{
 		Matd strain_rate = 0.5 * (dF_dt * ~F + F * ~dF_dt);
 		Matd normal_rate = getDiagonal(strain_rate);
@@ -75,14 +75,14 @@ namespace SPH
 		return nu_ * youngs_modulus / (1.0 + poisson_ratio) / (1.0 - 2.0 * poisson_ratio);
 	}
 	//=================================================================================================//
-	Matd LinearElasticSolid::ConstitutiveRelation(Matd &F, size_t particle_index_i)
+	Matd LinearElasticSolid::StressPK1(Matd &F, size_t particle_index_i)
 	{
 		Matd strain = 0.5 * (~F * F - Matd(1.0));
 		Matd sigmaPK2 = lambda0_ * strain.trace() * Matd(1.0) + 2.0 * G0_ * strain;
 		return sigmaPK2;
 	}
 	//=================================================================================================//
-	Matd LinearElasticSolid::EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i)
+	Matd LinearElasticSolid::StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i)
 	{
 		return lambda0_ * almansi_strain.trace() * Matd(1.0) + 2.0 * G0_ * almansi_strain;
 	}
@@ -92,7 +92,7 @@ namespace SPH
 		return K0_ * J * (J - 1);
 	}
 	//=================================================================================================//
-	Matd NeoHookeanSolid::ConstitutiveRelation(Matd &F, size_t particle_index_i)
+	Matd NeoHookeanSolid::StressPK1(Matd &F, size_t particle_index_i)
 	{
 		// This formulation allows negative determinant of F. Please refer
 		// Smith et al. (2018) Stable Neo-Hookean Flesh Simulation.
@@ -103,7 +103,7 @@ namespace SPH
 		return sigmaPK2;
 	}
 	//=================================================================================================//
-	Matd NeoHookeanSolid::EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i)
+	Matd NeoHookeanSolid::StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i)
 	{
 		Real J = det(F);
 		Matd B = inverse(-2.0 * almansi_strain + Matd(1.0));
@@ -116,7 +116,7 @@ namespace SPH
 		return 0.5 * K0_ * (J * J - 1);
 	}
 	//=================================================================================================//
-	Matd NeoHookeanSolidIncompressible::ConstitutiveRelation(Matd &F, size_t particle_index_i)
+	Matd NeoHookeanSolidIncompressible::StressPK1(Matd &F, size_t particle_index_i)
 	{
 		Matd right_cauchy = ~F * F;
 		Real I_1 = right_cauchy.trace(); // first strain invariant
@@ -125,7 +125,7 @@ namespace SPH
 		return sigmaPK2;
 	}
 	//=================================================================================================//
-	Matd NeoHookeanSolidIncompressible::EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i)
+	Matd NeoHookeanSolidIncompressible::StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i)
 	{
 		// TODO: implement
 		return {};
@@ -138,7 +138,7 @@ namespace SPH
 	//=================================================================================================//
 	OrthotropicSolid::OrthotropicSolid(Real rho_0, std::array<Vecd, 3> a, std::array<Real, 3> E, std::array<Real, 3> G, std::array<Real, 3> poisson)
 		// set parameters for parent class: LinearElasticSolid
-		// we take the max. E and max. possion to approximate the maximum of the Bulk modulus --> for time step size calculation
+		// we take the max. E and max. poisson to approximate the maximum of the Bulk modulus --> for time step size calculation
 		: LinearElasticSolid(rho_0, std::max({E[0], E[1], E[2]}), std::max({poisson[0], poisson[1], poisson[2]})),
 		  a_(a), E_(E), G_(G), poisson_(poisson)
 	{
@@ -149,7 +149,7 @@ namespace SPH
 		CalculateAllLambda();
 	};
 	//=================================================================================================//
-	Matd OrthotropicSolid::ConstitutiveRelation(Matd &F, size_t particle_index_i)
+	Matd OrthotropicSolid::StressPK1(Matd &F, size_t particle_index_i)
 	{
 		Matd strain = 0.5 * (~F * F - Matd(1.0));
 		Matd sigmaPK2 = Matd(0);
@@ -194,13 +194,13 @@ namespace SPH
 	void OrthotropicSolid::CalculateAllLambda()
 	{
 		// first we calculate the upper left part, a 3x3 matrix of the full compliance matrix
-		Matd Complience = Matd(
+		Matd Compliance = Matd(
 			Vecd(1 / E_[0], -poisson_[0] / E_[0], -poisson_[1] / E_[0]),
 			Vecd(-poisson_[0] / E_[1], 1 / E_[1], -poisson_[2] / E_[1]),
 			Vecd(-poisson_[1] / E_[2], -poisson_[2] / E_[2], 1 / E_[2]));
 
-		// we calculate the inverse of the Complience matrix, and calculate the lambdas elementwise
-		Matd Compliance_inv = SimTK::inverse(Complience);
+		// we calculate the inverse of the Compliance matrix, and calculate the lambdas elementwise
+		Matd Compliance_inv = SimTK::inverse(Compliance);
 		// Lambda_ is a 3x3 matrix
 		Lambda_[0][0] = Compliance_inv[0][0] - 2 * Mu_[0];
 		Lambda_[1][1] = Compliance_inv[1][1] - 2 * Mu_[1];
@@ -214,7 +214,7 @@ namespace SPH
 		Lambda_[2][1] = Lambda_[1][2];
 	}
 	//=================================================================================================//
-	Matd FeneNeoHookeanSolid::ConstitutiveRelation(Matd &F, size_t particle_index_i)
+	Matd FeneNeoHookeanSolid::StressPK1(Matd &F, size_t particle_index_i)
 	{
 		Matd right_cauchy = ~F * F;
 		Matd strain = 0.5 * (right_cauchy - Matd(1.0));
@@ -244,7 +244,7 @@ namespace SPH
 		return 3.0 * bulk_modulus * (1.0 - 2.0 * getPoissonRatio(bulk_modulus, a0, b0));
 	}
 	//=================================================================================================//
-	Matd Muscle::ConstitutiveRelation(Matd &F, size_t i)
+	Matd Muscle::StressPK1(Matd &F, size_t i)
 	{
 		Matd right_cauchy = ~F * F;
 		Real I_ff_1 = SimTK::dot(right_cauchy * f0_, f0_) - 1.0;
@@ -266,7 +266,7 @@ namespace SPH
 		return K0_ * J * (J - 1);
 	}
 	//=================================================================================================//
-	Matd LocallyOrthotropicMuscle::ConstitutiveRelation(Matd &F, size_t i)
+	Matd LocallyOrthotropicMuscle::StressPK1(Matd &F, size_t i)
 	{
 		Matd right_cauchy = ~F * F;
 		Real I_ff_1 = SimTK::dot(right_cauchy * local_f0_[i], local_f0_[i]) - 1.0;

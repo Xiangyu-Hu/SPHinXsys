@@ -197,7 +197,7 @@ namespace SPH
 											* transformation_matrix_[index_i] * (~current_transformation_matrix);
 				/** correct Almansi strain tensor according to plane stress problem. */
 				current_local_almansi_strain = getCorrectedAlmansiStrain(current_local_almansi_strain, nu_);
-				Matd cauchy_stress = material_->EulerianConstitutiveRelation(current_local_almansi_strain, F_gaussian_point, index_i)
+				Matd cauchy_stress = material_->StressCauchy(current_local_almansi_strain, F_gaussian_point, index_i)
 					+ current_transformation_matrix * (~transformation_matrix_[index_i]) * F_gaussian_point
 					* material_->NumericalDampingRightCauchy(F_gaussian_point, dF_gaussian_point_dt, smoothing_length_, index_i)
 					* (~F_gaussian_point) * transformation_matrix_[index_i] * (~current_transformation_matrix) / det(F_gaussian_point);

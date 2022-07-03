@@ -84,7 +84,7 @@ namespace SPH
 	{
 		Real J = rho0_ / rho_[index_i];
 		Mat3d F = F_[index_i];
-		Mat3d stress_PK1 = material_->ConstitutiveRelation(F, index_i);
+		Mat3d stress_PK1 = material_->StressPK1(F, index_i);
 		Mat3d sigma = (stress_PK1 * ~F) / J;
 
 		Real sigmaxx = sigma(0, 0);

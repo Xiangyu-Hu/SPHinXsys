@@ -1,30 +1,30 @@
-/* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
 * @file 	elastic_solid.h
 * @brief 	These are classes for define properties of elastic solid materials.
 *			These classes are based on isotropic linear elastic solid.
-* 			Several more complex materials, including neo-hookean, FENE noe-hookean
+* 			Several more complex materials, including neo-Hookean, FENE neo-Hookean
 *			and anisotropic muscle, are derived from the basic elastic solid class.
 * @author	Xiangyu Hu and Chi Zhang
 */
@@ -45,8 +45,8 @@ namespace SPH
 	{
 	protected:
 		Real E0_;  /*< Youngs or tensile modules  */
-		Real G0_;  /*< shearmodules  */
-		Real K0_;  /*< bulkmodules  */
+		Real G0_;  /*< shear modules  */
+		Real K0_;  /*< bulk modules  */
 		Real nu_;  /*< Poisson ratio  */
 		Real c0_;  /*< sound wave speed */
 		Real ct0_; /*< tensile wave speed */
@@ -71,19 +71,19 @@ namespace SPH
 		Real BulkModulus() { return K0_; };
 		Real PoissonRatio() { return nu_; };
 
-		/** Compute the stress through deformation, which can be Green-Lagrangian tensor, left or right Cauchy tensor. */
-		virtual Matd ConstitutiveRelation(Matd &deformation, size_t particle_index_i) = 0;
-		/** Compute the Cauchy stress through Eulerian Almansi strain tensor. */
-		virtual Matd EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i) = 0;
-		/** Compute numerical damping stress using right Cauchy tensor. */
+		/** 1st Piola-Kirchhoff stress through deformation. */
+		virtual Matd StressPK1(Matd &deformation, size_t particle_index_i) = 0;
+		/** Cauchy stress through Eulerian Almansi strain tensor. */
+		virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) = 0;
+		/** Numerical damping stress using right Cauchy tensor. */
 		virtual Matd NumericalDampingRightCauchy(Matd &deformation, Matd &deformation_rate, Real smoothing_length, size_t particle_index_i);
-		/** Compute numerical damping stress using left Cauchy tensor. */
+		/** Numerical damping stress using left Cauchy tensor. */
 		virtual Matd NumericalDampingLeftCauchy(Matd &deformation, Matd &deformation_rate, Real smoothing_length, size_t particle_index_i);
-		/** Numerical demaping is computed between particles i and j */
+		/** Numerical damping is computed between particles i and j */
 		virtual Real PairNumericalDamping(Real dE_dt_ij, Real smoothing_length);
 
 		/** Deviatoric Kirchhoff stress related with the deviatoric part of left Cauchy-Green deformation tensor.
-		 *  Note that, dependent of the normalizeation of the later, the returned stress can be normalized or non-normalized. */
+		 *  Note that, dependent of the normalization of the later, the returned stress can be normalized or non-normalized. */
 		virtual Matd DeviatoricKirchhoff(const Matd &deviatoric_be);
 		/** Volumetric Kirchhoff stress from determinate */
 		virtual Real VolumetricKirchhoff(Real J) = 0;
@@ -96,7 +96,7 @@ namespace SPH
 	/**
 	* @class LinearElasticSolid
 	* @brief Isotropic linear elastic solid.
-	* Note that only basic parameters are used to set ElasticSolid parmaters 
+	* Note that only basic parameters are used to set ElasticSolid parameters 
 	*/
 	class LinearElasticSolid : public ElasticSolid
 	{
@@ -104,8 +104,8 @@ namespace SPH
 		explicit LinearElasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio);
 		virtual ~LinearElasticSolid(){};
 
-		virtual Matd ConstitutiveRelation(Matd &deformation, size_t particle_index_i) override;
-		virtual Matd EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
+		virtual Matd StressPK1(Matd &deformation, size_t particle_index_i) override;
+		virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
 		/** Volumetric Kirchhoff stress from determinate */
 		virtual Real VolumetricKirchhoff(Real J) override;
 		/** Define the calculation of the stress matrix for postprocessing */
@@ -138,8 +138,8 @@ namespace SPH
 		virtual ~NeoHookeanSolid(){};
 
 		/** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
-		virtual Matd ConstitutiveRelation(Matd &deformation, size_t particle_index_i) override;
-		virtual Matd EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
+		virtual Matd StressPK1(Matd &deformation, size_t particle_index_i) override;
+		virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
 		/** Volumetric Kirchhoff stress from determinate */
 		virtual Real VolumetricKirchhoff(Real J) override;
 		/** Define the calculation of the stress matrix for postprocessing */
@@ -148,7 +148,7 @@ namespace SPH
 
 	/**
 	* @class NeoHookeanSolidIncompressible
-	* @brief Neo-Hookean solid, Incomressible formulation!
+	* @brief Neo-Hookean solid, Incompressible formulation!
 	* Currently only works with KirchhoffStressRelaxationFirstHalf, not with StressRelaxationFirstHalf
 	*/
 	class NeoHookeanSolidIncompressible : public LinearElasticSolid
@@ -162,15 +162,15 @@ namespace SPH
 		virtual ~NeoHookeanSolidIncompressible() {};
 	
 		/** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
-		virtual Matd ConstitutiveRelation(Matd &deformation, size_t particle_index_i) override;
-		virtual Matd EulerianConstitutiveRelation(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
+		virtual Matd StressPK1(Matd &deformation, size_t particle_index_i) override;
+		virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
 		/** Volumetric Kirchhoff stress from determinate */
 		virtual Real VolumetricKirchhoff(Real J) override;
 	};
 
 	/**
 	* @class OrthotropicSolid
-	* @brief Ortothropic solid - generic definition with 3 orthogonal directions + 9 independent parameters, ONLY for 3D applications
+	* @brief Orthotropic solid - generic definition with 3 orthogonal directions + 9 independent parameters, ONLY for 3D applications
 	* @param "a" --> 3 principal direction vectors
 	* @param "E" --> 3 principal Young's moduli
 	* @param "G" --> 3 principal shear moduli
@@ -182,7 +182,7 @@ namespace SPH
 		OrthotropicSolid(Real rho_0, std::array<Vecd, 3> a, std::array<Real, 3> E, std::array<Real, 3> G, std::array<Real, 3> poisson);
 
 		/** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
-		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
+		virtual Matd StressPK1(Matd& deformation, size_t particle_index_i) override;
 		/** Volumetric Kirchhoff stress determinate */
 		virtual Real VolumetricKirchhoff(Real J) override;
 
@@ -209,7 +209,7 @@ namespace SPH
 	class FeneNeoHookeanSolid : public LinearElasticSolid
 	{
 	protected:
-		Real j1_m_; /**< reference extension as basic paramter */
+		Real j1_m_; /**< reference extension as basic parameter */
 	public:
 		explicit FeneNeoHookeanSolid(Real rho0, Real youngs_modulus, Real poisson_ratio)
 			: LinearElasticSolid(rho0, youngs_modulus, poisson_ratio), j1_m_(1.0)
@@ -217,7 +217,7 @@ namespace SPH
 			material_type_name_ = "FeneNeoHookeanSolid";
 		};
 		virtual ~FeneNeoHookeanSolid() {};
-		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
+		virtual Matd StressPK1(Matd& deformation, size_t particle_index_i) override;
 		/** Define the calculation of the stress matrix for postprocessing */
 		virtual std::string getRelevantStressMeasureName() override { return "Cauchy"; };
 	};
@@ -243,7 +243,7 @@ namespace SPH
 
 		virtual Matd MuscleFiberDirection(size_t particle_index_i) { return f0f0_; };
 		/** compute the stress through Constitutive relation. */
-		virtual Matd ConstitutiveRelation(Matd &deformation, size_t particle_index_i) override;
+		virtual Matd StressPK1(Matd &deformation, size_t particle_index_i) override;
 		/** Volumetric Kirchhoff stress form determinate */
 		virtual Real VolumetricKirchhoff(Real J) override;
 		/** Define the calculation of the stress matrix for postprocessing */
@@ -294,7 +294,7 @@ namespace SPH
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;
 		virtual Matd MuscleFiberDirection(size_t particle_index_i) override { return local_f0f0_[particle_index_i]; };
 		/** Compute the stress through Constitutive relation. */
-		virtual Matd ConstitutiveRelation(Matd& deformation, size_t particle_index_i) override;
+		virtual Matd StressPK1(Matd& deformation, size_t particle_index_i) override;
 		virtual void readFromXmlForLocalParameters(const std::string &filefullpath) override;
 		/** Define the calculation of the stress matrix for postprocessing */
 		virtual std::string getRelevantStressMeasureName() override { return "Cauchy"; };
