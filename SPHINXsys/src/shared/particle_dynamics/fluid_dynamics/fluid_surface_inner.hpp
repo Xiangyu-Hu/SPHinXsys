@@ -20,7 +20,7 @@ namespace SPH
 			: FreeSurfaceIdentification(std::forward<ConstructorArgs>(args)...)
 		{
 			this->particles_->registerVariable(previous_surface_indicator_, "PreviousSurfaceIndicator", 1);
-			this->particles_->template registerASortableVariable<int>("PreviousSurfaceIndicator");
+			this->particles_->template registerSortableVariable<int>("PreviousSurfaceIndicator");
 		}
 		//=================================================================================================//
 		template <class FreeSurfaceIdentification>

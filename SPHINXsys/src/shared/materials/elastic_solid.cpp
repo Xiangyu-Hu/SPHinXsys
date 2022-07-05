@@ -293,8 +293,8 @@ namespace SPH
 	{
 		base_particles_->registerVariable(local_f0_, "Fiber");
 		base_particles_->registerVariable(local_s0_, "Sheet");
-		base_particles_->addAVariableNameToList<Vecd>(reload_local_parameters_, "Fiber");
-		base_particles_->addAVariableNameToList<Vecd>(reload_local_parameters_, "Sheet");
+		base_particles_->addVariableNameToList<Vecd>(reload_local_parameters_, "Fiber");
+		base_particles_->addVariableNameToList<Vecd>(reload_local_parameters_, "Sheet");
 		initializeFiberAndSheetTensors();
 	}
 	//=================================================================================================//

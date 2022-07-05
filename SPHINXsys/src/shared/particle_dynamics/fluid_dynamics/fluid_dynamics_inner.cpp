@@ -187,7 +187,7 @@ namespace SPH
 			  Vol_(particles_->Vol_), vel_(particles_->vel_)
 		{
 			particles_->registerVariable(vorticity_, "VorticityInner");
-			particles_->addAVariableToWrite<AngularVecd>("VorticityInner");
+			particles_->addVariableToWrite<AngularVecd>("VorticityInner");
 		}
 		//=================================================================================================//
 		void VorticityInner::Interaction(size_t index_i, Real dt)

@@ -86,7 +86,7 @@ namespace SPH
     //=================================================================================================//
     template <typename VariableType>
     void BaseParticles::
-        addAVariableNameToList(ParticleVariableList &variable_name_list, const std::string &variable_name)
+        addVariableNameToList(ParticleVariableList &variable_name_list, const std::string &variable_name)
     {
         constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
 
@@ -113,9 +113,9 @@ namespace SPH
     }
     //=================================================================================================//
     template <typename VariableType>
-    void BaseParticles::addAVariableToWrite(const std::string &variable_name)
+    void BaseParticles::addVariableToWrite(const std::string &variable_name)
     {
-        addAVariableNameToList<VariableType>(variables_to_write_, variable_name);
+        addVariableNameToList<VariableType>(variables_to_write_, variable_name);
     }
     //=================================================================================================//
     template <class DerivedVariableMethod>
@@ -124,23 +124,23 @@ namespace SPH
         SimpleDynamics<DerivedVariableMethod> *derived_data = derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(*sph_body_);
         derived_variables_.push_back(derived_data);
         using DerivedVariableType = typename DerivedVariableMethod::DerivedVariableType;
-        addAVariableNameToList<DerivedVariableType>(variables_to_write_, derived_data->LocalDynamics().variable_name_);
+        addVariableNameToList<DerivedVariableType>(variables_to_write_, derived_data->LocalDynamics().variable_name_);
     }
     //=================================================================================================//
     template <typename VariableType>
-    void BaseParticles::addAVariableToRestart(const std::string &variable_name)
+    void BaseParticles::addVariableToRestart(const std::string &variable_name)
     {
-        addAVariableNameToList<VariableType>(variables_to_restart_, variable_name);
+        addVariableNameToList<VariableType>(variables_to_restart_, variable_name);
     }
     //=================================================================================================//
     template <typename VariableType>
-    void BaseParticles::addAVariableToReload(const std::string &variable_name)
+    void BaseParticles::addVariableToReload(const std::string &variable_name)
     {
-        addAVariableNameToList<VariableType>(variables_to_reload_, variable_name);
+        addVariableNameToList<VariableType>(variables_to_reload_, variable_name);
     }
     //=================================================================================================//
     template <typename VariableType>
-    void BaseParticles::registerASortableVariable(const std::string &variable_name)
+    void BaseParticles::registerSortableVariable(const std::string &variable_name)
     {
         constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
 
@@ -162,7 +162,7 @@ namespace SPH
         }
         else
         {
-            std::cout << "\n Warning: the variable '" << variable_name << "' is already a sortabele variable!" << std::endl;
+            std::cout << "\n Warning: the variable '" << variable_name << "' is already a sortable variable!" << std::endl;
             std::cout << __FILE__ << ':' << __LINE__ << std::endl;
         }
     }

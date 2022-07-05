@@ -132,11 +132,11 @@ namespace SPH
 
 		/** add a variable into a particle variable name list */
 		template <typename VariableType>
-		void addAVariableNameToList(ParticleVariableList &variable_name_list, const std::string &variable_name);
+		void addVariableNameToList(ParticleVariableList &variable_name_list, const std::string &variable_name);
 
 		/** add a variable into the list for state output */
 		template <typename VariableType>
-		void addAVariableToWrite(const std::string &variable_name);
+		void addVariableToWrite(const std::string &variable_name);
 
 		/** add a derived variable into the list for state output */
 		template <class DerivedVariableMethod>
@@ -144,11 +144,11 @@ namespace SPH
 
 		/** add a variable into the list for restart */
 		template <typename VariableType>
-		void addAVariableToRestart(const std::string &variable_name);
+		void addVariableToRestart(const std::string &variable_name);
 
 		/** add a variable into the list for particle reload */
 		template <typename VariableType>
-		void addAVariableToReload(const std::string &variable_name);
+		void addVariableToReload(const std::string &variable_name);
 
 		//----------------------------------------------------------------------
 		//		Particle data for sorting
@@ -161,7 +161,7 @@ namespace SPH
 
 		/** register an already defined variable as sortable */
 		template <typename VariableType>
-		void registerASortableVariable(const std::string &variable_name);
+		void registerSortableVariable(const std::string &variable_name);
 
 		SPHBody *getSPHBody() { return sph_body_; };
 		/** initialize other variables  based one geometric variables and material */

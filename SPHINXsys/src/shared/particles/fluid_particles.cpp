@@ -27,15 +27,15 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register sortable particle data
 		//----------------------------------------------------------------------
-		registerASortableVariable<Vecd>("Position");
-		registerASortableVariable<Vecd>("Velocity");
-		registerASortableVariable<Real>("Mass");
-		registerASortableVariable<Real>("Density");
-		registerASortableVariable<Real>("Pressure");
+		registerSortableVariable<Vecd>("Position");
+		registerSortableVariable<Vecd>("Velocity");
+		registerSortableVariable<Real>("Mass");
+		registerSortableVariable<Real>("Density");
+		registerSortableVariable<Real>("Pressure");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
-		addAVariableToRestart<Real>("Pressure");
+		addVariableToRestart<Real>("Pressure");
 	}
 	//=================================================================================================//
 	ViscoelasticFluidParticles::
@@ -51,11 +51,11 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register sortable particle data
 		//----------------------------------------------------------------------
-		registerASortableVariable<Matd>("ElasticStress");
+		registerSortableVariable<Matd>("ElasticStress");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
-		addAVariableToRestart<Matd>("ElasticStress");
+		addVariableToRestart<Matd>("ElasticStress");
 	}
 	//=================================================================================================//
 	CompressibleFluidParticles::
@@ -75,7 +75,7 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		add output particle data
 		//----------------------------------------------------------------------
-		addAVariableToWrite<Real>("Pressure");
+		addVariableToWrite<Real>("Pressure");
 	}
 	//=================================================================================================//
 	WeaklyCompressibleFluidParticles::
@@ -93,7 +93,7 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		add output particle data
 		//----------------------------------------------------------------------
-		addAVariableToWrite<Real>("Pressure");
+		addVariableToWrite<Real>("Pressure");
 	}
 	//=================================================================================================//
 }

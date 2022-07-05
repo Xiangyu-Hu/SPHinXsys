@@ -134,8 +134,8 @@ namespace SPH
               thereshold_by_dimensions_((0.75 * (Real)Dimensions))
 
         {
-            particles_->addAVariableToWrite<Vecd>("SurfaceNormal");
-            particles_->addAVariableToWrite<Vecd>("ColorGradient");
+            particles_->addVariableToWrite<Vecd>("SurfaceNormal");
+            particles_->addVariableToWrite<Vecd>("ColorGradient");
         }
         //=================================================================================================//
         void ColorFunctionGradientInterplationInner::Interaction(size_t index_i, Real dt)

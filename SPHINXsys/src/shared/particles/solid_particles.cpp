@@ -62,15 +62,15 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
-		addAVariableToRestart<Matd>("DeformationGradient");
+		addVariableToRestart<Matd>("DeformationGradient");
 		//----------------------------------------------------------------------
 		//		add basic output particle data
 		//----------------------------------------------------------------------
-		addAVariableToWrite<Vecd>("NormalDirection");
+		addVariableToWrite<Vecd>("NormalDirection");
 		addDerivedVariableToWrite<Displacement>();
 		addDerivedVariableToWrite<VonMisesStress>();
 		addDerivedVariableToWrite<VonMisesStrain>();
-		addAVariableToRestart<Matd>("DeformationGradient");
+		addVariableToRestart<Matd>("DeformationGradient");
 		// get which stress measure is relevant for the material
 		stress_measure_ = elastic_solid_->getRelevantStressMeasureName();
 	}
@@ -222,8 +222,8 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		add particle reload data
 		//----------------------------------------------------------------------
-		addAVariableNameToList<Vecd>(variables_to_reload_, "NormalDirection");
-		addAVariableNameToList<Real>(variables_to_reload_, "Thickness");
+		addVariableNameToList<Vecd>(variables_to_reload_, "NormalDirection");
+		addVariableNameToList<Real>(variables_to_reload_, "Thickness");
 	}
 	//=================================================================================================//
 	void ShellParticles::initializeOtherVariables()
@@ -265,19 +265,19 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
-		addAVariableToRestart<Matd>("DeformationGradient");
-		addAVariableToRestart<Vecd>("PseudoNormal");
-		addAVariableToRestart<Vecd>("Rotation");
-		addAVariableToRestart<Vecd>("AngularVelocity");
+		addVariableToRestart<Matd>("DeformationGradient");
+		addVariableToRestart<Vecd>("PseudoNormal");
+		addVariableToRestart<Vecd>("Rotation");
+		addVariableToRestart<Vecd>("AngularVelocity");
 		//----------------------------------------------------------------------
 		//		add basic output particle data
 		//----------------------------------------------------------------------
-		addAVariableToWrite<Vecd>("NormalDirection");
+		addVariableToWrite<Vecd>("NormalDirection");
 		addDerivedVariableToWrite<Displacement>();
 		addDerivedVariableToWrite<VonMisesStress>();
 		addDerivedVariableToWrite<VonMisesStrain>();
-		addAVariableToRestart<Matd>("DeformationGradient");
-		addAVariableToWrite<Vecd>("Rotation");
+		addVariableToRestart<Matd>("DeformationGradient");
+		addVariableToWrite<Vecd>("Rotation");
 		//----------------------------------------------------------------------
 		//		initialize transformation matrix
 		//----------------------------------------------------------------------

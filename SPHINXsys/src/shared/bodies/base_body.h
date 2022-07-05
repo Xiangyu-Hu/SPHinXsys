@@ -154,7 +154,7 @@ namespace SPH
 		template <typename VariableType>
 		void addBodyStateForRecording(const std::string &variable_name)
 		{
-			base_particles_->template addAVariableToWrite<VariableType>(variable_name);
+			base_particles_->template addVariableToWrite<VariableType>(variable_name);
 		};
 
 		template <class DerivedVariableMethod>
