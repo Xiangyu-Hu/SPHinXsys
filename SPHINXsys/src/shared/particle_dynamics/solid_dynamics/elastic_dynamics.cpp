@@ -83,15 +83,26 @@ namespace SPH
 			  pos_(particles_->pos_), vel_(particles_->vel_), acc_(particles_->acc_),
 			  B_(particles_->B_), F_(particles_->F_), dF_dt_(particles_->dF_dt_) {}
 		//=================================================================================================//
-		StressRelaxationFirstHalf::
-			StressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
+		BaseStressRelaxationFirstHalf::
+			BaseStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
 			: BaseElasticRelaxation(inner_relation),
-			  acc_prior_(particles_->acc_prior_), force_from_fluid_(particles_->force_from_fluid_),
-			  stress_PK1_(particles_->stress_PK1_)
+			  acc_prior_(particles_->acc_prior_), force_from_fluid_(particles_->force_from_fluid_)
 		{
 			rho0_ = material_->ReferenceDensity();
 			inv_rho0_ = 1.0 / rho0_;
 			smoothing_length_ = sph_adaptation_->ReferenceSmoothingLength();
+		}
+		//=================================================================================================//
+		void BaseStressRelaxationFirstHalf::Update(size_t index_i, Real dt)
+		{
+			vel_[index_i] += acc_[index_i] * dt;
+		}
+		//=================================================================================================//
+		StressRelaxationFirstHalf::
+			StressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
+			: BaseStressRelaxationFirstHalf(inner_relation)
+		{
+			particles_->registerVariable(stress_PK1_B_, "CorrectedStressPK1");
 			numerical_dissipation_factor_ = 0.25;
 		}
 		//=================================================================================================//
@@ -102,7 +113,7 @@ namespace SPH
 			rho_[index_i] = rho0_ / det(F_[index_i]);
 			// obtain the first Piola-Kirchhoff stress from the second Piola-Kirchhoff stress
 			// it seems using reproducing correction here increases convergence rate near the free surface
-			stress_PK1_[index_i] = F_[index_i] * material_->StressPK2(F_[index_i], index_i) * B_[index_i];
+			stress_PK1_B_[index_i] = F_[index_i] * material_->StressPK2(F_[index_i], index_i) * B_[index_i];
 		}
 		//=================================================================================================//
 		void StressRelaxationFirstHalf::Interaction(size_t index_i, Real dt)
@@ -122,17 +133,12 @@ namespace SPH
 				Real weight = inner_neighborhood.W_ij_[n] * inv_W0_;
 				Matd numerical_stress_ij =
 					0.5 * (F_[index_i] + F_[index_j]) * material_->PairNumericalDamping(strain_rate, smoothing_length_);
-				acceleration += (stress_PK1_[index_i] + stress_PK1_[index_j] +
+				acceleration += (stress_PK1_B_[index_i] + stress_PK1_B_[index_j] +
 								 numerical_dissipation_factor_ * weight * numerical_stress_ij) *
 								inner_neighborhood.dW_ij_[n] * e_ij * Vol_[index_j] * inv_rho0_;
 			}
 
 			acc_[index_i] = acceleration;
-		}
-		//=================================================================================================//
-		void StressRelaxationFirstHalf::Update(size_t index_i, Real dt)
-		{
-			vel_[index_i] += acc_[index_i] * dt;
 		}
 		//=================================================================================================//
 		KirchhoffParticleStressRelaxationFirstHalf::
@@ -153,15 +159,15 @@ namespace SPH
 			Matd inverse_F_T = ~SimTK::inverse(F_[index_i]);
 			// obtain the first Piola-Kirchhoff stress from the Kirchhoff stress
 			// it seems using reproducing correction here increases convergence rate
-			// near the free surface however, this correction is not used for the numerical disspation
-			stress_PK1_[index_i] = (Matd(1.0) * material_->VolumetricKirchhoff(J) +
-									material_->DeviatoricKirchhoff(deviatoric_b)) *
-								   inverse_F_T * B_[index_i];
+			// near the free surface however, this correction is not used for the numerical dissipation
+			stress_PK1_B_[index_i] = (Matd(1.0) * material_->VolumetricKirchhoff(J) +
+									  material_->DeviatoricKirchhoff(deviatoric_b)) *
+									 inverse_F_T * B_[index_i];
 		}
 		//=================================================================================================//
 		KirchhoffStressRelaxationFirstHalf::
 			KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
-			: StressRelaxationFirstHalf(inner_relation)
+			: BaseStressRelaxationFirstHalf(inner_relation)
 		{
 			particles_->registerVariable(J_to_minus_2_over_dimension_, "DeterminantTerm");
 			particles_->registerVariable(stress_on_particle_, "StressOnParticle");
@@ -177,11 +183,11 @@ namespace SPH
 			rho_[index_i] = rho0_ * one_over_J;
 			J_to_minus_2_over_dimension_[index_i] = pow(one_over_J * one_over_J, one_over_dimensions_);
 			inverse_F_T_[index_i] = ~SimTK::inverse(F_[index_i]);
-			stress_on_particle_[index_i] = 
+			stress_on_particle_[index_i] =
 				inverse_F_T_[index_i] * (material_->VolumetricKirchhoff(J) -
-										 correction_factor_ * material_->ShearModulus() * J_to_minus_2_over_dimension_[index_i] * (F_[index_i] * ~F_[index_i]).trace() * one_over_dimensions_) +
+										 correction_factor_ * material_->ShearModulus() *
+											 J_to_minus_2_over_dimension_[index_i] * (F_[index_i] * ~F_[index_i]).trace() * one_over_dimensions_) +
 				material_->NumericalDampingLeftCauchy(F_[index_i], dF_dt_[index_i], smoothing_length_, index_i) * inverse_F_T_[index_i];
-			stress_PK1_[index_i] = F_[index_i] * material_->StressPK2(F_[index_i], index_i);
 		}
 		//=================================================================================================//
 		void KirchhoffStressRelaxationFirstHalf::Interaction(size_t index_i, Real dt)

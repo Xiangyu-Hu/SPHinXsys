@@ -129,7 +129,6 @@ namespace SPH
 			ShellStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation,
 				int number_of_gaussian_points, bool hourglass_control)
 			: BaseShellRelaxation(inner_relation),
-			stress_PK1_(particles_->stress_PK1_),
 			global_stress_(particles_->global_stress_),
 			global_moment_(particles_->global_moment_),
 			global_shear_stress_(particles_->global_shear_stress_),
@@ -211,9 +210,6 @@ namespace SPH
 					* transformation_matrix_[index_i] * (~current_transformation_matrix) * cauchy_stress
 					* current_transformation_matrix * (~transformation_matrix_[index_i])
 					* (~SimTK::inverse(F_gaussian_point));
-
-				/** Get the mid-surface stress to output the von-Mises equivalent stress. */
-				if (i == 0) stress_PK1_[index_i] = F_gaussian_point * stress_PK2_gaussian_point;
 
 				Vecd shear_stress_PK2_gaussian_point = -stress_PK2_gaussian_point.col(Dimensions - 1);
 				Matd moment_PK2_gaussian_point = stress_PK2_gaussian_point * gaussian_point_[i] * thickness_[index_i] * 0.5;

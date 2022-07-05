@@ -82,7 +82,6 @@ namespace SPH
 
 		StdLargeVec<Matd> F_;		   /**<  deformation tensor */
 		StdLargeVec<Matd> dF_dt_;	   /**<  deformation tensor change rate */
-		StdLargeVec<Matd> stress_PK1_; /**<  first Piola-Kirchhoff stress tensor */
 
 		// STRAIN
 		Matd getGreenLagrangeStrain(size_t particle_i);

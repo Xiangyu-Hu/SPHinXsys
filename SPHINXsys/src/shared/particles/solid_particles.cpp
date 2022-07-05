@@ -58,7 +58,6 @@ namespace SPH
 		//----------------------------------------------------------------------
 		registerVariable(F_, "DeformationGradient", Matd(1.0));
 		registerVariable(dF_dt_, "DeformationRate");
-		registerVariable(stress_PK1_, "FirstPiolaKirchhoffStress");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
@@ -282,7 +281,6 @@ namespace SPH
 		registerVariable(B_, "CorrectionMatrix", Matd(1.0));
 		registerVariable(F_, "DeformationGradient", Matd(1.0));
 		registerVariable(dF_dt_, "DeformationRate");
-		registerVariable(stress_PK1_, "FirstPiolaKirchhoffStress");
 		registerVariable(pseudo_n_, "PseudoNormal",
 						 [&](size_t i) -> Vecd
 						 { return n_[i]; });
