@@ -37,8 +37,8 @@ namespace SPH
     //=================================================================================================//
     template <typename VariableType>
     void BaseParticles::
-        registerAVariable(StdLargeVec<VariableType> &variable_addrs,
-                          const std::string &variable_name, VariableType initial_value)
+        registerVariable(StdLargeVec<VariableType> &variable_addrs,
+                         const std::string &variable_name, VariableType initial_value)
     {
         constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
 
@@ -56,40 +56,17 @@ namespace SPH
         }
     }
     //=================================================================================================//
-    template <typename VariableType>
+    template <typename VariableType, class InitializationFunction>
     void BaseParticles::
-        registerAVariable(StdLargeVec<VariableType> &variable_addrs,
-                          const std::string &new_variable_name, const std::string &old_variable_name)
+        registerVariable(StdLargeVec<VariableType> &variable_addrs,
+                         const std::string &variable_name, const InitializationFunction &initialization)
     {
         constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
 
-        if (all_variable_maps_[type_index].find(old_variable_name) != all_variable_maps_[type_index].end())
+        registerVariable(variable_addrs, variable_name);
+        for (size_t i = 0; i != real_particles_bound_; ++i)
         {
-            registerAVariable(variable_addrs, new_variable_name);
-            StdLargeVec<VariableType> *old_variable =
-                std::get<type_index>(all_particle_data_)[all_variable_maps_[type_index][old_variable_name]];
-            for (size_t i = 0; i != real_particles_bound_; ++i)
-                variable_addrs[i] = (*old_variable)[i];
-        }
-        else
-        {
-            std::cout << "\n Error: the old variable '" << old_variable_name << "' is not registered!" << std::endl;
-            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-            exit(1);
-        }
-    }
-    //=================================================================================================//
-    template <typename VariableType, class LambdaFunction>
-    void BaseParticles::
-        registerVariableFromFunction(StdLargeVec<VariableType> &variable_addrs,
-                          const std::string &new_variable_name, const LambdaFunction &lambda)
-    {
-        constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
-
-        registerAVariable(variable_addrs, new_variable_name);
-        for (size_t i = 0; i != real_particles_bound_; ++i) 
-        {
-            variable_addrs[i] = lambda(i);
+            variable_addrs[i] = initialization(i);
         }
     }
     //=================================================================================================//
@@ -364,7 +341,7 @@ namespace SPH
         BaseDerivedVariable(const SPHBody &sph_body, const std::string &variable_name)
         : variable_name_(variable_name)
     {
-        sph_body.base_particles_->registerAVariable(derived_variable_, variable_name_);
+        sph_body.base_particles_->registerVariable(derived_variable_, variable_name_);
     };
     //=================================================================================================//
 }

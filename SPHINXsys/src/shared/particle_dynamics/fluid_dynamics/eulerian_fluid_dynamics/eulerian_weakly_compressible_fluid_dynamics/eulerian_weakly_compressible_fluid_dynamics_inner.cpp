@@ -47,7 +47,7 @@ namespace SPH
 			surface_indicator_(particles_->surface_indicator_),
 			smoothing_length_(inner_relation.sph_body_->sph_adaptation_->ReferenceSmoothingLength())
 		{
-			particles_->registerAVariable(pos_div_, "PositionDivergence");
+			particles_->registerVariable(pos_div_, "PositionDivergence");
 		}
 		//=================================================================================================//
 		void FreeSurfaceIndicationInner::Interaction(size_t index_i, Real dt)
@@ -135,7 +135,7 @@ namespace SPH
 			EulerianWeaklyCompressibleFluidDataInner(inner_relation),
 			Vol_(particles_->Vol_), vel_(particles_->vel_)
 		{
-			particles_->registerAVariable(vorticity_, "VorticityInner");
+			particles_->registerVariable(vorticity_, "VorticityInner");
 			particles_->addAVariableToWrite<AngularVecd>("VorticityInner");
 		}
 		//=================================================================================================//

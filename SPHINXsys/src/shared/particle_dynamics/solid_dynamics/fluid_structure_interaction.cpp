@@ -16,7 +16,7 @@ namespace SPH
 			  FSIContactData(contact_relation),
 			  Vol_(particles_->Vol_), vel_ave_(particles_->vel_ave_)
 		{
-			particles_->registerAVariable(viscous_force_from_fluid_, "ViscousForceFromFluid");
+			particles_->registerVariable(viscous_force_from_fluid_, "ViscousForceFromFluid");
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
@@ -63,7 +63,7 @@ namespace SPH
 			EFSIContactData(contact_relation),
 			Vol_(particles_->Vol_), vel_ave_(particles_->vel_ave_)
 		{
-			particles_->registerAVariable(viscous_force_from_fluid_, "ViscousForceFromFluid");
+			particles_->registerVariable(viscous_force_from_fluid_, "ViscousForceFromFluid");
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
@@ -189,7 +189,7 @@ namespace SPH
 			: initialize_displacement_(solid_body, pos_temp_),
 			  update_averages_(solid_body, pos_temp_)
 		{
-			solid_body.base_particles_->registerAVariable(pos_temp_, "TemporaryPosition");
+			solid_body.base_particles_->registerVariable(pos_temp_, "TemporaryPosition");
 		}
 		//=================================================================================================//
 	}

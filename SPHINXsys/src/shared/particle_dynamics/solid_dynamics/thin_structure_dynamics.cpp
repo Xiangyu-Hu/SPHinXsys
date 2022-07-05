@@ -378,8 +378,8 @@ namespace SPH
 			  Vol_(particles_->Vol_), vel_(particles_->vel_),
 			  angular_vel_(particles_->angular_vel_)
 		{
-			particles_->registerAVariable(vel_n_temp_, "TemporaryVelocity");
-			particles_->registerAVariable(angular_vel_temp_, "TemporaryAngularVelocity");
+			particles_->registerVariable(vel_n_temp_, "TemporaryVelocity");
+			particles_->registerVariable(angular_vel_temp_, "TemporaryAngularVelocity");
 			for (int k = 0; k != Dimensions; ++k)
 			{
 				constrain_matrix_[k][k] = constrained_direction[k];
@@ -433,8 +433,8 @@ namespace SPH
 			  Vol_(particles_->Vol_), vel_(particles_->vel_),
 			  angular_vel_(particles_->angular_vel_)
 		{
-			particles_->registerAVariable(vel_n_temp_, "TemporaryVelocity");
-			particles_->registerAVariable(angular_vel_temp_, "TemporaryAngularVelocity");
+			particles_->registerVariable(vel_n_temp_, "TemporaryVelocity");
+			particles_->registerVariable(angular_vel_temp_, "TemporaryAngularVelocity");
 		}
 		//=================================================================================================//
 		void ClampConstrainShellBodyRegion::Initialization(size_t index_i, Real dt)
@@ -510,7 +510,7 @@ namespace SPH
 				weight_.push_back(StdLargeVec<Real>(0.0));
 				time_dependent_point_forces_.push_back(Vecd(0.0));
 				sum_of_weight_.push_back(0.0);
-				particles_->registerAVariable(weight_[i], "Weight_" + std::to_string(i));
+				particles_->registerVariable(weight_[i], "Weight_" + std::to_string(i));
 			}
 		}
 		//=================================================================================================//

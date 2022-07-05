@@ -166,7 +166,7 @@ namespace SPH
 	NeighborRelationContactBodyPart::
 		NeighborRelationContactBodyPart(SPHBody *body, BodyPart *contact_body_part) : NeighborRelation()
 	{
-		contact_body_part->getSPHBody()->base_particles_->registerAVariable(part_indicator_, "BodyPartByParticleIndicator");
+		contact_body_part->getSPHBody()->base_particles_->registerVariable(part_indicator_, "BodyPartByParticleIndicator");
 		Kernel *source_kernel = body->sph_adaptation_->getKernel();
 		Kernel *target_kernel = contact_body_part->getSPHBody()->sph_adaptation_->getKernel();
 		kernel_ = source_kernel->SmoothingLength() > target_kernel->SmoothingLength() ? source_kernel : target_kernel;

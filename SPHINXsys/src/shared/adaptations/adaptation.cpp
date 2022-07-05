@@ -126,7 +126,7 @@ namespace SPH
 	StdLargeVec<Real> &ParticleWithLocalRefinement::
 		registerSmoothingLengthRatio(BaseParticles *base_particles)
 	{
-		base_particles->registerAVariable(h_ratio_, "SmoothingLengthRatio", 1.0);
+		base_particles->registerVariable(h_ratio_, "SmoothingLengthRatio", 1.0);
 		return h_ratio_;
 	}
 	//=================================================================================================//
