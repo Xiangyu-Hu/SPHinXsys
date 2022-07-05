@@ -76,7 +76,7 @@ namespace SPH
 			for (itr = species_indexes_map_.begin(); itr != species_indexes_map_.end(); ++itr)
 			{
 				// Register a specie. 
-				this->registerAVariable(species_n_[itr->second], itr->first);
+				this->registerVariable(species_n_[itr->second], itr->first);
 				// the scalars will be sorted if particle sorting is called
 				// Note that we call a template function from a template class
 				this->template registerASortableVariable<Real>(itr->first);

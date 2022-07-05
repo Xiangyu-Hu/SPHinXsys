@@ -239,7 +239,7 @@ namespace SPH
 				mom_(particles_->mom_), pos_(particles_->pos_), mass_(particles_->mass_), Vol_(particles_->Vol_),
 				surface_indicator_(particles_->surface_indicator_)
 			{
-				particles_->registerAVariable(n_, "NormalDirection");
+				particles_->registerVariable(n_, "NormalDirection");
 			};
 			virtual ~NonReflectiveBoundaryVariableCorrection() {};
 		protected:

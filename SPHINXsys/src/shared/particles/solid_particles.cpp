@@ -24,16 +24,19 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
-		registerAVariable(pos0_, "InitialPosition", "Position");
-		registerAVariable(n_, "NormalDirection");
-		registerAVariable(n0_, "InitialNormalDirection");
-		registerAVariable(B_, "CorrectionMatrix", Matd(1.0));
+		registerVariable(pos0_, "InitialPosition", [&](size_t i) -> Vecd
+						 { return pos_[i]; });
+		registerVariable(n_, "NormalDirection");
+		registerVariable(n0_, "InitialNormalDirection",
+						 [&](size_t i) -> Vecd
+						 { return n_[i]; });
+		registerVariable(B_, "CorrectionMatrix", Matd(1.0));
 		//----------------------------------------------------------------------
 		//		for FSI
 		//----------------------------------------------------------------------
-		registerAVariable(vel_ave_, "AverageVelocity");
-		registerAVariable(acc_ave_, "AverageAcceleration");
-		registerAVariable(force_from_fluid_, "ForceFromFluid");
+		registerVariable(vel_ave_, "AverageVelocity");
+		registerVariable(acc_ave_, "AverageAcceleration");
+		registerVariable(force_from_fluid_, "ForceFromFluid");
 	}
 	//=================================================================================================//
 	Vecd SolidParticles::getKernelGradient(size_t index_i, size_t index_j, Real dW_ij, Vecd &e_ij)
@@ -53,9 +56,9 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
-		registerAVariable(F_, "DeformationGradient", Matd(1.0));
-		registerAVariable(dF_dt_, "DeformationRate");
-		registerAVariable(stress_PK1_, "FirstPiolaKirchhoffStress");
+		registerVariable(F_, "DeformationGradient", Matd(1.0));
+		registerVariable(dF_dt_, "DeformationRate");
+		registerVariable(stress_PK1_, "FirstPiolaKirchhoffStress");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
@@ -214,8 +217,8 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register geometric data only
 		//----------------------------------------------------------------------
-		registerAVariable(n_, "NormalDirection");
-		registerAVariable(thickness_, "Thickness");
+		registerVariable(n_, "NormalDirection");
+		registerVariable(thickness_, "Thickness");
 		//----------------------------------------------------------------------
 		//		add particle reload data
 		//----------------------------------------------------------------------
@@ -229,30 +232,36 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register particle data
 		//----------------------------------------------------------------------
-		registerAVariable(pos0_, "InitialPosition", "Position");
-		registerAVariable(n0_, "InitialNormalDirection", "NormalDirection");
-		registerAVariable(transformation_matrix_, "TransformationMatrix");
-		registerAVariable(B_, "CorrectionMatrix", Matd(1.0));
-		registerAVariable(F_, "DeformationGradient", Matd(1.0));
-		registerAVariable(dF_dt_, "DeformationRate");
-		registerAVariable(stress_PK1_, "FirstPiolaKirchhoffStress");
-		registerAVariable(pseudo_n_, "PseudoNormal", "NormalDirection");
-		registerAVariable(dpseudo_n_dt_, "PseudoNormalChangeRate");
-		registerAVariable(dpseudo_n_d2t_, "PseudoNormal2ndOrderTimeDerivative");
-		registerAVariable(rotation_, "Rotation");
-		registerAVariable(angular_vel_, "AngularVelocity");
-		registerAVariable(dangular_vel_dt_, "AngularAcceleration");
-		registerAVariable(F_bending_, "BendingDeformationGradient");
-		registerAVariable(dF_bending_dt_, "BendingDeformationGradientChangeRate");
-		registerAVariable(global_shear_stress_, "GlobalShearStress");
-		registerAVariable(global_stress_, "GlobalStress");
-		registerAVariable(global_moment_, "GlobalMoment");
+		registerVariable(pos0_, "InitialPosition",
+						 [&](size_t i) -> Vecd
+						 { return pos_[i]; });
+		registerVariable(n0_, "InitialNormalDirection",
+						 [&](size_t i) -> Vecd
+						 { return n_[i]; });
+		registerVariable(transformation_matrix_, "TransformationMatrix");
+		registerVariable(B_, "CorrectionMatrix", Matd(1.0));
+		registerVariable(F_, "DeformationGradient", Matd(1.0));
+		registerVariable(dF_dt_, "DeformationRate");
+		registerVariable(stress_PK1_, "FirstPiolaKirchhoffStress");
+		registerVariable(pseudo_n_, "PseudoNormal",
+						 [&](size_t i) -> Vecd
+						 { return n_[i]; });
+		registerVariable(dpseudo_n_dt_, "PseudoNormalChangeRate");
+		registerVariable(dpseudo_n_d2t_, "PseudoNormal2ndOrderTimeDerivative");
+		registerVariable(rotation_, "Rotation");
+		registerVariable(angular_vel_, "AngularVelocity");
+		registerVariable(dangular_vel_dt_, "AngularAcceleration");
+		registerVariable(F_bending_, "BendingDeformationGradient");
+		registerVariable(dF_bending_dt_, "BendingDeformationGradientChangeRate");
+		registerVariable(global_shear_stress_, "GlobalShearStress");
+		registerVariable(global_stress_, "GlobalStress");
+		registerVariable(global_moment_, "GlobalMoment");
 		//----------------------------------------------------------------------
 		//		for FSI
 		//----------------------------------------------------------------------
-		registerAVariable(vel_ave_, "AverageVelocity");
-		registerAVariable(acc_ave_, "AverageAcceleration");
-		registerAVariable(force_from_fluid_, "ForceFromFluid");
+		registerVariable(vel_ave_, "AverageVelocity");
+		registerVariable(acc_ave_, "AverageAcceleration");
+		registerVariable(force_from_fluid_, "ForceFromFluid");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------

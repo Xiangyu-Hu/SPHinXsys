@@ -163,9 +163,9 @@ namespace SPH
 			KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
 			: StressRelaxationFirstHalf(inner_relation)
 		{
-			particles_->registerAVariable(J_to_minus_2_over_dimension_, "DeterminantTerm");
-			particles_->registerAVariable(stress_on_particle_, "StressOnParticle");
-			particles_->registerAVariable(inverse_F_T_, "InverseTransposedDeformation");
+			particles_->registerVariable(J_to_minus_2_over_dimension_, "DeterminantTerm");
+			particles_->registerVariable(stress_on_particle_, "StressOnParticle");
+			particles_->registerVariable(inverse_F_T_, "InverseTransposedDeformation");
 		};
 		//=================================================================================================//
 		void KirchhoffStressRelaxationFirstHalf::Initialization(size_t index_i, Real dt)

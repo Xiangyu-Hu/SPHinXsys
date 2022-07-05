@@ -27,8 +27,8 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register geometric data only
 		//----------------------------------------------------------------------
-		registerAVariable(pos_, "Position");
-		registerAVariable(Vol_, "Volume");
+		registerVariable(pos_, "Position");
+		registerVariable(Vol_, "Volume");
 		//----------------------------------------------------------------------
 		//		add particle reload data
 		//----------------------------------------------------------------------
@@ -42,11 +42,11 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register non-geometric data
 		//----------------------------------------------------------------------
-		registerAVariable(vel_, "Velocity");
-		registerAVariable(acc_, "Acceleration");
-		registerAVariable(acc_prior_, "PriorAcceleration");
-		registerAVariable(rho_, "Density", rho0_);
-		registerAVariable(mass_, "Mass");
+		registerVariable(vel_, "Velocity");
+		registerVariable(acc_, "Acceleration");
+		registerVariable(acc_prior_, "PriorAcceleration");
+		registerVariable(rho_, "Density", rho0_);
+		registerVariable(mass_, "Mass");
 		//----------------------------------------------------------------------
 		//		add basic output particle data
 		//----------------------------------------------------------------------

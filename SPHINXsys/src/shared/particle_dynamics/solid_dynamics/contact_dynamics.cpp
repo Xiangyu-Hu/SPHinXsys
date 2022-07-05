@@ -23,7 +23,7 @@ namespace SPH
 			  SolidDataInner(self_contact_relation),
 			  mass_(particles_->mass_)
 		{
-			particles_->registerAVariable(self_contact_density_, "SelfContactDensity");
+			particles_->registerVariable(self_contact_density_, "SelfContactDensity");
 			Real dp_1 = self_contact_relation.sph_body_->sph_adaptation_->ReferenceSpacing();
 			offset_W_ij_ = self_contact_relation.sph_body_->sph_adaptation_->getKernel()->W(dp_1, Vecd(0.0));
 		}
@@ -47,7 +47,7 @@ namespace SPH
 			  ContactDynamicsData(solid_body_contact_relation), mass_(particles_->mass_),
 			  offset_W_ij_(StdVec<Real>(contact_configuration_.size(), 0.0))
 		{
-			particles_->registerAVariable(contact_density_, "ContactDensity");
+			particles_->registerVariable(contact_density_, "ContactDensity");
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_mass_.push_back(&(contact_particles_[k]->mass_));
@@ -92,7 +92,7 @@ namespace SPH
 			  kernel_(solid_body_contact_relation.sph_body_->sph_adaptation_->getKernel()),
 			  spacing_ref_(solid_body_contact_relation.sph_body_->sph_adaptation_->ReferenceSpacing())
 		{
-			particles_->registerAVariable(contact_density_, "ContactDensity");
+			particles_->registerVariable(contact_density_, "ContactDensity");
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_pos_.push_back(&(contact_particles_[k]->pos_));

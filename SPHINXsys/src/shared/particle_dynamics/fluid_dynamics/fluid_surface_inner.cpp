@@ -20,7 +20,7 @@ namespace SPH
               surface_indicator_(particles_->surface_indicator_),
               smoothing_length_(inner_relation.sph_body_->sph_adaptation_->ReferenceSmoothingLength())
         {
-            particles_->registerAVariable(pos_div_, "PositionDivergence");
+            particles_->registerVariable(pos_div_, "PositionDivergence");
         }
         //=================================================================================================//
         void FreeSurfaceIndicationInner::Interaction(size_t index_i, Real dt)
@@ -105,8 +105,8 @@ namespace SPH
               pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
               thereshold_by_dimensions_((0.75 * (Real)Dimensions))
         {
-            particles_->registerAVariable(color_grad_, "ColorGradient");
-            particles_->registerAVariable(surface_norm_, "SurfaceNormal");
+            particles_->registerVariable(color_grad_, "ColorGradient");
+            particles_->registerVariable(surface_norm_, "SurfaceNormal");
         }
         //=================================================================================================//
         void ColorFunctionGradientInner::Interaction(size_t index_i, Real dt)

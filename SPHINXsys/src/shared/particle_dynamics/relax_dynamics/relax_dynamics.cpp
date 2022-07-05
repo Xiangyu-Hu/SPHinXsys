@@ -21,7 +21,7 @@ namespace SPH
 			  RelaxDataDelegateSimple(sph_body), acc_(particles_->acc_),
 			  h_ref_(sph_body.sph_adaptation_->ReferenceSmoothingLength())
 		{
-			//The pressure is constant, so the speed of sound is zero
+			// The pressure is constant, so the speed of sound is zero
 			initial_reference_ = 0.0;
 		}
 		//=================================================================================================//
@@ -63,7 +63,7 @@ namespace SPH
 		{
 			RelaxationAccelerationInner::Interaction(index_i, dt);
 			acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
-										   pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
+									   pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
 		}
 		//=================================================================================================//
 		UpdateParticlePosition::UpdateParticlePosition(SPHBody &sph_body)
@@ -337,7 +337,9 @@ namespace SPH
 			  level_set_shape_(DynamicCast<LevelSetShape>(this, body_->body_shape_)),
 			  pos_(particles_->pos_), n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
 		{
-			particles_->registerAVariable(n_temp_, "PreviousNormalDirection", "NormalDirection");
+			particles_->registerVariable(n_temp_, "PreviousNormalDirection",
+										  [&](size_t i) -> Vecd
+										  { return n_[i]; });
 		}
 		//=================================================================================================//
 		void ShellNormalDirectionPrediction::NormalPrediction::update(size_t index_i, Real dt)
@@ -369,7 +371,7 @@ namespace SPH
 			  consistency_criterion_(consistency_criterion),
 			  n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
 		{
-			particles_->registerAVariable(updated_indicator_, "UpdatedIndicator", 0);
+			particles_->registerVariable(updated_indicator_, "UpdatedIndicator", 0);
 			updated_indicator_[particles_->total_real_particles_ / 3] = 1;
 		}
 		//=================================================================================================//

@@ -101,7 +101,7 @@ namespace SPH
 			  W0_(body_->sph_adaptation_->getKernel()->W0(Vecd(0))),
 			  smoothed_(*particles_->getVariableByName<VariableType>(variable_name))
 		{
-			particles_->registerAVariable(temp_, variable_name + "_temp");
+			particles_->registerVariable(temp_, variable_name + "_temp");
 		}
 
 		virtual ~ParticleSmoothing(){};

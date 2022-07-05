@@ -291,8 +291,8 @@ namespace SPH
 	//=================================================================================================//
 	void LocallyOrthotropicMuscle::initializeFiberAndSheet()
 	{
-		base_particles_->registerAVariable(local_f0_, "Fiber");
-		base_particles_->registerAVariable(local_s0_, "Sheet");
+		base_particles_->registerVariable(local_f0_, "Fiber");
+		base_particles_->registerVariable(local_s0_, "Sheet");
 		base_particles_->addAVariableNameToList<Vecd>(reload_local_parameters_, "Fiber");
 		base_particles_->addAVariableNameToList<Vecd>(reload_local_parameters_, "Sheet");
 		initializeFiberAndSheetTensors();
@@ -300,15 +300,12 @@ namespace SPH
 	//=================================================================================================//
 	void LocallyOrthotropicMuscle::initializeFiberAndSheetTensors()
 	{
-		base_particles_->registerVariableFromFunction(local_f0f0_, "FiberFiberTensor",
-													  [&](size_t i) -> Matd
-													  { return SimTK::outer(local_f0_[i], local_f0_[i]); });
-		base_particles_->registerVariableFromFunction(local_s0s0_, "SheetSheetTensor",
-													  [&](size_t i) -> Matd
-													  { return SimTK::outer(local_s0_[i], local_s0_[i]); });
-		base_particles_->registerVariableFromFunction(local_f0s0_, "FiberSheetTensor",
-													  [&](size_t i) -> Matd
-													  { return SimTK::outer(local_f0_[i], local_s0_[i]); });
+		base_particles_->registerVariable(local_f0f0_, "FiberFiberTensor", [&](size_t i) -> Matd
+										  { return SimTK::outer(local_f0_[i], local_f0_[i]); });
+		base_particles_->registerVariable(local_s0s0_, "SheetSheetTensor", [&](size_t i) -> Matd
+										  { return SimTK::outer(local_s0_[i], local_s0_[i]); });
+		base_particles_->registerVariable(local_f0s0_, "FiberSheetTensor", [&](size_t i) -> Matd
+										  { return SimTK::outer(local_f0_[i], local_s0_[i]); });
 	}
 	//=================================================================================================//
 	void LocallyOrthotropicMuscle::readFromXmlForLocalParameters(const std::string &filefullpath)

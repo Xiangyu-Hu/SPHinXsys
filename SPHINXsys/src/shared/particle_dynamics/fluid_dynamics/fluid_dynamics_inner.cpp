@@ -186,7 +186,7 @@ namespace SPH
 			  FluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), vel_(particles_->vel_)
 		{
-			particles_->registerAVariable(vorticity_, "VorticityInner");
+			particles_->registerVariable(vorticity_, "VorticityInner");
 			particles_->addAVariableToWrite<AngularVecd>("VorticityInner");
 		}
 		//=================================================================================================//
