@@ -64,8 +64,6 @@ SPHinXsys depends on the following:
   - Simbody library 3.6.0 or later
   - linear algebra: LAPACK 3.5.0 or later and BLAS
 
-
-
 Installing on Unix (Linux or Mac OS X)
 ---------------------------------------
 
@@ -79,7 +77,7 @@ On Linux system, LAPACK and BLAS is require, and we refer `to here
 <http://www.netlib.org/lapack/>`_ and `here
 <http://www.netlib.org/blas/>`_ for more details.
 
-To install google test, in the case we have installed Cmake, if you have ROOT authority (Ubuntu):
+To install google test, in the case we have installed Cmake, if you have ROOT authority (Ubuntu)::
 
   $ sudo apt-get install libgtest-dev
   $ cd /usr/src/gtest/
@@ -88,19 +86,19 @@ To install google test, in the case we have installed Cmake, if you have ROOT au
   $ cd lib/
   $ sudo cp libgtest* /usr/lib/
 
-Other wise (NO ROOT Linux):
+Other wise (NO ROOT Linux)::
 
-  $ git clone https://github.com/google/googletest.git -b release-1.11.0
-  $ cd googletest  
-  $ mkdir build
-  $ cd build
-  $ cmake ../ -DCMAKE_INSTALL_PREFIX=$HOME/gtest
-  $ make -j8
-  $ make install
+	$ git clone https://github.com/google/googletest.git -b release-1.11.0
+	$ cd googletest  
+	$ mkdir build
+	$ cd build
+	$ cmake ../ -DCMAKE_INSTALL_PREFIX=$HOME/gtest
+	$ make -j8
+	$ make install
 
-Allow to be found by cmake: 
-  
-  $ echo 'export GTEST_ROOT=$HOME/gtest' >> ~/.bashrc
+Allow to be found by cmake::
+
+	$ echo 'export GTEST_ROOT=$HOME/gtest' >> ~/.bashrc
 
 The installation of Simbody, refers to `this link
 <https://github.com/simbody/simbody#linux-or-mac-using-make>`_.
@@ -108,7 +106,7 @@ After installing Simbody correctly, set environment variable:
 
   -  For Mac OS X::
 
-        $ echo 'export SIMBODY_HOME=/path/to/simbody' >> ~/.bash_profile
+		$ echo 'export SIMBODY_HOME=/path/to/simbody' >> ~/.bash_profile
 
   -  For Linux::
 
@@ -156,7 +154,7 @@ and then make a build directory like sphinxsys-build with the following command:
     
 using the following commend to build the SPHinXsys and run all the tests with the following command::
 
-		$  cmake /path/to/sphinxsys-alpha -DCMAKE_BUILD_TYPE=RelWithDebInfo
+		$ cmake /path/to/sphinxsys-alpha -DCMAKE_BUILD_TYPE=RelWithDebInfo
 		$ make -j
 		$ ctest
 
@@ -168,7 +166,6 @@ You can play with SPHinXsys, for example run a specific test case by::
     $ ./test_2d_dambreak
 
 Right now, you can play with SPHinXsys by change the parameters. GOOD LUCK!
-
 
 Installing on Ubuntu
 ---------------------------------------
@@ -454,7 +451,7 @@ or  you can choose a specific case for running, for example, the **2d_dambreak**
 Rigth now, you have the **SPHinXsys** successfully installed in your computer, Have fun with it!
 
 Installing on Windows
----------------------
+---------------------------------------
 
 We provide pre-built binaries for use with Visual Studio 2017. 
 If you have an earlier or later version of Visual Studio, 
@@ -532,8 +529,7 @@ Step6: SPHinXsys
    
 You can use Visual Studio to play with SPHinXsys. GOOD LUCK!
 
-
-Installing on Ubunutu Linux using the dependency-free version
+Installing on Ubuntu Linux using the dependency-free version
 -------------------------------------------------------------
 
 Note: Do not clone the submodules if you are using the default installation!
