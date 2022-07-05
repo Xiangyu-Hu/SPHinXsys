@@ -39,57 +39,12 @@ namespace SPH
 
 		return 1.0/(1.0 + poisson) * std::sqrt(0.5 * (powerN(eps_1 - eps_2, 2)));
 	}
-	//=================================================================================================//
-	Matd ElasticSolidParticles::get_Cauchy_stress(size_t particle_i)
-	{
-		Mat2d F = F_[particle_i];
-		Real J = det(F);
-		Mat2d stress = stress_PK1_[particle_i];
-
-		return ( 1.0 / J ) * F * stress * ~F; // Cauchy stress
-	}
-	//=================================================================================================//
-	Matd ElasticSolidParticles::get_PK2_stress(size_t particle_i)
-	{
-		Mat2d F = F_[particle_i];
-		Mat2d stress = stress_PK1_[particle_i];
-
-		return SimTK::inverse(F) * stress; // Second Piola-Kirchhof stress
-	}
-	//=================================================================================================//
-	Vec2d ElasticSolidParticles::get_Principal_stresses(size_t particle_i)
-	{
-		Mat2d sigma;
-		if (stress_measure_ == "Cauchy") {
-			sigma = get_Cauchy_stress(particle_i); // Cauchy stress
-		} else if (stress_measure_ == "PK2") {
-			sigma = get_PK2_stress(particle_i); // Second Piola-Kirchhof stress
-		} else {
-			throw std::runtime_error("get_Principal_stresses: wrong input");
-		}
-
-		return getPrincipalValuesFromMatrix(sigma);
-	}
-	//=================================================================================================//
-	Real ElasticSolidParticles::get_von_Mises_stress(size_t particle_i)
-	{
-		Mat2d sigma;
-		if (stress_measure_ == "Cauchy") {
-			sigma = get_Cauchy_stress(particle_i); // Cauchy stress
-		} else if (stress_measure_ == "PK2") {
-			sigma = get_PK2_stress(particle_i); // Second Piola-Kirchhof stress
-		} else {
-			throw std::runtime_error("get_von_Mises_stress: wrong input");
-		}
-
-		return getVonMisesStressFromMatrix(sigma);
-	}
 	//=============================================================================================//
 	void VonMisesStress::update(size_t index_i, Real dt)
 	{
 		Real J = rho0_ / rho_[index_i];
 		Mat2d F = F_[index_i];
-		Mat2d stress_PK1 = material_->StressPK1(F, index_i);
+		Mat2d stress_PK1 = F * material_->StressPK2(F, index_i);
 		Mat2d sigma = (stress_PK1 * ~F) / J;
 
 		Real sigmaxx = sigma(0, 0);
