@@ -43,7 +43,7 @@ namespace SPH
 	 * Level set is the signed distance to an interface, 
 	 * here, the surface of a body.
 	 */
-	class LevelSetDataPackage : public BaseDataPackage<4, 6>
+	class LevelSetDataPackage : public GridDataPackage<4, 6>
 	{
 	public:
 		bool is_core_pkg_;					 /**< If true, the package is near to zero level set. */
@@ -63,7 +63,7 @@ namespace SPH
 		PackageData<int> near_interface_id_;
 		PackageDataAddress<int> near_interface_id_addrs_;
 
-		/** default constructor,  data and address arraries are not intialized */
+		/** default constructor,  data and address arrays are allocated but not initialized */
 		LevelSetDataPackage();
 		virtual ~LevelSetDataPackage(){};
 
@@ -108,10 +108,10 @@ namespace SPH
 	 * @brief Mesh with level set data as packages.
 	 * Note that the mesh containing the data packages are cell-based 
 	 * but within the data package, the data is grid-based.
-	 * Note that the level set data is intialized after the constructor.
+	 * Note that the level set data is initialized after the constructor.
 	 */
 	class LevelSet
-		: public MeshWithDataPackages<BaseLevelSet, LevelSetDataPackage>
+		: public MeshWithGridDataPackages<BaseLevelSet, LevelSetDataPackage>
 	{
 	public:
 		ConcurrentVector<LevelSetDataPackage *> core_data_pkgs_; /**< packages near to zero level set. */

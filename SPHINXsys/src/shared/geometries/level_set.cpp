@@ -11,7 +11,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	LevelSetDataPackage::
-		LevelSetDataPackage() : BaseDataPackage<4, 6>(), is_core_pkg_(false) {}
+		LevelSetDataPackage() : GridDataPackage<4, 6>(), is_core_pkg_(false) {}
 	//=================================================================================================//
 	void LevelSetDataPackage::initializeSingularDataAddress()
 	{
@@ -62,7 +62,7 @@ namespace SPH
 	//=================================================================================================//
 	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size,
 					   Shape &shape, SPHAdaptation &sph_adaptation)
-		: MeshWithDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, buffer_size,
+		: MeshWithGridDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, buffer_size,
 																  shape, sph_adaptation),
 		  global_h_ratio_(sph_adaptation.ReferenceSpacing() / data_spacing),
 		  kernel_(*sph_adaptation.getKernel())

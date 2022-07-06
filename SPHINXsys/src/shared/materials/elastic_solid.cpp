@@ -105,7 +105,9 @@ namespace SPH
 	{
 		Real J = det(F);
 		Matd B = inverse(-2.0 * almansi_strain + Matd(1.0));
-		Matd cauchy_stress = 0.5 * K0_ * (J - 1.0 / J) * Matd(1.0) + G0_ * pow(J, -2.0 / (Real)Dimensions - 1.0) * (B - B.trace() / (Real)Dimensions * Matd(1.0));
+		Matd cauchy_stress = 0.5 * K0_ * (J - 1.0 / J) * Matd(1.0) +
+							 G0_ * pow(J, -2.0 / (Real)Dimensions - 1.0) *
+								 (B - B.trace() / (Real)Dimensions * Matd(1.0));
 		return cauchy_stress;
 	}
 	//=================================================================================================//
@@ -122,7 +124,8 @@ namespace SPH
 		return G0_ * std::pow(I_3, -1.0 / 3.0) * (Matd(1.0) - 1.0 / 3.0 * I_1 * inverse(right_cauchy));
 	}
 	//=================================================================================================//
-	Matd NeoHookeanSolidIncompressible::StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i)
+	Matd NeoHookeanSolidIncompressible::
+		StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i)
 	{
 		// TODO: implement
 		return {};
@@ -133,10 +136,13 @@ namespace SPH
 		return 0.5 * K0_ * (J * J - 1);
 	}
 	//=================================================================================================//
-	OrthotropicSolid::OrthotropicSolid(Real rho_0, std::array<Vecd, 3> a, std::array<Real, 3> E, std::array<Real, 3> G, std::array<Real, 3> poisson)
+	OrthotropicSolid::OrthotropicSolid(Real rho_0, std::array<Vecd, 3> a, std::array<Real, 3> E,
+									   std::array<Real, 3> G, std::array<Real, 3> poisson)
 		// set parameters for parent class: LinearElasticSolid
-		// we take the max. E and max. poisson to approximate the maximum of the Bulk modulus --> for time step size calculation
-		: LinearElasticSolid(rho_0, std::max({E[0], E[1], E[2]}), std::max({poisson[0], poisson[1], poisson[2]})),
+		// we take the max. E and max. poisson to approximate the maximum of
+		// the Bulk modulus --> for time step size calculation
+		: LinearElasticSolid(rho_0, std::max({E[0], E[1], E[2]}),
+							 std::max({poisson[0], poisson[1], poisson[2]})),
 		  a_(a), E_(E), G_(G), poisson_(poisson)
 	{
 		// parameters for derived class
@@ -157,7 +163,8 @@ namespace SPH
 			for (int j = 0; j < 3; j++)
 			{
 				// inner sum (b{1-3})
-				Summa2 += Lambda_[i][j] * (CalculateDoubleDotProduct(A_[i], strain) * A_[j] + CalculateDoubleDotProduct(A_[j], strain) * A_[i]);
+				Summa2 += Lambda_[i][j] * (CalculateDoubleDotProduct(A_[i], strain) * A_[j] +
+										   CalculateDoubleDotProduct(A_[j], strain) * A_[i]);
 			}
 			stress_PK2 += Mu_[i] * (((A_[i] * strain) + (strain * A_[i])) + 1 / 2 * (Summa2));
 		}
