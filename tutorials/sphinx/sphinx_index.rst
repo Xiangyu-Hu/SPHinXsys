@@ -184,6 +184,13 @@ Examples:
 
    examples/example15_2D_aortic_valve.rst
 
+
+
+.. toctree::
+   :maxdepth: 2
+
+   examples/example16_2D_channel_flow.rst
+
 ******************************************
 Contribute to SPHinXsys
 ******************************************
