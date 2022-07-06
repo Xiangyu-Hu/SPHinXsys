@@ -108,7 +108,6 @@ int main()
 	SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
 	cylinder_body.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	cylinder_body.generateParticles<CylinderParticleGenerator>();
-	cylinder_body.addBodyStateForRecording<Mat3d>("FirstPiolaKirchhoffStress");
 	/** Define Observer. */
 	ObserverBody cylinder_observer(system, "CylinderObserver");
 	cylinder_observer.generateParticles<ObserverParticleGenerator>(observation_location);

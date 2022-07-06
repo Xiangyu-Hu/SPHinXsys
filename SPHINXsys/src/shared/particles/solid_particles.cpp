@@ -58,7 +58,6 @@ namespace SPH
 		//----------------------------------------------------------------------
 		registerVariable(F_, "DeformationGradient", Matd(1.0));
 		registerVariable(dF_dt_, "DeformationRate");
-		registerVariable(stress_PK1_, "FirstPiolaKirchhoffStress");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
@@ -85,6 +84,46 @@ namespace SPH
 	{
 		Matd epsilon = getGreenLagrangeStrain(particle_i); // calculation of the Green-Lagrange strain tensor
 		return getPrincipalValuesFromMatrix(epsilon);
+	}
+	//=================================================================================================//
+	Matd ElasticSolidParticles::getStressCauchy(size_t particle_i)
+	{
+		Matd F = F_[particle_i];
+		Matd stress_PK2 = elastic_solid_->StressPK2(F, particle_i);
+		return (1.0 / det(F)) * F * stress_PK2 * ~F;
+	}
+	//=================================================================================================//
+	Matd ElasticSolidParticles::getStressPK2(size_t particle_i)
+	{
+		return elastic_solid_->StressPK2(F_[particle_i], particle_i);
+	}
+	//=================================================================================================//
+	Vecd ElasticSolidParticles::getPrincipalStresses(size_t particle_i)
+	{
+		Matd sigma;
+		if (stress_measure_ == "Cauchy") {
+			sigma = getStressCauchy(particle_i); // Cauchy stress
+		} else if (stress_measure_ == "PK2") {
+			sigma = getStressPK2(particle_i); // Second Piola-Kirchhoff stress
+		} else {
+			throw std::runtime_error("get_Principal_stresses: wrong input");
+		}
+
+		return getPrincipalValuesFromMatrix(sigma);
+	}
+	//=================================================================================================//
+	Real ElasticSolidParticles::getVonMisesStress(size_t particle_i)
+	{
+		Matd sigma;
+		if (stress_measure_ == "Cauchy") {
+			sigma = getStressCauchy(particle_i); // Cauchy stress
+		} else if (stress_measure_ == "PK2") {
+			sigma = getStressPK2(particle_i); // Second Piola-Kirchhoff stress
+		} else {
+			throw std::runtime_error("get_von_Mises_stress: wrong input");
+		}
+
+		return getVonMisesStressFromMatrix(sigma);
 	}
 	//=================================================================================================//
 	StdLargeVec<Real> ElasticSolidParticles::getVonMisesStrainVector(std::string strain_measure)
@@ -139,7 +178,7 @@ namespace SPH
 		Real stress_max = 0.0;
 		for (size_t index_i = 0; index_i < pos0_.size(); index_i++)
 		{
-			Real stress = get_Principal_stresses(index_i)[0]; // take the max. component, which is the first one, this represents the max. tension
+			Real stress = getPrincipalStresses(index_i)[0]; // take the max. component, which is the first one, this represents the max. tension
 			if (stress_max < stress)
 				stress_max = stress;
 		}
@@ -151,7 +190,7 @@ namespace SPH
 		StdLargeVec<Real> stress_vector = {};
 		for (size_t index_i = 0; index_i < pos0_.size(); index_i++)
 		{
-			Real stress = get_von_Mises_stress(index_i);
+			Real stress = getVonMisesStress(index_i);
 			stress_vector.push_back(stress);
 		}
 		return stress_vector;
@@ -162,7 +201,7 @@ namespace SPH
 		Real stress_max = 0.0;
 		for (size_t index_i = 0; index_i < pos0_.size(); index_i++)
 		{
-			Real stress = get_von_Mises_stress(index_i);
+			Real stress = getVonMisesStress(index_i);
 			if (stress_max < stress)
 				stress_max = stress;
 		}
@@ -242,7 +281,6 @@ namespace SPH
 		registerVariable(B_, "CorrectionMatrix", Matd(1.0));
 		registerVariable(F_, "DeformationGradient", Matd(1.0));
 		registerVariable(dF_dt_, "DeformationRate");
-		registerVariable(stress_PK1_, "FirstPiolaKirchhoffStress");
 		registerVariable(pseudo_n_, "PseudoNormal",
 						 [&](size_t i) -> Vecd
 						 { return n_[i]; });

@@ -141,27 +141,42 @@ namespace SPH
 		};
 
 		/**
+		* @class BaseStressRelaxationFirstHalf
+		* @brief computing stress relaxation process by verlet time stepping
+		* This is the first step
+		*/
+		class BaseStressRelaxationFirstHalf : public BaseElasticRelaxation
+		{
+		public:
+			explicit BaseStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
+			virtual ~BaseStressRelaxationFirstHalf(){};
+
+		protected:
+			Real rho0_, inv_rho0_;
+			StdLargeVec<Vecd> &acc_prior_, &force_from_fluid_;
+			Real smoothing_length_;
+
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		};
+
+		/**
 		* @class StressRelaxationFirstHalf
 		* @brief computing stress relaxation process by verlet time stepping
 		* This is the first step
 		*/
-		class StressRelaxationFirstHalf : public BaseElasticRelaxation
+		class StressRelaxationFirstHalf : public BaseStressRelaxationFirstHalf
 		{
 		public:
 			explicit StressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
 			virtual ~StressRelaxationFirstHalf(){};
 
 		protected:
-			Real rho0_, inv_rho0_;
-			StdLargeVec<Vecd> &acc_prior_, &force_from_fluid_;
-			StdLargeVec<Matd> &stress_PK1_;
+			StdLargeVec<Matd> stress_PK1_B_;
 			Real numerical_dissipation_factor_;
-			Real smoothing_length_;
 			Real inv_W0_ = 1.0 / body_->sph_adaptation_->getKernel()->W0(Vecd(0));
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -194,7 +209,7 @@ namespace SPH
 		* it may be due to the determinate of deformation matrix become negative.
 		* In this case, you may need decrease CFL number when computing time-step size.
 		*/
-		class KirchhoffStressRelaxationFirstHalf : public StressRelaxationFirstHalf
+		class KirchhoffStressRelaxationFirstHalf : public BaseStressRelaxationFirstHalf
 		{
 		public:
 			explicit KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);

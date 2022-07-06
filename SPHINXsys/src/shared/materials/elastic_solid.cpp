@@ -75,11 +75,10 @@ namespace SPH
 		return nu_ * youngs_modulus / (1.0 + poisson_ratio) / (1.0 - 2.0 * poisson_ratio);
 	}
 	//=================================================================================================//
-	Matd LinearElasticSolid::StressPK1(Matd &F, size_t particle_index_i)
+	Matd LinearElasticSolid::StressPK2(Matd &F, size_t particle_index_i)
 	{
 		Matd strain = 0.5 * (~F * F - Matd(1.0));
-		Matd sigmaPK2 = lambda0_ * strain.trace() * Matd(1.0) + 2.0 * G0_ * strain;
-		return sigmaPK2;
+		return lambda0_ * strain.trace() * Matd(1.0) + 2.0 * G0_ * strain;
 	}
 	//=================================================================================================//
 	Matd LinearElasticSolid::StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i)
@@ -92,15 +91,14 @@ namespace SPH
 		return K0_ * J * (J - 1);
 	}
 	//=================================================================================================//
-	Matd NeoHookeanSolid::StressPK1(Matd &F, size_t particle_index_i)
+	Matd NeoHookeanSolid::StressPK2(Matd &F, size_t particle_index_i)
 	{
 		// This formulation allows negative determinant of F. Please refer
 		// Smith et al. (2018) Stable Neo-Hookean Flesh Simulation.
 		// ACM Transactions on Graphics, Vol. 37, No. 2, Article 12.
 		Matd right_cauchy = ~F * F;
 		Real J = det(F);
-		Matd sigmaPK2 = G0_ * Matd(1.0) + (lambda0_ * (J - 1.0) - G0_) * J * inverse(right_cauchy);
-		return sigmaPK2;
+		return G0_ * Matd(1.0) + (lambda0_ * (J - 1.0) - G0_) * J * inverse(right_cauchy);
 	}
 	//=================================================================================================//
 	Matd NeoHookeanSolid::StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i)
@@ -116,13 +114,12 @@ namespace SPH
 		return 0.5 * K0_ * (J * J - 1);
 	}
 	//=================================================================================================//
-	Matd NeoHookeanSolidIncompressible::StressPK1(Matd &F, size_t particle_index_i)
+	Matd NeoHookeanSolidIncompressible::StressPK2(Matd &F, size_t particle_index_i)
 	{
 		Matd right_cauchy = ~F * F;
 		Real I_1 = right_cauchy.trace(); // first strain invariant
 		Real I_3 = det(right_cauchy);	 // first strain invariant
-		Matd sigmaPK2 = G0_ * std::pow(I_3, -1.0 / 3.0) * (Matd(1.0) - 1.0 / 3.0 * I_1 * inverse(right_cauchy));
-		return sigmaPK2;
+		return G0_ * std::pow(I_3, -1.0 / 3.0) * (Matd(1.0) - 1.0 / 3.0 * I_1 * inverse(right_cauchy));
 	}
 	//=================================================================================================//
 	Matd NeoHookeanSolidIncompressible::StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i)
@@ -149,10 +146,10 @@ namespace SPH
 		CalculateAllLambda();
 	};
 	//=================================================================================================//
-	Matd OrthotropicSolid::StressPK1(Matd &F, size_t particle_index_i)
+	Matd OrthotropicSolid::StressPK2(Matd &F, size_t particle_index_i)
 	{
 		Matd strain = 0.5 * (~F * F - Matd(1.0));
-		Matd sigmaPK2 = Matd(0);
+		Matd stress_PK2 = Matd(0);
 		for (int i = 0; i < 3; i++)
 		{
 			// outer sum (a{1-3})
@@ -162,9 +159,9 @@ namespace SPH
 				// inner sum (b{1-3})
 				Summa2 += Lambda_[i][j] * (CalculateDoubleDotProduct(A_[i], strain) * A_[j] + CalculateDoubleDotProduct(A_[j], strain) * A_[i]);
 			}
-			sigmaPK2 += Mu_[i] * (((A_[i] * strain) + (strain * A_[i])) + 1 / 2 * (Summa2));
+			stress_PK2 += Mu_[i] * (((A_[i] * strain) + (strain * A_[i])) + 1 / 2 * (Summa2));
 		}
-		return sigmaPK2;
+		return stress_PK2;
 	}
 	//=================================================================================================//
 	Real OrthotropicSolid::VolumetricKirchhoff(Real J)
@@ -214,14 +211,13 @@ namespace SPH
 		Lambda_[2][1] = Lambda_[1][2];
 	}
 	//=================================================================================================//
-	Matd FeneNeoHookeanSolid::StressPK1(Matd &F, size_t particle_index_i)
+	Matd FeneNeoHookeanSolid::StressPK2(Matd &F, size_t particle_index_i)
 	{
 		Matd right_cauchy = ~F * F;
 		Matd strain = 0.5 * (right_cauchy - Matd(1.0));
 		Real J = det(F);
-		Matd sigmaPK2 = G0_ / (1.0 - 2.0 * strain.trace() / j1_m_) * Matd(1.0) +
-						(lambda0_ * (J - 1.0) - G0_) * J * inverse(right_cauchy);
-		return sigmaPK2;
+		return G0_ / (1.0 - 2.0 * strain.trace() / j1_m_) * Matd(1.0) +
+			   (lambda0_ * (J - 1.0) - G0_) * J * inverse(right_cauchy);
 	}
 	//=================================================================================================//
 	Real Muscle::getShearModulus(const Real (&a0)[4], const Real (&b0)[4])
@@ -244,7 +240,7 @@ namespace SPH
 		return 3.0 * bulk_modulus * (1.0 - 2.0 * getPoissonRatio(bulk_modulus, a0, b0));
 	}
 	//=================================================================================================//
-	Matd Muscle::StressPK1(Matd &F, size_t i)
+	Matd Muscle::StressPK2(Matd &F, size_t i)
 	{
 		Matd right_cauchy = ~F * F;
 		Real I_ff_1 = SimTK::dot(right_cauchy * f0_, f0_) - 1.0;
@@ -252,13 +248,11 @@ namespace SPH
 		Real I_fs = SimTK::dot(right_cauchy * f0_, s0_);
 		Real I_1_1 = right_cauchy.trace() - Real(Dimensions);
 		Real J = det(F);
-		Matd sigmaPK2 = a0_[0] * exp(b0_[0] * I_1_1) * Matd(1.0) +
-						(lambda0_ * (J - 1.0) - a0_[0]) * J * inverse(right_cauchy) +
-						2.0 * a0_[1] * I_ff_1 * exp(b0_[1] * I_ff_1 * I_ff_1) * f0f0_ +
-						2.0 * a0_[2] * I_ss_1 * exp(b0_[2] * I_ss_1 * I_ss_1) * s0s0_ +
-						a0_[3] * I_fs * exp(b0_[3] * I_fs * I_fs) * f0s0_;
-
-		return sigmaPK2;
+		return a0_[0] * exp(b0_[0] * I_1_1) * Matd(1.0) +
+			   (lambda0_ * (J - 1.0) - a0_[0]) * J * inverse(right_cauchy) +
+			   2.0 * a0_[1] * I_ff_1 * exp(b0_[1] * I_ff_1 * I_ff_1) * f0f0_ +
+			   2.0 * a0_[2] * I_ss_1 * exp(b0_[2] * I_ss_1 * I_ss_1) * s0s0_ +
+			   a0_[3] * I_fs * exp(b0_[3] * I_fs * I_fs) * f0s0_;
 	}
 	//=================================================================================================//
 	Real Muscle::VolumetricKirchhoff(Real J)
@@ -266,7 +260,7 @@ namespace SPH
 		return K0_ * J * (J - 1);
 	}
 	//=================================================================================================//
-	Matd LocallyOrthotropicMuscle::StressPK1(Matd &F, size_t i)
+	Matd LocallyOrthotropicMuscle::StressPK2(Matd &F, size_t i)
 	{
 		Matd right_cauchy = ~F * F;
 		Real I_ff_1 = SimTK::dot(right_cauchy * local_f0_[i], local_f0_[i]) - 1.0;
@@ -274,13 +268,11 @@ namespace SPH
 		Real I_fs = SimTK::dot(right_cauchy * local_f0_[i], local_s0_[i]);
 		Real I_1_1 = right_cauchy.trace() - Real(Dimensions);
 		Real J = det(F);
-		Matd sigmaPK2 = a0_[0] * exp(b0_[0] * I_1_1) * Matd(1.0) +
-						(lambda0_ * (J - 1.0) - a0_[0]) * J * inverse(right_cauchy) +
-						2.0 * a0_[1] * I_ff_1 * exp(b0_[1] * I_ff_1 * I_ff_1) * local_f0f0_[i] +
-						2.0 * a0_[2] * I_ss_1 * exp(b0_[2] * I_ss_1 * I_ss_1) * local_s0s0_[i] +
-						a0_[3] * I_fs * exp(b0_[3] * I_fs * I_fs) * local_f0s0_[i];
-
-		return sigmaPK2;
+		return a0_[0] * exp(b0_[0] * I_1_1) * Matd(1.0) +
+			   (lambda0_ * (J - 1.0) - a0_[0]) * J * inverse(right_cauchy) +
+			   2.0 * a0_[1] * I_ff_1 * exp(b0_[1] * I_ff_1 * I_ff_1) * local_f0f0_[i] +
+			   2.0 * a0_[2] * I_ss_1 * exp(b0_[2] * I_ss_1 * I_ss_1) * local_s0s0_[i] +
+			   a0_[3] * I_fs * exp(b0_[3] * I_fs * I_fs) * local_f0s0_[i];
 	}
 	//=================================================================================================//
 	void LocallyOrthotropicMuscle::assignBaseParticles(BaseParticles *base_particles)

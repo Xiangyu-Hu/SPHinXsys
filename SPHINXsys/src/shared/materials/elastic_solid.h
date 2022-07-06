@@ -71,8 +71,8 @@ namespace SPH
 		Real BulkModulus() { return K0_; };
 		Real PoissonRatio() { return nu_; };
 
-		/** 1st Piola-Kirchhoff stress through deformation. */
-		virtual Matd StressPK1(Matd &deformation, size_t particle_index_i) = 0;
+		/** 2nd Piola-Kirchhoff stress through deformation. */
+		virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) = 0;
 		/** Cauchy stress through Eulerian Almansi strain tensor. */
 		virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) = 0;
 		/** Numerical damping stress using right Cauchy tensor. */
@@ -104,7 +104,7 @@ namespace SPH
 		explicit LinearElasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio);
 		virtual ~LinearElasticSolid(){};
 
-		virtual Matd StressPK1(Matd &deformation, size_t particle_index_i) override;
+		virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
 		virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
 		/** Volumetric Kirchhoff stress from determinate */
 		virtual Real VolumetricKirchhoff(Real J) override;
@@ -138,7 +138,7 @@ namespace SPH
 		virtual ~NeoHookeanSolid(){};
 
 		/** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
-		virtual Matd StressPK1(Matd &deformation, size_t particle_index_i) override;
+		virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
 		virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
 		/** Volumetric Kirchhoff stress from determinate */
 		virtual Real VolumetricKirchhoff(Real J) override;
@@ -162,7 +162,7 @@ namespace SPH
 		virtual ~NeoHookeanSolidIncompressible() {};
 	
 		/** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
-		virtual Matd StressPK1(Matd &deformation, size_t particle_index_i) override;
+		virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
 		virtual Matd StressCauchy(Matd &almansi_strain, Matd &F, size_t particle_index_i) override;
 		/** Volumetric Kirchhoff stress from determinate */
 		virtual Real VolumetricKirchhoff(Real J) override;
@@ -182,7 +182,7 @@ namespace SPH
 		OrthotropicSolid(Real rho_0, std::array<Vecd, 3> a, std::array<Real, 3> E, std::array<Real, 3> G, std::array<Real, 3> poisson);
 
 		/** second Piola-Kirchhoff stress related with green-lagrangian deformation tensor */
-		virtual Matd StressPK1(Matd& deformation, size_t particle_index_i) override;
+		virtual Matd StressPK2(Matd& deformation, size_t particle_index_i) override;
 		/** Volumetric Kirchhoff stress determinate */
 		virtual Real VolumetricKirchhoff(Real J) override;
 
@@ -217,7 +217,7 @@ namespace SPH
 			material_type_name_ = "FeneNeoHookeanSolid";
 		};
 		virtual ~FeneNeoHookeanSolid() {};
-		virtual Matd StressPK1(Matd& deformation, size_t particle_index_i) override;
+		virtual Matd StressPK2(Matd& deformation, size_t particle_index_i) override;
 		/** Define the calculation of the stress matrix for postprocessing */
 		virtual std::string getRelevantStressMeasureName() override { return "Cauchy"; };
 	};
@@ -243,7 +243,7 @@ namespace SPH
 
 		virtual Matd MuscleFiberDirection(size_t particle_index_i) { return f0f0_; };
 		/** compute the stress through Constitutive relation. */
-		virtual Matd StressPK1(Matd &deformation, size_t particle_index_i) override;
+		virtual Matd StressPK2(Matd &deformation, size_t particle_index_i) override;
 		/** Volumetric Kirchhoff stress form determinate */
 		virtual Real VolumetricKirchhoff(Real J) override;
 		/** Define the calculation of the stress matrix for postprocessing */
@@ -294,7 +294,7 @@ namespace SPH
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;
 		virtual Matd MuscleFiberDirection(size_t particle_index_i) override { return local_f0f0_[particle_index_i]; };
 		/** Compute the stress through Constitutive relation. */
-		virtual Matd StressPK1(Matd& deformation, size_t particle_index_i) override;
+		virtual Matd StressPK2(Matd& deformation, size_t particle_index_i) override;
 		virtual void readFromXmlForLocalParameters(const std::string &filefullpath) override;
 		/** Define the calculation of the stress matrix for postprocessing */
 		virtual std::string getRelevantStressMeasureName() override { return "Cauchy"; };

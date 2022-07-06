@@ -82,7 +82,6 @@ namespace SPH
 
 		StdLargeVec<Matd> F_;		   /**<  deformation tensor */
 		StdLargeVec<Matd> dF_dt_;	   /**<  deformation tensor change rate */
-		StdLargeVec<Matd> stress_PK1_; /**<  first Piola-Kirchhoff stress tensor */
 
 		// STRAIN
 		Matd getGreenLagrangeStrain(size_t particle_i);
@@ -100,12 +99,12 @@ namespace SPH
 		Real getPrincipalStrainMax();
 
 		// STRESS
-		Matd get_Cauchy_stress(size_t particle_i);
-		Matd get_PK2_stress(size_t particle_i);
+		Matd getStressCauchy(size_t particle_i);
+		Matd getStressPK2(size_t particle_i);
 		/**< Computing principal_stresses - returns the principal stresses in descending order (starting from the largest) */
-		Vecd get_Principal_stresses(size_t particle_i);
+		Vecd getPrincipalStresses(size_t particle_i);
 		/**< Computing von_Mises_stress - "Cauchy" or "PK2" decided based on the stress_measure_ */
-		Real get_von_Mises_stress(size_t particle_i);
+		Real getVonMisesStress(size_t particle_i);
 
 		/**< Computing von Mises stress for all particles. - "Cauchy" or "PK2" decided based on the stress_measure_ */
 		StdLargeVec<Real> getVonMisesStressVector();
@@ -125,10 +124,11 @@ namespace SPH
 		/** relevant stress measure */
 		std::string stress_measure_;
 
-		ElasticSolid *elastic_solid_;
-
 		virtual void initializeOtherVariables() override;
 		virtual ElasticSolidParticles *ThisObjectPtr() override { return this; };
+
+	protected:
+		ElasticSolid *elastic_solid_;
 	};
 
 	/**
