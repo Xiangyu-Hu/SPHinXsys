@@ -106,7 +106,6 @@ namespace SPH
 		StdLargeVec<Real> getVonMisesStrainVector(std::string strain_measure = "static");
 		/**< Computing maximum von Mises strain from all particles. - "static" or "dynamic" */
 		Real getVonMisesStrainMax(std::string strain_measure = "static");
-		Real getPrincipalStrainMax();
 
 		// STRESS
 		Matd get_Cauchy_stress(size_t particle_i);
