@@ -44,20 +44,20 @@ namespace SPH
 	class Kernel;
 
 	/** Functor for operation on the mesh data package. */
-	template <class ReturnType, class GridDataPackageType>
-	using PackageFunctor = std::function<ReturnType(GridDataPackageType *, Real)>;
+	template <class ReturnType, class DataPackageType>
+	using PackageFunctor = std::function<ReturnType(DataPackageType *, Real)>;
 	/** Iterator on a collection of mesh data packages. sequential computing. */
-	template <class GridDataPackageType>
-	void PackageIterator(ConcurrentVector<GridDataPackageType *> &data_pkgs,
-						 PackageFunctor<void, GridDataPackageType> &pkg_functor, Real dt = 0.0)
+	template <class DataPackageType>
+	void PackageIterator(ConcurrentVector<DataPackageType *> &data_pkgs,
+						 PackageFunctor<void, DataPackageType> &pkg_functor, Real dt = 0.0)
 	{
 		for (size_t i = 0; i != data_pkgs.size(); ++i)
 			pkg_functor(data_pkgs[i], dt);
 	};
 	/** Iterator on a collection of mesh data packages. parallel computing. */
-	template <class GridDataPackageType>
-	void PackageIterator_parallel(ConcurrentVector<GridDataPackageType *> &data_pkgs,
-								  PackageFunctor<void, GridDataPackageType> &pkg_functor, Real dt = 0.0)
+	template <class DataPackageType>
+	void PackageIterator_parallel(ConcurrentVector<DataPackageType *> &data_pkgs,
+								  PackageFunctor<void, DataPackageType> &pkg_functor, Real dt = 0.0)
 	{
 		parallel_for(
 			blocked_range<size_t>(0, data_pkgs.size()),
@@ -71,9 +71,9 @@ namespace SPH
 			ap);
 	};
 	/** Package iterator for reducing. sequential computing. */
-	template <class ReturnType, typename ReduceOperation, class GridDataPackageType>
-	ReturnType ReducePackageIterator(ConcurrentVector<GridDataPackageType *> &data_pkgs, ReturnType temp,
-									 PackageFunctor<ReturnType, GridDataPackageType> &reduce_pkg_functor,
+	template <class ReturnType, typename ReduceOperation, class DataPackageType>
+	ReturnType ReducePackageIterator(ConcurrentVector<DataPackageType *> &data_pkgs, ReturnType temp,
+									 PackageFunctor<ReturnType, DataPackageType> &reduce_pkg_functor,
 									 ReduceOperation &reduce_operation, Real dt = 0.0)
 	{
 		for (size_t i = 0; i < data_pkgs.size(); ++i)
@@ -83,9 +83,9 @@ namespace SPH
 		return temp;
 	};
 	/** Package iterator for reducing. parallel computing. */
-	template <class ReturnType, typename ReduceOperation, class GridDataPackageType>
-	ReturnType ReducePackageIterator_parallel(ConcurrentVector<GridDataPackageType *> &data_pkgs, ReturnType temp,
-											  PackageFunctor<ReturnType, GridDataPackageType> &reduce_pkg_functor,
+	template <class ReturnType, typename ReduceOperation, class DataPackageType>
+	ReturnType ReducePackageIterator_parallel(ConcurrentVector<DataPackageType *> &data_pkgs, ReturnType temp,
+											  PackageFunctor<ReturnType, DataPackageType> &reduce_pkg_functor,
 											  ReduceOperation &reduce_operation, Real dt = 0.0)
 	{
 		return parallel_reduce(
@@ -117,7 +117,6 @@ namespace SPH
 		Vecu pkg_index_;	/**< index of this data package on the background mesh, Vecu(0) if it is not on the mesh. */
 		bool is_inner_pkg_; /**< If true, its data package is on the background mesh. */
 
-		/** default constructor,  data and address arrays are not initialized */
 		BaseDataPackage() : pkg_index_(0), is_inner_pkg_(false){};
 		virtual ~BaseDataPackage(){};
 	};
@@ -147,7 +146,6 @@ namespace SPH
 		using PackageTemporaryData = PackageData<DataType>;
 
 
-		/** default constructor,  data and address arrays are not initialized */
 		GridDataPackage() : BaseDataPackage(), BaseMesh(Vecu(ADDRS_SIZE)){};
 		virtual ~GridDataPackage(){};
 
@@ -184,6 +182,7 @@ namespace SPH
 		template <typename DataType>
 		void assignPackageDataAddress(PackageDataAddress<DataType> &pkg_data_addrs, Vecu &addrs_index,
 									  PackageData<DataType> &pkg_data, Vecu &data_index);
+									  
 		/** obtain averaged value at a corner of a data cell */
 		template <typename DataType>
 		DataType CornerAverage(PackageDataAddress<DataType> &pkg_data_addrs, Veci addrs_index, Veci corner_direction);
