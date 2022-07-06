@@ -32,7 +32,7 @@
 #define COMPLEX_SHAPE_H
 
 #include "base_geometry.h"
-
+#include "level_set_shape.h"
 #include "geometric_shape.h"
 #include "transform_shape.h"
 #include <string>
