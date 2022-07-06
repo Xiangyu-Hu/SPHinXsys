@@ -235,10 +235,17 @@ namespace SPH
 			  acceleration_(0),
 			  end_time_(end_time)
 		{
+            Real mass_in_region = 0.0;
+			for(size_t i = 0; i < body_part_particles_.size(); i++)
+			{
+					int particle_ID = body_part_particles_[i];
+					mass_in_region += particles_->mass_[particle_ID];
+			};
 			// calculate acceleration: force / total mass
-			acceleration_ = force / std::accumulate(particles_->mass_.begin(), particles_->mass_.end(), 0.0);
+			acceleration_ = force / mass_in_region;
 			// set ghost particles to zero
 			particles_->total_ghost_particles_ = 0;
+
 		}
 		//=================================================================================================//
 		void ForceInBodyRegion::Update(size_t index_i, Real dt)
