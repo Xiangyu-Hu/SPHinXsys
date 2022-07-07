@@ -144,7 +144,6 @@ namespace SPH
 		template <typename DataType>
 		using PackageTemporaryData = PackageDataMatrix<DataType, ADDRS_SIZE>;
 
-
 		GridDataPackage() : BaseDataPackage(), BaseMesh(Vecu(ADDRS_SIZE)){};
 		virtual ~GridDataPackage(){};
 
@@ -173,6 +172,15 @@ namespace SPH
 									   PackageDataAddress<OutDataType> out_pkg_data_addrs, Real dt = 0.0);
 
 	protected:
+		/** register a variable defined in a class (can be non-particle class) */
+		template <typename DataType>
+		void registerPackageData(PackageData<DataType> &pkg_data,
+								 PackageDataAddress<DataType> &pkg_data_addrs)
+		{
+			constexpr int type_index = DataTypeIndex<DataType>::value;
+			std::get<type_index>(all_pkg_data_).push_back(&pkg_data);
+			std::get<type_index>(all_pkg_data_addrs_).push_back(&pkg_data_addrs);
+		};
 		/** set the initial package data address within a derived class constructor */
 		template <typename DataType>
 		void initializePackageDataAddress(PackageData<DataType> &pkg_data,
@@ -181,7 +189,7 @@ namespace SPH
 		template <typename DataType>
 		void assignPackageDataAddress(PackageDataAddress<DataType> &pkg_data_addrs, Vecu &addrs_index,
 									  PackageData<DataType> &pkg_data, Vecu &data_index);
-									  
+
 		/** obtain averaged value at a corner of a data cell */
 		template <typename DataType>
 		DataType CornerAverage(PackageDataAddress<DataType> &pkg_data_addrs, Veci addrs_index, Veci corner_direction);
