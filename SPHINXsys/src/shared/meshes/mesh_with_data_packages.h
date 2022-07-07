@@ -137,13 +137,12 @@ namespace SPH
 		using PackageData = PackageDataMatrix<DataType, PKG_SIZE>;
 		template <typename DataType>
 		using PackageDataAddress = PackageDataMatrix<DataType *, ADDRS_SIZE>;
-		template <typename DataType>
-		using PackageDataPair = std::pair<PackageData<DataType>, PackageDataAddress<DataType>>;
-		GeneralDataAssemble<PackageDataPair> all_package_data;
+		GeneralDataAssemble<PackageData> all_pkg_data_;
+		GeneralDataAssemble<PackageDataAddress> all_pkg_data_addrs_;
 
-		/** define matrix data for temporary usage */
+		/** Matrix data for temporary usage. Note that it is array with ADDRS_SIZE.  */
 		template <typename DataType>
-		using PackageTemporaryData = PackageData<DataType>;
+		using PackageTemporaryData = PackageDataMatrix<DataType, ADDRS_SIZE>;
 
 
 		GridDataPackage() : BaseDataPackage(), BaseMesh(Vecu(ADDRS_SIZE)){};
