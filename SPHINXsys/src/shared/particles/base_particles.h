@@ -228,9 +228,9 @@ namespace SPH
 			void operator()(ParticleData &particle_data, size_t this_index, size_t another_index) const;
 		};
 
-		ParticleDataOperation<resizeParticleData> resize_particle_data_;
-		ParticleDataOperation<addAParticleDataValue> add_a_particle_value_;
-		ParticleDataOperation<copyAParticleDataValue> copy_a_particle_value_;
+		DataAssembleOperation<resizeParticleData> resize_particle_data_;
+		DataAssembleOperation<addAParticleDataValue> add_a_particle_value_;
+		DataAssembleOperation<copyAParticleDataValue> copy_a_particle_value_;
 	};
 
 	struct WriteAParticleVariableToXml

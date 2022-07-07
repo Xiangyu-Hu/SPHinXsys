@@ -134,7 +134,7 @@ namespace SPH
 			StdLargeVec<VariableType> *registerObservedQuantity(const std::string &variable_name)
 			{
 				BaseParticles *particles = this->particles_;
-      			constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
+      			constexpr int type_index = DataTypeIndex<VariableType>::value;
 				if (particles->all_variable_maps_[type_index].find(variable_name) == particles->all_variable_maps_[type_index].end())
 				{
 					particles->registerVariable(observed_quantities_, variable_name, VariableType(0));

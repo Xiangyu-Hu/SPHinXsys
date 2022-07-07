@@ -86,7 +86,7 @@ namespace SPH
 
 			for (size_t m = 0; m < number_of_diffusion_species_; ++m)
 			{
-				constexpr int type_index = ParticleDataTypeIndex<Real>::value;
+				constexpr int type_index = DataTypeIndex<Real>::value;
 				//----------------------------------------------------------------------
 				//	register reactive change rate terms without giving variable name
 				//----------------------------------------------------------------------

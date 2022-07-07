@@ -40,7 +40,7 @@ namespace SPH
         registerVariable(StdLargeVec<VariableType> &variable_addrs,
                          const std::string &variable_name, VariableType initial_value)
     {
-        constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
+        constexpr int type_index = DataTypeIndex<VariableType>::value;
 
         if (all_variable_maps_[type_index].find(variable_name) == all_variable_maps_[type_index].end())
         {
@@ -61,7 +61,7 @@ namespace SPH
         registerVariable(StdLargeVec<VariableType> &variable_addrs,
                          const std::string &variable_name, const InitializationFunction &initialization)
     {
-        constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
+        constexpr int type_index = DataTypeIndex<VariableType>::value;
 
         registerVariable(variable_addrs, variable_name);
         for (size_t i = 0; i != real_particles_bound_; ++i)
@@ -73,7 +73,7 @@ namespace SPH
     template <typename VariableType>
     StdLargeVec<VariableType> *BaseParticles::getVariableByName(const std::string &variable_name)
     {
-        constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
+        constexpr int type_index = DataTypeIndex<VariableType>::value;
 
         if (all_variable_maps_[type_index].find(variable_name) != all_variable_maps_[type_index].end())
             return std::get<type_index>(all_particle_data_)[all_variable_maps_[type_index][variable_name]];
@@ -88,7 +88,7 @@ namespace SPH
     void BaseParticles::
         addVariableNameToList(ParticleVariableList &variable_name_list, const std::string &variable_name)
     {
-        constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
+        constexpr int type_index = DataTypeIndex<VariableType>::value;
 
         if (all_variable_maps_[type_index].find(variable_name) != all_variable_maps_[type_index].end())
         {
@@ -142,7 +142,7 @@ namespace SPH
     template <typename VariableType>
     void BaseParticles::registerSortableVariable(const std::string &variable_name)
     {
-        constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
+        constexpr int type_index = DataTypeIndex<VariableType>::value;
 
         if (sortable_variable_maps_[type_index].find(variable_name) == sortable_variable_maps_[type_index].end())
         {
@@ -171,7 +171,7 @@ namespace SPH
     void BaseParticles::resizeParticleData<VariableType>::
     operator()(ParticleData &particle_data, size_t new_size) const
     {
-        constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
+        constexpr int type_index = DataTypeIndex<VariableType>::value;
 
         for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
             std::get<type_index>(particle_data)[i]->resize(new_size, VariableType(0));
@@ -181,7 +181,7 @@ namespace SPH
     void BaseParticles::addAParticleDataValue<VariableType>::
     operator()(ParticleData &particle_data) const
     {
-        constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
+        constexpr int type_index = DataTypeIndex<VariableType>::value;
 
         for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
             std::get<type_index>(particle_data)[i]->push_back(VariableType(0));
@@ -191,7 +191,7 @@ namespace SPH
     void BaseParticles::copyAParticleDataValue<VariableType>::
     operator()(ParticleData &particle_data, size_t this_index, size_t another_index) const
     {
-        constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
+        constexpr int type_index = DataTypeIndex<VariableType>::value;
 
         for (size_t i = 0; i != std::get<type_index>(particle_data).size(); ++i)
             (*std::get<type_index>(particle_data)[i])[this_index] =

@@ -315,39 +315,39 @@ namespace SPH
 	using SymMat2d = SimTK::SymMat22;
 	using SymMat3d = SimTK::SymMat33;
 
-	// type trait for particle data type index
+	// type trait for data type index
 	template <typename T>
-	struct ParticleDataTypeIndex
+	struct DataTypeIndex
 	{
 		static constexpr int value = std::numeric_limits<int>::max();
 	};
 	template <>
-	struct ParticleDataTypeIndex<Real>
+	struct DataTypeIndex<Real>
 	{
 		static constexpr int value = 0;
 	};
 	template <>
-	struct ParticleDataTypeIndex<Vec2d>
+	struct DataTypeIndex<Vec2d>
 	{
 		static constexpr int value = 1;
 	};
 	template <>
-	struct ParticleDataTypeIndex<Vec3d>
+	struct DataTypeIndex<Vec3d>
 	{
 		static constexpr int value = 1;
 	};
 	template <>
-	struct ParticleDataTypeIndex<Mat2d>
+	struct DataTypeIndex<Mat2d>
 	{
 		static constexpr int value = 2;
 	};
 	template <>
-	struct ParticleDataTypeIndex<Mat3d>
+	struct DataTypeIndex<Mat3d>
 	{
 		static constexpr int value = 2;
 	};
 	template <>
-	struct ParticleDataTypeIndex<int>
+	struct DataTypeIndex<int>
 	{
 		static constexpr int value = 3;
 	};
