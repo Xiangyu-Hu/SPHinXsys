@@ -50,13 +50,13 @@ namespace SPH
         OperationType<Matd> matrix_operation;
         OperationType<int> integer_operation;
 
-        template <typename DataAssembleType, typename... OperationArgs>
-        void operator()(DataAssembleType &data_assemble, OperationArgs &&...operation_args)
+        template <typename... OperationArgs>
+        void operator()(OperationArgs &&...operation_args)
         {
-            scalar_operation(data_assemble, std::forward<OperationArgs>(operation_args)...);
-            vector_operation(data_assemble, std::forward<OperationArgs>(operation_args)...);
-            matrix_operation(data_assemble, std::forward<OperationArgs>(operation_args)...);
-            integer_operation(data_assemble, std::forward<OperationArgs>(operation_args)...);
+            scalar_operation(std::forward<OperationArgs>(operation_args)...);
+            vector_operation(std::forward<OperationArgs>(operation_args)...);
+            matrix_operation(std::forward<OperationArgs>(operation_args)...);
+            integer_operation(std::forward<OperationArgs>(operation_args)...);
         }
     };
 }
