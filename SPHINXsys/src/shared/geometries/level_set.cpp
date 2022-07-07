@@ -11,7 +11,9 @@ namespace SPH
 {
 	//=================================================================================================//
 	LevelSetDataPackage::
-		LevelSetDataPackage() : GridDataPackage<4, 6>(), is_core_pkg_(false)
+		LevelSetDataPackage() : GridDataPackage<4, 6>(), is_core_pkg_(false) {}
+	//=================================================================================================//
+	void LevelSetDataPackage::registerAllVariables()
 	{
 		registerPackageData(phi_, phi_addrs_);
 		registerPackageData(phi_gradient_, phi_gradient_addrs_);
@@ -22,11 +24,7 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::initializeSingularDataAddress()
 	{
-		initializePackageDataAddress(phi_, phi_addrs_);
-		initializePackageDataAddress(phi_gradient_, phi_gradient_addrs_);
-		initializePackageDataAddress(kernel_weight_, kernel_weight_addrs_);
-		initializePackageDataAddress(kernel_gradient_, kernel_gradient_addrs_);
-		initializePackageDataAddress(near_interface_id_, near_interface_id_addrs_);
+		initialize_pkg_data_addrs_(all_pkg_data_, all_pkg_data_addrs_);
 	}
 	//=================================================================================================//
 	void LevelSetDataPackage::
@@ -70,7 +68,7 @@ namespace SPH
 	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size,
 					   Shape &shape, SPHAdaptation &sph_adaptation)
 		: MeshWithGridDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, buffer_size,
-																  shape, sph_adaptation),
+																	  shape, sph_adaptation),
 		  global_h_ratio_(sph_adaptation.ReferenceSpacing() / data_spacing),
 		  kernel_(*sph_adaptation.getKernel())
 	{
@@ -229,6 +227,7 @@ namespace SPH
 		mutex_my_pool.lock();
 		LevelSetDataPackage &new_data_pkg = *data_pkg_pool_.malloc();
 		mutex_my_pool.unlock();
+		new_data_pkg.registerAllVariables();
 		Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
 		new_data_pkg.initializePackageGeometry(pkg_lower_bound, data_spacing_);
 		new_data_pkg.initializeBasicData(shape_);

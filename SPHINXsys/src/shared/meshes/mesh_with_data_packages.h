@@ -183,8 +183,11 @@ namespace SPH
 		};
 		/** set the initial package data address within a derived class constructor */
 		template <typename DataType>
-		void initializePackageDataAddress(PackageData<DataType> &pkg_data,
-										  PackageDataAddress<DataType> &pkg_data_addrs);
+		struct initializePackageDataAddress
+		{
+			void operator()(GeneralDataAssemble<PackageData> &all_pkg_data,
+							GeneralDataAssemble<PackageDataAddress> &all_pkg_data_addrs);
+		};
 		/** assign address for a package data when the package is an inner one */
 		template <typename DataType>
 		void assignPackageDataAddress(PackageDataAddress<DataType> &pkg_data_addrs, Vecu &addrs_index,
@@ -193,6 +196,9 @@ namespace SPH
 		/** obtain averaged value at a corner of a data cell */
 		template <typename DataType>
 		DataType CornerAverage(PackageDataAddress<DataType> &pkg_data_addrs, Veci addrs_index, Veci corner_direction);
+
+	public:
+		DataAssembleOperation<initializePackageDataAddress> initialize_pkg_data_addrs_;
 	};
 
 	/**
@@ -254,6 +260,7 @@ namespace SPH
 		void initializeASingularDataPackage(ConstructorArgs &&...args)
 		{
 			GridDataPackageType *new_data_pkg = data_pkg_pool_.malloc();
+			new_data_pkg->registerAllVariables();
 			new_data_pkg->initializeSingularData(std::forward<ConstructorArgs>(args)...);
 			new_data_pkg->initializeSingularDataAddress();
 			singular_data_pkgs_addrs_.push_back(new_data_pkg);

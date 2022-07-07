@@ -67,6 +67,7 @@ namespace SPH
 		LevelSetDataPackage();
 		virtual ~LevelSetDataPackage(){};
 
+		void registerAllVariables();
 		void initializeSingularData(Real far_field_level_set);
 		void initializeSingularDataAddress();
 		void assignAllPackageDataAddress(Vecu addrs_index, LevelSetDataPackage *src_pkg, Vecu data_index);

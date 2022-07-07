@@ -1,8 +1,8 @@
 /**
-* @file 	base_mesh.hpp
-* @brief 	This is the implementation of the template function and class for base mesh
-* @author	Chi ZHang and Xiangyu Hu
-*/
+ * @file 	base_mesh.hpp
+ * @brief 	This is the implementation of the template function and class for base mesh
+ * @author	Chi ZHang and Xiangyu Hu
+ */
 
 #ifndef MESH_WITH_DATA_PACKAGES_2D_HPP
 #define MESH_WITH_DATA_PACKAGES_2D_HPP
@@ -64,15 +64,21 @@ namespace SPH
 	//=================================================================================================//
 	template <int PKG_SIZE, int ADDRS_SIZE>
 	template <typename DataType>
-	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::
-		initializePackageDataAddress(PackageData<DataType> &pkg_data,
-									 PackageDataAddress<DataType> &pkg_data_addrs)
+	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::initializePackageDataAddress<DataType>::
+	operator()(GeneralDataAssemble<PackageData> &all_pkg_data,
+			   GeneralDataAssemble<PackageDataAddress> &all_pkg_data_addrs)
 	{
-		for (int i = 0; i != ADDRS_SIZE; ++i)
-			for (int j = 0; j != ADDRS_SIZE; ++j)
-			{
-				pkg_data_addrs[i][j] = &pkg_data[0][0];
-			}
+		constexpr int type_index = DataTypeIndex<DataType>::value;
+		for (size_t l = 0; l != std::get<type_index>(all_pkg_data).size(); ++l)
+		{
+			PackageData<DataType> &pkg_data = *std::get<type_index>(all_pkg_data)[l];
+			PackageDataAddress<DataType> &pkg_data_addrs = *std::get<type_index>(all_pkg_data_addrs)[l];
+			for (int i = 0; i != ADDRS_SIZE; ++i)
+				for (int j = 0; j != ADDRS_SIZE; ++j)
+				{
+					pkg_data_addrs[i][j] = &pkg_data[0][0];
+				}
+		}
 	}
 	//=================================================================================================//
 	template <int PKG_SIZE, int ADDRS_SIZE>
@@ -182,4 +188,4 @@ namespace SPH
 	//=================================================================================================//
 }
 //=================================================================================================//
-#endif //MESH_WITH_DATA_PACKAGES_2D_HPP
+#endif // MESH_WITH_DATA_PACKAGES_2D_HPP
