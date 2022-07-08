@@ -214,7 +214,7 @@ There are two other submodules in SPHInXsys, i.e. simbody and wasmtbb,
 these are advanced components that you do not need for now.  
 
 If you install SPHinXsys from .tar file from relase version.
-You need unzip the source and download eigen 3 source from https://eigen.tuxfamily.org
+You need unzip the source and download eigen 3 source from <https://eigen.tuxfamily.org>
 and copy all files into the folder 3rd_party/eigen in SPHinXsys source.
 
 Make build directory for **SPHinXsys**::
@@ -253,13 +253,7 @@ Rigth now, you have the **SPHinXsys** successfully installed in your computer, H
 Installing on Windows
 ---------------------------------------
 
-We provide pre-built binaries for use with Visual Studio 2017. 
-If you have an earlier or later version of Visual Studio, 
-or if you are using Visual Studio Express you will likely need to build from source (not hard). 
-See the separate build from source document referenced at the start of this chapter.
-
-The only prerequisite on Windows is that you have a development environment (Visual Studio) and a way to unzip the `.zip` package. 
-If you don’t have one, you’ll need to install software that can perform the unzip operation. 
+The prerequisite on Windows is that you have a c++ development environment (Visual Studio 2017 (recommanded) or later version) and a way to unzip the `.zip` package.
 
 Step1: Install CMake
 
@@ -314,7 +308,16 @@ Step5: Install Goole test
 	- Similar to the installation of Simbody, build `ALL_BUILD` and `INSTALL` with `Debug` and `ReleaseWithDebugInfo` modes respectively.
 	- Set up Windows system environment variables: GTEST_HOME with the value of the install prefix directory (User variables). Also you need add the bin directory as new path. the dll files inside need to found when running the tests.    
 
-Step6: SPHinXsys
+Step6: Install Eigen
+
+	The Eigen library is a submodule in SPHinXsys.
+	If you install SPHinXsys from .zip or .tar file from relase version.
+	You need unzip the source and download eigen 3 source from <https://eigen.tuxfamily.org>
+	and copy all files into the folder 3rd_party/eigen in SPHinXsys source.
+	There are two other submodules in SPHInXsys, i.e. simbody and wasmtbb, 
+	these are advanced components that you do not need for now. 
+
+Step7: SPHinXsys
 
 	- Download the release version of SPHinXsys <https://github.com/Xiangyu-Hu/SPHinXsys/releases>, and then unzip it to the appropriate directory on your computer and create a new build directory.
 	- Please note that you should use simple name for the directory, especially not including number '0', which may trigger a bug in Cmake and leads to linking error in Visual Studio. 
