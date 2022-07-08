@@ -22,21 +22,6 @@ namespace SPH
 		registerPackageData(near_interface_id_, near_interface_id_addrs_);
 	}
 	//=================================================================================================//
-	void LevelSetDataPackage::initializeSingularDataAddress()
-	{
-		initialize_pkg_data_addrs_(all_pkg_data_, all_pkg_data_addrs_);
-	}
-	//=================================================================================================//
-	void LevelSetDataPackage::
-		assignAllPackageDataAddress(Vecu addrs_index, LevelSetDataPackage *src_pkg, Vecu data_index)
-	{
-		assignPackageDataAddress(phi_addrs_, addrs_index, src_pkg->phi_, data_index);
-		assignPackageDataAddress(phi_gradient_addrs_, addrs_index, src_pkg->phi_gradient_, data_index);
-		assignPackageDataAddress(kernel_weight_addrs_, addrs_index, src_pkg->kernel_weight_, data_index);
-		assignPackageDataAddress(kernel_gradient_addrs_, addrs_index, src_pkg->kernel_gradient_, data_index);
-		assignPackageDataAddress(near_interface_id_addrs_, addrs_index, src_pkg->near_interface_id_, data_index);
-	}
-	//=================================================================================================//
 	void LevelSetDataPackage::computeLevelSetGradient()
 	{
 		computeGradient(phi_addrs_, phi_gradient_addrs_);

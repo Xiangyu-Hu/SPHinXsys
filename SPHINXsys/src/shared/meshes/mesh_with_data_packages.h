@@ -188,17 +188,32 @@ namespace SPH
 			void operator()(GeneralDataAssemble<PackageData> &all_pkg_data,
 							GeneralDataAssemble<PackageDataAddress> &all_pkg_data_addrs);
 		};
+		DataAssembleOperation<initializePackageDataAddress> initialize_pkg_data_addrs_;
 		/** assign address for a package data when the package is an inner one */
 		template <typename DataType>
-		void assignPackageDataAddress(PackageDataAddress<DataType> &pkg_data_addrs, Vecu &addrs_index,
-									  PackageData<DataType> &pkg_data, Vecu &data_index);
+		struct assignPackageDataAddress
+		{
+			void operator()(GeneralDataAssemble<PackageDataAddress> &all_pkg_data_addrs,
+							const Vecu &addrs_index,
+							GeneralDataAssemble<PackageData> &all_pkg_data,
+							const Vecu &data_index);
+		};
+		DataAssembleOperation<assignPackageDataAddress> assign_pkg_data_addrs_;
 
 		/** obtain averaged value at a corner of a data cell */
 		template <typename DataType>
 		DataType CornerAverage(PackageDataAddress<DataType> &pkg_data_addrs, Veci addrs_index, Veci corner_direction);
 
 	public:
-		DataAssembleOperation<initializePackageDataAddress> initialize_pkg_data_addrs_;
+		void initializeSingularDataAddress()
+		{
+			initialize_pkg_data_addrs_(all_pkg_data_, all_pkg_data_addrs_);
+		};
+
+		void assignAllPackageDataAddress(const Vecu &addrs_index, GridDataPackage *src_pkg, const Vecu &data_index)
+		{
+			assign_pkg_data_addrs_(all_pkg_data_addrs_, addrs_index, src_pkg->all_pkg_data_, data_index);
+		};
 	};
 
 	/**

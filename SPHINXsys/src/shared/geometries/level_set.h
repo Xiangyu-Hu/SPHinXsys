@@ -69,8 +69,6 @@ namespace SPH
 
 		void registerAllVariables();
 		void initializeSingularData(Real far_field_level_set);
-		void initializeSingularDataAddress();
-		void assignAllPackageDataAddress(Vecu addrs_index, LevelSetDataPackage *src_pkg, Vecu data_index);
 		void initializeBasicData(Shape &shape);
 		void computeKernelIntegrals(LevelSet &level_set);
 		void computeLevelSetGradient();

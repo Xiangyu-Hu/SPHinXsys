@@ -99,13 +99,20 @@ namespace SPH
 	//=================================================================================================//
 	template <int PKG_SIZE, int ADDRS_SIZE>
 	template <typename DataType>
-	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::
-		assignPackageDataAddress(PackageDataAddress<DataType> &pkg_data_addrs, Vecu &addrs_index,
-								 PackageData<DataType> &pkg_data, Vecu &data_index)
+	void GridDataPackage<PKG_SIZE, ADDRS_SIZE>::assignPackageDataAddress<DataType>::
+	operator()(GeneralDataAssemble<PackageDataAddress> &all_pkg_data_addrs,
+			   const Vecu &addrs_index,
+			   GeneralDataAssemble<PackageData> &all_pkg_data,
+			   const Vecu &data_index)
 	{
-		pkg_data_addrs[addrs_index[0]][addrs_index[1]] = &pkg_data[data_index[0]][data_index[1]];
-	}
-	//=================================================================================================//
+		constexpr int type_index = DataTypeIndex<DataType>::value;
+		for (size_t l = 0; l != std::get<type_index>(all_pkg_data).size(); ++l)
+		{
+			PackageData<DataType> &pkg_data = *std::get<type_index>(all_pkg_data)[l];
+			PackageDataAddress<DataType> &pkg_data_addrs = *std::get<type_index>(all_pkg_data_addrs)[l];
+			pkg_data_addrs[addrs_index[0]][addrs_index[1]] = &pkg_data[data_index[0]][data_index[1]];
+		}
+	} //=================================================================================================//
 	template <class MeshFieldType, class GridDataPackageType>
 	template <typename DataType, typename PackageDataType, PackageDataType GridDataPackageType::*MemPtr>
 	DataType MeshWithGridDataPackages<MeshFieldType, GridDataPackageType>::
