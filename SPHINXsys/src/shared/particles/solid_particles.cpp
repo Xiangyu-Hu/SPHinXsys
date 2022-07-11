@@ -31,10 +31,6 @@ namespace SPH
 						 [&](size_t i) -> Vecd
 						 { return n_[i]; });
 		registerVariable(B_, "CorrectionMatrix", Matd(1.0));
-		//----------------------------------------------------------------------
-		//		for FSI
-		//----------------------------------------------------------------------
-		registerVariable(force_from_fluid_, "ForceFromFluid");
 	}
 	//=================================================================================================//
 	Vecd SolidParticles::getKernelGradient(size_t index_i, size_t index_j, Real dW_ij, Vecd &e_ij)
@@ -302,7 +298,6 @@ namespace SPH
 		//----------------------------------------------------------------------
 		registerVariable(vel_ave_, "AverageVelocity");
 		registerVariable(acc_ave_, "AverageAcceleration");
-		registerVariable(force_from_fluid_, "ForceFromFluid");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------

@@ -271,7 +271,7 @@ namespace SPH
 		 * @brief Constrain a solid body part from the motion
 		 * computed from Simbody.
 		 */
-		class ConstrainSolidBodyPartBySimBody : public ConstrainSolidBodyRegion
+		class ConstrainSolidBodyPartBySimBody : public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
 		public:
 			ConstrainSolidBodyPartBySimBody(SolidBody &solid_body,
@@ -283,6 +283,7 @@ namespace SPH
 			virtual ~ConstrainSolidBodyPartBySimBody(){};
 
 		protected:
+			StdLargeVec<Vecd> &pos_, &pos0_, &vel_, &n_, &n0_;
 			SimTK::MultibodySystem &MBsystem_;
 			SimTK::MobilizedBody &mobod_;
 			SimTK::Force::DiscreteForces &force_on_bodies_;
@@ -314,7 +315,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &mass_;
-			StdLargeVec<Vecd> &force_from_fluid_, &acc_prior_, &pos_;
+			StdLargeVec<Vecd> &acc_, &acc_prior_, &pos_;
 			SimTK::MultibodySystem &MBsystem_;
 			SimTK::MobilizedBody &mobod_;
 			SimTK::Force::DiscreteForces &force_on_bodies_;

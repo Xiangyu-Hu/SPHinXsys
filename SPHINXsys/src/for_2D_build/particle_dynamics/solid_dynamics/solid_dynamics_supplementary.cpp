@@ -40,11 +40,8 @@ namespace SPH
 		//=========================================================================================//
 		void ConstrainSolidBodyPartBySimBody::Update(size_t index_i, Real dt)
 		{
-			Vecd& pos_0_i = pos0_[index_i];
 			Vec3 rr, pos, vel, acc;
-			rr(0) = pos_0_i[0] - initial_mobod_origin_location_[0];
-			rr(1) = pos_0_i[1] - initial_mobod_origin_location_[1];
-			rr(2) = 0.0;
+			rr = upgradeToVector3D(pos0_[index_i]) - initial_mobod_origin_location_;
 			mobod_.findStationLocationVelocityAndAccelerationInGround(*simbody_state_, rr, pos, vel, acc);
 			/** this is how we calculate the particle position in after transform of MBbody.
 			 * const SimTK::Rotation&  R_GB = mobod_.getBodyRotation(simbody_state);
@@ -54,7 +51,6 @@ namespace SPH
 			 */
 			pos_[index_i] = pos.getSubVec<2>(0);
 			vel_[index_i] = vel.getSubVec<2>(0);
-			acc_[index_i] = acc.getSubVec<2>(0);
 			n_[index_i] = (mobod_.getBodyRotation(*simbody_state_) 
 						* upgradeToVector3D(n0_[index_i])).getSubVec<2>(0);
 		}
@@ -62,7 +58,7 @@ namespace SPH
 		SimTK::SpatialVec TotalForceOnSolidBodyPartForSimBody::ReduceFunction(size_t index_i, Real dt)
 		{
 			Vec3 force_from_particle(0);
-			force_from_particle.updSubVec<2>(0) = force_from_fluid_[index_i] + acc_prior_[index_i] * mass_[index_i];
+			force_from_particle.updSubVec<2>(0) = (acc_[index_i] + acc_prior_[index_i]) * mass_[index_i];
 			Vec3 displacement(0);
 			displacement.updSubVec<2>(0) = pos_[index_i]
 				- current_mobod_origin_location_.getSubVec<2>(0);

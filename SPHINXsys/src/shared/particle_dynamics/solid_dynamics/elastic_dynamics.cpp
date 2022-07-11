@@ -68,8 +68,8 @@ namespace SPH
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 
-				Vecd gradw_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
-				deformation -= Vol_[index_j] * SimTK::outer((pos_n_i - pos_[index_j]), gradw_ij);
+				Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
+				deformation -= Vol_[index_j] * SimTK::outer((pos_n_i - pos_[index_j]), gradW_ij);
 			}
 
 			F_[index_i] = B_[index_i] * deformation;
@@ -86,7 +86,7 @@ namespace SPH
 		BaseStressRelaxationFirstHalf::
 			BaseStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation)
 			: BaseElasticRelaxation(inner_relation),
-			  acc_prior_(particles_->acc_prior_), force_from_fluid_(particles_->force_from_fluid_)
+			  acc_prior_(particles_->acc_prior_)
 		{
 			rho0_ = material_->ReferenceDensity();
 			inv_rho0_ = 1.0 / rho0_;
@@ -95,7 +95,7 @@ namespace SPH
 		//=================================================================================================//
 		void BaseStressRelaxationFirstHalf::Update(size_t index_i, Real dt)
 		{
-			vel_[index_i] += acc_[index_i] * dt;
+			vel_[index_i] += (acc_prior_[index_i] + acc_[index_i]) * dt;
 		}
 		//=================================================================================================//
 		StressRelaxationFirstHalf::
@@ -119,7 +119,7 @@ namespace SPH
 		void StressRelaxationFirstHalf::Interaction(size_t index_i, Real dt)
 		{
 			// including gravity and force from fluid
-			Vecd acceleration = acc_prior_[index_i] + force_from_fluid_[index_i] / mass_[index_i];
+			Vecd acceleration(0);
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -193,7 +193,7 @@ namespace SPH
 		void KirchhoffStressRelaxationFirstHalf::Interaction(size_t index_i, Real dt)
 		{
 			// including gravity and force from fluid
-			Vecd acceleration = acc_prior_[index_i] + force_from_fluid_[index_i] / mass_[index_i];
+			Vecd acceleration(0);
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -222,9 +222,9 @@ namespace SPH
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 
-				Vecd gradw_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
+				Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
 				deformation_gradient_change_rate -=
-					Vol_[index_j] * SimTK::outer((vel_n_i - vel_[index_j]), gradw_ij);
+					Vol_[index_j] * SimTK::outer((vel_n_i - vel_[index_j]), gradW_ij);
 			}
 
 			dF_dt_[index_i] = deformation_gradient_change_rate * B_[index_i];

@@ -119,12 +119,12 @@ namespace SPH
 		/** register a variable defined in a class (can be non-particle class) */
 		template <typename VariableType>
 		void registerVariable(StdLargeVec<VariableType> &variable_addrs,
-							   const std::string &variable_name, VariableType initial_value = VariableType(0));
+							  const std::string &variable_name, VariableType initial_value = VariableType(0));
 
 		/** register a variable from a initialization function */
 		template <typename VariableType, class InitializationFunction>
 		void registerVariable(StdLargeVec<VariableType> &variable_addrs, const std::string &variable_name,
-										  const InitializationFunction &initialization);
+							  const InitializationFunction &initialization);
 
 		/** get a registered variable from particles by its name. return by pointer so that return nullptr if fail. */
 		template <typename VariableType>
@@ -194,6 +194,10 @@ namespace SPH
 		{
 			return dW_ij * e_ij;
 		};
+
+		virtual Vecd ParticleTotalAcceleration(size_t index_i) { return acc_[index_i] + acc_prior_[index_i]; }
+		virtual Real ParticleVolume(size_t index_i) { return Vol_[index_i]; }
+		virtual Real ParticleMass(size_t index_i) { return mass_[index_i]; }
 
 	protected:
 		SPHBody *sph_body_; /**< The body in which the particles belongs to. */

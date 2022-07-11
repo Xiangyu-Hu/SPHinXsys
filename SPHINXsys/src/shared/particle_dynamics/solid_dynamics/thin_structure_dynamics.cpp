@@ -67,9 +67,9 @@ namespace SPH
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 
-				Vecd gradw_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
+				Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
 				Vecd r_ji = -inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
-				global_configuration += Vol_[index_j] * SimTK::outer(r_ji, gradw_ij);
+				global_configuration += Vol_[index_j] * SimTK::outer(r_ji, gradW_ij);
 			}
 			Matd local_configuration =
 				transformation_matrix_[index_i] * global_configuration * (~transformation_matrix_[index_i]);
@@ -98,10 +98,10 @@ namespace SPH
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				size_t index_j = inner_neighborhood.j_[n];
-				Vecd gradw_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
-				deformation_part_one -= Vol_[index_j] * SimTK::outer((pos_n_i - pos_[index_j]), gradw_ij);
+				Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
+				deformation_part_one -= Vol_[index_j] * SimTK::outer((pos_n_i - pos_[index_j]), gradW_ij);
 				deformation_part_two -= Vol_[index_j] * SimTK::outer(
-															((pseudo_n_i - n0_[index_i]) - (pseudo_n_[index_j] - n0_[index_j])), gradw_ij);
+															((pseudo_n_i - n0_[index_i]) - (pseudo_n_[index_j] - n0_[index_j])), gradW_ij);
 			}
 			F_[index_i] = transformation_matrix_i * deformation_part_one * (~transformation_matrix_i) * B_[index_i];
 			F_[index_i].col(Dimensions - 1) = transformation_matrix_i * pseudo_n_[index_i];
@@ -116,7 +116,6 @@ namespace SPH
 			  pos_(particles_->pos_), vel_(particles_->vel_),
 			  acc_(particles_->acc_),
 			  acc_prior_(particles_->acc_prior_),
-			  force_from_fluid_(particles_->force_from_fluid_),
 			  n0_(particles_->n0_), pseudo_n_(particles_->pseudo_n_),
 			  dpseudo_n_dt_(particles_->dpseudo_n_dt_), dpseudo_n_d2t_(particles_->dpseudo_n_d2t_),
 			  rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
@@ -271,8 +270,7 @@ namespace SPH
 											  * inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n] * Vol_[index_j];
 			}
 			/** including external force (body force) and force from fluid */
-			acc_[index_i] = acceleration * inv_rho0_ / thickness_[index_i]
-				+ acc_prior_[index_i] + force_from_fluid_[index_i] / mass_[index_i] / thickness_[index_i];
+			acc_[index_i] = acceleration * inv_rho0_ / thickness_[index_i];
 			dpseudo_n_d2t_[index_i] = pseudo_normal_acceleration * inv_rho0_
 				* 12.0 / powerN(thickness_[index_i], 3);
 
@@ -284,7 +282,7 @@ namespace SPH
 		//=================================================================================================//
 		void ShellStressRelaxationFirstHalf::Update(size_t index_i, Real dt)
 		{
-			vel_[index_i] += acc_[index_i] * dt;
+			vel_[index_i] += (acc_prior_[index_i] + acc_[index_i]) * dt;
 			angular_vel_[index_i] += dangular_vel_dt_[index_i] * dt;
 		}
 		//=================================================================================================//
@@ -310,11 +308,11 @@ namespace SPH
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 
-				Vecd gradw_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
+				Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
 				deformation_gradient_change_rate_part_one -= Vol_[index_j] * SimTK::outer(
-																				 (vel_n_i - vel_[index_j]), gradw_ij);
+																				 (vel_n_i - vel_[index_j]), gradW_ij);
 				deformation_gradient_change_rate_part_two -= Vol_[index_j] * SimTK::outer(
-																				 (dpseudo_n_dt_i - dpseudo_n_dt_[index_j]), gradw_ij);
+																				 (dpseudo_n_dt_i - dpseudo_n_dt_[index_j]), gradW_ij);
 			}
 			dF_dt_[index_i] = transformation_matrix_i * deformation_gradient_change_rate_part_one * (~transformation_matrix_i) * B_[index_i];
 			dF_dt_[index_i].col(Dimensions - 1) = transformation_matrix_i * dpseudo_n_dt_[index_i];
@@ -540,7 +538,7 @@ namespace SPH
 			for (int i = 0; i < point_forces_.size(); ++i)
 			{
 				Vecd force = weight_[i][index_i] / (sum_of_weight_[i] + TinyReal) * time_dependent_point_forces_[i];
-				acc_prior_[index_i] += force / mass_[index_i] / thickness_[index_i];
+				acc_prior_[index_i] += force / particles_->ParticleMass(index_i);
 			}
 		}
 		//=================================================================================================//

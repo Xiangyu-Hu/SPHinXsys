@@ -56,10 +56,6 @@ namespace SPH
 		StdLargeVec<Vecd> n_;	 /**< normal direction */
 		StdLargeVec<Vecd> n0_;	 /**< initial normal direction */
 		StdLargeVec<Matd> B_;	 /**< configuration correction for linear reproducing */
-		//----------------------------------------------------------------------
-		//		for fluid-structure interaction (FSI)
-		//----------------------------------------------------------------------
-		StdLargeVec<Vecd> force_from_fluid_; /**<  forces (including pressure and viscous) from fluid */
 
 		/** Get the kernel gradient in weak form. */
 		virtual Vecd getKernelGradient(size_t index_i, size_t index_j, Real dW_ij, Vecd &e_ij) override;
@@ -88,8 +84,8 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		for fluid-structure interaction (FSI)
 		//----------------------------------------------------------------------
-		StdLargeVec<Vecd> vel_ave_;			 /**<  fluid time-step averaged particle velocity */
-		StdLargeVec<Vecd> acc_ave_;			 /**<  fluid time-step averaged particle acceleration */
+		StdLargeVec<Vecd> vel_ave_; /**<  fluid time-step averaged particle velocity */
+		StdLargeVec<Vecd> acc_ave_; /**<  fluid time-step averaged particle acceleration */
 
 		// STRAIN
 		Matd getGreenLagrangeStrain(size_t particle_i);
@@ -180,6 +176,9 @@ namespace SPH
 		StdLargeVec<Vecd> global_shear_stress_; /**< global shear stress */
 		StdLargeVec<Matd> global_stress_;		/**<  global stress for pair interaction */
 		StdLargeVec<Matd> global_moment_;		/**<  global bending moment for pair interaction */
+
+		virtual Real ParticleVolume(size_t index_i) { return Vol_[index_i] * thickness_[index_i]; }
+		virtual Real ParticleMass(size_t index_i) { return mass_[index_i] * thickness_[index_i]; }
 
 		virtual void initializeOtherVariables() override;
 		virtual ShellParticles *ThisObjectPtr() override { return this; };

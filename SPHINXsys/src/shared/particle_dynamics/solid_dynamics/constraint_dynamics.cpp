@@ -338,7 +338,9 @@ namespace SPH
 											SimTK::MobilizedBody &mobod,
 											SimTK::Force::DiscreteForces &force_on_bodies,
 											SimTK::RungeKuttaMersonIntegrator &integ)
-			: ConstrainSolidBodyRegion(solid_body, body_part),
+			: PartSimpleDynamicsByParticle(solid_body, body_part), SolidDataSimple(solid_body),
+			  pos_(particles_->pos_), pos0_(particles_->pos0_),
+			  vel_(particles_->vel_), n_(particles_->n_), n0_(particles_->n0_),
 			  MBsystem_(MBsystem), mobod_(mobod), force_on_bodies_(force_on_bodies), integ_(integ)
 		{
 			simbody_state_ = &integ_.getState();
@@ -362,7 +364,7 @@ namespace SPH
 												SimTK::RungeKuttaMersonIntegrator &integ)
 			: PartDynamicsByParticleReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>>(solid_body, body_part),
 			  SolidDataSimple(solid_body), mass_(particles_->mass_),
-			  force_from_fluid_(particles_->force_from_fluid_), acc_prior_(particles_->acc_prior_),
+			  acc_(particles_->acc_), acc_prior_(particles_->acc_prior_),
 			  pos_(particles_->pos_),
 			  MBsystem_(MBsystem), mobod_(mobod), force_on_bodies_(force_on_bodies), integ_(integ)
 		{

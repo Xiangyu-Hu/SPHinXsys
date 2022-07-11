@@ -153,7 +153,7 @@ namespace SPH
 
 		protected:
 			Real rho0_, inv_rho0_;
-			StdLargeVec<Vecd> &acc_prior_, &force_from_fluid_;
+			StdLargeVec<Vecd> &acc_prior_;
 			Real smoothing_length_;
 
 			virtual void Update(size_t index_i, Real dt = 0.0) override;

@@ -153,7 +153,7 @@ namespace SPH
 		TotalForceOnSolid::TotalForceOnSolid(SolidBody &solid_body)
 			: ParticleDynamicsReduce<Vecd, ReduceSum<Vecd>>(solid_body),
 			SolidDataSimple(solid_body),
-			force_from_fluid_(particles_->force_from_fluid_)
+			force_from_fluid_(*particles_->getVariableByName<Vecd>("ForceFromFluid"))
 		{
 			quantity_name_ = "TotalForceOnSolid";
 			initial_reference_ = Vecd(0);
