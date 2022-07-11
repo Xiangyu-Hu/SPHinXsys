@@ -59,14 +59,17 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		for fluid-structure interaction (FSI)
 		//----------------------------------------------------------------------
-		StdLargeVec<Vecd> vel_ave_;			 /**<  fluid time-step averaged particle velocity */
-		StdLargeVec<Vecd> acc_ave_;			 /**<  fluid time-step averaged particle acceleration */
 		StdLargeVec<Vecd> force_from_fluid_; /**<  forces (including pressure and viscous) from fluid */
 
 		/** Get the kernel gradient in weak form. */
 		virtual Vecd getKernelGradient(size_t index_i, size_t index_j, Real dW_ij, Vecd &e_ij) override;
+		/** Get wall average velocity when interacting with fluid. */
+		virtual StdLargeVec<Vecd> *AverageVelocity() { return &vel_; };
+		/** Get wall average acceleration when interacting with fluid. */
+		virtual StdLargeVec<Vecd> *AverageAcceleration() { return &acc_; };
 
 		virtual void initializeOtherVariables() override;
+
 		virtual SolidParticles *ThisObjectPtr() override { return this; };
 	};
 
@@ -80,8 +83,13 @@ namespace SPH
 		ElasticSolidParticles(SPHBody &sph_body, ElasticSolid *elastic_solid);
 		virtual ~ElasticSolidParticles(){};
 
-		StdLargeVec<Matd> F_;		   /**<  deformation tensor */
-		StdLargeVec<Matd> dF_dt_;	   /**<  deformation tensor change rate */
+		StdLargeVec<Matd> F_;	  /**<  deformation tensor */
+		StdLargeVec<Matd> dF_dt_; /**<  deformation tensor change rate */
+		//----------------------------------------------------------------------
+		//		for fluid-structure interaction (FSI)
+		//----------------------------------------------------------------------
+		StdLargeVec<Vecd> vel_ave_;			 /**<  fluid time-step averaged particle velocity */
+		StdLargeVec<Vecd> acc_ave_;			 /**<  fluid time-step averaged particle acceleration */
 
 		// STRAIN
 		Matd getGreenLagrangeStrain(size_t particle_i);
@@ -123,6 +131,11 @@ namespace SPH
 
 		/** relevant stress measure */
 		std::string stress_measure_;
+
+		/** Get wall average velocity when interacting with fluid. */
+		virtual StdLargeVec<Vecd> *AverageVelocity() { return &vel_ave_; };
+		/** Get wall average acceleration when interacting with fluid. */
+		virtual StdLargeVec<Vecd> *AverageAcceleration() { return &acc_ave_; };
 
 		virtual void initializeOtherVariables() override;
 		virtual ElasticSolidParticles *ThisObjectPtr() override { return this; };

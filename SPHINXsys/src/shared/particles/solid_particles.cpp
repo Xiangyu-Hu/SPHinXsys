@@ -34,8 +34,6 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		for FSI
 		//----------------------------------------------------------------------
-		registerVariable(vel_ave_, "AverageVelocity");
-		registerVariable(acc_ave_, "AverageAcceleration");
 		registerVariable(force_from_fluid_, "ForceFromFluid");
 	}
 	//=================================================================================================//
@@ -58,6 +56,11 @@ namespace SPH
 		//----------------------------------------------------------------------
 		registerVariable(F_, "DeformationGradient", Matd(1.0));
 		registerVariable(dF_dt_, "DeformationRate");
+		//----------------------------------------------------------------------
+		//		for FSI
+		//----------------------------------------------------------------------
+		registerVariable(vel_ave_, "AverageVelocity");
+		registerVariable(acc_ave_, "AverageAcceleration");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------

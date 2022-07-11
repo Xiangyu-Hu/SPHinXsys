@@ -18,14 +18,12 @@ namespace SPH
 		ImposeExternalForce::
 			ImposeExternalForce(SolidBody &solid_body, SolidBodyPartForSimbody &body_part)
 			: PartSimpleDynamicsByParticle(solid_body, body_part), SolidDataSimple(solid_body),
-			  pos0_(particles_->pos0_), vel_(particles_->vel_),
-			  vel_ave_(particles_->vel_ave_) {}
+			  pos0_(particles_->pos0_), vel_(particles_->vel_){}
 		//=================================================================================================//
 		void ImposeExternalForce::Update(size_t index_i, Real dt)
 		{
 			Vecd induced_acceleration = getAcceleration(pos0_[index_i]);
 			vel_[index_i] += induced_acceleration * dt;
-			vel_ave_[index_i] = vel_[index_i];
 		}
 		//=================================================================================================//
 		SpringDamperConstraintParticleWise::

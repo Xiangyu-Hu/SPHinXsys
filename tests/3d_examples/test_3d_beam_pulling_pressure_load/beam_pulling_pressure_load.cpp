@@ -49,7 +49,7 @@ public:
 	LoadForce(SPHBody& sph_body, BodyPartByParticle& body_part, StdVec<array<Real, 2>> f_arr)
 		:PartSimpleDynamicsByParticle(sph_body, body_part),
 		solid_dynamics::ElasticSolidDataSimple(sph_body),
-		dvel_dt_prior(particles_->acc_prior_),
+		acc_prior(particles_->acc_prior_),
 		force_arr_(f_arr),
 		mass_n_(particles_->mass_),
 	    vol_(particles_->Vol_),
@@ -63,7 +63,7 @@ public:
 	}
 
 protected:
-	StdLargeVec<Vecd>& dvel_dt_prior;
+	StdLargeVec<Vecd>& acc_prior;
 	StdLargeVec<Real>& mass_n_;
 	StdLargeVec<Real> area_0_;
 	StdLargeVec<Real> &vol_;
@@ -104,7 +104,7 @@ protected:
 		// current_area = J * area_0 * current_normal_norm
         Real mean_force_ = 	getForce(time) * J * area_0_[index_i] * current_normal_norm;
 
-		dvel_dt_prior[index_i] += (mean_force_ / mass_n_[index_i]) * normal;
+		acc_prior[index_i] += (mean_force_ / mass_n_[index_i]) * normal;
 	}
 };
 

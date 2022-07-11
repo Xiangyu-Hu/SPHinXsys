@@ -116,9 +116,9 @@ namespace SPH
 			explicit BaseFluidPressureForceOnSolid(BaseBodyRelationContact &contact_relation)
 				: InteractionDynamics(*contact_relation.sph_body_),
 				  FSIContactData(contact_relation),
-				  Vol_(particles_->Vol_), vel_ave_(particles_->vel_ave_),
+				  Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity()),
 				  force_from_fluid_(particles_->force_from_fluid_),
-				  acc_ave_(particles_->acc_ave_), n_(particles_->n_)
+				  acc_ave_(*particles_->AverageAcceleration()), n_(particles_->n_)
 			{
 				for (size_t k = 0; k != contact_particles_.size(); ++k)
 				{
@@ -126,7 +126,7 @@ namespace SPH
 					contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
 					contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 					contact_p_.push_back(&(contact_particles_[k]->p_));
-					contact_dvel_dt_prior_.push_back(&(contact_particles_[k]->acc_prior_));
+					contact_acc_prior_.push_back(&(contact_particles_[k]->acc_prior_));
 					riemann_solvers_.push_back(RiemannSolverType(*contact_material_[k], *contact_material_[k]));
 				}
 			};
@@ -136,12 +136,12 @@ namespace SPH
 			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &vel_ave_, &force_from_fluid_, &acc_ave_, &n_;
 			StdVec<StdLargeVec<Real> *> contact_Vol_, contact_rho_n_, contact_p_;
-			StdVec<StdLargeVec<Vecd> *> contact_vel_n_, contact_dvel_dt_prior_;
+			StdVec<StdLargeVec<Vecd> *> contact_vel_n_, contact_acc_prior_;
 			StdVec<RiemannSolverType> riemann_solvers_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override
 			{
-				const Vecd &dvel_dt_ave_i = acc_ave_[index_i];
+				const Vecd &acc_ave_i = acc_ave_[index_i];
 				Real Vol_i = Vol_[index_i];
 				const Vecd &vel_ave_i = vel_ave_[index_i];
 				const Vecd &n_i = n_[index_i];
@@ -153,7 +153,7 @@ namespace SPH
 					StdLargeVec<Real> &rho_n_k = *(contact_rho_n_[k]);
 					StdLargeVec<Real> &p_k = *(contact_p_[k]);
 					StdLargeVec<Vecd> &vel_n_k = *(contact_vel_n_[k]);
-					StdLargeVec<Vecd> &dvel_dt_prior_k = *(contact_dvel_dt_prior_[k]);
+					StdLargeVec<Vecd> &acc_prior_k = *(contact_acc_prior_[k]);
 					Fluid *fluid_k = contact_material_[k];
 					RiemannSolverType &riemann_solver_k = riemann_solvers_[k];
 					Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
@@ -162,7 +162,7 @@ namespace SPH
 						size_t index_j = contact_neighborhood.j_[n];
 						Vecd e_ij = contact_neighborhood.e_ij_[n];
 						Real r_ij = contact_neighborhood.r_ij_[n];
-						Real face_wall_external_acceleration = dot((dvel_dt_prior_k[index_j] - dvel_dt_ave_i), e_ij);
+						Real face_wall_external_acceleration = dot((acc_prior_k[index_j] - acc_ave_i), e_ij);
 						Real p_in_wall = p_k[index_j] + rho_n_k[index_j] * r_ij * SMAX(0.0, face_wall_external_acceleration);
 						Real rho_in_wall = fluid_k->DensityFromPressure(p_in_wall);
 						Vecd vel_in_wall = 2.0 * vel_ave_i - vel_n_k[index_j];
@@ -182,7 +182,7 @@ namespace SPH
 		/**
 		* @class BaseFluidPressureForceOnSolidInEuler
 		* @brief Template class fro computing the pressure force from the fluid with different Riemann solvers.
-		* The pressrue force is added on the viscous force of the latter is computed.
+		* The pressure force is added on the viscous force of the latter is computed.
 		* This class is for FSI applications to achieve smaller solid dynamics
 		* time step size compared to the fluid dynamics
 		*/
@@ -193,7 +193,7 @@ namespace SPH
 			explicit BaseFluidPressureForceOnSolidInEuler(BaseBodyRelationContact &contact_relation)
 				: InteractionDynamics(*contact_relation.sph_body_),
 				EFSIContactData(contact_relation),
-				Vol_(particles_->Vol_), vel_ave_(particles_->vel_ave_),
+				Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity()),
 				force_from_fluid_(particles_->force_from_fluid_), n_(particles_->n_)
 			{
 				for (size_t k = 0; k != contact_particles_.size(); ++k)

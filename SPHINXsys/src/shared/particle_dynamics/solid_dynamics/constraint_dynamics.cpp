@@ -20,8 +20,7 @@ namespace SPH
 			: PartSimpleDynamicsByParticle(sph_body, body_part), SolidDataSimple(sph_body),
 			  pos_(particles_->pos_), pos0_(particles_->pos0_),
 			  n_(particles_->n_), n0_(particles_->n0_),
-			  vel_(particles_->vel_), acc_(particles_->acc_),
-			  vel_ave_(particles_->vel_ave_), acc_ave_(particles_->acc_ave_)
+			  vel_(particles_->vel_), acc_(particles_->acc_)
 		{
 		}
 		//=================================================================================================//
@@ -30,14 +29,11 @@ namespace SPH
 			Vecd pos_0 = pos0_[index_i];
 			Vecd pos_n = pos_[index_i];
 			Vecd vel_n = vel_[index_i];
-			Vecd dvel_dt = acc_[index_i];
+			Vecd acc = acc_[index_i];
 
 			pos_[index_i] = getDisplacement(pos_0, pos_n);
 			vel_[index_i] = getVelocity(pos_0, pos_n, vel_n);
-			acc_[index_i] = getAcceleration(pos_0, pos_n, dvel_dt);
-			/** the average values are prescirbed also. */
-			vel_ave_[index_i] = vel_[index_i];
-			acc_ave_[index_i] = acc_[index_i];
+			acc_[index_i] = getAcceleration(pos_0, pos_n, acc);
 		}
 		//=================================================================================================//
 		ConstrainSolidBodySurfaceRegion::
@@ -71,7 +67,6 @@ namespace SPH
 			: PartSimpleDynamicsByParticle(sph_body, body_part), SolidDataSimple(sph_body),
 			  pos_(particles_->pos_), pos0_(particles_->pos0_),
 			  vel_(particles_->vel_), acc_(particles_->acc_),
-			  vel_ave_(particles_->vel_ave_), acc_ave_(particles_->acc_ave_),
 			  start_time_(start_time), end_time_(end_time), pos_end_center_(pos_end_center)
 		{
 			BoundingBox bounds = sph_body.getBodyDomainBounds();
@@ -120,7 +115,6 @@ namespace SPH
 			: PartSimpleDynamicsByParticle(sph_body, body_part), SolidDataSimple(sph_body),
 			  pos_(particles_->pos_), pos0_(particles_->pos0_),
 			  vel_(particles_->vel_), acc_(particles_->acc_),
-			  vel_ave_(particles_->vel_ave_), acc_ave_(particles_->acc_ave_),
 			  start_time_(start_time), end_time_(end_time), end_scale_(end_scale)
 		{
 			BoundingBox bounds = sph_body.getBodyDomainBounds();
@@ -263,18 +257,17 @@ namespace SPH
 			: PartInteractionDynamicsByParticleWithUpdate(*inner_relation.sph_body_, body_part),
 			  SolidDataInner(inner_relation),
 			  Vol_(particles_->Vol_),
-			  vel_(particles_->vel_), acc_(particles_->acc_),
-			  vel_ave_(particles_->vel_ave_), acc_ave_(particles_->acc_ave_)
+			  vel_(particles_->vel_), acc_(particles_->acc_)
 		{
 			particles_->registerVariable(vel_temp_, "TemporaryVelocity");
-			particles_->registerVariable(dvel_dt_temp_, "TemporaryAcceleration");
+			particles_->registerVariable(acc_temp_, "TemporaryAcceleration");
 		}
 		//=================================================================================================//
 		void SoftConstrainSolidBodyRegion::Interaction(size_t index_i, Real dt)
 		{
 			Real ttl_weight(Eps);
 			Vecd vel_i = vel_[index_i];
-			Vecd dvel_dt_i = acc_[index_i];
+			Vecd acc_i = acc_[index_i];
 
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -284,38 +277,35 @@ namespace SPH
 
 				ttl_weight += weight_j;
 				vel_i += vel_[index_j] * weight_j;
-				dvel_dt_i += acc_[index_j] * weight_j;
+				acc_i += acc_[index_j] * weight_j;
 			}
 
 			vel_temp_[index_i] = vel_i / ttl_weight;
-			dvel_dt_temp_[index_i] = dvel_dt_i / ttl_weight;
+			acc_temp_[index_i] = acc_i / ttl_weight;
 		}
 		//=================================================================================================//
 		void SoftConstrainSolidBodyRegion::Update(size_t index_i, Real dt)
 		{
 			vel_[index_i] = vel_temp_[index_i];
-			acc_[index_i] = dvel_dt_temp_[index_i];
-			/** the average values are prescirbed also. */
-			vel_ave_[index_i] = vel_[index_i];
-			acc_ave_[index_i] = acc_[index_i];
+			acc_[index_i] = acc_temp_[index_i];
 		}
 		//=================================================================================================//
 		ClampConstrainSolidBodyRegion::
 			ClampConstrainSolidBodyRegion(BaseBodyRelationInner &inner_relation, BodyPartByParticle &body_part)
 			: ParticleDynamics<void>(*inner_relation.sph_body_),
-			  constrianing_(ConstrainSolidBodyRegion(*inner_relation.sph_body_, body_part)),
-			  softing_(SoftConstrainSolidBodyRegion(inner_relation, body_part)) {}
+			  constraint_(ConstrainSolidBodyRegion(*inner_relation.sph_body_, body_part)),
+			  softening_(SoftConstrainSolidBodyRegion(inner_relation, body_part)) {}
 		//=================================================================================================//
 		void ClampConstrainSolidBodyRegion::exec(Real dt)
 		{
-			constrianing_.exec();
-			softing_.exec();
+			constraint_.exec();
+			softening_.exec();
 		}
 		//=================================================================================================//
 		void ClampConstrainSolidBodyRegion::parallel_exec(Real dt)
 		{
-			constrianing_.parallel_exec();
-			softing_.parallel_exec();
+			constraint_.parallel_exec();
+			softening_.parallel_exec();
 		}
 		//=================================================================================================//
 		ConstrainSolidBodyMassCenter::

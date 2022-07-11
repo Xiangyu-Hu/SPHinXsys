@@ -344,7 +344,7 @@ namespace SPH
 			Vecd pos_0 = pos0_[index_i];
 			Vecd pos_n = pos_[index_i];
 			Vecd vel_n = vel_[index_i];
-			Vecd dvel_dt = acc_[index_i];
+			Vecd acc = acc_[index_i];
 			Vecd rotation_0(0.0);
 			Vecd angular_vel(0.0);
 			Vecd dangular_vel_dt(0.0);
@@ -352,7 +352,7 @@ namespace SPH
 
 			pos_[index_i] = getDisplacement(pos_0, pos_n);
 			vel_[index_i] = getVelocity(pos_0, pos_n, vel_n);
-			acc_[index_i] = GetAcceleration(pos_0, pos_n, dvel_dt);
+			acc_[index_i] = GetAcceleration(pos_0, pos_n, acc);
 			rotation_[index_i] = GetRotationAngle(pos_0, pos_n, rotation_0);
 			angular_vel_[index_i] = GetAngularVelocity(pos_0, pos_n, angular_vel);
 			dangular_vel_dt_[index_i] = GetAngularAcceleration(pos_0, pos_n, dangular_vel_dt);

@@ -14,7 +14,7 @@ namespace SPH
 			FluidViscousForceOnSolid(BaseBodyRelationContact &contact_relation)
 			: InteractionDynamics(*contact_relation.sph_body_),
 			  FSIContactData(contact_relation),
-			  Vol_(particles_->Vol_), vel_ave_(particles_->vel_ave_)
+			  Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity())
 		{
 			particles_->registerVariable(viscous_force_from_fluid_, "ViscousForceFromFluid");
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
@@ -61,7 +61,7 @@ namespace SPH
 			FluidViscousForceOnSolidInEuler(BaseBodyRelationContact &contact_relation)
 			: InteractionDynamics(*contact_relation.sph_body_),
 			EFSIContactData(contact_relation),
-			Vol_(particles_->Vol_), vel_ave_(particles_->vel_ave_)
+			Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity())
 		{
 			particles_->registerVariable(viscous_force_from_fluid_, "ViscousForceFromFluid");
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
@@ -168,9 +168,8 @@ namespace SPH
 			InitializeDisplacement(SolidBody &solid_body, StdLargeVec<Vecd> &pos_temp)
 			: ParticleDynamicsSimple(solid_body), SolidDataSimple(solid_body),
 			  pos_temp_(pos_temp), pos_(particles_->pos_),
-			  vel_ave_(particles_->vel_ave_), acc_ave_(particles_->acc_ave_)
-		{
-		}
+			  vel_ave_(*particles_->AverageVelocity()), 
+			  acc_ave_(*particles_->AverageAcceleration()) {}
 		//=================================================================================================//
 		void InitializeDisplacement::Update(size_t index_i, Real dt)
 		{

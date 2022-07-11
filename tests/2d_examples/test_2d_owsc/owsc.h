@@ -285,7 +285,7 @@ class WaveMaking : public solid_dynamics::ConstrainSolidBodyRegion
 		return velocity;
 	}
 
-	virtual Vec2d getAcceleration(Vecd &pos_0, Vecd &pos_n, Vec2d &dvel_dt) override
+	virtual Vec2d getAcceleration(Vecd &pos_0, Vecd &pos_n, Vec2d &acc) override
 	{
 		Vec2d acceleration(0);
 		acceleration[0] = -0.5 * wave_stroke_ * wave_freq_ * wave_freq_ * sin(wave_freq_ * time_);

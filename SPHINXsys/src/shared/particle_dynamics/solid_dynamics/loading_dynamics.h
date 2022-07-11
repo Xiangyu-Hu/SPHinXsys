@@ -64,7 +64,7 @@ namespace SPH
             virtual ~ImposeExternalForce(){};
 
         protected:
-            StdLargeVec<Vecd> &pos0_, &vel_, &vel_ave_;
+            StdLargeVec<Vecd> &pos0_, &vel_;
             /**
              * @brief acceleration will be specified by the application
              */

@@ -35,8 +35,8 @@ namespace SPH
 				wall_inv_rho0_.push_back(1.0 / rho_0_k);
 				wall_mass_.push_back(&(WCFluidWallData::contact_particles_[k]->mass_));
 				wall_Vol_.push_back(&(WCFluidWallData::contact_particles_[k]->Vol_));
-				wall_vel_ave_.push_back(&(WCFluidWallData::contact_particles_[k]->vel_ave_));
-				wall_dvel_dt_ave_.push_back(&(WCFluidWallData::contact_particles_[k]->acc_ave_));
+				wall_vel_ave_.push_back(WCFluidWallData::contact_particles_[k]->AverageVelocity());
+				wall_acc_ave_.push_back(WCFluidWallData::contact_particles_[k]->AverageAcceleration());
 				wall_n_.push_back(&(WCFluidWallData::contact_particles_[k]->n_));
 			}
 		}
@@ -195,24 +195,24 @@ namespace SPH
 			this->drho_dt_[index_i] += density_change_rate;
 		}
 		//=================================================================================================//
-		template <class BaseDensityAndenergyRelaxationType>
-		BaseDensityAndEnergyRelaxationWithWall<BaseDensityAndenergyRelaxationType>::
+		template <class BaseDensityAndEnergyRelaxationType>
+		BaseDensityAndEnergyRelaxationWithWall<BaseDensityAndEnergyRelaxationType>::
 			BaseDensityAndEnergyRelaxationWithWall(ComplexBodyRelation &fluid_wall_relation)
-			: DensityAndEnergyRelaxation<BaseDensityAndenergyRelaxationType>(fluid_wall_relation.inner_relation_,
+			: DensityAndEnergyRelaxation<BaseDensityAndEnergyRelaxationType>(fluid_wall_relation.inner_relation_,
 				fluid_wall_relation.contact_relation_) {}
 		//=================================================================================================//
-		template <class BaseDensityAndenergyRelaxationType>
-		BaseDensityAndEnergyRelaxationWithWall<BaseDensityAndenergyRelaxationType>::
+		template <class BaseDensityAndEnergyRelaxationType>
+		BaseDensityAndEnergyRelaxationWithWall<BaseDensityAndEnergyRelaxationType>::
 			BaseDensityAndEnergyRelaxationWithWall(BaseBodyRelationInner &fluid_inner_relation,
 				BaseBodyRelationContact &wall_contact_relation)
-			: DensityAndEnergyRelaxation<BaseDensityAndenergyRelaxationType>(fluid_inner_relation,
+			: DensityAndEnergyRelaxation<BaseDensityAndEnergyRelaxationType>(fluid_inner_relation,
 				wall_contact_relation) {}
 		//=================================================================================================//
-		template <class BaseDensityAndenergyRelaxationType>
-		BaseDensityAndEnergyRelaxationWithWall<BaseDensityAndenergyRelaxationType>::
+		template <class BaseDensityAndEnergyRelaxationType>
+		BaseDensityAndEnergyRelaxationWithWall<BaseDensityAndEnergyRelaxationType>::
 			BaseDensityAndEnergyRelaxationWithWall(ComplexBodyRelation &fluid_complex_relation,
 				BaseBodyRelationContact &wall_contact_relation)
-			: DensityAndEnergyRelaxation<BaseDensityAndenergyRelaxationType>(fluid_complex_relation, wall_contact_relation) {}
+			: DensityAndEnergyRelaxation<BaseDensityAndEnergyRelaxationType>(fluid_complex_relation, wall_contact_relation) {}
 		//=================================================================================================//
 	}
 	//=================================================================================================//

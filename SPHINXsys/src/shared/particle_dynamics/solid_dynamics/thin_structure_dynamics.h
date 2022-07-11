@@ -207,7 +207,7 @@ namespace SPH
 			StdLargeVec<Vecd> &pseudo_n_, &dpseudo_n_dt_;
 			virtual Vecd getDisplacement(const Vecd &pos_0, const Vecd &pos_n) { return pos_0; };
 			virtual Vecd getVelocity(const Vecd &pos_0, const Vecd &pos_n, const Vecd &vel_n) { return Vecd(0); };
-			virtual Vecd GetAcceleration(const Vecd &pos_0, const Vecd &pos_n, const Vecd &dvel_dt) { return Vecd(0); };
+			virtual Vecd GetAcceleration(const Vecd &pos_0, const Vecd &pos_n, const Vecd &acc) { return Vecd(0); };
 			virtual Vecd GetRotationAngle(const Vecd &pos_0, const Vecd &pos_n, const Vecd &rotation_angles_0_) { return rotation_angles_0_; };
 			virtual Vecd GetAngularVelocity(const Vecd &pos_0, const Vecd &pos_n, const Vecd &angular_vel_) { return Vecd(0); };
 			virtual Vecd GetAngularAcceleration(const Vecd &pos_0, const Vecd &pos_n, const Vecd &dangular_vel_dt_) { return Vecd(0); };

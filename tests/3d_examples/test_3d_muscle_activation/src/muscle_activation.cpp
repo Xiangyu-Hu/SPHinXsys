@@ -81,11 +81,11 @@ protected:
 		vel_temp[axis_id_] = 0.0;
 		return vel_temp;
 	};
-	virtual Vecd getAcceleration(Vecd &pos_0, Vecd &pos_n, Vecd &dvel_dt)
+	virtual Vecd getAcceleration(Vecd &pos_0, Vecd &pos_n, Vecd &acc)
 	{
-		Vecd dvel_dt_temp = dvel_dt;
-		dvel_dt_temp[axis_id_] = 0.0;
-		return dvel_dt_temp;
+		Vecd acc_temp = acc;
+		acc_temp[axis_id_] = 0.0;
+		return acc_temp;
 	};
 };
 /**
