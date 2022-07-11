@@ -94,7 +94,7 @@ namespace SPH
 
 		StdLargeVec<Real> Vol_;	 /**< particle volumetric measure, also referred to area of surface particle and length of linear particle */
 		StdLargeVec<Real> rho_;	 /**< particle density */
-		StdLargeVec<Real> mass_; /**< particle mass */
+		StdLargeVec<Real> mass_; /**< particle massive measure, also referred to mass per-unit thickness of surface particle and mass per-unit cross-section area of linear particle */
 		//----------------------------------------------------------------------
 		// Global information for all particles
 		//----------------------------------------------------------------------

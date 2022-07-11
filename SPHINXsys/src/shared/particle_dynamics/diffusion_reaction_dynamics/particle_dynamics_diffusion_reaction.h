@@ -1,28 +1,28 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
 * @file 	particle_dynamics_diffusion_reaction.h
-* @brief 	This is the particle dynamics aplliable for all type bodies
+* @brief 	This is the particle dynamics applicable for all type bodies
 * 			TODO: there is an issue on applying corrected configuration for contact bodies.
 * @author	Xiaojing Tang, Chi ZHang and Xiangyu Hu
 */
@@ -96,11 +96,11 @@ namespace SPH
 	};
 
 	/**
-	 * @class RelaxationOfAllDiffussionSpeciesInner
+	 * @class RelaxationOfAllDiffusionSpeciesInner
 	 * @brief Compute the diffusion relaxation process of all species
 	 */
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	class RelaxationOfAllDiffussionSpeciesInner
+	class RelaxationOfAllDiffusionSpeciesInner
 		: public InteractionDynamicsWithUpdate,
 		  public DiffusionReactionInnerData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
@@ -122,18 +122,18 @@ namespace SPH
 		typedef BaseParticlesType InnerBaseParticlesType;
 		typedef BaseMaterialType InnerBaseMaterialType;
 		typedef BaseBodyRelationInner BodyRelationType;
-		explicit RelaxationOfAllDiffussionSpeciesInner(BaseBodyRelationInner &inner_relation);
-		virtual ~RelaxationOfAllDiffussionSpeciesInner(){};
+		explicit RelaxationOfAllDiffusionSpeciesInner(BaseBodyRelationInner &inner_relation);
+		virtual ~RelaxationOfAllDiffusionSpeciesInner(){};
 	};
 
 	/**
-	 * @class RelaxationOfAllDiffussionSpeciesComplex
+	 * @class RelaxationOfAllDiffusionSpeciesComplex
 	 * Complex diffusion relaxation between two different bodies
 	 */
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType,
 			  class ContactBodyType, class ContactBaseParticlesType, class ContactBaseMaterialType>
-	class RelaxationOfAllDiffussionSpeciesComplex
-		: public RelaxationOfAllDiffussionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>,
+	class RelaxationOfAllDiffusionSpeciesComplex
+		: public RelaxationOfAllDiffusionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>,
 		  public DiffusionReactionContactData<BodyType, BaseParticlesType, BaseMaterialType,
 											  ContactBodyType, ContactBaseParticlesType, ContactBaseMaterialType>
 	{
@@ -150,8 +150,8 @@ namespace SPH
 
 	public:
 		typedef ComplexBodyRelation BodyRelationType;
-		explicit RelaxationOfAllDiffussionSpeciesComplex(ComplexBodyRelation &complex_relation);
-		virtual ~RelaxationOfAllDiffussionSpeciesComplex(){};
+		explicit RelaxationOfAllDiffusionSpeciesComplex(ComplexBodyRelation &complex_relation);
+		virtual ~RelaxationOfAllDiffusionSpeciesComplex(){};
 	};
 
 	/**

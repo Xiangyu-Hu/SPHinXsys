@@ -29,7 +29,7 @@ namespace SPH
 		//----------------------------------------------------------------------
 		registerSortableVariable<Vecd>("Position");
 		registerSortableVariable<Vecd>("Velocity");
-		registerSortableVariable<Real>("Mass");
+		registerSortableVariable<Real>("MassiveMeasure");
 		registerSortableVariable<Real>("Density");
 		registerSortableVariable<Real>("Pressure");
 		//----------------------------------------------------------------------

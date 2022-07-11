@@ -332,7 +332,6 @@ namespace SPH
 			: PartSimpleDynamicsByParticle(solid_body, body_part), ShellDataSimple(solid_body),
 			  pos_(particles_->pos_), pos0_(particles_->pos0_), n_(particles_->n_),
 			  vel_(particles_->vel_), acc_(particles_->acc_),
-			  vel_ave_(particles_->vel_ave_), acc_ave_(particles_->acc_ave_),
 			  rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
 			  dangular_vel_dt_(particles_->dangular_vel_dt_),
 			  pseudo_n_(particles_->pseudo_n_), dpseudo_n_dt_(particles_->dpseudo_n_dt_)
@@ -358,10 +357,6 @@ namespace SPH
 			dangular_vel_dt_[index_i] = GetAngularAcceleration(pos_0, pos_n, dangular_vel_dt);
 			pseudo_n_[index_i] = GetPseudoNormal(pos_0, pos_n, local_pseudo_n_0);
 			dpseudo_n_dt_[index_i] = GetPseudoNormalChangeRate(pos_0, pos_n, dpseudo_normal_dt);
-
-			/** the average values are prescribed also. */
-			vel_ave_[index_i] = vel_[index_i];
-			acc_ave_[index_i] = acc_[index_i];
 		}
 		//=================================================================================================//
 		FixedFreeRotateShellBoundary::
@@ -471,7 +466,6 @@ namespace SPH
 			: PartSimpleDynamicsByParticle(solid_body, body_part), ShellDataSimple(solid_body),
 			  axis_(axis_direction), pos_(particles_->pos_), pos0_(particles_->pos0_),
 			  vel_(particles_->vel_), acc_(particles_->acc_),
-			  vel_ave_(particles_->vel_ave_), acc_ave_(particles_->acc_ave_),
 			  rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
 			  dangular_vel_dt_(particles_->dangular_vel_dt_) {}
 		//=================================================================================================//
@@ -484,10 +478,6 @@ namespace SPH
 
 			angular_vel_[index_i][1 - axis_] = 0.0;
 			dangular_vel_dt_[index_i][1 - axis_] = 0.0;
-
-			/** the average values are prescribed also. */
-			vel_ave_[index_i] = vel_[index_i];
-			acc_ave_[index_i] = acc_[index_i];
 		}
 		//=================================================================================================//
 		DistributingPointForcesToShell::

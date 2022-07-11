@@ -176,7 +176,7 @@ public:
 //----------------------------------------------------------------------
 class ThermalRelaxationComplex
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffussionSpeciesComplex<
+		  RelaxationOfAllDiffusionSpeciesComplex<
 			  FluidBody, FluidParticles, WeaklyCompressibleFluid, SolidBody, SolidParticles, Solid>>
 {
 public:

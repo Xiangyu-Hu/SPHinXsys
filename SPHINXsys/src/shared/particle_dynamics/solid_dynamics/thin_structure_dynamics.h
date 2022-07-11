@@ -1,25 +1,25 @@
-/* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
 * @file 	thin_structure_dynamics.h
 * @brief 	Here, we define the algorithm classes for thin structure dynamics. 
@@ -202,7 +202,7 @@ namespace SPH
 		protected:
 			StdLargeVec<Vecd> &pos_, &pos0_;
 			StdLargeVec<Vecd> &n_;
-			StdLargeVec<Vecd> &vel_, &acc_, &vel_ave_, &acc_ave_;
+			StdLargeVec<Vecd> &vel_, &acc_;
 			StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
 			StdLargeVec<Vecd> &pseudo_n_, &dpseudo_n_dt_;
 			virtual Vecd getDisplacement(const Vecd &pos_0, const Vecd &pos_n) { return pos_0; };
@@ -275,7 +275,7 @@ namespace SPH
 		protected:
 			const int axis_; /**< the axis direction for bounding*/
 			StdLargeVec<Vecd> &pos_, &pos0_;
-			StdLargeVec<Vecd> &vel_, &acc_, &vel_ave_, &acc_ave_;
+			StdLargeVec<Vecd> &vel_, &acc_;
 			StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};

@@ -50,7 +50,7 @@ public:
 			{
 				Real x = resolution_ref * i - BW + resolution_ref * 0.5;
 				Real y = resolution_ref * j - BW + resolution_ref * 0.5;
-				initializePositionAndVolume(Vecd(x, y, 0.0), resolution_ref * resolution_ref);
+				initializePositionAndVolumetricMeasure(Vecd(x, y, 0.0), resolution_ref * resolution_ref);
 				initializeSurfaceProperties(n_0, PT);
 			}
 		}

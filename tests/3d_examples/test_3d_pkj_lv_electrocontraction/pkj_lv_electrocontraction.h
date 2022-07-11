@@ -109,7 +109,7 @@ public:
 /** Set diffusion relaxation. */
 class DiffusionRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffussionSpeciesInner<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>>
+		  RelaxationOfAllDiffusionSpeciesInner<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>>
 {
 public:
 	explicit DiffusionRelaxation(BodyRelationInner &body_inner_relation)

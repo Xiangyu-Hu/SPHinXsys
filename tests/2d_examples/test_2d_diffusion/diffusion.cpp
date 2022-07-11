@@ -82,7 +82,7 @@ public:
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffussionSpeciesInner<SolidBody, SolidParticles, Solid>>
+		  RelaxationOfAllDiffusionSpeciesInner<SolidBody, SolidParticles, Solid>>
 {
 public:
 	explicit DiffusionBodyRelaxation(BodyRelationInner &body_inner_relation)

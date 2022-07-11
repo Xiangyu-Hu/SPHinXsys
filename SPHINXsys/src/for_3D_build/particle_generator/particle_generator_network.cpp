@@ -32,7 +32,7 @@ namespace SPH
 	void ParticleGeneratorNetwork::
 		growAParticleOnBranch(TreeBody::Branch *branch, const Vecd &new_point, const Vecd &end_direction)
 	{
-		initializePositionAndVolume(new_point, segment_length_);
+		initializePositionAndVolumetricMeasure(new_point, segment_length_);
 		tree_->branch_locations_.push_back(branch->id_);
 		branch->inner_particles_.push_back(pos_.size() - 1);
 		branch->end_direction_ = end_direction;

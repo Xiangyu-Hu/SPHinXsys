@@ -50,7 +50,7 @@ public:
 				Real x = radius_mid_surface * cos(-17.5 / 180.0 * Pi + (i - BWD + 0.5) * 215.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
 				Real y = particle_spacing_ref * j + particle_spacing_ref * 0.5;
 				Real z = radius_mid_surface * sin(-17.5 / 180.0 * Pi + (i - BWD + 0.5) * 215.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
-				initializePositionAndVolume(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref);
+				initializePositionAndVolumetricMeasure(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref);
 				Vec3d n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
 				initializeSurfaceProperties(n_0, thickness);
 			}

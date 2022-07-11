@@ -74,7 +74,7 @@ namespace SPH
 	protected:
 		StdLargeVec<Real> &Vol_; /**< particle volume */
 
-		virtual void initializePositionAndVolume(const Vecd &position, Real volume);
+		virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure);
 	};
 
 	/**

@@ -28,12 +28,12 @@ namespace SPH
 		//		register geometric data only
 		//----------------------------------------------------------------------
 		registerVariable(pos_, "Position");
-		registerVariable(Vol_, "Volume");
+		registerVariable(Vol_, "VolumetricMeasure");
 		//----------------------------------------------------------------------
 		//		add particle reload data
 		//----------------------------------------------------------------------
 		addVariableNameToList<Vecd>(variables_to_reload_, "Position");
-		addVariableNameToList<Real>(variables_to_reload_, "Volume");
+		addVariableNameToList<Real>(variables_to_reload_, "VolumetricMeasure");
 	}
 	//=================================================================================================//
 	void BaseParticles::initializeOtherVariables()
@@ -46,7 +46,7 @@ namespace SPH
 		registerVariable(acc_, "Acceleration");
 		registerVariable(acc_prior_, "PriorAcceleration");
 		registerVariable(rho_, "Density", rho0_);
-		registerVariable(mass_, "Mass");
+		registerVariable(mass_, "MassiveMeasure");
 		//----------------------------------------------------------------------
 		//		add basic output particle data
 		//----------------------------------------------------------------------
@@ -57,9 +57,9 @@ namespace SPH
 		addVariableNameToList<Vecd>(variables_to_restart_, "Position");
 		addVariableNameToList<Vecd>(variables_to_restart_, "Velocity");
 		addVariableNameToList<Vecd>(variables_to_restart_, "Acceleration");
-		addVariableNameToList<Real>(variables_to_restart_, "Volume");
+		addVariableNameToList<Real>(variables_to_restart_, "VolumetricMeasure");
 		//----------------------------------------------------------------------
-		//		initial particle mass and IDs
+		//		initial particle IDs and massive measure
 		//----------------------------------------------------------------------
 		for (size_t i = 0; i != real_particles_bound_; ++i)
 		{

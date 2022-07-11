@@ -316,7 +316,7 @@ namespace SPH
 		{
 			for (int i = 0; i != Dimensions; ++i)
 				correction_matrix_[i][i] = constrain_direction[i];
-			BodySummation<Real> compute_total_mass_(sph_body, "Mass");
+			BodySummation<Real> compute_total_mass_(sph_body, "MassiveMeasure");
 			total_mass_ = compute_total_mass_.parallel_exec();
 		}
 		//=================================================================================================//

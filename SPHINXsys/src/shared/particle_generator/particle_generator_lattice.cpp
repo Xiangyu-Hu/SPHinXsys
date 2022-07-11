@@ -37,13 +37,13 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void ParticleGeneratorMultiResolution::
-		initializePositionAndVolume(const Vecd &position, Real volume)
+		initializePositionAndVolumetricMeasure(const Vecd &position, Real volume)
 	{
 		Real local_particle_spacing = particle_adaptation_->getLocalSpacing(body_shape_, position);
 		Real local_particle_volume_ratio = powerN(lattice_spacing_ / local_particle_spacing, Dimensions);
 		if ((double)rand() / (RAND_MAX) < local_particle_volume_ratio)
 		{
-			ParticleGeneratorLattice::initializePositionAndVolume(position, volume / local_particle_volume_ratio);
+			ParticleGeneratorLattice::initializePositionAndVolumetricMeasure(position, volume / local_particle_volume_ratio);
 			initializeSmoothingLengthRatio(local_particle_spacing);
 		}
 	}
