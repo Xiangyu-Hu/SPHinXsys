@@ -25,7 +25,7 @@ namespace SPH
 	template <class MuscleType>
 	void ActiveMuscle<MuscleType>::initializeContractionStress()
 	{
-		this->base_particles_->registerAVariable(active_contraction_stress_, "ActiveContractionStress");
+		this->base_particles_->registerVariable(active_contraction_stress_, "ActiveContractionStress");
 	}
 	//=============================================================================================//
 	template <class MuscleType>
@@ -36,9 +36,9 @@ namespace SPH
 	}
 	//=============================================================================================//
 	template <class MuscleType>
-	Matd ActiveMuscle<MuscleType>::ConstitutiveRelation(Matd &deformation, size_t index_i)
+	Matd ActiveMuscle<MuscleType>::StressPK2(Matd &deformation, size_t index_i)
 	{
-		return MuscleType::ConstitutiveRelation(deformation, index_i) +
+		return MuscleType::StressPK2(deformation, index_i) +
 			   active_contraction_stress_[index_i] * MuscleType::MuscleFiberDirection(index_i);
 	}
 	//=============================================================================================//

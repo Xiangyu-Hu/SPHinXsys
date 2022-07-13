@@ -184,7 +184,7 @@ namespace SPH
 	};
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	void RegressionTestEnsembleAveraged<ObserveMethodType>::settingupAndCorrection()
+	void RegressionTestEnsembleAveraged<ObserveMethodType>::setupAndCorrection()
 	{
 		this->snapshot_ = this->current_result_.size();
 		this->observation_ = this->current_result_[0].size();

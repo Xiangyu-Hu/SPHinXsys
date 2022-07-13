@@ -43,10 +43,9 @@ ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
 add_test(NAME ${PROJECT_NAME}_particle_relaxation COMMAND ${PROJECT_NAME} --r=true --i=false
  WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-#add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --r=false --i=true
-# WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-# The test above passes and fails on two different CI run without any reason (no core file touched)
-# Msg on fail: The maximum distance of Position[0] is 0.0005791, and the current distance is 0.0006224.
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --r=false --i=true
+ WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+set_tests_properties(${PROJECT_NAME}_particle_relaxation ${PROJECT_NAME} PROPERTIES LABELS "solid_dynamics; contact")
 
 if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")

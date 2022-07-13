@@ -81,14 +81,14 @@ int main()
 		air_viscous_acceleration(air_water_complex, air_wall_contact);
 	fluid_dynamics::ViscousAccelerationMultiPhaseWithWall
 		water_viscous_acceleration(water_air_complex, water_wall_contact);
-	/** Suface tension. */
+	/** Surface tension. */
 	fluid_dynamics::FreeSurfaceIndicationInner
 		surface_detection(water_air_complex.inner_relation_);
 	fluid_dynamics::ColorFunctionGradientInner
 		color_gradient(water_air_complex.inner_relation_);
 	// fluid_dynamics::MultiPhaseColorFunctionGradient
 	//  	color_gradient(water_air_complex->contact_relation_);
-	fluid_dynamics::ColorFunctionGradientInterplationInner
+	fluid_dynamics::ColorFunctionGradientInterpolationInner
 		color_gradient_interpolation(water_air_complex.inner_relation_);
 	fluid_dynamics::SurfaceTensionAccelerationInner
 		surface_tension_acceleration(water_air_complex.inner_relation_, 1.0);

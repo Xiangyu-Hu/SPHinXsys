@@ -1,6 +1,6 @@
 /**
  * @file 	particle_dynamics_dissipation.hpp
- * @brief 	This is the particle dynamics aplliable for all type bodies
+ * @brief 	This is the particle dynamics applicable for all type bodies
  * @author	Chi ZHang and Xiangyu Hu
  */
 

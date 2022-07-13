@@ -128,7 +128,7 @@ std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMe
 		relaxParticlesSingleResolution(in_output, write_particle_relaxation_data, model, inner_relation);
 	}
 
-	return std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>>(model.base_particles_->pos_n_, model.base_particles_->Vol_);
+	return std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>>(model.base_particles_->pos_, model.base_particles_->Vol_);
 }
 
 BodyPartByParticle *createBodyPartFromMesh(SPHBody &body, const StlList &stl_list, size_t body_index, SharedPtr<TriangleMeshShape> tmesh)
@@ -402,19 +402,19 @@ void StructuralSimulation::initializeAllContacts()
 
 void StructuralSimulation::initializeGravity()
 {
-	// collect all the body indeces with non-zero gravity
-	vector<int> gravity_indeces = {};
+	// collect all the body indices with non-zero gravity
+	vector<int> gravity_indices = {};
 	for (size_t i = 0; i < non_zero_gravity_.size(); i++)
 	{
-		gravity_indeces.push_back(non_zero_gravity_[i].first);
+		gravity_indices.push_back(non_zero_gravity_[i].first);
 	}
 	// initialize gravity
 	initialize_gravity_ = {};
-	size_t gravity_index_i = 0; // iterating through gravity_indeces
+	size_t gravity_index_i = 0; // iterating through gravity_indices
 	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{
-		// check if i is in indeces_gravity
-		if (count(gravity_indeces.begin(), gravity_indeces.end(), i))
+		// check if i is in indices_gravity
+		if (count(gravity_indices.begin(), gravity_indices.end(), i))
 		{
 			Gravity *gravity = new Gravity(non_zero_gravity_[gravity_index_i].second);
 			initialize_gravity_.emplace_back(make_shared<TimeStepInitialization>(*solid_body_list_[i]->getSolidBodyFromMesh(), *gravity));
@@ -630,7 +630,7 @@ void StructuralSimulation::executeUpdateElasticNormalDirection()
 	}
 }
 
-void StructuralSimulation::executeinitializeATimeStep()
+void StructuralSimulation::executeInitializeATimeStep()
 {
 	for (size_t i = 0; i < initialize_gravity_.size(); i++)
 	{
@@ -839,7 +839,7 @@ void StructuralSimulation::initializeSimulation()
 {
 	GlobalStaticVariables::physical_time_ = 0.0;
 
-	/** INITIALALIZE SYSTEM */
+	/** INITIALIZE SYSTEM */
 	system_.initializeSystemCellLinkedLists();
 	system_.initializeSystemConfigurations();
 
@@ -857,7 +857,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 
 	/** ACTIVE BOUNDARY CONDITIONS */
 	// force (acceleration) based
-	executeinitializeATimeStep();
+	executeInitializeATimeStep();
 	executeAccelerationForBodyPartInBoundingBox();
 	executeForceInBodyRegion();
 	executeSurfacePressure();
@@ -868,7 +868,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 	executeContactDensitySummation();
 	executeContactForce();
 
-	/** STRESS RELAXATOIN, DAMPING, POSITIONAL CONSTRAINTS */
+	/** STRESS RELAXATION, DAMPING, POSITIONAL CONSTRAINTS */
 	executeStressRelaxationFirstHalf(dt);
 
 	executeConstrainSolidBody();
@@ -973,8 +973,8 @@ double StructuralSimulation::runSimulationFixedDurationJS(int number_of_steps)
 
 Real StructuralSimulation::getMaxDisplacement(int body_index)
 {
-	StdLargeVec<Vecd> &pos_0 = solid_body_list_[body_index].get()->getElasticSolidParticles()->pos_0_;
-	StdLargeVec<Vecd> &pos_n = solid_body_list_[body_index].get()->getElasticSolidParticles()->pos_n_;
+	StdLargeVec<Vecd> &pos_0 = solid_body_list_[body_index].get()->getElasticSolidParticles()->pos0_;
+	StdLargeVec<Vecd> &pos_n = solid_body_list_[body_index].get()->getElasticSolidParticles()->pos_;
 	Real displ_max = 0;
 	for (size_t i = 0; i < pos_0.size(); i++)
 	{

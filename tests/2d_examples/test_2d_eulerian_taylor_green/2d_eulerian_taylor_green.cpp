@@ -55,15 +55,15 @@ protected:
 	void Update(size_t index_i, Real dt) override
 	{
 		/** initial momentum and energy profile */
-		rho_n_[index_i] = rho0_f;
-		p_[index_i] = pow(c_f, 2) * rho_n_[index_i] / gamma_;
-		vel_n_[index_i][0] = -cos(2.0 * Pi * pos_n_[index_i][0]) *
-							 sin(2.0 * Pi * pos_n_[index_i][1]);
-		vel_n_[index_i][1] = sin(2.0 * Pi * pos_n_[index_i][0]) *
-							 cos(2.0 * Pi * pos_n_[index_i][1]);
-		mom_[index_i] = rho_n_[index_i] * vel_n_[index_i];
+		rho_[index_i] = rho0_f;
+		p_[index_i] = pow(c_f, 2) * rho_[index_i] / gamma_;
+		vel_[index_i][0] = -cos(2.0 * Pi * pos_[index_i][0]) *
+							 sin(2.0 * Pi * pos_[index_i][1]);
+		vel_[index_i][1] = sin(2.0 * Pi * pos_[index_i][0]) *
+							 cos(2.0 * Pi * pos_[index_i][1]);
+		mom_[index_i] = rho_[index_i] * vel_[index_i];
 		Real rho_e = p_[index_i] / (gamma_ - 1.0);
-		E_[index_i] = rho_e + 0.5 * rho_n_[index_i] * vel_n_[index_i].normSqr();
+		E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].normSqr();
 	}
 };
 //----------------------------------------------------------------------

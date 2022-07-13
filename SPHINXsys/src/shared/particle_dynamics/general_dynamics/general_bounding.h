@@ -43,7 +43,7 @@ namespace SPH
 	protected:
 		const int axis_;				 /**< the axis directions for bounding*/
 		BoundingBox body_domain_bounds_; /**< lower and upper bound for checking. */
-		StdLargeVec<Vecd> &pos_n_;
+		StdLargeVec<Vecd> &pos_;
 		BaseCellLinkedList *cell_linked_list_;
 		Real cut_off_radius_max_; /**< maximum cut off radius to avoid boundary particle depletion */
 	public:
@@ -299,7 +299,7 @@ namespace SPH
 			virtual void checkUpperBound(size_t index_i, Real dt = 0.0);
 			ParticleFunctor checking_bound_;
 
-			StdLargeVec<Vecd> &vel_n_;
+			StdLargeVec<Vecd> &vel_;
 			void mirrorInAxisDirection(size_t particle_index_i, Vecd body_bound, int axis_direction);
 
 		public:

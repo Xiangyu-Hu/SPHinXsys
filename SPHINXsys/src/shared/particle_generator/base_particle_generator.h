@@ -56,7 +56,7 @@ namespace SPH
 
 	protected:
 		BaseParticles *base_particles_;
-		StdLargeVec<Vecd> &pos_n_;		   /**< current position */
+		StdLargeVec<Vecd> &pos_;		   /**< current position */
 		StdLargeVec<size_t> &unsorted_id_; /**< original particle ids */
 		virtual void initializePosition(const Vecd &position);
 	};
@@ -74,7 +74,7 @@ namespace SPH
 	protected:
 		StdLargeVec<Real> &Vol_; /**< particle volume */
 
-		virtual void initializePositionAndVolume(const Vecd &position, Real volume);
+		virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure);
 	};
 
 	/**

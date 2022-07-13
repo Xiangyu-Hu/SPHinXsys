@@ -105,7 +105,7 @@ std::vector<Vecd> createFishBlockingShape()
 	return pnts_blocking_shape;
 }
 /**
- * Water body shpe defintion.
+ * Water body shape defintion.
  */
 class WaterBlock : public MultiPolygonShape
 {
@@ -362,10 +362,10 @@ int main(int ac, char *av[])
 	/** The forces of the MBsystem.*/
 	SimTK::GeneralForceSubsystem forces(MBsystem);
 	SimTK::CableTrackerSubsystem cables(MBsystem);
-	/** Mass proeprties of the fixed spot. */
+	/** Mass properties of the fixed spot. */
 	SimTK::Body::Rigid fixed_spot_info(SimTK::MassProperties(1.0, Vec3d(0), SimTK::UnitInertia(1)));
 	SolidBodyPartForSimbody fish_head(fish_body, makeShared<MultiPolygonShape>(createFishHeadShape(fish_body), "FishHead"));
-	/** Mass properties of the consrained spot. */
+	/** Mass properties of the constrained spot. */
 	SimTK::Body::Rigid tethered_spot_info(*fish_head.body_part_mass_properties_);
 	/** Mobility of the fixed spot. */
 	SimTK::MobilizedBody::Weld fixed_spot(matter.Ground(), SimTK::Transform(tethering_point),
@@ -399,7 +399,7 @@ int main(int ac, char *av[])
 	viz.report(state);
 	std::cout << "Hit ENTER to run a short simulation ...";
 	getchar();
-	/** Time steping method for multibody system.*/
+	/** Time stepping method for multibody system.*/
 	SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
 	integ.setAccuracy(1e-3);
 	integ.setAllowInterpolation(false);

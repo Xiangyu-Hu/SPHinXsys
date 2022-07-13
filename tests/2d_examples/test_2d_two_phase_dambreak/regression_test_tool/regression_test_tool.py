@@ -13,7 +13,7 @@ case name: test_2d_two_phase_dambreak
 case_name = "test_2d_two_phase_dambreak"
 body_name = "WaterBody"
 parameter_name = "TotalMechanicalEnergy"
-body_name_1 = "Fluidobserver"
+body_name_1 = "FluidObserver"
 parameter_name_1 = "Pressure"
 
 number_of_run_times = 0

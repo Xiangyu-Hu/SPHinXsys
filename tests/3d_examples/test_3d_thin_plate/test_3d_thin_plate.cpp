@@ -50,7 +50,7 @@ public:
 			{
 				Real x = resolution_ref * i - BW + resolution_ref * 0.5;
 				Real y = resolution_ref * j - BW + resolution_ref * 0.5;
-				initializePositionAndVolume(Vecd(x, y, 0.0), resolution_ref * resolution_ref);
+				initializePositionAndVolumetricMeasure(Vecd(x, y, 0.0), resolution_ref * resolution_ref);
 				initializeSurfaceProperties(n_0, PT);
 			}
 		}
@@ -72,8 +72,8 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_n_[index_i][0] < 0.0 || base_particles_->pos_n_[index_i][1] < 0.0 ||
-			base_particles_->pos_n_[index_i][0] > PL || base_particles_->pos_n_[index_i][1] > PH)
+		if (base_particles_->pos_[index_i][0] < 0.0 || base_particles_->pos_[index_i][1] < 0.0 ||
+			base_particles_->pos_[index_i][0] > PL || base_particles_->pos_[index_i][1] > PH)
 		{
 			body_part_particles_.push_back(index_i);
 		}

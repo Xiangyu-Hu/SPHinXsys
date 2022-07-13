@@ -12,7 +12,7 @@ using namespace SPH;
 /**
  * @brief Basic geometry parameters and numerical setup.
  */
-Real radius = 0.0975;								/** Radius of the inner boundary of the cylinderical thin structure. */
+Real radius = 0.0975;								/** Radius of the inner boundary of the cylindrical thin structure. */
 Real height = 0.02;									/** Height of the cylinder. */
 Real thickness = 0.005;								/** Thickness of the cylinder. */
 Real radius_mid_surface = radius + thickness / 2.0; /** Radius of the mid surface. */
@@ -50,7 +50,7 @@ public:
 				Real x = radius_mid_surface * cos(-17.5 / 180.0 * Pi + (i - BWD + 0.5) * 215.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
 				Real y = particle_spacing_ref * j + particle_spacing_ref * 0.5;
 				Real z = radius_mid_surface * sin(-17.5 / 180.0 * Pi + (i - BWD + 0.5) * 215.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
-				initializePositionAndVolume(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref);
+				initializePositionAndVolumetricMeasure(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref);
 				Vec3d n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
 				initializeSurfaceProperties(n_0, thickness);
 			}
@@ -73,7 +73,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_n_[index_i][2] < radius_mid_surface * sin(-17.5 / 180.0 * Pi))
+		if (base_particles_->pos_[index_i][2] < radius_mid_surface * sin(-17.5 / 180.0 * Pi))
 		{
 			body_part_particles_.push_back(index_i);
 		}

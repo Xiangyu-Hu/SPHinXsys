@@ -12,7 +12,7 @@
  *			Pressure pa = g * (mm)^(-1) * (ms)^(-2)
  *			diffusion d = (mm)^(2) * (ms)^(-2)
  *@version 0.3
- *			Here, the coupling with Purkinje network will be condcuted.
+ *			Here, the coupling with Purkinje network will be conducted.
  */
 /**  SPHinXsys Library. */
 #include "sphinxsys.h"
@@ -32,7 +32,7 @@ int main(int ac, char *av[])
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
 	system.run_particle_relaxation_ = true;
-	/** Tag for reload initially repaxed particles. */
+	/** Tag for reload initially relaxed particles. */
 	system.reload_particles_ = false;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
@@ -63,7 +63,7 @@ int main(int ac, char *av[])
 		/** Diffusion process for diffusion body. */
 		DiffusionRelaxation diffusion_relaxation(herat_model_inner);
 		/** Compute the fiber and sheet after diffusion. */
-		ComputeFiberandSheetDirections compute_fiber_sheet(herat_model);
+		ComputeFiberAndSheetDirections compute_fiber_sheet(herat_model);
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_herat_model_state_to_vtp(in_output, {herat_model});
 		/** Write the particle reload files. */
@@ -122,7 +122,7 @@ int main(int ac, char *av[])
 		return 0;
 	}
 	//----------------------------------------------------------------------
-	//	SPH simultion section
+	//	SPH simulation section
 	//----------------------------------------------------------------------
 	/** create a SPH body, material and particles */
 	SolidBody physiology_heart(system, makeShared<Heart>("PhysiologyHeart"));
@@ -197,7 +197,7 @@ int main(int ac, char *av[])
 	ObservedQuantityRecording<Real> write_voltage("Voltage", in_output, voltage_observer_contact);
 	ObservedQuantityRecording<Vecd> write_displacement("Position", in_output, myocardium_observer_contact);
 	/**Apply the Iron stimulus.*/
-	ApplyStimulusCurrentToMmyocardium apply_stimulus_myocardium(physiology_heart);
+	ApplyStimulusCurrentToMyocardium apply_stimulus_myocardium(physiology_heart);
 	ApplyStimulusCurrentToPKJ apply_stimulus_pkj(pkj_body);
 	/** Active mechanics. */
 	solid_dynamics::CorrectConfiguration correct_configuration_contraction(mechanics_heart_inner);
@@ -220,7 +220,7 @@ int main(int ac, char *av[])
 	BodyRegionByParticle muscle_base(mechanics_heart,  makeShared<TriangleMeshShapeBrick>(muscle_base_parameters, "Holder"));
 	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(mechanics_heart, muscle_base);
 	/** 
-	 * Pre-simultion. 
+	 * Pre-simulation. 
 	 */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();

@@ -22,7 +22,7 @@ namespace SPH
 		{
 			if (inner_relation.sph_body_ != contact_relation.sph_body_)
 			{
-				std::cout << "\n Error: the two body_realtions do not have the same source body!" << std::endl;
+				std::cout << "\n Error: the two body_relations do not have the same source body!" << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 				exit(1);
 			}
@@ -31,8 +31,8 @@ namespace SPH
 			{
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
 				contact_p_.push_back(&(contact_particles_[k]->p_));
-				contact_rho_n_.push_back(&(contact_particles_[k]->rho_n_));
-				contact_vel_n_.push_back(&(contact_particles_[k]->vel_n_));
+				contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
+				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 			}
 		}
 		//=================================================================================================//
@@ -59,7 +59,7 @@ namespace SPH
 		{
 			PressureRelaxationInnerType::Interaction(index_i, dt);
 
-			FluidState state_i(this->rho_n_[index_i], this->vel_n_[index_i], this->p_[index_i]);
+			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 			Vecd acceleration(0.0);
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
@@ -80,7 +80,7 @@ namespace SPH
 					acceleration -= 2.0 * p_star * e_ij * Vol_k[index_j] * dW_ij / state_i.rho_;
 				}
 			}
-			this->dvel_dt_[index_i] += acceleration;
+			this->acc_[index_i] += acceleration;
 		}
 		//=================================================================================================//
 		template<class PressureRelaxationInnerType>
@@ -89,7 +89,7 @@ namespace SPH
 		{
 			Vecd acceleration = PressureRelaxationInnerType::computeNonConservativeAcceleration(index_i);
 
-			Real rho_i = this->rho_n_[index_i];
+			Real rho_i = this->rho_[index_i];
 			Real p_i = this->p_[index_i];
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{
@@ -135,7 +135,7 @@ namespace SPH
 		{
 			DensityRelaxationInnerType::Interaction(index_i, dt);
 
-			FluidState state_i(this->rho_n_[index_i], this->vel_n_[index_i], this->p_[index_i]);
+			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 			Real density_change_rate = 0.0;
 			for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
 			{

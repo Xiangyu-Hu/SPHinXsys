@@ -55,7 +55,7 @@ namespace SPH
 		virtual ~PlasticSolid(){};
 
 		Real YieldStress() { return yield_stress_; };
-		/** compute the stress through defoemation, and plastic relaxation. */
+		/** compute the stress through deformation, and plastic relaxation. */
 		virtual Matd PlasticConstitutiveRelation(const Matd &deformation, size_t index_i, Real dt = 0.0) = 0;
 
 		virtual PlasticSolid *ThisObjectPtr() override { return this; };
@@ -88,7 +88,7 @@ namespace SPH
 		Real HardeningModulus() { return hardening_modulus_; };
 		/** assign particles to this material */
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;;
-		/** compute the stress through defoemation, and plastic relaxation. */
+		/** compute the stress through deformation, and plastic relaxation. */
 		virtual Matd PlasticConstitutiveRelation(const Matd &deformation, size_t index_i, Real dt = 0.0) override;
 
 		virtual HardeningPlasticSolid *ThisObjectPtr() override { return this; };
