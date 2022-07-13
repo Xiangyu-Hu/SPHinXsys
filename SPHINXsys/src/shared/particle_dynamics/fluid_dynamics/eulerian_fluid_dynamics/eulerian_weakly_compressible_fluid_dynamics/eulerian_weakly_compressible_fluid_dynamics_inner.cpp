@@ -39,10 +39,10 @@ namespace SPH
 		}
 		//=================================================================================================//
 		FreeSurfaceIndicationInner::
-			FreeSurfaceIndicationInner(BaseBodyRelationInner &inner_relation, Real thereshold)
+			FreeSurfaceIndicationInner(BaseBodyRelationInner &inner_relation, Real threshold)
 			: InteractionDynamicsWithUpdate(*inner_relation.sph_body_),
 			EulerianWeaklyCompressibleFluidDataInner(inner_relation),
-			thereshold_by_dimensions_(thereshold * (Real)Dimensions),
+			threshold_by_dimensions_(threshold * (Real)Dimensions),
 			Vol_(particles_->Vol_),
 			surface_indicator_(particles_->surface_indicator_),
 			smoothing_length_(inner_relation.sph_body_->sph_adaptation_->ReferenceSmoothingLength())
@@ -63,13 +63,13 @@ namespace SPH
 		//=================================================================================================//
 		void FreeSurfaceIndicationInner::Update(size_t index_i, Real dt)
 		{
-			bool is_free_surface = pos_div_[index_i] < thereshold_by_dimensions_ ? true : false;
+			bool is_free_surface = pos_div_[index_i] < threshold_by_dimensions_ ? true : false;
 
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
 				/** Two layer particles.*/
-				if (pos_div_[inner_neighborhood.j_[n]] < thereshold_by_dimensions_ &&
+				if (pos_div_[inner_neighborhood.j_[n]] < threshold_by_dimensions_ &&
 					inner_neighborhood.r_ij_[n] < smoothing_length_)
 				{
 					is_free_surface = true;

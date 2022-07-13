@@ -1,7 +1,7 @@
 /**
  * @file 	depolarization.cpp
  * @brief 	This is the first test to validate our PED-ODE solver for solving
- * 			electrophysiology monodomain model closed by a physiology reaction.
+ * 			electrophysiology mono-domain model closed by a physiology reaction.
  * @author 	Chi Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h" //SPHinXsys Library.

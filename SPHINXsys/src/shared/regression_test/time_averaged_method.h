@@ -83,8 +83,8 @@ namespace SPH
 		template<typename... ConstructorArgs>
 		explicit RegressionTestTimeAveraged(ConstructorArgs &&...args) :
 			RegressionTestBase<ObserveMethodType>(std::forward<ConstructorArgs>(args)...),
-			mean_variance_xml_engine_in_("mean_variance_xml_engine_in_", "meanvariance"),
-			mean_variance_xml_engine_out_("mean_variance_xml_engine_out_", "meanvariance")
+			mean_variance_xml_engine_in_("mean_variance_xml_engine_in_", "mean variance"),
+			mean_variance_xml_engine_out_("mean_variance_xml_engine_out_", "mean variance")
 		{
 			mean_variance_filefullpath_ = this->input_folder_path_ + "/" + this->body_name_
 				+ "_" + this->quantity_name_ + "_time_averaged_mean_variance.xml";
@@ -93,7 +93,7 @@ namespace SPH
 
         /** initialize the threshold of meanvalue and variance. */
 		void initializeThreshold(VariableType &threshold_mean, VariableType &threshold_variance);
-		void settingupTheTest();  /** setup the test environment and define basic variables. */
+		void setupTheTest();  /** setup the test environment and define basic variables. */
 		void readMeanVarianceFromXml();  /** read the mean and variance from the .xml file. */
 		void searchForStartPoint(); /** search for the starting point of the steady result. */
 		void filterExtremeValues();  /** filter out the extreme values, its default is false. */
@@ -110,7 +110,7 @@ namespace SPH
 			initializeThreshold(threshold_mean, threshold_variance);
 			if (this->converged == "false")
 			{
-				settingupTheTest();
+				setupTheTest();
 				if (filter == "true")
 					filterExtremeValues(); /* Pay attention to use this filter. */
 				searchForStartPoint(); /* searching starting point with snapshot*observation data structure, and it is dynamic varying. */
@@ -130,7 +130,7 @@ namespace SPH
 		{
 			this->writeXmlToXmlFile(); /* currently defined in in_output. */
 			this->readXmlFromXmlFile(); /* currently defined in in_output. */
-			settingupTheTest();
+			setupTheTest();
 			if (filter == "true")
 				filterExtremeValues();
 			searchForStartPoint();

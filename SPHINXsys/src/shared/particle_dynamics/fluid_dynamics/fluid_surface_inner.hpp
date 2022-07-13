@@ -29,7 +29,7 @@ namespace SPH
 		{
 			FreeSurfaceIdentification::Interaction(index_i, dt);
 
-			if (this->pos_div_[index_i] < this->thereshold_by_dimensions_)
+			if (this->pos_div_[index_i] < this->threshold_by_dimensions_)
 			{
 				checkNearPreviousFreeSurface(index_i);
 			}
@@ -52,7 +52,7 @@ namespace SPH
 				}
 				if (!is_near_previous_surface)
 				{
-					this->pos_div_[index_i] = 2.0 * this->thereshold_by_dimensions_;
+					this->pos_div_[index_i] = 2.0 * this->threshold_by_dimensions_;
 				}
 			}
 		}

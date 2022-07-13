@@ -221,7 +221,7 @@ namespace SPH
 	};
 	/**
 	 * @class PartDynamicsByParticleReduce
-	 * @brief reduce operation in a Lagrangian contrained region.
+	 * @brief reduce operation in a Lagrangian constrained region.
 	 */
 	template <class ReturnType, typename ReduceOperation>
 	class PartDynamicsByParticleReduce : public ParticleDynamics<ReturnType>

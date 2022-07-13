@@ -51,7 +51,7 @@ Vec2d Base_lt(Flap_x - 0.5 * Flap_width, Base_bottom_position + Base_height); //
 Vec2d Base_rt(Flap_x + 0.5 * Flap_width, Base_bottom_position + Base_height); // right top
 Vec2d Base_rb(Flap_x + 0.5 * Flap_width, Base_bottom_position);				  // right bottom
 
-// flap geometeric parameters
+// flap geometric parameters
 Vec2d Flap_lb(Flap_x - 0.5 * Flap_width, Base_bottom_position + Base_height + 0.5 * Flap_width);		  // left bottom
 Vec2d Flap_lt(Flap_x - 0.5 * Flap_width, Base_bottom_position + Base_height + 0.5 * Flap_width + Flap_H); // left top
 Vec2d Flap_rt(Flap_x + 0.5 * Flap_width, Base_bottom_position + Base_height + 0.5 * Flap_width + Flap_H); // right top

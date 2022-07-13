@@ -89,7 +89,7 @@ namespace SPH
 
 		/**
 		 * @class RelaxationAccelerationInnerWithLevelSetCorrection
-		 * @brief we constrain particles to a level function representing the interafce.
+		 * @brief we constrain particles to a level function representing the interface.
 		 */
 		class RelaxationAccelerationInnerWithLevelSetCorrection : public RelaxationAccelerationInner
 		{
@@ -163,7 +163,7 @@ namespace SPH
 		/**
 		 * @class ShapeSurfaceBounding
 		 * @brief constrain surface particles by
-		 * map contrained particles to geometry face and
+		 * map constrained particles to geometry face and
 		 * r = r + phi * norm (vector distance to face)
 		 */
 		class ShapeSurfaceBounding : public PartDynamicsByCell,
@@ -183,7 +183,7 @@ namespace SPH
 		/**
 		 * @class ConstraintSurfaceParticles
 		 * @brief constrain surface particles by
-		 * map contrained particles to geometry face and
+		 * map constrained particles to geometry face and
 		 * r = r + phi * norm (vector distance to face)
 		 */
 		class ConstraintSurfaceParticles : public PartSimpleDynamicsByParticle,
@@ -294,7 +294,7 @@ namespace SPH
 
 		/**
 		 * @class ShellNormalDirectionPrediction
-		 * @brief prodict the normal direction of shell particles.
+		 * @brief predict the normal direction of shell particles.
 		 */
 		class ShellNormalDirectionPrediction : public ParticleDynamics<void>
 		{

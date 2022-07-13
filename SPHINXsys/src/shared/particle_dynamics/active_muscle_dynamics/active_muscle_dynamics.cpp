@@ -1,6 +1,6 @@
 /**
  * @file 	active_muscle_dynamics.cpp
- * @brief 	In is file, we define functions decleared in active muscle dynamics.h
+ * @brief 	In is file, we define functions declared in active muscle dynamics.h
  * @author 	Chi Zhang and Xiangyu Hu
  */
 #include "active_muscle_dynamics.h"

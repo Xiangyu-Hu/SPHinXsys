@@ -16,15 +16,15 @@ file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/regression_test_tool.py
         DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/Fluidobserver_Pressure_runtimes.dat
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressure_runtimes.dat
         DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/Fluidobserver_Pressure_dtwdistance.xml
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressure_dtwdistance.xml
         DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/Fluidobserver_Pressure_Run_0_result.xml
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressure_Run_0_result.xml
         DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/Fluidobserver_Pressure_Run_11_result.xml
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressure_Run_11_result.xml
         DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/Fluidobserver_Pressure_Run_20_result.xml
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/FluidObserver_Pressure_Run_20_result.xml
         DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/WaterBody_TotalMechanicalEnergy_runtimes.dat
         DESTINATION ${BUILD_INPUT_PATH})

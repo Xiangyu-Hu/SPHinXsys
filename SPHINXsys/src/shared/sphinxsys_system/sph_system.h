@@ -34,7 +34,7 @@ namespace fs = std::experimental::filesystem;
 namespace SPH
 {
 	/**
-	 * @brief Preclaimed classes.
+	 * @brief Pre-claimed classes.
 	 */
 	class SPHBody;
 	class InOutput;
@@ -58,7 +58,7 @@ namespace SPH
 		size_t restart_step_;			/**< restart step */
 		bool run_particle_relaxation_;	/**< run particle relaxation for body fitted particle distribution */
 		bool reload_particles_;			/**< start the simulation with relaxed particles. */
-		bool generate_regression_data_; /**< run and generate or enhancethe regression test data set. */
+		bool generate_regression_data_; /**< run and generate or enhance the regression test data set. */
 
 		SPHBodyVector sph_bodies_;		  /**< All sph bodies. */
 		SPHBodyVector observation_bodies_; /**< The bodies without inner particle configuration. */

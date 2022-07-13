@@ -145,7 +145,7 @@ namespace SPH
 						for (int m = SMAX(j - 1, 0); m <= SMIN(j + 1, int(number_of_cells_[1]) - 1); ++m)
 							for (int n = SMAX(k - 1, 0); n <= SMIN(k + 1, int(number_of_cells_[2]) - 1); ++n)
 							{
-								// all cells near or contained by the body part shape are inlcuded
+								// all cells near or contained by the body part shape are included
 								if (check_included(CellPositionFromIndex(Vecu(l, m, n)), grid_spacing_))
 								{
 									is_included = true;

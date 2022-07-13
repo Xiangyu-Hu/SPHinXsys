@@ -108,7 +108,7 @@ int main()
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
 
 	/**
-	 * From here the time stepping begines.
+	 * From here the time stepping begins.
 	 * Set the starting time.
 	 */
 	GlobalStaticVariables::physical_time_ = 0.0;

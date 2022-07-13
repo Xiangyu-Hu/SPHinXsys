@@ -88,7 +88,7 @@ namespace SPH {
 	Real getCosineOfAngleBetweenTwoVectors (const Vec2d &vector_1, const Vec2d &vector_2);
 	Real getCosineOfAngleBetweenTwoVectors (const Vec3d &vector_1, const Vec3d &vector_2);
 
-	/** get orthogonal projection of a vactor. */
+	/** get orthogonal projection of a vector. */
 	Vec2d getVectorProjectionOfVector (const Vec2d& vector_1, const Vec2d& vector_2);
 	Vec3d getVectorProjectionOfVector (const Vec3d& vector_1, const Vec3d& vector_2);
 
@@ -96,7 +96,7 @@ namespace SPH {
 	Real getVonMisesStressFromMatrix(const Mat2d& sigma);
 	Real getVonMisesStressFromMatrix(const Mat3d& sigma);
 
-	/** pricipal strain or stress from strain or stress matrix */
+	/** principal strain or stress from strain or stress matrix */
 	Vec2d getPrincipalValuesFromMatrix(const Mat2d& A);
 	Vec3d getPrincipalValuesFromMatrix(const Mat3d& A);
 

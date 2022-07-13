@@ -133,7 +133,7 @@ int main()
 	solid_dynamics::ConstrainSolidBodyPartBySimBody
 		constraint_plate(moving_plate, plate_multibody, MBsystem, plateMBody, force_on_bodies, integ);
 	/**
-	 * From here the time stepping begines.
+	 * From here the time stepping begins.
 	 * Set the starting time.
 	 */
 	GlobalStaticVariables::physical_time_ = 0.0;

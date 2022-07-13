@@ -2,7 +2,7 @@
  * @file 	2d_cylinder_flow.h
  * @brief 	This is the case file for the test of flow passing by a cylinder.
  * @details  We consider a flow passing by a cylinder in 2D.
- * @author 	Xiangyu Hu, Chi Zhangand Luhui Han
+ * @author 	Xiangyu Hu, Chi Zhang and Luhui Han
  */
 
 #include "sphinxsys.h"
@@ -72,7 +72,7 @@ class WaterBlock : public ComplexShape
 public:
 	explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		/** Geomtry definition. */
+		/** Geometry definition. */
 		MultiPolygon multi_polygon;
 		multi_polygon.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
 		multi_polygon.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);

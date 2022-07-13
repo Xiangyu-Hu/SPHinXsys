@@ -24,7 +24,7 @@ namespace SPH
 		{
 			if (base_body_relation.sph_body_ != wall_contact_relation.sph_body_)
 			{
-				std::cout << "\n Error: the two body_realtions do not have the same source body!" << std::endl;
+				std::cout << "\n Error: the two body_relations do not have the same source body!" << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 				exit(1);
 			}

@@ -17,8 +17,8 @@ using namespace SPH;
  */
 Real DL = 5.366; 						/**< Tank length. */
 Real DH = 5.366; 						/**< Tank height. */
-Real LL = 2.0; 							/**< Liquid colume length. */
-Real LH = 1.0; 							/**< Liquid colume height. */
+Real LL = 2.0; 							/**< Liquid column length. */
+Real LH = 1.0; 							/**< Liquid column height. */
 Real resolution_ref = 0.025; 			/**< Global reference resolution. */
 Real BW = resolution_ref * 4; 			/**< Extending width for BCs. */
 /** Domain bounds of the system. */
@@ -117,7 +117,7 @@ int main()
 	/**
 	 * @brief 	Particle and body creation of fluid observer.
 	 */
-	ObserverBody fluid_observer(sph_system, "Fluidobserver");
+	ObserverBody fluid_observer(sph_system, "FluidObserver");
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	/** topology */
 	BodyRelationInner water_block_inner(water_block);

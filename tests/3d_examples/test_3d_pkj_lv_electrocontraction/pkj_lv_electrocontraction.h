@@ -221,7 +221,7 @@ public:
 /**
  * application dependent initial condition
  */
-class ApplyStimulusCurrentToMmyocardium
+class ApplyStimulusCurrentToMyocardium
 	: public electro_physiology::ElectroPhysiologyInitialCondition
 {
 protected:
@@ -242,7 +242,7 @@ protected:
 	};
 
 public:
-	explicit ApplyStimulusCurrentToMmyocardium(SolidBody &muscle)
+	explicit ApplyStimulusCurrentToMyocardium(SolidBody &muscle)
 		: electro_physiology::ElectroPhysiologyInitialCondition(muscle)
 	{
 		voltage_ = material_->SpeciesIndexMap()["Voltage"];

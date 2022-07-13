@@ -170,7 +170,7 @@ namespace SPH
 		/**
 		 * @class TranslateSolidBodyPart
 		 * @brief Translates the body in a given time interval -translation driven boundary condition; only moving the body; end position irrelevant;
-		 * Only the particles in a given Bounding Box are translated. The Bounding Box is defined for the nondeformed shape.
+		 * Only the particles in a given Bounding Box are translated. The Bounding Box is defined for the undeformed shape.
 		 */
 		class TranslateSolidBodyPart : public TranslateSolidBody
 		{

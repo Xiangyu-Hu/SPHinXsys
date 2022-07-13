@@ -1,6 +1,6 @@
 /**
  * @file 	sliding.cpp
- * @brief 	a 2D elastic cube sildes on a rigid slope.
+ * @brief 	a 2D elastic cube slides on a rigid slope.
  * @details This is the a case for test collision dynamics for
  * 			understanding SPH method for complex simulation.
  * @author 	chi Zhang and Xiangyu Hu

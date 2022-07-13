@@ -1,6 +1,6 @@
 /**
  * @file 	hydrostatic_fsi.cpp
- * @brief 	structure deformation due to hydrostatic pressue under gravity.
+ * @brief 	structure deformation due to hydrostatic pressure under gravity.
  * @details This is the one of the basic test cases 
  * for understanding SPH method for fluid-structure-interaction (FSI) simulation.
  * @author 	Yujie Zhu, Chi Zhang and Xiangyu Hu
@@ -325,7 +325,7 @@ int main()
 			{
 				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
 				fluid_damping.parallel_exec(dt);
-				/** Fluid relaxation and force computaton. */
+				/** Fluid relaxation and force computation. */
 				pressure_relaxation.parallel_exec(dt);
 				fluid_pressure_force_on_gate.parallel_exec();
 				density_relaxation.parallel_exec(dt);

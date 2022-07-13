@@ -37,7 +37,7 @@
 /** this is a reformulation of tbb parallel_sort for particle data */
 namespace tbb
 {
-	namespace interafce9
+	namespace interface9
 	{
 		namespace internal
 		{
@@ -129,7 +129,7 @@ namespace tbb
 				QuickSortParticleRange(QuickSortParticleRange &range, split)
 					: comp_(range.comp_), swap_sortable_particle_data_(range.swap_sortable_particle_data_), size_(splitRange(range))
 					  // +1 accounts for the pivot element, which is at its correct place
-					  // already and, therefore, is not included into subranges.
+					  // already and, therefore, is not included into sub-ranges.
 					  ,
 					  begin_(range.begin_ + range.size_ + 1)
 				{
@@ -170,7 +170,7 @@ namespace tbb
 			}
 
 			/*
-			Description : Insertsort in Iterator format
+			Description : Insert sort in Iterator format
 			Link        : http://www.codecodex.com/wiki/Insertion_sort
 			*/
 
@@ -252,7 +252,7 @@ namespace SPH
 		explicit SwapSortableParticleData(BaseParticles *base_particles);
 		~SwapSortableParticleData(){};
 
-		/** the operater overload for swapping particle data.
+		/** the operator overload for swapping particle data.
 		 *  the arguments are the same with std::iter_swap
 		 */
 		void operator()(size_t *a, size_t *b);
@@ -267,7 +267,7 @@ namespace SPH
 	private:
 		UniquePtrKeeper<SwapSortableParticleData> swap_particle_ptr_keeper_;
 		UniquePtrKeeper<
-			tbb::interafce9::internal::QuickSortParticleRange<size_t *, CompareParticleSequence, SwapSortableParticleData>>
+			tbb::interface9::internal::QuickSortParticleRange<size_t *, CompareParticleSequence, SwapSortableParticleData>>
 			quick_sort_particle_range_ptr_keeper_;
 
 	protected:
@@ -276,9 +276,9 @@ namespace SPH
 		/** using pointer because it is constructed after particles. */
 		SwapSortableParticleData *swap_sortable_particle_data_;
 		CompareParticleSequence compare_;
-		tbb::interafce9::internal::QuickSortParticleRange<
+		tbb::interface9::internal::QuickSortParticleRange<
 			size_t *, CompareParticleSequence, SwapSortableParticleData> *quick_sort_particle_range_;
-		tbb::interafce9::internal::QuickSortParticleBody<
+		tbb::interface9::internal::QuickSortParticleBody<
 			size_t *, CompareParticleSequence, SwapSortableParticleData>
 			quick_sort_particle_body_;
 

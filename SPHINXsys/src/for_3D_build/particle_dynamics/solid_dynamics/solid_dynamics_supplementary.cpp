@@ -29,7 +29,7 @@ namespace SPH
 					A[i * 3 + j] = F(i, j);
 
 			polar::polar_decomposition(Q, H, A);
-			//this decomposition has the form A = Q*H, where Q is orthogonal and H is symmetric positive semidefinite. 
+			//this decomposition has the form A = Q*H, where Q is orthogonal and H is symmetric positive semi-definite. 
 			//Ref. "An algorithm to compute the polar decomposition of a 3*3 matrix, Nicholas J. Higham et al. Numer Algor(2016) "
 			for (int i = 0; i < 3; i++)
 				for (int j = 0; j < 3; j++)

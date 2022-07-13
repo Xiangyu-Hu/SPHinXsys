@@ -112,7 +112,7 @@ class ThermosolidBodyMaterial : public DiffusionReaction<Solid>
 public:
 	ThermosolidBodyMaterial() : DiffusionReaction<Solid>({"Phi"})
 	{
-		// only default property is gieven, as no heat transfer within solid considered here.
+		// only default property is given, as no heat transfer within solid considered here.
 		initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi");
 	};
 };

@@ -13,7 +13,7 @@
 namespace SPH
 {
 	/**
-	 * @brief Preclaimed classes.
+	 * @brief Pre-claimed classes.
 	 */
 	class BaseMaterial;
 	class SPHBody;

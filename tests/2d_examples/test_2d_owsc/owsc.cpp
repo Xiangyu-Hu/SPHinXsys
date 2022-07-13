@@ -140,7 +140,7 @@ int main()
 	 * @param[in]	GeneralForceSubsystem &  	forces,
 	 * @param[in]	const MobilizedBody &  	mobod,
 	 * @param[in]	MobilizerUIndex  whichU, e.g., MobilizerUIndex(0)
-	 * @param[in]	Real  	Dampingconstant )
+	 * @param[in]	Real  	Damping constant )
 	 * Here, The damping constant c is provided, with the generated force being -c*u where u is the mobility's generalized speed.
 	 */
 	SimTK::Force::MobilityLinearDamper linear_damper(forces, pin_spot, SimTK::MobilizerUIndex(0), 20.0);
