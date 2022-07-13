@@ -170,7 +170,7 @@ int main(int ac, char *av[])
 
 	/** Output */
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
-	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
+	RegressionTestTimeAveraged<ObservedQuantityRecording<Real>>
 		write_beam_stress("VonMisesStress", in_output, beam_observer_contact);
 	/* time step begins */
 	GlobalStaticVariables::physical_time_ = 0.0;
@@ -234,11 +234,11 @@ int main(int ac, char *av[])
 
 	if (system.generate_regression_data_)
 	{
-		write_beam_stress.generateDataBase(1.0e-2);
+		write_beam_stress.generateDataBase({0.01}, {0.01});
 	}
 	else
 	{
-		write_beam_stress.newResultTest();
+		write_beam_stress.newResultTest(); 
 	}
 
 	return 0;
