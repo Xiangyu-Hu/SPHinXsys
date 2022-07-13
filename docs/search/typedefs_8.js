@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['sphbodyvector_1858',['SPHBodyVector',['../namespace_s_p_h.html#ab8b3224d963eb73d7febbf0d5346f429',1,'SPH']]],
-  ['splitcelllists_1859',['SplitCellLists',['../namespace_s_p_h.html#ac592bbe202be73decfcbfe8201484ffa',1,'SPH']]]
+  ['reactionfunctor',['ReactionFunctor',['../class_s_p_h_1_1_base_reaction_model.html#ac21bdef4f282d9d649c1ec107e86c8e0',1,'SPH::BaseReactionModel']]],
+  ['reducefunctor',['ReduceFunctor',['../namespace_s_p_h.html#a87043d855375056552eeedcb239e3b4f',1,'SPH']]]
 ];
