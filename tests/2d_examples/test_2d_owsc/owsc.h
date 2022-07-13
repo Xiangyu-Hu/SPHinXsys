@@ -70,8 +70,6 @@ Real mu_f = 1.0e-6;
 Real flap_mass = 33.04;
 Real flap_vol = 0.0579;
 Real rho0_s = flap_mass / flap_vol;
-Real poisson = 0.33;
-Real Youngs_modulus = 7.8e6;
 
 //------------------------------------------------------------------------------
 // geometric shape elements used in the case

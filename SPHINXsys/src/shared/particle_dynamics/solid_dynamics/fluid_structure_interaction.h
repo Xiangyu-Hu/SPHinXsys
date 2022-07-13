@@ -32,6 +32,7 @@
 #include "all_particle_dynamics.h"
 #include "base_material.h"
 #include "fluid_dynamics_complex.h"
+#include "elastic_dynamics.h"
 #include "riemann_solver.h"
 
 namespace SPH
@@ -331,7 +332,7 @@ namespace SPH
 		* This class is for FSI applications to achieve smaller solid dynamics
 		* time step size compared to the fluid dynamics
 		*/
-		class InitializeDisplacement : public ParticleDynamicsSimple, public SolidDataSimple
+		class InitializeDisplacement : public ParticleDynamicsSimple, public ElasticSolidDataSimple
 		{
 		public:
 			explicit InitializeDisplacement(SolidBody &solid_body, StdLargeVec<Vecd> &pos_temp);

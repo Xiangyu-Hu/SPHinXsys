@@ -26,7 +26,7 @@ int main()
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody flap(system, makeShared<Flap>("Flap"));
-	flap.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	flap.defineParticlesAndMaterial<SolidParticles, Solid>(rho0_s);
 	flap.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody observer(system, "FlapObserver");
@@ -61,7 +61,7 @@ int main()
 	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_block, U_f);
 	/** time step size with considering sound wave speed. */
 	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
-	/** pressure relaxation using verlet time stepping. */
+	/** pressure relaxation using Verlet time stepping. */
 	fluid_dynamics::PressureRelaxationRiemannWithWall pressure_relaxation(water_block_complex);
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
@@ -71,9 +71,6 @@ int main()
 	fluid_dynamics::DampingBoundaryCondition damping_wave(water_block, damping_buffer);
 	/** Fluid force on flap. */
 	solid_dynamics::FluidForceOnSolidUpdate fluid_force_on_flap(flap_contact);
-	/** average velocity for flap. */
-	solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(flap);
-	solid_dynamics::UpdateElasticNormalDirection flap_update_normal(flap);
 	/** constrain region of the part of wall boundary. */
 	BodyRegionByParticle wave_maker(wall_boundary, makeShared<MultiPolygonShape>(createWaveMakerShape()));
 	WaveMaking wave_making(wall_boundary, wave_maker);
@@ -232,7 +229,6 @@ int main()
 			viscous_acceleration.parallel_exec();
 			/** Viscous force exerting on flap. */
 			fluid_force_on_flap.viscous_force_.parallel_exec();
-			flap_update_normal.parallel_exec();
 
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
@@ -240,8 +236,7 @@ int main()
 				pressure_relaxation.parallel_exec(dt);
 				fluid_force_on_flap.parallel_exec();
 				density_relaxation.parallel_exec(dt);
-				/** solid dynamics. */
-				average_velocity_and_acceleration.initialize_displacement_.parallel_exec();
+				/** coupled rigid body dynamics. */
 				if (total_time >= relax_time)
 				{
 					SimTK::State &state_for_update = integ.updAdvancedState();
@@ -252,7 +247,6 @@ int main()
 					constraint_spot_flap.parallel_exec();
 					wave_making.parallel_exec(dt);
 				}
-				average_velocity_and_acceleration.update_averages_.parallel_exec(dt);
 				interpolation_observer_position.parallel_exec();
 
 				dt = get_fluid_time_step_size.parallel_exec();
