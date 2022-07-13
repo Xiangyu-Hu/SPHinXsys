@@ -11,6 +11,11 @@ SPHinXsys is a multi-physics, multi-resolution SPH library.
 Although it is not a standalone application itself, 
 many examples designated for the specific type of applications are provided.
 
+[![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/Naereen/StrapDown.js/blob/master/LICENSE)
+[![Linux](https://svgshare.com/i/Zhy.svg)](https://svgshare.com/i/Zhy.svg)
+[![Windows](https://svgshare.com/i/ZhY.svg)](https://svgshare.com/i/ZhY.svg)
+![ci workflow](https://github.com/Xiangyu-Hu/SPHinXsys/actions/workflows/ci.yml/badge.svg?event=push)
+
 ## Journal publications
 
 The algorithms in SPHinXsys are based on the following publications:
