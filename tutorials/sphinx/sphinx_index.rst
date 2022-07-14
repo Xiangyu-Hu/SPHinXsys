@@ -31,7 +31,7 @@ Introduction
    introduction.rst
 
 ****************************
-Theory and numerical schemes
+Theory and numreical schemes
 ****************************
 
 .. toctree::
@@ -76,14 +76,6 @@ Creating your own cases
 
    user_cases.rst
 
-***********************************
-Set regression test for a new case
-***********************************
-
-.. toctree::
-   :maxdepth: 2
-
-   regression_test.rst
 
 **********
 Examples:
@@ -198,6 +190,20 @@ Examples:
    :maxdepth: 2
 
    examples/example16_2D_channel_flow.rst
+
+
+
+.. toctree::
+   :maxdepth: 2
+
+   examples/example17_2D_throat.rst
+
+
+
+.. toctree::
+   :maxdepth: 2
+
+   examples/example18_2D_wetting.rst
 
 ******************************************
 Contribute to SPHinXsys

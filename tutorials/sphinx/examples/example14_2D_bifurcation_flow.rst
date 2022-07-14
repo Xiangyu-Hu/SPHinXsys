@@ -7,7 +7,7 @@ Example 14: 2D bifurcation flow
 The parameter definition of the case of 2D bifurcation flow is shown in the figure, 
 where the inlet fluid velocity varies periodically.
 
-.. figure:: ../figures/2D_bifurcation_flow.tif
+.. figure:: ../figures/2D_bifurcation_flow.png
    :width: 600 px
    :align: center
 
