@@ -113,7 +113,7 @@ in which the water wave impacts the tank wall and produces splashes.
 		WallBoundary wall_boundary(sph_system, "Wall");
 		SolidParticles wall_particles(wall_boundary);
 
-		ObserverBody fluid_observer(sph_system, "Fluidobserver");
+		ObserverBody fluid_observer(sph_system, "FluidObserver");
 		ObserverParticles observer_particles(fluid_observer, makeShared<FluidObserverParticleGenerator>());
 		//----------------------------------------------------------------------
 		//	Define body relation map.
@@ -267,7 +267,7 @@ in which the water wave impacts the tank wall and produces splashes.
 
 If you run the test_2d_dambreak correctly, 
 you should see a new folder :code:`output` is created.
-In the :code:`output` folder, you can see particle state files start with :code:`SPHBody`, :code:`Fluidobserver_Pressure_0.dat`, 
+In the :code:`output` folder, you can see particle state files start with :code:`SPHBody`, :code:`FluidObserver_Pressure_0.dat`, 
 and :code:`WaterBody_TotalMechanicalEnergy_0.dat` which is the global information file.
 In the visualization software Paraview you can produces the particle distribution as shown in the following figure. 
 
@@ -403,7 +403,7 @@ are defined form the coordinates based on the geometric parameters.
 
 The :code:`WaterBlock` and  :code:`WallBoundary`, 
 which are the derived class of :code:`FluidBody` and :code:`SolidBody` respectively, 
-are difined with boolean operation, 
+are defined with boolean operation, 
 such as :code:`add` and :code:`sub`.
 The :code:`FluidObserverParticleGenerator` defines the observation body 
 through adding the observation point :code:`Vecd(DL, 0.2)`.
@@ -436,7 +436,7 @@ and input/output environment is initialized.
 	WallBoundary wall_boundary(sph_system, "Wall");
 	SolidParticles wall_particles(wall_boundary);
 
-	ObserverBody fluid_observer(sph_system, "Fluidobserver");
+	ObserverBody fluid_observer(sph_system, "FluidObserver");
 	ObserverParticles observer_particles(fluid_observer, makeShared<FluidObserverParticleGenerator>());
 	//----------------------------------------------------------------------
 	//	Define body relation map.
@@ -565,7 +565,7 @@ interval for writing output files, etc.
 	write_recorded_water_pressure.writeToFile(number_of_iterations);
 
 
-Also the statistic for computation time is initialized and the initial body states and data are outputed.
+Also the statistic for computation time is initialized and the initial body states and data are outputted.
 
 Here comes the time-stepping loops. 
 The computation is carried out with a dual-criteria time-stepping scheme,

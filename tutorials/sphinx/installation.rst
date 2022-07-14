@@ -10,7 +10,7 @@ We will start here with general information, then give platform-specific instruc
 Where can I find the downloads
 ------------------------------
 
-SPHinXsys is an open-source library hosted on Githhub https://github.com/Xiangyu-Hu/SPHinXsys/.
+SPHinXsys is an open-source library hosted on Github https://github.com/Xiangyu-Hu/SPHinXsys/.
 You can clone the master branch or download the release .zip or .tar files.
 
 What if I have a problem
@@ -39,14 +39,14 @@ Installation overview
 Here is the general procedure
 
   - Set up your machine with the required prerequisites.
-  - Clone the source from githiub master branch or download the appropriate .zip package from the release page.
+  - Clone the source from github master branch or download the appropriate .zip package from the release page.
   - Unzip into the installation directory (can be anywhere but we will suggest default locations).
   - Set path and environment variables as needed.
   - Run Cmake to configure and generate the SPHinXsys project.
   - Make and run the test set to verify the installation.
 
 The next three sections provide the details specific to each of three platforms,
-i.e. Ubuntu Linux (recommanded), Windows and other Linux or Unix systems.
+i.e. Ubuntu Linux (recommended), Windows and other Linux or Unix systems.
 
 You only need to read one of these sections.
 
@@ -110,7 +110,7 @@ Install Lapack and Blas by typing the command below::
     $ sudo apt-get install libblas-dev liblapack-dev
 
 In the new version of **SPHinXsys**, the **Gtest** is introduced for functional test,
-to intall **Gtest**, following the stpes below::
+to install **Gtest**, following the steps below::
 
     $ sudo apt-get install libgtest-dev
     $ cd /usr/src/gtest
@@ -127,7 +127,7 @@ and set the environment by::
     $ echo 'export TBB_HOME=/usr/lib/x86_64-linux-gnu' >> ~/.bashrc
     $ echo 'export BOOST_HOME=/usr/lib/x86_64-linux-gnu' >> ~/.bashrc
 
-Notice that during the installation of Boost, you might be asked to choose the aera and the city.
+Notice that during the installation of Boost, you might be asked to choose the area and the city.
 
 **SPHinXsys** use **Simbody** to calculate the multi-body dynamics, thus we need to install **Simbody**.
 Here are the optional steps for visualizer of **Simbody**::
@@ -204,7 +204,7 @@ Download the latest version of **SPHinXsys** by the command below::
     $ git clone https://github.com/Xiangyu-Hu/SPHinXsys.git
 
 The Eigen 3 library is a submodule in SPHinXsys.
-You can go the the folder 3rd_party to initilize the the submodule, by typing::
+You can go the the folder 3rd_party to initialize the the submodule, by typing::
 
     $ git submodule init
     $ git submodule update
@@ -213,7 +213,7 @@ to ensure eigen 3 library is ready.
 There are two other submodules in SPHInXsys, i.e. simbody and wasmtbb, 
 these are advanced components that you do not need for now.  
 
-If you install SPHinXsys from .tar file from relase version.
+If you install SPHinXsys from .tar file from release version.
 You need unzip the source and download eigen 3 source from <https://eigen.tuxfamily.org>
 and copy all files into the folder 3rd_party/eigen in SPHinXsys source.
 
@@ -231,12 +231,12 @@ Configure and generate Make files::
 
 Notice that the path :code:`$HOME/SPHinXsys` should be path of SPHinXsys source code, you need to confirm it.
 
-Now you can build, test all cases of **SPHinXsys** by follwoing commands::
+Now you can build, test all cases of **SPHinXsys** by following commands::
 
     $ make -j7
     $ ctest
     
-Please pay attention here the :code:`ctest` without parallel execution, that is becasuse the **SPHinXsys**
+Please pay attention here the :code:`ctest` without parallel execution, that is because the **SPHinXsys**
 has the build-in function for parallel computing, if you run :code:`ctest` with :code:`-jx`, you may get some test 
 cases failed.
 Again, `-j7` means that I am using a 8 cores machine.  Please do not use all cores for compiling.  
@@ -248,18 +248,18 @@ or  you can choose a specific case for running, for example, the **2d_dambreak**
     $ cd bin
     $ ./test_2d_dambreak
 
-Rigth now, you have the **SPHinXsys** successfully installed in your computer, Have fun with it!
+Right now, you have the **SPHinXsys** successfully installed in your computer, Have fun with it!
 
 Installing on Windows
 ---------------------------------------
 
-The prerequisite on Windows is that you have a c++ development environment (Visual Studio 2017 (recommanded) or later version) and a way to unzip the `.zip` package.
+The prerequisite on Windows is that you have a c++ development environment (Visual Studio 2017 (recommended) or later version) and a way to unzip the `.zip` package.
 
 Step1: Install CMake
 
-	CMake is cross-plateform project manager and generates files for a project.
+	CMake is cross-platform project manager and generates files for a project.
 
-	- Install CMake on Windows and extract the file to the assigned folder, details refering to `CMake's page <https://cmake.org/>`_. 
+	- Install CMake on Windows and extract the file to the assigned folder, details referring to `CMake's page <https://cmake.org/>`_. 
 	- After installation, please set the CMake bin path to environmental variables (System variables).
 
 Step2: Install Tbb
@@ -274,9 +274,9 @@ Step2: Install Tbb
 
 Step3: Install Boost
 
-	- Download Boost `Boost's page <https://sourceforge.net/projects/boost/files/boost-binaries/>`_. Choose the right version according to your visual studio verson (For VS 2017 you choose msvc-14.1-64, VS2019 msvc-14.2-64.).
+	- Download Boost `Boost's page <https://sourceforge.net/projects/boost/files/boost-binaries/>`_. Choose the right version according to your visual studio version (For VS 2017 you choose msvc-14.1-64, VS2019 msvc-14.2-64.).
 	- Extract the file to the assigned folder. 
-	- Set environment: BOOST_HOME to its directory (User variables), and the path $BoostDirectory/lib64-msvc-14.1$ to enviromental variables (System variables).
+	- Set environment: BOOST_HOME to its directory (User variables), and the path $BoostDirectory/lib64-msvc-14.1$ to environmental variables (System variables).
 
 .. figure:: figures/Boost_1.png
    :width: 600 px
@@ -292,7 +292,7 @@ Step4: Install Simbody
 	- Extract the source and create a new build directory. 
 	- Using CMake, you will configure and generate a Visual Studio project and then open the project in Visual Studio. The install prefix you can choose the default one or other new directory. 
 	- Note that if you choose the default installation prefix (the system disk C:/), you need to run Visual Studio as administrator and then open the Simbody.sln file in the build directory instead of directly click `Open Project` in CMake GUI.
-	- Then build `ALL_BUILD` and `INSTALL` with `Debug` and `ReleaseWithDebugInfo` modes respectively in Visual Studio, refering to the following figure.
+	- Then build `ALL_BUILD` and `INSTALL` with `Debug` and `ReleaseWithDebugInfo` modes respectively in Visual Studio, referring to the following figure.
 	- After that, please set the system environment variable SIMBODY_HOME to the simbody prefix directory (User variables) and the simbody bin path to environmental variables (System variables).
 	- Note that `pthreadVC2_x64.dll` and `pthreadVC2_x64.lib` are lost in the latest Simbody version. You need to copy these two files from the old version, Simbody 3.5, and then put these files into the Simbody installation folder, $**/Simbody/bin$ and $**/Simbody/lib$. 
 
@@ -300,7 +300,7 @@ Step4: Install Simbody
    :width: 600 px
    :align: center
 
-Step5: Install Goole test
+Step5: Install Google test
 
 	- Install google test, we download the release version from the github repository: <https://github.com/google/googletest/releases>, build and install it.
 	- For this, you will extract the source and create a new build directory. Using CMake, you will configure and generate a Visual Studio project. Be sure that, in CMake GUI, you have to click the two options: `build_shared_libs` and `install_gtest`. The install prefix you can choose the default one or other new directory. 
@@ -311,7 +311,7 @@ Step5: Install Goole test
 Step6: Install Eigen
 
 	The Eigen library is a submodule in SPHinXsys.
-	If you install SPHinXsys from .zip or .tar file from relase version.
+	If you install SPHinXsys from .zip or .tar file from release version.
 	You need unzip the source and download eigen 3 source from <https://eigen.tuxfamily.org>
 	and copy all files into the folder 3rd_party/eigen in SPHinXsys source.
 	There are two other submodules in SPHInXsys, i.e. simbody and wasmtbb, 
@@ -409,7 +409,7 @@ Download the sphinxsys-linux or sphinxsys-max, and then unzip it to the appropri
 
   - Mac OS X::
 
-		$ echo 'export SPHINXSYS_HOME=/path/to/sphinxsyslibaray' >> ~/.bash_profile
+		$ echo 'export SPHINXSYS_HOME=/path/to/sphinxsyslibrary' >> ~/.bash_profile
 
   -  Linux::
 

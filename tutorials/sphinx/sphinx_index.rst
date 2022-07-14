@@ -31,7 +31,7 @@ Introduction
    introduction.rst
 
 ****************************
-Theory and numreical schemes
+Theory and numerical schemes
 ****************************
 
 .. toctree::

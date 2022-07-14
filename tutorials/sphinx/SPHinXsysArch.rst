@@ -33,7 +33,7 @@ If SPHinXsys is coupled with SimBody, one need create a :code:`SimTK` system in 
 mobility and forces are defined. The SimBody-SPHinXsys coupling, 
 as a realization of :code:`ParticleDynamics`, 
 such as computing forces on solid body for SimBody 
-and imposing constraints of soild body by SimBody, are defined in the next stage.
+and imposing constraints of solid body by SimBody, are defined in the next stage.
 Finally, :code:`Output` is created to specify the data will be saved in file during the computations.
 
 
