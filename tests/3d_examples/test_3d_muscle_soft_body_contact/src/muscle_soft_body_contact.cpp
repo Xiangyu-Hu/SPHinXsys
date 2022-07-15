@@ -80,9 +80,9 @@ int main()
 	solid_dynamics::CorrectConfiguration corrected_configuration(myocardium_body_inner);
 	solid_dynamics::CorrectConfiguration corrected_configuration_2(moving_plate_inner);
 	/** active and passive stress relaxation. */
-	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(myocardium_body_inner);
+	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half(myocardium_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(myocardium_body_inner);
-	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half_2(moving_plate_inner);
+	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half_2(moving_plate_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half_2(moving_plate_inner);
 	//stress_relaxation_first_half_2.post_processes_(spring_constraint);
 	/** Algorithms for solid-solid contact. */
