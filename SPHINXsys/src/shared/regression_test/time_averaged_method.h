@@ -83,8 +83,8 @@ namespace SPH
 		template<typename... ConstructorArgs>
 		explicit RegressionTestTimeAveraged(ConstructorArgs &&...args) :
 			RegressionTestBase<ObserveMethodType>(std::forward<ConstructorArgs>(args)...),
-			mean_variance_xml_engine_in_("mean_variance_xml_engine_in_", "mean variance"),
-			mean_variance_xml_engine_out_("mean_variance_xml_engine_out_", "mean variance")
+			mean_variance_xml_engine_in_("mean_variance_xml_engine_in_", "meanvariance"),
+			mean_variance_xml_engine_out_("mean_variance_xml_engine_out_", "meanvariance")
 		{
 			mean_variance_filefullpath_ = this->input_folder_path_ + "/" + this->body_name_
 				+ "_" + this->quantity_name_ + "_time_averaged_mean_variance.xml";
