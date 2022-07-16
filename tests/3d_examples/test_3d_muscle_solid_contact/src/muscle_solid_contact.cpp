@@ -73,7 +73,8 @@ int main()
 	 * This section define all numerical methods will be used in this case.
 	 */
 	/** initialize a time step */
-	TimeStepInitialization myocardium_initialize_gravity(myocardium_body);
+	TimeStepInitialization myocardium_initialize_time_step(myocardium_body);
+	TimeStepInitialization moving_plate_initialize_time_step(moving_plate);
 	/** Corrected configuration. */
 	solid_dynamics::CorrectConfiguration corrected_configuration(myocardium_body_inner);
 	/** Time step size calculation. */
@@ -165,7 +166,8 @@ int main()
 						  << dt << "\n";
 			}
 			/** Gravity. */
-			myocardium_initialize_gravity.parallel_exec();
+			myocardium_initialize_time_step.parallel_exec();
+			moving_plate_initialize_time_step.parallel_exec();
 			/** Contact model for myocardium. */
 			myocardium_update_contact_density.parallel_exec();
 			myocardium_compute_solid_contact_forces.parallel_exec();

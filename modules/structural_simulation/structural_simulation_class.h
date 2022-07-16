@@ -191,7 +191,7 @@ protected:
 	vector<shared_ptr<solid_dynamics::ContactForce>> contact_force_list_;
 
 	// for initializeATimeStep
-	vector<shared_ptr<TimeStepInitialization>> initialize_gravity_;
+	vector<shared_ptr<TimeStepInitialization>> initialize_time_step_;
 	vector<GravityPair> non_zero_gravity_;
 	// for AccelerationForBodyPartInBoundingBox
 	vector<shared_ptr<solid_dynamics::AccelerationForBodyPartInBoundingBox>> acceleration_bounding_box_;

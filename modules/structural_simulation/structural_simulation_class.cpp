@@ -409,20 +409,20 @@ void StructuralSimulation::initializeGravity()
 		gravity_indices.push_back(non_zero_gravity_[i].first);
 	}
 	// initialize gravity
-	initialize_gravity_ = {};
-	size_t gravity_index_i = 0; // iterating through gravity_indices
+	initialize_time_step_ = {};
+	size_t gravity_index_i = 0; // iterating through gravity_indeces
 	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{
 		// check if i is in indices_gravity
 		if (count(gravity_indices.begin(), gravity_indices.end(), i))
 		{
 			Gravity *gravity = new Gravity(non_zero_gravity_[gravity_index_i].second);
-			initialize_gravity_.emplace_back(make_shared<TimeStepInitialization>(*solid_body_list_[i]->getSolidBodyFromMesh(), *gravity));
+			initialize_time_step_.emplace_back(make_shared<TimeStepInitialization>(*solid_body_list_[i]->getSolidBodyFromMesh(), *gravity));
 			gravity_index_i++;
 		}
 		else
 		{
-			initialize_gravity_.emplace_back(make_shared<TimeStepInitialization>(*solid_body_list_[i]->getSolidBodyFromMesh()));
+			initialize_time_step_.emplace_back(make_shared<TimeStepInitialization>(*solid_body_list_[i]->getSolidBodyFromMesh()));
 		}
 	}
 }
@@ -632,9 +632,9 @@ void StructuralSimulation::executeUpdateElasticNormalDirection()
 
 void StructuralSimulation::executeInitializeATimeStep()
 {
-	for (size_t i = 0; i < initialize_gravity_.size(); i++)
+	for (size_t i = 0; i < initialize_time_step_.size(); i++)
 	{
-		initialize_gravity_[i]->parallel_exec();
+		initialize_time_step_[i]->parallel_exec();
 	}
 }
 
