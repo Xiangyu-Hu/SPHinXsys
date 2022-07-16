@@ -54,7 +54,7 @@ int main()
 	/** Define external force.*/
 	Gravity gravity(Vecd(0.0, -gravity_g));
 	/** Time step initialization, add gravity. */
-	TimeStepInitialization initialize_gravity_to_fluid(water_block, gravity);
+	TimeStepInitialization initialize_time_step_to_fluid(water_block, gravity);
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_block_complex);
 	/** time step size without considering sound wave speed. */
@@ -222,7 +222,7 @@ int main()
 		Real integral_time = 0.0;
 		while (integral_time < D_Time)
 		{
-			initialize_gravity_to_fluid.parallel_exec();
+			initialize_time_step_to_fluid.parallel_exec();
 
 			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
 			update_density_by_summation.parallel_exec();
