@@ -137,7 +137,7 @@ namespace SPH
       			constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
 				if (particles->all_variable_maps_[type_index].find(variable_name) == particles->all_variable_maps_[type_index].end())
 				{
-					particles->registerAVariable<VariableType>(observed_quantities_, variable_name, VariableType(0));
+					particles->registerAVariable(observed_quantities_, variable_name, VariableType(0));
 					return &observed_quantities_;
 				}
 				return particles->getVariableByName<VariableType>(variable_name);

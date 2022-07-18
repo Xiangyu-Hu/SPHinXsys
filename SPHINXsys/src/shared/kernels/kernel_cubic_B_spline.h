@@ -44,10 +44,8 @@ namespace SPH
 	 */
 	class KernelCubicBSpline : public Kernel
 	{
-	protected:
-		virtual void setBasicParameters() override;
 	public:
-		KernelCubicBSpline();
+		explicit KernelCubicBSpline(Real h);
 
 		/** Calculates the kernel value for 
 		the given distance of two particles */

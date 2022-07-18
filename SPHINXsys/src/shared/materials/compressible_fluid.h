@@ -33,9 +33,6 @@
 
 namespace SPH
 {
-
-	class CompressibleFluidParticles;
-
 	/**
 	 * @class CompressibleFluid
 	 * @brief Ideal gas equation of state (EOS).
@@ -44,20 +41,15 @@ namespace SPH
 	{
 	protected:
 		Real gamma_; /** heat capacity ratio */
-		CompressibleFluidParticles *compressible_fluid_particles_;
 
 	public:
 		explicit CompressibleFluid(Real rho0, Real gamma, Real mu = 0.0)
-			: Fluid(rho0, mu), gamma_(gamma), compressible_fluid_particles_(nullptr)
+			: Fluid(rho0, mu), gamma_(gamma)
 		{
-			material_type_ = "CompressibleFluid";
+			material_type_name_ = "CompressibleFluid";
 		};
 		virtual ~CompressibleFluid(){};
 
-		void assignCompressibleFluidParticles(CompressibleFluidParticles *compressible_fluid_particles)
-		{
-			compressible_fluid_particles_ = compressible_fluid_particles;
-		};
 		Real HeatCapacityRatio() { return gamma_; };
 		virtual Real getPressure(Real rho, Real rho_e) override;
 		virtual Real getPressure(Real rho) override { return 0.0; };

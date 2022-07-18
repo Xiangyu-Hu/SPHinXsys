@@ -48,7 +48,7 @@ namespace SPH
 {
     namespace active_muscle_dynamics
 	{
-        typedef DataDelegateSimple<SolidBody, ActiveMuscleParticles, Muscle> ActiveMuscleDataDelegateSimple;
+        typedef DataDelegateSimple<SolidBody, ElasticSolidParticles, ElasticSolid> ElasticSolidDataSimple;
  
 		/**
 		 * @class MuscleActivation
@@ -56,7 +56,7 @@ namespace SPH
 		 * This is a abstract class to be override for case specific activation
 		 */
 		class MuscleActivation :
-			public ParticleDynamicsSimple, public ActiveMuscleDataDelegateSimple
+			public ParticleDynamicsSimple, public ElasticSolidDataSimple
 		{
 		public:
 			explicit MuscleActivation(SolidBody &solid_body);
@@ -71,7 +71,7 @@ namespace SPH
 		 * towards each constrained particles' original position.
 		 */
 		class SpringConstrainMuscleRegion : 
-			public PartSimpleDynamicsByParticle, public ActiveMuscleDataDelegateSimple
+			public PartSimpleDynamicsByParticle, public ElasticSolidDataSimple
 		{
 		public:
 			SpringConstrainMuscleRegion(SolidBody &solid_body, BodyPartByParticle &body_part);
@@ -82,23 +82,6 @@ namespace SPH
 			StdLargeVec<Vecd>& pos_n_, & pos_0_, & vel_n_;
 			Vecd stiffness_;
 			virtual Vecd getAcceleration(Vecd& disp, Real mass);
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
-		};
-		
-		/**@class ImposingStress
-		 * @brief impose activation stress on a solid body part
-		 */
-		class ImposingStress :
-			public PartSimpleDynamicsByParticle, public ActiveMuscleDataDelegateSimple
-		{
-		public:
-			ImposingStress(SolidBody &solid_body, SolidBodyPartForSimbody &body_part);
-			virtual ~ImposingStress() {};
-		protected:
-			StdLargeVec<Vecd>& pos_0_;
-			StdLargeVec<Matd>& active_stress_;
-
-			virtual Matd getStress(Vecd& pos) = 0;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
     }

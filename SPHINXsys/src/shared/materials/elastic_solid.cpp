@@ -1,12 +1,11 @@
-/** 
+/**
  * @file elastic_solid.cpp
  * @author Chi Zhang and Xiangyu Hu
  */
 
 #include "elastic_solid.h"
 
-#include "base_body.h"
-#include "solid_particles.h"
+#include "base_particles.hpp"
 
 #ifdef max
 #undef max
@@ -21,11 +20,6 @@ namespace SPH
 		ct0_ = sqrt(E0_ / rho0_);
 		cs0_ = sqrt(G0_ / rho0_);
 	};
-	//=================================================================================================//
-	void ElasticSolid::assignElasticSolidParticles(ElasticSolidParticles *elastic_particles)
-	{
-		elastic_particles_ = elastic_particles;
-	}
 	//=================================================================================================//
 	Matd ElasticSolid::
 		NumericalDampingRightCauchy(Matd &F, Matd &dF_dt, Real smoothing_length, size_t particle_index_i)
@@ -56,12 +50,7 @@ namespace SPH
 	LinearElasticSolid::
 		LinearElasticSolid(Real rho0, Real youngs_modulus, Real poisson_ratio) : ElasticSolid(rho0)
 	{
-		material_type_ = "LinearElasticSolid";
-		assignElasticMaterialParameters(youngs_modulus, poisson_ratio);
-	}
-	//=================================================================================================//
-	void LinearElasticSolid::assignElasticMaterialParameters(Real youngs_modulus, Real poisson_ratio)
-	{
+		material_type_name_ = "LinearElasticSolid";
 		E0_ = youngs_modulus;
 		nu_ = poisson_ratio;
 		G0_ = getShearModulus(youngs_modulus, poisson_ratio);
@@ -78,7 +67,7 @@ namespace SPH
 	//=================================================================================================//
 	Real LinearElasticSolid::getShearModulus(Real youngs_modulus, Real poisson_ratio)
 	{
-		return 0.5 * youngs_modulus/ (1.0 + poisson_ratio);
+		return 0.5 * youngs_modulus / (1.0 + poisson_ratio);
 	}
 	//=================================================================================================//
 	Real LinearElasticSolid::getLambda(Real youngs_modulus, Real poisson_ratio)
@@ -105,9 +94,12 @@ namespace SPH
 	//=================================================================================================//
 	Matd NeoHookeanSolid::ConstitutiveRelation(Matd &F, size_t particle_index_i)
 	{
+		// This formulation allows negative determinant of F. Please refer
+		// Smith et al. (2018) Stable Neo-Hookean Flesh Simulation.
+		// ACM Transactions on Graphics, Vol. 37, No. 2, Article 12.
 		Matd right_cauchy = ~F * F;
-		Real I_1 = right_cauchy.trace(); // first strain invariant
-		Matd sigmaPK2 = G0_ * std::pow(det(F), - 2.0 / 3.0) * (Matd(1.0) - I_1 / 3.0 * inverse(right_cauchy)) + K0_ * det(F) * (det(F) - 1.0) * inverse(right_cauchy); // sigmaPK2 calculation
+		Real J = det(F);
+		Matd sigmaPK2 = G0_ * Matd(1.0) + (lambda0_ * (J - 1.0) - G0_) * J * inverse(right_cauchy);
 		return sigmaPK2;
 	}
 	//=================================================================================================//
@@ -115,8 +107,7 @@ namespace SPH
 	{
 		Real J = det(F);
 		Matd B = inverse(-2.0 * almansi_strain + Matd(1.0));
-		Matd cauchy_stress = 0.5 * K0_ * (J - 1.0 / J) * Matd(1.0)
-			+ G0_ * pow(J, -2.0 / (Real)Dimensions - 1.0) * (B - B.trace() / (Real)Dimensions * Matd(1.0));
+		Matd cauchy_stress = 0.5 * K0_ * (J - 1.0 / J) * Matd(1.0) + G0_ * pow(J, -2.0 / (Real)Dimensions - 1.0) * (B - B.trace() / (Real)Dimensions * Matd(1.0));
 		return cauchy_stress;
 	}
 	//=================================================================================================//
@@ -125,12 +116,12 @@ namespace SPH
 		return 0.5 * K0_ * (J * J - 1);
 	}
 	//=================================================================================================//
-	Matd NeoHookeanSolidIncompressible::ConstitutiveRelation(Matd& F, size_t particle_index_i)
+	Matd NeoHookeanSolidIncompressible::ConstitutiveRelation(Matd &F, size_t particle_index_i)
 	{
 		Matd right_cauchy = ~F * F;
 		Real I_1 = right_cauchy.trace(); // first strain invariant
-		Real I_3 = det(right_cauchy); // first strain invariant
-		Matd sigmaPK2 = G0_* std::pow(I_3, - 1.0 / 3.0) * (Matd(1.0) - 1.0 / 3.0 * I_1 * inverse(right_cauchy));
+		Real I_3 = det(right_cauchy);	 // first strain invariant
+		Matd sigmaPK2 = G0_ * std::pow(I_3, -1.0 / 3.0) * (Matd(1.0) - 1.0 / 3.0 * I_1 * inverse(right_cauchy));
 		return sigmaPK2;
 	}
 	//=================================================================================================//
@@ -142,43 +133,43 @@ namespace SPH
 	//=================================================================================================//
 	Real NeoHookeanSolidIncompressible::VolumetricKirchhoff(Real J)
 	{
-		return  0.5 * K0_ * (J * J - 1);
+		return 0.5 * K0_ * (J * J - 1);
 	}
 	//=================================================================================================//
 	OrthotropicSolid::OrthotropicSolid(Real rho_0, std::array<Vecd, 3> a, std::array<Real, 3> E, std::array<Real, 3> G, std::array<Real, 3> poisson)
-	// set parameters for parent class: LinearElasticSolid
-	// we take the max. E and max. possion to approxiamte the maximum of the Bulk modulus --> for time step size calculation
+		// set parameters for parent class: LinearElasticSolid
+		// we take the max. E and max. possion to approximate the maximum of the Bulk modulus --> for time step size calculation
 		: LinearElasticSolid(rho_0, std::max({E[0], E[1], E[2]}), std::max({poisson[0], poisson[1], poisson[2]})),
-		a_(a), E_(E), G_(G), poisson_(poisson)
+		  a_(a), E_(E), G_(G), poisson_(poisson)
 	{
 		// parameters for derived class
-		material_type_ = "OrthotropicSolid";
+		material_type_name_ = "OrthotropicSolid";
 		CalculateA0();
 		CalculateAllMu();
 		CalculateAllLambda();
 	};
 	//=================================================================================================//
-	Matd OrthotropicSolid::ConstitutiveRelation(Matd& F, size_t particle_index_i)
+	Matd OrthotropicSolid::ConstitutiveRelation(Matd &F, size_t particle_index_i)
 	{
 		Matd strain = 0.5 * (~F * F - Matd(1.0));
 		Matd sigmaPK2 = Matd(0);
-		for(int i=0; i<3; i++)
+		for (int i = 0; i < 3; i++)
 		{
 			// outer sum (a{1-3})
 			Matd Summa2 = Matd(0);
-			for(int j=0; j<3; j++)
+			for (int j = 0; j < 3; j++)
 			{
 				// inner sum (b{1-3})
-				Summa2 += Lambda_[i][j]*(CalculateDoubleDotProduct(A_[i],strain)*A_[j]+CalculateDoubleDotProduct(A_[j],strain)*A_[i]);
+				Summa2 += Lambda_[i][j] * (CalculateDoubleDotProduct(A_[i], strain) * A_[j] + CalculateDoubleDotProduct(A_[j], strain) * A_[i]);
 			}
-			sigmaPK2 += Mu_[i]*(((A_[i]*strain)+(strain*A_[i]))+1/2*(Summa2));
+			sigmaPK2 += Mu_[i] * (((A_[i] * strain) + (strain * A_[i])) + 1 / 2 * (Summa2));
 		}
 		return sigmaPK2;
 	}
 	//=================================================================================================//
 	Real OrthotropicSolid::VolumetricKirchhoff(Real J)
 	{
-		return  K0_ * J * (J - 1);
+		return K0_ * J * (J - 1);
 	}
 	//=================================================================================================//
 	void OrthotropicSolid::CalculateA0()
@@ -195,48 +186,48 @@ namespace SPH
 		// G_[1]=2/(Mu_[1]+Mu_[2]);
 		// G_[2]=2/(Mu_[2]+Mu_[0]);
 
-		Mu_[0]=1/G_[0]+1/G_[2]-1/G_[1];
-		Mu_[1]=1/G_[1]+1/G_[0]-1/G_[2];
-		Mu_[2]=1/G_[2]+1/G_[1]-1/G_[0];
+		Mu_[0] = 1 / G_[0] + 1 / G_[2] - 1 / G_[1];
+		Mu_[1] = 1 / G_[1] + 1 / G_[0] - 1 / G_[2];
+		Mu_[2] = 1 / G_[2] + 1 / G_[1] - 1 / G_[0];
 	}
 	//=================================================================================================//
 	void OrthotropicSolid::CalculateAllLambda()
 	{
 		// first we calculate the upper left part, a 3x3 matrix of the full compliance matrix
-		Matd Complience= Matd(
-			Vecd(1/E_[0], -poisson_[0]/E_[0], -poisson_[1]/E_[0]),
-			Vecd(-poisson_[0]/E_[1], 1/E_[1], -poisson_[2]/E_[1]),
-			Vecd(-poisson_[1]/E_[2], -poisson_[2]/E_[2], 1/E_[2])
-		);
+		Matd Complience = Matd(
+			Vecd(1 / E_[0], -poisson_[0] / E_[0], -poisson_[1] / E_[0]),
+			Vecd(-poisson_[0] / E_[1], 1 / E_[1], -poisson_[2] / E_[1]),
+			Vecd(-poisson_[1] / E_[2], -poisson_[2] / E_[2], 1 / E_[2]));
 
 		// we calculate the inverse of the Complience matrix, and calculate the lambdas elementwise
-		Matd Compliance_inv= SimTK::inverse(Complience);
-		//Lambda_ is a 3x3 matrix
-		Lambda_[0][0]=Compliance_inv[0][0]-2*Mu_[0];
-		Lambda_[1][1]=Compliance_inv[1][1]-2*Mu_[1];
-		Lambda_[2][2]=Compliance_inv[2][2]-2*Mu_[2];
-		Lambda_[0][1]=Compliance_inv[0][1];
-		Lambda_[0][2]=Compliance_inv[0][2];
-		Lambda_[1][2]=Compliance_inv[1][2];
+		Matd Compliance_inv = SimTK::inverse(Complience);
+		// Lambda_ is a 3x3 matrix
+		Lambda_[0][0] = Compliance_inv[0][0] - 2 * Mu_[0];
+		Lambda_[1][1] = Compliance_inv[1][1] - 2 * Mu_[1];
+		Lambda_[2][2] = Compliance_inv[2][2] - 2 * Mu_[2];
+		Lambda_[0][1] = Compliance_inv[0][1];
+		Lambda_[0][2] = Compliance_inv[0][2];
+		Lambda_[1][2] = Compliance_inv[1][2];
 		// the matrix is symmetric
 		Lambda_[1][0] = Lambda_[0][1];
 		Lambda_[2][0] = Lambda_[0][2];
-		Lambda_[2][1] = Lambda_[1][2];		
-	}	
+		Lambda_[2][1] = Lambda_[1][2];
+	}
 	//=================================================================================================//
-	Matd FeneNeoHookeanSolid::ConstitutiveRelation(Matd& F, size_t particle_index_i)
+	Matd FeneNeoHookeanSolid::ConstitutiveRelation(Matd &F, size_t particle_index_i)
 	{
 		Matd right_cauchy = ~F * F;
 		Matd strain = 0.5 * (right_cauchy - Matd(1.0));
+		Real J = det(F);
 		Matd sigmaPK2 = G0_ / (1.0 - 2.0 * strain.trace() / j1_m_) * Matd(1.0) +
-						(lambda0_ * log(det(F)) - G0_) * inverse(right_cauchy);
+						(lambda0_ * (J - 1.0) - G0_) * J * inverse(right_cauchy);
 		return sigmaPK2;
 	}
 	//=================================================================================================//
 	Real Muscle::getShearModulus(const Real (&a0)[4], const Real (&b0)[4])
 	{
 		// This is only the background material property.
-		// The previous version seems not correct because it leads to 
+		// The previous version seems not correct because it leads to
 		// that shear modulus is even bigger than bulk modulus.
 		return a0[0];
 	}
@@ -260,8 +251,9 @@ namespace SPH
 		Real I_ss_1 = SimTK::dot(right_cauchy * s0_, s0_) - 1.0;
 		Real I_fs = SimTK::dot(right_cauchy * f0_, s0_);
 		Real I_1_1 = right_cauchy.trace() - Real(Dimensions);
+		Real J = det(F);
 		Matd sigmaPK2 = a0_[0] * exp(b0_[0] * I_1_1) * Matd(1.0) +
-						(lambda0_ * log(det(F)) - a0_[0]) * inverse(right_cauchy) +
+						(lambda0_ * (J - 1.0) - a0_[0]) * J * inverse(right_cauchy) +
 						2.0 * a0_[1] * I_ff_1 * exp(b0_[1] * I_ff_1 * I_ff_1) * f0f0_ +
 						2.0 * a0_[2] * I_ss_1 * exp(b0_[2] * I_ss_1 * I_ss_1) * s0s0_ +
 						a0_[3] * I_fs * exp(b0_[3] * I_fs * I_fs) * f0s0_;
@@ -281,8 +273,9 @@ namespace SPH
 		Real I_ss_1 = SimTK::dot(right_cauchy * local_s0_[i], local_s0_[i]) - 1.0;
 		Real I_fs = SimTK::dot(right_cauchy * local_f0_[i], local_s0_[i]);
 		Real I_1_1 = right_cauchy.trace() - Real(Dimensions);
+		Real J = det(F);
 		Matd sigmaPK2 = a0_[0] * exp(b0_[0] * I_1_1) * Matd(1.0) +
-						(lambda0_ * log(det(F)) - a0_[0]) * inverse(right_cauchy) +
+						(lambda0_ * (J - 1.0) - a0_[0]) * J * inverse(right_cauchy) +
 						2.0 * a0_[1] * I_ff_1 * exp(b0_[1] * I_ff_1 * I_ff_1) * local_f0f0_[i] +
 						2.0 * a0_[2] * I_ss_1 * exp(b0_[2] * I_ss_1 * I_ss_1) * local_s0s0_[i] +
 						a0_[3] * I_fs * exp(b0_[3] * I_fs * I_fs) * local_f0s0_[i];
@@ -290,16 +283,16 @@ namespace SPH
 		return sigmaPK2;
 	}
 	//=================================================================================================//
-	void LocallyOrthotropicMuscle::assignElasticSolidParticles(ElasticSolidParticles *elastic_particles)
+	void LocallyOrthotropicMuscle::assignBaseParticles(BaseParticles *base_particles)
 	{
-		Muscle::assignElasticSolidParticles(elastic_particles);
+		Muscle::assignBaseParticles(base_particles);
 		initializeFiberAndSheet();
 	}
 	//=================================================================================================//
 	void LocallyOrthotropicMuscle::initializeFiberAndSheet()
 	{
-		base_particles_->registerAVariable<Vecd>(local_f0_, "Fiber");
-		base_particles_->registerAVariable<Vecd>(local_s0_, "Sheet");
+		base_particles_->registerAVariable(local_f0_, "Fiber");
+		base_particles_->registerAVariable(local_s0_, "Sheet");
 		base_particles_->addAVariableNameToList<Vecd>(reload_local_parameters_, "Fiber");
 		base_particles_->addAVariableNameToList<Vecd>(reload_local_parameters_, "Sheet");
 	}

@@ -16,6 +16,8 @@ Real particle_spacing_ref = 0.05;	/**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4; /**< Extending width for BCs. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
+// Observer location
+StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -25,12 +27,10 @@ Real gravity_g = 1.0;					 /**< Gravity force of fluid. */
 Real U_max = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
 Real c_f = 10.0 * U_max;				 /**< Reference sound speed. */
 //----------------------------------------------------------------------
-//	Geometric shapes used in the system.
+//	Geometric elements used in shape modeling.
 //----------------------------------------------------------------------
-/** create a water block shape */
 std::vector<Vecd> createWaterBlockShape()
 {
-	//geometry
 	std::vector<Vecd> water_block_shape;
 	water_block_shape.push_back(Vecd(0.0, 0.0));
 	water_block_shape.push_back(Vecd(0.0, LH));
@@ -39,7 +39,7 @@ std::vector<Vecd> createWaterBlockShape()
 	water_block_shape.push_back(Vecd(0.0, 0.0));
 	return water_block_shape;
 }
-/** create outer wall shape */
+
 std::vector<Vecd> createOuterWallShape()
 {
 	std::vector<Vecd> outer_wall_shape;
@@ -51,9 +51,7 @@ std::vector<Vecd> createOuterWallShape()
 
 	return outer_wall_shape;
 }
-/**
-* @brief create inner wall shape
-*/
+
 std::vector<Vecd> createInnerWallShape()
 {
 	std::vector<Vecd> inner_wall_shape;
@@ -66,65 +64,37 @@ std::vector<Vecd> createInnerWallShape()
 	return inner_wall_shape;
 }
 //----------------------------------------------------------------------
-//	Water block body with cases-dependent geometries (ComplexShape).
+//	cases-dependent geometric shape for water block.
 //----------------------------------------------------------------------
-class WaterBlock : public FluidBody
+class WaterBlock : public MultiPolygonShape
 {
 public:
-	WaterBlock(SPHSystem &sph_system, const std::string &body_name)
-		: FluidBody(sph_system, body_name, makeShared<SPHAdaptation>(1.3, 1))
+	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geomtry definition. */
-		MultiPolygon original_shape;
-		original_shape.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
-
-		body_shape_.add<MultiPolygonShape>(original_shape);
+		multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
 	}
 };
 //----------------------------------------------------------------------
-//	Air block body with cases-dependent geometries (ComplexShape).
+//	cases-dependent geometric shape for air block.
 //----------------------------------------------------------------------
-class AirBlock : public FluidBody
+class AirBlock : public MultiPolygonShape
 {
 public:
-	AirBlock(SPHSystem &sph_system, const std::string &body_name)
-		: FluidBody(sph_system, body_name, makeShared<SPHAdaptation>(1.3, 1.0))
+	explicit AirBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geomtry definition. */
-		MultiPolygon original_shape;
-		original_shape.addAPolygon(createInnerWallShape(), ShapeBooleanOps::add);
-		original_shape.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::sub);
-		body_shape_.add<MultiPolygonShape>(original_shape);
+		multi_polygon_.addAPolygon(createInnerWallShape(), ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::sub);
 	}
 };
 //----------------------------------------------------------------------
-//	Wall boundary body definition.
+//	Wall boundary shape definition.
 //----------------------------------------------------------------------
-class WallBoundary : public SolidBody
+class WallBoundary : public ComplexShape
 {
 public:
-	WallBoundary(SPHSystem &sph_system, const std::string &body_name)
-		: SolidBody(sph_system, body_name, makeShared<SPHAdaptation>(1.3, 1))
+	explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		/** Geomtry definition. */
-		MultiPolygon outer_wall_polygon;
-		outer_wall_polygon.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
-
-		MultiPolygon inner_wall_polygon;
-		inner_wall_polygon.addAPolygon(createInnerWallShape(), ShapeBooleanOps::add);
-
-		body_shape_.add<MultiPolygonShape>(outer_wall_polygon, "OuterWall");
-		body_shape_.substract<MultiPolygonShape>(inner_wall_polygon, "InnerWall");
-	}
-};
-//----------------------------------------------------------------------
-//	Observer particle generator.
-//----------------------------------------------------------------------
-class ObserverParticleGenerator : public ParticleGeneratorDirect
-{
-public:
-	ObserverParticleGenerator() : ParticleGeneratorDirect()
-	{
-		positions_volumes_.push_back(std::make_pair(Vecd(DL, 0.2), 0.0));
+		add<MultiPolygonShape>(MultiPolygon(createOuterWallShape()), "OuterWall");
+		subtract<MultiPolygonShape>(MultiPolygon(createInnerWallShape()), "InnerWall");
 	}
 };

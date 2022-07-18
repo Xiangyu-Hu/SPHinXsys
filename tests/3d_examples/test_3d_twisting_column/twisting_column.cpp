@@ -1,6 +1,6 @@
 /**
  * @file twisting_column.cpp
- * @brief This is an example of solid with classic neohookean model 
+ * @brief This is an example of solid with classic neohookean model
  * to demonstrate the robustness of the formulation with Kirchhoff stress decomposition.
  * @author Chi Zhang  and Xiangyu Hu
  * @ref 	DOI: 10.1016/j.cma.2014.09.024
@@ -16,11 +16,12 @@ int main()
 	/** Setup the system. Please the make sure the global domain bounds are correctly defined. */
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
 	/** create a body with corresponding material, particles and reaction model. */
-	Column column(system, "Column");
-	ElasticSolidParticles particles(column, makeShared<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson));
+	SolidBody column(system, makeShared<Column>("Column"));
+	column.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+	column.generateParticles<ParticleGeneratorLattice>();
 	/** Define Observer. */
 	ObserverBody my_observer(system, "MyObserver");
-	ObserverParticles observer_particles(my_observer, makeShared<ObserverParticleGenerator>());
+	my_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	/**body relation topology */
 	BodyRelationInner column_inner(column);
 	BodyRelationContact my_observer_contact(my_observer, {&column});
@@ -36,13 +37,12 @@ int main()
 	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half(column_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(column_inner);
 	/** Constrain the holder. */
-	TriangleMeshShapeBrick holder_shape(halfsize_holder, resolution, translation_holder);
-	BodyRegionByParticle holder(column, "Holder", holder_shape);
+	BodyRegionByParticle holder(column, makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder, "Holder"));
 	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(column, holder);
 	//----------------------------------------------------------------------
 	//	Output
 	//----------------------------------------------------------------------
-	In_Output in_output(system);
+	InOutput in_output(system);
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_velocity("Velocity", in_output, my_observer_contact);

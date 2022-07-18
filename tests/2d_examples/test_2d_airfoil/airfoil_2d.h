@@ -29,23 +29,16 @@ Real DH = 0.25; 				/**< airfoil height. */
 Real resolution_ref = 0.02; 	/**< Reference resolution. */	
 BoundingBox system_domain_bounds(Vec2d(-DL1, -DH), Vec2d(DL, DH));
 //----------------------------------------------------------------------
-//	Airfoil	as a solid body
+//	import model as a complex shape
 //----------------------------------------------------------------------
-class Airfoil : public SolidBody
+class ImportModel : public MultiPolygonShape
 {
 public:
-	Airfoil(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name, 
-			makeShared<ParticleSpacingByBodyShape>(1.15, 1.0, 3))
+	explicit ImportModel(const std::string &import_model_name) : MultiPolygonShape(import_model_name)
 	{
-		/** Geometry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygonFromFile(airfoil_flap_front, ShapeBooleanOps::add);
-		multi_polygon.addAPolygonFromFile(airfoil_wing, ShapeBooleanOps::add);
-		multi_polygon.addAPolygonFromFile(airfoil_flap_rear, ShapeBooleanOps::add);
-
-		MultiPolygonShape multi_polygon_shape(multi_polygon);
-		body_shape_.add<LevelSetShape>(this, multi_polygon_shape, true);
+		multi_polygon_.addAPolygonFromFile(airfoil_flap_front, ShapeBooleanOps::add);
+		multi_polygon_.addAPolygonFromFile(airfoil_wing, ShapeBooleanOps::add);
+		multi_polygon_.addAPolygonFromFile(airfoil_flap_rear, ShapeBooleanOps::add);
 	}
 };
 #endif //AIRFOIL_2D_H

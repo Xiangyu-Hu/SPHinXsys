@@ -1,30 +1,30 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * --------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+ * and HU1527/12-1.															*
+ *                                                                           *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * --------------------------------------------------------------------------*/
 /**
 * @file 	particle_dynamics_diffusion_reaction.h
 * @brief 	This is the particle dynamics aplliable for all type bodies
 * 			TODO: there is an issue on applying corrected configuration for contact bodies.
-  @author	Xiaojing Tang, Chi ZHang and Xiangyu Hu
+* @author	Xiaojing Tang, Chi ZHang and Xiangyu Hu
 */
 
 #ifndef PARTICLE_DYNAMICS_DIFFUSION_REACTION_H
@@ -39,23 +39,23 @@ namespace SPH
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	using DiffusionReactionSimpleData =
 		DataDelegateSimple<BodyType,
-						   DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>,
-						   DiffusionReaction<BaseParticlesType, BaseMaterialType>>;
+						   DiffusionReactionParticles<BaseParticlesType>,
+						   DiffusionReaction<BaseMaterialType>>;
 
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	using DiffusionReactionInnerData =
 		DataDelegateInner<BodyType,
-						  DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>,
-						  DiffusionReaction<BaseParticlesType, BaseMaterialType>>;
+						  DiffusionReactionParticles<BaseParticlesType>,
+						  DiffusionReaction<BaseMaterialType>>;
 
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType,
 			  class ContactBodyType, class ContactBaseParticlesType, class ContactBaseMaterialType>
 	using DiffusionReactionContactData =
 		DataDelegateContact<BodyType,
-							DiffusionReactionParticles<BaseParticlesType, BaseMaterialType>,
-							DiffusionReaction<BaseParticlesType, BaseMaterialType>,
-							ContactBodyType, DiffusionReactionParticles<ContactBaseParticlesType, ContactBaseMaterialType>,
-							ContactBaseMaterialType, DataDelegateEmptyBase>;
+							DiffusionReactionParticles<BaseParticlesType>,
+							DiffusionReaction<BaseMaterialType>,
+							ContactBodyType, DiffusionReactionParticles<ContactBaseParticlesType>,
+							DiffusionReaction<ContactBaseMaterialType>, DataDelegateEmptyBase>;
 
 	/**
 	 * @class  DiffusionReactionInitialCondition
@@ -118,6 +118,10 @@ namespace SPH
 		virtual void Update(size_t index_i, Real dt = 0.0) override;
 
 	public:
+		typedef BodyType InnerBodyType;
+		typedef BaseParticlesType InnerBaseParticlesType;
+		typedef BaseMaterialType InnerBaseMaterialType;
+		typedef BaseBodyRelationInner BodyRelationType;
 		explicit RelaxationOfAllDiffussionSpeciesInner(BaseBodyRelationInner &inner_relation);
 		virtual ~RelaxationOfAllDiffussionSpeciesInner(){};
 	};
@@ -141,20 +145,21 @@ namespace SPH
 
 	protected:
 		void getDiffusionChangeRateContact(size_t particle_i, size_t particle_j, Vecd &e_ij,
-										   Real surface_area_ij, StdVec<StdLargeVec<Real>> &species_n_k);
+										   Real surface_area_ij, const StdVec<StdLargeVec<Real>> &species_n_k);
 		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 
 	public:
+		typedef ComplexBodyRelation BodyRelationType;
 		explicit RelaxationOfAllDiffussionSpeciesComplex(ComplexBodyRelation &complex_relation);
 		virtual ~RelaxationOfAllDiffussionSpeciesComplex(){};
 	};
 
 	/**
-	* @class RungeKuttaInitialization
-	* @brief initialization of a runge-kutta integration scheme
-	*/
+	 * @class InitializationRK
+	 * @brief initialization of a runge-kutta integration scheme
+	 */
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	class RungeKuttaInitialization
+	class InitializationRK
 		: public ParticleDynamicsSimple,
 		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
@@ -165,16 +170,16 @@ namespace SPH
 		virtual void Update(size_t index_i, Real dt = 0.0) override;
 
 	public:
-		RungeKuttaInitialization(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &species_s);
-		virtual ~RungeKuttaInitialization(){};
+		InitializationRK(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &species_s);
+		virtual ~InitializationRK(){};
 	};
 
 	/**
-	* @class RungeKutta2Stages2ndStage
-	* @brief the second stage of the second runge-kutta scheme
-	*/
-	template <class RungeKutta2Stages1stStageType, class BodyRelationType>
-	class RungeKutta2Stages2ndStage : public RungeKutta2Stages1stStageType
+	 * @class SecondStageRK2
+	 * @brief the second stage of the 2nd-order Runge-Kutta scheme
+	 */
+	template <class FirstStageType>
+	class SecondStageRK2 : public FirstStageType
 	{
 		StdVec<BaseDiffusion *> species_diffusion_;
 		StdVec<StdLargeVec<Real>> &species_n_;
@@ -185,8 +190,9 @@ namespace SPH
 		virtual void updateSpeciesDiffusion(size_t particle_i, Real dt) override;
 
 	public:
-		RungeKutta2Stages2ndStage(BodyRelationType &body_relation, StdVec<StdLargeVec<Real>> &species_s);
-		virtual ~RungeKutta2Stages2ndStage(){};
+		SecondStageRK2(typename FirstStageType::BodyRelationType &body_relation,
+					   StdVec<StdLargeVec<Real>> &species_s);
+		virtual ~SecondStageRK2(){};
 	};
 
 	/**
@@ -194,23 +200,23 @@ namespace SPH
 	 * @brief Compute the diffusion relaxation process of all species
 	 * with second order Runge-Kutta time stepping
 	 */
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType,
-			  class RungeKutta2Stages1stStageType, class BodyRelationType>
-	class RelaxationOfAllDiffusionSpeciesRK2
-		: public ParticleDynamics<void>,
-		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
+	template <class FirstStageType>
+	class RelaxationOfAllDiffusionSpeciesRK2 : public ParticleDynamics<void>
 	{
 	protected:
 		StdVec<BaseDiffusion *> species_diffusion_;
 		/** Intermediate Value */
 		StdVec<StdLargeVec<Real>> species_s_;
 
-		RungeKuttaInitialization<BodyType, BaseParticlesType, BaseMaterialType> runge_kutta_initialization_;
-		RungeKutta2Stages1stStageType runge_kutta_1st_stage_;
-		RungeKutta2Stages2ndStage<RungeKutta2Stages1stStageType, BodyRelationType> runge_kutta_2nd_stage_;
+		InitializationRK<typename FirstStageType::InnerBodyType,
+						 typename FirstStageType::InnerBaseParticlesType,
+						 typename FirstStageType::InnerBaseMaterialType>
+			rk2_initialization_;
+		FirstStageType rk2_1st_stage_;
+		SecondStageRK2<FirstStageType> rk2_2nd_stage_;
 
 	public:
-		explicit RelaxationOfAllDiffusionSpeciesRK2(BodyRelationType &body_relation);
+		explicit RelaxationOfAllDiffusionSpeciesRK2(typename FirstStageType::BodyRelationType &body_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesRK2(){};
 
 		virtual void exec(Real dt = 0.0) override;
@@ -226,9 +232,9 @@ namespace SPH
 	};
 
 	/**
-	* @class RelaxationOfAllReactionsForward
-	* @brief Compute the reaction process of all species by forward splitting
-	*/
+	 * @class RelaxationOfAllReactionsForward
+	 * @brief Compute the reaction process of all species by forward splitting
+	 */
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	class RelaxationOfAllReactionsForward
 		: public ParticleDynamicsSimple,
@@ -247,9 +253,9 @@ namespace SPH
 	};
 
 	/**
-	* @class RelaxationOfAllReactionsBackward
-	* @brief Compute the reaction process of all species by backward splitting
-	*/
+	 * @class RelaxationOfAllReactionsBackward
+	 * @brief Compute the reaction process of all species by backward splitting
+	 */
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	class RelaxationOfAllReactionsBackward
 		: public ParticleDynamicsSimple,
@@ -289,10 +295,10 @@ namespace SPH
 	};
 
 	/**
-	* @class DiffusionBasedMapping
-	* @brief Mapping inside of body according to diffusion.
-	* This is a abstract class to be override for case specific implementation
-	*/
+	 * @class DiffusionBasedMapping
+	 * @brief Mapping inside of body according to diffusion.
+	 * This is a abstract class to be override for case specific implementation
+	 */
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	class DiffusionBasedMapping
 		: public ParticleDynamicsSimple,
@@ -373,4 +379,4 @@ namespace SPH
 		}
 	};
 }
-#endif //PARTICLE_DYNAMICS_DIFFUSION_REACTION_H
+#endif // PARTICLE_DYNAMICS_DIFFUSION_REACTION_H

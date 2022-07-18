@@ -4,10 +4,8 @@
 * This is the one of the basic test cases for efficient and accurate time     *
 * integration scheme investigation 							  				  *
 * ---------------------------------------------------------------------------*/
-/**
-   * @brief 	SPHinXsys Library.
-   */
-#include "sphinxsys.h"
+
+#include "sphinxsys.h" // SPHinXsys Library.
 
 using namespace SPH;
 
@@ -29,50 +27,44 @@ Real gravity_g = 1.0;
 Real U_f = 2.0 * sqrt(gravity_g * LH);
 Real c_f = 10.0 * U_f;
 
-//	resolution which controls the quality of created polygonalmesh
-int resolution(50);
-
-//	define the fluid body
-class WaterBlock : public FluidBody
+//	define the fluid body shape
+class WaterBlock : public ComplexShape
 {
 public:
-	WaterBlock(SPHSystem &system, const std::string &body_name)
-		: FluidBody(system, body_name)
+	explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
 	{
 		Vecd halfsize_water(0.5 * LL, 0.5 * LH, 0.5 * LW);
 		SimTK::Transform translation_water(halfsize_water);
-
-		body_shape_.add<GeometricShapeBrick>(halfsize_water, translation_water);
+		add<TransformShape<GeometricShapeBox>>(translation_water, halfsize_water);
 	}
 };
-//	define the static solid wall boundary
-class WallBoundary : public SolidBody
+//	define the static solid wall boundary shape
+class WallBoundary : public ComplexShape
 {
 public:
-	WallBoundary(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
 	{
 		Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
 		Vecd halfsize_inner(0.5 * DL, 0.5 * DH, 0.5 * DW);
-		SimTK::Transform  translation_wall(Vec3d(0.5 * DL, 0.5 * DH, 0.5 * DW));
-		body_shape_.add<GeometricShapeBrick>(halfsize_outer, translation_wall);
-		body_shape_.substract<GeometricShapeBrick>(halfsize_inner, translation_wall);
+		SimTK::Transform  translation_wall(halfsize_inner);
+		add<TransformShape<GeometricShapeBox>>(translation_wall, halfsize_outer);
+		subtract<TransformShape<GeometricShapeBox>>(translation_wall, halfsize_inner);
 	}
 };
 
-//	define an observer particle geneerator
-class ObserverParticleGenerator : public ParticleGeneratorDirect
+//	define an observer particle generator
+class WaterObserverParticleGenerator : public ObserverParticleGenerator
 {
 public:
-	ObserverParticleGenerator() : ParticleGeneratorDirect()
+	explicit WaterObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
 	{
 		//add observation points
-		positions_volumes_.push_back(std::make_pair(Vecd(DL, 0.01, 0.5 * DW), 0.0));
-		positions_volumes_.push_back(std::make_pair(Vecd(DL, 0.1, 0.5 * DW), 0.0));
-		positions_volumes_.push_back(std::make_pair(Vecd(DL, 0.2, 0.5 * DW), 0.0));
-		positions_volumes_.push_back(std::make_pair(Vecd(DL, 0.24, 0.5 * DW), 0.0));
-		positions_volumes_.push_back(std::make_pair(Vecd(DL, 0.252, 0.5 * DW), 0.0));
-		positions_volumes_.push_back(std::make_pair(Vecd(DL, 0.266, 0.5 * DW), 0.0));
+		positions_.push_back(Vecd(DL, 0.01, 0.5 * DW));
+		positions_.push_back(Vecd(DL, 0.1, 0.5 * DW));
+		positions_.push_back(Vecd(DL, 0.2, 0.5 * DW));
+		positions_.push_back(Vecd(DL, 0.24, 0.5 * DW));
+		positions_.push_back(Vecd(DL, 0.252, 0.5 * DW));
+		positions_.push_back(Vecd(DL, 0.266, 0.5 * DW));
 	}
 };
 
@@ -88,19 +80,18 @@ int main()
 	system.restart_step_ = 0;
 
 	//the water block
-	WaterBlock water_block(system, "WaterBody");
-	//create fluid particles
-	FluidParticles fluid_particles(water_block, makeShared<WeaklyCompressibleFluid>(rho0_f, c_f));
+	FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
+	water_block.defineParticlesAndMaterial<FluidParticles,WeaklyCompressibleFluid>(rho0_f, c_f);
+	water_block.generateParticles<ParticleGeneratorLattice>();
 
 	//the wall boundary
-	WallBoundary wall_boundary(system, "Wall");
-	//create solid particles
-	SolidParticles wall_particles(wall_boundary);
-	wall_particles.addAVariableToWrite<Vec3d>("NormalDirection");
+	SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
+	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
+	wall_boundary.generateParticles<ParticleGeneratorLattice>();
+	wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
 
 	ObserverBody fluid_observer(system, "Fluidobserver");
-	//create observer particles
-	ObserverParticles observer_particles(fluid_observer, makeShared<ObserverParticleGenerator>());
+	fluid_observer.generateParticles<WaterObserverParticleGenerator>();
 
 	/** topology */
 	ComplexBodyRelation water_block_complex(water_block, {&wall_boundary});
@@ -111,6 +102,7 @@ int main()
 	//-------------------------------------------------------------------
 	//-------- common particle dynamics ----------------------------------------
 	Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));
+	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	TimeStepInitialization initialize_a_fluid_step(water_block, gravity);
 	//-------- fluid dynamics --------------------------------------------------
 	//evaluation of density by summation approach
@@ -127,7 +119,7 @@ int main()
 	//-----------------------------------------------------------------------------
 	//outputs
 	//-----------------------------------------------------------------------------
-	In_Output in_output(system);
+	InOutput in_output(system);
 	BodyStatesRecordingToVtp write_water_block_states(in_output, system.real_bodies_);
 	/** Output the body states for restart simulation. */
 	RestartIO restart_io(in_output, system.real_bodies_);
@@ -145,7 +137,7 @@ int main()
 	 */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	wall_particles.initializeNormalDirectionFromBodyShape();
+	wall_boundary_normal_direction.parallel_exec();
 	/**
 	* @brief The time stepping starts here.
 	*/

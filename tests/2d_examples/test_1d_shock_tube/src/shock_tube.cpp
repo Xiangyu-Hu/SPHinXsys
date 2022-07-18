@@ -1,6 +1,6 @@
 /**
  * @file 	shock_tube.cpp
- * @brief 	This is a test to show the standard sod shock tube case.
+ * @brief 	This is a test to show the standard Sod shock tube case.
  * @details See https://doi.org/10.1016/j.jcp.2010.08.019 for the detailed problem setup.
  * @author 	Zhentong Wang and Xiangyu Hu
  */
@@ -25,28 +25,22 @@ Real p_r = 0.1;		  /**< initial pressure of right state. */
 //----------------------------------------------------------------------
 Real heat_capacity_ratio = 1.4; /**< heat capacity ratio. */
 //----------------------------------------------------------------------
-//	Cases-dependent geometries
+//	Cases-dependent geometry
 //----------------------------------------------------------------------
-std::vector<Vecd> waves_block_shape{
-	Vecd(-2.0 / 5.0 * DL, 0.0), Vecd(-2.0 / 5.0 * DL, DH), Vecd(3.0 / 5.0 * DL, DH),
-	Vecd(3.0 / 5.0 * DL, 0.0), Vecd(-2.0 / 5.0 * DL, 0.0)};
-//----------------------------------------------------------------------
-//	Bodies with cases-dependent geometries (ComplexShape).
-//----------------------------------------------------------------------
-class WaveBlock : public EulerianFluidBody
+class WaveBlock : public MultiPolygonShape
 {
 public:
-	WaveBlock(SPHSystem &sph_system, const std::string &body_name)
-		: EulerianFluidBody(sph_system, body_name)
+	explicit WaveBlock(const std::string &body_name)
+		: MultiPolygonShape(body_name)
 	{
-		/** Geomtry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(waves_block_shape, ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		std::vector<Vecd> waves_block_shape{
+			Vecd(-2.0 / 5.0 * DL, 0.0), Vecd(-2.0 / 5.0 * DL, DH), Vecd(3.0 / 5.0 * DL, DH),
+			Vecd(3.0 / 5.0 * DL, 0.0), Vecd(-2.0 / 5.0 * DL, 0.0)};
+		multi_polygon_.addAPolygon(waves_block_shape, ShapeBooleanOps::add);
 	}
 };
 //----------------------------------------------------------------------
-//	setup case-dependent initial condition.
+//	Case-dependent initial condition.
 //----------------------------------------------------------------------
 class WavesInitialCondition
 	: public eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition
@@ -89,36 +83,37 @@ int main(int ac, char *av[])
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
-	//handle command line arguments
+	// handle command line arguments
 	sph_system.handleCommandlineOptions(ac, av);
 	// output environment.
-	In_Output in_output(sph_system);
+	InOutput in_output(sph_system);
 	//----------------------------------------------------------------------
-	//	Creating body, materials and particles.
+	//	Create body, materials and particles.
 	//----------------------------------------------------------------------
-	WaveBlock wave_block(sph_system, "WaveBody");
-	CompressibleFluidParticles wave_particles(wave_block, makeShared<CompressibleFluid>(rho0_l, heat_capacity_ratio));
-	wave_particles.addAVariableToWrite<Real>("TotalEnergy");
+	EulerianFluidBody wave_body(sph_system, makeShared<WaveBlock>("WaveBody"));
+	wave_body.defineParticlesAndMaterial<CompressibleFluidParticles, CompressibleFluid>(rho0_l, heat_capacity_ratio);
+	wave_body.generateParticles<ParticleGeneratorLattice>();
+	wave_body.addBodyStateForRecording<Real>("TotalEnergy");
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The inner relation defines the particle configuration for particles within a body.
 	//	The contact relation defines the particle configuration between the bodies.
 	//----------------------------------------------------------------------
-	BodyRelationInner wave_block_inner(wave_block);
+	BodyRelationInner wave_body_inner(wave_body);
 	//----------------------------------------------------------------------
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	WavesInitialCondition waves_initial_condition(wave_block);
+	WavesInitialCondition waves_initial_condition(wave_body);
 	// Initialize particle acceleration.
-	eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization initialize_wave_step(wave_block);
+	eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization initialize_wave_step(wave_body);
 	// Periodic BCs in y direction.
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_y(wave_block, yAxis);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_y(wave_body, yAxis);
 	// Time step size with considering sound wave speed.
-	eulerian_compressible_fluid_dynamics::AcousticTimeStepSize get_wave_time_step_size(wave_block);
+	eulerian_compressible_fluid_dynamics::AcousticTimeStepSize get_wave_time_step_size(wave_body);
 	// Pressure, density and energy relaxation algorithm by use HLLC Riemann solver.
-	eulerian_compressible_fluid_dynamics::PressureRelaxationHLLCRiemannInner pressure_relaxation(wave_block_inner);
-	eulerian_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCRiemannInner density_and_energy_relaxation(wave_block_inner);
+	eulerian_compressible_fluid_dynamics::PressureRelaxationHLLCRiemannInner pressure_relaxation(wave_body_inner);
+	eulerian_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCRiemannInner density_and_energy_relaxation(wave_body_inner);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations, observations of the simulation.
 	//	Regression tests are also defined here.

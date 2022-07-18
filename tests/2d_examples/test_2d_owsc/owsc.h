@@ -1,19 +1,21 @@
 /**
-* @file 	owsc.h
-* @brief 	This is the case file for the test of Oscillating Wave Surge Converter (OWSC).
-* @author   Chi Zhang and Xiangyu Hu
-*/
+ * @file 	owsc.h
+ * @brief 	This is the case file for the test of Oscillating Wave Surge Converter (OWSC).
+ * @author   Chi Zhang and Xiangyu Hu
+ */
 #ifndef TEST_2D_OWSC_CASE_H
 #define TEST_2D_OWSC_CASE_H
 
 #include "sphinxsys.h"
 using namespace SPH;
 #define PI 3.1415926
-
+//------------------------------------------------------------------------------
+// global parameters for the case
+//------------------------------------------------------------------------------
 Real total_physical_time = 12.0;
-//for geometry
-Real DL = 18.42;	  //tank length
-Real DH = 1.0;		  //tank height
+
+Real DL = 18.42;	  // tank length
+Real DH = 1.0;		  // tank height
 Real DL_Extra = 1.0;  // for wave maker
 Real Water_H = 0.691; /**< Water height. */
 
@@ -23,58 +25,57 @@ Real Flap_H = 0.48;
 
 Real Base_bottom_position = 0.155;
 Real Base_height = 0.1;
-Real particle_spacing_ref = Flap_width / 4.0; //particle spacing
-Real BW = particle_spacing_ref * 4.0;		  //boundary width
-/** Domain bounds of the system. */
+Real particle_spacing_ref = Flap_width / 4.0; // particle spacing
+Real BW = particle_spacing_ref * 4.0;		  // boundary width
+
 BoundingBox system_domain_bounds(Vec2d(-DL_Extra - BW, -BW), Vec2d(DL + BW, DH + BW));
 
-//the offset that the rubber flap shifted above the tank
-//Real flap_off = Flap_x - 0.5 * Flap_width + DL_Extra + BW;
-//Real off_set = particle_spacing_ref + floor(flap_off / particle_spacing_ref) * particle_spacing_ref - flap_off;
+// the offset that the rubber flap shifted above the tank
+// Real flap_off = Flap_x - 0.5 * Flap_width + DL_Extra + BW;
+// Real off_set = particle_spacing_ref + floor(flap_off / particle_spacing_ref) * particle_spacing_ref - flap_off;
 Vec2d offset = Vec2d(0.0);
 
-//define Dam domain
-Vec2d Water_lb(0.0, 0.0);	  //left bottom
-Vec2d Water_lt(0.0, Water_H); //left top
-Vec2d Water_rt(DL, Water_H);  //right top
-Vec2d Water_rb(DL, 0.356);	  //right bottom
+// water block parameters
+Vec2d Water_lb(0.0, 0.0);	  // left bottom
+Vec2d Water_lt(0.0, Water_H); // left top
+Vec2d Water_rt(DL, Water_H);  // right top
+Vec2d Water_rb(DL, 0.356);	  // right bottom
 Vec2d Water_slope_1(DL - 6.2, 0.356);
 Vec2d Water_slope_2(DL - 6.2 - 3.7, 0.155);
 Vec2d Water_slope_3(DL - 6.2 - 3.7 - 2.4, 0.155);
 Vec2d Water_slope_4(DL - 6.2 - 3.7 - 2.4 - 1.3, 0.0);
 
-//define constrain region of flap
-Vec2d Base_lb(Flap_x - 0.5 * Flap_width, Base_bottom_position);				  //left bottom
-Vec2d Base_lt(Flap_x - 0.5 * Flap_width, Base_bottom_position + Base_height); //left top
-Vec2d Base_rt(Flap_x + 0.5 * Flap_width, Base_bottom_position + Base_height); //right top
-Vec2d Base_rb(Flap_x + 0.5 * Flap_width, Base_bottom_position);				  //right bottom
+// flap constrain region parameter
+Vec2d Base_lb(Flap_x - 0.5 * Flap_width, Base_bottom_position);				  // left bottom
+Vec2d Base_lt(Flap_x - 0.5 * Flap_width, Base_bottom_position + Base_height); // left top
+Vec2d Base_rt(Flap_x + 0.5 * Flap_width, Base_bottom_position + Base_height); // right top
+Vec2d Base_rb(Flap_x + 0.5 * Flap_width, Base_bottom_position);				  // right bottom
 
-//define flap
-Vec2d Flap_lb(Flap_x - 0.5 * Flap_width, Base_bottom_position + Base_height + 0.5 * Flap_width);		  //left bottom
-Vec2d Flap_lt(Flap_x - 0.5 * Flap_width, Base_bottom_position + Base_height + 0.5 * Flap_width + Flap_H); //left top
-Vec2d Flap_rt(Flap_x + 0.5 * Flap_width, Base_bottom_position + Base_height + 0.5 * Flap_width + Flap_H); //right top
-Vec2d Flap_rb(Flap_x + 0.5 * Flap_width, Base_bottom_position + Base_height + 0.5 * Flap_width);		  //right bottom
+// flap geometeric parameters
+Vec2d Flap_lb(Flap_x - 0.5 * Flap_width, Base_bottom_position + Base_height + 0.5 * Flap_width);		  // left bottom
+Vec2d Flap_lt(Flap_x - 0.5 * Flap_width, Base_bottom_position + Base_height + 0.5 * Flap_width + Flap_H); // left top
+Vec2d Flap_rt(Flap_x + 0.5 * Flap_width, Base_bottom_position + Base_height + 0.5 * Flap_width + Flap_H); // right top
+Vec2d Flap_rb(Flap_x + 0.5 * Flap_width, Base_bottom_position + Base_height + 0.5 * Flap_width);		  // right bottom
 
-//gravity
+// gravity
 Real gravity_g = 9.81;
 
-//for material properties of the fluid
+// for material properties of the fluid
 Real rho0_f = 1000.0;
 Real U_f = 2.0 * sqrt(0.79 * gravity_g);
 Real c_f = 10.0 * U_f;
 Real mu_f = 1.0e-6;
-//for material properties of the solid
+
+// for material properties of the solid
 Real flap_mass = 33.04;
 Real flap_vol = 0.0579;
 Real rho0_s = flap_mass / flap_vol;
 Real poisson = 0.33;
 Real Youngs_modulus = 7.8e6;
-/**
-* @brief define geometry and initial conditions of SPH bodies
-*/
-/**
-* @brief create a water block shape
-*/
+
+//------------------------------------------------------------------------------
+// geometric shape elements used in the case
+//------------------------------------------------------------------------------
 std::vector<Vecd> createWaterBlockShape()
 {
 	std::vector<Vecd> pnts;
@@ -90,9 +91,7 @@ std::vector<Vecd> createWaterBlockShape()
 
 	return pnts;
 }
-/**
-* @brief create flap base shape
-*/
+
 std::vector<Vecd> createFlapConstrainShape()
 {
 	std::vector<Vecd> pnts2;
@@ -104,9 +103,7 @@ std::vector<Vecd> createFlapConstrainShape()
 
 	return pnts2;
 }
-/**
-* @brief create flap base shape
-*/
+
 std::vector<Vecd> createFlapShape()
 {
 	std::vector<Vecd> pnts3;
@@ -125,9 +122,7 @@ std::vector<Vecd> createFlapShape()
 
 	return pnts3;
 }
-/**
-* @brief create a damping zone
-*/
+
 MultiPolygon createDampingBufferShape()
 {
 	std::vector<Vecd> pnts;
@@ -141,9 +136,7 @@ MultiPolygon createDampingBufferShape()
 	multi_polygon.addAPolygon(pnts, ShapeBooleanOps::add);
 	return multi_polygon;
 }
-/**
-* @brief create outer wall shape
-*/
+
 std::vector<Vecd> createOuterWallShape()
 {
 	std::vector<Vecd> pnts1;
@@ -159,9 +152,7 @@ std::vector<Vecd> createOuterWallShape()
 
 	return pnts1;
 }
-/**
-* @brief create inner wall shape 01
-*/
+
 std::vector<Vecd> createInnerWallShape01()
 {
 	std::vector<Vecd> pnts2;
@@ -181,9 +172,7 @@ std::vector<Vecd> createInnerWallShape01()
 
 	return pnts2;
 }
-/**
-* @brief create inner wall shape 02
-*/
+
 std::vector<Vecd> createInnerWallShape02()
 {
 	std::vector<Vecd> pnts3;
@@ -195,9 +184,7 @@ std::vector<Vecd> createInnerWallShape02()
 
 	return pnts3;
 }
-/**
-* @brief create wave maker shape
-*/
+
 MultiPolygon createWaveMakerShape()
 {
 	std::vector<Vecd> wave_make_shape;
@@ -211,49 +198,43 @@ MultiPolygon createWaveMakerShape()
 	multi_polygon.addAPolygon(wave_make_shape, ShapeBooleanOps::add);
 	return multi_polygon;
 }
-//define the fluid body
-class WaterBlock : public FluidBody
+//------------------------------------------------------------------------------
+// geometric shapes for the bodies used in the case
+//------------------------------------------------------------------------------
+class WaterBlock : public MultiPolygonShape
 {
 public:
-	WaterBlock(SPHSystem &system, const std::string &body_name)
-		: FluidBody(system, body_name)
+	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(createFlapShape(), ShapeBooleanOps::sub);
-		multi_polygon.addAPolygon(createFlapConstrainShape(), ShapeBooleanOps::sub);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
-	}
-};
-/** define the static solid wall boundary. */
-class WallBoundary : public SolidBody
-{
-public:
-	WallBoundary(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
-	{
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(createFlapConstrainShape(), ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(createInnerWallShape01(), ShapeBooleanOps::sub);
-		multi_polygon.addAPolygon(createInnerWallShape02(), ShapeBooleanOps::sub);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(createFlapShape(), ShapeBooleanOps::sub);
+		multi_polygon_.addAPolygon(createFlapConstrainShape(), ShapeBooleanOps::sub);
 	}
 };
 
-//define the elastic flap
-class Flap : public SolidBody
+class WallBoundary : public MultiPolygonShape
 {
 public:
-	Flap(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(createFlapShape(), ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(createOuterWallShape(), ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(createFlapConstrainShape(), ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(createInnerWallShape01(), ShapeBooleanOps::sub);
+		multi_polygon_.addAPolygon(createInnerWallShape02(), ShapeBooleanOps::sub);
 	}
 };
 
+class Flap : public MultiPolygonShape
+{
+public:
+	explicit Flap(const std::string &shape_name) : MultiPolygonShape(shape_name)
+	{
+		multi_polygon_.addAPolygon(createFlapShape(), ShapeBooleanOps::add);
+	}
+};
+//------------------------------------------------------------------------------
+// Body parts used in the case
+//------------------------------------------------------------------------------
 MultiPolygon createFlapSimbodyConstrainShape()
 {
 	MultiPolygon multi_polygon;
@@ -264,14 +245,13 @@ MultiPolygon createFlapSimbodyConstrainShape()
 class FlapSystemForSimbody : public SolidBodyPartForSimbody
 {
 public:
-	FlapSystemForSimbody(SolidBody &solid_body,
-						 const std::string &constrained_region_name, Shape &shape)
-		: SolidBodyPartForSimbody(solid_body, constrained_region_name, shape)
+	FlapSystemForSimbody(SolidBody &solid_body, SharedPtr<Shape> shape_ptr)
+		: SolidBodyPartForSimbody(solid_body, shape_ptr)
 	{
-		//Vecd mass_center = Vecd(7.92, 0.355); // 0.3355
-		//initial_mass_center_ = SimTK::Vec3(mass_center[0], mass_center[1], 0.0);
+		// Vecd mass_center = Vecd(7.92, 0.355); // 0.3355
+		// initial_mass_center_ = SimTK::Vec3(mass_center[0], mass_center[1], 0.0);
 		/** UnitInertia_ (const RealP &xx, const RealP &yy, const RealP &zz)
-		 * 	Create a principal unit inertia matrix (only non-zero on diagonal). 
+		 * 	Create a principal unit inertia matrix (only non-zero on diagonal).
 		 */
 		Real Iz = 1.84 / 33.04;
 		body_part_mass_properties_ =
@@ -279,9 +259,7 @@ public:
 				.createPtr<SimTK::MassProperties>(33.04, SimTK::Vec3(0.0), SimTK::UnitInertia(0.0, 0.0, Iz));
 	}
 };
-/**
-* @brief making the wave
-*/
+
 class WaveMaking : public solid_dynamics::ConstrainSolidBodyRegion
 {
 	Real model_scale_;
@@ -362,9 +340,7 @@ public:
 		computeWaveStrokeAndFrequency();
 	}
 };
-/**
-* @brief create a damping zone
-*/
+
 Real h = 1.3 * particle_spacing_ref;
 MultiPolygon createWaveProbeShape4()
 {
@@ -406,19 +382,21 @@ MultiPolygon createWaveProbeShape12()
 	multi_polygon.addAPolygon(pnts, ShapeBooleanOps::add);
 	return multi_polygon;
 }
-/** Flap observer body */
-class FlapObserverParticleGenerator : public ParticleGeneratorDirect
+//------------------------------------------------------------------------------
+// Case-dependent observer particle generator
+//------------------------------------------------------------------------------
+class FlapObserverParticleGenerator : public ObserverParticleGenerator
 {
 public:
-	FlapObserverParticleGenerator() : ParticleGeneratorDirect()
+	explicit FlapObserverParticleGenerator(SPHBody &sph_body) : ObserverParticleGenerator(sph_body)
 	{
 		/** the measuring particle with zero volume */
-		positions_volumes_.push_back(std::make_pair(Vecd(7.862, 0.645), 0.0));
-		positions_volumes_.push_back(std::make_pair(Vecd(7.862, 0.741), 0.0));
-		positions_volumes_.push_back(std::make_pair(Vecd(7.862, 0.391), 0.0));
-		positions_volumes_.push_back(std::make_pair(Vecd(7.862, 0.574), 0.0));
-		positions_volumes_.push_back(std::make_pair(Vecd(7.862, 0.716), 0.0));
-		positions_volumes_.push_back(std::make_pair(Vecd(7.862, 0.452), 0.0));
+		positions_.push_back(Vecd(7.862, 0.645));
+		positions_.push_back(Vecd(7.862, 0.741));
+		positions_.push_back(Vecd(7.862, 0.391));
+		positions_.push_back(Vecd(7.862, 0.574));
+		positions_.push_back(Vecd(7.862, 0.716));
+		positions_.push_back(Vecd(7.862, 0.452));
 	}
 };
-#endif //TEST_2D_OWSC_CASE_H
+#endif // TEST_2D_OWSC_CASE_H

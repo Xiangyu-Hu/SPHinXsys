@@ -6,13 +6,6 @@
 
 namespace SPH
 {
-	//=============================================================================================//
-	void SolidParticles::ParticleTranslationAndRotation(Transformd &transform)
-	{
-		std::cout << "\n Error: the function ParticleTranslationAndRotation in 3d is not defined!" << std::endl;
-		std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-		exit(1);
-	}
 	//=================================================================================================//
 	Matd ElasticSolidParticles::get_GreenLagrange_strain(size_t particle_i)
 	{
@@ -114,7 +107,7 @@ namespace SPH
 		return sqrt((1.0 / 3.0) * (std::pow(epsilonxx - epsilonyy, 2.0) + std::pow(epsilonyy - epsilonzz, 2.0) + std::pow(epsilonzz - epsilonxx, 2.0)) + 2.0 * (std::pow(epsilonxy, 2.0) + std::pow(epsilonyz, 2.0) + std::pow(epsilonxz, 2.0)));
 	}
 	//=============================================================================================//
-	void VonMisesStress::operator()(size_t index_i, Real dt)
+	void VonMisesStress::update(size_t index_i, Real dt)
 	{
 		Real J = rho0_ / rho_n_[index_i];
 		Mat3d F = F_[index_i];
@@ -134,7 +127,7 @@ namespace SPH
 				 3.0 * (sigmaxy * sigmaxy + sigmaxz * sigmaxz + sigmayz * sigmayz));
 	}
 	//=============================================================================================//
-	void VonMisesStrain::operator()(size_t index_i, Real dt)
+	void VonMisesStrain::update(size_t index_i, Real dt)
 	{
 		Mat3d F = F_[index_i];
 		Mat3d epsilon = 0.5 * (~F * F - Matd(1.0)); //calculation of the Green-Lagrange strain tensor

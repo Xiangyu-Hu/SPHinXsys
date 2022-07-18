@@ -45,20 +45,18 @@ std::vector<Vecd> beam_base_shape{
 // a beam shape
 std::vector<Vecd> beam_shape{
 	Vecd(-SL, -PH / 2), Vecd(-SL, PH / 2), Vecd(PL, PH / 2), Vecd(PL, -PH / 2), Vecd(-SL, -PH / 2)};
+//Beam observer location
+StdVec<Vecd> observation_location = {Vecd(PL, 0.0)};
 //----------------------------------------------------------------------
 //	Define the beam body
 //----------------------------------------------------------------------
-class Beam : public SolidBody
+class Beam : public MultiPolygonShape
 {
 public:
-	Beam(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name)
+	explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geometry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(beam_shape, ShapeBooleanOps::add);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(beam_shape, ShapeBooleanOps::add);
 	}
 };
 //----------------------------------------------------------------------
@@ -93,21 +91,9 @@ MultiPolygon createBeamConstrainShape()
 	multi_polygon.addAPolygon(beam_shape, ShapeBooleanOps::sub);
 	return multi_polygon;
 };
-//----------------------------------------------------------------------
-//	Observer particle generator
-//----------------------------------------------------------------------
-class ObserverParticleGenerator : public ParticleGeneratorDirect
-{
-public:
-	ObserverParticleGenerator() : ParticleGeneratorDirect()
-	{
-		positions_volumes_.push_back(std::make_pair(Vecd(PL, 0.0), 0.0));
-	}
-};
 //------------------------------------------------------------------------------
 //the main program
 //------------------------------------------------------------------------------
-
 int main()
 {
 	//----------------------------------------------------------------------
@@ -117,59 +103,51 @@ int main()
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	//the oscillating beam
-	Beam beam_body(system, "BeamBody");
-	//create particles for the elastic body
-	ElasticSolidParticles beam_particles(beam_body, makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson));
+	SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
+	beam_body.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	beam_body.generateParticles<ParticleGeneratorLattice>();
 
-	ObserverBody beam_observer(system, "BeamObserver", makeShared<SPHAdaptation>(1.15, 2.0));
-	//create observer particles
-	ObserverParticles observer_particles(beam_observer, makeShared<ObserverParticleGenerator>());
-
-	/** topology */
+	ObserverBody beam_observer(system, "BeamObserver");
+	beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
+	beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
+	//----------------------------------------------------------------------
+	//	Define body relation map.
+	//	The contact map gives the topological connections between the bodies.
+	//	Basically the the range of bodies to build neighbor particle lists.
+	//----------------------------------------------------------------------
 	BodyRelationInner beam_body_inner(beam_body);
 	BodyRelationContact beam_observer_contact(beam_observer, {&beam_body});
-
 	//-----------------------------------------------------------------------------
 	//this section define all numerical methods will be used in this case
 	//-----------------------------------------------------------------------------
 	/** initial condition */
 	BeamInitialCondition beam_initial_velocity(beam_body);
 	//corrected strong configuration
-	solid_dynamics::CorrectConfiguration
-		beam_corrected_configuration(beam_body_inner);
-
+	solid_dynamics::CorrectConfiguration beam_corrected_configuration(beam_body_inner);
 	//time step size calculation
 	solid_dynamics::AcousticTimeStepSize computing_time_step_size(beam_body);
-
 	//stress relaxation for the beam
-	solid_dynamics::StressRelaxationFirstHalf
-		stress_relaxation_first_half(beam_body_inner);
-	solid_dynamics::StressRelaxationSecondHalf
-		stress_relaxation_second_half(beam_body_inner);
-
+	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(beam_body_inner);
+	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(beam_body_inner);
 	// clamping a solid body part. This is softer than a driect constraint
-	MultiPolygonShape beam_cobstrain_shape(createBeamConstrainShape());
-	BodyRegionByParticle beam_base(beam_body, "BeamBase", beam_cobstrain_shape);
+	BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
 	solid_dynamics::ClampConstrainSolidBodyRegion clamp_constrain_beam_base(beam_body_inner, beam_base);
-
 	//-----------------------------------------------------------------------------
 	//outputs
 	//-----------------------------------------------------------------------------
-	In_Output in_output(system);
+	InOutput in_output(system);
 	BodyStatesRecordingToVtp write_beam_states(in_output, system.real_bodies_);
 	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Vecd>>
 		write_beam_tip_displacement("Position", in_output, beam_observer_contact);
-
-	/**
-	 * @brief Setup geometry and initial conditions
-	 */
+	//----------------------------------------------------------------------
+	//	Setup computing and initial conditions.
+	//----------------------------------------------------------------------
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	beam_initial_velocity.exec();
 	beam_corrected_configuration.parallel_exec();
 	//----------------------------------------------------------------------
-	//	Setup computing and initial conditions.
+	//	Setup computing time-step controls.
 	//----------------------------------------------------------------------
 	int ite = 0;
 	Real T0 = 1.0;

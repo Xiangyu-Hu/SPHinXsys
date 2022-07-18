@@ -31,7 +31,6 @@
 #define SPHINXSYS_PARAMETERIZATION_H
 
 #include "base_data_package.h"
-#include "in_output.h"
 #include "xml_engine.h"
 
 #include <string>
@@ -44,7 +43,7 @@ namespace SPH
 		XmlEngine xml_paremeters_;
 		std::string filefullpath_;
 
-		ParameterizationIO(In_Output& in_output);
+		explicit ParameterizationIO(const std::string &input_path);
 		~ParameterizationIO() {};
 
 		void writeProjectParameters();
@@ -55,8 +54,8 @@ namespace SPH
 	{
 	public:
 		template<typename... ConstructorArgs>
-		explicit BaseParameterization(ParameterizationIO& parameterization_io, ConstructorArgs... constructor_args) :
-			BaseClassType(constructor_args...), xml_paremeters_(parameterization_io.xml_paremeters_),
+		explicit BaseParameterization(ParameterizationIO& parameterization_io, ConstructorArgs... args) :
+			BaseClassType(std::forward<ConstructorArgs>(args)...), xml_paremeters_(parameterization_io.xml_paremeters_),
 			filefullpath_(parameterization_io.filefullpath_) {};
 		~BaseParameterization() {};
 	protected:

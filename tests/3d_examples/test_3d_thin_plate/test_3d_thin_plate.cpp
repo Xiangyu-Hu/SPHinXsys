@@ -1,9 +1,9 @@
 /**
-* @file 	test_3d_thin_plate.cpp
-* @brief 	This is the benchmark test of the shell.
-* @details  We consider the body force applied on a quasi-static square plate.
-* @author 	Dong Wu, Chi Zhang and Xiangyu Hu
-*/
+ * @file 	test_3d_thin_plate.cpp
+ * @brief 	This is the benchmark test of the shell.
+ * @details  We consider the body force applied on a quasi-static square plate.
+ * @author 	Dong Wu, Chi Zhang and Xiangyu Hu
+ */
 #include "sphinxsys.h"
 
 using namespace SPH;
@@ -17,11 +17,13 @@ Real PT = 1.0;									  /** Thickness of the square plate. */
 Vec3d n_0 = Vec3d(0.0, 0.0, 1.0);				  /** Pseudo-normal. */
 int particle_number = 14;						  /** Particle number in the direction of the length */
 Real resolution_ref = PL / (Real)particle_number; /** Initial reference particle spacing. */
-int BWD = 1;
-Real BW = resolution_ref * (Real)BWD; /** Boundary width, determined by specific layer of boundary particles. */
+int BWD = 1;									  /** Width of the boundary layer measured by number of particles. */
+Real BW = resolution_ref * (Real)BWD;			  /** Boundary width, determined by specific layer of boundary particles. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec3d(-BW, -BW, -0.5 * resolution_ref),
 								 Vec3d(PL + BW, PH + BW, 0.5 * resolution_ref));
+// Observer location
+StdVec<Vecd> observation_location = {Vecd(0.5 * PL, 0.5 * PH, 0.0)};
 
 /** For material properties of the solid. */
 Real rho0_s = 1.0;				   /** Normalized density. */
@@ -35,10 +37,11 @@ Real time_to_full_external_force = 0.1;
 Real gravitational_acceleration = 0.009646;
 
 /** Define application dependent particle generator for thin structure. */
-class PlateParticleGenerator : public ParticleGeneratorDirect
+class PlateParticleGenerator : public SurfaceParticleGenerator
 {
 public:
-	PlateParticleGenerator() : ParticleGeneratorDirect()
+	explicit PlateParticleGenerator(SPHBody &sph_body) : SurfaceParticleGenerator(sph_body){};
+	virtual void initializeGeometricVariables() override
 	{
 		// the plate and boundary
 		for (int i = 0; i < (particle_number + 2 * BWD); i++)
@@ -47,29 +50,11 @@ public:
 			{
 				Real x = resolution_ref * i - BW + resolution_ref * 0.5;
 				Real y = resolution_ref * j - BW + resolution_ref * 0.5;
-				positions_volumes_.push_back(std::make_pair(Vecd(x, y, 0.0), resolution_ref * resolution_ref));
+				initializePositionAndVolume(Vecd(x, y, 0.0), resolution_ref * resolution_ref);
+				initializeSurfaceProperties(n_0, PT);
 			}
 		}
 	}
-};
-/**
- * application dependent initial condition
- */
-class PlateDynamicsInitialCondition
-	: public thin_structure_dynamics::ShellDynamicsInitialCondition
-{
-public:
-	explicit PlateDynamicsInitialCondition(SolidBody &plate)
-		: thin_structure_dynamics::ShellDynamicsInitialCondition(plate){};
-
-protected:
-	void Update(size_t index_i, Real dt) override
-	{
-		/** initial pseudo-normal. */
-		n_0_[index_i] = n_0;
-		n_[index_i] = n_0;
-		pseudo_n_[index_i] = n_0_[index_i];
-	};
 };
 
 /** Define the boundary geometry. */
@@ -110,16 +95,6 @@ public:
 				   : global_acceleration_;
 	}
 };
-
-/** Define application dependent observer particle generator. */
-class ObserverParticleGenerator : public ParticleGeneratorDirect
-{
-public:
-	ObserverParticleGenerator() : ParticleGeneratorDirect()
-	{
-		positions_volumes_.push_back(std::make_pair(Vecd(0.5 * PL, 0.5 * PH, 0.0), 0.0));
-	}
-};
 /**
  *  The main program
  */
@@ -129,15 +104,14 @@ int main()
 	SPHSystem system(system_domain_bounds, resolution_ref);
 
 	/** create a plate body. */
-	ThinStructure plate_body(system, "PlateBody", makeShared<SPHAdaptation>(1.15, 1.0));
-	/** create a plate material. */
-	SharedPtr<LinearElasticSolid> plate_material = makeShared<LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
-	/** create particles for the elastic body. */
-	ShellParticles plate_body_particles(plate_body, plate_material, makeShared<PlateParticleGenerator>(), PT);
+	SolidBody plate_body(system, makeShared<DefaultShape>("PlateBody"));
+	plate_body.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	plate_body.generateParticles<PlateParticleGenerator>();
 
 	/** Define Observer. */
 	ObserverBody plate_observer(system, "PlateObserver");
-	ObserverParticles observer_particles(plate_observer, makeShared<ObserverParticleGenerator>());
+	plate_observer.defineParticlesAndMaterial();
+	plate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
 	/** Set body contact map
 	 *  The contact map gives the data connections between the bodies
@@ -153,8 +127,6 @@ int main()
 	/**
 	 * This section define all numerical methods will be used in this case.
 	 */
-	/** initial condition */
-	PlateDynamicsInitialCondition plate_initial_pseudo_normal(plate_body);
 	/** Corrected configuration. */
 	thin_structure_dynamics::ShellCorrectConfiguration
 		corrected_configuration(plate_body_inner);
@@ -169,11 +141,11 @@ int main()
 	BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
 	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(plate_body, boundary_geometry);
 	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
-		plate_position_damping(plate_body_inner, 0.5, "Velocity", physical_viscosity);
+		plate_position_damping(0.5, plate_body_inner, "Velocity", physical_viscosity);
 	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
-		plate_rotation_damping(plate_body_inner, 0.5, "AngularVelocity", physical_viscosity);
+		plate_rotation_damping(0.5, plate_body_inner, "AngularVelocity", physical_viscosity);
 	/** Output */
-	In_Output in_output(system);
+	InOutput in_output(system);
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_plate_max_displacement("Position", in_output, plate_observer_contact);
@@ -181,13 +153,12 @@ int main()
 	/** Apply initial condition. */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	plate_initial_pseudo_normal.parallel_exec();
 	corrected_configuration.parallel_exec();
 
 	/**
-	* From here the time stepping begins.
-	* Set the starting time.
-	*/
+	 * From here the time stepping begins.
+	 * Set the starting time.
+	 */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	write_states.writeToFile(0);
 	write_plate_max_displacement.writeToFile(0);

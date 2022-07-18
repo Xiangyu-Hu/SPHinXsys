@@ -12,42 +12,59 @@
 namespace SPH
 {
 	//=================================================================================================//
-	ParticleGeneratorDirect::ParticleGeneratorDirect(StdLargeVec<Vecd>& pos_0, StdLargeVec<Real>& volume) : ParticleGenerator()
+	BaseParticleGenerator::BaseParticleGenerator(SPHBody &sph_body)
+		: base_particles_(sph_body.base_particles_),
+		pos_n_(base_particles_->pos_n_), unsorted_id_(base_particles_->unsorted_id_)
 	{
-		// we add the generated particles for the direct generator
-		for(size_t particle_i = 0; particle_i < pos_0.size(); particle_i++)
+		if (sph_body.base_particles_ == nullptr || sph_body.base_material_ == nullptr)
 		{
-			positions_volumes_.push_back(std::make_pair(pos_0[particle_i], volume[particle_i]));
+			std::cout << "\n Error: Particles or Materials have not been defined yet!" << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			exit(1);
 		}
 	}
 	//=================================================================================================//
-	ParticleGeneratorDirect::ParticleGeneratorDirect(StdVec<Vecd>& pos_0, Real volume) : ParticleGenerator()
+	void BaseParticleGenerator::initializePosition(const Vecd &position)
 	{
-		// we add the generated particles for the direct generator
-		for(auto& pos: pos_0)
-		{
-			positions_volumes_.push_back(std::make_pair(pos, volume));
-		}
+		pos_n_.push_back(position);
+		unsorted_id_.push_back(base_particles_->total_real_particles_);
+		base_particles_->total_real_particles_ ++;
 	}
 	//=================================================================================================//
-	void ParticleGenerator::initialize(SPHBody *sph_body)
+	ParticleGenerator::ParticleGenerator(SPHBody &sph_body)
+		: BaseParticleGenerator(sph_body), Vol_(base_particles_->Vol_) {}
+	//=================================================================================================//
+	void ParticleGenerator::initializePositionAndVolume(const Vecd &position, Real volume)
 	{
-		sph_body_ = sph_body;
+		initializePosition(position);
+		Vol_.push_back(volume);
 	}
 	//=================================================================================================//
-	void ParticleGeneratorDirect::createBaseParticles(BaseParticles *base_particles)
+	SurfaceParticleGenerator::SurfaceParticleGenerator(SPHBody &sph_body)
+		: ParticleGenerator(sph_body),
+		  n_(*base_particles_->getVariableByName<Vecd>("NormalDirection")),
+		  thickness_(*base_particles_->getVariableByName<Real>("Thickness"))
 	{
-        base_particles->reserve(positions_volumes_.size());
-		for (size_t i = 0; i < positions_volumes_.size(); ++i)
+		sph_body.sph_adaptation_->getKernel()->reduceOnce();
+	}
+	//=================================================================================================//
+	void SurfaceParticleGenerator::initializeSurfaceProperties(const Vecd &surface_normal, Real thickness)
+	{
+		n_.push_back(surface_normal);
+		thickness_.push_back(thickness);
+	}
+	//=================================================================================================//
+	void ObserverParticleGenerator::initializeGeometricVariables()
+	{
+		for (size_t i = 0; i < positions_.size(); ++i)
 		{
-			base_particles->initializeABaseParticle(positions_volumes_[i].first,
-													positions_volumes_[i].second);
+			initializePositionAndVolume(positions_[i], 0.0);
 		}
 	}
 	//=================================================================================================//
 	ParticleGeneratorReload::
-		ParticleGeneratorReload(In_Output &in_output, const std::string &reload_body_name)
-		: ParticleGenerator()
+		ParticleGeneratorReload(SPHBody &sph_body, InOutput &in_output, const std::string &reload_body_name)
+		: ParticleGenerator(sph_body)
 	{
 		if (!fs::exists(in_output.reload_folder_))
 		{
@@ -59,19 +76,9 @@ namespace SPH
 		file_path_ = in_output.reload_folder_ + "/" + reload_body_name + "_rld.xml";
 	}
 	//=================================================================================================//
-	void ParticleGeneratorReload::createBaseParticles(BaseParticles *base_particles)
+	void ParticleGeneratorReload::initializeGeometricVariables()
 	{
-		XmlEngine *reload_xml_engine = base_particles->getReloadXmlEngine();
-		reload_xml_engine->loadXmlFile(file_path_);
-		SimTK::Xml::element_iterator ele_ite_ = reload_xml_engine->root_element_.element_begin();
-		for (; ele_ite_ != reload_xml_engine->root_element_.element_end(); ++ele_ite_)
-		{
-			Vecd position(0);
-			reload_xml_engine->getRequiredAttributeValue(ele_ite_, "Position", position);
-			Real volume(0);
-			reload_xml_engine->getRequiredAttributeValue(ele_ite_, "Volume", volume);
-			base_particles->initializeABaseParticle(position, volume);
-		}
+		base_particles_->readFromXmlForReloadParticle(file_path_);
 	}
 	//=================================================================================================//
 }

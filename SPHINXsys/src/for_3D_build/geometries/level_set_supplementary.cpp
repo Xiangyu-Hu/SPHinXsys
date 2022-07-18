@@ -20,7 +20,7 @@ namespace SPH
 				for (int k = 0; k != PackageSize(); ++k)
 				{
 					phi_[i][j][k] = far_field_level_set;
-					n_[i][j][k] = Vecd(1.0);
+					phi_gradient_[i][j][k] = Vecd(1.0);
 					kernel_weight_[i][j][k] = far_field_level_set < 0.0 ? 0 : 1.0;
 					kernel_gradient_[i][j][k] = Vecd(0.0);
 					near_interface_id_[i][j][k] = far_field_level_set < 0.0 ? -2 : 2;
@@ -33,8 +33,7 @@ namespace SPH
 			for (int j = 0; j != PackageSize(); ++j)
 				for (int k = 0; k != PackageSize(); ++k)
 				{
-					Vec3d position = data_lower_bound_ +
-									 Vec3d((Real)i * grid_spacing_, (Real)j * grid_spacing_, (Real)k * grid_spacing_);
+					Vec3d position = DataLowerBound() + Vec3d(i, j, k) * grid_spacing_;
 					phi_[i][j][k] = shape.findSignedDistance(position);
 					near_interface_id_[i][j][k] = phi_[i][j][k] < 0.0 ? -2 : 2;
 				}
@@ -46,8 +45,7 @@ namespace SPH
 			for (int j = 0; j != PackageSize(); ++j)
 				for (int k = 0; k != PackageSize(); ++k)
 				{
-					Vec3d position = data_lower_bound_ +
-									 Vec3d((Real)i * grid_spacing_, (Real)j * grid_spacing_, (Real)k * grid_spacing_);
+					Vec3d position = DataLowerBound() + Vec3d(i, j, k) * grid_spacing_;
 					kernel_weight_[i][j][k] = level_set.computeKernelIntegral(position);
 					kernel_gradient_[i][j][k] = level_set.computeKernelGradientIntegral(position);
 				}
@@ -121,7 +119,6 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::markNearInterface(Real small_shift_factor)
 	{
-		// small_shift_factor = 0.75 by default, can be increased for difficult geometries for smoothing
 		Real small_shift = small_shift_factor * grid_spacing_;
 		//corner averages, note that the first row and first column are not used
 		PackageTemporaryData<Real> corner_averages;
@@ -238,7 +235,8 @@ namespace SPH
 										if (neighbor_near_interface_id >= 1)
 										{
 											Real phi_p_ = neighbor_pkg->phi_[x_pair.second][y_pair.second][z_pair.second];
-											Vecd norm_to_face = neighbor_pkg->n_[x_pair.second][y_pair.second][z_pair.second];
+											Vecd norm_to_face = neighbor_pkg->phi_gradient_[x_pair.second][y_pair.second][z_pair.second];
+											norm_to_face /= norm_to_face.norm() + TinyReal;
 											min_distance_p = SMIN(min_distance_p, (Vecd((Real)x, (Real)y, Real(z)) * data_spacing_ + phi_p_ * norm_to_face).norm());
 										}
 									}
@@ -263,7 +261,8 @@ namespace SPH
 										if (neighbor_near_interface_id <= -1)
 										{
 											Real phi_n_ = neighbor_pkg->phi_[x_pair.second][y_pair.second][z_pair.second];
-											Vecd norm_to_face = neighbor_pkg->n_[x_pair.second][y_pair.second][z_pair.second];
+											Vecd norm_to_face = neighbor_pkg->phi_gradient_[x_pair.second][y_pair.second][z_pair.second];
+											norm_to_face /= norm_to_face.norm() + TinyReal;
 											min_distance_n = SMIN(min_distance_n, (Vecd((Real)x, (Real)y, Real(z)) * data_spacing_ - phi_n_ * norm_to_face).norm());
 										}
 									}
@@ -347,7 +346,7 @@ namespace SPH
 				for (size_t i = 0; i != number_of_operation[0]; ++i)
 				{
 					output_file << DataValueFromGlobalIndex<Vecd, LevelSetDataPackage::PackageData<Vecd>,
-															&LevelSetDataPackage::n_>(Vecu(i, j, k))[0]
+															&LevelSetDataPackage::phi_gradient_>(Vecu(i, j, k))[0]
 								<< " ";
 				}
 				output_file << " \n";
@@ -359,7 +358,7 @@ namespace SPH
 				for (size_t i = 0; i != number_of_operation[0]; ++i)
 				{
 					output_file << DataValueFromGlobalIndex<Vecd, LevelSetDataPackage::PackageData<Vecd>,
-															&LevelSetDataPackage::n_>(Vecu(i, j, k))[1]
+															&LevelSetDataPackage::phi_gradient_>(Vecu(i, j, k))[1]
 								<< " ";
 				}
 				output_file << " \n";
@@ -371,7 +370,7 @@ namespace SPH
 				for (size_t i = 0; i != number_of_operation[0]; ++i)
 				{
 					output_file << DataValueFromGlobalIndex<Vecd, LevelSetDataPackage::PackageData<Vecd>,
-															&LevelSetDataPackage::n_>(Vecu(i, j, k))[2]
+															&LevelSetDataPackage::phi_gradient_>(Vecu(i, j, k))[2]
 								<< " ";
 				}
 				output_file << " \n";

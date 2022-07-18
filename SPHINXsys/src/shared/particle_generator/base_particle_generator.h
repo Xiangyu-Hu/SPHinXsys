@@ -1,30 +1,30 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * --------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+ * and HU1527/12-1.															*
+ *                                                                           *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * --------------------------------------------------------------------------*/
 /**
  * @file 	base_particle_generator.h
  * @brief 	This is the base class of particle generator, which generates particles
  * 			with given positions and volumes. The direct generator simply generate
- * 			particle with given position and volume. 
+ * 			particle with given position and volume.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */
 
@@ -40,40 +40,78 @@ namespace SPH
 
 	class SPHBody;
 	class BaseParticles;
-	class In_Output;
+	class InOutput;
 
 	/**
-	 * @class ParticleGenerator.
-	 * @brief Base abstract class for particle generation.
+	 * @class BaseParticleGenerator
+	 * @brief Abstract base particle generator.
 	 */
-	class ParticleGenerator
+	class BaseParticleGenerator
 	{
 	public:
-		ParticleGenerator() : sph_body_(nullptr){};
-		virtual ~ParticleGenerator(){};
+		explicit BaseParticleGenerator(SPHBody &sph_body);
+		virtual ~BaseParticleGenerator(){};
 
-		virtual void initialize(SPHBody *sph_body);
-		virtual void createBaseParticles(BaseParticles *base_particles) = 0;
+		virtual void initializeGeometricVariables() = 0;
 
 	protected:
-		SPHBody *sph_body_;
+		BaseParticles *base_particles_;
+		StdLargeVec<Vecd> &pos_n_;		   /**< current position */
+		StdLargeVec<size_t> &unsorted_id_; /**< original particle ids */
+		virtual void initializePosition(const Vecd &position);
 	};
 
 	/**
-	 * @class ParticleGeneratorDirect
-	 * @brief Generate particle directly from position-and-volume data.
+	 * @class ParticleGenerator
+	 * @brief Generate volumetric particles by initialize position and volume.
 	 */
-	class ParticleGeneratorDirect : public ParticleGenerator
+	class ParticleGenerator : public BaseParticleGenerator
 	{
 	public:
-		ParticleGeneratorDirect() : ParticleGenerator(){};
-		ParticleGeneratorDirect(StdLargeVec<Vecd>& pos_0, StdLargeVec<Real>& volume);
-		ParticleGeneratorDirect(StdVec<Vecd>& pos_0, Real volume);
-		virtual ~ParticleGeneratorDirect(){};
-		virtual void createBaseParticles(BaseParticles *base_particles) override;
-	
+		explicit ParticleGenerator(SPHBody &sph_body);
+		virtual ~ParticleGenerator(){};
+
 	protected:
-		PositionsVolumes positions_volumes_;
+		StdLargeVec<Real> &Vol_; /**< particle volume */
+
+		virtual void initializePositionAndVolume(const Vecd &position, Real volume);
+	};
+
+	/**
+	 * @class SurfaceParticleGenerator
+	 * @brief Generate volumetric particles by initialize extra surface variables.
+	 */
+	class SurfaceParticleGenerator : public ParticleGenerator
+	{
+	public:
+		explicit SurfaceParticleGenerator(SPHBody &sph_body);
+		virtual ~SurfaceParticleGenerator(){};
+
+	protected:
+		StdLargeVec<Vecd> &n_;		   /**< surface normal */
+		StdLargeVec<Real> &thickness_; /**< surface thickness */
+
+		virtual void initializeSurfaceProperties(const Vecd &surface_normal, Real thickness);
+	};
+
+	/**
+	 * @class ObserverParticleGenerator
+	 * @brief Generate particle directly from position-and-volume data.
+	 * @details The values of PositionsVolumes will be given in the derived class.
+	 */
+	class ObserverParticleGenerator : public ParticleGenerator
+	{
+	public:
+		explicit ObserverParticleGenerator(SPHBody &sph_body)
+			: ParticleGenerator(sph_body){};
+		ObserverParticleGenerator(SPHBody &sph_body, const StdVec<Vecd> &positions)
+			: ParticleGenerator(sph_body), positions_(positions){};
+		virtual ~ObserverParticleGenerator(){};
+
+		virtual void initializeGeometricVariables() override;
+
+	protected:
+		StdVec<Vecd> positions_;
 	};
 
 	/**
@@ -85,9 +123,9 @@ namespace SPH
 		std::string file_path_;
 
 	public:
-		ParticleGeneratorReload(In_Output &in_output, const std::string &reload_body_name);
+		ParticleGeneratorReload(SPHBody &sph_body, InOutput &in_output, const std::string &reload_body_name);
 		virtual ~ParticleGeneratorReload(){};
-		virtual void createBaseParticles(BaseParticles *base_particles) override;
+		virtual void initializeGeometricVariables() override;
 	};
 }
-#endif //BASE_PARTICLE_GENERATOR_H
+#endif // BASE_PARTICLE_GENERATOR_H

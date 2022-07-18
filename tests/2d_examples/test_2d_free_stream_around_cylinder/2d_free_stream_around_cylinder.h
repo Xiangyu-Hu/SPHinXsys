@@ -21,6 +21,11 @@ Real insert_circle_radius = 1.0;			  /**< Radius of the cylinder. */
 BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
 /** Prescribed fluid body domain bounds*/
 BoundingBox fluid_body_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
+// Observation locations
+Vec2d point_coordinate_1(3.0, 5.0);
+Vec2d point_coordinate_2(4.0, 5.0);
+Vec2d point_coordinate_3(5.0, 5.0);
+StdVec<Vecd> observation_locations = {point_coordinate_1, point_coordinate_2, point_coordinate_3};
 //----------------------------------------------------------------------
 //	Global parameters on the fluid properties
 //----------------------------------------------------------------------
@@ -28,66 +33,38 @@ Real rho0_f = 1.0;											/**< Density. */
 Real U_f = 1.0;												/**< Characteristic velocity. */
 Real c_f = 10.0 * U_f;										/**< Speed of sound. */
 Real Re = 100.0;											/**< Reynolds number. */
-Real mu = rho0_f * U_f * (2.0 * insert_circle_radius) / Re; /**< Dynamics viscosity. */
+Real mu_f = rho0_f * U_f * (2.0 * insert_circle_radius) / Re; /**< Dynamics viscosity. */
 //----------------------------------------------------------------------
 //	define geometry of SPH bodies
 //----------------------------------------------------------------------
 //	water block shape
 std::vector<Vecd> water_block_shape {
 Vecd(-DL_sponge, 0.0),Vecd(-DL_sponge, DH), Vecd(DL, DH), Vecd(DL, 0.0), Vecd(-DL_sponge, 0.0)};
+Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
+Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
+Vec2d emitter_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
+Vec2d emitter_buffer_translation = Vec2d(-DL_sponge, 0.0) + emitter_buffer_halfsize;
+
 //----------------------------------------------------------------------
-//	Define case dependent SPH bodies.
+//	Define case dependent geometries
 //----------------------------------------------------------------------
-class WaterBlock : public FluidBody
+class WaterBlock : public MultiPolygonShape
 {
 public:
-	WaterBlock(SPHSystem &system, const std::string &body_name)
-		: FluidBody(system, body_name)
+	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geomtry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(water_block_shape, ShapeBooleanOps::add);
-		multi_polygon.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
-		body_shape_.add<MultiPolygonShape>(multi_polygon);
+		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
+		multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::sub);
 	}
 };
-/**  define solid body. */
-class Cylinder : public SolidBody
+class Cylinder : public MultiPolygonShape
 {
 public:
-	Cylinder(SPHSystem &system, const std::string &body_name)
-		: SolidBody(system, body_name, makeShared<SPHAdaptation>(1.15, 2.0))
+	explicit Cylinder(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geomtry definition. */
-		MultiPolygon multi_polygon;
-		multi_polygon.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
-		MultiPolygonShape multi_polygon_shape(multi_polygon);
-		body_shape_.add<LevelSetShape>(this, multi_polygon_shape);
+		multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
 	}
 };
-//----------------------------------------------------------------------
-//	Define case dependent SPH body parts.
-//----------------------------------------------------------------------
-/** create the emitter shape. */
-MultiPolygon creatEmitterShape()
-{
-	std::vector<Vecd> emmiter_shape{
-		Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(-DL_sponge + BW, DH), Vecd(-DL_sponge + BW, 0.0), Vecd(-DL_sponge, 0.0)};
-
-	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(emmiter_shape, ShapeBooleanOps::add);
-	return multi_polygon;
-}
-/** create the emitter buffer shape . */
-MultiPolygon createEmitterBufferShape()
-{
-	std::vector<Vecd> emitter_buffer_shape{
-		Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(0.0, DH), Vecd(0.0, 0.0), Vecd(-DL_sponge, 0.0)};
-
-	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(emitter_buffer_shape, ShapeBooleanOps::add);
-	return multi_polygon;
-}
 //----------------------------------------------------------------------
 //	Define emitter buffer inflow boundary condition
 //----------------------------------------------------------------------
@@ -96,8 +73,8 @@ class EmitterBufferInflowCondition : public fluid_dynamics::InflowBoundaryCondit
 	Real u_ave_, u_ref_, t_ref_;
 
 public:
-	EmitterBufferInflowCondition(FluidBody &fluid_body, BodyPartByCell &constrained_region)
-		: InflowBoundaryCondition(fluid_body, constrained_region),
+	EmitterBufferInflowCondition(FluidBody &fluid_body, BodyAlignedBoxByCell &aligned_box_part)
+		: InflowBoundaryCondition(fluid_body, aligned_box_part),
 		u_ave_(0), u_ref_(U_f), t_ref_(2.0) {}
 
 	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
@@ -136,23 +113,5 @@ public:
 		du_ave_dt_ = 0.5 * u_ref_ * (Pi / t_ref_) * sin(Pi * run_time_ / t_ref_);
 
 		return run_time_ < t_ref_ ? Vecd(du_ave_dt_, 0.0) : global_acceleration_;
-	}
-};
-//----------------------------------------------------------------------
-//	Define Observer Particle Generator
-//----------------------------------------------------------------------
-class ObserverParticleGenerator : public ParticleGeneratorDirect
-{
-public:
-	ObserverParticleGenerator() : ParticleGeneratorDirect()
-	{
-		/** the measureing particles */
-		Vec2d point_coordinate_1(3.0, 5.0);
-		Vec2d point_coordinate_2(4.0, 5.0);
-		Vec2d point_coordinate_3(5.0, 5.0);
-
-		positions_volumes_.push_back(std::make_pair(point_coordinate_1, 0.0));
-		positions_volumes_.push_back(std::make_pair(point_coordinate_2, 0.0));
-		positions_volumes_.push_back(std::make_pair(point_coordinate_3, 0.0));
 	}
 };
