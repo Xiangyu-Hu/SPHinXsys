@@ -12,6 +12,7 @@ namespace SPH
 		: ParticleDynamics<void>(real_body), DataDelegateSimple<SPHBody, BaseParticles>(real_body),
 		  axis_(axis_direction), body_domain_bounds_(real_body.getBodyDomainBounds()),
 		  pos_n_(particles_->pos_n_),
+		  vel_n_(particles_->vel_n_), // add velocity for LE boundary condition, should put it into LE class
 		  cell_linked_list_(real_body.cell_linked_list_),
 		  cut_off_radius_max_(sph_adaptation_->getKernel()->CutOffRadius()) {}
 	//=================================================================================================//
@@ -441,6 +442,32 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void LeesEdwardsConditionInAxisDirectionUsingGhostParticles::
+		PeriodicLeesEdwardsBounding::checkLowerBound(size_t index_i, Real dt)
+	{
+		// apply shear flow in x direction
+        // treat real particles
+		if (pos_n_[index_i][axis_] < body_domain_bounds_.first[axis_])
+		{	
+			pos_n_[index_i][0] += LE_displacement;
+			vel_n_[index_i][0] += LE_velocity // will velocity be updated?
+		}
+	}
+	//=================================================================================================//
+	void LeesEdwardsConditionInAxisDirectionUsingGhostParticles::
+		PeriodicLeesEdwardsBounding::checkUpperBound(size_t index_i, Real dt)
+	{
+		// apply shear flow in x direction
+        // treat real particles
+		if (pos_n_[index_i][axis_] > body_domain_bounds_.second[axis_])
+		{	
+			pos_n_[index_i][0] -= LE_displacement;
+			vel_n_[index_i][0] -= LE_velocity // will velocity be updated?
+		}
+	}
+	//=================================================================================================//
+
+	//=================================================================================================//
+	void LeesEdwardsConditionInAxisDirectionUsingGhostParticles::
 		CreatPeriodicGhostParticles::setupDynamics(Real dt)
 	{
 		for (size_t i = 0; i != ghost_particles_.size(); ++i)
@@ -451,29 +478,37 @@ namespace SPH
 		CreatPeriodicGhostParticles::checkLowerBound(size_t index_i, Real dt)
 	{
 		Vecd particle_position = pos_n_[index_i];
+		Vecd particle_velocity = vel_n_[index_i];
 		if (particle_position[axis_] > body_domain_bounds_.first[axis_] &&
 			particle_position[axis_] < (body_domain_bounds_.first[axis_] + cut_off_radius_max_))
 		{
 			size_t expected_particle_index = particles_->insertAGhostParticle(index_i);
 			ghost_particles_[0].push_back(expected_particle_index);
-			Vecd translated_position = particle_position + periodic_translation_; // add LEs
+			Vecd translated_position = particle_position + periodic_translation_; //
+			Vecd translated_velocity = particle_velocity; 
+			translated_velocity[0] += LE_velocity; //
 			// operation on velcoity.
 			/** insert ghost particle to cell linked list */
 			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
-			// need velocity entry
+			// Do I need to update velocity entry like following? 
+			// Is the translated_position the coordinates of particles, or coordinates of cell? 
+			//cell_linked_list_->InsertACellLinkedListDataEntryLE(expected_particle_index, translated_position,translated_velocity);
 		}
 	}
 	//=================================================================================================//
 	void LeesEdwardsConditionInAxisDirectionUsingGhostParticles::
 		CreatPeriodicGhostParticles::checkUpperBound(size_t index_i, Real dt)
-	{
+	{	
 		Vecd particle_position = pos_n_[index_i];
+		Vecd particle_velocity = vel_n_[index_i];
 		if (particle_position[axis_] < body_domain_bounds_.second[axis_] &&
 			particle_position[axis_] > (body_domain_bounds_.second[axis_] - cut_off_radius_max_))
 		{
 			size_t expected_particle_index = particles_->insertAGhostParticle(index_i);
 			ghost_particles_[1].push_back(expected_particle_index);
 			Vecd translated_position = particle_position - periodic_translation_;
+			Vecd translated_velocity = particle_velocity;
+			translated_velocity[0] -= LE_velocity;
 			/** insert ghost particle to cell linked list */
 			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
 			// need velocity entry 

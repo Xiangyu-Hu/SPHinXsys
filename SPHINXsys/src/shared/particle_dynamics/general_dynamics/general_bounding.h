@@ -371,7 +371,7 @@ namespace SPH
 	 *	The first step is carried out before update cell linked list and
 	 *	the second and third after the updating.
 	 *	If the exec or parallel_exec is called directly, error message will be given.
-	 *  Note that, this class can only be applied in one direction.
+	 *  Note that, this class can only be applied in x direction. shear in x direction 
 	 */
 	class LeesEdwardsConditionInAxisDirectionUsingGhostParticles : public PeriodicConditionInAxisDirection
 	{
@@ -379,19 +379,46 @@ namespace SPH
 		StdVec<IndexVector> ghost_particles_;
         Real shear_rate; /**< shear rate */
         Real run_time = GlobalStaticVariables::physical_time_;
-		Real LE_displacement = shear_rate * run_time;
-		Real LE_velocity = shear_rate * 4.0; //systemsize in y direction
+		Real LE_displacement = fmod((shear_rate * run_time), 1.0);
+		Real LE_velocity = shear_rate * 1.0; //systemsize in y direction, now fix size to 1, but need to change to variable 
+
+		/**
+		 * @class PeriodicLeesEdwardsBounding
+		 * @brief PeriodicLeesEdwardsBounding in an axis direction
+		 */
+		class PeriodicLeesEdwardsBounding : public PeriodicBounding
+		{
+		protected:
+			StdVec<IndexVector> &ghost_particles_;
+			virtual void checkLowerBound(size_t index_i, Real dt = 0.0) override;
+			virtual void checkUpperBound(size_t index_i, Real dt = 0.0) override;
+
+		public:
+			PeriodicLeesEdwardsBounding(Vecd &periodic_translation, StdVec<CellLists> &bound_cells,
+										StdVec<IndexVector> &ghost_particles, RealBody &real_body, int axis_direction)
+				: PeriodicBounding(periodic_translation, bound_cells, real_body, axis_direction),
+				  ghost_particles_(ghost_particles){};
+			virtual ~PeriodicLeesEdwardsBounding(){};
+
+			/** This class is only implemented in sequential due to memory conflicts.
+			 * Because creating ghost particle allocate memory.
+			 */
+			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
+		};
+
 		/**
 		 * @class CreatPeriodicGhostParticles
 		 * @brief create ghost particles in an axis direction
 		 */
-		class CreatPeriodicGhostParticles : public PeriodicBounding
+		class CreatPeriodicGhostParticles : public PeriodicLeesEdwardsBounding
 		{
 		protected:
 			StdVec<IndexVector> &ghost_particles_;
 			virtual void setupDynamics(Real dt = 0.0) override;
-			virtual void checkLowerBound(size_t index_i, Real dt = 0.0) override;
-			virtual void checkUpperBound(size_t index_i, Real dt = 0.0) override;
+			//virtual void checkLowerBound(size_t index_i, Real dt = 0.0) override;
+			//virtual void checkUpperBound(size_t index_i, Real dt = 0.0) override
+			virtual void checkLowerBound(size_t index_i, Real dt = 0.0);
+			virtual void checkUpperBound(size_t index_i, Real dt = 0.0);
 
 		public:
 			CreatPeriodicGhostParticles(Vecd &periodic_translation, StdVec<CellLists> &bound_cells,
@@ -414,9 +441,10 @@ namespace SPH
 		{
 		protected:
 			StdVec<IndexVector> &ghost_particles_;
-			void checkLowerBound(size_t index_i, Real dt = 0.0) override;
-			void checkUpperBound(size_t index_i, Real dt = 0.0) override;
-
+			//void checkLowerBound(size_t index_i, Real dt = 0.0) override;
+			//void checkUpperBound(size_t index_i, Real dt = 0.0) override;
+			void checkLowerBound(size_t index_i, Real dt = 0.0);
+			void checkUpperBound(size_t index_i, Real dt = 0.0);
 		public:
 			UpdatePeriodicGhostParticles(Vecd &periodic_translation, StdVec<CellLists> &bound_cells,
 										 StdVec<IndexVector> &ghost_particles, RealBody &real_body, int axis_direction)
@@ -440,9 +468,9 @@ namespace SPH
 
 		virtual ~LeesEdwardsConditionInAxisDirectionUsingGhostParticles(){};
 
-		PeriodicBounding bounding_; // need to add LE displacement and velocity
-		CreatPeriodicGhostParticles ghost_creation_;  // need to add LE displacement and velocity
-		UpdatePeriodicGhostParticles ghost_update_;   // need to update with LE displacement and velocity
+		PeriodicLeesEdwardsBounding bounding_; // add LE displacement and velocity
+		CreatPeriodicGhostParticles ghost_creation_;  // add LE displacement and velocity
+		UpdatePeriodicGhostParticles ghost_update_;   // update with LE displacement and velocity
 	};
 }
 #endif //GENERAL_BOUNDING_H

@@ -225,8 +225,8 @@ int main(int ac, char *av[])
 			periodic_condition_x.bounding_.parallel_exec();
 			periodic_condition_y.bounding_.parallel_exec();
 			water_block.updateCellLinkedList();
-            //periodic_condition_x.ghost_creation_.parallel_exec();
-            periodic_condition_y.ghost_creation_.parallel_exec();
+      //periodic_condition_x.ghost_creation_.parallel_exec();
+      periodic_condition_y.ghost_creation_.parallel_exec();
 			periodic_condition_x.update_cell_linked_list_.parallel_exec();
 			//periodic_condition_y.update_cell_linked_list_.parallel_exec();
 			water_block_inner.updateConfiguration();
