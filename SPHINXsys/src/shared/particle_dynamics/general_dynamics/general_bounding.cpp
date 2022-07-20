@@ -448,6 +448,7 @@ namespace SPH
         // treat real particles
 		if (pos_n_[index_i][axis_] < body_domain_bounds_.first[axis_])
 		{	
+			pos_n_[index_i][axis_] += periodic_translation_[axis_];
 			pos_n_[index_i][0] += LE_displacement;
 			vel_n_[index_i][0] += LE_velocity; // will velocity be updated?
 		}
@@ -460,6 +461,7 @@ namespace SPH
         // treat real particles
 		if (pos_n_[index_i][axis_] > body_domain_bounds_.second[axis_])
 		{	
+			pos_n_[index_i][axis_] -= periodic_translation_[axis_];
 			pos_n_[index_i][0] -= LE_displacement;
 			vel_n_[index_i][0] -= LE_velocity; // will velocity be updated?
 		}
