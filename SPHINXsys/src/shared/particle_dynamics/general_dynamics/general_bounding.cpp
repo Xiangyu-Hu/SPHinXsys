@@ -449,7 +449,7 @@ namespace SPH
 		if (pos_n_[index_i][axis_] < body_domain_bounds_.first[axis_])
 		{	
 			pos_n_[index_i][0] += LE_displacement;
-			vel_n_[index_i][0] += LE_velocity // will velocity be updated?
+			vel_n_[index_i][0] += LE_velocity; // will velocity be updated?
 		}
 	}
 	//=================================================================================================//
@@ -461,7 +461,7 @@ namespace SPH
 		if (pos_n_[index_i][axis_] > body_domain_bounds_.second[axis_])
 		{	
 			pos_n_[index_i][0] -= LE_displacement;
-			vel_n_[index_i][0] -= LE_velocity // will velocity be updated?
+			vel_n_[index_i][0] -= LE_velocity; // will velocity be updated?
 		}
 	}
 	//=================================================================================================//
@@ -485,6 +485,7 @@ namespace SPH
 			size_t expected_particle_index = particles_->insertAGhostParticle(index_i);
 			ghost_particles_[0].push_back(expected_particle_index);
 			Vecd translated_position = particle_position + periodic_translation_; //
+			translated_position[0] += LE_displacement;
 			Vecd translated_velocity = particle_velocity; 
 			translated_velocity[0] += LE_velocity; //
 			// operation on velcoity.
@@ -507,6 +508,7 @@ namespace SPH
 			size_t expected_particle_index = particles_->insertAGhostParticle(index_i);
 			ghost_particles_[1].push_back(expected_particle_index);
 			Vecd translated_position = particle_position - periodic_translation_;
+			translated_position[0] -= LE_displacement;
 			Vecd translated_velocity = particle_velocity;
 			translated_velocity[0] -= LE_velocity;
 			/** insert ghost particle to cell linked list */

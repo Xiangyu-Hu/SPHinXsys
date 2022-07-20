@@ -44,6 +44,7 @@ namespace SPH
 		const int axis_;				 /**< the axis directions for bounding*/
 		BoundingBox body_domain_bounds_; /**< lower and upper bound for checking. */
 		StdLargeVec<Vecd> &pos_n_;
+		StdLargeVec<Vecd> &vel_n_;
 		BaseCellLinkedList *cell_linked_list_;
 		Real cut_off_radius_max_; /**< maximum cut off radius to avoid boundary particle depletion */
 	public:
@@ -377,10 +378,10 @@ namespace SPH
 	{
 	protected:
 		StdVec<IndexVector> ghost_particles_;
-        Real shear_rate; /**< shear rate */
-        Real run_time = GlobalStaticVariables::physical_time_;
-		Real LE_displacement = fmod((shear_rate * run_time), 1.0);
-		Real LE_velocity = shear_rate * 1.0; //systemsize in y direction, now fix size to 1, but need to change to variable 
+        //Real shear_rate=100.0; /**< shear rate */
+        //Real run_time = GlobalStaticVariables::physical_time_;
+		//Real LE_displacement = fmod((shear_rate * run_time), 1.0);
+		//Real LE_velocity = shear_rate * 1.0; //systemsize in y direction, now fix size to 1, but need to change to variable 
 
 		/**
 		 * @class PeriodicLeesEdwardsBounding
@@ -389,15 +390,18 @@ namespace SPH
 		class PeriodicLeesEdwardsBounding : public PeriodicBounding
 		{
 		protected:
-			StdVec<IndexVector> &ghost_particles_;
-			virtual void checkLowerBound(size_t index_i, Real dt = 0.0) override;
-			virtual void checkUpperBound(size_t index_i, Real dt = 0.0) override;
-
+			//StdVec<IndexVector> &ghost_particles_;
+			Real shear_rate=100.0; /**< shear rate */
+            Real run_time = GlobalStaticVariables::physical_time_;
+		    Real LE_displacement = fmod((shear_rate * run_time), 1.0);
+		    Real LE_velocity = shear_rate * 1.0; //systemsize in y direction, now fix size to 1, but need to change to variable 
+			virtual void checkLowerBound(size_t index_i, Real dt = 0.0);
+			virtual void checkUpperBound(size_t index_i, Real dt = 0.0);
+ 
 		public:
 			PeriodicLeesEdwardsBounding(Vecd &periodic_translation, StdVec<CellLists> &bound_cells,
-										StdVec<IndexVector> &ghost_particles, RealBody &real_body, int axis_direction)
-				: PeriodicBounding(periodic_translation, bound_cells, real_body, axis_direction),
-				  ghost_particles_(ghost_particles){};
+										RealBody &real_body, int axis_direction)
+				: PeriodicBounding(periodic_translation, bound_cells, real_body, axis_direction){};
 			virtual ~PeriodicLeesEdwardsBounding(){};
 
 			/** This class is only implemented in sequential due to memory conflicts.
@@ -410,10 +414,14 @@ namespace SPH
 		 * @class CreatPeriodicGhostParticles
 		 * @brief create ghost particles in an axis direction
 		 */
-		class CreatPeriodicGhostParticles : public PeriodicLeesEdwardsBounding
+		class CreatPeriodicGhostParticles : public PeriodicBounding
 		{
 		protected:
 			StdVec<IndexVector> &ghost_particles_;
+			Real shear_rate=100.0; /**< shear rate */
+            Real run_time = GlobalStaticVariables::physical_time_;
+		    Real LE_displacement = fmod((shear_rate * run_time), 1.0);
+		    Real LE_velocity = shear_rate * 1.0; //systemsize in y direction, now fix size to 1, but need to change to variable 
 			virtual void setupDynamics(Real dt = 0.0) override;
 			//virtual void checkLowerBound(size_t index_i, Real dt = 0.0) override;
 			//virtual void checkUpperBound(size_t index_i, Real dt = 0.0) override
@@ -441,6 +449,10 @@ namespace SPH
 		{
 		protected:
 			StdVec<IndexVector> &ghost_particles_;
+					Real shear_rate=100.0; /**< shear rate */
+            Real run_time = GlobalStaticVariables::physical_time_;
+		    Real LE_displacement = fmod((shear_rate * run_time), 1.0);
+		    Real LE_velocity = shear_rate * 1.0; //systemsize in y direction, now fix size to 1, but need to change to variable 
 			//void checkLowerBound(size_t index_i, Real dt = 0.0) override;
 			//void checkUpperBound(size_t index_i, Real dt = 0.0) override;
 			void checkLowerBound(size_t index_i, Real dt = 0.0);
