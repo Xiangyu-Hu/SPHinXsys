@@ -440,5 +440,98 @@ namespace SPH
 			ap);
 	}
 	//=================================================================================================//
+	void LeesEdwardsConditionInAxisDirectionUsingGhostParticles::
+		CreatPeriodicGhostParticles::setupDynamics(Real dt)
+	{
+		for (size_t i = 0; i != ghost_particles_.size(); ++i)
+			ghost_particles_[i].clear();
+	}
+	//=================================================================================================//
+	void LeesEdwardsConditionInAxisDirectionUsingGhostParticles::
+		CreatPeriodicGhostParticles::checkLowerBound(size_t index_i, Real dt)
+	{
+		Vecd particle_position = pos_n_[index_i];
+		if (particle_position[axis_] > body_domain_bounds_.first[axis_] &&
+			particle_position[axis_] < (body_domain_bounds_.first[axis_] + cut_off_radius_max_))
+		{
+			size_t expected_particle_index = particles_->insertAGhostParticle(index_i);
+			ghost_particles_[0].push_back(expected_particle_index);
+			Vecd translated_position = particle_position + periodic_translation_; // add LEs
+			// operation on velcoity.
+			/** insert ghost particle to cell linked list */
+			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
+			// need velocity entry
+		}
+	}
+	//=================================================================================================//
+	void LeesEdwardsConditionInAxisDirectionUsingGhostParticles::
+		CreatPeriodicGhostParticles::checkUpperBound(size_t index_i, Real dt)
+	{
+		Vecd particle_position = pos_n_[index_i];
+		if (particle_position[axis_] < body_domain_bounds_.second[axis_] &&
+			particle_position[axis_] > (body_domain_bounds_.second[axis_] - cut_off_radius_max_))
+		{
+			size_t expected_particle_index = particles_->insertAGhostParticle(index_i);
+			ghost_particles_[1].push_back(expected_particle_index);
+			Vecd translated_position = particle_position - periodic_translation_;
+			/** insert ghost particle to cell linked list */
+			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
+			// need velocity entry 
+		}
+	}
+	//=================================================================================================//
+	void LeesEdwardsConditionInAxisDirectionUsingGhostParticles::
+		UpdatePeriodicGhostParticles::checkLowerBound(size_t index_i, Real dt)
+	{
+		particles_->updateFromAnotherParticle(index_i, sorted_id_[index_i]);
+		pos_n_[index_i] += periodic_translation_; // need add LEU ? 
+	}
+	//=================================================================================================//
+	void LeesEdwardsConditionInAxisDirectionUsingGhostParticles::
+		UpdatePeriodicGhostParticles::checkUpperBound(size_t index_i, Real dt)
+	{
+		particles_->updateFromAnotherParticle(index_i, sorted_id_[index_i]);
+		pos_n_[index_i] -= periodic_translation_; // need add LEU ?
+	}
+	//=================================================================================================//
+	void LeesEdwardsConditionInAxisDirectionUsingGhostParticles::
+		UpdatePeriodicGhostParticles::exec(Real dt)
+	{
+		for (size_t i = 0; i != ghost_particles_[0].size(); ++i)
+		{
+			checkLowerBound(ghost_particles_[0][i], dt);
+		}
+		for (size_t i = 0; i != ghost_particles_[1].size(); ++i)
+		{
+			checkUpperBound(ghost_particles_[1][i], dt);
+		}
+	}
+	//=================================================================================================//
+	void LeesEdwardsConditionInAxisDirectionUsingGhostParticles::
+		UpdatePeriodicGhostParticles::parallel_exec(Real dt)
+	{
+		parallel_for(
+			blocked_range<size_t>(0, ghost_particles_[0].size()),
+			[&](const blocked_range<size_t> &r)
+			{
+				for (size_t i = r.begin(); i < r.end(); ++i)
+				{
+					checkLowerBound(ghost_particles_[0][i], dt);
+				}
+			},
+			ap);
+
+		parallel_for(
+			blocked_range<size_t>(0, ghost_particles_[1].size()),
+			[&](const blocked_range<size_t> &r)
+			{
+				for (size_t i = r.begin(); i < r.end(); ++i)
+				{
+					checkUpperBound(ghost_particles_[1][i], dt);
+				}
+			},
+			ap);
+	}
+	//=================================================================================================//
 }
 //=================================================================================================//
