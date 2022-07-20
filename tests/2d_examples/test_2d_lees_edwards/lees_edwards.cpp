@@ -50,6 +50,23 @@ public:
 	}
 };
 /**
+ * apply initial uniform shear velocity profile 
+ */
+class ShearFlowInitialCondition
+	: public fluid_dynamics::FluidInitialCondition
+{
+public:
+	explicit ShearFlowInitialCondition(FluidBody &water)
+		: fluid_dynamics::FluidInitialCondition(water){};
+
+protected:
+	void Update(size_t index_i, Real dt) override
+	{
+		/** initial velocity profile */
+		vel_n_[index_i][1] = sr*(pos_n_[index_i][0]-0.5*DH);
+	}
+};
+/**
  * @brief 	Main program starts here.
  */
 int main(int ac, char *av[])
@@ -78,7 +95,8 @@ int main(int ac, char *av[])
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
-
+	/** Initial velocity field */
+	ShearFlowInitialCondition initial_condition(water_block);
 	/**
 	 * @brief 	Methods used for time stepping.
 	 */
@@ -129,8 +147,8 @@ int main(int ac, char *av[])
 	initial_condition.exec();
 	sph_system.initializeSystemCellLinkedLists();
     // initial periodic boundary condition
-  //periodic_condition_x.ghost_creation_.parallel_exec();
-  periodic_condition_y.ghost_creation_.parallel_exec();
+    //periodic_condition_x.ghost_creation_.parallel_exec();
+    periodic_condition_y.ghost_creation_.parallel_exec();
 	periodic_condition_x.update_cell_linked_list_.parallel_exec();
 	//periodic_condition_y.update_cell_linked_list_.parallel_exec();
 	sph_system.initializeSystemConfigurations();
@@ -207,8 +225,8 @@ int main(int ac, char *av[])
 			periodic_condition_x.bounding_.parallel_exec();
 			periodic_condition_y.bounding_.parallel_exec();
 			water_block.updateCellLinkedList();
-      //periodic_condition_x.ghost_creation_.parallel_exec();
-      periodic_condition_y.ghost_creation_.parallel_exec();
+            //periodic_condition_x.ghost_creation_.parallel_exec();
+            periodic_condition_y.ghost_creation_.parallel_exec();
 			periodic_condition_x.update_cell_linked_list_.parallel_exec();
 			//periodic_condition_y.update_cell_linked_list_.parallel_exec();
 			water_block_inner.updateConfiguration();
