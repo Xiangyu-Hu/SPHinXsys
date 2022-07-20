@@ -63,7 +63,7 @@ protected:
 	void Update(size_t index_i, Real dt) override
 	{
 		/** initial velocity profile */
-		vel_n_[index_i][1] = sr*(pos_n_[index_i][0]-0.5*DH);
+		vel_n_[index_i][0] = sr*(pos_n_[index_i][1]-0.5*DH);
 	}
 };
 /**
@@ -105,7 +105,8 @@ int main(int ac, char *av[])
 	/** Periodic BCs in x direction. */
 	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_x(water_block, xAxis);
 	/** Periodic BCs in y direction todo: change to LE. */
-  PeriodicConditionInAxisDirectionUsingGhostParticles periodic_condition_y(water_block, yAxis);
+  //PeriodicConditionInAxisDirectionUsingGhostParticles periodic_condition_y(water_block, yAxis);
+  LeesEdwardsConditionInAxisDirectionUsingGhostParticles periodic_condition_y(water_block, yAxis);
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
