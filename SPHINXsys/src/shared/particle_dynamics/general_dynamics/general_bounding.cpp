@@ -496,6 +496,8 @@ namespace SPH
 			// Do I need to update velocity entry like following? 
 			// Is the translated_position the coordinates of particles, or coordinates of cell? 
 			//cell_linked_list_->InsertACellLinkedListDataEntryLE(expected_particle_index, translated_position,translated_velocity);
+			// try this:
+			vel_n_[expected_particle_index] = translated_velocity;
 		}
 	}
 	//=================================================================================================//
@@ -515,7 +517,9 @@ namespace SPH
 			translated_velocity[0] -= LE_velocity;
 			/** insert ghost particle to cell linked list */
 			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
-			// need velocity entry 
+			// need change velocity of ghost particle 
+            // try this:
+			vel_n_[expected_particle_index] = translated_velocity;
 		}
 	}
 	//=================================================================================================//
