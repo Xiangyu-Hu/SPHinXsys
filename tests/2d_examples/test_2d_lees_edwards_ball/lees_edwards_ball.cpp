@@ -58,23 +58,6 @@ std::vector<Vecd> createWaterBlockShape()
 
 	return water_block_shape;
 }
-/**
-class WaterBlock : public MultiPolygonShape
-{
-public:
-	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
-	{
-		/** Geometry definition. 
-		std::vector<Vecd> water_block_shape;
-		water_block_shape.push_back(Vecd(0.0, 0.0));
-		water_block_shape.push_back(Vecd(0.0, DH));
-		water_block_shape.push_back(Vecd(DL, DH));
-		water_block_shape.push_back(Vecd(DL, 0.0));
-		water_block_shape.push_back(Vecd(0.0, 0.0));
-		multi_polygon_.addAPolygon(water_block_shape, ShapeBooleanOps::add);
-	}
-};
-*/
 /** Water block shape definition */
 class WaterBlock : public ComplexShape
 {
@@ -127,7 +110,7 @@ int main(int ac, char *av[])
 		/** Tag for running particle relaxation for the initially body-fitted distribution */
 	sph_system.run_particle_relaxation_ = false;
 	/** Tag for starting with relaxed body-fitted particles distribution */
-	sph_system.reload_particles_ = true;
+	sph_system.reload_particles_ = false;
 	/** Tag for computation from restart files. 0: start with initial condition */
 	sph_system.restart_step_ = 0;
 	//handle command line arguments
@@ -214,17 +197,8 @@ int main(int ac, char *av[])
 		return 0;
 	}
 
-	SimpleDynamics<NormalDirectionFromBodyShape> free_ball_normal_direction(free_ball);
 	Gravity gravity(Vecd(0.0, 0.0));
-	TimeStepInitialization free_ball_initialize_timestep(free_ball, gravity);
-	solid_dynamics::CorrectConfiguration free_ball_corrected_configuration(free_ball_inner);
-	solid_dynamics::AcousticTimeStepSize free_ball_get_time_step_size(free_ball);
-	/** stress relaxation for the balls. */
-	solid_dynamics::StressRelaxationFirstHalf free_ball_stress_relaxation_first_half(free_ball_inner);
-	solid_dynamics::StressRelaxationSecondHalf free_ball_stress_relaxation_second_half(free_ball_inner);
-	/** Algorithms for solid-solid contact. */
-	//solid_dynamics::ContactDensitySummation free_ball_update_contact_density(free_ball_contact);
-	//solid_dynamics::ContactForce free_ball_compute_solid_contact_forces(free_ball_contact);
+
 	/**
 	 * @brief 	Methods used for time stepping.
 	 */
@@ -232,8 +206,10 @@ int main(int ac, char *av[])
 	TimeStepInitialization time_step_initialization(water_block);
 	/** Lees Edwards BCs in y direction */
     LeesEdwardsConditionInAxisDirectionUsingGhostParticles periodic_condition_y(water_block, yAxis);
+    //LeesEdwardsConditionInAxisDirectionUsingGhostParticles periodic_condition_y_ball(free_ball, yAxis);
 	/** Periodic BCs in x direction. */
 	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_x(water_block, xAxis);
+	//PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_x_ball(free_ball, xAxis);
 
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
@@ -256,9 +232,11 @@ int main(int ac, char *av[])
 
     //pressure_relaxation.pre_processes_.push_back(&periodic_condition_x.ghost_update_);
     pressure_relaxation.pre_processes_.push_back(&periodic_condition_y.ghost_update_);
+    //pressure_relaxation.pre_processes_.push_back(&periodic_condition_y_ball.ghost_update_);
 	fluid_dynamics::DensityRelaxationRiemannInner density_relaxation(water_block_inner);
     //density_relaxation.pre_processes_.push_back(&periodic_condition_x.ghost_update_);
     density_relaxation.pre_processes_.push_back(&periodic_condition_y.ghost_update_);
+   // density_relaxation.pre_processes_.push_back(&periodic_condition_y_ball.ghost_update_);
 	/** Computing viscous acceleration. */
 	fluid_dynamics::ViscousAccelerationInner viscous_acceleration(water_block_inner);
 	/** Impose transport velocity. */
@@ -271,7 +249,24 @@ int main(int ac, char *av[])
 	solid_dynamics::FluidPressureForceOnSolid fluid_pressure_force_on_inserted_body(free_ball_contact);
 	/** Computing viscous force acting on wall with wall model. */
 	solid_dynamics::FluidViscousForceOnSolid fluid_viscous_force_on_inserted_body(free_ball_contact);
+	SimpleDynamics<NormalDirectionFromBodyShape> free_ball_normal_direction(free_ball);
 
+    //----------------------------------------------------------------------
+	//	Algorithms of Elastic dynamics.
+	//----------------------------------------------------------------------
+    //TimeStepInitialization free_ball_initialize_timestep(free_ball, gravity);
+	/** Corrected configuration for solid dynamics. */
+	solid_dynamics::CorrectConfiguration free_ball_corrected_configuration(free_ball_inner);
+	solid_dynamics::AcousticTimeStepSize free_ball_get_time_step_size(free_ball);
+	/** stress relaxation for the balls. */
+	solid_dynamics::StressRelaxationFirstHalf free_ball_stress_relaxation_first_half(free_ball_inner);
+	solid_dynamics::StressRelaxationSecondHalf free_ball_stress_relaxation_second_half(free_ball_inner);
+	/** Update the surface normal direaction of elastic gate. */
+	solid_dynamics::UpdateElasticNormalDirection free_ball_update_normal(free_ball);
+
+	/** Algorithms for solid-solid contact. */
+	//solid_dynamics::ContactDensitySummation free_ball_update_contact_density(free_ball_contact);
+	//solid_dynamics::ContactForce free_ball_compute_solid_contact_forces(free_ball_contact);
 	/**
 	 * @brief Output.
 	 */
@@ -292,11 +287,14 @@ int main(int ac, char *av[])
 	 * @brief Setup geometry and initial conditions
 	 */
 	initial_condition.exec();
+	
 	sph_system.initializeSystemCellLinkedLists();
     // initial periodic boundary condition
     //periodic_condition_x.ghost_creation_.parallel_exec();
     periodic_condition_y.ghost_creation_.parallel_exec();
+   // periodic_condition_y_ball.ghost_creation_.parallel_exec();
 	periodic_condition_x.update_cell_linked_list_.parallel_exec();
+	//periodic_condition_x_ball.update_cell_linked_list_.parallel_exec();
 	//periodic_condition_y.update_cell_linked_list_.parallel_exec();
 	sph_system.initializeSystemConfigurations();
 	free_ball_corrected_configuration.parallel_exec();
@@ -306,18 +304,19 @@ int main(int ac, char *av[])
 	 * @brief The time stepping starts here.
 	 */
 	/** If the starting time is not zero, please setup the restart time step or read in restart states. */
-	if (sph_system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
-		free_ball.updateCellLinkedList();
-		water_block.updateCellLinkedList();
-        //periodic_condition_x.ghost_creation_.parallel_exec();
-        periodic_condition_y.ghost_creation_.parallel_exec();
-		periodic_condition_x.update_cell_linked_list_.parallel_exec();
-		//periodic_condition_y.update_cell_linked_list_.parallel_exec();
-		water_block_inner.updateConfiguration();
-		free_ball_contact.updateConfiguration();
-	}
+	// if (sph_system.restart_step_ != 0)
+	// {
+	// 	GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
+	// 	free_ball.updateCellLinkedList();
+	// 	water_block.updateCellLinkedList();
+    //     //periodic_condition_x.ghost_creation_.parallel_exec();
+    //     periodic_condition_y.ghost_creation_.parallel_exec();
+    //     periodic_condition_y_ball.ghost_creation_.parallel_exec();
+	// 	periodic_condition_x_ball.update_cell_linked_list_.parallel_exec();
+	// 	//periodic_condition_y.update_cell_linked_list_.parallel_exec();
+	// 	water_block_inner.updateConfiguration();
+	// 	free_ball_contact.updateConfiguration();
+	// }
 	/** Output the start states of bodies. */
 	body_states_recording.writeToFile(0);
 	/**
@@ -329,6 +328,7 @@ int main(int ac, char *av[])
 	Real End_Time = 20.0; /**< End time. */
 	Real D_Time = 0.1;	 /**< Time stamps for output of body states. */
 	Real dt = 0.0;		 /**< Default acoustic time step sizes. */
+	Real dt_s = 0.0;				/**< Default acoustic time step sizes for solid. */
 	/** statistics for computing CPU time. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
@@ -349,29 +349,40 @@ int main(int ac, char *av[])
 			transport_velocity_correction.parallel_exec(Dt);
 			/** FSI for viscous force. */
 			fluid_viscous_force_on_inserted_body.parallel_exec();
-
+            /** Update normal direction at elastic body surface. */
+			free_ball_update_normal.parallel_exec();
 			/** Dynamics including pressure relaxation. */
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
 			{
-				free_ball_initialize_timestep.parallel_exec();
-				//free_ball_update_contact_density.parallel_exec();
-				free_ball_stress_relaxation_first_half.parallel_exec(dt);
-				free_ball_stress_relaxation_second_half.parallel_exec(dt);
-				free_ball.updateCellLinkedList();
-				Real dt_free = free_ball_get_time_step_size.parallel_exec();
-
-				//avoid possible smaller acoustic time step size for viscous flow
-				Real dt_fluid = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
-                dt = SMIN(dt_fluid,dt_free);
-
-				relaxation_time += dt;
-				integration_time += dt;
-
+				/** Fluid relaxation and force computation. */
 				pressure_relaxation.parallel_exec(dt);
-				/** FSI for pressure force. */
 				fluid_pressure_force_on_inserted_body.parallel_exec();
 				density_relaxation.parallel_exec(dt);
+				/** Solid dynamics time stepping. */
+				Real dt_s_sum = 0.0;
+				//average_velocity_and_acceleration.initialize_displacement_.parallel_exec();
+				while (dt_s_sum < dt)
+				{
+					dt_s = free_ball_get_time_step_size.parallel_exec();
+					if (dt - dt_s_sum < dt_s)
+						dt_s = dt - dt_s_sum;
+					free_ball_stress_relaxation_first_half.parallel_exec(dt_s);
+					
+					free_ball_stress_relaxation_second_half.parallel_exec(dt_s);
+					dt_s_sum += dt_s;
+				}
+				//average_velocity_and_acceleration.update_averages_.parallel_exec(dt);
+				dt = get_fluid_time_step_size.parallel_exec();
+
+				
+				//Real dt_free = free_ball_get_time_step_size.parallel_exec();
+
+				//avoid possible smaller acoustic time step size for viscous flow
+				//Real dt_fluid = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
+                //dt = SMIN(dt_fluid,dt_free);
+				relaxation_time += dt;
+				integration_time += dt;
 				GlobalStaticVariables::physical_time_ += dt;
 
 			}
@@ -391,11 +402,16 @@ int main(int ac, char *av[])
              
 			/** Water block configuration and periodic condition. */
 		    periodic_condition_y.bounding_.parallel_exec();
+		    //periodic_condition_y_ball.bounding_.parallel_exec();
 			periodic_condition_x.bounding_.parallel_exec();
+			//periodic_condition_x_ball.bounding_.parallel_exec();
 			water_block.updateCellLinkedList();
+			free_ball.updateCellLinkedList();
             //periodic_condition_x.ghost_creation_.parallel_exec();
-            periodic_condition_y.ghost_creation_.parallel_exec();
 			periodic_condition_x.update_cell_linked_list_.parallel_exec();
+            periodic_condition_y.ghost_creation_.parallel_exec();
+            //periodic_condition_y_ball.ghost_creation_.parallel_exec();
+			//periodic_condition_x_ball.update_cell_linked_list_.parallel_exec();
 			//periodic_condition_y.update_cell_linked_list_.parallel_exec();
 			water_block_inner.updateConfiguration();
 			free_ball_contact.updateConfiguration();
