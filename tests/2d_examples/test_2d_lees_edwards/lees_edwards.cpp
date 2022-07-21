@@ -102,11 +102,11 @@ int main(int ac, char *av[])
 	 */
 	/** Initialize particle acceleration. */
 	TimeStepInitialization time_step_initialization(water_block);
+	/** Lees Edwards BCs in y direction */
+    LeesEdwardsConditionInAxisDirectionUsingGhostParticles periodic_condition_y(water_block, yAxis);
 	/** Periodic BCs in x direction. */
 	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_x(water_block, xAxis);
-	/** Periodic BCs in y direction todo: change to LE. */
-  //PeriodicConditionInAxisDirectionUsingGhostParticles periodic_condition_y(water_block, yAxis);
-  LeesEdwardsConditionInAxisDirectionUsingGhostParticles periodic_condition_y(water_block, yAxis);
+
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
@@ -121,11 +121,11 @@ int main(int ac, char *av[])
 	  * The other reason is that we are using transport velocity formulation, 
 	  * which will also introduce numerical dissipation slightly. */
 	fluid_dynamics::PressureRelaxationInner pressure_relaxation(water_block_inner);
-  //pressure_relaxation.pre_processes_.push_back(&periodic_condition_x.ghost_update_);
-  pressure_relaxation.pre_processes_.push_back(&periodic_condition_y.ghost_update_);
+    //pressure_relaxation.pre_processes_.push_back(&periodic_condition_x.ghost_update_);
+    pressure_relaxation.pre_processes_.push_back(&periodic_condition_y.ghost_update_);
 	fluid_dynamics::DensityRelaxationRiemannInner density_relaxation(water_block_inner);
-  //density_relaxation.pre_processes_.push_back(&periodic_condition_x.ghost_update_);
-  density_relaxation.pre_processes_.push_back(&periodic_condition_y.ghost_update_);
+    //density_relaxation.pre_processes_.push_back(&periodic_condition_x.ghost_update_);
+    density_relaxation.pre_processes_.push_back(&periodic_condition_y.ghost_update_);
 	/** Computing viscous acceleration. */
 	fluid_dynamics::ViscousAccelerationInner viscous_acceleration(water_block_inner);
 	/** Impose transport velocity. */
@@ -161,8 +161,8 @@ int main(int ac, char *av[])
 	{
 		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
 		water_block.updateCellLinkedList();
-    //periodic_condition_x.ghost_creation_.parallel_exec();
-    periodic_condition_y.ghost_creation_.parallel_exec();
+        //periodic_condition_x.ghost_creation_.parallel_exec();
+        periodic_condition_y.ghost_creation_.parallel_exec();
 		periodic_condition_x.update_cell_linked_list_.parallel_exec();
 		//periodic_condition_y.update_cell_linked_list_.parallel_exec();
 		water_block_inner.updateConfiguration();
@@ -223,11 +223,11 @@ int main(int ac, char *av[])
 			number_of_iterations++;
 
 			/** Water block configuration and periodic condition. */
+		    periodic_condition_y.bounding_.parallel_exec();
 			periodic_condition_x.bounding_.parallel_exec();
-			periodic_condition_y.bounding_.parallel_exec();
 			water_block.updateCellLinkedList();
-      //periodic_condition_x.ghost_creation_.parallel_exec();
-      periodic_condition_y.ghost_creation_.parallel_exec();
+            //periodic_condition_x.ghost_creation_.parallel_exec();
+            periodic_condition_y.ghost_creation_.parallel_exec();
 			periodic_condition_x.update_cell_linked_list_.parallel_exec();
 			//periodic_condition_y.update_cell_linked_list_.parallel_exec();
 			water_block_inner.updateConfiguration();
