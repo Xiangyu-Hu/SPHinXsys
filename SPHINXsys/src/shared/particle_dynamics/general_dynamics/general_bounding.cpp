@@ -467,7 +467,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-
+    
 	//=================================================================================================//
 	void LeesEdwardsConditionInAxisDirectionUsingGhostParticles::
 		CreatPeriodicGhostParticles::setupDynamics(Real dt)
