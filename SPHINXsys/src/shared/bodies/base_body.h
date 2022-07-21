@@ -103,6 +103,7 @@ namespace SPH
 		virtual ~SPHBody(){};
 
 		std::string getBodyName();
+		void setBodyName(std::string new_name) { body_name_ = new_name; };
 		SPHSystem &getSPHSystem();
 		Real getSPHBodyResolutionRef() { return sph_adaptation_->ReferenceSpacing(); };
 		void setNewlyUpdated() { newly_updated_ = true; };
