@@ -149,8 +149,9 @@ int main(int ac, char *av[])
 	sph_system.initializeSystemCellLinkedLists();
     // initial periodic boundary condition
     //periodic_condition_x.ghost_creation_.parallel_exec();
-    periodic_condition_y.ghost_creation_.parallel_exec();
 	periodic_condition_x.update_cell_linked_list_.parallel_exec();
+    periodic_condition_y.ghost_creation_.parallel_exec();
+
 	//periodic_condition_y.update_cell_linked_list_.parallel_exec();
 	sph_system.initializeSystemConfigurations();
 	/**
@@ -178,6 +179,7 @@ int main(int ac, char *av[])
 	Real End_Time = 20.0; /**< End time. */
 	Real D_Time = 0.1;	 /**< Time stamps for output of body states. */
 	Real dt = 0.0;		 /**< Default acoustic time step sizes. */
+	//Real run_time = GlobalStaticVariables::physical_time_;
 	/** statistics for computing CPU time. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
@@ -186,6 +188,9 @@ int main(int ac, char *av[])
 	 */
 	while (GlobalStaticVariables::physical_time_ < End_Time)
 	{
+		
+		std::cout << " physical_time_" << GlobalStaticVariables::physical_time_  <<  std::endl;
+		
 		Real integration_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
 		while (integration_time < D_Time)
@@ -223,12 +228,14 @@ int main(int ac, char *av[])
 			number_of_iterations++;
 
 			/** Water block configuration and periodic condition. */
-		    periodic_condition_y.bounding_.parallel_exec();
 			periodic_condition_x.bounding_.parallel_exec();
+		    periodic_condition_y.bounding_.parallel_exec();
+
 			water_block.updateCellLinkedList();
             //periodic_condition_x.ghost_creation_.parallel_exec();
-            periodic_condition_y.ghost_creation_.parallel_exec();
 			periodic_condition_x.update_cell_linked_list_.parallel_exec();
+            periodic_condition_y.ghost_creation_.parallel_exec();
+
 			//periodic_condition_y.update_cell_linked_list_.parallel_exec();
 			water_block_inner.updateConfiguration();
 		}

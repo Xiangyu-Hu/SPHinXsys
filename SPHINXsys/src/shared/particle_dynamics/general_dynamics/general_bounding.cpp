@@ -449,8 +449,14 @@ namespace SPH
 		if (pos_n_[index_i][axis_] < body_domain_bounds_.first[axis_])
 		{	
 			pos_n_[index_i][axis_] += periodic_translation_[axis_];
-			pos_n_[index_i][0] += LE_displacement;
+			pos_n_[index_i][0] += fmod((shear_rate * GlobalStaticVariables::physical_time_), 1.0);
+			if (pos_n_[index_i][0] > body_domain_bounds_.second[0])
+		    {
+		        pos_n_[index_i][0] -= (body_domain_bounds_.second[0]-body_domain_bounds_.first[0]); 
+		    }
 			vel_n_[index_i][0] += LE_velocity; // will velocity be updated?
+			//std::cout << "axis_" << axis_ << "periodic_translation_[axis_]: " << periodic_translation_[axis_]
+			//   << std::endl;
 		}
 	}
 	//=================================================================================================//
@@ -462,7 +468,11 @@ namespace SPH
 		if (pos_n_[index_i][axis_] > body_domain_bounds_.second[axis_])
 		{	
 			pos_n_[index_i][axis_] -= periodic_translation_[axis_];
-			pos_n_[index_i][0] -= LE_displacement;
+			pos_n_[index_i][0] -= fmod((shear_rate * GlobalStaticVariables::physical_time_), 1.0);
+			if (pos_n_[index_i][0] < body_domain_bounds_.first[0])
+		    {
+		        pos_n_[index_i][0] += (body_domain_bounds_.second[0]-body_domain_bounds_.first[0]); 
+		    }
 			vel_n_[index_i][0] -= LE_velocity; // will velocity be updated?
 		}
 	}
@@ -487,17 +497,29 @@ namespace SPH
 			size_t expected_particle_index = particles_->insertAGhostParticle(index_i);
 			ghost_particles_[0].push_back(expected_particle_index);
 			Vecd translated_position = particle_position + periodic_translation_; //
-			translated_position[0] += LE_displacement;
+			translated_position[0] += fmod((shear_rate * GlobalStaticVariables::physical_time_), 1.0);
+			if (translated_position[0] > body_domain_bounds_.second[0])
+		    {
+		        translated_position[0] -= (body_domain_bounds_.second[0]-body_domain_bounds_.first[0]) ; 
+		    }
+
 			Vecd translated_velocity = particle_velocity; 
 			translated_velocity[0] += LE_velocity; //
 			// operation on velcoity.
 			/** insert ghost particle to cell linked list */
-			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
+			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position); // why the position of ghost particle in x direction is not updated. 
 			// Do I need to update velocity entry like following? 
 			// Is the translated_position the coordinates of particles, or coordinates of cell? 
 			//cell_linked_list_->InsertACellLinkedListDataEntryLE(expected_particle_index, translated_position,translated_velocity);
 			// try this:
+			/*std::cout << " vel_n_[expected_particle_index]: " << vel_n_[expected_particle_index]
+			<< " translated_velocity: " << translated_velocity << " vel_n_[index_i]: " << vel_n_[index_i] <<std::endl;*/
 			vel_n_[expected_particle_index] = translated_velocity;
+			pos_n_[expected_particle_index] = translated_position;
+			/*std::cout << "pos_n_[expected_particle_index]: " << pos_n_[expected_particle_index] << " pos_n_[index_i]: " << pos_n_[index_i]
+			    << " translated_position: " << translated_position << " expected_particle_index: " << expected_particle_index 
+				<< " index_i: " << index_i <<std::endl;*/
+
 		}
 	}
 	//=================================================================================================//
@@ -512,14 +534,31 @@ namespace SPH
 			size_t expected_particle_index = particles_->insertAGhostParticle(index_i);
 			ghost_particles_[1].push_back(expected_particle_index);
 			Vecd translated_position = particle_position - periodic_translation_;
-			translated_position[0] -= LE_displacement;
+			translated_position[0] -= fmod((shear_rate * GlobalStaticVariables::physical_time_), 1.0);
+			if (translated_position[0] < body_domain_bounds_.first[0])
+		    {
+		        translated_position[0] += (body_domain_bounds_.second[0]-body_domain_bounds_.first[0]); 
+		    }
+			/*std::cout << "body_domain_bounds_.first[0]: " << body_domain_bounds_.first[0] << "body_domain_bounds_.second[0]: " 
+			<< body_domain_bounds_.second[0] << "axis_: " << axis_
+			<< "periodic_translation_[0]: " << periodic_translation_[0]
+			<< std::endl;*/
+			// std::cout << "shear_rate, GlobalStaticVariables::physical_time_, LE_displacement: " << shear_rate  << GlobalStaticVariables::physical_time_ << LE_displacement << std::endl;
+			//std::cout << "fmod: " << fmod((shear_rate * GlobalStaticVariables::physical_time_), 1.0) << " origin: " << shear_rate * GlobalStaticVariables::physical_time_ << std::endl; ;
 			Vecd translated_velocity = particle_velocity;
 			translated_velocity[0] -= LE_velocity;
 			/** insert ghost particle to cell linked list */
 			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
 			// need change velocity of ghost particle 
             // try this:
+			/*std::cout << "vel_n_[expected_particle_index]: " << vel_n_[expected_particle_index]
+			<< "translated_velocity: " << translated_velocity 
+			<< "vel_n_[index_i]: " << vel_n_[index_i] << std::endl;*/
 			vel_n_[expected_particle_index] = translated_velocity;
+			pos_n_[expected_particle_index] = translated_position;
+			/*std::cout << "pos_n_[expected_particle_index]: " << pos_n_[expected_particle_index] << " pos_n_[index_i]: " << pos_n_[index_i]
+			<< "expected_particle_index: " << expected_particle_index 
+			<< "index_i: " << index_i <<std::endl;*/
 		}
 	}
 	//=================================================================================================//

@@ -391,13 +391,13 @@ namespace SPH
 		{
 		protected:
 			//StdVec<IndexVector> &ghost_particles_;
-			Real shear_rate=0.5; /**< shear rate */
-            Real run_time = GlobalStaticVariables::physical_time_;
-		    Real LE_displacement = fmod((shear_rate * run_time), 1.0);
+			Real shear_rate = 0.5; /**< shear rate */
+            //Real run_time = GlobalStaticVariables::physical_time_;
+		    //Real LE_displacement = fmod((shear_rate * GlobalStaticVariables::physical_time_), 1.0);
 		    Real LE_velocity = shear_rate * 1.0; //systemsize in y direction, now fix size to 1, but need to change to variable 
 			virtual void checkLowerBound(size_t index_i, Real dt = 0.0);
 			virtual void checkUpperBound(size_t index_i, Real dt = 0.0);
- 
+            
 		public:
 			PeriodicLeesEdwardsBounding(Vecd &periodic_translation, StdVec<CellLists> &bound_cells,
 										RealBody &real_body, int axis_direction)
@@ -419,8 +419,8 @@ namespace SPH
 		protected:
 			StdVec<IndexVector> &ghost_particles_;
 			Real shear_rate=0.5; /**< shear rate */
-            Real run_time = GlobalStaticVariables::physical_time_;
-		    Real LE_displacement = fmod((shear_rate * run_time), 1.0);
+            //Real run_time = GlobalStaticVariables::physical_time_;
+		    //Real LE_displacement = fmod((shear_rate * GlobalStaticVariables::physical_time_), 1.0);
 		    Real LE_velocity = shear_rate * 1.0; //systemsize in y direction, now fix size to 1, but need to change to variable 
 			virtual void setupDynamics(Real dt = 0.0) override;
 			//virtual void checkLowerBound(size_t index_i, Real dt = 0.0) override;
@@ -450,8 +450,8 @@ namespace SPH
 		protected:
 			StdVec<IndexVector> &ghost_particles_;
 			Real shear_rate=0.5; /**< shear rate */
-            Real run_time = GlobalStaticVariables::physical_time_;
-		    Real LE_displacement = fmod((shear_rate * run_time), 1.0);
+            //Real run_time = GlobalStaticVariables::physical_time_;
+		    //Real LE_displacement = fmod((shear_rate * GlobalStaticVariables::physical_time_), 1.0); ??? why it is zero? 
 		    Real LE_velocity = shear_rate * 1.0; //systemsize in y direction, now fix size to 1, but need to change to variable 
 			//void checkLowerBound(size_t index_i, Real dt = 0.0) override;
 			//void checkUpperBound(size_t index_i, Real dt = 0.0) override;
