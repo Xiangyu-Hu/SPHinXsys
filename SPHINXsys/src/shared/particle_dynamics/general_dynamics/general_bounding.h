@@ -378,7 +378,7 @@ namespace SPH
 	{
 	protected:
 		StdVec<IndexVector> ghost_particles_;
-        //Real shear_rate=100.0; /**< shear rate */
+        //Real shear_rate=0.5; /**< shear rate */
         //Real run_time = GlobalStaticVariables::physical_time_;
 		//Real LE_displacement = fmod((shear_rate * run_time), 1.0);
 		//Real LE_velocity = shear_rate * 1.0; //systemsize in y direction, now fix size to 1, but need to change to variable 
@@ -391,7 +391,7 @@ namespace SPH
 		{
 		protected:
 			//StdVec<IndexVector> &ghost_particles_;
-			Real shear_rate=100.0; /**< shear rate */
+			Real shear_rate=0.5; /**< shear rate */
             Real run_time = GlobalStaticVariables::physical_time_;
 		    Real LE_displacement = fmod((shear_rate * run_time), 1.0);
 		    Real LE_velocity = shear_rate * 1.0; //systemsize in y direction, now fix size to 1, but need to change to variable 
@@ -418,7 +418,7 @@ namespace SPH
 		{
 		protected:
 			StdVec<IndexVector> &ghost_particles_;
-			Real shear_rate=100.0; /**< shear rate */
+			Real shear_rate=0.5; /**< shear rate */
             Real run_time = GlobalStaticVariables::physical_time_;
 		    Real LE_displacement = fmod((shear_rate * run_time), 1.0);
 		    Real LE_velocity = shear_rate * 1.0; //systemsize in y direction, now fix size to 1, but need to change to variable 
@@ -449,7 +449,7 @@ namespace SPH
 		{
 		protected:
 			StdVec<IndexVector> &ghost_particles_;
-					Real shear_rate=100.0; /**< shear rate */
+			Real shear_rate=0.5; /**< shear rate */
             Real run_time = GlobalStaticVariables::physical_time_;
 		    Real LE_displacement = fmod((shear_rate * run_time), 1.0);
 		    Real LE_velocity = shear_rate * 1.0; //systemsize in y direction, now fix size to 1, but need to change to variable 

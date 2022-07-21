@@ -18,7 +18,7 @@ using namespace SPH;
 Real DL = 1.0;					   /**< box length. */
 Real DH = 1.0;					   /**< box height. */
 Real resolution_ref = 1.0 / 100.0; /**< Global reference resolution. */
-Real sr = 1.0;             /**< shear rate. */
+Real sr = 0.5;             /**< shear rate. */
 
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(0), Vec2d(DL, DH));
@@ -175,7 +175,7 @@ int main(int ac, char *av[])
 	size_t number_of_iterations = sph_system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 5.0; /**< End time. */
+	Real End_Time = 20.0; /**< End time. */
 	Real D_Time = 0.1;	 /**< Time stamps for output of body states. */
 	Real dt = 0.0;		 /**< Default acoustic time step sizes. */
 	/** statistics for computing CPU time. */
