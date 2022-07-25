@@ -25,17 +25,18 @@ BoundingBox system_domain_bounds(Vec2d(0), Vec2d(DL, DH));
 /**
  * @brief Material properties of the fluid.
  */
-Real rho0_f = 1.0;					/**< Reference density of fluid. */
+Real rho0_f = 1000.0;					/**< Reference density of fluid. */
 Real U_f = 1.0;						/**< Characteristic velocity. */
 Real c_f = 10.0 * U_f;				/**< Reference sound speed. */
 Real Re = 0.01;						/**< Reynolds number. */
-Real mu_f = rho0_f * U_f * DL / Re; /**< Dynamics viscosity. */
+//Real mu_f = rho0_f * U_f * DL / Re; /**< Dynamics viscosity. */
+Real mu_f = 0.001
 
 
 Vec2d ball_center_1(0.5, 0.5);
 Real ball_radius = 0.1;
 Real gravity_g = 0.0;
-Real rho0_s = 1.0;
+Real rho0_s = 1000.0;
 Real Youngs_modulus = 5.0e4;
 Real poisson = 0.0;
 //Real physical_viscosity = 10000.0;
@@ -131,7 +132,7 @@ int main(int ac, char *av[])
 	
 	SolidBody free_ball(sph_system, makeShared<FreeBall>("FreeBall"));
 	free_ball.defineBodyLevelSetShape();
-	free_ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+	free_ball.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 		? free_ball.generateParticles<ParticleGeneratorReload>(in_output, free_ball.getBodyName())
 		: free_ball.generateParticles<ParticleGeneratorLattice>();
@@ -352,7 +353,7 @@ int main(int ac, char *av[])
 			dt_f = get_fluid_time_step_size.parallel_exec();
 			//std::cout << " acoustic solid dt_s = " << dt_s << "acoustic fluid	dt = " << dt << " adv Dt = " << Dt << "\n";
 			// use smallest timestep
-            Real dt_min = SMIN(dt_f, Dt);
+      Real dt_min = SMIN(dt_f, Dt);
 			dt = SMIN(dt_s, dt_min);
 			//std::cout << " dt_s = " << dt_s << "dt_f = " << dt_f << " Dt = " << Dt << "\n";
 			update_density_by_summation.parallel_exec();
@@ -408,16 +409,16 @@ int main(int ac, char *av[])
 			number_of_iterations++;
              
 			/** Water block configuration and periodic condition. */
-		    periodic_condition_y.bounding_.parallel_exec();
-		    //periodic_condition_y_ball.bounding_.parallel_exec();
+		  periodic_condition_y.bounding_.parallel_exec();
+		  //periodic_condition_y_ball.bounding_.parallel_exec();
 			periodic_condition_x.bounding_.parallel_exec();
 			//periodic_condition_x_ball.bounding_.parallel_exec();
 			water_block.updateCellLinkedList();
 			free_ball.updateCellLinkedList();
-            //periodic_condition_x.ghost_creation_.parallel_exec();
+      //periodic_condition_x.ghost_creation_.parallel_exec();
 			periodic_condition_x.update_cell_linked_list_.parallel_exec();
-            periodic_condition_y.ghost_creation_.parallel_exec();
-            //periodic_condition_y_ball.ghost_creation_.parallel_exec();
+      periodic_condition_y.ghost_creation_.parallel_exec();
+      //periodic_condition_y_ball.ghost_creation_.parallel_exec();
 			//periodic_condition_x_ball.update_cell_linked_list_.parallel_exec();
 			//periodic_condition_y.update_cell_linked_list_.parallel_exec();
 			water_block_complex.updateConfiguration();
