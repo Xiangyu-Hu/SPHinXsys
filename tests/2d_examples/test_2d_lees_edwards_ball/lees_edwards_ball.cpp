@@ -131,7 +131,7 @@ int main(int ac, char *av[])
 	
 	SolidBody free_ball(sph_system, makeShared<FreeBall>("FreeBall"));
 	free_ball.defineBodyLevelSetShape();
-	free_ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+	free_ball.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 		? free_ball.generateParticles<ParticleGeneratorReload>(in_output, free_ball.getBodyName())
 		: free_ball.generateParticles<ParticleGeneratorLattice>();
@@ -205,7 +205,7 @@ int main(int ac, char *av[])
 	/** Initialize particle acceleration. */
 	TimeStepInitialization time_step_initialization(water_block);
 	/** Lees Edwards BCs in y direction */
-    LeesEdwardsConditionInAxisDirectionUsingGhostParticles periodic_condition_y(water_block, yAxis);
+  LeesEdwardsConditionInAxisDirectionUsingGhostParticles periodic_condition_y(water_block, yAxis);
     //LeesEdwardsConditionInAxisDirectionUsingGhostParticles periodic_condition_y_ball(free_ball, yAxis);
 	/** Periodic BCs in x direction. */
 	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_x(water_block, xAxis);
