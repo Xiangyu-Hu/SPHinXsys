@@ -153,7 +153,7 @@ int main(int ac, char *av[])
 	BodyRelationInner water_block_inner(water_block);
 	ComplexBodyRelation water_block_complex(water_block_inner, {&free_ball});
 	BodyRelationContact free_ball_contact(free_ball, {&water_block});
-    BodyRelationInner free_ball_inner(free_ball);
+  BodyRelationInner free_ball_inner(free_ball);
 	//----------------------------------------------------------------------
 	//	Run particle relaxation for body-fitted distribution if chosen.
 	//----------------------------------------------------------------------
@@ -205,7 +205,7 @@ int main(int ac, char *av[])
 	/** Initialize particle acceleration. */
 	TimeStepInitialization time_step_initialization(water_block);
 	/** Lees Edwards BC in y direction */
-    LeesEdwardsConditionInAxisDirectionUsingGhostParticles periodic_condition_y(water_block, yAxis);
+  LeesEdwardsConditionInAxisDirectionUsingGhostParticles periodic_condition_y(water_block, yAxis);
 	/** Periodic BC in x direction. */
 	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_x(water_block, xAxis);
 
@@ -213,7 +213,8 @@ int main(int ac, char *av[])
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
 	/** Evaluation of density by summation approach. */
-	fluid_dynamics::DensitySummationInner update_density_by_summation(water_block_inner);
+	//fluid_dynamics::DensitySummationInner update_density_by_summation(water_block_inner);
+  fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_block_complex);
 
 	/** Time step size without considering sound wave speed. */
 	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_block, U_f);
