@@ -42,6 +42,8 @@
 #include "cell_linked_list.h"
 #include "particle_sorting.h"
 #include "all_geometries.h"
+#include "base_material.h"
+#include "base_particles.h"
 
 #include <string>
 
