@@ -33,8 +33,6 @@
 #include "base_data_package.h"
 #include "sph_data_containers.h"
 
-#define TBB_2021_2_0;
-
 /** this is a reformulation of tbb parallel_sort for particle data */
 namespace tbb
 {
