@@ -26,7 +26,7 @@ namespace SPH
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
 			rho_[index_i] = rho0_ / SimTK::det(F_[index_i]);
 
-			// TODO: this formulation is temporary, to be revises. 
+			// TODO: this naming is temporary, to be revised. 
 			stress_PK1_B_[index_i] = plastic_solid_->PlasticConstitutiveRelation(F_[index_i], index_i, dt);
 		}
 		//=================================================================================================//
