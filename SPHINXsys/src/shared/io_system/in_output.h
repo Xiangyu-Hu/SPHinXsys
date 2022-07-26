@@ -347,6 +347,16 @@ namespace SPH
 			out_file << "\n";
 			out_file.close();
 		};
+
+		StdVec<VariableType> getObservedQuantity()
+		{
+			StdVec<VariableType> observed_quantity;
+			for (size_t i = 0; i != base_particles_->total_real_particles_; ++i)
+			{
+				observed_quantity.push_back((*this->interpolated_quantities_)[i]);
+			}
+			return observed_quantity;
+		}
 	};
 
 	/**
