@@ -104,9 +104,9 @@ int main(int ac, char *av[])
 	/** Initialize a time step. */
 	eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization time_step_initialization(water_body);
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_x(water_body, xAxis);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_x(water_body, water_body.getBodyShapeBounds(), xAxis);
 	/** Periodic BCs in y direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_y(water_body, yAxis);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_y(water_body, water_body.getBodyShapeBounds(), yAxis);
 	/** Time step size with considering sound wave speed. */
 	eulerian_compressible_fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_body);
 	/** Pressure relaxation algorithm by using verlet time stepping. */

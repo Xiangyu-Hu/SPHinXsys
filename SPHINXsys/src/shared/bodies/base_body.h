@@ -77,10 +77,6 @@ namespace SPH
 		SPHSystem &sph_system_;
 		std::string body_name_;
 		bool newly_updated_; /**< whether this body is in a newly updated state */
-		/** Computational domain bounds for body boundary conditions.
-		 * Note that domain bounds may be different from those of the initial body geometry. */
-		BoundingBox body_domain_bounds_;
-		bool is_domain_bounds_determined_;
 
 	public:
 		SPHAdaptation *sph_adaptation_; /**< numerical adaptation policy. */
@@ -97,8 +93,7 @@ namespace SPH
 		void setNewlyUpdated() { newly_updated_ = true; };
 		void setNotNewlyUpdated() { newly_updated_ = false; };
 		bool checkNewlyUpdated() { return newly_updated_; };
-		void setBodyDomainBounds(const BoundingBox &body_domain_bounds);
-		BoundingBox getBodyDomainBounds();
+		BoundingBox getBodyShapeBounds();
 		BoundingBox getSPHSystemBounds();
 		//----------------------------------------------------------------------
 		//		Object factory template functions

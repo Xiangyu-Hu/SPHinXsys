@@ -108,7 +108,7 @@ int main(int ac, char *av[])
 	// Initialize particle acceleration.
 	eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization initialize_wave_step(wave_body);
 	// Periodic BCs in y direction.
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_y(wave_body, yAxis);
+	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_y(wave_body, wave_body.getBodyShapeBounds(), yAxis);
 	// Time step size with considering sound wave speed.
 	eulerian_compressible_fluid_dynamics::AcousticTimeStepSize get_wave_time_step_size(wave_body);
 	// Pressure, density and energy relaxation algorithm by use HLLC Riemann solver.
