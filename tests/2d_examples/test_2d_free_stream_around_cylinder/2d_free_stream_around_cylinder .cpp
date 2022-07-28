@@ -135,7 +135,7 @@ int main(int ac, char *av[])
 	/** Prescribed fluid body domain bounds*/
 	BoundingBox water_block_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
 	/** recycle real fluid particle to buffer particles at outlet. */
-	OpenBoundaryConditionInAxisDirection transfer_to_buffer_particles_upper_bound(water_block, water_block_domain_bounds, xAxis, positiveDirection);
+	OpenBoundaryConditionAlongAxis transfer_to_buffer_particles_upper_bound(water_block, water_block_domain_bounds, xAxis, positiveDirection);
 	/** compute the vorticity. */
 	fluid_dynamics::VorticityInner compute_vorticity(water_block_inner);
 	//----------------------------------------------------------------------

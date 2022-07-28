@@ -133,7 +133,7 @@ int main(int ac, char *av[])
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
 	ParabolicInflow parabolic_inflow(water_block, inflow_buffer);
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
+	PeriodicConditionAlongAxisUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
 	//----------------------------------------------------------------------
 	//	Algorithms of FSI.
 	//----------------------------------------------------------------------

@@ -169,8 +169,8 @@ int main(int ac, char *av[])
 	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(water_block_complex_relation);
 	/** recycle real fluid particle to buffer particles at outlet. */
 	BoundingBox water_block_bounding_bounds(Vec2d(-DL_sponge, -DH), Vec2d(DL + BW, 2.0 * DH));
-	OpenBoundaryConditionInAxisDirection transfer_to_buffer_particles_lower_bound(water_block, water_block_bounding_bounds, yAxis, negativeDirection);
-	OpenBoundaryConditionInAxisDirection transfer_to_buffer_particles_upper_bound(water_block, water_block_bounding_bounds, yAxis, positiveDirection);
+	OpenBoundaryConditionAlongAxis transfer_to_buffer_particles_lower_bound(water_block, water_block_bounding_bounds, yAxis, negativeDirection);
+	OpenBoundaryConditionAlongAxis transfer_to_buffer_particles_upper_bound(water_block, water_block_bounding_bounds, yAxis, positiveDirection);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

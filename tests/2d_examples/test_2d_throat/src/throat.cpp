@@ -152,7 +152,7 @@ int main()
 	// this section define all numerical methods will be used in this case
 	//-------------------------------------------------------------------
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingGhostParticles periodic_condition(fluid_block, fluid_block.getBodyShapeBounds(), xAxis);
+	PeriodicConditionAlongAxisUsingGhostParticles periodic_condition(fluid_block, fluid_block.getBodyShapeBounds(), xAxis);
 	// evaluation of density by summation approach
 	fluid_dynamics::DensitySummationComplex update_density_by_summation(fluid_block_complex);
 	// time step size without considering sound wave speed and viscosity

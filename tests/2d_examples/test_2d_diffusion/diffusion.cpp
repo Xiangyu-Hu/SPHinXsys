@@ -149,7 +149,7 @@ int main()
 	/** Diffusion process for diffusion body. */
 	DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
 	/** Periodic BCs. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_y(diffusion_body, diffusion_body.getBodyShapeBounds(), yAxis);
+	PeriodicConditionAlongAxisUsingCellLinkedList periodic_condition_y(diffusion_body, diffusion_body.getBodyShapeBounds(), yAxis);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

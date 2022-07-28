@@ -103,9 +103,9 @@ int main(int ac, char *av[])
 	/** Initialize particle acceleration. */
 	TimeStepInitialization initialize_a_fluid_step(water_block);
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
+	PeriodicConditionAlongAxisUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
 	/** Periodic BCs in y direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_y(water_block, water_block.getBodyShapeBounds(), yAxis);
+	PeriodicConditionAlongAxisUsingCellLinkedList periodic_condition_y(water_block, water_block.getBodyShapeBounds(), yAxis);
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensitySummationComplex update_density_by_summation(water_block_complex);
 	/** Time step size without considering sound wave speed. */
