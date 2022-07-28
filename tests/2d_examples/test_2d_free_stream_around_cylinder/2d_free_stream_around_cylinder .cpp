@@ -245,7 +245,7 @@ int main(int ac, char *av[])
 
 			/** Water block configuration and periodic condition. */
 			emitter_inflow_injecting.exec();
-			transfer_to_buffer_particles_upper_bound.particle_type_transfer.parallel_exec();
+			transfer_to_buffer_particles_upper_bound.particle_type_transfer_.parallel_exec();
 
 			water_block.updateCellLinkedList();
 			water_block_complex.updateConfiguration();

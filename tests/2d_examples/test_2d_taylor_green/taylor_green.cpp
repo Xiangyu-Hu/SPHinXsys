@@ -104,9 +104,9 @@ int main(int ac, char *av[])
 	/** Initialize particle acceleration. */
 	TimeStepInitialization time_step_initialization(water_block);
 	/** Periodic BCs in x direction. */
-	PeriodicConditionAlongAxisUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
+	PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
 	/** Periodic BCs in y direction. */
-	PeriodicConditionAlongAxisUsingCellLinkedList periodic_condition_y(water_block, water_block.getBodyShapeBounds(), yAxis);
+	PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, water_block.getBodyShapeBounds(), yAxis);
 
 	/**
 	 * @brief 	Algorithms of fluid dynamics.

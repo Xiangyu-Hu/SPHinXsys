@@ -254,8 +254,8 @@ int main(int ac, char *av[])
 
 			/** inflow injecting*/
 			emitter_inflow_injecting.exec();
-			transfer_to_buffer_particles_lower_bound.particle_type_transfer.parallel_exec();
-			transfer_to_buffer_particles_upper_bound.particle_type_transfer.parallel_exec();
+			transfer_to_buffer_particles_lower_bound.particle_type_transfer_.parallel_exec();
+			transfer_to_buffer_particles_upper_bound.particle_type_transfer_.parallel_exec();
 
 			/** Update cell linked list and configuration. */
 			water_block.updateCellLinkedList();

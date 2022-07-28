@@ -16,7 +16,7 @@ namespace SPH
 		  cell_linked_list_(real_body.cell_linked_list_),
 		  cut_off_radius_max_(sph_adaptation_->getKernel()->CutOffRadius()) {}
 	//=================================================================================================//
-	Vecd PeriodicConditionAlongAxis::
+	Vecd BasePeriodicCondition::
 		setPeriodicTranslation(BoundingBox &bounding_bounds, int axis)
 	{
 		Vecd periodic_translation(0);
@@ -25,8 +25,8 @@ namespace SPH
 		return periodic_translation;
 	}
 	//=================================================================================================//
-	PeriodicConditionAlongAxis::
-		PeriodicConditionAlongAxis(RealBody &real_body, BoundingBox bounding_bounds, int axis)
+	BasePeriodicCondition::
+		BasePeriodicCondition(RealBody &real_body, BoundingBox bounding_bounds, int axis)
 		: periodic_translation_(setPeriodicTranslation(bounding_bounds, axis))
 	{
 		bound_cells_.resize(2);
@@ -40,19 +40,19 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void PeriodicConditionAlongAxis::PeriodicBounding::checkLowerBound(size_t index_i, Real dt)
+	void BasePeriodicCondition::PeriodicBounding::checkLowerBound(size_t index_i, Real dt)
 	{
 		if (pos_[index_i][axis_] < bounding_bounds_.first[axis_])
 			pos_[index_i][axis_] += periodic_translation_[axis_];
 	}
 	//=================================================================================================//
-	void PeriodicConditionAlongAxis::PeriodicBounding::checkUpperBound(size_t index_i, Real dt)
+	void BasePeriodicCondition::PeriodicBounding::checkUpperBound(size_t index_i, Real dt)
 	{
 		if (pos_[index_i][axis_] > bounding_bounds_.second[axis_])
 			pos_[index_i][axis_] -= periodic_translation_[axis_];
 	}
 	//=================================================================================================//
-	void PeriodicConditionAlongAxis::PeriodicBounding::exec(Real dt)
+	void BasePeriodicCondition::PeriodicBounding::exec(Real dt)
 	{
 		setupDynamics(dt);
 
@@ -75,7 +75,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void PeriodicConditionAlongAxis::PeriodicBounding::parallel_exec(Real dt)
+	void BasePeriodicCondition::PeriodicBounding::parallel_exec(Real dt)
 	{
 		setupDynamics(dt);
 
@@ -110,7 +110,7 @@ namespace SPH
 			ap);
 	}
 	//=================================================================================================//
-	void PeriodicConditionAlongAxisUsingCellLinkedList::PeriodicCellLinkedList::exec(Real dt)
+	void PeriodicConditionUsingCellLinkedList::PeriodicCellLinkedList::exec(Real dt)
 	{
 		setupDynamics(dt);
 
@@ -133,7 +133,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void PeriodicConditionAlongAxisUsingCellLinkedList::
+	void PeriodicConditionUsingCellLinkedList::
 		PeriodicCellLinkedList::checkUpperBound(ListData &list_data, Real dt)
 	{
 		Vecd particle_position = list_data.second;
@@ -146,7 +146,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void PeriodicConditionAlongAxisUsingCellLinkedList::
+	void PeriodicConditionUsingCellLinkedList::
 		PeriodicCellLinkedList::checkLowerBound(ListData &list_data, Real dt)
 	{
 		Vecd particle_position = list_data.second;
@@ -162,7 +162,7 @@ namespace SPH
 	OpenBoundaryConditionAlongAxis::
 		OpenBoundaryConditionAlongAxis(RealBody &real_body, BoundingBox bounding_bounds,
 											 int axis, bool positive)
-		: particle_type_transfer(this->bound_cells_, real_body, bounding_bounds, axis, positive)
+		: particle_type_transfer_(this->bound_cells_, real_body, bounding_bounds, axis, positive)
 	{
 		bound_cells_.resize(2);
 		BaseCellLinkedList *cell_linked_list = real_body.cell_linked_list_;
@@ -210,14 +210,14 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void PeriodicConditionAlongAxisUsingGhostParticles::
+	void PeriodicConditionUsingGhostParticles::
 		CreatPeriodicGhostParticles::setupDynamics(Real dt)
 	{
 		for (size_t i = 0; i != ghost_particles_.size(); ++i)
 			ghost_particles_[i].clear();
 	}
 	//=================================================================================================//
-	void PeriodicConditionAlongAxisUsingGhostParticles::
+	void PeriodicConditionUsingGhostParticles::
 		CreatPeriodicGhostParticles::checkLowerBound(size_t index_i, Real dt)
 	{
 		Vecd particle_position = pos_[index_i];
@@ -232,7 +232,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void PeriodicConditionAlongAxisUsingGhostParticles::
+	void PeriodicConditionUsingGhostParticles::
 		CreatPeriodicGhostParticles::checkUpperBound(size_t index_i, Real dt)
 	{
 		Vecd particle_position = pos_[index_i];
@@ -247,21 +247,21 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void PeriodicConditionAlongAxisUsingGhostParticles::
+	void PeriodicConditionUsingGhostParticles::
 		UpdatePeriodicGhostParticles::checkLowerBound(size_t index_i, Real dt)
 	{
 		particles_->updateFromAnotherParticle(index_i, sorted_id_[index_i]);
 		pos_[index_i] += periodic_translation_;
 	}
 	//=================================================================================================//
-	void PeriodicConditionAlongAxisUsingGhostParticles::
+	void PeriodicConditionUsingGhostParticles::
 		UpdatePeriodicGhostParticles::checkUpperBound(size_t index_i, Real dt)
 	{
 		particles_->updateFromAnotherParticle(index_i, sorted_id_[index_i]);
 		pos_[index_i] -= periodic_translation_;
 	}
 	//=================================================================================================//
-	void PeriodicConditionAlongAxisUsingGhostParticles::
+	void PeriodicConditionUsingGhostParticles::
 		UpdatePeriodicGhostParticles::exec(Real dt)
 	{
 		for (size_t i = 0; i != ghost_particles_[0].size(); ++i)
@@ -274,7 +274,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void PeriodicConditionAlongAxisUsingGhostParticles::
+	void PeriodicConditionUsingGhostParticles::
 		UpdatePeriodicGhostParticles::parallel_exec(Real dt)
 	{
 		parallel_for(
@@ -311,20 +311,20 @@ namespace SPH
 					 : std::bind(&MirrorConditionAlongAxis::MirrorBounding::checkLowerBound, this, _1, _2);
 	}
 	//=================================================================================================//
-	MirrorConditionAlongAxis::CreatingGhostParticles::
-		CreatingGhostParticles(IndexVector &ghost_particles, CellLists &bound_cells, RealBody &real_body, 
+	MirrorConditionAlongAxis::CreatingMirrorGhostParticles::
+		CreatingMirrorGhostParticles(IndexVector &ghost_particles, CellLists &bound_cells, RealBody &real_body, 
 							BoundingBox bounding_bounds, int axis, bool positive)
 		: MirrorBounding(bound_cells, real_body, bounding_bounds, axis, positive), 
 		ghost_particles_(ghost_particles) {}
 	//=================================================================================================//
-	MirrorConditionAlongAxis::UpdatingGhostStates::
-		UpdatingGhostStates(IndexVector &ghost_particles, CellLists &bound_cells, RealBody &real_body, 
+	MirrorConditionAlongAxis::UpdatingMirrorGhostStates::
+		UpdatingMirrorGhostStates(IndexVector &ghost_particles, CellLists &bound_cells, RealBody &real_body, 
 		BoundingBox bounding_bounds, int axis, bool positive)
 		: MirrorBounding(bound_cells, real_body, bounding_bounds, axis, positive), ghost_particles_(ghost_particles)
 	{
 		checking_bound_update_ =
-			positive ? std::bind(&MirrorConditionAlongAxis::UpdatingGhostStates::checkUpperBound, this, _1, _2)
-					 : std::bind(&MirrorConditionAlongAxis::UpdatingGhostStates::checkLowerBound, this, _1, _2);
+			positive ? std::bind(&MirrorConditionAlongAxis::UpdatingMirrorGhostStates::checkUpperBound, this, _1, _2)
+					 : std::bind(&MirrorConditionAlongAxis::UpdatingMirrorGhostStates::checkLowerBound, this, _1, _2);
 	}
 	//=================================================================================================//
 	void MirrorConditionAlongAxis ::MirrorBounding::checkLowerBound(size_t index_i, Real dt)
@@ -378,7 +378,7 @@ namespace SPH
 			ap);
 	}
 	//=================================================================================================//
-	void MirrorConditionAlongAxis::CreatingGhostParticles ::checkLowerBound(size_t index_i, Real dt)
+	void MirrorConditionAlongAxis::CreatingMirrorGhostParticles ::checkLowerBound(size_t index_i, Real dt)
 	{
 		Vecd particle_position = pos_[index_i];
 		if (particle_position[axis_] > bounding_bounds_.first[axis_] &&
@@ -394,7 +394,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void MirrorConditionAlongAxis::CreatingGhostParticles::checkUpperBound(size_t index_i, Real dt)
+	void MirrorConditionAlongAxis::CreatingMirrorGhostParticles::checkUpperBound(size_t index_i, Real dt)
 	{
 		Vecd particle_position = pos_[index_i];
 		if (particle_position[axis_] < bounding_bounds_.second[axis_] &&
@@ -410,19 +410,19 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void MirrorConditionAlongAxis::UpdatingGhostStates::checkLowerBound(size_t index_i, Real dt)
+	void MirrorConditionAlongAxis::UpdatingMirrorGhostStates::checkLowerBound(size_t index_i, Real dt)
 	{
 		particles_->updateFromAnotherParticle(index_i, sorted_id_[index_i]);
 		mirrorAlongAxis(index_i, bounding_bounds_.first, axis_);
 	}
 	//=================================================================================================//
-	void MirrorConditionAlongAxis::UpdatingGhostStates ::checkUpperBound(size_t index_i, Real dt)
+	void MirrorConditionAlongAxis::UpdatingMirrorGhostStates ::checkUpperBound(size_t index_i, Real dt)
 	{
 		particles_->updateFromAnotherParticle(index_i, sorted_id_[index_i]);
 		mirrorAlongAxis(index_i, bounding_bounds_.second, axis_);
 	}
 	//=================================================================================================//
-	void MirrorConditionAlongAxis::UpdatingGhostStates ::exec(Real dt)
+	void MirrorConditionAlongAxis::UpdatingMirrorGhostStates ::exec(Real dt)
 	{
 		for (size_t i = 0; i != ghost_particles_.size(); ++i)
 		{
@@ -430,7 +430,7 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void MirrorConditionAlongAxis::UpdatingGhostStates ::parallel_exec(Real dt)
+	void MirrorConditionAlongAxis::UpdatingMirrorGhostStates ::parallel_exec(Real dt)
 	{
 		parallel_for(
 			blocked_range<size_t>(0, ghost_particles_.size()),
