@@ -43,7 +43,7 @@ public:
 	{
 		if (free_list.empty())
 		{
-			data_list.emplace_back(T());
+			data_list.emplace_back();
 			return (&data_list.back());
 		}
 		else
