@@ -21,9 +21,9 @@ namespace SPH
 			  pos0_(particles_->pos0_),
 			  transformation_matrix_(particles_->transformation_matrix_) {}
 		//=================================================================================================//
-		ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SolidBody &solid_body)
+		ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SolidBody &solid_body, Real CFL)
 			: ParticleDynamicsReduce<Real, ReduceMin>(solid_body),
-			  ShellDataSimple(solid_body),
+			  ShellDataSimple(solid_body), CFL_(CFL),
 			  vel_(particles_->vel_), acc_(particles_->acc_),
 			  angular_vel_(particles_->angular_vel_), dangular_vel_dt_(particles_->dangular_vel_dt_),
 			  thickness_(particles_->thickness_),
@@ -41,9 +41,9 @@ namespace SPH
 		{
 			// Since the particle does not change its configuration in pressure relaxation step,
 			// I chose a time-step size according to Eulerian method.
-			Real time_setp_0 = 0.6 * SMIN(sqrt(smoothing_length_ / (acc_[index_i].norm() + TinyReal)),
+			Real time_setp_0 = CFL_ * SMIN(sqrt(smoothing_length_ / (acc_[index_i].norm() + TinyReal)),
 										  smoothing_length_ / (c0_ + vel_[index_i].norm()));
-			Real time_setp_1 = 0.6 * SMIN(sqrt(1.0 / (dangular_vel_dt_[index_i].norm() + TinyReal)),
+			Real time_setp_1 = CFL_ * SMIN(sqrt(1.0 / (dangular_vel_dt_[index_i].norm() + TinyReal)),
 										  1.0 / (angular_vel_[index_i].norm() + TinyReal));
 			Real time_setp_2 = smoothing_length_ * sqrt(rho0_ * (1.0 - nu_ * nu_) / E0_ /
 														(2.0 + (Pi * Pi / 12.0) * (1.0 - nu_) *
