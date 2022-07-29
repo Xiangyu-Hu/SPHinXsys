@@ -294,4 +294,4 @@ namespace SPH
 		virtual void updateSortedId();
 	};
 }
-#endif // PARTICLE_SORTING_H
+#endif //PARTICLE_SORTING_H

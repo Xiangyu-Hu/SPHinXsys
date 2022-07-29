@@ -72,10 +72,10 @@ namespace SPH
 		}
 		//=================================================================================================//
 		EmitterInflowInjecting ::EmitterInflowInjecting(FluidBody &fluid_body, BodyAlignedBoxByParticle &aligned_box_part,
-														size_t body_buffer_width, int axis_direction, bool positive)
+														size_t body_buffer_width, int axis, bool positive)
 			: PartSimpleDynamicsByParticle(fluid_body, aligned_box_part), FluidDataSimple(fluid_body),
 			  pos_(particles_->pos_), rho_(particles_->rho_), p_(particles_->p_),
-			  axis_(axis_direction), body_buffer_width_(body_buffer_width),
+			  axis_(axis), body_buffer_width_(body_buffer_width),
 			  aligned_box_(aligned_box_part.aligned_box_)
 		{
 			size_t total_body_buffer_particles = body_part_particles_.size() * body_buffer_width_;

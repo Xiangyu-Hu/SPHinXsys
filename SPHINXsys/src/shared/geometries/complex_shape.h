@@ -53,7 +53,7 @@ namespace SPH
 			size_t index = getShapeIndexByName(shape_name);
 			LevelSetShape *level_set_shape = shapes_ptr_keeper_[index].createPtr<LevelSetShape>(
 				sph_body, *shapes_and_ops_[index].first, std::forward<ConstructorArgs>(args)...);
-			shapes_and_ops_[index].first = level_set_shape;
+			shapes_and_ops_[index].first = DynamicCast<Shape>(this, level_set_shape);
 			return level_set_shape;
 		};
 	};

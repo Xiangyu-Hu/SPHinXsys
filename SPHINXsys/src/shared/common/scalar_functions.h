@@ -173,13 +173,13 @@ namespace SPH {
 		return distribution(generator);
 	}
 	/** rotating axis once according to right hand rule.
-	 * The axis_direction must be 0, 1 for 2d and 0, 1, 2 for 3d
+	 * The first_axis must be 0, 1 for 2d and 0, 1, 2 for 3d
 	 */
-	int SecondAxis(int axis_direction);
+	int SecondAxis(int first_axis);
 	/** rotating axis twice  according to right hand rule.
-	  * The axis_direction must be 0, 1 for 2d and 0, 1, 2 for 3d
+	  * The first_axis must be 0, 1 for 2d and 0, 1, 2 for 3d
 	  */
-	int ThirdAxis(int axis_direction);
+	int ThirdAxis(int first_axis);
 
 	double getLeftStateInWeno(double v1, double v2, double v3, double v4);
 	double getRightStateInWeno(double v1, double v2, double v3, double v4);

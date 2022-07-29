@@ -68,7 +68,7 @@ namespace SPH
 										  public ShellDataSimple
 		{
 		public:
-			explicit ShellAcousticTimeStepSize(SolidBody &sph_body);
+			explicit ShellAcousticTimeStepSize(SolidBody &sph_body, Real CFL = 0.6);
 			virtual ~ShellAcousticTimeStepSize(){};
 
 		protected:
@@ -76,6 +76,7 @@ namespace SPH
 			StdLargeVec<Real> &thickness_;
 			Real rho0_, physical_viscosity_, E0_, nu_, c0_;
 			Real smoothing_length_;
+			Real CFL_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -261,16 +262,16 @@ namespace SPH
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
-		/**@class ConstrainShellBodyRegionInAxisDirection
+		/**@class ConstrainShellBodyRegionAlongAxis
 		 * @brief The boundary conditions are denoted by SS1 according to the references.
-	     * The axis_direction must be 0 or 1.
+	     * The axis must be 0 or 1.
 		 * Note that the average values for FSI are prescribed also.
 		 */
-		class ConstrainShellBodyRegionInAxisDirection : public PartSimpleDynamicsByParticle, public ShellDataSimple
+		class ConstrainShellBodyRegionAlongAxis : public PartSimpleDynamicsByParticle, public ShellDataSimple
 		{
 		public:
-			ConstrainShellBodyRegionInAxisDirection(SolidBody &sph_body, BodyPartByParticle &body_part, int axis_direction);
-			virtual ~ConstrainShellBodyRegionInAxisDirection(){};
+			ConstrainShellBodyRegionAlongAxis(SolidBody &sph_body, BodyPartByParticle &body_part, int axis);
+			virtual ~ConstrainShellBodyRegionAlongAxis(){};
 
 		protected:
 			const int axis_; /**< the axis direction for bounding*/
