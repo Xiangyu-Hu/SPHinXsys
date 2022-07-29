@@ -304,7 +304,7 @@ int main(int ac, char *av[])
 	 * @brief   Methods used for updating data structure.
 	 */
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition(water_block, xAxis);
+	PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction(fish_body);
 	/** Corrected configuration.*/

@@ -29,9 +29,6 @@ SolidBodyFromMesh::SolidBodyFromMesh(
 	defineBodyLevelSetShape()->cleanLevelSet();
 	defineParticlesWithMaterial<ElasticSolidParticles>(material_model.get());
 	generateParticles<ParticleGeneratorLattice>();
-	// set the body domain bounds because it is not set by default
-	BoundingBox bounds = body_shape_->getBounds();
-	setBodyDomainBounds(bounds);
 }
 
 SolidBodyForSimulation::SolidBodyForSimulation(
@@ -116,10 +113,6 @@ std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMe
 	model.defineBodyLevelSetShape()->cleanLevelSet();
 	model.defineParticlesAndMaterial<SolidParticles, Solid>();
 	model.generateParticles<ParticleGeneratorLattice>();
-
-	// set the body domain bounds because it is not set by default
-	BoundingBox bounds = model.body_shape_->getBounds();
-	model.setBodyDomainBounds(bounds);
 
 	if (particle_relaxation)
 	{

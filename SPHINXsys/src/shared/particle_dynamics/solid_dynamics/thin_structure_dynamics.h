@@ -262,16 +262,16 @@ namespace SPH
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
-		/**@class ConstrainShellBodyRegionInAxisDirection
+		/**@class ConstrainShellBodyRegionAlongAxis
 		 * @brief The boundary conditions are denoted by SS1 according to the references.
-	     * The axis_direction must be 0 or 1.
+	     * The axis must be 0 or 1.
 		 * Note that the average values for FSI are prescribed also.
 		 */
-		class ConstrainShellBodyRegionInAxisDirection : public PartSimpleDynamicsByParticle, public ShellDataSimple
+		class ConstrainShellBodyRegionAlongAxis : public PartSimpleDynamicsByParticle, public ShellDataSimple
 		{
 		public:
-			ConstrainShellBodyRegionInAxisDirection(SolidBody &sph_body, BodyPartByParticle &body_part, int axis_direction);
-			virtual ~ConstrainShellBodyRegionInAxisDirection(){};
+			ConstrainShellBodyRegionAlongAxis(SolidBody &sph_body, BodyPartByParticle &body_part, int axis);
+			virtual ~ConstrainShellBodyRegionAlongAxis(){};
 
 		protected:
 			const int axis_; /**< the axis direction for bounding*/

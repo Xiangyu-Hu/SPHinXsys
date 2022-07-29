@@ -29,7 +29,6 @@ int main(int ac, char *av[])
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-	water_block.setBodyDomainBounds(fluid_body_domain_bounds);
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
 
@@ -133,8 +132,10 @@ int main(int ac, char *av[])
 	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex);
 	/** Apply transport velocity formulation. */
 	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(water_block_complex);
+	/** Prescribed fluid body domain bounds*/
+	BoundingBox water_block_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
 	/** recycle real fluid particle to buffer particles at outlet. */
-	OpenBoundaryConditionInAxisDirection transfer_to_buffer_particles_upper_bound(water_block, xAxis, positiveDirection);
+	OpenBoundaryConditionAlongAxis transfer_to_buffer_particles_upper_bound(water_block, water_block_domain_bounds, xAxis, positiveDirection);
 	/** compute the vorticity. */
 	fluid_dynamics::VorticityInner compute_vorticity(water_block_inner);
 	//----------------------------------------------------------------------
@@ -244,7 +245,7 @@ int main(int ac, char *av[])
 
 			/** Water block configuration and periodic condition. */
 			emitter_inflow_injecting.exec();
-			transfer_to_buffer_particles_upper_bound.particle_type_transfer.parallel_exec();
+			transfer_to_buffer_particles_upper_bound.particle_type_transfer_.parallel_exec();
 
 			water_block.updateCellLinkedList();
 			water_block_complex.updateConfiguration();
