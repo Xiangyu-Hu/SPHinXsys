@@ -173,7 +173,7 @@ int main(int ac, char *av[])
 	GlobalStaticVariables::physical_time_ = 0.0;
 	write_states.writeToFile(0);
 	write_cylinder_max_displacement.writeToFile(0);
-	observed_quantity_0 = write_cylinder_max_displacement.getObservedQuantity()[0][2];
+	observed_quantity_0 = (*write_cylinder_max_displacement.getObservedQuantity())[0][2];
 
 	/** Setup physical parameters. */
 	int ite = 0;
@@ -226,7 +226,7 @@ int main(int ac, char *av[])
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	write_cylinder_max_displacement.newResultTest();
-	observed_quantity_n = write_cylinder_max_displacement.getObservedQuantity()[0][2];
+	observed_quantity_n = (*write_cylinder_max_displacement.getObservedQuantity())[0][2];
 
 	testing::InitGoogleTest(&ac, av);
 	return RUN_ALL_TESTS();

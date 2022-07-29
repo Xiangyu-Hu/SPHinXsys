@@ -38,8 +38,8 @@ Real time_to_full_external_force = 0.1;
 
 Real gravitational_acceleration = 0.009646;
 
-Real observed_quantity_0 = 0.0;
-Real observed_quantity_n = 0.0;
+Real observed_quantity_0(0.0);
+Real observed_quantity_n(0.0);
 Real displ_max_reference = 1.8687;
 TEST(Plate, MaxDisplacement)
 {
@@ -195,7 +195,7 @@ int main(int ac, char *av[])
 	GlobalStaticVariables::physical_time_ = 0.0;
 	write_states.writeToFile(0);
 	write_plate_max_displacement.writeToFile(0);
-	observed_quantity_0 = write_plate_max_displacement.getObservedQuantity()[0][2];
+	observed_quantity_0 = (*write_plate_max_displacement.getObservedQuantity())[0][2];
 
 	/** Setup physical parameters. */
 	int ite = 0;
@@ -246,7 +246,7 @@ int main(int ac, char *av[])
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	observed_quantity_n = write_plate_max_displacement.getObservedQuantity()[0][2];
+	observed_quantity_n = (*write_plate_max_displacement.getObservedQuantity())[0][2];
 
 	testing::InitGoogleTest(&ac, av);
 	return RUN_ALL_TESTS();
