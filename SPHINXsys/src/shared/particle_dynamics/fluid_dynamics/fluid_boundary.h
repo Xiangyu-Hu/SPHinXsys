@@ -49,7 +49,7 @@ namespace SPH
             virtual ~FlowRelaxationBuffer(){};
 
         protected:
-            StdLargeVec<Vecd> &pos_n_, &vel_n_;
+            StdLargeVec<Vecd> &pos_, &vel_;
             /** default value is 0.1 suggests reaching  target inflow velocity in about 10 time steps */
             Real relaxation_rate_;
 
@@ -90,7 +90,7 @@ namespace SPH
             virtual ~DampingBoundaryCondition(){};
 
         protected:
-            StdLargeVec<Vecd> &pos_n_, &vel_n_;
+            StdLargeVec<Vecd> &pos_, &vel_;
             /** default value is 0.1 suggests reaching  target inflow velocity in about 10 time steps */
             Real strength_;
             BoundingBox damping_zone_bounds_;
@@ -109,8 +109,8 @@ namespace SPH
             virtual ~EmitterInflowCondition(){};
 
         protected:
-            StdLargeVec<Vecd> &pos_n_, &vel_n_;
-            StdLargeVec<Real> &rho_n_, &p_;
+            StdLargeVec<Vecd> &pos_, &vel_;
+            StdLargeVec<Real> &rho_, &p_;
             /** inflow pressure condition */
             Real inflow_pressure_;
             Real rho0_;
@@ -140,8 +140,8 @@ namespace SPH
             AlignedBoxShape &getBodyPartByParticle(){};
 
         protected:
-            StdLargeVec<Vecd> &pos_n_;
-            StdLargeVec<Real> &rho_n_, &p_;
+            StdLargeVec<Vecd> &pos_;
+            StdLargeVec<Real> &rho_, &p_;
             const int axis_; /**< the axis direction for bounding*/
             size_t body_buffer_width_;
             AlignedBoxShape &aligned_box_;
@@ -169,7 +169,7 @@ namespace SPH
         protected:
             Real rho0_, inv_sigma0_;
             StdLargeVec<Real> &mass_, &rho_sum_;
-            StdLargeVec<Vecd> &pos_n_;
+            StdLargeVec<Vecd> &pos_;
             LevelSetShape *level_set_shape_;
 
             virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -186,8 +186,8 @@ namespace SPH
             virtual ~StaticConfinementPressureRelaxation(){};
 
         protected:
-            StdLargeVec<Real> &rho_n_, &p_;
-            StdLargeVec<Vecd> &pos_n_, &vel_n_, &dvel_dt_;
+            StdLargeVec<Real> &rho_, &p_;
+            StdLargeVec<Vecd> &pos_, &vel_, &acc_;
             LevelSetShape *level_set_shape_;
             AcousticRiemannSolver riemann_solver_;
 
@@ -205,8 +205,8 @@ namespace SPH
             virtual ~StaticConfinementDensityRelaxation(){};
 
         protected:
-            StdLargeVec<Real> &rho_n_, &p_, &drho_dt_;
-            StdLargeVec<Vecd> &pos_n_, &vel_n_;
+            StdLargeVec<Real> &rho_, &p_, &drho_dt_;
+            StdLargeVec<Vecd> &pos_, &vel_;
             LevelSetShape *level_set_shape_;
             AcousticRiemannSolver riemann_solver_;
 

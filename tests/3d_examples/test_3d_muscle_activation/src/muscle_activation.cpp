@@ -53,7 +53,7 @@ public:
 protected:
 	void Update(size_t index_i, Real dt) override
 	{
-		Real voltage = pos_0_[index_i][0] <= 0 ? 0.0 : reference_voltage * pos_0_[index_i][0] / PL;
+		Real voltage = pos0_[index_i][0] <= 0 ? 0.0 : reference_voltage * pos0_[index_i][0] / PL;
 		active_contraction_stress_[index_i] += GlobalStaticVariables::physical_time_ <= 1.0
 												   ? linear_active_stress_factor * voltage * dt
 												   : 0.0;
@@ -81,11 +81,11 @@ protected:
 		vel_temp[axis_id_] = 0.0;
 		return vel_temp;
 	};
-	virtual Vecd getAcceleration(Vecd &pos_0, Vecd &pos_n, Vecd &dvel_dt)
+	virtual Vecd getAcceleration(Vecd &pos_0, Vecd &pos_n, Vecd &acc)
 	{
-		Vecd dvel_dt_temp = dvel_dt;
-		dvel_dt_temp[axis_id_] = 0.0;
-		return dvel_dt_temp;
+		Vecd acc_temp = acc;
+		acc_temp[axis_id_] = 0.0;
+		return acc_temp;
 	};
 };
 /**

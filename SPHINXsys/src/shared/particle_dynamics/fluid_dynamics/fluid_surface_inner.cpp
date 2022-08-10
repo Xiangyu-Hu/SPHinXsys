@@ -20,7 +20,7 @@ namespace SPH
               surface_indicator_(particles_->surface_indicator_),
               smoothing_length_(inner_relation.sph_body_->sph_adaptation_->ReferenceSmoothingLength())
         {
-            particles_->registerAVariable(pos_div_, "PositionDivergence");
+            particles_->registerVariable(pos_div_, "PositionDivergence");
         }
         //=================================================================================================//
         void FreeSurfaceIndicationInner::Interaction(size_t index_i, Real dt)
@@ -56,14 +56,14 @@ namespace SPH
         {
             if (rho_sum_[index_i] < rho0_ && isNearSurface(index_i))
             {
-                rho_n_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_n_[index_i]);
+                rho_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_[index_i]);
             }
             else
             {
-                rho_n_[index_i] = rho_sum_[index_i];
+                rho_[index_i] = rho_sum_[index_i];
             }
 
-            Vol_[index_i] = mass_[index_i] / rho_n_[index_i];
+            Vol_[index_i] = mass_[index_i] / rho_[index_i];
         }
         //=================================================================================================//
         bool DensitySummationFreeStreamInner::isNearSurface(size_t index_i)
@@ -87,14 +87,14 @@ namespace SPH
         //=================================================================================================//
         void FreeStreamBoundaryVelocityCorrection::Update(size_t index_i, Real dt)
         {
-            vel_n_[index_i] += dvel_dt_[index_i] * dt;
-            dvel_dt_[index_i] = Vecd(0.0, 0.0);
+            vel_[index_i] += acc_[index_i] * dt;
+            acc_[index_i] = Vecd(0.0, 0.0);
 
             if (surface_indicator_[index_i] == 1)
             {
                 Real run_time_ = GlobalStaticVariables::physical_time_;
                 Real u_ave_ = run_time_ < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time_ / t_ref_)) : u_ref_;
-                vel_n_[index_i][0] = u_ave_ + SMIN(rho_sum[index_i], rho_ref_) * (vel_n_[index_i][0] - u_ave_) / rho_ref_;
+                vel_[index_i][0] = u_ave_ + SMIN(rho_sum[index_i], rho_ref_) * (vel_[index_i][0] - u_ave_) / rho_ref_;
             }
         }
         //=================================================================================================//
@@ -105,8 +105,8 @@ namespace SPH
               pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
               thereshold_by_dimensions_((0.75 * (Real)Dimensions))
         {
-            particles_->registerAVariable(color_grad_, "ColorGradient");
-            particles_->registerAVariable(surface_norm_, "SurfaceNormal");
+            particles_->registerVariable(color_grad_, "ColorGradient");
+            particles_->registerVariable(surface_norm_, "SurfaceNormal");
         }
         //=================================================================================================//
         void ColorFunctionGradientInner::Interaction(size_t index_i, Real dt)
@@ -134,8 +134,8 @@ namespace SPH
               thereshold_by_dimensions_((0.75 * (Real)Dimensions))
 
         {
-            particles_->addAVariableToWrite<Vecd>("SurfaceNormal");
-            particles_->addAVariableToWrite<Vecd>("ColorGradient");
+            particles_->addVariableToWrite<Vecd>("SurfaceNormal");
+            particles_->addVariableToWrite<Vecd>("ColorGradient");
         }
         //=================================================================================================//
         void ColorFunctionGradientInterplationInner::Interaction(size_t index_i, Real dt)
@@ -166,7 +166,7 @@ namespace SPH
             : InteractionDynamics(*inner_relation.sph_body_), FluidDataInner(inner_relation),
               gamma_(gamma), Vol_(particles_->Vol_),
               mass_(particles_->mass_),
-              dvel_dt_prior_(particles_->dvel_dt_prior_),
+              acc_prior_(particles_->acc_prior_),
               surface_indicator_(particles_->surface_indicator_),
               color_grad_(*particles_->getVariableByName<Vecd>("ColorGradient")),
               surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")) {}
@@ -203,7 +203,7 @@ namespace SPH
              */
             renormalized_curvature = (Real)Dimensions * curvature / ABS(pos_div + TinyReal);
             Vecd acceleration = gamma_ * renormalized_curvature * color_grad_[index_i] * Vol_[index_i];
-            dvel_dt_prior_[index_i] -= acceleration / mass_[index_i];
+            acc_prior_[index_i] -= acceleration / mass_[index_i];
         }
         //=================================================================================================//
     }

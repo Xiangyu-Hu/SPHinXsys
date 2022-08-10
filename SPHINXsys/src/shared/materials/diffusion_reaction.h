@@ -90,7 +90,7 @@ namespace SPH
 
 	/**
 	 * @class DirectionalDiffusion
-	 * @brief Diffussion is biased along a specific direction.
+	 * @brief Diffusion is biased along a specific direction.
 	 */
 	class DirectionalDiffusion : public IsotropicDiffusion
 	{

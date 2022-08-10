@@ -61,10 +61,10 @@ protected:
 	void Update(size_t index_i, Real dt) override
 	{
 		/** initial velocity profile */
-		vel_n_[index_i][0] = -cos(2.0 * Pi * pos_n_[index_i][0]) *
-							 sin(2.0 * Pi * pos_n_[index_i][1]);
-		vel_n_[index_i][1] = sin(2.0 * Pi * pos_n_[index_i][0]) *
-							 cos(2.0 * Pi * pos_n_[index_i][1]);
+		vel_[index_i][0] = -cos(2.0 * Pi * pos_[index_i][0]) *
+							 sin(2.0 * Pi * pos_[index_i][1]);
+		vel_[index_i][1] = sin(2.0 * Pi * pos_[index_i][0]) *
+							 cos(2.0 * Pi * pos_[index_i][1]);
 	}
 };
 /**

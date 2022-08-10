@@ -24,14 +24,6 @@ namespace SPH
 	class CellList;
 	class BaseParticles;
 
-	/** Generalized particle data type */
-	typedef std::tuple<StdVec<StdLargeVec<Real> *>, StdVec<StdLargeVec<Vecd> *>, StdVec<StdLargeVec<Matd> *>,
-					   StdVec<StdLargeVec<int> *>>
-		ParticleData;
-	/** Generalized particle variable to index map */
-	typedef std::array<std::map<std::string, size_t>, 4> ParticleDataMap;
-	/** Generalized particle variable list */
-	typedef std::array<StdVec<std::pair<std::string, size_t>>, 4> ParticleVariableList;
 	/** Vector of Material. Note that vector of references are not allowed in c++.*/
 	using MaterialVector = StdVec<BaseMaterial *>;
 	/** Vector of bodies */
@@ -63,41 +55,13 @@ namespace SPH
 	/** Pair of point and volume. */
 	using PositionsVolumes = StdVec<std::pair<Vecd, Real>>;
 
-	/** an operation on particle data of all types */
-	template <template <typename VariableType> typename OperationType>
-	struct ParticleDataOperation
-	{
-		OperationType<Real> scalar_operation;
-		OperationType<Vecd> vector_operation;
-		OperationType<Matd> matrix_operation;
-		OperationType<int> integer_operation;
-
-		template <typename... ParticleArgs>
-		void operator()(ParticleData &particle_data, ParticleArgs... particle_args)
-		{
-			scalar_operation(particle_data, particle_args...);
-			vector_operation(particle_data, particle_args...);
-			matrix_operation(particle_data, particle_args...);
-			integer_operation(particle_data, particle_args...);
-		}
-	};
-
-	template <typename VariableType>
-	struct swapParticleDataValue
-	{
-		void operator()(ParticleData &particle_data, size_t index_a, size_t index_b) const
-		{
-       		constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
-
-			StdVec<StdLargeVec<VariableType> *> variables = std::get<type_index>(particle_data);
-			for (size_t i = 0; i != variables.size(); ++i)
-			{
-				StdLargeVec<VariableType> &variable = *variables[i];
-				std::swap(variable[index_a], variable[index_b]);
-			}
-		};
-	};
-	
+	/** Generalized particle data type */
+	typedef GeneralDataAssemble<StdLargeVec> ParticleData;
+	/** Generalized particle variable to index map */
+	typedef std::array<std::map<std::string, size_t>, 4> ParticleDataMap;
+	/** Generalized particle variable list */
+	typedef std::array<StdVec<std::pair<std::string, size_t>>, 4> ParticleVariableList;
+		
 	/** operation by looping or going through a particle data map */
 	template <typename VariableType>
 	struct loopParticleDataMap
@@ -106,7 +70,7 @@ namespace SPH
 		void operator()(ParticleData &particle_data,
 						ParticleDataMap &particle_data_map, VariableOperation &variable_operation) const
 		{
-      		constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
+			constexpr int type_index = DataTypeIndex<VariableType>::value;
 			for (auto const &name_index : particle_data_map[type_index])
 			{
 				std::string variable_name = name_index.first;
@@ -124,7 +88,7 @@ namespace SPH
 		void operator()(ParticleData &particle_data,
 						ParticleVariableList &variable_name_list, VariableOperation &variable_operation) const
 		{
-      		constexpr int type_index = ParticleDataTypeIndex<VariableType>::value;
+			constexpr int type_index = DataTypeIndex<VariableType>::value;
 			for (std::pair<std::string, size_t> &name_index : variable_name_list[type_index])
 			{
 				std::string variable_name = name_index.first;
@@ -132,6 +96,6 @@ namespace SPH
 				variable_operation(variable_name, variable);
 			}
 		};
-	};
+	};	
 }
-#endif //SPH_DATA_CONTAINERS_H
+#endif // SPH_DATA_CONTAINERS_H

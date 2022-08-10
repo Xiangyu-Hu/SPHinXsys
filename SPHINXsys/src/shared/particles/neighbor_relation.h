@@ -135,7 +135,7 @@ namespace SPH
 						Vecd &displacement, size_t i_index, size_t j_index) const;
 
 	protected:
-		StdLargeVec<Vecd> &pos_0_;
+		StdLargeVec<Vecd> &pos0_;
 	};
 
 	/**

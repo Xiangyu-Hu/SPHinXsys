@@ -14,7 +14,7 @@ namespace SPH
 	//=================================================================================================//
 	BaseParticleGenerator::BaseParticleGenerator(SPHBody &sph_body)
 		: base_particles_(sph_body.base_particles_),
-		pos_n_(base_particles_->pos_n_), unsorted_id_(base_particles_->unsorted_id_)
+		  pos_(base_particles_->pos_), unsorted_id_(base_particles_->unsorted_id_)
 	{
 		if (sph_body.base_particles_ == nullptr || sph_body.base_material_ == nullptr)
 		{
@@ -26,18 +26,19 @@ namespace SPH
 	//=================================================================================================//
 	void BaseParticleGenerator::initializePosition(const Vecd &position)
 	{
-		pos_n_.push_back(position);
+		pos_.push_back(position);
 		unsorted_id_.push_back(base_particles_->total_real_particles_);
-		base_particles_->total_real_particles_ ++;
+		base_particles_->total_real_particles_++;
 	}
 	//=================================================================================================//
 	ParticleGenerator::ParticleGenerator(SPHBody &sph_body)
 		: BaseParticleGenerator(sph_body), Vol_(base_particles_->Vol_) {}
 	//=================================================================================================//
-	void ParticleGenerator::initializePositionAndVolume(const Vecd &position, Real volume)
+	void ParticleGenerator::
+		initializePositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure)
 	{
 		initializePosition(position);
-		Vol_.push_back(volume);
+		Vol_.push_back(volumetric_measure);
 	}
 	//=================================================================================================//
 	SurfaceParticleGenerator::SurfaceParticleGenerator(SPHBody &sph_body)
@@ -58,7 +59,7 @@ namespace SPH
 	{
 		for (size_t i = 0; i < positions_.size(); ++i)
 		{
-			initializePositionAndVolume(positions_[i], 0.0);
+			initializePositionAndVolumetricMeasure(positions_[i], 0.0);
 		}
 	}
 	//=================================================================================================//

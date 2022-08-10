@@ -56,8 +56,8 @@ namespace SPH
 			virtual ~EulerianFlowTimeStepInitialization() {};
 
 		protected:
-			StdLargeVec<Real> &rho_n_, &mass_;
-			StdLargeVec<Vecd> &pos_n_, &vel_n_, &dmom_dt_prior_;
+			StdLargeVec<Real> &rho_, &mass_;
+			StdLargeVec<Vecd> &pos_, &vel_, &dmom_dt_prior_;
 			Gravity *gravity_;
 			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -101,8 +101,8 @@ namespace SPH
 		protected:
 			Real mu_;
 			Real smoothing_length_;
-			StdLargeVec<Real> &Vol_, &rho_n_, &p_;
-			StdLargeVec<Vecd> &vel_n_, &dmom_dt_prior_;
+			StdLargeVec<Real> &Vol_, &rho_, &p_;
+			StdLargeVec<Vecd> &vel_, &dmom_dt_prior_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -118,8 +118,8 @@ namespace SPH
 			explicit AcousticTimeStepSize(EulerianFluidBody &fluid_body);
 			virtual ~AcousticTimeStepSize() {};
 		protected:
-			StdLargeVec<Real>& rho_n_, &p_;
-			StdLargeVec<Vecd>& vel_n_;
+			StdLargeVec<Real>& rho_, &p_;
+			StdLargeVec<Vecd>& vel_;
 			Real smoothing_length_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 			Real OutputResult(Real reduced_value) override;
@@ -137,7 +137,7 @@ namespace SPH
 			virtual ~VorticityInner() {};
 		protected:
 			StdLargeVec<Real>& Vol_;
-			StdLargeVec<Vecd>& vel_n_;
+			StdLargeVec<Vecd>& vel_;
 			StdLargeVec<AngularVecd> vorticity_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -152,8 +152,8 @@ namespace SPH
 			explicit BaseRelaxation(BaseBodyRelationInner &inner_relation);
 			virtual ~BaseRelaxation() {};
 		protected:
-			StdLargeVec<Real>& Vol_, &mass_, &rho_n_, &p_, &drho_dt_;
-			StdLargeVec<Vecd>&vel_n_, &mom_, &dmom_dt_, &dmom_dt_prior_;
+			StdLargeVec<Real>& Vol_, &mass_, &rho_, &p_, &drho_dt_;
+			StdLargeVec<Vecd>&vel_, &mom_, &dmom_dt_, &dmom_dt_prior_;
 		};
 
 		/**
@@ -235,18 +235,18 @@ namespace SPH
 		public:
 			NonReflectiveBoundaryVariableCorrection(BaseBodyRelationInner &inner_relation) :
 				InteractionDynamics(*inner_relation.sph_body_), EulerianWeaklyCompressibleFluidDataInner(inner_relation),
-				rho_n_(particles_->rho_n_), p_(particles_->p_), vel_n_(particles_->vel_n_),
-				mom_(particles_->mom_), pos_n_(particles_->pos_n_), mass_(particles_->mass_), Vol_(particles_->Vol_),
+				rho_(particles_->rho_), p_(particles_->p_), vel_(particles_->vel_),
+				mom_(particles_->mom_), pos_(particles_->pos_), mass_(particles_->mass_), Vol_(particles_->Vol_),
 				surface_indicator_(particles_->surface_indicator_)
 			{
-				particles_->registerAVariable(n_, "NormalDirection");
+				particles_->registerVariable(n_, "NormalDirection");
 			};
 			virtual ~NonReflectiveBoundaryVariableCorrection() {};
 		protected:
 			Real p_farfield_, rho_farfield_, gamma_, sound_speed_;
 			Vecd vel_farfield_;
-			StdLargeVec<Real>& rho_n_, &p_, &mass_, &Vol_;
-			StdLargeVec<Vecd>& vel_n_, &mom_, &pos_n_;
+			StdLargeVec<Real>& rho_, &p_, &mass_, &Vol_;
+			StdLargeVec<Vecd>& vel_, &mom_, &pos_;
 			StdLargeVec<Vecd> n_;
 			StdLargeVec<int>& surface_indicator_;
 

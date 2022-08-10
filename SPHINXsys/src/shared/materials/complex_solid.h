@@ -50,7 +50,7 @@ namespace SPH
 
 		void assignBaseParticles(BaseParticles *base_particles) override;
 		/** compute the stress through Constitutive relation. */
-		virtual Matd ConstitutiveRelation(Matd &deformation, size_t index_i) override;
+		virtual Matd StressPK2(Matd &deformation, size_t index_i) override;
 		virtual ActiveMuscle<MuscleType> *ThisObjectPtr() override { return this; };
 	};
 }

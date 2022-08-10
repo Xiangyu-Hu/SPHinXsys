@@ -76,17 +76,17 @@ namespace SPH
 			for (itr = species_indexes_map_.begin(); itr != species_indexes_map_.end(); ++itr)
 			{
 				// Register a specie. 
-				this->registerAVariable(species_n_[itr->second], itr->first);
+				this->registerVariable(species_n_[itr->second], itr->first);
 				// the scalars will be sorted if particle sorting is called
 				// Note that we call a template function from a template class
-				this->template registerASortableVariable<Real>(itr->first);
+				this->template registerSortableVariable<Real>(itr->first);
 				// add species to basic output particle data
-				this->template addAVariableToWrite<Real>(itr->first);
+				this->template addVariableToWrite<Real>(itr->first);
 			}
 
 			for (size_t m = 0; m < number_of_diffusion_species_; ++m)
 			{
-				constexpr int type_index = ParticleDataTypeIndex<Real>::value;
+				constexpr int type_index = DataTypeIndex<Real>::value;
 				//----------------------------------------------------------------------
 				//	register reactive change rate terms without giving variable name
 				//----------------------------------------------------------------------

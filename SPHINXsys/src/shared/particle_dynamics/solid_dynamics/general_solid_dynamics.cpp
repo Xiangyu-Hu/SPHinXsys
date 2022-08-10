@@ -29,9 +29,9 @@ namespace SPH
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 
-				Vecd gradw_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
+				Vecd gradW_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
 				Vecd r_ji = inner_neighborhood.r_ij_[n] * inner_neighborhood.e_ij_[n];
-				local_configuration -= Vol_[index_j] * SimTK::outer(r_ji, gradw_ij);
+				local_configuration -= Vol_[index_j] * SimTK::outer(r_ji, gradW_ij);
 			}
 			B_[index_i] = SimTK::inverse(local_configuration);
 		}

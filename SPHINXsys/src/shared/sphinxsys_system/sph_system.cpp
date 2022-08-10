@@ -7,7 +7,7 @@
 #include "sph_system.h"
 
 #include "base_body.h"
-#include "body_relation.h"
+#include "all_body_relations.h"
 #include "elastic_dynamics.h"
 
 namespace SPH

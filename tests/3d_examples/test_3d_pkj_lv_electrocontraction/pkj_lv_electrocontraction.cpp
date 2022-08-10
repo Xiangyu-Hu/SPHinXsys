@@ -12,7 +12,7 @@
  *			Pressure pa = g * (mm)^(-1) * (ms)^(-2)
  *			diffusion d = (mm)^(2) * (ms)^(-2)
  *@version 0.3
- *			Here, the coupling with Purkinje network will be condcuted.
+ *			Here, the coupling with Purkinje network will be conducted.
  */
 /**  SPHinXsys Library. */
 #include "sphinxsys.h"
@@ -32,7 +32,7 @@ int main(int ac, char *av[])
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
 	system.run_particle_relaxation_ = true;
-	/** Tag for reload initially repaxed particles. */
+	/** Tag for reload initially relaxed particles. */
 	system.reload_particles_ = false;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
@@ -63,7 +63,7 @@ int main(int ac, char *av[])
 		/** Diffusion process for diffusion body. */
 		DiffusionRelaxation diffusion_relaxation(herat_model_inner);
 		/** Compute the fiber and sheet after diffusion. */
-		ComputeFiberandSheetDirections compute_fiber_sheet(herat_model);
+		ComputeFiberAndSheetDirections compute_fiber_sheet(herat_model);
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_herat_model_state_to_vtp(in_output, {herat_model});
 		/** Write the particle reload files. */

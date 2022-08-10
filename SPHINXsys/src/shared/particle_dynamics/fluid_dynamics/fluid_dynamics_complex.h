@@ -65,7 +65,7 @@ namespace SPH
 		protected:
 			StdVec<Real> wall_inv_rho0_;
 			StdVec<StdLargeVec<Real> *> wall_mass_, wall_Vol_;
-			StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_dvel_dt_ave_, wall_n_;
+			StdVec<StdLargeVec<Vecd> *> wall_vel_ave_, wall_acc_ave_, wall_n_;
 		};
 
 		/**
@@ -183,7 +183,7 @@ namespace SPH
 
 		protected:
 			Real penalty_strength_;
-			StdLargeVec<Vecd> non_cnsrv_dvel_dt_;
+			StdLargeVec<Vecd> non_cnsrv_acc_;
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;

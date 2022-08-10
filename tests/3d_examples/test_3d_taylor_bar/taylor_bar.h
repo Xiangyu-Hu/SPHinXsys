@@ -68,7 +68,7 @@ public:
 protected:
 	void Update(size_t index_i, Real dt) override
 	{
-		vel_n_[index_i][2] = -227.0;
+		vel_[index_i][2] = -227.0;
 	}
 };
 

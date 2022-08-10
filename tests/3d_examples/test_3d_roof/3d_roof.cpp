@@ -51,7 +51,7 @@ public:
 				Real x = radius_mid_surface * cos(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
 				Real y = particle_spacing_ref * j - BW + particle_spacing_ref * 0.5;
 				Real z = radius_mid_surface * sin(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
-				initializePositionAndVolume(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref);
+				initializePositionAndVolumetricMeasure(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref);
 				Vecd n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
 				initializeSurfaceProperties(n_0, thickness);
 			}
@@ -73,7 +73,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_n_[index_i][1] < 0.0 || base_particles_->pos_n_[index_i][1] > height - 0.5 * particle_spacing_ref)
+		if (base_particles_->pos_[index_i][1] < 0.0 || base_particles_->pos_[index_i][1] > height - 0.5 * particle_spacing_ref)
 		{
 			body_part_particles_.push_back(index_i);
 		}
@@ -108,7 +108,6 @@ int main()
 	SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
 	cylinder_body.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	cylinder_body.generateParticles<CylinderParticleGenerator>();
-	cylinder_body.addBodyStateForRecording<Mat3d>("FirstPiolaKirchhoffStress");
 	/** Define Observer. */
 	ObserverBody cylinder_observer(system, "CylinderObserver");
 	cylinder_observer.generateParticles<ObserverParticleGenerator>(observation_location);

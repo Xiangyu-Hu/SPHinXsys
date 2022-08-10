@@ -1,34 +1,34 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * --------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+ * and HU1527/12-1.															*
+ *                                                                           *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * --------------------------------------------------------------------------*/
 
 /**
-* @file cell_linked_list.h
-* @brief Here gives the classes for managing cell linked lists. This is the basic class 
-* for building the particle configurations.
-* @details  The cell linked list saves for each body a list of particles
-* located within the cell.
-* @author	Yongchuan Yu, Chi ZHang and Xiangyu Hu
-*/
+ * @file cell_linked_list.h
+ * @brief Here gives the classes for managing cell linked lists. This is the basic class
+ * for building the particle configurations.
+ * @details  The cell linked list saves for each body a list of particles
+ * located within the cell.
+ * @author	Yongchuan Yu, Chi ZHang and Xiangyu Hu
+ */
 
 #ifndef MESH_CELL_LINKED_LIST_H
 #define MESH_CELL_LINKED_LIST_H
@@ -69,7 +69,7 @@ namespace SPH
 	class BaseCellLinkedList : public BaseMeshField
 	{
 	protected:
-		SPHBody &sph_body_;
+		RealBody &real_body_;
 		Kernel &kernel_;
 		BaseParticles *base_particles_;
 
@@ -80,7 +80,7 @@ namespace SPH
 
 	public:
 		/** The buffer size 2 used to expand computational domain for particle searching. */
-		BaseCellLinkedList(SPHBody &sph_body, SPHAdaptation &sph_adaptation);
+		BaseCellLinkedList(RealBody &real_body, SPHAdaptation &sph_adaptation);
 		virtual ~BaseCellLinkedList(){};
 
 		/** Assign base particles to the mesh cell linked list,
@@ -121,11 +121,11 @@ namespace SPH
 
 	public:
 		CellLinkedList(BoundingBox tentative_bounds, Real grid_spacing,
-						   SPHBody &sph_body, SPHAdaptation &sph_adaptation);
+					   RealBody &real_body, SPHAdaptation &sph_adaptation);
 		virtual ~CellLinkedList() { deleteMeshDataMatrix(); };
 
 		void allocateMeshDataMatrix(); /**< allocate memories for addresses of data packages. */
-		void deleteMeshDataMatrix();	/**< delete memories for addresses of data packages. */
+		void deleteMeshDataMatrix();   /**< delete memories for addresses of data packages. */
 
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;
 		void clearCellLists();
@@ -152,15 +152,15 @@ namespace SPH
 											ParticleConfiguration &particle_configuration, GetParticleIndex &get_particle_index,
 											GetSearchDepth &get_search_depth, GetNeighborRelation &get_neighbor_relation,
 											PartParticleCheck &part_check);
-		
+
 		MeshDataMatrix<CellList> getCellLists() const { return cell_linked_lists_; }
 	};
 
 	/**
-	  * @class MultilevelCellLinkedList
-	  * @brief Defining a multilevel mesh cell linked list for a body
-	  * for multiresolution particle configuration.
-	  */
+	 * @class MultilevelCellLinkedList
+	 * @brief Defining a multilevel mesh cell linked list for a body
+	 * for multi-resolution particle configuration.
+	 */
 	class MultilevelCellLinkedList : public MultilevelMesh<BaseCellLinkedList, CellLinkedList, RefinedMesh<CellLinkedList>>
 	{
 	protected:
@@ -171,7 +171,7 @@ namespace SPH
 
 	public:
 		MultilevelCellLinkedList(BoundingBox tentative_bounds, Real reference_grid_spacing,
-									 size_t total_levels, SPHBody &sph_body, SPHAdaptation &sph_adaptation);
+								 size_t total_levels, RealBody &real_body, SPHAdaptation &sph_adaptation);
 		virtual ~MultilevelCellLinkedList(){};
 
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;
@@ -185,4 +185,4 @@ namespace SPH
 		virtual void tagMirrorBoundingCells(CellLists &cell_lists, BoundingBox &body_domain_bounds, int axis, bool positive) override{};
 	};
 }
-#endif //MESH_CELL_LINKED_LIST_H
+#endif // MESH_CELL_LINKED_LIST_H

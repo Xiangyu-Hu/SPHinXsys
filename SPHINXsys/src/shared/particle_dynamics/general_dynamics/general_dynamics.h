@@ -63,7 +63,7 @@ namespace SPH
 		virtual ~TimeStepInitialization(){};
 
 	protected:
-		StdLargeVec<Vecd> &pos_n_, &dvel_dt_prior_;
+		StdLargeVec<Vecd> &pos_, &acc_prior_;
 		Gravity *gravity_;
 		virtual void setupDynamics(Real dt = 0.0) override;
 		virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -82,7 +82,7 @@ namespace SPH
 		virtual ~RandomizeParticlePosition(){};
 
 	protected:
-		StdLargeVec<Vecd> &pos_n_;
+		StdLargeVec<Vecd> &pos_;
 		Real randomize_scale_;
 		virtual void Update(size_t index_i, Real dt = 0.0) override;
 	};
@@ -101,7 +101,7 @@ namespace SPH
 			  W0_(body_->sph_adaptation_->getKernel()->W0(Vecd(0))),
 			  smoothed_(*particles_->getVariableByName<VariableType>(variable_name))
 		{
-			particles_->registerAVariable(temp_, variable_name + "_temp");
+			particles_->registerVariable(temp_, variable_name + "_temp");
 		}
 
 		virtual ~ParticleSmoothing(){};
@@ -142,7 +142,7 @@ namespace SPH
 		virtual ~VelocityBoundCheck(){};
 
 	protected:
-		StdLargeVec<Vecd> &vel_n_;
+		StdLargeVec<Vecd> &vel_;
 		Real velocity_bound_;
 		bool ReduceFunction(size_t index_i, Real dt = 0.0) override;
 	};
@@ -159,7 +159,7 @@ namespace SPH
 		virtual ~UpperFrontInXDirection(){};
 
 	protected:
-		StdLargeVec<Vecd> &pos_n_;
+		StdLargeVec<Vecd> &pos_;
 		Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 	};
 
@@ -175,7 +175,7 @@ namespace SPH
 		virtual ~MaximumSpeed(){};
 
 	protected:
-		StdLargeVec<Vecd> &vel_n_;
+		StdLargeVec<Vecd> &vel_;
 		Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 	};
 
@@ -191,7 +191,7 @@ namespace SPH
 		virtual ~BodyLowerBound(){};
 
 	protected:
-		StdLargeVec<Vecd> &pos_n_;
+		StdLargeVec<Vecd> &pos_;
 		Vecd ReduceFunction(size_t index_i, Real dt = 0.0) override;
 	};
 
@@ -207,7 +207,7 @@ namespace SPH
 		virtual ~BodyUpperBound(){};
 
 	protected:
-		StdLargeVec<Vecd> &pos_n_;
+		StdLargeVec<Vecd> &pos_;
 		Vecd ReduceFunction(size_t index_i, Real dt = 0.0) override;
 	};
 
@@ -276,7 +276,7 @@ namespace SPH
 
 	protected:
 		StdLargeVec<Real> &mass_;
-		StdLargeVec<Vecd> &vel_n_, &pos_n_;
+		StdLargeVec<Vecd> &vel_, &pos_;
 		Gravity *gravity_;
 		Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 	};
