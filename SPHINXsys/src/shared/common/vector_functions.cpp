@@ -402,4 +402,24 @@ namespace SPH
 		return getMinAbsoluteElement(bbox.second - bbox.first);
 	}
 	//=================================================================================================//	
+  Vec2d getShearStress(const Vec2d &vector_1, const Vec2d &vector_2)
+  {
+    Vec2d shear_stress(0.0);
+    shear_stress[0]  = 0.5*(vector_2[0]*vector_1[1] + vector_2[1]*vector_1[0]);
+    shear_stress[1]  = 0.5*(vector_2[1]*vector_1[0] + vector_2[0]*vector_1[1]);
+
+    return shear_stress;
+  }
+  //=============================================i==================================================//
+  Vec3d getShearStress(const Vec3d &vector_1, const Vec3d &vector_2)
+  {
+    Vec3d shear_stress(0.0);
+    shear_stress[0] = 0.5*(vector_2[0]*vector_1[1] + vector_2[1]*vector_1[0]);
+    shear_stress[1] = 0.5*(vector_2[0]*vector_1[2] + vector_2[2]*vector_1[0]);
+    shear_stress[2] = 0.5*(vector_2[1]*vector_1[2] + vector_2[2]*vector_1[1]);
+
+    return shear_stress;
+  }
+  //=================================================================================================//
+
 }

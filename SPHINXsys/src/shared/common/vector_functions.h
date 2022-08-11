@@ -102,5 +102,10 @@ namespace SPH {
 
 	/** obtain minimum dimension of a bounding box */
 	Real MinimumDimension(const BoundingBox &bbox);
+
+  /** shear stress from force and position vector */
+  Vec2d getShearStress(const Vec2d &vector_1, const Vec2d &vector_2);
+  Vec3d getShearStress(const Vec3d &vector_1, const Vec3d &vector_2);
+
 }
 #endif //SMALL_VECTORS_H
