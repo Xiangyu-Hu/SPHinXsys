@@ -48,7 +48,7 @@ jobs:
           ls
           cd $HOME/simbody-build
           cmake $HOME/simbody-Simbody-3.7 -DCMAKE_INSTALL_PREFIX=$HOME/simbody -DBUILD_VISUALIZER=off
-          make -j7
+          make -j$(nproc)
           make install
           export SIMBODY_HOME=$HOME/simbody
           cd /usr/src/gtest
