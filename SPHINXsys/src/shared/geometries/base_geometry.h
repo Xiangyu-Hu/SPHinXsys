@@ -64,6 +64,9 @@ namespace SPH
 	class Shape
 	{
 	public:
+		
+		BoundingBox bounding_box_;
+
 		explicit Shape(const std::string &shape_name)
 			: name_(shape_name), is_bounds_found_(false){};
 		virtual ~Shape(){};
@@ -84,7 +87,6 @@ namespace SPH
 
 	protected:
 		std::string name_;
-		BoundingBox bounding_box_;
 		bool is_bounds_found_;
 
 		virtual BoundingBox findBounds() = 0;

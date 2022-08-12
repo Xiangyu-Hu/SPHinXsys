@@ -33,7 +33,7 @@
 #include "all_particle_dynamics.h"
 #include "general_dynamics.h"
 #include "base_kernel.h"
-#include "body_relation.h"
+#include "all_body_relations.h"
 #include "solid_body.h"
 #include "solid_particles.h"
 #include "elastic_solid.h"
@@ -56,7 +56,6 @@ namespace SPH
 		/**
 		 * @class ConstrainSolidBodyRegion
 		 * @brief Constrain a solid body part with prescribed motion.
-		 * Note the average values for FSI are prescirbed also.
 		 */
 		class ConstrainSolidBodyRegion : public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
@@ -66,13 +65,13 @@ namespace SPH
 			virtual ~ConstrainSolidBodyRegion(){};
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &pos_0_;
-			StdLargeVec<Vecd> &n_, &n_0_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			StdLargeVec<Vecd> &pos_, &pos0_;
+			StdLargeVec<Vecd> &n_, &n0_;
+			StdLargeVec<Vecd> &vel_, &acc_;
 			virtual Vecd getDisplacement(Vecd &pos_0, Vecd &pos_n) { return pos_n; };
 			virtual Vecd getVelocity(Vecd &pos_0, Vecd &pos_n, Vecd &vel_n) { return Vecd(0); };
-			virtual Vecd getAcceleration(Vecd &pos_0, Vecd &pos_n, Vecd &dvel_dt) { return Vecd(0); };
-			virtual SimTK::Rotation getBodyRotation(Vecd &pos_0, Vecd &pos_n, Vecd &dvel_dt) { return SimTK::Rotation(); }
+			virtual Vecd getAcceleration(Vecd &pos_0, Vecd &pos_n, Vecd &acc) { return Vecd(0); };
+			virtual SimTK::Rotation getBodyRotation(Vecd &pos_0, Vecd &pos_n, Vecd &acc) { return SimTK::Rotation(); }
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -89,8 +88,8 @@ namespace SPH
 			StdLargeVec<bool> &GetApplyConstrainToParticle() { return apply_constrain_to_particle_; }
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &pos_0_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_;
+			StdLargeVec<Vecd> &pos_, &pos0_;
+			StdLargeVec<Vecd> &vel_, &acc_;
 			StdLargeVec<bool> apply_constrain_to_particle_;
 
 			virtual Vecd getDisplacement(Vecd &pos_0, Vecd &pos_n) { return pos_n; };
@@ -100,19 +99,18 @@ namespace SPH
 		/**
 		 * @class PositionSolidBody
 		 * @brief Moves the body into a defined position in a given time interval - position driven boundary condition
-		 * Note the average values for FSI are prescirbed also.
 		 */
 		class PositionSolidBody : public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
 		public:
 			PositionSolidBody(SPHBody &sph_body, BodyPartByParticle &body_part, Real start_time, Real end_time, Vecd pos_end_center);
 			virtual ~PositionSolidBody(){};
-			StdLargeVec<Vecd> &GetParticlePos0() { return pos_0_; };
-			StdLargeVec<Vecd> &GetParticlePosN() { return pos_n_; };
+			StdLargeVec<Vecd> &GetParticlePos0() { return pos0_; };
+			StdLargeVec<Vecd> &GetParticlePosN() { return pos_; };
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &pos_0_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			StdLargeVec<Vecd> &pos_, &pos0_;
+			StdLargeVec<Vecd> &vel_, &acc_;
 			Real start_time_, end_time_;
 			Vecd pos_0_center_, pos_end_center_, translation_;
 			Vecd getDisplacement(size_t index_i, Real dt);
@@ -125,19 +123,18 @@ namespace SPH
 		/**
 		 * @class PositionScaleSolidBody
 		 * @brief Scales the body in a given time interval - position driven boundary condition
-		 * Note the average values for FSI are prescirbed also.
 		 */
 		class PositionScaleSolidBody : public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
 		public:
 			PositionScaleSolidBody(SPHBody &sph_body, BodyPartByParticle &body_part, Real start_time, Real end_time, Real end_scale);
 			virtual ~PositionScaleSolidBody(){};
-			StdLargeVec<Vecd> &GetParticlePos0() { return pos_0_; };
-			StdLargeVec<Vecd> &GetParticlePosN() { return pos_n_; };
+			StdLargeVec<Vecd> &GetParticlePos0() { return pos0_; };
+			StdLargeVec<Vecd> &GetParticlePosN() { return pos_; };
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &pos_0_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			StdLargeVec<Vecd> &pos_, &pos0_;
+			StdLargeVec<Vecd> &vel_, &acc_;
 			Real start_time_, end_time_, end_scale_;
 			Vecd pos_0_center_;
 			Vecd getDisplacement(size_t index_i, Real dt);
@@ -150,7 +147,6 @@ namespace SPH
 		/**
 		 * @class TranslateSolidBody
 		 * @brief Translates the body in a given time interval -translation driven boundary condition; only moving the body; end position irrelevant;
-		 * Note the average values for FSI are prescirbed also.
 		 */
 		class TranslateSolidBody : public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
@@ -159,9 +155,9 @@ namespace SPH
 			virtual ~TranslateSolidBody(){};
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &pos_0_;
+			StdLargeVec<Vecd> &pos_, &pos0_;
 			StdLargeVec<Vecd> pos_end_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_;
+			StdLargeVec<Vecd> &vel_, &acc_;
 			Real start_time_, end_time_;
 			Vecd translation_;
 			Vecd getDisplacement(size_t index_i, Real dt);
@@ -175,7 +171,6 @@ namespace SPH
 		 * @class TranslateSolidBodyPart
 		 * @brief Translates the body in a given time interval -translation driven boundary condition; only moving the body; end position irrelevant;
 		 * Only the particles in a given Bounding Box are translated. The Bounding Box is defined for the nondeformed shape.
-		 * Note the average values for FSI are prescirbed also.
 		 */
 		class TranslateSolidBodyPart : public TranslateSolidBody
 		{
@@ -226,8 +221,8 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
-			StdLargeVec<Vecd> vel_temp_, dvel_dt_temp_;
+			StdLargeVec<Vecd> &vel_, &acc_;
+			StdLargeVec<Vecd> vel_temp_, acc_temp_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
@@ -239,8 +234,8 @@ namespace SPH
 		class ClampConstrainSolidBodyRegion : public ParticleDynamics<void>
 		{
 		public:
-			ConstrainSolidBodyRegion constrianing_;
-			SoftConstrainSolidBodyRegion softing_;
+			ConstrainSolidBodyRegion constraint_;
+			SoftConstrainSolidBodyRegion softening_;
 
 			ClampConstrainSolidBodyRegion(BaseBodyRelationInner &inner_relation, BodyPartByParticle &body_part);
 			virtual ~ClampConstrainSolidBodyRegion(){};
@@ -267,7 +262,7 @@ namespace SPH
 			Real total_mass_;
 			Matd correction_matrix_;
 			Vecd velocity_correction_;
-			StdLargeVec<Vecd> &vel_n_;
+			StdLargeVec<Vecd> &vel_;
 			BodyMoment<Vecd> compute_total_momentum_;
 		};
 
@@ -276,7 +271,7 @@ namespace SPH
 		 * @brief Constrain a solid body part from the motion
 		 * computed from Simbody.
 		 */
-		class ConstrainSolidBodyPartBySimBody : public ConstrainSolidBodyRegion
+		class ConstrainSolidBodyPartBySimBody : public PartSimpleDynamicsByParticle, public SolidDataSimple
 		{
 		public:
 			ConstrainSolidBodyPartBySimBody(SolidBody &solid_body,
@@ -288,6 +283,7 @@ namespace SPH
 			virtual ~ConstrainSolidBodyPartBySimBody(){};
 
 		protected:
+			StdLargeVec<Vecd> &pos_, &pos0_, &vel_, &n_, &n0_;
 			SimTK::MultibodySystem &MBsystem_;
 			SimTK::MobilizedBody &mobod_;
 			SimTK::Force::DiscreteForces &force_on_bodies_;
@@ -318,7 +314,8 @@ namespace SPH
 			virtual ~TotalForceOnSolidBodyPartForSimBody(){};
 
 		protected:
-			StdLargeVec<Vecd> &force_from_fluid_, &contact_force_, &pos_n_;
+			StdLargeVec<Real> &mass_;
+			StdLargeVec<Vecd> &acc_, &acc_prior_, &pos_;
 			SimTK::MultibodySystem &MBsystem_;
 			SimTK::MobilizedBody &mobod_;
 			SimTK::Force::DiscreteForces &force_on_bodies_;

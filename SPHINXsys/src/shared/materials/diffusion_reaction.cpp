@@ -27,8 +27,8 @@ namespace SPH
 	//=================================================================================================//
 	void LocalDirectionalDiffusion::initializeFiberDirection()
 	{
-		base_particles_->registerAVariable(local_bias_direction_, "Fiber");
-		base_particles_->addAVariableNameToList<Vecd>(reload_local_parameters_, "Fiber");
+		base_particles_->registerVariable(local_bias_direction_, "Fiber");
+		base_particles_->addVariableNameToList<Vecd>(reload_local_parameters_, "Fiber");
 	}
 	//=================================================================================================//
 	void LocalDirectionalDiffusion::readFromXmlForLocalParameters(const std::string &filefullpath)

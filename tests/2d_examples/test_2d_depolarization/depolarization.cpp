@@ -57,7 +57,7 @@ protected:
 
 	void Update(size_t index_i, Real dt) override
 	{
-		species_n_[voltage_][index_i] = exp(-4.0 * ((pos_n_[index_i][0] - 1.0) * (pos_n_[index_i][0] - 1.0) + pos_n_[index_i][1] * pos_n_[index_i][1]));
+		species_n_[voltage_][index_i] = exp(-4.0 * ((pos_[index_i][0] - 1.0) * (pos_[index_i][0] - 1.0) + pos_[index_i][1] * pos_[index_i][1]));
 	};
 
 public:

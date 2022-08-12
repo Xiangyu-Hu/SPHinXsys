@@ -109,7 +109,7 @@ public:
 /** Set diffusion relaxation. */
 class DiffusionRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffussionSpeciesInner<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>>
+		  RelaxationOfAllDiffusionSpeciesInner<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>>
 {
 public:
 	explicit DiffusionRelaxation(BodyRelationInner &body_inner_relation)
@@ -124,10 +124,10 @@ protected:
 	size_t phi_;
 	virtual void Update(size_t index_i, Real dt = 0.0) override
 	{
-		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_n_[index_i]);
+		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_[index_i]);
 		Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
 
-		Vecd center_norm = pos_n_[index_i] / (pos_n_[index_i].norm() + 1.0e-15);
+		Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
 
 		Real angle = dot(face_norm, center_norm);
 		if (angle >= 0.0)
@@ -136,7 +136,7 @@ protected:
 		}
 		else
 		{
-			if (pos_n_[index_i][1] < -body_->sph_adaptation_->ReferenceSpacing())
+			if (pos_[index_i][1] < -body_->sph_adaptation_->ReferenceSpacing())
 				species_n_[phi_][index_i] = 0.0;
 		}
 	};
@@ -150,7 +150,7 @@ public:
 	virtual ~DiffusionBCs(){};
 };
 /** Compute Fiber and Sheet direction after diffusion */
-class ComputeFiberandSheetDirections
+class ComputeFiberAndSheetDirections
 	: public DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>
 {
 protected:
@@ -165,9 +165,9 @@ protected:
 		 * 		Present  doi.org/10.1016/j.cma.2016.05.031
 		 */
 		/** Probe the face norm from Levelset field. */
-		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_n_[index_i]);
+		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_[index_i]);
 		Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
-		Vecd center_norm = pos_n_[index_i] / (pos_n_[index_i].norm() + 1.0e-15);
+		Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
 		if (dot(face_norm, center_norm) <= 0.0)
 		{
 			face_norm = -face_norm;
@@ -181,7 +181,7 @@ protected:
 		Vecd f_0 = cos(beta) * cd_norm + sin(beta) * SimTK::cross(face_norm, cd_norm) +
 				   dot(face_norm, cd_norm) * (1.0 - cos(beta)) * face_norm;
 
-		if (pos_n_[index_i][2] < 2.0 * body_->sph_adaptation_->ReferenceSpacing())
+		if (pos_[index_i][2] < 2.0 * body_->sph_adaptation_->ReferenceSpacing())
 		{
 			material_->local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
 			material_->local_s0_[index_i] = face_norm;
@@ -194,7 +194,7 @@ protected:
 	};
 
 public:
-	explicit ComputeFiberandSheetDirections(SolidBody &body)
+	explicit ComputeFiberAndSheetDirections(SolidBody &body)
 		: DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(body)
 	{
 		phi_ = material_->SpeciesIndexMap()["Phi"];
@@ -202,7 +202,7 @@ public:
 		beta_epi_ = -(70.0 / 180.0) * M_PI;
 		beta_endo_ = (80.0 / 180.0) * M_PI;
 	};
-	virtual ~ComputeFiberandSheetDirections(){};
+	virtual ~ComputeFiberAndSheetDirections(){};
 };
 //	define shape parameters which will be used for the constrained body part.
 class MuscleBaseShapeParameters : public TriangleMeshShapeBrick::ShapeParameters
@@ -229,11 +229,11 @@ protected:
 
 	void Update(size_t index_i, Real dt) override
 	{
-		if (-32.0 * length_scale <= pos_n_[index_i][0] && pos_n_[index_i][0] <= -20.0 * length_scale)
+		if (-32.0 * length_scale <= pos_[index_i][0] && pos_[index_i][0] <= -20.0 * length_scale)
 		{
-			if (-5.0 * length_scale <= pos_n_[index_i][1] && pos_n_[index_i][1] <= 5.0)
+			if (-5.0 * length_scale <= pos_[index_i][1] && pos_[index_i][1] <= 5.0)
 			{
-				if (-10.0 * length_scale <= pos_n_[index_i][2] && pos_n_[index_i][2] <= 0.0 * length_scale)
+				if (-10.0 * length_scale <= pos_[index_i][2] && pos_[index_i][2] <= 0.0 * length_scale)
 				{
 					species_n_[voltage_][index_i] = 0.92;
 				}

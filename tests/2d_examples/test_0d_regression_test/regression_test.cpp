@@ -116,7 +116,7 @@ protected:
 	size_t phi_;
 	void Update(size_t index_i, Real dt) override
 	{
-		if (pos_n_[index_i][0] >= 0 && pos_n_[index_i][0] <= L && pos_n_[index_i][1] >= 0 && pos_n_[index_i][1] <= H)
+		if (pos_[index_i][0] >= 0 && pos_[index_i][0] <= L && pos_[index_i][1] >= 0 && pos_[index_i][1] <= H)
 		{
 			species_n_[phi_][index_i] = initialtemperature;
 		}
@@ -174,7 +174,7 @@ public:
 //----------------------------------------------------------------------
 class DiffusionBodyRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffussionSpeciesInner<SolidBody, SolidParticles, Solid>>
+		  RelaxationOfAllDiffusionSpeciesInner<SolidBody, SolidParticles, Solid>>
 {
 public:
 	explicit DiffusionBodyRelaxation(BodyRelationInner &body_inner_relation)

@@ -84,7 +84,7 @@ namespace SPH
 		ParticleSpacingByBodyShape *particle_adaptation_;
 		StdLargeVec<Real> &h_ratio_;
 
-		virtual void initializePositionAndVolume(const Vecd &position, Real volume) override;
+		virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
 		virtual void initializeSmoothingLengthRatio(Real local_spacing);
 	};
 

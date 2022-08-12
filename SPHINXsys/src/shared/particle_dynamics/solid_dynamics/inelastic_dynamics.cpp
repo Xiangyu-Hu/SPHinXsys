@@ -22,11 +22,12 @@ namespace SPH
 		//=================================================================================================//
 		void PlasticStressRelaxationFirstHalf::Initialization(size_t index_i, Real dt)
 		{
-			pos_n_[index_i] += vel_n_[index_i] * dt * 0.5;
+			pos_[index_i] += vel_[index_i] * dt * 0.5;
 			F_[index_i] += dF_dt_[index_i] * dt * 0.5;
-			rho_n_[index_i] = rho0_ / SimTK::det(F_[index_i]);
+			rho_[index_i] = rho0_ / SimTK::det(F_[index_i]);
 
-			stress_PK1_[index_i] = plastic_solid_->PlasticConstitutiveRelation(F_[index_i], index_i, dt);
+			// TODO: this naming is temporary, to be revised. 
+			stress_PK1_B_[index_i] = plastic_solid_->PlasticConstitutiveRelation(F_[index_i], index_i, dt);
 		}
 		//=================================================================================================//
 	}

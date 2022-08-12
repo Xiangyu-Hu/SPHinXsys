@@ -33,7 +33,7 @@
 #include "all_particle_dynamics.h"
 #include "general_dynamics.h"
 #include "base_kernel.h"
-#include "body_relation.h"
+#include "all_body_relations.h"
 #include "solid_body.h"
 #include "solid_particles.h"
 #include "elastic_solid.h"
@@ -67,7 +67,7 @@ namespace SPH
 			virtual ~ElasticDynamicsInitialCondition(){};
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &vel_n_;
+			StdLargeVec<Vecd> &pos_, &vel_;
 		};
 
 		/**
@@ -81,7 +81,7 @@ namespace SPH
 			virtual ~UpdateElasticNormalDirection(){};
 
 		protected:
-			StdLargeVec<Vecd> &n_, &n_0_;
+			StdLargeVec<Vecd> &n_, &n0_;
 			StdLargeVec<Matd> &F_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
@@ -100,8 +100,8 @@ namespace SPH
 
 		protected:
 			Real CFL_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_;
-			Real smoothing_length_;
+			StdLargeVec<Vecd> &vel_, &acc_;
+			Real smoothing_length_, c0_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -117,7 +117,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &pos_n_;
+			StdLargeVec<Vecd> &pos_;
 			StdLargeVec<Matd> &B_, &F_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -135,9 +135,28 @@ namespace SPH
 			virtual ~BaseElasticRelaxation(){};
 
 		protected:
-			StdLargeVec<Real> &Vol_, &rho_n_, &mass_;
-			StdLargeVec<Vecd> &pos_n_, &vel_n_, &dvel_dt_;
+			StdLargeVec<Real> &Vol_, &rho_, &mass_;
+			StdLargeVec<Vecd> &pos_, &vel_, &acc_;
 			StdLargeVec<Matd> &B_, &F_, &dF_dt_;
+		};
+
+		/**
+		* @class BaseStressRelaxationFirstHalf
+		* @brief computing stress relaxation process by verlet time stepping
+		* This is the first step
+		*/
+		class BaseStressRelaxationFirstHalf : public BaseElasticRelaxation
+		{
+		public:
+			explicit BaseStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
+			virtual ~BaseStressRelaxationFirstHalf(){};
+
+		protected:
+			Real rho0_, inv_rho0_;
+			StdLargeVec<Vecd> &acc_prior_;
+			Real smoothing_length_;
+
+			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -145,23 +164,19 @@ namespace SPH
 		* @brief computing stress relaxation process by verlet time stepping
 		* This is the first step
 		*/
-		class StressRelaxationFirstHalf : public BaseElasticRelaxation
+		class StressRelaxationFirstHalf : public BaseStressRelaxationFirstHalf
 		{
 		public:
 			explicit StressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);
 			virtual ~StressRelaxationFirstHalf(){};
 
 		protected:
-			Real rho0_, inv_rho0_;
-			StdLargeVec<Vecd> &dvel_dt_prior_, &force_from_fluid_;
-			StdLargeVec<Matd> &stress_PK1_;
+			StdLargeVec<Matd> stress_PK1_B_;
 			Real numerical_dissipation_factor_;
-			Real smoothing_length_;
 			Real inv_W0_ = 1.0 / body_->sph_adaptation_->getKernel()->W0(Vecd(0));
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -194,7 +209,7 @@ namespace SPH
 		* it may be due to the determinate of deformation matrix become negative.
 		* In this case, you may need decrease CFL number when computing time-step size.
 		*/
-		class KirchhoffStressRelaxationFirstHalf : public StressRelaxationFirstHalf
+		class KirchhoffStressRelaxationFirstHalf : public BaseStressRelaxationFirstHalf
 		{
 		public:
 			explicit KirchhoffStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation);

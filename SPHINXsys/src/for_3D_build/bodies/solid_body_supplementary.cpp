@@ -16,7 +16,7 @@ namespace SPH
 		for (size_t i = 0; i < body_part_particles_.size(); ++i)
 		{
 			size_t index_i = body_part_particles_[i];
-			Vecd particle_position = solid_particles_->pos_0_[index_i];
+			Vecd particle_position = solid_particles_->pos0_[index_i];
 			Real particle_volume = solid_particles_->Vol_[index_i];
 
 			initial_mass_center_ += particle_volume * particle_position;
@@ -31,7 +31,7 @@ namespace SPH
 		for (size_t i = 0; i < body_part_particles_.size(); ++i)
 		{
 			size_t index_i = body_part_particles_[i];
-			Vecd particle_position = solid_particles_->pos_0_[index_i];
+			Vecd particle_position = solid_particles_->pos0_[index_i];
 			Real particle_volume = solid_particles_->Vol_[index_i];
 
 			Vec3d displacement = (particle_position - initial_mass_center_);

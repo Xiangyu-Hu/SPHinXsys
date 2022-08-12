@@ -128,7 +128,7 @@ std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMe
 		relaxParticlesSingleResolution(in_output, write_particle_relaxation_data, model, inner_relation);
 	}
 
-	return std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>>(model.base_particles_->pos_n_, model.base_particles_->Vol_);
+	return std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>>(model.base_particles_->pos_, model.base_particles_->Vol_);
 }
 
 BodyPartByParticle *createBodyPartFromMesh(SPHBody &body, const StlList &stl_list, size_t body_index, SharedPtr<TriangleMeshShape> tmesh)
@@ -409,7 +409,7 @@ void StructuralSimulation::initializeGravity()
 		gravity_indeces.push_back(non_zero_gravity_[i].first);
 	}
 	// initialize gravity
-	initialize_gravity_ = {};
+	initialize_time_step_ = {};
 	size_t gravity_index_i = 0; // iterating through gravity_indeces
 	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{
@@ -417,12 +417,12 @@ void StructuralSimulation::initializeGravity()
 		if (count(gravity_indeces.begin(), gravity_indeces.end(), i))
 		{
 			Gravity *gravity = new Gravity(non_zero_gravity_[gravity_index_i].second);
-			initialize_gravity_.emplace_back(make_shared<TimeStepInitialization>(*solid_body_list_[i]->getSolidBodyFromMesh(), *gravity));
+			initialize_time_step_.emplace_back(make_shared<TimeStepInitialization>(*solid_body_list_[i]->getSolidBodyFromMesh(), *gravity));
 			gravity_index_i++;
 		}
 		else
 		{
-			initialize_gravity_.emplace_back(make_shared<TimeStepInitialization>(*solid_body_list_[i]->getSolidBodyFromMesh()));
+			initialize_time_step_.emplace_back(make_shared<TimeStepInitialization>(*solid_body_list_[i]->getSolidBodyFromMesh()));
 		}
 	}
 }
@@ -632,9 +632,9 @@ void StructuralSimulation::executeUpdateElasticNormalDirection()
 
 void StructuralSimulation::executeinitializeATimeStep()
 {
-	for (size_t i = 0; i < initialize_gravity_.size(); i++)
+	for (size_t i = 0; i < initialize_time_step_.size(); i++)
 	{
-		initialize_gravity_[i]->parallel_exec();
+		initialize_time_step_[i]->parallel_exec();
 	}
 }
 
@@ -973,8 +973,8 @@ double StructuralSimulation::runSimulationFixedDurationJS(int number_of_steps)
 
 Real StructuralSimulation::getMaxDisplacement(int body_index)
 {
-	StdLargeVec<Vecd> &pos_0 = solid_body_list_[body_index].get()->getElasticSolidParticles()->pos_0_;
-	StdLargeVec<Vecd> &pos_n = solid_body_list_[body_index].get()->getElasticSolidParticles()->pos_n_;
+	StdLargeVec<Vecd> &pos_0 = solid_body_list_[body_index].get()->getElasticSolidParticles()->pos0_;
+	StdLargeVec<Vecd> &pos_n = solid_body_list_[body_index].get()->getElasticSolidParticles()->pos_;
 	Real displ_max = 0;
 	for (size_t i = 0; i < pos_0.size(); i++)
 	{

@@ -31,11 +31,11 @@ namespace SPH
 		neighboring_ids.push_back(branches_[1]->inner_particles_[0]);
 		neighboring_ids.push_back(branches_[1]->inner_particles_[1]);
 		/** Build configuration. */
-		const StdLargeVec<Vecd> &pos_n_ =  base_particles_->pos_n_;
+		const StdLargeVec<Vecd> &pos_ =  base_particles_->pos_;
 		NeighborRelationInner neighbor_relation_inner(this);
 		for (size_t n = 0; n != neighboring_ids.size(); ++n)
 		{
-			Vecd displacement = pos_n_[particle_id] - pos_n_[neighboring_ids[n]];
+			Vecd displacement = pos_[particle_id] - pos_[neighboring_ids[n]];
 			Neighborhood &neighborhood = particle_configuration[particle_id];
 			neighbor_relation_inner(neighborhood, displacement, particle_id, neighboring_ids[n]);
 		}
@@ -101,7 +101,7 @@ namespace SPH
 
 			for (size_t n = 0; n != neighboring_ids.size(); ++n)
 			{
-				Vecd displacement = pos_n_[particle_id] - pos_n_[neighboring_ids[n]];
+				Vecd displacement = pos_[particle_id] - pos_[neighboring_ids[n]];
 				Neighborhood &neighborhood = particle_configuration[particle_id];
 				neighbor_relation_inner(neighborhood, displacement, particle_id, neighboring_ids[n]);
 			}
@@ -172,7 +172,7 @@ namespace SPH
 
 					for (size_t n = 0; n != neighboring_ids.size(); ++n)
 					{
-						Vecd displacement = pos_n_[particle_id] - pos_n_[neighboring_ids[n]];
+						Vecd displacement = pos_[particle_id] - pos_[neighboring_ids[n]];
 						Neighborhood &neighborhood = particle_configuration[particle_id];
 						neighbor_relation_inner(neighborhood, displacement, particle_id, neighboring_ids[n]);
 					}
@@ -209,7 +209,7 @@ namespace SPH
 
 					for (size_t n = 0; n != neighboring_ids.size(); ++n)
 					{
-						Vecd displacement = pos_n_[particle_id] - pos_n_[neighboring_ids[n]];
+						Vecd displacement = pos_[particle_id] - pos_[neighboring_ids[n]];
 						Neighborhood &neighborhood = particle_configuration[particle_id];
 						neighbor_relation_inner(neighborhood, displacement, particle_id, neighboring_ids[n]);
 					}

@@ -80,7 +80,7 @@ int main(int ac, char *av[])
 
 	//-------- common particle dynamics ----------------------------------------
 	TimeDependentGravity gravity(Vec3d(0.0, -gravity_g, 0.0));
-	TimeStepInitialization initialize_gravity(cantilever_body, gravity);
+	TimeStepInitialization initialize_time_step(cantilever_body, gravity);
 
 	/**
 	 * This section define all numerical methods will be used in this case.
@@ -142,7 +142,7 @@ int main(int ac, char *av[])
 						  << dt << "\n";
 			}
 
-			initialize_gravity.parallel_exec(); // gravity force
+			initialize_time_step.parallel_exec(); // gravity force
 			stress_relaxation_first_half.parallel_exec(dt);
 			constrain_holder.parallel_exec(dt);
 			muscle_damping.parallel_exec(dt);
