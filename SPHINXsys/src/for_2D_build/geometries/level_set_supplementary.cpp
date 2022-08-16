@@ -211,7 +211,7 @@ namespace SPH
 							}
 						*core_data_pkg->phi_addrs_[i][j] = -min_distance_p;
 						// this immediate switch of near interface id
-						// does not intervenning with the identification of unresolved interface
+						// does not intervening with the identification of unresolved interface
 						// based on the assumption that positive false_and negative bands are not close to each other
 						*core_data_pkg->near_interface_id_addrs_[i][j] = -1;
 					}
@@ -235,7 +235,7 @@ namespace SPH
 							}
 						*core_data_pkg->phi_addrs_[i][j] = min_distance_n;
 						// this immediate switch of near interface id
-						// does not intervenning with the identification of unresolved interface
+						// does not intervening with the identification of unresolved interface
 						// based on the assumption that positive false_and negative bands are not close to each other
 						*core_data_pkg->near_interface_id_addrs_[i][j] = 1;
 					}

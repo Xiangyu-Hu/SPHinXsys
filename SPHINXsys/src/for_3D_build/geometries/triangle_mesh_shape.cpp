@@ -29,7 +29,7 @@ namespace SPH
 
 		StdVec<int> neighbor_face(4);
 		neighbor_face[0] = face_id;
-		/** go throught the neighbor faces. */
+		/** go through the neighbor faces. */
 		for (int i = 1; i < 4; i++)
 		{
 			int edge = triangle_mesh_->getFaceEdge(face_id, i - 1);

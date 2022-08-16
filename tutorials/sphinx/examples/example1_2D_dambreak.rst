@@ -491,14 +491,14 @@ including the particle states, restart files, global values and observations.
 		write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact);
 
 
-The :code:`Vtu` files can be read directly by the open-source visualization code ParaView.
+The :code:`Vtp` files can be read directly by the open-source visualization code ParaView.
 You also have the option to save the files in Tecplot format.
 The global information and observation data are written in simple data format 
 and are used to check the accuracy of the simulation results in the regression tests. 
 The restart files are in :code:`XML` data format. 
 
 Before the computation, 
-we need to prepare the simulation with the cell linked list, configuration, and the wall normal direction.
+we need to prepare the simulation with the cell linked list, configuration and the wall normal direction.
 
 .. code-block:: cpp
 
@@ -533,7 +533,7 @@ Note that, because the particles have been moved in the previous simulation,
 one need to update the cell-linked list and particle configuration.
 
 The basic control parameter for the simulation is defined,
-such as the restart file output frequency, total simulation time, 
+such as the restart file, output frequency, total simulation time, 
 interval for writing output files, etc. 
 
 .. code-block:: cpp
@@ -657,4 +657,3 @@ On screen output will be the number of time steps,
 the current physical time, and the advection and acoustic time-step sizes.
 After the simulation is terminated, the statistics of computation time 
 and the accuracy of the global information and observation data are output on the screen.
-

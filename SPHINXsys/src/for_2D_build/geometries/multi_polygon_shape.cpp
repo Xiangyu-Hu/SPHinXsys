@@ -57,7 +57,7 @@ namespace SPH
 		default:
 		{
 			std::cout << "\n FAILURE: the type of boolean operation is undefined!" << std::endl;
-			std::cout << "\n Please check the boost libraray reference." << std::endl;
+			std::cout << "\n Please check the boost library reference." << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			throw;
 		}
@@ -112,8 +112,8 @@ namespace SPH
 
 		if (!is_valid(multi_poly_circle))
 		{
-			std::cout << "\n Error: the multi ploygen is not valid." << std::endl;
-			std::cout << "\n The points must be in clockwise. Please check the boost libraray reference." << std::endl;
+			std::cout << "\n Error: the multi polygon is not valid." << std::endl;
+			std::cout << "\n The points must be in clockwise. Please check the boost library reference." << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			throw;
 		}
@@ -139,16 +139,16 @@ namespace SPH
 			append(poly, pts_reverse);
 			if (!is_valid(poly))
 			{
-				std::cout << "\n Error: the multi ploygen is still not valid. Please check the boost libraray reference." << std::endl;
+				std::cout << "\n Error: the multi polygon is still not valid. Please check the boost library reference." << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 				throw;
 			}
 		}
 
-		boost_multi_poly multi_poly_polygen;
-		convert(poly, multi_poly_polygen);
+		boost_multi_poly multi_poly_polygon;
+		convert(poly, multi_poly_polygon);
 
-		multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_poly_polygen, op);
+		multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_poly_polygon, op);
 	}
 	//=================================================================================================//
 	void MultiPolygon::
@@ -198,7 +198,7 @@ namespace SPH
 		From the documentation on segment and referring_segment, the only difference between the two is that
 		referring_segment holds a reference to the points.
 		This is what is needed in a for each that modifies the segment since the points modified should be
-		reflected in the linestring. In a for each that does not modify the points, it should still take a
+		reflected in the line string. In a for each that does not modify the points, it should still take a
 		reference (most likely a const reference) since it reduces the amount of copying.
 		*/
 		pnt_type input_p(input_pnt[0], input_pnt[1]);

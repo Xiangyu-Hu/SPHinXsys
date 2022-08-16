@@ -227,7 +227,7 @@ int main(int ac, char *av[])
 	tt = t4 - t1 - interval;
 	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
 
-	if (!sph_system.restart_step_ == 0) // TODO: this case should be revsied latter.
+	if (!sph_system.restart_step_ == 0) // TODO: this case should be revised latter.
 	{
 		write_total_viscous_force_on_inserted_body.newResultTest();
 	}

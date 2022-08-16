@@ -25,7 +25,7 @@
  * @brief 	This is the base class of particle generator, which generates particles
  * 			with given positions and volumes. The direct generator simply generate
  * 			particle with given position and volume. The lattice generator generate
- * 			at lattice position by check whether the poision is contained by a SPH body.
+ * 			at lattice position by check whether the position is contained by a SPH body.
  * @author	Xiangyu Hu, Chi Zhang, Yongchuan Yu
  */
 
@@ -93,7 +93,7 @@ namespace SPH
 	 * @brief Generate thick surface particles from lattice positions for a thin structure defined by a body shape.
 	 * @details Here, a thick surface is defined as that the thickness is equal or larger than the proposed particle spacing. 
 	 * Note that, this class should not be used for generating the thin surface particles, 
-	 * which may be better generated from a geometric surfce directly.
+	 * which may be better generated from a geometric surface directly.
 	 */
 	class ThickSurfaceParticleGeneratorLattice : public BaseParticleGeneratorLattice, public SurfaceParticleGenerator
 	{

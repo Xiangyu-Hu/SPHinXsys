@@ -459,15 +459,15 @@ namespace SPH
 			angular_vel_[index_i] = angular_vel_temp_[index_i];
 		}
 		//=================================================================================================//
-		ConstrainShellBodyRegionInAxisDirection::
-			ConstrainShellBodyRegionInAxisDirection(SolidBody &solid_body, BodyPartByParticle &body_part, int axis_direction)
+		ConstrainShellBodyRegionAlongAxis::
+			ConstrainShellBodyRegionAlongAxis(SolidBody &solid_body, BodyPartByParticle &body_part, int axis)
 			: PartSimpleDynamicsByParticle(solid_body, body_part), ShellDataSimple(solid_body),
-			  axis_(axis_direction), pos_(particles_->pos_), pos0_(particles_->pos0_),
+			  axis_(axis), pos_(particles_->pos_), pos0_(particles_->pos0_),
 			  vel_(particles_->vel_), acc_(particles_->acc_),
 			  rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
 			  dangular_vel_dt_(particles_->dangular_vel_dt_) {}
 		//=================================================================================================//
-		void ConstrainShellBodyRegionInAxisDirection::Update(size_t index_i, Real dt)
+		void ConstrainShellBodyRegionAlongAxis::Update(size_t index_i, Real dt)
 		{
 			vel_[index_i][axis_] = 0.0;
 			vel_[index_i][2] = 0.0;

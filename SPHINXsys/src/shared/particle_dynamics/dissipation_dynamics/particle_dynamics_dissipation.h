@@ -22,7 +22,7 @@
  * --------------------------------------------------------------------------*/
 /**
  * @file 	particle_dynamics_dissipation.h
- * @brief 	This is the particle dynamics aplliable for all type bodies
+ * @brief 	This is the particle dynamics applicable for all type bodies
  * @author	Chi Zhang and Xiangyu Hu
  */
 
@@ -201,7 +201,7 @@ namespace SPH
 
 	/**
 	 * @class DampingWithRandomChoice
-	 * @brief A random choice method for obstaining static equilibrium state
+	 * @brief A random choice method for obtaining static equilibrium state
 	 * Note that, if periodic boundary condition is applied,
 	 * the parallelized version of the method requires the one using ghost particles
 	 * because the splitting partition only works in this case.

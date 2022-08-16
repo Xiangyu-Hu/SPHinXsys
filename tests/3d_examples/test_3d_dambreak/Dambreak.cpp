@@ -90,7 +90,7 @@ int main()
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 	wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
 
-	ObserverBody fluid_observer(system, "Fluidobserver");
+	ObserverBody fluid_observer(system, "FluidObserver");
 	fluid_observer.generateParticles<WaterObserverParticleGenerator>();
 
 	/** topology */
@@ -133,7 +133,7 @@ int main()
 	//-------------------------------------------------------------------
 
 	/**
-	 * @brief Setup geometrics and initial conditions
+	 * @brief Setup geometries and initial conditions
 	 */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();

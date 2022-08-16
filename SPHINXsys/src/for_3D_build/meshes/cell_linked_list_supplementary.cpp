@@ -145,7 +145,7 @@ namespace SPH
 						for (int m = SMAX(j - 1, 0); m <= SMIN(j + 1, int(number_of_cells_[1]) - 1); ++m)
 							for (int n = SMAX(k - 1, 0); n <= SMIN(k + 1, int(number_of_cells_[2]) - 1); ++n)
 							{
-								// all cells near or contained by the body part shape are inlcuded
+								// all cells near or contained by the body part shape are included
 								if (check_included(CellPositionFromIndex(Vecu(l, m, n)), grid_spacing_))
 								{
 									is_included = true;
@@ -157,12 +157,12 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void CellLinkedList::
-		tagBodyDomainBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &body_domain_bounds, int axis)
+		tagBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &bounding_bounds, int axis)
 	{
 		int second_axis = SecondAxis(axis);
 		int third_axis = ThirdAxis(axis);
-		Vecu body_lower_bound_cell_ = CellIndexFromPosition(body_domain_bounds.first);
-		Vecu body_upper_bound_cell_ = CellIndexFromPosition(body_domain_bounds.second);
+		Vecu body_lower_bound_cell_ = CellIndexFromPosition(bounding_bounds.first);
+		Vecu body_upper_bound_cell_ = CellIndexFromPosition(bounding_bounds.second);
 
 		// lower bound cells
 		for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis]) - 1, 0);
@@ -208,12 +208,12 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void CellLinkedList::
-		tagMirrorBoundingCells(CellLists &cell_lists, BoundingBox &body_domain_bounds, int axis, bool positive)
+		tagMirrorBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive)
 	{
 		int second_axis = SecondAxis(axis);
 		int third_axis = ThirdAxis(axis);
-		Vecu body_lower_bound_cell_ = CellIndexFromPosition(body_domain_bounds.first);
-		Vecu body_upper_bound_cell_ = CellIndexFromPosition(body_domain_bounds.second);
+		Vecu body_lower_bound_cell_ = CellIndexFromPosition(bounding_bounds.first);
+		Vecu body_upper_bound_cell_ = CellIndexFromPosition(bounding_bounds.second);
 
 		if (positive)
 		{

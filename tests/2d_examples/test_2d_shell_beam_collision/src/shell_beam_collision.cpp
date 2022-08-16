@@ -20,7 +20,7 @@ Vec2d circle_center(2.0, 2.0);
 Real circle_radius = 0.5;
 Real gravity_g = 1.0;
 //----------------------------------------------------------------------
-//	Global paramters on material properties
+//	Global parameters on material properties
 //----------------------------------------------------------------------
 Real rho0_s = 1.0;				 /** Normalized density. */
 Real Youngs_modulus = 5e3;		 /** Normalized Young's modulus. */
@@ -160,7 +160,7 @@ int main(int ac, char *av[])
 		shell.updateCellLinkedList();
 		write_mesh_cell_linked_list.writeToFile(0);
 		//----------------------------------------------------------------------
-		//	From here iteration for particle relaxation begines.
+		//	From here iteration for particle relaxation begins.
 		//----------------------------------------------------------------------
 		int ite = 0;
 		int relax_step = 1000;
@@ -182,7 +182,7 @@ int main(int ac, char *av[])
 		return 0;
 	}
 	//----------------------------------------------------------------------
-	//	Define the main numerical methods used in the simultion.
+	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	/** Define external force.*/

@@ -63,7 +63,7 @@ namespace SPH
 		size_t *begin = base_particles_->sequence_.data();
 		quick_sort_particle_range_ =
 			quick_sort_particle_range_ptr_keeper_.createPtr<
-				tbb::interafce9::internal::QuickSortParticleRange<
+				tbb::interface9::internal::QuickSortParticleRange<
 					size_t *, CompareParticleSequence, SwapSortableParticleData>>(begin, 0, compare_, *swap_sortable_particle_data_);
 	};
 	//=================================================================================================//

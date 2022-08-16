@@ -1,8 +1,8 @@
 /**
 * @file multi_polygon_shape.h
-* @brief Here, we define the 2D geometric algortihms. they are based on the boost library. 
+* @brief Here, we define the 2D geometric algorithms. they are based on the boost library. 
 * @details The idea is to define complex geometry based on shapes, usually
-* multi-polygon using boost library. we propose only very simple combinaton
+* multi-polygon using boost library. we propose only very simple combination
 * that the region is composed of shapes without intersection.
 * That is, the shapes are those contain each other or without overlap.
 * This strict requirement suggests that complex shapes should be finished

@@ -72,7 +72,7 @@ namespace SPH
 				deformation -= Vol_[index_j] * SimTK::outer((pos_n_i - pos_[index_j]), gradW_ij);
 			}
 
-			F_[index_i] = B_[index_i] * deformation;
+			F_[index_i] = deformation * B_[index_i];
 		}
 		//=================================================================================================//
 		BaseElasticRelaxation::

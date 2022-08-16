@@ -48,11 +48,11 @@ namespace SPH
 			  public FluidDataInner
 		{
 		public:
-			explicit FreeSurfaceIndicationInner(BaseBodyRelationInner &inner_relation, Real thereshold = 0.75);
+			explicit FreeSurfaceIndicationInner(BaseBodyRelationInner &inner_relation, Real threshold = 0.75);
 			virtual ~FreeSurfaceIndicationInner(){};
 
 		protected:
-			Real thereshold_by_dimensions_;
+			Real threshold_by_dimensions_;
 			StdLargeVec<Real> &Vol_;
 			StdLargeVec<int> &surface_indicator_;
 			StdLargeVec<Real> pos_div_;
@@ -179,7 +179,7 @@ namespace SPH
 			virtual ~ColorFunctionGradientInner(){};
 
 		protected:
-			Real thereshold_by_dimensions_;
+			Real threshold_by_dimensions_;
 			StdLargeVec<Real> &Vol_;
 			StdLargeVec<int> &surface_indicator_;
 			StdLargeVec<Vecd> color_grad_;
@@ -190,17 +190,17 @@ namespace SPH
 		};
 
 		/**
-		 * @class ColorFunctionGradientInterplationInner
+		 * @class ColorFunctionGradientInterpolationInner
 		 * @brief  the viscous force induced acceleration
 		 */
-		class ColorFunctionGradientInterplationInner : public InteractionDynamics, public FluidDataInner
+		class ColorFunctionGradientInterpolationInner : public InteractionDynamics, public FluidDataInner
 		{
 		public:
-			explicit ColorFunctionGradientInterplationInner(BaseBodyRelationInner &inner_relation);
-			virtual ~ColorFunctionGradientInterplationInner(){};
+			explicit ColorFunctionGradientInterpolationInner(BaseBodyRelationInner &inner_relation);
+			virtual ~ColorFunctionGradientInterpolationInner(){};
 
 		protected:
-			Real thereshold_by_dimensions_;
+			Real threshold_by_dimensions_;
 			StdLargeVec<Real> &Vol_;
 			StdLargeVec<int> &surface_indicator_;
 			StdLargeVec<Vecd> &color_grad_;

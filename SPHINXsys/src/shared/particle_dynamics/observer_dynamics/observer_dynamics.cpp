@@ -1,6 +1,6 @@
 /**
  * @file 	observer_dynamics.cpp
- * @brief 	Here, Functions defined in observer_dyanmcis.h are detailed.
+ * @brief 	Here, Functions defined in observer_dynamics.h are detailed.
  * @author	Chi ZHang and Xiangyu Hu
  */
 

@@ -24,7 +24,7 @@ namespace SPH
 		mass_center /= body_part_volume;
 		initial_mass_center_ = Vec3d(mass_center[0], mass_center[1], 0.0);
 
-		//computing unit intertia
+		//computing unit inertia
 		Real Ix = 0.0;
 		Real Iy = 0.0;
 		Real Iz = 0.0;

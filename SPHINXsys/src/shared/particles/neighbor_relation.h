@@ -23,7 +23,7 @@
 /**
  * @file 	neighbor_relation.h
  * @brief 	There are the classes for neighboring particles. 
- * It saves the information for carring out pair
+ * It saves the information for carrying out pair
  * interaction, and also considered as the topology of the particles.
  * @author	Xiangyu Hu and Chi Zhang
  */
@@ -47,8 +47,8 @@ namespace SPH
 	class Neighborhood
 	{
 	public:
-		size_t current_size_;	/**< the current number of neighors */
-		size_t allocated_size_; /**< the limit of neighors does not require memory allocation  */
+		size_t current_size_;	/**< the current number of neighbors */
+		size_t allocated_size_; /**< the limit of neighbors does not require memory allocation  */
 
 		StdLargeVec<size_t> j_;	  /**< index of the neighbor particle. */
 		StdLargeVec<Real> W_ij_;  /**< kernel value or particle volume contribution */

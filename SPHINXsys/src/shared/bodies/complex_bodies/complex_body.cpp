@@ -107,7 +107,7 @@ namespace SPH
 			}
 		}
 		/** Other branches. 
-		 * They are may normal branch (fully growed, has child and parent) or non-fully growed branch
+		 * They are may normal branch (fully grown, has child and parent) or non-fully grown branch
 		 */
 		for (size_t branch_idx = 2; branch_idx != branches_.size(); ++branch_idx)
 		{
@@ -115,7 +115,7 @@ namespace SPH
 			size_t parent_branch_id = branches_[branch_idx]->in_edge_;
 			if (!branches_[branch_idx]->is_terminated_)
 			{
-				/** This branch is fully growed. */
+				/** This branch is fully grown. */
 				for (size_t i = 0; i != num_ele; i++)
 				{
 					neighboring_ids.clear();
@@ -180,7 +180,7 @@ namespace SPH
 			}
 			else
 			{
-				/** This branch is not fully growed. */
+				/** This branch is not fully grown. */
 				for (size_t i = 0; i != num_ele; i++)
 				{
 					neighboring_ids.clear();

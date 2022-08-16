@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<meanvariance>
+    <MeanValue_Element>
+        <Snapshot_MeanValue VonMisesStress_0="5297.1329424629002" />
+    </MeanValue_Element>
+    <Variance_Element>
+        <Snapshot_Variance VonMisesStress_0="2805.9637402811741" />
+    </Variance_Element>
+</meanvariance>
