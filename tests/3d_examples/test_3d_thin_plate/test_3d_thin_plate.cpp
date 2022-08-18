@@ -83,7 +83,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_n_[index_i][1] < 0.0 || base_particles_->pos_n_[index_i][1] > PH)
+		if (base_particles_->pos_[index_i][1] < 0.0 || base_particles_->pos_[index_i][1] > PH)
 		{
 			body_part_particles_.push_back(index_i);
 		}
@@ -103,7 +103,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_n_[index_i][0] < 0.0 || base_particles_->pos_n_[index_i][0] > PL)
+		if (base_particles_->pos_[index_i][0] < 0.0 || base_particles_->pos_[index_i][0] > PL)
 		{
 			body_part_particles_.push_back(index_i);
 		}
@@ -169,10 +169,10 @@ int main(int ac, char *av[])
 		stress_relaxation_second_half(plate_body_inner);
 	/** Constrain the Boundary. */
 	BoundaryGeometryParallelToXAxis boundary_geometry_x(plate_body, "BoundaryGeometryParallelToXAxis");
-	thin_structure_dynamics::ConstrainShellBodyRegionInAxisDirection
+	thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis
 		constrain_holder_x(plate_body, boundary_geometry_x, 0);
 	BoundaryGeometryParallelToYAxis boundary_geometry_y(plate_body, "BoundaryGeometryParallelToYAxis");
-	thin_structure_dynamics::ConstrainShellBodyRegionInAxisDirection
+	thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis
 		constrain_holder_y(plate_body, boundary_geometry_y, 1);
 	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
 		plate_position_damping(0.5, plate_body_inner, "Velocity", physical_viscosity);
