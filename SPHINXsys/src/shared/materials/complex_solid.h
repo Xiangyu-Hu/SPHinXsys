@@ -33,7 +33,7 @@ namespace SPH
 {
 	/**
 	 * @class ActiveMuscle
-	 * @brief Here, the active reponse is considered.
+	 * @brief Here, the active response is considered.
 	 */
 	template <class MuscleType>
 	class ActiveMuscle : public MuscleType

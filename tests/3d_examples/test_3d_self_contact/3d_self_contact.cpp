@@ -59,7 +59,7 @@ int main(int ac, char *av[])
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	// Tag for run particle relaxation for the initial body fitted distribution.
 	system.run_particle_relaxation_ = false;
-	// Tag for reload initially repaxed particles.
+	// Tag for reload initially relaxed particles.
 	system.reload_particles_ = true;
 // handle command line arguments
 #ifdef BOOST_AVAILABLE

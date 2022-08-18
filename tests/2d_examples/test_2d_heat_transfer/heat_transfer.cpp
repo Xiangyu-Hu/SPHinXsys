@@ -112,7 +112,7 @@ class ThermosolidBodyMaterial : public DiffusionReaction<Solid>
 public:
 	ThermosolidBodyMaterial() : DiffusionReaction<Solid>({"Phi"})
 	{
-		// only default property is gieven, as no heat transfer within solid considered here.
+		// only default property is given, as no heat transfer within solid considered here.
 		initializeAnDiffusion<IsotropicDiffusion>("Phi", "Phi");
 	};
 };
@@ -251,7 +251,7 @@ int main()
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition(thermofluid_body, xAxis);
+	PeriodicConditionUsingCellLinkedList periodic_condition(thermofluid_body, thermofluid_body.getBodyShapeBounds(), xAxis);
 	ThermosolidBodyInitialCondition thermosolid_condition(thermosolid_body);
 	ThermofluidBodyInitialCondition thermofluid_initial_condition(thermofluid_body);
 	SimpleDynamics<NormalDirectionFromBodyShape> thermosolid_body_normal_direction(thermosolid_body);

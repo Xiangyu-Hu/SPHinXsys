@@ -1,7 +1,7 @@
 /**
  * @file 	3d_elasticSolid_shell_collision.cpp
  * @brief 	This is a benchmark test of the 3D elastic solid->shell contact/impact formulations.
- * @details  We consider the collisoin of an elastic ball bouncing in a spherical shell box.
+ * @details  We consider the collision of an elastic ball bouncing in a spherical shell box.
  * @author 	Massoud Rezavand, Virtonomy GmbH
  */
 #include "sphinxsys.h" //SPHinXsys Library.
@@ -22,7 +22,7 @@ BoundingBox system_domain_bounds(Vec3d(-radius - thickness, -half_height - thick
 Real ball_radius = 0.5;
 Real gravity_g = 1.0;
 //----------------------------------------------------------------------
-//	Global paramters on material properties
+//	Global parameters on material properties
 //----------------------------------------------------------------------
 Real rho0_s = 1.0e3;
 Real Youngs_modulus = 2.0e4;
@@ -114,7 +114,7 @@ int main(int ac, char *av[])
 		ball_random_particles.parallel_exec(0.25);
 		write_relaxed_particles.writeToFile(0);
 		//----------------------------------------------------------------------
-		//	From here iteration for particle relaxation begines.
+		//	From here iteration for particle relaxation begins.
 		//----------------------------------------------------------------------
 		int ite = 0;
 		int relax_step = 1000;
@@ -140,7 +140,7 @@ int main(int ac, char *av[])
 	BodyRelationInner ball_inner(ball);
 	SolidBodyRelationContact ball_contact(ball, {&shell});
 	//----------------------------------------------------------------------
-	//	Define the main numerical methods used in the simultion.
+	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));

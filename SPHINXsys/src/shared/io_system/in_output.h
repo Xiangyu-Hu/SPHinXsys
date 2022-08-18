@@ -53,7 +53,7 @@ namespace SPH
 {
 
 	/**
-	 * @brief preclaimed classes.
+	 * @brief pre-claimed classes.
 	 */
 	class BaseLevelSet;
 

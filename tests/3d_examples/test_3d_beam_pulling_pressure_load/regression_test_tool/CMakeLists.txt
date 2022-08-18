@@ -23,13 +23,7 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/regression_test_tool.
         DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/BeamObserver_VonMisesStress_runtimes.dat
         DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/BeamObserver_VonMisesStress_dtwdistance.xml
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/BeamObserver_VonMisesStress_Run_0_result.xml
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/BeamObserver_VonMisesStress_Run_3_result.xml
-        DESTINATION ${BUILD_INPUT_PATH})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/BeamObserver_VonMisesStress_Run_5_result.xml
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/BeamObserver_VonMisesStress_time_averaged_mean_variance.xml
         DESTINATION ${BUILD_INPUT_PATH})
 
 aux_source_directory(. DIR_SRCS)

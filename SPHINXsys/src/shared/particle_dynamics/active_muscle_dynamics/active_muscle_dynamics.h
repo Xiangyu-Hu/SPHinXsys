@@ -22,7 +22,7 @@
 * --------------------------------------------------------------------------*/
 /**
  * @file 	active_muscle_dynamics.h
- * @brief 	In is file, we declear muscle dynamics which is driven by an external injection of energy. 
+ * @brief 	In is file, we declare muscle dynamics which is driven by an external injection of energy. 
  * @author 	Chi Zhang and Xiangyu Hu
  * @version 0.3.1
  *			Here, we need identify the physical differences between electrophysiology and active muscle.

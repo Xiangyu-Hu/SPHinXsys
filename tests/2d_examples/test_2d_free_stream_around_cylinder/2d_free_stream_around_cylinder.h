@@ -19,8 +19,6 @@ Vec2d insert_circle_center(10.0, 0.5 * DH);	  /**< Location of the cylinder cent
 Real insert_circle_radius = 1.0;			  /**< Radius of the cylinder. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
-/** Prescribed fluid body domain bounds*/
-BoundingBox fluid_body_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
 // Observation locations
 Vec2d point_coordinate_1(3.0, 5.0);
 Vec2d point_coordinate_2(4.0, 5.0);

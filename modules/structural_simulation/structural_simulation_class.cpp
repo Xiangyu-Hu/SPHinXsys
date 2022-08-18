@@ -29,9 +29,6 @@ SolidBodyFromMesh::SolidBodyFromMesh(
 	defineBodyLevelSetShape()->cleanLevelSet();
 	defineParticlesWithMaterial<ElasticSolidParticles>(material_model.get());
 	generateParticles<ParticleGeneratorLattice>();
-	// set the body domain bounds because it is not set by default
-	BoundingBox bounds = body_shape_->getBounds();
-	setBodyDomainBounds(bounds);
 }
 
 SolidBodyForSimulation::SolidBodyForSimulation(
@@ -116,10 +113,6 @@ std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMe
 	model.defineBodyLevelSetShape()->cleanLevelSet();
 	model.defineParticlesAndMaterial<SolidParticles, Solid>();
 	model.generateParticles<ParticleGeneratorLattice>();
-
-	// set the body domain bounds because it is not set by default
-	BoundingBox bounds = model.body_shape_->getBounds();
-	model.setBodyDomainBounds(bounds);
 
 	if (particle_relaxation)
 	{
@@ -402,19 +395,19 @@ void StructuralSimulation::initializeAllContacts()
 
 void StructuralSimulation::initializeGravity()
 {
-	// collect all the body indeces with non-zero gravity
-	vector<int> gravity_indeces = {};
+	// collect all the body indices with non-zero gravity
+	vector<int> gravity_indices = {};
 	for (size_t i = 0; i < non_zero_gravity_.size(); i++)
 	{
-		gravity_indeces.push_back(non_zero_gravity_[i].first);
+		gravity_indices.push_back(non_zero_gravity_[i].first);
 	}
 	// initialize gravity
 	initialize_time_step_ = {};
 	size_t gravity_index_i = 0; // iterating through gravity_indeces
 	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{
-		// check if i is in indeces_gravity
-		if (count(gravity_indeces.begin(), gravity_indeces.end(), i))
+		// check if i is in indices_gravity
+		if (count(gravity_indices.begin(), gravity_indices.end(), i))
 		{
 			Gravity *gravity = new Gravity(non_zero_gravity_[gravity_index_i].second);
 			initialize_time_step_.emplace_back(make_shared<TimeStepInitialization>(*solid_body_list_[i]->getSolidBodyFromMesh(), *gravity));
@@ -630,7 +623,7 @@ void StructuralSimulation::executeUpdateElasticNormalDirection()
 	}
 }
 
-void StructuralSimulation::executeinitializeATimeStep()
+void StructuralSimulation::executeInitializeATimeStep()
 {
 	for (size_t i = 0; i < initialize_time_step_.size(); i++)
 	{
@@ -839,7 +832,7 @@ void StructuralSimulation::initializeSimulation()
 {
 	GlobalStaticVariables::physical_time_ = 0.0;
 
-	/** INITIALALIZE SYSTEM */
+	/** INITIALIZE SYSTEM */
 	system_.initializeSystemCellLinkedLists();
 	system_.initializeSystemConfigurations();
 
@@ -857,7 +850,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 
 	/** ACTIVE BOUNDARY CONDITIONS */
 	// force (acceleration) based
-	executeinitializeATimeStep();
+	executeInitializeATimeStep();
 	executeAccelerationForBodyPartInBoundingBox();
 	executeForceInBodyRegion();
 	executeSurfacePressure();
@@ -868,7 +861,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 	executeContactDensitySummation();
 	executeContactForce();
 
-	/** STRESS RELAXATOIN, DAMPING, POSITIONAL CONSTRAINTS */
+	/** STRESS RELAXATION, DAMPING, POSITIONAL CONSTRAINTS */
 	executeStressRelaxationFirstHalf(dt);
 
 	executeConstrainSolidBody();

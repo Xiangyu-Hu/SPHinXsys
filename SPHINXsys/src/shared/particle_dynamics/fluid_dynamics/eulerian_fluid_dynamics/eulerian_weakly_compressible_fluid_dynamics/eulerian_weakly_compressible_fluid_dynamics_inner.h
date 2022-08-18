@@ -74,11 +74,11 @@ namespace SPH
 			: public InteractionDynamicsWithUpdate, public EulerianWeaklyCompressibleFluidDataInner
 		{
 		public:
-			explicit FreeSurfaceIndicationInner(BaseBodyRelationInner &inner_relation, Real thereshold = 0.75);
+			explicit FreeSurfaceIndicationInner(BaseBodyRelationInner &inner_relation, Real threshold = 0.75);
 			virtual ~FreeSurfaceIndicationInner() {};
 
 		protected:
-			Real thereshold_by_dimensions_;
+			Real threshold_by_dimensions_;
 			StdLargeVec<Real>& Vol_;
 			StdLargeVec<int>& surface_indicator_;
 			StdLargeVec<Real> pos_div_;

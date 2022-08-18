@@ -122,7 +122,7 @@ int main(int ac, char *av[])
 		return 0;
 	}
 	//----------------------------------------------------------------------
-	//	SPH simultion section
+	//	SPH simulation section
 	//----------------------------------------------------------------------
 	/** create a SPH body, material and particles */
 	SolidBody physiology_heart(system, makeShared<Heart>("PhysiologyHeart"));
@@ -197,7 +197,7 @@ int main(int ac, char *av[])
 	ObservedQuantityRecording<Real> write_voltage("Voltage", in_output, voltage_observer_contact);
 	ObservedQuantityRecording<Vecd> write_displacement("Position", in_output, myocardium_observer_contact);
 	/**Apply the Iron stimulus.*/
-	ApplyStimulusCurrentToMmyocardium apply_stimulus_myocardium(physiology_heart);
+	ApplyStimulusCurrentToMyocardium apply_stimulus_myocardium(physiology_heart);
 	ApplyStimulusCurrentToPKJ apply_stimulus_pkj(pkj_body);
 	/** Active mechanics. */
 	solid_dynamics::CorrectConfiguration correct_configuration_contraction(mechanics_heart_inner);
@@ -220,7 +220,7 @@ int main(int ac, char *av[])
 	BodyRegionByParticle muscle_base(mechanics_heart,  makeShared<TriangleMeshShapeBrick>(muscle_base_parameters, "Holder"));
 	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(mechanics_heart, muscle_base);
 	/** 
-	 * Pre-simultion. 
+	 * Pre-simulation. 
 	 */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();

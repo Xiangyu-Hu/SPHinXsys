@@ -47,37 +47,37 @@ int main()
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	RealBody inputbody(system, makeShared<InputBody>("SPHInXsysLogo"));
-	inputbody.defineBodyLevelSetShape();
-	inputbody.defineParticlesAndMaterial();
-	inputbody.generateParticles<ParticleGeneratorLattice>();
+	RealBody input_body(system, makeShared<InputBody>("SPHInXsysLogo"));
+	input_body.defineBodyLevelSetShape();
+	input_body.defineParticlesAndMaterial();
+	input_body.generateParticles<ParticleGeneratorLattice>();
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
 	//	Basically the the range of bodies to build neighbor particle lists.
 	//----------------------------------------------------------------------
-	BodyRelationInner inputbody_inner(inputbody);
+	BodyRelationInner input_body_inner(input_body);
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
-	RandomizeParticlePosition random_inputbody_particles(inputbody);
-	relax_dynamics::RelaxationStepInner relaxation_step_inner(inputbody_inner, true);
+	RandomizeParticlePosition random_input_body_particles(input_body);
+	relax_dynamics::RelaxationStepInner relaxation_step_inner(input_body_inner, true);
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp inputbody_recording_to_vtp(in_output, inputbody);
-	MeshRecordingToPlt cell_linked_list_recording(in_output, inputbody, inputbody.cell_linked_list_);
+	BodyStatesRecordingToVtp input_body_recording_to_vtp(in_output, input_body);
+	MeshRecordingToPlt cell_linked_list_recording(in_output, input_body, input_body.cell_linked_list_);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
-	random_inputbody_particles.parallel_exec(0.25);
+	random_input_body_particles.parallel_exec(0.25);
 	relaxation_step_inner.surface_bounding_.parallel_exec();
-	inputbody.updateCellLinkedList();
+	input_body.updateCellLinkedList();
 	//----------------------------------------------------------------------
 	//	First output before the simulation.
 	//----------------------------------------------------------------------
-	inputbody_recording_to_vtp.writeToFile();
+	input_body_recording_to_vtp.writeToFile();
 	cell_linked_list_recording.writeToFile();
 	//----------------------------------------------------------------------
 	//	Particle relaxation time stepping start here.
@@ -90,7 +90,7 @@ int main()
 		if (ite_p % 100 == 0)
 		{
 			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the airfoil N = " << ite_p << "\n";
-			inputbody_recording_to_vtp.writeToFile(ite_p);
+			input_body_recording_to_vtp.writeToFile(ite_p);
 		}
 	}
 	std::cout << "The physics relaxation process of airfoil finish !" << std::endl;

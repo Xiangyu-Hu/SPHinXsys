@@ -276,9 +276,9 @@ namespace SPH
 		{
 			dot_product_1 += vector_1[i] * vector_2[i];
 		}
-		Real cos_teta = dot_product_1 / (vector_1.norm() * vector_2.norm());
+		Real cos_theta = dot_product_1 / (vector_1.norm() * vector_2.norm());
 
-		return cos_teta;
+		return cos_theta;
 	}
 	//=================================================================================================//
 	Real getCosineOfAngleBetweenTwoVectors(const Vec3d &vector_1, const Vec3d &vector_2)
@@ -289,9 +289,9 @@ namespace SPH
 		{
 			dot_product_1 += vector_1[i] * vector_2[i];
 		}
-		Real cos_teta = dot_product_1 / (vector_1.norm() * vector_2.norm());
+		Real cos_theta = dot_product_1 / (vector_1.norm() * vector_2.norm());
 
-		return cos_teta;
+		return cos_theta;
 	}
 	//=================================================================================================//
 	Vec2d getVectorProjectionOfVector(const Vec2d &vector_1, const Vec2d &vector_2)

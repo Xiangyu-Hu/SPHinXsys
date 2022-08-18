@@ -123,7 +123,7 @@ namespace SPH
 		using ViscousAccelerationWithWall = BaseViscousAccelerationWithWall<ViscousWithWall<ViscousAccelerationInner>>;
 		/**
 		 * @class TransportVelocityCorrectionComplex
-		 * @brief  transport velocity correction consdiering  the contribution from contact bodies
+		 * @brief  transport velocity correction considering  the contribution from contact bodies
 		 */
 		class TransportVelocityCorrectionComplex
 			: public ParticleDynamicsComplex<TransportVelocityCorrectionInner, FluidContactData>

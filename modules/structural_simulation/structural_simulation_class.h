@@ -264,7 +264,7 @@ protected:
 	void executeInitialNormalDirection();
 	void executeCorrectConfiguration();
 	void executeUpdateElasticNormalDirection();
-	void executeinitializeATimeStep();
+	void executeInitializeATimeStep();
 	void executeAccelerationForBodyPartInBoundingBox();
 	void executeForceInBodyRegion();
 	void executeSurfacePressure();

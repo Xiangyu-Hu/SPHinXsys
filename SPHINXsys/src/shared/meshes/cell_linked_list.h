@@ -100,9 +100,9 @@ namespace SPH
 		/** Tag body part by cell, call by body part */
 		virtual void tagBodyPartByCell(CellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) = 0;
 		/** Tag domain bounding cells in an axis direction, called by domain bounding classes */
-		virtual void tagBodyDomainBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &body_domain_bounds, int axis) = 0;
+		virtual void tagBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &bounding_bounds, int axis) = 0;
 		/** Tag mirror bounding cells, called by mirror boundary condition */
-		virtual void tagMirrorBoundingCells(CellLists &cell_lists, BoundingBox &body_domain_bounds, int axis, bool positive) = 0;
+		virtual void tagMirrorBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive) = 0;
 	};
 
 	/**
@@ -136,8 +136,8 @@ namespace SPH
 		virtual ListData findNearestListDataEntry(const Vecd &position) override;
 		virtual void computingSequence(StdLargeVec<size_t> &sequence) override;
 		virtual void tagBodyPartByCell(CellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
-		virtual void tagBodyDomainBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &body_domain_bounds, int axis) override;
-		virtual void tagMirrorBoundingCells(CellLists &cell_lists, BoundingBox &body_domain_bounds, int axis, bool positive) override;
+		virtual void tagBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &bounding_bounds, int axis) override;
+		virtual void tagMirrorBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive) override;
 		virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
 
 		/** generalized particle search algorithm */
@@ -181,8 +181,8 @@ namespace SPH
 		virtual ListData findNearestListDataEntry(const Vecd &position) override { return ListData(0, Vecd(0)); };
 		virtual void computingSequence(StdLargeVec<size_t> &sequence) override{};
 		virtual void tagBodyPartByCell(CellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
-		virtual void tagBodyDomainBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &body_domain_bounds, int axis) override{};
-		virtual void tagMirrorBoundingCells(CellLists &cell_lists, BoundingBox &body_domain_bounds, int axis, bool positive) override{};
+		virtual void tagBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &bounding_bounds, int axis) override{};
+		virtual void tagMirrorBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive) override{};
 	};
 }
 #endif // MESH_CELL_LINKED_LIST_H

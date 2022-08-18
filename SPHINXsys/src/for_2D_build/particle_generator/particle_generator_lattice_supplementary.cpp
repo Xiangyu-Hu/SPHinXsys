@@ -1,5 +1,5 @@
 /**
- * @file 	particle_generator_lattic_supplementary.cpp
+ * @file 	particle_generator_lattice_supplementary.cpp
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */
 

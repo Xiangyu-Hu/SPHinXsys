@@ -151,11 +151,11 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void CellLinkedList::
-		tagBodyDomainBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &body_domain_bounds, int axis)
+		tagBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &bounding_bounds, int axis)
 	{
 		int second_axis = SecondAxis(axis);
-		Vecu body_lower_bound_cell_ = CellIndexFromPosition(body_domain_bounds.first);
-		Vecu body_upper_bound_cell_ = CellIndexFromPosition(body_domain_bounds.second);
+		Vecu body_lower_bound_cell_ = CellIndexFromPosition(bounding_bounds.first);
+		Vecu body_upper_bound_cell_ = CellIndexFromPosition(bounding_bounds.second);
 
 		//lower bound cells
 		for (size_t j = SMAX(int(body_lower_bound_cell_[second_axis]) - 1, 0);
@@ -183,11 +183,11 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void CellLinkedList::
-		tagMirrorBoundingCells(CellLists &cell_lists, BoundingBox &body_domain_bounds, int axis, bool positive)
+		tagMirrorBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive)
 	{
 		int second_axis = SecondAxis(axis);
-		Vecu body_lower_bound_cell_ = CellIndexFromPosition(body_domain_bounds.first);
-		Vecu body_upper_bound_cell_ = CellIndexFromPosition(body_domain_bounds.second);
+		Vecu body_lower_bound_cell_ = CellIndexFromPosition(bounding_bounds.first);
+		Vecu body_upper_bound_cell_ = CellIndexFromPosition(bounding_bounds.second);
 
 		if (positive)
 		{

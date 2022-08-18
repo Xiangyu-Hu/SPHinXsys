@@ -37,7 +37,7 @@
 namespace SPH
 {
 	//----------------------------------------------------------------------
-	//		preclaimed classes
+	//		pre-claimed classes
 	//----------------------------------------------------------------------
 	class Solid;
 	class ElasticSolid;

@@ -81,4 +81,4 @@ namespace SPH {
     	}
    	 	aOut << '\n' << std::endl;
 	}
-}/** End of namespcae */
+}/** End of namespace */

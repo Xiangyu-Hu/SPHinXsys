@@ -132,7 +132,7 @@ namespace SPH
         {
         public:
             explicit EmitterInflowInjecting(FluidBody &fluid_body, BodyAlignedBoxByParticle &aligned_box_part,
-                                            size_t body_buffer_width, int axis_direction, bool positive);
+                                            size_t body_buffer_width, int axis, bool positive);
             virtual ~EmitterInflowInjecting(){};
 
             /** This class is only implemented in sequential due to memory conflicts. */

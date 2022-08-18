@@ -41,7 +41,7 @@ public:
 	}
 };
 /**
- * Assign case dependent muscle activation histroy
+ * Assign case dependent muscle activation history
  */
 class MyocardiumActivation
 	: public active_muscle_dynamics::MuscleActivation
@@ -121,7 +121,7 @@ int main()
 	InOutput in_output(system);
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
 	/**
-	 * From here the time stepping begines.
+	 * From here the time stepping begins.
 	 * Set the starting time.
 	 */
 	GlobalStaticVariables::physical_time_ = 0.0;

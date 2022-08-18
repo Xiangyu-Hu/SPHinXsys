@@ -22,7 +22,7 @@ TEST(StructuralSimulation, MassSpringDamperResponse)
 	std::vector<Real> resolution_list = { resolution_mass};
 	SharedPtr<LinearElasticSolid> material = makeShared<LinearElasticSolid>(rho_0, Youngs_modulus, poisson);
 	std::vector<SharedPtr<LinearElasticSolid>> material_model_list = { material };
-	/** INPUT DECLERATION */
+	/** INPUT DECLARATION */
 	StructuralSimulationInput input
 	{
 		relative_input_path,

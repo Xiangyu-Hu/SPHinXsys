@@ -23,39 +23,39 @@ Real diffusion_coff = 1.0e-3;
 Real bias_coff = 0.0;
 Real alpha = Pi / 4.0;
 Vec2d bias_direction(cos(alpha), sin(alpha));
-Real initialtemperature = 0.0;
-Real hightemperature = 1.0;
-Real lowtemperature = 0.0;
+Real initial_temperature = 0.0;
+Real high_temperature = 1.0;
+Real low_temperature = 0.0;
 //----------------------------------------------------------------------
 //	Cases-dependent 2D geometries
 //----------------------------------------------------------------------
 MultiPolygon createDiffusionDomain()
 {
 	//thermal solid domain geometry.
-	std::vector<Vecd> diffusiondomain;
-	diffusiondomain.push_back(Vecd(-BW, -BW));
-	diffusiondomain.push_back(Vecd(-BW, H + BW));
-	diffusiondomain.push_back(Vecd(L + BW, H + BW));
-	diffusiondomain.push_back(Vecd(L + BW, -BW));
-	diffusiondomain.push_back(Vecd(-BW, -BW));
+	std::vector<Vecd> diffusion_domain;
+	diffusion_domain.push_back(Vecd(-BW, -BW));
+	diffusion_domain.push_back(Vecd(-BW, H + BW));
+	diffusion_domain.push_back(Vecd(L + BW, H + BW));
+	diffusion_domain.push_back(Vecd(L + BW, -BW));
+	diffusion_domain.push_back(Vecd(-BW, -BW));
 
 	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(diffusiondomain, ShapeBooleanOps::add);
+	multi_polygon.addAPolygon(diffusion_domain, ShapeBooleanOps::add);
 	return multi_polygon;
 }
 
 MultiPolygon createInnerDomain()
 {
 	//thermal solid inner domain geometry.
-	std::vector<Vecd> innerdomain;
-	innerdomain.push_back(Vecd(0.0, 0.0));
-	innerdomain.push_back(Vecd(0.0, H));
-	innerdomain.push_back(Vecd(L, H));
-	innerdomain.push_back(Vecd(L, 0.0));
-	innerdomain.push_back(Vecd(0.0, 0.0));
+	std::vector<Vecd> inner_domain;
+	inner_domain.push_back(Vecd(0.0, 0.0));
+	inner_domain.push_back(Vecd(0.0, H));
+	inner_domain.push_back(Vecd(L, H));
+	inner_domain.push_back(Vecd(L, 0.0));
+	inner_domain.push_back(Vecd(0.0, 0.0));
 
 	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(innerdomain, ShapeBooleanOps::add);
+	multi_polygon.addAPolygon(inner_domain, ShapeBooleanOps::add);
 
 	return multi_polygon;
 }
@@ -63,15 +63,15 @@ MultiPolygon createInnerDomain()
 MultiPolygon createLeftSideBoundary()
 {
 	//left isothermal boundary geometry.
-	std::vector<Vecd> leftsideboundary;
-	leftsideboundary.push_back(Vecd(-BW, -BW));
-	leftsideboundary.push_back(Vecd(-BW, H + BW));
-	leftsideboundary.push_back(Vecd(0.0, H));
-	leftsideboundary.push_back(Vecd(0.0, 0.0));
-	leftsideboundary.push_back(Vecd(-BW, -BW));
+	std::vector<Vecd> left_boundary;
+	left_boundary.push_back(Vecd(-BW, -BW));
+	left_boundary.push_back(Vecd(-BW, H + BW));
+	left_boundary.push_back(Vecd(0.0, H));
+	left_boundary.push_back(Vecd(0.0, 0.0));
+	left_boundary.push_back(Vecd(-BW, -BW));
 
 	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(leftsideboundary, ShapeBooleanOps::add);
+	multi_polygon.addAPolygon(left_boundary, ShapeBooleanOps::add);
 
 	return multi_polygon;
 }
@@ -79,19 +79,19 @@ MultiPolygon createLeftSideBoundary()
 MultiPolygon createOtherSideBoundary()
 {
 	//other side isothermal boundary geometry.
-	std::vector<Vecd> othersideboundary;
-	othersideboundary.push_back(Vecd(-BW, -BW));
-	othersideboundary.push_back(Vecd(0.0, 0.0));
-	othersideboundary.push_back(Vecd(L, 0.0));
-	othersideboundary.push_back(Vecd(L, H));
-	othersideboundary.push_back(Vecd(0.0, L));
-	othersideboundary.push_back(Vecd(-BW, H + BW));
-	othersideboundary.push_back(Vecd(L + BW, H + BW));
-	othersideboundary.push_back(Vecd(L + BW, -BW));
-	othersideboundary.push_back(Vecd(-BW, -BW));
+	std::vector<Vecd> other_boundaries;
+	other_boundaries.push_back(Vecd(-BW, -BW));
+	other_boundaries.push_back(Vecd(0.0, 0.0));
+	other_boundaries.push_back(Vecd(L, 0.0));
+	other_boundaries.push_back(Vecd(L, H));
+	other_boundaries.push_back(Vecd(0.0, L));
+	other_boundaries.push_back(Vecd(-BW, H + BW));
+	other_boundaries.push_back(Vecd(L + BW, H + BW));
+	other_boundaries.push_back(Vecd(L + BW, -BW));
+	other_boundaries.push_back(Vecd(-BW, -BW));
 
 	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(othersideboundary, ShapeBooleanOps::add);
+	multi_polygon.addAPolygon(other_boundaries, ShapeBooleanOps::add);
 
 	return multi_polygon;
 }
@@ -118,7 +118,7 @@ protected:
 	{
 		if (pos_[index_i][0] >= 0 && pos_[index_i][0] <= L && pos_[index_i][1] >= 0 && pos_[index_i][1] <= H)
 		{
-			species_n_[phi_][index_i] = initialtemperature;
+			species_n_[phi_][index_i] = initial_temperature;
 		}
 	};
 
@@ -139,7 +139,7 @@ protected:
 	size_t phi_;
 	void Update(size_t index_i, Real dt) override
 	{
-		species_n_[phi_][index_i] = hightemperature;
+		species_n_[phi_][index_i] = high_temperature;
 	};
 
 public:
@@ -159,7 +159,7 @@ protected:
 	size_t phi_;
 	void Update(size_t index_i, Real dt) override
 	{
-		species_n_[phi_][index_i] = lowtemperature;
+		species_n_[phi_][index_i] = low_temperature;
 	};
 
 public:

@@ -12,7 +12,7 @@ using namespace SPH;
 /**
  * @brief Basic geometry parameters and numerical setup.
  */
-Real radius = 0.0975;								/** Radius of the inner boundary of the cylinderical thin structure. */
+Real radius = 0.0975;								/** Radius of the inner boundary of the cylindrical thin structure. */
 Real height = 0.02;									/** Height of the cylinder. */
 Real thickness = 0.005;								/** Thickness of the cylinder. */
 Real radius_mid_surface = radius + thickness / 2.0; /** Radius of the mid surface. */

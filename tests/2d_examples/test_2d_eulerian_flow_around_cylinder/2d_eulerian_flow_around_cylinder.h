@@ -33,7 +33,7 @@ Real c_f = 10.0 * U_f;	/**< Speed of sound. */
 Real Re = 100.0;		/**< Reynolds number. */
 Real mu_f = rho0_f * U_f * (2.0 * insert_circle_radius) / Re;	/**< Dynamics viscosity. */
 //----------------------------------------------------------------------
-//	define geometrices
+//	define geometries
 //----------------------------------------------------------------------
 std::vector<Vecd> createWaterBlockShape()
 {
@@ -52,7 +52,7 @@ class WaterBlock : public ComplexShape
 public:
 	explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		/** Geomtry definition. */
+		/** Geometry definition. */
 		MultiPolygon outer_boundary(createWaterBlockShape());
 		add<MultiPolygonShape>(outer_boundary, "OuterBoundary");
 		MultiPolygon circle(insert_circle_center, insert_circle_radius, 100);
@@ -64,7 +64,7 @@ class Cylinder : public MultiPolygonShape
 public:
 	explicit Cylinder(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geomtry definition. */
+		/** Geometry definition. */
 		multi_polygon_.addACircle(insert_circle_center, insert_circle_radius, 100, ShapeBooleanOps::add);
 	}
 };

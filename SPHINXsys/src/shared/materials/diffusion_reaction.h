@@ -21,7 +21,7 @@
  *                                                                           *
  * --------------------------------------------------------------------------*/
 /**
- * @file 	diffussion_reaction.h
+ * @file 	diffusion_reaction.h
  * @brief 	Describe the diffusive and reaction in which
  *          the dynamics is characterized by diffusion equation and reactive source terms.
  *			Typical physical processes are diffusion, heat conduction
