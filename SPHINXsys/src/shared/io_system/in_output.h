@@ -347,6 +347,11 @@ namespace SPH
 			out_file << "\n";
 			out_file.close();
 		};
+
+		StdLargeVec<VariableType> *getObservedQuantity()
+		{
+			return this->interpolated_quantities_;
+		}
 	};
 
 	/**
