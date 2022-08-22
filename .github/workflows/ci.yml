@@ -39,8 +39,8 @@ jobs:
           liblapack-dev \
           wget \
           unzip
-          cd /home/runner/ && wget "https://virtonomyplatformdev.blob.core.windows.net/simulation/simbody_lib/simbody.zip?sv=2019-12-12&st=2021-08-03T14%3A03%3A58Z&se=2022-08-04T14%3A03%3A00Z&sr=b&sp=r&sig=j4pjSwzRMV3OzRtKeYUv62zutZ3Td3M8khRxd3lsEYs%3D"
-          unzip "simbody.zip?sv=2019-12-12&st=2021-08-03T14:03:58Z&se=2022-08-04T14:03:00Z&sr=b&sp=r&sig=j4pjSwzRMV3OzRtKeYUv62zutZ3Td3M8khRxd3lsEYs="
+          cd /home/runner/ && wget "https://github.com/Virtonomy/simbody/releases/download/Simbody-3.7.1/simbody_v3.7.1.zip"
+          unzip "simbody_v3.7.1.zip"
           export TBB_HOME=/usr/lib/x86_64-linux-gnu
           export BOOST_HOME=/usr/lib/x86_64-linux-gnu
           cd /usr/src/gtest
