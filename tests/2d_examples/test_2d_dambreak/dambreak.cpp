@@ -1,5 +1,5 @@
 /**
- * @file 	Dambreak.cpp
+ * @file 	dambreak.cpp
  * @brief 	2D dambreak example.
  * @details This is the one of the basic test cases, also the first case for
  * 			understanding SPH method for fluid simulation.
@@ -33,7 +33,7 @@ Vec2d outer_wall_translation = Vec2d(-BW, -BW) + outer_wall_halfsize;
 Vec2d inner_wall_halfsize = Vec2d(0.5 * DL, 0.5 * DH);
 Vec2d inner_wall_translation = inner_wall_halfsize;
 //----------------------------------------------------------------------
-//	Complex shape for wall boundary, note that no partial overlap is allowed 
+//	Complex shape for wall boundary, note that no partial overlap is allowed
 //	for the shapes in a complex shape.
 //----------------------------------------------------------------------
 class WallBoundary : public ComplexShape
@@ -72,7 +72,7 @@ int main(int ac, char *av[])
 	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
 	ObserverBody fluid_observer(sph_system, "FluidObserver");
-	StdVec<Vecd> observation_location = {Vecd(DL, 0.2)}; // Pressure observer location
+	StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
@@ -129,7 +129,6 @@ int main(int ac, char *av[])
 	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 20.0;
 	Real output_interval = 0.1;
-	Real dt = 0.0;		  /**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------
@@ -157,21 +156,22 @@ int main(int ac, char *av[])
 			/** outer loop for dual-time criteria time-stepping. */
 			time_instance = tick_count::now();
 			fluid_step_initialization.parallel_exec();
-			Real Dt = fluid_advection_time_step.parallel_exec();
+			Real advection_dt = fluid_advection_time_step.parallel_exec();
 			fluid_density_by_summation.parallel_exec();
 			interval_computing_time_step += tick_count::now() - time_instance;
 
 			time_instance = tick_count::now();
 			Real relaxation_time = 0.0;
-			while (relaxation_time < Dt)
+			Real acoustic_dt = 0.0;
+			while (relaxation_time < advection_dt)
 			{
 				/** inner loop for dual-time criteria time-stepping.  */
-				fluid_pressure_relaxation.parallel_exec(dt);
-				fluid_density_relaxation.parallel_exec(dt);
-				dt = fluid_acoustic_time_step.parallel_exec();
-				relaxation_time += dt;
-				integration_time += dt;
-				GlobalStaticVariables::physical_time_ += dt;
+				acoustic_dt = fluid_acoustic_time_step.parallel_exec();
+				fluid_pressure_relaxation.parallel_exec(acoustic_dt);
+				fluid_density_relaxation.parallel_exec(acoustic_dt);
+				relaxation_time += acoustic_dt;
+				integration_time += acoustic_dt;
+				GlobalStaticVariables::physical_time_ += acoustic_dt;
 			}
 			interval_computing_fluid_pressure_relaxation += tick_count::now() - time_instance;
 
@@ -180,7 +180,7 @@ int main(int ac, char *av[])
 			{
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 						  << GlobalStaticVariables::physical_time_
-						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
+						  << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
 
 				if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != sph_system.restart_step_)
 				{
@@ -218,7 +218,12 @@ int main(int ac, char *av[])
 	std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
 			  << interval_updating_configuration.seconds() << "\n";
 
-	if (sph_system.restart_step_ == 0)
+	if (sph_system.generate_regression_data_)
+	{
+		write_water_mechanical_energy.generateDataBase(1.0e-2);
+		write_recorded_water_pressure.generateDataBase(1.0e-2);
+	}
+	else if (sph_system.restart_step_ == 0)
 	{
 		write_water_mechanical_energy.newResultTest();
 		write_recorded_water_pressure.newResultTest();
