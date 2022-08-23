@@ -10,33 +10,31 @@ using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 5.366;					/**< Tank length. */
-Real DH = 5.366;					/**< Tank height. */
-Real LL = 2.0;						/**< Liquid column length. */
-Real LH = 1.0;						/**< Liquid column height. */
+Real DL = 5.366;					/**< Water tank length. */
+Real DH = 5.366;					/**< Water tank height. */
+Real LL = 2.0;						/**< Water column length. */
+Real LH = 1.0;						/**< Water column height. */
 Real particle_spacing_ref = 0.025;	/**< Initial reference particle spacing. */
-Real BW = particle_spacing_ref * 4; /**< Extending width for boundary conditions. */
-BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
-// observer location
-StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
+Real BW = particle_spacing_ref * 4; /**< Thickness of tank wall. */
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
 Real rho0_f = 1.0;						 /**< Reference density of fluid. */
-Real gravity_g = 1.0;					 /**< Gravity force of fluid. */
+Real gravity_g = 1.0;					 /**< Gravity. */
 Real U_max = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
 Real c_f = 10.0 * U_max;				 /**< Reference sound speed. */
 //----------------------------------------------------------------------
 //	Geometric shapes used in this case.
 //----------------------------------------------------------------------
-Vec2d water_block_halfsize = Vec2d(0.5 * LL, 0.5 * LH); // local center at origin:
-Vec2d water_block_translation = water_block_halfsize;
+Vec2d water_block_halfsize = Vec2d(0.5 * LL, 0.5 * LH); // local center at origin
+Vec2d water_block_translation = water_block_halfsize;	// translation to global coordinates
 Vec2d outer_wall_halfsize = Vec2d(0.5 * DL + BW, 0.5 * DH + BW);
 Vec2d outer_wall_translation = Vec2d(-BW, -BW) + outer_wall_halfsize;
 Vec2d inner_wall_halfsize = Vec2d(0.5 * DL, 0.5 * DH);
 Vec2d inner_wall_translation = inner_wall_halfsize;
 //----------------------------------------------------------------------
-//	Complex for wall boundary
+//	Complex shape for wall boundary, note that no partial overlap is allowed 
+//	for the shapes in a complex shape.
 //----------------------------------------------------------------------
 class WallBoundary : public ComplexShape
 {
@@ -46,7 +44,7 @@ public:
 		add<TransformShape<GeometricShapeBox>>(Transform2d(outer_wall_translation), outer_wall_halfsize);
 		subtract<TransformShape<GeometricShapeBox>>(Transform2d(inner_wall_translation), inner_wall_halfsize);
 	}
-}; 
+};
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -55,10 +53,10 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem.
 	//----------------------------------------------------------------------
+	BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 	SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
 	sph_system.handleCommandlineOptions(ac, av);
-	/** I/O environment. */
-	InOutput in_output(sph_system);
+	InOutput in_output(sph_system); // I/O environment
 	//----------------------------------------------------------------------
 	//	Creating bodies with corresponding materials and particles.
 	//----------------------------------------------------------------------
@@ -74,6 +72,7 @@ int main(int ac, char *av[])
 	wall_boundary.addBodyStateForRecording<Vecd>("NormalDirection");
 
 	ObserverBody fluid_observer(sph_system, "FluidObserver");
+	StdVec<Vecd> observation_location = {Vecd(DL, 0.2)}; // Pressure observer location
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
@@ -83,8 +82,8 @@ int main(int ac, char *av[])
 	ComplexBodyRelation water_block_complex(water_block, {&wall_boundary});
 	BodyRelationContact fluid_observer_contact(fluid_observer, {&water_block});
 	//----------------------------------------------------------------------
-	//	Define the main numerical methods used in the simulation.
-	//	Note that there may be data dependence on the constructors of these methods.
+	//	Define the numerical methods used in the simulation.
+	//	Note that there may be data dependence on the sequence of constructions.
 	//----------------------------------------------------------------------
 	Gravity gravity(Vecd(0.0, -gravity_g));
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
