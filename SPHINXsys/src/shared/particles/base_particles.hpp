@@ -124,7 +124,7 @@ namespace SPH
         SimpleDynamics<DerivedVariableMethod> *derived_data = derived_particle_data_.createPtr<SimpleDynamics<DerivedVariableMethod>>(*sph_body_);
         derived_variables_.push_back(derived_data);
         using DerivedVariableType = typename DerivedVariableMethod::DerivedVariableType;
-        addVariableNameToList<DerivedVariableType>(variables_to_write_, derived_data->LocalDynamics().variable_name_);
+        addVariableNameToList<DerivedVariableType>(variables_to_write_, derived_data->getLocalDynamics().variable_name_);
     }
     //=================================================================================================//
     template <typename VariableType>

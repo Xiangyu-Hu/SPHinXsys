@@ -1,25 +1,25 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
 * @file 	particle_dynamics_algorithms.h
 * @brief 	This is the classes for algorithms particle dynamics.
@@ -36,7 +36,8 @@
 #ifndef PARTICLE_DYNAMICS_ALGORITHMS_H
 #define PARTICLE_DYNAMICS_ALGORITHMS_H
 
-#include "base_particle_dynamics.h"
+#include "particle_iterators.h"
+#include "base_local_dynamics.h"
 #include "base_particle_dynamics.hpp"
 
 namespace SPH
@@ -219,64 +220,35 @@ namespace SPH
 	//		it can be used in different dynamics.
 	//----------------------------------------------------------------------
 
-	class BodyParticleDynamics : public ParticleDynamics<void>
+	template <class LocalDynamics>
+	class SimpleDynamics : public ParticleDynamics<void>
 	{
-	public:
-		explicit BodyParticleDynamics(SPHBody &sph_body)
-			: ParticleDynamics<void>(sph_body){};
-
-		virtual ~BodyParticleDynamics(){};
-
-		virtual void exec(Real dt = 0.0) override
-		{
-			size_t total_real_particles = base_particles_->total_real_particles_;
-			ParticleIterator(total_real_particles, particle_functor_, dt);
-		};
-
-		virtual void parallel_exec(Real dt = 0.0) override
-		{
-			size_t total_real_particles = base_particles_->total_real_particles_;
-			ParticleIterator_parallel(total_real_particles, particle_functor_, dt);
-		};
-
-	protected:
-		ParticleFunctor particle_functor_;
-	};
-
-	template <class BodyDynamicsType, class LocalDynamicsSimple>
-	class SimpleParticleDynamics : public BodyDynamicsType
-	{
-		LocalDynamicsSimple local_dynamics_;
+		size_t &total_real_particles_;
+		LocalDynamics local_dynamics_;
 
 	public:
 		template <typename... ConstructorArgs>
-		SimpleParticleDynamics(SPHBody &sph_body, ConstructorArgs &&...args)
-			: BodyDynamicsType(sph_body),
-			  local_dynamics_(sph_body, std::forward<ConstructorArgs>(args)...)
-		{
-			this->particle_functor_ = std::bind(&LocalDynamicsSimple::update, &local_dynamics_, _1, _2);
-		};
-		virtual ~SimpleParticleDynamics(){};
+		SimpleDynamics(SPHBody &sph_body, ConstructorArgs &&...args)
+			: ParticleDynamics<void>(sph_body),
+			  total_real_particles_(base_particles_->total_real_particles_),
+			  local_dynamics_(sph_body, std::forward<ConstructorArgs>(args)...){};
+		virtual ~SimpleDynamics(){};
 
-		LocalDynamicsSimple &LocalDynamics() { return local_dynamics_; };
+		LocalDynamics &getLocalDynamics() { return local_dynamics_; };
 
 		virtual void exec(Real dt = 0.0) override
 		{
-			this->setBodyUpdated();
-			this->setupDynamics(dt); //TODO: this function should be in LocalDynamicsSimple
-			BodyDynamicsType::exec(dt);
+			setBodyUpdated();
+			local_dynamics_.setupDynamics(dt);
+			particle_for(total_real_particles_, local_dynamics_, &LocalDynamics::update, dt);
 		};
 
 		virtual void parallel_exec(Real dt = 0.0) override
 		{
-			this->setBodyUpdated();
-			this->setupDynamics(dt); //TODO: this function should be in LocalDynamicsSimple
-			BodyDynamicsType::parallel_exec(dt);
+			setBodyUpdated();
+			local_dynamics_.setupDynamics(dt);
+			particle_parallel_for(total_real_particles_, local_dynamics_, &LocalDynamics::update, dt);
 		};
 	};
-
-	//temporary usage before full revamping the code.
-	template <class LocalDynamicsType>
-	using SimpleDynamics = SimpleParticleDynamics<BodyParticleDynamics, LocalDynamicsType>;
 }
 #endif // PARTICLE_DYNAMICS_ALGORITHMS_H

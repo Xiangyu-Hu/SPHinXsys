@@ -313,7 +313,7 @@ namespace SPH
 			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
 
 		protected:
-			class NormalPrediction : public RelaxDataDelegateSimple
+			class NormalPrediction : public RelaxDataDelegateSimple, public LocalDynamics
 			{
 				Real thickness_;
 				LevelSetShape *level_set_shape_;

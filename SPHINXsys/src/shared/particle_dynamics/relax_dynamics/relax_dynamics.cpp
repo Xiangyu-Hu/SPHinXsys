@@ -333,7 +333,7 @@ namespace SPH
 		//=================================================================================================//
 		ShellNormalDirectionPrediction::NormalPrediction::
 			NormalPrediction(SPHBody &sph_body, Real thickness)
-			: RelaxDataDelegateSimple(sph_body), thickness_(thickness),
+			: RelaxDataDelegateSimple(sph_body), LocalDynamics(sph_body), thickness_(thickness),
 			  level_set_shape_(DynamicCast<LevelSetShape>(this, body_->body_shape_)),
 			  pos_(particles_->pos_), n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
 		{
