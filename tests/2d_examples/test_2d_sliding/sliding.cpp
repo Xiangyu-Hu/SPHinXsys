@@ -142,9 +142,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	int ite = 0;
 	Real T0 = 2.5;
-	Real End_Time = T0;
-	Real D_Time = 0.01 * T0;
-	Real Dt = 0.1 * D_Time;
+	Real end_time = T0;
+	Real output_interval = 0.01 * T0;
+	Real Dt = 0.1 * output_interval;
 	Real dt = 0.0;
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
@@ -154,10 +154,10 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)

@@ -165,7 +165,7 @@ int main()
 	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 20.0;	/**< End time. */
+	Real end_time = 20.0;	/**< End time. */
 	Real Output_Time = 0.1; /**< Time stamps for output of body states. */
 	Real dt = 0.0;			/**< Default acoustic time step sizes. */
 	/** statistics for computing CPU time. */
@@ -178,7 +178,7 @@ int main()
 	/**
 	 * @brief 	Main loop starts here.
 	 */
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		/** Integrate time (loop) until the next output time. */

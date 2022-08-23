@@ -182,10 +182,10 @@ int main(int ac, char *av[])
 
 	int ite = 0;
 	Real T0 = 1.0;
-	Real End_Time = T0;
+	Real end_time = T0;
 	//time step size for output file
-	Real D_Time = 0.01 * T0;
-	Real Dt = 0.1 * D_Time; /**< Time period for data observing */
+	Real output_interval = 0.01 * T0;
+	Real Dt = 0.1 * output_interval; /**< Time period for data observing */
 	Real dt = 0.0;			//default acoustic time step sizes
 
 	//statistics for computing time
@@ -193,11 +193,11 @@ int main(int ac, char *av[])
 	tick_count::interval_t interval;
 
 	//computation loop starts
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		//integrate time (loop) until the next output time
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 
 			Real relaxation_time = 0.0;

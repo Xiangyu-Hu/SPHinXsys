@@ -463,8 +463,8 @@ int main(int ac, char *av[])
 	int screen_output_interval = 10;
 	int ite = 0;
 	int reaction_step = 2;
-	Real End_Time = 100;
-	Real Ouput_T = End_Time / 200.0;
+	Real end_time = 100;
+	Real Ouput_T = end_time / 200.0;
 	Real Observer_time = 0.01 * Ouput_T;
 	Real dt = 0.0;	 /**< Default acoustic time step sizes for physiology. */
 	Real dt_s = 0.0; /**< Default acoustic time step sizes for mechanics. */
@@ -474,7 +474,7 @@ int main(int ac, char *av[])
 	std::cout << "Main Loop Starts Here : "
 			  << "\n";
 	/** Main loop starts here. */
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		while (integration_time < Ouput_T)

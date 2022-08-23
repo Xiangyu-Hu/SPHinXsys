@@ -169,8 +169,8 @@ int main()
 	//----------------------------------------------------------------------
 	int ite = 0;
 	Real T0 = 1.0;
-	Real End_Time = T0;
-	Real Output_Time = 0.1 * End_Time;
+	Real end_time = T0;
+	Real Output_Time = 0.1 * end_time;
 	Real Observe_time = 0.1 * Output_Time;
 	Real dt = 0.0;
 	//----------------------------------------------------------------------
@@ -186,7 +186,7 @@ int main()
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		while (integration_time < Output_Time)

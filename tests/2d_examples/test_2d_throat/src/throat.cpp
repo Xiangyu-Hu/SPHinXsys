@@ -195,9 +195,9 @@ int main()
 	//----------------------------------------------------------------------
 	int number_of_iterations = 0;
 	int screen_output_interval = 100;
-	Real End_Time = 20.0;
+	Real end_time = 20.0;
 	// time step size for ouput file
-	Real D_Time = End_Time / 20.0;
+	Real output_interval = end_time / 20.0;
 	Real dt = 0.0; // default acoustic time step sizes
 	// statistics for computing time
 	tick_count t1 = tick_count::now();
@@ -209,11 +209,11 @@ int main()
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		// integrate time (loop) until the next output time
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 
 			initialize_a_fluid_step.parallel_exec();

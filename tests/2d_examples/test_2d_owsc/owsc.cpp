@@ -206,8 +206,8 @@ int main()
 	GlobalStaticVariables::physical_time_ = 0.0;
 	int number_of_iterations = 0;
 	int screen_output_interval = 1000;
-	Real End_Time = total_physical_time;
-	Real D_Time = End_Time / 100.0;
+	Real end_time = total_physical_time;
+	Real output_interval = end_time / 100.0;
 	Real dt = 0.0;
 	Real total_time = 0.0;
 	Real relax_time = 1.0;
@@ -217,10 +217,10 @@ int main()
 	//----------------------------------------------------------------------
 	//	Main loop of time stepping starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integral_time = 0.0;
-		while (integral_time < D_Time)
+		while (integral_time < output_interval)
 		{
 			initialize_time_step_to_fluid.parallel_exec();
 

@@ -307,8 +307,8 @@ int main()
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
-	Real End_Time = 10;
-	Real D_Time = End_Time / 100.0; /**< time stamps for output,WriteToFile*/
+	Real end_time = 10;
+	Real output_interval = end_time / 100.0; /**< time stamps for output,WriteToFile*/
 	int number_of_iterations = 0;
 	int screen_output_interval = 40;
 	//----------------------------------------------------------------------
@@ -323,11 +323,11 @@ int main()
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 			initialize_a_fluid_step.parallel_exec();
 			Real Dt = get_fluid_advection_time_step.parallel_exec();

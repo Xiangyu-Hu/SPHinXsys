@@ -198,8 +198,8 @@ int main(int ac, char *av[])
 	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 100.0;			/**< End time. */
-	Real D_Time = End_Time / 200.0; /**< Time stamps for output of body states. */
+	Real end_time = 100.0;
+	Real output_interval = end_time / 200.0; /**< Time stamps for output of body states. */
 	Real dt = 0.0;					/**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
@@ -213,11 +213,11 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 			initialize_a_fluid_step.parallel_exec();
 			Real Dt = get_fluid_advection_time_step_size.parallel_exec();

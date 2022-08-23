@@ -157,9 +157,9 @@ int main()
 	size_t number_of_iterations = system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 20.0;
+	Real end_time = 20.0;
 	//time step size for output file
-	Real D_Time = End_Time / 20.0;
+	Real output_interval = end_time / 20.0;
 	Real dt = 0.0; //default acoustic time step sizes
 
 	//output for initial particles, global data
@@ -170,11 +170,11 @@ int main()
 	tick_count::interval_t interval;
 
 	//computation loop starts
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		//integrate time (loop) until the next output time
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 
 			//acceleration due to viscous force and gravity

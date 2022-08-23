@@ -130,8 +130,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = sph_system.restart_step_;
 	int screen_output_interval = 100;
-	Real End_Time = 0.2; /**< End time. */
-	Real D_Time = 0.01;	 /**< Time stamps for output of body states. */
+	Real end_time = 0.2;
+	Real output_interval = 0.01;	 /**< Time stamps for output of body states. */
 	//----------------------------------------------------------------------
 	// Output the start states of bodies.
 	//----------------------------------------------------------------------
@@ -144,11 +144,11 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		//	Integrate time (loop) until the next output time.
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 			initialize_wave_step.parallel_exec();
 			Real dt = get_wave_time_step_size.parallel_exec();

@@ -436,8 +436,8 @@ int main(int ac, char *av[])
 	 */
 	int number_of_iterations = 0;
 	int screen_output_interval = 100;
-	Real End_Time = 200.0;
-	Real D_Time = End_Time / 200.0;
+	Real end_time = 200.0;
+	Real output_interval = end_time / 200.0;
 	Real dt = 0.0;	 /**< Default acoustic time step sizes. */
 	Real dt_s = 0.0; /**< Default acoustic time step sizes for solid. */
 	tick_count t1 = tick_count::now();
@@ -446,10 +446,10 @@ int main(int ac, char *av[])
 	/**
 	 * Main loop starts here.
 	 */
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 			initialize_a_fluid_step.parallel_exec();
 			Real Dt = get_fluid_advection_time_step_size.parallel_exec();

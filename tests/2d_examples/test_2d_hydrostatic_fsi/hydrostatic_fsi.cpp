@@ -298,8 +298,8 @@ int main()
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = 0;
 	int screen_output_interval = 100;
-	Real End_Time = 0.5;		   /**< End time. */
-	Real D_Time = End_Time / 50.0; /**< time stamps for output. */
+	Real end_time = 0.5;		   /**< End time. */
+	Real output_interval = end_time / 50.0;
 	Real dt = 0.0;				   /**< Default acoustic time step sizes. */
 	Real dt_s = 0.0;			   /**< Default acoustic time step sizes for solid. */
 	tick_count t1 = tick_count::now();
@@ -307,11 +307,11 @@ int main()
 	//----------------------------------------------------------------------
 	//	Main loop of time stepping starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 			/** Acceleration due to viscous force and gravity. */
 			initialize_a_fluid_step.parallel_exec();

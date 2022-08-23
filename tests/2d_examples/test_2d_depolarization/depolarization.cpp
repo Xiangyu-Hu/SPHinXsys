@@ -131,9 +131,9 @@ int main()
 	//----------------------------------------------------------------------
 	int ite = 0;
 	Real T0 = 8.0;
-	Real End_Time = T0;
-	Real D_Time = 0.5;		 /**< Time period for output */
-	Real Dt = 0.01 * D_Time; /**< Time period for data observing */
+	Real end_time = T0;
+	Real output_interval = 0.5;		 /**< Time period for output */
+	Real Dt = 0.01 * output_interval; /**< Time period for data observing */
 	Real dt = 0.0;
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
@@ -143,10 +143,10 @@ int main()
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)

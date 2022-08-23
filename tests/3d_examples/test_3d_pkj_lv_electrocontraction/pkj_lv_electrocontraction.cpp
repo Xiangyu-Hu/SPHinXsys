@@ -237,8 +237,8 @@ int main(int ac, char *av[])
 	int screen_output_interval = 10;
 	int ite = 0;
 	int reaction_step = 2;
-	Real End_Time = 80;
-	Real Ouput_T = End_Time / 200.0;
+	Real end_time = 80;
+	Real Ouput_T = end_time / 200.0;
 	Real Observer_time = 0.01 * Ouput_T;
 	Real dt_myocardium = 0.0;
 	Real dt_pkj = 0.0;
@@ -249,7 +249,7 @@ int main(int ac, char *av[])
 	cout << "Main Loop Starts Here : "
 		 << "\n";
 	/** Main loop starts here. */
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		while (integration_time < Ouput_T)

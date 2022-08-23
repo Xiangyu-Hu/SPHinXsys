@@ -128,8 +128,8 @@ int main()
 	size_t number_of_iterations = sph_system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
-	Real End_Time = 5.0;		 /**< End time. */
-	Real D_Time = End_Time / 50; /**< Time stamps for output of body states. */
+	Real end_time = 5.0;		 /**< End time. */
+	Real output_interval = end_time / 50; /**< Time stamps for output of body states. */
 	Real dt = 0.0;				 /**< Default acoustic time step sizes. */
 	/** statistics for computing CPU time. */
 	tick_count t1 = tick_count::now();
@@ -145,11 +145,11 @@ int main()
 	//----------------------------------------------------------------------
 	//	Main loop starts here.
 	//----------------------------------------------------------------------
-	while (GlobalStaticVariables::physical_time_ < End_Time)
+	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
 		/** Integrate time (loop) until the next output time. */
-		while (integration_time < D_Time)
+		while (integration_time < output_interval)
 		{
 			/** Acceleration due to viscous force and gravity. */
 			time_instance = tick_count::now();
