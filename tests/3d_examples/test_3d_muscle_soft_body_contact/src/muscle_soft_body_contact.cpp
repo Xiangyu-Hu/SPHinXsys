@@ -104,8 +104,8 @@ int main()
 	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
 		plate_damping(0.2, moving_plate_inner, "Velocity", physical_viscosity);
 	/** Output */
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 
 	/**
 	 * From here the time stepping begins.

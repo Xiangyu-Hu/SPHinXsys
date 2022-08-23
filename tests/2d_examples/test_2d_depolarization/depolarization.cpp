@@ -76,8 +76,7 @@ int main()
 	//	Build up the environment of a SPHSystem.
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, resolution_ref);
-	/** output environment. */
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -111,9 +110,9 @@ int main()
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Real>>
-		write_recorded_voltage("Voltage", in_output, voltage_observer_contact_relation);
+		write_recorded_voltage("Voltage", io_environment, voltage_observer_contact_relation);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.

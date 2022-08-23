@@ -119,15 +119,15 @@ int main()
 	//-----------------------------------------------------------------------------
 	//outputs
 	//-----------------------------------------------------------------------------
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp write_water_block_states(in_output, system.real_bodies_);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp write_water_block_states(io_environment, system.real_bodies_);
 	/** Output the body states for restart simulation. */
-	RestartIO restart_io(in_output, system.real_bodies_);
+	RestartIO restart_io(io_environment, system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
 	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
-		write_water_mechanical_energy(in_output, water_block, gravity);
+		write_water_mechanical_energy(io_environment, water_block, gravity);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-		write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact);
+		write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);
 	//-------------------------------------------------------------------
 	//from here the time stepping begins
 	//-------------------------------------------------------------------

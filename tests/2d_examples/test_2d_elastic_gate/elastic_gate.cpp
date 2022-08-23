@@ -143,8 +143,7 @@ int main()
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Set the starting time to zero. */
 	GlobalStaticVariables::physical_time_ = 0.0;
-	/** I/O environment. */
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -223,12 +222,12 @@ int main()
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	/** Output body states for visualization in Tecplot. */
-	BodyStatesRecordingToPlt write_real_body_states_to_plt(in_output, system.real_bodies_);
+	BodyStatesRecordingToPlt write_real_body_states_to_plt(io_environment, system.real_bodies_);
 	/** Output body states for visualization in Paraview. */
-	BodyStatesRecordingToVtp write_real_body_states_to_vtp(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp write_real_body_states_to_vtp(io_environment, system.real_bodies_);
 	/** Output the observed displacement of gate free end. */
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_beam_tip_displacement("Position", in_output, gate_observer_contact_relation);
+		write_beam_tip_displacement("Position", io_environment, gate_observer_contact_relation);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.

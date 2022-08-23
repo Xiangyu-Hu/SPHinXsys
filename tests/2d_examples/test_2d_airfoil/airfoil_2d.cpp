@@ -52,8 +52,7 @@ int main(int ac, char *av[])
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
 #endif
-	/** output environment. */
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -66,8 +65,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp airfoil_recording_to_vtp(in_output, {&airfoil});
-	MeshRecordingToPlt cell_linked_list_recording(in_output, airfoil, airfoil.cell_linked_list_);
+	BodyStatesRecordingToVtp airfoil_recording_to_vtp(io_environment, {&airfoil});
+	MeshRecordingToPlt cell_linked_list_recording(io_environment, airfoil, airfoil.cell_linked_list_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies,

@@ -95,9 +95,9 @@ int main()
 	/**
 	 * @brief Output.
 	 */
-	InOutput in_output(sph_system);
+	IOEnvironment io_environment(sph_system);
 	/** Output the body states. */
-	BodyStatesRecordingToVtp body_states_recording(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
 	/** Pre-simulation*/
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();

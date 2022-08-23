@@ -212,10 +212,8 @@ int main(int ac, char *av[])
 	system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: start with initial condition. */
 	system.restart_step_ = 0;
-	// handle command line arguments
 	system.handleCommandlineOptions(ac, av);
-	// Setup in- and output environment.
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 
 	/**
 	 * @brief   Particles and body creation for water.
@@ -238,7 +236,7 @@ int main(int ac, char *av[])
 	fish_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	// Using relaxed particle distribution if needed
 	(!system.run_particle_relaxation_ && system.reload_particles_)
-		? fish_body.generateParticles<ParticleGeneratorReload>(in_output, fish_body.getBodyName())
+		? fish_body.generateParticles<ParticleGeneratorReload>(io_environment, fish_body.getBodyName())
 		: fish_body.generateParticles<ParticleGeneratorLattice>();
 	/**
 	 * @brief   Particle and body creation of fish observer.
@@ -252,9 +250,9 @@ int main(int ac, char *av[])
 	BodyRelationContact fish_body_contact(fish_body, {&water_block});
 	BodyRelationContact fish_observer_contact(fish_observer, {&fish_body});
 
-	BodyStatesRecordingToVtp write_real_body_states(in_output, system.real_bodies_);
-	BodyReducedQuantityRecording<solid_dynamics::TotalForceOnSolid> write_total_force_on_fish(in_output, fish_body);
-	ObservedQuantityRecording<Vecd> write_fish_displacement("Position", in_output, fish_observer_contact);
+	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
+	BodyReducedQuantityRecording<solid_dynamics::TotalForceOnSolid> write_total_force_on_fish(io_environment, fish_body);
+	ObservedQuantityRecording<Vecd> write_fish_displacement("Position", io_environment, fish_observer_contact);
 
 	/** check whether run particle relaxation for body fitted particle distribution. */
 	if (system.run_particle_relaxation_)
@@ -265,9 +263,9 @@ int main(int ac, char *av[])
 		/** Random reset the insert body particle position. */
 		RandomizeParticlePosition random_fish_body_particles(fish_body);
 		/** Write the body state to Vtp file. */
-		BodyStatesRecordingToVtp write_fish_body(in_output, fish_body);
+		BodyStatesRecordingToVtp write_fish_body(io_environment, fish_body);
 		/** Write the particle reload files. */
-		ReloadParticleIO write_particle_reload_files(in_output, {&fish_body});
+		ReloadParticleIO write_particle_reload_files(io_environment, {&fish_body});
 
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(fish_body_inner);

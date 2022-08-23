@@ -118,8 +118,8 @@ int main()
 	BodyRegionByParticle holder(myocardium_muscle_body, makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder));
 	ConstrainHolder constrain_holder(myocardium_muscle_body, holder, 0);
 	/** Output */
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	/**
 	 * From here the time stepping begins.
 	 * Set the starting time.

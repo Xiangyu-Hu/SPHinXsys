@@ -122,10 +122,10 @@ int main()
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_plate_max_displacement("Position", in_output, plate_observer_contact);
+		write_plate_max_displacement("Position", io_environment, plate_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.

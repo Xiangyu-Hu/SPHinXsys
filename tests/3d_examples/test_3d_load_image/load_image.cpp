@@ -40,8 +40,7 @@ int main()
 	//	Build up -- a SPHSystem
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, dp_0);
-	/** output environment. */
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -54,8 +53,8 @@ int main()
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_imported_model_to_vtp(in_output, {imported_model});
-	MeshRecordingToPlt cell_linked_list_recording(in_output, imported_model, imported_model.cell_linked_list_);
+	BodyStatesRecordingToVtp write_imported_model_to_vtp(io_environment, {imported_model});
+	MeshRecordingToPlt cell_linked_list_recording(io_environment, imported_model, imported_model.cell_linked_list_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.

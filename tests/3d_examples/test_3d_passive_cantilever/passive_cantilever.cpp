@@ -104,10 +104,10 @@ int main()
 		makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder, "Holder"));
 	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(cantilever_body, holder);
 	/** Output */
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_displacement("Position", in_output, cantilever_observer_contact);
+		write_displacement("Position", io_environment, cantilever_observer_contact);
 	/**
 	 * From here the time stepping begins.
 	 * Set the starting time.

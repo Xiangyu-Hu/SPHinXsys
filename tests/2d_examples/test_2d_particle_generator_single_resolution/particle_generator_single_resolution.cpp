@@ -43,7 +43,7 @@ int main()
 	//	Build up -- a SPHSystem
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, resolution_ref);
-	InOutput in_output(system); // output environment
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -65,8 +65,8 @@ int main()
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp input_body_recording_to_vtp(in_output, input_body);
-	MeshRecordingToPlt cell_linked_list_recording(in_output, input_body, input_body.cell_linked_list_);
+	BodyStatesRecordingToVtp input_body_recording_to_vtp(io_environment, input_body);
+	MeshRecordingToPlt cell_linked_list_recording(io_environment, input_body, input_body.cell_linked_list_);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.

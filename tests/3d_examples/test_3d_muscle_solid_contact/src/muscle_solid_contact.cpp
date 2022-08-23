@@ -95,8 +95,8 @@ int main()
 	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
 		muscle_damping(0.1, myocardium_body_inner, "Velocity", physical_viscosity);
 	/** Output */
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	/** Simbody interface. */
 	/**
 	* The multi body system from simbody.

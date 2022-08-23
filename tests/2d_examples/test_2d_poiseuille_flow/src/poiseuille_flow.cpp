@@ -134,11 +134,11 @@ int main()
 	/**
 	 * @brief Output.
 	 */
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	/** Output the body states. */
-	BodyStatesRecordingToVtp body_states_recording(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp body_states_recording(io_environment, system.real_bodies_);
 	/** Output the body states for restart simulation. */
-	RestartIO restart_io(in_output, system.real_bodies_);
+	RestartIO restart_io(io_environment, system.real_bodies_);
 	/**
 	 * @brief Setup geometry and initial conditions.
 	 */

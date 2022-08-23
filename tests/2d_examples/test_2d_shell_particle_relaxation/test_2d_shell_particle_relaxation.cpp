@@ -37,8 +37,7 @@ int main()
 {
 	/** Build up a SPHSystem. */
 	SPHSystem system(system_domain_bounds, resolution_ref);
-	/** output environment. */
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 
 	/** Creating body, materials and particles. */
 	SolidBody pipe_body(system, makeShared<Pipe>("PipeBody"));
@@ -51,8 +50,8 @@ int main()
 	/**
 	 * @brief define simple data file input and outputs functions.
 	 */
-	BodyStatesRecordingToVtp write_real_body_states(in_output, {pipe_body});
-	MeshRecordingToPlt write_mesh_cell_linked_list(in_output, pipe_body, pipe_body.cell_linked_list_);
+	BodyStatesRecordingToVtp write_real_body_states(io_environment, {pipe_body});
+	MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, pipe_body, pipe_body.cell_linked_list_);
 
 	/** Set body contact map
 	 *  The contact map gives the data connections between the bodies

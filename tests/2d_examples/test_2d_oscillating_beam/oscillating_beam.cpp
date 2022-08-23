@@ -135,10 +135,10 @@ int main()
 	//-----------------------------------------------------------------------------
 	//outputs
 	//-----------------------------------------------------------------------------
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp write_beam_states(in_output, system.real_bodies_);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp write_beam_states(io_environment, system.real_bodies_);
 	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Vecd>>
-		write_beam_tip_displacement("Position", in_output, beam_observer_contact);
+		write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
 	//----------------------------------------------------------------------
 	//	Setup computing and initial conditions.
 	//----------------------------------------------------------------------

@@ -26,7 +26,7 @@ namespace
 namespace SPH
 {
 	//=============================================================================================//
-	InOutput::InOutput(SPHSystem &sph_system, bool delete_output)
+	IOEnvironment::IOEnvironment(SPHSystem &sph_system, bool delete_output)
 		: sph_system_(sph_system),
 		  input_folder_("./input"), output_folder_("./output"),
 		  restart_folder_("./restart"), reload_folder_("./reload")
@@ -59,10 +59,10 @@ namespace SPH
 
 		restart_step_ = padValueWithZeros(sph_system.restart_step_);
 
-		sph_system.in_output_ = this;
+		sph_system.io_environment_ = this;
 	}
 	//=============================================================================================//
-	ParameterizationIO &InOutput::defineParameterizationIO()
+	ParameterizationIO &IOEnvironment::defineParameterizationIO()
 	{
 		return parameterization_io_ptr_keeper_.createRef<ParameterizationIO>(input_folder_);
 	}
@@ -111,7 +111,7 @@ namespace SPH
 			if (body->checkNewlyUpdated())
 			{
 				//TODO: we can short the file name by without using SPHBody
-				std::string filefullpath = in_output_.output_folder_ + "/SPHBody_" + body->getBodyName() + "_" + sequence + ".vtp";
+				std::string filefullpath = io_environment_.output_folder_ + "/SPHBody_" + body->getBodyName() + "_" + sequence + ".vtp";
 				if (fs::exists(filefullpath))
 				{
 					fs::remove(filefullpath);
@@ -218,7 +218,7 @@ namespace SPH
 		{
 			if (body->checkNewlyUpdated())
 			{
-				std::string filefullpath = in_output_.output_folder_ + "/SPHBody_" + body->getBodyName() + "_" + sequence + ".plt";
+				std::string filefullpath = io_environment_.output_folder_ + "/SPHBody_" + body->getBodyName() + "_" + sequence + ".plt";
 				if (fs::exists(filefullpath))
 				{
 					fs::remove(filefullpath);
@@ -236,8 +236,8 @@ namespace SPH
 	}
 	//=============================================================================================//
 	WriteToVtpIfVelocityOutOfBound::
-		WriteToVtpIfVelocityOutOfBound(InOutput &in_output, SPHBodyVector bodies, Real velocity_bound)
-		: BodyStatesRecordingToVtp(in_output, bodies), out_of_bound_(false)
+		WriteToVtpIfVelocityOutOfBound(IOEnvironment &io_environment, SPHBodyVector bodies, Real velocity_bound)
+		: BodyStatesRecordingToVtp(io_environment, bodies), out_of_bound_(false)
 	{
 		std::transform(bodies.begin(), bodies.end(), std::back_inserter(check_bodies_),
 					   [&](SPHBody *body) -> VelocityBoundCheck
@@ -259,10 +259,10 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	MeshRecordingToPlt ::MeshRecordingToPlt(InOutput &in_output, SPHBody &body, BaseMeshField *mesh_field)
-		: BodyStatesRecording(in_output, body), mesh_field_(mesh_field)
+	MeshRecordingToPlt ::MeshRecordingToPlt(IOEnvironment &io_environment, SPHBody &body, BaseMeshField *mesh_field)
+		: BodyStatesRecording(io_environment, body), mesh_field_(mesh_field)
 	{
-		filefullpath_ = in_output_.output_folder_ + "/" + body.getBodyName() + "_" + mesh_field_->Name() + ".dat";
+		filefullpath_ = io_environment_.output_folder_ + "/" + body.getBodyName() + "_" + mesh_field_->Name() + ".dat";
 	}
 	//=============================================================================================//
 	void MeshRecordingToPlt::writeWithFileName(const std::string &sequence)
@@ -272,25 +272,25 @@ namespace SPH
 		out_file.close();
 	}
 	//=============================================================================================//
-	ReloadParticleIO::ReloadParticleIO(InOutput &in_output, SPHBodyVector bodies) : BodyStatesIO(in_output, bodies)
+	ReloadParticleIO::ReloadParticleIO(IOEnvironment &io_environment, SPHBodyVector bodies) : BodyStatesIO(io_environment, bodies)
 	{
-		if (!fs::exists(in_output.reload_folder_))
+		if (!fs::exists(io_environment.reload_folder_))
 		{
-			fs::create_directory(in_output.reload_folder_);
+			fs::create_directory(io_environment.reload_folder_);
 		}
 
 		std::transform(bodies.begin(), bodies.end(), std::back_inserter(file_paths_),
 					   [&](SPHBody *body) -> std::string
-					   { return in_output.reload_folder_ + "/" + body->getBodyName() + "_rld.xml"; });
+					   { return io_environment.reload_folder_ + "/" + body->getBodyName() + "_rld.xml"; });
 	};
 	//=============================================================================================//
-	ReloadParticleIO::ReloadParticleIO(InOutput &in_output, SPHBodyVector bodies,
+	ReloadParticleIO::ReloadParticleIO(IOEnvironment &io_environment, SPHBodyVector bodies,
 									   const StdVec<std::string> &given_body_names) 
-		: ReloadParticleIO(in_output, bodies)
+		: ReloadParticleIO(io_environment, bodies)
 	{
 		std::transform(given_body_names.begin(), given_body_names.end(), file_paths_.begin(),
 					   [&](const std::string &body_name) -> std::string
-					   { return in_output.reload_folder_ + "/" + body_name + "_rld.xml"; });
+					   { return io_environment.reload_folder_ + "/" + body_name + "_rld.xml"; });
 	}
 	//=============================================================================================//
 	void ReloadParticleIO::writeToFile(size_t iteration_step)
@@ -325,12 +325,12 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	RestartIO::RestartIO(InOutput &in_output, SPHBodyVector bodies)
-		: BodyStatesIO(in_output, bodies), overall_file_path_(in_output.restart_folder_ + "/Restart_time_")
+	RestartIO::RestartIO(IOEnvironment &io_environment, SPHBodyVector bodies)
+		: BodyStatesIO(io_environment, bodies), overall_file_path_(io_environment.restart_folder_ + "/Restart_time_")
 	{
 		std::transform(bodies.begin(), bodies.end(), std::back_inserter(file_paths_),
 					   [&](SPHBody *body) -> std::string
-					   { return in_output.restart_folder_ + "/SPHBody_" + body->getBodyName() + "_rst_"; });
+					   { return io_environment.restart_folder_ + "/SPHBody_" + body->getBodyName() + "_rst_"; });
 	}
 	//=============================================================================================//
 	void RestartIO::writeToFile(size_t iteration_step)
@@ -392,9 +392,9 @@ namespace SPH
 	}
 	//=============================================================================================//
 	WriteSimBodyPinData::
-		WriteSimBodyPinData(InOutput &in_output, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Pin &pinbody)
-		: WriteSimBodyStates<SimTK::MobilizedBody::Pin>(in_output, integ, pinbody),
-		filefullpath_(in_output_.output_folder_ + "/mb_pinbody_data.dat")
+		WriteSimBodyPinData(IOEnvironment &io_environment, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Pin &pinbody)
+		: WriteSimBodyStates<SimTK::MobilizedBody::Pin>(io_environment, integ, pinbody),
+		filefullpath_(io_environment_.output_folder_ + "/mb_pinbody_data.dat")
 	{
 		std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
 
@@ -423,18 +423,18 @@ namespace SPH
 		out_file.close();
 	};
 	//=================================================================================================//
-	ReloadMaterialParameterIO::ReloadMaterialParameterIO(InOutput &in_output, BaseMaterial *base_material)
-		: in_output_(in_output), base_material_(base_material),
-		  file_path_(in_output.reload_folder_ + "/Material_" + base_material->LocalParametersName() + "_rld.xml") {}
+	ReloadMaterialParameterIO::ReloadMaterialParameterIO(IOEnvironment &io_environment, BaseMaterial *base_material)
+		: io_environment_(io_environment), base_material_(base_material),
+		  file_path_(io_environment.reload_folder_ + "/Material_" + base_material->LocalParametersName() + "_rld.xml") {}
 	//=================================================================================================//
 	ReloadMaterialParameterIO::
-		ReloadMaterialParameterIO(InOutput &in_output, BaseMaterial *base_material, const std::string &given_parameters_name)
-		: in_output_(in_output), base_material_(base_material),
-		  file_path_(in_output.reload_folder_ + "/Material_" + given_parameters_name + "_rld.xml") {}
+		ReloadMaterialParameterIO(IOEnvironment &io_environment, BaseMaterial *base_material, const std::string &given_parameters_name)
+		: io_environment_(io_environment), base_material_(base_material),
+		  file_path_(io_environment.reload_folder_ + "/Material_" + given_parameters_name + "_rld.xml") {}
 	//=================================================================================================//
 	void ReloadMaterialParameterIO::writeToFile(size_t iteration_step)
 	{
-		std::string reload_material_folder = in_output_.reload_folder_;
+		std::string reload_material_folder = io_environment_.reload_folder_;
 		if (!fs::exists(reload_material_folder))
 		{
 			fs::create_directory(reload_material_folder);

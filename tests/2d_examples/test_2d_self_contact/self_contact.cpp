@@ -160,11 +160,11 @@ int main(int ac, char *av[])
 	//-----------------------------------------------------------------------------
 	//	outputs
 	//-----------------------------------------------------------------------------
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	beam_body.addBodyStateForRecording<Real>("SelfContactDensity");
-	BodyStatesRecordingToVtp write_beam_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp write_beam_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_beam_tip_displacement("Position", in_output, beam_observer_contact);
+		write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
 	//-----------------------------------------------------------------------------
 	//	Setup particle configuration and initial conditions
 	//-----------------------------------------------------------------------------

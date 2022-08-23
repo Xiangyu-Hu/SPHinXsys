@@ -80,8 +80,7 @@ int main(int ac, char *av[])
 	sph_system.reload_particles_ = false;
 	//handle command line arguments
 	sph_system.handleCommandlineOptions(ac, av);
-	/** output environment. */
-	InOutput in_output(sph_system);
+	IOEnvironment io_environment(sph_system);
 	/**
 	 * @brief create body, particle and material property.
 	 */
@@ -89,7 +88,7 @@ int main(int ac, char *av[])
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	// Using relaxed particle distribution if needed
 	sph_system.reload_particles_
-		? water_block.generateParticles<ParticleGeneratorReload>(in_output, water_block.getBodyName())
+		? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getBodyName())
 		: water_block.generateParticles<ParticleGeneratorLattice>();
 	/** topology */
 	BodyRelationInner water_block_inner(water_block);
@@ -131,17 +130,17 @@ int main(int ac, char *av[])
 	 * @brief Output.
 	 */
 	/** Output the body states. */
-	BodyStatesRecordingToVtp body_states_recording(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
 	/** Write the particle reload files. */
-	ReloadParticleIO write_particle_reload_files(in_output, {&water_block});
+	ReloadParticleIO write_particle_reload_files(io_environment, {&water_block});
 	/** Output the body states for restart simulation. */
-	RestartIO restart_io(in_output, sph_system.real_bodies_);
+	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
 	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
-		write_total_mechanical_energy(in_output, water_block);
+		write_total_mechanical_energy(io_environment, water_block);
 	/** Output the maximum speed of the fluid body. */
 	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<MaximumSpeed>>
-		write_maximum_speed(in_output, water_block);
+		write_maximum_speed(io_environment, water_block);
 	/**
 	 * @brief Setup geometry and initial conditions
 	 */

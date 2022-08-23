@@ -163,8 +163,8 @@ namespace SPH
 	//=================================================================================================//
 	void ParticleGeneratorNetwork::initializeGeometricVariables()
 	{
-		InOutput *in_output = sph_body_.getSPHSystem().in_output_;
-		BodyStatesRecordingToVtp write_states(*in_output, {sph_body_});
+		IOEnvironment *io_environment = sph_body_.getSPHSystem().io_environment_;
+		BodyStatesRecordingToVtp write_states(*io_environment, {sph_body_});
 
 		std::cout << "Now creating Particles on network... " << std::endl;
 

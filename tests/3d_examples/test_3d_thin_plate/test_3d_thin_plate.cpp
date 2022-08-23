@@ -179,9 +179,9 @@ int main(int ac, char *av[])
 	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
 		plate_rotation_damping(0.5, plate_body_inner, "AngularVelocity", physical_viscosity);
 	/** Output */
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
-	ObservedQuantityRecording<Vecd> write_plate_max_displacement("Position", in_output, plate_observer_contact);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
+	ObservedQuantityRecording<Vecd> write_plate_max_displacement("Position", io_environment, plate_observer_contact);
 
 	/** Apply initial condition. */
 	system.initializeSystemCellLinkedLists();

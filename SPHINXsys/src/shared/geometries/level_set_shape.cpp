@@ -23,8 +23,8 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetShape::writeLevelSet(SPHBody &sph_body)
 	{
-		InOutput *in_output = sph_body.getSPHSystem().in_output_;
-		MeshRecordingToPlt write_level_set_to_plt(*in_output, sph_body, level_set_);
+		IOEnvironment *io_environment = sph_body.getSPHSystem().io_environment_;
+		MeshRecordingToPlt write_level_set_to_plt(*io_environment, sph_body, level_set_);
 		write_level_set_to_plt.writeToFile(0);
 	}
 	//=================================================================================================//

@@ -105,10 +105,10 @@ int main(int ac, char *av[])
 	DampingWithRandomChoice<DampingBySplittingInner<Vec3d>>
 		muscle_damping(0.1, cantilever_body_inner, "Velocity", physical_viscosity);
 	/** Output */
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_displacement("Position", in_output, cantilever_observer_contact);
+		write_displacement("Position", io_environment, cantilever_observer_contact);
 	/**
 	 * From here the time stepping begins.
 	 * Set the starting time.

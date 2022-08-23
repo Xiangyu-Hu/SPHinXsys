@@ -61,12 +61,11 @@ int main(int ac, char *av[])
 	system.run_particle_relaxation_ = false;
 	// Tag for reload initially relaxed particles.
 	system.reload_particles_ = true;
-// handle command line arguments
 #ifdef BOOST_AVAILABLE
+	// handle command line arguments
 	system.handleCommandlineOptions(ac, av);
 #endif
-	// output environment
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -74,7 +73,7 @@ int main(int ac, char *av[])
 	coil.defineBodyLevelSetShape()->writeLevelSet(coil);
 	coil.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	(!system.run_particle_relaxation_ && system.reload_particles_)
-		? coil.generateParticles<ParticleGeneratorReload>(in_output, coil.getBodyName())
+		? coil.generateParticles<ParticleGeneratorReload>(io_environment, coil.getBodyName())
 		: coil.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody stationary_plate(system, makeShared<StationaryPlate>("StationaryPlate"));
@@ -83,7 +82,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -103,7 +102,7 @@ int main(int ac, char *av[])
 		// Random reset the insert body particle position.
 		RandomizeParticlePosition random_inserted_body_particles(coil);
 		// Write the particle reload files.
-		ReloadParticleIO write_particle_reload_files(in_output, {&coil});
+		ReloadParticleIO write_particle_reload_files(io_environment, {&coil});
 		// A  Physics relaxation step.
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(coil_inner);
 		//----------------------------------------------------------------------

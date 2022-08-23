@@ -19,8 +19,7 @@ int main()
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	sph_system.restart_step_ = 0;
-	/** I/O environment. */
-	InOutput in_output(sph_system);
+	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -87,15 +86,15 @@ int main()
 	//	and regression tests of the simulation.
 	//----------------------------------------------------------------------
 	/** Output the body states. */
-	BodyStatesRecordingToVtp body_states_recording(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
 	/** Output the body states for restart simulation. */
-	RestartIO restart_io(in_output, sph_system.real_bodies_);
+	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
 	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
-		write_water_mechanical_energy(in_output, water_block, gravity);
+		write_water_mechanical_energy(io_environment, water_block, gravity);
 	/** output the observed data from fluid body. */
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-		write_recorded_pressure("Pressure", in_output, fluid_observer_contact);
+		write_recorded_pressure("Pressure", io_environment, fluid_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary. 

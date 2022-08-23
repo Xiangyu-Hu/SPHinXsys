@@ -66,11 +66,11 @@ int main(int ac, char *av[])
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
-// handle command line arguments
 #ifdef BOOST_AVAILABLE
+	// handle command line arguments
 	sph_system.handleCommandlineOptions(ac, av);
-#endif	/** output environment. */
-	InOutput in_output(sph_system);
+#endif
+	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles
 	//----------------------------------------------------------------------
@@ -118,10 +118,10 @@ int main(int ac, char *av[])
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	/** Output the body states. */
-	BodyStatesRecordingToVtp body_states_recording(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
 	/** Observer and output. */
 	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Vecd>>
-		write_free_cube_displacement("Position", in_output, cube_observer_contact);
+		write_free_cube_displacement("Position", io_environment, cube_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.

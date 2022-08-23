@@ -141,13 +141,13 @@ int main()
 	//----------------------------------------------------------------------
 	//	File Output
 	//----------------------------------------------------------------------
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp body_states_recording(in_output, system.real_bodies_);
-	RestartIO restart_io(in_output, system.real_bodies_);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp body_states_recording(io_environment, system.real_bodies_);
+	RestartIO restart_io(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
-		write_water_mechanical_energy(in_output, water_body, gravity);
+		write_water_mechanical_energy(io_environment, water_body, gravity);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-		write_recorded_water_pressure("Pressure", in_output, fluid_observer_contact_relation);
+		write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact_relation);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.

@@ -28,8 +28,7 @@ int main(int ac, char *av[])
 #ifdef BOOST_AVAILABLE
 	sph_system.handleCommandlineOptions(ac, av);
 #endif
-	/** output environment. */
-	InOutput in_output(sph_system);
+	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -46,7 +45,7 @@ int main(int ac, char *av[])
 	insert_body.defineBodyLevelSetShape()->writeLevelSet(insert_body);
 	insert_body.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-		? insert_body.generateParticles<ParticleGeneratorReload>(in_output, insert_body.getBodyName())
+		? insert_body.generateParticles<ParticleGeneratorReload>(io_environment, insert_body.getBodyName())
 		: insert_body.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody beam_observer(sph_system, "BeamObserver");
@@ -74,9 +73,9 @@ int main(int ac, char *av[])
 		/** Random reset the insert body particle position. */
 		RandomizeParticlePosition random_insert_body_particles(insert_body);
 		/** Write the body state to Vtp file. */
-		BodyStatesRecordingToVtp write_insert_body_to_vtp(in_output, {&insert_body});
+		BodyStatesRecordingToVtp write_insert_body_to_vtp(io_environment, {&insert_body});
 		/** Write the particle reload files. */
-		ReloadParticleIO write_particle_reload_files(in_output, {&insert_body});
+		ReloadParticleIO write_particle_reload_files(io_environment, {&insert_body});
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(insert_body_inner);
 		//----------------------------------------------------------------------
@@ -161,14 +160,14 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_real_body_states(in_output, sph_system.real_bodies_);
-	RestartIO restart_io(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	RegressionTestTimeAveraged<BodyReducedQuantityRecording<solid_dynamics::TotalViscousForceOnSolid>>
-		write_total_viscous_force_on_insert_body(in_output, insert_body);
+		write_total_viscous_force_on_insert_body(io_environment, insert_body);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_beam_tip_displacement("Position", in_output, beam_observer_contact);
+		write_beam_tip_displacement("Position", io_environment, beam_observer_contact);
 	ObservedQuantityRecording<Vecd>
-		write_fluid_velocity("Velocity", in_output, fluid_observer_contact);
+		write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.

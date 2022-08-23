@@ -280,8 +280,7 @@ int main(int ac, char *av[])
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
 #endif
-	/** in- and output environment. */
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	SPH Particle relaxation section
 	//----------------------------------------------------------------------
@@ -305,11 +304,11 @@ int main(int ac, char *av[])
 		/** Compute the fiber and sheet after diffusion. */
 		ComputeFiberAndSheetDirections compute_fiber_sheet(herat_model);
 		/** Write the body state to Vtp file. */
-		BodyStatesRecordingToVtp write_herat_model_state_to_vtp(in_output, {herat_model});
+		BodyStatesRecordingToVtp write_herat_model_state_to_vtp(io_environment, {herat_model});
 		/** Write the particle reload files. */
-		ReloadParticleIO write_particle_reload_files(in_output, {&herat_model}, {"HeartModel"});
+		ReloadParticleIO write_particle_reload_files(io_environment, {&herat_model}, {"HeartModel"});
 		/** Write material property to xml file. */
-		ReloadMaterialParameterIO write_material_property(in_output, herat_model.base_material_, "FiberDirection");
+		ReloadMaterialParameterIO write_material_property(io_environment, herat_model.base_material_, "FiberDirection");
 		//----------------------------------------------------------------------
 		//	Physics relaxation starts here.
 		//----------------------------------------------------------------------
@@ -370,7 +369,7 @@ int main(int ac, char *av[])
 	physiology_heart.defineParticlesAndMaterial<
 		ElectroPhysiologyParticles, LocalMonoFieldElectroPhysiology>(muscle_reaction_model, diffusion_coff, bias_coff, fiber_direction);
 	(!system.run_particle_relaxation_ && system.reload_particles_)
-		? physiology_heart.generateParticles<ParticleGeneratorReload>(in_output, "HeartModel")
+		? physiology_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
 		: physiology_heart.generateParticles<ParticleGeneratorLattice>();
 
 	/** create a SPH body, material and particles */
@@ -378,14 +377,14 @@ int main(int ac, char *av[])
 	mechanics_heart.defineParticlesAndMaterial<
 		ElasticSolidParticles, ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
 	(!system.run_particle_relaxation_ && system.reload_particles_)
-		? mechanics_heart.generateParticles<ParticleGeneratorReload>(in_output, "HeartModel")
+		? mechanics_heart.generateParticles<ParticleGeneratorReload>(io_environment, "HeartModel")
 		: mechanics_heart.generateParticles<ParticleGeneratorLattice>();
 
 	/** check whether reload material properties. */
 	if (!system.run_particle_relaxation_ && system.reload_particles_)
 	{
-		ReloadMaterialParameterIO read_physiology_heart_fiber(in_output, physiology_heart.base_material_, "FiberDirection");
-		ReloadMaterialParameterIO read_mechanics_heart_fiber(in_output, mechanics_heart.base_material_, "FiberDirection");
+		ReloadMaterialParameterIO read_physiology_heart_fiber(io_environment, physiology_heart.base_material_, "FiberDirection");
+		ReloadMaterialParameterIO read_mechanics_heart_fiber(io_environment, mechanics_heart.base_material_, "FiberDirection");
 		read_mechanics_heart_fiber.readFromFile();
 		read_physiology_heart_fiber.readFromFile();
 	}
@@ -441,11 +440,11 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	SPH Output section
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
-		write_voltage("Voltage", in_output, voltage_observer_contact);
+		write_voltage("Voltage", io_environment, voltage_observer_contact);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_displacement("Position", in_output, myocardium_observer_contact);
+		write_displacement("Position", io_environment, myocardium_observer_contact);
 	//----------------------------------------------------------------------
 	//	 Pre-simulation.
 	//----------------------------------------------------------------------

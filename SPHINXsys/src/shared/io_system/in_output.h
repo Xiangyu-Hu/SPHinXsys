@@ -58,18 +58,18 @@ namespace SPH
 	class BaseLevelSet;
 
 	/**
-	 * @class InOutput
+	 * @class IOEnvironment
 	 * @brief The base class which defines folders for output,
 	 * restart and particle reload folders.
 	 */
-	class InOutput
+	class IOEnvironment
 	{
 	private:
 		UniquePtrKeeper<ParameterizationIO> parameterization_io_ptr_keeper_;
 
 	public:
-		explicit InOutput(SPHSystem &sph_system, bool delete_output = true);
-		virtual ~InOutput(){};
+		explicit IOEnvironment(SPHSystem &sph_system, bool delete_output = true);
+		virtual ~IOEnvironment(){};
 
 		SPHSystem &sph_system_;
 		std::string input_folder_;
@@ -104,17 +104,17 @@ namespace SPH
 	class BodyStatesIO
 	{
 	protected:
-		InOutput &in_output_;
+		IOEnvironment &io_environment_;
 		SPHBody *body_;
 		SPHBodyVector bodies_;
 
 		std::string convertPhysicalTimeToString(Real physical_time);
 
 	public:
-		BodyStatesIO(InOutput &in_output, SPHBody &body)
-			: in_output_(in_output), body_(&body), bodies_({&body}){};
-		BodyStatesIO(InOutput &in_output, SPHBodyVector bodies)
-			: in_output_(in_output), body_(bodies[0]), bodies_(bodies){};
+		BodyStatesIO(IOEnvironment &io_environment, SPHBody &body)
+			: io_environment_(io_environment), body_(&body), bodies_({&body}){};
+		BodyStatesIO(IOEnvironment &io_environment, SPHBodyVector bodies)
+			: io_environment_(io_environment), body_(bodies[0]), bodies_(bodies){};
 		virtual ~BodyStatesIO(){};
 	};
 
@@ -125,10 +125,10 @@ namespace SPH
 	class BodyStatesRecording : public BodyStatesIO
 	{
 	public:
-		BodyStatesRecording(InOutput &in_output, SPHBody &body)
-			: BodyStatesIO(in_output, body){};
-		BodyStatesRecording(InOutput &in_output, SPHBodyVector bodies)
-			: BodyStatesIO(in_output, bodies){};
+		BodyStatesRecording(IOEnvironment &io_environment, SPHBody &body)
+			: BodyStatesIO(io_environment, body){};
+		BodyStatesRecording(IOEnvironment &io_environment, SPHBodyVector bodies)
+			: BodyStatesIO(io_environment, bodies){};
 		virtual ~BodyStatesRecording(){};
 
 		/** write with filename indicated by physical time */
@@ -152,13 +152,13 @@ namespace SPH
 	class SimBodyStatesIO
 	{
 	protected:
-		InOutput &in_output_;
+		IOEnvironment &io_environment_;
 		SimTK::RungeKuttaMersonIntegrator &integ_;
 		MobilizedBodyType &mobody_;
 
 	public:
-		SimBodyStatesIO(InOutput &in_output, SimTK::RungeKuttaMersonIntegrator &integ, MobilizedBodyType &mobody)
-			: in_output_(in_output), integ_(integ), mobody_(mobody){};
+		SimBodyStatesIO(IOEnvironment &io_environment, SimTK::RungeKuttaMersonIntegrator &integ, MobilizedBodyType &mobody)
+			: io_environment_(io_environment), integ_(integ), mobody_(mobody){};
 		virtual ~SimBodyStatesIO(){};
 	};
 
@@ -170,8 +170,8 @@ namespace SPH
 	class WriteSimBodyStates : public SimBodyStatesIO<MobilizedBodyType>
 	{
 	public:
-		WriteSimBodyStates(InOutput &in_output, SimTK::RungeKuttaMersonIntegrator &integ, MobilizedBodyType &mobody)
-			: SimBodyStatesIO<MobilizedBodyType>(in_output, integ, mobody){};
+		WriteSimBodyStates(IOEnvironment &io_environment, SimTK::RungeKuttaMersonIntegrator &integ, MobilizedBodyType &mobody)
+			: SimBodyStatesIO<MobilizedBodyType>(io_environment, integ, mobody){};
 		virtual ~WriteSimBodyStates(){};
 
 		virtual void writeToFile(size_t iteration_step) = 0;
@@ -185,10 +185,10 @@ namespace SPH
 	class ReadSimBodyStates : public SimBodyStatesIO<MobilizedBodyType>
 	{
 	public:
-		ReadSimBodyStates(InOutput &in_output, MobilizedBodyType *mobody)
-			: SimBodyStatesIO<MobilizedBodyType>(in_output, mobody){};
-		ReadSimBodyStates(InOutput &in_output, StdVec<MobilizedBodyType *> mobodies)
-			: SimBodyStatesIO<MobilizedBodyType>(in_output, mobodies){};
+		ReadSimBodyStates(IOEnvironment &io_environment, MobilizedBodyType *mobody)
+			: SimBodyStatesIO<MobilizedBodyType>(io_environment, mobody){};
+		ReadSimBodyStates(IOEnvironment &io_environment, StdVec<MobilizedBodyType *> mobodies)
+			: SimBodyStatesIO<MobilizedBodyType>(io_environment, mobodies){};
 		virtual ~ReadSimBodyStates(){};
 
 		virtual void readFromFile(size_t iteration_step) = 0;
@@ -202,10 +202,10 @@ namespace SPH
 	class BodyStatesRecordingToVtp : public BodyStatesRecording
 	{
 	public:
-		BodyStatesRecordingToVtp(InOutput &in_output, SPHBody &body)
-			: BodyStatesRecording(in_output, body){};
-		BodyStatesRecordingToVtp(InOutput &in_output, SPHBodyVector bodies)
-			: BodyStatesRecording(in_output, bodies){};
+		BodyStatesRecordingToVtp(IOEnvironment &io_environment, SPHBody &body)
+			: BodyStatesRecording(io_environment, body){};
+		BodyStatesRecordingToVtp(IOEnvironment &io_environment, SPHBodyVector bodies)
+			: BodyStatesRecording(io_environment, bodies){};
 		virtual ~BodyStatesRecordingToVtp(){};
 
 	protected:
@@ -221,8 +221,8 @@ namespace SPH
 	class BodyStatesRecordingToVtpString : public BodyStatesRecording
 	{
 	public:
-		BodyStatesRecordingToVtpString(InOutput &in_output, SPHBodyVector bodies)
-			: BodyStatesRecording(in_output, bodies){};
+		BodyStatesRecordingToVtpString(IOEnvironment &io_environment, SPHBodyVector bodies)
+			: BodyStatesRecording(io_environment, bodies){};
 		virtual ~BodyStatesRecordingToVtpString() = default;
 
 		const VtuStringData &GetVtuData() const;
@@ -247,10 +247,10 @@ namespace SPH
 	class BodyStatesRecordingToPlt : public BodyStatesRecording
 	{
 	public:
-		BodyStatesRecordingToPlt(InOutput &in_output, SPHBody &body)
-			: BodyStatesRecording(in_output, body){};
-		BodyStatesRecordingToPlt(InOutput &in_output, SPHBodyVector bodies)
-			: BodyStatesRecording(in_output, bodies){};
+		BodyStatesRecordingToPlt(IOEnvironment &io_environment, SPHBody &body)
+			: BodyStatesRecording(io_environment, body){};
+		BodyStatesRecordingToPlt(IOEnvironment &io_environment, SPHBodyVector bodies)
+			: BodyStatesRecording(io_environment, bodies){};
 		virtual ~BodyStatesRecordingToPlt(){};
 
 	protected:
@@ -271,7 +271,7 @@ namespace SPH
 		virtual void writeWithFileName(const std::string &sequence) override;
 
 	public:
-		WriteToVtpIfVelocityOutOfBound(InOutput &in_output,
+		WriteToVtpIfVelocityOutOfBound(IOEnvironment &io_environment,
 									   SPHBodyVector bodies, Real velocity_bound);
 		virtual ~WriteToVtpIfVelocityOutOfBound(){};
 	};
@@ -288,7 +288,7 @@ namespace SPH
 		virtual void writeWithFileName(const std::string &sequence) override;
 
 	public:
-		MeshRecordingToPlt(InOutput &in_output, SPHBody &body, BaseMeshField *mesh_field);
+		MeshRecordingToPlt(IOEnvironment &io_environment, SPHBody &body, BaseMeshField *mesh_field);
 		virtual ~MeshRecordingToPlt(){};
 	};
 
@@ -312,16 +312,16 @@ namespace SPH
 		VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
 
 	public:
-		ObservedQuantityRecording(const std::string &quantity_name, InOutput &in_output,
+		ObservedQuantityRecording(const std::string &quantity_name, IOEnvironment &io_environment,
 								  BaseBodyRelationContact &contact_relation)
-			: BodyStatesRecording(in_output, *contact_relation.sph_body_),
+			: BodyStatesRecording(io_environment, *contact_relation.sph_body_),
 			  observer_dynamics::ObservingAQuantity<VariableType>(contact_relation, quantity_name),
 			  observer_(contact_relation.sph_body_), plt_engine_(),
 			  base_particles_(observer_->base_particles_), body_name_(contact_relation.sph_body_->getBodyName()),
 			  quantity_name_(quantity_name)
 		{
 			/** Output for .dat file. */
-			filefullpath_output_ = in_output_.output_folder_ + "/" + body_name_ + "_" + quantity_name + "_" + in_output_.restart_step_ + ".dat";
+			filefullpath_output_ = io_environment_.output_folder_ + "/" + body_name_ + "_" + quantity_name + "_" + io_environment_.restart_step_ + ".dat";
 			std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
 			out_file << "run_time"
 					 << "   ";
@@ -362,7 +362,7 @@ namespace SPH
 	class BodyReducedQuantityRecording
 	{
 	protected:
-		InOutput &in_output_;
+		IOEnvironment &io_environment_;
 		PltEngine plt_engine_;
 		ReduceMethodType reduce_method_;
 		std::string body_name_;
@@ -376,13 +376,13 @@ namespace SPH
 
 	public:
 		template <typename... ConstructorArgs>
-		BodyReducedQuantityRecording(InOutput &in_output, ConstructorArgs &&...args)
-			: in_output_(in_output), plt_engine_(), reduce_method_(std::forward<ConstructorArgs>(args)...),
+		BodyReducedQuantityRecording(IOEnvironment &io_environment, ConstructorArgs &&...args)
+			: io_environment_(io_environment), plt_engine_(), reduce_method_(std::forward<ConstructorArgs>(args)...),
 			  body_name_(reduce_method_.getSPHBody()->getBodyName()),
 			  quantity_name_(reduce_method_.QuantityName())
 		{
 			/** output for .dat file. */
-			filefullpath_output_ = in_output_.output_folder_ + "/" + body_name_ + "_" + quantity_name_ + "_" + in_output_.restart_step_ + ".dat";
+			filefullpath_output_ = io_environment_.output_folder_ + "/" + body_name_ + "_" + quantity_name_ + "_" + io_environment_.restart_step_ + ".dat";
 			std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
 			out_file << "\"run_time\""
 					 << "   ";
@@ -412,8 +412,8 @@ namespace SPH
 		StdVec<std::string> file_paths_;
 
 	public:
-		ReloadParticleIO(InOutput &in_output, SPHBodyVector bodies);
-		ReloadParticleIO(InOutput &in_output, SPHBodyVector bodies, const StdVec<std::string> &given_body_names);
+		ReloadParticleIO(IOEnvironment &io_environment, SPHBodyVector bodies);
+		ReloadParticleIO(IOEnvironment &io_environment, SPHBodyVector bodies, const StdVec<std::string> &given_body_names);
 		virtual ~ReloadParticleIO(){};
 
 		virtual void writeToFile(size_t iteration_step = 0);
@@ -433,7 +433,7 @@ namespace SPH
 		Real readRestartTime(size_t restart_step);
 
 	public:
-		RestartIO(InOutput &in_output, SPHBodyVector bodies);
+		RestartIO(IOEnvironment &io_environment, SPHBodyVector bodies);
 		virtual ~RestartIO(){};
 
 		virtual void writeToFile(size_t iteration_step = 0);
@@ -455,7 +455,7 @@ namespace SPH
 		std::string filefullpath_;
 
 	public:
-		WriteSimBodyPinData(InOutput &in_output, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Pin &pinbody);
+		WriteSimBodyPinData(IOEnvironment &io_environment, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Pin &pinbody);
 		virtual ~WriteSimBodyPinData(){};
 		virtual void writeToFile(size_t iteration_step = 0) override;
 	};
@@ -467,13 +467,13 @@ namespace SPH
 	class ReloadMaterialParameterIO
 	{
 	protected:
-		InOutput &in_output_;
+		IOEnvironment &io_environment_;
 		BaseMaterial *base_material_;
 		std::string file_path_;
 
 	public:
-		ReloadMaterialParameterIO(InOutput &in_output, BaseMaterial *base_material);
-		ReloadMaterialParameterIO(InOutput &in_output, BaseMaterial *base_material, const std::string &given_parameters_name);
+		ReloadMaterialParameterIO(IOEnvironment &io_environment, BaseMaterial *base_material);
+		ReloadMaterialParameterIO(IOEnvironment &io_environment, BaseMaterial *base_material, const std::string &given_parameters_name);
 		virtual ~ReloadMaterialParameterIO(){};
 
 		virtual void writeToFile(size_t iteration_step = 0);

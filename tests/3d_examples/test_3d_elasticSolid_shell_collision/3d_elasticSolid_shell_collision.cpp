@@ -66,10 +66,8 @@ int main(int ac, char *av[])
 	sph_system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: start with initial condition */
 	sph_system.restart_step_ = 0;
-	/** Handle command line arguments. */
 	sph_system.handleCommandlineOptions(ac, av);
-	/** I/O environment. */
-	InOutput in_output(sph_system);
+	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -82,7 +80,7 @@ int main(int ac, char *av[])
 	ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 	{
-		ball.generateParticles<ParticleGeneratorReload>(in_output, ball.getBodyName());
+		ball.generateParticles<ParticleGeneratorReload>(io_environment, ball.getBodyName());
 	}
 	else
 	{
@@ -106,8 +104,8 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Output for particle relaxation.
 		//----------------------------------------------------------------------
-		BodyStatesRecordingToVtp write_relaxed_particles(in_output, sph_system.real_bodies_);
-		ReloadParticleIO write_particle_reload_files(in_output, {&ball});
+		BodyStatesRecordingToVtp write_relaxed_particles(io_environment, sph_system.real_bodies_);
+		ReloadParticleIO write_particle_reload_files(io_environment, {&ball});
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
@@ -157,8 +155,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp body_states_recording(in_output, sph_system.real_bodies_);
-	BodyStatesRecordingToVtp write_ball_state(in_output, {ball});
+	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp write_ball_state(io_environment, {ball});
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.

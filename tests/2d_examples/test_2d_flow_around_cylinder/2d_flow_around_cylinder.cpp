@@ -23,11 +23,8 @@ int main(int ac, char *av[])
 #ifdef BOOST_AVAILABLE
 	sph_system.handleCommandlineOptions(ac, av);
 #endif
-	//----------------------------------------------------------------------
-	//	define IO relevant classes.
-	//----------------------------------------------------------------------
-	InOutput in_output(sph_system);
-	ParameterizationIO &parameterization_io = in_output.defineParameterizationIO();
+	IOEnvironment io_environment(sph_system);
+	ParameterizationIO &parameterization_io = io_environment.defineParameterizationIO();
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -40,7 +37,7 @@ int main(int ac, char *av[])
 	cylinder.defineBodyLevelSetShape();
 	cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-		? cylinder.generateParticles<ParticleGeneratorReload>(in_output, cylinder.getBodyName())
+		? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getBodyName())
 		: cylinder.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody fluid_observer(sph_system, "FluidObserver");
@@ -66,9 +63,9 @@ int main(int ac, char *av[])
 		/** Random reset the insert body particle position. */
 		RandomizeParticlePosition random_inserted_body_particles(cylinder);
 		/** Write the body state to Vtp file. */
-		BodyStatesRecordingToVtp write_inserted_body_to_vtp(in_output, {&cylinder});
+		BodyStatesRecordingToVtp write_inserted_body_to_vtp(io_environment, {&cylinder});
 		/** Write the particle reload files. */
-		ReloadParticleIO write_particle_reload_files(in_output, {&cylinder});
+		ReloadParticleIO write_particle_reload_files(io_environment, {&cylinder});
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner);
 		//----------------------------------------------------------------------
@@ -135,14 +132,14 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_real_body_states(in_output, sph_system.real_bodies_);
-	RestartIO restart_io(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	RegressionTestTimeAveraged<BodyReducedQuantityRecording<solid_dynamics::TotalViscousForceOnSolid>>
-		write_total_viscous_force_on_inserted_body(in_output, cylinder);
+		write_total_viscous_force_on_inserted_body(io_environment, cylinder);
 	BodyReducedQuantityRecording<solid_dynamics::TotalViscousForceOnSolid>
-		write_total_force_on_inserted_body(in_output, cylinder);
+		write_total_force_on_inserted_body(io_environment, cylinder);
 	ObservedQuantityRecording<Vecd>
-		write_fluid_velocity("Velocity", in_output, fluid_observer_contact);
+		write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.

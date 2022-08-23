@@ -61,12 +61,12 @@ void expandBoundingBox(BoundingBox *original, BoundingBox *additional)
 	}
 }
 
-void relaxParticlesSingleResolution(InOutput &in_output,
+void relaxParticlesSingleResolution(IOEnvironment &io_environment,
 									bool write_particle_relaxation_data,
 									SolidBody &solid_body_from_mesh,
 									BodyRelationInner &solid_body_from_mesh_inner)
 {
-	BodyStatesRecordingToVtp write_solid_body_from_mesh_to_vtp(in_output, solid_body_from_mesh);
+	BodyStatesRecordingToVtp write_solid_body_from_mesh_to_vtp(io_environment, solid_body_from_mesh);
 
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
@@ -116,9 +116,9 @@ std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>> generateAndRelaxParticlesFromMe
 
 	if (particle_relaxation)
 	{
-		InOutput in_output(system);
+		IOEnvironment io_environment(system);
 		BodyRelationInner inner_relation(model);
-		relaxParticlesSingleResolution(in_output, write_particle_relaxation_data, model, inner_relation);
+		relaxParticlesSingleResolution(io_environment, write_particle_relaxation_data, model, inner_relation);
 	}
 
 	return std::tuple<StdLargeVec<Vecd>, StdLargeVec<Real>>(model.base_particles_->pos_, model.base_particles_->Vol_);
@@ -199,7 +199,7 @@ StructuralSimulation::StructuralSimulation(const StructuralSimulationInput &inpu
 	  system_resolution_(0.0),
 	  system_(SPHSystem(BoundingBox(Vec3d(0), Vec3d(0)), system_resolution_)),
 	  scale_system_boundaries_(input.scale_system_boundaries_),
-	  in_output_(system_),
+	  io_environment_(system_),
 
 	  // optional: boundary conditions
 	  non_zero_gravity_(input.non_zero_gravity_),
@@ -898,7 +898,7 @@ void StructuralSimulation::runSimulationStep(Real &dt, Real &integration_time)
 
 void StructuralSimulation::runSimulation(Real end_time)
 {
-	BodyStatesRecordingToVtp write_states(in_output_, system_.real_bodies_);
+	BodyStatesRecordingToVtp write_states(io_environment_, system_.real_bodies_);
 
 	/** Statistics for computing time. */
 	write_states.writeToFile(0);
@@ -934,7 +934,7 @@ void StructuralSimulation::runSimulation(Real end_time)
 
 double StructuralSimulation::runSimulationFixedDurationJS(int number_of_steps)
 {
-	BodyStatesRecordingToVtp write_states(in_output_, system_.real_bodies_);
+	BodyStatesRecordingToVtp write_states(io_environment_, system_.real_bodies_);
 	GlobalStaticVariables::physical_time_ = 0.0;
 
 	/** Statistics for computing time. */
@@ -980,7 +980,7 @@ Real StructuralSimulation::getMaxDisplacement(int body_index)
 
 StructuralSimulationJS::StructuralSimulationJS(const StructuralSimulationInput &input)
 	: StructuralSimulation(input),
-	  write_states_(in_output_, system_.real_bodies_),
+	  write_states_(io_environment_, system_.real_bodies_),
 	  dt(0.0)
 {
 	write_states_.writeToFile(0);

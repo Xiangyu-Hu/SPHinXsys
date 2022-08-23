@@ -223,7 +223,7 @@ int main()
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	GlobalStaticVariables::physical_time_ = 0.0;
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -284,11 +284,11 @@ int main()
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_real_body_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
 	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Real>>
-		write_fluid_phi("Phi", in_output, fluid_observer_contact);
+		write_fluid_phi("Phi", io_environment, fluid_observer_contact);
 	ObservedQuantityRecording<Vecd>
-		write_fluid_velocity("Velocity", in_output, fluid_observer_contact);
+		write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.

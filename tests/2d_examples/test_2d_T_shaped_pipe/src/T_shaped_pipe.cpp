@@ -112,9 +112,8 @@ int main(int ac, char *av[])
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	/** Tag for computation from restart files. 0: not from restart files. */
 	system.restart_step_ = 0;
-	// handle command line arguments
 	system.handleCommandlineOptions(ac, av);
-	InOutput in_output(system);
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.cd
 	//----------------------------------------------------------------------
@@ -174,8 +173,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_body_states(in_output, system.real_bodies_);
-	RestartIO restart_io(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp write_body_states(io_environment, system.real_bodies_);
+	RestartIO restart_io(io_environment, system.real_bodies_);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.

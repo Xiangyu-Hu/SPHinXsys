@@ -15,7 +15,7 @@ int main(int ac, char *av[])
 {
 	/** Build up -- a SPHSystem -- */
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
-	InOutput in_output(sph_system);
+	IOEnvironment io_environment(sph_system);
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
 	sph_system.run_particle_relaxation_ = false;
 	/** Tag for computation start with relaxed body fitted particles distribution. */
@@ -34,7 +34,7 @@ int main(int ac, char *av[])
 	water_block.defineComponentLevelSetShape("OuterBoundary");
 	water_block.defineParticlesAndMaterial<WeaklyCompressibleFluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-		? water_block.generateParticles<ParticleGeneratorReload>(in_output, water_block.getBodyName())
+		? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getBodyName())
 		: water_block.generateParticles<ParticleGeneratorLattice>();
 	water_block.addBodyStateForRecording<int>("SurfaceIndicator");
 	/**
@@ -45,13 +45,13 @@ int main(int ac, char *av[])
 	cylinder.defineBodyLevelSetShape();
 	cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-		? cylinder.generateParticles<ParticleGeneratorReload>(in_output, cylinder.getBodyName())
+		? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getBodyName())
 		: cylinder.generateParticles<ParticleGeneratorLattice>();
 	/**
 	 * @brief define simple data file input and outputs functions.
 	 */
-	BodyStatesRecordingToVtp write_real_body_states(in_output, sph_system.real_bodies_);
-	RestartIO restart_io(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
+	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	/** body topology */
 	BodyRelationInner water_block_inner(water_block);
 	BodyRelationContact water_cylinder_contact(water_block, {&cylinder});
@@ -70,11 +70,11 @@ int main(int ac, char *av[])
 		RandomizeParticlePosition random_inserted_body_particles(cylinder);
 		RandomizeParticlePosition random_water_body_particles(water_block);
 		/** Write the body state to Vtu file. */
-		BodyStatesRecordingToVtp write_inserted_body_to_vtu(in_output, {&cylinder});
-		BodyStatesRecordingToVtp write_water_body_to_vtu(in_output, {&water_block});
+		BodyStatesRecordingToVtp write_inserted_body_to_vtu(io_environment, {&cylinder});
+		BodyStatesRecordingToVtp write_water_body_to_vtu(io_environment, {&water_block});
 		/** Write the particle reload files. */
-		ReloadParticleIO write_inserted_particle_reload_files(in_output, {&cylinder});
-		ReloadParticleIO write_water_particle_reload_files(in_output, {&water_block});
+		ReloadParticleIO write_inserted_particle_reload_files(io_environment, {&cylinder});
+		ReloadParticleIO write_water_particle_reload_files(io_environment, {&water_block});
 
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(cylinder_inner, true);
@@ -136,11 +136,11 @@ int main(int ac, char *av[])
 	 * @brief Write solid data into files.
 	 */
 	RegressionTestTimeAveraged<BodyReducedQuantityRecording<solid_dynamics::TotalViscousForceOnSolid>>
-		write_total_viscous_force_on_inserted_body(in_output, cylinder);
+		write_total_viscous_force_on_inserted_body(io_environment, cylinder);
 	BodyReducedQuantityRecording<solid_dynamics::TotalForceOnSolid>
-		write_total_force_on_inserted_body(in_output, cylinder);
+		write_total_force_on_inserted_body(io_environment, cylinder);
 	/** Output the maximum speed of the fluid body. */
-	BodyReducedQuantityRecording<MaximumSpeed> write_maximum_speed(in_output, water_block);
+	BodyReducedQuantityRecording<MaximumSpeed> write_maximum_speed(io_environment, water_block);
 	/**
 	 * @brief Pre-simulation.
 	 */

@@ -112,11 +112,11 @@ int main(int ac, char *av[])
 {
 	/** Setup the system. Please the make sure the global domain bounds are correctly defined. */
 	SPHSystem system(system_domain_bounds, resolution_ref);
-// handle command line arguments
 #ifdef BOOST_AVAILABLE
+	// handle command line arguments
 	system.handleCommandlineOptions(ac, av);
-#endif /** output environment. */
-	InOutput in_output(system);
+#endif
+	IOEnvironment io_environment(system);
 
 	/** Import a beam body, with corresponding material and particles. */
 	SolidBody beam_body(system, makeShared<Beam>("beam"));
@@ -169,9 +169,9 @@ int main(int ac, char *av[])
 		beam_damping(0.1, beam_body_inner, "Velocity", physical_viscosity);
 
 	/** Output */
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestTimeAveraged<ObservedQuantityRecording<Real>>
-		write_beam_stress("VonMisesStress", in_output, beam_observer_contact);
+		write_beam_stress("VonMisesStress", io_environment, beam_observer_contact);
 	/* time step begins */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	system.initializeSystemCellLinkedLists();

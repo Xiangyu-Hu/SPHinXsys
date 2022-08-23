@@ -42,12 +42,12 @@ int main()
 	//----------------------------------------------------------------------
 	//	Output
 	//----------------------------------------------------------------------
-	InOutput in_output(system);
-	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	IOEnvironment io_environment(system);
+	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_velocity("Velocity", in_output, my_observer_contact);
+		write_velocity("Velocity", io_environment, my_observer_contact);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_displacement("Position", in_output, my_observer_contact);
+		write_displacement("Position", io_environment, my_observer_contact);
 	//----------------------------------------------------------------------
 	// From here the time stepping begins.
 	//----------------------------------------------------------------------

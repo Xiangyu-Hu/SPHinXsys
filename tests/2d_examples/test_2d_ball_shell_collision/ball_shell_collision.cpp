@@ -53,10 +53,8 @@ int main(int ac, char *av[])
 	sph_system.reload_particles_ = false;
 	/** Tag for computation from restart files. 0: start with initial condition */
 	sph_system.restart_step_ = 0;
-	/** Handle command line arguments. */
 	sph_system.handleCommandlineOptions(ac, av);
-	/** I/O environment. */
-	InOutput in_output(sph_system);
+	IOEnvironment io_environment(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -64,7 +62,7 @@ int main(int ac, char *av[])
 	ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 	{
-		ball.generateParticles<ParticleGeneratorReload>(in_output, ball.getBodyName());
+		ball.generateParticles<ParticleGeneratorReload>(io_environment, ball.getBodyName());
 	}
 	else
 	{
@@ -81,7 +79,7 @@ int main(int ac, char *av[])
 	wall_boundary.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1.0, 1.0, 0.0);
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 	{
-		wall_boundary.generateParticles<ParticleGeneratorReload>(in_output, wall_boundary.getBodyName());
+		wall_boundary.generateParticles<ParticleGeneratorReload>(io_environment, wall_boundary.getBodyName());
 	}
 	else
 	{
@@ -123,9 +121,9 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Output for particle relaxation.
 		//----------------------------------------------------------------------
-		BodyStatesRecordingToVtp write_relaxed_particles(in_output, sph_system.real_bodies_);
-		MeshRecordingToPlt write_mesh_cell_linked_list(in_output, wall_boundary, wall_boundary.cell_linked_list_);
-		ReloadParticleIO write_particle_reload_files(in_output, {&ball, &wall_boundary});
+		BodyStatesRecordingToVtp write_relaxed_particles(io_environment, sph_system.real_bodies_);
+		MeshRecordingToPlt write_mesh_cell_linked_list(io_environment, wall_boundary, wall_boundary.cell_linked_list_);
+		ReloadParticleIO write_particle_reload_files(io_environment, {&ball, &wall_boundary});
 		//----------------------------------------------------------------------
 		//	Particle relaxation starts here.
 		//----------------------------------------------------------------------
@@ -186,9 +184,9 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp body_states_recording(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_ball_center_displacement("Position", in_output, ball_observer_contact);
+		write_ball_center_displacement("Position", io_environment, ball_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.

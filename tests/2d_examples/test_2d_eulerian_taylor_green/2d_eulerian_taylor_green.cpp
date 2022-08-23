@@ -79,9 +79,7 @@ int main(int ac, char *av[])
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for computation from restart files. 0: not from restart files. */
 	sph_system.restart_step_ = 0;
-	/** output environment. */
-	InOutput in_output(sph_system);
-	//handle command line arguments
+	IOEnvironment io_environment(sph_system);
 	sph_system.handleCommandlineOptions(ac, av);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
@@ -119,15 +117,15 @@ int main(int ac, char *av[])
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
 	/** Output the body states. */
-	BodyStatesRecordingToVtp body_states_recording(in_output, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
 	/** Output the body states for restart simulation. */
-	RestartIO restart_io(in_output, sph_system.real_bodies_);
+	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
 	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
-		write_total_mechanical_energy(in_output, water_body);
+		write_total_mechanical_energy(io_environment, water_body);
 	/** Output the maximum speed of the fluid body. */
 	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<MaximumSpeed>>
-		write_maximum_speed(in_output, water_body);
+		write_maximum_speed(io_environment, water_body);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.

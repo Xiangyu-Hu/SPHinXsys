@@ -96,7 +96,7 @@ public:
 
 void expandBoundingBox(BoundingBox *original, BoundingBox *additional);
 
-void relaxParticlesSingleResolution(InOutput &in_output,
+void relaxParticlesSingleResolution(IOEnvironment &io_environment,
 									bool write_particles_to_file,
 									SolidBodyFromMesh &solid_body_from_mesh,
 									ElasticSolidParticles &solid_body_from_mesh_particles,
@@ -181,7 +181,7 @@ protected:
 	Real system_resolution_;
 	SPHSystem system_;
 	Real scale_system_boundaries_;
-	InOutput in_output_;
+	IOEnvironment io_environment_;
 
 	vector<shared_ptr<SolidBodyForSimulation>> solid_body_list_;
 	vector<shared_ptr<solid_dynamics::UpdateElasticNormalDirection>> particle_normal_update_;

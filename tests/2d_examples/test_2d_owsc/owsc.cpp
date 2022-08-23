@@ -13,7 +13,7 @@ int main()
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
-	InOutput in_output(system); // output environment
+	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
@@ -157,26 +157,26 @@ int main()
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
-	BodyStatesRecordingToVtp write_real_body_states(in_output, system.real_bodies_);
+	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<
-		BodyReducedQuantityRecording<solid_dynamics::TotalForceOnSolid>> write_total_force_on_flap(in_output, flap);
-	WriteSimBodyPinData write_flap_pin_data(in_output, integ, pin_spot);
+		BodyReducedQuantityRecording<solid_dynamics::TotalForceOnSolid>> write_total_force_on_flap(io_environment, flap);
+	WriteSimBodyPinData write_flap_pin_data(io_environment, integ, pin_spot);
 	
 	/** WaveProbes. */
 	BodyRegionByCell wave_probe_buffer_no_4(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape4(), "WaveProbe_04"));
 	BodyReducedQuantityRecording<fluid_dynamics::FreeSurfaceProbeOnFluidBody>
-		wave_probe_4(in_output, water_block, wave_probe_buffer_no_4);
+		wave_probe_4(io_environment, water_block, wave_probe_buffer_no_4);
 
 	BodyRegionByCell wave_probe_buffer_no_5(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape5(), "WaveProbe_05"));
 	BodyReducedQuantityRecording<fluid_dynamics::FreeSurfaceProbeOnFluidBody>
-		wave_probe_5(in_output, water_block, wave_probe_buffer_no_5);
+		wave_probe_5(io_environment, water_block, wave_probe_buffer_no_5);
 
 	BodyRegionByCell wave_probe_buffer_no_12(water_block, makeShared<MultiPolygonShape>(createWaveProbeShape12(), "WaveProbe_12"));
 	BodyReducedQuantityRecording<fluid_dynamics::FreeSurfaceProbeOnFluidBody>
-		wave_probe_12(in_output, water_block, wave_probe_buffer_no_12);
+		wave_probe_12(io_environment, water_block, wave_probe_buffer_no_12);
 	
 	/** Pressure probe. */
-	ObservedQuantityRecording<Real> pressure_probe("Pressure", in_output, observer_contact_with_water);
+	ObservedQuantityRecording<Real> pressure_probe("Pressure", io_environment, observer_contact_with_water);
 	/** Interpolate the particle position in flap to move the observer accordingly. */
 	observer_dynamics::InterpolatingAQuantity<Vecd>
 		interpolation_observer_position(observer_contact_with_flap, "Position", "Position");
