@@ -123,7 +123,6 @@ namespace SPH
 		//=================================================================================================//
 		Real AcousticTimeStepSize::OutputResult(Real reduced_value)
 		{
-			particles_->signal_speed_max_ = reduced_value;
 			//since the particle does not change its configuration in pressure relaxation step
 			//I chose a time-step size according to Eulerian method
 			return 0.6 / Dimensions * smoothing_length_ / (reduced_value + TinyReal);
