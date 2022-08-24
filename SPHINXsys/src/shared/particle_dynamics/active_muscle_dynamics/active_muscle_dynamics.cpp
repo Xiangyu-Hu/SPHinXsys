@@ -13,8 +13,8 @@ namespace SPH
 	{
 		//=================================================================================================//
 		MuscleActivation::
-			MuscleActivation(SolidBody &solid_body) :
-			ParticleDynamicsSimple(solid_body), ElasticSolidDataSimple(solid_body),
+			MuscleActivation(SPHBody &sph_body) :
+			LocalDynamics(sph_body), ElasticSolidDataSimple(sph_body),
 			pos0_(particles_->pos0_), 
 			active_contraction_stress_(*particles_->getVariableByName<Real>("ActiveContractionStress")) {};
 		//=================================================================================================//

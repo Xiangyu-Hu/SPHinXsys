@@ -56,10 +56,10 @@ namespace SPH
 		 * This is a abstract class to be override for case specific activation
 		 */
 		class MuscleActivation :
-			public ParticleDynamicsSimple, public ElasticSolidDataSimple
+			public LocalDynamics, public ElasticSolidDataSimple
 		{
 		public:
-			explicit MuscleActivation(SolidBody &solid_body);
+			explicit MuscleActivation(SPHBody &sph_body);
 			virtual ~MuscleActivation() {};
 		protected:
 			StdLargeVec<Vecd>& pos0_;
@@ -69,6 +69,7 @@ namespace SPH
 		/**@class SpringConstrainMuscleRegion
 		 * @brief Constrain a solid body part with a spring force 
 		 * towards each constrained particles' original position.
+		 * //TODO: a test case is required for this class.
 		 */
 		class SpringConstrainMuscleRegion : 
 			public PartSimpleDynamicsByParticle, public ElasticSolidDataSimple

@@ -17,7 +17,7 @@ Real LH = 1.0;						/**< Water column height. */
 Real particle_spacing_ref = 0.025;	/**< Initial reference particle spacing. */
 Real BW = particle_spacing_ref * 4; /**< Thickness of tank wall. */
 //----------------------------------------------------------------------
-//	Material properties of the fluid.
+//	Material parameters.
 //----------------------------------------------------------------------
 Real rho0_f = 1.0;						 /**< Reference density of fluid. */
 Real gravity_g = 1.0;					 /**< Gravity. */
@@ -85,14 +85,14 @@ int main(int ac, char *av[])
 	//	Define the numerical methods used in the simulation.
 	//	Note that there may be data dependence on the sequence of constructions.
 	//----------------------------------------------------------------------
+	fluid_dynamics::PressureRelaxationRiemannWithWall fluid_pressure_relaxation(water_block_complex);
+	fluid_dynamics::DensityRelaxationRiemannWithWall fluid_density_relaxation(water_block_complex);
+	fluid_dynamics::DensitySummationFreeSurfaceComplex fluid_density_by_summation(water_block_complex);
 	Gravity gravity(Vecd(0.0, -gravity_g));
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	TimeStepInitialization fluid_step_initialization(water_block, gravity);
-	fluid_dynamics::DensitySummationFreeSurfaceComplex fluid_density_by_summation(water_block_complex);
 	fluid_dynamics::AdvectionTimeStepSize fluid_advection_time_step(water_block, U_max);
 	fluid_dynamics::AcousticTimeStepSize fluid_acoustic_time_step(water_block);
-	fluid_dynamics::PressureRelaxationRiemannWithWall fluid_pressure_relaxation(water_block_complex);
-	fluid_dynamics::DensityRelaxationRiemannWithWall fluid_density_relaxation(water_block_complex);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations, observations
 	//	and regression tests of the simulation.

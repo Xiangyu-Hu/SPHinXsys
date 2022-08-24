@@ -4,9 +4,10 @@
  * @author Chi Zhang and Xiangyu Hu
  */
 #include "sphinxsys.h"
-/** Name space. */
 using namespace SPH;
-/** Geometry parameters. */
+//----------------------------------------------------------------------
+//	Basic geometry parameters and numerical setup.
+//----------------------------------------------------------------------
 Real PL = 1.0;					 /**< Length of the myocardium body. */
 Real PH = 1.0;					 /**< Thickness of the myocardium body. */
 Real PW = 1.0;					 /**< Width of the myocardium body. */
@@ -16,11 +17,9 @@ Vecd halfsize_myocardium(0.5 * (PL + SL), 0.5 * PH, 0.5 * PW);
 Vecd translation_myocardium(0.5 * (PL - SL), 0.5 * PH, 0.5 * PW);
 Vecd halfsize_holder(0.5 * SL, 0.5 * PH, 0.5 * PW);
 Vecd translation_holder(-0.5 * SL, 0.5 * PH, 0.5 * PW);
-/** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vecd(-SL, -SL, -SL),
-								 Vecd(PL + SL, PH + SL, PW + SL));
-
-/** For material properties of the solid. */
+//----------------------------------------------------------------------
+//	Material parameters.
+//----------------------------------------------------------------------
 Real rho0_s = 1.0;
 Real a0[4] = {0.059, 0.0, 0.0, 0.0};
 Real b0[4] = {8.023, 0.0, 0.0, 0.0};
@@ -30,28 +29,17 @@ Real reference_voltage = 30.0;
 Real linear_active_stress_factor = -0.5;
 /** reference stress or bulk modulus to achieve weakly compressible condition */
 Real bulk_modulus = 30.0 * reference_voltage * fabs(linear_active_stress_factor);
-
-/** Define the myocardium body shape. */
-class Myocardium : public ComplexShape
-{
-public:
-	explicit Myocardium(const std::string &shape_name) : ComplexShape(shape_name)
-	{
-		add<TransformShape<GeometricShapeBox>>(translation_myocardium, halfsize_myocardium);
-	}
-};
-/**
- * Assign case dependent muscle activation history
- */
+//----------------------------------------------------------------------
+//	Case dependent muscle activation history.
+//----------------------------------------------------------------------
 class MyocardiumActivation
 	: public active_muscle_dynamics::MuscleActivation
 {
 public:
-	explicit MyocardiumActivation(SolidBody &myocardium)
-		: active_muscle_dynamics::MuscleActivation(myocardium){};
+	explicit MyocardiumActivation(SPHBody &sph_body)
+		: active_muscle_dynamics::MuscleActivation(sph_body){};
 
-protected:
-	void Update(size_t index_i, Real dt) override
+	void update(size_t index_i, Real dt)
 	{
 		Real voltage = pos0_[index_i][0] <= 0 ? 0.0 : reference_voltage * pos0_[index_i][0] / PL;
 		active_contraction_stress_[index_i] += GlobalStaticVariables::physical_time_ <= 1.0
@@ -59,7 +47,9 @@ protected:
 												   : 0.0;
 	};
 };
-// application dependent constraint
+//----------------------------------------------------------------------
+//	Case dependent constraint.
+//----------------------------------------------------------------------
 class ConstrainHolder : public solid_dynamics::ConstrainSolidBodyRegion
 {
 public:
@@ -88,58 +78,74 @@ protected:
 		return acc_temp;
 	};
 };
-/**
- *  The main program
- */
+//----------------------------------------------------------------------
+//	Main program starts here.
+//----------------------------------------------------------------------
 int main()
 {
-	/** Setup the system. */
+	//----------------------------------------------------------------------
+	//	Build up an SPHSystem.
+	//----------------------------------------------------------------------
+	BoundingBox system_domain_bounds(Vecd(-SL, -SL, -SL), Vecd(PL + SL, PH + SL, PW + SL));
 	SPHSystem system(system_domain_bounds, resolution_ref);
-	/** Creat a Myocardium body, corresponding material and particles. */
-	SolidBody myocardium_muscle_body(system, makeShared<Myocardium>("MyocardiumMuscleBody"));
+	//----------------------------------------------------------------------
+	//	Creating bodies with corresponding materials and particles.
+	//----------------------------------------------------------------------
+	SolidBody myocardium_muscle_body(system, makeShared<TransformShape<GeometricShapeBox>>(
+						Transform3d(translation_myocardium), halfsize_myocardium, "MyocardiumMuscleBody"));
 	myocardium_muscle_body.defineParticlesAndMaterial<
 		ElasticSolidParticles, ActiveMuscle<Muscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
 	myocardium_muscle_body.generateParticles<ParticleGeneratorLattice>();
-	/** topology */
+	//----------------------------------------------------------------------
+	//	Define body relation map.
+	//	The contact map gives the topological connections between the bodies.
+	//	Basically the the range of bodies to build neighbor particle lists.
+	//----------------------------------------------------------------------
 	BodyRelationInner myocardium_muscle_body_inner(myocardium_muscle_body);
-	/**
-	 * This section define all numerical methods will be used in this case.
-	 */
-	/** Corrected configuration. */
-	solid_dynamics::CorrectConfiguration corrected_configuration(myocardium_muscle_body_inner);
-	/** Time step size calculation. */
-	solid_dynamics::AcousticTimeStepSize computing_time_step_size(myocardium_muscle_body);
-	/** Compute the active contraction stress */
-	MyocardiumActivation myocardium_activation(myocardium_muscle_body);
-	/** active and passive stress relaxation. */
+	//----------------------------------------------------------------------
+	//	Define the numerical methods used in the simulation.
+	//	Note that there may be data dependence on the sequence of constructions.
+	//----------------------------------------------------------------------
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(myocardium_muscle_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(myocardium_muscle_body_inner);
-	/** Constrain region of the inserted body. */
+	solid_dynamics::CorrectConfiguration corrected_configuration(myocardium_muscle_body_inner);
+	solid_dynamics::AcousticTimeStepSize computing_time_step_size(myocardium_muscle_body);
+	SimpleDynamics<MyocardiumActivation> myocardium_activation(myocardium_muscle_body);
 	BodyRegionByParticle holder(myocardium_muscle_body, makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder));
 	ConstrainHolder constrain_holder(myocardium_muscle_body, holder, 0);
-	/** Output */
+	//----------------------------------------------------------------------
+	//	Define the methods for I/O operations, observations
+	//	and regression tests of the simulation.
+	//----------------------------------------------------------------------
 	IOEnvironment io_environment(system);
 	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
-	/**
-	 * From here the time stepping begins.
-	 * Set the starting time.
-	 */
+	//----------------------------------------------------------------------
+	//	Prepare the simulation with cell linked list, configuration
+	//	and case specified initial condition if necessary.
+	//----------------------------------------------------------------------
 	GlobalStaticVariables::physical_time_ = 0.0;
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	corrected_configuration.parallel_exec();
-	write_states.writeToFile(0);
-	/** Setup physical parameters. */
+	//----------------------------------------------------------------------
+	//	Setup for time-stepping control
+	//----------------------------------------------------------------------
 	int ite = 0;
 	Real end_time = 1.2;
 	Real output_period = end_time / 60.0;
 	Real dt = 0.0;
-	/** Statistics for computing time. */
+	//----------------------------------------------------------------------
+	//	Statistics for CPU time
+	//----------------------------------------------------------------------
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
-	/**
-	 * Main loop
-	 */
+	//----------------------------------------------------------------------
+	//	First output before the main loop.
+	//----------------------------------------------------------------------
+	write_states.writeToFile(0);
+	//----------------------------------------------------------------------
+	//	Main loop starts here.
+	//----------------------------------------------------------------------
 	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
