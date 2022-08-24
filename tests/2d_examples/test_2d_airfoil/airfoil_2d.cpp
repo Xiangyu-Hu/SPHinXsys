@@ -5,11 +5,8 @@
  *			Before the particles are generated, we clean the sharp corners and other unresolvable surfaces.
  * @author 	Yongchuan Yu and Xiangyu Hu
  */
-
 #include "sphinxsys.h"
-
 using namespace SPH;
-
 //----------------------------------------------------------------------
 //	Set the file path to the data file.
 //----------------------------------------------------------------------
@@ -46,9 +43,7 @@ int main(int ac, char *av[])
 	//	Build up -- a SPHSystem
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, resolution_ref);
-	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = true;
-// handle command line arguments
+	system.run_particle_relaxation_ = true; //tag to run particle relaxation when no commandline option
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
 #endif
@@ -63,7 +58,7 @@ int main(int ac, char *av[])
 	airfoil.generateParticles<ParticleGeneratorMultiResolution>();
 	airfoil.addBodyStateForRecording<Real>("SmoothingLengthRatio");
 	//----------------------------------------------------------------------
-	//	Define simple file input and outputs functions.
+	//	Define outputs functions.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp airfoil_recording_to_vtp(io_environment, {&airfoil});
 	MeshRecordingToPlt cell_linked_list_recording(io_environment, airfoil, airfoil.cell_linked_list_);
@@ -103,11 +98,11 @@ int main(int ac, char *av[])
 		ite_p += 1;
 		if (ite_p % 100 == 0)
 		{
-			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps for the airfoil N = " << ite_p << "\n";
+			std::cout << std::fixed << std::setprecision(9) << "Relaxation steps N = " << ite_p << "\n";
 			airfoil_recording_to_vtp.writeToFile(ite_p);
 		}
 	}
-	std::cout << "The physics relaxation process of airfoil finish !" << std::endl;
+	std::cout << "The physics relaxation process finished !" << std::endl;
 
 	return 0;
 }
