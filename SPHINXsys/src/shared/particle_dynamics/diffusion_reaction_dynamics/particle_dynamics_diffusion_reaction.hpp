@@ -13,18 +13,18 @@ namespace SPH
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	DiffusionReactionInitialCondition<BodyType, BaseParticlesType, BaseMaterialType>::
-		DiffusionReactionInitialCondition(BodyType &body)
-		: ParticleDynamicsSimple(body),
-		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(body),
+		DiffusionReactionInitialCondition(SPHBody &sph_body)
+		: ParticleDynamicsSimple(sph_body),
+		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 		  pos_(this->particles_->pos_), species_n_(this->particles_->species_n_) {}
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	GetDiffusionTimeStepSize<BodyType, BaseParticlesType, BaseMaterialType>::
-		GetDiffusionTimeStepSize(BodyType &body)
-		: ParticleDynamics<Real>(body),
-		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(body)
+		GetDiffusionTimeStepSize(SPHBody &sph_body)
+		: ParticleDynamics<Real>(sph_body),
+		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body)
 	{
-		Real smoothing_length = body.sph_adaptation_->ReferenceSmoothingLength();
+		Real smoothing_length = sph_body.sph_adaptation_->ReferenceSmoothingLength();
 		diff_time_step_ = this->material_->getDiffusionTimeStepSize(smoothing_length);
 	}
 	//=================================================================================================//
@@ -255,9 +255,9 @@ namespace SPH
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	RelaxationOfAllReactionsForward<BodyType, BaseParticlesType, BaseMaterialType>::
-		RelaxationOfAllReactionsForward(BodyType &body)
-		: ParticleDynamicsSimple(body),
-		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(body),
+		RelaxationOfAllReactionsForward(SPHBody &sph_body)
+		: ParticleDynamicsSimple(sph_body),
+		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 		  species_n_(this->particles_->species_n_)
 	{
 		species_reaction_ = this->material_->SpeciesReaction();
@@ -280,9 +280,9 @@ namespace SPH
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	RelaxationOfAllReactionsBackward<BodyType, BaseParticlesType, BaseMaterialType>::
-		RelaxationOfAllReactionsBackward(BodyType &body)
-		: ParticleDynamicsSimple(body),
-		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(body),
+		RelaxationOfAllReactionsBackward(SPHBody &sph_body)
+		: ParticleDynamicsSimple(sph_body),
+		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 		  species_n_(this->particles_->species_n_)
 	{
 		species_reaction_ = this->material_->SpeciesReaction();

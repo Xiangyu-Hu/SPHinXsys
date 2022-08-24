@@ -67,7 +67,7 @@ namespace SPH
 		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 	public:
-		explicit DiffusionReactionInitialCondition(BodyType &body);
+		explicit DiffusionReactionInitialCondition(SPHBody &sph_body);
 		virtual ~DiffusionReactionInitialCondition(){};
 
 	protected:
@@ -85,7 +85,7 @@ namespace SPH
 		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 	public:
-		explicit GetDiffusionTimeStepSize(BodyType &body);
+		explicit GetDiffusionTimeStepSize(SPHBody &sph_body);
 		virtual ~GetDiffusionTimeStepSize(){};
 
 		virtual Real exec(Real dt = 0.0) override { return diff_time_step_; };
@@ -248,7 +248,7 @@ namespace SPH
 		virtual void Update(size_t index_i, Real dt = 0.0) override;
 
 	public:
-		explicit RelaxationOfAllReactionsForward(BodyType &body);
+		explicit RelaxationOfAllReactionsForward(SPHBody &sph_body);
 		virtual ~RelaxationOfAllReactionsForward(){};
 	};
 
@@ -269,7 +269,7 @@ namespace SPH
 		virtual void Update(size_t index_i, Real dt = 0.0) override;
 
 	public:
-		explicit RelaxationOfAllReactionsBackward(BodyType &body);
+		explicit RelaxationOfAllReactionsBackward(SPHBody &sph_body);
 		virtual ~RelaxationOfAllReactionsBackward(){};
 	};
 
@@ -283,9 +283,9 @@ namespace SPH
 		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 	public:
-		ConstrainDiffusionBodyRegion(BodyType &body, BodyPartByParticleType &body_part)
-			: PartSimpleDynamicsByParticle(body, body_part),
-			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(body),
+		ConstrainDiffusionBodyRegion(SPHBody &sph_body, BodyPartByParticleType &body_part)
+			: PartSimpleDynamicsByParticle(sph_body, body_part),
+			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 			  pos_(this->particles_->pos_), species_n_(this->particles_->species_n_){};
 		virtual ~ConstrainDiffusionBodyRegion(){};
 
@@ -305,9 +305,9 @@ namespace SPH
 		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 	public:
-		explicit DiffusionBasedMapping(BodyType &body)
-			: ParticleDynamicsSimple(body),
-			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(body),
+		explicit DiffusionBasedMapping(SPHBody &sph_body)
+			: ParticleDynamicsSimple(sph_body),
+			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 			  pos_(this->particles_->pos_), species_n_(this->particles_->species_n_){};
 		virtual ~DiffusionBasedMapping(){};
 
@@ -326,9 +326,9 @@ namespace SPH
 		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 	public:
-		explicit TotalAveragedParameterOnDiffusionBody(BodyType &body, const std::string &species_name)
-			: ParticleDynamicsReduce<Real, ReduceSum<Real>>(body),
-			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(body),
+		explicit TotalAveragedParameterOnDiffusionBody(SPHBody &sph_body, const std::string &species_name)
+			: ParticleDynamicsReduce<Real, ReduceSum<Real>>(sph_body),
+			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 			  species_n_(this->particles_->species_n_), species_name_(species_name)
 		{
 			quantity_name_ = "TotalAveragedParameterOnDiffusionBody";
@@ -357,10 +357,10 @@ namespace SPH
 		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 	public:
-		explicit TotalAveragedParameterOnPartlyDiffusionBody(BodyType &body,
+		explicit TotalAveragedParameterOnPartlyDiffusionBody(SPHBody &sph_body,
 															 BodyPartByParticle &body_part, const std::string &species_name)
-			: PartDynamicsByParticleReduce<Real, ReduceSum<Real>>(body, body_part),
-			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(body),
+			: PartDynamicsByParticleReduce<Real, ReduceSum<Real>>(sph_body, body_part),
+			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 			  species_n_(this->particles_->species_n_), species_name_(species_name)
 		{
 			quantity_name_ = "TotalAveragedParameterOnPartlyDiffusionBody";
