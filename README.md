@@ -20,6 +20,12 @@ many examples designated for the specific type of applications are provided.
 [![YouTube](https://img.shields.io/badge/YouTube-FF0000.svg?style=flat&logo=YouTube&logoColor=white)](https://www.youtube.com/channel/UCexdJbxOn9dvim6Jg1dnCFQ)
 [![Bilibili](https://img.shields.io/badge/bilibili-%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9-critical)](https://space.bilibili.com/1761273682/video)
 
+<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/2d_examples/test_2d_dambreak/Dambreak.cpp">
+<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/dambreak.gif" height="192px"></a>
+<a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/2d_examples/test_2d_filling_tank/filling_tank.cpp"> 
+<img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/water-hose.gif" height="192px"></a>
+
+
 ## Journal publications
 
 The algorithms in SPHinXsys are based on the following publications:
