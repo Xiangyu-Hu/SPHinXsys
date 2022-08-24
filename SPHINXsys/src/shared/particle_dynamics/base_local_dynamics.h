@@ -49,10 +49,9 @@ namespace SPH
 		explicit BaseLocalDynamics(SPHBody &sph_body) : sph_body_(&sph_body){};
 		virtual ~BaseLocalDynamics(){};
 
-		typedef ReturnType DynamicsParameterType;
+		typedef ReturnType LocalDynamicsReturnType;
 		void setBodyUpdated() { sph_body_->setNewlyUpdated(); };
-		/** the function for set global parameters for the particle dynamics */
-		virtual ReturnType setupDynamics(Real dt = 0.0) = 0;
+		virtual ReturnType setupDynamics(Real dt = 0.0) = 0; //setup global parameters
 	};
 
 	/**

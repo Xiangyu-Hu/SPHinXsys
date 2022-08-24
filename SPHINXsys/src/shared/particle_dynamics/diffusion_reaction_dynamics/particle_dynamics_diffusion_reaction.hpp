@@ -14,7 +14,7 @@ namespace SPH
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	DiffusionReactionInitialCondition<BodyType, BaseParticlesType, BaseMaterialType>::
 		DiffusionReactionInitialCondition(SPHBody &sph_body)
-		: ParticleDynamicsSimple(sph_body),
+		: LocalDynamics(sph_body),
 		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 		  pos_(this->particles_->pos_), species_n_(this->particles_->species_n_) {}
 	//=================================================================================================//

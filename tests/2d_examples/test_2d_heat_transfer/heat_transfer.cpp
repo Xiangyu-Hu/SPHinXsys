@@ -125,9 +125,15 @@ class ThermosolidBodyInitialCondition
 protected:
 	size_t phi_;
 
-	void Update(size_t index_i, Real dt) override
+public:
+	explicit ThermosolidBodyInitialCondition(SPHBody &sph_body)
+		: DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>(sph_body)
 	{
+		phi_ = material_->SpeciesIndexMap()["Phi"];
+	};
 
+	void update(size_t index_i, Real dt)
+	{
 		if (-BW <= pos_[index_i][1] && pos_[index_i][1] <= 0.0)
 		{
 			species_n_[phi_][index_i] = phi_lower_wall;
@@ -137,13 +143,6 @@ protected:
 		{
 			species_n_[phi_][index_i] = phi_upper_wall;
 		}
-	};
-
-public:
-	explicit ThermosolidBodyInitialCondition(SolidBody &diffusion_solid_body)
-		: DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>(diffusion_solid_body)
-	{
-		phi_ = material_->SpeciesIndexMap()["Phi"];
 	};
 };
 //----------------------------------------------------------------------
@@ -155,20 +154,19 @@ class ThermofluidBodyInitialCondition
 protected:
 	size_t phi_;
 
-	void Update(size_t index_i, Real dt) override
+public:
+	explicit ThermofluidBodyInitialCondition(SPHBody &sph_body)
+		: DiffusionReactionInitialCondition<FluidBody, FluidParticles, WeaklyCompressibleFluid>(sph_body)
 	{
+		phi_ = material_->SpeciesIndexMap()["Phi"];
+	};
 
+	void update(size_t index_i, Real dt)
+	{
 		if (0 <= pos_[index_i][1] && pos_[index_i][1] <= DH)
 		{
 			species_n_[phi_][index_i] = phi_fluid_initial;
 		}
-	};
-
-public:
-	explicit ThermofluidBodyInitialCondition(FluidBody &diffusion_fluid_body)
-		: DiffusionReactionInitialCondition<FluidBody, FluidParticles, WeaklyCompressibleFluid>(diffusion_fluid_body)
-	{
-		phi_ = material_->SpeciesIndexMap()["Phi"];
 	};
 };
 //----------------------------------------------------------------------
@@ -252,8 +250,8 @@ int main()
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	PeriodicConditionUsingCellLinkedList periodic_condition(thermofluid_body, thermofluid_body.getBodyShapeBounds(), xAxis);
-	ThermosolidBodyInitialCondition thermosolid_condition(thermosolid_body);
-	ThermofluidBodyInitialCondition thermofluid_initial_condition(thermofluid_body);
+	SimpleDynamics<ThermosolidBodyInitialCondition> thermosolid_condition(thermosolid_body);
+	SimpleDynamics<ThermofluidBodyInitialCondition> thermofluid_initial_condition(thermofluid_body);
 	SimpleDynamics<NormalDirectionFromBodyShape> thermosolid_body_normal_direction(thermosolid_body);
 	/** Initialize particle acceleration. */
 	TimeStepInitialization initialize_a_fluid_step(thermofluid_body);

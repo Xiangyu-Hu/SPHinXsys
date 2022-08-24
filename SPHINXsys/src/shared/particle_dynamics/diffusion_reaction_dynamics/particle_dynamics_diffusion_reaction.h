@@ -63,7 +63,7 @@ namespace SPH
 	 */
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	class DiffusionReactionInitialCondition
-		: public ParticleDynamicsSimple,
+		: public LocalDynamics,
 		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 	public:

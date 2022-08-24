@@ -238,14 +238,14 @@ namespace SPH
 
 		virtual void exec(Real dt = 0.0) override
 		{
-			setBodyUpdated();
+			local_dynamics_.setBodyUpdated();
 			local_dynamics_.setupDynamics(dt);
 			particle_for(total_real_particles_, local_dynamics_, &LocalDynamics::update, dt);
 		};
 
 		virtual void parallel_exec(Real dt = 0.0) override
 		{
-			setBodyUpdated();
+			local_dynamics_.setBodyUpdated();
 			local_dynamics_.setupDynamics(dt);
 			particle_parallel_for(total_real_particles_, local_dynamics_, &LocalDynamics::update, dt);
 		};

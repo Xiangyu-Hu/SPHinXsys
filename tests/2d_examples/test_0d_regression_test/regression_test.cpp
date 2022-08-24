@@ -114,7 +114,15 @@ class DiffusionInitialCondition
 {
 protected:
 	size_t phi_;
-	void Update(size_t index_i, Real dt) override
+
+public:
+	explicit DiffusionInitialCondition(SPHBody &sph_body)
+		: DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>(sph_body)
+	{
+		phi_ = material_->SpeciesIndexMap()["Phi"];
+	};
+
+	void update(size_t index_i, Real dt)
 	{
 		if (pos_[index_i][0] >= 0 && pos_[index_i][0] <= L && pos_[index_i][1] >= 0 && pos_[index_i][1] <= H)
 		{
@@ -122,12 +130,6 @@ protected:
 		}
 	};
 
-public:
-	explicit DiffusionInitialCondition(SolidBody &diffusion_body)
-		: DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>(diffusion_body)
-	{
-		phi_ = material_->SpeciesIndexMap()["Phi"];
-	};
 };
 //----------------------------------------------------------------------
 //	Set left side boundary condition.
@@ -233,19 +235,14 @@ int main()
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	DiffusionInitialCondition setup_diffusion_initial_condition(diffusion_body);
-	/** Left wall boundary conditions */
+	DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
+	SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
+	solid_dynamics::CorrectConfiguration correct_configuration(diffusion_body_inner_relation);
+	GetDiffusionTimeStepSize<SolidBody, SolidParticles, Solid> get_time_step_size(diffusion_body);
 	BodyRegionByParticle left_boundary(diffusion_body, makeShared<MultiPolygonShape>(createLeftSideBoundary()));
 	LeftSideBoundaryCondition left_boundary_condition(diffusion_body, left_boundary);
-	/** Other wall boundary conditions */
 	BodyRegionByParticle other_boundary(diffusion_body,	makeShared<MultiPolygonShape>(createOtherSideBoundary()));
 	OtherSideBoundaryCondition other_boundary_condition(diffusion_body, other_boundary);
-	/** Corrected configuration for diffusion body. */
-	solid_dynamics::CorrectConfiguration correct_configuration(diffusion_body_inner_relation);
-	/** Time step size calculation. */
-	GetDiffusionTimeStepSize<SolidBody, SolidParticles, Solid> get_time_step_size(diffusion_body);
-	/** Diffusion process for diffusion body. */
-	DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations, observations of the simulation.
 	//	Regression tests are also defined here.

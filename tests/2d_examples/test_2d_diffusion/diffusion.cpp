@@ -57,7 +57,14 @@ class DiffusionInitialCondition
 protected:
 	size_t phi_;
 
-	void Update(size_t index_i, Real dt) override
+public:
+	explicit DiffusionInitialCondition(SPHBody &sph_body)
+		: DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>(sph_body)
+	{
+		phi_ = material_->SpeciesIndexMap()["Phi"];
+	};
+
+	void update(size_t index_i, Real dt)
 	{
 
 		if (pos_[index_i][0] >= 0.45 && pos_[index_i][0] <= 0.55)
@@ -68,13 +75,6 @@ protected:
 		{
 			species_n_[phi_][index_i] = exp(-2500.0 * ((pos_[index_i][0] - 1.5) * (pos_[index_i][0] - 1.5)));
 		}
-	};
-
-public:
-	explicit DiffusionInitialCondition(SolidBody &diffusion_body)
-		: DiffusionReactionInitialCondition<SolidBody, SolidParticles, Solid>(diffusion_body)
-	{
-		phi_ = material_->SpeciesIndexMap()["Phi"];
 	};
 };
 //----------------------------------------------------------------------
@@ -140,14 +140,10 @@ int main()
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	DiffusionInitialCondition setup_diffusion_initial_condition(diffusion_body);
-	/** Corrected configuration for diffusion body. */
-	solid_dynamics::CorrectConfiguration correct_configuration(diffusion_body_inner_relation);
-	/** Time step size calculation. */
-	GetDiffusionTimeStepSize<SolidBody, SolidParticles, Solid> get_time_step_size(diffusion_body);
-	/** Diffusion process for diffusion body. */
 	DiffusionBodyRelaxation diffusion_relaxation(diffusion_body_inner_relation);
-	/** Periodic BCs. */
+	SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
+	solid_dynamics::CorrectConfiguration correct_configuration(diffusion_body_inner_relation);
+	GetDiffusionTimeStepSize<SolidBody, SolidParticles, Solid> get_time_step_size(diffusion_body);
 	PeriodicConditionUsingCellLinkedList periodic_condition_y(diffusion_body, diffusion_body.getBodyShapeBounds(), yAxis);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
