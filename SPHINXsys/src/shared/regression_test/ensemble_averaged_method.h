@@ -23,7 +23,7 @@
 /**
  * @file ensemble_averaged_method.h
  * @brief Classes for the comparison between validated and tested results
-          with ensemble-averaged meanvalue and variance method.
+          with ensemble-averaged mean value and variance method.
  * @author Bo Zhang and Xiangyu Hu
  */
 
@@ -35,7 +35,7 @@ namespace SPH
 {
 	/**
 	 * @class RegressionTestEnsembleAveraged
-	 * @brief the regression test is based on the ensemble-averaged meanvalue and variance.
+	 * @brief the regression test is based on the ensemble-averaged mean value and variance.
 	 */
 	template<class ObserveMethodType>
 	class RegressionTestEnsembleAveraged : public RegressionTestTimeAveraged<ObserveMethodType>
@@ -44,7 +44,7 @@ namespace SPH
 		using VariableType = decltype(ObserveMethodType::type_indicator_);
 
 	protected:
-		DoubleVec<VariableType> meanvalue_, meanvalue_new_;  /* the container of (new) meanvalue. [different from time-averaged]*/
+		DoubleVec<VariableType> meanvalue_, meanvalue_new_;  /* the container of (new) mean value. [different from time-averaged]*/
 		DoubleVec<VariableType> variance_, variance_new_;    /* the container of (new) variance. [different from time-averaged]*/
 		
 		/** the method used for calculating the new variance. */
@@ -72,7 +72,7 @@ namespace SPH
 		};
 		virtual ~RegressionTestEnsembleAveraged() {};
 
-		void settingupAndCorrection(); /** setup and correct the number of old and new result. */
+		void setupAndCorrection(); /** setup and correct the number of old and new result. */
 		void readMeanVarianceFromXml(); /** read the meanvalue and variance from the .xml file. */
 		void updateMeanVariance(); /** update the meanvalue and variance from new result. */
 		void writeMeanVarianceToXml(); /** write the meanvalue and variance to the .xml file. */
@@ -87,7 +87,7 @@ namespace SPH
 			this->initializeThreshold(threshold_mean, threshold_variance);
 			if (this->converged == "false")
 			{
-				settingupAndCorrection();
+				setupAndCorrection();
 				this->readResultFromXml();
 				if (filter == "true")
 					this->filterExtremeValues();
@@ -106,7 +106,7 @@ namespace SPH
 		{
 			this->writeXmlToXmlFile();
 			this->readXmlFromXmlFile();
-			settingupAndCorrection();
+			setupAndCorrection();
 			if (filter == "true")
 				this->filterExtremeValues();
 			readMeanVarianceFromXml();

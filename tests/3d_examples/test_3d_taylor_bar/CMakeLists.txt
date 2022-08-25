@@ -3,7 +3,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${SPHINXSYS_PROJECT_DIR}/cmake) # mai
 
 set(CMAKE_VERBOSE_MAKEFILE on)
 
-STRING( REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR} )
+STRING(REGEX REPLACE ".*/(.*)" "\\1" CURRENT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR})
 PROJECT("${CURRENT_FOLDER}")
 
 include(ImportSPHINXsysFromSource_for_3D_build)
@@ -16,41 +16,48 @@ SET(BUILD_RELOAD_PATH "${EXECUTABLE_OUTPUT_PATH}/reload")
 file(MAKE_DIRECTORY ${BUILD_INPUT_PATH})
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/regression_test_tool.py
-        DESTINATION ${BUILD_INPUT_PATH})
+	DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/MyObserver_Velocity_runtimes.dat
-        DESTINATION ${BUILD_INPUT_PATH})
+	DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/MyObserver_Velocity_dtwdistance.xml
-        DESTINATION ${BUILD_INPUT_PATH})
+	DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/MyObserver_Velocity_Run_0_result.xml
-        DESTINATION ${BUILD_INPUT_PATH})
+	DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/MyObserver_Velocity_Run_3_result.xml
-        DESTINATION ${BUILD_INPUT_PATH})
+	DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/MyObserver_Velocity_Run_5_result.xml
-        DESTINATION ${BUILD_INPUT_PATH})
+	DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/MyObserver_Position_runtimes.dat
-        DESTINATION ${BUILD_INPUT_PATH})
+	DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/MyObserver_Position_dtwdistance.xml
-        DESTINATION ${BUILD_INPUT_PATH})
+	DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/MyObserver_Position_Run_0_result.xml
-        DESTINATION ${BUILD_INPUT_PATH})
+	DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/MyObserver_Position_Run_3_result.xml
-        DESTINATION ${BUILD_INPUT_PATH})
+	DESTINATION ${BUILD_INPUT_PATH})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/regression_test_tool/MyObserver_Position_Run_5_result.xml
-        DESTINATION ${BUILD_INPUT_PATH})
+	DESTINATION ${BUILD_INPUT_PATH})
 
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
-add_test(NAME ${PROJECT_NAME}_particle_relaxation COMMAND ${PROJECT_NAME} --r=true --i=false
- WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-#add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --r=false --i=true
-# WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
-# The test above passes and fails on two different CI run without any reason (no core file touched)
-# Msg on fail: The maximum distance of Position[0] is 0.0005791, and the current distance is 0.0006224.
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        add_test(NAME ${PROJECT_NAME}_particle_relaxation COMMAND ${PROJECT_NAME} --r=true
+                 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+        add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME} --r=false --i=true
+                 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/run_test.sh
+                DESTINATION ${EXECUTABLE_OUTPUT_PATH})
+        add_test(NAME ${PROJECT_NAME} COMMAND bash ${EXECUTABLE_OUTPUT_PATH}/run_test.sh
+                WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+
+set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "solid_dynamics; contact")
 
 if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-                                set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
+		set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 		target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
 		add_dependencies(${PROJECT_NAME} sphinxsys_3d)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -66,7 +73,7 @@ if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 else() # static build only
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-                                set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
+		set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 		target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -80,9 +87,11 @@ else() # static build only
 		endif()
 	endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif()
+
 if(NOT BUILD_WITH_SIMBODY) # link Simbody if not built by the project
-target_link_libraries(${PROJECT_NAME} ${Simbody_LIBRARIES})
+	target_link_libraries(${PROJECT_NAME} ${Simbody_LIBRARIES})
 endif()
+
 if(NOT BUILD_WITH_ONETBB) # link TBB if not built by the project
-target_link_libraries(${PROJECT_NAME} ${TBB_LIBRARYS})
+	target_link_libraries(${PROJECT_NAME} ${TBB_LIBRARYS})
 endif()

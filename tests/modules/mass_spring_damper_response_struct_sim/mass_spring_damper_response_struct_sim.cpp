@@ -22,7 +22,7 @@ TEST(StructuralSimulation, MassSpringDamperResponse)
 	std::vector<Real> resolution_list = { resolution_mass};
 	SharedPtr<LinearElasticSolid> material = makeShared<LinearElasticSolid>(rho_0, Youngs_modulus, poisson);
 	std::vector<SharedPtr<LinearElasticSolid>> material_model_list = { material };
-	/** INPUT DECLERATION */
+	/** INPUT DECLARATION */
 	StructuralSimulationInput input
 	{
 		relative_input_path,
@@ -42,8 +42,8 @@ TEST(StructuralSimulation, MassSpringDamperResponse)
 	sim.runSimulation(end_time);
 	//=================================================================================================//
 
-	StdLargeVec<Vecd>& pos_0 = sim.get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_0_;
-	StdLargeVec<Vecd>& pos_n = sim.get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_n_;
+	StdLargeVec<Vecd>& pos_0 = sim.get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos0_;
+	StdLargeVec<Vecd>& pos_n = sim.get_solid_body_list_()[0].get()->getElasticSolidParticles()->pos_;
 	Real end_displ = 0.05;
 
 	for (size_t index = 0; index < pos_0.size(); index++)

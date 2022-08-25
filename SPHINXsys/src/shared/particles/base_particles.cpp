@@ -27,13 +27,13 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register geometric data only
 		//----------------------------------------------------------------------
-		registerAVariable(pos_n_, "Position");
-		registerAVariable(Vol_, "Volume");
+		registerVariable(pos_, "Position");
+		registerVariable(Vol_, "VolumetricMeasure");
 		//----------------------------------------------------------------------
 		//		add particle reload data
 		//----------------------------------------------------------------------
-		addAVariableNameToList<Vecd>(variables_to_reload_, "Position");
-		addAVariableNameToList<Real>(variables_to_reload_, "Volume");
+		addVariableNameToList<Vecd>(variables_to_reload_, "Position");
+		addVariableNameToList<Real>(variables_to_reload_, "VolumetricMeasure");
 	}
 	//=================================================================================================//
 	void BaseParticles::initializeOtherVariables()
@@ -42,30 +42,30 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		register non-geometric data
 		//----------------------------------------------------------------------
-		registerAVariable(vel_n_, "Velocity");
-		registerAVariable(dvel_dt_, "Acceleration");
-		registerAVariable(dvel_dt_prior_, "PriorAcceleration");
-		registerAVariable(rho_n_, "Density", rho0_);
-		registerAVariable(mass_, "Mass");
+		registerVariable(vel_, "Velocity");
+		registerVariable(acc_, "Acceleration");
+		registerVariable(acc_prior_, "PriorAcceleration");
+		registerVariable(rho_, "Density", rho0_);
+		registerVariable(mass_, "MassiveMeasure");
 		//----------------------------------------------------------------------
 		//		add basic output particle data
 		//----------------------------------------------------------------------
-		addAVariableToWrite<Vecd>("Velocity");
+		addVariableToWrite<Vecd>("Velocity");
 		//----------------------------------------------------------------------
 		//		add restart output particle data
 		//----------------------------------------------------------------------
-		addAVariableNameToList<Vecd>(variables_to_restart_, "Position");
-		addAVariableNameToList<Vecd>(variables_to_restart_, "Velocity");
-		addAVariableNameToList<Vecd>(variables_to_restart_, "Acceleration");
-		addAVariableNameToList<Real>(variables_to_restart_, "Volume");
+		addVariableNameToList<Vecd>(variables_to_restart_, "Position");
+		addVariableNameToList<Vecd>(variables_to_restart_, "Velocity");
+		addVariableNameToList<Vecd>(variables_to_restart_, "Acceleration");
+		addVariableNameToList<Real>(variables_to_restart_, "VolumetricMeasure");
 		//----------------------------------------------------------------------
-		//		initial particle mass and IDs
+		//		initial particle IDs and massive measure
 		//----------------------------------------------------------------------
 		for (size_t i = 0; i != real_particles_bound_; ++i)
 		{
 			sorted_id_.push_back(sequence_.size());
 			sequence_.push_back(0);
-			mass_[i] = rho_n_[i] * Vol_[i];
+			mass_[i] = rho_[i] * Vol_[i];
 		}
 	}
 	//=================================================================================================//
@@ -102,7 +102,7 @@ namespace SPH
 		total_ghost_particles_ += 1;
 		size_t expected_size = real_particles_bound_ + total_ghost_particles_;
 		size_t expected_particle_index = expected_size - 1;
-		if (expected_size <= pos_n_.size())
+		if (expected_size <= pos_.size())
 		{
 			copyFromAnotherParticle(expected_particle_index, index_i);
 			/** For a ghost particle, its sorted id is that of corresponding real particle. */
@@ -158,7 +158,7 @@ namespace SPH
 	void BaseParticles::writePltFileParticleData(std::ofstream &output_file, size_t index_i)
 	{
 		// write particle positions and index first
-		Vec3d particle_position = upgradeToVector3D(pos_n_[index_i]);
+		Vec3d particle_position = upgradeToVector3D(pos_[index_i]);
 		output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " "
 					<< index_i << " ";
 
@@ -215,7 +215,7 @@ namespace SPH
 		for (size_t i = 0; i != total_surface_particles; ++i)
 		{
 			size_t particle_i = surface_particles.body_part_particles_[i];
-			Vec3d particle_position = upgradeToVector3D(pos_n_[particle_i]);
+			Vec3d particle_position = upgradeToVector3D(pos_[particle_i]);
 			output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " ";
 		}
 		output_file << std::endl;
@@ -333,7 +333,7 @@ namespace SPH
 	{
 		resizeXmlDocForParticles(restart_xml_engine_);
 		WriteAParticleVariableToXml write_variable_to_xml(restart_xml_engine_, total_real_particles_);
-		ParticleDataOperation<loopVariableNameList> loop_variable_namelist;
+		DataAssembleOperation<loopVariableNameList> loop_variable_namelist;
 		loop_variable_namelist(all_particle_data_, variables_to_restart_, write_variable_to_xml);
 		restart_xml_engine_.writeToXmlFile(filefullpath);
 	}
@@ -342,7 +342,7 @@ namespace SPH
 	{
 		restart_xml_engine_.loadXmlFile(filefullpath);
 		ReadAParticleVariableFromXml read_variable_from_xml(restart_xml_engine_, total_real_particles_);
-		ParticleDataOperation<loopVariableNameList> loop_variable_namelist;
+		DataAssembleOperation<loopVariableNameList> loop_variable_namelist;
 		loop_variable_namelist(all_particle_data_, variables_to_restart_, read_variable_from_xml);
 	}
 	//=================================================================================================//
@@ -350,7 +350,7 @@ namespace SPH
 	{
 		resizeXmlDocForParticles(reload_xml_engine_);
 		WriteAParticleVariableToXml write_variable_to_xml(reload_xml_engine_, total_real_particles_);
-		ParticleDataOperation<loopVariableNameList> loop_variable_namelist;
+		DataAssembleOperation<loopVariableNameList> loop_variable_namelist;
 		loop_variable_namelist(all_particle_data_, variables_to_reload_, write_variable_to_xml);
 		reload_xml_engine_.writeToXmlFile(filefullpath);
 	}
@@ -365,7 +365,7 @@ namespace SPH
 		};
 		resize_particle_data_(all_particle_data_, total_real_particles_);
 		ReadAParticleVariableFromXml read_variable_from_xml(reload_xml_engine_, total_real_particles_);
-		ParticleDataOperation<loopVariableNameList> loop_variable_namelist;
+		DataAssembleOperation<loopVariableNameList> loop_variable_namelist;
 		loop_variable_namelist(all_particle_data_, variables_to_reload_, read_variable_from_xml);
 	}
 	//=================================================================================================//

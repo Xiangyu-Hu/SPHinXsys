@@ -38,7 +38,7 @@ class WaterBlock : public MultiPolygonShape
 public:
 	explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geomtry definition. */
+		/** Geometry definition. */
 		std::vector<Vecd> water_block_shape;
 		water_block_shape.push_back(Vecd(0.0, 0.0));
 		water_block_shape.push_back(Vecd(0.0, DH));
@@ -56,7 +56,7 @@ class WallBoundary : public MultiPolygonShape
 public:
 	explicit WallBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-		/** Geomtry definition. */
+		/** Geometry definition. */
 		std::vector<Vecd> outer_wall_shape;
 		outer_wall_shape.push_back(Vecd(-BW, -BW));
 		outer_wall_shape.push_back(Vecd(-BW, DH + BW));
@@ -113,7 +113,7 @@ int main()
 	/** Initialize particle acceleration. */
 	TimeStepInitialization initialize_a_fluid_step(water_block, gravity);
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition(water_block, xAxis);
+	PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
@@ -140,7 +140,7 @@ int main()
 	/** Output the body states for restart simulation. */
 	RestartIO restart_io(in_output, system.real_bodies_);
 	/**
-	 * @brief Setup geomtry and initial conditions.
+	 * @brief Setup geometry and initial conditions.
 	 */
 	system.initializeSystemCellLinkedLists();
 	periodic_condition.update_cell_linked_list_.parallel_exec();

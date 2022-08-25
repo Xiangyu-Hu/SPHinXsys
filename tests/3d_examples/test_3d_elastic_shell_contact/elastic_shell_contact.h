@@ -10,9 +10,7 @@ public:
     ShellBodyFromMesh(SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape)
 	: SolidBody(system, triangle_mesh_shape)
     {
-        // set the body domain bounds because it is not set by default
-        BoundingBox bounds = body_shape_->getBounds();
-        setBodyDomainBounds(bounds);
+        body_shape_->getBounds();
     }
 };
 
@@ -23,8 +21,7 @@ public:
 	: SolidBody(system, triangle_mesh_shape)
 	{
 		// set the body domain bounds because it is not set by default
-		BoundingBox bounds = body_shape_->getBounds();
-		setBodyDomainBounds(bounds);
+		body_shape_->getBounds();
 	}
 };
 
@@ -76,9 +73,9 @@ protected:
 	void Update(size_t index_i, Real dt) override
 	{
 		/** initial pseudo-normal. */
-		n_[index_i] = n_0_[index_i];
-		pseudo_n_[index_i] = n_0_[index_i];
-		transformation_matrix_[index_i] = getTransformationMatrix(n_0_[index_i]);
+		n_[index_i] = n0_[index_i];
+		pseudo_n_[index_i] = n0_[index_i];
+		transformation_matrix_[index_i] = getTransformationMatrix(n0_[index_i]);
 	};
 };
 
@@ -264,10 +261,10 @@ void ElasticShellContact(bool elastic_shell, Real shell_resolution, Real shell_t
 	EXPECT_LT(shell_body_particles->getVonMisesStrainMax(), 1e-3);
 	// check that there is contact, the solid body particles don't go through the shell
 	Real shell_x_min = Infinity;
-	for (auto pos: shell_body_particles->pos_n_)
+	for (auto pos: shell_body_particles->pos_)
 		if (pos[0] < shell_x_min)
 			shell_x_min = pos[0];
-	for (auto pos: myocardium_body.base_particles_->pos_n_)
+	for (auto pos: myocardium_body.base_particles_->pos_)
 		EXPECT_LT(pos[0], shell_x_min);
 }
 

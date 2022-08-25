@@ -1,25 +1,25 @@
-/* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
 * @file 	thin_structure_dynamics.h
 * @brief 	Here, we define the algorithm classes for thin structure dynamics. 
@@ -32,7 +32,7 @@
 
 #include "all_particle_dynamics.h"
 #include "base_kernel.h"
-#include "body_relation.h"
+#include "all_body_relations.h"
 #include "solid_body.h"
 #include "solid_particles.h"
 #include "elastic_solid.h"
@@ -56,7 +56,7 @@ namespace SPH
 			virtual ~ShellDynamicsInitialCondition(){};
 
 		protected:
-			StdLargeVec<Vecd> &n_0_, &n_, &pseudo_n_, &pos_0_;
+			StdLargeVec<Vecd> &n0_, &n_, &pseudo_n_, &pos0_;
 			StdLargeVec<Matd> &transformation_matrix_;
 		};
 
@@ -68,14 +68,15 @@ namespace SPH
 										  public ShellDataSimple
 		{
 		public:
-			explicit ShellAcousticTimeStepSize(SolidBody &sph_body);
+			explicit ShellAcousticTimeStepSize(SolidBody &sph_body, Real CFL = 0.6);
 			virtual ~ShellAcousticTimeStepSize(){};
 
 		protected:
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &angular_vel_, &dangular_vel_dt_;
+			StdLargeVec<Vecd> &vel_, &acc_, &angular_vel_, &dangular_vel_dt_;
 			StdLargeVec<Real> &thickness_;
-			Real rho0_, physical_viscosity_, E0_, nu_;
+			Real rho0_, physical_viscosity_, E0_, nu_, c0_;
 			Real smoothing_length_;
+			Real CFL_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 		};
 
@@ -92,7 +93,7 @@ namespace SPH
 		protected:
 			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Matd> &B_;
-			StdLargeVec<Vecd> &n_0_;
+			StdLargeVec<Vecd> &n0_;
 			StdLargeVec<Matd> &transformation_matrix_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -109,7 +110,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &pos_n_, &pseudo_n_, &n_0_;
+			StdLargeVec<Vecd> &pos_, &pseudo_n_, &n0_;
 			StdLargeVec<Matd> &B_, &F_, &F_bending_;
 			StdLargeVec<Matd> &transformation_matrix_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -126,9 +127,9 @@ namespace SPH
 			virtual ~BaseShellRelaxation(){};
 
 		protected:
-			StdLargeVec<Real> &Vol_, &rho_n_, &mass_, &thickness_;
-			StdLargeVec<Vecd> &pos_n_, &vel_n_, &dvel_dt_, &dvel_dt_prior_, &force_from_fluid_;
-			StdLargeVec<Vecd> &n_0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
+			StdLargeVec<Real> &Vol_, &rho_, &mass_, &thickness_;
+			StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
+			StdLargeVec<Vecd> &n0_, &pseudo_n_, &dpseudo_n_dt_, &dpseudo_n_d2t_, &rotation_,
 				&angular_vel_, dangular_vel_dt_;
 			StdLargeVec<Matd> &B_, &F_, &dF_dt_, &F_bending_, &dF_bending_dt_;
 			StdLargeVec<Matd> &transformation_matrix_;
@@ -148,7 +149,7 @@ namespace SPH
 
 		protected:
 			Real rho0_, inv_rho0_;
-			StdLargeVec<Matd> &stress_PK1_, &global_stress_, &global_moment_;
+			StdLargeVec<Matd> &global_stress_, &global_moment_;
 			StdLargeVec<Vecd> &global_shear_stress_, &n_;
 			Real smoothing_length_, E0_, G0_, nu_, hourglass_control_factor_;
 			bool hourglass_control_;
@@ -200,14 +201,14 @@ namespace SPH
 			virtual ~ConstrainShellBodyRegion(){};
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &pos_0_;
+			StdLargeVec<Vecd> &pos_, &pos0_;
 			StdLargeVec<Vecd> &n_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			StdLargeVec<Vecd> &vel_, &acc_;
 			StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
 			StdLargeVec<Vecd> &pseudo_n_, &dpseudo_n_dt_;
 			virtual Vecd getDisplacement(const Vecd &pos_0, const Vecd &pos_n) { return pos_0; };
 			virtual Vecd getVelocity(const Vecd &pos_0, const Vecd &pos_n, const Vecd &vel_n) { return Vecd(0); };
-			virtual Vecd GetAcceleration(const Vecd &pos_0, const Vecd &pos_n, const Vecd &dvel_dt) { return Vecd(0); };
+			virtual Vecd GetAcceleration(const Vecd &pos_0, const Vecd &pos_n, const Vecd &acc) { return Vecd(0); };
 			virtual Vecd GetRotationAngle(const Vecd &pos_0, const Vecd &pos_n, const Vecd &rotation_angles_0_) { return rotation_angles_0_; };
 			virtual Vecd GetAngularVelocity(const Vecd &pos_0, const Vecd &pos_n, const Vecd &angular_vel_) { return Vecd(0); };
 			virtual Vecd GetAngularAcceleration(const Vecd &pos_0, const Vecd &pos_n, const Vecd &dangular_vel_dt_) { return Vecd(0); };
@@ -232,7 +233,7 @@ namespace SPH
 			Real W0_;
 			Matd constrain_matrix_, recover_matrix_;
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &vel_n_, &angular_vel_;
+			StdLargeVec<Vecd> &vel_, &angular_vel_;
 			StdLargeVec<Vecd> vel_n_temp_, angular_vel_temp_;
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
@@ -253,7 +254,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &vel_n_, &angular_vel_;
+			StdLargeVec<Vecd> &vel_, &angular_vel_;
 			StdLargeVec<Vecd> vel_n_temp_, angular_vel_temp_;
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
@@ -261,21 +262,21 @@ namespace SPH
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
-		/**@class ConstrainShellBodyRegionInAxisDirection
+		/**@class ConstrainShellBodyRegionAlongAxis
 		 * @brief The boundary conditions are denoted by SS1 according to the references.
-	     * The axis_direction must be 0 or 1.
+	     * The axis must be 0 or 1.
 		 * Note that the average values for FSI are prescribed also.
 		 */
-		class ConstrainShellBodyRegionInAxisDirection : public PartSimpleDynamicsByParticle, public ShellDataSimple
+		class ConstrainShellBodyRegionAlongAxis : public PartSimpleDynamicsByParticle, public ShellDataSimple
 		{
 		public:
-			ConstrainShellBodyRegionInAxisDirection(SolidBody &sph_body, BodyPartByParticle &body_part, int axis_direction);
-			virtual ~ConstrainShellBodyRegionInAxisDirection(){};
+			ConstrainShellBodyRegionAlongAxis(SolidBody &sph_body, BodyPartByParticle &body_part, int axis);
+			virtual ~ConstrainShellBodyRegionAlongAxis(){};
 
 		protected:
 			const int axis_; /**< the axis direction for bounding*/
-			StdLargeVec<Vecd> &pos_n_, &pos_0_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_, &vel_ave_, &dvel_dt_ave_;
+			StdLargeVec<Vecd> &pos_, &pos0_;
+			StdLargeVec<Vecd> &vel_, &acc_;
 			StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
@@ -290,7 +291,7 @@ namespace SPH
 			std::vector<Vecd> point_forces_, reference_positions_, time_dependent_point_forces_;
 			Real time_to_full_external_force_;
 			Real particle_spacing_ref_, h_spacing_ratio_;
-			StdLargeVec<Vecd> &pos_0_, &dvel_dt_prior_;
+			StdLargeVec<Vecd> &pos0_, &acc_prior_;
 			StdLargeVec<Real> &Vol_, &mass_, &thickness_;
 			std::vector <StdLargeVec<Real>> weight_;
 			std::vector<Real> sum_of_weight_;

@@ -23,7 +23,7 @@ namespace SPH
 		base_particles_->resizeXmlDocForParticles(reload_material_xml_engine_);
 		WriteAParticleVariableToXml
 			write_variable_to_xml(reload_material_xml_engine_, total_real_particles);
-		ParticleDataOperation<loopVariableNameList> loop_variable_namelist;
+		DataAssembleOperation<loopVariableNameList> loop_variable_namelist;
 		loop_variable_namelist(all_particle_data, reload_local_parameters_, write_variable_to_xml);
 		reload_material_xml_engine_.writeToXmlFile(filefullpath);
 		std::cout << "\n Material properties writing finished. " << std::endl;
@@ -36,7 +36,7 @@ namespace SPH
 		ParticleData &all_particle_data = base_particles_->all_particle_data_;
 		ReadAParticleVariableFromXml
 			read_variable_from_xml(reload_material_xml_engine_, total_real_particles);
-		ParticleDataOperation<loopVariableNameList> loop_variable_namelist;
+		DataAssembleOperation<loopVariableNameList> loop_variable_namelist;
 		loop_variable_namelist(all_particle_data, reload_local_parameters_, read_variable_from_xml);
 
 		if (total_real_particles != reload_material_xml_engine_.SizeOfXmlDoc())

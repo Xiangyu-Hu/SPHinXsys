@@ -1,6 +1,6 @@
 /**
  * @file 	observer_dynamics.cpp
- * @brief 	Here, Functions defined in observer_dyanmcis.h are detailed.
+ * @brief 	Here, Functions defined in observer_dynamics.h are detailed.
  * @author	Chi ZHang and Xiangyu Hu
  */
 
@@ -39,10 +39,10 @@ namespace SPH
 					size_t index_j = contact_neighborhood.j_[n];
 					Real weight_j = contact_neighborhood.W_ij_[n] * Vol_k[index_j];
 					Vecd r_ji = -contact_neighborhood.r_ij_[n] * contact_neighborhood.e_ij_[n];
-					Vecd gradw_ij = contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n];
+					Vecd gradW_ij = contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n];
 
 					weight_correction += r_ji * weight_j;
-					local_configuration += Vol_k[index_j] * SimTK::outer(r_ji, gradw_ij);
+					local_configuration += Vol_k[index_j] * SimTK::outer(r_ji, gradW_ij);
 				}
 			}
 

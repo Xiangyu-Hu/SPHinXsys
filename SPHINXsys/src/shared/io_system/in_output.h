@@ -53,7 +53,7 @@ namespace SPH
 {
 
 	/**
-	 * @brief preclaimed classes.
+	 * @brief pre-claimed classes.
 	 */
 	class BaseLevelSet;
 
@@ -347,6 +347,11 @@ namespace SPH
 			out_file << "\n";
 			out_file.close();
 		};
+
+		StdLargeVec<VariableType> *getObservedQuantity()
+		{
+			return this->interpolated_quantities_;
+		}
 	};
 
 	/**

@@ -24,7 +24,7 @@
  * @file 	state_engine.h
  * @details The StateEngine class defines the interface used to add computational
  *          elements to the underlying SimTK::System (MultibodySystem). It specifies
- *          the interface that simbodystates must satisfy in order to be part of the system
+ *          the interface that simbody states must satisfy in order to be part of the system
  *          and provides a series of helper methods for adding variables
  *          (state, discrete, cache, ...) to the underlying system. As such, SimbodyState
  *          handles all of the bookkeeping of system indices and provides convenience
@@ -69,7 +69,7 @@ namespace SPH {
 
         /**
          * @class StateVariable
-         * @details Derived simbodysate must create concrete StateVariables to expose their state
+         * @details Derived simbody sate must create concrete StateVariables to expose their state
          *      variables. When exposing state variables allocated by the underlying Simbody
          *      (MobilizedBody, Constraint, Force, etc...) use its interface to
          *      implement the virtual methods below.
@@ -77,7 +77,7 @@ namespace SPH {
         class StateVariable {
             //friend void StateEngine::addStateVariable(StateVariable* sv);
         public:
-            /** Concstructor and destructor. */
+            /** Constructor and destructor. */
             StateVariable() :name_(""), owner_(nullptr),
                 subsysindex_(SimTK::InvalidIndex),
                 varindex_(SimTK::InvalidIndex),
@@ -139,7 +139,7 @@ namespace SPH {
              */
         class AddedStateVariable : public StateVariable {
         public:
-            /** Constructors adn destrucutors. */
+            /** Constructors adn destructors. */
             AddedStateVariable() : StateVariable(), invalidatestage_(SimTK::Stage::Empty) {}
 
             /** Convenience constructor for defining a StateEngine added state variable */
@@ -197,7 +197,7 @@ namespace SPH {
             int order;
         };
         //===============================================================//
-        // PULIC
+        // PUBLIC
         //===============================================================//       
     public:
 
@@ -282,7 +282,7 @@ namespace SPH {
 
         /** Destructor is virtual to allow concrete StateEngine to cleanup. **/
         virtual ~StateEngine() {};
-        /** Set up the working state in presetn engine */
+        /** Set up the working state in present engine */
         void InitializeState();
         /**
         * Get the underlying MultibodySystem that this StateEngine is connected to.
@@ -334,7 +334,7 @@ namespace SPH {
         std::string restart_folder_;
         void writeStateInfoToXml(int ite_rst_, const SimTK::State& state_);
         /**
-         * read state infor from xml and set it to sate.
+         * read state info from xml and set it to sate.
          * For all bodies in the matter system, their generalized coordinates,
          * generalized velocities and transformations of the origin points are read from
          * the restart file

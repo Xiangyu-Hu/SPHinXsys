@@ -3,9 +3,10 @@
  * @brief 	This is the benchmark test of the shell.
  * @details  We consider the deformation of a cylindrical surface.
  * @author 	Dong Wu, Chi Zhang and Xiangyu Hu
- * @version  0.1
+ * @ref 	doi.org/10.1007/s00466-017-1498-9, doi.org/10.1016/0045-7825(89)90098-4
  */
 #include "sphinxsys.h"
+#include <gtest/gtest.h>
 
 using namespace SPH;
 
@@ -36,6 +37,16 @@ Real physical_viscosity = 7.0e3; /** physical damping, here we choose the same v
 Real time_to_full_external_force = 0.1;
 Real gravitational_acceleration = -10.0;
 
+Real observed_quantity_0 = 0.0;
+Real observed_quantity_n = 0.0;
+Real displ_max_reference = 0.3024;
+TEST(Plate, MaxDisplacement)
+{
+	Real displ_max = observed_quantity_0 - observed_quantity_n;
+	EXPECT_NEAR(displ_max, displ_max_reference, displ_max_reference * 0.1);
+	std::cout << "displ_max: " << displ_max << std::endl;
+}
+
 /** Define application dependent particle generator for thin structure. */
 class CylinderParticleGenerator : public SurfaceParticleGenerator
 {
@@ -51,7 +62,7 @@ public:
 				Real x = radius_mid_surface * cos(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
 				Real y = particle_spacing_ref * j - BW + particle_spacing_ref * 0.5;
 				Real z = radius_mid_surface * sin(50.0 / 180.0 * Pi + (i + 0.5) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number);
-				initializePositionAndVolume(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref);
+				initializePositionAndVolumetricMeasure(Vecd(x, y, z), particle_spacing_ref * particle_spacing_ref);
 				Vecd n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
 				initializeSurfaceProperties(n_0, thickness);
 			}
@@ -73,7 +84,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_n_[index_i][1] < 0.0 || base_particles_->pos_n_[index_i][1] > height - 0.5 * particle_spacing_ref)
+		if (base_particles_->pos_[index_i][1] < 0.0 || base_particles_->pos_[index_i][1] > height - 0.5 * particle_spacing_ref)
 		{
 			body_part_particles_.push_back(index_i);
 		}
@@ -99,7 +110,7 @@ public:
 /**
  *  The main program
  */
-int main()
+int main(int ac, char *av[])
 {
 	/** Setup the system. */
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
@@ -108,7 +119,6 @@ int main()
 	SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
 	cylinder_body.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	cylinder_body.generateParticles<CylinderParticleGenerator>();
-	cylinder_body.addBodyStateForRecording<Mat3d>("FirstPiolaKirchhoffStress");
 	/** Define Observer. */
 	ObserverBody cylinder_observer(system, "CylinderObserver");
 	cylinder_observer.generateParticles<ObserverParticleGenerator>(observation_location);
@@ -162,6 +172,7 @@ int main()
 	GlobalStaticVariables::physical_time_ = 0.0;
 	write_states.writeToFile(0);
 	write_cylinder_max_displacement.writeToFile(0);
+	observed_quantity_0 = (*write_cylinder_max_displacement.getObservedQuantity())[0][2];
 
 	/** Setup physical parameters. */
 	int ite = 0;
@@ -214,6 +225,8 @@ int main()
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
 	write_cylinder_max_displacement.newResultTest();
+	observed_quantity_n = (*write_cylinder_max_displacement.getObservedQuantity())[0][2];
 
-	return 0;
+	testing::InitGoogleTest(&ac, av);
+	return RUN_ALL_TESTS();
 }

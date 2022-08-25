@@ -1,6 +1,5 @@
 /**
  * @file solid_particles_variable.cpp
- * @brief Definition of functions declared in solid_particles_variable.h
  * @author	Xiangyu Hu
  */
 #include "solid_particles_variable.h"
@@ -11,45 +10,45 @@ namespace SPH
     //=============================================================================================//
     Displacement::Displacement(SPHBody &sph_body)
         : BaseDerivedVariable<Vecd>(sph_body, "Displacement"), SolidDataSimple(sph_body),
-          pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_) {}
+          pos_(particles_->pos_), pos0_(particles_->pos0_) {}
     //=============================================================================================//
     void Displacement::update(size_t index_i, Real dt)
     {
-        derived_variable_[index_i] = pos_n_[index_i] - pos_0_[index_i];
+        derived_variable_[index_i] = pos_[index_i] - pos0_[index_i];
     }
     //=============================================================================================//
     OffsetInitialPosition::
         OffsetInitialPosition(SPHBody &sph_body, Vecd &offset)
         : SolidDataSimple(sph_body), offset_(offset),
-          pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_) {}
+          pos_(particles_->pos_), pos0_(particles_->pos0_) {}
     //=============================================================================================//
     void OffsetInitialPosition::update(size_t index_i, Real dt)
     {
-        pos_n_[index_i] += offset_;
-        pos_0_[index_i] += offset_;
+        pos_[index_i] += offset_;
+        pos0_[index_i] += offset_;
     }
     //=============================================================================================//
     TranslationAndRotation::
         TranslationAndRotation(SPHBody &sph_body, Transformd &transform)
         : SolidDataSimple(sph_body), transform_(transform),
-          pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_) {}
-	//=============================================================================================//
-	void TranslationAndRotation::update(size_t index_i, Real dt)
-	{
-		pos_n_[index_i] = transform_.shiftFrameStationToBase(pos_n_[index_i]);
-		pos_0_[index_i] = transform_.shiftFrameStationToBase(pos_0_[index_i]);
-	}
-   //=============================================================================================//
+          pos_(particles_->pos_), pos0_(particles_->pos0_) {}
+    //=============================================================================================//
+    void TranslationAndRotation::update(size_t index_i, Real dt)
+    {
+        pos_[index_i] = transform_.shiftFrameStationToBase(pos_[index_i]);
+        pos0_[index_i] = transform_.shiftFrameStationToBase(pos0_[index_i]);
+    }
+    //=============================================================================================//
     NormalDirectionFromBodyShape::
         NormalDirectionFromBodyShape(SPHBody &sph_body)
         : SolidDataSimple(sph_body), body_shape_(*sph_body.body_shape_),
-          pos_n_(particles_->pos_n_), n_(particles_->n_), n_0_(particles_->n_0_) {}
+          pos_(particles_->pos_), n_(particles_->n_), n0_(particles_->n0_) {}
     //=============================================================================================//
     void NormalDirectionFromBodyShape::update(size_t index_i, Real dt)
     {
-        Vecd normal_direction = body_shape_.findNormalDirection(pos_n_[index_i]);
+        Vecd normal_direction = body_shape_.findNormalDirection(pos_[index_i]);
         n_[index_i] = normal_direction;
-        n_0_[index_i] = normal_direction;
+        n0_[index_i] = normal_direction;
     }
     //=============================================================================================//
     NormalDirectionFromShapeAndOp::
@@ -58,22 +57,46 @@ namespace SPH
           shape_and_op_(DynamicCast<ComplexShape>(this, sph_body.body_shape_)->getShapeAndOpByName(shape_name)),
           shape_(shape_and_op_->first),
           switch_sign_(shape_and_op_->second == ShapeBooleanOps::add ? 1.0 : -1.0),
-          pos_n_(particles_->pos_n_), n_(particles_->n_), n_0_(particles_->n_0_) {}
+          pos_(particles_->pos_), n_(particles_->n_), n0_(particles_->n0_) {}
     //=============================================================================================//
     void NormalDirectionFromShapeAndOp::update(size_t index_i, Real dt)
     {
-        Vecd normal_direction = switch_sign_ * shape_->findNormalDirection(pos_n_[index_i]);
+        Vecd normal_direction = switch_sign_ * shape_->findNormalDirection(pos_[index_i]);
         n_[index_i] = normal_direction;
-        n_0_[index_i] = normal_direction;
+        n0_[index_i] = normal_direction;
+    }
+    //=============================================================================================//
+    GreenLagrangeStrain::GreenLagrangeStrain(SPHBody &sph_body)
+        : BaseDerivedVariable<Matd>(sph_body, "GreenLagrangeStrain"), ElasticSolidDataSimple(sph_body),
+          F_(particles_->F_) {}
+    //=============================================================================================//
+    void GreenLagrangeStrain::update(size_t index_i, Real dt)
+    {
+        Matd F = F_[index_i];
+        derived_variable_[index_i] = 0.5 * (~F * F - Matd(1.0));
     }
     //=============================================================================================//
     VonMisesStress::VonMisesStress(SPHBody &sph_body)
         : BaseDerivedVariable<Real>(sph_body, "VonMisesStress"), ElasticSolidDataSimple(sph_body),
-          rho0_(particles_->rho0_), rho_n_(particles_->rho_n_),
-          F_(particles_->F_), stress_PK1_(particles_->stress_PK1_) {}
+          rho0_(particles_->rho0_), rho_(particles_->rho_), F_(particles_->F_) {}
     //=============================================================================================//
     VonMisesStrain::VonMisesStrain(SPHBody &sph_body)
         : BaseDerivedVariable<Real>(sph_body, "VonMisesStrain"),
-          ElasticSolidDataSimple(sph_body), F_(particles_->F_) {}
-    //=================================================================================================//
+          ElasticSolidDataSimple(sph_body) {}
+	//=============================================================================================//
+	void VonMisesStrain::update(size_t index_i, Real dt)
+	{
+		derived_variable_[index_i] = particles_->getVonMisesStrain(index_i);
+	}
+     //=============================================================================================//
+    VonMisesStrainDynamic::VonMisesStrainDynamic(SPHBody &sph_body)
+        : BaseDerivedVariable<Real>(sph_body, "VonMisesStrainDynamic"),
+          ElasticSolidDataSimple(sph_body),
+          poisson_ratio_(material_->PoissonRatio()) {}
+	//=============================================================================================//
+	void VonMisesStrainDynamic::update(size_t index_i, Real dt)
+	{
+		derived_variable_[index_i] = particles_->getVonMisesStrainDynamic(index_i, poisson_ratio_);
+	}
+   //=================================================================================================//
 }

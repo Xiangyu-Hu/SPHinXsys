@@ -67,6 +67,16 @@ Installing SPHinXsys
    installation.rst
 
 
+************************
+Creating your own cases
+************************
+
+.. toctree::
+   :maxdepth: 2
+
+   user_cases.rst
+
+
 **********
 Examples:
 **********
@@ -159,6 +169,27 @@ Examples:
    :maxdepth: 2
 
    examples/example13_2D_oscillating_beam.rst
+
+
+
+.. toctree::
+   :maxdepth: 2
+
+   examples/example14_2D_bifurcation_flow.rst
+
+
+
+.. toctree::
+   :maxdepth: 2
+
+   examples/example15_2D_aortic_valve.rst
+
+
+
+.. toctree::
+   :maxdepth: 2
+
+   examples/example16_2D_channel_flow.rst
 
 ******************************************
 Contribute to SPHinXsys

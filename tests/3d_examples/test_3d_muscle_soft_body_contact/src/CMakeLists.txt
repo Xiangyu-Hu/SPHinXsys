@@ -11,7 +11,8 @@ SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
-add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}
+	WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
 if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -43,9 +44,11 @@ else() # static build only
 		endif()
 	endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif()
+
 if(NOT BUILD_WITH_SIMBODY) # link Simbody if not built by the project
-target_link_libraries(${PROJECT_NAME} ${Simbody_LIBRARIES})
+	target_link_libraries(${PROJECT_NAME} ${Simbody_LIBRARIES})
 endif()
+
 if(NOT BUILD_WITH_ONETBB) # link TBB if not built by the project
-target_link_libraries(${PROJECT_NAME} ${TBB_LIBRARYS})
+	target_link_libraries(${PROJECT_NAME} ${TBB_LIBRARYS})
 endif()
