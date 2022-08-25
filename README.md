@@ -22,8 +22,8 @@ many examples designated for the specific type of applications are provided.
 
 ## Examples at a glance
 
-Using SPHinXsys library, fast multi-physics modeling can be achieved. 
-Here, we present several short examples in flow, solid dynamics and fluid structure interactions (FSI) and dynamic solid contact.
+Using SPHinXsys library, straightforward and fast multi-physics modeling can be achieved. 
+Here, we present several short examples in flow, solid dynamics, fluid structure interactions (FSI) and dynamic solid contact.
 
 <a href="https://github.com/Xiangyu-Hu/SPHinXsys/blob/master/tests/2d_examples/test_2d_dambreak/Dambreak.cpp">
 <img src="https://github.com/Xiangyu-Hu/SPHinXsys-public-files/blob/master/videos/dambreak.gif" height="192px"></a>
