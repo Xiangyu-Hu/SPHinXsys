@@ -168,7 +168,7 @@ namespace SPH
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	InitializationRK<BodyType, BaseParticlesType, BaseMaterialType>::
 		InitializationRK(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &species_s)
-		: ParticleDynamicsSimple(sph_body),
+		: LocalDynamics(sph_body),
 		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 		  species_n_(this->particles_->species_n_), species_s_(species_s)
 	{
@@ -188,7 +188,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	void InitializationRK<BodyType, BaseParticlesType, BaseMaterialType>::
-		Update(size_t index_i, Real dt)
+		update(size_t index_i, Real dt)
 	{
 		initializeIntermediateValue(index_i);
 	}
@@ -256,7 +256,7 @@ namespace SPH
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	RelaxationOfAllReactionsForward<BodyType, BaseParticlesType, BaseMaterialType>::
 		RelaxationOfAllReactionsForward(SPHBody &sph_body)
-		: ParticleDynamicsSimple(sph_body),
+		: LocalDynamics(sph_body),
 		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 		  species_n_(this->particles_->species_n_)
 	{
@@ -265,7 +265,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	void RelaxationOfAllReactionsForward<BodyType, BaseParticlesType, BaseMaterialType>::
-		Update(size_t index_i, Real dt)
+		update(size_t index_i, Real dt)
 	{
 		IndexVector &reactive_species = species_reaction_->reactive_species_;
 
@@ -281,7 +281,7 @@ namespace SPH
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	RelaxationOfAllReactionsBackward<BodyType, BaseParticlesType, BaseMaterialType>::
 		RelaxationOfAllReactionsBackward(SPHBody &sph_body)
-		: ParticleDynamicsSimple(sph_body),
+		: LocalDynamics(sph_body),
 		  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 		  species_n_(this->particles_->species_n_)
 	{
@@ -290,7 +290,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	void RelaxationOfAllReactionsBackward<BodyType, BaseParticlesType, BaseMaterialType>::
-		Update(size_t index_i, Real dt)
+		update(size_t index_i, Real dt)
 	{
 		IndexVector &reactive_species = species_reaction_->reactive_species_;
 

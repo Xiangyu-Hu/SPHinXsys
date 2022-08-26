@@ -62,7 +62,7 @@ int main(int ac, char *av[])
 		/** Diffusion process for diffusion body. */
 		DiffusionRelaxation diffusion_relaxation(herat_model_inner);
 		/** Compute the fiber and sheet after diffusion. */
-		ComputeFiberAndSheetDirections compute_fiber_sheet(herat_model);
+		SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model);
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_herat_model_state_to_vtp(io_environment, {herat_model});
 		/** Write the particle reload files. */

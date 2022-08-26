@@ -160,18 +160,18 @@ namespace SPH
 	 */
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	class InitializationRK
-		: public ParticleDynamicsSimple,
+		: public LocalDynamics,
 		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 		StdVec<BaseDiffusion *> species_diffusion_;
 		StdVec<StdLargeVec<Real>> &species_n_, &species_s_;
 
 		void initializeIntermediateValue(size_t particle_i);
-		virtual void Update(size_t index_i, Real dt = 0.0) override;
-
 	public:
 		InitializationRK(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &species_s);
 		virtual ~InitializationRK(){};
+
+		void update(size_t index_i, Real dt = 0.0);
 	};
 
 	/**
@@ -208,9 +208,9 @@ namespace SPH
 		/** Intermediate Value */
 		StdVec<StdLargeVec<Real>> species_s_;
 
-		InitializationRK<typename FirstStageType::InnerBodyType,
+		SimpleDynamics<InitializationRK<typename FirstStageType::InnerBodyType,
 						 typename FirstStageType::InnerBaseParticlesType,
-						 typename FirstStageType::InnerBaseMaterialType>
+						 typename FirstStageType::InnerBaseMaterialType>>
 			rk2_initialization_;
 		FirstStageType rk2_1st_stage_;
 		SecondStageRK2<FirstStageType> rk2_2nd_stage_;
@@ -237,19 +237,18 @@ namespace SPH
 	 */
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	class RelaxationOfAllReactionsForward
-		: public ParticleDynamicsSimple,
+		: public LocalDynamics,
 		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 		BaseReactionModel *species_reaction_;
 		StdVec<StdLargeVec<Real>> &species_n_;
 		UpdateAReactionSpecies updateAReactionSpecies;
 
-	protected:
-		virtual void Update(size_t index_i, Real dt = 0.0) override;
-
 	public:
 		explicit RelaxationOfAllReactionsForward(SPHBody &sph_body);
 		virtual ~RelaxationOfAllReactionsForward(){};
+
+		void update(size_t index_i, Real dt = 0.0);
 	};
 
 	/**
@@ -258,19 +257,18 @@ namespace SPH
 	 */
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	class RelaxationOfAllReactionsBackward
-		: public ParticleDynamicsSimple,
+		: public LocalDynamics,
 		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 		BaseReactionModel *species_reaction_;
 		StdVec<StdLargeVec<Real>> &species_n_;
 		UpdateAReactionSpecies updateAReactionSpecies;
 
-	protected:
-		virtual void Update(size_t index_i, Real dt = 0.0) override;
-
 	public:
 		explicit RelaxationOfAllReactionsBackward(SPHBody &sph_body);
 		virtual ~RelaxationOfAllReactionsBackward(){};
+
+		void update(size_t index_i, Real dt = 0.0);
 	};
 
 	/**
@@ -301,12 +299,12 @@ namespace SPH
 	 */
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	class DiffusionBasedMapping
-		: public ParticleDynamicsSimple,
+		: public LocalDynamics,
 		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 	public:
 		explicit DiffusionBasedMapping(SPHBody &sph_body)
-			: ParticleDynamicsSimple(sph_body),
+			: LocalDynamics(sph_body),
 			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 			  pos_(this->particles_->pos_), species_n_(this->particles_->species_n_){};
 		virtual ~DiffusionBasedMapping(){};

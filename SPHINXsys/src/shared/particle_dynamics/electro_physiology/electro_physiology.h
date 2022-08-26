@@ -208,32 +208,13 @@ namespace SPH
 				: RelaxationOfAllDiffusionSpeciesRK2(complex_relation){};
 			virtual ~ElectroPhysiologyDiffusionRelaxationComplex(){};
 		};
-		/**
-		 * @class ElectroPhysiologyReactionRelaxationForward
-		 * @brief Solve the reaction ODE equation of trans-membrane potential
-		 * using forward sweeping
-		 */
-		class ElectroPhysiologyReactionRelaxationForward
-			: public RelaxationOfAllReactionsForward<RealBody, SolidParticles, Solid>
-		{
-		public:
-			explicit ElectroPhysiologyReactionRelaxationForward(RealBody &real_body)
-				: RelaxationOfAllReactionsForward<RealBody, SolidParticles, Solid>(real_body){};
-			virtual ~ElectroPhysiologyReactionRelaxationForward(){};
-		};
-		/**
-		 * @class ElectroPhysiologyReactionRelaxationForward
-		 * @brief Solve the reaction ODE equation of trans-membrane potential
-		 * using backward sweeping
-		 */
-		class ElectroPhysiologyReactionRelaxationBackward
-			: public RelaxationOfAllReactionsBackward<RealBody, SolidParticles, Solid>
-		{
-		public:
-			explicit ElectroPhysiologyReactionRelaxationBackward(RealBody &real_body)
-				: RelaxationOfAllReactionsBackward<RealBody, SolidParticles, Solid>(real_body){};
-			virtual ~ElectroPhysiologyReactionRelaxationBackward(){};
-		};
+
+		/** Solve the reaction ODE equation of trans-membrane potential	using forward sweeping */
+		using ElectroPhysiologyReactionRelaxationForward =
+			SimpleDynamics<RelaxationOfAllReactionsForward<RealBody, SolidParticles, Solid>>;
+		/** Solve the reaction ODE equation of trans-membrane potential	using backward sweeping */
+		using ElectroPhysiologyReactionRelaxationBackward =
+			SimpleDynamics<RelaxationOfAllReactionsBackward<RealBody, SolidParticles, Solid>>;
 		/**
 		 * @class ApplyStimulusCurrents
 		 * @brief Apply specific stimulus currents

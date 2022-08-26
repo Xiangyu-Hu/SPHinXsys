@@ -126,7 +126,19 @@ protected:
 	Real beta_epi_, beta_endo_;
 	/** We define the centerline vector, which is parallel to the ventricular centerline and pointing  apex-to-base.*/
 	Vecd center_line_;
-	virtual void Update(size_t index_i, Real dt = 0.0) override
+
+public:
+	explicit ComputeFiberAndSheetDirections(SPHBody &sph_body)
+		: DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(sph_body)
+	{
+		phi_ = material_->SpeciesIndexMap()["Phi"];
+		center_line_ = Vecd(0.0, 1.0, 0.0);
+		beta_epi_ = -(70.0 / 180.0) * M_PI;
+		beta_endo_ = (80.0 / 180.0) * M_PI;
+	};
+	virtual ~ComputeFiberAndSheetDirections(){};
+
+	void update(size_t index_i, Real dt = 0.0)
 	{
 		/**
 		 * Ref: original doi.org/10.1016/j.euromechsol.2013.10.009
@@ -160,17 +172,6 @@ protected:
 			material_->local_s0_[index_i] = Vecd(0);
 		}
 	};
-
-public:
-	explicit ComputeFiberAndSheetDirections(SolidBody &body)
-		: DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(body)
-	{
-		phi_ = material_->SpeciesIndexMap()["Phi"];
-		center_line_ = Vecd(0.0, 1.0, 0.0);
-		beta_epi_ = -(70.0 / 180.0) * M_PI;
-		beta_endo_ = (80.0 / 180.0) * M_PI;
-	};
-	virtual ~ComputeFiberAndSheetDirections(){};
 };
 //	define shape parameters which will be used for the constrained body part.
 class MuscleBaseShapeParameters : public TriangleMeshShapeBrick::ShapeParameters
@@ -302,7 +303,7 @@ int main(int ac, char *av[])
 		/** Diffusion process for diffusion body. */
 		DiffusionRelaxation diffusion_relaxation(herat_model_inner);
 		/** Compute the fiber and sheet after diffusion. */
-		ComputeFiberAndSheetDirections compute_fiber_sheet(herat_model);
+		SimpleDynamics<ComputeFiberAndSheetDirections> compute_fiber_sheet(herat_model);
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_herat_model_state_to_vtp(io_environment, {herat_model});
 		/** Write the particle reload files. */
