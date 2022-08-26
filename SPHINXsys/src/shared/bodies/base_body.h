@@ -81,9 +81,9 @@ namespace SPH
 		bool newly_updated_; /**< whether this body is in a newly updated state */
 
 	public:
-		SPHAdaptation *sph_adaptation_; /**< numerical adaptation policy. */
-		BaseMaterial *base_material_;	/**< base material for dynamic cast in particle dynamics */
-		BaseParticles *base_particles_; /**< Base particles for dynamic cast particle dynamics  */
+		SPHAdaptation *sph_adaptation_;			   /**< numerical adaptation policy. */
+		BaseMaterial *base_material_;			   /**< base material for dynamic cast in particle dynamics */
+		BaseParticles *base_particles_;			   /**< Base particles for dynamic cast particle dynamics  */
 		StdVec<SPHBodyRelation *> body_relations_; /**< all contact relations centered from this body **/
 
 		explicit SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
@@ -91,6 +91,10 @@ namespace SPH
 
 		std::string getBodyName();
 		SPHSystem &getSPHSystem();
+		SPHBody &getSPHBody() { return *this; };
+		typedef size_t LoopRangeType;
+		size_t &LoopRange() { return base_particles_->total_real_particles_; };
+
 		Real getSPHBodyResolutionRef() { return sph_adaptation_->ReferenceSpacing(); };
 		void setNewlyUpdated() { newly_updated_ = true; };
 		void setNotNewlyUpdated() { newly_updated_ = false; };
@@ -218,4 +222,4 @@ namespace SPH
 		};
 	};
 }
-#endif //BASE_BODY_H
+#endif // BASE_BODY_H

@@ -220,18 +220,19 @@ namespace SPH
 	//		it can be used in different dynamics.
 	//----------------------------------------------------------------------
 
-	template <class LocalDynamics>
+	template <class LocalDynamics, class DynamicsRange = SPHBody>
 	class SimpleDynamics : public ParticleDynamics<void>
 	{
-		size_t &total_real_particles_;
+		using LoopRang = typename DynamicsRange::LoopRangeType;
+		const LoopRang &loop_range_;
 		LocalDynamics local_dynamics_;
 
 	public:
 		template <typename... ConstructorArgs>
-		SimpleDynamics(SPHBody &sph_body, ConstructorArgs &&...args)
-			: ParticleDynamics<void>(sph_body),
-			  total_real_particles_(base_particles_->total_real_particles_),
-			  local_dynamics_(sph_body, std::forward<ConstructorArgs>(args)...){};
+		SimpleDynamics(DynamicsRange &dynamics_range, ConstructorArgs &&...args)
+			: ParticleDynamics<void>(dynamics_range.getSPHBody()),
+			  loop_range_(dynamics_range.LoopRange()),
+			  local_dynamics_(dynamics_range.getSPHBody(), std::forward<ConstructorArgs>(args)...){};
 		virtual ~SimpleDynamics(){};
 
 		LocalDynamics &getLocalDynamics() { return local_dynamics_; };
@@ -240,14 +241,14 @@ namespace SPH
 		{
 			local_dynamics_.setBodyUpdated();
 			local_dynamics_.setupDynamics(dt);
-			particle_for(total_real_particles_, local_dynamics_, &LocalDynamics::update, dt);
+			particle_for(loop_range_, local_dynamics_, &LocalDynamics::update, dt);
 		};
 
 		virtual void parallel_exec(Real dt = 0.0) override
 		{
 			local_dynamics_.setBodyUpdated();
 			local_dynamics_.setupDynamics(dt);
-			particle_parallel_for(total_real_particles_, local_dynamics_, &LocalDynamics::update, dt);
+			particle_parallel_for(loop_range_, local_dynamics_, &LocalDynamics::update, dt);
 		};
 	};
 }
