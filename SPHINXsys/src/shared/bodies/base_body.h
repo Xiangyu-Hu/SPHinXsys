@@ -67,9 +67,6 @@ namespace SPH
 		UniquePtrKeeper<BaseParticles> base_particles_ptr_keeper_;
 		SharedPtrKeeper<Shape> shape_ptr_keeper_;
 
-	public:
-		Shape *body_shape_; /**< describe the volumetric geometry enclosing the body */
-
 	protected:
 		UniquePtrKeeper<SPHAdaptation> sph_adaptation_ptr_keeper_;
 
@@ -79,6 +76,7 @@ namespace SPH
 		bool newly_updated_; /**< whether this body is in a newly updated state */
 
 	public:
+		Shape *body_shape_;						   /**< describe the volumetric geometry enclosing the body */
 		SPHAdaptation *sph_adaptation_;			   /**< numerical adaptation policy. */
 		BaseMaterial *base_material_;			   /**< base material for dynamic cast in particle dynamics */
 		BaseParticles *base_particles_;			   /**< Base particles for dynamic cast particle dynamics  */
@@ -91,7 +89,6 @@ namespace SPH
 		SPHSystem &getSPHSystem();
 		SPHBody &getSPHBody() { return *this; };
 		size_t &LoopRange() { return base_particles_->total_real_particles_; };
-
 		Real getSPHBodyResolutionRef() { return sph_adaptation_->ReferenceSpacing(); };
 		void setNewlyUpdated() { newly_updated_ = true; };
 		void setNotNewlyUpdated() { newly_updated_ = false; };
