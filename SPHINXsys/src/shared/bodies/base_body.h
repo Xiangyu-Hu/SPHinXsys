@@ -63,6 +63,8 @@ namespace SPH
 	class SPHBody
 	{
 	private:
+		UniquePtrKeeper<BaseMaterial> base_material_ptr_keeper_;
+		UniquePtrKeeper<BaseParticles> base_particles_ptr_keeper_;
 		SharedPtrKeeper<Shape> shape_ptr_keeper_;
 
 	public:
@@ -70,10 +72,6 @@ namespace SPH
 
 	protected:
 		UniquePtrKeeper<SPHAdaptation> sph_adaptation_ptr_keeper_;
-
-	private:
-		UniquePtrKeeper<BaseMaterial> base_material_ptr_keeper_;
-		UniquePtrKeeper<BaseParticles> base_particles_ptr_keeper_;
 
 	protected:
 		SPHSystem &sph_system_;
@@ -107,14 +105,14 @@ namespace SPH
 		LevelSetShape *defineComponentLevelSetShape(const std::string &shape_name, ConstructorArgs &&...args)
 		{
 			ComplexShape *complex_shape = DynamicCast<ComplexShape>(this, body_shape_);
-			return complex_shape->defineLevelSetShape(this, shape_name, std::forward<ConstructorArgs>(args)...);
+			return complex_shape->defineLevelSetShape(*this, shape_name, std::forward<ConstructorArgs>(args)...);
 		};
 
 		template <typename... ConstructorArgs>
 		LevelSetShape *defineBodyLevelSetShape(ConstructorArgs &&...args)
 		{
 			LevelSetShape *levelset_shape =
-				shape_ptr_keeper_.resetPtr<LevelSetShape>(this, *body_shape_, std::forward<ConstructorArgs>(args)...);
+				shape_ptr_keeper_.resetPtr<LevelSetShape>(*this, *body_shape_, std::forward<ConstructorArgs>(args)...);
 			body_shape_ = levelset_shape;
 			return levelset_shape;
 		};
@@ -215,7 +213,7 @@ namespace SPH
 		void defineAdaptation(ConstructorArgs &&...args)
 		{
 			sph_adaptation_ = sph_adaptation_ptr_keeper_
-								  .createPtr<AdaptationType>(this, std::forward<ConstructorArgs>(args)...);
+								  .createPtr<AdaptationType>(*this, std::forward<ConstructorArgs>(args)...);
 			cell_linked_list_ = cell_linked_list_keeper_.movePtr(
 				sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));
 		};

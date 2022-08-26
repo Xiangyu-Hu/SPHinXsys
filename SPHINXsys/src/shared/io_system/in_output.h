@@ -105,16 +105,15 @@ namespace SPH
 	{
 	protected:
 		IOEnvironment &io_environment_;
-		SPHBody *body_;
 		SPHBodyVector bodies_;
 
 		std::string convertPhysicalTimeToString(Real physical_time);
 
 	public:
 		BodyStatesIO(IOEnvironment &io_environment, SPHBody &body)
-			: io_environment_(io_environment), body_(&body), bodies_({&body}){};
+			: io_environment_(io_environment), bodies_({&body}){};
 		BodyStatesIO(IOEnvironment &io_environment, SPHBodyVector bodies)
-			: io_environment_(io_environment), body_(bodies[0]), bodies_(bodies){};
+			: io_environment_(io_environment), bodies_(bodies){};
 		virtual ~BodyStatesIO(){};
 	};
 

@@ -48,7 +48,7 @@ namespace SPH
 		virtual ~ComplexShape(){};
 
 		template <typename... ConstructorArgs>
-		LevelSetShape *defineLevelSetShape(SPHBody *sph_body, const std::string &shape_name, ConstructorArgs &&...args)
+		LevelSetShape *defineLevelSetShape(SPHBody &sph_body, const std::string &shape_name, ConstructorArgs &&...args)
 		{
 			size_t index = getShapeIndexByName(shape_name);
 			LevelSetShape *level_set_shape = shapes_ptr_keeper_[index].createPtr<LevelSetShape>(
