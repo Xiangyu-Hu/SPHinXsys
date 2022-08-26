@@ -162,7 +162,7 @@ namespace SPH
 		template <typename VariableType>
 		void registerSortableVariable(const std::string &variable_name);
 
-		SPHBody *getSPHBody() { return sph_body_; };
+		SPHBody &getSPHBody() { return sph_body_; };
 		/** initialize other variables  based one geometric variables and material */
 		virtual void initializeOtherVariables();
 		void addBufferParticles(size_t buffer_size);
@@ -199,7 +199,7 @@ namespace SPH
 		virtual Real ParticleMass(size_t index_i) { return mass_[index_i]; }
 
 	protected:
-		SPHBody *sph_body_; /**< The body in which the particles belongs to. */
+		SPHBody &sph_body_; /**< The body in which the particles belongs to. */
 		std::string body_name_;
 		XmlEngine restart_xml_engine_;
 		XmlEngine reload_xml_engine_;

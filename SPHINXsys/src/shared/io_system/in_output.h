@@ -105,16 +105,15 @@ namespace SPH
 	{
 	protected:
 		IOEnvironment &io_environment_;
-		SPHBody *body_;
 		SPHBodyVector bodies_;
 
 		std::string convertPhysicalTimeToString(Real physical_time);
 
 	public:
 		BodyStatesIO(IOEnvironment &io_environment, SPHBody &body)
-			: io_environment_(io_environment), body_(&body), bodies_({&body}){};
+			: io_environment_(io_environment), bodies_({&body}){};
 		BodyStatesIO(IOEnvironment &io_environment, SPHBodyVector bodies)
-			: io_environment_(io_environment), body_(bodies[0]), bodies_(bodies){};
+			: io_environment_(io_environment), bodies_(bodies){};
 		virtual ~BodyStatesIO(){};
 	};
 
@@ -301,7 +300,7 @@ namespace SPH
 									  public observer_dynamics::ObservingAQuantity<VariableType>
 	{
 	protected:
-		SPHBody *observer_;
+		SPHBody &observer_;
 		PltEngine plt_engine_;
 		BaseParticles *base_particles_;
 		std::string body_name_;
@@ -314,10 +313,10 @@ namespace SPH
 	public:
 		ObservedQuantityRecording(const std::string &quantity_name, IOEnvironment &io_environment,
 								  BaseBodyRelationContact &contact_relation)
-			: BodyStatesRecording(io_environment, *contact_relation.sph_body_),
+			: BodyStatesRecording(io_environment, contact_relation.sph_body_),
 			  observer_dynamics::ObservingAQuantity<VariableType>(contact_relation, quantity_name),
 			  observer_(contact_relation.sph_body_), plt_engine_(),
-			  base_particles_(observer_->base_particles_), body_name_(contact_relation.sph_body_->getBodyName()),
+			  base_particles_(observer_.base_particles_), body_name_(contact_relation.sph_body_.getBodyName()),
 			  quantity_name_(quantity_name)
 		{
 			/** Output for .dat file. */
@@ -378,7 +377,7 @@ namespace SPH
 		template <typename... ConstructorArgs>
 		BodyReducedQuantityRecording(IOEnvironment &io_environment, ConstructorArgs &&...args)
 			: io_environment_(io_environment), plt_engine_(), reduce_method_(std::forward<ConstructorArgs>(args)...),
-			  body_name_(reduce_method_.getSPHBody()->getBodyName()),
+			  body_name_(reduce_method_.getSPHBody().getBodyName()),
 			  quantity_name_(reduce_method_.QuantityName())
 		{
 			/** output for .dat file. */

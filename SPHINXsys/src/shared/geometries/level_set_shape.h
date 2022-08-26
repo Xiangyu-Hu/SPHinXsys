@@ -50,7 +50,7 @@ namespace SPH
 
 	public:
 		/** refinement_ratio is between body reference resolution and level set resolution */
-		LevelSetShape(SPHBody *sph_body, Shape &shape, Real refinement_ratio = 1.0);
+		LevelSetShape(SPHBody &sph_body, Shape &shape, Real refinement_ratio = 1.0);
 		virtual ~LevelSetShape(){};
 
 		virtual bool checkContain(const Vecd &input_pnt, bool BOUNDARY_INCLUDED = true) override;

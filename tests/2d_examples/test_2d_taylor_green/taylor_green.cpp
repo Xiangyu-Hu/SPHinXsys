@@ -54,11 +54,10 @@ class TaylorGreenInitialCondition
 	: public fluid_dynamics::FluidInitialCondition
 {
 public:
-	explicit TaylorGreenInitialCondition(FluidBody &water)
-		: fluid_dynamics::FluidInitialCondition(water){};
+	explicit TaylorGreenInitialCondition(SPHBody &sph_body)
+		: fluid_dynamics::FluidInitialCondition(sph_body){};
 
-protected:
-	void Update(size_t index_i, Real dt) override
+	void update(size_t index_i, Real dt)
 	{
 		/** initial velocity profile */
 		vel_[index_i][0] = -cos(2.0 * Pi * pos_[index_i][0]) *
@@ -96,7 +95,7 @@ int main(int ac, char *av[])
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
 	/** Initial velocity field */
-	TaylorGreenInitialCondition initial_condition(water_block);
+	SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_block);
 	/**
 	 * @brief 	Methods used for time stepping.
 	 */

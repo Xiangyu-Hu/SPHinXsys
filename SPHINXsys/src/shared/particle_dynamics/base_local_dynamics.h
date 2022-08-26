@@ -43,14 +43,14 @@ namespace SPH
 	template <class ReturnType>
 	class BaseLocalDynamics
 	{
-		SPHBody *sph_body_;
+		SPHBody &sph_body_;
 
 	public:
-		explicit BaseLocalDynamics(SPHBody &sph_body) : sph_body_(&sph_body){};
+		explicit BaseLocalDynamics(SPHBody &sph_body) : sph_body_(sph_body){};
 		virtual ~BaseLocalDynamics(){};
 
 		typedef ReturnType LocalDynamicsReturnType;
-		void setBodyUpdated() { sph_body_->setNewlyUpdated(); };
+		void setBodyUpdated() { sph_body_.setNewlyUpdated(); };
 		virtual ReturnType setupDynamics(Real dt = 0.0) = 0; //setup global parameters
 	};
 

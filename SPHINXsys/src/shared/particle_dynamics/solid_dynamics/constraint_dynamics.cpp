@@ -254,7 +254,7 @@ namespace SPH
 		//=================================================================================================//
 		SoftConstrainSolidBodyRegion::
 			SoftConstrainSolidBodyRegion(BaseBodyRelationInner &inner_relation, BodyPartByParticle &body_part)
-			: PartInteractionDynamicsByParticleWithUpdate(*inner_relation.sph_body_, body_part),
+			: PartInteractionDynamicsByParticleWithUpdate(inner_relation.sph_body_, body_part),
 			  SolidDataInner(inner_relation),
 			  Vol_(particles_->Vol_),
 			  vel_(particles_->vel_), acc_(particles_->acc_)
@@ -292,8 +292,8 @@ namespace SPH
 		//=================================================================================================//
 		ClampConstrainSolidBodyRegion::
 			ClampConstrainSolidBodyRegion(BaseBodyRelationInner &inner_relation, BodyPartByParticle &body_part)
-			: ParticleDynamics<void>(*inner_relation.sph_body_),
-			  constraint_(ConstrainSolidBodyRegion(*inner_relation.sph_body_, body_part)),
+			: ParticleDynamics<void>(inner_relation.sph_body_),
+			  constraint_(ConstrainSolidBodyRegion(inner_relation.sph_body_, body_part)),
 			  softening_(SoftConstrainSolidBodyRegion(inner_relation, body_part)) {}
 		//=================================================================================================//
 		void ClampConstrainSolidBodyRegion::exec(Real dt)

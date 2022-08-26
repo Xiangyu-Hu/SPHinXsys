@@ -115,7 +115,7 @@ namespace SPH
 		{
 		public:
 			explicit BaseFluidPressureForceOnSolid(BaseBodyRelationContact &contact_relation)
-				: InteractionDynamics(*contact_relation.sph_body_),
+				: InteractionDynamics(contact_relation.sph_body_),
 				  FSIContactData(contact_relation),
 				  Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity()),
 				  acc_prior_(particles_->acc_prior_),
@@ -195,7 +195,7 @@ namespace SPH
 		{
 		public:
 			explicit BaseFluidPressureForceOnSolidInEuler(BaseBodyRelationContact &contact_relation)
-				: InteractionDynamics(*contact_relation.sph_body_),
+				: InteractionDynamics(contact_relation.sph_body_),
 				EFSIContactData(contact_relation),
 				Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity()),
 				acc_prior_(particles_->acc_prior_), n_(particles_->n_)

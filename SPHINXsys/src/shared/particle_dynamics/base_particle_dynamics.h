@@ -148,18 +148,18 @@ namespace SPH
 		explicit ParticleDynamics(SPHBody &sph_body);
 		virtual ~ParticleDynamics(){};
 
-		SPHBody *getSPHBody() { return sph_body_; };
+		SPHBody &getSPHBody() { return sph_body_; };
 		/** The only two functions can be called from outside
 		  * One is for sequential execution, the other is for parallel. */
 		virtual ReturnType exec(Real dt = 0.0) = 0;
 		virtual ReturnType parallel_exec(Real dt = 0.0) = 0;
 
 	protected:
-		SPHBody *sph_body_;
+		SPHBody &sph_body_;
 		SPHAdaptation *sph_adaptation_;
 		BaseParticles *base_particles_;
 
-		void setBodyUpdated() { sph_body_->setNewlyUpdated(); };
+		void setBodyUpdated() { sph_body_.setNewlyUpdated(); };
 		/** the function for set global parameters for the particle dynamics */
 		virtual void setupDynamics(Real dt = 0.0){};
 	};
@@ -217,7 +217,7 @@ namespace SPH
 	{
 	public:
 		explicit DataDelegateInner(BaseBodyRelationInner &body_inner_relation)
-			: BaseDataDelegateType(*body_inner_relation.sph_body_),
+			: BaseDataDelegateType(body_inner_relation.sph_body_),
 			  inner_configuration_(body_inner_relation.inner_configuration_){};
 		virtual ~DataDelegateInner(){};
 

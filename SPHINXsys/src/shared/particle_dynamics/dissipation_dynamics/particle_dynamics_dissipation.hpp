@@ -16,7 +16,7 @@ namespace SPH
 	DampingBySplittingInner<VariableType>::
 		DampingBySplittingInner(BaseBodyRelationInner &inner_relation,
 								const std::string &variable_name, Real eta)
-		: InteractionDynamicsSplitting(*inner_relation.sph_body_),
+		: InteractionDynamicsSplitting(inner_relation.sph_body_),
 		  DissipationDataInner(inner_relation), eta_(eta),
 		  Vol_(particles_->Vol_), mass_(particles_->mass_),
 		  variable_(*particles_->getVariableByName<VariableType>(variable_name)) {}
@@ -211,7 +211,7 @@ namespace SPH
 	DampingPairwiseInner<VariableType>::
 		DampingPairwiseInner(BaseBodyRelationInner &inner_relation,
 							 const std::string &variable_name, Real eta)
-		: InteractionDynamicsSplitting(*inner_relation.sph_body_),
+		: InteractionDynamicsSplitting(inner_relation.sph_body_),
 		  DissipationDataInner(inner_relation),
 		  Vol_(particles_->Vol_), mass_(particles_->mass_),
 		  variable_(*particles_->getVariableByName<VariableType>(variable_name)),
@@ -385,7 +385,7 @@ namespace SPH
 	template <typename VariableType>
 	DampingPairwiseFromWall<VariableType>::
 		DampingPairwiseFromWall(BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta)
-		: InteractionDynamicsSplitting(*contact_relation.sph_body_),
+		: InteractionDynamicsSplitting(contact_relation.sph_body_),
 		  DataDelegateContact<SPHBody, BaseParticles, BaseMaterial, SolidBody, SolidParticles, Solid>(contact_relation),
 		  eta_(eta), Vol_(particles_->Vol_), mass_(particles_->mass_),
 		  variable_(*particles_->getVariableByName<VariableType>(variable_name))

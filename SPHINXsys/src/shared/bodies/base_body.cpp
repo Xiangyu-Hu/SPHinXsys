@@ -15,7 +15,7 @@ namespace SPH
 	SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
 		: body_shape_(shape_ptr_keeper_.assignPtr(shape_ptr)),
 		  sph_system_(sph_system), body_name_(body_shape_->getName()), newly_updated_(true),
-		  sph_adaptation_(sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(this)),
+		  sph_adaptation_(sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(*this)),
 		  base_material_(nullptr), base_particles_(nullptr)
 	{
 		sph_system_.sph_bodies_.push_back(this);

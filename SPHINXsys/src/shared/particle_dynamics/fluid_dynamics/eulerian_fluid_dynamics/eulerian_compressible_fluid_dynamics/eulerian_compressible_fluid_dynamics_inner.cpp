@@ -46,7 +46,7 @@ namespace SPH
 			  gamma_(material_->HeatCapacityRatio()) {}
 		//=================================================================================================//
 		ViscousAccelerationInner::ViscousAccelerationInner(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(*inner_relation.sph_body_),
+			: InteractionDynamics(inner_relation.sph_body_),
 			  CompressibleFluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
 			  mass_(particles_->mass_), dE_dt_prior_(particles_->dE_dt_prior_),
@@ -95,7 +95,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseRelaxation::BaseRelaxation(BaseBodyRelationInner &inner_relation)
-			: ParticleDynamics1Level(*inner_relation.sph_body_),
+			: ParticleDynamics1Level(inner_relation.sph_body_),
 			  CompressibleFluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
 			  drho_dt_(particles_->drho_dt_), E_(particles_->E_), dE_dt_(particles_->dE_dt_),

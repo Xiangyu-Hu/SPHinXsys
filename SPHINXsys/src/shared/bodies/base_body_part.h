@@ -46,14 +46,14 @@ namespace SPH
 	{
 	public:
 		BodyPart(SPHBody &sph_body, const std::string &body_part_name)
-			: sph_body_(&sph_body), body_part_name_(body_part_name){};
+			: sph_body_(sph_body), body_part_name_(body_part_name){};
 		virtual ~BodyPart(){};
 
-		SPHBody *getSPHBody() { return sph_body_; };
+		SPHBody &getSPHBody() { return sph_body_; };
 		std::string BodyPartName() { return body_part_name_; };
 
 	protected:
-		SPHBody *sph_body_;
+		SPHBody &sph_body_;
 		std::string body_part_name_;
 	};
 

@@ -56,8 +56,8 @@ namespace SPH
 			virtual ~EulerianFlowTimeStepInitialization() {};
 
 		protected:
-			StdLargeVec<Real> &rho_, &mass_;
-			StdLargeVec<Vecd> &pos_, &vel_, &dmom_dt_prior_;
+			StdLargeVec<Real> &rho_;
+			StdLargeVec<Vecd> &pos_, &dmom_dt_prior_;
 			Gravity *gravity_;
 			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -234,7 +234,7 @@ namespace SPH
 		{
 		public:
 			NonReflectiveBoundaryVariableCorrection(BaseBodyRelationInner &inner_relation) :
-				InteractionDynamics(*inner_relation.sph_body_), EulerianWeaklyCompressibleFluidDataInner(inner_relation),
+				InteractionDynamics(inner_relation.sph_body_), EulerianWeaklyCompressibleFluidDataInner(inner_relation),
 				rho_(particles_->rho_), p_(particles_->p_), vel_(particles_->vel_),
 				mom_(particles_->mom_), pos_(particles_->pos_), mass_(particles_->mass_), Vol_(particles_->Vol_),
 				surface_indicator_(particles_->surface_indicator_)

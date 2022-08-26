@@ -130,7 +130,7 @@ namespace SPH
 		{
 		public:
 			explicit FreeStreamBoundaryVelocityCorrection(BaseBodyRelationInner &inner_relation)
-				: ParticleDynamicsSimple(*inner_relation.sph_body_),
+				: ParticleDynamicsSimple(inner_relation.sph_body_),
 				  FluidDataInner(inner_relation), u_ref_(1.0), t_ref_(2.0),
 				  rho_ref_(material_->ReferenceDensity()), rho_sum(particles_->rho_sum_),
 				  vel_(particles_->vel_), acc_(particles_->acc_),

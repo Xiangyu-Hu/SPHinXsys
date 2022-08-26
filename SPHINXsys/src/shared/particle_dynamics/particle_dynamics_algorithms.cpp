@@ -54,10 +54,10 @@ namespace SPH
 	//=================================================================================================//
 	CombinedInteractionDynamics::
 		CombinedInteractionDynamics(InteractionDynamics &dynamics_a, InteractionDynamics &dynamics_b)
-		: InteractionDynamics(*dynamics_a.sph_body_),
+		: InteractionDynamics(dynamics_a.sph_body_),
 		  dynamics_a_(dynamics_a), dynamics_b_(dynamics_b)
 	{
-		if (dynamics_a.sph_body_ != dynamics_b.sph_body_)
+		if (&dynamics_a.sph_body_ != &dynamics_b.sph_body_)
 		{
 			std::cout << "\n Error: CombinedInteractionDynamics does not have the same source body!" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;

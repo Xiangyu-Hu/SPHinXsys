@@ -51,10 +51,10 @@ namespace SPH
 		 * @brief  Set initial condition for a fluid body.
 		 * This is a abstract class to be override for case specific initial conditions
 		 */
-		class FluidInitialCondition : public ParticleDynamicsSimple, public FluidDataSimple
+		class FluidInitialCondition : public LocalDynamics, public FluidDataSimple
 		{
 		public:
-			explicit FluidInitialCondition(FluidBody &fluid_body);
+			explicit FluidInitialCondition(SPHBody &sph_body);
 			virtual ~FluidInitialCondition(){};
 
 		protected:

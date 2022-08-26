@@ -52,7 +52,7 @@ namespace SPH
 		{
 		public:
 			explicit BaseInterpolation(BaseBodyRelationContact &contact_relation, const std::string &variable_name)
-				: InteractionDynamics(*contact_relation.sph_body_), InterpolationContactData(contact_relation),
+				: InteractionDynamics(contact_relation.sph_body_), InterpolationContactData(contact_relation),
 				  interpolated_quantities_(nullptr)
 			{
 				for (size_t k = 0; k != this->contact_particles_.size(); ++k)

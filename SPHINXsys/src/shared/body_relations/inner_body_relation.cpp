@@ -12,7 +12,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	BodyRelationInner::BodyRelationInner(RealBody &real_body)
-		: BaseBodyRelationInner(real_body), get_inner_neighbor_(&real_body),
+		: BaseBodyRelationInner(real_body), get_inner_neighbor_(real_body),
 		  cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.cell_linked_list_)) {}
 	//=================================================================================================//
 	void BodyRelationInner::updateConfiguration()
@@ -28,7 +28,7 @@ namespace SPH
 	BodyRelationInnerVariableSmoothingLength::
 		BodyRelationInnerVariableSmoothingLength(RealBody &real_body)
 		: BaseBodyRelationInner(real_body), total_levels_(0),
-		  get_inner_neighbor_variable_smoothing_length_(&real_body)
+		  get_inner_neighbor_variable_smoothing_length_(real_body)
 	{
 		MultilevelCellLinkedList *multi_level_cell_linked_list =
 			DynamicCast<MultilevelCellLinkedList>(this, real_body.cell_linked_list_);
@@ -61,7 +61,7 @@ namespace SPH
 		  body_surface_layer_(real_body),
 		  body_part_particles_(body_surface_layer_.body_part_particles_),
 		  get_body_part_particle_index_(body_part_particles_),
-		  get_self_contact_neighbor_(&real_body),
+		  get_self_contact_neighbor_(real_body),
 		  cell_linked_list_(DynamicCast<CellLinkedList>(this, real_body.cell_linked_list_)) {}
 	//=================================================================================================//
 	void SolidBodyRelationSelfContact::resetNeighborhoodCurrentSize()
