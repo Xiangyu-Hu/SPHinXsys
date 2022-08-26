@@ -80,7 +80,7 @@ namespace SPH
 		{
 			size_t total_body_buffer_particles = body_part_particles_.size() * body_buffer_width_;
 			particles_->addBufferParticles(total_body_buffer_particles);
-			sph_body_->allocateConfigurationMemoriesForBufferParticles();
+			sph_body_.allocateConfigurationMemoriesForBufferParticles();
 
 			checking_bound_ = positive ? std::bind(&EmitterInflowInjecting::checkUpperBound, this, _1, _2)
 									   : std::bind(&EmitterInflowInjecting::checkLowerBound, this, _1, _2);

@@ -16,7 +16,7 @@ namespace SPH
 																	 BaseBodyRelationContact &contact_relation)
 			: ViscousAccelerationInner(inner_relation), MultiPhaseContactData(contact_relation)
 		{
-			if (inner_relation.sph_body_ != contact_relation.sph_body_)
+			if (&inner_relation.sph_body_ != &contact_relation.sph_body_)
 			{
 				std::cout << "\n Error: the two body_relations do not have the same source body!" << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
@@ -67,7 +67,7 @@ namespace SPH
 		//=================================================================================================//
 		MultiPhaseColorFunctionGradient::
 			MultiPhaseColorFunctionGradient(BaseBodyRelationContact &contact_relation)
-			: InteractionDynamics(*contact_relation.sph_body_), MultiPhaseData(contact_relation),
+			: InteractionDynamics(contact_relation.sph_body_), MultiPhaseData(contact_relation),
 			  rho0_(particles_->rho0_), Vol_(particles_->Vol_),
 			  pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
 			  surface_indicator_(particles_->surface_indicator_)

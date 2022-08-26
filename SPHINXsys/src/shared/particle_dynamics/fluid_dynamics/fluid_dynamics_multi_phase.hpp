@@ -20,7 +20,7 @@ namespace SPH
 				BaseBodyRelationContact &contact_relation) :
 				RelaxationInnerType(inner_relation), MultiPhaseContactData(contact_relation)
 		{
-			if (inner_relation.sph_body_ != contact_relation.sph_body_)
+			if (&inner_relation.sph_body_ != &contact_relation.sph_body_)
 			{
 				std::cout << "\n Error: the two body_relations do not have the same source body!" << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;

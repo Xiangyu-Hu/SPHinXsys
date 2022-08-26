@@ -92,7 +92,6 @@ namespace SPH
 		std::string getBodyName();
 		SPHSystem &getSPHSystem();
 		SPHBody &getSPHBody() { return *this; };
-		typedef size_t LoopRangeType;
 		size_t &LoopRange() { return base_particles_->total_real_particles_; };
 
 		Real getSPHBodyResolutionRef() { return sph_adaptation_->ReferenceSpacing(); };

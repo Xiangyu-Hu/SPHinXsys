@@ -16,7 +16,7 @@ namespace SPH
 		//=================================================================================================//
 		CorrectInterpolationKernelWeights::
 			CorrectInterpolationKernelWeights(BaseBodyRelationContact &contact_relation) : 
-			InteractionDynamics(*contact_relation.sph_body_),
+			InteractionDynamics(contact_relation.sph_body_),
 			InterpolationContactData(contact_relation)
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)

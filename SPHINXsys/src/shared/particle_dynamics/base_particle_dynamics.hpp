@@ -15,7 +15,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class ReturnType>
 	ParticleDynamics<ReturnType>::ParticleDynamics(SPHBody &sph_body)
-		: GlobalStaticVariables(), sph_body_(&sph_body),
+		: GlobalStaticVariables(), sph_body_(sph_body),
 		  sph_adaptation_(sph_body.sph_adaptation_),
 		  base_particles_(sph_body.base_particles_) {}
 	//=================================================================================================//
@@ -27,7 +27,7 @@ namespace SPH
 			  class ContactMaterialType,
 			  class BaseDataDelegateType>
 	DataDelegateContact<BodyType, ParticlesType, MaterialType, ContactBodyType, ContactParticlesType, ContactMaterialType, BaseDataDelegateType>::
-		DataDelegateContact(BaseBodyRelationContact &body_contact_relation) : BaseDataDelegateType(*body_contact_relation.sph_body_)
+		DataDelegateContact(BaseBodyRelationContact &body_contact_relation) : BaseDataDelegateType(body_contact_relation.sph_body_)
 	{
 		RealBodyVector contact_sph_bodies = body_contact_relation.contact_bodies_;
 		for (size_t i = 0; i != contact_sph_bodies.size(); ++i)
@@ -77,7 +77,7 @@ namespace SPH
 		: ParticleDynamicsInnerType(complex_relation.inner_relation_),
 		  ContactDataType(complex_relation.contact_relation_)
 	{
-		if (complex_relation.sph_body_ != extra_contact_relation.sph_body_)
+		if (&complex_relation.sph_body_ != &extra_contact_relation.sph_body_)
 		{
 			std::cout << "\n Error: the two body_realtions do not have the same source body!" << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;

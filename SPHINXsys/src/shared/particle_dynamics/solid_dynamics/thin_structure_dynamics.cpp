@@ -53,7 +53,7 @@ namespace SPH
 		//=================================================================================================//
 		ShellCorrectConfiguration::
 			ShellCorrectConfiguration(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(*inner_relation.sph_body_),
+			: InteractionDynamics(inner_relation.sph_body_),
 			  ShellDataInner(inner_relation),
 			  Vol_(particles_->Vol_), B_(particles_->B_),
 			  n0_(particles_->n0_), transformation_matrix_(particles_->transformation_matrix_) {}
@@ -79,7 +79,7 @@ namespace SPH
 		//=================================================================================================//
 		ShellDeformationGradientTensor::
 			ShellDeformationGradientTensor(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(*inner_relation.sph_body_),
+			: InteractionDynamics(inner_relation.sph_body_),
 			  ShellDataInner(inner_relation),
 			  Vol_(particles_->Vol_), pos_(particles_->pos_),
 			  pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
@@ -109,7 +109,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseShellRelaxation::BaseShellRelaxation(BaseBodyRelationInner &inner_relation)
-			: ParticleDynamics1Level(*inner_relation.sph_body_),
+			: ParticleDynamics1Level(inner_relation.sph_body_),
 			  ShellDataInner(inner_relation), Vol_(particles_->Vol_),
 			  rho_(particles_->rho_), mass_(particles_->mass_),
 			  thickness_(particles_->thickness_),
@@ -360,7 +360,7 @@ namespace SPH
 		FixedFreeRotateShellBoundary::
 			FixedFreeRotateShellBoundary(BaseBodyRelationInner &inner_relation,
 										 BodyPartByParticle &body_part, Vecd constrained_direction)
-			: PartInteractionDynamicsByParticle1Level(*inner_relation.sph_body_, body_part),
+			: PartInteractionDynamicsByParticle1Level(inner_relation.sph_body_, body_part),
 			  ShellDataInner(inner_relation),
 			  W0_(sph_adaptation_->getKernel()->W0(Vecd(0))),
 			  constrain_matrix_(Matd(0)), recover_matrix_(Matd(1.0)),
@@ -417,7 +417,7 @@ namespace SPH
 		//=================================================================================================//
 		ClampConstrainShellBodyRegion::
 			ClampConstrainShellBodyRegion(BaseBodyRelationInner &inner_relation, BodyPartByParticle &body_part)
-			: PartInteractionDynamicsByParticle1Level(*inner_relation.sph_body_, body_part),
+			: PartInteractionDynamicsByParticle1Level(inner_relation.sph_body_, body_part),
 			  ShellDataInner(inner_relation),
 			  Vol_(particles_->Vol_), vel_(particles_->vel_),
 			  angular_vel_(particles_->angular_vel_)
@@ -500,7 +500,7 @@ namespace SPH
 		//=================================================================================================//
 		void DistributingPointForcesToShell::getWeight()
 		{
-			Kernel *kernel_ = sph_body_->sph_adaptation_->getKernel();
+			Kernel *kernel_ = sph_body_.sph_adaptation_->getKernel();
 			Real reference_smoothing_length = sph_adaptation_->ReferenceSmoothingLength();
 			Real smoothing_length = h_spacing_ratio_ * particle_spacing_ref_;
 			Real h_ratio = reference_smoothing_length / smoothing_length;

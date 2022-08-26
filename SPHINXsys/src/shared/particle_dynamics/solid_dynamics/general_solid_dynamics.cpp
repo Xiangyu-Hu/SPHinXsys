@@ -17,7 +17,7 @@ namespace SPH
 		//=================================================================================================//
 		CorrectConfiguration::
 			CorrectConfiguration(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(*inner_relation.sph_body_),
+			: InteractionDynamics(inner_relation.sph_body_),
 			  SolidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), B_(particles_->B_) {}
 		//=================================================================================================//

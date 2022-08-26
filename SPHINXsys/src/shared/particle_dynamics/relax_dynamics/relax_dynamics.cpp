@@ -36,7 +36,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		RelaxationAccelerationInner::RelaxationAccelerationInner(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(*inner_relation.sph_body_),
+			: InteractionDynamics(inner_relation.sph_body_),
 			  RelaxDataDelegateInner(inner_relation),
 			  Vol_(particles_->Vol_), acc_(particles_->acc_), pos_(particles_->pos_) {}
 		//=================================================================================================//
@@ -94,7 +94,7 @@ namespace SPH
 		//=================================================================================================//
 		RelaxationAccelerationComplex::
 			RelaxationAccelerationComplex(ComplexBodyRelation &complex_relation)
-			: InteractionDynamics(*complex_relation.sph_body_),
+			: InteractionDynamics(complex_relation.sph_body_),
 			  RelaxDataDelegateComplex(complex_relation),
 			  Vol_(particles_->Vol_), acc_(particles_->acc_), pos_(particles_->pos_)
 		{
@@ -168,7 +168,7 @@ namespace SPH
 		//=================================================================================================//
 		RelaxationStepInner::
 			RelaxationStepInner(BaseBodyRelationInner &inner_relation, bool level_set_correction)
-			: ParticleDynamics<void>(*inner_relation.sph_body_),
+			: ParticleDynamics<void>(inner_relation.sph_body_),
 			  real_body_(inner_relation.real_body_),
 			  inner_relation_(inner_relation),
 			  near_shape_surface_(*real_body_),
@@ -224,7 +224,7 @@ namespace SPH
 		//=================================================================================================//
 		RelaxationStepComplex::RelaxationStepComplex(ComplexBodyRelation &body_complex_relation,
 													 const std::string &shape_name, bool level_set_correction)
-			: ParticleDynamics<void>(*body_complex_relation.sph_body_),
+			: ParticleDynamics<void>(body_complex_relation.sph_body_),
 			  real_body_(body_complex_relation.inner_relation_.real_body_),
 			  complex_relation_(body_complex_relation),
 			  near_shape_surface_(*real_body_, shape_name),
@@ -275,13 +275,13 @@ namespace SPH
 		ShellNormalDirectionPrediction::
 			ShellNormalDirectionPrediction(BaseBodyRelationInner &inner_relation,
 										   Real thickness, Real consistency_criterion)
-			: ParticleDynamics<void>(*inner_relation.sph_body_),
+			: ParticleDynamics<void>(inner_relation.sph_body_),
 			  convergence_criterion_(cos(0.01 * Pi)),
 			  consistency_criterion_(consistency_criterion),
-			  normal_prediction_(*sph_body_, thickness),
-			  normal_prediction_convergence_check_(*sph_body_, convergence_criterion_),
+			  normal_prediction_(sph_body_, thickness),
+			  normal_prediction_convergence_check_(sph_body_, convergence_criterion_),
 			  consistency_correction_(inner_relation, consistency_criterion_),
-			  consistency_updated_check_(*sph_body_),
+			  consistency_updated_check_(sph_body_),
 			  smoothing_normal_(inner_relation) {}
 		//=================================================================================================//
 		void ShellNormalDirectionPrediction::exec(Real dt)
@@ -366,7 +366,7 @@ namespace SPH
 		//=================================================================================================//
 		ShellNormalDirectionPrediction::ConsistencyCorrection::
 			ConsistencyCorrection(BaseBodyRelationInner &inner_relation, Real consistency_criterion)
-			: InteractionDynamics(*inner_relation.sph_body_),
+			: InteractionDynamics(inner_relation.sph_body_),
 			  RelaxDataDelegateInner(inner_relation),
 			  consistency_criterion_(consistency_criterion),
 			  n_(*particles_->getVariableByName<Vecd>("NormalDirection"))

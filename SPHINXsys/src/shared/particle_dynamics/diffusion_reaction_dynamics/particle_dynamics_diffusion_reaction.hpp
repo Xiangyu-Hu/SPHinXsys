@@ -31,7 +31,7 @@ namespace SPH
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	RelaxationOfAllDiffusionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>::
 		RelaxationOfAllDiffusionSpeciesInner(BaseBodyRelationInner &inner_relation)
-		: InteractionDynamicsWithUpdate(*inner_relation.sph_body_),
+		: InteractionDynamicsWithUpdate(inner_relation.sph_body_),
 		  DiffusionReactionInnerData<BodyType, BaseParticlesType, BaseMaterialType>(inner_relation),
 		  species_n_(this->particles_->species_n_),
 		  diffusion_dt_(this->particles_->diffusion_dt_), Vol_(this->particles_->Vol_)
@@ -219,8 +219,8 @@ namespace SPH
 	template <class FirstStageType>
 	RelaxationOfAllDiffusionSpeciesRK2<FirstStageType>::
 		RelaxationOfAllDiffusionSpeciesRK2(typename FirstStageType::BodyRelationType &body_relation)
-		: ParticleDynamics<void>(*body_relation.sph_body_),
-		  rk2_initialization_(*body_relation.sph_body_, species_s_),
+		: ParticleDynamics<void>(body_relation.sph_body_),
+		  rk2_initialization_(body_relation.sph_body_, species_s_),
 		  rk2_1st_stage_(body_relation),
 		  rk2_2nd_stage_(body_relation, species_s_)
 	{

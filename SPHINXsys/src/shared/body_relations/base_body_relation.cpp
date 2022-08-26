@@ -11,7 +11,7 @@ namespace SPH
 {
 	//=================================================================================================//
 	SPHBodyRelation::SPHBodyRelation(SPHBody &sph_body)
-		: sph_body_(&sph_body), base_particles_(sph_body.base_particles_) {}
+		: sph_body_(sph_body), base_particles_(sph_body.base_particles_) {}
 	//=================================================================================================//
 	BaseBodyRelationInner::BaseBodyRelationInner(RealBody &real_body)
 		: SPHBodyRelation(real_body), real_body_(&real_body)
@@ -22,7 +22,7 @@ namespace SPH
 	//=================================================================================================//
 	void BaseBodyRelationInner::updateConfigurationMemories()
 	{
-		size_t updated_size = sph_body_->base_particles_->real_particles_bound_;
+		size_t updated_size = sph_body_.base_particles_->real_particles_bound_;
 		inner_configuration_.resize(updated_size, Neighborhood());
 	}
 	//=================================================================================================//
@@ -52,7 +52,7 @@ namespace SPH
 	{
 		for (size_t k = 0; k != contact_body_parts.size(); ++k)
 		{
-			contact_bodies_.push_back(DynamicCast<RealBody>(this, contact_body_parts[k]->getSPHBody()));
+			contact_bodies_.push_back(DynamicCast<RealBody>(this, &contact_body_parts[k]->getSPHBody()));
 		}
 		subscribeToBody();
 		updateConfigurationMemories();
@@ -60,7 +60,7 @@ namespace SPH
 	//=================================================================================================//
 	void BaseBodyRelationContact::updateConfigurationMemories()
 	{
-		size_t updated_size = sph_body_->base_particles_->real_particles_bound_;
+		size_t updated_size = sph_body_.base_particles_->real_particles_bound_;
 		contact_configuration_.resize(contact_bodies_.size());
 		for (size_t k = 0; k != contact_bodies_.size(); ++k)
 		{

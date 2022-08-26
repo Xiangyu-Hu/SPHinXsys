@@ -40,12 +40,12 @@ namespace SPH
 		//=================================================================================================//
 		FreeSurfaceIndicationInner::
 			FreeSurfaceIndicationInner(BaseBodyRelationInner &inner_relation, Real threshold)
-			: InteractionDynamicsWithUpdate(*inner_relation.sph_body_),
+			: InteractionDynamicsWithUpdate(inner_relation.sph_body_),
 			EulerianWeaklyCompressibleFluidDataInner(inner_relation),
 			threshold_by_dimensions_(threshold * (Real)Dimensions),
 			Vol_(particles_->Vol_),
 			surface_indicator_(particles_->surface_indicator_),
-			smoothing_length_(inner_relation.sph_body_->sph_adaptation_->ReferenceSmoothingLength())
+			smoothing_length_(inner_relation.sph_body_.sph_adaptation_->ReferenceSmoothingLength())
 		{
 			particles_->registerVariable(pos_div_, "PositionDivergence");
 		}
@@ -80,7 +80,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ViscousAccelerationInner::ViscousAccelerationInner(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(*inner_relation.sph_body_),
+			: InteractionDynamics(inner_relation.sph_body_),
 			EulerianWeaklyCompressibleFluidDataInner(inner_relation),
 			Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
 			vel_(particles_->vel_),
@@ -130,7 +130,7 @@ namespace SPH
 		//=================================================================================================//
 		VorticityInner::
 			VorticityInner(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(*inner_relation.sph_body_),
+			: InteractionDynamics(inner_relation.sph_body_),
 			EulerianWeaklyCompressibleFluidDataInner(inner_relation),
 			Vol_(particles_->Vol_), vel_(particles_->vel_)
 		{
@@ -157,7 +157,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseRelaxation::BaseRelaxation(BaseBodyRelationInner &inner_relation)
-			: ParticleDynamics1Level(*inner_relation.sph_body_),
+			: ParticleDynamics1Level(inner_relation.sph_body_),
 			EulerianWeaklyCompressibleFluidDataInner(inner_relation),
 			Vol_(particles_->Vol_), mass_(particles_->mass_), rho_(particles_->rho_),
 			p_(particles_->p_), drho_dt_(particles_->drho_dt_), vel_(particles_->vel_), mom_(particles_->mom_),
@@ -188,7 +188,7 @@ namespace SPH
 		//=================================================================================================//
 		void NonReflectiveBoundaryVariableCorrection::Interaction(size_t index_i, Real dt)
 		{
-			Shape &body_shape = *sph_body_->body_shape_;
+			Shape &body_shape = *sph_body_.body_shape_;
 			if (surface_indicator_[index_i] == 1)
 			{
 				Vecd normal_direction = body_shape.findNormalDirection(pos_[index_i]);

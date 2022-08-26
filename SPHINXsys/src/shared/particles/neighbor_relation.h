@@ -102,7 +102,7 @@ namespace SPH
 	class NeighborRelationInner : public NeighborRelation
 	{
 	public:
-		explicit NeighborRelationInner(SPHBody *body);
+		explicit NeighborRelationInner(SPHBody &body);
 		void operator()(Neighborhood &neighborhood,
 						Vecd &displacement, size_t i_index, size_t j_index) const;
 	};
@@ -114,7 +114,7 @@ namespace SPH
 	class NeighborRelationInnerVariableSmoothingLength : public NeighborRelation
 	{
 	public:
-		explicit NeighborRelationInnerVariableSmoothingLength(SPHBody *body);
+		explicit NeighborRelationInnerVariableSmoothingLength(SPHBody &body);
 		void operator()(Neighborhood &neighborhood,
 						Vecd &displacement, size_t i_index, size_t j_index) const;
 
@@ -129,7 +129,7 @@ namespace SPH
 	class NeighborRelationSelfContact : public NeighborRelation
 	{
 	public:
-		explicit NeighborRelationSelfContact(SPHBody *body);
+		explicit NeighborRelationSelfContact(SPHBody &body);
 		virtual ~NeighborRelationSelfContact(){};
 		void operator()(Neighborhood &neighborhood,
 						Vecd &displacement, size_t i_index, size_t j_index) const;
@@ -145,7 +145,7 @@ namespace SPH
 	class NeighborRelationContact : public NeighborRelation
 	{
 	public:
-		NeighborRelationContact(SPHBody *body, SPHBody *contact_body);
+		NeighborRelationContact(SPHBody &body, SPHBody &contact_body);
 		virtual ~NeighborRelationContact(){};
 		void operator()(Neighborhood &neighborhood,
 						Vecd &displacement, size_t i_index, size_t j_index) const;
@@ -161,7 +161,7 @@ namespace SPH
 		UniquePtrKeeper<Kernel> kernel_keeper_;
 
 	public:
-		NeighborRelationSolidContact(SPHBody *body, SPHBody *contact_body);
+		NeighborRelationSolidContact(SPHBody &body, SPHBody &contact_body);
 		virtual ~NeighborRelationSolidContact(){};
 	};
 
@@ -172,7 +172,7 @@ namespace SPH
 	class NeighborRelationContactBodyPart : public NeighborRelation
 	{
 	public:
-		NeighborRelationContactBodyPart(SPHBody *body, BodyPart *contact_body_part);
+		NeighborRelationContactBodyPart(SPHBody &body, BodyPart &contact_body_part);
 		virtual ~NeighborRelationContactBodyPart(){};
 		void operator()(Neighborhood &neighborhood,
 						Vecd &displacement, size_t i_index, size_t j_index) const;

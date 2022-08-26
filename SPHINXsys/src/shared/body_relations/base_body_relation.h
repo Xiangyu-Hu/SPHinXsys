@@ -99,13 +99,13 @@ namespace SPH
 	class SPHBodyRelation
 	{
 	public:
-		SPHBody *sph_body_;
+		SPHBody &sph_body_;
 		BaseParticles *base_particles_;
 
 		explicit SPHBodyRelation(SPHBody &sph_body);
 		virtual ~SPHBodyRelation(){};
 
-		void subscribeToBody() { sph_body_->body_relations_.push_back(this); };
+		void subscribeToBody() { sph_body_.body_relations_.push_back(this); };
 		virtual void updateConfigurationMemories() = 0;
 		virtual void updateConfiguration() = 0;
 	};

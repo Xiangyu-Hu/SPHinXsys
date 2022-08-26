@@ -234,7 +234,7 @@ namespace SPH
 		{
 		public:
 			NonReflectiveBoundaryVariableCorrection(BaseBodyRelationInner &inner_relation) :
-				InteractionDynamics(*inner_relation.sph_body_), EulerianWeaklyCompressibleFluidDataInner(inner_relation),
+				InteractionDynamics(inner_relation.sph_body_), EulerianWeaklyCompressibleFluidDataInner(inner_relation),
 				rho_(particles_->rho_), p_(particles_->p_), vel_(particles_->vel_),
 				mom_(particles_->mom_), pos_(particles_->pos_), mass_(particles_->mass_), Vol_(particles_->Vol_),
 				surface_indicator_(particles_->surface_indicator_)
