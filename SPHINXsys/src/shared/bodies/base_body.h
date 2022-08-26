@@ -72,11 +72,10 @@ namespace SPH
 
 	protected:
 		SPHSystem &sph_system_;
-		std::string body_name_;
 		bool newly_updated_; /**< whether this body is in a newly updated state */
 
 	public:
-		Shape *body_shape_;						   /**< describe the volumetric geometry enclosing the body */
+		Shape *body_shape_;						   /**< volumetric geometry enclosing the body */
 		SPHAdaptation *sph_adaptation_;			   /**< numerical adaptation policy. */
 		BaseMaterial *base_material_;			   /**< base material for dynamic cast in particle dynamics */
 		BaseParticles *base_particles_;			   /**< Base particles for dynamic cast particle dynamics  */
@@ -85,7 +84,7 @@ namespace SPH
 		explicit SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
 		virtual ~SPHBody(){};
 
-		std::string getBodyName();
+		std::string getBodyName() { return body_shape_->getName(); };
 		SPHSystem &getSPHSystem();
 		SPHBody &getSPHBody() { return *this; };
 		size_t &LoopRange() { return base_particles_->total_real_particles_; };
