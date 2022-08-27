@@ -21,11 +21,11 @@
  *                                                                              *
  * -----------------------------------------------------------------------------*/
 /**
-* @file 	thin_structure_dynamics.h
-* @brief 	Here, we define the algorithm classes for thin structure dynamics. 
-* @details 	We consider here a weakly compressible solids.   
-* @author	Dong Wu, Chi Zhang and Xiangyu Hu
-*/
+ * @file 	thin_structure_dynamics.h
+ * @brief 	Here, we define the algorithm classes for thin structure dynamics.
+ * @details 	We consider here a weakly compressible solids.
+ * @author	Dong Wu, Chi Zhang and Xiangyu Hu
+ */
 
 #ifndef THIN_STRUCTURE_DYNAMICS_H
 #define THIN_STRUCTURE_DYNAMICS_H
@@ -49,10 +49,10 @@ namespace SPH
 		 * @brief  set initial condition for shell particles
 		 * This is a abstract class to be override for case specific initial conditions.
 		 */
-		class ShellDynamicsInitialCondition : public ParticleDynamicsSimple, public ShellDataSimple
+		class ShellDynamicsInitialCondition : public LocalDynamics, public ShellDataSimple
 		{
 		public:
-			explicit ShellDynamicsInitialCondition(SolidBody &solid_body);
+			explicit ShellDynamicsInitialCondition(SPHBody &sph_body);
 			virtual ~ShellDynamicsInitialCondition(){};
 
 		protected:
@@ -61,9 +61,9 @@ namespace SPH
 		};
 
 		/**
-		* @class ShellAcousticTimeStepSize
-		* @brief Computing the acoustic time step size for shell
-		*/
+		 * @class ShellAcousticTimeStepSize
+		 * @brief Computing the acoustic time step size for shell
+		 */
 		class ShellAcousticTimeStepSize : public ParticleDynamicsReduce<Real, ReduceMin>,
 										  public ShellDataSimple
 		{
@@ -81,9 +81,9 @@ namespace SPH
 		};
 
 		/**
-		* @class ShellCorrectConfiguration
-		* @brief obtain the corrected initial configuration in strong form
-		*/
+		 * @class ShellCorrectConfiguration
+		 * @brief obtain the corrected initial configuration in strong form
+		 */
 		class ShellCorrectConfiguration : public InteractionDynamics, public ShellDataInner
 		{
 		public:
@@ -99,9 +99,9 @@ namespace SPH
 		};
 
 		/**
-		* @class ShellDeformationGradientTensor
-		* @brief computing deformation gradient tensor for shell
-		*/
+		 * @class ShellDeformationGradientTensor
+		 * @brief computing deformation gradient tensor for shell
+		 */
 		class ShellDeformationGradientTensor : public InteractionDynamics, public ShellDataInner
 		{
 		public:
@@ -119,7 +119,7 @@ namespace SPH
 		/**
 		 * @class BaseShellRelaxation
 		 * @brief abstract class for preparing shell relaxation
-		*/
+		 */
 		class BaseShellRelaxation : public ParticleDynamics1Level, public ShellDataInner
 		{
 		public:
@@ -136,16 +136,16 @@ namespace SPH
 		};
 
 		/**
-		* @class ShellStressRelaxationFirstHalf
-		* @brief computing stress relaxation process by verlet time stepping
-		* This is the first step
-		*/
+		 * @class ShellStressRelaxationFirstHalf
+		 * @brief computing stress relaxation process by verlet time stepping
+		 * This is the first step
+		 */
 		class ShellStressRelaxationFirstHalf : public BaseShellRelaxation
 		{
 		public:
 			explicit ShellStressRelaxationFirstHalf(BaseBodyRelationInner &inner_relation,
-				int number_of_gaussian_points = 3, bool hourglass_control = false);
-			virtual ~ShellStressRelaxationFirstHalf() {};
+													int number_of_gaussian_points = 3, bool hourglass_control = false);
+			virtual ~ShellStressRelaxationFirstHalf(){};
 
 		protected:
 			Real rho0_, inv_rho0_;
@@ -156,16 +156,13 @@ namespace SPH
 			const Real inv_W0_ = 1.0 / body_->sph_adaptation_->getKernel()->W0(Vecd(0));
 			const Real shear_correction_factor_ = 5.0 / 6.0;
 
-			const StdVec<Real> three_gaussian_points_ = { 0.0, 0.7745966692414834, -0.7745966692414834 };
-			const StdVec<Real> three_gaussian_weights_ = { 0.8888888888888889, 0.5555555555555556, 0.5555555555555556 };
-			const StdVec<Real> five_gaussian_points_
-				= { 0.0, 0.5384693101056831, -0.5384693101056831, 0.9061798459386640, -0.9061798459386640 };
-			const StdVec<Real> five_gaussian_weights_
-				= { 0.5688888888888889, 0.4786286704993665, 0.4786286704993665, 0.2369268850561891, 0.2369268850561891 };
+			const StdVec<Real> three_gaussian_points_ = {0.0, 0.7745966692414834, -0.7745966692414834};
+			const StdVec<Real> three_gaussian_weights_ = {0.8888888888888889, 0.5555555555555556, 0.5555555555555556};
+			const StdVec<Real> five_gaussian_points_ = {0.0, 0.5384693101056831, -0.5384693101056831, 0.9061798459386640, -0.9061798459386640};
+			const StdVec<Real> five_gaussian_weights_ = {0.5688888888888889, 0.4786286704993665, 0.4786286704993665, 0.2369268850561891, 0.2369268850561891};
 			int number_of_gaussian_points_;
 			StdVec<Real> gaussian_point_;
 			StdVec<Real> gaussian_weight_;
-
 
 			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -173,10 +170,10 @@ namespace SPH
 		};
 
 		/**
-		* @class ShellStressRelaxationSecondHalf
-		* @brief computing stress relaxation process by verlet time stepping
-		* This is the second step
-		*/
+		 * @class ShellStressRelaxationSecondHalf
+		 * @brief computing stress relaxation process by verlet time stepping
+		 * This is the second step
+		 */
 		class ShellStressRelaxationSecondHalf : public BaseShellRelaxation
 		{
 		public:
@@ -264,7 +261,7 @@ namespace SPH
 
 		/**@class ConstrainShellBodyRegionAlongAxis
 		 * @brief The boundary conditions are denoted by SS1 according to the references.
-	     * The axis must be 0 or 1.
+		 * The axis must be 0 or 1.
 		 * Note that the average values for FSI are prescribed also.
 		 */
 		class ConstrainShellBodyRegionAlongAxis : public PartSimpleDynamicsByParticle, public ShellDataSimple
@@ -285,7 +282,7 @@ namespace SPH
 		 * @class DistributingPointForcesToShell
 		 * @brief Distribute a series of point forces to its contact shell bodies.
 		 */
-		class DistributingPointForcesToShell : public ParticleDynamicsSimple, public ShellDataSimple
+		class DistributingPointForcesToShell : public LocalDynamics, public ShellDataSimple
 		{
 		protected:
 			std::vector<Vecd> point_forces_, reference_positions_, time_dependent_point_forces_;
@@ -293,19 +290,20 @@ namespace SPH
 			Real particle_spacing_ref_, h_spacing_ratio_;
 			StdLargeVec<Vecd> &pos0_, &acc_prior_;
 			StdLargeVec<Real> &Vol_, &mass_, &thickness_;
-			std::vector <StdLargeVec<Real>> weight_;
+			std::vector<StdLargeVec<Real>> weight_;
 			std::vector<Real> sum_of_weight_;
 
-		public:
-			DistributingPointForcesToShell(SolidBody &sph_body, std::vector<Vecd> point_forces,
-				std::vector<Vecd> reference_positions, Real time_to_full_external_force,
-				Real particle_spacing_ref, Real h_spacing_ratio = 1.6);
-			virtual ~DistributingPointForcesToShell() {};
-
 			void getWeight();
-			void getForce();
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+
+		public:
+			DistributingPointForcesToShell(SPHBody &sph_body, std::vector<Vecd> point_forces,
+										   std::vector<Vecd> reference_positions, Real time_to_full_external_force,
+										   Real particle_spacing_ref, Real h_spacing_ratio = 1.6);
+			virtual ~DistributingPointForcesToShell(){};
+
+			virtual void setupDynamics(Real dt = 0.0) override;
+			void update(size_t index_i, Real dt = 0.0);
 		};
 	}
 }
-#endif //THIN_STRUCTURE_DYNAMICS_H
+#endif // THIN_STRUCTURE_DYNAMICS_H

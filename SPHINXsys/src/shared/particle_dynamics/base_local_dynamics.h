@@ -43,6 +43,7 @@ namespace SPH
 	template <class ReturnType>
 	class BaseLocalDynamics
 	{
+	protected:
 		SPHBody &sph_body_;
 
 	public:

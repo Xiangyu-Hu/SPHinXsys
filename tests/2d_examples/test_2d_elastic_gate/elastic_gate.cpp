@@ -214,7 +214,7 @@ int main()
 	BodyRegionByParticle gate_constrain_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
 	solid_dynamics::ConstrainSolidBodyRegion gate_constrain(gate, gate_constrain_part);
 	/** Update the surface normal direction of elastic gate. */
-	solid_dynamics::UpdateElasticNormalDirection gate_update_normal(gate);
+	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> gate_update_normal(gate);
 	/** Compute the average velocity of gate. */
 	solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
 	//----------------------------------------------------------------------

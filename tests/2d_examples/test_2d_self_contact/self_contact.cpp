@@ -92,11 +92,10 @@ class BeamInitialCondition
 	: public solid_dynamics::ElasticDynamicsInitialCondition
 {
 public:
-	explicit BeamInitialCondition(SolidBody &beam)
-		: solid_dynamics::ElasticDynamicsInitialCondition(beam){};
+	explicit BeamInitialCondition(SPHBody &sph_body)
+		: solid_dynamics::ElasticDynamicsInitialCondition(sph_body){};
 
-protected:
-	void Update(size_t index_i, Real dt) override
+	void update(size_t index_i, Real dt)
 	{
 		/** initial velocity profile */
 		Real x = pos_[index_i][0] / PL;
@@ -141,7 +140,7 @@ int main(int ac, char *av[])
 	//this section define all numerical methods will be used in this case
 	//-----------------------------------------------------------------------------
 	// initial condition
-	BeamInitialCondition beam_initial_velocity(beam_body);
+	SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
 	SimpleDynamics<TimeStepInitialization> reset_prior_acceleration(beam_body);
 	//corrected strong configuration
 	solid_dynamics::CorrectConfiguration

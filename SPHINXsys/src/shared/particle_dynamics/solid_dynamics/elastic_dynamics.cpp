@@ -34,29 +34,23 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ElasticDynamicsInitialCondition::
-			ElasticDynamicsInitialCondition(SolidBody &solid_body)
-			: ParticleDynamicsSimple(solid_body),
-			  ElasticSolidDataSimple(solid_body),
-			  pos_(particles_->pos_), vel_(particles_->vel_)
-		{
-		}
+			ElasticDynamicsInitialCondition(SPHBody &sph_body)
+			: LocalDynamics(sph_body),
+			  ElasticSolidDataSimple(sph_body),
+			  pos_(particles_->pos_), vel_(particles_->vel_) {}
 		//=================================================================================================//
 		UpdateElasticNormalDirection::
-			UpdateElasticNormalDirection(SolidBody &solid_body)
-			: ParticleDynamicsSimple(solid_body),
-			  ElasticSolidDataSimple(solid_body),
-			  n_(particles_->n_), n0_(particles_->n0_), F_(particles_->F_)
-		{
-		}
+			UpdateElasticNormalDirection(SPHBody &sph_body)
+			: LocalDynamics(sph_body),
+			  ElasticSolidDataSimple(sph_body),
+			  n_(particles_->n_), n0_(particles_->n0_), F_(particles_->F_) {}
 		//=================================================================================================//
 		DeformationGradientTensorBySummation::
 			DeformationGradientTensorBySummation(BaseBodyRelationInner &inner_relation)
 			: InteractionDynamics(inner_relation.sph_body_),
 			  ElasticSolidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), pos_(particles_->pos_),
-			  B_(particles_->B_), F_(particles_->F_)
-		{
-		}
+			  B_(particles_->B_), F_(particles_->F_) {}
 		//=================================================================================================//
 		void DeformationGradientTensorBySummation::Interaction(size_t index_i, Real dt)
 		{

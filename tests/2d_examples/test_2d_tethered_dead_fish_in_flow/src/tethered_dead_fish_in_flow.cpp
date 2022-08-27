@@ -347,7 +347,7 @@ int main(int ac, char *av[])
 	solid_dynamics::StressRelaxationSecondHalf
 		fish_body_stress_relaxation_second_half(fish_body_inner);
 	/** Update normal direction on fish body.*/
-	solid_dynamics::UpdateElasticNormalDirection
+	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection>
 		fish_body_update_normal(fish_body);
 	/** Compute the average velocity on fish body. */
 	solid_dynamics::AverageVelocityAndAcceleration fish_body_average_velocity(fish_body);

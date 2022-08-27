@@ -310,7 +310,7 @@ namespace SPH
 		//=================================================================================================//
 		ConstrainSolidBodyMassCenter::
 			ConstrainSolidBodyMassCenter(SPHBody &sph_body, Vecd constrain_direction)
-			: ParticleDynamicsSimple(sph_body), SolidDataSimple(sph_body),
+			: LocalDynamics(sph_body), SolidDataSimple(sph_body),
 			  correction_matrix_(Matd(1.0)), vel_(particles_->vel_),
 			  compute_total_momentum_(sph_body, "Velocity")
 		{
@@ -326,7 +326,7 @@ namespace SPH
 				correction_matrix_ * compute_total_momentum_.parallel_exec(dt) / total_mass_;
 		}
 		//=================================================================================================//
-		void ConstrainSolidBodyMassCenter::Update(size_t index_i, Real dt)
+		void ConstrainSolidBodyMassCenter::update(size_t index_i, Real dt)
 		{
 			vel_[index_i] -= velocity_correction_;
 		}

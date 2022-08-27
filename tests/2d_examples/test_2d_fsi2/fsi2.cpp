@@ -156,7 +156,7 @@ int main(int ac, char *av[])
 	BodyRegionByParticle beam_base(insert_body, makeShared<MultiPolygonShape>(createBeamBaseShape()));
 	solid_dynamics::ConstrainSolidBodyRegion constrain_beam_base(insert_body, beam_base);
 	/** Update norm .*/
-	solid_dynamics::UpdateElasticNormalDirection insert_body_update_normal(insert_body);
+	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> insert_body_update_normal(insert_body);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

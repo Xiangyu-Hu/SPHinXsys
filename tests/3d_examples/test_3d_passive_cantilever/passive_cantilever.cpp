@@ -52,11 +52,10 @@ class CantileverInitialCondition
 	: public solid_dynamics::ElasticDynamicsInitialCondition
 {
 public:
-	explicit CantileverInitialCondition(SolidBody &cantilever)
-		: solid_dynamics::ElasticDynamicsInitialCondition(cantilever){};
+	explicit CantileverInitialCondition(SPHBody &sph_body)
+		: solid_dynamics::ElasticDynamicsInitialCondition(sph_body){};
 
-protected:
-	void Update(size_t index_i, Real dt) override
+	void update(size_t index_i, Real dt)
 	{
 		if (pos_[index_i][0] > 0.0)
 		{
@@ -88,8 +87,7 @@ int main()
 	/** 
 	 * This section define all numerical methods will be used in this case.
 	 */
-	/** Initialization. */
-	CantileverInitialCondition initialization(cantilever_body);
+	SimpleDynamics<CantileverInitialCondition> initialization(cantilever_body);
 	/** Corrected configuration. */
 	solid_dynamics::CorrectConfiguration
 		corrected_configuration(cantilever_body_inner);

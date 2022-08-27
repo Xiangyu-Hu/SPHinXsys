@@ -1,31 +1,31 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * --------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+ * and HU1527/12-1.															*
+ *                                                                           *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * --------------------------------------------------------------------------*/
 /**
-* @file 	elastic_dynamics.h
-* @brief 	Here, we define the algorithm classes for elastic solid dynamics. 
-* @details 	We consider here a weakly compressible solids.   
-* @author	Luhui Han, Chi ZHang and Xiangyu Hu
-*/
+ * @file 	elastic_dynamics.h
+ * @brief 	Here, we define the algorithm classes for elastic solid dynamics.
+ * @details 	We consider here a weakly compressible solids.
+ * @author	Luhui Han, Chi ZHang and Xiangyu Hu
+ */
 
 #ifndef ELASTIC_DYNAMICS_H
 #define ELASTIC_DYNAMICS_H
@@ -37,8 +37,6 @@
 #include "solid_body.h"
 #include "solid_particles.h"
 #include "elastic_solid.h"
-
-
 
 namespace SPH
 {
@@ -60,10 +58,10 @@ namespace SPH
 		 * @brief  set initial condition for a solid body with different material
 		 * This is a abstract class to be override for case specific initial conditions.
 		 */
-		class ElasticDynamicsInitialCondition : public ParticleDynamicsSimple, public ElasticSolidDataSimple
+		class ElasticDynamicsInitialCondition : public LocalDynamics, public ElasticSolidDataSimple
 		{
 		public:
-			explicit ElasticDynamicsInitialCondition(SolidBody &solid_body);
+			explicit ElasticDynamicsInitialCondition(SPHBody &sph_body);
 			virtual ~ElasticDynamicsInitialCondition(){};
 
 		protected:
@@ -71,26 +69,27 @@ namespace SPH
 		};
 
 		/**
-		* @class UpdateElasticNormalDirection
-		* @brief update particle normal directions for elastic solid
-		*/
-		class UpdateElasticNormalDirection : public ParticleDynamicsSimple, public ElasticSolidDataSimple
+		 * @class UpdateElasticNormalDirection
+		 * @brief update particle normal directions for elastic solid
+		 */
+		class UpdateElasticNormalDirection : public LocalDynamics, public ElasticSolidDataSimple
 		{
-		public:
-			explicit UpdateElasticNormalDirection(SolidBody &solid_body);
-			virtual ~UpdateElasticNormalDirection(){};
-
 		protected:
 			StdLargeVec<Vecd> &n_, &n0_;
 			StdLargeVec<Matd> &F_;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+
+		public:
+			explicit UpdateElasticNormalDirection(SPHBody &sph_body);
+			virtual ~UpdateElasticNormalDirection(){};
+
+			void update(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
-		* @class AcousticTimeStepSize
-		* @brief Computing the acoustic time step size
-		* computing time step size
-		*/
+		 * @class AcousticTimeStepSize
+		 * @brief Computing the acoustic time step size
+		 * computing time step size
+		 */
 		class AcousticTimeStepSize : public ParticleDynamicsReduce<Real, ReduceMin>,
 									 public ElasticSolidDataSimple
 		{
@@ -106,9 +105,9 @@ namespace SPH
 		};
 
 		/**
-		* @class DeformationGradientTensorBySummation
-		* @brief computing deformation gradient tensor by summation
-		*/
+		 * @class DeformationGradientTensorBySummation
+		 * @brief computing deformation gradient tensor by summation
+		 */
 		class DeformationGradientTensorBySummation : public InteractionDynamics, public ElasticSolidDataInner
 		{
 		public:
@@ -123,9 +122,9 @@ namespace SPH
 		};
 
 		/**
-		* @class BaseElasticRelaxation
-		* @brief base class for elastic relaxation
-		*/
+		 * @class BaseElasticRelaxation
+		 * @brief base class for elastic relaxation
+		 */
 		class BaseElasticRelaxation
 			: public ParticleDynamics1Level,
 			  public ElasticSolidDataInner
@@ -141,10 +140,10 @@ namespace SPH
 		};
 
 		/**
-		* @class BaseStressRelaxationFirstHalf
-		* @brief computing stress relaxation process by verlet time stepping
-		* This is the first step
-		*/
+		 * @class BaseStressRelaxationFirstHalf
+		 * @brief computing stress relaxation process by verlet time stepping
+		 * This is the first step
+		 */
 		class BaseStressRelaxationFirstHalf : public BaseElasticRelaxation
 		{
 		public:
@@ -160,10 +159,10 @@ namespace SPH
 		};
 
 		/**
-		* @class StressRelaxationFirstHalf
-		* @brief computing stress relaxation process by verlet time stepping
-		* This is the first step
-		*/
+		 * @class StressRelaxationFirstHalf
+		 * @brief computing stress relaxation process by verlet time stepping
+		 * This is the first step
+		 */
 		class StressRelaxationFirstHalf : public BaseStressRelaxationFirstHalf
 		{
 		public:
@@ -180,8 +179,8 @@ namespace SPH
 		};
 
 		/**
-		* @class KirchhoffParticleStressRelaxationFirstHalf
-		*/
+		 * @class KirchhoffParticleStressRelaxationFirstHalf
+		 */
 		class KirchhoffParticleStressRelaxationFirstHalf : public StressRelaxationFirstHalf
 		{
 		public:
@@ -195,20 +194,20 @@ namespace SPH
 		};
 
 		/**
-		* @class KirchhoffStressRelaxationFirstHalf
-		* @brief Decompose the stress into particle stress includes isotropic stress 
-		* and the stress due to non-homogeneous material properties.
-		* The preliminary shear stress is introduced by particle pair to avoid 
-		* spurious stress and deformation. 
-		* Note that, for the shear stress term, 
-		* due to the mismatch of the divergence contribution between 
-		* the pair-wise second-order derivative Laplacian formulation
-		* and particle-wise first-order gradient formulation, 
-		* a correction factor slight large than one is introduced.
-		* Note that, if you see time step size goes unusually small, 
-		* it may be due to the determinate of deformation matrix become negative.
-		* In this case, you may need decrease CFL number when computing time-step size.
-		*/
+		 * @class KirchhoffStressRelaxationFirstHalf
+		 * @brief Decompose the stress into particle stress includes isotropic stress
+		 * and the stress due to non-homogeneous material properties.
+		 * The preliminary shear stress is introduced by particle pair to avoid
+		 * spurious stress and deformation.
+		 * Note that, for the shear stress term,
+		 * due to the mismatch of the divergence contribution between
+		 * the pair-wise second-order derivative Laplacian formulation
+		 * and particle-wise first-order gradient formulation,
+		 * a correction factor slight large than one is introduced.
+		 * Note that, if you see time step size goes unusually small,
+		 * it may be due to the determinate of deformation matrix become negative.
+		 * In this case, you may need decrease CFL number when computing time-step size.
+		 */
 		class KirchhoffStressRelaxationFirstHalf : public BaseStressRelaxationFirstHalf
 		{
 		public:
@@ -226,10 +225,10 @@ namespace SPH
 		};
 
 		/**
-		* @class StressRelaxationSecondHalf
-		* @brief computing stress relaxation process by verlet time stepping
-		* This is the second step
-		*/
+		 * @class StressRelaxationSecondHalf
+		 * @brief computing stress relaxation process by verlet time stepping
+		 * This is the second step
+		 */
 		class StressRelaxationSecondHalf : public BaseElasticRelaxation
 		{
 		public:
@@ -242,6 +241,6 @@ namespace SPH
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
-    }
+	}
 }
-#endif //ELASTIC_DYNAMICS_H
+#endif // ELASTIC_DYNAMICS_H

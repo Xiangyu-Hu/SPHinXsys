@@ -79,13 +79,8 @@ namespace SPH
          * The damping force is calculated based on the particle's current velocity.
          * Only for 3D applications
          */
-        class SpringDamperConstraintParticleWise
-            : public ParticleDynamicsSimple,
-              public SolidDataSimple
+        class SpringDamperConstraintParticleWise : public LocalDynamics, public SolidDataSimple
         {
-        public:
-            SpringDamperConstraintParticleWise(SolidBody &solid_body, Vecd stiffness, Real damping_ratio = 0.05);
-
         protected:
             StdLargeVec<Vecd> &pos_, &pos0_, &vel_, &acc_prior_;
             Vecd stiffness_;
@@ -93,7 +88,11 @@ namespace SPH
 
             virtual Vecd getSpringForce(size_t index_i, Vecd &disp);
             virtual Vecd getDampingForce(size_t index_i);
-            virtual void Update(size_t index_i, Real dt = 0.0) override;
+
+        public:
+            SpringDamperConstraintParticleWise(SPHBody &sph_body, Vecd stiffness, Real damping_ratio = 0.05);
+
+            void update(size_t index_i, Real dt = 0.0);
         };
         /**
          * @class SpringNormalOnSurfaceParticles
@@ -137,41 +136,37 @@ namespace SPH
          * BodyPartByParticle define the ody part that the spring is applied to.
          * Only for uniform surface particle size.
          */
-        class SpringOnSurfaceParticles
-            : public ParticleDynamicsSimple,
-              public SolidDataSimple
+        class SpringOnSurfaceParticles : public LocalDynamics, public SolidDataSimple
         {
-        public:
-            SpringOnSurfaceParticles(SolidBody &body, Real stiffness, Real damping_ratio = 0.05);
-
-            StdLargeVec<bool> &GetApplySpringForceToParticle() { return apply_spring_force_to_particle_; }
-
         protected:
             StdLargeVec<Vecd> &pos_, &pos0_, &vel_, &acc_prior_;
             StdLargeVec<Real> &mass_;
             Real stiffness_;
             Real damping_coeff_; // damping component parallel to the spring force component
             StdLargeVec<bool> apply_spring_force_to_particle_;
+            StdLargeVec<bool> &GetApplySpringForceToParticle() { return apply_spring_force_to_particle_; }
 
-            virtual void Update(size_t index_i, Real dt = 0.0) override;
+        public:
+            SpringOnSurfaceParticles(SPHBody &sph_body, Real stiffness, Real damping_ratio = 0.05);
+
+            void update(size_t index_i, Real dt = 0.0);
         };
         /**
          * @class AccelerationForBodyPartInBoundingBox
          * @brief Adds acceleration to the part of the body that's inside a bounding box
          */
-        class AccelerationForBodyPartInBoundingBox
-            : public ParticleDynamicsSimple,
-              public SolidDataSimple
+        class AccelerationForBodyPartInBoundingBox : public LocalDynamics, public SolidDataSimple
         {
-        public:
-            AccelerationForBodyPartInBoundingBox(SolidBody &solid_body, BoundingBox &bounding_box, Vecd acceleration);
-            virtual ~AccelerationForBodyPartInBoundingBox(){};
-
         protected:
             StdLargeVec<Vecd> &pos_, &acc_prior_;
             BoundingBox bounding_box_;
             Vecd acceleration_;
-            virtual void Update(size_t index_i, Real dt = 0.0) override;
+
+        public:
+            AccelerationForBodyPartInBoundingBox(SPHBody &sph_body, BoundingBox &bounding_box, Vecd acceleration);
+            virtual ~AccelerationForBodyPartInBoundingBox(){};
+
+            void update(size_t index_i, Real dt = 0.0);
         };
 
         /**

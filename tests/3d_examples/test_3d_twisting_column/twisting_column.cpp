@@ -28,7 +28,7 @@ int main()
 	//----------------------------------------------------------------------
 	//	All numerical methods will be used in this case.
 	//----------------------------------------------------------------------
-	InitialCondition initial_condition(column);
+	SimpleDynamics<InitialCondition> initial_condition(column);
 	/** Corrected configuration. */
 	solid_dynamics::CorrectConfiguration corrected_configuration(column_inner);
 	/** Time step size calculation. We use CFL = 0.5 due to the very large twisting speed. */

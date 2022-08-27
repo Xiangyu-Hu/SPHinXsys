@@ -343,7 +343,7 @@ void StructuralSimulation::initializeElasticSolidBodies()
 			system_, body_mesh_list_[i], resolution_list_[i], physical_viscosity_[i], material_model_list_[i], pos_0, volume));
 
 		// update normal direction of particles
-		particle_normal_update_.emplace_back(make_shared<solid_dynamics::UpdateElasticNormalDirection>(*solid_body_list_[i]->getSolidBodyFromMesh()));
+		particle_normal_update_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection>>(*solid_body_list_[i]->getSolidBodyFromMesh()));
 	}
 }
 
@@ -426,7 +426,7 @@ void StructuralSimulation::initializeAccelerationForBodyPartInBoundingBox()
 	for (size_t i = 0; i < acceleration_bounding_box_tuple_.size(); i++)
 	{
 		SolidBody *solid_body = solid_body_list_[get<0>(acceleration_bounding_box_tuple_[i])]->getSolidBodyFromMesh();
-		acceleration_bounding_box_.emplace_back(make_shared<solid_dynamics::AccelerationForBodyPartInBoundingBox>(
+		acceleration_bounding_box_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::AccelerationForBodyPartInBoundingBox>>(
 			*solid_body, get<1>(acceleration_bounding_box_tuple_[i]), get<2>(acceleration_bounding_box_tuple_[i])));
 	}
 }
@@ -478,7 +478,7 @@ void StructuralSimulation::initializeSpringDamperConstraintParticleWise()
 	for (size_t i = 0; i < spring_damper_tuple_.size(); i++)
 	{
 		SolidBody *solid_body = solid_body_list_[get<0>(spring_damper_tuple_[i])]->getSolidBodyFromMesh();
-		spring_damper_constraint_.emplace_back(make_shared<solid_dynamics::SpringDamperConstraintParticleWise>(*solid_body, get<1>(spring_damper_tuple_[i]), get<2>(spring_damper_tuple_[i])));
+		spring_damper_constraint_.emplace_back(make_shared<SimpleDynamics<solid_dynamics::SpringDamperConstraintParticleWise>>(*solid_body, get<1>(spring_damper_tuple_[i]), get<2>(spring_damper_tuple_[i])));
 	}
 }
 

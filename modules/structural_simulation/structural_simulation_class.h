@@ -184,7 +184,7 @@ protected:
 	IOEnvironment io_environment_;
 
 	vector<shared_ptr<SolidBodyForSimulation>> solid_body_list_;
-	vector<shared_ptr<solid_dynamics::UpdateElasticNormalDirection>> particle_normal_update_;
+	vector<shared_ptr<SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection>>> particle_normal_update_;
 
 	vector<shared_ptr<SolidBodyRelationContact>> contact_list_;
 	vector<shared_ptr<solid_dynamics::ContactDensitySummation>> contact_density_list_;
@@ -194,7 +194,7 @@ protected:
 	vector<shared_ptr<SimpleDynamics<TimeStepInitialization>>> initialize_time_step_;
 	vector<GravityPair> non_zero_gravity_;
 	// for AccelerationForBodyPartInBoundingBox
-	vector<shared_ptr<solid_dynamics::AccelerationForBodyPartInBoundingBox>> acceleration_bounding_box_;
+	vector<shared_ptr<SimpleDynamics<solid_dynamics::AccelerationForBodyPartInBoundingBox>>> acceleration_bounding_box_;
 	vector<AccelTuple> acceleration_bounding_box_tuple_;
 	// for ForceInBodyRegion
 	vector<shared_ptr<solid_dynamics::ForceInBodyRegion>> force_in_body_region_;
@@ -203,7 +203,7 @@ protected:
 	vector<shared_ptr<solid_dynamics::SurfacePressureFromSource>> surface_pressure_;
 	vector<PressureTuple> surface_pressure_tuple_;
 	// for SpringDamperConstraintParticleWise
-	vector<shared_ptr<solid_dynamics::SpringDamperConstraintParticleWise>> spring_damper_constraint_;
+	vector<shared_ptr<SimpleDynamics<solid_dynamics::SpringDamperConstraintParticleWise>>> spring_damper_constraint_;
 	vector<SpringDamperTuple> spring_damper_tuple_;
 	// for SpringNormalOnSurfaceParticles
 	vector<shared_ptr<solid_dynamics::SpringNormalOnSurfaceParticles>> surface_spring_;

@@ -51,19 +51,6 @@ namespace SPH
 		typedef DataDelegateInner<SolidBody, SolidParticles, Solid> SolidDataInner;
 
 		/**
-		 * @class SolidDynamicsInitialCondition
-		 * @brief  set initial condition for solid fluid body
-		 * This is a abstract class to be override for case specific initial conditions.
-		 */
-		class SolidDynamicsInitialCondition : public ParticleDynamicsSimple, public SolidDataSimple
-		{
-		public:
-			explicit SolidDynamicsInitialCondition(SolidBody &solid_body)
-				: ParticleDynamicsSimple(solid_body), SolidDataSimple(solid_body){};
-			virtual ~SolidDynamicsInitialCondition(){};
-		};
-
-		/**
 		* @class CorrectConfiguration
 		* @brief obtain the corrected initial configuration in strong form
 		*/

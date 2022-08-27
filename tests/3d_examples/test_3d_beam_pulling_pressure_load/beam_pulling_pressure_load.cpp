@@ -137,7 +137,7 @@ int main(int ac, char *av[])
 
 	/** Time step size calculation. */
 	solid_dynamics::AcousticTimeStepSize computing_time_step_size(beam_body);
-	solid_dynamics::UpdateElasticNormalDirection update_beam_normal(beam_body);
+	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> update_beam_normal(beam_body);
 
 	/** active and passive stress relaxation. */
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(beam_body_inner);

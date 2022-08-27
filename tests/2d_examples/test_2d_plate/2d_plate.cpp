@@ -110,7 +110,7 @@ int main()
 	/** stress relaxation. */
 	thin_structure_dynamics::ShellStressRelaxationFirstHalf stress_relaxation_first_half(plate_body_inner, 3, true);
 	thin_structure_dynamics::ShellStressRelaxationSecondHalf stress_relaxation_second_half(plate_body_inner);
-	thin_structure_dynamics::DistributingPointForcesToShell
+	SimpleDynamics<thin_structure_dynamics::DistributingPointForcesToShell>
 		apply_point_force(plate_body, point_force, reference_position, time_to_full_external_force, resolution_ref);
 	/** Constrain the Boundary. */
 	BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
@@ -125,7 +125,7 @@ int main()
 	IOEnvironment io_environment(system);
 	BodyStatesRecordingToVtp write_states(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-		write_plate_max_displacement("Position", io_environment, plate_observer_contact);
+		write_plate_max_displacement("Position", io_environment, plate_observer_contact); //TODO: using ensemble better
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -133,7 +133,6 @@ int main()
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
 	corrected_configuration.parallel_exec();
-	apply_point_force.getWeight();
 	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
@@ -163,7 +162,6 @@ int main()
 						  << GlobalStaticVariables::physical_time_ << "	dt: "
 						  << dt << "\n";
 			}
-			apply_point_force.getForce();
 			apply_point_force.parallel_exec(dt);
 			stress_relaxation_first_half.parallel_exec(dt);
 			constrain_holder.parallel_exec(dt);

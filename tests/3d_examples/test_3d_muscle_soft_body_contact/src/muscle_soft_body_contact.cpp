@@ -95,7 +95,7 @@ int main()
 		makeShared<TransformShape<GeometricShapeBox>>(translation_stationary_plate, halfsize_stationary_plate, "Holder"));
 	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(myocardium_body, holder);
 	/** Add spring constraint on the plate. */
-	solid_dynamics::SpringDamperConstraintParticleWise spring_constraint(moving_plate, Vecd(0.2, 0, 0), 0.01);
+	SimpleDynamics<solid_dynamics::SpringDamperConstraintParticleWise> spring_constraint(moving_plate, Vecd(0.2, 0, 0), 0.01);
 
 	/** Damping with the solid body*/
 	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>

@@ -248,22 +248,23 @@ namespace SPH
 		 * @class ConstrainSolidBodyMassCenter
 		 * @brief Constrain the mass center of a solid body.
 		 */
-		class ConstrainSolidBodyMassCenter : public ParticleDynamicsSimple, public SolidDataSimple
+		class ConstrainSolidBodyMassCenter : public LocalDynamics, public SolidDataSimple
 		{
-		public:
-			explicit ConstrainSolidBodyMassCenter(SPHBody &sph_body, Vecd constrain_direction = Vecd(1.0));
-			virtual ~ConstrainSolidBodyMassCenter(){};
-
-		protected:
-			virtual void setupDynamics(Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
-
 		private:
 			Real total_mass_;
 			Matd correction_matrix_;
 			Vecd velocity_correction_;
 			StdLargeVec<Vecd> &vel_;
 			BodyMoment<Vecd> compute_total_momentum_;
+
+		protected:
+			virtual void setupDynamics(Real dt = 0.0) override;
+
+		public:
+			explicit ConstrainSolidBodyMassCenter(SPHBody &sph_body, Vecd constrain_direction = Vecd(1.0));
+			virtual ~ConstrainSolidBodyMassCenter(){};
+
+			void update(size_t index_i, Real dt = 0.0);
 		};
 
 		/**

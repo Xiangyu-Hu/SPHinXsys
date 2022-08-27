@@ -332,15 +332,16 @@ namespace SPH
 		* This class is for FSI applications to achieve smaller solid dynamics
 		* time step size compared to the fluid dynamics
 		*/
-		class InitializeDisplacement : public ParticleDynamicsSimple, public ElasticSolidDataSimple
+		class InitializeDisplacement : public LocalDynamics, public ElasticSolidDataSimple
 		{
+		protected:
+			StdLargeVec<Vecd> &pos_temp_, &pos_;
+
 		public:
-			explicit InitializeDisplacement(SolidBody &solid_body, StdLargeVec<Vecd> &pos_temp);
+			explicit InitializeDisplacement(SPHBody &sph_body, StdLargeVec<Vecd> &pos_temp);
 			virtual ~InitializeDisplacement(){};
 
-		protected:
-			StdLargeVec<Vecd> &pos_temp_, &pos_, &vel_ave_, &acc_ave_;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+			void update(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -349,15 +350,16 @@ namespace SPH
 		* This class is for FSI applications to achieve smaller solid dynamics
 		* time step size compared to the fluid dynamics
 		*/
-		class UpdateAverageVelocityAndAcceleration : public InitializeDisplacement
+		class UpdateAverageVelocityAndAcceleration : public LocalDynamics, public ElasticSolidDataSimple
 		{
+		protected:
+			StdLargeVec<Vecd> &pos_temp_, &pos_, &vel_ave_, &acc_ave_;
+
 		public:
-			explicit UpdateAverageVelocityAndAcceleration(SolidBody &solid_body, StdLargeVec<Vecd> &pos_temp)
-				: InitializeDisplacement(solid_body, pos_temp){};
+			explicit UpdateAverageVelocityAndAcceleration(SPHBody &sph_body, StdLargeVec<Vecd> &pos_temp);
 			virtual ~UpdateAverageVelocityAndAcceleration(){};
 
-		protected:
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+			void update(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -372,8 +374,8 @@ namespace SPH
 			StdLargeVec<Vecd> pos_temp_;
 
 		public:
-			InitializeDisplacement initialize_displacement_;
-			UpdateAverageVelocityAndAcceleration update_averages_;
+			SimpleDynamics<InitializeDisplacement> initialize_displacement_;
+			SimpleDynamics<UpdateAverageVelocityAndAcceleration> update_averages_;
 
 			explicit AverageVelocityAndAcceleration(SolidBody &solid_body);
 			~AverageVelocityAndAcceleration(){};

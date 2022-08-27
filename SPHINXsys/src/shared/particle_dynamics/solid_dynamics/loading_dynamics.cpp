@@ -27,8 +27,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		SpringDamperConstraintParticleWise::
-			SpringDamperConstraintParticleWise(SolidBody &solid_body, Vecd stiffness, Real damping_ratio)
-			: ParticleDynamicsSimple(solid_body), SolidDataSimple(solid_body),
+			SpringDamperConstraintParticleWise(SPHBody &sph_body, Vecd stiffness, Real damping_ratio)
+			: LocalDynamics(sph_body), SolidDataSimple(sph_body),
 			  pos_(particles_->pos_),
 			  pos0_(particles_->pos0_),
 			  vel_(particles_->vel_),
@@ -59,7 +59,7 @@ namespace SPH
 			return damping_force;
 		}
 		//=================================================================================================//
-		void SpringDamperConstraintParticleWise::Update(size_t index_i, Real dt)
+		void SpringDamperConstraintParticleWise::update(size_t index_i, Real dt)
 		{
 			Vecd delta_x = pos_[index_i] - pos0_[index_i];
 			acc_prior_[index_i] += getSpringForce(index_i, delta_x);
@@ -154,8 +154,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		SpringOnSurfaceParticles::
-			SpringOnSurfaceParticles(SolidBody &body, Real stiffness, Real damping_ratio)
-			: ParticleDynamicsSimple(body), SolidDataSimple(body),
+			SpringOnSurfaceParticles(SPHBody &sph_body, Real stiffness, Real damping_ratio)
+			: LocalDynamics(sph_body), SolidDataSimple(sph_body),
 			  pos_(particles_->pos_),
 			  pos0_(particles_->pos0_),
 			  vel_(particles_->vel_),
@@ -164,7 +164,7 @@ namespace SPH
 			  apply_spring_force_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
 		{
 			// get the surface layer of particles
-			BodySurface surface_layer(body);
+			BodySurface surface_layer(sph_body);
 			// select which particles the spring is applied to
 			// if the particle is in the surface layer, the force is applied
 			for (size_t particle_i : surface_layer.body_part_particles_)
@@ -177,7 +177,7 @@ namespace SPH
 			damping_coeff_ = stiffness_ * damping_ratio;
 		}
 		//=================================================================================================//
-		void SpringOnSurfaceParticles::Update(size_t index_i, Real dt)
+		void SpringOnSurfaceParticles::update(size_t index_i, Real dt)
 		{
 			try
 			{
@@ -194,14 +194,14 @@ namespace SPH
 		}
 		//=================================================================================================//
 		AccelerationForBodyPartInBoundingBox::
-			AccelerationForBodyPartInBoundingBox(SolidBody &solid_body, BoundingBox &bounding_box, Vecd acceleration)
-			: ParticleDynamicsSimple(solid_body), SolidDataSimple(solid_body),
+			AccelerationForBodyPartInBoundingBox(SPHBody &sph_body, BoundingBox &bounding_box, Vecd acceleration)
+			: LocalDynamics(sph_body), SolidDataSimple(sph_body),
 			  pos_(particles_->pos_),
 			  acc_prior_(particles_->acc_prior_),
 			  bounding_box_(bounding_box),
 			  acceleration_(acceleration) {}
 		//=================================================================================================//
-		void AccelerationForBodyPartInBoundingBox::Update(size_t index_i, Real dt)
+		void AccelerationForBodyPartInBoundingBox::update(size_t index_i, Real dt)
 		{
 			try
 			{

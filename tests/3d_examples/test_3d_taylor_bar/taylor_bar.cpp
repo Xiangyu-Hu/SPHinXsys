@@ -88,18 +88,13 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	All numerical methods will be used in this case.
 	//----------------------------------------------------------------------
-	SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
-	InitialCondition initial_condition(column);
-	/** Corrected configuration. */
-	solid_dynamics::CorrectConfiguration corrected_configuration(column_inner);
-	/** Time step size calculation with given CFL number. */
-	solid_dynamics::AcousticTimeStepSize computing_time_step_size(column, 0.3);
-
-	/** stress and deformation relaxation. */
 	solid_dynamics::PlasticStressRelaxationFirstHalf stress_relaxation_first_half(column_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(column_inner);
 	solid_dynamics::DynamicContactForceWithWall column_wall_contact_force(column_wall_contact);
-
+	SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
+	SimpleDynamics<InitialCondition> initial_condition(column);
+	solid_dynamics::CorrectConfiguration corrected_configuration(column_inner);
+	solid_dynamics::AcousticTimeStepSize computing_time_step_size(column, 0.3);
 	//----------------------------------------------------------------------
 	//	Output
 	//----------------------------------------------------------------------

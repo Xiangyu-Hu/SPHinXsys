@@ -22,7 +22,7 @@ namespace SPH
 	namespace solid_dynamics
 	{
 		//=========================================================================================//
-		void UpdateElasticNormalDirection::Update(size_t index_i, Real dt)
+		void UpdateElasticNormalDirection::update(size_t index_i, Real dt)
 		{
 			Matd& F = F_[index_i];
 			//deformation tensor in 2D
