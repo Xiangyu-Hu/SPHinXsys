@@ -48,19 +48,18 @@ class TaylorGreenInitialCondition
 	: public eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition
 {
 public:
-	explicit TaylorGreenInitialCondition(EulerianFluidBody &water)
-		: eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition(water){};
+	explicit TaylorGreenInitialCondition(SPHBody &sph_body)
+		: eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition(sph_body){};
 
-protected:
-	void Update(size_t index_i, Real dt) override
+	void update(size_t index_i, Real dt)
 	{
 		/** initial momentum and energy profile */
 		rho_[index_i] = rho0_f;
 		p_[index_i] = pow(c_f, 2) * rho_[index_i] / gamma_;
 		vel_[index_i][0] = -cos(2.0 * Pi * pos_[index_i][0]) *
-							 sin(2.0 * Pi * pos_[index_i][1]);
+						   sin(2.0 * Pi * pos_[index_i][1]);
 		vel_[index_i][1] = sin(2.0 * Pi * pos_[index_i][0]) *
-							 cos(2.0 * Pi * pos_[index_i][1]);
+						   cos(2.0 * Pi * pos_[index_i][1]);
 		mom_[index_i] = rho_[index_i] * vel_[index_i];
 		Real rho_e = p_[index_i] / (gamma_ - 1.0);
 		E_[index_i] = rho_e + 0.5 * rho_[index_i] * vel_[index_i].normSqr();
@@ -98,9 +97,9 @@ int main(int ac, char *av[])
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	/** Initial condition with momentum and energy field */
-	TaylorGreenInitialCondition initial_condition(water_body);
+	SimpleDynamics<TaylorGreenInitialCondition> initial_condition(water_body);
 	/** Initialize a time step. */
-	eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization time_step_initialization(water_body);
+	SimpleDynamics<eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization> time_step_initialization(water_body);
 	/** Periodic BCs in x direction. */
 	PeriodicConditionUsingCellLinkedList periodic_condition_x(water_body, water_body.getBodyShapeBounds(), xAxis);
 	/** Periodic BCs in y direction. */
@@ -153,7 +152,7 @@ int main(int ac, char *av[])
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 5.0;
-	Real output_interval = 0.1;	 /**< Time stamps for output of body states. */
+	Real output_interval = 0.1; /**< Time stamps for output of body states. */
 	/** statistics for computing CPU time. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;

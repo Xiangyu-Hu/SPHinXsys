@@ -115,7 +115,7 @@ int main(int ac, char *av[])
 	 */
 	SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
 	/** Initialize particle acceleration. */
-	eulerian_weakly_compressible_fluid_dynamics::EulerianFlowTimeStepInitialization initialize_a_fluid_step(water_block);
+	SimpleDynamics<eulerian_weakly_compressible_fluid_dynamics::EulerianFlowTimeStepInitialization> initialize_a_fluid_step(water_block);
 	/** Time step size with considering sound wave speed. */
 	eulerian_weakly_compressible_fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */

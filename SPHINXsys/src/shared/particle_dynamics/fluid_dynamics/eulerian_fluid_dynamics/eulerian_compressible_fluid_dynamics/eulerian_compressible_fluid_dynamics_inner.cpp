@@ -14,28 +14,21 @@ namespace SPH
 	namespace eulerian_compressible_fluid_dynamics
 	{
 		//=================================================================================================//
-		CompressibleFlowTimeStepInitialization::CompressibleFlowTimeStepInitialization(SPHBody &sph_body)
-			: ParticleDynamicsSimple(sph_body), CompressibleFluidDataSimple(sph_body),
-			  rho_(particles_->rho_), dE_dt_prior_(particles_->dE_dt_prior_), pos_(particles_->pos_),
-			  vel_(particles_->vel_), dmom_dt_prior_(particles_->dmom_dt_prior_),
-			  gravity_(gravity_ptr_keeper_.createPtr<Gravity>(Vecd(0))) {}
-		//=================================================================================================//
 		CompressibleFlowTimeStepInitialization::
-			CompressibleFlowTimeStepInitialization(SPHBody &sph_body, Gravity &gravity)
-			: ParticleDynamicsSimple(sph_body), CompressibleFluidDataSimple(sph_body),
+			CompressibleFlowTimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr)
+			: BaseTimeStepInitialization(sph_body, gravity_ptr), CompressibleFluidDataSimple(sph_body),
 			  rho_(particles_->rho_), dE_dt_prior_(particles_->dE_dt_prior_), pos_(particles_->pos_),
-			  vel_(particles_->vel_), dmom_dt_prior_(particles_->dmom_dt_prior_),
-			  gravity_(&gravity) {}
+			  vel_(particles_->vel_), dmom_dt_prior_(particles_->dmom_dt_prior_) {}
 		//=================================================================================================//
-		void CompressibleFlowTimeStepInitialization::Update(size_t index_i, Real dt)
+		void CompressibleFlowTimeStepInitialization::update(size_t index_i, Real dt)
 		{
 			dmom_dt_prior_[index_i] = rho_[index_i] * gravity_->InducedAcceleration(pos_[index_i]);
 			dE_dt_prior_[index_i] = rho_[index_i] * SimTK::dot(gravity_->InducedAcceleration(pos_[index_i]), vel_[index_i]);
 		}
 		//=================================================================================================//
 		CompressibleFluidInitialCondition::
-			CompressibleFluidInitialCondition(EulerianFluidBody &body)
-			: ParticleDynamicsSimple(body), CompressibleFluidDataSimple(body),
+			CompressibleFluidInitialCondition(SPHBody &sph_body)
+			: LocalDynamics(sph_body), CompressibleFluidDataSimple(sph_body),
 			  pos_(particles_->pos_), vel_(particles_->vel_), mom_(particles_->mom_),
 			  rho_(particles_->rho_), E_(particles_->E_), p_(particles_->p_),
 			  gamma_(material_->HeatCapacityRatio()) {}
@@ -60,7 +53,7 @@ namespace SPH
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 
-				//viscous force
+				// viscous force
 				vel_derivative = (vel_i - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
 				acceleration += 2.0 * mu_ * vel_derivative * Vol_[index_j] * inner_neighborhood.dW_ij_[n] / rho_i;
 			}
@@ -84,8 +77,8 @@ namespace SPH
 		//=================================================================================================//
 		Real AcousticTimeStepSize::OutputResult(Real reduced_value)
 		{
-			//since the particle does not change its configuration in pressure relaxation step
-			//I chose a time-step size according to Eulerian method
+			// since the particle does not change its configuration in pressure relaxation step
+			// I chose a time-step size according to Eulerian method
 			return 0.6 * smoothing_length_ / (reduced_value + TinyReal);
 		}
 		//=================================================================================================//

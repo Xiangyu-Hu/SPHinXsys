@@ -43,26 +43,6 @@
 namespace SPH
 {
 	/**
-	 * @class ParticleDynamicsSimple
-	 * @brief Simple particle dynamics without considering particle interaction
-	 */
-	class ParticleDynamicsSimple : public ParticleDynamics<void>
-	{
-	public:
-		explicit ParticleDynamicsSimple(SPHBody &sph_body)
-			: ParticleDynamics<void>(sph_body),
-			  functor_update_(std::bind(&ParticleDynamicsSimple::Update, this, _1, _2)){};
-		virtual ~ParticleDynamicsSimple(){};
-
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
-
-	protected:
-		virtual void Update(size_t index_i, Real dt = 0.0) = 0;
-		ParticleFunctor functor_update_;
-	};
-
-	/**
 	 * @class ParticleDynamicsReduce
 	 * @brief Base abstract class for reduce
 	 */
@@ -220,6 +200,10 @@ namespace SPH
 	//		it can be used in different dynamics.
 	//----------------------------------------------------------------------
 
+	/**
+	 * @class SimpleDynamics
+	 * @brief Simple particle dynamics without considering particle interaction
+	 */
 	template <class LocalDynamics, class DynamicsRange = SPHBody>
 	class SimpleDynamics : public ParticleDynamics<void>
 	{

@@ -12,22 +12,6 @@
 namespace SPH
 {
 	//=================================================================================================//
-	void ParticleDynamicsSimple::exec(Real dt)
-	{
-		setBodyUpdated();
-		setupDynamics(dt);
-		size_t total_real_particles = base_particles_->total_real_particles_;
-		ParticleIterator(total_real_particles, functor_update_, dt);
-	}
-	//=================================================================================================//
-	void ParticleDynamicsSimple::parallel_exec(Real dt)
-	{
-		setBodyUpdated();
-		setupDynamics(dt);
-		size_t total_real_particles = base_particles_->total_real_particles_;
-		ParticleIterator_parallel(total_real_particles, functor_update_, dt);
-	}
-	//=================================================================================================//
 	void InteractionDynamics::exec(Real dt)
 	{
 		setBodyUpdated();

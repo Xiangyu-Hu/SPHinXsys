@@ -24,6 +24,7 @@
 * @file 	eulerian_weakly_compressible_fluid_dynamics_inner.h
 * @brief 	Here, we define the algorithm classes for weakly compressible fluid dynamics within the body. 
 * @details 	We consider here weakly compressible fluids. 
+*			TODO: It seems that the eulerian and Lagrangian formulation can be merged together
 * @author	Zhentong Wang,Chi Zhang and Xiangyu Hu
 */
 
@@ -32,6 +33,7 @@
 #include "fluid_dynamics_inner.h"
 
 #include "all_particle_dynamics.h"
+#include "all_general_dynamics.h"
 #include "base_kernel.h"
 #include "external_force.h"
 #include "riemann_solver.h"
@@ -44,22 +46,18 @@ namespace SPH
 		typedef DataDelegateInner<EulerianFluidBody, WeaklyCompressibleFluidParticles, Fluid> EulerianWeaklyCompressibleFluidDataInner;
 
 		class EulerianFlowTimeStepInitialization
-			: public ParticleDynamicsSimple,
+			: public BaseTimeStepInitialization,
 			public EulerianWeaklyCompressibleFluidDataSimple
 		{
-		private:
-			UniquePtrKeeper<Gravity> gravity_ptr_keeper_;
-
-		public:
-			explicit EulerianFlowTimeStepInitialization(SPHBody &sph_body);
-			EulerianFlowTimeStepInitialization(SPHBody &sph_body, Gravity &gravity);
-			virtual ~EulerianFlowTimeStepInitialization() {};
-
 		protected:
 			StdLargeVec<Real> &rho_;
 			StdLargeVec<Vecd> &pos_, &dmom_dt_prior_;
-			Gravity *gravity_;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+
+		public:
+			EulerianFlowTimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0)));
+			virtual ~EulerianFlowTimeStepInitialization() {};
+
+			void update(size_t index_i, Real dt = 0.0);
 		};
 
 		/**

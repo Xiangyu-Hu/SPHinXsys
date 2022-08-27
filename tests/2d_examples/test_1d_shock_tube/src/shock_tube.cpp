@@ -46,11 +46,10 @@ class WavesInitialCondition
 	: public eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition
 {
 public:
-	explicit WavesInitialCondition(EulerianFluidBody &water)
-		: eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition(water){};
+	explicit WavesInitialCondition(SPHBody &sph_body)
+		: eulerian_compressible_fluid_dynamics::CompressibleFluidInitialCondition(sph_body){};
 
-protected:
-	void Update(size_t index_i, Real dt) override
+	void update(size_t index_i, Real dt)
 	{
 		if (pos_[index_i][0] < DL / 10.0)
 		{
@@ -102,9 +101,9 @@ int main(int ac, char *av[])
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	WavesInitialCondition waves_initial_condition(wave_body);
+	SimpleDynamics<WavesInitialCondition> waves_initial_condition(wave_body);
 	// Initialize particle acceleration.
-	eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization initialize_wave_step(wave_body);
+	SimpleDynamics<eulerian_compressible_fluid_dynamics::CompressibleFlowTimeStepInitialization> initialize_wave_step(wave_body);
 	// Periodic BCs in y direction.
 	PeriodicConditionUsingCellLinkedList periodic_condition_y(wave_body, wave_body.getBodyShapeBounds(), yAxis);
 	// Time step size with considering sound wave speed.
