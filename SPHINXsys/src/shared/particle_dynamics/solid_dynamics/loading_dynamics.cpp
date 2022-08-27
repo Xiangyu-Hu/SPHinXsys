@@ -18,7 +18,7 @@ namespace SPH
 		ImposeExternalForce::
 			ImposeExternalForce(SolidBody &solid_body, SolidBodyPartForSimbody &body_part)
 			: PartSimpleDynamicsByParticle(solid_body, body_part), SolidDataSimple(solid_body),
-			  pos0_(particles_->pos0_), vel_(particles_->vel_){}
+			  pos0_(particles_->pos0_), vel_(particles_->vel_) {}
 		//=================================================================================================//
 		void ImposeExternalForce::Update(size_t index_i, Real dt)
 		{
@@ -35,10 +35,8 @@ namespace SPH
 			  acc_prior_(particles_->acc_prior_)
 		{
 			// scale stiffness and damping by mass here, so it's not necessary in each iteration
-			stiffness_ = stiffness / std::accumulate(particles_->mass_.begin(), particles_->mass_.end(), 0.0);
+			stiffness_ = stiffness / std::accumulate(&particles_->mass_[0], &particles_->mass_[particles_->total_real_particles_], 0.0);
 			damping_coeff_ = stiffness_ * damping_ratio;
-
-			particles_->total_ghost_particles_ = 0;
 		}
 		//=================================================================================================//
 		Vecd SpringDamperConstraintParticleWise::getSpringForce(size_t index_i, Vecd &disp)
@@ -110,8 +108,6 @@ namespace SPH
 			Real area = std::pow(particles_->Vol_[0], 2.0 / 3.0);
 			stiffness_ = stiffness * area;
 			damping_coeff_ = stiffness_ * damping_ratio;
-
-			particles_->total_ghost_particles_ = 0;
 		}
 		//=================================================================================================//
 		Vecd SpringNormalOnSurfaceParticles::getSpringForce(size_t index_i, Vecd disp)
@@ -179,8 +175,6 @@ namespace SPH
 			Real area = std::pow(particles_->Vol_[0], 2.0 / 3.0);
 			stiffness_ = stiffness * area;
 			damping_coeff_ = stiffness_ * damping_ratio;
-
-			particles_->total_ghost_particles_ = 0;
 		}
 		//=================================================================================================//
 		void SpringOnSurfaceParticles::Update(size_t index_i, Real dt)
@@ -205,10 +199,7 @@ namespace SPH
 			  pos_(particles_->pos_),
 			  acc_prior_(particles_->acc_prior_),
 			  bounding_box_(bounding_box),
-			  acceleration_(acceleration)
-		{
-			particles_->total_ghost_particles_ = 0;
-		}
+			  acceleration_(acceleration) {}
 		//=================================================================================================//
 		void AccelerationForBodyPartInBoundingBox::Update(size_t index_i, Real dt)
 		{
@@ -234,9 +225,10 @@ namespace SPH
 			  end_time_(end_time)
 		{
 			// calculate acceleration: force / total mass
-			acceleration_ = force / std::accumulate(particles_->mass_.begin(), particles_->mass_.end(), 0.0);
-			// set ghost particles to zero
-			particles_->total_ghost_particles_ = 0;
+			Real total_mass_in_region(0);
+			for (size_t particle_i : body_part.body_part_particles_)
+				total_mass_in_region += particles_->mass_[particle_i];
+			acceleration_ = force / total_mass_in_region;
 		}
 		//=================================================================================================//
 		void ForceInBodyRegion::Update(size_t index_i, Real dt)
@@ -276,13 +268,11 @@ namespace SPH
 				Real cos_theta = getCosineOfAngleBetweenTwoVectors(vector_to_particle, normal);
 				// if the angle is less than 90°, we apply the pressure to the surface particle
 				// ignore exactly perpendicular surfaces
-				if (cos_theta > 1e-6) 
+				if (cos_theta > 1e-6)
 				{
 					apply_pressure_to_particle_[particle_i] = true;
 				}
 			}
-
-			particles_->total_ghost_particles_ = 0;
 		}
 		//=================================================================================================//
 		Real SurfacePressureFromSource::getPressure()

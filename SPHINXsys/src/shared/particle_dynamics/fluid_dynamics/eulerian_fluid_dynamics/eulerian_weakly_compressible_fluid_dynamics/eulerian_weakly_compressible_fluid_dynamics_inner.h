@@ -59,7 +59,6 @@ namespace SPH
 			StdLargeVec<Real> &rho_;
 			StdLargeVec<Vecd> &pos_, &dmom_dt_prior_;
 			Gravity *gravity_;
-			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 

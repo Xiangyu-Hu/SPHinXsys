@@ -124,6 +124,7 @@ namespace SPH
 	void RealBody::updateCellLinkedList()
 	{
 		cell_linked_list_->UpdateCellLists();
+		base_particles_->total_ghost_particles_ = 0;
 	}
 	//=================================================================================================//
 }

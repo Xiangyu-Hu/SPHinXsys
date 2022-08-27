@@ -27,11 +27,6 @@ namespace SPH
 			  vel_(particles_->vel_), dmom_dt_prior_(particles_->dmom_dt_prior_),
 			  gravity_(&gravity) {}
 		//=================================================================================================//
-		void CompressibleFlowTimeStepInitialization::setupDynamics(Real dt)
-		{
-			particles_->total_ghost_particles_ = 0;
-		}
-		//=================================================================================================//
 		void CompressibleFlowTimeStepInitialization::Update(size_t index_i, Real dt)
 		{
 			dmom_dt_prior_[index_i] = rho_[index_i] * gravity_->InducedAcceleration(pos_[index_i]);

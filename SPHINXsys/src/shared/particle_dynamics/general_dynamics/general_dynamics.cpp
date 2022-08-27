@@ -18,11 +18,6 @@ namespace SPH
 		  pos_(particles_->pos_), acc_prior_(particles_->acc_prior_),
 		  gravity_(&gravity) {}
 	//=================================================================================================//
-	void TimeStepInitialization::setupDynamics(Real dt)
-	{
-		particles_->total_ghost_particles_ = 0;
-	}
-	//=================================================================================================//
 	void TimeStepInitialization::Update(size_t index_i, Real dt)
 	{
 		acc_prior_[index_i] = gravity_->InducedAcceleration(pos_[index_i]);

@@ -21,7 +21,7 @@ namespace SPH
 		if (iteration_count_ % 100 == 0)
 			sortParticleWithCellLinkedList();
 		iteration_count_++;
-		cell_linked_list_->UpdateCellLists();
+		RealBody::updateCellLinkedList();
 	}
 	//=================================================================================================//
 	EulerianFluidBody::EulerianFluidBody(SPHSystem &system, SharedPtr<Shape> shape_ptr)

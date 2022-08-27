@@ -26,11 +26,6 @@ namespace SPH
 			rho_(particles_->rho_), pos_(particles_->pos_), dmom_dt_prior_(particles_->dmom_dt_prior_),
 			gravity_(&gravity) {}
 		//=================================================================================================//
-		void EulerianFlowTimeStepInitialization::setupDynamics(Real dt)
-		{
-			particles_->total_ghost_particles_ = 0;
-		}
-		//=================================================================================================//
 		void EulerianFlowTimeStepInitialization::Update(size_t index_i, Real dt)
 		{
 			dmom_dt_prior_[index_i] = rho_[index_i] * gravity_->InducedAcceleration(pos_[index_i]);
