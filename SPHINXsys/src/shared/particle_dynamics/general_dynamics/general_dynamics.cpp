@@ -18,10 +18,10 @@ namespace SPH
 	}
 	//=================================================================================================//
 	RandomizeParticlePosition::RandomizeParticlePosition(SPHBody &sph_body)
-		: ParticleDynamicsSimple(sph_body), DataDelegateSimple<SPHBody, BaseParticles>(sph_body),
+		: LocalDynamics(sph_body), DataDelegateSimple<SPHBody, BaseParticles>(sph_body),
 		  pos_(particles_->pos_), randomize_scale_(sph_body.sph_adaptation_->MinimumSpacing()) {}
 	//=================================================================================================//
-	void RandomizeParticlePosition::Update(size_t index_i, Real dt)
+	void RandomizeParticlePosition::update(size_t index_i, Real dt)
 	{
 		Vecd &pos_n_i = pos_[index_i];
 		for (int k = 0; k < pos_n_i.size(); ++k)

@@ -67,8 +67,8 @@ int main(int ac, char *av[])
 		 * @brief 	Methods used for particle relaxation.
 		 */
 		/** Random reset the insert body particle position. */
-		RandomizeParticlePosition random_inserted_body_particles(cylinder);
-		RandomizeParticlePosition random_water_body_particles(water_block);
+		SimpleDynamics<RandomizeParticlePosition> random_inserted_body_particles(cylinder);
+		SimpleDynamics<RandomizeParticlePosition> random_water_body_particles(water_block);
 		/** Write the body state to Vtu file. */
 		BodyStatesRecordingToVtp write_inserted_body_to_vtu(io_environment, {&cylinder});
 		BodyStatesRecordingToVtp write_water_body_to_vtu(io_environment, {&water_block});

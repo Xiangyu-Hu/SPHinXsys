@@ -52,12 +52,13 @@ namespace SPH
 	{
 	private:
 		SharedPtrKeeper<Gravity> gravity_ptr_keeper_;
+
 	protected:
 		Gravity *gravity_;
 
 	public:
 		BaseTimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> &gravity_ptr)
-		: LocalDynamics(sph_body), gravity_(gravity_ptr_keeper_.assignPtr(gravity_ptr)) {};
+			: LocalDynamics(sph_body), gravity_(gravity_ptr_keeper_.assignPtr(gravity_ptr)){};
 		virtual ~BaseTimeStepInitialization(){};
 	};
 
@@ -84,17 +85,18 @@ namespace SPH
 	 * @brief Randomize the initial particle position
 	 */
 	class RandomizeParticlePosition
-		: public ParticleDynamicsSimple,
+		: public LocalDynamics,
 		  public GeneralDataDelegateSimple
 	{
+	protected:
+		StdLargeVec<Vecd> &pos_;
+		Real randomize_scale_;
+
 	public:
 		explicit RandomizeParticlePosition(SPHBody &sph_body);
 		virtual ~RandomizeParticlePosition(){};
 
-	protected:
-		StdLargeVec<Vecd> &pos_;
-		Real randomize_scale_;
-		virtual void Update(size_t index_i, Real dt = 0.0) override;
+		void update(size_t index_i, Real dt = 0.0);
 	};
 
 	/**

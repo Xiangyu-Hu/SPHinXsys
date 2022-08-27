@@ -67,28 +67,26 @@ namespace SPH
 		}
 		//=================================================================================================//
 		UpdateParticlePosition::UpdateParticlePosition(SPHBody &sph_body)
-			: ParticleDynamicsSimple(sph_body), RelaxDataDelegateSimple(sph_body),
+			: LocalDynamics(sph_body), RelaxDataDelegateSimple(sph_body),
+			  sph_adaptation_(sph_body.sph_adaptation_),
 			  pos_(particles_->pos_), acc_(particles_->acc_) {}
 		//=================================================================================================//
-		void UpdateParticlePosition::Update(size_t index_i, Real dt_square)
+		void UpdateParticlePosition::update(size_t index_i, Real dt_square)
 		{
 			pos_[index_i] += acc_[index_i] * dt_square * 0.5 / sph_adaptation_->SmoothingLengthRatio(index_i);
 		}
 		//=================================================================================================//
 		UpdateSmoothingLengthRatioByBodyShape::UpdateSmoothingLengthRatioByBodyShape(SPHBody &sph_body)
-			: ParticleDynamicsSimple(sph_body), RelaxDataDelegateSimple(sph_body),
+			: LocalDynamics(sph_body), RelaxDataDelegateSimple(sph_body),
 			  h_ratio_(*particles_->getVariableByName<Real>("SmoothingLengthRatio")),
-			  Vol_(particles_->Vol_), pos_(particles_->pos_),
-			  body_shape_(*sph_body.body_shape_), kernel_(*sph_body.sph_adaptation_->getKernel())
-		{
-			particle_spacing_by_body_shape_ =
-				DynamicCast<ParticleSpacingByBodyShape>(this, sph_body.sph_adaptation_);
-		}
+			  Vol_(particles_->Vol_), pos_(particles_->pos_), body_shape_(*sph_body.body_shape_),
+			  particle_spacing_by_body_shape_(DynamicCast<ParticleSpacingByBodyShape>(this, sph_body.sph_adaptation_)),
+			  reference_spacing_(particle_spacing_by_body_shape_->ReferenceSpacing()) {}
 		//=================================================================================================//
-		void UpdateSmoothingLengthRatioByBodyShape::Update(size_t index_i, Real dt_square)
+		void UpdateSmoothingLengthRatioByBodyShape::update(size_t index_i, Real dt_square)
 		{
 			Real local_spacing = particle_spacing_by_body_shape_->getLocalSpacing(body_shape_, pos_[index_i]);
-			h_ratio_[index_i] = sph_adaptation_->ReferenceSpacing() / local_spacing;
+			h_ratio_[index_i] = reference_spacing_ / local_spacing;
 			Vol_[index_i] = powerN(local_spacing, Dimensions);
 		}
 		//=================================================================================================//
@@ -338,8 +336,8 @@ namespace SPH
 			  pos_(particles_->pos_), n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
 		{
 			particles_->registerVariable(n_temp_, "PreviousNormalDirection",
-										  [&](size_t i) -> Vecd
-										  { return n_[i]; });
+										 [&](size_t i) -> Vecd
+										 { return n_[i]; });
 		}
 		//=================================================================================================//
 		void ShellNormalDirectionPrediction::NormalPrediction::update(size_t index_i, Real dt)

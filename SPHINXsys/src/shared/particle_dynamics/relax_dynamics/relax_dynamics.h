@@ -107,37 +107,39 @@ namespace SPH
 		 * @class UpdateParticlePosition
 		 * @brief update the particle position for a time step
 		 */
-		class UpdateParticlePosition : public ParticleDynamicsSimple,
+		class UpdateParticlePosition : public LocalDynamics,
 									   public RelaxDataDelegateSimple
 		{
+		protected:
+			SPHAdaptation *sph_adaptation_;
+			StdLargeVec<Vecd> &pos_, &acc_;
+
 		public:
 			explicit UpdateParticlePosition(SPHBody &sph_body);
 			virtual ~UpdateParticlePosition(){};
 
-		protected:
-			StdLargeVec<Vecd> &pos_, &acc_;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+			void update(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
 		 * @class UpdateSmoothingLengthRatioByBodyShape
 		 * @brief update the particle smoothing length ratio
 		 */
-		class UpdateSmoothingLengthRatioByBodyShape : public ParticleDynamicsSimple,
+		class UpdateSmoothingLengthRatioByBodyShape : public LocalDynamics,
 													  public RelaxDataDelegateSimple
 		{
-		public:
-			explicit UpdateSmoothingLengthRatioByBodyShape(SPHBody &sph_body);
-			virtual ~UpdateSmoothingLengthRatioByBodyShape(){};
-
 		protected:
 			StdLargeVec<Real> &h_ratio_, &Vol_;
 			StdLargeVec<Vecd> &pos_;
 			Shape &body_shape_;
-			Kernel &kernel_;
 			ParticleSpacingByBodyShape *particle_spacing_by_body_shape_;
+			Real reference_spacing_;
 
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+		public:
+			explicit UpdateSmoothingLengthRatioByBodyShape(SPHBody &sph_body);
+			virtual ~UpdateSmoothingLengthRatioByBodyShape(){};
+
+			void update(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -218,7 +220,7 @@ namespace SPH
 
 			UniquePtr<RelaxationAccelerationInner> relaxation_acceleration_inner_;
 			GetTimeStepSizeSquare get_time_step_square_;
-			UpdateParticlePosition update_particle_position_;
+			SimpleDynamics<UpdateParticlePosition> update_particle_position_;
 			ShapeSurfaceBounding surface_bounding_;
 
 			virtual void exec(Real dt = 0.0) override;
@@ -262,7 +264,7 @@ namespace SPH
 
 			UniquePtr<RelaxationAccelerationComplex> relaxation_acceleration_complex_;
 			GetTimeStepSizeSquare get_time_step_square_;
-			UpdateParticlePosition update_particle_position_;
+			SimpleDynamics<UpdateParticlePosition> update_particle_position_;
 			ShapeSurfaceBounding surface_bounding_;
 
 			virtual void exec(Real dt = 0.0) override;
@@ -270,12 +272,12 @@ namespace SPH
 		};
 
 		/**
-		* @class ShellMidSurfaceBounding
-		* @brief constrain particles by constraining particles to mid-surface.
-		* Note that level_set_refinement_ratio should be smaller than particle_spacing_ref_ / (0.05 * thickness_)
-		* because if level_set_refinement_ratio > particle_spacing_ref_ / (0.05 * thickness_), 
-		* there will be no level set field.
-		*/
+		 * @class ShellMidSurfaceBounding
+		 * @brief constrain particles by constraining particles to mid-surface.
+		 * Note that level_set_refinement_ratio should be smaller than particle_spacing_ref_ / (0.05 * thickness_)
+		 * because if level_set_refinement_ratio > particle_spacing_ref_ / (0.05 * thickness_),
+		 * there will be no level set field.
+		 */
 		class ShellMidSurfaceBounding : public PartDynamicsByCell,
 										public RelaxDataDelegateInner
 		{
@@ -305,8 +307,8 @@ namespace SPH
 			void correctNormalDirection();
 
 		public:
-			explicit ShellNormalDirectionPrediction(BaseBodyRelationInner &inner_relation, 
-				Real thickness, Real consistency_criterion = cos(Pi / 20.0));
+			explicit ShellNormalDirectionPrediction(BaseBodyRelationInner &inner_relation,
+													Real thickness, Real consistency_criterion = cos(Pi / 20.0));
 			virtual ~ShellNormalDirectionPrediction(){};
 
 			virtual void exec(Real dt = 0.0) override;
@@ -355,7 +357,7 @@ namespace SPH
 			};
 
 			class ConsistencyUpdatedCheck : public ParticleDynamicsReduce<bool, ReduceAND>,
-								 public RelaxDataDelegateSimple
+											public RelaxDataDelegateSimple
 			{
 			public:
 				explicit ConsistencyUpdatedCheck(SPHBody &sph_body);
@@ -394,7 +396,7 @@ namespace SPH
 											  Real level_set_refinement_ratio, bool level_set_correction = false);
 			virtual ~ShellRelaxationStepInner(){};
 
-			UpdateParticlePosition update_shell_particle_position_;
+			SimpleDynamics<UpdateParticlePosition> update_shell_particle_position_;
 			ShellMidSurfaceBounding mid_surface_bounding_;
 
 			virtual void exec(Real dt = 0.0) override;

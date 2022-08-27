@@ -54,7 +54,7 @@ int main(int ac, char *av[])
 		/** topology */
 		BodyRelationInner herat_model_inner(herat_model);
 		/** Random reset the relax solid particle position. */
-		RandomizeParticlePosition random_particles(herat_model);
+		SimpleDynamics<RandomizeParticlePosition> random_particles(herat_model);
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(herat_model_inner);
 		/** Time step for diffusion. */

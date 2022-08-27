@@ -60,7 +60,7 @@ int main()
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
-	RandomizeParticlePosition random_input_body_particles(input_body);
+	SimpleDynamics<RandomizeParticlePosition> random_input_body_particles(input_body);
 	relax_dynamics::RelaxationStepInner relaxation_step_inner(input_body_inner, true);
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.

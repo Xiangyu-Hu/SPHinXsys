@@ -108,12 +108,12 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Define the methods for particle relaxation for ball.
 		//----------------------------------------------------------------------
-		RandomizeParticlePosition ball_random_particles(ball);
+		SimpleDynamics<RandomizeParticlePosition> ball_random_particles(ball);
 		relax_dynamics::RelaxationStepInner ball_relaxation_step_inner(ball_inner);
 		//----------------------------------------------------------------------
 		//	Define the methods for particle relaxation for wall boundary.
 		//----------------------------------------------------------------------
-		RandomizeParticlePosition wall_boundary_random_particles(wall_boundary);
+		SimpleDynamics<RandomizeParticlePosition> wall_boundary_random_particles(wall_boundary);
 		relax_dynamics::ShellRelaxationStepInner
 			relaxation_step_wall_boundary_inner(wall_boundary_inner, thickness, level_set_refinement_ratio);
 		relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(wall_boundary_inner, thickness, cos(Pi / 3.75));
