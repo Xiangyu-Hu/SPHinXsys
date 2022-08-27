@@ -85,16 +85,20 @@ namespace SPH
             return is_near_surface;
         }
         //=================================================================================================//
-        void FreeStreamBoundaryVelocityCorrection::Update(size_t index_i, Real dt)
+        FreeStreamBoundaryVelocityCorrection::FreeStreamBoundaryVelocityCorrection(SPHBody &sph_body)
+            : LocalDynamics(sph_body), FluidDataSimple(sph_body),
+              u_ref_(1.0), t_ref_(2.0), rho_ref_(material_->ReferenceDensity()),
+              rho_sum(particles_->rho_sum_), vel_(particles_->vel_),
+              surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")) {}
+        //=================================================================================================//
+        void FreeStreamBoundaryVelocityCorrection::update(size_t index_i, Real dt)
         {
-            vel_[index_i] += acc_[index_i] * dt;
-            acc_[index_i] = Vecd(0.0, 0.0);
-
             if (surface_indicator_[index_i] == 1)
             {
+                //TODO: free stream condition should be summarized to a separated class.
                 Real run_time_ = GlobalStaticVariables::physical_time_;
-                Real u_ave_ = run_time_ < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time_ / t_ref_)) : u_ref_;
-                vel_[index_i][0] = u_ave_ + SMIN(rho_sum[index_i], rho_ref_) * (vel_[index_i][0] - u_ave_) / rho_ref_;
+                Real u_freestream = run_time_ < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time_ / t_ref_)) : u_ref_;
+                vel_[index_i][0] = u_freestream + SMIN(rho_sum[index_i], rho_ref_) * (vel_[index_i][0] - u_freestream) / rho_ref_;
             }
         }
         //=================================================================================================//

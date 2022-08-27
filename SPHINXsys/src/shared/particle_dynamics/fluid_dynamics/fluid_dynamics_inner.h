@@ -286,19 +286,6 @@ namespace SPH
 		using DensityRelaxationDissipativeRiemannInner = BaseDensityRelaxationInner<DissipativeRiemannSolver>;
 
 		/**
-		 * @class Oldroyd_B_FluidInitialCondition
-		 * @brief  set initial condition for Oldroyd_B_Fluid dynamics
-		 * This is a abstract class to be override for case specific initial conditions
-		 */
-		class Oldroyd_B_FluidInitialCondition : public ParticleDynamicsSimple, public FluidDataSimple
-		{
-		public:
-			explicit Oldroyd_B_FluidInitialCondition(FluidBody &fluid_body)
-				: ParticleDynamicsSimple(fluid_body), FluidDataSimple(fluid_body){};
-			virtual ~Oldroyd_B_FluidInitialCondition(){};
-		};
-
-		/**
 		* @class PressureRelaxationInnerOldroyd_B
 		* @brief Pressure relaxation scheme with the mostly used Riemann solver.
 		*/

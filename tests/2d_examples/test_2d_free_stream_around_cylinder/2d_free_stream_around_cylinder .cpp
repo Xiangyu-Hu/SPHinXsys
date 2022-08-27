@@ -119,7 +119,7 @@ int main(int ac, char *av[])
 	/** Time step size with considering sound wave speed. */
 	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
 	/** modify the velocity of boundary particles with free-stream velocity. */
-	fluid_dynamics::FreeStreamBoundaryVelocityCorrection velocity_boundary_condition_constraint(water_block_inner);
+	SimpleDynamics<fluid_dynamics::FreeStreamBoundaryVelocityCorrection> velocity_boundary_condition_constraint(water_block);
 	/** Pressure relaxation. */
 	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(water_block_complex);
 	/** correct the velocity of boundary particles with free-stream velocity through the post process of pressure relaxation. */
