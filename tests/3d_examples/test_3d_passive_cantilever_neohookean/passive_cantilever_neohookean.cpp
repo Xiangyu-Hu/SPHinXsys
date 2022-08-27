@@ -79,8 +79,8 @@ int main(int ac, char *av[])
 	BodyRelationContact cantilever_observer_contact(cantilever_observer, {&cantilever_body});
 
 	//-------- common particle dynamics ----------------------------------------
-	TimeDependentGravity gravity(Vec3d(0.0, -gravity_g, 0.0));
-	TimeStepInitialization initialize_time_step(cantilever_body, gravity);
+	SimpleDynamics<TimeStepInitialization> 
+		initialize_time_step(cantilever_body, makeShared<TimeDependentGravity>(Vec3d(0.0, -gravity_g, 0.0)));
 
 	/**
 	 * This section define all numerical methods will be used in this case.

@@ -130,7 +130,7 @@ int main(int ac, char *av[])
 	BodyRelationInner beam_body_inner(beam_body);
 	BodyRelationContact beam_observer_contact(beam_observer, {&beam_body});
 	/** initialize a time step */
-	TimeStepInitialization beam_initialize(beam_body);
+	SimpleDynamics<TimeStepInitialization> beam_initialize(beam_body);
 
 	/** Corrected configuration. */
 	solid_dynamics::CorrectConfiguration corrected_configuration(beam_body_inner);

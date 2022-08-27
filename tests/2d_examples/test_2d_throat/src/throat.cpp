@@ -164,9 +164,8 @@ int main()
 	fluid_dynamics::DensityRelaxationWithWallOldroyd_B density_relaxation(fluid_block_complex);
 	density_relaxation.pre_processes_.push_back(&periodic_condition.ghost_update_);
 	// define external force
-	Gravity gravity(Vecd(gravity_g, 0.0));
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-	TimeStepInitialization initialize_a_fluid_step(fluid_block, gravity);
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(fluid_block, makeShared<Gravity>(Vecd(gravity_g, 0.0)));
 	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(fluid_block_complex);
 	// computing viscous effect implicitly and with update velocity directly other than viscous acceleration
 	DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>

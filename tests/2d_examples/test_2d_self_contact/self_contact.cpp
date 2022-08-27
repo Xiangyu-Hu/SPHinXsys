@@ -142,7 +142,7 @@ int main(int ac, char *av[])
 	//-----------------------------------------------------------------------------
 	// initial condition
 	BeamInitialCondition beam_initial_velocity(beam_body);
-	TimeStepInitialization reset_prior_acceleration(beam_body);
+	SimpleDynamics<TimeStepInitialization> reset_prior_acceleration(beam_body);
 	//corrected strong configuration
 	solid_dynamics::CorrectConfiguration
 		beam_corrected_configuration(beam_body_inner);

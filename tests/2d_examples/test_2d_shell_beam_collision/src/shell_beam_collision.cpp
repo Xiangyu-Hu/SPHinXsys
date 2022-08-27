@@ -18,7 +18,6 @@ Real level_set_refinement_ratio = resolution_ref / (0.1 * thickness);
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
 Vec2d circle_center(2.0, 2.0);
 Real circle_radius = 0.5;
-Real gravity_g = 1.0;
 //----------------------------------------------------------------------
 //	Global parameters on material properties
 //----------------------------------------------------------------------
@@ -184,8 +183,7 @@ int main(int ac, char *av[])
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	/** Define external force.*/
-	Gravity gravity(Vecd(0.0, -gravity_g));
-	TimeStepInitialization beam_initialize_timestep(beam);
+	SimpleDynamics<TimeStepInitialization> beam_initialize_timestep(beam);
 	solid_dynamics::CorrectConfiguration beam_corrected_configuration(beam_inner);
 	solid_dynamics::AcousticTimeStepSize shell_get_time_step_size(beam);
 	/** stress relaxation for the walls. */

@@ -230,10 +230,8 @@ int main()
 	//----------------------------------------------------------------------
 	//	Define all numerical methods which are used in this case.
 	//----------------------------------------------------------------------
-	/** Define the external force. */
-	Gravity gravity(Vecd(0.0, -gravity_g));
-	/** Initialize particle acceleration. */
-	TimeStepInitialization initialize_a_fluid_step(water_block, gravity);
+	/** Initialize particle acceleration. */ //TODO: this is missing for solid body.
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
 	/** Evaluation of fluid density by summation approach. */
 	fluid_dynamics::DensitySummationFreeSurfaceComplex update_fluid_density(water_block_complex);
 	/** Compute time step size without considering sound wave speed. */

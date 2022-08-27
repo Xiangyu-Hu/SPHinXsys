@@ -311,7 +311,7 @@ int main(int ac, char *av[])
 	/**
 	 * Common particle dynamics.
 	 */
-	TimeStepInitialization initialize_a_fluid_step(water_block);
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensitySummationComplex update_density_by_summation(water_block_complex);
 	/** Time step size without considering sound wave speed. */

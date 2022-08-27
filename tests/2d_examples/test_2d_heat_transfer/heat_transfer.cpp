@@ -254,7 +254,7 @@ int main()
 	SimpleDynamics<ThermofluidBodyInitialCondition> thermofluid_initial_condition(thermofluid_body);
 	SimpleDynamics<NormalDirectionFromBodyShape> thermosolid_body_normal_direction(thermosolid_body);
 	/** Initialize particle acceleration. */
-	TimeStepInitialization initialize_a_fluid_step(thermofluid_body);
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(thermofluid_body);
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensitySummationComplex update_density_by_summation(fluid_body_complex);
 	/** Time step size without considering sound wave speed. */

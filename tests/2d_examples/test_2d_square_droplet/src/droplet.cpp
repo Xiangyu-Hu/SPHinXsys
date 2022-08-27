@@ -44,11 +44,9 @@ int main()
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
-	/** Define external force. */
-	Gravity gravity(Vecd(0.0, -gravity_g));
 	/** Initialize particle acceleration. */
-	TimeStepInitialization initialize_a_water_step(water_block, gravity);
-	TimeStepInitialization initialize_a_air_step(air_block, gravity);
+	SimpleDynamics<TimeStepInitialization> initialize_a_water_step(water_block);
+	SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	/**
 	 * @brief 	Algorithms of fluid dynamics.

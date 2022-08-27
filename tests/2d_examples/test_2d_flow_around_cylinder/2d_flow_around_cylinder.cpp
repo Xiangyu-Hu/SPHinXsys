@@ -98,7 +98,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	SimpleDynamics<NormalDirectionFromBodyShape> cylinder_normal_direction(cylinder);
 	/** Initialize particle acceleration. */
-	TimeStepInitialization initialize_a_fluid_step(water_block);
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block);
 	/** Periodic BCs in x direction. */
 	PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
 	/** Periodic BCs in y direction. */

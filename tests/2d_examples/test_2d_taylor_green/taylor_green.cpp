@@ -100,7 +100,7 @@ int main(int ac, char *av[])
 	 * @brief 	Methods used for time stepping.
 	 */
 	/** Initialize particle acceleration. */
-	TimeStepInitialization time_step_initialization(water_block);
+	SimpleDynamics<TimeStepInitialization> time_step_initialization(water_block);
 	/** Periodic BCs in x direction. */
 	PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
 	/** Periodic BCs in y direction. */

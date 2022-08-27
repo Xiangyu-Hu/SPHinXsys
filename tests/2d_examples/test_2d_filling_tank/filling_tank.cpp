@@ -121,9 +121,9 @@ int main()
 	//----------------------------------------------------------------------
 	//	Define all numerical methods which are used in this case.
 	//----------------------------------------------------------------------
-	Gravity gravity(Vecd(0.0, -gravity_g));
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
-	TimeStepInitialization initialize_a_fluid_step(water_body, gravity);
+	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_body, gravity_ptr);
 	/** Emitter. */
 	BodyAlignedBoxByParticle emitter(
 		water_body, makeShared<AlignedBoxShape>(Transform2d(inlet_translation), inlet_halfsize));
@@ -145,7 +145,7 @@ int main()
 	BodyStatesRecordingToVtp body_states_recording(io_environment, system.real_bodies_);
 	RestartIO restart_io(io_environment, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
-		write_water_mechanical_energy(io_environment, water_body, gravity);
+		write_water_mechanical_energy(io_environment, water_body, *gravity_ptr.get());
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact_relation);
 	//----------------------------------------------------------------------

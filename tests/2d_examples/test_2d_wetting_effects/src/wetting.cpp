@@ -46,12 +46,10 @@ int main()
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	/** Define external force. */
-	Gravity gravity(Vecd(0.0, -gravity_g));
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	/** Initialize particle acceleration. */
-	TimeStepInitialization initialize_a_water_step(water_block, gravity);
-	TimeStepInitialization initialize_a_air_step(air_block, gravity);
+	SimpleDynamics<TimeStepInitialization> initialize_a_water_step(water_block);
+	SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block);
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensitySummationFreeSurfaceComplex
 		update_water_density_by_summation(water_air_complex.inner_relation_, water_wall_contact);

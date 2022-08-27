@@ -114,8 +114,8 @@ int main()
 	BodyRelationContact cylinder_observer_contact(cylinder_observer, {&cylinder_body});
 
 	/** Common particle dynamics. */
-	TimeDependentExternalForce external_force(Vec2d(0.0, gravitational_acceleration));
-	TimeStepInitialization initialize_external_force(cylinder_body, external_force);
+	SimpleDynamics<TimeStepInitialization> initialize_external_force(
+		cylinder_body, makeShared<TimeDependentExternalForce>(Vec2d(0.0, gravitational_acceleration)));
 
 	/**
 	 * This section define all numerical methods will be used in this case.

@@ -52,12 +52,11 @@ int main()
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	/** Define external force. */
-	Gravity gravity(Vecd(0.0, -gravity_g));
 	/** Initialize particle acceleration. */
 	SimpleDynamics<NormalDirectionFromShapeAndOp> inner_normal_direction(wall_boundary, "InnerWall");
-	TimeStepInitialization initialize_a_water_step(water_block, gravity);
-	TimeStepInitialization initialize_a_air_step(air_block, gravity);
+	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
+	SimpleDynamics<TimeStepInitialization> initialize_a_water_step(water_block, gravity_ptr);
+	SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block, gravity_ptr);
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensitySummationFreeSurfaceComplex
 		update_water_density_by_summation(water_air_complex.inner_relation_, water_wall_contact);
@@ -91,7 +90,7 @@ int main()
 	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
 	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
-		write_water_mechanical_energy(io_environment, water_block, gravity);
+		write_water_mechanical_energy(io_environment, water_block, *gravity_ptr.get());
 	/** output the observed data from fluid body. */
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_pressure("Pressure", io_environment, fluid_observer_contact);

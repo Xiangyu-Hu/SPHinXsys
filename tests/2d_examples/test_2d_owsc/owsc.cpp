@@ -51,10 +51,8 @@ int main()
 
 	/** corrected strong configuration. */
 	solid_dynamics::CorrectConfiguration flap_corrected_configuration(flap_inner);
-	/** Define external force.*/
-	Gravity gravity(Vecd(0.0, -gravity_g));
 	/** Time step initialization, add gravity. */
-	TimeStepInitialization initialize_time_step_to_fluid(water_block, gravity);
+	SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_block_complex);
 	/** time step size without considering sound wave speed. */
@@ -128,7 +126,7 @@ int main()
 	 *		hb=pb*(-d) - hz. Note that this is a signed quantity so the potential energy is
 	 *		also signed. 0.475
 	 */
-	SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTK::Vec3(0.0, Real(-9.81), 0.0), 0.0);
+	SimTK::Force::UniformGravity sim_gravity(forces, matter, SimTK::Vec3(0.0, -gravity_g, 0.0), 0.0);
 	/** discrete forces acting on the bodies. */
 	SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
 	/**

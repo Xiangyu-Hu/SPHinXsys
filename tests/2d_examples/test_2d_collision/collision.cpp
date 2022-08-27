@@ -176,9 +176,9 @@ int main(int ac, char *av[])
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	Gravity gravity(Vecd(0.0, -gravity_g));
-	TimeStepInitialization free_ball_initialize_timestep(free_ball, gravity);
-	TimeStepInitialization damping_ball_initialize_timestep(damping_ball, gravity);
+	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
+	SimpleDynamics<TimeStepInitialization> free_ball_initialize_timestep(free_ball, gravity_ptr);
+	SimpleDynamics<TimeStepInitialization> damping_ball_initialize_timestep(damping_ball, gravity_ptr);
 	solid_dynamics::CorrectConfiguration free_ball_corrected_configuration(free_ball_inner);
 	solid_dynamics::CorrectConfiguration damping_ball_corrected_configuration(damping_ball_inner);
 	solid_dynamics::AcousticTimeStepSize free_ball_get_time_step_size(free_ball);

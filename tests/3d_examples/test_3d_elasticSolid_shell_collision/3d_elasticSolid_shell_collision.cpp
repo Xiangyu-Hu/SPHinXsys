@@ -141,8 +141,7 @@ int main(int ac, char *av[])
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	Gravity gravity(Vec3d(0.0, 0.0, -gravity_g));
-	TimeStepInitialization ball_initialize_timestep(ball, gravity);
+	SimpleDynamics<TimeStepInitialization> ball_initialize_timestep(ball, makeShared<Gravity>(Vec3d(0.0, 0.0, -gravity_g)));
 	solid_dynamics::CorrectConfiguration ball_corrected_configuration(ball_inner);
 	solid_dynamics::AcousticTimeStepSize ball_get_time_step_size(ball, 0.45);
 	/** stress relaxation for the balls. */

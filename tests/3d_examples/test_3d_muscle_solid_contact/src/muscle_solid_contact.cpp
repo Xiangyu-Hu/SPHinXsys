@@ -73,8 +73,8 @@ int main()
 	 * This section define all numerical methods will be used in this case.
 	 */
 	/** initialize a time step */
-	TimeStepInitialization myocardium_initialize_time_step(myocardium_body);
-	TimeStepInitialization moving_plate_initialize_time_step(moving_plate);
+	SimpleDynamics<TimeStepInitialization> myocardium_initialize_time_step(myocardium_body);
+	SimpleDynamics<TimeStepInitialization> moving_plate_initialize_time_step(moving_plate);
 	/** Corrected configuration. */
 	solid_dynamics::CorrectConfiguration corrected_configuration(myocardium_body_inner);
 	/** Time step size calculation. */

@@ -177,9 +177,8 @@ int main()
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	/** Define the external force. */
-	Gravity gravity(Vecd(0.0, -gravity_g));
 	/** Initialize particle acceleration. */
-	TimeStepInitialization initialize_a_fluid_step(water_block, gravity);
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
 	//----------------------------------------------------------------------
 	//	Algorithms of fluid dynamics.
 	//----------------------------------------------------------------------

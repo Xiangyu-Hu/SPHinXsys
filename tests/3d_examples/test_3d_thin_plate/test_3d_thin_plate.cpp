@@ -151,8 +151,8 @@ int main(int ac, char *av[])
 	BodyRelationContact plate_observer_contact(plate_observer, {&plate_body});
 
 	/** Common particle dynamics. */
-	TimeDependentExternalForce external_force(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration));
-	TimeStepInitialization initialize_external_force(plate_body, external_force);
+	SimpleDynamics<TimeStepInitialization> initialize_external_force(plate_body, 
+		makeShared<TimeDependentExternalForce>(Vec3d(0.0, 0.0, q / (PT * rho0_s) - gravitational_acceleration)));
 
 	/**
 	 * This section define all numerical methods will be used in this case.

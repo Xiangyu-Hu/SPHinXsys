@@ -403,19 +403,19 @@ void StructuralSimulation::initializeGravity()
 	}
 	// initialize gravity
 	initialize_time_step_ = {};
-	size_t gravity_index_i = 0; // iterating through gravity_indeces
+	size_t gravity_index_i = 0; // iterating through gravity_indices
 	for (size_t i = 0; i < solid_body_list_.size(); i++)
 	{
 		// check if i is in indices_gravity
 		if (count(gravity_indices.begin(), gravity_indices.end(), i))
 		{
-			Gravity *gravity = new Gravity(non_zero_gravity_[gravity_index_i].second);
-			initialize_time_step_.emplace_back(make_shared<TimeStepInitialization>(*solid_body_list_[i]->getSolidBodyFromMesh(), *gravity));
+			SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(non_zero_gravity_[gravity_index_i].second);
+			initialize_time_step_.emplace_back(make_shared<SimpleDynamics<TimeStepInitialization>>(*solid_body_list_[i]->getSolidBodyFromMesh(), gravity_ptr));
 			gravity_index_i++;
 		}
 		else
 		{
-			initialize_time_step_.emplace_back(make_shared<TimeStepInitialization>(*solid_body_list_[i]->getSolidBodyFromMesh()));
+			initialize_time_step_.emplace_back(make_shared<SimpleDynamics<TimeStepInitialization>>(*solid_body_list_[i]->getSolidBodyFromMesh()));
 		}
 	}
 }

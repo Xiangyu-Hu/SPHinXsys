@@ -133,9 +133,8 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	This section define all numerical methods will be used in this case.
 	//----------------------------------------------------------------------
-	Gravity gravity(Vecd(0.0, -1.0, 0.0));
 	// initialize a time step
-	TimeStepInitialization initialization_with_gravity(coil, gravity);
+	SimpleDynamics<TimeStepInitialization> initialization_with_gravity(coil, makeShared<Gravity>(Vecd(0.0, -1.0, 0.0)));
 	// Corrected configuration for reproducing rigid rotation.
 	solid_dynamics::CorrectConfiguration corrected_configuration(coil_inner);
 	// Time step size

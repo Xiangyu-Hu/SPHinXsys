@@ -8,17 +8,11 @@
 namespace SPH
 {
 	//=================================================================================================//
-	TimeStepInitialization::TimeStepInitialization(SPHBody &sph_body)
-		: ParticleDynamicsSimple(sph_body), GeneralDataDelegateSimple(sph_body),
-		  pos_(particles_->pos_), acc_prior_(particles_->acc_prior_),
-		  gravity_(gravity_ptr_keeper_.createPtr<Gravity>(Vecd(0))) {}
+	TimeStepInitialization::TimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr)
+		: BaseTimeStepInitialization(sph_body, gravity_ptr), GeneralDataDelegateSimple(sph_body),
+		  pos_(particles_->pos_), acc_prior_(particles_->acc_prior_) {}
 	//=================================================================================================//
-	TimeStepInitialization ::TimeStepInitialization(SPHBody &sph_body, Gravity &gravity)
-		: ParticleDynamicsSimple(sph_body), GeneralDataDelegateSimple(sph_body),
-		  pos_(particles_->pos_), acc_prior_(particles_->acc_prior_),
-		  gravity_(&gravity) {}
-	//=================================================================================================//
-	void TimeStepInitialization::Update(size_t index_i, Real dt)
+	void TimeStepInitialization::update(size_t index_i, Real dt)
 	{
 		acc_prior_[index_i] = gravity_->InducedAcceleration(pos_[index_i]);
 	}

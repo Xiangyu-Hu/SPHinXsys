@@ -131,7 +131,8 @@ int main()
 	 * @brief 	Methods used for time stepping.
 	 */
 	 /** Initialize particle acceleration. */
-	TimeStepInitialization 	initialize_a_fluid_step(water_block, gravity);
+	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
@@ -159,7 +160,7 @@ int main()
 	RestartIO		restart_io(io_environment, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
 	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<TotalMechanicalEnergy>> 	
-		write_water_mechanical_energy(io_environment, water_block, gravity);
+		write_water_mechanical_energy(io_environment, water_block, *gravity_ptr.get());
 	/** output the observed data from fluid body. */
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);

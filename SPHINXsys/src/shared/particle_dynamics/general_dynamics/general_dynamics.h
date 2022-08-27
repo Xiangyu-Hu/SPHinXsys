@@ -43,29 +43,40 @@ namespace SPH
 	typedef DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,
 								SPHBody, BaseParticles, BaseMaterial, DataDelegateEmptyBase>
 		GeneralDataDelegateContact;
+
+	/**
+	 * @class BaseTimeStepInitialization
+	 * @brief base class for time step initialization.
+	 */
+	class BaseTimeStepInitialization : public LocalDynamics
+	{
+	private:
+		SharedPtrKeeper<Gravity> gravity_ptr_keeper_;
+	protected:
+		Gravity *gravity_;
+
+	public:
+		BaseTimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> &gravity_ptr)
+		: LocalDynamics(sph_body), gravity_(gravity_ptr_keeper_.assignPtr(gravity_ptr)) {};
+		virtual ~BaseTimeStepInitialization(){};
+	};
+
 	/**
 	 * @class TimeStepInitialization
 	 * @brief initialize a time step for a body.
-	 * including initialize prior acceleration
-	 * induced by viscous, gravity and other forces,
-	 * set the number of ghost particles into zero.
 	 */
 	class TimeStepInitialization
-		: public ParticleDynamicsSimple,
+		: public BaseTimeStepInitialization,
 		  public GeneralDataDelegateSimple
 	{
-	private:
-		UniquePtrKeeper<Gravity> gravity_ptr_keeper_;
-
-	public:
-		explicit TimeStepInitialization(SPHBody &sph_body);
-		TimeStepInitialization(SPHBody &sph_body, Gravity &gravity);
-		virtual ~TimeStepInitialization(){};
-
 	protected:
 		StdLargeVec<Vecd> &pos_, &acc_prior_;
-		Gravity *gravity_;
-		virtual void Update(size_t index_i, Real dt = 0.0) override;
+
+	public:
+		TimeStepInitialization(SPHBody &sph_body, SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0)));
+		virtual ~TimeStepInitialization(){};
+
+		void update(size_t index_i, Real dt = 0.0);
 	};
 
 	/**

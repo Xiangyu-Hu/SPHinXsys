@@ -177,7 +177,7 @@ namespace SPH
 					}
 				}
 				force_from_fluid_[index_i] = force;
-				acc_prior_[index_i] = force / particles_->ParticleMass(index_i);
+				acc_prior_[index_i] = force / particles_->ParticleMass(index_i); //TODO: to add gravity contribution
 			};
 		};
 		using FluidPressureForceOnSolid = BaseFluidPressureForceOnSolid<NoRiemannSolver>;
@@ -253,7 +253,7 @@ namespace SPH
 					}
 				}
 				force_from_fluid_[index_i] = force;
-				acc_prior_[index_i] = force / particles_->ParticleMass(index_i);
+				acc_prior_[index_i] = force / particles_->ParticleMass(index_i); //TODO: to add gravity contribution
 			};
 		};
 		using FluidPressureForceOnSolidInEuler = BaseFluidPressureForceOnSolidInEuler<NoRiemannSolver>;

@@ -101,9 +101,9 @@ int main()
 	//this section define all numerical methods will be used in this case
 	//-------------------------------------------------------------------
 	//-------- common particle dynamics ----------------------------------------
-	Gravity gravity(Vec3d(0.0, -gravity_g, 0.0));
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
-	TimeStepInitialization initialize_a_fluid_step(water_block, gravity);
+	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vec3d(0.0, -gravity_g, 0.0));
+	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
 	//-------- fluid dynamics --------------------------------------------------
 	//evaluation of density by summation approach
 	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_block_complex);
@@ -125,7 +125,7 @@ int main()
 	RestartIO restart_io(io_environment, system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
 	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
-		write_water_mechanical_energy(io_environment, water_block, gravity);
+		write_water_mechanical_energy(io_environment, water_block, *gravity_ptr.get());
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);
 	//-------------------------------------------------------------------

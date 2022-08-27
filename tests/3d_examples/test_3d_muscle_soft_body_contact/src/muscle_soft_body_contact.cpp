@@ -73,9 +73,8 @@ int main()
 	 * This section define all numerical methods will be used in this case.
 	 */
 	/** initialize a time step */
-	TimeStepInitialization myocardium_initialize_time_step(myocardium_body);
-	Gravity gravity(Vecd(-100.0, 0.0, 0.0));
-	TimeStepInitialization plate_initialize_time_step(moving_plate, gravity);
+	SimpleDynamics<TimeStepInitialization> myocardium_initialize_time_step(myocardium_body);
+	SimpleDynamics<TimeStepInitialization> plate_initialize_time_step(moving_plate, makeShared<Gravity>(Vecd(-100.0, 0.0, 0.0)));
 	/** Corrected configuration. */
 	solid_dynamics::CorrectConfiguration corrected_configuration(myocardium_body_inner);
 	solid_dynamics::CorrectConfiguration corrected_configuration_2(moving_plate_inner);
