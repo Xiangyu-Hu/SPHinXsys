@@ -196,8 +196,8 @@ int main(int ac, char *av[])
 	ObservedQuantityRecording<Real> write_voltage("Voltage", io_environment, voltage_observer_contact);
 	ObservedQuantityRecording<Vecd> write_displacement("Position", io_environment, myocardium_observer_contact);
 	/**Apply the Iron stimulus.*/
-	ApplyStimulusCurrentToMyocardium apply_stimulus_myocardium(physiology_heart);
-	ApplyStimulusCurrentToPKJ apply_stimulus_pkj(pkj_body);
+	SimpleDynamics<ApplyStimulusCurrentToMyocardium> apply_stimulus_myocardium(physiology_heart);
+	SimpleDynamics<ApplyStimulusCurrentToPKJ> apply_stimulus_pkj(pkj_body);
 	/** Active mechanics. */
 	solid_dynamics::CorrectConfiguration correct_configuration_contraction(mechanics_heart_inner);
 	/** Observer Dynamics */

@@ -228,7 +228,14 @@ class ApplyStimulusCurrentToMyocardium
 protected:
 	size_t voltage_;
 
-	void Update(size_t index_i, Real dt) override
+public:
+	explicit ApplyStimulusCurrentToMyocardium(SPHBody &sph_body)
+		: electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
+	{
+		voltage_ = material_->SpeciesIndexMap()["Voltage"];
+	};
+
+	void update(size_t index_i, Real dt)
 	{
 		if (-32.0 * length_scale <= pos_[index_i][0] && pos_[index_i][0] <= -20.0 * length_scale)
 		{
@@ -240,13 +247,6 @@ protected:
 				}
 			}
 		}
-	};
-
-public:
-	explicit ApplyStimulusCurrentToMyocardium(SolidBody &muscle)
-		: electro_physiology::ElectroPhysiologyInitialCondition(muscle)
-	{
-		voltage_ = material_->SpeciesIndexMap()["Voltage"];
 	};
 };
 // Observer particle generator.
@@ -272,19 +272,19 @@ class ApplyStimulusCurrentToPKJ
 protected:
 	size_t voltage_;
 
-	void Update(size_t index_i, Real dt) override
+public:
+	explicit ApplyStimulusCurrentToPKJ(SPHBody &sph_body)
+		: electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
+	{
+		voltage_ = material_->SpeciesIndexMap()["Voltage"];
+	};
+
+	void update(size_t index_i, Real dt)
 	{
 		if (index_i <= 10)
 		{
 			species_n_[voltage_][index_i] = 1.0;
 		}
-	};
-
-public:
-	explicit ApplyStimulusCurrentToPKJ(RealBody &muscle)
-		: electro_physiology::ElectroPhysiologyInitialCondition(muscle)
-	{
-		voltage_ = material_->SpeciesIndexMap()["Voltage"];
 	};
 };
 

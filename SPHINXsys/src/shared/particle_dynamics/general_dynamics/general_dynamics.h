@@ -46,7 +46,7 @@ namespace SPH
 	/**
 	 * @class TimeStepInitialization
 	 * @brief initialize a time step for a body.
-	 * including initialize particle acceleration
+	 * including initialize prior acceleration
 	 * induced by viscous, gravity and other forces,
 	 * set the number of ghost particles into zero.
 	 */

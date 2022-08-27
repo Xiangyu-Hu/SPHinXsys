@@ -159,11 +159,14 @@ namespace SPH
 		 * @brief  set initial condition for a muscle body
 		 * This is a abstract class to be override for case specific initial conditions.
 		 */
-		class ElectroPhysiologyInitialCondition : public ParticleDynamicsSimple,
+		class ElectroPhysiologyInitialCondition : public LocalDynamics,
 												  public ElectroPhysiologyDataDelegateSimple
 		{
 		public:
-			explicit ElectroPhysiologyInitialCondition(RealBody &real_body);
+			explicit ElectroPhysiologyInitialCondition(SPHBody &sph_body)
+				: LocalDynamics(sph_body),
+				  ElectroPhysiologyDataDelegateSimple(sph_body),
+				  pos_(particles_->pos_), species_n_(particles_->species_n_){};
 			virtual ~ElectroPhysiologyInitialCondition(){};
 
 		protected:
@@ -215,20 +218,6 @@ namespace SPH
 		/** Solve the reaction ODE equation of trans-membrane potential	using backward sweeping */
 		using ElectroPhysiologyReactionRelaxationBackward =
 			SimpleDynamics<RelaxationOfAllReactionsBackward<RealBody, SolidParticles, Solid>>;
-		/**
-		 * @class ApplyStimulusCurrents
-		 * @brief Apply specific stimulus currents
-		 * This is a abstract class to be override for case specific implementations.
-		 */
-		class ApplyStimulusCurrents : public ParticleDynamicsSimple,
-									  public ElectroPhysiologyDataDelegateSimple
-		{
-		public:
-			explicit ApplyStimulusCurrents(RealBody &real_body)
-				: ParticleDynamicsSimple(real_body),
-				  ElectroPhysiologyDataDelegateSimple(real_body) {}
-			virtual ~ApplyStimulusCurrents(){};
-		};
 	}
 }
 #endif // ELECTRO_PHYSIOLOGY_H

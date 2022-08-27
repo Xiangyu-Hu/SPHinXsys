@@ -193,7 +193,14 @@ class ApplyStimulusCurrentSI
 protected:
 	size_t voltage_;
 
-	void Update(size_t index_i, Real dt) override
+public:
+	explicit ApplyStimulusCurrentSI(SPHBody &sph_body)
+		: electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
+	{
+		voltage_ = material_->SpeciesIndexMap()["Voltage"];
+	};
+
+	void update(size_t index_i, Real dt)
 	{
 		if (-30.0 * length_scale <= pos_[index_i][0] && pos_[index_i][0] <= -15.0 * length_scale)
 		{
@@ -206,13 +213,6 @@ protected:
 			}
 		}
 	};
-
-public:
-	explicit ApplyStimulusCurrentSI(SolidBody &muscle)
-		: electro_physiology::ElectroPhysiologyInitialCondition(muscle)
-	{
-		voltage_ = material_->SpeciesIndexMap()["Voltage"];
-	};
 };
 /**
  * application dependent initial condition
@@ -223,7 +223,14 @@ class ApplyStimulusCurrentSII
 protected:
 	size_t voltage_;
 
-	void Update(size_t index_i, Real dt) override
+public:
+	explicit ApplyStimulusCurrentSII(SPHBody &sph_body)
+		: electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
+	{
+		voltage_ = material_->SpeciesIndexMap()["Voltage"];
+	};
+
+	void update(size_t index_i, Real dt)
 	{
 		if (0.0 <= pos_[index_i][0] && pos_[index_i][0] <= 6.0 * length_scale)
 		{
@@ -235,13 +242,6 @@ protected:
 				}
 			}
 		}
-	};
-
-public:
-	explicit ApplyStimulusCurrentSII(SolidBody &muscle)
-		: electro_physiology::ElectroPhysiologyInitialCondition(muscle)
-	{
-		voltage_ = material_->SpeciesIndexMap()["Voltage"];
 	};
 };
 /**
@@ -418,8 +418,8 @@ int main(int ac, char *av[])
 	electro_physiology::ElectroPhysiologyReactionRelaxationForward reaction_relaxation_forward(physiology_heart);
 	electro_physiology::ElectroPhysiologyReactionRelaxationBackward reaction_relaxation_backward(physiology_heart);
 	//	Apply the Iron stimulus.
-	ApplyStimulusCurrentSI apply_stimulus_s1(physiology_heart);
-	ApplyStimulusCurrentSII apply_stimulus_s2(physiology_heart);
+	SimpleDynamics<ApplyStimulusCurrentSI> apply_stimulus_s1(physiology_heart);
+	SimpleDynamics<ApplyStimulusCurrentSII> apply_stimulus_s2(physiology_heart);
 	// Active mechanics.
 	solid_dynamics::CorrectConfiguration correct_configuration_contraction(mechanics_body_inner);
 	observer_dynamics::CorrectInterpolationKernelWeights correct_kernel_weights_for_interpolation(mechanics_body_contact);

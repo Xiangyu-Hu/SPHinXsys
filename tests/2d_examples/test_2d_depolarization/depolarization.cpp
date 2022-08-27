@@ -55,16 +55,16 @@ class DepolarizationInitialCondition
 protected:
 	size_t voltage_;
 
-	void Update(size_t index_i, Real dt) override
-	{
-		species_n_[voltage_][index_i] = exp(-4.0 * ((pos_[index_i][0] - 1.0) * (pos_[index_i][0] - 1.0) + pos_[index_i][1] * pos_[index_i][1]));
-	};
-
 public:
-	explicit DepolarizationInitialCondition(SolidBody &muscle)
-		: electro_physiology::ElectroPhysiologyInitialCondition(muscle)
+	explicit DepolarizationInitialCondition(SPHBody &sph_body)
+		: electro_physiology::ElectroPhysiologyInitialCondition(sph_body)
 	{
 		voltage_ = material_->SpeciesIndexMap()["Voltage"];
+	};
+
+	void update(size_t index_i, Real dt)
+	{
+		species_n_[voltage_][index_i] = exp(-4.0 * ((pos_[index_i][0] - 1.0) * (pos_[index_i][0] - 1.0) + pos_[index_i][1] * pos_[index_i][1]));
 	};
 };
 //----------------------------------------------------------------------
@@ -99,7 +99,7 @@ int main()
 	//	Define the main numerical methods used in the simulation.
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
-	DepolarizationInitialCondition initialization(muscle_body);
+	SimpleDynamics<DepolarizationInitialCondition> initialization(muscle_body);
 	solid_dynamics::CorrectConfiguration correct_configuration(muscle_body_inner_relation);
 	electro_physiology::GetElectroPhysiologyTimeStepSize get_time_step_size(muscle_body);
 	// Diffusion process for diffusion body.

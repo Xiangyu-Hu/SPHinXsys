@@ -100,13 +100,4 @@ namespace SPH
 		SPHBody &sph_body, DiffusionReaction<Solid> *diffusion_reaction_material)
 		: DiffusionReactionParticles<SolidParticles>(sph_body, diffusion_reaction_material) {}
 	//=================================================================================================//
-	namespace electro_physiology
-	{
-		//=================================================================================================//
-		ElectroPhysiologyInitialCondition::ElectroPhysiologyInitialCondition(RealBody &real_body)
-			: ParticleDynamicsSimple(real_body),
-			  ElectroPhysiologyDataDelegateSimple(real_body),
-			  pos_(particles_->pos_), species_n_(particles_->species_n_) {}
-		//=================================================================================================//
-	}
 }
