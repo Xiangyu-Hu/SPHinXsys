@@ -108,9 +108,9 @@ int main()
 	//evaluation of density by summation approach
 	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_block_complex);
 	//time step size without considering sound wave speed
-	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_block, U_f);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	//time step size with considering sound wave speed
-	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 
 	//pressure relaxation using verlet time stepping
 	fluid_dynamics::PressureRelaxationRiemannWithWall pressure_relaxation(water_block_complex);

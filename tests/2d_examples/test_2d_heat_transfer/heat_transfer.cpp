@@ -258,9 +258,9 @@ int main()
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensitySummationComplex update_density_by_summation(fluid_body_complex);
 	/** Time step size without considering sound wave speed. */
-	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step(thermofluid_body, U_f);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step(thermofluid_body, U_f);
 	/** Time step size with considering sound wave speed. */
-	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step(thermofluid_body);
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step(thermofluid_body);
 	/** Time step size calculation. */
 	GetDiffusionTimeStepSize<FluidBody, FluidParticles, WeaklyCompressibleFluid> get_thermal_time_step(thermofluid_body);
 	/** Diffusion process between two diffusion bodies. */

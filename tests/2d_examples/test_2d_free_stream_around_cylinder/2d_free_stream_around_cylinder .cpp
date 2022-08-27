@@ -115,9 +115,9 @@ int main(int ac, char *av[])
 	water_block.addBodyStateForRecording<Real>("Pressure");
 	water_block.addBodyStateForRecording<int>("SurfaceIndicator");
 	/** Time step size without considering sound wave speed. */
-	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_block, U_f);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
-	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** modify the velocity of boundary particles with free-stream velocity. */
 	SimpleDynamics<fluid_dynamics::FreeStreamBoundaryVelocityCorrection> velocity_boundary_condition_constraint(water_block);
 	/** Pressure relaxation. */

@@ -112,9 +112,9 @@ int main(int ac, char *av[])
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensitySummationInner update_density_by_summation(water_block_inner);
 	/** Time step size without considering sound wave speed. */
-	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_block, U_f);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
-	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation algorithm by using verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. 
 	  * The other reason is that we are using transport velocity formulation, 

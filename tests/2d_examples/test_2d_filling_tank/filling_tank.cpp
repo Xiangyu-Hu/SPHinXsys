@@ -134,8 +134,8 @@ int main()
 	/** We can output a method-specific particle data for debug */
 	water_body.addBodyStateForRecording<Real>("PositionDivergence");
 	water_body.addBodyStateForRecording<int>("SurfaceIndicator");
-	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_body, U_f);
-	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_body);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_body, U_f);
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);
 	fluid_dynamics::PressureRelaxationRiemannWithWall pressure_relaxation(water_body_complex);
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_body_complex);
 	//----------------------------------------------------------------------

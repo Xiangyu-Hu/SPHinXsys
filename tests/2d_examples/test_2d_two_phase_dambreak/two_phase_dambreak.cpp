@@ -65,11 +65,11 @@ int main()
 	fluid_dynamics::TransportVelocityCorrectionComplex
 		air_transport_correction(air_water_complex, air_wall_contact);
 	/** Time step size without considering sound wave speed. */
-	fluid_dynamics::AdvectionTimeStepSize get_water_advection_time_step_size(water_block, U_max);
-	fluid_dynamics::AdvectionTimeStepSize get_air_advection_time_step_size(air_block, U_max);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_max);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_air_advection_time_step_size(air_block, U_max);
 	/** Time step size with considering sound wave speed. */
-	fluid_dynamics::AcousticTimeStepSize get_water_time_step_size(water_block);
-	fluid_dynamics::AcousticTimeStepSize get_air_time_step_size(air_block);
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_water_time_step_size(water_block);
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_air_time_step_size(air_block);
 	/** Pressure relaxation for water by using position verlet time stepping. */
 	fluid_dynamics::PressureRelaxationRiemannWithWall
 		water_pressure_relaxation(water_air_complex.inner_relation_, water_wall_contact);
