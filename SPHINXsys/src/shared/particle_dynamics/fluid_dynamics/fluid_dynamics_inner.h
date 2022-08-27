@@ -1,32 +1,32 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * --------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+ * and HU1527/12-1.															*
+ *                                                                           *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * --------------------------------------------------------------------------*/
 /**
-* @file 	fluid_dynamics_inner.h
-* @brief 	Here, we define the algorithm classes for fluid dynamics within the body. 
-* @details 	We consider here weakly compressible fluids. The algorithms may be
-* 			different for free surface flow and the one without free surface.   
-* @author	Chi ZHang and Xiangyu Hu
-*/
+ * @file 	fluid_dynamics_inner.h
+ * @brief 	Here, we define the algorithm classes for fluid dynamics within the body.
+ * @details 	We consider here weakly compressible fluids. The algorithms may be
+ * 			different for free surface flow and the one without free surface.
+ * @author	Chi ZHang and Xiangyu Hu
+ */
 
 #ifndef FLUID_DYNAMICS_INNER_H
 #define FLUID_DYNAMICS_INNER_H
@@ -62,9 +62,9 @@ namespace SPH
 		};
 
 		/**
-		* @class DensitySummationInner
-		* @brief  computing density by summation
-		*/
+		 * @class DensitySummationInner
+		 * @brief  computing density by summation
+		 */
 		class DensitySummationInner : public InteractionDynamicsWithUpdate, public FluidDataInner
 		{
 		public:
@@ -136,55 +136,59 @@ namespace SPH
 		};
 
 		/**
-		* @class AcousticTimeStepSize
-		* @brief Computing the acoustic time step size
-		*/
-		class AcousticTimeStepSize : public ParticleDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
+		 * @class AcousticTimeStepSize
+		 * @brief Computing the acoustic time step size
+		 */
+		class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
 		{
-		public:
-			explicit AcousticTimeStepSize(FluidBody &fluid_body);
-			virtual ~AcousticTimeStepSize(){};
-
 		protected:
 			StdLargeVec<Real> &rho_, &p_;
 			StdLargeVec<Vecd> &vel_;
 			Real smoothing_length_;
-			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
-			Real OutputResult(Real reduced_value) override;
+
+		public:
+			explicit AcousticTimeStepSize(SPHBody &sph_body);
+			virtual ~AcousticTimeStepSize(){};
+
+			Real reduce(size_t index_i, Real dt = 0.0);
+			virtual Real outputResult(Real reduced_value) override;
 		};
 
 		/**
-		* @class AdvectionTimeStepSize
-		* @brief Computing the advection time step size
-		*/
-		class AdvectionTimeStepSize : public ParticleDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
+		 * @class AdvectionTimeStepSizeForImplicitViscosity
+		 * @brief Computing the advection time step size when viscosity is handled implicitly
+		 */
+		class AdvectionTimeStepSizeForImplicitViscosity : public LocalDynamicsReduce<Real, ReduceMax>, public FluidDataSimple
 		{
-		public:
-			explicit AdvectionTimeStepSize(FluidBody &fluid_body, Real U_max);
-			virtual ~AdvectionTimeStepSize(){};
-
 		protected:
 			Real smoothing_length_;
 			StdLargeVec<Vecd> &vel_;
-			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
-			Real OutputResult(Real reduced_value) override;
+
+		public:
+			explicit AdvectionTimeStepSizeForImplicitViscosity(SPHBody &sph_body, Real U_max);
+			virtual ~AdvectionTimeStepSizeForImplicitViscosity(){};
+
+			Real reduce(size_t index_i, Real dt = 0.0);
+			virtual Real outputResult(Real reduced_value) override;
 		};
 
 		/**
-		* @class AdvectionTimeStepSizeForImplicitViscosity
-		* @brief Computing the advection time step size when viscosity is handled implicitly
-		*/
-		class AdvectionTimeStepSizeForImplicitViscosity : public AdvectionTimeStepSize
+		 * @class AdvectionTimeStepSize
+		 * @brief Computing the advection time step size
+		 */
+		class AdvectionTimeStepSize : public AdvectionTimeStepSizeForImplicitViscosity
 		{
 		public:
-			explicit AdvectionTimeStepSizeForImplicitViscosity(FluidBody &fluid_body, Real U_max);
-			virtual ~AdvectionTimeStepSizeForImplicitViscosity(){};
+			explicit AdvectionTimeStepSize(SPHBody &sph_body, Real U_max);
+			virtual ~AdvectionTimeStepSize(){};
+
+			Real reduce(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
-		* @class VorticityInner
-		* @brief  compute vorticity in the fluid field
-		*/
+		 * @class VorticityInner
+		 * @brief  compute vorticity in the fluid field
+		 */
 		class VorticityInner : public InteractionDynamics, public FluidDataInner
 		{
 		public:
@@ -252,7 +256,7 @@ namespace SPH
 
 		/**
 		 * @class BaseDensityRelaxation
-		 * @brief Abstract base class for all density relaxation schemes 
+		 * @brief Abstract base class for all density relaxation schemes
 		 */
 		class BaseDensityRelaxation : public BaseRelaxation
 		{
@@ -286,9 +290,9 @@ namespace SPH
 		using DensityRelaxationDissipativeRiemannInner = BaseDensityRelaxationInner<DissipativeRiemannSolver>;
 
 		/**
-		* @class PressureRelaxationInnerOldroyd_B
-		* @brief Pressure relaxation scheme with the mostly used Riemann solver.
-		*/
+		 * @class PressureRelaxationInnerOldroyd_B
+		 * @brief Pressure relaxation scheme with the mostly used Riemann solver.
+		 */
 		class PressureRelaxationInnerOldroyd_B : public PressureRelaxationDissipativeRiemannInner
 		{
 		public:
@@ -302,9 +306,9 @@ namespace SPH
 		};
 
 		/**
-		* @class DensityRelaxationInnerOldroyd_B
-		* @brief Density relaxation scheme with the mostly used Riemann solver.
-		*/
+		 * @class DensityRelaxationInnerOldroyd_B
+		 * @brief Density relaxation scheme with the mostly used Riemann solver.
+		 */
 		class DensityRelaxationInnerOldroyd_B : public DensityRelaxationDissipativeRiemannInner
 		{
 		public:
@@ -320,4 +324,4 @@ namespace SPH
 		};
 	}
 }
-#endif //FLUID_DYNAMICS_INNER_H
+#endif // FLUID_DYNAMICS_INNER_H

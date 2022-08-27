@@ -21,10 +21,10 @@
  *                                                                              *
  * -----------------------------------------------------------------------------*/
 /**
-* @file particle_iterators.h
-* @brief This is for the base functions for particle iterator.
-* @author  Xiangyu Hu
-*/
+ * @file particle_iterators.h
+ * @brief This is for the base functions for particle iterator.
+ * @author  Xiangyu Hu
+ */
 
 #ifndef PARTICLE_ITERATORS_H
 #define PARTICLE_ITERATORS_H
@@ -38,8 +38,8 @@ namespace SPH
 	//----------------------------------------------------------------------
 	//	Body-wise iterators (for sequential and parallel computing).
 	//----------------------------------------------------------------------
-    
-    template <class LocalDynamics>
+
+	template <class LocalDynamics>
 	void particle_for(const size_t &all_real_particles, LocalDynamics &local_dynamics,
 					  void (LocalDynamics::*func_ptr)(size_t, Real), Real dt = 0.0)
 	{
@@ -62,5 +62,37 @@ namespace SPH
 			},
 			ap);
 	};
+
+	template <class ReturnType, typename ReduceOperation, class LocalDynamics>
+	ReturnType particle_reduce(const size_t &all_real_particles, ReturnType temp, ReduceOperation &reduce_operation,
+							   LocalDynamics &local_dynamics, ReturnType (LocalDynamics::*func_ptr)(size_t, Real),
+							   Real dt = 0.0)
+	{
+		for (size_t i = 0; i < all_real_particles; ++i)
+		{
+			temp = reduce_operation(temp, (local_dynamics.*func_ptr)(i, dt));
+		}
+		return temp;
+	};
+
+	template <class ReturnType, typename ReduceOperation, class LocalDynamics>
+	ReturnType particle_parallel_reduce(const size_t &all_real_particles, ReturnType temp,  ReduceOperation &reduce_operation,
+										LocalDynamics &local_dynamics, ReturnType (LocalDynamics::*func_ptr)(size_t, Real),
+										Real dt = 0.0)
+	{
+		return parallel_reduce(
+			IndexRange(0, all_real_particles),
+			temp, [&](const IndexRange &r, ReturnType temp0) -> ReturnType
+			{
+				for (size_t i = r.begin(); i != r.end(); ++i)
+				{
+					temp0 = reduce_operation(temp0, (local_dynamics.*func_ptr)(i, dt));
+				}
+				return temp0; },
+			[&](ReturnType x, ReturnType y) -> ReturnType
+			{
+				return reduce_operation(x, y);
+			});
+	};
 }
-#endif //PARTICLE_ITERATORS_H
+#endif // PARTICLE_ITERATORS_H

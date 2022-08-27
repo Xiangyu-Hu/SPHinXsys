@@ -234,5 +234,39 @@ namespace SPH
 			particle_parallel_for(dynamics_range_.LoopRange(), local_dynamics_, &LocalDynamics::update, dt);
 		};
 	};
+
+	template <class LocalDynamics, class DynamicsRange = SPHBody>
+	class ReduceDynamics : public ParticleDynamics<typename LocalDynamics::ReduceReturnType>
+	{
+		using ReturnType = typename LocalDynamics::ReduceReturnType;
+		DynamicsRange &dynamics_range_;
+		LocalDynamics local_dynamics_;
+
+	public:
+		template <typename... ConstructorArgs>
+		ReduceDynamics(DynamicsRange &dynamics_range, ConstructorArgs &&...args)
+			: ParticleDynamics<ReturnType>(dynamics_range.getSPHBody()),
+			  dynamics_range_(dynamics_range),
+			  local_dynamics_(dynamics_range.getSPHBody(), std::forward<ConstructorArgs>(args)...){};
+		virtual ~ReduceDynamics(){};
+
+		LocalDynamics &getLocalDynamics() { return local_dynamics_; };
+
+		virtual ReturnType exec(Real dt = 0.0) override
+		{
+			local_dynamics_.setupDynamics(dt);
+			ReturnType temp = particle_reduce(dynamics_range_.LoopRange(), local_dynamics_.InitialReference(), 
+											  local_dynamics_.getReduceOperation(),local_dynamics_, &LocalDynamics::reduce, dt);
+			return local_dynamics_.outputResult(temp);
+		};
+
+		virtual ReturnType parallel_exec(Real dt = 0.0) override
+		{
+			local_dynamics_.setupDynamics(dt);
+			ReturnType temp = particle_parallel_reduce(dynamics_range_.LoopRange(), local_dynamics_.InitialReference(),
+													   local_dynamics_.getReduceOperation(), local_dynamics_, &LocalDynamics::reduce, dt);
+			return local_dynamics_.outputResult(temp);
+		};
+	};
 }
 #endif // PARTICLE_DYNAMICS_ALGORITHMS_H

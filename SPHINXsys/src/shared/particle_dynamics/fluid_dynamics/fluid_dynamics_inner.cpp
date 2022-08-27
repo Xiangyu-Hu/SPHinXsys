@@ -62,7 +62,7 @@ namespace SPH
 			{
 				size_t index_j = inner_neighborhood.j_[n];
 
-				//viscous force
+				// viscous force
 				vel_derivative = (vel_i - vel_[index_j]) / (inner_neighborhood.r_ij_[n] + 0.01 * smoothing_length_);
 				acceleration += 2.0 * mu_ * vel_derivative * Vol_[index_j] * inner_neighborhood.dW_ij_[n] / rho_i;
 			}
@@ -83,7 +83,7 @@ namespace SPH
 				Vecd &e_ij = inner_neighborhood.e_ij_[n];
 				Real r_ij = inner_neighborhood.r_ij_[n];
 
-				/** The following viscous force is given in Monaghan 2005 (Rep. Prog. Phys.), it seems that 
+				/** The following viscous force is given in Monaghan 2005 (Rep. Prog. Phys.), it seems that
 				 * this formulation is more accurate than the previous one for Taylor-Green-Vortex flow. */
 				Real v_r_ij = dot(vel_i - vel_[index_j], r_ij * e_ij);
 				Real eta_ij = 8.0 * mu_ * v_r_ij / (r_ij * r_ij + 0.01 * smoothing_length_);
@@ -119,7 +119,7 @@ namespace SPH
 				size_t index_j = inner_neighborhood.j_[n];
 				Vecd nablaW_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
 
-				//acceleration for transport velocity
+				// acceleration for transport velocity
 				acceleration_trans -= 2.0 * p_background_ * Vol_[index_j] * nablaW_ij / rho_i;
 			}
 
@@ -127,56 +127,52 @@ namespace SPH
 				pos_[index_i] += acceleration_trans * dt * dt * 0.5;
 		}
 		//=================================================================================================//
-		AcousticTimeStepSize::AcousticTimeStepSize(FluidBody &fluid_body)
-			: ParticleDynamicsReduce<Real, ReduceMax>(fluid_body),
-			  FluidDataSimple(fluid_body), rho_(particles_->rho_),
+		AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body)
+			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
+			  FluidDataSimple(sph_body), rho_(particles_->rho_),
 			  p_(particles_->p_), vel_(particles_->vel_),
-			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength())
-		{
-			initial_reference_ = 0.0;
-		}
+			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
-		Real AcousticTimeStepSize::ReduceFunction(size_t index_i, Real dt)
+		Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 		{
 			return material_->getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
 		}
 		//=================================================================================================//
-		Real AcousticTimeStepSize::OutputResult(Real reduced_value)
+		Real AcousticTimeStepSize::outputResult(Real reduced_value)
 		{
-			//since the particle does not change its configuration in pressure relaxation step
-			//I chose a time-step size according to Eulerian method
+			// since the particle does not change its configuration in pressure relaxation step
+			// I chose a time-step size according to Eulerian method
 			return 0.6 * smoothing_length_ / (reduced_value + TinyReal);
 		}
 		//=================================================================================================//
-		AdvectionTimeStepSize::AdvectionTimeStepSize(FluidBody &fluid_body, Real U_max)
-			: ParticleDynamicsReduce<Real, ReduceMax>(fluid_body),
-			  FluidDataSimple(fluid_body), vel_(particles_->vel_),
-			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength())
-		{
-			Real rho_0 = material_->ReferenceDensity();
-			Real mu = material_->ReferenceViscosity();
-			Real viscous_speed = mu / rho_0 / smoothing_length_;
-			Real u_max = SMAX(viscous_speed, U_max);
-			initial_reference_ = u_max * u_max;
-		}
+		AdvectionTimeStepSizeForImplicitViscosity::
+			AdvectionTimeStepSizeForImplicitViscosity(SPHBody &sph_body, Real U_max)
+			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, U_max * U_max),
+			  FluidDataSimple(sph_body), vel_(particles_->vel_),
+			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()){}
 		//=================================================================================================//
-		Real AdvectionTimeStepSize::ReduceFunction(size_t index_i, Real dt)
+		Real AdvectionTimeStepSizeForImplicitViscosity::reduce(size_t index_i, Real dt)
 		{
 			return vel_[index_i].normSqr();
 		}
 		//=================================================================================================//
-		Real AdvectionTimeStepSize::OutputResult(Real reduced_value)
+		Real AdvectionTimeStepSizeForImplicitViscosity::outputResult(Real reduced_value)
 		{
 			Real speed_max = sqrt(reduced_value);
 			particles_->speed_max_ = speed_max;
 			return 0.25 * smoothing_length_ / (speed_max + TinyReal);
 		}
 		//=================================================================================================//
-		AdvectionTimeStepSizeForImplicitViscosity::
-			AdvectionTimeStepSizeForImplicitViscosity(FluidBody &fluid_body, Real U_max)
-			: AdvectionTimeStepSize(fluid_body, U_max)
+		AdvectionTimeStepSize::AdvectionTimeStepSize(SPHBody &sph_body, Real U_max)
+			: AdvectionTimeStepSizeForImplicitViscosity(sph_body, U_max)
 		{
-			initial_reference_ = U_max * U_max;
+			Real viscous_speed = material_->ReferenceViscosity() / material_->ReferenceDensity() / smoothing_length_;
+			reference_ = SMAX(viscous_speed * viscous_speed, reference_);
+		}
+		//=================================================================================================//
+		Real AdvectionTimeStepSize::reduce(size_t index_i, Real dt)
+		{
+			return AdvectionTimeStepSizeForImplicitViscosity::reduce(index_i, dt);
 		}
 		//=================================================================================================//
 		VorticityInner::
@@ -293,7 +289,7 @@ namespace SPH
 				size_t index_j = inner_neighborhood.j_[n];
 				Vecd nablaW_ij = inner_neighborhood.dW_ij_[n] * inner_neighborhood.e_ij_[n];
 
-				//elastic force
+				// elastic force
 				acceleration += (tau_i + tau_[index_j]) * nablaW_ij * Vol_[index_j] / rho_i;
 			}
 

@@ -50,7 +50,6 @@ namespace SPH
 		explicit BaseLocalDynamics(SPHBody &sph_body) : sph_body_(sph_body){};
 		virtual ~BaseLocalDynamics(){};
 
-		typedef ReturnType LocalDynamicsReturnType;
 		void setBodyUpdated() { sph_body_.setNewlyUpdated(); };
 		virtual ReturnType setupDynamics(Real dt = 0.0) = 0; //setup global parameters
 	};
@@ -85,6 +84,7 @@ namespace SPH
 		virtual ~LocalDynamicsReduce(){};
 
 		using ReduceReturnType = ReturnType;
+		using ReduceOperationType = ReduceOperation;
 		ReturnType InitialReference() { return reference_; };
 		std::string QuantityName() { return quantity_name_; };
 		ReduceOperation &getReduceOperation() { return operation_; };
