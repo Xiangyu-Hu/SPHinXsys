@@ -340,7 +340,7 @@ int main(int ac, char *av[])
 	 * Solid dynamics.
 	 */
 	/** Time step size calculation. */
-	solid_dynamics::AcousticTimeStepSize fish_body_computing_time_step_size(fish_body);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> fish_body_computing_time_step_size(fish_body);
 	/** Process of stress relaxation. */
 	solid_dynamics::StressRelaxationFirstHalf
 		fish_body_stress_relaxation_first_half(fish_body_inner);

@@ -124,7 +124,7 @@ int main()
 	thin_structure_dynamics::ShellCorrectConfiguration
 		corrected_configuration(cylinder_body_inner);
 	/** Time step size calculation. */
-	thin_structure_dynamics::ShellAcousticTimeStepSize computing_time_step_size(cylinder_body);
+	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);
 	/** stress relaxation. */
 	thin_structure_dynamics::ShellStressRelaxationFirstHalf
 		stress_relaxation_first_half(cylinder_body_inner);

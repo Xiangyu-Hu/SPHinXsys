@@ -161,7 +161,7 @@ int main(int ac, char *av[])
 	thin_structure_dynamics::ShellCorrectConfiguration
 		corrected_configuration(plate_body_inner);
 	/** Time step size calculation. */
-	thin_structure_dynamics::ShellAcousticTimeStepSize computing_time_step_size(plate_body);
+	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
 	/** active-passive stress relaxation. */
 	thin_structure_dynamics::ShellStressRelaxationFirstHalf
 		stress_relaxation_first_half(plate_body_inner);

@@ -94,7 +94,7 @@ int main(int ac, char *av[])
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
 	SimpleDynamics<InitialCondition> initial_condition(column);
 	solid_dynamics::CorrectConfiguration corrected_configuration(column_inner);
-	solid_dynamics::AcousticTimeStepSize computing_time_step_size(column, 0.3);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.3);
 	//----------------------------------------------------------------------
 	//	Output
 	//----------------------------------------------------------------------

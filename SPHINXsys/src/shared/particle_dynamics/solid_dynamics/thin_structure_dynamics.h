@@ -64,20 +64,21 @@ namespace SPH
 		 * @class ShellAcousticTimeStepSize
 		 * @brief Computing the acoustic time step size for shell
 		 */
-		class ShellAcousticTimeStepSize : public ParticleDynamicsReduce<Real, ReduceMin>,
+		class ShellAcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMin>,
 										  public ShellDataSimple
 		{
-		public:
-			explicit ShellAcousticTimeStepSize(SolidBody &sph_body, Real CFL = 0.6);
-			virtual ~ShellAcousticTimeStepSize(){};
-
 		protected:
 			StdLargeVec<Vecd> &vel_, &acc_, &angular_vel_, &dangular_vel_dt_;
 			StdLargeVec<Real> &thickness_;
 			Real rho0_, physical_viscosity_, E0_, nu_, c0_;
 			Real smoothing_length_;
 			Real CFL_;
-			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
+
+		public:
+			explicit ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL = 0.6);
+			virtual ~ShellAcousticTimeStepSize(){};
+
+			Real reduce(size_t index_i, Real dt = 0.0);
 		};
 
 		/**

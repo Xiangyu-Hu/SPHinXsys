@@ -54,18 +54,18 @@ namespace SPH
 		 * @brief relaxation dynamics for particle initialization
 		 * computing the square of time step size
 		 */
-		class GetTimeStepSizeSquare : public ParticleDynamicsReduce<Real, ReduceMax>,
+		class GetTimeStepSizeSquare : public LocalDynamicsReduce<Real, ReduceMax>,
 									  public RelaxDataDelegateSimple
 		{
+		protected:
+			StdLargeVec<Vecd> &acc_;
+			Real h_ref_;
 		public:
 			explicit GetTimeStepSizeSquare(SPHBody &sph_body);
 			virtual ~GetTimeStepSizeSquare(){};
 
-		protected:
-			StdLargeVec<Vecd> &acc_;
-			Real h_ref_;
-			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
-			Real OutputResult(Real reduced_value) override;
+			Real reduce(size_t index_i, Real dt = 0.0);
+			virtual Real outputResult(Real reduced_value);
 		};
 
 		/**
@@ -219,7 +219,7 @@ namespace SPH
 			virtual ~RelaxationStepInner(){};
 
 			UniquePtr<RelaxationAccelerationInner> relaxation_acceleration_inner_;
-			GetTimeStepSizeSquare get_time_step_square_;
+			ReduceDynamics<GetTimeStepSizeSquare> get_time_step_square_;
 			SimpleDynamics<UpdateParticlePosition> update_particle_position_;
 			ShapeSurfaceBounding surface_bounding_;
 
@@ -263,7 +263,7 @@ namespace SPH
 			virtual ~RelaxationStepComplex(){};
 
 			UniquePtr<RelaxationAccelerationComplex> relaxation_acceleration_complex_;
-			GetTimeStepSizeSquare get_time_step_square_;
+			ReduceDynamics<GetTimeStepSizeSquare> get_time_step_square_;
 			SimpleDynamics<UpdateParticlePosition> update_particle_position_;
 			ShapeSurfaceBounding surface_bounding_;
 
@@ -327,17 +327,17 @@ namespace SPH
 				void update(size_t index_i, Real dt = 0.0);
 			};
 
-			class PredictionConvergenceCheck : public ParticleDynamicsReduce<bool, ReduceAND>,
+			class PredictionConvergenceCheck : public LocalDynamicsReduce<bool, ReduceAND>,
 											   public RelaxDataDelegateSimple
 			{
+			protected:
+				const Real convergence_criterion_;
+				StdLargeVec<Vecd> &n_, &n_temp_;
 			public:
 				PredictionConvergenceCheck(SPHBody &sph_body, Real convergence_criterion);
 				virtual ~PredictionConvergenceCheck(){};
 
-			protected:
-				const Real convergence_criterion_;
-				StdLargeVec<Vecd> &n_, &n_temp_;
-				bool ReduceFunction(size_t index_i, Real dt = 0.0) override;
+				bool reduce(size_t index_i, Real dt = 0.0);
 			};
 
 			class ConsistencyCorrection : public InteractionDynamics, public RelaxDataDelegateInner
@@ -356,16 +356,16 @@ namespace SPH
 				virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			};
 
-			class ConsistencyUpdatedCheck : public ParticleDynamicsReduce<bool, ReduceAND>,
+			class ConsistencyUpdatedCheck : public LocalDynamicsReduce<bool, ReduceAND>,
 											public RelaxDataDelegateSimple
 			{
+			protected:
+				StdLargeVec<int> &updated_indicator_;
 			public:
 				explicit ConsistencyUpdatedCheck(SPHBody &sph_body);
 				virtual ~ConsistencyUpdatedCheck(){};
 
-			protected:
-				StdLargeVec<int> &updated_indicator_;
-				bool ReduceFunction(size_t index_i, Real dt = 0.0) override;
+				bool reduce(size_t index_i, Real dt = 0.0);
 			};
 
 			class SmoothingNormal : public ParticleSmoothing<Vecd>
@@ -379,9 +379,9 @@ namespace SPH
 			};
 
 			SimpleDynamics<NormalPrediction> normal_prediction_;
-			PredictionConvergenceCheck normal_prediction_convergence_check_;
+			ReduceDynamics<PredictionConvergenceCheck> normal_prediction_convergence_check_;
 			ConsistencyCorrection consistency_correction_;
-			ConsistencyUpdatedCheck consistency_updated_check_;
+			ReduceDynamics<ConsistencyUpdatedCheck> consistency_updated_check_;
 			SmoothingNormal smoothing_normal_;
 		};
 

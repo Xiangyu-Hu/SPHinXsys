@@ -103,7 +103,7 @@ int main(int ac, char *av[])
 	/** Kernel correction. */
 	solid_dynamics::CorrectConfiguration free_cube_corrected_configuration(free_cube_inner);
 	/** Time step size. */
-	solid_dynamics::AcousticTimeStepSize free_cube_get_time_step_size(free_cube);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_cube_get_time_step_size(free_cube);
 	/** stress relaxation for the solid body. */
 	solid_dynamics::StressRelaxationFirstHalf free_cube_stress_relaxation_first_half(free_cube_inner);
 	solid_dynamics::StressRelaxationSecondHalf free_cube_stress_relaxation_second_half(free_cube_inner);

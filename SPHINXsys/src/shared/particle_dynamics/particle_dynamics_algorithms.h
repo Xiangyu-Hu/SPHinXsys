@@ -43,53 +43,6 @@
 namespace SPH
 {
 	/**
-	 * @class ParticleDynamicsReduce
-	 * @brief Base abstract class for reduce
-	 */
-	template <class ReturnType, typename ReduceOperation>
-	class ParticleDynamicsReduce : public ParticleDynamics<ReturnType>
-	{
-	public:
-		explicit ParticleDynamicsReduce(SPHBody &sph_body)
-			: ParticleDynamics<ReturnType>(sph_body), quantity_name_("ReducedQuantity"), initial_reference_(),
-			  functor_reduce_function_(std::bind(&ParticleDynamicsReduce::ReduceFunction, this, _1, _2)){};
-		virtual ~ParticleDynamicsReduce(){};
-
-		ReturnType InitialReference() { return initial_reference_; };
-		std::string QuantityName() { return quantity_name_; };
-
-		virtual ReturnType exec(Real dt = 0.0) override
-		{
-			size_t total_real_particles = this->base_particles_->total_real_particles_;
-			this->setBodyUpdated();
-			SetupReduce();
-			ReturnType temp = ReduceIterator(total_real_particles,
-											 initial_reference_, functor_reduce_function_, reduce_operation_, dt);
-			return OutputResult(temp);
-		};
-		virtual ReturnType parallel_exec(Real dt = 0.0) override
-		{
-			size_t total_real_particles = this->base_particles_->total_real_particles_;
-			this->setBodyUpdated();
-			SetupReduce();
-			ReturnType temp = ReduceIterator_parallel(total_real_particles,
-													  initial_reference_, functor_reduce_function_, reduce_operation_, dt);
-			return this->OutputResult(temp);
-		};
-
-	protected:
-		ReduceOperation reduce_operation_;
-		std::string quantity_name_;
-
-		/** initial or reference value */
-		ReturnType initial_reference_;
-		virtual void SetupReduce(){};
-		virtual ReturnType ReduceFunction(size_t index_i, Real dt = 0.0) = 0;
-		virtual ReturnType OutputResult(ReturnType reduced_value) { return reduced_value; };
-		ReduceFunctor<ReturnType> functor_reduce_function_;
-	};
-
-	/**
 	 * @class InteractionDynamics
 	 * @brief This is the class for particle interaction with other particles
 	 */

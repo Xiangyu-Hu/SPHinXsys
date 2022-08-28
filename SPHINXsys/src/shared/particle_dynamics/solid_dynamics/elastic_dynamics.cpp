@@ -15,17 +15,14 @@ namespace SPH
 	namespace solid_dynamics
 	{
 		//=================================================================================================//
-		AcousticTimeStepSize::AcousticTimeStepSize(SolidBody &solid_body, Real CFL)
-			: ParticleDynamicsReduce<Real, ReduceMin>(solid_body),
-			  ElasticSolidDataSimple(solid_body), CFL_(CFL),
+		AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body, Real CFL)
+			: LocalDynamicsReduce<Real, ReduceMin>(sph_body, Real(MaxRealNumber)),
+			  ElasticSolidDataSimple(sph_body), CFL_(CFL),
 			  vel_(particles_->vel_), acc_(particles_->acc_),
-			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength()),
-			  c0_(material_->ReferenceSoundSpeed())
-		{
-			initial_reference_ = DBL_MAX;
-		}
+			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
+			  c0_(material_->ReferenceSoundSpeed()) {}
 		//=================================================================================================//
-		Real AcousticTimeStepSize::ReduceFunction(size_t index_i, Real dt)
+		Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 		{
 			// since the particle does not change its configuration in pressure relaxation step
 			// I chose a time-step size according to Eulerian method

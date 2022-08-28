@@ -210,7 +210,7 @@ int main(int ac, char *av[])
 	observer_dynamics::InterpolatingAQuantity<Vecd>
 		interpolation_particle_position(physiology_heart_contact, "Position", "Position");
 	/** Time step size calculation. */
-	solid_dynamics::AcousticTimeStepSize get_mechanics_time_step(mechanics_heart);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> get_mechanics_time_step(mechanics_heart);
 	/** active and passive stress relaxation. */
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(mechanics_heart_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(mechanics_heart_inner);

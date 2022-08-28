@@ -95,21 +95,18 @@ namespace SPH
 			dmom_dt_prior_[index_i] += rho_i * acceleration;
 		}
 		//=================================================================================================//
-		AcousticTimeStepSize::AcousticTimeStepSize(EulerianFluidBody &fluid_body)
-			: ParticleDynamicsReduce<Real, ReduceMax>(fluid_body),
-			  EulerianWeaklyCompressibleFluidDataSimple(fluid_body), rho_(particles_->rho_),
+		AcousticTimeStepSize::AcousticTimeStepSize(SPHBody &sph_body)
+			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
+			  EulerianWeaklyCompressibleFluidDataSimple(sph_body), rho_(particles_->rho_),
 			  p_(particles_->p_), vel_(particles_->vel_),
-			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength())
-		{
-			initial_reference_ = 0.0;
-		}
+			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
-		Real AcousticTimeStepSize::ReduceFunction(size_t index_i, Real dt)
+		Real AcousticTimeStepSize::reduce(size_t index_i, Real dt)
 		{
 			return material_->getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm();
 		}
 		//=================================================================================================//
-		Real AcousticTimeStepSize::OutputResult(Real reduced_value)
+		Real AcousticTimeStepSize::outputResult(Real reduced_value)
 		{
 			// since the particle does not change its configuration in pressure relaxation step
 			// I chose a time-step size according to Eulerian method

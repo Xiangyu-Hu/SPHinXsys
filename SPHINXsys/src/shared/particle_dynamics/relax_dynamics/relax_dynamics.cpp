@@ -17,20 +17,16 @@ namespace SPH
 	{
 		//=================================================================================================//
 		GetTimeStepSizeSquare::GetTimeStepSizeSquare(SPHBody &sph_body)
-			: ParticleDynamicsReduce<Real, ReduceMax>(sph_body),
+			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(0)),
 			  RelaxDataDelegateSimple(sph_body), acc_(particles_->acc_),
-			  h_ref_(sph_body.sph_adaptation_->ReferenceSmoothingLength())
-		{
-			// The pressure is constant, so the speed of sound is zero
-			initial_reference_ = 0.0;
-		}
+			  h_ref_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
-		Real GetTimeStepSizeSquare::ReduceFunction(size_t index_i, Real dt)
+		Real GetTimeStepSizeSquare::reduce(size_t index_i, Real dt)
 		{
 			return acc_[index_i].norm();
 		}
 		//=================================================================================================//
-		Real GetTimeStepSizeSquare::OutputResult(Real reduced_value)
+		Real GetTimeStepSizeSquare::outputResult(Real reduced_value)
 		{
 			return 0.0625 * h_ref_ / (reduced_value + TinyReal);
 		}
@@ -348,16 +344,13 @@ namespace SPH
 		//=================================================================================================//
 		ShellNormalDirectionPrediction::PredictionConvergenceCheck::
 			PredictionConvergenceCheck(SPHBody &sph_body, Real convergence_criterion)
-			: ParticleDynamicsReduce<bool, ReduceAND>(sph_body),
+			: LocalDynamicsReduce<bool, ReduceAND>(sph_body, true),
 			  RelaxDataDelegateSimple(sph_body), convergence_criterion_(convergence_criterion),
 			  n_(*particles_->getVariableByName<Vecd>("NormalDirection")),
-			  n_temp_(*particles_->getVariableByName<Vecd>("PreviousNormalDirection"))
-		{
-			initial_reference_ = true;
-		}
+			  n_temp_(*particles_->getVariableByName<Vecd>("PreviousNormalDirection")) {}
 		//=================================================================================================//
 		bool ShellNormalDirectionPrediction::
-			PredictionConvergenceCheck::ReduceFunction(size_t index_i, Real dt)
+			PredictionConvergenceCheck::reduce(size_t index_i, Real dt)
 		{
 			return SimTK::dot(n_[index_i], n_temp_[index_i]) > convergence_criterion_;
 		}
@@ -405,15 +398,12 @@ namespace SPH
 		//=================================================================================================//
 		ShellNormalDirectionPrediction::ConsistencyUpdatedCheck::
 			ConsistencyUpdatedCheck(SPHBody &sph_body)
-			: ParticleDynamicsReduce<bool, ReduceAND>(sph_body),
+			: LocalDynamicsReduce<bool, ReduceAND>(sph_body, true),
 			  RelaxDataDelegateSimple(sph_body),
-			  updated_indicator_(*particles_->getVariableByName<int>("UpdatedIndicator"))
-		{
-			initial_reference_ = true;
-		}
+			  updated_indicator_(*particles_->getVariableByName<int>("UpdatedIndicator")) {}
 		//=================================================================================================//
 		bool ShellNormalDirectionPrediction::
-			ConsistencyUpdatedCheck::ReduceFunction(size_t index_i, Real dt)
+			ConsistencyUpdatedCheck::reduce(size_t index_i, Real dt)
 		{
 			return updated_indicator_[index_i] != 0;
 		}

@@ -181,8 +181,8 @@ int main(int ac, char *av[])
 	SimpleDynamics<TimeStepInitialization> damping_ball_initialize_timestep(damping_ball, gravity_ptr);
 	solid_dynamics::CorrectConfiguration free_ball_corrected_configuration(free_ball_inner);
 	solid_dynamics::CorrectConfiguration damping_ball_corrected_configuration(damping_ball_inner);
-	solid_dynamics::AcousticTimeStepSize free_ball_get_time_step_size(free_ball);
-	solid_dynamics::AcousticTimeStepSize damping_ball_get_time_step_size(damping_ball);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> free_ball_get_time_step_size(free_ball);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> damping_ball_get_time_step_size(damping_ball);
 	/** stress relaxation for the balls. */
 	solid_dynamics::StressRelaxationFirstHalf free_ball_stress_relaxation_first_half(free_ball_inner);
 	solid_dynamics::StressRelaxationSecondHalf free_ball_stress_relaxation_second_half(free_ball_inner);

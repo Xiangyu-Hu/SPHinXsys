@@ -185,7 +185,7 @@ int main(int ac, char *av[])
 	/** Define external force.*/
 	SimpleDynamics<TimeStepInitialization> beam_initialize_timestep(beam);
 	solid_dynamics::CorrectConfiguration beam_corrected_configuration(beam_inner);
-	solid_dynamics::AcousticTimeStepSize shell_get_time_step_size(beam);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> shell_get_time_step_size(beam);
 	/** stress relaxation for the walls. */
 	solid_dynamics::StressRelaxationFirstHalf beam_stress_relaxation_first_half(beam_inner);
 	solid_dynamics::StressRelaxationSecondHalf beam_stress_relaxation_second_half(beam_inner);

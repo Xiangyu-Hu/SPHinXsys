@@ -85,18 +85,19 @@ namespace SPH
 		 * @brief Computing the acoustic time step size
 		 * computing time step size
 		 */
-		class AcousticTimeStepSize : public ParticleDynamicsReduce<Real, ReduceMin>,
+		class AcousticTimeStepSize : public LocalDynamicsReduce<Real, ReduceMin>,
 									 public ElasticSolidDataSimple
 		{
-		public:
-			explicit AcousticTimeStepSize(SolidBody &solid_body, Real CFL = 0.6);
-			virtual ~AcousticTimeStepSize(){};
-
 		protected:
 			Real CFL_;
 			StdLargeVec<Vecd> &vel_, &acc_;
 			Real smoothing_length_, c0_;
-			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
+
+		public:
+			explicit AcousticTimeStepSize(SPHBody &sph_body, Real CFL = 0.6);
+			virtual ~AcousticTimeStepSize(){};
+
+			Real reduce(size_t index_i, Real dt = 0.0);
 		};
 
 		/**

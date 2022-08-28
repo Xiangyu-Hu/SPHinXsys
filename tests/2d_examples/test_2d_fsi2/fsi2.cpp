@@ -148,7 +148,7 @@ int main(int ac, char *av[])
 	//	Algorithms of solid dynamics.
 	//----------------------------------------------------------------------
 	/** Compute time step size of elastic solid. */
-	solid_dynamics::AcousticTimeStepSize insert_body_computing_time_step_size(insert_body);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> insert_body_computing_time_step_size(insert_body);
 	/** Stress relaxation for the inserted body. */
 	solid_dynamics::StressRelaxationFirstHalf insert_body_stress_relaxation_first_half(insert_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf insert_body_stress_relaxation_second_half(insert_body_inner);

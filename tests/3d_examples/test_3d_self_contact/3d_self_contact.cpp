@@ -138,7 +138,7 @@ int main(int ac, char *av[])
 	// Corrected configuration for reproducing rigid rotation.
 	solid_dynamics::CorrectConfiguration corrected_configuration(coil_inner);
 	// Time step size
-	solid_dynamics::AcousticTimeStepSize computing_time_step_size(coil);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
 	// stress relaxation.
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(coil_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(coil_inner);

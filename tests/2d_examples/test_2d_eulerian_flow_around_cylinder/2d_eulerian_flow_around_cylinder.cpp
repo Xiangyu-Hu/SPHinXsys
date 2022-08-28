@@ -117,7 +117,7 @@ int main(int ac, char *av[])
 	/** Initialize particle acceleration. */
 	SimpleDynamics<eulerian_weakly_compressible_fluid_dynamics::EulerianFlowTimeStepInitialization> initialize_a_fluid_step(water_block);
 	/** Time step size with considering sound wave speed. */
-	eulerian_weakly_compressible_fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
+	ReduceDynamics<eulerian_weakly_compressible_fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation using verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
 	eulerian_weakly_compressible_fluid_dynamics::PressureRelaxationHLLCRiemannWithLimiterWithWall pressure_relaxation(water_block_complex);

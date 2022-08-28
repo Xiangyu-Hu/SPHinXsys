@@ -206,7 +206,7 @@ int main()
 	//	Algorithms of Elastic dynamics.
 	//----------------------------------------------------------------------
 	/** Compute time step size of elastic solid. */
-	solid_dynamics::AcousticTimeStepSize gate_computing_time_step_size(gate);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> gate_computing_time_step_size(gate);
 	/** Stress relaxation stepping for the elastic gate. */
 	solid_dynamics::StressRelaxationFirstHalf gate_stress_relaxation_first_half(gate_inner_relation);
 	solid_dynamics::StressRelaxationSecondHalf gate_stress_relaxation_second_half(gate_inner_relation);

@@ -89,7 +89,7 @@ int main(int ac, char *av[])
 	solid_dynamics::CorrectConfiguration
 		corrected_configuration(cantilever_body_inner);
 	/** Time step size calculation. */
-	solid_dynamics::AcousticTimeStepSize
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize>
 		computing_time_step_size(cantilever_body);
 	/** active and passive stress relaxation. */
 	solid_dynamics::StressRelaxationFirstHalf

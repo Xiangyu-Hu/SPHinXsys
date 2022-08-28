@@ -107,7 +107,7 @@ int main(int ac, char *av[])
 	// Periodic BCs in y direction.
 	PeriodicConditionUsingCellLinkedList periodic_condition_y(wave_body, wave_body.getBodyShapeBounds(), yAxis);
 	// Time step size with considering sound wave speed.
-	eulerian_compressible_fluid_dynamics::AcousticTimeStepSize get_wave_time_step_size(wave_body);
+	ReduceDynamics<eulerian_compressible_fluid_dynamics::AcousticTimeStepSize> get_wave_time_step_size(wave_body);
 	// Pressure, density and energy relaxation algorithm by use HLLC Riemann solver.
 	eulerian_compressible_fluid_dynamics::PressureRelaxationHLLCRiemannInner pressure_relaxation(wave_body_inner);
 	eulerian_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCRiemannInner density_and_energy_relaxation(wave_body_inner);

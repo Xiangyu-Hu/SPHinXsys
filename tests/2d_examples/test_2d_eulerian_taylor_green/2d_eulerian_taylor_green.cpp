@@ -105,7 +105,7 @@ int main(int ac, char *av[])
 	/** Periodic BCs in y direction. */
 	PeriodicConditionUsingCellLinkedList periodic_condition_y(water_body, water_body.getBodyShapeBounds(), yAxis);
 	/** Time step size with considering sound wave speed. */
-	eulerian_compressible_fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_body);
+	ReduceDynamics<eulerian_compressible_fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);
 	/** Pressure relaxation algorithm by using verlet time stepping. */
 	/** Here, we can use HLLC with Limiter Riemann solver for pressure relaxation and density and energy relaxation  */
 	eulerian_compressible_fluid_dynamics::PressureRelaxationHLLCWithLimiterRiemannInner pressure_relaxation(water_body_inner);

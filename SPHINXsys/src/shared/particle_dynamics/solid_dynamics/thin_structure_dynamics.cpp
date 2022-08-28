@@ -19,23 +19,19 @@ namespace SPH
 			  n0_(particles_->n0_), n_(particles_->n_), pseudo_n_(particles_->pseudo_n_),
 			  pos0_(particles_->pos0_), transformation_matrix_(particles_->transformation_matrix_) {}
 		//=================================================================================================//
-		ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SolidBody &solid_body, Real CFL)
-			: ParticleDynamicsReduce<Real, ReduceMin>(solid_body),
-			  ShellDataSimple(solid_body), CFL_(CFL),
+		ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
+			: LocalDynamicsReduce<Real, ReduceMin>(sph_body, Real(MaxRealNumber)),
+			  ShellDataSimple(sph_body), CFL_(CFL),
 			  vel_(particles_->vel_), acc_(particles_->acc_),
 			  angular_vel_(particles_->angular_vel_), dangular_vel_dt_(particles_->dangular_vel_dt_),
 			  thickness_(particles_->thickness_),
-			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength()),
+			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()),
 			  rho0_(material_->ReferenceDensity()),
 			  E0_(material_->YoungsModulus()),
 			  nu_(material_->PoissonRatio()),
-			  c0_(material_->ReferenceSoundSpeed())
-
-		{
-			initial_reference_ = DBL_MAX;
-		}
+			  c0_(material_->ReferenceSoundSpeed()) {}
 		//=================================================================================================//
-		Real ShellAcousticTimeStepSize::ReduceFunction(size_t index_i, Real dt)
+		Real ShellAcousticTimeStepSize::reduce(size_t index_i, Real dt)
 		{
 			// Since the particle does not change its configuration in pressure relaxation step,
 			// I chose a time-step size according to Eulerian method.

@@ -78,7 +78,7 @@ int main()
 	/** Corrected configuration. */
 	solid_dynamics::CorrectConfiguration corrected_configuration(myocardium_body_inner);
 	/** Time step size calculation. */
-	solid_dynamics::AcousticTimeStepSize computing_time_step_size(myocardium_body);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(myocardium_body);
 	/** active and passive stress relaxation. */
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(myocardium_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(myocardium_body_inner);

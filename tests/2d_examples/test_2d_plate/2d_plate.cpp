@@ -106,7 +106,7 @@ int main()
 	/** Corrected configuration. */
 	thin_structure_dynamics::ShellCorrectConfiguration corrected_configuration(plate_body_inner);
 	/** Time step size. */
-	thin_structure_dynamics::ShellAcousticTimeStepSize computing_time_step_size(plate_body);
+	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
 	/** stress relaxation. */
 	thin_structure_dynamics::ShellStressRelaxationFirstHalf stress_relaxation_first_half(plate_body_inner, 3, true);
 	thin_structure_dynamics::ShellStressRelaxationSecondHalf stress_relaxation_second_half(plate_body_inner);

@@ -32,7 +32,7 @@ int main()
 	/** Corrected configuration. */
 	solid_dynamics::CorrectConfiguration corrected_configuration(column_inner);
 	/** Time step size calculation. We use CFL = 0.5 due to the very large twisting speed. */
-	solid_dynamics::AcousticTimeStepSize computing_time_step_size(column, 0.5);
+	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.5);
 	/** active and passive stress relaxation. */
 	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half(column_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(column_inner);
