@@ -111,7 +111,7 @@ namespace SPH
 			if (body->checkNewlyUpdated())
 			{
 				//TODO: we can short the file name by without using SPHBody
-				std::string filefullpath = io_environment_.output_folder_ + "/SPHBody_" + body->getBodyName() + "_" + sequence + ".vtp";
+				std::string filefullpath = io_environment_.output_folder_ + "/SPHBody_" + body->getName() + "_" + sequence + ".vtp";
 				if (fs::exists(filefullpath))
 				{
 					fs::remove(filefullpath);
@@ -124,7 +124,7 @@ namespace SPH
 
 				BaseParticles *base_particles = body->base_particles_;
 				size_t total_real_particles = base_particles->total_real_particles_;
-				out_file << "  <Piece Name =\"" << body->getBodyName() << "\" NumberOfPoints=\"" << total_real_particles << "\" NumberOfVerts=\"" << total_real_particles << "\">\n";
+				out_file << "  <Piece Name =\"" << body->getName() << "\" NumberOfPoints=\"" << total_real_particles << "\" NumberOfVerts=\"" << total_real_particles << "\">\n";
 
 				body->writeParticlesToVtpFile(out_file);
 
@@ -167,7 +167,7 @@ namespace SPH
 		{
 			if (body->checkNewlyUpdated())
 			{
-				const auto& vtuName = body->getBodyName() + "_" + sequence + ".vtu";
+				const auto& vtuName = body->getName() + "_" + sequence + ".vtu";
 				std::stringstream sstream;
 				//begin of the XML file
 				writeVtu(sstream, body);
@@ -185,7 +185,7 @@ namespace SPH
 
 		BaseParticles* base_particles = body->base_particles_;
 		size_t total_real_particles = base_particles->total_real_particles_;
-		stream << "  <Piece Name =\"" << body->getBodyName() << "\" NumberOfPoints=\"" << total_real_particles << "\" NumberOfCells=\"0\">\n";
+		stream << "  <Piece Name =\"" << body->getName() << "\" NumberOfPoints=\"" << total_real_particles << "\" NumberOfCells=\"0\">\n";
 
 		body->writeParticlesToVtuFile(stream);
 
@@ -218,7 +218,7 @@ namespace SPH
 		{
 			if (body->checkNewlyUpdated())
 			{
-				std::string filefullpath = io_environment_.output_folder_ + "/SPHBody_" + body->getBodyName() + "_" + sequence + ".plt";
+				std::string filefullpath = io_environment_.output_folder_ + "/SPHBody_" + body->getName() + "_" + sequence + ".plt";
 				if (fs::exists(filefullpath))
 				{
 					fs::remove(filefullpath);
@@ -240,8 +240,8 @@ namespace SPH
 		: BodyStatesRecordingToVtp(io_environment, bodies), out_of_bound_(false)
 	{
 		std::transform(bodies.begin(), bodies.end(), std::back_inserter(check_bodies_),
-					   [&](SPHBody *body) -> VelocityBoundCheck
-					   { return VelocityBoundCheck(*body, velocity_bound); });
+					   [&](SPHBody *body) -> ReduceDynamics<VelocityBoundCheck>
+					   { return ReduceDynamics<VelocityBoundCheck>(*body, velocity_bound); });
 	}
 	//=============================================================================================//
 	void WriteToVtpIfVelocityOutOfBound::writeWithFileName(const std::string &sequence)
@@ -262,7 +262,7 @@ namespace SPH
 	MeshRecordingToPlt ::MeshRecordingToPlt(IOEnvironment &io_environment, SPHBody &body, BaseMeshField *mesh_field)
 		: BodyStatesRecording(io_environment, body), mesh_field_(mesh_field)
 	{
-		filefullpath_ = io_environment_.output_folder_ + "/" + body.getBodyName() + "_" + mesh_field_->Name() + ".dat";
+		filefullpath_ = io_environment_.output_folder_ + "/" + body.getName() + "_" + mesh_field_->Name() + ".dat";
 	}
 	//=============================================================================================//
 	void MeshRecordingToPlt::writeWithFileName(const std::string &sequence)
@@ -281,7 +281,7 @@ namespace SPH
 
 		std::transform(bodies.begin(), bodies.end(), std::back_inserter(file_paths_),
 					   [&](SPHBody *body) -> std::string
-					   { return io_environment.reload_folder_ + "/" + body->getBodyName() + "_rld.xml"; });
+					   { return io_environment.reload_folder_ + "/" + body->getName() + "_rld.xml"; });
 	};
 	//=============================================================================================//
 	ReloadParticleIO::ReloadParticleIO(IOEnvironment &io_environment, SPHBodyVector bodies,
@@ -330,7 +330,7 @@ namespace SPH
 	{
 		std::transform(bodies.begin(), bodies.end(), std::back_inserter(file_paths_),
 					   [&](SPHBody *body) -> std::string
-					   { return io_environment.restart_folder_ + "/SPHBody_" + body->getBodyName() + "_rst_"; });
+					   { return io_environment.restart_folder_ + "/SPHBody_" + body->getName() + "_rst_"; });
 	}
 	//=============================================================================================//
 	void RestartIO::writeToFile(size_t iteration_step)

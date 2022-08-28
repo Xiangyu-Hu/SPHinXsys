@@ -37,7 +37,7 @@ int main(int ac, char *av[])
 	cylinder.defineBodyLevelSetShape();
 	cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-		? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getBodyName())
+		? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getName())
 		: cylinder.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody fluid_observer(sph_system, "FluidObserver");
@@ -150,9 +150,9 @@ int main(int ac, char *av[])
 	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	ObservedQuantityRecording<Vecd>
 		write_fluid_velocity("Velocity", io_environment, fluid_observer_contact);
-	RegressionTestTimeAveraged<BodyReducedQuantityRecording<solid_dynamics::TotalViscousForceOnSolid>>
+	RegressionTestTimeAveraged<BodyReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
 		write_total_viscous_force_on_inserted_body(io_environment, cylinder);
-	BodyReducedQuantityRecording<solid_dynamics::TotalForceOnSolid>
+	BodyReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>>
 		write_total_force_on_inserted_body(io_environment, cylinder);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

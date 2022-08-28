@@ -45,7 +45,7 @@ int main(int ac, char *av[])
 	insert_body.defineBodyLevelSetShape()->writeLevelSet(insert_body);
 	insert_body.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-		? insert_body.generateParticles<ParticleGeneratorReload>(io_environment, insert_body.getBodyName())
+		? insert_body.generateParticles<ParticleGeneratorReload>(io_environment, insert_body.getName())
 		: insert_body.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody beam_observer(sph_system, "BeamObserver");
@@ -162,7 +162,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, sph_system.real_bodies_);
 	RestartIO restart_io(io_environment, sph_system.real_bodies_);
-	RegressionTestTimeAveraged<BodyReducedQuantityRecording<solid_dynamics::TotalViscousForceOnSolid>>
+	RegressionTestTimeAveraged<BodyReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
 		write_total_viscous_force_on_insert_body(io_environment, insert_body);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_beam_tip_displacement("Position", io_environment, beam_observer_contact);

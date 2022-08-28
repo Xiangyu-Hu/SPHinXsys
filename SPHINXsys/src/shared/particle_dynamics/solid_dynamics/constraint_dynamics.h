@@ -40,11 +40,6 @@
 
 namespace SPH
 {
-	template <typename VariableType>
-	class BodySummation;
-	template <typename VariableType>
-	class BodyMoment;
-
 	namespace solid_dynamics
 	{
 		//----------------------------------------------------------------------
@@ -255,7 +250,7 @@ namespace SPH
 			Matd correction_matrix_;
 			Vecd velocity_correction_;
 			StdLargeVec<Vecd> &vel_;
-			BodyMoment<Vecd> compute_total_momentum_;
+			ReduceDynamics<QuantityMoment<Vecd>> compute_total_momentum_;
 
 		protected:
 			virtual void setupDynamics(Real dt = 0.0) override;

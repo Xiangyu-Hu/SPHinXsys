@@ -62,7 +62,7 @@ int main(int ac, char *av[])
 	ball.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 	{
-		ball.generateParticles<ParticleGeneratorReload>(io_environment, ball.getBodyName());
+		ball.generateParticles<ParticleGeneratorReload>(io_environment, ball.getName());
 	}
 	else
 	{
@@ -79,7 +79,7 @@ int main(int ac, char *av[])
 	wall_boundary.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1.0, 1.0, 0.0);
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 	{
-		wall_boundary.generateParticles<ParticleGeneratorReload>(io_environment, wall_boundary.getBodyName());
+		wall_boundary.generateParticles<ParticleGeneratorReload>(io_environment, wall_boundary.getName());
 	}
 	else
 	{

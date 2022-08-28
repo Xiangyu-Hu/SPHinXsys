@@ -124,8 +124,8 @@ int main()
 	/** Output the body states for restart simulation. */
 	RestartIO restart_io(io_environment, system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
-		write_water_mechanical_energy(io_environment, water_block, *gravity_ptr.get());
+	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+		write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact);
 	//-------------------------------------------------------------------

@@ -146,125 +146,138 @@ namespace SPH
 	 * @class VelocityBoundCheck
 	 * @brief  check whether particle velocity within a given bound
 	 */
-	class VelocityBoundCheck : public ParticleDynamicsReduce<bool, ReduceOR>,
+	class VelocityBoundCheck : public LocalDynamicsReduce<bool, ReduceOR>,
 							   public GeneralDataDelegateSimple
 	{
+	protected:
+		StdLargeVec<Vecd> &vel_;
+		Real velocity_bound_;
+
 	public:
 		VelocityBoundCheck(SPHBody &sph_body, Real velocity_bound);
 		virtual ~VelocityBoundCheck(){};
 
-	protected:
-		StdLargeVec<Vecd> &vel_;
-		Real velocity_bound_;
-		bool ReduceFunction(size_t index_i, Real dt = 0.0) override;
+		bool reduce(size_t index_i, Real dt = 0.0);
 	};
 
 	/**
-	 * @class UpperFrontInXDirection
-	 * @brief Get the upper front In X Direction for a SPH body
+	 * @class 	UpperFrontInXDirection
+	 * @brief 	Get the upper front In X Direction for a SPH body
+	 *			TODO: a test using this method
 	 */
-	class UpperFrontInXDirection : public ParticleDynamicsReduce<Real, ReduceMax>,
+	class UpperFrontInXDirection : public LocalDynamicsReduce<Real, ReduceMax>,
 								   public GeneralDataDelegateSimple
 	{
+	protected:
+		StdLargeVec<Vecd> &pos_;
+
 	public:
 		explicit UpperFrontInXDirection(SPHBody &sph_body);
 		virtual ~UpperFrontInXDirection(){};
 
-	protected:
-		StdLargeVec<Vecd> &pos_;
-		Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
+		Real reduce(size_t index_i, Real dt = 0.0);
 	};
 
 	/**
 	 * @class MaximumSpeed
 	 * @brief Get the maximum particle speed in a SPH body
 	 */
-	class MaximumSpeed : public ParticleDynamicsReduce<Real, ReduceMax>,
+	class MaximumSpeed : public LocalDynamicsReduce<Real, ReduceMax>,
 						 public GeneralDataDelegateSimple
 	{
+	protected:
+		StdLargeVec<Vecd> &vel_;
+
 	public:
 		explicit MaximumSpeed(SPHBody &sph_body);
 		virtual ~MaximumSpeed(){};
 
-	protected:
-		StdLargeVec<Vecd> &vel_;
-		Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
+		Real reduce(size_t index_i, Real dt = 0.0);
 	};
 
 	/**
-	 * @class BodyLowerBound
-	 * @brief the lower bound of a body by reduced particle positions.
+	 * @class	PositionLowerBound
+	 * @brief	the lower bound of a body by reduced particle positions.
+	 * 			TODO: a test using this method
 	 */
-	class BodyLowerBound : public ParticleDynamicsReduce<Vecd, ReduceLowerBound>,
-						   public GeneralDataDelegateSimple
+	class PositionLowerBound : public LocalDynamicsReduce<Vecd, ReduceLowerBound>,
+							   public GeneralDataDelegateSimple
 	{
-	public:
-		explicit BodyLowerBound(SPHBody &sph_body);
-		virtual ~BodyLowerBound(){};
-
 	protected:
 		StdLargeVec<Vecd> &pos_;
-		Vecd ReduceFunction(size_t index_i, Real dt = 0.0) override;
+
+	public:
+		explicit PositionLowerBound(SPHBody &sph_body);
+		virtual ~PositionLowerBound(){};
+
+		Vecd reduce(size_t index_i, Real dt = 0.0);
 	};
 
 	/**
-	 * @class BodyUpperBound
-	 * @brief the upper bound of a body by reduced particle positions.
+	 * @class	PositionUpperBound
+	 * @brief	the upper bound of a body by reduced particle positions.
+	 * 			TODO: a test using this method
 	 */
-	class BodyUpperBound : public ParticleDynamicsReduce<Vecd, ReduceUpperBound>,
-						   public GeneralDataDelegateSimple
+	class PositionUpperBound : public LocalDynamicsReduce<Vecd, ReduceUpperBound>,
+							   public GeneralDataDelegateSimple
 	{
-	public:
-		explicit BodyUpperBound(SPHBody &sph_body);
-		virtual ~BodyUpperBound(){};
-
 	protected:
 		StdLargeVec<Vecd> &pos_;
-		Vecd ReduceFunction(size_t index_i, Real dt = 0.0) override;
+
+	public:
+		explicit PositionUpperBound(SPHBody &sph_body);
+		virtual ~PositionUpperBound(){};
+
+		Vecd reduce(size_t index_i, Real dt = 0.0);
 	};
 
 	/**
-	 * @class BodySummation
+	 * @class QuantitySummation
 	 * @brief Compute the summation of  a particle variable in a body
 	 */
 	template <typename VariableType>
-	class BodySummation : public ParticleDynamicsReduce<VariableType, ReduceSum<VariableType>>,
-						  public GeneralDataDelegateSimple
+	class QuantitySummation : public LocalDynamicsReduce<VariableType, ReduceSum<VariableType>>,
+							  public GeneralDataDelegateSimple
 	{
-	public:
-		explicit BodySummation(SPHBody &sph_body, const std::string &variable_name)
-			: ParticleDynamicsReduce<VariableType, ReduceSum<VariableType>>(sph_body),
-			  GeneralDataDelegateSimple(sph_body),
-			  variable_(*particles_->getVariableByName<VariableType>(variable_name))
-		{
-			this->initial_reference_ = VariableType(0);
-		};
-		virtual ~BodySummation(){};
-
 	protected:
 		StdLargeVec<VariableType> &variable_;
-		VariableType ReduceFunction(size_t index_i, Real dt = 0.0) override
+
+	public:
+		explicit QuantitySummation(SPHBody &sph_body, const std::string &variable_name)
+			: LocalDynamicsReduce<VariableType, ReduceSum<VariableType>>(sph_body, VariableType(0)),
+			  GeneralDataDelegateSimple(sph_body),
+			  variable_(*this->particles_->getVariableByName<VariableType>(variable_name))
+		{
+			this->quantity_name_ = variable_name + "Summation";
+		};
+		virtual ~QuantitySummation(){};
+
+		VariableType reduce(size_t index_i, Real dt = 0.0)
 		{
 			return variable_[index_i];
 		};
 	};
 
 	/**
-	 * @class BodyMoment
+	 * @class QuantityMoment
 	 * @brief Compute the moment of a body
 	 */
 	template <typename VariableType>
-	class BodyMoment : public BodySummation<VariableType>
+	class QuantityMoment : public QuantitySummation<VariableType>
 	{
-	public:
-		explicit BodyMoment(SPHBody &sph_body, const std::string &variable_name)
-			: BodySummation<VariableType>(sph_body, variable_name),
-			  mass_(this->particles_->mass_){};
-		virtual ~BodyMoment(){};
-
 	protected:
 		StdLargeVec<Real> &mass_;
-		VariableType ReduceFunction(size_t index_i, Real dt = 0.0) override
+
+	public:
+		explicit QuantityMoment(SPHBody &sph_body, const std::string &variable_name)
+			: QuantitySummation<VariableType>(sph_body, variable_name),
+			  mass_(this->particles_->mass_)
+		{
+			this->quantity_name_ = variable_name + "Moment";
+		};
+		virtual ~QuantityMoment(){};
+
+		VariableType reduce(size_t index_i, Real dt = 0.0)
 		{
 			return mass_[index_i] * this->variable_[index_i];
 		};
@@ -275,22 +288,22 @@ namespace SPH
 	 * @brief Compute the total mechanical (kinematic and potential) energy
 	 */
 	class TotalMechanicalEnergy
-		: public ParticleDynamicsReduce<Real, ReduceSum<Real>>,
+		: public LocalDynamicsReduce<Real, ReduceSum<Real>>,
 		  public GeneralDataDelegateSimple
 	{
 	private:
-		UniquePtrKeeper<Gravity> gravity_ptr_keeper_;
-
-	public:
-		explicit TotalMechanicalEnergy(SPHBody &sph_body);
-		TotalMechanicalEnergy(SPHBody &sph_body, Gravity &gravity_ptr);
-		virtual ~TotalMechanicalEnergy(){};
+		SharedPtrKeeper<Gravity> gravity_ptr_keeper_;
 
 	protected:
 		StdLargeVec<Real> &mass_;
 		StdLargeVec<Vecd> &vel_, &pos_;
 		Gravity *gravity_;
-		Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
+
+	public:
+		TotalMechanicalEnergy(SPHBody &sph_body, SharedPtr<Gravity> = makeShared<Gravity>(Vecd(0)));
+		virtual ~TotalMechanicalEnergy(){};
+
+		Real reduce(size_t index_i, Real dt = 0.0);
 	};
 }
 #endif // GENERAL_DYNAMICS_H

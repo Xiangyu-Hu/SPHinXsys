@@ -4,7 +4,6 @@
  */
 
 #include "constraint_dynamics.h"
-#include "general_dynamics.h"
 
 #include <numeric>
 
@@ -316,7 +315,7 @@ namespace SPH
 		{
 			for (int i = 0; i != Dimensions; ++i)
 				correction_matrix_[i][i] = constrain_direction[i];
-			BodySummation<Real> compute_total_mass_(sph_body, "MassiveMeasure");
+			ReduceDynamics<QuantitySummation<Real>> compute_total_mass_(sph_body, "MassiveMeasure");
 			total_mass_ = compute_total_mass_.parallel_exec();
 		}
 		//=================================================================================================//

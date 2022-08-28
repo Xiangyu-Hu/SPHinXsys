@@ -300,30 +300,30 @@ namespace SPH
 		* @class TotalViscousForceOnSolid
 		* @brief Computing the total viscous force from fluid
 		*/
-		class TotalViscousForceOnSolid : public ParticleDynamicsReduce<Vecd, ReduceSum<Vecd>>, public SolidDataSimple
+		class TotalViscousForceOnSolid : public LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>, public SolidDataSimple
 		{
-		public:
-			explicit TotalViscousForceOnSolid(SolidBody &solid_body);
-			virtual ~TotalViscousForceOnSolid(){};
-
 		protected:
 			StdLargeVec<Vecd> &viscous_force_from_fluid_;
-			Vecd ReduceFunction(size_t index_i, Real dt = 0.0) override;
+		public:
+			explicit TotalViscousForceOnSolid(SPHBody &sph_body);
+			virtual ~TotalViscousForceOnSolid(){};
+
+			Vecd reduce(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
 		 * @class TotalForceOnSolid
 		 * @brief Computing total force from fluid.
 		 */
-		class TotalForceOnSolid : public ParticleDynamicsReduce<Vecd, ReduceSum<Vecd>>, public SolidDataSimple
+		class TotalForceOnSolid : public LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>, public SolidDataSimple
 		{
-		public:
-			explicit TotalForceOnSolid(SolidBody &solid_body);
-			virtual ~TotalForceOnSolid(){};
-
 		protected:
 			StdLargeVec<Vecd> &force_from_fluid_;
-			Vecd ReduceFunction(size_t index_i, Real dt = 0.0) override;
+		public:
+			explicit TotalForceOnSolid(SPHBody &sph_body);
+			virtual ~TotalForceOnSolid(){};
+
+			Vecd reduce(size_t index_i, Real dt = 0.0);
 		};
 
 		/**

@@ -266,7 +266,7 @@ namespace SPH
 	{
 	protected:
 		bool out_of_bound_;
-		StdVec<VelocityBoundCheck> check_bodies_;
+		StdVec<ReduceDynamics<VelocityBoundCheck>> check_bodies_;
 		virtual void writeWithFileName(const std::string &sequence) override;
 
 	public:
@@ -303,7 +303,7 @@ namespace SPH
 		SPHBody &observer_;
 		PltEngine plt_engine_;
 		BaseParticles *base_particles_;
-		std::string body_name_;
+		std::string dynamics_range_name_;
 		const std::string quantity_name_;
 		std::string filefullpath_output_;
 
@@ -316,11 +316,12 @@ namespace SPH
 			: BodyStatesRecording(io_environment, contact_relation.sph_body_),
 			  observer_dynamics::ObservingAQuantity<VariableType>(contact_relation, quantity_name),
 			  observer_(contact_relation.sph_body_), plt_engine_(),
-			  base_particles_(observer_.base_particles_), body_name_(contact_relation.sph_body_.getBodyName()),
+			  base_particles_(observer_.base_particles_), 
+			  dynamics_range_name_(contact_relation.sph_body_.getName()),
 			  quantity_name_(quantity_name)
 		{
 			/** Output for .dat file. */
-			filefullpath_output_ = io_environment_.output_folder_ + "/" + body_name_ + "_" + quantity_name + "_" + io_environment_.restart_step_ + ".dat";
+			filefullpath_output_ = io_environment_.output_folder_ + "/" + dynamics_range_name_ + "_" + quantity_name + "_" + io_environment_.restart_step_ + ".dat";
 			std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
 			out_file << "run_time"
 					 << "   ";
@@ -364,28 +365,28 @@ namespace SPH
 		IOEnvironment &io_environment_;
 		PltEngine plt_engine_;
 		ReduceMethodType reduce_method_;
-		std::string body_name_;
+		std::string dynamics_range_name_;
 		const std::string quantity_name_;
 		std::string filefullpath_output_;
 
 	public:
 		/*< deduce variable type from reduce method. */
-		using VariableType = decltype(reduce_method_.InitialReference());
+		using VariableType = decltype(reduce_method_.getLocalDynamics().InitialReference());
 		VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
 
 	public:
 		template <typename... ConstructorArgs>
 		BodyReducedQuantityRecording(IOEnvironment &io_environment, ConstructorArgs &&...args)
 			: io_environment_(io_environment), plt_engine_(), reduce_method_(std::forward<ConstructorArgs>(args)...),
-			  body_name_(reduce_method_.getSPHBody().getBodyName()),
+			  dynamics_range_name_(reduce_method_.DynamicsRangeName()),
 			  quantity_name_(reduce_method_.QuantityName())
 		{
 			/** output for .dat file. */
-			filefullpath_output_ = io_environment_.output_folder_ + "/" + body_name_ + "_" + quantity_name_ + "_" + io_environment_.restart_step_ + ".dat";
+			filefullpath_output_ = io_environment_.output_folder_ + "/" + dynamics_range_name_ + "_" + quantity_name_ + "_" + io_environment_.restart_step_ + ".dat";
 			std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
 			out_file << "\"run_time\""
 					 << "   ";
-			plt_engine_.writeAQuantityHeader(out_file, reduce_method_.InitialReference(), quantity_name_);
+			plt_engine_.writeAQuantityHeader(out_file, reduce_method_.getLocalDynamics().InitialReference(), quantity_name_);
 			out_file << "\n";
 			out_file.close();
 		};

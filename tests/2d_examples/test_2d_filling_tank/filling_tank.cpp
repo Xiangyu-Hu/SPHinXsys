@@ -144,8 +144,8 @@ int main()
 	IOEnvironment io_environment(system);
 	BodyStatesRecordingToVtp body_states_recording(io_environment, system.real_bodies_);
 	RestartIO restart_io(io_environment, system.real_bodies_);
-	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
-		write_water_mechanical_energy(io_environment, water_body, *gravity_ptr.get());
+	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+		write_water_mechanical_energy(io_environment, water_body, gravity_ptr);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
 		write_recorded_water_pressure("Pressure", io_environment, fluid_observer_contact_relation);
 	//----------------------------------------------------------------------

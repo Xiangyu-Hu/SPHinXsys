@@ -142,26 +142,26 @@ namespace SPH
 		};
 
 		/**
-		 * @class FreeSurfaceProbeOnFluidBody
+		 * @class FreeSurfaceHeight
 		 * @brief Probe the free surface profile for a fluid body part by reduced operation.
+		 * TODO: this class can be generalized
 		 */
-		class FreeSurfaceProbeOnFluidBody : public PartDynamicsByCellReduce<Real, ReduceMax>,
-											public FluidDataSimple
+		class FreeSurfaceHeight : public LocalDynamicsReduce<Real, ReduceMax>,
+								  public FluidDataSimple
 		{
-		public:
-			FreeSurfaceProbeOnFluidBody(FluidBody &fluid_body, BodyPartByCell &body_part)
-				: PartDynamicsByCellReduce<Real, ReduceMax>(fluid_body, body_part), FluidDataSimple(fluid_body),
-				  pos_(particles_->pos_)
-			{
-				quantity_name_ = body_part.BodyPartName() + "FreeSurface";
-				initial_reference_ = 0.0;
-			}
-			virtual ~FreeSurfaceProbeOnFluidBody(){};
-
 		protected:
 			StdLargeVec<Vecd> &pos_;
-			virtual void SetupReduce() override{};
-			virtual Real ReduceFunction(size_t index_i, Real dt = 0.0) override { return pos_[index_i][1]; };
+
+		public:
+			FreeSurfaceHeight(SPHBody &sph_body)
+				: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(MinRealNumber)),
+				  FluidDataSimple(sph_body), pos_(particles_->pos_)
+			{
+				quantity_name_ = "FreeSurfaceHeight";
+			}
+			virtual ~FreeSurfaceHeight(){};
+
+			Real reduce(size_t index_i, Real dt = 0.0) { return pos_[index_i][1]; };
 		};
 		/**
 		 * @class ColorFunctionGradientInner

@@ -21,17 +21,18 @@
  *                                                                              *
  * -----------------------------------------------------------------------------*/
 /**
-* @file base_local_dynamics.h
-* @brief This is for the base classes of local particle dynamics, which describe the
-* dynamics of a particle.
-* @author  Xiangyu Hu
-*/
+ * @file base_local_dynamics.h
+ * @brief This is for the base classes of local particle dynamics, which describe the
+ * dynamics of a particle.
+ * @author  Xiangyu Hu
+ */
 
 #ifndef BASE_LOCAL_DYNAMICS_H
 #define BASE_LOCAL_DYNAMICS_H
 
 #include "base_data_package.h"
 #include "sph_data_containers.h"
+#include "base_particle_dynamics.h"
 
 namespace SPH
 {
@@ -51,7 +52,7 @@ namespace SPH
 		virtual ~BaseLocalDynamics(){};
 
 		void setBodyUpdated() { sph_body_.setNewlyUpdated(); };
-		virtual ReturnType setupDynamics(Real dt = 0.0) = 0; //setup global parameters
+		virtual ReturnType setupDynamics(Real dt = 0.0) = 0; // setup global parameters
 	};
 
 	/**
@@ -78,13 +79,12 @@ namespace SPH
 	class LocalDynamicsReduce : public LocalDynamics
 	{
 	public:
-		explicit LocalDynamicsReduce(SPHBody &sph_body, ReturnType reference)
+		LocalDynamicsReduce(SPHBody &sph_body, ReturnType reference)
 			: LocalDynamics(sph_body), reference_(reference),
 			  quantity_name_("ReducedQuantity"){};
 		virtual ~LocalDynamicsReduce(){};
 
 		using ReduceReturnType = ReturnType;
-		using ReduceOperationType = ReduceOperation;
 		ReturnType InitialReference() { return reference_; };
 		std::string QuantityName() { return quantity_name_; };
 		ReduceOperation &getReduceOperation() { return operation_; };
@@ -94,6 +94,16 @@ namespace SPH
 		ReturnType reference_;
 		ReduceOperation operation_;
 		std::string quantity_name_;
-	};    
+	};
+
+	template <typename ReturnType>
+	class LocalDynamicsReduceAverage : public LocalDynamicsReduce<ReturnType, ReduceSum<ReturnType>>
+	{
+	public:
+		LocalDynamicsReduceAverage(SPHBody &sph_body, ReturnType reference)
+			: LocalDynamicsReduce<ReturnType, ReduceSum<ReturnType>>(sph_body, reference) {};
+		virtual ~LocalDynamicsReduceAverage(){};
+		ReturnType outputAverage(ReturnType reduced_value, size_t total) { return reduced_value / Real(total); }
+	};
 }
-#endif //BASE_LOCAL_DYNAMICS_H
+#endif // BASE_LOCAL_DYNAMICS_H

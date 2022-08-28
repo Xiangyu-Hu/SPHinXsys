@@ -34,7 +34,7 @@ int main(int ac, char *av[])
 	water_block.defineComponentLevelSetShape("OuterBoundary");
 	water_block.defineParticlesAndMaterial<WeaklyCompressibleFluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-		? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getBodyName())
+		? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
 		: water_block.generateParticles<ParticleGeneratorLattice>();
 	water_block.addBodyStateForRecording<int>("SurfaceIndicator");
 	/**
@@ -45,7 +45,7 @@ int main(int ac, char *av[])
 	cylinder.defineBodyLevelSetShape();
 	cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
-		? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getBodyName())
+		? cylinder.generateParticles<ParticleGeneratorReload>(io_environment, cylinder.getName())
 		: cylinder.generateParticles<ParticleGeneratorLattice>();
 	/**
 	 * @brief define simple data file input and outputs functions.
@@ -135,12 +135,12 @@ int main(int ac, char *av[])
 	/**
 	 * @brief Write solid data into files.
 	 */
-	RegressionTestTimeAveraged<BodyReducedQuantityRecording<solid_dynamics::TotalViscousForceOnSolid>>
+	RegressionTestTimeAveraged<BodyReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalViscousForceOnSolid>>>
 		write_total_viscous_force_on_inserted_body(io_environment, cylinder);
-	BodyReducedQuantityRecording<solid_dynamics::TotalForceOnSolid>
+	BodyReducedQuantityRecording<ReduceDynamics<solid_dynamics::TotalForceOnSolid>>
 		write_total_force_on_inserted_body(io_environment, cylinder);
 	/** Output the maximum speed of the fluid body. */
-	BodyReducedQuantityRecording<MaximumSpeed> write_maximum_speed(io_environment, water_block);
+	BodyReducedQuantityRecording<ReduceDynamics<MaximumSpeed>> write_maximum_speed(io_environment, water_block);
 	/**
 	 * @brief Pre-simulation.
 	 */

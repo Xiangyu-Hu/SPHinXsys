@@ -136,30 +136,28 @@ namespace SPH
 			viscous_force_from_fluid_[index_i] = force;
 		}
 		//=================================================================================================//
-		TotalViscousForceOnSolid ::TotalViscousForceOnSolid(SolidBody &solid_body)
-			: ParticleDynamicsReduce<Vecd, ReduceSum<Vecd>>(solid_body),
-			  SolidDataSimple(solid_body),
+		TotalViscousForceOnSolid ::TotalViscousForceOnSolid(SPHBody &sph_body)
+			: LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>(sph_body, Vecd(0)),
+			  SolidDataSimple(sph_body),
 			  viscous_force_from_fluid_(*particles_->getVariableByName<Vecd>("ViscousForceFromFluid"))
 		{
 			quantity_name_ = "TotalViscousForceOnSolid";
-			initial_reference_ = Vecd(0);
 		}
 		//=================================================================================================//
-		Vecd TotalViscousForceOnSolid::ReduceFunction(size_t index_i, Real dt)
+		Vecd TotalViscousForceOnSolid::reduce(size_t index_i, Real dt)
 		{
 			return viscous_force_from_fluid_[index_i];
 		}
 		//=================================================================================================//
-		TotalForceOnSolid::TotalForceOnSolid(SolidBody &solid_body)
-			: ParticleDynamicsReduce<Vecd, ReduceSum<Vecd>>(solid_body),
-			  SolidDataSimple(solid_body),
+		TotalForceOnSolid::TotalForceOnSolid(SPHBody &sph_body)
+			: LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>(sph_body, Vecd(0)),
+			  SolidDataSimple(sph_body),
 			  force_from_fluid_(*particles_->getVariableByName<Vecd>("ForceFromFluid"))
 		{
 			quantity_name_ = "TotalForceOnSolid";
-			initial_reference_ = Vecd(0);
 		}
 		//=================================================================================================//
-		Vecd TotalForceOnSolid::ReduceFunction(size_t index_i, Real dt)
+		Vecd TotalForceOnSolid::reduce(size_t index_i, Real dt)
 		{
 			return force_from_fluid_[index_i];
 		}

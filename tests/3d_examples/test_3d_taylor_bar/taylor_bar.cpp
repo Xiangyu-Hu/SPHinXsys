@@ -28,7 +28,7 @@ int main(int ac, char *av[])
 	column.defineParticlesAndMaterial<ElasticSolidParticles, HardeningPlasticSolid>(
 		rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
 	(!system.run_particle_relaxation_ && system.reload_particles_)
-		? column.generateParticles<ParticleGeneratorReload>(io_environment, column.getBodyName())
+		? column.generateParticles<ParticleGeneratorReload>(io_environment, column.getName())
 		: column.generateParticles<ParticleGeneratorLattice>();
 	column.addBodyStateForRecording<Vecd>("NormalDirection");
 

@@ -21,11 +21,11 @@
  *                                                                              *
  * -----------------------------------------------------------------------------*/
 /**
-* @file 	particle_dynamics_diffusion_reaction.h
-* @brief 	This is the particle dynamics applicable for all type bodies
-* 			TODO: there is an issue on applying corrected configuration for contact bodies.
-* @author	Xiaojing Tang, Chi ZHang and Xiangyu Hu
-*/
+ * @file 	particle_dynamics_diffusion_reaction.h
+ * @brief 	This is the particle dynamics applicable for all type bodies
+ * 			TODO: there is an issue on applying corrected configuration for contact bodies.
+ * @author	Xiaojing Tang, Chi ZHang and Xiangyu Hu
+ */
 
 #ifndef PARTICLE_DYNAMICS_DIFFUSION_REACTION_H
 #define PARTICLE_DYNAMICS_DIFFUSION_REACTION_H
@@ -167,6 +167,7 @@ namespace SPH
 		StdVec<StdLargeVec<Real>> &species_n_, &species_s_;
 
 		void initializeIntermediateValue(size_t particle_i);
+
 	public:
 		InitializationRK(SPHBody &sph_body, StdVec<StdLargeVec<Real>> &species_s);
 		virtual ~InitializationRK(){};
@@ -209,8 +210,8 @@ namespace SPH
 		StdVec<StdLargeVec<Real>> species_s_;
 
 		SimpleDynamics<InitializationRK<typename FirstStageType::InnerBodyType,
-						 typename FirstStageType::InnerBaseParticlesType,
-						 typename FirstStageType::InnerBaseMaterialType>>
+										typename FirstStageType::InnerBaseParticlesType,
+										typename FirstStageType::InnerBaseMaterialType>>
 			rk2_initialization_;
 		FirstStageType rk2_1st_stage_;
 		SecondStageRK2<FirstStageType> rk2_2nd_stage_;
@@ -315,65 +316,33 @@ namespace SPH
 	};
 
 	/**
-	 * @class TotalAveragedParameterOnDiffusionBody
-	 * @brief Computing the total averaged parameter on the whole diffusion body.
+	 * @class 	DiffusionReactionSpeciesAverage
+	 * @brief 	Computing the total averaged parameter on the whole diffusion body.
+	 * 			TODO: need a test using this method
 	 */
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	class TotalAveragedParameterOnDiffusionBody
-		: public ParticleDynamicsReduce<Real, ReduceSum<Real>>,
+	class DiffusionReactionSpeciesAverage
+		: public LocalDynamicsReduceAverage<Real>,
 		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
-	public:
-		explicit TotalAveragedParameterOnDiffusionBody(SPHBody &sph_body, const std::string &species_name)
-			: ParticleDynamicsReduce<Real, ReduceSum<Real>>(sph_body),
-			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
-			  species_n_(this->particles_->species_n_), species_name_(species_name)
-		{
-			quantity_name_ = "TotalAveragedParameterOnDiffusionBody";
-			initial_reference_ = Real(0);
-			phi_ = this->material_->SpeciesIndexMap()[species_name_];
-		}
-		virtual ~TotalAveragedParameterOnDiffusionBody(){};
-
 	protected:
 		StdVec<StdLargeVec<Real>> &species_n_;
-		std::string species_name_;
 		size_t phi_;
-		Real ReduceFunction(size_t index_i, Real dt = 0.0) override
-		{
-			return species_n_[phi_][index_i] / this->base_particles_->total_real_particles_;
-		}
-	};
 
-	/**
-	 * @class TotalAveragedParameterOnPartlyDiffusionBody
-	 * @brief Computing the total averaged parameter on partly diffusion body.
-	 */
-	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	class TotalAveragedParameterOnPartlyDiffusionBody
-		: public PartDynamicsByParticleReduce<Real, ReduceSum<Real>>,
-		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
-	{
 	public:
-		explicit TotalAveragedParameterOnPartlyDiffusionBody(SPHBody &sph_body,
-															 BodyPartByParticle &body_part, const std::string &species_name)
-			: PartDynamicsByParticleReduce<Real, ReduceSum<Real>>(sph_body, body_part),
+		explicit DiffusionReactionSpeciesAverage(SPHBody &sph_body, const std::string &species_name)
+			: LocalDynamicsReduceAverage<Real>(sph_body, Real(0)),
 			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
-			  species_n_(this->particles_->species_n_), species_name_(species_name)
+			  species_n_(this->particles_->species_n_),
+			  phi_(this->material_->SpeciesIndexMap()[species_name])
 		{
-			quantity_name_ = "TotalAveragedParameterOnPartlyDiffusionBody";
-			initial_reference_ = Real(0);
-			phi_ = this->material_->SpeciesIndexMap()[species_name_];
-		};
-		virtual ~TotalAveragedParameterOnPartlyDiffusionBody(){};
+			quantity_name_ = "DiffusionReactionSpeciesAverage";
+		}
+		virtual ~DiffusionReactionSpeciesAverage(){};
 
-	protected:
-		StdVec<StdLargeVec<Real>> &species_n_;
-		std::string species_name_;
-		size_t phi_;
-		Real ReduceFunction(size_t index_i, Real dt = 0.0) override
+		Real reduce(size_t index_i, Real dt = 0.0)
 		{
-			return species_n_[phi_][index_i] / body_part_particles_.size();
+			return species_n_[phi_][index_i];
 		}
 	};
 }

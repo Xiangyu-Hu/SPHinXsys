@@ -239,24 +239,32 @@ namespace SPH
 	class ReduceDynamics : public ParticleDynamics<typename LocalDynamics::ReduceReturnType>
 	{
 		using ReturnType = typename LocalDynamics::ReduceReturnType;
+
+	protected:
 		DynamicsRange &dynamics_range_;
 		LocalDynamics local_dynamics_;
+		std::string dynamics_range_name_;
+		std::string quantity_name_;
 
 	public:
 		template <typename... ConstructorArgs>
 		ReduceDynamics(DynamicsRange &dynamics_range, ConstructorArgs &&...args)
 			: ParticleDynamics<ReturnType>(dynamics_range.getSPHBody()),
 			  dynamics_range_(dynamics_range),
-			  local_dynamics_(dynamics_range.getSPHBody(), std::forward<ConstructorArgs>(args)...){};
+			  local_dynamics_(dynamics_range.getSPHBody(), std::forward<ConstructorArgs>(args)...),
+			  dynamics_range_name_(dynamics_range.getName()),
+			  quantity_name_(local_dynamics_.QuantityName()){};
 		virtual ~ReduceDynamics(){};
 
 		LocalDynamics &getLocalDynamics() { return local_dynamics_; };
+		std::string QuantityName() { return quantity_name_; };
+		std::string DynamicsRangeName() { return dynamics_range_name_; };
 
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
 			local_dynamics_.setupDynamics(dt);
-			ReturnType temp = particle_reduce(dynamics_range_.LoopRange(), local_dynamics_.InitialReference(), 
-											  local_dynamics_.getReduceOperation(),local_dynamics_, &LocalDynamics::reduce, dt);
+			ReturnType temp = particle_reduce(dynamics_range_.LoopRange(), local_dynamics_.InitialReference(),
+											  local_dynamics_.getReduceOperation(), local_dynamics_, &LocalDynamics::reduce, dt);
 			return local_dynamics_.outputResult(temp);
 		};
 
@@ -268,5 +276,30 @@ namespace SPH
 			return local_dynamics_.outputResult(temp);
 		};
 	};
+
+	template <class LocalDynamics, class DynamicsRange = SPHBody>
+	class ReduceDynamicsAverage : public ReduceDynamics<LocalDynamics, DynamicsRange>
+	{
+		using ReturnType = typename LocalDynamics::ReduceReturnType;
+
+	public:
+		template <typename... ConstructorArgs>
+		ReduceDynamicsAverage(DynamicsRange &dynamics_range, ConstructorArgs &&...args)
+			: ReduceDynamics<LocalDynamics, DynamicsRange>(dynamics_range, std::forward<ConstructorArgs>(args)...){};
+		virtual ~ReduceDynamicsAverage(){};
+
+		virtual ReturnType exec(Real dt = 0.0) override
+		{
+			ReturnType output_result = ReduceDynamics<LocalDynamics, DynamicsRange>::exec(dt);
+			return this->local_dynamics_.outputAverage(output_result, SizeOfLoopRange(this->dynamics_range_.LoopRange()));
+		};
+
+		virtual ReturnType parallel_exec(Real dt = 0.0) override
+		{
+			ReturnType output_result = ReduceDynamics<LocalDynamics, DynamicsRange>::parallel_exec(dt);
+			return this->local_dynamics_.outputAverage(output_result, SizeOfLoopRange(this->dynamics_range_.LoopRange()));
+		};
+	};
+
 }
 #endif // PARTICLE_DYNAMICS_ALGORITHMS_H

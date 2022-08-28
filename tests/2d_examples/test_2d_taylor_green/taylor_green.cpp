@@ -87,7 +87,7 @@ int main(int ac, char *av[])
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	// Using relaxed particle distribution if needed
 	sph_system.reload_particles_
-		? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getBodyName())
+		? water_block.generateParticles<ParticleGeneratorReload>(io_environment, water_block.getName())
 		: water_block.generateParticles<ParticleGeneratorLattice>();
 	/** topology */
 	BodyRelationInner water_block_inner(water_block);
@@ -135,10 +135,10 @@ int main(int ac, char *av[])
 	/** Output the body states for restart simulation. */
 	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
+	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_total_mechanical_energy(io_environment, water_block);
 	/** Output the maximum speed of the fluid body. */
-	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<MaximumSpeed>>
+	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<ReduceDynamics<MaximumSpeed>>>
 		write_maximum_speed(io_environment, water_block);
 	/**
 	 * @brief Setup geometry and initial conditions

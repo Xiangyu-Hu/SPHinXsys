@@ -99,7 +99,7 @@ int main(int ac, char *av[])
 	shell.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1.0, 1.0, 0.0);
 	if (!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 	{
-		shell.generateParticles<ParticleGeneratorReload>(io_environment, shell.getBodyName());
+		shell.generateParticles<ParticleGeneratorReload>(io_environment, shell.getName());
 	}
 	else
 	{

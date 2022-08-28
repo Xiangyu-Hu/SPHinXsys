@@ -73,7 +73,7 @@ int main(int ac, char *av[])
 	coil.defineBodyLevelSetShape()->writeLevelSet(coil);
 	coil.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	(!system.run_particle_relaxation_ && system.reload_particles_)
-		? coil.generateParticles<ParticleGeneratorReload>(io_environment, coil.getBodyName())
+		? coil.generateParticles<ParticleGeneratorReload>(io_environment, coil.getName())
 		: coil.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody stationary_plate(system, makeShared<StationaryPlate>("StationaryPlate"));

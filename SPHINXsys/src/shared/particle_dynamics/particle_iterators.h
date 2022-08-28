@@ -35,6 +35,9 @@
 namespace SPH
 {
 
+	size_t SizeOfLoopRange(const size_t &all_real_particles);
+	size_t SizeOfLoopRange(const IndexVector &body_part_particles);
+	size_t SizeOfLoopRange(const CellLists &body_part_cells);
 	//----------------------------------------------------------------------
 	//	Body-wise iterators (for sequential and parallel computing).
 	//----------------------------------------------------------------------
@@ -63,6 +66,10 @@ namespace SPH
 			ap);
 	};
 
+	//----------------------------------------------------------------------
+	//	Body-wise reduce iterators (for sequential and parallel computing).
+	//----------------------------------------------------------------------
+
 	template <class ReturnType, typename ReduceOperation, class LocalDynamics>
 	ReturnType particle_reduce(const size_t &all_real_particles, ReturnType temp, ReduceOperation &reduce_operation,
 							   LocalDynamics &local_dynamics, ReturnType (LocalDynamics::*func_ptr)(size_t, Real),
@@ -76,7 +83,7 @@ namespace SPH
 	};
 
 	template <class ReturnType, typename ReduceOperation, class LocalDynamics>
-	ReturnType particle_parallel_reduce(const size_t &all_real_particles, ReturnType temp,  ReduceOperation &reduce_operation,
+	ReturnType particle_parallel_reduce(const size_t &all_real_particles, ReturnType temp, ReduceOperation &reduce_operation,
 										LocalDynamics &local_dynamics, ReturnType (LocalDynamics::*func_ptr)(size_t, Real),
 										Real dt = 0.0)
 	{
@@ -93,6 +100,89 @@ namespace SPH
 			{
 				return reduce_operation(x, y);
 			});
+	};
+
+	//----------------------------------------------------------------------
+	//	BodypartByParticle-wise reduce iterators (for sequential and parallel computing).
+	//----------------------------------------------------------------------
+
+	template <class ReturnType, typename ReduceOperation, class LocalDynamics>
+	ReturnType particle_reduce(const IndexVector &body_part_particles, ReturnType temp, ReduceOperation &reduce_operation,
+							   LocalDynamics &local_dynamics, ReturnType (LocalDynamics::*func_ptr)(size_t, Real),
+							   Real dt = 0.0)
+	{
+		for (size_t i = 0; i < body_part_particles.size(); ++i)
+		{
+			temp = reduce_operation(temp, (local_dynamics.*func_ptr)(body_part_particles[i], dt));
+		}
+		return temp;
+	};
+
+	template <class ReturnType, typename ReduceOperation, class LocalDynamics>
+	ReturnType particle_parallel_reduce(const IndexVector &body_part_particles, ReturnType temp, ReduceOperation &reduce_operation,
+										LocalDynamics &local_dynamics, ReturnType (LocalDynamics::*func_ptr)(size_t, Real),
+										Real dt = 0.0)
+	{
+		return parallel_reduce(
+			IndexRange(0, body_part_particles.size()),
+			temp,
+			[&](const IndexRange &r, ReturnType temp0) -> ReturnType
+			{
+				for (size_t n = r.begin(); n != r.end(); ++n)
+				{
+					temp0 = reduce_operation(temp0, (local_dynamics.*func_ptr)(body_part_particles[n], dt));
+				}
+				return temp0;
+			},
+			[&](ReturnType x, ReturnType y) -> ReturnType
+			{
+				return reduce_operation(x, y);
+			});
+	};
+
+	//----------------------------------------------------------------------
+	//	BodypartByCell-wise reduce iterators (for sequential and parallel computing).
+	//----------------------------------------------------------------------
+
+	template <class ReturnType, typename ReduceOperation, class LocalDynamics>
+	ReturnType particle_reduce(const CellLists &body_part_cells, ReturnType temp, ReduceOperation &reduce_operation,
+							   LocalDynamics &local_dynamics, ReturnType (LocalDynamics::*func_ptr)(size_t, Real),
+							   Real dt = 0.0)
+	{
+		for (size_t i = 0; i != body_part_cells.size(); ++i)
+		{
+			ListDataVector &list_data = body_part_cells[i]->cell_list_data_;
+			for (size_t num = 0; num < list_data.size(); ++num)
+			{
+				temp = reduce_operation(temp, (local_dynamics.*func_ptr)(list_data[num].first, dt));
+			}
+		}
+
+		return temp;
+	};
+
+	template <class ReturnType, typename ReduceOperation, class LocalDynamics>
+	ReturnType particle_parallel_reduce(const CellLists &body_part_cells, ReturnType temp, ReduceOperation &reduce_operation,
+										LocalDynamics &local_dynamics, ReturnType (LocalDynamics::*func_ptr)(size_t, Real),
+										Real dt = 0.0)
+	{
+		return parallel_reduce(
+			IndexRange(0, body_part_cells.size()),
+			temp,
+			[&](const IndexRange &r, ReturnType temp0) -> ReturnType
+			{
+				for (size_t i = r.begin(); i != r.end(); ++i)
+				{
+					ListDataVector &list_data = body_part_cells[i]->cell_list_data_;
+					for (size_t num = 0; num < list_data.size(); ++num)
+					{
+						temp0 = reduce_operation(temp0, (local_dynamics.*func_ptr)(list_data[num].first, dt));
+					}
+				}
+				return temp0;
+			},
+			[&](ReturnType x, ReturnType y) -> ReturnType
+			{ return reduce_operation(x, y); });
 	};
 }
 #endif // PARTICLE_ITERATORS_H

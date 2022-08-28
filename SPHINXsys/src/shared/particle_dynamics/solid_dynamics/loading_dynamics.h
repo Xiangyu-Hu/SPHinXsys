@@ -40,12 +40,7 @@
 
 namespace SPH
 {
-    template <typename VariableType>
-    class BodySummation;
-    template <typename VariableType>
-    class BodyMoment;
-
-    namespace solid_dynamics
+     namespace solid_dynamics
     {
         //----------------------------------------------------------------------
         //		for general solid dynamics

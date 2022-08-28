@@ -84,7 +84,7 @@ namespace SPH
 		explicit SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr);
 		virtual ~SPHBody(){};
 
-		std::string getBodyName() { return body_shape_->getName(); };
+		std::string getName() { return body_shape_->getName(); };
 		SPHSystem &getSPHSystem();
 		SPHBody &getSPHBody() { return *this; };
 		size_t &LoopRange() { return base_particles_->total_real_particles_; };

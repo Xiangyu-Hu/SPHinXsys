@@ -120,10 +120,10 @@ int main(int ac, char *av[])
 	/** Output the body states for restart simulation. */
 	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<TotalMechanicalEnergy>>
+	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_total_mechanical_energy(io_environment, water_body);
 	/** Output the maximum speed of the fluid body. */
-	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<MaximumSpeed>>
+	RegressionTestEnsembleAveraged<BodyReducedQuantityRecording<ReduceDynamics<MaximumSpeed>>>
 		write_maximum_speed(io_environment, water_body);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
