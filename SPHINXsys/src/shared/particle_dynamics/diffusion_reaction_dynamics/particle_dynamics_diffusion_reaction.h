@@ -273,24 +273,25 @@ namespace SPH
 	};
 
 	/**
-	 * @class ConstrainDiffusionBodyRegion
+	 * @class ConstrainDiffusionReactionSpecies
 	 * @brief set boundary condition for diffusion problem
 	 */
-	template <class BodyType, class BaseParticlesType, class BodyPartByParticleType, class BaseMaterialType>
-	class ConstrainDiffusionBodyRegion
-		: public PartSimpleDynamicsByParticle,
+	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
+	class ConstrainDiffusionReactionSpecies
+		: public LocalDynamics,
 		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 	public:
-		ConstrainDiffusionBodyRegion(SPHBody &sph_body, BodyPartByParticleType &body_part)
-			: PartSimpleDynamicsByParticle(sph_body, body_part),
+		ConstrainDiffusionReactionSpecies(SPHBody &sph_body, const std::string &species_name)
+			: LocalDynamics(sph_body),
 			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
-			  pos_(this->particles_->pos_), species_n_(this->particles_->species_n_){};
-		virtual ~ConstrainDiffusionBodyRegion(){};
+			  phi_(this->material_->SpeciesIndexMap()[species_name]),
+			  species_(this->particles_->species_n_[phi_]) {};
+		virtual ~ConstrainDiffusionReactionSpecies(){};
 
 	protected:
-		StdLargeVec<Vecd> &pos_;
-		StdVec<StdLargeVec<Real>> &species_n_;
+		size_t phi_;
+		StdLargeVec<Real> &species_;
 	};
 
 	/**

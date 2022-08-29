@@ -48,6 +48,25 @@ namespace SPH
 		typedef DataDelegateSimple<SolidBody, SolidParticles, Solid> SolidDataSimple;
 		typedef DataDelegateInner<SolidBody, SolidParticles, Solid> SolidDataInner;
 
+		/**@class SpringConstrain
+		 * @brief Constrain with a spring for each constrained particles to its original position.
+		 * //TODO: a test case is required for this class.
+		 */
+		class SpringConstrain : 
+			public LocalDynamics, public SolidDataSimple
+		{
+		public:
+			SpringConstrain(SPHBody &sph_body, Real stiffness);
+			virtual ~SpringConstrain() {};
+
+			void update(size_t index_i, Real dt = 0.0);
+		protected:
+			StdLargeVec<Real>& mass_;
+			StdLargeVec<Vecd>& pos_, & pos0_, & vel_;
+			Vecd stiffness_;
+			virtual Vecd getAcceleration(Vecd& disp, Real mass);
+		};
+
 		/**
 		 * @class ConstrainSolidBodyRegion
 		 * @brief Constrain a solid body part with prescribed motion.

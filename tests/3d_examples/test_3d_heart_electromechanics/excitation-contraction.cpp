@@ -11,7 +11,7 @@
  *			diffusion d = (mm)^(2) * (ms)^(-2)
  */
 #include "sphinxsys.h" // SPHinXsys Library.
-using namespace SPH; // Namespace cite here.
+using namespace SPH;   // Namespace cite here.
 /** Geometry parameter. */
 /** Set the file path to the stl file. */
 std::string full_path_to_stl_file = "./input/heart-new.stl";
@@ -86,11 +86,15 @@ public:
 };
 /** Imposing diffusion boundary condition */
 class DiffusionBCs
-	: public ConstrainDiffusionBodyRegion<SolidBody, ElasticSolidParticles, BodySurface, LocallyOrthotropicMuscle>
+	: public ConstrainDiffusionReactionSpecies<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>
 {
-protected:
-	size_t phi_;
-	virtual void Update(size_t index_i, Real dt = 0.0) override
+public:
+	DiffusionBCs(SPHBody &sph_body, const std::string &species_name)
+		: ConstrainDiffusionReactionSpecies<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(sph_body, species_name),
+		  pos_(particles_->pos_){};
+	virtual ~DiffusionBCs(){};
+	
+	void update(size_t index_i, Real dt = 0.0)
 	{
 		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_[index_i]);
 		Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
@@ -100,22 +104,17 @@ protected:
 		Real angle = dot(face_norm, center_norm);
 		if (angle >= 0.0)
 		{
-			species_n_[phi_][index_i] = 1.0;
+			species_[index_i] = 1.0;
 		}
 		else
 		{
 			if (pos_[index_i][1] < -body_->sph_adaptation_->ReferenceSpacing())
-				species_n_[phi_][index_i] = 0.0;
+				species_[index_i] = 0.0;
 		}
 	};
 
-public:
-	DiffusionBCs(SolidBody &body, BodySurface &body_part)
-		: ConstrainDiffusionBodyRegion<SolidBody, ElasticSolidParticles, BodySurface, LocallyOrthotropicMuscle>(body, body_part)
-	{
-		phi_ = material_->SpeciesIndexMap()["Phi"];
-	};
-	virtual ~DiffusionBCs(){};
+protected:
+	StdLargeVec<Vecd> &pos_;
 };
 /** Compute Fiber and Sheet direction after diffusion */
 class ComputeFiberAndSheetDirections
@@ -335,7 +334,7 @@ int main(int ac, char *av[])
 
 		BodySurface surface_part(herat_model);
 		/** constraint boundary condition for diffusion. */
-		DiffusionBCs impose_diffusion_bc(herat_model, surface_part);
+		SimpleDynamics<DiffusionBCs, BodySurface> impose_diffusion_bc(surface_part, "Phi");
 		impose_diffusion_bc.parallel_exec();
 
 		write_herat_model_state_to_vtp.writeToFile(ite);

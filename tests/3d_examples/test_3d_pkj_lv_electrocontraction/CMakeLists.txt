@@ -31,6 +31,7 @@ else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         add_test(NAME ${PROJECT_NAME} COMMAND bash ${EXECUTABLE_OUTPUT_PATH}/run_test.sh
                 WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "muscle, diffusion reaction")
 
 if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")

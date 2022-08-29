@@ -65,26 +65,6 @@ namespace SPH
 			StdLargeVec<Vecd>& pos0_;
 			StdLargeVec<Real>& active_contraction_stress_;
 		};
-
-		/**@class SpringConstrainMuscleRegion
-		 * @brief Constrain a solid body part with a spring force 
-		 * towards each constrained particles' original position.
-		 * //TODO: a test case is required for this class.
-		 */
-		class SpringConstrainMuscleRegion : 
-			public PartSimpleDynamicsByParticle, public ElasticSolidDataSimple
-		{
-		public:
-			SpringConstrainMuscleRegion(SolidBody &solid_body, BodyPartByParticle &body_part);
-			virtual ~SpringConstrainMuscleRegion() {};
-			void setUpSpringStiffness(Vecd stiffness){stiffness_ = stiffness;}
-		protected:
-			StdLargeVec<Real>& mass_;
-			StdLargeVec<Vecd>& pos_, & pos0_, & vel_;
-			Vecd stiffness_;
-			virtual Vecd getAcceleration(Vecd& disp, Real mass);
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
-		};
     }
 }
 #endif //ACTIVE_MUSCLE_DYNAMICS_H

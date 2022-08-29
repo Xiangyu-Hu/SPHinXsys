@@ -118,11 +118,15 @@ public:
 };
 /** Imposing diffusion boundary condition */
 class DiffusionBCs
-	: public ConstrainDiffusionBodyRegion<SolidBody, ElasticSolidParticles, BodySurface, LocallyOrthotropicMuscle>
+	: public ConstrainDiffusionReactionSpecies<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>
 {
-protected:
-	size_t phi_;
-	virtual void Update(size_t index_i, Real dt = 0.0) override
+public:
+	DiffusionBCs(SPHBody &sph_body, const std::string &species_name)
+		: ConstrainDiffusionReactionSpecies<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(sph_body, species_name),
+		  pos_(particles_->pos_){};
+	virtual ~DiffusionBCs(){};
+	
+	void update(size_t index_i, Real dt = 0.0)
 	{
 		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_[index_i]);
 		Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
@@ -132,23 +136,19 @@ protected:
 		Real angle = dot(face_norm, center_norm);
 		if (angle >= 0.0)
 		{
-			species_n_[phi_][index_i] = 1.0;
+			species_[index_i] = 1.0;
 		}
 		else
 		{
 			if (pos_[index_i][1] < -body_->sph_adaptation_->ReferenceSpacing())
-				species_n_[phi_][index_i] = 0.0;
+				species_[index_i] = 0.0;
 		}
 	};
 
-public:
-	DiffusionBCs(SolidBody &body, BodySurface &body_part)
-		: ConstrainDiffusionBodyRegion<SolidBody, ElasticSolidParticles, BodySurface, LocallyOrthotropicMuscle>(body, body_part)
-	{
-		phi_ = material_->SpeciesIndexMap()["Phi"];
-	};
-	virtual ~DiffusionBCs(){};
+protected:
+	StdLargeVec<Vecd> &pos_;
 };
+
 /** Compute Fiber and Sheet direction after diffusion */
 class ComputeFiberAndSheetDirections
 	: public DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>

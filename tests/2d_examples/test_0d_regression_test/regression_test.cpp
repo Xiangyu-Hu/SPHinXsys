@@ -1,13 +1,13 @@
 /**
  * @file 	regression_test.cpp
- * @brief 	This is a test case based on diffusion, which can be used to 
-            validate the generation of the converged database in a regression test. 
-            It can be run successfully (using CMake's CTest) in Linux system installed with Python 3.
+ * @brief 	This is a test case based on diffusion, which can be used to
+			validate the generation of the converged database in a regression test.
+			It can be run successfully (using CMake's CTest) in Linux system installed with Python 3.
  * @author 	Bo Zhang and Xiangyu Hu
  */
 
 #include "sphinxsys.h" //SPHinXsys Library
-using namespace SPH;   //namespace cite here
+using namespace SPH;   // namespace cite here
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -31,7 +31,7 @@ Real low_temperature = 0.0;
 //----------------------------------------------------------------------
 MultiPolygon createDiffusionDomain()
 {
-	//thermal solid domain geometry.
+	// thermal solid domain geometry.
 	std::vector<Vecd> diffusion_domain;
 	diffusion_domain.push_back(Vecd(-BW, -BW));
 	diffusion_domain.push_back(Vecd(-BW, H + BW));
@@ -46,7 +46,7 @@ MultiPolygon createDiffusionDomain()
 
 MultiPolygon createInnerDomain()
 {
-	//thermal solid inner domain geometry.
+	// thermal solid inner domain geometry.
 	std::vector<Vecd> inner_domain;
 	inner_domain.push_back(Vecd(0.0, 0.0));
 	inner_domain.push_back(Vecd(0.0, H));
@@ -62,7 +62,7 @@ MultiPolygon createInnerDomain()
 
 MultiPolygon createLeftSideBoundary()
 {
-	//left isothermal boundary geometry.
+	// left isothermal boundary geometry.
 	std::vector<Vecd> left_boundary;
 	left_boundary.push_back(Vecd(-BW, -BW));
 	left_boundary.push_back(Vecd(-BW, H + BW));
@@ -78,7 +78,7 @@ MultiPolygon createLeftSideBoundary()
 
 MultiPolygon createOtherSideBoundary()
 {
-	//other side isothermal boundary geometry.
+	// other side isothermal boundary geometry.
 	std::vector<Vecd> other_boundaries;
 	other_boundaries.push_back(Vecd(-BW, -BW));
 	other_boundaries.push_back(Vecd(0.0, 0.0));
@@ -107,6 +107,25 @@ public:
 	};
 };
 //----------------------------------------------------------------------
+//	Set left side boundary condition.
+//----------------------------------------------------------------------
+class ConstrainTemperatureConstant
+	: public ConstrainDiffusionReactionSpecies<SolidBody, SolidParticles, Solid>
+{
+public:
+	ConstrainTemperatureConstant(SPHBody &sph_body, const std::string &species_name, Real constrained_value)
+		: ConstrainDiffusionReactionSpecies<SolidBody, SolidParticles, Solid>(sph_body, species_name),
+		  constrained_value_(constrained_value){};
+
+	void update(size_t index_i, Real dt = 0.0)
+	{
+		species_[index_i] = constrained_value_;
+	};
+
+protected:
+	Real constrained_value_;
+};
+//----------------------------------------------------------------------
 //	Case-dependent initial condition.
 //----------------------------------------------------------------------
 class DiffusionInitialCondition
@@ -128,47 +147,6 @@ public:
 		{
 			species_n_[phi_][index_i] = initial_temperature;
 		}
-	};
-
-};
-//----------------------------------------------------------------------
-//	Set left side boundary condition.
-//----------------------------------------------------------------------
-class LeftSideBoundaryCondition
-	: public ConstrainDiffusionBodyRegion<SolidBody, SolidParticles, BodyPartByParticle, Solid>
-{
-protected:
-	size_t phi_;
-	void Update(size_t index_i, Real dt) override
-	{
-		species_n_[phi_][index_i] = high_temperature;
-	};
-
-public:
-	LeftSideBoundaryCondition(SolidBody &diffusion_body, BodyPartByParticle &body_part)
-		: ConstrainDiffusionBodyRegion<SolidBody, SolidParticles, BodyPartByParticle, Solid>(diffusion_body, body_part)
-	{
-		phi_ = material_->SpeciesIndexMap()["Phi"];
-	};
-};
-//----------------------------------------------------------------------
-//	Set other side boundary condition.
-//----------------------------------------------------------------------
-class OtherSideBoundaryCondition
-	: public ConstrainDiffusionBodyRegion<SolidBody, SolidParticles, BodyPartByParticle, Solid>
-{
-protected:
-	size_t phi_;
-	void Update(size_t index_i, Real dt) override
-	{
-		species_n_[phi_][index_i] = low_temperature;
-	};
-
-public:
-	OtherSideBoundaryCondition(SolidBody &diffusion_body, BodyPartByParticle &body_part)
-		: ConstrainDiffusionBodyRegion<SolidBody, SolidParticles, BodyPartByParticle, Solid>(diffusion_body, body_part)
-	{
-		phi_ = material_->SpeciesIndexMap()["Phi"];
 	};
 };
 //----------------------------------------------------------------------
@@ -240,9 +218,9 @@ int main()
 	solid_dynamics::CorrectConfiguration correct_configuration(diffusion_body_inner_relation);
 	GetDiffusionTimeStepSize<SolidBody, SolidParticles, Solid> get_time_step_size(diffusion_body);
 	BodyRegionByParticle left_boundary(diffusion_body, makeShared<MultiPolygonShape>(createLeftSideBoundary()));
-	LeftSideBoundaryCondition left_boundary_condition(diffusion_body, left_boundary);
-	BodyRegionByParticle other_boundary(diffusion_body,	makeShared<MultiPolygonShape>(createOtherSideBoundary()));
-	OtherSideBoundaryCondition other_boundary_condition(diffusion_body, other_boundary);
+	SimpleDynamics<ConstrainTemperatureConstant, BodyRegionByParticle> left_boundary_condition(left_boundary, "Phi", high_temperature);
+	BodyRegionByParticle other_boundary(diffusion_body, makeShared<MultiPolygonShape>(createOtherSideBoundary()));
+	SimpleDynamics<ConstrainTemperatureConstant, BodyRegionByParticle> other_boundary_condition(other_boundary, "Phi", low_temperature);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations, observations of the simulation.
 	//	Regression tests are also defined here.

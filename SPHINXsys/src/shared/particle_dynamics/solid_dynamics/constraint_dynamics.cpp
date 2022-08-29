@@ -14,6 +14,29 @@ namespace SPH
 	namespace solid_dynamics
 	{
 		//=================================================================================================//
+		SpringConstrain::
+			SpringConstrain(SPHBody &sph_body, Real stiffness) :
+			LocalDynamics(sph_body), SolidDataSimple(sph_body), 
+			mass_(particles_->mass_), pos_(particles_->pos_), pos0_(particles_->pos0_),
+			vel_(particles_->vel_), stiffness_(stiffness) {}
+		//=================================================================================================//
+		Vecd SpringConstrain::getAcceleration(Vecd &disp, Real mass)
+		{
+			Vecd spring_force(0);
+			for(int i = 0; i < disp.size(); i++)
+			{
+				spring_force[i] = -stiffness_[i] * disp[i] / mass;
+			}
+			return spring_force;
+		}
+		//=================================================================================================//
+		void SpringConstrain::update(size_t index_i, Real dt)
+		{
+			Vecd disp_from_0 = pos_[index_i] - pos0_[index_i];
+			vel_[index_i] +=  dt * getAcceleration(disp_from_0, mass_[index_i]);
+			pos_[index_i] +=  dt * dt * getAcceleration(disp_from_0, mass_[index_i]);
+		}
+		//=================================================================================================//
 		ConstrainSolidBodyRegion::
 			ConstrainSolidBodyRegion(SPHBody &sph_body, BodyPartByParticle &body_part)
 			: PartSimpleDynamicsByParticle(sph_body, body_part), SolidDataSimple(sph_body),

@@ -63,6 +63,72 @@ namespace SPH
 	};
 
 	//----------------------------------------------------------------------
+	//	BodypartByParticle-wise iterators (for sequential and parallel computing).
+	//----------------------------------------------------------------------
+
+	template <class LocalDynamics>
+	void particle_for(const IndexVector &body_part_particles, LocalDynamics &local_dynamics,
+					  void (LocalDynamics::*func_ptr)(size_t, Real), Real dt = 0.0)
+	{
+		for (size_t i = 0; i < body_part_particles.size(); ++i)
+			(local_dynamics.*func_ptr)(body_part_particles[i], dt);
+	};
+
+	template <class LocalDynamics>
+	void particle_parallel_for(const IndexVector &body_part_particles, LocalDynamics &local_dynamics,
+							   void (LocalDynamics::*func_ptr)(size_t, Real), Real dt = 0.0)
+	{
+		parallel_for(
+			IndexRange(0, body_part_particles.size()),
+			[&](const IndexRange &r)
+			{
+				for (size_t i = r.begin(); i < r.end(); ++i)
+				{
+					(local_dynamics.*func_ptr)(body_part_particles[i], dt);
+				}
+			},
+			ap);
+	};
+
+	//----------------------------------------------------------------------
+	//	BodypartByCell-wise iterators (for sequential and parallel computing).
+	//----------------------------------------------------------------------
+
+	template <class LocalDynamics>
+	void particle_for(const CellLists &body_part_cells, LocalDynamics &local_dynamics,
+					  void (LocalDynamics::*func_ptr)(size_t, Real), Real dt = 0.0)
+	{
+		for (size_t i = 0; i != body_part_cells.size(); ++i)
+		{
+			ListDataVector &list_data = body_part_cells[i]->cell_list_data_;
+			for (size_t num = 0; num < list_data.size(); ++num)
+			{
+				(local_dynamics.*func_ptr)(list_data[num].first, dt);
+			}
+		}
+	};
+
+	template <class LocalDynamics>
+	void particle_parallel_for(const CellLists &body_part_cells, LocalDynamics &local_dynamics,
+							   void (LocalDynamics::*func_ptr)(size_t, Real), Real dt = 0.0)
+	{
+		parallel_for(
+			IndexRange(0, body_part_cells.size()),
+			[&](const IndexRange &r)
+			{
+				for (size_t i = r.begin(); i < r.end(); ++i)
+				{
+					ListDataVector &list_data = body_part_cells[i]->cell_list_data_;
+					for (size_t num = 0; num < list_data.size(); ++num)
+					{
+						(local_dynamics.*func_ptr)(list_data[num].first, dt);
+					}
+				}
+			},
+			ap);
+	};
+
+	//----------------------------------------------------------------------
 	//	Body-wise reduce iterators (for sequential and parallel computing).
 	//----------------------------------------------------------------------
 
