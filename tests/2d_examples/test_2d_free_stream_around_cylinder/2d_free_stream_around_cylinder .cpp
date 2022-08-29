@@ -102,7 +102,8 @@ int main(int ac, char *av[])
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<TimeDependentAcceleration>(Vec2d(0)));
 	BodyAlignedBoxByParticle emitter(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_translation)), emitter_halfsize));
-	fluid_dynamics::EmitterInflowInjecting emitter_inflow_injecting(water_block, emitter, 10, 0, true);
+	SimpleDynamics<fluid_dynamics::EmitterInflowInjecting, BodyAlignedBoxByParticle> 
+		emitter_inflow_injecting(emitter,  emitter.aligned_box_, emitter.SizeOfLoopRange() * 10, 0, true);
 	/** Emitter buffer inflow condition. */
 	BodyAlignedBoxByCell emitter_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));

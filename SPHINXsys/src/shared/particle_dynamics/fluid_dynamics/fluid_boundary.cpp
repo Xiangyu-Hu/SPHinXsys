@@ -51,16 +51,15 @@ namespace SPH
 		}
 		//=================================================================================================//
 		EmitterInflowCondition::
-			EmitterInflowCondition(FluidBody &fluid_body, BodyAlignedBoxByParticle &aligned_box_part)
-			: PartSimpleDynamicsByParticle(fluid_body, aligned_box_part), FluidDataSimple(fluid_body),
+			EmitterInflowCondition(SPHBody &sph_body, AlignedBoxShape &aligned_box)
+			: LocalDynamics(sph_body), FluidDataSimple(sph_body),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
 			  rho_(particles_->rho_), p_(particles_->p_), inflow_pressure_(0),
-			  rho0_(material_->ReferenceDensity()),
-			  aligned_box_(aligned_box_part.aligned_box_),
+			  rho0_(material_->ReferenceDensity()), aligned_box_(aligned_box),
 			  updated_transform_(aligned_box_.getTransform()),
 			  old_transform_(updated_transform_) {}
 		//=================================================================================================//
-		void EmitterInflowCondition ::Update(size_t unsorted_index_i, Real dt)
+		void EmitterInflowCondition ::update(size_t unsorted_index_i, Real dt)
 		{
 			size_t sorted_index_i = sorted_id_[unsorted_index_i];
 			Vecd frame_position = old_transform_.shiftBaseStationToFrame(pos_[sorted_index_i]);
@@ -71,14 +70,12 @@ namespace SPH
 			p_[sorted_index_i] = material_->getPressure(rho_[sorted_index_i]);
 		}
 		//=================================================================================================//
-		EmitterInflowInjecting ::EmitterInflowInjecting(FluidBody &fluid_body, BodyAlignedBoxByParticle &aligned_box_part,
-														size_t body_buffer_width, int axis, bool positive)
-			: PartSimpleDynamicsByParticle(fluid_body, aligned_box_part), FluidDataSimple(fluid_body),
+		EmitterInflowInjecting ::EmitterInflowInjecting(SPHBody &sph_body, AlignedBoxShape &aligned_box,
+														size_t total_body_buffer_particles, int axis, bool positive)
+			: LocalDynamics(sph_body), FluidDataSimple(sph_body),
 			  pos_(particles_->pos_), rho_(particles_->rho_), p_(particles_->p_),
-			  axis_(axis), body_buffer_width_(body_buffer_width),
-			  aligned_box_(aligned_box_part.aligned_box_)
+			  axis_(axis), aligned_box_(aligned_box)
 		{
-			size_t total_body_buffer_particles = body_part_particles_.size() * body_buffer_width_;
 			particles_->addBufferParticles(total_body_buffer_particles);
 			sph_body_.allocateConfigurationMemoriesForBufferParticles();
 

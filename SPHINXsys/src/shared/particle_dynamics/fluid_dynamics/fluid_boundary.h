@@ -32,6 +32,7 @@
 
 #include "fluid_dynamics_inner.h"
 
+#include <mutex>
 namespace SPH
 {
     namespace fluid_dynamics
@@ -80,7 +81,7 @@ namespace SPH
          * @class DampingBoundaryCondition
          * @brief damping boundary condition which relaxes
          * the particles to zero velocity profile.
-         * TODO: one can using aligned box shape and generalize the damping factor along 
+         * TODO: one can using aligned box shape and generalize the damping factor along
          * one axis direction.
          */
         class DampingBoundaryCondition : public PartDynamicsByCell, public FluidDataSimple
@@ -102,11 +103,14 @@ namespace SPH
          * @brief Inflow boundary condition imposed on an emitter, in which pressure and density profile are imposed too.
          * The body part region is required to have parallel lower- and upper-bound surfaces.
          */
-        class EmitterInflowCondition : public PartSimpleDynamicsByParticle, public FluidDataSimple
+        class EmitterInflowCondition : public LocalDynamics, public FluidDataSimple
         {
         public:
-            explicit EmitterInflowCondition(FluidBody &fluid_body, BodyAlignedBoxByParticle &aligned_box_part);
+            explicit EmitterInflowCondition(SPHBody &sph_body, AlignedBoxShape &aligned_box);
             virtual ~EmitterInflowCondition(){};
+
+            virtual void setupDynamics(Real dt = 0.0) override { updateTransform(); };
+            void update(size_t unsorted_index_i, Real dt = 0.0);
 
         protected:
             StdLargeVec<Vecd> &pos_, &vel_;
@@ -120,26 +124,31 @@ namespace SPH
             /** no transform by default */
             virtual void updateTransform(){};
             virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) = 0;
-            virtual void setupDynamics(Real dt = 0.0) override { updateTransform(); };
-            virtual void Update(size_t unsorted_index_i, Real dt = 0.0) override;
         };
 
         /**
          * @class EmitterInflowInjecting
          * @brief Inject particles into the computational domain.
          */
-        class EmitterInflowInjecting : public PartSimpleDynamicsByParticle, public FluidDataSimple
+        class EmitterInflowInjecting : public LocalDynamics, public FluidDataSimple
         {
         public:
-            explicit EmitterInflowInjecting(FluidBody &fluid_body, BodyAlignedBoxByParticle &aligned_box_part,
-                                            size_t body_buffer_width, int axis, bool positive);
+            explicit EmitterInflowInjecting(SPHBody &sph_body, AlignedBoxShape &aligned_box,
+                                            size_t total_body_buffer_particles, int axis, bool positive);
             virtual ~EmitterInflowInjecting(){};
 
             /** This class is only implemented in sequential due to memory conflicts. */
-            virtual void parallel_exec(Real dt = 0.0) override { exec(); };
             AlignedBoxShape &getBodyPartByParticle(){};
 
+            virtual void update(size_t unsorted_index_i, Real dt = 0.0)
+            {
+                mutex_switch_to_buffer_.lock();
+                checking_bound_(unsorted_index_i, dt);
+                mutex_switch_to_buffer_.unlock();
+            };
+
         protected:
+            std::mutex mutex_switch_to_buffer_; /**< mutex exclusion for memory pool */
             StdLargeVec<Vecd> &pos_;
             StdLargeVec<Real> &rho_, &p_;
             const int axis_; /**< the axis direction for bounding*/
@@ -149,11 +158,6 @@ namespace SPH
             virtual void checkLowerBound(size_t unsorted_index_i, Real dt = 0.0);
             virtual void checkUpperBound(size_t unsorted_index_i, Real dt = 0.0);
             ParticleFunctor checking_bound_;
-
-            virtual void Update(size_t unsorted_index_i, Real dt = 0.0) override
-            {
-                checking_bound_(unsorted_index_i, dt);
-            };
         };
 
         /**
