@@ -148,8 +148,8 @@ int main()
 	//----------------------------------------------------------------------
 	//	Coupling between SimBody and SPH
 	//----------------------------------------------------------------------
-	solid_dynamics::TotalForceOnSolidBodyPartForSimBody
-		force_on_spot_flap(flap, flap_multibody, MBsystem, pin_spot, force_on_bodies, integ);
+	ReduceDynamics<solid_dynamics::TotalForceForSimBody, FlapSystemForSimbody>
+		force_on_spot_flap(flap_multibody, MBsystem, pin_spot, force_on_bodies, integ);
 	solid_dynamics::ConstrainSolidBodyPartBySimBody
 		constraint_spot_flap(flap, flap_multibody, MBsystem, pin_spot, force_on_bodies, integ);
 	//----------------------------------------------------------------------

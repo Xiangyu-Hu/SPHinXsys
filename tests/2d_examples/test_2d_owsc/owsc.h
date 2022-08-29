@@ -243,8 +243,8 @@ MultiPolygon createFlapSimbodyConstrainShape()
 class FlapSystemForSimbody : public SolidBodyPartForSimbody
 {
 public:
-	FlapSystemForSimbody(SolidBody &solid_body, SharedPtr<Shape> shape_ptr)
-		: SolidBodyPartForSimbody(solid_body, shape_ptr)
+	FlapSystemForSimbody(SPHBody &sph_body, SharedPtr<Shape> shape_ptr)
+		: SolidBodyPartForSimbody(sph_body, shape_ptr)
 	{
 		// Vecd mass_center = Vecd(7.92, 0.355); // 0.3355
 		// initial_mass_center_ = SimTK::Vec3(mass_center[0], mass_center[1], 0.0);

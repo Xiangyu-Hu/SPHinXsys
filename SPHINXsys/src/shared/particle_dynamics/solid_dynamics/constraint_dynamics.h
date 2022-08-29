@@ -292,23 +292,14 @@ namespace SPH
 		};
 
 		/**
-		 * @class TotalForceOnSolidBodyPartForSimBody
+		 * @class TotalForceForSimBody
 		 * @brief Compute the force acting on the solid body part
 		 * for applying to simbody forces latter
 		 */
-		class TotalForceOnSolidBodyPartForSimBody
-			: public PartDynamicsByParticleReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>>,
+		class TotalForceForSimBody
+			: public LocalDynamicsReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>>,
 			  public SolidDataSimple
 		{
-		public:
-			TotalForceOnSolidBodyPartForSimBody(SolidBody &solid_body,
-												SolidBodyPartForSimbody &body_part,
-												SimTK::MultibodySystem &MBsystem,
-												SimTK::MobilizedBody &mobod,
-												SimTK::Force::DiscreteForces &force_on_bodies,
-												SimTK::RungeKuttaMersonIntegrator &integ);
-			virtual ~TotalForceOnSolidBodyPartForSimBody(){};
-
 		protected:
 			StdLargeVec<Real> &mass_;
 			StdLargeVec<Vecd> &acc_, &acc_prior_, &pos_;
@@ -319,8 +310,16 @@ namespace SPH
 			const SimTK::State *simbody_state_;
 			Vec3d current_mobod_origin_location_;
 
-			virtual void SetupReduce() override;
-			virtual SimTK::SpatialVec ReduceFunction(size_t index_i, Real dt = 0.0) override;
+		public:
+			TotalForceForSimBody(SPHBody &sph_body,
+												SimTK::MultibodySystem &MBsystem,
+												SimTK::MobilizedBody &mobod,
+												SimTK::Force::DiscreteForces &force_on_bodies,
+												SimTK::RungeKuttaMersonIntegrator &integ);
+			virtual ~TotalForceForSimBody(){};
+
+			virtual void setupDynamics(Real dt = 0.0) override;
+			SimTK::SpatialVec reduce(size_t index_i, Real dt = 0.0);
 		};
 	}
 }

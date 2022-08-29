@@ -405,8 +405,8 @@ int main(int ac, char *av[])
 	/**
 	 * Coupling between SimBody and SPH.
 	 */
-	solid_dynamics::TotalForceOnSolidBodyPartForSimBody
-		force_on_tethered_spot(fish_body, fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
+	ReduceDynamics<solid_dynamics::TotalForceForSimBody, SolidBodyPartForSimbody>
+		force_on_tethered_spot(fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
 	solid_dynamics::ConstrainSolidBodyPartBySimBody
 		constraint_tethered_spot(fish_body, fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
 

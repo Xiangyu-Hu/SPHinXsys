@@ -227,8 +227,8 @@ int main(int ac, char *av[])
 	integ.setAllowInterpolation(false);
 	integ.initialize(state);
 	/** Coupling between SimBody and SPH.*/
-	solid_dynamics::TotalForceOnSolidBodyPartForSimBody
-		force_on_shell(shell, shell_multibody, MBsystem, shellMBody, force_on_bodies, integ);
+	ReduceDynamics<solid_dynamics::TotalForceForSimBody, SolidBodyPartForSimbody>
+		force_on_shell(shell_multibody, MBsystem, shellMBody, force_on_bodies, integ);
 	solid_dynamics::ConstrainSolidBodyPartBySimBody
 		constraint_shell(shell, shell_multibody, MBsystem, shellMBody, force_on_bodies, integ);
 	//----------------------------------------------------------------------

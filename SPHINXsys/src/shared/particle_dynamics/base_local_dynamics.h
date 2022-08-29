@@ -85,9 +85,9 @@ namespace SPH
 		virtual ~LocalDynamicsReduce(){};
 
 		using ReduceReturnType = ReturnType;
-		ReturnType InitialReference() { return reference_; };
+		ReturnType Reference() { return reference_; };
 		std::string QuantityName() { return quantity_name_; };
-		ReduceOperation &getReduceOperation() { return operation_; };
+		ReduceOperation &getOperation() { return operation_; };
 		virtual ReturnType outputResult(ReturnType reduced_value) { return reduced_value; }
 
 	protected:

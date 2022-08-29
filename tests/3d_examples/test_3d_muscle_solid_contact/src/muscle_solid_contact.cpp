@@ -129,8 +129,8 @@ int main()
 	integ.setAllowInterpolation(false);
 	integ.initialize(state);
 	/** Coupling between SimBody and SPH.*/
-	solid_dynamics::TotalForceOnSolidBodyPartForSimBody
-		force_on_plate(moving_plate, plate_multibody, MBsystem, plateMBody, force_on_bodies, integ);
+	ReduceDynamics<solid_dynamics::TotalForceForSimBody, SolidBodyPartForSimbody>
+		force_on_plate(plate_multibody, MBsystem, plateMBody, force_on_bodies, integ);
 	solid_dynamics::ConstrainSolidBodyPartBySimBody
 		constraint_plate(moving_plate, plate_multibody, MBsystem, plateMBody, force_on_bodies, integ);
 	/**

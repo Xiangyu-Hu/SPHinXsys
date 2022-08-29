@@ -34,10 +34,6 @@
 
 namespace SPH
 {
-
-	size_t SizeOfLoopRange(const size_t &all_real_particles);
-	size_t SizeOfLoopRange(const IndexVector &body_part_particles);
-	size_t SizeOfLoopRange(const CellLists &body_part_cells);
 	//----------------------------------------------------------------------
 	//	Body-wise iterators (for sequential and parallel computing).
 	//----------------------------------------------------------------------

@@ -371,7 +371,7 @@ namespace SPH
 
 	public:
 		/*< deduce variable type from reduce method. */
-		using VariableType = decltype(reduce_method_.getLocalDynamics().InitialReference());
+		using VariableType = typename ReduceMethodType::ReduceReturnType;
 		VariableType type_indicator_; /*< this is an indicator to identify the variable type. */
 
 	public:
@@ -386,7 +386,7 @@ namespace SPH
 			std::ofstream out_file(filefullpath_output_.c_str(), std::ios::app);
 			out_file << "\"run_time\""
 					 << "   ";
-			plt_engine_.writeAQuantityHeader(out_file, reduce_method_.getLocalDynamics().InitialReference(), quantity_name_);
+			plt_engine_.writeAQuantityHeader(out_file, reduce_method_.getLocalDynamics().Reference(), quantity_name_);
 			out_file << "\n";
 			out_file.close();
 		};

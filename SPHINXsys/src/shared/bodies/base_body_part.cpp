@@ -16,6 +16,16 @@ namespace SPH
 			tagging_particle_method(i);
 		}
 	};
+    //=============================================================================================//
+    size_t BodyPartByCell::SizeOfLoopRange()
+    {
+        size_t size_of_loop_range = 0;
+        for (size_t i = 0; i != body_part_cells_.size(); ++i)
+        {
+            size_of_loop_range += body_part_cells_[i]->cell_list_data_.size();
+        }
+        return size_of_loop_range;
+    };
 	//=================================================================================================//
 	void BodyPartByCell::tagCells(TaggingCellMethod &tagging_cell_method)
 	{

@@ -354,23 +354,22 @@ namespace SPH
 			MBsystem_.realize(*simbody_state_, Stage::Acceleration);
 		}
 		//=================================================================================================//
-		TotalForceOnSolidBodyPartForSimBody::
-			TotalForceOnSolidBodyPartForSimBody(SolidBody &solid_body,
-												SolidBodyPartForSimbody &body_part,
+		TotalForceForSimBody::
+			TotalForceForSimBody(SPHBody &sph_body,
 												SimTK::MultibodySystem &MBsystem,
 												SimTK::MobilizedBody &mobod,
 												SimTK::Force::DiscreteForces &force_on_bodies,
 												SimTK::RungeKuttaMersonIntegrator &integ)
-			: PartDynamicsByParticleReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>>(solid_body, body_part),
-			  SolidDataSimple(solid_body), mass_(particles_->mass_),
+			: LocalDynamicsReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>>(sph_body, SpatialVec(Vec3(0), Vec3(0))),
+			  SolidDataSimple(sph_body), mass_(particles_->mass_),
 			  acc_(particles_->acc_), acc_prior_(particles_->acc_prior_),
 			  pos_(particles_->pos_),
 			  MBsystem_(MBsystem), mobod_(mobod), force_on_bodies_(force_on_bodies), integ_(integ)
 		{
-			initial_reference_ = SpatialVec(Vec3(0), Vec3(0));
+			quantity_name_ = "TotalForceForSimBody";
 		}
 		//=================================================================================================//
-		void TotalForceOnSolidBodyPartForSimBody::SetupReduce()
+		void TotalForceForSimBody::setupDynamics(Real dt)
 		{
 			simbody_state_ = &integ_.getState();
 			MBsystem_.realize(*simbody_state_, Stage::Acceleration);

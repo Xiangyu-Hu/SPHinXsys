@@ -53,8 +53,7 @@ namespace SPH
 			n_[index_i] = (mobod_.getBodyRotation(*simbody_state_) * n0_[index_i]);
 		}
 		//=================================================================================================//
-		SimTK::SpatialVec TotalForceOnSolidBodyPartForSimBody
-			::ReduceFunction(size_t index_i, Real dt)
+		SimTK::SpatialVec TotalForceForSimBody::reduce(size_t index_i, Real dt)
 		{
 			Vec3 force_from_particle = (acc_[index_i] + acc_prior_[index_i]) * mass_[index_i];
 			Vec3 displacement(0);
