@@ -75,7 +75,7 @@ namespace SPH
 	 * @class LocalDynamicsReduce
 	 * @brief The new version of base class for all local particle dynamics.
 	 */
-	template <typename ReturnType, typename ReduceOperation>
+	template <typename ReturnType, typename Operation>
 	class LocalDynamicsReduce : public LocalDynamics
 	{
 	public:
@@ -87,23 +87,13 @@ namespace SPH
 		using ReduceReturnType = ReturnType;
 		ReturnType Reference() { return reference_; };
 		std::string QuantityName() { return quantity_name_; };
-		ReduceOperation &getOperation() { return operation_; };
+		Operation &getOperation() { return operation_; };
 		virtual ReturnType outputResult(ReturnType reduced_value) { return reduced_value; }
 
 	protected:
 		ReturnType reference_;
-		ReduceOperation operation_;
+		Operation operation_;
 		std::string quantity_name_;
-	};
-
-	template <typename ReturnType>
-	class LocalDynamicsReduceAverage : public LocalDynamicsReduce<ReturnType, ReduceSum<ReturnType>>
-	{
-	public:
-		LocalDynamicsReduceAverage(SPHBody &sph_body, ReturnType reference)
-			: LocalDynamicsReduce<ReturnType, ReduceSum<ReturnType>>(sph_body, reference) {};
-		virtual ~LocalDynamicsReduceAverage(){};
-		ReturnType outputAverage(ReturnType reduced_value, size_t total) { return reduced_value / Real(total); }
 	};
 }
 #endif // BASE_LOCAL_DYNAMICS_H

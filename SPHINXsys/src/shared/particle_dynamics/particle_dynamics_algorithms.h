@@ -237,6 +237,10 @@ namespace SPH
 	class ReduceDynamicsAverage : public ReduceDynamics<LocalDynamics, DynamicsRange>
 	{
 		using ReturnType = typename LocalDynamics::ReduceReturnType;
+		ReturnType outputAverage(ReturnType sum, size_t size_of_loop_range)
+		{
+			return sum / Real(size_of_loop_range);
+		}
 
 	public:
 		template <typename... Args>
@@ -246,14 +250,14 @@ namespace SPH
 
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
-			ReturnType output_result = ReduceDynamics<LocalDynamics, DynamicsRange>::exec(dt);
-			return this->local_dynamics_.outputAverage(output_result, this->dynamics_range_.SizeOfLoopRange());
+			ReturnType sum = ReduceDynamics<LocalDynamics, DynamicsRange>::exec(dt);
+			return outputAverage(sum, this->dynamics_range_.SizeOfLoopRange());
 		};
 
 		virtual ReturnType parallel_exec(Real dt = 0.0) override
 		{
-			ReturnType output_result = ReduceDynamics<LocalDynamics, DynamicsRange>::parallel_exec(dt);
-			return this->local_dynamics_.outputAverage(output_result, this->dynamics_range_.SizeOfLoopRange());
+			ReturnType sum = ReduceDynamics<LocalDynamics, DynamicsRange>::parallel_exec(dt);
+			return outputAverage(sum, this->dynamics_range_.SizeOfLoopRange());
 		};
 	};
 

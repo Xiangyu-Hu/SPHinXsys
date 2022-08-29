@@ -316,13 +316,13 @@ namespace SPH
 	};
 
 	/**
-	 * @class 	DiffusionReactionSpeciesAverage
+	 * @class 	DiffusionReactionSpeciesSummation
 	 * @brief 	Computing the total averaged parameter on the whole diffusion body.
 	 * 			TODO: need a test using this method
 	 */
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	class DiffusionReactionSpeciesAverage
-		: public LocalDynamicsReduceAverage<Real>,
+	class DiffusionReactionSpeciesSummation
+		: public LocalDynamicsReduce<Real, ReduceSum<Real>>,
 		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 	protected:
@@ -330,15 +330,15 @@ namespace SPH
 		size_t phi_;
 
 	public:
-		explicit DiffusionReactionSpeciesAverage(SPHBody &sph_body, const std::string &species_name)
-			: LocalDynamicsReduceAverage<Real>(sph_body, Real(0)),
+		explicit DiffusionReactionSpeciesSummation(SPHBody &sph_body, const std::string &species_name)
+			: LocalDynamicsReduce<Real, ReduceSum<Real>>(sph_body, Real(0)),
 			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 			  species_n_(this->particles_->species_n_),
 			  phi_(this->material_->SpeciesIndexMap()[species_name])
 		{
 			quantity_name_ = "DiffusionReactionSpeciesAverage";
 		}
-		virtual ~DiffusionReactionSpeciesAverage(){};
+		virtual ~DiffusionReactionSpeciesSummation(){};
 
 		Real reduce(size_t index_i, Real dt = 0.0)
 		{
