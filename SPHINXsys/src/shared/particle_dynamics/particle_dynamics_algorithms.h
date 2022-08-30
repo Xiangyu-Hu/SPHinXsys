@@ -177,14 +177,21 @@ namespace SPH
 		{
 			local_dynamics_.setBodyUpdated();
 			local_dynamics_.setupDynamics(dt);
-			particle_for(dynamics_range_.LoopRange(), local_dynamics_, &LocalDynamicsType::update, dt);
+			particle_for(
+				dynamics_range_.LoopRange(),
+				[&](size_t i, Real delta)
+				{ local_dynamics_.update(i, delta); },
+				dt);
 		};
 
 		virtual void parallel_exec(Real dt = 0.0) override
 		{
 			local_dynamics_.setBodyUpdated();
 			local_dynamics_.setupDynamics(dt);
-			particle_parallel_for(dynamics_range_.LoopRange(), local_dynamics_, &LocalDynamicsType::update, dt);
+			particle_parallel_for(
+				dynamics_range_.LoopRange(), [&](size_t i, Real delta)
+				{ local_dynamics_.update(i, delta); },
+				dt);
 		};
 	};
 
@@ -217,18 +224,22 @@ namespace SPH
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
 			local_dynamics_.setupDynamics(dt);
-			ReturnType temp = particle_reduce(dynamics_range_.LoopRange(),
-											  local_dynamics_.Reference(), local_dynamics_.getOperation(),
-											  local_dynamics_, &LocalDynamicsType::reduce, dt);
+			ReturnType temp = particle_reduce(
+				dynamics_range_.LoopRange(), local_dynamics_.Reference(), local_dynamics_.getOperation(),
+				[&](size_t i, Real delta) -> ReturnType
+				{ return local_dynamics_.reduce(i, delta); },
+				dt);
 			return local_dynamics_.outputResult(temp);
 		};
 
 		virtual ReturnType parallel_exec(Real dt = 0.0) override
 		{
 			local_dynamics_.setupDynamics(dt);
-			ReturnType temp = particle_parallel_reduce(dynamics_range_.LoopRange(),
-													   local_dynamics_.Reference(), local_dynamics_.getOperation(),
-													   local_dynamics_, &LocalDynamicsType::reduce, dt);
+			ReturnType temp = particle_parallel_reduce(
+				dynamics_range_.LoopRange(), local_dynamics_.Reference(), local_dynamics_.getOperation(),
+				[&](size_t i, Real delta) -> ReturnType
+				{ return local_dynamics_.reduce(i, delta); },
+				dt);
 			return local_dynamics_.outputResult(temp);
 		};
 	};
