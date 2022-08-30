@@ -221,8 +221,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		SurfacePressureFromSource::
-			SurfacePressureFromSource(SPHBody &sph_body, BodyPartByParticle &body_part, Vecd source_point, StdVec<std::array<Real, 2>> pressure_over_time)
-			: PartSimpleDynamicsByParticle(sph_body, body_part), SolidDataSimple(sph_body),
+			SurfacePressureFromSource(BodyPartByParticle &body_part, Vecd source_point, StdVec<std::array<Real, 2>> pressure_over_time)
+			: LocalDynamics(body_part.getSPHBody()), SolidDataSimple(sph_body_),
 			  pos0_(particles_->pos0_),
 			  n_(particles_->n_),
 			  acc_prior_(particles_->acc_prior_),
@@ -232,7 +232,7 @@ namespace SPH
 			  apply_pressure_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
 		{
 			// get the surface layer of particles
-			BodySurface surface_layer(sph_body);
+			BodySurface surface_layer(sph_body_);
 			// select which particles the pressure is applied to
 			for (size_t particle_i : surface_layer.body_part_particles_)
 			{
@@ -280,24 +280,17 @@ namespace SPH
 			return p_0 + (p_1 - p_0) * (GlobalStaticVariables::physical_time_ - t_0) / (t_1 - t_0);
 		}
 		//=================================================================================================//
-		void SurfacePressureFromSource::Update(size_t index_i, Real dt)
+		void SurfacePressureFromSource::update(size_t index_i, Real dt)
 		{
-			try
+			if (apply_pressure_to_particle_[index_i])
 			{
-				if (apply_pressure_to_particle_[index_i])
-				{
-					// get the surface area of the particle, assuming it has a cubic volume
-					// acceleration is particle force / particle mass
-					Real area = std::pow(particles_->Vol_[index_i], 2.0 / 3.0);
-					Real acc_from_pressure = getPressure() * area / mass_[index_i];
-					// vector is made by multiplying it with the surface normal
-					// add the acceleration to the particle
-					acc_prior_[index_i] += (-1.0) * n_[index_i] * acc_from_pressure;
-				}
-			}
-			catch (std::out_of_range &e)
-			{
-				throw std::runtime_error(std::string("SurfacePressureFromSource::Update: particle index out of bounds") + std::to_string(index_i));
+				// get the surface area of the particle, assuming it has a cubic volume
+				// acceleration is particle force / particle mass
+				Real area = std::pow(particles_->Vol_[index_i], 2.0 / 3.0);
+				Real acc_from_pressure = getPressure() * area / mass_[index_i];
+				// vector is made by multiplying it with the surface normal
+				// add the acceleration to the particle
+				acc_prior_[index_i] += (-1.0) * n_[index_i] * acc_from_pressure;
 			}
 		}
 		//=================================================================================================//

@@ -183,13 +183,14 @@ namespace SPH
          * @class SurfacePressureFromSource
          * @brief SurfacePressureFromSource, applies pressure on the surface particles coming from a source point
          */
-        class SurfacePressureFromSource : public PartSimpleDynamicsByParticle, public SolidDataSimple
+        class SurfacePressureFromSource : public LocalDynamics, public SolidDataSimple
         {
         public:
-            SurfacePressureFromSource(SPHBody &sph_body, BodyPartByParticle &body_part,
+            SurfacePressureFromSource(BodyPartByParticle &body_part,
                                       Vecd source_point, StdVec<std::array<Real, 2>> pressure_over_time);
 
             StdLargeVec<bool> &GetApplyPressureToParticle() { return apply_pressure_to_particle_; }
+            void update(size_t index_i, Real dt = 0.0);
 
         protected:
             StdLargeVec<Vecd> &pos0_, &n_, &acc_prior_;
@@ -197,7 +198,6 @@ namespace SPH
             StdVec<std::array<Real, 2>> pressure_over_time_;
             StdLargeVec<bool> apply_pressure_to_particle_;
             Real getPressure();
-            virtual void Update(size_t index_i, Real dt = 0.0) override;
         };
     }
 }

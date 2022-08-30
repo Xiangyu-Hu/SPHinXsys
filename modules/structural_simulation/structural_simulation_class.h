@@ -200,7 +200,7 @@ protected:
 	vector<shared_ptr<SimpleDynamics<solid_dynamics::ForceInBodyRegion, BodyRegionByParticle>>> force_in_body_region_;
 	vector<ForceTuple> force_in_body_region_tuple_;
 	// for SurfacePressureFromSource
-	vector<shared_ptr<solid_dynamics::SurfacePressureFromSource>> surface_pressure_;
+	vector<shared_ptr<SimpleDynamics<solid_dynamics::SurfacePressureFromSource, BodyPartByParticle>>> surface_pressure_;
 	vector<PressureTuple> surface_pressure_tuple_;
 	// for SpringDamperConstraintParticleWise
 	vector<shared_ptr<SimpleDynamics<solid_dynamics::SpringDamperConstraintParticleWise>>> spring_damper_constraint_;

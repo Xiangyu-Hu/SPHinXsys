@@ -61,25 +61,6 @@ namespace SPH
 		: ParticleDynamics<void>(sph_body),
 		  body_part_particles_(body_part.body_part_particles_) {}
 	//=================================================================================================//
-	PartSimpleDynamicsByParticle::
-		PartSimpleDynamicsByParticle(SPHBody &sph_body, BodyPartByParticle &body_part)
-		: PartDynamicsByParticle(sph_body, body_part),
-		  functor_update_(std::bind(&PartSimpleDynamicsByParticle::Update, this, _1, _2)) {}
-	//=================================================================================================//
-	void PartSimpleDynamicsByParticle::exec(Real dt)
-	{
-		setBodyUpdated();
-		setupDynamics(dt);
-		PartIteratorByParticle(body_part_particles_, functor_update_, dt);
-	}
-	//=================================================================================================//
-	void PartSimpleDynamicsByParticle::parallel_exec(Real dt)
-	{
-		setBodyUpdated();
-		setupDynamics(dt);
-		PartIteratorByParticle_parallel(body_part_particles_, functor_update_, dt);
-	}
-	//=================================================================================================//
 	PartInteractionDynamicsByParticle::
 		PartInteractionDynamicsByParticle(SPHBody &sph_body, BodyPartByParticle &body_part)
 		: PartDynamicsByParticle(sph_body, body_part),

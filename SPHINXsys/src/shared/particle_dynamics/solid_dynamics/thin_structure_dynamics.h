@@ -192,11 +192,12 @@ namespace SPH
 		 * @brief Fix the position and angle of a shell body part.
 		 * Note that the average values for FSI are prescribed also.
 		 */
-		class ConstrainShellBodyRegion : public PartSimpleDynamicsByParticle, public ShellDataSimple
+		class ConstrainShellBodyRegion : public LocalDynamics, public ShellDataSimple
 		{
 		public:
-			ConstrainShellBodyRegion(SolidBody &sph_body, BodyPartByParticle &body_part);
+			ConstrainShellBodyRegion(BodyPartByParticle &body_part);
 			virtual ~ConstrainShellBodyRegion(){};
+			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Vecd> &pos_, &pos0_;
@@ -212,7 +213,6 @@ namespace SPH
 			virtual Vecd GetAngularAcceleration(const Vecd &pos_0, const Vecd &pos_n, const Vecd &dangular_vel_dt_) { return Vecd(0); };
 			virtual Vecd GetPseudoNormal(const Vecd &pos_0, const Vecd &pos_n, const Vecd &n_0) { return n_0; };
 			virtual Vecd GetPseudoNormalChangeRate(const Vecd &pos_0, const Vecd &pos_n, const Vecd &dpseudo_normal_dt_) { return Vecd(0); };
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -265,18 +265,18 @@ namespace SPH
 		 * The axis must be 0 or 1.
 		 * Note that the average values for FSI are prescribed also.
 		 */
-		class ConstrainShellBodyRegionAlongAxis : public PartSimpleDynamicsByParticle, public ShellDataSimple
+		class ConstrainShellBodyRegionAlongAxis : public LocalDynamics, public ShellDataSimple
 		{
 		public:
-			ConstrainShellBodyRegionAlongAxis(SolidBody &sph_body, BodyPartByParticle &body_part, int axis);
+			ConstrainShellBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis);
 			virtual ~ConstrainShellBodyRegionAlongAxis(){};
+			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			const int axis_; /**< the axis direction for bounding*/
 			StdLargeVec<Vecd> &pos_, &pos0_;
 			StdLargeVec<Vecd> &vel_, &acc_;
 			StdLargeVec<Vecd> &rotation_, &angular_vel_, &dangular_vel_dt_;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**

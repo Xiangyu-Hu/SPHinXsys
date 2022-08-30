@@ -64,24 +64,6 @@ namespace SPH
 	};
 
 	/**
-	 * @class PartSimpleDynamicsByParticle
-	 * @brief Abstract class for body part simple particle dynamics.
-	 */
-	class PartSimpleDynamicsByParticle : public PartDynamicsByParticle
-	{
-	public:
-		PartSimpleDynamicsByParticle(SPHBody &sph_body, BodyPartByParticle &body_part);
-		virtual ~PartSimpleDynamicsByParticle(){};
-
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
-
-	protected:
-		ParticleFunctor functor_update_;
-		virtual void Update(size_t index_i, Real dt = 0.0) = 0;
-	};
-
-	/**
 	 * @class PartInteractionDynamicsByParticle
 	 * @brief Abstract class for particle interaction involving in a body part.
 	 */

@@ -42,12 +42,12 @@ public:
 };
 
 /* define load*/
-class LoadForce : public PartSimpleDynamicsByParticle, public solid_dynamics::ElasticSolidDataSimple
+class LoadForce : public LocalDynamics, public solid_dynamics::ElasticSolidDataSimple
 {
 public:
-	LoadForce(SPHBody &sph_body, BodyPartByParticle &body_part, StdVec<array<Real, 2>> f_arr)
-		: PartSimpleDynamicsByParticle(sph_body, body_part),
-		  solid_dynamics::ElasticSolidDataSimple(sph_body),
+	LoadForce(BodyPartByParticle &body_part, StdVec<array<Real, 2>> f_arr)
+		: LocalDynamics(body_part.getSPHBody()),
+		  solid_dynamics::ElasticSolidDataSimple(sph_body_),
 		  acc_prior(particles_->acc_prior_),
 		  force_arr_(f_arr),
 		  mass_n_(particles_->mass_),
@@ -58,6 +58,24 @@ public:
 		area_0_.resize(particles_->total_real_particles_);
 		for (auto i = 0; i < particles_->total_real_particles_; ++i)
 			area_0_[i] = std::pow(particles_->Vol_[i], 2.0 / 3.0);
+	}
+
+	void update(size_t index_i, Real time = 0.0)
+	{
+		// pulling direction, i.e. positive z direction
+		Vecd normal(0, 0, 1);
+		// compute the new normal direction
+		const Vecd current_normal = ~SimTK::inverse(F_[index_i]) * normal;
+		const Real current_normal_norm = current_normal.norm();
+
+		Real J = SimTK::det(F_[index_i]);
+		// using Nanson’s relation to compute the new area of the surface particle.
+		// current_area * current_normal = det(F) * trans(inverse(F)) * area_0 * normal	   =>
+		// current_area = J * area_0 * norm(trans(inverse(F)) * normal)   =>
+		// current_area = J * area_0 * current_normal_norm
+		Real mean_force_ = getForce(time) * J * area_0_[index_i] * current_normal_norm;
+
+		acc_prior[index_i] += (mean_force_ / mass_n_[index_i]) * normal;
 	}
 
 protected:
@@ -84,24 +102,6 @@ protected:
 			else if (time > force_arr_.back()[0])
 				return force_arr_.back()[1];
 		}
-	}
-
-	virtual void Update(size_t index_i, Real time = 0.0)
-	{
-		// pulling direction, i.e. positive z direction
-		Vecd normal(0, 0, 1);
-		// compute the new normal direction
-		const Vecd current_normal = ~SimTK::inverse(F_[index_i]) * normal;
-		const Real current_normal_norm = current_normal.norm();
-
-		Real J = SimTK::det(F_[index_i]);
-		// using Nanson’s relation to compute the new area of the surface particle.
-		// current_area * current_normal = det(F) * trans(inverse(F)) * area_0 * normal	   =>
-		// current_area = J * area_0 * norm(trans(inverse(F)) * normal)   =>
-		// current_area = J * area_0 * current_normal_norm
-		Real mean_force_ = getForce(time) * J * area_0_[index_i] * current_normal_norm;
-
-		acc_prior[index_i] += (mean_force_ / mass_n_[index_i]) * normal;
 	}
 };
 
@@ -155,7 +155,7 @@ int main(int ac, char *av[])
 		{0.1 * end_time, 0.1 * load_total_force},
 		{0.4 * end_time, load_total_force},
 		{end_time, load_total_force}};
-	LoadForce pull_force(beam_body, load_surface, force_over_time);
+	SimpleDynamics<LoadForce, BodyRegionByParticle> pull_force(load_surface, force_over_time);
 	cout << "load surface particle number: " << load_surface.body_part_particles_.size() << endl;
 
 	//=== define constraint ===

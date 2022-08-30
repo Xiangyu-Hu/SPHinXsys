@@ -306,8 +306,8 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ConstrainShellBodyRegion::
-			ConstrainShellBodyRegion(SolidBody &solid_body, BodyPartByParticle &body_part)
-			: PartSimpleDynamicsByParticle(solid_body, body_part), ShellDataSimple(solid_body),
+			ConstrainShellBodyRegion(BodyPartByParticle &body_part)
+			: LocalDynamics(body_part.getSPHBody()), ShellDataSimple(sph_body_),
 			  pos_(particles_->pos_), pos0_(particles_->pos0_), n_(particles_->n_),
 			  vel_(particles_->vel_), acc_(particles_->acc_),
 			  rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
@@ -316,7 +316,7 @@ namespace SPH
 		{
 		}
 		//=================================================================================================//
-		void ConstrainShellBodyRegion::Update(size_t index_i, Real dt)
+		void ConstrainShellBodyRegion::update(size_t index_i, Real dt)
 		{
 			Vecd pos_0 = pos0_[index_i];
 			Vecd pos_n = pos_[index_i];
@@ -440,14 +440,14 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ConstrainShellBodyRegionAlongAxis::
-			ConstrainShellBodyRegionAlongAxis(SolidBody &solid_body, BodyPartByParticle &body_part, int axis)
-			: PartSimpleDynamicsByParticle(solid_body, body_part), ShellDataSimple(solid_body),
+			ConstrainShellBodyRegionAlongAxis(BodyPartByParticle &body_part, int axis)
+			: LocalDynamics(body_part.getSPHBody()), ShellDataSimple(sph_body_),
 			  axis_(axis), pos_(particles_->pos_), pos0_(particles_->pos0_),
 			  vel_(particles_->vel_), acc_(particles_->acc_),
 			  rotation_(particles_->rotation_), angular_vel_(particles_->angular_vel_),
 			  dangular_vel_dt_(particles_->dangular_vel_dt_) {}
 		//=================================================================================================//
-		void ConstrainShellBodyRegionAlongAxis::Update(size_t index_i, Real dt)
+		void ConstrainShellBodyRegionAlongAxis::update(size_t index_i, Real dt)
 		{
 			vel_[index_i][axis_] = 0.0;
 			vel_[index_i][2] = 0.0;
