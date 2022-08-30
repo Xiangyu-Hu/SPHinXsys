@@ -144,22 +144,6 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		ConstraintSurfaceParticles::
-			ConstraintSurfaceParticles(SPHBody &sph_body, BodySurface &body_part)
-			: PartSimpleDynamicsByParticle(sph_body, body_part), RelaxDataDelegateSimple(sph_body),
-			  constrained_distance_(0.5 * sph_body.sph_adaptation_->MinimumSpacing()),
-			  pos_(particles_->pos_)
-		{
-			level_set_shape_ = DynamicCast<LevelSetShape>(this, body_->body_shape_);
-		}
-		//=================================================================================================//
-		void ConstraintSurfaceParticles::Update(size_t index_i, Real dt)
-		{
-			Real phi = level_set_shape_->findSignedDistance(pos_[index_i]);
-			Vecd unit_normal = level_set_shape_->findNormalDirection(pos_[index_i]);
-			pos_[index_i] -= (phi + constrained_distance_) * unit_normal;
-		}
-		//=================================================================================================//
 		RelaxationStepInner::
 			RelaxationStepInner(BaseBodyRelationInner &inner_relation, bool level_set_correction)
 			: ParticleDynamics<void>(inner_relation.sph_body_),

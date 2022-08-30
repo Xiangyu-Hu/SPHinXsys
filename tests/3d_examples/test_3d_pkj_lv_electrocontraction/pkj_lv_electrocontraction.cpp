@@ -217,7 +217,7 @@ int main(int ac, char *av[])
 	/** Constrain region of the inserted body. */
 	MuscleBaseShapeParameters muscle_base_parameters;
 	BodyRegionByParticle muscle_base(mechanics_heart,  makeShared<TriangleMeshShapeBrick>(muscle_base_parameters, "Holder"));
-	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(mechanics_heart, muscle_base);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(muscle_base);
 	/** 
 	 * Pre-simulation. 
 	 */
@@ -333,7 +333,7 @@ int main(int ac, char *av[])
 					if (dt_myocardium - dt_muscle_sum < dt_muscle)
 						dt_muscle = dt_myocardium - dt_muscle_sum;
 					stress_relaxation_first_half.parallel_exec(dt_muscle);
-					constrain_holder.parallel_exec(dt_muscle);
+					constraint_holder.parallel_exec(dt_muscle);
 					stress_relaxation_second_half.parallel_exec(dt_muscle);
 					dt_muscle_sum += dt_muscle;
 				}

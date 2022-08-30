@@ -121,15 +121,15 @@ MultiPolygon createGateShape()
 MultiPolygon createGateConstrainShape()
 {
 	// geometry
-	std::vector<Vecd> gate_constrain_shape;
-	gate_constrain_shape.push_back(ConstrainP_lb);
-	gate_constrain_shape.push_back(ConstrainP_lt);
-	gate_constrain_shape.push_back(ConstrainP_rt);
-	gate_constrain_shape.push_back(ConstrainP_rb);
-	gate_constrain_shape.push_back(ConstrainP_lb);
+	std::vector<Vecd> gate_constraint_shape;
+	gate_constraint_shape.push_back(ConstrainP_lb);
+	gate_constraint_shape.push_back(ConstrainP_lt);
+	gate_constraint_shape.push_back(ConstrainP_rt);
+	gate_constraint_shape.push_back(ConstrainP_rb);
+	gate_constraint_shape.push_back(ConstrainP_lb);
 
 	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(gate_constrain_shape, ShapeBooleanOps::add);
+	multi_polygon.addAPolygon(gate_constraint_shape, ShapeBooleanOps::add);
 	return multi_polygon;
 }
 //----------------------------------------------------------------------
@@ -211,8 +211,8 @@ int main()
 	solid_dynamics::StressRelaxationFirstHalf gate_stress_relaxation_first_half(gate_inner_relation);
 	solid_dynamics::StressRelaxationSecondHalf gate_stress_relaxation_second_half(gate_inner_relation);
 	/**Constrain a solid body part.  */
-	BodyRegionByParticle gate_constrain_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
-	solid_dynamics::ConstrainSolidBodyRegion gate_constrain(gate, gate_constrain_part);
+	BodyRegionByParticle gate_constraint_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> gate_constraint(gate_constraint_part);
 	/** Update the surface normal direction of elastic gate. */
 	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> gate_update_normal(gate);
 	/** Compute the average velocity of gate. */
@@ -284,7 +284,7 @@ int main()
 					if (dt - dt_s_sum < dt_s)
 						dt_s = dt - dt_s_sum;
 					gate_stress_relaxation_first_half.parallel_exec(dt_s);
-					gate_constrain.parallel_exec();
+					gate_constraint.parallel_exec();
 					gate_stress_relaxation_second_half.parallel_exec(dt_s);
 					dt_s_sum += dt_s;
 				}

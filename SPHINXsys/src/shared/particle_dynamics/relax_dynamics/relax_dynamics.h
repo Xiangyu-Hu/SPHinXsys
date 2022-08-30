@@ -183,26 +183,6 @@ namespace SPH
 		};
 
 		/**
-		 * @class ConstraintSurfaceParticles
-		 * @brief constrain surface particles by
-		 * map constrained particles to geometry face and
-		 * r = r + phi * norm (vector distance to face)
-		 */
-		class ConstraintSurfaceParticles : public PartSimpleDynamicsByParticle,
-										   public RelaxDataDelegateSimple
-		{
-		public:
-			ConstraintSurfaceParticles(SPHBody &sph_body, BodySurface &body_part);
-			virtual ~ConstraintSurfaceParticles(){};
-
-		protected:
-			Real constrained_distance_;
-			StdLargeVec<Vecd> &pos_;
-			LevelSetShape *level_set_shape_;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
 		 * @class RelaxationStepInner
 		 * @brief carry out particle relaxation step of particles within the body
 		 */

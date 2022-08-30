@@ -258,7 +258,7 @@ public:
 	}
 };
 
-class WaveMaking : public solid_dynamics::ConstrainSolidBodyRegion
+class WaveMaking : public solid_dynamics::BaseMotionConstraint
 {
 	Real model_scale_;
 	Real gravity_;
@@ -267,33 +267,26 @@ class WaveMaking : public solid_dynamics::ConstrainSolidBodyRegion
 	Real wave_period_;
 	Real wave_freq_;
 	Real wave_stroke_;
-	Real time_;
 
-	virtual Vecd getDisplacement(Vecd &pos_0, Vecd &pos_n) override
+	Vecd getDisplacement(const Real &time)
 	{
 		Vecd displacement(0);
-		displacement[0] = 0.5 * wave_stroke_ * sin(wave_freq_ * time_);
-		return pos_0 + displacement;
+		displacement[0] = 0.5 * wave_stroke_ * sin(wave_freq_ * time);
+		return displacement;
 	}
 
-	virtual Vec2d getVelocity(Vecd &pos_0, Vecd &pos_n, Vec2d &vel_n) override
+	Vec2d getVelocity(const Real &time)
 	{
 		Vec2d velocity(0);
-		velocity[0] = 0.5 * wave_stroke_ * wave_freq_ * cos(wave_freq_ * time_);
+		velocity[0] = 0.5 * wave_stroke_ * wave_freq_ * cos(wave_freq_ * time);
 		return velocity;
 	}
 
-	virtual Vec2d getAcceleration(Vecd &pos_0, Vecd &pos_n, Vec2d &acc) override
+	Vec2d getAcceleration(const Real &time)
 	{
 		Vec2d acceleration(0);
-		acceleration[0] = -0.5 * wave_stroke_ * wave_freq_ * wave_freq_ * sin(wave_freq_ * time_);
+		acceleration[0] = -0.5 * wave_stroke_ * wave_freq_ * wave_freq_ * sin(wave_freq_ * time);
 		return acceleration;
-	}
-
-	virtual void setupDynamics(Real dt = 0.0) override
-	{
-		body_->setNewlyUpdated();
-		time_ = GlobalStaticVariables::physical_time_;
 	}
 
 	void computeWaveStrokeAndFrequency()
@@ -331,12 +324,21 @@ class WaveMaking : public solid_dynamics::ConstrainSolidBodyRegion
 	}
 
 public:
-	WaveMaking(SolidBody &solid_body, BodyPartByParticle &constrained_region)
-		: ConstrainSolidBodyRegion(solid_body, constrained_region), time_(0.0),
-		  model_scale_(25.0), wave_height_(5.0), wave_period_(10.0), gravity_(gravity_g), water_depth_(Water_H)
+	WaveMaking(SPHBody &sph_body)
+		: solid_dynamics::BaseMotionConstraint(sph_body),
+		  model_scale_(25.0), wave_height_(5.0),
+		  wave_period_(10.0), gravity_(gravity_g), water_depth_(Water_H)
 	{
 		computeWaveStrokeAndFrequency();
 	}
+
+	void update(size_t index_i, Real dt = 0.0)
+	{
+		Real time = GlobalStaticVariables::physical_time_;
+		pos_[index_i] = pos0_[index_i] + getDisplacement(time);
+		vel_[index_i] = getVelocity(time);
+		acc_[index_i] = getAcceleration(time);
+	};
 };
 
 Real h = 1.3 * particle_spacing_ref;

@@ -71,7 +71,7 @@ int main()
 	solid_dynamics::FluidForceOnSolidUpdate fluid_force_on_flap(flap_contact);
 	/** constrain region of the part of wall boundary. */
 	BodyRegionByParticle wave_maker(wall_boundary, makeShared<MultiPolygonShape>(createWaveMakerShape()));
-	WaveMaking wave_making(wall_boundary, wave_maker);
+	SimpleDynamics<WaveMaking, BodyRegionByParticle> wave_making(wave_maker);
 	//----------------------------------------------------------------------
 	//	Define the multi-body system
 	//----------------------------------------------------------------------
@@ -150,8 +150,8 @@ int main()
 	//----------------------------------------------------------------------
 	ReduceDynamics<solid_dynamics::TotalForceForSimBody, FlapSystemForSimbody>
 		force_on_spot_flap(flap_multibody, MBsystem, pin_spot, force_on_bodies, integ);
-	solid_dynamics::ConstrainSolidBodyPartBySimBody
-		constraint_spot_flap(flap, flap_multibody, MBsystem, pin_spot, force_on_bodies, integ);
+	SimpleDynamics<solid_dynamics::ConstraintBySimBody, FlapSystemForSimbody>
+		constraint_spot_flap(flap_multibody, MBsystem, pin_spot, force_on_bodies, integ);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

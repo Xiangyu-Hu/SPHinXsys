@@ -101,7 +101,7 @@ int main(int ac, char *av[])
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(cantilever_body,
 								makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder, "Holder"));
-	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(cantilever_body, holder);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
 	DampingWithRandomChoice<DampingBySplittingInner<Vec3d>>
 		muscle_damping(0.1, cantilever_body_inner, "Velocity", physical_viscosity);
 	/** Output */
@@ -144,9 +144,9 @@ int main(int ac, char *av[])
 
 			initialize_time_step.parallel_exec(); // gravity force
 			stress_relaxation_first_half.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+			constraint_holder.parallel_exec(dt);
 			muscle_damping.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+			constraint_holder.parallel_exec(dt);
 			stress_relaxation_second_half.parallel_exec(dt);
 
 			ite++;

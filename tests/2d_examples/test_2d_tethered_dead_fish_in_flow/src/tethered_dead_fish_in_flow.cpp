@@ -407,8 +407,8 @@ int main(int ac, char *av[])
 	 */
 	ReduceDynamics<solid_dynamics::TotalForceForSimBody, SolidBodyPartForSimbody>
 		force_on_tethered_spot(fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
-	solid_dynamics::ConstrainSolidBodyPartBySimBody
-		constraint_tethered_spot(fish_body, fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
+	SimpleDynamics<solid_dynamics::ConstraintBySimBody, SolidBodyPartForSimbody>
+		constraint_tethered_spot(fish_head, MBsystem, tethered_spot, force_on_bodies, integ);
 
 	/**
 	 * Time steeping starts here.

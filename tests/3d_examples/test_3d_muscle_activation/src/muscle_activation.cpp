@@ -48,37 +48,6 @@ public:
 	};
 };
 //----------------------------------------------------------------------
-//	Case dependent constraint.
-//----------------------------------------------------------------------
-class ConstrainHolder : public solid_dynamics::ConstrainSolidBodyRegion
-{
-public:
-	ConstrainHolder(SolidBody &body, BodyPartByParticle &body_part, int axis_id)
-		: solid_dynamics::ConstrainSolidBodyRegion(body, body_part),
-		  axis_id_(axis_id){};
-
-protected:
-	int axis_id_;
-	virtual Vecd getDisplacement(Vecd &pos_0, Vecd &pos_n)
-	{
-		Vecd pos_temp = pos_n;
-		pos_temp[axis_id_] = pos_0[axis_id_];
-		return pos_temp;
-	};
-	virtual Vecd getVelocity(Vecd &pos_0, Vecd &pos_n, Vecd &vel_n)
-	{
-		Vecd vel_temp = vel_n;
-		vel_temp[axis_id_] = 0.0;
-		return vel_temp;
-	};
-	virtual Vecd getAcceleration(Vecd &pos_0, Vecd &pos_n, Vecd &acc)
-	{
-		Vecd acc_temp = acc;
-		acc_temp[axis_id_] = 0.0;
-		return acc_temp;
-	};
-};
-//----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
 int main()
@@ -112,7 +81,7 @@ int main()
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(myocardium_muscle_body);
 	SimpleDynamics<MyocardiumActivation> myocardium_activation(myocardium_muscle_body);
 	BodyRegionByParticle holder(myocardium_muscle_body, makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder));
-	ConstrainHolder constrain_holder(myocardium_muscle_body, holder, 0);
+	SimpleDynamics<solid_dynamics::FixedInAxisDirection, BodyRegionByParticle> constrain_holder(holder, Vecd(0.0, 1.0, 1.0));
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations, observations
 	//	and regression tests of the simulation.

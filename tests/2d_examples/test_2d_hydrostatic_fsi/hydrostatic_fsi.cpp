@@ -152,23 +152,23 @@ public:
 MultiPolygon createGateConstrainShape()
 {
 	//geometry
-	std::vector<Vecd> gate_constrain_shape_left;
-	gate_constrain_shape_left.push_back(ConstrainLP_lb);
-	gate_constrain_shape_left.push_back(ConstrainLP_lt);
-	gate_constrain_shape_left.push_back(ConstrainLP_rt);
-	gate_constrain_shape_left.push_back(ConstrainLP_rb);
-	gate_constrain_shape_left.push_back(ConstrainLP_lb);
+	std::vector<Vecd> gate_constraint_shape_left;
+	gate_constraint_shape_left.push_back(ConstrainLP_lb);
+	gate_constraint_shape_left.push_back(ConstrainLP_lt);
+	gate_constraint_shape_left.push_back(ConstrainLP_rt);
+	gate_constraint_shape_left.push_back(ConstrainLP_rb);
+	gate_constraint_shape_left.push_back(ConstrainLP_lb);
 
-	std::vector<Vecd> gate_constrain_shape_right;
-	gate_constrain_shape_right.push_back(ConstrainRP_lb);
-	gate_constrain_shape_right.push_back(ConstrainRP_lt);
-	gate_constrain_shape_right.push_back(ConstrainRP_rt);
-	gate_constrain_shape_right.push_back(ConstrainRP_rb);
-	gate_constrain_shape_right.push_back(ConstrainRP_lb);
+	std::vector<Vecd> gate_constraint_shape_right;
+	gate_constraint_shape_right.push_back(ConstrainRP_lb);
+	gate_constraint_shape_right.push_back(ConstrainRP_lt);
+	gate_constraint_shape_right.push_back(ConstrainRP_rt);
+	gate_constraint_shape_right.push_back(ConstrainRP_rb);
+	gate_constraint_shape_right.push_back(ConstrainRP_lb);
 
 	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(gate_constrain_shape_left, ShapeBooleanOps::add);
-	multi_polygon.addAPolygon(gate_constrain_shape_right, ShapeBooleanOps::add);
+	multi_polygon.addAPolygon(gate_constraint_shape_left, ShapeBooleanOps::add);
+	multi_polygon.addAPolygon(gate_constraint_shape_right, ShapeBooleanOps::add);
 	return multi_polygon;
 }
 //----------------------------------------------------------------------
@@ -177,14 +177,14 @@ MultiPolygon createGateConstrainShape()
 std::vector<Vecd> createGateConstrainShapeRight()
 {
 	//geometry
-	std::vector<Vecd> gate_constrain_shape;
-	gate_constrain_shape.push_back(ConstrainRP_lb);
-	gate_constrain_shape.push_back(ConstrainRP_lt);
-	gate_constrain_shape.push_back(ConstrainRP_rt);
-	gate_constrain_shape.push_back(ConstrainRP_rb);
-	gate_constrain_shape.push_back(ConstrainRP_lb);
+	std::vector<Vecd> gate_constraint_shape;
+	gate_constraint_shape.push_back(ConstrainRP_lb);
+	gate_constraint_shape.push_back(ConstrainRP_lt);
+	gate_constraint_shape.push_back(ConstrainRP_rt);
+	gate_constraint_shape.push_back(ConstrainRP_rb);
+	gate_constraint_shape.push_back(ConstrainRP_lb);
 
-	return gate_constrain_shape;
+	return gate_constraint_shape;
 }
 //----------------------------------------------------------------------
 //	Main program starts here.
@@ -254,8 +254,8 @@ int main()
 	solid_dynamics::StressRelaxationFirstHalf gate_stress_relaxation_first_half(gate_inner);
 	solid_dynamics::StressRelaxationSecondHalf gate_stress_relaxation_second_half(gate_inner);
 	/**Constrain a solid body part.  */
-	BodyRegionByParticle gate_constrain_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
-	solid_dynamics::ConstrainSolidBodyRegion gate_constrain(gate, gate_constrain_part);
+	BodyRegionByParticle gate_constraint_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> gate_constraint(gate_constraint_part);
 	/** Update the norm of elastic gate. */
 	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> gate_update_normal(gate);
 	/** Compute the average velocity of gate. */
@@ -334,7 +334,7 @@ int main()
 					if (dt - dt_s_sum < dt_s)
 						dt_s = dt - dt_s_sum;
 					gate_stress_relaxation_first_half.parallel_exec(dt_s);
-					gate_constrain.parallel_exec();
+					gate_constraint.parallel_exec();
 					gate_stress_relaxation_second_half.parallel_exec(dt_s);
 					dt_s_sum += dt_s;
 					dt_s = gate_computing_time_step_size.parallel_exec();

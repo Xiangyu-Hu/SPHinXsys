@@ -194,7 +194,7 @@ int main(int ac, char *av[])
 	solid_dynamics::ContactForceFromWall beam_compute_solid_contact_forces(beam_contact);
 	solid_dynamics::ContactForceToWall shell_compute_solid_contact_forces(shell_contact);
 	BodyRegionByParticle holder(beam, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
-	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(beam, holder);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
 	/** Damping with the solid body*/
 	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
 		beam_damping(0.5, beam_inner, "Velocity", physical_viscosity);
@@ -229,8 +229,8 @@ int main(int ac, char *av[])
 	/** Coupling between SimBody and SPH.*/
 	ReduceDynamics<solid_dynamics::TotalForceForSimBody, SolidBodyPartForSimbody>
 		force_on_shell(shell_multibody, MBsystem, shellMBody, force_on_bodies, integ);
-	solid_dynamics::ConstrainSolidBodyPartBySimBody
-		constraint_shell(shell, shell_multibody, MBsystem, shellMBody, force_on_bodies, integ);
+	SimpleDynamics<solid_dynamics::ConstraintBySimBody, SolidBodyPartForSimbody>
+		constraint_shell(shell_multibody, MBsystem, shellMBody, force_on_bodies, integ);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -279,9 +279,9 @@ int main(int ac, char *av[])
 			}
 
 			beam_stress_relaxation_first_half.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+			constraint_holder.parallel_exec(dt);
 			beam_damping.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+			constraint_holder.parallel_exec(dt);
 			beam_stress_relaxation_second_half.parallel_exec(dt);
 
 			shell.updateCellLinkedList();

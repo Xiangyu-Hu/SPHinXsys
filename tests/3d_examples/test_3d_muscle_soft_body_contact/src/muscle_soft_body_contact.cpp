@@ -93,7 +93,7 @@ int main()
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(myocardium_body, 
 		makeShared<TransformShape<GeometricShapeBox>>(translation_stationary_plate, halfsize_stationary_plate, "Holder"));
-	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(myocardium_body, holder);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
 	/** Add spring constraint on the plate. */
 	SimpleDynamics<solid_dynamics::SpringDamperConstraintParticleWise> spring_constraint(moving_plate, Vecd(0.2, 0, 0), 0.01);
 
@@ -154,9 +154,9 @@ int main()
 
 			/** Stress relaxation and damping. */
 			stress_relaxation_first_half.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+			constraint_holder.parallel_exec(dt);
 			muscle_damping.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+			constraint_holder.parallel_exec(dt);
 			stress_relaxation_second_half.parallel_exec(dt);
 
 			stress_relaxation_first_half_2.parallel_exec(dt);

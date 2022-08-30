@@ -154,7 +154,7 @@ int main(int ac, char *av[])
 	solid_dynamics::StressRelaxationSecondHalf insert_body_stress_relaxation_second_half(insert_body_inner);
 	/** Constrain region of the inserted body. */
 	BodyRegionByParticle beam_base(insert_body, makeShared<MultiPolygonShape>(createBeamBaseShape()));
-	solid_dynamics::ConstrainSolidBodyRegion constrain_beam_base(insert_body, beam_base);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_beam_base(beam_base);
 	/** Update norm .*/
 	SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection> insert_body_update_normal(insert_body);
 	//----------------------------------------------------------------------
@@ -256,7 +256,7 @@ int main(int ac, char *av[])
 				{
 					Real dt_s = SMIN(insert_body_computing_time_step_size.parallel_exec(), dt - dt_s_sum);
 					insert_body_stress_relaxation_first_half.parallel_exec(dt_s);
-					constrain_beam_base.parallel_exec();
+					constraint_beam_base.parallel_exec();
 					insert_body_stress_relaxation_second_half.parallel_exec(dt_s);
 					dt_s_sum += dt_s;
 					inner_ite_dt_s++;

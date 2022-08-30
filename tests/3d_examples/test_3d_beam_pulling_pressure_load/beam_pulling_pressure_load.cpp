@@ -162,7 +162,7 @@ int main(int ac, char *av[])
 	/* create a brick to tag the region */
 	Vecd half_size_1(0.03, 0.03, 0.02);
 	BodyRegionByParticle holder(beam_body, makeShared<TriangleMeshShapeBrick>(half_size_1, 1, Vecd(0.0, 0.0, -0.02)));
-	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(beam_body, holder);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
 
 	/** Damping with the solid body*/
 	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
@@ -209,9 +209,9 @@ int main(int ac, char *av[])
 
 			/** Stress relaxation and damping. */
 			stress_relaxation_first_half.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+			constraint_holder.parallel_exec(dt);
 			beam_damping.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+			constraint_holder.parallel_exec(dt);
 			stress_relaxation_second_half.parallel_exec(dt);
 
 			ite++;

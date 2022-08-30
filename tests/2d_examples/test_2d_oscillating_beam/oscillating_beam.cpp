@@ -129,7 +129,7 @@ int main()
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(beam_body_inner);
 	// clamping a solid body part. This is softer than a direct constraint
 	BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
-	solid_dynamics::ClampConstrainSolidBodyRegion clamp_constrain_beam_base(beam_body_inner, beam_base);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_beam_base(beam_base);
 	//-----------------------------------------------------------------------------
 	// outputs
 	//-----------------------------------------------------------------------------
@@ -176,7 +176,7 @@ int main()
 			while (relaxation_time < Dt)
 			{
 				stress_relaxation_first_half.parallel_exec(dt);
-				clamp_constrain_beam_base.parallel_exec();
+				constraint_beam_base.parallel_exec();
 				stress_relaxation_second_half.parallel_exec(dt);
 
 				ite++;

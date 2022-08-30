@@ -37,7 +37,7 @@ namespace SPH
 			n_[index_i] = R * n0_[index_i];
 		}
 		//=================================================================================================//
-		void ConstrainSolidBodyPartBySimBody::Update(size_t index_i, Real dt)
+		void ConstraintBySimBody::update(size_t index_i, Real dt)
 		{
 			Vec3 rr, pos, vel, acc;
 			rr = pos0_[index_i] - initial_mobod_origin_location_;

@@ -155,7 +155,7 @@ int main(int ac, char *av[])
 	solid_dynamics::SelfContactForce beam_self_contact_forces(beam_self_contact);
 	// clamping a solid body part. This is softer than a direct constraint
 	BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
-	solid_dynamics::ClampConstrainSolidBodyRegion clamp_constrain_beam_base(beam_body_inner, beam_base);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_beam_base(beam_base);
 	//-----------------------------------------------------------------------------
 	//	outputs
 	//-----------------------------------------------------------------------------
@@ -217,7 +217,7 @@ int main(int ac, char *av[])
 				beam_self_contact.updateConfiguration();
 
 				stress_relaxation_first_half.parallel_exec(dt);
-				clamp_constrain_beam_base.parallel_exec();
+				constraint_beam_base.parallel_exec();
 				stress_relaxation_second_half.parallel_exec(dt);
 
 				ite++;

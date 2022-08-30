@@ -38,7 +38,7 @@ int main()
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(column_inner);
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(column, makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder, "Holder"));
-	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(column, holder);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
 	//----------------------------------------------------------------------
 	//	Output
 	//----------------------------------------------------------------------
@@ -83,7 +83,7 @@ int main()
 						  << dt << "\n";
 			}
 			stress_relaxation_first_half.parallel_exec(dt);
-			constrain_holder.parallel_exec(dt);
+			constraint_holder.parallel_exec(dt);
 			stress_relaxation_second_half.parallel_exec(dt);
 
 			ite++;
