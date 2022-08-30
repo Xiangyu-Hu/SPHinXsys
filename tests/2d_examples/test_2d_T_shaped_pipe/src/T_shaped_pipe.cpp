@@ -141,8 +141,7 @@ int main(int ac, char *av[])
 	/** Emitter. */
 	BodyAlignedBoxByParticle emitter(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_translation)), emitter_halfsize));
-	SimpleDynamics<fluid_dynamics::EmitterInflowInjecting, BodyAlignedBoxByParticle> 
-		emitter_inflow_injecting(emitter,  emitter.aligned_box_, emitter.SizeOfLoopRange() * 10, 0, true);
+	SimpleDynamics<fluid_dynamics::EmitterInflowInjecting, BodyAlignedBoxByParticle> emitter_inflow_injecting(emitter, 10, 0, true);
 	/** Emitter condition. */
 	BodyAlignedBoxByCell emitter_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
@@ -201,7 +200,7 @@ int main(int ac, char *av[])
 	int restart_output_interval = screen_output_interval * 10;
 	Real end_time = 100.0;
 	Real output_interval = end_time / 200.0; /**< Time stamps for output of body states. */
-	Real dt = 0.0;					/**< Default acoustic time step sizes. */
+	Real dt = 0.0;							 /**< Default acoustic time step sizes. */
 	//----------------------------------------------------------------------
 	//	Statistics for CPU time
 	//----------------------------------------------------------------------

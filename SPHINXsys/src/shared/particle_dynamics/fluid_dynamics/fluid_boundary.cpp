@@ -51,11 +51,11 @@ namespace SPH
 		}
 		//=================================================================================================//
 		EmitterInflowCondition::
-			EmitterInflowCondition(SPHBody &sph_body, AlignedBoxShape &aligned_box)
-			: LocalDynamics(sph_body), FluidDataSimple(sph_body),
+			EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part)
+			: LocalDynamics(aligned_box_part.getSPHBody()), FluidDataSimple(sph_body_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
 			  rho_(particles_->rho_), p_(particles_->p_), inflow_pressure_(0),
-			  rho0_(material_->ReferenceDensity()), aligned_box_(aligned_box),
+			  rho0_(material_->ReferenceDensity()), aligned_box_(aligned_box_part.aligned_box_),
 			  updated_transform_(aligned_box_.getTransform()),
 			  old_transform_(updated_transform_) {}
 		//=================================================================================================//
@@ -70,17 +70,25 @@ namespace SPH
 			p_[sorted_index_i] = material_->getPressure(rho_[sorted_index_i]);
 		}
 		//=================================================================================================//
-		EmitterInflowInjecting ::EmitterInflowInjecting(SPHBody &sph_body, AlignedBoxShape &aligned_box,
-														size_t total_body_buffer_particles, int axis, bool positive)
-			: LocalDynamics(sph_body), FluidDataSimple(sph_body),
+		EmitterInflowInjecting::EmitterInflowInjecting(BodyAlignedBoxByParticle &aligned_box_part,
+													   size_t body_buffer_width, int axis, bool positive)
+			: LocalDynamics(aligned_box_part.getSPHBody()), FluidDataSimple(sph_body_),
 			  pos_(particles_->pos_), rho_(particles_->rho_), p_(particles_->p_),
-			  axis_(axis), aligned_box_(aligned_box)
+			  axis_(axis), aligned_box_(aligned_box_part.aligned_box_)
 		{
+			size_t total_body_buffer_particles = aligned_box_part.body_part_particles_.size() * body_buffer_width_;
 			particles_->addBufferParticles(total_body_buffer_particles);
 			sph_body_.allocateConfigurationMemoriesForBufferParticles();
 
 			checking_bound_ = positive ? std::bind(&EmitterInflowInjecting::checkUpperBound, this, _1, _2)
 									   : std::bind(&EmitterInflowInjecting::checkLowerBound, this, _1, _2);
+		}
+		//=================================================================================================//
+		void EmitterInflowInjecting::update(size_t unsorted_index_i, Real dt)
+		{
+			mutex_switch_to_buffer_.lock();
+			checking_bound_(unsorted_index_i, dt);
+			mutex_switch_to_buffer_.unlock();
 		}
 		//=================================================================================================//
 		void EmitterInflowInjecting::checkUpperBound(size_t unsorted_index_i, Real dt)

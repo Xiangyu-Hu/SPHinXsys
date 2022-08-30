@@ -86,11 +86,11 @@ public:
 };
 /** Imposing diffusion boundary condition */
 class DiffusionBCs
-	: public ConstrainDiffusionReactionSpecies<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>
+	: public DiffusionReactionSpeciesConstraint<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>
 {
 public:
-	DiffusionBCs(SPHBody &sph_body, const std::string &species_name)
-		: ConstrainDiffusionReactionSpecies<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(sph_body, species_name),
+	DiffusionBCs(BodyPartByParticle &body_part, const std::string &species_name)
+		: DiffusionReactionSpeciesConstraint<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(body_part, species_name),
 		  pos_(particles_->pos_){};
 	virtual ~DiffusionBCs(){};
 	

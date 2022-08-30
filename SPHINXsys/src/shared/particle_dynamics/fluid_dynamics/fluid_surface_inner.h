@@ -153,9 +153,9 @@ namespace SPH
 			StdLargeVec<Vecd> &pos_;
 
 		public:
-			FreeSurfaceHeight(SPHBody &sph_body)
-				: LocalDynamicsReduce<Real, ReduceMax>(sph_body, Real(MinRealNumber)),
-				  FluidDataSimple(sph_body), pos_(particles_->pos_)
+			FreeSurfaceHeight(BodyPartByCell &body_part)
+				: LocalDynamicsReduce<Real, ReduceMax>(body_part.getSPHBody(), Real(MinRealNumber)),
+				  FluidDataSimple(sph_body_), pos_(particles_->pos_)
 			{
 				quantity_name_ = "FreeSurfaceHeight";
 			}

@@ -168,7 +168,7 @@ namespace SPH
 		SimpleDynamics(DynamicsRange &dynamics_range, Args &&...args)
 			: ParticleDynamics<void>(dynamics_range.getSPHBody()),
 			  dynamics_range_(dynamics_range),
-			  local_dynamics_(dynamics_range.getSPHBody(), std::forward<Args>(args)...){};
+			  local_dynamics_(dynamics_range, std::forward<Args>(args)...){};
 		virtual ~SimpleDynamics(){};
 
 		LocalDynamicsType &getLocalDynamics() { return local_dynamics_; };
@@ -211,7 +211,7 @@ namespace SPH
 		ReduceDynamics(DynamicsRange &dynamics_range, Args &&...args)
 			: ParticleDynamics<ReturnType>(dynamics_range.getSPHBody()),
 			  dynamics_range_(dynamics_range),
-			  local_dynamics_(dynamics_range.getSPHBody(), std::forward<Args>(args)...),
+			  local_dynamics_(dynamics_range, std::forward<Args>(args)...),
 			  dynamics_range_name_(dynamics_range.getName()),
 			  quantity_name_(local_dynamics_.QuantityName()){};
 		virtual ~ReduceDynamics(){};
@@ -271,6 +271,5 @@ namespace SPH
 			return outputAverage(sum, this->dynamics_range_.SizeOfLoopRange());
 		};
 	};
-
 }
 #endif // PARTICLE_DYNAMICS_ALGORITHMS_H

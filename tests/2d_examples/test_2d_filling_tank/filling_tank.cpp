@@ -73,16 +73,11 @@ public:
 class InletInflowCondition : public fluid_dynamics::EmitterInflowCondition
 {
 public:
-	InletInflowCondition(SPHBody &sph_body, AlignedBoxShape &aligned_box)
-		: EmitterInflowCondition(sph_body, aligned_box) {}
-
-	void update(size_t unsorted_index_i, Real dt = 0.0)
-	{
-		fluid_dynamics::EmitterInflowCondition::update(unsorted_index_i, dt);
-	};
+	InletInflowCondition(BodyAlignedBoxByParticle &aligned_box_part)
+		: EmitterInflowCondition(aligned_box_part) {}
 
 protected:
-	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
+	virtual Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
 	{
 		return Vec2d(2.0, 0.0);
 	}
@@ -130,9 +125,8 @@ int main()
 	/** Emitter. */
 	BodyAlignedBoxByParticle emitter(
 		water_body, makeShared<AlignedBoxShape>(Transform2d(inlet_translation), inlet_halfsize));
-	SimpleDynamics<InletInflowCondition, BodyAlignedBoxByParticle> inflow_condition(emitter, emitter.aligned_box_);
-	SimpleDynamics<fluid_dynamics::EmitterInflowInjecting, BodyAlignedBoxByParticle> 
-		emitter_injection(emitter,  emitter.aligned_box_, emitter.SizeOfLoopRange() * 350, 0, true);
+	SimpleDynamics<InletInflowCondition, BodyAlignedBoxByParticle> inflow_condition(emitter);
+	SimpleDynamics<fluid_dynamics::EmitterInflowInjecting, BodyAlignedBoxByParticle> emitter_injection(emitter, 350, 0, true);
 	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_body_complex);
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex indicate_free_surface(water_body_complex);
 	/** We can output a method-specific particle data for debug */

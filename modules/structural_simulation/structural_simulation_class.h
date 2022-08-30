@@ -197,7 +197,7 @@ protected:
 	vector<shared_ptr<SimpleDynamics<solid_dynamics::AccelerationForBodyPartInBoundingBox>>> acceleration_bounding_box_;
 	vector<AccelTuple> acceleration_bounding_box_tuple_;
 	// for ForceInBodyRegion
-	vector<shared_ptr<solid_dynamics::ForceInBodyRegion>> force_in_body_region_;
+	vector<shared_ptr<SimpleDynamics<solid_dynamics::ForceInBodyRegion, BodyRegionByParticle>>> force_in_body_region_;
 	vector<ForceTuple> force_in_body_region_tuple_;
 	// for SurfacePressureFromSource
 	vector<shared_ptr<solid_dynamics::SurfacePressureFromSource>> surface_pressure_;
@@ -206,7 +206,7 @@ protected:
 	vector<shared_ptr<SimpleDynamics<solid_dynamics::SpringDamperConstraintParticleWise>>> spring_damper_constraint_;
 	vector<SpringDamperTuple> spring_damper_tuple_;
 	// for SpringNormalOnSurfaceParticles
-	vector<shared_ptr<solid_dynamics::SpringNormalOnSurfaceParticles>> surface_spring_;
+	vector<shared_ptr<SimpleDynamics<solid_dynamics::SpringNormalOnSurfaceParticles>>> surface_spring_;
 	vector<SurfaceSpringTuple> surface_spring_tuple_;
 	// for ConstrainSolidBody
 	vector<shared_ptr<SimpleDynamics<solid_dynamics::FixConstraint>>> fixed_constraint_body_;

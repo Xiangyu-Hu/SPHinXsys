@@ -106,7 +106,7 @@ namespace SPH
         class EmitterInflowCondition : public LocalDynamics, public FluidDataSimple
         {
         public:
-            explicit EmitterInflowCondition(SPHBody &sph_body, AlignedBoxShape &aligned_box);
+            explicit EmitterInflowCondition(BodyAlignedBoxByParticle &aligned_box_part);
             virtual ~EmitterInflowCondition(){};
 
             virtual void setupDynamics(Real dt = 0.0) override { updateTransform(); };
@@ -133,22 +133,14 @@ namespace SPH
         class EmitterInflowInjecting : public LocalDynamics, public FluidDataSimple
         {
         public:
-            explicit EmitterInflowInjecting(SPHBody &sph_body, AlignedBoxShape &aligned_box,
-                                            size_t total_body_buffer_particles, int axis, bool positive);
+            EmitterInflowInjecting(BodyAlignedBoxByParticle &aligned_box_part,
+                                            size_t body_buffer_width, int axis, bool positive);
             virtual ~EmitterInflowInjecting(){};
 
-            /** This class is only implemented in sequential due to memory conflicts. */
-            AlignedBoxShape &getBodyPartByParticle(){};
-
-            virtual void update(size_t unsorted_index_i, Real dt = 0.0)
-            {
-                mutex_switch_to_buffer_.lock();
-                checking_bound_(unsorted_index_i, dt);
-                mutex_switch_to_buffer_.unlock();
-            };
+            void update(size_t unsorted_index_i, Real dt = 0.0);
 
         protected:
-            std::mutex mutex_switch_to_buffer_; /**< mutex exclusion for memory pool */
+            std::mutex mutex_switch_to_buffer_; /**< mutex exclusion for memory conflict */
             StdLargeVec<Vecd> &pos_;
             StdLargeVec<Real> &rho_, &p_;
             const int axis_; /**< the axis direction for bounding*/

@@ -273,21 +273,23 @@ namespace SPH
 	};
 
 	/**
-	 * @class ConstrainDiffusionReactionSpecies
+	 * @class DiffusionReactionSpeciesConstraint
 	 * @brief set boundary condition for diffusion problem
 	 */
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
-	class ConstrainDiffusionReactionSpecies
+	class DiffusionReactionSpeciesConstraint
 		: public LocalDynamics,
 		  public DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 	public:
-		ConstrainDiffusionReactionSpecies(SPHBody &sph_body, const std::string &species_name)
+		DiffusionReactionSpeciesConstraint(SPHBody &sph_body, const std::string &species_name)
 			: LocalDynamics(sph_body),
 			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 			  phi_(this->material_->SpeciesIndexMap()[species_name]),
-			  species_(this->particles_->species_n_[phi_]) {};
-		virtual ~ConstrainDiffusionReactionSpecies(){};
+			  species_(this->particles_->species_n_[phi_]){};
+		DiffusionReactionSpeciesConstraint(BodyPartByParticle &body_part, const std::string &species_name)
+			: DiffusionReactionSpeciesConstraint(body_part.getSPHBody(), species_name){};
+		virtual ~DiffusionReactionSpeciesConstraint(){};
 
 	protected:
 		size_t phi_;
@@ -331,20 +333,22 @@ namespace SPH
 		size_t phi_;
 
 	public:
-		explicit DiffusionReactionSpeciesSummation(SPHBody &sph_body, const std::string &species_name)
+		DiffusionReactionSpeciesSummation(SPHBody &sph_body, const std::string &species_name)
 			: LocalDynamicsReduce<Real, ReduceSum<Real>>(sph_body, Real(0)),
 			  DiffusionReactionSimpleData<BodyType, BaseParticlesType, BaseMaterialType>(sph_body),
 			  species_n_(this->particles_->species_n_),
 			  phi_(this->material_->SpeciesIndexMap()[species_name])
 		{
 			quantity_name_ = "DiffusionReactionSpeciesAverage";
-		}
+		};
+		DiffusionReactionSpeciesSummation(BodyPartByParticle &body_part, const std::string &species_name)
+		: DiffusionReactionSpeciesSummation(body_part.getSPHBody(), species_name) {};
 		virtual ~DiffusionReactionSpeciesSummation(){};
 
 		Real reduce(size_t index_i, Real dt = 0.0)
 		{
 			return species_n_[phi_][index_i];
-		}
+		};
 	};
 }
 #endif // PARTICLE_DYNAMICS_DIFFUSION_REACTION_H

@@ -40,7 +40,7 @@
 
 namespace SPH
 {
-     namespace solid_dynamics
+    namespace solid_dynamics
     {
         //----------------------------------------------------------------------
         //		for general solid dynamics
@@ -52,11 +52,12 @@ namespace SPH
          * @brief impose external force on a solid body part
          * by add extra acceleration
          */
-        class ImposeExternalForce : public PartSimpleDynamicsByParticle, public SolidDataSimple
+        class ImposeExternalForce : public LocalDynamics, public SolidDataSimple
         {
         public:
-            ImposeExternalForce(SolidBody &solid_body, SolidBodyPartForSimbody &body_part);
+            ImposeExternalForce(SPHBody &sph_body);
             virtual ~ImposeExternalForce(){};
+            void update(size_t index_i, Real dt = 0.0);
 
         protected:
             StdLargeVec<Vecd> &pos0_, &vel_;
@@ -64,7 +65,6 @@ namespace SPH
              * @brief acceleration will be specified by the application
              */
             virtual Vecd getAcceleration(Vecd &pos) = 0;
-            virtual void Update(size_t index_i, Real dt = 0.0) override;
         };
 
         /**
@@ -100,15 +100,14 @@ namespace SPH
          * Only for 3D applications
          * Only for uniform surface particle size.
          */
-        class SpringNormalOnSurfaceParticles
-            : public PartSimpleDynamicsByParticle,
-              public SolidDataSimple
+        class SpringNormalOnSurfaceParticles : public LocalDynamics, public SolidDataSimple
         {
         public:
-            SpringNormalOnSurfaceParticles(SolidBody &solid_body, BodyPartByParticle &body_part,
-                                           bool outer_surface, Vecd source_point, Real stiffness, Real damping_ratio = 0.05);
+            SpringNormalOnSurfaceParticles(SPHBody &sph_body, bool outer_surface,
+                                           Vecd source_point, Real stiffness, Real damping_ratio = 0.05);
 
             StdLargeVec<bool> &GetApplySpringForceToParticle() { return apply_spring_force_to_particle_; }
+            void update(size_t index_i, Real dt = 0.0);
 
         protected:
             StdLargeVec<Vecd> &pos_, &pos0_, &n_, &n0_, &vel_, &acc_prior_;
@@ -119,7 +118,6 @@ namespace SPH
 
             virtual Vecd getSpringForce(size_t index_i, Vecd disp);
             virtual Vecd getDampingForce(size_t index_i);
-            virtual void Update(size_t index_i, Real dt = 0.0) override;
         };
         /**
          * @class SpringOnSurfaceParticles
@@ -168,16 +166,17 @@ namespace SPH
          * @class ForceInBodyRegion
          * @brief ForceInBodyRegion, distributes the force vector as acceleration among the particles in a given body part
          */
-        class ForceInBodyRegion : public PartSimpleDynamicsByParticle, public SolidDataSimple
+        class ForceInBodyRegion : public LocalDynamics, public SolidDataSimple
         {
         public:
-            ForceInBodyRegion(SPHBody &sph_body, BodyPartByParticle &body_part, Vecd force, Real end_time);
+            ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time);
+            virtual ~ForceInBodyRegion(){};
+            void update(size_t index_i, Real dt = 0.0);
 
         protected:
             StdLargeVec<Vecd> &pos0_, &acc_prior_;
             Vecd acceleration_;
             Real end_time_;
-            virtual void Update(size_t index_i, Real dt = 0.0) override;
         };
 
         /**

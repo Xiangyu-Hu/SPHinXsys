@@ -15,15 +15,13 @@ namespace SPH
 	namespace solid_dynamics
 	{
 		//=================================================================================================//
-		ImposeExternalForce::
-			ImposeExternalForce(SolidBody &solid_body, SolidBodyPartForSimbody &body_part)
-			: PartSimpleDynamicsByParticle(solid_body, body_part), SolidDataSimple(solid_body),
+		ImposeExternalForce::ImposeExternalForce(SPHBody &sph_body)
+			: LocalDynamics(sph_body), SolidDataSimple(sph_body),
 			  pos0_(particles_->pos0_), vel_(particles_->vel_) {}
 		//=================================================================================================//
-		void ImposeExternalForce::Update(size_t index_i, Real dt)
+		void ImposeExternalForce::update(size_t index_i, Real dt)
 		{
-			Vecd induced_acceleration = getAcceleration(pos0_[index_i]);
-			vel_[index_i] += induced_acceleration * dt;
+			vel_[index_i] += dt * getAcceleration(pos0_[index_i]);
 		}
 		//=================================================================================================//
 		SpringDamperConstraintParticleWise::
@@ -67,8 +65,9 @@ namespace SPH
 		}
 		//=================================================================================================//
 		SpringNormalOnSurfaceParticles::
-			SpringNormalOnSurfaceParticles(SolidBody &solid_body, BodyPartByParticle &body_part, bool outer_surface, Vecd source_point, Real stiffness, Real damping_ratio)
-			: PartSimpleDynamicsByParticle(solid_body, body_part), SolidDataSimple(solid_body),
+			SpringNormalOnSurfaceParticles(SPHBody &sph_body, bool outer_surface,
+										   Vecd source_point, Real stiffness, Real damping_ratio)
+			: LocalDynamics(sph_body), SolidDataSimple(sph_body),
 			  pos_(particles_->pos_),
 			  pos0_(particles_->pos0_),
 			  n_(particles_->n_),
@@ -79,7 +78,7 @@ namespace SPH
 			  apply_spring_force_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
 		{
 			// get the surface layer of particles
-			BodySurface surface_layer(solid_body);
+			BodySurface surface_layer(sph_body);
 			// select which particles the spring is applied to
 			for (size_t particle_i : surface_layer.body_part_particles_)
 			{
@@ -136,20 +135,13 @@ namespace SPH
 			return damping_force_vector;
 		}
 		//=================================================================================================//
-		void SpringNormalOnSurfaceParticles::Update(size_t index_i, Real dt)
+		void SpringNormalOnSurfaceParticles::update(size_t index_i, Real dt)
 		{
-			try
+			if (apply_spring_force_to_particle_[index_i])
 			{
-				if (apply_spring_force_to_particle_[index_i])
-				{
-					Vecd delta_x = pos_[index_i] - pos0_[index_i];
-					acc_prior_[index_i] += getSpringForce(index_i, delta_x) / mass_[index_i];
-					acc_prior_[index_i] += getDampingForce(index_i) / mass_[index_i];
-				}
-			}
-			catch (std::out_of_range &e)
-			{
-				throw std::runtime_error(std::string("SpringNormalOnSurfaceParticles::Update: particle index out of bounds") + std::to_string(index_i));
+				Vecd delta_x = pos_[index_i] - pos0_[index_i];
+				acc_prior_[index_i] += getSpringForce(index_i, delta_x) / mass_[index_i];
+				acc_prior_[index_i] += getDampingForce(index_i) / mass_[index_i];
 			}
 		}
 		//=================================================================================================//
@@ -203,26 +195,17 @@ namespace SPH
 		//=================================================================================================//
 		void AccelerationForBodyPartInBoundingBox::update(size_t index_i, Real dt)
 		{
-			try
+			if (bounding_box_.checkContain(pos_[index_i]))
 			{
-				if (bounding_box_.checkContain(pos_[index_i]))
-				{
-					acc_prior_[index_i] += acceleration_;
-				}
-			}
-			catch (std::out_of_range &e)
-			{
-				throw std::runtime_error(std::string("AccelerationForBodyPartInBoundingBox::Update: particle index out of bounds") + std::to_string(index_i));
+				acc_prior_[index_i] += acceleration_;
 			}
 		}
 		//=================================================================================================//
 		ForceInBodyRegion::
-			ForceInBodyRegion(SPHBody &sph_body, BodyPartByParticle &body_part, Vecd force, Real end_time)
-			: PartSimpleDynamicsByParticle(sph_body, body_part), SolidDataSimple(sph_body),
-			  pos0_(particles_->pos0_),
-			  acc_prior_(particles_->acc_prior_),
-			  acceleration_(0),
-			  end_time_(end_time)
+			ForceInBodyRegion(BodyPartByParticle &body_part, Vecd force, Real end_time)
+			: LocalDynamics(body_part.getSPHBody()), SolidDataSimple(sph_body_),
+			  pos0_(particles_->pos0_), acc_prior_(particles_->acc_prior_),
+			  acceleration_(0), end_time_(end_time)
 		{
 			// calculate acceleration: force / total mass
 			Real total_mass_in_region(0);
@@ -231,17 +214,10 @@ namespace SPH
 			acceleration_ = force / total_mass_in_region;
 		}
 		//=================================================================================================//
-		void ForceInBodyRegion::Update(size_t index_i, Real dt)
+		void ForceInBodyRegion::update(size_t index_i, Real dt)
 		{
-			try
-			{
-				Real time_factor = SMIN(GlobalStaticVariables::physical_time_ / end_time_, 1.0);
-				acc_prior_[index_i] = acceleration_ * time_factor;
-			}
-			catch (std::out_of_range &e)
-			{
-				throw std::runtime_error(std::string("ForceInBodyRegion::Update: particle index out of bounds") + std::to_string(index_i));
-			}
+			Real time_factor = SMIN(GlobalStaticVariables::physical_time_ / end_time_, 1.0);
+			acc_prior_[index_i] = acceleration_ * time_factor;
 		}
 		//=================================================================================================//
 		SurfacePressureFromSource::

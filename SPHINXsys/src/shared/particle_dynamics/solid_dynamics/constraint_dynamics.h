@@ -62,6 +62,8 @@ namespace SPH
 		{
 		public:
 			explicit BaseMotionConstraint(SPHBody &sph_body);
+			explicit BaseMotionConstraint(BodyPartByParticle &body_part);
+
 			virtual ~BaseMotionConstraint(){};
 
 		protected:
@@ -76,7 +78,8 @@ namespace SPH
 		class FixConstraint : public BaseMotionConstraint
 		{
 		public:
-			FixConstraint(SPHBody &sph_body) : BaseMotionConstraint(sph_body){};
+			explicit FixConstraint(SPHBody &sph_body) : BaseMotionConstraint(sph_body){};
+			explicit FixConstraint(BodyPartByParticle &body_part) : BaseMotionConstraint(body_part){};
 			virtual ~FixConstraint(){};
 
 			void update(size_t index_i, Real dt = 0.0) { vel_[index_i] = Vecd(0); };
@@ -89,7 +92,7 @@ namespace SPH
 		class SpringConstrain : public BaseMotionConstraint
 		{
 		public:
-			SpringConstrain(SPHBody &sph_body, Real stiffness);
+			SpringConstrain(BodyPartByParticle &body_part, Real stiffness);
 			virtual ~SpringConstrain(){};
 
 			void update(size_t index_i, Real dt = 0.0);
@@ -152,6 +155,7 @@ namespace SPH
 		{
 		public:
 			TranslateSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Vecd translation);
+			TranslateSolidBody(BodyPartByParticle &body_part, Real start_time, Real end_time, Vecd translation);
 			virtual ~TranslateSolidBody(){};
 			void update(size_t index_i, Real dt = 0.0);
 
@@ -168,8 +172,8 @@ namespace SPH
 		class FixedInAxisDirection : public BaseMotionConstraint
 		{
 		public:
-			FixedInAxisDirection(SPHBody &sph_body, Vecd constrained_axises = Vecd(0))
-				: BaseMotionConstraint(sph_body), constrain_matrix_(Matd(1.0))
+			FixedInAxisDirection(BodyPartByParticle &body_part, Vecd constrained_axises = Vecd(0))
+				: BaseMotionConstraint(body_part), constrain_matrix_(Matd(1.0))
 			{
 				for (int k = 0; k != Dimensions; ++k)
 					constrain_matrix_[k][k] = constrained_axises[k];
@@ -220,6 +224,11 @@ namespace SPH
 								SimTK::MobilizedBody &mobod,
 								SimTK::Force::DiscreteForces &force_on_bodies,
 								SimTK::RungeKuttaMersonIntegrator &integ);
+			ConstraintBySimBody(BodyPartByParticle &body_part,
+								SimTK::MultibodySystem &MBsystem,
+								SimTK::MobilizedBody &mobod,
+								SimTK::Force::DiscreteForces &force_on_bodies,
+								SimTK::RungeKuttaMersonIntegrator &integ);
 			virtual ~ConstraintBySimBody(){};
 
 			virtual void setupDynamics(Real dt = 0.0) override;
@@ -259,6 +268,12 @@ namespace SPH
 								 SimTK::MobilizedBody &mobod,
 								 SimTK::Force::DiscreteForces &force_on_bodies,
 								 SimTK::RungeKuttaMersonIntegrator &integ);
+			TotalForceForSimBody(BodyPartByParticle &body_part,
+								 SimTK::MultibodySystem &MBsystem,
+								 SimTK::MobilizedBody &mobod,
+								 SimTK::Force::DiscreteForces &force_on_bodies,
+								 SimTK::RungeKuttaMersonIntegrator &integ);
+
 			virtual ~TotalForceForSimBody(){};
 
 			virtual void setupDynamics(Real dt = 0.0) override;

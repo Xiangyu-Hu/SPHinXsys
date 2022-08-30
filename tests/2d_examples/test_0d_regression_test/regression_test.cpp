@@ -109,12 +109,12 @@ public:
 //----------------------------------------------------------------------
 //	Set left side boundary condition.
 //----------------------------------------------------------------------
-class ConstrainTemperatureConstant
-	: public ConstrainDiffusionReactionSpecies<SolidBody, SolidParticles, Solid>
+class ConstantTemperatureConstraint
+	: public DiffusionReactionSpeciesConstraint<SolidBody, SolidParticles, Solid>
 {
 public:
-	ConstrainTemperatureConstant(SPHBody &sph_body, const std::string &species_name, Real constrained_value)
-		: ConstrainDiffusionReactionSpecies<SolidBody, SolidParticles, Solid>(sph_body, species_name),
+	ConstantTemperatureConstraint(BodyPartByParticle &body_part, const std::string &species_name, Real constrained_value)
+		: DiffusionReactionSpeciesConstraint<SolidBody, SolidParticles, Solid>(body_part, species_name),
 		  constrained_value_(constrained_value){};
 
 	void update(size_t index_i, Real dt = 0.0)
@@ -218,9 +218,9 @@ int main()
 	solid_dynamics::CorrectConfiguration correct_configuration(diffusion_body_inner_relation);
 	GetDiffusionTimeStepSize<SolidBody, SolidParticles, Solid> get_time_step_size(diffusion_body);
 	BodyRegionByParticle left_boundary(diffusion_body, makeShared<MultiPolygonShape>(createLeftSideBoundary()));
-	SimpleDynamics<ConstrainTemperatureConstant, BodyRegionByParticle> left_boundary_condition(left_boundary, "Phi", high_temperature);
+	SimpleDynamics<ConstantTemperatureConstraint, BodyRegionByParticle> left_boundary_condition(left_boundary, "Phi", high_temperature);
 	BodyRegionByParticle other_boundary(diffusion_body, makeShared<MultiPolygonShape>(createOtherSideBoundary()));
-	SimpleDynamics<ConstrainTemperatureConstant, BodyRegionByParticle> other_boundary_condition(other_boundary, "Phi", low_temperature);
+	SimpleDynamics<ConstantTemperatureConstraint, BodyRegionByParticle> other_boundary_condition(other_boundary, "Phi", low_temperature);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations, observations of the simulation.
 	//	Regression tests are also defined here.

@@ -15,13 +15,16 @@ namespace SPH
 	{
 		//=================================================================================================//
 		BaseMotionConstraint::BaseMotionConstraint(SPHBody &sph_body)
-			: LocalDynamics(sph_body), SolidDataSimple(sph_body),
+			: LocalDynamics(sph_body), SolidDataSimple(sph_body_),
 			  pos_(particles_->pos_), pos0_(particles_->pos0_),
 			  n_(particles_->n_), n0_(particles_->n0_),
 			  vel_(particles_->vel_), acc_(particles_->acc_) {}
 		//=================================================================================================//
-		SpringConstrain::SpringConstrain(SPHBody &sph_body, Real stiffness)
-			: BaseMotionConstraint(sph_body), mass_(particles_->mass_), stiffness_(stiffness) {}
+		BaseMotionConstraint::BaseMotionConstraint(BodyPartByParticle &body_part)
+			: BaseMotionConstraint(body_part.getSPHBody()) {}
+		//=================================================================================================//
+		SpringConstrain::SpringConstrain(BodyPartByParticle &body_part, Real stiffness)
+			: BaseMotionConstraint(body_part), mass_(particles_->mass_), stiffness_(stiffness) {}
 		//=================================================================================================//
 		Vecd SpringConstrain::getAcceleration(Vecd &disp, Real mass)
 		{
@@ -105,6 +108,10 @@ namespace SPH
 			: BaseMotionConstraint(sph_body), SolidDataSimple(sph_body),
 			  start_time_(start_time), end_time_(end_time), translation_(translation) {}
 		//=================================================================================================//
+		TranslateSolidBody::
+			TranslateSolidBody(BodyPartByParticle &body_part, Real start_time, Real end_time, Vecd translation)
+			: TranslateSolidBody(body_part.getSPHBody(), start_time, end_time, translation){};
+		//=================================================================================================//
 		Vecd TranslateSolidBody::getDisplacement(size_t index_i, Real dt)
 		{
 			Vecd displacement(0);
@@ -158,18 +165,24 @@ namespace SPH
 			initial_mobod_origin_location_ = mobod_.getBodyOriginLocation(*simbody_state_);
 		}
 		//=================================================================================================//
+		ConstraintBySimBody::ConstraintBySimBody(BodyPartByParticle &body_part,
+												 SimTK::MultibodySystem &MBsystem,
+												 SimTK::MobilizedBody &mobod,
+												 SimTK::Force::DiscreteForces &force_on_bodies,
+												 SimTK::RungeKuttaMersonIntegrator &integ)
+			: ConstraintBySimBody(body_part.getSPHBody(), MBsystem, mobod, force_on_bodies, integ){};
+		//=================================================================================================//
 		void ConstraintBySimBody::setupDynamics(Real dt)
 		{
 			simbody_state_ = &integ_.getState();
 			MBsystem_.realize(*simbody_state_, Stage::Acceleration);
 		}
 		//=================================================================================================//
-		TotalForceForSimBody::
-			TotalForceForSimBody(SPHBody &sph_body,
-								 SimTK::MultibodySystem &MBsystem,
-								 SimTK::MobilizedBody &mobod,
-								 SimTK::Force::DiscreteForces &force_on_bodies,
-								 SimTK::RungeKuttaMersonIntegrator &integ)
+		TotalForceForSimBody::TotalForceForSimBody(SPHBody &sph_body,
+												   SimTK::MultibodySystem &MBsystem,
+												   SimTK::MobilizedBody &mobod,
+												   SimTK::Force::DiscreteForces &force_on_bodies,
+												   SimTK::RungeKuttaMersonIntegrator &integ)
 			: LocalDynamicsReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>>(sph_body, SpatialVec(Vec3(0), Vec3(0))),
 			  SolidDataSimple(sph_body), mass_(particles_->mass_),
 			  acc_(particles_->acc_), acc_prior_(particles_->acc_prior_),
@@ -178,6 +191,13 @@ namespace SPH
 		{
 			quantity_name_ = "TotalForceForSimBody";
 		}
+		//=================================================================================================//
+		TotalForceForSimBody::TotalForceForSimBody(BodyPartByParticle &body_part,
+												   SimTK::MultibodySystem &MBsystem,
+												   SimTK::MobilizedBody &mobod,
+												   SimTK::Force::DiscreteForces &force_on_bodies,
+												   SimTK::RungeKuttaMersonIntegrator &integ)
+			: TotalForceForSimBody(body_part.getSPHBody(), MBsystem, mobod, force_on_bodies, integ) {}
 		//=================================================================================================//
 		void TotalForceForSimBody::setupDynamics(Real dt)
 		{
