@@ -135,6 +135,8 @@ namespace SPH
 		virtual void initializeOtherVariables() override;
 		virtual ElasticSolidParticles *ThisObjectPtr() override { return this; };
 
+        inline ElasticSolid *getMaterial() { return elastic_solid_; }
+
 	protected:
 		ElasticSolid *elastic_solid_;
 	};
