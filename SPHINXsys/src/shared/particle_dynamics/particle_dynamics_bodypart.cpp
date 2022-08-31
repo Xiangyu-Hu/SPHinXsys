@@ -125,23 +125,4 @@ namespace SPH
 		PartIteratorByParticle_parallel(body_part_particles_, functor_update_, dt);
 	}
 	//=================================================================================================//
-	PartDynamicsByCell::PartDynamicsByCell(SPHBody &sph_body, BodyPartByCell &body_part)
-		: ParticleDynamics<void>(sph_body),
-		  body_part_cells_(body_part.body_part_cells_),
-		  functor_update_(std::bind(&PartDynamicsByCell::Update, this, _1, _2)){};
-	//=================================================================================================//
-	void PartDynamicsByCell::exec(Real dt)
-	{
-		setBodyUpdated();
-		setupDynamics(dt);
-		PartIteratorByCell(body_part_cells_, functor_update_, dt);
-	}
-	//=================================================================================================//
-	void PartDynamicsByCell::parallel_exec(Real dt)
-	{
-		setBodyUpdated();
-		setupDynamics(dt);
-		PartIteratorByCell_parallel(body_part_cells_, functor_update_, dt);
-	}
-	//=================================================================================================//
 }

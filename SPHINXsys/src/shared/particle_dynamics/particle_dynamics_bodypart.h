@@ -116,25 +116,5 @@ namespace SPH
 		virtual void Initialization(size_t index_i, Real dt = 0.0) = 0;
 		ParticleFunctor functor_initialization_;
 	};
-
-	/**
-	 * @class PartDynamicsByCell
-	 * @brief Abstract class for imposing Eulerian constrain to a body.
-	 * The constrained particles are in the tagged cells .
-	 */
-	class PartDynamicsByCell : public ParticleDynamics<void>
-	{
-	public:
-		PartDynamicsByCell(SPHBody &sph_body, BodyPartByCell &body_part);
-		virtual ~PartDynamicsByCell(){};
-
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
-
-	protected:
-		CellLists &body_part_cells_;
-		ParticleFunctor functor_update_;
-		virtual void Update(size_t index_i, Real dt = 0.0) = 0;
-	};
 }
 #endif // PARTICLE_DYNAMICS_BODYPART_H
