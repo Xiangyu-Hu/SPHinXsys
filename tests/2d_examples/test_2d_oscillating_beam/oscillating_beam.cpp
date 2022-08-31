@@ -93,13 +93,16 @@ MultiPolygon createBeamConstrainShape()
 //------------------------------------------------------------------------------
 // the main program
 //------------------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, resolution_ref);
-	//----------------------------------------------------------------------
+#ifdef BOOST_AVAILABLE
+	// handle command line arguments
+	system.handleCommandlineOptions(ac, av);
+#endif //----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
@@ -207,7 +210,15 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_beam_tip_displacement.newResultTest();
+	if (system.generate_regression_data_)
+	{
+		// The lift force at the cylinder is very small and not important in this case.
+		write_beam_tip_displacement.generateDataBase({1.0e-2, 1.0e-2}, {1.0e-2, 1.0e-2});
+	}
+	else
+	{
+		write_beam_tip_displacement.newResultTest();
+	}
 
 	return 0;
 }

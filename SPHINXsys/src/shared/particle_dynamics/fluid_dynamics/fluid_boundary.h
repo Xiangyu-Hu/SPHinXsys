@@ -160,7 +160,6 @@ namespace SPH
             StdLargeVec<Vecd> &pos_;
             StdLargeVec<Real> &rho_, &p_;
             const int axis_; /**< the axis direction for bounding*/
-            size_t body_buffer_width_;
             AlignedBoxShape &aligned_box_;
 
             virtual void checkLowerBound(size_t unsorted_index_i, Real dt = 0.0);

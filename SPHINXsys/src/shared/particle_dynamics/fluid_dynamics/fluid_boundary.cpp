@@ -75,7 +75,7 @@ namespace SPH
 			  pos_(particles_->pos_), rho_(particles_->rho_), p_(particles_->p_),
 			  axis_(axis), aligned_box_(aligned_box_part.aligned_box_)
 		{
-			size_t total_body_buffer_particles = aligned_box_part.body_part_particles_.size() * body_buffer_width_;
+			size_t total_body_buffer_particles = aligned_box_part.body_part_particles_.size() * body_buffer_width;
 			particles_->addBufferParticles(total_body_buffer_particles);
 			sph_body_.allocateConfigurationMemoriesForBufferParticles();
 
