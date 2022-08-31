@@ -168,18 +168,18 @@ namespace SPH
 		 * map constrained particles to geometry face and
 		 * r = r + phi * norm (vector distance to face)
 		 */
-		class ShapeSurfaceBounding : public PartDynamicsByCell,
+		class ShapeSurfaceBounding : public LocalDynamics,
 									 public RelaxDataDelegateSimple
 		{
 		public:
-			ShapeSurfaceBounding(SPHBody &sph_body, NearShapeSurface &body_part);
+			ShapeSurfaceBounding(NearShapeSurface &body_part);
 			virtual ~ShapeSurfaceBounding(){};
+			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Vecd> &pos_;
 			LevelSetShape *level_set_shape_;
 			Real constrained_distance_;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -201,7 +201,7 @@ namespace SPH
 			UniquePtr<RelaxationAccelerationInner> relaxation_acceleration_inner_;
 			ReduceDynamics<GetTimeStepSizeSquare> get_time_step_square_;
 			SimpleDynamics<UpdateParticlePosition> update_particle_position_;
-			ShapeSurfaceBounding surface_bounding_;
+			SimpleDynamics<ShapeSurfaceBounding, NearShapeSurface> surface_bounding_;
 
 			virtual void exec(Real dt = 0.0) override;
 			virtual void parallel_exec(Real dt = 0.0) override;
@@ -245,7 +245,7 @@ namespace SPH
 			UniquePtr<RelaxationAccelerationComplex> relaxation_acceleration_complex_;
 			ReduceDynamics<GetTimeStepSizeSquare> get_time_step_square_;
 			SimpleDynamics<UpdateParticlePosition> update_particle_position_;
-			ShapeSurfaceBounding surface_bounding_;
+			SimpleDynamics<ShapeSurfaceBounding, NearShapeSurface> surface_bounding_;
 
 			virtual void exec(Real dt = 0.0) override;
 			virtual void parallel_exec(Real dt = 0.0) override;
@@ -258,20 +258,20 @@ namespace SPH
 		 * because if level_set_refinement_ratio > particle_spacing_ref_ / (0.05 * thickness_),
 		 * there will be no level set field.
 		 */
-		class ShellMidSurfaceBounding : public PartDynamicsByCell,
+		class ShellMidSurfaceBounding : public LocalDynamics,
 										public RelaxDataDelegateInner
 		{
 		public:
-			ShellMidSurfaceBounding(SPHBody &body, NearShapeSurface &body_part, BaseBodyRelationInner &inner_relation,
+			ShellMidSurfaceBounding(NearShapeSurface &body_part, BaseBodyRelationInner &inner_relation,
 									Real thickness, Real level_set_refinement_ratio);
 			virtual ~ShellMidSurfaceBounding(){};
+			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Vecd> &pos_;
 			Real constrained_distance_;
 			LevelSetShape *level_set_shape_;
 			Real particle_spacing_ref_, thickness_, level_set_refinement_ratio_;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -377,7 +377,7 @@ namespace SPH
 			virtual ~ShellRelaxationStepInner(){};
 
 			SimpleDynamics<UpdateParticlePosition> update_shell_particle_position_;
-			ShellMidSurfaceBounding mid_surface_bounding_;
+			SimpleDynamics<ShellMidSurfaceBounding, NearShapeSurface>  mid_surface_bounding_;
 
 			virtual void exec(Real dt = 0.0) override;
 			virtual void parallel_exec(Real dt = 0.0) override;

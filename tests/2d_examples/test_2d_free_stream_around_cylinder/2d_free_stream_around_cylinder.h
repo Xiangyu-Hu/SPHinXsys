@@ -66,16 +66,16 @@ public:
 //----------------------------------------------------------------------
 //	Define emitter buffer inflow boundary condition
 //----------------------------------------------------------------------
-class EmitterBufferInflowCondition : public fluid_dynamics::InflowBoundaryCondition
+class EmitterBufferInflowCondition : public fluid_dynamics::InflowVelocityCondition
 {
 	Real u_ave_, u_ref_, t_ref_;
 
 public:
-	EmitterBufferInflowCondition(FluidBody &fluid_body, BodyAlignedBoxByCell &aligned_box_part)
-		: InflowBoundaryCondition(fluid_body, aligned_box_part),
+	EmitterBufferInflowCondition(BodyAlignedBoxByCell &aligned_box_part)
+		: InflowVelocityCondition(aligned_box_part),
 		u_ave_(0), u_ref_(U_f), t_ref_(2.0) {}
 
-	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
+	Vecd getPrescribedVelocity(Vecd &position, Vecd &velocity) override
 	{
 		Real u = velocity[0];
 		Real v = velocity[1];

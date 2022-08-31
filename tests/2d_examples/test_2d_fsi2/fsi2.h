@@ -1,9 +1,9 @@
 /**
-* @file 	fsi2.h
-* @brief 	This is the case file for the test of fluid - structure interaction.
-* @details  We consider a flow - induced vibration of an elastic beam behind a cylinder in 2D.
-* @author 	Xiangyu Hu, Chi Zhang and Luhui Han
-*/
+ * @file 	fsi2.h
+ * @brief 	This is the case file for the test of fluid - structure interaction.
+ * @details  We consider a flow - induced vibration of an elastic beam behind a cylinder in 2D.
+ * @author 	Xiangyu Hu, Chi Zhang and Luhui Han
+ */
 
 #ifndef FSI2_CASE_H
 #define FSI2_CASE_H
@@ -21,8 +21,8 @@ Real BW = resolution_ref * 4.0;			/**< Boundary width, determined by specific la
 Vec2d insert_circle_center(2.0, 2.0);	/**< Location of the cylinder center. */
 Real insert_circle_radius = 0.5;		/**< Radius of the cylinder. */
 /** Beam related parameters. */
-Real bh = 0.4 * insert_circle_radius;	/**< Height of the beam. */
-Real bl = 7.0 * insert_circle_radius;	/**< Length of the beam. */
+Real bh = 0.4 * insert_circle_radius; /**< Height of the beam. */
+Real bl = 7.0 * insert_circle_radius; /**< Length of the beam. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-DL_sponge - BW, -BW), Vec2d(DL + BW, DH + BW));
 //----------------------------------------------------------------------
@@ -46,7 +46,7 @@ Real Youngs_modulus = Ae * rho0_f * U_f * U_f;
 /** create a water block shape */
 std::vector<Vecd> createWaterBlockShape()
 {
-	//geometry
+	// geometry
 	std::vector<Vecd> water_block_shape;
 	water_block_shape.push_back(Vecd(-DL_sponge, 0.0));
 	water_block_shape.push_back(Vecd(-DL_sponge, DH));
@@ -62,7 +62,7 @@ Vec2d BLB(insert_circle_center[0], insert_circle_center[1] - hbh);
 Vec2d BLT(insert_circle_center[0], insert_circle_center[1] + hbh);
 Vec2d BRB(insert_circle_center[0] + insert_circle_radius + bl, insert_circle_center[1] - hbh);
 Vec2d BRT(insert_circle_center[0] + insert_circle_radius + bl, insert_circle_center[1] + hbh);
-//Beam observer location
+// Beam observer location
 StdVec<Vecd> beam_observation_location = {0.5 * (BRT + BRB)};
 std::vector<Vecd> createBeamShape()
 {
@@ -88,8 +88,8 @@ std::vector<Vecd> createOuterWallShape()
 	return outer_wall_shape;
 }
 /**
-* @brief create inner wall shape
-*/
+ * @brief create inner wall shape
+ */
 std::vector<Vecd> createInnerWallShape()
 {
 	std::vector<Vecd> inner_wall_shape;
@@ -143,15 +143,15 @@ MultiPolygon createBeamBaseShape()
 	return multi_polygon;
 }
 /** Case dependent inflow boundary condition. */
-class ParabolicInflow : public fluid_dynamics::InflowBoundaryCondition
+class ParabolicInflow : public fluid_dynamics::InflowVelocityCondition
 {
 	Real u_ave_, u_ref_, t_ref;
 
 public:
-	ParabolicInflow(FluidBody &fluid_body, BodyAlignedBoxByCell &aligned_box_part)
-		: InflowBoundaryCondition(fluid_body, aligned_box_part),
+	ParabolicInflow(BodyAlignedBoxByCell &aligned_box_part)
+		: InflowVelocityCondition(aligned_box_part),
 		  u_ave_(0), u_ref_(1.0), t_ref(2.0) {}
-	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
+	Vecd getPrescribedVelocity(Vecd &position, Vecd &velocity) override
 	{
 		Real u = velocity[0];
 		Real v = velocity[1];
@@ -187,4 +187,4 @@ public:
 	}
 };
 
-#endif //FSI2_CASE_H
+#endif // FSI2_CASE_H

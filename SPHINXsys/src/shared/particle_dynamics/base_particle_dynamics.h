@@ -136,6 +136,25 @@ namespace SPH
 	};
 
 	/**
+	* @class BaseDynamics
+	* @brief The base class for all dynamics
+	* This class contains only the interface functions available
+	* for all dynamics. An specific implementation should be realized.
+	*/
+	template <class ReturnType = void>
+	class BaseDynamics : public GlobalStaticVariables
+	{
+	public:
+		BaseDynamics(){};
+		virtual ~BaseDynamics(){};
+
+		/** There are only functions can be called from outside,
+		  * for sequential, parallel and possible other type of execution. */
+		virtual ReturnType exec(Real dt = 0.0) = 0;
+		virtual ReturnType parallel_exec(Real dt = 0.0) = 0;
+	};
+
+	/**
 	* @class ParticleDynamics
 	* @brief The base class for all particle dynamics
 	* This class contains the only two interface functions available

@@ -72,17 +72,17 @@ public:
 //----------------------------------------------------------------------
 //	Define emitter buffer inflow boundary condition
 //----------------------------------------------------------------------
-class EmitterBufferInflowCondition : public fluid_dynamics::InflowBoundaryCondition
+class EmitterBufferInflowCondition : public fluid_dynamics::InflowVelocityCondition
 {
 	Real u_ave_, u_ref_, t_ref_;
 
 public:
-	EmitterBufferInflowCondition(FluidBody &body, BodyAlignedBoxByCell &aligned_box_part)
-		: InflowBoundaryCondition(body, aligned_box_part),
+	EmitterBufferInflowCondition(BodyAlignedBoxByCell &aligned_box_part)
+		: InflowVelocityCondition(aligned_box_part),
 		  u_ave_(0), u_ref_(U_f), t_ref_(4.0) {}
 
 	// here every argument parameters and return value are in frame (local) coordinate
-	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
+	Vecd getPrescribedVelocity(Vecd &position, Vecd &velocity) override
 	{
 		Real u = velocity[0];
 		Real v = velocity[1];
@@ -145,7 +145,7 @@ int main(int ac, char *av[])
 	/** Emitter condition. */
 	BodyAlignedBoxByCell emitter_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
-	EmitterBufferInflowCondition emitter_buffer_inflow_condition(water_block, emitter_buffer);
+	SimpleDynamics<EmitterBufferInflowCondition, BodyAlignedBoxByCell> emitter_buffer_inflow_condition(emitter_buffer);
 	/** time-space method to detect surface particles. */
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex
 		inlet_outlet_surface_particle_indicator(water_block_complex_relation);

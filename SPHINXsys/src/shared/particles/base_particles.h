@@ -46,7 +46,7 @@ namespace SPH
 	class ParticleGenerator;
 	class BodySurface;
 	template <class ReturnType>
-	class ParticleDynamics;
+	class BaseDynamics;
 
 	/**
 	 * @class BaseParticles
@@ -81,7 +81,7 @@ namespace SPH
 	class BaseParticles
 	{
 	private:
-		UniquePtrKeepers<ParticleDynamics<void>> derived_particle_data_;
+		UniquePtrKeepers<BaseDynamics<void>> derived_particle_data_;
 
 	public:
 		explicit BaseParticles(SPHBody &sph_body, BaseMaterial *base_material);
@@ -112,7 +112,7 @@ namespace SPH
 		//----------------------------------------------------------------------
 		ParticleData all_particle_data_;
 		ParticleDataMap all_variable_maps_;
-		StdVec<ParticleDynamics<void> *> derived_variables_;
+		StdVec<BaseDynamics<void> *> derived_variables_;
 		ParticleVariableList variables_to_write_;
 
 		/** register a variable defined in a class (can be non-particle class) */

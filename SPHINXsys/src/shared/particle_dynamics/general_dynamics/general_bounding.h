@@ -38,7 +38,7 @@ namespace SPH
 	 * @brief Bounding particle position in along axis.
 	 * The axis must be 0, 1 for 2d and 0, 1, 2 for 3d
 	 */
-	class BoundingAlongAxis : public ParticleDynamics<void>, public GeneralDataDelegateSimple
+	class BoundingAlongAxis : public BaseDynamics<void>, public GeneralDataDelegateSimple
 	{
 	protected:
 		const int axis_;			  /**< the axis directions for bounding*/
@@ -46,6 +46,10 @@ namespace SPH
 		StdLargeVec<Vecd> &pos_;
 		BaseCellLinkedList *cell_linked_list_;
 		Real cut_off_radius_max_; /**< maximum cut off radius to avoid boundary particle depletion */
+
+		void setBodyUpdated() { body_->setNewlyUpdated(); };
+		/** the function for set global parameters for the particle dynamics */
+		virtual void setupDynamics(Real dt = 0.0){};		
 	public:
 		BoundingAlongAxis(RealBody &real_body, BoundingBox bounding_bounds, int axis);
 		virtual ~BoundingAlongAxis(){};

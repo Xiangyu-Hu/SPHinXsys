@@ -147,7 +147,7 @@ int main()
 		fluid_dynamics::DensityRelaxationRiemannInner	density_relaxation(water_block_inner);
 	/** Confinement condition for wall and structure. */
 	NearShapeSurface near_surface(water_block, makeShared<WallAndStructure>("WallAndStructure"));
-	fluid_dynamics::StaticConfinement confinement_condition(water_block, near_surface);
+	fluid_dynamics::StaticConfinement confinement_condition(near_surface);
 	update_density_by_summation.post_processes_.push_back(&confinement_condition.density_summation_);
 	pressure_relaxation.post_processes_.push_back(&confinement_condition.pressure_relaxation_);
 	density_relaxation.post_processes_.push_back(&confinement_condition.density_relaxation_);

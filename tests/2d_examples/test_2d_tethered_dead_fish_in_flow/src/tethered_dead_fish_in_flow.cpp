@@ -170,16 +170,16 @@ public:
 /**
  * Inflow boundary condition.
  */
-class ParabolicInflow : public fluid_dynamics::InflowBoundaryCondition
+class ParabolicInflow : public fluid_dynamics::InflowVelocityCondition
 {
 	Real u_ave_, u_ref_, t_ref;
 
 public:
-	ParabolicInflow(FluidBody &fluid_body, BodyAlignedBoxByCell &aligned_box_part)
-		: InflowBoundaryCondition(fluid_body, aligned_box_part),
+	ParabolicInflow(BodyAlignedBoxByCell &aligned_box_part)
+		: InflowVelocityCondition(aligned_box_part),
 		  u_ave_(0), u_ref_(1.0), t_ref(4.0) {}
 
-	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
+	Vecd getPrescribedVelocity(Vecd &position, Vecd &velocity) override
 	{
 		Real u = velocity[0];
 		Real v = velocity[1];
@@ -330,7 +330,7 @@ int main(int ac, char *av[])
 	/** Inflow boundary condition. */
 	BodyAlignedBoxByCell inflow_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
-	ParabolicInflow parabolic_inflow(water_block, inflow_buffer);
+	SimpleDynamics<ParabolicInflow, BodyAlignedBoxByCell> parabolic_inflow(inflow_buffer);
 
 	/**
 	 * Fluid structure interaction model.

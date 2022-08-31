@@ -56,9 +56,9 @@ namespace SPH
 		virtual ~InteractionDynamics(){};
 
 		/** pre process such as update ghost state */
-		StdVec<ParticleDynamics<void> *> pre_processes_;
+		StdVec<BaseDynamics<void> *> pre_processes_;
 		/** post process such as impose constraint */
-		StdVec<ParticleDynamics<void> *> post_processes_;
+		StdVec<BaseDynamics<void> *> post_processes_;
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
@@ -158,16 +158,15 @@ namespace SPH
 	 * @brief Simple particle dynamics without considering particle interaction
 	 */
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
-	class SimpleDynamics : public ParticleDynamics<void>, public LocalDynamicsType
+	class SimpleDynamics : public LocalDynamicsType, public BaseDynamics<void>
 	{
 		DynamicsRange &dynamics_range_;
 
 	public:
 		template <typename... Args>
 		SimpleDynamics(DynamicsRange &dynamics_range, Args &&...args)
-			: ParticleDynamics<void>(dynamics_range.getSPHBody()),
-			  LocalDynamicsType(dynamics_range, std::forward<Args>(args)...),
-			  dynamics_range_(dynamics_range){};
+			: LocalDynamicsType(dynamics_range, std::forward<Args>(args)...),
+			  BaseDynamics<void>(), dynamics_range_(dynamics_range){};
 		virtual ~SimpleDynamics(){};
 
 		virtual void exec(Real dt = 0.0) override
@@ -194,8 +193,9 @@ namespace SPH
 	};
 
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
-	class ReduceDynamics : public ParticleDynamics<typename LocalDynamicsType::ReduceReturnType>,
-						   public LocalDynamicsType
+	class ReduceDynamics : public LocalDynamicsType,
+						   public BaseDynamics<typename LocalDynamicsType::ReduceReturnType>
+
 	{
 		using ReturnType = typename LocalDynamicsType::ReduceReturnType;
 
@@ -205,9 +205,8 @@ namespace SPH
 	public:
 		template <typename... Args>
 		ReduceDynamics(DynamicsRange &dynamics_range, Args &&...args)
-			: ParticleDynamics<ReturnType>(dynamics_range.getSPHBody()),
-			  LocalDynamicsType(dynamics_range, std::forward<Args>(args)...),
-			  dynamics_range_(dynamics_range) {};
+			: LocalDynamicsType(dynamics_range, std::forward<Args>(args)...),
+			  BaseDynamics<ReturnType>(), dynamics_range_(dynamics_range){};
 		virtual ~ReduceDynamics(){};
 
 		using ReduceReturnType = ReturnType;

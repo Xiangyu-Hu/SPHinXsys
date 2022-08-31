@@ -185,16 +185,16 @@ public:
 //----------------------------------------------------------------------
 //	Case dependent inflow boundary condition.
 //----------------------------------------------------------------------
-class ParabolicInflow : public fluid_dynamics::InflowBoundaryCondition
+class ParabolicInflow : public fluid_dynamics::InflowVelocityCondition
 {
 	Real u_ave_, u_ref_, t_ref;
 
 public:
-	ParabolicInflow(FluidBody &fluid_body, BodyAlignedBoxByCell &aligned_box_part)
-		: InflowBoundaryCondition(fluid_body, aligned_box_part),
+	ParabolicInflow(BodyAlignedBoxByCell &aligned_box_part)
+		: InflowVelocityCondition(aligned_box_part),
 		  u_ave_(0.0), u_ref_(1.0), t_ref(2.0) {}
 
-	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
+	Vecd getPrescribedVelocity(Vecd &position, Vecd &velocity) override
 	{
 		Real u = velocity[0];
 		Real v = velocity[1];
@@ -278,7 +278,7 @@ int main()
 	/** Inflow boundary condition. */
 	BodyAlignedBoxByCell inflow_buffer(
 		thermofluid_body, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
-	ParabolicInflow parabolic_inflow(thermofluid_body, inflow_buffer);
+	SimpleDynamics<ParabolicInflow, BodyAlignedBoxByCell> parabolic_inflow(inflow_buffer);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

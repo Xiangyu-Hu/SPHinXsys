@@ -66,7 +66,7 @@ int main()
 	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex);
 	/** Inflow boundary condition. */
 	BodyRegionByCell damping_buffer(water_block, makeShared<MultiPolygonShape>(createDampingBufferShape()));
-	fluid_dynamics::DampingBoundaryCondition damping_wave(water_block, damping_buffer);
+	SimpleDynamics<fluid_dynamics::DampingBoundaryCondition, BodyRegionByCell> damping_wave(damping_buffer);
 	/** Fluid force on flap. */
 	solid_dynamics::FluidForceOnSolidUpdate fluid_force_on_flap(flap_contact);
 	/** constrain region of the part of wall boundary. */

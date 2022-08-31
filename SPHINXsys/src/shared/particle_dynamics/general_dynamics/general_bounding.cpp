@@ -10,11 +10,11 @@ namespace SPH
 	//=================================================================================================//
 	BoundingAlongAxis::
 		BoundingAlongAxis(RealBody &real_body, BoundingBox bounding_bounds, int axis)
-		: ParticleDynamics<void>(real_body), DataDelegateSimple<SPHBody, BaseParticles>(real_body),
+		: BaseDynamics<void>(), DataDelegateSimple<SPHBody, BaseParticles>(real_body),
 		  axis_(axis), bounding_bounds_(bounding_bounds),
 		  pos_(particles_->pos_),
 		  cell_linked_list_(real_body.cell_linked_list_),
-		  cut_off_radius_max_(sph_adaptation_->getKernel()->CutOffRadius()) {}
+		  cut_off_radius_max_(real_body.sph_adaptation_->getKernel()->CutOffRadius()) {}
 	//=================================================================================================//
 	Vecd BasePeriodicCondition::
 		setPeriodicTranslation(BoundingBox &bounding_bounds, int axis)
@@ -161,7 +161,7 @@ namespace SPH
 	//=================================================================================================//
 	OpenBoundaryConditionAlongAxis::
 		OpenBoundaryConditionAlongAxis(RealBody &real_body, BoundingBox bounding_bounds,
-											 int axis, bool positive)
+									   int axis, bool positive)
 		: particle_type_transfer_(this->bound_cells_, real_body, bounding_bounds, axis, positive)
 	{
 		bound_cells_.resize(2);
@@ -312,14 +312,14 @@ namespace SPH
 	}
 	//=================================================================================================//
 	MirrorConditionAlongAxis::CreatingMirrorGhostParticles::
-		CreatingMirrorGhostParticles(IndexVector &ghost_particles, CellLists &bound_cells, RealBody &real_body, 
-							BoundingBox bounding_bounds, int axis, bool positive)
-		: MirrorBounding(bound_cells, real_body, bounding_bounds, axis, positive), 
-		ghost_particles_(ghost_particles) {}
+		CreatingMirrorGhostParticles(IndexVector &ghost_particles, CellLists &bound_cells, RealBody &real_body,
+									 BoundingBox bounding_bounds, int axis, bool positive)
+		: MirrorBounding(bound_cells, real_body, bounding_bounds, axis, positive),
+		  ghost_particles_(ghost_particles) {}
 	//=================================================================================================//
 	MirrorConditionAlongAxis::UpdatingMirrorGhostStates::
-		UpdatingMirrorGhostStates(IndexVector &ghost_particles, CellLists &bound_cells, RealBody &real_body, 
-		BoundingBox bounding_bounds, int axis, bool positive)
+		UpdatingMirrorGhostStates(IndexVector &ghost_particles, CellLists &bound_cells, RealBody &real_body,
+								  BoundingBox bounding_bounds, int axis, bool positive)
 		: MirrorBounding(bound_cells, real_body, bounding_bounds, axis, positive), ghost_particles_(ghost_particles)
 	{
 		checking_bound_update_ =

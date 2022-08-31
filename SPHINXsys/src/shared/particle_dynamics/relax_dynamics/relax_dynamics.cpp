@@ -125,15 +125,15 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ShapeSurfaceBounding::
-			ShapeSurfaceBounding(SPHBody &sph_body, NearShapeSurface &near_shape_surface)
-			: PartDynamicsByCell(sph_body, near_shape_surface), RelaxDataDelegateSimple(sph_body),
+			ShapeSurfaceBounding(NearShapeSurface &near_shape_surface)
+			: LocalDynamics(near_shape_surface.getSPHBody()), RelaxDataDelegateSimple(sph_body_),
 			  pos_(particles_->pos_),
-			  constrained_distance_(0.5 * sph_body.sph_adaptation_->MinimumSpacing())
+			  constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing())
 		{
 			level_set_shape_ = &near_shape_surface.level_set_shape_;
 		}
 		//=================================================================================================//
-		void ShapeSurfaceBounding::Update(size_t index_i, Real dt)
+		void ShapeSurfaceBounding::update(size_t index_i, Real dt)
 		{
 			Real phi = level_set_shape_->findSignedDistance(pos_[index_i]);
 
@@ -151,7 +151,7 @@ namespace SPH
 			  inner_relation_(inner_relation),
 			  near_shape_surface_(*real_body_),
 			  get_time_step_square_(*real_body_), update_particle_position_(*real_body_),
-			  surface_bounding_(*real_body_, near_shape_surface_),
+			  surface_bounding_(near_shape_surface_),
 			  relaxation_acceleration_inner_(
 				  !level_set_correction
 					  ? std::move(makeUnique<RelaxationAccelerationInner>(inner_relation))
@@ -207,7 +207,7 @@ namespace SPH
 			  complex_relation_(body_complex_relation),
 			  near_shape_surface_(*real_body_, shape_name),
 			  get_time_step_square_(*real_body_), update_particle_position_(*real_body_),
-			  surface_bounding_(*real_body_, near_shape_surface_),
+			  surface_bounding_(near_shape_surface_),
 			  relaxation_acceleration_complex_(
 				  !level_set_correction
 					  ? std::move(makeUnique<RelaxationAccelerationComplex>(body_complex_relation))
@@ -234,15 +234,15 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ShellMidSurfaceBounding::
-			ShellMidSurfaceBounding(SPHBody &sph_body, NearShapeSurface &body_part, BaseBodyRelationInner &inner_relation,
+			ShellMidSurfaceBounding(NearShapeSurface &body_part, BaseBodyRelationInner &inner_relation,
 									Real thickness, Real level_set_refinement_ratio)
-			: PartDynamicsByCell(sph_body, body_part), RelaxDataDelegateInner(inner_relation),
-			  pos_(particles_->pos_), constrained_distance_(0.5 * sph_body.sph_adaptation_->MinimumSpacing()),
-			  particle_spacing_ref_(sph_body.sph_adaptation_->MinimumSpacing()),
+			: LocalDynamics(body_part.getSPHBody()), RelaxDataDelegateInner(inner_relation),
+			  pos_(particles_->pos_), constrained_distance_(0.5 * sph_body_.sph_adaptation_->MinimumSpacing()),
+			  particle_spacing_ref_(sph_body_.sph_adaptation_->MinimumSpacing()),
 			  thickness_(thickness), level_set_refinement_ratio_(level_set_refinement_ratio),
 			  level_set_shape_(DynamicCast<LevelSetShape>(this, body_->body_shape_)) {}
 		//=================================================================================================//
-		void ShellMidSurfaceBounding::Update(size_t index_i, Real dt)
+		void ShellMidSurfaceBounding::update(size_t index_i, Real dt)
 		{
 			Vecd none_normalized_normal = level_set_shape_->findLevelSetGradient(pos_[index_i]);
 			Vecd normal = level_set_shape_->findNormalDirection(pos_[index_i]);
@@ -406,7 +406,7 @@ namespace SPH
 									 Real level_set_refinement_ratio, bool level_set_correction)
 			: RelaxationStepInner(inner_relation, level_set_correction),
 			  update_shell_particle_position_(*real_body_),
-			  mid_surface_bounding_(*real_body_, near_shape_surface_, inner_relation,
+			  mid_surface_bounding_(near_shape_surface_, inner_relation,
 									thickness, level_set_refinement_ratio) {}
 		//=================================================================================================//
 		void ShellRelaxationStepInner::exec(Real ite_p)
