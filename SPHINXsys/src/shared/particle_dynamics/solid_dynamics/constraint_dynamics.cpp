@@ -44,7 +44,7 @@ namespace SPH
 		//=================================================================================================//
 		PositionSolidBody::
 			PositionSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Vecd pos_end_center)
-			: BaseMotionConstraint(sph_body), SolidDataSimple(sph_body),
+			: BaseMotionConstraint(sph_body),
 			  start_time_(start_time), end_time_(end_time), pos_end_center_(pos_end_center)
 		{
 			BoundingBox bounds = sph_body.getBodyShapeBounds();
@@ -76,7 +76,7 @@ namespace SPH
 		//=================================================================================================//
 		PositionScaleSolidBody::
 			PositionScaleSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Real end_scale)
-			: BaseMotionConstraint(sph_body), SolidDataSimple(sph_body),
+			: BaseMotionConstraint(sph_body),
 			  start_time_(start_time), end_time_(end_time), end_scale_(end_scale)
 		{
 			BoundingBox bounds = sph_body.getBodyShapeBounds();
@@ -90,6 +90,7 @@ namespace SPH
 			Vecd pos_final = pos_0_center_ + end_scale_ * (pos0_[index_i] - pos_0_center_);
 			displacement = (pos_final - pos_[index_i]) * dt /
 						   (end_time_ - GlobalStaticVariables::physical_time_);
+			return displacement;
 		}
 		//=================================================================================================//
 		void PositionScaleSolidBody::update(size_t index_i, Real dt)
@@ -105,7 +106,7 @@ namespace SPH
 		//=================================================================================================//
 		TranslateSolidBody::
 			TranslateSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Vecd translation)
-			: BaseMotionConstraint(sph_body), SolidDataSimple(sph_body),
+			: BaseMotionConstraint(sph_body),
 			  start_time_(start_time), end_time_(end_time), translation_(translation) {}
 		//=================================================================================================//
 		TranslateSolidBody::
@@ -157,7 +158,7 @@ namespace SPH
 												 SimTK::MobilizedBody &mobod,
 												 SimTK::Force::DiscreteForces &force_on_bodies,
 												 SimTK::RungeKuttaMersonIntegrator &integ)
-			: BaseMotionConstraint(sph_body), SolidDataSimple(sph_body),
+			: BaseMotionConstraint(sph_body),
 			  MBsystem_(MBsystem), mobod_(mobod), force_on_bodies_(force_on_bodies), integ_(integ)
 		{
 			simbody_state_ = &integ_.getState();

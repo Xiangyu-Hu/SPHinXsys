@@ -109,7 +109,7 @@ namespace SPH
 		 * 			can be considered as a quasi-static position driven boundary condition.
 		 * 			Note that, this constraint is not for a elastic solid body.
 		 */
-		class PositionSolidBody : public BaseMotionConstraint, public SolidDataSimple
+		class PositionSolidBody : public BaseMotionConstraint
 		{
 		public:
 			PositionSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Vecd pos_end_center);
@@ -130,7 +130,7 @@ namespace SPH
 		 * 			can be considered as a quasi-static position driven boundary condition.
 		 * 			Note that, this constraint is not for a elastic solid body.
 		 */
-		class PositionScaleSolidBody : public BaseMotionConstraint, public SolidDataSimple
+		class PositionScaleSolidBody : public BaseMotionConstraint
 		{
 		public:
 			PositionScaleSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Real end_scale);
@@ -151,7 +151,7 @@ namespace SPH
 		 * 			translation driven boundary condition; only moving the body; end position irrelevant;
 		 * 			Note that, this constraint is not for a elastic solid body.
 		 */
-		class TranslateSolidBody : public BaseMotionConstraint, public SolidDataSimple
+		class TranslateSolidBody : public BaseMotionConstraint
 		{
 		public:
 			TranslateSolidBody(SPHBody &sph_body, Real start_time, Real end_time, Vecd translation);
@@ -216,7 +216,7 @@ namespace SPH
 		 * @class ConstraintBySimBody
 		 * @brief Constrain by the motion computed from Simbody.
 		 */
-		class ConstraintBySimBody : public BaseMotionConstraint, public SolidDataSimple
+		class ConstraintBySimBody : public BaseMotionConstraint
 		{
 		public:
 			ConstraintBySimBody(SPHBody &sph_body,
