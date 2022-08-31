@@ -158,89 +158,82 @@ namespace SPH
 	 * @brief Simple particle dynamics without considering particle interaction
 	 */
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
-	class SimpleDynamics : public ParticleDynamics<void>
+	class SimpleDynamics : public ParticleDynamics<void>, public LocalDynamicsType
 	{
 		DynamicsRange &dynamics_range_;
-		LocalDynamicsType local_dynamics_;
 
 	public:
 		template <typename... Args>
 		SimpleDynamics(DynamicsRange &dynamics_range, Args &&...args)
 			: ParticleDynamics<void>(dynamics_range.getSPHBody()),
-			  dynamics_range_(dynamics_range),
-			  local_dynamics_(dynamics_range, std::forward<Args>(args)...){};
+			  LocalDynamicsType(dynamics_range, std::forward<Args>(args)...),
+			  dynamics_range_(dynamics_range){};
 		virtual ~SimpleDynamics(){};
-
-		LocalDynamicsType &getLocalDynamics() { return local_dynamics_; };
 
 		virtual void exec(Real dt = 0.0) override
 		{
-			local_dynamics_.setBodyUpdated();
-			local_dynamics_.setupDynamics(dt);
+			this->setBodyUpdated();
+			this->setupDynamics(dt);
 			particle_for(
 				dynamics_range_.LoopRange(),
 				[&](size_t i, Real delta)
-				{ local_dynamics_.update(i, delta); },
+				{ this->update(i, delta); },
 				dt);
 		};
 
 		virtual void parallel_exec(Real dt = 0.0) override
 		{
-			local_dynamics_.setBodyUpdated();
-			local_dynamics_.setupDynamics(dt);
+			this->setBodyUpdated();
+			this->setupDynamics(dt);
 			particle_parallel_for(
-				dynamics_range_.LoopRange(), [&](size_t i, Real delta)
-				{ local_dynamics_.update(i, delta); },
+				dynamics_range_.LoopRange(),
+				[&](size_t i, Real delta)
+				{ this->update(i, delta); },
 				dt);
 		};
 	};
 
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
-	class ReduceDynamics : public ParticleDynamics<typename LocalDynamicsType::ReduceReturnType>
+	class ReduceDynamics : public ParticleDynamics<typename LocalDynamicsType::ReduceReturnType>,
+						   public LocalDynamicsType
 	{
 		using ReturnType = typename LocalDynamicsType::ReduceReturnType;
 
 	protected:
 		DynamicsRange &dynamics_range_;
-		LocalDynamicsType local_dynamics_;
-		std::string dynamics_range_name_;
-		std::string quantity_name_;
 
 	public:
 		template <typename... Args>
 		ReduceDynamics(DynamicsRange &dynamics_range, Args &&...args)
 			: ParticleDynamics<ReturnType>(dynamics_range.getSPHBody()),
-			  dynamics_range_(dynamics_range),
-			  local_dynamics_(dynamics_range, std::forward<Args>(args)...),
-			  dynamics_range_name_(dynamics_range.getName()),
-			  quantity_name_(local_dynamics_.QuantityName()){};
+			  LocalDynamicsType(dynamics_range, std::forward<Args>(args)...),
+			  dynamics_range_(dynamics_range) {};
 		virtual ~ReduceDynamics(){};
 
 		using ReduceReturnType = ReturnType;
-		LocalDynamicsType &getLocalDynamics() { return local_dynamics_; };
-		std::string QuantityName() { return quantity_name_; };
-		std::string DynamicsRangeName() { return dynamics_range_name_; };
+		std::string QuantityName() { return this->quantity_name_; };
+		std::string DynamicsRangeName() { return dynamics_range_.getName(); };
 
 		virtual ReturnType exec(Real dt = 0.0) override
 		{
-			local_dynamics_.setupDynamics(dt);
+			this->setupDynamics(dt);
 			ReturnType temp = particle_reduce(
-				dynamics_range_.LoopRange(), local_dynamics_.Reference(), local_dynamics_.getOperation(),
+				dynamics_range_.LoopRange(), this->Reference(), this->getOperation(),
 				[&](size_t i, Real delta) -> ReturnType
-				{ return local_dynamics_.reduce(i, delta); },
+				{ return this->reduce(i, delta); },
 				dt);
-			return local_dynamics_.outputResult(temp);
+			return this->outputResult(temp);
 		};
 
 		virtual ReturnType parallel_exec(Real dt = 0.0) override
 		{
-			local_dynamics_.setupDynamics(dt);
+			this->setupDynamics(dt);
 			ReturnType temp = particle_parallel_reduce(
-				dynamics_range_.LoopRange(), local_dynamics_.Reference(), local_dynamics_.getOperation(),
+				dynamics_range_.LoopRange(), this->Reference(), this->getOperation(),
 				[&](size_t i, Real delta) -> ReturnType
-				{ return local_dynamics_.reduce(i, delta); },
+				{ return this->reduce(i, delta); },
 				dt);
-			return local_dynamics_.outputResult(temp);
+			return this->outputResult(temp);
 		};
 	};
 
