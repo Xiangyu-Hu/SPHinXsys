@@ -33,6 +33,61 @@
 
 namespace SPH
 {
+
+	/**
+	 * @class PeriodicBoundingDynamics
+	 * @brief
+	 */
+	template <class LocalDynamicsType>
+	class PeriodicBoundingDynamics : public LocalDynamicsType, public BaseDynamics<void>
+	{
+		StdVec<CellLists> &bound_cells_;
+
+	public:
+		template <typename... Args>
+		PeriodicBoundingDynamics(StdVec<CellLists> &bound_cells, 
+			SPHBody &sph_body, BoundingBox &bounding_box, Args &&...args)
+			: LocalDynamicsType(sph_body, bounding_box, std::forward<Args>(args)...),
+			  BaseDynamics<void>(){};
+		virtual ~PeriodicBoundingDynamics(){};
+
+		virtual void exec(Real dt = 0.0) override
+		{
+			this->setBodyUpdated();
+			this->setupDynamics(dt);
+
+			particle_for(
+				bound_cells_[0],
+				[&](size_t i, Real delta)
+				{ this->checkLowerBound(i, delta); },
+				dt);
+
+			particle_for(
+				bound_cells_[1],
+				[&](size_t i, Real delta)
+				{ this->checkUpperBound(i, delta); },
+				dt);
+		};
+
+		virtual void parallel_exec(Real dt = 0.0) override
+		{
+			this->setBodyUpdated();
+			this->setupDynamics(dt);
+
+			particle_parallel_for(
+				bound_cells_[0],
+				[&](size_t i, Real delta)
+				{ this->checkLowerBound(i, delta); },
+				dt);
+
+			particle_parallel_for(
+				bound_cells_[1],
+				[&](size_t i, Real delta)
+				{ this->checkUpperBound(i, delta); },
+				dt);
+		};
+	};
+
 	/**
 	 * @class BoundingAlongAxis
 	 * @brief Bounding particle position in along axis.
@@ -49,7 +104,8 @@ namespace SPH
 
 		void setBodyUpdated() { body_->setNewlyUpdated(); };
 		/** the function for set global parameters for the particle dynamics */
-		virtual void setupDynamics(Real dt = 0.0){};		
+		virtual void setupDynamics(Real dt = 0.0){};
+
 	public:
 		BoundingAlongAxis(RealBody &real_body, BoundingBox bounding_bounds, int axis);
 		virtual ~BoundingAlongAxis(){};

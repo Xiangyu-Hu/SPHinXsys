@@ -39,16 +39,16 @@ namespace SPH
 	//----------------------------------------------------------------------
 
 	template <class LocalDynamicsFunction>
-	void particle_for(const size_t &all_real_particles, 
-	const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
+	void particle_for(const size_t &all_real_particles,
+					  const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
 	{
 		for (size_t i = 0; i < all_real_particles; ++i)
 			local_dynamics_function(i, dt);
 	};
 
 	template <class LocalDynamicsFunction>
-	void particle_parallel_for(const size_t &all_real_particles, 
-	const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
+	void particle_parallel_for(const size_t &all_real_particles,
+							   const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
 	{
 		parallel_for(
 			IndexRange(0, all_real_particles),
@@ -67,16 +67,16 @@ namespace SPH
 	//----------------------------------------------------------------------
 
 	template <class LocalDynamicsFunction>
-	void particle_for(const IndexVector &body_part_particles, 
-	const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
+	void particle_for(const IndexVector &body_part_particles,
+					  const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
 	{
 		for (size_t i = 0; i < body_part_particles.size(); ++i)
 			local_dynamics_function(body_part_particles[i], dt);
 	};
 
 	template <class LocalDynamicsFunction>
-	void particle_parallel_for(const IndexVector &body_part_particles, 
-	const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
+	void particle_parallel_for(const IndexVector &body_part_particles,
+							   const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
 	{
 		parallel_for(
 			IndexRange(0, body_part_particles.size()),
@@ -95,22 +95,22 @@ namespace SPH
 	//----------------------------------------------------------------------
 
 	template <class LocalDynamicsFunction>
-	void particle_for(const CellLists &body_part_cells, 
-	const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
+	void particle_for(const CellLists &body_part_cells,
+					  const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
 	{
 		for (size_t i = 0; i != body_part_cells.size(); ++i)
 		{
-			ListDataVector &list_data = body_part_cells[i]->cell_list_data_;
-			for (size_t num = 0; num < list_data.size(); ++num)
+			IndexVector &particle_indexes = body_part_cells[i]->real_particle_indexes_;
+			for (size_t num = 0; num < particle_indexes.size(); ++num)
 			{
-				local_dynamics_function(list_data[num].first, dt);
+				local_dynamics_function(particle_indexes[num], dt);
 			}
 		}
 	};
 
 	template <class LocalDynamicsFunction>
-	void particle_parallel_for(const CellLists &body_part_cells, 
-	const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
+	void particle_parallel_for(const CellLists &body_part_cells,
+							   const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
 	{
 		parallel_for(
 			IndexRange(0, body_part_cells.size()),
@@ -118,10 +118,10 @@ namespace SPH
 			{
 				for (size_t i = r.begin(); i < r.end(); ++i)
 				{
-					ListDataVector &list_data = body_part_cells[i]->cell_list_data_;
-					for (size_t num = 0; num < list_data.size(); ++num)
+					IndexVector &particle_indexes = body_part_cells[i]->real_particle_indexes_;
+					for (size_t num = 0; num < particle_indexes.size(); ++num)
 					{
-						local_dynamics_function(list_data[num].first, dt);
+						local_dynamics_function(particle_indexes[num], dt);
 					}
 				}
 			},
@@ -208,10 +208,10 @@ namespace SPH
 	{
 		for (size_t i = 0; i != body_part_cells.size(); ++i)
 		{
-			ListDataVector &list_data = body_part_cells[i]->cell_list_data_;
-			for (size_t num = 0; num < list_data.size(); ++num)
+			IndexVector &particle_indexes = body_part_cells[i]->real_particle_indexes_;
+			for (size_t num = 0; num < particle_indexes.size(); ++num)
 			{
-				temp = operation(temp, local_dynamics_function(list_data[num].first, dt));
+				temp = operation(temp, local_dynamics_function(particle_indexes[num], dt));
 			}
 		}
 
@@ -229,10 +229,10 @@ namespace SPH
 			{
 				for (size_t i = r.begin(); i != r.end(); ++i)
 				{
-					ListDataVector &list_data = body_part_cells[i]->cell_list_data_;
-					for (size_t num = 0; num < list_data.size(); ++num)
+					IndexVector &particle_indexes = body_part_cells[i]->real_particle_indexes_;
+					for (size_t num = 0; num < particle_indexes.size(); ++num)
 					{
-						temp0 = operation(temp0, local_dynamics_function(list_data[num].first, dt));
+						temp0 = operation(temp0, local_dynamics_function(particle_indexes[num], dt));
 					}
 				}
 				return temp0;
