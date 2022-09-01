@@ -102,11 +102,14 @@ int main(int ac, char *av[])
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<TimeDependentAcceleration>(Vec2d(0)));
 	BodyAlignedBoxByParticle emitter(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_translation)), emitter_halfsize));
-	SimpleDynamics<fluid_dynamics::EmitterInflowInjecting, BodyAlignedBoxByParticle> emitter_inflow_injecting(emitter, 10, 0, true);
+	SimpleDynamics<fluid_dynamics::EmitterInflowInjecting, BodyAlignedBoxByParticle> emitter_inflow_injecting(emitter, 10, 0);
 	/** Emitter buffer inflow condition. */
 	BodyAlignedBoxByCell emitter_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
 	SimpleDynamics<EmitterBufferInflowCondition, BodyAlignedBoxByCell> emitter_buffer_inflow_condition(emitter_buffer);
+	BodyAlignedBoxByCell disposer(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(disposer_translation)), disposer_halfsize));
+	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion, BodyAlignedBoxByCell> disposer_outflow_deletion(disposer, 0);
 	/** time-space method to detect surface particles. */
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex free_stream_surface_indicator(water_block_complex);
 	/** Evaluation of density by freestream approach. */
@@ -130,10 +133,6 @@ int main(int ac, char *av[])
 	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex);
 	/** Apply transport velocity formulation. */
 	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(water_block_complex);
-	/** Prescribed fluid body domain bounds*/
-	BoundingBox water_block_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
-	/** recycle real fluid particle to buffer particles at outlet. */
-	OpenBoundaryConditionAlongAxis transfer_to_buffer_particles_upper_bound(water_block, water_block_domain_bounds, xAxis, positiveDirection);
 	/** compute the vorticity. */
 	fluid_dynamics::VorticityInner compute_vorticity(water_block_inner);
 	//----------------------------------------------------------------------
@@ -242,8 +241,8 @@ int main(int ac, char *av[])
 			number_of_iterations++;
 
 			/** Water block configuration and periodic condition. */
-			emitter_inflow_injecting.exec();
-			transfer_to_buffer_particles_upper_bound.particle_type_transfer_.parallel_exec();
+			emitter_inflow_injecting.parallel_exec();
+			disposer_outflow_deletion.parallel_exec();
 
 			water_block.updateCellLinkedList();
 			water_block_complex.updateConfiguration();

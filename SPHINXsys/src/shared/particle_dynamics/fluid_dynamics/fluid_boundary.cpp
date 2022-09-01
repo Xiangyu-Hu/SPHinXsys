@@ -70,7 +70,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		EmitterInflowInjecting::EmitterInflowInjecting(BodyAlignedBoxByParticle &aligned_box_part,
-													   size_t body_buffer_width, int axis, bool positive)
+													   size_t body_buffer_width, int axis)
 			: LocalDynamics(aligned_box_part.getSPHBody()), FluidDataSimple(sph_body_),
 			  pos_(particles_->pos_), rho_(particles_->rho_), p_(particles_->p_),
 			  axis_(axis), aligned_box_(aligned_box_part.aligned_box_)
@@ -78,23 +78,14 @@ namespace SPH
 			size_t total_body_buffer_particles = aligned_box_part.body_part_particles_.size() * body_buffer_width;
 			particles_->addBufferParticles(total_body_buffer_particles);
 			sph_body_.allocateConfigurationMemoriesForBufferParticles();
-
-			checking_bound_ = positive ? std::bind(&EmitterInflowInjecting::checkUpperBound, this, _1, _2)
-									   : std::bind(&EmitterInflowInjecting::checkLowerBound, this, _1, _2);
 		}
 		//=================================================================================================//
 		void EmitterInflowInjecting::update(size_t unsorted_index_i, Real dt)
 		{
-			mutex_switch_to_real_.lock();
-			checking_bound_(unsorted_index_i, dt);
-			mutex_switch_to_real_.unlock();
-		}
-		//=================================================================================================//
-		void EmitterInflowInjecting::checkUpperBound(size_t unsorted_index_i, Real dt)
-		{
 			size_t sorted_index_i = sorted_id_[unsorted_index_i];
 			if (aligned_box_.checkUpperBound(axis_, pos_[sorted_index_i]))
 			{
+				mutex_switch_to_real_.lock();
 				if (particles_->total_real_particles_ >= particles_->real_particles_bound_)
 				{
 					std::cout << "EmitterInflowBoundaryCondition::ConstraintAParticle: \n"
@@ -106,30 +97,11 @@ namespace SPH
 				particles_->copyFromAnotherParticle(particles_->total_real_particles_, sorted_index_i);
 				/** Realize the buffer particle by increasing the number of real particle in the body.  */
 				particles_->total_real_particles_ += 1;
+				mutex_switch_to_real_.unlock();
 				/** Periodic bounding. */
 				pos_[sorted_index_i] = aligned_box_.getUpperPeriodic(axis_, pos_[sorted_index_i]);
 				rho_[sorted_index_i] = material_->ReferenceDensity();
 				p_[sorted_index_i] = material_->getPressure(rho_[sorted_index_i]);
-			}
-		}
-		//=================================================================================================//
-		void EmitterInflowInjecting::checkLowerBound(size_t unsorted_index_i, Real dt)
-		{
-			size_t sorted_index_i = sorted_id_[unsorted_index_i];
-			if (aligned_box_.checkLowerBound(axis_, pos_[sorted_index_i]))
-			{
-				if (particles_->total_real_particles_ >= particles_->real_particles_bound_)
-				{
-					std::cout << "EmitterInflowBoundaryCondition::ConstraintAParticle: \n"
-							  << "Not enough body buffer particles! Exit the code."
-							  << "\n";
-					exit(0);
-				}
-				/** Buffer Particle state copied from real particle. */
-				particles_->copyFromAnotherParticle(particles_->total_real_particles_, sorted_index_i);
-				/** Realize the buffer particle by increasing the number of real particle in the body.  */
-				particles_->total_real_particles_ += 1;
-				pos_[sorted_index_i] = aligned_box_.getUpperPeriodic(axis_, pos_[sorted_index_i]);
 			}
 		}
 		//=================================================================================================//
@@ -147,21 +119,18 @@ namespace SPH
 		}
 		//=================================================================================================//
 		DisposerOutflowDeletion::
-			DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part, int axis, bool positive)
+			DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part, int axis)
 			: LocalDynamics(aligned_box_part.getSPHBody()), FluidDataSimple(sph_body_),
 			  pos_(particles_->pos_), axis_(axis), aligned_box_(aligned_box_part.aligned_box_) {}
 		//=================================================================================================//
 		void DisposerOutflowDeletion::update(size_t index_i, Real dt)
 		{
-			if (aligned_box_.checkUpperBound(axis_, pos_[index_i]))
+			mutex_switch_to_buffer_.lock();
+			while (aligned_box_.checkUpperBound(axis_, pos_[index_i]) && index_i < particles_->total_real_particles_)
 			{
-				mutex_switch_to_buffer_.lock();
-				while (index_i < particles_->total_real_particles_)
-				{
-					particles_->switchToBufferParticle(index_i);
-				}
-				mutex_switch_to_buffer_.unlock();
+				particles_->switchToBufferParticle(index_i);
 			}
+			mutex_switch_to_buffer_.unlock();
 		}
 		//=================================================================================================//
 		StaticConfinementDensity::StaticConfinementDensity(NearShapeSurface &near_surface)

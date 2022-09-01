@@ -152,7 +152,7 @@ namespace SPH
         {
         public:
             EmitterInflowInjecting(BodyAlignedBoxByParticle &aligned_box_part,
-                                   size_t body_buffer_width, int axis, bool positive);
+                                   size_t body_buffer_width, int axis);
             virtual ~EmitterInflowInjecting(){};
 
             void update(size_t unsorted_index_i, Real dt = 0.0);
@@ -163,10 +163,6 @@ namespace SPH
             StdLargeVec<Real> &rho_, &p_;
             const int axis_; /**< the axis direction for bounding*/
             AlignedBoxShape &aligned_box_;
-
-            virtual void checkLowerBound(size_t unsorted_index_i, Real dt = 0.0);
-            virtual void checkUpperBound(size_t unsorted_index_i, Real dt = 0.0);
-            ParticleFunctor checking_bound_;
         };
 
         /**
@@ -197,7 +193,7 @@ namespace SPH
         class DisposerOutflowDeletion : public LocalDynamics, public FluidDataSimple
         {
         public:
-            DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part, int axis, bool positive);
+            DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part, int axis);
             virtual ~DisposerOutflowDeletion(){};
 
             void update(size_t index_i, Real dt = 0.0);

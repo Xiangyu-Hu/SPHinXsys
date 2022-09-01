@@ -126,7 +126,7 @@ int main()
 	BodyAlignedBoxByParticle emitter(
 		water_body, makeShared<AlignedBoxShape>(Transform2d(inlet_translation), inlet_halfsize));
 	SimpleDynamics<InletInflowCondition, BodyAlignedBoxByParticle> inflow_condition(emitter);
-	SimpleDynamics<fluid_dynamics::EmitterInflowInjecting, BodyAlignedBoxByParticle> emitter_injection(emitter, 350, 0, true);
+	SimpleDynamics<fluid_dynamics::EmitterInflowInjecting, BodyAlignedBoxByParticle> emitter_injection(emitter, 350, 0);
 	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_body_complex);
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex indicate_free_surface(water_body_complex);
 	/** We can output a method-specific particle data for debug */
