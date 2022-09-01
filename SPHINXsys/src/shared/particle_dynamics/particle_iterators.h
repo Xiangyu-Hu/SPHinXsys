@@ -129,6 +129,34 @@ namespace SPH
 	};
 
 	//----------------------------------------------------------------------
+	//	BodypartByCell-wise iterators on cells (for sequential and parallel computing).
+	//----------------------------------------------------------------------
+
+	template <class LocalDynamicsFunction>
+	void cell_list_for(const CellLists &body_part_cells,
+					   const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
+	{
+		for (size_t i = 0; i != body_part_cells.size(); ++i)
+			local_dynamics_function(body_part_cells[i], dt);
+	};
+
+	template <class LocalDynamicsFunction>
+	void cell_list_parallel_for(const CellLists &body_part_cells,
+								const LocalDynamicsFunction &local_dynamics_function, Real dt = 0.0)
+	{
+		parallel_for(
+			IndexRange(0, body_part_cells.size()),
+			[&](const IndexRange &r)
+			{
+				for (size_t i = r.begin(); i < r.end(); ++i)
+				{
+					local_dynamics_function(body_part_cells[i], dt);
+				}
+			},
+			ap);
+	};
+
+	//----------------------------------------------------------------------
 	//	Body-wise reduce iterators (for sequential and parallel computing).
 	//----------------------------------------------------------------------
 

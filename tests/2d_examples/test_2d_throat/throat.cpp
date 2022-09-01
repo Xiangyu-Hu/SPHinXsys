@@ -22,9 +22,6 @@ Real DT = 1.0;					// throat height
 Real DL = 24.0;					// channel length
 Real resolution_ref = 0.1;		// particle spacing
 Real BW = resolution_ref * 4.0; // boundary width
-/** Domain bounds of the system. */
-BoundingBox system_domain_bounds(Vec2d(-0.5 * DL - BW, -0.5 * DH - BW),
-								 Vec2d(0.5 * DL + BW, 0.5 * DH + BW));
 //----------------------------------------------------------------------
 //	Material properties of the fluid.
 //----------------------------------------------------------------------
@@ -121,14 +118,15 @@ public:
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem.
 	//----------------------------------------------------------------------
+	BoundingBox system_domain_bounds(Vec2d(-0.5 * DL - BW, -0.5 * DH - BW),
+									 Vec2d(0.5 * DL + BW, 0.5 * DH + BW));
 	SPHSystem system(system_domain_bounds, resolution_ref);
-	// starting time zero
-	GlobalStaticVariables::physical_time_ = 0.0;
+	system.handleCommandlineOptions(ac, av);
 	IOEnvironment io_environment(system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
@@ -140,6 +138,10 @@ int main()
 	SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
+
+	ObserverBody fluid_observer(system, "FluidObserver");
+	StdVec<Vecd> observation_location = {Vecd(0)};
+	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
 	//	The contact map gives the topological connections between the bodies.
@@ -147,6 +149,7 @@ int main()
 	//----------------------------------------------------------------------
 	BodyRelationInner fluid_block_inner(fluid_block);
 	ComplexBodyRelation fluid_block_complex(fluid_block_inner, {&wall_boundary});
+	BodyRelationContact fluid_observer_contact(fluid_observer, {&fluid_block});
 	//-------------------------------------------------------------------
 	// this section define all numerical methods will be used in this case
 	//-------------------------------------------------------------------
@@ -179,6 +182,10 @@ int main()
 	//	and regression tests of the simulation.
 	//----------------------------------------------------------------------
 	BodyStatesRecordingToVtp write_real_body_states(io_environment, system.real_bodies_);
+	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
+		write_fluid_mechanical_energy(io_environment, fluid_block);
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
+		write_recorded_fluid_pressure("Pressure", io_environment, fluid_observer_contact);
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
@@ -193,7 +200,8 @@ int main()
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------
 	int number_of_iterations = 0;
-	int screen_output_interval = 100;
+	int screen_output_interval = 10;
+	int observation_sample_interval = screen_output_interval * 2;
 	Real end_time = 20.0;
 	// time step size for ouput file
 	Real output_interval = end_time / 20.0;
@@ -238,6 +246,11 @@ int main()
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
 						  << GlobalStaticVariables::physical_time_
 						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
+				if (number_of_iterations % observation_sample_interval == 0 && number_of_iterations != system.restart_step_)
+				{
+					write_fluid_mechanical_energy.writeToFile(number_of_iterations);
+					write_recorded_fluid_pressure.writeToFile(number_of_iterations);
+				}
 			}
 			number_of_iterations++;
 
@@ -259,6 +272,17 @@ int main()
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
+
+	if (system.generate_regression_data_)
+	{
+		write_fluid_mechanical_energy.generateDataBase(1.0e-2);
+		write_recorded_fluid_pressure.generateDataBase(1.0e-2);
+	}
+	else
+	{
+		write_fluid_mechanical_energy.newResultTest();
+		write_recorded_fluid_pressure.newResultTest();
+	}
 
 	return 0;
 }
