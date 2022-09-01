@@ -228,7 +228,7 @@ int main()
 	BodyStatesRecordingToVtp write_states(io_environment, sph_system.real_bodies_);
 	RegressionTestEnsembleAveraged<ObservedQuantityRecording<Real>>
 		write_solid_temperature("Phi", io_environment, temperature_observer_contact);
-	BodyRegionByParticle inner_domain(diffusion_body, makeShared<MultiPolygonShape>(createInnerDomain()));
+	BodyRegionByParticle inner_domain(diffusion_body, makeShared<MultiPolygonShape>(createInnerDomain(), "InnerDomain"));
 	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<
 		ReduceDynamicsAverage<DiffusionReactionSpeciesSummation<SolidBody, SolidParticles, Solid>, BodyRegionByParticle>>>
 		write_solid_average_temperature_part(io_environment, inner_domain, "Phi");

@@ -35,65 +35,13 @@ namespace SPH
 {
 
 	/**
-	 * @class PeriodicBoundingDynamics
-	 * @brief
-	 */
-	template <class LocalDynamicsType>
-	class PeriodicBoundingDynamics : public LocalDynamicsType, public BaseDynamics<void>
-	{
-		StdVec<CellLists> &bound_cells_;
-
-	public:
-		template <typename... Args>
-		PeriodicBoundingDynamics(StdVec<CellLists> &bound_cells, 
-			SPHBody &sph_body, BoundingBox &bounding_box, Args &&...args)
-			: LocalDynamicsType(sph_body, bounding_box, std::forward<Args>(args)...),
-			  BaseDynamics<void>(){};
-		virtual ~PeriodicBoundingDynamics(){};
-
-		virtual void exec(Real dt = 0.0) override
-		{
-			this->setBodyUpdated();
-			this->setupDynamics(dt);
-
-			particle_for(
-				bound_cells_[0],
-				[&](size_t i, Real delta)
-				{ this->checkLowerBound(i, delta); },
-				dt);
-
-			particle_for(
-				bound_cells_[1],
-				[&](size_t i, Real delta)
-				{ this->checkUpperBound(i, delta); },
-				dt);
-		};
-
-		virtual void parallel_exec(Real dt = 0.0) override
-		{
-			this->setBodyUpdated();
-			this->setupDynamics(dt);
-
-			particle_parallel_for(
-				bound_cells_[0],
-				[&](size_t i, Real delta)
-				{ this->checkLowerBound(i, delta); },
-				dt);
-
-			particle_parallel_for(
-				bound_cells_[1],
-				[&](size_t i, Real delta)
-				{ this->checkUpperBound(i, delta); },
-				dt);
-		};
-	};
-
-	/**
 	 * @class BoundingAlongAxis
 	 * @brief Bounding particle position in along axis.
 	 * The axis must be 0, 1 for 2d and 0, 1, 2 for 3d
 	 */
-	class BoundingAlongAxis : public BaseDynamics<void>, public GeneralDataDelegateSimple
+	class BoundingAlongAxis : public BaseDynamics<void>,
+							  public LocalDynamics,
+							  public GeneralDataDelegateSimple
 	{
 	protected:
 		const int axis_;			  /**< the axis directions for bounding*/
@@ -101,10 +49,6 @@ namespace SPH
 		StdLargeVec<Vecd> &pos_;
 		BaseCellLinkedList *cell_linked_list_;
 		Real cut_off_radius_max_; /**< maximum cut off radius to avoid boundary particle depletion */
-
-		void setBodyUpdated() { body_->setNewlyUpdated(); };
-		/** the function for set global parameters for the particle dynamics */
-		virtual void setupDynamics(Real dt = 0.0){};
 
 	public:
 		BoundingAlongAxis(RealBody &real_body, BoundingBox bounding_bounds, int axis);
@@ -172,8 +116,8 @@ namespace SPH
 		protected:
 			Vecd &periodic_translation_;
 			StdVec<CellLists> &bound_cells_;
-			virtual void checkLowerBound(ListData &list_data, Real dt = 0.0);
-			virtual void checkUpperBound(ListData &list_data, Real dt = 0.0);
+			virtual void checkLowerBound(CellList *cell_list, Real dt = 0.0);
+			virtual void checkUpperBound(CellList *cell_list, Real dt = 0.0);
 
 		public:
 			PeriodicCellLinkedList(Vecd &periodic_translation, StdVec<CellLists> &bound_cells,
@@ -200,51 +144,6 @@ namespace SPH
 
 		PeriodicBounding bounding_;
 		PeriodicCellLinkedList update_cell_linked_list_;
-	};
-
-	/**
-	 * @class OpenBoundaryConditionAlongAxis
-	 * @brief In open boundary case, we transfer real particles to buffer particles when it runs out the bounds.
-	 * @brief int axis is used to choose direction in coordinate
-	 * @brief bool positive is used to choose upper or lower bound in your chosen direction
-	 */
-	class OpenBoundaryConditionAlongAxis
-	{
-	protected:
-		StdVec<CellLists> bound_cells_;
-
-		class ParticleTypeTransfer : public BoundingAlongAxis
-		{
-		protected:
-			StdVec<CellLists> &bound_cells_;
-			ParticleFunctor checking_bound_;
-			virtual void checkLowerBound(size_t index_i, Real dt = 0.0);
-			virtual void checkUpperBound(size_t index_i, Real dt = 0.0);
-
-		public:
-			ParticleTypeTransfer(StdVec<CellLists> &bound_cells, RealBody &real_body,
-								 BoundingBox bounding_bounds, int axis, bool positive)
-				: BoundingAlongAxis(real_body, bounding_bounds, axis),
-				  bound_cells_(bound_cells)
-			{
-				checking_bound_ = positive
-									  ? std::bind(&OpenBoundaryConditionAlongAxis::ParticleTypeTransfer::checkUpperBound, this, _1, _2)
-									  : std::bind(&OpenBoundaryConditionAlongAxis::ParticleTypeTransfer::checkLowerBound, this, _1, _2);
-			};
-			virtual ~ParticleTypeTransfer(){};
-
-			/** This class is only implemented in sequential due to memory conflicts.
-			 * Because the cell list data is not concurrent vector.
-			 */
-			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
-		};
-
-	public:
-		OpenBoundaryConditionAlongAxis(RealBody &real_body, BoundingBox bounding_bounds, int axis, bool positive);
-		virtual ~OpenBoundaryConditionAlongAxis(){};
-
-		ParticleTypeTransfer particle_type_transfer_;
 	};
 
 	/**
@@ -325,6 +224,51 @@ namespace SPH
 		PeriodicBounding bounding_;
 		CreatPeriodicGhostParticles ghost_creation_;
 		UpdatePeriodicGhostParticles ghost_update_;
+	};
+
+	/**
+	 * @class OpenBoundaryConditionAlongAxis
+	 * @brief In open boundary case, we transfer real particles to buffer particles when it runs out the bounds.
+	 * @brief int axis is used to choose direction in coordinate
+	 * @brief bool positive is used to choose upper or lower bound in your chosen direction
+	 */
+	class OpenBoundaryConditionAlongAxis
+	{
+	protected:
+		StdVec<CellLists> bound_cells_;
+
+		class ParticleTypeTransfer : public BoundingAlongAxis
+		{
+		protected:
+			StdVec<CellLists> &bound_cells_;
+			ParticleFunctor checking_bound_;
+			virtual void checkLowerBound(size_t index_i, Real dt = 0.0);
+			virtual void checkUpperBound(size_t index_i, Real dt = 0.0);
+
+		public:
+			ParticleTypeTransfer(StdVec<CellLists> &bound_cells, RealBody &real_body,
+								 BoundingBox bounding_bounds, int axis, bool positive)
+				: BoundingAlongAxis(real_body, bounding_bounds, axis),
+				  bound_cells_(bound_cells)
+			{
+				checking_bound_ = positive
+									  ? std::bind(&OpenBoundaryConditionAlongAxis::ParticleTypeTransfer::checkUpperBound, this, _1, _2)
+									  : std::bind(&OpenBoundaryConditionAlongAxis::ParticleTypeTransfer::checkLowerBound, this, _1, _2);
+			};
+			virtual ~ParticleTypeTransfer(){};
+
+			/** This class is only implemented in sequential due to memory conflicts.
+			 * Because the cell list data is not concurrent vector.
+			 */
+			virtual void exec(Real dt = 0.0) override;
+			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
+		};
+
+	public:
+		OpenBoundaryConditionAlongAxis(RealBody &real_body, BoundingBox bounding_bounds, int axis, bool positive);
+		virtual ~OpenBoundaryConditionAlongAxis(){};
+
+		ParticleTypeTransfer particle_type_transfer_;
 	};
 
 	/**
