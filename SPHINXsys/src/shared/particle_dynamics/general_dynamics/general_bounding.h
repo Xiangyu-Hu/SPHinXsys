@@ -114,6 +114,7 @@ namespace SPH
 		class PeriodicCellLinkedList : public BoundingAlongAxis
 		{
 		protected:
+			std::mutex mutex_cell_list_entry_; /**< mutex exclusion for memory conflict */
 			Vecd &periodic_translation_;
 			StdVec<CellLists> &bound_cells_;
 			virtual void checkLowerBound(CellList *cell_list, Real dt = 0.0);
@@ -128,11 +129,8 @@ namespace SPH
 			;
 			virtual ~PeriodicCellLinkedList(){};
 
-			/** This class is only implemented in sequential due to memory conflicts.
-			 * Because the cell list data is not concurrent vector.
-			 */
 			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
+			virtual void parallel_exec(Real dt = 0.0) override;
 		};
 
 	public:
@@ -168,6 +166,7 @@ namespace SPH
 		class CreatPeriodicGhostParticles : public PeriodicBounding
 		{
 		protected:
+			std::mutex mutex_create_ghost_particle_; /**< mutex exclusion for memory conflict */
 			StdVec<IndexVector> &ghost_particles_;
 			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void checkLowerBound(size_t index_i, Real dt = 0.0) override;
@@ -179,11 +178,6 @@ namespace SPH
 				: PeriodicBounding(periodic_translation, bound_cells, real_body, bounding_bounds, axis),
 				  ghost_particles_(ghost_particles){};
 			virtual ~CreatPeriodicGhostParticles(){};
-
-			/** This class is only implemented in sequential due to memory conflicts.
-			 * Because creating ghost particle allocate memory.
-			 */
-			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
 		};
 
 		/**

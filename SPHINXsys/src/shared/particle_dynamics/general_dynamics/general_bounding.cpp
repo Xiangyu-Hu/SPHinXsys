@@ -86,6 +86,44 @@ namespace SPH
 			dt);
 	}
 	//=================================================================================================//
+	void PeriodicConditionUsingCellLinkedList::
+		PeriodicCellLinkedList::checkUpperBound(CellList *cell_list, Real dt)
+	{
+		ListDataVector &cell_list_data = cell_list->cell_list_data_;
+		for (size_t num = 0; num < cell_list_data.size(); ++num)
+		{
+			Vecd particle_position = cell_list_data[num].second;
+			if (particle_position[axis_] < bounding_bounds_.second[axis_] &&
+				particle_position[axis_] > (bounding_bounds_.second[axis_] - cut_off_radius_max_))
+			{
+				Vecd translated_position = particle_position - periodic_translation_;
+				/** insert ghost particle to cell linked list */
+				mutex_cell_list_entry_.lock();
+				cell_linked_list_->InsertACellLinkedListDataEntry(cell_list_data[num].first, translated_position);
+				mutex_cell_list_entry_.unlock();
+			}
+		}
+	}
+	//=================================================================================================//
+	void PeriodicConditionUsingCellLinkedList::
+		PeriodicCellLinkedList::checkLowerBound(CellList *cell_list, Real dt)
+	{
+		ListDataVector &cell_list_data = cell_list->cell_list_data_;
+		for (size_t num = 0; num < cell_list_data.size(); ++num)
+		{
+			Vecd particle_position = cell_list_data[num].second;
+			if (particle_position[axis_] > bounding_bounds_.first[axis_] &&
+				particle_position[axis_] < (bounding_bounds_.first[axis_] + cut_off_radius_max_))
+			{
+				Vecd translated_position = particle_position + periodic_translation_;
+				/** insert ghost particle to cell linked list */
+				mutex_cell_list_entry_.lock();
+				cell_linked_list_->InsertACellLinkedListDataEntry(cell_list_data[num].first, translated_position);
+				mutex_cell_list_entry_.unlock();
+			}
+		}
+	}
+	//=================================================================================================//
 	void PeriodicConditionUsingCellLinkedList::PeriodicCellLinkedList::exec(Real dt)
 	{
 		setupDynamics(dt);
@@ -103,38 +141,21 @@ namespace SPH
 			dt);
 	}
 	//=================================================================================================//
-	void PeriodicConditionUsingCellLinkedList::
-		PeriodicCellLinkedList::checkUpperBound(CellList *cell_list, Real dt)
+	void PeriodicConditionUsingCellLinkedList::PeriodicCellLinkedList::parallel_exec(Real dt)
 	{
-		ListDataVector &cell_list_data = cell_list->cell_list_data_;
-		for (size_t num = 0; num < cell_list_data.size(); ++num)
-		{
-			Vecd particle_position = cell_list_data[num].second;
-			if (particle_position[axis_] < bounding_bounds_.second[axis_] &&
-				particle_position[axis_] > (bounding_bounds_.second[axis_] - cut_off_radius_max_))
-			{
-				Vecd translated_position = particle_position - periodic_translation_;
-				/** insert ghost particle to cell linked list */
-				cell_linked_list_->InsertACellLinkedListDataEntry(cell_list_data[num].first, translated_position);
-			}
-		}
-	}
-	//=================================================================================================//
-	void PeriodicConditionUsingCellLinkedList::
-		PeriodicCellLinkedList::checkLowerBound(CellList *cell_list, Real dt)
-	{
-		ListDataVector &cell_list_data = cell_list->cell_list_data_;
-		for (size_t num = 0; num < cell_list_data.size(); ++num)
-		{
-			Vecd particle_position = cell_list_data[num].second;
-			if (particle_position[axis_] > bounding_bounds_.first[axis_] &&
-				particle_position[axis_] < (bounding_bounds_.first[axis_] + cut_off_radius_max_))
-			{
-				Vecd translated_position = particle_position + periodic_translation_;
-				/** insert ghost particle to cell linked list */
-				cell_linked_list_->InsertACellLinkedListDataEntry(cell_list_data[num].first, translated_position);
-			}
-		}
+		setupDynamics(dt);
+
+		cell_list_parallel_for(
+			bound_cells_[0],
+			[&](CellList *cell_ist, Real delta)
+			{ checkLowerBound(cell_ist, delta); },
+			dt);
+
+		cell_list_parallel_for(
+			bound_cells_[1],
+			[&](CellList *cell_ist, Real delta)
+			{ checkUpperBound(cell_ist, delta); },
+			dt);
 	}
 	//=================================================================================================//
 	void PeriodicConditionUsingGhostParticles::
@@ -151,11 +172,13 @@ namespace SPH
 		if (particle_position[axis_] > bounding_bounds_.first[axis_] &&
 			particle_position[axis_] < (bounding_bounds_.first[axis_] + cut_off_radius_max_))
 		{
+			mutex_create_ghost_particle_.lock();
 			size_t expected_particle_index = particles_->insertAGhostParticle(index_i);
 			ghost_particles_[0].push_back(expected_particle_index);
 			Vecd translated_position = particle_position + periodic_translation_;
 			/** insert ghost particle to cell linked list */
 			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
+			mutex_create_ghost_particle_.unlock();
 		}
 	}
 	//=================================================================================================//
@@ -166,11 +189,13 @@ namespace SPH
 		if (particle_position[axis_] < bounding_bounds_.second[axis_] &&
 			particle_position[axis_] > (bounding_bounds_.second[axis_] - cut_off_radius_max_))
 		{
+			mutex_create_ghost_particle_.lock();
 			size_t expected_particle_index = particles_->insertAGhostParticle(index_i);
 			ghost_particles_[1].push_back(expected_particle_index);
 			Vecd translated_position = particle_position - periodic_translation_;
 			/** insert ghost particle to cell linked list */
 			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
+			mutex_create_ghost_particle_.unlock();
 		}
 	}
 	//=================================================================================================//
