@@ -145,6 +145,8 @@ namespace SPH
         /**
          * @class EmitterInflowInjecting
          * @brief Inject particles into the computational domain.
+         * Note that the axis is at the local coordinate and upper bound direction is 
+         * the local positive direction.
          */
         class EmitterInflowInjecting : public LocalDynamics, public FluidDataSimple
         {
@@ -156,7 +158,7 @@ namespace SPH
             void update(size_t unsorted_index_i, Real dt = 0.0);
 
         protected:
-            std::mutex mutex_switch_to_buffer_; /**< mutex exclusion for memory conflict */
+            std::mutex mutex_switch_to_real_; /**< mutex exclusion for memory conflict */
             StdLargeVec<Vecd> &pos_;
             StdLargeVec<Real> &rho_, &p_;
             const int axis_; /**< the axis direction for bounding*/
@@ -166,6 +168,46 @@ namespace SPH
             virtual void checkUpperBound(size_t unsorted_index_i, Real dt = 0.0);
             ParticleFunctor checking_bound_;
         };
+
+        /**
+         * @class DisposerOutflowCondition
+         * @brief Outflow boundary condition imposed on a disposer by zero acceleration.
+         * Note that the transverse span of BodyAlignedBoxByCell should be slightly larger that of the flow.
+         * This method takes action just after the update of the particle acceleration and before
+         * the update of the particle velocity, i.e. as a post process of the interaction in PressureRelaxation.
+         */
+        class DisposerOutflowCondition : public LocalDynamics, public FluidDataSimple
+        {
+        public:
+            explicit DisposerOutflowCondition(BodyAlignedBoxByCell &aligned_box_part, int axis);
+            virtual ~DisposerOutflowCondition(){};
+
+            void update(size_t index_i, Real dt = 0.0);
+
+        protected:
+            StdLargeVec<Vecd> &pos_, &acc_;
+            const int axis_; /**< the axis direction for bounding*/
+            AlignedBoxShape &aligned_box_;
+        };
+
+        /**
+         * @class DisposerOutflowDeletion
+         * @brief Delete particles who ruing out the computational domain.
+         */
+        class DisposerOutflowDeletion : public LocalDynamics, public FluidDataSimple
+        {
+        public:
+            DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part, int axis, bool positive);
+            virtual ~DisposerOutflowDeletion(){};
+
+            void update(size_t index_i, Real dt = 0.0);
+
+        protected:
+            std::mutex mutex_switch_to_buffer_; /**< mutex exclusion for memory conflict */
+            StdLargeVec<Vecd> &pos_;
+            const int axis_; /**< the axis direction for bounding*/
+            AlignedBoxShape &aligned_box_;
+         };
 
         /**
          * @class StaticConfinementDensity

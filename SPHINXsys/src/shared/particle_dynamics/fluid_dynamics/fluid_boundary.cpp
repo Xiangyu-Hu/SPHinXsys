@@ -85,9 +85,9 @@ namespace SPH
 		//=================================================================================================//
 		void EmitterInflowInjecting::update(size_t unsorted_index_i, Real dt)
 		{
-			mutex_switch_to_buffer_.lock();
+			mutex_switch_to_real_.lock();
 			checking_bound_(unsorted_index_i, dt);
-			mutex_switch_to_buffer_.unlock();
+			mutex_switch_to_real_.unlock();
 		}
 		//=================================================================================================//
 		void EmitterInflowInjecting::checkUpperBound(size_t unsorted_index_i, Real dt)
@@ -130,6 +130,37 @@ namespace SPH
 				/** Realize the buffer particle by increasing the number of real particle in the body.  */
 				particles_->total_real_particles_ += 1;
 				pos_[sorted_index_i] = aligned_box_.getUpperPeriodic(axis_, pos_[sorted_index_i]);
+			}
+		}
+		//=================================================================================================//
+		DisposerOutflowCondition::DisposerOutflowCondition(BodyAlignedBoxByCell &aligned_box_part, int axis)
+			: LocalDynamics(aligned_box_part.getSPHBody()), FluidDataSimple(sph_body_),
+			  pos_(particles_->pos_), acc_(particles_->acc_),
+			  axis_(axis), aligned_box_(aligned_box_part.aligned_box_) {}
+		//=================================================================================================//
+		void DisposerOutflowCondition::update(size_t index_i, Real dt)
+		{
+			if (!aligned_box_.checkLowerBound(axis_, pos_[index_i]))
+			{
+				acc_[index_i] = Vecd(0);
+			}
+		}
+		//=================================================================================================//
+		DisposerOutflowDeletion::
+			DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part, int axis, bool positive)
+			: LocalDynamics(aligned_box_part.getSPHBody()), FluidDataSimple(sph_body_),
+			  pos_(particles_->pos_), axis_(axis), aligned_box_(aligned_box_part.aligned_box_) {}
+		//=================================================================================================//
+		void DisposerOutflowDeletion::update(size_t index_i, Real dt)
+		{
+			if (aligned_box_.checkUpperBound(axis_, pos_[index_i]))
+			{
+				mutex_switch_to_buffer_.lock();
+				while (index_i < particles_->total_real_particles_)
+				{
+					particles_->switchToBufferParticle(index_i);
+				}
+				mutex_switch_to_buffer_.unlock();
 			}
 		}
 		//=================================================================================================//

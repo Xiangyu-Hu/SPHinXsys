@@ -208,7 +208,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void CellLinkedList::
-		tagMirrorBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive)
+		tagOneSideBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive)
 	{
 		int second_axis = SecondAxis(axis);
 		int third_axis = ThirdAxis(axis);

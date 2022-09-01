@@ -102,7 +102,7 @@ namespace SPH
 		/** Tag domain bounding cells in an axis direction, called by domain bounding classes */
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &bounding_bounds, int axis) = 0;
 		/** Tag mirror bounding cells, called by mirror boundary condition */
-		virtual void tagMirrorBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive) = 0;
+		virtual void tagOneSideBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive) = 0;
 	};
 
 	/**
@@ -137,7 +137,7 @@ namespace SPH
 		virtual void computingSequence(StdLargeVec<size_t> &sequence) override;
 		virtual void tagBodyPartByCell(CellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &bounding_bounds, int axis) override;
-		virtual void tagMirrorBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive) override;
+		virtual void tagOneSideBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive) override;
 		virtual void writeMeshFieldToPlt(std::ofstream &output_file) override;
 
 		/** generalized particle search algorithm */
@@ -182,7 +182,7 @@ namespace SPH
 		virtual void computingSequence(StdLargeVec<size_t> &sequence) override{};
 		virtual void tagBodyPartByCell(CellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) override;
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &bounding_bounds, int axis) override{};
-		virtual void tagMirrorBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive) override{};
+		virtual void tagOneSideBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive) override{};
 	};
 }
 #endif // MESH_CELL_LINKED_LIST_H
