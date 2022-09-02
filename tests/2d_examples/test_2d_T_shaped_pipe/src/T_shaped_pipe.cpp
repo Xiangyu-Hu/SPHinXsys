@@ -156,9 +156,17 @@ int main(int ac, char *av[])
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(inlet_buffer_translation)), inlet_buffer_halfsize));
 	SimpleDynamics<EmitterBufferInflowCondition, BodyAlignedBoxByCell> emitter_buffer_inflow_condition(emitter_buffer);
 
-	BoundingBox water_block_bounding_bounds(Vec2d(-DL_sponge, -DH), Vec2d(DL + BW, 2.0 * DH));
-	OpenBoundaryConditionAlongAxis transfer_to_buffer_particles_lower_bound(water_block, water_block_bounding_bounds, yAxis, negativeDirection);
-	OpenBoundaryConditionAlongAxis transfer_to_buffer_particles_upper_bound(water_block, water_block_bounding_bounds, yAxis, positiveDirection);
+	Vec2d disposer_up_halfsize = Vec2d(0.3 * DH, 0.5 * BW);
+	Vec2d disposer_up_translation = Vec2d(DL + 0.05 * DH, 2.0 * DH) - disposer_up_halfsize;
+	BodyAlignedBoxByCell disposer_up(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(disposer_up_translation)), disposer_up_halfsize));
+	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion, BodyAlignedBoxByCell> disposer_up_outflow_deletion(disposer_up, yAxis);
+
+	Vec2d disposer_down_halfsize = disposer_up_halfsize;
+	Vec2d disposer_down_translation = Vec2d(DL1 - 0.05 * DH, - DH) + disposer_down_halfsize;
+	BodyAlignedBoxByCell disposer_down(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Rotation2d(Pi), Vec2d(disposer_down_translation)), disposer_down_halfsize));
+	SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion, BodyAlignedBoxByCell> disposer_down_outflow_deletion(disposer_down, yAxis);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -242,8 +250,8 @@ int main(int ac, char *av[])
 
 			/** inflow injection*/
 			emitter_inflow_injection.exec();
-			transfer_to_buffer_particles_lower_bound.particle_type_transfer_.parallel_exec();
-			transfer_to_buffer_particles_upper_bound.particle_type_transfer_.parallel_exec();
+			disposer_up_outflow_deletion.parallel_exec();
+			disposer_down_outflow_deletion.parallel_exec();
 
 			/** Update cell linked list and configuration. */
 			water_block.updateCellLinkedList();
