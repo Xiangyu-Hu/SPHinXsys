@@ -143,17 +143,17 @@ namespace SPH
         };
 
         /**
-         * @class EmitterInflowInjecting
+         * @class EmitterInflowInjection
          * @brief Inject particles into the computational domain.
          * Note that the axis is at the local coordinate and upper bound direction is 
          * the local positive direction.
          */
-        class EmitterInflowInjecting : public LocalDynamics, public FluidDataSimple
+        class EmitterInflowInjection : public LocalDynamics, public FluidDataSimple
         {
         public:
-            EmitterInflowInjecting(BodyAlignedBoxByParticle &aligned_box_part,
+            EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part,
                                    size_t body_buffer_width, int axis);
-            virtual ~EmitterInflowInjecting(){};
+            virtual ~EmitterInflowInjection(){};
 
             void update(size_t unsorted_index_i, Real dt = 0.0);
 

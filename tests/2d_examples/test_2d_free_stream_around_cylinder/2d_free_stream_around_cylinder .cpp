@@ -102,7 +102,7 @@ int main(int ac, char *av[])
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<TimeDependentAcceleration>(Vec2d(0)));
 	BodyAlignedBoxByParticle emitter(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_translation)), emitter_halfsize));
-	SimpleDynamics<fluid_dynamics::EmitterInflowInjecting, BodyAlignedBoxByParticle> emitter_inflow_injecting(emitter, 10, 0);
+	SimpleDynamics<fluid_dynamics::EmitterInflowInjection, BodyAlignedBoxByParticle> emitter_inflow_injection(emitter, 10, 0);
 	/** Emitter buffer inflow condition. */
 	BodyAlignedBoxByCell emitter_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
@@ -241,7 +241,7 @@ int main(int ac, char *av[])
 			number_of_iterations++;
 
 			/** Water block configuration and periodic condition. */
-			emitter_inflow_injecting.parallel_exec();
+			emitter_inflow_injection.parallel_exec();
 			disposer_outflow_deletion.parallel_exec();
 
 			water_block.updateCellLinkedList();

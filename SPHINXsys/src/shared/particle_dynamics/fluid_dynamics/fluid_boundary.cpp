@@ -69,7 +69,7 @@ namespace SPH
 			p_[sorted_index_i] = material_->getPressure(rho_[sorted_index_i]);
 		}
 		//=================================================================================================//
-		EmitterInflowInjecting::EmitterInflowInjecting(BodyAlignedBoxByParticle &aligned_box_part,
+		EmitterInflowInjection::EmitterInflowInjection(BodyAlignedBoxByParticle &aligned_box_part,
 													   size_t body_buffer_width, int axis)
 			: LocalDynamics(aligned_box_part.getSPHBody()), FluidDataSimple(sph_body_),
 			  pos_(particles_->pos_), rho_(particles_->rho_), p_(particles_->p_),
@@ -80,7 +80,7 @@ namespace SPH
 			sph_body_.allocateConfigurationMemoriesForBufferParticles();
 		}
 		//=================================================================================================//
-		void EmitterInflowInjecting::update(size_t unsorted_index_i, Real dt)
+		void EmitterInflowInjection::update(size_t unsorted_index_i, Real dt)
 		{
 			size_t sorted_index_i = sorted_id_[unsorted_index_i];
 			if (aligned_box_.checkUpperBound(axis_, pos_[sorted_index_i]))

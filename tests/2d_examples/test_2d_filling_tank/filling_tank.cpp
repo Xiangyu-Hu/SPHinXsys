@@ -119,23 +119,23 @@ int main()
 	//----------------------------------------------------------------------
 	//	Define all numerical methods which are used in this case.
 	//----------------------------------------------------------------------
-	SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
+	fluid_dynamics::PressureRelaxationRiemannWithWall pressure_relaxation(water_body_complex);
+	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_body_complex);
+	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_body_complex);
+	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex indicate_free_surface(water_body_complex);
+	water_body.addBodyStateForRecording<Real>("PositionDivergence"); //for debug
+	water_body.addBodyStateForRecording<int>("SurfaceIndicator"); //for debug
+
 	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_body, gravity_ptr);
-	/** Emitter. */
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_body, U_f);
+	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);
+	SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
 	BodyAlignedBoxByParticle emitter(
 		water_body, makeShared<AlignedBoxShape>(Transform2d(inlet_translation), inlet_halfsize));
 	SimpleDynamics<InletInflowCondition, BodyAlignedBoxByParticle> inflow_condition(emitter);
-	SimpleDynamics<fluid_dynamics::EmitterInflowInjecting, BodyAlignedBoxByParticle> emitter_injection(emitter, 350, 0);
-	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_body_complex);
-	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex indicate_free_surface(water_body_complex);
-	/** We can output a method-specific particle data for debug */
-	water_body.addBodyStateForRecording<Real>("PositionDivergence");
-	water_body.addBodyStateForRecording<int>("SurfaceIndicator");
-	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_body, U_f);
-	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_body);
-	fluid_dynamics::PressureRelaxationRiemannWithWall pressure_relaxation(water_body_complex);
-	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_body_complex);
+	SimpleDynamics<fluid_dynamics::EmitterInflowInjection, BodyAlignedBoxByParticle> emitter_injection(emitter, 350, 0);
+
 	//----------------------------------------------------------------------
 	//	File Output
 	//----------------------------------------------------------------------
