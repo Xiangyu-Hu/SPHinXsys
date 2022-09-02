@@ -60,6 +60,7 @@ namespace SPH
 		protected:
 			StdLargeVec<Vecd> &acc_;
 			Real h_ref_;
+
 		public:
 			explicit GetTimeStepSizeSquare(SPHBody &sph_body);
 			virtual ~GetTimeStepSizeSquare(){};
@@ -74,17 +75,16 @@ namespace SPH
 		 * without considering contact interaction.
 		 * this is usually used for solid like bodies
 		 */
-		class RelaxationAccelerationInner : public InteractionDynamics, public RelaxDataDelegateInner
+		class RelaxationAccelerationInner : public LocalDynamics, public RelaxDataDelegateInner
 		{
 		public:
 			explicit RelaxationAccelerationInner(BaseBodyRelationInner &inner_relation);
 			virtual ~RelaxationAccelerationInner(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &acc_;
-			StdLargeVec<Vecd> &pos_;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			StdLargeVec<Vecd> &acc_, &pos_;
 		};
 
 		/**
@@ -97,10 +97,11 @@ namespace SPH
 			explicit RelaxationAccelerationInnerWithLevelSetCorrection(
 				BaseBodyRelationInner &inner_relation);
 			virtual ~RelaxationAccelerationInnerWithLevelSetCorrection(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			LevelSetShape *level_set_shape_;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			SPHAdaptation *sph_adaptation_;
 		};
 
 		/**
@@ -148,18 +149,18 @@ namespace SPH
 		 * with considering contact interaction
 		 * this is usually used for fluid like bodies
 		 */
-		class RelaxationAccelerationComplex : public InteractionDynamics,
+		class RelaxationAccelerationComplex : public LocalDynamics,
 											  public RelaxDataDelegateComplex
 		{
 		public:
 			explicit RelaxationAccelerationComplex(ComplexBodyRelation &body_complex_relation);
 			virtual ~RelaxationAccelerationComplex(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &acc_, &pos_;
 			StdVec<StdLargeVec<Real> *> contact_Vol_;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -198,7 +199,7 @@ namespace SPH
 										 bool level_set_correction = false);
 			virtual ~RelaxationStepInner(){};
 
-			UniquePtr<RelaxationAccelerationInner> relaxation_acceleration_inner_;
+			UniquePtr<BaseDynamics<void>> relaxation_acceleration_inner_;
 			ReduceDynamics<GetTimeStepSizeSquare> get_time_step_square_;
 			SimpleDynamics<UpdateParticlePosition> update_particle_position_;
 			SimpleDynamics<ShapeSurfaceBounding, NearShapeSurface> surface_bounding_;
@@ -220,10 +221,10 @@ namespace SPH
 			RelaxationAccelerationComplexWithLevelSetCorrection(
 				ComplexBodyRelation &body_complex_relation, const std::string &shape_name);
 			virtual ~RelaxationAccelerationComplexWithLevelSetCorrection(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			LevelSetShape *level_set_shape_;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -313,6 +314,7 @@ namespace SPH
 			protected:
 				const Real convergence_criterion_;
 				StdLargeVec<Vecd> &n_, &n_temp_;
+
 			public:
 				PredictionConvergenceCheck(SPHBody &sph_body, Real convergence_criterion);
 				virtual ~PredictionConvergenceCheck(){};
@@ -341,6 +343,7 @@ namespace SPH
 			{
 			protected:
 				StdLargeVec<int> &updated_indicator_;
+
 			public:
 				explicit ConsistencyUpdatedCheck(SPHBody &sph_body);
 				virtual ~ConsistencyUpdatedCheck(){};
@@ -377,7 +380,7 @@ namespace SPH
 			virtual ~ShellRelaxationStepInner(){};
 
 			SimpleDynamics<UpdateParticlePosition> update_shell_particle_position_;
-			SimpleDynamics<ShellMidSurfaceBounding, NearShapeSurface>  mid_surface_bounding_;
+			SimpleDynamics<ShellMidSurfaceBounding, NearShapeSurface> mid_surface_bounding_;
 
 			virtual void exec(Real dt = 0.0) override;
 			virtual void parallel_exec(Real dt = 0.0) override;

@@ -249,57 +249,6 @@ namespace SPH
 			dt);
 	}
 	//=================================================================================================//
-	OpenBoundaryConditionAlongAxis::
-		OpenBoundaryConditionAlongAxis(RealBody &real_body, BoundingBox bounding_bounds,
-									   int axis, bool positive)
-		: particle_type_transfer_(this->bound_cells_, real_body, bounding_bounds, axis, positive)
-	{
-		bound_cells_.resize(2);
-		BaseCellLinkedList *cell_linked_list = real_body.cell_linked_list_;
-		cell_linked_list->tagBoundingCells(bound_cells_, bounding_bounds, axis);
-	}
-	//=================================================================================================//
-	void OpenBoundaryConditionAlongAxis ::
-		ParticleTypeTransfer::checkLowerBound(size_t index_i, Real dt)
-	{
-		while (index_i < particles_->total_real_particles_ && pos_[index_i][axis_] < bounding_bounds_.first[axis_])
-		{
-			particles_->switchToBufferParticle(index_i);
-		}
-	}
-	//=================================================================================================//
-	void OpenBoundaryConditionAlongAxis ::
-		ParticleTypeTransfer::checkUpperBound(size_t index_i, Real dt)
-	{
-		while (index_i < particles_->total_real_particles_ && pos_[index_i][axis_] > bounding_bounds_.second[axis_])
-		{
-			particles_->switchToBufferParticle(index_i);
-		}
-	}
-	//=================================================================================================//
-	void OpenBoundaryConditionAlongAxis::ParticleTypeTransfer::exec(Real dt)
-	{
-		setupDynamics(dt);
-
-		// check lower bound
-		CellLists &lower_bound_cells = bound_cells_[0];
-		for (size_t i = 0; i != lower_bound_cells.size(); ++i)
-		{
-			IndexVector &particle_indexes = lower_bound_cells[i]->real_particle_indexes_;
-			for (size_t num = 0; num < particle_indexes.size(); ++num)
-				checking_bound_(particle_indexes[num], dt);
-		}
-
-		// check upper bound
-		CellLists &upper_bound_cells = bound_cells_[1];
-		for (size_t i = 0; i != upper_bound_cells.size(); ++i)
-		{
-			IndexVector &particle_indexes = upper_bound_cells[i]->real_particle_indexes_;
-			for (size_t num = 0; num < particle_indexes.size(); ++num)
-				checking_bound_(particle_indexes[num], dt);
-		}
-	}
-	//=================================================================================================//
 	MirrorConditionAlongAxis::MirrorBounding::
 		MirrorBounding(CellLists &bound_cells, RealBody &real_body,
 					   BoundingBox bounding_bounds, int axis, bool positive)

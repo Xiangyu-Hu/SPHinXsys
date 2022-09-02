@@ -32,11 +32,10 @@ namespace SPH
 		}
 		//=================================================================================================//
 		RelaxationAccelerationInner::RelaxationAccelerationInner(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(inner_relation.sph_body_),
-			  RelaxDataDelegateInner(inner_relation),
+			: LocalDynamics(inner_relation.sph_body_), RelaxDataDelegateInner(inner_relation),
 			  Vol_(particles_->Vol_), acc_(particles_->acc_), pos_(particles_->pos_) {}
 		//=================================================================================================//
-		void RelaxationAccelerationInner::Interaction(size_t index_i, Real dt)
+		void RelaxationAccelerationInner::interaction(size_t index_i, Real dt)
 		{
 			Vecd acceleration(0);
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -50,14 +49,14 @@ namespace SPH
 		//=================================================================================================//
 		RelaxationAccelerationInnerWithLevelSetCorrection::
 			RelaxationAccelerationInnerWithLevelSetCorrection(BaseBodyRelationInner &inner_relation)
-			: RelaxationAccelerationInner(inner_relation)
+			: RelaxationAccelerationInner(inner_relation), sph_adaptation_(sph_body_.sph_adaptation_)
 		{
 			level_set_shape_ = DynamicCast<LevelSetShape>(this, body_->body_shape_);
 		}
 		//=================================================================================================//
-		void RelaxationAccelerationInnerWithLevelSetCorrection::Interaction(size_t index_i, Real dt)
+		void RelaxationAccelerationInnerWithLevelSetCorrection::interaction(size_t index_i, Real dt)
 		{
-			RelaxationAccelerationInner::Interaction(index_i, dt);
+			RelaxationAccelerationInner::interaction(index_i, dt);
 			acc_[index_i] -= 2.0 * level_set_shape_->computeKernelGradientIntegral(
 									   pos_[index_i], sph_adaptation_->SmoothingLengthRatio(index_i));
 		}
@@ -88,7 +87,7 @@ namespace SPH
 		//=================================================================================================//
 		RelaxationAccelerationComplex::
 			RelaxationAccelerationComplex(ComplexBodyRelation &complex_relation)
-			: InteractionDynamics(complex_relation.sph_body_),
+			: LocalDynamics(complex_relation.sph_body_),
 			  RelaxDataDelegateComplex(complex_relation),
 			  Vol_(particles_->Vol_), acc_(particles_->acc_), pos_(particles_->pos_)
 		{
@@ -98,7 +97,7 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		void RelaxationAccelerationComplex::Interaction(size_t index_i, Real dt)
+		void RelaxationAccelerationComplex::interaction(size_t index_i, Real dt)
 		{
 			Vecd acceleration(0);
 			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -151,11 +150,19 @@ namespace SPH
 			  inner_relation_(inner_relation),
 			  near_shape_surface_(*real_body_),
 			  get_time_step_square_(*real_body_), update_particle_position_(*real_body_),
-			  surface_bounding_(near_shape_surface_),
-			  relaxation_acceleration_inner_(
-				  !level_set_correction
-					  ? std::move(makeUnique<RelaxationAccelerationInner>(inner_relation))
-					  : std::move(makeUnique<RelaxationAccelerationInnerWithLevelSetCorrection>(inner_relation))) {}
+			  surface_bounding_(near_shape_surface_)
+		{
+			if (!level_set_correction)
+			{
+				relaxation_acceleration_inner_ =
+					std::move(makeUnique<SimpleInteractionDynamics<RelaxationAccelerationInner>>(inner_relation));
+			}
+			else
+			{
+				relaxation_acceleration_inner_ =
+					std::move(makeUnique<SimpleInteractionDynamics<RelaxationAccelerationInnerWithLevelSetCorrection>>(inner_relation));
+			}
+		}
 		//=================================================================================================//
 		void RelaxationStepInner::exec(Real dt)
 		{
@@ -185,9 +192,9 @@ namespace SPH
 			level_set_shape_ = DynamicCast<LevelSetShape>(this, complex_shape.getShapeByName(shape_name));
 		}
 		//=================================================================================================//
-		void RelaxationAccelerationComplexWithLevelSetCorrection::Interaction(size_t index_i, Real dt)
+		void RelaxationAccelerationComplexWithLevelSetCorrection::interaction(size_t index_i, Real dt)
 		{
-			RelaxationAccelerationComplex::Interaction(index_i, dt);
+			RelaxationAccelerationComplex::interaction(index_i, dt);
 
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{

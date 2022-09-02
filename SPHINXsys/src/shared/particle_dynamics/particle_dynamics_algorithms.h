@@ -263,5 +263,72 @@ namespace SPH
 			return outputAverage(sum, this->dynamics_range_.SizeOfLoopRange());
 		};
 	};
+
+	/**
+	 * @class SimpleInteractionDynamics
+	 * @brief This is the class for particle interaction with other particles
+	 */
+	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
+	class SimpleInteractionDynamics : public LocalDynamicsType, public BaseDynamics<void>
+	{
+		DynamicsRange &dynamics_range_;
+
+	public:
+		template <typename... Args>
+		SimpleInteractionDynamics(DynamicsRange &dynamics_range, Args &&...args)
+			: LocalDynamicsType(dynamics_range, std::forward<Args>(args)...),
+			  BaseDynamics<void>(), dynamics_range_(dynamics_range){};
+		virtual ~SimpleInteractionDynamics(){};
+
+		/** pre process such as update ghost state */
+		StdVec<BaseDynamics<void> *> pre_processes_;
+		/** post process such as impose constraint */
+		StdVec<BaseDynamics<void> *> post_processes_;
+
+		virtual void exec(Real dt = 0.0) override
+		{
+			this->setBodyUpdated();
+			this->setupDynamics(dt);
+			runInteractionStep(dt);
+		};
+
+		virtual void parallel_exec(Real dt = 0.0) override
+		{
+			this->setBodyUpdated();
+			this->setupDynamics(dt);
+			parallel_runInteractionStep(dt);
+		};
+
+		void runInteractionStep(Real dt)
+		{
+			for (size_t k = 0; k < pre_processes_.size(); ++k)
+				pre_processes_[k]->exec(dt);
+
+			particle_for(
+				dynamics_range_.LoopRange(),
+				[&](size_t i, Real delta)
+				{ this->interaction(i, delta); },
+				dt);
+
+			for (size_t k = 0; k < post_processes_.size(); ++k)
+				post_processes_[k]->exec(dt);
+		}
+
+		void parallel_runInteractionStep(Real dt)
+		{
+			for (size_t k = 0; k < pre_processes_.size(); ++k)
+				pre_processes_[k]->parallel_exec(dt);
+
+			particle_parallel_for(
+				dynamics_range_.LoopRange(),
+				[&](size_t i, Real delta)
+				{ this->interaction(i, delta); },
+				dt);
+
+			for (size_t k = 0; k < post_processes_.size(); ++k)
+				post_processes_[k]->parallel_exec(dt);
+		}
+	};
+
 }
 #endif // PARTICLE_DYNAMICS_ALGORITHMS_H
