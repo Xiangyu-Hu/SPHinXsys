@@ -105,19 +105,6 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		DisposerOutflowCondition::DisposerOutflowCondition(BodyAlignedBoxByCell &aligned_box_part, int axis)
-			: LocalDynamics(aligned_box_part.getSPHBody()), FluidDataSimple(sph_body_),
-			  pos_(particles_->pos_), acc_(particles_->acc_),
-			  axis_(axis), aligned_box_(aligned_box_part.aligned_box_) {}
-		//=================================================================================================//
-		void DisposerOutflowCondition::update(size_t index_i, Real dt)
-		{
-			if (!aligned_box_.checkLowerBound(axis_, pos_[index_i]))
-			{
-				acc_[index_i] = Vecd(0);
-			}
-		}
-		//=================================================================================================//
 		DisposerOutflowDeletion::
 			DisposerOutflowDeletion(BodyAlignedBoxByCell &aligned_box_part, int axis)
 			: LocalDynamics(aligned_box_part.getSPHBody()), FluidDataSimple(sph_body_),

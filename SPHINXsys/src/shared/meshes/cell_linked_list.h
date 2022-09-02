@@ -101,7 +101,7 @@ namespace SPH
 		virtual void tagBodyPartByCell(CellLists &cell_lists, std::function<bool(Vecd, Real)> &check_included) = 0;
 		/** Tag domain bounding cells in an axis direction, called by domain bounding classes */
 		virtual void tagBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &bounding_bounds, int axis) = 0;
-		/** Tag mirror bounding cells, called by mirror boundary condition */
+		/** Tag domain bounding cells in one side, called by mirror boundary condition */
 		virtual void tagOneSideBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive) = 0;
 	};
 

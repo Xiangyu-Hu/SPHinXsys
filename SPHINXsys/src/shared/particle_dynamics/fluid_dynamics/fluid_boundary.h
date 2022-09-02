@@ -166,27 +166,6 @@ namespace SPH
         };
 
         /**
-         * @class DisposerOutflowCondition
-         * @brief Outflow boundary condition imposed on a disposer by zero acceleration.
-         * Note that the transverse span of BodyAlignedBoxByCell should be slightly larger that of the flow.
-         * This method takes action just after the update of the particle acceleration and before
-         * the update of the particle velocity, i.e. as a post process of the interaction in PressureRelaxation.
-         */
-        class DisposerOutflowCondition : public LocalDynamics, public FluidDataSimple
-        {
-        public:
-            explicit DisposerOutflowCondition(BodyAlignedBoxByCell &aligned_box_part, int axis);
-            virtual ~DisposerOutflowCondition(){};
-
-            void update(size_t index_i, Real dt = 0.0);
-
-        protected:
-            StdLargeVec<Vecd> &pos_, &acc_;
-            const int axis_; /**< the axis direction for bounding*/
-            AlignedBoxShape &aligned_box_;
-        };
-
-        /**
          * @class DisposerOutflowDeletion
          * @brief Delete particles who ruing out the computational domain.
          */

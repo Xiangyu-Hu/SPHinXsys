@@ -221,51 +221,6 @@ namespace SPH
 	};
 
 	/**
-	 * @class OpenBoundaryConditionAlongAxis
-	 * @brief In open boundary case, we transfer real particles to buffer particles when it runs out the bounds.
-	 * @brief int axis is used to choose direction in coordinate
-	 * @brief bool positive is used to choose upper or lower bound in your chosen direction
-	 */
-	class OpenBoundaryConditionAlongAxis
-	{
-	protected:
-		StdVec<CellLists> bound_cells_;
-
-		class ParticleTypeTransfer : public BoundingAlongAxis
-		{
-		protected:
-			StdVec<CellLists> &bound_cells_;
-			ParticleFunctor checking_bound_;
-			virtual void checkLowerBound(size_t index_i, Real dt = 0.0);
-			virtual void checkUpperBound(size_t index_i, Real dt = 0.0);
-
-		public:
-			ParticleTypeTransfer(StdVec<CellLists> &bound_cells, RealBody &real_body,
-								 BoundingBox bounding_bounds, int axis, bool positive)
-				: BoundingAlongAxis(real_body, bounding_bounds, axis),
-				  bound_cells_(bound_cells)
-			{
-				checking_bound_ = positive
-									  ? std::bind(&OpenBoundaryConditionAlongAxis::ParticleTypeTransfer::checkUpperBound, this, _1, _2)
-									  : std::bind(&OpenBoundaryConditionAlongAxis::ParticleTypeTransfer::checkLowerBound, this, _1, _2);
-			};
-			virtual ~ParticleTypeTransfer(){};
-
-			/** This class is only implemented in sequential due to memory conflicts.
-			 * Because the cell list data is not concurrent vector.
-			 */
-			virtual void exec(Real dt = 0.0) override;
-			virtual void parallel_exec(Real dt = 0.0) override { exec(); };
-		};
-
-	public:
-		OpenBoundaryConditionAlongAxis(RealBody &real_body, BoundingBox bounding_bounds, int axis, bool positive);
-		virtual ~OpenBoundaryConditionAlongAxis(){};
-
-		ParticleTypeTransfer particle_type_transfer_;
-	};
-
-	/**
 	 * @class MirrorConditionAlongAxis
 	 * @brief Mirror bounding particle position and velocity in an axis direction
 	 *  Note that, currently, this class is not for mirror condition in combined directions,
