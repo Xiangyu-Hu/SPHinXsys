@@ -11,12 +11,12 @@
 
 namespace
 {
-    /**
-     * @brief Convert any input to string and pad the output with zeros
-     * @todo Use external library for general string formatting, e.g. abseil, fmt library, or std::format
-     */
-    template<typename T>
-    std::string padValueWithZeros(T&& value, size_t max_string_width = 10)
+	/**
+	 * @brief Convert any input to string and pad the output with zeros
+	 * @todo Use external library for general string formatting, e.g. abseil, fmt library, or std::format
+	 */
+	template <typename T>
+	std::string padValueWithZeros(T &&value, size_t max_string_width = 10)
 	{
 		std::ostringstream s_time;
 		s_time << std::setw(max_string_width) << std::setfill('0') << value;
@@ -50,7 +50,7 @@ namespace SPH
 		{
 			fs::remove_all(restart_folder_);
 			fs::create_directory(restart_folder_);
-			if(delete_output == true)
+			if (delete_output == true)
 			{
 				fs::remove_all(output_folder_);
 				fs::create_directory(output_folder_);
@@ -100,9 +100,9 @@ namespace SPH
 	}
 	//=============================================================================================//
 	void BodyStatesRecording::writeToFile(size_t iteration_step)
-    {
-        writeWithFileName(padValueWithZeros(iteration_step));
-    };
+	{
+		writeWithFileName(padValueWithZeros(iteration_step));
+	};
 	//=============================================================================================//
 	void BodyStatesRecordingToVtp::writeWithFileName(const std::string &sequence)
 	{
@@ -110,14 +110,14 @@ namespace SPH
 		{
 			if (body->checkNewlyUpdated())
 			{
-				//TODO: we can short the file name by without using SPHBody
+				// TODO: we can short the file name by without using SPHBody
 				std::string filefullpath = io_environment_.output_folder_ + "/SPHBody_" + body->getName() + "_" + sequence + ".vtp";
 				if (fs::exists(filefullpath))
 				{
 					fs::remove(filefullpath);
 				}
 				std::ofstream out_file(filefullpath.c_str(), std::ios::trunc);
-				//begin of the XML file
+				// begin of the XML file
 				out_file << "<?xml version=\"1.0\"?>\n";
 				out_file << "<VTKFile type=\"PolyData\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
 				out_file << " <PolyData>\n";
@@ -130,7 +130,7 @@ namespace SPH
 
 				out_file << "   </PointData>\n";
 
-				//write empty cells
+				// write empty cells
 				out_file << "   <Verts>\n";
 				out_file << "    <DataArray type=\"Int32\"  Name=\"connectivity\"  Format=\"ascii\">\n";
 				out_file << "    ";
@@ -161,15 +161,15 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	void BodyStatesRecordingToVtpString::writeWithFileName(const std::string& sequence)
+	void BodyStatesRecordingToVtpString::writeWithFileName(const std::string &sequence)
 	{
 		for (SPHBody *body : bodies_)
 		{
 			if (body->checkNewlyUpdated())
 			{
-				const auto& vtuName = body->getName() + "_" + sequence + ".vtu";
+				const auto &vtuName = body->getName() + "_" + sequence + ".vtu";
 				std::stringstream sstream;
-				//begin of the XML file
+				// begin of the XML file
 				writeVtu(sstream, body);
 				_vtuData[vtuName] = sstream.str();
 			}
@@ -177,13 +177,13 @@ namespace SPH
 		}
 	}
 	//=============================================================================================//
-	void BodyStatesRecordingToVtpString::writeVtu(std::ostream& stream, SPHBody* body) const
+	void BodyStatesRecordingToVtpString::writeVtu(std::ostream &stream, SPHBody *body) const
 	{
 		stream << "<?xml version=\"1.0\"?>\n";
 		stream << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n";
 		stream << " <UnstructuredGrid>\n";
 
-		BaseParticles* base_particles = body->base_particles_;
+		BaseParticles *base_particles = body->base_particles_;
 		size_t total_real_particles = base_particles->total_real_particles_;
 		stream << "  <Piece Name =\"" << body->getName() << "\" NumberOfPoints=\"" << total_real_particles << "\" NumberOfCells=\"0\">\n";
 
@@ -191,7 +191,7 @@ namespace SPH
 
 		stream << "   </PointData>\n";
 
-		//write empty cells
+		// write empty cells
 		stream << "   <Cells>\n";
 		stream << "    <DataArray type=\"Int32\"  Name=\"connectivity\"  Format=\"ascii\">\n";
 		stream << "    </DataArray>\n";
@@ -207,7 +207,7 @@ namespace SPH
 		stream << "</VTKFile>\n";
 	}
 	//=============================================================================================//
-	const VtuStringData& BodyStatesRecordingToVtpString::GetVtuData() const
+	const VtuStringData &BodyStatesRecordingToVtpString::GetVtuData() const
 	{
 		return _vtuData;
 	}
@@ -225,7 +225,7 @@ namespace SPH
 				}
 				std::ofstream out_file(filefullpath.c_str(), std::ios::trunc);
 
-				//begin of the plt file writing
+				// begin of the plt file writing
 
 				body->writeParticlesToPltFile(out_file);
 
@@ -246,7 +246,7 @@ namespace SPH
 	//=============================================================================================//
 	void WriteToVtpIfVelocityOutOfBound::writeWithFileName(const std::string &sequence)
 	{
-		for (auto check_body : check_bodies_)
+		for (auto &check_body : check_bodies_)
 		{
 			out_of_bound_ = out_of_bound_ || check_body.parallel_exec();
 		}
@@ -285,7 +285,7 @@ namespace SPH
 	};
 	//=============================================================================================//
 	ReloadParticleIO::ReloadParticleIO(IOEnvironment &io_environment, SPHBodyVector bodies,
-									   const StdVec<std::string> &given_body_names) 
+									   const StdVec<std::string> &given_body_names)
 		: ReloadParticleIO(io_environment, bodies)
 	{
 		std::transform(given_body_names.begin(), given_body_names.end(), file_paths_.begin(),
@@ -394,7 +394,7 @@ namespace SPH
 	WriteSimBodyPinData::
 		WriteSimBodyPinData(IOEnvironment &io_environment, SimTK::RungeKuttaMersonIntegrator &integ, SimTK::MobilizedBody::Pin &pinbody)
 		: WriteSimBodyStates<SimTK::MobilizedBody::Pin>(io_environment, integ, pinbody),
-		filefullpath_(io_environment_.output_folder_ + "/mb_pinbody_data.dat")
+		  filefullpath_(io_environment_.output_folder_ + "/mb_pinbody_data.dat")
 	{
 		std::ofstream out_file(filefullpath_.c_str(), std::ios::app);
 

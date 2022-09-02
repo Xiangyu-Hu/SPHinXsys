@@ -56,7 +56,7 @@ public:
 		  particles_num_(body_part.body_part_particles_.size())
 	{
 		area_0_.resize(particles_->total_real_particles_);
-		for (auto i = 0; i < particles_->total_real_particles_; ++i)
+		for (size_t i = 0; i < particles_->total_real_particles_; ++i)
 			area_0_[i] = std::pow(particles_->Vol_[i], 2.0 / 3.0);
 	}
 

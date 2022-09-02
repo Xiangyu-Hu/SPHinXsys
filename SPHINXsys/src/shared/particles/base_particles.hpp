@@ -240,7 +240,7 @@ namespace SPH
         output_stream << "    </DataArray>\n";
 
         // compute derived particle variables
-        for (auto derived_variable : derived_variables_)
+        for (auto &derived_variable : derived_variables_)
         {
             derived_variable->parallel_exec();
         }

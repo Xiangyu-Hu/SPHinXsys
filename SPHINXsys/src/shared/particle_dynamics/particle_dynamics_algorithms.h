@@ -163,10 +163,10 @@ namespace SPH
 		DynamicsRange &dynamics_range_;
 
 	public:
-		template <typename... Args>
-		SimpleDynamics(DynamicsRange &dynamics_range, Args &&...args)
-			: LocalDynamicsType(dynamics_range, std::forward<Args>(args)...),
-			  BaseDynamics<void>(), dynamics_range_(dynamics_range){};
+		template <class DerivedDynamicsRange, typename... Args>
+		SimpleDynamics(DerivedDynamicsRange &derived_dynamics_range, Args &&...args)
+			: LocalDynamicsType(derived_dynamics_range, std::forward<Args>(args)...),
+			  BaseDynamics<void>(), dynamics_range_(derived_dynamics_range){};
 		virtual ~SimpleDynamics(){};
 
 		virtual void exec(Real dt = 0.0) override
@@ -203,10 +203,10 @@ namespace SPH
 		DynamicsRange &dynamics_range_;
 
 	public:
-		template <typename... Args>
-		ReduceDynamics(DynamicsRange &dynamics_range, Args &&...args)
-			: LocalDynamicsType(dynamics_range, std::forward<Args>(args)...),
-			  BaseDynamics<ReturnType>(), dynamics_range_(dynamics_range){};
+		template <class DerivedDynamicsRange, typename... Args>
+		ReduceDynamics(DerivedDynamicsRange &derived_dynamics_range, Args &&...args)
+			: LocalDynamicsType(derived_dynamics_range, std::forward<Args>(args)...),
+			  BaseDynamics<ReturnType>(), dynamics_range_(derived_dynamics_range){};
 		virtual ~ReduceDynamics(){};
 
 		using ReduceReturnType = ReturnType;
@@ -246,9 +246,9 @@ namespace SPH
 		}
 
 	public:
-		template <typename... Args>
-		ReduceDynamicsAverage(DynamicsRange &dynamics_range, Args &&...args)
-			: ReduceDynamics<LocalDynamicsType, DynamicsRange>(dynamics_range, std::forward<Args>(args)...){};
+		template <class DerivedDynamicsRange, typename... Args>
+		ReduceDynamicsAverage(DerivedDynamicsRange &derived_dynamics_range, Args &&...args)
+			: ReduceDynamics<LocalDynamicsType, DynamicsRange>(derived_dynamics_range, std::forward<Args>(args)...){};
 		virtual ~ReduceDynamicsAverage(){};
 
 		virtual ReturnType exec(Real dt = 0.0) override
