@@ -223,7 +223,7 @@ namespace SPH
 			else
 			{
 				relaxation_acceleration_complex_ =
-					std::move(makeUnique<SimpleInteractionDynamics<RelaxationAccelerationInnerWithLevelSetCorrection>>(body_complex_relation));
+					std::move(makeUnique<SimpleInteractionDynamics<RelaxationAccelerationComplexWithLevelSetCorrection>>(body_complex_relation, shape_name));
 			}
 		}
 		//=================================================================================================//

@@ -58,7 +58,7 @@ namespace SPH
 		int operator()(size_t particle_index) const { return 1; };
 	};
 
-	/** @brief a small functor for obtaining search depth across resolution 
+	/** @brief a small functor for obtaining search depth across resolution
 	 * @details Note that the search depth is defined on the target cell linked list.
 	 */
 	struct SearchDepthMultiResolution
@@ -74,7 +74,7 @@ namespace SPH
 		int operator()(size_t particle_index) const { return search_depth_; };
 	};
 
-	/** @brief a small functor for obtaining search depth for variable smoothing length 
+	/** @brief a small functor for obtaining search depth for variable smoothing length
 	 * @details Note that the search depth is defined on the target cell linked list.
 	 */
 	struct SearchDepthVariableSmoothingLength
@@ -101,6 +101,7 @@ namespace SPH
 	public:
 		SPHBody &sph_body_;
 		BaseParticles *base_particles_;
+		SPHBody &getDynamicsRange() { return sph_body_; };
 
 		explicit SPHBodyRelation(SPHBody &sph_body);
 		virtual ~SPHBodyRelation(){};
@@ -128,7 +129,7 @@ namespace SPH
 
 		virtual void updateConfigurationMemories() override;
 	};
-	
+
 	/**
 	 * @class BaseBodyRelationContact
 	 * @brief The base relation between a SPH body and its contact SPH bodies
@@ -157,4 +158,4 @@ namespace SPH
 		virtual void updateConfigurationMemories() override;
 	};
 }
-#endif //BASE_BODY_RELATION_H
+#endif // BASE_BODY_RELATION_H
