@@ -274,10 +274,10 @@ namespace SPH
 		DynamicsRange &dynamics_range_;
 
 	public:
-		template <typename... Args>
-		SimpleInteractionDynamics(DynamicsRange &dynamics_range, Args &&...args)
-			: LocalDynamicsType(dynamics_range, std::forward<Args>(args)...),
-			  BaseDynamics<void>(), dynamics_range_(dynamics_range){};
+		template <class BodyRelationType, typename... Args>
+		SimpleInteractionDynamics(BodyRelationType &body_relation, Args &&...args)
+			: LocalDynamicsType(body_relation, std::forward<Args>(args)...),
+			  BaseDynamics<void>(), dynamics_range_(body_relation.getDynamicsRange()){};
 		virtual ~SimpleInteractionDynamics(){};
 
 		/** pre process such as update ghost state */

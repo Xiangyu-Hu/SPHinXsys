@@ -145,10 +145,8 @@ namespace SPH
 		//=================================================================================================//
 		RelaxationStepInner::
 			RelaxationStepInner(BaseBodyRelationInner &inner_relation, bool level_set_correction)
-			: ParticleDynamics<void>(inner_relation.sph_body_),
-			  real_body_(inner_relation.real_body_),
-			  inner_relation_(inner_relation),
-			  near_shape_surface_(*real_body_),
+			: BaseDynamics<void>(), real_body_(inner_relation.real_body_),
+			  inner_relation_(inner_relation), near_shape_surface_(*real_body_),
 			  get_time_step_square_(*real_body_), update_particle_position_(*real_body_),
 			  surface_bounding_(near_shape_surface_)
 		{
@@ -186,7 +184,8 @@ namespace SPH
 		//=================================================================================================//
 		RelaxationAccelerationComplexWithLevelSetCorrection::
 			RelaxationAccelerationComplexWithLevelSetCorrection(ComplexBodyRelation &body_complex_relation, const std::string &shape_name)
-			: RelaxationAccelerationComplex(body_complex_relation)
+			: RelaxationAccelerationComplex(body_complex_relation),
+			  sph_adaptation_(sph_body_.sph_adaptation_)
 		{
 			ComplexShape &complex_shape = DynamicCast<ComplexShape>(this, *body_->body_shape_);
 			level_set_shape_ = DynamicCast<LevelSetShape>(this, complex_shape.getShapeByName(shape_name));
@@ -209,16 +208,24 @@ namespace SPH
 		//=================================================================================================//
 		RelaxationStepComplex::RelaxationStepComplex(ComplexBodyRelation &body_complex_relation,
 													 const std::string &shape_name, bool level_set_correction)
-			: ParticleDynamics<void>(body_complex_relation.sph_body_),
+			: BaseDynamics<void>(),
 			  real_body_(body_complex_relation.inner_relation_.real_body_),
 			  complex_relation_(body_complex_relation),
 			  near_shape_surface_(*real_body_, shape_name),
 			  get_time_step_square_(*real_body_), update_particle_position_(*real_body_),
-			  surface_bounding_(near_shape_surface_),
-			  relaxation_acceleration_complex_(
-				  !level_set_correction
-					  ? std::move(makeUnique<RelaxationAccelerationComplex>(body_complex_relation))
-					  : std::move(makeUnique<RelaxationAccelerationComplexWithLevelSetCorrection>(body_complex_relation, shape_name))) {}
+			  surface_bounding_(near_shape_surface_)
+		{
+			if (!level_set_correction)
+			{
+				relaxation_acceleration_complex_ =
+					std::move(makeUnique<SimpleInteractionDynamics<RelaxationAccelerationComplex>>(body_complex_relation));
+			}
+			else
+			{
+				relaxation_acceleration_complex_ =
+					std::move(makeUnique<SimpleInteractionDynamics<RelaxationAccelerationInnerWithLevelSetCorrection>>(body_complex_relation));
+			}
+		}
 		//=================================================================================================//
 		void RelaxationStepComplex::exec(Real dt)
 		{

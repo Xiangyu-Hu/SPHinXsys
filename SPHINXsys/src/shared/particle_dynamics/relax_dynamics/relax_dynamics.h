@@ -187,7 +187,7 @@ namespace SPH
 		 * @class RelaxationStepInner
 		 * @brief carry out particle relaxation step of particles within the body
 		 */
-		class RelaxationStepInner : public ParticleDynamics<void>
+		class RelaxationStepInner : public BaseDynamics<void>
 		{
 		protected:
 			RealBody *real_body_;
@@ -225,13 +225,14 @@ namespace SPH
 
 		protected:
 			LevelSetShape *level_set_shape_;
+			SPHAdaptation *sph_adaptation_;
 		};
 
 		/**
 		 * @class RelaxationStepComplex
 		 * @brief carry out particle relaxation step of particles within multi bodies
 		 */
-		class RelaxationStepComplex : public ParticleDynamics<void>
+		class RelaxationStepComplex : public BaseDynamics<void>
 		{
 		protected:
 			RealBody *real_body_;
@@ -243,7 +244,7 @@ namespace SPH
 										   const std::string &shape_name, bool level_set_correction = false);
 			virtual ~RelaxationStepComplex(){};
 
-			UniquePtr<RelaxationAccelerationComplex> relaxation_acceleration_complex_;
+			UniquePtr<BaseDynamics<void>> relaxation_acceleration_complex_;
 			ReduceDynamics<GetTimeStepSizeSquare> get_time_step_square_;
 			SimpleDynamics<UpdateParticlePosition> update_particle_position_;
 			SimpleDynamics<ShapeSurfaceBounding, NearShapeSurface> surface_bounding_;
