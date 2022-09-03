@@ -40,62 +40,6 @@ namespace SPH
 				wall_n_.push_back(&(CompressibleFluidWallData::contact_particles_[k]->n_));
 			}
 		}
-        //=================================================================================================//
-        template<class BaseViscousAccelerationType>   	
-		template<class BaseBodyRelationType>
-		ViscousWithWall<BaseViscousAccelerationType>::
-            ViscousWithWall(BaseBodyRelationType &base_body_relation, 
-				BaseBodyRelationContact &wall_contact_relation) 
-		: RelaxationWithWall<BaseViscousAccelerationType>(base_body_relation, wall_contact_relation) {}
-		//=================================================================================================//
-        template<class BaseViscousAccelerationType>
-		void ViscousWithWall<BaseViscousAccelerationType>::Interaction(size_t index_i, Real dt)
-		{
-			BaseViscousAccelerationType::Interaction(index_i, dt);
-			
-			Real rho_i = this->rho_[index_i];
-			Vecd& vel_i = this->vel_[index_i];
-
-			Vecd acceleration(0), vel_derivative(0);
-			for (size_t k = 0; k < CompressibleFluidWallData::contact_configuration_.size(); ++k)
-			{
-				StdLargeVec<Real>& Vol_k = *(this->wall_Vol_[k]);
-				StdLargeVec<Vecd>& vel_ave_k = *(this->wall_vel_ave_[k]);
-				Neighborhood& contact_neighborhood = (*CompressibleFluidWallData::contact_configuration_[k])[index_i];
-				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
-				{
-					size_t index_j = contact_neighborhood.j_[n];
-					Real r_ij = contact_neighborhood.r_ij_[n];
-
-					vel_derivative = 2.0*(vel_i - vel_ave_k[index_j]) / (r_ij + 0.01 * this->smoothing_length_);
-					acceleration += 2.0 * this->mu_ * vel_derivative 
-								  * contact_neighborhood.dW_ij_[n] * Vol_k[index_j] / rho_i;
-				}
-			}
-			
-			this->dmom_dt_prior_[index_i] += rho_i * acceleration;
-			this->dE_dt_prior_[index_i] += rho_i * dot(acceleration, vel_i);
-		}
-		//=================================================================================================//
-        template<class BaseViscousAccelerationType>
-		BaseViscousAccelerationWithWall<BaseViscousAccelerationType>::
-			BaseViscousAccelerationWithWall(ComplexBodyRelation &fluid_wall_relation) :
-				BaseViscousAccelerationType(fluid_wall_relation.inner_relation_,
-					fluid_wall_relation.contact_relation_) {}
-        //=================================================================================================//
-        template<class BaseViscousAccelerationType>
-		BaseViscousAccelerationWithWall<BaseViscousAccelerationType>::
-			BaseViscousAccelerationWithWall(BaseBodyRelationInner &fluid_inner_relation, 
-				BaseBodyRelationContact &wall_contact_relation) :
-				BaseViscousAccelerationType(fluid_inner_relation,
-					wall_contact_relation) {}
-        //=================================================================================================//
-        template<class BaseViscousAccelerationType>
-		BaseViscousAccelerationWithWall<BaseViscousAccelerationType>::
-			BaseViscousAccelerationWithWall(ComplexBodyRelation &fluid_complex_relation, 
-				BaseBodyRelationContact &wall_contact_relation) :
-				BaseViscousAccelerationType(fluid_complex_relation,
-					wall_contact_relation) {}
        //=================================================================================================//
         template<class BasePressureRelaxationType>   	
 		template<class BaseBodyRelationType>

@@ -124,23 +124,6 @@ namespace SPH
 		};
 
 		/**
-		* @class VorticityInner
-		* @brief  compute vorticity in the fluid field
-		*/
-		class VorticityInner
-			: public InteractionDynamics, public EulerianWeaklyCompressibleFluidDataInner
-		{
-		public:
-			explicit VorticityInner(BaseBodyRelationInner &inner_relation);
-			virtual ~VorticityInner() {};
-		protected:
-			StdLargeVec<Real>& Vol_;
-			StdLargeVec<Vecd>& vel_;
-			StdLargeVec<AngularVecd> vorticity_;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
 		 * @class BaseRelaxation
 		 * @brief Pure abstract base class for all fluid relaxation schemes
 		 */

@@ -24,11 +24,11 @@ int main()
 	//----------------------------------------------------------------------
 	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
-	water_block.generateParticles<ParticleGeneratorLattice>();	
+	water_block.generateParticles<ParticleGeneratorLattice>();
 
 	FluidBody air_block(sph_system, makeShared<AirBlock>("AirBody"));
 	air_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_a, c_f, mu_a);
-	air_block.generateParticles<ParticleGeneratorLattice>();	
+	air_block.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
 	wall_boundary.defineParticlesAndMaterial<SolidParticles, Solid>();
@@ -56,7 +56,7 @@ int main()
 	fluid_dynamics::DensitySummationComplex
 		update_air_density_by_summation(air_water_complex, air_wall_contact);
 	/** transport formulation for regularizing particle distribution. */
-	fluid_dynamics::TransportVelocityCorrectionComplex
+	NewInteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
 		air_transport_correction(air_water_complex, air_wall_contact);
 	/** Time step size without considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_max);
@@ -75,10 +75,8 @@ int main()
 	fluid_dynamics::MultiPhaseDensityRelaxationRiemannWithWall
 		air_density_relaxation(air_water_complex, air_wall_contact);
 	/** Viscous acceleration. */
-	fluid_dynamics::ViscousAccelerationMultiPhase
-		air_viscous_acceleration(air_water_complex);
-	fluid_dynamics::ViscousAccelerationMultiPhase
-		water_viscous_acceleration(water_air_complex);
+	NewInteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhase> air_viscous_acceleration(air_water_complex);
+	NewInteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhase> water_viscous_acceleration(water_air_complex);
 	/** Surface tension and wetting effects. */
 	fluid_dynamics::FreeSurfaceIndicationComplex
 		surface_detection(water_air_complex.inner_relation_, water_wall_contact);
@@ -126,9 +124,9 @@ int main()
 	size_t number_of_iterations = sph_system.restart_step_;
 	int screen_output_interval = 100;
 	int restart_output_interval = screen_output_interval * 10;
-	Real end_time = 5.0;		 /**< End time. */
+	Real end_time = 5.0;				  /**< End time. */
 	Real output_interval = end_time / 50; /**< Time stamps for output of body states. */
-	Real dt = 0.0;				 /**< Default acoustic time step sizes. */
+	Real dt = 0.0;						  /**< Default acoustic time step sizes. */
 	/** statistics for computing CPU time. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;

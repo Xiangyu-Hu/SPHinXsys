@@ -93,17 +93,17 @@ namespace SPH
 			this->rho_sum_[index_i] += sigma * this->rho0_ * this->inv_sigma0_;
 		}
 		//=================================================================================================//
-		template <class BaseViscousAccelerationType>
+		template <class ViscousAccelerationInnerType>
 		template <class BaseBodyRelationType>
-		ViscousWithWall<BaseViscousAccelerationType>::
+		ViscousWithWall<ViscousAccelerationInnerType>::
 			ViscousWithWall(BaseBodyRelationType &base_body_relation,
 							BaseBodyRelationContact &wall_contact_relation)
-			: RelaxationWithWall<BaseViscousAccelerationType>(base_body_relation, wall_contact_relation) {}
+			: RelaxationWithWall<ViscousAccelerationInnerType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
-		template <class BaseViscousAccelerationType>
-		void ViscousWithWall<BaseViscousAccelerationType>::Interaction(size_t index_i, Real dt)
+		template <class ViscousAccelerationInnerType>
+		void ViscousWithWall<ViscousAccelerationInnerType>::interaction(size_t index_i, Real dt)
 		{
-			BaseViscousAccelerationType::Interaction(index_i, dt);
+			ViscousAccelerationInnerType::interaction(index_i, dt);
 
 			Real rho_i = this->rho_[index_i];
 			const Vecd &vel_i = this->vel_[index_i];
@@ -127,23 +127,23 @@ namespace SPH
 			this->acc_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
-		template <class BaseViscousAccelerationType>
-		BaseViscousAccelerationWithWall<BaseViscousAccelerationType>::
+		template <class ViscousAccelerationInnerType>
+		BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::
 			BaseViscousAccelerationWithWall(ComplexBodyRelation &fluid_wall_relation)
-			: BaseViscousAccelerationType(fluid_wall_relation.inner_relation_,
+			: ViscousAccelerationInnerType(fluid_wall_relation.inner_relation_,
 										  fluid_wall_relation.contact_relation_) {}
 		//=================================================================================================//
-		template <class BaseViscousAccelerationType>
-		BaseViscousAccelerationWithWall<BaseViscousAccelerationType>::
+		template <class ViscousAccelerationInnerType>
+		BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::
 			BaseViscousAccelerationWithWall(BaseBodyRelationInner &fluid_inner_relation,
 											BaseBodyRelationContact &wall_contact_relation)
-			: BaseViscousAccelerationType(fluid_inner_relation, wall_contact_relation) {}
+			: ViscousAccelerationInnerType(fluid_inner_relation, wall_contact_relation) {}
 		//=================================================================================================//
-		template <class BaseViscousAccelerationType>
-		BaseViscousAccelerationWithWall<BaseViscousAccelerationType>::
+		template <class ViscousAccelerationInnerType>
+		BaseViscousAccelerationWithWall<ViscousAccelerationInnerType>::
 			BaseViscousAccelerationWithWall(ComplexBodyRelation &fluid_complex_relation,
 											BaseBodyRelationContact &wall_contact_relation)
-			: BaseViscousAccelerationType(fluid_complex_relation, wall_contact_relation) {}
+			: ViscousAccelerationInnerType(fluid_complex_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BasePressureRelaxationType>
 		template <class BaseBodyRelationType>

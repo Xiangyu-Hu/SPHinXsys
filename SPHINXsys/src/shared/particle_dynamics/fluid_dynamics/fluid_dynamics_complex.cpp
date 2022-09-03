@@ -41,9 +41,9 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		void TransportVelocityCorrectionComplex::Interaction(size_t index_i, Real dt)
+		void TransportVelocityCorrectionComplex::interaction(size_t index_i, Real dt)
 		{
-			TransportVelocityCorrectionInner::Interaction(index_i, dt);
+			TransportVelocityCorrectionInner::interaction(index_i, dt);
 
 			Real rho_i = rho_[index_i];
 
@@ -57,7 +57,7 @@ namespace SPH
 					size_t index_j = contact_neighborhood.j_[n];
 					Vecd nablaW_ij = contact_neighborhood.dW_ij_[n] * contact_neighborhood.e_ij_[n];
 
-					//acceleration for transport velocity
+					// acceleration for transport velocity
 					acceleration_trans -= 2.0 * p_background_ * Vol_k[index_j] * nablaW_ij / rho_i;
 				}
 			}

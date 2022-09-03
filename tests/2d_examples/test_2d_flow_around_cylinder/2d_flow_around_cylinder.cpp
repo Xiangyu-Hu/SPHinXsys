@@ -114,11 +114,11 @@ int main(int ac, char *av[])
 	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(water_block_complex);
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex);
 	/** Computing viscous acceleration with wall. */
-	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex);
+	NewInteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Impose transport velocity. */
-	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(water_block_complex);
+	NewInteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex);
 	/** Computing vorticity in the flow. */
-	fluid_dynamics::VorticityInner compute_vorticity(water_block_complex.inner_relation_);
+	NewInteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_complex.inner_relation_);
 	/** free stream boundary condition. */
 	BodyRegionByCell free_stream_buffer(water_block, makeShared<MultiPolygonShape>(createBufferShape()));
 	SimpleDynamics<FreeStreamCondition, BodyRegionByCell> freestream_condition(free_stream_buffer);

@@ -104,7 +104,7 @@ int main()
 	//	Define all numerical methods which are used in this case.
 	//----------------------------------------------------------------------
 	/** Corrected configuration. */
-	thin_structure_dynamics::ShellCorrectConfiguration corrected_configuration(plate_body_inner);
+	NewInteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration(plate_body_inner);
 	/** Time step size. */
 	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(plate_body);
 	/** stress relaxation. */

@@ -85,36 +85,37 @@ namespace SPH
 		 * @class ShellCorrectConfiguration
 		 * @brief obtain the corrected initial configuration in strong form
 		 */
-		class ShellCorrectConfiguration : public InteractionDynamics, public ShellDataInner
+		class ShellCorrectConfiguration : public LocalDynamics, public ShellDataInner
 		{
 		public:
 			explicit ShellCorrectConfiguration(BaseBodyRelationInner &inner_relation);
 			virtual ~ShellCorrectConfiguration(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Matd> &B_;
 			StdLargeVec<Vecd> &n0_;
 			StdLargeVec<Matd> &transformation_matrix_;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
 		 * @class ShellDeformationGradientTensor
 		 * @brief computing deformation gradient tensor for shell
+		 * TODO: need a test case for this.
 		 */
-		class ShellDeformationGradientTensor : public InteractionDynamics, public ShellDataInner
+		class ShellDeformationGradientTensor : public LocalDynamics, public ShellDataInner
 		{
 		public:
 			explicit ShellDeformationGradientTensor(BaseBodyRelationInner &inner_relation);
 			virtual ~ShellDeformationGradientTensor(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &pos_, &pseudo_n_, &n0_;
 			StdLargeVec<Matd> &B_, &F_, &F_bending_;
 			StdLargeVec<Matd> &transformation_matrix_;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**

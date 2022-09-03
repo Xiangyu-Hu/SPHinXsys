@@ -130,11 +130,11 @@ int main(int ac, char *av[])
 	/** Density relaxation. */
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
-	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex);
+	NewInteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Apply transport velocity formulation. */
-	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(water_block_complex);
+	NewInteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex);
 	/** compute the vorticity. */
-	fluid_dynamics::VorticityInner compute_vorticity(water_block_inner);
+	NewInteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
 	//----------------------------------------------------------------------
 	//	Algorithms of FSI.
 	//----------------------------------------------------------------------

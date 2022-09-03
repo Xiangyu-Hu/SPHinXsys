@@ -169,14 +169,14 @@ int main(int ac, char *av[])
 	// define external force
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(fluid_block, makeShared<Gravity>(Vecd(gravity_g, 0.0)));
-	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(fluid_block_complex);
+	NewInteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_block_complex);
 	// computing viscous effect implicitly and with update velocity directly other than viscous acceleration
 	DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>
 		implicit_viscous_damping(fluid_block_complex, "Velocity", mu_f);
 	// impose transport velocity
-	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(fluid_block_complex);
+	NewInteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(fluid_block_complex);
 	// computing vorticity in the flow
-	fluid_dynamics::VorticityInner compute_vorticity(fluid_block_inner);
+	NewInteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_block_inner);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations, observations
 	//	and regression tests of the simulation.

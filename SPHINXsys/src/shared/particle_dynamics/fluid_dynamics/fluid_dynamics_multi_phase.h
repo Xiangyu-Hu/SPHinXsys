@@ -51,11 +51,10 @@ namespace SPH
 				BaseBodyRelationContact &contact_relation);
 			explicit ViscousAccelerationMultiPhase(ComplexBodyRelation &complex_relation);
 			virtual ~ViscousAccelerationMultiPhase() {};
+			void interaction(size_t index_i, Real dt = 0.0);
 		protected:
 			StdVec<StdLargeVec<Real>*> contact_Vol_;
 			StdVec<StdLargeVec<Vecd>*> contact_vel_n_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 		using ViscousAccelerationMultiPhaseWithWall = 
 			BaseViscousAccelerationWithWall<ViscousWithWall<ViscousAccelerationMultiPhase>>;

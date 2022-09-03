@@ -80,9 +80,7 @@ namespace SPH
 			ViscousWithWall(BaseBodyRelationType &base_body_relation,
 				BaseBodyRelationContact &wall_contact_relation);
 			virtual ~ViscousWithWall() {};
-
-		protected:
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/** template interface class for different pressure relaxation with wall schemes */

@@ -67,37 +67,6 @@ namespace SPH
 		};
 
 		/**
-		 * @class ViscousWithWall
-		 * @brief  template class viscous acceleration with wall boundary
-		 */
-		template <class BaseViscousAccelerationType>
-		class ViscousWithWall : public RelaxationWithWall<BaseViscousAccelerationType>
-		{
-		public:
-			// template for different combination of constructing body relations
-			template <class BaseBodyRelationType>
-			ViscousWithWall(BaseBodyRelationType &base_body_relation,
-							BaseBodyRelationContact &wall_contact_relation);
-			virtual ~ViscousWithWall(){};
-
-		protected:
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/** template interface class for different pressure relaxation with wall schemes */
-		template <class BaseViscousAccelerationType>
-		class BaseViscousAccelerationWithWall : public BaseViscousAccelerationType
-		{
-		public:
-			explicit BaseViscousAccelerationWithWall(ComplexBodyRelation &fluid_wall_relation);
-			BaseViscousAccelerationWithWall(BaseBodyRelationInner &fluid_inner_relation,
-											BaseBodyRelationContact &wall_contact_relation);
-			BaseViscousAccelerationWithWall(ComplexBodyRelation &fluid_complex_relation,
-											BaseBodyRelationContact &wall_contact_relation);
-		};
-		using ViscousAccelerationWithWall = BaseViscousAccelerationWithWall<ViscousWithWall<ViscousAccelerationInner>>;
-
-		/**
 		 * @class PressureRelaxation
 		 * @brief  template class pressure relaxation scheme with wall boundary
 		 */

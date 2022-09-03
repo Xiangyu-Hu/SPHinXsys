@@ -81,22 +81,33 @@ namespace SPH
 		};
 
 		/**
-		 * @class ViscousAccelerationInner
-		 * @brief  the viscosity force induced acceleration
+		 * @class BaseViscousAccelerationInner
+		 * @brief Base class for the viscosity force induced acceleration
 		 */
-		class ViscousAccelerationInner : public InteractionDynamics, public FluidDataInner
+		class BaseViscousAccelerationInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
-			explicit ViscousAccelerationInner(BaseBodyRelationInner &inner_relation);
-			virtual ~ViscousAccelerationInner(){};
+			explicit BaseViscousAccelerationInner(BaseBodyRelationInner &inner_relation);
+			virtual ~BaseViscousAccelerationInner(){};
 
 		protected:
 			Real mu_;
 			Real smoothing_length_;
 			StdLargeVec<Real> &Vol_, &rho_, &p_;
 			StdLargeVec<Vecd> &vel_, &acc_prior_;
+		};
 
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		/**
+		 * @class ViscousAccelerationInner
+		 * @brief  the viscosity force induced acceleration
+		 */
+		class ViscousAccelerationInner : public BaseViscousAccelerationInner
+		{
+		public:
+			explicit ViscousAccelerationInner(BaseBodyRelationInner &inner_relation)
+				: BaseViscousAccelerationInner(inner_relation){};
+			virtual ~ViscousAccelerationInner(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -104,35 +115,32 @@ namespace SPH
 		 * @brief the viscosity force induced acceleration, a formulation for conserving
 		 * angular momentum, to be tested for its practical applications.
 		 */
-		class AngularConservativeViscousAccelerationInner : public ViscousAccelerationInner
+		class AngularConservativeViscousAccelerationInner : public BaseViscousAccelerationInner
 		{
 		public:
 			explicit AngularConservativeViscousAccelerationInner(BaseBodyRelationInner &inner_relation)
-				: ViscousAccelerationInner(inner_relation){};
+				: BaseViscousAccelerationInner(inner_relation){};
 			virtual ~AngularConservativeViscousAccelerationInner(){};
-
-		protected:
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
 		 * @class TransportVelocityCorrectionInner
 		 * @brief transport velocity correction
 		 */
-		class TransportVelocityCorrectionInner : public InteractionDynamics, public FluidDataInner
+		class TransportVelocityCorrectionInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
 			explicit TransportVelocityCorrectionInner(BaseBodyRelationInner &inner_relation);
 			virtual ~TransportVelocityCorrectionInner(){};
+			virtual void setupDynamics(Real dt = 0.0) override;
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &Vol_, &rho_;
 			StdLargeVec<Vecd> &pos_;
 			StdLargeVec<int> &surface_indicator_;
 			Real p_background_;
-
-			virtual void setupDynamics(Real dt = 0.0) override;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -189,17 +197,17 @@ namespace SPH
 		 * @class VorticityInner
 		 * @brief  compute vorticity in the fluid field
 		 */
-		class VorticityInner : public InteractionDynamics, public FluidDataInner
+		class VorticityInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
 			explicit VorticityInner(BaseBodyRelationInner &inner_relation);
 			virtual ~VorticityInner(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &vel_;
 			StdLargeVec<AngularVecd> vorticity_;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**

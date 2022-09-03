@@ -124,7 +124,7 @@ int main(int ac, char *av[])
 	eulerian_weakly_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCRiemannWithLimiterWithWall density_relaxation(water_block_complex);
 	eulerian_weakly_compressible_fluid_dynamics::FreeSurfaceIndicationComplex surface_indicator(water_block_complex.inner_relation_, water_block_complex.contact_relation_);
 	/** Computing viscous acceleration with wall model. */
-	eulerian_weakly_compressible_fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex);
+	NewInteractionDynamics<eulerian_weakly_compressible_fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** non_reflective boundary condition. */
 	FarFieldBoundary variable_reset_in_boundary_condition(water_block_complex.inner_relation_);
 	/**

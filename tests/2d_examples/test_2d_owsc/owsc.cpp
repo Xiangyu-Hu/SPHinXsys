@@ -63,7 +63,7 @@ int main()
 	fluid_dynamics::PressureRelaxationRiemannWithWall pressure_relaxation(water_block_complex);
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
-	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex);
+	NewInteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Inflow boundary condition. */
 	BodyRegionByCell damping_buffer(water_block, makeShared<MultiPolygonShape>(createDampingBufferShape()));
 	SimpleDynamics<fluid_dynamics::DampingBoundaryCondition, BodyRegionByCell> damping_wave(damping_buffer);

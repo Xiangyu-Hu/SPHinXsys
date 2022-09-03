@@ -127,7 +127,7 @@ int main()
 	 * This section define all numerical methods will be used in this case.
 	 */
 	/** Corrected configuration. */
-	thin_structure_dynamics::ShellCorrectConfiguration
+	NewInteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration>
 		corrected_configuration(cylinder_body_inner);
 	/** Time step size calculation. */
 	ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size(cylinder_body);

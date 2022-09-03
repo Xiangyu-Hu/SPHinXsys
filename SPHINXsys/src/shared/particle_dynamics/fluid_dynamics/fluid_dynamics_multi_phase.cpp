@@ -35,9 +35,9 @@ namespace SPH
 			: ViscousAccelerationMultiPhase(complex_relation.inner_relation_,
 											complex_relation.contact_relation_) {}
 		//=================================================================================================//
-		void ViscousAccelerationMultiPhase::Interaction(size_t index_i, Real dt)
+		void ViscousAccelerationMultiPhase::interaction(size_t index_i, Real dt)
 		{
-			ViscousAccelerationInner::Interaction(index_i, dt);
+			ViscousAccelerationInner::interaction(index_i, dt);
 
 			Real rho_i = this->rho_[index_i];
 			const Vecd &vel_i = this->vel_[index_i];

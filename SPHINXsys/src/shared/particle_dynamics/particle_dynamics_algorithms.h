@@ -329,5 +329,141 @@ namespace SPH
 				post_processes_[k]->parallel_exec(dt);
 		}
 	};
+
+	/**
+	 * @class NewInteractionDynamicsWithUpdate
+	 * @brief This class includes an interaction and a update steps
+	 */
+	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
+	class NewInteractionDynamicsWithUpdate : public NewInteractionDynamics<LocalDynamicsType, DynamicsRange>
+	{
+	public:
+		template <class BodyRelationType, typename... Args>
+		NewInteractionDynamicsWithUpdate(BodyRelationType &body_relation, Args &&...args)
+			: NewInteractionDynamics<LocalDynamicsType, DynamicsRange>(body_relation, std::forward<Args>(args)...) {}
+		virtual ~NewInteractionDynamicsWithUpdate(){};
+
+		virtual void exec(Real dt = 0.0) override
+		{
+			this->exec(dt);
+			particle_for(
+				this->dynamics_range_.LoopRange(),
+				[&](size_t i, Real delta)
+				{ this->update(i, delta); },
+				dt);
+		};
+
+		virtual void parallel_exec(Real dt = 0.0) override
+		{
+			this->parallel_exec(dt);
+			particle_parallel_for(
+				this->dynamics_range_.LoopRange(),
+				[&](size_t i, Real delta)
+				{ this->update(i, delta); },
+				dt);
+		};
+	};
+
+	/**
+	 * @class NewInteractionDynamics1Level
+	 * @brief This class includes an interaction and a update steps
+	 */
+	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
+	class NewInteractionDynamics1Level : public NewInteractionDynamicsWithUpdate<LocalDynamicsType, DynamicsRange>
+	{
+	public:
+		template <class BodyRelationType, typename... Args>
+		NewInteractionDynamics1Level(BodyRelationType &body_relation, Args &&...args)
+			: NewInteractionDynamicsWithUpdate<LocalDynamicsType, DynamicsRange>(body_relation, std::forward<Args>(args)...) {}
+		virtual ~NewInteractionDynamics1Level(){};
+
+		virtual void exec(Real dt = 0.0) override
+		{
+			this->setBodyUpdated();
+			this->setupDynamics(dt);
+
+			particle_for(
+				this->dynamics_range_.LoopRange(),
+				[&](size_t i, Real delta)
+				{ this->initialization(i, delta); },
+				dt);
+
+			this->runInteractionStep(dt);
+
+			particle_for(
+				this->dynamics_range_.LoopRange(),
+				[&](size_t i, Real delta)
+				{ this->update(i, delta); },
+				dt);
+		};
+
+		virtual void parallel_exec(Real dt = 0.0) override
+		{
+			this->setBodyUpdated();
+			this->setupDynamics(dt);
+
+			particle_parallel_for(
+				this->dynamics_range_.LoopRange(),
+				[&](size_t i, Real delta)
+				{ this->initialization(i, delta); },
+				dt);
+
+			this->parallel_runInteractionStep(dt);
+
+			particle_parallel_for(
+				this->dynamics_range_.LoopRange(),
+				[&](size_t i, Real delta)
+				{ this->update(i, delta); },
+				dt);
+		};
+	};
+
+	/**
+	 * @class CombinedLocalDynamics
+	 * @brief This is the class for combining two local dynamics,
+	 * which share the particle loop but are independent from each other,
+	 * aiming to increase computing intensity under the data caching environment
+	 * TODO: may be try for combine arbitrary interactions of the same type.
+	 */
+	template <typename... MultipleLocalDynamics>
+	class CombinedLocalInteractionDynamics;
+
+	template <>
+	class CombinedLocalInteractionDynamics<> : public LocalDynamics
+	{
+	public:
+		template <class BodyRelationType>
+		CombinedLocalInteractionDynamics(BodyRelationType &body_relation) : LocalDynamics(body_relation.getDynamicsRange()){};
+
+		void interaction(size_t index_i, Real dt = 0.0){};
+	};
+
+	template <class FirstLocalDynamics, class... OtherLocalDynamics>
+	class CombinedLocalInteractionDynamics<FirstLocalDynamics, OtherLocalDynamics...> : public LocalDynamics
+	{
+	protected:
+		FirstLocalDynamics first_local_dynamics_;
+		CombinedLocalInteractionDynamics<OtherLocalDynamics...> other_local_dynamics_;
+
+	public:
+		template <typename BodyRelationType, typename... FirstArgs, typename... OtherArgs>
+		CombinedLocalInteractionDynamics(BodyRelationType &body_relation, FirstArgs &&...first_args, OtherArgs &&...other_args)
+			: LocalDynamics(body_relation.getDynamicsRange()),
+			  first_local_dynamics_(body_relation, std::forward<FirstArgs>(first_args)...),
+			  other_local_dynamics_(body_relation, std::forward<OtherArgs>(other_args)...){};
+
+		virtual void setupDynamics(Real dt = 0.0) override
+		{
+			first_local_dynamics_.setupDynamics(dt);
+			other_local_dynamics_.setupDynamics(dt);
+		};
+
+		void interaction(size_t index_i, Real dt = 0.0)
+		{
+			first_local_dynamics_.interaction(index_i, dt);
+			other_local_dynamics_.interaction(index_i, dt);
+		};
+	};
+
 }
 #endif // PARTICLE_DYNAMICS_ALGORITHMS_H

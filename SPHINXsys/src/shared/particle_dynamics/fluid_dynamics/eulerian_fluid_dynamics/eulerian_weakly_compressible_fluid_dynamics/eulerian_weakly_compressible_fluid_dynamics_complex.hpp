@@ -49,9 +49,9 @@ namespace SPH
 			: RelaxationWithWall<BaseViscousAccelerationType>(base_body_relation, wall_contact_relation) {}
 		//=================================================================================================//
 		template <class BaseViscousAccelerationType>
-		void ViscousWithWall<BaseViscousAccelerationType>::Interaction(size_t index_i, Real dt)
+		void ViscousWithWall<BaseViscousAccelerationType>::interaction(size_t index_i, Real dt)
 		{
-			BaseViscousAccelerationType::Interaction(index_i, dt);
+			BaseViscousAccelerationType::interaction(index_i, dt);
 
 			Real rho_i = this->rho_[index_i];
 			const Vecd &vel_i = this->vel_[index_i];

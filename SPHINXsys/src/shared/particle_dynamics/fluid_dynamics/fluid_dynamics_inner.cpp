@@ -42,16 +42,14 @@ namespace SPH
 			Vol_[index_i] = mass_[index_i] / rho_[index_i];
 		}
 		//=================================================================================================//
-		ViscousAccelerationInner::ViscousAccelerationInner(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(inner_relation.sph_body_),
-			  FluidDataInner(inner_relation),
+		BaseViscousAccelerationInner::BaseViscousAccelerationInner(BaseBodyRelationInner &inner_relation)
+			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
-			  vel_(particles_->vel_),
-			  acc_prior_(particles_->acc_prior_),
+			  vel_(particles_->vel_), acc_prior_(particles_->acc_prior_),
 			  mu_(material_->ReferenceViscosity()),
-			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength()) {}
+			  smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
-		void ViscousAccelerationInner::Interaction(size_t index_i, Real dt)
+		void ViscousAccelerationInner::interaction(size_t index_i, Real dt)
 		{
 			Real rho_i = rho_[index_i];
 			const Vecd &vel_i = vel_[index_i];
@@ -70,7 +68,7 @@ namespace SPH
 			acc_prior_[index_i] += acceleration;
 		}
 		//=================================================================================================//
-		void AngularConservativeViscousAccelerationInner::Interaction(size_t index_i, Real dt)
+		void AngularConservativeViscousAccelerationInner::interaction(size_t index_i, Real dt)
 		{
 			Real rho_i = rho_[index_i];
 			const Vecd &vel_i = vel_[index_i];
@@ -95,10 +93,8 @@ namespace SPH
 		//=================================================================================================//
 		TransportVelocityCorrectionInner::
 			TransportVelocityCorrectionInner(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(inner_relation.sph_body_),
-			  FluidDataInner(inner_relation),
-			  Vol_(particles_->Vol_), rho_(particles_->rho_),
-			  pos_(particles_->pos_),
+			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+			  Vol_(particles_->Vol_), rho_(particles_->rho_), pos_(particles_->pos_),
 			  surface_indicator_(particles_->surface_indicator_), p_background_(0) {}
 		//=================================================================================================//
 		void TransportVelocityCorrectionInner::setupDynamics(Real dt)
@@ -108,7 +104,7 @@ namespace SPH
 			p_background_ = 7.0 * density * speed_max * speed_max;
 		}
 		//=================================================================================================//
-		void TransportVelocityCorrectionInner::Interaction(size_t index_i, Real dt)
+		void TransportVelocityCorrectionInner::interaction(size_t index_i, Real dt)
 		{
 			Real rho_i = rho_[index_i];
 
@@ -149,7 +145,7 @@ namespace SPH
 			AdvectionTimeStepSizeForImplicitViscosity(SPHBody &sph_body, Real U_max)
 			: LocalDynamicsReduce<Real, ReduceMax>(sph_body, U_max * U_max),
 			  FluidDataSimple(sph_body), vel_(particles_->vel_),
-			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()){}
+			  smoothing_length_(sph_body.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
 		Real AdvectionTimeStepSizeForImplicitViscosity::reduce(size_t index_i, Real dt)
 		{
@@ -175,17 +171,15 @@ namespace SPH
 			return AdvectionTimeStepSizeForImplicitViscosity::reduce(index_i, dt);
 		}
 		//=================================================================================================//
-		VorticityInner::
-			VorticityInner(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(inner_relation.sph_body_),
-			  FluidDataInner(inner_relation),
+		VorticityInner::VorticityInner(BaseBodyRelationInner &inner_relation)
+			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), vel_(particles_->vel_)
 		{
 			particles_->registerVariable(vorticity_, "VorticityInner");
 			particles_->addVariableToWrite<AngularVecd>("VorticityInner");
 		}
 		//=================================================================================================//
-		void VorticityInner::Interaction(size_t index_i, Real dt)
+		void VorticityInner::interaction(size_t index_i, Real dt)
 		{
 			const Vecd &vel_i = vel_[index_i];
 

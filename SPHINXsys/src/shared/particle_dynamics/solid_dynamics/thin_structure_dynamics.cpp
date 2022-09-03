@@ -47,12 +47,11 @@ namespace SPH
 		//=================================================================================================//
 		ShellCorrectConfiguration::
 			ShellCorrectConfiguration(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(inner_relation.sph_body_),
-			  ShellDataInner(inner_relation),
+			: LocalDynamics(inner_relation.sph_body_), ShellDataInner(inner_relation),
 			  Vol_(particles_->Vol_), B_(particles_->B_),
 			  n0_(particles_->n0_), transformation_matrix_(particles_->transformation_matrix_) {}
 		//=================================================================================================//
-		void ShellCorrectConfiguration::Interaction(size_t index_i, Real dt)
+		void ShellCorrectConfiguration::interaction(size_t index_i, Real dt)
 		{
 			/** A small number is added to diagonal to avoid dividing by zero. */
 			Matd global_configuration(Eps);
@@ -73,14 +72,13 @@ namespace SPH
 		//=================================================================================================//
 		ShellDeformationGradientTensor::
 			ShellDeformationGradientTensor(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(inner_relation.sph_body_),
-			  ShellDataInner(inner_relation),
+			: LocalDynamics(inner_relation.sph_body_), ShellDataInner(inner_relation),
 			  Vol_(particles_->Vol_), pos_(particles_->pos_),
 			  pseudo_n_(particles_->pseudo_n_), n0_(particles_->n0_),
 			  B_(particles_->B_), F_(particles_->F_), F_bending_(particles_->F_bending_),
 			  transformation_matrix_(particles_->transformation_matrix_) {}
 		//=================================================================================================//
-		void ShellDeformationGradientTensor::Interaction(size_t index_i, Real dt)
+		void ShellDeformationGradientTensor::interaction(size_t index_i, Real dt)
 		{
 			const Vecd &pseudo_n_i = pseudo_n_[index_i];
 			const Vecd &pos_n_i = pos_[index_i];
