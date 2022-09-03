@@ -70,24 +70,6 @@ namespace SPH
 	};
 
 	/**
-	 * @class CombinedInteractionDynamics
-	 * @brief This is the class for combining several interactions dynamics,
-	 * which share the particle loop but are independent from each other,
-	 * aiming to increase computing intensity under the data caching environment
-	 */
-	class CombinedInteractionDynamics : public InteractionDynamics
-	{
-	public:
-		explicit CombinedInteractionDynamics(InteractionDynamics &dynamics_a, InteractionDynamics &dynamics_b);
-		virtual ~CombinedInteractionDynamics(){};
-
-	protected:
-		InteractionDynamics &dynamics_a_, &dynamics_b_;
-		virtual void setupDynamics(Real dt = 0.0) override;
-		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-	};
-
-	/**
 	 * @class InteractionDynamicsWithUpdate
 	 * @brief This class includes an interaction and a update steps
 	 */

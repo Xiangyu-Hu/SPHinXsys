@@ -119,16 +119,11 @@ int main(int ac, char *av[])
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
 	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(water_block_complex);
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex);
-	/** Computing viscous acceleration. */
-	NewInteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
-	/** Impose transport velocity. */
-	NewInteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex);
 	/** viscous acceleration and transport velocity correction can be combined because they are independent dynamics. */
 	NewInteractionDynamics<CombinedLocalInteractionDynamics<
 		fluid_dynamics::ViscousAccelerationWithWall,
-		fluid_dynamics::TransportVelocityCorrectionComplex>> 
+		fluid_dynamics::TransportVelocityCorrectionComplex>>
 		viscous_acceleration_and_transport_correction(water_block_complex);
-	//	CombinedInteractionDynamics viscous_acceleration_and_transport_correction(viscous_acceleration, transport_velocity_correction);
 	/** Computing vorticity in the flow. */
 	NewInteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_complex.inner_relation_);
 	/** Inflow boundary condition. */
