@@ -265,20 +265,20 @@ namespace SPH
 	};
 
 	/**
-	 * @class SimpleInteractionDynamics
+	 * @class NewInteractionDynamics
 	 * @brief This is the class for particle interaction with other particles
 	 */
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
-	class SimpleInteractionDynamics : public LocalDynamicsType, public BaseDynamics<void>
+	class NewInteractionDynamics : public LocalDynamicsType, public BaseDynamics<void>
 	{
 		DynamicsRange &dynamics_range_;
 
 	public:
 		template <class BodyRelationType, typename... Args>
-		SimpleInteractionDynamics(BodyRelationType &body_relation, Args &&...args)
+		NewInteractionDynamics(BodyRelationType &body_relation, Args &&...args)
 			: LocalDynamicsType(body_relation, std::forward<Args>(args)...),
 			  BaseDynamics<void>(), dynamics_range_(body_relation.getDynamicsRange()){};
-		virtual ~SimpleInteractionDynamics(){};
+		virtual ~NewInteractionDynamics(){};
 
 		/** pre process such as update ghost state */
 		StdVec<BaseDynamics<void> *> pre_processes_;
@@ -329,6 +329,5 @@ namespace SPH
 				post_processes_[k]->parallel_exec(dt);
 		}
 	};
-
 }
 #endif // PARTICLE_DYNAMICS_ALGORITHMS_H

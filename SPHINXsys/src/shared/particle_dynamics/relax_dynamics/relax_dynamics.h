@@ -323,20 +323,18 @@ namespace SPH
 				bool reduce(size_t index_i, Real dt = 0.0);
 			};
 
-			class ConsistencyCorrection : public InteractionDynamics, public RelaxDataDelegateInner
+			class ConsistencyCorrection : public LocalDynamics, public RelaxDataDelegateInner
 			{
 			public:
 				explicit ConsistencyCorrection(BaseBodyRelationInner &inner_relation, Real consistency_criterion);
 				virtual ~ConsistencyCorrection(){};
-
-				/** only implement sequential version now. */
-				virtual void parallel_exec(Real dt = 0.0) override { exec(); };
+				void interaction(size_t index_i, Real dt = 0.0);
 
 			protected:
-				const Real consistency_criterion_;
+          		std::mutex mutex_modify_neighbor_; /**< mutex exclusion for memory conflict */
+ 				const Real consistency_criterion_;
 				StdLargeVec<int> updated_indicator_; /**> 0 not updated, 1 updated with reliable prediction, 2 updated from a reliable neighbor */
 				StdLargeVec<Vecd> &n_;
-				virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			};
 
 			class ConsistencyUpdatedCheck : public LocalDynamicsReduce<bool, ReduceAND>,
@@ -364,7 +362,7 @@ namespace SPH
 
 			SimpleDynamics<NormalPrediction> normal_prediction_;
 			ReduceDynamics<PredictionConvergenceCheck> normal_prediction_convergence_check_;
-			ConsistencyCorrection consistency_correction_;
+			NewInteractionDynamics<ConsistencyCorrection> consistency_correction_;
 			ReduceDynamics<ConsistencyUpdatedCheck> consistency_updated_check_;
 			SmoothingNormal smoothing_normal_;
 		};

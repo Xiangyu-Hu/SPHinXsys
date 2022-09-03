@@ -176,7 +176,7 @@ int main(int ac, char *av[])
 	TreeBodyRelationInner pkj_inner(pkj_body);
 
 	/** Corrected configuration. */
-	solid_dynamics::CorrectConfiguration correct_configuration_excitation(physiology_heart_inner);
+	NewInteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration_excitation(physiology_heart_inner);
 	/** Time step size calculation. */
 	electro_physiology::GetElectroPhysiologyTimeStepSize get_myocardium_physiology_time_step(physiology_heart);
 	/** Diffusion process for diffusion body. */
@@ -199,15 +199,15 @@ int main(int ac, char *av[])
 	SimpleDynamics<ApplyStimulusCurrentToMyocardium> apply_stimulus_myocardium(physiology_heart);
 	SimpleDynamics<ApplyStimulusCurrentToPKJ> apply_stimulus_pkj(pkj_body);
 	/** Active mechanics. */
-	solid_dynamics::CorrectConfiguration correct_configuration_contraction(mechanics_heart_inner);
+	NewInteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration_contraction(mechanics_heart_inner);
 	/** Observer Dynamics */
-	observer_dynamics::CorrectInterpolationKernelWeights
+	NewInteractionDynamics<observer_dynamics::CorrectInterpolationKernelWeights>
 		correct_kernel_weights_for_interpolation(mechanics_heart_contact);
 	/** Interpolate the active contract stress from electrophysiology body. */
-	observer_dynamics::InterpolatingAQuantity<Real>
+	NewInteractionDynamics<observer_dynamics::InterpolatingAQuantity<Real>>
 		active_stress_interpolation(mechanics_heart_contact, "ActiveContractionStress", "ActiveContractionStress");
 	/** Interpolate the particle position in physiology_heart  from mechanics_heart. */
-	observer_dynamics::InterpolatingAQuantity<Vecd>
+	NewInteractionDynamics<observer_dynamics::InterpolatingAQuantity<Vecd>>
 		interpolation_particle_position(physiology_heart_contact, "Position", "Position");
 	/** Time step size calculation. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> get_mechanics_time_step(mechanics_heart);

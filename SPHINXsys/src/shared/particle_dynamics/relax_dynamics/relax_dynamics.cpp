@@ -153,12 +153,12 @@ namespace SPH
 			if (!level_set_correction)
 			{
 				relaxation_acceleration_inner_ =
-					std::move(makeUnique<SimpleInteractionDynamics<RelaxationAccelerationInner>>(inner_relation));
+					std::move(makeUnique<NewInteractionDynamics<RelaxationAccelerationInner>>(inner_relation));
 			}
 			else
 			{
 				relaxation_acceleration_inner_ =
-					std::move(makeUnique<SimpleInteractionDynamics<RelaxationAccelerationInnerWithLevelSetCorrection>>(inner_relation));
+					std::move(makeUnique<NewInteractionDynamics<RelaxationAccelerationInnerWithLevelSetCorrection>>(inner_relation));
 			}
 		}
 		//=================================================================================================//
@@ -218,12 +218,12 @@ namespace SPH
 			if (!level_set_correction)
 			{
 				relaxation_acceleration_complex_ =
-					std::move(makeUnique<SimpleInteractionDynamics<RelaxationAccelerationComplex>>(body_complex_relation));
+					std::move(makeUnique<NewInteractionDynamics<RelaxationAccelerationComplex>>(body_complex_relation));
 			}
 			else
 			{
 				relaxation_acceleration_complex_ =
-					std::move(makeUnique<SimpleInteractionDynamics<RelaxationAccelerationComplexWithLevelSetCorrection>>(body_complex_relation, shape_name));
+					std::move(makeUnique<NewInteractionDynamics<RelaxationAccelerationComplexWithLevelSetCorrection>>(body_complex_relation, shape_name));
 			}
 		}
 		//=================================================================================================//
@@ -355,8 +355,7 @@ namespace SPH
 		//=================================================================================================//
 		ShellNormalDirectionPrediction::ConsistencyCorrection::
 			ConsistencyCorrection(BaseBodyRelationInner &inner_relation, Real consistency_criterion)
-			: InteractionDynamics(inner_relation.sph_body_),
-			  RelaxDataDelegateInner(inner_relation),
+			: LocalDynamics(inner_relation.sph_body_), RelaxDataDelegateInner(inner_relation),
 			  consistency_criterion_(consistency_criterion),
 			  n_(*particles_->getVariableByName<Vecd>("NormalDirection"))
 		{
@@ -365,8 +364,9 @@ namespace SPH
 		}
 		//=================================================================================================//
 		void ShellNormalDirectionPrediction::
-			ConsistencyCorrection::Interaction(size_t index_i, Real dt)
+			ConsistencyCorrection::interaction(size_t index_i, Real dt)
 		{
+			mutex_modify_neighbor_.lock();
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -392,6 +392,7 @@ namespace SPH
 					}
 				}
 			}
+			mutex_modify_neighbor_.unlock();
 		}
 		//=================================================================================================//
 		ShellNormalDirectionPrediction::ConsistencyUpdatedCheck::

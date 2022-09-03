@@ -30,7 +30,7 @@ int main()
 	//----------------------------------------------------------------------
 	SimpleDynamics<InitialCondition> initial_condition(column);
 	/** Corrected configuration. */
-	solid_dynamics::CorrectConfiguration corrected_configuration(column_inner);
+	NewInteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration(column_inner);
 	/** Time step size calculation. We use CFL = 0.5 due to the very large twisting speed. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(column, 0.5);
 	/** active and passive stress relaxation. */

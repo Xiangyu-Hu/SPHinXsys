@@ -136,7 +136,7 @@ int main(int ac, char *av[])
 	// initialize a time step
 	SimpleDynamics<TimeStepInitialization> initialization_with_gravity(coil, makeShared<Gravity>(Vecd(0.0, -1.0, 0.0)));
 	// Corrected configuration for reproducing rigid rotation.
-	solid_dynamics::CorrectConfiguration corrected_configuration(coil_inner);
+	NewInteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration(coil_inner);
 	// Time step size
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(coil);
 	// stress relaxation.

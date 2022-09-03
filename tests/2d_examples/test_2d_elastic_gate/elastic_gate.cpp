@@ -199,7 +199,7 @@ int main()
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
 	/** Corrected configuration for solid dynamics. */
-	solid_dynamics::CorrectConfiguration gate_corrected_configuration(gate_inner_relation);
+	NewInteractionDynamics<solid_dynamics::CorrectConfiguration> gate_corrected_configuration(gate_inner_relation);
 	/** Compute the force exerted on elastic gate due to fluid pressure. */
 	solid_dynamics::FluidPressureForceOnSolidRiemann fluid_pressure_force_on_gate(gate_water_contact_relation);
 	//----------------------------------------------------------------------

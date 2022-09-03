@@ -37,7 +37,7 @@
 
 namespace SPH
 {
-	namespace observer_dynamics
+	namespace observer_dynamics //TODO: this namespace seems not necessary, these dynamics seems belong to general dynamics
 	{
 		typedef DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,
 									SPHBody, BaseParticles, BaseMaterial>
@@ -48,11 +48,13 @@ namespace SPH
 		 * @brief Base class for interpolation.
 		 */
 		template <typename VariableType>
-		class BaseInterpolation : public InteractionDynamics, public InterpolationContactData
+		class BaseInterpolation : public LocalDynamics, public InterpolationContactData
 		{
 		public:
+			StdLargeVec<VariableType>*  interpolated_quantities_;
+
 			explicit BaseInterpolation(BaseBodyRelationContact &contact_relation, const std::string &variable_name)
-				: InteractionDynamics(contact_relation.sph_body_), InterpolationContactData(contact_relation),
+				: LocalDynamics(contact_relation.sph_body_), InterpolationContactData(contact_relation),
 				  interpolated_quantities_(nullptr)
 			{
 				for (size_t k = 0; k != this->contact_particles_.size(); ++k)
@@ -64,13 +66,8 @@ namespace SPH
 				}
 			};
 			virtual ~BaseInterpolation() {};
-			StdLargeVec<VariableType>*  interpolated_quantities_;
 
-		protected:
-			StdVec<StdLargeVec<Real>*> contact_Vol_;
-			StdVec<StdLargeVec<VariableType>*> contact_data_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override
+			void interaction(size_t index_i, Real dt = 0.0)
 			{
 				VariableType observed_quantity(0);
 				Real ttl_weight(0);
@@ -91,6 +88,10 @@ namespace SPH
 				}
 				(*interpolated_quantities_)[index_i] = observed_quantity / (ttl_weight + TinyReal);
 			};
+
+		protected:
+			StdVec<StdLargeVec<Real>*> contact_Vol_;
+			StdVec<StdLargeVec<VariableType>*> contact_data_;
 		};
 
 		/**
@@ -116,11 +117,11 @@ namespace SPH
 		 * @brief Observing a variable from contact bodies.
 		 */
 		template <typename VariableType>
-		class ObservingAQuantity : public BaseInterpolation<VariableType>
+		class ObservingAQuantity : public NewInteractionDynamics<BaseInterpolation<VariableType>>
 		{
 		public:
 			explicit ObservingAQuantity(BaseBodyRelationContact &contact_relation, const std::string &variable_name)
-				: BaseInterpolation<VariableType>(contact_relation, variable_name)
+				: NewInteractionDynamics<BaseInterpolation<VariableType>>(contact_relation, variable_name)
 			{
 				this->interpolated_quantities_ = registerObservedQuantity(variable_name);
 			};
@@ -148,16 +149,16 @@ namespace SPH
 		* @class CorrectInterpolationKernelWeights
 		* @brief  correct kernel weights for interpolation between general bodies
 		*/
-		class CorrectInterpolationKernelWeights : public InteractionDynamics,
+		class CorrectInterpolationKernelWeights : public LocalDynamics,
 												  public InterpolationContactData
 		{
 		public:
 			explicit CorrectInterpolationKernelWeights(BaseBodyRelationContact &contact_relation);
 			virtual ~CorrectInterpolationKernelWeights(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdVec<StdLargeVec<Real> *> contact_Vol_;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 	}
 }

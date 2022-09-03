@@ -54,18 +54,17 @@ namespace SPH
 		* @class CorrectConfiguration
 		* @brief obtain the corrected initial configuration in strong form
 		*/
-		class CorrectConfiguration : public InteractionDynamics, public SolidDataInner
+		class CorrectConfiguration : public LocalDynamics, public SolidDataInner
 		{
 		public:
 			explicit CorrectConfiguration(BaseBodyRelationInner &inner_relation);
 			virtual ~CorrectConfiguration(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Matd> &B_;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
-
 	}
 }
 #endif //GENERAL_SOLID_DYNAMICS_H

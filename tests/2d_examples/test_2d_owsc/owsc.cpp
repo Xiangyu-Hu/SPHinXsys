@@ -50,7 +50,7 @@ int main()
 	SimpleDynamics<NormalDirectionFromBodyShape> flap_normal_direction(flap);
 
 	/** corrected strong configuration. */
-	solid_dynamics::CorrectConfiguration flap_corrected_configuration(flap_inner);
+	NewInteractionDynamics<solid_dynamics::CorrectConfiguration> flap_corrected_configuration(flap_inner);
 	/** Time step initialization, add gravity. */
 	SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
 	/** Evaluation of density by summation approach. */
@@ -175,8 +175,9 @@ int main()
 	
 	/** Pressure probe. */
 	ObservedQuantityRecording<Real> pressure_probe("Pressure", io_environment, observer_contact_with_water);
-	/** Interpolate the particle position in flap to move the observer accordingly. */
-	observer_dynamics::InterpolatingAQuantity<Vecd>
+	// Interpolate the particle position in flap to move the observer accordingly. 
+	// Seems not used? TODO: observe displacement more accurate.
+	NewInteractionDynamics<observer_dynamics::InterpolatingAQuantity<Vecd>>
 		interpolation_observer_position(observer_contact_with_flap, "Position", "Position");
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration

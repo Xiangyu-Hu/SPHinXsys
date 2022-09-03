@@ -408,7 +408,7 @@ int main(int ac, char *av[])
 	//	SPH Method section
 	//----------------------------------------------------------------------
 	// Corrected configuration.
-	solid_dynamics::CorrectConfiguration correct_configuration_excitation(physiology_heart_inner);
+	NewInteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration_excitation(physiology_heart_inner);
 	// Time step size calculation.
 	electro_physiology::GetElectroPhysiologyTimeStepSize get_physiology_time_step(physiology_heart);
 	// Diffusion process for diffusion body.
@@ -420,13 +420,14 @@ int main(int ac, char *av[])
 	SimpleDynamics<ApplyStimulusCurrentSI> apply_stimulus_s1(physiology_heart);
 	SimpleDynamics<ApplyStimulusCurrentSII> apply_stimulus_s2(physiology_heart);
 	// Active mechanics.
-	solid_dynamics::CorrectConfiguration correct_configuration_contraction(mechanics_body_inner);
-	observer_dynamics::CorrectInterpolationKernelWeights correct_kernel_weights_for_interpolation(mechanics_body_contact);
+	NewInteractionDynamics<solid_dynamics::CorrectConfiguration> correct_configuration_contraction(mechanics_body_inner);
+	NewInteractionDynamics<observer_dynamics::CorrectInterpolationKernelWeights> correct_kernel_weights_for_interpolation(mechanics_body_contact);
 	/** Interpolate the active contract stress from electrophysiology body. */
-	observer_dynamics::InterpolatingAQuantity<Real>
+	NewInteractionDynamics<observer_dynamics::InterpolatingAQuantity<Real>>
 		active_stress_interpolation(mechanics_body_contact, "ActiveContractionStress", "ActiveContractionStress");
 	/** Interpolate the particle position in physiology_heart  from mechanics_heart. */
-	observer_dynamics::InterpolatingAQuantity<Vecd>
+	// TODO: this is a bug, we should interpolate displacement other than position.
+	NewInteractionDynamics<observer_dynamics::InterpolatingAQuantity<Vecd>>
 		interpolation_particle_position(physiology_heart_contact, "Position", "Position");
 	/** Time step size calculation. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> get_mechanics_time_step(mechanics_heart);
