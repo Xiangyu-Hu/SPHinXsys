@@ -82,8 +82,6 @@ int main()
 		surface_detection(water_air_complex.inner_relation_);
 	fluid_dynamics::ColorFunctionGradientInner
 		color_gradient(water_air_complex.inner_relation_);
-	// fluid_dynamics::MultiPhaseColorFunctionGradient
-	//  	color_gradient(water_air_complex->contact_relation_);
 	fluid_dynamics::ColorFunctionGradientInterpolationInner
 		color_gradient_interpolation(water_air_complex.inner_relation_);
 	fluid_dynamics::SurfaceTensionAccelerationInner

@@ -131,12 +131,15 @@ namespace SPH
 		/**
 		 * @class MultiPhaseColorFunctionGradient
 		 * @brief  indicate the particles near the interface of a fluid-fluid interaction and computing norm
+		 * TODO: Need a test cases for this.
 		 */
-		class MultiPhaseColorFunctionGradient : public InteractionDynamics, public MultiPhaseData
+		class MultiPhaseColorFunctionGradient : public LocalDynamics, public MultiPhaseData
 		{
 		public:
 			explicit MultiPhaseColorFunctionGradient(BaseBodyRelationContact &contact_relation);
 			virtual ~MultiPhaseColorFunctionGradient() {};
+			void interaction(size_t index_i, Real dt = 0.0);
+
 		protected:
 			Real rho0_;
 			StdVec<Real> contact_rho0_;
@@ -144,8 +147,6 @@ namespace SPH
 			StdLargeVec<int>& surface_indicator_;
 			StdLargeVec<Vecd> color_grad_, surface_norm_;
 			StdVec<StdLargeVec<Real>*> contact_Vol_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 	}
 }
