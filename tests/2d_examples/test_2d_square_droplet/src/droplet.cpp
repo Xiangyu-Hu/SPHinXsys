@@ -80,12 +80,9 @@ int main()
 	/** Surface tension. */
 	fluid_dynamics::FreeSurfaceIndicationInner
 		surface_detection(water_air_complex.inner_relation_);
-	fluid_dynamics::ColorFunctionGradientInner
-		color_gradient(water_air_complex.inner_relation_);
-	fluid_dynamics::ColorFunctionGradientInterpolationInner
-		color_gradient_interpolation(water_air_complex.inner_relation_);
-	fluid_dynamics::SurfaceTensionAccelerationInner
-		surface_tension_acceleration(water_air_complex.inner_relation_, 1.0);
+	NewInteractionDynamics<fluid_dynamics::ColorFunctionGradientInner> color_gradient(water_air_complex.inner_relation_);
+	NewInteractionDynamics<fluid_dynamics::ColorFunctionGradientInterpolationInner> color_gradient_interpolation(water_air_complex.inner_relation_);
+	NewInteractionDynamics<fluid_dynamics::SurfaceTensionAccelerationInner> surface_tension_acceleration(water_air_complex.inner_relation_, 1.0);
 	/**
 	 * @brief Output.
 	 */

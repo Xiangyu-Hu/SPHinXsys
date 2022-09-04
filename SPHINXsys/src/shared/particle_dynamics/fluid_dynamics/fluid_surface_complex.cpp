@@ -62,9 +62,9 @@ namespace SPH
 			: ColorFunctionGradientComplex(complex_relation.inner_relation_,
 										   complex_relation.contact_relation_) {}
 		//=================================================================================================//
-		void ColorFunctionGradientComplex::Interaction(size_t index_i, Real dt)
+		void ColorFunctionGradientComplex::interaction(size_t index_i, Real dt)
 		{
-			ColorFunctionGradientInner::Interaction(index_i, dt);
+			ColorFunctionGradientInner::interaction(index_i, dt);
 
 			Vecd gradient(0.0);
 			if (pos_div_[index_i] < threshold_by_dimensions_)
@@ -85,7 +85,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		SurfaceNormWithWall::SurfaceNormWithWall(BaseBodyRelationContact &contact_relation, Real contact_angle)
-			: InteractionDynamics(contact_relation.sph_body_), FSIContactData(contact_relation),
+			: LocalDynamics(contact_relation.sph_body_), FSIContactData(contact_relation),
 			  contact_angle_(contact_angle),
 			  surface_indicator_(particles_->surface_indicator_),
 			  surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")),
@@ -99,7 +99,7 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		void SurfaceNormWithWall::Interaction(size_t index_i, Real dt)
+		void SurfaceNormWithWall::interaction(size_t index_i, Real dt)
 		{
 			Real large_dist(1.0e6);
 			Vecd n_i = surface_norm_[index_i];

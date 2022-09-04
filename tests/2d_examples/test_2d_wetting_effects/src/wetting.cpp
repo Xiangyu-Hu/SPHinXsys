@@ -80,15 +80,11 @@ int main()
 	/** Surface tension and wetting effects. */
 	fluid_dynamics::FreeSurfaceIndicationComplex
 		surface_detection(water_air_complex.inner_relation_, water_wall_contact);
-	fluid_dynamics::ColorFunctionGradientComplex
-		color_gradient(water_air_complex.inner_relation_, water_wall_contact);
-	fluid_dynamics::ColorFunctionGradientInterpolationInner
-		color_gradient_interpolation(water_air_complex.inner_relation_);
-	fluid_dynamics::SurfaceTensionAccelerationInner
-		surface_tension_acceleration(water_air_complex.inner_relation_, tension_force);
+	NewInteractionDynamics<fluid_dynamics::ColorFunctionGradientComplex> color_gradient(water_air_complex.inner_relation_, water_wall_contact);
+	NewInteractionDynamics<fluid_dynamics::ColorFunctionGradientInterpolationInner> color_gradient_interpolation(water_air_complex.inner_relation_);
+	NewInteractionDynamics<fluid_dynamics::SurfaceTensionAccelerationInner> surface_tension_acceleration(water_air_complex.inner_relation_, tension_force);
 	/** Wetting effects. */
-	fluid_dynamics::SurfaceNormWithWall
-		wetting_norm(water_wall_contact, contact_angle);
+	NewInteractionDynamics<fluid_dynamics::SurfaceNormWithWall> wetting_norm(water_wall_contact, contact_angle);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations, observations
 	//	and regression tests of the simulation.

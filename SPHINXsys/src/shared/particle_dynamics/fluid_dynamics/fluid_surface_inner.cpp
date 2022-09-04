@@ -95,7 +95,7 @@ namespace SPH
         {
             if (surface_indicator_[index_i] == 1)
             {
-                //TODO: free stream condition should be summarized to a separated class.
+                // TODO: free stream condition should be summarized to a separated class.
                 Real run_time_ = GlobalStaticVariables::physical_time_;
                 Real u_freestream = run_time_ < t_ref_ ? 0.5 * u_ref_ * (1.0 - cos(Pi * run_time_ / t_ref_)) : u_ref_;
                 vel_[index_i][0] = u_freestream + SMIN(rho_sum[index_i], rho_ref_) * (vel_[index_i][0] - u_freestream) / rho_ref_;
@@ -103,7 +103,7 @@ namespace SPH
         }
         //=================================================================================================//
         ColorFunctionGradientInner::ColorFunctionGradientInner(BaseBodyRelationInner &inner_relation)
-            : InteractionDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+            : LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
               Vol_(particles_->Vol_),
               surface_indicator_(particles_->surface_indicator_),
               pos_div_(*particles_->getVariableByName<Real>("PositionDivergence")),
@@ -113,7 +113,7 @@ namespace SPH
             particles_->registerVariable(surface_norm_, "SurfaceNormal");
         }
         //=================================================================================================//
-        void ColorFunctionGradientInner::Interaction(size_t index_i, Real dt)
+        void ColorFunctionGradientInner::interaction(size_t index_i, Real dt)
         {
             Vecd gradient(0);
             const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -130,7 +130,7 @@ namespace SPH
         }
         //=================================================================================================//
         ColorFunctionGradientInterpolationInner::ColorFunctionGradientInterpolationInner(BaseBodyRelationInner &inner_relation)
-            : InteractionDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation), Vol_(particles_->Vol_),
+            : LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation), Vol_(particles_->Vol_),
               surface_indicator_(particles_->surface_indicator_),
               color_grad_(*particles_->getVariableByName<Vecd>("ColorGradient")),
               surface_norm_(*particles_->getVariableByName<Vecd>("SurfaceNormal")),
@@ -142,7 +142,7 @@ namespace SPH
             particles_->addVariableToWrite<Vecd>("ColorGradient");
         }
         //=================================================================================================//
-        void ColorFunctionGradientInterpolationInner::Interaction(size_t index_i, Real dt)
+        void ColorFunctionGradientInterpolationInner::interaction(size_t index_i, Real dt)
         {
             Vecd grad(0);
             Real weight(0);
@@ -167,7 +167,7 @@ namespace SPH
         }
         //=================================================================================================//
         SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseBodyRelationInner &inner_relation, Real gamma)
-            : InteractionDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
+            : LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
               gamma_(gamma), Vol_(particles_->Vol_),
               mass_(particles_->mass_),
               acc_prior_(particles_->acc_prior_),
@@ -178,7 +178,7 @@ namespace SPH
         SurfaceTensionAccelerationInner::SurfaceTensionAccelerationInner(BaseBodyRelationInner &inner_relation)
             : SurfaceTensionAccelerationInner(inner_relation, 1.0) {}
         //=================================================================================================//
-        void SurfaceTensionAccelerationInner::Interaction(size_t index_i, Real dt)
+        void SurfaceTensionAccelerationInner::interaction(size_t index_i, Real dt)
         {
             Vecd n_i = surface_norm_[index_i];
             Real curvature(0.0);

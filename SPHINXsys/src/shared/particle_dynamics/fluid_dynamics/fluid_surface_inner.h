@@ -167,11 +167,12 @@ namespace SPH
 		 * @class ColorFunctionGradientInner
 		 * @brief  indicate the particles near the interface of a fluid-fluid interaction and computing norm
 		 */
-		class ColorFunctionGradientInner : public InteractionDynamics, public FluidDataInner
+		class ColorFunctionGradientInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
 			explicit ColorFunctionGradientInner(BaseBodyRelationInner &inner_relation);
 			virtual ~ColorFunctionGradientInner(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real threshold_by_dimensions_;
@@ -180,19 +181,18 @@ namespace SPH
 			StdLargeVec<Vecd> color_grad_;
 			StdLargeVec<Vecd> surface_norm_;
 			StdLargeVec<Real> &pos_div_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
 		 * @class ColorFunctionGradientInterpolationInner
-		 * @brief  the viscous force induced acceleration
+		 * @brief
 		 */
-		class ColorFunctionGradientInterpolationInner : public InteractionDynamics, public FluidDataInner
+		class ColorFunctionGradientInterpolationInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
 			explicit ColorFunctionGradientInterpolationInner(BaseBodyRelationInner &inner_relation);
 			virtual ~ColorFunctionGradientInterpolationInner(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real threshold_by_dimensions_;
@@ -201,20 +201,19 @@ namespace SPH
 			StdLargeVec<Vecd> &color_grad_;
 			StdLargeVec<Vecd> &surface_norm_;
 			StdLargeVec<Real> &pos_div_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
 		 * @class SurfaceTensionAccelerationInner
-		 * @brief  the viscous force induced acceleration
+		 * @brief  the surface force induced acceleration
 		 */
-		class SurfaceTensionAccelerationInner : public InteractionDynamics, public FluidDataInner
+		class SurfaceTensionAccelerationInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
 			SurfaceTensionAccelerationInner(BaseBodyRelationInner &inner_relation, Real gamma);
 			explicit SurfaceTensionAccelerationInner(BaseBodyRelationInner &inner_relation);
 			virtual ~SurfaceTensionAccelerationInner(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real gamma_;
@@ -223,8 +222,6 @@ namespace SPH
 			StdLargeVec<int> &surface_indicator_;
 			StdLargeVec<Vecd> &color_grad_;
 			StdLargeVec<Vecd> &surface_norm_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 	}
 }
