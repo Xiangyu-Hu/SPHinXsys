@@ -34,15 +34,14 @@ namespace SPH
 			  gamma_(material_->HeatCapacityRatio()) {}
 		//=================================================================================================//
 		ViscousAccelerationInner::ViscousAccelerationInner(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(inner_relation.sph_body_),
-			  CompressibleFluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.sph_body_), CompressibleFluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
 			  mass_(particles_->mass_), dE_dt_prior_(particles_->dE_dt_prior_),
 			  vel_(particles_->vel_), dmom_dt_prior_(particles_->dmom_dt_prior_),
-			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength()),
+			  smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()),
 			  mu_(material_->ReferenceViscosity()) {}
 		//=================================================================================================//
-		void ViscousAccelerationInner::Interaction(size_t index_i, Real dt)
+		void ViscousAccelerationInner::interaction(size_t index_i, Real dt)
 		{
 			Real rho_i = rho_[index_i];
 			const Vecd &vel_i = vel_[index_i];

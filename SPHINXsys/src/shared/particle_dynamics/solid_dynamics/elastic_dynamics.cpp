@@ -44,12 +44,11 @@ namespace SPH
 		//=================================================================================================//
 		DeformationGradientTensorBySummation::
 			DeformationGradientTensorBySummation(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(inner_relation.sph_body_),
-			  ElasticSolidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.sph_body_), ElasticSolidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), pos_(particles_->pos_),
 			  B_(particles_->B_), F_(particles_->F_) {}
 		//=================================================================================================//
-		void DeformationGradientTensorBySummation::Interaction(size_t index_i, Real dt)
+		void DeformationGradientTensorBySummation::interaction(size_t index_i, Real dt)
 		{
 			Vecd &pos_n_i = pos_[index_i];
 

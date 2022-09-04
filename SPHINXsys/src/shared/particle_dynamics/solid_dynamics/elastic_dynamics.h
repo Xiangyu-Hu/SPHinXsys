@@ -104,17 +104,17 @@ namespace SPH
 		 * @class DeformationGradientTensorBySummation
 		 * @brief computing deformation gradient tensor by summation
 		 */
-		class DeformationGradientTensorBySummation : public InteractionDynamics, public ElasticSolidDataInner
+		class DeformationGradientTensorBySummation : public LocalDynamics, public ElasticSolidDataInner
 		{
 		public:
 			explicit DeformationGradientTensorBySummation(BaseBodyRelationInner &inner_relation);
 			virtual ~DeformationGradientTensorBySummation(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> &Vol_;
 			StdLargeVec<Vecd> &pos_;
 			StdLargeVec<Matd> &B_, &F_;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**

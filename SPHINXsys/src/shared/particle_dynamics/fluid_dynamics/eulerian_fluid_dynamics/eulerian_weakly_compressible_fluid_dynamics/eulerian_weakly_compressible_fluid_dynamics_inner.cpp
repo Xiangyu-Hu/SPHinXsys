@@ -68,15 +68,14 @@ namespace SPH
 		}
 		//=================================================================================================//
 		ViscousAccelerationInner::ViscousAccelerationInner(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamics(inner_relation.sph_body_),
+			: LocalDynamics(inner_relation.sph_body_),
 			  EulerianWeaklyCompressibleFluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), p_(particles_->p_),
-			  vel_(particles_->vel_),
-			  dmom_dt_prior_(particles_->dmom_dt_prior_),
+			  vel_(particles_->vel_), dmom_dt_prior_(particles_->dmom_dt_prior_),
 			  mu_(material_->ReferenceViscosity()),
-			  smoothing_length_(sph_adaptation_->ReferenceSmoothingLength()) {}
+			  smoothing_length_(sph_body_.sph_adaptation_->ReferenceSmoothingLength()) {}
 		//=================================================================================================//
-		void ViscousAccelerationInner::Interaction(size_t index_i, Real dt)
+		void ViscousAccelerationInner::interaction(size_t index_i, Real dt)
 		{
 			Real rho_i = rho_[index_i];
 			const Vecd &vel_i = vel_[index_i];
@@ -143,7 +142,7 @@ namespace SPH
 			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
-		void NonReflectiveBoundaryVariableCorrection::Interaction(size_t index_i, Real dt)
+		void NonReflectiveBoundaryVariableCorrection::interaction(size_t index_i, Real dt)
 		{
 			Shape &body_shape = *sph_body_.body_shape_;
 			if (surface_indicator_[index_i] == 1)

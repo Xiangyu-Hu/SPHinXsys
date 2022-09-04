@@ -126,7 +126,7 @@ int main(int ac, char *av[])
 	/** Computing viscous acceleration with wall model. */
 	NewInteractionDynamics<eulerian_weakly_compressible_fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** non_reflective boundary condition. */
-	FarFieldBoundary variable_reset_in_boundary_condition(water_block_complex.inner_relation_);
+	NewInteractionDynamics<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_complex.inner_relation_);
 	/**
 	 * @brief Algorithms of FSI.
 	 */

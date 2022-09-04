@@ -111,7 +111,7 @@ int main(int ac, char *av[])
 	eulerian_compressible_fluid_dynamics::PressureRelaxationHLLCWithLimiterRiemannInner pressure_relaxation(water_body_inner);
 	eulerian_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCWithLimiterRiemannInner density_and_energy_relaxation(water_body_inner);
 	/** Computing viscous acceleration. */
-	eulerian_compressible_fluid_dynamics::ViscousAccelerationInner viscous_acceleration(water_body_inner);
+	NewInteractionDynamics<eulerian_compressible_fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_body_inner);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

@@ -79,21 +79,18 @@ namespace SPH
 		 * @class ViscousAccelerationInner
 		 * @brief  the viscosity force induced acceleration
 		 */
-		class ViscousAccelerationInner
-			: public InteractionDynamics,
-			  public CompressibleFluidDataInner
+		class ViscousAccelerationInner : public LocalDynamics, public CompressibleFluidDataInner
 		{
 		public:
 			explicit ViscousAccelerationInner(BaseBodyRelationInner &inner_relation);
 			virtual ~ViscousAccelerationInner(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real mu_;
 			Real smoothing_length_;
 			StdLargeVec<Real> &Vol_, &rho_, &p_, &mass_, &dE_dt_prior_;
 			StdLargeVec<Vecd> &vel_, &dmom_dt_prior_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
