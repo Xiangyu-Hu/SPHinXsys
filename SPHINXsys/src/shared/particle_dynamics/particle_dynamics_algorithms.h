@@ -43,17 +43,17 @@
 namespace SPH
 {
 	/**
-	 * @class InteractionDynamics
+	 * @class OldInteractionDynamics
 	 * @brief This is the class for particle interaction with other particles
 	 */
-	class InteractionDynamics : public ParticleDynamics<void>
+	class OldInteractionDynamics : public ParticleDynamics<void>
 	{
 	public:
-		explicit InteractionDynamics(SPHBody &sph_body)
+		explicit OldInteractionDynamics(SPHBody &sph_body)
 			: ParticleDynamics<void>(sph_body),
-			  functor_interaction_(std::bind(&InteractionDynamics::Interaction,
+			  functor_interaction_(std::bind(&OldInteractionDynamics::Interaction,
 											 this, _1, _2)){};
-		virtual ~InteractionDynamics(){};
+		virtual ~OldInteractionDynamics(){};
 
 		/** pre process such as update ghost state */
 		StdVec<BaseDynamics<void> *> pre_processes_;
@@ -73,11 +73,11 @@ namespace SPH
 	 * @class InteractionDynamicsWithUpdate
 	 * @brief This class includes an interaction and a update steps
 	 */
-	class InteractionDynamicsWithUpdate : public InteractionDynamics
+	class InteractionDynamicsWithUpdate : public OldInteractionDynamics
 	{
 	public:
 		explicit InteractionDynamicsWithUpdate(SPHBody &sph_body)
-			: InteractionDynamics(sph_body),
+			: OldInteractionDynamics(sph_body),
 			  functor_update_(std::bind(&InteractionDynamicsWithUpdate::Update,
 										this, _1, _2)) {}
 		virtual ~InteractionDynamicsWithUpdate(){};
@@ -115,7 +115,7 @@ namespace SPH
 	 * @class InteractionDynamicsSplitting
 	 * @brief This is for the splitting algorithm
 	 */
-	class InteractionDynamicsSplitting : public InteractionDynamics
+	class InteractionDynamicsSplitting : public OldInteractionDynamics
 	{
 	public:
 		explicit InteractionDynamicsSplitting(SPHBody &sph_body);
@@ -247,20 +247,20 @@ namespace SPH
 	};
 
 	/**
-	 * @class NewInteractionDynamics
+	 * @class InteractionDynamics
 	 * @brief This is the class for particle interaction with other particles
 	 */
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
-	class NewInteractionDynamics : public LocalDynamicsType, public BaseDynamics<void>
+	class InteractionDynamics : public LocalDynamicsType, public BaseDynamics<void>
 	{
 		DynamicsRange &dynamics_range_;
 
 	public:
 		template <class BodyRelationType, typename... Args>
-		NewInteractionDynamics(BodyRelationType &body_relation, Args &&...args)
+		InteractionDynamics(BodyRelationType &body_relation, Args &&...args)
 			: LocalDynamicsType(body_relation, std::forward<Args>(args)...),
 			  BaseDynamics<void>(), dynamics_range_(body_relation.getDynamicsRange()){};
-		virtual ~NewInteractionDynamics(){};
+		virtual ~InteractionDynamics(){};
 
 		/** pre process such as update ghost state */
 		StdVec<BaseDynamics<void> *> pre_processes_;
@@ -317,12 +317,12 @@ namespace SPH
 	 * @brief This class includes an interaction and a update steps
 	 */
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
-	class NewInteractionDynamicsWithUpdate : public NewInteractionDynamics<LocalDynamicsType, DynamicsRange>
+	class NewInteractionDynamicsWithUpdate : public InteractionDynamics<LocalDynamicsType, DynamicsRange>
 	{
 	public:
 		template <class BodyRelationType, typename... Args>
 		NewInteractionDynamicsWithUpdate(BodyRelationType &body_relation, Args &&...args)
-			: NewInteractionDynamics<LocalDynamicsType, DynamicsRange>(body_relation, std::forward<Args>(args)...) {}
+			: InteractionDynamics<LocalDynamicsType, DynamicsRange>(body_relation, std::forward<Args>(args)...) {}
 		virtual ~NewInteractionDynamicsWithUpdate(){};
 
 		virtual void exec(Real dt = 0.0) override
@@ -402,10 +402,9 @@ namespace SPH
 
 	/**
 	 * @class CombinedLocalDynamics
-	 * @brief This is the class for combining two local dynamics,
+	 * @brief This is the class for combining multiple local dynamics,
 	 * which share the particle loop but are independent from each other,
 	 * aiming to increase computing intensity under the data caching environment
-	 * TODO: may be try for combine arbitrary interactions of the same type.
 	 */
 	template <typename... MultipleLocalDynamics>
 	class CombinedLocalInteractionDynamics;

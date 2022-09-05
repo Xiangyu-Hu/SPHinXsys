@@ -114,11 +114,11 @@ int main(int ac, char *av[])
 	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(water_block_complex);
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex);
 	/** Computing viscous acceleration with wall. */
-	NewInteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Impose transport velocity. */
-	NewInteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex);
+	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex);
 	/** Computing vorticity in the flow. */
-	NewInteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_complex.inner_relation_);
+	InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_complex.inner_relation_);
 	/** free stream boundary condition. */
 	BodyRegionByCell free_stream_buffer(water_block, makeShared<MultiPolygonShape>(createBufferShape()));
 	SimpleDynamics<FreeStreamCondition, BodyRegionByCell> freestream_condition(free_stream_buffer);
@@ -126,9 +126,9 @@ int main(int ac, char *av[])
 	//	Algorithms of FSI.
 	//----------------------------------------------------------------------
 	/** Compute the force exerted on solid body due to fluid pressure and viscosity. */
-	solid_dynamics::FluidPressureForceOnSolid fluid_pressure_force_on_inserted_body(cylinder_contact);
+	InteractionDynamics<solid_dynamics::FluidViscousForceOnSolid> viscous_force_on_cylinder(cylinder_contact);
+	InteractionDynamics<solid_dynamics::FluidPressureForceOnSolid> pressure_force_on_cylinder(cylinder_contact);
 	/** Computing viscous force acting on wall with wall model. */
-	solid_dynamics::FluidViscousForceOnSolid fluid_viscous_force_on_inserted_body(cylinder_contact);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -202,7 +202,7 @@ int main(int ac, char *av[])
 			transport_velocity_correction.parallel_exec(Dt);
 
 			/** FSI for viscous force. */
-			fluid_viscous_force_on_inserted_body.parallel_exec();
+			viscous_force_on_cylinder.parallel_exec();
 			size_t inner_ite_dt = 0;
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
@@ -211,7 +211,7 @@ int main(int ac, char *av[])
 				/** Fluid pressure relaxation, first half. */
 				pressure_relaxation.parallel_exec(dt);
 				/** FSI for pressure force. */
-				fluid_pressure_force_on_inserted_body.parallel_exec();
+				pressure_force_on_cylinder.parallel_exec();
 				/** Fluid pressure relaxation, second half. */
 				density_relaxation.parallel_exec(dt);
 

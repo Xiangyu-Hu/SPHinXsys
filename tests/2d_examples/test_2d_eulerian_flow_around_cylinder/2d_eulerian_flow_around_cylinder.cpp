@@ -124,14 +124,15 @@ int main(int ac, char *av[])
 	eulerian_weakly_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCRiemannWithLimiterWithWall density_relaxation(water_block_complex);
 	eulerian_weakly_compressible_fluid_dynamics::FreeSurfaceIndicationComplex surface_indicator(water_block_complex.inner_relation_, water_block_complex.contact_relation_);
 	/** Computing viscous acceleration with wall model. */
-	NewInteractionDynamics<eulerian_weakly_compressible_fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
+	InteractionDynamics<eulerian_weakly_compressible_fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** non_reflective boundary condition. */
-	NewInteractionDynamics<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_complex.inner_relation_);
+	InteractionDynamics<FarFieldBoundary> variable_reset_in_boundary_condition(water_block_complex.inner_relation_);
 	/**
 	 * @brief Algorithms of FSI.
 	 */
 	/** Compute the force exerted on solid body due to fluid pressure and viscosity. */
-	solid_dynamics::FluidForceOnSolidUpdateRiemannWithLimiterInEuler fluid_force_on_solid_update(cylinder_contact);
+	InteractionDynamics<solid_dynamics::FluidViscousForceOnSolidInEuler> viscous_force_on_solid(cylinder_contact);
+	InteractionDynamics<solid_dynamics::FluidPressureForceOnSolidHLLCWithLimiterRiemannInEuler> pressure_force_on_solid(cylinder_contact);
 	/**
 	 * @brief Write solid data into files.
 	 */
@@ -189,11 +190,11 @@ int main(int ac, char *av[])
 			Real dt = get_fluid_time_step_size.parallel_exec();
 			viscous_acceleration.parallel_exec();
 			/** FSI for viscous force. */
-			fluid_force_on_solid_update.viscous_force_.parallel_exec();
+			viscous_force_on_solid.parallel_exec();
 			/** Fluid pressure relaxation, first half. */
 			pressure_relaxation.parallel_exec(dt);
 			/** FSI for pressure force. */
-			fluid_force_on_solid_update.parallel_exec();
+			pressure_force_on_solid.parallel_exec();
 			/** Fluid pressure relaxation, second half. */
 			density_relaxation.parallel_exec(dt);
 

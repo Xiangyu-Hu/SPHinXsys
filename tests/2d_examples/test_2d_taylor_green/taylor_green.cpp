@@ -122,9 +122,9 @@ int main(int ac, char *av[])
 	fluid_dynamics::PressureRelaxationInner pressure_relaxation(water_block_inner);
 	fluid_dynamics::DensityRelaxationRiemannInner density_relaxation(water_block_inner);
 	/** Computing viscous acceleration. */
-	NewInteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
 	/** Impose transport velocity. */
-	NewInteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner> transport_velocity_correction(water_block_inner);
+	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionInner> transport_velocity_correction(water_block_inner);
 	/**
 	 * @brief Output.
 	 */

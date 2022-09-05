@@ -153,12 +153,12 @@ namespace SPH
 			if (!level_set_correction)
 			{
 				relaxation_acceleration_inner_ =
-					std::move(makeUnique<NewInteractionDynamics<RelaxationAccelerationInner>>(inner_relation));
+					std::move(makeUnique<InteractionDynamics<RelaxationAccelerationInner>>(inner_relation));
 			}
 			else
 			{
 				relaxation_acceleration_inner_ =
-					std::move(makeUnique<NewInteractionDynamics<RelaxationAccelerationInnerWithLevelSetCorrection>>(inner_relation));
+					std::move(makeUnique<InteractionDynamics<RelaxationAccelerationInnerWithLevelSetCorrection>>(inner_relation));
 			}
 		}
 		//=================================================================================================//
@@ -218,12 +218,12 @@ namespace SPH
 			if (!level_set_correction)
 			{
 				relaxation_acceleration_complex_ =
-					std::move(makeUnique<NewInteractionDynamics<RelaxationAccelerationComplex>>(body_complex_relation));
+					std::move(makeUnique<InteractionDynamics<RelaxationAccelerationComplex>>(body_complex_relation));
 			}
 			else
 			{
 				relaxation_acceleration_complex_ =
-					std::move(makeUnique<NewInteractionDynamics<RelaxationAccelerationComplexWithLevelSetCorrection>>(body_complex_relation, shape_name));
+					std::move(makeUnique<InteractionDynamics<RelaxationAccelerationComplexWithLevelSetCorrection>>(body_complex_relation, shape_name));
 			}
 		}
 		//=================================================================================================//

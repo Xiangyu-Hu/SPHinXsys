@@ -10,10 +10,8 @@ namespace SPH
 	namespace solid_dynamics
 	{
 		//=================================================================================================//
-		FluidViscousForceOnSolid::
-			FluidViscousForceOnSolid(BaseBodyRelationContact &contact_relation)
-			: InteractionDynamics(contact_relation.sph_body_),
-			  FSIContactData(contact_relation),
+		FluidViscousForceOnSolid::FluidViscousForceOnSolid(BaseBodyRelationContact &contact_relation)
+			: LocalDynamics(contact_relation.sph_body_), FSIContactData(contact_relation),
 			  Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity())
 		{
 			particles_->registerVariable(viscous_force_from_fluid_, "ViscousForceFromFluid");
@@ -28,7 +26,7 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		void FluidViscousForceOnSolid::Interaction(size_t index_i, Real dt)
+		void FluidViscousForceOnSolid::interaction(size_t index_i, Real dt)
 		{
 			Real Vol_i = Vol_[index_i];
 			const Vecd &vel_ave_i = vel_ave_[index_i];
@@ -59,7 +57,7 @@ namespace SPH
 		//=================================================================================================//
 		FluidViscousForceOnSolidInEuler::
 			FluidViscousForceOnSolidInEuler(BaseBodyRelationContact &contact_relation)
-			: InteractionDynamics(contact_relation.sph_body_),
+			: LocalDynamics(contact_relation.sph_body_),
 			  EFSIContactData(contact_relation),
 			  Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity())
 		{
@@ -75,7 +73,7 @@ namespace SPH
 			}
 		}
 		//=================================================================================================//
-		void FluidViscousForceOnSolidInEuler::Interaction(size_t index_i, Real dt)
+		void FluidViscousForceOnSolidInEuler::interaction(size_t index_i, Real dt)
 		{
 			Real Vol_i = Vol_[index_i];
 			const Vecd &vel_ave_i = vel_ave_[index_i];
@@ -104,7 +102,7 @@ namespace SPH
 			viscous_force_from_fluid_[index_i] = force;
 		}
 		//=================================================================================================//
-		void FluidAngularConservativeViscousForceOnSolid::Interaction(size_t index_i, Real dt)
+		void FluidAngularConservativeViscousForceOnSolid::interaction(size_t index_i, Real dt)
 		{
 			Real Vol_i = Vol_[index_i];
 			const Vecd &vel_ave_i = vel_ave_[index_i];

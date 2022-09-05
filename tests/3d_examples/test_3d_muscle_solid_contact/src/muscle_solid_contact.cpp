@@ -76,7 +76,7 @@ int main()
 	SimpleDynamics<TimeStepInitialization> myocardium_initialize_time_step(myocardium_body);
 	SimpleDynamics<TimeStepInitialization> moving_plate_initialize_time_step(moving_plate);
 	/** Corrected configuration. */
-	NewInteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration(myocardium_body_inner);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> corrected_configuration(myocardium_body_inner);
 	/** Time step size calculation. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(myocardium_body);
 	/** active and passive stress relaxation. */

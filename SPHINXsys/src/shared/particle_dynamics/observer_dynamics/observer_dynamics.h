@@ -117,11 +117,11 @@ namespace SPH
 		 * @brief Observing a variable from contact bodies.
 		 */
 		template <typename VariableType>
-		class ObservingAQuantity : public NewInteractionDynamics<BaseInterpolation<VariableType>>
+		class ObservingAQuantity : public InteractionDynamics<BaseInterpolation<VariableType>>
 		{
 		public:
 			explicit ObservingAQuantity(BaseBodyRelationContact &contact_relation, const std::string &variable_name)
-				: NewInteractionDynamics<BaseInterpolation<VariableType>>(contact_relation, variable_name)
+				: InteractionDynamics<BaseInterpolation<VariableType>>(contact_relation, variable_name)
 			{
 				this->interpolated_quantities_ = registerObservedQuantity(variable_name);
 			};

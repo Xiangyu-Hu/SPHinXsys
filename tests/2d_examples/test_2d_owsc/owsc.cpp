@@ -50,7 +50,7 @@ int main()
 	SimpleDynamics<NormalDirectionFromBodyShape> flap_normal_direction(flap);
 
 	/** corrected strong configuration. */
-	NewInteractionDynamics<solid_dynamics::CorrectConfiguration> flap_corrected_configuration(flap_inner);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> flap_corrected_configuration(flap_inner);
 	/** Time step initialization, add gravity. */
 	SimpleDynamics<TimeStepInitialization> initialize_time_step_to_fluid(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
 	/** Evaluation of density by summation approach. */
@@ -63,12 +63,13 @@ int main()
 	fluid_dynamics::PressureRelaxationRiemannWithWall pressure_relaxation(water_block_complex);
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
-	NewInteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Inflow boundary condition. */
 	BodyRegionByCell damping_buffer(water_block, makeShared<MultiPolygonShape>(createDampingBufferShape()));
 	SimpleDynamics<fluid_dynamics::DampingBoundaryCondition, BodyRegionByCell> damping_wave(damping_buffer);
 	/** Fluid force on flap. */
-	solid_dynamics::FluidForceOnSolidUpdate fluid_force_on_flap(flap_contact);
+	InteractionDynamics<solid_dynamics::FluidViscousForceOnSolid> viscous_force_on_solid(flap_contact);
+	InteractionDynamics<solid_dynamics::FluidForceOnSolidUpdate> fluid_force_on_flap(flap_contact, viscous_force_on_solid);
 	/** constrain region of the part of wall boundary. */
 	BodyRegionByParticle wave_maker(wall_boundary, makeShared<MultiPolygonShape>(createWaveMakerShape()));
 	SimpleDynamics<WaveMaking, BodyRegionByParticle> wave_making(wave_maker);
@@ -177,7 +178,7 @@ int main()
 	ObservedQuantityRecording<Real> pressure_probe("Pressure", io_environment, observer_contact_with_water);
 	// Interpolate the particle position in flap to move the observer accordingly. 
 	// Seems not used? TODO: observe displacement more accurate.
-	NewInteractionDynamics<observer_dynamics::InterpolatingAQuantity<Vecd>>
+	InteractionDynamics<observer_dynamics::InterpolatingAQuantity<Vecd>>
 		interpolation_observer_position(observer_contact_with_flap, "Position", "Position");
 	//----------------------------------------------------------------------
 	//	Prepare the simulation with cell linked list, configuration
@@ -227,7 +228,7 @@ int main()
 			update_density_by_summation.parallel_exec();
 			viscous_acceleration.parallel_exec();
 			/** Viscous force exerting on flap. */
-			fluid_force_on_flap.viscous_force_.parallel_exec();
+			viscous_force_on_solid.parallel_exec();
 
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)

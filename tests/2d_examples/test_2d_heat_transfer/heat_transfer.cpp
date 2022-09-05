@@ -270,11 +270,11 @@ int main()
 	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(fluid_body_complex);
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(fluid_body_complex);
 	/** Computing viscous acceleration. */
-	NewInteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_body_complex);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_body_complex);
 	/** Apply transport velocity formulation. */
-	NewInteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(fluid_body_complex);
+	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(fluid_body_complex);
 	/** Computing vorticity in the flow. */
-	NewInteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_body_inner);
+	InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(fluid_body_inner);
 	/** Inflow boundary condition. */
 	BodyAlignedBoxByCell inflow_buffer(
 		thermofluid_body, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));

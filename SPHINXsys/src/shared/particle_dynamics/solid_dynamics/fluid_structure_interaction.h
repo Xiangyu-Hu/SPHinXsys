@@ -1,30 +1,30 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
-* and HU1527/12-1.															*
-*                                                                           *
-* Portions copyright (c) 2017-2020 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * --------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
+ * and HU1527/12-1.															*
+ *                                                                           *
+ * Portions copyright (c) 2017-2020 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * --------------------------------------------------------------------------*/
 /**
-* @file 	fluid_structure_interaction.h
-* @brief 	Here, we define the algorithm classes for fluid structure interaction.   
-* @author	Chi ZHang and Xiangyu Hu
-*/
+ * @file 	fluid_structure_interaction.h
+ * @brief 	Here, we define the algorithm classes for fluid structure interaction.
+ * @author	Chi ZHang and Xiangyu Hu
+ */
 
 #ifndef FLUID_STRUCTURE_INTERACTION_H
 #define FLUID_STRUCTURE_INTERACTION_H
@@ -42,17 +42,20 @@ namespace SPH
 		typedef DataDelegateSimple<SolidBody, SolidParticles, Solid> SolidDataSimple;
 		typedef DataDelegateContact<SolidBody, SolidParticles, Solid, FluidBody, FluidParticles, Fluid> FSIContactData;
 		typedef DataDelegateContact<SolidBody, SolidParticles, Solid, EulerianFluidBody,
-			FluidParticles, Fluid> EFSIContactData; //EFSIContactData=Eulerian Fluid contact Data
+									FluidParticles, Fluid>
+			EFSIContactData; // EFSIContactData=Eulerian Fluid contact Data
 
 		/**
-		* @class FluidViscousForceOnSolid
-		* @brief Computing the viscous force from the fluid
-		*/
-		class FluidViscousForceOnSolid : public InteractionDynamics, public FSIContactData
+		 * @class FluidViscousForceOnSolid
+		 * @brief Computing the viscous force from the fluid
+		 */
+		class FluidViscousForceOnSolid : public LocalDynamics, public FSIContactData
 		{
 		public:
 			explicit FluidViscousForceOnSolid(BaseBodyRelationContact &contact_relation);
 			virtual ~FluidViscousForceOnSolid(){};
+			void interaction(size_t index_i, Real dt = 0.0);
+			StdLargeVec<Vecd> &getViscousForceFromFluid() { return viscous_force_from_fluid_; };
 
 		protected:
 			StdLargeVec<Real> &Vol_;
@@ -62,19 +65,19 @@ namespace SPH
 			StdVec<Real> mu_;
 			StdVec<Real> smoothing_length_;
 			StdLargeVec<Vecd> viscous_force_from_fluid_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
-		* @class FluidViscousForceOnSolidInEuler
-		* @brief Computing the viscous force from the fluid in eulerian framework
-		*/
-		class FluidViscousForceOnSolidInEuler : public InteractionDynamics, public EFSIContactData
+		 * @class FluidViscousForceOnSolidInEuler
+		 * @brief Computing the viscous force from the fluid in eulerian framework
+		 */
+		class FluidViscousForceOnSolidInEuler : public LocalDynamics, public EFSIContactData
 		{
 		public:
 			explicit FluidViscousForceOnSolidInEuler(BaseBodyRelationContact &contact_relation);
 			virtual ~FluidViscousForceOnSolidInEuler(){};
+			void interaction(size_t index_i, Real dt = 0.0);
+			StdLargeVec<Vecd> &getViscousForceFromFluid() { return viscous_force_from_fluid_; };
 
 		protected:
 			StdLargeVec<Real> &Vol_;
@@ -84,14 +87,13 @@ namespace SPH
 			StdVec<Real> mu_;
 			StdVec<Real> smoothing_length_;
 			StdLargeVec<Vecd> viscous_force_from_fluid_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
-		* @class FluidAngularConservativeViscousForceOnSolid
-		* @brief Computing the viscous force from the fluid
-		*/
+		 * @class FluidAngularConservativeViscousForceOnSolid
+		 * @brief Computing the viscous force from the fluid
+		 * TODO: new test for this.
+		 */
 		class FluidAngularConservativeViscousForceOnSolid : public FluidViscousForceOnSolid
 		{
 		public:
@@ -100,23 +102,22 @@ namespace SPH
 			virtual ~FluidAngularConservativeViscousForceOnSolid(){};
 
 		protected:
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
-		* @class BaseFluidPressureForce
-		* @brief Template class fro computing the pressure force from the fluid with different Riemann solvers.
-		* The pressure force is added on the viscous force of the latter is computed.
-		* This class is for FSI applications to achieve smaller solid dynamics
-		* time step size compared to the fluid dynamics
-		*/
+		 * @class BaseFluidPressureForceOnSolid
+		 * @brief Template class fro computing the pressure force from the fluid with different Riemann solvers.
+		 * The pressure force is added on the viscous force of the latter is computed.
+		 * This class is for FSI applications to achieve smaller solid dynamics
+		 * time step size compared to the fluid dynamics
+		 */
 		template <class RiemannSolverType>
-		class BaseFluidPressureForceOnSolid : public InteractionDynamics, public FSIContactData
+		class BaseFluidPressureForceOnSolid : public LocalDynamics, public FSIContactData
 		{
 		public:
 			explicit BaseFluidPressureForceOnSolid(BaseBodyRelationContact &contact_relation)
-				: InteractionDynamics(contact_relation.sph_body_),
-				  FSIContactData(contact_relation),
+				: LocalDynamics(contact_relation.sph_body_), FSIContactData(contact_relation),
 				  Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity()),
 				  acc_prior_(particles_->acc_prior_),
 				  acc_ave_(*particles_->AverageAcceleration()), n_(particles_->n_)
@@ -134,15 +135,7 @@ namespace SPH
 			};
 			virtual ~BaseFluidPressureForceOnSolid(){};
 
-		protected:
-			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &vel_ave_, &acc_prior_, &acc_ave_, &n_;
-			StdVec<StdLargeVec<Real> *> contact_Vol_, contact_rho_n_, contact_p_;
-			StdVec<StdLargeVec<Vecd> *> contact_vel_n_, contact_acc_prior_;
-			StdVec<RiemannSolverType> riemann_solvers_;
-			StdLargeVec<Vecd> force_from_fluid_; /**<  forces (including pressure and viscous) from fluid */
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override
+			void interaction(size_t index_i, Real dt = 0.0)
 			{
 				const Vecd &acc_ave_i = acc_ave_[index_i];
 				Real Vol_i = Vol_[index_i];
@@ -177,28 +170,36 @@ namespace SPH
 					}
 				}
 				force_from_fluid_[index_i] = force;
-				acc_prior_[index_i] = force / particles_->ParticleMass(index_i); //TODO: to add gravity contribution
+				acc_prior_[index_i] = force / particles_->ParticleMass(index_i); // TODO: to add gravity contribution
 			};
+
+		protected:
+			StdLargeVec<Real> &Vol_;
+			StdLargeVec<Vecd> &vel_ave_, &acc_prior_, &acc_ave_, &n_;
+			StdVec<StdLargeVec<Real> *> contact_Vol_, contact_rho_n_, contact_p_;
+			StdVec<StdLargeVec<Vecd> *> contact_vel_n_, contact_acc_prior_;
+			StdVec<RiemannSolverType> riemann_solvers_;
+			StdLargeVec<Vecd> force_from_fluid_; /**<  forces (including pressure and viscous) from fluid */
 		};
 		using FluidPressureForceOnSolid = BaseFluidPressureForceOnSolid<NoRiemannSolver>;
 		using FluidPressureForceOnSolidRiemann = BaseFluidPressureForceOnSolid<AcousticRiemannSolver>;
 
 		/**
-		* @class BaseFluidPressureForceOnSolidInEuler
-		* @brief Template class fro computing the pressure force from the fluid with different Riemann solvers.
-		* The pressure force is added on the viscous force of the latter is computed.
-		* This class is for FSI applications to achieve smaller solid dynamics
-		* time step size compared to the fluid dynamics
-		*/
+		 * @class BaseFluidPressureForceOnSolidInEuler
+		 * @brief Template class fro computing the pressure force from the fluid with different Riemann solvers.
+		 * The pressure force is added on the viscous force of the latter is computed.
+		 * This class is for FSI applications to achieve smaller solid dynamics
+		 * time step size compared to the fluid dynamics
+		 */
 		template <class RiemannSolverType>
-		class BaseFluidPressureForceOnSolidInEuler : public InteractionDynamics, public EFSIContactData
+		class BaseFluidPressureForceOnSolidInEuler : public LocalDynamics, public EFSIContactData
 		{
 		public:
 			explicit BaseFluidPressureForceOnSolidInEuler(BaseBodyRelationContact &contact_relation)
-				: InteractionDynamics(contact_relation.sph_body_),
-				EFSIContactData(contact_relation),
-				Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity()),
-				acc_prior_(particles_->acc_prior_), n_(particles_->n_)
+				: LocalDynamics(contact_relation.sph_body_),
+				  EFSIContactData(contact_relation),
+				  Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity()),
+				  acc_prior_(particles_->acc_prior_), n_(particles_->n_)
 			{
 				particles_->registerVariable(force_from_fluid_, "ForceFromFluid");
 				for (size_t k = 0; k != contact_particles_.size(); ++k)
@@ -210,17 +211,9 @@ namespace SPH
 					riemann_solvers_.push_back(RiemannSolverType(*contact_material_[k], *contact_material_[k]));
 				}
 			};
-			virtual ~BaseFluidPressureForceOnSolidInEuler() {};
+			virtual ~BaseFluidPressureForceOnSolidInEuler(){};
 
-		protected:
-			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &vel_ave_, &acc_prior_, &n_;
-			StdVec<StdLargeVec<Real> *> contact_Vol_, contact_rho_n_, contact_p_;
-			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
-			StdVec<RiemannSolverType> riemann_solvers_;
-			StdLargeVec<Vecd> force_from_fluid_; /**<  forces (including pressure and viscous) from fluid */
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override
+			void interaction(size_t index_i, Real dt = 0.0)
 			{
 				Real Vol_i = Vol_[index_i];
 				const Vecd &vel_ave_i = vel_ave_[index_i];
@@ -243,7 +236,7 @@ namespace SPH
 						Real r_ij = contact_neighborhood.r_ij_[n];
 						Real p_in_wall = p_k[index_j];
 						Real rho_in_wall = fluid_k->DensityFromPressure(p_in_wall);
-						Vecd vel_in_wall = - vel_n_k[index_j];
+						Vecd vel_in_wall = -vel_n_k[index_j];
 
 						FluidState state_l(rho_n_k[index_j], vel_n_k[index_j], p_k[index_j]);
 						FluidState state_r(rho_in_wall, vel_in_wall, p_in_wall);
@@ -253,8 +246,16 @@ namespace SPH
 					}
 				}
 				force_from_fluid_[index_i] = force;
-				acc_prior_[index_i] = force / particles_->ParticleMass(index_i); //TODO: to add gravity contribution
+				acc_prior_[index_i] = force / particles_->ParticleMass(index_i); // TODO: to add gravity contribution
 			};
+
+		protected:
+			StdLargeVec<Real> &Vol_;
+			StdLargeVec<Vecd> &vel_ave_, &acc_prior_, &n_;
+			StdVec<StdLargeVec<Real> *> contact_Vol_, contact_rho_n_, contact_p_;
+			StdVec<StdLargeVec<Vecd> *> contact_vel_n_;
+			StdVec<RiemannSolverType> riemann_solvers_;
+			StdLargeVec<Vecd> force_from_fluid_; /**<  forces (including pressure and viscous) from fluid */
 		};
 		using FluidPressureForceOnSolidInEuler = BaseFluidPressureForceOnSolidInEuler<NoRiemannSolver>;
 		using FluidPressureForceOnSolidAcousticRiemannInEuler = BaseFluidPressureForceOnSolidInEuler<AcousticRiemannSolver>;
@@ -262,48 +263,48 @@ namespace SPH
 		using FluidPressureForceOnSolidHLLCWithLimiterRiemannInEuler = BaseFluidPressureForceOnSolidInEuler<HLLCRiemannSolverWithLimiterInWeaklyCompressibleFluid>;
 
 		/**
-		* @class BaseFluidForceOnSolidUpdate
-		* @brief template class for computing force from fluid with updated viscous force
-		*/
-		template <class PressureForceType, class ViscousForceType>
+		 * @class BaseFluidForceOnSolidUpdate
+		 * @brief template class for computing force from fluid with updated viscous force
+		 */
+		template <class PressureForceType>
 		class BaseFluidForceOnSolidUpdate : public PressureForceType
 		{
 		public:
-			explicit BaseFluidForceOnSolidUpdate(BaseBodyRelationContact &contact_relation)
-				: PressureForceType(contact_relation), viscous_force_(contact_relation),
-				  viscous_force_from_fluid_(*this->particles_->template getVariableByName<Vecd>("ViscousForceFromFluid")){};
+			template <class ViscousForceOnSolidType>
+			BaseFluidForceOnSolidUpdate(BaseBodyRelationContact &contact_relation,
+										ViscousForceOnSolidType &viscous_force_on_solid)
+				: PressureForceType(contact_relation),
+				  viscous_force_from_fluid_(viscous_force_on_solid.getViscousForceFromFluid()){};
 			virtual ~BaseFluidForceOnSolidUpdate(){};
 
-			ViscousForceType viscous_force_;
-
-		protected:
-			StdLargeVec<Vecd> &viscous_force_from_fluid_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override
+			void interaction(size_t index_i, Real dt = 0.0)
 			{
-				PressureForceType::Interaction(index_i, dt);
+				PressureForceType::interaction(index_i, dt);
 				this->force_from_fluid_[index_i] += viscous_force_from_fluid_[index_i];
 				this->acc_prior_[index_i] += viscous_force_from_fluid_[index_i] / this->particles_->ParticleMass(index_i);
 			};
+
+		protected:
+			StdLargeVec<Vecd> &viscous_force_from_fluid_;
 		};
 		using FluidForceOnSolidUpdate =
-			BaseFluidForceOnSolidUpdate<FluidPressureForceOnSolid, FluidViscousForceOnSolid>;
+			BaseFluidForceOnSolidUpdate<FluidPressureForceOnSolid>;
 		using FluidForceOnSolidUpdateRiemann =
-			BaseFluidForceOnSolidUpdate<FluidPressureForceOnSolidRiemann, FluidViscousForceOnSolid>;
+			BaseFluidForceOnSolidUpdate<FluidPressureForceOnSolidRiemann>;
 		using FluidForceOnSolidUpdateInEuler =
-			BaseFluidForceOnSolidUpdate<FluidPressureForceOnSolidHLLCRiemannInEuler, FluidViscousForceOnSolidInEuler>;
+			BaseFluidForceOnSolidUpdate<FluidPressureForceOnSolidHLLCRiemannInEuler>;
 		using FluidForceOnSolidUpdateRiemannWithLimiterInEuler =
-			BaseFluidForceOnSolidUpdate<FluidPressureForceOnSolidHLLCWithLimiterRiemannInEuler, FluidViscousForceOnSolidInEuler>;
-
+			BaseFluidForceOnSolidUpdate<FluidPressureForceOnSolidHLLCWithLimiterRiemannInEuler>;
 
 		/**
-		* @class TotalViscousForceOnSolid
-		* @brief Computing the total viscous force from fluid
-		*/
+		 * @class TotalViscousForceOnSolid
+		 * @brief Computing the total viscous force from fluid
+		 */
 		class TotalViscousForceOnSolid : public LocalDynamicsReduce<Vecd, ReduceSum<Vecd>>, public SolidDataSimple
 		{
 		protected:
 			StdLargeVec<Vecd> &viscous_force_from_fluid_;
+
 		public:
 			explicit TotalViscousForceOnSolid(SPHBody &sph_body);
 			virtual ~TotalViscousForceOnSolid(){};
@@ -319,6 +320,7 @@ namespace SPH
 		{
 		protected:
 			StdLargeVec<Vecd> &force_from_fluid_;
+
 		public:
 			explicit TotalForceOnSolid(SPHBody &sph_body);
 			virtual ~TotalForceOnSolid(){};
@@ -327,11 +329,11 @@ namespace SPH
 		};
 
 		/**
-		* @class InitializeDisplacement
-		* @brief initialize the displacement for computing average velocity.
-		* This class is for FSI applications to achieve smaller solid dynamics
-		* time step size compared to the fluid dynamics
-		*/
+		 * @class InitializeDisplacement
+		 * @brief initialize the displacement for computing average velocity.
+		 * This class is for FSI applications to achieve smaller solid dynamics
+		 * time step size compared to the fluid dynamics
+		 */
 		class InitializeDisplacement : public LocalDynamics, public ElasticSolidDataSimple
 		{
 		protected:
@@ -345,11 +347,11 @@ namespace SPH
 		};
 
 		/**
-		* @class UpdateAverageVelocityAndAcceleration
-		* @brief Computing average velocity.
-		* This class is for FSI applications to achieve smaller solid dynamics
-		* time step size compared to the fluid dynamics
-		*/
+		 * @class UpdateAverageVelocityAndAcceleration
+		 * @brief Computing average velocity.
+		 * This class is for FSI applications to achieve smaller solid dynamics
+		 * time step size compared to the fluid dynamics
+		 */
 		class UpdateAverageVelocityAndAcceleration : public LocalDynamics, public ElasticSolidDataSimple
 		{
 		protected:
@@ -363,11 +365,11 @@ namespace SPH
 		};
 
 		/**
-		* @class AverageVelocityAndAcceleration
-		* @brief Impose force matching between fluid and solid dynamics.
-		* Note that the fluid time step should be larger than that of solid time step.
-		* Otherwise numerical instability may occur. 
-		*/
+		 * @class AverageVelocityAndAcceleration
+		 * @brief Impose force matching between fluid and solid dynamics.
+		 * Note that the fluid time step should be larger than that of solid time step.
+		 * Otherwise numerical instability may occur.
+		 */
 		class AverageVelocityAndAcceleration
 		{
 		protected:
@@ -382,4 +384,4 @@ namespace SPH
 		};
 	}
 }
-#endif //FLUID_STRUCTURE_INTERACTION_H
+#endif // FLUID_STRUCTURE_INTERACTION_H

@@ -171,7 +171,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	/** Define external force.*/
 	SimpleDynamics<TimeStepInitialization> ball_initialize_timestep(ball, makeShared<Gravity>(Vec2d(0.0, -gravity_g)));
-	NewInteractionDynamics<solid_dynamics::CorrectConfiguration> ball_corrected_configuration(ball_inner);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> ball_corrected_configuration(ball_inner);
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> ball_get_time_step_size(ball);
 	/** stress relaxation for the balls. */
 	solid_dynamics::StressRelaxationFirstHalf ball_stress_relaxation_first_half(ball_inner);

@@ -12,7 +12,7 @@
 namespace SPH
 {
 	//=================================================================================================//
-	void InteractionDynamics::exec(Real dt)
+	void OldInteractionDynamics::exec(Real dt)
 	{
 		setBodyUpdated();
 		setupDynamics(dt);
@@ -24,7 +24,7 @@ namespace SPH
 			post_processes_[k]->exec(dt);
 	}
 	//=================================================================================================//
-	void InteractionDynamics::parallel_exec(Real dt)
+	void OldInteractionDynamics::parallel_exec(Real dt)
 	{
 		setBodyUpdated();
 		setupDynamics(dt);
@@ -91,7 +91,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	InteractionDynamicsSplitting::InteractionDynamicsSplitting(SPHBody &sph_body)
-		: InteractionDynamics(sph_body),
+		: OldInteractionDynamics(sph_body),
 		  real_body_(DynamicCast<RealBody>(this, sph_body)),
 		  split_cell_lists_(real_body_.getSplitCellLists())
 	{

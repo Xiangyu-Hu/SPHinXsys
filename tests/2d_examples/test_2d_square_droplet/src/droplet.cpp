@@ -56,7 +56,7 @@ int main()
 		update_water_density_by_summation(water_air_complex.inner_relation_, water_wall_contact);
 	fluid_dynamics::DensitySummationComplex
 		update_air_density_by_summation(air_water_complex, air_wall_contact);
-	NewInteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
+	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
 		air_transport_correction(air_water_complex, air_wall_contact);
 	/** Time step size without considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_max);
@@ -75,14 +75,14 @@ int main()
 	fluid_dynamics::MultiPhaseDensityRelaxationRiemannWithWall
 		air_density_relaxation(air_water_complex, air_wall_contact);
 	/** Viscous acceleration. */
-	NewInteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall> air_viscous_acceleration(air_water_complex, air_wall_contact);
-	NewInteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall> water_viscous_acceleration(water_air_complex, water_wall_contact);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall> air_viscous_acceleration(air_water_complex, air_wall_contact);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhaseWithWall> water_viscous_acceleration(water_air_complex, water_wall_contact);
 	/** Surface tension. */
 	fluid_dynamics::FreeSurfaceIndicationInner
 		surface_detection(water_air_complex.inner_relation_);
-	NewInteractionDynamics<fluid_dynamics::ColorFunctionGradientInner> color_gradient(water_air_complex.inner_relation_);
-	NewInteractionDynamics<fluid_dynamics::ColorFunctionGradientInterpolationInner> color_gradient_interpolation(water_air_complex.inner_relation_);
-	NewInteractionDynamics<fluid_dynamics::SurfaceTensionAccelerationInner> surface_tension_acceleration(water_air_complex.inner_relation_, 1.0);
+	InteractionDynamics<fluid_dynamics::ColorFunctionGradientInner> color_gradient(water_air_complex.inner_relation_);
+	InteractionDynamics<fluid_dynamics::ColorFunctionGradientInterpolationInner> color_gradient_interpolation(water_air_complex.inner_relation_);
+	InteractionDynamics<fluid_dynamics::SurfaceTensionAccelerationInner> surface_tension_acceleration(water_air_complex.inner_relation_, 1.0);
 	/**
 	 * @brief Output.
 	 */

@@ -241,13 +241,13 @@ int main()
 	/** Pressure relaxation using verlet time stepping. */
 	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(water_block_complex);
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex);
-	NewInteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	DampingWithRandomChoice<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
 		fluid_damping(0.2, water_block_complex, "Velocity", mu_f);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
 	/** Corrected configuration. */
-	NewInteractionDynamics<solid_dynamics::CorrectConfiguration> gate_corrected_configuration(gate_inner);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> gate_corrected_configuration(gate_inner);
 	/** Compute time step size of elastic solid. */
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> gate_computing_time_step_size(gate);
 	/** Stress relaxation stepping for the elastic gate. */
@@ -261,7 +261,7 @@ int main()
 	/** Compute the average velocity of gate. */
 	solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);
 	/** Compute the force exerted on elastic gate due to fluid pressure. */
-	solid_dynamics::FluidPressureForceOnSolid fluid_pressure_force_on_gate(gate_contact);
+	InteractionDynamics<solid_dynamics::FluidPressureForceOnSolid> fluid_pressure_force_on_gate(gate_contact);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

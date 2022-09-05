@@ -62,7 +62,7 @@ int main()
 		update_water_density_by_summation(water_air_complex.inner_relation_, water_wall_contact);
 	fluid_dynamics::DensitySummationComplex
 		update_air_density_by_summation(air_water_complex, air_wall_contact);
-	NewInteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
+	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
 		air_transport_correction(air_water_complex, air_wall_contact);
 	/** Time step size without considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_water_advection_time_step_size(water_block, U_max);

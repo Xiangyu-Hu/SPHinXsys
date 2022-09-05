@@ -362,7 +362,7 @@ namespace SPH
 
 			SimpleDynamics<NormalPrediction> normal_prediction_;
 			ReduceDynamics<PredictionConvergenceCheck> normal_prediction_convergence_check_;
-			NewInteractionDynamics<ConsistencyCorrection> consistency_correction_;
+			InteractionDynamics<ConsistencyCorrection> consistency_correction_;
 			ReduceDynamics<ConsistencyUpdatedCheck> consistency_updated_check_;
 			SmoothingNormal smoothing_normal_;
 		};

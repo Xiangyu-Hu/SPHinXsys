@@ -120,12 +120,12 @@ int main(int ac, char *av[])
 	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(water_block_complex);
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex);
 	/** viscous acceleration and transport velocity correction can be combined because they are independent dynamics. */
-	NewInteractionDynamics<CombinedLocalInteractionDynamics<
+	InteractionDynamics<CombinedLocalInteractionDynamics<
 		fluid_dynamics::ViscousAccelerationWithWall,
 		fluid_dynamics::TransportVelocityCorrectionComplex>>
 		viscous_acceleration_and_transport_correction(water_block_complex);
 	/** Computing vorticity in the flow. */
-	NewInteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_complex.inner_relation_);
+	InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_complex.inner_relation_);
 	/** Inflow boundary condition. */
 	BodyAlignedBoxByCell inflow_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
@@ -138,9 +138,11 @@ int main(int ac, char *av[])
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SimpleDynamics<NormalDirectionFromBodyShape> insert_body_normal_direction(insert_body);
 	/** Corrected configuration for the elastic insert body. */
-	NewInteractionDynamics<solid_dynamics::CorrectConfiguration> insert_body_corrected_configuration(insert_body_inner);
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> insert_body_corrected_configuration(insert_body_inner);
 	/** Compute the force exerted on solid body due to fluid pressure and viscosity. */
-	solid_dynamics::FluidForceOnSolidUpdate fluid_force_on_solid_update(insert_body_contact);
+	InteractionDynamics<solid_dynamics::FluidViscousForceOnSolid> viscous_force_on_solid(insert_body_contact);
+	InteractionDynamics<solid_dynamics::FluidForceOnSolidUpdate> 
+		fluid_force_on_solid_update(insert_body_contact, viscous_force_on_solid);
 	/** Compute the average velocity of the insert body. */
 	solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(insert_body);
 	//----------------------------------------------------------------------
@@ -231,7 +233,7 @@ int main(int ac, char *av[])
 			viscous_acceleration_and_transport_correction.parallel_exec(Dt);
 
 			/** FSI for viscous force. */
-			fluid_force_on_solid_update.viscous_force_.parallel_exec();
+			viscous_force_on_solid.parallel_exec();
 			/** Update normal direction on elastic body.*/
 			insert_body_update_normal.parallel_exec();
 			size_t inner_ite_dt = 0;

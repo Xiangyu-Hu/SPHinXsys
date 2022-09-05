@@ -306,7 +306,7 @@ int main(int ac, char *av[])
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction(fish_body);
 	/** Corrected configuration.*/
-	NewInteractionDynamics<solid_dynamics::CorrectConfiguration>
+	InteractionDynamics<solid_dynamics::CorrectConfiguration>
 		fish_body_corrected_configuration(fish_body_inner);
 	/**
 	 * Common particle dynamics.
@@ -322,11 +322,11 @@ int main(int ac, char *av[])
 	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(water_block_complex);
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
-	NewInteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
+	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** Impose transport velocity formulation. */
-	NewInteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex);
+	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex);
 	/** Computing vorticity in the flow. */
-	NewInteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
+	InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
 	/** Inflow boundary condition. */
 	BodyAlignedBoxByCell inflow_buffer(
 		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
@@ -335,7 +335,8 @@ int main(int ac, char *av[])
 	/**
 	 * Fluid structure interaction model.
 	 */
-	solid_dynamics::FluidForceOnSolidUpdate fluid_force_on_fish_body(fish_body_contact);
+	InteractionDynamics<solid_dynamics::FluidViscousForceOnSolid> viscous_force_on_fish_body(fish_body_contact);
+	InteractionDynamics<solid_dynamics::FluidForceOnSolidUpdate> fluid_force_on_fish_body(fish_body_contact, viscous_force_on_fish_body);
 	/**
 	 * Solid dynamics.
 	 */
@@ -457,7 +458,7 @@ int main(int ac, char *av[])
 			viscous_acceleration.parallel_exec();
 			transport_velocity_correction.parallel_exec(Dt);
 			/** Viscous force exerting on fish body. */
-			fluid_force_on_fish_body.viscous_force_.parallel_exec();
+			viscous_force_on_fish_body.parallel_exec();
 			/** Update normal direction on fish body. */
 			fish_body_update_normal.parallel_exec();
 			Real relaxation_time = 0.0;
