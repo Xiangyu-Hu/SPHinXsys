@@ -98,7 +98,7 @@ namespace SPH
 		: SPHBody(sph_system, shape_ptr),
 		  system_domain_bounds_(this->getSPHSystem().system_domain_bounds_),
 		  use_split_cell_lists_(false), particle_sorting_(this),
-		  iteration_count_(0)
+		  iteration_count_(1)
 	{
 		sph_system.real_bodies_.push_back(this);
 		size_t number_of_split_cell_lists = powerN(3, Vecd(0).size());

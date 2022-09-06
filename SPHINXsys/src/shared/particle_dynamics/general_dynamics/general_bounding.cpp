@@ -173,11 +173,11 @@ namespace SPH
 			particle_position[axis_] < (bounding_bounds_.first[axis_] + cut_off_radius_max_))
 		{
 			mutex_create_ghost_particle_.lock();
-			size_t expected_particle_index = particles_->insertAGhostParticle(index_i);
-			ghost_particles_[0].push_back(expected_particle_index);
-			Vecd translated_position = particle_position + periodic_translation_;
+			size_t ghost_particle_index = particles_->insertAGhostParticle(index_i);
+			ghost_particles_[0].push_back(ghost_particle_index);
+			pos_[ghost_particle_index] = particle_position + periodic_translation_;
 			/** insert ghost particle to cell linked list */
-			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
+			cell_linked_list_->InsertACellLinkedListDataEntry(ghost_particle_index, pos_[ghost_particle_index]);
 			mutex_create_ghost_particle_.unlock();
 		}
 	}
@@ -190,11 +190,11 @@ namespace SPH
 			particle_position[axis_] > (bounding_bounds_.second[axis_] - cut_off_radius_max_))
 		{
 			mutex_create_ghost_particle_.lock();
-			size_t expected_particle_index = particles_->insertAGhostParticle(index_i);
-			ghost_particles_[1].push_back(expected_particle_index);
-			Vecd translated_position = particle_position - periodic_translation_;
+			size_t ghost_particle_index = particles_->insertAGhostParticle(index_i);
+			ghost_particles_[1].push_back(ghost_particle_index);
+			pos_[ghost_particle_index] = particle_position - periodic_translation_;
 			/** insert ghost particle to cell linked list */
-			cell_linked_list_->InsertACellLinkedListDataEntry(expected_particle_index, translated_position);
+			cell_linked_list_->InsertACellLinkedListDataEntry(ghost_particle_index, pos_[ghost_particle_index]);
 			mutex_create_ghost_particle_.unlock();
 		}
 	}
