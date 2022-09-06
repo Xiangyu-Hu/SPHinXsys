@@ -51,9 +51,9 @@ int main()
 	SimpleDynamics<TimeStepInitialization> initialize_a_water_step(water_block);
 	SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block);
 	/** Evaluation of density by summation approach. */
-	NewInteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex>
+	InteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex>
 		update_water_density_by_summation(water_air_complex.inner_relation_, water_wall_contact);
-	NewInteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationComplex>
+	InteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationComplex>
 		update_air_density_by_summation(air_water_complex, air_wall_contact);
 	/** transport formulation for regularizing particle distribution. */
 	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
@@ -78,7 +78,7 @@ int main()
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhase> air_viscous_acceleration(air_water_complex);
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationMultiPhase> water_viscous_acceleration(water_air_complex);
 	/** Surface tension and wetting effects. */
-	NewInteractionDynamicsWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_detection(water_air_complex.inner_relation_, water_wall_contact);
+	InteractionDynamicsWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_detection(water_air_complex.inner_relation_, water_wall_contact);
 	InteractionDynamics<fluid_dynamics::ColorFunctionGradientComplex> color_gradient(water_air_complex.inner_relation_, water_wall_contact);
 	InteractionDynamics<fluid_dynamics::ColorFunctionGradientInterpolationInner> color_gradient_interpolation(water_air_complex.inner_relation_);
 	InteractionDynamics<fluid_dynamics::SurfaceTensionAccelerationInner> surface_tension_acceleration(water_air_complex.inner_relation_, tension_force);

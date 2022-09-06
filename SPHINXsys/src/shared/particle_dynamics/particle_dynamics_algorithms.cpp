@@ -36,7 +36,7 @@ namespace SPH
 			post_processes_[k]->parallel_exec(dt);
 	}
 	//=================================================================================================//
-	void InteractionDynamicsWithUpdate::exec(Real dt)
+	void OldInteractionDynamicsWithUpdate::exec(Real dt)
 	{
 		setBodyUpdated();
 		setupDynamics(dt);
@@ -49,7 +49,7 @@ namespace SPH
 		ParticleIterator(total_real_particles, functor_update_, dt);
 	}
 	//=================================================================================================//
-	void InteractionDynamicsWithUpdate::parallel_exec(Real dt)
+	void OldInteractionDynamicsWithUpdate::parallel_exec(Real dt)
 	{
 		setBodyUpdated();
 		setupDynamics(dt);

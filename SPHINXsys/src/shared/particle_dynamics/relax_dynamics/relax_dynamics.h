@@ -364,7 +364,7 @@ namespace SPH
 			ReduceDynamics<PredictionConvergenceCheck> normal_prediction_convergence_check_;
 			InteractionDynamics<ConsistencyCorrection> consistency_correction_;
 			ReduceDynamics<ConsistencyUpdatedCheck> consistency_updated_check_;
-			NewInteractionDynamicsWithUpdate<SmoothingNormal> smoothing_normal_;
+			InteractionDynamicsWithUpdate<SmoothingNormal> smoothing_normal_;
 		};
 
 		/**

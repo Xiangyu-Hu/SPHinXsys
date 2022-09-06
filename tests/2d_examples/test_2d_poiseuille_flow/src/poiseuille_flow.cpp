@@ -117,7 +117,7 @@ int main()
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
 	/** Evaluation of density by summation approach. */
-	NewInteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_complex);
+	InteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(water_block_complex);
 	/** Time step size without considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */

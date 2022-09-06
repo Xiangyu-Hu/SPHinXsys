@@ -256,7 +256,7 @@ int main()
 	/** Initialize particle acceleration. */
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(thermofluid_body);
 	/** Evaluation of density by summation approach. */
-	NewInteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_body_complex);
+	InteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_body_complex);
 	/** Time step size without considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step(thermofluid_body, U_f);
 	/** Time step size with considering sound wave speed. */

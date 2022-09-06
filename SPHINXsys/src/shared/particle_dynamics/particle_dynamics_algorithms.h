@@ -70,17 +70,17 @@ namespace SPH
 	};
 
 	/**
-	 * @class InteractionDynamicsWithUpdate
+	 * @class OldInteractionDynamicsWithUpdate
 	 * @brief This class includes an interaction and a update steps
 	 */
-	class InteractionDynamicsWithUpdate : public OldInteractionDynamics
+	class OldInteractionDynamicsWithUpdate : public OldInteractionDynamics
 	{
 	public:
-		explicit InteractionDynamicsWithUpdate(SPHBody &sph_body)
+		explicit OldInteractionDynamicsWithUpdate(SPHBody &sph_body)
 			: OldInteractionDynamics(sph_body),
-			  functor_update_(std::bind(&InteractionDynamicsWithUpdate::Update,
+			  functor_update_(std::bind(&OldInteractionDynamicsWithUpdate::Update,
 										this, _1, _2)) {}
-		virtual ~InteractionDynamicsWithUpdate(){};
+		virtual ~OldInteractionDynamicsWithUpdate(){};
 
 		virtual void exec(Real dt = 0.0) override;
 		virtual void parallel_exec(Real dt = 0.0) override;
@@ -94,11 +94,11 @@ namespace SPH
 	 * @class ParticleDynamics1Level
 	 * @brief This class includes an initialization, an interaction and a update steps
 	 */
-	class ParticleDynamics1Level : public InteractionDynamicsWithUpdate
+	class ParticleDynamics1Level : public OldInteractionDynamicsWithUpdate
 	{
 	public:
 		explicit ParticleDynamics1Level(SPHBody &sph_body)
-			: InteractionDynamicsWithUpdate(sph_body),
+			: OldInteractionDynamicsWithUpdate(sph_body),
 			  functor_initialization_(std::bind(&ParticleDynamics1Level::Initialization,
 												this, _1, _2)) {}
 		virtual ~ParticleDynamics1Level(){};
@@ -314,17 +314,17 @@ namespace SPH
 	};
 
 	/**
-	 * @class NewInteractionDynamicsWithUpdate
+	 * @class InteractionDynamicsWithUpdate
 	 * @brief This class includes an interaction and a update steps
 	 */
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
-	class NewInteractionDynamicsWithUpdate : public InteractionDynamics<LocalDynamicsType, DynamicsRange>
+	class InteractionDynamicsWithUpdate : public InteractionDynamics<LocalDynamicsType, DynamicsRange>
 	{
 	public:
 		template <class BodyRelationType, typename... Args>
-		NewInteractionDynamicsWithUpdate(BodyRelationType &body_relation, Args &&...args)
+		InteractionDynamicsWithUpdate(BodyRelationType &body_relation, Args &&...args)
 			: InteractionDynamics<LocalDynamicsType, DynamicsRange>(body_relation, std::forward<Args>(args)...) {}
-		virtual ~NewInteractionDynamicsWithUpdate(){};
+		virtual ~InteractionDynamicsWithUpdate(){};
 
 		virtual void exec(Real dt = 0.0) override
 		{
@@ -352,12 +352,12 @@ namespace SPH
 	 * @brief This class includes an interaction and a update steps
 	 */
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
-	class NewInteractionDynamics1Level : public NewInteractionDynamicsWithUpdate<LocalDynamicsType, DynamicsRange>
+	class NewInteractionDynamics1Level : public InteractionDynamicsWithUpdate<LocalDynamicsType, DynamicsRange>
 	{
 	public:
 		template <class BodyRelationType, typename... Args>
 		NewInteractionDynamics1Level(BodyRelationType &body_relation, Args &&...args)
-			: NewInteractionDynamicsWithUpdate<LocalDynamicsType, DynamicsRange>(body_relation, std::forward<Args>(args)...) {}
+			: InteractionDynamicsWithUpdate<LocalDynamicsType, DynamicsRange>(body_relation, std::forward<Args>(args)...) {}
 		virtual ~NewInteractionDynamics1Level(){};
 
 		virtual void exec(Real dt = 0.0) override
