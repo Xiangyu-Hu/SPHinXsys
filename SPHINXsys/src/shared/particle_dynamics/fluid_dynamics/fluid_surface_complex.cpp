@@ -29,9 +29,9 @@ namespace SPH
 			: FreeSurfaceIndicationComplex(complex_relation.inner_relation_,
 										   complex_relation.contact_relation_, threshold) {}
 		//=================================================================================================//
-		void FreeSurfaceIndicationComplex::Interaction(size_t index_i, Real dt)
+		void FreeSurfaceIndicationComplex::interaction(size_t index_i, Real dt)
 		{
-			FreeSurfaceIndicationInner::Interaction(index_i, dt);
+			FreeSurfaceIndicationInner::interaction(index_i, dt);
 
 			Real pos_div = 0.0;
 			for (size_t k = 0; k < contact_configuration_.size(); ++k)

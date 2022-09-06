@@ -13,8 +13,7 @@ namespace SPH
         //=================================================================================================//
         FreeSurfaceIndicationInner::
             FreeSurfaceIndicationInner(BaseBodyRelationInner &inner_relation, Real threshold)
-            : InteractionDynamicsWithUpdate(inner_relation.sph_body_),
-              FluidDataInner(inner_relation),
+            : LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
               threshold_by_dimensions_(threshold * (Real)Dimensions),
               Vol_(particles_->Vol_),
               surface_indicator_(particles_->surface_indicator_),
@@ -23,7 +22,7 @@ namespace SPH
             particles_->registerVariable(pos_div_, "PositionDivergence");
         }
         //=================================================================================================//
-        void FreeSurfaceIndicationInner::Interaction(size_t index_i, Real dt)
+        void FreeSurfaceIndicationInner::interaction(size_t index_i, Real dt)
         {
             Real pos_div = 0.0;
             const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
@@ -34,7 +33,7 @@ namespace SPH
             pos_div_[index_i] = pos_div;
         }
         //=================================================================================================//
-        void FreeSurfaceIndicationInner::Update(size_t index_i, Real dt)
+        void FreeSurfaceIndicationInner::update(size_t index_i, Real dt)
         {
             bool is_free_surface = pos_div_[index_i] < threshold_by_dimensions_ ? true : false;
 
@@ -52,7 +51,7 @@ namespace SPH
             surface_indicator_[index_i] = is_free_surface ? 1 : 0;
         }
         //=================================================================================================//
-        void DensitySummationFreeStreamInner::Update(size_t index_i, Real dt)
+        void DensitySummationFreeStreamInner::update(size_t index_i, Real dt)
         {
             if (rho_sum_[index_i] < rho0_ && isNearSurface(index_i))
             {

@@ -133,9 +133,9 @@ int main(int ac, char *av[])
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex_relation);
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex_relation);
 	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(water_block_complex_relation);
-	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex
+	NewInteractionDynamicsWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
 		inlet_outlet_surface_particle_indicator(water_block_complex_relation);
-	fluid_dynamics::DensitySummationFreeStreamComplex update_density_by_summation(water_block_complex_relation);
+	NewInteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationFreeStreamComplex> update_density_by_summation(water_block_complex_relation);
 	water_block.addBodyStateForRecording<Real>("Pressure");		   // output for debug
 	water_block.addBodyStateForRecording<int>("SurfaceIndicator"); // output for debug
 

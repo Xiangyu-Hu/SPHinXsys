@@ -49,12 +49,11 @@ namespace SPH
 										 BaseBodyRelationContact &contact_relation, Real threshold = 0.75);
 			explicit FreeSurfaceIndicationComplex(ComplexBodyRelation &complex_relation, Real threshold = 0.75);
 			virtual ~FreeSurfaceIndicationComplex(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdVec<Real> contact_inv_rho0_;
 			StdVec<StdLargeVec<Real> *> contact_mass_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 		using SpatialTemporalFreeSurfaceIdentificationComplex =
 			SpatialTemporalFreeSurfaceIdentification<FreeSurfaceIndicationComplex>;

@@ -61,32 +61,6 @@ namespace SPH
 		};
 
 		/**
-		 * @class FreeSurfaceIndicationInner
-		 * @brief  indicate the particles near the free surface of a fluid body.
-		 * Note that, SPHinXsys does not require this function for simulating general free surface flow problems.
-		 * However, some other applications may use this function, such as transport velocity formulation,
-		 * for masking some function which is only applicable for the bulk of the fluid body.
-		 */
-		class FreeSurfaceIndicationInner
-			: public InteractionDynamicsWithUpdate,
-			  public EulerianWeaklyCompressibleFluidDataInner
-		{
-		public:
-			explicit FreeSurfaceIndicationInner(BaseBodyRelationInner &inner_relation, Real threshold = 0.75);
-			virtual ~FreeSurfaceIndicationInner(){};
-
-		protected:
-			Real threshold_by_dimensions_;
-			StdLargeVec<Real> &Vol_;
-			StdLargeVec<int> &surface_indicator_;
-			StdLargeVec<Real> pos_div_;
-			Real smoothing_length_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
-		};
-
-		/**
 		 * @class ViscousAccelerationInner
 		 * @brief  the viscosity force induced acceleration
 		 */

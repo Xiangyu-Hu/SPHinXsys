@@ -73,9 +73,9 @@ namespace SPH
 		}
 		//=================================================================================================//
 		template <class DensitySummationInnerType>
-		void DensitySummation<DensitySummationInnerType>::Interaction(size_t index_i, Real dt)
+		void DensitySummation<DensitySummationInnerType>::interaction(size_t index_i, Real dt)
 		{
-			DensitySummationInnerType::Interaction(index_i, dt);
+			DensitySummationInnerType::interaction(index_i, dt);
 
 			/** Contact interaction. */
 			Real sigma(0.0);

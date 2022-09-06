@@ -4,38 +4,38 @@
  * @details This is the one of the basic test cases.
  * @author 	Xiangyu Hu
  */
- /**
-  * @brief 	SPHinXsys Library.
-  */
+/**
+ * @brief 	SPHinXsys Library.
+ */
 #include "sphinxsys.h"
-  /**
+/**
  * @brief Namespace cite here.
  */
 using namespace SPH;
 /**
  * @brief Basic geometry parameters and numerical setup.
  */
-Real DL = 5.366; 						/**< Tank length. */
-Real DH = 5.366; 						/**< Tank height. */
-Real LL = 2.0; 							/**< Liquid column length. */
-Real LH = 1.0; 							/**< Liquid column height. */
-Real resolution_ref = 0.025; 			/**< Global reference resolution. */
-Real BW = resolution_ref * 4; 			/**< Extending width for BCs. */
+Real DL = 5.366;			  /**< Tank length. */
+Real DH = 5.366;			  /**< Tank height. */
+Real LL = 2.0;				  /**< Liquid column length. */
+Real LH = 1.0;				  /**< Liquid column height. */
+Real resolution_ref = 0.025;  /**< Global reference resolution. */
+Real BW = resolution_ref * 4; /**< Extending width for BCs. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(DL + BW, DH + BW));
-//Observer location
+// Observer location
 StdVec<Vecd> observation_location = {Vecd(DL, 0.2)};
 /**
  * @brief Material properties of the fluid.
  */
-Real rho0_f = 1.0;						/**< Reference density of fluid. */
-Real gravity_g = 1.0;					/**< Gravity force of fluid. */
-Real U_max = 2.0*sqrt(gravity_g*LH);		/**< Characteristic velocity. */
-Real c_f = 10.0* U_max;					/**< Reference sound speed. */
+Real rho0_f = 1.0;						 /**< Reference density of fluid. */
+Real gravity_g = 1.0;					 /**< Gravity force of fluid. */
+Real U_max = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
+Real c_f = 10.0 * U_max;				 /**< Reference sound speed. */
 /** create a water block shape */
 std::vector<Vecd> createWaterBlockShape()
 {
-	//geometry
+	// geometry
 	std::vector<Vecd> water_block_shape;
 	water_block_shape.push_back(Vecd(0.0, 0.0));
 	water_block_shape.push_back(Vecd(0.0, LH));
@@ -45,8 +45,8 @@ std::vector<Vecd> createWaterBlockShape()
 	return water_block_shape;
 }
 /**
-* @brief create wall shape
-*/
+ * @brief create wall shape
+ */
 std::vector<Vecd> createWallShape()
 {
 	std::vector<Vecd> inner_wall_shape;
@@ -62,7 +62,7 @@ std::vector<Vecd> createWallShape()
 /** create a structure shape */
 std::vector<Vecd> createStructureShape()
 {
-	//geometry
+	// geometry
 	std::vector<Vecd> water_block_shape;
 	water_block_shape.push_back(Vecd(0.5 * DL, 0.05 * DH));
 	water_block_shape.push_back(Vecd(0.5 * DL + 0.5 * LL, 0.05 * DH + 0.5 * LH));
@@ -71,8 +71,8 @@ std::vector<Vecd> createStructureShape()
 	return water_block_shape;
 }
 /**
-*@brief 	Fluid body shape definition.
-*/
+ *@brief 	Fluid body shape definition.
+ */
 class WaterBlock : public MultiPolygonShape
 {
 public:
@@ -89,8 +89,8 @@ class WallAndStructure : public MultiPolygonShape
 public:
 	explicit WallAndStructure(const std::string &shape_name) : MultiPolygonShape(shape_name)
 	{
-	multi_polygon_.addAPolygon(createWallShape(), ShapeBooleanOps::add);
-	multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::sub);
+		multi_polygon_.addAPolygon(createWallShape(), ShapeBooleanOps::add);
+		multi_polygon_.addAPolygon(createStructureShape(), ShapeBooleanOps::sub);
 	}
 };
 /**
@@ -107,7 +107,7 @@ int main()
 	/** Tag for computation from restart files. 0: not from restart files. */
 	sph_system.restart_step_ = 0;
 	/** output environment. */
-	IOEnvironment 	io_environment(sph_system);
+	IOEnvironment io_environment(sph_system);
 	/**
 	 * @brief Material property, particles and body creation of fluid.
 	 */
@@ -121,30 +121,30 @@ int main()
 	fluid_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	/** topology */
 	BodyRelationInner water_block_inner(water_block);
-	BodyRelationContact fluid_observer_contact(fluid_observer, { &water_block });
+	BodyRelationContact fluid_observer_contact(fluid_observer, {&water_block});
 	/**
 	 * @brief 	Define all numerical methods which are used in this case.
 	 */
-	 /** Define external force. */
-	Gravity	gravity(Vecd(0.0, -gravity_g));
+	/** Define external force. */
+	Gravity gravity(Vecd(0.0, -gravity_g));
 	/**
 	 * @brief 	Methods used for time stepping.
 	 */
-	 /** Initialize particle acceleration. */
+	/** Initialize particle acceleration. */
 	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, gravity_ptr);
 	/**
 	 * @brief 	Algorithms of fluid dynamics.
 	 */
-	 /** Evaluation of density by summation approach. */
-	fluid_dynamics::DensitySummationFreeSurfaceInner 		update_density_by_summation(water_block_inner);
+	/** Evaluation of density by summation approach. */
+	NewInteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceInner> update_density_by_summation(water_block_inner);
 	/** Time step size without considering sound wave speed. */
-	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> 			get_fluid_advection_time_step_size(water_block, U_max);
+	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_max);
 	/** Time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation algorithm by using position verlet time stepping. */
 	fluid_dynamics::PressureRelaxationRiemannInner pressure_relaxation(water_block_inner);
-		fluid_dynamics::DensityRelaxationRiemannInner	density_relaxation(water_block_inner);
+	fluid_dynamics::DensityRelaxationRiemannInner density_relaxation(water_block_inner);
 	/** Confinement condition for wall and structure. */
 	NearShapeSurface near_surface(water_block, makeShared<WallAndStructure>("WallAndStructure"));
 	fluid_dynamics::StaticConfinement confinement_condition(near_surface);
@@ -155,11 +155,11 @@ int main()
 	 * @brief Output.
 	 */
 	/** Output the body states. */
-	BodyStatesRecordingToVtp		body_states_recording(io_environment, sph_system.real_bodies_);
+	BodyStatesRecordingToVtp body_states_recording(io_environment, sph_system.real_bodies_);
 	/** Output the body states for restart simulation. */
-	RestartIO		restart_io(io_environment, sph_system.real_bodies_);
+	RestartIO restart_io(io_environment, sph_system.real_bodies_);
 	/** Output the mechanical energy of fluid body. */
-	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>> 	
+	RegressionTestDynamicTimeWarping<BodyReducedQuantityRecording<ReduceDynamics<TotalMechanicalEnergy>>>
 		write_water_mechanical_energy(io_environment, water_block, gravity_ptr);
 	/** output the observed data from fluid body. */
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Real>>
@@ -171,7 +171,7 @@ int main()
 	/**
 	 * @brief The time stepping starts here.
 	 */
-	 /** If the starting time is not zero, please setup the restart time step ro read in restart states. */
+	/** If the starting time is not zero, please setup the restart time step ro read in restart states. */
 	if (sph_system.restart_step_ != 0)
 	{
 		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
@@ -191,9 +191,9 @@ int main()
 	int screen_output_interval = 100;
 	int observation_sample_interval = screen_output_interval * 2;
 	int restart_output_interval = screen_output_interval * 10;
-	Real end_time = 20.0; 	/**< End time. */
-	Real output_interval = 0.1;		/**< Time stamps for output of body states. */
-	Real dt = 0.0; 			/**< Default acoustic time step sizes. */
+	Real end_time = 20.0;		/**< End time. */
+	Real output_interval = 0.1; /**< Time stamps for output of body states. */
+	Real dt = 0.0;				/**< Default acoustic time step sizes. */
 	/** statistics for computing CPU time. */
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
@@ -235,10 +235,11 @@ int main()
 			if (number_of_iterations % screen_output_interval == 0)
 			{
 				std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
-					<< GlobalStaticVariables::physical_time_
-					<< "	Dt = " << Dt << "	dt = " << dt << "\n";
+						  << GlobalStaticVariables::physical_time_
+						  << "	Dt = " << Dt << "	dt = " << dt << "\n";
 
-				if (number_of_iterations != 0 && number_of_iterations % observation_sample_interval == 0) {
+				if (number_of_iterations != 0 && number_of_iterations % observation_sample_interval == 0)
+				{
 					write_water_mechanical_energy.writeToFile(number_of_iterations);
 					write_recorded_water_pressure.writeToFile(number_of_iterations);
 				}
@@ -265,13 +266,13 @@ int main()
 	tick_count::interval_t tt;
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds()
-		<< " seconds." << std::endl;
+			  << " seconds." << std::endl;
 	std::cout << std::fixed << std::setprecision(9) << "interval_computing_time_step ="
-		<< interval_computing_time_step.seconds() << "\n";
+			  << interval_computing_time_step.seconds() << "\n";
 	std::cout << std::fixed << std::setprecision(9) << "interval_computing_pressure_relaxation = "
-		<< interval_computing_pressure_relaxation.seconds() << "\n";
+			  << interval_computing_pressure_relaxation.seconds() << "\n";
 	std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
-		<< interval_updating_configuration.seconds() << "\n";
+			  << interval_updating_configuration.seconds() << "\n";
 
 	write_water_mechanical_energy.newResultTest();
 	write_recorded_water_pressure.newResultTest();

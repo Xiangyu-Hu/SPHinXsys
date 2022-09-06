@@ -122,7 +122,7 @@ int main(int ac, char *av[])
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
 	eulerian_weakly_compressible_fluid_dynamics::PressureRelaxationHLLCRiemannWithLimiterWithWall pressure_relaxation(water_block_complex);
 	eulerian_weakly_compressible_fluid_dynamics::DensityAndEnergyRelaxationHLLCRiemannWithLimiterWithWall density_relaxation(water_block_complex);
-	eulerian_weakly_compressible_fluid_dynamics::FreeSurfaceIndicationComplex surface_indicator(water_block_complex.inner_relation_, water_block_complex.contact_relation_);
+	NewInteractionDynamicsWithUpdate<fluid_dynamics::FreeSurfaceIndicationComplex> surface_indicator(water_block_complex.inner_relation_, water_block_complex.contact_relation_);
 	/** Computing viscous acceleration with wall model. */
 	InteractionDynamics<eulerian_weakly_compressible_fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(water_block_complex);
 	/** non_reflective boundary condition. */

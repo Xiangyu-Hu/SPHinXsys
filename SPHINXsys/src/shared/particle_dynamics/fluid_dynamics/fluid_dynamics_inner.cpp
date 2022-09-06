@@ -18,14 +18,13 @@ namespace SPH
 			  pos_(particles_->pos_), vel_(particles_->vel_) {}
 		//=================================================================================================//
 		DensitySummationInner::DensitySummationInner(BaseBodyRelationInner &inner_relation)
-			: InteractionDynamicsWithUpdate(inner_relation.sph_body_),
-			  FluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), mass_(particles_->mass_),
 			  rho_sum_(particles_->rho_sum_),
-			  W0_(sph_adaptation_->getKernel()->W0(Vecd(0))),
+			  W0_(sph_body_.sph_adaptation_->getKernel()->W0(Vecd(0))),
 			  rho0_(particles_->rho0_), inv_sigma0_(1.0 / particles_->sigma0_) {}
 		//=================================================================================================//
-		void DensitySummationInner::Interaction(size_t index_i, Real dt)
+		void DensitySummationInner::interaction(size_t index_i, Real dt)
 		{
 			/** Inner interaction. */
 			Real sigma = W0_;
@@ -36,7 +35,7 @@ namespace SPH
 			rho_sum_[index_i] = sigma * rho0_ * inv_sigma0_;
 		}
 		//=================================================================================================//
-		void DensitySummationInner::Update(size_t index_i, Real dt)
+		void DensitySummationInner::update(size_t index_i, Real dt)
 		{
 			rho_[index_i] = ReinitializedDensity(rho_sum_[index_i], rho0_, rho_[index_i]);
 			Vol_[index_i] = mass_[index_i] / rho_[index_i];

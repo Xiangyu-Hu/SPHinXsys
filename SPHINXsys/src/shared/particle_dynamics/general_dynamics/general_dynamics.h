@@ -104,12 +104,11 @@ namespace SPH
 	 * @brief computing smoothed variable field by averaging with neighbors
 	 */
 	template <typename VariableType>
-	class ParticleSmoothing : public InteractionDynamicsWithUpdate, public GeneralDataDelegateInner
+	class ParticleSmoothing : public LocalDynamics, public GeneralDataDelegateInner
 	{
 	public:
 		explicit ParticleSmoothing(BaseBodyRelationInner &inner_relation, const std::string &variable_name)
-			: InteractionDynamicsWithUpdate(inner_relation.sph_body_),
-			  GeneralDataDelegateInner(inner_relation),
+			: LocalDynamics(inner_relation.sph_body_), GeneralDataDelegateInner(inner_relation),
 			  W0_(body_->sph_adaptation_->getKernel()->W0(Vecd(0))),
 			  smoothed_(*particles_->getVariableByName<VariableType>(variable_name))
 		{
@@ -118,11 +117,7 @@ namespace SPH
 
 		virtual ~ParticleSmoothing(){};
 
-	protected:
-		const Real W0_;
-		StdLargeVec<VariableType> &smoothed_, temp_;
-
-		virtual void Interaction(size_t index_i, Real dt = 0.0) override
+		void interaction(size_t index_i, Real dt = 0.0)
 		{
 			Real weight = W0_;
 			VariableType summation = W0_ * smoothed_[index_i];
@@ -136,10 +131,14 @@ namespace SPH
 			temp_[index_i] = summation / (weight + TinyReal);
 		};
 
-		virtual void Update(size_t index_i, Real dt = 0.0) override
+		void update(size_t index_i, Real dt = 0.0)
 		{
 			smoothed_[index_i] = temp_[index_i];
 		};
+
+	protected:
+		const Real W0_;
+		StdLargeVec<VariableType> &smoothed_, temp_;
 	};
 
 	/**

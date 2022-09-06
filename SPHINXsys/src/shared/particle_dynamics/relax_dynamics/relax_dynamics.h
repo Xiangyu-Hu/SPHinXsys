@@ -331,8 +331,8 @@ namespace SPH
 				void interaction(size_t index_i, Real dt = 0.0);
 
 			protected:
-          		std::mutex mutex_modify_neighbor_; /**< mutex exclusion for memory conflict */
- 				const Real consistency_criterion_;
+				std::mutex mutex_modify_neighbor_; /**< mutex exclusion for memory conflict */
+				const Real consistency_criterion_;
 				StdLargeVec<int> updated_indicator_; /**> 0 not updated, 1 updated with reliable prediction, 2 updated from a reliable neighbor */
 				StdLargeVec<Vecd> &n_;
 			};
@@ -355,16 +355,16 @@ namespace SPH
 			public:
 				explicit SmoothingNormal(BaseBodyRelationInner &inner_relation);
 				virtual ~SmoothingNormal(){};
+				void update(size_t index_i, Real dt = 0.0);
 
 			protected:
-				virtual void Update(size_t index_i, Real dt = 0.0) override;
 			};
 
 			SimpleDynamics<NormalPrediction> normal_prediction_;
 			ReduceDynamics<PredictionConvergenceCheck> normal_prediction_convergence_check_;
 			InteractionDynamics<ConsistencyCorrection> consistency_correction_;
 			ReduceDynamics<ConsistencyUpdatedCheck> consistency_updated_check_;
-			SmoothingNormal smoothing_normal_;
+			NewInteractionDynamicsWithUpdate<SmoothingNormal> smoothing_normal_;
 		};
 
 		/**

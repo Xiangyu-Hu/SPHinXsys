@@ -58,9 +58,9 @@ int main()
 	SimpleDynamics<TimeStepInitialization> initialize_a_water_step(water_block, gravity_ptr);
 	SimpleDynamics<TimeStepInitialization> initialize_a_air_step(air_block, gravity_ptr);
 	/** Evaluation of density by summation approach. */
-	fluid_dynamics::DensitySummationFreeSurfaceComplex
+	NewInteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex>
 		update_water_density_by_summation(water_air_complex.inner_relation_, water_wall_contact);
-	fluid_dynamics::DensitySummationComplex
+	NewInteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationComplex>
 		update_air_density_by_summation(air_water_complex, air_wall_contact);
 	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex>
 		air_transport_correction(air_water_complex, air_wall_contact);

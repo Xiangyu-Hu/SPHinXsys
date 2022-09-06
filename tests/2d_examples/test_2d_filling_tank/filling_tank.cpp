@@ -121,10 +121,11 @@ int main()
 	//----------------------------------------------------------------------
 	fluid_dynamics::PressureRelaxationRiemannWithWall pressure_relaxation(water_body_complex);
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_body_complex);
-	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_body_complex);
-	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex indicate_free_surface(water_body_complex);
-	water_body.addBodyStateForRecording<Real>("PositionDivergence"); //for debug
-	water_body.addBodyStateForRecording<int>("SurfaceIndicator"); //for debug
+	NewInteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_body_complex);
+	NewInteractionDynamicsWithUpdate<fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex>
+		indicate_free_surface(water_body_complex);
+	water_body.addBodyStateForRecording<Real>("PositionDivergence"); // for debug
+	water_body.addBodyStateForRecording<int>("SurfaceIndicator");	 // for debug
 
 	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_body, gravity_ptr);

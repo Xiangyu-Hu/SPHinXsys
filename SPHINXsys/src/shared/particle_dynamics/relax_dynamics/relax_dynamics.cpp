@@ -411,9 +411,10 @@ namespace SPH
 			SmoothingNormal(BaseBodyRelationInner &inner_relation)
 			: ParticleSmoothing<Vecd>(inner_relation, "NormalDirection"){};
 		//=================================================================================================//
-		void ShellNormalDirectionPrediction::SmoothingNormal::Update(size_t index_i, Real dt)
+		void ShellNormalDirectionPrediction::SmoothingNormal::update(size_t index_i, Real dt)
 		{
-			smoothed_[index_i] = temp_[index_i] / (temp_[index_i].norm() + TinyReal);
+			ParticleSmoothing<Vecd>::update(index_i, dt);
+			smoothed_[index_i] /= temp_[index_i].norm() + TinyReal;
 		}
 		//=================================================================================================//
 		ShellRelaxationStepInner::

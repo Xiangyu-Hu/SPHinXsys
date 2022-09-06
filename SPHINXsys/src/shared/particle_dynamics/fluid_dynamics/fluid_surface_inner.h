@@ -43,13 +43,13 @@ namespace SPH
 		 * However, some other applications may use this function, such as transport velocity formulation,
 		 * for masking some function which is only applicable for the bulk of the fluid body.
 		 */
-		class FreeSurfaceIndicationInner
-			: public InteractionDynamicsWithUpdate,
-			  public FluidDataInner
+		class FreeSurfaceIndicationInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
 			explicit FreeSurfaceIndicationInner(BaseBodyRelationInner &inner_relation, Real threshold = 0.75);
 			virtual ~FreeSurfaceIndicationInner(){};
+			void interaction(size_t index_i, Real dt = 0.0);
+			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real threshold_by_dimensions_;
@@ -57,9 +57,6 @@ namespace SPH
 			StdLargeVec<int> &surface_indicator_;
 			StdLargeVec<Real> pos_div_;
 			Real smoothing_length_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -73,13 +70,11 @@ namespace SPH
 			template <typename... ConstructorArgs>
 			explicit SpatialTemporalFreeSurfaceIdentification(ConstructorArgs &&...args);
 			virtual ~SpatialTemporalFreeSurfaceIdentification(){};
+			void interaction(size_t index_i, Real dt = 0.0);
+			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<int> previous_surface_indicator_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
-
 			void checkNearPreviousFreeSurface(size_t index_i);
 		};
 		using SpatialTemporalFreeSurfaceIdentificationInner =
@@ -114,10 +109,10 @@ namespace SPH
 				: DensitySummationFreeSurfaceInner(inner_relation),
 				  surface_indicator_(*particles_->getVariableByName<int>("SurfaceIndicator")){};
 			virtual ~DensitySummationFreeStreamInner(){};
+			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<int> &surface_indicator_;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
 			bool isNearSurface(size_t index_i);
 		};
 

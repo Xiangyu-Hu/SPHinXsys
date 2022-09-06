@@ -156,7 +156,7 @@ int main(int ac, char *av[])
 	/** Periodic BCs in x direction. */
 	PeriodicConditionUsingGhostParticles periodic_condition(fluid_block, fluid_block.getBodyShapeBounds(), xAxis);
 	// evaluation of density by summation approach
-	fluid_dynamics::DensitySummationComplex update_density_by_summation(fluid_block_complex);
+	NewInteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationComplex> update_density_by_summation(fluid_block_complex);
 	// time step size without considering sound wave speed and viscosity
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSizeForImplicitViscosity> get_fluid_advection_time_step_size(fluid_block, U_f);
 	// time step size with considering sound wave speed

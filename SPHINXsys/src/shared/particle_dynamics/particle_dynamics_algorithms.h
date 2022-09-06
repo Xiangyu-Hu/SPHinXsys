@@ -253,6 +253,7 @@ namespace SPH
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
 	class InteractionDynamics : public LocalDynamicsType, public BaseDynamics<void>
 	{
+	protected:
 		DynamicsRange &dynamics_range_;
 
 	public:
@@ -327,7 +328,7 @@ namespace SPH
 
 		virtual void exec(Real dt = 0.0) override
 		{
-			this->exec(dt);
+			InteractionDynamics<LocalDynamicsType, DynamicsRange>::exec(dt);
 			particle_for(
 				this->dynamics_range_.LoopRange(),
 				[&](size_t i, Real delta)
@@ -337,7 +338,7 @@ namespace SPH
 
 		virtual void parallel_exec(Real dt = 0.0) override
 		{
-			this->parallel_exec(dt);
+			InteractionDynamics<LocalDynamicsType, DynamicsRange>::parallel_exec(dt);
 			particle_parallel_for(
 				this->dynamics_range_.LoopRange(),
 				[&](size_t i, Real delta)

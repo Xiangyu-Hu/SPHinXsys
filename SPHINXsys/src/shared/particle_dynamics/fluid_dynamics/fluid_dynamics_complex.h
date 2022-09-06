@@ -80,13 +80,13 @@ namespace SPH
 			explicit DensitySummation(ComplexBodyRelation &complex_relation);
 			DensitySummation(ComplexBodyRelation &complex_relation, BaseBodyRelationContact &extra_contact_relation);
 			virtual ~DensitySummation(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdVec<Real> contact_inv_rho0_;
 			StdVec<StdLargeVec<Real> *> contact_mass_;
 
 			virtual void prepareContactData() override;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 		/** the case without free surface */
 		using DensitySummationComplex = DensitySummation<DensitySummationInner>;

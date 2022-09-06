@@ -31,7 +31,7 @@ namespace SPH
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	RelaxationOfAllDiffusionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>::
 		RelaxationOfAllDiffusionSpeciesInner(BaseBodyRelationInner &inner_relation)
-		: InteractionDynamicsWithUpdate(inner_relation.sph_body_),
+		: LocalDynamics(inner_relation.sph_body_),
 		  DiffusionReactionInnerData<BodyType, BaseParticlesType, BaseMaterialType>(inner_relation),
 		  species_n_(this->particles_->species_n_),
 		  diffusion_dt_(this->particles_->diffusion_dt_), Vol_(this->particles_->Vol_)
@@ -75,7 +75,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	void RelaxationOfAllDiffusionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>::
-		Interaction(size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 	{
 		DiffusionReactionParticles<BaseParticlesType> *particles = this->particles_;
 		Neighborhood &inner_neighborhood = this->inner_configuration_[index_i];
@@ -96,7 +96,7 @@ namespace SPH
 	//=================================================================================================//
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	void RelaxationOfAllDiffusionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>::
-		Update(size_t index_i, Real dt)
+		update(size_t index_i, Real dt)
 	{
 		updateSpeciesDiffusion(index_i, dt);
 	}
@@ -140,9 +140,9 @@ namespace SPH
 			  class ContactBodyType, class ContactBaseParticlesType, class ContactBaseMaterialType>
 	void RelaxationOfAllDiffusionSpeciesComplex<BodyType, BaseParticlesType, BaseMaterialType,
 												 ContactBodyType, ContactBaseParticlesType, ContactBaseMaterialType>::
-		Interaction(size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 	{
-		RelaxationOfAllDiffusionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>::Interaction(index_i, dt);
+		RelaxationOfAllDiffusionSpeciesInner<BodyType, BaseParticlesType, BaseMaterialType>::interaction(index_i, dt);
 		DiffusionReactionParticles<BaseParticlesType> *particles = this->particles_;
 
 		for (size_t k = 0; k < this->contact_configuration_.size(); ++k)
@@ -219,10 +219,8 @@ namespace SPH
 	template <class FirstStageType>
 	RelaxationOfAllDiffusionSpeciesRK2<FirstStageType>::
 		RelaxationOfAllDiffusionSpeciesRK2(typename FirstStageType::BodyRelationType &body_relation)
-		: ParticleDynamics<void>(body_relation.sph_body_),
-		  rk2_initialization_(body_relation.sph_body_, species_s_),
-		  rk2_1st_stage_(body_relation),
-		  rk2_2nd_stage_(body_relation, species_s_)
+		: BaseDynamics<void>(), rk2_initialization_(body_relation.sph_body_, species_s_),
+		  rk2_1st_stage_(body_relation), rk2_2nd_stage_(body_relation, species_s_)
 	{
 		StdVec<BaseDiffusion *> species_diffusion_ = rk2_1st_stage_.getMaterial()->SpeciesDiffusion();
 

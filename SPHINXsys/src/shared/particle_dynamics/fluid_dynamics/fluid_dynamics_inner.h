@@ -65,18 +65,17 @@ namespace SPH
 		 * @class DensitySummationInner
 		 * @brief  computing density by summation
 		 */
-		class DensitySummationInner : public InteractionDynamicsWithUpdate, public FluidDataInner
+		class DensitySummationInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
 			explicit DensitySummationInner(BaseBodyRelationInner &inner_relation);
 			virtual ~DensitySummationInner(){};
+			void interaction(size_t index_i, Real dt = 0.0);
+			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real W0_, rho0_, inv_sigma0_;
 			StdLargeVec<Real> &Vol_, &rho_, &mass_, &rho_sum_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
 			virtual Real ReinitializedDensity(Real rho_sum, Real rho_0, Real rho_n) { return rho_sum; };
 		};
 

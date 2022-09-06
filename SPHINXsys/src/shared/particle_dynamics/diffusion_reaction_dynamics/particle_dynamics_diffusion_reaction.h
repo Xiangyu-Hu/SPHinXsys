@@ -101,7 +101,7 @@ namespace SPH
 	 */
 	template <class BodyType, class BaseParticlesType, class BaseMaterialType>
 	class RelaxationOfAllDiffusionSpeciesInner
-		: public InteractionDynamicsWithUpdate,
+		: public LocalDynamics,
 		  public DiffusionReactionInnerData<BodyType, BaseParticlesType, BaseMaterialType>
 	{
 		/** all diffusion species and diffusion relation. */
@@ -114,8 +114,6 @@ namespace SPH
 		void initializeDiffusionChangeRate(size_t particle_i);
 		void getDiffusionChangeRate(size_t particle_i, size_t particle_j, Vecd &e_ij, Real surface_area_ij);
 		virtual void updateSpeciesDiffusion(size_t particle_i, Real dt);
-		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-		virtual void Update(size_t index_i, Real dt = 0.0) override;
 
 	public:
 		typedef BodyType InnerBodyType;
@@ -124,6 +122,8 @@ namespace SPH
 		typedef BaseBodyRelationInner BodyRelationType;
 		explicit RelaxationOfAllDiffusionSpeciesInner(BaseBodyRelationInner &inner_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesInner(){};
+		void interaction(size_t index_i, Real dt = 0.0);
+		void update(size_t index_i, Real dt = 0.0);
 	};
 
 	/**
@@ -146,12 +146,12 @@ namespace SPH
 	protected:
 		void getDiffusionChangeRateContact(size_t particle_i, size_t particle_j, Vecd &e_ij,
 										   Real surface_area_ij, const StdVec<StdLargeVec<Real>> &species_n_k);
-		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 
 	public:
 		typedef ComplexBodyRelation BodyRelationType;
 		explicit RelaxationOfAllDiffusionSpeciesComplex(ComplexBodyRelation &complex_relation);
 		virtual ~RelaxationOfAllDiffusionSpeciesComplex(){};
+		void interaction(size_t index_i, Real dt = 0.0);
 	};
 
 	/**
@@ -202,7 +202,7 @@ namespace SPH
 	 * with second order Runge-Kutta time stepping
 	 */
 	template <class FirstStageType>
-	class RelaxationOfAllDiffusionSpeciesRK2 : public ParticleDynamics<void>
+	class RelaxationOfAllDiffusionSpeciesRK2 : public BaseDynamics<void>
 	{
 	protected:
 		StdVec<BaseDiffusion *> species_diffusion_;
@@ -213,8 +213,8 @@ namespace SPH
 										typename FirstStageType::InnerBaseParticlesType,
 										typename FirstStageType::InnerBaseMaterialType>>
 			rk2_initialization_;
-		FirstStageType rk2_1st_stage_;
-		SecondStageRK2<FirstStageType> rk2_2nd_stage_;
+		NewInteractionDynamicsWithUpdate<FirstStageType> rk2_1st_stage_;
+		NewInteractionDynamicsWithUpdate<SecondStageRK2<FirstStageType>> rk2_2nd_stage_;
 
 	public:
 		explicit RelaxationOfAllDiffusionSpeciesRK2(typename FirstStageType::BodyRelationType &body_relation);
@@ -342,7 +342,7 @@ namespace SPH
 			quantity_name_ = "DiffusionReactionSpeciesAverage";
 		};
 		DiffusionReactionSpeciesSummation(BodyPartByParticle &body_part, const std::string &species_name)
-		: DiffusionReactionSpeciesSummation(body_part.getSPHBody(), species_name) {};
+			: DiffusionReactionSpeciesSummation(body_part.getSPHBody(), species_name){};
 		virtual ~DiffusionReactionSpeciesSummation(){};
 
 		Real reduce(size_t index_i, Real dt = 0.0)

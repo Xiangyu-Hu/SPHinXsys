@@ -166,24 +166,5 @@ namespace SPH
 		using DensityAndEnergyRelaxationAcousticRiemannWithWall = BaseDensityAndEnergyRelaxationWithWall<DensityAndEnergyRelaxationAcousticRiemannInner>;
 		using DensityAndEnergyRelaxationHLLCRiemannWithWall = BaseDensityAndEnergyRelaxationWithWall<DensityAndEnergyRelaxationHLLCRiemannInner>;
 		using DensityAndEnergyRelaxationHLLCRiemannWithLimiterWithWall = BaseDensityAndEnergyRelaxationWithWall<DensityAndEnergyRelaxationHLLCWithLimiterRiemannInner>;
-
-		/**
-		* @class FreeSurfaceIndicationComplex
-		* @brief indicate the particles near the free fluid surface.
-		*/
-		class FreeSurfaceIndicationComplex : public FreeSurfaceIndicationInner, public WCFluidContactData
-		{
-		public:
-			FreeSurfaceIndicationComplex(BaseBodyRelationInner &inner_relation,
-				BaseBodyRelationContact &contact_relation, Real threshold = 0.75);
-			explicit FreeSurfaceIndicationComplex(ComplexBodyRelation &complex_relation, Real threshold = 0.75);
-			virtual ~FreeSurfaceIndicationComplex() {};
-
-		protected:
-			StdVec<Real> contact_inv_rho0_;
-			StdVec<StdLargeVec<Real> *> contact_mass_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-		};
 	}
 }

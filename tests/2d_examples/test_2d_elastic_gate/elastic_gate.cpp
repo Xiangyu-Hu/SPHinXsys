@@ -179,7 +179,7 @@ int main()
 	//----------------------------------------------------------------------
 	fluid_dynamics::PressureRelaxationRiemannWithWall pressure_relaxation(water_block_complex_relation);
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex_relation);
-	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_block_complex_relation);
+	NewInteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> update_density_by_summation(water_block_complex_relation);
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(water_block, makeShared<Gravity>(Vecd(0.0, -gravity_g)));
 	ReduceDynamics<fluid_dynamics::AdvectionTimeStepSize> get_fluid_advection_time_step_size(water_block, U_f);
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
