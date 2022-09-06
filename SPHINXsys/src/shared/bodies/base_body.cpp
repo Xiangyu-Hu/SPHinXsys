@@ -97,7 +97,8 @@ namespace SPH
 	RealBody::RealBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
 		: SPHBody(sph_system, shape_ptr),
 		  system_domain_bounds_(this->getSPHSystem().system_domain_bounds_),
-		  use_split_cell_lists_(false), particle_sorting_(this)
+		  use_split_cell_lists_(false), particle_sorting_(this),
+		  iteration_count_(0)
 	{
 		sph_system.real_bodies_.push_back(this);
 		size_t number_of_split_cell_lists = powerN(3, Vecd(0).size());
@@ -125,6 +126,14 @@ namespace SPH
 	{
 		cell_linked_list_->UpdateCellLists();
 		base_particles_->total_ghost_particles_ = 0;
+	}
+	//=================================================================================================//
+	void RealBody::updateCellLinkedListWithParticleSort(size_t particle_sorting_period)
+	{
+		if (iteration_count_ % particle_sorting_period == 0)
+			sortParticleWithCellLinkedList();
+		iteration_count_++;
+		updateCellLinkedList();
 	}
 	//=================================================================================================//
 }

@@ -287,7 +287,7 @@ int main()
 			number_of_iterations++;
 
 			/** Update cell linked list and configuration. */
-			water_block.updateCellLinkedList();
+			water_block.updateCellLinkedListWithParticleSort(100);
 			gate.updateCellLinkedList();
 			water_block_complex_relation.updateConfiguration();
 			gate_water_contact_relation.updateConfiguration();

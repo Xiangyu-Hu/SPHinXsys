@@ -155,20 +155,6 @@ int main(int ac, char *av[])
 	/** initialize surface normal direction for the insert body. */
 	cylinder_normal_direction.parallel_exec();
 	//----------------------------------------------------------------------
-	//	Load restart file if necessary.
-	//----------------------------------------------------------------------
-	if (sph_system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
-		cylinder.updateCellLinkedList();
-		water_block.updateCellLinkedList();
-		periodic_condition_x.update_cell_linked_list_.parallel_exec();
-		periodic_condition_y.update_cell_linked_list_.parallel_exec();
-		/** one need update configuration after periodic condition. */
-		water_block_complex.updateConfiguration();
-		cylinder_contact.updateConfiguration();
-	}
-	//----------------------------------------------------------------------
 	//	Setup computing and initial conditions.
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = sph_system.restart_step_;
@@ -236,7 +222,7 @@ int main(int ac, char *av[])
 			/** Water block configuration and periodic condition. */
 			periodic_condition_x.bounding_.parallel_exec();
 			periodic_condition_y.bounding_.parallel_exec();
-			water_block.updateCellLinkedList();
+			water_block.updateCellLinkedListWithParticleSort(100);
 			periodic_condition_x.update_cell_linked_list_.parallel_exec();
 			periodic_condition_y.update_cell_linked_list_.parallel_exec();
 			/** one need update configuration after periodic condition. */

@@ -165,18 +165,6 @@ int main(int ac, char *av[])
 	/** computing surface normal direction for the insert body. */
 	cylinder_normal_direction.parallel_exec();
 	//----------------------------------------------------------------------
-	//	Load restart file if necessary.
-	//----------------------------------------------------------------------
-	if (sph_system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
-		cylinder.updateCellLinkedList();
-		water_block.updateCellLinkedList();
-		/** one need update configuration after periodic condition. */
-		water_block_complex.updateConfiguration();
-		cylinder_contact.updateConfiguration();
-	}
-	//----------------------------------------------------------------------
 	//	First output before the main loop.
 	//----------------------------------------------------------------------
 	write_real_body_states.writeToFile();
@@ -245,7 +233,7 @@ int main(int ac, char *av[])
 			emitter_inflow_injection.parallel_exec();
 			disposer_outflow_deletion.parallel_exec();
 
-			water_block.updateCellLinkedList();
+			water_block.updateCellLinkedListWithParticleSort(100);
 			water_block_complex.updateConfiguration();
 			/** one need update configuration after periodic condition. */
 			/** write run-time observation into file */

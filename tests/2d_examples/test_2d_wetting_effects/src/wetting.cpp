@@ -106,8 +106,8 @@ int main()
 	if (sph_system.restart_step_ != 0)
 	{
 		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
-		water_block.updateCellLinkedList();
-		air_block.updateCellLinkedList();
+		water_block.updateCellLinkedListWithParticleSort(100);
+		air_block.updateCellLinkedListWithParticleSort(100);
 		water_air_complex.updateConfiguration();
 		water_wall_contact.updateConfiguration();
 		air_water_complex.updateConfiguration();
@@ -201,11 +201,11 @@ int main()
 			/** Update cell linked list and configuration. */
 			time_instance = tick_count::now();
 
-			water_block.updateCellLinkedList();
+			water_block.updateCellLinkedListWithParticleSort(100);
 			water_air_complex.updateConfiguration();
 			water_wall_contact.updateConfiguration();
 
-			air_block.updateCellLinkedList();
+			air_block.updateCellLinkedListWithParticleSort(100);
 			air_water_complex.updateConfiguration();
 			air_wall_contact.updateConfiguration();
 

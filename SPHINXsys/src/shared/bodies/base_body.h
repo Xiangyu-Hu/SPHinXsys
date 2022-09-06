@@ -187,6 +187,7 @@ namespace SPH
 		 */
 		SplitCellLists split_cell_lists_;
 		bool use_split_cell_lists_;
+		size_t iteration_count_;
 
 	public:
 		ParticleSorting particle_sorting_;
@@ -202,7 +203,8 @@ namespace SPH
 		 * and is important because particles are not defined in FluidBody constructor.  */
 		virtual void assignBaseParticles(BaseParticles *base_particles) override;
 		virtual void sortParticleWithCellLinkedList();
-		virtual void updateCellLinkedList();
+		void updateCellLinkedList();
+		void updateCellLinkedListWithParticleSort(size_t particle_sort_period);
 		//----------------------------------------------------------------------
 		//		Object factory template functions
 		//----------------------------------------------------------------------

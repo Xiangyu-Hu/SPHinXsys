@@ -129,22 +129,11 @@ int main(int ac, char *av[])
 	//	Prepare the simulation with cell linked list, configuration
 	//	and case specified initial condition if necessary.
 	//----------------------------------------------------------------------
-	initial_condition.exec();
 	sph_system.initializeSystemCellLinkedLists();
 	periodic_condition_x.update_cell_linked_list_.parallel_exec();
 	periodic_condition_y.update_cell_linked_list_.parallel_exec();
 	sph_system.initializeSystemConfigurations();
-	//----------------------------------------------------------------------
-	//	Load restart file if necessary.
-	//----------------------------------------------------------------------
-	if (sph_system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
-		water_body.updateCellLinkedList();
-		periodic_condition_x.update_cell_linked_list_.parallel_exec();
-		periodic_condition_y.update_cell_linked_list_.parallel_exec();
-		water_body_inner.updateConfiguration();
-	}
+	initial_condition.parallel_exec();
 	//----------------------------------------------------------------------
 	//	Setup for time-stepping control
 	//----------------------------------------------------------------------

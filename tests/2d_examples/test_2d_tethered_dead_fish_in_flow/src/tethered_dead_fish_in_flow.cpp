@@ -510,7 +510,7 @@ int main(int ac, char *av[])
 			viz.report(integ.getState());
 			/** Water block configuration and periodic condition. */
 			periodic_condition.bounding_.parallel_exec();
-			water_block.updateCellLinkedList();
+			water_block.updateCellLinkedListWithParticleSort(100);
 			fish_body.updateCellLinkedList();
 			periodic_condition.update_cell_linked_list_.parallel_exec();
 			water_block_complex.updateConfiguration();

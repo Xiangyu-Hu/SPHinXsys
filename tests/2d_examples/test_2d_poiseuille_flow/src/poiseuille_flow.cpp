@@ -145,17 +145,6 @@ int main()
 	periodic_condition.update_cell_linked_list_.parallel_exec();
 	system.initializeSystemConfigurations();
 	wall_boundary_normal_direction.parallel_exec();
-	/**
-	 * @brief The time stepping starts here.
-	 */
-	/** If the starting time is not zero, please setup the restart time step ro read in restart states. */
-	if (system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.restart_step_);
-		water_block.updateCellLinkedList();
-		periodic_condition.update_cell_linked_list_.parallel_exec();
-		water_block_complex.updateConfiguration();
-	}
 	/** Output the start states of bodies. */
 	body_states_recording.writeToFile(0);
 	/**
@@ -219,7 +208,7 @@ int main()
 			time_instance = tick_count::now();
 			/** Water block configuration and periodic condition. */
 			periodic_condition.bounding_.parallel_exec();
-			water_block.updateCellLinkedList();
+			water_block.updateCellLinkedListWithParticleSort(100);
 			periodic_condition.update_cell_linked_list_.parallel_exec();
 			water_block_complex.updateConfiguration();
 			interval_updating_configuration += tick_count::now() - time_instance;

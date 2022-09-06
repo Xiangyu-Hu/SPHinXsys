@@ -359,7 +359,7 @@ int main()
 
 			/** Water block configuration and periodic condition. */
 			periodic_condition.bounding_.parallel_exec();
-			thermofluid_body.updateCellLinkedList();
+			thermofluid_body.updateCellLinkedListWithParticleSort(100);
 			periodic_condition.update_cell_linked_list_.parallel_exec();
 			fluid_body_complex.updateConfiguration();
 		}

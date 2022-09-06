@@ -141,14 +141,6 @@ int main()
 	/**
 	* @brief The time stepping starts here.
 	*/
-	/** If the starting time is not zero, please setup the restart time step or read in restart states. */
-	if (system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.restart_step_);
-		water_block.updateCellLinkedList();
-		water_block_complex.updateConfiguration();
-	}
-
 	/** Output the start states of bodies. */
 	write_water_block_states.writeToFile(0);
 	/** Output the mechanical energy of fluid. */
@@ -205,7 +197,7 @@ int main()
 			}
 			number_of_iterations++;
 
-			water_block.updateCellLinkedList();
+			water_block.updateCellLinkedListWithParticleSort(100);
 			water_block_complex.updateConfiguration();
 			fluid_observer_contact.updateConfiguration();
 			write_recorded_water_pressure.writeToFile(number_of_iterations);

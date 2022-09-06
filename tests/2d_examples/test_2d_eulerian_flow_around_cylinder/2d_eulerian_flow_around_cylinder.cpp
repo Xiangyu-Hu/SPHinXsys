@@ -153,18 +153,6 @@ int main(int ac, char *av[])
 	cylinder_normal_direction.parallel_exec();
 	surface_indicator.parallel_exec();
 	variable_reset_in_boundary_condition.parallel_exec();
-
-	/**
-	 * @brief The time stepping starts here.
-	 */
-	if (sph_system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
-		cylinder.updateCellLinkedList();
-		water_block.updateCellLinkedList();
-		water_block_complex.updateConfiguration();
-		cylinder_contact.updateConfiguration();
-	}
 	/** first output*/
 	write_real_body_states.writeToFile(0);
 

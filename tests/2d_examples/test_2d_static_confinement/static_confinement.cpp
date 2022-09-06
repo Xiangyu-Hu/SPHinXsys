@@ -168,16 +168,6 @@ int main()
 	/** Pre-simulation*/
 	sph_system.initializeSystemCellLinkedLists();
 	sph_system.initializeSystemConfigurations();
-	/**
-	 * @brief The time stepping starts here.
-	 */
-	/** If the starting time is not zero, please setup the restart time step ro read in restart states. */
-	if (sph_system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
-		water_block.updateCellLinkedList();
-		water_block_inner.updateConfiguration();
-	}
 
 	/** Output the start states of bodies. */
 	body_states_recording.writeToFile(0);
@@ -250,7 +240,7 @@ int main()
 
 			/** Update cell linked list and configuration. */
 			time_instance = tick_count::now();
-			water_block.updateCellLinkedList();
+			water_block.updateCellLinkedListWithParticleSort(100);
 			water_block_inner.updateConfiguration();
 			fluid_observer_contact.updateConfiguration();
 			interval_updating_configuration += tick_count::now() - time_instance;

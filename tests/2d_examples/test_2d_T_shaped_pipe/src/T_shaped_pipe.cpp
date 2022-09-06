@@ -180,16 +180,6 @@ int main(int ac, char *av[])
 	system.initializeSystemConfigurations();
 	wall_boundary_normal_direction.parallel_exec();
 	//----------------------------------------------------------------------
-	//	Load restart file if necessary.
-	//----------------------------------------------------------------------
-	/** If the starting time is not zero, please setup the restart time step ro read in restart states. */
-	if (system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.restart_step_);
-		water_block.updateCellLinkedList();
-		water_block_complex_relation.updateConfiguration();
-	}
-	//----------------------------------------------------------------------
 	//	Setup computing and initial conditions.
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = system.restart_step_;
@@ -254,7 +244,7 @@ int main(int ac, char *av[])
 			disposer_down_outflow_deletion.parallel_exec();
 
 			/** Update cell linked list and configuration. */
-			water_block.updateCellLinkedList();
+			water_block.updateCellLinkedListWithParticleSort(100);
 			water_block_complex_relation.updateConfiguration();
 		}
 

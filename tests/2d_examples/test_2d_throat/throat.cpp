@@ -256,7 +256,7 @@ int main(int ac, char *av[])
 
 			// water block configuration and periodic condition
 			periodic_condition.bounding_.parallel_exec();
-			fluid_block.updateCellLinkedList();
+			fluid_block.updateCellLinkedListWithParticleSort(100);
 			periodic_condition.ghost_creation_.parallel_exec();
 			fluid_block_complex.updateConfiguration();
 		}

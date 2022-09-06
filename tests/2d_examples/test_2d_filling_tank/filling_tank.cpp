@@ -156,15 +156,6 @@ int main()
 	wall_normal_direction.parallel_exec();
 	indicate_free_surface.parallel_exec();
 	//----------------------------------------------------------------------
-	//	Load restart file if necessary.
-	//----------------------------------------------------------------------
-	if (system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(system.restart_step_);
-		water_body.updateCellLinkedList();
-		water_body_complex.updateConfiguration();
-	}
-	//----------------------------------------------------------------------
 	//	Time stepping control parameters.
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = system.restart_step_;
@@ -223,7 +214,7 @@ int main()
 			emitter_injection.exec();
 			/** Update cell linked list and configuration. */
 
-			water_body.updateCellLinkedList();
+			water_body.updateCellLinkedListWithParticleSort(100);
 			water_body_complex.updateConfiguration();
 			fluid_observer_contact_relation.updateConfiguration();
 		}

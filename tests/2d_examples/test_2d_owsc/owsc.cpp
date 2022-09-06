@@ -266,7 +266,7 @@ int main()
 			}
 			number_of_iterations++;
 			damping_wave.parallel_exec(Dt);
-			water_block.updateCellLinkedList();
+			water_block.updateCellLinkedListWithParticleSort(100);
 			wall_boundary.updateCellLinkedList();
 			flap.updateCellLinkedList();
 			water_block_complex.updateConfiguration();

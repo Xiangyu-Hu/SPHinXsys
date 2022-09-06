@@ -45,12 +45,7 @@ namespace SPH {
 	public:
 		explicit FluidBody(SPHSystem &system, SharedPtr<Shape> shape_ptr);
 		virtual ~FluidBody() {};
-
-		/** Update cell linked list with particle sorting. */
-		virtual void updateCellLinkedList() override;
 		virtual FluidBody* ThisObjectPtr() override {return this;};
-	protected:
-		size_t iteration_count_;
 	};
 
 	/**
@@ -62,7 +57,6 @@ namespace SPH {
 	public:
 		explicit EulerianFluidBody(SPHSystem &system, SharedPtr<Shape> shape_ptr);
 		virtual ~EulerianFluidBody() {};
-
 		virtual EulerianFluidBody* ThisObjectPtr() override { return this; };
 	};
 }

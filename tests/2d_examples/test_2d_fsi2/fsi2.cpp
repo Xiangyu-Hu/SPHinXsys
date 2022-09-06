@@ -187,20 +187,6 @@ int main(int ac, char *av[])
 	/** computing linear reproducing configuration for the insert body. */
 	insert_body_corrected_configuration.parallel_exec();
 	//----------------------------------------------------------------------
-	//	Load restart file if necessary.
-	//----------------------------------------------------------------------
-	if (sph_system.restart_step_ != 0)
-	{
-		GlobalStaticVariables::physical_time_ = restart_io.readRestartFiles(sph_system.restart_step_);
-		insert_body.updateCellLinkedList();
-		water_block.updateCellLinkedList();
-		periodic_condition.update_cell_linked_list_.parallel_exec();
-		/** one need update configuration after periodic condition. */
-		water_block_complex.updateConfiguration();
-		insert_body_contact.updateConfiguration();
-		insert_body_update_normal.parallel_exec();
-	}
-	//----------------------------------------------------------------------
 	//	Setup computing and initial conditions.
 	//----------------------------------------------------------------------
 	size_t number_of_iterations = sph_system.restart_step_;
@@ -285,7 +271,7 @@ int main(int ac, char *av[])
 			/** Water block configuration and periodic condition. */
 			periodic_condition.bounding_.parallel_exec();
 
-			water_block.updateCellLinkedList();
+			water_block.updateCellLinkedListWithParticleSort(100);
 			periodic_condition.update_cell_linked_list_.parallel_exec();
 			water_block_complex.updateConfiguration();
 			/** one need update configuration after periodic condition. */

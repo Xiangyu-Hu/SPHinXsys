@@ -354,7 +354,7 @@ int main()
 			number_of_iterations++;
 
 			/** Update cell linked list and configuration. */
-			water_block.updateCellLinkedList();
+			water_block.updateCellLinkedList(); //water particle motion is small
 			water_block_complex.updateConfiguration();
 			/** one need update configuration after periodic condition. */
 			gate.updateCellLinkedList();
