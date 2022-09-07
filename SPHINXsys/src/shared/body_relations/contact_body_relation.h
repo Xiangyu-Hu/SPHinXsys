@@ -22,8 +22,8 @@
  * -----------------------------------------------------------------------------*/
 /**
  * @file 	contact_body_relation.h
- * @brief 	The topological relations between bodies, 
- * 			and the corresponding local topologies (particle configurations) 
+ * @brief 	The topological relations between bodies,
+ * 			and the corresponding local topologies (particle configurations)
  * 			are constructed in these classes.
  * @author	Xiangyu Hu
  */
@@ -69,8 +69,8 @@ namespace SPH
 		SolidBodyRelationContact(SPHBody &sph_body, RealBodyVector contact_bodies);
 		SolidBodyRelationContact(SolidBodyRelationSelfContact &solid_body_relation_self_contact,
 								 RealBodyVector contact_bodies);
-
 		virtual ~SolidBodyRelationContact(){};
+		BodyPartByParticle &getDynamicsRange() { return *body_surface_layer_; };
 
 		virtual void updateConfiguration() override;
 
@@ -83,25 +83,8 @@ namespace SPH
 	};
 
 	/**
-	 * @class BodyPartRelationContact
-	 * @brief The relation between a Body part with a SPH body. 
-	 */
-	class BodyPartRelationContact : public BodyRelationContact
-	{
-	public:
-		BodyPart *body_part_;
-		IndexVector &body_part_particles_;
-		BodyPartParticlesIndex get_body_part_particle_index_;
-
-		BodyPartRelationContact(BodyPart &body_part, RealBodyVector contact_bodies);
-		virtual ~BodyPartRelationContact(){};
-
-		virtual void updateConfiguration() override;
-	};
-
-	/**
 	 * @class BodyRelationContactToBodyPart
-	 * @brief The relation between a SPH body and a vector of body parts. 
+	 * @brief The relation between a SPH body and a vector of body parts.
 	 */
 	class BodyRelationContactToBodyPart : public BodyRelationContact
 	{
@@ -118,4 +101,4 @@ namespace SPH
 		virtual void updateConfiguration() override;
 	};
 }
-#endif //CONTACT_BODY_RELATION_H
+#endif // CONTACT_BODY_RELATION_H

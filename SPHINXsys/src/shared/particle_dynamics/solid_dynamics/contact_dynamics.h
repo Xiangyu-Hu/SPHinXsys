@@ -45,18 +45,17 @@ namespace SPH
 		 * @class SelfContactDensitySummation
 		 * @brief Computing the summation density due to solid self-contact model.
 		 */
-		class SelfContactDensitySummation : public PartInteractionDynamicsByParticle, public SolidDataInner
+		class SelfContactDensitySummation : public LocalDynamics, public SolidDataInner
 		{
 		public:
 			explicit SelfContactDensitySummation(SolidBodyRelationSelfContact &self_contact_relation);
 			virtual ~SelfContactDensitySummation(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Real> self_contact_density_;
 			StdLargeVec<Real> &mass_;
 			Real offset_W_ij_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**

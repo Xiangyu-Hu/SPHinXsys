@@ -86,6 +86,7 @@ namespace SPH
 
 		explicit SolidBodyRelationSelfContact(RealBody &real_body);
 		virtual ~SolidBodyRelationSelfContact(){};
+		BodyPartByParticle &getDynamicsRange() { return body_surface_layer_; };
 
 		virtual void updateConfiguration() override;
 

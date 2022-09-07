@@ -18,9 +18,7 @@ namespace SPH
 		//=================================================================================================//
 		SelfContactDensitySummation::
 			SelfContactDensitySummation(SolidBodyRelationSelfContact &self_contact_relation)
-			: PartInteractionDynamicsByParticle(self_contact_relation.sph_body_,
-												self_contact_relation.body_surface_layer_),
-			  SolidDataInner(self_contact_relation),
+			: LocalDynamics(self_contact_relation.sph_body_), SolidDataInner(self_contact_relation),
 			  mass_(particles_->mass_)
 		{
 			particles_->registerVariable(self_contact_density_, "SelfContactDensity");
@@ -28,7 +26,7 @@ namespace SPH
 			offset_W_ij_ = self_contact_relation.sph_body_.sph_adaptation_->getKernel()->W(dp_1, Vecd(0.0));
 		}
 		//=================================================================================================//
-		void SelfContactDensitySummation::Interaction(size_t index_i, Real dt)
+		void SelfContactDensitySummation::interaction(size_t index_i, Real dt)
 		{
 			Real sigma = 0.0;
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];

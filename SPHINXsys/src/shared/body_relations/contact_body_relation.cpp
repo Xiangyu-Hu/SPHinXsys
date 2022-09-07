@@ -118,26 +118,6 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	BodyPartRelationContact::BodyPartRelationContact(BodyPart &body_part, RealBodyVector contact_bodies)
-		: BodyRelationContact(body_part.getSPHBody(), contact_bodies), body_part_(&body_part),
-		  body_part_particles_(DynamicCast<BodyPartByParticle>(this, body_part).body_part_particles_),
-		  get_body_part_particle_index_(DynamicCast<BodyPartByParticle>(this, body_part).body_part_particles_)
-	{
-	}
-	//=================================================================================================//
-	void BodyPartRelationContact::updateConfiguration()
-	{
-		size_t number_of_particles = body_part_particles_.size();
-		for (size_t k = 0; k != contact_bodies_.size(); ++k)
-		{
-			target_cell_linked_lists_[k]
-				->searchNeighborsByParticles(number_of_particles,
-											 *base_particles_, contact_configuration_[k],
-											 get_body_part_particle_index_, *get_search_depths_[k],
-											 *get_contact_neighbors_[k]);
-		}
-	}
-	//=================================================================================================//
 	BodyRelationContactToBodyPart::BodyRelationContactToBodyPart(RealBody &real_body, BodyPartVector contact_body_parts)
 		: BodyRelationContact(real_body, contact_body_parts), contact_body_parts_(contact_body_parts)
 	{
