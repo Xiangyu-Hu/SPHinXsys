@@ -123,7 +123,6 @@ namespace SPH
 	public:
 		RealBody *real_body_;
 		ParticleConfiguration inner_configuration_; /**< inner configuration for the neighbor relations. */
-
 		explicit BaseBodyRelationInner(RealBody &real_body);
 		virtual ~BaseBodyRelationInner(){};
 

@@ -98,9 +98,9 @@ int main()
 	SimpleDynamics<solid_dynamics::SpringDamperConstraintParticleWise> spring_constraint(moving_plate, Vecd(0.2, 0, 0), 0.01);
 
 	/** Damping with the solid body*/
-	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
+	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec3d>>>
 		muscle_damping(0.2, myocardium_body_inner, "Velocity", physical_viscosity);
-	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
+	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec3d>>>
 		plate_damping(0.2, moving_plate_inner, "Velocity", physical_viscosity);
 	/** Output */
 	IOEnvironment io_environment(system);

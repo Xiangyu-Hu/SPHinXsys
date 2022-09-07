@@ -194,7 +194,7 @@ int main(int ac, char *av[])
 	solid_dynamics::ContactDensitySummation damping_ball_update_contact_density(damping_ball_contact);
 	solid_dynamics::ContactForceFromWall damping_ball_compute_solid_contact_forces(damping_ball_contact);
 	/** Damping for one ball */
-	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
+	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec2d>>>
 		damping(0.5, damping_ball_inner, "Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.

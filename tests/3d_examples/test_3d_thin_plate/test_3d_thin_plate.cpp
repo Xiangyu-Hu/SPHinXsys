@@ -174,9 +174,9 @@ int main(int ac, char *av[])
 	BoundaryGeometryParallelToYAxis boundary_geometry_y(plate_body, "BoundaryGeometryParallelToYAxis");
 	SimpleDynamics<thin_structure_dynamics::ConstrainShellBodyRegionAlongAxis, BoundaryGeometryParallelToYAxis>
 		constrain_holder_y(boundary_geometry_y, 1);
-	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
+	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec3d>>>
 		plate_position_damping(0.5, plate_body_inner, "Velocity", physical_viscosity);
-	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
+	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec3d>>>
 		plate_rotation_damping(0.5, plate_body_inner, "AngularVelocity", physical_viscosity);
 	/** Output */
 	IOEnvironment io_environment(system);

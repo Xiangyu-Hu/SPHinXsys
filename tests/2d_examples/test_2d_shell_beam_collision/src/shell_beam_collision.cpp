@@ -196,7 +196,7 @@ int main(int ac, char *av[])
 	BodyRegionByParticle holder(beam, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
 	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
 	/** Damping with the solid body*/
-	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
+	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec2d>>>
 		beam_damping(0.5, beam_inner, "Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.

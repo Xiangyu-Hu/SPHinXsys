@@ -16,7 +16,7 @@ namespace SPH
 	DampingBySplittingInner<VariableType>::
 		DampingBySplittingInner(BaseBodyRelationInner &inner_relation,
 								const std::string &variable_name, Real eta)
-		: InteractionDynamicsSplitting(inner_relation.sph_body_),
+		: LocalDynamics(inner_relation.sph_body_),
 		  DissipationDataInner(inner_relation), eta_(eta),
 		  Vol_(particles_->Vol_), mass_(particles_->mass_),
 		  variable_(*particles_->getVariableByName<VariableType>(variable_name)) {}
@@ -72,7 +72,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <typename VariableType>
-	void DampingBySplittingInner<VariableType>::Interaction(size_t index_i, Real dt)
+	void DampingBySplittingInner<VariableType>::interaction(size_t index_i, Real dt)
 	{
 		ErrorAndParameters<VariableType> error_and_parameters = computeErrorAndParameters(index_i, dt);
 		updateStates(index_i, dt, error_and_parameters);
@@ -211,14 +211,14 @@ namespace SPH
 	DampingPairwiseInner<VariableType>::
 		DampingPairwiseInner(BaseBodyRelationInner &inner_relation,
 							 const std::string &variable_name, Real eta)
-		: InteractionDynamicsSplitting(inner_relation.sph_body_),
+		: LocalDynamics(inner_relation.sph_body_),
 		  DissipationDataInner(inner_relation),
 		  Vol_(particles_->Vol_), mass_(particles_->mass_),
 		  variable_(*particles_->getVariableByName<VariableType>(variable_name)),
 		  eta_(eta) {}
 	//=================================================================================================//
 	template <typename VariableType>
-	void DampingPairwiseInner<VariableType>::Interaction(size_t index_i, Real dt)
+	void DampingPairwiseInner<VariableType>::interaction(size_t index_i, Real dt)
 	{
 		Real Vol_i = Vol_[index_i];
 		Real mass_i = mass_[index_i];
@@ -275,9 +275,9 @@ namespace SPH
 								 complex_relation.contact_relation_, variable_name, eta) {}
 	//=================================================================================================//
 	template <typename VariableType>
-	void DampingPairwiseComplex<VariableType>::Interaction(size_t index_i, Real dt)
+	void DampingPairwiseComplex<VariableType>::interaction(size_t index_i, Real dt)
 	{
-		DampingPairwiseInner<VariableType>::Interaction(index_i, dt);
+		DampingPairwiseInner<VariableType>::interaction(index_i, dt);
 
 		Real Vol_i = this->Vol_[index_i];
 		Real mass_i = this->mass_[index_i];
@@ -345,9 +345,9 @@ namespace SPH
 	template <typename VariableType,
 			  template <typename BaseVariableType> class BaseDampingPairwiseType>
 	void DampingPairwiseWithWall<VariableType, BaseDampingPairwiseType>::
-		Interaction(size_t index_i, Real dt)
+		interaction(size_t index_i, Real dt)
 	{
-		BaseDampingPairwiseType<VariableType>::Interaction(index_i, dt);
+		BaseDampingPairwiseType<VariableType>::interaction(index_i, dt);
 
 		Real Vol_i = this->Vol_[index_i];
 		Real mass_i = this->mass_[index_i];
@@ -385,7 +385,7 @@ namespace SPH
 	template <typename VariableType>
 	DampingPairwiseFromWall<VariableType>::
 		DampingPairwiseFromWall(BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta)
-		: InteractionDynamicsSplitting(contact_relation.sph_body_),
+		: LocalDynamics(contact_relation.sph_body_),
 		  DataDelegateContact<SPHBody, BaseParticles, BaseMaterial, SolidBody, SolidParticles, Solid>(contact_relation),
 		  eta_(eta), Vol_(particles_->Vol_), mass_(particles_->mass_),
 		  variable_(*particles_->getVariableByName<VariableType>(variable_name))
@@ -398,7 +398,7 @@ namespace SPH
 	}
 	//=================================================================================================//
 	template <typename VariableType>
-	void DampingPairwiseFromWall<VariableType>::Interaction(size_t index_i, Real dt)
+	void DampingPairwiseFromWall<VariableType>::interaction(size_t index_i, Real dt)
 	{
 		Real Vol_i = Vol_[index_i];
 		Real mass_i = mass_[index_i];

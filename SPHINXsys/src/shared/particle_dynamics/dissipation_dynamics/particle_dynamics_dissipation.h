@@ -58,13 +58,13 @@ namespace SPH
 	 * because the splitting partition only works in this case.
 	 */
 	template <typename VariableType>
-	class DampingBySplittingInner : public InteractionDynamicsSplitting, public DissipationDataInner
+	class DampingBySplittingInner : public LocalDynamics, public DissipationDataInner
 	{
 	protected:
 	public:
 		DampingBySplittingInner(BaseBodyRelationInner &inner_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingBySplittingInner(){};
-		void resetDampingCoefficient(Real reset_ratio) { eta_ *= reset_ratio; };
+		void interaction(size_t index_i, Real dt = 0.0);
 
 	protected:
 		Real eta_; /**< damping coefficient */
@@ -73,7 +73,6 @@ namespace SPH
 
 		virtual ErrorAndParameters<VariableType> computeErrorAndParameters(size_t index_i, Real dt = 0.0);
 		virtual void updateStates(size_t index_i, Real dt, const ErrorAndParameters<VariableType> &error_and_parameters);
-		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 	};
 
 	template <typename VariableType>
@@ -118,19 +117,17 @@ namespace SPH
 	 * because the splitting partition only works in this case.
 	 */
 	template <typename VariableType>
-	class DampingPairwiseInner : public InteractionDynamicsSplitting, public DissipationDataInner
+	class DampingPairwiseInner : public LocalDynamics, public DissipationDataInner
 	{
 	public:
 		DampingPairwiseInner(BaseBodyRelationInner &inner_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseInner(){};
-		void resetDampingCoefficient(Real reset_ratio) { eta_ *= reset_ratio; };
+		void interaction(size_t index_i, Real dt = 0.0);
 
 	protected:
 		StdLargeVec<Real> &Vol_, &mass_;
 		StdLargeVec<VariableType> &variable_;
 		Real eta_; /**< damping coefficient */
-
-		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 	};
 
 	template <typename VariableType>
@@ -141,9 +138,7 @@ namespace SPH
 							   BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta);
 		DampingPairwiseComplex(ComplexBodyRelation &complex_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseComplex(){};
-
-	protected:
-		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		void interaction(size_t index_i, Real dt = 0.0);
 
 	private:
 		StdVec<StdLargeVec<Real> *> contact_Vol_, contact_mass_;
@@ -165,9 +160,7 @@ namespace SPH
 								BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta);
 		DampingPairwiseWithWall(ComplexBodyRelation &complex_wall_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseWithWall(){};
-
-	protected:
-		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		void interaction(size_t index_i, Real dt = 0.0);
 
 	private:
 		StdVec<StdLargeVec<Real> *> wall_Vol_;
@@ -180,16 +173,14 @@ namespace SPH
 	 * and the mass of wall particle is not considered.
 	 */
 	template <typename VariableType>
-	class DampingPairwiseFromWall : public InteractionDynamicsSplitting,
-								  public DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,
-															 SolidBody, SolidParticles, Solid>
+	class DampingPairwiseFromWall : public LocalDynamics,
+									public DataDelegateContact<SPHBody, BaseParticles, BaseMaterial,
+															   SolidBody, SolidParticles, Solid>
 	{
 	public:
 		DampingPairwiseFromWall(BaseBodyRelationContact &contact_relation, const std::string &variable_name, Real eta);
 		virtual ~DampingPairwiseFromWall(){};
-
-	protected:
-		virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+		void interaction(size_t index_i, Real dt = 0.0);
 
 	private:
 		Real eta_; /**< damping coefficient */

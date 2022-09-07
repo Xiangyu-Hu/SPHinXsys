@@ -188,11 +188,12 @@ namespace SPH
 		 * @brief Damping to wall by which the wall velocity is not updated
 		 * and the mass of wall particle is not considered.
 		 */
-		class PairwiseFrictionFromWall : public InteractionDynamicsSplitting, public ContactWithWallData
+		class PairwiseFrictionFromWall : public LocalDynamics, public ContactWithWallData
 		{
 		public:
 			PairwiseFrictionFromWall(BaseBodyRelationContact &contact_relation, Real eta);
 			virtual ~PairwiseFrictionFromWall(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real eta_; /**< friction coefficient */
@@ -200,8 +201,6 @@ namespace SPH
 			StdLargeVec<Vecd> &vel_;
 			StdVec<StdLargeVec<Real> *> wall_Vol_;
 			StdVec<StdLargeVec<Vecd> *> wall_vel_n_, wall_n_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**

@@ -16,7 +16,7 @@ Real half_height = 1.0;								/** Height of the cylinder. */
 Real radius_mid_surface = radius + thickness / 2.0; /** Radius of the mid surface. */
 int particle_number_mid_surface = int(2.0 * radius_mid_surface * Pi * 215.0 / 360.0 / resolution_ref);
 int particle_number_height = 2 * int(half_height / resolution_ref);
-int BWD = 1;						  /** Width of the boundary layer measured by number of particles. */
+int BWD = 1; /** Width of the boundary layer measured by number of particles. */
 BoundingBox system_domain_bounds(Vec3d(-radius - thickness, -half_height - thickness, -radius - thickness),
 								 Vec3d(radius + thickness, half_height + thickness, radius + thickness));
 Real ball_radius = 0.5;
@@ -42,7 +42,7 @@ public:
 			for (int j = 0; j < particle_number_height; j++)
 			{
 				Real x = radius_mid_surface * cos(162.5 / 180.0 * Pi + (i - BWD + 0.5) * 215.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
-				Real y = (j -  particle_number_height / 2) * resolution_ref + resolution_ref * 0.5;
+				Real y = (j - particle_number_height / 2) * resolution_ref + resolution_ref * 0.5;
 				Real z = radius_mid_surface * sin(162.5 / 180.0 * Pi + (i - BWD + 0.5) * 215.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
 				initializePositionAndVolumetricMeasure(Vecd(x, y, z), resolution_ref * resolution_ref);
 				Vec3d n_0 = Vec3d(x / radius_mid_surface, 0.0, z / radius_mid_surface);
@@ -150,7 +150,8 @@ int main(int ac, char *av[])
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ShellContactDensity ball_update_contact_density(ball_contact);
 	solid_dynamics::ContactForceFromWall ball_compute_solid_contact_forces(ball_contact);
-	DampingWithRandomChoice<solid_dynamics::PairwiseFrictionFromWall> ball_friction(0.1, ball_contact, physical_viscosity);
+	DampingWithRandomChoice<NewInteractionDynamicsSplit<solid_dynamics::PairwiseFrictionFromWall>>
+		ball_friction(0.1, ball_contact, physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

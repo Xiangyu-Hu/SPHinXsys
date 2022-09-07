@@ -171,7 +171,7 @@ int main(int ac, char *av[])
 	SimpleDynamics<TimeStepInitialization> initialize_a_fluid_step(fluid_block, makeShared<Gravity>(Vecd(gravity_g, 0.0)));
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationWithWall> viscous_acceleration(fluid_block_complex);
 	// computing viscous effect implicitly and with update velocity directly other than viscous acceleration
-	DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>
+	NewInteractionDynamicsSplit<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
 		implicit_viscous_damping(fluid_block_complex, "Velocity", mu_f);
 	// impose transport velocity
 	InteractionDynamics<fluid_dynamics::TransportVelocityCorrectionComplex> transport_velocity_correction(fluid_block_complex);

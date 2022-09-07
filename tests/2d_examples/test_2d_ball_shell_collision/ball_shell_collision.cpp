@@ -179,7 +179,8 @@ int main(int ac, char *av[])
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ShellContactDensity ball_update_contact_density(ball_contact);
 	solid_dynamics::ContactForceFromWall ball_compute_solid_contact_forces(ball_contact);
-	DampingWithRandomChoice<solid_dynamics::PairwiseFrictionFromWall> ball_friction(0.1, ball_contact, physical_viscosity);
+	DampingWithRandomChoice<NewInteractionDynamicsSplit<solid_dynamics::PairwiseFrictionFromWall>> 
+		ball_friction(0.1, ball_contact, physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

@@ -250,23 +250,23 @@ namespace SPH
 	 * @class InteractionDynamics
 	 * @brief This is the class for particle interaction with other particles
 	 */
-	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
-	class InteractionDynamics : public LocalDynamicsType, public BaseDynamics<void>
+	template <class LocalDynamicsType>
+	class BaseInteractionDynamics : public LocalDynamicsType, public BaseDynamics<void>
 	{
-	protected:
-		DynamicsRange &dynamics_range_;
-
 	public:
 		template <class BodyRelationType, typename... Args>
-		InteractionDynamics(BodyRelationType &body_relation, Args &&...args)
+		BaseInteractionDynamics(BodyRelationType &body_relation, Args &&...args)
 			: LocalDynamicsType(body_relation, std::forward<Args>(args)...),
-			  BaseDynamics<void>(), dynamics_range_(body_relation.getDynamicsRange()){};
-		virtual ~InteractionDynamics(){};
+			  BaseDynamics<void>(){};
+		virtual ~BaseInteractionDynamics(){};
 
 		/** pre process such as update ghost state */
 		StdVec<BaseDynamics<void> *> pre_processes_;
 		/** post process such as impose constraint */
 		StdVec<BaseDynamics<void> *> post_processes_;
+
+		virtual void runInteractionStep(Real dt) = 0;
+		virtual void parallel_runInteractionStep(Real dt) = 0;
 
 		virtual void exec(Real dt = 0.0) override
 		{
@@ -281,11 +281,82 @@ namespace SPH
 			this->setupDynamics(dt);
 			parallel_runInteractionStep(dt);
 		};
+	};
 
-		void runInteractionStep(Real dt)
+	/**
+	 * @class NewInteractionDynamicsSplit
+	 * @brief This is the class for particle interaction with other particles
+	 */
+	template <class LocalDynamicsType>
+	class NewInteractionDynamicsSplit : public BaseInteractionDynamics<LocalDynamicsType>
+	{
+	protected:
+		RealBody &real_body_;
+		SplitCellLists &split_cell_lists_;
+
+	public:
+		template <class BodyRelationType, typename... Args>
+		NewInteractionDynamicsSplit(BodyRelationType &body_relation, Args &&...args)
+			: BaseInteractionDynamics<LocalDynamicsType>(body_relation, std::forward<Args>(args)...),
+			  real_body_(DynamicCast<RealBody>(this, this->sph_body_)),
+			  split_cell_lists_(real_body_.getSplitCellLists())
 		{
-			for (size_t k = 0; k < pre_processes_.size(); ++k)
-				pre_processes_[k]->exec(dt);
+			real_body_.setUseSplitCellLists();
+		};
+		virtual ~NewInteractionDynamicsSplit(){};
+
+		virtual void runInteractionStep(Real dt) override
+		{
+			for (size_t k = 0; k < this->pre_processes_.size(); ++k)
+				this->pre_processes_[k]->exec(dt);
+
+			particle_for_split(
+				split_cell_lists_,
+				[&](size_t i, Real delta)
+				{ this->interaction(i, delta); },
+				dt);
+
+			for (size_t k = 0; k < this->post_processes_.size(); ++k)
+				this->post_processes_[k]->exec(dt);
+		}
+
+		virtual void parallel_runInteractionStep(Real dt) override
+		{
+			for (size_t k = 0; k < this->pre_processes_.size(); ++k)
+				this->pre_processes_[k]->parallel_exec(dt);
+
+			particle_parallel_for_split(
+				split_cell_lists_,
+				[&](size_t i, Real delta)
+				{ this->interaction(i, delta); },
+				dt);
+
+			for (size_t k = 0; k < this->post_processes_.size(); ++k)
+				this->post_processes_[k]->parallel_exec(dt);
+		}
+	};
+
+	/**
+	 * @class InteractionDynamics
+	 * @brief This is the class for particle interaction with other particles
+	 */
+	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
+	class InteractionDynamics : public BaseInteractionDynamics<LocalDynamicsType>
+	{
+	protected:
+		DynamicsRange &dynamics_range_;
+
+	public:
+		template <class BodyRelationType, typename... Args>
+		InteractionDynamics(BodyRelationType &body_relation, Args &&...args)
+			: BaseInteractionDynamics<LocalDynamicsType>(body_relation, std::forward<Args>(args)...),
+			  dynamics_range_(body_relation.getDynamicsRange()){};
+		virtual ~InteractionDynamics(){};
+
+		virtual void runInteractionStep(Real dt) override
+		{
+			for (size_t k = 0; k < this->pre_processes_.size(); ++k)
+				this->pre_processes_[k]->exec(dt);
 
 			particle_for(
 				dynamics_range_.LoopRange(),
@@ -293,14 +364,14 @@ namespace SPH
 				{ this->interaction(i, delta); },
 				dt);
 
-			for (size_t k = 0; k < post_processes_.size(); ++k)
-				post_processes_[k]->exec(dt);
+			for (size_t k = 0; k < this->post_processes_.size(); ++k)
+				this->post_processes_[k]->exec(dt);
 		}
 
-		void parallel_runInteractionStep(Real dt)
+		virtual void parallel_runInteractionStep(Real dt) override
 		{
-			for (size_t k = 0; k < pre_processes_.size(); ++k)
-				pre_processes_[k]->parallel_exec(dt);
+			for (size_t k = 0; k < this->pre_processes_.size(); ++k)
+				this->pre_processes_[k]->parallel_exec(dt);
 
 			particle_parallel_for(
 				dynamics_range_.LoopRange(),
@@ -308,8 +379,8 @@ namespace SPH
 				{ this->interaction(i, delta); },
 				dt);
 
-			for (size_t k = 0; k < post_processes_.size(); ++k)
-				post_processes_[k]->parallel_exec(dt);
+			for (size_t k = 0; k < this->post_processes_.size(); ++k)
+				this->post_processes_[k]->parallel_exec(dt);
 		}
 	};
 

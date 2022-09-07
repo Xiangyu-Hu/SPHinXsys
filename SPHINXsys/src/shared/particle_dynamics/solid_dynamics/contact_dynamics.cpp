@@ -136,9 +136,9 @@ namespace SPH
 			SelfContactForce(SolidBodyRelationSelfContact &self_contact_relation)
 			: PartInteractionDynamicsByParticle(self_contact_relation.sph_body_,
 												self_contact_relation.body_surface_layer_),
-			  SolidDataInner(self_contact_relation), mass_(particles_->mass_), 
-			  self_contact_density_(*particles_->getVariableByName<Real>("SelfContactDensity")), 
-			  Vol_(particles_->Vol_), acc_prior_(particles_->acc_prior_), 
+			  SolidDataInner(self_contact_relation), mass_(particles_->mass_),
+			  self_contact_density_(*particles_->getVariableByName<Real>("SelfContactDensity")),
+			  Vol_(particles_->Vol_), acc_prior_(particles_->acc_prior_),
 			  contact_impedance_(material_->ReferenceDensity() * sqrt(material_->ContactStiffness())),
 			  vel_(particles_->vel_) {}
 		//=================================================================================================//
@@ -281,67 +281,66 @@ namespace SPH
 		}
 		//=================================================================================================//
 		PairwiseFrictionFromWall::
-		PairwiseFrictionFromWall(BaseBodyRelationContact &contact_relation, Real eta)
-		: InteractionDynamicsSplitting(contact_relation.sph_body_),
-		  ContactWithWallData(contact_relation),
-		  eta_(eta), Vol_(particles_->Vol_), mass_(particles_->mass_),
-		  vel_(particles_->vel_)
+			PairwiseFrictionFromWall(BaseBodyRelationContact &contact_relation, Real eta)
+			: LocalDynamics(contact_relation.sph_body_), ContactWithWallData(contact_relation),
+			  eta_(eta), Vol_(particles_->Vol_), mass_(particles_->mass_),
+			  vel_(particles_->vel_)
 		{
-		for (size_t k = 0; k != contact_particles_.size(); ++k)
-		{
-			wall_Vol_.push_back(&(contact_particles_[k]->Vol_));
-			wall_vel_n_.push_back(&contact_particles_[k]->vel_);
-			wall_n_.push_back(&contact_particles_[k]->n_);
-		}
+			for (size_t k = 0; k != contact_particles_.size(); ++k)
+			{
+				wall_Vol_.push_back(&(contact_particles_[k]->Vol_));
+				wall_vel_n_.push_back(&contact_particles_[k]->vel_);
+				wall_n_.push_back(&contact_particles_[k]->n_);
+			}
 		}
 		//=================================================================================================//
-		void PairwiseFrictionFromWall::Interaction(size_t index_i, Real dt)
+		void PairwiseFrictionFromWall::interaction(size_t index_i, Real dt)
 		{
 			Real Vol_i = Vol_[index_i];
-		Real mass_i = mass_[index_i];
-		Vecd &vel_i = vel_[index_i];
+			Real mass_i = mass_[index_i];
+			Vecd &vel_i = vel_[index_i];
 
-		std::array<Real, MaximumNeighborhoodSize> parameter_b;
+			std::array<Real, MaximumNeighborhoodSize> parameter_b;
 
-		/** Contact interaction. */
-		for (size_t k = 0; k < contact_configuration_.size(); ++k)
-		{
-			StdLargeVec<Real> &Vol_k = *(wall_Vol_[k]);
-			StdLargeVec<Vecd> &vel_k = *(wall_vel_n_[k]);
-			StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
-			Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
-			// forward sweep
-			for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+			/** Contact interaction. */
+			for (size_t k = 0; k < contact_configuration_.size(); ++k)
 			{
-				size_t index_j = contact_neighborhood.j_[n];
-				Vecd &e_ij = contact_neighborhood.e_ij_[n];
+				StdLargeVec<Real> &Vol_k = *(wall_Vol_[k]);
+				StdLargeVec<Vecd> &vel_k = *(wall_vel_n_[k]);
+				StdLargeVec<Vecd> &n_k = *(wall_n_[k]);
+				Neighborhood &contact_neighborhood = (*contact_configuration_[k])[index_i];
+				// forward sweep
+				for (size_t n = 0; n != contact_neighborhood.current_size_; ++n)
+				{
+					size_t index_j = contact_neighborhood.j_[n];
+					Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
-				parameter_b[n] = eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
+					parameter_b[n] = eta_ * contact_neighborhood.dW_ij_[n] * Vol_i * Vol_k[index_j] * dt / contact_neighborhood.r_ij_[n];
 
-				// only update particle i
-				Vecd vel_derivative = (vel_i - vel_k[index_j]);
-				Vecd n_j = SimTK::dot(e_ij, n_k[index_j]) > 0.0 ? n_k[index_j] : -1.0 * n_k[index_j];
-				vel_derivative -= SMAX(0.0, SimTK::dot(vel_derivative, n_j)) * n_j;
-				vel_i += parameter_b[n] * vel_derivative / (mass_i - 2.0 * parameter_b[n]);
-			}
-			// backward sweep
-			for (size_t n = contact_neighborhood.current_size_; n != 0; --n)
-			{
-				size_t index_j = contact_neighborhood.j_[n - 1];
-				Vecd &e_ij = contact_neighborhood.e_ij_[n];
+					// only update particle i
+					Vecd vel_derivative = (vel_i - vel_k[index_j]);
+					Vecd n_j = SimTK::dot(e_ij, n_k[index_j]) > 0.0 ? n_k[index_j] : -1.0 * n_k[index_j];
+					vel_derivative -= SMAX(0.0, SimTK::dot(vel_derivative, n_j)) * n_j;
+					vel_i += parameter_b[n] * vel_derivative / (mass_i - 2.0 * parameter_b[n]);
+				}
+				// backward sweep
+				for (size_t n = contact_neighborhood.current_size_; n != 0; --n)
+				{
+					size_t index_j = contact_neighborhood.j_[n - 1];
+					Vecd &e_ij = contact_neighborhood.e_ij_[n];
 
-				// only update particle i
-				Vecd vel_derivative = (vel_i - vel_k[index_j]);
-				Vecd n_j = SimTK::dot(e_ij, n_k[index_j]) > 0.0 ? n_k[index_j] : -1.0 * n_k[index_j];
-				vel_derivative -= SMAX(0.0, SimTK::dot(vel_derivative, n_j)) * n_j;
-				vel_i += parameter_b[n - 1] * vel_derivative / (mass_i - 2.0 * parameter_b[n - 1]);
-			}
+					// only update particle i
+					Vecd vel_derivative = (vel_i - vel_k[index_j]);
+					Vecd n_j = SimTK::dot(e_ij, n_k[index_j]) > 0.0 ? n_k[index_j] : -1.0 * n_k[index_j];
+					vel_derivative -= SMAX(0.0, SimTK::dot(vel_derivative, n_j)) * n_j;
+					vel_i += parameter_b[n - 1] * vel_derivative / (mass_i - 2.0 * parameter_b[n - 1]);
+				}
 			}
 		}
 		//=================================================================================================//
 		DynamicContactForceWithWall::
-		DynamicContactForceWithWall(SolidBodyRelationContact &solid_body_contact_relation, Real penalty_strength)
-		: PartInteractionDynamicsByParticle(solid_body_contact_relation.sph_body_,
+			DynamicContactForceWithWall(SolidBodyRelationContact &solid_body_contact_relation, Real penalty_strength)
+			: PartInteractionDynamicsByParticle(solid_body_contact_relation.sph_body_,
 												*solid_body_contact_relation.body_surface_layer_),
 			  ContactDynamicsData(solid_body_contact_relation),
 			  Vol_(particles_->Vol_), mass_(particles_->mass_),

@@ -165,7 +165,7 @@ int main(int ac, char *av[])
 	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
 
 	/** Damping with the solid body*/
-	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
+	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec3d>>>
 		beam_damping(0.1, beam_body_inner, "Velocity", physical_viscosity);
 
 	/** Output */

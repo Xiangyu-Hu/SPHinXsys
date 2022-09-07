@@ -111,7 +111,7 @@ int main(int ac, char *av[])
 	solid_dynamics::ContactDensitySummation free_cube_update_contact_density(free_cube_contact);
 	solid_dynamics::ContactForceFromWall free_cube_compute_solid_contact_forces(free_cube_contact);
 	/** Damping*/
-	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
+	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec2d>>>
 		damping(0.5, free_cube_inner,"Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.

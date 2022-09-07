@@ -156,6 +156,89 @@ namespace SPH
 			ap);
 	};
 
+	template <class LocalDynamicsFunction>
+	void particle_for_split(SplitCellLists &split_cell_lists,
+							const LocalDynamicsFunction &local_dynamics_function, Real dt)
+	{
+		Real dt2 = dt * 0.5;
+		// forward sweeping
+		for (size_t k = 0; k != split_cell_lists.size(); ++k)
+		{
+			ConcurrentCellLists &cell_lists = split_cell_lists[k];
+			for (size_t l = 0; l != cell_lists.size(); ++l)
+			{
+				IndexVector &particle_indexes = cell_lists[l]->real_particle_indexes_;
+				for (size_t i = 0; i != particle_indexes.size(); ++i)
+				{
+					local_dynamics_function(particle_indexes[i], dt2);
+				}
+			}
+		}
+
+		// backward sweeping
+		for (size_t k = split_cell_lists.size(); k != 0; --k)
+		{
+			ConcurrentCellLists &cell_lists = split_cell_lists[k - 1];
+			for (size_t l = 0; l != cell_lists.size(); ++l)
+			{
+				IndexVector &particle_indexes = cell_lists[l]->real_particle_indexes_;
+				for (size_t i = particle_indexes.size(); i != 0; --i)
+				{
+					local_dynamics_function(particle_indexes[i - 1], dt2);
+				}
+			}
+		}
+	};
+
+	//----------------------------------------------------------------------
+	//	Splitting algorithm (for sequential and parallel computing).
+	//----------------------------------------------------------------------
+	template <class LocalDynamicsFunction>
+	void particle_parallel_for_split(SplitCellLists &split_cell_lists,
+									 const LocalDynamicsFunction &local_dynamics_function, Real dt)
+	{
+		Real dt2 = dt * 0.5;
+		// forward sweeping
+		for (size_t k = 0; k != split_cell_lists.size(); ++k)
+		{
+			ConcurrentCellLists &cell_lists = split_cell_lists[k];
+			parallel_for(
+				blocked_range<size_t>(0, cell_lists.size()),
+				[&](const blocked_range<size_t> &r)
+				{
+					for (size_t l = r.begin(); l < r.end(); ++l)
+					{
+						IndexVector &particle_indexes = cell_lists[l]->real_particle_indexes_;
+						for (size_t i = 0; i < particle_indexes.size(); ++i)
+						{
+							local_dynamics_function(particle_indexes[i], dt2);
+						}
+					}
+				},
+				ap);
+		}
+
+		// backward sweeping
+		for (size_t k = split_cell_lists.size(); k != 0; --k)
+		{
+			ConcurrentCellLists &cell_lists = split_cell_lists[k - 1];
+			parallel_for(
+				blocked_range<size_t>(0, cell_lists.size()),
+				[&](const blocked_range<size_t> &r)
+				{
+					for (size_t l = r.begin(); l < r.end(); ++l)
+					{
+						IndexVector &particle_indexes = cell_lists[l]->real_particle_indexes_;
+						for (size_t i = particle_indexes.size(); i != 0; --i)
+						{
+							local_dynamics_function(particle_indexes[i - 1], dt2);
+						}
+					}
+				},
+				ap);
+		}
+	}
+
 	//----------------------------------------------------------------------
 	//	Body-wise reduce iterators (for sequential and parallel computing).
 	//----------------------------------------------------------------------

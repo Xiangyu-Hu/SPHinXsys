@@ -64,7 +64,7 @@ int main(int ac, char *av[])
 // handle command line arguments
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
-#endif	/** output environment. */
+#endif /** output environment. */
 
 	/** create a Cantilever body, corresponding material, particles and reaction model. */
 	SolidBody cantilever_body(system, makeShared<Cantilever>("CantileverBody"));
@@ -79,7 +79,7 @@ int main(int ac, char *av[])
 	BodyRelationContact cantilever_observer_contact(cantilever_observer, {&cantilever_body});
 
 	//-------- common particle dynamics ----------------------------------------
-	SimpleDynamics<TimeStepInitialization> 
+	SimpleDynamics<TimeStepInitialization>
 		initialize_time_step(cantilever_body, makeShared<TimeDependentGravity>(Vec3d(0.0, -gravity_g, 0.0)));
 
 	/**
@@ -102,7 +102,7 @@ int main(int ac, char *av[])
 	BodyRegionByParticle holder(cantilever_body,
 								makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder, "Holder"));
 	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
-	DampingWithRandomChoice<DampingBySplittingInner<Vec3d>>
+	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingBySplittingInner<Vec3d>>>
 		muscle_damping(0.1, cantilever_body_inner, "Velocity", physical_viscosity);
 	/** Output */
 	IOEnvironment io_environment(system);
