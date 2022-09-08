@@ -231,7 +231,7 @@ int main(int ac, char *av[])
 	 * @brief   Particles and body creation for fish.
 	 */
 	SolidBody fish_body(system, makeShared<FishBody>("FishBody"));
-	fish_body.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
+	fish_body.defineAdaptationRatios(1.15, 2.0);
 	fish_body.defineBodyLevelSetShape();
 	fish_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	// Using relaxed particle distribution if needed

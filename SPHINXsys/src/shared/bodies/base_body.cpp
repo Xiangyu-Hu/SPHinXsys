@@ -49,6 +49,11 @@ namespace SPH
 		return body_shape_->getBounds();
 	}
 	//=================================================================================================//
+	void SPHBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
+	{
+		sph_adaptation_->resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
+	}
+	//=================================================================================================//
 	void SPHBody::writeParticlesToVtuFile(std::ostream &output_file)
 	{
 		base_particles_->writeParticlesToVtk(output_file);
@@ -134,6 +139,13 @@ namespace SPH
 			sortParticleWithCellLinkedList();
 		iteration_count_++;
 		updateCellLinkedList();
+	}
+	//=================================================================================================//
+	void RealBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
+	{
+		sph_adaptation_->resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
+		cell_linked_list_ = cell_linked_list_keeper_.movePtr(
+			sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));
 	}
 	//=================================================================================================//
 }

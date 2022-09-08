@@ -41,7 +41,7 @@ int main(int ac, char *av[])
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody insert_body(sph_system, makeShared<Insert>("InsertedBody"));
-	insert_body.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
+	insert_body.defineAdaptationRatios(1.15, 2.0);
 	insert_body.defineBodyLevelSetShape()->writeLevelSet(insert_body);
 	insert_body.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)

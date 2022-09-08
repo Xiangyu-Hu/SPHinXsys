@@ -130,7 +130,7 @@ namespace SPH
 		class TransportVelocityCorrectionInner : public LocalDynamics, public FluidDataInner
 		{
 		public:
-			explicit TransportVelocityCorrectionInner(BaseBodyRelationInner &inner_relation);
+			explicit TransportVelocityCorrectionInner(BaseBodyRelationInner &inner_relation, Real coefficient = 7.0);
 			virtual ~TransportVelocityCorrectionInner(){};
 			virtual void setupDynamics(Real dt = 0.0) override;
 			void interaction(size_t index_i, Real dt = 0.0);
@@ -140,6 +140,10 @@ namespace SPH
 			StdLargeVec<Vecd> &pos_;
 			StdLargeVec<int> &surface_indicator_;
 			Real p_background_;
+			const Real coefficient_;
+
+			virtual void setupDynamics(Real dt = 0.0) override;
+			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**

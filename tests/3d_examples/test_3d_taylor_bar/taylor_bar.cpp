@@ -23,7 +23,7 @@ int main(int ac, char *av[])
 
 	/** create a body with corresponding material, particles and reaction model. */
 	SolidBody column(system, makeShared<Column>("Column"));
-	column.sph_adaptation_->resetAdaptationRatios(1.3, 1.0);
+	column.defineAdaptationRatios(1.3, 1.0);
 	column.defineBodyLevelSetShape()->writeLevelSet(column);
 	column.defineParticlesAndMaterial<ElasticSolidParticles, HardeningPlasticSolid>(
 		rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);

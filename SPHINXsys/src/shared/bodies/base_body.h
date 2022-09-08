@@ -98,6 +98,8 @@ namespace SPH
 		//----------------------------------------------------------------------
 		//		Object factory template functions
 		//----------------------------------------------------------------------
+		virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0);
+
 		template <typename... ConstructorArgs>
 		LevelSetShape *defineComponentLevelSetShape(const std::string &shape_name, ConstructorArgs &&...args)
 		{
@@ -216,6 +218,8 @@ namespace SPH
 			cell_linked_list_ = cell_linked_list_keeper_.movePtr(
 				sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));
 		};
+
+		virtual void defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio = 1.0) override;
 	};
 }
 #endif // BASE_BODY_H

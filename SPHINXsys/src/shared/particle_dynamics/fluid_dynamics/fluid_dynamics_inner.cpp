@@ -95,12 +95,19 @@ namespace SPH
 			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), rho_(particles_->rho_), pos_(particles_->pos_),
 			  surface_indicator_(particles_->surface_indicator_), p_background_(0) {}
+			TransportVelocityCorrectionInner(BaseBodyRelationInner &inner_relation, Real coefficient)
+			: InteractionDynamics(*inner_relation.sph_body_),
+			  FluidDataInner(inner_relation),
+			  Vol_(particles_->Vol_), rho_(particles_->rho_),
+			  pos_(particles_->pos_),
+			  surface_indicator_(particles_->surface_indicator_), p_background_(0),
+			  coefficient_(coefficient) {}
 		//=================================================================================================//
 		void TransportVelocityCorrectionInner::setupDynamics(Real dt)
 		{
 			Real speed_max = particles_->speed_max_;
 			Real density = material_->ReferenceDensity();
-			p_background_ = 7.0 * density * speed_max * speed_max;
+			p_background_ = coefficient_ * density * speed_max * speed_max;
 		}
 		//=================================================================================================//
 		void TransportVelocityCorrectionInner::interaction(size_t index_i, Real dt)
