@@ -122,7 +122,6 @@ int main(int ac, char *av[])
 
 	ObserverBody beam_observer(system, "BeamObserver");
 	beam_observer.defineAdaptationRatios(1.15, 2.0);
-	beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
 	StdVec<Vecd> beam_observation_location = {Vecd(PL, 0.0)};
 	beam_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
 	//----------------------------------------------------------------------

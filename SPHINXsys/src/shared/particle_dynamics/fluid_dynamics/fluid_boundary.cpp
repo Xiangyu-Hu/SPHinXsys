@@ -16,8 +16,8 @@ namespace SPH
 			  rho_(particles_->rho_), p_(particles_->p_),
 			  pos_(particles_->pos_), vel_(particles_->vel_){};
 		//=================================================================================================//
-		FlowVelocityBuffer::FlowVelocityBuffer(BodyPartByCell &body_part)
-			: BaseFlowBoundaryCondition(body_part), relaxation_rate_(0.3){};
+		FlowVelocityBuffer::FlowVelocityBuffer(BodyPartByCell &body_part, Real relaxation_rate)
+			: BaseFlowBoundaryCondition(body_part), relaxation_rate_(relaxation_rate){};
 		//=================================================================================================//
 		void FlowVelocityBuffer::update(size_t index_i, Real dt)
 		{

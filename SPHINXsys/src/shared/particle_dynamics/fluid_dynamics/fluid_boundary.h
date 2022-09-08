@@ -61,7 +61,7 @@ namespace SPH
         class FlowVelocityBuffer : public BaseFlowBoundaryCondition
         {
         public:
-            FlowVelocityBuffer(BodyPartByCell &body_part);
+            FlowVelocityBuffer(BodyPartByCell &body_part, Real relaxation_rate = 0.3);
             virtual ~FlowVelocityBuffer(){};
             void update(size_t index_i, Real dt = 0.0);
 
