@@ -85,8 +85,8 @@ int main(int ac, char *av[])
 	//	Define the numerical methods used in the simulation.
 	//	Note that there may be data dependence on the sequence of constructions.
 	//----------------------------------------------------------------------
-	fluid_dynamics::PressureRelaxationRiemannWithWall fluid_pressure_relaxation(water_block_complex);
-	fluid_dynamics::DensityRelaxationRiemannWithWall fluid_density_relaxation(water_block_complex);
+	NewInteractionDynamics1Level<fluid_dynamics::PressureRelaxationRiemannWithWall> fluid_pressure_relaxation(water_block_complex);
+	NewInteractionDynamics1Level<fluid_dynamics::DensityRelaxationRiemannWithWall> fluid_density_relaxation(water_block_complex);
 	InteractionDynamicsWithUpdate<fluid_dynamics::DensitySummationFreeSurfaceComplex> fluid_density_by_summation(water_block_complex);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SharedPtr<Gravity> gravity_ptr = makeShared<Gravity>(Vecd(0.0, -gravity_g));

@@ -111,24 +111,6 @@ namespace SPH
 		ParticleFunctor functor_initialization_;
 	};
 
-	/**
-	 * @class InteractionDynamicsSplitting
-	 * @brief This is for the splitting algorithm
-	 */
-	class InteractionDynamicsSplitting : public OldInteractionDynamics
-	{
-	public:
-		explicit InteractionDynamicsSplitting(SPHBody &sph_body);
-		virtual ~InteractionDynamicsSplitting(){};
-
-		virtual void exec(Real dt = 0.0) override;
-		virtual void parallel_exec(Real dt = 0.0) override;
-
-	protected:
-		RealBody &real_body_;
-		SplitCellLists &split_cell_lists_;
-	};
-
 	//----------------------------------------------------------------------
 	//		New version particle dynamics base classes.
 	//		Aiming to use template on local dynamics so that
@@ -174,6 +156,10 @@ namespace SPH
 		};
 	};
 
+	/**
+	 * @class ReduceDynamics
+	 * @brief Template class for particle-wise reduce operation
+	 */
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
 	class ReduceDynamics : public LocalDynamicsType,
 						   public BaseDynamics<typename LocalDynamicsType::ReduceReturnType>
@@ -218,6 +204,10 @@ namespace SPH
 		};
 	};
 
+	/**
+	 * @class ReduceDynamicsAverage
+	 * @brief Template class for computing particle-wise averages
+	 */
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
 	class ReduceDynamicsAverage : public ReduceDynamics<LocalDynamicsType, DynamicsRange>
 	{
@@ -247,8 +237,8 @@ namespace SPH
 	};
 
 	/**
-	 * @class InteractionDynamics
-	 * @brief This is the class for particle interaction with other particles
+	 * @class BaseInteractionDynamics
+	 * @brief This is the base class for particle interaction with other particles
 	 */
 	template <class LocalDynamicsType>
 	class BaseInteractionDynamics : public LocalDynamicsType, public BaseDynamics<void>
@@ -285,7 +275,7 @@ namespace SPH
 
 	/**
 	 * @class NewInteractionDynamicsSplit
-	 * @brief This is the class for particle interaction with other particles
+	 * @brief This is for the splitting algorithm
 	 */
 	template <class LocalDynamicsType>
 	class NewInteractionDynamicsSplit : public BaseInteractionDynamics<LocalDynamicsType>
@@ -338,7 +328,7 @@ namespace SPH
 
 	/**
 	 * @class InteractionDynamics
-	 * @brief This is the class for particle interaction with other particles
+	 * @brief This is the class with a single step of particle interaction with other particles
 	 */
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
 	class InteractionDynamics : public BaseInteractionDynamics<LocalDynamicsType>
@@ -420,7 +410,9 @@ namespace SPH
 
 	/**
 	 * @class NewInteractionDynamics1Level
-	 * @brief This class includes an interaction and a update steps
+	 * @brief This class includes three steps, including initialization, interaction and update.
+	 * It is the most complex particle dynamics type, 
+	 * and is typically for computing the main fluid and solid dynamics.
 	 */
 	template <class LocalDynamicsType, class DynamicsRange = SPHBody>
 	class NewInteractionDynamics1Level : public InteractionDynamicsWithUpdate<LocalDynamicsType, DynamicsRange>
@@ -474,7 +466,7 @@ namespace SPH
 
 	/**
 	 * @class CombinedLocalDynamics
-	 * @brief This is the class for combining multiple local dynamics,
+	 * @brief This is the class for combining multiple local interaction dynamics,
 	 * which share the particle loop but are independent from each other,
 	 * aiming to increase computing intensity under the data caching environment
 	 */

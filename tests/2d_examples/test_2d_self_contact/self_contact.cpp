@@ -1,29 +1,26 @@
 /**
-* @file 	self_contact.cpp
-* @brief 	This is the case file for the test of dynamic self contact.
-* @author   Xiangyu Hu
-*/
+ * @file 	self_contact.cpp
+ * @brief 	This is the case file for the test of dynamic self contact.
+ * @author   Xiangyu Hu
+ */
 
 #include "sphinxsys.h"
 using namespace SPH;
 
 //------------------------------------------------------------------------------
-//global parameters for the case
+// global parameters for the case
 //------------------------------------------------------------------------------
-Real PL = 0.2;	//beam length
-Real PH = 0.01; //for thick plate; 0.01 for thin plate
-Real SL = 0.04; //depth of the insert
+Real PL = 0.2;	// beam length
+Real PH = 0.01; // for thick plate; 0.01 for thin plate
+Real SL = 0.04; // depth of the insert
 Real resolution_ref = PH / 10.0;
-Real BW = resolution_ref * 4; //boundary width, at least three particles
-// Domain bounds of the system.
-BoundingBox system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0),
-								 Vec2d(PL + 3.0 * BW, PL / 2.0));
+Real BW = resolution_ref * 4; // boundary width, at least three particles
 //----------------------------------------------------------------------
 //	Global parameters for material properties.
 //----------------------------------------------------------------------
-Real rho0_s = 1.0e3;		 //reference density
-Real Youngs_modulus = 1.0e5; //reference Youngs modulus
-Real poisson = 0.45;		 //Poisson ratio
+Real rho0_s = 1.0e3;		 // reference density
+Real Youngs_modulus = 1.0e5; // reference Youngs modulus
+Real poisson = 0.45;		 // Poisson ratio
 //----------------------------------------------------------------------
 //	Global parameters for initial condition
 //----------------------------------------------------------------------
@@ -34,15 +31,11 @@ Real Q = 2.0 * (cos(kl) * sinh(kl) - sin(kl) * cosh(kl));
 Real vf = 0.15;
 Real R = PL / (0.5 * Pi);
 //----------------------------------------------------------------------
-//	Global parameters for observation
-//----------------------------------------------------------------------
-StdVec<Vecd> beam_observation_location = {Vecd(PL, 0.0)};
-//----------------------------------------------------------------------
 //	Geometric elements used in the case.
 //----------------------------------------------------------------------
 std::vector<Vecd> createBeamBaseShape()
 {
-	//geometry
+	// geometry
 	std::vector<Vecd> beam_base_shape;
 	beam_base_shape.push_back(Vecd(-SL - BW, -PH / 2 - BW));
 	beam_base_shape.push_back(Vecd(-SL - BW, PH / 2 + BW));
@@ -102,23 +95,25 @@ public:
 		if (x > 0.0)
 		{
 			vel_[index_i][1] = vf * material_->ReferenceSoundSpeed() / Q *
-								 (M * (cos(kl * x) - cosh(kl * x)) - N * (sin(kl * x) - sinh(kl * x)));
+							   (M * (cos(kl * x) - cosh(kl * x)) - N * (sin(kl * x) - sinh(kl * x)));
 		}
 	};
 };
 //------------------------------------------------------------------------------
-//the main program
+// the main program
 //------------------------------------------------------------------------------
 int main(int ac, char *av[])
 {
 	//----------------------------------------------------------------------
 	//	Build up -- a SPHSystem
 	//----------------------------------------------------------------------
+	BoundingBox system_domain_bounds(Vec2d(-SL - BW, -PL / 2.0), Vec2d(PL + 3.0 * BW, PL / 2.0));
 	SPHSystem system(system_domain_bounds, resolution_ref);
 // handle command line arguments
 #ifdef BOOST_AVAILABLE
 	system.handleCommandlineOptions(ac, av);
-#endif	//----------------------------------------------------------------------
+#endif
+	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
@@ -127,6 +122,7 @@ int main(int ac, char *av[])
 
 	ObserverBody beam_observer(system, "BeamObserver");
 	beam_observer.sph_adaptation_->resetAdaptationRatios(1.15, 2.0);
+	StdVec<Vecd> beam_observation_location = {Vecd(PL, 0.0)};
 	beam_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
@@ -137,25 +133,18 @@ int main(int ac, char *av[])
 	BodyRelationContact beam_observer_contact(beam_observer, {&beam_body});
 	SolidBodyRelationSelfContact beam_self_contact(beam_body);
 	//-----------------------------------------------------------------------------
-	//this section define all numerical methods will be used in this case
+	// this section define all numerical methods will be used in this case
 	//-----------------------------------------------------------------------------
-	// initial condition
 	SimpleDynamics<BeamInitialCondition> beam_initial_velocity(beam_body);
 	SimpleDynamics<TimeStepInitialization> reset_prior_acceleration(beam_body);
-	//corrected strong configuration
-	InteractionDynamics<solid_dynamics::CorrectConfiguration>
-		beam_corrected_configuration(beam_body_inner);
-	//time step size calculation
+	InteractionDynamics<solid_dynamics::CorrectConfiguration> beam_corrected_configuration(beam_body_inner);
 	ReduceDynamics<solid_dynamics::AcousticTimeStepSize> computing_time_step_size(beam_body);
-	//stress relaxation for the beam
 	solid_dynamics::KirchhoffStressRelaxationFirstHalf stress_relaxation_first_half(beam_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(beam_body_inner);
-	// algorithms for solid self contact
 	InteractionDynamics<solid_dynamics::SelfContactDensitySummation, BodyPartByParticle> beam_self_contact_density(beam_self_contact);
 	InteractionDynamics<solid_dynamics::SelfContactForce, BodyPartByParticle> beam_self_contact_forces(beam_self_contact);
-	// clamping a solid body part. This is softer than a direct constraint
 	BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
-	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_beam_base(beam_base);
+	SimpleDynamics<solid_dynamics::FixConstraint, BodyPartByParticle> constraint_beam_base(beam_base);
 	//-----------------------------------------------------------------------------
 	//	outputs
 	//-----------------------------------------------------------------------------
@@ -172,9 +161,9 @@ int main(int ac, char *av[])
 	beam_initial_velocity.exec();
 	beam_corrected_configuration.parallel_exec();
 	//-----------------------------------------------------------------------------
-	//from here the time stepping begins
+	// from here the time stepping begins
 	//-----------------------------------------------------------------------------
-	//starting time zero
+	// starting time zero
 	GlobalStaticVariables::physical_time_ = 0.0;
 	write_beam_states.writeToFile(0);
 	write_beam_tip_displacement.writeToFile(0);
@@ -182,20 +171,20 @@ int main(int ac, char *av[])
 	int ite = 0;
 	Real T0 = 1.0;
 	Real end_time = T0;
-	//time step size for output file
+	// time step size for output file
 	Real output_interval = 0.01 * T0;
 	Real Dt = 0.1 * output_interval; /**< Time period for data observing */
-	Real dt = 0.0;			//default acoustic time step sizes
+	Real dt = 0.0;					 // default acoustic time step sizes
 
-	//statistics for computing time
+	// statistics for computing time
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
 
-	//computation loop starts
+	// computation loop starts
 	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
 		Real integration_time = 0.0;
-		//integrate time (loop) until the next output time
+		// integrate time (loop) until the next output time
 		while (integration_time < output_interval)
 		{
 

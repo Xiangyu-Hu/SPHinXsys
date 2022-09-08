@@ -155,9 +155,9 @@ namespace SPH
 			PressureRelaxation(BaseBodyRelationType &base_body_relation,
 							   BaseBodyRelationContact &wall_contact_relation);
 			virtual ~PressureRelaxation(){};
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
 		};
 
@@ -177,13 +177,13 @@ namespace SPH
 									 BaseBodyRelationContact &wall_contact_relation, Real penalty_strength = 1.0);
 
 			virtual ~ExtendPressureRelaxation(){};
+			void initialization(size_t index_i, Real dt = 0.0);
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			Real penalty_strength_;
 			StdLargeVec<Vecd> non_cnsrv_acc_;
 
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual Vecd computeNonConservativeAcceleration(size_t index_i) override;
 		};
 
@@ -228,9 +228,7 @@ namespace SPH
 			DensityRelaxation(BaseBodyRelationType &base_body_relation,
 							  BaseBodyRelationContact &wall_contact_relation);
 			virtual ~DensityRelaxation(){};
-
-		protected:
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/** template interface class for different density relaxation schemes */
@@ -259,9 +257,7 @@ namespace SPH
 																	   fluid_wall_relation.contact_relation_){};
 
 			virtual ~PressureRelaxationWithWallOldroyd_B(){};
-
-		protected:
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			void interaction(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -276,9 +272,7 @@ namespace SPH
 																	 fluid_wall_relation.contact_relation_){};
 
 			virtual ~DensityRelaxationWithWallOldroyd_B(){};
-
-		protected:
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			void interaction(size_t index_i, Real dt = 0.0);
 		};
 	}
 }

@@ -197,8 +197,7 @@ namespace SPH
 		}
 		//=================================================================================================//
 		BaseRelaxation::BaseRelaxation(BaseBodyRelationInner &inner_relation)
-			: ParticleDynamics1Level(inner_relation.sph_body_),
-			  FluidDataInner(inner_relation),
+			: LocalDynamics(inner_relation.sph_body_), FluidDataInner(inner_relation),
 			  Vol_(particles_->Vol_), mass_(particles_->mass_), rho_(particles_->rho_),
 			  p_(particles_->p_), drho_dt_(particles_->drho_dt_),
 			  pos_(particles_->pos_), vel_(particles_->vel_),
@@ -208,7 +207,7 @@ namespace SPH
 		BasePressureRelaxation::
 			BasePressureRelaxation(BaseBodyRelationInner &inner_relation) : BaseRelaxation(inner_relation) {}
 		//=================================================================================================//
-		void BasePressureRelaxation::Initialization(size_t index_i, Real dt)
+		void BasePressureRelaxation::initialization(size_t index_i, Real dt)
 		{
 			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
 			Vol_[index_i] = mass_[index_i] / rho_[index_i];
@@ -216,7 +215,7 @@ namespace SPH
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
-		void BasePressureRelaxation::Update(size_t index_i, Real dt)
+		void BasePressureRelaxation::update(size_t index_i, Real dt)
 		{
 			vel_[index_i] += acc_[index_i] * dt;
 		}
@@ -245,12 +244,12 @@ namespace SPH
 		BaseDensityRelaxation::
 			BaseDensityRelaxation(BaseBodyRelationInner &inner_relation) : BaseRelaxation(inner_relation) {}
 		//=================================================================================================//
-		void BaseDensityRelaxation::Initialization(size_t index_i, Real dt)
+		void BaseDensityRelaxation::initialization(size_t index_i, Real dt)
 		{
 			pos_[index_i] += vel_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
-		void BaseDensityRelaxation::Update(size_t index_i, Real dt)
+		void BaseDensityRelaxation::update(size_t index_i, Real dt)
 		{
 			rho_[index_i] += drho_dt_[index_i] * dt * 0.5;
 		}
@@ -261,16 +260,16 @@ namespace SPH
 			  tau_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_.base_particles_)->tau_),
 			  dtau_dt_(DynamicCast<ViscoelasticFluidParticles>(this, sph_body_.base_particles_)->dtau_dt_) {}
 		//=================================================================================================//
-		void PressureRelaxationInnerOldroyd_B::Initialization(size_t index_i, Real dt)
+		void PressureRelaxationInnerOldroyd_B::initialization(size_t index_i, Real dt)
 		{
-			PressureRelaxationDissipativeRiemannInner::Initialization(index_i, dt);
+			PressureRelaxationDissipativeRiemannInner::initialization(index_i, dt);
 
 			tau_[index_i] += dtau_dt_[index_i] * dt * 0.5;
 		}
 		//=================================================================================================//
-		void PressureRelaxationInnerOldroyd_B::Interaction(size_t index_i, Real dt)
+		void PressureRelaxationInnerOldroyd_B::interaction(size_t index_i, Real dt)
 		{
-			PressureRelaxationDissipativeRiemannInner::Interaction(index_i, dt);
+			PressureRelaxationDissipativeRiemannInner::interaction(index_i, dt);
 
 			Real rho_i = rho_[index_i];
 			Matd tau_i = tau_[index_i];
@@ -300,9 +299,9 @@ namespace SPH
 			lambda_ = oldroy_b_fluid->getReferenceRelaxationTime();
 		}
 		//=================================================================================================//
-		void DensityRelaxationInnerOldroyd_B::Interaction(size_t index_i, Real dt)
+		void DensityRelaxationInnerOldroyd_B::interaction(size_t index_i, Real dt)
 		{
-			DensityRelaxationDissipativeRiemannInner::Interaction(index_i, dt);
+			DensityRelaxationDissipativeRiemannInner::interaction(index_i, dt);
 
 			Vecd vel_i = vel_[index_i];
 			Matd tau_i = tau_[index_i];
@@ -322,9 +321,9 @@ namespace SPH
 			dtau_dt_[index_i] = stress_rate;
 		}
 		//=================================================================================================//
-		void DensityRelaxationInnerOldroyd_B::Update(size_t index_i, Real dt)
+		void DensityRelaxationInnerOldroyd_B::update(size_t index_i, Real dt)
 		{
-			DensityRelaxationDissipativeRiemannInner::Update(index_i, dt);
+			DensityRelaxationDissipativeRiemannInner::update(index_i, dt);
 
 			tau_[index_i] += dtau_dt_[index_i] * dt * 0.5;
 		}

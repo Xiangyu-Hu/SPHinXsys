@@ -213,7 +213,7 @@ namespace SPH
 		 * @class BaseRelaxation
 		 * @brief Pure abstract base class for all fluid relaxation schemes
 		 */
-		class BaseRelaxation : public ParticleDynamics1Level, public FluidDataInner
+		class BaseRelaxation : public LocalDynamics, public FluidDataInner
 		{
 		public:
 			explicit BaseRelaxation(BaseBodyRelationInner &inner_relation);
@@ -233,10 +233,10 @@ namespace SPH
 		public:
 			explicit BasePressureRelaxation(BaseBodyRelationInner &inner_relation);
 			virtual ~BasePressureRelaxation(){};
+			void initialization(size_t index_i, Real dt = 0.0);
+			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
 			virtual Vecd computeNonConservativeAcceleration(size_t index_i);
 		};
 
@@ -252,9 +252,7 @@ namespace SPH
 			explicit BasePressureRelaxationInner(BaseBodyRelationInner &inner_relation);
 			virtual ~BasePressureRelaxationInner(){};
 			RiemannSolverType riemann_solver_;
-
-		protected:
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			void interaction(size_t index_i, Real dt = 0.0);
 		};
 		using PressureRelaxationInner = BasePressureRelaxationInner<NoRiemannSolver>;
 		/** define the mostly used pressure relaxation scheme using Riemann solver */
@@ -270,10 +268,8 @@ namespace SPH
 		public:
 			explicit BaseDensityRelaxation(BaseBodyRelationInner &inner_relation);
 			virtual ~BaseDensityRelaxation(){};
-
-		protected:
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
+			virtual void initialization(size_t index_i, Real dt = 0.0);
+			virtual void update(size_t index_i, Real dt = 0.0);
 		};
 
 		/**
@@ -287,9 +283,7 @@ namespace SPH
 			explicit BaseDensityRelaxationInner(BaseBodyRelationInner &inner_relation);
 			virtual ~BaseDensityRelaxationInner(){};
 			RiemannSolverType riemann_solver_;
-
-		protected:
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
+			void interaction(size_t index_i, Real dt = 0.0);
 		};
 		using DensityRelaxationInner = BaseDensityRelaxationInner<NoRiemannSolver>;
 		/** define the mostly used density relaxation scheme using Riemann solver */
@@ -305,11 +299,11 @@ namespace SPH
 		public:
 			explicit PressureRelaxationInnerOldroyd_B(BaseBodyRelationInner &inner_relation);
 			virtual ~PressureRelaxationInnerOldroyd_B(){};
+			void initialization(size_t index_i, Real dt = 0.0);
+			void interaction(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Matd> &tau_, &dtau_dt_;
-			virtual void Initialization(size_t index_i, Real dt = 0.0) override;
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
 
 		/**
@@ -321,13 +315,12 @@ namespace SPH
 		public:
 			explicit DensityRelaxationInnerOldroyd_B(BaseBodyRelationInner &inner_relation);
 			virtual ~DensityRelaxationInnerOldroyd_B(){};
+			void interaction(size_t index_i, Real dt = 0.0);
+			void update(size_t index_i, Real dt = 0.0);
 
 		protected:
 			StdLargeVec<Matd> &tau_, &dtau_dt_;
 			Real mu_p_, lambda_;
-
-			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
-			virtual void Update(size_t index_i, Real dt = 0.0) override;
 		};
 	}
 }

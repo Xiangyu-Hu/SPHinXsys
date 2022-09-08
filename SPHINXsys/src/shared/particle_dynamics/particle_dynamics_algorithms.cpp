@@ -89,36 +89,6 @@ namespace SPH
 			post_processes_[k]->parallel_exec(dt);
 		ParticleIterator_parallel(total_real_particles, functor_update_, dt);
 	}
-	//=================================================================================================//
-	InteractionDynamicsSplitting::InteractionDynamicsSplitting(SPHBody &sph_body)
-		: OldInteractionDynamics(sph_body),
-		  real_body_(DynamicCast<RealBody>(this, sph_body)),
-		  split_cell_lists_(real_body_.getSplitCellLists())
-	{
-		real_body_.setUseSplitCellLists();
-	};
-	//=================================================================================================//
-	void InteractionDynamicsSplitting::exec(Real dt)
-	{
-		setBodyUpdated();
-		setupDynamics(dt);
-		for (size_t k = 0; k < pre_processes_.size(); ++k)
-			pre_processes_[k]->exec(dt);
-		ParticleIteratorSplittingSweep(split_cell_lists_, functor_interaction_, dt);
-		for (size_t k = 0; k < post_processes_.size(); ++k)
-			post_processes_[k]->exec(dt);
-	}
-	//=================================================================================================//
-	void InteractionDynamicsSplitting::parallel_exec(Real dt)
-	{
-		setBodyUpdated();
-		setupDynamics(dt);
-		for (size_t k = 0; k < pre_processes_.size(); ++k)
-			pre_processes_[k]->parallel_exec(dt);
-		ParticleIteratorSplittingSweep_parallel(split_cell_lists_, functor_interaction_, dt);
-		for (size_t k = 0; k < post_processes_.size(); ++k)
-			post_processes_[k]->parallel_exec(dt);
-	}
 	//=============================================================================================//
 }
 //=================================================================================================//

@@ -119,8 +119,8 @@ int main(int ac, char *av[])
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. 
 	  * The other reason is that we are using transport velocity formulation, 
 	  * which will also introduce numerical dissipation slightly. */
-	fluid_dynamics::PressureRelaxationInner pressure_relaxation(water_block_inner);
-	fluid_dynamics::DensityRelaxationRiemannInner density_relaxation(water_block_inner);
+	NewInteractionDynamics1Level<fluid_dynamics::PressureRelaxationInner> pressure_relaxation(water_block_inner);
+	NewInteractionDynamics1Level<fluid_dynamics::DensityRelaxationRiemannInner> density_relaxation(water_block_inner);
 	/** Computing viscous acceleration. */
 	InteractionDynamics<fluid_dynamics::ViscousAccelerationInner> viscous_acceleration(water_block_inner);
 	/** Impose transport velocity. */

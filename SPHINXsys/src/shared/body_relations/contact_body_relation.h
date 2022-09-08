@@ -57,6 +57,7 @@ namespace SPH
 	/**
 	 * @class SolidBodyRelationContact
 	 * @brief The relation between a solid body and its contact solid bodies
+	 * TODO: better called BodySurfaceContact
 	 */
 	class SolidBodyRelationContact : public BaseBodyRelationContact
 	{

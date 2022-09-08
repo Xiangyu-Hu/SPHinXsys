@@ -55,9 +55,9 @@ namespace SPH
 				BasePressureRelaxationMultiPhase(complex_relation.inner_relation_, complex_relation.contact_relation_) {}
 		//=================================================================================================//
 		template<class PressureRelaxationInnerType>
-        void BasePressureRelaxationMultiPhase<PressureRelaxationInnerType>::Interaction(size_t index_i, Real dt)
+        void BasePressureRelaxationMultiPhase<PressureRelaxationInnerType>::interaction(size_t index_i, Real dt)
 		{
-			PressureRelaxationInnerType::Interaction(index_i, dt);
+			PressureRelaxationInnerType::interaction(index_i, dt);
 
 			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 			Vecd acceleration(0.0);
@@ -131,9 +131,9 @@ namespace SPH
 				BaseDensityRelaxationMultiPhase(complex_relation.inner_relation_, complex_relation.contact_relation_) {}
  		//=================================================================================================//
 		template<class DensityRelaxationInnerType>
-        void BaseDensityRelaxationMultiPhase<DensityRelaxationInnerType>::Interaction(size_t index_i, Real dt)
+        void BaseDensityRelaxationMultiPhase<DensityRelaxationInnerType>::interaction(size_t index_i, Real dt)
 		{
-			DensityRelaxationInnerType::Interaction(index_i, dt);
+			DensityRelaxationInnerType::interaction(index_i, dt);
 
 			FluidState state_i(this->rho_[index_i], this->vel_[index_i], this->p_[index_i]);
 			Real density_change_rate = 0.0;

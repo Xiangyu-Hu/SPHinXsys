@@ -78,6 +78,7 @@ namespace SPH
 	/**
 	 * @class SolidBodyRelationSelfContact
 	 * @brief The relation for self contact of a solid body
+	 * TODO: better called BodySurfaceSelfContact
 	 */
 	class SolidBodyRelationSelfContact : public BaseBodyRelationInner
 	{

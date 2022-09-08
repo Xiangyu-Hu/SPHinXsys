@@ -143,8 +143,8 @@ int main()
 	/** Time step size with considering sound wave speed. */
 	ReduceDynamics<fluid_dynamics::AcousticTimeStepSize> get_fluid_time_step_size(water_block);
 	/** Pressure relaxation algorithm by using position verlet time stepping. */
-	fluid_dynamics::PressureRelaxationRiemannInner pressure_relaxation(water_block_inner);
-	fluid_dynamics::DensityRelaxationRiemannInner density_relaxation(water_block_inner);
+	NewInteractionDynamics1Level<fluid_dynamics::PressureRelaxationRiemannInner> pressure_relaxation(water_block_inner);
+	NewInteractionDynamics1Level<fluid_dynamics::DensityRelaxationRiemannInner> density_relaxation(water_block_inner);
 	/** Confinement condition for wall and structure. */
 	NearShapeSurface near_surface(water_block, makeShared<WallAndStructure>("WallAndStructure"));
 	fluid_dynamics::StaticConfinement confinement_condition(near_surface);
