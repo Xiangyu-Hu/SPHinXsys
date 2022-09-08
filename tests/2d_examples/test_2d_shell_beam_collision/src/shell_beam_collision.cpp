@@ -190,9 +190,9 @@ int main(int ac, char *av[])
 	solid_dynamics::StressRelaxationFirstHalf beam_stress_relaxation_first_half(beam_inner);
 	solid_dynamics::StressRelaxationSecondHalf beam_stress_relaxation_second_half(beam_inner);
 	/** Algorithms for shell-solid contact. */
-	solid_dynamics::ContactDensitySummation beam_shell_update_contact_density(beam_contact);
-	solid_dynamics::ContactForceFromWall beam_compute_solid_contact_forces(beam_contact);
-	solid_dynamics::ContactForceToWall shell_compute_solid_contact_forces(shell_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> beam_shell_update_contact_density(beam_contact);
+	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> beam_compute_solid_contact_forces(beam_contact);
+	InteractionDynamics<solid_dynamics::ContactForceToWall, BodyPartByParticle> shell_compute_solid_contact_forces(shell_contact);
 	BodyRegionByParticle holder(beam, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
 	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_holder(holder);
 	/** Damping with the solid body*/

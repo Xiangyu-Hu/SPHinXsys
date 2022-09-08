@@ -152,7 +152,7 @@ int main(int ac, char *av[])
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(beam_body_inner);
 	// algorithms for solid self contact
 	InteractionDynamics<solid_dynamics::SelfContactDensitySummation, BodyPartByParticle> beam_self_contact_density(beam_self_contact);
-	solid_dynamics::SelfContactForce beam_self_contact_forces(beam_self_contact);
+	InteractionDynamics<solid_dynamics::SelfContactForce, BodyPartByParticle> beam_self_contact_forces(beam_self_contact);
 	// clamping a solid body part. This is softer than a direct constraint
 	BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
 	SimpleDynamics<solid_dynamics::FixConstraint, BodyRegionByParticle> constraint_beam_base(beam_base);

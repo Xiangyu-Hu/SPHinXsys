@@ -85,10 +85,10 @@ int main()
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half_2(moving_plate_inner);
 	//stress_relaxation_first_half_2.post_processes_(spring_constraint);
 	/** Algorithms for solid-solid contact. */
-	solid_dynamics::ContactDensitySummation myocardium_update_contact_density(myocardium_plate_contact);
-	solid_dynamics::ContactDensitySummation plate_update_contact_density(plate_myocardium_contact);
-	solid_dynamics::ContactForce myocardium_compute_solid_contact_forces(myocardium_plate_contact);
-	solid_dynamics::ContactForce plate_compute_solid_contact_forces(plate_myocardium_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> myocardium_update_contact_density(myocardium_plate_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> plate_update_contact_density(plate_myocardium_contact);
+	InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle> myocardium_compute_solid_contact_forces(myocardium_plate_contact);
+	InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle> plate_compute_solid_contact_forces(plate_myocardium_contact);
 
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(myocardium_body, 

@@ -108,8 +108,8 @@ int main(int ac, char *av[])
 	solid_dynamics::StressRelaxationFirstHalf free_cube_stress_relaxation_first_half(free_cube_inner);
 	solid_dynamics::StressRelaxationSecondHalf free_cube_stress_relaxation_second_half(free_cube_inner);
 	/** Algorithms for solid-solid contact. */
-	solid_dynamics::ContactDensitySummation free_cube_update_contact_density(free_cube_contact);
-	solid_dynamics::ContactForceFromWall free_cube_compute_solid_contact_forces(free_cube_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> free_cube_update_contact_density(free_cube_contact);
+	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> free_cube_compute_solid_contact_forces(free_cube_contact);
 	/** Damping*/
 	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec2d>>>
 		damping(0.5, free_cube_inner,"Velocity", physical_viscosity);

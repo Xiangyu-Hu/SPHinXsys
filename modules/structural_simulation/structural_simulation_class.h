@@ -187,8 +187,8 @@ protected:
 	vector<shared_ptr<SimpleDynamics<solid_dynamics::UpdateElasticNormalDirection>>> particle_normal_update_;
 
 	vector<shared_ptr<SolidBodyRelationContact>> contact_list_;
-	vector<shared_ptr<solid_dynamics::ContactDensitySummation>> contact_density_list_;
-	vector<shared_ptr<solid_dynamics::ContactForce>> contact_force_list_;
+	vector<shared_ptr<InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle>>> contact_density_list_;
+	vector<shared_ptr<InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle>>> contact_force_list_;
 
 	// for initializeATimeStep
 	vector<shared_ptr<SimpleDynamics<TimeStepInitialization>>> initialize_time_step_;

@@ -189,10 +189,10 @@ int main(int ac, char *av[])
 	solid_dynamics::StressRelaxationFirstHalf damping_ball_stress_relaxation_first_half(damping_ball_inner);
 	solid_dynamics::StressRelaxationSecondHalf damping_ball_stress_relaxation_second_half(damping_ball_inner);
 	/** Algorithms for solid-solid contact. */
-	solid_dynamics::ContactDensitySummation free_ball_update_contact_density(free_ball_contact);
-	solid_dynamics::ContactForceFromWall free_ball_compute_solid_contact_forces(free_ball_contact);
-	solid_dynamics::ContactDensitySummation damping_ball_update_contact_density(damping_ball_contact);
-	solid_dynamics::ContactForceFromWall damping_ball_compute_solid_contact_forces(damping_ball_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> free_ball_update_contact_density(free_ball_contact);
+	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> free_ball_compute_solid_contact_forces(free_ball_contact);
+	InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle> damping_ball_update_contact_density(damping_ball_contact);
+	InteractionDynamics<solid_dynamics::ContactForceFromWall, BodyPartByParticle> damping_ball_compute_solid_contact_forces(damping_ball_contact);
 	/** Damping for one ball */
 	DampingWithRandomChoice<NewInteractionDynamicsSplit<DampingPairwiseInner<Vec2d>>>
 		damping(0.5, damping_ball_inner, "Velocity", physical_viscosity);

@@ -356,11 +356,11 @@ void StructuralSimulation::initializeContactBetweenTwoBodies(int first, int seco
 	contact_list_.emplace_back(make_shared<SolidBodyRelationContact>(*second_body, RealBodyVector({first_body})));
 
 	int last = contact_list_.size() - 1;
-	contact_density_list_.push_back(make_shared<solid_dynamics::ContactDensitySummation>(*contact_list_[last - 1]));
-	contact_density_list_.push_back(make_shared<solid_dynamics::ContactDensitySummation>(*contact_list_[last]));
+	contact_density_list_.push_back(make_shared<InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle>>(*contact_list_[last - 1]));
+	contact_density_list_.push_back(make_shared<InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle>>(*contact_list_[last]));
 
-	contact_force_list_.push_back(make_shared<solid_dynamics::ContactForce>(*contact_list_[last - 1]));
-	contact_force_list_.push_back(make_shared<solid_dynamics::ContactForce>(*contact_list_[last]));
+	contact_force_list_.push_back(make_shared<InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle>>(*contact_list_[last - 1]));
+	contact_force_list_.push_back(make_shared<InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle>>(*contact_list_[last]));
 }
 
 void StructuralSimulation::initializeAllContacts()
@@ -381,8 +381,8 @@ void StructuralSimulation::initializeAllContacts()
 
 		contact_list_.emplace_back(make_shared<SolidBodyRelationContact>(*contact_body, target_list));
 		int last = contact_list_.size() - 1;
-		contact_density_list_.emplace_back(make_shared<solid_dynamics::ContactDensitySummation>(*contact_list_[last]));
-		contact_force_list_.emplace_back(make_shared<solid_dynamics::ContactForce>(*contact_list_[last]));
+		contact_density_list_.emplace_back(make_shared<InteractionDynamics<solid_dynamics::ContactDensitySummation, BodyPartByParticle>>(*contact_list_[last]));
+		contact_force_list_.emplace_back(make_shared<InteractionDynamics<solid_dynamics::ContactForce, BodyPartByParticle>>(*contact_list_[last]));
 	}
 	// continue appending the lists with the time dependent contacts
 	for (size_t i = 0; i < time_dep_contacting_body_pairs_list_.size(); i++)
