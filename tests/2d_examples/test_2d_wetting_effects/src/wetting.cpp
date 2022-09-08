@@ -1,6 +1,6 @@
 /**
  * @file 	wetting.cpp
- * @brief 	2D two-phase flow for weeting effect.
+ * @brief 	2D two-phase flow for wetting effect.
  * @details This is the one of the basic test cases for understanding SPH method for multi-phase simulation.
  * @author 	Chi Zhang and Xiangyu Hu
  */
@@ -58,7 +58,7 @@ int main()
 		update_water_density_by_summation(water_air_complex.inner_relation_, water_wall_contact);
 	fluid_dynamics::DensitySummationComplex
 		update_air_density_by_summation(air_water_complex, air_wall_contact);
-	/** transsport formulation for regularizing particle distribution. */
+	/** transport formulation for regularizing particle distribution. */
 	fluid_dynamics::TransportVelocityCorrectionComplex
 		air_transport_correction(air_water_complex, air_wall_contact);
 	/** Time step size without considering sound wave speed. */
@@ -82,12 +82,12 @@ int main()
 		air_viscous_acceleration(air_water_complex);
 	fluid_dynamics::ViscousAccelerationMultiPhase
 		water_viscous_acceleration(water_air_complex);
-	/** Suface tension and wetting effects. */
+	/** Surface tension and wetting effects. */
 	fluid_dynamics::FreeSurfaceIndicationComplex
 		surface_detection(water_air_complex.inner_relation_, water_wall_contact);
 	fluid_dynamics::ColorFunctionGradientComplex
 		color_gradient(water_air_complex.inner_relation_, water_wall_contact);
-	fluid_dynamics::ColorFunctionGradientInterplationInner
+	fluid_dynamics::ColorFunctionGradientInterpolationInner
 		color_gradient_interpolation(water_air_complex.inner_relation_);
 	fluid_dynamics::SurfaceTensionAccelerationInner
 		surface_tension_acceleration(water_air_complex.inner_relation_, tension_force);

@@ -45,7 +45,7 @@ public:
 	{
 		Vecd halfsize_plate(half_width + BW, 0.5 * BW, half_width + BW);
 		Vecd translation_plate(0.0, -half_width - 0.75 * BW, half_width);
-		add<GeometricShapeBrick>(halfsize_plate, translation_plate);
+		add<TransformShape<GeometricShapeBox>>(translation_plate, halfsize_plate);
 	}
 };
 //----------------------------------------------------------------------
@@ -59,7 +59,7 @@ int main(int ac, char *av[])
 	SPHSystem system(system_domain_bounds, resolution_ref);
 	// Tag for run particle relaxation for the initial body fitted distribution.
 	system.run_particle_relaxation_ = false;
-	// Tag for reload initially repaxed particles.
+	// Tag for reload initially relaxed particles.
 	system.reload_particles_ = true;
 // handle command line arguments
 #ifdef BOOST_AVAILABLE
@@ -101,7 +101,7 @@ int main(int ac, char *av[])
 		//	Methods used for particle relaxation.
 		//----------------------------------------------------------------------
 		// Random reset the insert body particle position.
-		RandomizePartilePosition random_inserted_body_particles(coil);
+		RandomizeParticlePosition random_inserted_body_particles(coil);
 		// Write the particle reload files.
 		ReloadParticleIO write_particle_reload_files(in_output, {&coil});
 		// A  Physics relaxation step.
@@ -146,12 +146,12 @@ int main(int ac, char *av[])
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(coil_inner);
 	// Algorithms for solid-solid contacts.
 	solid_dynamics::ContactDensitySummation coil_update_contact_density(coil_contact);
-	solid_dynamics::ContactForce coil_compute_solid_contact_forces(coil_contact);
+	solid_dynamics::ContactForceFromWall coil_compute_solid_contact_forces(coil_contact);
 	solid_dynamics::SelfContactDensitySummation coil_self_contact_density(coil_self_contact);
 	solid_dynamics::SelfContactForce coil_self_contact_forces(coil_self_contact);
 	// Damping the velocity field for quasi-static solution
 	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
-		coil_damping(coil_inner, 0.2, "Velocity", physical_viscosity);
+		coil_damping(0.2, coil_inner, "Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	From here the time stepping begins.
 	//----------------------------------------------------------------------

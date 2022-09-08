@@ -25,6 +25,7 @@
 
 #include "data_type.h"
 
+
 namespace SPH {
 
 	Vec2d FirstAxisVector(const Vec2d& zero_vector);
@@ -75,6 +76,10 @@ namespace SPH {
 	Mat2d getDiagonal(const Mat2d& A);
 	Mat3d getDiagonal(const Mat3d& A);
 
+	/** double dot product between two matrices, resulting in a scalar value (sum of products of element-wise) */
+	Real CalculateDoubleDotProduct(Mat2d Matrix1, Mat2d Matrix2 ); //calculate double dot
+	Real CalculateDoubleDotProduct(Mat3d Matrix1, Mat3d Matrix2 ); //calculate double dot
+
 	/** get transformation matrix. */
 	Mat2d getTransformationMatrix(const Vec2d& direction_of_y);
 	Mat3d getTransformationMatrix(const Vec3d& direction_of_z);
@@ -83,16 +88,19 @@ namespace SPH {
 	Real getCosineOfAngleBetweenTwoVectors (const Vec2d &vector_1, const Vec2d &vector_2);
 	Real getCosineOfAngleBetweenTwoVectors (const Vec3d &vector_1, const Vec3d &vector_2);
 
-	/** get orthogonal projection of a vactor. */
-	Vec2d getVectorProjectionOfVector (const Vec2d &vector_1, const Vec2d &vector_2);
-	Vec3d getVectorProjectionOfVector (const Vec3d &vector_1, const Vec3d &vector_2);
+	/** get orthogonal projection of a vector. */
+	Vec2d getVectorProjectionOfVector (const Vec2d& vector_1, const Vec2d& vector_2);
+	Vec3d getVectorProjectionOfVector (const Vec3d& vector_1, const Vec3d& vector_2);
 
-	/** Check if a point is inside the bounding box */
-	bool checkIfPointInBoundingBox(const Vec2d &point, const BoundingBox2d &bbox);
-	bool checkIfPointInBoundingBox(const Vec3d &point, const BoundingBox3d &bbox);
-	
+	/** von Mises stress from stress matrix */
+	Real getVonMisesStressFromMatrix(const Mat2d& sigma);
+	Real getVonMisesStressFromMatrix(const Mat3d& sigma);
+
+	/** principal strain or stress from strain or stress matrix */
+	Vec2d getPrincipalValuesFromMatrix(const Mat2d& A);
+	Vec3d getPrincipalValuesFromMatrix(const Mat3d& A);
+
 	/** obtain minimum dimension of a bounding box */
 	Real MinimumDimension(const BoundingBox &bbox);
 }
-
 #endif //SMALL_VECTORS_H

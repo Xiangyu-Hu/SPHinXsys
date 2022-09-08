@@ -23,16 +23,16 @@ Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 50.0;
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 
-class ImportedModel : public ComplexShape
+class SolidBodyFromMesh : public ComplexShape
 {
 public:
-	explicit ImportedModel(const std::string &shape_name) : ComplexShape(shape_name)
+	explicit SolidBodyFromMesh(const std::string &shape_name) : ComplexShape(shape_name)
 	{
 		add<ImageShapeFromFile>(full_path_to_image);
 	}
 };
 //----------------------------------------------------------------------
-//	Main program begines here
+//	Main program begins here
 //----------------------------------------------------------------------
 int main()
 {
@@ -45,7 +45,7 @@ int main()
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	RealBody imported_model(system, makeShared<ImportedModel>("ImportedModel"));
+	RealBody imported_model(system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
 	imported_model.defineAdaptation<ParticleSpacingByBodyShape>(1.15, 1.0, 2);
 	imported_model.defineBodyLevelSetShape()->writeLevelSet(imported_model);
 	imported_model.defineParticlesAndMaterial();
@@ -66,7 +66,7 @@ int main()
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
-	RandomizePartilePosition random_imported_model_particles(imported_model);
+	RandomizeParticlePosition random_imported_model_particles(imported_model);
 	/** A  Physics relaxation step. */
 	// relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner.get(), true);
 	relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner, true);

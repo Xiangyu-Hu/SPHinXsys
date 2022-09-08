@@ -77,7 +77,7 @@ public:
 /** Set diffusion relaxation method. */
 class DiffusionRelaxation
 	: public RelaxationOfAllDiffusionSpeciesRK2<
-		  RelaxationOfAllDiffussionSpeciesInner<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>>
+		  RelaxationOfAllDiffusionSpeciesInner<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>>
 {
 public:
 	explicit DiffusionRelaxation(BodyRelationInner &body_inner_relation)
@@ -92,10 +92,10 @@ protected:
 	size_t phi_;
 	virtual void Update(size_t index_i, Real dt = 0.0) override
 	{
-		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_n_[index_i]);
+		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_[index_i]);
 		Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
 
-		Vecd center_norm = pos_n_[index_i] / (pos_n_[index_i].norm() + 1.0e-15);
+		Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
 
 		Real angle = dot(face_norm, center_norm);
 		if (angle >= 0.0)
@@ -104,7 +104,7 @@ protected:
 		}
 		else
 		{
-			if (pos_n_[index_i][1] < -body_->sph_adaptation_->ReferenceSpacing())
+			if (pos_[index_i][1] < -body_->sph_adaptation_->ReferenceSpacing())
 				species_n_[phi_][index_i] = 0.0;
 		}
 	};
@@ -118,7 +118,7 @@ public:
 	virtual ~DiffusionBCs(){};
 };
 /** Compute Fiber and Sheet direction after diffusion */
-class ComputeFiberandSheetDirections
+class ComputeFiberAndSheetDirections
 	: public DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>
 {
 protected:
@@ -133,9 +133,9 @@ protected:
 		 * 		Present  doi.org/10.1016/j.cma.2016.05.031
 		 */
 		/** Probe the face norm from Levelset field. */
-		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_n_[index_i]);
+		Vecd dist_2_face = body_->body_shape_->findNormalDirection(pos_[index_i]);
 		Vecd face_norm = dist_2_face / (dist_2_face.norm() + 1.0e-15);
-		Vecd center_norm = pos_n_[index_i] / (pos_n_[index_i].norm() + 1.0e-15);
+		Vecd center_norm = pos_[index_i] / (pos_[index_i].norm() + 1.0e-15);
 		if (dot(face_norm, center_norm) <= 0.0)
 		{
 			face_norm = -face_norm;
@@ -149,7 +149,7 @@ protected:
 		Vecd f_0 = cos(beta) * cd_norm + sin(beta) * SimTK::cross(face_norm, cd_norm) +
 				   dot(face_norm, cd_norm) * (1.0 - cos(beta)) * face_norm;
 
-		if (pos_n_[index_i][1] < -body_->sph_adaptation_->ReferenceSpacing())
+		if (pos_[index_i][1] < -body_->sph_adaptation_->ReferenceSpacing())
 		{
 			material_->local_f0_[index_i] = f_0 / (f_0.norm() + 1.0e-15);
 			material_->local_s0_[index_i] = face_norm;
@@ -162,7 +162,7 @@ protected:
 	};
 
 public:
-	explicit ComputeFiberandSheetDirections(SolidBody &body)
+	explicit ComputeFiberAndSheetDirections(SolidBody &body)
 		: DiffusionBasedMapping<SolidBody, ElasticSolidParticles, LocallyOrthotropicMuscle>(body)
 	{
 		phi_ = material_->SpeciesIndexMap()["Phi"];
@@ -170,7 +170,7 @@ public:
 		beta_epi_ = -(70.0 / 180.0) * M_PI;
 		beta_endo_ = (80.0 / 180.0) * M_PI;
 	};
-	virtual ~ComputeFiberandSheetDirections(){};
+	virtual ~ComputeFiberAndSheetDirections(){};
 };
 //	define shape parameters which will be used for the constrained body part.
 class MuscleBaseShapeParameters : public TriangleMeshShapeBrick::ShapeParameters
@@ -194,11 +194,11 @@ protected:
 
 	void Update(size_t index_i, Real dt) override
 	{
-		if (-30.0 * length_scale <= pos_n_[index_i][0] && pos_n_[index_i][0] <= -15.0 * length_scale)
+		if (-30.0 * length_scale <= pos_[index_i][0] && pos_[index_i][0] <= -15.0 * length_scale)
 		{
-			if (-2.0 * length_scale <= pos_n_[index_i][1] && pos_n_[index_i][1] <= 0.0)
+			if (-2.0 * length_scale <= pos_[index_i][1] && pos_[index_i][1] <= 0.0)
 			{
-				if (-3.0 * length_scale <= pos_n_[index_i][2] && pos_n_[index_i][2] <= 3.0 * length_scale)
+				if (-3.0 * length_scale <= pos_[index_i][2] && pos_[index_i][2] <= 3.0 * length_scale)
 				{
 					species_n_[voltage_][index_i] = 0.92;
 				}
@@ -224,11 +224,11 @@ protected:
 
 	void Update(size_t index_i, Real dt) override
 	{
-		if (0.0 <= pos_n_[index_i][0] && pos_n_[index_i][0] <= 6.0 * length_scale)
+		if (0.0 <= pos_[index_i][0] && pos_[index_i][0] <= 6.0 * length_scale)
 		{
-			if (-6.0 * length_scale <= pos_n_[index_i][1])
+			if (-6.0 * length_scale <= pos_[index_i][1])
 			{
-				if (12.0 * length_scale <= pos_n_[index_i][2])
+				if (12.0 * length_scale <= pos_[index_i][2])
 				{
 					species_n_[voltage_][index_i] = 0.95;
 				}
@@ -271,7 +271,7 @@ int main(int ac, char *av[])
 	/** Set the starting time. */
 	GlobalStaticVariables::physical_time_ = 0.0;
 	/** Tag for run particle relaxation for the initial body fitted distribution. */
-	system.run_particle_relaxation_ = false;
+	system.run_particle_relaxation_ = true;
 	/** Tag for reload initially relaxed particles. */
 	system.reload_particles_ = true;
 	/** Tag for computation from restart files. 0: not from restart files. */
@@ -295,7 +295,7 @@ int main(int ac, char *av[])
 		/** topology */
 		BodyRelationInner herat_model_inner(herat_model);
 		/** Random reset the relax solid particle position. */
-		RandomizePartilePosition random_particles(herat_model);
+		RandomizeParticlePosition random_particles(herat_model);
 		/** A  Physics relaxation step. */
 		relax_dynamics::RelaxationStepInner relaxation_step_inner(herat_model_inner);
 		/** Time step for diffusion. */
@@ -303,7 +303,7 @@ int main(int ac, char *av[])
 		/** Diffusion process for diffusion body. */
 		DiffusionRelaxation diffusion_relaxation(herat_model_inner);
 		/** Compute the fiber and sheet after diffusion. */
-		ComputeFiberandSheetDirections compute_fiber_sheet(herat_model);
+		ComputeFiberAndSheetDirections compute_fiber_sheet(herat_model);
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_herat_model_state_to_vtp(in_output, {herat_model});
 		/** Write the particle reload files. */
@@ -362,7 +362,7 @@ int main(int ac, char *av[])
 		return 0;
 	}
 	//----------------------------------------------------------------------
-	//	SPH simultion section
+	//	SPH simulation section
 	//----------------------------------------------------------------------
 	/** create a SPH body, material and particles */
 	SolidBody physiology_heart(system, makeShared<Heart>("PhysiologyHeart"));

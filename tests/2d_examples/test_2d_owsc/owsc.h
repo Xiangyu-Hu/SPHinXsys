@@ -51,7 +51,7 @@ Vec2d Base_lt(Flap_x - 0.5 * Flap_width, Base_bottom_position + Base_height); //
 Vec2d Base_rt(Flap_x + 0.5 * Flap_width, Base_bottom_position + Base_height); // right top
 Vec2d Base_rb(Flap_x + 0.5 * Flap_width, Base_bottom_position);				  // right bottom
 
-// flap geometeric parameters
+// flap geometric parameters
 Vec2d Flap_lb(Flap_x - 0.5 * Flap_width, Base_bottom_position + Base_height + 0.5 * Flap_width);		  // left bottom
 Vec2d Flap_lt(Flap_x - 0.5 * Flap_width, Base_bottom_position + Base_height + 0.5 * Flap_width + Flap_H); // left top
 Vec2d Flap_rt(Flap_x + 0.5 * Flap_width, Base_bottom_position + Base_height + 0.5 * Flap_width + Flap_H); // right top
@@ -70,8 +70,6 @@ Real mu_f = 1.0e-6;
 Real flap_mass = 33.04;
 Real flap_vol = 0.0579;
 Real rho0_s = flap_mass / flap_vol;
-Real poisson = 0.33;
-Real Youngs_modulus = 7.8e6;
 
 //------------------------------------------------------------------------------
 // geometric shape elements used in the case
@@ -285,7 +283,7 @@ class WaveMaking : public solid_dynamics::ConstrainSolidBodyRegion
 		return velocity;
 	}
 
-	virtual Vec2d getAcceleration(Vecd &pos_0, Vecd &pos_n, Vec2d &dvel_dt) override
+	virtual Vec2d getAcceleration(Vecd &pos_0, Vecd &pos_n, Vec2d &acc) override
 	{
 		Vec2d acceleration(0);
 		acceleration[0] = -0.5 * wave_stroke_ * wave_freq_ * wave_freq_ * sin(wave_freq_ * time_);

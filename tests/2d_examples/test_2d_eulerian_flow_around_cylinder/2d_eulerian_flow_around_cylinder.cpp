@@ -41,7 +41,7 @@ int main(int ac, char *av[])
 	 * @brief 	Creating the cylinder.
 	 */
 	SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
-	cylinder.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
+	cylinder.defineAdaptationRatios(1.15, 2.0);
 	cylinder.defineBodyLevelSetShape();
 	cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
@@ -67,8 +67,8 @@ int main(int ac, char *av[])
 		 * @brief 	Methods used for particle relaxation.
 		 */
 		/** Random reset the insert body particle position. */
-		RandomizePartilePosition random_inserted_body_particles(cylinder);
-		RandomizePartilePosition random_water_body_particles(water_block);
+		RandomizeParticlePosition random_inserted_body_particles(cylinder);
+		RandomizeParticlePosition random_water_body_particles(water_block);
 		/** Write the body state to Vtu file. */
 		BodyStatesRecordingToVtp write_inserted_body_to_vtu(in_output, {&cylinder});
 		BodyStatesRecordingToVtp write_water_body_to_vtu(in_output, {&water_block});
@@ -227,7 +227,7 @@ int main(int ac, char *av[])
 	tt = t4 - t1 - interval;
 	cout << "Total wall time for computation: " << tt.seconds() << " seconds." << endl;
 
-	if (!sph_system.restart_step_ == 0) // TODO: this case should be revsied latter.
+	if (!sph_system.restart_step_ == 0) // TODO: this case should be revised latter.
 	{
 		write_total_viscous_force_on_inserted_body.newResultTest();
 	}

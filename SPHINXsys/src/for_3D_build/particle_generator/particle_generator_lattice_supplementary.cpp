@@ -6,6 +6,7 @@
 #include "base_mesh.h"
 #include "base_body.h"
 #include "base_particles.h"
+#include "base_particle_dynamics.h"
 
 namespace SPH
 {
@@ -24,13 +25,13 @@ namespace SPH
 					{
 						if (body_shape_.checkContain(particle_position))
 						{
-							initializePositionAndVolume(particle_position, particle_volume);
+							initializePositionAndVolumetricMeasure(particle_position, particle_volume);
 						}
 					}
 				}
 	}
 	//=================================================================================================//
-	void ShellParticleGeneratorLattice::initializeGeometricVariables()
+	void ThickSurfaceParticleGeneratorLattice::initializeGeometricVariables()
 	{
 		// Calculate the total volume and
 		// count the number of cells inside the body volume, where we might put particles.
@@ -71,8 +72,8 @@ namespace SPH
 							// If the random_real is smaller than the interval, add a particle, only if we haven't reached the max. number of particles.
 							if (random_real <= interval && base_particles_->total_real_particles_ < planned_number_of_particles_)
 							{
-								initializePositionAndVolume(particle_position, avg_particle_volume_);
-								initializeSurfaceProperties(Vecd(1.0, 0.0), global_avg_thickness_);
+								initializePositionAndVolumetricMeasure(particle_position, avg_particle_volume_ / global_avg_thickness_);
+								initializeSurfaceProperties(body_shape_.findNormalDirection(particle_position), global_avg_thickness_);
 							}
 						}
 					}

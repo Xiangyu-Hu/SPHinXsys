@@ -14,14 +14,14 @@ namespace SPH
 			FluidViscousForceOnSolid(BaseBodyRelationContact &contact_relation)
 			: InteractionDynamics(*contact_relation.sph_body_),
 			  FSIContactData(contact_relation),
-			  Vol_(particles_->Vol_), vel_ave_(particles_->vel_ave_)
+			  Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity())
 		{
-			particles_->registerAVariable(viscous_force_from_fluid_, "ViscousForceFromFluid");
+			particles_->registerVariable(viscous_force_from_fluid_, "ViscousForceFromFluid");
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-				contact_rho_n_.push_back(&(contact_particles_[k]->rho_n_));
-				contact_vel_n_.push_back(&(contact_particles_[k]->vel_n_));
+				contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
+				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 
 				mu_.push_back(contact_material_[k]->ReferenceViscosity());
 				smoothing_length_.push_back(contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength());
@@ -61,14 +61,14 @@ namespace SPH
 			FluidViscousForceOnSolidInEuler(BaseBodyRelationContact &contact_relation)
 			: InteractionDynamics(*contact_relation.sph_body_),
 			EFSIContactData(contact_relation),
-			Vol_(particles_->Vol_), vel_ave_(particles_->vel_ave_)
+			Vol_(particles_->Vol_), vel_ave_(*particles_->AverageVelocity())
 		{
-			particles_->registerAVariable(viscous_force_from_fluid_, "ViscousForceFromFluid");
+			particles_->registerVariable(viscous_force_from_fluid_, "ViscousForceFromFluid");
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
 				contact_Vol_.push_back(&(contact_particles_[k]->Vol_));
-				contact_rho_n_.push_back(&(contact_particles_[k]->rho_n_));
-				contact_vel_n_.push_back(&(contact_particles_[k]->vel_n_));
+				contact_rho_n_.push_back(&(contact_particles_[k]->rho_));
+				contact_vel_n_.push_back(&(contact_particles_[k]->vel_));
 
 				mu_.push_back(contact_material_[k]->ReferenceViscosity());
 				smoothing_length_.push_back(contact_bodies_[k]->sph_adaptation_->ReferenceSmoothingLength());
@@ -153,7 +153,7 @@ namespace SPH
 		TotalForceOnSolid::TotalForceOnSolid(SolidBody &solid_body)
 			: ParticleDynamicsReduce<Vecd, ReduceSum<Vecd>>(solid_body),
 			SolidDataSimple(solid_body),
-			force_from_fluid_(particles_->force_from_fluid_)
+			force_from_fluid_(*particles_->getVariableByName<Vecd>("ForceFromFluid"))
 		{
 			quantity_name_ = "TotalForceOnSolid";
 			initial_reference_ = Vecd(0);
@@ -166,21 +166,20 @@ namespace SPH
 		//=================================================================================================//
 		InitializeDisplacement::
 			InitializeDisplacement(SolidBody &solid_body, StdLargeVec<Vecd> &pos_temp)
-			: ParticleDynamicsSimple(solid_body), SolidDataSimple(solid_body),
-			  pos_temp_(pos_temp), pos_n_(particles_->pos_n_),
-			  vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_)
-		{
-		}
+			: ParticleDynamicsSimple(solid_body), ElasticSolidDataSimple(solid_body),
+			  pos_temp_(pos_temp), pos_(particles_->pos_),
+			  vel_ave_(particles_->vel_ave_), 
+			  acc_ave_(particles_->acc_ave_) {}
 		//=================================================================================================//
 		void InitializeDisplacement::Update(size_t index_i, Real dt)
 		{
-			pos_temp_[index_i] = pos_n_[index_i];
+			pos_temp_[index_i] = pos_[index_i];
 		}
 		//=================================================================================================//
 		void UpdateAverageVelocityAndAcceleration::Update(size_t index_i, Real dt)
 		{
-			Vecd updated_vel_ave = (pos_n_[index_i] - pos_temp_[index_i]) / (dt + Eps);
-			dvel_dt_ave_[index_i] = (updated_vel_ave - vel_ave_[index_i]) / (dt + Eps);
+			Vecd updated_vel_ave = (pos_[index_i] - pos_temp_[index_i]) / (dt + Eps);
+			acc_ave_[index_i] = (updated_vel_ave - vel_ave_[index_i]) / (dt + Eps);
 			vel_ave_[index_i] = updated_vel_ave;
 		}
 		//=================================================================================================//
@@ -189,7 +188,7 @@ namespace SPH
 			: initialize_displacement_(solid_body, pos_temp_),
 			  update_averages_(solid_body, pos_temp_)
 		{
-			solid_body.base_particles_->registerAVariable(pos_temp_, "TemporaryPosition");
+			solid_body.base_particles_->registerVariable(pos_temp_, "TemporaryPosition");
 		}
 		//=================================================================================================//
 	}

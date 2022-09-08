@@ -4,7 +4,6 @@
  */
 
 #include "level_set.h"
-#include "base_body.h"
 #include "adaptation.h"
 #include "mesh_with_data_packages.hpp"
 
@@ -12,25 +11,15 @@ namespace SPH
 {
 	//=================================================================================================//
 	LevelSetDataPackage::
-		LevelSetDataPackage() : BaseDataPackage<4, 6>(), is_core_pkg_(false) {}
+		LevelSetDataPackage() : GridDataPackage<4, 6>(), is_core_pkg_(false) {}
 	//=================================================================================================//
-	void LevelSetDataPackage::initializeSingularDataAddress()
+	void LevelSetDataPackage::registerAllVariables()
 	{
-		initializePackageDataAddress(phi_, phi_addrs_);
-		initializePackageDataAddress(phi_gradient_, phi_gradient_addrs_);
-		initializePackageDataAddress(kernel_weight_, kernel_weight_addrs_);
-		initializePackageDataAddress(kernel_gradient_, kernel_gradient_addrs_);
-		initializePackageDataAddress(near_interface_id_, near_interface_id_addrs_);
-	}
-	//=================================================================================================//
-	void LevelSetDataPackage::
-		assignAllPackageDataAddress(Vecu addrs_index, LevelSetDataPackage *src_pkg, Vecu data_index)
-	{
-		assignPackageDataAddress(phi_addrs_, addrs_index, src_pkg->phi_, data_index);
-		assignPackageDataAddress(phi_gradient_addrs_, addrs_index, src_pkg->phi_gradient_, data_index);
-		assignPackageDataAddress(kernel_weight_addrs_, addrs_index, src_pkg->kernel_weight_, data_index);
-		assignPackageDataAddress(kernel_gradient_addrs_, addrs_index, src_pkg->kernel_gradient_, data_index);
-		assignPackageDataAddress(near_interface_id_addrs_, addrs_index, src_pkg->near_interface_id_, data_index);
+		registerPackageData(phi_, phi_addrs_);
+		registerPackageData(phi_gradient_, phi_gradient_addrs_);
+		registerPackageData(kernel_weight_, kernel_weight_addrs_);
+		registerPackageData(kernel_gradient_, kernel_gradient_addrs_);
+		registerPackageData(near_interface_id_, near_interface_id_addrs_);
 	}
 	//=================================================================================================//
 	void LevelSetDataPackage::computeLevelSetGradient()
@@ -40,7 +29,15 @@ namespace SPH
 	//=================================================================================================//
 	BaseLevelSet ::BaseLevelSet(Shape &shape, SPHAdaptation &sph_adaptation)
 		: BaseMeshField("LevelSet"),
-		  shape_(shape), sph_adaptation_(sph_adaptation) {}
+		  shape_(shape), sph_adaptation_(sph_adaptation)
+	{
+		if (!shape_.isValid())
+		{
+			std::cout << "\n BaseLevelSet Error: shape_ is invalid." << std::endl;
+			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+			throw;
+		}
+	}
 	//=================================================================================================//
 	Real BaseLevelSet::computeHeaviside(Real phi, Real half_width)
 	{
@@ -55,8 +52,8 @@ namespace SPH
 	//=================================================================================================//
 	LevelSet::LevelSet(BoundingBox tentative_bounds, Real data_spacing, size_t buffer_size,
 					   Shape &shape, SPHAdaptation &sph_adaptation)
-		: MeshWithDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, buffer_size,
-																  shape, sph_adaptation),
+		: MeshWithGridDataPackages<BaseLevelSet, LevelSetDataPackage>(tentative_bounds, data_spacing, buffer_size,
+																	  shape, sph_adaptation),
 		  global_h_ratio_(sph_adaptation.ReferenceSpacing() / data_spacing),
 		  kernel_(*sph_adaptation.getKernel())
 	{
@@ -106,7 +103,16 @@ namespace SPH
 	Vecd LevelSet::probeNormalDirection(const Vecd &position)
 	{
 		Vecd probed_value = probeLevelSetGradient(position);
-		return probed_value / (probed_value.norm() + TinyReal);
+
+		Real threshold = 1.0e-2 * data_spacing_;
+		while (probed_value.norm() < threshold)
+		{
+			Vecd jittered = position; // jittering
+			for (int l = 0; l != position.size(); ++l)
+				jittered[l] += (((Real)rand() / (RAND_MAX)) - 0.5) * 0.5 * data_spacing_;
+			probed_value = probeLevelSetGradient(jittered);
+		}
+		return probed_value.normalize();
 	}
 	//=================================================================================================//
 	Vecd LevelSet::probeLevelSetGradient(const Vecd &position)
@@ -206,6 +212,7 @@ namespace SPH
 		mutex_my_pool.lock();
 		LevelSetDataPackage &new_data_pkg = *data_pkg_pool_.malloc();
 		mutex_my_pool.unlock();
+		new_data_pkg.registerAllVariables();
 		Vecd pkg_lower_bound = GridPositionFromCellPosition(cell_position);
 		new_data_pkg.initializePackageGeometry(pkg_lower_bound, data_spacing_);
 		new_data_pkg.initializeBasicData(shape_);

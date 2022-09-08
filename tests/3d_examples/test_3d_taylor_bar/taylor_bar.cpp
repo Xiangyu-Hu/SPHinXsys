@@ -24,7 +24,7 @@ int main(int ac, char *av[])
 
 	/** create a body with corresponding material, particles and reaction model. */
 	SolidBody column(system, makeShared<Column>("Column"));
-	column.sph_adaptation_->resetAdapationRatios(1.3, 1.0);
+	column.defineAdaptationRatios(1.3, 1.0);
 	column.defineBodyLevelSetShape()->writeLevelSet(column);
 	column.defineParticlesAndMaterial<ElasticSolidParticles, HardeningPlasticSolid>(
 		rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus);
@@ -54,7 +54,7 @@ int main(int ac, char *av[])
 		 * @brief 	Methods used for particle relaxation.
 		 */
 		/** Random reset the insert body particle position. */
-		RandomizePartilePosition random_column_particles(column);
+		RandomizeParticlePosition random_column_particles(column);
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_column_to_vtp(in_output, column);
 		/** Write the particle reload files. */
@@ -99,7 +99,7 @@ int main(int ac, char *av[])
 	/** stress and deformation relaxation. */
 	solid_dynamics::PlasticStressRelaxationFirstHalf stress_relaxation_first_half(column_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(column_inner);
-	solid_dynamics::ContactForceWithWall column_wall_contact_force(column_wall_contact);
+	solid_dynamics::DynamicContactForceWithWall column_wall_contact_force(column_wall_contact);
 
 	//----------------------------------------------------------------------
 	//	Output

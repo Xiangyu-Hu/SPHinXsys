@@ -14,8 +14,7 @@ namespace SPH
 	//=================================================================================================//
 	BaseParticleGenerator::BaseParticleGenerator(SPHBody &sph_body)
 		: base_particles_(sph_body.base_particles_),
-		pos_n_(base_particles_->pos_n_), sequence_(base_particles_->sequence_),
-		sorted_id_(base_particles_->sorted_id_), unsorted_id_(base_particles_->unsorted_id_)
+		  pos_(base_particles_->pos_), unsorted_id_(base_particles_->unsorted_id_)
 	{
 		if (sph_body.base_particles_ == nullptr || sph_body.base_material_ == nullptr)
 		{
@@ -27,27 +26,25 @@ namespace SPH
 	//=================================================================================================//
 	void BaseParticleGenerator::initializePosition(const Vecd &position)
 	{
-		pos_n_.push_back(position);
-		sorted_id_.push_back(sequence_.size());
-		unsorted_id_.push_back(sequence_.size());
-		sequence_.push_back(0);
-		base_particles_->total_real_particles_ ++;
+		pos_.push_back(position);
+		unsorted_id_.push_back(base_particles_->total_real_particles_);
+		base_particles_->total_real_particles_++;
 	}
 	//=================================================================================================//
 	ParticleGenerator::ParticleGenerator(SPHBody &sph_body)
 		: BaseParticleGenerator(sph_body), Vol_(base_particles_->Vol_) {}
 	//=================================================================================================//
-	void ParticleGenerator::initializePositionAndVolume(const Vecd &position, Real volume)
+	void ParticleGenerator::
+		initializePositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure)
 	{
 		initializePosition(position);
-		Vol_.push_back(volume);
+		Vol_.push_back(volumetric_measure);
 	}
 	//=================================================================================================//
 	SurfaceParticleGenerator::SurfaceParticleGenerator(SPHBody &sph_body)
 		: ParticleGenerator(sph_body),
 		  n_(*base_particles_->getVariableByName<Vecd>("NormalDirection")),
-		  thickness_(*base_particles_->getVariableByName<Real>("Thickness")),
-		  transformation_matrix_(*base_particles_->getVariableByName<Matd>("TransformationMatrix"))
+		  thickness_(*base_particles_->getVariableByName<Real>("Thickness"))
 	{
 		sph_body.sph_adaptation_->getKernel()->reduceOnce();
 	}
@@ -56,14 +53,13 @@ namespace SPH
 	{
 		n_.push_back(surface_normal);
 		thickness_.push_back(thickness);
-		transformation_matrix_.push_back(getTransformationMatrix(surface_normal));
 	}
 	//=================================================================================================//
 	void ObserverParticleGenerator::initializeGeometricVariables()
 	{
 		for (size_t i = 0; i < positions_.size(); ++i)
 		{
-			initializePositionAndVolume(positions_[i], 0.0);
+			initializePositionAndVolumetricMeasure(positions_[i], 0.0);
 		}
 	}
 	//=================================================================================================//
@@ -78,23 +74,12 @@ namespace SPH
 			exit(1);
 		}
 
-		file_path_ = in_output.reload_folder_ + "/SPHBody_" + reload_body_name + "_rld.xml";
+		file_path_ = in_output.reload_folder_ + "/" + reload_body_name + "_rld.xml";
 	}
 	//=================================================================================================//
 	void ParticleGeneratorReload::initializeGeometricVariables()
 	{
-		XmlEngine *reload_xml_engine = base_particles_->getReloadXmlEngine();
-		reload_xml_engine->loadXmlFile(file_path_);
-		SimTK::Xml::element_iterator ele_ite_ = reload_xml_engine->root_element_.element_begin();
-		for (; ele_ite_ != reload_xml_engine->root_element_.element_end(); ++ele_ite_)
-		{
-			Vecd position(0);
-			reload_xml_engine->getRequiredAttributeValue(ele_ite_, "Position", position);
-			Real volume(0);
-			reload_xml_engine->getRequiredAttributeValue(ele_ite_, "Volume", volume);
-
-			initializePositionAndVolume(position, volume);
-		}
+		base_particles_->readFromXmlForReloadParticle(file_path_);
 	}
 	//=================================================================================================//
 }

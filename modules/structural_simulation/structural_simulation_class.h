@@ -37,25 +37,37 @@ using PositionScaleSolidBodyTuple = tuple<int, Real, Real, Real>;
 using TranslateSolidBodyTuple = tuple<int, Real, Real, Vec3d>;
 using TranslateSolidBodyPartTuple = tuple<int, Real, Real, Vec3d, BoundingBox>;
 
-class BodyPartByParticleTriMesh : public BodyRegionByParticle
+#ifdef __EMSCRIPTEN__
+	struct StlData
+	{
+		string name;
+		uintptr_t ptr;
+	};
+
+	using StlList = vector<StlData>;
+#else
+	using StlList = vector<string>;
+#endif
+
+class BodyPartFromMesh : public BodyRegionByParticle
 {
 public:
-	BodyPartByParticleTriMesh(SPHBody &body, SharedPtr<TriangleMeshShape> triangle_mesh_shape_ptr);
-	~BodyPartByParticleTriMesh(){};
+	BodyPartFromMesh(SPHBody &body, SharedPtr<TriangleMeshShape> triangle_mesh_shape_ptr);
+	~BodyPartFromMesh(){};
 };
 
-class ImportedModel : public SolidBody
+class SolidBodyFromMesh : public SolidBody
 {
 public:
-	ImportedModel(SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
+	SolidBodyFromMesh(SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
 				  SharedPtr<LinearElasticSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume);
-	~ImportedModel(){};
+	~SolidBodyFromMesh(){};
 };
 
 class SolidBodyForSimulation
 {
 private:
-	ImportedModel imported_model_;
+	SolidBodyFromMesh solid_body_from_mesh_;
 	BodyRelationInner inner_body_relation_;
 
 	SimpleDynamics<NormalDirectionFromBodyShape> initial_normal_direction_;
@@ -65,13 +77,14 @@ private:
 	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>> damping_random_;
 
 public:
+	// no particle reload --> direct generator
 	SolidBodyForSimulation(
 		SPHSystem &system, SharedPtr<TriangleMeshShape> triangle_mesh_shape, Real resolution,
 		Real physical_viscosity, SharedPtr<LinearElasticSolid> material_model, StdLargeVec<Vecd> &pos_0, StdLargeVec<Real> &volume);
 	~SolidBodyForSimulation(){};
 
-	ImportedModel *getImportedModel() { return &imported_model_; };
-	ElasticSolidParticles *getElasticSolidParticles() { return DynamicCast<ElasticSolidParticles>(this, imported_model_.base_particles_); };
+	SolidBodyFromMesh *getSolidBodyFromMesh() { return &solid_body_from_mesh_; };
+	ElasticSolidParticles *getElasticSolidParticles() { return DynamicCast<ElasticSolidParticles>(this, solid_body_from_mesh_.base_particles_); };
 	BodyRelationInner *getInnerBodyRelation() { return &inner_body_relation_; };
 
 	SimpleDynamics<NormalDirectionFromBodyShape> *getInitialNormalDirection() { return &initial_normal_direction_; };
@@ -85,9 +98,9 @@ void expandBoundingBox(BoundingBox *original, BoundingBox *additional);
 
 void relaxParticlesSingleResolution(InOutput &in_output,
 									bool write_particles_to_file,
-									ImportedModel &imported_model,
-									ElasticSolidParticles &imported_model_particles,
-									BodyRelationInner &imported_model_inner);
+									SolidBodyFromMesh &solid_body_from_mesh,
+									ElasticSolidParticles &solid_body_from_mesh_particles,
+									BodyRelationInner &solid_body_from_mesh_inner);
 
 static inline Real getPhysicalViscosityGeneral(Real rho, Real youngs_modulus, Real length_scale, Real shape_constant = 1.0)
 {
@@ -103,7 +116,7 @@ class StructuralSimulationInput
 {
 public:
 	string relative_input_path_;
-	vector<string> imported_stl_list_;
+	StlList imported_stl_list_;
 	Real scale_stl_;
 	vector<Vec3d> translation_list_;
 	vector<Real> resolution_list_;
@@ -129,18 +142,17 @@ public:
 	vector<PositionScaleSolidBodyTuple> position_scale_solid_body_tuple_;
 	vector<TranslateSolidBodyTuple> translation_solid_body_tuple_;
 	vector<TranslateSolidBodyPartTuple> translation_solid_body_part_tuple_;
-	// option to only write surface particles into vtu
-	bool surface_particles_only_to_vtu_;
 
 	StructuralSimulationInput(
-		const string &relative_input_path,
-		const vector<string> &imported_stl_list,
+		string relative_input_path,
+		StlList imported_stl_list,
 		Real scale_stl,
-		const vector<Vec3d> &translation_list,
-		const vector<Real> &resolution_list,
-		const vector<SharedPtr<LinearElasticSolid>> &material_model_list,
-		const StdVec<Real> &physical_viscosity,
-		const StdVec<IndexVector> &contacting_bodies_list);
+		vector<Vec3d> translation_list,
+		vector<Real> resolution_list,
+		vector<shared_ptr<LinearElasticSolid>> material_model_list,
+		StdVec<Real> physical_viscosity,
+		StdVec<IndexVector> contacting_bodies_list
+	);
 };
 
 class StructuralSimulation
@@ -148,12 +160,12 @@ class StructuralSimulation
 private:
 	UniquePtrKeepers<SolidBodyRelationContact> contact_relation_ptr_keeper_;
 	UniquePtrKeepers<Gravity> gravity_ptr_keeper_;
-	UniquePtrKeepers<BodyPartByParticleTriMesh> body_part_tri_mesh_ptr_keeper_;
+	UniquePtrKeepers<BodyPartFromMesh> body_part_tri_mesh_ptr_keeper_;
 
 protected:
 	// mandatory input
 	string relative_input_path_;
-	vector<string> imported_stl_list_;
+	StlList imported_stl_list_;
 	Real scale_stl_;
 	vector<Vec3d> translation_list_;
 	vector<Real> resolution_list_;
@@ -179,7 +191,7 @@ protected:
 	vector<shared_ptr<solid_dynamics::ContactForce>> contact_force_list_;
 
 	// for initializeATimeStep
-	vector<shared_ptr<TimeStepInitialization>> initialize_gravity_;
+	vector<shared_ptr<TimeStepInitialization>> initialize_time_step_;
 	vector<GravityPair> non_zero_gravity_;
 	// for AccelerationForBodyPartInBoundingBox
 	vector<shared_ptr<solid_dynamics::AccelerationForBodyPartInBoundingBox>> acceleration_bounding_box_;
@@ -214,8 +226,6 @@ protected:
 	// for TranslateSolidBodyPart
 	vector<shared_ptr<solid_dynamics::TranslateSolidBodyPart>> translation_solid_body_part_;
 	vector<TranslateSolidBodyPartTuple> translation_solid_body_part_tuple_;
-	// option to only write surface particles into vtu
-	bool surface_particles_only_to_vtu_;
 
 	// iterators
 	int iteration_;
@@ -254,7 +264,7 @@ protected:
 	void executeInitialNormalDirection();
 	void executeCorrectConfiguration();
 	void executeUpdateElasticNormalDirection();
-	void executeinitializeATimeStep();
+	void executeInitializeATimeStep();
 	void executeAccelerationForBodyPartInBoundingBox();
 	void executeForceInBodyRegion();
 	void executeSurfacePressure();
@@ -279,7 +289,7 @@ protected:
 	void runSimulationStep(Real &dt, Real &integration_time);
 
 public:
-	explicit StructuralSimulation(StructuralSimulationInput &input);
+	explicit StructuralSimulation(const StructuralSimulationInput &input);
 	~StructuralSimulation();
 
 	StdVec<shared_ptr<SolidBodyForSimulation>> get_solid_body_list_() { return solid_body_list_; };
@@ -292,4 +302,19 @@ public:
 	double runSimulationFixedDurationJS(int number_of_steps);
 };
 
-#endif // SOLID_STRUCTURAL_SIMULATION_CLASS_H
+class StructuralSimulationJS : public StructuralSimulation
+	{
+	public:
+		StructuralSimulationJS(const StructuralSimulationInput& input);
+		~StructuralSimulationJS() = default;
+		
+		void runSimulationFixedDuration(int number_of_steps);
+		
+		VtuStringData getVtuData();
+
+	private:
+		BodyStatesRecordingToVtpString write_states_;
+		Real dt;
+	};
+
+#endif //SOLID_STRUCTURAL_SIMULATION_CLASS_H

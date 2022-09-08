@@ -43,8 +43,8 @@ class Column : public ComplexShape
 public:
 	explicit Column(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<GeometricShapeBrick>(halfsize_column, translation_column);
-		add<GeometricShapeBrick>(halfsize_holder, translation_holder);
+		add<TransformShape<GeometricShapeBox>>(translation_column, halfsize_column);
+		add<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder);
 	}
 };
 /**
@@ -60,17 +60,17 @@ public:
 protected:
 	void Update(size_t index_i, Real dt) override
 	{
-		Real x = pos_n_[index_i][0];
-		Real y = pos_n_[index_i][1];
-		Real z = pos_n_[index_i][2];
+		Real x = pos_[index_i][0];
+		Real y = pos_[index_i][1];
+		Real z = pos_[index_i][2];
 		Real angular_velocity = angular_0 * sin((M_PI * x) / (2.0 * PL));
 		Real local_radius = sqrt(pow(y, 2.0) + pow(z, 2.0));
 		Real angular = atan2(y, z);
 
 		if (x > 0.0)
 		{
-			vel_n_[index_i][1] = angular_velocity * local_radius * cos(angular);
-			vel_n_[index_i][2] = -angular_velocity * local_radius * sin(angular);
+			vel_[index_i][1] = angular_velocity * local_radius * cos(angular);
+			vel_[index_i][2] = -angular_velocity * local_radius * sin(angular);
 		}
 	};
 };

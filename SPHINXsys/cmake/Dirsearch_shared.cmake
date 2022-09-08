@@ -31,7 +31,7 @@ MACRO(SOURCE_DIRECTORIES_SHARED return_list)
         if(BUILD_WITH_SIMBODY)
             SET(dir_list ${dir_list} ${dir_path})
         else() # if Simbody is not built, ignore the simbody and clapack folders
-            if(NOT dir_list MATCHES ("/simbody/+" OR "/clapack_for_SPHinXsys/+") )
+            if(NOT (dir_list MATCHES "/simbody/+"))
                 SET(dir_list ${dir_list} ${dir_path})
             endif()
         endif()

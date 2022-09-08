@@ -6,9 +6,8 @@
 #include "base_body.h"
 
 #include "sph_system.h"
-#include "base_particles.h"
 #include "base_particles.hpp"
-#include "body_relation.h"
+#include "base_body_relation.h"
 
 namespace SPH
 {
@@ -16,7 +15,6 @@ namespace SPH
 	SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
 		: body_shape_(shape_ptr_keeper_.assignPtr(shape_ptr)),
 		  sph_system_(sph_system), body_name_(body_shape_->getName()), newly_updated_(true),
-		  body_domain_bounds_(0, 0), is_domain_bounds_determined_(false),
 		  sph_adaptation_(sph_adaptation_ptr_keeper_.createPtr<SPHAdaptation>(this)),
 		  base_material_(nullptr), base_particles_(nullptr)
 	{
@@ -51,20 +49,14 @@ namespace SPH
 		}
 	}
 	//=================================================================================================//
-	void SPHBody::setBodyDomainBounds(const BoundingBox &body_domain_bounds)
+	BoundingBox SPHBody::getBodyShapeBounds()
 	{
-		body_domain_bounds_ = body_domain_bounds;
-		is_domain_bounds_determined_ = true;
-	};
+		return body_shape_->getBounds();
+	}
 	//=================================================================================================//
-	BoundingBox SPHBody::getBodyDomainBounds()
+	void SPHBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
 	{
-		if (!is_domain_bounds_determined_)
-		{
-			body_domain_bounds_ = body_shape_->findBounds();
-			is_domain_bounds_determined_ = true;
-		}
-		return body_domain_bounds_;
+		sph_adaptation_->resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
 	}
 	//=================================================================================================//
 	void SPHBody::writeParticlesToVtuFile(std::ostream &output_file)
@@ -113,12 +105,15 @@ namespace SPH
 	}
 	//=================================================================================================//
 	RealBody::RealBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
-		: SPHBody(sph_system, shape_ptr), particle_sorting_(this)
+		: SPHBody(sph_system, shape_ptr),
+		  system_domain_bounds_(this->getSPHSystem().system_domain_bounds_),
+		  use_split_cell_lists_(false), particle_sorting_(this)
 	{
 		sph_system.real_bodies_.push_back(this);
-		cell_linked_list_ = cell_linked_list_keeper_.movePtr(sph_adaptation_->createCellLinkedList());
 		size_t number_of_split_cell_lists = powerN(3, Vecd(0).size());
 		split_cell_lists_.resize(number_of_split_cell_lists);
+		cell_linked_list_ = cell_linked_list_keeper_.movePtr(
+			sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));
 	}
 	//=================================================================================================//
 	void RealBody::assignBaseParticles(BaseParticles *base_particles)
@@ -139,6 +134,13 @@ namespace SPH
 	void RealBody::updateCellLinkedList()
 	{
 		cell_linked_list_->UpdateCellLists();
+	}
+	//=================================================================================================//
+	void RealBody::defineAdaptationRatios(Real h_spacing_ratio, Real new_system_refinement_ratio)
+	{
+		sph_adaptation_->resetAdaptationRatios(h_spacing_ratio, new_system_refinement_ratio);
+		cell_linked_list_ = cell_linked_list_keeper_.movePtr(
+			sph_adaptation_->createCellLinkedList(system_domain_bounds_, *this));
 	}
 	//=================================================================================================//
 }

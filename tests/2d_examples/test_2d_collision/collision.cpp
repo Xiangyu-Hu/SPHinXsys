@@ -128,8 +128,8 @@ int main(int ac, char *av[])
 		//----------------------------------------------------------------------
 		//	Define the methods for particle relaxation.
 		//----------------------------------------------------------------------
-		RandomizePartilePosition free_ball_random_particles(free_ball);
-		RandomizePartilePosition damping_ball_random_particles(damping_ball);
+		RandomizeParticlePosition free_ball_random_particles(free_ball);
+		RandomizeParticlePosition damping_ball_random_particles(damping_ball);
 		relax_dynamics::RelaxationStepInner free_ball_relaxation_step_inner(free_ball_inner);
 		relax_dynamics::RelaxationStepInner damping_ball_relaxation_step_inner(damping_ball_inner);
 		//----------------------------------------------------------------------
@@ -192,12 +192,12 @@ int main(int ac, char *av[])
 	solid_dynamics::StressRelaxationSecondHalf damping_ball_stress_relaxation_second_half(damping_ball_inner);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ContactDensitySummation free_ball_update_contact_density(free_ball_contact);
-	solid_dynamics::ContactForce free_ball_compute_solid_contact_forces(free_ball_contact);
+	solid_dynamics::ContactForceFromWall free_ball_compute_solid_contact_forces(free_ball_contact);
 	solid_dynamics::ContactDensitySummation damping_ball_update_contact_density(damping_ball_contact);
-	solid_dynamics::ContactForce damping_ball_compute_solid_contact_forces(damping_ball_contact);
+	solid_dynamics::ContactForceFromWall damping_ball_compute_solid_contact_forces(damping_ball_contact);
 	/** Damping for one ball */
 	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
-		damping(damping_ball_inner, 0.5, "Velocity", physical_viscosity);
+		damping(0.5, damping_ball_inner, "Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

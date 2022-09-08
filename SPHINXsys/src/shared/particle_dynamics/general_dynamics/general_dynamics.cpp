@@ -10,12 +10,12 @@ namespace SPH
 	//=================================================================================================//
 	TimeStepInitialization::TimeStepInitialization(SPHBody &sph_body)
 		: ParticleDynamicsSimple(sph_body), GeneralDataDelegateSimple(sph_body),
-		  pos_n_(particles_->pos_n_), dvel_dt_prior_(particles_->dvel_dt_prior_),
+		  pos_(particles_->pos_), acc_prior_(particles_->acc_prior_),
 		  gravity_(gravity_ptr_keeper_.createPtr<Gravity>(Vecd(0))) {}
 	//=================================================================================================//
 	TimeStepInitialization ::TimeStepInitialization(SPHBody &sph_body, Gravity &gravity)
 		: ParticleDynamicsSimple(sph_body), GeneralDataDelegateSimple(sph_body),
-		  pos_n_(particles_->pos_n_), dvel_dt_prior_(particles_->dvel_dt_prior_),
+		  pos_(particles_->pos_), acc_prior_(particles_->acc_prior_),
 		  gravity_(&gravity) {}
 	//=================================================================================================//
 	void TimeStepInitialization::setupDynamics(Real dt)
@@ -25,16 +25,16 @@ namespace SPH
 	//=================================================================================================//
 	void TimeStepInitialization::Update(size_t index_i, Real dt)
 	{
-		dvel_dt_prior_[index_i] = gravity_->InducedAcceleration(pos_n_[index_i]);
+		acc_prior_[index_i] = gravity_->InducedAcceleration(pos_[index_i]);
 	}
 	//=================================================================================================//
-	RandomizePartilePosition::RandomizePartilePosition(SPHBody &sph_body)
+	RandomizeParticlePosition::RandomizeParticlePosition(SPHBody &sph_body)
 		: ParticleDynamicsSimple(sph_body), DataDelegateSimple<SPHBody, BaseParticles>(sph_body),
-		  pos_n_(particles_->pos_n_), randomize_scale_(sph_body.sph_adaptation_->MinimumSpacing()) {}
+		  pos_(particles_->pos_), randomize_scale_(sph_body.sph_adaptation_->MinimumSpacing()) {}
 	//=================================================================================================//
-	void RandomizePartilePosition::Update(size_t index_i, Real dt)
+	void RandomizeParticlePosition::Update(size_t index_i, Real dt)
 	{
-		Vecd &pos_n_i = pos_n_[index_i];
+		Vecd &pos_n_i = pos_[index_i];
 		for (int k = 0; k < pos_n_i.size(); ++k)
 		{
 			pos_n_i[k] += dt * (((double)rand() / (RAND_MAX)) - 0.5) * 2.0 * randomize_scale_;
@@ -45,20 +45,20 @@ namespace SPH
 		VelocityBoundCheck(SPHBody &sph_body, Real velocity_bound)
 		: ParticleDynamicsReduce<bool, ReduceOR>(sph_body),
 		  GeneralDataDelegateSimple(sph_body),
-		  vel_n_(particles_->vel_n_), velocity_bound_(velocity_bound)
+		  vel_(particles_->vel_), velocity_bound_(velocity_bound)
 	{
 		initial_reference_ = false;
 	}
 	//=================================================================================================//
 	bool VelocityBoundCheck::ReduceFunction(size_t index_i, Real dt)
 	{
-		return vel_n_[index_i].norm() > velocity_bound_;
+		return vel_[index_i].norm() > velocity_bound_;
 	}
 	//=================================================================================================//
 	UpperFrontInXDirection::
 		UpperFrontInXDirection(SPHBody &sph_body) : ParticleDynamicsReduce<Real, ReduceMax>(sph_body),
 													GeneralDataDelegateSimple(sph_body),
-													pos_n_(particles_->pos_n_)
+													pos_(particles_->pos_)
 	{
 		quantity_name_ = "UpperFrontInXDirection";
 		initial_reference_ = 0.0;
@@ -66,13 +66,13 @@ namespace SPH
 	//=================================================================================================//
 	Real UpperFrontInXDirection::ReduceFunction(size_t index_i, Real dt)
 	{
-		return pos_n_[index_i][0];
+		return pos_[index_i][0];
 	}
 	//=================================================================================================//
 	MaximumSpeed::
 		MaximumSpeed(SPHBody &sph_body) : ParticleDynamicsReduce<Real, ReduceMax>(sph_body),
 										  GeneralDataDelegateSimple(sph_body),
-										  vel_n_(particles_->vel_n_)
+										  vel_(particles_->vel_)
 	{
 		quantity_name_ = "MaximumSpeed";
 		initial_reference_ = 0.0;
@@ -80,13 +80,13 @@ namespace SPH
 	//=================================================================================================//
 	Real MaximumSpeed::ReduceFunction(size_t index_i, Real dt)
 	{
-		return vel_n_[index_i].norm();
+		return vel_[index_i].norm();
 	}
 	//=================================================================================================//
 	BodyLowerBound::BodyLowerBound(SPHBody &sph_body)
 		: ParticleDynamicsReduce<Vecd, ReduceLowerBound>(sph_body),
 		  GeneralDataDelegateSimple(sph_body),
-		  pos_n_(particles_->pos_n_)
+		  pos_(particles_->pos_)
 	{
 		constexpr double max_real_number = (std::numeric_limits<double>::max)();
 		initial_reference_ = Vecd(max_real_number);
@@ -94,13 +94,13 @@ namespace SPH
 	//=================================================================================================//
 	Vecd BodyLowerBound::ReduceFunction(size_t index_i, Real dt)
 	{
-		return pos_n_[index_i];
+		return pos_[index_i];
 	}
 	//=================================================================================================//
 	BodyUpperBound::
 		BodyUpperBound(SPHBody &sph_body) : ParticleDynamicsReduce<Vecd, ReduceUpperBound>(sph_body),
 											GeneralDataDelegateSimple(sph_body),
-											pos_n_(particles_->pos_n_)
+											pos_(particles_->pos_)
 	{
 		constexpr double min_real_number = (std::numeric_limits<double>::min)();
 		initial_reference_ = Vecd(min_real_number);
@@ -108,13 +108,13 @@ namespace SPH
 	//=================================================================================================//
 	Vecd BodyUpperBound::ReduceFunction(size_t index_i, Real dt)
 	{
-		return pos_n_[index_i];
+		return pos_[index_i];
 	}
 	//=================================================================================================//
 	TotalMechanicalEnergy::TotalMechanicalEnergy(SPHBody &sph_body)
 		: ParticleDynamicsReduce<Real, ReduceSum<Real>>(sph_body),
 		  GeneralDataDelegateSimple(sph_body), mass_(particles_->mass_),
-		  vel_n_(particles_->vel_n_), pos_n_(particles_->pos_n_),
+		  vel_(particles_->vel_), pos_(particles_->pos_),
 		  gravity_(gravity_ptr_keeper_.createPtr<Gravity>(Vecd(0)))
 	{
 		quantity_name_ = "TotalMechanicalEnergy"; // TODO: this need to ben changed as "TotalKineticEnergy"
@@ -124,7 +124,7 @@ namespace SPH
 	TotalMechanicalEnergy::TotalMechanicalEnergy(SPHBody &sph_body, Gravity &gravity)
 		: ParticleDynamicsReduce<Real, ReduceSum<Real>>(sph_body),
 		  GeneralDataDelegateSimple(sph_body), mass_(particles_->mass_),
-		  vel_n_(particles_->vel_n_), pos_n_(particles_->pos_n_),
+		  vel_(particles_->vel_), pos_(particles_->pos_),
 		  gravity_(&gravity)
 	{
 		quantity_name_ = "TotalMechanicalEnergy";
@@ -133,7 +133,7 @@ namespace SPH
 	//=================================================================================================//
 	Real TotalMechanicalEnergy::ReduceFunction(size_t index_i, Real dt)
 	{
-		return 0.5 * mass_[index_i] * vel_n_[index_i].normSqr() + mass_[index_i] * gravity_->getPotential(pos_n_[index_i]);
+		return 0.5 * mass_[index_i] * vel_[index_i].normSqr() + mass_[index_i] * gravity_->getPotential(pos_[index_i]);
 	}
 	//=================================================================================================//
 }

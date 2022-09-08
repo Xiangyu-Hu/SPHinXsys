@@ -21,7 +21,7 @@ TEST(BernoulliBeam20x, Pressure)
 	std::vector<SharedPtr<LinearElasticSolid>> material_model_list = { material };
 
 	SharedPtr<TriangleMeshShapeSTL> specimen = makeShared<TriangleMeshShapeSTL>("./input/bernoulli_beam_20x.stl", Vec3d(0), scale_stl, "bernoulli_beam_20x");
-	BoundingBox fixation = specimen->findBounds();
+	BoundingBox fixation = specimen->getBounds();
 	fixation.second[0] = fixation.first[0] + 0.01;
 	
 	StructuralSimulationInput input
@@ -35,7 +35,6 @@ TEST(BernoulliBeam20x, Pressure)
 		{physical_viscosity},
 		{}
 	};
-	input.surface_particles_only_to_vtu_ = { true };
 	input.body_indices_fixed_constraint_region_ = StdVec<ConstrainedRegionPair>{ ConstrainedRegionPair(0, fixation) };
 	StdVec<array<Real, 2>> pressure_over_time = {
 		{0.0, 0.0},

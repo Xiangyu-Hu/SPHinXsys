@@ -1,29 +1,29 @@
-/* -------------------------------------------------------------------------*
- *								SPHinXsys									*
- * --------------------------------------------------------------------------*
- * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
- * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
- * physical accurate simulation and aims to model coupled industrial dynamic *
- * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
- * (smoothed particle hydrodynamics), a meshless computational method using	*
- * particle discretization.													*
- *																			*
- * SPHinXsys is partially funded by German Research Foundation				*
- * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1				*
- * and HU1527/12-1.															*
- *                                                                           *
- * Portions copyright (c) 2017-2020 Technical University of Munich and		*
- * the authors' affiliations.												*
- *                                                                           *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
- * not use this file except in compliance with the License. You may obtain a *
- * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
- *                                                                           *
- * --------------------------------------------------------------------------*/
+/* -----------------------------------------------------------------------------*
+ *                               SPHinXsys                                      *
+ * -----------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle    *
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for       *
+ * physical accurate simulation and aims to model coupled industrial dynamic    *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH      *
+ * (smoothed particle hydrodynamics), a meshless computational method using     *
+ * particle discretization.                                                     *
+ *                                                                              *
+ * SPHinXsys is partially funded by German Research Foundation                  *
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,               *
+ * HU1527/12-1 and HU1527/12-4.                                                 *
+ *                                                                              *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and          *
+ * the authors' affiliations.                                                   *
+ *                                                                              *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may      *
+ * not use this file except in compliance with the License. You may obtain a    *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.           *
+ *                                                                              *
+ * -----------------------------------------------------------------------------*/
 /**
  * @file 	base_body_part.h
  * @brief 	This is the base classes of body parts.
- * @details	There two main type of body parts. One is part by particle. 
+ * @details	There two main type of body parts. One is part by particle.
  * 			The other is part by cell.
  * @author	Luhui Han, Chi ZHang and Xiangyu Hu
  */
@@ -114,12 +114,13 @@ namespace SPH
 
 	/**
 	 * @class BodyRegionByParticle
-	 * @brief A  body part with the collection of particles within by a presribed shape.
+	 * @brief A  body part with the collection of particles within by a prescribed shape.
 	 */
 	class BodyRegionByParticle : public BodyPartByParticle
 	{
 	private:
 		SharedPtrKeeper<Shape> shape_ptr_keeper_;
+
 	public:
 		Shape &body_part_shape_;
 
@@ -168,6 +169,7 @@ namespace SPH
 	{
 	private:
 		SharedPtrKeeper<Shape> shape_ptr_keeper_;
+
 	public:
 		Shape &body_part_shape_;
 
@@ -202,5 +204,23 @@ namespace SPH
 		/** only cells near the surface of the body part shape are included */
 		bool checkNearSurface(Vecd cell_position, Real threshold);
 	};
+
+	/**
+	 * @class AlignedBoxRegion
+	 * @brief A template body part with the collection of particles within by an AlignedBoxShape.
+	 */
+	template <class BodyRegionType>
+	class AlignedBoxRegion : public BodyRegionType
+	{
+	public:
+		AlignedBoxShape &aligned_box_;
+
+		AlignedBoxRegion(RealBody &real_body, SharedPtr<AlignedBoxShape> aligned_box_ptr)
+			: BodyRegionType(real_body, aligned_box_ptr), aligned_box_(*aligned_box_ptr.get()){};
+		virtual ~AlignedBoxRegion(){};
+	};
+
+	using BodyAlignedBoxByParticle = AlignedBoxRegion<BodyRegionByParticle>;
+	using BodyAlignedBoxByCell = AlignedBoxRegion<BodyRegionByCell>;
 }
 #endif // BASE_BODY_PART_H

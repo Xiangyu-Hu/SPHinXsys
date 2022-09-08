@@ -1,6 +1,6 @@
 /**
  * @file 	sliding.cpp
- * @brief 	a 2D elastic cube sildes on a rigid slope.
+ * @brief 	a 2D elastic cube slides on a rigid slope.
  * @details This is the a case for test collision dynamics for
  * 			understanding SPH method for complex simulation.
  * @author 	chi Zhang and Xiangyu Hu
@@ -18,7 +18,7 @@ Real resolution_ref = L / 10.0; /**< reference particle spacing. */
 Real BW = resolution_ref * 4;	/**< wall width for BCs. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-BW, -BW), Vec2d(25, 15));
-//Observer location
+// Observer location
 StdVec<Vecd> observation_location = {Vecd(7.2, 9.8)};
 //----------------------------------------------------------------------
 //	Global parameters on material properties
@@ -60,13 +60,16 @@ public:
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
 	//----------------------------------------------------------------------
 	//	Build up the environment of a SPHSystem with global controls.
 	//----------------------------------------------------------------------
 	SPHSystem sph_system(system_domain_bounds, resolution_ref);
-	/** output environment. */
+// handle command line arguments
+#ifdef BOOST_AVAILABLE
+	sph_system.handleCommandlineOptions(ac, av);
+#endif	/** output environment. */
 	InOutput in_output(sph_system);
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles
@@ -76,7 +79,7 @@ int main()
 	free_cube.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
-	wall_boundary.defineParticlesAndMaterial<SolidParticles,LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	wall_boundary.defineParticlesAndMaterial<SolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody cube_observer(sph_system, "CubeObserver");
@@ -94,9 +97,9 @@ int main()
 	//	Note that there may be data dependence on the constructors of these methods.
 	//----------------------------------------------------------------------
 	Gravity gravity(Vecd(0.0, -gravity_g));
-	Transformd transform(-0.5235, Vecd(0));
-	SimpleDynamics<TranslationAndRotation> wall_boundary_rotation(wall_boundary, transform);
-	SimpleDynamics<TranslationAndRotation> free_cube_rotation(free_cube, transform);
+	Transform2d transform2d(Rotation2d(-0.5235));
+	SimpleDynamics<TranslationAndRotation> wall_boundary_rotation(wall_boundary, transform2d);
+	SimpleDynamics<TranslationAndRotation> free_cube_rotation(free_cube, transform2d);
 	TimeStepInitialization free_cube_initialize_timestep(free_cube, gravity);
 	/** Kernel correction. */
 	solid_dynamics::CorrectConfiguration free_cube_corrected_configuration(free_cube_inner);
@@ -107,10 +110,10 @@ int main()
 	solid_dynamics::StressRelaxationSecondHalf free_cube_stress_relaxation_second_half(free_cube_inner);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ContactDensitySummation free_cube_update_contact_density(free_cube_contact);
-	solid_dynamics::ContactForce free_cube_compute_solid_contact_forces(free_cube_contact);
+	solid_dynamics::ContactForceFromWall free_cube_compute_solid_contact_forces(free_cube_contact);
 	/** Damping*/
 	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
-		damping(free_cube_inner, 0.5, "Velocity", physical_viscosity);
+		damping(0.5, free_cube_inner,"Velocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------
@@ -193,7 +196,15 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
+	if (sph_system.generate_regression_data_)
+	{
+		// The lift force at the cylinder is very small and not important in this case.
+		write_free_cube_displacement.generateDataBase({1.0e-2, 1.0e-2}, {1.0e-2, 1.0e-2});
+	}
+	else
+	{
 	write_free_cube_displacement.newResultTest();
+	}
 
 	return 0;
 }

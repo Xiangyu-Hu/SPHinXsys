@@ -23,7 +23,7 @@ namespace SPH
 		template<class RiemannSolverType>
 		void BasePressureRelaxationInner<RiemannSolverType>::Interaction(size_t index_i, Real dt)
 		{
-			FluidState state_i(rho_n_[index_i], vel_n_[index_i], p_[index_i]);
+			FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
 			Vecd momentum_change_rate = dmom_dt_prior_[index_i];
 			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -32,7 +32,7 @@ namespace SPH
 				Real dW_ij = inner_neighborhood.dW_ij_[n];
 				Vecd& e_ij = inner_neighborhood.e_ij_[n];
 
-				FluidState state_j(rho_n_[index_j], vel_n_[index_j], p_[index_j]);
+				FluidState state_j(rho_[index_j], vel_[index_j], p_[index_j]);
 				FluidState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
 				Real p_star = interface_state.p_;
 				Vecd vel_star = interface_state.vel_;
@@ -53,7 +53,7 @@ namespace SPH
 		template<class RiemannSolverType>
 		void BaseDensityAndEnergyRelaxationInner<RiemannSolverType>::Interaction(size_t index_i, Real dt)
 		{
-			FluidState state_i(rho_n_[index_i], vel_n_[index_i], p_[index_i]);
+			FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
 			Real density_change_rate = 0.0;
 			Neighborhood& inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -62,7 +62,7 @@ namespace SPH
 				Vecd& e_ij = inner_neighborhood.e_ij_[n];
 				Real dW_ij = inner_neighborhood.dW_ij_[n];
 
-				FluidState state_j(rho_n_[index_j], vel_n_[index_j], p_[index_j]);
+				FluidState state_j(rho_[index_j], vel_[index_j], p_[index_j]);
 				FluidState interface_state = riemann_solver_.getInterfaceState(state_i, state_j, e_ij);
 				Real p_star = interface_state.p_;
 				Vecd vel_star = interface_state.vel_;

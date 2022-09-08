@@ -62,21 +62,16 @@ namespace SPH
 
 		virtual bool checkContain(const Vec3d &input_pnt, bool BOUNDARY_INCLUDED = true) override;
 		virtual Vec3d findClosestPoint(const Vec3d &input_pnt) override;
-		virtual BoundingBox findBounds() override;
-
-		virtual bool checkNotFar(const Vec3d &input_pnt, Real threshold) override;
-		virtual bool checkNearSurface(const Vec3d &input_pnt, Real threshold) override;
-		virtual Real findSignedDistance(const Vec3d &input_pnt) override;
-		virtual Vec3d findNormalDirection(const Vec3d &input_pnt) override;
 
 	protected:
 		//- distance map has to be float type image
 		Vec3d translation_;
 		Mat3d rotation_;
 		std::unique_ptr<ImageMHD<float, 3>> image_;
-
 		Real max_distance_;
 		Real min_distance_;
+	
+		virtual BoundingBox findBounds() override;
 	};
 
 	class ImageShapeFromFile : public ImageShape

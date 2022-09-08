@@ -19,8 +19,6 @@ Vec2d insert_circle_center(10.0, 0.5 * DH);	  /**< Location of the cylinder cent
 Real insert_circle_radius = 1.0;			  /**< Radius of the cylinder. */
 /** Domain bounds of the system. */
 BoundingBox system_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
-/** Prescribed fluid body domain bounds*/
-BoundingBox fluid_body_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
 // Observation locations
 Vec2d point_coordinate_1(3.0, 5.0);
 Vec2d point_coordinate_2(4.0, 5.0);
@@ -40,6 +38,11 @@ Real mu_f = rho0_f * U_f * (2.0 * insert_circle_radius) / Re; /**< Dynamics visc
 //	water block shape
 std::vector<Vecd> water_block_shape {
 Vecd(-DL_sponge, 0.0),Vecd(-DL_sponge, DH), Vecd(DL, DH), Vecd(DL, 0.0), Vecd(-DL_sponge, 0.0)};
+Vec2d emitter_halfsize = Vec2d(0.5 * BW, 0.5 * DH);
+Vec2d emitter_translation = Vec2d(-DL_sponge, 0.0) + emitter_halfsize;
+Vec2d emitter_buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
+Vec2d emitter_buffer_translation = Vec2d(-DL_sponge, 0.0) + emitter_buffer_halfsize;
+
 //----------------------------------------------------------------------
 //	Define case dependent geometries
 //----------------------------------------------------------------------
@@ -61,29 +64,6 @@ public:
 	}
 };
 //----------------------------------------------------------------------
-//	Define case dependent SPH body part shapes.
-//----------------------------------------------------------------------
-/** create the emitter shape. */
-MultiPolygon creatEmitterShape()
-{
-	std::vector<Vecd> emmiter_shape{
-		Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(-DL_sponge + BW, DH), Vecd(-DL_sponge + BW, 0.0), Vecd(-DL_sponge, 0.0)};
-
-	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(emmiter_shape, ShapeBooleanOps::add);
-	return multi_polygon;
-}
-/** create the emitter buffer shape . */
-MultiPolygon createEmitterBufferShape()
-{
-	std::vector<Vecd> emitter_buffer_shape{
-		Vecd(-DL_sponge, 0.0), Vecd(-DL_sponge, DH), Vecd(0.0, DH), Vecd(0.0, 0.0), Vecd(-DL_sponge, 0.0)};
-
-	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(emitter_buffer_shape, ShapeBooleanOps::add);
-	return multi_polygon;
-}
-//----------------------------------------------------------------------
 //	Define emitter buffer inflow boundary condition
 //----------------------------------------------------------------------
 class EmitterBufferInflowCondition : public fluid_dynamics::InflowBoundaryCondition
@@ -91,8 +71,8 @@ class EmitterBufferInflowCondition : public fluid_dynamics::InflowBoundaryCondit
 	Real u_ave_, u_ref_, t_ref_;
 
 public:
-	EmitterBufferInflowCondition(FluidBody &fluid_body, BodyPartByCell &constrained_region)
-		: InflowBoundaryCondition(fluid_body, constrained_region),
+	EmitterBufferInflowCondition(FluidBody &fluid_body, BodyAlignedBoxByCell &aligned_box_part)
+		: InflowBoundaryCondition(fluid_body, aligned_box_part),
 		u_ave_(0), u_ref_(U_f), t_ref_(2.0) {}
 
 	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override

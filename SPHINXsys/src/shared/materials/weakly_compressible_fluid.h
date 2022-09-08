@@ -75,7 +75,7 @@ namespace SPH
 			  cutoff_pressure_(cutoff_pressure),
 			  cutoff_density_(WeaklyCompressibleFluidType::DensityFromPressure(cutoff_pressure))
 		{
-			WeaklyCompressibleFluidType::aterial_type_ += "FreeSurface";
+			WeaklyCompressibleFluidType::material_type_ += "FreeSurface";
 		};
 		virtual ~WeaklyCompressibleFluidFreeSurface(){};
 
@@ -108,7 +108,7 @@ namespace SPH
 
 	/**
 	 * @class Oldroyd_B_Fluid
-	 * @brief linear EOS with relaxation time and polymetric viscosity.
+	 * @brief linear EOS with relaxation time and polymeric viscosity.
 	 */
 	class Oldroyd_B_Fluid : public WeaklyCompressibleFluid
 	{

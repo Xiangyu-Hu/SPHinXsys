@@ -57,8 +57,8 @@ namespace SPH
 			virtual ~CompressibleFlowTimeStepInitialization(){};
 
 		protected:
-			StdLargeVec<Real> &rho_n_, &dE_dt_prior_;
-			StdLargeVec<Vecd> &pos_n_, &vel_n_, &dmom_dt_prior_;
+			StdLargeVec<Real> &rho_, &dE_dt_prior_;
+			StdLargeVec<Vecd> &pos_, &vel_, &dmom_dt_prior_;
 			Gravity *gravity_;
 			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -78,8 +78,8 @@ namespace SPH
 			virtual ~CompressibleFluidInitialCondition(){};
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &vel_n_, &mom_;
-			StdLargeVec<Real> &rho_n_, &E_, &p_;
+			StdLargeVec<Vecd> &pos_, &vel_, &mom_;
+			StdLargeVec<Real> &rho_, &E_, &p_;
 			Real gamma_;
 		};
 
@@ -98,8 +98,8 @@ namespace SPH
 		protected:
 			Real mu_;
 			Real smoothing_length_;
-			StdLargeVec<Real> &Vol_, &rho_n_, &p_, &mass_, &dE_dt_prior_;
-			StdLargeVec<Vecd> &vel_n_, &dmom_dt_prior_;
+			StdLargeVec<Real> &Vol_, &rho_, &p_, &mass_, &dE_dt_prior_;
+			StdLargeVec<Vecd> &vel_, &dmom_dt_prior_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -115,8 +115,8 @@ namespace SPH
 			virtual ~AcousticTimeStepSize(){};
 
 		protected:
-			StdLargeVec<Real> &rho_n_, &p_;
-			StdLargeVec<Vecd> &vel_n_;
+			StdLargeVec<Real> &rho_, &p_;
+			StdLargeVec<Vecd> &vel_;
 			Real smoothing_length_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 			Real OutputResult(Real reduced_value) override;
@@ -133,8 +133,8 @@ namespace SPH
 			virtual ~BaseRelaxation(){};
 
 		protected:
-			StdLargeVec<Real> &Vol_, &rho_n_, &p_, &drho_dt_, &E_, &dE_dt_, &dE_dt_prior_;
-			StdLargeVec<Vecd> &vel_n_, &mom_, &dmom_dt_, &dmom_dt_prior_;
+			StdLargeVec<Real> &Vol_, &rho_, &p_, &drho_dt_, &E_, &dE_dt_, &dE_dt_prior_;
+			StdLargeVec<Vecd> &vel_, &mom_, &dmom_dt_, &dmom_dt_prior_;
 		};
 
 		/**

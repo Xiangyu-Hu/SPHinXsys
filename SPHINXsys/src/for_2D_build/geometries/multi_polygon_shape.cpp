@@ -11,13 +11,13 @@ namespace SPH
 {
 	//=================================================================================================//
 	MultiPolygon::MultiPolygon(const std::vector<Vecd> &points)
-	: MultiPolygon()
+		: MultiPolygon()
 	{
 		addAPolygon(points, ShapeBooleanOps::add);
 	}
 	//=================================================================================================//
 	MultiPolygon::MultiPolygon(const Vec2d &center, Real radius, int resolution)
-	: MultiPolygon()
+		: MultiPolygon()
 	{
 		addACircle(center, radius, resolution, ShapeBooleanOps::add);
 	}
@@ -27,8 +27,8 @@ namespace SPH
 								 boost_multi_poly multi_poly_op, ShapeBooleanOps boolean_op)
 	{
 		boost_multi_poly multi_poly_tmp_in = multi_poly_in;
-		//out multi-poly need to be emtpy
-		//otherwise the operation is not valid
+		// out multi-poly need to be emtpy
+		// otherwise the operation is not valid
 		boost_multi_poly multi_poly_tmp_out;
 
 		switch (boolean_op)
@@ -57,7 +57,7 @@ namespace SPH
 		default:
 		{
 			std::cout << "\n FAILURE: the type of boolean operation is undefined!" << std::endl;
-			std::cout << "\n Please check the boost libraray reference." << std::endl;
+			std::cout << "\n Please check the boost library reference." << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			throw;
 		}
@@ -73,6 +73,17 @@ namespace SPH
 	void MultiPolygon::addABoostMultiPoly(boost_multi_poly &boost_multi_poly_op, ShapeBooleanOps op)
 	{
 		multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, boost_multi_poly_op, op);
+	}
+	//=================================================================================================//
+	void MultiPolygon::addABox(Transform2d transform2d, const Vec2d &halfsize, ShapeBooleanOps op)
+	{
+		Vec2d point0 = transform2d.shiftFrameStationToBase(-halfsize);
+		Vec2d point1 = transform2d.shiftFrameStationToBase(Vec2d(-halfsize[0], halfsize[1]));
+		Vec2d point2 = transform2d.shiftFrameStationToBase(halfsize);
+		Vec2d point3 = transform2d.shiftFrameStationToBase(Vec2d(halfsize[0], -halfsize[1]));
+		
+		std::vector<Vecd> points = { point0, point1, point2, point3, point0};
+		addAPolygon(points, op);
 	}
 	//=================================================================================================//
 	void MultiPolygon::addACircle(const Vec2d &center, Real radius, int resolution, ShapeBooleanOps op)
@@ -101,8 +112,8 @@ namespace SPH
 
 		if (!is_valid(multi_poly_circle))
 		{
-			std::cout << "\n Error: the multi ploygen is not valid." << std::endl;
-			std::cout << "\n The points must be in clockwise. Please check the boost libraray reference." << std::endl;
+			std::cout << "\n Error: the multi polygon is not valid." << std::endl;
+			std::cout << "\n The points must be in clockwise. Please check the boost library reference." << std::endl;
 			std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 			throw;
 		}
@@ -128,16 +139,16 @@ namespace SPH
 			append(poly, pts_reverse);
 			if (!is_valid(poly))
 			{
-				std::cout << "\n Error: the multi ploygen is still not valid. Please check the boost libraray reference." << std::endl;
+				std::cout << "\n Error: the multi polygon is still not valid. Please check the boost library reference." << std::endl;
 				std::cout << __FILE__ << ':' << __LINE__ << std::endl;
 				throw;
 			}
 		}
 
-		boost_multi_poly multi_poly_polygen;
-		convert(poly, multi_poly_polygen);
+		boost_multi_poly multi_poly_polygon;
+		convert(poly, multi_poly_polygon);
 
-		multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_poly_polygen, op);
+		multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_poly_polygon, op);
 	}
 	//=================================================================================================//
 	void MultiPolygon::
@@ -150,7 +161,7 @@ namespace SPH
 		if (dataFile.fail())
 		{
 			std::cout << "File can not open.\n"
-				<< std::endl;
+					  << std::endl;
 			;
 		}
 
@@ -187,7 +198,7 @@ namespace SPH
 		From the documentation on segment and referring_segment, the only difference between the two is that
 		referring_segment holds a reference to the points.
 		This is what is needed in a for each that modifies the segment since the points modified should be
-		reflected in the linestring. In a for each that does not modify the points, it should still take a
+		reflected in the line string. In a for each that does not modify the points, it should still take a
 		reference (most likely a const reference) since it reduces the amount of copying.
 		*/
 		pnt_type input_p(input_pnt[0], input_pnt[1]);
@@ -199,7 +210,7 @@ namespace SPH
 			if (dist < closest_dist_2seg)
 			{
 				closest_dist_2seg = dist;
-				//closest_seg.append(seg);
+				// closest_seg.append(seg);
 				Real x0 = boost::geometry::get<0, 0>(seg);
 				Real y0 = boost::geometry::get<0, 1>(seg);
 				Real x1 = boost::geometry::get<1, 0>(seg);
@@ -255,6 +266,11 @@ namespace SPH
 		return BoundingBox(lower_bound, upper_bound);
 	}
 	//=================================================================================================//
+	bool MultiPolygonShape::isValid()
+	{
+		return multi_polygon_.getBoostMultiPoly().size() == 0 ? false : true;
+	}
+	//=================================================================================================//
 	bool MultiPolygonShape::checkContain(const Vec2d &input_pnt, bool BOUNDARY_INCLUDED)
 	{
 		return multi_polygon_.checkContain(input_pnt, BOUNDARY_INCLUDED);
@@ -263,38 +279,6 @@ namespace SPH
 	Vec2d MultiPolygonShape::findClosestPoint(const Vec2d &input_pnt)
 	{
 		return multi_polygon_.findClosestPoint(input_pnt);
-	}
-	//=================================================================================================//
-	bool MultiPolygonShape::checkNotFar(const Vec2d &input_pnt, Real threshold)
-	{
-		return multi_polygon_.checkContain(input_pnt) || checkNearSurface(input_pnt, threshold) ? true : false;
-	}
-	//=================================================================================================//
-	bool MultiPolygonShape::checkNearSurface(const Vec2d &input_pnt, Real threshold)
-	{
-		return getMaxAbsoluteElement(input_pnt - multi_polygon_.findClosestPoint(input_pnt)) < threshold ? true : false;
-	}
-	//=================================================================================================//
-	Real MultiPolygonShape::findSignedDistance(const Vec2d &input_pnt)
-	{
-		Real distance_to_surface = (findClosestPoint(input_pnt) - input_pnt).norm();
-		return checkContain(input_pnt) ? -distance_to_surface : distance_to_surface;
-	}
-	//=================================================================================================//
-	Vec2d MultiPolygonShape::findNormalDirection(const Vec2d &input_pnt)
-	{
-		bool is_contain = checkContain(input_pnt);
-		Vecd displacement_to_surface = findClosestPoint(input_pnt) - input_pnt;
-		while (displacement_to_surface.norm() < Eps)
-		{
-			Vecd jittered = input_pnt; //jittering
-			for (int l = 0; l != input_pnt.size(); ++l)
-				jittered[l] = input_pnt[l] + (((Real)rand() / (RAND_MAX)) - 0.5) * 100.0 * Eps;
-			if (checkContain(jittered) == is_contain)
-				displacement_to_surface = findClosestPoint(jittered) - jittered;
-		}
-		Vecd direction_to_surface = displacement_to_surface.normalize();
-		return is_contain ? direction_to_surface : -1.0 * direction_to_surface;
 	}
 	//=================================================================================================//
 	BoundingBox MultiPolygonShape::findBounds()

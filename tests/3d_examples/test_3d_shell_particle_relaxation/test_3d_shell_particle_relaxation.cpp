@@ -53,7 +53,7 @@ int main(int ac, char *av[])
 	imported_model.defineBodyLevelSetShape(level_set_refinement_ratio)->writeLevelSet(imported_model);
 	//here dummy linear elastic solid is use because no solid dynamics in particle relaxation
 	imported_model.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(1.0, 1.0, 0.0);
-	imported_model.generateParticles<ShellParticleGeneratorLattice>(thickness);
+	imported_model.generateParticles<ThickSurfaceParticleGeneratorLattice>(thickness);
 	imported_model.addBodyStateForRecording<Vecd>("NormalDirection");
 	//----------------------------------------------------------------------
 	//	Define simple file input and outputs functions.
@@ -69,7 +69,7 @@ int main(int ac, char *av[])
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
-	RandomizePartilePosition random_imported_model_particles(imported_model);
+	RandomizeParticlePosition random_imported_model_particles(imported_model);
 	/** A  Physics relaxation step. */
 	relax_dynamics::ShellRelaxationStepInner relaxation_step_inner(imported_model_inner, thickness, level_set_refinement_ratio);
 	relax_dynamics::ShellNormalDirectionPrediction shell_normal_prediction(imported_model_inner, thickness);	

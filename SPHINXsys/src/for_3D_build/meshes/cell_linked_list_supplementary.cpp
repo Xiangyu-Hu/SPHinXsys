@@ -2,6 +2,7 @@
 #include "base_kernel.h"
 #include "base_body.h"
 #include "base_particles.h"
+#include "base_particle_dynamics.h"
 #include "neighbor_relation.h"
 
 namespace SPH
@@ -41,7 +42,7 @@ namespace SPH
 	//=================================================================================================//
 	void CellLinkedList::UpdateCellListData()
 	{
-		StdLargeVec<Vecd> &pos_n = base_particles_->pos_n_;
+		StdLargeVec<Vecd> &pos_n = base_particles_->pos_;
 		parallel_for(
 			blocked_range3d<size_t>(0, number_of_cells_[0], 0, number_of_cells_[1], 0, number_of_cells_[2]),
 			[&](const blocked_range3d<size_t> &r)
@@ -55,6 +56,7 @@ namespace SPH
 							for (size_t s = 0; s != cell_list.concurrent_particle_indexes_.size(); ++s)
 							{
 								size_t particle_index = cell_list.concurrent_particle_indexes_[s];
+								cell_list.real_particle_indexes_.push_back(particle_index);
 								cell_list.cell_list_data_.emplace_back(std::make_pair(particle_index, pos_n[particle_index]));
 							}
 						}
@@ -64,7 +66,7 @@ namespace SPH
 	//=================================================================================================//
 	void CellLinkedList::updateSplitCellLists(SplitCellLists &split_cell_lists)
 	{
-		//clear the data
+		// clear the data
 		clearSplitCellLists(split_cell_lists);
 
 		parallel_for(
@@ -79,8 +81,6 @@ namespace SPH
 							size_t real_particles_in_cell = cell_list.concurrent_particle_indexes_.size();
 							if (real_particles_in_cell != 0)
 							{
-								for (size_t s = 0; s != real_particles_in_cell; ++s)
-									cell_list.real_particle_indexes_.push_back(cell_list.concurrent_particle_indexes_[s]);
 								split_cell_lists[transferMeshIndexTo1D(Vecu(3), Vecu(i % 3, j % 3, k % 3))]
 									.push_back(&cell_linked_lists_[i][j][k]);
 							}
@@ -145,7 +145,7 @@ namespace SPH
 						for (int m = SMAX(j - 1, 0); m <= SMIN(j + 1, int(number_of_cells_[1]) - 1); ++m)
 							for (int n = SMAX(k - 1, 0); n <= SMIN(k + 1, int(number_of_cells_[2]) - 1); ++n)
 							{
-								//all cells near or contained by the body part shape are inlcuded
+								// all cells near or contained by the body part shape are included
 								if (check_included(CellPositionFromIndex(Vecu(l, m, n)), grid_spacing_))
 								{
 									is_included = true;
@@ -157,14 +157,14 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void CellLinkedList::
-		tagBodyDomainBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &body_domain_bounds, int axis)
+		tagBoundingCells(StdVec<CellLists> &cell_lists, BoundingBox &bounding_bounds, int axis)
 	{
 		int second_axis = SecondAxis(axis);
 		int third_axis = ThirdAxis(axis);
-		Vecu body_lower_bound_cell_ = CellIndexFromPosition(body_domain_bounds.first);
-		Vecu body_upper_bound_cell_ = CellIndexFromPosition(body_domain_bounds.second);
+		Vecu body_lower_bound_cell_ = CellIndexFromPosition(bounding_bounds.first);
+		Vecu body_upper_bound_cell_ = CellIndexFromPosition(bounding_bounds.second);
 
-		//lower bound cells
+		// lower bound cells
 		for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis]) - 1, 0);
 			 k < (size_t)SMIN(int(body_upper_bound_cell_[third_axis] + 2), int(number_of_cells_[third_axis])); ++k)
 		{
@@ -185,7 +185,7 @@ namespace SPH
 			}
 		}
 
-		//upper bound cells
+		// upper bound cells
 		for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis]) - 1, 0);
 			 k < (size_t)SMIN(int(body_upper_bound_cell_[third_axis] + 2), int(number_of_cells_[third_axis])); ++k)
 		{
@@ -208,16 +208,16 @@ namespace SPH
 	}
 	//=================================================================================================//
 	void CellLinkedList::
-		tagMirrorBoundingCells(CellLists &cell_lists, BoundingBox &body_domain_bounds, int axis, bool positive)
+		tagMirrorBoundingCells(CellLists &cell_lists, BoundingBox &bounding_bounds, int axis, bool positive)
 	{
 		int second_axis = SecondAxis(axis);
 		int third_axis = ThirdAxis(axis);
-		Vecu body_lower_bound_cell_ = CellIndexFromPosition(body_domain_bounds.first);
-		Vecu body_upper_bound_cell_ = CellIndexFromPosition(body_domain_bounds.second);
+		Vecu body_lower_bound_cell_ = CellIndexFromPosition(bounding_bounds.first);
+		Vecu body_upper_bound_cell_ = CellIndexFromPosition(bounding_bounds.second);
 
 		if (positive)
 		{
-			//upper bound cells
+			// upper bound cells
 			for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis]) - 1, 0);
 				 k < (size_t)SMIN(int(body_upper_bound_cell_[third_axis] + 2), int(number_of_cells_[third_axis])); ++k)
 			{
@@ -240,7 +240,7 @@ namespace SPH
 		}
 		else
 		{
-			//lower bound cells
+			// lower bound cells
 			for (size_t k = SMAX(int(body_lower_bound_cell_[third_axis]) - 1, 0);
 				 k < (size_t)SMIN(int(body_upper_bound_cell_[third_axis] + 2), int(number_of_cells_[third_axis])); ++k)
 			{

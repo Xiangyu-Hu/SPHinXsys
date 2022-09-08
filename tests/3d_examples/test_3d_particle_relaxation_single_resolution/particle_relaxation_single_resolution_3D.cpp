@@ -23,10 +23,10 @@ BoundingBox system_domain_bounds(domain_lower_bound, domain_upper_bound);
 //----------------------------------------------------------------------
 //	define the imported model.
 //----------------------------------------------------------------------
-class ImportedModel : public ComplexShape
+class SolidBodyFromMesh : public ComplexShape
 {
 public:
-	explicit ImportedModel(const std::string &shape_name) : ComplexShape(shape_name)
+	explicit SolidBodyFromMesh(const std::string &shape_name) : ComplexShape(shape_name)
 	{
 		Vecd translation(0.0, 0.0, 0.0);
 		add<TriangleMeshShapeSTL>(full_path_to_file, translation, 1.0);
@@ -46,7 +46,7 @@ int main()
 	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
-	RealBody imported_model(system, makeShared<ImportedModel>("ImportedModel"));
+	RealBody imported_model(system, makeShared<SolidBodyFromMesh>("SolidBodyFromMesh"));
 	// level set shape is used for particle relaxation
 	imported_model.defineBodyLevelSetShape()->writeLevelSet(imported_model);
 	imported_model.defineParticlesAndMaterial();
@@ -65,7 +65,7 @@ int main()
 	//----------------------------------------------------------------------
 	//	Methods used for particle relaxation.
 	//----------------------------------------------------------------------
-	RandomizePartilePosition random_imported_model_particles(imported_model);
+	RandomizeParticlePosition random_imported_model_particles(imported_model);
 	/** A  Physics relaxation step. */
 	relax_dynamics::RelaxationStepInner relaxation_step_inner(imported_model_inner, true);
 	//----------------------------------------------------------------------

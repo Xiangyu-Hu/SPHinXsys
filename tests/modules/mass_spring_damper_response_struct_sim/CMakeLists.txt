@@ -27,7 +27,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${SPHINXSYS_PROJECT_DIR}/modul
 
 gtest_discover_tests(${PROJECT_NAME} WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
-if(NOT STATIC_BUILD) # usual dynamic build
+if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 		target_link_libraries(${PROJECT_NAME} sphinxsys_3d GTest::gtest GTest::gtest_main)

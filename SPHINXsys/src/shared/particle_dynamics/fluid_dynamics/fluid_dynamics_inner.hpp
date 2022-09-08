@@ -22,8 +22,8 @@ namespace SPH
 		template <class RiemannSolverType>
 		void BasePressureRelaxationInner<RiemannSolverType>::Interaction(size_t index_i, Real dt)
 		{
-			FluidState state_i(rho_n_[index_i], vel_n_[index_i], p_[index_i]);
-			Vecd acceleration = dvel_dt_prior_[index_i];
+			FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
+			Vecd acceleration = acc_prior_[index_i];
 			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
 			{
@@ -31,11 +31,11 @@ namespace SPH
 				Real dW_ij = inner_neighborhood.dW_ij_[n];
 				Vecd &e_ij = inner_neighborhood.e_ij_[n];
 
-				FluidState state_j(rho_n_[index_j], vel_n_[index_j], p_[index_j]);
+				FluidState state_j(rho_[index_j], vel_[index_j], p_[index_j]);
 				Real p_star = riemann_solver_.getPStar(state_i, state_j, e_ij);
 				acceleration -= 2.0 * p_star * Vol_[index_j] * dW_ij * e_ij / state_i.rho_;
 			}
-			dvel_dt_[index_i] = acceleration;
+			acc_[index_i] = acceleration;
 		}
 		//=================================================================================================//
 		template <class RiemannSolverType>
@@ -46,7 +46,7 @@ namespace SPH
 		template <class RiemannSolverType>
 		void BaseDensityRelaxationInner<RiemannSolverType>::Interaction(size_t index_i, Real dt)
 		{
-			FluidState state_i(rho_n_[index_i], vel_n_[index_i], p_[index_i]);
+			FluidState state_i(rho_[index_i], vel_[index_i], p_[index_i]);
 			Real density_change_rate = 0.0;
 			Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -55,7 +55,7 @@ namespace SPH
 				Vecd &e_ij = inner_neighborhood.e_ij_[n];
 				Real dW_ij = inner_neighborhood.dW_ij_[n];
 
-				FluidState state_j(rho_n_[index_j], vel_n_[index_j], p_[index_j]);
+				FluidState state_j(rho_[index_j], vel_[index_j], p_[index_j]);
 				Vecd vel_star = riemann_solver_.getVStar(state_i, state_j, e_ij);
 				density_change_rate += 2.0 * state_i.rho_ * Vol_[index_j] * dot(state_i.vel_ - vel_star, e_ij) * dW_ij;
 			}

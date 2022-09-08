@@ -18,14 +18,14 @@ int main()
 	 */
 	SPHSystem sph_system(system_domain_bounds, particle_spacing_ref);
 	/**
-	 * @brief Material property, partilces and body creation of water.
+	 * @brief Material property, particles and body creation of water.
 	 */
 	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
 	water_block.addBodyStateForRecording<int>("SurfaceIndicator");
 	/**
-	 * @brief Material property, partilces and body creation of air.
+	 * @brief Material property, particles and body creation of air.
 	 */
 	FluidBody air_block(sph_system, makeShared<AirBlock>("AirBody"));
 	air_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_a, c_f, mu_a);
@@ -81,14 +81,14 @@ int main()
 		air_viscous_acceleration(air_water_complex, air_wall_contact);
 	fluid_dynamics::ViscousAccelerationMultiPhaseWithWall
 		water_viscous_acceleration(water_air_complex, water_wall_contact);
-	/** Suface tension. */
+	/** Surface tension. */
 	fluid_dynamics::FreeSurfaceIndicationInner
 		surface_detection(water_air_complex.inner_relation_);
 	fluid_dynamics::ColorFunctionGradientInner
 		color_gradient(water_air_complex.inner_relation_);
 	// fluid_dynamics::MultiPhaseColorFunctionGradient
 	//  	color_gradient(water_air_complex->contact_relation_);
-	fluid_dynamics::ColorFunctionGradientInterplationInner
+	fluid_dynamics::ColorFunctionGradientInterpolationInner
 		color_gradient_interpolation(water_air_complex.inner_relation_);
 	fluid_dynamics::SurfaceTensionAccelerationInner
 		surface_tension_acceleration(water_air_complex.inner_relation_, 1.0);

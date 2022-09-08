@@ -35,7 +35,7 @@ public:
 	{
 		Vecd halfsize_water(0.5 * LL, 0.5 * LH, 0.5 * LW);
 		SimTK::Transform translation_water(halfsize_water);
-		add<GeometricShapeBrick>(halfsize_water, translation_water);
+		add<TransformShape<GeometricShapeBox>>(translation_water, halfsize_water);
 	}
 };
 //	define the static solid wall boundary shape
@@ -46,13 +46,13 @@ public:
 	{
 		Vecd halfsize_outer(0.5 * DL + BW, 0.5 * DH + BW, 0.5 * DW + BW);
 		Vecd halfsize_inner(0.5 * DL, 0.5 * DH, 0.5 * DW);
-		SimTK::Transform  translation_wall(Vec3d(0.5 * DL, 0.5 * DH, 0.5 * DW));
-		add<GeometricShapeBrick>(halfsize_outer, translation_wall);
-		substract<GeometricShapeBrick>(halfsize_inner, translation_wall);
+		SimTK::Transform  translation_wall(halfsize_inner);
+		add<TransformShape<GeometricShapeBox>>(translation_wall, halfsize_outer);
+		subtract<TransformShape<GeometricShapeBox>>(translation_wall, halfsize_inner);
 	}
 };
 
-//	define an observer particle geneerator
+//	define an observer particle generator
 class WaterObserverParticleGenerator : public ObserverParticleGenerator
 {
 public:
@@ -90,7 +90,7 @@ int main()
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 	wall_boundary.addBodyStateForRecording<Vec3d>("NormalDirection");
 
-	ObserverBody fluid_observer(system, "Fluidobserver");
+	ObserverBody fluid_observer(system, "FluidObserver");
 	fluid_observer.generateParticles<WaterObserverParticleGenerator>();
 
 	/** topology */
@@ -133,7 +133,7 @@ int main()
 	//-------------------------------------------------------------------
 
 	/**
-	 * @brief Setup geometrics and initial conditions
+	 * @brief Setup geometries and initial conditions
 	 */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
@@ -224,8 +224,10 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
+	/*
 	write_water_mechanical_energy.newResultTest();
 	write_recorded_water_pressure.newResultTest();
+	*/
 
 	return 0;
 }

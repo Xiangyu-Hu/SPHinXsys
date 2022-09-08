@@ -40,7 +40,7 @@ namespace SPH
 	class ParameterizationIO
 	{
 	public:
-		XmlEngine xml_paremeters_;
+		XmlEngine xml_parameters_;
 		std::string filefullpath_;
 
 		explicit ParameterizationIO(const std::string &input_path);
@@ -55,21 +55,21 @@ namespace SPH
 	public:
 		template<typename... ConstructorArgs>
 		explicit BaseParameterization(ParameterizationIO& parameterization_io, ConstructorArgs... args) :
-			BaseClassType(std::forward<ConstructorArgs>(args)...), xml_paremeters_(parameterization_io.xml_paremeters_),
+			BaseClassType(std::forward<ConstructorArgs>(args)...), xml_parameters_(parameterization_io.xml_parameters_),
 			filefullpath_(parameterization_io.filefullpath_) {};
 		~BaseParameterization() {};
 	protected:
-		XmlEngine& xml_paremeters_;
+		XmlEngine& xml_parameters_;
 		std::string filefullpath_;
 
 		template<typename VariableType>
 		void getAParameter(const std::string& element_name, const std::string& variable_name, VariableType& variable_addrs)
 		{
 			SimTK::Xml::element_iterator ele_ite = 
-				xml_paremeters_.root_element_.element_begin(element_name);
-			if(ele_ite != xml_paremeters_.root_element_.element_end())
+				xml_parameters_.root_element_.element_begin(element_name);
+			if(ele_ite != xml_parameters_.root_element_.element_end())
 			{
-				xml_paremeters_.getRequiredAttributeValue(ele_ite, variable_name, variable_addrs);
+				xml_parameters_.getRequiredAttributeValue(ele_ite, variable_name, variable_addrs);
 			}
 			else {
 				std::cout << "\n Error: the variable '" << variable_name << "' is given not in project_parameters.dat !" << std::endl;
@@ -82,13 +82,13 @@ namespace SPH
 		void setAParameter(const std::string& element_name, const std::string& variable_name, VariableType& variable_addrs)
 		{
 			SimTK::Xml::element_iterator ele_ite =
-				xml_paremeters_.root_element_.element_begin(element_name);
-			if (ele_ite == xml_paremeters_.root_element_.element_end())
+				xml_parameters_.root_element_.element_begin(element_name);
+			if (ele_ite == xml_parameters_.root_element_.element_end())
 			{
-				xml_paremeters_.addElementToXmlDoc(element_name);
-				ele_ite = xml_paremeters_.root_element_.element_begin(element_name);
+				xml_parameters_.addElementToXmlDoc(element_name);
+				ele_ite = xml_parameters_.root_element_.element_begin(element_name);
 			}
-			xml_paremeters_.setAttributeToElement(ele_ite, variable_name, variable_addrs);
+			xml_parameters_.setAttributeToElement(ele_ite, variable_name, variable_addrs);
 		};
 	};
 }

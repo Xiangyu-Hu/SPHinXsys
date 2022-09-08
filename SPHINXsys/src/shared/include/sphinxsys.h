@@ -33,6 +33,7 @@ capabilities. **/
 #include "all_particle_generators.h"
 #include "all_geometries.h"
 #include "all_bodies.h"
+#include "all_body_relations.h"
 #include "sph_system.h"
 #include "all_materials.h"
 #include "all_physical_dynamics.h"

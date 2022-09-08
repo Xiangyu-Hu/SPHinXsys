@@ -18,34 +18,30 @@ namespace SPH
 		ConstrainSolidBodyRegion::
 			ConstrainSolidBodyRegion(SPHBody &sph_body, BodyPartByParticle &body_part)
 			: PartSimpleDynamicsByParticle(sph_body, body_part), SolidDataSimple(sph_body),
-			  pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
-			  n_(particles_->n_), n_0_(particles_->n_0_),
-			  vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
-			  vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_)
+			  pos_(particles_->pos_), pos0_(particles_->pos0_),
+			  n_(particles_->n_), n0_(particles_->n0_),
+			  vel_(particles_->vel_), acc_(particles_->acc_)
 		{
 		}
 		//=================================================================================================//
 		void ConstrainSolidBodyRegion::Update(size_t index_i, Real dt)
 		{
-			Vecd pos_0 = pos_0_[index_i];
-			Vecd pos_n = pos_n_[index_i];
-			Vecd vel_n = vel_n_[index_i];
-			Vecd dvel_dt = dvel_dt_[index_i];
+			Vecd pos_0 = pos0_[index_i];
+			Vecd pos_n = pos_[index_i];
+			Vecd vel_n = vel_[index_i];
+			Vecd acc = acc_[index_i];
 
-			pos_n_[index_i] = getDisplacement(pos_0, pos_n);
-			vel_n_[index_i] = getVelocity(pos_0, pos_n, vel_n);
-			dvel_dt_[index_i] = getAcceleration(pos_0, pos_n, dvel_dt);
-			/** the average values are prescirbed also. */
-			vel_ave_[index_i] = vel_n_[index_i];
-			dvel_dt_ave_[index_i] = dvel_dt_[index_i];
+			pos_[index_i] = getDisplacement(pos_0, pos_n);
+			vel_[index_i] = getVelocity(pos_0, pos_n, vel_n);
+			acc_[index_i] = getAcceleration(pos_0, pos_n, acc);
 		}
 		//=================================================================================================//
 		ConstrainSolidBodySurfaceRegion::
 			ConstrainSolidBodySurfaceRegion(SPHBody &body, BodyPartByParticle &body_part)
 			: PartSimpleDynamicsByParticle(body, body_part), SolidDataSimple(body),
-			  pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
-			  vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
-			  apply_constrain_to_particle_(StdLargeVec<bool>(pos_0_.size(), false))
+			  pos_(particles_->pos_), pos0_(particles_->pos0_),
+			  vel_(particles_->vel_), acc_(particles_->acc_),
+			  apply_constrain_to_particle_(StdLargeVec<bool>(pos0_.size(), false))
 		{
 			// get the surface layer of particles
 			BodySurface surface_layer(body);
@@ -59,9 +55,9 @@ namespace SPH
 		{
 			if (apply_constrain_to_particle_[index_i])
 			{
-				pos_n_[index_i] = pos_0_[index_i];
-				vel_n_[index_i] = Vecd(0);
-				dvel_dt_[index_i] = Vecd(0);
+				pos_[index_i] = pos0_[index_i];
+				vel_[index_i] = Vecd(0);
+				acc_[index_i] = Vecd(0);
 			}
 		}
 		//=================================================================================================//
@@ -69,12 +65,11 @@ namespace SPH
 			PositionSolidBody(SPHBody &sph_body, BodyPartByParticle &body_part,
 							  Real start_time, Real end_time, Vecd pos_end_center)
 			: PartSimpleDynamicsByParticle(sph_body, body_part), SolidDataSimple(sph_body),
-			  pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
-			  vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
-			  vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
+			  pos_(particles_->pos_), pos0_(particles_->pos0_),
+			  vel_(particles_->vel_), acc_(particles_->acc_),
 			  start_time_(start_time), end_time_(end_time), pos_end_center_(pos_end_center)
 		{
-			BoundingBox bounds = sph_body.getBodyDomainBounds();
+			BoundingBox bounds = sph_body.getBodyShapeBounds();
 			pos_0_center_ = (bounds.first + bounds.second) * 0.5;
 			translation_ = pos_end_center_ - pos_0_center_;
 		}
@@ -85,8 +80,8 @@ namespace SPH
 			try
 			{
 				// displacement from the initial position
-				Vecd pos_final = pos_0_[index_i] + translation_;
-				displacement = (pos_final - pos_n_[index_i]) * dt /
+				Vecd pos_final = pos0_[index_i] + translation_;
+				displacement = (pos_final - pos_[index_i]) * dt /
 							   (end_time_ - GlobalStaticVariables::physical_time_);
 			}
 			catch (std::out_of_range &e)
@@ -104,8 +99,8 @@ namespace SPH
 				if (GlobalStaticVariables::physical_time_ >= start_time_ &&
 					GlobalStaticVariables::physical_time_ <= end_time_)
 				{
-					pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
-					vel_n_[index_i] = getVelocity();
+					pos_[index_i] = pos_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
+					vel_[index_i] = getVelocity();
 				}
 			}
 			catch (std::out_of_range &e)
@@ -118,12 +113,11 @@ namespace SPH
 			PositionScaleSolidBody(SPHBody &sph_body, BodyPartByParticle &body_part,
 								   Real start_time, Real end_time, Real end_scale)
 			: PartSimpleDynamicsByParticle(sph_body, body_part), SolidDataSimple(sph_body),
-			  pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_),
-			  vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
-			  vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_),
+			  pos_(particles_->pos_), pos0_(particles_->pos0_),
+			  vel_(particles_->vel_), acc_(particles_->acc_),
 			  start_time_(start_time), end_time_(end_time), end_scale_(end_scale)
 		{
-			BoundingBox bounds = sph_body.getBodyDomainBounds();
+			BoundingBox bounds = sph_body.getBodyShapeBounds();
 			pos_0_center_ = (bounds.first + bounds.second) * 0.5;
 		}
 		//=================================================================================================//
@@ -133,8 +127,8 @@ namespace SPH
 			try
 			{
 				// displacement from the initial position
-				Vecd pos_final = pos_0_center_ + end_scale_ * (pos_0_[index_i] - pos_0_center_);
-				displacement = (pos_final - pos_n_[index_i]) * dt /
+				Vecd pos_final = pos_0_center_ + end_scale_ * (pos0_[index_i] - pos_0_center_);
+				displacement = (pos_final - pos_[index_i]) * dt /
 							   (end_time_ - GlobalStaticVariables::physical_time_);
 			}
 			catch (std::out_of_range &e)
@@ -152,8 +146,8 @@ namespace SPH
 				if (GlobalStaticVariables::physical_time_ >= start_time_ &&
 					GlobalStaticVariables::physical_time_ <= end_time_)
 				{
-					pos_n_[index_i] = pos_n_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
-					vel_n_[index_i] = getVelocity();
+					pos_[index_i] = pos_[index_i] + getDisplacement(index_i, dt); // displacement from the initial position
+					vel_[index_i] = getVelocity();
 				}
 			}
 			catch (std::out_of_range &e)
@@ -186,14 +180,14 @@ namespace SPH
 		TranslateSolidBody::
 			TranslateSolidBody(SPHBody &sph_body, BodyPartByParticle &body_part, Real start_time, Real end_time, Vecd translation)
 			: PartSimpleDynamicsByParticle(sph_body, body_part), SolidDataSimple(sph_body),
-			  pos_n_(particles_->pos_n_), pos_0_(particles_->pos_0_), pos_end_({}),
-			  vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
+			  pos_(particles_->pos_), pos0_(particles_->pos0_), pos_end_({}),
+			  vel_(particles_->vel_), acc_(particles_->acc_),
 			  start_time_(start_time), end_time_(end_time), translation_(translation)
 		{
 			// record the particle positions that should be reached at end time
-			for (size_t index_i = 0; index_i < pos_n_.size(); index_i++)
+			for (size_t index_i = 0; index_i < pos_.size(); index_i++)
 			{
-				pos_end_.push_back(pos_n_[index_i] + translation_);
+				pos_end_.push_back(pos_[index_i] + translation_);
 			}
 		}
 		//=================================================================================================//
@@ -202,7 +196,7 @@ namespace SPH
 			Vecd displacement(0);
 			try
 			{
-				displacement = (pos_end_[index_i] - pos_n_[index_i]) * dt / (end_time_ - GlobalStaticVariables::physical_time_);
+				displacement = (pos_end_[index_i] - pos_[index_i]) * dt / (end_time_ - GlobalStaticVariables::physical_time_);
 			}
 			catch (std::out_of_range &e)
 			{
@@ -218,8 +212,8 @@ namespace SPH
 			{
 				try
 				{
-					pos_n_[index_i] = pos_n_[index_i] + 0.5 * getDisplacement(index_i, dt); // displacement from the initial position, 0.5x because it's executed twice
-					vel_n_[index_i] = getVelocity();
+					pos_[index_i] = pos_[index_i] + 0.5 * getDisplacement(index_i, dt); // displacement from the initial position, 0.5x because it's executed twice
+					vel_[index_i] = getVelocity();
 				}
 				catch (std::out_of_range &e)
 				{
@@ -238,17 +232,17 @@ namespace SPH
 		{
 			try
 			{
-				Vecd point = pos_0_[index_i];
+				Vecd point = pos0_[index_i];
 				if (checkIfPointInBoundingBox(point, bbox_))
 				{
 					if (GlobalStaticVariables::physical_time_ >= start_time_ && GlobalStaticVariables::physical_time_ <= end_time_)
 					{
-						vel_n_[index_i] = getDisplacement(index_i, dt) / dt;
+						vel_[index_i] = getDisplacement(index_i, dt) / dt;
 					}
 					else
 					{
-						vel_n_[index_i] = 0;
-						dvel_dt_[index_i] = 0;
+						vel_[index_i] = 0;
+						acc_[index_i] = 0;
 					}
 				}
 			}
@@ -263,18 +257,17 @@ namespace SPH
 			: PartInteractionDynamicsByParticleWithUpdate(*inner_relation.sph_body_, body_part),
 			  SolidDataInner(inner_relation),
 			  Vol_(particles_->Vol_),
-			  vel_n_(particles_->vel_n_), dvel_dt_(particles_->dvel_dt_),
-			  vel_ave_(particles_->vel_ave_), dvel_dt_ave_(particles_->dvel_dt_ave_)
+			  vel_(particles_->vel_), acc_(particles_->acc_)
 		{
-			particles_->registerAVariable(vel_temp_, "TemporaryVelocity");
-			particles_->registerAVariable(dvel_dt_temp_, "TemporaryAcceleration");
+			particles_->registerVariable(vel_temp_, "TemporaryVelocity");
+			particles_->registerVariable(acc_temp_, "TemporaryAcceleration");
 		}
 		//=================================================================================================//
 		void SoftConstrainSolidBodyRegion::Interaction(size_t index_i, Real dt)
 		{
 			Real ttl_weight(Eps);
-			Vecd vel_i = vel_n_[index_i];
-			Vecd dvel_dt_i = dvel_dt_[index_i];
+			Vecd vel_i = vel_[index_i];
+			Vecd acc_i = acc_[index_i];
 
 			const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
 			for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
@@ -283,50 +276,47 @@ namespace SPH
 				Real weight_j = inner_neighborhood.W_ij_[n] * Vol_[index_j];
 
 				ttl_weight += weight_j;
-				vel_i += vel_n_[index_j] * weight_j;
-				dvel_dt_i += dvel_dt_[index_j] * weight_j;
+				vel_i += vel_[index_j] * weight_j;
+				acc_i += acc_[index_j] * weight_j;
 			}
 
 			vel_temp_[index_i] = vel_i / ttl_weight;
-			dvel_dt_temp_[index_i] = dvel_dt_i / ttl_weight;
+			acc_temp_[index_i] = acc_i / ttl_weight;
 		}
 		//=================================================================================================//
 		void SoftConstrainSolidBodyRegion::Update(size_t index_i, Real dt)
 		{
-			vel_n_[index_i] = vel_temp_[index_i];
-			dvel_dt_[index_i] = dvel_dt_temp_[index_i];
-			/** the average values are prescirbed also. */
-			vel_ave_[index_i] = vel_n_[index_i];
-			dvel_dt_ave_[index_i] = dvel_dt_[index_i];
+			vel_[index_i] = vel_temp_[index_i];
+			acc_[index_i] = acc_temp_[index_i];
 		}
 		//=================================================================================================//
 		ClampConstrainSolidBodyRegion::
 			ClampConstrainSolidBodyRegion(BaseBodyRelationInner &inner_relation, BodyPartByParticle &body_part)
 			: ParticleDynamics<void>(*inner_relation.sph_body_),
-			  constrianing_(ConstrainSolidBodyRegion(*inner_relation.sph_body_, body_part)),
-			  softing_(SoftConstrainSolidBodyRegion(inner_relation, body_part)) {}
+			  constraint_(ConstrainSolidBodyRegion(*inner_relation.sph_body_, body_part)),
+			  softening_(SoftConstrainSolidBodyRegion(inner_relation, body_part)) {}
 		//=================================================================================================//
 		void ClampConstrainSolidBodyRegion::exec(Real dt)
 		{
-			constrianing_.exec();
-			softing_.exec();
+			constraint_.exec();
+			softening_.exec();
 		}
 		//=================================================================================================//
 		void ClampConstrainSolidBodyRegion::parallel_exec(Real dt)
 		{
-			constrianing_.parallel_exec();
-			softing_.parallel_exec();
+			constraint_.parallel_exec();
+			softening_.parallel_exec();
 		}
 		//=================================================================================================//
 		ConstrainSolidBodyMassCenter::
 			ConstrainSolidBodyMassCenter(SPHBody &sph_body, Vecd constrain_direction)
 			: ParticleDynamicsSimple(sph_body), SolidDataSimple(sph_body),
-			  correction_matrix_(Matd(1.0)), vel_n_(particles_->vel_n_),
+			  correction_matrix_(Matd(1.0)), vel_(particles_->vel_),
 			  compute_total_momentum_(sph_body, "Velocity")
 		{
 			for (int i = 0; i != Dimensions; ++i)
 				correction_matrix_[i][i] = constrain_direction[i];
-			BodySummation<Real> compute_total_mass_(sph_body, "Mass");
+			BodySummation<Real> compute_total_mass_(sph_body, "MassiveMeasure");
 			total_mass_ = compute_total_mass_.parallel_exec();
 		}
 		//=================================================================================================//
@@ -338,7 +328,7 @@ namespace SPH
 		//=================================================================================================//
 		void ConstrainSolidBodyMassCenter::Update(size_t index_i, Real dt)
 		{
-			vel_n_[index_i] -= velocity_correction_;
+			vel_[index_i] -= velocity_correction_;
 		}
 		//=================================================================================================//
 		ConstrainSolidBodyPartBySimBody::
@@ -348,7 +338,9 @@ namespace SPH
 											SimTK::MobilizedBody &mobod,
 											SimTK::Force::DiscreteForces &force_on_bodies,
 											SimTK::RungeKuttaMersonIntegrator &integ)
-			: ConstrainSolidBodyRegion(solid_body, body_part),
+			: PartSimpleDynamicsByParticle(solid_body, body_part), SolidDataSimple(solid_body),
+			  pos_(particles_->pos_), pos0_(particles_->pos0_),
+			  vel_(particles_->vel_), n_(particles_->n_), n0_(particles_->n0_),
 			  MBsystem_(MBsystem), mobod_(mobod), force_on_bodies_(force_on_bodies), integ_(integ)
 		{
 			simbody_state_ = &integ_.getState();
@@ -371,9 +363,9 @@ namespace SPH
 												SimTK::Force::DiscreteForces &force_on_bodies,
 												SimTK::RungeKuttaMersonIntegrator &integ)
 			: PartDynamicsByParticleReduce<SimTK::SpatialVec, ReduceSum<SimTK::SpatialVec>>(solid_body, body_part),
-			  SolidDataSimple(solid_body),
-			  force_from_fluid_(particles_->force_from_fluid_), contact_force_(particles_->contact_force_),
-			  pos_n_(particles_->pos_n_),
+			  SolidDataSimple(solid_body), mass_(particles_->mass_),
+			  acc_(particles_->acc_), acc_prior_(particles_->acc_prior_),
+			  pos_(particles_->pos_),
 			  MBsystem_(MBsystem), mobod_(mobod), force_on_bodies_(force_on_bodies), integ_(integ)
 		{
 			initial_reference_ = SpatialVec(Vec3(0), Vec3(0));

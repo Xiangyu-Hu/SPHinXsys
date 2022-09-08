@@ -36,7 +36,7 @@ int main(int ac, char *av[])
 	water_block.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
-	cylinder.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
+	cylinder.defineAdaptationRatios(1.15, 2.0);
 	cylinder.defineBodyLevelSetShape();
 	cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
@@ -64,7 +64,7 @@ int main(int ac, char *av[])
 		//	Methods used for particle relaxation.
 		//----------------------------------------------------------------------
 		/** Random reset the insert body particle position. */
-		RandomizePartilePosition random_inserted_body_particles(cylinder);
+		RandomizeParticlePosition random_inserted_body_particles(cylinder);
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_inserted_body_to_vtp(in_output, {&cylinder});
 		/** Write the particle reload files. */
@@ -103,16 +103,16 @@ int main(int ac, char *av[])
 	/** Initialize particle acceleration. */
 	TimeStepInitialization initialize_a_fluid_step(water_block);
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_x(water_block, xAxis);
+	PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
 	/** Periodic BCs in y direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_y(water_block, yAxis);
+	PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, water_block.getBodyShapeBounds(), yAxis);
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensitySummationComplex update_density_by_summation(water_block_complex);
 	/** Time step size without considering sound wave speed. */
 	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_block, U_f);
 	/** Time step size with considering sound wave speed. */
 	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
-	/** Pressure relaxation using verlet time stepping. */
+	/** Pressure relaxation using Verlet time stepping. */
 	/** Here, we do not use Riemann solver for pressure as the flow is viscous. */
 	fluid_dynamics::PressureRelaxationWithWall pressure_relaxation(water_block_complex);
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex);

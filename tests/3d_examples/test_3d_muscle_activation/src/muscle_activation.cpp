@@ -37,11 +37,11 @@ class Myocardium : public ComplexShape
 public:
 	explicit Myocardium(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<GeometricShapeBrick>(halfsize_myocardium, translation_myocardium);
+		add<TransformShape<GeometricShapeBox>>(translation_myocardium, halfsize_myocardium);
 	}
 };
 /**
- * Assign case dependent muscle activation histroy
+ * Assign case dependent muscle activation history
  */
 class MyocardiumActivation
 	: public active_muscle_dynamics::MuscleActivation
@@ -53,7 +53,7 @@ public:
 protected:
 	void Update(size_t index_i, Real dt) override
 	{
-		Real voltage = pos_0_[index_i][0] <= 0 ? 0.0 : reference_voltage * pos_0_[index_i][0] / PL;
+		Real voltage = pos0_[index_i][0] <= 0 ? 0.0 : reference_voltage * pos0_[index_i][0] / PL;
 		active_contraction_stress_[index_i] += GlobalStaticVariables::physical_time_ <= 1.0
 												   ? linear_active_stress_factor * voltage * dt
 												   : 0.0;
@@ -81,11 +81,11 @@ protected:
 		vel_temp[axis_id_] = 0.0;
 		return vel_temp;
 	};
-	virtual Vecd getAcceleration(Vecd &pos_0, Vecd &pos_n, Vecd &dvel_dt)
+	virtual Vecd getAcceleration(Vecd &pos_0, Vecd &pos_n, Vecd &acc)
 	{
-		Vecd dvel_dt_temp = dvel_dt;
-		dvel_dt_temp[axis_id_] = 0.0;
-		return dvel_dt_temp;
+		Vecd acc_temp = acc;
+		acc_temp[axis_id_] = 0.0;
+		return acc_temp;
 	};
 };
 /**
@@ -115,13 +115,13 @@ int main()
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(myocardium_muscle_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(myocardium_muscle_body_inner);
 	/** Constrain region of the inserted body. */
-	BodyRegionByParticle holder(myocardium_muscle_body, makeShared<GeometricShapeBrick>(halfsize_holder, translation_holder));
+	BodyRegionByParticle holder(myocardium_muscle_body, makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder));
 	ConstrainHolder constrain_holder(myocardium_muscle_body, holder, 0);
 	/** Output */
 	InOutput in_output(system);
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
 	/**
-	 * From here the time stepping begines.
+	 * From here the time stepping begins.
 	 * Set the starting time.
 	 */
 	GlobalStaticVariables::physical_time_ = 0.0;

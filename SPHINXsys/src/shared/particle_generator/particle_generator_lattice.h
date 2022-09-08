@@ -25,7 +25,7 @@
  * @brief 	This is the base class of particle generator, which generates particles
  * 			with given positions and volumes. The direct generator simply generate
  * 			particle with given position and volume. The lattice generator generate
- * 			at lattice position by check whether the poision is contained by a SPH body.
+ * 			at lattice position by check whether the position is contained by a SPH body.
  * @author	Xiangyu Hu, Chi Zhang, Yongchuan Yu
  */
 
@@ -81,22 +81,25 @@ namespace SPH
 		virtual ~ParticleGeneratorMultiResolution(){};
 
 	protected:
-		ParticleSpacingByBodyShape *particle_adapation_;
+		ParticleSpacingByBodyShape *particle_adaptation_;
 		StdLargeVec<Real> &h_ratio_;
 
-		virtual void initializePositionAndVolume(const Vecd &position, Real volume) override;
+		virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
 		virtual void initializeSmoothingLengthRatio(Real local_spacing);
 	};
 
 	/**
-	 * @class ShellParticleGeneratorLattice
-	 * @brief generate particles from lattice positions for a shell body.
+	 * @class ThickSurfaceParticleGeneratorLattice
+	 * @brief Generate thick surface particles from lattice positions for a thin structure defined by a body shape.
+	 * @details Here, a thick surface is defined as that the thickness is equal or larger than the proposed particle spacing. 
+	 * Note that, this class should not be used for generating the thin surface particles, 
+	 * which may be better generated from a geometric surface directly.
 	 */
-	class ShellParticleGeneratorLattice : public BaseParticleGeneratorLattice, public SurfaceParticleGenerator
+	class ThickSurfaceParticleGeneratorLattice : public BaseParticleGeneratorLattice, public SurfaceParticleGenerator
 	{
 	public:
-		ShellParticleGeneratorLattice(SPHBody &sph_body, Real global_avg_thickness);
-		virtual ~ShellParticleGeneratorLattice(){};
+		ThickSurfaceParticleGeneratorLattice(SPHBody &sph_body, Real global_avg_thickness);
+		virtual ~ThickSurfaceParticleGeneratorLattice(){};
 
 		virtual void initializeGeometricVariables() override;
 

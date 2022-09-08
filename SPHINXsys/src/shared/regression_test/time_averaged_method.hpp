@@ -3,6 +3,8 @@
  * @author	Bo Zhang and Xiangyu Hu
  */
 
+#pragma once
+
 #include "time_averaged_method.h"
 
  //=================================================================================================//
@@ -406,7 +408,7 @@ namespace SPH
 	};
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	void RegressionTestTimeAveraged<ObserveMethodType>::settingupTheTest()
+	void RegressionTestTimeAveraged<ObserveMethodType>::setupTheTest()
 	{
 		this->snapshot_ = this->current_result_.size();
 		this->observation_ = this->current_result_[0].size();

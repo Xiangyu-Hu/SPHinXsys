@@ -28,9 +28,7 @@
  */
 
 #pragma once
-#include "in_output.h"
-#include "xml_engine.h"
-#include "all_physical_dynamics.h"
+#include "regression_test_base.hpp"
 
 namespace SPH
 {
@@ -71,7 +69,7 @@ namespace SPH
 		};
 		virtual ~RegressionTestDynamicTimeWarping() {};
 
-		void settingupTheTest(); /** setup the test and defined basic variables. */
+		void setupTheTest(); /** setup the test and defined basic variables. */
 		void readDTWDistanceFromXml(); /** read the old DTW distance from the .xml file. */
 		void updateDTWDistance(); /** update the maximum DTWDistance with the new result. */
 		void writeDTWDistanceToXml(); /* write the updated DTWDistance to .xml file.*/
@@ -86,7 +84,7 @@ namespace SPH
 			this->transposeTheIndex();
 			if (this->converged == "false")
 			{
-				settingupTheTest();
+				setupTheTest();
 				if (filter == "true")
 					this->filterExtremeValues();
 				readDTWDistanceFromXml();
@@ -110,7 +108,7 @@ namespace SPH
 			this->writeXmlToXmlFile();
 			this->readXmlFromXmlFile();
 			this->transposeTheIndex();
-			settingupTheTest();
+			setupTheTest();
 			if (filter == "true")
 				this->filterExtremeValues();
 			readDTWDistanceFromXml();

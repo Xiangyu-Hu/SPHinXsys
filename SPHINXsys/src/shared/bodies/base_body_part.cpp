@@ -5,6 +5,7 @@
  */
 #include "base_body_part.h"
 
+#include "base_particles.hpp"
 namespace SPH
 {
 	//=================================================================================================//
@@ -23,8 +24,8 @@ namespace SPH
 	//=================================================================================================//
 	BodyRegionByParticle::
 		BodyRegionByParticle(SPHBody &sph_body, SharedPtr<Shape> shape_ptr)
-		: BodyPartByParticle(sph_body, shape_ptr->getName()), 
-		body_part_shape_(shape_ptr_keeper_.assignRef(shape_ptr))
+		: BodyPartByParticle(sph_body, shape_ptr->getName()),
+		  body_part_shape_(shape_ptr_keeper_.assignRef(shape_ptr))
 	{
 		TaggingParticleMethod tagging_particle_method = std::bind(&BodyRegionByParticle::tagByContain, this, _1);
 		tagParticles(tagging_particle_method);
@@ -32,7 +33,7 @@ namespace SPH
 	//=================================================================================================//
 	void BodyRegionByParticle::tagByContain(size_t particle_index)
 	{
-		if (body_part_shape_.checkContain(base_particles_->pos_n_[particle_index]))
+		if (body_part_shape_.checkContain(base_particles_->pos_[particle_index]))
 		{
 			body_part_particles_.push_back(particle_index);
 		}
@@ -49,7 +50,7 @@ namespace SPH
 	//=================================================================================================//
 	void BodySurface::tagNearSurface(size_t particle_index)
 	{
-		Real phi = sph_body_->body_shape_->findSignedDistance(base_particles_->pos_n_[particle_index]);
+		Real phi = sph_body_->body_shape_->findSignedDistance(base_particles_->pos_[particle_index]);
 		if (fabs(phi) < particle_spacing_min_)
 			body_part_particles_.push_back(particle_index);
 	}
@@ -65,16 +66,16 @@ namespace SPH
 	//=================================================================================================//
 	void BodySurfaceLayer::tagSurfaceLayer(size_t particle_index)
 	{
-		Real distance = fabs(sph_body_->body_shape_->findSignedDistance(base_particles_->pos_n_[particle_index]));
+		Real distance = fabs(sph_body_->body_shape_->findSignedDistance(base_particles_->pos_[particle_index]));
 		if (distance < thickness_threshold_)
 		{
 			body_part_particles_.push_back(particle_index);
 		}
 	}
 	//=================================================================================================//
-	BodyRegionByCell::BodyRegionByCell(RealBody &real_body,  SharedPtr<Shape> shape_ptr)
-		: BodyPartByCell(real_body, shape_ptr->getName()), 
-		body_part_shape_(shape_ptr_keeper_.assignRef(shape_ptr))
+	BodyRegionByCell::BodyRegionByCell(RealBody &real_body, SharedPtr<Shape> shape_ptr)
+		: BodyPartByCell(real_body, shape_ptr->getName()),
+		  body_part_shape_(shape_ptr_keeper_.assignRef(shape_ptr))
 	{
 		TaggingCellMethod tagging_cell_method = std::bind(&BodyRegionByCell::checkNotFar, this, _1, _2);
 		tagCells(tagging_cell_method);

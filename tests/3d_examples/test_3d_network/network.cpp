@@ -28,8 +28,6 @@
 #include "sphinxsys.h"
 using namespace SPH;
 
-/** Set the file path to the stl file. */
-std::string full_path_to_stl = "./input/sphere.stl";
 Vec3d domain_lower_bound(-1.0, -1.0, -1.0);
 Vec3d domain_upper_bound(1.0, 1.0, 1.0);
 Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
@@ -43,16 +41,6 @@ Vecd second_point(-0.964, 0.0, 0.266);
 int iteration_levels = 15;
 /** Network defecting angle. */
 Real grad_factor = 5.0;
-/** Define the my heart body shape. */
-class MyPolygonShape : public ComplexShape
-{
-public:
-	explicit MyPolygonShape(const std::string &shape_name) : ComplexShape(shape_name)
-	{
-		Vecd translation(-1.0, -1.0, -1.0);
-		add<TriangleMeshShapeSTL>(full_path_to_stl, translation, 0.025);
-	}
-};
 
 int main()
 {
@@ -61,7 +49,7 @@ int main()
 	/** Output */
 	InOutput in_output(system);
 	/** Creat a body, corresponding material and particles. */
-	TreeBody tree_on_sphere(system, makeShared<MyPolygonShape>("TreeOnSphere"));
+	TreeBody tree_on_sphere(system, makeShared<GeometricShapeBall>(Vec3d(0), 1.0, "Sphere"));
 	tree_on_sphere.defineBodyLevelSetShape()->writeLevelSet(tree_on_sphere);
 	tree_on_sphere.defineParticlesAndMaterial();
 	tree_on_sphere.generateParticles<ParticleGeneratorNetwork>(starting_point, second_point, iteration_levels, grad_factor);

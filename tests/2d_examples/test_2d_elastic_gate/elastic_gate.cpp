@@ -157,12 +157,12 @@ int main()
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody gate(system, makeShared<MultiPolygonShape>(createGateShape(), "Gate"));
-	gate.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
+	gate.defineAdaptationRatios(1.15, 2.0);
 	gate.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	gate.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody gate_observer(system, "Observer");
-	gate_observer.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
+	gate_observer.defineAdaptationRatios(1.15, 2.0);
 	gate_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
@@ -215,7 +215,7 @@ int main()
 	/**Constrain a solid body part.  */
 	BodyRegionByParticle gate_constrain_part(gate, makeShared<MultiPolygonShape>(createGateConstrainShape()));
 	solid_dynamics::ConstrainSolidBodyRegion gate_constrain(gate, gate_constrain_part);
-	/** Update the surface normal direaction of elastic gate. */
+	/** Update the surface normal direction of elastic gate. */
 	solid_dynamics::UpdateElasticNormalDirection gate_update_normal(gate);
 	/** Compute the average velocity of gate. */
 	solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(gate);

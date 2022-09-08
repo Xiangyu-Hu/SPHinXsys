@@ -41,8 +41,8 @@ class Cantilever : public ComplexShape
 public:
 	explicit Cantilever(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<GeometricShapeBrick>(halfsize_cantilever, translation_cantilever);
-		add<GeometricShapeBrick>(halfsize_holder, translation_holder);
+		add<TransformShape<GeometricShapeBox>>(translation_cantilever, halfsize_cantilever);
+		add<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder);
 	}
 };
 /**
@@ -58,10 +58,10 @@ public:
 protected:
 	void Update(size_t index_i, Real dt) override
 	{
-		if (pos_n_[index_i][0] > 0.0)
+		if (pos_[index_i][0] > 0.0)
 		{
-			vel_n_[index_i][1] = 5.0 * sqrt(3.0);
-			vel_n_[index_i][2] = 5.0;
+			vel_[index_i][1] = 5.0 * sqrt(3.0);
+			vel_[index_i][2] = 5.0;
 		}
 	};
 };
@@ -101,7 +101,7 @@ int main()
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(cantilever_body_inner);
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(cantilever_body, 
-		makeShared<GeometricShapeBrick>(halfsize_holder, translation_holder, "Holder"));
+		makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder, "Holder"));
 	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(cantilever_body, holder);
 	/** Output */
 	InOutput in_output(system);

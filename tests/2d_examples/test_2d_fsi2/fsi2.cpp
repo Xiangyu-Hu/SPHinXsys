@@ -42,14 +42,14 @@ int main(int ac, char *av[])
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody insert_body(sph_system, makeShared<Insert>("InsertedBody"));
-	insert_body.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
+	insert_body.defineAdaptationRatios(1.15, 2.0);
 	insert_body.defineBodyLevelSetShape()->writeLevelSet(insert_body);
 	insert_body.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
 		? insert_body.generateParticles<ParticleGeneratorReload>(in_output, insert_body.getBodyName())
 		: insert_body.generateParticles<ParticleGeneratorLattice>();
 
-	ObserverBody beam_observer(sph_system,"BeamObserver");
+	ObserverBody beam_observer(sph_system, "BeamObserver");
 	beam_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
 	ObserverBody fluid_observer(sph_system, "FluidObserver");
 	fluid_observer.generateParticles<FluidObserverParticleGenerator>();
@@ -72,7 +72,7 @@ int main(int ac, char *av[])
 		//	Methods used for particle relaxation.
 		//----------------------------------------------------------------------
 		/** Random reset the insert body particle position. */
-		RandomizePartilePosition random_insert_body_particles(insert_body);
+		RandomizeParticlePosition random_insert_body_particles(insert_body);
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_insert_body_to_vtp(in_output, {&insert_body});
 		/** Write the particle reload files. */
@@ -129,16 +129,17 @@ int main(int ac, char *av[])
 	/** Computing vorticity in the flow. */
 	fluid_dynamics::VorticityInner compute_vorticity(water_block_complex.inner_relation_);
 	/** Inflow boundary condition. */
-	BodyRegionByCell inflow_buffer(water_block, makeShared<MultiPolygonShape>(createInflowBufferShape()));
+	BodyAlignedBoxByCell inflow_buffer(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
 	ParabolicInflow parabolic_inflow(water_block, inflow_buffer);
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition(water_block, xAxis);
+	PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
 	//----------------------------------------------------------------------
 	//	Algorithms of FSI.
 	//----------------------------------------------------------------------
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SimpleDynamics<NormalDirectionFromBodyShape> insert_body_normal_direction(insert_body);
-	/** Corrected configuration for the elastic  insertbody. */
+	/** Corrected configuration for the elastic insert body. */
 	solid_dynamics::CorrectConfiguration insert_body_corrected_configuration(insert_body_inner);
 	/** Compute the force exerted on solid body due to fluid pressure and viscosity. */
 	solid_dynamics::FluidForceOnSolidUpdate fluid_force_on_solid_update(insert_body_contact);

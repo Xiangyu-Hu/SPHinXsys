@@ -33,6 +33,7 @@
 
 #include "base_data_package.h"
 #include "sph_data_containers.h"
+#include "large_data_containers.h"
 
 namespace SPH
 {
@@ -55,11 +56,8 @@ namespace SPH
 
 	protected:
 		BaseParticles *base_particles_;
-		StdLargeVec<Vecd> &pos_n_; /**< current position */
-		StdLargeVec<size_t> &sequence_;
-		StdLargeVec<size_t> &sorted_id_;
-		StdLargeVec<size_t> &unsorted_id_;
-
+		StdLargeVec<Vecd> &pos_;		   /**< current position */
+		StdLargeVec<size_t> &unsorted_id_; /**< original particle ids */
 		virtual void initializePosition(const Vecd &position);
 	};
 
@@ -76,7 +74,7 @@ namespace SPH
 	protected:
 		StdLargeVec<Real> &Vol_; /**< particle volume */
 
-		virtual void initializePositionAndVolume(const Vecd &position, Real volume);
+		virtual void initializePositionAndVolumetricMeasure(const Vecd &position, Real volumetric_measure);
 	};
 
 	/**
@@ -90,9 +88,8 @@ namespace SPH
 		virtual ~SurfaceParticleGenerator(){};
 
 	protected:
-		StdLargeVec<Vecd> &n_;					   /**< surface normal */
-		StdLargeVec<Real> &thickness_;			   /**< surface thickness */
-		StdLargeVec<Matd> &transformation_matrix_; /**< initial transformation matrix from global to local coordinates */
+		StdLargeVec<Vecd> &n_;		   /**< surface normal */
+		StdLargeVec<Real> &thickness_; /**< surface thickness */
 
 		virtual void initializeSurfaceProperties(const Vecd &surface_normal, Real thickness);
 	};

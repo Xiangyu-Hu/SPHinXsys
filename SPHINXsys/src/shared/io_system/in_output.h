@@ -1,25 +1,25 @@
 /* -------------------------------------------------------------------------*
-*								SPHinXsys									*
-* --------------------------------------------------------------------------*
-* SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
-* Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
-* physical accurate simulation and aims to model coupled industrial dynamic *
-* systems including fluid, solid, multi-body dynamics and beyond with SPH	*
-* (smoothed particle hydrodynamics), a meshless computational method using	*
-* particle discretization.													*
-*																			*
-* SPHinXsys is partially funded by German Research Foundation				*
-* (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
-* HU1527/12-1 and HU1527/12-4.												*
-*                                                                           *
-* Portions copyright (c) 2017-2022 Technical University of Munich and		*
-* the authors' affiliations.												*
-*                                                                           *
-* Licensed under the Apache License, Version 2.0 (the "License"); you may   *
-* not use this file except in compliance with the License. You may obtain a *
-* copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
-*                                                                           *
-* --------------------------------------------------------------------------*/
+ *								SPHinXsys									*
+ * --------------------------------------------------------------------------*
+ * SPHinXsys (pronunciation: s'finksis) is an acronym from Smoothed Particle	*
+ * Hydrodynamics for industrial compleX systems. It provides C++ APIs for	*
+ * physical accurate simulation and aims to model coupled industrial dynamic *
+ * systems including fluid, solid, multi-body dynamics and beyond with SPH	*
+ * (smoothed particle hydrodynamics), a meshless computational method using	*
+ * particle discretization.													*
+ *																			*
+ * SPHinXsys is partially funded by German Research Foundation				*
+ * (Deutsche Forschungsgemeinschaft) DFG HU1527/6-1, HU1527/10-1,			*
+ * HU1527/12-1 and HU1527/12-4.												*
+ *                                                                           *
+ * Portions copyright (c) 2017-2022 Technical University of Munich and		*
+ * the authors' affiliations.												*
+ *                                                                           *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may   *
+ * not use this file except in compliance with the License. You may obtain a *
+ * copy of the License at http://www.apache.org/licenses/LICENSE-2.0.        *
+ *                                                                           *
+ * --------------------------------------------------------------------------*/
 /**
  * @file 	in_output.h
  * @brief 	Classes for input and output functions.
@@ -47,25 +47,28 @@ namespace fs = boost::filesystem;
 namespace fs = std::experimental::filesystem;
 #endif
 
+using VtuStringData = std::map<std::string, std::string>;
+
 namespace SPH
 {
 
 	/**
-	 * @brief preclaimed classes.
+	 * @brief pre-claimed classes.
 	 */
 	class BaseLevelSet;
 
 	/**
 	 * @class InOutput
-	 * @brief The base class which defines folders for output, 
+	 * @brief The base class which defines folders for output,
 	 * restart and particle reload folders.
 	 */
 	class InOutput
 	{
 	private:
 		UniquePtrKeeper<ParameterizationIO> parameterization_io_ptr_keeper_;
+
 	public:
-		explicit InOutput(SPHSystem &sph_system);
+		explicit InOutput(SPHSystem &sph_system, bool delete_output = true);
 		virtual ~InOutput(){};
 
 		SPHSystem &sph_system_;
@@ -93,7 +96,7 @@ namespace SPH
 		void writeAQuantity(std::ofstream &out_file, const Real &quantity);
 		void writeAQuantity(std::ofstream &out_file, const Vecd &quantity);
 	};
-	
+
 	/**
 	 * @class BodyStatesIO
 	 * @brief base class for write and read body states.
@@ -135,10 +138,7 @@ namespace SPH
 		};
 
 		/** write with filename indicated by iteration step */
-		virtual void writeToFile(size_t iteration_step)
-		{
-			writeWithFileName(std::to_string(iteration_step));
-		};
+		virtual void writeToFile(size_t iteration_step);
 
 	protected:
 		virtual void writeWithFileName(const std::string &sequence) = 0;
@@ -213,42 +213,30 @@ namespace SPH
 	};
 
 	/**
-	 * @class BodyStatesRecordingToVtuString
+	 * @class BodyStatesRecordingToVtpString
 	 * @brief  Write strings for bodies
 	 * the output is map of strings with VTK XML format can visualized by ParaView
 	 * the data type vtkUnstructedGrid
 	 */
-	class BodyStatesRecordingToVtuString : public BodyStatesRecording
+	class BodyStatesRecordingToVtpString : public BodyStatesRecording
 	{
 	public:
-		BodyStatesRecordingToVtuString(InOutput& in_output, SPHBodyVector bodies)
-			: BodyStatesRecording(in_output, bodies) {};
-		virtual ~BodyStatesRecordingToVtuString() = default;
+		BodyStatesRecordingToVtpString(InOutput &in_output, SPHBodyVector bodies)
+			: BodyStatesRecording(in_output, bodies){};
+		virtual ~BodyStatesRecordingToVtpString() = default;
 
-		using VtuStringData = std::map<std::string, std::string>;
+		const VtuStringData &GetVtuData() const;
+		void clear()
+		{
+			_vtuData.clear();
+		}
 
-		const VtuStringData& GetVtuData() const;
 	protected:
-		virtual void writeWithFileName(const std::string& sequence) override;
-		virtual void writeVtu(std::ostream& stream, SPHBody* body) const;
+		virtual void writeWithFileName(const std::string &sequence) override;
+		virtual void writeVtu(std::ostream &stream, SPHBody *body) const;
+
 	private:
 		VtuStringData _vtuData;
-	};
-
-	/**
-	 * @class SurfaceOnlyBodyStatesRecordingToVtu
-	 * @brief  Write files for surface particles of bodies
-	 * the output file is VTK XML format can visualized by ParaView
-	 * the data type vtkUnstructedGrid
-	 */
-	class SurfaceOnlyBodyStatesRecordingToVtu : public BodyStatesRecording
-	{
-	public:
-		SurfaceOnlyBodyStatesRecordingToVtu(InOutput& in_output, SPHBodyVector bodies);
-
-	protected:
-		virtual void writeWithFileName(const std::string& sequence) override;
-		StdVec<BodySurface> surface_body_layer_vector_;
 	};
 
 	/**
@@ -359,6 +347,11 @@ namespace SPH
 			out_file << "\n";
 			out_file.close();
 		};
+
+		StdLargeVec<VariableType> *getObservedQuantity()
+		{
+			return this->interpolated_quantities_;
+		}
 	};
 
 	/**
@@ -410,9 +403,9 @@ namespace SPH
 	};
 
 	/**
-	  * @class ReloadParticleIO
-	  * @brief Write the reload particles file in XML format.
-	  */
+	 * @class ReloadParticleIO
+	 * @brief Write the reload particles file in XML format.
+	 */
 	class ReloadParticleIO : public BodyStatesIO
 	{
 	protected:
@@ -420,7 +413,7 @@ namespace SPH
 
 	public:
 		ReloadParticleIO(InOutput &in_output, SPHBodyVector bodies);
-		ReloadParticleIO(InOutput &in_output, SPHBodyVector bodies, StdVec<std::string> given_body_names);
+		ReloadParticleIO(InOutput &in_output, SPHBodyVector bodies, const StdVec<std::string> &given_body_names);
 		virtual ~ReloadParticleIO(){};
 
 		virtual void writeToFile(size_t iteration_step = 0);
@@ -454,8 +447,8 @@ namespace SPH
 
 	/**
 	 * @class WriteSimBodyPinData
-	* @brief Write total force acting a solid body.
-	*/
+	 * @brief Write total force acting a solid body.
+	 */
 	class WriteSimBodyPinData : public WriteSimBodyStates<SimTK::MobilizedBody::Pin>
 	{
 	protected:

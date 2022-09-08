@@ -5,9 +5,11 @@
 
 #include "complex_body.h"
 
+#include "base_material.h"
 #include "base_particles.h"
 #include "neighbor_relation.h"
 #include "adaptation.h"
+#include "base_particle_dynamics.h"
 
 namespace SPH
 {
@@ -29,11 +31,11 @@ namespace SPH
 		neighboring_ids.push_back(branches_[1]->inner_particles_[0]);
 		neighboring_ids.push_back(branches_[1]->inner_particles_[1]);
 		/** Build configuration. */
-		const StdLargeVec<Vecd> &pos_n_ =  base_particles_->pos_n_;
+		const StdLargeVec<Vecd> &pos_ =  base_particles_->pos_;
 		NeighborRelationInner neighbor_relation_inner(this);
 		for (size_t n = 0; n != neighboring_ids.size(); ++n)
 		{
-			Vecd displacement = pos_n_[particle_id] - pos_n_[neighboring_ids[n]];
+			Vecd displacement = pos_[particle_id] - pos_[neighboring_ids[n]];
 			Neighborhood &neighborhood = particle_configuration[particle_id];
 			neighbor_relation_inner(neighborhood, displacement, particle_id, neighboring_ids[n]);
 		}
@@ -99,13 +101,13 @@ namespace SPH
 
 			for (size_t n = 0; n != neighboring_ids.size(); ++n)
 			{
-				Vecd displacement = pos_n_[particle_id] - pos_n_[neighboring_ids[n]];
+				Vecd displacement = pos_[particle_id] - pos_[neighboring_ids[n]];
 				Neighborhood &neighborhood = particle_configuration[particle_id];
 				neighbor_relation_inner(neighborhood, displacement, particle_id, neighboring_ids[n]);
 			}
 		}
 		/** Other branches. 
-		 * They are may normal branch (fully growed, has child and parent) or non-fully growed branch
+		 * They are may normal branch (fully grown, has child and parent) or non-fully grown branch
 		 */
 		for (size_t branch_idx = 2; branch_idx != branches_.size(); ++branch_idx)
 		{
@@ -113,7 +115,7 @@ namespace SPH
 			size_t parent_branch_id = branches_[branch_idx]->in_edge_;
 			if (!branches_[branch_idx]->is_terminated_)
 			{
-				/** This branch is fully growed. */
+				/** This branch is fully grown. */
 				for (size_t i = 0; i != num_ele; i++)
 				{
 					neighboring_ids.clear();
@@ -170,7 +172,7 @@ namespace SPH
 
 					for (size_t n = 0; n != neighboring_ids.size(); ++n)
 					{
-						Vecd displacement = pos_n_[particle_id] - pos_n_[neighboring_ids[n]];
+						Vecd displacement = pos_[particle_id] - pos_[neighboring_ids[n]];
 						Neighborhood &neighborhood = particle_configuration[particle_id];
 						neighbor_relation_inner(neighborhood, displacement, particle_id, neighboring_ids[n]);
 					}
@@ -178,7 +180,7 @@ namespace SPH
 			}
 			else
 			{
-				/** This branch is not fully growed. */
+				/** This branch is not fully grown. */
 				for (size_t i = 0; i != num_ele; i++)
 				{
 					neighboring_ids.clear();
@@ -207,7 +209,7 @@ namespace SPH
 
 					for (size_t n = 0; n != neighboring_ids.size(); ++n)
 					{
-						Vecd displacement = pos_n_[particle_id] - pos_n_[neighboring_ids[n]];
+						Vecd displacement = pos_[particle_id] - pos_[neighboring_ids[n]];
 						Neighborhood &neighborhood = particle_configuration[particle_id];
 						neighbor_relation_inner(neighborhood, displacement, particle_id, neighboring_ids[n]);
 					}

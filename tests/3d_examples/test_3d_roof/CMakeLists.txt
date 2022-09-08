@@ -32,18 +32,18 @@ aux_source_directory(. DIR_SRCS)
 ADD_EXECUTABLE(${PROJECT_NAME} ${DIR_SRCS})
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}
-WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
+                  WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
 if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
                                 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
-		target_link_libraries(${PROJECT_NAME} sphinxsys_3d)
+		target_link_libraries(${PROJECT_NAME} sphinxsys_3d GTest::gtest GTest::gtest_main)
 		add_dependencies(${PROJECT_NAME} sphinxsys_3d)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++)
+			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++ gtest gtest_main)
 		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++ stdc++fs dl)
+			target_link_libraries(${PROJECT_NAME} sphinxsys_3d stdc++ stdc++fs dl gtest gtest_main)
 		endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 		if(DEFINED BOOST_AVAILABLE) # link Boost if available (not for Windows)
@@ -53,12 +53,12 @@ if(NOT SPH_ONLY_STATIC_BUILD) # usual dynamic build
 else() # static build only
 	if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
                                 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
-		target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d)
+		target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d gtest gtest_main)
 	else(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++)
+			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++ gtest gtest_main)
 		else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++ stdc++fs dl)
+			target_link_libraries(${PROJECT_NAME} sphinxsys_static_3d stdc++ stdc++fs dl gtest gtest_main)
 		endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 		if(DEFINED BOOST_AVAILABLE) # link Boost if available (not for Windows)

@@ -7,8 +7,8 @@
 #include "mesh_with_data_packages.hpp"
 #include "base_kernel.h"
 #include "base_particles.h"
+#include "base_particle_dynamics.h"
 #include "base_body.h"
-#include "adaptation.h"
 
 namespace SPH
 {
@@ -119,7 +119,6 @@ namespace SPH
 	//=================================================================================================//
 	void LevelSetDataPackage::markNearInterface(Real small_shift_factor)
 	{
-		// small_shift_factor = 0.75 by default, can be increased for difficult geometries for smoothing
 		Real small_shift = small_shift_factor * grid_spacing_;
 		//corner averages, note that the first row and first column are not used
 		PackageTemporaryData<Real> corner_averages;
@@ -243,7 +242,7 @@ namespace SPH
 									}
 							*core_data_pkg->phi_addrs_[i][j][k] = -min_distance_p;
 							// this immediate switch of near interface id
-							// does not intervenning with the identification of unresolved interface
+							// does not intervening with the identification of unresolved interface
 							// based on the assumption that positive false_and negative bands are not close to each other
 							*core_data_pkg->near_interface_id_addrs_[i][j][k] = -1;
 						}
@@ -269,7 +268,7 @@ namespace SPH
 									}
 							*core_data_pkg->phi_addrs_[i][j][k] = min_distance_n;
 							// this immediate switch of near interface id
-							// does not intervenning with the identification of unresolved interface
+							// does not intervening with the identification of unresolved interface
 							// based on the assumption that positive false_and negative bands are not close to each other
 							*core_data_pkg->near_interface_id_addrs_[i][j][k] = 1;
 						}

@@ -26,7 +26,7 @@ int main()
 	wall_boundary.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody flap(system, makeShared<Flap>("Flap"));
-	flap.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	flap.defineParticlesAndMaterial<SolidParticles, Solid>(rho0_s);
 	flap.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody observer(system, "FlapObserver");
@@ -54,14 +54,14 @@ int main()
 	/** Define external force.*/
 	Gravity gravity(Vecd(0.0, -gravity_g));
 	/** Time step initialization, add gravity. */
-	TimeStepInitialization initialize_gravity_to_fluid(water_block, gravity);
+	TimeStepInitialization initialize_time_step_to_fluid(water_block, gravity);
 	/** Evaluation of density by summation approach. */
 	fluid_dynamics::DensitySummationFreeSurfaceComplex update_density_by_summation(water_block_complex);
 	/** time step size without considering sound wave speed. */
 	fluid_dynamics::AdvectionTimeStepSize get_fluid_advection_time_step_size(water_block, U_f);
 	/** time step size with considering sound wave speed. */
 	fluid_dynamics::AcousticTimeStepSize get_fluid_time_step_size(water_block);
-	/** pressure relaxation using verlet time stepping. */
+	/** pressure relaxation using Verlet time stepping. */
 	fluid_dynamics::PressureRelaxationRiemannWithWall pressure_relaxation(water_block_complex);
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex);
 	/** Computing viscous acceleration. */
@@ -71,9 +71,6 @@ int main()
 	fluid_dynamics::DampingBoundaryCondition damping_wave(water_block, damping_buffer);
 	/** Fluid force on flap. */
 	solid_dynamics::FluidForceOnSolidUpdate fluid_force_on_flap(flap_contact);
-	/** average velocity for flap. */
-	solid_dynamics::AverageVelocityAndAcceleration average_velocity_and_acceleration(flap);
-	solid_dynamics::UpdateElasticNormalDirection flap_update_normal(flap);
 	/** constrain region of the part of wall boundary. */
 	BodyRegionByParticle wave_maker(wall_boundary, makeShared<MultiPolygonShape>(createWaveMakerShape()));
 	WaveMaking wave_making(wall_boundary, wave_maker);
@@ -140,7 +137,7 @@ int main()
 	 * @param[in]	GeneralForceSubsystem &  	forces,
 	 * @param[in]	const MobilizedBody &  	mobod,
 	 * @param[in]	MobilizerUIndex  whichU, e.g., MobilizerUIndex(0)
-	 * @param[in]	Real  	Dampingconstant )
+	 * @param[in]	Real  	Damping constant )
 	 * Here, The damping constant c is provided, with the generated force being -c*u where u is the mobility's generalized speed.
 	 */
 	SimTK::Force::MobilityLinearDamper linear_damper(forces, pin_spot, SimTK::MobilizerUIndex(0), 20.0);
@@ -225,14 +222,13 @@ int main()
 		Real integral_time = 0.0;
 		while (integral_time < D_Time)
 		{
-			initialize_gravity_to_fluid.parallel_exec();
+			initialize_time_step_to_fluid.parallel_exec();
 
 			Real Dt = get_fluid_advection_time_step_size.parallel_exec();
 			update_density_by_summation.parallel_exec();
 			viscous_acceleration.parallel_exec();
 			/** Viscous force exerting on flap. */
 			fluid_force_on_flap.viscous_force_.parallel_exec();
-			flap_update_normal.parallel_exec();
 
 			Real relaxation_time = 0.0;
 			while (relaxation_time < Dt)
@@ -240,8 +236,7 @@ int main()
 				pressure_relaxation.parallel_exec(dt);
 				fluid_force_on_flap.parallel_exec();
 				density_relaxation.parallel_exec(dt);
-				/** solid dynamics. */
-				average_velocity_and_acceleration.initialize_displacement_.parallel_exec();
+				/** coupled rigid body dynamics. */
 				if (total_time >= relax_time)
 				{
 					SimTK::State &state_for_update = integ.updAdvancedState();
@@ -252,7 +247,6 @@ int main()
 					constraint_spot_flap.parallel_exec();
 					wave_making.parallel_exec(dt);
 				}
-				average_velocity_and_acceleration.update_averages_.parallel_exec(dt);
 				interpolation_observer_position.parallel_exec();
 
 				dt = get_fluid_time_step_size.parallel_exec();

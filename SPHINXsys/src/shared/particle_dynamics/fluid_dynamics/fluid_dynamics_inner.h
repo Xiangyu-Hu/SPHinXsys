@@ -33,7 +33,7 @@
 
 #include "all_particle_dynamics.h"
 #include "base_kernel.h"
-#include "body_relation.h"
+#include "all_body_relations.h"
 #include "fluid_body.h"
 #include "fluid_particles.h"
 #include "weakly_compressible_fluid.h"
@@ -58,7 +58,7 @@ namespace SPH
 			virtual ~FluidInitialCondition(){};
 
 		protected:
-			StdLargeVec<Vecd> &pos_n_, &vel_n_;
+			StdLargeVec<Vecd> &pos_, &vel_;
 		};
 
 		/**
@@ -73,7 +73,7 @@ namespace SPH
 
 		protected:
 			Real W0_, rho0_, inv_sigma0_;
-			StdLargeVec<Real> &Vol_, &rho_n_, &mass_, &rho_sum_;
+			StdLargeVec<Real> &Vol_, &rho_, &mass_, &rho_sum_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 			virtual void Update(size_t index_i, Real dt = 0.0) override;
@@ -93,8 +93,8 @@ namespace SPH
 		protected:
 			Real mu_;
 			Real smoothing_length_;
-			StdLargeVec<Real> &Vol_, &rho_n_, &p_;
-			StdLargeVec<Vecd> &vel_n_, &dvel_dt_prior_;
+			StdLargeVec<Real> &Vol_, &rho_, &p_;
+			StdLargeVec<Vecd> &vel_, &acc_prior_;
 
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -122,14 +122,15 @@ namespace SPH
 		class TransportVelocityCorrectionInner : public InteractionDynamics, public FluidDataInner
 		{
 		public:
-			explicit TransportVelocityCorrectionInner(BaseBodyRelationInner &inner_relation);
+			explicit TransportVelocityCorrectionInner(BaseBodyRelationInner &inner_relation, Real coefficient = 7.0);
 			virtual ~TransportVelocityCorrectionInner(){};
 
 		protected:
-			StdLargeVec<Real> &Vol_, &rho_n_;
-			StdLargeVec<Vecd> &pos_n_;
+			StdLargeVec<Real> &Vol_, &rho_;
+			StdLargeVec<Vecd> &pos_;
 			StdLargeVec<int> &surface_indicator_;
 			Real p_background_;
+			const Real coefficient_;
 
 			virtual void setupDynamics(Real dt = 0.0) override;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
@@ -146,8 +147,8 @@ namespace SPH
 			virtual ~AcousticTimeStepSize(){};
 
 		protected:
-			StdLargeVec<Real> &rho_n_, &p_;
-			StdLargeVec<Vecd> &vel_n_;
+			StdLargeVec<Real> &rho_, &p_;
+			StdLargeVec<Vecd> &vel_;
 			Real smoothing_length_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 			Real OutputResult(Real reduced_value) override;
@@ -165,7 +166,7 @@ namespace SPH
 
 		protected:
 			Real smoothing_length_;
-			StdLargeVec<Vecd> &vel_n_;
+			StdLargeVec<Vecd> &vel_;
 			Real ReduceFunction(size_t index_i, Real dt = 0.0) override;
 			Real OutputResult(Real reduced_value) override;
 		};
@@ -193,7 +194,7 @@ namespace SPH
 
 		protected:
 			StdLargeVec<Real> &Vol_;
-			StdLargeVec<Vecd> &vel_n_;
+			StdLargeVec<Vecd> &vel_;
 			StdLargeVec<AngularVecd> vorticity_;
 			virtual void Interaction(size_t index_i, Real dt = 0.0) override;
 		};
@@ -209,8 +210,8 @@ namespace SPH
 			virtual ~BaseRelaxation(){};
 
 		protected:
-			StdLargeVec<Real> &Vol_, &mass_, &rho_n_, &p_, &drho_dt_;
-			StdLargeVec<Vecd> &pos_n_, &vel_n_, &dvel_dt_, &dvel_dt_prior_;
+			StdLargeVec<Real> &Vol_, &mass_, &rho_, &p_, &drho_dt_;
+			StdLargeVec<Vecd> &pos_, &vel_, &acc_, &acc_prior_;
 		};
 
 		/**

@@ -17,8 +17,8 @@ namespace SPH
 		//=================================================================================================//
 		FreeSurfaceIndicationComplex::
 			FreeSurfaceIndicationComplex(BaseBodyRelationInner &inner_relation,
-				BaseBodyRelationContact &contact_relation, Real thereshold)
-			: FreeSurfaceIndicationInner(inner_relation, thereshold), WCFluidContactData(contact_relation)
+				BaseBodyRelationContact &contact_relation, Real threshold)
+			: FreeSurfaceIndicationInner(inner_relation, threshold), WCFluidContactData(contact_relation)
 		{
 			for (size_t k = 0; k != contact_particles_.size(); ++k)
 			{
@@ -29,9 +29,9 @@ namespace SPH
 		}
 		//=================================================================================================//
 		FreeSurfaceIndicationComplex::
-			FreeSurfaceIndicationComplex(ComplexBodyRelation &complex_relation, Real thereshold)
+			FreeSurfaceIndicationComplex(ComplexBodyRelation &complex_relation, Real threshold)
 			: FreeSurfaceIndicationComplex(complex_relation.inner_relation_,
-				complex_relation.contact_relation_, thereshold) {}
+				complex_relation.contact_relation_, threshold) {}
 		//=================================================================================================//
 		void FreeSurfaceIndicationComplex::Interaction(size_t index_i, Real dt)
 		{

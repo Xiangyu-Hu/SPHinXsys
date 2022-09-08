@@ -1,6 +1,6 @@
 /**
  * @file 	hydrostatic_fsi.cpp
- * @brief 	structure deformation due to hydrostatic pressue under gravity.
+ * @brief 	structure deformation due to hydrostatic pressure under gravity.
  * @details This is the one of the basic test cases 
  * for understanding SPH method for fluid-structure-interaction (FSI) simulation.
  * @author 	Yujie Zhu, Chi Zhang and Xiangyu Hu
@@ -34,7 +34,7 @@ Vec2d GateP_lt(-BW, 0.0);
 Vec2d GateP_rt(Dam_L + BW, 0.0);
 Vec2d GateP_rb(Dam_L + BW, -Gate_width);
 //----------------------------------------------------------------------
-//	Define the geometry for gate constrian.
+//	Define the geometry for gate constrain.
 //----------------------------------------------------------------------
 Vec2d ConstrainLP_lb(-BW, -Gate_width);
 Vec2d ConstrainLP_lt(-BW, 0.0);
@@ -246,7 +246,7 @@ int main()
 	fluid_dynamics::DensityRelaxationRiemannWithWall density_relaxation(water_block_complex);
 	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex);
 	DampingWithRandomChoice<DampingPairwiseWithWall<Vec2d, DampingPairwiseInner>>
-		fluid_damping(water_block_complex, 0.2, "Velocity", mu_f);
+		fluid_damping(0.2, water_block_complex, "Velocity", mu_f);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SimpleDynamics<NormalDirectionFromBodyShape> gate_normal_direction(gate);
 	/** Corrected configuration. */
@@ -325,7 +325,7 @@ int main()
 			{
 				dt = SMIN(get_fluid_time_step_size.parallel_exec(), Dt);
 				fluid_damping.parallel_exec(dt);
-				/** Fluid relaxation and force computaton. */
+				/** Fluid relaxation and force computation. */
 				pressure_relaxation.parallel_exec(dt);
 				fluid_pressure_force_on_gate.parallel_exec();
 				density_relaxation.parallel_exec(dt);

@@ -99,10 +99,10 @@ protected:
 	void Update(size_t index_i, Real dt) override
 	{
 		/** initial velocity profile */
-		Real x = pos_n_[index_i][0] / PL;
+		Real x = pos_[index_i][0] / PL;
 		if (x > 0.0)
 		{
-			vel_n_[index_i][1] = vf * material_->ReferenceSoundSpeed() / Q *
+			vel_[index_i][1] = vf * material_->ReferenceSoundSpeed() / Q *
 								 (M * (cos(kl * x) - cosh(kl * x)) - N * (sin(kl * x) - sinh(kl * x)));
 		}
 	};
@@ -110,22 +110,24 @@ protected:
 //------------------------------------------------------------------------------
 //the main program
 //------------------------------------------------------------------------------
-int main()
+int main(int ac, char *av[])
 {
 	//----------------------------------------------------------------------
 	//	Build up -- a SPHSystem
 	//----------------------------------------------------------------------
 	SPHSystem system(system_domain_bounds, resolution_ref);
-	//----------------------------------------------------------------------
+// handle command line arguments
+#ifdef BOOST_AVAILABLE
+	system.handleCommandlineOptions(ac, av);
+#endif	//----------------------------------------------------------------------
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	SolidBody beam_body(system, makeShared<Beam>("BeamBody"));
 	beam_body.defineParticlesAndMaterial<ElasticSolidParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
 	beam_body.generateParticles<ParticleGeneratorLattice>();
-	beam_body.addBodyStateForRecording<Real>("ContactDensity");
 
 	ObserverBody beam_observer(system, "BeamObserver");
-	beam_observer.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
+	beam_observer.defineAdaptationRatios(1.15, 2.0);
 	beam_observer.generateParticles<ObserverParticleGenerator>(beam_observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
@@ -159,6 +161,7 @@ int main()
 	//	outputs
 	//-----------------------------------------------------------------------------
 	InOutput in_output(system);
+	beam_body.addBodyStateForRecording<Real>("SelfContactDensity");
 	BodyStatesRecordingToVtp write_beam_states(in_output, system.real_bodies_);
 	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_beam_tip_displacement("Position", in_output, beam_observer_contact);
@@ -239,7 +242,11 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	if (!system.restart_step_ == 0) // TODO: this case should be revsied latter.
+	if (system.generate_regression_data_)
+	{
+		write_beam_tip_displacement.generateDataBase(1.0e-2);
+	}
+	else
 	{
 		write_beam_tip_displacement.newResultTest();
 	}

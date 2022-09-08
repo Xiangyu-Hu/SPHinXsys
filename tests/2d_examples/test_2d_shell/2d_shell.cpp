@@ -47,7 +47,7 @@ public:
 					 cos(50.0 / 180.0 * Pi + (i + 0.5 - BWD) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
 			Real y = radius_mid_surface *
 					 sin(50.0 / 180.0 * Pi + (i + 0.5 - BWD) * 80.0 / 360.0 * 2 * Pi / (Real)particle_number_mid_surface);
-			initializePositionAndVolume(Vecd(x, y), particle_spacing_ref);
+			initializePositionAndVolumetricMeasure(Vecd(x, y), particle_spacing_ref);
 			Vec2d normal_direction = Vec2d(x / radius_mid_surface, y / radius_mid_surface);
 			initializeSurfaceProperties(normal_direction, thickness);
 		}
@@ -68,7 +68,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_n_[index_i][0] < -radius_mid_surface * cos(50.0 / 180.0 * Pi) || base_particles_->pos_n_[index_i][0] > radius_mid_surface * cos(50.0 / 180.0 * Pi))
+		if (base_particles_->pos_[index_i][0] < -radius_mid_surface * cos(50.0 / 180.0 * Pi) || base_particles_->pos_[index_i][0] > radius_mid_surface * cos(50.0 / 180.0 * Pi))
 		{
 			body_part_particles_.push_back(index_i);
 		}
@@ -135,9 +135,9 @@ int main()
 	thin_structure_dynamics::ConstrainShellBodyRegion
 		fixed_free_rotate_shell_boundary(cylinder_body, boundary_geometry);
 	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
-		cylinder_position_damping(cylinder_body_inner, 0.2, "Velocity", physical_viscosity);
+		cylinder_position_damping(0.2, cylinder_body_inner, "Velocity", physical_viscosity);
 	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
-		cylinder_rotation_damping(cylinder_body_inner, 0.2, "AngularVelocity", physical_viscosity);
+		cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
 	/** Output */
 	InOutput in_output(system);
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);

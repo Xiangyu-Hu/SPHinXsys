@@ -1,9 +1,9 @@
 /**
-* @file 	freestream_flow_around_cylinder_case.h
-* @brief 	This is the case file for the test of free-stream flow.
-* @details  We consider a flow pass the cylinder with freestream boundary condition in 2D.
-* @author 	Xiangyu Hu, Shuoguo Zhang
-*/
+ * @file 	freestream_flow_around_cylinder_case.h
+ * @brief 	This is the case file for the test of free-stream flow.
+ * @details  We consider a flow pass the cylinder with freestream boundary condition in 2D.
+ * @author 	Xiangyu Hu, Shuoguo Zhang
+ */
 
 #include "sphinxsys.h"
 #include "2d_free_stream_around_cylinder.h"
@@ -29,12 +29,11 @@ int main(int ac, char *av[])
 	//	Creating body, materials and particles.
 	//----------------------------------------------------------------------
 	FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-	water_block.setBodyDomainBounds(fluid_body_domain_bounds);
 	water_block.defineParticlesAndMaterial<FluidParticles, WeaklyCompressibleFluid>(rho0_f, c_f, mu_f);
 	water_block.generateParticles<ParticleGeneratorLattice>();
 
 	SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
-	cylinder.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
+	cylinder.defineAdaptationRatios(1.15, 2.0);
 	cylinder.defineBodyLevelSetShape();
 	cylinder.defineParticlesAndMaterial<SolidParticles, Solid>();
 	(!sph_system.run_particle_relaxation_ && sph_system.reload_particles_)
@@ -63,7 +62,7 @@ int main(int ac, char *av[])
 		//	Methods used for particle relaxation.
 		//----------------------------------------------------------------------
 		/** Random reset the insert body particle position. */
-		RandomizePartilePosition random_inserted_body_particles(cylinder);
+		RandomizeParticlePosition random_inserted_body_particles(cylinder);
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_inserted_body_to_vtp(in_output, {&cylinder});
 		/** Write the particle reload files. */
@@ -103,11 +102,12 @@ int main(int ac, char *av[])
 	TimeDependentAcceleration gravity(Vec2d(0.0, 0.0));
 	/** Initialize particle acceleration. */
 	TimeStepInitialization initialize_a_fluid_step(water_block, gravity);
-	/** Emmiter. */
-	BodyRegionByParticle emitter(water_block, makeShared<MultiPolygonShape>(creatEmitterShape()));
+	BodyAlignedBoxByParticle emitter(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_translation)), emitter_halfsize));
 	fluid_dynamics::EmitterInflowInjecting emitter_inflow_injecting(water_block, emitter, 10, 0, true);
 	/** Emitter buffer inflow condition. */
-	BodyRegionByCell emitter_buffer(water_block, makeShared<MultiPolygonShape>(createEmitterBufferShape()));
+	BodyAlignedBoxByCell emitter_buffer(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(emitter_buffer_translation)), emitter_buffer_halfsize));
 	EmitterBufferInflowCondition emitter_buffer_inflow_condition(water_block, emitter_buffer);
 	/** time-space method to detect surface particles. */
 	fluid_dynamics::SpatialTemporalFreeSurfaceIdentificationComplex free_stream_surface_indicator(water_block_complex);
@@ -132,8 +132,10 @@ int main(int ac, char *av[])
 	fluid_dynamics::ViscousAccelerationWithWall viscous_acceleration(water_block_complex);
 	/** Apply transport velocity formulation. */
 	fluid_dynamics::TransportVelocityCorrectionComplex transport_velocity_correction(water_block_complex);
+	/** Prescribed fluid body domain bounds*/
+	BoundingBox water_block_domain_bounds(Vec2d(-DL_sponge, -0.25 * DH), Vec2d(DL, 1.25 * DH));
 	/** recycle real fluid particle to buffer particles at outlet. */
-	OpenBoundaryConditionInAxisDirection tansfer_to_buffer_particles_upper_bound(water_block, xAxis, positiveDirection);
+	OpenBoundaryConditionAlongAxis transfer_to_buffer_particles_upper_bound(water_block, water_block_domain_bounds, xAxis, positiveDirection);
 	/** compute the vorticity. */
 	fluid_dynamics::VorticityInner compute_vorticity(water_block_inner);
 	//----------------------------------------------------------------------
@@ -243,7 +245,7 @@ int main(int ac, char *av[])
 
 			/** Water block configuration and periodic condition. */
 			emitter_inflow_injecting.exec();
-			tansfer_to_buffer_particles_upper_bound.particle_type_transfer.parallel_exec();
+			transfer_to_buffer_particles_upper_bound.particle_type_transfer_.parallel_exec();
 
 			water_block.updateCellLinkedList();
 			water_block_complex.updateConfiguration();
@@ -271,7 +273,7 @@ int main(int ac, char *av[])
 
 	if (sph_system.generate_regression_data_)
 	{
-		//The lift force at the cylinder is very small and not important in this case. 
+		// The lift force at the cylinder is very small and not important in this case.
 		write_total_viscous_force_on_inserted_body.generateDataBase({1.0e-2, 1.0e-2}, {1.0e-2, 1.0e-2});
 	}
 	else

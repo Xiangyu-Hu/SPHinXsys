@@ -59,22 +59,8 @@ std::vector<Vecd> createWaterBlockShape()
 
 	return pnts_shaping_water_block;
 }
-/**
- * @brief create a buffer for water block shape
- */
-MultiPolygon createInflowBufferShape()
-{
-	std::vector<Vecd> pnts_buffer;
-	pnts_buffer.push_back(Vecd(-DL_sponge, 0.0));
-	pnts_buffer.push_back(Vecd(-DL_sponge, DH));
-	pnts_buffer.push_back(Vecd(0.0, DH));
-	pnts_buffer.push_back(Vecd(0.0, 0.0));
-	pnts_buffer.push_back(Vecd(-DL_sponge, 0.0));
-
-	MultiPolygon multi_polygon;
-	multi_polygon.addAPolygon(pnts_buffer, ShapeBooleanOps::add);
-	return multi_polygon;
-}
+Vec2d buffer_halfsize = Vec2d(0.5 * DL_sponge, 0.5 * DH);
+Vec2d buffer_translation = Vec2d(-DL_sponge, 0.0) + buffer_halfsize;
 /**
  * @brief create outer wall shape
  */
@@ -119,7 +105,7 @@ std::vector<Vecd> createFishBlockingShape()
 	return pnts_blocking_shape;
 }
 /**
- * Water body shpe defintion.
+ * Water body shape defintion.
  */
 class WaterBlock : public MultiPolygonShape
 {
@@ -189,8 +175,8 @@ class ParabolicInflow : public fluid_dynamics::InflowBoundaryCondition
 	Real u_ave_, u_ref_, t_ref;
 
 public:
-	ParabolicInflow(FluidBody &fluid_body, BodyPartByCell &constrained_region)
-		: InflowBoundaryCondition(fluid_body, constrained_region),
+	ParabolicInflow(FluidBody &fluid_body, BodyAlignedBoxByCell &aligned_box_part)
+		: InflowBoundaryCondition(fluid_body, aligned_box_part),
 		  u_ave_(0), u_ref_(1.0), t_ref(4.0) {}
 
 	Vecd getTargetVelocity(Vecd &position, Vecd &velocity) override
@@ -247,7 +233,7 @@ int main(int ac, char *av[])
 	 * @brief   Particles and body creation for fish.
 	 */
 	SolidBody fish_body(system, makeShared<FishBody>("FishBody"));
-	fish_body.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
+	fish_body.defineAdaptationRatios(1.15, 2.0);
 	fish_body.defineBodyLevelSetShape();
 	fish_body.defineParticlesAndMaterial<ElasticSolidParticles, NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
 	// Using relaxed particle distribution if needed
@@ -277,7 +263,7 @@ int main(int ac, char *av[])
 		 * @brief 	Methods used for particle relaxation.
 		 */
 		/** Random reset the insert body particle position. */
-		RandomizePartilePosition random_fish_body_particles(fish_body);
+		RandomizeParticlePosition random_fish_body_particles(fish_body);
 		/** Write the body state to Vtp file. */
 		BodyStatesRecordingToVtp write_fish_body(in_output, fish_body);
 		/** Write the particle reload files. */
@@ -318,7 +304,7 @@ int main(int ac, char *av[])
 	 * @brief   Methods used for updating data structure.
 	 */
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition(water_block, xAxis);
+	PeriodicConditionUsingCellLinkedList periodic_condition(water_block, water_block.getBodyShapeBounds(), xAxis);
 	SimpleDynamics<NormalDirectionFromBodyShape> wall_boundary_normal_direction(wall_boundary);
 	SimpleDynamics<NormalDirectionFromBodyShape> fish_body_normal_direction(fish_body);
 	/** Corrected configuration.*/
@@ -344,7 +330,8 @@ int main(int ac, char *av[])
 	/** Computing vorticity in the flow. */
 	fluid_dynamics::VorticityInner compute_vorticity(water_block_inner);
 	/** Inflow boundary condition. */
-	BodyRegionByCell inflow_buffer(water_block, makeShared<MultiPolygonShape>(createInflowBufferShape(), "Buffer"));
+	BodyAlignedBoxByCell inflow_buffer(
+		water_block, makeShared<AlignedBoxShape>(Transform2d(Vec2d(buffer_translation)), buffer_halfsize));
 	ParabolicInflow parabolic_inflow(water_block, inflow_buffer);
 
 	/**
@@ -375,10 +362,10 @@ int main(int ac, char *av[])
 	/** The forces of the MBsystem.*/
 	SimTK::GeneralForceSubsystem forces(MBsystem);
 	SimTK::CableTrackerSubsystem cables(MBsystem);
-	/** Mass proeprties of the fixed spot. */
+	/** Mass properties of the fixed spot. */
 	SimTK::Body::Rigid fixed_spot_info(SimTK::MassProperties(1.0, Vec3d(0), SimTK::UnitInertia(1)));
 	SolidBodyPartForSimbody fish_head(fish_body, makeShared<MultiPolygonShape>(createFishHeadShape(fish_body), "FishHead"));
-	/** Mass properties of the consrained spot. */
+	/** Mass properties of the constrained spot. */
 	SimTK::Body::Rigid tethered_spot_info(*fish_head.body_part_mass_properties_);
 	/** Mobility of the fixed spot. */
 	SimTK::MobilizedBody::Weld fixed_spot(matter.Ground(), SimTK::Transform(tethering_point),
@@ -412,7 +399,7 @@ int main(int ac, char *av[])
 	viz.report(state);
 	std::cout << "Hit ENTER to run a short simulation ...";
 	getchar();
-	/** Time steping method for multibody system.*/
+	/** Time stepping method for multibody system.*/
 	SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
 	integ.setAccuracy(1e-3);
 	integ.setAllowInterpolation(false);

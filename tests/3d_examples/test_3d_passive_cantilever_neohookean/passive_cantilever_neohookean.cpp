@@ -1,6 +1,6 @@
 /**
  * @file passive_cantilever_neohookean.cpp
- * @brief This is the example of cantilever with simple neohookean tissue model 
+ * @brief This is the example of cantilever with simple neohookean tissue model
  * @author Bence Rochlitz, Chi Zhang  and Xiangyu Hu
  * @ref 	doi.org/10.1016/j.jcp.2013.12.012
  */
@@ -26,7 +26,7 @@ StdVec<Vecd> observation_location = {Vecd(PL, PH, PW)};
 Real rho0_s = 1265.0;			// Gheorghe 2019
 Real poisson = 0.45;			// nearly incompressible
 Real Youngs_modulus = 5e4;		// Sommer 2015
-Real physical_viscosity = 50.0; //physical damping, here we choose the same value as numerical viscosity
+Real physical_viscosity = 50.0; // physical damping, here we choose the same value as numerical viscosity
 Real gravity_g = 9.8;			/**< Value of gravity. */
 Real time_to_full_gravity = 0.0;
 
@@ -36,8 +36,8 @@ class Cantilever : public ComplexShape
 public:
 	explicit Cantilever(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<GeometricShapeBrick>(halfsize_cantilever, translation_cantilever);
-		add<GeometricShapeBrick>(halfsize_holder, translation_holder);
+		add<TransformShape<GeometricShapeBox>>(translation_cantilever, halfsize_cantilever);
+		add<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder);
 	}
 };
 /**
@@ -57,10 +57,14 @@ public:
 /**
  *  The main program
  */
-int main()
+int main(int ac, char *av[])
 {
 	/** Setup the system. */
 	SPHSystem system(system_domain_bounds, resolution_ref);
+// handle command line arguments
+#ifdef BOOST_AVAILABLE
+	system.handleCommandlineOptions(ac, av);
+#endif	/** output environment. */
 
 	/** create a Cantilever body, corresponding material, particles and reaction model. */
 	SolidBody cantilever_body(system, makeShared<Cantilever>("CantileverBody"));
@@ -76,9 +80,9 @@ int main()
 
 	//-------- common particle dynamics ----------------------------------------
 	TimeDependentGravity gravity(Vec3d(0.0, -gravity_g, 0.0));
-	TimeStepInitialization initialize_gravity(cantilever_body, gravity);
+	TimeStepInitialization initialize_time_step(cantilever_body, gravity);
 
-	/** 
+	/**
 	 * This section define all numerical methods will be used in this case.
 	 */
 	/** Corrected configuration. */
@@ -91,15 +95,15 @@ int main()
 	solid_dynamics::StressRelaxationFirstHalf
 		stress_relaxation_first_half(cantilever_body_inner);
 	/** Setup the damping stress, if you know what you are doing. */
-	//stress_relaxation_first_step.setupDampingStressFactor(1.0);
+	// stress_relaxation_first_step.setupDampingStressFactor(1.0);
 	solid_dynamics::StressRelaxationSecondHalf
 		stress_relaxation_second_half(cantilever_body_inner);
 	/** Constrain the holder. */
-	BodyRegionByParticle holder(cantilever_body, 
-		makeShared<GeometricShapeBrick>(halfsize_holder, translation_holder, "Holder"));
+	BodyRegionByParticle holder(cantilever_body,
+								makeShared<TransformShape<GeometricShapeBox>>(translation_holder, halfsize_holder, "Holder"));
 	solid_dynamics::ConstrainSolidBodyRegion constrain_holder(cantilever_body, holder);
 	DampingWithRandomChoice<DampingBySplittingInner<Vec3d>>
-		muscle_damping(cantilever_body_inner, 0.1, "Velocity", physical_viscosity);
+		muscle_damping(0.1, cantilever_body_inner, "Velocity", physical_viscosity);
 	/** Output */
 	InOutput in_output(system);
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
@@ -138,7 +142,7 @@ int main()
 						  << dt << "\n";
 			}
 
-			initialize_gravity.parallel_exec(); // gravity force
+			initialize_time_step.parallel_exec(); // gravity force
 			stress_relaxation_first_half.parallel_exec(dt);
 			constrain_holder.parallel_exec(dt);
 			muscle_damping.parallel_exec(dt);
@@ -162,7 +166,14 @@ int main()
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
-	write_displacement.newResultTest();
+	if (system.generate_regression_data_)
+	{
+		write_displacement.generateDataBase(1.0e-2);
+	}
+	else
+	{
+		write_displacement.newResultTest();
+	}
 
 	return 0;
 }

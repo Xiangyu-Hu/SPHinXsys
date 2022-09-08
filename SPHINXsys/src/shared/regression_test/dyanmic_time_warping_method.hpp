@@ -3,6 +3,8 @@
  * @author	Bo Zhang and Xiangyu Hu
  */
 
+#pragma once
+
 #include "dynamic_time_warping_method.h"
 
  //=================================================================================================//
@@ -66,7 +68,7 @@ namespace SPH
 	};
 	//=================================================================================================//
 	template<class ObserveMethodType>
-	void RegressionTestDynamicTimeWarping<ObserveMethodType>::settingupTheTest()
+	void RegressionTestDynamicTimeWarping<ObserveMethodType>::setupTheTest()
 	{
 		this->snapshot_ = this->current_result_.size();
 		this->observation_ = this->current_result_[0].size();

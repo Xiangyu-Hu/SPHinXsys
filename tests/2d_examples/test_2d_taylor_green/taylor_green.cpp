@@ -61,10 +61,10 @@ protected:
 	void Update(size_t index_i, Real dt) override
 	{
 		/** initial velocity profile */
-		vel_n_[index_i][0] = -cos(2.0 * Pi * pos_n_[index_i][0]) *
-							 sin(2.0 * Pi * pos_n_[index_i][1]);
-		vel_n_[index_i][1] = sin(2.0 * Pi * pos_n_[index_i][0]) *
-							 cos(2.0 * Pi * pos_n_[index_i][1]);
+		vel_[index_i][0] = -cos(2.0 * Pi * pos_[index_i][0]) *
+							 sin(2.0 * Pi * pos_[index_i][1]);
+		vel_[index_i][1] = sin(2.0 * Pi * pos_[index_i][0]) *
+							 cos(2.0 * Pi * pos_[index_i][1]);
 	}
 };
 /**
@@ -104,9 +104,9 @@ int main(int ac, char *av[])
 	/** Initialize particle acceleration. */
 	TimeStepInitialization time_step_initialization(water_block);
 	/** Periodic BCs in x direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_x(water_block, xAxis);
+	PeriodicConditionUsingCellLinkedList periodic_condition_x(water_block, water_block.getBodyShapeBounds(), xAxis);
 	/** Periodic BCs in y direction. */
-	PeriodicConditionInAxisDirectionUsingCellLinkedList periodic_condition_y(water_block, yAxis);
+	PeriodicConditionUsingCellLinkedList periodic_condition_y(water_block, water_block.getBodyShapeBounds(), yAxis);
 
 	/**
 	 * @brief 	Algorithms of fluid dynamics.

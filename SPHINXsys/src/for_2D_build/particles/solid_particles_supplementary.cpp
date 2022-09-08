@@ -10,21 +10,7 @@
 namespace SPH
 {
 	//=================================================================================================//
-	Real ElasticSolidParticles::von_Mises_stress(size_t particle_i)
-	{
-		Real J = rho0_ / rho_n_[particle_i];
-		Mat2d F = F_[particle_i];
-		Mat2d stress = stress_PK1_[particle_i];
-		Mat2d sigma = (stress * ~F) / J;
-
-		Real sigmaxx = sigma(0, 0);
-		Real sigmayy = sigma(1, 1);
-		Real sigmaxy = sigma(0, 1);
-
-		return sqrt(sigmaxx * sigmaxx + sigmayy * sigmayy - sigmaxx * sigmayy + 3.0 * sigmaxy * sigmaxy);
-	}
-	//=================================================================================================//
-	Real ElasticSolidParticles::von_Mises_strain(size_t particle_i) // not tested in 2D
+	Real ElasticSolidParticles::getVonMisesStrain(size_t particle_i) // not tested in 2D
 	{
 
 		Mat2d F = F_[particle_i];
@@ -41,19 +27,25 @@ namespace SPH
 								   std::pow(epsilonzz - epsilonxx, 2.0)) +
 					2.0 * (std::pow(epsilonxy, 2.0) + std::pow(epsilonyz, 2.0) + std::pow(epsilonxz, 2.0)));
 	}
-	//=============================================================================================//
-	void TranslationAndRotation::update(size_t index_i, Real dt)
+	//=================================================================================================//
+	Real ElasticSolidParticles::getVonMisesStrainDynamic(size_t particle_i, Real poisson) //not tested in 2D
 	{
-		pos_n_[index_i] = transform_.imposeTransform(pos_n_[index_i]);
-		pos_0_[index_i] = transform_.imposeTransform(pos_0_[index_i]);
+		Mat2d F = F_[particle_i];
+		Mat2d epsilon = 0.5 * (~F * F - Matd(1.0)); //calculation of the Green-Lagrange strain tensor
+		
+		Vec2d principal_strains = getPrincipalValuesFromMatrix(epsilon);
+		Real eps_1 = principal_strains[0];
+		Real eps_2 = principal_strains[1];
+
+		return 1.0/(1.0 + poisson) * std::sqrt(0.5 * (powerN(eps_1 - eps_2, 2)));
 	}
 	//=============================================================================================//
 	void VonMisesStress::update(size_t index_i, Real dt)
 	{
-		Real J = rho0_ / rho_n_[index_i];
+		Real J = rho0_ / rho_[index_i];
 		Mat2d F = F_[index_i];
-		Mat2d stress = stress_PK1_[index_i];
-		Mat2d sigma = (stress * ~F) / J;
+		Mat2d stress_PK1 = F * material_->StressPK2(F, index_i);
+		Mat2d sigma = (stress_PK1 * ~F) / J;
 
 		Real sigmaxx = sigma(0, 0);
 		Real sigmayy = sigma(1, 1);
@@ -63,19 +55,4 @@ namespace SPH
 			sqrt(sigmaxx * sigmaxx + sigmayy * sigmayy - sigmaxx * sigmayy + 3.0 * sigmaxy * sigmaxy);
 	}
 	//=============================================================================================//
-	void VonMisesStrain::update(size_t index_i, Real dt)
-	{
-		Mat2d F = F_[index_i];
-		Mat2d epsilon = 0.5 * (~F * F - Mat2d(1.0)); // calculation of the Green-Lagrange strain tensor
-
-		Real epsilonxx = epsilon(0, 0);
-		Real epsilonyy = epsilon(1, 1);
-		Real epsilonxy = epsilon(0, 1);
-
-		derived_variable_[index_i] = sqrt(0.5 * ((epsilonxx - epsilonyy) * (epsilonxx - epsilonyy) +
-												 epsilonyy * epsilonyy + epsilonxx * epsilonxx +
-												 2.0 * epsilonxy * epsilonxy));
-	}
-	//=================================================================================================//
-
 }

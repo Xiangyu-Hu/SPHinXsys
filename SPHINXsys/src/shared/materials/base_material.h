@@ -64,7 +64,7 @@ namespace SPH
 			: material_type_name_("BaseMaterial"),
 			  parameters_name_("LocalMaterialParameters"),
 			  rho0_(rho0), base_particles_(nullptr),
-			  reload_material_xml_engine_("xml_material", "local_material_paramaters"){};
+			  reload_material_xml_engine_("xml_material", "local_material_parameters"){};
 		BaseMaterial() : BaseMaterial(1.0){};
 		virtual ~BaseMaterial(){};
 

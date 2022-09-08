@@ -35,8 +35,8 @@ class Myocardium : public ComplexShape
 public:
 	explicit Myocardium(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<GeometricShapeBrick>(halfsize_myocardium, translation_myocardium);
-		add<GeometricShapeBrick>(halfsize_stationary_plate, translation_stationary_plate);
+		add<TransformShape<GeometricShapeBox>>(translation_myocardium, halfsize_myocardium);
+		add<TransformShape<GeometricShapeBox>>(translation_stationary_plate, halfsize_stationary_plate);
 	}
 };
 /**
@@ -47,7 +47,7 @@ class MovingPlate : public ComplexShape
 public:
 	explicit MovingPlate(const std::string &shape_name) : ComplexShape(shape_name)
 	{
-		add<GeometricShapeBrick>(halfsize_moving_plate, translation_moving_plate);
+		add<TransformShape<GeometricShapeBox>>(translation_moving_plate, halfsize_moving_plate);
 	}
 };
 /**
@@ -73,7 +73,8 @@ int main()
 	 * This section define all numerical methods will be used in this case.
 	 */
 	/** initialize a time step */
-	TimeStepInitialization myocardium_initialize_gravity(myocardium_body);
+	TimeStepInitialization myocardium_initialize_time_step(myocardium_body);
+	TimeStepInitialization moving_plate_initialize_time_step(moving_plate);
 	/** Corrected configuration. */
 	solid_dynamics::CorrectConfiguration corrected_configuration(myocardium_body_inner);
 	/** Time step size calculation. */
@@ -83,17 +84,16 @@ int main()
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(myocardium_body_inner);
 	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ContactDensitySummation myocardium_update_contact_density(myocardium_plate_contact);
-	solid_dynamics::ContactForce myocardium_compute_solid_contact_forces(myocardium_plate_contact);
-	/** Algorithms for solid-solid contact. */
 	solid_dynamics::ContactDensitySummation plate_update_contact_density(plate_myocardium_contact);
+	solid_dynamics::ContactForce myocardium_compute_solid_contact_forces(myocardium_plate_contact);
 	solid_dynamics::ContactForce plate_compute_solid_contact_forces(plate_myocardium_contact);
 	/** Constrain the holder. */
 	BodyRegionByParticle holder(myocardium_body, 
-		makeShared<GeometricShapeBrick>(halfsize_stationary_plate, translation_stationary_plate, "Holder"));
+		makeShared<TransformShape<GeometricShapeBox>>(translation_stationary_plate, halfsize_stationary_plate, "Holder"));
 	solid_dynamics::ConstrainSolidBodyRegion	constrain_holder(myocardium_body, holder);
 	/** Damping with the solid body*/
 	DampingWithRandomChoice<DampingPairwiseInner<Vec3d>>
-		muscle_damping(myocardium_body_inner, 0.1, "Velocity", physical_viscosity);
+		muscle_damping(0.1, myocardium_body_inner, "Velocity", physical_viscosity);
 	/** Output */
 	InOutput in_output(system);
 	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
@@ -107,10 +107,10 @@ int main()
 	/** The forces of the MBsystem.*/
 	SimTK::GeneralForceSubsystem forces(MBsystem);
 	SimTK::CableTrackerSubsystem cables(MBsystem);
-	/** mass proeprties of the fixed spot. */
+	/** mass properties of the fixed spot. */
 	SolidBodyPartForSimbody plate_multibody(moving_plate, 
-		makeShared<GeometricShapeBrick>(halfsize_moving_plate, translation_moving_plate, "Plate"));
-	/** Mass properties of the consrained spot. 
+		makeShared<TransformShape<GeometricShapeBox>>(translation_moving_plate, halfsize_moving_plate, "Plate"));
+	/** Mass properties of the constrained spot. 
 	 * SimTK::MassProperties(mass, center of mass, inertia)
 	 */
 	SimTK::Body::Rigid rigid_info(*plate_multibody.body_part_mass_properties_);
@@ -122,7 +122,7 @@ int main()
 	SimTK::Force::DiscreteForces force_on_bodies(forces, matter);
 	/** Damper. */
 	SimTK::Force::MobilityLinearDamper linear_damper(forces, plateMBody, SimTK::MobilizerUIndex(0), 20.0);
-	/** Time steping method for multibody system.*/
+	/** Time stepping method for multibody system.*/
 	SimTK::State state = MBsystem.realizeTopology();
 	SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
 	integ.setAccuracy(1e-3);
@@ -134,7 +134,7 @@ int main()
 	solid_dynamics::ConstrainSolidBodyPartBySimBody
 		constraint_plate(moving_plate, plate_multibody, MBsystem, plateMBody, force_on_bodies, integ);
 	/**
-	 * From here the time stepping begines.
+	 * From here the time stepping begins.
 	 * Set the starting time.
 	 */
 	GlobalStaticVariables::physical_time_ = 0.0;
@@ -166,7 +166,8 @@ int main()
 						  << dt << "\n";
 			}
 			/** Gravity. */
-			myocardium_initialize_gravity.parallel_exec();
+			myocardium_initialize_time_step.parallel_exec();
+			moving_plate_initialize_time_step.parallel_exec();
 			/** Contact model for myocardium. */
 			myocardium_update_contact_density.parallel_exec();
 			myocardium_compute_solid_contact_forces.parallel_exec();

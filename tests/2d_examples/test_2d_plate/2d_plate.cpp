@@ -48,7 +48,7 @@ public:
 		for (int i = 0; i < (particle_number + 2 * BWD); i++)
 		{
 			Real x = resolution_ref * i - BW + resolution_ref * 0.5;
-			initializePositionAndVolume(Vecd(x, 0.0), resolution_ref);
+			initializePositionAndVolumetricMeasure(Vecd(x, 0.0), resolution_ref);
 			initializeSurfaceProperties(n_0, thickness);
 		}
 	};
@@ -68,7 +68,7 @@ public:
 private:
 	void tagManually(size_t index_i)
 	{
-		if (base_particles_->pos_n_[index_i][0] < 0.0 || base_particles_->pos_n_[index_i][0] > PL)
+		if (base_particles_->pos_[index_i][0] < 0.0 || base_particles_->pos_[index_i][0] > PL)
 		{
 			body_part_particles_.push_back(index_i);
 		}
@@ -116,9 +116,9 @@ int main()
 	BoundaryGeometry boundary_geometry(plate_body, "BoundaryGeometry");
 	thin_structure_dynamics::ConstrainShellBodyRegion constrain_holder(plate_body, boundary_geometry);
 	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
-		plate_position_damping(plate_body_inner, 0.2, "Velocity", physical_viscosity);
+		plate_position_damping(0.2, plate_body_inner, "Velocity", physical_viscosity);
 	DampingWithRandomChoice<DampingPairwiseInner<Vec2d>>
-		plate_rotation_damping(plate_body_inner, 0.2, "AngularVelocity", physical_viscosity);
+		plate_rotation_damping(0.2, plate_body_inner, "AngularVelocity", physical_viscosity);
 	//----------------------------------------------------------------------
 	//	Define the methods for I/O operations and observations of the simulation.
 	//----------------------------------------------------------------------

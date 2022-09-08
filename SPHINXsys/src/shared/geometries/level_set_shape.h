@@ -53,23 +53,20 @@ namespace SPH
 		LevelSetShape(SPHBody *sph_body, Shape &shape, Real refinement_ratio = 1.0);
 		virtual ~LevelSetShape(){};
 
-		virtual BoundingBox findBounds() override { return bounding_box_; };
-		virtual Vecd findClosestPoint(const Vecd &input_pnt) override;
 		virtual bool checkContain(const Vecd &input_pnt, bool BOUNDARY_INCLUDED = true) override;
-		virtual bool checkNotFar(const Vecd &input_pnt, Real threshold) override;
-		virtual bool checkNearSurface(const Vecd &input_pnt, Real threshold) override;
-		virtual Real findSignedDistance(const Vecd &input_pnt) override;
-		virtual Vecd findNormalDirection(const Vecd &input_pnt) override;
-		virtual Vecd findLevelSetGradient(const Vecd &input_pnt);
+		virtual Vecd findClosestPoint(const Vecd &input_pnt) override;
 
-		virtual Real computeKernelIntegral(const Vecd &input_pnt, Real h_ratio = 1.0);
-		virtual Vecd computeKernelGradientIntegral(const Vecd &input_pnt, Real h_ratio = 1.0);
+		Vecd findLevelSetGradient(const Vecd &input_pnt);
+		Real computeKernelIntegral(const Vecd &input_pnt, Real h_ratio = 1.0);
+		Vecd computeKernelGradientIntegral(const Vecd &input_pnt, Real h_ratio = 1.0);
+		/** small_shift_factor = 1.0 by default, can be increased for difficult geometries for smoothing */
 		LevelSetShape *cleanLevelSet(Real small_shift_factor = 1.0);
 		void writeLevelSet(SPHBody &sph_body);
 
 	protected:
-		BoundingBox bounding_box_;
-		BaseLevelSet *level_set_; /**< narrow bounded levelset mesh. */
+		BaseLevelSet *level_set_; /**< narrow bounded level set mesh. */
+
+		virtual BoundingBox findBounds() override;
 	};
 }
 #endif // LEVEL_SET_SHAPE_H

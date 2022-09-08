@@ -73,10 +73,10 @@ protected:
 	void Update(size_t index_i, Real dt) override
 	{
 		/** initial velocity profile */
-		Real x = pos_n_[index_i][0] / PL;
+		Real x = pos_[index_i][0] / PL;
 		if (x > 0.0)
 		{
-			vel_n_[index_i][1] = vf * material_->ReferenceSoundSpeed() *
+			vel_[index_i][1] = vf * material_->ReferenceSoundSpeed() *
 								 (M * (cos(kl * x) - cosh(kl * x)) - N * (sin(kl * x) - sinh(kl * x))) / Q;
 		}
 	};
@@ -108,7 +108,7 @@ int main()
 	beam_body.generateParticles<ParticleGeneratorLattice>();
 
 	ObserverBody beam_observer(system, "BeamObserver");
-	beam_observer.sph_adaptation_->resetAdapationRatios(1.15, 2.0);
+	beam_observer.defineAdaptationRatios(1.15, 2.0);
 	beam_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 	//----------------------------------------------------------------------
 	//	Define body relation map.
@@ -129,7 +129,7 @@ int main()
 	//stress relaxation for the beam
 	solid_dynamics::StressRelaxationFirstHalf stress_relaxation_first_half(beam_body_inner);
 	solid_dynamics::StressRelaxationSecondHalf stress_relaxation_second_half(beam_body_inner);
-	// clamping a solid body part. This is softer than a driect constraint
+	// clamping a solid body part. This is softer than a direct constraint
 	BodyRegionByParticle beam_base(beam_body, makeShared<MultiPolygonShape>(createBeamConstrainShape()));
 	solid_dynamics::ClampConstrainSolidBodyRegion clamp_constrain_beam_base(beam_body_inner, beam_base);
 	//-----------------------------------------------------------------------------
@@ -161,7 +161,7 @@ int main()
 	tick_count t1 = tick_count::now();
 	tick_count::interval_t interval;
 	//-----------------------------------------------------------------------------
-	//from here the time stepping begines
+	//from here the time stepping begins
 	//-----------------------------------------------------------------------------
 	write_beam_states.writeToFile(0);
 	write_beam_tip_displacement.writeToFile(0);

@@ -1,8 +1,8 @@
 /**
 * @file multi_polygon_shape.h
-* @brief Here, we define the 2D geometric algortihms. they are based on the boost library. 
+* @brief Here, we define the 2D geometric algorithms. they are based on the boost library. 
 * @details The idea is to define complex geometry based on shapes, usually
-* multi-polygon using boost library. we propose only very simple combinaton
+* multi-polygon using boost library. we propose only very simple combination
 * that the region is composed of shapes without intersection.
 * That is, the shapes are those contain each other or without overlap.
 * This strict requirement suggests that complex shapes should be finished
@@ -64,6 +64,7 @@ namespace SPH
 		void addAMultiPolygon(MultiPolygon &multi_polygon, ShapeBooleanOps op);
 		void addABoostMultiPoly(boost_multi_poly &boost_multi_poly, ShapeBooleanOps op);
 		void addAPolygon(const std::vector<Vecd> &points, ShapeBooleanOps op);
+		void addABox(Transform2d transform2d, const Vec2d &halfsize, ShapeBooleanOps op);
 		void addACircle(const Vec2d &center, Real radius, int resolution, ShapeBooleanOps op);
 		void addAPolygonFromFile(std::string file_path_name, ShapeBooleanOps op, Vec2d translation = Vecd(0), Real scale_factor = 1.0);
 
@@ -76,7 +77,7 @@ namespace SPH
 
 	/**
 	 * @class MultiPolygonShape
-	 * @brief A shape whose geometry is defined by a multipolygen.
+	 * @brief A shape whose geometry is defined by a multi polygon.
 	 */
 	class MultiPolygonShape : public Shape
 	{
@@ -88,16 +89,14 @@ namespace SPH
 			: Shape(shape_name), multi_polygon_(multi_polygon){};
 		virtual ~MultiPolygonShape(){};
 
-		virtual BoundingBox findBounds() override;
+		virtual bool isValid() override;
 		virtual bool checkContain(const Vec2d &input_pnt, bool BOUNDARY_INCLUDED = true) override;
 		virtual Vec2d findClosestPoint(const Vec2d &input_pnt) override;
-		virtual bool checkNotFar(const Vec2d &input_pnt, Real threshold) override;
-		virtual bool checkNearSurface(const Vec2d &input_pnt, Real threshold) override;
-		virtual Real findSignedDistance(const Vec2d &input_pnt) override;
-		virtual Vec2d findNormalDirection(const Vec2d &input_pnt) override;
 
 	protected:
 		MultiPolygon multi_polygon_;
+
+		virtual BoundingBox findBounds() override;
 	};
 }
 
