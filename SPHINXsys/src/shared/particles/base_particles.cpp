@@ -226,26 +226,26 @@ namespace SPH
 		output_file << "   <PointData  Vectors=\"vector\">\n";
 
 		// write sorted particles ID
-		output_file << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != total_surface_particles; ++i)
-		{
-			size_t particle_i = surface_particles.body_part_particles_[i];
-			output_file << particle_i << " ";
-		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
+		// output_file << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
+		// output_file << "    ";
+		// for (size_t i = 0; i != total_surface_particles; ++i)
+		// {
+		// 	size_t particle_i = surface_particles.body_part_particles_[i];
+		// 	output_file << particle_i << " ";
+		// }
+		// output_file << std::endl;
+		// output_file << "    </DataArray>\n";
 
 		// write unsorted particles ID
-		output_file << "    <DataArray Name=\"UnsortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
-		output_file << "    ";
-		for (size_t i = 0; i != total_surface_particles; ++i)
-		{
-			size_t particle_i = surface_particles.body_part_particles_[i];
-			output_file << unsorted_id_[particle_i] << " ";
-		}
-		output_file << std::endl;
-		output_file << "    </DataArray>\n";
+		// output_file << "    <DataArray Name=\"UnsortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
+		// output_file << "    ";
+		// for (size_t i = 0; i != total_surface_particles; ++i)
+		// {
+		// 	size_t particle_i = surface_particles.body_part_particles_[i];
+		// 	output_file << unsorted_id_[particle_i] << " ";
+		// }
+		// output_file << std::endl;
+		// output_file << "    </DataArray>\n";
 
 		// write matrices
 		for (std::pair<std::string, size_t> &name_index : variables_to_write_[2])

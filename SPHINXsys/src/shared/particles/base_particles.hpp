@@ -229,24 +229,24 @@ namespace SPH
         output_stream << "   <PointData  Vectors=\"vector\">\n";
 
         // write sorted particles ID
-        output_stream << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
-        output_stream << "    ";
-        for (size_t i = 0; i != total_real_particles; ++i)
-        {
-            output_stream << i << " ";
-        }
-        output_stream << std::endl;
-        output_stream << "    </DataArray>\n";
+        // output_stream << "    <DataArray Name=\"SortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
+        // output_stream << "    ";
+        // for (size_t i = 0; i != total_real_particles; ++i)
+        // {
+        //     output_stream << i << " ";
+        // }
+        // output_stream << std::endl;
+        // output_stream << "    </DataArray>\n";
 
         // write unsorted particles ID
-        output_stream << "    <DataArray Name=\"UnsortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
-        output_stream << "    ";
-        for (size_t i = 0; i != total_real_particles; ++i)
-        {
-            output_stream << unsorted_id_[i] << " ";
-        }
-        output_stream << std::endl;
-        output_stream << "    </DataArray>\n";
+        // output_stream << "    <DataArray Name=\"UnsortedParticle_ID\" type=\"Int32\" Format=\"ascii\">\n";
+        // output_stream << "    ";
+        // for (size_t i = 0; i != total_real_particles; ++i)
+        // {
+        //     output_stream << unsorted_id_[i] << " ";
+        // }
+        // output_stream << std::endl;
+        // output_stream << "    </DataArray>\n";
 
         // compute derived particle variables
         for (ParticleDynamics<void> *derived_variable : derived_variables_)
