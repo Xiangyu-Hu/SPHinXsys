@@ -227,7 +227,7 @@ namespace SPH
 			: ParticleDynamics<void>(*body_complex_relation.sph_body_),
 			  real_body_(body_complex_relation.inner_relation_.real_body_),
 			  complex_relation_(body_complex_relation),
-			  near_shape_surface_(*real_body_, shape_name),
+			  near_shape_surface_(*real_body_),
 			  get_time_step_square_(*real_body_), update_particle_position_(*real_body_),
 			  surface_bounding_(*real_body_, near_shape_surface_),
 			  relaxation_acceleration_complex_(
