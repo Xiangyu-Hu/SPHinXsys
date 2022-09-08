@@ -8,14 +8,14 @@ set(SPHINXSYS_PROJECT_DIR ${PROJECT_SOURCE_DIR})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${SPHINXSYS_PROJECT_DIR}/cmake)
 
 ###### Change settings in this file if you want to build with Simbody and/or oneTBB source code ######
-option(STATIC_BUILD "STATIC_BUILD" 0)
+option(SPH_ONLY_STATIC_BUILD "SPH_ONLY_STATIC_BUILD" 0)
 option(ONLY_3D "ONLY_3D" 0)
 option(BUILD_WITH_SIMBODY "BUILD_WITH_SIMBODY" 0)
 option(EMSCRIPTEN "EMSCRIPTEN" 0)
 option(BUILD_SPHINXSYS_TESTS "BUILD_SPHINXSYS_TESTS" 1)
 
 if(EMSCRIPTEN)
-    set(STATIC_BUILD 1)
+    set(SPH_ONLY_STATIC_BUILD 1)
     set(BUILD_WITH_SIMBODY 1)
     set(ONLY_3D 1)
     set(BUILD_SPHINXSYS_TESTS 1)
@@ -41,7 +41,7 @@ if(BUILD_WITH_SIMBODY)
     include_directories("${EIGEN_ROOT}")
 endif()
 
-if(STATIC_BUILD)
+if(SPH_ONLY_STATIC_BUILD)
     set(BUILD_STATIC_LIBRARIES 1) # Simbody
     set(BUILD_DYNAMIC_LIBRARIES 0) # Simbody
 endif()
@@ -82,8 +82,10 @@ elseif(EMSCRIPTEN)
     # set(EM_FLAGS " -s INITIAL_MEMORY=536870912 -s ASSERTIONS=1 -s ALLOW_MEMORY_GROWTH=0 -s ERROR_ON_UNDEFINED_SYMBOLS=1")
     # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${EM_FLAGS}")
 else()
-    add_compile_definitions(__linux__=1)
-    set(CMAKE_CXX_FLAGS "-w -std=c++11 -DUNIX -pthread")
+    if(NOT (${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
+        add_compile_definitions(__linux__=1)
+    endif()
+    set(CMAKE_CXX_FLAGS "-w -std=c++17 -DUNIX -pthread")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -ggdb")
     IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
@@ -137,3 +139,7 @@ if(ACTIVATE_CUDA)
 endif()
 
 add_subdirectory(modules)
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/PythonScriptStore/RegressionTest/regression_test_base_tool.py
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/PythonScriptStore/RegressionTest)
+        

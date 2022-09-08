@@ -1,7 +1,6 @@
 In Example 10, we explained how to build up a 2D shell case. 
 Here we will give you a 3D arch case. 
-Different form the previous case, the initial psudo-normal is not same between each particle, 
-and dynamic responses are solved.
+Different form the previous case, the initial psudo-normal is not same between each particle.
 Here we will emphasise the method differences for the 3D arch compared to the 2D plate.
 
 ===================================
@@ -15,18 +14,18 @@ of which two ends are fully clamped and the even-distributed downward body force
    :width: 600 px
    :align: center
 
-   The dynamic responses of a deep circular arch shell structure.
+   The quasi-staitc responses of a deep circular arch shell structure.
 
 First, we provide the parameters for geometric modeling, numerical setup, material properties, etc.
 
 .. code-block:: cpp
 
 	/**
-	* @file 	3d_arch.cpp
-	* @brief 	This is the benchmark test of the 3D shell.
-	* @details  We consider large deformation of a circular arch.
-	* @author 	Dong Wu, Chi Zhang and Xiangyu Hu
-	* @version  0.1
+	 * @file 	3d_arch.cpp
+	 * @brief 	This is the benchmark test of the shell.
+	 * @details  We consider large deformation of a cylindrical thin structure.
+	 * @author 	Dong Wu, Chi Zhang and Xiangyu Hu
+	 * @version  0.1
 	 */
 	#include "sphinxsys.h"
 
@@ -35,34 +34,36 @@ First, we provide the parameters for geometric modeling, numerical setup, materi
 	/**
 	 * @brief Basic geometry parameters and numerical setup.
 	 */
-	Real radius = 0.0975;                                    /** Radius of the inner boudary of the cylinder. */
-	Real height = 0.02;                                      /** Height of the cylinder. */
-	Real thickness = 0.005;                                  /** Thickness of the cylinder. */
-	Real radius_mid_surface = radius + thickness / 2.0;      /** Radius of the mid surface. */
-	int particle_number = 10;								 /** Particle number in the height direction. */
+	Real radius = 0.0975;								/** Radius of the inner boundary of the cylinderical thin structure. */
+	Real height = 0.02;									/** Height of the cylinder. */
+	Real thickness = 0.005;								/** Thickness of the cylinder. */
+	Real radius_mid_surface = radius + thickness / 2.0; /** Radius of the mid surface. */
+	int particle_number = 10;							/** Particle number in the height direction. */
 	Real particle_spacing_ref = height / (Real)particle_number;
-	int particle_number_mid_surface = 2 * radius_mid_surface * Pi * 215.0 / 360.0 / particle_spacing_ref;
-	int BWD = 4;
-	Real BW = particle_spacing_ref * (Real)BWD;              /** Boundary width, determined by specific layer of boundary particles. */
+	int particle_number_mid_surface = int(2.0 * radius_mid_surface * Pi * 215.0 / 360.0 / particle_spacing_ref);
+	int BWD = 1;								/** Width of the boundary layer measured by number of particles. */
+	Real BW = particle_spacing_ref * (Real)BWD; /** Boundary width, determined by specific layer of boundary particles. */
 	/** Domain bounds of the system. */
 	BoundingBox system_domain_bounds(Vec3d(-radius - thickness, 0.0, -radius - thickness),
-		Vec3d(radius + thickness, height, radius + thickness));
-
+									 Vec3d(radius + thickness, height, radius + thickness));
+	// Observer location
+	StdVec<Vecd> observation_location = {Vecd(0.0, height / 2.0, radius_mid_surface)};
 	/** For material properties of the solid. */
-	Real rho0_s = 7.800; 			                         /** Normalized density. */
-	Real Youngs_modulus = 210e6;	                         /** Normalized Youngs Modulus. */
-	Real poisson = 0.3; 			                         /** Poisson ratio. */
+	Real rho0_s = 7.800;			 /** Normalized density. */
+	Real Youngs_modulus = 210e6;	 /** Normalized Youngs Modulus. */
+	Real poisson = 0.3;				 /** Poisson ratio. */
+	Real physical_viscosity = 200.0; /** physical damping, here we choose the same value as numerical viscosity. */
 
-	Real time_to_full_external_force = 0.0;
-	Real body_acceleration = -400000;
+	Real time_to_full_external_force = 0.001;
+	Real gravitational_acceleration = -300000.0;
 
 There is two more angular DOFs (Degrees of Freedom) for 3D thin structure dynamics than that for 3D solid dynamics. 
 And we get the pseudo normal direction by rotating the normal direction according to these two angular DOFs.
-We do not define the physical viscosity any more because of dynamic analysis.
-:code:`time_to_full_external_force`  is equal to 0.0, 
-which means the external force remains constant , that is to say, stepping load is applied.
+:code:`time_to_full_external_force` is equal to 0.001, 
+which means the external force increases linearly before 0.001 s and remains constant after 0.001 s.
 
-Then we define to generate particles directly by giving each particle position and volume, just like 2D case. 
+Then we define to generate particles directly by giving each particle position and volume 
+and initializing the normal direction, just like 2D case. 
 
 .. code-block:: cpp
 
@@ -86,51 +87,32 @@ Then we define to generate particles directly by giving each particle position a
 		}
 	};
 
-And we define initial condition, boundary geometry, external force, observer body and material properties 
+Note that the volume is :code:`resolution_ref * particle_spacing_ref` for 3D shell particles.
+And we define the boundary geometry and :code:`TimeDependentExternalForce` 
 in following code piece.
 
 .. code-block:: cpp
 
-	/**
-	 * application dependent initial condition
-	 */
-	class CylinderDynamicsInitialCondition
-		: public thin_structure_dynamics::ShellDynamicsInitialCondition
-	{
-	public:
-		CylinderDynamicsInitialCondition(SolidBody *plate)
-			: thin_structure_dynamics::ShellDynamicsInitialCondition(plate) {};
-	protected:
-		void Update(size_t index_i, Real dt) override {
-			/** initial pseudo-normal. */
-			n_0_[index_i] = Vec3d(pos_0_[index_i][0] / radius_mid_surface, 0.0, pos_0_[index_i][2] / radius_mid_surface);
-			n_[index_i] = n_0_[index_i];
-			pseudo_n_[index_i] = n_0_[index_i];
-			transformation_matrix_[index_i] = getTransformationMatrix(n_0_[index_i]);
-		};
-	};
-
 	/** Define the boundary geometry. */
 	class BoundaryGeometry : public BodyPartByParticle
 	{
-	protected:
-		virtual void tagBodyPart() override
+	public:
+		BoundaryGeometry(SPHBody &body, const std::string &body_part_name)
+			: BodyPartByParticle(body, body_part_name)
 		{
-			BaseParticles* base_particles = body_->base_particles_;
-			for (size_t i = 0; i < base_particles->total_real_particles_; ++i)
+			TaggingParticleMethod tagging_particle_method = std::bind(&BoundaryGeometry::tagManually, this, _1);
+			tagParticles(tagging_particle_method);
+		};
+		virtual ~BoundaryGeometry(){};
+
+	private:
+		void tagManually(size_t index_i)
+		{
+			if (base_particles_->pos_n_[index_i][2] < radius_mid_surface * sin(-17.5 / 180.0 * Pi))
 			{
-				if (base_particles->pos_n_[i][2] < radius_mid_surface * sin(-17.5 / 180.0 * Pi))
-				{
-					tagAParticle(i);
-				}
+				body_part_particles_.push_back(index_i);
 			}
 		};
-	public:
-		BoundaryGeometry(SPHBody *body, std::string body_part_name)
-			: BodyPartByParticle(body, body_part_name) {
-			tagBodyPart();
-		};
-		virtual ~BoundaryGeometry() {};
 	};
 
 	/**
@@ -139,88 +121,51 @@ in following code piece.
 	class TimeDependentExternalForce : public Gravity
 	{
 	public:
-		TimeDependentExternalForce(Vecd external_force)
+		explicit TimeDependentExternalForce(Vecd external_force)
 			: Gravity(external_force) {}
-		virtual Vecd InducedAcceleration(Vecd& position) override
+		virtual Vecd InducedAcceleration(Vecd &position) override
 		{
 			Real current_time = GlobalStaticVariables::physical_time_;
-			return current_time < time_to_full_external_force ?
-				current_time * global_acceleration_ / time_to_full_external_force : global_acceleration_;
+			return current_time < time_to_full_external_force ? current_time * global_acceleration_ / time_to_full_external_force : global_acceleration_;
 		}
 	};
-
-	/** Define an observer body. */
-	class CylinderObserver : public FictitiousBody
-	{
-	public:
-		CylinderObserver(SPHSystem &system, std::string body_name)
-			: FictitiousBody(system, body_name)
-		{
-			/** the measuring particle with zero volume */
-			body_input_points_volumes_.push_back(std::make_pair(Vecd(0.0, height / 2.0, radius_mid_surface), 0.0));
-		}
-	};
-
-	class CylinderMaterial : public LinearElasticSolid
-	{
-	public:
-		CylinderMaterial(): LinearElasticSolid()
-		{
-			rho0_ = rho0_s;
-			youngs_modulus_ = Youngs_modulus;
-			poisson_ratio_ = poisson;
-
-			assignDerivedMaterialParameters();
-		}
-	};
-
-Note that we should also initialize the transformation matrices, 
-which will be used for coordinate tranformations from global coordinates to local coordiantes.
-The observer body includes only one point, located at the middle of the arch.
 
 Here we come to the :code:`int main()` function. 
 In the first part of :code:`main` function, 
-an object of :code:`SPHSystem` is created, and external force is defined.
+an object of :code:`SPHSystem` is created.
 
 .. code-block:: cpp
 
 	/** Setup the system. */
 	SPHSystem system(system_domain_bounds, particle_spacing_ref);
 
-	/** Define the external force. */
-	TimeDependentExternalForce external_force(Vec3d(0.0, 0.0, body_acceleration));
-
-Note that the external force applied gives each particle the same acceleration since the load is equally distributed.
-The bodies, material and particles are also created in following code piece.
-
-.. code-block:: cpp
-
-	/** Creat a Cylinder body. */
-	Cylinder *cylinder_body = new Cylinder(system, "CylinderBody", new ParticleAdaptation(1.15, 0), new ParticleGeneratorDirect());
-	/** elastic soild material properties */
-	CylinderMaterial *cylinder_material = new CylinderMaterial();
-	/** Creat particles for the elastic body. */
-	ShellParticles cylinder_body_particles(cylinder_body, cylinder_material, thickness);
-
-And then the observer body and contact map are defined.
-
-.. code-block:: cpp
+	/** create a cylinder body with shell particles and linear elasticity. */
+	SolidBody cylinder_body(system, makeShared<DefaultShape>("CylinderBody"));
+	cylinder_body.defineParticlesAndMaterial<ShellParticles, LinearElasticSolid>(rho0_s, Youngs_modulus, poisson);
+	cylinder_body.generateParticles<CylinderParticleGenerator>();
 
 	/** Define Observer. */
-	CylinderObserver *cylinder_observer = new CylinderObserver(system, "CylinderObserver");
-	BaseParticles observer_particles(cylinder_observer);
+	ObserverBody cylinder_observer(system, "CylinderObserver");
+	cylinder_observer.generateParticles<ObserverParticleGenerator>(observation_location);
 
 	/** Set body contact map
-	 *  The contact map gives the data conntections between the bodies
+	 *  The contact map gives the data connections between the bodies
 	 *  basically the the range of bodies to build neighbor particle lists
 	 */
-	InnerBodyRelation* cylinder_body_inner = new InnerBodyRelation(cylinder_body);
-	ContactBodyRelation* cylinder_observer_contact = new ContactBodyRelation(cylinder_observer, { cylinder_body });
+	BodyRelationInner cylinder_body_inner(cylinder_body);
+	BodyRelationContact cylinder_observer_contact(cylinder_observer, {&cylinder_body});
 
+	/** Common particle dynamics. */
+	Gravity external_force(Vec3d(0.0, 0.0, gravitational_acceleration));
+	TimeStepInitialization initialize_external_force(cylinder_body, external_force);
+
+The material, particles and bodies are created. 
+Then, the observer body and the contact map are defined. 
 Using class :code:`InnerBodyRelation` means :code:`plate_body_inner` defines the inner data connections.
 And using class :code:`ContactBodyRelation` means :code:`plate_observer_contact` 
 defines the :code:`palte_observer` has data connections with :code:`plate_body`,
 e.g. the :code:`palte_observer` gets data from :code:`plate_body`.
+Note that the external force applied gives each particle the same acceleration since the load is equally distributed.
 After this, all the physical dynamics are defined in the form of particle discretization.
 
 .. code-block:: cpp
@@ -228,28 +173,24 @@ After this, all the physical dynamics are defined in the form of particle discre
 	/**
 	 * This section define all numerical methods will be used in this case.
 	 */
-	/** Common particle dynamics. */
-	InitializeATimeStep 	initialize_external_force(cylinder_body, &external_force);
-	 /** initial condition */
-	CylinderDynamicsInitialCondition cylinder_initial_pseudo_normal(cylinder_body);
-	 /** Corrected strong configuration. */
+	/** Corrected configuration. */
 	thin_structure_dynamics::ShellCorrectConfiguration
-		corrected_configuration_in_strong_form(cylinder_body_inner);
-	/** Time step size caclutation. */
+		corrected_configuration(cylinder_body_inner);
+	/** Time step size calculation. */
 	thin_structure_dynamics::ShellAcousticTimeStepSize computing_time_step_size(cylinder_body);
-	/** active-pative stress relaxation. */
-	thin_structure_dynamics::ShellStressRelaxationFirstHalf
-		stress_relaxation_first_half(cylinder_body_inner);
-	thin_structure_dynamics::ShellStressRelaxationSecondHalf
-		stress_relaxation_second_half(cylinder_body_inner);
+	/** stress relaxation. */
+	thin_structure_dynamics::ShellStressRelaxationFirstHalf stress_relaxation_first_half(cylinder_body_inner);
+	thin_structure_dynamics::ShellStressRelaxationSecondHalf stress_relaxation_second_half(cylinder_body_inner);
 	/** Constrain the Boundary. */
-	thin_structure_dynamics::ClampConstrainShellBodyRegion
-		constrain_holder(cylinder_body_inner, new BoundaryGeometry(cylinder_body, "BoundaryGeometry"));
+	BoundaryGeometry boundary_geometry(cylinder_body, "BoundaryGeometry");
+	thin_structure_dynamics::ConstrainShellBodyRegion constrain_holder(cylinder_body, boundary_geometry);
+	DampingWithRandomChoice<DampingPairwiseInner<Vecd>>
+		cylinder_position_damping(0.2, cylinder_body_inner, "Velocity", physical_viscosity);
+	DampingWithRandomChoice<DampingPairwiseInner<Vecd>>
+		cylinder_rotation_damping(0.2, cylinder_body_inner, "AngularVelocity", physical_viscosity);
 
-First, the applying external force is defined. 
-Then comes to the methods, initial condition and correted configuration, that will be executed only once.
-Initial condition defines the initial normal and pseudo-normal direction, and the transformation matrix, 
-and configuration is corrected to ensure the first-order consistency.
+First comes to the methods, correted configuration, that will be executed only once.
+The configuration is corrected to ensure the first-order consistency.
 Then, the methods that will used for multiple times are defined.
 
 Before the computation, we also define the outputs, 
@@ -258,9 +199,9 @@ including the particle states and obervations.
 .. code-block:: cpp
 
 	/** Output */
-	In_Output in_output(system);
-	WriteBodyStatesToPlt write_states(in_output, system.real_bodies_);
-	WriteAnObservedQuantity<indexVector, Vecd>
+	InOutput in_output(system);
+	BodyStatesRecordingToVtp write_states(in_output, system.real_bodies_);
+	RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
 		write_cylinder_max_displacement("Position", in_output, cylinder_observer_contact);
 
 The initial conditions, including the cell-linked list and particle configuration, are executed once before the main loop.
@@ -270,8 +211,7 @@ The initial conditions, including the cell-linked list and particle configuratio
 	/** Apply initial condition. */
 	system.initializeSystemCellLinkedLists();
 	system.initializeSystemConfigurations();
-	cylinder_initial_pseudo_normal.parallel_exec();
-	corrected_configuration_in_strong_form.parallel_exec();
+	corrected_configuration.parallel_exec();
 
 For solid dynamics, we do not change the cell-linked list and particle configuration. 
 So they are calculated only once before the simulation.
@@ -280,16 +220,16 @@ The basic control parameter for the simulation is defined in the following.
 .. code-block:: cpp
 
 	/**
-	* From here the time stepping begines.
-	* Set the starting time.
-	*/
+	 * From here the time stepping begins.
+	 * Set the starting time.
+	 */
 	GlobalStaticVariables::physical_time_ = 0.0;
-	write_states.WriteToFile(0);
-	write_cylinder_max_displacement.WriteToFile(0);
-	
-	/** Setup physical parameters. */
+	write_states.writeToFile(0);
+	write_cylinder_max_displacement.writeToFile(0);
+
+	/** Setup time stepping control parameters. */
 	int ite = 0;
-	Real end_time = 0.005;
+	Real end_time = 0.006;
 	Real output_period = end_time / 100.0;
 	Real dt = 0.0;
 	/** Statistics for computing time. */
@@ -306,29 +246,31 @@ Then we come to the time-stepping loop.
 	 */
 	while (GlobalStaticVariables::physical_time_ < end_time)
 	{
-		Real integeral_time = 0.0;
-		while (integeral_time < output_period)
+		Real integral_time = 0.0;
+		while (integral_time < output_period)
 		{
-			if (ite % 100 == 0) {
+			if (ite % 100 == 0)
+			{
 				std::cout << "N=" << ite << " Time: "
-					<< GlobalStaticVariables::physical_time_ << "	dt: "
-					<< dt << "\n";
+						  << GlobalStaticVariables::physical_time_ << "	dt: "
+						  << dt << "\n";
 			}
 			initialize_external_force.parallel_exec(dt);
 			stress_relaxation_first_half.parallel_exec(dt);
+			constrain_holder.parallel_exec(dt);
+			cylinder_position_damping.parallel_exec(dt);
+			cylinder_rotation_damping.parallel_exec(dt);
 			constrain_holder.parallel_exec(dt);
 			stress_relaxation_second_half.parallel_exec(dt);
 
 			ite++;
 			dt = computing_time_step_size.parallel_exec();
-			integeral_time += dt;
+			integral_time += dt;
 			GlobalStaticVariables::physical_time_ += dt;
-			Real check_time = GlobalStaticVariables::physical_time_;
-
 		}
-		write_cylinder_max_displacement.WriteToFile(ite);
+		write_cylinder_max_displacement.writeToFile(ite);
 		tick_count t2 = tick_count::now();
-		write_states.WriteToFile();
+		write_states.writeToFile();
 		tick_count t3 = tick_count::now();
 		interval += t3 - t2;
 	}
@@ -338,7 +280,8 @@ Then we come to the time-stepping loop.
 	tt = t4 - t1 - interval;
 	std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
 
+	write_cylinder_max_displacement.newResultTest();
+
 	return 0;
 
-The main function is almost same with that of 2D case, 
-except that the physical damping is not included.
+The main function is almost same with that of 2D case.
